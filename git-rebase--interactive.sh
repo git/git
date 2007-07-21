@@ -19,6 +19,8 @@ require_work_tree
 DOTEST="$GIT_DIR/.dotest-merge"
 TODO="$DOTEST"/todo
 DONE="$DOTEST"/done
+MSG="$DOTEST"/message
+SQUASH_MSG="$DOTEST"/message-squash
 REWRITTEN="$DOTEST"/rewritten
 PRESERVE_MERGES=
 STRATEGY=
@@ -158,6 +160,38 @@ pick_one_preserving_merges () {
 	esac
 }
 
+nth_string () {
+	case "$1" in
+	*1[0-9]|*[04-9]) echo "$1"th;;
+	*1) echo "$1"st;;
+	*2) echo "$1"nd;;
+	*3) echo "$1"rd;;
+	esac
+}
+
+make_squash_message () {
+	if [ -f "$SQUASH_MSG" ]; then
+		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([0-9]\+\).*/\1/p" \
+			< "$SQUASH_MSG" | tail -n 1)+1))
+		echo "# This is a combination of $COUNT commits."
+		sed -n "2,\$p" < "$SQUASH_MSG"
+	else
+		COUNT=2
+		echo "# This is a combination of two commits."
+		echo "# The first commit's message is:"
+		echo
+		git cat-file commit HEAD | sed -e '1,/^$/d'
+		echo
+	fi
+	echo "# This is the $(nth_string $COUNT) commit message:"
+	echo
+	git cat-file commit $1 | sed -e '1,/^$/d'
+}
+
+peek_next_command () {
+	sed -n "1s/ .*$//p" < "$TODO"
+}
+
 do_next () {
 	test -f "$DOTEST"/message && rm "$DOTEST"/message
 	test -f "$DOTEST"/author-script && rm "$DOTEST"/author-script
@@ -194,17 +228,19 @@ do_next () {
 			die "Cannot 'squash' without a previous commit"
 
 		mark_action_done
-		MSG="$DOTEST"/message
-		echo "# This is a combination of two commits." > "$MSG"
-		echo "# The first commit's message is:" >> "$MSG"
-		echo >> "$MSG"
-		git cat-file commit HEAD | sed -e '1,/^$/d' >> "$MSG"
-		echo >> "$MSG"
+		make_squash_message $sha1 > "$MSG"
+		case "$(peek_next_command)" in
+		squash)
+			EDIT_COMMIT=
+			cp "$MSG" "$SQUASH_MSG"
+		;;
+		*)
+			EDIT_COMMIT=-e
+			test -f "$SQUASH_MSG" && rm "$SQUASH_MSG"
+		esac
+
 		failed=f
 		pick_one -n $sha1 || failed=t
-		echo "# And this is the 2nd commit message:" >> "$MSG"
-		echo >> "$MSG"
-		git cat-file commit $sha1 | sed -e '1,/^$/d' >> "$MSG"
 		git reset --soft HEAD^
 		author_script=$(get_author_ident_from_commit $sha1)
 		echo "$author_script" > "$DOTEST"/author-script
@@ -213,7 +249,7 @@ do_next () {
 			# This is like --amend, but with a different message
 			eval "$author_script"
 			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
-			git commit -F "$MSG" -e
+			git commit -F "$MSG" $EDIT_COMMIT
 			;;
 		t)
 			cp "$MSG" "$GIT_DIR"/MERGE_MSG

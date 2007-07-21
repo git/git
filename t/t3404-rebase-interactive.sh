@@ -65,6 +65,7 @@ cat > fake-editor.sh << EOF
 #!/bin/sh
 test "\$1" = .git/COMMIT_EDITMSG && {
 	test -z "\$FAKE_COMMIT_MESSAGE" || echo "\$FAKE_COMMIT_MESSAGE" > "\$1"
+	test -z "\$FAKE_COMMIT_AMEND" || echo "\$FAKE_COMMIT_AMEND" >> "\$1"
 	exit
 }
 test -z "\$FAKE_LINES" && exit
@@ -210,6 +211,14 @@ test_expect_success 'verbose flag is heeded, even after --continue' '
 	git add file1 &&
 	git rebase --continue > output &&
 	grep "^ file1 |    2 +-$" output
+'
+
+test_expect_success 'multi-squash only fires up editor once' '
+	base=$(git rev-parse HEAD~4) &&
+	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 squash 2 squash 3 squash 4" \
+		git rebase -i $base &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 1 = $(git show | grep ONCE | wc -l)
 '
 
 test_done
