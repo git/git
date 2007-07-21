@@ -108,9 +108,9 @@ mytag
 EOF
 test_expect_success \
 	'trying to delete tags without params should succeed and do nothing' '
-	git tag -l > actual && git diff expect actual &&
+	git tag -l | cat > actual && git diff expect actual &&
 	git-tag -d &&
-	git tag -l > actual && git diff expect actual
+	git tag -l | cat > actual && git diff expect actual
 '
 
 test_expect_success \
@@ -164,7 +164,7 @@ test_expect_success 'listing all tags should print them ordered' '
 	git tag a1 &&
 	git tag v1.0 &&
 	git tag t210 &&
-	git tag -l > actual &&
+	git tag -l | cat > actual &&
 	git diff expect actual
 '
 
