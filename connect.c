@@ -225,11 +225,10 @@ static int git_tcp_connect_sock(char *host, int flags)
 		}
 		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
 			saved_errno = errno;
-			fprintf(stderr, "%s[%d: %s]: net=%s, errno=%s\n",
+			fprintf(stderr, "%s[%d: %s]: errno=%s\n",
 				host,
 				cnt,
 				ai_name(ai),
-				hstrerror(h_errno),
 				strerror(saved_errno));
 			close(sockfd);
 			sockfd = -1;
@@ -316,11 +315,10 @@ static int git_tcp_connect_sock(char *host, int flags)
 
 		if (connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {
 			saved_errno = errno;
-			fprintf(stderr, "%s[%d: %s]: net=%s, errno=%s\n",
+			fprintf(stderr, "%s[%d: %s]: errno=%s\n",
 				host,
 				cnt,
 				inet_ntoa(*(struct in_addr *)&sa.sin_addr),
-				hstrerror(h_errno),
 				strerror(saved_errno));
 			close(sockfd);
 			sockfd = -1;

@@ -377,6 +377,13 @@ then
 		)
 	)
 
+	# Upstream URL
+	git-config remote."$origin".url "$repo" &&
+
+	# Set up the mappings to track the remote branches.
+	git-config remote."$origin".fetch \
+		"+refs/heads/*:$remote_top/*" '^$' &&
+
 	# Write out remote.$origin config, and update our "$head_points_at".
 	case "$head_points_at" in
 	?*)
@@ -384,21 +391,20 @@ then
 		git-symbolic-ref HEAD "refs/heads/$head_points_at" &&
 
 		# Tracking branch for the primary branch at the remote.
-		origin_track="$remote_top/$head_points_at" &&
 		git-update-ref HEAD "$head_sha1" &&
 
-		# Upstream URL
-		git-config remote."$origin".url "$repo" &&
-
-		# Set up the mappings to track the remote branches.
-		git-config remote."$origin".fetch \
-			"+refs/heads/*:$remote_top/*" '^$' &&
 		rm -f "refs/remotes/$origin/HEAD"
 		git-symbolic-ref "refs/remotes/$origin/HEAD" \
 			"refs/remotes/$origin/$head_points_at" &&
 
 		git-config branch."$head_points_at".remote "$origin" &&
 		git-config branch."$head_points_at".merge "refs/heads/$head_points_at"
+		;;
+	'')
+		# Source had detached HEAD pointing nowhere
+		git-update-ref --no-deref HEAD "$head_sha1" &&
+		rm -f "refs/remotes/$origin/HEAD"
+		;;
 	esac
 
 	case "$no_checkout" in

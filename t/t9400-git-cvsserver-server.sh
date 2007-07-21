@@ -180,8 +180,8 @@ test_expect_success 'req_Root (export-all)' \
    tail -n1 log | grep -q "^I LOVE YOU$"'
 
 test_expect_failure 'req_Root failure (export-all w/o whitelist)' \
-  'cat request-anonymous | git-cvsserver --export-all pserver >log 2>&1
-   || false'
+  'cat request-anonymous | git-cvsserver --export-all pserver >log 2>&1 ||
+   false'
 
 test_expect_success 'req_Root (everything together)' \
   'cat request-base | git-cvsserver --export-all --strict-paths --base-path $WORKDIR/ pserver $SERVERDIR >log 2>&1 &&

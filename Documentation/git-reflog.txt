@@ -39,6 +39,19 @@ the current branch. It is basically an alias for 'git log -g --abbrev-commit
 OPTIONS
 -------
 
+--stale-fix::
+	This revamps the logic -- the definition of "broken commit"
+	becomes: a commit that is not reachable from any of the refs and
+	there is a missing object among the commit, tree, or blob
+	objects reachable from it that is not reachable from any of the
+	refs.
++
+This computation involves traversing all the reachable objects, i.e. it
+has the same cost as 'git prune'.  Fortunately, once this is run, we
+should not have to ever worry about missing objects, because the current
+prune and pack-objects know about reflogs and protect objects referred by
+them.
+
 --expire=<time>::
 	Entries older than this time are pruned.  Without the
 	option it is taken from configuration `gc.reflogExpire`,

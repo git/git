@@ -16,11 +16,13 @@ SYNOPSIS
 	     [ \--sparse ]
 	     [ \--no-merges ]
 	     [ \--remove-empty ]
+	     [ \--full-history ]
 	     [ \--not ]
 	     [ \--all ]
 	     [ \--stdin ]
 	     [ \--topo-order ]
 	     [ \--parents ]
+	     [ \--timestamp ]
 	     [ \--left-right ]
 	     [ \--cherry-pick ]
 	     [ \--encoding[=<encoding>] ]
@@ -115,6 +117,9 @@ e.g. "2 hours ago".
 --parents::
 
 	Print the parents of the commit.
+
+--timestamp::
+	Print the raw commit timestamp.
 
 --left-right::
 
@@ -227,6 +232,14 @@ limiting may be applied.
 --remove-empty::
 
 	Stop when a given path disappears from the tree.
+
+--full-history::
+
+	Show also parts of history irrelevant to current state of a given
+	path. This turns off history simplification, which removed merges
+	which didn't change anything at all at some child. It will still actually
+	simplify away merges that didn't change anything at all into either
+	child.
 
 --no-merges::
 

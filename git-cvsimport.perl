@@ -774,7 +774,6 @@ sub commit {
 		or die "Cannot write branch $branch for update: $!\n";
 
 	if ($tag) {
-		my ($in, $out) = ('','');
 	        my ($xtag) = $tag;
 		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
 		$xtag =~ tr/_/\./ if ( $opt_u );
@@ -1008,7 +1007,7 @@ if ($orig_branch) {
 		if ($opt_r && $opt_o ne 'HEAD');
 	system('git-update-ref', 'HEAD', "$orig_branch");
 	unless ($opt_i) {
-		system('git checkout');
+		system('git checkout -f');
 		die "checkout failed: $?\n" if $?;
 	}
 }

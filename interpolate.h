@@ -19,8 +19,8 @@ struct interp {
 extern void interp_set_entry(struct interp *table, int slot, const char *value);
 extern void interp_clear_table(struct interp *table, int ninterps);
 
-extern int interpolate(char *result, int reslen,
-		       const char *orig,
-		       const struct interp *interps, int ninterps);
+extern unsigned long interpolate(char *result, unsigned long reslen,
+				 const char *orig,
+				 const struct interp *interps, int ninterps);
 
 #endif /* INTERPOLATE_H */

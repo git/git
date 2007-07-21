@@ -211,7 +211,8 @@ SCRIPT_SH = \
 	git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh \
-	git-lost-found.sh git-quiltimport.sh git-submodule.sh
+	git-lost-found.sh git-quiltimport.sh git-submodule.sh \
+	git-filter-branch.sh
 
 SCRIPT_PERL = \
 	git-add--interactive.perl \
@@ -1056,15 +1057,16 @@ git.spec: git.spec.in
 	mv $@+ $@
 
 GIT_TARNAME=git-$(GIT_VERSION)
-dist: git.spec git-archive
+dist: git.spec git-archive configure
 	./git-archive --format=tar \
 		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar
 	@mkdir -p $(GIT_TARNAME)
-	@cp git.spec $(GIT_TARNAME)
+	@cp git.spec configure $(GIT_TARNAME)
 	@echo $(GIT_VERSION) > $(GIT_TARNAME)/version
 	@$(MAKE) -C git-gui TARDIR=../$(GIT_TARNAME)/git-gui dist-version
 	$(TAR) rf $(GIT_TARNAME).tar \
 		$(GIT_TARNAME)/git.spec \
+		$(GIT_TARNAME)/configure \
 		$(GIT_TARNAME)/version \
 		$(GIT_TARNAME)/git-gui/version
 	@rm -rf $(GIT_TARNAME)

@@ -89,10 +89,16 @@ Issues of note:
    will include them.  Note that config.mak is not distributed;
    the name is reserved for local settings.
 
- - To build and install documentation suite, you need to have the
-   asciidoc/xmlto toolchain.  Alternatively, pre-formatted
-   documentation are available in "html" and "man" branches of the git
-   repository itself.  For example, you could:
+ - To build and install documentation suite, you need to have
+   the asciidoc/xmlto toolchain.  Because not many people are
+   inclined to install the tools, the default build target
+   ("make all") does _not_ build them.  The documentation is
+   written for AsciiDoc 7, but "make ASCIIDOC8=YesPlease doc"
+   will let you format with AsciiDoc 8.
+
+   Alternatively, pre-formatted documentation are available in
+   "html" and "man" branches of the git repository itself.  For
+   example, you could:
 
 	$ mkdir manual && cd manual
 	$ git init
