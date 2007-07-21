@@ -1417,6 +1417,7 @@ set is_quitting 0
 
 proc do_quit {} {
 	global ui_comm is_quitting repo_config commit_type
+	global GITGUI_BCK_exists GITGUI_BCK_i
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -1425,18 +1426,30 @@ proc do_quit {} {
 		# -- Stash our current commit buffer.
 		#
 		set save [gitdir GITGUI_MSG]
-		set msg [string trim [$ui_comm get 0.0 end]]
-		regsub -all -line {[ \r\t]+$} $msg {} msg
-		if {(![string match amend* $commit_type]
-			|| [$ui_comm edit modified])
-			&& $msg ne {}} {
-			catch {
-				set fd [open $save w]
-				puts -nonewline $fd $msg
-				close $fd
-			}
+		if {$GITGUI_BCK_exists && ![$ui_comm edit modified]} {
+			file rename -force [gitdir GITGUI_BCK] $save
+			set GITGUI_BCK_exists 0
 		} else {
-			catch {file delete $save}
+			set msg [string trim [$ui_comm get 0.0 end]]
+			regsub -all -line {[ \r\t]+$} $msg {} msg
+			if {(![string match amend* $commit_type]
+				|| [$ui_comm edit modified])
+				&& $msg ne {}} {
+				catch {
+					set fd [open $save w]
+					puts -nonewline $fd $msg
+					close $fd
+				}
+			} else {
+				catch {file delete $save}
+			}
+		}
+
+		# -- Remove our editor backup, its not needed.
+		#
+		after cancel $GITGUI_BCK_i
+		if {$GITGUI_BCK_exists} {
+			catch {file delete [gitdir GITGUI_BCK]}
 		}
 
 		# -- Stash our current window geometry into this repository.
@@ -2596,6 +2609,59 @@ if {[is_enabled transport]} {
 
 	populate_fetch_menu
 	populate_push_menu
+}
+
+if {[winfo exists $ui_comm]} {
+	set GITGUI_BCK_exists [load_message GITGUI_BCK]
+
+	# -- If both our backup and message files exist use the
+	#    newer of the two files to initialize the buffer.
+	#
+	if {$GITGUI_BCK_exists} {
+		set m [gitdir GITGUI_MSG]
+		if {[file isfile $m]} {
+			if {[file mtime [gitdir GITGUI_BCK]] > [file mtime $m]} {
+				catch {file delete [gitdir GITGUI_MSG]}
+			} else {
+				$ui_comm delete 0.0 end
+				$ui_comm edit reset
+				$ui_comm edit modified false
+				catch {file delete [gitdir GITGUI_BCK]}
+				set GITGUI_BCK_exists 0
+			}
+		}
+		unset m
+	}
+
+	proc backup_commit_buffer {} {
+		global ui_comm GITGUI_BCK_exists
+
+		set m [$ui_comm edit modified]
+		if {$m || $GITGUI_BCK_exists} {
+			set msg [string trim [$ui_comm get 0.0 end]]
+			regsub -all -line {[ \r\t]+$} $msg {} msg
+
+			if {$msg eq {}} {
+				if {$GITGUI_BCK_exists} {
+					catch {file delete [gitdir GITGUI_BCK]}
+					set GITGUI_BCK_exists 0
+				}
+			} elseif {$m} {
+				catch {
+					set fd [open [gitdir GITGUI_BCK] w]
+					puts -nonewline $fd $msg
+					close $fd
+					set GITGUI_BCK_exists 1
+				}
+			}
+
+			$ui_comm edit modified false
+		}
+
+		set ::GITGUI_BCK_i [after 2000 backup_commit_buffer]
+	}
+
+	backup_commit_buffer
 }
 
 lock_index begin-read

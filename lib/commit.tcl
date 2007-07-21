@@ -379,6 +379,10 @@ A rescan will be automatically started now.
 	$ui_comm delete 0.0 end
 	$ui_comm edit reset
 	$ui_comm edit modified false
+	if {$::GITGUI_BCK_exists} {
+		catch {file delete [gitdir GITGUI_BCK]}
+		set $::GITGUI_BCK_exists 0
+	}
 
 	if {[is_enabled singlecommit]} do_quit
 
