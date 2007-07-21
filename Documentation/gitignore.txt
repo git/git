@@ -18,20 +18,25 @@ pattern.
 
 When deciding whether to ignore a path, git normally checks
 `gitignore` patterns from multiple sources, with the following
-order of precedence:
+order of precedence, from highest to lowest (within one level of
+precedence, the last matching pattern decides the outcome):
 
- * Patterns read from the file specified by the configuration
-   variable 'core.excludesfile'.
-
- * Patterns read from `$GIT_DIR/info/exclude`.
+ * Patterns read from the command line for those commands that support
+   them.
 
  * Patterns read from a `.gitignore` file in the same directory
-   as the path, or in any parent directory, ordered from the
-   deepest such file to a file in the root of the repository.
+   as the path, or in any parent directory, with patterns in the
+   higher level files (up to the root) being overriden by those in
+   lower level files down to the directory containing the file.
    These patterns match relative to the location of the
    `.gitignore` file.  A project normally includes such
    `.gitignore` files in its repository, containing patterns for
    files generated as part of the project build.
+
+ * Patterns read from `$GIT_DIR/info/exclude`.
+
+ * Patterns read from the file specified by the configuration
+   variable 'core.excludesfile'.
 
 The underlying git plumbing tools, such as
 gitlink:git-ls-files[1] and gitlink:git-read-tree[1], read
@@ -49,7 +54,8 @@ Patterns have the following format:
 
  - An optional prefix '!' which negates the pattern; any
    matching file excluded by a previous pattern will become
-   included again.
+   included again.  If a negated pattern matches, this will
+   override lower precedence patterns sources.
 
  - If the pattern does not contain a slash '/', git treats it as
    a shell glob pattern and checks for a match against the
