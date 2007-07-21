@@ -14,6 +14,7 @@ int start_command(struct child_process *cmd)
 	int need_in, need_out;
 	int fdin[2] = { -1, -1 };
 	int fdout[2] = { -1, -1 };
+	char **env = environ;
 
 	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
@@ -55,21 +56,26 @@ int start_command(struct child_process *cmd)
 			fdout[1] = cmd->out;
 		}
 
+		if (cmd->dir)
+			die("chdir in start_command() not implemented");
 		if (cmd->dir && chdir(cmd->dir))
 			die("exec %s: cd to %s failed (%s)", cmd->argv[0],
 			    cmd->dir, strerror(errno));
 		if (cmd->env) {
+			if (cmd->git_cmd)
+				die("modifying environment for git_cmd in start_command() not implemented");
+			env = copy_environ();
 			for (; *cmd->env; cmd->env++) {
 				if (strchr(*cmd->env, '='))
-					putenv((char*)*cmd->env);
+					die("setting environment in start_command() not implemented");
 				else
-					unsetenv(*cmd->env);
+					env_unsetenv(env, *cmd->env);
 			}
 		}
 		if (cmd->git_cmd) {
 			cmd->pid = spawnv_git_cmd(cmd->argv, fdin, fdout);
 		} else {
-			cmd->pid = spawnvpe_pipe(cmd->argv[0], cmd->argv, environ, fdin, fdout);
+			cmd->pid = spawnvpe_pipe(cmd->argv[0], cmd->argv, env, fdin, fdout);
 		}
 	}
 	if (cmd->pid < 0) {
