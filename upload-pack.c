@@ -62,7 +62,7 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 	return safe_write(fd, data, sz);
 }
 
-FILE *pack_pipe = NULL;
+static FILE *pack_pipe = NULL;
 static void show_commit(struct commit *commit)
 {
 	if (commit->object.flags & BOUNDARY)
@@ -775,7 +775,7 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
-	
+
 	if (i != argc-1)
 		usage(upload_pack_usage);
 	dir = argv[i];

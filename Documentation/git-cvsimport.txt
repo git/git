@@ -13,7 +13,7 @@ SYNOPSIS
 	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
 	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
 	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
-	      [<CVS_module>]
+	      [-r <remote>] [<CVS_module>]
 
 
 DESCRIPTION
@@ -25,10 +25,12 @@ Splitting the CVS log into patch sets is done by 'cvsps'.
 At least version 2.1 is required.
 
 You should *never* do any work of your own on the branches that are
-created by git-cvsimport. The initial import will create and populate a
+created by git-cvsimport.  By default initial import will create and populate a
 "master" branch from the CVS repository's main branch which you're free
 to work with; after that, you need to 'git merge' incremental imports, or
-any CVS branches, yourself.
+any CVS branches, yourself.  It is advisable to specify a named remote via
+-r to separate and protect the incoming branches.
+
 
 OPTIONS
 -------
@@ -37,7 +39,7 @@ OPTIONS
 
 -d <CVSROOT>::
 	The root of the CVS archive. May be local (a simple path) or remote;
-	currently, only the :local:, :ext: and :pserver: access methods 
+	currently, only the :local:, :ext: and :pserver: access methods
 	are supported. If not given, git-cvsimport will try to read it
 	from `CVS/Root`. If no such file exists, it checks for the
 	`CVSROOT` environment variable.
@@ -51,10 +53,19 @@ OPTIONS
         The git repository to import to.  If the directory doesn't
         exist, it will be created.  Default is the current directory.
 
+-r <remote>::
+	The git remote to import this CVS repository into.
+	Moves all CVS branches into remotes/<remote>/<branch>
+	akin to the git-clone --use-separate-remote option.
+
 -o <branch-for-HEAD>::
-	The 'HEAD' branch from CVS is imported to the 'origin' branch within
-	the git repository, as 'HEAD' already has a special meaning for git.
-	Use this option if you want to import into a different branch.
+	When no remote is specified (via -r) the 'HEAD' branch
+	from CVS is imported to the 'origin' branch within the git
+	repository, as 'HEAD' already has a special meaning for git.
+	When a remote is specified the 'HEAD' branch is named
+	remotes/<remote>/master mirroring git-clone behaviour.
+	Use this option if you want to import into a different
+	branch.
 +
 Use '-o master' for continuing an import that was initially done by
 the old cvs2git tool.
@@ -67,7 +78,7 @@ the old cvs2git tool.
 -k::
 	Kill keywords: will extract files with '-kk' from the CVS archive
 	to avoid noisy changesets. Highly recommended, but off by default
-	to preserve compatibility with early imported trees. 
+	to preserve compatibility with early imported trees.
 
 -u::
 	Convert underscores in tag and branch names to dots.
@@ -89,15 +100,15 @@ If you need to pass multiple options, separate them with a comma.
 	Instead of calling cvsps, read the provided cvsps output file. Useful
 	for debugging or when cvsps is being handled outside cvsimport.
 
--m::    
+-m::
 	Attempt to detect merges based on the commit message. This option
-	will enable default regexes that try to capture the name source 
-	branch name from the commit message. 
+	will enable default regexes that try to capture the name source
+	branch name from the commit message.
 
 -M <regex>::
 	Attempt to detect merges based on the commit message with a custom
 	regex. It can be used with '-m' to also see the default regexes.
-	You must escape forward slashes. 
+	You must escape forward slashes.
 
 -S <regex>::
 	Skip paths matching the regex.
@@ -156,4 +167,3 @@ Documentation by Matthias Urlichs <smurf@smurf.noris.de>.
 GIT
 ---
 Part of the gitlink:git[7] suite
-

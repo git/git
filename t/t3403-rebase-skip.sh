@@ -54,4 +54,3 @@ test_expect_success 'merge and reference trees equal' \
 test_debug 'gitk --all & sleep 1'
 
 test_done
-

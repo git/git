@@ -525,4 +525,3 @@ test_expect_success 'reset and bind merge' '
 '
 
 test_done
-

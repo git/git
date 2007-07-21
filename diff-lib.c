@@ -664,7 +664,7 @@ int run_diff_index(struct rev_info *revs, int cached)
 	const char *tree_name;
 	int match_missing = 0;
 
-	/* 
+	/*
 	 * Backward compatibility wart - "diff-index -m" does
 	 * not mean "do not ignore merges", but totally different.
 	 */

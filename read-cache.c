@@ -166,7 +166,7 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 		changed |= MTIME_CHANGED;
 	if (ce->ce_ctime.nsec != htonl(st->st_ctim.tv_nsec))
 		changed |= CTIME_CHANGED;
-#endif	
+#endif
 
 	if (ce->ce_uid != htonl(st->st_uid) ||
 	    ce->ce_gid != htonl(st->st_gid))
@@ -597,7 +597,7 @@ static int has_dir_name(struct index_state *istate,
  * is being added, or we already have path and path/file is being
  * added.  Either one would result in a nonsense tree that has path
  * twice when git-write-tree tries to write it out.  Prevent it.
- * 
+ *
  * If ok-to-replace is specified, we remove the conflicting entries
  * from the cache so the caller should recompute the insert position.
  * When this happens, we return non-zero.
@@ -970,8 +970,8 @@ static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 		write_buffer_len = buffered;
 		len -= partial;
 		data = (char *) data + partial;
- 	}
- 	return 0;
+	}
+	return 0;
 }
 
 static int write_index_ext_header(SHA_CTX *context, int fd,
@@ -1037,7 +1037,7 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 		 * size to zero here, then the object name recorded
 		 * in index is the 6-byte file but the cached stat information
 		 * becomes zero --- which would then match what we would
-		 * obtain from the filesystem next time we stat("frotz"). 
+		 * obtain from the filesystem next time we stat("frotz").
 		 *
 		 * However, the second update-index, before calling
 		 * this function, notices that the cached size is 6

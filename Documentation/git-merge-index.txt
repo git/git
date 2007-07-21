@@ -59,7 +59,7 @@ Examples:
   This is modified MM in the branch B.			# merge2
   This is modified MM in the branch B.			# current contents
 
-or 
+or
 
   torvalds@ppc970:~/merge-test> git-merge-index cat AA MM
   cat: : No such file or directory
@@ -85,4 +85,3 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 GIT
 ---
 Part of the gitlink:git[7] suite
-

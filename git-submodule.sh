@@ -26,7 +26,47 @@ say()
 }
 
 #
-# Run clone + checkout on missing submodules
+# Map submodule path to submodule name
+#
+# $1 = path
+#
+module_name()
+{
+       name=$(GIT_CONFIG=.gitmodules git-config --get-regexp '^submodule\..*\.path$' "$1" |
+       sed -nre 's/^submodule\.(.+)\.path .+$/\1/p')
+       test -z "$name" &&
+       die "No submodule mapping found in .gitmodules for path '$path'"
+       echo "$name"
+}
+
+#
+# Clone a submodule
+#
+module_clone()
+{
+	path=$1
+	url=$2
+
+	# If there already is a directory at the submodule path,
+	# expect it to be empty (since that is the default checkout
+	# action) and try to remove it.
+	# Note: if $path is a symlink to a directory the test will
+	# succeed but the rmdir will fail. We might want to fix this.
+	if test -d "$path"
+	then
+		rmdir "$path" 2>/dev/null ||
+		die "Directory '$path' exist, but is neither empty nor a git repository"
+	fi
+
+	test -e "$path" &&
+	die "A file already exist at path '$path'"
+
+	git-clone -n "$url" "$path" ||
+	die "Clone of '$url' into submodule path '$path' failed"
+}
+
+#
+# Register submodules in .git/config
 #
 # $@ = requested paths (default to all)
 #
@@ -35,52 +75,24 @@ modules_init()
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
 	do
-		# Skip submodule paths that already contain a .git directory.
-		# This will also trigger if $path is a symlink to a git
-		# repository
-		test -d "$path"/.git && continue
+		# Skip already registered paths
+		name=$(module_name "$path") || exit
+		url=$(git-config submodule."$name".url)
+		test -z "$url" || continue
 
-		# If there already is a directory at the submodule path,
-		# expect it to be empty (since that is the default checkout
-		# action) and try to remove it.
-		# Note: if $path is a symlink to a directory the test will
-		# succeed but the rmdir will fail. We might want to fix this.
-		if test -d "$path"
-		then
-			rmdir "$path" 2>/dev/null ||
-			die "Directory '$path' exist, but is neither empty nor a git repository"
-		fi
-
-		test -e "$path" &&
-		die "A file already exist at path '$path'"
-
-		url=$(GIT_CONFIG=.gitmodules git-config module."$path".url)
+		url=$(GIT_CONFIG=.gitmodules git-config submodule."$name".url)
 		test -z "$url" &&
-		die "No url found for submodule '$path' in .gitmodules"
+		die "No url found for submodule path '$path' in .gitmodules"
 
-		# MAYBE FIXME: this would be the place to check GIT_CONFIG
-		# for a preferred url for this submodule, possibly like this:
-		#
-		# modname=$(GIT_CONFIG=.gitmodules git-config module."$path".name)
-		# alturl=$(git-config module."$modname".url)
-		#
-		# This would let the versioned .gitmodules file use the submodule
-		# path as key, while the unversioned GIT_CONFIG would use the
-		# logical modulename (if present) as key. But this would need
-		# another fallback mechanism if the module wasn't named.
+		git-config submodule."$name".url "$url" ||
+		die "Failed to register url for submodule path '$path'"
 
-		git-clone -n "$url" "$path" ||
-		die "Clone of submodule '$path' failed"
-
-		(unset GIT_DIR && cd "$path" && git-checkout -q "$sha1") ||
-		die "Checkout of submodule '$path' failed"
-
-		say "Submodule '$path' initialized"
+		say "Submodule '$name' ($url) registered for path '$path'"
 	done
 }
 
 #
-# Checkout correct revision of each initialized submodule
+# Update each submodule path to correct revision, using clone and checkout as needed
 #
 # $@ = requested paths (default to all)
 #
@@ -89,31 +101,40 @@ modules_update()
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
 	do
-		if ! test -d "$path"/.git
+		name=$(module_name "$path") || exit
+		url=$(git-config submodule."$name".url)
+		if test -z "$url"
 		then
 			# Only mention uninitialized submodules when its
 			# path have been specified
 			test "$#" != "0" &&
-			say "Submodule '$path' not initialized"
-			continue;
+			say "Submodule path '$path' not initialized"
+			continue
 		fi
-		subsha1=$(unset GIT_DIR && cd "$path" &&
-			git-rev-parse --verify HEAD) ||
-		die "Unable to find current revision of submodule '$path'"
+
+		if ! test -d "$path"/.git
+		then
+			module_clone "$path" "$url" || exit
+			subsha1=
+		else
+			subsha1=$(unset GIT_DIR && cd "$path" &&
+				git-rev-parse --verify HEAD) ||
+			die "Unable to find current revision in submodule path '$path'"
+		fi
 
 		if test "$subsha1" != "$sha1"
 		then
 			(unset GIT_DIR && cd "$path" && git-fetch &&
 				git-checkout -q "$sha1") ||
-			die "Unable to checkout '$sha1' in submodule '$path'"
+			die "Unable to checkout '$sha1' in submodule path '$path'"
 
-			say "Submodule '$path': checked out '$sha1'"
+			say "Submodule path '$path': checked out '$sha1'"
 		fi
 	done
 }
 
 #
-# List all registered submodules, prefixed with:
+# List all submodules, prefixed with:
 #  - submodule not initialized
 #  + different revision checked out
 #
@@ -127,7 +148,9 @@ modules_list()
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
 	do
-		if ! test -d "$path"/.git
+		name=$(module_name "$path") || exit
+		url=$(git-config submodule."$name".url)
+		if test -z "url" || ! test -d "$path"/.git
 		then
 			say "-$sha1 $path"
 			continue;

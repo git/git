@@ -8,7 +8,7 @@ git-blame - Show what revision and author last modified each line of a file
 SYNOPSIS
 --------
 [verse]
-'git-blame' [-c] [-b] [--root] [-s] [-l] [-t] [-f] [-n] [-p] [--incremental] [-L n,m]
+'git-blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-w] [--incremental] [-L n,m]
             [-S <revs-file>] [-M] [-C] [-C] [--since=<date>]
             [<rev> | --contents <file>] [--] <file>
 
@@ -62,6 +62,11 @@ include::blame-options.txt[]
 
 -s::
 	Suppress author name and timestamp from the output.
+
+-w::
+	Ignore whitespace when comparing parent's version and
+	child's to find where the lines came from.
+
 
 THE PORCELAIN FORMAT
 --------------------

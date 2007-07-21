@@ -8,7 +8,7 @@ git-bisect - Find the change that introduced a bug by binary search
 
 SYNOPSIS
 --------
-'git bisect' <subcommand> <options> 
+'git bisect' <subcommand> <options>
 
 DESCRIPTION
 -----------
@@ -200,4 +200,3 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 GIT
 ---
 Part of the gitlink:git[7] suite
-

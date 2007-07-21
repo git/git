@@ -165,4 +165,3 @@ Written by Sean Estabrooks <seanlkml@sympatico.ca>
 GIT
 ---
 Part of the gitlink:git[7] suite
-

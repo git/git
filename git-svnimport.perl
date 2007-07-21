@@ -542,7 +542,7 @@ sub copy_path($$$$$$$$) {
 	if ($node_kind eq $SVN::Node::dir) {
 		$srcpath =~ s#/*$#/#;
 	}
-	
+
 	my $pid = open my $f,'-|';
 	die $! unless defined $pid;
 	if (!$pid) {
@@ -560,7 +560,7 @@ sub copy_path($$$$$$$$) {
 		} else {
 			$p = $path;
 		}
-		push(@$new,[$mode,$sha1,$p]);	
+		push(@$new,[$mode,$sha1,$p]);
 	}
 	close($f) or
 		print STDERR "$newrev:$newbranch: could not list files in $oldpath \@ $rev\n";

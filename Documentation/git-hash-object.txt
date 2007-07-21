@@ -18,7 +18,7 @@ work tree), and optionally writes the resulting object into the
 object database.  Reports its object ID to its standard output.
 This is used by "git-cvsimport" to update the index
 without modifying files in the work tree.  When <type> is not
-specified, it defaults to "blob". 
+specified, it defaults to "blob".
 
 OPTIONS
 -------
@@ -43,4 +43,3 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 GIT
 ---
 Part of the gitlink:git[7] suite
-

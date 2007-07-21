@@ -133,7 +133,7 @@ static int avoid_alias(char *p)
 {
 	int sl, ndot;
 
-	/* 
+	/*
 	 * This resurrects the belts and suspenders paranoia check by HPA
 	 * done in <435560F7.4080006@zytor.com> thread, now enter_repo()
 	 * does not do getcwd() based path canonicalizations.
@@ -247,7 +247,7 @@ static char *path_ok(struct interp *itable)
 		int pathlen = strlen(path);
 
 		/* The validation is done on the paths after enter_repo
-		 * appends optional {.git,.git/.git} and friends, but 
+		 * appends optional {.git,.git/.git} and friends, but
 		 * it does not use getcwd().  So if your /pub is
 		 * a symlink to /mnt/pub, you can whitelist /pub and
 		 * do not have to say /mnt/pub.
@@ -439,7 +439,7 @@ static void parse_extra_args(struct interp *table, char *extra_args, int buflen)
 	}
 }
 
-void fill_in_extra_table_entries(struct interp *itable)
+static void fill_in_extra_table_entries(struct interp *itable)
 {
 	char *hp;
 

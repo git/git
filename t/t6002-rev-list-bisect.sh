@@ -26,7 +26,7 @@ test_bisection_diff()
 
 	# Test if bisection size is close to half of list size within
 	# tolerance.
-	# 
+	#
 	_bisect_err=`expr $_list_size - $_bisection_size \* 2`
 	test "$_bisect_err" -lt 0 && _bisect_err=`expr 0 - $_bisect_err`
 	_bisect_err=`expr $_bisect_err / 2` ; # floor
@@ -116,8 +116,8 @@ on_committer_date "1971-08-16 00:00:06" save_tag V unique_commit V tree -p u1 -p
 
 test_sequence()
 {
-	_bisect_option=$1	
-	
+	_bisect_option=$1
+
 	test_bisection_diff 0 $_bisect_option l0 ^root
 	test_bisection_diff 0 $_bisect_option l1 ^root
 	test_bisection_diff 0 $_bisect_option l2 ^root
@@ -152,7 +152,7 @@ test_sequence()
 	test_bisection_diff 0 $_bisect_option u3 ^U
 	test_bisection_diff 0 $_bisect_option u4 ^U
 	test_bisection_diff 0 $_bisect_option u5 ^U
-	
+
 #
 # the following illustrates Linus' binary bug blatt idea.
 #

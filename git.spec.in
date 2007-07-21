@@ -63,7 +63,7 @@ Git tools for importing Perforce repositories.
 %package email
 Summary:        Git tools for sending email
 Group:          Development/Tools
-Requires:	git-core = %{version}-%{release} 
+Requires:	git-core = %{version}-%{release}
 %description email
 Git tools for sending email.
 

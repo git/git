@@ -42,4 +42,3 @@ cat "$GIT_DIR/.tmp-vtag" |
 sed '/-----BEGIN PGP/Q' |
 gpg --verify "$GIT_DIR/.tmp-vtag" - || exit 1
 rm -f "$GIT_DIR/.tmp-vtag"
-

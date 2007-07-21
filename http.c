@@ -137,7 +137,7 @@ static int http_options(const char *var, const char *value)
 		return 0;
 	}
 
-#ifdef USE_CURL_MULTI	
+#ifdef USE_CURL_MULTI
 	if (!strcmp("http.maxrequests", var)) {
 		if (max_requests == -1)
 			max_requests = git_config_int(var, value);

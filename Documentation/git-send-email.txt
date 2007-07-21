@@ -78,7 +78,7 @@ The --cc option must be repeated for each user you want on the cc list.
 	`localhost` otherwise.
 
 --subject::
-   	Specify the initial subject of the email thread.
+	Specify the initial subject of the email thread.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
@@ -137,4 +137,3 @@ Documentation by Ryan Anderson
 GIT
 ---
 Part of the gitlink:git[7] suite
-

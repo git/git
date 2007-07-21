@@ -40,4 +40,3 @@ test_expect_success 'short SHA-1 works' '
 	test $start = $abbrv'
 
 test_done
-

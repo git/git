@@ -177,4 +177,3 @@ shallow::
 	This is similar to `info/grafts` but is internally used
 	and maintained by shallow clone mechanism.  See `--depth`
 	option to gitlink:git-clone[1] and gitlink:git-fetch[1].
-

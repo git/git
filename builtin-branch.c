@@ -55,7 +55,7 @@ static int parse_branch_color_slot(const char *var, int ofs)
 	die("bad config variable '%s'", var);
 }
 
-int git_branch_config(const char *var, const char *value)
+static int git_branch_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "color.branch")) {
 		branch_use_color = git_config_colorbool(var, value);
@@ -72,7 +72,7 @@ int git_branch_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
-const char *branch_get_color(enum color_branch ix)
+static const char *branch_get_color(enum color_branch ix)
 {
 	if (branch_use_color)
 		return branch_colors[ix];
@@ -85,6 +85,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 	unsigned char sha1[20];
 	char *name = NULL;
 	const char *fmt, *remote;
+	char section[PATH_MAX];
 	int i;
 	int ret = 0;
 
@@ -152,9 +153,13 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			error("Error deleting %sbranch '%s'", remote,
 			       argv[i]);
 			ret = 1;
-		} else
+		} else {
 			printf("Deleted %sbranch %s.\n", remote, argv[i]);
-
+			snprintf(section, sizeof(section), "branch.%s",
+				 argv[i]);
+			if (git_config_rename_section(section, NULL) < 0)
+				warning("Update of config-file failed");
+		}
 	}
 
 	if (name)

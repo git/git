@@ -147,7 +147,7 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 gitexecdir = $(bindir)
 sharedir = $(prefix)/share
-template_dir = $(sharedir)/git-core/templates/
+template_dir = $(sharedir)/git-core/templates
 ifeq ($(prefix),/usr)
 sysconfdir = /etc
 else
@@ -773,9 +773,13 @@ gitk-wish: gitk GIT-GUI-VARS
 	chmod +x $@+ && \
 	mv -f $@+ $@
 
-git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
+git.o: git.c common-cmds.h GIT-CFLAGS
+	$(QUIET_CC)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
+		$(ALL_CFLAGS) -c $(filter %.c,$^)
+
+git$X: git.o $(BUILTIN_OBJS) $(GITLIBS)
 	$(QUIET_LINK)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
+		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) git.o \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
 help.o: common-cmds.h
@@ -785,6 +789,8 @@ git-merge-subtree$X: git-merge-recursive$X
 
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)rm -f $@ && ln git$X $@
+
+common-cmds.h: ./generate-cmdlist.sh
 
 common-cmds.h: $(wildcard Documentation/git-*.txt)
 	$(QUIET_GEN)./generate-cmdlist.sh > $@+ && mv $@+ $@
@@ -883,6 +889,8 @@ git$X git.spec \
 
 %.o: %.c GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+%.s: %.c GIT-CFLAGS
+	$(QUIET_CC)$(CC) -S $(ALL_CFLAGS) $<
 %.o: %.S
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
@@ -1089,8 +1097,9 @@ dist-doc:
 
 clean:
 	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
-		test-chmtime$X test-genrandom$X $(LIB_FILE) $(XDIFF_LIB)
+		$(LIB_FILE) $(XDIFF_LIB)
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
+	rm -f $(TEST_PROGRAMS)
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	rm -rf autom4te.cache
 	rm -f configure config.log config.mak.autogen config.mak.append config.status config.cache

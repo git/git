@@ -197,7 +197,7 @@ if (@canstatusfiles) {
 # ... validate new files,
 foreach my $f (@afiles) {
     if (defined ($cvsstat{$f}) and $cvsstat{$f} ne "Unknown") {
- 	$dirty = 1;
+	$dirty = 1;
 	warn "File $f is already known in your CVS checkout -- perhaps it has been added by another user. Or this may indicate that it exists on a different branch. If this is the case, use -f to force the merge.\n";
 	warn "Status was: $cvsstat{$f}\n";
     }

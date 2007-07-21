@@ -127,7 +127,7 @@ static void output(int v, const char *fmt, ...)
 	va_end(args);
 }
 
-static void flush_output()
+static void flush_output(void)
 {
 	struct output_buffer *b, *n;
 	for (b = output_list; b; b = n) {

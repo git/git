@@ -114,7 +114,7 @@ static const unsigned char* get_rev(void)
 		commit->object.flags |= POPPED;
 		if (!(commit->object.flags & COMMON))
 			non_common_revs--;
-	
+
 		parents = commit->parents;
 
 		if (commit->object.flags & COMMON) {

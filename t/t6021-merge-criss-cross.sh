@@ -20,7 +20,7 @@ test_expect_success 'prepare repository' \
 7
 8
 9" > file &&
-git add file && 
+git add file &&
 git commit -m "Initial commit" file &&
 git branch A &&
 git branch B &&

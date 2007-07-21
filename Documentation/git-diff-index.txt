@@ -75,7 +75,7 @@ actually doing a "git-write-tree" and comparing that. Except this one is much
 nicer for the case where you just want to check where you are.
 
 So doing a "git-diff-index --cached" is basically very useful when you are
-asking yourself "what have I already marked for being committed, and 
+asking yourself "what have I already marked for being committed, and
 what's the difference to a previous tree".
 
 Non-cached Mode
@@ -130,4 +130,3 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 GIT
 ---
 Part of the gitlink:git[7] suite
-

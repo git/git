@@ -62,4 +62,3 @@ Documentation by Eric Biederman and the git-list <git@vger.kernel.org>.
 GIT
 ---
 Part of the gitlink:git[7] suite
-

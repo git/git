@@ -51,4 +51,3 @@ do { \
 
 
 #endif /* #if !defined(XMACROS_H) */
-

@@ -66,7 +66,7 @@ test_expect_success 'pack the destination repository' '
 '
 
 test_expect_success \
-        'pushing rewound head should not barf but require --force' ' 
+        'pushing rewound head should not barf but require --force' '
 	# should not fail but refuse to update.
 	if git-send-pack ./victim/.git/ master
 	then

@@ -954,7 +954,200 @@ sub format_subject_html {
 	}
 }
 
-# format patch (diff) line (rather not to be used for diff headers)
+# format git diff header line, i.e. "diff --(git|combined|cc) ..."
+sub format_git_diff_header_line {
+	my $line = shift;
+	my $diffinfo = shift;
+	my ($from, $to) = @_;
+
+	if ($diffinfo->{'nparents'}) {
+		# combined diff
+		$line =~ s!^(diff (.*?) )"?.*$!$1!;
+		if ($to->{'href'}) {
+			$line .= $cgi->a({-href => $to->{'href'}, -class => "path"},
+			                 esc_path($to->{'file'}));
+		} else { # file was deleted (no href)
+			$line .= esc_path($to->{'file'});
+		}
+	} else {
+		# "ordinary" diff
+		$line =~ s!^(diff (.*?) )"?a/.*$!$1!;
+		if ($from->{'href'}) {
+			$line .= $cgi->a({-href => $from->{'href'}, -class => "path"},
+			                 'a/' . esc_path($from->{'file'}));
+		} else { # file was added (no href)
+			$line .= 'a/' . esc_path($from->{'file'});
+		}
+		$line .= ' ';
+		if ($to->{'href'}) {
+			$line .= $cgi->a({-href => $to->{'href'}, -class => "path"},
+			                 'b/' . esc_path($to->{'file'}));
+		} else { # file was deleted
+			$line .= 'b/' . esc_path($to->{'file'});
+		}
+	}
+
+	return "<div class=\"diff header\">$line</div>\n";
+}
+
+# format extended diff header line, before patch itself
+sub format_extended_diff_header_line {
+	my $line = shift;
+	my $diffinfo = shift;
+	my ($from, $to) = @_;
+
+	# match <path>
+	if ($line =~ s!^((copy|rename) from ).*$!$1! && $from->{'href'}) {
+		$line .= $cgi->a({-href=>$from->{'href'}, -class=>"path"},
+		                       esc_path($from->{'file'}));
+	}
+	if ($line =~ s!^((copy|rename) to ).*$!$1! && $to->{'href'}) {
+		$line .= $cgi->a({-href=>$to->{'href'}, -class=>"path"},
+		                 esc_path($to->{'file'}));
+	}
+	# match single <mode>
+	if ($line =~ m/\s(\d{6})$/) {
+		$line .= '<span class="info"> (' .
+		         file_type_long($1) .
+		         ')</span>';
+	}
+	# match <hash>
+	if ($line =~ m/^index [0-9a-fA-F]{40},[0-9a-fA-F]{40}/) {
+		# can match only for combined diff
+		$line = 'index ';
+		for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
+			if ($from->{'href'}[$i]) {
+				$line .= $cgi->a({-href=>$from->{'href'}[$i],
+				                  -class=>"hash"},
+				                 substr($diffinfo->{'from_id'}[$i],0,7));
+			} else {
+				$line .= '0' x 7;
+			}
+			# separator
+			$line .= ',' if ($i < $diffinfo->{'nparents'} - 1);
+		}
+		$line .= '..';
+		if ($to->{'href'}) {
+			$line .= $cgi->a({-href=>$to->{'href'}, -class=>"hash"},
+			                 substr($diffinfo->{'to_id'},0,7));
+		} else {
+			$line .= '0' x 7;
+		}
+
+	} elsif ($line =~ m/^index [0-9a-fA-F]{40}..[0-9a-fA-F]{40}/) {
+		# can match only for ordinary diff
+		my ($from_link, $to_link);
+		if ($from->{'href'}) {
+			$from_link = $cgi->a({-href=>$from->{'href'}, -class=>"hash"},
+			                     substr($diffinfo->{'from_id'},0,7));
+		} else {
+			$from_link = '0' x 7;
+		}
+		if ($to->{'href'}) {
+			$to_link = $cgi->a({-href=>$to->{'href'}, -class=>"hash"},
+			                   substr($diffinfo->{'to_id'},0,7));
+		} else {
+			$to_link = '0' x 7;
+		}
+		my ($from_id, $to_id) = ($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
+		$line =~ s!$from_id\.\.$to_id!$from_link..$to_link!;
+	}
+
+	return $line . "<br/>\n";
+}
+
+# format from-file/to-file diff header
+sub format_diff_from_to_header {
+	my ($from_line, $to_line, $diffinfo, $from, $to, @parents) = @_;
+	my $line;
+	my $result = '';
+
+	$line = $from_line;
+	#assert($line =~ m/^---/) if DEBUG;
+	# no extra formatting for "^--- /dev/null"
+	if (! $diffinfo->{'nparents'}) {
+		# ordinary (single parent) diff
+		if ($line =~ m!^--- "?a/!) {
+			if ($from->{'href'}) {
+				$line = '--- a/' .
+				        $cgi->a({-href=>$from->{'href'}, -class=>"path"},
+				                esc_path($from->{'file'}));
+			} else {
+				$line = '--- a/' .
+				        esc_path($from->{'file'});
+			}
+		}
+		$result .= qq!<div class="diff from_file">$line</div>\n!;
+
+	} else {
+		# combined diff (merge commit)
+		for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
+			if ($from->{'href'}[$i]) {
+				$line = '--- ' .
+				        $cgi->a({-href=>href(action=>"blobdiff",
+				                             hash_parent=>$diffinfo->{'from_id'}[$i],
+				                             hash_parent_base=>$parents[$i],
+				                             file_parent=>$from->{'file'}[$i],
+				                             hash=>$diffinfo->{'to_id'},
+				                             hash_base=>$hash,
+				                             file_name=>$to->{'file'}),
+				                 -class=>"path",
+				                 -title=>"diff" . ($i+1)},
+				                $i+1) .
+				        '/' .
+				        $cgi->a({-href=>$from->{'href'}[$i], -class=>"path"},
+				                esc_path($from->{'file'}[$i]));
+			} else {
+				$line = '--- /dev/null';
+			}
+			$result .= qq!<div class="diff from_file">$line</div>\n!;
+		}
+	}
+
+	$line = $to_line;
+	#assert($line =~ m/^\+\+\+/) if DEBUG;
+	# no extra formatting for "^+++ /dev/null"
+	if ($line =~ m!^\+\+\+ "?b/!) {
+		if ($to->{'href'}) {
+			$line = '+++ b/' .
+			        $cgi->a({-href=>$to->{'href'}, -class=>"path"},
+			                esc_path($to->{'file'}));
+		} else {
+			$line = '+++ b/' .
+			        esc_path($to->{'file'});
+		}
+	}
+	$result .= qq!<div class="diff to_file">$line</div>\n!;
+
+	return $result;
+}
+
+# create note for patch simplified by combined diff
+sub format_diff_cc_simplified {
+	my ($diffinfo, @parents) = @_;
+	my $result = '';
+
+	$result .= "<div class=\"diff header\">" .
+	           "diff --cc ";
+	if (!is_deleted($diffinfo)) {
+		$result .= $cgi->a({-href => href(action=>"blob",
+		                                  hash_base=>$hash,
+		                                  hash=>$diffinfo->{'to_id'},
+		                                  file_name=>$diffinfo->{'to_file'}),
+		                    -class => "path"},
+		                   esc_path($diffinfo->{'to_file'}));
+	} else {
+		$result .= esc_path($diffinfo->{'to_file'});
+	}
+	$result .= "</div>\n" . # class="diff header"
+	           "<div class=\"diff nodifferences\">" .
+	           "Simple merge" .
+	           "</div>\n"; # class="diff nodifferences"
+
+	return $result;
+}
+
+# format patch (diff) line (not to be used for diff headers)
 sub format_diff_line {
 	my $line = shift;
 	my ($from, $to) = @_;
@@ -1680,6 +1873,48 @@ sub parse_ls_tree_line ($;%) {
 	return wantarray ? %res : \%res;
 }
 
+# generates _two_ hashes, references to which are passed as 2 and 3 argument
+sub parse_from_to_diffinfo {
+	my ($diffinfo, $from, $to, @parents) = @_;
+
+	if ($diffinfo->{'nparents'}) {
+		# combined diff
+		$from->{'file'} = [];
+		$from->{'href'} = [];
+		fill_from_file_info($diffinfo, @parents)
+			unless exists $diffinfo->{'from_file'};
+		for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
+			$from->{'file'}[$i] = $diffinfo->{'from_file'}[$i] || $diffinfo->{'to_file'};
+			if ($diffinfo->{'status'}[$i] ne "A") { # not new (added) file
+				$from->{'href'}[$i] = href(action=>"blob",
+				                           hash_base=>$parents[$i],
+				                           hash=>$diffinfo->{'from_id'}[$i],
+				                           file_name=>$from->{'file'}[$i]);
+			} else {
+				$from->{'href'}[$i] = undef;
+			}
+		}
+	} else {
+		$from->{'file'} = $diffinfo->{'from_file'} || $diffinfo->{'file'};
+		if ($diffinfo->{'status'} ne "A") { # not new (added) file
+			$from->{'href'} = href(action=>"blob", hash_base=>$hash_parent,
+			                       hash=>$diffinfo->{'from_id'},
+			                       file_name=>$from->{'file'});
+		} else {
+			delete $from->{'href'};
+		}
+	}
+
+	$to->{'file'} = $diffinfo->{'to_file'} || $diffinfo->{'file'};
+	if (!is_deleted($diffinfo)) { # file exists in result
+		$to->{'href'} = href(action=>"blob", hash_base=>$hash,
+		                     hash=>$diffinfo->{'to_id'},
+		                     file_name=>$to->{'file'});
+	} else {
+		delete $to->{'href'};
+	}
+}
+
 ## ......................................................................
 ## parse to array of hashes functions
 
@@ -2387,6 +2622,11 @@ sub from_ids_eq {
 	}
 }
 
+sub is_deleted {
+	my $diffinfo = shift;
+
+	return $diffinfo->{'to_id'} eq ('0' x 40);
+}
 
 sub git_difftree_body {
 	my ($difftree, $hash, @parents) = @_;
@@ -2401,6 +2641,26 @@ sub git_difftree_body {
 	print "<table class=\"" .
 	      (@parents > 1 ? "combined " : "") .
 	      "diff_tree\">\n";
+
+	# header only for combined diff in 'commitdiff' view
+	my $has_header = @parents > 1 && $action eq 'commitdiff';
+	if ($has_header) {
+		# table header
+		print "<thead><tr>\n" .
+		       "<th></th><th></th>\n"; # filename, patchN link
+		for (my $i = 0; $i < @parents; $i++) {
+			my $par = $parents[$i];
+			print "<th>" .
+			      $cgi->a({-href => href(action=>"commitdiff",
+			                             hash=>$hash, hash_parent=>$par),
+			               -title => 'commitdiff to parent number ' .
+			                          ($i+1) . ': ' . substr($par,0,7)},
+			              $i+1) .
+			      "&nbsp;</th>\n";
+		}
+		print "</tr></thead>\n<tbody>\n";
+	}
+
 	my $alternate = 1;
 	my $patchno = 0;
 	foreach my $line (@{$difftree}) {
@@ -2424,7 +2684,7 @@ sub git_difftree_body {
 			fill_from_file_info($diff, @parents)
 				unless exists $diff->{'from_file'};
 
-			if ($diff->{'to_id'} ne ('0' x 40)) {
+			if (!is_deleted($diff)) {
 				# file exists in the result (child) commit
 				print "<td>" .
 				      $cgi->a({-href => href(action=>"blob", hash=>$diff->{'to_id'},
@@ -2673,6 +2933,7 @@ sub git_difftree_body {
 		} # we should not encounter Unmerged (U) or Unknown (X) status
 		print "</tr>\n";
 	}
+	print "</tbody>" if $has_header;
 	print "</table>\n";
 }
 
@@ -2737,13 +2998,35 @@ sub git_patchset_body {
 			# advance raw git-diff output if needed
 			$patch_idx++ if defined $diffinfo;
 
-			# read and prepare patch information
-			if (ref($difftree->[$patch_idx]) eq "HASH") {
-				# pre-parsed (or generated by hand)
-				$diffinfo = $difftree->[$patch_idx];
-			} else {
-				$diffinfo = parse_difftree_raw_line($difftree->[$patch_idx]);
+			# compact combined diff output can have some patches skipped
+			# find which patch (using pathname of result) we are at now
+			my $to_name;
+			if ($diff_header[0] =~ m!^diff --cc "?(.*)"?$!) {
+				$to_name = $1;
 			}
+
+			do {
+				# read and prepare patch information
+				if (ref($difftree->[$patch_idx]) eq "HASH") {
+					# pre-parsed (or generated by hand)
+					$diffinfo = $difftree->[$patch_idx];
+				} else {
+					$diffinfo = parse_difftree_raw_line($difftree->[$patch_idx]);
+				}
+
+				# check if current raw line has no patch (it got simplified)
+				if (defined $to_name && $to_name ne $diffinfo->{'to_file'}) {
+					print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n" .
+					      format_diff_cc_simplified($diffinfo, @hash_parents) .
+					      "</div>\n";  # class="patch"
+
+					$patch_idx++;
+					$patch_number++;
+				}
+			} until (!defined $to_name || $to_name eq $diffinfo->{'to_file'} ||
+			         $patch_idx > $#$difftree);
+			# modifies %from, %to hashes
+			parse_from_to_diffinfo($diffinfo, \%from, \%to, @hash_parents);
 			if ($diffinfo->{'nparents'}) {
 				# combined diff
 				$from{'file'} = [];
@@ -2773,7 +3056,7 @@ sub git_patchset_body {
 			}
 
 			$to{'file'} = $diffinfo->{'to_file'} || $diffinfo->{'file'};
-			if ($diffinfo->{'to_id'} ne ('0' x 40)) { # file exists in result
+			if (!is_deleted($diffinfo)) { # file exists in result
 				$to{'href'} = href(action=>"blob", hash_base=>$hash,
 				                   hash=>$diffinfo->{'to_id'},
 				                   file_name=>$to{'file'});
@@ -2787,105 +3070,15 @@ sub git_patchset_body {
 
 		# print "git diff" header
 		$patch_line = shift @diff_header;
-		if ($diffinfo->{'nparents'}) {
-
-			# combined diff
-			$patch_line =~ s!^(diff (.*?) )"?.*$!$1!;
-			if ($to{'href'}) {
-				$patch_line .= $cgi->a({-href => $to{'href'}, -class => "path"},
-				                       esc_path($to{'file'}));
-			} else { # file was deleted
-				$patch_line .= esc_path($to{'file'});
-			}
-
-		} else {
-
-			$patch_line =~ s!^(diff (.*?) )"?a/.*$!$1!;
-			if ($from{'href'}) {
-				$patch_line .= $cgi->a({-href => $from{'href'}, -class => "path"},
-				                       'a/' . esc_path($from{'file'}));
-			} else { # file was added
-				$patch_line .= 'a/' . esc_path($from{'file'});
-			}
-			$patch_line .= ' ';
-			if ($to{'href'}) {
-				$patch_line .= $cgi->a({-href => $to{'href'}, -class => "path"},
-				                       'b/' . esc_path($to{'file'}));
-			} else { # file was deleted
-				$patch_line .= 'b/' . esc_path($to{'file'});
-			}
-
-		}
-		print "<div class=\"diff header\">$patch_line</div>\n";
+		print format_git_diff_header_line($patch_line, $diffinfo,
+		                                  \%from, \%to);
 
 		# print extended diff header
 		print "<div class=\"diff extended_header\">\n" if (@diff_header > 0);
 	EXTENDED_HEADER:
 		foreach $patch_line (@diff_header) {
-			# match <path>
-			if ($patch_line =~ s!^((copy|rename) from ).*$!$1! && $from{'href'}) {
-				$patch_line .= $cgi->a({-href=>$from{'href'}, -class=>"path"},
-				                       esc_path($from{'file'}));
-			}
-			if ($patch_line =~ s!^((copy|rename) to ).*$!$1! && $to{'href'}) {
-				$patch_line .= $cgi->a({-href=>$to{'href'}, -class=>"path"},
-				                       esc_path($to{'file'}));
-			}
-			# match single <mode>
-			if ($patch_line =~ m/\s(\d{6})$/) {
-				$patch_line .= '<span class="info"> (' .
-				               file_type_long($1) .
-				               ')</span>';
-			}
-			# match <hash>
-			if ($patch_line =~ m/^index [0-9a-fA-F]{40},[0-9a-fA-F]{40}/) {
-				# can match only for combined diff
-				$patch_line = 'index ';
-				for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
-					if ($from{'href'}[$i]) {
-						$patch_line .= $cgi->a({-href=>$from{'href'}[$i],
-						                        -class=>"hash"},
-						                       substr($diffinfo->{'from_id'}[$i],0,7));
-					} else {
-						$patch_line .= '0' x 7;
-					}
-					# separator
-					$patch_line .= ',' if ($i < $diffinfo->{'nparents'} - 1);
-				}
-				$patch_line .= '..';
-				if ($to{'href'}) {
-					$patch_line .= $cgi->a({-href=>$to{'href'}, -class=>"hash"},
-					                       substr($diffinfo->{'to_id'},0,7));
-				} else {
-					$patch_line .= '0' x 7;
-				}
-
-			} elsif ($patch_line =~ m/^index [0-9a-fA-F]{40}..[0-9a-fA-F]{40}/) {
-				# can match only for ordinary diff
-				my ($from_link, $to_link);
-				if ($from{'href'}) {
-					$from_link = $cgi->a({-href=>$from{'href'}, -class=>"hash"},
-					                     substr($diffinfo->{'from_id'},0,7));
-				} else {
-					$from_link = '0' x 7;
-				}
-				if ($to{'href'}) {
-					$to_link = $cgi->a({-href=>$to{'href'}, -class=>"hash"},
-					                   substr($diffinfo->{'to_id'},0,7));
-				} else {
-					$to_link = '0' x 7;
-				}
-				#affirm {
-				#	my ($from_hash, $to_hash) =
-				#		($patch_line =~ m/^index ([0-9a-fA-F]{40})..([0-9a-fA-F]{40})/);
-				#	my ($from_id, $to_id) =
-				#		($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
-				#	($from_hash eq $from_id) && ($to_hash eq $to_id);
-				#} if DEBUG;
-				my ($from_id, $to_id) = ($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
-				$patch_line =~ s!$from_id\.\.$to_id!$from_link..$to_link!;
-			}
-			print $patch_line . "<br/>\n";
+			print format_extended_diff_header_line($patch_line, $diffinfo,
+			                                       \%from, \%to);
 		}
 		print "</div>\n"  if (@diff_header > 0); # class="diff extended_header"
 
@@ -2897,24 +3090,15 @@ sub git_patchset_body {
 		}
 		next PATCH if ($patch_line =~ m/^diff /);
 		#assert($patch_line =~ m/^---/) if DEBUG;
-		if (!$diffinfo->{'nparents'} && # not from-file line for combined diff
-		    $from{'href'} && $patch_line =~ m!^--- "?a/!) {
-			$patch_line = '--- a/' .
-			              $cgi->a({-href=>$from{'href'}, -class=>"path"},
-			                      esc_path($from{'file'}));
-		}
-		print "<div class=\"diff from_file\">$patch_line</div>\n";
+		#assert($patch_line eq $last_patch_line) if DEBUG;
 
 		$patch_line = <$fd>;
 		chomp $patch_line;
+		#assert($patch_line =~ m/^\+\+\+/) if DEBUG;
 
-		#assert($patch_line =~ m/^+++/) if DEBUG;
-		if ($to{'href'} && $patch_line =~ m!^\+\+\+ "?b/!) {
-			$patch_line = '+++ b/' .
-			              $cgi->a({-href=>$to{'href'}, -class=>"path"},
-			                      esc_path($to{'file'}));
-		}
-		print "<div class=\"diff to_file\">$patch_line</div>\n";
+		print format_diff_from_to_header($last_patch_line, $patch_line,
+		                                 $diffinfo, \%from, \%to,
+		                                 @hash_parents);
 
 		# the patch itself
 	LINE:
@@ -2928,6 +3112,27 @@ sub git_patchset_body {
 
 	} continue {
 		print "</div>\n"; # class="patch"
+	}
+
+	# for compact combined (--cc) format, with chunk and patch simpliciaction
+	# patchset might be empty, but there might be unprocessed raw lines
+	for ($patch_idx++ if $patch_number > 0;
+	     $patch_idx < @$difftree;
+	     $patch_idx++) {
+		# read and prepare patch information
+		if (ref($difftree->[$patch_idx]) eq "HASH") {
+			# pre-parsed (or generated by hand)
+			$diffinfo = $difftree->[$patch_idx];
+		} else {
+			$diffinfo = parse_difftree_raw_line($difftree->[$patch_idx]);
+		}
+
+		# generate anchor for "patch" links in difftree / whatchanged part
+		print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n" .
+		      format_diff_cc_simplified($diffinfo, @hash_parents) .
+		      "</div>\n";  # class="patch"
+
+		$patch_number++;
 	}
 
 	if ($patch_number == 0) {
@@ -4001,8 +4206,10 @@ sub git_snapshot {
 
 	my $git = git_cmd_str();
 	my $name = $project;
+	$name =~ s,([^/])/*\.git$,$1,;
+	$name = basename($name);
+	my $filename = to_utf8($name);
 	$name =~ s/\047/\047\\\047\047/g;
-	my $filename = to_utf8(basename($project));
 	my $cmd;
 	if ($suffix eq 'zip') {
 		$filename .= "-$hash.$suffix";
@@ -4443,7 +4650,11 @@ sub git_commitdiff {
 		die_error(undef, "Unknown commit object");
 	}
 
-	# we need to prepare $formats_nav before any parameter munging
+	# choose format for commitdiff for merge
+	if (! defined $hash_parent && @{$co{'parents'}} > 1) {
+		$hash_parent = '--cc';
+	}
+	# we need to prepare $formats_nav before almost any parameter munging
 	my $formats_nav;
 	if ($format eq 'html') {
 		$formats_nav =
@@ -4451,14 +4662,22 @@ sub git_commitdiff {
 			                       hash=>$hash, hash_parent=>$hash_parent)},
 			        "raw");
 
-		if (defined $hash_parent) {
+		if (defined $hash_parent &&
+		    $hash_parent ne '-c' && $hash_parent ne '--cc') {
 			# commitdiff with two commits given
 			my $hash_parent_short = $hash_parent;
 			if ($hash_parent =~ m/^[0-9a-fA-F]{40}$/) {
 				$hash_parent_short = substr($hash_parent, 0, 7);
 			}
 			$formats_nav .=
-				' (from: ' .
+				' (from';
+			for (my $i = 0; $i < @{$co{'parents'}}; $i++) {
+				if ($co{'parents'}[$i] eq $hash_parent) {
+					$formats_nav .= ' parent ' . ($i+1);
+					last;
+				}
+			}
+			$formats_nav .= ': ' .
 				$cgi->a({-href => href(action=>"commitdiff",
 				                       hash=>$hash_parent)},
 				        esc_html($hash_parent_short)) .
@@ -4476,6 +4695,17 @@ sub git_commitdiff {
 				')';
 		} else {
 			# merge commit
+			if ($hash_parent eq '--cc') {
+				$formats_nav .= ' | ' .
+					$cgi->a({-href => href(action=>"commitdiff",
+					                       hash=>$hash, hash_parent=>'-c')},
+					        'combined');
+			} else { # $hash_parent eq '-c'
+				$formats_nav .= ' | ' .
+					$cgi->a({-href => href(action=>"commitdiff",
+					                       hash=>$hash, hash_parent=>'--cc')},
+					        'compact');
+			}
 			$formats_nav .=
 				' (merge: ' .
 				join(' ', map {
@@ -4488,9 +4718,10 @@ sub git_commitdiff {
 	}
 
 	my $hash_parent_param = $hash_parent;
-	if (!defined $hash_parent) {
+	if (!defined $hash_parent_param) {
+		# --cc for multiple parents, --root for parentless
 		$hash_parent_param =
-			@{$co{'parents'}} > 1 ? '-c' : $co{'parent'} || '--root';
+			@{$co{'parents'}} > 1 ? '--cc' : $co{'parent'} || '--root';
 	}
 
 	# read commitdiff
@@ -4567,10 +4798,14 @@ TEXT
 
 	# write patch
 	if ($format eq 'html') {
-		git_difftree_body(\@difftree, $hash, $hash_parent || @{$co{'parents'}});
+		my $use_parents = !defined $hash_parent ||
+			$hash_parent eq '-c' || $hash_parent eq '--cc';
+		git_difftree_body(\@difftree, $hash,
+		                  $use_parents ? @{$co{'parents'}} : $hash_parent);
 		print "<br/>\n";
 
-		git_patchset_body($fd, \@difftree, $hash, $hash_parent || @{$co{'parents'}});
+		git_patchset_body($fd, \@difftree, $hash,
+		                  $use_parents ? @{$co{'parents'}} : $hash_parent);
 		close $fd;
 		print "</div>\n"; # class="page_body"
 		git_footer_html();

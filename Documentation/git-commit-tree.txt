@@ -40,7 +40,7 @@ OPTIONS
 
 -p <parent commit>::
 	Each '-p' indicates the id of a parent commit object.
-	
+
 
 Commit Information
 ------------------
@@ -107,4 +107,3 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 GIT
 ---
 Part of the gitlink:git[7] suite
-

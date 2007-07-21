@@ -1,7 +1,7 @@
 The output format from "git-diff-index", "git-diff-tree" and
 "git-diff-files" are very similar.
 
-These commands all compare two sets of things; what is 
+These commands all compare two sets of things; what is
 compared differs:
 
 git-diff-index <tree-ish>::
@@ -139,28 +139,28 @@ index fabadb8,cc95eb0..4866510
 --- a/describe.c
 +++ b/describe.c
 @@@ -98,20 -98,12 +98,20 @@@
-  	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
+	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
   }
-  
+
 - static void describe(char *arg)
  -static void describe(struct commit *cmit, int last_one)
 ++static void describe(char *arg, int last_one)
   {
  +	unsigned char sha1[20];
  +	struct commit *cmit;
-  	struct commit_list *list;
-  	static int initialized = 0;
-  	struct commit_name *n;
-  
+	struct commit_list *list;
+	static int initialized = 0;
+	struct commit_name *n;
+
  +	if (get_sha1(arg, sha1) < 0)
  +		usage(describe_usage);
  +	cmit = lookup_commit_reference(sha1);
  +	if (!cmit)
  +		usage(describe_usage);
  +
-  	if (!initialized) {
-  		initialized = 1;
-  		for_each_ref(get_name);
+	if (!initialized) {
+		initialized = 1;
+		for_each_ref(get_name);
 ------------
 
 1.   It is preceded with a "git diff" header, that looks like
@@ -233,4 +233,3 @@ parents).  When shown by `git diff-files -c`, it compares the
 two unresolved merge parents with the working tree file
 (i.e. file1 is stage 2 aka "our version", file2 is stage 3 aka
 "their version").
-

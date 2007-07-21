@@ -82,4 +82,3 @@ Documentation by Eric Wong <normalperson@yhbt.net>.
 GIT
 ---
 Part of the gitlink:git[7] suite
-

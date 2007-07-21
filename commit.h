@@ -66,14 +66,12 @@ extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit 
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
  **/
-struct commit *pop_most_recent_commit(struct commit_list **list, 
+struct commit *pop_most_recent_commit(struct commit_list **list,
 				      unsigned int mark);
 
 struct commit *pop_commit(struct commit_list **stack);
 
 void clear_commit_marks(struct commit *commit, unsigned int mark);
-
-int count_parents(struct commit * commit);
 
 /*
  * Performs an in-place topological sort of list supplied.

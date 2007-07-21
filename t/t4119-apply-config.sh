@@ -24,7 +24,7 @@ cat >gpatch.file <<\EOF &&
 +++ file1+	2007-02-21 01:07:44.000000000 -0800
 @@ -1 +1 @@
 -A
-+B 
++B
 EOF
 
 sed -e 's|file1|sub/&|' gpatch.file >gpatch-sub.file &&

@@ -155,8 +155,6 @@ extern void diff_unmerge(struct diff_options *,
 			 unsigned mode,
 			 const unsigned char *sha1);
 
-extern int diff_scoreopt_parse(const char *opt);
-
 #define DIFF_SETUP_REVERSE      	1
 #define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4

@@ -17,26 +17,26 @@ DESCRIPTION
 Imports a project from one or more Arch repositories. It will follow branches
 and repositories within the namespaces defined by the <archive/branch>
 parameters supplied. If it cannot find the remote branch a merge comes from
-it will just import it as a regular commit. If it can find it, it will mark it 
-as a merge whenever possible (see discussion below). 
+it will just import it as a regular commit. If it can find it, it will mark it
+as a merge whenever possible (see discussion below).
 
-The script expects you to provide the key roots where it can start the import 
-from an 'initial import' or 'tag' type of Arch commit. It will follow and 
-import new branches within the provided roots. 
+The script expects you to provide the key roots where it can start the import
+from an 'initial import' or 'tag' type of Arch commit. It will follow and
+import new branches within the provided roots.
 
-It expects to be dealing with one project only. If it sees 
-branches that have different roots, it will refuse to run. In that case, 
-edit your <archive/branch> parameters to define clearly the scope of the 
-import. 
+It expects to be dealing with one project only. If it sees
+branches that have different roots, it will refuse to run. In that case,
+edit your <archive/branch> parameters to define clearly the scope of the
+import.
 
-`git-archimport` uses `tla` extensively in the background to access the 
+`git-archimport` uses `tla` extensively in the background to access the
 Arch repository.
 Make sure you have a recent version of `tla` available in the path. `tla` must
-know about the repositories you pass to `git-archimport`. 
+know about the repositories you pass to `git-archimport`.
 
-For the initial import `git-archimport` expects to find itself in an empty 
-directory. To follow the development of a project that uses Arch, rerun 
-`git-archimport` with the same parameters as the initial import to perform 
+For the initial import `git-archimport` expects to find itself in an empty
+directory. To follow the development of a project that uses Arch, rerun
+`git-archimport` with the same parameters as the initial import to perform
 incremental imports.
 
 While git-archimport will try to create sensible branch names for the
@@ -54,15 +54,15 @@ convert Arch repositories that had been rotated periodically.
 
 MERGES
 ------
-Patch merge data from Arch is used to mark merges in git as well. git 
+Patch merge data from Arch is used to mark merges in git as well. git
 does not care much about tracking patches, and only considers a merge when a
 branch incorporates all the commits since the point they forked. The end result
-is that git will have a good idea of how far branches have diverged. So the 
+is that git will have a good idea of how far branches have diverged. So the
 import process does lose some patch-trading metadata.
 
-Fortunately, when you try and merge branches imported from Arch, 
-git will find a good merge base, and it has a good chance of identifying 
-patches that have been traded out-of-sequence between the branches. 
+Fortunately, when you try and merge branches imported from Arch,
+git will find a good merge base, and it has a good chance of identifying
+patches that have been traded out-of-sequence between the branches.
 
 OPTIONS
 -------
@@ -71,10 +71,10 @@ OPTIONS
 	Display usage.
 
 -v::
-	Verbose output. 
+	Verbose output.
 
 -T::
-	Many tags. Will create a tag for every commit, reflecting the commit 
+	Many tags. Will create a tag for every commit, reflecting the commit
 	name in the Arch repository.
 
 -f::
@@ -104,7 +104,7 @@ OPTIONS
 
 
 <archive/branch>::
-	Archive/branch identifier in a format that `tla log` understands. 
+	Archive/branch identifier in a format that `tla log` understands.
 
 
 Author
@@ -118,4 +118,3 @@ Documentation by Junio C Hamano, Martin Langhoff and the git-list <git@vger.kern
 GIT
 ---
 Part of the gitlink:git[7] suite
-

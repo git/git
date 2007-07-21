@@ -60,4 +60,3 @@ test_expect_success 'check result' '
 '
 
 test_done
-

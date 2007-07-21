@@ -100,4 +100,3 @@ void print_path_list(const char *text, const struct path_list *p)
 	for (i = 0; i < p->nr; i++)
 		printf("%s:%p\n", p->items[i].path, p->items[i].util);
 }
-

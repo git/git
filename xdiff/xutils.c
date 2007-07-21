@@ -380,4 +380,3 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 
 	return 0;
 }
-

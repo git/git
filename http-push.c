@@ -518,7 +518,7 @@ static void start_put(struct transfer_request *request)
 	request->buffer.size = stream.total_out;
 	request->buffer.posn = 0;
 
-	request->url = xmalloc(strlen(remote->url) + 
+	request->url = xmalloc(strlen(remote->url) +
 			       strlen(request->lock->token) + 51);
 	strcpy(request->url, remote->url);
 	posn = request->url + strlen(remote->url);

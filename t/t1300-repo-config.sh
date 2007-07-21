@@ -520,4 +520,3 @@ git config --list > result
 test_expect_success 'value continued on next line' 'cmp result expect'
 
 test_done
-

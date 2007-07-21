@@ -44,4 +44,3 @@ endif
 # (even though GIT-CFLAGS aren't used yet. If ever)
 ../GIT-CFLAGS:
 	$(MAKE) -C .. GIT-CFLAGS
-

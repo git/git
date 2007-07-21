@@ -26,7 +26,7 @@ static int cleanup(char *line)
 	return 1;
 }
 
-void stripspace(FILE *in, FILE *out)
+static void stripspace(FILE *in, FILE *out)
 {
 	int empties = -1;
 	int incomplete = 0;

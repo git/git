@@ -49,10 +49,10 @@ copy to include/arch/cris/klibc/archsetjmp.h
 - * arch/x86_64/include/klibc/archsetjmp.h
 + * arch/cris/include/klibc/archsetjmp.h
   */
- 
+
  #ifndef _KLIBC_ARCHSETJMP_H
  #define _KLIBC_ARCHSETJMP_H
- 
+
  struct __jmp_buf {
 -  unsigned long __rbx;
 -  unsigned long __rsp;
@@ -74,9 +74,9 @@ copy to include/arch/cris/klibc/archsetjmp.h
 +  unsigned long __sp;
 +  unsigned long __srp;
  };
- 
+
  typedef struct __jmp_buf jmp_buf[1];
- 
+
 -#endif /* _SETJMP_H */
 +#endif /* _KLIBC_ARCHSETJMP_H */
 diff --git a/klibc/arch/x86_64/include/klibc/archsetjmp.h b/include/arch/m32r/klibc/archsetjmp.h
@@ -90,10 +90,10 @@ rename to include/arch/m32r/klibc/archsetjmp.h
 - * arch/x86_64/include/klibc/archsetjmp.h
 + * arch/m32r/include/klibc/archsetjmp.h
   */
- 
+
  #ifndef _KLIBC_ARCHSETJMP_H
  #define _KLIBC_ARCHSETJMP_H
- 
+
  struct __jmp_buf {
 -  unsigned long __rbx;
 -  unsigned long __rsp;
@@ -108,9 +108,9 @@ rename to include/arch/m32r/klibc/archsetjmp.h
    unsigned long __r15;
 -  unsigned long __rip;
  };
- 
+
  typedef struct __jmp_buf jmp_buf[1];
- 
+
 -#endif /* _SETJMP_H */
 +#endif /* _KLIBC_ARCHSETJMP_H */
 EOF

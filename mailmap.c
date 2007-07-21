@@ -89,4 +89,3 @@ int map_email(struct path_list *map, const char *email, char *name, int maxlen)
 	}
 	return 0;
 }
-

@@ -23,15 +23,15 @@ status::
 	repository. This command is the default command for git-submodule.
 
 init::
-	Initialize the submodules, i.e. clone the git repositories specified
-	in the .gitmodules file and checkout the submodule commits specified
-	in the index of the containing repository. This will make the
-	submodules HEAD be detached.
+	Initialize the submodules, i.e. register in .git/config each submodule
+	path and url found in .gitmodules. The key used in git/config is
+	`submodule.$path.url`. This command does not alter existing information
+	in .git/config.
 
 update::
-	Update the initialized submodules, i.e. checkout the submodule commits
-	specified in the index of the containing repository. This will make
-	the submodules HEAD be detached.
+	Update the registered submodules, i.e. clone missing submodules and
+	checkout the commit specified in the index of the containing repository.
+	This will make the submodules HEAD be detached.
 
 
 OPTIONS
@@ -50,7 +50,7 @@ OPTIONS
 
 FILES
 -----
-When cloning submodules, a .gitmodules file in the top-level directory
+When initializing submodules, a .gitmodules file in the top-level directory
 of the containing repository is used to find the url of each submodule.
 This file should be formatted in the same way as $GIR_DIR/config. The key
 to each submodule url is "module.$path.url".

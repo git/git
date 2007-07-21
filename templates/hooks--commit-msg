@@ -19,4 +19,3 @@ test "" = "$(grep '^Signed-off-by: ' "$1" |
 	echo >&2 Duplicate Signed-off-by lines.
 	exit 1
 }
-

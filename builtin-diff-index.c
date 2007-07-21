@@ -23,7 +23,7 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-			
+
 		if (!strcmp(arg, "--cached"))
 			cached = 1;
 		else

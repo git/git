@@ -44,4 +44,3 @@ test_expect_success \
     git diff ../t4100/t-apply-7.expect current'
 
 test_done
-

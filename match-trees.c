@@ -301,4 +301,3 @@ void shift_tree(const unsigned char *hash1,
 
 	splice_tree(hash1, add_prefix, hash2, shifted);
 }
-

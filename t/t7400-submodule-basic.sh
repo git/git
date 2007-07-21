@@ -18,7 +18,7 @@ subcommands of git-submodule.
 #  -add directory lib to 'superproject', this creates a DIRLINK entry
 #  -add a couple of regular files to enable testing of submodule filtering
 #  -mv lib subrepo
-#  -add an entry to .gitmodules for path 'lib'
+#  -add an entry to .gitmodules for submodule 'example'
 #
 test_expect_success 'Prepare submodule testing' '
 	mkdir lib &&
@@ -40,7 +40,19 @@ test_expect_success 'Prepare submodule testing' '
 	git-add a lib z &&
 	git-commit -m "super commit 1" &&
 	mv lib .subrepo &&
-	GIT_CONFIG=.gitmodules git-config module.lib.url ./.subrepo
+	GIT_CONFIG=.gitmodules git-config submodule.example.url git://example.com/lib.git
+'
+
+test_expect_success 'status should fail for unmapped paths' '
+	if git-submodule status
+	then
+		echo "[OOPS] submodule status succeeded"
+		false
+	elif ! GIT_CONFIG=.gitmodules git-config submodule.example.path lib
+	then
+		echo "[OOPS] git-config failed to update .gitmodules"
+		false
+	fi
 '
 
 test_expect_success 'status should only print one line' '
@@ -52,41 +64,55 @@ test_expect_success 'status should initially be "missing"' '
 	git-submodule status | grep "^-$rev1"
 '
 
-test_expect_success 'init should fail when path is used by a file' '
-	echo "hello" >lib &&
-	if git-submodule init
+test_expect_success 'init should register submodule url in .git/config' '
+	git-submodule init &&
+	url=$(git-config submodule.example.url) &&
+	if test "$url" != "git://example.com/lib.git"
 	then
-		echo "[OOPS] init should have failed"
+		echo "[OOPS] init succeeded but submodule url is wrong"
 		false
-	elif test -f lib && test "$(cat lib)" != "hello"
+	elif ! git-config submodule.example.url ./.subrepo
 	then
-		echo "[OOPS] init failed but lib file was molested"
+		echo "[OOPS] init succeeded but update of url failed"
+		false
+	fi
+'
+
+test_expect_success 'update should fail when path is used by a file' '
+	echo "hello" >lib &&
+	if git-submodule update
+	then
+		echo "[OOPS] update should have failed"
+		false
+	elif test "$(cat lib)" != "hello"
+	then
+		echo "[OOPS] update failed but lib file was molested"
 		false
 	else
 		rm lib
 	fi
 '
 
-test_expect_success 'init should fail when path is used by a nonempty directory' '
+test_expect_success 'update should fail when path is used by a nonempty directory' '
 	mkdir lib &&
 	echo "hello" >lib/a &&
-	if git-submodule init
+	if git-submodule update
 	then
-		echo "[OOPS] init should have failed"
+		echo "[OOPS] update should have failed"
 		false
 	elif test "$(cat lib/a)" != "hello"
 	then
-		echo "[OOPS] init failed but lib/a was molested"
+		echo "[OOPS] update failed but lib/a was molested"
 		false
 	else
 		rm lib/a
 	fi
 '
 
-test_expect_success 'init should work when path is an empty dir' '
+test_expect_success 'update should work when path is an empty dir' '
 	rm -rf lib &&
 	mkdir lib &&
-	git-submodule init &&
+	git-submodule update &&
 	head=$(cd lib && git-rev-parse HEAD) &&
 	if test -z "$head"
 	then
@@ -99,7 +125,7 @@ test_expect_success 'init should work when path is an empty dir' '
 	fi
 '
 
-test_expect_success 'status should be "up-to-date" after init' '
+test_expect_success 'status should be "up-to-date" after update' '
 	git-submodule status | grep "^ $rev1"
 '
 

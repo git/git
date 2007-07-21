@@ -259,9 +259,12 @@ class CellRendererGraph(gtk.GenericCellRenderer):
 				self.set_colour(ctx, colour, 0.0, 0.5)
 			ctx.show_text(name)
 
-class Commit:
+class Commit(object):
 	""" This represent a commit object obtained after parsing the git-rev-list
 	output """
+
+	__slots__ = ['children_sha1', 'message', 'author', 'date', 'committer',
+				 'commit_date', 'commit_sha1', 'parent_sha1']
 
 	children_sha1 = {}
 
@@ -339,7 +342,7 @@ class Commit:
 		fp.close()
 		return diff
 
-class AnnotateWindow:
+class AnnotateWindow(object):
 	"""Annotate window.
 	This object represents and manages a single window containing the
 	annotate information of the file
@@ -349,6 +352,7 @@ class AnnotateWindow:
 		self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 		self.window.set_border_width(0)
 		self.window.set_title("Git repository browser annotation window")
+		self.prev_read = ""
 
 		# Use two thirds of the screen by default
 		screen = self.window.get_screen()
@@ -398,7 +402,10 @@ class AnnotateWindow:
 	def data_ready(self, source, condition):
 		while (1):
 			try :
-				buffer = source.read(8192)
+				# A simple readline doesn't work
+				# a readline bug ??
+				buffer = source.read(100)
+
 			except:
 				# resource temporary not available
 				return True
@@ -407,6 +414,19 @@ class AnnotateWindow:
 				gobject.source_remove(self.io_watch_tag)
 				source.close()
 				return False
+
+			if (self.prev_read != ""):
+				buffer = self.prev_read + buffer
+				self.prev_read = ""
+
+			if (buffer[len(buffer) -1] != '\n'):
+				try:
+					newline_index = buffer.rindex("\n")
+				except ValueError:
+					newline_index = 0
+
+				self.prev_read = buffer[newline_index:(len(buffer))]
+				buffer = buffer[0:newline_index]
 
 			for buff in buffer.split("\n"):
 				annotate_line = re.compile('^([0-9a-f]{40}) (.+) (.+) (.+)$')
@@ -513,13 +533,13 @@ class AnnotateWindow:
 
 		self.add_file_data(filename, commit_sha1, line_num)
 
-		fp = os.popen("git blame --incremental -- " + filename + " " + commit_sha1)
+		fp = os.popen("git blame --incremental -C -C -- " + filename + " " + commit_sha1)
 		flags = fcntl.fcntl(fp.fileno(), fcntl.F_GETFL)
 		fcntl.fcntl(fp.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
 		self.io_watch_tag = gobject.io_add_watch(fp, gobject.IO_IN, self.data_ready)
 
 
-class DiffWindow:
+class DiffWindow(object):
 	"""Diff window.
 	This object represents and manages a single window containing the
 	differences between two revisions on a branch.
@@ -674,7 +694,7 @@ class DiffWindow:
 			fp.close()
 		dialog.destroy()
 
-class GitView:
+class GitView(object):
 	""" This is the main class
 	"""
 	version = "0.9"
@@ -1277,5 +1297,3 @@ if __name__ == "__main__":
 
 	view = GitView( without_diff != 1)
 	view.run(sys.argv[without_diff:])
-
-

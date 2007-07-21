@@ -85,5 +85,3 @@ void mark_reachable(struct object *obj, unsigned int mask)
 			mark_reachable(refs->ref[i], mask);
 	}
 }
-
-

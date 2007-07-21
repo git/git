@@ -109,4 +109,3 @@ test_expect_success  ".rev_db auto-converted to .rev_db.UUID" "
 	"
 
 test_done
-

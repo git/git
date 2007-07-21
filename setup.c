@@ -57,7 +57,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 		int speclen = strlen(path);
 		char *n = xmalloc(speclen + len + 1);
 		char *p;
-	
+
 		memcpy(n, prefix, len);
 		memcpy(n + len, path, speclen+1);
 #ifdef __MINGW32__
@@ -70,7 +70,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 	return path;
 }
 
-/* 
+/*
  * Unlike prefix_path, this should be used if the named file does
  * not have to interact with index entry; i.e. name of a random file
  * on the filesystem.

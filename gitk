@@ -337,7 +337,7 @@ proc readrefs {} {
 		    set tagids($name) $commit
 		    lappend idtags($commit) $name
 		}
-	    }		
+	    }
 	    catch {
 	        set tagcontents($name) [exec git cat-file tag $id]
 	    }

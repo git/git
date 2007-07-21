@@ -49,7 +49,7 @@ void SHA1_Update(SHA_CTX *c, const void *p, unsigned long n)
 void SHA1_Final(unsigned char *hash, SHA_CTX *c)
 {
 	uint64_t bitlen;
-	uint32_t bitlen_hi, bitlen_lo; 
+	uint32_t bitlen_hi, bitlen_lo;
 	unsigned int i, offset, padlen;
 	unsigned char bits[8];
 	static const unsigned char padding[64] = { 0x80, };
@@ -69,7 +69,7 @@ void SHA1_Final(unsigned char *hash, SHA_CTX *c)
 	bits[5] = bitlen_lo >> 16;
 	bits[6] = bitlen_lo >> 8;
 	bits[7] = bitlen_lo;
-	SHA1_Update(c, bits, 8); 
+	SHA1_Update(c, bits, 8);
 
 	for (i = 0; i < 5; i++) {
 		uint32_t v = c->hash[i];

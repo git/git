@@ -201,7 +201,7 @@ char *sha1_pack_name(const unsigned char *sha1)
 		*buf++ = hex[val >> 4];
 		*buf++ = hex[val & 0xf];
 	}
-	
+
 	return base;
 }
 
@@ -226,7 +226,7 @@ char *sha1_pack_index_name(const unsigned char *sha1)
 		*buf++ = hex[val >> 4];
 		*buf++ = hex[val & 0xf];
 	}
-	
+
 	return base;
 }
 
@@ -425,7 +425,7 @@ static size_t peak_pack_mapped;
 static size_t pack_mapped;
 struct packed_git *packed_git;
 
-void pack_report()
+void pack_report(void)
 {
 	fprintf(stderr,
 		"pack_report: getpagesize()            = %10" SZ_FMT "\n"
@@ -982,7 +982,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long siz
 	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
-void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
+static void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 {
 	struct stat st;
 	void *map;
@@ -1162,7 +1162,7 @@ static int parse_sha1_header(const char *hdr, unsigned long *sizep)
 	unsigned long size;
 
 	/*
-	 * The type can be at most ten bytes (including the 
+	 * The type can be at most ten bytes (including the
 	 * terminating '\0' that we add), and is followed by
 	 * a space.
 	 */
@@ -1761,7 +1761,7 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, cons
 	return 0;
 }
 
-struct packed_git *find_sha1_pack(const unsigned char *sha1, 
+struct packed_git *find_sha1_pack(const unsigned char *sha1,
 				  struct packed_git *packs)
 {
 	struct packed_git *p;

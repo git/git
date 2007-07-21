@@ -95,7 +95,7 @@ When things cleanly merge, these things happen:
 1. the results are updated both in the index file and in your
    working tree,
 2. index file is written out as a tree,
-3. the tree gets committed, and 
+3. the tree gets committed, and
 4. the `HEAD` pointer gets advanced.
 
 Because of 2., we require that the original state of the index

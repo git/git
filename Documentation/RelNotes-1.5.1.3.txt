@@ -43,4 +43,3 @@ Fixes since v1.5.1.2
     description was given by the caller.
 
 Also contains various documentation updates.
-

@@ -106,8 +106,6 @@ struct rev_info {
 #define REV_TREE_DIFFERENT	2
 
 /* revision.c */
-extern int rev_same_tree_as_empty(struct rev_info *, struct tree *t1);
-extern int rev_compare_tree(struct rev_info *, struct tree *t1, struct tree *t2);
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
@@ -131,6 +129,5 @@ extern void add_object(struct object *obj,
 		       const char *name);
 
 extern void add_pending_object(struct rev_info *revs, struct object *obj, const char *name);
-extern void add_pending_object_with_mode(struct rev_info *revs, struct object *obj, const char *name, unsigned mode);
 
 #endif

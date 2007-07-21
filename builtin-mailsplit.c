@@ -159,8 +159,8 @@ out:
 	return ret;
 }
 
-int split_mbox(const char *file, const char *dir, int allow_bare,
-		int nr_prec, int skip)
+static int split_mbox(const char *file, const char *dir, int allow_bare,
+		      int nr_prec, int skip)
 {
 	char name[PATH_MAX];
 	int ret = -1;

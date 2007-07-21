@@ -81,7 +81,7 @@ static struct llist * llist_copy(struct llist *list)
 {
 	struct llist *ret;
 	struct llist_item *new, *old, *prev;
-	
+
 	llist_init(&ret);
 
 	if ((ret->size = list->size) == 0)
@@ -100,7 +100,7 @@ static struct llist * llist_copy(struct llist *list)
 	}
 	new->next = NULL;
 	ret->back = new;
-	
+
 	return ret;
 }
 

@@ -403,7 +403,7 @@ static int match_multi_number(unsigned long num, char c, const char *date, char 
 }
 
 /*
- * We've seen a digit. Time? Year? Date? 
+ * We've seen a digit. Time? Year? Date?
  */
 static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt)
 {
@@ -495,7 +495,7 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
 	} else if (num > 0 && num < 13) {
 		tm->tm_mon = num-1;
 	}
-		
+
 	return n;
 }
 
@@ -569,13 +569,13 @@ int parse_date(const char *date, char *result, int maxlen)
 		if (!match) {
 			/* BAD CRAP */
 			match = 1;
-		}	
+		}
 
 		date += match;
 	}
 
 	/* mktime uses local timezone */
-	then = my_mktime(&tm); 
+	then = my_mktime(&tm);
 	if (offset == -1)
 		offset = (then - mktime(&tm)) / 60;
 
@@ -691,7 +691,7 @@ static const struct typelen {
 	{ "days", 24*60*60 },
 	{ "weeks", 7*24*60*60 },
 	{ NULL }
-};	
+};
 
 static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 {

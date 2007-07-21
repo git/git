@@ -34,4 +34,3 @@ int copy_fd(int ifd, int ofd)
 	close(ifd);
 	return 0;
 }
-

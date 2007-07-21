@@ -539,7 +539,7 @@ static int store_aux(const char* key, const char* value)
 	return 0;
 }
 
-static int write_error()
+static int write_error(void)
 {
 	fprintf(stderr, "Failed to write new configuration file\n");
 
@@ -637,7 +637,7 @@ static ssize_t find_beginning_of_line(const char* contents, size_t size,
 	size_t equal_offset = size, bracket_offset = size;
 	ssize_t offset;
 
-	for (offset = offset_-2; offset > 0 
+	for (offset = offset_-2; offset > 0
 			&& contents[offset] != '\n'; offset--)
 		switch (contents[offset]) {
 			case '=': equal_offset = offset; break;
@@ -1007,4 +1007,3 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	free(config_filename);
 	return ret;
 }
-

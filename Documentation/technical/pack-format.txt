@@ -80,7 +80,7 @@ Pack Idx file:
 	    +--------------------------------+ |
 main	    | offset                         | |
 index	    | object name 00XXXXXXXXXXXXXXXX | |
-table	    +--------------------------------+ | 
+table	    +--------------------------------+ |
 	    | offset                         | |
 	    | object name 00XXXXXXXXXXXXXXXX | |
 	    +--------------------------------+ |
@@ -97,14 +97,14 @@ trailer	  | | packfile checksum              |
 	  | +--------------------------------+
 	  | | idxfile checksum               |
 	  | +--------------------------------+
-          .-------.      
+          .-------.
                   |
 Pack file entry: <+
 
      packed object header:
 	1-byte size extension bit (MSB)
 	       type (next 3 bit)
-	       size0 (lower 4-bit) 
+	       size0 (lower 4-bit)
         n-byte sizeN (as long as MSB is set, each 7-bit)
 		size0..sizeN form 4+7+7+..+7 bit integer, size0
 		is the least significant part, and sizeN is the
@@ -114,5 +114,5 @@ Pack file entry: <+
 		is the size before compression).
 	If it is DELTA, then
 	  20-byte base object name SHA1 (the size above is the
-	  	size of the delta data that follows).
+		size of the delta data that follows).
           delta data, deflated.
