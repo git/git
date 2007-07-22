@@ -3403,7 +3403,7 @@ proc drawcmittext {id row col} {
     if {$id eq $nullid} {
 	set ofill red
     } elseif {$id eq $nullid2} {
-	set ofill magenta
+	set ofill green
     } else {
 	set ofill [expr {$listed != 0? "blue": "white"}]
     }
