@@ -307,10 +307,6 @@ sub feature_snapshot {
 
 	if ($val) {
 		@fmts = ($val eq 'none' ? () : split /\s*[,\s]\s*/, $val);
-		@fmts = grep { defined } map {
-			exists $known_snapshot_format_aliases{$_} ?
-				$known_snapshot_format_aliases{$_} : $_ } @fmts;
-		@fmts = grep(exists $known_snapshot_formats{$_}, @fmts);
 	}
 
 	return @fmts;
@@ -354,6 +350,18 @@ sub check_export_ok {
 	my ($dir) = @_;
 	return (check_head_link($dir) &&
 		(!$export_ok || -e "$dir/$export_ok"));
+}
+
+# process alternate names for backward compatibility
+# filter out unsupported (unknown) snapshot formats
+sub filter_snapshot_fmts {
+	my @fmts = @_;
+
+	@fmts = map {
+		exists $known_snapshot_format_aliases{$_} ?
+		       $known_snapshot_format_aliases{$_} : $_} @fmts;
+	@fmts = grep(exists $known_snapshot_formats{$_}, @fmts);
+
 }
 
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
@@ -1299,9 +1307,11 @@ sub format_diff_line {
 sub format_snapshot_links {
 	my ($hash) = @_;
 	my @snapshot_fmts = gitweb_check_feature('snapshot');
+	@snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
 	my $num_fmts = @snapshot_fmts;
 	if ($num_fmts > 1) {
 		# A parenthesized list of links bearing format names.
+		# e.g. "snapshot (_tar.gz_ _zip_)"
 		return "snapshot (" . join(' ', map
 			$cgi->a({
 				-href => href(
@@ -1313,8 +1323,10 @@ sub format_snapshot_links {
 		, @snapshot_fmts) . ")";
 	} elsif ($num_fmts == 1) {
 		# A single "snapshot" link whose tooltip bears the format name.
+		# i.e. "_snapshot_"
 		my ($fmt) = @snapshot_fmts;
-		return $cgi->a({
+		return
+			$cgi->a({
 				-href => href(
 					action=>"snapshot",
 					hash=>$hash,
@@ -4302,11 +4314,12 @@ sub git_tree {
 
 sub git_snapshot {
 	my @supported_fmts = gitweb_check_feature('snapshot');
+	@supported_fmts = filter_snapshot_fmts(@supported_fmts);
 
 	my $format = $cgi->param('sf');
 	unless ($format =~ m/[a-z0-9]+/
-		&& exists($known_snapshot_formats{$format})
-		&& grep($_ eq $format, @supported_fmts)) {
+	        && exists($known_snapshot_formats{$format})
+	        && grep($_ eq $format, @supported_fmts)) {
 		die_error(undef, "Unsupported snapshot format");
 	}
 
