@@ -95,6 +95,7 @@ $copyright" \
 	}
 
 	set d {}
+	append d "git wrapper: $::_git\n"
 	append d "git exec dir: [gitexec]\n"
 	append d "git-gui lib: $oguilib"
 
@@ -191,6 +192,7 @@ proc do_options {} {
 
 		{b gui.trustmtime  {Trust File Modification Timestamps}}
 		{b gui.pruneduringfetch {Prune Tracking Branches During Fetch}}
+		{b gui.matchtrackingbranch {Match Tracking Branches}}
 		{i-0..99 gui.diffcontext {Number of Diff Context Lines}}
 		{t gui.newbranchtemplate {New Branch Name Template}}
 		} {

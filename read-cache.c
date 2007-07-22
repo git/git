@@ -350,6 +350,34 @@ int remove_file_from_index(struct index_state *istate, const char *path)
 	return 0;
 }
 
+static int compare_name(struct cache_entry *ce, const char *path, int namelen)
+{
+	return namelen != ce_namelen(ce) || memcmp(path, ce->name, namelen);
+}
+
+static int index_name_pos_also_unmerged(struct index_state *istate,
+	const char *path, int namelen)
+{
+	int pos = index_name_pos(istate, path, namelen);
+	struct cache_entry *ce;
+
+	if (pos >= 0)
+		return pos;
+
+	/* maybe unmerged? */
+	pos = -1 - pos;
+	if (pos >= istate->cache_nr ||
+			compare_name((ce = istate->cache[pos]), path, namelen))
+		return -1;
+
+	/* order of preference: stage 2, 1, 3 */
+	if (ce_stage(ce) == 1 && pos + 1 < istate->cache_nr &&
+			ce_stage((ce = istate->cache[pos + 1])) == 2 &&
+			!compare_name(ce, path, namelen))
+		pos++;
+	return pos;
+}
+
 int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 {
 	int size, namelen;
@@ -380,7 +408,7 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 		 * from it, otherwise assume unexecutable regular file.
 		 */
 		struct cache_entry *ent;
-		int pos = index_name_pos(istate, path, namelen);
+		int pos = index_name_pos_also_unmerged(istate, path, namelen);
 
 		ent = (0 <= pos) ? istate->cache[pos] : NULL;
 		ce->ce_mode = ce_mode_from_stat(ent, st.st_mode);

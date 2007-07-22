@@ -56,18 +56,18 @@ printf "propter nomen suum." >> new4.txt
 
 cp new1.txt test.txt
 test_expect_success "merge without conflict" \
-	"git-merge-file test.txt orig.txt new2.txt"
+	"git merge-file test.txt orig.txt new2.txt"
 
 cp new1.txt test2.txt
 test_expect_success "merge without conflict (missing LF at EOF)" \
-	"git-merge-file test2.txt orig.txt new2.txt"
+	"git merge-file test2.txt orig.txt new2.txt"
 
 test_expect_success "merge result added missing LF" \
 	"git diff test.txt test2.txt"
 
 cp test.txt backup.txt
 test_expect_failure "merge with conflicts" \
-	"git-merge-file test.txt orig.txt new3.txt"
+	"git merge-file test.txt orig.txt new3.txt"
 
 cat > expect.txt << EOF
 <<<<<<< test.txt
@@ -90,7 +90,7 @@ test_expect_success "expected conflict markers" "git diff test.txt expect.txt"
 
 cp backup.txt test.txt
 test_expect_failure "merge with conflicts, using -L" \
-	"git-merge-file -L 1 -L 2 test.txt orig.txt new3.txt"
+	"git merge-file -L 1 -L 2 test.txt orig.txt new3.txt"
 
 cat > expect.txt << EOF
 <<<<<<< 1
@@ -114,7 +114,7 @@ test_expect_success "expected conflict markers, with -L" \
 
 sed "s/ tu / TU /" < new1.txt > new5.txt
 test_expect_failure "conflict in removed tail" \
-	"git-merge-file -p orig.txt new1.txt new5.txt > out"
+	"git merge-file -p orig.txt new1.txt new5.txt > out"
 
 cat > expect << EOF
 Dominus regit me,

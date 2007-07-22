@@ -254,6 +254,8 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 	}
 }
 
+($from) = expand_aliases($from) if defined $from;
+
 my $prompting = 0;
 if (!defined $from) {
 	$from = $author || $committer;
@@ -408,6 +410,7 @@ sub extract_valid_address {
 	return $address if ($address =~ /^($local_part_regexp)$/);
 
 	if ($have_email_valid) {
+		$address =~ s/^\s*<(.*)>\s*$/$1/;
 		return scalar Email::Valid->address($address);
 	} else {
 		# less robust/correct than the monster regexp in Email::Valid,

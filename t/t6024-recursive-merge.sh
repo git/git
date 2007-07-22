@@ -28,7 +28,7 @@ echo B > a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:02" git commit -m B a1 &&
 
 git checkout -b D A &&
-git-rev-parse B > .git/MERGE_HEAD &&
+git rev-parse B > .git/MERGE_HEAD &&
 echo D > a1 &&
 git update-index a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:03" git commit -m D &&
@@ -42,19 +42,19 @@ echo C > a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:05" git commit -m C a1 &&
 
 git checkout -b E C &&
-git-rev-parse B > .git/MERGE_HEAD &&
+git rev-parse B > .git/MERGE_HEAD &&
 echo E > a1 &&
 git update-index a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:06" git commit -m E &&
 
 git checkout -b G E &&
-git-rev-parse A > .git/MERGE_HEAD &&
+git rev-parse A > .git/MERGE_HEAD &&
 echo G > a1 &&
 git update-index a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:07" git commit -m G &&
 
 git checkout -b F D &&
-git-rev-parse C > .git/MERGE_HEAD &&
+git rev-parse C > .git/MERGE_HEAD &&
 echo F > a1 &&
 git update-index a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:08" git commit -m F

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-apply for contextually independent diffs'
+test_description='git apply for contextually independent diffs'
 . ./test-lib.sh
 
 echo '1

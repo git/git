@@ -8,11 +8,20 @@ git-submodule - Initialize, update or inspect submodules
 
 SYNOPSIS
 --------
+[verse]
+'git-submodule' [--quiet] [-b branch] add <repository> [<path>]
 'git-submodule' [--quiet] [--cached] [status|init|update] [--] [<path>...]
 
 
 COMMANDS
 --------
+add::
+	Add the given repository as a submodule at the given path
+	to the changeset to be committed next.  In particular, the
+	repository is cloned at the specified path, added to the
+	changeset and registered in .gitmodules.   If no path is
+	specified, the path is deduced from the repository specification.
+
 status::
 	Show the status of the submodules. This will print the SHA-1 of the
 	currently checked out commit for each submodule, along with the
@@ -24,8 +33,8 @@ status::
 
 init::
 	Initialize the submodules, i.e. register in .git/config each submodule
-	path and url found in .gitmodules. The key used in git/config is
-	`submodule.$path.url`. This command does not alter existing information
+	name and url found in .gitmodules. The key used in .git/config is
+	`submodule.$name.url`. This command does not alter existing information
 	in .git/config.
 
 update::
@@ -38,6 +47,9 @@ OPTIONS
 -------
 -q, --quiet::
 	Only print error messages.
+
+-b, --branch::
+	Branch of repository to add as submodule.
 
 --cached::
 	Display the SHA-1 stored in the index, not the SHA-1 of the currently
@@ -53,7 +65,7 @@ FILES
 When initializing submodules, a .gitmodules file in the top-level directory
 of the containing repository is used to find the url of each submodule.
 This file should be formatted in the same way as $GIR_DIR/config. The key
-to each submodule url is "module.$path.url".
+to each submodule url is "submodule.$name.url".
 
 
 AUTHOR

@@ -279,6 +279,25 @@ struct remote *remote_get(const char *name)
 	return ret;
 }
 
+int for_each_remote(each_remote_fn fn, void *priv)
+{
+	int i, result = 0;
+	read_config();
+	for (i = 0; i < allocated_remotes && !result; i++) {
+		struct remote *r = remotes[i];
+		if (!r)
+			continue;
+		if (!r->fetch)
+			r->fetch = parse_ref_spec(r->fetch_refspec_nr,
+					r->fetch_refspec);
+		if (!r->push)
+			r->push = parse_ref_spec(r->push_refspec_nr,
+					r->push_refspec);
+		result = fn(r, priv);
+	}
+	return result;
+}
+
 int remote_has_uri(struct remote *remote, const char *uri)
 {
 	int i;
@@ -291,33 +310,63 @@ int remote_has_uri(struct remote *remote, const char *uri)
 
 int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 {
+	int find_src = refspec->src == NULL;
+	char *needle, **result;
 	int i;
+
+	if (find_src) {
+		if (refspec->dst == NULL)
+			return error("find_tracking: need either src or dst");
+		needle = refspec->dst;
+		result = &refspec->src;
+	} else {
+		needle = refspec->src;
+		result = &refspec->dst;
+	}
+
 	for (i = 0; i < remote->fetch_refspec_nr; i++) {
 		struct refspec *fetch = &remote->fetch[i];
+		const char *key = find_src ? fetch->dst : fetch->src;
+		const char *value = find_src ? fetch->src : fetch->dst;
 		if (!fetch->dst)
 			continue;
 		if (fetch->pattern) {
-			if (!prefixcmp(refspec->src, fetch->src)) {
-				refspec->dst =
-					xmalloc(strlen(fetch->dst) +
-						strlen(refspec->src) -
-						strlen(fetch->src) + 1);
-				strcpy(refspec->dst, fetch->dst);
-				strcpy(refspec->dst + strlen(fetch->dst),
-				       refspec->src + strlen(fetch->src));
+			if (!prefixcmp(needle, key)) {
+				*result = xmalloc(strlen(value) +
+						  strlen(needle) -
+						  strlen(key) + 1);
+				strcpy(*result, value);
+				strcpy(*result + strlen(value),
+				       needle + strlen(key));
 				refspec->force = fetch->force;
 				return 0;
 			}
-		} else {
-			if (!strcmp(refspec->src, fetch->src)) {
-				refspec->dst = xstrdup(fetch->dst);
-				refspec->force = fetch->force;
-				return 0;
-			}
+		} else if (!strcmp(needle, key)) {
+			*result = xstrdup(value);
+			refspec->force = fetch->force;
+			return 0;
 		}
 	}
-	refspec->dst = NULL;
 	return -1;
+}
+
+struct ref *alloc_ref(unsigned namelen)
+{
+	struct ref *ret = xmalloc(sizeof(struct ref) + namelen);
+	memset(ret, 0, sizeof(struct ref) + namelen);
+	return ret;
+}
+
+void free_refs(struct ref *ref)
+{
+	struct ref *next;
+	while (ref) {
+		next = ref->next;
+		if (ref->peer_ref)
+			free(ref->peer_ref);
+		free(ref);
+		ref = next;
+	}
 }
 
 static int count_refspec_match(const char *pattern,
@@ -377,11 +426,12 @@ static int count_refspec_match(const char *pattern,
 	}
 }
 
-static void link_dst_tail(struct ref *ref, struct ref ***tail)
+static void tail_link_ref(struct ref *ref, struct ref ***tail)
 {
 	**tail = ref;
+	while (ref->next)
+		ref = ref->next;
 	*tail = &ref->next;
-	**tail = NULL;
 }
 
 static struct ref *try_explicit_object_name(const char *name)
@@ -391,7 +441,7 @@ static struct ref *try_explicit_object_name(const char *name)
 	int len;
 
 	if (!*name) {
-		ref = xcalloc(1, sizeof(*ref) + 20);
+		ref = alloc_ref(20);
 		strcpy(ref->name, "(delete)");
 		hashclr(ref->new_sha1);
 		return ref;
@@ -399,22 +449,22 @@ static struct ref *try_explicit_object_name(const char *name)
 	if (get_sha1(name, sha1))
 		return NULL;
 	len = strlen(name) + 1;
-	ref = xcalloc(1, sizeof(*ref) + len);
+	ref = alloc_ref(len);
 	memcpy(ref->name, name, len);
 	hashcpy(ref->new_sha1, sha1);
 	return ref;
 }
 
-static struct ref *make_dst(const char *name, struct ref ***dst_tail)
+static struct ref *make_linked_ref(const char *name, struct ref ***tail)
 {
-	struct ref *dst;
+	struct ref *ret;
 	size_t len;
 
 	len = strlen(name) + 1;
-	dst = xcalloc(1, sizeof(*dst) + len);
-	memcpy(dst->name, name, len);
-	link_dst_tail(dst, dst_tail);
-	return dst;
+	ret = alloc_ref(len);
+	memcpy(ret->name, name, len);
+	tail_link_ref(ret, tail);
+	return ret;
 }
 
 static int match_explicit(struct ref *src, struct ref *dst,
@@ -462,7 +512,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		break;
 	case 0:
 		if (!memcmp(dst_value, "refs/", 5))
-			matched_dst = make_dst(dst_value, dst_tail);
+			matched_dst = make_linked_ref(dst_value, dst_tail);
 		else
 			error("dst refspec %s does not match any "
 			      "existing ref on the remote and does "
@@ -544,6 +594,13 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 			if (!pat)
 				continue;
 		}
+		else if (prefixcmp(src->name, "refs/heads/"))
+			/*
+			 * "matching refs"; traditionally we pushed everything
+			 * including refs outside refs/heads/ hierarchy, but
+			 * that does not make much sense these days.
+			 */
+			continue;
 
 		if (pat) {
 			const char *dst_side = pat->dst ? pat->dst : pat->src;
@@ -565,7 +622,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 			goto free_name;
 		if (!dst_peer) {
 			/* Create a new one and link it */
-			dst_peer = make_dst(dst_name, dst_tail);
+			dst_peer = make_linked_ref(dst_name, dst_tail);
 			hashcpy(dst_peer->new_sha1, src->new_sha1);
 		}
 		dst_peer->peer_ref = src;

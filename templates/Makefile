@@ -6,6 +6,7 @@ endif
 
 INSTALL ?= install
 TAR ?= tar
+RM ?= rm -f
 prefix ?= $(HOME)
 template_dir = $(prefix)/share/git-core/templates
 # DESTDIR=
@@ -48,7 +49,7 @@ custom:
 	$(QUIET): no custom templates yet
 
 clean:
-	rm -rf blt boilerplates.made
+	$(RM) -r blt boilerplates.made
 
 install: all
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(template_dir_SQ)'

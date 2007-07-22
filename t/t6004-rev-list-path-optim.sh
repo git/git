@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-rev-list trivial path optimization test'
+test_description='git rev-list trivial path optimization test'
 
 . ./test-lib.sh
 
@@ -12,9 +12,9 @@ initial=$(git rev-parse --verify HEAD)
 '
 
 test_expect_success path-optimization '
-    commit=$(echo "Unchanged tree" | git-commit-tree "HEAD^{tree}" -p HEAD) &&
-    test $(git-rev-list $commit | wc -l) = 2 &&
-    test $(git-rev-list $commit -- . | wc -l) = 1
+    commit=$(echo "Unchanged tree" | git commit-tree "HEAD^{tree}" -p HEAD) &&
+    test $(git rev-list $commit | wc -l) = 2 &&
+    test $(git rev-list $commit -- . | wc -l) = 1
 '
 
 test_expect_success 'further setup' '

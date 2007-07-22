@@ -2,7 +2,7 @@
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc update_indexinfo {msg pathList after} {
-	global update_index_cp ui_status_value
+	global update_index_cp
 
 	if {![lock_index update]} return
 
@@ -12,12 +12,12 @@ proc update_indexinfo {msg pathList after} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	set ui_status_value [format \
+	ui_status [format \
 		"$msg... %i/%i files (%.2f%%)" \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
-	set fd [open "| git update-index -z --index-info" w]
+	set fd [git_write update-index -z --index-info]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
@@ -36,7 +36,7 @@ proc update_indexinfo {msg pathList after} {
 }
 
 proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
-	global update_index_cp ui_status_value
+	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
@@ -67,7 +67,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 		display_file $path $new
 	}
 
-	set ui_status_value [format \
+	ui_status [format \
 		"$msg... %i/%i files (%.2f%%)" \
 		$update_index_cp \
 		$totalCnt \
@@ -75,7 +75,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 }
 
 proc update_index {msg pathList after} {
-	global update_index_cp ui_status_value
+	global update_index_cp
 
 	if {![lock_index update]} return
 
@@ -85,12 +85,12 @@ proc update_index {msg pathList after} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	set ui_status_value [format \
+	ui_status [format \
 		"$msg... %i/%i files (%.2f%%)" \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
-	set fd [open "| git update-index --add --remove -z --stdin" w]
+	set fd [git_write update-index --add --remove -z --stdin]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
@@ -109,7 +109,7 @@ proc update_index {msg pathList after} {
 }
 
 proc write_update_index {fd pathList totalCnt batch msg after} {
-	global update_index_cp ui_status_value
+	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
@@ -144,7 +144,7 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		display_file $path $new
 	}
 
-	set ui_status_value [format \
+	ui_status [format \
 		"$msg... %i/%i files (%.2f%%)" \
 		$update_index_cp \
 		$totalCnt \
@@ -152,7 +152,7 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 }
 
 proc checkout_index {msg pathList after} {
-	global update_index_cp ui_status_value
+	global update_index_cp
 
 	if {![lock_index update]} return
 
@@ -162,18 +162,18 @@ proc checkout_index {msg pathList after} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	set ui_status_value [format \
+	ui_status [format \
 		"$msg... %i/%i files (%.2f%%)" \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
-	set cmd [list git checkout-index]
-	lappend cmd --index
-	lappend cmd --quiet
-	lappend cmd --force
-	lappend cmd -z
-	lappend cmd --stdin
-	set fd [open "| $cmd " w]
+	set fd [git_write checkout-index \
+		--index \
+		--quiet \
+		--force \
+		-z \
+		--stdin \
+		]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
@@ -192,7 +192,7 @@ proc checkout_index {msg pathList after} {
 }
 
 proc write_checkout_index {fd pathList totalCnt batch msg after} {
-	global update_index_cp ui_status_value
+	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
@@ -217,7 +217,7 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 		}
 	}
 
-	set ui_status_value [format \
+	ui_status [format \
 		"$msg... %i/%i files (%.2f%%)" \
 		$update_index_cp \
 		$totalCnt \
@@ -249,7 +249,7 @@ proc unstage_helper {txt paths} {
 		update_indexinfo \
 			$txt \
 			$pathList \
-			[concat $after {set ui_status_value {Ready.}}]
+			[concat $after [list ui_ready]]
 	}
 }
 
@@ -293,7 +293,7 @@ proc add_helper {txt paths} {
 		update_index \
 			$txt \
 			$pathList \
-			[concat $after {set ui_status_value {Ready to commit.}}]
+			[concat $after {ui_status {Ready to commit.}}]
 	}
 }
 
@@ -370,7 +370,7 @@ Any unadded changes will be permanently lost by the revert." \
 		checkout_index \
 			$txt \
 			$pathList \
-			[concat $after {set ui_status_value {Ready.}}]
+			[concat $after [list ui_ready]]
 	} else {
 		unlock_index
 	}

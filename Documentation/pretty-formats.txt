@@ -106,12 +106,14 @@ The placeholders are:
 - '%aD': author date, RFC2822 style
 - '%ar': author date, relative
 - '%at': author date, UNIX timestamp
+- '%ai': author date, ISO 8601 format
 - '%cn': committer name
 - '%ce': committer email
 - '%cd': committer date
 - '%cD': committer date, RFC2822 style
 - '%cr': committer date, relative
 - '%ct': committer date, UNIX timestamp
+- '%ci': committer date, ISO 8601 format
 - '%e': encoding
 - '%s': subject
 - '%b': body

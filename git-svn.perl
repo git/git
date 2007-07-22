@@ -374,16 +374,9 @@ sub cmd_dcommit {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history\n";
 	}
-	my $c = $refs[-1];
 	my $last_rev;
-	foreach my $d (@refs) {
-		if (!verify_ref("$d~1")) {
-			fatal "Commit $d\n",
-			      "has no parent commit, and therefore ",
-			      "nothing to diff against.\n",
-			      "You should be working from a repository ",
-			      "originally created by git-svn\n";
-		}
+	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
+	foreach my $d (@$linear_refs) {
 		unless (defined $last_rev) {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
 			unless (defined $last_rev) {
@@ -405,6 +398,9 @@ sub cmd_dcommit {
 			                svn_path => '');
 			if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
 				print "No changes\n$d~1 == $d\n";
+			} elsif ($parents->{$d} && @{$parents->{$d}}) {
+				$gs->{inject_parents_dcommit}->{$last_rev} =
+				                               $parents->{$d};
 			}
 		}
 	}
@@ -831,6 +827,59 @@ sub working_head_info {
 	(undef, undef, undef, undef);
 }
 
+sub read_commit_parents {
+	my ($parents, $c) = @_;
+	my ($fh, $ctx) = command_output_pipe(qw/cat-file commit/, $c);
+	while (<$fh>) {
+		chomp;
+		last if '';
+		/^parent ($sha1)/ or next;
+		push @{$parents->{$c}}, $1;
+	}
+	close $fh; # break the pipe
+}
+
+sub linearize_history {
+	my ($gs, $refs) = @_;
+	my %parents;
+	foreach my $c (@$refs) {
+		read_commit_parents(\%parents, $c);
+	}
+
+	my @linear_refs;
+	my %skip = ();
+	my $last_svn_commit = $gs->last_commit;
+	foreach my $c (reverse @$refs) {
+		next if $c eq $last_svn_commit;
+		last if $skip{$c};
+
+		unshift @linear_refs, $c;
+		$skip{$c} = 1;
+
+		# we only want the first parent to diff against for linear
+		# history, we save the rest to inject when we finalize the
+		# svn commit
+		my $fp_a = verify_ref("$c~1");
+		my $fp_b = shift @{$parents{$c}} if $parents{$c};
+		if (!$fp_a || !$fp_b) {
+			die "Commit $c\n",
+			    "has no parent commit, and therefore ",
+			    "nothing to diff against.\n",
+			    "You should be working from a repository ",
+			    "originally created by git-svn\n";
+		}
+		if ($fp_a ne $fp_b) {
+			die "$c~1 = $fp_a, however parsing commit $c ",
+			    "revealed that:\n$c~1 = $fp_b\nBUG!\n";
+		}
+
+		foreach my $p (@{$parents{$c}}) {
+			$skip{$p} = 1;
+		}
+	}
+	(\@linear_refs, \%parents);
+}
+
 package Git::SVN;
 use strict;
 use warnings;
@@ -977,7 +1026,9 @@ sub read_all_remotes {
 	my $r = {};
 	foreach (grep { s/^svn-remote\.// } command(qw/config -l/)) {
 		if (m!^(.+)\.fetch=\s*(.*)\s*:\s*refs/remotes/(.+)\s*$!) {
-			$r->{$1}->{fetch}->{$2} = $3;
+			my ($remote, $local_ref, $remote_ref) = ($1, $2, $3);
+			$local_ref =~ s{^/}{};
+			$r->{$remote}->{fetch}->{$local_ref} = $remote_ref;
 		} elsif (m!^(.+)\.url=\s*(.*)\s*$!) {
 			$r->{$1}->{url} = $2;
 		} elsif (m!^(.+)\.(branches|tags)=
@@ -1097,6 +1148,7 @@ sub init_remote_config {
 	unless ($no_write) {
 		command_noisy('config',
 			      "svn-remote.$self->{repo_id}.url", $url);
+		$self->{path} =~ s{^/}{};
 		command_noisy('config', '--add',
 			      "svn-remote.$self->{repo_id}.fetch",
 			      "$self->{path}:".$self->refname);
@@ -1550,6 +1602,11 @@ sub get_commit_parents {
 	}
 	if (my $cur = ::verify_ref($self->refname.'^0')) {
 		push @tmp, $cur;
+	}
+	if (my $ipd = $self->{inject_parents_dcommit}) {
+		if (my $commit = delete $ipd->{$log_entry->{revision}}) {
+			push @tmp, @$commit;
+		}
 	}
 	push @tmp, $_ foreach (@{$log_entry->{parents}}, @tmp);
 	while (my $p = shift @tmp) {
@@ -2948,6 +3005,7 @@ sub new {
 	      \&Git::SVN::Prompt::username, 2),
 	  ]);
 	my $config = SVN::Core::config_get_config($config_dir);
+	$RA = undef;
 	my $self = SVN::Ra->new(url => $url, auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,

@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-apply should handle files with incomplete lines.
+test_description='git apply should handle files with incomplete lines.
 
 '
 . ./test-lib.sh
@@ -23,7 +23,7 @@ do
     cat frotz.$i >frotz
     test_expect_success \
         "apply diff between $i and $j" \
-	"git-apply <../t4101/diff.$i-$j && diff frotz.$j frotz"
+	"git apply <../t4101/diff.$i-$j && diff frotz.$j frotz"
   done
 done
 

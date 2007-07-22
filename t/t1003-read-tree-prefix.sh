@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Junio C Hamano
 #
 
-test_description='git-read-tree --prefix test.
+test_description='git read-tree --prefix test.
 '
 
 . ./test-lib.sh
@@ -14,8 +14,8 @@ cmp () {
 
 test_expect_success setup '
 	echo hello >one &&
-	git-update-index --add one &&
-	tree=`git-write-tree` &&
+	git update-index --add one &&
+	tree=`git write-tree` &&
 	echo tree is $tree
 '
 
@@ -23,8 +23,8 @@ echo 'one
 two/one' >expect
 
 test_expect_success 'read-tree --prefix' '
-	git-read-tree --prefix=two/ $tree &&
-	git-ls-files >actual &&
+	git read-tree --prefix=two/ $tree &&
+	git ls-files >actual &&
 	cmp expect actual
 '
 

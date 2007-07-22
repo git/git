@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "commit.h"
 

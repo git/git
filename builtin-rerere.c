@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "path-list.h"
 #include "xdiff/xdiff.h"
@@ -11,6 +12,9 @@ static const char git_rerere_usage[] =
 /* these values are days */
 static int cutoff_noresolve = 15;
 static int cutoff_resolve = 60;
+
+/* if rerere_enabled == -1, fall back to detection of .git/rr-cache */
+static int rerere_enabled = -1;
 
 static char *merge_rr_path;
 
@@ -165,19 +169,16 @@ static int find_conflict(struct path_list *conflict)
 	int i;
 	if (read_cache() < 0)
 		return error("Could not read index");
-	for (i = 0; i + 2 < active_nr; i++) {
-		struct cache_entry *e1 = active_cache[i];
-		struct cache_entry *e2 = active_cache[i+1];
-		struct cache_entry *e3 = active_cache[i+2];
-		if (ce_stage(e1) == 1 &&
-		    ce_stage(e2) == 2 &&
+	for (i = 0; i+1 < active_nr; i++) {
+		struct cache_entry *e2 = active_cache[i];
+		struct cache_entry *e3 = active_cache[i+1];
+		if (ce_stage(e2) == 2 &&
 		    ce_stage(e3) == 3 &&
-		    ce_same_name(e1, e2) && ce_same_name(e1, e3) &&
-		    S_ISREG(ntohl(e1->ce_mode)) &&
+		    ce_same_name(e2, e3) &&
 		    S_ISREG(ntohl(e2->ce_mode)) &&
 		    S_ISREG(ntohl(e3->ce_mode))) {
-			path_list_insert((const char *)e1->name, conflict);
-			i += 2;
+			path_list_insert((const char *)e2->name, conflict);
+			i++; /* skip over both #2 and #3 */
 		}
 	}
 	return 0;
@@ -282,8 +283,8 @@ static int diff_two(const char *file1, const char *label1,
 	printf("--- a/%s\n+++ b/%s\n", label1, label2);
 	fflush(stdout);
 	xpp.flags = XDF_NEED_MINIMAL;
+	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
-	xecfg.flags = 0;
 	ecb.outf = outf;
 	xdl_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 
@@ -387,21 +388,41 @@ static int git_rerere_config(const char *var, const char *value)
 		cutoff_resolve = git_config_int(var, value);
 	else if (!strcmp(var, "gc.rerereunresolved"))
 		cutoff_noresolve = git_config_int(var, value);
+	else if (!strcmp(var, "rerere.enabled"))
+		rerere_enabled = git_config_bool(var, value);
 	else
 		return git_default_config(var, value);
 	return 0;
+}
+
+static int is_rerere_enabled(void)
+{
+	struct stat st;
+	const char *rr_cache;
+	int rr_cache_exists;
+
+	if (!rerere_enabled)
+		return 0;
+
+	rr_cache = git_path("rr-cache");
+	rr_cache_exists = !stat(rr_cache, &st) && S_ISDIR(st.st_mode);
+	if (rerere_enabled < 0)
+		return rr_cache_exists;
+
+	if (!rr_cache_exists &&
+	    (mkdir(rr_cache, 0777) || adjust_shared_perm(rr_cache)))
+		die("Could not create directory %s", rr_cache);
+	return 1;
 }
 
 int cmd_rerere(int argc, const char **argv, const char *prefix)
 {
 	struct path_list merge_rr = { NULL, 0, 0, 1 };
 	int i, fd = -1;
-	struct stat st;
-
-	if (stat(git_path("rr-cache"), &st) || !S_ISDIR(st.st_mode))
-		return 0;
 
 	git_config(git_rerere_config);
+	if (!is_rerere_enabled())
+		return 0;
 
 	merge_rr_path = xstrdup(git_path("rr-cache/MERGE_RR"));
 	fd = hold_lock_file_for_update(&write_lock, merge_rr_path, 1);
@@ -411,6 +432,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 		return do_plain_rerere(&merge_rr, fd);
 	else if (!strcmp(argv[1], "clear")) {
 		for (i = 0; i < merge_rr.nr; i++) {
+			struct stat st;
 			const char *name = (const char *)merge_rr.items[i].util;
 			if (!stat(git_path("rr-cache/%s", name), &st) &&
 					S_ISDIR(st.st_mode) &&

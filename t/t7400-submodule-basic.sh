@@ -23,24 +23,24 @@ subcommands of git-submodule.
 test_expect_success 'Prepare submodule testing' '
 	mkdir lib &&
 	cd lib &&
-	git-init &&
+	git init &&
 	echo a >a &&
-	git-add a &&
+	git add a &&
 	git-commit -m "submodule commit 1" &&
 	git-tag -a -m "rev-1" rev-1 &&
-	rev1=$(git-rev-parse HEAD) &&
+	rev1=$(git rev-parse HEAD) &&
 	if test -z "$rev1"
 	then
-		echo "[OOPS] submodule git-rev-parse returned nothing"
+		echo "[OOPS] submodule git rev-parse returned nothing"
 		false
 	fi &&
 	cd .. &&
 	echo a >a &&
 	echo z >z &&
-	git-add a lib z &&
+	git add a lib z &&
 	git-commit -m "super commit 1" &&
 	mv lib .subrepo &&
-	GIT_CONFIG=.gitmodules git-config submodule.example.url git://example.com/lib.git
+	GIT_CONFIG=.gitmodules git config submodule.example.url git://example.com/lib.git
 '
 
 test_expect_success 'status should fail for unmapped paths' '
@@ -48,9 +48,9 @@ test_expect_success 'status should fail for unmapped paths' '
 	then
 		echo "[OOPS] submodule status succeeded"
 		false
-	elif ! GIT_CONFIG=.gitmodules git-config submodule.example.path lib
+	elif ! GIT_CONFIG=.gitmodules git config submodule.example.path lib
 	then
-		echo "[OOPS] git-config failed to update .gitmodules"
+		echo "[OOPS] git config failed to update .gitmodules"
 		false
 	fi
 '
@@ -66,12 +66,12 @@ test_expect_success 'status should initially be "missing"' '
 
 test_expect_success 'init should register submodule url in .git/config' '
 	git-submodule init &&
-	url=$(git-config submodule.example.url) &&
+	url=$(git config submodule.example.url) &&
 	if test "$url" != "git://example.com/lib.git"
 	then
 		echo "[OOPS] init succeeded but submodule url is wrong"
 		false
-	elif ! git-config submodule.example.url ./.subrepo
+	elif ! git config submodule.example.url ./.subrepo
 	then
 		echo "[OOPS] init succeeded but update of url failed"
 		false
@@ -113,7 +113,7 @@ test_expect_success 'update should work when path is an empty dir' '
 	rm -rf lib &&
 	mkdir lib &&
 	git-submodule update &&
-	head=$(cd lib && git-rev-parse HEAD) &&
+	head=$(cd lib && git rev-parse HEAD) &&
 	if test -z "$head"
 	then
 		echo "[OOPS] Failed to obtain submodule head"
@@ -132,13 +132,13 @@ test_expect_success 'status should be "up-to-date" after update' '
 test_expect_success 'status should be "modified" after submodule commit' '
 	cd lib &&
 	echo b >b &&
-	git-add b &&
+	git add b &&
 	git-commit -m "submodule commit 2" &&
-	rev2=$(git-rev-parse HEAD) &&
+	rev2=$(git rev-parse HEAD) &&
 	cd .. &&
 	if test -z "$rev2"
 	then
-		echo "[OOPS] submodule git-rev-parse returned nothing"
+		echo "[OOPS] submodule git rev-parse returned nothing"
 		false
 	fi &&
 	git-submodule status | grep "^+$rev2"
@@ -150,10 +150,10 @@ test_expect_success 'the --cached sha1 should be rev1' '
 
 test_expect_success 'update should checkout rev1' '
 	git-submodule update &&
-	head=$(cd lib && git-rev-parse HEAD) &&
+	head=$(cd lib && git rev-parse HEAD) &&
 	if test -z "$head"
 	then
-		echo "[OOPS] submodule git-rev-parse returned nothing"
+		echo "[OOPS] submodule git rev-parse returned nothing"
 		false
 	elif test "$head" != "$rev1"
 	then

@@ -58,7 +58,7 @@ http://* | https://* | ftp://* )
             curl_extra_args="-k"
         fi
 	if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
-		"`git-config --bool http.noEPSV`" = true ]; then
+		"`git config --bool http.noEPSV`" = true ]; then
 		curl_extra_args="${curl_extra_args} --disable-epsv"
 	fi
 	curl -nsf $curl_extra_args --header "Pragma: no-cache" "$peek_repo/info/refs" ||
@@ -82,7 +82,7 @@ rsync://* )
 	(cd $tmpdir && /usr/bin/find refs -type f) |
 	while read path
 	do
-		cat "$tmpdir/$path" | tr -d '\012'
+		tr -d '\012' <"$tmpdir/$path"
 		echo "	$path"
 	done &&
 	rm -fr $tmpdir

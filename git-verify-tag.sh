@@ -21,7 +21,7 @@ then
 	usage
 fi
 
-type="$(git-cat-file -t "$1" 2>/dev/null)" ||
+type="$(git cat-file -t "$1" 2>/dev/null)" ||
 	die "$1: no such object."
 
 test "$type" = tag ||
@@ -29,14 +29,14 @@ test "$type" = tag ||
 
 case "$verbose" in
 t)
-	git-cat-file -p "$1" |
+	git cat-file -p "$1" |
 	sed -n -e '/^-----BEGIN PGP SIGNATURE-----/q' -e p
 	;;
 esac
 
 trap 'rm -f "$GIT_DIR/.tmp-vtag"' 0
 
-git-cat-file tag "$1" >"$GIT_DIR/.tmp-vtag" || exit 1
+git cat-file tag "$1" >"$GIT_DIR/.tmp-vtag" || exit 1
 sed -n -e '
 	/^-----BEGIN PGP SIGNATURE-----$/q
 	p

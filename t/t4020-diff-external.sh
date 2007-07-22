@@ -94,4 +94,16 @@ test_expect_success 'diff attribute should apply only to diff' '
 
 '
 
+test_expect_success 'no diff with -diff' '
+	echo >.gitattributes "file -diff" &&
+	git diff | grep Binary
+'
+
+echo NULZbetweenZwords | tr Z '\0' > file
+
+test_expect_success 'force diff with "diff"' '
+	echo >.gitattributes "file diff" &&
+	git diff | grep -a second
+'
+
 test_done

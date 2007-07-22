@@ -25,12 +25,12 @@ add () {
 	done
 
 	echo "$text" > test.txt
-	git-update-index --add test.txt
-	tree=$(git-write-tree)
+	git update-index --add test.txt
+	tree=$(git write-tree)
 	# make sure timestamps are in correct order
 	sec=$(($sec+1))
 	commit=$(echo "$text" | GIT_AUTHOR_DATE=$sec \
-		git-commit-tree $tree $parents 2>>log2.txt)
+		git commit-tree $tree $parents 2>>log2.txt)
 	export $name=$commit
 	echo $commit > .git/refs/heads/$branch
 	eval ${branch}TIP=$commit
@@ -61,19 +61,19 @@ pull_to_client () {
 		"git-fetch-pack -k -v .. $heads"
 	case "$heads" in *A*) echo $ATIP > .git/refs/heads/A;; esac
 	case "$heads" in *B*) echo $BTIP > .git/refs/heads/B;; esac
-	git-symbolic-ref HEAD refs/heads/`echo $heads | sed -e 's/^\(.\).*$/\1/'`
+	git symbolic-ref HEAD refs/heads/`echo $heads | sed -e 's/^\(.\).*$/\1/'`
 
-	test_expect_success "fsck" 'git-fsck --full > fsck.txt 2>&1'
+	test_expect_success "fsck" 'git fsck --full > fsck.txt 2>&1'
 
 	test_expect_success 'check downloaded results' \
 	'mv .git/objects/pack/pack-* . &&
 	 p=`ls -1 pack-*.pack` &&
-	 git-unpack-objects <$p &&
-	 git-fsck --full'
+	 git unpack-objects <$p &&
+	 git fsck --full'
 
 	test_expect_success "new object count after $number pull" \
 	'idx=`echo pack-*.idx` &&
-	 pack_count=`git-show-index <$idx | wc -l` &&
+	 pack_count=`git show-index <$idx | wc -l` &&
 	 test $pack_count = $count'
 	test -z "$pack_count" && pack_count=0
 	if [ -z "$no_strict_count_check" ]; then
@@ -97,7 +97,7 @@ pull_to_client () {
 (
 	mkdir client &&
 	cd client &&
-	git-init 2>> log2.txt &&
+	git init 2>> log2.txt &&
 	git config transfer.unpacklimit 0
 )
 
@@ -113,7 +113,7 @@ add B1 $A1
 
 echo $ATIP > .git/refs/heads/A
 echo $BTIP > .git/refs/heads/B
-git-symbolic-ref HEAD refs/heads/B
+git symbolic-ref HEAD refs/heads/B
 
 pull_to_client 1st "B A" $((11*3))
 
@@ -131,7 +131,7 @@ pull_to_client 3rd "A" $((1*3)) # old fails
 
 test_expect_success "clone shallow" "git-clone --depth 2 . shallow"
 
-(cd shallow; git-count-objects -v) > count.shallow
+(cd shallow; git count-objects -v) > count.shallow
 
 test_expect_success "clone shallow object count" \
 	"test \"in-pack: 18\" = \"$(grep in-pack count.shallow)\""
@@ -145,7 +145,7 @@ test_expect_success "clone shallow object count (part 2)" '
 '
 
 test_expect_success "fsck in shallow repo" \
-	"(cd shallow; git-fsck --full)"
+	"(cd shallow; git fsck --full)"
 
 #test_done; exit
 
@@ -155,7 +155,7 @@ add B67 $B66
 test_expect_success "pull in shallow repo" \
 	"(cd shallow; git pull .. B)"
 
-(cd shallow; git-count-objects -v) > count.shallow
+(cd shallow; git count-objects -v) > count.shallow
 test_expect_success "clone shallow object count" \
 	"test \"count: 6\" = \"$(grep count count.shallow)\""
 
@@ -165,14 +165,14 @@ add B69 $B68
 test_expect_success "deepening pull in shallow repo" \
 	"(cd shallow; git pull --depth 4 .. B)"
 
-(cd shallow; git-count-objects -v) > count.shallow
+(cd shallow; git count-objects -v) > count.shallow
 test_expect_success "clone shallow object count" \
 	"test \"count: 12\" = \"$(grep count count.shallow)\""
 
 test_expect_success "deepening fetch in shallow repo" \
 	"(cd shallow; git fetch --depth 4 .. A:A)"
 
-(cd shallow; git-count-objects -v) > count.shallow
+(cd shallow; git count-objects -v) > count.shallow
 test_expect_success "clone shallow object count" \
 	"test \"count: 18\" = \"$(grep count count.shallow)\""
 

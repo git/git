@@ -8,7 +8,7 @@ test_description='Merge base computation.
 
 . ./test-lib.sh
 
-T=$(git-write-tree)
+T=$(git write-tree)
 
 M=1130000000
 Z=+0000
@@ -29,7 +29,7 @@ doit() {
 	GIT_COMMITTER_DATE="$(($M + $OFFSET)) $Z"
 	GIT_AUTHOR_DATE=$GIT_COMMITTER_DATE
 	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
-	commit=$(echo $NAME | git-commit-tree $T $PARENTS)
+	commit=$(echo $NAME | git commit-tree $T $PARENTS)
 	echo $commit >.git/refs/tags/$NAME
 	echo $commit
 }
@@ -51,16 +51,16 @@ G=$(doit 7 G $B $E)
 H=$(doit 8 H $A $F)
 
 test_expect_success 'compute merge-base (single)' \
-    'MB=$(git-merge-base G H) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
+    'MB=$(git merge-base G H) &&
+     expr "$(git name-rev "$MB")" : "[0-9a-f]* tags/B"'
 
 test_expect_success 'compute merge-base (all)' \
-    'MB=$(git-merge-base --all G H) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
+    'MB=$(git merge-base --all G H) &&
+     expr "$(git name-rev "$MB")" : "[0-9a-f]* tags/B"'
 
 test_expect_success 'compute merge-base with show-branch' \
-    'MB=$(git-show-branch --merge-base G H) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
+    'MB=$(git show-branch --merge-base G H) &&
+     expr "$(git name-rev "$MB")" : "[0-9a-f]* tags/B"'
 
 # Setup for second test to demonstrate that relying on timestamps in a
 # distributed SCM to provide a _consistent_ partial ordering of commits
@@ -100,11 +100,11 @@ PL=$(doit  4 PL $L2 $C2)
 PR=$(doit  4 PR $C2 $R2)
 
 test_expect_success 'compute merge-base (single)' \
-    'MB=$(git-merge-base PL PR) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/C2"'
+    'MB=$(git merge-base PL PR) &&
+     expr "$(git name-rev "$MB")" : "[0-9a-f]* tags/C2"'
 
 test_expect_success 'compute merge-base (all)' \
-    'MB=$(git-merge-base --all PL PR) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/C2"'
+    'MB=$(git merge-base --all PL PR) &&
+     expr "$(git name-rev "$MB")" : "[0-9a-f]* tags/C2"'
 
 test_done

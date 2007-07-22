@@ -71,6 +71,9 @@ our $logo_label = "git homepage";
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
 
+# the width (in characters) of the projects list "Description" column
+our $projects_list_description_width = 25;
+
 # default order of projects list
 # valid values are none, project, descr, owner, and age
 our $default_projects_order = "project";
@@ -383,6 +386,23 @@ if (defined $hash_base) {
 	}
 }
 
+my %allowed_options = (
+	"--no-merges" => [ qw(rss atom log shortlog history) ],
+);
+
+our @extra_options = $cgi->param('opt');
+if (defined @extra_options) {
+	foreach(@extra_options)
+	{
+		if (not grep(/^$_$/, keys %allowed_options)) {
+			die_error(undef, "Invalid option parameter");
+		}
+		if (not grep(/^$action$/, @{$allowed_options{$_}})) {
+			die_error(undef, "Invalid option parameter for this action");
+		}
+	}
+}
+
 our $hash_parent_base = $cgi->param('hpb');
 if (defined $hash_parent_base) {
 	if (!validate_refname($hash_parent_base)) {
@@ -534,6 +554,7 @@ sub href(%) {
 		action => "a",
 		file_name => "f",
 		file_parent => "fp",
+		extra_options => "opt",
 		hash => "h",
 		hash_parent => "hp",
 		hash_base => "hb",
@@ -1465,12 +1486,12 @@ sub git_get_projects_list {
 	return @list;
 }
 
-sub git_get_project_owner {
-	my $project = shift;
-	my $owner;
+our $gitweb_project_owner = undef;
+sub git_get_project_list_from_file {
 
-	return undef unless $project;
+	return if (defined $gitweb_project_owner);
 
+	$gitweb_project_owner = {};
 	# read from file (url-encoded):
 	# 'git%2Fgit.git Linus+Torvalds'
 	# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
@@ -1482,12 +1503,24 @@ sub git_get_project_owner {
 			my ($pr, $ow) = split ' ', $line;
 			$pr = unescape($pr);
 			$ow = unescape($ow);
-			if ($pr eq $project) {
-				$owner = to_utf8($ow);
-				last;
-			}
+			$gitweb_project_owner->{$pr} = to_utf8($ow);
 		}
 		close $fd;
+	}
+}
+
+sub git_get_project_owner {
+	my $project = shift;
+	my $owner;
+
+	return undef unless $project;
+
+	if (!defined $gitweb_project_owner) {
+		git_get_project_list_from_file();
+	}
+
+	if (exists $gitweb_project_owner->{$project}) {
+		$owner = $gitweb_project_owner->{$project};
 	}
 	if (!defined $owner) {
 		$owner = get_file_owner("$projectroot/$project");
@@ -1514,6 +1547,7 @@ sub git_get_last_activity {
 		my $age = time - $timestamp;
 		return ($age, age_string($age));
 	}
+	return (undef, undef);
 }
 
 sub git_get_references {
@@ -1757,6 +1791,7 @@ sub parse_commits {
 		($arg ? ($arg) : ()),
 		("--max-count=" . $maxcount),
 		("--skip=" . $skip),
+		@extra_options,
 		$commit_id,
 		"--",
 		($filename ? ($filename) : ())
@@ -2201,12 +2236,18 @@ EOF
 		} else {
 			$search_hash = "HEAD";
 		}
+		my $action = $my_uri;
+		my ($use_pathinfo) = gitweb_check_feature('pathinfo');
+		if ($use_pathinfo) {
+			$action .= "/$project";
+		} else {
+			$cgi->param("p", $project);
+		}
 		$cgi->param("a", "search");
 		$cgi->param("h", $search_hash);
-		$cgi->param("p", $project);
-		print $cgi->startform(-method => "get", -action => $my_uri) .
+		print $cgi->startform(-method => "get", -action => $action) .
 		      "<div class=\"search\">\n" .
-		      $cgi->hidden(-name => "p") . "\n" .
+		      (!$use_pathinfo && $cgi->hidden(-name => "p") . "\n") .
 		      $cgi->hidden(-name => "a") . "\n" .
 		      $cgi->hidden(-name => "h") . "\n" .
 		      $cgi->popup_menu(-name => 'st', -default => 'commit',
@@ -3163,10 +3204,10 @@ sub git_project_list_body {
 		if (!defined $pr->{'descr'}) {
 			my $descr = git_get_project_description($pr->{'path'}) || "";
 			$pr->{'descr_long'} = to_utf8($descr);
-			$pr->{'descr'} = chop_str($descr, 25, 5);
+			$pr->{'descr'} = chop_str($descr, $projects_list_description_width, 5);
 		}
 		if (!defined $pr->{'owner'}) {
-			$pr->{'owner'} = get_file_owner("$projectroot/$pr->{'path'}") || "";
+			$pr->{'owner'} = git_get_project_owner("$pr->{'path'}") || "";
 		}
 		if ($check_forks) {
 			my $pname = $pr->{'path'};
@@ -3590,7 +3631,7 @@ sub git_project_index {
 
 	foreach my $pr (@projects) {
 		if (!exists $pr->{'owner'}) {
-			$pr->{'owner'} = get_file_owner("$projectroot/$pr->{'path'}");
+			$pr->{'owner'} = git_get_project_owner("$pr->{'path'}");
 		}
 
 		my ($path, $owner) = ($pr->{'path'}, $pr->{'owner'});

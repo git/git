@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "refs.h"
 #include "object.h"
@@ -796,7 +797,7 @@ static struct ref_sort *default_sort(void)
 	return sort;
 }
 
-int cmd_for_each_ref(int ac, const char **av, char *prefix)
+int cmd_for_each_ref(int ac, const char **av, const char *prefix)
 {
 	int i, num_refs;
 	const char *format = NULL;

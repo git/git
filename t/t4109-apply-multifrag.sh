@@ -4,7 +4,7 @@
 # Copyright (c) 2005 Robert Fitzsimons
 #
 
-test_description='git-apply test patches with multiple fragments.
+test_description='git apply test patches with multiple fragments.
 
 '
 . ./test-lib.sh
@@ -142,8 +142,8 @@ diff --git a/main.c b/main.c
  
 EOF
 
-test_expect_success "S = git-apply (1)" \
-    'git-apply patch1.patch patch2.patch'
+test_expect_success "S = git apply (1)" \
+    'git apply patch1.patch patch2.patch'
 mv main.c main.c.git
 
 test_expect_success "S = patch (1)" \
@@ -154,8 +154,8 @@ test_expect_success "S = cmp (1)" \
 
 rm -f main.c main.c.git
 
-test_expect_success "S = git-apply (2)" \
-    'git-apply patch1.patch patch2.patch patch3.patch'
+test_expect_success "S = git apply (2)" \
+    'git apply patch1.patch patch2.patch patch3.patch'
 mv main.c main.c.git
 
 test_expect_success "S = patch (2)" \
@@ -166,8 +166,8 @@ test_expect_success "S = cmp (2)" \
 
 rm -f main.c main.c.git
 
-test_expect_success "S = git-apply (3)" \
-    'git-apply patch1.patch patch4.patch'
+test_expect_success "S = git apply (3)" \
+    'git apply patch1.patch patch4.patch'
 mv main.c main.c.git
 
 test_expect_success "S = patch (3)" \

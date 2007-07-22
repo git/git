@@ -16,8 +16,9 @@
 #include "progress.h"
 
 static const char pack_usage[] = "\
-git-pack-objects [{ -q | --progress | --all-progress }] [--max-pack-size=N] \n\
-	[--local] [--incremental] [--window=N] [--depth=N] \n\
+git-pack-objects [{ -q | --progress | --all-progress }] \n\
+	[--max-pack-size=N] [--local] [--incremental] \n\
+	[--window=N] [--window-memory=N] [--depth=N] \n\
 	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
 	[--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
 	[--stdout | base-name] [<ref-list | <object-list]";
@@ -25,9 +26,6 @@ git-pack-objects [{ -q | --progress | --all-progress }] [--max-pack-size=N] \n\
 struct object_entry {
 	struct pack_idx_entry idx;
 	unsigned long size;	/* uncompressed size */
-
-	unsigned int hash;	/* name hint hash */
-	unsigned int depth;	/* delta depth */
 	struct packed_git *in_pack; 	/* already in pack */
 	off_t in_pack_offset;
 	struct object_entry *delta;	/* delta base object */
@@ -37,6 +35,7 @@ struct object_entry {
 					     */
 	void *delta_data;	/* cached delta (uncompressed) */
 	unsigned long delta_size;	/* delta data size (uncompressed) */
+	unsigned int hash;	/* name hint hash */
 	enum object_type type;
 	enum object_type in_pack_type;	/* could be delta */
 	unsigned char in_pack_header_size;
@@ -78,6 +77,9 @@ static int pack_compression_seen;
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 0;
 static unsigned long cache_max_small_delta_size = 1000;
+
+static unsigned long window_memory_usage = 0;
+static unsigned long window_memory_limit = 0;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -1270,6 +1272,7 @@ struct unpacked {
 	struct object_entry *entry;
 	void *data;
 	struct delta_index *index;
+	unsigned depth;
 };
 
 static int delta_cacheable(struct unpacked *trg, struct unpacked *src,
@@ -1303,6 +1306,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	struct object_entry *trg_entry = trg->entry;
 	struct object_entry *src_entry = src->entry;
 	unsigned long trg_size, src_size, delta_size, sizediff, max_size, sz;
+	unsigned ref_depth;
 	enum object_type type;
 	void *delta_buf;
 
@@ -1327,20 +1331,27 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		return 0;
 
 	/* Let's not bust the allowed depth. */
-	if (src_entry->depth >= max_depth)
+	if (src->depth >= max_depth)
 		return 0;
 
 	/* Now some size filtering heuristics. */
 	trg_size = trg_entry->size;
-	max_size = trg_size/2 - 20;
-	max_size = max_size * (max_depth - src_entry->depth) / max_depth;
+	if (!trg_entry->delta) {
+		max_size = trg_size/2 - 20;
+		ref_depth = 1;
+	} else {
+		max_size = trg_entry->delta_size;
+		ref_depth = trg->depth;
+	}
+	max_size = max_size * (max_depth - src->depth) /
+						(max_depth - ref_depth + 1);
 	if (max_size == 0)
 		return 0;
-	if (trg_entry->delta && trg_entry->delta_size <= max_size)
-		max_size = trg_entry->delta_size-1;
 	src_size = src_entry->size;
 	sizediff = src_size < trg_size ? trg_size - src_size : 0;
 	if (sizediff >= max_size)
+		return 0;
+	if (trg_size < src_size / 32)
 		return 0;
 
 	/* Load data if not already done */
@@ -1349,12 +1360,14 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		if (sz != trg_size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(trg_entry->idx.sha1), sz, trg_size);
+		window_memory_usage += sz;
 	}
 	if (!src->data) {
 		src->data = read_sha1_file(src_entry->idx.sha1, &type, &sz);
 		if (sz != src_size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(src_entry->idx.sha1), sz, src_size);
+		window_memory_usage += sz;
 	}
 	if (!src->index) {
 		src->index = create_delta_index(src->data, src_size);
@@ -1364,6 +1377,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 				warning("suboptimal pack - out of memory");
 			return 0;
 		}
+		window_memory_usage += sizeof_delta_index(src->index);
 	}
 
 	delta_buf = create_delta(src->index, trg->data, trg_size, &delta_size, max_size);
@@ -1371,13 +1385,19 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		return 0;
 
 	if (trg_entry->delta_data) {
+		/* Prefer only shallower same-sized deltas. */
+		if (delta_size == trg_entry->delta_size &&
+		    src->depth + 1 >= trg->depth) {
+			free(delta_buf);
+			return 0;
+		}
 		delta_cache_size -= trg_entry->delta_size;
 		free(trg_entry->delta_data);
+		trg_entry->delta_data = NULL;
 	}
-	trg_entry->delta_data = 0;
 	trg_entry->delta = src_entry;
 	trg_entry->delta_size = delta_size;
-	trg_entry->depth = src_entry->depth + 1;
+	trg->depth = src->depth + 1;
 
 	if (delta_cacheable(src, trg, src_size, trg_size, delta_size)) {
 		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
@@ -1400,9 +1420,23 @@ static unsigned int check_delta_limit(struct object_entry *me, unsigned int n)
 	return m;
 }
 
+static void free_unpacked(struct unpacked *n)
+{
+	window_memory_usage -= sizeof_delta_index(n->index);
+	free_delta_index(n->index);
+	n->index = NULL;
+	if (n->data) {
+		free(n->data);
+		n->data = NULL;
+		window_memory_usage -= n->entry->size;
+	}
+	n->entry = NULL;
+	n->depth = 0;
+}
+
 static void find_deltas(struct object_entry **list, int window, int depth)
 {
-	uint32_t i = nr_objects, idx = 0, processed = 0;
+	uint32_t i = nr_objects, idx = 0, count = 0, processed = 0;
 	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array;
 	int max_depth;
@@ -1437,11 +1471,16 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		if (entry->no_try_delta)
 			continue;
 
-		free_delta_index(n->index);
-		n->index = NULL;
-		free(n->data);
-		n->data = NULL;
+		free_unpacked(n);
 		n->entry = entry;
+
+		while (window_memory_limit &&
+		       window_memory_usage > window_memory_limit &&
+		       count > 1) {
+			uint32_t tail = (idx + window - count) % window;
+			free_unpacked(array + tail);
+			count--;
+		}
 
 		/*
 		 * If the current object is at pack edge, take the depth the
@@ -1472,11 +1511,13 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		 * depth, leaving it in the window is pointless.  we
 		 * should evict it first.
 		 */
-		if (entry->delta && depth <= entry->depth)
+		if (entry->delta && depth <= n->depth)
 			continue;
 
 		next:
 		idx++;
+		if (count + 1 < window)
+			count++;
 		if (idx >= window)
 			idx = 0;
 	} while (i > 0);
@@ -1515,7 +1556,11 @@ static int git_pack_config(const char *k, const char *v)
 		window = git_config_int(k, v);
 		return 0;
 	}
-	if(!strcmp(k, "pack.depth")) {
+	if (!strcmp(k, "pack.windowmemory")) {
+		window_memory_limit = git_config_ulong(k, v);
+		return 0;
+	}
+	if (!strcmp(k, "pack.depth")) {
 		depth = git_config_int(k, v);
 		return 0;
 	}
@@ -1688,6 +1733,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			char *end;
 			window = strtoul(arg+9, &end, 0);
 			if (!arg[9] || *end)
+				usage(pack_usage);
+			continue;
+		}
+		if (!prefixcmp(arg, "--window-memory=")) {
+			if (!git_parse_ulong(arg+16, &window_memory_limit))
 				usage(pack_usage);
 			continue;
 		}

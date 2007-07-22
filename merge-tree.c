@@ -106,8 +106,8 @@ static void show_diff(struct merge_list *entry)
 	xdemitcb_t ecb;
 
 	xpp.flags = XDF_NEED_MINIMAL;
+	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
-	xecfg.flags = 0;
 	ecb.outf = show_outf;
 	ecb.priv = NULL;
 

@@ -95,7 +95,7 @@ the remote repository.
 -v::
 	Run verbosely.
 
-include::urls.txt[]
+include::urls-remotes.txt[]
 
 
 Examples

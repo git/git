@@ -61,6 +61,9 @@ include::pretty-options.txt[]
 	the specified paths; this means that "<paths>..." limits only
 	commits, and doesn't limit diff for those commits.
 
+--follow::
+	Continue listing the history of a file beyond renames.
+
 <paths>...::
 	Show only commits that affect the specified paths.
 
@@ -90,6 +93,12 @@ git log -r --name-status release..test::
 	Show the commits that are in the "test" branch but not yet
 	in the "release" branch, along with the list of paths
 	each commit modifies.
+
+git log --follow builtin-rev-list.c::
+
+	Shows the commits that changed builtin-rev-list.c, including
+	those commits that occurred before the file was given its
+	present name.
 
 Discussion
 ----------

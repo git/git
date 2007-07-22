@@ -19,9 +19,9 @@ test_expect_success 'setup old-looking metadata' "
 	mv $GIT_DIR/svn/* $GIT_DIR/ &&
 	mv $GIT_DIR/svn/.metadata $GIT_DIR/ &&
 	rmdir $GIT_DIR/svn &&
-	git-update-ref refs/heads/git-svn-HEAD refs/remotes/git-svn &&
-	git-update-ref refs/heads/svn-HEAD refs/remotes/git-svn &&
-	git-update-ref -d refs/remotes/git-svn refs/remotes/git-svn
+	git update-ref refs/heads/git-svn-HEAD refs/remotes/git-svn &&
+	git update-ref refs/heads/svn-HEAD refs/remotes/git-svn &&
+	git update-ref -d refs/remotes/git-svn refs/remotes/git-svn
 	"
 
 head=`git rev-parse --verify refs/heads/git-svn-HEAD^0`
@@ -33,8 +33,8 @@ test_expect_success 'initialize old-style (v0) git-svn layout' "
 	echo $svnrepo > $GIT_DIR/svn/info/url &&
 	git-svn migrate &&
 	! test -d $GIT_DIR/git-svn &&
-	git-rev-parse --verify refs/remotes/git-svn^0 &&
-	git-rev-parse --verify refs/remotes/svn^0 &&
+	git rev-parse --verify refs/remotes/git-svn^0 &&
+	git rev-parse --verify refs/remotes/svn^0 &&
 	test \`git config --get svn-remote.svn.url\` = '$svnrepo' &&
 	test \`git config --get svn-remote.svn.fetch\` = \
              ':refs/remotes/git-svn'
@@ -42,20 +42,20 @@ test_expect_success 'initialize old-style (v0) git-svn layout' "
 
 test_expect_success 'initialize a multi-repository repo' "
 	git-svn init $svnrepo -T trunk -t tags -b branches &&
-	git-config --get-all svn-remote.svn.fetch > fetch.out &&
+	git config --get-all svn-remote.svn.fetch > fetch.out &&
 	grep '^trunk:refs/remotes/trunk$' fetch.out &&
-	test -n \"\`git-config --get svn-remote.svn.branches \
+	test -n \"\`git config --get svn-remote.svn.branches \
 	            '^branches/\*:refs/remotes/\*$'\`\" &&
-	test -n \"\`git-config --get svn-remote.svn.tags \
+	test -n \"\`git config --get svn-remote.svn.tags \
 	            '^tags/\*:refs/remotes/tags/\*$'\`\" &&
 	git config --unset svn-remote.svn.branches \
 	                        '^branches/\*:refs/remotes/\*$' &&
 	git config --unset svn-remote.svn.tags \
 	                        '^tags/\*:refs/remotes/tags/\*$' &&
-	git-config --add svn-remote.svn.fetch 'branches/a:refs/remotes/a' &&
-	git-config --add svn-remote.svn.fetch 'branches/b:refs/remotes/b' &&
+	git config --add svn-remote.svn.fetch 'branches/a:refs/remotes/a' &&
+	git config --add svn-remote.svn.fetch 'branches/b:refs/remotes/b' &&
 	for i in tags/0.1 tags/0.2 tags/0.3; do
-		git-config --add svn-remote.svn.fetch \
+		git config --add svn-remote.svn.fetch \
 		                 \$i:refs/remotes/\$i || exit 1; done
 	"
 
@@ -86,8 +86,8 @@ test_expect_success 'migrate --minimize on old inited layout' "
 		echo $svnrepo\$path > $GIT_DIR/svn/\$ref/info/url ) || exit 1;
 	done &&
 	git-svn migrate --minimize &&
-	test -z \"\`git-config -l |grep -v '^svn-remote\.git-svn\.'\`\" &&
-	git-config --get-all svn-remote.svn.fetch > fetch.out &&
+	test -z \"\`git config -l |grep -v '^svn-remote\.git-svn\.'\`\" &&
+	git config --get-all svn-remote.svn.fetch > fetch.out &&
 	grep '^trunk:refs/remotes/trunk$' fetch.out &&
 	grep '^branches/a:refs/remotes/a$' fetch.out &&
 	grep '^branches/b:refs/remotes/b$' fetch.out &&

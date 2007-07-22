@@ -12,7 +12,7 @@ URL: 		http://kernel.org/pub/software/scm/git/
 Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
 BuildRequires:	zlib-devel >= 1.2, openssl-devel, curl-devel, expat-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires:	git-core, git-svn, git-cvs, git-arch, git-email, gitk, git-gui, git-p4, perl-Git
+Requires:	git-core, git-svn, git-cvs, git-arch, git-email, gitk, git-gui, perl-Git
 
 %description
 Git is a fast, scalable, distributed revision control system with an
@@ -53,13 +53,6 @@ Requires:       git-core = %{version}-%{release}, tla
 %description arch
 Git tools for importing Arch repositories.
 
-%package p4
-Summary:        Git tools for importing Perforce repositories
-Group:          Development/Tools
-Requires:       git-core = %{version}-%{release}, python
-%description p4
-Git tools for importing Perforce repositories.
-
 %package email
 Summary:        Git tools for sending email
 Group:          Development/Tools
@@ -95,14 +88,14 @@ Perl interface to Git
 %setup -q
 
 %build
-make %{_smp_mflags} CFLAGS="$RPM_OPT_FLAGS" WITH_P4IMPORT=YesPlease \
+make %{_smp_mflags} CFLAGS="$RPM_OPT_FLAGS" \
      ETC_GITCONFIG=/etc/gitconfig \
-     prefix=%{_prefix} PYTHON_PATH=%{python_path} all %{!?_without_docs: doc}
+     prefix=%{_prefix} all %{!?_without_docs: doc}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 make %{_smp_mflags} CFLAGS="$RPM_OPT_FLAGS" DESTDIR=$RPM_BUILD_ROOT \
-     WITH_P4IMPORT=YesPlease prefix=%{_prefix} mandir=%{_mandir} \
+     prefix=%{_prefix} mandir=%{_mandir} \
      ETC_GITCONFIG=/etc/gitconfig \
      PYTHON_PATH=%{python_path} \
      INSTALLDIRS=vendor install %{!?_without_docs: install-doc}
@@ -110,10 +103,10 @@ find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 find $RPM_BUILD_ROOT -type f -name '*.bs' -empty -exec rm -f {} ';'
 find $RPM_BUILD_ROOT -type f -name perllocal.pod -exec rm -f {} ';'
 
-(find $RPM_BUILD_ROOT%{_bindir} -type f | grep -vE "p4import|archimport|svn|cvs|email|gitk|git-gui|git-citool" | sed -e s@^$RPM_BUILD_ROOT@@)               > bin-man-doc-files
+(find $RPM_BUILD_ROOT%{_bindir} -type f | grep -vE "archimport|svn|cvs|email|gitk|git-gui|git-citool" | sed -e s@^$RPM_BUILD_ROOT@@)               > bin-man-doc-files
 (find $RPM_BUILD_ROOT%{perl_vendorlib} -type f | sed -e s@^$RPM_BUILD_ROOT@@) >> perl-files
 %if %{!?_without_docs:1}0
-(find $RPM_BUILD_ROOT%{_mandir} $RPM_BUILD_ROOT/Documentation -type f | grep -vE "p4import|archimport|svn|git-cvs|email|gitk|git-gui|git-citool" | sed -e s@^$RPM_BUILD_ROOT@@ -e 's/$/*/' ) >> bin-man-doc-files
+(find $RPM_BUILD_ROOT%{_mandir} $RPM_BUILD_ROOT/Documentation -type f | grep -vE "archimport|svn|git-cvs|email|gitk|git-gui|git-citool" | sed -e s@^$RPM_BUILD_ROOT@@ -e 's/$/*/' ) >> bin-man-doc-files
 %else
 rm -rf $RPM_BUILD_ROOT%{_mandir}
 %endif
@@ -144,13 +137,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/git-archimport
 %{!?_without_docs: %{_mandir}/man1/git-archimport.1*}
 %{!?_without_docs: %doc Documentation/git-archimport.html }
-
-%files p4
-%defattr(-,root,root)
-%doc Documentation/git-p4import.txt
-%{_bindir}/git-p4import
-%{!?_without_docs: %{_mandir}/man1/git-p4import.1*}
-%{!?_without_docs: %doc Documentation/git-p4import.html }
 
 %files email
 %defattr(-,root,root)
@@ -187,6 +173,9 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %doc Documentation/technical}
 
 %changelog
+* Sun Jul 15 2007 Sean Estabrooks <seanlkml@sympatico.ca>
+- Removed p4import.
+
 * Tue Jun 26 2007 Quy Tonthat <qtonthat@gmail.com>
 - Fixed problems looking for wrong manpages.
 

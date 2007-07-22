@@ -437,7 +437,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 	return 0;
 }
 
-static void cherry_pick_list(struct commit_list *list)
+static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 {
 	struct commit_list *p;
 	int left_count = 0, right_count = 0;
@@ -458,6 +458,11 @@ static void cherry_pick_list(struct commit_list *list)
 
 	left_first = left_count < right_count;
 	init_patch_ids(&ids);
+	if (revs->diffopt.nr_paths) {
+		ids.diffopts.nr_paths = revs->diffopt.nr_paths;
+		ids.diffopts.paths = revs->diffopt.paths;
+		ids.diffopts.pathlens = revs->diffopt.pathlens;
+	}
 
 	/* Compute patch-ids for one side */
 	for (p = list; p; p = p->next) {
@@ -546,7 +551,7 @@ static int limit_list(struct rev_info *revs)
 		p = &commit_list_insert(commit, p)->next;
 	}
 	if (revs->cherry_pick)
-		cherry_pick_list(newlist);
+		cherry_pick_list(newlist, revs);
 
 	revs->commits = newlist;
 	return 0;
@@ -667,7 +672,6 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->min_age = -1;
 	revs->skip_count = -1;
 	revs->max_count = -1;
-	revs->subject_prefix = "PATCH";
 
 	revs->prune_fn = NULL;
 	revs->prune_data = NULL;
@@ -1129,6 +1133,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			if (!strncmp(arg, "--date=", 7)) {
 				if (!strcmp(arg + 7, "relative"))
 					revs->date_mode = DATE_RELATIVE;
+				else if (!strcmp(arg + 7, "iso8601") ||
+					 !strcmp(arg + 7, "iso"))
+					revs->date_mode = DATE_ISO8601;
+				else if (!strcmp(arg + 7, "rfc2822") ||
+					 !strcmp(arg + 7, "rfc"))
+					revs->date_mode = DATE_RFC2822;
+				else if (!strcmp(arg + 7, "short"))
+					revs->date_mode = DATE_SHORT;
 				else if (!strcmp(arg + 7, "local"))
 					revs->date_mode = DATE_LOCAL;
 				else if (!strcmp(arg + 7, "default"))
@@ -1309,6 +1321,25 @@ static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp
 	}
 }
 
+static void remove_duplicate_parents(struct commit *commit)
+{
+	struct commit_list *p;
+	struct commit_list **pp = &commit->parents;
+
+	/* Examine existing parents while marking ones we have seen... */
+	for (p = commit->parents; p; p = p->next) {
+		struct commit *parent = p->item;
+		if (parent->object.flags & TMP_MARK)
+			continue;
+		parent->object.flags |= TMP_MARK;
+		*pp = p;
+		pp = &p->next;
+	}
+	/* ... and clear the temporary mark */
+	for (p = commit->parents; p; p = p->next)
+		p->item->object.flags &= ~TMP_MARK;
+}
+
 static int rewrite_parents(struct rev_info *revs, struct commit *commit)
 {
 	struct commit_list **pp = &commit->parents;
@@ -1325,6 +1356,7 @@ static int rewrite_parents(struct rev_info *revs, struct commit *commit)
 		}
 		pp = &parent->next;
 	}
+	remove_duplicate_parents(commit);
 	return 0;
 }
 

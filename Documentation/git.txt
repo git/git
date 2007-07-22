@@ -42,9 +42,11 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.5.2.2/git.html[documentation for release 1.5.2.2]
+* link:v1.5.2.4/git.html[documentation for release 1.5.2.4]
 
 * release notes for
+  link:RelNotes-1.5.2.4.txt[1.5.2.4],
+  link:RelNotes-1.5.2.3.txt[1.5.2.3],
   link:RelNotes-1.5.2.2.txt[1.5.2.2],
   link:RelNotes-1.5.2.1.txt[1.5.2.1],
   link:RelNotes-1.5.2.txt[1.5.2].
@@ -409,6 +411,11 @@ parameter, <path>.
 
 other
 ~~~~~
+'GIT_MERGE_VERBOSITY'::
+	A number controlling the amount of output shown by
+	the recursive merge strategy.  Overrides merge.verbosity.
+	See gitlink:git-merge[1]
+
 'GIT_PAGER'::
 	This environment variable overrides `$PAGER`.
 

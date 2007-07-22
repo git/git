@@ -40,10 +40,10 @@ case "$bases" in
 	for c in $bases
 	do
 		rm -f $G
-		GIT_INDEX_FILE=$G git-read-tree -m $c $head $remotes \
+		GIT_INDEX_FILE=$G git read-tree -m $c $head $remotes \
 			 2>/dev/null ||	continue
 		# Count the paths that are unmerged.
-		cnt=`GIT_INDEX_FILE=$G git-ls-files --unmerged | wc -l`
+		cnt=`GIT_INDEX_FILE=$G git ls-files --unmerged | wc -l`
 		if test $best_cnt -le 0 -o $cnt -le $best_cnt
 		then
 			best=$c
@@ -63,10 +63,10 @@ case "$bases" in
 	;;
 esac
 
-git-update-index --refresh 2>/dev/null
-git-read-tree -u -m $common $head $remotes || exit 2
+git update-index --refresh 2>/dev/null
+git read-tree -u -m $common $head $remotes || exit 2
 echo "Trying simple merge."
-if result_tree=$(git-write-tree  2>/dev/null)
+if result_tree=$(git write-tree  2>/dev/null)
 then
 	exit 0
 else

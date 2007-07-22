@@ -184,7 +184,36 @@ static void copy_templates(const char *git_dir, int len, const char *template_di
 	closedir(dir);
 }
 
-static int create_default_files(const char *git_dir, const char *template_path)
+/*
+ * Get the full path to the working tree specified in $GIT_WORK_TREE
+ * or NULL if no working tree is specified.
+ */
+static const char *get_work_tree(void)
+{
+	const char *git_work_tree;
+	char cwd[PATH_MAX];
+	static char worktree[PATH_MAX];
+
+	git_work_tree = getenv(GIT_WORK_TREE_ENVIRONMENT);
+	if (!git_work_tree)
+		return NULL;
+	if (!getcwd(cwd, sizeof(cwd)))
+		die("Unable to read current working directory");
+	if (chdir(git_work_tree))
+		die("Cannot change directory to specified working tree '%s'",
+			git_work_tree);
+	if (git_work_tree[0] != '/') {
+		if (!getcwd(worktree, sizeof(worktree)))
+			die("Unable to read current working directory");
+		git_work_tree = worktree;
+	}
+	if (chdir(cwd))
+		die("Cannot come back to cwd");
+	return git_work_tree;
+}
+
+static int create_default_files(const char *git_dir, const char *git_work_tree,
+	const char *template_path)
 {
 	unsigned len = strlen(git_dir);
 	static char path[PATH_MAX];
@@ -263,7 +292,7 @@ static int create_default_files(const char *git_dir, const char *template_path)
 	}
 	git_config_set("core.filemode", filemode ? "true" : "false");
 
-	if (is_bare_repository()) {
+	if (is_bare_repository() && !git_work_tree) {
 		git_config_set("core.bare", "true");
 	}
 	else {
@@ -271,12 +300,14 @@ static int create_default_files(const char *git_dir, const char *template_path)
 		/* allow template config file to override the default */
 		if (log_all_ref_updates == -1)
 		    git_config_set("core.logallrefupdates", "true");
+		if (git_work_tree)
+			git_config_set("core.worktree", git_work_tree);
 	}
 	return reinit;
 }
 
 static const char init_db_usage[] =
-"git-init [--template=<template-directory>] [--shared]";
+"git-init [-q | --quiet] [--template=<template-directory>] [--shared]";
 
 /*
  * If you want to, you can share the DB area with any number of branches.
@@ -287,10 +318,12 @@ static const char init_db_usage[] =
 int cmd_init_db(int argc, const char **argv, const char *prefix)
 {
 	const char *git_dir;
+	const char *git_work_tree;
 	const char *sha1_dir;
 	const char *template_dir = NULL;
 	char *path;
 	int len, i, reinit;
+	int quiet = 0;
 
 	for (i = 1; i < argc; i++, argv++) {
 		const char *arg = argv[1];
@@ -300,9 +333,13 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 			shared_repository = PERM_GROUP;
 		else if (!prefixcmp(arg, "--shared="))
 			shared_repository = git_config_perm("arg", arg+9);
+		else if (!strcmp(arg, "-q") || !strcmp(arg, "--quiet"))
+		        quiet = 1;
 		else
 			usage(init_db_usage);
 	}
+
+	git_work_tree = get_work_tree();
 
 	/*
 	 * Set up the default .git directory contents
@@ -319,7 +356,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	 */
 	check_repository_format();
 
-	reinit = create_default_files(git_dir, template_dir);
+	reinit = create_default_files(git_dir, git_work_tree, template_dir);
 
 	/*
 	 * And set up the object store.
@@ -346,10 +383,11 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		git_config_set("receive.denyNonFastforwards", "true");
 	}
 
-	printf("%s%s Git repository in %s/\n",
-		reinit ? "Reinitialized existing" : "Initialized empty",
-		shared_repository ? " shared" : "",
-		git_dir);
+	if (!quiet)
+		printf("%s%s Git repository in %s/\n",
+		       reinit ? "Reinitialized existing" : "Initialized empty",
+		       shared_repository ? " shared" : "",
+		       git_dir);
 
 	return 0;
 }

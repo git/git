@@ -20,7 +20,7 @@ require_work_tree
 ignored=
 ignoredonly=
 cleandir=
-disabled="`git-config --bool clean.requireForce`"
+disabled="`git config --bool clean.requireForce`"
 rmf="rm -f --"
 rmrf="rm -rf --"
 rm_refuse="echo Not removing"
@@ -83,7 +83,7 @@ if [ -z "$ignored" ]; then
 	fi
 fi
 
-git-ls-files --others --directory $excl ${excl_info:+"$excl_info"} -- "$@" |
+git ls-files --others --directory $excl ${excl_info:+"$excl_info"} -- "$@" |
 while read -r file; do
 	if [ -d "$file" -a ! -L "$file" ]; then
 		if [ -z "$cleandir" ]; then

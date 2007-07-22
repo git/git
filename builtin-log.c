@@ -16,6 +16,7 @@
 #include "refs.h"
 
 static int default_show_root = 1;
+static const char *fmt_patch_subject_prefix = "PATCH";
 
 /* this is in builtin-diff.c */
 void add_head(struct rev_info *revs);
@@ -55,6 +56,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	rev->commit_format = CMIT_FMT_DEFAULT;
 	rev->verbose_header = 1;
 	rev->show_root_diff = default_show_root;
+	rev->subject_prefix = fmt_patch_subject_prefix;
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
@@ -94,6 +96,12 @@ static int cmd_log_walk(struct rev_info *rev)
 
 static int git_log_config(const char *var, const char *value)
 {
+	if (!strcmp(var, "format.subjectprefix")) {
+		if (!value)
+			die("format.subjectprefix without value");
+		fmt_patch_subject_prefix = xstrdup(value);
+		return 0;
+	}
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;
@@ -290,6 +298,7 @@ static int git_format_config(const char *var, const char *value)
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
 		return 0;
 	}
+
 	return git_log_config(var, value);
 }
 
@@ -459,6 +468,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.diffopt.msg_sep = "";
 	rev.diffopt.recursive = 1;
 
+	rev.subject_prefix = fmt_patch_subject_prefix;
 	rev.extra_headers = extra_headers;
 
 	/*

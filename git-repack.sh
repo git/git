@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-USAGE='[-a] [-d] [-f] [-l] [-n] [-q] [--max-pack-size=N] [--window=N] [--depth=N]'
+USAGE='[-a] [-d] [-f] [-l] [-n] [-q] [--max-pack-size=N] [--window=N] [--window-memory=N] [--depth=N]'
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
@@ -20,6 +20,7 @@ do
 	-l)	local=--local ;;
 	--max-pack-size=*) extra="$extra $1" ;;
 	--window=*) extra="$extra $1" ;;
+	--window-memory=*) extra="$extra $1" ;;
 	--depth=*) extra="$extra $1" ;;
 	*)	usage ;;
 	esac
@@ -63,10 +64,12 @@ case ",$all_into_one," in
 esac
 
 args="$args $local $quiet $no_reuse$extra"
-names=$(git-pack-objects --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
+names=$(git pack-objects --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
 if [ -z "$names" ]; then
-	echo Nothing new to pack.
+	if test -z "$quiet"; then
+		echo Nothing new to pack.
+	fi
 fi
 for name in $names ; do
 	fullbases="$fullbases pack-$name"
@@ -113,7 +116,7 @@ then
 		  done
 		)
 	fi
-	git-prune-packed $quiet
+	git prune-packed $quiet
 fi
 
 case "$no_update_info" in

@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-apply boundary tests
+test_description='git apply boundary tests
 
 '
 . ./test-lib.sh

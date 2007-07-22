@@ -96,6 +96,7 @@ git-push
 git-quiltimport
 git-read-tree
 git-rebase
+git-rebase--interactive
 git-receive-pack
 git-reflog
 git-relink
@@ -123,6 +124,7 @@ git-ssh-fetch
 git-ssh-pull
 git-ssh-push
 git-ssh-upload
+git-stash
 git-status
 git-stripspace
 git-submodule

@@ -10,11 +10,11 @@ test_description='A simple turial in the form of a test case'
 echo "Hello World" > hello
 echo "Silly example" > example
 
-git-update-index --add hello example
+git update-index --add hello example
 
-test_expect_success 'blob' "test blob = \"$(git-cat-file -t 557db03)\""
+test_expect_success 'blob' "test blob = \"$(git cat-file -t 557db03)\""
 
-test_expect_success 'blob 557db03' "test \"Hello World\" = \"$(git-cat-file blob 557db03)\""
+test_expect_success 'blob 557db03' "test \"Hello World\" = \"$(git cat-file blob 557db03)\""
 
 echo "It's a new day for git" >>hello
 cat > diff.expect << EOF
@@ -26,25 +26,25 @@ index 557db03..263414f 100644
  Hello World
 +It's a new day for git
 EOF
-git-diff-files -p > diff.output
-test_expect_success 'git-diff-files -p' 'cmp diff.expect diff.output'
+git diff-files -p > diff.output
+test_expect_success 'git diff-files -p' 'cmp diff.expect diff.output'
 git diff > diff.output
 test_expect_success 'git diff' 'cmp diff.expect diff.output'
 
-tree=$(git-write-tree 2>/dev/null)
+tree=$(git write-tree 2>/dev/null)
 
 test_expect_success 'tree' "test 8988da15d077d4829fc51d8544c097def6644dbb = $tree"
 
-output="$(echo "Initial commit" | git-commit-tree $(git-write-tree) 2>&1 > .git/refs/heads/master)"
+output="$(echo "Initial commit" | git commit-tree $(git write-tree) 2>&1 > .git/refs/heads/master)"
 
-git-diff-index -p HEAD > diff.output
-test_expect_success 'git-diff-index -p HEAD' 'cmp diff.expect diff.output'
+git diff-index -p HEAD > diff.output
+test_expect_success 'git diff-index -p HEAD' 'cmp diff.expect diff.output'
 
 git diff HEAD > diff.output
 test_expect_success 'git diff HEAD' 'cmp diff.expect diff.output'
 
 #rm hello
-#test_expect_success 'git-read-tree --reset HEAD' "git-read-tree --reset HEAD ; test \"hello: needs update\" = \"$(git-update-index --refresh)\""
+#test_expect_success 'git read-tree --reset HEAD' "git read-tree --reset HEAD ; test \"hello: needs update\" = \"$(git update-index --refresh)\""
 
 cat > whatchanged.expect << EOF
 commit VARIABLE
@@ -69,11 +69,11 @@ index 0000000..557db03
 +Hello World
 EOF
 
-git-whatchanged -p --root | \
+git whatchanged -p --root | \
 	sed -e "1s/^\(.\{7\}\).\{40\}/\1VARIABLE/" \
 		-e "2,3s/^\(.\{8\}\).*$/\1VARIABLE/" \
 > whatchanged.output
-test_expect_success 'git-whatchanged -p --root' 'cmp whatchanged.expect whatchanged.output'
+test_expect_success 'git whatchanged -p --root' 'cmp whatchanged.expect whatchanged.output'
 
 git tag my-first-tag
 test_expect_success 'git tag my-first-tag' 'cmp .git/refs/heads/master .git/refs/tags/my-first-tag'

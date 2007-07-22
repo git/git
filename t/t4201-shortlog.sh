@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Johannes E. Schindelin
 #
 
-test_description='git-shortlog
+test_description='git shortlog
 '
 
 . ./test-lib.sh

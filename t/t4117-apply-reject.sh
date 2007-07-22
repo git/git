@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-apply with rejects
+test_description='git apply with rejects
 
 '
 

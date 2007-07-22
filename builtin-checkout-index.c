@@ -36,6 +36,7 @@
  * of "-a" causing problems (not possible in the above example,
  * but get used to it in scripting!).
  */
+#include "builtin.h"
 #include "cache.h"
 #include "strbuf.h"
 #include "quote.h"

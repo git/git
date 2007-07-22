@@ -35,7 +35,7 @@ include::fetch-options.txt[]
 
 include::pull-fetch-param.txt[]
 
-include::urls.txt[]
+include::urls-remotes.txt[]
 
 SEE ALSO
 --------

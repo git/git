@@ -119,6 +119,7 @@ struct index_entry {
 };
 
 struct delta_index {
+	unsigned long memsize;
 	const void *src_buf;
 	unsigned long src_size;
 	unsigned int hash_mask;
@@ -159,6 +160,7 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	mem = hash + hsize;
 	entry = mem;
 
+	index->memsize = memsize;
 	index->src_buf = buf;
 	index->src_size = bufsize;
 	index->hash_mask = hmask;
@@ -226,6 +228,14 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 void free_delta_index(struct delta_index *index)
 {
 	free(index);
+}
+
+unsigned long sizeof_delta_index(struct delta_index *index)
+{
+	if (index)
+		return index->memsize;
+	else
+		return 0;
 }
 
 /*

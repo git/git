@@ -117,6 +117,18 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See gitlink:git-update-index[1]. True by default.
 
+core.quotepath::
+	The commands that output paths (e.g. `ls-files`,
+	`diff`), when not given the `-z` option, will quote
+	"unusual" characters in the pathname by enclosing the
+	pathname in a double-quote pair and with backslashes the
+	same way strings in C source code are quoted.  If this
+	variable is set to false, the bytes higher than 0x80 are
+	not quoted but output as verbatim.  Note that double
+	quote, backslash and control characters are always
+	quoted without `-z` regardless of the setting of this
+	variable.
+
 core.autocrlf::
 	If true, makes git convert `CRLF` at the end of lines in text files to
 	`LF` when reading from the filesystem, and convert in reverse when
@@ -268,6 +280,10 @@ core.excludesfile::
 	'.git/info/exclude', git looks into this file for patterns
 	of files which are not meant to be tracked.  See
 	gitlink:gitignore[5].
+
+core.pager::
+	The command that git will use to paginate output.  Can be overridden
+	with the `GIT_PAGER` environment variable.
 
 alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.
@@ -432,6 +448,11 @@ gc.rerereunresolved::
 	kept for this many days when `git rerere gc` is run.
 	The default is 15 days.  See gitlink:git-rerere[1].
 
+rerere.enabled::
+	Activate recording of resolved conflicts, so that identical
+	conflict hunks can be resolved automatically, should they
+	be encountered again.  See gitlink:git-rerere[1].
+
 gitcvs.enabled::
 	Whether the cvs server interface is enabled for this repository.
 	See gitlink:git-cvsserver[1].
@@ -546,6 +567,7 @@ merge.verbosity::
 	message if conflicts were detected. Level 1 outputs only
 	conflicts, 2 outputs conflicts and file changes.  Level 5 and
 	above outputs debugging information.  The default is level 2.
+	Can be overriden by 'GIT_MERGE_VERBOSITY' environment variable.
 
 merge.<driver>.name::
 	Defines a human readable name for a custom low-level
@@ -567,6 +589,12 @@ pack.window::
 pack.depth::
 	The maximum delta depth used by gitlink:git-pack-objects[1] when no
 	maximum depth is given on the command line. Defaults to 50.
+
+pack.windowMemory::
+	The window memory size limit used by gitlink:git-pack-objects[1]
+	when no limit is given on the command line.  The value can be
+	suffixed with "k", "m", or "g".  Defaults to 0, meaning no
+	limit.
 
 pack.compression::
 	An integer -1..9, indicating the compression level for objects

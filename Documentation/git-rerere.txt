@@ -23,7 +23,7 @@ initial manual merge, and later by noticing the same automerge
 results and applying the previously recorded hand resolution.
 
 [NOTE]
-You need to create `$GIT_DIR/rr-cache` directory to enable this
+You need to set the config variable rerere.enabled to enable this
 command.
 
 
@@ -171,7 +171,7 @@ records it if it is a new conflict, or reuses the earlier hand
 resolve when it is not.  `git-commit` also invokes `git-rerere`
 when recording a merge result.  What this means is that you do
 not have to do anything special yourself (Note: you still have
-to create `$GIT_DIR/rr-cache` directory to enable this command).
+to set the config variable rerere.enabled to enable this command).
 
 In our example, when you did the test merge, the manual
 resolution is recorded, and it will be reused when you do the

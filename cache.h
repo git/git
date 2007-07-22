@@ -295,6 +295,7 @@ extern int delete_ref(const char *, const unsigned char *sha1);
 
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
+extern int quote_path_fully;
 extern int has_symlinks;
 extern int assume_unchanged;
 extern int prefer_symlink_refs;
@@ -409,9 +410,16 @@ extern void *read_object_with_reference(const unsigned char *sha1,
 					unsigned long *size,
 					unsigned char *sha1_ret);
 
-enum date_mode { DATE_NORMAL = 0, DATE_RELATIVE, DATE_SHORT, DATE_LOCAL };
+enum date_mode {
+	DATE_NORMAL = 0,
+	DATE_RELATIVE,
+	DATE_SHORT,
+	DATE_LOCAL,
+	DATE_ISO8601,
+	DATE_RFC2822
+};
+
 const char *show_date(unsigned long time, int timezone, enum date_mode mode);
-const char *show_rfc2822_date(unsigned long time, int timezone);
 int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
@@ -521,7 +529,10 @@ typedef int (*config_fn_t)(const char *, const char *);
 extern int git_default_config(const char *, const char *);
 extern int git_config_from_file(config_fn_t fn, const char *);
 extern int git_config(config_fn_t fn);
+extern int git_parse_long(const char *, long *);
+extern int git_parse_ulong(const char *, unsigned long *);
 extern int git_config_int(const char *, const char *);
+extern unsigned long git_config_ulong(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
 extern int git_config_set(const char *, const char *);
 extern int git_config_set_multivar(const char *, const char *, const char *, int);
@@ -547,6 +558,7 @@ extern int write_or_whine_pipe(int fd, const void *buf, size_t count, const char
 
 /* pager.c */
 extern void setup_pager(void);
+extern char *pager_program;
 extern int pager_in_use;
 extern int pager_use_color;
 

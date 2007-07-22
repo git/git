@@ -105,6 +105,7 @@ git-diff-tree                           plumbinginterrogators
 git-fast-import				ancillarymanipulators
 git-fetch                               mainporcelain
 git-fetch-pack                          synchingrepositories
+git-filter-branch                       ancillarymanipulators
 git-fmt-merge-msg                       purehelpers
 git-for-each-ref                        plumbinginterrogators
 git-format-patch                        mainporcelain
@@ -178,6 +179,7 @@ git-show-ref                            plumbinginterrogators
 git-sh-setup                            purehelpers
 git-ssh-fetch                           synchingrepositories
 git-ssh-upload                          synchingrepositories
+git-stash                               mainporcelain
 git-status                              mainporcelain
 git-stripspace                          purehelpers
 git-submodule                           mainporcelain

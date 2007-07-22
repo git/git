@@ -319,9 +319,21 @@ sub add_usage {
 	exit(1);
 }
 
+local $VERBOSE = 0;
+@ARGV = grep {
+	if ($_ eq '-v' or $_ eq '--verbose') {
+		$VERBOSE=1;
+		0
+	} else {
+		1
+	}
+} @ARGV;
+
 if (!@ARGV) {
 	for (sort keys %$remote) {
-		print "$_\n";
+		print "$_";
+		print "\t$remote->{$_}->{URL}" if $VERBOSE;
+		print "\n";
 	}
 }
 elsif ($ARGV[0] eq 'show') {

@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
@@ -5,9 +6,9 @@
 static const char merge_file_usage[] =
 "git merge-file [-p | --stdout] [-q | --quiet] [-L name1 [-L orig [-L name2]]] file1 orig_file file2";
 
-int cmd_merge_file(int argc, char **argv, char **envp)
+int cmd_merge_file(int argc, const char **argv, const char *prefix)
 {
-	char *names[3];
+	const char *names[3];
 	mmfile_t mmfs[3];
 	mmbuffer_t result = {NULL, 0};
 	xpparam_t xpp = {XDF_NEED_MINIMAL};
@@ -51,7 +52,7 @@ int cmd_merge_file(int argc, char **argv, char **envp)
 		free(mmfs[i].ptr);
 
 	if (ret >= 0) {
-		char *filename = argv[1];
+		const char *filename = argv[1];
 		FILE *f = to_stdout ? stdout : fopen(filename, "wb");
 
 		if (!f)

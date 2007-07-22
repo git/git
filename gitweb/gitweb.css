@@ -281,6 +281,12 @@ table.diff_tree span.file_status.copied {
   color: #70a070;
 }
 
+/* noage: "No commits" */
+table.project_list td.noage {
+	color: #808080;
+	font-style: italic;
+}
+
 /* age2: 60*60*24*2 <= age */
 table.project_list td.age2, table.blame td.age2 {
 	font-style: italic;

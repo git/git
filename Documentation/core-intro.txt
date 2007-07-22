@@ -528,7 +528,7 @@ paths that have been trivially merged.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sadly, many merges aren't trivial. If there are files that have
-been added.moved or removed, or if both branches have modified the
+been added, moved or removed, or if both branches have modified the
 same file, you will be left with an index tree that contains "merge
 entries" in it. Such an index tree can 'NOT' be written out to a tree
 object, and you will have to resolve any such merge clashes using

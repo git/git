@@ -57,6 +57,14 @@ static struct ll_diff_driver {
 	char *cmd;
 } *user_diff, **user_diff_tail;
 
+static void read_config_if_needed(void)
+{
+	if (!user_diff_tail) {
+		user_diff_tail = &user_diff;
+		git_config(git_diff_ui_config);
+	}
+}
+
 /*
  * Currently there is only "diff.<drivername>.command" variable;
  * because there are "diff.color.<slot>" variables, we are parsing
@@ -95,6 +103,45 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
 }
 
 /*
+ * 'diff.<what>.funcname' attribute can be specified in the configuration
+ * to define a customized regexp to find the beginning of a function to
+ * be used for hunk header lines of "diff -p" style output.
+ */
+static struct funcname_pattern {
+	char *name;
+	char *pattern;
+	struct funcname_pattern *next;
+} *funcname_pattern_list;
+
+static int parse_funcname_pattern(const char *var, const char *ep, const char *value)
+{
+	const char *name;
+	int namelen;
+	struct funcname_pattern *pp;
+
+	name = var + 5; /* "diff." */
+	namelen = ep - name;
+
+	for (pp = funcname_pattern_list; pp; pp = pp->next)
+		if (!strncmp(pp->name, name, namelen) && !pp->name[namelen])
+			break;
+	if (!pp) {
+		char *namebuf;
+		pp = xcalloc(1, sizeof(*pp));
+		namebuf = xmalloc(namelen + 1);
+		memcpy(namebuf, name, namelen);
+		namebuf[namelen] = 0;
+		pp->name = namebuf;
+		pp->next = funcname_pattern_list;
+		funcname_pattern_list = pp;
+	}
+	if (pp->pattern)
+		free(pp->pattern);
+	pp->pattern = xstrdup(value);
+	return 0;
+}
+
+/*
  * These are to give UI layer defaults.
  * The core-level commands such as git-diff-files should
  * never be affected by the setting of diff.renames
@@ -123,8 +170,12 @@ int git_diff_ui_config(const char *var, const char *value)
 	if (!prefixcmp(var, "diff.")) {
 		const char *ep = strrchr(var, '.');
 
-		if (ep != var + 4 && !strcmp(ep, ".command"))
-			return parse_lldiff_command(var, ep, value);
+		if (ep != var + 4) {
+			if (!strcmp(ep, ".command"))
+				return parse_lldiff_command(var, ep, value);
+			if (!strcmp(ep, ".funcname"))
+				return parse_funcname_pattern(var, ep, value);
+		}
 	}
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
@@ -391,6 +442,7 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	mmfile_t minus, plus;
 	int i;
 
+	memset(&xecfg, 0, sizeof(xecfg));
 	minus.size = diff_words->minus.text.size;
 	minus.ptr = xmalloc(minus.size);
 	memcpy(minus.ptr, diff_words->minus.text.ptr, minus.size);
@@ -409,7 +461,6 @@ static void diff_words_show(struct diff_words_data *diff_words)
 
 	xpp.flags = XDF_NEED_MINIMAL;
 	xecfg.ctxlen = diff_words->minus.alloc + diff_words->plus.alloc;
-	xecfg.flags = 0;
 	ecb.outf = xdiff_outf;
 	ecb.priv = diff_words;
 	diff_words->xm.consume = fn_out_diff_words_aux;
@@ -1103,30 +1154,111 @@ static void setup_diff_attr_check(struct git_attr_check *check)
 {
 	static struct git_attr *attr_diff;
 
-	if (!attr_diff)
+	if (!attr_diff) {
 		attr_diff = git_attr("diff", 4);
-	check->attr = attr_diff;
+	}
+	check[0].attr = attr_diff;
 }
 
-static int file_is_binary(struct diff_filespec *one)
+static void diff_filespec_check_attr(struct diff_filespec *one)
 {
 	struct git_attr_check attr_diff_check;
+	int check_from_data = 0;
+
+	if (one->checked_attr)
+		return;
 
 	setup_diff_attr_check(&attr_diff_check);
+	one->is_binary = 0;
+	one->funcname_pattern_ident = NULL;
+
 	if (!git_checkattr(one->path, 1, &attr_diff_check)) {
-		const char *value = attr_diff_check.value;
+		const char *value;
+
+		/* binaryness */
+		value = attr_diff_check.value;
 		if (ATTR_TRUE(value))
-			return 0;
+			;
 		else if (ATTR_FALSE(value))
-			return 1;
+			one->is_binary = 1;
+		else
+			check_from_data = 1;
+
+		/* funcname pattern ident */
+		if (ATTR_TRUE(value) || ATTR_FALSE(value) || ATTR_UNSET(value))
+			;
+		else
+			one->funcname_pattern_ident = value;
 	}
 
-	if (!one->data) {
-		if (!DIFF_FILE_VALID(one))
-			return 0;
-		diff_populate_filespec(one, 0);
+	if (check_from_data) {
+		if (!one->data && DIFF_FILE_VALID(one))
+			diff_populate_filespec(one, 0);
+
+		if (one->data)
+			one->is_binary = buffer_is_binary(one->data, one->size);
 	}
-	return buffer_is_binary(one->data, one->size);
+}
+
+int diff_filespec_is_binary(struct diff_filespec *one)
+{
+	diff_filespec_check_attr(one);
+	return one->is_binary;
+}
+
+static const char *funcname_pattern(const char *ident)
+{
+	struct funcname_pattern *pp;
+
+	read_config_if_needed();
+	for (pp = funcname_pattern_list; pp; pp = pp->next)
+		if (!strcmp(ident, pp->name))
+			return pp->pattern;
+	return NULL;
+}
+
+static struct builtin_funcname_pattern {
+	const char *name;
+	const char *pattern;
+} builtin_funcname_pattern[] = {
+	{ "java", "!^[ 	]*\\(catch\\|do\\|for\\|if\\|instanceof\\|"
+			"new\\|return\\|switch\\|throw\\|while\\)\n"
+			"^[ 	]*\\(\\([ 	]*"
+			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
+			"[ 	]*([^;]*$\\)" },
+	{ "tex", "^\\(\\\\\\(sub\\)*section{.*\\)$" },
+};
+
+static const char *diff_funcname_pattern(struct diff_filespec *one)
+{
+	const char *ident, *pattern;
+	int i;
+
+	diff_filespec_check_attr(one);
+	ident = one->funcname_pattern_ident;
+
+	if (!ident)
+		/*
+		 * If the config file has "funcname.default" defined, that
+		 * regexp is used; otherwise NULL is returned and xemit uses
+		 * the built-in default.
+		 */
+		return funcname_pattern("default");
+
+	/* Look up custom "funcname.$ident" regexp from config. */
+	pattern = funcname_pattern(ident);
+	if (pattern)
+		return pattern;
+
+	/*
+	 * And define built-in fallback patterns here.  Note that
+	 * these can be overriden by the user's config settings.
+	 */
+	for (i = 0; i < ARRAY_SIZE(builtin_funcname_pattern); i++)
+		if (!strcmp(ident, builtin_funcname_pattern[i].name))
+			return builtin_funcname_pattern[i].pattern;
+
+	return NULL;
 }
 
 static void builtin_diff(const char *name_a,
@@ -1183,7 +1315,8 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (!o->text && (file_is_binary(one) || file_is_binary(two))) {
+	if (!o->text &&
+	    (diff_filespec_is_binary(one) || diff_filespec_is_binary(two))) {
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
@@ -1202,7 +1335,13 @@ static void builtin_diff(const char *name_a,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
+		const char *funcname_pattern;
 
+		funcname_pattern = diff_funcname_pattern(one);
+		if (!funcname_pattern)
+			funcname_pattern = diff_funcname_pattern(two);
+
+		memset(&xecfg, 0, sizeof(xecfg));
 		memset(&ecbdata, 0, sizeof(ecbdata));
 		ecbdata.label_path = lbl;
 		ecbdata.color_diff = o->color_diff;
@@ -1210,6 +1349,8 @@ static void builtin_diff(const char *name_a,
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
+		if (funcname_pattern)
+			xdiff_set_find_func(&xecfg, funcname_pattern);
 		if (!diffopts)
 			;
 		else if (!prefixcmp(diffopts, "--unified="))
@@ -1261,7 +1402,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (file_is_binary(one) || file_is_binary(two)) {
+	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
 		data->is_binary = 1;
 		data->added = mf2.size;
 		data->deleted = mf1.size;
@@ -1271,9 +1412,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 
+		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
-		xecfg.ctxlen = 0;
-		xecfg.flags = 0;
 		ecb.outf = xdiff_outf;
 		ecb.priv = diffstat;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
@@ -1303,7 +1443,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (file_is_binary(two))
+	if (diff_filespec_is_binary(two))
 		goto free_and_return;
 	else {
 		/* Crazy xdl interfaces.. */
@@ -1311,9 +1451,8 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 
+		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = XDF_NEED_MINIMAL;
-		xecfg.ctxlen = 0;
-		xecfg.flags = 0;
 		ecb.outf = xdiff_outf;
 		ecb.priv = &data;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
@@ -1748,10 +1887,7 @@ static const char *external_diff_attr(const char *name)
 		    !ATTR_UNSET(value)) {
 			struct ll_diff_driver *drv;
 
-			if (!user_diff_tail) {
-				user_diff_tail = &user_diff;
-				git_config(git_diff_ui_config);
-			}
+			read_config_if_needed();
 			for (drv = user_diff; drv; drv = drv->next)
 				if (!strcmp(drv->name, value))
 					return drv->cmd;
@@ -1808,6 +1944,11 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 		hashclr(one->sha1);
 }
 
+static int similarity_index(struct diff_filepair *p)
+{
+	return p->score * 100 / MAX_SCORE;
+}
+
 static void run_diff(struct diff_filepair *p, struct diff_options *o)
 {
 	const char *pgm = external_diff();
@@ -1842,23 +1983,20 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 				"similarity index %d%%\n"
 				"copy from %s\n"
 				"copy to %s\n",
-				(int)(0.5 + p->score * 100.0/MAX_SCORE),
-				name_munged, other_munged);
+				similarity_index(p), name_munged, other_munged);
 		break;
 	case DIFF_STATUS_RENAMED:
 		len += snprintf(msg + len, sizeof(msg) - len,
 				"similarity index %d%%\n"
 				"rename from %s\n"
 				"rename to %s\n",
-				(int)(0.5 + p->score * 100.0/MAX_SCORE),
-				name_munged, other_munged);
+				similarity_index(p), name_munged, other_munged);
 		break;
 	case DIFF_STATUS_MODIFIED:
 		if (p->score) {
 			len += snprintf(msg + len, sizeof(msg) - len,
 					"dissimilarity index %d%%\n",
-					(int)(0.5 + p->score *
-					      100.0/MAX_SCORE));
+					similarity_index(p));
 			complete_rewrite = 1;
 			break;
 		}
@@ -1873,8 +2011,8 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 
 		if (o->binary) {
 			mmfile_t mf;
-			if ((!fill_mmfile(&mf, one) && file_is_binary(one)) ||
-			    (!fill_mmfile(&mf, two) && file_is_binary(two)))
+			if ((!fill_mmfile(&mf, one) && diff_filespec_is_binary(one)) ||
+			    (!fill_mmfile(&mf, two) && diff_filespec_is_binary(two)))
 				abbrev = 40;
 		}
 		len += snprintf(msg + len, sizeof(msg) - len,
@@ -2234,6 +2372,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->exit_with_status = 1;
 	else if (!strcmp(arg, "--quiet"))
 		options->quiet = 1;
+	else if (!strcmp(arg, "--ext-diff"))
+		options->allow_external = 1;
+	else if (!strcmp(arg, "--no-ext-diff"))
+		options->allow_external = 0;
 	else
 		return 0;
 	return 1;
@@ -2382,8 +2524,7 @@ static void diff_flush_raw(struct diff_filepair *p,
 	}
 
 	if (p->score)
-		sprintf(status, "%c%03d", p->status,
-			(int)(0.5 + p->score * 100.0/MAX_SCORE));
+		sprintf(status, "%c%03d", p->status, similarity_index(p));
 	else {
 		status[0] = p->status;
 		status[1] = 0;
@@ -2666,8 +2807,7 @@ static void show_rename_copy(const char *renamecopy, struct diff_filepair *p)
 {
 	char *names = pprint_rename(p->one->path, p->two->path);
 
-	printf(" %s %s (%d%%)\n", renamecopy, names,
-	       (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	printf(" %s %s (%d%%)\n", renamecopy, names, similarity_index(p));
 	free(names);
 	show_mode_change(p, 0);
 }
@@ -2691,7 +2831,7 @@ static void diff_summary(struct diff_filepair *p)
 		if (p->score) {
 			char *name = quote_one(p->two->path);
 			printf(" rewrite %s (%d%%)\n", name,
-				(int)(0.5 + p->score * 100.0/MAX_SCORE));
+			       similarity_index(p));
 			free(name);
 			show_mode_change(p, 0);
 		} else	show_mode_change(p, 1);
@@ -2755,6 +2895,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 		struct diff_filepair *p = q->queue[i];
 		int len1, len2;
 
+		memset(&xecfg, 0, sizeof(xecfg));
 		if (p->status == 0)
 			return error("internal diff status error");
 		if (p->status == DIFF_STATUS_UNKNOWN)
@@ -2774,7 +2915,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 			return error("unable to read files to diff");
 
 		/* Maybe hash p->two? into the patch id? */
-		if (file_is_binary(p->two))
+		if (diff_filespec_is_binary(p->two))
 			continue;
 
 		len1 = remove_space(p->one->path, strlen(p->one->path));
@@ -3001,6 +3142,7 @@ void diffcore_std(struct diff_options *options)
 {
 	if (options->quiet)
 		return;
+
 	if (options->break_opt != -1)
 		diffcore_break(options->break_opt);
 	if (options->detect_rename)

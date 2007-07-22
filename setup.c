@@ -249,14 +249,11 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		int len, offset;
 		int minoffset = 0;
 
-#ifdef __MINGW32__
-		if (!getcwd(cwd, sizeof(cwd)-1) || !(cwd[0] == '/' || cwd[1] == ':'))
+		if (!getcwd(cwd, sizeof(cwd)-1))
 			die("Unable to read current working directory");
+#ifdef __MINGW32__
 		if (cwd[1] == ':')
 			minoffset = 2;
-#else
-		if (!getcwd(cwd, sizeof(cwd)-1) || cwd[0] != '/')
-			die("Unable to read current working directory");
 #endif
 
 		offset = len = strlen(cwd);
@@ -316,7 +313,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		die("Not a git repository: '%s'", gitdirenv);
 	}
 
-	if (!getcwd(cwd, sizeof(cwd)-1) || cwd[0] != '/')
+	if (!getcwd(cwd, sizeof(cwd)-1))
 		die("Unable to read current working directory");
 	if (chdir(gitdirenv)) {
 		if (nongit_ok) {
@@ -326,7 +323,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		die("Cannot change directory to $%s '%s'",
 			GIT_DIR_ENVIRONMENT, gitdirenv);
 	}
-	if (!getcwd(gitdir, sizeof(gitdir)-1) || gitdir[0] != '/')
+	if (!getcwd(gitdir, sizeof(gitdir)-1))
 		die("Unable to read current working directory");
 	if (chdir(cwd))
 		die("Cannot come back to cwd");
@@ -385,7 +382,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			die("Cannot change directory to working tree '%s'",
 				gitworktree);
 	}
-	if (!getcwd(worktree, sizeof(worktree)-1) || worktree[0] != '/')
+	if (!getcwd(worktree, sizeof(worktree)-1))
 		die("Unable to read current working directory");
 	strcat(worktree, "/");
 	inside_work_tree = !prefixcmp(cwd, worktree);
@@ -409,6 +406,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 int git_config_perm(const char *var, const char *value)
 {
 	if (value) {
+		int i;
 		if (!strcmp(value, "umask"))
 			return PERM_UMASK;
 		if (!strcmp(value, "group"))
@@ -417,6 +415,9 @@ int git_config_perm(const char *var, const char *value)
 		    !strcmp(value, "world") ||
 		    !strcmp(value, "everybody"))
 			return PERM_EVERYBODY;
+		i = atoi(value);
+		if (i > 1)
+			return i;
 	}
 	return git_config_bool(var, value);
 }

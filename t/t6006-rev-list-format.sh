@@ -1,12 +1,12 @@
 #!/bin/sh
 
-test_description='git-rev-list --pretty=format test'
+test_description='git rev-list --pretty=format test'
 
 . ./test-lib.sh
 
 test_tick
 test_expect_success 'setup' '
-touch foo && git-add foo && git-commit -m "added foo" &&
+touch foo && git add foo && git-commit -m "added foo" &&
   echo changed >foo && git-commit -a -m "changed foo"
 '
 
@@ -14,8 +14,8 @@ touch foo && git-add foo && git-commit -m "added foo" &&
 test_format() {
 	cat >expect.$1
 	test_expect_success "format $1" "
-git-rev-list --pretty=format:$2 master >output.$1 &&
-git-diff expect.$1 output.$1
+git rev-list --pretty=format:$2 master >output.$1 &&
+git diff expect.$1 output.$1
 "
 }
 
@@ -113,7 +113,7 @@ and it will be encoded in iso8859-1. We should therefore
 include an iso8859 character: ¡bueno!
 EOF
 test_expect_success 'setup complex body' '
-git-config i18n.commitencoding iso8859-1 &&
+git config i18n.commitencoding iso8859-1 &&
   echo change2 >foo && git-commit -a -F commit-msg
 '
 

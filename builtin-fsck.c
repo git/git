@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "commit.h"
 #include "tree.h"
@@ -20,6 +21,7 @@ static int check_strict;
 static int keep_cache_objects;
 static unsigned char head_sha1[20];
 static int errors_found;
+static int write_lost_and_found;
 static int verbose;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
@@ -138,6 +140,21 @@ static void check_unreachable_object(struct object *obj)
 	if (!obj->used) {
 		printf("dangling %s %s\n", typename(obj->type),
 		       sha1_to_hex(obj->sha1));
+		if (write_lost_and_found) {
+			char *filename = git_path("lost-found/%s/%s",
+				obj->type == OBJ_COMMIT ? "commit" : "other",
+				sha1_to_hex(obj->sha1));
+			FILE *f;
+
+			if (safe_create_leading_directories(filename)) {
+				error("Could not create lost-found");
+				return;
+			}
+			if (!(f = fopen(filename, "w")))
+				die("Could not open %s", filename);
+			fprintf(f, "%s\n", sha1_to_hex(obj->sha1));
+			fclose(f);
+		}
 		return;
 	}
 
@@ -643,7 +660,7 @@ static const char fsck_usage[] =
 "git-fsck [--tags] [--root] [[--unreachable] [--cache] [--full] "
 "[--strict] [--verbose] <head-sha1>*]";
 
-int cmd_fsck(int argc, char **argv, const char *prefix)
+int cmd_fsck(int argc, const char **argv, const char *prefix)
 {
 	int i, heads;
 
@@ -683,6 +700,12 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--verbose")) {
 			verbose = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--lost-found")) {
+			check_full = 1;
+			include_reflogs = 0;
+			write_lost_and_found = 1;
 			continue;
 		}
 		if (*arg == '-')

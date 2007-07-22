@@ -17,10 +17,10 @@ while read dangling type sha1
 do
 	case "$dangling" in
 	dangling)
-		if git-rev-parse --verify "$sha1^0" >/dev/null 2>/dev/null
+		if git rev-parse --verify "$sha1^0" >/dev/null 2>/dev/null
 		then
 			dir="$laf/commit"
-			git-show-branch "$sha1"
+			git show-branch "$sha1"
 		else
 			dir="$laf/other"
 		fi

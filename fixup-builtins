@@ -1,0 +1,16 @@
+#!/bin/sh
+while [ "$1" ]
+do
+	old="$1"
+	new=$(echo "$1" | sed 's/git-/git /')
+	echo "Converting '$old' to '$new'"
+	git ls-files '*.sh' | while read file
+	do
+		sed "s/\\<$old\\>/$new/g" < $file > $file.new
+		chmod --reference=$file $file.new
+		mv $file.new $file
+	done
+	shift
+done
+git update-index --refresh >& /dev/null
+exit 0

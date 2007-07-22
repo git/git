@@ -7,6 +7,7 @@ INSTALL ?= install
 INSTALL_ELC = $(INSTALL) -m 644
 prefix ?= $(HOME)
 emacsdir = $(prefix)/share/emacs/site-lisp
+RM ?= rm -f
 
 all: $(ELC)
 
@@ -17,4 +18,4 @@ install: all
 %.elc: %.el
 	$(EMACS) -batch -f batch-byte-compile $<
 
-clean:; rm -f $(ELC)
+clean:; $(RM) $(ELC)

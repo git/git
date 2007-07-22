@@ -98,10 +98,10 @@ constructor dialog {} {
 	button $w.heads.footer.rescan \
 		-text {Rescan} \
 		-command [cb _rescan]
-	pack $w.heads.footer.status -side left -fill x -expand 1
+	pack $w.heads.footer.status -side left -fill x
 	pack $w.heads.footer.rescan -side right
 
-	pack $w.heads.footer -side bottom -fill x -expand 1
+	pack $w.heads.footer -side bottom -fill x
 	pack $w.heads.sby -side right -fill y
 	pack $w.heads.l -side left -fill both -expand 1
 	pack $w.heads -fill both -expand 1 -pady 5 -padx 5
@@ -296,7 +296,7 @@ method _load {cache uri} {
 		set full_list [list]
 		set head_cache($cache) [list]
 		set full_cache($cache) [list]
-		set active_ls [open "| [list git ls-remote $uri]" r]
+		set active_ls [git_read ls-remote $uri]
 		fconfigure $active_ls \
 			-blocking 0 \
 			-translation lf \

@@ -185,6 +185,21 @@ static int handle_alias(int *argcp, const char ***argv)
 	git_config(git_alias_config);
 	if (alias_string) {
 		if (alias_string[0] == '!') {
+			if (*argcp > 1) {
+				int i, sz = PATH_MAX;
+				char *s = xmalloc(sz), *new_alias = s;
+
+				add_to_string(&s, &sz, alias_string, 0);
+				free(alias_string);
+				alias_string = new_alias;
+				for (i = 1; i < *argcp &&
+					!add_to_string(&s, &sz, " ", 0) &&
+					!add_to_string(&s, &sz, (*argv)[i], 1)
+					; i++)
+					; /* do nothing */
+				if (!sz)
+					die("Too many or long arguments");
+			}
 			trace_printf("trace: alias to shell cmd: %s => %s\n",
 				     alias_command, alias_string + 1);
 			ret = system(alias_string + 1);
@@ -292,7 +307,7 @@ static void handle_internal_command(int argc, const char **argv)
 	const char *cmd = argv[0];
 	static struct cmd_struct commands[] = {
 		{ "add", cmd_add, RUN_SETUP | NEED_WORK_TREE },
-		{ "annotate", cmd_annotate, RUN_SETUP | USE_PAGER },
+		{ "annotate", cmd_annotate, RUN_SETUP },
 		{ "apply", cmd_apply },
 		{ "archive", cmd_archive },
 		{ "blame", cmd_blame, RUN_SETUP },
@@ -334,7 +349,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "mv", cmd_mv, RUN_SETUP | NEED_WORK_TREE },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
-		{ "pickaxe", cmd_blame, RUN_SETUP | USE_PAGER },
+		{ "pickaxe", cmd_blame, RUN_SETUP },
 		{ "prune", cmd_prune, RUN_SETUP },
 		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
 		{ "push", cmd_push, RUN_SETUP },

@@ -3,9 +3,9 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-ls-files --others --exclude
+test_description='git ls-files --others --exclude
 
-This test runs git-ls-files --others and tests --exclude patterns.
+This test runs git ls-files --others and tests --exclude patterns.
 '
 
 . ./test-lib.sh
@@ -59,8 +59,8 @@ echo '!*.2
 !*.8' >one/two/.gitignore
 
 test_expect_success \
-    'git-ls-files --others with various exclude options.' \
-    'git-ls-files --others \
+    'git ls-files --others with various exclude options.' \
+    'git ls-files --others \
        --exclude=\*.6 \
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
@@ -71,8 +71,8 @@ test_expect_success \
 printf '*.1\r\n/*.3\r\n!*.6\r\n' >.gitignore
 
 test_expect_success \
-    'git-ls-files --others with \r\n line endings.' \
-    'git-ls-files --others \
+    'git ls-files --others with \r\n line endings.' \
+    'git ls-files --others \
        --exclude=\*.6 \
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
@@ -84,9 +84,9 @@ cat > excludes-file << EOF
 e*
 EOF
 
-git-config core.excludesFile excludes-file
+git config core.excludesFile excludes-file
 
-git-runstatus | grep "^#	" > output
+git runstatus | grep "^#	" > output
 
 cat > expect << EOF
 #	.gitignore

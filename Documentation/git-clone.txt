@@ -64,6 +64,7 @@ OPTIONS
 	Operate quietly.  This flag is passed to "rsync" and
 	"git-fetch-pack" commands when given.
 
+--no-checkout::
 -n::
 	No checkout of HEAD is performed after the clone is complete.
 
@@ -106,8 +107,9 @@ OPTIONS
 	as patches.
 
 <repository>::
-	The (possibly remote) repository to clone from.  It can
-	be any URL git-fetch supports.
+	The (possibly remote) repository to clone from.  See the
+	<<URLS,URLS>> section below for more information on specifying
+	repositories.
 
 <directory>::
 	The name of a new directory to clone into.  The "humanish"
@@ -115,6 +117,8 @@ OPTIONS
 	explicitly given ("repo" for "/path/to/repo.git" and "foo"
 	for "host.xz:foo/.git").  Cloning into an existing directory
 	is not allowed.
+
+include::urls.txt[]
 
 Examples
 --------

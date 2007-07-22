@@ -717,7 +717,11 @@ class P4Sync(Command):
         # POSIX says it's 4096 bytes, default for Linux seems to be 130 K.
         # and all OS from the table below seems to be higher than POSIX.
         # See http://www.in-ulm.de/~mascheck/various/argmax/
-        argmax = min(4000, os.sysconf('SC_ARG_MAX'))
+        if (self.isWindows):
+            argmax = 2000
+        else:
+            argmax = min(4000, os.sysconf('SC_ARG_MAX'))
+
         chunk = ''
         filedata = []
         for i in xrange(len(files)):
