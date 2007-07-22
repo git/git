@@ -1165,11 +1165,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				add_message_grep(revs, arg+7);
 				continue;
 			}
-			if (!prefixcmp(arg, "--extended-regexp")) {
+			if (!strcmp(arg, "--extended-regexp") ||
+			    !strcmp(arg, "-E")) {
 				regflags |= REG_EXTENDED;
 				continue;
 			}
-			if (!prefixcmp(arg, "--regexp-ignore-case")) {
+			if (!strcmp(arg, "--regexp-ignore-case") ||
+			    !strcmp(arg, "-i")) {
 				regflags |= REG_ICASE;
 				continue;
 			}

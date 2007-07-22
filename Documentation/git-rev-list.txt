@@ -27,7 +27,8 @@ SYNOPSIS
 	     [ \--cherry-pick ]
 	     [ \--encoding[=<encoding>] ]
 	     [ \--(author|committer|grep)=<pattern> ]
-	     [ \--regexp-ignore-case ] [ \--extended-regexp ]
+	     [ \--regexp-ignore-case | \-i ]
+	     [ \--extended-regexp | \-E ]
 	     [ \--date={local|relative|default|iso|rfc|short} ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
@@ -227,11 +228,11 @@ limiting may be applied.
 	Limit the commits output to ones with log message that
 	matches the specified pattern (regular expression).
 
---regexp-ignore-case::
+-i, --regexp-ignore-case::
 
 	Match the regexp limiting patterns without regard to letters case.
 
---extended-regexp::
+-E, --extended-regexp::
 
 	Consider the limiting patterns to be extended regular expressions
 	instead of the default basic regular expressions.
