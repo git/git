@@ -385,22 +385,24 @@ method _after_readtree {} {
 	set rn [string length $rh]
 	if {[string equal -length $rn $rh $new_ref]} {
 		set new_branch [string range $new_ref $rn end]
-		append log " to $new_branch"
-
-		if {[catch {
-				git symbolic-ref -m $log HEAD $new_ref
-			} err]} {
-			_fatal $this $err
+		if {$is_detached || $current_branch ne $new_branch} {
+			append log " to $new_branch"
+			if {[catch {
+					git symbolic-ref -m $log HEAD $new_ref
+				} err]} {
+				_fatal $this $err
+			}
+			set current_branch $new_branch
+			set is_detached 0
 		}
-		set current_branch $new_branch
-		set is_detached 0
 	} else {
-		append log " to $new_expr"
-
-		if {[catch {
-				_detach_HEAD $log $new_hash
-			} err]} {
-			_fatal $this $err
+		if {$new_hash ne $HEAD} {
+			append log " to $new_expr"
+			if {[catch {
+					_detach_HEAD $log $new_hash
+				} err]} {
+				_fatal $this $err
+			}
 		}
 		set current_branch HEAD
 		set is_detached 1
