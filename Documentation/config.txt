@@ -286,8 +286,8 @@ core.editor::
 	messages by lauching an editor uses the value of this
 	variable when it is set, and the environment variable
 	`GIT_EDITOR` is not set.  The order of preference is
-	`GIT_EDITOR` environment, `core.editor`, `EDITOR` and
-	`VISUAL` environment variables and then finally `vi`.
+	`GIT_EDITOR` environment, `core.editor`, `VISUAL` and
+	`EDITOR` environment variables and then finally `vi`.
 
 core.pager::
 	The command that git will use to paginate output.  Can be overridden
