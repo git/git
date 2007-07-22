@@ -201,6 +201,7 @@ method _update_ref {} {
 					# The current branch is actually newer.
 					#
 					set new $cur
+					set new_hash $cur
 				} else {
 					_error $this "Branch '$newbranch' already exists.\n\nIt cannot fast-forward to $new_expr.\nA merge is required."
 					return 0
