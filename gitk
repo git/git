@@ -7646,6 +7646,8 @@ set localfrow -1
 set lserial 0
 setcoords
 makewindow
+# wait for the window to become visible
+tkwait visibility .
 wm title . "[file tail $argv0]: [file tail [pwd]]"
 readrefs
 
