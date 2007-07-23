@@ -1181,11 +1181,11 @@ class P4Sync(Command):
                 elif ',' not in self.changeRange:
                     self.revision = self.changeRange
                     self.changeRange = ""
-                p = p[0:atIdx]
+                p = p[:atIdx]
             elif p.find("#") != -1:
                 hashIdx = p.index("#")
                 self.revision = p[hashIdx:]
-                p = p[0:hashIdx]
+                p = p[:hashIdx]
             elif self.previousDepotPaths == []:
                 self.revision = "#head"
 
@@ -1299,7 +1299,7 @@ class P4Sync(Command):
                 changes.sort()
 
                 if len(self.maxChanges) > 0:
-                    changes = changes[0:min(int(self.maxChanges), len(changes))]
+                    changes = changes[:min(int(self.maxChanges), len(changes))]
 
             if len(changes) == 0:
                 if not self.silent:
