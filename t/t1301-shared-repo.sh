@@ -14,6 +14,10 @@ test_expect_success 'shared=all' '
 	test 2 = $(git config core.sharedrepository)
 '
 
+say "update-server-info not supported - skipping tests"
+test_done
+exit 0
+
 test_expect_success 'update-server-info honors core.sharedRepository' '
 	: > a1 &&
 	git add a1 &&
