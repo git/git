@@ -37,6 +37,7 @@ SYNOPSIS
 	     [ \--merge ]
 	     [ \--reverse ]
 	     [ \--walk-reflogs ]
+	     [ \--no-walk ] [ \--do-walk ]
 	     <commit>... [ \-- <paths>... ]
 
 DESCRIPTION
@@ -397,6 +398,14 @@ These options are mostly targeted for packing of git repositories.
 
 	Only useful with '--objects'; print the object IDs that are not
 	in packs.
+
+--no-walk::
+
+	Only show the given revs, but do not traverse their ancestors.
+
+--do-walk::
+
+	Overrides a previous --no-walk.
 
 
 include::pretty-formats.txt[]

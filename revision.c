@@ -1191,6 +1191,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->reverse ^= 1;
 				continue;
 			}
+			if (!strcmp(arg, "--no-walk")) {
+				revs->no_walk = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--do-walk")) {
+				revs->no_walk = 0;
+				continue;
+			}
 
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
