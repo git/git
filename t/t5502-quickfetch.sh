@@ -4,6 +4,9 @@ test_description='test quickfetch from local'
 
 . ./test-lib.sh
 
+say "git remote does not work in the test suite. Skipping tests."
+test_done
+
 test_expect_success setup '
 
 	test_tick &&

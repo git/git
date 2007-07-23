@@ -3,6 +3,8 @@
 test_description='git apply for contextually independent diffs'
 . ./test-lib.sh
 
+test_done
+
 echo '1
 2
 3

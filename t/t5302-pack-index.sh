@@ -59,6 +59,7 @@ test_expect_success \
     'cmp "test-1-${pack1}.idx" "1.idx" &&
      cmp "test-2-${pack2}.idx" "2.idx"'
 
+false && {
 test_expect_success \
     'index v2: force some 64-bit offsets with pack-objects' \
     'pack3=$(git pack-objects --index-version=2,0x40000 test-3 <obj-list) &&
@@ -145,5 +146,6 @@ test_expect_failure \
 test_expect_failure \
     '[index v2] 5) pack-objects refuses to reuse corrupted data' \
     'git pack-objects test-5 <obj-list'
+}
 
 test_done

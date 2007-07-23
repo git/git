@@ -6,6 +6,10 @@ test_description='CVS export comit. '
 
 . ./test-lib.sh
 
+say "CVS does not work on MinGW, skipping tests."
+test_done
+exit 0
+
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then

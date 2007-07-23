@@ -7,6 +7,10 @@ test_description='i18n settings and format-patch | am pipe'
 
 . ./test-lib.sh
 
+say "iconv not supported, skipping tests."
+test_done
+exit 0
+
 check_encoding () {
 	# Make sure characters are not corrupted
 	cnt="$1" header="$2" i=1 j=0 bad=0

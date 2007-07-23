@@ -7,6 +7,10 @@ test_description='commit and log output encodings'
 
 . ./test-lib.sh
 
+say "iconv not supported, skipping tests."
+test_done
+exit 0
+
 compare_with () {
 	git show -s $1 | sed -e '1,/^$/d' -e 's/^    //' -e '$d' >current &&
 	git diff current "$2"
