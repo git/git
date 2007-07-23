@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a | --interactive] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit> | --amend] [-u] [-e] [--author <author>] [[-i | -o] <path>...]'
+USAGE='[-a | --interactive] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit> | --amend] [-u] [-e] [--author <author>] [--template <file>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
@@ -87,6 +87,7 @@ signoff=
 force_author=
 only_include_assumed=
 untracked_files=
+templatefile="`git config commit.template`"
 while case "$#" in 0) break;; esac
 do
 	case "$1" in
@@ -248,6 +249,13 @@ $1"
 		signoff=t
 		shift
 		;;
+	-t|--t|--te|--tem|--temp|--templ|--templa|--templat|--template)
+		case "$#" in 1) usage ;; esac
+		shift
+		templatefile="$1"
+		no_edit=
+		shift
+		;;
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t
 		shift
@@ -320,6 +328,14 @@ t,,[1-9]*)
 ,,t,0)
 	die "No paths with -i does not make sense." ;;
 esac
+
+if test ! -z "$templatefile" -a -z "$log_given"
+then
+	if test ! -f "$templatefile"
+	then
+		die "Commit template file does not exist."
+	fi
+fi
 
 ################################################################
 # Prepare index to have a tree to be committed
@@ -454,6 +470,9 @@ then
 elif test -f "$GIT_DIR/SQUASH_MSG"
 then
 	cat "$GIT_DIR/SQUASH_MSG"
+elif test "$templatefile" != ""
+then
+	cat "$templatefile"
 fi | git stripspace >"$GIT_DIR"/COMMIT_EDITMSG
 
 case "$signoff" in
@@ -572,10 +591,35 @@ else
 fi |
 git stripspace >"$GIT_DIR"/COMMIT_MSG
 
-if cnt=`grep -v -i '^Signed-off-by' "$GIT_DIR"/COMMIT_MSG |
-	git stripspace |
-	wc -l` &&
-   test 0 -lt $cnt
+# Test whether the commit message has any content we didn't supply.
+have_commitmsg=
+grep -v -i '^Signed-off-by' "$GIT_DIR"/COMMIT_MSG |
+	git stripspace > "$GIT_DIR"/COMMIT_BAREMSG
+
+# Is the commit message totally empty?
+if test -s "$GIT_DIR"/COMMIT_BAREMSG
+then
+	if test "$templatefile" != ""
+	then
+		# Test whether this is just the unaltered template.
+		if cnt=`sed -e '/^#/d' < "$templatefile" |
+			git stripspace |
+			diff "$GIT_DIR"/COMMIT_BAREMSG - |
+			wc -l` &&
+		   test 0 -lt $cnt
+		then
+			have_commitmsg=t
+		fi
+	else
+		# No template, so the content in the commit message must
+		# have come from the user.
+		have_commitmsg=t
+	fi
+fi
+
+rm -f "$GIT_DIR"/COMMIT_BAREMSG
+
+if test "$have_commitmsg" = "t"
 then
 	if test -z "$TMP_INDEX"
 	then

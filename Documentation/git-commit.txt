@@ -74,6 +74,14 @@ OPTIONS
 -m <msg>|--message=<msg>::
 	Use the given <msg> as the commit message.
 
+-t <file>|--template=<file>::
+	Use the contents of the given file as the initial version
+	of the commit message. The editor is invoked and you can
+	make subsequent changes. If a message is specified using
+	the `-m` or `-F` options, this option has no effect. The
+	template file may also be specified using the `commit.template`
+	configuration variable.
+
 -s|--signoff::
 	Add Signed-off-by line at the end of the commit message.
 
