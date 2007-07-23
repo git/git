@@ -33,6 +33,20 @@ warn () {
 	echo "$*" >&2
 }
 
+output () {
+	case "$VERBOSE" in
+	'')
+		"$@" > "$DOTEST"/output 2>&1
+		status=$?
+		test $status != 0 &&
+			cat "$DOTEST"/output
+		return $status
+	;;
+	*)
+		"$@"
+	esac
+}
+
 require_clean_work_tree () {
 	# test if working tree is dirty
 	git rev-parse --verify HEAD > /dev/null &&
@@ -56,6 +70,10 @@ mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
+	count=$(($(wc -l < "$DONE")))
+	total=$(($count+$(wc -l < "$TODO")))
+	printf "Rebasing (%d/%d)\r" $count $total
+	test -z "$VERBOSE" || echo
 }
 
 make_patch () {
@@ -79,18 +97,18 @@ die_abort () {
 
 pick_one () {
 	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
-	git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
+	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$REWRITTEN" &&
 		pick_one_preserving_merges "$@" && return
 	parent_sha1=$(git rev-parse --verify $sha1^ 2>/dev/null)
 	current_sha1=$(git rev-parse --verify HEAD)
 	if [ $current_sha1 = $parent_sha1 ]; then
-		git reset --hard $sha1
-		test "a$1" = a-n && git reset --soft $current_sha1
+		output git reset --hard $sha1
+		test "a$1" = a-n && output git reset --soft $current_sha1
 		sha1=$(git rev-parse --short $sha1)
-		warn Fast forward to $sha1
+		output warn Fast forward to $sha1
 	else
-		git cherry-pick $STRATEGY "$@"
+		output git cherry-pick $STRATEGY "$@"
 	fi
 }
 
@@ -127,7 +145,7 @@ pick_one_preserving_merges () {
 	done
 	case $fast_forward in
 	t)
-		echo "Fast forward to $sha1"
+		output warn "Fast forward to $sha1"
 		test $preserve=f && echo $sha1 > "$REWRITTEN"/$sha1
 		;;
 	f)
@@ -135,7 +153,7 @@ pick_one_preserving_merges () {
 
 		first_parent=$(expr "$new_parents" : " \([^ ]*\)")
 		# detach HEAD to current parent
-		git checkout $first_parent 2> /dev/null ||
+		output git checkout $first_parent 2> /dev/null ||
 			die "Cannot move HEAD to $first_parent"
 
 		echo $sha1 > "$DOTEST"/current-commit
@@ -147,14 +165,14 @@ pick_one_preserving_merges () {
 			msg="$(git cat-file commit $sha1 | \
 				sed -e '1,/^$/d' -e "s/[\"\\]/\\\\&/g")"
 			# NEEDSWORK: give rerere a chance
-			if ! git merge $STRATEGY -m "$msg" $new_parents
+			if ! output git merge $STRATEGY -m "$msg" $new_parents
 			then
 				echo "$msg" > "$GIT_DIR"/MERGE_MSG
 				die Error redoing merge $sha1
 			fi
 			;;
 		*)
-			git cherry-pick $STRATEGY "$@" ||
+			output git cherry-pick $STRATEGY "$@" ||
 				die_with_patch $sha1 "Could not pick $sha1"
 		esac
 	esac
@@ -241,7 +259,7 @@ do_next () {
 
 		failed=f
 		pick_one -n $sha1 || failed=t
-		git reset --soft HEAD^
+		output git reset --soft HEAD^
 		author_script=$(get_author_ident_from_commit $sha1)
 		echo "$author_script" > "$DOTEST"/author-script
 		case $failed in
@@ -249,7 +267,7 @@ do_next () {
 			# This is like --amend, but with a different message
 			eval "$author_script"
 			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
-			git commit -F "$MSG" $EDIT_COMMIT
+			output git commit -F "$MSG" $EDIT_COMMIT
 			;;
 		t)
 			cp "$MSG" "$GIT_DIR"/MERGE_MSG
@@ -324,7 +342,7 @@ do
 		HEADNAME=$(cat "$DOTEST"/head-name)
 		HEAD=$(cat "$DOTEST"/head)
 		git symbolic-ref HEAD $HEADNAME &&
-		git reset --hard $HEAD &&
+		output git reset --hard $HEAD &&
 		rm -rf "$DOTEST"
 		exit
 		;;
@@ -333,7 +351,7 @@ do
 
 		test -d "$DOTEST" || die "No interactive rebase running"
 
-		git reset --hard && do_rest
+		output git reset --hard && do_rest
 		;;
 	-s|--strategy)
 		shift
@@ -387,9 +405,9 @@ do
 
 		if [ ! -z "$2"]
 		then
-			git show-ref --verify --quiet "refs/heads/$2" ||
+			output git show-ref --verify --quiet "refs/heads/$2" ||
 				die "Invalid branchname: $2"
-			git checkout "$2" ||
+			output git checkout "$2" ||
 				die "Could not checkout $2"
 		fi
 
@@ -456,7 +474,7 @@ EOF
 		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&
 			die_abort "Nothing to do"
 
-		git checkout $ONTO && do_rest
+		output git checkout $ONTO && do_rest
 	esac
 	shift
 done
