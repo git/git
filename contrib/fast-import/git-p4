@@ -1296,7 +1296,7 @@ class P4Sync(Command):
                     changeNum = line.split(" ")[1]
                     changes.append(changeNum)
 
-                changes.reverse()
+                changes.sort()
 
                 if len(self.maxChanges) > 0:
                     changes = changes[0:min(int(self.maxChanges), len(changes))]
