@@ -30,24 +30,24 @@ test_expect_success 'setup' '
 H=$(git rev-parse H)
 
 test_expect_success 'rewrite identically' '
-	git-filter-branch H2
+	git-filter-branch branch
 '
-
 test_expect_success 'result is really identical' '
-	test $H = $(git rev-parse H2)
+	test $H = $(git rev-parse HEAD)
 '
 
 test_expect_success 'rewrite, renaming a specific file' '
-	git-filter-branch --tree-filter "mv d doh || :" H3
+	git-filter-branch -f --tree-filter "mv d doh || :" HEAD
 '
 
 test_expect_success 'test that the file was renamed' '
-	test d = $(git show H3:doh)
+	test d = $(git show HEAD:doh)
 '
 
-git tag oldD H3~4
+git tag oldD HEAD~4
 test_expect_success 'rewrite one branch, keeping a side branch' '
-	git-filter-branch --tree-filter "mv b boh || :" modD D..oldD
+	git branch modD oldD &&
+	git-filter-branch -f --tree-filter "mv b boh || :" D..modD
 '
 
 test_expect_success 'common ancestor is still common (unchanged)' '
@@ -69,7 +69,8 @@ test_expect_success 'filter subdirectory only' '
 	git rm a &&
 	test_tick &&
 	git commit -m "again not subdir" &&
-	git-filter-branch --subdirectory-filter subdir sub
+	git branch sub &&
+	git-filter-branch -f --subdirectory-filter subdir refs/heads/sub
 '
 
 test_expect_success 'subdirectory filter result looks okay' '
@@ -89,7 +90,8 @@ test_expect_success 'setup and filter history that requires --full-history' '
 	test_tick &&
 	git commit -m "again subdir on master" &&
 	git merge branch &&
-	git-filter-branch --subdirectory-filter subdir sub-master
+	git branch sub-master &&
+	git-filter-branch -f --subdirectory-filter subdir sub-master
 '
 
 test_expect_success 'subdirectory filter result looks okay' '
@@ -100,7 +102,8 @@ test_expect_success 'subdirectory filter result looks okay' '
 '
 
 test_expect_success 'use index-filter to move into a subdirectory' '
-	git-filter-branch --index-filter \
+	git branch directorymoved &&
+	git-filter-branch -f --index-filter \
 		 "git ls-files -s | sed \"s-\\t-&newsubdir/-\" |
 	          GIT_INDEX_FILE=\$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
@@ -108,9 +111,10 @@ test_expect_success 'use index-filter to move into a subdirectory' '
 	test -z "$(git diff HEAD directorymoved:newsubdir)"'
 
 test_expect_success 'stops when msg filter fails' '
-	! git-filter-branch --msg-filter false nonono &&
-	rm -rf .git-rewrite &&
-	! git rev-parse nonono
+	old=$(git rev-parse HEAD) &&
+	! git-filter-branch -f --msg-filter false &&
+	test $old = $(git rev-parse HEAD) &&
+	rm -rf .git-rewrite
 '
 
 test_expect_success 'author information is preserved' '
@@ -118,7 +122,8 @@ test_expect_success 'author information is preserved' '
 	git add i &&
 	test_tick &&
 	GIT_AUTHOR_NAME="B V Uips" git commit -m bvuips &&
-	git-filter-branch --msg-filter "cat; \
+	git branch preserved-author &&
+	git-filter-branch -f --msg-filter "cat; \
 			test \$GIT_COMMIT != $(git rev-parse master) || \
 			echo Hallo" \
 		preserved-author &&
@@ -129,7 +134,8 @@ test_expect_success "remove a certain author's commits" '
 	echo i > i &&
 	test_tick &&
 	git commit -m i i &&
-	git-filter-branch --commit-filter "\
+	git branch removed-author &&
+	git-filter-branch -f --commit-filter "\
 		if [ \"\$GIT_AUTHOR_NAME\" = \"B V Uips\" ];\
 		then\
 			shift;\
@@ -146,6 +152,11 @@ test_expect_success "remove a certain author's commits" '
 	cnt2=$(git rev-list removed-author | wc -l) &&
 	test $cnt1 -eq $(($cnt2 + 1)) &&
 	test 0 = $(git rev-list --author="B V Uips" removed-author | wc -l)
+'
+
+test_expect_success 'barf on invalid name' '
+	! git filter-branch -f master xy-problem &&
+	! git filter-branch -f HEAD^
 '
 
 test_done
