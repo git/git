@@ -1682,7 +1682,7 @@ menu .mbar.repository
 .mbar.repository add command \
 	-label {Browse Current Branch's Files} \
 	-command {browser::new $current_branch}
-trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Browse \$current_branch's Files\" ;#"
+set ui_browse_current [.mbar.repository index last]
 .mbar.repository add command \
 	-label {Browse Branch Files...} \
 	-command browser_open::dialog
@@ -1691,11 +1691,20 @@ trace add variable current_branch write ".mbar.repository entryconf [.mbar.repos
 .mbar.repository add command \
 	-label {Visualize Current Branch's History} \
 	-command {do_gitk $current_branch}
-trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Visualize \$current_branch's History\" ;#"
+set ui_visualize_current [.mbar.repository index last]
 .mbar.repository add command \
 	-label {Visualize All Branch History} \
 	-command {do_gitk --all}
 .mbar.repository add separator
+
+proc current_branch_write {args} {
+	global current_branch
+	.mbar.repository entryconf $::ui_browse_current \
+		-label "Browse $current_branch's Files"
+	.mbar.repository entryconf $::ui_visualize_current \
+		-label "Visualize $current_branch's History"
+}
+trace add variable current_branch write current_branch_write
 
 if {[is_enabled multicommit]} {
 	.mbar.repository add command -label {Database Statistics} \
