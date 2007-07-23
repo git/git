@@ -2418,17 +2418,19 @@ lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command -label {Options...} \
 	-command do_options
-bind_button3 $ui_diff "
-	set cursorX %x
-	set cursorY %y
-	if {\$ui_index eq \$current_diff_side} {
-		$ctxm entryconf $ui_diff_applyhunk -label {Unstage Hunk From Commit}
+proc popup_diff_menu {ctxm x y X Y} {
+	set ::cursorX $x
+	set ::cursorY $y
+	if {$::ui_index eq $::current_diff_side} {
+		$ctxm entryconf $::ui_diff_applyhunk \
+			-label {Unstage Hunk From Commit}
 	} else {
-		$ctxm entryconf $ui_diff_applyhunk -label {Stage Hunk For Commit}
+		$ctxm entryconf $::ui_diff_applyhunk \
+			-label {Stage Hunk For Commit}
 	}
-	tk_popup $ctxm %X %Y
-"
-unset ui_diff_applyhunk
+	tk_popup $ctxm $X $Y
+}
+bind_button3 $ui_diff [list popup_diff_menu $ctxm %x %y %X %Y]
 
 # -- Status Bar
 #
