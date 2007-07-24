@@ -660,6 +660,14 @@ static void date_am(struct tm *tm, int *num)
 	tm->tm_hour = (hour % 12);
 }
 
+static void date_never(struct tm *tm, int *num)
+{
+	tm->tm_mon = tm->tm_wday = tm->tm_yday
+		= tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
+	tm->tm_year = 70;
+	tm->tm_mday = 1;
+}
+
 static const struct special {
 	const char *name;
 	void (*fn)(struct tm *, int *);
@@ -670,6 +678,7 @@ static const struct special {
 	{ "tea", date_tea },
 	{ "PM", date_pm },
 	{ "AM", date_am },
+	{ "never", date_never },
 	{ NULL }
 };
 
