@@ -298,7 +298,7 @@ do
 	# Assign the boundarie(s) in the set of rewritten commits
 	# as the replacement commit(s).
 	# (This would look a bit nicer if --not --stdin worked.)
-	for p in $((cd "$workdir"/../map; ls | sed "s/^/^/") |
+	for p in $( (cd "$workdir"/../map; ls | sed "s/^/^/") |
 		git rev-list $ref --boundary --stdin |
 		sed -n "s/^-//p")
 	do
