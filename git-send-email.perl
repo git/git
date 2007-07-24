@@ -237,7 +237,7 @@ my %parse_alias = (
 			$aliases{$1} = [ split(/\s+/, $2) ];
 		}}},
 	pine => sub { my $fh = shift; while (<$fh>) {
-		if (/^(\S+)\s+(.*)$/) {
+		if (/^(\S+)\t.*\t(.*)$/) {
 			$aliases{$1} = [ split(/\s*,\s*/, $2) ];
 		}}},
 	gnus => sub { my $fh = shift; while (<$fh>) {
