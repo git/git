@@ -529,6 +529,8 @@ static void convert_to_utf8(char *line, const char *charset)
 			return;
 	}
 
+	if (!strcmp(metainfo_charset, charset))
+		return;
 	out = reencode_string(line, metainfo_charset, charset);
 	if (!out)
 		die("cannot convert from %s to %s\n",
