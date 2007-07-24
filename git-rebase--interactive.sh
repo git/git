@@ -102,7 +102,7 @@ pick_one () {
 		pick_one_preserving_merges "$@" && return
 	parent_sha1=$(git rev-parse --verify $sha1^ 2>/dev/null)
 	current_sha1=$(git rev-parse --verify HEAD)
-	if [ $current_sha1 = $parent_sha1 ]; then
+	if test $current_sha1 = $parent_sha1; then
 		output git reset --hard $sha1
 		test "a$1" = a-n && output git reset --soft $current_sha1
 		sha1=$(git rev-parse --short $sha1)
@@ -116,7 +116,7 @@ pick_one_preserving_merges () {
 	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
 	sha1=$(git rev-parse $sha1)
 
-	if [ -f "$DOTEST"/current-commit ]
+	if test -f "$DOTEST"/current-commit
 	then
 		current_commit=$(cat "$DOTEST"/current-commit) &&
 		git rev-parse HEAD > "$REWRITTEN"/$current_commit &&
@@ -130,7 +130,7 @@ pick_one_preserving_merges () {
 	new_parents=
 	for p in $(git rev-list --parents -1 $sha1 | cut -d\  -f2-)
 	do
-		if [ -f "$REWRITTEN"/$p ]
+		if test -f "$REWRITTEN"/$p
 		then
 			preserve=f
 			new_p=$(cat "$REWRITTEN"/$p)
@@ -188,7 +188,7 @@ nth_string () {
 }
 
 make_squash_message () {
-	if [ -f "$SQUASH_MSG" ]; then
+	if test -f "$SQUASH_MSG"; then
 		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([0-9]\+\).*/\1/p" \
 			< "$SQUASH_MSG" | tail -n 1)+1))
 		echo "# This is a combination of $COUNT commits."
@@ -286,7 +286,7 @@ do_next () {
 	HEADNAME=$(cat "$DOTEST"/head-name) &&
 	OLDHEAD=$(cat "$DOTEST"/head) &&
 	SHORTONTO=$(git rev-parse --short $(cat "$DOTEST"/onto)) &&
-	if [ -d "$REWRITTEN" ]
+	if test -d "$REWRITTEN"
 	then
 		test -f "$DOTEST"/current-commit &&
 			current_commit=$(cat "$DOTEST"/current-commit) &&
@@ -403,7 +403,7 @@ do
 
 		require_clean_work_tree
 
-		if [ ! -z "$2"]
+		if test ! -z "$2"
 		then
 			output git show-ref --verify --quiet "refs/heads/$2" ||
 				die "Invalid branchname: $2"
@@ -426,7 +426,7 @@ do
 		echo $ONTO > "$DOTEST"/onto
 		test -z "$STRATEGY" || echo "$STRATEGY" > "$DOTEST"/strategy
 		test t = "$VERBOSE" && : > "$DOTEST"/verbose
-		if [ t = "$PRESERVE_MERGES" ]
+		if test t = "$PRESERVE_MERGES"
 		then
 			# $REWRITTEN contains files for each commit that is
 			# reachable by at least one merge base of $HEAD and
