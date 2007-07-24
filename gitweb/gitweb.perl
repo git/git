@@ -4317,9 +4317,16 @@ sub git_snapshot {
 	@supported_fmts = filter_snapshot_fmts(@supported_fmts);
 
 	my $format = $cgi->param('sf');
-	unless ($format =~ m/[a-z0-9]+/
-	        && exists($known_snapshot_formats{$format})
-	        && grep($_ eq $format, @supported_fmts)) {
+	if (!@supported_fmts) {
+		die_error('403 Permission denied', "Permission denied");
+	}
+	# default to first supported snapshot format
+	$format ||= $supported_fmts[0];
+	if ($format !~ m/^[a-z0-9]+$/) {
+		die_error(undef, "Invalid snapshot format parameter");
+	} elsif (!exists($known_snapshot_formats{$format})) {
+		die_error(undef, "Unknown snapshot format");
+	} elsif (!grep($_ eq $format, @supported_fmts)) {
 		die_error(undef, "Unsupported snapshot format");
 	}
 
