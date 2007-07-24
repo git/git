@@ -284,6 +284,12 @@ do
 		git mailinfo $keep $utf8 "$dotest/msg" "$dotest/patch" \
 			<"$dotest/$msgnum" >"$dotest/info" ||
 			stop_here $this
+
+		# skip pine's internal folder data
+		grep '^Author: Mail System Internal Data$' \
+			<"$dotest"/info >/dev/null &&
+			go_next && continue
+
 		test -s $dotest/patch || {
 			echo "Patch is empty.  Was it split wrong?"
 			stop_here $this
