@@ -260,8 +260,8 @@ do_next () {
 		esac
 
 		failed=f
-		pick_one -n $sha1 || failed=t
 		output git reset --soft HEAD^
+		pick_one -n $sha1 || failed=t
 		author_script=$(get_author_ident_from_commit $sha1)
 		echo "$author_script" > "$DOTEST"/author-script
 		case $failed in
