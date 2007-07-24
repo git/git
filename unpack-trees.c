@@ -11,9 +11,6 @@
 
 struct tree_entry_list {
 	struct tree_entry_list *next;
-	unsigned directory : 1;
-	unsigned executable : 1;
-	unsigned symlink : 1;
 	unsigned int mode;
 	const char *name;
 	const unsigned char *sha1;
@@ -38,9 +35,6 @@ static struct tree_entry_list *create_tree_entry_list(struct tree *tree)
 		entry->name = one.path;
 		entry->sha1 = one.sha1;
 		entry->mode = one.mode;
-		entry->directory = S_ISDIR(one.mode) != 0;
-		entry->executable = (one.mode & S_IXUSR) != 0;
-		entry->symlink = S_ISLNK(one.mode) != 0;
 		entry->next = NULL;
 
 		*list_p = entry;
@@ -141,9 +135,9 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 #endif
 			if (!first || entcmp(first, firstdir,
 					     posns[i]->name,
-					     posns[i]->directory) > 0) {
+					     S_ISDIR(posns[i]->mode)) > 0) {
 				first = posns[i]->name;
-				firstdir = posns[i]->directory;
+				firstdir = S_ISDIR(posns[i]->mode);
 			}
 		}
 		/* No name means we're done */
@@ -177,7 +171,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 				continue;
 			}
 
-			if (posns[i]->directory) {
+			if (S_ISDIR(posns[i]->mode)) {
 				struct tree *tree = lookup_tree(posns[i]->sha1);
 				any_dirs = 1;
 				parse_tree(tree);
