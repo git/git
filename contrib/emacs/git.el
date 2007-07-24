@@ -1058,7 +1058,7 @@ Return the list of files that haven't been handled."
   (let ((info (ewoc-data (ewoc-locate git-status))))
     (find-file (git-fileinfo->name info))
     (when (eq 'unmerged (git-fileinfo->state info))
-      (smerge-mode))))
+      (smerge-mode 1))))
 
 (defun git-find-file-other-window ()
   "Visit the current file in its own buffer in another window."
