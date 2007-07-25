@@ -6,7 +6,7 @@ trap 'rm -f $tmp-*' 0
 since="$1"
 until="$2"
 
-git-rev-list --no-merges --since="$1" --until="$2" master >"$tmp-0.txt"
+git-rev-list --no-merges "^master@{$1}" "master@{$2}" >"$tmp-0.txt"
 top=$(head -n 1 "$tmp-0.txt")
 bottom=$(tail -n 1 "$tmp-0.txt")
 
@@ -32,5 +32,5 @@ Changes during this period are as follows:
 
 EOF
 
-git shortlog --no-merges $bottom..$top
+git shortlog -w72,2,4 --no-merges $bottom..$top
 
