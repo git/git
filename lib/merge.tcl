@@ -4,8 +4,7 @@
 class merge {
 
 field w         ; # top level window
-field w_list    ; # widget of available branches
-field list      ; # list of available branches
+field w_rev     ; # mega-widget to pick the revision to merge
 
 method _can_merge {} {
 	global HEAD commit_type file_states
@@ -68,11 +67,10 @@ You should complete the current commit before starting a merge.  Doing so will h
 }
 
 method _rev {} {
-	set i [$w_list curselection]
-	if {$i >= 0} {
-		return [lindex [lindex $list $i] 0]
+	if {[catch {$w_rev commit_or_die}]} {
+		return {}
 	}
-	return {}
+	return [$w_rev get]
 }
 
 method _visualize {} {
@@ -121,38 +119,6 @@ constructor dialog {} {
 		return
 	}
 
-	set fmt {list %(objectname) %(*objectname) %(refname) %(subject)}
-	set fr_fd [git_read for-each-ref \
-		--tcl \
-		--format=$fmt \
-		refs/heads \
-		refs/remotes \
-		refs/tags \
-		]
-	fconfigure $fr_fd -translation binary
-	while {[gets $fr_fd line] > 0} {
-		set line [eval $line]
-		set ref [lindex $line 2]
-		regsub ^refs/(heads|remotes|tags)/ $ref {} ref
-		set subj($ref) [lindex $line 3]
-		lappend sha1([lindex $line 0]) $ref
-		if {[lindex $line 1] ne {}} {
-			lappend sha1([lindex $line 1]) $ref
-		}
-	}
-	close $fr_fd
-
-	set list [list]
-	set fr_fd [git_read rev-list --all --not HEAD]
-	while {[gets $fr_fd line] > 0} {
-		if {[catch {set ref $sha1($line)}]} continue
-		foreach n $ref {
-			lappend list [list $n $line]
-		}
-	}
-	close $fr_fd
-	set list [lsort -unique $list]
-
 	make_toplevel top w
 	wm title $top "[appname] ([reponame]): Merge"
 	if {$top ne {.}} {
@@ -178,39 +144,11 @@ constructor dialog {} {
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.source -text {Source Branches}
-	set w_list $w.source.l
-	listbox $w_list \
-		-height 10 \
-		-width 70 \
-		-font font_diff \
-		-selectmode browse \
-		-yscrollcommand [list $w.source.sby set]
-	scrollbar $w.source.sby -command [list $w_list yview]
-	pack $w.source.sby -side right -fill y
-	pack $w_list -side left -fill both -expand 1
-	pack $w.source -fill both -expand 1 -pady 5 -padx 5
-
-	foreach ref $list {
-		set n [lindex $ref 0]
-		if {[string length $n] > 20} {
-			set n "[string range $n 0 16]..."
-		}
-		$w_list insert end [format {%s %-20s %s} \
-			[string range [lindex $ref 1] 0 5] \
-			$n \
-			$subj([lindex $ref 0])]
-	}
-
-	bind $w_list <Key-K> [list event generate %W <Shift-Key-Up>]
-	bind $w_list <Key-J> [list event generate %W <Shift-Key-Down>]
-	bind $w_list <Key-k> [list event generate %W <Key-Up>]
-	bind $w_list <Key-j> [list event generate %W <Key-Down>]
-	bind $w_list <Key-h> [list event generate %W <Key-Left>]
-	bind $w_list <Key-l> [list event generate %W <Key-Right>]
-	bind $w_list <Key-v> $_visualize
+	set w_rev [::choose_rev::new_unmerged $w.rev {Revision To Merge}]
+	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 
 	bind $w <$M1B-Key-Return> $_start
+	bind $w <Key-Return> $_start
 	bind $w <Visibility> [cb _visible]
 	bind $w <Key-Escape> [cb _cancel]
 	wm protocol $w WM_DELETE_WINDOW [cb _cancel]
@@ -219,7 +157,10 @@ constructor dialog {} {
 
 method _visible {} {
 	grab $w
-	focus $w_list
+	if {[is_config_true gui.matchtrackingbranch]} {
+		$w_rev pick_tracking_branch
+	}
+	$w_rev focus_filter
 }
 
 method _cancel {} {
