@@ -81,17 +81,41 @@ method _visualize {} {
 }
 
 method _start {} {
-	global HEAD current_branch
+	global HEAD current_branch remote_url
 
 	set name [_rev $this]
 	if {$name eq {}} {
 		return
 	}
 
-	set cmd [list git merge $name]
-	set msg "Merging $current_branch and $name"
+	set spec [$w_rev get_tracking_branch]
+	set cmit [$w_rev get_commit]
+	set cmd [list git]
+	lappend cmd merge
+	lappend cmd --strategy=recursive
+
+	set fh [open [gitdir FETCH_HEAD] w]
+	fconfigure $fh -translation lf
+	if {$spec eq {}} {
+		set remote .
+		set branch $name
+		set stitle $branch
+	} else {
+		set remote $remote_url([lindex $spec 1])
+		set branch [lindex $spec 2]
+		set stitle "$branch of $remote"
+	}
+	regsub ^refs/heads/ $branch {} branch
+	puts $fh "$cmit\t\tbranch '$branch' of $remote"
+	close $fh
+
+	lappend cmd [git fmt-merge-msg <[gitdir FETCH_HEAD]]
+	lappend cmd HEAD
+	lappend cmd $cmit
+
+	set msg "Merging $current_branch and $stitle"
 	ui_status "$msg..."
-	set cons [console::new "Merge" $cmd]
+	set cons [console::new "Merge" "merge $stitle"]
 	console::exec $cons $cmd [cb _finish $cons]
 
 	wm protocol $w WM_DELETE_WINDOW {}
