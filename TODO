@@ -14,34 +14,6 @@ to pick an item from the list and work on it.
 Recent issues
 -------------
 
-* gitweb patches (bunch of them)
-
-From: Matt McCutchen <hashproduct@gmail.com>
-Subject: [PATCH] gitweb: snapshot cleanups & support for offering multiple formats
-Message-ID: <1183053733.6108.0.camel@mattlaptop2>
-
-Subject: [PATCH] gitweb: make search form generate pathinfo-style URLs
-Message-ID: <1183057027.6108.4.camel@mattlaptop2>
-
-Subject: [PATCH] gitweb: make "No commits" in project list gray, not bold green
-Message-ID: <1183068922.6108.8.camel@mattlaptop2>
-
-From: Miklos Vajna <vmiklos@frugalware.org>
-Subject: [PATCH] gitweb: prefer git_get_project_owner() over get_file_owner()
-Message-ID: <20070703221122.GI32766@genesis.frugalware.org>
-
-From: Michael Hendricks <michael@ndrix.org>
-Subject: [PATCH] gitweb: configurable width for the projects list Description column
-Message-ID: <11835958082458-git-send-email-michael@ndrix.org>
-
-
-* switching branches when b changes between symlink and directory in a/b/c
-
-From: Pierre Habouzit <madcoder@debian.org>
-Subject: [BUG (or misfeature?)] git checkout and symlinks
-Message-ID: <20070704203541.GA13286@artemis.corp>
-
-
 * cherry-pick unexpected conflicts
 
 From: Gerrit Pape <pape@smarden.org>
@@ -49,18 +21,14 @@ Subject: Re: unexpected git-cherry-pick conflict
 Date: Wed, 13 Jun 2007 13:43:35 +0000
 Message-ID: <20070613134336.13661.qmail@c61f4fed932273.315fe32.mid.smarden.org>
 
-* git-apply -R --whitespace=warn
+* 3way merge still has D/F conflict problems
 
-From: Daniel Barkalow <barkalow@iabervon.org>
-Message-ID: <Pine.LNX.4.64.0707062155170.6977@iabervon.org>
-Subject: Minor bug in git-apply's patch-cleaning
+Subject: [RFH] 3way still has D/F conflict problems...
+Date: Mon, 23 Jul 2007 00:22:51 -0700
+Message-ID: <7vejizmvn8.fsf@assigned-by-dhcp.cox.net>
 
-* gitk --left-right
-
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <alpine.LFD.0.98.0705051524300.17381@woody.linux-foundation.org>
-From: Junio C Hamano <junkio@cox.net>
-Message-ID: <7vabwifl23.fsf@assigned-by-dhcp.cox.net>
+I am punting on unpack-trees related D/F issues for 1.5.3.  We
+might end up rewriting read-tree after the release.
 
 * Pushing into a non-bare repository more gracefully.
 
@@ -89,12 +57,6 @@ Repeated requests against git-daemon makes it stuck under --syslog
    editor backup files).  "git clean -x" and "git checkout" to
    another branch that has a file where the current branch has a
    directory could lose such 'precious' files.
-
- - Customized "diff -p" markers per path.
-
-  From: Linus Torvalds <torvalds@linux-foundation.org>
-  Subject: Re: [PATCH] Per-path attribute based hunk header selection.
-  Message-ID: <alpine.LFD.0.98.0707061051020.9434@woody.linux-foundation.org>
 
  - Others???
 
@@ -161,43 +123,6 @@ Technical (milder)
 
 Technical (trivial)
 -------------------
-
-* Change the "first line of commit message is special" rule to
-  "first paragraph" and then wrap it.
-
-  From: Junio C Hamano <junkio@cox.net>
-  Message-ID: <7vsla5pkug.fsf@assigned-by-dhcp.cox.net>
-
-  This is slightly related, but I have been wondering about the
-  interaction with "single-liner summary, empty line and then the
-  rest" convention and various commands in the log family.
-
-  Currently, --pretty=oneline and --pretty=email (hence format-patch)
-  take and use only the first line.  I think we could change it to:
-
-   - take the first paragraph, where the definition of the first
-     paragraph is "skip all blank lines from the beginning, and
-     then grab everything up to the next empty line".
-
-   - replace all line breaks with a whitespace.
-
-  This change would not affect well-behaved commit messages that
-  adhere to the convention, as their first paragraph always
-  consist of a single line.  On the other hand, people from
-  different culture can get frustrated by their commit message
-  chomped at the first linebreak in the middle of sentence right
-  now, which would be helped by this change.
-
-  Their Subject: and --pretty=oneline output would become very
-  long and unsightly, but their commit messages are already
-  ugly anyway, and such a change at least avoid the loss of
-  information.
-
-  If we were to do this, Subject: line would most likely use
-  RFC2822 line folding at the places where line breaks were in the
-  original, but that goes without saying.
-
-  What do people think?
 
 * Give --stdin to git-log, similar to git-rev-list
 
