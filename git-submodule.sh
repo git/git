@@ -236,7 +236,6 @@ modules_list()
 			say "-$sha1 $path"
 			continue;
 		fi
-		revname=$(unset GIT_DIR && cd "$path" && git describe --tags $sha1)
 		set_name_rev "$path" "$sha1"
 		if git diff-files --quiet -- "$path"
 		then
