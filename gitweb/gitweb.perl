@@ -4343,7 +4343,7 @@ sub git_snapshot {
 	my $cmd;
 	$filename .= "-$hash$known_snapshot_formats{$format}{'suffix'}";
 	$cmd = "$git_command archive " .
-		"--format=$known_snapshot_formats{$format}{'format'}" .
+		"--format=$known_snapshot_formats{$format}{'format'} " .
 		"--prefix=\'$name\'/ $hash";
 	if (exists $known_snapshot_formats{$format}{'compressor'}) {
 		$cmd .= ' | ' . join ' ', @{$known_snapshot_formats{$format}{'compressor'}};
