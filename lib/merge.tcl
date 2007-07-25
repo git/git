@@ -102,6 +102,9 @@ method _start {} {
 		set stitle $branch
 	} else {
 		set remote $remote_url([lindex $spec 1])
+		if {[regexp {^[^:@]*@[^:]*:/} $remote]} {
+			regsub {^[^:@]*@} $remote {} remote
+		}
 		set branch [lindex $spec 2]
 		set stitle "$branch of $remote"
 	}
