@@ -125,7 +125,6 @@ constructor dialog {} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	set _visualize [cb _visualize]
 	set _start [cb _start]
 
 	label $w.header \
@@ -134,10 +133,14 @@ constructor dialog {} {
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
-	button $w.buttons.visualize -text Visualize -command $_visualize
+	button $w.buttons.visualize \
+		-text Visualize \
+		-command [cb _visualize]
 	pack $w.buttons.visualize -side left
-	button $w.buttons.create -text Merge -command $_start
-	pack $w.buttons.create -side right
+	button $w.buttons.merge \
+		-text Merge \
+		-command $_start
+	pack $w.buttons.merge -side right
 	button $w.buttons.cancel \
 		-text {Cancel} \
 		-command [cb _cancel]
@@ -149,9 +152,10 @@ constructor dialog {} {
 
 	bind $w <$M1B-Key-Return> $_start
 	bind $w <Key-Return> $_start
-	bind $w <Visibility> [cb _visible]
 	bind $w <Key-Escape> [cb _cancel]
 	wm protocol $w WM_DELETE_WINDOW [cb _cancel]
+
+	bind $w.buttons.merge <Visibility> [cb _visible]
 	tkwait window $w
 }
 
