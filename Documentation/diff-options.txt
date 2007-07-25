@@ -4,6 +4,13 @@
 -u::
 	Synonym for "-p".
 
+-U<n>::
+	Shorthand for "--unified=<n>".
+
+--unified=<n>::
+	Generate diffs with <n> lines of context instead of
+	the usual three. Implies "-p".
+
 --raw::
 	Generate the raw format.
 
