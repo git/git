@@ -17,6 +17,7 @@ field spec_head       ; # list of all head specs
 field spec_trck       ; # list of all tracking branch specs
 field spec_tag        ; # list of all tag specs
 field tip_data        ; # array of tip commit info by refname
+field log_last        ; # array of reflog date by refname
 
 field tooltip_wm        {} ; # Current tooltip toplevel, if open
 field tooltip_t         {} ; # Text widget in $tooltip_wm
@@ -518,7 +519,14 @@ method _open_tooltip {} {
 		set cmit [lindex $data 0]
 	}
 
-	$tooltip_t insert end "[lindex $spec 0]\n"
+	$tooltip_t insert end [lindex $spec 0]
+	set last [_reflog_last $this [lindex $spec 1]]
+	if {$last ne {}} {
+		$tooltip_t insert end "\n"
+		$tooltip_t insert end "updated"
+		$tooltip_t insert end " $last"
+	}
+	$tooltip_t insert end "\n"
 
 	if {$tag ne {}} {
 		$tooltip_t insert end "\n"
@@ -551,6 +559,30 @@ method _open_tooltip {} {
 
 	$tooltip_t conf -state disabled
 	_position_tooltip $this
+}
+
+method _reflog_last {name} {
+	if {[info exists reflog_last($name)]} {
+		return reflog_last($name)
+	}
+
+	set last {}
+	if {[catch {set last [file mtime [gitdir $name]]}]
+	&& ![catch {set g [open [gitdir logs $name] r]}]} {
+		fconfigure $g -translation binary
+		while {[gets $g line] >= 0} {
+			if {[regexp {> ([1-9][0-9]*) } $line line when]} {
+				set last $when
+			}
+		}
+		close $g
+	}
+
+	if {$last ne {}} {
+		set last [clock format $last -format {%a %b %e %H:%M:%S %Y}]
+	}
+	set reflog_last($name) $last
+	return $last
 }
 
 method _position_tooltip {} {
