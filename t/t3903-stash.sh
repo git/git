@@ -66,4 +66,11 @@ test_expect_success 'apply stashed changes (including index)' '
 	test 1 = $(git show HEAD:file)
 '
 
+test_expect_success 'unstashing in a subdirectory' '
+	git reset --hard HEAD &&
+	mkdir subdir &&
+	cd subdir &&
+	git stash apply
+'
+
 test_done

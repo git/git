@@ -6,6 +6,7 @@ USAGE='[ | list | show | apply | clear]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
+cd_to_toplevel
 
 TMP="$GIT_DIR/.git-stash.$$"
 trap 'rm -f "$TMP-*"' 0
