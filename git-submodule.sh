@@ -46,8 +46,11 @@ get_repo_base() {
 #
 module_name()
 {
-       name=$(GIT_CONFIG=.gitmodules git config --get-regexp '^submodule\..*\.path$' "$1" |
-       sed -nre 's/^submodule\.(.+)\.path .+$/\1/p')
+	# Do we have "submodule.<something>.path = $1" defined in .gitmodules file?
+	re=$(printf '%s' "$1" | sed -e 's/\([^a-zA-Z0-9_]\)/\\\1/g')
+	name=$( GIT_CONFIG=.gitmodules \
+		git config --get-regexp '^submodule\..*\.path$' |
+		sed -n -e 's|^submodule\.\(.*\)\.path '"$re"'$|\1|p' )
        test -z "$name" &&
        die "No submodule mapping found in .gitmodules for path '$path'"
        echo "$name"
