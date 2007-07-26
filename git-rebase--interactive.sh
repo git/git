@@ -250,10 +250,12 @@ do_next () {
 		case "$(peek_next_command)" in
 		squash)
 			EDIT_COMMIT=
+			USE_OUTPUT=output
 			cp "$MSG" "$SQUASH_MSG"
 		;;
 		*)
 			EDIT_COMMIT=-e
+			USE_OUTPUT=
 			test -f "$SQUASH_MSG" && rm "$SQUASH_MSG"
 		esac
 
@@ -267,7 +269,7 @@ do_next () {
 			# This is like --amend, but with a different message
 			eval "$author_script"
 			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
-			output git commit -F "$MSG" $EDIT_COMMIT
+			$USE_OUTPUT git commit -F "$MSG" $EDIT_COMMIT
 			;;
 		t)
 			cp "$MSG" "$GIT_DIR"/MERGE_MSG
