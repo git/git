@@ -139,6 +139,10 @@ proc getcommitlines {fd view}  {
     global vparentlist vdisporder vcmitlisted
 
     set stuff [read $fd 500000]
+    # git log doesn't terminate the last commit with a null...
+    if {$stuff == {} && $leftover($view) ne {} && [eof $fd]} {
+	set stuff "\0"
+    }
     if {$stuff == {}} {
 	if {![eof $fd]} {
 	    return 1
@@ -2157,7 +2161,7 @@ proc readfhighlight {} {
 
 proc find_change {name ix op} {
     global nhighlights mainfont boldnamerows
-    global findstring findpattern findtype markingmatches
+    global findstring findpattern findtype
 
     # delete previous highlights, if any
     foreach row $boldnamerows {
@@ -2172,7 +2176,6 @@ proc find_change {name ix op} {
 		   $findstring]
 	set findpattern "*$e*"
     }
-    set markingmatches [expr {$findstring ne {}}]
     drawvisible
 }
 
@@ -2218,26 +2221,32 @@ proc askfindhighlight {row id} {
 	    }
 	}
 	if {$markingmatches} {
-	    markrowmatches $row [lindex $info 0] [lindex $info 1]
+	    markrowmatches $row $id
 	}
     }
     set nhighlights($row) $isbold
 }
 
-proc markrowmatches {row headline author} {
-    global canv canv2 linehtag linentag
+proc markrowmatches {row id} {
+    global canv canv2 linehtag linentag commitinfo findloc
 
+    set headline [lindex $commitinfo($id) 0]
+    set author [lindex $commitinfo($id) 1]
     $canv delete match$row
     $canv2 delete match$row
-    set m [findmatches $headline]
-    if {$m ne {}} {
-	markmatches $canv $row $headline $linehtag($row) $m \
-	    [$canv itemcget $linehtag($row) -font]
+    if {$findloc eq "All fields" || $findloc eq "Headline"} {
+	set m [findmatches $headline]
+	if {$m ne {}} {
+	    markmatches $canv $row $headline $linehtag($row) $m \
+		[$canv itemcget $linehtag($row) -font] $row
+	}
     }
-    set m [findmatches $author]
-    if {$m ne {}} {
-	markmatches $canv2 $row $author $linentag($row) $m \
-	    [$canv2 itemcget $linentag($row) -font]
+    if {$findloc eq "All fields" || $findloc eq "Author"} {
+	set m [findmatches $author]
+	if {$m ne {}} {
+	    markmatches $canv2 $row $author $linentag($row) $m \
+		[$canv2 itemcget $linentag($row) -font] $row
+	}
     }
 }
 
@@ -3406,7 +3415,7 @@ proc drawcmittext {id row col} {
     global linespc canv canv2 canv3 canvy0 fgcolor curview
     global commitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
-    global linehtag linentag linedtag markingmatches
+    global linehtag linentag linedtag
     global mainfont canvxmax boldrows boldnamerows fgcolor nullid nullid2
 
     # listed is 0 for boundary, 1 for normal, 2 for left, 3 for right
@@ -3483,9 +3492,6 @@ proc drawcmittext {id row col} {
     set linedtag($row) [$canv3 create text 3 $y -anchor w -fill $fgcolor \
 			    -text $date -font $mainfont -tags text]
     set xr [expr {$xt + [font measure $mainfont $headline]}]
-    if {$markingmatches} {
-	markrowmatches $row $headline $name
-    }
     if {$xr > $canvxmax} {
 	set canvxmax $xr
 	setcanvscroll
@@ -3494,7 +3500,7 @@ proc drawcmittext {id row col} {
 
 proc drawcmitrow {row} {
     global displayorder rowidlist
-    global iddrawn
+    global iddrawn markingmatches
     global commitinfo parentlist numcommits
     global filehighlight fhighlights findstring nhighlights
     global hlview vhighlights
@@ -3515,18 +3521,22 @@ proc drawcmitrow {row} {
     if {$highlight_related ne "None" && ![info exists rhighlights($row)]} {
 	askrelhighlight $row $id
     }
-    if {[info exists iddrawn($id)]} return
-    set col [lsearch -exact [lindex $rowidlist $row] $id]
-    if {$col < 0} {
-	puts "oops, row $row id $id not in list"
-	return
+    if {![info exists iddrawn($id)]} {
+	set col [lsearch -exact [lindex $rowidlist $row] $id]
+	if {$col < 0} {
+	    puts "oops, row $row id $id not in list"
+	    return
+	}
+	if {![info exists commitinfo($id)]} {
+	    getcommit $id
+	}
+	assigncolor $id
+	drawcmittext $id $row $col
+	set iddrawn($id) 1
     }
-    if {![info exists commitinfo($id)]} {
-	getcommit $id
+    if {$markingmatches} {
+	markrowmatches $row $id
     }
-    assigncolor $id
-    drawcmittext $id $row $col
-    set iddrawn($id) 1
 }
 
 proc drawcommits {row {endrow {}}} {
@@ -4044,7 +4054,6 @@ proc dofind {{rev 0}} {
     if {!$rev} {
 	run findmore
     } else {
-	set findcurline $findstartline
 	if {$findcurline == 0} {
 	    set findcurline $numcommits
 	}
@@ -4079,7 +4088,7 @@ proc findprev {} {
 
 proc findmore {} {
     global commitdata commitinfo numcommits findstring findpattern findloc
-    global findstartline findcurline markingmatches displayorder
+    global findstartline findcurline displayorder
 
     set fldtypes {Headline Author Date Committer CDate Comments}
     set l [expr {$findcurline + 1}]
@@ -4097,6 +4106,8 @@ proc findmore {} {
     set last 0
     for {} {$l < $lim} {incr l} {
 	set id [lindex $displayorder $l]
+	# shouldn't happen unless git log doesn't give all the commits...
+	if {![info exists commitdata($id)]} continue
 	if {![doesmatch $commitdata($id)]} continue
 	if {![info exists commitinfo($id)]} {
 	    getcommit $id
@@ -4105,7 +4116,6 @@ proc findmore {} {
 	foreach f $info ty $fldtypes {
 	    if {($findloc eq "All fields" || $findloc eq $ty) &&
 		[doesmatch $f]} {
-		set markingmatches 1
 		findselectline $l
 		notbusy finding
 		return 0
@@ -4124,7 +4134,7 @@ proc findmore {} {
 
 proc findmorerev {} {
     global commitdata commitinfo numcommits findstring findpattern findloc
-    global findstartline findcurline markingmatches displayorder
+    global findstartline findcurline displayorder
 
     set fldtypes {Headline Author Date Committer CDate Comments}
     set l $findcurline
@@ -4151,7 +4161,6 @@ proc findmorerev {} {
 	foreach f $info ty $fldtypes {
 	    if {($findloc eq "All fields" || $findloc eq $ty) &&
 		[doesmatch $f]} {
-		set markingmatches 1
 		findselectline $l
 		notbusy finding
 		return 0
@@ -4169,7 +4178,10 @@ proc findmorerev {} {
 }
 
 proc findselectline {l} {
-    global findloc commentend ctext
+    global findloc commentend ctext findcurline markingmatches
+
+    set markingmatches 1
+    set findcurline $l
     selectline $l 1
     if {$findloc == "All fields" || $findloc == "Comments"} {
 	# highlight the matches in the comments
@@ -4181,10 +4193,13 @@ proc findselectline {l} {
 	    $ctext tag add found "1.0 + $start c" "1.0 + $end c"
 	}
     }
+    drawvisible
 }
 
 # mark the bits of a headline or author that match a find string
-proc markmatches {canv l str tag matches font} {
+proc markmatches {canv l str tag matches font row} {
+    global selectedline
+
     set bbox [$canv bbox $tag]
     set x0 [lindex $bbox 0]
     set y0 [lindex $bbox 1]
@@ -4199,6 +4214,9 @@ proc markmatches {canv l str tag matches font} {
 		   [expr {$x0+$xlen+2}] $y1 \
 		   -outline {} -tags [list match$l matches] -fill yellow]
 	$canv lower $t
+	if {[info exists selectedline] && $row == $selectedline} {
+	    $canv raise $t secsel
+	}
     }
 }
 
