@@ -715,7 +715,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	int fd = -1, in_fd;
 	int ret;
 	char* config_filename;
-	char* lock_file;
+	struct lock_file *lock = NULL;
 	const char* last_dot = strrchr(key, '.');
 
 	config_filename = getenv(CONFIG_ENVIRONMENT);
@@ -725,7 +725,6 @@ int git_config_set_multivar(const char* key, const char* value,
 			config_filename  = git_path("config");
 	}
 	config_filename = xstrdup(config_filename);
-	lock_file = xstrdup(mkpath("%s.lock", config_filename));
 
 	/*
 	 * Since "key" actually contains the section name and the real
@@ -770,11 +769,12 @@ int git_config_set_multivar(const char* key, const char* value,
 	store.key[i] = 0;
 
 	/*
-	 * The lock_file serves a purpose in addition to locking: the new
+	 * The lock serves a purpose in addition to locking: the new
 	 * contents of .git/config will be written into it.
 	 */
-	fd = open(lock_file, O_WRONLY | O_CREAT | O_EXCL, 0666);
-	if (fd < 0 || adjust_shared_perm(lock_file)) {
+	lock = xcalloc(sizeof(struct lock_file), 1);
+	fd = hold_lock_file_for_update(lock, config_filename, 0);
+	if (fd < 0) {
 		fprintf(stderr, "could not lock config file\n");
 		free(store.key);
 		ret = -1;
@@ -914,25 +914,31 @@ int git_config_set_multivar(const char* key, const char* value,
 				goto write_err_out;
 
 		munmap(contents, contents_sz);
-		unlink(config_filename);
 	}
 
-	if (rename(lock_file, config_filename) < 0) {
-		fprintf(stderr, "Could not rename the lock file?\n");
+	if (close(fd) || commit_lock_file(lock) < 0) {
+		fprintf(stderr, "Cannot commit config file!\n");
 		ret = 4;
 		goto out_free;
 	}
 
+	/* fd is closed, so don't try to close it below. */
+	fd = -1;
+	/*
+	 * lock is committed, so don't try to roll it back below.
+	 * NOTE: Since lockfile.c keeps a linked list of all created
+	 * lock_file structures, it isn't safe to free(lock).  It's
+	 * better to just leave it hanging around.
+	 */
+	lock = NULL;
 	ret = 0;
 
 out_free:
 	if (0 <= fd)
 		close(fd);
+	if (lock)
+		rollback_lock_file(lock);
 	free(config_filename);
-	if (lock_file) {
-		unlink(lock_file);
-		free(lock_file);
-	}
 	return ret;
 
 write_err_out:
