@@ -829,8 +829,9 @@ proc rescan {after {honor_trustmtime 1}} {
 
 	array unset file_states
 
-	if {![$ui_comm edit modified]
-		|| [string trim [$ui_comm get 0.0 end]] eq {}} {
+	if {!$::GITGUI_BCK_exists &&
+		(![$ui_comm edit modified]
+		|| [string trim [$ui_comm get 0.0 end]] eq {})} {
 		if {[string match amend* $commit_type]} {
 		} elseif {[load_message GITGUI_MSG]} {
 		} elseif {[load_message MERGE_MSG]} {
