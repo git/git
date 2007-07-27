@@ -879,6 +879,7 @@ proc makewindow {} {
     bind $cflist <1> {sel_flist %W %x %y; break}
     bind $cflist <B1-Motion> {sel_flist %W %x %y; break}
     bind $cflist <ButtonRelease-1> {treeclick %W %x %y}
+    bind $cflist <Button-3> {pop_flist_menu %W %X %Y %x %y}
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -916,6 +917,14 @@ proc makewindow {} {
 	-command cobranch
     $headctxmenu add command -label "Remove this branch" \
 	-command rmbranch
+
+    global flist_menu
+    set flist_menu .flistctxmenu
+    menu $flist_menu -tearoff 0
+    $flist_menu add command -label "Highlight this too" \
+	-command {flist_hl 0}
+    $flist_menu add command -label "Highlight this only" \
+	-command {flist_hl 1}
 }
 
 # mouse-2 makes all windows scan vertically, but only the one
@@ -1496,6 +1505,33 @@ proc sel_flist {w x y} {
 	$ctext yview 1.0
     } else {
 	catch {$ctext yview [lindex $difffilestart [expr {$l - 2}]]}
+    }
+}
+
+proc pop_flist_menu {w X Y x y} {
+    global ctext cflist cmitmode flist_menu flist_menu_file
+    global treediffs diffids
+
+    set l [lindex [split [$w index "@$x,$y"] "."] 0]
+    if {$l <= 1} return
+    if {$cmitmode eq "tree"} {
+	set e [linetoelt $l]
+	if {[string index $e end] eq "/"} return
+    } else {
+	set e [lindex $treediffs($diffids) [expr {$l-2}]]
+    }
+    set flist_menu_file $e
+    tk_popup $flist_menu $X $Y
+}
+
+proc flist_hl {only} {
+    global flist_menu_file highlight_files
+
+    set x [shellquote $flist_menu_file]
+    if {$only || $highlight_files eq {}} {
+	set highlight_files $x
+    } else {
+	append highlight_files " " $x
     }
 }
 
