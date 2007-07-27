@@ -19,9 +19,10 @@ no_changes () {
 }
 
 clear_stash () {
-	logfile="$GIT_DIR/logs/$ref_stash" &&
-	mkdir -p "$(dirname "$logfile")" &&
-	: >"$logfile"
+	if current=$(git rev-parse --verify $ref_stash 2>/dev/null)
+	then
+		git update-ref -d refs/stash $current
+	fi
 }
 
 save_stash () {
