@@ -78,14 +78,16 @@ could occasionally be minor breakages or brown paper bag bugs
 but they are not expected to be anything major.  Every now and
 then, a "feature release" is cut from the tip of this branch and
 they typically are named with three dotted decimal digits.  The
-last such release was v1.5.2 done on May 20th this year.
+last such release was v1.5.2 done on May 20th this year.  You
+can expect that the tip of the "master" branch is always as
+stable as any of the released versions, if not more stable.
 
 Whenever a feature release is made, "maint" branch is forked off
 from "master" at that point.  Obvious, safe and urgent fixes
 after a feature release are applied to this branch and
 maintenance releases are cut from it.  The maintenance releases
 are named with four dotted decimal, named after the feature
-release they are updates to; the last such release was v1.5.1.6.
+release they are updates to; the last such release was v1.5.2.4.
 New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
@@ -116,6 +118,8 @@ but is expected to work more or less without major breakage.  I
 usually use "next" version of git for my own work, so it cannot
 be _that_ broken to prevent me from pushing the changes out.
 The "next" branch is where new and exciting things take place.
+Note that being in "next" does not mean the change will be in
+the next feature release.
 
 The above three branches, "master", "maint" and "next" are never
 rewound, so you should be able to safely track them (this
@@ -125,7 +129,9 @@ are interested in from the output of "git log next").
 
 The "pu" (proposed updates) branch bundles all the remainder of
 topic branches.  The "pu" branch, and topic branches that are
-only in "pu", are subject to rebasing in general.
+only in "pu", are subject to rebasing in general.  By the above
+definition of how "next" works, you can tell that this branch
+will contain quite experimental and obviously broken stuff.
 
 When a topic that was in "pu" proves to be in testable shape, it
 graduates to "next".  I do this with:
@@ -134,11 +140,11 @@ graduates to "next".  I do this with:
         git merge that-topic-branch
 
 Sometimes, an idea that looked promising turns out to be not so
-hot and the topic can be dropped from "pu" in such a case.
+good and the topic can be dropped from "pu" in such a case.
 
 A topic that is in "next" is expected to be tweaked and fixed to
 perfection before it is merged to "master" (that's why "master"
-can be expected to stay very stable).  Similarly to the above I
+can be expected to stay very stable).  Similarly to the above, I
 do it with this:
 
         git checkout master
