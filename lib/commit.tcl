@@ -153,7 +153,7 @@ The rescan will be automatically started now.
 		U? {
 			error_popup "Unmerged files cannot be committed.
 
-File [short_path $path] has merge conflicts.  You must resolve them and add the file before committing.
+File [short_path $path] has merge conflicts.  You must resolve them and stage the file before committing.
 "
 			unlock_index
 			return
@@ -169,7 +169,7 @@ File [short_path $path] cannot be committed by this program.
 	if {!$files_ready && ![string match *merge $curType]} {
 		info_popup {No changes to commit.
 
-You must add at least 1 file before you can commit.
+You must stage at least 1 file before you can commit.
 }
 		unlock_index
 		return

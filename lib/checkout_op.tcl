@@ -248,7 +248,7 @@ method _checkout {} {
 	if {[lock_index checkout_op]} {
 		after idle [cb _start_checkout]
 	} else {
-		_error $this "Index is already locked."
+		_error $this "Staging area (index) is already locked."
 		delete_this
 	}
 }

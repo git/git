@@ -1827,12 +1827,12 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-	.mbar.commit add command -label {Add To Commit} \
+	.mbar.commit add command -label {Stage To Commit} \
 		-command do_add_selection
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-	.mbar.commit add command -label {Add Tracked Files To Commit} \
+	.mbar.commit add command -label {Stage Changed Files To Commit} \
 		-command do_add_all \
 		-accelerator $M1T-I
 	lappend disable_on_lock \
@@ -2154,7 +2154,7 @@ pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
-button .vpane.lower.commarea.buttons.incall -text {Add Tracked} \
+button .vpane.lower.commarea.buttons.incall -text {Stage Changed} \
 	-command do_add_all
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \

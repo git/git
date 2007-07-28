@@ -45,7 +45,7 @@ The rescan will be automatically started now.
 
 File [short_path $path] has merge conflicts.
 
-You must resolve them, add the file, and commit to complete the current merge.  Only then can you begin another merge.
+You must resolve them, stage the file, and commit to complete the current merge.  Only then can you begin another merge.
 "
 			unlock_index
 			return 0
@@ -219,16 +219,20 @@ You must finish amending this commit.
 	if {![lock_index abort]} return
 
 	if {[string match *merge* $commit_type]} {
-		set op merge
+		set op_question "Abort merge?
+
+Aborting the current merge will cause *ALL* uncommitted changes to be lost.
+
+Continue with aborting the current merge?"
 	} else {
-		set op commit
+		set op_question "Reset changes?
+
+Resetting the changes will cause *ALL* uncommitted changes to be lost.
+
+Continue with resetting the current changes?"
 	}
 
-	if {[ask_popup "Abort $op?
-
-Aborting the current $op will cause *ALL* uncommitted changes to be lost.
-
-Continue with aborting the current $op?"] eq {yes}} {
+	if {[ask_popup $op_question] eq {yes}} {
 		set fd [git_read read-tree --reset -u HEAD]
 		fconfigure $fd -blocking 0 -translation binary
 		fileevent $fd readable [namespace code [list _reset_wait $fd]]
