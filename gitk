@@ -101,7 +101,7 @@ proc start_rev_list {view} {
     set commfd($view) $fd
     set leftover($view) {}
     set lookingforhead $showlocalchanges
-    fconfigure $fd -blocking 0 -translation lf
+    fconfigure $fd -blocking 0 -translation lf -eofchar {}
     if {$tclencoding != {}} {
 	fconfigure $fd -encoding $tclencoding
     }
@@ -139,6 +139,10 @@ proc getcommitlines {fd view}  {
     global vparentlist vdisporder vcmitlisted
 
     set stuff [read $fd 500000]
+    # git log doesn't terminate the last commit with a null...
+    if {$stuff == {} && $leftover($view) ne {} && [eof $fd]} {
+	set stuff "\0"
+    }
     if {$stuff == {}} {
 	if {![eof $fd]} {
 	    return 1
@@ -262,11 +266,11 @@ proc chewcommits {view} {
 	set tlimit [expr {[clock clicks -milliseconds] + 50}]
 	set more [layoutmore $tlimit $allread]
 	if {$allread && !$more} {
-	    global displayorder nullid commitidx phase
+	    global displayorder commitidx phase
 	    global numcommits startmsecs
 
 	    if {[info exists pending_select]} {
-		set row [expr {[lindex $displayorder 0] eq $nullid}]
+		set row [first_real_row]
 		selectline $row 1
 	    }
 	    if {$commitidx($curview) > 0} {
@@ -435,6 +439,19 @@ proc readrefs {} {
 	    }
 	}
     }
+}
+
+# skip over fake commits
+proc first_real_row {} {
+    global nullid nullid2 displayorder numcommits
+
+    for {set row 0} {$row < $numcommits} {incr row} {
+	set id [lindex $displayorder $row]
+	if {$id ne $nullid && $id ne $nullid2} {
+	    break
+	}
+    }
+    return $row
 }
 
 # update things for a head moved to a child of its previous location
@@ -796,6 +813,12 @@ proc makewindow {} {
         wm geometry . "$geometry(main)"
     }
 
+    if {[tk windowingsystem] eq {aqua}} {
+        set M1B M1
+    } else {
+        set M1B Control
+    }
+
     bind .pwbottom <Configure> {resizecdetpanes %W %w}
     pack .ctop -fill both -expand 1
     bindall <1> {selcanvline %W %x %y}
@@ -814,12 +837,12 @@ proc makewindow {} {
     bindkey <Key-Left> "goback"
     bind . <Key-Prior> "selnextpage -1"
     bind . <Key-Next> "selnextpage 1"
-    bind . <Control-Home> "allcanvs yview moveto 0.0"
-    bind . <Control-End> "allcanvs yview moveto 1.0"
-    bind . <Control-Key-Up> "allcanvs yview scroll -1 units"
-    bind . <Control-Key-Down> "allcanvs yview scroll 1 units"
-    bind . <Control-Key-Prior> "allcanvs yview scroll -1 pages"
-    bind . <Control-Key-Next> "allcanvs yview scroll 1 pages"
+    bind . <$M1B-Home> "allcanvs yview moveto 0.0"
+    bind . <$M1B-End> "allcanvs yview moveto 1.0"
+    bind . <$M1B-Key-Up> "allcanvs yview scroll -1 units"
+    bind . <$M1B-Key-Down> "allcanvs yview scroll 1 units"
+    bind . <$M1B-Key-Prior> "allcanvs yview scroll -1 pages"
+    bind . <$M1B-Key-Next> "allcanvs yview scroll 1 pages"
     bindkey <Key-Delete> "$ctext yview scroll -1 pages"
     bindkey <Key-BackSpace> "$ctext yview scroll -1 pages"
     bindkey <Key-space> "$ctext yview scroll 1 pages"
@@ -839,15 +862,15 @@ proc makewindow {} {
     bindkey ? findprev
     bindkey f nextfile
     bindkey <F5> updatecommits
-    bind . <Control-q> doquit
-    bind . <Control-f> dofind
-    bind . <Control-g> {findnext 0}
-    bind . <Control-r> dosearchback
-    bind . <Control-s> dosearch
-    bind . <Control-equal> {incrfont 1}
-    bind . <Control-KP_Add> {incrfont 1}
-    bind . <Control-minus> {incrfont -1}
-    bind . <Control-KP_Subtract> {incrfont -1}
+    bind . <$M1B-q> doquit
+    bind . <$M1B-f> dofind
+    bind . <$M1B-g> {findnext 0}
+    bind . <$M1B-r> dosearchback
+    bind . <$M1B-s> dosearch
+    bind . <$M1B-equal> {incrfont 1}
+    bind . <$M1B-KP_Add> {incrfont 1}
+    bind . <$M1B-minus> {incrfont -1}
+    bind . <$M1B-KP_Subtract> {incrfont -1}
     wm protocol . WM_DELETE_WINDOW doquit
     bind . <Button-1> "click %W"
     bind $fstring <Key-Return> dofind
@@ -1088,12 +1111,17 @@ proc keys {} {
 	raise $w
 	return
     }
+    if {[tk windowingsystem] eq {aqua}} {
+	set M1T Cmd
+    } else {
+	set M1T Ctrl
+    }
     toplevel $w
     wm title $w "Gitk key bindings"
-    message $w.m -text {
+    message $w.m -text "
 Gitk key bindings:
 
-<Ctrl-Q>		Quit
+<$M1T-Q>		Quit
 <Home>		Move to first commit
 <End>		Move to last commit
 <Up>, p, i	Move up one commit
@@ -1102,12 +1130,12 @@ Gitk key bindings:
 <Right>, x, l	Go forward in history list
 <PageUp>	Move up one page in commit list
 <PageDown>	Move down one page in commit list
-<Ctrl-Home>	Scroll to top of commit list
-<Ctrl-End>	Scroll to bottom of commit list
-<Ctrl-Up>	Scroll commit list up one line
-<Ctrl-Down>	Scroll commit list down one line
-<Ctrl-PageUp>	Scroll commit list up one page
-<Ctrl-PageDown>	Scroll commit list down one page
+<$M1T-Home>	Scroll to top of commit list
+<$M1T-End>	Scroll to bottom of commit list
+<$M1T-Up>	Scroll commit list up one line
+<$M1T-Down>	Scroll commit list down one line
+<$M1T-PageUp>	Scroll commit list up one page
+<$M1T-PageDown>	Scroll commit list down one page
 <Shift-Up>	Move to previous highlighted line
 <Shift-Down>	Move to next highlighted line
 <Delete>, b	Scroll diff view up one page
@@ -1115,20 +1143,20 @@ Gitk key bindings:
 <Space>		Scroll diff view down one page
 u		Scroll diff view up 18 lines
 d		Scroll diff view down 18 lines
-<Ctrl-F>		Find
-<Ctrl-G>		Move to next find hit
+<$M1T-F>		Find
+<$M1T-G>		Move to next find hit
 <Return>	Move to next find hit
 /		Move to next find hit, or redo find
 ?		Move to previous find hit
 f		Scroll diff view to next file
-<Ctrl-S>		Search for next hit in diff view
-<Ctrl-R>		Search for previous hit in diff view
-<Ctrl-KP+>	Increase font size
-<Ctrl-plus>	Increase font size
-<Ctrl-KP->	Decrease font size
-<Ctrl-minus>	Decrease font size
+<$M1T-S>		Search for next hit in diff view
+<$M1T-R>		Search for previous hit in diff view
+<$M1T-KP+>	Increase font size
+<$M1T-plus>	Increase font size
+<$M1T-KP->	Decrease font size
+<$M1T-minus>	Decrease font size
 <F5>		Update
-} \
+" \
 	    -justify left -bg white -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
     $w.m configure -font $uifont
@@ -1871,7 +1899,7 @@ proc showview {n} {
     } elseif {$selid ne {}} {
 	set pending_select $selid
     } else {
-	set row [expr {[lindex $displayorder 0] eq $nullid}]
+	set row [first_real_row]
 	if {$row < $numcommits} {
 	    selectline $row 0
 	} else {
@@ -2133,7 +2161,7 @@ proc readfhighlight {} {
 
 proc find_change {name ix op} {
     global nhighlights mainfont boldnamerows
-    global findstring findpattern findtype markingmatches
+    global findstring findpattern findtype
 
     # delete previous highlights, if any
     foreach row $boldnamerows {
@@ -2148,7 +2176,6 @@ proc find_change {name ix op} {
 		   $findstring]
 	set findpattern "*$e*"
     }
-    set markingmatches [expr {$findstring ne {}}]
     drawvisible
 }
 
@@ -2194,26 +2221,32 @@ proc askfindhighlight {row id} {
 	    }
 	}
 	if {$markingmatches} {
-	    markrowmatches $row [lindex $info 0] [lindex $info 1]
+	    markrowmatches $row $id
 	}
     }
     set nhighlights($row) $isbold
 }
 
-proc markrowmatches {row headline author} {
-    global canv canv2 linehtag linentag
+proc markrowmatches {row id} {
+    global canv canv2 linehtag linentag commitinfo findloc
 
+    set headline [lindex $commitinfo($id) 0]
+    set author [lindex $commitinfo($id) 1]
     $canv delete match$row
     $canv2 delete match$row
-    set m [findmatches $headline]
-    if {$m ne {}} {
-	markmatches $canv $row $headline $linehtag($row) $m \
-	    [$canv itemcget $linehtag($row) -font]
+    if {$findloc eq "All fields" || $findloc eq "Headline"} {
+	set m [findmatches $headline]
+	if {$m ne {}} {
+	    markmatches $canv $row $headline $linehtag($row) $m \
+		[$canv itemcget $linehtag($row) -font] $row
+	}
     }
-    set m [findmatches $author]
-    if {$m ne {}} {
-	markmatches $canv2 $row $author $linentag($row) $m \
-	    [$canv2 itemcget $linentag($row) -font]
+    if {$findloc eq "All fields" || $findloc eq "Author"} {
+	set m [findmatches $author]
+	if {$m ne {}} {
+	    markmatches $canv2 $row $author $linentag($row) $m \
+		[$canv2 itemcget $linentag($row) -font] $row
+	}
     }
 }
 
@@ -2643,7 +2676,7 @@ proc layoutmore {tmax allread} {
 
 proc showstuff {canshow last} {
     global numcommits commitrow pending_select selectedline curview
-    global lookingforhead mainheadid displayorder nullid selectfirst
+    global lookingforhead mainheadid displayorder selectfirst
     global lastscrollset
 
     if {$numcommits == 0} {
@@ -2676,7 +2709,7 @@ proc showstuff {canshow last} {
 	if {[info exists selectedline] || [info exists pending_select]} {
 	    set selectfirst 0
 	} else {
-	    set l [expr {[lindex $displayorder 0] eq $nullid}]
+	    set l [first_real_row]
 	    selectline $l 1
 	    set selectfirst 0
 	}
@@ -2700,48 +2733,93 @@ proc doshowlocalchanges {} {
 }
 
 proc dohidelocalchanges {} {
-    global lookingforhead localrow lserial
+    global lookingforhead localfrow localirow lserial
 
     set lookingforhead 0
-    if {$localrow >= 0} {
-	removerow $localrow
-	set localrow -1
+    if {$localfrow >= 0} {
+	removerow $localfrow
+	set localfrow -1
+	if {$localirow > 0} {
+	    incr localirow -1
+	}
+    }
+    if {$localirow >= 0} {
+	removerow $localirow
+	set localirow -1
     }
     incr lserial
 }
 
-# spawn off a process to do git diff-index HEAD
+# spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
-    global localrow lserial
+    global localirow localfrow lserial
 
     incr lserial
-    set localrow -1
-    set fd [open "|git diff-index HEAD" r]
+    set localfrow -1
+    set localirow -1
+    set fd [open "|git diff-index --cached HEAD" r]
     fconfigure $fd -blocking 0
     filerun $fd [list readdiffindex $fd $lserial]
 }
 
 proc readdiffindex {fd serial} {
-    global localrow commitrow mainheadid nullid curview
+    global localirow commitrow mainheadid nullid2 curview
     global commitinfo commitdata lserial
 
+    set isdiff 1
     if {[gets $fd line] < 0} {
-	if {[eof $fd]} {
-	    close $fd
-	    return 0
+	if {![eof $fd]} {
+	    return 1
 	}
-	return 1
+	set isdiff 0
     }
     # we only need to see one line and we don't really care what it says...
     close $fd
 
-    if {$serial == $lserial && $localrow == -1} {
+    # now see if there are any local changes not checked in to the index
+    if {$serial == $lserial} {
+	set fd [open "|git diff-files" r]
+	fconfigure $fd -blocking 0
+	filerun $fd [list readdifffiles $fd $serial]
+    }
+
+    if {$isdiff && $serial == $lserial && $localirow == -1} {
+	# add the line for the changes in the index to the graph
+	set localirow $commitrow($curview,$mainheadid)
+	set hl "Local changes checked in to index but not committed"
+	set commitinfo($nullid2) [list  $hl {} {} {} {} "    $hl\n"]
+	set commitdata($nullid2) "\n    $hl\n"
+	insertrow $localirow $nullid2
+    }
+    return 0
+}
+
+proc readdifffiles {fd serial} {
+    global localirow localfrow commitrow mainheadid nullid curview
+    global commitinfo commitdata lserial
+
+    set isdiff 1
+    if {[gets $fd line] < 0} {
+	if {![eof $fd]} {
+	    return 1
+	}
+	set isdiff 0
+    }
+    # we only need to see one line and we don't really care what it says...
+    close $fd
+
+    if {$isdiff && $serial == $lserial && $localfrow == -1} {
 	# add the line for the local diff to the graph
-	set localrow $commitrow($curview,$mainheadid)
-	set hl "Local uncommitted changes"
+	if {$localirow >= 0} {
+	    set localfrow $localirow
+	    incr localirow
+	} else {
+	    set localfrow $commitrow($curview,$mainheadid)
+	}
+	set hl "Local uncommitted changes, not checked in to index"
 	set commitinfo($nullid) [list  $hl {} {} {} {} "    $hl\n"]
 	set commitdata($nullid) "\n    $hl\n"
-	insertrow $localrow $nullid
+	insertrow $localfrow $nullid
     }
     return 0
 }
@@ -3337,13 +3415,15 @@ proc drawcmittext {id row col} {
     global linespc canv canv2 canv3 canvy0 fgcolor curview
     global commitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
-    global linehtag linentag linedtag markingmatches
-    global mainfont canvxmax boldrows boldnamerows fgcolor nullid
+    global linehtag linentag linedtag
+    global mainfont canvxmax boldrows boldnamerows fgcolor nullid nullid2
 
     # listed is 0 for boundary, 1 for normal, 2 for left, 3 for right
     set listed [lindex $commitlisted $row]
     if {$id eq $nullid} {
 	set ofill red
+    } elseif {$id eq $nullid2} {
+	set ofill green
     } else {
 	set ofill [expr {$listed != 0? "blue": "white"}]
     }
@@ -3412,9 +3492,6 @@ proc drawcmittext {id row col} {
     set linedtag($row) [$canv3 create text 3 $y -anchor w -fill $fgcolor \
 			    -text $date -font $mainfont -tags text]
     set xr [expr {$xt + [font measure $mainfont $headline]}]
-    if {$markingmatches} {
-	markrowmatches $row $headline $name
-    }
     if {$xr > $canvxmax} {
 	set canvxmax $xr
 	setcanvscroll
@@ -3423,7 +3500,7 @@ proc drawcmittext {id row col} {
 
 proc drawcmitrow {row} {
     global displayorder rowidlist
-    global iddrawn
+    global iddrawn markingmatches
     global commitinfo parentlist numcommits
     global filehighlight fhighlights findstring nhighlights
     global hlview vhighlights
@@ -3444,18 +3521,22 @@ proc drawcmitrow {row} {
     if {$highlight_related ne "None" && ![info exists rhighlights($row)]} {
 	askrelhighlight $row $id
     }
-    if {[info exists iddrawn($id)]} return
-    set col [lsearch -exact [lindex $rowidlist $row] $id]
-    if {$col < 0} {
-	puts "oops, row $row id $id not in list"
-	return
+    if {![info exists iddrawn($id)]} {
+	set col [lsearch -exact [lindex $rowidlist $row] $id]
+	if {$col < 0} {
+	    puts "oops, row $row id $id not in list"
+	    return
+	}
+	if {![info exists commitinfo($id)]} {
+	    getcommit $id
+	}
+	assigncolor $id
+	drawcmittext $id $row $col
+	set iddrawn($id) 1
     }
-    if {![info exists commitinfo($id)]} {
-	getcommit $id
+    if {$markingmatches} {
+	markrowmatches $row $id
     }
-    assigncolor $id
-    drawcmittext $id $row $col
-    set iddrawn($id) 1
 }
 
 proc drawcommits {row {endrow {}}} {
@@ -3973,7 +4054,6 @@ proc dofind {{rev 0}} {
     if {!$rev} {
 	run findmore
     } else {
-	set findcurline $findstartline
 	if {$findcurline == 0} {
 	    set findcurline $numcommits
 	}
@@ -4008,7 +4088,7 @@ proc findprev {} {
 
 proc findmore {} {
     global commitdata commitinfo numcommits findstring findpattern findloc
-    global findstartline findcurline markingmatches displayorder
+    global findstartline findcurline displayorder
 
     set fldtypes {Headline Author Date Committer CDate Comments}
     set l [expr {$findcurline + 1}]
@@ -4026,6 +4106,8 @@ proc findmore {} {
     set last 0
     for {} {$l < $lim} {incr l} {
 	set id [lindex $displayorder $l]
+	# shouldn't happen unless git log doesn't give all the commits...
+	if {![info exists commitdata($id)]} continue
 	if {![doesmatch $commitdata($id)]} continue
 	if {![info exists commitinfo($id)]} {
 	    getcommit $id
@@ -4034,7 +4116,6 @@ proc findmore {} {
 	foreach f $info ty $fldtypes {
 	    if {($findloc eq "All fields" || $findloc eq $ty) &&
 		[doesmatch $f]} {
-		set markingmatches 1
 		findselectline $l
 		notbusy finding
 		return 0
@@ -4053,7 +4134,7 @@ proc findmore {} {
 
 proc findmorerev {} {
     global commitdata commitinfo numcommits findstring findpattern findloc
-    global findstartline findcurline markingmatches displayorder
+    global findstartline findcurline displayorder
 
     set fldtypes {Headline Author Date Committer CDate Comments}
     set l $findcurline
@@ -4080,7 +4161,6 @@ proc findmorerev {} {
 	foreach f $info ty $fldtypes {
 	    if {($findloc eq "All fields" || $findloc eq $ty) &&
 		[doesmatch $f]} {
-		set markingmatches 1
 		findselectline $l
 		notbusy finding
 		return 0
@@ -4098,7 +4178,10 @@ proc findmorerev {} {
 }
 
 proc findselectline {l} {
-    global findloc commentend ctext
+    global findloc commentend ctext findcurline markingmatches
+
+    set markingmatches 1
+    set findcurline $l
     selectline $l 1
     if {$findloc == "All fields" || $findloc == "Comments"} {
 	# highlight the matches in the comments
@@ -4110,10 +4193,13 @@ proc findselectline {l} {
 	    $ctext tag add found "1.0 + $start c" "1.0 + $end c"
 	}
     }
+    drawvisible
 }
 
 # mark the bits of a headline or author that match a find string
-proc markmatches {canv l str tag matches font} {
+proc markmatches {canv l str tag matches font row} {
+    global selectedline
+
     set bbox [$canv bbox $tag]
     set x0 [lindex $bbox 0]
     set y0 [lindex $bbox 1]
@@ -4128,6 +4214,9 @@ proc markmatches {canv l str tag matches font} {
 		   [expr {$x0+$xlen+2}] $y1 \
 		   -outline {} -tags [list match$l matches] -fill yellow]
 	$canv lower $t
+	if {[info exists selectedline] && $row == $selectedline} {
+	    $canv raise $t secsel
+	}
     }
 }
 
@@ -4582,16 +4671,19 @@ proc goforw {} {
 }
 
 proc gettree {id} {
-    global treefilelist treeidlist diffids diffmergeid treepending nullid
+    global treefilelist treeidlist diffids diffmergeid treepending
+    global nullid nullid2
 
     set diffids $id
     catch {unset diffmergeid}
     if {![info exists treefilelist($id)]} {
 	if {![info exists treepending]} {
-	    if {$id ne $nullid} {
-		set cmd [concat | git ls-tree -r $id]
+	    if {$id eq $nullid} {
+		set cmd [list | git ls-files]
+	    } elseif {$id eq $nullid2} {
+		set cmd [list | git ls-files --stage -t]
 	    } else {
-		set cmd [concat | git ls-files]
+		set cmd [list | git ls-tree -r $id]
 	    }
 	    if {[catch {set gtf [open $cmd r]}]} {
 		return
@@ -4608,12 +4700,14 @@ proc gettree {id} {
 }
 
 proc gettreeline {gtf id} {
-    global treefilelist treeidlist treepending cmitmode diffids nullid
+    global treefilelist treeidlist treepending cmitmode diffids nullid nullid2
 
     set nl 0
     while {[incr nl] <= 1000 && [gets $gtf line] >= 0} {
-	if {$diffids ne $nullid} {
-	    if {[lindex $line 1] ne "blob"} continue
+	if {$diffids eq $nullid} {
+	    set fname $line
+	} else {
+	    if {$diffids ne $nullid2 && [lindex $line 1] ne "blob"} continue
 	    set i [string first "\t" $line]
 	    if {$i < 0} continue
 	    set sha1 [lindex $line 2]
@@ -4622,8 +4716,6 @@ proc gettreeline {gtf id} {
 		set fname [lindex $fname 0]
 	    }
 	    lappend treeidlist($id) $sha1
-	} else {
-	    set fname $line
 	}
 	lappend treefilelist($id) $fname
     }
@@ -4645,7 +4737,7 @@ proc gettreeline {gtf id} {
 }
 
 proc showfile {f} {
-    global treefilelist treeidlist diffids nullid
+    global treefilelist treeidlist diffids nullid nullid2
     global ctext commentend
 
     set i [lsearch -exact $treefilelist($diffids) $f]
@@ -4653,15 +4745,15 @@ proc showfile {f} {
 	puts "oops, $f not in list for id $diffids"
 	return
     }
-    if {$diffids ne $nullid} {
-	set blob [lindex $treeidlist($diffids) $i]
-	if {[catch {set bf [open [concat | git cat-file blob $blob] r]} err]} {
-	    puts "oops, error reading blob $blob: $err"
+    if {$diffids eq $nullid} {
+	if {[catch {set bf [open $f r]} err]} {
+	    puts "oops, can't read $f: $err"
 	    return
 	}
     } else {
-	if {[catch {set bf [open $f r]} err]} {
-	    puts "oops, can't read $f: $err"
+	set blob [lindex $treeidlist($diffids) $i]
+	if {[catch {set bf [open [concat | git cat-file blob $blob] r]} err]} {
+	    puts "oops, error reading blob $blob: $err"
 	    return
 	}
     }
@@ -4789,11 +4881,13 @@ proc getmergediffline {mdf id np} {
 }
 
 proc startdiff {ids} {
-    global treediffs diffids treepending diffmergeid nullid
+    global treediffs diffids treepending diffmergeid nullid nullid2
 
     set diffids $ids
     catch {unset diffmergeid}
-    if {![info exists treediffs($ids)] || [lsearch -exact $ids $nullid] >= 0} {
+    if {![info exists treediffs($ids)] ||
+	[lsearch -exact $ids $nullid] >= 0 ||
+	[lsearch -exact $ids $nullid2] >= 0} {
 	if {![info exists treepending]} {
 	    gettreediffs $ids
 	}
@@ -4809,22 +4903,41 @@ proc addtocflist {ids} {
 }
 
 proc diffcmd {ids flags} {
-    global nullid
+    global nullid nullid2
 
     set i [lsearch -exact $ids $nullid]
+    set j [lsearch -exact $ids $nullid2]
     if {$i >= 0} {
-	set cmd [concat | git diff-index $flags]
-	if {[llength $ids] > 1} {
+	if {[llength $ids] > 1 && $j < 0} {
+	    # comparing working directory with some specific revision
+	    set cmd [concat | git diff-index $flags]
 	    if {$i == 0} {
 		lappend cmd -R [lindex $ids 1]
 	    } else {
 		lappend cmd [lindex $ids 0]
 	    }
 	} else {
+	    # comparing working directory with index
+	    set cmd [concat | git diff-files $flags]
+	    if {$j == 1} {
+		lappend cmd -R
+	    }
+	}
+    } elseif {$j >= 0} {
+	set cmd [concat | git diff-index --cached $flags]
+	if {[llength $ids] > 1} {
+	    # comparing index with specific revision
+	    if {$i == 0} {
+		lappend cmd -R [lindex $ids 1]
+	    } else {
+		lappend cmd [lindex $ids 0]
+	    }
+	} else {
+	    # comparing index with HEAD
 	    lappend cmd HEAD
 	}
     } else {
-	set cmd [concat | git diff-tree --no-commit-id -r $flags $ids]
+	set cmd [concat | git diff-tree -r $flags $ids]
     }
     return $cmd
 }
@@ -4834,7 +4947,7 @@ proc gettreediffs {ids} {
 
     set treepending $ids
     set treediff {}
-    if {[catch {set gdtf [open [diffcmd $ids {}] r]}]} return
+    if {[catch {set gdtf [open [diffcmd $ids {--no-commit-id}] r]}]} return
     fconfigure $gdtf -blocking 0
     filerun $gdtf [list gettreediffline $gdtf $ids]
 }
@@ -4877,7 +4990,7 @@ proc getblobdiffs {ids} {
     global diffinhdr treediffs
 
     set env(GIT_DIFF_OPTS) $diffopts
-    if {[catch {set bdf [open [diffcmd $ids {-p -C}] r]} err]} {
+    if {[catch {set bdf [open [diffcmd $ids {-p -C --no-commit-id}] r]} err]} {
 	puts "error getting diffs: $err"
 	return
     }
@@ -5468,7 +5581,7 @@ proc mstime {} {
 
 proc rowmenu {x y id} {
     global rowctxmenu commitrow selectedline rowmenuid curview
-    global nullid fakerowmenu mainhead
+    global nullid nullid2 fakerowmenu mainhead
 
     set rowmenuid $id
     if {![info exists selectedline]
@@ -5477,7 +5590,7 @@ proc rowmenu {x y id} {
     } else {
 	set state normal
     }
-    if {$id ne $nullid} {
+    if {$id ne $nullid && $id ne $nullid2} {
 	set menu $rowctxmenu
 	$menu entryconfigure 7 -label "Reset $mainhead branch to here"
     } else {
@@ -5596,18 +5709,12 @@ proc mkpatchrev {} {
 }
 
 proc mkpatchgo {} {
-    global patchtop nullid
+    global patchtop nullid nullid2
 
     set oldid [$patchtop.fromsha1 get]
     set newid [$patchtop.tosha1 get]
     set fname [$patchtop.fname get]
-    if {$newid eq $nullid} {
-	set cmd [list git diff-index -p $oldid]
-    } elseif {$oldid eq $nullid} {
-	set cmd [list git diff-index -p -R $newid]
-    } else {
-	set cmd [list git diff-tree -p $oldid $newid]
-    }
+    set cmd [diffcmd [list $oldid $newid] -p]
     lappend cmd >$fname &
     if {[catch {eval exec $cmd} err]} {
 	error_popup "Error creating patch: $err"
@@ -7522,6 +7629,8 @@ if {$i >= [llength $argv] && $revtreeargs ne {}} {
 }
 
 set nullid "0000000000000000000000000000000000000000"
+set nullid2 "0000000000000000000000000000000000000001"
+
 
 set runq {}
 set history {}
@@ -7550,10 +7659,13 @@ set stopped 0
 set stuffsaved 0
 set patchnum 0
 set lookingforhead 0
-set localrow -1
+set localirow -1
+set localfrow -1
 set lserial 0
 setcoords
 makewindow
+# wait for the window to become visible
+tkwait visibility .
 wm title . "[file tail $argv0]: [file tail [pwd]]"
 readrefs
 
