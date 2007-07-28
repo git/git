@@ -890,11 +890,25 @@ sub age_string {
 	return $age_str;
 }
 
+use constant {
+	S_IFINVALID => 0030000,
+	S_IFGITLINK => 0160000,
+};
+
+# submodule/subproject, a commit object reference
+sub S_ISGITLINK($) {
+	my $mode = shift;
+
+	return (($mode & S_IFMT) == S_IFGITLINK)
+}
+
 # convert file mode in octal to symbolic file mode string
 sub mode_str {
 	my $mode = oct shift;
 
-	if (S_ISDIR($mode & S_IFMT)) {
+	if (S_ISGITLINK($mode)) {
+		return 'm---------';
+	} elsif (S_ISDIR($mode & S_IFMT)) {
 		return 'drwxr-xr-x';
 	} elsif (S_ISLNK($mode)) {
 		return 'lrwxrwxrwx';
@@ -920,7 +934,9 @@ sub file_type {
 		$mode = oct $mode;
 	}
 
-	if (S_ISDIR($mode & S_IFMT)) {
+	if (S_ISGITLINK($mode)) {
+		return "submodule";
+	} elsif (S_ISDIR($mode & S_IFMT)) {
 		return "directory";
 	} elsif (S_ISLNK($mode)) {
 		return "symlink";
@@ -941,7 +957,9 @@ sub file_type_long {
 		$mode = oct $mode;
 	}
 
-	if (S_ISDIR($mode & S_IFMT)) {
+	if (S_ISGITLINK($mode)) {
+		return "submodule";
+	} elsif (S_ISDIR($mode & S_IFMT)) {
 		return "directory";
 	} elsif (S_ISLNK($mode)) {
 		return "symlink";
@@ -2703,6 +2721,20 @@ sub git_print_tree_entry {
 		if (defined $hash_base) {
 			print " | " .
 			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			                             file_name=>"$basedir$t->{'name'}")},
+			              "history");
+		}
+		print "</td>\n";
+	} else {
+		# unknown object: we can only present history for it
+		# (this includes 'commit' object, i.e. submodule support)
+		print "<td class=\"list\">" .
+		      esc_path($t->{'name'}) .
+		      "</td>\n";
+		print "<td class=\"link\">";
+		if (defined $hash_base) {
+			print $cgi->a({-href => href(action=>"history",
+			                             hash_base=>$hash_base,
 			                             file_name=>"$basedir$t->{'name'}")},
 			              "history");
 		}
