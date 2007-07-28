@@ -17,7 +17,7 @@ USAGE='(--continue | --abort | --skip | [--preserve-merges] [--verbose]
 require_work_tree
 
 DOTEST="$GIT_DIR/.dotest-merge"
-TODO="$DOTEST"/todo
+TODO="$DOTEST"/git-rebase-todo
 DONE="$DOTEST"/done
 MSG="$DOTEST"/message
 SQUASH_MSG="$DOTEST"/message-squash
