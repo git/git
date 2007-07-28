@@ -157,15 +157,16 @@ apply_stash () {
 	if git-merge-recursive $b_tree -- $c_tree $w_tree
 	then
 		# No conflict
-		a="$TMP-added" &&
-		git diff --cached --name-only --diff-filter=A $c_tree >"$a" &&
-		git read-tree --reset $c_tree &&
-		git update-index --add --stdin <"$a" ||
-			die "Cannot unstage modified files"
-		rm -f "$a"
 		if test -n "$unstashed_index_tree"
 		then
 			git read-tree "$unstashed_index_tree"
+		else
+			a="$TMP-added" &&
+			git diff --cached --name-only --diff-filter=A $c_tree >"$a" &&
+			git read-tree --reset $c_tree &&
+			git update-index --add --stdin <"$a" ||
+				die "Cannot unstage modified files"
+			rm -f "$a"
 		fi
 		git status || :
 	else
