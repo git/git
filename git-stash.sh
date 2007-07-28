@@ -128,19 +128,24 @@ apply_stash () {
 	c_tree=$(git write-tree) ||
 		die 'Cannot apply a stash in the middle of a merge'
 
+	# stash records the work tree, and is a merge between the
+	# base commit (first parent) and the index tree (second parent).
 	s=$(git rev-parse --revs-only --no-flags --default $ref_stash "$@") &&
 	w_tree=$(git rev-parse --verify "$s:") &&
-	b_tree=$(git rev-parse --verify "$s^:") ||
+	b_tree=$(git rev-parse --verify "$s^1:") &&
+	i_tree=$(git rev-parse --verify "$s^2:") ||
 		die "$*: no valid stashed state found"
 
-	test -z "$unstash_index" || {
+	unstashed_index_tree=
+	if test -n "$unstash_index" && test "$b_tree" != "$i_tree"
+	then
 		git diff --binary $s^2^..$s^2 | git apply --cached
 		test $? -ne 0 &&
 			die 'Conflicts in index. Try without --index.'
 		unstashed_index_tree=$(git-write-tree) ||
 			die 'Could not save index tree'
 		git reset
-	}
+	fi
 
 	eval "
 		GITHEAD_$w_tree='Stashed changes' &&
@@ -157,13 +162,19 @@ apply_stash () {
 		git read-tree --reset $c_tree &&
 		git update-index --add --stdin <"$a" ||
 			die "Cannot unstage modified files"
-		git-status
 		rm -f "$a"
-		test -z "$unstash_index" || git read-tree $unstashed_index_tree
+		if test -n "$unstashed_index_tree"
+		then
+			git read-tree "$unstashed_index_tree"
+		fi
+		git status || :
 	else
 		# Merge conflict; keep the exit status from merge-recursive
 		status=$?
-		test -z "$unstash_index" || echo 'Index was not unstashed.' >&2
+		if test -n "$unstash_index"
+		then
+			echo >&2 'Index was not unstashed.'
+		fi
 		exit $status
 	fi
 }
