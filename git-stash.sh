@@ -36,6 +36,9 @@ save_stash () {
 	test -f "$GIT_DIR/logs/$ref_stash" ||
 		clear_stash || die "Cannot initialize stash"
 
+	# Make sure the reflog for stash is kept.
+	: >>"$GIT_DIR/logs/$ref_stash"
+
 	# state of the base commit
 	if b_commit=$(git rev-parse --verify HEAD)
 	then
