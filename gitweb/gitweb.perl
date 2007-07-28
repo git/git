@@ -436,12 +436,11 @@ my %allowed_options = (
 
 our @extra_options = $cgi->param('opt');
 if (defined @extra_options) {
-	foreach(@extra_options)
-	{
-		if (not grep(/^$_$/, keys %allowed_options)) {
+	foreach my $opt (@extra_options) {
+		if (not exists $allowed_options{$opt}) {
 			die_error(undef, "Invalid option parameter");
 		}
-		if (not grep(/^$action$/, @{$allowed_options{$_}})) {
+		if (not grep(/^$action$/, @{$allowed_options{$opt}})) {
 			die_error(undef, "Invalid option parameter for this action");
 		}
 	}
@@ -598,7 +597,6 @@ sub href(%) {
 		action => "a",
 		file_name => "f",
 		file_parent => "fp",
-		extra_options => "opt",
 		hash => "h",
 		hash_parent => "hp",
 		hash_base => "hb",
@@ -608,6 +606,7 @@ sub href(%) {
 		searchtext => "s",
 		searchtype => "st",
 		snapshot_format => "sf",
+		extra_options => "opt",
 	);
 	my %mapping = @mapping;
 
@@ -2285,9 +2284,17 @@ EOF
 		printf('<link rel="alternate" title="%s log RSS feed" '.
 		       'href="%s" type="application/rss+xml" />'."\n",
 		       esc_param($project), href(action=>"rss"));
+		printf('<link rel="alternate" title="%s log RSS feed (no merges)" '.
+		       'href="%s" type="application/rss+xml" />'."\n",
+		       esc_param($project), href(action=>"rss",
+		                                 extra_options=>"--no-merges"));
 		printf('<link rel="alternate" title="%s log Atom feed" '.
 		       'href="%s" type="application/atom+xml" />'."\n",
 		       esc_param($project), href(action=>"atom"));
+		printf('<link rel="alternate" title="%s log Atom feed (no merges)" '.
+		       'href="%s" type="application/atom+xml" />'."\n",
+		       esc_param($project), href(action=>"atom",
+		                                 extra_options=>"--no-merges"));
 	} else {
 		printf('<link rel="alternate" title="%s projects list" '.
 		       'href="%s" type="text/plain; charset=utf-8"/>'."\n",
