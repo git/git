@@ -872,6 +872,10 @@ proc rescan_stage2 {fd after} {
 	if {[file readable $info_exclude]} {
 		lappend ls_others "--exclude-from=$info_exclude"
 	}
+	set user_exclude [get_config core.excludesfile]
+	if {$user_exclude ne {} && [file readable $user_exclude]} {
+		lappend ls_others "--exclude-from=$user_exclude"
+	}
 
 	set buf_rdi {}
 	set buf_rdf {}
