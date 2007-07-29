@@ -427,7 +427,7 @@ proc readrefs {} {
 	    lappend idotherrefs($id) $name
 	}
     }
-    close $refd
+    catch {close $refd}
     set mainhead {}
     set mainheadid {}
     catch {
