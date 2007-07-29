@@ -373,7 +373,7 @@ BUILTIN_OBJS = \
 	builtin-pack-refs.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
-EXTLIBS = -lz
+EXTLIBS =
 
 #
 # Platform specific tweaks
@@ -517,6 +517,12 @@ ifndef NO_CURL
 		EXPAT_LIBEXPAT = -lexpat
 	endif
 endif
+
+ifdef ZLIB_PATH
+	BASIC_CFLAGS += -I$(ZLIB_PATH)/include
+	EXTLIBS += -L$(ZLIB_PATH)/lib $(CC_LD_DYNPATH)$(ZLIB_PATH)/lib
+endif
+EXTLIBS += -lz
 
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl

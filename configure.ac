@@ -75,6 +75,9 @@ GIT_ARG_SET_PATH(shell)
 # Define PERL_PATH to provide path to Perl.
 GIT_ARG_SET_PATH(perl)
 #
+# Define ZLIB_PATH to provide path to zlib.
+GIT_ARG_SET_PATH(zlib)
+#
 # Declare the with-tcltk/without-tcltk options.
 AC_ARG_WITH(tcltk,
 AS_HELP_STRING([--with-tcltk],[use Tcl/Tk GUI (default is YES)])
