@@ -102,17 +102,14 @@ Limiting the diff output::
 +
 ------------
 $ git diff --diff-filter=MRC            <1>
-$ git diff --name-status -r             <2>
+$ git diff --name-status                <2>
 $ git diff arch/i386 include/asm-i386   <3>
 ------------
 +
 <1> show only modification, rename and copy, but not addition
 nor deletion.
 <2> show only names and the nature of change, but not actual
-diff output.  --name-status disables usual patch generation
-which in turn also disables recursive behavior, so without -r
-you would only see the directory name if there is a change in a
-file in a subdirectory.
+diff output.
 <3> limit diff output to named subtrees.
 
 Munging the diff output::
