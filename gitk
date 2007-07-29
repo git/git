@@ -7636,7 +7636,10 @@ catch {source ~/.gitk}
 font create optionfont -family sans-serif -size -12
 
 # check that we can find a .git directory somewhere...
-set gitdir [gitdir]
+if {[catch {set gitdir [gitdir]}]} {
+    show_error {} . "Cannot find a git repository here."
+    exit 1
+}
 if {![file isdirectory $gitdir]} {
     show_error {} . "Cannot find the git directory \"$gitdir\"."
     exit 1
