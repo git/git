@@ -1036,6 +1036,32 @@ void unlock_ref(struct ref_lock *lock)
 	free(lock);
 }
 
+/*
+ * copy the reflog message msg to buf, which has been allocated sufficiently
+ * large, while cleaning up the whitespaces.  Especially, convert LF to space,
+ * because reflog file is one line per entry.
+ */
+static int copy_msg(char *buf, const char *msg)
+{
+	char *cp = buf;
+	char c;
+	int wasspace = 1;
+
+	*cp++ = '\t';
+	while ((c = *msg++)) {
+		if (wasspace && isspace(c))
+			continue;
+		wasspace = isspace(c);
+		if (wasspace)
+			c = ' ';
+		*cp++ = c;
+	}
+	while (buf < cp && isspace(cp[-1]))
+		cp--;
+	*cp++ = '\n';
+	return cp - buf;
+}
+
 static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 			 const unsigned char *new_sha1, const char *msg)
 {
@@ -1080,21 +1106,7 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 
 	adjust_shared_perm(log_file);
 
-	msglen = 0;
-	if (msg) {
-		/* clean up the message and make sure it is a single line */
-		for ( ; *msg; msg++)
-			if (!isspace(*msg))
-				break;
-		if (*msg) {
-			const char *ep = strchr(msg, '\n');
-			if (ep)
-				msglen = ep - msg;
-			else
-				msglen = strlen(msg);
-		}
-	}
-
+	msglen = msg ? strlen(msg) : 0;
 	committer = git_committer_info(-1);
 	maxlen = strlen(committer) + msglen + 100;
 	logrec = xmalloc(maxlen);
@@ -1103,7 +1115,7 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 		      sha1_to_hex(new_sha1),
 		      committer);
 	if (msglen)
-		len += sprintf(logrec + len - 1, "\t%.*s\n", msglen, msg) - 1;
+		len += copy_msg(logrec + len - 1, msg) - 1;
 	written = len <= maxlen ? write_in_full(logfd, logrec, len) : -1;
 	free(logrec);
 	if (close(logfd) != 0 || written != len)
