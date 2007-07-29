@@ -176,6 +176,7 @@ CC = gcc
 AR = ar
 RM = rm -f
 TAR = tar
+FIND = find
 INSTALL = install
 RPMBUILD = rpmbuild
 TCL_PATH = tclsh
@@ -903,11 +904,11 @@ doc:
 
 TAGS:
 	$(RM) TAGS
-	find . -name '*.[hcS]' -print | xargs etags -a
+	$(FIND) . -name '*.[hcS]' -print | xargs etags -a
 
 tags:
 	$(RM) tags
-	find . -name '*.[hcS]' -print | xargs ctags -a
+	$(FIND) . -name '*.[hcS]' -print | xargs ctags -a
 
 ### Detect prefix changes
 TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):\
