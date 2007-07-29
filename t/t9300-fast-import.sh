@@ -577,7 +577,7 @@ EXPECT_END
 test_expect_success \
     'L: verify internal tree sorting' \
 	'git-fast-import <input &&
-	 git diff --raw L^ L >output &&
+	 git diff-tree --abbrev --raw L^ L >output &&
 	 git diff expect output'
 
 ###
