@@ -595,4 +595,19 @@ echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
 
+test_expect_success 'symlinked configuration' '
+
+	ln -s notyet myconfig &&
+	GIT_CONFIG=myconfig git config test.frotz nitfol &&
+	test -h myconfig &&
+	test -f notyet &&
+	test "z$(GIT_CONFIG=notyet git config test.frotz)" = znitfol &&
+	GIT_CONFIG=myconfig git config test.xyzzy rezrov &&
+	test -h myconfig &&
+	test -f notyet &&
+	test "z$(GIT_CONFIG=notyet git config test.frotz)" = znitfol &&
+	test "z$(GIT_CONFIG=notyet git config test.xyzzy)" = zrezrov
+
+'
+
 test_done
