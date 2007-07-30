@@ -154,12 +154,10 @@ proc gitexec {args} {
 }
 
 proc reponame {} {
-	global _reponame
-	return $_reponame
+	return $::_reponame
 }
 
 proc is_MacOSX {} {
-	global tcl_platform tk_library
 	if {[tk windowingsystem] eq {aqua}} {
 		return 1
 	}
@@ -167,17 +165,16 @@ proc is_MacOSX {} {
 }
 
 proc is_Windows {} {
-	global tcl_platform
-	if {$tcl_platform(platform) eq {windows}} {
+	if {$::tcl_platform(platform) eq {windows}} {
 		return 1
 	}
 	return 0
 }
 
 proc is_Cygwin {} {
-	global tcl_platform _iscygwin
+	global _iscygwin
 	if {$_iscygwin eq {}} {
-		if {$tcl_platform(platform) eq {windows}} {
+		if {$::tcl_platform(platform) eq {windows}} {
 			if {[catch {set p [exec cygpath --windir]} err]} {
 				set _iscygwin 0
 			} else {
@@ -367,16 +364,25 @@ proc _which {what} {
 	return {}
 }
 
+proc _lappend_nice {cmd_var} {
+	global _nice
+	upvar $cmd_var cmd
+
+	if {![info exists _nice]} {
+		set _nice [_which nice]
+	}
+	if {$_nice ne {}} {
+		lappend cmd $_nice
+	}
+}
+
 proc git {args} {
 	set opt [list exec]
 
 	while {1} {
 		switch -- [lindex $args 0] {
 		--nice {
-			global _nice
-			if {$_nice ne {}} {
-				lappend opt $_nice
-			}
+			_lappend_nice opt
 		}
 
 		default {
@@ -414,6 +420,7 @@ proc _open_stdout_stderr {cmd} {
 			error $err
 		}
 	}
+	fconfigure $fd -eofchar {}
 	return $fd
 }
 
@@ -423,10 +430,7 @@ proc git_read {args} {
 	while {1} {
 		switch -- [lindex $args 0] {
 		--nice {
-			global _nice
-			if {$_nice ne {}} {
-				lappend opt $_nice
-			}
+			_lappend_nice opt
 		}
 
 		--stderr {
@@ -454,10 +458,7 @@ proc git_write {args} {
 	while {1} {
 		switch -- [lindex $args 0] {
 		--nice {
-			global _nice
-			if {$_nice ne {}} {
-				lappend opt $_nice
-			}
+			_lappend_nice opt
 		}
 
 		default {
@@ -524,7 +525,6 @@ if {$_git eq {}} {
 	error_popup "Cannot find git in PATH."
 	exit 1
 }
-set _nice [_which nice]
 
 ######################################################################
 ##
@@ -544,8 +544,34 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 	error_popup "Cannot parse Git version string:\n\n$_git_version"
 	exit 1
 }
+
+set _real_git_version $_git_version
+regsub -- {-dirty$} $_git_version {} _git_version
 regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
 regsub {\.rc[0-9]+$} $_git_version {} _git_version
+regsub {\.GIT$} $_git_version {} _git_version
+
+if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
+	catch {wm withdraw .}
+	if {[tk_messageBox \
+		-icon warning \
+		-type yesno \
+		-default no \
+		-title "[appname]: warning" \
+		-message "Git version cannot be determined.
+
+$_git claims it is version '$_real_git_version'.
+
+[appname] requires at least Git 1.5.0 or later.
+
+Assume '$_real_git_version' is version 1.5.0?
+"] eq {yes}} {
+		set _git_version 1.5.0
+	} else {
+		exit 1
+	}
+}
+unset _real_git_version
 
 proc git-version {args} {
 	global _git_version
@@ -603,6 +629,46 @@ You are using [git-version]:
 
 ######################################################################
 ##
+## feature option selection
+
+if {[regexp {^git-(.+)$} [appname] _junk subcommand]} {
+	unset _junk
+} else {
+	set subcommand gui
+}
+if {$subcommand eq {gui.sh}} {
+	set subcommand gui
+}
+if {$subcommand eq {gui} && [llength $argv] > 0} {
+	set subcommand [lindex $argv 0]
+	set argv [lrange $argv 1 end]
+}
+
+enable_option multicommit
+enable_option branch
+enable_option transport
+disable_option bare
+
+switch -- $subcommand {
+browser -
+blame {
+	enable_option bare
+
+	disable_option multicommit
+	disable_option branch
+	disable_option transport
+}
+citool {
+	enable_option singlecommit
+
+	disable_option multicommit
+	disable_option branch
+	disable_option transport
+}
+}
+
+######################################################################
+##
 ## repository setup
 
 if {[catch {
@@ -625,19 +691,24 @@ if {![file isdirectory $_gitdir]} {
 	error_popup "Git directory not found:\n\n$_gitdir"
 	exit 1
 }
-if {[lindex [file split $_gitdir] end] ne {.git}} {
-	catch {wm withdraw .}
-	error_popup "Cannot use funny .git directory:\n\n$_gitdir"
-	exit 1
+if {![is_enabled bare]} {
+	if {[lindex [file split $_gitdir] end] ne {.git}} {
+		catch {wm withdraw .}
+		error_popup "Cannot use funny .git directory:\n\n$_gitdir"
+		exit 1
+	}
+	if {[catch {cd [file dirname $_gitdir]} err]} {
+		catch {wm withdraw .}
+		error_popup "No working directory [file dirname $_gitdir]:\n\n$err"
+		exit 1
+	}
 }
-if {[catch {cd [file dirname $_gitdir]} err]} {
-	catch {wm withdraw .}
-	error_popup "No working directory [file dirname $_gitdir]:\n\n$err"
-	exit 1
+set _reponame [file split [file normalize $_gitdir]]
+if {[lindex $_reponame end] eq {.git}} {
+	set _reponame [lindex $_reponame end-1]
+} else {
+	set _reponame [lindex $_reponame end]
 }
-set _reponame [lindex [file split \
-	[file normalize [file dirname $_gitdir]]] \
-	end]
 
 ######################################################################
 ##
@@ -758,8 +829,9 @@ proc rescan {after {honor_trustmtime 1}} {
 
 	array unset file_states
 
-	if {![$ui_comm edit modified]
-		|| [string trim [$ui_comm get 0.0 end]] eq {}} {
+	if {!$::GITGUI_BCK_exists &&
+		(![$ui_comm edit modified]
+		|| [string trim [$ui_comm get 0.0 end]] eq {})} {
 		if {[string match amend* $commit_type]} {
 		} elseif {[load_message GITGUI_MSG]} {
 		} elseif {[load_message MERGE_MSG]} {
@@ -800,6 +872,10 @@ proc rescan_stage2 {fd after} {
 	if {[file readable $info_exclude]} {
 		lappend ls_others "--exclude-from=$info_exclude"
 	}
+	set user_exclude [get_config core.excludesfile]
+	if {$user_exclude ne {} && [file readable $user_exclude]} {
+		lappend ls_others "--exclude-from=$user_exclude"
+	}
 
 	set buf_rdi {}
 	set buf_rdf {}
@@ -827,6 +903,7 @@ proc load_message {file} {
 		if {[catch {set fd [open $f r]}]} {
 			return 0
 		}
+		fconfigure $fd -eofchar {}
 		set content [string trim [read $fd]]
 		close $fd
 		regsub -all -line {[ \r\t]+$} $content {} content
@@ -1219,32 +1296,6 @@ static unsigned char file_merge_bits[] = {
    0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
 } -maskdata $filemask
 
-set file_dir_data {
-#define file_width 18
-#define file_height 18
-static unsigned char file_bits[] = {
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x03, 0x00,
-  0x0c, 0x03, 0x00, 0x04, 0xfe, 0x00, 0x06, 0x80, 0x00, 0xff, 0x9f, 0x00,
-  0x03, 0x98, 0x00, 0x02, 0x90, 0x00, 0x06, 0xb0, 0x00, 0x04, 0xa0, 0x00,
-  0x0c, 0xe0, 0x00, 0x08, 0xc0, 0x00, 0xf8, 0xff, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-}
-image create bitmap file_dir -background white -foreground blue \
-	-data $file_dir_data -maskdata $file_dir_data
-unset file_dir_data
-
-set file_uplevel_data {
-#define up_width 15
-#define up_height 15
-static unsigned char up_bits[] = {
-  0x80, 0x00, 0xc0, 0x01, 0xe0, 0x03, 0xf0, 0x07, 0xf8, 0x0f, 0xfc, 0x1f,
-  0xfe, 0x3f, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01,
-  0xc0, 0x01, 0xc0, 0x01, 0x00, 0x00};
-}
-image create bitmap file_uplevel -background white -foreground red \
-	-data $file_uplevel_data -maskdata $file_uplevel_data
-unset file_uplevel_data
-
 set ui_index .vpane.files.index.list
 set ui_workdir .vpane.files.workdir.list
 
@@ -1345,6 +1396,7 @@ set is_quitting 0
 
 proc do_quit {} {
 	global ui_comm is_quitting repo_config commit_type
+	global GITGUI_BCK_exists GITGUI_BCK_i
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -1353,18 +1405,30 @@ proc do_quit {} {
 		# -- Stash our current commit buffer.
 		#
 		set save [gitdir GITGUI_MSG]
-		set msg [string trim [$ui_comm get 0.0 end]]
-		regsub -all -line {[ \r\t]+$} $msg {} msg
-		if {(![string match amend* $commit_type]
-			|| [$ui_comm edit modified])
-			&& $msg ne {}} {
-			catch {
-				set fd [open $save w]
-				puts -nonewline $fd $msg
-				close $fd
-			}
+		if {$GITGUI_BCK_exists && ![$ui_comm edit modified]} {
+			file rename -force [gitdir GITGUI_BCK] $save
+			set GITGUI_BCK_exists 0
 		} else {
-			catch {file delete $save}
+			set msg [string trim [$ui_comm get 0.0 end]]
+			regsub -all -line {[ \r\t]+$} $msg {} msg
+			if {(![string match amend* $commit_type]
+				|| [$ui_comm edit modified])
+				&& $msg ne {}} {
+				catch {
+					set fd [open $save w]
+					puts -nonewline $fd $msg
+					close $fd
+				}
+			} else {
+				catch {file delete $save}
+			}
+		}
+
+		# -- Remove our editor backup, its not needed.
+		#
+		after cancel $GITGUI_BCK_i
+		if {$GITGUI_BCK_exists} {
+			catch {file delete [gitdir GITGUI_BCK]}
 		}
 
 		# -- Stash our current window geometry into this repository.
@@ -1568,43 +1632,6 @@ apply_config
 
 ######################################################################
 ##
-## feature option selection
-
-if {[regexp {^git-(.+)$} [appname] _junk subcommand]} {
-	unset _junk
-} else {
-	set subcommand gui
-}
-if {$subcommand eq {gui.sh}} {
-	set subcommand gui
-}
-if {$subcommand eq {gui} && [llength $argv] > 0} {
-	set subcommand [lindex $argv 0]
-	set argv [lrange $argv 1 end]
-}
-
-enable_option multicommit
-enable_option branch
-enable_option transport
-
-switch -- $subcommand {
-browser -
-blame {
-	disable_option multicommit
-	disable_option branch
-	disable_option transport
-}
-citool {
-	enable_option singlecommit
-
-	disable_option multicommit
-	disable_option branch
-	disable_option transport
-}
-}
-
-######################################################################
-##
 ## ui construction
 
 set ui_comm {}
@@ -1632,19 +1659,31 @@ if {[is_enabled transport]} {
 menu .mbar.repository
 
 .mbar.repository add command \
-	-label {Browse Current Branch} \
+	-label {Browse Current Branch's Files} \
 	-command {browser::new $current_branch}
-trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Browse \$current_branch\" ;#"
+set ui_browse_current [.mbar.repository index last]
+.mbar.repository add command \
+	-label {Browse Branch Files...} \
+	-command browser_open::dialog
 .mbar.repository add separator
 
 .mbar.repository add command \
-	-label {Visualize Current Branch} \
+	-label {Visualize Current Branch's History} \
 	-command {do_gitk $current_branch}
-trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Visualize \$current_branch\" ;#"
+set ui_visualize_current [.mbar.repository index last]
 .mbar.repository add command \
-	-label {Visualize All Branches} \
+	-label {Visualize All Branch History} \
 	-command {do_gitk --all}
 .mbar.repository add separator
+
+proc current_branch_write {args} {
+	global current_branch
+	.mbar.repository entryconf $::ui_browse_current \
+		-label "Browse $current_branch's Files"
+	.mbar.repository entryconf $::ui_visualize_current \
+		-label "Visualize $current_branch's History"
+}
+trace add variable current_branch write current_branch_write
 
 if {[is_enabled multicommit]} {
 	.mbar.repository add command -label {Database Statistics} \
@@ -1766,12 +1805,12 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-	.mbar.commit add command -label {Add To Commit} \
+	.mbar.commit add command -label {Stage To Commit} \
 		-command do_add_selection
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-	.mbar.commit add command -label {Add Existing To Commit} \
+	.mbar.commit add command -label {Stage Changed Files To Commit} \
 		-command do_add_all \
 		-accelerator $M1T-I
 	lappend disable_on_lock \
@@ -1805,14 +1844,14 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 if {[is_enabled branch]} {
 	menu .mbar.merge
 	.mbar.merge add command -label {Local Merge...} \
-		-command merge::dialog
+		-command merge::dialog \
+		-accelerator $M1T-M
 	lappend disable_on_lock \
 		[list .mbar.merge entryconf [.mbar.merge index last] -state]
 	.mbar.merge add command -label {Abort Merge...} \
 		-command merge::reset_hard
 	lappend disable_on_lock \
 		[list .mbar.merge entryconf [.mbar.merge index last] -state]
-
 }
 
 # -- Transport Menu
@@ -1844,33 +1883,6 @@ if {[is_MacOSX]} {
 	.mbar.edit add separator
 	.mbar.edit add command -label {Options...} \
 		-command do_options
-
-	# -- Tools Menu
-	#
-	if {[is_Cygwin] && [file exists /usr/local/miga/lib/gui-miga]} {
-	proc do_miga {} {
-		if {![lock_index update]} return
-		set cmd [list sh --login -c "/usr/local/miga/lib/gui-miga \"[pwd]\""]
-		set miga_fd [open "|$cmd" r]
-		fconfigure $miga_fd -blocking 0
-		fileevent $miga_fd readable [list miga_done $miga_fd]
-		ui_status {Running miga...}
-	}
-	proc miga_done {fd} {
-		read $fd 512
-		if {[eof $fd]} {
-			close $fd
-			unlock_index
-			rescan ui_ready
-		}
-	}
-	.mbar add cascade -label Tools -menu .mbar.tools
-	menu .mbar.tools
-	.mbar.tools add command -label "Migrate" \
-		-command do_miga
-	lappend disable_on_lock \
-		[list .mbar.tools entryconf [.mbar.tools index last] -state]
-	}
 }
 
 # -- Help Menu
@@ -1938,29 +1950,10 @@ proc usage {} {
 # -- Not a normal commit type invocation?  Do that instead!
 #
 switch -- $subcommand {
-browser {
-	set subcommand_args {rev?}
-	switch [llength $argv] {
-	0 { load_current_branch }
-	1 {
-		set current_branch [lindex $argv 0]
-		if {[regexp {^[0-9a-f]{1,39}$} $current_branch]} {
-			if {[catch {
-					set current_branch \
-					[git rev-parse --verify $current_branch]
-				} err]} {
-				puts stderr $err
-				exit 1
-			}
-		}
-	}
-	default usage
-	}
-	browser::new $current_branch
-	return
-}
+browser -
 blame {
-	set subcommand_args {rev? path?}
+	set subcommand_args {rev? path}
+	if {$argv eq {}} usage
 	set head {}
 	set path {}
 	set is_path 0
@@ -1979,11 +1972,17 @@ blame {
 		} elseif {$head eq {}} {
 			if {$head ne {}} usage
 			set head $a
+			set is_path 1
 		} else {
 			usage
 		}
 	}
 	unset is_path
+
+	if {$head ne {} && $path eq {}} {
+		set path $_prefix$head
+		set head {}
+	}
 
 	if {$head eq {}} {
 		load_current_branch
@@ -1999,8 +1998,26 @@ blame {
 		set current_branch $head
 	}
 
-	if {$path eq {}} usage
-	blame::new $head $path
+	switch -- $subcommand {
+	browser {
+		if {$head eq {}} {
+			if {$path ne {} && [file isdirectory $path]} {
+				set head $current_branch
+			} else {
+				set head $path
+				set path {}
+			}
+		}
+		browser::new $head $path
+	}
+	blame   {
+		if {$head eq {} && ![file exists $path]} {
+			puts stderr "fatal: cannot stat path $path: No such file or directory"
+			exit 1
+		}
+		blame::new $head $path
+	}
+	}
 	return
 }
 citool -
@@ -2115,7 +2132,7 @@ pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
-button .vpane.lower.commarea.buttons.incall -text {Add Existing} \
+button .vpane.lower.commarea.buttons.incall -text {Stage Changed} \
 	-command do_add_all
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
@@ -2389,17 +2406,25 @@ lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command -label {Options...} \
 	-command do_options
-bind_button3 $ui_diff "
-	set cursorX %x
-	set cursorY %y
-	if {\$ui_index eq \$current_diff_side} {
-		$ctxm entryconf $ui_diff_applyhunk -label {Unstage Hunk From Commit}
+proc popup_diff_menu {ctxm x y X Y} {
+	set ::cursorX $x
+	set ::cursorY $y
+	if {$::ui_index eq $::current_diff_side} {
+		$ctxm entryconf $::ui_diff_applyhunk \
+			-state normal \
+			-label {Unstage Hunk From Commit}
+	} elseif {{_O} eq [lindex $::file_states($::current_diff_path) 0]} {
+		$ctxm entryconf $::ui_diff_applyhunk \
+			-state disabled \
+			-label {Stage Hunk For Commit}
 	} else {
-		$ctxm entryconf $ui_diff_applyhunk -label {Stage Hunk For Commit}
+		$ctxm entryconf $::ui_diff_applyhunk \
+			-state normal \
+			-label {Stage Hunk For Commit}
 	}
-	tk_popup $ctxm %X %Y
-"
-unset ui_diff_applyhunk
+	tk_popup $ctxm $X $Y
+}
+bind_button3 $ui_diff [list popup_diff_menu $ctxm %x %y %X %Y]
 
 # -- Status Bar
 #
@@ -2460,6 +2485,8 @@ if {[is_enabled branch]} {
 	bind . <$M1B-Key-N> branch_create::dialog
 	bind . <$M1B-Key-o> branch_checkout::dialog
 	bind . <$M1B-Key-O> branch_checkout::dialog
+	bind . <$M1B-Key-m> merge::dialog
+	bind . <$M1B-Key-M> merge::dialog
 }
 if {[is_enabled transport]} {
 	bind . <$M1B-Key-p> do_push_anywhere
@@ -2551,24 +2578,64 @@ if {[is_enabled transport]} {
 	populate_push_menu
 }
 
-# -- Only suggest a gc run if we are going to stay running.
-#
-if {[is_enabled multicommit]} {
-	set object_limit 2000
-	if {[is_Windows]} {set object_limit 200}
-	regexp {^([0-9]+) objects,} [git count-objects] _junk objects_current
-	if {$objects_current >= $object_limit} {
-		if {[ask_popup \
-			"This repository currently has $objects_current loose objects.
+if {[winfo exists $ui_comm]} {
+	set GITGUI_BCK_exists [load_message GITGUI_BCK]
 
-To maintain optimal performance it is strongly recommended that you compress the database when more than $object_limit loose objects exist.
-
-Compress the database now?"] eq yes} {
-			do_gc
+	# -- If both our backup and message files exist use the
+	#    newer of the two files to initialize the buffer.
+	#
+	if {$GITGUI_BCK_exists} {
+		set m [gitdir GITGUI_MSG]
+		if {[file isfile $m]} {
+			if {[file mtime [gitdir GITGUI_BCK]] > [file mtime $m]} {
+				catch {file delete [gitdir GITGUI_MSG]}
+			} else {
+				$ui_comm delete 0.0 end
+				$ui_comm edit reset
+				$ui_comm edit modified false
+				catch {file delete [gitdir GITGUI_BCK]}
+				set GITGUI_BCK_exists 0
+			}
 		}
+		unset m
 	}
-	unset object_limit _junk objects_current
+
+	proc backup_commit_buffer {} {
+		global ui_comm GITGUI_BCK_exists
+
+		set m [$ui_comm edit modified]
+		if {$m || $GITGUI_BCK_exists} {
+			set msg [string trim [$ui_comm get 0.0 end]]
+			regsub -all -line {[ \r\t]+$} $msg {} msg
+
+			if {$msg eq {}} {
+				if {$GITGUI_BCK_exists} {
+					catch {file delete [gitdir GITGUI_BCK]}
+					set GITGUI_BCK_exists 0
+				}
+			} elseif {$m} {
+				catch {
+					set fd [open [gitdir GITGUI_BCK] w]
+					puts -nonewline $fd $msg
+					close $fd
+					set GITGUI_BCK_exists 1
+				}
+			}
+
+			$ui_comm edit modified false
+		}
+
+		set ::GITGUI_BCK_i [after 2000 backup_commit_buffer]
+	}
+
+	backup_commit_buffer
 }
 
 lock_index begin-read
+if {![winfo ismapped .]} {
+	wm deiconify .
+}
 after 1 do_rescan
+if {[is_enabled multicommit]} {
+	after 1000 hint_gc
+}

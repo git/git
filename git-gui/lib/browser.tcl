@@ -3,6 +3,13 @@
 
 class browser {
 
+image create photo ::browser::img_parent  -data {R0lGODlhEAAQAIUAAPwCBBxSHBxOHMTSzNzu3KzCtBRGHCSKFIzCjLzSxBQ2FAxGHDzCLCyeHBQ+FHSmfAwuFBxKLDSCNMzizISyjJzOnDSyLAw+FAQSDAQeDBxWJAwmDAQOBKzWrDymNAQaDAQODAwaDDyKTFSyXFTGTEy6TAQCBAQKDAwiFBQyHAwSFAwmHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAQABAAAAZ1QIBwSCwaj0hiQCBICpcDQsFgGAaIguhhi0gohIsrQEDYMhiNrRfgeAQC5fMCAolIDhD2hFI5WC4YRBkaBxsOE2l/RxsHHA4dHmkfRyAbIQ4iIyQlB5NFGCAACiakpSZEJyinTgAcKSesACorgU4mJ6uxR35BACH+aENyZWF0ZWQgYnkgQk1QVG9HSUYgUHJvIHZlcnNpb24gMi41DQqpIERldmVsQ29yIDE5OTcsMTk5OC4gQWxsIHJpZ2h0cyByZXNlcnZlZC4NCmh0dHA6Ly93d3cuZGV2ZWxjb3IuY29tADs=}
+image create photo ::browser::img_rblob   -data {R0lGODlhEAAQAIUAAPwCBFxaXNze3Ly2rJSWjPz+/Ozq7GxqbJyanPT29HRydMzOzDQyNIyKjERCROTi3Pz69PTy7Pzy7PTu5Ozm3LyqlJyWlJSSjJSOhOzi1LyulPz27PTq3PTm1OzezLyqjIyKhJSKfOzaxPz29OzizLyidIyGdIyCdOTOpLymhOzavOTStMTCtMS+rMS6pMSynMSulLyedAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAQABAAAAaQQIAQECgajcNkQMBkDgKEQFK4LFgLhkMBIVUKroWEYlEgMLxbBKLQUBwc52HgAQ4LBo049atWQyIPA3pEdFcQEhMUFYNVagQWFxgZGoxfYRsTHB0eH5UJCJAYICEinUoPIxIcHCQkIiIllQYEGCEhJicoKYwPmiQeKisrKLFKLCwtLi8wHyUlMYwM0tPUDH5BACH+aENyZWF0ZWQgYnkgQk1QVG9HSUYgUHJvIHZlcnNpb24gMi41DQqpIERldmVsQ29yIDE5OTcsMTk5OC4gQWxsIHJpZ2h0cyByZXNlcnZlZC4NCmh0dHA6Ly93d3cuZGV2ZWxjb3IuY29tADs=}
+image create photo ::browser::img_xblob   -data {R0lGODlhEAAQAIYAAPwCBFRWVFxaXNza3OTi3Nze3Ly2tJyanPz+/Ozq7GxubNzSxMzOzMTGxHRybDQyNLy+vHRydHx6fKSipISChIyKjGxqbERCRCwuLLy6vGRiZExKTCQiJAwKDLSytLy2rJSSlHx+fDw6PKyqrBQWFPTu5Ozm3LyulLS2tCQmJAQCBPTq3Ozi1MSynCwqLAQGBOTazOzizOzezLyqjBweHNzSvOzaxKyurHRuZNzOtLymhDw+PIyCdOzWvOTOpLyidNzKtOTStLyifMTCtMS+rLyedAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAQABAAAAfZgACCAAEChYeGg4oCAwQFjgYBBwGKggEECJkICQoIkwADCwwNDY2mDA4Lng8QDhESsLARExQVDhYXGBkWExIaGw8cHR4SCQQfFQ8eFgUgIQEiwiMSBMYfGB4atwEXDyQd0wQlJicPKAHoFyIpJCoeDgMrLC0YKBsX6i4kL+4OMDEyZijr5oLGNxUqUCioEcPGDAwjPNyI6MEDChQjcOSwsUDHgw07RIgI4KCkAgs8cvTw8eOBogAxQtXIASTISiEuBwUYMoRIixYnZggpUgTDywdIkWJIitRPIAAh/mhDcmVhdGVkIGJ5IEJNUFRvR0lGIFBybyB2ZXJzaW9uIDIuNQ0KqSBEZXZlbENvciAxOTk3LDE5OTguIEFsbCByaWdodHMgcmVzZXJ2ZWQuDQpodHRwOi8vd3d3LmRldmVsY29yLmNvbQA7}
+image create photo ::browser::img_tree    -data {R0lGODlhEAAQAIYAAPwCBAQCBExKTBwWHMzKzOzq7ERCRExGTCwqLARqnAQ+ZHR2dKyqrNTOzHx2fCQiJMTi9NTu9HzC3AxmnAQ+XPTm7Dy67DymzITC3IzG5AxypHRydKymrMzOzOzu7BweHByy9AyGtFyy1IzG3NTu/ARupFRSVByazBR6rAyGvFyuzJTK3MTm9BR+tAxWhHS61MTi7Pz+/IymvCxulBRelAx2rHS63Pz6/PTy9PTu9Nza3ISitBRupFSixNTS1CxqnDQyNMzGzOTi5MTCxMTGxGxubGxqbLy2vLSutGRiZLy6vLSytKyurDQuNFxaXKSipDw6PAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAQABAAAAfDgACCAAECg4eIAAMEBQYHCImDBgkKCwwNBQIBBw4Bhw8QERITFJYEFQUFnoIPFhcYoRkaFBscHR4Ggh8gIRciEiMQJBkltCa6JyUoKSkXKhIrLCQYuQAPLS4TEyUhKb0qLzDVAjEFMjMuNBMoNcw21QY3ODkFOjs82RM1PfDzFRU3fOggcM7Fj2pAgggRokOHDx9DhhAZUqQaISBGhjwMEvEIkiIHEgUAkgSJkiNLmFSMJChAEydPGBSBwvJQgAc0/QQCACH+aENyZWF0ZWQgYnkgQk1QVG9HSUYgUHJvIHZlcnNpb24gMi41DQqpIERldmVsQ29yIDE5OTcsMTk5OC4gQWxsIHJpZ2h0cyByZXNlcnZlZC4NCmh0dHA6Ly93d3cuZGV2ZWxjb3IuY29tADs=}
+image create photo ::browser::img_symlink -data {R0lGODlhEAAQAIQAAPwCBCwqLLSytLy+vERGRFRWVDQ2NKSmpAQCBKyurMTGxISChJyanHR2dIyKjGxubHRydGRmZIyOjFxeXHx6fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAQABAAAAVbICACwWieY1CibCCsrBkMb0zchSEcNYskCtqBBzshFkOGQFk0IRqOxqPBODRHCMhCQKteRc9FI/KQWGOIyFYgkDC+gPR4snCcfRGKOIKIgSMQE31+f4OEYCZ+IQAh/mhDcmVhdGVkIGJ5IEJNUFRvR0lGIFBybyB2ZXJzaW9uIDIuNQ0KqSBEZXZlbENvciAxOTk3LDE5OTguIEFsbCByaWdodHMgcmVzZXJ2ZWQuDQpodHRwOi8vd3d3LmRldmVsY29yLmNvbQA7}
+image create photo ::browser::img_unknown -data {R0lGODlhEAAQAIUAAPwCBFxaXIyKjNTW1Nze3LS2tJyanER2RGS+VPz+/PTu5GxqbPz69BQ6BCxeLFSqRPT29HRydMzOzDQyNERmPKSypCRWHIyKhERCRDyGPKz2nESiLBxGHCyCHGxubPz6/PTy7Ozi1Ly2rKSipOzm3LyqlKSWhCRyFOzizLymhNTKtNzOvOzaxOTStPz27OzWvOTOpLSupLyedMS+rMS6pMSulLyqjLymfLyifAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAQABAAAAamQIAQECgajcOkYEBoDgoBQyAJOCCuiENCsWBIh9aGw9F4HCARiXciRDQoBUnlYRlcIgsMG5CxXAgMGhscBRAEBRd7AB0eBBoIgxUfICEiikSPgyMMIAokJZcBkBybJgomIaBJAZoMpyCmqkMBFCcVCrgKKAwpoSorKqchKCwtvasIFBIhLiYvLzDHsxQNMcMKLDAwMqEz3jQ1NTY3ONyrE+jp6hN+QQAh/mhDcmVhdGVkIGJ5IEJNUFRvR0lGIFBybyB2ZXJzaW9uIDIuNQ0KqSBEZXZlbENvciAxOTk3LDE5OTguIEFsbCByaWdodHMgcmVzZXJ2ZWQuDQpodHRwOi8vd3d3LmRldmVsY29yLmNvbQA7}
+
 field w
 field browser_commit
 field browser_path
@@ -13,13 +20,13 @@ field browser_busy   1
 
 field ls_buf     {}; # Buffered record output from ls-tree
 
-constructor new {commit} {
+constructor new {commit {path {}}} {
 	global cursor_ptr M1B
 	make_toplevel top w
 	wm title $top "[appname] ([reponame]): File Browser"
 
 	set browser_commit $commit
-	set browser_path $browser_commit:
+	set browser_path $browser_commit:$path
 
 	label $w.path \
 		-textvariable @browser_path \
@@ -73,7 +80,11 @@ constructor new {commit} {
 
 	bind $w_list <Visibility> [list focus $w_list]
 	set w $w_list
-	_ls $this $browser_commit
+	if {$path ne {}} {
+		_ls $this $browser_commit:$path $path
+	} else {
+		_ls $this $browser_commit $path
+	}
 	return $this
 }
 
@@ -173,7 +184,7 @@ method _ls {tree_id {name {}}} {
 		$w image create end \
 			-align center -padx 5 -pady 1 \
 			-name icon0 \
-			-image file_uplevel
+			-image ::browser::img_parent
 		$w insert end {[Up To Parent]}
 		lappend browser_files parent
 	}
@@ -203,14 +214,21 @@ method _read {fd} {
 
 		switch -- $type {
 		blob {
-			set image file_mod
+			scan [lindex $info 0] %o mode
+			if {$mode == 0120000} {
+				set image ::browser::img_symlink
+			} elseif {($mode & 0100) != 0} {
+				set image ::browser::img_xblob
+			} else {
+				set image ::browser::img_rblob
+			}
 		}
 		tree {
-			set image file_dir
+			set image ::browser::img_tree
 			append path /
 		}
 		default {
-			set image file_question
+			set image ::browser::img_unknown
 		}
 		}
 
@@ -236,6 +254,59 @@ method _read {fd} {
 	}
 } ifdeleted {
 	catch {close $fd}
+}
+
+}
+
+class browser_open {
+
+field w              ; # widget path
+field w_rev          ; # mega-widget to pick the initial revision
+
+constructor dialog {} {
+	make_toplevel top w
+	wm title $top "[appname] ([reponame]): Browse Branch Files"
+	if {$top ne {.}} {
+		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
+	}
+
+	label $w.header \
+		-text {Browse Branch Files} \
+		-font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.browse -text Browse \
+		-default active \
+		-command [cb _open]
+	pack $w.buttons.browse -side right
+	button $w.buttons.cancel -text {Cancel} \
+		-command [list destroy $w]
+	pack $w.buttons.cancel -side right -padx 5
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	set w_rev [::choose_rev::new $w.rev {Revision}]
+	$w_rev bind_listbox <Double-Button-1> [cb _open]
+	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
+
+	bind $w <Visibility> [cb _visible]
+	bind $w <Key-Escape> [list destroy $w]
+	bind $w <Key-Return> [cb _open]\;break
+	tkwait window $w
+}
+
+method _open {} {
+	if {[catch {$w_rev commit_or_die} err]} {
+		return
+	}
+	set name [$w_rev get]
+	destroy $w
+	browser::new $name
+}
+
+method _visible {} {
+	grab $w
+	$w_rev focus_filter
 }
 
 }

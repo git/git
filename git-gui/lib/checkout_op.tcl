@@ -12,6 +12,7 @@ field new_ref    ; # ref we are updating/creating
 
 field parent_w      .; # window that started us
 field merge_type none; # type of merge to apply to existing branch
+field merge_base   {}; # merge base if we have another ref involved
 field fetch_spec   {}; # refetch tracking branch if used?
 field checkout      1; # actually checkout the branch?
 field create        0; # create the branch if it doesn't exist?
@@ -65,14 +66,19 @@ method run {} {
 		set r_head [lindex $fetch_spec 2]
 		regsub ^refs/heads/ $r_head {} r_name
 
+		set cmd [list git fetch $remote]
+		if {$l_trck ne {}} {
+			lappend cmd +$r_head:$l_trck
+		} else {
+			lappend cmd $r_head
+		}
+
 		_toplevel $this {Refreshing Tracking Branch}
 		set w_cons [::console::embed \
 			$w.console \
 			"Fetching $r_name from $remote"]
 		pack $w.console -fill both -expand 1
-		$w_cons exec \
-			[list git fetch $remote +$r_head:$l_trck] \
-			[cb _finish_fetch]
+		$w_cons exec $cmd [cb _finish_fetch]
 
 		bind $w <$M1B-Key-w> break
 		bind $w <$M1B-Key-W> break
@@ -113,6 +119,9 @@ method _noop {} {}
 method _finish_fetch {ok} {
 	if {$ok} {
 		set l_trck [lindex $fetch_spec 0]
+		if {$l_trck eq {}} {
+			set l_trck FETCH_HEAD
+		}
 		if {[catch {set new_hash [git rev-parse --verify "$l_trck^0"]} err]} {
 			set ok 0
 			$w_cons insert "fatal: Cannot resolve $l_trck"
@@ -180,29 +189,25 @@ method _update_ref {} {
 		# No merge would be required, don't compute anything.
 		#
 	} else {
-		set mrb {}
-		catch {set mrb [git merge-base $new $cur]}
-		switch -- $merge_type {
-		ff {
-			if {$mrb eq $new} {
-				# The current branch is actually newer.
-				#
-				set new $cur
-			} elseif {$mrb eq $cur} {
-				# The current branch is older.
-				#
-				set reflog_msg "merge $new_expr: Fast-forward"
-			} else {
-				_error $this "Branch '$newbranch' already exists.\n\nIt cannot fast-forward to $new_expr.\nA merge is required."
-				return 0
+		catch {set merge_base [git merge-base $new $cur]}
+		if {$merge_base eq $cur} {
+			# The current branch is older.
+			#
+			set reflog_msg "merge $new_expr: Fast-forward"
+		} else {
+			switch -- $merge_type {
+			ff {
+				if {$merge_base eq $new} {
+					# The current branch is actually newer.
+					#
+					set new $cur
+					set new_hash $cur
+				} else {
+					_error $this "Branch '$newbranch' already exists.\n\nIt cannot fast-forward to $new_expr.\nA merge is required."
+					return 0
+				}
 			}
-		}
-		reset {
-			if {$mrb eq $cur} {
-				# The current branch is older.
-				#
-				set reflog_msg "merge $new_expr: Fast-forward"
-			} else {
+			reset {
 				# The current branch will lose things.
 				#
 				if {[_confirm_reset $this $cur]} {
@@ -211,11 +216,11 @@ method _update_ref {} {
 					return 0
 				}
 			}
-		}
-		default {
-			_error $this "Only 'ff' and 'reset' merge is currently supported."
-			return 0
-		}
+			default {
+				_error $this "Merge strategy '$merge_type' not supported."
+				return 0
+			}
+			}
 		}
 	}
 
@@ -243,7 +248,7 @@ method _checkout {} {
 	if {[lock_index checkout_op]} {
 		after idle [cb _start_checkout]
 	} else {
-		_error $this "Index is already locked."
+		_error $this "Staging area (index) is already locked."
 		delete_this
 	}
 }
@@ -270,7 +275,9 @@ The rescan will be automatically started now.
 		return
 	}
 
-	if {[is_config_true gui.trustmtime]} {
+	if {$curHEAD eq $new_hash} {
+		_after_readtree $this
+	} elseif {[is_config_true gui.trustmtime]} {
 		_readtree $this
 	} else {
 		ui_status {Refreshing file status...}
@@ -378,22 +385,24 @@ method _after_readtree {} {
 	set rn [string length $rh]
 	if {[string equal -length $rn $rh $new_ref]} {
 		set new_branch [string range $new_ref $rn end]
-		append log " to $new_branch"
-
-		if {[catch {
-				git symbolic-ref -m $log HEAD $new_ref
-			} err]} {
-			_fatal $this $err
+		if {$is_detached || $current_branch ne $new_branch} {
+			append log " to $new_branch"
+			if {[catch {
+					git symbolic-ref -m $log HEAD $new_ref
+				} err]} {
+				_fatal $this $err
+			}
+			set current_branch $new_branch
+			set is_detached 0
 		}
-		set current_branch $new_branch
-		set is_detached 0
 	} else {
-		append log " to $new_expr"
-
-		if {[catch {
-				_detach_HEAD $log $new_hash
-			} err]} {
-			_fatal $this $err
+		if {$new_hash ne $HEAD} {
+			append log " to $new_expr"
+			if {[catch {
+					_detach_HEAD $log $new_hash
+				} err]} {
+				_fatal $this $err
+			}
 		}
 		set current_branch HEAD
 		set is_detached 1

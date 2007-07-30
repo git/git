@@ -370,6 +370,7 @@ method _load {jump} {
 	$w_path conf -text [escape_path $path]
 	if {$commit eq {}} {
 		set fd [open $path r]
+		fconfigure $fd -eofchar {}
 	} else {
 		set fd [git_read cat-file blob "$commit:$path"]
 	}
@@ -770,15 +771,20 @@ method _showcommit {cur_w lno} {
 						set enc [string tolower [string range $line 9 end]]
 					}
 				}
-				set msg [encoding convertfrom $enc [read $fd]]
-				set msg [string trim $msg]
+				set msg [read $fd]
 				close $fd
 
-				set author_name [encoding convertfrom $enc $author_name]
-				set committer_name [encoding convertfrom $enc $committer_name]
-
-				set header($cmit,author) $author_name
-				set header($cmit,committer) $committer_name
+				set enc [tcl_encoding $enc]
+				if {$enc ne {}} {
+					set msg [encoding convertfrom $enc $msg]
+					set author_name [encoding convertfrom $enc $author_name]
+					set committer_name [encoding convertfrom $enc $committer_name]
+					set header($cmit,author) $author_name
+					set header($cmit,committer) $committer_name
+					set header($cmit,summary) \
+					[encoding convertfrom $enc $header($cmit,summary)]
+				}
+				set msg [string trim $msg]
 			}
 			set header($cmit,message) $msg
 		}
@@ -871,6 +877,11 @@ method _open_tooltip {cur_w} {
 	} else {
 		set dat [lindex $asim_data $lno]
 		set org [lindex $amov_data $lno]
+	}
+
+	if {$dat eq {}} {
+		_hide_tooltip $this
+		return
 	}
 
 	set cmit [lindex $dat 0]
