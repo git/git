@@ -34,6 +34,10 @@ proc new_unmerged {path {title {}}} {
 constructor _new {path unmerged_only title} {
 	global current_branch is_detached
 
+	if {![info exists ::all_remotes]} {
+		load_all_remotes
+	}
+
 	set w $path
 
 	if {$title ne {}} {
