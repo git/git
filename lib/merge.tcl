@@ -90,9 +90,6 @@ method _start {} {
 
 	set spec [$w_rev get_tracking_branch]
 	set cmit [$w_rev get_commit]
-	set cmd [list git]
-	lappend cmd merge
-	lappend cmd --strategy=recursive
 
 	set fh [open [gitdir FETCH_HEAD] w]
 	fconfigure $fh -translation lf
@@ -112,6 +109,9 @@ method _start {} {
 	puts $fh "$cmit\t\tbranch '$branch' of $remote"
 	close $fh
 
+	set cmd [list git]
+	lappend cmd merge
+	lappend cmd --strategy=recursive
 	lappend cmd [git fmt-merge-msg <[gitdir FETCH_HEAD]]
 	lappend cmd HEAD
 	lappend cmd $cmit
