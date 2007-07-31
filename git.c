@@ -443,11 +443,11 @@ int main(int argc, const char **argv)
 	cmd = argv[0];
 
 	/*
-	 * We search for git commands in the following order:
-	 *  - git_exec_path()
-	 *  - the path of the "git" command if we could find it
-	 *    in $0
-	 *  - the regular PATH.
+	 * We execute external git command via execv_git_cmd(),
+	 * which looks at "--exec-path" option, GIT_EXEC_PATH
+	 * environment, and $(gitexecdir) in Makefile while built,
+	 * in this order.  For scripted commands, we prepend
+	 * the value of the exec_path variable to the PATH.
 	 */
 	if (exec_path)
 		prepend_to_path(exec_path, strlen(exec_path));
