@@ -380,7 +380,7 @@ static int index_name_pos_also_unmerged(struct index_state *istate,
 
 int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 {
-	int size, namelen;
+	int size, namelen, pos;
 	struct stat st;
 	struct cache_entry *ce;
 
@@ -412,6 +412,15 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 
 		ent = (0 <= pos) ? istate->cache[pos] : NULL;
 		ce->ce_mode = ce_mode_from_stat(ent, st.st_mode);
+	}
+
+	pos = index_name_pos(istate, ce->name, namelen);
+	if (0 <= pos &&
+	    !ce_stage(istate->cache[pos]) &&
+	    !ie_modified(istate, istate->cache[pos], &st, 1)) {
+		/* Nothing changed, really */
+		free(ce);
+		return 0;
 	}
 
 	if (index_path(ce->sha1, path, &st, 1))
