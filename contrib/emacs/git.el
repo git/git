@@ -589,6 +589,16 @@ Return the list of files that haven't been handled."
           (when node (push (ewoc-data node) unmerged-files))))
       (git-set-files-state unmerged-files 'unmerged))))
 
+(defun git-get-exclude-files ()
+  "Get the list of exclude files to pass to git-ls-files."
+  (let (files
+        (config (git-config "core.excludesfile")))
+    (when (file-readable-p ".git/info/exclude")
+      (push ".git/info/exclude" files))
+    (when (and config (file-readable-p config))
+      (push config files))
+    files))
+
 (defun git-update-status-files (files &optional default-state)
   "Update the status of FILES from the index."
   (unless git-status (error "Not in git-status buffer."))
@@ -598,11 +608,11 @@ Return the list of files that haven't been handled."
               (git-run-ls-files status files 'added "-c")
             (git-run-diff-index status files))))
     (git-run-ls-unmerged status files)
-    (when (and (or (not files) remaining-files)
-               (file-readable-p ".git/info/exclude"))
-      (setq remaining-files (git-run-ls-files status remaining-files
-                                              'unknown "-o" "--exclude-from=.git/info/exclude"
-                                              (concat "--exclude-per-directory=" git-per-dir-ignore-file))))
+    (when (or (not files) remaining-files)
+      (let ((exclude-files (git-get-exclude-files)))
+        (setq remaining-files (apply #'git-run-ls-files status remaining-files 'unknown "-o"
+                                     (concat "--exclude-per-directory=" git-per-dir-ignore-file)
+                                     (mapcar (lambda (f) (concat "--exclude-from=" f)) exclude-files)))))
     ; mark remaining files with the default state (or remove them if nil)
     (when remaining-files
       (if default-state
