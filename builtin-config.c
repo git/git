@@ -2,7 +2,7 @@
 #include "cache.h"
 
 static const char git_config_set_usage[] =
-"git-config [ --global | --system ] [ --bool | --int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list";
+"git-config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list";
 
 static char *key;
 static regex_t *key_regexp;
@@ -186,6 +186,13 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 		else if (!strcmp(argv[1], "--system"))
 			setenv(CONFIG_ENVIRONMENT, ETC_GITCONFIG, 1);
+		else if (!strcmp(argv[1], "--file") || !strcmp(argv[1], "-f")) {
+			if (argc < 3)
+				usage(git_config_set_usage);
+			setenv(CONFIG_ENVIRONMENT, argv[2], 1);
+			argc--;
+			argv++;
+		}
 		else if (!strcmp(argv[1], "--null") || !strcmp(argv[1], "-z")) {
 			term = '\0';
 			delim = '\n';

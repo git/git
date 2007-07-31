@@ -9,17 +9,17 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git-config' [--system | --global] [type] [-z|--null] name [value [value_regex]]
-'git-config' [--system | --global] [type] --add name value
-'git-config' [--system | --global] [type] --replace-all name [value [value_regex]]
-'git-config' [--system | --global] [type] [-z|--null] --get name [value_regex]
-'git-config' [--system | --global] [type] [-z|--null] --get-all name [value_regex]
-'git-config' [--system | --global] [type] [-z|--null] --get-regexp name_regex [value_regex]
-'git-config' [--system | --global] --unset name [value_regex]
-'git-config' [--system | --global] --unset-all name [value_regex]
-'git-config' [--system | --global] --rename-section old_name new_name
-'git-config' [--system | --global] --remove-section name
-'git-config' [--system | --global] [-z|--null] -l | --list
+'git-config' [--system | --global | [-f|--file] config-file] [type] [-z|--null] name [value [value_regex]]
+'git-config' [--system | --global | [-f|--file] config-file] [type] --add name value
+'git-config' [--system | --global | [-f|--file] config-file] [type] --replace-all name [value [value_regex]]
+'git-config' [--system | --global | [-f|--file] config-file] [type] [-z|--null] --get name [value_regex]
+'git-config' [--system | --global | [-f|--file] config-file] [type] [-z|--null] --get-all name [value_regex]
+'git-config' [--system | --global | [-f|--file] config-file] [type] [-z|--null] --get-regexp name_regex [value_regex]
+'git-config' [--system | --global | [-f|--file] config-file] --unset name [value_regex]
+'git-config' [--system | --global | [-f|--file] config-file] --unset-all name [value_regex]
+'git-config' [--system | --global | [-f|--file] config-file] --rename-section old_name new_name
+'git-config' [--system | --global | [-f|--file] config-file] --remove-section name
+'git-config' [--system | --global | [-f|--file] config-file] [-z|--null] -l | --list
 
 DESCRIPTION
 -----------
@@ -42,8 +42,8 @@ no checks or transformations are performed on the value.
 
 This command will fail if:
 
-. The .git/config file is invalid,
-. Can not write to .git/config,
+. The config file is invalid,
+. Can not write to the config file,
 . no section was provided,
 . the section or key is invalid,
 . you try to unset an option which does not exist,
@@ -92,6 +92,9 @@ For reading options: read only from system-wide $(prefix)/etc/gitconfig
 rather than from all available files.
 +
 See also <<FILES>>.
+
+-f config-file, --file config-file::
+	Use the given config file instead of the one specified by GIT_CONFIG.
 
 --remove-section::
 	Remove the given section from the configuration file.
