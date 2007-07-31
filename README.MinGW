@@ -28,6 +28,7 @@ In order to compile this code you need:
 	zlib-1.2.3-mingwPORT-1.tar
 	w32api-3.6.tar.gz
 	tcltk-8.4.1-1.exe (for gitk, git-gui)
+	libiconv-1.9.2-1-{lib,bin}.zip (for git-am, from http://gnuwin32.sourceforge.net/packages/libiconv.htm)
 
 
 STATUS
