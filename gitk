@@ -82,11 +82,12 @@ proc dorunq {} {
 proc start_rev_list {view} {
     global startmsecs
     global commfd leftover tclencoding datemode
-    global viewargs viewfiles commitidx
+    global viewargs viewfiles commitidx vnextroot
     global lookingforhead showlocalchanges
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
+    set vnextroot($view) 0
     set order "--topo-order"
     if {$datemode} {
 	set order "--date-order"
@@ -131,12 +132,26 @@ proc getcommits {} {
     show_status "Reading commits..."
 }
 
+# This makes a string representation of a positive integer which
+# sorts as a string in numerical order
+proc strrep {n} {
+    if {$n < 16} {
+	return [format "%x" $n]
+    } elseif {$n < 256} {
+	return [format "x%.2x" $n]
+    } elseif {$n < 65536} {
+	return [format "y%.4x" $n]
+    }
+    return [format "z%.8x" $n]
+}
+
 proc getcommitlines {fd view}  {
     global commitlisted
     global leftover commfd
     global displayorder commitidx commitrow commitdata
     global parentlist children curview hlview
     global vparentlist vdisporder vcmitlisted
+    global ordertok vnextroot
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
@@ -221,14 +236,32 @@ proc getcommitlines {fd view}  {
 	    exit 1
 	}
 	set id [lindex $ids 0]
+	if {![info exists ordertok($view,$id)]} {
+	    set otok "o[strrep $vnextroot($view)]"
+	    incr vnextroot($view)
+	    set ordertok($view,$id) $otok
+	} else {
+	    set otok $ordertok($view,$id)
+	}
 	if {$listed} {
 	    set olds [lrange $ids 1 end]
-	    set i 0
-	    foreach p $olds {
-		if {$i == 0 || [lsearch -exact $olds $p] >= $i} {
-		    lappend children($view,$p) $id
+	    if {[llength $olds] == 1} {
+		set p [lindex $olds 0]
+		lappend children($view,$p) $id
+		if {![info exists ordertok($view,$p)]} {
+		    set ordertok($view,$p) $ordertok($view,$id)
 		}
-		incr i
+	    } else {
+		set i 0
+		foreach p $olds {
+		    if {$i == 0 || [lsearch -exact $olds $p] >= $i} {
+			lappend children($view,$p) $id
+		    }
+		    if {![info exists ordertok($view,$p)]} {
+			set ordertok($view,$p) "$otok[strrep $i]]"
+		    }
+		    incr i
+		}
 	    }
 	} else {
 	    set olds {}
@@ -1821,7 +1854,7 @@ proc unflatten {var l} {
 
 proc showview {n} {
     global curview viewdata viewfiles
-    global displayorder parentlist rowidlist rowoffsets
+    global displayorder parentlist rowidlist
     global colormap rowtextx commitrow nextcolor canvxmax
     global numcommits rowrangelist commitlisted idrowranges rowchk
     global selectedline currentid canv canvy0
@@ -1859,13 +1892,13 @@ proc showview {n} {
 	set vcmitlisted($curview) $commitlisted
 	if {$phase ne {}} {
 	    set viewdata($curview) \
-		[list $phase $rowidlist $rowoffsets $rowrangelist \
+		[list $phase $rowidlist {} $rowrangelist \
 		     [flatten idrowranges] [flatten idinlist] \
 		     $rowlaidout $rowoptim $numcommits]
 	} elseif {![info exists viewdata($curview)]
 		  || [lindex $viewdata($curview) 0] ne {}} {
 	    set viewdata($curview) \
-		[list {} $rowidlist $rowoffsets $rowrangelist]
+		[list {} $rowidlist {} $rowrangelist]
 	}
     }
     catch {unset treediffs}
@@ -1894,7 +1927,6 @@ proc showview {n} {
     set parentlist $vparentlist($n)
     set commitlisted $vcmitlisted($n)
     set rowidlist [lindex $v 1]
-    set rowoffsets [lindex $v 2]
     set rowrangelist [lindex $v 3]
     if {$phase eq {}} {
 	set numcommits [llength $displayorder]
@@ -2542,67 +2574,43 @@ proc usedinrange {id l1 l2} {
     return 0
 }
 
-proc sanity {row {full 0}} {
-    global rowidlist rowoffsets
+# Work out where id should go in idlist so that order-token
+# values increase from left to right
+proc idcol {idlist id {i 0}} {
+    global ordertok curview
 
-    set col -1
-    set ids [lindex $rowidlist $row]
-    foreach id $ids {
-	incr col
-	if {$id eq {}} continue
-	if {$col < [llength $ids] - 1 &&
-	    [lsearch -exact -start [expr {$col+1}] $ids $id] >= 0} {
-	    puts "oops: [shortids $id] repeated in row $row col $col: {[shortids [lindex $rowidlist $row]]}"
+    set t $ordertok($curview,$id)
+    if {$i >= [llength $idlist] ||
+	$t < $ordertok($curview,[lindex $idlist $i])} {
+	if {$i > [llength $idlist]} {
+	    set i [llength $idlist]
 	}
-	set o [lindex $rowoffsets $row $col]
-	set y $row
-	set x $col
-	while {$o ne {}} {
-	    incr y -1
-	    incr x $o
-	    if {[lindex $rowidlist $y $x] != $id} {
-		puts "oops: rowoffsets wrong at row [expr {$y+1}] col [expr {$x-$o}]"
-		puts "  id=[shortids $id] check started at row $row"
-		for {set i $row} {$i >= $y} {incr i -1} {
-		    puts "  row $i ids={[shortids [lindex $rowidlist $i]]} offs={[lindex $rowoffsets $i]}"
-		}
-		break
-	    }
-	    if {!$full} break
-	    set o [lindex $rowoffsets $y $x]
+	while {[incr i -1] >= 0 &&
+	       $t < $ordertok($curview,[lindex $idlist $i])} {}
+	incr i
+    } else {
+	if {$t > $ordertok($curview,[lindex $idlist $i])} {
+	    while {[incr i] < [llength $idlist] &&
+		   $t >= $ordertok($curview,[lindex $idlist $i])} {}
 	}
     }
+    return $i
 }
 
-proc makeuparrow {oid x y z} {
-    global rowidlist rowoffsets uparrowlen idrowranges displayorder
+proc makeuparrow {oid y x} {
+    global rowidlist uparrowlen idrowranges displayorder
 
     for {set i 1} {$i < $uparrowlen && $y > 1} {incr i} {
 	incr y -1
-	incr x $z
-	set off0 [lindex $rowoffsets $y]
-	for {set x0 $x} {1} {incr x0} {
-	    if {$x0 >= [llength $off0]} {
-		set x0 [llength [lindex $rowoffsets [expr {$y-1}]]]
-		break
-	    }
-	    set z [lindex $off0 $x0]
-	    if {$z ne {}} {
-		incr x0 $z
-		break
-	    }
-	}
-	set z [expr {$x0 - $x}]
-	lset rowidlist $y [linsert [lindex $rowidlist $y] $x $oid]
-	lset rowoffsets $y [linsert [lindex $rowoffsets $y] $x $z]
+	set idl [lindex $rowidlist $y]
+	set x [idcol $idl $oid $x]
+	lset rowidlist $y [linsert $idl $x $oid]
     }
-    set tmp [lreplace [lindex $rowoffsets $y] $x $x {}]
-    lset rowoffsets $y [incrange $tmp [expr {$x+1}] -1]
     lappend idrowranges($oid) [lindex $displayorder $y]
 }
 
 proc initlayout {} {
-    global rowidlist rowoffsets displayorder commitlisted
+    global rowidlist displayorder commitlisted
     global rowlaidout rowoptim
     global idinlist rowchk rowrangelist idrowranges
     global numcommits canvxmax canv
@@ -2618,7 +2626,6 @@ proc initlayout {} {
     set rowrangelist {}
     set nextcolor 0
     set rowidlist {{}}
-    set rowoffsets {{}}
     catch {unset idinlist}
     catch {unset rowchk}
     set rowlaidout 0
@@ -2679,8 +2686,8 @@ proc layoutmore {tmax allread} {
 	    set nr [expr {$commitidx($curview) - $rowlaidout}]
 	    # may need to increase this threshold if uparrowlen or
 	    # mingaplen are increased...
-	    if {$nr > 150} {
-		set nr 150
+	    if {$nr > 200} {
+		set nr 200
 	    }
 	    set row $rowlaidout
 	    set rowlaidout [layoutrows $row [expr {$row + $nr}] $allread]
@@ -2861,7 +2868,7 @@ proc readdifffiles {fd serial} {
 }
 
 proc layoutrows {row endrow last} {
-    global rowidlist rowoffsets displayorder
+    global rowidlist displayorder
     global uparrowlen downarrowlen maxwidth mingaplen
     global children parentlist
     global idrowranges
@@ -2869,12 +2876,12 @@ proc layoutrows {row endrow last} {
     global idinlist rowchk rowrangelist
 
     set idlist [lindex $rowidlist $row]
-    set offs [lindex $rowoffsets $row]
     while {$row < $endrow} {
 	set id [lindex $displayorder $row]
 	set oldolds {}
 	set newolds {}
-	foreach p [lindex $parentlist $row] {
+	set olds [lindex $parentlist $row]
+	foreach p $olds {
 	    if {![info exists idinlist($p)]} {
 		lappend newolds $p
 	    } elseif {!$idinlist($p)} {
@@ -2883,7 +2890,7 @@ proc layoutrows {row endrow last} {
 	}
 	set nev [expr {[llength $idlist] + [llength $newolds]
 		       + [llength $oldolds] - $maxwidth + 1}]
-	if {$nev > 0} {
+	if {1 || $nev > 0} {
 	    if {!$last &&
 		$row + $uparrowlen + $mingaplen >= $commitidx($curview)} break
 	    for {set x [llength $idlist]} {[incr x -1] >= 0} {} {
@@ -2893,34 +2900,25 @@ proc layoutrows {row endrow last} {
 			       [expr {$row + $uparrowlen + $mingaplen}]]
 		    if {$r == 0} {
 			set idlist [lreplace $idlist $x $x]
-			set offs [lreplace $offs $x $x]
-			set offs [incrange $offs $x 1]
 			set idinlist($i) 0
 			set rm1 [expr {$row - 1}]
 			lappend idrowranges($i) [lindex $displayorder $rm1]
-			if {[incr nev -1] <= 0} break
+			#if {[incr nev -1] <= 0} break
 			continue
 		    }
 		    set rowchk($id) [expr {$row + $r}]
 		}
 	    }
 	    lset rowidlist $row $idlist
-	    lset rowoffsets $row $offs
 	}
 	set col [lsearch -exact $idlist $id]
 	if {$col < 0} {
-	    set col [llength $idlist]
-	    lappend idlist $id
+	    set col [idcol $idlist $id]
+	    set idlist [linsert $idlist $col $id]
 	    lset rowidlist $row $idlist
-	    set z {}
 	    if {$children($curview,$id) ne {}} {
-		set z [expr {[llength [lindex $rowidlist [expr {$row-1}]]] - $col}]
 		unset idinlist($id)
-	    }
-	    lappend offs $z
-	    lset rowoffsets $row $offs
-	    if {$z ne {}} {
-		makeuparrow $id $col $row $z
+		makeuparrow $id $row $col
 	    }
 	} else {
 	    unset idinlist($id)
@@ -2933,38 +2931,21 @@ proc layoutrows {row endrow last} {
 	}
 	lappend rowrangelist $ranges
 	incr row
-	set offs [ntimes [llength $idlist] 0]
-	set l [llength $newolds]
-	set idlist [eval lreplace \$idlist $col $col $newolds]
-	set o 0
-	if {$l != 1} {
-	    set offs [lrange $offs 0 [expr {$col - 1}]]
-	    foreach x $newolds {
-		lappend offs {}
-		incr o -1
-	    }
-	    incr o
-	    set tmp [expr {[llength $idlist] - [llength $offs]}]
-	    if {$tmp > 0} {
-		set offs [concat $offs [ntimes $tmp $o]]
-	    }
-	} else {
-	    lset offs $col {}
-	}
+	set idlist [lreplace $idlist $col $col]
+	set x $col
 	foreach i $newolds {
+	    set x [idcol $idlist $i $x]
+	    set idlist [linsert $idlist $x $i]
 	    set idinlist($i) 1
 	    set idrowranges($i) $id
 	}
-	incr col $l
 	foreach oid $oldolds {
 	    set idinlist($oid) 1
-	    set idlist [linsert $idlist $col $oid]
-	    set offs [linsert $offs $col $o]
-	    makeuparrow $oid $col $row $o
-	    incr col
+	    set x [idcol $idlist $oid $x]
+	    set idlist [linsert $idlist $x $oid]
+	    makeuparrow $oid $row $x
 	}
 	lappend rowidlist $idlist
-	lappend rowoffsets $offs
     }
     return $row
 }
@@ -2989,7 +2970,7 @@ proc addextraid {id row} {
 }
 
 proc layouttail {} {
-    global rowidlist rowoffsets idinlist commitidx curview
+    global rowidlist idinlist commitidx curview
     global idrowranges rowrangelist
 
     set row $commitidx($curview)
@@ -3003,56 +2984,70 @@ proc layouttail {} {
 	lappend rowrangelist $idrowranges($id)
 	unset idrowranges($id)
 	incr row
-	set offs [ntimes $col 0]
 	set idlist [lreplace $idlist $col $col]
 	lappend rowidlist $idlist
-	lappend rowoffsets $offs
     }
 
     foreach id [array names idinlist] {
 	unset idinlist($id)
 	addextraid $id $row
 	lset rowidlist $row [list $id]
-	lset rowoffsets $row 0
-	makeuparrow $id 0 $row 0
+	makeuparrow $id $row 0
 	lappend idrowranges($id) $id
 	lappend rowrangelist $idrowranges($id)
 	unset idrowranges($id)
 	incr row
 	lappend rowidlist {}
-	lappend rowoffsets {}
     }
 }
 
 proc insert_pad {row col npad} {
-    global rowidlist rowoffsets
+    global rowidlist
 
     set pad [ntimes $npad {}]
     lset rowidlist $row [eval linsert [list [lindex $rowidlist $row]] $col $pad]
-    set tmp [eval linsert [list [lindex $rowoffsets $row]] $col $pad]
-    lset rowoffsets $row [incrange $tmp [expr {$col + $npad}] [expr {-$npad}]]
 }
 
 proc optimize_rows {row col endrow} {
-    global rowidlist rowoffsets displayorder
+    global rowidlist displayorder
 
+    if {$row < 1} {
+	set row 1
+    }
+    set idlist [lindex $rowidlist [expr {$row - 1}]]
+    if {$row >= 2} {
+	set previdlist [lindex $rowidlist [expr {$row - 2}]]
+    } else {
+	set previdlist {}
+    }
     for {} {$row < $endrow} {incr row} {
+	set pprevidlist $previdlist
+	set previdlist $idlist
 	set idlist [lindex $rowidlist $row]
-	set offs [lindex $rowoffsets $row]
 	set haspad 0
-	for {} {$col < [llength $offs]} {incr col} {
-	    if {[lindex $idlist $col] eq {}} {
+	set y0 [expr {$row - 1}]
+	set ym [expr {$row - 2}]
+	set x0 -1
+	set xm -1
+	for {} {$col < [llength $idlist]} {incr col} {
+	    set id [lindex $idlist $col]
+	    if {[lindex $previdlist $col] eq $id} continue
+	    if {$id eq {}} {
 		set haspad 1
 		continue
 	    }
-	    set z [lindex $offs $col]
-	    if {$z eq {}} continue
+	    set x0 [lsearch -exact $previdlist $id]
+	    if {$x0 < 0} continue
+	    set z [expr {$x0 - $col}]
 	    set isarrow 0
-	    set x0 [expr {$col + $z}]
-	    set y0 [expr {$row - 1}]
-	    set z0 [lindex $rowoffsets $y0 $x0]
+	    set z0 {}
+	    if {$ym >= 0} {
+		set xm [lsearch -exact $pprevidlist $id]
+		if {$xm >= 0} {
+		    set z0 [expr {$xm - $x0}]
+		}
+	    }
 	    if {$z0 eq {}} {
-		set id [lindex $idlist $col]
 		set ranges [rowranges $id]
 		if {$ranges ne {} && $y0 > [lindex $ranges 0]} {
 		    set isarrow 1
@@ -3066,43 +3061,32 @@ proc optimize_rows {row col endrow} {
 		# Line currently goes left too much;
 		# insert pads in the previous row, then optimize it
 		set npad [expr {-1 - $z + $isarrow}]
-		set offs [incrange $offs $col $npad]
 		insert_pad $y0 $x0 $npad
 		if {$y0 > 0} {
 		    optimize_rows $y0 $x0 $row
 		}
-		set z [lindex $offs $col]
-		set x0 [expr {$col + $z}]
-		set z0 [lindex $rowoffsets $y0 $x0]
+		set previdlist [lindex $rowidlist $y0]
+		set x0 [lsearch -exact $previdlist $id]
+		set z [expr {$x0 - $col}]
+		if {$z0 ne {}} {
+		    set pprevidlist [lindex $rowidlist $ym]
+		    set xm [lsearch -exact $pprevidlist $id]
+		    set z0 [expr {$xm - $x0}]
+		}
 	    } elseif {$z > 1 || ($z > 0 && $isarrow)} {
 		# Line currently goes right too much;
-		# insert pads in this line and adjust the next's rowoffsets
+		# insert pads in this line
 		set npad [expr {$z - 1 + $isarrow}]
-		set y1 [expr {$row + 1}]
-		set offs2 [lindex $rowoffsets $y1]
-		set x1 -1
-		foreach z $offs2 {
-		    incr x1
-		    if {$z eq {} || $x1 + $z < $col} continue
-		    if {$x1 + $z > $col} {
-			incr npad
-		    }
-		    lset rowoffsets $y1 [incrange $offs2 $x1 $npad]
-		    break
-		}
 		set pad [ntimes $npad {}]
 		set idlist [eval linsert \$idlist $col $pad]
-		set tmp [eval linsert \$offs $col $pad]
 		incr col $npad
-		set offs [incrange $tmp $col [expr {-$npad}]]
-		set z [lindex $offs $col]
+		set z [expr {$x0 - $col}]
 		set haspad 1
 	    }
-	    if {$z0 eq {} && !$isarrow} {
+	    if {$z0 eq {} && !$isarrow && $ym >= 0} {
 		# this line links to its first child on row $row-2
-		set rm2 [expr {$row - 2}]
-		set id [lindex $displayorder $rm2]
-		set xc [lsearch -exact [lindex $rowidlist $rm2] $id]
+		set id [lindex $displayorder $ym]
+		set xc [lsearch -exact $pprevidlist $id]
 		if {$xc >= 0} {
 		    set z0 [expr {$xc - $x0}]
 		}
@@ -3110,51 +3094,36 @@ proc optimize_rows {row col endrow} {
 	    # avoid lines jigging left then immediately right
 	    if {$z0 ne {} && $z < 0 && $z0 > 0} {
 		insert_pad $y0 $x0 1
-		set offs [incrange $offs $col 1]
-		optimize_rows $y0 [expr {$x0 + 1}] $row
+		incr x0
+		optimize_rows $y0 $x0 $row
+		set previdlist [lindex $rowidlist $y0]
+		set pprevidlist [lindex $rowidlist $ym]
 	    }
 	}
 	if {!$haspad} {
-	    set o {}
 	    # Find the first column that doesn't have a line going right
 	    for {set col [llength $idlist]} {[incr col -1] >= 0} {} {
-		set o [lindex $offs $col]
-		if {$o eq {}} {
+		set id [lindex $idlist $col]
+		if {$id eq {}} break
+		set x0 [lsearch -exact $previdlist $id]
+		if {$x0 < 0} {
 		    # check if this is the link to the first child
-		    set id [lindex $idlist $col]
 		    set ranges [rowranges $id]
 		    if {$ranges ne {} && $row == [lindex $ranges 0]} {
 			# it is, work out offset to child
-			set y0 [expr {$row - 1}]
 			set id [lindex $displayorder $y0]
-			set x0 [lsearch -exact [lindex $rowidlist $y0] $id]
-			if {$x0 >= 0} {
-			    set o [expr {$x0 - $col}]
-			}
+			set x0 [lsearch -exact $previdlist $id]
 		    }
 		}
-		if {$o eq {} || $o <= 0} break
+		if {$x0 <= $col} break
 	    }
 	    # Insert a pad at that column as long as it has a line and
-	    # isn't the last column, and adjust the next row' offsets
-	    if {$o ne {} && [incr col] < [llength $idlist]} {
-		set y1 [expr {$row + 1}]
-		set offs2 [lindex $rowoffsets $y1]
-		set x1 -1
-		foreach z $offs2 {
-		    incr x1
-		    if {$z eq {} || $x1 + $z < $col} continue
-		    lset rowoffsets $y1 [incrange $offs2 $x1 1]
-		    break
-		}
+	    # isn't the last column
+	    if {$x0 >= 0 && [incr col] < [llength $idlist]} {
 		set idlist [linsert $idlist $col {}]
-		set tmp [linsert $offs $col {}]
-		incr col
-		set offs [incrange $tmp $col -1]
 	    }
 	}
 	lset rowidlist $row $idlist
-	lset rowoffsets $row $offs
 	set col 0
     }
 }
@@ -3669,7 +3638,7 @@ proc clear_display {} {
 }
 
 proc findcrossings {id} {
-    global rowidlist parentlist numcommits rowoffsets displayorder
+    global rowidlist parentlist numcommits displayorder
 
     set cross {}
     set ccross {}
@@ -3678,12 +3647,9 @@ proc findcrossings {id} {
 	    set e [expr {$numcommits - 1}]
 	}
 	if {$e <= $s} continue
-	set x [lsearch -exact [lindex $rowidlist $e] $id]
-	if {$x < 0} {
-	    puts "findcrossings: oops, no [shortids $id] in row $e"
-	    continue
-	}
 	for {set row $e} {[incr row -1] >= $s} {} {
+	    set x [lsearch -exact [lindex $rowidlist $row] $id]
+	    if {$x < 0} break
 	    set olds [lindex $parentlist $row]
 	    set kid [lindex $displayorder $row]
 	    set kidx [lsearch -exact [lindex $rowidlist $row] $kid]
@@ -3701,9 +3667,6 @@ proc findcrossings {id} {
 		    }
 		}
 	    }
-	    set inc [lindex $rowoffsets $row $x]
-	    if {$inc eq {}} break
-	    incr x $inc
 	}
     }
     return [concat $ccross {{}} $cross]
@@ -3893,7 +3856,7 @@ proc show_status {msg} {
 # on that row and below will move down one row.
 proc insertrow {row newcmit} {
     global displayorder parentlist commitlisted children
-    global commitrow curview rowidlist rowoffsets numcommits
+    global commitrow curview rowidlist numcommits
     global rowrangelist rowlaidout rowoptim numcommits
     global selectedline rowchk commitidx
 
@@ -3917,26 +3880,14 @@ proc insertrow {row newcmit} {
     incr commitidx($curview)
 
     set idlist [lindex $rowidlist $row]
-    set offs [lindex $rowoffsets $row]
-    set newoffs {}
-    foreach x $idlist {
-	if {$x eq {} || ($x eq $p && [llength $kids] == 1)} {
-	    lappend newoffs {}
-	} else {
-	    lappend newoffs 0
-	}
-    }
     if {[llength $kids] == 1} {
 	set col [lsearch -exact $idlist $p]
 	lset idlist $col $newcmit
     } else {
 	set col [llength $idlist]
 	lappend idlist $newcmit
-	lappend offs {}
-	lset rowoffsets $row $offs
     }
     set rowidlist [linsert $rowidlist $row $idlist]
-    set rowoffsets [linsert $rowoffsets [expr {$row+1}] $newoffs]
 
     set rowrangelist [linsert $rowrangelist $row {}]
     if {[llength $kids] > 1} {
@@ -3965,7 +3916,7 @@ proc insertrow {row newcmit} {
 # Remove a commit that was inserted with insertrow on row $row.
 proc removerow {row} {
     global displayorder parentlist commitlisted children
-    global commitrow curview rowidlist rowoffsets numcommits
+    global commitrow curview rowidlist numcommits
     global rowrangelist idrowranges rowlaidout rowoptim numcommits
     global linesegends selectedline rowchk commitidx
 
@@ -3993,12 +3944,6 @@ proc removerow {row} {
     incr commitidx($curview) -1
 
     set rowidlist [lreplace $rowidlist $row $row]
-    set rowoffsets [lreplace $rowoffsets $rp1 $rp1]
-    if {$kids ne {}} {
-	set offs [lindex $rowoffsets $row]
-	set offs [lreplace $offs end end]
-	lset rowoffsets $row $offs
-    }
 
     set rowrangelist [lreplace $rowrangelist $row $row]
     if {[llength $kids] > 0} {
@@ -7590,9 +7535,9 @@ set maxgraphpct 50
 set maxwidth 16
 set revlistorder 0
 set fastdate 0
-set uparrowlen 7
-set downarrowlen 7
-set mingaplen 30
+set uparrowlen 5
+set downarrowlen 5
+set mingaplen 100
 set cmitmode "patch"
 set wrapcomment "none"
 set showneartags 1
