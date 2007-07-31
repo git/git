@@ -310,7 +310,7 @@ static struct commit_list *find_bisection(struct commit_list *list,
 	show_list("bisection 2 sorted", 0, nr, list);
 
 	*all = nr;
-	weights = xcalloc(on_list, sizeof(int*));
+	weights = xcalloc(on_list, sizeof(*weights));
 	counted = 0;
 
 	for (n = 0, p = list; p; p = p->next) {
