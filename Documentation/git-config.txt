@@ -9,17 +9,17 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git-config' [--system | --global | [-f|--file] config-file] [type] [-z|--null] name [value [value_regex]]
-'git-config' [--system | --global | [-f|--file] config-file] [type] --add name value
-'git-config' [--system | --global | [-f|--file] config-file] [type] --replace-all name [value [value_regex]]
-'git-config' [--system | --global | [-f|--file] config-file] [type] [-z|--null] --get name [value_regex]
-'git-config' [--system | --global | [-f|--file] config-file] [type] [-z|--null] --get-all name [value_regex]
-'git-config' [--system | --global | [-f|--file] config-file] [type] [-z|--null] --get-regexp name_regex [value_regex]
-'git-config' [--system | --global | [-f|--file] config-file] --unset name [value_regex]
-'git-config' [--system | --global | [-f|--file] config-file] --unset-all name [value_regex]
-'git-config' [--system | --global | [-f|--file] config-file] --rename-section old_name new_name
-'git-config' [--system | --global | [-f|--file] config-file] --remove-section name
-'git-config' [--system | --global | [-f|--file] config-file] [-z|--null] -l | --list
+'git-config' [<file-option>] [type] [-z|--null] name [value [value_regex]]
+'git-config' [<file-option>] [type] --add name value
+'git-config' [<file-option>] [type] --replace-all name [value [value_regex]]
+'git-config' [<file-option>] [type] [-z|--null] --get name [value_regex]
+'git-config' [<file-option>] [type] [-z|--null] --get-all name [value_regex]
+'git-config' [<file-option>] [type] [-z|--null] --get-regexp name_regex [value_regex]
+'git-config' [<file-option>] --unset name [value_regex]
+'git-config' [<file-option>] --unset-all name [value_regex]
+'git-config' [<file-option>] --rename-section old_name new_name
+'git-config' [<file-option>] --remove-section name
+'git-config' [<file-option>] [-z|--null] -l | --list
 
 DESCRIPTION
 -----------
@@ -39,6 +39,12 @@ The type specifier can be either '--int' or '--bool', which will make
 convert the value to the canonical form (simple decimal number for int,
 a "true" or "false" string for bool).  If no type specifier is passed,
 no checks or transformations are performed on the value.
+
+The file-option can be one of '--system', '--global' or '--file'
+which specify where the values will be read from or written to.
+The default is to assume the config file of the current repository,
+.git/config unless defined otherwise with GIT_DIR and GIT_CONFIG
+(see <<FILES>>).
 
 This command will fail if:
 
@@ -133,8 +139,8 @@ See also <<FILES>>.
 FILES
 -----
 
-There are three files where git-config will search for configuration
-options:
+If not set explicitely with '--file', there are three files where
+git-config will search for configuration options:
 
 .git/config::
 	Repository specific configuration file. (The filename is
