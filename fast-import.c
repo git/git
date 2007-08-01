@@ -61,7 +61,7 @@ Format of STDIN stream:
      #
   mark ::= 'mark' sp idnum lf;
   data ::= (delimited_data | exact_data)
-    lf;
+    lf?;
 
     # note: delim may be any string but must not contain lf.
     # data_line may contain any data but must not be exactly
@@ -1470,6 +1470,13 @@ static void read_next_command(void)
 	} while (!command_buf.eof && command_buf.buf[0] == '#');
 }
 
+static void skip_optional_lf()
+{
+	int term_char = fgetc(stdin);
+	if (term_char != '\n' && term_char != EOF)
+		ungetc(term_char, stdin);
+}
+
 static void cmd_mark(void)
 {
 	if (!prefixcmp(command_buf.buf, "mark :")) {
@@ -1522,9 +1529,7 @@ static void *cmd_data (size_t *size)
 		}
 	}
 
-	if (fgetc(stdin) != '\n')
-		die("An lf did not trail the binary data as expected.");
-
+	skip_optional_lf();
 	*size = length;
 	return buffer;
 }

@@ -818,4 +818,25 @@ test_expect_success \
 	'git-fast-import <input &&
 	 test `git-rev-parse N3` = `git-rev-parse O1`'
 
+cat >input <<INPUT_END
+commit refs/heads/O2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+dirty directory copy
+COMMIT
+from refs/heads/branch^0
+M 644 inline file2/file5
+data <<EOF
+$file5_data
+EOF
+C file2 file3
+D file2/file5
+
+INPUT_END
+
+test_expect_success \
+	'O: blank lines not necessary after data commands' \
+	'git-fast-import <input &&
+	 test `git-rev-parse N3` = `git-rev-parse O2`'
+
 test_done

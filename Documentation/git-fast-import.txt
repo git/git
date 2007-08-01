@@ -708,13 +708,18 @@ Exact byte count format::
 +
 ....
 	'data' SP <count> LF
-	<raw> LF
+	<raw> LF?
 ....
 +
 where `<count>` is the exact number of bytes appearing within
 `<raw>`.  The value of `<count>` is expressed as an ASCII decimal
 integer.  The `LF` on either side of `<raw>` is not
 included in `<count>` and will not be included in the imported data.
++
+The `LF` after `<raw>` is optional (it used to be required) but
+recommended.  Always including it makes debugging a fast-import
+stream easier as the next command always starts in column 0
+of the next line, even if `<raw>` did not end with an `LF`.
 
 Delimited format::
 	A delimiter string is used to mark the end of the data.
@@ -726,6 +731,7 @@ Delimited format::
 	'data' SP '<<' <delim> LF
 	<raw> LF
 	<delim> LF
+	LF?
 ....
 +
 where `<delim>` is the chosen delimiter string.  The string `<delim>`
@@ -734,6 +740,8 @@ fast-import will think the data ends earlier than it really does.  The `LF`
 immediately trailing `<raw>` is part of `<raw>`.  This is one of
 the limitations of the delimited format, it is impossible to supply
 a data chunk which does not have an LF as its last byte.
++
+The `LF` after `<delim> LF` is optional (it used to be required).
 
 `checkpoint`
 ~~~~~~~~~~~~
