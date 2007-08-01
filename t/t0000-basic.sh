@@ -281,4 +281,20 @@ test_expect_success 'update-index D/F conflict' '
 	test $numpath0 = 1
 '
 
+test_expect_success 'absolute path works as expected' '
+	mkdir first &&
+	ln -s ../.git first/.git &&
+	mkdir second &&
+	ln -s ../first second/other &&
+	mkdir third &&
+	dir="$(cd .git; pwd -P)" &&
+	dir2=third/../second/other/.git &&
+	test "$dir" = "$(test-absolute-path $dir2)" &&
+	file="$dir"/index &&
+	test "$file" = "$(test-absolute-path $dir2/index)" &&
+	ln -s ../first/file .git/syml &&
+	sym="$(cd first; pwd -P)"/file &&
+	test "$sym" = "$(test-absolute-path $dir2/syml)"
+'
+
 test_done
