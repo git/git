@@ -98,6 +98,14 @@ test_expect_success 'no changes are a nop' '
 	test $(git rev-parse I) = $(git rev-parse HEAD)
 '
 
+test_expect_success 'test the [branch] option' '
+	git checkout -b dead-end &&
+	git rm file6 &&
+	git commit -m "stop here" &&
+	git rebase -i F branch2 &&
+	test $(git rev-parse I) = $(git rev-parse HEAD)
+'
+
 test_expect_success 'rebase on top of a non-conflicting commit' '
 	git checkout branch1 &&
 	git tag original-branch1 &&

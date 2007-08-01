@@ -405,6 +405,7 @@ do
 
 		require_clean_work_tree
 
+		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
 		if test ! -z "$2"
 		then
 			output git show-ref --verify --quiet "refs/heads/$2" ||
@@ -418,7 +419,6 @@ do
 
 		test -z "$ONTO" && ONTO=$UPSTREAM
 
-		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
 		: > "$DOTEST"/interactive || die "Could not mark as interactive"
 		git symbolic-ref HEAD > "$DOTEST"/head-name ||
 			die "Could not get HEAD"
