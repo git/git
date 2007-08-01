@@ -35,6 +35,10 @@ int pager_in_use;
 int pager_use_color = 1;
 int auto_crlf = 0;	/* 1: both ways, -1: only when adding git objects */
 
+/* This is set by setup_git_dir_gently() and/or git_default_config() */
+char *git_work_tree_cfg;
+static const char *work_tree;
+
 static const char *git_dir;
 static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
 
@@ -62,15 +66,8 @@ static void setup_git_env(void)
 
 int is_bare_repository(void)
 {
-	const char *dir, *s;
-	if (0 <= is_bare_repository_cfg)
-		return is_bare_repository_cfg;
-
-	dir = get_git_dir();
-	if (!strcmp(dir, DEFAULT_GIT_DIR_ENVIRONMENT))
-		return 0;
-	s = strrchr(dir, '/');
-	return !s || strcmp(s + 1, DEFAULT_GIT_DIR_ENVIRONMENT);
+	/* if core.bare is not 'false', let's see if there is a work tree */
+	return is_bare_repository_cfg && !get_git_work_tree();
 }
 
 const char *get_git_dir(void)
@@ -78,6 +75,26 @@ const char *get_git_dir(void)
 	if (!git_dir)
 		setup_git_env();
 	return git_dir;
+}
+
+const char *get_git_work_tree(void)
+{
+	static int initialized = 0;
+	if (!initialized) {
+		work_tree = getenv(GIT_WORK_TREE_ENVIRONMENT);
+		/* core.bare = true overrides implicit and config work tree */
+		if (!work_tree && is_bare_repository_cfg < 1) {
+			work_tree = git_work_tree_cfg;
+			/* make_absolute_path also normalizes the path */
+			if (work_tree && !is_absolute_path(work_tree))
+				work_tree = xstrdup(make_absolute_path(git_path(work_tree)));
+		} else if (work_tree)
+			work_tree = xstrdup(make_absolute_path(work_tree));
+		initialized = 1;
+		if (work_tree)
+			is_bare_repository_cfg = 0;
+	}
+	return work_tree;
 }
 
 char *get_object_directory(void)
