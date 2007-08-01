@@ -61,4 +61,7 @@ extern void add_exclude(const char *string, const char *base,
 extern int file_exists(const char *);
 extern struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len);
 
+extern char *get_relative_cwd(char *buffer, int size, const char *dir);
+extern int is_inside_dir(const char *dir);
+
 #endif
