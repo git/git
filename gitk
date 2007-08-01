@@ -3363,7 +3363,7 @@ proc drawlineseg {id row endrow arrowlow} {
 
 proc drawparentlinks {id row} {
     global rowidlist canv colormap curview parentlist
-    global idpos
+    global idpos linespc
 
     set rowids [lindex $rowidlist $row]
     set col [lsearch -exact $rowids $id]
@@ -3373,6 +3373,8 @@ proc drawparentlinks {id row} {
     set x [xc $row $col]
     set y [yc $row]
     set y2 [yc $row2]
+    set d [expr {int(0.4 * $linespc)}]
+    set ymid [expr {$y + $d}]
     set ids [lindex $rowidlist $row2]
     # rmx = right-most X coord used
     set rmx 0
@@ -3386,19 +3388,37 @@ proc drawparentlinks {id row} {
 	if {$x2 > $rmx} {
 	    set rmx $x2
 	}
-	if {[lsearch -exact $rowids $p] < 0} {
+	set j [lsearch -exact $rowids $p]
+	if {$j < 0} {
 	    # drawlineseg will do this one for us
 	    continue
 	}
 	assigncolor $p
 	# should handle duplicated parents here...
 	set coords [list $x $y]
-	if {$i < $col - 1} {
-	    lappend coords [xc $row [expr {$i + 1}]] $y
-	} elseif {$i > $col + 1} {
-	    lappend coords [xc $row [expr {$i - 1}]] $y
+	if {$i != $col} {
+	    # if attaching to a vertical segment, draw a smaller
+	    # slant for visual distinctness
+	    if {$i == $j} {
+		if {$i < $col} {
+		    lappend coords [expr {$x2 + $d}] $y $x2 $ymid
+		} else {
+		    lappend coords [expr {$x2 - $d}] $y $x2 $ymid
+		}
+	    } elseif {$i < $col && $i < $j} {
+		# segment slants towards us already
+		lappend coords [xc $row $j] $y
+	    } else {
+		if {$i < $col - 1} {
+		    lappend coords [expr {$x2 + $linespc}] $y
+		} elseif {$i > $col + 1} {
+		    lappend coords [expr {$x2 - $linespc}] $y
+		}
+		lappend coords $x2 $y2
+	    }
+	} else {
+	    lappend coords $x2 $y2
 	}
-	lappend coords $x2 $y2
 	set t [$canv create line $coords -width [linewidth $p] \
 		   -fill $colormap($p) -tags lines.$p]
 	$canv lower $t
