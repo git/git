@@ -76,10 +76,10 @@ $ git diff --cached   <2>
 $ git diff HEAD       <3>
 ------------
 +
-<1> changes in the working tree not yet staged for the next commit.
-<2> changes between the index and your last commit; what you
+<1> Changes in the working tree not yet staged for the next commit.
+<2> Changes between the index and your last commit; what you
 would be committing if you run "git commit" without "-a" option.
-<3> changes in the working tree since your last commit; what you
+<3> Changes in the working tree since your last commit; what you
 would be committing if you run "git commit -a"
 
 Comparing with arbitrary commits::
@@ -90,12 +90,12 @@ $ git diff HEAD -- ./test  <2>
 $ git diff HEAD^ HEAD      <3>
 ------------
 +
-<1> instead of using the tip of the current branch, compare with the
+<1> Instead of using the tip of the current branch, compare with the
 tip of "test" branch.
-<2> instead of comparing with the tip of "test" branch, compare with
+<2> Instead of comparing with the tip of "test" branch, compare with
 the tip of the current branch, but limit the comparison to the
 file "test".
-<3> compare the version before the last commit and the last commit.
+<3> Compare the version before the last commit and the last commit.
 
 
 Limiting the diff output::
@@ -106,11 +106,11 @@ $ git diff --name-status                <2>
 $ git diff arch/i386 include/asm-i386   <3>
 ------------
 +
-<1> show only modification, rename and copy, but not addition
+<1> Show only modification, rename and copy, but not addition
 nor deletion.
-<2> show only names and the nature of change, but not actual
+<2> Show only names and the nature of change, but not actual
 diff output.
-<3> limit diff output to named subtrees.
+<3> Limit diff output to named subtrees.
 
 Munging the diff output::
 +
@@ -119,9 +119,9 @@ $ git diff --find-copies-harder -B -C  <1>
 $ git diff -R                          <2>
 ------------
 +
-<1> spend extra cycles to find renames, copies and complete
+<1> Spend extra cycles to find renames, copies and complete
 rewrites (very expensive).
-<2> output diff in reverse.
+<2> Output diff in reverse.
 
 
 Author
