@@ -778,4 +778,44 @@ test_expect_success \
 	'git-fast-import <input &&
 	 test `git-rev-parse N2^{tree}` = `git-rev-parse N3^{tree}`'
 
+###
+### series O
+###
+
+cat >input <<INPUT_END
+#we will
+commit refs/heads/O1
+# -- ignore all of this text
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+# $GIT_COMMITTER_NAME has inserted here for his benefit.
+data <<COMMIT
+dirty directory copy
+COMMIT
+
+# don't forget the import blank line!
+#
+# yes, we started from our usual base of branch^0.
+# i like branch^0.
+from refs/heads/branch^0
+# and we need to reuse file2/file5 from N3 above.
+M 644 inline file2/file5
+# otherwise the tree will be different
+data <<EOF
+$file5_data
+EOF
+
+# don't forget to copy file2 to file3
+C file2 file3
+#
+# or to delete file5 from file2.
+D file2/file5
+# are we done yet?
+
+INPUT_END
+
+test_expect_success \
+	'O: comments are all skipped' \
+	'git-fast-import <input &&
+	 test `git-rev-parse N3` = `git-rev-parse O1`'
+
 test_done

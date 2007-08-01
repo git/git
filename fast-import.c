@@ -122,6 +122,17 @@ Format of STDIN stream:
   email ::= # valid GIT author/committer email;
   ts    ::= # time since the epoch in seconds, ascii base10 notation;
   tz    ::= # GIT style timezone;
+
+     # note: comments may appear anywhere in the input, except
+     # within a data command.  Any form of the data command
+     # always escapes the related input from comment processing.
+     #
+     # In case it is not clear, the '#' that starts the comment
+     # must be the first character on that the line (an lf have
+     # preceeded it).
+     #
+  comment ::= '#' not_lf* lf;
+  not_lf  ::= # Any byte that is not ASCII newline (LF);
 */
 
 #include "builtin.h"
@@ -1454,7 +1465,9 @@ static void dump_marks(void)
 
 static void read_next_command(void)
 {
-	read_line(&command_buf, stdin, '\n');
+	do {
+		read_line(&command_buf, stdin, '\n');
+	} while (!command_buf.eof && command_buf.buf[0] == '#');
 }
 
 static void cmd_mark(void)
@@ -1481,7 +1494,7 @@ static void *cmd_data (size_t *size)
 		length = 0;
 		buffer = xmalloc(sz);
 		for (;;) {
-			read_next_command();
+			read_line(&command_buf, stdin, '\n');
 			if (command_buf.eof)
 				die("EOF in data (terminator '%s' not found)", term);
 			if (term_len == command_buf.len

@@ -176,6 +176,15 @@ results, such as branch names or file names with leading or trailing
 spaces in their name, or early termination of fast-import when it encounters
 unexpected input.
 
+Stream Comments
+~~~~~~~~~~~~~~~
+To aid in debugging frontends fast-import ignores any line that
+begins with `#` (ASCII pound/hash) up to and including the line
+ending `LF`.  A comment line may contain any sequence of bytes
+that does not contain an LF and therefore may be used to include
+any detailed debugging information that might be specific to the
+frontend and useful when inspecting a fast-import data stream.
+
 Date Formats
 ~~~~~~~~~~~~
 The following date formats are supported.  A frontend should select
@@ -688,6 +697,11 @@ byte count or delimited with a terminating line.  Real frontends
 intended for production-quality conversions should always use the
 exact byte count format, as it is more robust and performs better.
 The delimited format is intended primarily for testing fast-import.
+
+Comment lines appearing within the `<raw>` part of `data` commands
+are always taken to be part of the body of the data and are therefore
+never ignored by fast-import.  This makes it safe to import any
+file/message content whose lines might start with `#`.
 
 Exact byte count format::
 	The frontend must specify the number of bytes of data.
