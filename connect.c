@@ -145,6 +145,8 @@ static enum protocol get_protocol(const char *name)
 		return PROTO_SSH;
 	if (!strcmp(name, "ssh+git"))
 		return PROTO_SSH;
+	if (!strcmp(name, "file"))
+		return PROTO_LOCAL;
 	die("I don't handle protocol '%s'", name);
 }
 
@@ -498,13 +500,13 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		end = host;
 
 	path = strchr(end, c);
-	if (c == ':') {
-		if (path) {
+	if (path) {
+		if (c == ':') {
 			protocol = PROTO_SSH;
 			*path++ = '\0';
-		} else
-			path = host;
-	}
+		}
+	} else
+		path = end;
 
 	if (!path || !*path)
 		die("No path specified. See 'man git-pull' for valid url syntax");
