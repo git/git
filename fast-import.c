@@ -1487,12 +1487,7 @@ static void *cmd_data (size_t *size)
 			if (term_len == command_buf.len
 				&& !strcmp(term, command_buf.buf))
 				break;
-			if (sz < (length + command_buf.len)) {
-				sz = sz * 3 / 2 + 16;
-				if (sz < (length + command_buf.len))
-					sz = length + command_buf.len;
-				buffer = xrealloc(buffer, sz);
-			}
+			ALLOC_GROW(buffer, length + command_buf.len, sz);
 			memcpy(buffer + length,
 				command_buf.buf,
 				command_buf.len - 1);
