@@ -29,7 +29,8 @@ set_reflog_action() {
 }
 
 git_editor() {
-	GIT_EDITOR=${GIT_EDITOR:-$(git config core.editor || echo ${VISUAL:-${EDITOR}})}
+	: "${GIT_EDITOR:=$(git config core.editor)}"
+	: "${GIT_EDITOR:=${VISUAL:-${EDITOR}}}"
 	case "$GIT_EDITOR,$TERM" in
 	,dumb)
 		echo >&2 "No editor specified in GIT_EDITOR, core.editor, VISUAL,"
@@ -40,7 +41,7 @@ git_editor() {
 		exit 1
 		;;
 	esac
-	"${GIT_EDITOR:-vi}" "$1"
+	eval "${GIT_EDITOR:=vi}" '"$@"'
 }
 
 is_bare_repository () {
