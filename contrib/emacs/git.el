@@ -530,7 +530,7 @@ and returns the process output as a string."
     (setf (git-fileinfo->needs-refresh info) t)
     (when node   ;preserve the marked flag
       (setf (git-fileinfo->marked info) (git-fileinfo->marked (ewoc-data node))))
-    (if node (ewoc-set-data node info) (ewoc-enter-last status info))))
+    (if node (setf (ewoc-data node) info) (ewoc-enter-last status info))))
 
 (defun git-run-diff-index (status files)
   "Run git-diff-index on FILES and parse the results into STATUS.
