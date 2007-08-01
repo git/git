@@ -23,7 +23,7 @@ Format of STDIN stream:
     ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
     ('merge' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)*
     file_change*
-    lf;
+    lf?;
   commit_msg ::= data;
 
   file_change ::= file_clr
@@ -48,10 +48,10 @@ Format of STDIN stream:
 
   reset_branch ::= 'reset' sp ref_str lf
     ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
-    lf;
+    lf?;
 
   checkpoint ::= 'checkpoint' lf
-    lf;
+    lf?;
 
      # note: the first idnum in a stream should be 1 and subsequent
      # idnums should not have gaps between values as this will cause
@@ -330,6 +330,7 @@ static struct tag *last_tag;
 /* Input stream parsing */
 static whenspec_type whenspec = WHENSPEC_RAW;
 static struct strbuf command_buf;
+static int unread_command_buf;
 static uintmax_t next_mark;
 static struct dbuf new_data;
 
@@ -1466,7 +1467,10 @@ static void dump_marks(void)
 static void read_next_command(void)
 {
 	do {
-		read_line(&command_buf, stdin, '\n');
+		if (unread_command_buf)
+			unread_command_buf = 0;
+		else
+			read_line(&command_buf, stdin, '\n');
 	} while (!command_buf.eof && command_buf.buf[0] == '#');
 }
 
@@ -1825,13 +1829,13 @@ static void cmd_from_existing(struct branch *b)
 	}
 }
 
-static void cmd_from(struct branch *b)
+static int cmd_from(struct branch *b)
 {
 	const char *from;
 	struct branch *s;
 
 	if (prefixcmp(command_buf.buf, "from "))
-		return;
+		return 0;
 
 	if (b->branch_tree.tree) {
 		release_tree_content_recursive(b->branch_tree.tree);
@@ -1866,6 +1870,7 @@ static void cmd_from(struct branch *b)
 		die("Invalid ref name or SHA1 expression: %s", from);
 
 	read_next_command();
+	return 1;
 }
 
 static struct hash_list *cmd_merge(unsigned int *count)
@@ -1950,10 +1955,8 @@ static void cmd_new_commit(void)
 	}
 
 	/* file_change* */
-	for (;;) {
-		if (1 == command_buf.len)
-			break;
-		else if (!prefixcmp(command_buf.buf, "M "))
+	while (!command_buf.eof && command_buf.len > 1) {
+		if (!prefixcmp(command_buf.buf, "M "))
 			file_change_m(b);
 		else if (!prefixcmp(command_buf.buf, "D "))
 			file_change_d(b);
@@ -1963,8 +1966,10 @@ static void cmd_new_commit(void)
 			file_change_cr(b, 0);
 		else if (!strcmp("deleteall", command_buf.buf))
 			file_change_deleteall(b);
-		else
-			die("Unsupported file_change: %s", command_buf.buf);
+		else {
+			unread_command_buf = 1;
+			break;
+		}
 		read_next_command();
 	}
 
@@ -2105,7 +2110,8 @@ static void cmd_reset_branch(void)
 	else
 		b = new_branch(sp);
 	read_next_command();
-	cmd_from(b);
+	if (!cmd_from(b) && command_buf.len > 1)
+		unread_command_buf = 1;
 }
 
 static void cmd_checkpoint(void)
@@ -2116,7 +2122,7 @@ static void cmd_checkpoint(void)
 		dump_tags();
 		dump_marks();
 	}
-	read_next_command();
+	skip_optional_lf();
 }
 
 static void import_marks(const char *input_file)

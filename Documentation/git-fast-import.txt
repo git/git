@@ -312,7 +312,7 @@ change to the project.
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
 	(filemodify | filedelete | filecopy | filerename | filedeleteall)*
-	LF
+	LF?
 ....
 
 where `<ref>` is the name of the branch to make the commit on.
@@ -342,6 +342,8 @@ However it is recommended that a `filedeleteall` command preceed
 all `filemodify`, `filecopy` and `filerename` commands in the same
 commit, as `filedeleteall`
 wipes the branch clean (see below).
+
+The `LF` after the command is optional (it used to be required).
 
 `author`
 ^^^^^^^^
@@ -654,11 +656,13 @@ branch from an existing commit without creating a new commit.
 ....
 	'reset' SP <ref> LF
 	('from' SP <committish> LF)?
-	LF
+	LF?
 ....
 
 For a detailed description of `<ref>` and `<committish>` see above
 under `commit` and `from`.
+
+The `LF` after the command is optional (it used to be required).
 
 The `reset` command can also be used to create lightweight
 (non-annotated) tags.  For example:
@@ -750,7 +754,7 @@ save out all current branch refs, tags and marks.
 
 ....
 	'checkpoint' LF
-	LF
+	LF?
 ....
 
 Note that fast-import automatically switches packfiles when the current
@@ -769,6 +773,7 @@ process access to a branch.  However given that a 30 GiB Subversion
 repository can be loaded into Git through fast-import in about 3 hours,
 explicit checkpointing may not be necessary.
 
+The `LF` after the command is optional (it used to be required).
 
 Tips and Tricks
 ---------------

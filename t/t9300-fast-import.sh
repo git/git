@@ -839,4 +839,50 @@ test_expect_success \
 	'git-fast-import <input &&
 	 test `git-rev-parse N3` = `git-rev-parse O2`'
 
+test_expect_success \
+	'O: repack before next test' \
+	'git repack -a -d'
+
+cat >input <<INPUT_END
+commit refs/heads/O3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zstring
+COMMIT
+commit refs/heads/O3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zof
+COMMIT
+checkpoint
+commit refs/heads/O3
+mark :5
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zempty
+COMMIT
+checkpoint
+commit refs/heads/O3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zcommits
+COMMIT
+reset refs/tags/O3-2nd
+from :5
+INPUT_END
+
+cat >expect <<INPUT_END
+string
+of
+empty
+commits
+INPUT_END
+test_expect_success \
+	'O: blank lines not necessary after other commands' \
+	'git-fast-import <input &&
+	 test 8 = `find .git/objects/pack -type f | wc -l` &&
+	 test `git rev-parse refs/tags/O3-2nd` = `git rev-parse O3^` &&
+	 git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
+	 git diff expect actual'
+
 test_done
