@@ -885,4 +885,35 @@ test_expect_success \
 	 git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
 	 git diff expect actual'
 
+cat >input <<INPUT_END
+commit refs/heads/O4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zstring
+COMMIT
+commit refs/heads/O4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zof
+COMMIT
+progress Two commits down, 2 to go!
+commit refs/heads/O4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zempty
+COMMIT
+progress Three commits down, 1 to go!
+commit refs/heads/O4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zcommits
+COMMIT
+progress I'm done!
+INPUT_END
+test_expect_success \
+	'O: progress outputs as requested by input' \
+	'git-fast-import <input >actual &&
+	 grep "progress " <input >expect &&
+	 git diff expect actual'
+
 test_done

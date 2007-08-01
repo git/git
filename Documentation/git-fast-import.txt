@@ -298,6 +298,11 @@ and control the current import process.  More detailed discussion
 	This command is optional and is not needed to perform
 	an import.
 
+`progress`::
+	Causes fast-import to echo the entire line to its own
+	standard output.  This command is optional and is not needed
+	to perform an import.
+
 `commit`
 ~~~~~~~~
 Create or update a branch with a new commit, recording one logical
@@ -775,6 +780,31 @@ explicit checkpointing may not be necessary.
 
 The `LF` after the command is optional (it used to be required).
 
+`progress`
+~~~~~~~~~~
+Causes fast-import to print the entire `progress` line unmodified to
+its standard output channel (file descriptor 1) when the command is
+processed from the input stream.  The command otherwise has no impact
+on the current import, or on any of fast-import's internal state.
+
+....
+	'progress' SP <any> LF
+	LF?
+....
+
+The `<any>` part of the command may contain any sequence of bytes
+that does not contain `LF`.  The `LF` after the command is optional.
+Callers may wish to process the output through a tool such as sed to
+remove the leading part of the line, for example:
+
+====
+	frontend | git-fast-import | sed 's/^progress //'
+====
+
+Placing a `progress` command immediately after a `checkpoint` will
+inform the reader when the `checkpoint` has been completed and it
+can safely access the refs that fast-import updated.
+
 Tips and Tricks
 ---------------
 The following tips and tricks have been collected from various
@@ -866,6 +896,15 @@ last year), consider expending some extra CPU time and supplying
 This will take longer, but will also produce a smaller packfile.
 You only need to expend the effort once, and everyone using your
 project will benefit from the smaller repository.
+
+Include Some Progress Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Every once in a while have your frontend emit a `progress` message
+to fast-import.  The contents of the messages are entirely free-form,
+so one suggestion would be to output the current month and year
+each time the current commit date moves into the next month.
+Your users will feel better knowing how much of the data stream
+has been processed.
 
 
 Packfile Optimization

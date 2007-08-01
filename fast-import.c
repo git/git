@@ -8,6 +8,7 @@ Format of STDIN stream:
         | new_tag
         | reset_branch
         | checkpoint
+        | progress
         ;
 
   new_blob ::= 'blob' lf
@@ -51,6 +52,9 @@ Format of STDIN stream:
     lf?;
 
   checkpoint ::= 'checkpoint' lf
+    lf?;
+
+  progress ::= 'progress' sp not_lf* lf
     lf?;
 
      # note: the first idnum in a stream should be 1 and subsequent
@@ -2125,6 +2129,14 @@ static void cmd_checkpoint(void)
 	skip_optional_lf();
 }
 
+static void cmd_progress(void)
+{
+	fwrite(command_buf.buf, 1, command_buf.len - 1, stdout);
+	fputc('\n', stdout);
+	fflush(stdout);
+	skip_optional_lf();
+}
+
 static void import_marks(const char *input_file)
 {
 	char line[512];
@@ -2235,6 +2247,8 @@ int main(int argc, const char **argv)
 			cmd_reset_branch();
 		else if (!strcmp("checkpoint", command_buf.buf))
 			cmd_checkpoint();
+		else if (!prefixcmp(command_buf.buf, "progress "))
+			cmd_progress();
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}
