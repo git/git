@@ -40,6 +40,9 @@ Updates since v1.5.2
     $GIT_DIR to work in a subdirectory of a working tree that is
     not located at "$GIT_DIR/..".
 
+  - Giving "--file=<file>" option to "git config" is the same as
+    running the command with GIT_CONFIG=<file> environment.
+
   - "git log" learned a new option "--follow", to follow
     renaming history of a single file.
 
@@ -49,6 +52,9 @@ Updates since v1.5.2
 
   - "git-cvsserver" learned new options (--base-path, --export-all,
     --strict-paths) inspired by git-daemon.
+
+  - "git daemon --base-path-relaxed" can help migrating a repository URL
+    that did not use to use --base-path to use --base-path.
 
   - "git-commit" can use "-t templatefile" option and commit.template
     configuration variable to prime the commit message given to you in the
@@ -120,6 +126,9 @@ Updates since v1.5.2
     of the format ('tgz', 'tbz2' or 'zip').  Please update the
     your configuration file accordingly.
 
+  - "git diff" (but not the plumbing level "git diff-tree") now
+    recursively descends into trees by default.
+
   - The editor to use with many interactive commands can be
     overridden with GIT_EDITOR environment variable, or if it
     does not exist, with core.editor configuration variable.  As
@@ -164,6 +173,9 @@ Updates since v1.5.2
 
   - The diffstat given after a merge (or a pull) honors the
     color.diff configuration.
+
+  - "git commit --amend" is now compatible with various message source
+    options such as -m/-C/-c/-F.
 
   - "git-apply --whitespace=strip" removes blank lines added at
     the end of the file.
@@ -262,6 +274,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3-rc3
+O=v1.5.3-rc3-119-g50cff52
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
