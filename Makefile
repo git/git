@@ -458,6 +458,10 @@ ifeq ($(uname_S),AIX)
 	NO_STRLCPY = YesPlease
 	NEEDS_LIBICONV=YesPlease
 endif
+ifeq ($(uname_S),GNU)
+	# GNU/Hurd
+	NO_STRLCPY=YesPlease
+endif
 ifeq ($(uname_S),IRIX64)
 	NO_IPV6=YesPlease
 	NO_SETENV=YesPlease
