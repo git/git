@@ -87,7 +87,7 @@ Perhaps git-update-server-info needs to be run there?"
 
 quiet=
 local=no
-use_local=no
+use_local_hardlink=yes
 local_shared=no
 unset template
 no_checkout=
@@ -108,9 +108,13 @@ while
 	  no_checkout=yes ;;
 	*,--na|*,--nak|*,--nake|*,--naked|\
 	*,-b|*,--b|*,--ba|*,--bar|*,--bare) bare=yes ;;
-	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
+	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local)
+	  use_local_hardlink=yes ;;
+	*,--no-h|*,--no-ha|*,--no-har|*,--no-hard|*,--no-hardl|\
+	*,--no-hardli|*,--no-hardlin|*,--no-hardlink|*,--no-hardlinks)
+	  use_local_hardlink=no ;;
         *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared)
-          local_shared=yes; use_local=yes ;;
+          local_shared=yes; ;;
 	1,--template) usage ;;
 	*,--template)
 		shift; template="--template=$1" ;;
@@ -249,34 +253,36 @@ fi
 rm -f "$GIT_DIR/CLONE_HEAD"
 
 # We do local magic only when the user tells us to.
-case "$local,$use_local" in
-yes,yes)
+case "$local" in
+yes)
 	( cd "$repo/objects" ) ||
-		die "-l flag seen but repository '$repo' is not local."
+		die "cannot chdir to local '$repo/objects'."
 
-	case "$local_shared" in
-	no)
-	    # See if we can hardlink and drop "l" if not.
-	    sample_file=$(cd "$repo" && \
-			  find objects -type f -print | sed -e 1q)
-
-	    # objects directory should not be empty since we are cloning!
-	    test -f "$repo/$sample_file" || exit
-
-	    l=
-	    if ln "$repo/$sample_file" "$GIT_DIR/objects/sample" 2>/dev/null
-	    then
-		    l=l
-	    fi &&
-	    rm -f "$GIT_DIR/objects/sample" &&
-	    cd "$repo" &&
-	    find objects -depth -print | cpio -pumd$l "$GIT_DIR/" || exit 1
-	    ;;
-	yes)
-	    mkdir -p "$GIT_DIR/objects/info"
-	    echo "$repo/objects" >> "$GIT_DIR/objects/info/alternates"
-	    ;;
-	esac
+	if test "$local_shared" = yes
+	then
+		mkdir -p "$GIT_DIR/objects/info"
+		echo "$repo/objects" >>"$GIT_DIR/objects/info/alternates"
+	else
+		l= &&
+		if test "$use_local_hardlink" = yes
+		then
+			# See if we can hardlink and drop "l" if not.
+			sample_file=$(cd "$repo" && \
+				      find objects -type f -print | sed -e 1q)
+			# objects directory should not be empty because
+			# we are cloning!
+			test -f "$repo/$sample_file" || exit
+			if ln "$repo/$sample_file" "$GIT_DIR/objects/sample" 2>/dev/null
+			then
+				rm -f "$GIT_DIR/objects/sample"
+				l=l
+			else
+				echo >&2 "Warning: -l asked but cannot hardlink to $repo"
+			fi
+		fi &&
+		cd "$repo" &&
+		find objects -depth -print | cpio -pumd$l "$GIT_DIR/" || exit 1
+	fi
 	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
 	;;
 *)

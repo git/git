@@ -9,7 +9,8 @@ git-clone - Clone a repository into a new directory
 SYNOPSIS
 --------
 [verse]
-'git-clone' [--template=<template_directory>] [-l [-s]] [-q] [-n] [--bare]
+'git-clone' [--template=<template_directory>]
+	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--depth <depth>] <repository> [<directory>]
 
@@ -40,8 +41,19 @@ OPTIONS
 	this flag bypasses normal "git aware" transport
 	mechanism and clones the repository by making a copy of
 	HEAD and everything under objects and refs directories.
-	The files under .git/objects/ directory are hardlinked
-	to save space when possible.
+	The files under `.git/objects/` directory are hardlinked
+	to save space when possible.  This is now the default when
+	the source repository is specified with `/path/to/repo`
+	syntax, so it essentially is a no-op option.  To force
+	copying instead of hardlinking (which may be desirable
+	if you are trying to make a back-up of your repository),
+	but still avoid the usual "git aware" transport
+	mechanism, `--no-hardlinks` can be used.
+
+--no-hardlinks::
+	Optimize the cloning process from a repository on a
+	local filesystem by copying files under `.git/objects`
+	directory.
 
 --shared::
 -s::
