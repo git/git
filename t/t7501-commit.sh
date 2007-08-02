@@ -27,7 +27,7 @@ test_expect_success \
 
 test_expect_failure \
 	"invalid options 1" \
-	"git-commit --amend -F file"
+	"git-commit -m foo -m bar -F file"
 
 test_expect_failure \
 	"invalid options 2" \
@@ -78,9 +78,9 @@ test_expect_success \
 	"VISUAL=./editor git-commit --amend"
 
 test_expect_failure \
-	"passing --amend and -F" \
+	"passing -m and -F" \
 	"echo 'enough with the bongos' >file && \
-	 git-commit -F msg --amend ."
+	 git-commit -F msg -m amending ."
 
 test_expect_success \
 	"using message from other commit" \
