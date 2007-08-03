@@ -2407,13 +2407,15 @@ $ctxm add separator
 $ctxm add command -label {Options...} \
 	-command do_options
 proc popup_diff_menu {ctxm x y X Y} {
+	global current_diff_path
 	set ::cursorX $x
 	set ::cursorY $y
 	if {$::ui_index eq $::current_diff_side} {
 		$ctxm entryconf $::ui_diff_applyhunk \
 			-state normal \
 			-label {Unstage Hunk From Commit}
-	} elseif {{_O} eq [lindex $::file_states($::current_diff_path) 0]} {
+	} elseif {![info exists file_states($current_diff_path)]
+		|| {_O} eq [lindex $file_states($::current_diff_path) 0]} {
 		$ctxm entryconf $::ui_diff_applyhunk \
 			-state disabled \
 			-label {Stage Hunk For Commit}
