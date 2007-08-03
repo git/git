@@ -1348,6 +1348,9 @@ unset i
 proc bind_button3 {w cmd} {
 	bind $w <Any-Button-3> $cmd
 	if {[is_MacOSX]} {
+		# Mac OS X sends Button-2 on right click through three-button mouse,
+		# or through trackpad right-clicking (two-finger touch + click).
+		bind $w <Any-Button-2> $cmd
 		bind $w <Control-Button-1> $cmd
 	}
 }
