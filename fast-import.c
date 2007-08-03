@@ -524,8 +524,12 @@ static struct branch *new_branch(const char *name)
 
 	if (b)
 		die("Invalid attempt to create duplicate branch: %s", name);
-	if (check_ref_format(name))
+	switch (check_ref_format(name)) {
+	case  0: break; /* its valid */
+	case -2: break; /* valid, but too few '/', allow anyway */
+	default:
 		die("Branch name doesn't conform to GIT standards: %s", name);
+	}
 
 	b = pool_calloc(1, sizeof(struct branch));
 	b->name = pool_strdup(name);

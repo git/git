@@ -170,6 +170,53 @@ test_expect_failure \
     'git-fast-import <input'
 rm -f .git/objects/pack_* .git/objects/index_*
 
+cat >input <<INPUT_END
+commit .badbranchname
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+corrupt
+COMMIT
+
+from refs/heads/master
+
+INPUT_END
+test_expect_failure \
+    'B: fail on invalid branch name ".badbranchname"' \
+    'git-fast-import <input'
+rm -f .git/objects/pack_* .git/objects/index_*
+
+cat >input <<INPUT_END
+commit bad[branch]name
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+corrupt
+COMMIT
+
+from refs/heads/master
+
+INPUT_END
+test_expect_failure \
+    'B: fail on invalid branch name "bad[branch]name"' \
+    'git-fast-import <input'
+rm -f .git/objects/pack_* .git/objects/index_*
+
+cat >input <<INPUT_END
+commit TEMP_TAG
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+tag base
+COMMIT
+
+from refs/heads/master
+
+INPUT_END
+test_expect_success \
+    'B: accept branch name "TEMP_TAG"' \
+    'git-fast-import <input &&
+	 test -f .git/TEMP_TAG &&
+	 test `git rev-parse master` = `git rev-parse TEMP_TAG^`'
+rm -f .git/TEMP_TAG
+
 ###
 ### series C
 ###
