@@ -972,6 +972,11 @@ _git_show ()
 	__git_complete_file
 }
 
+_git_stash ()
+{
+	__gitcomp 'list show apply clear'
+}
+
 _git ()
 {
 	local i c=1 command __git_dir
@@ -1028,6 +1033,7 @@ _git ()
 	shortlog)    _git_shortlog ;;
 	show)        _git_show ;;
 	show-branch) _git_log ;;
+	stash)       _git_stash ;;
 	whatchanged) _git_log ;;
 	*)           COMPREPLY=() ;;
 	esac
@@ -1073,6 +1079,7 @@ complete -o default -o nospace -F _git_remote git-remote
 complete -o default -o nospace -F _git_reset git-reset
 complete -o default -o nospace -F _git_shortlog git-shortlog
 complete -o default -o nospace -F _git_show git-show
+complete -o default -o nospace -F _git_stash git-stash
 complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_log git-whatchanged
 
