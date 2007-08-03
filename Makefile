@@ -474,7 +474,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MMAP=YesPlease
 	NO_PREAD=YesPlease
 	NO_OPENSSL=YesPlease
-	NO_CURL=YesPlease
 	NO_SYMLINK_HEAD=YesPlease
 	NO_IPV6=YesPlease
 	NO_ETC_PASSWD=YesPlease
@@ -488,6 +487,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_SYMLINKS=YesPlease
 	NO_SVN_TESTS=YesPlease
 	NO_PERL_MAKEMAKER=YesPlease
+	NO_R_TO_GCC_LINKER = YesPlease
 	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -D__USE_MINGW_ACCESS -I compat
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
 	EXTLIBS += -lws2_32
