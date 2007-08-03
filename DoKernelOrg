@@ -83,8 +83,20 @@ maint | master)
 		ln -f git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/.
 		;;
 	esac >>./:all.log 2>&1 &&
-	case "$NO_RPM_PLEASE" in
-	'')
+	case "$V" in
+	*.rc[0-9]*)
+		mkdir -p $G/testing &&
+		for a in $narch
+		do
+			for rr in $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm
+			do
+				test -f "$rr" || continue
+				ln -f "$rr" $G/testing/.
+			done
+		done &&
+		ln -f $HOME/rpms/SRPMS/git-$V-*.src.rpm $G/testing/.
+		;;
+	*)
 		mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
 		for a in $narch
 		do
@@ -105,8 +117,6 @@ maint | master)
 			/usr/local/bin/yummy $G/RPMS/SRPMS
 			:
 		} >>./:all.log 2>&1 ;;
-	*)
-		echo Skipping RPM ;;
 	esac &&
 	make clean &&
 
