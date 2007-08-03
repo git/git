@@ -269,6 +269,13 @@ typedef enum {
 	WHENSPEC_NOW,
 } whenspec_type;
 
+struct recent_command
+{
+	struct recent_command *prev;
+	struct recent_command *next;
+	char *buf;
+};
+
 /* Configured limits on output */
 static unsigned long max_depth = 10;
 static off_t max_packsize = (1LL << 32) - 1;
@@ -335,6 +342,10 @@ static struct tag *last_tag;
 static whenspec_type whenspec = WHENSPEC_RAW;
 static struct strbuf command_buf;
 static int unread_command_buf;
+static struct recent_command cmd_hist = {&cmd_hist, &cmd_hist, NULL};
+static struct recent_command *cmd_tail = &cmd_hist;
+static struct recent_command *rc_free;
+static unsigned int cmd_save = 100;
 static uintmax_t next_mark;
 static struct dbuf new_data;
 
@@ -370,6 +381,7 @@ static void write_crash_report(const char *err, va_list params)
 	FILE *rpt = fopen(loc, "w");
 	struct branch *b;
 	unsigned long lu;
+	struct recent_command *rc;
 
 	if (!rpt) {
 		error("can't write crash report %s: %s", loc, strerror(errno));
@@ -387,6 +399,18 @@ static void write_crash_report(const char *err, va_list params)
 	fputs("fatal: ", rpt);
 	vfprintf(rpt, err, params);
 	fputc('\n', rpt);
+
+	fputc('\n', rpt);
+	fputs("Most Recent Commands Before Crash\n", rpt);
+	fputs("---------------------------------\n", rpt);
+	for (rc = cmd_hist.next; rc != &cmd_hist; rc = rc->next) {
+		if (rc->next == &cmd_hist)
+			fputs("* ", rpt);
+		else
+			fputs("  ", rpt);
+		fputs(rc->buf, rpt);
+		fputc('\n', rpt);
+	}
 
 	fputc('\n', rpt);
 	fputs("Active Branch LRU\n", rpt);
@@ -1563,11 +1587,35 @@ static void dump_marks(void)
 static void read_next_command(void)
 {
 	do {
-		if (unread_command_buf)
+		if (unread_command_buf) {
 			unread_command_buf = 0;
-		else
+			if (command_buf.eof)
+				return;
+		} else {
+			struct recent_command *rc;
+
+			command_buf.buf = NULL;
 			read_line(&command_buf, stdin, '\n');
-	} while (!command_buf.eof && command_buf.buf[0] == '#');
+			if (command_buf.eof)
+				return;
+
+			rc = rc_free;
+			if (rc)
+				rc_free = rc->next;
+			else {
+				rc = cmd_hist.next;
+				cmd_hist.next = rc->next;
+				cmd_hist.next->prev = &cmd_hist;
+				free(rc->buf);
+			}
+
+			rc->buf = command_buf.buf;
+			rc->prev = cmd_tail;
+			rc->next = cmd_hist.prev;
+			rc->prev->next = rc;
+			cmd_tail = rc;
+		}
+	} while (command_buf.buf[0] == '#');
 }
 
 static void skip_optional_lf()
@@ -1600,6 +1648,7 @@ static void *cmd_data (size_t *size)
 		size_t sz = 8192, term_len = command_buf.len - 5 - 2;
 		length = 0;
 		buffer = xmalloc(sz);
+		command_buf.buf = NULL;
 		for (;;) {
 			read_line(&command_buf, stdin, '\n');
 			if (command_buf.eof)
@@ -2269,7 +2318,7 @@ static const char fast_import_usage[] =
 
 int main(int argc, const char **argv)
 {
-	int i, show_stats = 1;
+	unsigned int i, show_stats = 1;
 
 	git_config(git_default_config);
 	alloc_objects(object_entry_alloc);
@@ -2322,6 +2371,11 @@ int main(int argc, const char **argv)
 	}
 	if (i != argc)
 		usage(fast_import_usage);
+
+	rc_free = pool_alloc(cmd_save * sizeof(*rc_free));
+	for (i = 0; i < (cmd_save - 1); i++)
+		rc_free[i].next = &rc_free[i + 1];
+	rc_free[cmd_save - 1].next = NULL;
 
 	prepare_packed_git();
 	start_packfile();
