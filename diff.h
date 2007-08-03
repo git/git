@@ -65,6 +65,7 @@ struct diff_options {
 	int context;
 	int break_opt;
 	int detect_rename;
+	int skip_stat_unmatch;
 	int line_termination;
 	int output_format;
 	int pickaxe_opts;
