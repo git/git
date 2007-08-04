@@ -332,7 +332,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 * In case there is a work tree we may change the directory,
 	 * therefore make GIT_DIR an absolute path.
 	 */
-	if (gitdirenv[0] != '/') {
+	if (!is_absolute_path(gitdirenv)) {
 		setenv(GIT_DIR_ENVIRONMENT, gitdir, 1);
 		gitdirenv = getenv(GIT_DIR_ENVIRONMENT);
 		if (!gitdirenv)
