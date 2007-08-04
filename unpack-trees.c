@@ -407,6 +407,15 @@ static void verify_uptodate(struct cache_entry *ce,
 		unsigned changed = ce_match_stat(ce, &st, 1);
 		if (!changed)
 			return;
+		/*
+		 * NEEDSWORK: the current default policy is to allow
+		 * submodule to be out of sync wrt the supermodule
+		 * index.  This needs to be tightened later for
+		 * submodules that are marked to be automatically
+		 * checked out.
+		 */
+		if (S_ISGITLINK(ntohl(ce->ce_mode)))
+			return;
 		errno = 0;
 	}
 	if (errno == ENOENT)
