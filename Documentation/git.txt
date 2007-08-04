@@ -421,6 +421,22 @@ other
 	to an empty string or to the value "cat", git will not launch
 	a pager.
 
+'GIT_SSH'::
+	If this environment variable is set then gitlink:git-fetch[1]
+	and gitlink:git-push[1] will use this command instead
+	of `ssh` when they need to connect to a remote system.
+	The 'GIT_SSH' command will be given exactly two arguments:
+	the 'username@host' (or just 'host') from the URL and the
+	shell command to execute on that remote system.
++
+To pass options to the program that you want to list in GIT_SSH
+you will need to wrap the program and options into a shell script,
+then set GIT_SSH to refer to the shell script.
++
+Usually it is easier to configure any desired options through your
+personal `.ssh/config` file.  Please consult your ssh documentation
+for further details.
+
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
 	as git-blame (in incremental mode), git-rev-list, git-log,
