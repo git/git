@@ -116,3 +116,7 @@ Issues of note:
    would instead give you a copy of what you see at:
 
 	http://www.kernel.org/pub/software/scm/git/docs/
+
+   It has been reported that docbook-xsl version 1.72 and 1.73 are
+   buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
+   the patch in contrib/patches/docbook-xsl-manpages-charmap.patch

@@ -1,0 +1,21 @@
+From: Ismail Dönmez <ismail@pardus.org.tr>
+
+Trying to build the documentation with docbook-xsl 1.73 may result in
+the following error.  This patch fixes it.
+
+$ xmlto -m callouts.xsl man git-add.xml
+runtime error: file
+file:///usr/share/sgml/docbook/xsl-stylesheets-1.73.0/manpages/other.xsl line
+129 element call-template
+The called template 'read-character-map' was not found.
+
+--- docbook-xsl-1.73.0/manpages/docbook.xsl.manpages-charmap	2007-07-23 16:24:23.000000000 +0100
++++ docbook-xsl-1.73.0/manpages/docbook.xsl	2007-07-23 16:25:16.000000000 +0100
+@@ -37,6 +37,7 @@
+   <xsl:include href="lists.xsl"/>
+   <xsl:include href="endnotes.xsl"/>
+   <xsl:include href="table.xsl"/>
++  <xsl:include href="../common/charmap.xsl"/>
+
+   <!-- * we rename the following just to avoid using params with "man" -->
+   <!-- * prefixes in the table.xsl stylesheet (because that stylesheet -->
