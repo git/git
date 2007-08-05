@@ -1079,6 +1079,11 @@ $ git diff HEAD	    # difference between HEAD and working tree; what
 $ git status	    # a brief per-file summary of the above.
 -------------------------------------------------
 
+You can also use gitlink:git-gui[1] to create commits, view changes in
+the index and the working tree files, and individually select diff hunks
+for inclusion in the index (by right-clicking on the diff hunk and
+choosing "Stage Hunk For Commit").
+
 [[creating-good-commit-messages]]
 Creating good commit messages
 -----------------------------
@@ -2506,8 +2511,10 @@ $ gitk origin..mywork &
 
 And browse through the list of patches in the mywork branch using gitk,
 applying them (possibly in a different order) to mywork-new using
-cherry-pick, and possibly modifying them as you go using commit
---amend.
+cherry-pick, and possibly modifying them as you go using commit --amend.
+The git-gui[1] command may also help as it allows you to individually
+select diff hunks for inclusion in the index (by right-clicking on the
+diff hunk and choosing "Stage Hunk for Commit").
 
 Another technique is to use git-format-patch to create a series of
 patches, then reset the state to before the patches:
