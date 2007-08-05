@@ -79,7 +79,7 @@ the remote repository.
 
 -f, \--force::
 	Usually, the command refuses to update a remote ref that is
-	not a descendant of the local ref used to overwrite it.
+	not an ancestor of the local ref used to overwrite it.
 	This flag disables the check.  This can cause the
 	remote repository to lose commits; use it with care.
 
