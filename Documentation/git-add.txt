@@ -3,7 +3,7 @@ git-add(1)
 
 NAME
 ----
-git-add - Add file contents to the changeset to be committed next
+git-add - Add file contents to the index
 
 SYNOPSIS
 --------
@@ -11,24 +11,27 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-All the changed file contents to be committed together in a single set
-of changes must be "added" with the 'add' command before using the
-'commit' command.  This is not only for adding new files.  Even modified
-files must be added to the set of changes about to be committed.
+This command adds the current content of new or modified files to the
+index, thus staging that content for inclusion in the next commit.
 
-This command can be performed multiple times before a commit. The added
-content corresponds to the state of specified file(s) at the time the
-'add' command is used. This means the 'commit' command will not consider
-subsequent changes to already added content if it is not added again before
-the commit.
+The "index" holds a snapshot of the content of the working tree, and it
+is this snapshot that is taken as the contents of the next commit.  Thus
+after making any changes to the working directory, and before running
+the commit command, you must use the 'add' command to add any new or
+modified files to the index.
 
-The 'git status' command can be used to obtain a summary of what is included
-for the next commit.
+This command can be performed multiple times before a commit.  It only
+adds the content of the specified file(s) at the time the add command is
+run; if you want subsequent changes included in the next commit, then
+you must run 'git add' again to add the new content to the index.
 
-This command can be used to add ignored files with `-f` (force)
-option, but they have to be
-explicitly and exactly specified from the command line.  File globbing
-and recursive behaviour do not add ignored files.
+The 'git status' command can be used to obtain a summary of which
+files have changes that are staged for the next commit.
+
+The 'add' command can be used to add ignored files with `-f` (force)
+option, but they have to be explicitly and exactly specified from the
+command line.  File globbing and recursive behaviour do not add ignored
+files.
 
 Please see gitlink:git-commit[1] for alternative ways to add content to a
 commit.
