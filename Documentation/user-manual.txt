@@ -1,4 +1,4 @@
-Git User's Manual (for version 1.5.1 or newer)
+Git User's Manual (for version 1.5.3 or newer)
 ______________________________________________
 
 
@@ -1667,24 +1667,19 @@ one step:
 $ git pull origin master
 -------------------------------------------------
 
-In fact, "origin" is normally the default repository to pull from,
-and the default branch is normally the HEAD of the remote repository,
-so often you can accomplish the above with just
+In fact, if you have "master" checked out, then by default "git pull"
+merges from the HEAD branch of the origin repository.  So often you can
+accomplish the above with just a simple
 
 -------------------------------------------------
 $ git pull
 -------------------------------------------------
 
-See the descriptions of the branch.<name>.remote and branch.<name>.merge
-options in gitlink:git-config[1] to learn how to control these defaults
-depending on the current branch.  Also note that the --track option to
-gitlink:git-branch[1] and gitlink:git-checkout[1] can be used to
-automatically set the default remote branch to pull from at the time
-that a branch is created:
-
--------------------------------------------------
-$ git checkout --track -b maint origin/maint
--------------------------------------------------
+More generally, a branch that is created from a remote branch will pull
+by default from that branch.  See the descriptions of the
+branch.<name>.remote and branch.<name>.merge options in
+gitlink:git-config[1], and the discussion of the --track option in
+gitlink:git-checkout[1], to learn how to control these defaults.
 
 In addition to saving you keystrokes, "git pull" also helps you by
 producing a default commit message documenting the branch and
