@@ -71,6 +71,8 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 			ssh_basename = ssh;
 		else
 			ssh_basename++;
+		trace_printf("Calling '%s' '%s' '%s' '%s'\n",
+				ssh, ssh_basename, host, command);
 		close(sv[1]);
 		dup2(sv[0], 0);
 		dup2(sv[0], 1);
