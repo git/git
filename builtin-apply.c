@@ -2508,7 +2508,7 @@ static void write_out_one_result(struct patch *patch, int phase)
 	 * thing: remove the old, write the new
 	 */
 	if (phase == 0)
-		remove_file(patch, 0);
+		remove_file(patch, patch->is_rename);
 	if (phase == 1)
 		create_file(patch);
 }
