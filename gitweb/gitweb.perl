@@ -1515,6 +1515,7 @@ sub git_get_projects_list {
 
 		File::Find::find({
 			follow_fast => 1, # follow symbolic links
+			follow_skip => 2, # ignore duplicates
 			dangling_symlinks => 0, # ignore dangling symlinks, silently
 			wanted => sub {
 				# skip project-list toplevel, if we get it.

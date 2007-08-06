@@ -325,6 +325,9 @@ EOF
 
 test_expect_success 'new variable inserts into proper section' 'cmp .git/config expect'
 
+test_expect_success 'alternative GIT_CONFIG (non-existing file should fail)' \
+	'git config --file non-existing-config -l; test $? != 0'
+
 cat > other-config << EOF
 [ein]
 	bahn = strasse
@@ -337,6 +340,9 @@ EOF
 GIT_CONFIG=other-config git config -l > output
 
 test_expect_success 'alternative GIT_CONFIG' 'cmp output expect'
+
+test_expect_success 'alternative GIT_CONFIG (--file)' \
+	'git config --file other-config -l > output && cmp output expect'
 
 GIT_CONFIG=other-config git config anwohner.park ausweis
 
@@ -594,5 +600,20 @@ git config --null --get-regexp 'val[0-9]' | tr '[\000]' 'Q' > result
 echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
+
+test_expect_success 'symlinked configuration' '
+
+	ln -s notyet myconfig &&
+	GIT_CONFIG=myconfig git config test.frotz nitfol &&
+	test -h myconfig &&
+	test -f notyet &&
+	test "z$(GIT_CONFIG=notyet git config test.frotz)" = znitfol &&
+	GIT_CONFIG=myconfig git config test.xyzzy rezrov &&
+	test -h myconfig &&
+	test -f notyet &&
+	test "z$(GIT_CONFIG=notyet git config test.frotz)" = znitfol &&
+	test "z$(GIT_CONFIG=notyet git config test.xyzzy)" = zrezrov
+
+'
 
 test_done

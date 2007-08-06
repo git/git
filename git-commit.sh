@@ -190,7 +190,6 @@ $1"
 		;;
 	--a|--am|--ame|--amen|--amend)
 		amend=t
-		log_given=t$log_given
 		use_commit=HEAD
 		shift
 		;;
@@ -298,9 +297,9 @@ esac
 
 case "$log_given" in
 tt*)
-	die "Only one of -c/-C/-F/--amend can be used." ;;
+	die "Only one of -c/-C/-F can be used." ;;
 *tm*|*mt*)
-	die "Option -m cannot be combined with -c/-C/-F/--amend." ;;
+	die "Option -m cannot be combined with -c/-C/-F." ;;
 esac
 
 case "$#,$also,$only,$amend" in

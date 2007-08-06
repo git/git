@@ -237,8 +237,6 @@ static int eatspace(char *line)
 
 static char *cleanup_subject(char *subject)
 {
-	if (keep_subject)
-		return subject;
 	for (;;) {
 		char *p;
 		int len, remove;
@@ -425,6 +423,7 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 			if (addlen >= sz - len)
 				addlen = sz - len - 1;
 			memcpy(line + len, continuation, addlen);
+			line[len] = '\n';
 			len += addlen;
 		}
 	}
@@ -846,6 +845,22 @@ static void handle_body(void)
 	return;
 }
 
+static void output_header_lines(FILE *fout, const char *hdr, char *data)
+{
+	while (1) {
+		char *ep = strchr(data, '\n');
+		int len;
+		if (!ep)
+			len = strlen(data);
+		else
+			len = ep - data;
+		fprintf(fout, "%s: %.*s\n", hdr, len, data);
+		if (!ep)
+			break;
+		data = ep + 1;
+	}
+}
+
 static void handle_info(void)
 {
 	char *sub;
@@ -863,9 +878,13 @@ static void handle_info(void)
 			continue;
 
 		if (!memcmp(header[i], "Subject", 7)) {
-			sub = cleanup_subject(hdr);
-			cleanup_space(sub);
-			fprintf(fout, "Subject: %s\n", sub);
+			if (keep_subject)
+				sub = hdr;
+			else {
+				sub = cleanup_subject(hdr);
+				cleanup_space(sub);
+			}
+			output_header_lines(fout, "Subject", sub);
 		} else if (!memcmp(header[i], "From", 4)) {
 			handle_from(hdr);
 			fprintf(fout, "Author: %s\n", name);

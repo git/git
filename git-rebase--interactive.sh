@@ -405,6 +405,7 @@ do
 
 		require_clean_work_tree
 
+		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
 		if test ! -z "$2"
 		then
 			output git show-ref --verify --quiet "refs/heads/$2" ||
@@ -418,7 +419,6 @@ do
 
 		test -z "$ONTO" && ONTO=$UPSTREAM
 
-		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
 		: > "$DOTEST"/interactive || die "Could not mark as interactive"
 		git symbolic-ref HEAD > "$DOTEST"/head-name ||
 			die "Could not get HEAD"
@@ -463,8 +463,9 @@ do
 #
 EOF
 		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
-			--abbrev=7 --reverse $UPSTREAM..$HEAD | \
-			sed "s/^/pick /" >> "$TODO"
+			--abbrev=7 --reverse --left-right --cherry-pick \
+			$UPSTREAM...$HEAD | \
+			sed -n "s/^>/pick /p" >> "$TODO"
 
 		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&
 			die_abort "Nothing to do"

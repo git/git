@@ -120,6 +120,7 @@ clean:
 	mv $@+ $@
 
 %.1 %.5 %.7 : %.xml
+	$(RM) $@
 	xmlto -m callouts.xsl man $<
 
 %.xml : %.txt

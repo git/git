@@ -642,3 +642,46 @@ file_exists(const char *f)
   struct stat sb;
   return stat(f, &sb) == 0;
 }
+
+/*
+ * get_relative_cwd() gets the prefix of the current working directory
+ * relative to 'dir'.  If we are not inside 'dir', it returns NULL.
+ *
+ * As a convenience, it also returns NULL if 'dir' is already NULL.  The
+ * reason for this behaviour is that it is natural for functions returning
+ * directory names to return NULL to say "this directory does not exist"
+ * or "this directory is invalid".  These cases are usually handled the
+ * same as if the cwd is not inside 'dir' at all, so get_relative_cwd()
+ * returns NULL for both of them.
+ *
+ * Most notably, get_relative_cwd(buffer, size, get_git_work_tree())
+ * unifies the handling of "outside work tree" with "no work tree at all".
+ */
+char *get_relative_cwd(char *buffer, int size, const char *dir)
+{
+	char *cwd = buffer;
+
+	if (!dir)
+		return NULL;
+	if (!getcwd(buffer, size))
+		die("can't find the current directory: %s", strerror(errno));
+
+	if (!is_absolute_path(dir))
+		dir = make_absolute_path(dir);
+
+	while (*dir && *dir == *cwd) {
+		dir++;
+		cwd++;
+	}
+	if (*dir)
+		return NULL;
+	if (*cwd == '/')
+		return cwd + 1;
+	return cwd;
+}
+
+int is_inside_dir(const char *dir)
+{
+	char buffer[PATH_MAX];
+	return get_relative_cwd(buffer, sizeof(buffer), dir) != NULL;
+}

@@ -101,7 +101,7 @@ Example
 
 	# Proxy settings
 	[core]
-		gitProxy="ssh" for "ssh://kernel.org/"
+		gitProxy="ssh" for "kernel.org"
 		gitProxy=default-proxy ; for the rest
 
 Variables

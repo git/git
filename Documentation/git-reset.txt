@@ -63,7 +63,7 @@ $ git commit -a -c ORIG_HEAD  <3>
 <1> This is most often done when you remembered what you
 just committed is incomplete, or you misspelled your commit
 message, or both.  Leaves working tree as it was before "reset".
-<2> make corrections to working tree files.
+<2> Make corrections to working tree files.
 <3> "reset" copies the old head to .git/ORIG_HEAD; redo the
 commit by starting with its log message.  If you do not need to
 edit the message further, you can give -C option instead.
@@ -106,17 +106,17 @@ $ git reset                                <3>
 $ git pull git://info.example.com/ nitfol  <4>
 ------------
 +
-<1> you are happily working on something, and find the changes
+<1> You are happily working on something, and find the changes
 in these files are in good order.  You do not want to see them
 when you run "git diff", because you plan to work on other files
 and changes with these files are distracting.
-<2> somebody asks you to pull, and the changes sounds worthy of merging.
-<3> however, you already dirtied the index (i.e. your index does
+<2> Somebody asks you to pull, and the changes sounds worthy of merging.
+<3> However, you already dirtied the index (i.e. your index does
 not match the HEAD commit).  But you know the pull you are going
 to make does not affect frotz.c nor filfre.c, so you revert the
 index changes for these two files.  Your changes in working tree
 remain there.
-<4> then you can pull and merge, leaving frotz.c and filfre.c
+<4> Then you can pull and merge, leaving frotz.c and filfre.c
 changes still in the working tree.
 
 Undo a merge or pull::
@@ -133,15 +133,15 @@ Fast forward
 $ git reset --hard ORIG_HEAD       <4>
 ------------
 +
-<1> try to update from the upstream resulted in a lot of
+<1> Try to update from the upstream resulted in a lot of
 conflicts; you were not ready to spend a lot of time merging
 right now, so you decide to do that later.
 <2> "pull" has not made merge commit, so "git reset --hard"
 which is a synonym for "git reset --hard HEAD" clears the mess
 from the index file and the working tree.
-<3> merge a topic branch into the current branch, which resulted
+<3> Merge a topic branch into the current branch, which resulted
 in a fast forward.
-<4> but you decided that the topic branch is not ready for public
+<4> But you decided that the topic branch is not ready for public
 consumption yet.  "pull" or "merge" always leaves the original
 tip of the current branch in ORIG_HEAD, so resetting hard to it
 brings your index file and the working tree back to that state,

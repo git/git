@@ -68,6 +68,9 @@ test "\$1" = .git/COMMIT_EDITMSG && {
 	test -z "\$FAKE_COMMIT_AMEND" || echo "\$FAKE_COMMIT_AMEND" >> "\$1"
 	exit
 }
+test -z "\$EXPECT_COUNT" ||
+	test "\$EXPECT_COUNT" = \$(grep -ve "^#" -e "^$" < "\$1" | wc -l) ||
+	exit
 test -z "\$FAKE_LINES" && exit
 grep -v "^#" < "\$1" > "\$1".tmp
 rm "\$1"
@@ -92,6 +95,14 @@ export VISUAL
 
 test_expect_success 'no changes are a nop' '
 	git rebase -i F &&
+	test $(git rev-parse I) = $(git rev-parse HEAD)
+'
+
+test_expect_success 'test the [branch] option' '
+	git checkout -b dead-end &&
+	git rm file6 &&
+	git commit -m "stop here" &&
+	git rebase -i F branch2 &&
 	test $(git rev-parse I) = $(git rev-parse HEAD)
 '
 
@@ -249,6 +260,18 @@ test_expect_success 'interrupted squash works as expected' '
 	git add conflict &&
 	git rebase --continue &&
 	test $one = $(git rev-parse HEAD~2)
+'
+
+test_expect_success 'ignore patch if in upstream' '
+	HEAD=$(git rev-parse HEAD) &&
+	git checkout -b has-cherry-picked HEAD^ &&
+	echo unrelated > file7 &&
+	git add file7 &&
+	test_tick &&
+	git commit -m "unrelated change" &&
+	git cherry-pick $HEAD &&
+	EXPECT_COUNT=1 git rebase -i $HEAD &&
+	test $HEAD = $(git rev-parse HEAD^)
 '
 
 test_done

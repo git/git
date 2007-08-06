@@ -938,8 +938,8 @@ sub resolve_local_globs {
 	foreach (command(qw#for-each-ref --format=%(refname) refs/remotes#)) {
 		next unless m#^refs/remotes/$ref->{regex}$#;
 		my $p = $1;
-		my $pathname = $path->full_path($p);
-		my $refname = $ref->full_path($p);
+		my $pathname = desanitize_refname($path->full_path($p));
+		my $refname = desanitize_refname($ref->full_path($p));
 		if (my $existing = $fetch->{$pathname}) {
 			if ($existing ne $refname) {
 				die "Refspec conflict:\n",
@@ -1239,7 +1239,40 @@ sub new {
 	$self;
 }
 
-sub refname { "refs/remotes/$_[0]->{ref_id}" }
+sub refname {
+	my ($refname) = "refs/remotes/$_[0]->{ref_id}" ;
+
+	# It cannot end with a slash /, we'll throw up on this because
+	# SVN can't have directories with a slash in their name, either:
+	if ($refname =~ m{/$}) {
+		die "ref: '$refname' ends with a trailing slash, this is ",
+		    "not permitted by git nor Subversion\n";
+	}
+
+	# It cannot have ASCII control character space, tilde ~, caret ^,
+	# colon :, question-mark ?, asterisk *, space, or open bracket [
+	# anywhere.
+	#
+	# Additionally, % must be escaped because it is used for escaping
+	# and we want our escaped refname to be reversible
+	$refname =~ s{([ \%~\^:\?\*\[\t])}{uc sprintf('%%%02x',ord($1))}eg;
+
+	# no slash-separated component can begin with a dot .
+	# /.* becomes /%2E*
+	$refname =~ s{/\.}{/%2E}g;
+
+	# It cannot have two consecutive dots .. anywhere
+	# .. becomes %2E%2E
+	$refname =~ s{\.\.}{%2E%2E}g;
+
+	return $refname;
+}
+
+sub desanitize_refname {
+	my ($refname) = @_;
+	$refname =~ s{%(?:([0-9A-F]{2}))}{chr hex($1)}eg;
+	return $refname;
+}
 
 sub svm_uuid {
 	my ($self) = @_;

@@ -31,9 +31,9 @@ test_rev_parse() {
 test_rev_parse toplevel false false true ''
 
 cd .git || exit 1
-test_rev_parse .git/ false true true .git/
+test_rev_parse .git/ true true false ''
 cd objects || exit 1
-test_rev_parse .git/objects/ false true true .git/objects/
+test_rev_parse .git/objects/ true true false ''
 cd ../.. || exit 1
 
 mkdir -p sub/dir || exit 1
@@ -42,7 +42,7 @@ test_rev_parse subdirectory false false true sub/dir/
 cd ../.. || exit 1
 
 git config core.bare true
-test_rev_parse 'core.bare = true' true false true
+test_rev_parse 'core.bare = true' true false false
 
 git config --unset core.bare
 test_rev_parse 'core.bare undefined' false false true
@@ -50,28 +50,28 @@ test_rev_parse 'core.bare undefined' false false true
 mkdir work || exit 1
 cd work || exit 1
 export GIT_DIR=../.git
-export GIT_CONFIG="$GIT_DIR"/config
+export GIT_CONFIG="$(pwd)"/../.git/config
 
 git config core.bare false
-test_rev_parse 'GIT_DIR=../.git, core.bare = false' false false true ''
+test_rev_parse 'GIT_DIR=../.git, core.bare = false' false false true work/
 
 git config core.bare true
-test_rev_parse 'GIT_DIR=../.git, core.bare = true' true false true ''
+test_rev_parse 'GIT_DIR=../.git, core.bare = true' true false false ''
 
 git config --unset core.bare
-test_rev_parse 'GIT_DIR=../.git, core.bare undefined' false false true ''
+test_rev_parse 'GIT_DIR=../.git, core.bare undefined' false false true work/
 
 mv ../.git ../repo.git || exit 1
 export GIT_DIR=../repo.git
-export GIT_CONFIG="$GIT_DIR"/config
+export GIT_CONFIG="$(pwd)"/../repo.git/config
 
 git config core.bare false
 test_rev_parse 'GIT_DIR=../repo.git, core.bare = false' false false true ''
 
 git config core.bare true
-test_rev_parse 'GIT_DIR=../repo.git, core.bare = true' true false true ''
+test_rev_parse 'GIT_DIR=../repo.git, core.bare = true' true false false ''
 
 git config --unset core.bare
-test_rev_parse 'GIT_DIR=../repo.git, core.bare undefined' true false true ''
+test_rev_parse 'GIT_DIR=../repo.git, core.bare undefined' false false true ''
 
 test_done

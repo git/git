@@ -54,6 +54,12 @@ OPTIONS
 	'git://example.com/hello.git', `git-daemon` will interpret the path
 	as '/srv/git/hello.git'.
 
+--base-path-relaxed::
+	If --base-path is enabled and repo lookup fails, with this option
+	`git-daemon` will attempt to lookup without prefixing the base path.
+	This is useful for switching to --base-path usage, while still
+	allowing the old paths.
+
 --interpolated-path=pathtemplate::
 	To support virtual hosting, an interpolated path template can be
 	used to dynamically construct alternate paths.  The template

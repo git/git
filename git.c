@@ -276,9 +276,14 @@ static int run_command(struct cmd_struct *p, int argc, const char **argv)
 		prefix = setup_git_directory();
 	if (p->option & USE_PAGER)
 		setup_pager();
-	if ((p->option & NEED_WORK_TREE) &&
-	    (!is_inside_work_tree() || is_inside_git_dir()))
-		die("%s must be run in a work tree", p->cmd);
+	if (p->option & NEED_WORK_TREE) {
+		const char *work_tree = get_git_work_tree();
+		const char *git_dir = get_git_dir();
+		if (!is_absolute_path(git_dir))
+			set_git_dir(make_absolute_path(git_dir));
+		if (!work_tree || chdir(work_tree))
+			die("%s must be run in a work tree", p->cmd);
+	}
 	trace_argv_printf(argv, argc, "trace: built-in: git");
 
 	status = p->fn(argc, argv, prefix);
@@ -466,11 +471,11 @@ int main(int argc, const char **argv)
 	cmd = argv[0];
 
 	/*
-	 * We search for git commands in the following order:
-	 *  - git_exec_path()
-	 *  - the path of the "git" command if we could find it
-	 *    in $0
-	 *  - the regular PATH.
+	 * We execute external git command via execv_git_cmd(),
+	 * which looks at "--exec-path" option, GIT_EXEC_PATH
+	 * environment, and $(gitexecdir) in Makefile while built,
+	 * in this order.  For scripted commands, we prepend
+	 * the value of the exec_path variable to the PATH.
 	 */
 	if (exec_path)
 		prepend_to_path(exec_path, strlen(exec_path));
