@@ -119,6 +119,7 @@ cmds_txt = cmds-ancillaryinterrogators.txt \
 $(cmds_txt): cmd-list.made
 
 cmd-list.made: cmd-list.perl $(MAN1_TXT)
+	$(RM) $@
 	perl ./cmd-list.perl
 	date >$@
 
