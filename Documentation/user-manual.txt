@@ -1,4 +1,4 @@
-Git User's Manual (for version 1.5.1 or newer)
+Git User's Manual (for version 1.5.3 or newer)
 ______________________________________________
 
 
@@ -1079,6 +1079,11 @@ $ git diff HEAD	    # difference between HEAD and working tree; what
 $ git status	    # a brief per-file summary of the above.
 -------------------------------------------------
 
+You can also use gitlink:git-gui[1] to create commits, view changes in
+the index and the working tree files, and individually select diff hunks
+for inclusion in the index (by right-clicking on the diff hunk and
+choosing "Stage Hunk For Commit").
+
 [[creating-good-commit-messages]]
 Creating good commit messages
 -----------------------------
@@ -1484,6 +1489,38 @@ $ git show HEAD^:path/to/file
 
 which will display the given version of the file.
 
+[[interrupted-work]]
+Temporarily setting aside work in progress
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+While you are in the middle of working on something complicated, you
+find an unrelated but obvious and trivial bug.  You would like to fix it
+before continuing.  You can use gitlink:git-stash[1] to save the current
+state of your work, and after fixing the bug (or, optionally after doing
+so on a different branch and then coming back), unstash the
+work-in-progress changes.
+
+------------------------------------------------
+$ git stash "work in progress for foo feature"
+------------------------------------------------
+
+This command will save your changes away to the `stash`, and
+reset your working tree and the index to match the tip of your
+current branch.  Then you can make your fix as usual.
+
+------------------------------------------------
+... edit and test ...
+$ git commit -a -m "blorpl: typofix"
+------------------------------------------------
+
+After that, you can go back to what you were working on with
+`git stash apply`:
+
+------------------------------------------------
+$ git stash apply
+------------------------------------------------
+
+
 [[ensuring-good-performance]]
 Ensuring good performance
 -------------------------
@@ -1667,24 +1704,19 @@ one step:
 $ git pull origin master
 -------------------------------------------------
 
-In fact, "origin" is normally the default repository to pull from,
-and the default branch is normally the HEAD of the remote repository,
-so often you can accomplish the above with just
+In fact, if you have "master" checked out, then by default "git pull"
+merges from the HEAD branch of the origin repository.  So often you can
+accomplish the above with just a simple
 
 -------------------------------------------------
 $ git pull
 -------------------------------------------------
 
-See the descriptions of the branch.<name>.remote and branch.<name>.merge
-options in gitlink:git-config[1] to learn how to control these defaults
-depending on the current branch.  Also note that the --track option to
-gitlink:git-branch[1] and gitlink:git-checkout[1] can be used to
-automatically set the default remote branch to pull from at the time
-that a branch is created:
-
--------------------------------------------------
-$ git checkout --track -b maint origin/maint
--------------------------------------------------
+More generally, a branch that is created from a remote branch will pull
+by default from that branch.  See the descriptions of the
+branch.<name>.remote and branch.<name>.merge options in
+gitlink:git-config[1], and the discussion of the --track option in
+gitlink:git-checkout[1], to learn how to control these defaults.
 
 In addition to saving you keystrokes, "git pull" also helps you by
 producing a default commit message documenting the branch and
@@ -2479,8 +2511,10 @@ $ gitk origin..mywork &
 
 And browse through the list of patches in the mywork branch using gitk,
 applying them (possibly in a different order) to mywork-new using
-cherry-pick, and possibly modifying them as you go using commit
---amend.
+cherry-pick, and possibly modifying them as you go using commit --amend.
+The git-gui[1] command may also help as it allows you to individually
+select diff hunks for inclusion in the index (by right-clicking on the
+diff hunk and choosing "Stage Hunk for Commit").
 
 Another technique is to use git-format-patch to create a series of
 patches, then reset the state to before the patches:
