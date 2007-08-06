@@ -482,7 +482,8 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_UNSETENV=YesPlease
 	NO_STRCASESTR=YesPlease
 	NO_STRLCPY=YesPlease
-	NO_ICONV=YesPlease
+	NEEDS_LIBICONV = YesPlease
+	OLD_ICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
 	NO_STRTOUMAX = YesPlease
 	NO_SYMLINKS=YesPlease
