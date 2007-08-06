@@ -19,6 +19,7 @@ Use 'git commit' to store the current contents of the index in a new
 commit along with a log message describing the changes you have made.
 
 The content to be added can be specified in several ways:
+
 1. by using gitlink:git-add[1] to incrementally "add" changes to the
    index before using the 'commit' command (Note: even modified
    files must be "added");
