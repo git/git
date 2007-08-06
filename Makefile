@@ -176,7 +176,7 @@ CC = gcc
 AR = ar
 RM = rm -f
 TAR = tar
-INSTALL = install
+INSTALL = /bin/install
 RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
@@ -373,7 +373,7 @@ BUILTIN_OBJS = \
 	builtin-pack-refs.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
-EXTLIBS = -lz
+EXTLIBS = /mingw/lib/libz.a
 
 #
 # Platform specific tweaks
@@ -488,7 +488,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_SYMLINKS=YesPlease
 	NO_SVN_TESTS=YesPlease
 	NO_PERL_MAKEMAKER=YesPlease
-	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -I compat
+	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -D__USE_MINGW_ACCESS -I compat
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
 	EXTLIBS += -lws2_32
 	X = .exe
