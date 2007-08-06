@@ -17,8 +17,10 @@ USAGE='(--continue | --abort | --skip | [--preserve-merges] [--verbose]
 require_work_tree
 
 DOTEST="$GIT_DIR/.dotest-merge"
-TODO="$DOTEST"/todo
+TODO="$DOTEST"/git-rebase-todo
 DONE="$DOTEST"/done
+MSG="$DOTEST"/message
+SQUASH_MSG="$DOTEST"/message-squash
 REWRITTEN="$DOTEST"/rewritten
 PRESERVE_MERGES=
 STRATEGY=
@@ -29,6 +31,20 @@ test -f "$DOTEST"/verbose && VERBOSE=t
 
 warn () {
 	echo "$*" >&2
+}
+
+output () {
+	case "$VERBOSE" in
+	'')
+		"$@" > "$DOTEST"/output 2>&1
+		status=$?
+		test $status != 0 &&
+			cat "$DOTEST"/output
+		return $status
+	;;
+	*)
+		"$@"
+	esac
 }
 
 require_clean_work_tree () {
@@ -54,6 +70,10 @@ mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
+	count=$(($(wc -l < "$DONE")))
+	total=$(($count+$(wc -l < "$TODO")))
+	printf "Rebasing (%d/%d)\r" $count $total
+	test -z "$VERBOSE" || echo
 }
 
 make_patch () {
@@ -77,18 +97,18 @@ die_abort () {
 
 pick_one () {
 	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
-	git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
+	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$REWRITTEN" &&
 		pick_one_preserving_merges "$@" && return
 	parent_sha1=$(git rev-parse --verify $sha1^ 2>/dev/null)
 	current_sha1=$(git rev-parse --verify HEAD)
-	if [ $current_sha1 = $parent_sha1 ]; then
-		git reset --hard $sha1
-		test "a$1" = a-n && git reset --soft $current_sha1
+	if test $current_sha1 = $parent_sha1; then
+		output git reset --hard $sha1
+		test "a$1" = a-n && output git reset --soft $current_sha1
 		sha1=$(git rev-parse --short $sha1)
-		warn Fast forward to $sha1
+		output warn Fast forward to $sha1
 	else
-		git cherry-pick $STRATEGY "$@"
+		output git cherry-pick $STRATEGY "$@"
 	fi
 }
 
@@ -96,7 +116,7 @@ pick_one_preserving_merges () {
 	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
 	sha1=$(git rev-parse $sha1)
 
-	if [ -f "$DOTEST"/current-commit ]
+	if test -f "$DOTEST"/current-commit
 	then
 		current_commit=$(cat "$DOTEST"/current-commit) &&
 		git rev-parse HEAD > "$REWRITTEN"/$current_commit &&
@@ -110,7 +130,7 @@ pick_one_preserving_merges () {
 	new_parents=
 	for p in $(git rev-list --parents -1 $sha1 | cut -d\  -f2-)
 	do
-		if [ -f "$REWRITTEN"/$p ]
+		if test -f "$REWRITTEN"/$p
 		then
 			preserve=f
 			new_p=$(cat "$REWRITTEN"/$p)
@@ -125,7 +145,7 @@ pick_one_preserving_merges () {
 	done
 	case $fast_forward in
 	t)
-		echo "Fast forward to $sha1"
+		output warn "Fast forward to $sha1"
 		test $preserve=f && echo $sha1 > "$REWRITTEN"/$sha1
 		;;
 	f)
@@ -133,7 +153,7 @@ pick_one_preserving_merges () {
 
 		first_parent=$(expr "$new_parents" : " \([^ ]*\)")
 		# detach HEAD to current parent
-		git checkout $first_parent 2> /dev/null ||
+		output git checkout $first_parent 2> /dev/null ||
 			die "Cannot move HEAD to $first_parent"
 
 		echo $sha1 > "$DOTEST"/current-commit
@@ -145,17 +165,49 @@ pick_one_preserving_merges () {
 			msg="$(git cat-file commit $sha1 | \
 				sed -e '1,/^$/d' -e "s/[\"\\]/\\\\&/g")"
 			# NEEDSWORK: give rerere a chance
-			if ! git merge $STRATEGY -m "$msg" $new_parents
+			if ! output git merge $STRATEGY -m "$msg" $new_parents
 			then
 				echo "$msg" > "$GIT_DIR"/MERGE_MSG
 				die Error redoing merge $sha1
 			fi
 			;;
 		*)
-			git cherry-pick $STRATEGY "$@" ||
+			output git cherry-pick $STRATEGY "$@" ||
 				die_with_patch $sha1 "Could not pick $sha1"
 		esac
 	esac
+}
+
+nth_string () {
+	case "$1" in
+	*1[0-9]|*[04-9]) echo "$1"th;;
+	*1) echo "$1"st;;
+	*2) echo "$1"nd;;
+	*3) echo "$1"rd;;
+	esac
+}
+
+make_squash_message () {
+	if test -f "$SQUASH_MSG"; then
+		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([0-9]\+\).*/\1/p" \
+			< "$SQUASH_MSG" | tail -n 1)+1))
+		echo "# This is a combination of $COUNT commits."
+		sed -n "2,\$p" < "$SQUASH_MSG"
+	else
+		COUNT=2
+		echo "# This is a combination of two commits."
+		echo "# The first commit's message is:"
+		echo
+		git cat-file commit HEAD | sed -e '1,/^$/d'
+		echo
+	fi
+	echo "# This is the $(nth_string $COUNT) commit message:"
+	echo
+	git cat-file commit $1 | sed -e '1,/^$/d'
+}
+
+peek_next_command () {
+	sed -n "1s/ .*$//p" < "$TODO"
 }
 
 do_next () {
@@ -194,18 +246,22 @@ do_next () {
 			die "Cannot 'squash' without a previous commit"
 
 		mark_action_done
-		MSG="$DOTEST"/message
-		echo "# This is a combination of two commits." > "$MSG"
-		echo "# The first commit's message is:" >> "$MSG"
-		echo >> "$MSG"
-		git cat-file commit HEAD | sed -e '1,/^$/d' >> "$MSG"
-		echo >> "$MSG"
+		make_squash_message $sha1 > "$MSG"
+		case "$(peek_next_command)" in
+		squash)
+			EDIT_COMMIT=
+			USE_OUTPUT=output
+			cp "$MSG" "$SQUASH_MSG"
+		;;
+		*)
+			EDIT_COMMIT=-e
+			USE_OUTPUT=
+			test -f "$SQUASH_MSG" && rm "$SQUASH_MSG"
+		esac
+
 		failed=f
+		output git reset --soft HEAD^
 		pick_one -n $sha1 || failed=t
-		echo "# And this is the 2nd commit message:" >> "$MSG"
-		echo >> "$MSG"
-		git cat-file commit $sha1 | sed -e '1,/^$/d' >> "$MSG"
-		git reset --soft HEAD^
 		author_script=$(get_author_ident_from_commit $sha1)
 		echo "$author_script" > "$DOTEST"/author-script
 		case $failed in
@@ -213,7 +269,7 @@ do_next () {
 			# This is like --amend, but with a different message
 			eval "$author_script"
 			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
-			git commit -F "$MSG" -e
+			$USE_OUTPUT git commit -F "$MSG" $EDIT_COMMIT
 			;;
 		t)
 			cp "$MSG" "$GIT_DIR"/MERGE_MSG
@@ -232,7 +288,7 @@ do_next () {
 	HEADNAME=$(cat "$DOTEST"/head-name) &&
 	OLDHEAD=$(cat "$DOTEST"/head) &&
 	SHORTONTO=$(git rev-parse --short $(cat "$DOTEST"/onto)) &&
-	if [ -d "$REWRITTEN" ]
+	if test -d "$REWRITTEN"
 	then
 		test -f "$DOTEST"/current-commit &&
 			current_commit=$(cat "$DOTEST"/current-commit) &&
@@ -288,7 +344,7 @@ do
 		HEADNAME=$(cat "$DOTEST"/head-name)
 		HEAD=$(cat "$DOTEST"/head)
 		git symbolic-ref HEAD $HEADNAME &&
-		git reset --hard $HEAD &&
+		output git reset --hard $HEAD &&
 		rm -rf "$DOTEST"
 		exit
 		;;
@@ -297,7 +353,7 @@ do
 
 		test -d "$DOTEST" || die "No interactive rebase running"
 
-		git reset --hard && do_rest
+		output git reset --hard && do_rest
 		;;
 	-s|--strategy)
 		shift
@@ -349,11 +405,11 @@ do
 
 		require_clean_work_tree
 
-		if [ ! -z "$2"]
+		if test ! -z "$2"
 		then
-			git show-ref --verify --quiet "refs/heads/$2" ||
+			output git show-ref --verify --quiet "refs/heads/$2" ||
 				die "Invalid branchname: $2"
-			git checkout "$2" ||
+			output git checkout "$2" ||
 				die "Could not checkout $2"
 		fi
 
@@ -372,7 +428,7 @@ do
 		echo $ONTO > "$DOTEST"/onto
 		test -z "$STRATEGY" || echo "$STRATEGY" > "$DOTEST"/strategy
 		test t = "$VERBOSE" && : > "$DOTEST"/verbose
-		if [ t = "$PRESERVE_MERGES" ]
+		if test t = "$PRESERVE_MERGES"
 		then
 			# $REWRITTEN contains files for each commit that is
 			# reachable by at least one merge base of $HEAD and
@@ -414,13 +470,13 @@ EOF
 			die_abort "Nothing to do"
 
 		cp "$TODO" "$TODO".backup
-		${VISUAL:-${EDITOR:-vi}} "$TODO" ||
+		git_editor "$TODO" ||
 			die "Could not execute editor"
 
 		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&
 			die_abort "Nothing to do"
 
-		git checkout $ONTO && do_rest
+		output git checkout $ONTO && do_rest
 	esac
 	shift
 done

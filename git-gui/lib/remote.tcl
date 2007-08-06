@@ -57,6 +57,7 @@ proc all_tracking_branches {} {
 proc load_all_remotes {} {
 	global repo_config
 	global all_remotes tracking_branches some_heads_tracking
+	global remote_url
 
 	set some_heads_tracking 0
 	set all_remotes [list]
@@ -76,6 +77,10 @@ proc load_all_remotes {} {
 			catch {
 				set fd [open [file join $rm_dir $name] r]
 				while {[gets $fd line] >= 0} {
+					if {[regexp {^URL:[ 	]*(.+)$} $line line url]} {
+						set remote_url($name) $url
+						continue
+					}
 					if {![regexp {^Pull:[ 	]*([^:]+):(.+)$} \
 						$line line src dst]} continue
 					if {[string index $src 0] eq {+}} {
@@ -100,6 +105,7 @@ proc load_all_remotes {} {
 	foreach line [array names repo_config remote.*.url] {
 		if {![regexp ^remote\.(.*)\.url\$ $line line name]} continue
 		lappend all_remotes $name
+		set remote_url($name) $repo_config(remote.$name.url)
 
 		if {[catch {set fl $repo_config(remote.$name.fetch)}]} {
 			set fl {}

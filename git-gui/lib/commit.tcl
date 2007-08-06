@@ -37,9 +37,14 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 					set enc [string tolower [string range $line 9 end]]
 				}
 			}
-			set msg [encoding convertfrom $enc [read $fd]]
-			set msg [string trim $msg]
+			set msg [read $fd]
 			close $fd
+
+			set enc [tcl_encoding $enc]
+			if {$enc ne {}} {
+				set msg [encoding convertfrom $enc $msg]
+			}
+			set msg [string trim $msg]
 		} err]} {
 		error_popup "Error loading commit data for amend:\n\n$err"
 		return
@@ -148,7 +153,7 @@ The rescan will be automatically started now.
 		U? {
 			error_popup "Unmerged files cannot be committed.
 
-File [short_path $path] has merge conflicts.  You must resolve them and add the file before committing.
+File [short_path $path] has merge conflicts.  You must resolve them and stage the file before committing.
 "
 			unlock_index
 			return
@@ -164,7 +169,7 @@ File [short_path $path] cannot be committed by this program.
 	if {!$files_ready && ![string match *merge $curType]} {
 		info_popup {No changes to commit.
 
-You must add at least 1 file before you can commit.
+You must stage at least 1 file before you can commit.
 }
 		unlock_index
 		return
@@ -209,7 +214,7 @@ A good commit message has the following format:
 	ui_status {Calling pre-commit hook...}
 	set pch_error {}
 	set fd_ph [open "| $pchook" r]
-	fconfigure $fd_ph -blocking 0 -translation binary
+	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 	fileevent $fd_ph readable \
 		[list commit_prehook_wait $fd_ph $curHEAD $msg]
 }
@@ -287,11 +292,18 @@ A rescan will be automatically started now.
 	#
 	set msg_p [gitdir COMMIT_EDITMSG]
 	set msg_wt [open $msg_p w]
+	fconfigure $msg_wt -translation lf
 	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
 		set enc utf-8
 	}
-	fconfigure $msg_wt -encoding binary -translation binary
-	puts -nonewline $msg_wt [encoding convertto $enc $msg]
+	set use_enc [tcl_encoding $enc]
+	if {$use_enc ne {}} {
+		fconfigure $msg_wt -encoding $use_enc
+	} else {
+		puts stderr "warning: Tcl does not support encoding '$enc'."
+		fconfigure $msg_wt -encoding utf-8
+	}
+	puts -nonewline $msg_wt $msg
 	close $msg_wt
 
 	# -- Create the commit.
@@ -367,6 +379,10 @@ A rescan will be automatically started now.
 	$ui_comm delete 0.0 end
 	$ui_comm edit reset
 	$ui_comm edit modified false
+	if {$::GITGUI_BCK_exists} {
+		catch {file delete [gitdir GITGUI_BCK]}
+		set ::GITGUI_BCK_exists 0
+	}
 
 	if {[is_enabled singlecommit]} do_quit
 

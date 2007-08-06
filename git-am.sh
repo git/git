@@ -284,6 +284,12 @@ do
 		git mailinfo $keep $utf8 "$dotest/msg" "$dotest/patch" \
 			<"$dotest/$msgnum" >"$dotest/info" ||
 			stop_here $this
+
+		# skip pine's internal folder data
+		grep '^Author: Mail System Internal Data$' \
+			<"$dotest"/info >/dev/null &&
+			go_next && continue
+
 		test -s $dotest/patch || {
 			echo "Patch is empty.  Was it split wrong?"
 			stop_here $this
@@ -364,7 +370,7 @@ do
 		[yY]*) action=yes ;;
 		[aA]*) action=yes interactive= ;;
 		[nN]*) action=skip ;;
-		[eE]*) "${VISUAL:-${EDITOR:-vi}}" "$dotest/final-commit"
+		[eE]*) git_editor "$dotest/final-commit"
 		       action=again ;;
 		[vV]*) action=again
 		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;

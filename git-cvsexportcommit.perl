@@ -281,6 +281,11 @@ if ($opt_c) {
 # clean up
 unlink(".cvsexportcommit.diff");
 
+# CVS version 1.11.x and 1.12.x sleeps the wrong way to ensure the timestamp
+# used by CVS and the one set by subsequence file modifications are different.
+# If they are not different CVS will not detect changes.
+sleep(1);
+
 sub usage {
 	print STDERR <<END;
 Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [-f] [-m msgprefix] [ parent ] commit

@@ -449,7 +449,7 @@ Exploring git history
 
 Git is best thought of as a tool for storing the history of a
 collection of files.  It does this by storing compressed snapshots of
-the contents of a file heirarchy, together with "commits" which show
+the contents of a file hierarchy, together with "commits" which show
 the relationships between these snapshots.
 
 Git provides extremely flexible and fast tools for exploring the
@@ -1070,7 +1070,7 @@ about to commit:
 
 -------------------------------------------------
 $ git diff --cached # difference between HEAD and the index; what
-		    # would be commited if you ran "commit" now.
+		    # would be committed if you ran "commit" now.
 $ git diff	    # difference between the index file and your
 		    # working directory; changes that would not
 		    # be included if you ran "commit" now.
@@ -1257,7 +1257,7 @@ index 802992c,2b60207..0000000
 ++>>>>>>> 77976da35a11db4580b80ae27e8d65caf5208086:file.txt
 -------------------------------------------------
 
-Recall that the commit which will be commited after we resolve this
+Recall that the commit which will be committed after we resolve this
 conflict will have two parents instead of the usual one: one parent
 will be HEAD, the tip of the current branch; the other will be the
 tip of the other branch, which is stored temporarily in MERGE_HEAD.
@@ -1351,7 +1351,7 @@ away, you can always return to the pre-merge state with
 $ git reset --hard HEAD
 -------------------------------------------------
 
-Or, if you've already commited the merge that you want to throw away,
+Or, if you've already committed the merge that you want to throw away,
 
 -------------------------------------------------
 $ git reset --hard ORIG_HEAD

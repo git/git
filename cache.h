@@ -265,7 +265,7 @@ extern int ie_match_stat(struct index_state *, struct cache_entry *, struct stat
 extern int ie_modified(struct index_state *, struct cache_entry *, struct stat *, int);
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
-extern int read_pipe(int fd, char** return_buf, unsigned long* return_size);
+extern int read_fd(int fd, char **return_buf, unsigned long *return_size);
 extern int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object);
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);

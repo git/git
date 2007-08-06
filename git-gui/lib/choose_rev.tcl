@@ -16,9 +16,27 @@ field cur_specs [list]; # list of specs for $revtype
 field spec_head       ; # list of all head specs
 field spec_trck       ; # list of all tracking branch specs
 field spec_tag        ; # list of all tag specs
+field tip_data        ; # array of tip commit info by refname
+field log_last        ; # array of reflog date by refname
 
-constructor new {path {title {}}} {
+field tooltip_wm        {} ; # Current tooltip toplevel, if open
+field tooltip_t         {} ; # Text widget in $tooltip_wm
+field tooltip_timer     {} ; # Current timer event for our tooltip
+
+proc new {path {title {}}} {
+	return [_new $path 0 $title]
+}
+
+proc new_unmerged {path {title {}}} {
+	return [_new $path 1 $title]
+}
+
+constructor _new {path unmerged_only title} {
 	global current_branch is_detached
+
+	if {![info exists ::all_remotes]} {
+		load_all_remotes
+	}
 
 	set w $path
 
@@ -86,13 +104,17 @@ constructor new {path {title {}}} {
 	listbox $w_list \
 		-font font_diff \
 		-width 50 \
-		-height 5 \
+		-height 10 \
 		-selectmode browse \
 		-exportselection false \
 		-xscrollcommand [cb _sb_set $w.list.sbx h] \
 		-yscrollcommand [cb _sb_set $w.list.sby v]
 	pack $w_list -fill both -expand 1
 	grid $w.list -sticky nswe -padx {20 5} -columnspan 2
+	bind $w_list <Any-Motion>  [cb _show_tooltip @%x,%y]
+	bind $w_list <Any-Enter>   [cb _hide_tooltip]
+	bind $w_list <Any-Leave>   [cb _hide_tooltip]
+	bind $w_list <Destroy>     [cb _hide_tooltip]
 
 	grid columnconfigure $w 1 -weight 1
 	if {$is_detached} {
@@ -105,21 +127,89 @@ constructor new {path {title {}}} {
 	bind $w_filter <Key-Return> [list focus $w_list]\;break
 	bind $w_filter <Key-Down>   [list focus $w_list]
 
+	set fmt list
+	append fmt { %(refname)}
+	append fmt { [list}
+	append fmt { %(objecttype)}
+	append fmt { %(objectname)}
+	append fmt { [concat %(taggername) %(authorname)]}
+	append fmt { [concat %(taggerdate) %(authordate)]}
+	append fmt { %(subject)}
+	append fmt {] [list}
+	append fmt { %(*objecttype)}
+	append fmt { %(*objectname)}
+	append fmt { %(*authorname)}
+	append fmt { %(*authordate)}
+	append fmt { %(*subject)}
+	append fmt {]}
+	set all_refn [list]
+	set fr_fd [git_read for-each-ref \
+		--tcl \
+		--sort=-taggerdate \
+		--format=$fmt \
+		refs/heads \
+		refs/remotes \
+		refs/tags \
+		]
+	fconfigure $fr_fd -translation lf -encoding utf-8
+	while {[gets $fr_fd line] > 0} {
+		set line [eval $line]
+		if {[lindex $line 1 0] eq {tag}} {
+			if {[lindex $line 2 0] eq {commit}} {
+				set sha1 [lindex $line 2 1]
+			} else {
+				continue
+			}
+		} elseif {[lindex $line 1 0] eq {commit}} {
+			set sha1 [lindex $line 1 1]
+		} else {
+			continue
+		}
+		set refn [lindex $line 0]
+		set tip_data($refn) [lrange $line 1 end]
+		lappend cmt_refn($sha1) $refn
+		lappend all_refn $refn
+	}
+	close $fr_fd
+
+	if {$unmerged_only} {
+		set fr_fd [git_read rev-list --all ^$::HEAD]
+		while {[gets $fr_fd sha1] > 0} {
+			if {[catch {set rlst $cmt_refn($sha1)}]} continue
+			foreach refn $rlst {
+				set inc($refn) 1
+			}
+		}
+		close $fr_fd
+	} else {
+		foreach refn $all_refn {
+			set inc($refn) 1
+		}
+	}
+
 	set spec_head [list]
 	foreach name [load_all_heads] {
-		lappend spec_head [list $name refs/heads/$name]
+		set refn refs/heads/$name
+		if {[info exists inc($refn)]} {
+			lappend spec_head [list $name $refn]
+		}
 	}
 
 	set spec_trck [list]
 	foreach spec [all_tracking_branches] {
-		set name [lindex $spec 0]
-		regsub ^refs/(heads|remotes)/ $name {} name
-		lappend spec_trck [concat $name $spec]
+		set refn [lindex $spec 0]
+		if {[info exists inc($refn)]} {
+			regsub ^refs/(heads|remotes)/ $refn {} name
+			lappend spec_trck [concat $name $spec]
+		}
 	}
 
 	set spec_tag [list]
 	foreach name [load_all_tags] {
-		lappend spec_tag [list $name refs/tags/$name]
+		set refn refs/tags/$name
+		if {[info exists inc($refn)]} {
+			lappend spec_tag [list $name $refn]
+		}
 	}
 
 		  if {$is_detached}             { set revtype HEAD
@@ -362,6 +452,176 @@ method _sb_set {sb orient first last} {
 		}
 	}
 	$sb set $first $last
+}
+
+method _show_tooltip {pos} {
+	if {$tooltip_wm ne {}} {
+		_open_tooltip $this
+	} elseif {$tooltip_timer eq {}} {
+		set tooltip_timer [after 1000 [cb _open_tooltip]]
+	}
+}
+
+method _open_tooltip {} {
+	global remote_url
+
+	set tooltip_timer {}
+	set pos_x [winfo pointerx $w_list]
+	set pos_y [winfo pointery $w_list]
+	if {[winfo containing $pos_x $pos_y] ne $w_list} {
+		_hide_tooltip $this
+		return
+	}
+
+	set pos @[join [list \
+		[expr {$pos_x - [winfo rootx $w_list]}] \
+		[expr {$pos_y - [winfo rooty $w_list]}]] ,]
+	set lno [$w_list index $pos]
+	if {$lno eq {}} {
+		_hide_tooltip $this
+		return
+	}
+
+	set spec [lindex $cur_specs $lno]
+	set refn [lindex $spec 1]
+	if {$refn eq {}} {
+		_hide_tooltip $this
+		return
+	}
+
+	if {$tooltip_wm eq {}} {
+		set tooltip_wm [toplevel $w_list.tooltip -borderwidth 1]
+		wm overrideredirect $tooltip_wm 1
+		wm transient $tooltip_wm [winfo toplevel $w_list]
+		set tooltip_t $tooltip_wm.label
+		text $tooltip_t \
+			-takefocus 0 \
+			-highlightthickness 0 \
+			-relief flat \
+			-borderwidth 0 \
+			-wrap none \
+			-background lightyellow \
+			-foreground black
+		$tooltip_t tag conf section_header -font font_uibold
+		bind $tooltip_wm <Escape> [cb _hide_tooltip]
+		pack $tooltip_t
+	} else {
+		$tooltip_t conf -state normal
+		$tooltip_t delete 0.0 end
+	}
+
+	set data $tip_data($refn)
+	if {[lindex $data 0 0] eq {tag}} {
+		set tag  [lindex $data 0]
+		if {[lindex $data 1 0] eq {commit}} {
+			set cmit [lindex $data 1]
+		} else {
+			set cmit {}
+		}
+	} elseif {[lindex $data 0 0] eq {commit}} {
+		set tag  {}
+		set cmit [lindex $data 0]
+	}
+
+	$tooltip_t insert end [lindex $spec 0]
+	set last [_reflog_last $this [lindex $spec 1]]
+	if {$last ne {}} {
+		$tooltip_t insert end "\n"
+		$tooltip_t insert end "updated"
+		$tooltip_t insert end " $last"
+	}
+	$tooltip_t insert end "\n"
+
+	if {$tag ne {}} {
+		$tooltip_t insert end "\n"
+		$tooltip_t insert end "tag" section_header
+		$tooltip_t insert end "  [lindex $tag 1]\n"
+		$tooltip_t insert end [lindex $tag 2]
+		$tooltip_t insert end " ([lindex $tag 3])\n"
+		$tooltip_t insert end [lindex $tag 4]
+		$tooltip_t insert end "\n"
+	}
+
+	if {$cmit ne {}} {
+		$tooltip_t insert end "\n"
+		$tooltip_t insert end "commit" section_header
+		$tooltip_t insert end "  [lindex $cmit 1]\n"
+		$tooltip_t insert end [lindex $cmit 2]
+		$tooltip_t insert end " ([lindex $cmit 3])\n"
+		$tooltip_t insert end [lindex $cmit 4]
+	}
+
+	if {[llength $spec] > 2} {
+		$tooltip_t insert end "\n"
+		$tooltip_t insert end "remote" section_header
+		$tooltip_t insert end "  [lindex $spec 2]\n"
+		$tooltip_t insert end "url"
+		$tooltip_t insert end " $remote_url([lindex $spec 2])\n"
+		$tooltip_t insert end "branch"
+		$tooltip_t insert end " [lindex $spec 3]"
+	}
+
+	$tooltip_t conf -state disabled
+	_position_tooltip $this
+}
+
+method _reflog_last {name} {
+	if {[info exists reflog_last($name)]} {
+		return reflog_last($name)
+	}
+
+	set last {}
+	if {[catch {set last [file mtime [gitdir $name]]}]
+	&& ![catch {set g [open [gitdir logs $name] r]}]} {
+		fconfigure $g -translation binary
+		while {[gets $g line] >= 0} {
+			if {[regexp {> ([1-9][0-9]*) } $line line when]} {
+				set last $when
+			}
+		}
+		close $g
+	}
+
+	if {$last ne {}} {
+		set last [clock format $last -format {%a %b %e %H:%M:%S %Y}]
+	}
+	set reflog_last($name) $last
+	return $last
+}
+
+method _position_tooltip {} {
+	set max_h [lindex [split [$tooltip_t index end] .] 0]
+	set max_w 0
+	for {set i 1} {$i <= $max_h} {incr i} {
+		set c [lindex [split [$tooltip_t index "$i.0 lineend"] .] 1]
+		if {$c > $max_w} {set max_w $c}
+	}
+	$tooltip_t conf -width $max_w -height $max_h
+
+	set req_w [winfo reqwidth  $tooltip_t]
+	set req_h [winfo reqheight $tooltip_t]
+	set pos_x [expr {[winfo pointerx .] +  5}]
+	set pos_y [expr {[winfo pointery .] + 10}]
+
+	set g "${req_w}x${req_h}"
+	if {$pos_x >= 0} {append g +}
+	append g $pos_x
+	if {$pos_y >= 0} {append g +}
+	append g $pos_y
+
+	wm geometry $tooltip_wm $g
+	raise $tooltip_wm
+}
+
+method _hide_tooltip {} {
+	if {$tooltip_wm ne {}} {
+		destroy $tooltip_wm
+		set tooltip_wm {}
+	}
+	if {$tooltip_timer ne {}} {
+		after cancel $tooltip_timer
+		set tooltip_timer {}
+	}
 }
 
 }

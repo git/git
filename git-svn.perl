@@ -740,7 +740,7 @@ sub load_authors {
 	my $log = $cmd eq 'log';
 	while (<$authors>) {
 		chomp;
-		next unless /^(\S+?|\(no author\))\s*=\s*(.+?)\s*<(.+)>\s*$/;
+		next unless /^(.+?|\(no author\))\s*=\s*(.+?)\s*<(.+)>\s*$/;
 		my ($user, $name, $email) = ($1, $2, $3);
 		if ($log) {
 			$Git::SVN::Log::rusers{"$name <$email>"} = $user;
@@ -2724,6 +2724,9 @@ sub repo_path {
 
 sub url_path {
 	my ($self, $path) = @_;
+	if ($self->{url} =~ m#^https?://#) {
+		$path =~ s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
+	}
 	$self->{url} . '/' . $self->repo_path($path);
 }
 

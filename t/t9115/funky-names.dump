@@ -1,0 +1,103 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 819c44fe-2bcc-4066-88e4-985e2bc0b418
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2007-07-12T07:54:26.062914Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 152
+Content-length: 152
+
+K 7
+svn:log
+V 44
+what will those wacky people think of next?
+
+K 10
+svn:author
+V 12
+normalperson
+K 8
+svn:date
+V 27
+2007-07-12T08:00:05.011573Z
+PROPS-END
+
+Node-path:  leading space
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path:  leading space file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 5
+Text-content-md5: e4fa20c67542cdc21271e08d329397ab
+Content-length: 15
+
+PROPS-END
+ugly
+
+
+Node-path: #{bad_directory_name}
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: #{cool_name}
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 18
+Text-content-md5: 87dac40ca337dfa3dcc8911388c3ddda
+Content-length: 28
+
+PROPS-END
+strange name here
+
+
+Node-path: dir name with spaces
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: file name with spaces
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 7
+Text-content-md5: c1f10cfd640618484a2a475c11410fd3
+Content-length: 17
+
+PROPS-END
+spaces
+
+
+Node-path: regular_dir_name
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END

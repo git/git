@@ -521,4 +521,32 @@ test_expect_success \
 	'gitweb_run "p=.git;a=log"'
 test_debug 'cat gitweb.log'
 
+# ----------------------------------------------------------------------
+# extra options
+
+test_expect_success \
+	'opt: log --no-merges' \
+	'gitweb_run "p=.git;a=log;opt=--no-merges"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'opt: atom --no-merges' \
+	'gitweb_run "p=.git;a=log;opt=--no-merges"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'opt: "file" history --no-merges' \
+	'gitweb_run "p=.git;a=history;f=file;opt=--no-merges"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'opt: log --no-such-option (invalid option)' \
+	'gitweb_run "p=.git;a=log;opt=--no-such-option"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'opt: tree --no-merges (invalid option for action)' \
+	'gitweb_run "p=.git;a=tree;opt=--no-merges"'
+test_debug 'cat gitweb.log'
+
 test_done

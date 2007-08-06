@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 
-	if (read_pipe(0, &buffer, &size)) {
+	if (read_fd(0, &buffer, &size)) {
 		free(buffer);
 		die("could not read from stdin");
 	}

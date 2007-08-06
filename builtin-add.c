@@ -60,7 +60,7 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec,
 		path = git_path("info/exclude");
 		if (!access(path, R_OK))
 			add_excludes_from_file(dir, path);
-		if (!access(excludes_file, R_OK))
+		if (excludes_file != NULL && !access(excludes_file, R_OK))
 			add_excludes_from_file(dir, excludes_file);
 	}
 

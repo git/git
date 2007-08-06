@@ -87,3 +87,30 @@ proc do_fsck_objects {} {
 	lappend cmd --strict
 	console::exec $w $cmd
 }
+
+proc hint_gc {} {
+	set object_limit 8
+	if {[is_Windows]} {
+		set object_limit 1
+	}
+
+	set objects_current [llength [glob \
+		-directory [gitdir objects 42] \
+		-nocomplain \
+		-tails \
+		-- \
+		*]]
+
+	if {$objects_current >= $object_limit} {
+		set objects_current [expr {$objects_current * 256}]
+		set object_limit    [expr {$object_limit    * 256}]
+		if {[ask_popup \
+			"This repository currently has approximately $objects_current loose objects.
+
+To maintain optimal performance it is strongly recommended that you compress the database when more than $object_limit loose objects exist.
+
+Compress the database now?"] eq yes} {
+			do_gc
+		}
+	}
+}

@@ -1,9 +1,12 @@
 # git-gui branch merge support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
-namespace eval merge {
+class merge {
 
-proc _can_merge {} {
+field w         ; # top level window
+field w_rev     ; # mega-widget to pick the revision to merge
+
+method _can_merge {} {
 	global HEAD commit_type file_states
 
 	if {[string match amend* $commit_type]} {
@@ -42,7 +45,7 @@ The rescan will be automatically started now.
 
 File [short_path $path] has merge conflicts.
 
-You must resolve them, add the file, and commit to complete the current merge.  Only then can you begin another merge.
+You must resolve them, stage the file, and commit to complete the current merge.  Only then can you begin another merge.
 "
 			unlock_index
 			return 0
@@ -63,147 +66,93 @@ You should complete the current commit before starting a merge.  Doing so will h
 	return 1
 }
 
-proc _refs {w list} {
-	set r {}
-	foreach i [$w.source.l curselection] {
-		lappend r [lindex [lindex $list $i] 0]
+method _rev {} {
+	if {[catch {$w_rev commit_or_die}]} {
+		return {}
 	}
-	return $r
+	return [$w_rev get]
 }
 
-proc _visualize {w list} {
-	set revs [_refs $w $list]
-	if {$revs eq {}} return
-	lappend revs --not HEAD
-	do_gitk $revs
+method _visualize {} {
+	set rev [_rev $this]
+	if {$rev ne {}} {
+		do_gitk [list $rev --not HEAD]
+	}
 }
 
-proc _start {w list} {
-	global HEAD current_branch
+method _start {} {
+	global HEAD current_branch remote_url
 
-	set cmd [list git merge]
-	set names [_refs $w $list]
-	set revcnt [llength $names]
-	append cmd { } $names
-
-	if {$revcnt == 0} {
+	set name [_rev $this]
+	if {$name eq {}} {
 		return
-	} elseif {$revcnt == 1} {
-		set unit branch
-	} elseif {$revcnt <= 15} {
-		set unit branches
+	}
 
-		if {[tk_dialog \
-		$w.confirm_octopus \
-		[wm title $w] \
-		"Use octopus merge strategy?
+	set spec [$w_rev get_tracking_branch]
+	set cmit [$w_rev get_commit]
 
-You are merging $revcnt branches at once.  This requires using the octopus merge driver, which may not succeed if there are file-level conflicts.
-" \
-		question \
-		0 \
-		{Cancel} \
-		{Use octopus} \
-		] != 1} return
+	set fh [open [gitdir FETCH_HEAD] w]
+	fconfigure $fh -translation lf
+	if {$spec eq {}} {
+		set remote .
+		set branch $name
+		set stitle $branch
 	} else {
-		tk_messageBox \
-			-icon error \
-			-type ok \
-			-title [wm title $w] \
-			-parent $w \
-			-message "Too many branches selected.
-
-You have requested to merge $revcnt branches in an octopus merge.  This exceeds Git's internal limit of 15 branches per merge.
-
-Please select fewer branches.  To merge more than 15 branches, merge the branches in batches.
-"
-		return
+		set remote $remote_url([lindex $spec 1])
+		if {[regexp {^[^:@]*@[^:]*:/} $remote]} {
+			regsub {^[^:@]*@} $remote {} remote
+		}
+		set branch [lindex $spec 2]
+		set stitle "$branch of $remote"
 	}
+	regsub ^refs/heads/ $branch {} branch
+	puts $fh "$cmit\t\tbranch '$branch' of $remote"
+	close $fh
 
-	set msg "Merging $current_branch, [join $names {, }]"
+	set cmd [list git]
+	lappend cmd merge
+	lappend cmd --strategy=recursive
+	lappend cmd [git fmt-merge-msg <[gitdir FETCH_HEAD]]
+	lappend cmd HEAD
+	lappend cmd $cmit
+
+	set msg "Merging $current_branch and $stitle"
 	ui_status "$msg..."
-	set cons [console::new "Merge" $msg]
-	console::exec $cons $cmd \
-		[namespace code [list _finish $revcnt $cons]]
+	set cons [console::new "Merge" "merge $stitle"]
+	console::exec $cons $cmd [cb _finish $cons]
 
 	wm protocol $w WM_DELETE_WINDOW {}
 	destroy $w
 }
 
-proc _finish {revcnt w ok} {
-	console::done $w $ok
+method _finish {cons ok} {
+	console::done $cons $ok
 	if {$ok} {
 		set msg {Merge completed successfully.}
 	} else {
-		if {$revcnt != 1} {
-			info_popup "Octopus merge failed.
-
-Your merge of $revcnt branches has failed.
-
-There are file-level conflicts between the branches which must be resolved manually.
-
-The working directory will now be reset.
-
-You can attempt this merge again by merging only one branch at a time." $w
-
-			set fd [git_read read-tree --reset -u HEAD]
-			fconfigure $fd -blocking 0 -translation binary
-			fileevent $fd readable \
-				[namespace code [list _reset_wait $fd]]
-			ui_status {Aborting... please wait...}
-			return
-		}
-
 		set msg {Merge failed.  Conflict resolution is required.}
 	}
 	unlock_index
 	rescan [list ui_status $msg]
+	delete_this
 }
 
-proc dialog {} {
+constructor dialog {} {
 	global current_branch
 	global M1B
 
-	if {![_can_merge]} return
-
-	set fmt {list %(objectname) %(*objectname) %(refname) %(subject)}
-	set fr_fd [git_read for-each-ref \
-		--tcl \
-		--format=$fmt \
-		refs/heads \
-		refs/remotes \
-		refs/tags \
-		]
-	fconfigure $fr_fd -translation binary
-	while {[gets $fr_fd line] > 0} {
-		set line [eval $line]
-		set ref [lindex $line 2]
-		regsub ^refs/(heads|remotes|tags)/ $ref {} ref
-		set subj($ref) [lindex $line 3]
-		lappend sha1([lindex $line 0]) $ref
-		if {[lindex $line 1] ne {}} {
-			lappend sha1([lindex $line 1]) $ref
-		}
+	if {![_can_merge $this]} {
+		delete_this
+		return
 	}
-	close $fr_fd
 
-	set to_show {}
-	set fr_fd [git_read rev-list --all --not HEAD]
-	while {[gets $fr_fd line] > 0} {
-		if {[catch {set ref $sha1($line)}]} continue
-		foreach n $ref {
-			lappend to_show [list $n $line]
-		}
+	make_toplevel top w
+	wm title $top "[appname] ([reponame]): Merge"
+	if {$top ne {.}} {
+		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
-	close $fr_fd
-	set to_show [lsort -unique $to_show]
 
-	set w .merge_setup
-	toplevel $w
-	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-
-	set _visualize [namespace code [list _visualize $w $to_show]]
-	set _start [namespace code [list _start $w $to_show]]
+	set _start [cb _start]
 
 	label $w.header \
 		-text "Merge Into $current_branch" \
@@ -211,54 +160,50 @@ proc dialog {} {
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
-	button $w.buttons.visualize -text Visualize -command $_visualize
+	button $w.buttons.visualize \
+		-text Visualize \
+		-command [cb _visualize]
 	pack $w.buttons.visualize -side left
-	button $w.buttons.create -text Merge -command $_start
-	pack $w.buttons.create -side right
+	button $w.buttons.merge \
+		-text Merge \
+		-command $_start
+	pack $w.buttons.merge -side right
 	button $w.buttons.cancel \
 		-text {Cancel} \
-		-command "unlock_index;destroy $w"
+		-command [cb _cancel]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.source -text {Source Branches}
-	listbox $w.source.l \
-		-height 10 \
-		-width 70 \
-		-font font_diff \
-		-selectmode extended \
-		-yscrollcommand [list $w.source.sby set]
-	scrollbar $w.source.sby -command [list $w.source.l yview]
-	pack $w.source.sby -side right -fill y
-	pack $w.source.l -side left -fill both -expand 1
-	pack $w.source -fill both -expand 1 -pady 5 -padx 5
-
-	foreach ref $to_show {
-		set n [lindex $ref 0]
-		if {[string length $n] > 20} {
-			set n "[string range $n 0 16]..."
-		}
-		$w.source.l insert end [format {%s %-20s %s} \
-			[string range [lindex $ref 1] 0 5] \
-			$n \
-			$subj([lindex $ref 0])]
-	}
-
-	bind $w.source.l <Key-K> [list event generate %W <Shift-Key-Up>]
-	bind $w.source.l <Key-J> [list event generate %W <Shift-Key-Down>]
-	bind $w.source.l <Key-k> [list event generate %W <Key-Up>]
-	bind $w.source.l <Key-j> [list event generate %W <Key-Down>]
-	bind $w.source.l <Key-h> [list event generate %W <Key-Left>]
-	bind $w.source.l <Key-l> [list event generate %W <Key-Right>]
-	bind $w.source.l <Key-v> $_visualize
+	set w_rev [::choose_rev::new_unmerged $w.rev {Revision To Merge}]
+	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 
 	bind $w <$M1B-Key-Return> $_start
-	bind $w <Visibility> "grab $w; focus $w.source.l"
-	bind $w <Key-Escape> "unlock_index;destroy $w"
-	wm protocol $w WM_DELETE_WINDOW "unlock_index;destroy $w"
-	wm title $w "[appname] ([reponame]): Merge"
+	bind $w <Key-Return> $_start
+	bind $w <Key-Escape> [cb _cancel]
+	wm protocol $w WM_DELETE_WINDOW [cb _cancel]
+
+	bind $w.buttons.merge <Visibility> [cb _visible]
 	tkwait window $w
 }
+
+method _visible {} {
+	grab $w
+	if {[is_config_true gui.matchtrackingbranch]} {
+		$w_rev pick_tracking_branch
+	}
+	$w_rev focus_filter
+}
+
+method _cancel {} {
+	wm protocol $w WM_DELETE_WINDOW {}
+	unlock_index
+	destroy $w
+	delete_this
+}
+
+}
+
+namespace eval merge {
 
 proc reset_hard {} {
 	global HEAD commit_type file_states
@@ -274,20 +219,24 @@ You must finish amending this commit.
 	if {![lock_index abort]} return
 
 	if {[string match *merge* $commit_type]} {
-		set op merge
+		set op_question "Abort merge?
+
+Aborting the current merge will cause *ALL* uncommitted changes to be lost.
+
+Continue with aborting the current merge?"
 	} else {
-		set op commit
+		set op_question "Reset changes?
+
+Resetting the changes will cause *ALL* uncommitted changes to be lost.
+
+Continue with resetting the current changes?"
 	}
 
-	if {[ask_popup "Abort $op?
-
-Aborting the current $op will cause *ALL* uncommitted changes to be lost.
-
-Continue with aborting the current $op?"] eq {yes}} {
-		set fd [git_read read-tree --reset -u HEAD]
+	if {[ask_popup $op_question] eq {yes}} {
+		set fd [git_read --stderr read-tree --reset -u -v HEAD]
 		fconfigure $fd -blocking 0 -translation binary
 		fileevent $fd readable [namespace code [list _reset_wait $fd]]
-		ui_status {Aborting... please wait...}
+		$::main_status start {Aborting} {files reset}
 	} else {
 		unlock_index
 	}
@@ -296,9 +245,12 @@ Continue with aborting the current $op?"] eq {yes}} {
 proc _reset_wait {fd} {
 	global ui_comm
 
-	read $fd
+	$::main_status update_meter [read $fd]
+
+	fconfigure $fd -blocking 1
 	if {[eof $fd]} {
-		close $fd
+		set fail [catch {close $fd} err]
+		$::main_status stop
 		unlock_index
 
 		$ui_comm delete 0.0 end
@@ -310,7 +262,12 @@ proc _reset_wait {fd} {
 		catch {file delete [gitdir MERGE_MSG]}
 		catch {file delete [gitdir GITGUI_MSG]}
 
+		if {$fail} {
+			warn_popup "Abort failed.\n\n$err"
+		}
 		rescan {ui_status {Abort completed.  Ready.}}
+	} else {
+		fconfigure $fd -blocking 0
 	}
 }
 

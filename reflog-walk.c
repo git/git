@@ -136,7 +136,7 @@ void init_reflog_walk(struct reflog_walk_info** info)
 	*info = xcalloc(sizeof(struct reflog_walk_info), 1);
 }
 
-void add_reflog_for_walk(struct reflog_walk_info *info,
+int add_reflog_for_walk(struct reflog_walk_info *info,
 		struct commit *commit, const char *name)
 {
 	unsigned long timestamp = 0;
@@ -188,7 +188,7 @@ void add_reflog_for_walk(struct reflog_walk_info *info,
 			}
 		}
 		if (!reflogs || reflogs->nr == 0)
-			die("No reflogs found for '%s'", branch);
+			return -1;
 		path_list_insert(branch, &info->complete_reflogs)->util
 			= reflogs;
 	}
@@ -200,13 +200,14 @@ void add_reflog_for_walk(struct reflog_walk_info *info,
 		if (commit_reflog->recno < 0) {
 			free(branch);
 			free(commit_reflog);
-			return;
+			return -1;
 		}
 	} else
 		commit_reflog->recno = reflogs->nr - recno - 1;
 	commit_reflog->reflogs = reflogs;
 
 	add_commit_info(commit, commit_reflog, &info->reflogs);
+	return 0;
 }
 
 void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)

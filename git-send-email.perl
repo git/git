@@ -49,8 +49,8 @@ Options:
    --bcc          Specify a list of email addresses that should be Bcc:
 		  on all the emails.
 
-   --compose      Use \$EDITOR to edit an introductory message for the
-                  patch series.
+   --compose      Use \$GIT_EDITOR, core.editor, \$EDITOR, or \$VISUAL to edit
+		  an introductory message for the patch series.
 
    --subject      Specify the initial "Subject:" line.
                   Only necessary if --compose is also set.  If --compose
@@ -237,7 +237,7 @@ my %parse_alias = (
 			$aliases{$1} = [ split(/\s+/, $2) ];
 		}}},
 	pine => sub { my $fh = shift; while (<$fh>) {
-		if (/^(\S+)\s+(.*)$/) {
+		if (/^(\S+)\t.*\t(.*)$/) {
 			$aliases{$1} = [ split(/\s*,\s*/, $2) ];
 		}}},
 	gnus => sub { my $fh = shift; while (<$fh>) {
@@ -341,8 +341,7 @@ GIT: for the patch you are writing.
 EOT
 	close(C);
 
-	my $editor = $ENV{EDITOR};
-	$editor = 'vi' unless defined $editor;
+	my $editor = $ENV{GIT_EDITOR} || $repo->config("core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
 	system($editor, $compose_filename);
 
 	open(C2,">",$compose_filename . ".final")

@@ -6,6 +6,7 @@ USAGE='[ | list | show | apply | clear]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
+cd_to_toplevel
 
 TMP="$GIT_DIR/.git-stash.$$"
 trap 'rm -f "$TMP-*"' 0
@@ -18,9 +19,10 @@ no_changes () {
 }
 
 clear_stash () {
-	logfile="$GIT_DIR/logs/$ref_stash" &&
-	mkdir -p "$(dirname "$logfile")" &&
-	: >"$logfile"
+	if current=$(git rev-parse --verify $ref_stash 2>/dev/null)
+	then
+		git update-ref -d refs/stash $current
+	fi
 }
 
 save_stash () {
@@ -33,6 +35,9 @@ save_stash () {
 	fi
 	test -f "$GIT_DIR/logs/$ref_stash" ||
 		clear_stash || die "Cannot initialize stash"
+
+	# Make sure the reflog for stash is kept.
+	: >>"$GIT_DIR/logs/$ref_stash"
 
 	# state of the base commit
 	if b_commit=$(git rev-parse --verify HEAD)
@@ -123,19 +128,24 @@ apply_stash () {
 	c_tree=$(git write-tree) ||
 		die 'Cannot apply a stash in the middle of a merge'
 
+	# stash records the work tree, and is a merge between the
+	# base commit (first parent) and the index tree (second parent).
 	s=$(git rev-parse --revs-only --no-flags --default $ref_stash "$@") &&
 	w_tree=$(git rev-parse --verify "$s:") &&
-	b_tree=$(git rev-parse --verify "$s^:") ||
+	b_tree=$(git rev-parse --verify "$s^1:") &&
+	i_tree=$(git rev-parse --verify "$s^2:") ||
 		die "$*: no valid stashed state found"
 
-	test -z "$unstash_index" || {
+	unstashed_index_tree=
+	if test -n "$unstash_index" && test "$b_tree" != "$i_tree"
+	then
 		git diff --binary $s^2^..$s^2 | git apply --cached
 		test $? -ne 0 &&
 			die 'Conflicts in index. Try without --index.'
 		unstashed_index_tree=$(git-write-tree) ||
 			die 'Could not save index tree'
 		git reset
-	}
+	fi
 
 	eval "
 		GITHEAD_$w_tree='Stashed changes' &&
@@ -147,18 +157,25 @@ apply_stash () {
 	if git-merge-recursive $b_tree -- $c_tree $w_tree
 	then
 		# No conflict
-		a="$TMP-added" &&
-		git diff --cached --name-only --diff-filter=A $c_tree >"$a" &&
-		git read-tree --reset $c_tree &&
-		git update-index --add --stdin <"$a" ||
-			die "Cannot unstage modified files"
-		git-status
-		rm -f "$a"
-		test -z "$unstash_index" || git read-tree $unstashed_index_tree
+		if test -n "$unstashed_index_tree"
+		then
+			git read-tree "$unstashed_index_tree"
+		else
+			a="$TMP-added" &&
+			git diff --cached --name-only --diff-filter=A $c_tree >"$a" &&
+			git read-tree --reset $c_tree &&
+			git update-index --add --stdin <"$a" ||
+				die "Cannot unstage modified files"
+			rm -f "$a"
+		fi
+		git status || :
 	else
 		# Merge conflict; keep the exit status from merge-recursive
 		status=$?
-		test -z "$unstash_index" || echo 'Index was not unstashed.' >&2
+		if test -n "$unstash_index"
+		then
+			echo >&2 'Index was not unstashed.'
+		fi
 		exit $status
 	fi
 }

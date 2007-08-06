@@ -417,7 +417,9 @@ other
 	See gitlink:git-merge[1]
 
 'GIT_PAGER'::
-	This environment variable overrides `$PAGER`.
+	This environment variable overrides `$PAGER`. If it is set
+	to an empty string or to the value "cat", git will not launch
+	a pager.
 
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such

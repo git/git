@@ -13,7 +13,7 @@ all: $(ELC)
 
 install: all
 	$(INSTALL) -d $(DESTDIR)$(emacsdir)
-	$(INSTALL_ELC) $(ELC) $(DESTDIR)$(emacsdir)
+	$(INSTALL_ELC) $(ELC:.elc=.el) $(ELC) $(DESTDIR)$(emacsdir)
 
 %.elc: %.el
 	$(EMACS) -batch -f batch-byte-compile $<

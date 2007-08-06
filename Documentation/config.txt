@@ -281,6 +281,14 @@ core.excludesfile::
 	of files which are not meant to be tracked.  See
 	gitlink:gitignore[5].
 
+core.editor::
+	Commands such as `commit` and `tag` that lets you edit
+	messages by lauching an editor uses the value of this
+	variable when it is set, and the environment variable
+	`GIT_EDITOR` is not set.  The order of preference is
+	`GIT_EDITOR` environment, `core.editor`, `VISUAL` and
+	`EDITOR` environment variables and then finally `vi`.
+
 core.pager::
 	The command that git will use to paginate output.  Can be overridden
 	with the `GIT_PAGER` environment variable.
@@ -384,6 +392,9 @@ color.status.<slot>::
 	`changed` (files which are changed but not added in the index),
 	or `untracked` (files which are not tracked by git). The values of
 	these variables may be specified as in color.branch.<slot>.
+
+commit.template::
+	Specify a file to use as the template for new commit messages.
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename

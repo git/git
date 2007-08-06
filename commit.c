@@ -721,7 +721,10 @@ static char *logmsg_reencode(const struct commit *commit,
 	encoding = get_header(commit, "encoding");
 	use_encoding = encoding ? encoding : utf8;
 	if (!strcmp(use_encoding, output_encoding))
-		out = xstrdup(commit->buffer);
+		if (encoding) /* we'll strip encoding header later */
+			out = xstrdup(commit->buffer);
+		else
+			return NULL; /* nothing to do */
 	else
 		out = reencode_string(commit->buffer,
 				      output_encoding, use_encoding);

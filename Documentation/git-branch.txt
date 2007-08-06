@@ -130,8 +130,8 @@ Delete unneeded branch::
 ------------
 $ git clone git://git.kernel.org/.../git.git my.git
 $ cd my.git
-$ git branch -d -r todo html man   <1>
-$ git branch -D test               <2>
+$ git branch -d -r origin/todo origin/html origin/man   <1>
+$ git branch -D test                                    <2>
 ------------
 +
 <1> delete remote-tracking branches "todo", "html", "man"

@@ -499,15 +499,42 @@ static int decode_b_segment(char *in, char *ot, char *ep)
 	return 0;
 }
 
+/*
+ * When there is no known charset, guess.
+ *
+ * Right now we assume that if the target is UTF-8 (the default),
+ * and it already looks like UTF-8 (which includes US-ASCII as its
+ * subset, of course) then that is what it is and there is nothing
+ * to do.
+ *
+ * Otherwise, we default to assuming it is Latin1 for historical
+ * reasons.
+ */
+static const char *guess_charset(const char *line, const char *target_charset)
+{
+	if (is_encoding_utf8(target_charset)) {
+		if (is_utf8(line))
+			return NULL;
+	}
+	return "latin1";
+}
+
 static void convert_to_utf8(char *line, const char *charset)
 {
-	static const char latin_one[] = "latin1";
-	const char *input_charset = *charset ? charset : latin_one;
-	char *out = reencode_string(line, metainfo_charset, input_charset);
+	char *out;
 
+	if (!charset || !*charset) {
+		charset = guess_charset(line, metainfo_charset);
+		if (!charset)
+			return;
+	}
+
+	if (!strcmp(metainfo_charset, charset))
+		return;
+	out = reencode_string(line, metainfo_charset, charset);
 	if (!out)
 		die("cannot convert from %s to %s\n",
-		    input_charset, metainfo_charset);
+		    charset, metainfo_charset);
 	strcpy(line, out);
 	free(out);
 }

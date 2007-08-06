@@ -360,7 +360,7 @@ proc revert_helper {txt paths} {
 		"[appname] ([reponame])" \
 		"Revert changes in $s?
 
-Any unadded changes will be permanently lost by the revert." \
+Any unstaged changes will be permanently lost by the revert." \
 		question \
 		1 \
 		{Do Nothing} \

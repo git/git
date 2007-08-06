@@ -5,14 +5,12 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "progress.h"
+#include "refs.h"
 
 #define DBRT_DEBUG 1
 
 struct tree_entry_list {
 	struct tree_entry_list *next;
-	unsigned directory : 1;
-	unsigned executable : 1;
-	unsigned symlink : 1;
 	unsigned int mode;
 	const char *name;
 	const unsigned char *sha1;
@@ -37,9 +35,6 @@ static struct tree_entry_list *create_tree_entry_list(struct tree *tree)
 		entry->name = one.path;
 		entry->sha1 = one.sha1;
 		entry->mode = one.mode;
-		entry->directory = S_ISDIR(one.mode) != 0;
-		entry->executable = (one.mode & S_IXUSR) != 0;
-		entry->symlink = S_ISLNK(one.mode) != 0;
 		entry->next = NULL;
 
 		*list_p = entry;
@@ -140,9 +135,9 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 #endif
 			if (!first || entcmp(first, firstdir,
 					     posns[i]->name,
-					     posns[i]->directory) > 0) {
+					     S_ISDIR(posns[i]->mode)) > 0) {
 				first = posns[i]->name;
-				firstdir = posns[i]->directory;
+				firstdir = S_ISDIR(posns[i]->mode);
 			}
 		}
 		/* No name means we're done */
@@ -176,7 +171,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 				continue;
 			}
 
-			if (posns[i]->directory) {
+			if (S_ISDIR(posns[i]->mode)) {
 				struct tree *tree = lookup_tree(posns[i]->sha1);
 				any_dirs = 1;
 				parse_tree(tree);
@@ -425,11 +420,24 @@ static void invalidate_ce_path(struct cache_entry *ce)
 		cache_tree_invalidate_path(active_cache_tree, ce->name);
 }
 
-static int verify_clean_subdirectory(const char *path, const char *action,
+/*
+ * Check that checking out ce->sha1 in subdir ce->name is not
+ * going to overwrite any working files.
+ *
+ * Currently, git does not checkout subprojects during a superproject
+ * checkout, so it is not going to overwrite anything.
+ */
+static int verify_clean_submodule(struct cache_entry *ce, const char *action,
+				      struct unpack_trees_options *o)
+{
+	return 0;
+}
+
+static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 				      struct unpack_trees_options *o)
 {
 	/*
-	 * we are about to extract "path"; we would not want to lose
+	 * we are about to extract "ce->name"; we would not want to lose
 	 * anything in the existing directory there.
 	 */
 	int namelen;
@@ -437,13 +445,24 @@ static int verify_clean_subdirectory(const char *path, const char *action,
 	struct dir_struct d;
 	char *pathbuf;
 	int cnt = 0;
+	unsigned char sha1[20];
+
+	if (S_ISGITLINK(ntohl(ce->ce_mode)) &&
+	    resolve_gitlink_ref(ce->name, "HEAD", sha1) == 0) {
+		/* If we are not going to update the submodule, then
+		 * we don't care.
+		 */
+		if (!hashcmp(sha1, ce->sha1))
+			return 0;
+		return verify_clean_submodule(ce, action, o);
+	}
 
 	/*
 	 * First let's make sure we do not have a local modification
 	 * in that directory.
 	 */
-	namelen = strlen(path);
-	pos = cache_name_pos(path, namelen);
+	namelen = strlen(ce->name);
+	pos = cache_name_pos(ce->name, namelen);
 	if (0 <= pos)
 		return cnt; /* we have it as nondirectory */
 	pos = -pos - 1;
@@ -451,7 +470,7 @@ static int verify_clean_subdirectory(const char *path, const char *action,
 		struct cache_entry *ce = active_cache[i];
 		int len = ce_namelen(ce);
 		if (len < namelen ||
-		    strncmp(path, ce->name, namelen) ||
+		    strncmp(ce->name, ce->name, namelen) ||
 		    ce->name[namelen] != '/')
 			break;
 		/*
@@ -469,16 +488,16 @@ static int verify_clean_subdirectory(const char *path, const char *action,
 	 * present file that is not ignored.
 	 */
 	pathbuf = xmalloc(namelen + 2);
-	memcpy(pathbuf, path, namelen);
+	memcpy(pathbuf, ce->name, namelen);
 	strcpy(pathbuf+namelen, "/");
 
 	memset(&d, 0, sizeof(d));
 	if (o->dir)
 		d.exclude_per_dir = o->dir->exclude_per_dir;
-	i = read_directory(&d, path, pathbuf, namelen+1, NULL);
+	i = read_directory(&d, ce->name, pathbuf, namelen+1, NULL);
 	if (i)
 		die("Updating '%s' would lose untracked files in it",
-		    path);
+		    ce->name);
 	free(pathbuf);
 	return cnt;
 }
@@ -487,7 +506,7 @@ static int verify_clean_subdirectory(const char *path, const char *action,
  * We do not want to remove or overwrite a working tree file that
  * is not tracked, unless it is ignored.
  */
-static void verify_absent(const char *path, const char *action,
+static void verify_absent(struct cache_entry *ce, const char *action,
 		struct unpack_trees_options *o)
 {
 	struct stat st;
@@ -495,15 +514,15 @@ static void verify_absent(const char *path, const char *action,
 	if (o->index_only || o->reset || !o->update)
 		return;
 
-	if (has_symlink_leading_path(path, NULL))
+	if (has_symlink_leading_path(ce->name, NULL))
 		return;
 
-	if (!lstat(path, &st)) {
+	if (!lstat(ce->name, &st)) {
 		int cnt;
 
-		if (o->dir && excluded(o->dir, path))
+		if (o->dir && excluded(o->dir, ce->name))
 			/*
-			 * path is explicitly excluded, so it is Ok to
+			 * ce->name is explicitly excluded, so it is Ok to
 			 * overwrite it.
 			 */
 			return;
@@ -515,7 +534,7 @@ static void verify_absent(const char *path, const char *action,
 			 * files that are in "foo/" we would lose
 			 * it.
 			 */
-			cnt = verify_clean_subdirectory(path, action, o);
+			cnt = verify_clean_subdirectory(ce, action, o);
 
 			/*
 			 * If this removed entries from the index,
@@ -543,7 +562,7 @@ static void verify_absent(const char *path, const char *action,
 		 * delete this path, which is in a subdirectory that
 		 * is being replaced with a blob.
 		 */
-		cnt = cache_name_pos(path, strlen(path));
+		cnt = cache_name_pos(ce->name, strlen(ce->name));
 		if (0 <= cnt) {
 			struct cache_entry *ce = active_cache[cnt];
 			if (!ce_stage(ce) && !ce->ce_mode)
@@ -551,7 +570,7 @@ static void verify_absent(const char *path, const char *action,
 		}
 
 		die("Untracked working tree file '%s' "
-		    "would be %s by merge.", path, action);
+		    "would be %s by merge.", ce->name, action);
 	}
 }
 
@@ -575,7 +594,7 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		}
 	}
 	else {
-		verify_absent(merge->name, "overwritten", o);
+		verify_absent(merge, "overwritten", o);
 		invalidate_ce_path(merge);
 	}
 
@@ -590,7 +609,7 @@ static int deleted_entry(struct cache_entry *ce, struct cache_entry *old,
 	if (old)
 		verify_uptodate(old, o);
 	else
-		verify_absent(ce->name, "removed", o);
+		verify_absent(ce, "removed", o);
 	ce->ce_mode = 0;
 	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 	invalidate_ce_path(ce);
@@ -707,18 +726,18 @@ int threeway_merge(struct cache_entry **stages,
 	if (o->aggressive) {
 		int head_deleted = !head && !df_conflict_head;
 		int remote_deleted = !remote && !df_conflict_remote;
-		const char *path = NULL;
+		struct cache_entry *ce = NULL;
 
 		if (index)
-			path = index->name;
+			ce = index;
 		else if (head)
-			path = head->name;
+			ce = head;
 		else if (remote)
-			path = remote->name;
+			ce = remote;
 		else {
 			for (i = 1; i < o->head_idx; i++) {
 				if (stages[i] && stages[i] != o->df_conflict_entry) {
-					path = stages[i]->name;
+					ce = stages[i];
 					break;
 				}
 			}
@@ -733,8 +752,8 @@ int threeway_merge(struct cache_entry **stages,
 		    (remote_deleted && head && head_match)) {
 			if (index)
 				return deleted_entry(index, index, o);
-			else if (path && !head_deleted)
-				verify_absent(path, "removed", o);
+			else if (ce && !head_deleted)
+				verify_absent(ce, "removed", o);
 			return 0;
 		}
 		/*

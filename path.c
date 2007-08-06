@@ -71,24 +71,22 @@ char *git_path(const char *fmt, ...)
 /* git_mkstemp() - create tmp file honoring TMPDIR variable */
 int git_mkstemp(char *path, size_t len, const char *template)
 {
-	char *env, *pch = path;
+	const char *tmp;
+	size_t n;
 
-	if ((env = getenv("TMPDIR")) == NULL &&
-	    /* on Windows it is TMP and TEMP */
-	    (env = getenv("TMP")) == NULL &&
-	    (env = getenv("TEMP")) == NULL) {
-		strcpy(pch, "/tmp/");
-		len -= 5;
-		pch += 5;
-	} else {
-		size_t n = snprintf(pch, len, "%s/", env);
-
-		len -= n;
-		pch += n;
+	tmp = getenv("TMPDIR");
+	/* on Windows it is TMP and TEMP */
+	if (!tmp)
+	    tmp = getenv("TMP");
+	if (!tmp)
+	    tmp = getenv("TEMP");
+	if (!tmp)
+		tmp = "/tmp";
+	n = snprintf(path, len, "%s/%s", tmp, template);
+	if (len <= n) {
+		errno = ENAMETOOLONG;
+		return -1;
 	}
-
-	strlcpy(pch, template, len);
-
 	return mkstemp(path);
 }
 

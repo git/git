@@ -51,12 +51,15 @@ proc ask_popup {msg} {
 	if {[reponame] ne {}} {
 		append title " ([reponame])"
 	}
-	return [tk_messageBox \
-		-parent . \
+	set cmd [list tk_messageBox \
 		-icon question \
 		-type yesno \
 		-title $title \
 		-message $msg]
+	if {[winfo ismapped .]} {
+		lappend cmd -parent .
+	}
+	eval $cmd
 }
 
 proc hook_failed_popup {hook msg} {
