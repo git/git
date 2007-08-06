@@ -15,26 +15,26 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Use 'git commit' when you want to record your changes into the repository
-along with a log message describing what the commit is about. All changes
-to be committed must be explicitly identified using one of the following
-methods:
+Use 'git commit' to store the current contents of the index in a new
+commit along with a log message describing the changes you have made.
 
+The content to be added can be specified in several ways:
 1. by using gitlink:git-add[1] to incrementally "add" changes to the
-   next commit before using the 'commit' command (Note: even modified
+   index before using the 'commit' command (Note: even modified
    files must be "added");
 
-2. by using gitlink:git-rm[1] to identify content removal for the next
-   commit, again before using the 'commit' command;
+2. by using gitlink:git-rm[1] to remove files from the working tree
+   and the index, again before using the 'commit' command;
 
-3. by directly listing files containing changes to be committed as arguments
-   to the 'commit' command, in which cases only those files alone will be
-   considered for the commit;
+3. by listing files as arguments to the 'commit' command, in which
+   case the commit will ignore changes staged in the index, and instead
+   record the current content of the listed files;
 
-4. by using the -a switch with the 'commit' command to automatically "add"
-   changes from all known files i.e. files that have already been committed
-   before, and to automatically "rm" files that have been
-   removed from the working tree, and perform the actual commit.
+4. by using the -a switch with the 'commit' command to automatically
+   "add" changes from all known files (i.e. all files that are already
+   listed in the index) and to automatically "rm" files in the index
+   that have been removed from the working tree, and then perform the
+   actual commit;
 
 5. by using the --interactive switch with the 'commit' command to decide one
    by one which files should be part of the commit, before finalizing the
