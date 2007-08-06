@@ -44,6 +44,11 @@ INSTALL?=install
 RM ?= rm -f
 DOC_REF = origin/man
 
+infodir?=$(prefix)/share/info
+MAKEINFO=makeinfo
+INSTALL_INFO=install-info
+DOCBOOK2X_TEXI=docbook2x-texi
+
 -include ../config.mak.autogen
 -include ../config.mak
 
@@ -67,6 +72,8 @@ man1: $(DOC_MAN1)
 man5: $(DOC_MAN5)
 man7: $(DOC_MAN7)
 
+info: git.info
+
 install: man
 	$(INSTALL) -d -m755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -d -m755 $(DESTDIR)$(man5dir)
@@ -75,6 +82,14 @@ install: man
 	$(INSTALL) -m644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
 	$(INSTALL) -m644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
 
+install-info: info
+	$(INSTALL) -d -m755 $(DESTDIR)$(infodir)
+	$(INSTALL) -m644 git.info $(DESTDIR)$(infodir)
+	if test -r $(DESTDIR)$(infodir)/dir; then \
+	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) git.info ;\
+	else \
+	  echo "No directory found in $(DESTDIR)$(infodir)" >&2 ; \
+	fi
 
 ../GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	$(MAKE) -C ../ GIT-VERSION-FILE
@@ -110,7 +125,7 @@ cmd-list.made: cmd-list.perl $(MAN1_TXT)
 git.7 git.html: git.txt core-intro.txt
 
 clean:
-	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 howto-index.txt howto/*.html doc.dep
+	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 *.texi *.texi+ howto-index.txt howto/*.html doc.dep
 	$(RM) $(cmds_txt) *.made
 
 %.html : %.txt
@@ -137,6 +152,13 @@ XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
 
 user-manual.html: user-manual.xml
 	xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
+
+git.info: user-manual.xml
+	$(RM) $@ $*.texi $*.texi+
+	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout >$*.texi+
+	perl fix-texi.perl <$*.texi+ >$*.texi
+	$(MAKEINFO) --no-split $*.texi
+	$(RM) $*.texi $*.texi+
 
 howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
 	$(RM) $@+ $@

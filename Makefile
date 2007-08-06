@@ -913,6 +913,9 @@ perl/Makefile: perl/Git.pm perl/Makefile.PL GIT-CFLAGS
 doc:
 	$(MAKE) -C Documentation all
 
+info:
+	$(MAKE) -C Documentation info
+
 TAGS:
 	$(RM) TAGS
 	$(FIND) . -name '*.[hcS]' -print | xargs etags -a
@@ -1004,6 +1007,9 @@ endif
 
 install-doc:
 	$(MAKE) -C Documentation install
+
+install-info:
+	$(MAKE) -C Documentation install-info
 
 quick-install-doc:
 	$(MAKE) -C Documentation quick-install
