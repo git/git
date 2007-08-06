@@ -364,6 +364,15 @@ static inline int is_absolute_path(const char *path)
 	return path[0] == '/' || (isalpha(path[0]) && path[1] == ':');
 }
 
+static inline int is_dev_null(const char *str)
+{
+#ifdef __MINGW32__
+	if (!strcmp(str, "nul"))
+		return 1;
+#endif
+	return !strcmp(str, "/dev/null");
+}
+
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int sha1_object_info(const unsigned char *, unsigned long *);
 extern void * read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size);
