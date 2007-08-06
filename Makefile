@@ -493,8 +493,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	EXTLIBS += -lws2_32
 	X = .exe
 	NOEXECTEMPL = .noexec
-	template_dir = ../share/git-core/templates/
-	ETC_GITCONFIG = ../etc/gitconfig
+	prefix =
 	SCRIPT_SH += cpio.sh
 endif
 ifneq (,$(findstring arm,$(uname_M)))
