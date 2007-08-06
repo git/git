@@ -260,7 +260,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		for (;;) {
 			if (is_git_directory(".git"))
 				break;
-			if (offset == 0) {
+			if (offset == minoffset) {
 				offset = -1;
 				break;
 			}
