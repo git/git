@@ -5,8 +5,8 @@ Normally you can just do "make" followed by "make install", and that
 will install the git programs in your own ~/bin/ directory.  If you want
 to do a global install, you can do
 
-	$ make prefix=/usr all doc ;# as yourself
-	# make prefix=/usr install install-doc ;# as root
+	$ make prefix=/usr all doc info ;# as yourself
+	# make prefix=/usr install install-doc install-info ;# as root
 
 (or prefix=/usr/local, of course).  Just like any program suite
 that uses $prefix, the built results have some paths encoded,
@@ -91,9 +91,13 @@ Issues of note:
  - To build and install documentation suite, you need to have
    the asciidoc/xmlto toolchain.  Because not many people are
    inclined to install the tools, the default build target
-   ("make all") does _not_ build them.  The documentation is
-   written for AsciiDoc 7, but "make ASCIIDOC8=YesPlease doc"
-   will let you format with AsciiDoc 8.
+   ("make all") does _not_ build them.
+
+   Building and installing the info file additionally requires
+   makeinfo and docbook2X.  Version 0.8.3 is known to work.
+
+   The documentation is written for AsciiDoc 7, but "make
+   ASCIIDOC8=YesPlease doc" will let you format with AsciiDoc 8.
 
    Alternatively, pre-formatted documentation are available in
    "html" and "man" branches of the git repository itself.  For
