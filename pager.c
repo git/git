@@ -31,8 +31,11 @@ void setup_pager(void)
 
 	if (!isatty(1))
 		return;
-	if (!pager)
+	if (!pager) {
+		if (!pager_program)
+			git_config(git_default_config);
 		pager = pager_program;
+	}
 	if (!pager)
 		pager = getenv("PAGER");
 	if (!pager)
