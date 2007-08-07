@@ -364,7 +364,11 @@ int safe_create_leading_directories(char *path);
 char *enter_repo(char *path, int strict);
 static inline int is_absolute_path(const char *path)
 {
+#ifndef __MINGW32__
 	return path[0] == '/';
+#else
+	return path[0] == '/' || (path[0] && path[1] == ':');
+#endif
 }
 const char *make_absolute_path(const char *path);
 
