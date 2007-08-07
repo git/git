@@ -167,7 +167,6 @@ int commit_lock_file(struct lock_file *lk)
 	strcpy(result_file, lk->filename);
 	i = strlen(result_file) - 5; /* .lock */
 	result_file[i] = 0;
-	unlink(result_file);
 	i = rename(lk->filename, result_file);
 	lk->filename[0] = 0;
 	return i;

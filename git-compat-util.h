@@ -466,6 +466,9 @@ char *mingw_getcwd(char *pointer, int len);
 int mingw_socket(int domain, int type, int protocol);
 #define socket mingw_socket
 
+int mingw_rename(const char*, const char*);
+#define rename mingw_rename
+
 #define setlinebuf(x)
 #define fsync(x) 0
 

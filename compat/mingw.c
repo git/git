@@ -322,3 +322,28 @@ int mingw_socket(int domain, int type, int protocol)
 	}
 	return s;
 }
+
+#undef rename
+int mingw_rename(const char *pold, const char *pnew)
+{
+	/*
+	 * Try native rename() first to get errno right.
+	 * It is based on MoveFile(), which cannot overwrite existing files.
+	 */
+	if (!rename(pold, pnew))
+		return 0;
+	if (errno != EEXIST)
+		return -1;
+	if (MoveFileEx(pold, pnew, MOVEFILE_REPLACE_EXISTING))
+		return 0;
+	/* TODO: translate more errors */
+	if (GetLastError() == ERROR_ACCESS_DENIED) {
+		struct stat st;
+		if (!stat(pnew, &st) && S_ISDIR(st.st_mode)) {
+			errno = EISDIR;
+			return -1;
+		}
+	}
+	errno = EACCES;
+	return -1;
+}

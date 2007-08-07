@@ -963,15 +963,6 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 
  retry:
 	if (log && rename(git_path("tmp-renamed-log"), git_path("logs/%s", newref))) {
-#ifdef __MINGW32__
-		if (errno == EEXIST) {
-			struct stat st;
-			if (stat(git_path("logs/%s", newref), &st) == 0 && S_ISDIR(st.st_mode))
-				errno = EISDIR;
-			else
-				errno = EEXIST;
-		}
-#endif
 		if (errno==EISDIR || errno==ENOTDIR) {
 			/*
 			 * rename(a, b) when b is an existing
@@ -1237,7 +1228,6 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 		error("Unable to write to %s", lockpath);
 		goto error_unlink_return;
 	}
-	unlink(git_HEAD);
 	if (rename(lockpath, git_HEAD) < 0) {
 		error("Unable to create %s", git_HEAD);
 		goto error_unlink_return;
