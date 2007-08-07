@@ -24,10 +24,8 @@ git read-tree $head
 git checkout-index -a -f --prefix="$mandir"/
 
 if test -n "$GZ"; then
-	cd "$mandir"
-	for i in `git ls-tree -r --name-only $head`
-	do
-		gzip < $i > $i.gz && rm $i
-	done
+	git ls-tree -r --name-only $head |
+	xargs printf "$mandir/%s\n" |
+	xargs gzip -f
 fi
 rm -f "$GIT_INDEX_FILE"
