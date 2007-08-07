@@ -839,16 +839,20 @@ class P4Sync(Command):
             if file["action"] == "delete":
                 self.gitStream.write("D %s\n" % relPath)
             else:
-                mode = 644
-                if file["type"].startswith("x"):
-                    mode = 755
-
                 data = file['data']
+
+                mode = "644"
+                if file["type"].startswith("x"):
+                    mode = "755"
+                elif file["type"] == "symlink":
+                    mode = "120000"
+                    # p4 print on a symlink contains "target\n", so strip it off
+                    data = data[:-1]
 
                 if self.isWindows and file["type"].endswith("text"):
                     data = data.replace("\r\n", "\n")
 
-                self.gitStream.write("M %d inline %s\n" % (mode, relPath))
+                self.gitStream.write("M %s inline %s\n" % (mode, relPath))
                 self.gitStream.write("data %s\n" % len(data))
                 self.gitStream.write(data)
                 self.gitStream.write("\n")
