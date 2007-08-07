@@ -305,6 +305,7 @@ test_expect_success 'update-index D/F conflict' '
 	test $numpath0 = 1
 '
 
+test "$no_symlinks" ||
 test_expect_success 'absolute path works as expected' '
 	mkdir first &&
 	ln -s ../.git first/.git &&
