@@ -492,7 +492,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	OLD_ICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
 	NO_STRTOUMAX = YesPlease
-	NO_SYMLINKS=YesPlease
 	NO_SVN_TESTS=YesPlease
 	NO_PERL_MAKEMAKER=YesPlease
 	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -I compat
@@ -987,7 +986,6 @@ all: $(TEST_PROGRAMS)
 # However, the environment gets quite big, and some programs have problems
 # with that.
 
-export NO_SYMLINKS
 export NO_SVN_TESTS
 
 test: all

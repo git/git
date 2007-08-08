@@ -87,8 +87,6 @@ do
 	--no-python)
 		# noop now...
 		shift ;;
-	--no-symlinks)
-		no_symlinks=t; shift ;;
 	*)
 		break ;;
 	esac
@@ -284,6 +282,10 @@ test=trash
 rm -fr "$test"
 test_create_repo $test
 cd "$test"
+
+# test for symbolic link capability
+ln -s x y 2> /dev/null && test -l y 2> /dev/null || no_symlinks=1
+rm -f y
 
 this_test=$(expr "./$0" : '.*/\(t[0-9]*\)-[^/]*$')
 for skp in $GIT_SKIP_TESTS
