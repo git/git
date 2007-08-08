@@ -964,8 +964,8 @@ proc bindkey {ev script} {
 # set the focus back to the toplevel for any click outside
 # the entry widgets
 proc click {w} {
-    global entries
-    foreach e $entries {
+    global ctext entries
+    foreach e [concat $entries $ctext] {
 	if {$w == $e} return
     }
     focus .
@@ -4600,6 +4600,7 @@ proc sellastline {} {
 
 proc selnextline {dir} {
     global selectedline
+    focus .
     if {![info exists selectedline]} return
     set l [expr {$selectedline + $dir}]
     unmarkmatches
@@ -4680,6 +4681,7 @@ proc godo {elt} {
 
 proc goback {} {
     global history historyindex
+    focus .
 
     if {$historyindex > 1} {
 	incr historyindex -1
@@ -4693,6 +4695,7 @@ proc goback {} {
 
 proc goforw {} {
     global history historyindex
+    focus .
 
     if {$historyindex < [llength $history]} {
 	set cmd [lindex $history $historyindex]
