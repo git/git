@@ -1796,11 +1796,12 @@ taken from the message containing each patch.
 Public git repositories
 -----------------------
 
-Another way to submit changes to a project is to tell the maintainer of
-that project to pull the changes from your repository using git-pull[1].
-In the section "<<getting-updates-with-git-pull, Getting updates with
-git pull>>" we described this as a way to get updates from the "main"
-repository, but it works just as well in the other direction.
+Another way to submit changes to a project is to tell the maintainer
+of that project to pull the changes from your repository using
+gitlink:git-pull[1].  In the section "<<getting-updates-with-git-pull,
+Getting updates with git pull>>" we described this as a way to get
+updates from the "main" repository, but it works just as well in the
+other direction.
 
 If you and the maintainer both have accounts on the same machine, then
 you can just pull changes from each other's repositories directly;
@@ -2057,7 +2058,8 @@ $ cd work
 Linus's tree will be stored in the remote branch named origin/master,
 and can be updated using gitlink:git-fetch[1]; you can track other
 public trees using gitlink:git-remote[1] to set up a "remote" and
-git-fetch[1] to keep them up-to-date; see <<repositories-and-branches>>.
+gitlink:git-fetch[1] to keep them up-to-date; see
+<<repositories-and-branches>>.
 
 Now create the branches in which you are going to work; these start out
 at the current tip of origin/master branch, and should be set up (using
@@ -2512,9 +2514,9 @@ $ gitk origin..mywork &
 And browse through the list of patches in the mywork branch using gitk,
 applying them (possibly in a different order) to mywork-new using
 cherry-pick, and possibly modifying them as you go using commit --amend.
-The git-gui[1] command may also help as it allows you to individually
-select diff hunks for inclusion in the index (by right-clicking on the
-diff hunk and choosing "Stage Hunk for Commit").
+The gitlink:git-gui[1] command may also help as it allows you to
+individually select diff hunks for inclusion in the index (by
+right-clicking on the diff hunk and choosing "Stage Hunk for Commit").
 
 Another technique is to use git-format-patch to create a series of
 patches, then reset the state to before the patches:
