@@ -823,8 +823,13 @@ proc makewindow {} {
     pack .ctop -fill both -expand 1
     bindall <1> {selcanvline %W %x %y}
     #bindall <B1-Motion> {selcanvline %W %x %y}
-    bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
-    bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
+    if {[tk windowingsystem] == "win32"} {
+	bind . <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D }
+	bind $ctext <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D ; break }
+    } else {
+	bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
+	bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
+    }
     bindall <2> "canvscan mark %W %x %y"
     bindall <B2-Motion> "canvscan dragto %W %x %y"
     bindkey <Home> selfirstline
@@ -925,6 +930,24 @@ proc makewindow {} {
 	-command {flist_hl 0}
     $flist_menu add command -label "Highlight this only" \
 	-command {flist_hl 1}
+}
+
+# Windows sends all mouse wheel events to the current focused window, not
+# the one where the mouse hovers, so bind those events here and redirect
+# to the correct window
+proc windows_mousewheel_redirector {W X Y D} {
+    global canv canv2 canv3
+    set w [winfo containing -displayof $W $X $Y]
+    if {$w ne ""} {
+	set u [expr {$D < 0 ? 5 : -5}]
+	if {$w == $canv || $w == $canv2 || $w == $canv3} {
+	    allcanvs yview scroll $u units
+	} else {
+	    catch {
+		$w yview scroll $u units
+	    }
+	}
+    }
 }
 
 # mouse-2 makes all windows scan vertically, but only the one
