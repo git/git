@@ -390,6 +390,30 @@ class P4Submit(Command):
 
         return result
 
+    def prepareSubmitTemplate(self):
+        # remove lines in the Files section that show changes to files outside the depot path we're committing into
+        template = ""
+        inFilesSection = False
+        for line in read_pipe_lines("p4 change -o"):
+            if inFilesSection:
+                if line.startswith("\t"):
+                    # path starts and ends with a tab
+                    path = line[1:]
+                    lastTab = path.rfind("\t")
+                    if lastTab != -1:
+                        path = path[:lastTab]
+                        if not path.startswith(self.depotPath):
+                            continue
+                else:
+                    inFilesSection = False
+            else:
+                if line.startswith("Files:"):
+                    inFilesSection = True
+
+            template += line
+
+        return template
+
     def applyCommit(self, id):
         if self.directSubmit:
             print "Applying local change in working directory/index"
@@ -467,7 +491,7 @@ class P4Submit(Command):
                 logMessage = logMessage.replace("\n", "\r\n")
             logMessage = logMessage.strip()
 
-        template = read_pipe("p4 change -o")
+        template = self.prepareSubmitTemplate()
 
         if self.interactive:
             submitTemplate = self.prepareLogMessage(template, logMessage)
@@ -558,24 +582,24 @@ class P4Submit(Command):
             return False
 
         [upstream, settings] = findUpstreamBranchPoint()
-        depotPath = settings['depot-paths'][0]
+        self.depotPath = settings['depot-paths'][0]
         if len(self.origin) == 0:
             self.origin = upstream
 
         if self.verbose:
             print "Origin branch is " + self.origin
 
-        if len(depotPath) == 0:
+        if len(self.depotPath) == 0:
             print "Internal error: cannot locate perforce depot path from existing branches"
             sys.exit(128)
 
-        self.clientPath = p4Where(depotPath)
+        self.clientPath = p4Where(self.depotPath)
 
         if len(self.clientPath) == 0:
-            print "Error: Cannot locate perforce checkout of %s in client view" % depotPath
+            print "Error: Cannot locate perforce checkout of %s in client view" % self.depotPath
             sys.exit(128)
 
-        print "Perforce checkout for depot path %s located at %s" % (depotPath, self.clientPath)
+        print "Perforce checkout for depot path %s located at %s" % (self.depotPath, self.clientPath)
         self.oldWorkingDirectory = os.getcwd()
 
         if self.directSubmit:
