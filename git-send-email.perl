@@ -137,7 +137,7 @@ my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@initial_cc,@bcclist,@xh,
-	$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
+	$initial_reply_to,$initial_subject,@files,$author,$sender,$compose,$time);
 
 my $smtp_server;
 my $envelope_sender;
@@ -179,7 +179,7 @@ if (!@bcclist or !$bcclist[0]) {
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
 
-my $rc = GetOptions("from=s" => \$from,
+my $rc = GetOptions("sender|from=s" => \$sender,
                     "in-reply-to=s" => \$initial_reply_to,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@to,
@@ -216,8 +216,8 @@ foreach my $entry (@bcclist) {
 
 # Now, let's fill any that aren't set in with defaults:
 
-my ($author) = $repo->ident_person('author');
-my ($committer) = $repo->ident_person('committer');
+my ($repoauthor) = $repo->ident_person('author');
+my ($repocommitter) = $repo->ident_person('committer');
 
 my %aliases;
 my @alias_files = $repo->config('sendemail.aliasesfile');
@@ -254,17 +254,17 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 	}
 }
 
-($from) = expand_aliases($from) if defined $from;
+($sender) = expand_aliases($sender) if defined $sender;
 
 my $prompting = 0;
-if (!defined $from) {
-	$from = $author || $committer;
+if (!defined $sender) {
+	$sender = $repoauthor || $repocommitter;
 	do {
-		$_ = $term->readline("Who should the emails appear to be from? [$from] ");
+		$_ = $term->readline("Who should the emails appear to be from? [$sender] ");
 	} while (!defined $_);
 
-	$from = $_ if ($_);
-	print "Emails will be sent from: ", $from, "\n";
+	$sender = $_ if ($_);
+	print "Emails will be sent from: ", $sender, "\n";
 	$prompting++;
 }
 
@@ -330,7 +330,7 @@ if ($compose) {
 	# effort to have it be unique
 	open(C,">",$compose_filename)
 		or die "Failed to open for writing $compose_filename: $!";
-	print C "From $from # This line is ignored.\n";
+	print C "From $sender # This line is ignored.\n";
 	printf C "Subject: %s\n\n", $initial_subject;
 	printf C <<EOT;
 GIT: Please enter your email below.
@@ -433,11 +433,11 @@ sub make_message_id
 	my $date = time;
 	my $pseudo_rand = int (rand(4200));
 	my $du_part;
-	for ($from, $committer, $author) {
-		$du_part = extract_valid_address($_);
-		last if ($du_part ne '');
+	for ($sender, $repocommitter, $repoauthor) {
+		$du_part = extract_valid_address(sanitize_address($_));
+		last if (defined $du_part and $du_part ne '');
 	}
-	if ($du_part eq '') {
+	if (not defined $du_part or $du_part eq '') {
 		use Sys::Hostname qw();
 		$du_part = 'user@' . Sys::Hostname::hostname();
 	}
@@ -508,10 +508,10 @@ sub send_message
 	if ($cc ne '') {
 		$ccline = "\nCc: $cc";
 	}
-	$from = sanitize_address($from);
+	my $sanitized_sender = sanitize_address($sender);
 	make_message_id();
 
-	my $header = "From: $from
+	my $header = "From: $sanitized_sender
 To: $to${ccline}
 Subject: $subject
 Date: $date
@@ -528,7 +528,7 @@ X-Mailer: git-send-email $gitversion
 	}
 
 	my @sendmail_parameters = ('-i', @recipients);
-	my $raw_from = $from;
+	my $raw_from = $sanitized_sender;
 	$raw_from = $envelope_sender if (defined $envelope_sender);
 	$raw_from = extract_valid_address($raw_from);
 	unshift (@sendmail_parameters,
@@ -565,7 +565,7 @@ X-Mailer: git-send-email $gitversion
 		} else {
 			print "Sendmail: $smtp_server ".join(' ',@sendmail_parameters)."\n";
 		}
-		print "From: $from\nSubject: $subject\nCc: $cc\nTo: $to\n\n";
+		print "From: $sanitized_sender\nSubject: $subject\nCc: $cc\nTo: $to\n\n";
 		if ($smtp) {
 			print "Result: ", $smtp->code, ' ',
 				($smtp->message =~ /\n([^\n]+\n)$/s), "\n";
@@ -582,7 +582,7 @@ $subject = $initial_subject;
 foreach my $t (@files) {
 	open(F,"<",$t) or die "can't open file $t";
 
-	my $author_not_sender = undef;
+	my $author = undef;
 	@cc = @initial_cc;
 	@xh = ();
 	my $input_format = undef;
@@ -604,12 +604,11 @@ foreach my $t (@files) {
 					$subject = $1;
 
 				} elsif (/^(Cc|From):\s+(.*)$/) {
-					if (unquote_rfc2047($2) eq $from) {
-						$from = $2;
+					if (unquote_rfc2047($2) eq $sender) {
 						next if ($suppress_from);
 					}
 					elsif ($1 eq 'From') {
-						$author_not_sender = $2;
+						$author = unquote_rfc2047($2);
 					}
 					printf("(mbox) Adding cc: %s from line '%s'\n",
 						$2, $_) unless $quiet;
@@ -653,9 +652,8 @@ foreach my $t (@files) {
 		}
 	}
 	close F;
-	if (defined $author_not_sender) {
-		$author_not_sender = unquote_rfc2047($author_not_sender);
-		$message = "From: $author_not_sender\n\n$message";
+	if (defined $author) {
+		$message = "From: $author\n\n$message";
 	}
 
 
