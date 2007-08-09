@@ -12,7 +12,7 @@ SYNOPSIS
 	[--index-filter <command>] [--parent-filter <command>]
 	[--msg-filter <command>] [--commit-filter <command>]
 	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
-	[-d <directory>] <new-branch-name> [<rev-list options>...]
+	[-d <directory>] [-f | --force] [<rev-list options>...]
 
 DESCRIPTION
 -----------
@@ -26,10 +26,9 @@ information) will be preserved.
 The command takes the new branch name as a mandatory argument and
 the filters as optional arguments.  If you specify no filters, the
 commits will be recommitted without any changes, which would normally
-have no effect and result in the new branch pointing to the same
-branch as your current branch.  Nevertheless, this may be useful in
-the future for compensating for some git bugs or such, therefore
-such a usage is permitted.
+have no effect.  Nevertheless, this may be useful in the future for
+compensating for some git bugs or such, therefore such a usage is
+permitted.
 
 *WARNING*! The rewritten history will have different object names for all
 the objects and will not converge with the original branch.  You will not
@@ -38,8 +37,9 @@ original branch.  Please do not use this command if you do not know the
 full implications, and avoid using it anyway, if a simple single commit
 would suffice to fix your problem.
 
-Always verify that the rewritten version is correct before disposing
-the original branch.
+Always verify that the rewritten version is correct: The original refs,
+if different from the rewritten ones, will be stored in the namespace
+'refs/original/'.
 
 Note that since this operation is extensively I/O expensive, it might
 be a good idea to redirect the temporary directory off-disk, e.g. on
@@ -142,6 +142,11 @@ definition impossible to preserve signatures at any rate.)
 	does this in the '.git-rewrite/' directory but you can override
 	that choice by this parameter.
 
+-f\|--force::
+	`git filter-branch` refuses to start with an existing temporary
+	directory or when there are already refs starting with
+	'refs/original/', unless forced.
+
 <rev-list-options>::
 	When options are given after the new branch name, they will
 	be passed to gitlink:git-rev-list[1].  Only commits in the resulting
@@ -156,14 +161,14 @@ Suppose you want to remove a file (containing confidential information
 or copyright violation) from all commits:
 
 -------------------------------------------------------
-git filter-branch --tree-filter 'rm filename' newbranch
+git filter-branch --tree-filter 'rm filename' HEAD
 -------------------------------------------------------
 
 A significantly faster version:
 
--------------------------------------------------------------------------------
-git filter-branch --index-filter 'git update-index --remove filename' newbranch
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------
+git filter-branch --index-filter 'git update-index --remove filename' HEAD
+--------------------------------------------------------------------------
 
 Now, you will get the rewritten history saved in the branch 'newbranch'
 (your current branch is left untouched).
@@ -172,25 +177,25 @@ To set a commit (which typically is at the tip of another
 history) to be the parent of the current initial commit, in
 order to paste the other history behind the current history:
 
-------------------------------------------------------------------------
-git filter-branch --parent-filter 'sed "s/^\$/-p <graft-id>/"' newbranch
-------------------------------------------------------------------------
+-------------------------------------------------------------------
+git filter-branch --parent-filter 'sed "s/^\$/-p <graft-id>/"' HEAD
+-------------------------------------------------------------------
 
 (if the parent string is empty - therefore we are dealing with the
 initial commit - add graftcommit as a parent).  Note that this assumes
 history with a single root (that is, no merge without common ancestors
 happened).  If this is not the case, use:
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------
 git filter-branch --parent-filter \
-	'cat; test $GIT_COMMIT = <commit-id> && echo "-p <graft-id>"' newbranch
--------------------------------------------------------------------------------
+	'cat; test $GIT_COMMIT = <commit-id> && echo "-p <graft-id>"' HEAD
+--------------------------------------------------------------------------
 
 or even simpler:
 
 -----------------------------------------------
 echo "$commit-id $graft-id" >> .git/info/grafts
-git filter-branch newbranch $graft-id..
+git filter-branch $graft-id..HEAD
 -----------------------------------------------
 
 To remove commits authored by "Darl McBribe" from the history:
@@ -208,7 +213,7 @@ git filter-branch --commit-filter '
 		done;
 	else
 		git commit-tree "$@";
-	fi' newbranch
+	fi' HEAD
 ------------------------------------------------------------------------------
 
 The shift magic first throws away the tree id and then the -p
@@ -238,14 +243,14 @@ A--B-----C
 To rewrite only commits D,E,F,G,H, but leave A, B and C alone, use:
 
 --------------------------------
-git filter-branch ... new-H C..H
+git filter-branch ... C..H
 --------------------------------
 
 To rewrite commits E,F,G,H, use one of these:
 
 ----------------------------------------
-git filter-branch ... new-H C..H --not D
-git filter-branch ... new-H D..H --not C
+git filter-branch ... C..H --not D
+git filter-branch ... D..H --not C
 ----------------------------------------
 
 To move the whole tree into a subdirectory, or remove it from there:
@@ -255,7 +260,7 @@ git filter-branch --index-filter \
 	'git ls-files -s | sed "s-\t-&newsubdir/-" |
 		GIT_INDEX_FILE=$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
-	 mv $GIT_INDEX_FILE.new $GIT_INDEX_FILE' directorymoved
+	 mv $GIT_INDEX_FILE.new $GIT_INDEX_FILE' HEAD
 ---------------------------------------------------------------
 
 

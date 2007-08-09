@@ -107,11 +107,11 @@ pull after you are done and ready.
 
 When things cleanly merge, these things happen:
 
-1. the results are updated both in the index file and in your
-   working tree,
-2. index file is written out as a tree,
-3. the tree gets committed, and
-4. the `HEAD` pointer gets advanced.
+1. The results are updated both in the index file and in your
+   working tree;
+2. Index file is written out as a tree;
+3. The tree gets committed; and
+4. The `HEAD` pointer gets advanced.
 
 Because of 2., we require that the original state of the index
 file to match exactly the current `HEAD` commit; otherwise we

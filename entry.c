@@ -8,17 +8,40 @@ static void create_directories(const char *path, const struct checkout *state)
 	const char *slash = path;
 
 	while ((slash = strchr(slash+1, '/')) != NULL) {
+		struct stat st;
+		int stat_status;
+
 		len = slash - path;
 		memcpy(buf, path, len);
 		buf[len] = 0;
+
+		if (len <= state->base_dir_len)
+			/*
+			 * checkout-index --prefix=<dir>; <dir> is
+			 * allowed to be a symlink to an existing
+			 * directory.
+			 */
+			stat_status = stat(buf, &st);
+		else
+			/*
+			 * if there currently is a symlink, we would
+			 * want to replace it with a real directory.
+			 */
+			stat_status = lstat(buf, &st);
+
+		if (!stat_status && S_ISDIR(st.st_mode))
+			continue; /* ok, it is already a directory. */
+
+		/*
+		 * We know stat_status == 0 means something exists
+		 * there and this mkdir would fail, but that is an
+		 * error codepath; we do not care, as we unlink and
+		 * mkdir again in such a case.
+		 */
 		if (mkdir(buf, 0777)) {
-			if (errno == EEXIST) {
-				struct stat st;
-				if (len > state->base_dir_len && state->force && !unlink(buf) && !mkdir(buf, 0777))
-					continue;
-				if (!stat(buf, &st) && S_ISDIR(st.st_mode))
-					continue; /* ok */
-			}
+			if (errno == EEXIST && state->force &&
+			    !unlink(buf) && !mkdir(buf, 0777))
+				continue;
 			die("cannot create directory at %s", buf);
 		}
 	}

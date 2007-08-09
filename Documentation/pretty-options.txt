@@ -1,9 +1,9 @@
 --pretty[='<format>']::
 
-	Pretty print the contents of the commit logs in a given format,
+	Pretty-print the contents of the commit logs in a given format,
 	where '<format>' can be one of 'oneline', 'short', 'medium',
 	'full', 'fuller', 'email', 'raw' and 'format:<string>'.
-	When left out the format default to 'medium'.
+	When omitted, the format defaults to 'medium'.
 
 --abbrev-commit::
 	Instead of showing the full 40-byte hexadecimal commit object

@@ -49,8 +49,8 @@ Options:
    --bcc          Specify a list of email addresses that should be Bcc:
 		  on all the emails.
 
-   --compose      Use \$EDITOR to edit an introductory message for the
-                  patch series.
+   --compose      Use \$GIT_EDITOR, core.editor, \$EDITOR, or \$VISUAL to edit
+		  an introductory message for the patch series.
 
    --subject      Specify the initial "Subject:" line.
                   Only necessary if --compose is also set.  If --compose
@@ -237,7 +237,7 @@ my %parse_alias = (
 			$aliases{$1} = [ split(/\s+/, $2) ];
 		}}},
 	pine => sub { my $fh = shift; while (<$fh>) {
-		if (/^(\S+)\s+(.*)$/) {
+		if (/^(\S+)\t.*\t(.*)$/) {
 			$aliases{$1} = [ split(/\s*,\s*/, $2) ];
 		}}},
 	gnus => sub { my $fh = shift; while (<$fh>) {
@@ -289,7 +289,7 @@ sub expand_aliases {
 }
 
 @to = expand_aliases(@to);
-@to = (map { sanitize_address_rfc822($_) } @to);
+@to = (map { sanitize_address($_) } @to);
 @initial_cc = expand_aliases(@initial_cc);
 @bcclist = expand_aliases(@bcclist);
 
@@ -341,8 +341,7 @@ GIT: for the patch you are writing.
 EOT
 	close(C);
 
-	my $editor = $ENV{EDITOR};
-	$editor = 'vi' unless defined $editor;
+	my $editor = $ENV{GIT_EDITOR} || $repo->config("core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
 	system($editor, $compose_filename);
 
 	open(C2,">",$compose_filename . ".final")
@@ -460,22 +459,41 @@ sub unquote_rfc2047 {
 	return "$_";
 }
 
-# If an address contains a . in the name portion, the name must be quoted.
-sub sanitize_address_rfc822
+# use the simplest quoting being able to handle the recipient
+sub sanitize_address
 {
 	my ($recipient) = @_;
-	my ($recipient_name) = ($recipient =~ /^(.*?)\s+</);
-	if ($recipient_name && $recipient_name =~ /\./ && $recipient_name !~ /^".*"$/) {
-		my ($name, $addr) = ($recipient =~ /^(.*?)(\s+<.*)/);
-		$recipient = "\"$name\"$addr";
+	my ($recipient_name, $recipient_addr) = ($recipient =~ /^(.*?)\s*(<.*)/);
+
+	if (not $recipient_name) {
+		return "$recipient";
 	}
-	return $recipient;
+
+	# if recipient_name is already quoted, do nothing
+	if ($recipient_name =~ /^(".*"|=\?utf-8\?q\?.*\?=)$/) {
+		return $recipient;
+	}
+
+	# rfc2047 is needed if a non-ascii char is included
+	if ($recipient_name =~ /[^[:ascii:]]/) {
+		$recipient_name =~ s/([^-a-zA-Z0-9!*+\/])/sprintf("=%02X", ord($1))/eg;
+		$recipient_name =~ s/(.*)/=\?utf-8\?q\?$1\?=/;
+	}
+
+	# double quotes are needed if specials or CTLs are included
+	elsif ($recipient_name =~ /[][()<>@,;:\\".\000-\037\177]/) {
+		$recipient_name =~ s/(["\\\r])/\\$1/;
+		$recipient_name = "\"$recipient_name\"";
+	}
+
+	return "$recipient_name $recipient_addr";
+
 }
 
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
-	@cc = (map { sanitize_address_rfc822($_) } @cc);
+	@cc = (map { sanitize_address($_) } @cc);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
 	@recipients = (map { extract_valid_address($_) } @recipients);
@@ -490,7 +508,7 @@ sub send_message
 	if ($cc ne '') {
 		$ccline = "\nCc: $cc";
 	}
-	$from = sanitize_address_rfc822($from);
+	$from = sanitize_address($from);
 	make_message_id();
 
 	my $header = "From: $from

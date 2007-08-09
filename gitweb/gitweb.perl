@@ -104,6 +104,59 @@ our $mimetypes_file = undef;
 # could be even 'utf-8' for the old behavior)
 our $fallback_encoding = 'latin1';
 
+# rename detection options for git-diff and git-diff-tree
+# - default is '-M', with the cost proportional to
+#   (number of removed files) * (number of new files).
+# - more costly is '-C' (which implies '-M'), with the cost proportional to
+#   (number of changed files + number of removed files) * (number of new files)
+# - even more costly is '-C', '--find-copies-harder' with cost
+#   (number of files in the original tree) * (number of new files)
+# - one might want to include '-B' option, e.g. '-B', '-M'
+our @diff_opts = ('-M'); # taken from git_commit
+
+# information about snapshot formats that gitweb is capable of serving
+our %known_snapshot_formats = (
+	# name => {
+	# 	'display' => display name,
+	# 	'type' => mime type,
+	# 	'suffix' => filename suffix,
+	# 	'format' => --format for git-archive,
+	# 	'compressor' => [compressor command and arguments]
+	# 	                (array reference, optional)}
+	#
+	'tgz' => {
+		'display' => 'tar.gz',
+		'type' => 'application/x-gzip',
+		'suffix' => '.tar.gz',
+		'format' => 'tar',
+		'compressor' => ['gzip']},
+
+	'tbz2' => {
+		'display' => 'tar.bz2',
+		'type' => 'application/x-bzip2',
+		'suffix' => '.tar.bz2',
+		'format' => 'tar',
+		'compressor' => ['bzip2']},
+
+	'zip' => {
+		'display' => 'zip',
+		'type' => 'application/x-zip',
+		'suffix' => '.zip',
+		'format' => 'zip'},
+);
+
+# Aliases so we understand old gitweb.snapshot values in repository
+# configuration.
+our %known_snapshot_format_aliases = (
+	'gzip'  => 'tgz',
+	'bzip2' => 'tbz2',
+
+	# backward compatibility: legacy gitweb config support
+	'x-gzip' => undef, 'gz' => undef,
+	'x-bzip2' => undef, 'bz2' => undef,
+	'x-zip' => undef, '' => undef,
+);
+
 # You define site-wide feature defaults here; override them with
 # $GITWEB_CONFIG as necessary.
 our %feature = (
@@ -134,20 +187,22 @@ our %feature = (
 		'override' => 0,
 		'default' => [0]},
 
-	# Enable the 'snapshot' link, providing a compressed tarball of any
+	# Enable the 'snapshot' link, providing a compressed archive of any
 	# tree. This can potentially generate high traffic if you have large
 	# project.
 
+	# Value is a list of formats defined in %known_snapshot_formats that
+	# you wish to offer.
 	# To disable system wide have in $GITWEB_CONFIG
-	# $feature{'snapshot'}{'default'} = [undef];
+	# $feature{'snapshot'}{'default'} = [];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'snapshot'}{'override'} = 1;
-	# and in project config gitweb.snapshot = none|gzip|bzip2|zip;
+	# and in project config, a comma-separated list of formats or "none"
+	# to disable.  Example: gitweb.snapshot = tbz2,zip;
 	'snapshot' => {
 		'sub' => \&feature_snapshot,
 		'override' => 0,
-		#         => [content-encoding, suffix, program]
-		'default' => ['x-gzip', 'gz', 'gzip']},
+		'default' => ['tgz']},
 
 	# Enable text search, which will list the commits which match author,
 	# committer or commit text to a given string.  Enabled by default.
@@ -246,28 +301,15 @@ sub feature_blame {
 }
 
 sub feature_snapshot {
-	my ($ctype, $suffix, $command) = @_;
+	my (@fmts) = @_;
 
 	my ($val) = git_get_project_config('snapshot');
 
-	if ($val eq 'gzip') {
-		return ('x-gzip', 'gz', 'gzip');
-	} elsif ($val eq 'bzip2') {
-		return ('x-bzip2', 'bz2', 'bzip2');
-	} elsif ($val eq 'zip') {
-		return ('x-zip', 'zip', '');
-	} elsif ($val eq 'none') {
-		return ();
+	if ($val) {
+		@fmts = ($val eq 'none' ? () : split /\s*[,\s]\s*/, $val);
 	}
 
-	return ($ctype, $suffix, $command);
-}
-
-sub gitweb_have_snapshot {
-	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
-	my $have_snapshot = (defined $ctype && defined $suffix);
-
-	return $have_snapshot;
+	return @fmts;
 }
 
 sub feature_grep {
@@ -310,15 +352,17 @@ sub check_export_ok {
 		(!$export_ok || -e "$dir/$export_ok"));
 }
 
-# rename detection options for git-diff and git-diff-tree
-# - default is '-M', with the cost proportional to
-#   (number of removed files) * (number of new files).
-# - more costly is '-C' (or '-C', '-M'), with the cost proportional to
-#   (number of changed files + number of removed files) * (number of new files)
-# - even more costly is '-C', '--find-copies-harder' with cost
-#   (number of files in the original tree) * (number of new files)
-# - one might want to include '-B' option, e.g. '-B', '-M'
-our @diff_opts = ('-M'); # taken from git_commit
+# process alternate names for backward compatibility
+# filter out unsupported (unknown) snapshot formats
+sub filter_snapshot_fmts {
+	my @fmts = @_;
+
+	@fmts = map {
+		exists $known_snapshot_format_aliases{$_} ?
+		       $known_snapshot_format_aliases{$_} : $_} @fmts;
+	@fmts = grep(exists $known_snapshot_formats{$_}, @fmts);
+
+}
 
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
 do $GITWEB_CONFIG if -e $GITWEB_CONFIG;
@@ -392,12 +436,11 @@ my %allowed_options = (
 
 our @extra_options = $cgi->param('opt');
 if (defined @extra_options) {
-	foreach(@extra_options)
-	{
-		if (not grep(/^$_$/, keys %allowed_options)) {
+	foreach my $opt (@extra_options) {
+		if (not exists $allowed_options{$opt}) {
 			die_error(undef, "Invalid option parameter");
 		}
-		if (not grep(/^$action$/, @{$allowed_options{$_}})) {
+		if (not grep(/^$action$/, @{$allowed_options{$opt}})) {
 			die_error(undef, "Invalid option parameter for this action");
 		}
 	}
@@ -554,7 +597,6 @@ sub href(%) {
 		action => "a",
 		file_name => "f",
 		file_parent => "fp",
-		extra_options => "opt",
 		hash => "h",
 		hash_parent => "hp",
 		hash_base => "hb",
@@ -563,6 +605,8 @@ sub href(%) {
 		order => "o",
 		searchtext => "s",
 		searchtype => "st",
+		snapshot_format => "sf",
+		extra_options => "opt",
 	);
 	my %mapping = @mapping;
 
@@ -585,7 +629,13 @@ sub href(%) {
 	for (my $i = 0; $i < @mapping; $i += 2) {
 		my ($name, $symbol) = ($mapping[$i], $mapping[$i+1]);
 		if (defined $params{$name}) {
-			push @result, $symbol . "=" . esc_param($params{$name});
+			if (ref($params{$name}) eq "ARRAY") {
+				foreach my $par (@{$params{$name}}) {
+					push @result, $symbol . "=" . esc_param($par);
+				}
+			} else {
+				push @result, $symbol . "=" . esc_param($params{$name});
+			}
 		}
 	}
 	$href .= "?" . join(';', @result) if scalar @result;
@@ -845,11 +895,25 @@ sub age_string {
 	return $age_str;
 }
 
+use constant {
+	S_IFINVALID => 0030000,
+	S_IFGITLINK => 0160000,
+};
+
+# submodule/subproject, a commit object reference
+sub S_ISGITLINK($) {
+	my $mode = shift;
+
+	return (($mode & S_IFMT) == S_IFGITLINK)
+}
+
 # convert file mode in octal to symbolic file mode string
 sub mode_str {
 	my $mode = oct shift;
 
-	if (S_ISDIR($mode & S_IFMT)) {
+	if (S_ISGITLINK($mode)) {
+		return 'm---------';
+	} elsif (S_ISDIR($mode & S_IFMT)) {
 		return 'drwxr-xr-x';
 	} elsif (S_ISLNK($mode)) {
 		return 'lrwxrwxrwx';
@@ -875,7 +939,9 @@ sub file_type {
 		$mode = oct $mode;
 	}
 
-	if (S_ISDIR($mode & S_IFMT)) {
+	if (S_ISGITLINK($mode)) {
+		return "submodule";
+	} elsif (S_ISDIR($mode & S_IFMT)) {
 		return "directory";
 	} elsif (S_ISLNK($mode)) {
 		return "symlink";
@@ -896,7 +962,9 @@ sub file_type_long {
 		$mode = oct $mode;
 	}
 
-	if (S_ISDIR($mode & S_IFMT)) {
+	if (S_ISGITLINK($mode)) {
+		return "submodule";
+	} elsif (S_ISDIR($mode & S_IFMT)) {
 		return "directory";
 	} elsif (S_ISLNK($mode)) {
 		return "symlink";
@@ -1257,6 +1325,43 @@ sub format_diff_line {
 	return "<div class=\"diff$diff_class\">" . esc_html($line, -nbsp=>1) . "</div>\n";
 }
 
+# Generates undef or something like "_snapshot_" or "snapshot (_tbz2_ _zip_)",
+# linked.  Pass the hash of the tree/commit to snapshot.
+sub format_snapshot_links {
+	my ($hash) = @_;
+	my @snapshot_fmts = gitweb_check_feature('snapshot');
+	@snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
+	my $num_fmts = @snapshot_fmts;
+	if ($num_fmts > 1) {
+		# A parenthesized list of links bearing format names.
+		# e.g. "snapshot (_tar.gz_ _zip_)"
+		return "snapshot (" . join(' ', map
+			$cgi->a({
+				-href => href(
+					action=>"snapshot",
+					hash=>$hash,
+					snapshot_format=>$_
+				)
+			}, $known_snapshot_formats{$_}{'display'})
+		, @snapshot_fmts) . ")";
+	} elsif ($num_fmts == 1) {
+		# A single "snapshot" link whose tooltip bears the format name.
+		# i.e. "_snapshot_"
+		my ($fmt) = @snapshot_fmts;
+		return
+			$cgi->a({
+				-href => href(
+					action=>"snapshot",
+					hash=>$hash,
+					snapshot_format=>$fmt
+				),
+				-title => "in format: $known_snapshot_formats{$fmt}{'display'}"
+			}, "snapshot");
+	} else { # $num_fmts == 0
+		return undef;
+	}
+}
+
 ## ----------------------------------------------------------------------
 ## git utility subroutines, invoking git commands
 
@@ -1410,6 +1515,7 @@ sub git_get_projects_list {
 
 		File::Find::find({
 			follow_fast => 1, # follow symbolic links
+			follow_skip => 2, # ignore duplicates
 			dangling_symlinks => 0, # ignore dangling symlinks, silently
 			wanted => sub {
 				# skip project-list toplevel, if we get it.
@@ -2185,9 +2291,17 @@ EOF
 		printf('<link rel="alternate" title="%s log RSS feed" '.
 		       'href="%s" type="application/rss+xml" />'."\n",
 		       esc_param($project), href(action=>"rss"));
+		printf('<link rel="alternate" title="%s log RSS feed (no merges)" '.
+		       'href="%s" type="application/rss+xml" />'."\n",
+		       esc_param($project), href(action=>"rss",
+		                                 extra_options=>"--no-merges"));
 		printf('<link rel="alternate" title="%s log Atom feed" '.
 		       'href="%s" type="application/atom+xml" />'."\n",
 		       esc_param($project), href(action=>"atom"));
+		printf('<link rel="alternate" title="%s log Atom feed (no merges)" '.
+		       'href="%s" type="application/atom+xml" />'."\n",
+		       esc_param($project), href(action=>"atom",
+		                                 extra_options=>"--no-merges"));
 	} else {
 		printf('<link rel="alternate" title="%s projects list" '.
 		       'href="%s" type="text/plain; charset=utf-8"/>'."\n",
@@ -2621,6 +2735,20 @@ sub git_print_tree_entry {
 		if (defined $hash_base) {
 			print " | " .
 			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			                             file_name=>"$basedir$t->{'name'}")},
+			              "history");
+		}
+		print "</td>\n";
+	} else {
+		# unknown object: we can only present history for it
+		# (this includes 'commit' object, i.e. submodule support)
+		print "<td class=\"list\">" .
+		      esc_path($t->{'name'}) .
+		      "</td>\n";
+		print "<td class=\"link\">";
+		if (defined $hash_base) {
+			print $cgi->a({-href => href(action=>"history",
+			                             hash_base=>$hash_base,
 			                             file_name=>"$basedir$t->{'name'}")},
 			              "history");
 		}
@@ -3321,8 +3449,6 @@ sub git_shortlog_body {
 	# uses global variable $project
 	my ($commitlist, $from, $to, $refs, $extra) = @_;
 
-	my $have_snapshot = gitweb_have_snapshot();
-
 	$from = 0 unless defined $from;
 	$to = $#{$commitlist} if (!defined $to || $#{$commitlist} < $to);
 
@@ -3349,8 +3475,9 @@ sub git_shortlog_body {
 		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") . " | " .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") . " | " .
 		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree");
-		if ($have_snapshot) {
-			print " | " . $cgi->a({-href => href(action=>"snapshot", hash=>$commit)}, "snapshot");
+		my $snapshot_links = format_snapshot_links($commit);
+		if (defined $snapshot_links) {
+			print " | " . $snapshot_links;
 		}
 		print "</td>\n" .
 		      "</tr>\n";
@@ -4132,8 +4259,6 @@ sub git_blob {
 }
 
 sub git_tree {
-	my $have_snapshot = gitweb_have_snapshot();
-
 	if (!defined $hash_base) {
 		$hash_base = "HEAD";
 	}
@@ -4167,11 +4292,10 @@ sub git_tree {
 				                       hash_base=>"HEAD", file_name=>$file_name)},
 				        "HEAD"),
 		}
-		if ($have_snapshot) {
+		my $snapshot_links = format_snapshot_links($hash);
+		if (defined $snapshot_links) {
 			# FIXME: Should be available when we have no hash base as well.
-			push @views_nav,
-				$cgi->a({-href => href(action=>"snapshot", hash=>$hash)},
-				        "snapshot");
+			push @views_nav, $snapshot_links;
 		}
 		git_print_page_nav('tree','', $hash_base, undef, undef, join(' | ', @views_nav));
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash_base);
@@ -4235,33 +4359,44 @@ sub git_tree {
 }
 
 sub git_snapshot {
-	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
-	my $have_snapshot = (defined $ctype && defined $suffix);
-	if (!$have_snapshot) {
+	my @supported_fmts = gitweb_check_feature('snapshot');
+	@supported_fmts = filter_snapshot_fmts(@supported_fmts);
+
+	my $format = $cgi->param('sf');
+	if (!@supported_fmts) {
 		die_error('403 Permission denied', "Permission denied");
+	}
+	# default to first supported snapshot format
+	$format ||= $supported_fmts[0];
+	if ($format !~ m/^[a-z0-9]+$/) {
+		die_error(undef, "Invalid snapshot format parameter");
+	} elsif (!exists($known_snapshot_formats{$format})) {
+		die_error(undef, "Unknown snapshot format");
+	} elsif (!grep($_ eq $format, @supported_fmts)) {
+		die_error(undef, "Unsupported snapshot format");
 	}
 
 	if (!defined $hash) {
 		$hash = git_get_head_hash($project);
 	}
 
-	my $git = git_cmd_str();
+	my $git_command = git_cmd_str();
 	my $name = $project;
 	$name =~ s,([^/])/*\.git$,$1,;
 	$name = basename($name);
 	my $filename = to_utf8($name);
 	$name =~ s/\047/\047\\\047\047/g;
 	my $cmd;
-	if ($suffix eq 'zip') {
-		$filename .= "-$hash.$suffix";
-		$cmd = "$git archive --format=zip --prefix=\'$name\'/ $hash";
-	} else {
-		$filename .= "-$hash.tar.$suffix";
-		$cmd = "$git archive --format=tar --prefix=\'$name\'/ $hash | $command";
+	$filename .= "-$hash$known_snapshot_formats{$format}{'suffix'}";
+	$cmd = "$git_command archive " .
+		"--format=$known_snapshot_formats{$format}{'format'} " .
+		"--prefix=\'$name\'/ $hash";
+	if (exists $known_snapshot_formats{$format}{'compressor'}) {
+		$cmd .= ' | ' . join ' ', @{$known_snapshot_formats{$format}{'compressor'}};
 	}
 
 	print $cgi->header(
-		-type => "application/$ctype",
+		-type => $known_snapshot_formats{$format}{'type'},
 		-content_disposition => 'inline; filename="' . "$filename" . '"',
 		-status => '200 OK');
 
@@ -4271,7 +4406,6 @@ sub git_snapshot {
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 	close $fd;
-
 }
 
 sub git_log {
@@ -4390,8 +4524,6 @@ sub git_commit {
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $co{'id'});
 
-	my $have_snapshot = gitweb_have_snapshot();
-
 	git_header_html(undef, $expires);
 	git_print_page_nav('commit', '',
 	                   $hash, $co{'tree'}, $hash,
@@ -4430,9 +4562,9 @@ sub git_commit {
 	      "<td class=\"link\">" .
 	      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$hash)},
 	              "tree");
-	if ($have_snapshot) {
-		print " | " .
-		      $cgi->a({-href => href(action=>"snapshot", hash=>$hash)}, "snapshot");
+	my $snapshot_links = format_snapshot_links($hash);
+	if (defined $snapshot_links) {
+		print " | " . $snapshot_links;
 	}
 	print "</td>" .
 	      "</tr>\n";
@@ -5234,7 +5366,7 @@ sub git_feed {
 
 	# log/feed of current (HEAD) branch, log of given branch, history of file/directory
 	my $head = $hash || 'HEAD';
-	my @commitlist = parse_commits($head, 150);
+	my @commitlist = parse_commits($head, 150, 0, undef, $file_name);
 
 	my %latest_commit;
 	my %latest_date;

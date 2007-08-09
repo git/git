@@ -97,7 +97,6 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = -1;
 
-	setup_git_directory();
 	git_config(git_default_config);
 
 	newfd = hold_locked_index(&lock_file, 1);

@@ -4,6 +4,13 @@
 -u::
 	Synonym for "-p".
 
+-U<n>::
+	Shorthand for "--unified=<n>".
+
+--unified=<n>::
+	Generate diffs with <n> lines of context instead of
+	the usual three. Implies "-p".
+
 --raw::
 	Generate the raw format.
 
@@ -36,7 +43,9 @@
 	Synonym for "-p --stat".
 
 -z::
-	\0 line termination on output
+	NUL-line termination on output.  This affects the --raw
+	output field terminator.  Also output from commands such
+	as "git-log" will be delimited with NUL between commits.
 
 --name-only::
 	Show only names of changed files.

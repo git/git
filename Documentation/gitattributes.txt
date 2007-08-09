@@ -405,7 +405,7 @@ the attributes given to path `t/abc` are computed as follows:
    and `bar` attributes should be given to this path, so it
    leaves `foo` and `bar` unset.  Attribute `baz` is set.
 
-3. Finally it examines `$GIT_DIR/info/gitattributes`.  This file
+3. Finally it examines `$GIT_DIR/info/attributes`.  This file
    is used to override the in-tree settings.  The first line is
    a match, and `foo` is set, `bar` is reverted to unspecified
    state, and `baz` is unset.

@@ -32,22 +32,33 @@ Updates since v1.5.2
   - "git rebase" learned an "interactive" mode that let you
     pick and reorder which commits to rebuild.
 
-  - "git fsck" can save its findings in $GIT_DIR/lost-found,
-    without a separate invocation of "git lost-found" command.
+  - "git fsck" can save its findings in $GIT_DIR/lost-found, without a
+    separate invocation of "git lost-found" command.  The blobs stored by
+    lost-found are stored in plain format to allow you to grep in them.
 
   - $GIT_WORK_TREE environment variable can be used together with
     $GIT_DIR to work in a subdirectory of a working tree that is
     not located at "$GIT_DIR/..".
 
+  - Giving "--file=<file>" option to "git config" is the same as
+    running the command with GIT_CONFIG=<file> environment.
+
   - "git log" learned a new option "--follow", to follow
     renaming history of a single file.
 
   - "git-filter-branch" lets you rewrite the revision history of
-    the current branch, creating a new branch. You can specify a
-    number of filters to modify the commits, files and trees.
+    specified branches. You can specify a number of filters to
+    modify the commits, files and trees.
 
   - "git-cvsserver" learned new options (--base-path, --export-all,
     --strict-paths) inspired by git-daemon.
+
+  - "git daemon --base-path-relaxed" can help migrating a repository URL
+    that did not use to use --base-path to use --base-path.
+
+  - "git-commit" can use "-t templatefile" option and commit.template
+    configuration variable to prime the commit message given to you in the
+    editor.
 
   - "git-submodule" command helps you manage the projects from
     the superproject that contain them.
@@ -105,8 +116,32 @@ Updates since v1.5.2
 
 * Updated behavior of existing commands.
 
+  - "gitweb" can offer multiple snapshot formats.
+
+    ***NOTE*** Unfortunately, this changes the format of the
+    $feature{snapshot}{default} entry in the per-site
+    configuration file 'gitweb_config.perl'.  It used to be a
+    three-element tuple that describe a single format; with the
+    new configuration item format, you only have to say the name
+    of the format ('tgz', 'tbz2' or 'zip').  Please update the
+    your configuration file accordingly.
+
+  - "git diff" (but not the plumbing level "git diff-tree") now
+    recursively descends into trees by default.
+
+  - The editor to use with many interactive commands can be
+    overridden with GIT_EDITOR environment variable, or if it
+    does not exist, with core.editor configuration variable.  As
+    before, if you have neither, environment variables VISUAL
+    and EDITOR are consulted in this order, and then finally we
+    fall back on "vi".
+
   - "git rm --cached" does not complain when removing a newly
     added file from the index anymore.
+
+  - Options to "git log" to affect how --grep/--author options look for
+    given strings now have shorter abbreviations.  -i is for ignore case,
+    and -E is for extended regexp.
 
   - "git svn dcommit" retains local merge information.
 
@@ -138,6 +173,9 @@ Updates since v1.5.2
 
   - The diffstat given after a merge (or a pull) honors the
     color.diff configuration.
+
+  - "git commit --amend" is now compatible with various message source
+    options such as -m/-C/-c/-F.
 
   - "git-apply --whitespace=strip" removes blank lines added at
     the end of the file.
@@ -189,6 +227,10 @@ Updates since v1.5.2
     git-fast-import (also in contrib).  The man page and p4
     rpm have been removed as well.
 
+  - "git mailinfo" (hence "am") now tries to see if the message
+    is in utf-8 first, instead of assuming iso-8859-1, if
+    incoming e-mail does not say what encoding it is in.
+
 * Builds
 
   - old-style function definitions (most notably, a function
@@ -232,6 +274,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3-rc2
+O=v1.5.3-rc4
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

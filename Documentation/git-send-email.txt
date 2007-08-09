@@ -44,8 +44,8 @@ The --cc option must be repeated for each user you want on the cc list.
 	value; if that is unspecified, default to --chain-reply-to.
 
 --compose::
-	Use $EDITOR to edit an introductory message for the
-	patch series.
+	Use $GIT_EDITOR, core.editor, $VISUAL, or $EDITOR to edit an
+	introductory message for the patch series.
 
 --from::
 	Specify the sender of the emails.  This will default to

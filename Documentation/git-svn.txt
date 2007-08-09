@@ -435,6 +435,26 @@ Tracking and contributing to an entire Subversion-managed project
 # of dcommit/rebase/show-ignore should be the same as above.
 ------------------------------------------------------------------------
 
+The initial 'git-svn clone' can be quite time-consuming
+(especially for large Subversion repositories). If multiple
+people (or one person with multiple machines) want to use
+git-svn to interact with the same Subversion repository, you can
+do the initial 'git-svn clone' to a repository on a server and
+have each person clone that repository with 'git clone':
+
+------------------------------------------------------------------------
+# Do the initial import on a server
+	ssh server "cd /pub && git-svn clone http://svn.foo.org/project
+# Clone locally
+	git clone server:/pub/project
+# Tell git-svn which branch contains the Subversion commits
+	git update-ref refs/remotes/git-svn origin/master
+# Initialize git-svn locally (be sure to use the same URL and -T/-b/-t options as were used on server)
+	git-svn init http://svn.foo.org/project
+# Pull the latest changes from Subversion
+	git-svn rebase
+------------------------------------------------------------------------
+
 REBASE VS. PULL/MERGE
 ---------------------
 

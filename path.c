@@ -71,24 +71,23 @@ char *git_path(const char *fmt, ...)
 /* git_mkstemp() - create tmp file honoring TMPDIR variable */
 int git_mkstemp(char *path, size_t len, const char *template)
 {
-	char *env, *pch = path;
+	const char *tmp;
+	size_t n;
 
-	if ((env = getenv("TMPDIR")) == NULL &&
-	    /* on Windows it is TMP and TEMP */
-	    (env = getenv("TMP")) == NULL &&
-	    (env = getenv("TEMP")) == NULL) {
-		strcpy(pch, "/tmp/");
-		len -= 5;
-		pch += 5;
-	} else {
-		size_t n = snprintf(pch, len, "%s/", env);
-
-		len -= n;
-		pch += n;
+	tmp = getenv("TMPDIR");
+#ifdef __MINGW32__
+	if (!tmp)
+		tmp = getenv("TMP");
+	if (!tmp)
+		tmp = getenv("TEMP");
+#endif
+	if (!tmp)
+		tmp = "/tmp";
+	n = snprintf(path, len, "%s/%s", tmp, template);
+	if (len <= n) {
+		errno = ENAMETOOLONG;
+		return -1;
 	}
-
-	strlcpy(pch, template, len);
-
 	return mkstemp(path);
 }
 
@@ -305,4 +304,69 @@ int adjust_shared_perm(const char *path)
 	if ((mode & st.st_mode) != mode && chmod(path, mode) < 0)
 		return -2;
 	return 0;
+}
+
+/* We allow "recursive" symbolic links. Only within reason, though. */
+#define MAXDEPTH 5
+
+const char *make_absolute_path(const char *path)
+{
+	static char bufs[2][PATH_MAX + 1], *buf = bufs[0], *next_buf = bufs[1];
+	char cwd[1024] = "";
+	int buf_index = 1, len;
+
+	int depth = MAXDEPTH;
+	char *last_elem = NULL;
+	struct stat st;
+
+	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
+		die ("Too long path: %.*s", 60, path);
+
+	while (depth--) {
+		if (stat(buf, &st) || !S_ISDIR(st.st_mode)) {
+			char *last_slash = strrchr(buf, '/');
+			if (last_slash) {
+				*last_slash = '\0';
+				last_elem = xstrdup(last_slash + 1);
+			} else
+				last_elem = xstrdup(buf);
+		}
+
+		if (*buf) {
+			if (!*cwd && !getcwd(cwd, sizeof(cwd)))
+				die ("Could not get current working directory");
+
+			if (chdir(buf))
+				die ("Could not switch to '%s'", buf);
+		}
+		if (!getcwd(buf, PATH_MAX))
+			die ("Could not get current working directory");
+
+		if (last_elem) {
+			int len = strlen(buf);
+			if (len + strlen(last_elem) + 2 > PATH_MAX)
+				die ("Too long path name: '%s/%s'",
+						buf, last_elem);
+			buf[len] = '/';
+			strcpy(buf + len + 1, last_elem);
+			free(last_elem);
+			last_elem = NULL;
+		}
+
+		if (!lstat(buf, &st) && S_ISLNK(st.st_mode)) {
+			len = readlink(buf, next_buf, PATH_MAX);
+			if (len < 0)
+				die ("Invalid symlink: %s", buf);
+			next_buf[len] = '\0';
+			buf = next_buf;
+			buf_index = 1 - buf_index;
+			next_buf = bufs[buf_index];
+		} else
+			break;
+	}
+
+	if (*cwd && chdir(cwd))
+		die ("Could not change back to '%s'", cwd);
+
+	return buf;
 }

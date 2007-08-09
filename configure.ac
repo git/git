@@ -69,11 +69,25 @@ fi \
 ## Site configuration related to programs (before tests)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
 #
+# Set lib to alternative name of lib directory (e.g. lib64)
+AC_ARG_WITH([lib],
+ [AS_HELP_STRING([--with-lib=ARG],
+                 [ARG specifies alternative name for lib directory])],
+ [if test "$withval" = "no" -o "$withval" = "yes"; then \
+	AC_MSG_WARN([You should provide name for --with-lib=ARG]); \
+else \
+	GIT_CONF_APPEND_LINE(lib=$withval); \
+fi; \
+],[])
+#
 # Define SHELL_PATH to provide path to shell.
 GIT_ARG_SET_PATH(shell)
 #
 # Define PERL_PATH to provide path to Perl.
 GIT_ARG_SET_PATH(perl)
+#
+# Define ZLIB_PATH to provide path to zlib.
+GIT_ARG_SET_PATH(zlib)
 #
 # Declare the with-tcltk/without-tcltk options.
 AC_ARG_WITH(tcltk,

@@ -16,7 +16,8 @@ static int reuseaddr;
 static const char daemon_usage[] =
 "git-daemon [--verbose] [--syslog] [--export-all]\n"
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
-"           [--base-path=path] [--user-path | --user-path=path]\n"
+"           [--base-path=path] [--base-path-relaxed]\n"
+"           [--user-path | --user-path=path]\n"
 "           [--interpolated-path=path]\n"
 "           [--reuseaddr] [--detach] [--pid-file=file]\n"
 "           [--[enable|disable|allow-override|forbid-override]=service]\n"
@@ -34,6 +35,7 @@ static int export_all_trees;
 /* Take all paths relative to this one if non-NULL */
 static char *base_path;
 static char *interpolated_path;
+static int base_path_relaxed;
 
 /* Flag indicating client sent extra args. */
 static int saw_extended_args;
@@ -180,6 +182,7 @@ static char *path_ok(struct interp *itable)
 {
 	static char rpath[PATH_MAX];
 	static char interp_path[PATH_MAX];
+	int retried_path = 0;
 	char *path;
 	char *dir;
 
@@ -235,7 +238,22 @@ static char *path_ok(struct interp *itable)
 		dir = rpath;
 	}
 
-	path = enter_repo(dir, strict_paths);
+	do {
+		path = enter_repo(dir, strict_paths);
+		if (path)
+			break;
+
+		/*
+		 * if we fail and base_path_relaxed is enabled, try without
+		 * prefixing the base path
+		 */
+		if (base_path && base_path_relaxed && !retried_path) {
+			dir = itable[INTERP_SLOT_DIR].value;
+			retried_path = 1;
+			continue;
+		}
+		break;
+	} while (1);
 
 	if (!path) {
 		logerror("'%s': unable to chdir or not a git archive", dir);
@@ -1059,6 +1077,10 @@ int main(int argc, char **argv)
 		}
 		if (!prefixcmp(arg, "--base-path=")) {
 			base_path = arg+12;
+			continue;
+		}
+		if (!strcmp(arg, "--base-path-relaxed")) {
+			base_path_relaxed = 1;
 			continue;
 		}
 		if (!prefixcmp(arg, "--interpolated-path=")) {

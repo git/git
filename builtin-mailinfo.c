@@ -237,8 +237,6 @@ static int eatspace(char *line)
 
 static char *cleanup_subject(char *subject)
 {
-	if (keep_subject)
-		return subject;
 	for (;;) {
 		char *p;
 		int len, remove;
@@ -425,6 +423,7 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 			if (addlen >= sz - len)
 				addlen = sz - len - 1;
 			memcpy(line + len, continuation, addlen);
+			line[len] = '\n';
 			len += addlen;
 		}
 	}
@@ -499,15 +498,42 @@ static int decode_b_segment(char *in, char *ot, char *ep)
 	return 0;
 }
 
+/*
+ * When there is no known charset, guess.
+ *
+ * Right now we assume that if the target is UTF-8 (the default),
+ * and it already looks like UTF-8 (which includes US-ASCII as its
+ * subset, of course) then that is what it is and there is nothing
+ * to do.
+ *
+ * Otherwise, we default to assuming it is Latin1 for historical
+ * reasons.
+ */
+static const char *guess_charset(const char *line, const char *target_charset)
+{
+	if (is_encoding_utf8(target_charset)) {
+		if (is_utf8(line))
+			return NULL;
+	}
+	return "latin1";
+}
+
 static void convert_to_utf8(char *line, const char *charset)
 {
-	static const char latin_one[] = "latin1";
-	const char *input_charset = *charset ? charset : latin_one;
-	char *out = reencode_string(line, metainfo_charset, input_charset);
+	char *out;
 
+	if (!charset || !*charset) {
+		charset = guess_charset(line, metainfo_charset);
+		if (!charset)
+			return;
+	}
+
+	if (!strcmp(metainfo_charset, charset))
+		return;
+	out = reencode_string(line, metainfo_charset, charset);
 	if (!out)
 		die("cannot convert from %s to %s\n",
-		    input_charset, metainfo_charset);
+		    charset, metainfo_charset);
 	strcpy(line, out);
 	free(out);
 }
@@ -819,6 +845,22 @@ static void handle_body(void)
 	return;
 }
 
+static void output_header_lines(FILE *fout, const char *hdr, char *data)
+{
+	while (1) {
+		char *ep = strchr(data, '\n');
+		int len;
+		if (!ep)
+			len = strlen(data);
+		else
+			len = ep - data;
+		fprintf(fout, "%s: %.*s\n", hdr, len, data);
+		if (!ep)
+			break;
+		data = ep + 1;
+	}
+}
+
 static void handle_info(void)
 {
 	char *sub;
@@ -836,9 +878,13 @@ static void handle_info(void)
 			continue;
 
 		if (!memcmp(header[i], "Subject", 7)) {
-			sub = cleanup_subject(hdr);
-			cleanup_space(sub);
-			fprintf(fout, "Subject: %s\n", sub);
+			if (keep_subject)
+				sub = hdr;
+			else {
+				sub = cleanup_subject(hdr);
+				cleanup_space(sub);
+			}
+			output_header_lines(fout, "Subject", sub);
 		} else if (!memcmp(header[i], "From", 4)) {
 			handle_from(hdr);
 			fprintf(fout, "Author: %s\n", name);

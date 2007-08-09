@@ -233,6 +233,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			die("diff_setup_done failed");
 	}
 	rev.diffopt.allow_external = 1;
+	rev.diffopt.recursive = 1;
 
 	/* Do we have --cached and not have a pending object, then
 	 * default to HEAD by hand.  Eek.

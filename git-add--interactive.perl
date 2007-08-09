@@ -3,9 +3,16 @@
 use strict;
 
 sub run_cmd_pipe {
-	my $fh = undef;
-	open($fh, '-|', @_) or die;
-	return <$fh>;
+	if ($^O eq 'MSWin32') {
+		my @invalid = grep {m/[":*]/} @_;
+		die "$^O does not support: @invalid\n" if @invalid;
+		my @args = map { m/ /o ? "\"$_\"": $_ } @_;
+		return qx{@args};
+	} else {
+		my $fh = undef;
+		open($fh, '-|', @_) or die;
+		return <$fh>;
+	}
 }
 
 my ($GIT_DIR) = run_cmd_pipe(qw(git rev-parse --git-dir));
@@ -17,7 +24,7 @@ chomp($GIT_DIR);
 
 sub refresh {
 	my $fh;
-	open $fh, '-|', qw(git update-index --refresh)
+	open $fh, 'git update-index --refresh |'
 	    or die;
 	while (<$fh>) {
 		;# ignore 'needs update'
@@ -296,7 +303,7 @@ sub revert_cmd {
 		my @lines = run_cmd_pipe(qw(git ls-tree HEAD --),
 					 map { $_->{VALUE} } @update);
 		my $fh;
-		open $fh, '|-', qw(git update-index --index-info)
+		open $fh, '| git update-index --index-info'
 		    or die;
 		for (@lines) {
 			print $fh $_;
@@ -725,7 +732,7 @@ sub patch_update_cmd {
 	if (@result) {
 		my $fh;
 
-		open $fh, '|-', qw(git apply --cached);
+		open $fh, '| git apply --cached';
 		for (@{$head->{TEXT}}, @result) {
 			print $fh $_;
 		}

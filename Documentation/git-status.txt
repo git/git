@@ -27,6 +27,13 @@ The command takes the same set of options as `git-commit`; it
 shows what would be committed if the same options are given to
 `git-commit`.
 
+If any paths have been touched in the working tree (that is,
+their modification times have changed) but their contents and
+permissions are identical to those in the index file, the command
+updates the index file. Running `git-status` can thus speed up
+subsequent operations such as `git-diff` if the working tree
+contains many paths that have been touched but not modified.
+
 
 OUTPUT
 ------

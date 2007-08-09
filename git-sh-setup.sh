@@ -28,6 +28,22 @@ set_reflog_action() {
 	fi
 }
 
+git_editor() {
+	: "${GIT_EDITOR:=$(git config core.editor)}"
+	: "${GIT_EDITOR:=${VISUAL:-${EDITOR}}}"
+	case "$GIT_EDITOR,$TERM" in
+	,dumb)
+		echo >&2 "No editor specified in GIT_EDITOR, core.editor, VISUAL,"
+		echo >&2 "or EDITOR. Tried to fall back to vi but terminal is dumb."
+		echo >&2 "Please set one of these variables to an appropriate"
+		echo >&2 "editor or run $0 with options that will not cause an"
+		echo >&2 "editor to be invoked (e.g., -m or -F for git-commit)."
+		exit 1
+		;;
+	esac
+	eval "${GIT_EDITOR:=vi}" '"$@"'
+}
+
 is_bare_repository () {
 	git rev-parse --is-bare-repository
 }
@@ -44,8 +60,7 @@ cd_to_toplevel () {
 }
 
 require_work_tree () {
-	test $(git rev-parse --is-inside-work-tree) = true &&
-	test $(git rev-parse --is-inside-git-dir) = false ||
+	test $(git rev-parse --is-inside-work-tree) = true ||
 	die "fatal: $0 cannot be used without a working tree."
 }
 
