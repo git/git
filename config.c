@@ -454,7 +454,7 @@ const char *git_etc_gitconfig(void)
 	if (!system_wide) {
 		system_wide = ETC_GITCONFIG;
 		/* interpret path relative to exec-dir */
-		if (system_wide[0] != '/' && system_wide[1] != ':') {
+		if (!is_absolute_path(system_wide)) {
 			const char *exec_path = git_exec_path();
 			system_wide = prefix_path(exec_path, strlen(exec_path),
 						system_wide);

@@ -80,11 +80,7 @@ int execv_git_cmd(const char **argv)
 
 		if (!exec_dir || !*exec_dir) continue;
 
-#ifdef __MINGW32__
-		if (*exec_dir != '/' && exec_dir[1] != ':') {
-#else
-		if (*exec_dir != '/') {
-#endif
+		if (!is_absolute_path(exec_dir)) {
 			if (!getcwd(git_command, sizeof(git_command))) {
 				fprintf(stderr, "git: cannot determine "
 					"current directory: %s\n",
@@ -190,11 +186,7 @@ int spawnv_git_cmd(const char **argv, int pin[2], int pout[2])
 
 		if (!exec_dir || !*exec_dir) continue;
 
-#ifdef __MINGW32__
-		if (*exec_dir != '/' && exec_dir[1] != ':') {
-#else
-		if (*exec_dir != '/') {
-#endif
+		if (!is_absolute_path(exec_dir)) {
 			if (!getcwd(p[i], sizeof(p[i]))) {
 				fprintf(stderr, "git: cannot determine "
 					"current directory: %s\n",

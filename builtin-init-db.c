@@ -140,7 +140,7 @@ static void copy_templates(const char *git_dir, int len, const char *template_di
 		 * interpreted relative to the exec_dir
 		 */
 		template_dir = DEFAULT_GIT_TEMPLATE_DIR;
-		if (template_dir[0] != '/' && template_dir[1] != ':') {
+		if (!is_absolute_path(template_dir)) {
 			const char *exec_path = git_exec_path();
 			template_dir = prefix_path(exec_path, strlen(exec_path),
 						   template_dir);

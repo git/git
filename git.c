@@ -422,22 +422,16 @@ int main(int argc, const char **argv)
 	 * if it's an absolute path and we don't have
 	 * anything better.
 	 */
-	if (slash) {
-		*slash++ = 0;
-		if (*cmd == '/')
-			exec_path = cmd;
-		cmd = slash;
-	}
-
 #ifdef __MINGW32__
-	slash = strrchr(cmd, '\\');
+	if (!slash)
+		slash = strrchr(cmd, '\\');
+#endif
 	if (slash) {
 		*slash++ = 0;
-		if (cmd[1] == ':')
+		if (is_absolute_path(cmd))
 			exec_path = cmd;
 		cmd = slash;
 	}
-#endif
 
 	/*
 	 * "git-xxxx" is the same as "git xxxx", but we obviously:

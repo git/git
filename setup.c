@@ -88,10 +88,7 @@ const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 		return arg;
 #else
 	/* don't add prefix to absolute paths */
-	const int is_absolute =
-		is_dir_sep(arg[0]) ||
-		(arg[0] && arg[1] == ':' && is_dir_sep(arg[2]));
-	if (is_absolute)
+	if (is_absolute_path(arg))
 		pfx_len = 0;
 	else
 #endif
