@@ -118,22 +118,29 @@ sub info ($) {
 	print STDERR "-Info-    $_[0]\n" if $debug;
 }
 
-sub parse_config ($$) {
-	my ($data, $fn) = @_;
-	info "Loading $fn";
-	open(I,'-|','git',"--git-dir=$acl_git",'cat-file','blob',$fn);
+sub git_value (@) {
+	open(T,'-|','git',@_); local $_ = <T>; chop; close T; $_;
+}
+
+sub parse_config ($$$$) {
+	my $data = shift;
+	local $ENV{GIT_DIR} = shift;
+	my $br = shift;
+	my $fn = shift;
+	info "Loading $br:$fn";
+	open(I,'-|','git','cat-file','blob',"$br:$fn");
 	my $section = '';
 	while (<I>) {
 		chomp;
 		if (/^\s*$/ || /^\s*#/) {
 		} elsif (/^\[([a-z]+)\]$/i) {
-			$section = $1;
+			$section = lc $1;
 		} elsif (/^\[([a-z]+)\s+"(.*)"\]$/i) {
-			$section = "$1.$2";
+			$section = join('.',lc $1,$2);
 		} elsif (/^\s*([a-z][a-z0-9]+)\s*=\s*(.*?)\s*$/i) {
-			push @{$data->{"$section.$1"}}, $2;
+			push @{$data->{join('.',$section,lc $1)}}, $2;
 		} else {
-			deny "bad config file line $. in $fn";
+			deny "bad config file line $. in $br:$fn";
 		}
 	}
 	close I;
@@ -202,11 +209,6 @@ sub check_committers (@) {
 	}
 }
 
-sub git_value (@) {
-	open(T,'-|','git',@_); local $_ = <T>; chop; close T;
-	$_;
-}
-
 deny "No GIT_DIR inherited from caller" unless $git_dir;
 deny "Need a ref name" unless $ref;
 deny "Refusing funny ref $ref" unless $ref =~ s,^refs/,,;
@@ -231,13 +233,39 @@ $op = 'U' if ($op eq 'R'
 	&& $ref =~ m,^heads/,
 	&& $old eq git_value('merge-base',$old,$new));
 
-# Load the user's ACL file.
+# Load the user's ACL file. Expand groups (user.memberof) one level.
 {
 	my %data = ('user.committer' => []);
-	parse_config(\%data, "$acl_branch:users/$this_user.acl");
+	parse_config(\%data,$acl_git,$acl_branch,"external/$repository_name.acl");
+
+	%data = (
+		'user.committer' => $data{'user.committer'},
+		'user.memberof' => [],
+	);
+	parse_config(\%data,$acl_git,$acl_branch,"users/$this_user.acl");
+
 	%user_committer = map {$_ => $_} @{$data{'user.committer'}};
-	my $rules = $data{"repository.$repository_name.allow"} || [];
+	my $rule_key = "repository.$repository_name.allow";
+	my $rules = $data{$rule_key} || [];
+
+	foreach my $group (@{$data{'user.memberof'}}) {
+		my %g;
+		parse_config(\%g,$acl_git,$acl_branch,"groups/$group.acl");
+		my $group_rules = $g{$rule_key};
+		push @$rules, @$group_rules if $group_rules;
+	}
+
+RULE:
 	foreach (@$rules) {
+		while (/\${user\.([a-z][a-zA-Z0-9]+)}/) {
+			my $k = lc $1;
+			my $v = $data{"user.$k"};
+			next RULE unless defined $v;
+			next RULE if @$v != 1;
+			next RULE unless defined $v->[0];
+			s/\${user\.$k}/$v->[0]/g;
+		}
+
 		if (/^([CDRU ]+)\s+for\s+([^\s]+)$/) {
 			my $ops = $1;
 			my $ref = $2;
