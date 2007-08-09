@@ -318,9 +318,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	/*
 	 * Set up the default .git directory contents
 	 */
-	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	if (!git_dir)
-		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
+	git_dir = get_git_dir();
 	safe_create_dir(git_dir, 0);
 
 	/* Check to see if the repository version is right.
