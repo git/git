@@ -9,6 +9,7 @@ test_description='fmt-merge-msg test'
 
 datestamp=1151939923
 setdate () {
+	sleep 1
 	GIT_COMMITTER_DATE="$datestamp +0200"
 	GIT_AUTHOR_DATE="$datestamp +0200"
 	datestamp=`expr "$datestamp" + 1`
