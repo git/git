@@ -408,8 +408,8 @@ sub extract_valid_address {
 	# check for a local address:
 	return $address if ($address =~ /^($local_part_regexp)$/);
 
+	$address =~ s/^\s*<(.*)>\s*$/$1/;
 	if ($have_email_valid) {
-		$address =~ s/^\s*<(.*)>\s*$/$1/;
 		return scalar Email::Valid->address($address);
 	} else {
 		# less robust/correct than the monster regexp in Email::Valid,
