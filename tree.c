@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "cache-tree.h"
 #include "tree.h"
 #include "blob.h"
 #include "commit.h"
@@ -7,7 +8,7 @@
 
 const char *tree_type = "tree";
 
-static int read_one_entry(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
+static int read_one_entry_opt(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage, int opt)
 {
 	int len;
 	unsigned int size;
@@ -25,7 +26,23 @@ static int read_one_entry(const unsigned char *sha1, const char *base, int basel
 	memcpy(ce->name, base, baselen);
 	memcpy(ce->name + baselen, pathname, len+1);
 	hashcpy(ce->sha1, sha1);
-	return add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
+	return add_cache_entry(ce, opt);
+}
+
+static int read_one_entry(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
+{
+	return read_one_entry_opt(sha1, base, baselen, pathname, mode, stage,
+				  ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
+}
+
+/*
+ * This is used when the caller knows there is no existing entries at
+ * the stage that will conflict with the entry being added.
+ */
+static int read_one_entry_quick(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
+{
+	return read_one_entry_opt(sha1, base, baselen, pathname, mode, stage,
+				  ADD_CACHE_JUST_APPEND);
 }
 
 static int match_tree_entry(const char *base, int baselen, const char *path, unsigned int mode, const char **paths)
@@ -119,9 +136,55 @@ int read_tree_recursive(struct tree *tree,
 	return 0;
 }
 
+static int cmp_cache_name_compare(const void *a_, const void *b_)
+{
+	const struct cache_entry *ce1, *ce2;
+
+	ce1 = *((const struct cache_entry **)a_);
+	ce2 = *((const struct cache_entry **)b_);
+	return cache_name_compare(ce1->name, ntohs(ce1->ce_flags),
+				  ce2->name, ntohs(ce2->ce_flags));
+}
+
 int read_tree(struct tree *tree, int stage, const char **match)
 {
-	return read_tree_recursive(tree, "", 0, stage, match, read_one_entry);
+	read_tree_fn_t fn = NULL;
+	int i, err;
+
+	/*
+	 * Currently the only existing callers of this function all
+	 * call it with stage=1 and after making sure there is nothing
+	 * at that stage; we could always use read_one_entry_quick().
+	 *
+	 * But when we decide to straighten out git-read-tree not to
+	 * use unpack_trees() in some cases, this will probably start
+	 * to matter.
+	 */
+
+	/*
+	 * See if we have cache entry at the stage.  If so,
+	 * do it the original slow way, otherwise, append and then
+	 * sort at the end.
+	 */
+	for (i = 0; !fn && i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (ce_stage(ce) == stage)
+			fn = read_one_entry;
+	}
+
+	if (!fn)
+		fn = read_one_entry_quick;
+	err = read_tree_recursive(tree, "", 0, stage, match, fn);
+	if (fn == read_one_entry || err)
+		return err;
+
+	/*
+	 * Sort the cache entry -- we need to nuke the cache tree, though.
+	 */
+	cache_tree_free(&active_cache_tree);
+	qsort(active_cache, active_nr, sizeof(active_cache[0]),
+	      cmp_cache_name_compare);
+	return 0;
 }
 
 struct tree *lookup_tree(const unsigned char *sha1)
