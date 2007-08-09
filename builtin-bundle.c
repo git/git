@@ -279,8 +279,41 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		if (!(e->item->flags & SHOWN) && e->item->type == OBJ_COMMIT) {
 			warning("ref '%s' is excluded by the rev-list options",
 				e->name);
+			free(ref);
 			continue;
 		}
+		/*
+		 * If you run "git bundle create bndl v1.0..v2.0", the
+		 * name of the positive ref is "v2.0" but that is the
+		 * commit that is referenced by the tag, and not the tag
+		 * itself.
+		 */
+		if (hashcmp(sha1, e->item->sha1)) {
+			/*
+			 * Is this the positive end of a range expressed
+			 * in terms of a tag (e.g. v2.0 from the range
+			 * "v1.0..v2.0")?
+			 */
+			struct commit *one = lookup_commit_reference(sha1);
+			struct object *obj;
+
+			if (e->item == &(one->object)) {
+				/*
+				 * Need to include e->name as an
+				 * independent ref to the pack-objects
+				 * input, so that the tag is included
+				 * in the output; otherwise we would
+				 * end up triggering "empty bundle"
+				 * error.
+				 */
+				obj = parse_object(sha1);
+				obj->flags |= SHOWN;
+				add_pending_object(&revs, obj, e->name);
+			}
+			free(ref);
+			continue;
+		}
+
 		ref_count++;
 		write_or_die(bundle_fd, sha1_to_hex(e->item->sha1), 40);
 		write_or_die(bundle_fd, " ", 1);
