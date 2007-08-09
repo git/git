@@ -223,20 +223,31 @@ sub load_diff ($) {
 	my $d = $diff_cache{$base};
 	unless ($d) {
 		local $/ = "\0";
-		open(T,'-|','git','diff-tree',
-			'-r','--name-status','-z',
-			$base,$new) or return undef;
 		my %this_diff;
-		while (<T>) {
-			my $op = $_;
-			chop $op;
+		if ($base =~ /^0{40}$/) {
+			open(T,'-|','git','ls-tree',
+				'-r','--name-only','-z',
+				$new) or return undef;
+			while (<T>) {
+				chop;
+				$this_diff{$_} = 'A';
+			}
+			close T or return undef;
+		} else {
+			open(T,'-|','git','diff-tree',
+				'-r','--name-status','-z',
+				$base,$new) or return undef;
+			while (<T>) {
+				my $op = $_;
+				chop $op;
 
-			my $path = <T>;
-			chop $path;
+				my $path = <T>;
+				chop $path;
 
-			$this_diff{$path} = $op;
+				$this_diff{$path} = $op;
+			}
+			close T or return undef;
 		}
-		close T or return undef;
 		$d = \%this_diff;
 		$diff_cache{$base} = $d;
 	}
