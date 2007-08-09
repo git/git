@@ -208,6 +208,10 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	struct rev_info revs;
 	struct child_process rls;
 
+	/*
+	 * NEEDSWORK: this should use something like lock-file
+	 * to create temporary that is cleaned up upon error.
+	 */
 	bundle_fd = (!strcmp(path, "-") ? 1 :
 			open(path, O_CREAT | O_EXCL | O_WRONLY, 0666));
 	if (bundle_fd < 0)
@@ -267,8 +271,12 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		 * Make sure the refs we wrote out is correct; --max-count and
 		 * other limiting options could have prevented all the tips
 		 * from getting output.
+		 *
+		 * Non commit objects such as tags and blobs do not have
+		 * this issue as they are not affected by those extra
+		 * constraints.
 		 */
-		if (!(e->item->flags & SHOWN)) {
+		if (!(e->item->flags & SHOWN) && e->item->type == OBJ_COMMIT) {
 			warning("ref '%s' is excluded by the rev-list options",
 				e->name);
 			continue;
