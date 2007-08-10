@@ -216,13 +216,19 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
  */
 static int index_only = 0;
 
+static void init_tree_desc_from_tree(struct tree_desc *desc, struct tree *tree)
+{
+	parse_tree(tree);
+	init_tree_desc(desc, tree->buffer, tree->size);
+}
+
 static int git_merge_trees(int index_only,
 			   struct tree *common,
 			   struct tree *head,
 			   struct tree *merge)
 {
 	int rc;
-	struct object_list *trees = NULL;
+	struct tree_desc t[3];
 	struct unpack_trees_options opts;
 
 	memset(&opts, 0, sizeof(opts));
@@ -234,11 +240,11 @@ static int git_merge_trees(int index_only,
 	opts.head_idx = 2;
 	opts.fn = threeway_merge;
 
-	object_list_append(&common->object, &trees);
-	object_list_append(&head->object, &trees);
-	object_list_append(&merge->object, &trees);
+	init_tree_desc_from_tree(t+0, common);
+	init_tree_desc_from_tree(t+1, head);
+	init_tree_desc_from_tree(t+2, merge);
 
-	rc = unpack_trees(trees, &opts);
+	rc = unpack_trees(3, t, &opts);
 	cache_tree_free(&active_cache_tree);
 	return rc;
 }

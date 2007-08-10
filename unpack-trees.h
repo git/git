@@ -26,7 +26,7 @@ struct unpack_trees_options {
 	struct cache_entry *df_conflict_entry;
 };
 
-extern int unpack_trees(struct object_list *trees,
+extern int unpack_trees(unsigned n, struct tree_desc *t,
 		struct unpack_trees_options *options);
 
 int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o);
