@@ -224,7 +224,7 @@ left-to-right.
     G   H   I   J
      \ /     \ /
       D   E   F
-       \  |  / \
+       \  |  / \ 
         \ | /   |
          \|/    |
           B     C
