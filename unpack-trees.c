@@ -827,7 +827,6 @@ int twoway_merge(struct cache_entry **src,
 	struct cache_entry *oldtree = src[1];
 	struct cache_entry *newtree = src[2];
 
-	remove_entry(remove);
 	if (o->merge_size != 2)
 		return error("Cannot do a twoway merge of %d trees",
 			     o->merge_size);
@@ -850,6 +849,7 @@ int twoway_merge(struct cache_entry **src,
 		}
 		else if (oldtree && !newtree && same(current, oldtree)) {
 			/* 10 or 11 */
+			remove_entry(remove);
 			return deleted_entry(oldtree, current, o);
 		}
 		else if (oldtree && newtree &&
@@ -859,6 +859,7 @@ int twoway_merge(struct cache_entry **src,
 		}
 		else {
 			/* all other failures */
+			remove_entry(remove);
 			if (oldtree)
 				reject_merge(oldtree);
 			if (current)
@@ -870,8 +871,8 @@ int twoway_merge(struct cache_entry **src,
 	}
 	else if (newtree)
 		return merged_entry(newtree, current, o);
-	else
-		return deleted_entry(oldtree, current, o);
+	remove_entry(remove);
+	return deleted_entry(oldtree, current, o);
 }
 
 /*
