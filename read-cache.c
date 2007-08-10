@@ -507,6 +507,11 @@ int verify_path(const char *path)
 {
 	char c;
 
+#ifdef __MINGW32__
+	if (is_absolute_path(path))
+		return error("Cannot handle absolute path: %s", path);
+#endif
+
 	goto inside;
 	for (;;) {
 		if (!c)
