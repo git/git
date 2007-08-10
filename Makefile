@@ -179,7 +179,6 @@ RM = rm -f
 TAR = tar
 FIND = find
 INSTALL = /bin/install
-INSTALL = install
 RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
