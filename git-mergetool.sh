@@ -14,6 +14,7 @@ SUBDIRECTORY_OK=Yes
 require_work_tree
 
 KDIFF3=kdiff3
+KDIFF3SEPARATOR=--
 
 # Returns true if the mode reflects a symlink
 is_symlink () {
@@ -194,10 +195,10 @@ merge_file () {
 	kdiff3)
 	    if base_present ; then
 		("$KDIFF3" --auto --L1 "$path (Base)" -L2 "$path (Local)" --L3 "$path (Remote)" \
-		    -o "$path" -- "$BASE" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
+		    -o "$path" $KDIFF3SEPERATOR "$BASE" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    else
 		("$KDIFF3" --auto -L1 "$path (Local)" --L2 "$path (Remote)" \
-		    -o "$path" -- "$LOCAL" "$REMOTE" > /dev/null 2>&1)
+		    -o "$path" $KDIFF3SEPERATOR "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    fi
 	    status=$?
 	    remove_backup
@@ -321,6 +322,11 @@ if test -z "$merge_tool" ; then
             merge_tool_candidates="kdiff3 $merge_tool_candidates"
         fi
     fi
+    regentry="$(REG QUERY 'HKEY_LOCAL_MACHINE\SOFTWARE\KDiff3\diff-ext' 2>/dev/null)" && {
+        KDIFF3=$(echo "$regentry" | grep diffcommand | cut -f 3)
+        KDIFF3SEPARATOR=
+        merge_tool_candidates="$merge_tool_candidates kdiff3"
+    }
     if echo "${VISUAL:-$EDITOR}" | grep 'emacs' > /dev/null 2>&1; then
         merge_tool_candidates="$merge_tool_candidates emerge"
     fi
@@ -332,10 +338,12 @@ if test -z "$merge_tool" ; then
     for i in $merge_tool_candidates; do
         if test $i = emerge ; then
             cmd=emacs
+        elif test $i = kdiff3 ; then
+            cmd="$KDIFF3"
         else
             cmd=$i
         fi
-        if type $cmd > /dev/null 2>&1; then
+        if type "$cmd" > /dev/null 2>&1; then
             merge_tool=$i
             break
         fi
@@ -347,7 +355,13 @@ if test -z "$merge_tool" ; then
 fi
 
 case "$merge_tool" in
-    kdiff3|tkdiff|meld|xxdiff|vimdiff|gvimdiff|opendiff)
+    kdiff3)
+	if ! type "$KDIFF3" > /dev/null 2>&1; then
+	    echo "The merge tool $merge_tool is not available"
+	    exit 1
+	fi
+	;;
+    tkdiff|meld|xxdiff|vimdiff|gvimdiff|opendiff)
 	if ! type "$merge_tool" > /dev/null 2>&1; then
 	    echo "The merge tool $merge_tool is not available"
 	    exit 1
