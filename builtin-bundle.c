@@ -207,6 +207,7 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	char buffer[1024];
 	struct rev_info revs;
 	struct child_process rls;
+	FILE *rls_fout;
 
 	/*
 	 * NEEDSWORK: this should use something like lock-file
@@ -236,10 +237,11 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	rls.git_cmd = 1;
 	if (start_command(&rls))
 		return -1;
-	while ((i = read_string(rls.out, buffer, sizeof(buffer))) > 0) {
+	rls_fout = fdopen(rls.out, "r");
+	while (fgets(buffer, sizeof(buffer), rls_fout)) {
 		unsigned char sha1[20];
 		if (buffer[0] == '-') {
-			write_or_die(bundle_fd, buffer, i);
+			write_or_die(bundle_fd, buffer, strlen(buffer));
 			if (!get_sha1_hex(buffer + 1, sha1)) {
 				struct object *object = parse_object(sha1);
 				object->flags |= UNINTERESTING;
@@ -250,6 +252,7 @@ static int create_bundle(struct bundle_header *header, const char *path,
 			object->flags |= SHOWN;
 		}
 	}
+	fclose(rls_fout);
 	if (finish_command(&rls))
 		return error("rev-list died");
 
