@@ -16,19 +16,13 @@ struct tree_entry_list {
 	const unsigned char *sha1;
 };
 
-static struct tree_entry_list *create_tree_entry_list(struct tree *tree)
+static struct tree_entry_list *create_tree_entry_list(struct tree_desc *desc)
 {
-	struct tree_desc desc;
 	struct name_entry one;
 	struct tree_entry_list *ret = NULL;
 	struct tree_entry_list **list_p = &ret;
 
-	if (!tree->object.parsed)
-		parse_tree(tree);
-
-	init_tree_desc(&desc, tree->buffer, tree->size);
-
-	while (tree_entry(&desc, &one)) {
+	while (tree_entry(desc, &one)) {
 		struct tree_entry_list *entry;
 
 		entry = xmalloc(sizeof(struct tree_entry_list));
@@ -173,9 +167,11 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 
 			if (S_ISDIR(posns[i]->mode)) {
 				struct tree *tree = lookup_tree(posns[i]->sha1);
+				struct tree_desc t;
 				any_dirs = 1;
 				parse_tree(tree);
-				subposns[i] = create_tree_entry_list(tree);
+				init_tree_desc(&t, tree->buffer, tree->size);
+				subposns[i] = create_tree_entry_list(&t);
 				posns[i] = posns[i]->next;
 				src[i + o->merge] = o->df_conflict_entry;
 				continue;
@@ -331,12 +327,10 @@ static void check_updates(struct cache_entry **src, int nr,
 		stop_progress(&progress);;
 }
 
-int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
+int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)
 {
-	unsigned len = object_list_length(trees);
 	struct tree_entry_list **posns;
 	int i;
-	struct object_list *posn = trees;
 	struct tree_entry_list df_conflict_list;
 	static struct cache_entry *dfc;
 
@@ -356,10 +350,9 @@ int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
 
 	if (len) {
 		posns = xmalloc(len * sizeof(struct tree_entry_list *));
-		for (i = 0; i < len; i++) {
-			posns[i] = create_tree_entry_list((struct tree *) posn->item);
-			posn = posn->next;
-		}
+		for (i = 0; i < len; i++)
+			posns[i] = create_tree_entry_list(t+i);
+
 		if (unpack_trees_rec(posns, len, o->prefix ? o->prefix : "",
 				     o, &df_conflict_list))
 			return -1;
