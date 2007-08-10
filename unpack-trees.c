@@ -58,10 +58,17 @@ static int entcmp(const char *name1, int dir1, const char *name2, int dir2)
 	return ret;
 }
 
+static inline void remove_entry(int remove)
+{
+	if (remove >= 0)
+		remove_cache_entry_at(remove);
+}
+
 static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			    const char *base, struct unpack_trees_options *o,
 			    struct tree_entry_list *df_conflict_list)
 {
+	int remove;
 	int baselen = strlen(base);
 	int src_size = len + 1;
 	int i_stk = i_stk;
@@ -145,10 +152,11 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 
 		subposns = xcalloc(len, sizeof(struct tree_list_entry *));
 
+		remove = -1;
 		if (cache_name && !strcmp(cache_name, first)) {
 			any_files = 1;
 			src[0] = active_cache[o->pos];
-			remove_cache_entry_at(o->pos);
+			remove = o->pos;
 		}
 
 		for (i = 0; i < len; i++) {
@@ -214,13 +222,14 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 						printf("\n");
 				}
 #endif
-				ret = o->fn(src, o);
+				ret = o->fn(src, o, remove);
 
 #if DBRT_DEBUG > 1
 				printf("Added %d entries\n", ret);
 #endif
 				o->pos += ret;
 			} else {
+				remove_entry(remove);
 				for (i = 0; i < src_size; i++) {
 					if (src[i]) {
 						add_cache_entry(src[i], ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
@@ -641,7 +650,8 @@ static void show_stage_entry(FILE *o,
 #endif
 
 int threeway_merge(struct cache_entry **stages,
-		struct unpack_trees_options *o)
+		struct unpack_trees_options *o,
+		int remove)
 {
 	struct cache_entry *index;
 	struct cache_entry *head;
@@ -657,6 +667,7 @@ int threeway_merge(struct cache_entry **stages,
 	int no_anc_exists = 1;
 	int i;
 
+	remove_entry(remove);
 	for (i = 1; i < o->head_idx; i++) {
 		if (!stages[i] || stages[i] == o->df_conflict_entry)
 			any_anc_missing = 1;
@@ -809,12 +820,14 @@ int threeway_merge(struct cache_entry **stages,
  *
  */
 int twoway_merge(struct cache_entry **src,
-		struct unpack_trees_options *o)
+		struct unpack_trees_options *o,
+		int remove)
 {
 	struct cache_entry *current = src[0];
 	struct cache_entry *oldtree = src[1];
 	struct cache_entry *newtree = src[2];
 
+	remove_entry(remove);
 	if (o->merge_size != 2)
 		return error("Cannot do a twoway merge of %d trees",
 			     o->merge_size);
@@ -868,11 +881,13 @@ int twoway_merge(struct cache_entry **src,
  * stage0 does not have anything there.
  */
 int bind_merge(struct cache_entry **src,
-		struct unpack_trees_options *o)
+		struct unpack_trees_options *o,
+		int remove)
 {
 	struct cache_entry *old = src[0];
 	struct cache_entry *a = src[1];
 
+	remove_entry(remove);
 	if (o->merge_size != 1)
 		return error("Cannot do a bind merge of %d trees\n",
 			     o->merge_size);
@@ -891,11 +906,13 @@ int bind_merge(struct cache_entry **src,
  * - take the stat information from stage0, take the data from stage1
  */
 int oneway_merge(struct cache_entry **src,
-		struct unpack_trees_options *o)
+		struct unpack_trees_options *o,
+		int remove)
 {
 	struct cache_entry *old = src[0];
 	struct cache_entry *a = src[1];
 
+	remove_entry(remove);
 	if (o->merge_size != 1)
 		return error("Cannot do a oneway merge of %d trees",
 			     o->merge_size);

@@ -4,7 +4,8 @@
 struct unpack_trees_options;
 
 typedef int (*merge_fn_t)(struct cache_entry **src,
-		struct unpack_trees_options *options);
+		struct unpack_trees_options *options,
+		int remove);
 
 struct unpack_trees_options {
 	int reset;
@@ -29,9 +30,9 @@ struct unpack_trees_options {
 extern int unpack_trees(unsigned n, struct tree_desc *t,
 		struct unpack_trees_options *options);
 
-int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o);
-int twoway_merge(struct cache_entry **src, struct unpack_trees_options *o);
-int bind_merge(struct cache_entry **src, struct unpack_trees_options *o);
-int oneway_merge(struct cache_entry **src, struct unpack_trees_options *o);
+int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o, int);
+int twoway_merge(struct cache_entry **src, struct unpack_trees_options *o, int);
+int bind_merge(struct cache_entry **src, struct unpack_trees_options *o, int);
+int oneway_merge(struct cache_entry **src, struct unpack_trees_options *o, int);
 
 #endif
