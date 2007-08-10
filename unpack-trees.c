@@ -887,7 +887,6 @@ int bind_merge(struct cache_entry **src,
 	struct cache_entry *old = src[0];
 	struct cache_entry *a = src[1];
 
-	remove_entry(remove);
 	if (o->merge_size != 1)
 		return error("Cannot do a bind merge of %d trees\n",
 			     o->merge_size);
@@ -912,13 +911,14 @@ int oneway_merge(struct cache_entry **src,
 	struct cache_entry *old = src[0];
 	struct cache_entry *a = src[1];
 
-	remove_entry(remove);
 	if (o->merge_size != 1)
 		return error("Cannot do a oneway merge of %d trees",
 			     o->merge_size);
 
-	if (!a)
+	if (!a) {
+		remove_entry(remove);
 		return deleted_entry(old, old, o);
+	}
 	if (old && same(old, a)) {
 		if (o->reset) {
 			struct stat st;
