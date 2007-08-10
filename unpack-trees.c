@@ -667,7 +667,6 @@ int threeway_merge(struct cache_entry **stages,
 	int no_anc_exists = 1;
 	int i;
 
-	remove_entry(remove);
 	for (i = 1; i < o->head_idx; i++) {
 		if (!stages[i] || stages[i] == o->df_conflict_entry)
 			any_anc_missing = 1;
@@ -730,8 +729,10 @@ int threeway_merge(struct cache_entry **stages,
 	}
 
 	/* #1 */
-	if (!head && !remote && any_anc_missing)
+	if (!head && !remote && any_anc_missing) {
+		remove_entry(remove);
 		return 0;
+	}
 
 	/* Under the new "aggressive" rule, we resolve mostly trivial
 	 * cases that we historically had git-merge-one-file resolve.
@@ -763,6 +764,7 @@ int threeway_merge(struct cache_entry **stages,
 		if ((head_deleted && remote_deleted) ||
 		    (head_deleted && remote && remote_match) ||
 		    (remote_deleted && head && head_match)) {
+			remove_entry(remove);
 			if (index)
 				return deleted_entry(index, index, o);
 			else if (ce && !head_deleted)
@@ -785,6 +787,7 @@ int threeway_merge(struct cache_entry **stages,
 		verify_uptodate(index, o);
 	}
 
+	remove_entry(remove);
 	o->nontrivial_merge = 1;
 
 	/* #2, #3, #4, #6, #7, #9, #10, #11. */
