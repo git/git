@@ -27,17 +27,4 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="literallayout[@class='monospaced']">
-  <xsl:text>.RS</xsl:text>
-  <xsl:if test="not($man.indent.width = '')">
-    <xsl:text> </xsl:text>
-    <xsl:value-of select="$man.indent.width"/>
-  </xsl:if>
-  <xsl:text>&#10;</xsl:text>
-  <xsl:text>&#10;.ft C&#10;.nf&#10;</xsl:text>
-  <xsl:apply-templates/>
-  <xsl:text>&#10;.fi&#10;.ft&#10;</xsl:text>
-  <xsl:text>.RE&#10;</xsl:text>
-</xsl:template>
-
 </xsl:stylesheet>
