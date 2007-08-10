@@ -475,8 +475,8 @@ ifeq ($(uname_S),IRIX64)
 	BASIC_LDFLAGS += -L/usr/lib32
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-	SHELL_PATH = $(shell cd /bin && pwd -W)/sh
-	PERL_PATH = $(shell cd /bin && pwd -W)/perl
+	SHELL_PATH = /bin/sh
+	PERL_PATH = /bin/perl
 	NO_MMAP=YesPlease
 	NO_PREAD=YesPlease
 	NO_OPENSSL=YesPlease
