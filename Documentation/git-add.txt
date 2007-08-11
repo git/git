@@ -7,7 +7,7 @@ git-add - Add file contents to the index
 
 SYNOPSIS
 --------
-'git-add' [-n] [-v] [-f] [--interactive | -i] [-u] [--] <file>...
+'git-add' [-n] [-v] [-f] [--interactive | -i] [-u] [--refresh] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -65,6 +65,10 @@ OPTIONS
 	except that the update is limited to paths specified on the
 	command line. If no paths are specified, all tracked files are
 	updated.
+
+\--refresh::
+	Don't add the file(s), but only refresh their stat()
+	information in the index.
 
 \--::
 	This option can be used to separate command-line options from

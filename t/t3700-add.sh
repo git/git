@@ -143,4 +143,16 @@ test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over st
 	git ls-files --stage | grep "^120000 .* 0	symlink$"
 '
 
+test_expect_success 'git add --refresh' '
+	>foo && git add foo && git commit -a -m "commit all" &&
+	test -z "`git diff-index HEAD -- foo`" &&
+	git read-tree HEAD &&
+	case "`git diff-index HEAD -- foo`" in
+	:100644" "*"M	foo") echo ok;;
+	*) echo fail; (exit 1);;
+	esac &&
+	git add --refresh -- foo &&
+	test -z "`git diff-index HEAD -- foo`"
+'
+
 test_done
