@@ -912,10 +912,12 @@ Return the list of files that haven't been handled."
 
 (defun git-setup-diff-buffer (buffer)
   "Setup a buffer for displaying a diff."
-  (with-current-buffer buffer
-    (diff-mode)
-    (goto-char (point-min))
-    (setq buffer-read-only t))
+  (let ((dir default-directory))
+    (with-current-buffer buffer
+      (diff-mode)
+      (goto-char (point-min))
+      (setq default-directory dir)
+      (setq buffer-read-only t)))
   (display-buffer buffer)
   (shrink-window-if-larger-than-buffer))
 
