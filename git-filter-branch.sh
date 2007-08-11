@@ -170,13 +170,6 @@ do
 	esac
 done < "$tempdir"/backup-refs
 
-case "$GIT_DIR" in
-/*)
-	;;
-*)
-	GIT_DIR="$(pwd)/../../$GIT_DIR"
-	;;
-esac
 export GIT_DIR GIT_WORK_TREE=.
 
 # These refs should be updated if their heads were rewritten
