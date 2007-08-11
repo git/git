@@ -8,7 +8,7 @@ git-stripspace - Filter out empty lines
 
 SYNOPSIS
 --------
-'git-stripspace' < <stream>
+'git-stripspace' [-s | --strip-comments] < <stream>
 
 DESCRIPTION
 -----------
@@ -16,6 +16,9 @@ Remove multiple empty lines, and empty lines at beginning and end.
 
 OPTIONS
 -------
+-s\|--strip-comments::
+	In addition to empty lines, also strip lines starting with '#'.
+
 <stream>::
 	Byte stream to act on.
 

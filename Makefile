@@ -208,7 +208,6 @@ SCRIPT_SH = \
 	git-pull.sh git-rebase.sh git-rebase--interactive.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-sh-setup.sh \
-	git-tag.sh git-verify-tag.sh \
 	git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh \
@@ -363,12 +362,14 @@ BUILTIN_OBJS = \
 	builtin-show-branch.o \
 	builtin-stripspace.o \
 	builtin-symbolic-ref.o \
+	builtin-tag.o \
 	builtin-tar-tree.o \
 	builtin-unpack-objects.o \
 	builtin-update-index.o \
 	builtin-update-ref.o \
 	builtin-upload-archive.o \
 	builtin-verify-pack.o \
+	builtin-verify-tag.o \
 	builtin-write-tree.o \
 	builtin-show-ref.o \
 	builtin-pack-refs.o
