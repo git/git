@@ -180,7 +180,25 @@ static void show_man_page(const char *git_cmd)
 		page = p;
 	}
 
+#ifdef __MINGW32__
+       {
+           char* prefix = "/doc/git/html/";
+	   int prefix_len = strlen (prefix);
+	   char* suffix = ".html";
+	   int suffix_len = strlen (suffix);
+	   int page_len = strlen (page);
+	   int htmlpath_len = prefix_len + page_len + suffix_len;
+	   char* htmlpath = xmalloc (htmlpath_len + 1);
+	   strcpy (htmlpath, prefix);
+	   strcpy (htmlpath + prefix_len, page);
+	   strcpy (htmlpath + prefix_len + page_len, suffix);
+	   htmlpath[htmlpath_len] = 0;
+	   /* We need sh here to run shell script /bin/start. */
+	   execlp("sh", "start", "/bin/start", htmlpath, NULL );
+       }
+#else
 	execlp("man", "man", page, NULL);
+#endif
 }
 
 void help_unknown_cmd(const char *cmd)
