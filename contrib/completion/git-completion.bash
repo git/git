@@ -459,6 +459,35 @@ _git_branch ()
 	__gitcomp "$(__git_refs)"
 }
 
+_git_bundle ()
+{
+	local mycword="$COMP_CWORD"
+	case "${COMP_WORDS[0]}" in
+	git)
+		local cmd="${COMP_WORDS[2]}"
+		mycword="$((mycword-1))"
+		;;
+	git-bundle*)
+		local cmd="${COMP_WORDS[1]}"
+		;;
+	esac
+	case "$mycword" in
+	1)
+		__gitcomp "create list-heads verify unbundle"
+		;;
+	2)
+		# looking for a file
+		;;
+	*)
+		case "$cmd" in
+			create)
+				__git_complete_revlist
+			;;
+		esac
+		;;
+	esac
+}
+
 _git_checkout ()
 {
 	__gitcomp "$(__git_refs)"
@@ -1009,6 +1038,7 @@ _git ()
 	add)         _git_add ;;
 	apply)       _git_apply ;;
 	bisect)      _git_bisect ;;
+	bundle)      _git_bundle ;;
 	branch)      _git_branch ;;
 	checkout)    _git_checkout ;;
 	cherry)      _git_cherry ;;
@@ -1057,6 +1087,7 @@ complete -o default -o nospace -F _git_am git-am
 complete -o default -o nospace -F _git_apply git-apply
 complete -o default -o nospace -F _git_bisect git-bisect
 complete -o default -o nospace -F _git_branch git-branch
+complete -o default -o nospace -F _git_bundle git-bundle
 complete -o default -o nospace -F _git_checkout git-checkout
 complete -o default -o nospace -F _git_cherry git-cherry
 complete -o default -o nospace -F _git_cherry_pick git-cherry-pick
@@ -1092,6 +1123,7 @@ complete -o default -o nospace -F _git_add git-add.exe
 complete -o default -o nospace -F _git_apply git-apply.exe
 complete -o default -o nospace -F _git git.exe
 complete -o default -o nospace -F _git_branch git-branch.exe
+complete -o default -o nospace -F _git_bundle git-bundle.exe
 complete -o default -o nospace -F _git_cherry git-cherry.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
 complete -o default -o nospace -F _git_format_patch git-format-patch.exe
