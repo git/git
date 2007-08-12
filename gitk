@@ -2600,7 +2600,7 @@ proc idcol {idlist id {i 0}} {
 proc makeuparrow {oid y x} {
     global rowidlist uparrowlen idrowranges displayorder
 
-    for {set i 1} {$i < $uparrowlen && $y > 1} {incr i} {
+    for {set i 0} {$i < $uparrowlen && $y > 1} {incr i} {
 	incr y -1
 	set idl [lindex $rowidlist $y]
 	set x [idcol $idl $oid $x]
@@ -3005,7 +3005,14 @@ proc insert_pad {row col npad} {
     global rowidlist
 
     set pad [ntimes $npad {}]
-    lset rowidlist $row [eval linsert [list [lindex $rowidlist $row]] $col $pad]
+    set idlist [lindex $rowidlist $row]
+    set bef [lrange $idlist 0 [expr {$col - 1}]]
+    set aft [lrange $idlist $col end]
+    set i [lsearch -exact $aft {}]
+    if {$i > 0} {
+	set aft [lreplace $aft $i $i]
+    }
+    lset rowidlist $row [concat $bef $pad $aft]
 }
 
 proc optimize_rows {row col endrow} {
@@ -3053,6 +3060,10 @@ proc optimize_rows {row col endrow} {
 		    set isarrow 1
 		}
 	    }
+	    if {!$isarrow && $id ne [lindex $displayorder $row] &&
+		[lsearch -exact [lindex $rowidlist [expr {$row+1}]] $id] < 0} {
+		set isarrow 1
+	    }
 	    # Looking at lines from this row to the previous row,
 	    # make them go straight up if they end in an arrow on
 	    # the previous row; otherwise make them go straight up
@@ -3077,8 +3088,8 @@ proc optimize_rows {row col endrow} {
 		# Line currently goes right too much;
 		# insert pads in this line
 		set npad [expr {$z - 1 + $isarrow}]
-		set pad [ntimes $npad {}]
-		set idlist [eval linsert \$idlist $col $pad]
+		insert_pad $row $col $npad
+		set idlist [lindex $rowidlist $row]
 		incr col $npad
 		set z [expr {$x0 - $col}]
 		set haspad 1
@@ -3169,31 +3180,9 @@ proc rowranges {id} {
     return $linenos
 }
 
-# work around tk8.4 refusal to draw arrows on diagonal segments
-proc adjarrowhigh {coords} {
-    global linespc
-
-    set x0 [lindex $coords 0]
-    set x1 [lindex $coords 2]
-    if {$x0 != $x1} {
-	set y0 [lindex $coords 1]
-	set y1 [lindex $coords 3]
-	if {$y0 - $y1 <= 2 * $linespc && $x1 == [lindex $coords 4]} {
-	    # we have a nearby vertical segment, just trim off the diag bit
-	    set coords [lrange $coords 2 end]
-	} else {
-	    set slope [expr {($x0 - $x1) / ($y0 - $y1)}]
-	    set xi [expr {$x0 - $slope * $linespc / 2}]
-	    set yi [expr {$y0 - $linespc / 2}]
-	    set coords [lreplace $coords 0 1 $xi $y0 $xi $yi]
-	}
-    }
-    return $coords
-}
-
 proc drawlineseg {id row endrow arrowlow} {
     global rowidlist displayorder iddrawn linesegs
-    global canv colormap linespc curview maxlinelen
+    global canv colormap linespc curview maxlinelen parentlist
 
     set cols [list [lsearch -exact [lindex $rowidlist $row] $id]]
     set le [expr {$row + 1}]
@@ -3268,9 +3257,11 @@ proc drawlineseg {id row endrow arrowlow} {
 	set itl [lindex $lines [expr {$i-1}] 2]
 	set al [$canv itemcget $itl -arrow]
 	set arrowlow [expr {$al eq "last" || $al eq "both"}]
-    } elseif {$arrowlow &&
-	      [lsearch -exact [lindex $rowidlist [expr {$row-1}]] $id] >= 0} {
-	set arrowlow 0
+    } elseif {$arrowlow} {
+	if {[lsearch -exact [lindex $rowidlist [expr {$row-1}]] $id] >= 0 ||
+	    [lsearch -exact [lindex $parentlist [expr {$row-1}]] $id] >= 0} {
+	    set arrowlow 0
+	}
     }
     set arrow [lindex {none first last both} [expr {$arrowhigh + 2*$arrowlow}]]
     for {set y $le} {[incr y -1] > $row} {} {
@@ -3289,8 +3280,19 @@ proc drawlineseg {id row endrow arrowlow} {
 	    set xc [lsearch -exact [lindex $rowidlist $row] $ch]
 	    if {$xc < 0} {
 		puts "oops: drawlineseg: child $ch not on row $row"
-	    } else {
-		if {$xc < $x - 1} {
+	    } elseif {$xc != $x} {
+		if {($arrowhigh && $le == $row + 1) || $dir == 0} {
+		    set d [expr {int(0.5 * $linespc)}]
+		    set x1 [xc $row $x]
+		    if {$xc < $x} {
+			set x2 [expr {$x1 - $d}]
+		    } else {
+			set x2 [expr {$x1 + $d}]
+		    }
+		    set y2 [yc $row]
+		    set y1 [expr {$y2 + $d}]
+		    lappend coords $x1 $y1 $x2 $y2
+		} elseif {$xc < $x - 1} {
 		    lappend coords [xc $row [expr {$x-1}]] [yc $row]
 		} elseif {$xc > $x + 1} {
 		    lappend coords [xc $row [expr {$x+1}]] [yc $row]
@@ -3301,23 +3303,9 @@ proc drawlineseg {id row endrow arrowlow} {
 	} else {
 	    set xn [xc $row $xp]
 	    set yn [yc $row]
-	    # work around tk8.4 refusal to draw arrows on diagonal segments
-	    if {$arrowlow && $xn != [lindex $coords end-1]} {
-		if {[llength $coords] < 4 ||
-		    [lindex $coords end-3] != [lindex $coords end-1] ||
-		    [lindex $coords end] - $yn > 2 * $linespc} {
-		    set xn [xc $row [expr {$xp - 0.5 * $dir}]]
-		    set yo [yc [expr {$row + 0.5}]]
-		    lappend coords $xn $yo $xn $yn
-		}
-	    } else {
-		lappend coords $xn $yn
-	    }
+	    lappend coords $xn $yn
 	}
 	if {!$joinhigh} {
-	    if {$arrowhigh} {
-		set coords [adjarrowhigh $coords]
-	    }
 	    assigncolor $id
 	    set t [$canv create line $coords -width [linewidth $id] \
 		       -fill $colormap($id) -tags lines.$id -arrow $arrow]
@@ -3341,9 +3329,6 @@ proc drawlineseg {id row endrow arrowlow} {
 	set coords [concat $coords $clow]
 	if {!$joinhigh} {
 	    lset lines [expr {$i-1}] 1 $le
-	    if {$arrowhigh} {
-		set coords [adjarrowhigh $coords]
-	    }
 	} else {
 	    # coalesce two pieces
 	    $canv delete $ith
@@ -3373,7 +3358,7 @@ proc drawparentlinks {id row} {
     set x [xc $row $col]
     set y [yc $row]
     set y2 [yc $row2]
-    set d [expr {int(0.4 * $linespc)}]
+    set d [expr {int(0.5 * $linespc)}]
     set ymid [expr {$y + $d}]
     set ids [lindex $rowidlist $row2]
     # rmx = right-most X coord used
