@@ -4,7 +4,6 @@
 #include "spawn-pipe.h"
 #define MAX_ARGS	32
 
-extern char **environ;
 static const char *current_exec_path;
 
 static const char *builtin_exec_path(void)
@@ -138,7 +137,7 @@ int execv_git_cmd(const char **argv)
 		trace_argv_printf(argv, -1, "trace: exec:");
 
 		/* execve() can only ever return if it fails */
-		execve(git_command, (char **)argv, environ);
+		execve(git_command, (const char **) argv, (const char **) environ);
 
 		trace_printf("trace: exec failed: %s\n", strerror(errno));
 
@@ -247,7 +246,7 @@ int spawnv_git_cmd(const char **argv, int pin[2], int pout[2])
 
 	trace_argv_printf(argv, -1, "trace: exec:");
 
-	pid = spawnvppe_pipe(cmd, argv, environ, usedpaths,
+	pid = spawnvppe_pipe(cmd, argv, (const char**) environ, usedpaths,
 		pin, pout);
 
 	argv[0] = tmp;

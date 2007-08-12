@@ -585,7 +585,7 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		const char *argv[] = { NULL, host, command, NULL };
 		const char *ssh = getenv("GIT_SSH");
 		if (!ssh) ssh = "ssh";
-		pid = spawnvpe_pipe(ssh, argv, environ, pipefd[1], pipefd[0]);
+		pid = spawnvpe_pipe(ssh, argv, (const char**) environ, pipefd[1], pipefd[0]);
 	}
 	else {
 		const char *argv[] = { NULL, "-c", command, NULL };

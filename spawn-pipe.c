@@ -1,8 +1,6 @@
 #include "git-compat-util.h"
 #include "spawn-pipe.h"
 
-extern char **environ;
-
 #ifdef __MINGW32__
 static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
 {
@@ -193,7 +191,7 @@ int spawnvppe_pipe(const char *cmd, const char **argv, const char **env,
 	qargv = xmalloc((argc+2)*sizeof(char*));
 	if (!interpr) {
 		quote_argv(qargv, argv);
-		pid = spawnve(_P_NOWAIT, prog, qargv, env);
+		pid = spawnve(_P_NOWAIT, prog, qargv, (const char**) env);
 	} else {
 		qargv[0] = interpr;
 		argv[0] = prog;
@@ -219,7 +217,7 @@ int spawnvppe_pipe(const char *cmd, const char **argv, const char **env,
 
 const char **copy_environ()
 {
-	return copy_env(environ);
+	return copy_env( (const char**)environ);
 }
 
 const char **copy_env(const char **env)

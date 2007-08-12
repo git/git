@@ -131,7 +131,7 @@ int pipe(int filedes[2])
 		CloseHandle(h[0]);
 		return -1;
 	}
-	fd = _open_osfhandle(h[0], O_NOINHERIT);
+	fd = _open_osfhandle( (int) h[0], O_NOINHERIT);
 	if (fd < 0) {
 		close(filedes[0]);
 		close(filedes[1]);
@@ -141,7 +141,7 @@ int pipe(int filedes[2])
 	}
 	close(filedes[0]);
 	filedes[0] = fd;
-	fd = _open_osfhandle(h[1], O_NOINHERIT);
+	fd = _open_osfhandle( (int) h[1], O_NOINHERIT);
 	if (fd < 0) {
 		close(filedes[0]);
 		close(filedes[1]);

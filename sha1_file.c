@@ -425,15 +425,17 @@ static size_t peak_pack_mapped;
 static size_t pack_mapped;
 struct packed_git *packed_git;
 
+extern size_t getpagesize();
+
 void pack_report(void)
 {
 	fprintf(stderr,
 		"pack_report: getpagesize()            = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitWindowSize = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitLimit      = %10" SZ_FMT "\n",
-		(size_t) getpagesize(),
-		packed_git_window_size,
-		packed_git_limit);
+		(unsigned long) getpagesize(),
+		(unsigned long) packed_git_window_size,
+		(unsigned long) packed_git_limit);
 	fprintf(stderr,
 		"pack_report: pack_used_ctr            = %10u\n"
 		"pack_report: pack_mmap_calls          = %10u\n"
@@ -443,7 +445,8 @@ void pack_report(void)
 		pack_used_ctr,
 		pack_mmap_calls,
 		pack_open_windows, peak_pack_open_windows,
-		pack_mapped, peak_pack_mapped);
+		(unsigned long) pack_mapped,
+		(unsigned long) peak_pack_mapped);
 }
 
 static int check_packed_git_idx(const char *path,  struct packed_git *p)
@@ -634,7 +637,6 @@ static int open_packed_git_1(struct packed_git *p)
 	struct pack_header hdr;
 	unsigned char sha1[20];
 	unsigned char *idx_sha1;
-	long fd_flag;
 
 	if (!p->index_data && open_pack_index(p))
 		return error("packfile %s index unavailable", p->pack_name);
@@ -669,13 +671,13 @@ static int open_packed_git_1(struct packed_git *p)
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
 		return error("file %s is not a GIT packfile", p->pack_name);
 	if (!pack_version_ok(hdr.hdr_version))
-		return error("packfile %s is version %u and not supported"
+		return error("packfile %s is version %lu and not supported"
 			" (try upgrading GIT to a newer version)",
 			p->pack_name, ntohl(hdr.hdr_version));
 
 	/* Verify the pack matches its index. */
 	if (p->num_objects != ntohl(hdr.hdr_entries))
-		return error("packfile %s claims to have %u objects"
+		return error("packfile %s claims to have %lu objects"
 			     " while index indicates %u objects",
 			     p->pack_name, ntohl(hdr.hdr_entries),
 			     p->num_objects);

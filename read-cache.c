@@ -149,7 +149,7 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 			changed |= DATA_CHANGED;
 		return changed;
 	default:
-		die("internal error: ce_mode is %o", ntohl(ce->ce_mode));
+		die("internal error: ce_mode is %lo", ntohl(ce->ce_mode));
 	}
 	if (ce->ce_mtime.sec != htonl(st->st_mtime))
 		changed |= MTIME_CHANGED;

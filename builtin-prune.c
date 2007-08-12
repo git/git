@@ -8,6 +8,8 @@
 static const char prune_usage[] = "git-prune [-n]";
 static int show_only;
 
+void sync(void);
+
 static int prune_object(char *path, const char *filename, const unsigned char *sha1)
 {
 	if (show_only) {

@@ -88,7 +88,7 @@ void setup_pager(void)
 #else
 	/* spawn the pager */
 	pager_argv[2] = pager;
-	pager_pid = spawnvpe_pipe(pager_argv[0], pager_argv, environ, fd, NULL);
+	pager_pid = spawnvpe_pipe(pager_argv[0], pager_argv, (const char**) environ, fd, NULL);
 	if (pager_pid < 0)
 		return;
 

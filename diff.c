@@ -1793,7 +1793,7 @@ static int spawn_prog(const char *pgm, const char **arg)
 	int status;
 
 	fflush(NULL);
-	pid = spawnvpe_pipe(pgm, arg, environ, NULL, NULL);
+	pid = spawnvpe_pipe(pgm, arg, (const char**) environ, NULL, NULL);
 	if (pid < 0)
 		die("unable to fork");
 
