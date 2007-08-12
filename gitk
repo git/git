@@ -2880,6 +2880,7 @@ proc layoutrows {row endrow last} {
 	    } elseif {!$idinlist($p)} {
 		lappend oldolds $p
 	    }
+	    set idinlist($p) 1
 	}
 	set nev [expr {[llength $idlist] + [llength $newolds]
 		       + [llength $oldolds] - $maxwidth + 1}]
@@ -2952,12 +2953,10 @@ proc layoutrows {row endrow last} {
 	    lset offs $col {}
 	}
 	foreach i $newolds {
-	    set idinlist($i) 1
 	    set idrowranges($i) $id
 	}
 	incr col $l
 	foreach oid $oldolds {
-	    set idinlist($oid) 1
 	    set idlist [linsert $idlist $col $oid]
 	    set offs [linsert $offs $col $o]
 	    makeuparrow $oid $col $row $o
@@ -2998,7 +2997,7 @@ proc layouttail {} {
 	set col [expr {[llength $idlist] - 1}]
 	set id [lindex $idlist $col]
 	addextraid $id $row
-	unset idinlist($id)
+	catch {unset idinlist($id)}
 	lappend idrowranges($id) $id
 	lappend rowrangelist $idrowranges($id)
 	unset idrowranges($id)
