@@ -7,6 +7,12 @@ test_description='quoted output'
 
 . ./test-lib.sh
 
+P1='pathname	with HT'
+: >"$P1" 2>&1 && test -f "$P1" && rm -f "$P1" || {
+	echo >&2 'Filesystem does not support HT in names'
+	test_done
+}
+
 FN='濱野'
 GN='純'
 HT='	'
