@@ -323,7 +323,7 @@ if test -z "$merge_tool" ; then
         fi
     fi
     regentry="$(REG QUERY 'HKEY_LOCAL_MACHINE\SOFTWARE\KDiff3\diff-ext' 2>/dev/null)" && {
-        KDIFF3=$(echo "$regentry" | grep diffcommand | cut -f 3)
+        KDIFF3=$(echo "$regentry" | grep diffcommand | cut -f 3 | sed -e 's@\\@/@g')
         KDIFF3SEPARATOR=
         merge_tool_candidates="$merge_tool_candidates kdiff3"
     }
