@@ -1322,7 +1322,7 @@ class P4Sync(Command):
 
                 for line in output:
                     changeNum = line.split(" ")[1]
-                    changes.append(changeNum)
+                    changes.append(int(changeNum))
 
                 changes.sort()
 
