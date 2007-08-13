@@ -296,7 +296,7 @@ proc readcommit {id} {
 
 proc updatecommits {} {
     global viewdata curview phase displayorder
-    global children commitrow selectedline thickerline
+    global children commitrow selectedline thickerline showneartags
 
     if {$phase ne {}} {
 	stop_rev_list
@@ -313,7 +313,9 @@ proc updatecommits {} {
     catch {unset viewdata($n)}
     readrefs
     changedrefs
-    regetallcommits
+    if {$showneartags} {
+	getallcommits
+    }
     showview $n
 }
 
@@ -427,7 +429,7 @@ proc readrefs {} {
 	    lappend idotherrefs($id) $name
 	}
     }
-    close $refd
+    catch {close $refd}
     set mainhead {}
     set mainheadid {}
     catch {
@@ -823,8 +825,13 @@ proc makewindow {} {
     pack .ctop -fill both -expand 1
     bindall <1> {selcanvline %W %x %y}
     #bindall <B1-Motion> {selcanvline %W %x %y}
-    bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
-    bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
+    if {[tk windowingsystem] == "win32"} {
+	bind . <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D }
+	bind $ctext <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D ; break }
+    } else {
+	bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
+	bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
+    }
     bindall <2> "canvscan mark %W %x %y"
     bindall <B2-Motion> "canvscan dragto %W %x %y"
     bindkey <Home> selfirstline
@@ -879,6 +886,7 @@ proc makewindow {} {
     bind $cflist <1> {sel_flist %W %x %y; break}
     bind $cflist <B1-Motion> {sel_flist %W %x %y; break}
     bind $cflist <ButtonRelease-1> {treeclick %W %x %y}
+    bind $cflist <Button-3> {pop_flist_menu %W %X %Y %x %y}
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -916,6 +924,32 @@ proc makewindow {} {
 	-command cobranch
     $headctxmenu add command -label "Remove this branch" \
 	-command rmbranch
+
+    global flist_menu
+    set flist_menu .flistctxmenu
+    menu $flist_menu -tearoff 0
+    $flist_menu add command -label "Highlight this too" \
+	-command {flist_hl 0}
+    $flist_menu add command -label "Highlight this only" \
+	-command {flist_hl 1}
+}
+
+# Windows sends all mouse wheel events to the current focused window, not
+# the one where the mouse hovers, so bind those events here and redirect
+# to the correct window
+proc windows_mousewheel_redirector {W X Y D} {
+    global canv canv2 canv3
+    set w [winfo containing -displayof $W $X $Y]
+    if {$w ne ""} {
+	set u [expr {$D < 0 ? 5 : -5}]
+	if {$w == $canv || $w == $canv2 || $w == $canv3} {
+	    allcanvs yview scroll $u units
+	} else {
+	    catch {
+		$w yview scroll $u units
+	    }
+	}
+    }
 }
 
 # mouse-2 makes all windows scan vertically, but only the one
@@ -955,8 +989,8 @@ proc bindkey {ev script} {
 # set the focus back to the toplevel for any click outside
 # the entry widgets
 proc click {w} {
-    global entries
-    foreach e $entries {
+    global ctext entries
+    foreach e [concat $entries $ctext] {
 	if {$w == $e} return
     }
     focus .
@@ -1496,6 +1530,33 @@ proc sel_flist {w x y} {
 	$ctext yview 1.0
     } else {
 	catch {$ctext yview [lindex $difffilestart [expr {$l - 2}]]}
+    }
+}
+
+proc pop_flist_menu {w X Y x y} {
+    global ctext cflist cmitmode flist_menu flist_menu_file
+    global treediffs diffids
+
+    set l [lindex [split [$w index "@$x,$y"] "."] 0]
+    if {$l <= 1} return
+    if {$cmitmode eq "tree"} {
+	set e [linetoelt $l]
+	if {[string index $e end] eq "/"} return
+    } else {
+	set e [lindex $treediffs($diffids) [expr {$l-2}]]
+    }
+    set flist_menu_file $e
+    tk_popup $flist_menu $X $Y
+}
+
+proc flist_hl {only} {
+    global flist_menu_file highlight_files
+
+    set x [shellquote $flist_menu_file]
+    if {$only || $highlight_files eq {}} {
+	set highlight_files $x
+    } else {
+	append highlight_files " " $x
     }
 }
 
@@ -2836,17 +2897,12 @@ proc layoutrows {row endrow last} {
     set offs [lindex $rowoffsets $row]
     while {$row < $endrow} {
 	set id [lindex $displayorder $row]
-	set oldolds {}
-	set newolds {}
+	set nev [expr {[llength $idlist] - $maxwidth + 1}]
 	foreach p [lindex $parentlist $row] {
-	    if {![info exists idinlist($p)]} {
-		lappend newolds $p
-	    } elseif {!$idinlist($p)} {
-		lappend oldolds $p
+	    if {![info exists idinlist($p)] || !$idinlist($p)} {
+		incr nev
 	    }
 	}
-	set nev [expr {[llength $idlist] + [llength $newolds]
-		       + [llength $oldolds] - $maxwidth + 1}]
 	if {$nev > 0} {
 	    if {!$last &&
 		$row + $uparrowlen + $mingaplen >= $commitidx($curview)} break
@@ -2865,11 +2921,21 @@ proc layoutrows {row endrow last} {
 			if {[incr nev -1] <= 0} break
 			continue
 		    }
-		    set rowchk($id) [expr {$row + $r}]
+		    set rowchk($i) [expr {$row + $r}]
 		}
 	    }
 	    lset rowidlist $row $idlist
 	    lset rowoffsets $row $offs
+	}
+	set oldolds {}
+	set newolds {}
+	foreach p [lindex $parentlist $row] {
+	    if {![info exists idinlist($p)]} {
+		lappend newolds $p
+	    } elseif {!$idinlist($p)} {
+		lappend oldolds $p
+	    }
+	    set idinlist($p) 1
 	}
 	set col [lsearch -exact $idlist $id]
 	if {$col < 0} {
@@ -2916,12 +2982,10 @@ proc layoutrows {row endrow last} {
 	    lset offs $col {}
 	}
 	foreach i $newolds {
-	    set idinlist($i) 1
 	    set idrowranges($i) $id
 	}
 	incr col $l
 	foreach oid $oldolds {
-	    set idinlist($oid) 1
 	    set idlist [linsert $idlist $col $oid]
 	    set offs [linsert $offs $col $o]
 	    makeuparrow $oid $col $row $o
@@ -2962,7 +3026,7 @@ proc layouttail {} {
 	set col [expr {[llength $idlist] - 1}]
 	set id [lindex $idlist $col]
 	addextraid $id $row
-	unset idinlist($id)
+	catch {unset idinlist($id)}
 	lappend idrowranges($id) $id
 	lappend rowrangelist $idrowranges($id)
 	unset idrowranges($id)
@@ -4565,6 +4629,7 @@ proc sellastline {} {
 
 proc selnextline {dir} {
     global selectedline
+    focus .
     if {![info exists selectedline]} return
     set l [expr {$selectedline + $dir}]
     unmarkmatches
@@ -4645,6 +4710,7 @@ proc godo {elt} {
 
 proc goback {} {
     global history historyindex
+    focus .
 
     if {$historyindex > 1} {
 	incr historyindex -1
@@ -4658,6 +4724,7 @@ proc goback {} {
 
 proc goforw {} {
     global history historyindex
+    focus .
 
     if {$historyindex < [llength $history]} {
 	set cmd [lindex $history $historyindex]
@@ -6134,17 +6201,13 @@ proc rmbranch {} {
 proc getallcommits {} {
     global allcommits allids nbmp nextarc seeds
 
-    set allids {}
-    set nbmp 0
-    set nextarc 0
-    set allcommits 0
-    set seeds {}
-    regetallcommits
-}
-
-# Called when the graph might have changed
-proc regetallcommits {} {
-    global allcommits seeds
+    if {![info exists allcommits]} {
+	set allids {}
+	set nbmp 0
+	set nextarc 0
+	set allcommits 0
+	set seeds {}
+    }
 
     set cmd [concat | git rev-list --all --parents]
     foreach id $seeds {
@@ -7575,7 +7638,10 @@ catch {source ~/.gitk}
 font create optionfont -family sans-serif -size -12
 
 # check that we can find a .git directory somewhere...
-set gitdir [gitdir]
+if {[catch {set gitdir [gitdir]}]} {
+    show_error {} . "Cannot find a git repository here."
+    exit 1
+}
 if {![file isdirectory $gitdir]} {
     show_error {} . "Cannot find the git directory \"$gitdir\"."
     exit 1
