@@ -185,11 +185,11 @@ static const char *env_hint =
 "\n"
 "Run\n"
 "\n"
-"  git config user.email \"you@email.com\"\n"
-"  git config user.name \"Your Name\"\n"
+"  git config --global user.email \"you@email.com\"\n"
+"  git config --global user.name \"Your Name\"\n"
 "\n"
-"To set the identity in this repository.\n"
-"Add --global to set your account\'s default\n"
+"to set your account\'s default identity.\n"
+"Omit --global to set the identity only in this repository.\n"
 "\n";
 
 const char *fmt_ident(const char *name, const char *email,
