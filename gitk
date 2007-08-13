@@ -460,7 +460,7 @@ proc readrefs {} {
 	    lappend idotherrefs($id) $name
 	}
     }
-    close $refd
+    catch {close $refd}
     set mainhead {}
     set mainheadid {}
     catch {
@@ -856,8 +856,13 @@ proc makewindow {} {
     pack .ctop -fill both -expand 1
     bindall <1> {selcanvline %W %x %y}
     #bindall <B1-Motion> {selcanvline %W %x %y}
-    bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
-    bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
+    if {[tk windowingsystem] == "win32"} {
+	bind . <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D }
+	bind $ctext <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D ; break }
+    } else {
+	bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
+	bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
+    }
     bindall <2> "canvscan mark %W %x %y"
     bindall <B2-Motion> "canvscan dragto %W %x %y"
     bindkey <Home> selfirstline
@@ -960,6 +965,24 @@ proc makewindow {} {
 	-command {flist_hl 1}
 }
 
+# Windows sends all mouse wheel events to the current focused window, not
+# the one where the mouse hovers, so bind those events here and redirect
+# to the correct window
+proc windows_mousewheel_redirector {W X Y D} {
+    global canv canv2 canv3
+    set w [winfo containing -displayof $W $X $Y]
+    if {$w ne ""} {
+	set u [expr {$D < 0 ? 5 : -5}]
+	if {$w == $canv || $w == $canv2 || $w == $canv3} {
+	    allcanvs yview scroll $u units
+	} else {
+	    catch {
+		$w yview scroll $u units
+	    }
+	}
+    }
+}
+
 # mouse-2 makes all windows scan vertically, but only the one
 # the cursor is in scans horizontally
 proc canvscan {op w x y} {
@@ -997,8 +1020,8 @@ proc bindkey {ev script} {
 # set the focus back to the toplevel for any click outside
 # the entry widgets
 proc click {w} {
-    global entries
-    foreach e $entries {
+    global ctext entries
+    foreach e [concat $entries $ctext] {
 	if {$w == $e} return
     }
     focus .
@@ -2887,6 +2910,7 @@ proc layoutrows {row endrow last} {
 	    } elseif {!$idinlist($p)} {
 		lappend oldolds $p
 	    }
+	    set idinlist($p) 1
 	}
 	set nev [expr {[llength $idlist] + [llength $newolds]
 		       + [llength $oldolds] - $maxwidth + 1}]
@@ -2936,11 +2960,9 @@ proc layoutrows {row endrow last} {
 	foreach i $newolds {
 	    set x [idcol $idlist $i $x]
 	    set idlist [linsert $idlist $x $i]
-	    set idinlist($i) 1
 	    set idrowranges($i) $id
 	}
 	foreach oid $oldolds {
-	    set idinlist($oid) 1
 	    set x [idcol $idlist $oid $x]
 	    set idlist [linsert $idlist $x $oid]
 	    makeuparrow $oid $row $x
@@ -2979,7 +3001,7 @@ proc layouttail {} {
 	set col [expr {[llength $idlist] - 1}]
 	set id [lindex $idlist $col]
 	addextraid $id $row
-	unset idinlist($id)
+	catch {unset idinlist($id)}
 	lappend idrowranges($id) $id
 	lappend rowrangelist $idrowranges($id)
 	unset idrowranges($id)
@@ -4551,6 +4573,7 @@ proc sellastline {} {
 
 proc selnextline {dir} {
     global selectedline
+    focus .
     if {![info exists selectedline]} return
     set l [expr {$selectedline + $dir}]
     unmarkmatches
@@ -4631,6 +4654,7 @@ proc godo {elt} {
 
 proc goback {} {
     global history historyindex
+    focus .
 
     if {$historyindex > 1} {
 	incr historyindex -1
@@ -4644,6 +4668,7 @@ proc goback {} {
 
 proc goforw {} {
     global history historyindex
+    focus .
 
     if {$historyindex < [llength $history]} {
 	set cmd [lindex $history $historyindex]
@@ -7561,7 +7586,10 @@ catch {source ~/.gitk}
 font create optionfont -family sans-serif -size -12
 
 # check that we can find a .git directory somewhere...
-set gitdir [gitdir]
+if {[catch {set gitdir [gitdir]}]} {
+    show_error {} . "Cannot find a git repository here."
+    exit 1
+}
 if {![file isdirectory $gitdir]} {
     show_error {} . "Cannot find the git directory \"$gitdir\"."
     exit 1
