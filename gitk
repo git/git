@@ -2895,18 +2895,12 @@ proc layoutrows {row endrow last} {
     set offs [lindex $rowoffsets $row]
     while {$row < $endrow} {
 	set id [lindex $displayorder $row]
-	set oldolds {}
-	set newolds {}
+	set nev [expr {[llength $idlist] - $maxwidth + 1}]
 	foreach p [lindex $parentlist $row] {
-	    if {![info exists idinlist($p)]} {
-		lappend newolds $p
-	    } elseif {!$idinlist($p)} {
-		lappend oldolds $p
+	    if {![info exists idinlist($p)] || !$idinlist($p)} {
+		incr nev
 	    }
-	    set idinlist($p) 1
 	}
-	set nev [expr {[llength $idlist] + [llength $newolds]
-		       + [llength $oldolds] - $maxwidth + 1}]
 	if {$nev > 0} {
 	    if {!$last &&
 		$row + $uparrowlen + $mingaplen >= $commitidx($curview)} break
@@ -2925,11 +2919,21 @@ proc layoutrows {row endrow last} {
 			if {[incr nev -1] <= 0} break
 			continue
 		    }
-		    set rowchk($id) [expr {$row + $r}]
+		    set rowchk($i) [expr {$row + $r}]
 		}
 	    }
 	    lset rowidlist $row $idlist
 	    lset rowoffsets $row $offs
+	}
+	set oldolds {}
+	set newolds {}
+	foreach p [lindex $parentlist $row] {
+	    if {![info exists idinlist($p)]} {
+		lappend newolds $p
+	    } elseif {!$idinlist($p)} {
+		lappend oldolds $p
+	    }
+	    set idinlist($p) 1
 	}
 	set col [lsearch -exact $idlist $id]
 	if {$col < 0} {
