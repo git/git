@@ -296,7 +296,7 @@ proc readcommit {id} {
 
 proc updatecommits {} {
     global viewdata curview phase displayorder
-    global children commitrow selectedline thickerline
+    global children commitrow selectedline thickerline showneartags
 
     if {$phase ne {}} {
 	stop_rev_list
@@ -313,7 +313,9 @@ proc updatecommits {} {
     catch {unset viewdata($n)}
     readrefs
     changedrefs
-    regetallcommits
+    if {$showneartags} {
+	getallcommits
+    }
     showview $n
 }
 
@@ -6199,17 +6201,13 @@ proc rmbranch {} {
 proc getallcommits {} {
     global allcommits allids nbmp nextarc seeds
 
-    set allids {}
-    set nbmp 0
-    set nextarc 0
-    set allcommits 0
-    set seeds {}
-    regetallcommits
-}
-
-# Called when the graph might have changed
-proc regetallcommits {} {
-    global allcommits seeds
+    if {![info exists allcommits]} {
+	set allids {}
+	set nbmp 0
+	set nextarc 0
+	set allcommits 0
+	set seeds {}
+    }
 
     set cmd [concat | git rev-list --all --parents]
     foreach id $seeds {
