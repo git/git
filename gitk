@@ -329,7 +329,7 @@ proc readcommit {id} {
 
 proc updatecommits {} {
     global viewdata curview phase displayorder
-    global children commitrow selectedline thickerline
+    global children commitrow selectedline thickerline showneartags
 
     if {$phase ne {}} {
 	stop_rev_list
@@ -346,7 +346,9 @@ proc updatecommits {} {
     catch {unset viewdata($n)}
     readrefs
     changedrefs
-    regetallcommits
+    if {$showneartags} {
+	getallcommits
+    }
     showview $n
 }
 
@@ -2901,20 +2903,7 @@ proc layoutrows {row endrow last} {
     set idlist [lindex $rowidlist $row]
     while {$row < $endrow} {
 	set id [lindex $displayorder $row]
-	set oldolds {}
-	set newolds {}
-	set olds [lindex $parentlist $row]
-	foreach p $olds {
-	    if {![info exists idinlist($p)]} {
-		lappend newolds $p
-	    } elseif {!$idinlist($p)} {
-		lappend oldolds $p
-	    }
-	    set idinlist($p) 1
-	}
-	set nev [expr {[llength $idlist] + [llength $newolds]
-		       + [llength $oldolds] - $maxwidth + 1}]
-	if {1 || $nev > 0} {
+	if {1} {
 	    if {!$last &&
 		$row + $uparrowlen + $mingaplen >= $commitidx($curview)} break
 	    for {set x [llength $idlist]} {[incr x -1] >= 0} {} {
@@ -2927,13 +2916,22 @@ proc layoutrows {row endrow last} {
 			set idinlist($i) 0
 			set rm1 [expr {$row - 1}]
 			lappend idrowranges($i) [lindex $displayorder $rm1]
-			#if {[incr nev -1] <= 0} break
 			continue
 		    }
-		    set rowchk($id) [expr {$row + $r}]
+		    set rowchk($i) [expr {$row + $r}]
 		}
 	    }
 	    lset rowidlist $row $idlist
+	}
+	set oldolds {}
+	set newolds {}
+	foreach p [lindex $parentlist $row] {
+	    if {![info exists idinlist($p)]} {
+		lappend newolds $p
+	    } elseif {!$idinlist($p)} {
+		lappend oldolds $p
+	    }
+	    set idinlist($p) 1
 	}
 	set col [lsearch -exact $idlist $id]
 	if {$col < 0} {
@@ -6145,17 +6143,13 @@ proc rmbranch {} {
 proc getallcommits {} {
     global allcommits allids nbmp nextarc seeds
 
-    set allids {}
-    set nbmp 0
-    set nextarc 0
-    set allcommits 0
-    set seeds {}
-    regetallcommits
-}
-
-# Called when the graph might have changed
-proc regetallcommits {} {
-    global allcommits seeds
+    if {![info exists allcommits]} {
+	set allids {}
+	set nbmp 0
+	set nextarc 0
+	set allcommits 0
+	set seeds {}
+    }
 
     set cmd [concat | git rev-list --all --parents]
     foreach id $seeds {
