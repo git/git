@@ -677,6 +677,26 @@ struct ll_merge_driver {
 /*
  * Built-in low-levels
  */
+static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
+			   const char *path_unused,
+			   mmfile_t *orig,
+			   mmfile_t *src1, const char *name1,
+			   mmfile_t *src2, const char *name2,
+			   mmbuffer_t *result)
+{
+	/*
+	 * The tentative merge result is "ours" for the final round,
+	 * or common ancestor for an internal merge.  Still return
+	 * "conflicted merge" status.
+	 */
+	mmfile_t *stolen = index_only ? orig : src1;
+
+	result->ptr = stolen->ptr;
+	result->size = stolen->size;
+	stolen->ptr = NULL;
+	return 1;
+}
+
 static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			const char *path_unused,
 			mmfile_t *orig,
@@ -687,10 +707,15 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	xpparam_t xpp;
 
 	if (buffer_is_binary(orig->ptr, orig->size) ||
-			buffer_is_binary(src1->ptr, src1->size) ||
-			buffer_is_binary(src2->ptr, src2->size))
-		return error("Cannot merge binary files: %s vs. %s\n",
+	    buffer_is_binary(src1->ptr, src1->size) ||
+	    buffer_is_binary(src2->ptr, src2->size)) {
+		warning("Cannot merge binary files: %s vs. %s\n",
 			name1, name2);
+		return ll_binary_merge(drv_unused, path_unused,
+				       orig, src1, name1,
+				       src2, name2,
+				       result);
+	}
 
 	memset(&xpp, 0, sizeof(xpp));
 	return xdl_merge(orig,
@@ -741,26 +766,6 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 	}
 	result->size = dst - result->ptr;
 	return 0;
-}
-
-static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
-			   const char *path_unused,
-			   mmfile_t *orig,
-			   mmfile_t *src1, const char *name1,
-			   mmfile_t *src2, const char *name2,
-			   mmbuffer_t *result)
-{
-	/*
-	 * The tentative merge result is "ours" for the final round,
-	 * or common ancestor for an internal merge.  Still return
-	 * "conflicted merge" status.
-	 */
-	mmfile_t *stolen = index_only ? orig : src1;
-
-	result->ptr = stolen->ptr;
-	result->size = stolen->size;
-	stolen->ptr = NULL;
-	return 1;
 }
 
 #define LL_BINARY_MERGE 0
