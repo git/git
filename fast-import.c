@@ -663,9 +663,7 @@ static void start_packfile(void)
 
 	snprintf(tmpfile, sizeof(tmpfile),
 		"%s/tmp_pack_XXXXXX", get_object_directory());
-	pack_fd = mkstemp(tmpfile);
-	if (pack_fd < 0)
-		die("Can't create %s: %s", tmpfile, strerror(errno));
+	pack_fd = xmkstemp(tmpfile);
 	p = xcalloc(1, sizeof(*p) + strlen(tmpfile) + 2);
 	strcpy(p->pack_name, tmpfile);
 	p->pack_fd = pack_fd;
@@ -727,9 +725,7 @@ static char *create_index(void)
 
 	snprintf(tmpfile, sizeof(tmpfile),
 		"%s/tmp_idx_XXXXXX", get_object_directory());
-	idx_fd = mkstemp(tmpfile);
-	if (idx_fd < 0)
-		die("Can't create %s: %s", tmpfile, strerror(errno));
+	idx_fd = xmkstemp(tmpfile);
 	f = sha1fd(idx_fd, tmpfile);
 	sha1write(f, array, 256 * sizeof(int));
 	SHA1_Init(&ctx);

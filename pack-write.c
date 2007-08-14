@@ -45,7 +45,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		static char tmpfile[PATH_MAX];
 		snprintf(tmpfile, sizeof(tmpfile),
 			 "%s/tmp_idx_XXXXXX", get_object_directory());
-		fd = mkstemp(tmpfile);
+		fd = xmkstemp(tmpfile);
 		index_name = xstrdup(tmpfile);
 	} else {
 		unlink(index_name);

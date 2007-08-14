@@ -114,7 +114,7 @@ static const char *open_pack_file(const char *pack_name)
 			static char tmpfile[PATH_MAX];
 			snprintf(tmpfile, sizeof(tmpfile),
 				 "%s/tmp_pack_XXXXXX", get_object_directory());
-			output_fd = mkstemp(tmpfile);
+			output_fd = xmkstemp(tmpfile);
 			pack_name = xstrdup(tmpfile);
 		} else
 			output_fd = open(pack_name, O_CREAT|O_EXCL|O_RDWR, 0600);
