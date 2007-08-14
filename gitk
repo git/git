@@ -1012,7 +1012,7 @@ proc savestuff {w} {
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth showneartags showlocalchanges
     global viewname viewfiles viewargs viewperm nextviewnum
-    global cmitmode wrapcomment
+    global cmitmode wrapcomment datetimeformat
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
 
     if {$stuffsaved} return
@@ -1030,6 +1030,7 @@ proc savestuff {w} {
 	puts $f [list set wrapcomment $wrapcomment]
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set showlocalchanges $showlocalchanges]
+	puts $f [list set datetimeformat $datetimeformat]
 	puts $f [list set bgcolor $bgcolor]
 	puts $f [list set fgcolor $fgcolor]
 	puts $f [list set colors $colors]
@@ -7341,8 +7342,9 @@ proc prefsok {} {
 }
 
 proc formatdate {d} {
+    global datetimeformat
     if {$d ne {}} {
-	set d [clock format $d -format "%Y-%m-%d %H:%M:%S"]
+	set d [clock format $d -format $datetimeformat]
     }
     return $d
 }
@@ -7655,6 +7657,7 @@ set showneartags 1
 set maxrefs 20
 set maxlinelen 200
 set showlocalchanges 1
+set datetimeformat "%Y-%m-%d %H:%M:%S"
 
 set colors {green red blue magenta darkgrey brown orange}
 set bgcolor white
