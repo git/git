@@ -497,7 +497,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 		 */
 		if (idx_size != 4*256 + nr * 24 + 20 + 20) {
 			munmap(idx_map, idx_size);
-			return error("wrong index file size in %s", path);
+			return error("wrong index v1 file size in %s", path);
 		}
 	} else if (version == 2) {
 		/*
@@ -519,7 +519,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 			max_size += (nr - 1)*8;
 		if (idx_size < min_size || idx_size > max_size) {
 			munmap(idx_map, idx_size);
-			return error("wrong index file size in %s", path);
+			return error("wrong index v2 file size in %s", path);
 		}
 		if (idx_size != min_size) {
 			/* make sure we can deal with large pack offsets */
