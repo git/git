@@ -525,7 +525,8 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		    ) {
 			protocol = PROTO_SSH;
 			*path++ = '\0';
-		}
+		} else
+			path = host;
 	} else
 		path = end;
 
