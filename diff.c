@@ -3185,7 +3185,8 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 			 * to determine how many paths were dirty only
 			 * due to stat info mismatch.
 			 */
-			diffopt->skip_stat_unmatch++;
+			if (!diffopt->no_index)
+				diffopt->skip_stat_unmatch++;
 			diff_free_filepair(p);
 		}
 	}
