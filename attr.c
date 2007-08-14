@@ -257,6 +257,7 @@ static struct attr_stack {
 	struct attr_stack *prev;
 	char *origin;
 	unsigned num_matches;
+	unsigned alloc;
 	struct match_attr **attrs;
 } *attr_stack;
 
@@ -287,6 +288,26 @@ static const char *builtin_attr[] = {
 	NULL,
 };
 
+static void handle_attr_line(struct attr_stack *res,
+			     const char *line,
+			     const char *src,
+			     int lineno,
+			     int macro_ok)
+{
+	struct match_attr *a;
+
+	a = parse_attr_line(line, src, lineno, macro_ok);
+	if (!a)
+		return;
+	if (res->alloc <= res->num_matches) {
+		res->alloc = alloc_nr(res->num_matches);
+		res->attrs = xrealloc(res->attrs,
+				      sizeof(struct match_attr *) *
+				      res->alloc);
+	}
+	res->attrs[res->num_matches++] = a;
+}
+
 static struct attr_stack *read_attr_from_array(const char **list)
 {
 	struct attr_stack *res;
@@ -294,42 +315,34 @@ static struct attr_stack *read_attr_from_array(const char **list)
 	int lineno = 0;
 
 	res = xcalloc(1, sizeof(*res));
-	while ((line = *(list++)) != NULL) {
-		struct match_attr *a;
-
-		a = parse_attr_line(line, "[builtin]", ++lineno, 1);
-		if (!a)
-			continue;
-		res->attrs = xrealloc(res->attrs,
-			sizeof(struct match_attr *) * (res->num_matches + 1));
-		res->attrs[res->num_matches++] = a;
-	}
+	while ((line = *(list++)) != NULL)
+		handle_attr_line(res, line, "[builtin]", ++lineno, 1);
 	return res;
 }
 
 static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 {
-	FILE *fp;
+	FILE *fp = fopen(path, "r");
 	struct attr_stack *res;
 	char buf[2048];
 	int lineno = 0;
 
-	res = xcalloc(1, sizeof(*res));
-	fp = fopen(path, "r");
 	if (!fp)
-		return res;
-
-	while (fgets(buf, sizeof(buf), fp)) {
-		struct match_attr *a;
-
-		a = parse_attr_line(buf, path, ++lineno, macro_ok);
-		if (!a)
-			continue;
-		res->attrs = xrealloc(res->attrs,
-			sizeof(struct match_attr *) * (res->num_matches + 1));
-		res->attrs[res->num_matches++] = a;
-	}
+		return NULL;
+	res = xcalloc(1, sizeof(*res));
+	while (fgets(buf, sizeof(buf), fp))
+		handle_attr_line(res, buf, path, ++lineno, macro_ok);
 	fclose(fp);
+	return res;
+}
+
+static struct attr_stack *read_attr(const char *path, int macro_ok)
+{
+	struct attr_stack *res;
+
+	res = read_attr_from_file(path, macro_ok);
+	if (!res)
+		res = xcalloc(1, sizeof(*res));
 	return res;
 }
 
@@ -370,13 +383,15 @@ static void bootstrap_attr_stack(void)
 		elem->prev = attr_stack;
 		attr_stack = elem;
 
-		elem = read_attr_from_file(GITATTRIBUTES_FILE, 1);
+		elem = read_attr(GITATTRIBUTES_FILE, 1);
 		elem->origin = strdup("");
 		elem->prev = attr_stack;
 		attr_stack = elem;
 		debug_push(elem);
 
 		elem = read_attr_from_file(git_path(INFOATTRIBUTES_FILE), 1);
+		if (!elem)
+			elem = xcalloc(1, sizeof(*elem));
 		elem->origin = NULL;
 		elem->prev = attr_stack;
 		attr_stack = elem;
@@ -441,7 +456,7 @@ static void prepare_attr_stack(const char *path, int dirlen)
 		memcpy(pathbuf + dirlen, "/", 2);
 		cp = strchr(pathbuf + len + 1, '/');
 		strcpy(cp + 1, GITATTRIBUTES_FILE);
-		elem = read_attr_from_file(pathbuf, 0);
+		elem = read_attr(pathbuf, 0);
 		*cp = '\0';
 		elem->origin = strdup(pathbuf);
 		elem->prev = attr_stack;
