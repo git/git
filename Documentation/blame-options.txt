@@ -64,11 +64,11 @@ of lines before or after the line given by <start>.
 	assigns blame to the lines that were moved down (i.e. A)
 	to the child commit.  With this option, both groups of lines
 	are blamed on the parent.
-
-	<num> is optional but it is the lower bound on the number of
-	alphanumeric characters that git must detect as moving
-	within a file for it to associate those lines with the parent
-	commit.
++
+<num> is optional but it is the lower bound on the number of
+alphanumeric characters that git must detect as moving
+within a file for it to associate those lines with the parent
+commit.
 
 -C|<num>|::
 	In addition to `-M`, detect lines copied from other
@@ -77,11 +77,11 @@ of lines before or after the line given by <start>.
 	around across files.  When this option is given twice,
 	the command looks for copies from all other files in the
 	parent for the commit that creates the file in addition.
-
-	<num> is optional but it is the lower bound on the number of
-	alphanumeric characters that git must detect as moving
-	between files for it to associate those lines with the parent
-	commit.
++
+<num> is optional but it is the lower bound on the number of
+alphanumeric characters that git must detect as moving
+between files for it to associate those lines with the parent
+commit.
 
 -h, --help::
 	Show help message.

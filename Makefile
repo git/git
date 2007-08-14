@@ -208,7 +208,6 @@ SCRIPT_SH = \
 	git-pull.sh git-rebase.sh git-rebase--interactive.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-sh-setup.sh \
-	git-tag.sh git-verify-tag.sh \
 	git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh \
@@ -364,12 +363,14 @@ BUILTIN_OBJS = \
 	builtin-show-branch.o \
 	builtin-stripspace.o \
 	builtin-symbolic-ref.o \
+	builtin-tag.o \
 	builtin-tar-tree.o \
 	builtin-unpack-objects.o \
 	builtin-update-index.o \
 	builtin-update-ref.o \
 	builtin-upload-archive.o \
 	builtin-verify-pack.o \
+	builtin-verify-tag.o \
 	builtin-write-tree.o \
 	builtin-show-ref.o \
 	builtin-pack-refs.o
@@ -943,6 +944,9 @@ perl/Makefile: perl/Git.pm perl/Makefile.PL GIT-CFLAGS
 doc:
 	$(MAKE) -C Documentation all
 
+info:
+	$(MAKE) -C Documentation info
+
 TAGS:
 	$(RM) TAGS
 	$(FIND) . -name '*.[hcS]' -print | xargs etags -a
@@ -1035,6 +1039,9 @@ endif
 
 install-doc:
 	$(MAKE) -C Documentation install
+
+install-info:
+	$(MAKE) -C Documentation install-info
 
 quick-install-doc:
 	$(MAKE) -C Documentation quick-install

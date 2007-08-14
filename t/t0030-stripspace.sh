@@ -392,4 +392,9 @@ test_expect_success \
     git diff expect actual
 '
 
+test_expect_success 'strip comments, too' '
+	test ! -z "$(echo "# comment" | git stripspace)" &&
+	test -z "$(echo "# comment" | git stripspace -s)"
+'
+
 test_done

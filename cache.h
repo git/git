@@ -258,6 +258,7 @@ extern int index_name_pos(struct index_state *, const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
+#define ADD_CACHE_JUST_APPEND 8		/* Append only; tree.c::read_tree() */
 extern int add_index_entry(struct index_state *, struct cache_entry *ce, int option);
 extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern int remove_index_entry_at(struct index_state *, int pos);
@@ -582,6 +583,8 @@ extern void setup_pager(void);
 extern char *pager_program;
 extern int pager_in_use;
 extern int pager_use_color;
+
+extern char *editor_program;
 
 /* base85 */
 int decode_85(char *dst, const char *line, int linelen);

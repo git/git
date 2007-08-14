@@ -51,7 +51,7 @@ diff expected current'
 cd "$base_dir"
 
 test_expect_success 'cloning with reference (no -l -s)' \
-'git clone --reference B A D'
+'git clone --reference B file://`pwd`/A D'
 
 cd "$base_dir"
 

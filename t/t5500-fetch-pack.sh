@@ -129,7 +129,7 @@ pull_to_client 2nd "B" $((64*3))
 
 pull_to_client 3rd "A" $((1*3)) # old fails
 
-test_expect_success "clone shallow" "git-clone --depth 2 . shallow"
+test_expect_success "clone shallow" "git-clone --depth 2 file://`pwd`/. shallow"
 
 (cd shallow; git count-objects -v) > count.shallow
 

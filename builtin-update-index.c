@@ -86,9 +86,15 @@ static int process_lstat_error(const char *path, int err)
 
 static int add_one_path(struct cache_entry *old, const char *path, int len, struct stat *st)
 {
-	int option, size = cache_entry_size(len);
-	struct cache_entry *ce = xcalloc(1, size);
+	int option, size;
+	struct cache_entry *ce;
 
+	/* Was the old index entry already up-to-date? */
+	if (old && !ce_stage(old) && !ce_match_stat(old, st, 0))
+		return 0;
+
+	size = cache_entry_size(len);
+	ce = xcalloc(1, size);
 	memcpy(ce->name, path, len);
 	ce->ce_flags = htons(len);
 	fill_stat_cache_info(ce, st);

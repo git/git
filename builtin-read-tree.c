@@ -13,14 +13,19 @@
 #include "dir.h"
 #include "builtin.h"
 
-static struct object_list *trees;
+static int nr_trees;
+static struct tree *trees[4];
 
 static int list_tree(unsigned char *sha1)
 {
-	struct tree *tree = parse_tree_indirect(sha1);
+	struct tree *tree;
+
+	if (nr_trees >= 4)
+		return -1;
+	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		return -1;
-	object_list_append(&tree->object, &trees);
+	trees[nr_trees++] = tree;
 	return 0;
 }
 
@@ -76,11 +81,10 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 
 static void prime_cache_tree(void)
 {
-	struct tree *tree = (struct tree *)trees->item;
-	if (!tree)
+	if (!nr_trees)
 		return;
 	active_cache_tree = cache_tree();
-	prime_cache_tree_rec(active_cache_tree, tree);
+	prime_cache_tree_rec(active_cache_tree, trees[0]);
 
 }
 
@@ -92,6 +96,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int i, newfd, stage = 0;
 	unsigned char sha1[20];
+	struct tree_desc t[3];
 	struct unpack_trees_options opts;
 
 	memset(&opts, 0, sizeof(opts));
@@ -258,7 +263,12 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			opts.head_idx = 1;
 	}
 
-	unpack_trees(trees, &opts);
+	for (i = 0; i < nr_trees; i++) {
+		struct tree *tree = trees[i];
+		parse_tree(tree);
+		init_tree_desc(t+i, tree->buffer, tree->size);
+	}
+	unpack_trees(nr_trees, t, &opts);
 
 	/*
 	 * When reading only one tree (either the most basic form,
@@ -266,7 +276,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	 * valid cache-tree because the index must match exactly
 	 * what came from the tree.
 	 */
-	if (trees && trees->item && !opts.prefix && (!opts.merge || (stage == 2))) {
+	if (nr_trees && !opts.prefix && (!opts.merge || (stage == 2))) {
 		cache_tree_free(&active_cache_tree);
 		prime_cache_tree();
 	}
