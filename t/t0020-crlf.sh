@@ -290,4 +290,85 @@ test_expect_success '.gitattributes says two and three are text' '
 	fi
 '
 
+test_expect_success 'in-tree .gitattributes (1)' '
+
+	echo "one -crlf" >>.gitattributes &&
+	git add .gitattributes &&
+	git commit -m "Add .gitattributes" &&
+
+	rm -rf tmp one dir .gitattributes patch.file three &&
+	git read-tree --reset -u HEAD &&
+
+	if remove_cr one >/dev/null
+	then
+		echo "Eh? one should not have CRLF"
+		false
+	else
+		: happy
+	fi &&
+	remove_cr three >/dev/null || {
+		echo "Eh? three should still have CRLF"
+		false
+	}
+'
+
+test_expect_success 'in-tree .gitattributes (2)' '
+
+	rm -rf tmp one dir .gitattributes patch.file three &&
+	git read-tree --reset HEAD &&
+	git checkout-index -f -q -u -a &&
+
+	if remove_cr one >/dev/null
+	then
+		echo "Eh? one should not have CRLF"
+		false
+	else
+		: happy
+	fi &&
+	remove_cr three >/dev/null || {
+		echo "Eh? three should still have CRLF"
+		false
+	}
+'
+
+test_expect_success 'in-tree .gitattributes (3)' '
+
+	rm -rf tmp one dir .gitattributes patch.file three &&
+	git read-tree --reset HEAD &&
+	git checkout-index -u .gitattributes &&
+	git checkout-index -u one dir/two three &&
+
+	if remove_cr one >/dev/null
+	then
+		echo "Eh? one should not have CRLF"
+		false
+	else
+		: happy
+	fi &&
+	remove_cr three >/dev/null || {
+		echo "Eh? three should still have CRLF"
+		false
+	}
+'
+
+test_expect_success 'in-tree .gitattributes (4)' '
+
+	rm -rf tmp one dir .gitattributes patch.file three &&
+	git read-tree --reset HEAD &&
+	git checkout-index -u one dir/two three &&
+	git checkout-index -u .gitattributes &&
+
+	if remove_cr one >/dev/null
+	then
+		echo "Eh? one should not have CRLF"
+		false
+	else
+		: happy
+	fi &&
+	remove_cr three >/dev/null || {
+		echo "Eh? three should still have CRLF"
+		false
+	}
+'
+
 test_done

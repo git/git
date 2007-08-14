@@ -336,13 +336,70 @@ static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 	return res;
 }
 
+static void *read_index_data(const char *path)
+{
+	int pos, len;
+	unsigned long sz;
+	enum object_type type;
+	void *data;
+
+	len = strlen(path);
+	pos = cache_name_pos(path, len);
+	if (pos < 0) {
+		/*
+		 * We might be in the middle of a merge, in which
+		 * case we would read stage #2 (ours).
+		 */
+		int i;
+		for (i = -pos - 1;
+		     (pos < 0 && i < active_nr &&
+		      !strcmp(active_cache[i]->name, path));
+		     i++)
+			if (ce_stage(active_cache[i]) == 2)
+				pos = i;
+	}
+	if (pos < 0)
+		return NULL;
+	data = read_sha1_file(active_cache[pos]->sha1, &type, &sz);
+	if (!data || type != OBJ_BLOB) {
+		free(data);
+		return NULL;
+	}
+	return data;
+}
+
 static struct attr_stack *read_attr(const char *path, int macro_ok)
 {
 	struct attr_stack *res;
+	char *buf, *sp;
+	int lineno = 0;
 
 	res = read_attr_from_file(path, macro_ok);
-	if (!res)
-		res = xcalloc(1, sizeof(*res));
+	if (res)
+		return res;
+
+	res = xcalloc(1, sizeof(*res));
+
+	/*
+	 * There is no checked out .gitattributes file there, but
+	 * we might have it in the index.  We allow operation in a
+	 * sparsely checked out work tree, so read from it.
+	 */
+	buf = read_index_data(path);
+	if (!buf)
+		return res;
+
+	for (sp = buf; *sp; ) {
+		char *ep;
+		int more;
+		for (ep = sp; *ep && *ep != '\n'; ep++)
+			;
+		more = (*ep == '\n');
+		*ep = '\0';
+		handle_attr_line(res, sp, path, ++lineno, macro_ok);
+		sp = ep + more;
+	}
+	free(buf);
 	return res;
 }
 
