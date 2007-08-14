@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "cache.h"
 #include "attr.h"
 #include "quote.h"
 
@@ -9,6 +10,10 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 {
 	struct git_attr_check *check;
 	int cnt, i, doubledash;
+
+	if (read_cache() < 0) {
+		die("invalid cache");
+	}
 
 	doubledash = -1;
 	for (i = 1; doubledash < 0 && i < argc; i++) {
