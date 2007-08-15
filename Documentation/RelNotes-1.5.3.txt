@@ -9,6 +9,19 @@ Updates since v1.5.2
 
 * The submodule support has Porcelain layer.
 
+  Note that the current submodule support is minimal and this is
+  deliberately so.  A design decision we made is that operations
+  at the supermodule level do not recurse into submodules by
+  default.  The expectation is that later we would add a
+  mechanism to tell git which submodules the user is interested
+  in, and this information might be used to determine the
+  recursive behaviour of certain commands (e.g. "git checkout"
+  and "git diff"), but currently we haven't agreed on what that
+  mechanism should look like.  Therefore, if you use submodules,
+  you would probably need "git submodule update" on the
+  submodules you care about after running a "git checkout" at
+  the supermodule level.
+
 * There are a handful pack-objects changes to help you cope better
   with repositories with pathologically large blobs in them.
 
@@ -46,21 +59,21 @@ Updates since v1.5.2
   - "git log" learned a new option "--follow", to follow
     renaming history of a single file.
 
-  - "git-filter-branch" lets you rewrite the revision history of
+  - "git filter-branch" lets you rewrite the revision history of
     specified branches. You can specify a number of filters to
     modify the commits, files and trees.
 
-  - "git-cvsserver" learned new options (--base-path, --export-all,
-    --strict-paths) inspired by git-daemon.
+  - "git cvsserver" learned new options (--base-path, --export-all,
+    --strict-paths) inspired by "git daemon".
 
   - "git daemon --base-path-relaxed" can help migrating a repository URL
     that did not use to use --base-path to use --base-path.
 
-  - "git-commit" can use "-t templatefile" option and commit.template
+  - "git commit" can use "-t templatefile" option and commit.template
     configuration variable to prime the commit message given to you in the
     editor.
 
-  - "git-submodule" command helps you manage the projects from
+  - "git submodule" command helps you manage the projects from
     the superproject that contain them.
 
   - In addition to core.compression configuration option,
@@ -68,15 +81,15 @@ Updates since v1.5.2
     independently tweak zlib compression levels used for loose
     and packed objects.
 
-  - "git-ls-tree -l" shows size of blobs pointed at by the
+  - "git ls-tree -l" shows size of blobs pointed at by the
     tree entries, similar to "/bin/ls -l".
 
-  - "git-rev-list" learned --regexp-ignore-case and
+  - "git rev-list" learned --regexp-ignore-case and
     --extended-regexp options to tweak its matching logic used
     for --grep fitering.
 
-  - "git-describe --contains" is a handier way to call more
-    obscure command "git-name-rev --tags".
+  - "git describe --contains" is a handier way to call more
+    obscure command "git name-rev --tags".
 
   - "git gc --aggressive" tells the command to spend more cycles
     to optimize the repository harder.
@@ -112,6 +125,9 @@ Updates since v1.5.2
   - "git config" learned NUL terminated output format via -z to
     help scripts.
 
+  - "git add" learned "--refresh <paths>..." option to selectively refresh
+    the cached stat information.
+
   - "git init -q" makes the command quieter.
 
 * Updated behavior of existing commands.
@@ -126,8 +142,18 @@ Updates since v1.5.2
     of the format ('tgz', 'tbz2' or 'zip').  Please update the
     your configuration file accordingly.
 
+  - "git clone" uses -l (hardlink files under .git) by default when
+    cloning locally.
+
+  - "git bundle create" can now create a bundle without negative refs,
+    i.e. "everything since the beginning up to certain points".
+
   - "git diff" (but not the plumbing level "git diff-tree") now
     recursively descends into trees by default.
+
+  - "git diff" does not show differences that come only from
+    stat-dirtiness in the form of "diff --git" header anymore.  When
+    generating a textual diff, it shows a warning message at the end.
 
   - The editor to use with many interactive commands can be
     overridden with GIT_EDITOR environment variable, or if it
@@ -143,7 +169,15 @@ Updates since v1.5.2
     given strings now have shorter abbreviations.  -i is for ignore case,
     and -E is for extended regexp.
 
+  - "git log" learned --log-size to show the number of bytes in
+    the log message part of the output to help qgit.
+
   - "git svn dcommit" retains local merge information.
+
+  - "git svnimport" allows an empty string to be specified as the
+    trunk/ directory.  This is necessary to suck data from a SVN
+    repository that doe not have trunk/ branches/ and tags/ organization
+    at all.
 
   - "git config" to set values also honors type flags like --bool
     and --int.
@@ -167,7 +201,7 @@ Updates since v1.5.2
     and the handcrafted ones the old code created was not
     properly formed anyway.
 
-  - "git-push" pretends that you immediately fetched back from
+  - "git push" pretends that you immediately fetched back from
     the remote by updating corresponding remote tracking
     branches if you have any.
 
@@ -177,10 +211,10 @@ Updates since v1.5.2
   - "git commit --amend" is now compatible with various message source
     options such as -m/-C/-c/-F.
 
-  - "git-apply --whitespace=strip" removes blank lines added at
+  - "git apply --whitespace=strip" removes blank lines added at
     the end of the file.
 
-  - "git-fetch" over git native protocols with "-v" option shows
+  - "git fetch" over git native protocols with "-v" option shows
     connection status, and the IP address of the other end, to
     help diagnosing problems.
 
@@ -195,10 +229,10 @@ Updates since v1.5.2
   - "--find-copies-harder" option to diff family can now be
     spelled as "-C -C" for brevity.
 
-  - "git-mailsplit" (hence "git-am") can read from Maildir
+  - "git mailsplit" (hence "git am") can read from Maildir
     formatted mailboxes.
 
-  - "git-cvsserver" does not barf upon seeing "cvs login"
+  - "git cvsserver" does not barf upon seeing "cvs login"
     request.
 
   - "pack-objects" honors "delta" attribute set in
@@ -208,7 +242,7 @@ Updates since v1.5.2
   - "new-workdir" script (in contrib) can now be used with a
     bare repository.
 
-  - "git-mergetool" learned to use gvimdiff.
+  - "git mergetool" learned to use gvimdiff.
 
   - "gitview" (in contrib) has a better blame interface.
 
@@ -223,8 +257,8 @@ Updates since v1.5.2
     "oneline".
 
   - "git p4import" has been demoted to contrib status.  For
-    a superior option, checkout the git-p4 front end to
-    git-fast-import (also in contrib).  The man page and p4
+    a superior option, checkout the "git p4" front end to
+    "git fast-import" (also in contrib).  The man page and p4
     rpm have been removed as well.
 
   - "git mailinfo" (hence "am") now tries to see if the message
@@ -237,13 +271,15 @@ Updates since v1.5.2
     without parameter defined with "func()", not "func(void)")
     have been eradicated.
 
+  - "git tag" and "git verify-tag" have been rewritten in C.
+
 * Performance Tweaks
 
-  - git-pack-objects avoids re-deltification cost by caching
+  - "git pack-objects" avoids re-deltification cost by caching
     small enough delta results it creates while looking for the
     best delta candidates.
 
-  - git-pack-objects learned a new heuristcs to prefer delta
+  - "git pack-objects" learned a new heuristcs to prefer delta
     that is shallower in depth over the smallest delta
     possible.  This improves both overall packfile access
     performance and packfile density.
@@ -259,6 +295,13 @@ Updates since v1.5.2
 
   - verifying pack contents done by "git fsck --full" got boost
     by carefully choosing the order to verify objects in them.
+
+  - "git read-tree -m" to read into an already populated index
+    has been optimized vastly.  The effect of this can be seen
+    when switching branches that have differences in only a
+    handful paths.
+
+  - "git commit paths..." has also been optimized.
 
 
 Fixes since v1.5.2
