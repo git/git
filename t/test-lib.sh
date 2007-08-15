@@ -89,6 +89,8 @@ do
 		shift ;;
 	--no-symlinks)
 		no_symlinks=t; shift ;;
+	--no-hardlinks)
+		no_hardlinks=t; shift ;;
 	*)
 		break ;;
 	esac

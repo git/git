@@ -99,6 +99,7 @@ origin_override=
 use_separate_remote=t
 depth=
 no_progress=
+test "@@NO_HARDLINKS@@" && use_local_hardlink=no
 test -t 1 || no_progress=--no-progress
 while
 	case "$#,$1" in
@@ -109,7 +110,9 @@ while
 	*,--na|*,--nak|*,--nake|*,--naked|\
 	*,-b|*,--b|*,--ba|*,--bar|*,--bare) bare=yes ;;
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local)
-	  use_local_hardlink=yes ;;
+	  (test "@@NO_HARDLINKS@@" &&
+	    echo >&2 "Warning: -l asked but hardlinks are not supported") ||
+	    use_local_hardlink=yes ;;
 	*,--no-h|*,--no-ha|*,--no-har|*,--no-hard|*,--no-hardl|\
 	*,--no-hardli|*,--no-hardlin|*,--no-hardlink|*,--no-hardlinks)
 	  use_local_hardlink=no ;;

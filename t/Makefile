@@ -18,6 +18,10 @@ ifdef NO_SYMLINKS
 	GIT_TEST_OPTS += --no-symlinks
 endif
 
+ifdef NO_HARDLINKS
+	GIT_TEST_OPTS += --no-hardlinks
+endif
+
 all: $(T) clean
 
 $(T):

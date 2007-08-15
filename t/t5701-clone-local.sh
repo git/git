@@ -3,6 +3,13 @@
 test_description='test local clone'
 . ./test-lib.sh
 
+if test "$no_hardlinks"
+then
+    say 'Hard links not supported, skipping tests.'
+    test_done
+    exit
+fi
+
 D=`pwd`
 
 test_expect_success 'preparing origin repository' '

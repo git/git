@@ -39,6 +39,9 @@ all:
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
+# Define NO_HARDLINKS if you want to disable hard linking in git clone.
+# Enable it on Windows.
+#
 # Define NO_SVN_TESTS if you want to skip time-consuming SVN interoperability
 # tests.  These tests take up a significant amount of the total test time
 # but are not needed unless you plan to talk to SVN repos.
@@ -482,6 +485,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_PREAD=YesPlease
 	NO_OPENSSL=YesPlease
 	NO_SYMLINK_HEAD=YesPlease
+	NO_HARDLINKS=YesPlease
 	NO_IPV6=YesPlease
 	NO_ETC_PASSWD=YesPlease
 	NO_SETENV=YesPlease
@@ -724,6 +728,10 @@ ifdef ASCIIDOC8
 	export ASCIIDOC8
 endif
 
+ifdef NO_HARDLINKS
+	export NO_HARDLINKS
+endif
+
 # Shell quote (do not use $(call) to accommodate ancient setups);
 
 SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
@@ -799,6 +807,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
+	    -e 's/@@NO_HARDLINKS@@/$(NO_HARDLINKS)/g' \
 	    $@.sh >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
