@@ -3501,11 +3501,17 @@ sub log_use_color {
 sub git_svn_log_cmd {
 	my ($r_min, $r_max, @args) = @_;
 	my $head = 'HEAD';
+	my (@files, @log_opts);
 	foreach my $x (@args) {
-		last if $x eq '--';
-		next unless ::verify_ref("$x^0");
-		$head = $x;
-		last;
+		if ($x eq '--' || @files) {
+			push @files, $x;
+		} else {
+			if (::verify_ref("$x^0")) {
+				$head = $x;
+			} else {
+				push @log_opts, $x;
+			}
+		}
 	}
 
 	my ($url, $rev, $uuid, $gs) = ::working_head_info($head);
@@ -3515,13 +3521,13 @@ sub git_svn_log_cmd {
 	push @cmd, '-r' unless $non_recursive;
 	push @cmd, qw/--raw --name-status/ if $verbose;
 	push @cmd, '--color' if log_use_color();
-	return @cmd unless defined $r_max;
-	if ($r_max == $r_min) {
+	push @cmd, @log_opts;
+	if (defined $r_max && $r_max == $r_min) {
 		push @cmd, '--max-count=1';
 		if (my $c = $gs->rev_db_get($r_max)) {
 			push @cmd, $c;
 		}
-	} else {
+	} elsif (defined $r_max) {
 		my ($c_min, $c_max);
 		$c_max = $gs->rev_db_get($r_max);
 		$c_min = $gs->rev_db_get($r_min);
@@ -3537,7 +3543,7 @@ sub git_svn_log_cmd {
 			push @cmd, $c_min;
 		}
 	}
-	return @cmd;
+	return (@cmd, @files);
 }
 
 # adapted from pager.c
@@ -3702,7 +3708,7 @@ sub cmd_show_log {
 	}
 
 	config_pager();
-	@args = (git_svn_log_cmd($r_min, $r_max, @args), @args);
+	@args = git_svn_log_cmd($r_min, $r_max, @args);
 	my $log = command_output_pipe(@args);
 	run_pager();
 	my (@k, $c, $d, $stat);
