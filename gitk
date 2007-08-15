@@ -6168,7 +6168,7 @@ proc cobranch {} {
 
 proc rmbranch {} {
     global headmenuid headmenuhead mainhead
-    global headids idheads
+    global idheads
 
     set head $headmenuhead
     set id $headmenuid
@@ -6178,7 +6178,7 @@ proc rmbranch {} {
 	return
     }
     set dheads [descheads $id]
-    if {$dheads eq $headids($head)} {
+    if {$idheads($dheads) eq $head} {
 	# the stuff on this branch isn't on any other branch
 	if {![confirm_popup "The commits on branch $head aren't on any other\
 			branch.\nReally delete branch $head?"]} return
