@@ -175,4 +175,21 @@ test_expect_success 'checkout superproject with subproject already present' '
 	git-checkout master
 '
 
+test_expect_success 'apply submodule diff' '
+	git branch second &&
+	(
+		cd lib &&
+		echo s >s &&
+		git add s &&
+		git commit -m "change subproject"
+	) &&
+	git update-index --add lib &&
+	git-commit -m "change lib" &&
+	git-format-patch -1 --stdout >P.diff &&
+	git checkout second &&
+	git apply --index P.diff &&
+	D=$(git diff --cached master) &&
+	test -z "$D"
+'
+
 test_done
