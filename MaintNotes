@@ -41,8 +41,7 @@ also push into an alternate here:
 
         git://repo.or.cz/alt-git.git/
 
-Impatient people would have better luck with the latter one, but it
-does not have "html" and "man" branches (described below).
+Impatient people would have better luck with the latter one.
 
 There are three branches in git.git repository that are not
 about the source tree of git: "todo", "html" and "man".  The
