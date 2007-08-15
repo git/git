@@ -123,12 +123,12 @@ static void update_callback(struct diff_queue_struct *q,
 	}
 }
 
-static void update(int verbose, const char **files)
+static void update(int verbose, const char *prefix, const char **files)
 {
 	struct rev_info rev;
-	init_revisions(&rev, "");
+	init_revisions(&rev, prefix);
 	setup_revisions(0, NULL, &rev, NULL);
-	rev.prune_data = get_pathspec(rev.prefix, files);
+	rev.prune_data = get_pathspec(prefix, files);
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = &verbose;
@@ -209,7 +209,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	if (take_worktree_changes) {
-		update(verbose, argv + i);
+		update(verbose, prefix, argv + i);
 		goto finish;
 	}
 
