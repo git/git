@@ -76,16 +76,18 @@ struct path_list_item *path_list_lookup(const char *path, struct path_list *list
 	return list->items + i;
 }
 
-void path_list_clear(struct path_list *list, int free_items)
+void path_list_clear(struct path_list *list, int free_util)
 {
 	if (list->items) {
 		int i;
-		if (free_items)
-			for (i = 0; i < list->nr; i++) {
-				if (list->strdup_paths)
-					free(list->items[i].path);
+		if (list->strdup_paths) {
+			for (i = 0; i < list->nr; i++)
+				free(list->items[i].path);
+		}
+		if (free_util) {
+			for (i = 0; i < list->nr; i++)
 				free(list->items[i].util);
-			}
+		}
 		free(list->items);
 	}
 	list->items = NULL;
