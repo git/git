@@ -19,10 +19,12 @@ LF='
 all_strategies='recur recursive octopus resolve stupid ours subtree'
 default_twohead_strategies='recursive'
 default_octopus_strategies='octopus'
-no_trivial_merge_strategies='ours subtree'
+no_fast_forward_strategies='subtree ours'
+no_trivial_strategies='recursive recur subtree ours'
 use_strategies=
 
-index_merge=t
+allow_fast_forward=t
+allow_trivial_merge=t
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
@@ -265,11 +267,20 @@ esac
 
 for s in $use_strategies
 do
-	for nt in $no_trivial_merge_strategies
+	for ss in $no_fast_forward_strategies
 	do
 		case " $s " in
-		*" $nt "*)
-			index_merge=f
+		*" $ss "*)
+			allow_fast_forward=f
+			break
+			;;
+		esac
+	done
+	for ss in $no_trivial_strategies
+	do
+		case " $s " in
+		*" $ss "*)
+			allow_trivial_merge=f
 			break
 			;;
 		esac
@@ -286,10 +297,7 @@ case "$#" in
 esac
 echo "$head" >"$GIT_DIR/ORIG_HEAD"
 
-case "$index_merge,$#,$common,$no_commit" in
-f,*)
-	# We've been told not to try anything clever.  Skip to real merge.
-	;;
+case "$allow_fast_forward,$#,$common,$no_commit" in
 ?,*,'',*)
 	# No common ancestors found. We need a real merge.
 	;;
@@ -299,7 +307,7 @@ f,*)
 	finish_up_to_date "Already up-to-date."
 	exit 0
 	;;
-?,1,"$head",*)
+t,1,"$head",*)
 	# Again the most common case of merging one remote.
 	echo "Updating $(git rev-parse --short $head)..$(git rev-parse --short $1)"
 	git update-index --refresh 2>/dev/null
@@ -322,11 +330,8 @@ f,*)
 	# We are not doing octopus, not fast forward, and have only
 	# one common.
 	git update-index --refresh 2>/dev/null
-	case " $use_strategies " in
-	*' recursive '*|*' recur '*)
-		: run merge later
-		;;
-	*)
+	case "$allow_trivial_merge" in
+	t)
 		# See if it is really trivial.
 		git var GIT_COMMITTER_IDENT >/dev/null || exit
 		echo "Trying really trivial in-index merge..."
