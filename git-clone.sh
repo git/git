@@ -215,7 +215,12 @@ else
 	GIT_DIR="$D/.git"
 fi &&
 export GIT_DIR &&
-git-init $quiet ${template+"$template"} || usage
+GIT_CONFIG="$GIT_DIR/config" git-init $quiet ${template+"$template"} || usage
+
+if test -n "$bare"
+then
+	GIT_CONFIG="$GIT_DIR/config" git config core.bare true
+fi
 
 if test -n "$reference"
 then
