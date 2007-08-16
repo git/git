@@ -1273,9 +1273,8 @@ struct unpacked {
 	unsigned depth;
 };
 
-static int delta_cacheable(struct unpacked *trg, struct unpacked *src,
-			    unsigned long src_size, unsigned long trg_size,
-			    unsigned long delta_size)
+static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
+			   unsigned long delta_size)
 {
 	if (max_delta_cache_size && delta_cache_size + delta_size > max_delta_cache_size)
 		return 0;
@@ -1397,7 +1396,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	trg_entry->delta_size = delta_size;
 	trg->depth = src->depth + 1;
 
-	if (delta_cacheable(src, trg, src_size, trg_size, delta_size)) {
+	if (delta_cacheable(src_size, trg_size, delta_size)) {
 		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
 		delta_cache_size += trg_entry->delta_size;
 	} else
