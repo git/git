@@ -479,6 +479,38 @@ the user on the git side.  git-svn does however follow copy
 history of the directory that it is tracking, however (much like
 how 'svn log' works).
 
+CAVEATS
+-------
+
+For the sake of simplicity and interoperating with a less-capable system
+(SVN), it is recommended that all git-svn users clone, fetch and dcommit
+directly from the SVN server, and avoid all git-clone/pull/merge/push
+operations between git repositories and branches.  The recommended
+method of exchanging code between git branches and users is
+git-format-patch and git-am, or just dcommiting to the SVN repository.
+
+Running 'git-merge' or 'git-pull' is NOT recommended on a branch you
+plan to dcommit from.  Subversion does not represent merges in any
+reasonable or useful fashion; so users using Subversion cannot see any
+merges you've made.  Furthermore, if you merge or pull from a git branch
+that is a mirror of an SVN branch, dcommit may commit to the wrong
+branch.
+
+'git-clone' does not clone branches under the refs/remotes/ hierarchy or
+any git-svn metadata, or config.  So repositories created and managed with
+using git-svn should use rsync(1) for cloning, if cloning is to be done
+at all.
+
+Since 'dcommit' uses rebase internally, any git branches you git-push to
+before dcommit on will require forcing an overwrite of the existing ref
+on the remote repository.  This is generally considered bad practice,
+see the git-push(1) documentation for details.
+
+Do not use the --amend option of git-commit(1) on a change you've
+already dcommitted.  It is considered bad practice to --amend commits
+you've already pushed to a remote repository for other users, and
+dcommit with SVN is analogous to that.
+
 BUGS
 ----
 
