@@ -5146,8 +5146,8 @@ proc getblobdiffline {bdf ids} {
 	    # the middle char will be a space, and the two bits either
 	    # side will be a/name and b/name, or "a/name" and "b/name".
 	    # If the name has changed we'll get "rename from" and
-	    # "rename to" lines following this, and we'll use them
-	    # to get the filenames.
+	    # "rename to" or "copy from" and "copy to" lines following this,
+	    # and we'll use them to get the filenames.
 	    # This complexity is necessary because spaces in the filename(s)
 	    # don't get escaped.
 	    set l [string length $line]
@@ -5171,8 +5171,9 @@ proc getblobdiffline {bdf ids} {
 	    set diffinhdr 0
 
 	} elseif {$diffinhdr} {
-	    if {![string compare -length 12 "rename from " $line]} {
-		set fname [string range $line 12 end]
+	    if {![string compare -length 12 "rename from " $line] ||
+		![string compare -length 10 "copy from " $line]} {
+		set fname [string range $line [expr 6 + [string first " from " $line] ] end]
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
 		}
@@ -5180,8 +5181,9 @@ proc getblobdiffline {bdf ids} {
 		if {$i >= 0} {
 		    setinlist difffilestart $i $curdiffstart
 		}
-	    } elseif {![string compare -length 10 $line "rename to "]} {
-		set fname [string range $line 10 end]
+	    } elseif {![string compare -length 10 $line "rename to "] ||
+		      ![string compare -length 8 $line "copy to "]} {
+		set fname [string range $line [expr 4 + [string first " to " $line] ] end]
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
 		}
