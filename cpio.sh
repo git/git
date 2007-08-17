@@ -24,16 +24,24 @@ while test $# -gt 0; do
 	shift
 done
 
+prev=
+
 filterdirs() {
 	while read f; do
 		if test -d "$f"; then
 			# list only empty directories
-			if test -z "$(ls -A "$f")"; then
-				echo "$f"
-			fi
+			# here we assume that directories are listed after
+			# its files (aka 'find -depth'), hence, a directory
+			# that is not empty will be a leading sub-string
+			# of the preceding entry
+			case "$prev" in
+			"$f"/* ) ;;
+			*) echo "$f";;
+			esac
 		else
 			echo "$f"
 		fi
+		prev="$f"
 	done
 }
 
