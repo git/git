@@ -518,13 +518,18 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 
 	path = strchr(end, c);
 	if (path) {
-		if (c == ':'
+		if (c == ':') {
 #ifdef __MINGW32__
-		    && path - end > 1     /* host must have at least 2 chars to catch DOS C:/path */
+			/* host must have at least 2 chars to
+			 * catch DOS C:/path */
+			if (path - end > 1) {
 #endif
-		    ) {
-			protocol = PROTO_SSH;
-			*path++ = '\0';
+				protocol = PROTO_SSH;
+				*path++ = '\0';
+#ifdef __MINGW32__
+			} else
+				path = end;
+#endif
 		}
 	} else
 		path = end;
