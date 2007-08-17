@@ -54,6 +54,8 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#else
+int mkstemp (char *__template);
 #endif
 #include <assert.h>
 #include <regex.h>
@@ -435,7 +437,6 @@ int kill(pid_t pid, int sig);
 unsigned int sleep (unsigned int __seconds);
 const char *inet_ntop(int af, const void *src,
                              char *dst, size_t cnt);
-int mkstemp (char *__template);
 int gettimeofday(struct timeval *tv, void *tz);
 int pipe(int filedes[2]);
 
