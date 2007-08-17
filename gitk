@@ -6208,7 +6208,7 @@ proc rmbranch {} {
 	return
     }
     set dheads [descheads $id]
-    if {$idheads($dheads) eq $head} {
+    if {[llength $dheads] == 1 && $idheads($dheads) eq $head} {
 	# the stuff on this branch isn't on any other branch
 	if {![confirm_popup "The commits on branch $head aren't on any other\
 			branch.\nReally delete branch $head?"]} return
