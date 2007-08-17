@@ -51,9 +51,9 @@ A commit encapsulates:
 - author name, email and date
 - committer name and email and the commit time.
 
-If not provided, "git-commit-tree" uses your name, hostname and domain to
-provide author and committer info. This can be overridden by
-either `.git/config` file, or using the following environment variables.
+While parent object ids are provided on the command line, author and
+commiter information is taken from the following environment variables,
+if set:
 
 	GIT_AUTHOR_NAME
 	GIT_AUTHOR_EMAIL
@@ -65,12 +65,9 @@ either `.git/config` file, or using the following environment variables.
 
 (nb "<", ">" and "\n"s are stripped)
 
-In `.git/config` file, the following items are used for GIT_AUTHOR_NAME and
-GIT_AUTHOR_EMAIL:
-
-	[user]
-		name = "Your Name"
-		email = "your@email.address.xz"
+In case (some of) these environment variables are not set, the information
+is taken from the configuration items user.name and user.email, or, if not
+present, system user name and fully qualified hostname.
 
 A commit comment is read from stdin. If a changelog
 entry is not provided via "<" redirection, "git-commit-tree" will just wait
