@@ -431,6 +431,7 @@ typedef int pid_t;
 #define SIGKILL 0
 #define SIGCHLD 0
 #define SIGALRM 0
+#define SIGPIPE 0
 #define ECONNABORTED 0
 
 int kill(pid_t pid, int sig);
