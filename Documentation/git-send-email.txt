@@ -62,7 +62,7 @@ The --cc option must be repeated for each user you want on the cc list.
 --signed-off-by-cc, --no-signed-off-by-cc::
         If this is set, add emails found in Signed-off-by: or Cc: lines to the
         cc list.
-        Default is the value of 'sendemail.signedoffbycc' configuration value;
+        Default is the value of 'sendemail.signedoffcc' configuration value;
         if that is unspecified, default to --signed-off-by-cc.
 
 --quiet::
