@@ -120,7 +120,7 @@ have all of them as parents.
 	tag name is expected on standard output.
 +
 The original tags are not deleted, but can be overwritten;
-use "--tag-name-filter=cat" to simply update the tags.  In this
+use "--tag-name-filter cat" to simply update the tags.  In this
 case, be very careful and make sure you have the old tags
 backed up in case the conversion has run afoul.
 +
