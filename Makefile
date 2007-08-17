@@ -1,5 +1,5 @@
 # The default target of this Makefile is...
-all:
+all::
 
 # Define V=1 to have a more verbose compile.
 #
@@ -762,9 +762,12 @@ export TAR INSTALL DESTDIR SHELL_PATH
 
 ### Build rules
 
-all: $(ALL_PROGRAMS) $(BUILT_INS) $(OTHER_PROGRAMS)
+all:: $(ALL_PROGRAMS) $(BUILT_INS) $(OTHER_PROGRAMS)
+ifneq (,$X)
+	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), $(RM) '$p';)
+endif
 
-all:
+all::
 ifndef NO_TCLTK
 	$(QUIET_SUBDIR0)git-gui $(QUIET_SUBDIR1) all
 endif
@@ -993,7 +996,7 @@ endif
 
 TEST_PROGRAMS = test-chmtime$X test-genrandom$X test-date$X test-delta$X test-sha1$X test-match-trees$X test-absolute-path$X
 
-all: $(TEST_PROGRAMS)
+all:: $(TEST_PROGRAMS)
 
 # GNU make supports exporting all variables by "export" without parameters.
 # However, the environment gets quite big, and some programs have problems
@@ -1045,6 +1048,9 @@ endif
 			'$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X'; \
 	fi
 	$(foreach p,$(BUILT_INS), $(RM) '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
+ifneq (,$X)
+	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), $(RM) '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p';)
+endif
 
 install-doc:
 	$(MAKE) -C Documentation install
