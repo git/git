@@ -102,6 +102,7 @@ static void update_callback(struct diff_queue_struct *q,
 			break;
 		case DIFF_STATUS_DELETED:
 			remove_file_from_cache(path);
+			cache_tree_invalidate_path(active_cache_tree, path);
 			if (verbose)
 				printf("remove '%s'\n", path);
 			break;
@@ -109,18 +110,35 @@ static void update_callback(struct diff_queue_struct *q,
 	}
 }
 
-static void update(int verbose, const char **files)
+static void update(int verbose, const char *prefix, const char **files)
 {
 	struct rev_info rev;
-	init_revisions(&rev, "");
+	init_revisions(&rev, prefix);
 	setup_revisions(0, NULL, &rev, NULL);
-	rev.prune_data = get_pathspec(rev.prefix, files);
+	rev.prune_data = get_pathspec(prefix, files);
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = &verbose;
 	if (read_cache() < 0)
 		die("index file corrupt");
 	run_diff_files(&rev, 0);
+}
+
+static void refresh(int verbose, const char **pathspec)
+{
+	char *seen;
+	int i, specs;
+
+	for (specs = 0; pathspec[specs];  specs++)
+		/* nothing */;
+	seen = xcalloc(specs, 1);
+	if (read_cache() < 0)
+		die("index file corrupt");
+	refresh_index(&the_index, verbose ? 0 : REFRESH_QUIET, pathspec, seen);
+	for (i = 0; i < specs; i++) {
+		if (!seen[i])
+			die("pathspec '%s' did not match any files", pathspec[i]);
+	}
 }
 
 static int git_add_config(const char *var, const char *value)
@@ -143,7 +161,7 @@ static const char ignore_warning[] =
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
-	int verbose = 0, show_only = 0, ignored_too = 0;
+	int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
 	const char **pathspec;
 	struct dir_struct dir;
 	int add_interactive = 0;
@@ -191,11 +209,15 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			take_worktree_changes = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--refresh")) {
+			refresh_only = 1;
+			continue;
+		}
 		usage(builtin_add_usage);
 	}
 
 	if (take_worktree_changes) {
-		update(verbose, argv + i);
+		update(verbose, prefix, argv + i);
 		goto finish;
 	}
 
@@ -205,6 +227,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 	pathspec = get_pathspec(prefix, argv + i);
+
+	if (refresh_only) {
+		refresh(verbose, pathspec);
+		goto finish;
+	}
 
 	fill_directory(&dir, pathspec, ignored_too);
 

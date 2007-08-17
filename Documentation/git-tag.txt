@@ -12,7 +12,7 @@ SYNOPSIS
 'git-tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]  <name> [<head>]
 'git-tag' -d <name>...
 'git-tag' [-n [<num>]] -l [<pattern>]
-'git-tag' -v <name>
+'git-tag' -v <name>...
 
 DESCRIPTION
 -----------
@@ -23,7 +23,7 @@ Unless `-f` is given, the tag must not yet exist in
 
 If one of `-a`, `-s`, or `-u <key-id>` is passed, the command
 creates a 'tag' object, and requires the tag message.  Unless
-`-m <msg>` is given, an editor is started for the user to type
+`-m <msg>` or `-F <file>` is given, an editor is started for the user to type
 in the tag message.
 
 Otherwise just the SHA1 object name of the commit object is
@@ -59,15 +59,17 @@ OPTIONS
 	Delete existing tags with the given names.
 
 -v::
-	Verify the gpg signature of given the tag
+	Verify the gpg signature of the given tag names.
 
 -n <num>::
 	<num> specifies how many lines from the annotation, if any,
 	are printed when using -l.
 	The default is not to print any annotation lines.
+	If no number is given to `-n`, only the first line is printed.
 
 -l <pattern>::
 	List tags with names that match the given pattern (or all if no pattern is given).
+	Typing "git tag" without arguments, also lists all tags.
 
 -m <msg>::
 	Use the given tag message (instead of prompting)

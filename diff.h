@@ -60,11 +60,13 @@ struct diff_options {
 		 color_diff_words:1,
 		 has_changes:1,
 		 quiet:1,
+		 no_index:1,
 		 allow_external:1,
 		 exit_with_status:1;
 	int context;
 	int break_opt;
 	int detect_rename;
+	int skip_stat_unmatch;
 	int line_termination;
 	int output_format;
 	int pickaxe_opts;

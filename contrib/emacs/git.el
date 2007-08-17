@@ -912,10 +912,12 @@ Return the list of files that haven't been handled."
 
 (defun git-setup-diff-buffer (buffer)
   "Setup a buffer for displaying a diff."
-  (with-current-buffer buffer
-    (diff-mode)
-    (goto-char (point-min))
-    (setq buffer-read-only t))
+  (let ((dir default-directory))
+    (with-current-buffer buffer
+      (diff-mode)
+      (goto-char (point-min))
+      (setq default-directory dir)
+      (setq buffer-read-only t)))
   (display-buffer buffer)
   (shrink-window-if-larger-than-buffer))
 
@@ -965,7 +967,13 @@ Return the list of files that haven't been handled."
 (defun git-diff-file-idiff ()
   "Perform an interactive diff on the current file."
   (interactive)
-  (error "Interactive diffs not implemented yet."))
+  (let ((files (git-marked-files-state 'added 'deleted 'modified)))
+    (unless (eq 1 (length files))
+      (error "Cannot perform an interactive diff on multiple files."))
+    (let* ((filename (car (git-get-filenames files)))
+           (buff1 (find-file-noselect filename))
+           (buff2 (git-run-command-buffer (concat filename ".~HEAD~") "cat-file" "blob" (concat "HEAD:" filename))))
+      (ediff-buffers buff1 buff2))))
 
 (defun git-log-file ()
   "Display a log of changes to the marked file(s)."

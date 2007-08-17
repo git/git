@@ -103,7 +103,8 @@ It does not apply to blobs recorded in its index."
 }
 
 prec=4
-dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary= resolvemsg=
+dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary=
+resolvemsg= resume=
 git_apply_opt=
 
 while case "$#" in 0) break;; esac

@@ -1196,6 +1196,7 @@ sub req_ci
     $log->info("Lockless commit start, basing commit on '$tmpdir', index file is '$file_index'");
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
+    $ENV{GIT_WORK_TREE} = ".";
     $ENV{GIT_INDEX_FILE} = $file_index;
 
     # Remember where the head was at the beginning.
@@ -1721,6 +1722,7 @@ sub req_annotate
     $log->info("Temp checkoutdir creation successful, basing annotate session work on '$tmpdir', index file is '$file_index'");
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
+    $ENV{GIT_WORK_TREE} = ".";
     $ENV{GIT_INDEX_FILE} = $file_index;
 
     chdir $tmpdir;

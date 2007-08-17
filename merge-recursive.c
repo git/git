@@ -216,13 +216,19 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
  */
 static int index_only = 0;
 
+static void init_tree_desc_from_tree(struct tree_desc *desc, struct tree *tree)
+{
+	parse_tree(tree);
+	init_tree_desc(desc, tree->buffer, tree->size);
+}
+
 static int git_merge_trees(int index_only,
 			   struct tree *common,
 			   struct tree *head,
 			   struct tree *merge)
 {
 	int rc;
-	struct object_list *trees = NULL;
+	struct tree_desc t[3];
 	struct unpack_trees_options opts;
 
 	memset(&opts, 0, sizeof(opts));
@@ -234,11 +240,11 @@ static int git_merge_trees(int index_only,
 	opts.head_idx = 2;
 	opts.fn = threeway_merge;
 
-	object_list_append(&common->object, &trees);
-	object_list_append(&head->object, &trees);
-	object_list_append(&merge->object, &trees);
+	init_tree_desc_from_tree(t+0, common);
+	init_tree_desc_from_tree(t+1, head);
+	init_tree_desc_from_tree(t+2, merge);
 
-	rc = unpack_trees(trees, &opts);
+	rc = unpack_trees(3, t, &opts);
 	cache_tree_free(&active_cache_tree);
 	return rc;
 }
@@ -671,6 +677,26 @@ struct ll_merge_driver {
 /*
  * Built-in low-levels
  */
+static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
+			   const char *path_unused,
+			   mmfile_t *orig,
+			   mmfile_t *src1, const char *name1,
+			   mmfile_t *src2, const char *name2,
+			   mmbuffer_t *result)
+{
+	/*
+	 * The tentative merge result is "ours" for the final round,
+	 * or common ancestor for an internal merge.  Still return
+	 * "conflicted merge" status.
+	 */
+	mmfile_t *stolen = index_only ? orig : src1;
+
+	result->ptr = stolen->ptr;
+	result->size = stolen->size;
+	stolen->ptr = NULL;
+	return 1;
+}
+
 static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			const char *path_unused,
 			mmfile_t *orig,
@@ -681,10 +707,15 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	xpparam_t xpp;
 
 	if (buffer_is_binary(orig->ptr, orig->size) ||
-			buffer_is_binary(src1->ptr, src1->size) ||
-			buffer_is_binary(src2->ptr, src2->size))
-		return error("Cannot merge binary files: %s vs. %s\n",
+	    buffer_is_binary(src1->ptr, src1->size) ||
+	    buffer_is_binary(src2->ptr, src2->size)) {
+		warning("Cannot merge binary files: %s vs. %s\n",
 			name1, name2);
+		return ll_binary_merge(drv_unused, path_unused,
+				       orig, src1, name1,
+				       src2, name2,
+				       result);
+	}
 
 	memset(&xpp, 0, sizeof(xpp));
 	return xdl_merge(orig,
@@ -737,26 +768,6 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 	return 0;
 }
 
-static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
-			   const char *path_unused,
-			   mmfile_t *orig,
-			   mmfile_t *src1, const char *name1,
-			   mmfile_t *src2, const char *name2,
-			   mmbuffer_t *result)
-{
-	/*
-	 * The tentative merge result is "ours" for the final round,
-	 * or common ancestor for an internal merge.  Still return
-	 * "conflicted merge" status.
-	 */
-	mmfile_t *stolen = index_only ? orig : src1;
-
-	result->ptr = stolen->ptr;
-	result->size = stolen->size;
-	stolen->ptr = NULL;
-	return 1;
-}
-
 #define LL_BINARY_MERGE 0
 #define LL_TEXT_MERGE 1
 #define LL_UNION_MERGE 2
@@ -771,9 +782,7 @@ static void create_temp(mmfile_t *src, char *path)
 	int fd;
 
 	strcpy(path, ".merge_file_XXXXXX");
-	fd = mkstemp(path);
-	if (fd < 0)
-		die("unable to create temp-file");
+	fd = xmkstemp(path);
 	if (write_in_full(fd, src->ptr, src->size) != src->size)
 		die("unable to write temp-file");
 	close(fd);

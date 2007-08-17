@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "cache-tree.h"
 #include "refs.h"
+#include "dir.h"
 
 /* Index extensions.
  *
@@ -665,7 +666,7 @@ static int check_file_directory_conflict(struct index_state *istate,
 	return retval + has_dir_name(istate, ce, pos, ok_to_replace);
 }
 
-int add_index_entry(struct index_state *istate, struct cache_entry *ce, int option)
+static int add_index_entry_with_check(struct index_state *istate, struct cache_entry *ce, int option)
 {
 	int pos;
 	int ok_to_add = option & ADD_CACHE_OK_TO_ADD;
@@ -707,6 +708,22 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
 		pos = index_name_pos(istate, ce->name, ntohs(ce->ce_flags));
 		pos = -pos-1;
 	}
+	return pos + 1;
+}
+
+int add_index_entry(struct index_state *istate, struct cache_entry *ce, int option)
+{
+	int pos;
+
+	if (option & ADD_CACHE_JUST_APPEND)
+		pos = istate->cache_nr;
+	else {
+		int ret;
+		ret = add_index_entry_with_check(istate, ce, option);
+		if (ret <= 0)
+			return ret;
+		pos = ret - 1;
+	}
 
 	/* Make sure the array is big enough .. */
 	if (istate->cache_nr == istate->cache_alloc) {
@@ -717,7 +734,7 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
 
 	/* Add it in.. */
 	istate->cache_nr++;
-	if (istate->cache_nr > pos)
+	if (istate->cache_nr > pos + 1)
 		memmove(istate->cache + pos + 1,
 			istate->cache + pos,
 			(istate->cache_nr - pos - 1) * sizeof(ce));
@@ -782,7 +799,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	return updated;
 }
 
-int refresh_index(struct index_state *istate, unsigned int flags)
+int refresh_index(struct index_state *istate, unsigned int flags, const char **pathspec, char *seen)
 {
 	int i;
 	int has_errors = 0;
@@ -807,6 +824,9 @@ int refresh_index(struct index_state *istate, unsigned int flags)
 			has_errors = 1;
 			continue;
 		}
+
+		if (pathspec && !match_pathspec(pathspec, ce->name, strlen(ce->name), 0, seen))
+			continue;
 
 		new = refresh_cache_ent(istate, ce, really, &cache_errno);
 		if (new == ce)

@@ -7,7 +7,7 @@ mandir="$2"
 SUBDIRECTORY_OK=t
 USAGE='<refname> <target directory>'
 . git-sh-setup
-export GIT_DIR
+cd_to_toplevel
 
 test -z "$mandir" && usage
 if ! git rev-parse --verify "$head^0" >/dev/null; then
@@ -18,14 +18,14 @@ fi
 GIT_INDEX_FILE=`pwd`/.quick-doc.index
 export GIT_INDEX_FILE
 rm -f "$GIT_INDEX_FILE"
+trap 'rm -f "$GIT_INDEX_FILE"' 0
+
 git read-tree $head
 git checkout-index -a -f --prefix="$mandir"/
 
 if test -n "$GZ"; then
-	cd "$mandir"
-	for i in `git ls-tree -r --name-only $head`
-	do
-		gzip < $i > $i.gz && rm $i
-	done
+	git ls-tree -r --name-only $head |
+	xargs printf "$mandir/%s\n" |
+	xargs gzip -f
 fi
 rm -f "$GIT_INDEX_FILE"

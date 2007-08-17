@@ -21,7 +21,16 @@ test_expect_success 'update-server-info honors core.sharedRepository' '
 	git commit -m a1 &&
 	umask 0277 &&
 	git update-server-info &&
-	test 444 = $(stat -c %a .git/info/refs)
+	actual="$(ls -l .git/info/refs)" &&
+	case "$actual" in
+	-r--r--r--*)
+		: happy
+		;;
+	*)
+		echo Oops, .git/info/refs is not 0444
+		false
+		;;
+	esac
 '
 
 test_done

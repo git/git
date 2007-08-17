@@ -116,6 +116,16 @@ then
 		exit $exit
 	}
 else
-	GIT_DIR=$(git rev-parse --git-dir) || exit
+	GIT_DIR=$(git rev-parse --git-dir) || {
+	    exit=$?
+	    echo >&2 "Failed to find a valid git directory."
+	    exit $exit
+	}
 fi
+
+test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
+    echo >&2 "Unable to determine absolute path of git directory"
+    exit 1
+}
+
 : ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}

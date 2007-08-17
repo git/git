@@ -145,4 +145,12 @@ test_expect_success 'bundle does not prerequisite objects' '
 	test 4 = $(git verify-pack -v bundle.pack | wc -l)
 '
 
+test_expect_success 'bundle should be able to create a full history' '
+
+	cd "$D" &&
+	git tag -a -m '1.0' v1.0 master &&
+	git bundle create bundle4 v1.0
+
+'
+
 test_done

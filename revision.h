@@ -81,6 +81,7 @@ struct rev_info {
 	const char	*log_reencode;
 	const char	*subject_prefix;
 	int		no_inline;
+	int		show_log_size;
 
 	/* Filter by commit log message */
 	struct grep_opt	*grep_filter;

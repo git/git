@@ -171,6 +171,20 @@ apply.whitespace::
 	When no `--whitespace` flag is given from the command
 	line, this configuration item is used as the default.
 
+Submodules
+----------
+If the patch contains any changes to submodules then gitlink:git-apply[1]
+treats these changes as follows.
+
+If --index is specified (explicitly or implicitly), then the submodule
+commits must match the index exactly for the patch to apply.  If any
+of the submodules are checked-out, then these check-outs are completely
+ignored, i.e., they are not required to be up-to-date or clean and they
+are not updated.
+
+If --index is not specified, then the submodule commits in the patch
+are ignored and only the absence of presence of the corresponding
+subdirectory is checked and (if possible) updated.
 
 Author
 ------

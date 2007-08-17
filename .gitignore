@@ -148,6 +148,7 @@ git-write-tree
 git-core-*/?*
 gitk-wish
 gitweb/gitweb.cgi
+test-absolute-path
 test-chmtime
 test-date
 test-delta

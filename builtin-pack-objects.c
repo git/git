@@ -586,7 +586,7 @@ static off_t write_one(struct sha1file *f,
 static int open_object_dir_tmp(const char *path)
 {
     snprintf(tmpname, sizeof(tmpname), "%s/%s", get_object_directory(), path);
-    return mkstemp(tmpname);
+    return xmkstemp(tmpname);
 }
 
 /* forward declaration for write_pack_file */
@@ -612,8 +612,6 @@ static void write_pack_file(void)
 			f = sha1fd(1, "<stdout>");
 		} else {
 			int fd = open_object_dir_tmp("tmp_pack_XXXXXX");
-			if (fd < 0)
-				die("unable to create %s: %s\n", tmpname, strerror(errno));
 			pack_tmp_name = xstrdup(tmpname);
 			f = sha1fd(fd, pack_tmp_name);
 		}
@@ -1275,9 +1273,8 @@ struct unpacked {
 	unsigned depth;
 };
 
-static int delta_cacheable(struct unpacked *trg, struct unpacked *src,
-			    unsigned long src_size, unsigned long trg_size,
-			    unsigned long delta_size)
+static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
+			   unsigned long delta_size)
 {
 	if (max_delta_cache_size && delta_cache_size + delta_size > max_delta_cache_size)
 		return 0;
@@ -1399,7 +1396,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	trg_entry->delta_size = delta_size;
 	trg->depth = src->depth + 1;
 
-	if (delta_cacheable(src, trg, src_size, trg_size, delta_size)) {
+	if (delta_cacheable(src_size, trg_size, delta_size)) {
 		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
 		delta_cache_size += trg_entry->delta_size;
 	} else

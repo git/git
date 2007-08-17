@@ -189,6 +189,7 @@ static int handle_diff_files_args(struct rev_info *revs,
 				!strcmp(argv[1], "--no-index")) {
 			revs->max_count = -2;
 			revs->diffopt.exit_with_status = 1;
+			revs->diffopt.no_index = 1;
 		}
 		else if (!strcmp(argv[1], "-q"))
 			*silent = 1;
@@ -204,8 +205,10 @@ static int handle_diff_files_args(struct rev_info *revs,
 		 */
 		read_cache();
 		if (!is_in_index(revs->diffopt.paths[0]) ||
-					!is_in_index(revs->diffopt.paths[1]))
+					!is_in_index(revs->diffopt.paths[1])) {
 			revs->max_count = -2;
+			revs->diffopt.no_index = 1;
+		}
 	}
 
 	/*
@@ -293,6 +296,7 @@ int setup_diff_no_index(struct rev_info *revs,
 	else
 		revs->diffopt.paths = argv + argc - 2;
 	revs->diffopt.nr_paths = 2;
+	revs->diffopt.no_index = 1;
 	revs->max_count = -2;
 	return 0;
 }
@@ -304,7 +308,7 @@ int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv)
 	if (handle_diff_files_args(revs, argc, argv, &silent_on_removed))
 		return -1;
 
-	if (revs->max_count == -2) {
+	if (revs->diffopt.no_index) {
 		if (revs->diffopt.nr_paths != 2)
 			return error("need two files/directories with --no-index");
 		if (queue_diff(&revs->diffopt, revs->diffopt.paths[0],

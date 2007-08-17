@@ -173,7 +173,7 @@ extern struct index_state the_index;
 #define remove_cache_entry_at(pos) remove_index_entry_at(&the_index, (pos))
 #define remove_file_from_cache(path) remove_file_from_index(&the_index, (path))
 #define add_file_to_cache(path, verbose) add_file_to_index(&the_index, (path), (verbose))
-#define refresh_cache(flags) refresh_index(&the_index, flags)
+#define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL)
 #define ce_match_stat(ce, st, really) ie_match_stat(&the_index, (ce), (st), (really))
 #define ce_modified(ce, st, really) ie_modified(&the_index, (ce), (st), (really))
 #endif
@@ -258,6 +258,7 @@ extern int index_name_pos(struct index_state *, const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
+#define ADD_CACHE_JUST_APPEND 8		/* Append only; tree.c::read_tree() */
 extern int add_index_entry(struct index_state *, struct cache_entry *ce, int option);
 extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern int remove_index_entry_at(struct index_state *, int pos);
@@ -277,7 +278,7 @@ extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 #define REFRESH_UNMERGED	0x0002	/* allow unmerged */
 #define REFRESH_QUIET		0x0004	/* be quiet about it */
 #define REFRESH_IGNORE_MISSING	0x0008	/* ignore non-existent */
-extern int refresh_index(struct index_state *, unsigned int flags);
+extern int refresh_index(struct index_state *, unsigned int flags, const char **pathspec, char *seen);
 
 struct lock_file {
 	struct lock_file *next;
@@ -573,6 +574,8 @@ extern void setup_pager(void);
 extern char *pager_program;
 extern int pager_in_use;
 extern int pager_use_color;
+
+extern char *editor_program;
 
 /* base85 */
 int decode_85(char *dst, const char *line, int linelen);

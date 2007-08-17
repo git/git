@@ -68,6 +68,8 @@ for my $cat (qw(ancillaryinterrogators
 	}
 }
 
+# The following list is sorted with "sort -d" to make it easier
+# to find entry in the resulting git.html manual page.
 __DATA__
 git-add                                 mainporcelain
 git-am                                  mainporcelain
@@ -80,9 +82,9 @@ git-blame                               ancillaryinterrogators
 git-branch                              mainporcelain
 git-bundle                              mainporcelain
 git-cat-file                            plumbinginterrogators
-git-checkout-index                      plumbingmanipulators
-git-checkout                            mainporcelain
 git-check-attr                          purehelpers
+git-checkout                            mainporcelain
+git-checkout-index                      plumbingmanipulators
 git-check-ref-format                    purehelpers
 git-cherry                              ancillaryinterrogators
 git-cherry-pick                         mainporcelain
@@ -91,6 +93,7 @@ git-clean                               mainporcelain
 git-clone                               mainporcelain
 git-commit                              mainporcelain
 git-commit-tree                         plumbingmanipulators
+git-config                              ancillarymanipulators
 git-convert-objects                     ancillarymanipulators
 git-count-objects                       ancillaryinterrogators
 git-cvsexportcommit                     foreignscminterface
@@ -98,9 +101,9 @@ git-cvsimport                           foreignscminterface
 git-cvsserver                           foreignscminterface
 git-daemon                              synchingrepositories
 git-describe                            mainporcelain
+git-diff                                mainporcelain
 git-diff-files                          plumbinginterrogators
 git-diff-index                          plumbinginterrogators
-git-diff                                mainporcelain
 git-diff-tree                           plumbinginterrogators
 git-fast-import				ancillarymanipulators
 git-fetch                               mainporcelain
@@ -130,13 +133,13 @@ git-ls-remote                           plumbinginterrogators
 git-ls-tree                             plumbinginterrogators
 git-mailinfo                            purehelpers
 git-mailsplit                           purehelpers
+git-merge                               mainporcelain
 git-merge-base                          plumbinginterrogators
 git-merge-file                          plumbingmanipulators
 git-merge-index                         plumbingmanipulators
-git-merge                               mainporcelain
 git-merge-one-file                      purehelpers
-git-merge-tree                          ancillaryinterrogators
 git-mergetool                           ancillarymanipulators
+git-merge-tree                          ancillaryinterrogators
 git-mktag                               plumbingmanipulators
 git-mktree                              plumbingmanipulators
 git-mv                                  mainporcelain
@@ -157,9 +160,8 @@ git-rebase                              mainporcelain
 git-receive-pack                        synchelpers
 git-reflog                              ancillarymanipulators
 git-relink                              ancillarymanipulators
-git-repack                              ancillarymanipulators
-git-config                              ancillarymanipulators
 git-remote                              ancillarymanipulators
+git-repack                              ancillarymanipulators
 git-request-pull                        foreignscminterface
 git-rerere                              ancillaryinterrogators
 git-reset                               mainporcelain

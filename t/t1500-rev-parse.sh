@@ -28,6 +28,8 @@ test_rev_parse() {
 	[ $# -eq 0 ] && return
 }
 
+# label is-bare is-inside-git is-inside-work prefix
+
 test_rev_parse toplevel false false true ''
 
 cd .git || exit 1
@@ -53,13 +55,13 @@ export GIT_DIR=../.git
 export GIT_CONFIG="$(pwd)"/../.git/config
 
 git config core.bare false
-test_rev_parse 'GIT_DIR=../.git, core.bare = false' false false true work/
+test_rev_parse 'GIT_DIR=../.git, core.bare = false' false false true ''
 
 git config core.bare true
 test_rev_parse 'GIT_DIR=../.git, core.bare = true' true false false ''
 
 git config --unset core.bare
-test_rev_parse 'GIT_DIR=../.git, core.bare undefined' false false true work/
+test_rev_parse 'GIT_DIR=../.git, core.bare undefined' false false true ''
 
 mv ../.git ../repo.git || exit 1
 export GIT_DIR=../repo.git

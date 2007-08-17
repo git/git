@@ -5366,7 +5366,7 @@ sub git_feed {
 
 	# log/feed of current (HEAD) branch, log of given branch, history of file/directory
 	my $head = $hash || 'HEAD';
-	my @commitlist = parse_commits($head, 150);
+	my @commitlist = parse_commits($head, 150, 0, undef, $file_name);
 
 	my %latest_commit;
 	my %latest_date;

@@ -130,7 +130,7 @@ the following situation:
 
 then the command
 
-    git-rebase --onto topicA~5 topicA~2 topicA
+    git-rebase --onto topicA~5 topicA~3 topicA
 
 would result in the removal of commits F and G:
 
