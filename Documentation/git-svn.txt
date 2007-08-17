@@ -549,7 +549,7 @@ listed below are allowed:
 ------------------------------------------------------------------------
 
 Keep in mind that the '*' (asterisk) wildcard of the local ref
-(left of the ':') *must* be the farthest right path component;
+(right of the ':') *must* be the farthest right path component;
 however the remote wildcard may be anywhere as long as it's own
 independent path component (surrounded by '/' or EOL).   This
 type of configuration is not automatically created by 'init' and
