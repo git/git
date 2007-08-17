@@ -31,6 +31,13 @@ In order to compile this code you need:
 	libiconv-1.9.2-1-{lib,bin,lib}.zip (for git-am,
 		from http://gnuwin32.sourceforge.net/packages/libiconv.htm)
 
+I am using these settings in config.mak to have pointers to the right tools:
+
+TCL_PATH=tclsh84
+TCLTK_PATH=wish84
+SHELL_PATH=D:/MSYS/1.0/bin/sh
+PERL_PATH=D:/MSYS/1.0/bin/perl
+
 
 STATUS
 ------
