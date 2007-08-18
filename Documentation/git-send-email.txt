@@ -34,6 +34,12 @@ The --bcc option must be repeated for each user you want on the bcc list.
 +
 The --cc option must be repeated for each user you want on the cc list.
 
+--cc-cmd::
+	Specify a command to execute once per patch file which
+	should generate patch file specific "Cc:" entries.
+	Output of this command must be single email address per line.
+	Default is the value of 'sendemail.cccmd' configuration value.
+
 --chain-reply-to, --no-chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
@@ -123,6 +129,9 @@ sendemail.aliasesfile::
 sendemail.aliasfiletype::
 	Format of the file(s) specified in sendemail.aliasesfile. Must be
 	one of 'mutt', 'mailrc', 'pine', or 'gnus'.
+
+sendemail.cccmd::
+	Command to execute to generate per patch file specific "Cc:"s.
 
 sendemail.bcc::
 	Email address (or alias) to always bcc.
