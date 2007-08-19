@@ -192,7 +192,7 @@ core.worktree::
 	variable and the '--work-tree' command line option.
 
 core.logAllRefUpdates::
-	Updates to a ref <ref> is logged to the file
+	Enable the reflog. Updates to a ref <ref> is logged to the file
 	"$GIT_DIR/logs/<ref>", by appending the new and old
 	SHA1, the date/time and the reason of the update, but
 	only when the file exists.  If this configuration
