@@ -9,7 +9,8 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate]
+'git' [--version] [--exec-path[=GIT_EXEC_PATH]]
+    [-p|--paginate|--no-pager]
     [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]
     [--help] COMMAND [ARGS]
 
@@ -102,6 +103,9 @@ OPTIONS
 
 -p|--paginate::
 	Pipe all output into 'less' (or if set, $PAGER).
+
+--no-pager::
+	Do not pipe git output into a pager.
 
 --git-dir=<path>::
 	Set the path to the repository. This can also be controlled by
