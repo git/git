@@ -519,6 +519,7 @@ proc makewindow {} {
     global textfont mainfont uifont tabstop
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
+    global diffcontextstring diffcontext
     global maincursor textcursor curtextcursor
     global rowctxmenu fakerowmenu mergemax wrapcomment
     global highlight_files gdttype
@@ -733,7 +734,17 @@ proc makewindow {} {
 	-command changediffdisp -variable diffelide -value {0 1}
     radiobutton .bleft.mid.new -text "New version" \
 	-command changediffdisp -variable diffelide -value {1 0}
+    label .bleft.mid.labeldiffcontext -text "      Lines of context: " \
+	-font $uifont
     pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left
+    spinbox .bleft.mid.diffcontext -width 5 -font $textfont \
+	-from 1 -increment 1 -to 10000000 \
+	-validate all -validatecommand "diffcontextvalidate %P" \
+	-textvariable diffcontextstring
+    .bleft.mid.diffcontext set $diffcontext
+    trace add variable diffcontextstring write diffcontextchange
+    lappend entries .bleft.mid.diffcontext
+    pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left
     set ctext .bleft.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
 	-tabs "[expr {$tabstop * $charspc}]" \
@@ -1001,8 +1012,8 @@ proc savestuff {w} {
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth showneartags showlocalchanges
     global viewname viewfiles viewargs viewperm nextviewnum
-    global cmitmode wrapcomment
-    global colors bgcolor fgcolor diffcolors selectbgcolor
+    global cmitmode wrapcomment datetimeformat
+    global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -1019,10 +1030,12 @@ proc savestuff {w} {
 	puts $f [list set wrapcomment $wrapcomment]
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set showlocalchanges $showlocalchanges]
+	puts $f [list set datetimeformat $datetimeformat]
 	puts $f [list set bgcolor $bgcolor]
 	puts $f [list set fgcolor $fgcolor]
 	puts $f [list set colors $colors]
 	puts $f [list set diffcolors $diffcolors]
+	puts $f [list set diffcontext $diffcontext]
 	puts $f [list set selectbgcolor $selectbgcolor]
 
 	puts $f "set geometry(main) [wm geometry .]"
@@ -5052,12 +5065,29 @@ proc gettreediffline {gdtf ids} {
     return 0
 }
 
+# empty string or positive integer
+proc diffcontextvalidate {v} {
+    return [regexp {^(|[1-9][0-9]*)$} $v]
+}
+
+proc diffcontextchange {n1 n2 op} {
+    global diffcontextstring diffcontext
+
+    if {[string is integer -strict $diffcontextstring]} {
+	if {$diffcontextstring > 0} {
+	    set diffcontext $diffcontextstring
+	    reselectline
+	}
+    }
+}
+
 proc getblobdiffs {ids} {
     global diffopts blobdifffd diffids env
     global diffinhdr treediffs
+    global diffcontext
 
     set env(GIT_DIFF_OPTS) $diffopts
-    if {[catch {set bdf [open [diffcmd $ids {-p -C --no-commit-id}] r]} err]} {
+    if {[catch {set bdf [open [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"] r]} err]} {
 	puts "error getting diffs: $err"
 	return
     }
@@ -6168,7 +6198,7 @@ proc cobranch {} {
 
 proc rmbranch {} {
     global headmenuid headmenuhead mainhead
-    global headids idheads
+    global idheads
 
     set head $headmenuhead
     set id $headmenuid
@@ -6178,7 +6208,7 @@ proc rmbranch {} {
 	return
     }
     set dheads [descheads $id]
-    if {$dheads eq $headids($head)} {
+    if {$idheads($dheads) eq $head} {
 	# the stuff on this branch isn't on any other branch
 	if {![confirm_popup "The commits on branch $head aren't on any other\
 			branch.\nReally delete branch $head?"]} return
@@ -7312,8 +7342,9 @@ proc prefsok {} {
 }
 
 proc formatdate {d} {
+    global datetimeformat
     if {$d ne {}} {
-	set d [clock format $d -format "%Y-%m-%d %H:%M:%S"]
+	set d [clock format $d -format $datetimeformat]
     }
     return $d
 }
@@ -7626,11 +7657,13 @@ set showneartags 1
 set maxrefs 20
 set maxlinelen 200
 set showlocalchanges 1
+set datetimeformat "%Y-%m-%d %H:%M:%S"
 
 set colors {green red blue magenta darkgrey brown orange}
 set bgcolor white
 set fgcolor black
 set diffcolors {red "#00a000" blue}
+set diffcontext 3
 set selectbgcolor gray85
 
 catch {source ~/.gitk}
