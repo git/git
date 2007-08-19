@@ -145,32 +145,27 @@ current branch:
 
 ------------------------------------------------
 $ git show
-commit 2b5f6dcce5bf94b9b119e9ed8d537098ec61c3d2
-Author: Jamal Hadi Salim <hadi@cyberus.ca>
-Date:   Sat Dec 2 22:22:25 2006 -0800
+commit 17cf781661e6d38f737f15f53ab552f1e95960d7
+Author: Linus Torvalds <torvalds@ppc970.osdl.org.(none)>
+Date:   Tue Apr 19 14:11:06 2005 -0700
 
-    [XFRM]: Fix aevent structuring to be more complete.
-    
-    aevents can not uniquely identify an SA. We break the ABI with this
-    patch, but consensus is that since it is not yet utilized by any
-    (known) application then it is fine (better do it now than later).
-    
-    Signed-off-by: Jamal Hadi Salim <hadi@cyberus.ca>
-    Signed-off-by: David S. Miller <davem@davemloft.net>
+    Remove duplicate getenv(DB_ENVIRONMENT) call
 
-diff --git a/Documentation/networking/xfrm_sync.txt b/Documentation/networking/xfrm_sync.txt
-index 8be626f..d7aac9d 100644
---- a/Documentation/networking/xfrm_sync.txt
-+++ b/Documentation/networking/xfrm_sync.txt
-@@ -47,10 +47,13 @@ aevent_id structure looks like:
+    Noted by Tony Luck.
+
+diff --git a/init-db.c b/init-db.c
+index 65898fa..b002dc6 100644
+--- a/init-db.c
++++ b/init-db.c
+@@ -7,7 +7,7 @@
  
-    struct xfrm_aevent_id {
-              struct xfrm_usersa_id           sa_id;
-+             xfrm_address_t                  saddr;
-              __u32                           flags;
-+             __u32                           reqid;
-    };
-...
+ int main(int argc, char **argv)
+ {
+-	char *sha1_dir = getenv(DB_ENVIRONMENT), *path;
++	char *sha1_dir, *path;
+ 	int len, i;
+ 
+ 	if (mkdir(".git", 0755) < 0) {
 ------------------------------------------------
 
 As you can see, a commit shows who made the latest change, what they
