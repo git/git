@@ -32,7 +32,8 @@ directly by the end users -- instead, see gitlink:git-gc[1].
 
 The subcommand "show" (which is also the default, in the absense of any
 subcommands) will take all the normal log options, and show the log of
-the current branch. It is basically an alias for 'git log -g --abbrev-commit
+`HEAD`, which will cover all recent actions, including branch switches.
+It is basically an alias for 'git log -g --abbrev-commit
 --pretty=oneline', see gitlink:git-log[1].
 
 
