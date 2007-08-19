@@ -66,14 +66,14 @@ contains all the information about the history of the project.
 How to check out a different version of a project
 -------------------------------------------------
 
-Git is best thought of as a tool for storing the history of a
-collection of files.  It stores the history as a compressed
-collection of interrelated snapshots (versions) of the project's
-contents.
+Git is best thought of as a tool for storing the history of a collection
+of files.  It stores the history as a compressed collection of
+interrelated snapshots of the project's contents.  In git each such
+version is called a <<def_commit,commit>>.
 
 A single git repository may contain multiple branches.  It keeps track
 of them by keeping a list of <<def_head,heads>> which reference the
-latest version on each branch; the gitlink:git-branch[1] command shows
+latest commit on each branch; the gitlink:git-branch[1] command shows
 you the list of branch heads:
 
 ------------------------------------------------
