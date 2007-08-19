@@ -1348,6 +1348,9 @@ unset i
 proc bind_button3 {w cmd} {
 	bind $w <Any-Button-3> $cmd
 	if {[is_MacOSX]} {
+		# Mac OS X sends Button-2 on right click through three-button mouse,
+		# or through trackpad right-clicking (two-finger touch + click).
+		bind $w <Any-Button-2> $cmd
 		bind $w <Control-Button-1> $cmd
 	}
 }
@@ -2407,13 +2410,15 @@ $ctxm add separator
 $ctxm add command -label {Options...} \
 	-command do_options
 proc popup_diff_menu {ctxm x y X Y} {
+	global current_diff_path
 	set ::cursorX $x
 	set ::cursorY $y
 	if {$::ui_index eq $::current_diff_side} {
 		$ctxm entryconf $::ui_diff_applyhunk \
 			-state normal \
 			-label {Unstage Hunk From Commit}
-	} elseif {{_O} eq [lindex $::file_states($::current_diff_path) 0]} {
+	} elseif {![info exists file_states($current_diff_path)]
+		|| {_O} eq [lindex $file_states($::current_diff_path) 0]} {
 		$ctxm entryconf $::ui_diff_applyhunk \
 			-state disabled \
 			-label {Stage Hunk For Commit}
