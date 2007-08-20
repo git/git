@@ -302,7 +302,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		}
 		chdir("..");
 		do {
-			if (!offset) {
+			if (offset <= minoffset) {
 				if (nongit_ok) {
 					if (chdir(cwd))
 						die("Cannot come back to cwd");
