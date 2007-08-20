@@ -99,6 +99,7 @@ origin_override=
 use_separate_remote=t
 depth=
 no_progress=
+local_explicitly_asked_for=
 test -t 1 || no_progress=--no-progress
 while
 	case "$#,$1" in
@@ -109,6 +110,7 @@ while
 	*,--na|*,--nak|*,--nake|*,--naked|\
 	*,-b|*,--b|*,--ba|*,--bar|*,--bare) bare=yes ;;
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local)
+	  local_explicitly_asked_for=yes
 	  use_local_hardlink=yes ;;
 	*,--no-h|*,--no-ha|*,--no-har|*,--no-hard|*,--no-hardl|\
 	*,--no-hardli|*,--no-hardlin|*,--no-hardlink|*,--no-hardlinks)
@@ -281,7 +283,8 @@ yes)
 			then
 				rm -f "$GIT_DIR/objects/sample"
 				l=l
-			else
+			elif test -n "$local_explicitly_asked_for"
+			then
 				echo >&2 "Warning: -l asked but cannot hardlink to $repo"
 			fi
 		fi &&
