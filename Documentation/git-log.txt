@@ -49,6 +49,7 @@ include::pretty-options.txt[]
 -g, \--walk-reflogs::
 	Show commits as they were recorded in the reflog. The log contains
 	a record about how the tip of a reference was changed.
+	Cannot be combined with --reverse.
 	See also gitlink:git-reflog[1].
 
 --decorate::
