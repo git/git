@@ -114,7 +114,7 @@ method _start {} {
 	lappend cmd --strategy=recursive
 	lappend cmd [git fmt-merge-msg <[gitdir FETCH_HEAD]]
 	lappend cmd HEAD
-	lappend cmd $cmit
+	lappend cmd $name
 
 	set msg "Merging $current_branch and $stitle"
 	ui_status "$msg..."
