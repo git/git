@@ -148,11 +148,12 @@ proc make_toplevel {t w args} {
 		}
 	}
 
-	if {[winfo ismapped .]} {
+	if {$::root_exists || [winfo ismapped .]} {
 		regsub -all {::} $this {__} w
 		set top .$w
 		set pfx $top
 		toplevel $top
+		set ::root_exists 1
 	} else {
 		set top .
 		set pfx {}

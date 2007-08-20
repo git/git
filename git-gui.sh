@@ -1936,6 +1936,12 @@ if {$browser ne {}} {
 }
 unset browser doc_path doc_url
 
+set root_exists 0
+bind . <Visibility> {
+	bind . <Visibility> {}
+	set root_exists 1
+}
+
 # -- Standard bindings
 #
 wm protocol . WM_DELETE_WINDOW do_quit
