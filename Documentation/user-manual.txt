@@ -914,7 +914,7 @@ they look OK.
 
 [[Finding-comments-with-given-content]]
 Finding commits referencing a file with given content
------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Somebody hands you a copy of a file, and asks which commits modified a
 file such that it contained the given content either before or after the
