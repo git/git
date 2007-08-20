@@ -88,7 +88,7 @@ The --cc option must be repeated for each user you want on the cc list.
         If this is set, do not add the From: address to the cc: list, if it
         shows up in a From: line.
         Default is the value of 'sendemail.suppressfrom' configuration value;
-        if that is unspecified, default to --no-supress-from.
+        if that is unspecified, default to --no-suppress-from.
 
 --thread, --no-thread::
 	If this is set, the In-Reply-To header will be set on each email sent.
