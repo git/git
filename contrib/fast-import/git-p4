@@ -664,9 +664,8 @@ class P4Submit(Command):
             f.close();
 
         os.chdir(self.clientPath)
-        response = raw_input("Do you want to sync %s with p4 sync? [y]es/[n]o " % self.clientPath)
-        if response == "y" or response == "yes":
-            system("p4 sync ...")
+        print "Syncronizing p4 checkout..."
+        system("p4 sync ...")
 
         if self.reset:
             self.firstTime = True
