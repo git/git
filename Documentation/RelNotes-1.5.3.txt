@@ -28,7 +28,7 @@ Updates since v1.5.2
 * For people who need to import from Perforce, a front-end for
   fast-import is in contrib/fast-import/.
 
-* Comes with git-gui 0.8.0.
+* Comes with git-gui 0.8.1.
 
 * Comes with updated gitk.
 
@@ -129,6 +129,9 @@ Updates since v1.5.2
     the cached stat information.
 
   - "git init -q" makes the command quieter.
+
+  - "git -p command" now has a cousin of opposite sex, "git --no-pager
+    command".
 
 * Updated behavior of existing commands.
 
@@ -317,6 +320,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3-rc4
+O=v1.5.3-rc6
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
