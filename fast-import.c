@@ -375,7 +375,7 @@ static void write_branch_report(FILE *rpt, struct branch *b)
 	fputc('\n', rpt);
 }
 
-static void write_crash_report(const char *err, va_list params)
+static void write_crash_report(const char *err)
 {
 	char *loc = git_path("fast_import_crash_%d", getpid());
 	FILE *rpt = fopen(loc, "w");
@@ -397,7 +397,7 @@ static void write_crash_report(const char *err, va_list params)
 	fputc('\n', rpt);
 
 	fputs("fatal: ", rpt);
-	vfprintf(rpt, err, params);
+	fputs(err, rpt);
 	fputc('\n', rpt);
 
 	fputc('\n', rpt);
@@ -442,18 +442,17 @@ static void write_crash_report(const char *err, va_list params)
 static NORETURN void die_nicely(const char *err, va_list params)
 {
 	static int zombie;
-	va_list x_params;
+	char message[2 * PATH_MAX];
 
-	va_copy(x_params, params);
+	vsnprintf(message, sizeof(message), err, params);
 	fputs("fatal: ", stderr);
-	vfprintf(stderr, err, params);
+	fputs(message, stderr);
 	fputc('\n', stderr);
 
 	if (!zombie) {
 		zombie = 1;
-		write_crash_report(err, x_params);
+		write_crash_report(message);
 	}
-	va_end(x_params);
 	exit(128);
 }
 
