@@ -533,6 +533,7 @@ proc makewindow {} {
     menu .bar.file
     .bar.file add command -label "Update" -command updatecommits
     .bar.file add command -label "Reread references" -command rereadrefs
+    .bar.file add command -label "List references" -command showrefs
     .bar.file add command -label "Quit" -command doquit
     .bar.file configure -font $uifont
     menu .bar.edit
@@ -1466,6 +1467,38 @@ image create bitmap tri-dn -background black -foreground blue -data {
        0x00, 0x00};
 }
 
+image create bitmap reficon-T -background black -foreground yellow -data {
+    #define tagicon_width 13
+    #define tagicon_height 9
+    static unsigned char tagicon_bits[] = {
+       0x00, 0x00, 0x00, 0x00, 0xf0, 0x07, 0xf8, 0x07,
+       0xfc, 0x07, 0xf8, 0x07, 0xf0, 0x07, 0x00, 0x00, 0x00, 0x00};
+} -maskdata {
+    #define tagicon-mask_width 13
+    #define tagicon-mask_height 9
+    static unsigned char tagicon-mask_bits[] = {
+       0x00, 0x00, 0xf0, 0x0f, 0xf8, 0x0f, 0xfc, 0x0f,
+       0xfe, 0x0f, 0xfc, 0x0f, 0xf8, 0x0f, 0xf0, 0x0f, 0x00, 0x00};
+}
+set rectdata {
+    #define headicon_width 13
+    #define headicon_height 9
+    static unsigned char headicon_bits[] = {
+       0x00, 0x00, 0x00, 0x00, 0xf8, 0x07, 0xf8, 0x07,
+       0xf8, 0x07, 0xf8, 0x07, 0xf8, 0x07, 0x00, 0x00, 0x00, 0x00};
+}
+set rectmask {
+    #define headicon-mask_width 13
+    #define headicon-mask_height 9
+    static unsigned char headicon-mask_bits[] = {
+       0x00, 0x00, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f,
+       0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0x00, 0x00};
+}
+image create bitmap reficon-H -background black -foreground green \
+    -data $rectdata -maskdata $rectmask
+image create bitmap reficon-o -background black -foreground "#ddddff" \
+    -data $rectdata -maskdata $rectmask
+
 proc init_flist {first} {
     global cflist cflist_top selectedline difffilestart
 
@@ -1988,6 +2021,7 @@ proc showview {n} {
     } elseif {$numcommits == 0} {
 	show_status "No commits selected"
     }
+    run refill_reflist
 }
 
 # Stuff relating to the highlighting facility
@@ -2751,12 +2785,21 @@ proc layoutmore {tmax allread} {
 proc showstuff {canshow last} {
     global numcommits commitrow pending_select selectedline curview
     global lookingforhead mainheadid displayorder selectfirst
-    global lastscrollset
+    global lastscrollset commitinterest
 
     if {$numcommits == 0} {
 	global phase
 	set phase "incrdraw"
 	allcanvs delete all
+    }
+    for {set l $numcommits} {$l < $canshow} {incr l} {
+	set id [lindex $displayorder $l]
+	if {[info exists commitinterest($id)]} {
+	    foreach script $commitinterest($id) {
+		eval [string map [list "%I" $id] $script]
+	    }
+	    unset commitinterest($id)
+	}
     }
     set r0 $numcommits
     set prev $numcommits
@@ -4484,6 +4527,7 @@ proc selectline {l isnew} {
     $canv delete hover
     normalline
     cancel_next_highlight
+    unsel_reflist
     if {$l < 0 || $l >= $numcommits} return
     set y [expr {$canvy0 + $l * $linespc}]
     set ymax [lindex [$canv cget -scrollregion] 3]
@@ -5146,8 +5190,8 @@ proc getblobdiffline {bdf ids} {
 	    # the middle char will be a space, and the two bits either
 	    # side will be a/name and b/name, or "a/name" and "b/name".
 	    # If the name has changed we'll get "rename from" and
-	    # "rename to" lines following this, and we'll use them
-	    # to get the filenames.
+	    # "rename to" or "copy from" and "copy to" lines following this,
+	    # and we'll use them to get the filenames.
 	    # This complexity is necessary because spaces in the filename(s)
 	    # don't get escaped.
 	    set l [string length $line]
@@ -5171,8 +5215,9 @@ proc getblobdiffline {bdf ids} {
 	    set diffinhdr 0
 
 	} elseif {$diffinhdr} {
-	    if {![string compare -length 12 "rename from " $line]} {
-		set fname [string range $line 12 end]
+	    if {![string compare -length 12 "rename from " $line] ||
+		![string compare -length 10 "copy from " $line]} {
+		set fname [string range $line [expr 6 + [string first " from " $line] ] end]
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
 		}
@@ -5180,8 +5225,9 @@ proc getblobdiffline {bdf ids} {
 		if {$i >= 0} {
 		    setinlist difffilestart $i $curdiffstart
 		}
-	    } elseif {![string compare -length 10 $line "rename to "]} {
-		set fname [string range $line 10 end]
+	    } elseif {![string compare -length 10 $line "rename to "] ||
+		      ![string compare -length 8 $line "copy to "]} {
+		set fname [string range $line [expr 4 + [string first " to " $line] ] end]
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
 		}
@@ -5412,7 +5458,7 @@ proc redisplay {} {
 }
 
 proc incrfont {inc} {
-    global mainfont textfont ctext canv phase cflist
+    global mainfont textfont ctext canv phase cflist showrefstop
     global charspc tabstop
     global stopped entries
     unmarkmatches
@@ -5427,6 +5473,9 @@ proc incrfont {inc} {
     }
     if {$phase eq "getcommits"} {
 	$canv itemconf textitems -font $mainfont
+    }
+    if {[info exists showrefstop] && [winfo exists $showrefstop]} {
+	$showrefstop.list conf -font $mainfont
     }
     redisplay
 }
@@ -5886,6 +5935,8 @@ proc domktag {} {
     lappend idtags($id) $tag
     redrawtags $id
     addedtag $id
+    dispneartags 0
+    run refill_reflist
 }
 
 proc redrawtags {id} {
@@ -6027,6 +6078,7 @@ proc mkbrgo {top} {
 	notbusy newbranch
 	redrawtags $id
 	dispneartags 0
+	run refill_reflist
     }
 }
 
@@ -6208,7 +6260,7 @@ proc rmbranch {} {
 	return
     }
     set dheads [descheads $id]
-    if {$idheads($dheads) eq $head} {
+    if {[llength $dheads] == 1 && $idheads($dheads) eq $head} {
 	# the stuff on this branch isn't on any other branch
 	if {![confirm_popup "The commits on branch $head aren't on any other\
 			branch.\nReally delete branch $head?"]} return
@@ -6225,6 +6277,163 @@ proc rmbranch {} {
     redrawtags $id
     notbusy rmbranch
     dispneartags 0
+    run refill_reflist
+}
+
+# Display a list of tags and heads
+proc showrefs {} {
+    global showrefstop bgcolor fgcolor selectbgcolor mainfont
+    global bglist fglist uifont reflistfilter reflist maincursor
+
+    set top .showrefs
+    set showrefstop $top
+    if {[winfo exists $top]} {
+	raise $top
+	refill_reflist
+	return
+    }
+    toplevel $top
+    wm title $top "Tags and heads: [file tail [pwd]]"
+    text $top.list -background $bgcolor -foreground $fgcolor \
+	-selectbackground $selectbgcolor -font $mainfont \
+	-xscrollcommand "$top.xsb set" -yscrollcommand "$top.ysb set" \
+	-width 30 -height 20 -cursor $maincursor \
+	-spacing1 1 -spacing3 1 -state disabled
+    $top.list tag configure highlight -background $selectbgcolor
+    lappend bglist $top.list
+    lappend fglist $top.list
+    scrollbar $top.ysb -command "$top.list yview" -orient vertical
+    scrollbar $top.xsb -command "$top.list xview" -orient horizontal
+    grid $top.list $top.ysb -sticky nsew
+    grid $top.xsb x -sticky ew
+    frame $top.f
+    label $top.f.l -text "Filter: " -font $uifont
+    entry $top.f.e -width 20 -textvariable reflistfilter -font $uifont
+    set reflistfilter "*"
+    trace add variable reflistfilter write reflistfilter_change
+    pack $top.f.e -side right -fill x -expand 1
+    pack $top.f.l -side left
+    grid $top.f - -sticky ew -pady 2
+    button $top.close -command [list destroy $top] -text "Close" \
+	-font $uifont
+    grid $top.close -
+    grid columnconfigure $top 0 -weight 1
+    grid rowconfigure $top 0 -weight 1
+    bind $top.list <1> {break}
+    bind $top.list <B1-Motion> {break}
+    bind $top.list <ButtonRelease-1> {sel_reflist %W %x %y; break}
+    set reflist {}
+    refill_reflist
+}
+
+proc sel_reflist {w x y} {
+    global showrefstop reflist headids tagids otherrefids
+
+    if {![winfo exists $showrefstop]} return
+    set l [lindex [split [$w index "@$x,$y"] "."] 0]
+    set ref [lindex $reflist [expr {$l-1}]]
+    set n [lindex $ref 0]
+    switch -- [lindex $ref 1] {
+	"H" {selbyid $headids($n)}
+	"T" {selbyid $tagids($n)}
+	"o" {selbyid $otherrefids($n)}
+    }
+    $showrefstop.list tag add highlight $l.0 "$l.0 lineend"
+}
+
+proc unsel_reflist {} {
+    global showrefstop
+
+    if {![info exists showrefstop] || ![winfo exists $showrefstop]} return
+    $showrefstop.list tag remove highlight 0.0 end
+}
+
+proc reflistfilter_change {n1 n2 op} {
+    global reflistfilter
+
+    after cancel refill_reflist
+    after 200 refill_reflist
+}
+
+proc refill_reflist {} {
+    global reflist reflistfilter showrefstop headids tagids otherrefids
+    global commitrow curview commitinterest
+
+    if {![info exists showrefstop] || ![winfo exists $showrefstop]} return
+    set refs {}
+    foreach n [array names headids] {
+	if {[string match $reflistfilter $n]} {
+	    if {[info exists commitrow($curview,$headids($n))]} {
+		lappend refs [list $n H]
+	    } else {
+		set commitinterest($headids($n)) {run refill_reflist}
+	    }
+	}
+    }
+    foreach n [array names tagids] {
+	if {[string match $reflistfilter $n]} {
+	    if {[info exists commitrow($curview,$tagids($n))]} {
+		lappend refs [list $n T]
+	    } else {
+		set commitinterest($tagids($n)) {run refill_reflist}
+	    }
+	}
+    }
+    foreach n [array names otherrefids] {
+	if {[string match $reflistfilter $n]} {
+	    if {[info exists commitrow($curview,$otherrefids($n))]} {
+		lappend refs [list $n o]
+	    } else {
+		set commitinterest($otherrefids($n)) {run refill_reflist}
+	    }
+	}
+    }
+    set refs [lsort -index 0 $refs]
+    if {$refs eq $reflist} return
+
+    # Update the contents of $showrefstop.list according to the
+    # differences between $reflist (old) and $refs (new)
+    $showrefstop.list conf -state normal
+    $showrefstop.list insert end "\n"
+    set i 0
+    set j 0
+    while {$i < [llength $reflist] || $j < [llength $refs]} {
+	if {$i < [llength $reflist]} {
+	    if {$j < [llength $refs]} {
+		set cmp [string compare [lindex $reflist $i 0] \
+			     [lindex $refs $j 0]]
+		if {$cmp == 0} {
+		    set cmp [string compare [lindex $reflist $i 1] \
+				 [lindex $refs $j 1]]
+		}
+	    } else {
+		set cmp -1
+	    }
+	} else {
+	    set cmp 1
+	}
+	switch -- $cmp {
+	    -1 {
+		$showrefstop.list delete "[expr {$j+1}].0" "[expr {$j+2}].0"
+		incr i
+	    }
+	    0 {
+		incr i
+		incr j
+	    }
+	    1 {
+		set l [expr {$j + 1}]
+		$showrefstop.list image create $l.0 -align baseline \
+		    -image reficon-[lindex $refs $j 1] -padx 2
+		$showrefstop.list insert $l.1 "[lindex $refs $j 0]\n"
+		incr j
+	    }
+	}
+    }
+    set reflist $refs
+    # delete last newline
+    $showrefstop.list delete end-2c end-1c
+    $showrefstop.list conf -state disabled
 }
 
 # Stuff for finding nearby tags
@@ -7122,6 +7331,7 @@ proc rereadrefs {} {
 	    redrawtags $id
 	}
     }
+    run refill_reflist
 }
 
 proc listrefs {id} {
