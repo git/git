@@ -664,9 +664,11 @@ Return the list of files that haven't been handled."
     (ewoc-set-hf status
                  (format "Directory:  %s\nBranch:     %s\nHead:       %s%s\n"
                          default-directory
-                         (if (string-match "^refs/heads/" branch)
-                             (substring branch (match-end 0))
-                           branch)
+                         (if branch
+                             (if (string-match "^refs/heads/" branch)
+                                 (substring branch (match-end 0))
+                               branch)
+                           "none (detached HEAD)")
                          head
                          (if merge-heads
                              (concat "\nMerging:    "
