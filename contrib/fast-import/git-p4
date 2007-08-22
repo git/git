@@ -704,10 +704,14 @@ class P4Submit(Command):
             else:
                 print "All changes applied!"
                 os.chdir(self.oldWorkingDirectory)
-                response = raw_input("Do you want to sync from Perforce now using git-p4 rebase? [y]es/[n]o ")
+
+                sync = P4Sync()
+                sync.run([])
+
+                response = raw_input("Do you want to rebase current HEAD from Perforce now using git-p4 rebase? [y]es/[n]o ")
                 if response == "y" or response == "yes":
                     rebase = P4Rebase()
-                    rebase.run([])
+                    rebase.rebase()
             os.remove(self.configFile)
 
         return True
@@ -1439,6 +1443,9 @@ class P4Rebase(Command):
         sync = P4Sync()
         sync.run([])
 
+        return self.rebase()
+
+    def rebase(self):
         [upstream, settings] = findUpstreamBranchPoint()
         if len(upstream) == 0:
             die("Cannot find upstream branchpoint for rebase")
