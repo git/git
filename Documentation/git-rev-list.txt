@@ -298,8 +298,8 @@ used in the output.  When the starting commit is specified as
 'commit@{now}', output also uses 'commit@\{timestamp}' notation
 instead.  Under '\--pretty=oneline', the commit message is
 prefixed with this information on the same line.
-+
-Cannot be combined with --reverse.
+
+Cannot be combined with '\--reverse'.
 
 --merge::
 
@@ -375,7 +375,7 @@ By default, the commits are shown in reverse chronological order.
 --reverse::
 
 	Output the commits in reverse order.
-	Cannot be combined with --walk-reflogs.
+	Cannot be combined with '\--walk-reflogs'.
 
 Object Traversal
 ~~~~~~~~~~~~~~~~
