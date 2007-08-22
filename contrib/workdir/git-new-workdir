@@ -33,6 +33,14 @@ case "$git_dir" in
 	;;
 esac
 
+# don't link to a configured bare repository
+isbare=$(git --git-dir="$git_dir" config --bool --get core.bare)
+if test ztrue = z$isbare
+then
+	die "\"$git_dir\" has core.bare set to true," \
+		" remove from \"$git_dir/config\" to use $0"
+fi
+
 # don't link to a workdir
 if test -L "$git_dir/config"
 then
