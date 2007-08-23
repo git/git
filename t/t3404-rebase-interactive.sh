@@ -264,6 +264,27 @@ test_expect_success 'interrupted squash works as expected' '
 	test $one = $(git rev-parse HEAD~2)
 '
 
+test_expect_success 'interrupted squash works as expected (case 2)' '
+	for n in one two three four
+	do
+		echo $n >> conflict &&
+		git add conflict &&
+		git commit -m $n
+	done &&
+	one=$(git rev-parse HEAD~3) &&
+	! FAKE_LINES="3 squash 1 2" git rebase -i HEAD~3 &&
+	(echo one; echo four) > conflict &&
+	git add conflict &&
+	! git rebase --continue &&
+	(echo one; echo two; echo four) > conflict &&
+	git add conflict &&
+	! git rebase --continue &&
+	echo resolved > conflict &&
+	git add conflict &&
+	git rebase --continue &&
+	test $one = $(git rev-parse HEAD~2)
+'
+
 test_expect_success 'ignore patch if in upstream' '
 	HEAD=$(git rev-parse HEAD) &&
 	git checkout -b has-cherry-picked HEAD^ &&
