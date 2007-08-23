@@ -370,6 +370,7 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
+	print "Committing to $url ...\n";
 	unless ($gs) {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history\n";
