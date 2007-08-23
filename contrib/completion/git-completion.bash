@@ -419,7 +419,7 @@ _git_add ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--interactive"
+		__gitcomp "--interactive --refresh"
 		return
 	esac
 	COMPREPLY=()
@@ -525,6 +525,11 @@ _git_commit ()
 	COMPREPLY=()
 }
 
+_git_describe ()
+{
+	__gitcomp "$(__git_refs)"
+}
+
 _git_diff ()
 {
 	__git_complete_file
@@ -573,6 +578,7 @@ _git_format_patch ()
 			--stdout --attach --thread
 			--output-directory
 			--numbered --start-number
+			--numbered-files
 			--keep-subject
 			--signoff
 			--in-reply-to=
@@ -590,7 +596,7 @@ _git_gc ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--prune"
+		__gitcomp "--prune --aggressive"
 		return
 		;;
 	esac
@@ -617,14 +623,20 @@ _git_log ()
 			" "" "${cur##--pretty=}"
 		return
 		;;
+	--date=*)
+		__gitcomp "
+			relative iso8601 rfc2822 short local default
+		" "" "${cur##--date=}"
+		return
+		;;
 	--*)
 		__gitcomp "
 			--max-count= --max-age= --since= --after=
 			--min-age= --before= --until=
 			--root --topo-order --date-order --reverse
-			--no-merges
+			--no-merges --follow
 			--abbrev-commit --abbrev=
-			--relative-date
+			--relative-date --date=
 			--author= --committer= --grep=
 			--all-match
 			--pretty= --name-status --name-only --raw
@@ -796,7 +808,7 @@ _git_config ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--global --system
+			--global --system --file=
 			--list --replace-all
 			--get --get-all --get-regexp
 			--add --unset --unset-all
@@ -839,6 +851,7 @@ _git_config ()
 		core.ignoreStat
 		core.preferSymlinkRefs
 		core.logAllRefUpdates
+		core.loosecompression
 		core.repositoryFormatVersion
 		core.sharedRepository
 		core.warnAmbiguousRefs
@@ -870,6 +883,7 @@ _git_config ()
 		diff.renames
 		fetch.unpackLimit
 		format.headers
+		format.subjectprefix
 		gitcvs.enabled
 		gitcvs.logfile
 		gitcvs.allbinary
@@ -896,6 +910,10 @@ _git_config ()
 		merge.verbosity
 		pack.window
 		pack.depth
+		pack.windowMemory
+		pack.compression
+		pack.deltaCacheSize
+		pack.deltaCacheLimit
 		pull.octopus
 		pull.twohead
 		repack.useDeltaBaseOffset
@@ -1006,6 +1024,31 @@ _git_stash ()
 	__gitcomp 'list show apply clear'
 }
 
+_git_submodule ()
+{
+	local i c=1 command
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		add|status|init|update) command="$i"; break ;;
+		esac
+		c=$((++c))
+	done
+
+	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+		local cur="${COMP_WORDS[COMP_CWORD]}"
+		case "$cur" in
+		--*)
+			__gitcomp "--quiet --cached"
+			;;
+		*)
+			__gitcomp "add status init update"
+			;;
+		esac
+		return
+	fi
+}
+
 _git ()
 {
 	local i c=1 command __git_dir
@@ -1024,7 +1067,14 @@ _git ()
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
 		case "${COMP_WORDS[COMP_CWORD]}" in
 		--*=*) COMPREPLY=() ;;
-		--*)   __gitcomp "--git-dir= --bare --version --exec-path" ;;
+		--*)   __gitcomp "
+			--no-pager
+			--git-dir=
+			--bare
+			--version
+			--exec-path
+			"
+			;;
 		*)     __gitcomp "$(__git_commands) $(__git_aliases)" ;;
 		esac
 		return
@@ -1045,6 +1095,7 @@ _git ()
 	cherry-pick) _git_cherry_pick ;;
 	commit)      _git_commit ;;
 	config)      _git_config ;;
+	describe)    _git_describe ;;
 	diff)        _git_diff ;;
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
@@ -1064,6 +1115,7 @@ _git ()
 	show)        _git_show ;;
 	show-branch) _git_log ;;
 	stash)       _git_stash ;;
+	submodule)   _git_submodule ;;
 	whatchanged) _git_log ;;
 	*)           COMPREPLY=() ;;
 	esac
@@ -1092,6 +1144,7 @@ complete -o default -o nospace -F _git_checkout git-checkout
 complete -o default -o nospace -F _git_cherry git-cherry
 complete -o default -o nospace -F _git_cherry_pick git-cherry-pick
 complete -o default -o nospace -F _git_commit git-commit
+complete -o default -o nospace -F _git_describe git-describe
 complete -o default -o nospace -F _git_diff git-diff
 complete -o default -o nospace -F _git_fetch git-fetch
 complete -o default -o nospace -F _git_format_patch git-format-patch
@@ -1111,6 +1164,7 @@ complete -o default -o nospace -F _git_reset git-reset
 complete -o default -o nospace -F _git_shortlog git-shortlog
 complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_stash git-stash
+complete -o default -o nospace -F _git_submodule git-submodule
 complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_log git-whatchanged
 
@@ -1125,6 +1179,7 @@ complete -o default -o nospace -F _git git.exe
 complete -o default -o nospace -F _git_branch git-branch.exe
 complete -o default -o nospace -F _git_bundle git-bundle.exe
 complete -o default -o nospace -F _git_cherry git-cherry.exe
+complete -o default -o nospace -F _git_describe git-describe.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
 complete -o default -o nospace -F _git_format_patch git-format-patch.exe
 complete -o default -o nospace -F _git_log git-log.exe
