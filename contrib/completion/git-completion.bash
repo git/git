@@ -1024,6 +1024,31 @@ _git_stash ()
 	__gitcomp 'list show apply clear'
 }
 
+_git_submodule ()
+{
+	local i c=1 command
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		add|status|init|update) command="$i"; break ;;
+		esac
+		c=$((++c))
+	done
+
+	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+		local cur="${COMP_WORDS[COMP_CWORD]}"
+		case "$cur" in
+		--*)
+			__gitcomp "--quiet --cached"
+			;;
+		*)
+			__gitcomp "add status init update"
+			;;
+		esac
+		return
+	fi
+}
+
 _git ()
 {
 	local i c=1 command __git_dir
@@ -1090,6 +1115,7 @@ _git ()
 	show)        _git_show ;;
 	show-branch) _git_log ;;
 	stash)       _git_stash ;;
+	submodule)   _git_submodule ;;
 	whatchanged) _git_log ;;
 	*)           COMPREPLY=() ;;
 	esac
@@ -1138,6 +1164,7 @@ complete -o default -o nospace -F _git_reset git-reset
 complete -o default -o nospace -F _git_shortlog git-shortlog
 complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_stash git-stash
+complete -o default -o nospace -F _git_submodule git-submodule
 complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_log git-whatchanged
 
