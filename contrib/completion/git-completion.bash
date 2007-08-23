@@ -419,7 +419,7 @@ _git_add ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--interactive"
+		__gitcomp "--interactive --refresh"
 		return
 	esac
 	COMPREPLY=()
@@ -573,6 +573,7 @@ _git_format_patch ()
 			--stdout --attach --thread
 			--output-directory
 			--numbered --start-number
+			--numbered-files
 			--keep-subject
 			--signoff
 			--in-reply-to=
@@ -590,7 +591,7 @@ _git_gc ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--prune"
+		__gitcomp "--prune --aggressive"
 		return
 		;;
 	esac
@@ -617,14 +618,20 @@ _git_log ()
 			" "" "${cur##--pretty=}"
 		return
 		;;
+	--date=*)
+		__gitcomp "
+			relative iso8601 rfc2822 short local default
+		" "" "${cur##--date=}"
+		return
+		;;
 	--*)
 		__gitcomp "
 			--max-count= --max-age= --since= --after=
 			--min-age= --before= --until=
 			--root --topo-order --date-order --reverse
-			--no-merges
+			--no-merges --follow
 			--abbrev-commit --abbrev=
-			--relative-date
+			--relative-date --date=
 			--author= --committer= --grep=
 			--all-match
 			--pretty= --name-status --name-only --raw
@@ -796,7 +803,7 @@ _git_config ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--global --system
+			--global --system --file=
 			--list --replace-all
 			--get --get-all --get-regexp
 			--add --unset --unset-all
@@ -839,6 +846,7 @@ _git_config ()
 		core.ignoreStat
 		core.preferSymlinkRefs
 		core.logAllRefUpdates
+		core.loosecompression
 		core.repositoryFormatVersion
 		core.sharedRepository
 		core.warnAmbiguousRefs
@@ -870,6 +878,7 @@ _git_config ()
 		diff.renames
 		fetch.unpackLimit
 		format.headers
+		format.subjectprefix
 		gitcvs.enabled
 		gitcvs.logfile
 		gitcvs.allbinary
@@ -896,6 +905,10 @@ _git_config ()
 		merge.verbosity
 		pack.window
 		pack.depth
+		pack.windowMemory
+		pack.compression
+		pack.deltaCacheSize
+		pack.deltaCacheLimit
 		pull.octopus
 		pull.twohead
 		repack.useDeltaBaseOffset
@@ -1024,7 +1037,14 @@ _git ()
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
 		case "${COMP_WORDS[COMP_CWORD]}" in
 		--*=*) COMPREPLY=() ;;
-		--*)   __gitcomp "--git-dir= --bare --version --exec-path" ;;
+		--*)   __gitcomp "
+			--no-pager
+			--git-dir=
+			--bare
+			--version
+			--exec-path
+			"
+			;;
 		*)     __gitcomp "$(__git_commands) $(__git_aliases)" ;;
 		esac
 		return
