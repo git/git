@@ -1959,7 +1959,7 @@ proc showview {n} {
     global commfd
     global selectedview selectfirst
     global vparentlist vdisporder vcmitlisted
-    global hlview selectedhlview
+    global hlview selectedhlview commitinterest
 
     if {$n == $curview} return
     set selid {}
@@ -2000,6 +2000,7 @@ proc showview {n} {
 	unset hlview
 	set selectedhlview None
     }
+    catch {unset commitinterest}
 
     set curview $n
     set selectedview $n
@@ -4322,7 +4323,7 @@ proc commit_descriptor {p} {
 # append some text to the ctext widget, and make any SHA1 ID
 # that we know about be a clickable link.
 proc appendwithlinks {text tags} {
-    global ctext commitrow linknum curview
+    global ctext commitrow linknum curview pendinglinks
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text $tags
@@ -4331,17 +4332,48 @@ proc appendwithlinks {text tags} {
 	set s [lindex $l 0]
 	set e [lindex $l 1]
 	set linkid [string range $text $s $e]
-	if {![info exists commitrow($curview,$linkid)]} continue
 	incr e
-	$ctext tag add link "$start + $s c" "$start + $e c"
 	$ctext tag add link$linknum "$start + $s c" "$start + $e c"
-	$ctext tag bind link$linknum <1> \
-	    [list selectline $commitrow($curview,$linkid) 1]
+	setlink $linkid link$linknum
 	incr linknum
     }
-    $ctext tag conf link -foreground blue -underline 1
-    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
-    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
+}
+
+proc setlink {id lk} {
+    global curview commitrow ctext pendinglinks commitinterest
+
+    if {[info exists commitrow($curview,$id)]} {
+	$ctext tag conf $lk -foreground blue -underline 1
+	$ctext tag bind $lk <1> [list selectline $commitrow($curview,$id) 1]
+	$ctext tag bind $lk <Enter> {linkcursor %W 1}
+	$ctext tag bind $lk <Leave> {linkcursor %W -1}
+    } else {
+	lappend pendinglinks($id) $lk
+	lappend commitinterest($id) {makelink %I}
+    }
+}
+
+proc makelink {id} {
+    global pendinglinks
+
+    if {![info exists pendinglinks($id)]} return
+    foreach lk $pendinglinks($id) {
+	setlink $id $lk
+    }
+    unset pendinglinks($id)
+}
+
+proc linkcursor {w inc} {
+    global linkentercount curtextcursor
+
+    if {[incr linkentercount $inc] > 0} {
+	$w configure -cursor hand2
+    } else {
+	$w configure -cursor $curtextcursor
+	if {$linkentercount < 0} {
+	    set linkentercount 0
+	}
+    }
 }
 
 proc viewnextline {dir} {
@@ -4388,15 +4420,7 @@ proc appendrefs {pos ids var} {
 	    $ctext tag delete $lk
 	    $ctext insert $pos $sep
 	    $ctext insert $pos [lindex $ti 0] $lk
-	    if {[info exists commitrow($curview,$id)]} {
-		$ctext tag conf $lk -foreground blue
-		$ctext tag bind $lk <1> \
-		    [list selectline $commitrow($curview,$id) 1]
-		$ctext tag conf $lk -underline 1
-		$ctext tag bind $lk <Enter> { %W configure -cursor hand2 }
-		$ctext tag bind $lk <Leave> \
-		    { %W configure -cursor $curtextcursor }
-	    }
+	    setlink $id $lk
 	    set sep ", "
 	}
     }
@@ -5237,6 +5261,7 @@ proc nextfile {} {
 
 proc clear_ctext {{first 1.0}} {
     global ctext smarktop smarkbot
+    global pendinglinks
 
     set l [lindex [split $first .] 0]
     if {![info exists smarktop] || [$ctext compare $first < $smarktop.0]} {
@@ -5246,6 +5271,9 @@ proc clear_ctext {{first 1.0}} {
 	set smarkbot $l
     }
     $ctext delete $first end
+    if {$first eq "1.0"} {
+	catch {unset pendinglinks}
+    }
 }
 
 proc incrsearch {name ix op} {
@@ -5609,12 +5637,9 @@ proc lineclick {x y id isnew} {
     # fill the details pane with info about this line
     $ctext conf -state normal
     clear_ctext
-    $ctext tag conf link -foreground blue -underline 1
-    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
-    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
     $ctext insert end "Parent:\t"
-    $ctext insert end $id [list link link0]
-    $ctext tag bind link0 <1> [list selbyid $id]
+    $ctext insert end $id link0
+    setlink $id link0
     set info $commitinfo($id)
     $ctext insert end "\n\t[lindex $info 0]\n"
     $ctext insert end "\tAuthor:\t[lindex $info 1]\n"
@@ -5629,8 +5654,8 @@ proc lineclick {x y id isnew} {
 	    if {![info exists commitinfo($child)] && ![getcommit $child]} continue
 	    set info $commitinfo($child)
 	    $ctext insert end "\n\t"
-	    $ctext insert end $child [list link link$i]
-	    $ctext tag bind link$i <1> [list selbyid $child]
+	    $ctext insert end $child link$i
+	    setlink $child link$i
 	    $ctext insert end "\n\t[lindex $info 0]"
 	    $ctext insert end "\n\tAuthor:\t[lindex $info 1]"
 	    set date [formatdate [lindex $info 2]]
@@ -5711,16 +5736,13 @@ proc doseldiff {oldid newid} {
     clear_ctext
     init_flist "Top"
     $ctext insert end "From "
-    $ctext tag conf link -foreground blue -underline 1
-    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
-    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
-    $ctext tag bind link0 <1> [list selbyid $oldid]
-    $ctext insert end $oldid [list link link0]
+    $ctext insert end $oldid link0
+    setlink $oldid link0
     $ctext insert end "\n     "
     $ctext insert end [lindex $commitinfo($oldid) 0]
     $ctext insert end "\n\nTo   "
-    $ctext tag bind link1 <1> [list selbyid $newid]
-    $ctext insert end $newid [list link link1]
+    $ctext insert end $newid link1
+    setlink $newid link1
     $ctext insert end "\n     "
     $ctext insert end [lindex $commitinfo($newid) 0]
     $ctext insert end "\n"
@@ -7892,6 +7914,7 @@ set boldrows {}
 set boldnamerows {}
 set diffelide {0 0}
 set markingmatches 0
+set linkentercount 0
 
 set optim_delay 16
 
