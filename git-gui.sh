@@ -738,6 +738,7 @@ set empty_tree {}
 set current_branch {}
 set is_detached 0
 set current_diff_path {}
+set is_3way_diff 0
 set selected_commit_type new
 
 ######################################################################
@@ -2443,6 +2444,9 @@ proc popup_diff_menu {ctxm x y X Y} {
 			set s normal
 		}
 		set l "Stage Hunk For Commit"
+	}
+	if {$::is_3way_diff} {
+		set s disabled
 	}
 	$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
 	tk_popup $ctxm $X $Y
