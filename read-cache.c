@@ -1104,6 +1104,7 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 		 * for "frotz" stays 6 which does not match the filesystem.
 		 */
 		ce->ce_size = htonl(0);
+		trace_printf("trace: index: Index object for '%s' smudged due to being racily clean\n", ce->name);
 	}
 }
 
