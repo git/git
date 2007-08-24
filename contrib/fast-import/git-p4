@@ -231,6 +231,56 @@ def findUpstreamBranchPoint(head = "HEAD"):
 
     return ["", settings]
 
+def createOrUpdateBranchesFromOrigin(localRefPrefix = "refs/remotes/p4/", silent=True):
+    if not silent:
+        print ("Creating/updating branch(es) in %s based on origin branch(es)"
+               % localRefPrefix)
+
+    originPrefix = "origin/p4/"
+
+    for line in read_pipe_lines("git rev-parse --symbolic --remotes"):
+        line = line.strip()
+        if (not line.startswith(originPrefix)) or line.endswith("HEAD"):
+            continue
+
+        headName = line[len(originPrefix):]
+        remoteHead = localRefPrefix + headName
+        originHead = line
+
+        original = extractSettingsGitLog(extractLogMessageFromGitCommit(originHead))
+        if (not original.has_key('depot-paths')
+            or not original.has_key('change')):
+            continue
+
+        update = False
+        if not gitBranchExists(remoteHead):
+            if verbose:
+                print "creating %s" % remoteHead
+            update = True
+        else:
+            settings = extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
+            if settings.has_key('change') > 0:
+                if settings['depot-paths'] == original['depot-paths']:
+                    originP4Change = int(original['change'])
+                    p4Change = int(settings['change'])
+                    if originP4Change > p4Change:
+                        print ("%s (%s) is newer than %s (%s). "
+                               "Updating p4 branch from origin."
+                               % (originHead, originP4Change,
+                                  remoteHead, p4Change))
+                        update = True
+                else:
+                    print ("Ignoring: %s was imported from %s while "
+                           "%s was imported from %s"
+                           % (originHead, ','.join(original['depot-paths']),
+                              remoteHead, ','.join(settings['depot-paths'])))
+
+        if update:
+            system("git update-ref %s %s" % (remoteHead, originHead))
+
+def originP4BranchesExist():
+        return gitBranchExists("origin") or gitBranchExists("origin/p4") or gitBranchExists("origin/p4/master")
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
@@ -1041,53 +1091,6 @@ class P4Sync(Command):
         for branch in branches.keys():
             self.initialParents[self.refPrefix + branch] = branches[branch]
 
-    def createOrUpdateBranchesFromOrigin(self):
-        if not self.silent:
-            print ("Creating/updating branch(es) in %s based on origin branch(es)"
-                   % self.refPrefix)
-
-        originPrefix = "origin/p4/"
-
-        for line in read_pipe_lines("git rev-parse --symbolic --remotes"):
-            line = line.strip()
-            if (not line.startswith(originPrefix)) or line.endswith("HEAD"):
-                continue
-
-            headName = line[len(originPrefix):]
-            remoteHead = self.refPrefix + headName
-            originHead = line
-
-            original = extractSettingsGitLog(extractLogMessageFromGitCommit(originHead))
-            if (not original.has_key('depot-paths')
-                or not original.has_key('change')):
-                continue
-
-            update = False
-            if not gitBranchExists(remoteHead):
-                if self.verbose:
-                    print "creating %s" % remoteHead
-                update = True
-            else:
-                settings = extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
-                if settings.has_key('change') > 0:
-                    if settings['depot-paths'] == original['depot-paths']:
-                        originP4Change = int(original['change'])
-                        p4Change = int(settings['change'])
-                        if originP4Change > p4Change:
-                            print ("%s (%s) is newer than %s (%s). "
-                                   "Updating p4 branch from origin."
-                                   % (originHead, originP4Change,
-                                      remoteHead, p4Change))
-                            update = True
-                    else:
-                        print ("Ignoring: %s was imported from %s while "
-                               "%s was imported from %s"
-                               % (originHead, ','.join(original['depot-paths']),
-                                  remoteHead, ','.join(settings['depot-paths'])))
-
-            if update:
-                system("git update-ref %s %s" % (remoteHead, originHead))
-
     def updateOptionDict(self, d):
         option_keys = {}
         if self.keepRepoPath:
@@ -1108,7 +1111,7 @@ class P4Sync(Command):
         # map from branch depot path to parent branch
         self.knownBranches = {}
         self.initialParents = {}
-        self.hasOrigin = gitBranchExists("origin") or gitBranchExists("origin/p4") or gitBranchExists("origin/p4/master")
+        self.hasOrigin = originP4BranchesExist()
         if not self.syncWithOrigin:
             self.hasOrigin = False
 
@@ -1135,7 +1138,7 @@ class P4Sync(Command):
         # merge with previous imports, if possible.
         if args == []:
             if self.hasOrigin:
-                self.createOrUpdateBranchesFromOrigin()
+                createOrUpdateBranchesFromOrigin(self.refPrefix, self.silent)
             self.listExistingP4GitBranches()
 
             if len(self.p4BranchesInGit) > 1:
@@ -1518,6 +1521,9 @@ class P4Branches(Command):
         self.verbose = False
 
     def run(self, args):
+        if originP4BranchesExist():
+            createOrUpdateBranchesFromOrigin()
+
         cmdline = "git rev-parse --symbolic "
         cmdline += " --remotes"
 
