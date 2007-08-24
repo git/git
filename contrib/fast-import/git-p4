@@ -1131,7 +1131,7 @@ class P4Sync(Command):
                 system("git update-ref %s refs/heads/p4" % self.branch)
                 system("git branch -D p4");
             # create it /after/ importing, when master exists
-            if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes:
+            if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
         # TODO: should always look at previous commits,
