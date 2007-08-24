@@ -241,7 +241,7 @@ been well tested in the wild.
 +
 Frontends should prefer the `raw` format if the source material
 already uses UNIX-epoch format, can be coaxed to give dates in that
-format, or its format is easiliy convertible to it, as there is no
+format, or its format is easily convertible to it, as there is no
 ambiguity in parsing.
 
 `now`::
@@ -343,7 +343,7 @@ Zero or more `filemodify`, `filedelete`, `filecopy`, `filerename`
 and `filedeleteall` commands
 may be included to update the contents of the branch prior to
 creating the commit.  These commands may be supplied in any order.
-However it is recommended that a `filedeleteall` command preceed
+However it is recommended that a `filedeleteall` command precede
 all `filemodify`, `filecopy` and `filerename` commands in the same
 commit, as `filedeleteall`
 wipes the branch clean (see below).
@@ -402,7 +402,7 @@ Here `<committish>` is any of the following:
 +
 The reason fast-import uses `:` to denote a mark reference is this character
 is not legal in a Git branch name.  The leading `:` makes it easy
-to distingush between the mark 42 (`:42`) and the branch 42 (`42`
+to distinguish between the mark 42 (`:42`) and the branch 42 (`42`
 or `refs/heads/42`), or an abbreviated SHA-1 which happened to
 consist only of base-10 digits.
 +
@@ -487,7 +487,7 @@ start with double quote (`"`).
 If an `LF` or double quote must be encoded into `<path>` shell-style
 quoting should be used, e.g. `"path/with\n and \" in it"`.
 
-The value of `<path>` must be in canoncial form. That is it must not:
+The value of `<path>` must be in canonical form. That is it must not:
 
 * contain an empty directory component (e.g. `foo//bar` is invalid),
 * end with a directory separator (e.g. `foo/` is invalid),
@@ -733,7 +733,7 @@ of the next line, even if `<raw>` did not end with an `LF`.
 Delimited format::
 	A delimiter string is used to mark the end of the data.
 	fast-import will compute the length by searching for the delimiter.
-	This format is primarly useful for testing and is not
+	This format is primarily useful for testing and is not
 	recommended for real data.
 +
 ....
@@ -873,7 +873,7 @@ to remove the dummy branch.
 Import Now, Repack Later
 ~~~~~~~~~~~~~~~~~~~~~~~~
 As soon as fast-import completes the Git repository is completely valid
-and ready for use.  Typicallly this takes only a very short time,
+and ready for use.  Typically this takes only a very short time,
 even for considerably large projects (100,000+ commits).
 
 However repacking the repository is necessary to improve data
@@ -942,8 +942,8 @@ Memory Utilization
 ------------------
 There are a number of factors which affect how much memory fast-import
 requires to perform an import.  Like critical sections of core
-Git, fast-import uses its own memory allocators to ammortize any overheads
-associated with malloc.  In practice fast-import tends to ammoritize any
+Git, fast-import uses its own memory allocators to amortize any overheads
+associated with malloc.  In practice fast-import tends to amortize any
 malloc overheads to 0, due to its use of large block allocations.
 
 per object
@@ -1000,7 +1000,7 @@ per active tree
 ~~~~~~~~~~~~~~~
 Trees (aka directories) use just 12 bytes of memory on top of the
 memory required for their entries (see ``per active file'' below).
-The cost of a tree is virtually 0, as its overhead ammortizes out
+The cost of a tree is virtually 0, as its overhead amortizes out
 over the individual file entries.
 
 per active file entry

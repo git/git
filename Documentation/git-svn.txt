@@ -99,7 +99,7 @@ COMMANDS
 
 This works similarly to 'svn update' or 'git-pull' except that
 it preserves linear history with 'git-rebase' instead of
-'git-merge' for ease of dcommit-ing with git-svn.
+'git-merge' for ease of dcommiting with git-svn.
 
 This accepts all options that 'git-svn fetch' and 'git-rebase'
 accepts.  However '--fetch-all' only fetches from the current
@@ -551,7 +551,7 @@ listed below are allowed:
 Keep in mind that the '*' (asterisk) wildcard of the local ref
 (left of the ':') *must* be the farthest right path component;
 however the remote wildcard may be anywhere as long as it's own
-independent path componet (surrounded by '/' or EOL).   This
+independent path component (surrounded by '/' or EOL).   This
 type of configuration is not automatically created by 'init' and
 should be manually entered with a text-editor or using
 gitlink:git-config[1]

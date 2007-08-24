@@ -30,7 +30,7 @@ Entries older than `expire` time, or entries older than
 tip, are removed from the reflog.  This is typically not used
 directly by the end users -- instead, see gitlink:git-gc[1].
 
-The subcommand "show" (which is also the default, in the absense of any
+The subcommand "show" (which is also the default, in the absence of any
 subcommands) will take all the normal log options, and show the log of
 `HEAD`, which will cover all recent actions, including branch switches.
 It is basically an alias for 'git log -g --abbrev-commit

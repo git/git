@@ -113,7 +113,7 @@ e.g. "2 hours ago".
 `--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
 format, often found in E-mail messages.
 +
-`--date=short` shows only date but not time, in `YYYY-MM-DD` fomat.
+`--date=short` shows only date but not time, in `YYYY-MM-DD` format.
 +
 `--date=default` shows timestamps in the original timezone
 (either committer's or author's).

@@ -52,7 +52,7 @@ A commit encapsulates:
 - committer name and email and the commit time.
 
 While parent object ids are provided on the command line, author and
-commiter information is taken from the following environment variables,
+committer information is taken from the following environment variables,
 if set:
 
 	GIT_AUTHOR_NAME

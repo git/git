@@ -4,7 +4,7 @@ ______________________________________________
 
 Git is a fast distributed revision control system.
 
-This manual is designed to be readable by someone with basic unix
+This manual is designed to be readable by someone with basic UNIX
 command-line skills, but no previous knowledge of git.
 
 <<repositories-and-branches>> and <<exploring-git-history>> explain how
@@ -217,7 +217,7 @@ commits will help understand how the git organizes history.
 
 In the following, we say that commit X is "reachable" from commit Y
 if commit X is an ancestor of commit Y.  Equivalently, you could say
-that Y is a descendent of X, or that there is a chain of parents
+that Y is a descendant of X, or that there is a chain of parents
 leading from commit Y to commit X.
 
 [[history-diagrams]]
@@ -1911,7 +1911,7 @@ gitlink:git-update-server-info[1], and the documentation
 link:hooks.html[Hooks used by git].)
 
 Advertise the url of proj.git.  Anybody else should then be able to
-clone or pull from that url, for example with a commandline like:
+clone or pull from that url, for example with a command line like:
 
 -------------------------------------------------
 $ git clone http://yourserver.com/~you/proj.git
@@ -2531,7 +2531,7 @@ them again with gitlink:git-am[1].
 Other tools
 -----------
 
-There are numerous other tools, such as stgit, which exist for the
+There are numerous other tools, such as StGIT, which exist for the
 purpose of maintaining a patch series.  These are outside of the scope of
 this manual.
 
@@ -3961,8 +3961,8 @@ This is a work in progress.
 
 The basic requirements:
 	- It must be readable in order, from beginning to end, by
-	  someone intelligent with a basic grasp of the unix
-	  commandline, but without any special knowledge of git.  If
+	  someone intelligent with a basic grasp of the UNIX
+	  command line, but without any special knowledge of git.  If
 	  necessary, any other prerequisites should be specifically
 	  mentioned as they arise.
 	- Whenever possible, section headings should clearly describe

@@ -14,7 +14,7 @@ DESCRIPTION
 -----------
 
 This script is used to combine all objects that do not currently
-reside in a "pack", into a pack.  It can also be used to re-organise
+reside in a "pack", into a pack.  It can also be used to re-organize
 existing packs into a single, more efficient pack.
 
 A pack is a collection of objects, individually compressed, with

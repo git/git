@@ -118,7 +118,7 @@ include::diff-options.txt[]
 
 --suffix=.<sfx>::
 	Instead of using `.patch` as the suffix for generated
-	filenames, use specifed suffix.  A common alternative is
+	filenames, use specified suffix.  A common alternative is
 	`--suffix=.txt`.
 +
 Note that you would need to include the leading dot `.` if you

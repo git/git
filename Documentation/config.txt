@@ -283,7 +283,7 @@ core.excludesfile::
 
 core.editor::
 	Commands such as `commit` and `tag` that lets you edit
-	messages by lauching an editor uses the value of this
+	messages by launching an editor uses the value of this
 	variable when it is set, and the environment variable
 	`GIT_EDITOR` is not set.  The order of preference is
 	`GIT_EDITOR` environment, `core.editor`, `VISUAL` and
@@ -500,10 +500,10 @@ gitcvs.dbuser, gitcvs.dbpass::
 	'gitcvs.dbuser' supports variable substitution (see
 	gitlink:git-cvsserver[1] for details).
 
-All gitcvs variables except for 'gitcvs.allbinary' can also specifed
-as 'gitcvs.<access_method>.<varname>' (where 'access_method' is one
-of "ext" and "pserver") to make them apply only for the given access
-method.
+All gitcvs variables except for 'gitcvs.allbinary' can also be
+specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
+is one of "ext" and "pserver") to make them apply only for the given
+access method.
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
@@ -615,7 +615,7 @@ pack.compression::
 	not set,  defaults to -1.
 
 pack.deltaCacheSize::
-	The maxium memory in bytes used for caching deltas in
+	The maximum memory in bytes used for caching deltas in
 	gitlink:git-pack-objects[1].
 	A value of 0 means no limit. Defaults to 0.
 
