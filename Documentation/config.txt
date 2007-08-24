@@ -465,11 +465,11 @@ rerere.enabled::
 	be encountered again.  See gitlink:git-rerere[1].
 
 gitcvs.enabled::
-	Whether the cvs server interface is enabled for this repository.
+	Whether the CVS server interface is enabled for this repository.
 	See gitlink:git-cvsserver[1].
 
 gitcvs.logfile::
-	Path to a log file where the cvs server interface well... logs
+	Path to a log file where the CVS server interface well... logs
 	various stuff. See gitlink:git-cvsserver[1].
 
 gitcvs.allbinary::
