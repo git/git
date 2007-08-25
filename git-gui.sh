@@ -703,7 +703,15 @@ if {![file isdirectory $_gitdir]} {
 	error_popup "Git directory not found:\n\n$_gitdir"
 	exit 1
 }
-if {![is_enabled bare]} {
+if {$_prefix ne {}} {
+	regsub -all {[^/]+/} $_prefix ../ cdup
+	if {[catch {cd $cdup} err]} {
+		catch {wm withdraw .}
+		error_popup "Cannot move to top of working directory:\n\n$err"
+		exit 1
+	}
+	unset cdup
+} elseif {![is_enabled bare]} {
 	if {[lindex [file split $_gitdir] end] ne {.git}} {
 		catch {wm withdraw .}
 		error_popup "Cannot use funny .git directory:\n\n$_gitdir"
