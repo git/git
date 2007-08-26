@@ -1127,6 +1127,67 @@ class P4Sync(Command):
 
         return self.refPrefix + self.projectName + branch
 
+    def gitCommitByP4Change(self, ref, change):
+        if self.verbose:
+            print "looking in ref " + ref + " for change %s using bisect..." % change
+
+        earliestCommit = ""
+        latestCommit = parseRevision(ref)
+
+        while True:
+            if self.verbose:
+                print "trying: earliest %s latest %s" % (earliestCommit, latestCommit)
+            next = read_pipe("git rev-list --bisect %s %s" % (latestCommit, earliestCommit)).strip()
+            if len(next) == 0:
+                if self.verbose:
+                    print "argh"
+                return ""
+            log = extractLogMessageFromGitCommit(next)
+            settings = extractSettingsGitLog(log)
+            currentChange = int(settings['change'])
+            if self.verbose:
+                print "current change %s" % currentChange
+
+            if currentChange == change:
+                if self.verbose:
+                    print "found %s" % next
+                return next
+
+            if currentChange < change:
+                earliestCommit = "^%s" % next
+            else:
+                latestCommit = "%s" % next
+
+        return ""
+
+    def importNewBranch(self, branch, maxChange):
+        # make fast-import flush all changes to disk and update the refs using the checkpoint
+        # command so that we can try to find the branch parent in the git history
+        self.gitStream.write("checkpoint\n\n");
+        self.gitStream.flush();
+        branchPrefix = self.depotPaths[0] + branch + "/"
+        range = "@1,%s" % maxChange
+        #print "prefix" + branchPrefix
+        changes = p4ChangesForPaths([branchPrefix], range)
+        if len(changes) <= 0:
+            return False
+        firstChange = changes[0]
+        #print "first change in branch: %s" % firstChange
+        sourceBranch = self.knownBranches[branch]
+        sourceDepotPath = self.depotPaths[0] + sourceBranch
+        sourceRef = self.gitRefForBranch(sourceBranch)
+        #print "source " + sourceBranch
+
+        branchParentChange = int(p4Cmd("changes -m 1 %s...@1,%s" % (sourceDepotPath, firstChange))["change"])
+        #print "branch parent: %s" % branchParentChange
+        gitParent = self.gitCommitByP4Change(sourceRef, branchParentChange)
+        if len(gitParent) > 0:
+            self.initialParents[self.gitRefForBranch(branch)] = gitParent
+            #print "parent git commit: %s" % gitParent
+
+        self.importChanges(changes)
+        return True
+
     def importChanges(self, changes):
         cnt = 1
         for change in changes:
@@ -1159,8 +1220,19 @@ class P4Sync(Command):
                             parent = self.knownBranches[branch]
                             if parent == branch:
                                 parent = ""
-                            elif self.verbose:
-                                print "parent determined through known branches: %s" % parent
+                            else:
+                                fullBranch = self.projectName + branch
+                                if fullBranch not in self.p4BranchesInGit:
+                                    if not self.silent:
+                                        print("\n    Importing new branch %s" % fullBranch);
+                                    if self.importNewBranch(branch, change - 1):
+                                        parent = ""
+                                        self.p4BranchesInGit.append(fullBranch)
+                                    if not self.silent:
+                                        print("\n    Resuming with change %s" % change);
+
+                                if self.verbose:
+                                    print "parent determined through known branches: %s" % parent
 
                         branch = self.gitRefForBranch(branch)
                         parent = self.gitRefForBranch(parent)
