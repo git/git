@@ -430,7 +430,7 @@ div.search {
 	font-size: 100%;
 	font-weight: normal;
 	margin: 4px 8px;
-	position: absolute;
+	float: right;
 	top: 56px;
 	right: 12px
 }
