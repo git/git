@@ -14,7 +14,7 @@
 #include "revision.h"
 
 static const char builtin_add_usage[] =
-"git-add [-n] [-v] [-f] [--interactive | -i] [-u] [--] <filepattern>...";
+"git-add [-n] [-v] [-f] [--interactive | -i] [-u] [--refresh] [--] <filepattern>...";
 
 static int take_worktree_changes;
 static const char *excludes_file;

@@ -7,7 +7,9 @@ git-add - Add file contents to the index
 
 SYNOPSIS
 --------
-'git-add' [-n] [-v] [-f] [--interactive | -i] [-u] [--refresh] [--] <file>...
+[verse]
+'git-add' [-n] [-v] [-f] [--interactive | -i] [-u] [--refresh]
+          [--] <filepattern>...
 
 DESCRIPTION
 -----------
@@ -41,7 +43,7 @@ commit.
 
 OPTIONS
 -------
-<file>...::
+<filepattern>...::
 	Files to add content from.  Fileglobs (e.g. `*.c`) can
 	be given to add all matching files.  Also a
 	leading directory name (e.g. `dir` to add `dir/file1`
