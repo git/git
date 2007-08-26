@@ -1188,6 +1188,50 @@ class P4Sync(Command):
                 print self.gitError.read()
                 sys.exit(1)
 
+    def importHeadRevision(self, revision):
+        print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
+
+        details = { "user" : "git perforce import user", "time" : int(time.time()) }
+        details["desc"] = ("Initial import of %s from the state at revision %s"
+                           % (' '.join(self.depotPaths), revision))
+        details["change"] = revision
+        newestRevision = 0
+
+        fileCnt = 0
+        for info in p4CmdList("files "
+                              +  ' '.join(["%s...%s"
+                                           % (p, revision)
+                                           for p in self.depotPaths])):
+
+            if info['code'] == 'error':
+                sys.stderr.write("p4 returned an error: %s\n"
+                                 % info['data'])
+                sys.exit(1)
+
+
+            change = int(info["change"])
+            if change > newestRevision:
+                newestRevision = change
+
+            if info["action"] == "delete":
+                # don't increase the file cnt, otherwise details["depotFile123"] will have gaps!
+                #fileCnt = fileCnt + 1
+                continue
+
+            for prop in ["depotFile", "rev", "action", "type" ]:
+                details["%s%s" % (prop, fileCnt)] = info[prop]
+
+            fileCnt = fileCnt + 1
+
+        details["change"] = newestRevision
+        self.updateOptionDict(details)
+        try:
+            self.commit(details, self.extractFilesFromCommit(details), self.branch, self.depotPaths)
+        except IOError:
+            print "IO error with git fast-import. Is your git version recent enough?"
+            print self.gitError.read()
+
+
     def run(self, args):
         self.depotPaths = []
         self.changeRange = ""
@@ -1346,48 +1390,7 @@ class P4Sync(Command):
         self.gitError = importProcess.stderr
 
         if revision:
-            print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
-
-            details = { "user" : "git perforce import user", "time" : int(time.time()) }
-            details["desc"] = ("Initial import of %s from the state at revision %s"
-                               % (' '.join(self.depotPaths), revision))
-            details["change"] = revision
-            newestRevision = 0
-
-            fileCnt = 0
-            for info in p4CmdList("files "
-                                  +  ' '.join(["%s...%s"
-                                               % (p, revision)
-                                               for p in self.depotPaths])):
-
-                if info['code'] == 'error':
-                    sys.stderr.write("p4 returned an error: %s\n"
-                                     % info['data'])
-                    sys.exit(1)
-
-
-                change = int(info["change"])
-                if change > newestRevision:
-                    newestRevision = change
-
-                if info["action"] == "delete":
-                    # don't increase the file cnt, otherwise details["depotFile123"] will have gaps!
-                    #fileCnt = fileCnt + 1
-                    continue
-
-                for prop in ["depotFile", "rev", "action", "type" ]:
-                    details["%s%s" % (prop, fileCnt)] = info[prop]
-
-                fileCnt = fileCnt + 1
-
-            details["change"] = newestRevision
-            self.updateOptionDict(details)
-            try:
-                self.commit(details, self.extractFilesFromCommit(details), self.branch, self.depotPaths)
-            except IOError:
-                print "IO error with git fast-import. Is your git version recent enough?"
-                print self.gitError.read()
-
+            self.importHeadRevision(revision)
         else:
             changes = []
 
