@@ -281,6 +281,19 @@ def createOrUpdateBranchesFromOrigin(localRefPrefix = "refs/remotes/p4/", silent
 def originP4BranchesExist():
         return gitBranchExists("origin") or gitBranchExists("origin/p4") or gitBranchExists("origin/p4/master")
 
+def p4ChangesForPaths(depotPaths, changeRange):
+    assert depotPaths
+    output = read_pipe_lines("p4 changes " + ' '.join (["%s...%s" % (p, changeRange)
+                                                        for p in depotPaths]))
+
+    changes = []
+    for line in output:
+        changeNum = line.split(" ")[1]
+        changes.append(int(changeNum))
+
+    changes.sort()
+    return changes
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
@@ -1322,15 +1335,7 @@ class P4Sync(Command):
                 if self.verbose:
                     print "Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
                                                               self.changeRange)
-                assert self.depotPaths
-                output = read_pipe_lines("p4 changes " + ' '.join (["%s...%s" % (p, self.changeRange)
-                                                                    for p in self.depotPaths]))
-
-                for line in output:
-                    changeNum = line.split(" ")[1]
-                    changes.append(int(changeNum))
-
-                changes.sort()
+                changes = p4ChangesForPaths(self.depotPaths, self.changeRange)
 
                 if len(self.maxChanges) > 0:
                     changes = changes[:min(int(self.maxChanges), len(changes))]
