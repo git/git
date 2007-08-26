@@ -1285,7 +1285,7 @@ class P4Sync(Command):
 
             self.depotPaths = sorted(args)
 
-        self.revision = ""
+        revision = ""
         self.users = {}
 
         newPaths = []
@@ -1296,15 +1296,15 @@ class P4Sync(Command):
                 if self.changeRange == "@all":
                     self.changeRange = ""
                 elif ',' not in self.changeRange:
-                    self.revision = self.changeRange
+                    revision = self.changeRange
                     self.changeRange = ""
                 p = p[:atIdx]
             elif p.find("#") != -1:
                 hashIdx = p.index("#")
-                self.revision = p[hashIdx:]
+                revision = p[hashIdx:]
                 p = p[:hashIdx]
             elif self.previousDepotPaths == []:
-                self.revision = "#head"
+                revision = "#head"
 
             p = re.sub ("\.\.\.$", "", p)
             if not p.endswith("/"):
@@ -1345,19 +1345,19 @@ class P4Sync(Command):
         self.gitStream = importProcess.stdin
         self.gitError = importProcess.stderr
 
-        if self.revision:
-            print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), self.revision, self.branch)
+        if revision:
+            print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
 
             details = { "user" : "git perforce import user", "time" : int(time.time()) }
             details["desc"] = ("Initial import of %s from the state at revision %s"
-                               % (' '.join(self.depotPaths), self.revision))
-            details["change"] = self.revision
+                               % (' '.join(self.depotPaths), revision))
+            details["change"] = revision
             newestRevision = 0
 
             fileCnt = 0
             for info in p4CmdList("files "
                                   +  ' '.join(["%s...%s"
-                                               % (p, self.revision)
+                                               % (p, revision)
                                                for p in self.depotPaths])):
 
                 if info['code'] == 'error':
