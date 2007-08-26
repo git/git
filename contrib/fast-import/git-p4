@@ -1118,6 +1118,76 @@ class P4Sync(Command):
         self.keepRepoPath = (d.has_key('options')
                              and ('keepRepoPath' in d['options']))
 
+    def importChanges(self, changes):
+        cnt = 1
+        for change in changes:
+            description = p4Cmd("describe %s" % change)
+            self.updateOptionDict(description)
+
+            if not self.silent:
+                sys.stdout.write("\rImporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
+                sys.stdout.flush()
+            cnt = cnt + 1
+
+            try:
+                if self.detectBranches:
+                    branches = self.splitFilesIntoBranches(description)
+                    for branch in branches.keys():
+                        ## HACK  --hwn
+                        branchPrefix = self.depotPaths[0] + branch + "/"
+
+                        parent = ""
+
+                        filesForCommit = branches[branch]
+
+                        if self.verbose:
+                            print "branch is %s" % branch
+
+                        self.updatedBranches.add(branch)
+
+                        if branch not in self.createdBranches:
+                            self.createdBranches.add(branch)
+                            parent = self.knownBranches[branch]
+                            if parent == branch:
+                                parent = ""
+                            elif self.verbose:
+                                print "parent determined through known branches: %s" % parent
+
+                        # main branch? use master
+                        if branch == "main":
+                            branch = "master"
+                        else:
+
+                            ## FIXME
+                            branch = self.projectName + branch
+
+                        if parent == "main":
+                            parent = "master"
+                        elif len(parent) > 0:
+                            ## FIXME
+                            parent = self.projectName + parent
+
+                        branch = self.refPrefix + branch
+                        if len(parent) > 0:
+                            parent = self.refPrefix + parent
+
+                        if self.verbose:
+                            print "looking for initial parent for %s; current parent is %s" % (branch, parent)
+
+                        if len(parent) == 0 and branch in self.initialParents:
+                            parent = self.initialParents[branch]
+                            del self.initialParents[branch]
+
+                        self.commit(description, filesForCommit, branch, [branchPrefix], parent)
+                else:
+                    files = self.extractFilesFromCommit(description)
+                    self.commit(description, files, self.branch, self.depotPaths,
+                                self.initialParent)
+                    self.initialParent = ""
+            except IOError:
+                print self.gitError.read()
+                sys.exit(1)
+
     def run(self, args):
         self.depotPaths = []
         self.changeRange = ""
@@ -1350,74 +1420,7 @@ class P4Sync(Command):
 
             self.updatedBranches = set()
 
-            cnt = 1
-            for change in changes:
-                description = p4Cmd("describe %s" % change)
-                self.updateOptionDict(description)
-
-                if not self.silent:
-                    sys.stdout.write("\rImporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
-                    sys.stdout.flush()
-                cnt = cnt + 1
-
-                try:
-                    if self.detectBranches:
-                        branches = self.splitFilesIntoBranches(description)
-                        for branch in branches.keys():
-                            ## HACK  --hwn
-                            branchPrefix = self.depotPaths[0] + branch + "/"
-
-                            parent = ""
-
-                            filesForCommit = branches[branch]
-
-                            if self.verbose:
-                                print "branch is %s" % branch
-
-                            self.updatedBranches.add(branch)
-
-                            if branch not in self.createdBranches:
-                                self.createdBranches.add(branch)
-                                parent = self.knownBranches[branch]
-                                if parent == branch:
-                                    parent = ""
-                                elif self.verbose:
-                                    print "parent determined through known branches: %s" % parent
-
-                            # main branch? use master
-                            if branch == "main":
-                                branch = "master"
-                            else:
-
-                                ## FIXME
-                                branch = self.projectName + branch
-
-                            if parent == "main":
-                                parent = "master"
-                            elif len(parent) > 0:
-                                ## FIXME
-                                parent = self.projectName + parent
-
-                            branch = self.refPrefix + branch
-                            if len(parent) > 0:
-                                parent = self.refPrefix + parent
-
-                            if self.verbose:
-                                print "looking for initial parent for %s; current parent is %s" % (branch, parent)
-
-                            if len(parent) == 0 and branch in self.initialParents:
-                                parent = self.initialParents[branch]
-                                del self.initialParents[branch]
-
-                            self.commit(description, filesForCommit, branch, [branchPrefix], parent)
-                    else:
-                        files = self.extractFilesFromCommit(description)
-                        self.commit(description, files, self.branch, self.depotPaths,
-                                    self.initialParent)
-                        self.initialParent = ""
-                except IOError:
-                    print self.gitError.read()
-                    sys.exit(1)
+            self.importChanges(changes)
 
             if not self.silent:
                 print ""
@@ -1426,7 +1429,6 @@ class P4Sync(Command):
                     for b in self.updatedBranches:
                         sys.stdout.write("%s " % b)
                     sys.stdout.write("\n")
-
 
         self.gitStream.close()
         if importProcess.wait() != 0:
