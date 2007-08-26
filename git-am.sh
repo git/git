@@ -2,8 +2,10 @@
 #
 # Copyright (c) 2005, 2006 Junio C Hamano
 
-USAGE='[--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
-  [--interactive] [--whitespace=<option>] [-C<n>] [-p<n>] <mbox>...
+USAGE='[--signoff] [--dotest=<dir>] [--keep] [--utf8 | --no-utf8]
+  [--3way] [--interactive] [--binary]
+  [--whitespace=<option>] [-C<n>] [-p<n>]
+  <mbox>|<Maildir>...
   or, when resuming [--skip | --resolved]'
 . git-sh-setup
 set_reflog_action am
