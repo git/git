@@ -42,10 +42,9 @@ How to get a git repository
 It will be useful to have a git repository to experiment with as you
 read this manual.
 
-The best way to get one is by using the gitlink:git-clone[1] command
-to download a copy of an existing repository for a project that you
-are interested in.  If you don't already have a project in mind, here
-are some interesting examples:
+The best way to get one is by using the gitlink:git-clone[1] command to
+download a copy of an existing repository.  If you don't already have a
+project in mind, here are some interesting examples:
 
 ------------------------------------------------
 	# git itself (approx. 10MB download):
@@ -63,21 +62,18 @@ directory, you will see that it contains a copy of the project files,
 together with a special top-level directory named ".git", which
 contains all the information about the history of the project.
 
-In most of the following, examples will be taken from one of the two
-repositories above.
-
 [[how-to-check-out]]
 How to check out a different version of a project
 -------------------------------------------------
 
-Git is best thought of as a tool for storing the history of a
-collection of files.  It stores the history as a compressed
-collection of interrelated snapshots (versions) of the project's
-contents.
+Git is best thought of as a tool for storing the history of a collection
+of files.  It stores the history as a compressed collection of
+interrelated snapshots of the project's contents.  In git each such
+version is called a <<def_commit,commit>>.
 
 A single git repository may contain multiple branches.  It keeps track
 of them by keeping a list of <<def_head,heads>> which reference the
-latest version on each branch; the gitlink:git-branch[1] command shows
+latest commit on each branch; the gitlink:git-branch[1] command shows
 you the list of branch heads:
 
 ------------------------------------------------
@@ -149,32 +145,27 @@ current branch:
 
 ------------------------------------------------
 $ git show
-commit 2b5f6dcce5bf94b9b119e9ed8d537098ec61c3d2
-Author: Jamal Hadi Salim <hadi@cyberus.ca>
-Date:   Sat Dec 2 22:22:25 2006 -0800
+commit 17cf781661e6d38f737f15f53ab552f1e95960d7
+Author: Linus Torvalds <torvalds@ppc970.osdl.org.(none)>
+Date:   Tue Apr 19 14:11:06 2005 -0700
 
-    [XFRM]: Fix aevent structuring to be more complete.
+    Remove duplicate getenv(DB_ENVIRONMENT) call
 
-    aevents can not uniquely identify an SA. We break the ABI with this
-    patch, but consensus is that since it is not yet utilized by any
-    (known) application then it is fine (better do it now than later).
+    Noted by Tony Luck.
 
-    Signed-off-by: Jamal Hadi Salim <hadi@cyberus.ca>
-    Signed-off-by: David S. Miller <davem@davemloft.net>
-
-diff --git a/Documentation/networking/xfrm_sync.txt b/Documentation/networking/xfrm_sync.txt
-index 8be626f..d7aac9d 100644
---- a/Documentation/networking/xfrm_sync.txt
-+++ b/Documentation/networking/xfrm_sync.txt
-@@ -47,10 +47,13 @@ aevent_id structure looks like:
-
-    struct xfrm_aevent_id {
-              struct xfrm_usersa_id           sa_id;
-+             xfrm_address_t                  saddr;
-              __u32                           flags;
-+             __u32                           reqid;
-    };
-...
+diff --git a/init-db.c b/init-db.c
+index 65898fa..b002dc6 100644
+--- a/init-db.c
++++ b/init-db.c
+@@ -7,7 +7,7 @@
+ 
+ int main(int argc, char **argv)
+ {
+-	char *sha1_dir = getenv(DB_ENVIRONMENT), *path;
++	char *sha1_dir, *path;
+ 	int len, i;
+ 
+ 	if (mkdir(".git", 0755) < 0) {
 ------------------------------------------------
 
 As you can see, a commit shows who made the latest change, what they
@@ -923,7 +914,7 @@ they look OK.
 
 [[Finding-comments-with-given-content]]
 Finding commits referencing a file with given content
------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Somebody hands you a copy of a file, and asks which commits modified a
 file such that it contained the given content either before or after the
@@ -1105,20 +1096,14 @@ backup files made by your editor. Of course, 'not' tracking files with git
 is just a matter of 'not' calling "`git add`" on them. But it quickly becomes
 annoying to have these untracked files lying around; e.g. they make
 "`git add .`" and "`git commit -a`" practically useless, and they keep
-showing up in the output of "`git status`", etc.
+showing up in the output of "`git status`".
 
-Git therefore provides "exclude patterns" for telling git which files to
-actively ignore. Exclude patterns are thoroughly explained in the
-gitlink:gitignore[5] manual page, but the heart of the concept is simply
-a list of files which git should ignore. Entries in the list may contain
-globs to specify multiple files, or may be prefixed by "`!`" to
-explicitly include (un-ignore) a previously excluded (ignored) file
-(i.e. later exclude patterns override earlier ones).  The following
-example should illustrate such patterns:
+You can tell git to ignore certain files by creating a file called .gitignore
+in the top level of your working directory, with contents such as:
 
 -------------------------------------------------
 # Lines starting with '#' are considered comments.
-# Ignore foo.txt.
+# Ignore any file named foo.txt.
 foo.txt
 # Ignore (generated) html files,
 *.html
@@ -1128,41 +1113,20 @@ foo.txt
 *.[oa]
 -------------------------------------------------
 
-The next question is where to put these exclude patterns so that git can
-find them. Git looks for exclude patterns in the following files:
+See gitlink:gitignore[5] for a detailed explanation of the syntax.  You can
+also place .gitignore files in other directories in your working tree, and they
+will apply to those directories and their subdirectories.  The `.gitignore`
+files can be added to your repository like any other files (just run `git add
+.gitignore` and `git commit`, as usual), which is convenient when the exclude
+patterns (such as patterns matching build output files) would also make sense
+for other users who clone your repository.
 
-`.gitignore` files in your working tree:::
-	   You may store multiple `.gitignore` files at various locations in your
-	   working tree. Each `.gitignore` file is applied to the directory where
-	   it's located, including its subdirectories. Furthermore, the
-	   `.gitignore` files can be tracked like any other files in your working
-	   tree; just do a "`git add .gitignore`" and commit. `.gitignore` is
-	   therefore the right place to put exclude patterns that are meant to
-	   be shared between all project participants, such as build output files
-	   (e.g. `\*.o`), etc.
-`.git/info/exclude` in your repo:::
-	   Exclude patterns in this file are applied to the working tree as a
-	   whole. Since the file is not located in your working tree, it does
-	   not follow push/pull/clone like `.gitignore` can do. This is therefore
-	   the place to put exclude patterns that are local to your copy of the
-	   repo (i.e. 'not' shared between project participants), such as
-	   temporary backup files made by your editor (e.g. `\*~`), etc.
-The file specified by the `core.excludesfile` config directive:::
-	   By setting the `core.excludesfile` config directive you can tell git
-	   where to find more exclude patterns (see gitlink:git-config[1] for
-	   more information on configuration options). This config directive
-	   can be set in the per-repo `.git/config` file, in which case the
-	   exclude patterns will apply to that repo only. Alternatively, you
-	   can set the directive in the global `~/.gitconfig` file to apply
-	   the exclude pattern to all your git repos. As with the above
-	   `.git/info/exclude` (and, indeed, with git config directives in
-	   general), this directive does not follow push/pull/clone, but remain
-	   local to your repo(s).
-
-[NOTE]
-In addition to the above alternatives, there are git commands that can take
-exclude patterns directly on the command line. See gitlink:git-ls-files[1]
-for an example of this.
+If you wish the exclude patterns to affect only certain repositories
+(instead of every repository for a given project), you may instead put
+them in a file in your repository named .git/info/exclude, or in any file
+specified by the `core.excludesfile` configuration variable.  Some git
+commands can also take exclude patterns directly on the command line.
+See gitlink:gitignore[5] for the details.
 
 [[how-to-merge]]
 How to merge
@@ -1796,11 +1760,12 @@ taken from the message containing each patch.
 Public git repositories
 -----------------------
 
-Another way to submit changes to a project is to tell the maintainer of
-that project to pull the changes from your repository using git-pull[1].
-In the section "<<getting-updates-with-git-pull, Getting updates with
-git pull>>" we described this as a way to get updates from the "main"
-repository, but it works just as well in the other direction.
+Another way to submit changes to a project is to tell the maintainer
+of that project to pull the changes from your repository using
+gitlink:git-pull[1].  In the section "<<getting-updates-with-git-pull,
+Getting updates with git pull>>" we described this as a way to get
+updates from the "main" repository, but it works just as well in the
+other direction.
 
 If you and the maintainer both have accounts on the same machine, then
 you can just pull changes from each other's repositories directly;
@@ -2057,7 +2022,8 @@ $ cd work
 Linus's tree will be stored in the remote branch named origin/master,
 and can be updated using gitlink:git-fetch[1]; you can track other
 public trees using gitlink:git-remote[1] to set up a "remote" and
-git-fetch[1] to keep them up-to-date; see <<repositories-and-branches>>.
+gitlink:git-fetch[1] to keep them up-to-date; see
+<<repositories-and-branches>>.
 
 Now create the branches in which you are going to work; these start out
 at the current tip of origin/master branch, and should be set up (using
@@ -2512,9 +2478,9 @@ $ gitk origin..mywork &
 And browse through the list of patches in the mywork branch using gitk,
 applying them (possibly in a different order) to mywork-new using
 cherry-pick, and possibly modifying them as you go using commit --amend.
-The git-gui[1] command may also help as it allows you to individually
-select diff hunks for inclusion in the index (by right-clicking on the
-diff hunk and choosing "Stage Hunk for Commit").
+The gitlink:git-gui[1] command may also help as it allows you to
+individually select diff hunks for inclusion in the index (by
+right-clicking on the diff hunk and choosing "Stage Hunk for Commit").
 
 Another technique is to use git-format-patch to create a series of
 patches, then reset the state to before the patches:
