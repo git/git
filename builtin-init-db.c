@@ -267,6 +267,44 @@ static int create_default_files(const char *git_dir, const char *template_path)
 	return reinit;
 }
 
+static void guess_repository_type(const char *git_dir)
+{
+	char cwd[PATH_MAX];
+	const char *slash;
+
+	if (0 <= is_bare_repository_cfg)
+		return;
+	if (!git_dir)
+		return;
+
+	/*
+	 * "GIT_DIR=. git init" is always bare.
+	 * "GIT_DIR=`pwd` git init" too.
+	 */
+	if (!strcmp(".", git_dir))
+		goto force_bare;
+	if (!getcwd(cwd, sizeof(cwd)))
+		die("cannot tell cwd");
+	if (!strcmp(git_dir, cwd))
+		goto force_bare;
+	/*
+	 * "GIT_DIR=.git or GIT_DIR=something/.git is usually not.
+	 */
+	if (!strcmp(git_dir, ".git"))
+		return;
+	slash = strrchr(git_dir, '/');
+	if (slash && !strcmp(slash, "/.git"))
+		return;
+
+	/*
+	 * Otherwise it is often bare.  At this point
+	 * we are just guessing.
+	 */
+ force_bare:
+	is_bare_repository_cfg = 1;
+	return;
+}
+
 static const char init_db_usage[] =
 "git-init [-q | --quiet] [--template=<template-directory>] [--shared]";
 
@@ -299,11 +337,28 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 			usage(init_db_usage);
 	}
 
-	git_work_tree_cfg = xcalloc(PATH_MAX, 1);
-	if (!getcwd(git_work_tree_cfg, PATH_MAX))
-		die ("Cannot access current working directory.");
-	if (access(get_git_work_tree(), X_OK))
-		die ("Cannot access work tree '%s'", get_git_work_tree());
+	/*
+	 * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR
+	 * without --bare.  Catch the error early.
+	 */
+	git_dir = getenv(GIT_DIR_ENVIRONMENT);
+	if ((!git_dir || is_bare_repository_cfg == 1)
+	    && getenv(GIT_WORK_TREE_ENVIRONMENT))
+		die("%s (or --work-tree=<directory>) not allowed without "
+		    "specifying %s (or --git-dir=<directory>)",
+		    GIT_WORK_TREE_ENVIRONMENT,
+		    GIT_DIR_ENVIRONMENT);
+
+	guess_repository_type(git_dir);
+
+	if (is_bare_repository_cfg <= 0) {
+		git_work_tree_cfg = xcalloc(PATH_MAX, 1);
+		if (!getcwd(git_work_tree_cfg, PATH_MAX))
+			die ("Cannot access current working directory.");
+		if (access(get_git_work_tree(), X_OK))
+			die ("Cannot access work tree '%s'",
+			     get_git_work_tree());
+	}
 
 	/*
 	 * Set up the default .git directory contents
