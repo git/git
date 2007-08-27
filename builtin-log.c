@@ -55,6 +55,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
 	rev->verbose_header = 1;
+	rev->diffopt.recursive = 1;
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
 	argc = setup_revisions(argc, argv, rev, "HEAD");
@@ -116,7 +117,6 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	git_config(git_log_config);
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
-	rev.diffopt.recursive = 1;
 	rev.simplify_history = 0;
 	cmd_log_init(argc, argv, prefix, &rev);
 	if (!rev.diffopt.output_format)
@@ -165,7 +165,6 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	git_config(git_log_config);
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
-	rev.diffopt.recursive = 1;
 	rev.combine_merges = 1;
 	rev.dense_combined_merges = 1;
 	rev.always_show_header = 1;
