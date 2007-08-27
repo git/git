@@ -99,47 +99,56 @@ if there is already one that displays the same directory."
 
 
 (defface git-status-face
-  '((((class color) (background light)) (:foreground "purple")))
+  '((((class color) (background light)) (:foreground "purple"))
+    (((class color) (background dark)) (:foreground "salmon")))
   "Git mode face used to highlight added and modified files."
   :group 'git)
 
 (defface git-unmerged-face
-  '((((class color) (background light)) (:foreground "red" :bold t)))
+  '((((class color) (background light)) (:foreground "red" :bold t))
+    (((class color) (background dark)) (:foreground "red" :bold t)))
   "Git mode face used to highlight unmerged files."
   :group 'git)
 
 (defface git-unknown-face
-  '((((class color) (background light)) (:foreground "goldenrod" :bold t)))
+  '((((class color) (background light)) (:foreground "goldenrod" :bold t))
+    (((class color) (background dark)) (:foreground "goldenrod" :bold t)))
   "Git mode face used to highlight unknown files."
   :group 'git)
 
 (defface git-uptodate-face
-  '((((class color) (background light)) (:foreground "grey60")))
+  '((((class color) (background light)) (:foreground "grey60"))
+    (((class color) (background dark)) (:foreground "grey40")))
   "Git mode face used to highlight up-to-date files."
   :group 'git)
 
 (defface git-ignored-face
-  '((((class color) (background light)) (:foreground "grey60")))
+  '((((class color) (background light)) (:foreground "grey60"))
+    (((class color) (background dark)) (:foreground "grey40")))
   "Git mode face used to highlight ignored files."
   :group 'git)
 
 (defface git-mark-face
-  '((((class color) (background light)) (:foreground "red" :bold t)))
+  '((((class color) (background light)) (:foreground "red" :bold t))
+    (((class color) (background dark)) (:foreground "tomato" :bold t)))
   "Git mode face used for the file marks."
   :group 'git)
 
 (defface git-header-face
-  '((((class color) (background light)) (:foreground "blue")))
+  '((((class color) (background light)) (:foreground "blue"))
+    (((class color) (background dark)) (:foreground "blue")))
   "Git mode face used for commit headers."
   :group 'git)
 
 (defface git-separator-face
-  '((((class color) (background light)) (:foreground "brown")))
+  '((((class color) (background light)) (:foreground "brown"))
+    (((class color) (background dark)) (:foreground "brown")))
   "Git mode face used for commit separator."
   :group 'git)
 
 (defface git-permission-face
-  '((((class color) (background light)) (:foreground "green" :bold t)))
+  '((((class color) (background light)) (:foreground "green" :bold t))
+    (((class color) (background dark)) (:foreground "green" :bold t)))
   "Git mode face used for permission changes."
   :group 'git)
 
