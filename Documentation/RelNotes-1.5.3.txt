@@ -28,7 +28,7 @@ Updates since v1.5.2
 * For people who need to import from Perforce, a front-end for
   fast-import is in contrib/fast-import/.
 
-* Comes with git-gui 0.8.1.
+* Comes with git-gui 0.8.2.
 
 * Comes with updated gitk.
 
@@ -318,8 +318,11 @@ this release, unless otherwise noted.
   - "gitweb" had trouble handling non UTF-8 text with older
     Encode.pm Perl module.
 
+  - "git-write-tree" had a bad interaction with racy-git avoidance and
+    gitattributes mechanisms.
+
 --
 exec >/var/tmp/1
-O=v1.5.3-rc6
+O=v1.5.3-rc6-47-ge92ea62
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
