@@ -22,10 +22,10 @@ tree and the index file, or the index file and the working tree.
 	words, the differences are what you _could_ tell git to
 	further add to the index but you still haven't.  You can
 	stage these changes by using gitlink:git-add[1].
-
-	If exactly two paths are given, and at least one is untracked,
-	compare the two files / directories. This behavior can be
-	forced by --no-index.
++
+If exactly two paths are given, and at least one is untracked,
+compare the two files / directories. This behavior can be
+forced by --no-index.
 
 'git-diff' [--options] --cached [<commit>] [--] [<path>...]::
 
@@ -44,8 +44,22 @@ tree and the index file, or the index file and the working tree.
 
 'git-diff' [--options] <commit> <commit> [--] [<path>...]::
 
-	This form is to view the changes between two <commit>,
-	for example, tips of two branches.
+	This is to view the changes between two arbitrary
+	<commit>.
+
+'git-diff' [--options] <commit>..<commit> [--] [<path>...]::
+
+	This is synonymous to the previous form.  If <commit> on
+	one side is omitted, it will have the same effect as
+	using HEAD instead.
+
+'git-diff' [--options] <commit>...<commit> [--] [<path>...]::
+
+	This form is to view the changes on the branch containing
+	and up to the second <commit>, starting at a common ancestor
+	of both <commit>.  "git-diff A...B" is equivalent to
+	"git-diff $(git-merge-base A B) B".  You can omit any one
+	of <commit>, which has the same effect as using HEAD instead.
 
 Just in case if you are doing something exotic, it should be
 noted that all of the <commit> in the above description can be
@@ -53,7 +67,10 @@ any <tree-ish>.
 
 For a more complete list of ways to spell <commit>, see
 "SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
-
+However, "diff" is about comparing two _endpoints_, not ranges,
+and the range notations ("<commit>..<commit>" and
+"<commit>...<commit>") do not mean a range as defined in the
+"SPECIFYING RANGES" section in gitlink:git-rev-parse[1].
 
 OPTIONS
 -------
@@ -97,6 +114,18 @@ the tip of the current branch, but limit the comparison to the
 file "test".
 <3> Compare the version before the last commit and the last commit.
 
+Comparing branches::
++
+------------
+$ git diff topic master    <1>
+$ git diff topic..master   <2>
+$ git diff topic...master  <3>
+------------
++
+<1> Changes between the tips of the topic and the master branches.
+<2> Same as above.
+<3> Changes that occured on the master branch since when the topic
+branch was started off it.
 
 Limiting the diff output::
 +
