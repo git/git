@@ -33,9 +33,9 @@ files have changes that are staged for the next commit.
 The 'git add' command will not add ignored files by default.  If any
 ignored files were explicitly specified on the command line, 'git add'
 will fail with a list of ignored files.  Ignored files reached by
-directory recursion or filename globbing will be silently ignored.
-The 'add' command can be used to add ignored files with the `-f`
-(force) option.
+directory recursion or filename globbing performed by Git (quote your
+globs before the shell) will be silently ignored.  The 'add' command can
+be used to add ignored files with the `-f` (force) option.
 
 Please see gitlink:git-commit[1] for alternative ways to add content to a
 commit.
