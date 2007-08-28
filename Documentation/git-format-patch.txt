@@ -16,20 +16,31 @@ SYNOPSIS
                    [--in-reply-to=Message-Id] [--suffix=.<sfx>]
                    [--ignore-if-in-upstream]
                    [--subject-prefix=Subject-Prefix]
-                   <since>[..<until>]
+		   [ <since> | <revision range> ]
 
 DESCRIPTION
 -----------
 
-Prepare each commit between <since> and <until> with its patch in
+Prepare each commit with its patch in
 one file per commit, formatted to resemble UNIX mailbox format.
-If ..<until> is not specified, the head of the current working
-tree is implied.  For a more complete list of ways to spell
-<since> and <until>, see "SPECIFYING REVISIONS" section in
-gitlink:git-rev-parse[1].
-
 The output of this command is convenient for e-mail submission or
 for use with gitlink:git-am[1].
+
+There are two ways to specify which commits to operate on.
+
+1. A single commit, <since>, specifies that the commits leading
+   to the tip of the current branch that are not in the history
+   that leads to the <since> to be output.
+
+2. Generic <revision range> expression (see "SPECIFYING
+   REVISIONS" section in gitlink:git-rev-parse[1]) means the
+   commits in the specified range.  A single commit, when
+   interpreted as a <revision range> expression, means
+   "everything that leads to that commit", but that is taken as
+   the special case above.  If you want to format everything
+   since project inception to one commit, say "git format-patch
+   \--root <that-commit>", as showing the root commit as patch
+   requires \--root option anyway.
 
 By default, each output file is numbered sequentially from 1, and uses the
 first line of the commit message (massaged for pathname safety) as
@@ -152,6 +163,10 @@ git-format-patch origin::
 	Extract all commits which are in the current branch but
 	not in the origin branch.  For each commit a separate file
 	is created in the current directory.
+
+git-format-patch \--root origin::
+	Extract all commits which that leads to 'origin' since the
+	inception of the project.
 
 git-format-patch -M -B origin::
 	The same as the previous one.  Additionally, it detects

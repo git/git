@@ -585,12 +585,19 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (rev.pending.nr == 1) {
-		if (rev.max_count < 0) {
+		if (rev.max_count < 0 && !rev.show_root_diff) {
+			/*
+			 * This is traditional behaviour of "git format-patch
+			 * origin" that prepares what the origin side still
+			 * does not have.
+			 */
 			rev.pending.objects[0].item->flags |= UNINTERESTING;
 			add_head(&rev);
 		}
-		/* Otherwise, it is "format-patch -22 HEAD", and
-		 * get_revision() would return only the specified count.
+		/*
+		 * Otherwise, it is "format-patch -22 HEAD", and/or
+		 * "format-patch --root HEAD".  The user wants
+		 * get_revision() to do the usual traversal.
 		 */
 	}
 
