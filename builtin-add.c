@@ -155,7 +155,7 @@ static int git_add_config(const char *var, const char *value)
 
 static struct lock_file lock_file;
 
-static const char ignore_warning[] =
+static const char ignore_error[] =
 "The following paths are ignored by one of your .gitignore files:\n";
 
 int cmd_add(int argc, const char **argv, const char *prefix)
@@ -250,12 +250,12 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		die("index file corrupt");
 
 	if (dir.ignored_nr) {
-		fprintf(stderr, ignore_warning);
+		fprintf(stderr, ignore_error);
 		for (i = 0; i < dir.ignored_nr; i++) {
 			fprintf(stderr, "%s\n", dir.ignored[i]->name);
 		}
 		fprintf(stderr, "Use -f if you really want to add them.\n");
-		exit(1);
+		die("no files added");
 	}
 
 	for (i = 0; i < dir.nr; i++)
