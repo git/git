@@ -175,6 +175,15 @@ Updates since v1.5.2
   - "git log" learned --log-size to show the number of bytes in
     the log message part of the output to help qgit.
 
+  - "git log --name-status" does not require you to give "-r" anymore.
+    As a general rule, Porcelain commands should recurse when showing
+    diff.
+
+  - "git format-patch --root A" can be used to format everything
+    since the beginning up to A.  This was supported with
+    "git format-patch --root A A" for a long time, but was not
+    properly documented.
+
   - "git svn dcommit" retains local merge information.
 
   - "git svnimport" allows an empty string to be specified as the
@@ -304,8 +313,8 @@ Updates since v1.5.2
     when switching branches that have differences in only a
     handful paths.
 
-  - "git commit paths..." has also been optimized.
-
+  - "git add paths..." and "git commit paths..." has also been
+    heavily optimized.
 
 Fixes since v1.5.2
 ------------------
@@ -321,8 +330,11 @@ this release, unless otherwise noted.
   - "git-write-tree" had a bad interaction with racy-git avoidance and
     gitattributes mechanisms.
 
+  - "git --bare command" overrode existing GIT_DIR setting and always
+    made it treat the current working directory as GIT_DIR.
+
 --
 exec >/var/tmp/1
-O=v1.5.3-rc6-47-ge92ea62
+O=v1.5.3-rc7
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
