@@ -96,7 +96,7 @@ git log --since="2 weeks ago" \-- gitk::
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
 
-git log -r --name-status release..test::
+git log --name-status release..test::
 
 	Show the commits that are in the "test" branch but not yet
 	in the "release" branch, along with the list of paths
