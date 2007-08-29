@@ -2007,6 +2007,7 @@ proc showview {n} {
     .bar.view entryconf Edit* -state [expr {$n == 0? "disabled": "normal"}]
     .bar.view entryconf Delete* -state [expr {$n == 0? "disabled": "normal"}]
 
+    run refill_reflist
     if {![info exists viewdata($n)]} {
 	if {$selid ne {}} {
 	    set pending_select $selid
@@ -2070,7 +2071,6 @@ proc showview {n} {
     } elseif {$numcommits == 0} {
 	show_status "No commits selected"
     }
-    run refill_reflist
 }
 
 # Stuff relating to the highlighting facility
