@@ -43,6 +43,11 @@ also push into an alternate here:
 
 Impatient people would have better luck with the latter one.
 
+Their gitweb interfaces are found at:
+
+	http://git.kernel.org/?p=git/git.git
+	http://repo.or.cz/w/alt-git.git
+
 There are three branches in git.git repository that are not
 about the source tree of git: "todo", "html" and "man".  The
 first one was meant to contain TODO list for me, but I am not
