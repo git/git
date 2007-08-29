@@ -192,7 +192,7 @@ core.worktree::
 	variable and the '--work-tree' command line option.
 
 core.logAllRefUpdates::
-	Updates to a ref <ref> is logged to the file
+	Enable the reflog. Updates to a ref <ref> is logged to the file
 	"$GIT_DIR/logs/<ref>", by appending the new and old
 	SHA1, the date/time and the reason of the update, but
 	only when the file exists.  If this configuration
@@ -283,7 +283,7 @@ core.excludesfile::
 
 core.editor::
 	Commands such as `commit` and `tag` that lets you edit
-	messages by lauching an editor uses the value of this
+	messages by launching an editor uses the value of this
 	variable when it is set, and the environment variable
 	`GIT_EDITOR` is not set.  The order of preference is
 	`GIT_EDITOR` environment, `core.editor`, `VISUAL` and
@@ -465,11 +465,11 @@ rerere.enabled::
 	be encountered again.  See gitlink:git-rerere[1].
 
 gitcvs.enabled::
-	Whether the cvs server interface is enabled for this repository.
+	Whether the CVS server interface is enabled for this repository.
 	See gitlink:git-cvsserver[1].
 
 gitcvs.logfile::
-	Path to a log file where the cvs server interface well... logs
+	Path to a log file where the CVS server interface well... logs
 	various stuff. See gitlink:git-cvsserver[1].
 
 gitcvs.allbinary::
@@ -500,10 +500,10 @@ gitcvs.dbuser, gitcvs.dbpass::
 	'gitcvs.dbuser' supports variable substitution (see
 	gitlink:git-cvsserver[1] for details).
 
-All gitcvs variables except for 'gitcvs.allbinary' can also specifed
-as 'gitcvs.<access_method>.<varname>' (where 'access_method' is one
-of "ext" and "pserver") to make them apply only for the given access
-method.
+All gitcvs variables except for 'gitcvs.allbinary' can also be
+specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
+is one of "ext" and "pserver") to make them apply only for the given
+access method.
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
@@ -615,7 +615,7 @@ pack.compression::
 	not set,  defaults to -1.
 
 pack.deltaCacheSize::
-	The maxium memory in bytes used for caching deltas in
+	The maximum memory in bytes used for caching deltas in
 	gitlink:git-pack-objects[1].
 	A value of 0 means no limit. Defaults to 0.
 
@@ -675,15 +675,11 @@ showbranch.default::
 	See gitlink:git-show-branch[1].
 
 tar.umask::
-	By default, gitlink:git-tar-tree[1] sets file and directories modes
-	to 0666 or 0777. While this is both useful and acceptable for projects
-	such as the Linux Kernel, it might be excessive for other projects.
-	With this variable, it becomes possible to tell
-	gitlink:git-tar-tree[1] to apply a specific umask to the modes above.
-	The special value "user" indicates that the user's current umask will
-	be used. This should be enough for most projects, as it will lead to
-	the same permissions as gitlink:git-checkout[1] would use. The default
-	value remains 0, which means world read-write.
+	This variable can be used to restrict the permission bits of
+	tar archive entries.  The default is 0002, which turns off the
+	world write bit.  The special value "user" indicates that the
+	archiving user's umask will be used instead.  See umask(2) and
+	gitlink:git-archive[1].
 
 user.email::
 	Your email address to be recorded in any newly created commits.

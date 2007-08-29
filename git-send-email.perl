@@ -21,7 +21,10 @@ use warnings;
 use Term::ReadLine;
 use Getopt::Long;
 use Data::Dumper;
+use Term::ANSIColor;
 use Git;
+
+$SIG{INT} = sub { print color("reset"), "\n"; exit };
 
 package FakeTerm;
 sub new {

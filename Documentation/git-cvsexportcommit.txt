@@ -59,7 +59,7 @@ OPTIONS
 	Useful for patch series and the like.
 
 -u::
-	Update affected files from cvs repository before attempting export.
+	Update affected files from CVS repository before attempting export.
 
 -v::
 	Verbose.

@@ -170,6 +170,53 @@ test_expect_failure \
     'git-fast-import <input'
 rm -f .git/objects/pack_* .git/objects/index_*
 
+cat >input <<INPUT_END
+commit .badbranchname
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+corrupt
+COMMIT
+
+from refs/heads/master
+
+INPUT_END
+test_expect_failure \
+    'B: fail on invalid branch name ".badbranchname"' \
+    'git-fast-import <input'
+rm -f .git/objects/pack_* .git/objects/index_*
+
+cat >input <<INPUT_END
+commit bad[branch]name
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+corrupt
+COMMIT
+
+from refs/heads/master
+
+INPUT_END
+test_expect_failure \
+    'B: fail on invalid branch name "bad[branch]name"' \
+    'git-fast-import <input'
+rm -f .git/objects/pack_* .git/objects/index_*
+
+cat >input <<INPUT_END
+commit TEMP_TAG
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+tag base
+COMMIT
+
+from refs/heads/master
+
+INPUT_END
+test_expect_success \
+    'B: accept branch name "TEMP_TAG"' \
+    'git-fast-import <input &&
+	 test -f .git/TEMP_TAG &&
+	 test `git rev-parse master` = `git rev-parse TEMP_TAG^`'
+rm -f .git/TEMP_TAG
+
 ###
 ### series C
 ###
@@ -730,5 +777,143 @@ test_expect_success \
 	'N: copy dirty subdirectory' \
 	'git-fast-import <input &&
 	 test `git-rev-parse N2^{tree}` = `git-rev-parse N3^{tree}`'
+
+###
+### series O
+###
+
+cat >input <<INPUT_END
+#we will
+commit refs/heads/O1
+# -- ignore all of this text
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+# $GIT_COMMITTER_NAME has inserted here for his benefit.
+data <<COMMIT
+dirty directory copy
+COMMIT
+
+# don't forget the import blank line!
+#
+# yes, we started from our usual base of branch^0.
+# i like branch^0.
+from refs/heads/branch^0
+# and we need to reuse file2/file5 from N3 above.
+M 644 inline file2/file5
+# otherwise the tree will be different
+data <<EOF
+$file5_data
+EOF
+
+# don't forget to copy file2 to file3
+C file2 file3
+#
+# or to delete file5 from file2.
+D file2/file5
+# are we done yet?
+
+INPUT_END
+
+test_expect_success \
+	'O: comments are all skipped' \
+	'git-fast-import <input &&
+	 test `git-rev-parse N3` = `git-rev-parse O1`'
+
+cat >input <<INPUT_END
+commit refs/heads/O2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+dirty directory copy
+COMMIT
+from refs/heads/branch^0
+M 644 inline file2/file5
+data <<EOF
+$file5_data
+EOF
+C file2 file3
+D file2/file5
+
+INPUT_END
+
+test_expect_success \
+	'O: blank lines not necessary after data commands' \
+	'git-fast-import <input &&
+	 test `git-rev-parse N3` = `git-rev-parse O2`'
+
+test_expect_success \
+	'O: repack before next test' \
+	'git repack -a -d'
+
+cat >input <<INPUT_END
+commit refs/heads/O3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zstring
+COMMIT
+commit refs/heads/O3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zof
+COMMIT
+checkpoint
+commit refs/heads/O3
+mark :5
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zempty
+COMMIT
+checkpoint
+commit refs/heads/O3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zcommits
+COMMIT
+reset refs/tags/O3-2nd
+from :5
+INPUT_END
+
+cat >expect <<INPUT_END
+string
+of
+empty
+commits
+INPUT_END
+test_expect_success \
+	'O: blank lines not necessary after other commands' \
+	'git-fast-import <input &&
+	 test 8 = `find .git/objects/pack -type f | wc -l` &&
+	 test `git rev-parse refs/tags/O3-2nd` = `git rev-parse O3^` &&
+	 git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
+	 git diff expect actual'
+
+cat >input <<INPUT_END
+commit refs/heads/O4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zstring
+COMMIT
+commit refs/heads/O4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zof
+COMMIT
+progress Two commits down, 2 to go!
+commit refs/heads/O4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zempty
+COMMIT
+progress Three commits down, 1 to go!
+commit refs/heads/O4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+zcommits
+COMMIT
+progress I'm done!
+INPUT_END
+test_expect_success \
+	'O: progress outputs as requested by input' \
+	'git-fast-import <input >actual &&
+	 grep "progress " <input >expect &&
+	 git diff expect actual'
 
 test_done

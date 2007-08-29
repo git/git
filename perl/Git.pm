@@ -860,7 +860,13 @@ sub READLINE {
 	if ($self->{i} >= scalar @{$self->{data}}) {
 		return undef;
 	}
-	return $self->{'data'}->[ $self->{i}++ ];
+	my $i = $self->{i};
+	if (wantarray) {
+		$self->{i} = $#{$self->{'data'}} + 1;
+		return splice(@{$self->{'data'}}, $i);
+	}
+	$self->{i} = $i + 1;
+	return $self->{'data'}->[ $i ];
 }
 
 sub CLOSE {

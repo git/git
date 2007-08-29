@@ -68,6 +68,9 @@ When importing incrementally, you might need to edit the .git/svn2git file.
 	Prepend 'rX: ' to commit messages, where X is the imported
 	subversion revision.
 
+-u::
+	Replace underscores in tag names with periods.
+
 -I <ignorefile_name>::
 	Import the svn:ignore directory property to files with this
 	name in each directory. (The Subversion and GIT ignore

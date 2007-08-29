@@ -213,7 +213,7 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 		entry = hash[i];
 		do {
 			struct index_entry *keep = entry;
-			int skip = hash_count[i] / HASH_LIMIT / 2;
+			int skip = hash_count[i] / HASH_LIMIT;
 			do {
 				entry = entry->next;
 			} while(--skip && entry);

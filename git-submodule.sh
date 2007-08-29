@@ -313,7 +313,7 @@ case "$add,$init,$update,$status,$cached" in
 ,,1,,)
 	modules_update "$@"
 	;;
-,,,1,*)
+,,,*,*)
 	modules_list "$@"
 	;;
 *)

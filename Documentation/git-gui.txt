@@ -89,7 +89,7 @@ See Also
 Other
 -----
 git-gui is actually maintained as an independent project, but stable
-versions are distributed as part of the Git suite for the convience
+versions are distributed as part of the Git suite for the convenience
 of end users.
 
 A git-gui development repository can be obtained from:
