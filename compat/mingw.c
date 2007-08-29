@@ -322,3 +322,12 @@ int mingw_socket(int domain, int type, int protocol)
 	}
 	return s;
 }
+
+#undef exit
+int git_exit(int code)
+{
+	if (code < 0)
+		exit(1);
+	exit(code);
+}
+

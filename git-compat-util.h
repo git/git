@@ -472,6 +472,9 @@ int mingw_socket(int domain, int type, int protocol);
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);
 
+extern __attribute__((noreturn)) int git_exit(int code);
+#define exit git_exit
+
 #endif /* __MINGW32__ */
 
 #endif
