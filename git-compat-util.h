@@ -483,6 +483,7 @@ int mingw_rename(const char*, const char*);
 
 #define setlinebuf(x)
 #define fsync(x) 0
+#define getppid() 1
 
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);
