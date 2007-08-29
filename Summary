@@ -6,9 +6,9 @@ trap 'rm -f $tmp-*' 0
 since="$1"
 until="$2"
 
-git-rev-list --no-merges "^master@{$1}" "master@{$2}" >"$tmp-0.txt"
-top=$(head -n 1 "$tmp-0.txt")
-bottom=$(tail -n 1 "$tmp-0.txt")
+git-rev-list --no-merges "master@{$1}..master@{$2}" >"$tmp-0.txt"
+top="master@{$until}"
+bottom="master@{$since}"
 
 num_patches=$(git rev-list --no-merges $bottom..$top | wc -l)
 git shortlog -s -n --no-merges $bottom..$top >"$tmp-0.txt"
