@@ -880,7 +880,7 @@ INPUT_END
 test_expect_success \
 	'O: blank lines not necessary after other commands' \
 	'git-fast-import <input &&
-	 test 8 = `find .git/objects/pack -type f | wc -l` &&
+	 test 8 = `/usr/bin/find .git/objects/pack -type f | wc -l` &&
 	 test `git rev-parse refs/tags/O3-2nd` = `git rev-parse O3^` &&
 	 git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
 	 git diff expect actual'
