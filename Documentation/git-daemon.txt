@@ -124,7 +124,8 @@ OPTIONS
 	Detach from the shell. Implies --syslog.
 
 --pid-file=file::
-	Save the process id in 'file'.
+	Save the process id in 'file'.  Ignored when the daemon
+	is run under `--inetd`.
 
 --user=user, --group=group::
 	Change daemon's uid and gid before entering the service loop.
@@ -157,6 +158,13 @@ the facility of inet daemon to achieve the same before spawning
 SERVICES
 --------
 
+These services can be globally enabled/disabled using the
+command line options of this command.  If a finer-grained
+control is desired (e.g. to allow `git-archive` to be run
+against only in a few selected repositories the daemon serves),
+the per-repository configuration file can be used to enable or
+disable them.
+
 upload-pack::
 	This serves `git-fetch-pack` and `git-peek-remote`
 	clients.  It is enabled by default, but a repository can
@@ -164,7 +172,19 @@ upload-pack::
 	item to `false`.
 
 upload-archive::
-	This serves `git-archive --remote`.
+	This serves `git-archive --remote`.  It is disabled by
+	default, but a repository can enable it by setting
+	`daemon.uploadarchive` configuration item to `true`.
+
+receive-pack::
+	This serves `git-send-pack` clients, allowing anonymous
+	push.  It is disabled by default, as there is _no_
+	authentication in the protocol (in other words, anybody
+	can push anything into the repository, including removal
+	of refs).  This is solely meant for a closed LAN setting
+	where everybody is friendly.  This service can be
+	enabled by `daemon.receivepack` configuration item to
+	`true`.
 
 EXAMPLES
 --------
@@ -227,6 +247,18 @@ In this example, the root-level directory `/pub` will contain
 a subdirectory for each virtual host IP address supported.
 Repositories can still be accessed by hostname though, assuming
 they correspond to these IP addresses.
+
+
+To enable `git-archive --remote` and disable `git-fetch` against
+a repository, have the following in the configuration file in the
+repository (that is the file 'config' next to 'HEAD', 'refs' and
+'objects').
++
+----------------------------------------------------------------
+[daemon]
+	uploadpack = false
+	uploadarchive = true
+----------------------------------------------------------------
 
 
 Author
