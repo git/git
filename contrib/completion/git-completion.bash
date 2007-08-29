@@ -641,6 +641,7 @@ _git_log ()
 			--all-match
 			--pretty= --name-status --name-only --raw
 			--not --all
+			--left-right --cherry-pick
 			"
 		return
 		;;
