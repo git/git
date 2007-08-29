@@ -34,13 +34,16 @@ There are two ways to specify which commits to operate on.
 
 2. Generic <revision range> expression (see "SPECIFYING
    REVISIONS" section in gitlink:git-rev-parse[1]) means the
-   commits in the specified range.  A single commit, when
-   interpreted as a <revision range> expression, means
-   "everything that leads to that commit", but that is taken as
-   the special case above.  If you want to format everything
-   since project inception to one commit, say "git format-patch
-   \--root <that-commit>", as showing the root commit as patch
-   requires \--root option anyway.
+   commits in the specified range.
+
+A single commit, when interpreted as a <revision range>
+expression, means "everything that leads to that commit", but
+if you write 'git format-patch <commit>', the previous rule
+applies to that command line and you do not get "everything
+since the beginning of the time".  If you want to format
+everything since project inception to one commit, say "git
+format-patch \--root <commit>" to make it clear that it is the
+latter case.
 
 By default, each output file is numbered sequentially from 1, and uses the
 first line of the commit message (massaged for pathname safety) as
