@@ -54,8 +54,7 @@ test_expect_success 'With -no-hardlinks, local will make a copy' '
 	cd "$D" &&
 	git clone --bare --no-hardlinks x w &&
 	cd w &&
-	linked=$(find objects -type f ! -links 1 | wc -l) &&
-	test "$linked" = 0
+	test $(find objects -type f ! -links 1 | wc -l) = 0
 '
 
 test_expect_success 'Even without -l, local will make a hardlink' '
@@ -63,8 +62,7 @@ test_expect_success 'Even without -l, local will make a hardlink' '
 	rm -fr w &&
 	git clone -l --bare x w &&
 	cd w &&
-	copied=$(find objects -type f -links 1 | wc -l) &&
-	test "$copied" = 0
+	test $(find objects -type f -links 1 | wc -l) = 0
 '
 
 test_done
