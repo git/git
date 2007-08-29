@@ -53,23 +53,24 @@ forced by --no-index.
 	one side is omitted, it will have the same effect as
 	using HEAD instead.
 
-'git-diff' [--options] <commit>...<commit> [--] [<path>...]::
+'git-diff' [--options] <commit>\...<commit> [--] [<path>...]::
 
 	This form is to view the changes on the branch containing
 	and up to the second <commit>, starting at a common ancestor
-	of both <commit>.  "git-diff A...B" is equivalent to
+	of both <commit>.  "git-diff A\...B" is equivalent to
 	"git-diff $(git-merge-base A B) B".  You can omit any one
 	of <commit>, which has the same effect as using HEAD instead.
 
 Just in case if you are doing something exotic, it should be
-noted that all of the <commit> in the above description can be
-any <tree-ish>.
+noted that all of the <commit> in the above description, except
+for the last two forms that use ".." notations, can be any
+<tree-ish>.
 
 For a more complete list of ways to spell <commit>, see
 "SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
 However, "diff" is about comparing two _endpoints_, not ranges,
 and the range notations ("<commit>..<commit>" and
-"<commit>...<commit>") do not mean a range as defined in the
+"<commit>\...<commit>") do not mean a range as defined in the
 "SPECIFYING RANGES" section in gitlink:git-rev-parse[1].
 
 OPTIONS
