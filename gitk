@@ -6641,8 +6641,9 @@ proc splitarc {p} {
 proc addnewchild {id p} {
     global allids allparents allchildren idtags nextarc nbmp
     global arcnos arcids arctags arcout arcend arcstart archeads growing
-    global seeds
+    global seeds allcommits
 
+    if {![info exists allcommits]} return
     lappend allids $id
     set allparents($id) [list $p]
     set allchildren($id) {}
