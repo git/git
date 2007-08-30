@@ -8,7 +8,13 @@
 # a new branch. You can specify a number of filters to modify the commits,
 # files and trees.
 
-USAGE="git-filter-branch [-d TEMPDIR] [FILTERS] [REV-RANGE]"
+USAGE="[--env-filter <command>] [--tree-filter <command>] \
+[--index-filter <command>] [--parent-filter <command>] \
+[--msg-filter <command>] [--commit-filter <command>] \
+[--tag-name-filter <command>] [--subdirectory-filter <directory>] \
+[--original <namespace>] [-d <directory>] [-f | --force] \
+[<rev-list options>...]"
+
 . git-sh-setup
 
 warn () {
