@@ -6445,25 +6445,59 @@ proc refill_reflist {} {
 
 # Stuff for finding nearby tags
 proc getallcommits {} {
-    global allcommits allids nbmp nextarc seeds
+    global allcommits nextarc seeds allccache allcwait cachedarcs allcupdate
+    global idheads idtags idotherrefs allparents tagobjid
 
     if {![info exists allcommits]} {
-	set allids {}
-	set nbmp 0
 	set nextarc 0
 	set allcommits 0
 	set seeds {}
+	set allcwait 0
+	set cachedarcs 0
+	set allccache [file join [gitdir] "gitk.cache"]
+	if {![catch {
+	    set f [open $allccache r]
+	    set allcwait 1
+	    getcache $f
+	}]} return
     }
 
-    set cmd [concat | git rev-list --all --parents]
-    foreach id $seeds {
-	lappend cmd "^$id"
+    if {$allcwait} {
+	return
     }
-    set fd [open $cmd r]
-    fconfigure $fd -blocking 0
-    incr allcommits
-    nowbusy allcommits
-    filerun $fd [list getallclines $fd]
+    set cmd [list | git rev-list --parents]
+    set allcupdate [expr {$seeds ne {}}]
+    if {!$allcupdate} {
+	set ids "--all"
+    } else {
+	set refs [concat [array names idheads] [array names idtags] \
+		      [array names idotherrefs]]
+	set ids {}
+	set tagobjs {}
+	foreach name [array names tagobjid] {
+	    lappend tagobjs $tagobjid($name)
+	}
+	foreach id [lsort -unique $refs] {
+	    if {![info exists allparents($id)] &&
+		[lsearch -exact $tagobjs $id] < 0} {
+		lappend ids $id
+	    }
+	}
+	if {$ids ne {}} {
+	    foreach id $seeds {
+		lappend ids "^$id"
+	    }
+	}
+    }
+    if {$ids ne {}} {
+	set fd [open [concat $cmd $ids] r]
+	fconfigure $fd -blocking 0
+	incr allcommits
+	nowbusy allcommits
+	filerun $fd [list getallclines $fd]
+    } else {
+	dispneartags 0
+    }
 }
 
 # Since most commits have 1 parent and 1 child, we group strings of
@@ -6482,10 +6516,10 @@ proc getallcommits {} {
 # coming from descendents, and "outgoing" means going towards ancestors.
 
 proc getallclines {fd} {
-    global allids allparents allchildren idtags idheads nextarc nbmp
+    global allparents allchildren idtags idheads nextarc
     global arcnos arcids arctags arcout arcend arcstart archeads growing
-    global seeds allcommits
-
+    global seeds allcommits cachedarcs allcupdate
+    
     set nid 0
     while {[incr nid] <= 1000 && [gets $fd line] >= 0} {
 	set id [lindex $line 0]
@@ -6493,7 +6527,7 @@ proc getallclines {fd} {
 	    # seen it already
 	    continue
 	}
-	lappend allids $id
+	set cachedarcs 0
 	set olds [lrange $line 1 end]
 	set allparents($id) $olds
 	if {![info exists allchildren($id)]} {
@@ -6524,7 +6558,6 @@ proc getallclines {fd} {
 		continue
 	    }
 	}
-	incr nbmp
 	foreach a $arcnos($id) {
 	    lappend arcids($a) $id
 	    set arcend($a) $id
@@ -6564,9 +6597,28 @@ proc getallclines {fd} {
     if {![eof $fd]} {
 	return [expr {$nid >= 1000? 2: 1}]
     }
-    close $fd
+    set cacheok 1
+    if {[catch {
+	fconfigure $fd -blocking 1
+	close $fd
+    } err]} {
+	# got an error reading the list of commits
+	# if we were updating, try rereading the whole thing again
+	if {$allcupdate} {
+	    incr allcommits -1
+	    dropcache $err
+	    return
+	}
+	error_popup "Error reading commit topology information;\
+		branch and preceding/following tag information\
+		will be incomplete.\n($err)"
+	set cacheok 0
+    }
     if {[incr allcommits -1] == 0} {
 	notbusy allcommits
+	if {$cacheok} {
+	    run savecache
+	}
     }
     dispneartags 0
     return 0
@@ -6590,7 +6642,7 @@ proc recalcarc {a} {
 }
 
 proc splitarc {p} {
-    global arcnos arcids nextarc nbmp arctags archeads idtags idheads
+    global arcnos arcids nextarc arctags archeads idtags idheads
     global arcstart arcend arcout allparents growing
 
     set a $arcnos($p)
@@ -6622,7 +6674,6 @@ proc splitarc {p} {
 	set growing($na) 1
 	unset growing($a)
     }
-    incr nbmp
 
     foreach id $tail {
 	if {[llength $arcnos($id)] == 1} {
@@ -6646,17 +6697,15 @@ proc splitarc {p} {
 # Update things for a new commit added that is a child of one
 # existing commit.  Used when cherry-picking.
 proc addnewchild {id p} {
-    global allids allparents allchildren idtags nextarc nbmp
+    global allparents allchildren idtags nextarc
     global arcnos arcids arctags arcout arcend arcstart archeads growing
     global seeds allcommits
 
     if {![info exists allcommits]} return
-    lappend allids $id
     set allparents($id) [list $p]
     set allchildren($id) {}
     set arcnos($id) {}
     lappend seeds $id
-    incr nbmp
     lappend allchildren($p) $id
     set a [incr nextarc]
     set arcstart($a) $id
@@ -6669,6 +6718,172 @@ proc addnewchild {id p} {
     }
     lappend arcnos($p) $a
     set arcout($id) [list $a]
+}
+
+# This implements a cache for the topology information.
+# The cache saves, for each arc, the start and end of the arc,
+# the ids on the arc, and the outgoing arcs from the end.
+proc readcache {f} {
+    global arcnos arcids arcout arcstart arcend arctags archeads nextarc
+    global idtags idheads allparents cachedarcs possible_seeds seeds growing
+    global allcwait
+
+    set a $nextarc
+    set lim $cachedarcs
+    if {$lim - $a > 500} {
+	set lim [expr {$a + 500}]
+    }
+    if {[catch {
+	if {$a == $lim} {
+	    # finish reading the cache and setting up arctags, etc.
+	    set line [gets $f]
+	    if {$line ne "1"} {error "bad final version"}
+	    close $f
+	    foreach id [array names idtags] {
+		if {[info exists arcnos($id)] && [llength $arcnos($id)] == 1 &&
+		    [llength $allparents($id)] == 1} {
+		    set a [lindex $arcnos($id) 0]
+		    if {$arctags($a) eq {}} {
+			recalcarc $a
+		    }
+		}
+	    }
+	    foreach id [array names idheads] {
+		if {[info exists arcnos($id)] && [llength $arcnos($id)] == 1 &&
+		    [llength $allparents($id)] == 1} {
+		    set a [lindex $arcnos($id) 0]
+		    if {$archeads($a) eq {}} {
+			recalcarc $a
+		    }
+		}
+	    }
+	    foreach id [lsort -unique $possible_seeds] {
+		if {$arcnos($id) eq {}} {
+		    lappend seeds $id
+		}
+	    }
+	    set allcwait 0
+	} else {
+	    while {[incr a] <= $lim} {
+		set line [gets $f]
+		if {[llength $line] != 3} {error "bad line"}
+		set s [lindex $line 0]
+		set arcstart($a) $s
+		lappend arcout($s) $a
+		if {![info exists arcnos($s)]} {
+		    lappend possible_seeds $s
+		    set arcnos($s) {}
+		}
+		set e [lindex $line 1]
+		if {$e eq {}} {
+		    set growing($a) 1
+		} else {
+		    set arcend($a) $e
+		    if {![info exists arcout($e)]} {
+			set arcout($e) {}
+		    }
+		}
+		set arcids($a) [lindex $line 2]
+		foreach id $arcids($a) {
+		    lappend allparents($s) $id
+		    set s $id
+		    lappend arcnos($id) $a
+		}
+		if {![info exists allparents($s)]} {
+		    set allparents($s) {}
+		}
+		set arctags($a) {}
+		set archeads($a) {}
+	    }
+	    set nextarc [expr {$a - 1}]
+	}
+    } err]} {
+	dropcache $err
+	return 0
+    }
+    if {!$allcwait} {
+	getallcommits
+    }
+    return $allcwait
+}
+
+proc getcache {f} {
+    global nextarc cachedarcs possible_seeds
+
+    if {[catch {
+	set line [gets $f]
+	if {[llength $line] != 2 || [lindex $line 0] ne "1"} {error "bad version"}
+	# make sure it's an integer
+	set cachedarcs [expr {int([lindex $line 1])}]
+	if {$cachedarcs < 0} {error "bad number of arcs"}
+	set nextarc 0
+	set possible_seeds {}
+	run readcache $f
+    } err]} {
+	dropcache $err
+    }
+    return 0
+}
+
+proc dropcache {err} {
+    global allcwait nextarc cachedarcs seeds
+
+    #puts "dropping cache ($err)"
+    foreach v {arcnos arcout arcids arcstart arcend growing \
+		   arctags archeads allparents allchildren} {
+	global $v
+	catch {unset $v}
+    }
+    set allcwait 0
+    set nextarc 0
+    set cachedarcs 0
+    set seeds {}
+    getallcommits
+}
+
+proc writecache {f} {
+    global cachearc cachedarcs allccache
+    global arcstart arcend arcnos arcids arcout
+
+    set a $cachearc
+    set lim $cachedarcs
+    if {$lim - $a > 1000} {
+	set lim [expr {$a + 1000}]
+    }
+    if {[catch {
+	while {[incr a] <= $lim} {
+	    if {[info exists arcend($a)]} {
+		puts $f [list $arcstart($a) $arcend($a) $arcids($a)]
+	    } else {
+		puts $f [list $arcstart($a) {} $arcids($a)]
+	    }
+	}
+    } err]} {
+	catch {close $f}
+	catch {file delete $allccache}
+	#puts "writing cache failed ($err)"
+	return 0
+    }
+    set cachearc [expr {$a - 1}]
+    if {$a > $cachedarcs} {
+	puts $f "1"
+	close $f
+	return 0
+    }
+    return 1
+}
+
+proc savecache {} {
+    global nextarc cachedarcs cachearc allccache
+
+    if {$nextarc == $cachedarcs} return
+    set cachearc 0
+    set cachedarcs $nextarc
+    catch {
+	set f [open $allccache w]
+	puts $f [list 1 $cachedarcs]
+	run writecache $f
+    }
 }
 
 # Returns 1 if a is an ancestor of b, -1 if b is an ancestor of a,
