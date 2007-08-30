@@ -287,12 +287,12 @@ static void cleanup_space(char *buf)
 	}
 }
 
-static void decode_header(char *it);
+static void decode_header(char *it, unsigned itsize);
 static char *header[MAX_HDR_PARSED] = {
 	"From","Subject","Date",
 };
 
-static int check_header(char *line, char **hdr_data, int overwrite)
+static int check_header(char *line, unsigned linesize, char **hdr_data, int overwrite)
 {
 	int i;
 
@@ -305,7 +305,7 @@ static int check_header(char *line, char **hdr_data, int overwrite)
 			/* Unwrap inline B and Q encoding, and optionally
 			 * normalize the meta information to utf8.
 			 */
-			decode_header(line + len + 2);
+			decode_header(line + len + 2, linesize - len - 2);
 			hdr_data[i] = xmalloc(1000 * sizeof(char));
 			if (! handle_header(line, hdr_data[i], len + 2)) {
 				return 1;
@@ -316,14 +316,14 @@ static int check_header(char *line, char **hdr_data, int overwrite)
 	/* Content stuff */
 	if (!strncasecmp(line, "Content-Type", 12) &&
 		line[12] == ':' && isspace(line[12 + 1])) {
-		decode_header(line + 12 + 2);
+		decode_header(line + 12 + 2, linesize - 12 - 2);
 		if (! handle_content_type(line)) {
 			return 1;
 		}
 	}
 	if (!strncasecmp(line, "Content-Transfer-Encoding", 25) &&
 		line[25] == ':' && isspace(line[25 + 1])) {
-		decode_header(line + 25 + 2);
+		decode_header(line + 25 + 2, linesize - 25 - 2);
 		if (! handle_content_transfer_encoding(line)) {
 			return 1;
 		}
@@ -432,10 +432,15 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 	return 1;
 }
 
-static int decode_q_segment(char *in, char *ot, char *ep, int rfc2047)
+static int decode_q_segment(char *in, char *ot, unsigned otsize, char *ep, int rfc2047)
 {
+	char *otend = ot + otsize;
 	int c;
 	while ((c = *in++) != 0 && (in <= ep)) {
+		if (ot == otend) {
+			*--ot = '\0';
+			return -1;
+		}
 		if (c == '=') {
 			int d = *in++;
 			if (d == '\n' || !d)
@@ -451,12 +456,17 @@ static int decode_q_segment(char *in, char *ot, char *ep, int rfc2047)
 	return 0;
 }
 
-static int decode_b_segment(char *in, char *ot, char *ep)
+static int decode_b_segment(char *in, char *ot, unsigned otsize, char *ep)
 {
 	/* Decode in..ep, possibly in-place to ot */
 	int c, pos = 0, acc = 0;
+	char *otend = ot + otsize;
 
 	while ((c = *in++) != 0 && (in <= ep)) {
+		if (ot == otend) {
+			*--ot = '\0';
+			return -1;
+		}
 		if (c == '+')
 			c = 62;
 		else if (c == '/')
@@ -518,7 +528,7 @@ static const char *guess_charset(const char *line, const char *target_charset)
 	return "latin1";
 }
 
-static void convert_to_utf8(char *line, const char *charset)
+static void convert_to_utf8(char *line, unsigned linesize, const char *charset)
 {
 	char *out;
 
@@ -534,11 +544,11 @@ static void convert_to_utf8(char *line, const char *charset)
 	if (!out)
 		die("cannot convert from %s to %s\n",
 		    charset, metainfo_charset);
-	strcpy(line, out);
+	strlcpy(line, out, linesize);
 	free(out);
 }
 
-static int decode_header_bq(char *it)
+static int decode_header_bq(char *it, unsigned itsize)
 {
 	char *in, *out, *ep, *cp, *sp;
 	char outbuf[1000];
@@ -578,56 +588,60 @@ static int decode_header_bq(char *it)
 		default:
 			return rfc2047; /* no munging */
 		case 'b':
-			sz = decode_b_segment(cp + 3, piecebuf, ep);
+			sz = decode_b_segment(cp + 3, piecebuf, sizeof(piecebuf), ep);
 			break;
 		case 'q':
-			sz = decode_q_segment(cp + 3, piecebuf, ep, 1);
+			sz = decode_q_segment(cp + 3, piecebuf, sizeof(piecebuf), ep, 1);
 			break;
 		}
 		if (sz < 0)
 			return rfc2047;
 		if (metainfo_charset)
-			convert_to_utf8(piecebuf, charset_q);
+			convert_to_utf8(piecebuf, sizeof(piecebuf), charset_q);
+
+		sz = strlen(piecebuf);
+		if (outbuf + sizeof(outbuf) <= out + sz)
+			return rfc2047; /* no munging */
 		strcpy(out, piecebuf);
-		out += strlen(out);
+		out += sz;
 		in = ep + 2;
 	}
 	strcpy(out, in);
-	strcpy(it, outbuf);
+	strlcpy(it, outbuf, itsize);
 	return rfc2047;
 }
 
-static void decode_header(char *it)
+static void decode_header(char *it, unsigned itsize)
 {
 
-	if (decode_header_bq(it))
+	if (decode_header_bq(it, itsize))
 		return;
 	/* otherwise "it" is a straight copy of the input.
 	 * This can be binary guck but there is no charset specified.
 	 */
 	if (metainfo_charset)
-		convert_to_utf8(it, "");
+		convert_to_utf8(it, itsize, "");
 }
 
-static void decode_transfer_encoding(char *line)
+static void decode_transfer_encoding(char *line, unsigned linesize)
 {
 	char *ep;
 
 	switch (transfer_encoding) {
 	case TE_QP:
 		ep = line + strlen(line);
-		decode_q_segment(line, line, ep, 0);
+		decode_q_segment(line, line, linesize, ep, 0);
 		break;
 	case TE_BASE64:
 		ep = line + strlen(line);
-		decode_b_segment(line, line, ep);
+		decode_b_segment(line, line, linesize, ep);
 		break;
 	case TE_DONTCARE:
 		break;
 	}
 }
 
-static int handle_filter(char *line);
+static int handle_filter(char *line, unsigned linesize);
 
 static int find_boundary(void)
 {
@@ -655,7 +669,7 @@ again:
 					"can't recover\n");
 			exit(1);
 		}
-		handle_filter(newline);
+		handle_filter(newline, sizeof(newline));
 
 		/* skip to the next boundary */
 		if (!find_boundary())
@@ -670,7 +684,7 @@ again:
 
 	/* slurp in this section's info */
 	while (read_one_header_line(line, sizeof(line), fin))
-		check_header(line, p_hdr_data, 0);
+		check_header(line, sizeof(line), p_hdr_data, 0);
 
 	/* eat the blank line after section info */
 	return (fgets(line, sizeof(line), fin) != NULL);
@@ -709,9 +723,10 @@ static inline int patchbreak(const char *line)
 }
 
 
-static int handle_commit_msg(char *line)
+static int handle_commit_msg(char *line, unsigned linesize)
 {
 	static int still_looking = 1;
+	char *endline = line + linesize;
 
 	if (!cmitmsg)
 		return 0;
@@ -726,13 +741,13 @@ static int handle_commit_msg(char *line)
 			if (!*cp)
 				return 0;
 		}
-		if ((still_looking = check_header(cp, s_hdr_data, 0)) != 0)
+		if ((still_looking = check_header(cp, endline - cp, s_hdr_data, 0)) != 0)
 			return 0;
 	}
 
 	/* normalize the log message to UTF-8. */
 	if (metainfo_charset)
-		convert_to_utf8(line, charset);
+		convert_to_utf8(line, endline - line, charset);
 
 	if (patchbreak(line)) {
 		fclose(cmitmsg);
@@ -751,7 +766,7 @@ static int handle_patch(char *line)
 	return 0;
 }
 
-static int handle_filter(char *line)
+static int handle_filter(char *line, unsigned linesize)
 {
 	static int filter = 0;
 
@@ -760,7 +775,7 @@ static int handle_filter(char *line)
 	 */
 	switch (filter) {
 	case 0:
-		if (!handle_commit_msg(line))
+		if (!handle_commit_msg(line, linesize))
 			break;
 		filter++;
 	case 1:
@@ -792,14 +807,14 @@ static void handle_body(void)
 			/* flush any leftover */
 			if ((transfer_encoding == TE_BASE64)  &&
 			    (np != newline)) {
-				handle_filter(newline);
+				handle_filter(newline, sizeof(newline));
 			}
 			if (!handle_boundary())
 				return;
 		}
 
 		/* Unwrap transfer encoding */
-		decode_transfer_encoding(line);
+		decode_transfer_encoding(line, sizeof(line));
 
 		switch (transfer_encoding) {
 		case TE_BASE64:
@@ -808,7 +823,7 @@ static void handle_body(void)
 
 			/* binary data most likely doesn't have newlines */
 			if (message_type != TYPE_TEXT) {
-				rc = handle_filter(line);
+				rc = handle_filter(line, sizeof(newline));
 				break;
 			}
 
@@ -825,7 +840,7 @@ static void handle_body(void)
 					/* should be sitting on a new line */
 					*(++np) = 0;
 					op++;
-					rc = handle_filter(newline);
+					rc = handle_filter(newline, sizeof(newline));
 					np = newline;
 				}
 			} while (*op != 0);
@@ -835,7 +850,7 @@ static void handle_body(void)
 			break;
 		}
 		default:
-			rc = handle_filter(line);
+			rc = handle_filter(line, sizeof(newline));
 		}
 		if (rc)
 			/* nothing left to filter */
@@ -922,7 +937,7 @@ static int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
 
 	/* process the email header */
 	while (read_one_header_line(line, sizeof(line), fin))
-		check_header(line, p_hdr_data, 1);
+		check_header(line, sizeof(line), p_hdr_data, 1);
 
 	handle_body();
 	handle_info();
