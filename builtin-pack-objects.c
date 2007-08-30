@@ -1389,20 +1389,24 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	if (!delta_buf)
 		return 0;
 
-	if (trg_entry->delta_data) {
+	if (trg_entry->delta) {
 		/* Prefer only shallower same-sized deltas. */
 		if (delta_size == trg_entry->delta_size &&
 		    src->depth + 1 >= trg->depth) {
 			free(delta_buf);
 			return 0;
 		}
+	}
+
+	trg_entry->delta = src_entry;
+	trg_entry->delta_size = delta_size;
+	trg->depth = src->depth + 1;
+
+	if (trg_entry->delta_data) {
 		delta_cache_size -= trg_entry->delta_size;
 		free(trg_entry->delta_data);
 		trg_entry->delta_data = NULL;
 	}
-	trg_entry->delta = src_entry;
-	trg_entry->delta_size = delta_size;
-	trg->depth = src->depth + 1;
 
 	if (delta_cacheable(src_size, trg_size, delta_size)) {
 		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
