@@ -12,7 +12,8 @@ SYNOPSIS
 	[--index-filter <command>] [--parent-filter <command>]
 	[--msg-filter <command>] [--commit-filter <command>]
 	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
-	[-d <directory>] [-f | --force] [<rev-list options>...]
+	[--original <namespace>] [-d <directory>] [-f | --force]
+	[<rev-list options>...]
 
 DESCRIPTION
 -----------
@@ -133,6 +134,10 @@ definition impossible to preserve signatures at any rate.)
 	Only look at the history which touches the given subdirectory.
 	The result will contain that directory (and only that) as its
 	project root.
+
+--original <namespace>::
+	Use this option to set the namespace where the original commits
+	will be stored. The default value is 'refs/original'.
 
 -d <directory>::
 	Use this option to set the path to the temporary directory used for
