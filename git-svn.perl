@@ -807,7 +807,7 @@ sub cmt_metadata {
 
 sub working_head_info {
 	my ($head, $refs) = @_;
-	my ($fh, $ctx) = command_output_pipe('log', $head);
+	my ($fh, $ctx) = command_output_pipe('log', '--no-color', $head);
 	my $hash;
 	my %max;
 	while (<$fh>) {
@@ -2072,7 +2072,7 @@ sub rebuild {
 		return;
 	}
 	print "Rebuilding $db_path ...\n";
-	my ($log, $ctx) = command_output_pipe("log", $self->refname);
+	my ($log, $ctx) = command_output_pipe("log", '--no-color', $self->refname);
 	my $latest;
 	my $full_url = $self->full_url;
 	remove_username($full_url);
