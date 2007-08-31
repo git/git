@@ -264,6 +264,21 @@ static int create_default_files(const char *git_dir, const char *template_path)
 		if (work_tree != git_work_tree_cfg)
 			git_config_set("core.worktree", work_tree);
 	}
+
+	/* Check if symlink is supported in the work tree */
+	if (!reinit) {
+		path[len] = 0;
+		strcpy(path + len, "tXXXXXX");
+		if (!close(xmkstemp(path)) &&
+		    !unlink(path) &&
+		    !symlink("testing", path) &&
+		    !lstat(path, &st1) &&
+		    S_ISLNK(st1.st_mode))
+			unlink(path); /* good */
+		else
+			git_config_set("core.symlinks", "false");
+	}
+
 	return reinit;
 }
 
