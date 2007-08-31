@@ -112,9 +112,6 @@ OPTIONS
 As a special extension, the commit filter may emit multiple
 commit ids; in that case, ancestors of the original commit will
 have all of them as parents.
-+
-Note that the 'map' function is not available in the commit filter yet.
-This will be changed in a future version.
 
 --tag-name-filter <command>::
 	This is the filter for rewriting tag names. When passed,
