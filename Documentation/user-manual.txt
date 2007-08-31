@@ -182,7 +182,7 @@ has that commit at all).  Since the object name is computed as a hash over the
 contents of the commit, you are guaranteed that the commit can never change
 without its name also changing.
 
-In fact, in <<git-internals>> we shall see that everything stored in git
+In fact, in <<git-concepts>> we shall see that everything stored in git
 history, including file data and directory contents, is stored in an object
 with a name that is a hash of its contents.
 
@@ -2708,12 +2708,16 @@ See gitlink:git-config[1] for more details on the configuration
 options mentioned above.
 
 
-[[git-internals]]
-Git internals
-=============
+[[git-concepts]]
+Git concepts
+============
 
-Git depends on two fundamental abstractions: the "object database", and
-the "current directory cache" aka "index".
+Git is built on a small number of simple but powerful ideas.  While it
+is possible to get things done without understanding them, you will find
+git much more intuitive if you do.
+
+We start with the most important, the  <<def_object_database,object
+database>> and the <<def_index,index>>.
 
 [[the-object-database]]
 The Object Database
