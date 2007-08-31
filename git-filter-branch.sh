@@ -140,7 +140,7 @@ do
 		filter_subdir="$OPTARG"
 		;;
 	--original)
-		orig_namespace="$OPTARG"
+		orig_namespace=$(expr "$OPTARG/" : '\(.*[^/]\)/*$')/
 		;;
 	*)
 		usage
