@@ -2760,29 +2760,6 @@ used to sign other objects. It contains the identifier and type of
 another object, a symbolic name (of course!) and, optionally, a
 signature.
 
-Regardless of object type, all objects share the following
-characteristics: they are all deflated with zlib, and have a header
-that not only specifies their type, but also provides size information
-about the data in the object.  It's worth noting that the SHA1 hash
-that is used to name the object is the hash of the original data
-plus this header, so `sha1sum` 'file' does not match the object name
-for 'file'.
-(Historical note: in the dawn of the age of git the hash
-was the sha1 of the 'compressed' object.)
-
-As a result, the general consistency of an object can always be tested
-independently of the contents or the type of the object: all objects can
-be validated by verifying that (a) their hashes match the content of the
-file and (b) the object successfully inflates to a stream of bytes that
-forms a sequence of <ascii type without space> {plus} <space> {plus} <ascii decimal
-size> {plus} <byte\0> {plus} <binary object data>.
-
-The structured objects can further have their structure and
-connectivity to other objects verified. This is generally done with
-the `git-fsck` program, which generates a full dependency graph
-of all objects, and verifies their internal consistency (in addition
-to just verifying their superficial consistency through the hash).
-
 The object types in some more detail:
 
 [[blob-object]]
@@ -3480,6 +3457,38 @@ Hacking git
 
 This chapter covers internal details of the git implementation which
 probably only git developers need to understand.
+
+[[object-details]]
+Object storage format
+---------------------
+
+All objects have a statically determined "type" which identifies the
+format of the object (i.e. how it is used, and how it can refer to other
+objects).  There are currently four different object types: "blob",
+"tree", "commit", and "tag".
+
+Regardless of object type, all objects share the following
+characteristics: they are all deflated with zlib, and have a header
+that not only specifies their type, but also provides size information
+about the data in the object.  It's worth noting that the SHA1 hash
+that is used to name the object is the hash of the original data
+plus this header, so `sha1sum` 'file' does not match the object name
+for 'file'.
+(Historical note: in the dawn of the age of git the hash
+was the sha1 of the 'compressed' object.)
+
+As a result, the general consistency of an object can always be tested
+independently of the contents or the type of the object: all objects can
+be validated by verifying that (a) their hashes match the content of the
+file and (b) the object successfully inflates to a stream of bytes that
+forms a sequence of <ascii type without space> {plus} <space> {plus} <ascii decimal
+size> {plus} <byte\0> {plus} <binary object data>.
+
+The structured objects can further have their structure and
+connectivity to other objects verified. This is generally done with
+the `git-fsck` program, which generates a full dependency graph
+of all objects, and verifies their internal consistency (in addition
+to just verifying their superficial consistency through the hash).
 
 [[birdview-on-the-source-code]]
 A birds-eye view of Git's source code
