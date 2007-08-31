@@ -396,6 +396,16 @@ color.status.<slot>::
 commit.template::
 	Specify a file to use as the template for new commit messages.
 
+diff.autorefreshindex::
+	When using `git diff` to compare with work tree
+	files, do not consider stat-only change as changed.
+	Instead, silently run `git update-index --refresh` to
+	update the cached stat information for paths whose
+	contents in the work tree match the contents in the
+	index.  This option defaults to true.  Note that this
+	affects only `git diff` Porcelain, and not lower level
+	`diff` commands, such as `git diff-files`.
+
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
 	detection; equivalent to the git diff option '-l'.

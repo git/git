@@ -19,6 +19,7 @@
 static int diff_detect_rename_default;
 static int diff_rename_limit_default = -1;
 static int diff_use_color_default;
+int diff_auto_refresh_index = 1;
 
 static char diff_colors[][COLOR_MAXLEN] = {
 	"\033[m",	/* reset */
@@ -164,6 +165,10 @@ int git_diff_ui_config(const char *var, const char *value)
 			diff_detect_rename_default = DIFF_DETECT_COPY;
 		else if (git_config_bool(var,value))
 			diff_detect_rename_default = DIFF_DETECT_RENAME;
+		return 0;
+	}
+	if (!strcmp(var, "diff.autorefreshindex")) {
+		diff_auto_refresh_index = git_config_bool(var, value);
 		return 0;
 	}
 	if (!prefixcmp(var, "diff.")) {
