@@ -896,7 +896,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			continue;
 		argv[i] = NULL;
 		argc = i;
-		revs->prune_data = get_pathspec(revs->prefix, argv + i + 1);
+		if (argv[i + 1])
+			revs->prune_data = get_pathspec(revs->prefix, argv + i + 1);
 		seen_dashdash = 1;
 		break;
 	}
