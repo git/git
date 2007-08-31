@@ -333,8 +333,20 @@ this release, unless otherwise noted.
   - "git --bare command" overrode existing GIT_DIR setting and always
     made it treat the current working directory as GIT_DIR.
 
+  - "git ls-files --error-unmatch" does not complain if you give the
+    same path pattern twice by mistake.
+
+  - "git init" autodetected core.filemode but not core.symlinks, which
+    made a new directory created automatically by "git clone" cumbersome
+    to use on filesystems that require these configurations to be set.
+
+  - "git log" family of commands behaved differently when run as "git
+    log" (no pathspec) and as "git log --" (again, no pathspec).  This
+    inconsistency was introduced somewhere in v1.3.0 series but now has
+    been corrected.
+
 --
 exec >/var/tmp/1
-O=v1.5.3-rc7
+O=v1.5.3-rc7-15-ga65f200
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
