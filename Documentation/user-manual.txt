@@ -2787,7 +2787,7 @@ The object types in some more detail:
 
 [[blob-object]]
 Blob Object
------------
+~~~~~~~~~~~
 
 A "blob" object is nothing but a binary blob of data, and doesn't
 refer to anything else.  There is no signature or any other
@@ -2809,7 +2809,7 @@ is run, and its data can be accessed by gitlink:git-cat-file[1].
 
 [[tree-object]]
 Tree Object
------------
+~~~~~~~~~~~
 
 The next hierarchical object type is the "tree" object.  A tree object
 is a list of mode/name/blob data, sorted by name.  Alternatively, the
@@ -2851,7 +2851,7 @@ Two trees can be compared with gitlink:git-diff-tree[1].
 
 [[commit-object]]
 Commit Object
--------------
+~~~~~~~~~~~~~
 
 The "commit" object is an object that introduces the notion of
 history into the picture.  In contrast to the other objects, it
@@ -2878,7 +2878,7 @@ its data can be accessed by gitlink:git-cat-file[1].
 
 [[trust]]
 Trust
------
+~~~~~
 
 An aside on the notion of "trust". Trust is really outside the scope
 of "git", but it's worth noting a few things.  First off, since
@@ -2908,7 +2908,7 @@ To assist in this, git also provides the tag object...
 
 [[tag-object]]
 Tag Object
-----------
+~~~~~~~~~~
 
 Git provides the "tag" object to simplify creating, managing and
 exchanging symbolic and signed tokens.  The "tag" object at its
@@ -3473,6 +3473,13 @@ Running it while somebody is actually changing the repository can cause
 confusing and scary messages, but it won't actually do anything bad. In
 contrast, running "git prune" while somebody is actively changing the
 repository is a *BAD* idea).
+
+[[hacking-git]]
+Hacking git
+===========
+
+This chapter covers internal details of the git implementation which
+probably only git developers need to understand.
 
 [[birdview-on-the-source-code]]
 A birds-eye view of Git's source code
