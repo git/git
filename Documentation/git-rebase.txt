@@ -211,7 +211,8 @@ OPTIONS
 
 -i, \--interactive::
 	Make a list of the commits which are about to be rebased.  Let the
-	user edit that list before rebasing.
+	user edit that list before rebasing.  This mode can also be used to
+	split commits (see SPLITTING COMMITS below).
 
 -p, \--preserve-merges::
 	Instead of ignoring merges, try to recreate them.  This option
@@ -324,6 +325,42 @@ sure that the current HEAD is "B", and call
 -----------------------------
 $ git rebase -i -p --onto Q O
 -----------------------------
+
+
+SPLITTING COMMITS
+-----------------
+
+In interactive mode, you can mark commits with the action "edit".  However,
+this does not necessarily mean that 'git rebase' expects the result of this
+edit to be exactly one commit.  Indeed, you can undo the commit, or you can
+add other commits.  This can be used to split a commit into two:
+
+- Start an interactive rebase with 'git rebase -i <commit>^', where
+  <commit> is the commit you want to split.  In fact, any commit range
+  will do, as long as it contains that commit.
+
+- Mark the commit you want to split with the action "edit".
+
+- When it comes to editing that commit, execute 'git reset HEAD^'.  The
+  effect is that the HEAD is rewound by one, and the index follows suit.
+  However, the working tree stays the same.
+
+- Now add the changes to the index that you want to have in the first
+  commit.  You can use gitlink:git-add[1] (possibly interactively) and/or
+  gitlink:git-gui[1] to do that.
+
+- Commit the now-current index with whatever commit message is appropriate
+  now.
+
+- Repeat the last two steps until your working tree is clean.
+
+- Continue the rebase with 'git rebase --continue'.
+
+If you are not absolutely sure that the intermediate revisions are
+consistent (they compile, pass the testsuite, etc.) you should use
+gitlink:git-stash[1] to stash away the not-yet-committed changes
+after each commit, test, and amend the commit if fixes are necessary.
+
 
 Authors
 ------
