@@ -23,6 +23,20 @@ map()
 	fi
 }
 
+# if you run 'skip_commit "$@"' in a commit filter, it will print
+# the (mapped) parents, effectively skipping the commit.
+
+skip_commit()
+{
+	shift;
+	while [ -n "$1" ];
+	do
+		shift;
+		map "$1";
+		shift;
+	done;
+}
+
 # override die(): this version puts in an extra line break, so that
 # the progress is still visible
 

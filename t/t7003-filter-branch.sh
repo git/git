@@ -138,13 +138,7 @@ test_expect_success "remove a certain author's commits" '
 	git-filter-branch -f --commit-filter "\
 		if [ \"\$GIT_AUTHOR_NAME\" = \"B V Uips\" ];\
 		then\
-			shift;\
-			while [ -n \"\$1\" ];\
-			do\
-				shift;\
-				echo \"\$1\";\
-				shift;\
-			done;\
+			skip_commit \"\$@\";
 		else\
 			git commit-tree \"\$@\";\
 		fi" removed-author &&

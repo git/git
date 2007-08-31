@@ -112,6 +112,11 @@ OPTIONS
 As a special extension, the commit filter may emit multiple
 commit ids; in that case, ancestors of the original commit will
 have all of them as parents.
++
+You can use the 'map' convenience function in this filter, and other
+convenience functions, too.  For example, calling 'skip_commit "$@"'
+will leave out the current commit (but not its changes! If you want
+that, use gitlink:git-rebase[1] instead).
 
 --tag-name-filter <command>::
 	This is the filter for rewriting tag names. When passed,
@@ -209,23 +214,38 @@ To remove commits authored by "Darl McBribe" from the history:
 git filter-branch --commit-filter '
 	if [ "$GIT_AUTHOR_NAME" = "Darl McBribe" ];
 	then
-		shift;
-		while [ -n "$1" ];
-		do
-			shift;
-			echo "$1";
-			shift;
-		done;
+		skip_commit "$@";
 	else
 		git commit-tree "$@";
 	fi' HEAD
 ------------------------------------------------------------------------------
+
+Note that the changes introduced by the commits, and not reverted by
+subsequent commits, will still be in the rewritten branch. If you want
+to throw out _changes_ together with the commits, you should use the
+interactive mode of gitlink:git-rebase[1].
+
+The function 'skip_commits' is defined as follows:
+
+--------------------------
+skip_commit()
+{
+	shift;
+	while [ -n "$1" ];
+	do
+		shift;
+		map "$1";
+		shift;
+	done;
+}
+--------------------------
 
 The shift magic first throws away the tree id and then the -p
 parameters.  Note that this handles merges properly! In case Darl
 committed a merge between P1 and P2, it will be propagated properly
 and all children of the merge will become merge commits with P1,P2
 as their parents instead of the merge commit.
+
 
 To restrict rewriting to only part of the history, specify a revision
 range in addition to the new branch name.  The new branch name will
