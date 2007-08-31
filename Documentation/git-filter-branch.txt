@@ -17,19 +17,19 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Lets you rewrite git revision history by creating a new branch from
-your current branch, applying custom filters on each revision.
+Lets you rewrite git revision history by rewriting the branches mentioned
+in the <rev-list options>, applying custom filters on each revision.
 Those filters can modify each tree (e.g. removing a file or running
 a perl rewrite on all files) or information about each commit.
 Otherwise, all information (including original commit times or merge
 information) will be preserved.
 
-The command takes the new branch name as a mandatory argument and
-the filters as optional arguments.  If you specify no filters, the
-commits will be recommitted without any changes, which would normally
-have no effect.  Nevertheless, this may be useful in the future for
-compensating for some git bugs or such, therefore such a usage is
-permitted.
+The command will only rewrite the _positive_ refs mentioned in the
+command line (i.e. if you pass 'a..b', only 'b' will be rewritten).
+If you specify no filters, the commits will be recommitted without any
+changes, which would normally have no effect.  Nevertheless, this may be
+useful in the future for compensating for some git bugs or such,
+therefore such a usage is permitted.
 
 *WARNING*! The rewritten history will have different object names for all
 the objects and will not converge with the original branch.  You will not
@@ -43,8 +43,8 @@ if different from the rewritten ones, will be stored in the namespace
 'refs/original/'.
 
 Note that since this operation is extensively I/O expensive, it might
-be a good idea to redirect the temporary directory off-disk, e.g. on
-tmpfs.  Reportedly the speedup is very noticeable.
+be a good idea to redirect the temporary directory off-disk with the
+'-d' option, e.g. on tmpfs.  Reportedly the speedup is very noticeable.
 
 
 Filters
@@ -112,6 +112,9 @@ OPTIONS
 As a special extension, the commit filter may emit multiple
 commit ids; in that case, ancestors of the original commit will
 have all of them as parents.
++
+Note that the 'map' function is not available in the commit filter yet.
+This will be changed in a future version.
 
 --tag-name-filter <command>::
 	This is the filter for rewriting tag names. When passed,
@@ -186,8 +189,8 @@ order to paste the other history behind the current history:
 git filter-branch --parent-filter 'sed "s/^\$/-p <graft-id>/"' HEAD
 -------------------------------------------------------------------
 
-(if the parent string is empty - therefore we are dealing with the
-initial commit - add graftcommit as a parent).  Note that this assumes
+(if the parent string is empty - which happens when we are dealing with
+the initial commit - add graftcommit as a parent).  Note that this assumes
 history with a single root (that is, no merge without common ancestors
 happened).  If this is not the case, use:
 
@@ -232,10 +235,11 @@ range in addition to the new branch name.  The new branch name will
 point to the top-most revision that a 'git rev-list' of this range
 will print.
 
-Note that the changes introduced by the commits, and not reverted by
-subsequent commits, will still be in the rewritten branch. If you want
+*NOTE* the changes introduced by the commits, and which are not reverted
+by subsequent commits, will still be in the rewritten branch. If you want
 to throw out _changes_ together with the commits, you should use the
 interactive mode of gitlink:git-rebase[1].
+
 
 Consider this history:
 
