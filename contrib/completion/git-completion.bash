@@ -114,6 +114,27 @@ __git_heads ()
 	done
 }
 
+__git_tags ()
+{
+	local cmd i is_hash=y dir="$(__gitdir "$1")"
+	if [ -d "$dir" ]; then
+		for i in $(git --git-dir="$dir" \
+			for-each-ref --format='%(refname)' \
+			refs/tags ); do
+			echo "${i#refs/tags/}"
+		done
+		return
+	fi
+	for i in $(git-ls-remote "$1" 2>/dev/null); do
+		case "$is_hash,$i" in
+		y,*) is_hash=n ;;
+		n,*^{}) is_hash=y ;;
+		n,refs/tags/*) is_hash=y; echo "${i#refs/tags/}" ;;
+		n,*) is_hash=y; echo "$i" ;;
+		esac
+	done
+}
+
 __git_refs ()
 {
 	local cmd i is_hash=y dir="$(__gitdir "$1")"
@@ -1050,6 +1071,40 @@ _git_submodule ()
 	fi
 }
 
+_git_tag ()
+{
+	local i c=1 f=0
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		-d|-v)
+			__gitcomp "$(__git_tags)"
+			return
+			;;
+		-f)
+			f=1
+			;;
+		esac
+		c=$((++c))
+	done
+
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	-m|-F)
+		COMPREPLY=()
+		;;
+	-*|tag|git-tag)
+		if [ $f = 1 ]; then
+			__gitcomp "$(__git_tags)"
+		else
+			COMPREPLY=()
+		fi
+		;;
+	*)
+		__gitcomp "$(__git_refs)"
+		;;
+	esac
+}
+
 _git ()
 {
 	local i c=1 command __git_dir
@@ -1117,6 +1172,7 @@ _git ()
 	show-branch) _git_log ;;
 	stash)       _git_stash ;;
 	submodule)   _git_submodule ;;
+	tag)         _git_tag ;;
 	whatchanged) _git_log ;;
 	*)           COMPREPLY=() ;;
 	esac
@@ -1167,6 +1223,7 @@ complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_stash git-stash
 complete -o default -o nospace -F _git_submodule git-submodule
 complete -o default -o nospace -F _git_log git-show-branch
+complete -o default -o nospace -F _git_tag git-tag
 complete -o default -o nospace -F _git_log git-whatchanged
 
 # The following are necessary only for Cygwin, and only are needed
@@ -1192,5 +1249,6 @@ complete -o default -o nospace -F _git_config git-config
 complete -o default -o nospace -F _git_shortlog git-shortlog.exe
 complete -o default -o nospace -F _git_show git-show.exe
 complete -o default -o nospace -F _git_log git-show-branch.exe
+complete -o default -o nospace -F _git_tag git-tag.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe
 fi
