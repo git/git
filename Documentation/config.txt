@@ -301,12 +301,12 @@ alias.*::
 	hide existing git commands are ignored. Arguments are split by
 	spaces, the usual shell quoting and escaping is supported.
 	quote pair and a backslash can be used to quote them.
-
-	If the alias expansion is prefixed with an exclamation point,
-	it will be treated as a shell command.  For example, defining
-	"alias.new = !gitk --all --not ORIG_HEAD", the invocation
-	"git new" is equivalent to running the shell command
-	"gitk --all --not ORIG_HEAD".
++
+If the alias expansion is prefixed with an exclamation point,
+it will be treated as a shell command.  For example, defining
+"alias.new = !gitk --all --not ORIG_HEAD", the invocation
+"git new" is equivalent to running the shell command
+"gitk --all --not ORIG_HEAD".
 
 apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way

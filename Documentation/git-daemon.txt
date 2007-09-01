@@ -248,16 +248,16 @@ a subdirectory for each virtual host IP address supported.
 Repositories can still be accessed by hostname though, assuming
 they correspond to these IP addresses.
 
-
-To enable `git-archive --remote` and disable `git-fetch` against
-a repository, have the following in the configuration file in the
-repository (that is the file 'config' next to 'HEAD', 'refs' and
-'objects').
+selectively enable/disable services per repository::
+	To enable `git-archive --remote` and disable `git-fetch` against
+	a repository, have the following in the configuration file in the
+	repository (that is the file 'config' next to 'HEAD', 'refs' and
+	'objects').
 +
 ----------------------------------------------------------------
-[daemon]
-	uploadpack = false
-	uploadarchive = true
+	[daemon]
+		uploadpack = false
+		uploadarchive = true
 ----------------------------------------------------------------
 
 
