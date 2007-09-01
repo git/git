@@ -66,4 +66,34 @@ test_expect_success 'dcommit does the svn equivalent of an index merge' "
 	git-svn dcommit
 	"
 
+test_expect_success 'commit another change from svn side' "
+	svn co $svnrepo t.svn &&
+	cd t.svn &&
+		echo third line from svn >> file &&
+		poke file &&
+		svn commit -m 'third line from svn' &&
+	cd .. &&
+	rm -rf t.svn
+	"
+
+test_expect_failure 'multiple dcommit from git-svn will not clobber svn' "
+	git reset --hard refs/remotes/git-svn &&
+	echo new file >> new-file &&
+	git update-index --add new-file &&
+	git commit -a -m 'new file' &&
+	echo clobber > file &&
+	git commit -a -m 'clobber' &&
+	git svn dcommit
+	" || true
+
+
+test_expect_success 'check that rebase really failed' 'test -d .dotest'
+
+test_expect_success 'resolve, continue the rebase and dcommit' "
+	echo clobber and I really mean it > file &&
+	git update-index file &&
+	git rebase --continue &&
+	git svn dcommit
+	"
+
 test_done

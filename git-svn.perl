@@ -384,6 +384,12 @@ sub cmd_dcommit {
 	}
 	my $last_rev;
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
+	if ($_no_rebase && scalar(@$linear_refs) > 1) {
+		warn "Attempting to commit more than one change while ",
+		     "--no-rebase is enabled.\n",
+		     "If these changes depend on each other, re-running ",
+		     "without --no-rebase will be required."
+	}
 	foreach my $d (@$linear_refs) {
 		unless (defined $last_rev) {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
@@ -395,6 +401,7 @@ sub cmd_dcommit {
 		if ($_dry_run) {
 			print "diff-tree $d~1 $d\n";
 		} else {
+			my $cmt_rev;
 			my %ed_opts = ( r => $last_rev,
 			                log => get_commit_entry($d)->{log},
 			                ra => Git::SVN::Ra->new($gs->full_url),
@@ -402,41 +409,38 @@ sub cmd_dcommit {
 			                tree_b => $d,
 			                editor_cb => sub {
 			                       print "Committed r$_[0]\n";
-			                       $last_rev = $_[0]; },
+			                       $cmt_rev = $_[0];
+			                },
 			                svn_path => '');
 			if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
 				print "No changes\n$d~1 == $d\n";
 			} elsif ($parents->{$d} && @{$parents->{$d}}) {
-				$gs->{inject_parents_dcommit}->{$last_rev} =
+				$gs->{inject_parents_dcommit}->{$cmt_rev} =
 				                               $parents->{$d};
 			}
+			$_fetch_all ? $gs->fetch_all : $gs->fetch;
+			next if $_no_rebase;
+
+			# we always want to rebase against the current HEAD,
+			# not any head that was passed to us
+			my @diff = command('diff-tree', 'HEAD',
+			                   $gs->refname, '--');
+			my @finish;
+			if (@diff) {
+				@finish = rebase_cmd();
+				print STDERR "W: HEAD and ", $gs->refname,
+				             " differ, using @finish:\n",
+				             "@diff";
+			} else {
+				print "No changes between current HEAD and ",
+				      $gs->refname,
+				      "\nResetting to the latest ",
+				      $gs->refname, "\n";
+				@finish = qw/reset --mixed/;
+			}
+			command_noisy(@finish, $gs->refname);
+			$last_rev = $cmt_rev;
 		}
-	}
-	return if $_dry_run;
-	unless ($gs) {
-		warn "Could not determine fetch information for $url\n",
-		     "Will not attempt to fetch and rebase commits.\n",
-		     "This probably means you have useSvmProps and should\n",
-		     "now resync your SVN::Mirror repository.\n";
-		return;
-	}
-	$_fetch_all ? $gs->fetch_all : $gs->fetch;
-	unless ($_no_rebase) {
-		# we always want to rebase against the current HEAD, not any
-		# head that was passed to us
-		my @diff = command('diff-tree', 'HEAD', $gs->refname, '--');
-		my @finish;
-		if (@diff) {
-			@finish = rebase_cmd();
-			print STDERR "W: HEAD and ", $gs->refname, " differ, ",
-				     "using @finish:\n", "@diff";
-		} else {
-			print "No changes between current HEAD and ",
-			      $gs->refname, "\nResetting to the latest ",
-			      $gs->refname, "\n";
-			@finish = qw/reset --mixed/;
-		}
-		command_noisy(@finish, $gs->refname);
 	}
 }
 
