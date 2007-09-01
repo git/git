@@ -59,20 +59,23 @@ continue_merge () {
 		die "$RESOLVEMSG"
 	fi
 
+	cmt=`cat $dotest/current`
 	if ! git diff-index --quiet HEAD
 	then
-		if ! git-commit -C "`cat $dotest/current`"
+		if ! git-commit -C "$cmt"
 		then
 			echo "Commit failed, please do not call \"git commit\""
 			echo "directly, but instead do one of the following: "
 			die "$RESOLVEMSG"
 		fi
-		printf "Committed: %0${prec}d" $msgnum
+		printf "Committed: %0${prec}d " $msgnum
+		git rev-list --pretty=oneline -1 HEAD | \
+			sed 's/^[a-f0-9]\+ //'
 	else
-		printf "Already applied: %0${prec}d" $msgnum
+		printf "Already applied: %0${prec}d " $msgnum
+		git rev-list --pretty=oneline -1 "$cmt" | \
+			sed 's/^[a-f0-9]\+ //'
 	fi
-	echo ' '`git rev-list --pretty=oneline -1 HEAD | \
-				sed 's/^[a-f0-9]\+ //'`
 
 	prev_head=`git rev-parse HEAD^0`
 	# save the resulting commit so we can read-tree on it later
