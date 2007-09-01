@@ -10,6 +10,7 @@ to name the remote repository:
 - https://host.xz/path/to/repo.git/
 - git://host.xz/path/to/repo.git/
 - git://host.xz/~user/path/to/repo.git/
+- ssh://{startsb}user@{endsb}host.xz{startsb}:port{endsb}/path/to/repo.git/
 - ssh://{startsb}user@{endsb}host.xz/path/to/repo.git/
 - ssh://{startsb}user@{endsb}host.xz/~user/path/to/repo.git/
 - ssh://{startsb}user@{endsb}host.xz/~/path/to/repo.git
@@ -18,7 +19,8 @@ to name the remote repository:
 SSH is the default transport protocol over the network.  You can
 optionally specify which user to log-in as, and an alternate,
 scp-like syntax is also supported.  Both syntaxes support
-username expansion, as does the native git protocol. The following
+username expansion, as does the native git protocol, but
+only the former supports port specification. The following
 three are identical to the last three above, respectively:
 
 ===============================================================
