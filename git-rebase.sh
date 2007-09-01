@@ -69,13 +69,10 @@ continue_merge () {
 			die "$RESOLVEMSG"
 		fi
 		printf "Committed: %0${prec}d " $msgnum
-		git rev-list --pretty=oneline -1 HEAD | \
-			sed 's/^[a-f0-9]\+ //'
 	else
 		printf "Already applied: %0${prec}d " $msgnum
-		git rev-list --pretty=oneline -1 "$cmt" | \
-			sed 's/^[a-f0-9]\+ //'
 	fi
+	git rev-list --pretty=oneline -1 "$cmt" | sed -e 's/^[^ ]* //'
 
 	prev_head=`git rev-parse HEAD^0`
 	# save the resulting commit so we can read-tree on it later
