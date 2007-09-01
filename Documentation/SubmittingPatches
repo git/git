@@ -31,7 +31,8 @@ Checklist (and a short version for the impatient):
 	  corrupt whitespaces.
 	- provide additional information (which is unsuitable for
 	  the commit message) between the "---" and the diffstat
-	- send the patch to the list _and_ the maintainer
+	- send the patch to the list (git@vger.kernel.org) and the
+	  maintainer (gitster@pobox.com).
 	- if you change, add, or remove a command line option or
 	  make some other user interface change, the associated
 	  documentation should be updated as well.
