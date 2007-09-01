@@ -49,6 +49,9 @@ Options:
    --cc           Specify an initial "Cc:" list for the entire series
                   of emails.
 
+   --cc-cmd       Specify a command to execute per file which adds
+                  per file specific cc address entries
+
    --bcc          Specify a list of email addresses that should be Bcc:
 		  on all the emails.
 
@@ -160,13 +163,14 @@ if ($@) {
 my ($quiet, $dry_run) = (0, 0);
 
 # Variables with corresponding config settings
-my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc);
+my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
 
 my %config_settings = (
     "thread" => [\$thread, 1],
     "chainreplyto" => [\$chain_reply_to, 1],
     "suppressfrom" => [\$suppress_from, 0],
     "signedoffcc" => [\$signed_off_cc, 1],
+    "cccmd" => [\$cc_cmd, ""],
 );
 
 foreach my $setting (keys %config_settings) {
@@ -192,6 +196,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-server=s" => \$smtp_server,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
+		    "cc-cmd=s" => \$cc_cmd,
 		    "suppress-from!" => \$suppress_from,
 		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_cc,
 		    "dry-run" => \$dry_run,
@@ -655,10 +660,25 @@ foreach my $t (@files) {
 		}
 	}
 	close F;
+
+	if ($cc_cmd ne "") {
+		open(F, "$cc_cmd $t |")
+			or die "(cc-cmd) Could not execute '$cc_cmd'";
+		while(<F>) {
+			my $c = $_;
+			$c =~ s/^\s*//g;
+			$c =~ s/\n$//g;
+			push @cc, $c;
+			printf("(cc-cmd) Adding cc: %s from: '%s'\n",
+				$c, $cc_cmd) unless $quiet;
+		}
+		close F
+			or die "(cc-cmd) failed to close pipe to '$cc_cmd'";
+	}
+
 	if (defined $author) {
 		$message = "From: $author\n\n$message";
 	}
-
 
 	send_message();
 
