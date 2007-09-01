@@ -2766,27 +2766,32 @@ signature.
 
 The object types in some more detail:
 
-[[blob-object]]
-Blob Object
-~~~~~~~~~~~
+[[commit-object]]
+Commit Object
+~~~~~~~~~~~~~
 
-A "blob" object is nothing but a binary blob of data, and doesn't
-refer to anything else.  There is no signature or any other
-verification of the data, so while the object is consistent (it 'is'
-indexed by its sha1 hash, so the data itself is certainly correct), it
-has absolutely no other attributes.  No name associations, no
-permissions.  It is purely a blob of data (i.e. normally "file
-contents").
+The "commit" object is an object that introduces the notion of
+history into the picture.  In contrast to the other objects, it
+doesn't just describe the physical state of a tree, it describes how
+we got there, and why.
 
-In particular, since the blob is entirely defined by its data, if two
-files in a directory tree (or in multiple different versions of the
-repository) have the same contents, they will share the same blob
-object. The object is totally independent of its location in the
-directory tree, and renaming a file does not change the object that
-file is associated with in any way.
+A "commit" is defined by the tree-object that it results in, the
+parent commits (zero, one or more) that led up to that point, and a
+comment on what happened.  Again, a commit is not trusted per se:
+the contents are well-defined and "safe" due to the cryptographically
+strong signatures at all levels, but there is no reason to believe
+that the tree is "good" or that the merge information makes sense.
+The parents do not have to actually have any relationship with the
+result, for example.
 
-A blob is typically created when gitlink:git-update-index[1]
-is run, and its data can be accessed by gitlink:git-cat-file[1].
+Note on commits: unlike some SCM's, commits do not contain
+rename information or file mode change information.  All of that is
+implicit in the trees involved (the result tree, and the result trees
+of the parents), and describing that makes no sense in this idiotic
+file manager.
+
+A commit is created with gitlink:git-commit-tree[1] and
+its data can be accessed by gitlink:git-cat-file[1].
 
 [[tree-object]]
 Tree Object
@@ -2830,32 +2835,27 @@ A tree is created with gitlink:git-write-tree[1] and
 its data can be accessed by gitlink:git-ls-tree[1].
 Two trees can be compared with gitlink:git-diff-tree[1].
 
-[[commit-object]]
-Commit Object
-~~~~~~~~~~~~~
+[[blob-object]]
+Blob Object
+~~~~~~~~~~~
 
-The "commit" object is an object that introduces the notion of
-history into the picture.  In contrast to the other objects, it
-doesn't just describe the physical state of a tree, it describes how
-we got there, and why.
+A "blob" object is nothing but a binary blob of data, and doesn't
+refer to anything else.  There is no signature or any other
+verification of the data, so while the object is consistent (it 'is'
+indexed by its sha1 hash, so the data itself is certainly correct), it
+has absolutely no other attributes.  No name associations, no
+permissions.  It is purely a blob of data (i.e. normally "file
+contents").
 
-A "commit" is defined by the tree-object that it results in, the
-parent commits (zero, one or more) that led up to that point, and a
-comment on what happened.  Again, a commit is not trusted per se:
-the contents are well-defined and "safe" due to the cryptographically
-strong signatures at all levels, but there is no reason to believe
-that the tree is "good" or that the merge information makes sense.
-The parents do not have to actually have any relationship with the
-result, for example.
+In particular, since the blob is entirely defined by its data, if two
+files in a directory tree (or in multiple different versions of the
+repository) have the same contents, they will share the same blob
+object. The object is totally independent of its location in the
+directory tree, and renaming a file does not change the object that
+file is associated with in any way.
 
-Note on commits: unlike some SCM's, commits do not contain
-rename information or file mode change information.  All of that is
-implicit in the trees involved (the result tree, and the result trees
-of the parents), and describing that makes no sense in this idiotic
-file manager.
-
-A commit is created with gitlink:git-commit-tree[1] and
-its data can be accessed by gitlink:git-cat-file[1].
+A blob is typically created when gitlink:git-update-index[1]
+is run, and its data can be accessed by gitlink:git-cat-file[1].
 
 [[trust]]
 Trust
