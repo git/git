@@ -8,7 +8,7 @@ git-rebase - Forward-port local commits to the updated upstream head
 SYNOPSIS
 --------
 [verse]
-'git-rebase' [-i | --interactive] [-v | --verbose] [--merge] [-C<n>]
+'git-rebase' [-i | --interactive] [-v | --verbose] [-m | --merge] [-C<n>]
 	[-p | --preserve-merges] [--onto <newbase>] <upstream> [<branch>]
 'git-rebase' --continue | --skip | --abort
 
@@ -188,7 +188,7 @@ OPTIONS
 --skip::
 	Restart the rebasing process by skipping the current patch.
 
---merge::
+-m, \--merge::
 	Use merging strategies to rebase.  When the recursive (default) merge
 	strategy is used, this allows rebase to be aware of renames on the
 	upstream side.
