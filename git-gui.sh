@@ -51,8 +51,12 @@ set oguirel {@@GITGUI_RELATIVE@@}
 if {$oguirel eq {1}} {
 	set oguilib [file dirname [file dirname [file normalize $argv0]]]
 	set oguilib [file join $oguilib share git-gui lib]
+	set oguimsg [file join $oguilib msgs]
 } elseif {[string match @@* $oguirel]} {
 	set oguilib [file join [file dirname [file normalize $argv0]] lib]
+	set oguimsg [file join [file dirname [file normalize $argv0]] po]
+} else {
+	set oguimsg [file join $oguilib msgs]
 }
 unset oguirel
 
@@ -73,6 +77,16 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 		uplevel 1 real__source $name
 	}
 }
+
+######################################################################
+##
+## Internationalization (i18n) through msgcat and gettext. See
+## http://www.gnu.org/software/gettext/manual/html_node/Tcl.html
+
+package require msgcat
+namespace import ::msgcat::mc
+::msgcat::mcload $oguimsg
+unset oguimsg
 
 ######################################################################
 ##
