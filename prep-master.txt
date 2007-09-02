@@ -1,15 +1,5 @@
-diff --git a/Documentation/RelNotes-1.5.3.txt b/Documentation/RelNotes-1.5.3.txt
-index 03d1843..6f5d14f 100644
---- a/Documentation/RelNotes-1.5.3.txt
-+++ b/Documentation/RelNotes-1.5.3.txt
-@@ -47,8 +47,8 @@ Updates since v1.5.2
-     renaming history of a single file.
- 
-   - "git-filter-branch" lets you rewrite the revision history of
--    the current branch, creating a new branch. You can specify a
--    number of filters to modify the commits, files and trees.
-+    specified branches. You can specify a number of filters to
-+    modify the commits, files and trees.
- 
-   - "git-cvsserver" learned new options (--base-path, --export-all,
-     --strict-paths) inspired by git-daemon.
+--
+exec >/var/tmp/1
+O=v1.5.3
+echo O=`git describe refs/heads/master`
+git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
