@@ -44,6 +44,20 @@ if {[catch {package require Tcl 8.4} err]
 
 ######################################################################
 ##
+## locate our library
+
+set oguilib {@@GITGUI_LIBDIR@@}
+set oguirel {@@GITGUI_RELATIVE@@}
+if {$oguirel eq {1}} {
+	set oguilib [file dirname [file dirname [file normalize $argv0]]]
+	set oguilib [file join $oguilib share git-gui lib]
+} elseif {[string match @@* $oguirel]} {
+	set oguilib [file join [file dirname [file normalize $argv0]] lib]
+}
+unset oguirel
+
+######################################################################
+##
 ## enable verbose loading?
 
 if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
@@ -595,15 +609,6 @@ You are using [git-version]:
 ##
 ## configure our library
 
-set oguilib {@@GITGUI_LIBDIR@@}
-set oguirel {@@GITGUI_RELATIVE@@}
-if {$oguirel eq {1}} {
-	set oguilib [file dirname [file dirname [file normalize $argv0]]]
-	set oguilib [file join $oguilib share git-gui lib]
-} elseif {[string match @@* $oguirel]} {
-	set oguilib [file join [file dirname [file normalize $argv0]] lib]
-}
-
 set idx [file join $oguilib tclIndex]
 if {[catch {set fd [open $idx r]} err]} {
 	catch {wm withdraw .}
@@ -637,7 +642,7 @@ if {$idx ne {}} {
 } else {
 	set auto_path [concat [list $oguilib] $auto_path]
 }
-unset -nocomplain oguirel idx fd
+unset -nocomplain idx fd
 
 ######################################################################
 ##
