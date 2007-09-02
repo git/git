@@ -93,7 +93,7 @@ other things I think are needed in my response:
 Technical (milder)
 ------------------
 
-* add 'tree' entries to the index.
+* perhaps add 'tree' entries to the index.
 
   From: Junio C Hamano <junkio@cox.net>
   Message-ID: <11793556371774-git-send-email-junkio@cox.net>
@@ -111,8 +111,6 @@ Technical (milder)
 
 * daemon --strict-symlink.
 
-* Maybe grok PGP signed text/plain in applymbox as well.
-
 * "git fetch" should be able to use foreign SCM import backends
   such as svnimport and cvsimport.
 
@@ -121,13 +119,20 @@ Technical (milder)
   From: Junio C Hamano <junkio@cox.net>
   Message-ID: <11793556371774-git-send-email-junkio@cox.net>
 
+* Maybe grok PGP signed text/plain in mailinfo as well.
+
+
 Technical (trivial)
 -------------------
 
 * Give --stdin to git-log, similar to git-rev-list
 
-From: "Marco Costalba" <mcostalba@gmail.com>
-Message-ID: <e5bfff550705110413q28aef3d8k3aeb0d342eeb2016@mail.gmail.com>
+  From: "Marco Costalba" <mcostalba@gmail.com>
+  Message-ID: <e5bfff550705110413q28aef3d8k3aeb0d342eeb2016@mail.gmail.com>
+
+[jc: but why is it needed?  shouldn't we be using rev-list plumbing,
+ and if not perhaps rev-list needs to learn something log knows
+ how to do?]
 
 * Update the lockfile protocol so that closing and renaming are
   done inside lockfile commit time.  Some filesystems do not
