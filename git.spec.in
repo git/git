@@ -25,6 +25,7 @@ This is a dummy package which brings in all subpackages.
 Summary:	Core git tools
 Group:		Development/Tools
 Requires:	zlib >= 1.2, rsync, curl, less, openssh-clients, expat
+Obsoletes:	git-p4
 %description core
 Git is a fast, scalable, distributed revision control system with an
 unusually rich command set that provides both high-level operations
