@@ -1460,7 +1460,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	do {
 		struct object_entry *entry = list[--i];
 		struct unpacked *n = array + idx;
-		int j;
+		int j, best_base = -1;
 
 		if (!entry->preferred_base)
 			processed++;
@@ -1505,6 +1505,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 		j = window;
 		while (--j > 0) {
+			int ret;
 			uint32_t other_idx = idx + j;
 			struct unpacked *m;
 			if (other_idx >= window)
@@ -1512,8 +1513,11 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			m = array + other_idx;
 			if (!m->entry)
 				break;
-			if (try_delta(n, m, max_depth) < 0)
+			ret = try_delta(n, m, max_depth);
+			if (ret < 0)
 				break;
+			else if (ret > 0)
+				best_base = other_idx;
 		}
 
 		/* if we made n a delta, and if n is already at max
@@ -1522,6 +1526,23 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		 */
 		if (entry->delta && depth <= n->depth)
 			continue;
+
+		/*
+		 * Move the best delta base up in the window, after the
+		 * currently deltified object, to keep it longer.  It will
+		 * be the first base object to be attempted next.
+		 */
+		if (entry->delta) {
+			struct unpacked swap = array[best_base];
+			int dist = (window + idx - best_base) % window;
+			int dst = best_base;
+			while (dist--) {
+				int src = (dst + 1) % window;
+				array[dst] = array[src];
+				dst = src;
+			}
+			array[dst] = swap;
+		}
 
 		next:
 		idx++;
