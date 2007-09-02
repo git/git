@@ -122,6 +122,9 @@ Updates since v1.5.2
   - "git send-email" can be told not to thread the messages when
     sending out more than one patches.
 
+  - "git send-email" can also be told how to find whom to cc the
+    message to for each message via --cc-cmd.
+
   - "git config" learned NUL terminated output format via -z to
     help scripts.
 
@@ -148,6 +151,9 @@ Updates since v1.5.2
   - "git clone" uses -l (hardlink files under .git) by default when
     cloning locally.
 
+  - URL used for "git clone" and friends can specify nonstandard SSH port
+    by using sh://host:port/path/to/repo syntax.
+
   - "git bundle create" can now create a bundle without negative refs,
     i.e. "everything since the beginning up to certain points".
 
@@ -155,8 +161,13 @@ Updates since v1.5.2
     recursively descends into trees by default.
 
   - "git diff" does not show differences that come only from
-    stat-dirtiness in the form of "diff --git" header anymore.  When
-    generating a textual diff, it shows a warning message at the end.
+    stat-dirtiness in the form of "diff --git" header anymore.
+    It runs "update-index --refresh" silently as needed.
+
+  - "git tag -l" used to match tags by globbing its parameter as if it
+    has wildcard '*' on both ends, which made "git tag -l gui" to match
+    tag 'gitgui-0.7.0'; this was very annoying.  You now have to add
+    asterisk on the sides you want to wildcard yourself.
 
   - The editor to use with many interactive commands can be
     overridden with GIT_EDITOR environment variable, or if it
@@ -327,6 +338,13 @@ this release, unless otherwise noted.
   - "gitweb" had trouble handling non UTF-8 text with older
     Encode.pm Perl module.
 
+  - "git svn" misparsed the data from the commits in the repository when
+    the user had "color.diff = true" in the configuration.  This has been
+    fixed.
+
+  - There was a case where "git svn dcommit" clobbered changes made on the
+    SVN side while committing multiple changes.
+
   - "git-write-tree" had a bad interaction with racy-git avoidance and
     gitattributes mechanisms.
 
@@ -345,8 +363,4 @@ this release, unless otherwise noted.
     inconsistency was introduced somewhere in v1.3.0 series but now has
     been corrected.
 
---
-exec >/var/tmp/1
-O=v1.5.3-rc7-15-ga65f200
-echo O=`git describe refs/heads/master`
-git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
+  - "git rebase -m" incorrectly displayed commits that were skipped.
