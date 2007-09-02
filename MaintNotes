@@ -82,7 +82,7 @@ could occasionally be minor breakages or brown paper bag bugs
 but they are not expected to be anything major.  Every now and
 then, a "feature release" is cut from the tip of this branch and
 they typically are named with three dotted decimal digits.  The
-last such release was v1.5.3 done on Sep 1st this year.  You
+last such release was v1.5.3 done on Sep 2nd this year.  You
 can expect that the tip of the "master" branch is always as
 stable as any of the released versions, if not more stable.
 
