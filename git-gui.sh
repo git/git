@@ -261,7 +261,7 @@ proc _git_cmd {name} {
 			set s [gets $f]
 			close $f
 
-			switch -glob -- $s {
+			switch -glob -- [lindex $s 0] {
 			#!*sh     { set i sh     }
 			#!*perl   { set i perl   }
 			#!*python { set i python }
@@ -275,7 +275,7 @@ proc _git_cmd {name} {
 			if {$interp eq {}} {
 				error "git-$name requires $i (not in PATH)"
 			}
-			set v [list $interp $p]
+			set v [concat [list $interp] [lrange $s 1 end] [list $p]]
 		} else {
 			# Assume it is builtin to git somehow and we
 			# aren't actually able to see a file for it.
