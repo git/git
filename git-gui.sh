@@ -2441,20 +2441,17 @@ proc popup_diff_menu {ctxm x y X Y} {
 	set ::cursorX $x
 	set ::cursorY $y
 	if {$::ui_index eq $::current_diff_side} {
-		set s normal
 		set l "Unstage Hunk From Commit"
 	} else {
-		if {$current_diff_path eq {}
-			|| ![info exists file_states($current_diff_path)]
-			|| {_O} eq [lindex $file_states($current_diff_path) 0]} {
-			set s disabled
-		} else {
-			set s normal
-		}
 		set l "Stage Hunk For Commit"
 	}
-	if {$::is_3way_diff} {
+	if {$::is_3way_diff
+		|| $current_diff_path eq {}
+		|| ![info exists file_states($current_diff_path)]
+		|| {_O} eq [lindex $file_states($current_diff_path) 0]} {
 		set s disabled
+	} else {
+		set s normal
 	}
 	$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
 	tk_popup $ctxm $X $Y
