@@ -73,8 +73,17 @@ Options:
    --signed-off-cc Automatically add email addresses that appear in
                  Signed-off-by: or Cc: lines to the cc: list. Defaults to on.
 
+   --identity     The configuration identity, a subsection to prioritise over
+                  the default section.
+
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
+
+   --smtp-user    The username for SMTP-AUTH.
+
+   --smtp-pass    The password for SMTP-AUTH.
+
+   --smtp-ssl     If set, connects to the SMTP server using SSL.
 
    --suppress-from Suppress sending emails to yourself if your address
                   appears in a From: line. Defaults to off.
@@ -145,7 +154,6 @@ my $compose_filename = ".msg.$$";
 my (@to,@cc,@initial_cc,@bcclist,@xh,
 	$initial_reply_to,$initial_subject,@files,$author,$sender,$compose,$time);
 
-my $smtp_server;
 my $envelope_sender;
 
 # Example reply to:
@@ -164,24 +172,26 @@ my ($quiet, $dry_run) = (0, 0);
 
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
+my ($smtp_server, $smtp_authuser, $smtp_authpass, $smtp_ssl);
+my ($identity, $aliasfiletype, @alias_files);
 
-my %config_settings = (
+my %config_bool_settings = (
     "thread" => [\$thread, 1],
     "chainreplyto" => [\$chain_reply_to, 1],
     "suppressfrom" => [\$suppress_from, 0],
     "signedoffcc" => [\$signed_off_cc, 1],
-    "cccmd" => [\$cc_cmd, ""],
+    "smtpssl" => [\$smtp_ssl, 0],
 );
 
-foreach my $setting (keys %config_settings) {
-    my $config = $repo->config_bool("sendemail.$setting");
-    ${$config_settings{$setting}->[0]} = (defined $config) ? $config : $config_settings{$setting}->[1];
-}
-
-@bcclist = $repo->config('sendemail.bcc');
-if (!@bcclist or !$bcclist[0]) {
-    @bcclist = ();
-}
+my %config_settings = (
+    "smtpserver" => \$smtp_server,
+    "smtpuser" => \$smtp_authuser,
+    "smtppass" => \$smtp_authpass,
+    "cccmd" => \$cc_cmd,
+    "aliasfiletype" => \$aliasfiletype,
+    "bcc" => \@bcclist,
+    "aliasesfile" => \@alias_files,
+);
 
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
@@ -194,6 +204,10 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "bcc=s" => \@bcclist,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "smtp-server=s" => \$smtp_server,
+		    "smtp-user=s" => \$smtp_authuser,
+		    "smtp-pass=s" => \$smtp_authpass,
+		    "smtp-ssl!" => \$smtp_ssl,
+		    "identity=s" => \$identity,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
 		    "cc-cmd=s" => \$cc_cmd,
@@ -207,6 +221,43 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 unless ($rc) {
     usage();
 }
+
+# Now, let's fill any that aren't set in with defaults:
+
+sub read_config {
+	my ($prefix) = @_;
+
+	foreach my $setting (keys %config_bool_settings) {
+		my $target = $config_bool_settings{$setting}->[0];
+		$$target = $repo->config_bool("$prefix.$setting") unless (defined $$target);
+	}
+
+	foreach my $setting (keys %config_settings) {
+		my $target = $config_settings{$setting};
+		if (ref($target) eq "ARRAY") {
+			unless (@$target) {
+				my @values = $repo->config("$prefix.$setting");
+				@$target = @values if (@values && defined $values[0]);
+			}
+		}
+		else {
+			$$target = $repo->config("$prefix.$setting") unless (defined $$target);
+		}
+	}
+}
+
+# read configuration from [sendemail "$identity"], fall back on [sendemail]
+$identity = $repo->config("sendemail.identity") unless (defined $identity);
+read_config("sendemail.$identity") if (defined $identity);
+read_config("sendemail");
+
+# fall back on builtin bool defaults
+foreach my $setting (values %config_bool_settings) {
+	${$setting->[0]} = $setting->[1] unless (defined (${$setting->[0]}));
+}
+
+my ($repoauthor) = $repo->ident_person('author');
+my ($repocommitter) = $repo->ident_person('committer');
 
 # Verify the user input
 
@@ -222,14 +273,7 @@ foreach my $entry (@bcclist) {
 	die "Comma in --bcclist entry: $entry'\n" unless $entry !~ m/,/;
 }
 
-# Now, let's fill any that aren't set in with defaults:
-
-my ($repoauthor) = $repo->ident_person('author');
-my ($repocommitter) = $repo->ident_person('committer');
-
 my %aliases;
-my @alias_files = $repo->config('sendemail.aliasesfile');
-my $aliasfiletype = $repo->config('sendemail.aliasfiletype');
 my %parse_alias = (
 	# multiline formats can be supported in the future
 	mutt => sub { my $fh = shift; while (<$fh>) {
@@ -320,10 +364,7 @@ if ($thread && !defined $initial_reply_to && $prompting) {
 	$initial_reply_to =~ s/(^\s+|\s+$)//g;
 }
 
-if (!$smtp_server) {
-	$smtp_server = $repo->config('sendemail.smtpserver');
-}
-if (!$smtp_server) {
+if (!defined $smtp_server) {
 	foreach (qw( /usr/sbin/sendmail /usr/lib/sendmail )) {
 		if (-x $_) {
 			$smtp_server = $_;
@@ -553,8 +594,16 @@ X-Mailer: git-send-email $gitversion
 		print $sm "$header\n$message";
 		close $sm or die $?;
 	} else {
-		require Net::SMTP;
-		$smtp ||= Net::SMTP->new( $smtp_server );
+		if ($smtp_ssl) {
+			require Net::SMTP::SSL;
+			$smtp ||= Net::SMTP::SSL->new( $smtp_server, Port => 465 );
+		}
+		else {
+			require Net::SMTP;
+			$smtp ||= Net::SMTP->new( $smtp_server );
+		}
+		$smtp->auth( $smtp_authuser, $smtp_authpass )
+			or die $smtp->message if (defined $smtp_authuser);
 		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
 		$smtp->data or die $smtp->message;
@@ -661,7 +710,7 @@ foreach my $t (@files) {
 	}
 	close F;
 
-	if ($cc_cmd ne "") {
+	if (defined $cc_cmd) {
 		open(F, "$cc_cmd $t |")
 			or die "(cc-cmd) Could not execute '$cc_cmd'";
 		while(<F>) {
