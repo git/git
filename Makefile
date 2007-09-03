@@ -47,6 +47,8 @@ ifndef V
 	QUIET_GEN      = $(QUIET)echo '   ' GEN $@ &&
 	QUIET_BUILT_IN = $(QUIET)echo '   ' BUILTIN $@ &&
 	QUIET_INDEX    = $(QUIET)echo '   ' INDEX $(dir $@) &&
+	QUIET_MSGFMT0  = $(QUIET)printf '    MSGFMT %12s ' $@ &&
+	QUIET_MSGFMT1  = 2>&1 | sed -e 's/fuzzy translations/fuzzy/' | sed -e 's/ messages//g'
 	QUIET_2DEVNULL = 2>/dev/null
 
 	INSTALL_D0 = dir=
@@ -104,6 +106,7 @@ $(GITGUI_BUILT_INS): git-gui
 	$(QUIET_BUILT_IN)rm -f $@ && ln git-gui $@
 
 XGETTEXT   ?= xgettext
+MSGFMT     ?= msgfmt
 msgsdir    ?= $(libdir)/msgs
 msgsdir_SQ  = $(subst ','\'',$(msgsdir))
 PO_TEMPLATE = po/git-gui.pot
@@ -115,8 +118,7 @@ $(PO_TEMPLATE): $(SCRIPT_SH) $(ALL_LIBFILES)
 update-po:: $(PO_TEMPLATE)
 	$(foreach p, $(ALL_POFILES), echo Updating $p ; msgmerge -U $p $(PO_TEMPLATE) ; )
 $(ALL_MSGFILES): %.msg : %.po
-	@echo Generating catalog $@
-	msgfmt --statistics --tcl $< -l $(basename $(notdir $<)) -d $(dir $@)
+	$(QUIET_MSGFMT0)$(MSGFMT) --statistics --tcl $< -l $(basename $(notdir $<)) -d $(dir $@) $(QUIET_MSGFMT1)
 
 lib/tclIndex: $(ALL_LIBFILES)
 	$(QUIET_INDEX)if echo \
