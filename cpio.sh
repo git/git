@@ -44,6 +44,7 @@ o)
 p)
 	test -z "$null" || die "cpio: cannot use -0 in pass-through mode"
 	filterdirs |
+	tr -d '\r' |
 	tar --create --file=- --files-from=- |
 	tar --extract --directory="$dir" --file=-
 	;;
