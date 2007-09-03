@@ -229,6 +229,20 @@ static ssize_t do_sign(char *buffer, size_t size, size_t max)
 	if (len == max - size)
 		return error("could not read the entire signature from gpg.");
 
+#ifdef __MINGW32__
+	/* strip CR from the line endings */
+	{
+		int i, j;
+		for (i = j = 0; i < len; i++)
+			if (buffer[size + i] != '\r') {
+				if (i != j)
+					buffer[size + j] = buffer[size + i];
+				j++;
+			}
+		len = j;
+	}
+#endif
+
 	return size + len;
 }
 
