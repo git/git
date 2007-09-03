@@ -224,6 +224,20 @@ static int do_sign(struct strbuf *buffer)
 	if (len < 0)
 		return error("could not read the entire signature from gpg.");
 
+#ifdef __MINGW32__
+	/* strip CR from the line endings */
+	{
+		int i, j;
+		for (i = j = 0; i < buffer->len; i++)
+			if (buffer->buf[i] != '\r') {
+				if (i != j)
+					buffer->buf[j] = buffer->buf[i];
+				j++;
+			}
+		strbuf_setlen(buffer, j);
+	}
+#endif
+
 	return 0;
 }
 
