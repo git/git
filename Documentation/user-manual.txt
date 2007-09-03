@@ -4023,25 +4023,26 @@ Appendix B: Notes and todo list for this manual
 This is a work in progress.
 
 The basic requirements:
-	- It must be readable in order, from beginning to end, by
-	  someone intelligent with a basic grasp of the UNIX
-	  command line, but without any special knowledge of git.  If
-	  necessary, any other prerequisites should be specifically
-	  mentioned as they arise.
-	- Whenever possible, section headings should clearly describe
-	  the task they explain how to do, in language that requires
-	  no more knowledge than necessary: for example, "importing
-	  patches into a project" rather than "the git-am command"
+
+- It must be readable in order, from beginning to end, by someone
+  intelligent with a basic grasp of the UNIX command line, but without
+  any special knowledge of git.  If necessary, any other prerequisites
+  should be specifically mentioned as they arise.
+- Whenever possible, section headings should clearly describe the task
+  they explain how to do, in language that requires no more knowledge
+  than necessary: for example, "importing patches into a project" rather
+  than "the git-am command"
 
 Think about how to create a clear chapter dependency graph that will
 allow people to get to important topics without necessarily reading
 everything in between.
 
 Scan Documentation/ for other stuff left out; in particular:
-	howto's
-	some of technical/?
-	hooks
-	list of commands in gitlink:git[1]
+
+- howto's
+- some of technical/?
+- hooks
+- list of commands in gitlink:git[1]
 
 Scan email archives for other stuff left out
 
@@ -4070,3 +4071,5 @@ Write a chapter on using plumbing and writing scripts.
 Alternates, clone -reference, etc.
 
 git unpack-objects -r for recovery
+
+submodules
