@@ -488,6 +488,14 @@ int mingw_rename(const char*, const char*);
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);
 
+/* Use git_lstat() instead of lstat()/stat() and
+ * git_fstat() instead of fstat() on Windows
+ */
+int git_lstat(const char *file_name, struct stat *buf);
+int git_fstat(int fd, struct stat *buf);
+#define lstat(x,y) git_lstat(x,y)
+#define stat(x,y) git_lstat(x,y)
+#define fstat(x,y) git_fstat(x,y)
 #endif /* __MINGW32__ */
 
 #endif

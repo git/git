@@ -23,12 +23,81 @@ int fchmod(int fildes, mode_t mode)
 	return -1;
 }
 
-int lstat(const char *file_name, struct stat *buf)
+static inline time_t filetime_to_time_t(const FILETIME *ft)
+{
+	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
+	winTime -= 116444736000000000LL; /* Windows to Unix Epoch conversion */
+	winTime /= 10000000;		 /* Nano to seconds resolution */
+	return (time_t)winTime;
+}
+
+extern int _getdrive( void );
+/* We keep the do_lstat code in a separate function to avoid recursion.
+ * When a path ends with a slash, the stat will fail with ENOENT. In
+ * this case, we strip the trailing slashes and stat again.
+ */
+static int do_lstat(const char *file_name, struct stat *buf)
+{
+	WIN32_FILE_ATTRIBUTE_DATA fdata;
+
+	if (GetFileAttributesExA(file_name, GetFileExInfoStandard, &fdata)) {
+		int fMode = S_IREAD;
+		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			fMode |= S_IFDIR;
+		else
+			fMode |= S_IFREG;
+		if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+			fMode |= S_IWRITE;
+
+		buf->st_ino = 0;
+		buf->st_gid = 0;
+		buf->st_uid = 0;
+		buf->st_nlink = 1;
+		buf->st_mode = fMode;
+		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
+		buf->st_dev = buf->st_rdev = (_getdrive() - 1);
+		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
+		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
+		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
+		errno = 0;
+		return 0;
+	}
+
+	switch (GetLastError()) {
+	case ERROR_ACCESS_DENIED:
+	case ERROR_SHARING_VIOLATION:
+	case ERROR_LOCK_VIOLATION:
+	case ERROR_SHARING_BUFFER_EXCEEDED:
+		errno = EACCES;
+		break;
+	case ERROR_BUFFER_OVERFLOW:
+		errno = ENAMETOOLONG;
+		break;
+	case ERROR_NOT_ENOUGH_MEMORY:
+		errno = ENOMEM;
+		break;
+	case ERROR_INVALID_NAME:
+		errno = EFAULT;
+		break;
+	default:
+		errno = ENOENT;
+		break;
+	}
+	return -1;
+}
+
+/* We provide our own lstat/fstat functions, since the provided
+ * lstat/fstat functions are so slow. These stat functions are
+ * tailored for Git's usage (read: fast), and are not meant to be
+ * complete. Note that Git stat()s are redirected to git_lstat()
+ * too, since Windows doesn't really handle symlinks that well.
+ */
+int git_lstat(const char *file_name, struct stat *buf)
 {
 	int namelen;
 	static char alt_name[PATH_MAX];
 
-	if (!stat(file_name, buf))
+	if (!do_lstat(file_name, buf))
 		return 0;
 
 	/* if file_name ended in a '/', Windows returned ENOENT;
@@ -36,6 +105,7 @@ int lstat(const char *file_name, struct stat *buf)
 	 */
 	if (errno != ENOENT)
 		return -1;
+
 	namelen = strlen(file_name);
 	if (namelen && file_name[namelen-1] != '/')
 		return -1;
@@ -43,9 +113,40 @@ int lstat(const char *file_name, struct stat *buf)
 		--namelen;
 	if (!namelen || namelen >= PATH_MAX)
 		return -1;
+
 	memcpy(alt_name, file_name, namelen);
 	alt_name[namelen] = 0;
-	return stat(alt_name, buf);
+	return do_lstat(alt_name, buf);
+}
+
+int git_fstat(int fd, struct stat *buf)
+{
+	HANDLE fh = (HANDLE)_get_osfhandle(fd);
+	BY_HANDLE_FILE_INFORMATION fdata;
+
+	if (fh != INVALID_HANDLE_VALUE && GetFileInformationByHandle(fh, &fdata)) {
+		int fMode = S_IREAD;
+		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			fMode |= S_IFDIR;
+		else
+			fMode |= S_IFREG;
+		if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+			fMode |= S_IWRITE;
+
+		buf->st_ino = 0;
+		buf->st_gid = 0;
+		buf->st_uid = 0;
+		buf->st_nlink = 1;
+		buf->st_mode = fMode;
+		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
+		buf->st_dev = buf->st_rdev = (_getdrive() - 1);
+		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
+		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
+		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
+		return 0;
+	}
+	errno = EBADF;
+	return -1;
 }
 
 /* missing: link, mkstemp, fchmod, getuid (?), gettimeofday */
