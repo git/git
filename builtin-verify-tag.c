@@ -35,7 +35,7 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 
 	/* find the length without signature */
 	len = 0;
-	while (len < size && prefixcmp(buf + len, PGP_SIGNATURE "\n")) {
+	while (len < size && prefixcmp(buf + len, PGP_SIGNATURE)) {
 		eol = memchr(buf + len, '\n', size - len);
 		len += eol ? eol - (buf + len) + 1 : size - len;
 	}
