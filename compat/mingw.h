@@ -60,7 +60,6 @@ struct itimerval {
 #define ITIMER_REAL 0
 
 #define st_blocks st_size/512	/* will be cleaned up later */
-#define lstat stat
 
 /*
  * trivial stubs
@@ -159,6 +158,15 @@ int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
 
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
+
+/* Use mingw_lstat() instead of lstat()/stat() and
+ * mingw_fstat() instead of fstat() on Windows.
+ */
+int mingw_lstat(const char *file_name, struct stat *buf);
+int mingw_fstat(int fd, struct stat *buf);
+#define fstat mingw_fstat
+#define lstat mingw_lstat
+#define stat(x,y) mingw_lstat(x,y)
 
 pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env);
 void mingw_execvp(const char *cmd, char *const *argv);
