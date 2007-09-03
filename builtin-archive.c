@@ -10,6 +10,7 @@
 #include "exec_cmd.h"
 #include "pkt-line.h"
 #include "sideband.h"
+#include "attr.h"
 
 static const char archive_usage[] = \
 "git-archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";
@@ -80,6 +81,57 @@ static int run_remote_archiver(const char *remote, int argc,
 	return !!rv;
 }
 
+static void *convert_to_archive(const char *path,
+                                const void *src, unsigned long *sizep,
+                                const struct commit *commit)
+{
+	static struct git_attr *attr_specfile;
+	struct git_attr_check check[1];
+	char *interpolated = NULL;
+	unsigned long allocated = 0;
+
+	if (!commit)
+		return NULL;
+
+        if (!attr_specfile)
+                attr_specfile = git_attr("specfile", 8);
+
+	check[0].attr = attr_specfile;
+	if (git_checkattr(path, ARRAY_SIZE(check), check))
+		return NULL;
+	if (!ATTR_TRUE(check[0].value))
+		return NULL;
+
+	*sizep = format_commit_message(commit, src, &interpolated, &allocated);
+
+	return interpolated;
+}
+
+void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
+                           unsigned int mode, enum object_type *type,
+                           unsigned long *size,
+                           const struct commit *commit)
+{
+	void *buffer, *converted;
+
+	buffer = read_sha1_file(sha1, type, size);
+	if (buffer && S_ISREG(mode)) {
+		converted = convert_to_working_tree(path, buffer, size);
+		if (converted) {
+			free(buffer);
+			buffer = converted;
+		}
+
+		converted = convert_to_archive(path, buffer, size, commit);
+		if (converted) {
+			free(buffer);
+			buffer = converted;
+		}
+	}
+
+	return buffer;
+}
+
 static int init_archiver(const char *name, struct archiver *ar)
 {
 	int rv = -1, i;
@@ -109,7 +161,7 @@ void parse_treeish_arg(const char **argv, struct archiver_args *ar_args,
 	const unsigned char *commit_sha1;
 	time_t archive_time;
 	struct tree *tree;
-	struct commit *commit;
+	const struct commit *commit;
 	unsigned char sha1[20];
 
 	if (get_sha1(name, sha1))
@@ -142,6 +194,7 @@ void parse_treeish_arg(const char **argv, struct archiver_args *ar_args,
 	}
 	ar_args->tree = tree;
 	ar_args->commit_sha1 = commit_sha1;
+	ar_args->commit = commit;
 	ar_args->time = archive_time;
 }
 

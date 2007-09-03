@@ -28,12 +28,15 @@ commit id embedding:
 TAR=${TAR:-tar}
 UNZIP=${UNZIP:-unzip}
 
+SPECFILEFORMAT=%H%n
+
 test_expect_success \
     'populate workdir' \
     'mkdir a b c &&
      echo simple textfile >a/a &&
      mkdir a/bin &&
      cp /bin/sh a/bin &&
+     printf "%s" "$SPECFILEFORMAT" >a/specfile &&
      ln -s a a/l1 &&
      (p=long_path_to_a_file && cd a &&
       for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
@@ -103,6 +106,22 @@ test_expect_success \
 test_expect_success \
     'validate file contents with prefix' \
     'diff -r a c/prefix/a'
+
+test_expect_success \
+    'create an archive with a specfile' \
+    'echo specfile specfile >a/.gitattributes &&
+     git archive HEAD >f.tar &&
+     rm a/.gitattributes'
+
+test_expect_success \
+    'extract specfile' \
+    '(mkdir f && cd f && $TAR xf -) <f.tar'
+
+test_expect_success \
+     'validate specfile contents' \
+     'git log --max-count=1 "--pretty=format:$SPECFILEFORMAT" HEAD \
+      >f/a/specfile.expected &&
+      diff f/a/specfile.expected f/a/specfile'
 
 test_expect_success \
     'git archive --format=zip' \

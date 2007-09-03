@@ -421,6 +421,20 @@ frotz	unspecified
 ----------------------------------------------------------------
 
 
+Creating an archive
+~~~~~~~~~~~~~~~~~~~
+
+`specfile`
+^^^^^^^^^^
+
+If the attribute `specfile` is set for a file then git will expand
+several placeholders when adding this file to an archive.  The
+expansion depends on the availability of a commit ID, i.e. if
+gitlink:git-archive[1] has been given a tree instead of a commit or a
+tag then no replacement will be done.  The placeholders are the same
+as those for the option `--pretty=format:` of gitlink:git-log[1].
+
+
 GIT
 ---
 Part of the gitlink:git[7] suite
