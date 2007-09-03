@@ -1643,7 +1643,7 @@ proc apply_config {} {
 				font configure $font $cn $cv
 			}
 			} err]} {
-			error_popup [append [mc "Invalid font specified in gui.%s:" $name] "\n\n$err"]
+			error_popup [append [mc "Invalid font specified in %s:" "gui.$name"] "\n\n$err"]
 		}
 		foreach {cn cv} [font configure $font] {
 			font configure ${font}bold $cn $cv
