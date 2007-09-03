@@ -2963,29 +2963,41 @@ instantiated.  So the index can be thought of as a write-back cache,
 which can contain dirty information that has not yet been written back
 to the backing store.
 
+[[low-level-operations]]
+Low-level git operations
+========================
 
+Many of the higher-level commands were originally implemented as shell
+scripts using a smaller core of low-level git commands.  These can still
+be useful when doing unusual things with git, or just as a way to
+understand its inner workings.
 
 [[the-workflow]]
 The Workflow
 ------------
 
+High-level operations such as gitlink:git-commit[1],
+gitlink:git-checkout[1] and git-reset[1] work by moving data between the
+working tree, the index, and the object database.  Git provides
+low-level operations which perform each of these steps individually.
+
 Generally, all "git" operations work on the index file. Some operations
 work *purely* on the index file (showing the current state of the
-index), but most operations move data to and from the index file. Either
-from the database or from the working directory. Thus there are four
-main combinations:
+index), but most operations move data between the index file and either
+the database or the working directory. Thus there are four main
+combinations:
 
 [[working-directory-to-index]]
 working directory -> index
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You update the index with information from the working directory with
-the gitlink:git-update-index[1] command.  You
-generally update the index information by just specifying the filename
-you want to update, like so:
+The gitlink:git-update-index[1] command updates the index with
+information from the working directory.  You generally update the
+index information by just specifying the filename you want to update,
+like so:
 
 -------------------------------------------------
-$ git-update-index filename
+$ git update-index filename
 -------------------------------------------------
 
 but to avoid common mistakes with filename globbing etc, the command
@@ -3009,6 +3021,9 @@ stat information. It will 'not' update the object status itself, and
 it will only update the fields that are used to quickly test whether
 an object still matches its old backing store object.
 
+The previously introduced gitlink:git-add[1] is just a wrapper for
+gitlink:git-update-index[1].
+
 [[index-to-object-database]]
 index -> object database
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3016,7 +3031,7 @@ index -> object database
 You write your current index file to a "tree" object with the program
 
 -------------------------------------------------
-$ git-write-tree
+$ git write-tree
 -------------------------------------------------
 
 that doesn't come with any options - it will just write out the
