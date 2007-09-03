@@ -138,13 +138,7 @@ test_expect_success "remove a certain author's commits" '
 	git-filter-branch -f --commit-filter "\
 		if [ \"\$GIT_AUTHOR_NAME\" = \"B V Uips\" ];\
 		then\
-			shift;\
-			while [ -n \"\$1\" ];\
-			do\
-				shift;\
-				echo \"\$1\";\
-				shift;\
-			done;\
+			skip_commit \"\$@\";
 		else\
 			git commit-tree \"\$@\";\
 		fi" removed-author &&
@@ -157,6 +151,16 @@ test_expect_success "remove a certain author's commits" '
 test_expect_success 'barf on invalid name' '
 	! git filter-branch -f master xy-problem &&
 	! git filter-branch -f HEAD^
+'
+
+test_expect_success '"map" works in commit filter' '
+	git filter-branch -f --commit-filter "\
+		parent=\$(git rev-parse \$GIT_COMMIT^) &&
+		mapped=\$(map \$parent) &&
+		actual=\$(echo \"\$@\" | sed \"s/^.*-p //\") &&
+		test \$mapped = \$actual &&
+		git commit-tree \"\$@\";" master~2..master &&
+	git rev-parse --verify master
 '
 
 test_done

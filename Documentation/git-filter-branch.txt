@@ -12,23 +12,24 @@ SYNOPSIS
 	[--index-filter <command>] [--parent-filter <command>]
 	[--msg-filter <command>] [--commit-filter <command>]
 	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
-	[-d <directory>] [-f | --force] [<rev-list options>...]
+	[--original <namespace>] [-d <directory>] [-f | --force]
+	[<rev-list options>...]
 
 DESCRIPTION
 -----------
-Lets you rewrite git revision history by creating a new branch from
-your current branch, applying custom filters on each revision.
+Lets you rewrite git revision history by rewriting the branches mentioned
+in the <rev-list options>, applying custom filters on each revision.
 Those filters can modify each tree (e.g. removing a file or running
 a perl rewrite on all files) or information about each commit.
 Otherwise, all information (including original commit times or merge
 information) will be preserved.
 
-The command takes the new branch name as a mandatory argument and
-the filters as optional arguments.  If you specify no filters, the
-commits will be recommitted without any changes, which would normally
-have no effect.  Nevertheless, this may be useful in the future for
-compensating for some git bugs or such, therefore such a usage is
-permitted.
+The command will only rewrite the _positive_ refs mentioned in the
+command line (i.e. if you pass 'a..b', only 'b' will be rewritten).
+If you specify no filters, the commits will be recommitted without any
+changes, which would normally have no effect.  Nevertheless, this may be
+useful in the future for compensating for some git bugs or such,
+therefore such a usage is permitted.
 
 *WARNING*! The rewritten history will have different object names for all
 the objects and will not converge with the original branch.  You will not
@@ -42,8 +43,8 @@ if different from the rewritten ones, will be stored in the namespace
 'refs/original/'.
 
 Note that since this operation is extensively I/O expensive, it might
-be a good idea to redirect the temporary directory off-disk, e.g. on
-tmpfs.  Reportedly the speedup is very noticeable.
+be a good idea to redirect the temporary directory off-disk with the
+'-d' option, e.g. on tmpfs.  Reportedly the speedup is very noticeable.
 
 
 Filters
@@ -111,6 +112,11 @@ OPTIONS
 As a special extension, the commit filter may emit multiple
 commit ids; in that case, ancestors of the original commit will
 have all of them as parents.
++
+You can use the 'map' convenience function in this filter, and other
+convenience functions, too.  For example, calling 'skip_commit "$@"'
+will leave out the current commit (but not its changes! If you want
+that, use gitlink:git-rebase[1] instead).
 
 --tag-name-filter <command>::
 	This is the filter for rewriting tag names. When passed,
@@ -133,6 +139,10 @@ definition impossible to preserve signatures at any rate.)
 	Only look at the history which touches the given subdirectory.
 	The result will contain that directory (and only that) as its
 	project root.
+
+--original <namespace>::
+	Use this option to set the namespace where the original commits
+	will be stored. The default value is 'refs/original'.
 
 -d <directory>::
 	Use this option to set the path to the temporary directory used for
@@ -181,8 +191,8 @@ order to paste the other history behind the current history:
 git filter-branch --parent-filter 'sed "s/^\$/-p <graft-id>/"' HEAD
 -------------------------------------------------------------------
 
-(if the parent string is empty - therefore we are dealing with the
-initial commit - add graftcommit as a parent).  Note that this assumes
+(if the parent string is empty - which happens when we are dealing with
+the initial commit - add graftcommit as a parent).  Note that this assumes
 history with a single root (that is, no merge without common ancestors
 happened).  If this is not the case, use:
 
@@ -204,17 +214,31 @@ To remove commits authored by "Darl McBribe" from the history:
 git filter-branch --commit-filter '
 	if [ "$GIT_AUTHOR_NAME" = "Darl McBribe" ];
 	then
-		shift;
-		while [ -n "$1" ];
-		do
-			shift;
-			echo "$1";
-			shift;
-		done;
+		skip_commit "$@";
 	else
 		git commit-tree "$@";
 	fi' HEAD
 ------------------------------------------------------------------------------
+
+Note that the changes introduced by the commits, and not reverted by
+subsequent commits, will still be in the rewritten branch. If you want
+to throw out _changes_ together with the commits, you should use the
+interactive mode of gitlink:git-rebase[1].
+
+The function 'skip_commits' is defined as follows:
+
+--------------------------
+skip_commit()
+{
+	shift;
+	while [ -n "$1" ];
+	do
+		shift;
+		map "$1";
+		shift;
+	done;
+}
+--------------------------
 
 The shift magic first throws away the tree id and then the -p
 parameters.  Note that this handles merges properly! In case Darl
@@ -222,15 +246,17 @@ committed a merge between P1 and P2, it will be propagated properly
 and all children of the merge will become merge commits with P1,P2
 as their parents instead of the merge commit.
 
+
 To restrict rewriting to only part of the history, specify a revision
 range in addition to the new branch name.  The new branch name will
 point to the top-most revision that a 'git rev-list' of this range
 will print.
 
-Note that the changes introduced by the commits, and not reverted by
-subsequent commits, will still be in the rewritten branch. If you want
+*NOTE* the changes introduced by the commits, and which are not reverted
+by subsequent commits, will still be in the rewritten branch. If you want
 to throw out _changes_ together with the commits, you should use the
 interactive mode of gitlink:git-rebase[1].
+
 
 Consider this history:
 

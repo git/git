@@ -8,9 +8,6 @@
 # a new branch. You can specify a number of filters to modify the commits,
 # files and trees.
 
-USAGE="git-filter-branch [-d TEMPDIR] [FILTERS] [REV-RANGE]"
-. git-sh-setup
-
 warn () {
         echo "$*" >&2
 }
@@ -24,6 +21,20 @@ map()
 	else
 		echo "$1"
 	fi
+}
+
+# if you run 'skip_commit "$@"' in a commit filter, it will print
+# the (mapped) parents, effectively skipping the commit.
+
+skip_commit()
+{
+	shift;
+	while [ -n "$1" ];
+	do
+		shift;
+		map "$1";
+		shift;
+	done;
 }
 
 # override die(): this version puts in an extra line break, so that
@@ -68,6 +79,20 @@ set_ident () {
 	# Ensure non-empty id name.
 	echo "[ -n \"\$GIT_${uid}_NAME\" ] || export GIT_${uid}_NAME=\"\${GIT_${uid}_EMAIL%%@*}\""
 }
+
+# This script can be sourced by the commit filter to get the functions
+test "a$SOURCE_FUNCTIONS" = a1 && return
+this_script="$(cd "$(dirname "$0")"; pwd)"/$(basename "$0")
+export this_script
+
+USAGE="[--env-filter <command>] [--tree-filter <command>] \
+[--index-filter <command>] [--parent-filter <command>] \
+[--msg-filter <command>] [--commit-filter <command>] \
+[--tag-name-filter <command>] [--subdirectory-filter <directory>] \
+[--original <namespace>] [-d <directory>] [-f | --force] \
+[<rev-list options>...]"
+
+. git-sh-setup
 
 tempdir=.git-rewrite
 filter_env=
@@ -125,7 +150,7 @@ do
 		filter_msg="$OPTARG"
 		;;
 	--commit-filter)
-		filter_commit="$OPTARG"
+		filter_commit='SOURCE_FUNCTIONS=1 . "$this_script";'" $OPTARG"
 		;;
 	--tag-name-filter)
 		filter_tag_name="$OPTARG"
@@ -134,7 +159,7 @@ do
 		filter_subdir="$OPTARG"
 		;;
 	--original)
-		orig_namespace="$OPTARG"
+		orig_namespace=$(expr "$OPTARG/" : '\(.*[^/]\)/*$')/
 		;;
 	*)
 		usage
