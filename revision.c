@@ -896,7 +896,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			continue;
 		argv[i] = NULL;
 		argc = i;
-		revs->prune_data = get_pathspec(revs->prefix, argv + i + 1);
+		if (argv[i + 1])
+			revs->prune_data = get_pathspec(revs->prefix, argv + i + 1);
 		seen_dashdash = 1;
 		break;
 	}
@@ -1150,6 +1151,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 					die("unknown date format %s", arg);
 				continue;
 			}
+			if (!strcmp(arg, "--log-size")) {
+				revs->show_log_size = 1;
+				continue;
+			}
 
 			/*
 			 * Grepping the commit log
@@ -1272,6 +1277,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		revs->grep_filter->all_match = all_match;
 		compile_grep_patterns(revs->grep_filter);
 	}
+
+	if (revs->reverse && revs->reflog_info)
+		die("cannot combine --reverse with --walk-reflogs");
 
 	return left;
 }

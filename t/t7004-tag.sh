@@ -185,18 +185,17 @@ cba
 EOF
 test_expect_success \
 	'listing tags with substring as pattern must print those matching' '
-	git-tag -l a > actual &&
+	git-tag -l "*a*" > actual &&
 	git diff expect actual
 '
 
 cat >expect <<EOF
 v0.2.1
 v1.0.1
-v1.1.3
 EOF
 test_expect_success \
-	'listing tags with substring as pattern must print those matching' '
-	git-tag -l .1 > actual &&
+	'listing tags with a suffix as pattern must print those matching' '
+	git-tag -l "*.1" > actual &&
 	git diff expect actual
 '
 
@@ -205,37 +204,36 @@ t210
 t211
 EOF
 test_expect_success \
-	'listing tags with substring as pattern must print those matching' '
-	git-tag -l t21 > actual &&
+	'listing tags with a prefix as pattern must print those matching' '
+	git-tag -l "t21*" > actual &&
 	git diff expect actual
 '
 
 cat >expect <<EOF
 a1
-aa1
 EOF
 test_expect_success \
-	'listing tags using a name as pattern must print those matching' '
+	'listing tags using a name as pattern must print that one matching' '
 	git-tag -l a1 > actual &&
 	git diff expect actual
 '
 
 cat >expect <<EOF
 v1.0
-v1.0.1
 EOF
 test_expect_success \
-	'listing tags using a name as pattern must print those matching' '
+	'listing tags using a name as pattern must print that one matching' '
 	git-tag -l v1.0 > actual &&
 	git diff expect actual
 '
 
 cat >expect <<EOF
+v1.0.1
 v1.1.3
 EOF
 test_expect_success \
 	'listing tags with ? in the pattern should print those matching' '
-	git-tag -l "1.1?" > actual &&
+	git-tag -l "v1.?.?" > actual &&
 	git diff expect actual
 '
 

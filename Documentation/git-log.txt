@@ -49,6 +49,7 @@ include::pretty-options.txt[]
 -g, \--walk-reflogs::
 	Show commits as they were recorded in the reflog. The log contains
 	a record about how the tip of a reference was changed.
+	Cannot be combined with --reverse.
 	See also gitlink:git-reflog[1].
 
 --decorate::
@@ -63,6 +64,13 @@ include::pretty-options.txt[]
 
 --follow::
 	Continue listing the history of a file beyond renames.
+
+--log-size::
+	Before the log message print out its size in bytes. Intended
+	mainly for porcelain tools consumption. If git is unable to
+	produce a valid value size is set to zero.
+	Note that only message is considered, if also a diff is shown
+	its size is not included.
 
 <paths>...::
 	Show only commits that affect the specified paths.
@@ -88,7 +96,7 @@ git log --since="2 weeks ago" \-- gitk::
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
 
-git log -r --name-status release..test::
+git log --name-status release..test::
 
 	Show the commits that are in the "test" branch but not yet
 	in the "release" branch, along with the list of paths

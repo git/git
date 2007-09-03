@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 git-fmt-merge-msg [--summary | --no-summary] <$GIT_DIR/FETCH_HEAD
-git-fmt-merge-msg [--summary | --no-summray] -F <file>
+git-fmt-merge-msg [--summary | --no-summary] -F <file>
 
 DESCRIPTION
 -----------

@@ -176,7 +176,7 @@ hook does on its standard input.
 This hook does not affect the outcome of `git-receive-pack`, as it
 is called after the real work is done.
 
-This supersedes the <<post-update,'post-update'>> hook in that it get's
+This supersedes the <<post-update,'post-update'>> hook in that it gets
 both old and new values of all the refs in addition to their
 names.
 

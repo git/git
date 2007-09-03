@@ -29,5 +29,6 @@ WriteMakefile(
 	VERSION_FROM    => 'Git.pm',
 	PM		=> \%pm,
 	MAKEFILE	=> 'perl.mak',
+	INSTALLSITEMAN3DIR => '$(SITEPREFIX)/share/man/man3',
 	%extra
 );

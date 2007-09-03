@@ -139,7 +139,7 @@ See also <<FILES>>.
 FILES
 -----
 
-If not set explicitely with '--file', there are three files where
+If not set explicitly with '--file', there are three files where
 git-config will search for configuration options:
 
 .git/config::

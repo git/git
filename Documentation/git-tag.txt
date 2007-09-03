@@ -34,13 +34,6 @@ A GnuPG signed tag object will be created when `-s` or `-u
 committer identity for the current user is used to find the
 GnuPG key for signing.
 
-`-d <tag>` deletes the tag.
-
-`-v <tag>` verifies the gpg signature of the tag.
-
-`-l <pattern>` lists tags with names that match the given pattern
-(or all if no pattern is given).
-
 OPTIONS
 -------
 -a::

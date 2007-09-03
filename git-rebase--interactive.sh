@@ -96,13 +96,14 @@ die_abort () {
 }
 
 pick_one () {
-	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
+	no_ff=
+	case "$1" in -n) sha1=$2; no_ff=t ;; *) sha1=$1 ;; esac
 	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$REWRITTEN" &&
 		pick_one_preserving_merges "$@" && return
 	parent_sha1=$(git rev-parse --verify $sha1^ 2>/dev/null)
 	current_sha1=$(git rev-parse --verify HEAD)
-	if test $current_sha1 = $parent_sha1; then
+	if test $no_ff$current_sha1 = $parent_sha1; then
 		output git reset --hard $sha1
 		test "a$1" = a-n && output git reset --soft $current_sha1
 		sha1=$(git rev-parse --short $sha1)
@@ -189,7 +190,7 @@ nth_string () {
 
 make_squash_message () {
 	if test -f "$SQUASH_MSG"; then
-		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([0-9]\+\).*/\1/p" \
+		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([1-9][0-9]*\).*/\1/p" \
 			< "$SQUASH_MSG" | tail -n 1)+1))
 		echo "# This is a combination of $COUNT commits."
 		sed -n "2,\$p" < "$SQUASH_MSG"

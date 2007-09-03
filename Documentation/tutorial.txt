@@ -339,7 +339,7 @@ $ git pull . remotes/bob/master
 -------------------------------------
 
 Note that git pull always merges into the current branch,
-regardless of what else is given on the commandline.
+regardless of what else is given on the command line.
 
 Later, Bob can update his repo with Alice's latest changes using
 

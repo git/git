@@ -285,7 +285,7 @@ want to appear as the hunk header, like this:
 Note.  A single level of backslashes are eaten by the
 configuration file parser, so you would need to double the
 backslashes; the pattern above picks a line that begins with a
-backslash, and zero or more occurences of `sub` followed by
+backslash, and zero or more occurrences of `sub` followed by
 `section` followed by open brace, to the end of line.
 
 There are a few built-in patterns to make this easier, and `tex`
@@ -394,7 +394,7 @@ abc	-foo -bar
 the attributes given to path `t/abc` are computed as follows:
 
 1. By examining `t/.gitattributes` (which is in the same
-   diretory as the path in question), git finds that the first
+   directory as the path in question), git finds that the first
    line matches.  `merge` attribute is set.  It also finds that
    the second line matches, and attributes `foo` and `bar`
    are unset.
@@ -410,7 +410,7 @@ the attributes given to path `t/abc` are computed as follows:
    a match, and `foo` is set, `bar` is reverted to unspecified
    state, and `baz` is unset.
 
-As the result, the attributes assignement to `t/abc` becomes:
+As the result, the attributes assignment to `t/abc` becomes:
 
 ----------------------------------------------------------------
 foo	set to true

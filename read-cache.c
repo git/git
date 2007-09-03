@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "cache-tree.h"
 #include "refs.h"
+#include "dir.h"
 
 /* Index extensions.
  *
@@ -803,7 +804,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	return updated;
 }
 
-int refresh_index(struct index_state *istate, unsigned int flags)
+int refresh_index(struct index_state *istate, unsigned int flags, const char **pathspec, char *seen)
 {
 	int i;
 	int has_errors = 0;
@@ -828,6 +829,9 @@ int refresh_index(struct index_state *istate, unsigned int flags)
 			has_errors = 1;
 			continue;
 		}
+
+		if (pathspec && !match_pathspec(pathspec, ce->name, strlen(ce->name), 0, seen))
+			continue;
 
 		new = refresh_cache_ent(istate, ce, really, &cache_errno);
 		if (new == ce)

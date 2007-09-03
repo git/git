@@ -98,6 +98,10 @@ static char *fill_origin_blob(struct origin *o, mmfile_t *file)
 		num_read_blob++;
 		file->ptr = read_sha1_file(o->blob_sha1, &type,
 					   (unsigned long *)(&(file->size)));
+		if (!file->ptr)
+			die("Cannot read blob %s for path %s",
+			    sha1_to_hex(o->blob_sha1),
+			    o->path);
 		o->file = *file;
 	}
 	else
@@ -1384,6 +1388,9 @@ static void get_commit_info(struct commit *commit,
 		unsigned long size;
 		commit->buffer =
 			read_sha1_file(commit->object.sha1, &type, &size);
+		if (!commit->buffer)
+			die("Cannot read commit %s",
+			    sha1_to_hex(commit->object.sha1));
 	}
 	ret->author = author_buf;
 	get_ac_line(commit->buffer, "\nauthor ",
@@ -2382,6 +2389,10 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 
 		sb.final_buf = read_sha1_file(o->blob_sha1, &type,
 					      &sb.final_buf_size);
+		if (!sb.final_buf)
+			die("Cannot read blob %s for path %s",
+			    sha1_to_hex(o->blob_sha1),
+			    path);
 	}
 	num_read_blob++;
 	lno = prepare_lines(&sb);

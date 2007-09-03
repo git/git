@@ -9,7 +9,8 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate]
+'git' [--version] [--exec-path[=GIT_EXEC_PATH]]
+    [-p|--paginate|--no-pager]
     [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]
     [--help] COMMAND [ARGS]
 
@@ -42,9 +43,10 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.5.2.4/git.html[documentation for release 1.5.2.4]
+* link:v1.5.2.5/git.html[documentation for release 1.5.2.5]
 
 * release notes for
+  link:RelNotes-1.5.2.5.txt[1.5.2.5],
   link:RelNotes-1.5.2.4.txt[1.5.2.4],
   link:RelNotes-1.5.2.3.txt[1.5.2.3],
   link:RelNotes-1.5.2.2.txt[1.5.2.2],
@@ -102,6 +104,9 @@ OPTIONS
 -p|--paginate::
 	Pipe all output into 'less' (or if set, $PAGER).
 
+--no-pager::
+	Do not pipe git output into a pager.
+
 --git-dir=<path>::
 	Set the path to the repository. This can also be controlled by
 	setting the GIT_DIR environment variable.
@@ -115,7 +120,10 @@ OPTIONS
 	variable.
 
 --bare::
-	Same as --git-dir=`pwd`.
+	Treat the repository as a bare repository.  If GIT_DIR
+	environment is not set, it is set to the current working
+	directory.
+
 
 FURTHER DOCUMENTATION
 ---------------------
@@ -468,7 +476,7 @@ include::core-intro.txt[]
 Authors
 -------
 * git's founding father is Linus Torvalds <torvalds@osdl.org>.
-* The current git nurse is Junio C Hamano <junkio@cox.net>.
+* The current git nurse is Junio C Hamano <gitster@pobox.com>.
 * The git potty was written by Andres Ericsson <ae@op5.se>.
 * General upbringing is handled by the git-list <git@vger.kernel.org>.
 

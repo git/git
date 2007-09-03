@@ -49,10 +49,11 @@ run_status () {
 		export GIT_INDEX_FILE
 	fi
 
-	case "$status_only" in
-	t) color= ;;
-	*) color=--nocolor ;;
-	esac
+	if test "$status_only" = "t" -o "$use_status_color" = "t"; then
+		color=
+	else
+		color=--nocolor
+	fi
 	git runstatus ${color} \
 		${verbose:+--verbose} \
 		${amend:+--amend} \
@@ -556,6 +557,7 @@ fi
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" -a -z "$amend" ]
 then
 	rm -f "$GIT_DIR/COMMIT_EDITMSG" "$GIT_DIR/SQUASH_MSG"
+	use_status_color=t
 	run_status
 	exit 1
 fi

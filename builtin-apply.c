@@ -1984,6 +1984,25 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 	return 0;
 }
 
+static int read_file_or_gitlink(struct cache_entry *ce, char **buf_p,
+				unsigned long *size_p)
+{
+	if (!ce)
+		return 0;
+
+	if (S_ISGITLINK(ntohl(ce->ce_mode))) {
+		*buf_p = xmalloc(100);
+		*size_p = snprintf(*buf_p, 100,
+			"Subproject commit %s\n", sha1_to_hex(ce->sha1));
+	} else {
+		enum object_type type;
+		*buf_p = read_sha1_file(ce->sha1, &type, size_p);
+		if (!*buf_p)
+			return -1;
+	}
+	return 0;
+}
+
 static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
 	char *buf;
@@ -1994,21 +2013,31 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	alloc = 0;
 	buf = NULL;
 	if (cached) {
-		if (ce) {
-			enum object_type type;
-			buf = read_sha1_file(ce->sha1, &type, &size);
-			if (!buf)
+		if (read_file_or_gitlink(ce, &buf, &size))
+			return error("read of %s failed", patch->old_name);
+		alloc = size;
+	} else if (patch->old_name) {
+		if (S_ISGITLINK(patch->old_mode)) {
+			if (ce)
+				read_file_or_gitlink(ce, &buf, &size);
+			else {
+				/*
+				 * There is no way to apply subproject
+				 * patch without looking at the index.
+				 */
+				patch->fragments = NULL;
+				size = 0;
+			}
+		}
+		else {
+			size = xsize_t(st->st_size);
+			alloc = size + 8192;
+			buf = xmalloc(alloc);
+			if (read_old_data(st, patch->old_name,
+					  &buf, &alloc, &size))
 				return error("read of %s failed",
 					     patch->old_name);
-			alloc = size;
 		}
-	}
-	else if (patch->old_name) {
-		size = xsize_t(st->st_size);
-		alloc = size + 8192;
-		buf = xmalloc(alloc);
-		if (read_old_data(st, patch->old_name, &buf, &alloc, &size))
-			return error("read of %s failed", patch->old_name);
 	}
 
 	desc.size = size;
@@ -2055,6 +2084,16 @@ static int check_to_create_blob(const char *new_name, int ok_if_exists)
 	return 0;
 }
 
+static int verify_index_match(struct cache_entry *ce, struct stat *st)
+{
+	if (S_ISGITLINK(ntohl(ce->ce_mode))) {
+		if (!S_ISDIR(st->st_mode))
+			return -1;
+		return 0;
+	}
+	return ce_match_stat(ce, st, 1);
+}
+
 static int check_patch(struct patch *patch, struct patch *prev_patch)
 {
 	struct stat st;
@@ -2065,8 +2104,14 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 	int ok_if_exists;
 
 	patch->rejected = 1; /* we will drop this after we succeed */
+
+	/*
+	 * Make sure that we do not have local modifications from the
+	 * index when we are looking at the index.  Also make sure
+	 * we have the preimage file to be patched in the work tree,
+	 * unless --cached, which tells git to apply only in the index.
+	 */
 	if (old_name) {
-		int changed = 0;
 		int stat_ret = 0;
 		unsigned st_mode = 0;
 
@@ -2096,15 +2141,12 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 				    lstat(old_name, &st))
 					return -1;
 			}
-			if (!cached)
-				changed = ce_match_stat(ce, &st, 1);
-			if (changed)
+			if (!cached && verify_index_match(ce, &st))
 				return error("%s: does not match index",
 					     old_name);
 			if (cached)
 				st_mode = ntohl(ce->ce_mode);
-		}
-		else if (stat_ret < 0)
+		} else if (stat_ret < 0)
 			return error("%s: %s", old_name, strerror(errno));
 
 		if (!cached)
@@ -2354,7 +2396,11 @@ static void remove_file(struct patch *patch, int rmdir_empty)
 		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
 	if (!cached) {
-		if (!unlink(patch->old_name) && rmdir_empty) {
+		if (S_ISGITLINK(patch->old_mode)) {
+			if (rmdir(patch->old_name))
+				warning("unable to remove submodule %s",
+					patch->old_name);
+		} else if (!unlink(patch->old_name) && rmdir_empty) {
 			char *name = xstrdup(patch->old_name);
 			char *end = strrchr(name, '/');
 			while (end) {
@@ -2382,13 +2428,21 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	memcpy(ce->name, path, namelen);
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = htons(namelen);
-	if (!cached) {
-		if (lstat(path, &st) < 0)
-			die("unable to stat newly created file %s", path);
-		fill_stat_cache_info(ce, &st);
+	if (S_ISGITLINK(mode)) {
+		const char *s = buf;
+
+		if (get_sha1_hex(s + strlen("Subproject commit "), ce->sha1))
+			die("corrupt patch for subproject %s", path);
+	} else {
+		if (!cached) {
+			if (lstat(path, &st) < 0)
+				die("unable to stat newly created file %s",
+				    path);
+			fill_stat_cache_info(ce, &st);
+		}
+		if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0)
+			die("unable to create backing store for newly created file %s", path);
 	}
-	if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0)
-		die("unable to create backing store for newly created file %s", path);
 	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
 		die("unable to add cache entry for %s", path);
 }
@@ -2397,6 +2451,13 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 {
 	int fd;
 	char *nbuf;
+
+	if (S_ISGITLINK(mode)) {
+		struct stat st;
+		if (!lstat(path, &st) && S_ISDIR(st.st_mode))
+			return 0;
+		return mkdir(path, 0777);
+	}
 
 	if (has_symlinks && S_ISLNK(mode))
 		/* Although buf:size is counted string, it also is NUL

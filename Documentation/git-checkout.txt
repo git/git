@@ -35,7 +35,7 @@ working tree.
 OPTIONS
 -------
 -q::
-	Quiet, supress feedback messages.
+	Quiet, suppress feedback messages.
 
 -f::
 	Proceed even if the index or the working tree differs

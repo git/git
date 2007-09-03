@@ -188,6 +188,30 @@ void add_head(struct rev_info *revs)
 	add_pending_object(revs, obj, "HEAD");
 }
 
+static void refresh_index_quietly(void)
+{
+	struct lock_file *lock_file;
+	int fd;
+
+	lock_file = xcalloc(1, sizeof(struct lock_file));
+	fd = hold_locked_index(lock_file, 0);
+	if (fd < 0)
+		return;
+	discard_cache();
+	read_cache();
+	refresh_cache(REFRESH_QUIET|REFRESH_UNMERGED);
+	if (active_cache_changed) {
+		if (write_cache(fd, active_cache, active_nr) ||
+		    close(fd) ||
+		    commit_locked_index(lock_file))
+			; /*
+			   * silently ignore it -- we haven't mucked
+			   * with the real index.
+			   */
+	}
+	rollback_lock_file(lock_file);
+}
+
 int cmd_diff(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -222,6 +246,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	prefix = setup_git_directory_gently(&nongit);
 	git_config(git_diff_ui_config);
 	init_revisions(&rev, prefix);
+	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
 
 	if (!setup_diff_no_index(&rev, argc, argv, nongit, prefix))
 		argc = 0;
@@ -234,6 +259,12 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	}
 	rev.diffopt.allow_external = 1;
 	rev.diffopt.recursive = 1;
+
+	/* If the user asked for our exit code then don't start a
+	 * pager or we would end up reporting its exit code instead.
+	 */
+	if (!rev.diffopt.exit_with_status)
+		setup_pager();
 
 	/* Do we have --cached and not have a pending object, then
 	 * default to HEAD by hand.  Eek.
@@ -338,5 +369,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 					     ent, ents);
 	if (rev.diffopt.exit_with_status)
 		result = rev.diffopt.has_changes;
+
+	if (1 < rev.diffopt.skip_stat_unmatch)
+		refresh_index_quietly();
 	return result;
 }

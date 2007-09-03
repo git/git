@@ -112,6 +112,16 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		if (!new)
 			return error("git-checkout-index: unable to read sha1 file of %s (%s)",
 				path, sha1_to_hex(ce->sha1));
+
+		/*
+		 * Convert from git internal format to working tree format
+		 */
+		buf = convert_to_working_tree(ce->name, new, &size);
+		if (buf) {
+			free(new);
+			new = buf;
+		}
+
 		if (to_tempfile) {
 			strcpy(path, ".merge_file_XXXXXX");
 			fd = mkstemp(path);
@@ -121,15 +131,6 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 			free(new);
 			return error("git-checkout-index: unable to create file %s (%s)",
 				path, strerror(errno));
-		}
-
-		/*
-		 * Convert from git internal format to working tree format
-		 */
-		buf = convert_to_working_tree(ce->name, new, &size);
-		if (buf) {
-			free(new);
-			new = buf;
 		}
 
 		wrote = write_in_full(fd, new, size);

@@ -44,10 +44,15 @@ COMMANDS
 --tags=<tags_subdir>;;
 -b<branches_subdir>;;
 --branches=<branches_subdir>;;
+-s;;
+--stdlayout;;
 	These are optional command-line options for init.  Each of
 	these flags can point to a relative repository path
 	(--tags=project/tags') or a full url
-	(--tags=https://foo.org/project/tags)
+	(--tags=https://foo.org/project/tags). The option --stdlayout is
+	a shorthand way of setting trunk,tags,branches as the relative paths,
+	which is the Subversion default. If any of the other options are given
+	as well, they take precedence.
 --no-metadata;;
 	Set the 'noMetadata' option in the [svn-remote] config.
 --use-svm-props;;
@@ -94,7 +99,7 @@ COMMANDS
 
 This works similarly to 'svn update' or 'git-pull' except that
 it preserves linear history with 'git-rebase' instead of
-'git-merge' for ease of dcommit-ing with git-svn.
+'git-merge' for ease of dcommiting with git-svn.
 
 This accepts all options that 'git-svn fetch' and 'git-rebase'
 accepts.  However '--fetch-all' only fetches from the current
@@ -479,6 +484,38 @@ the user on the git side.  git-svn does however follow copy
 history of the directory that it is tracking, however (much like
 how 'svn log' works).
 
+CAVEATS
+-------
+
+For the sake of simplicity and interoperating with a less-capable system
+(SVN), it is recommended that all git-svn users clone, fetch and dcommit
+directly from the SVN server, and avoid all git-clone/pull/merge/push
+operations between git repositories and branches.  The recommended
+method of exchanging code between git branches and users is
+git-format-patch and git-am, or just dcommiting to the SVN repository.
+
+Running 'git-merge' or 'git-pull' is NOT recommended on a branch you
+plan to dcommit from.  Subversion does not represent merges in any
+reasonable or useful fashion; so users using Subversion cannot see any
+merges you've made.  Furthermore, if you merge or pull from a git branch
+that is a mirror of an SVN branch, dcommit may commit to the wrong
+branch.
+
+'git-clone' does not clone branches under the refs/remotes/ hierarchy or
+any git-svn metadata, or config.  So repositories created and managed with
+using git-svn should use rsync(1) for cloning, if cloning is to be done
+at all.
+
+Since 'dcommit' uses rebase internally, any git branches you git-push to
+before dcommit on will require forcing an overwrite of the existing ref
+on the remote repository.  This is generally considered bad practice,
+see the git-push(1) documentation for details.
+
+Do not use the --amend option of git-commit(1) on a change you've
+already dcommitted.  It is considered bad practice to --amend commits
+you've already pushed to a remote repository for other users, and
+dcommit with SVN is analogous to that.
+
 BUGS
 ----
 
@@ -512,9 +549,9 @@ listed below are allowed:
 ------------------------------------------------------------------------
 
 Keep in mind that the '*' (asterisk) wildcard of the local ref
-(left of the ':') *must* be the farthest right path component;
+(right of the ':') *must* be the farthest right path component;
 however the remote wildcard may be anywhere as long as it's own
-independent path componet (surrounded by '/' or EOL).   This
+independent path component (surrounded by '/' or EOL).   This
 type of configuration is not automatically created by 'init' and
 should be manually entered with a text-editor or using
 gitlink:git-config[1]

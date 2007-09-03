@@ -24,7 +24,7 @@ do
 	esac
 done
 
-# Give up if we are given more than two remotes -- not handling octopus.
+# Give up if we are given two or more remotes -- not handling octopus.
 case "$remotes" in
 ?*' '?*)
 	exit 2 ;;

@@ -34,7 +34,7 @@ commit-id::
         the local end after the transfer is complete.
 
 --stdin::
-	Instead of a commit id on the commandline (which is not expected in this
+	Instead of a commit id on the command line (which is not expected in this
 	case), 'git-http-fetch' expects lines on stdin in the format
 
 		<commit-id>['\t'<filename-as-in--w>]

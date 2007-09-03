@@ -49,7 +49,7 @@ getopts("A:b:C:dDFhiI:l:mM:o:rs:t:T:SP:R:uv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
-my $trunk_name = $opt_T || "trunk";
+my $trunk_name = defined $opt_T ? $opt_T : "trunk";
 my $branch_name = $opt_b || "branches";
 my $project_name = $opt_P || "";
 $project_name = "/" . $project_name if ($project_name);

@@ -8,10 +8,11 @@ Format of STDIN stream:
         | new_tag
         | reset_branch
         | checkpoint
+        | progress
         ;
 
   new_blob ::= 'blob' lf
-	mark?
+    mark?
     file_content;
   file_content ::= data;
 
@@ -23,7 +24,7 @@ Format of STDIN stream:
     ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
     ('merge' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)*
     file_change*
-    lf;
+    lf?;
   commit_msg ::= data;
 
   file_change ::= file_clr
@@ -42,33 +43,36 @@ Format of STDIN stream:
 
   new_tag ::= 'tag' sp tag_str lf
     'from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf
-	'tagger' sp name '<' email '>' when lf
+    'tagger' sp name '<' email '>' when lf
     tag_msg;
   tag_msg ::= data;
 
   reset_branch ::= 'reset' sp ref_str lf
     ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
-    lf;
+    lf?;
 
   checkpoint ::= 'checkpoint' lf
-    lf;
+    lf?;
+
+  progress ::= 'progress' sp not_lf* lf
+    lf?;
 
      # note: the first idnum in a stream should be 1 and subsequent
      # idnums should not have gaps between values as this will cause
      # the stream parser to reserve space for the gapped values.  An
-	 # idnum can be updated in the future to a new object by issuing
+     # idnum can be updated in the future to a new object by issuing
      # a new mark directive with the old idnum.
-	 #
+     #
   mark ::= 'mark' sp idnum lf;
   data ::= (delimited_data | exact_data)
-    lf;
+    lf?;
 
     # note: delim may be any string but must not contain lf.
     # data_line may contain any data but must not be exactly
     # delim.
   delimited_data ::= 'data' sp '<<' delim lf
     (data_line lf)*
-	delim lf;
+    delim lf;
 
      # note: declen indicates the length of binary_data in bytes.
      # declen does not include the lf preceeding the binary data.
@@ -78,10 +82,10 @@ Format of STDIN stream:
 
      # note: quoted strings are C-style quoting supporting \c for
      # common escapes of 'c' (e..g \n, \t, \\, \") or \nnn where nnn
-	 # is the signed byte value in octal.  Note that the only
+     # is the signed byte value in octal.  Note that the only
      # characters which must actually be escaped to protect the
      # stream formatting is: \, " and LF.  Otherwise these values
-	 # are UTF8.
+     # are UTF8.
      #
   ref_str     ::= ref;
   sha1exp_str ::= sha1exp;
@@ -104,9 +108,9 @@ Format of STDIN stream:
   lf ::= # ASCII newline (LF) character;
 
      # note: a colon (':') must precede the numerical value assigned to
-	 # an idnum.  This is to distinguish it from a ref or tag name as
+     # an idnum.  This is to distinguish it from a ref or tag name as
      # GIT does not permit ':' in ref or tag strings.
-	 #
+     #
   idnum   ::= ':' bigint;
   path    ::= # GIT style file path, e.g. "a/b/c";
   ref     ::= # GIT ref name, e.g. "refs/heads/MOZ_GECKO_EXPERIMENT";
@@ -115,13 +119,24 @@ Format of STDIN stream:
   hexsha1 ::= # SHA1 in hexadecimal format;
 
      # note: name and email are UTF8 strings, however name must not
-	 # contain '<' or lf and email must not contain any of the
+     # contain '<' or lf and email must not contain any of the
      # following: '<', '>', lf.
-	 #
+     #
   name  ::= # valid GIT author/committer name;
   email ::= # valid GIT author/committer email;
   ts    ::= # time since the epoch in seconds, ascii base10 notation;
   tz    ::= # GIT style timezone;
+
+     # note: comments may appear anywhere in the input, except
+     # within a data command.  Any form of the data command
+     # always escapes the related input from comment processing.
+     #
+     # In case it is not clear, the '#' that starts the comment
+     # must be the first character on that the line (an lf have
+     # preceeded it).
+     #
+  comment ::= '#' not_lf* lf;
+  not_lf  ::= # Any byte that is not ASCII newline (LF);
 */
 
 #include "builtin.h"
@@ -254,6 +269,13 @@ typedef enum {
 	WHENSPEC_NOW,
 } whenspec_type;
 
+struct recent_command
+{
+	struct recent_command *prev;
+	struct recent_command *next;
+	char *buf;
+};
+
 /* Configured limits on output */
 static unsigned long max_depth = 10;
 static off_t max_packsize = (1LL << 32) - 1;
@@ -319,9 +341,120 @@ static struct tag *last_tag;
 /* Input stream parsing */
 static whenspec_type whenspec = WHENSPEC_RAW;
 static struct strbuf command_buf;
+static int unread_command_buf;
+static struct recent_command cmd_hist = {&cmd_hist, &cmd_hist, NULL};
+static struct recent_command *cmd_tail = &cmd_hist;
+static struct recent_command *rc_free;
+static unsigned int cmd_save = 100;
 static uintmax_t next_mark;
 static struct dbuf new_data;
 
+static void write_branch_report(FILE *rpt, struct branch *b)
+{
+	fprintf(rpt, "%s:\n", b->name);
+
+	fprintf(rpt, "  status      :");
+	if (b->active)
+		fputs(" active", rpt);
+	if (b->branch_tree.tree)
+		fputs(" loaded", rpt);
+	if (is_null_sha1(b->branch_tree.versions[1].sha1))
+		fputs(" dirty", rpt);
+	fputc('\n', rpt);
+
+	fprintf(rpt, "  tip commit  : %s\n", sha1_to_hex(b->sha1));
+	fprintf(rpt, "  old tree    : %s\n", sha1_to_hex(b->branch_tree.versions[0].sha1));
+	fprintf(rpt, "  cur tree    : %s\n", sha1_to_hex(b->branch_tree.versions[1].sha1));
+	fprintf(rpt, "  commit clock: %" PRIuMAX "\n", b->last_commit);
+
+	fputs("  last pack   : ", rpt);
+	if (b->pack_id < MAX_PACK_ID)
+		fprintf(rpt, "%u", b->pack_id);
+	fputc('\n', rpt);
+
+	fputc('\n', rpt);
+}
+
+static void write_crash_report(const char *err)
+{
+	char *loc = git_path("fast_import_crash_%d", getpid());
+	FILE *rpt = fopen(loc, "w");
+	struct branch *b;
+	unsigned long lu;
+	struct recent_command *rc;
+
+	if (!rpt) {
+		error("can't write crash report %s: %s", loc, strerror(errno));
+		return;
+	}
+
+	fprintf(stderr, "fast-import: dumping crash report to %s\n", loc);
+
+	fprintf(rpt, "fast-import crash report:\n");
+	fprintf(rpt, "    fast-import process: %d\n", getpid());
+	fprintf(rpt, "    parent process     : %d\n", getppid());
+	fprintf(rpt, "    at %s\n", show_date(time(NULL), 0, DATE_LOCAL));
+	fputc('\n', rpt);
+
+	fputs("fatal: ", rpt);
+	fputs(err, rpt);
+	fputc('\n', rpt);
+
+	fputc('\n', rpt);
+	fputs("Most Recent Commands Before Crash\n", rpt);
+	fputs("---------------------------------\n", rpt);
+	for (rc = cmd_hist.next; rc != &cmd_hist; rc = rc->next) {
+		if (rc->next == &cmd_hist)
+			fputs("* ", rpt);
+		else
+			fputs("  ", rpt);
+		fputs(rc->buf, rpt);
+		fputc('\n', rpt);
+	}
+
+	fputc('\n', rpt);
+	fputs("Active Branch LRU\n", rpt);
+	fputs("-----------------\n", rpt);
+	fprintf(rpt, "    active_branches = %lu cur, %lu max\n",
+		cur_active_branches,
+		max_active_branches);
+	fputc('\n', rpt);
+	fputs("  pos  clock name\n", rpt);
+	fputs("  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n", rpt);
+	for (b = active_branches, lu = 0; b; b = b->active_next_branch)
+		fprintf(rpt, "  %2lu) %6" PRIuMAX" %s\n",
+			++lu, b->last_commit, b->name);
+
+	fputc('\n', rpt);
+	fputs("Inactive Branches\n", rpt);
+	fputs("-----------------\n", rpt);
+	for (lu = 0; lu < branch_table_sz; lu++) {
+		for (b = branch_table[lu]; b; b = b->table_next_branch)
+			write_branch_report(rpt, b);
+	}
+
+	fputc('\n', rpt);
+	fputs("-------------------\n", rpt);
+	fputs("END OF CRASH REPORT\n", rpt);
+	fclose(rpt);
+}
+
+static NORETURN void die_nicely(const char *err, va_list params)
+{
+	static int zombie;
+	char message[2 * PATH_MAX];
+
+	vsnprintf(message, sizeof(message), err, params);
+	fputs("fatal: ", stderr);
+	fputs(message, stderr);
+	fputc('\n', stderr);
+
+	if (!zombie) {
+		zombie = 1;
+		write_crash_report(message);
+	}
+	exit(128);
+}
 
 static void alloc_objects(unsigned int cnt)
 {
@@ -524,8 +657,12 @@ static struct branch *new_branch(const char *name)
 
 	if (b)
 		die("Invalid attempt to create duplicate branch: %s", name);
-	if (check_ref_format(name))
+	switch (check_ref_format(name)) {
+	case  0: break; /* its valid */
+	case -2: break; /* valid, but too few '/', allow anyway */
+	default:
 		die("Branch name doesn't conform to GIT standards: %s", name);
+	}
 
 	b = pool_calloc(1, sizeof(struct branch));
 	b->name = pool_strdup(name);
@@ -663,9 +800,7 @@ static void start_packfile(void)
 
 	snprintf(tmpfile, sizeof(tmpfile),
 		"%s/tmp_pack_XXXXXX", get_object_directory());
-	pack_fd = mkstemp(tmpfile);
-	if (pack_fd < 0)
-		die("Can't create %s: %s", tmpfile, strerror(errno));
+	pack_fd = xmkstemp(tmpfile);
 	p = xcalloc(1, sizeof(*p) + strlen(tmpfile) + 2);
 	strcpy(p->pack_name, tmpfile);
 	p->pack_fd = pack_fd;
@@ -727,9 +862,7 @@ static char *create_index(void)
 
 	snprintf(tmpfile, sizeof(tmpfile),
 		"%s/tmp_idx_XXXXXX", get_object_directory());
-	idx_fd = mkstemp(tmpfile);
-	if (idx_fd < 0)
-		die("Can't create %s: %s", tmpfile, strerror(errno));
+	idx_fd = xmkstemp(tmpfile);
 	f = sha1fd(idx_fd, tmpfile);
 	sha1write(f, array, 256 * sizeof(int));
 	SHA1_Init(&ctx);
@@ -1454,7 +1587,43 @@ static void dump_marks(void)
 
 static void read_next_command(void)
 {
-	read_line(&command_buf, stdin, '\n');
+	do {
+		if (unread_command_buf) {
+			unread_command_buf = 0;
+			if (command_buf.eof)
+				return;
+		} else {
+			struct recent_command *rc;
+
+			command_buf.buf = NULL;
+			read_line(&command_buf, stdin, '\n');
+			if (command_buf.eof)
+				return;
+
+			rc = rc_free;
+			if (rc)
+				rc_free = rc->next;
+			else {
+				rc = cmd_hist.next;
+				cmd_hist.next = rc->next;
+				cmd_hist.next->prev = &cmd_hist;
+				free(rc->buf);
+			}
+
+			rc->buf = command_buf.buf;
+			rc->prev = cmd_tail;
+			rc->next = cmd_hist.prev;
+			rc->prev->next = rc;
+			cmd_tail = rc;
+		}
+	} while (command_buf.buf[0] == '#');
+}
+
+static void skip_optional_lf(void)
+{
+	int term_char = fgetc(stdin);
+	if (term_char != '\n' && term_char != EOF)
+		ungetc(term_char, stdin);
 }
 
 static void cmd_mark(void)
@@ -1480,19 +1649,15 @@ static void *cmd_data (size_t *size)
 		size_t sz = 8192, term_len = command_buf.len - 5 - 2;
 		length = 0;
 		buffer = xmalloc(sz);
+		command_buf.buf = NULL;
 		for (;;) {
-			read_next_command();
+			read_line(&command_buf, stdin, '\n');
 			if (command_buf.eof)
 				die("EOF in data (terminator '%s' not found)", term);
 			if (term_len == command_buf.len
 				&& !strcmp(term, command_buf.buf))
 				break;
-			if (sz < (length + command_buf.len)) {
-				sz = sz * 3 / 2 + 16;
-				if (sz < (length + command_buf.len))
-					sz = length + command_buf.len;
-				buffer = xrealloc(buffer, sz);
-			}
+			ALLOC_GROW(buffer, length + command_buf.len, sz);
 			memcpy(buffer + length,
 				command_buf.buf,
 				command_buf.len - 1);
@@ -1514,9 +1679,7 @@ static void *cmd_data (size_t *size)
 		}
 	}
 
-	if (fgetc(stdin) != '\n')
-		die("An lf did not trail the binary data as expected.");
-
+	skip_optional_lf();
 	*size = length;
 	return buffer;
 }
@@ -1812,13 +1975,13 @@ static void cmd_from_existing(struct branch *b)
 	}
 }
 
-static void cmd_from(struct branch *b)
+static int cmd_from(struct branch *b)
 {
 	const char *from;
 	struct branch *s;
 
 	if (prefixcmp(command_buf.buf, "from "))
-		return;
+		return 0;
 
 	if (b->branch_tree.tree) {
 		release_tree_content_recursive(b->branch_tree.tree);
@@ -1853,6 +2016,7 @@ static void cmd_from(struct branch *b)
 		die("Invalid ref name or SHA1 expression: %s", from);
 
 	read_next_command();
+	return 1;
 }
 
 static struct hash_list *cmd_merge(unsigned int *count)
@@ -1937,10 +2101,8 @@ static void cmd_new_commit(void)
 	}
 
 	/* file_change* */
-	for (;;) {
-		if (1 == command_buf.len)
-			break;
-		else if (!prefixcmp(command_buf.buf, "M "))
+	while (!command_buf.eof && command_buf.len > 1) {
+		if (!prefixcmp(command_buf.buf, "M "))
 			file_change_m(b);
 		else if (!prefixcmp(command_buf.buf, "D "))
 			file_change_d(b);
@@ -1950,8 +2112,10 @@ static void cmd_new_commit(void)
 			file_change_cr(b, 0);
 		else if (!strcmp("deleteall", command_buf.buf))
 			file_change_deleteall(b);
-		else
-			die("Unsupported file_change: %s", command_buf.buf);
+		else {
+			unread_command_buf = 1;
+			break;
+		}
 		read_next_command();
 	}
 
@@ -2092,7 +2256,8 @@ static void cmd_reset_branch(void)
 	else
 		b = new_branch(sp);
 	read_next_command();
-	cmd_from(b);
+	if (!cmd_from(b) && command_buf.len > 1)
+		unread_command_buf = 1;
 }
 
 static void cmd_checkpoint(void)
@@ -2103,7 +2268,15 @@ static void cmd_checkpoint(void)
 		dump_tags();
 		dump_marks();
 	}
-	read_next_command();
+	skip_optional_lf();
+}
+
+static void cmd_progress(void)
+{
+	fwrite(command_buf.buf, 1, command_buf.len - 1, stdout);
+	fputc('\n', stdout);
+	fflush(stdout);
+	skip_optional_lf();
 }
 
 static void import_marks(const char *input_file)
@@ -2146,7 +2319,7 @@ static const char fast_import_usage[] =
 
 int main(int argc, const char **argv)
 {
-	int i, show_stats = 1;
+	unsigned int i, show_stats = 1;
 
 	git_config(git_default_config);
 	alloc_objects(object_entry_alloc);
@@ -2200,8 +2373,14 @@ int main(int argc, const char **argv)
 	if (i != argc)
 		usage(fast_import_usage);
 
+	rc_free = pool_alloc(cmd_save * sizeof(*rc_free));
+	for (i = 0; i < (cmd_save - 1); i++)
+		rc_free[i].next = &rc_free[i + 1];
+	rc_free[cmd_save - 1].next = NULL;
+
 	prepare_packed_git();
 	start_packfile();
+	set_die_routine(die_nicely);
 	for (;;) {
 		read_next_command();
 		if (command_buf.eof)
@@ -2216,6 +2395,8 @@ int main(int argc, const char **argv)
 			cmd_reset_branch();
 		else if (!strcmp("checkpoint", command_buf.buf))
 			cmd_checkpoint();
+		else if (!prefixcmp(command_buf.buf, "progress "))
+			cmd_progress();
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}

@@ -595,7 +595,11 @@ foreach my $ps (@psets) {
     my $pid = open2(*READER, *WRITER,'git-commit-tree',$tree,@par)
         or die $!;
     print WRITER $ps->{summary},"\n\n";
-    print WRITER $ps->{message},"\n";
+
+    # only print message if it's not empty, to avoid a spurious blank line;
+    # also append an extra newline, so there's a blank line before the
+    # following "git-archimport-id:" line.
+    print WRITER $ps->{message},"\n\n" if ($ps->{message} ne "");
 
     # make it easy to backtrack and figure out which Arch revision this was:
     print WRITER 'git-archimport-id: ',$ps->{id},"\n";

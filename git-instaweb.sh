@@ -8,13 +8,7 @@ USAGE='[--start] [--stop] [--restart]
 
 . git-sh-setup
 
-case "$GIT_DIR" in
-/*)
-	fqgitdir="$GIT_DIR" ;;
-*)
-	fqgitdir="$PWD/$GIT_DIR" ;;
-esac
-
+fqgitdir="$GIT_DIR"
 local="`git config --bool --get instaweb.local`"
 httpd="`git config --get instaweb.httpd`"
 browser="`git config --get instaweb.browser`"

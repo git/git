@@ -77,11 +77,12 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		   \$Git::SVN::_repack_flags,
 		%remote_opts );
 
-my ($_trunk, $_tags, $_branches);
+my ($_trunk, $_tags, $_branches, $_stdlayout);
 my %icv;
 my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
                   'trunk|T=s' => \$_trunk, 'tags|t=s' => \$_tags,
                   'branches|b=s' => \$_branches, 'prefix=s' => \$_prefix,
+                  'stdlayout|s' => \$_stdlayout,
                   'minimize-url|m' => \$Git::SVN::_minimize_url,
 		  'no-metadata' => sub { $icv{noMetadata} = 1 },
 		  'use-svm-props' => sub { $icv{useSvmProps} = 1 },
@@ -292,7 +293,8 @@ sub init_subdir {
 sub cmd_clone {
 	my ($url, $path) = @_;
 	if (!defined $path &&
-	    (defined $_trunk || defined $_branches || defined $_tags) &&
+	    (defined $_trunk || defined $_branches || defined $_tags ||
+	     defined $_stdlayout) &&
 	    $url !~ m#^[a-z\+]+://#) {
 		$path = $url;
 	}
@@ -302,6 +304,11 @@ sub cmd_clone {
 }
 
 sub cmd_init {
+	if (defined $_stdlayout) {
+		$_trunk = 'trunk' if (!defined $_trunk);
+		$_tags = 'tags' if (!defined $_tags);
+		$_branches = 'branches' if (!defined $_branches);
+	}
 	if (defined $_trunk || defined $_branches || defined $_tags) {
 		return cmd_multi_init(@_);
 	}
@@ -370,12 +377,19 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
+	print "Committing to $url ...\n";
 	unless ($gs) {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history\n";
 	}
 	my $last_rev;
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
+	if ($_no_rebase && scalar(@$linear_refs) > 1) {
+		warn "Attempting to commit more than one change while ",
+		     "--no-rebase is enabled.\n",
+		     "If these changes depend on each other, re-running ",
+		     "without --no-rebase will be required."
+	}
 	foreach my $d (@$linear_refs) {
 		unless (defined $last_rev) {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
@@ -387,6 +401,7 @@ sub cmd_dcommit {
 		if ($_dry_run) {
 			print "diff-tree $d~1 $d\n";
 		} else {
+			my $cmt_rev;
 			my %ed_opts = ( r => $last_rev,
 			                log => get_commit_entry($d)->{log},
 			                ra => Git::SVN::Ra->new($gs->full_url),
@@ -394,41 +409,38 @@ sub cmd_dcommit {
 			                tree_b => $d,
 			                editor_cb => sub {
 			                       print "Committed r$_[0]\n";
-			                       $last_rev = $_[0]; },
+			                       $cmt_rev = $_[0];
+			                },
 			                svn_path => '');
 			if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
 				print "No changes\n$d~1 == $d\n";
 			} elsif ($parents->{$d} && @{$parents->{$d}}) {
-				$gs->{inject_parents_dcommit}->{$last_rev} =
+				$gs->{inject_parents_dcommit}->{$cmt_rev} =
 				                               $parents->{$d};
 			}
+			$_fetch_all ? $gs->fetch_all : $gs->fetch;
+			next if $_no_rebase;
+
+			# we always want to rebase against the current HEAD,
+			# not any head that was passed to us
+			my @diff = command('diff-tree', 'HEAD',
+			                   $gs->refname, '--');
+			my @finish;
+			if (@diff) {
+				@finish = rebase_cmd();
+				print STDERR "W: HEAD and ", $gs->refname,
+				             " differ, using @finish:\n",
+				             "@diff";
+			} else {
+				print "No changes between current HEAD and ",
+				      $gs->refname,
+				      "\nResetting to the latest ",
+				      $gs->refname, "\n";
+				@finish = qw/reset --mixed/;
+			}
+			command_noisy(@finish, $gs->refname);
+			$last_rev = $cmt_rev;
 		}
-	}
-	return if $_dry_run;
-	unless ($gs) {
-		warn "Could not determine fetch information for $url\n",
-		     "Will not attempt to fetch and rebase commits.\n",
-		     "This probably means you have useSvmProps and should\n",
-		     "now resync your SVN::Mirror repository.\n";
-		return;
-	}
-	$_fetch_all ? $gs->fetch_all : $gs->fetch;
-	unless ($_no_rebase) {
-		# we always want to rebase against the current HEAD, not any
-		# head that was passed to us
-		my @diff = command('diff-tree', 'HEAD', $gs->refname, '--');
-		my @finish;
-		if (@diff) {
-			@finish = rebase_cmd();
-			print STDERR "W: HEAD and ", $gs->refname, " differ, ",
-				     "using @finish:\n", "@diff";
-		} else {
-			print "No changes between current HEAD and ",
-			      $gs->refname, "\nResetting to the latest ",
-			      $gs->refname, "\n";
-			@finish = qw/reset --mixed/;
-		}
-		command_noisy(@finish, $gs->refname);
 	}
 }
 
@@ -799,7 +811,7 @@ sub cmt_metadata {
 
 sub working_head_info {
 	my ($head, $refs) = @_;
-	my ($fh, $ctx) = command_output_pipe('log', $head);
+	my ($fh, $ctx) = command_output_pipe('log', '--no-color', $head);
 	my $hash;
 	my %max;
 	while (<$fh>) {
@@ -2064,7 +2076,7 @@ sub rebuild {
 		return;
 	}
 	print "Rebuilding $db_path ...\n";
-	my ($log, $ctx) = command_output_pipe("log", $self->refname);
+	my ($log, $ctx) = command_output_pipe("log", '--no-color', $self->refname);
 	my $latest;
 	my $full_url = $self->full_url;
 	remove_username($full_url);
@@ -3501,11 +3513,17 @@ sub log_use_color {
 sub git_svn_log_cmd {
 	my ($r_min, $r_max, @args) = @_;
 	my $head = 'HEAD';
+	my (@files, @log_opts);
 	foreach my $x (@args) {
-		last if $x eq '--';
-		next unless ::verify_ref("$x^0");
-		$head = $x;
-		last;
+		if ($x eq '--' || @files) {
+			push @files, $x;
+		} else {
+			if (::verify_ref("$x^0")) {
+				$head = $x;
+			} else {
+				push @log_opts, $x;
+			}
+		}
 	}
 
 	my ($url, $rev, $uuid, $gs) = ::working_head_info($head);
@@ -3515,13 +3533,13 @@ sub git_svn_log_cmd {
 	push @cmd, '-r' unless $non_recursive;
 	push @cmd, qw/--raw --name-status/ if $verbose;
 	push @cmd, '--color' if log_use_color();
-	return @cmd unless defined $r_max;
-	if ($r_max == $r_min) {
+	push @cmd, @log_opts;
+	if (defined $r_max && $r_max == $r_min) {
 		push @cmd, '--max-count=1';
 		if (my $c = $gs->rev_db_get($r_max)) {
 			push @cmd, $c;
 		}
-	} else {
+	} elsif (defined $r_max) {
 		my ($c_min, $c_max);
 		$c_max = $gs->rev_db_get($r_max);
 		$c_min = $gs->rev_db_get($r_min);
@@ -3537,7 +3555,7 @@ sub git_svn_log_cmd {
 			push @cmd, $c_min;
 		}
 	}
-	return @cmd;
+	return (@cmd, @files);
 }
 
 # adapted from pager.c
@@ -3702,7 +3720,7 @@ sub cmd_show_log {
 	}
 
 	config_pager();
-	@args = (git_svn_log_cmd($r_min, $r_max, @args), @args);
+	@args = git_svn_log_cmd($r_min, $r_max, @args);
 	my $log = command_output_pipe(@args);
 	run_pager();
 	my (@k, $c, $d, $stat);

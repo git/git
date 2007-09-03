@@ -508,7 +508,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 		 */
 		if (idx_size != 4*256 + nr * 24 + 20 + 20) {
 			munmap(idx_map, idx_size);
-			return error("wrong index file size in %s", path);
+			return error("wrong index v1 file size in %s", path);
 		}
 	} else if (version == 2) {
 		/*
@@ -530,7 +530,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 			max_size += (nr - 1)*8;
 		if (idx_size < min_size || idx_size > max_size) {
 			munmap(idx_map, idx_size);
-			return error("wrong index file size in %s", path);
+			return error("wrong index v2 file size in %s", path);
 		}
 		if (idx_size != min_size) {
 			/* make sure we can deal with large pack offsets */
@@ -1582,6 +1582,10 @@ static void *unpack_delta_entry(struct packed_git *p,
 		    (uintmax_t)base_offset, p->pack_name);
 
 	delta_data = unpack_compressed_entry(p, w_curs, curpos, delta_size);
+	if (!delta_data)
+		die("failed to unpack compressed delta"
+		    " at %"PRIuMAX" from %s",
+		    (uintmax_t)curpos, p->pack_name);
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
 			     sizep);

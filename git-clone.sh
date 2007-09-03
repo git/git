@@ -110,6 +110,7 @@ while
 	*,--na|*,--nak|*,--nake|*,--naked|\
 	*,-b|*,--b|*,--ba|*,--bar|*,--bare) bare=yes ;;
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local)
+	  local_explicitly_asked_for=yes
 	  (test "@@NO_HARDLINKS@@" &&
 	    echo >&2 "Warning: -l asked but hardlinks are not supported") ||
 	    use_local_hardlink=yes ;;
@@ -218,7 +219,12 @@ else
 	GIT_DIR="$D/.git"
 fi &&
 export GIT_DIR &&
-git-init $quiet ${template+"$template"} || usage
+GIT_CONFIG="$GIT_DIR/config" git-init $quiet ${template+"$template"} || usage
+
+if test -n "$bare"
+then
+	GIT_CONFIG="$GIT_DIR/config" git config core.bare true
+fi
 
 if test -n "$reference"
 then
@@ -279,7 +285,8 @@ yes)
 			then
 				rm -f "$GIT_DIR/objects/sample"
 				l=l
-			else
+			elif test -n "$local_explicitly_asked_for"
+			then
 				echo >&2 "Warning: -l asked but cannot hardlink to $repo"
 			fi
 		fi &&

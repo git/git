@@ -78,7 +78,7 @@ The hook should exit with non-zero status if it wants to disallow
 updating the named ref.  Otherwise it should exit with zero.
 
 Successful execution (a zero exit status) of this hook does not
-ensure the ref will actully be updated, it is only a prerequisite.
+ensure the ref will actually be updated, it is only a prerequisite.
 As such it is not a good idea to send notices (e.g. email) from
 this hook.  Consider using the post-receive hook instead.
 

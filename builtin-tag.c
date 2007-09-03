@@ -123,21 +123,14 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 static int list_tags(const char *pattern, int lines)
 {
 	struct tag_filter filter;
-	char *newpattern;
 
 	if (pattern == NULL)
-		pattern = "";
+		pattern = "*";
 
-	/* prepend/append * to the shell pattern: */
-	newpattern = xmalloc(strlen(pattern) + 3);
-	sprintf(newpattern, "*%s*", pattern);
-
-	filter.pattern = newpattern;
+	filter.pattern = pattern;
 	filter.lines = lines;
 
 	for_each_tag_ref(show_reference, (void *) &filter);
-
-	free(newpattern);
 
 	return 0;
 }

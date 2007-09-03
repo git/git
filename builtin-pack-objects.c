@@ -586,7 +586,7 @@ static off_t write_one(struct sha1file *f,
 static int open_object_dir_tmp(const char *path)
 {
     snprintf(tmpname, sizeof(tmpname), "%s/%s", get_object_directory(), path);
-    return mkstemp(tmpname);
+    return xmkstemp(tmpname);
 }
 
 /* forward declaration for write_pack_file */
@@ -612,8 +612,6 @@ static void write_pack_file(void)
 			f = sha1fd(1, "<stdout>");
 		} else {
 			int fd = open_object_dir_tmp("tmp_pack_XXXXXX");
-			if (fd < 0)
-				die("unable to create %s: %s\n", tmpname, strerror(errno));
 			pack_tmp_name = xstrdup(tmpname);
 			f = sha1fd(fd, pack_tmp_name);
 		}
@@ -981,6 +979,8 @@ static void add_pbase_object(struct tree_desc *tree,
 	int cmp;
 
 	while (tree_entry(tree,&entry)) {
+		if (S_ISGITLINK(entry.mode))
+			continue;
 		cmp = tree_entry_len(entry.path, entry.sha1) != cmplen ? 1 :
 		      memcmp(name, entry.path, cmplen);
 		if (cmp > 0)
@@ -1275,9 +1275,8 @@ struct unpacked {
 	unsigned depth;
 };
 
-static int delta_cacheable(struct unpacked *trg, struct unpacked *src,
-			    unsigned long src_size, unsigned long trg_size,
-			    unsigned long delta_size)
+static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
+			   unsigned long delta_size)
 {
 	if (max_delta_cache_size && delta_cache_size + delta_size > max_delta_cache_size)
 		return 0;
@@ -1357,6 +1356,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	/* Load data if not already done */
 	if (!trg->data) {
 		trg->data = read_sha1_file(trg_entry->idx.sha1, &type, &sz);
+		if (!trg->data)
+			die("object %s cannot be read",
+			    sha1_to_hex(trg_entry->idx.sha1));
 		if (sz != trg_size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(trg_entry->idx.sha1), sz, trg_size);
@@ -1364,6 +1366,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	}
 	if (!src->data) {
 		src->data = read_sha1_file(src_entry->idx.sha1, &type, &sz);
+		if (!src->data)
+			die("object %s cannot be read",
+			    sha1_to_hex(src_entry->idx.sha1));
 		if (sz != src_size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(src_entry->idx.sha1), sz, src_size);
@@ -1384,22 +1389,26 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	if (!delta_buf)
 		return 0;
 
-	if (trg_entry->delta_data) {
+	if (trg_entry->delta) {
 		/* Prefer only shallower same-sized deltas. */
 		if (delta_size == trg_entry->delta_size &&
 		    src->depth + 1 >= trg->depth) {
 			free(delta_buf);
 			return 0;
 		}
-		delta_cache_size -= trg_entry->delta_size;
-		free(trg_entry->delta_data);
-		trg_entry->delta_data = NULL;
 	}
+
 	trg_entry->delta = src_entry;
 	trg_entry->delta_size = delta_size;
 	trg->depth = src->depth + 1;
 
-	if (delta_cacheable(src, trg, src_size, trg_size, delta_size)) {
+	if (trg_entry->delta_data) {
+		delta_cache_size -= trg_entry->delta_size;
+		free(trg_entry->delta_data);
+		trg_entry->delta_data = NULL;
+	}
+
+	if (delta_cacheable(src_size, trg_size, delta_size)) {
 		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
 		delta_cache_size += trg_entry->delta_size;
 	} else

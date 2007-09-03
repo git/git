@@ -11,14 +11,17 @@ static const char name_rev_usage[] =
 
 typedef struct rev_name {
 	const char *tip_name;
-	int merge_traversals;
 	int generation;
+	int distance;
 } rev_name;
 
 static long cutoff = LONG_MAX;
 
+/* How many generations are maximally preferred over _one_ merge traversal? */
+#define MERGE_TRAVERSAL_WEIGHT 65535
+
 static void name_rev(struct commit *commit,
-		const char *tip_name, int merge_traversals, int generation,
+		const char *tip_name, int generation, int distance,
 		int deref)
 {
 	struct rev_name *name = (struct rev_name *)commit->util;
@@ -45,13 +48,11 @@ static void name_rev(struct commit *commit,
 		name = xmalloc(sizeof(rev_name));
 		commit->util = name;
 		goto copy_data;
-	} else if (name->merge_traversals > merge_traversals ||
-			(name->merge_traversals == merge_traversals &&
-			 name->generation > generation)) {
+	} else if (name->distance > distance) {
 copy_data:
 		name->tip_name = tip_name;
-		name->merge_traversals = merge_traversals;
 		name->generation = generation;
+		name->distance = distance;
 	} else
 		return;
 
@@ -74,11 +75,11 @@ copy_data:
 				sprintf(new_name, "%.*s^%d", len, tip_name,
 						parent_number);
 
-			name_rev(parents->item, new_name,
-				merge_traversals + 1 , 0, 0);
+			name_rev(parents->item, new_name, 0,
+				distance + MERGE_TRAVERSAL_WEIGHT, 0);
 		} else {
-			name_rev(parents->item, tip_name, merge_traversals,
-				generation + 1, 0);
+			name_rev(parents->item, tip_name, generation + 1,
+				distance + 1, 0);
 		}
 	}
 }
