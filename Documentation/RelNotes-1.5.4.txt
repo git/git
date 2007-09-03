@@ -1,0 +1,14 @@
+GIT v1.5.4 Release Notes
+========================
+
+Updates since v1.5.3
+--------------------
+
+
+
+Fixes since v1.5.3
+------------------
+
+All of the fixes in v1.5.3 maintenance series are included in
+this release, unless otherwise noted.
+
