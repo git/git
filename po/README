@@ -130,12 +130,7 @@ resulting git-gui under your locale:
 	$ make install
 	$ LANG=af git-gui
 
-There is a trick to test your translation without first installing, if
-you prefer.  First, create this symbolic link in the source tree:
-
-	$ ln -s ../po lib/msgs
-
-After setting up such a symbolic link, you can:
+There is a trick to test your translation without first installing:
 
 	$ make
 	$ LANG=af ./git-gui.sh
