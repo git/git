@@ -396,7 +396,7 @@ method _after_readtree {} {
 			set is_detached 0
 		}
 	} else {
-		if {$new_hash ne $HEAD} {
+		if {!$is_detached || $new_hash ne $HEAD} {
 			append log " to $new_expr"
 			if {[catch {
 					_detach_HEAD $log $new_hash

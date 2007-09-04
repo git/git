@@ -289,7 +289,7 @@ proc _git_cmd {name} {
 			set s [gets $f]
 			close $f
 
-			switch -glob -- $s {
+			switch -glob -- [lindex $s 0] {
 			#!*sh     { set i sh     }
 			#!*perl   { set i perl   }
 			#!*python { set i python }
@@ -303,7 +303,7 @@ proc _git_cmd {name} {
 			if {$interp eq {}} {
 				error "git-$name requires $i (not in PATH)"
 			}
-			set v [list $interp $p]
+			set v [concat [list $interp] [lrange $s 1 end] [list $p]]
 		} else {
 			# Assume it is builtin to git somehow and we
 			# aren't actually able to see a file for it.
@@ -2461,20 +2461,17 @@ proc popup_diff_menu {ctxm x y X Y} {
 	set ::cursorX $x
 	set ::cursorY $y
 	if {$::ui_index eq $::current_diff_side} {
-		set s normal
 		set l [mc "Unstage Hunk From Commit"]
 	} else {
-		if {$current_diff_path eq {}
-			|| ![info exists file_states($current_diff_path)]
-			|| {_O} eq [lindex $file_states($current_diff_path) 0]} {
-			set s disabled
-		} else {
-			set s normal
-		}
 		set l [mc "Stage Hunk For Commit"]
 	}
-	if {$::is_3way_diff} {
+	if {$::is_3way_diff
+		|| $current_diff_path eq {}
+		|| ![info exists file_states($current_diff_path)]
+		|| {_O} eq [lindex $file_states($current_diff_path) 0]} {
 		set s disabled
+	} else {
+		set s normal
 	}
 	$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
 	tk_popup $ctxm $X $Y
