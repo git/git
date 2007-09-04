@@ -314,6 +314,9 @@ static inline FILE *xfdopen(int fd, const char *mode)
 	return stream;
 }
 
+#ifdef __MINGW32__
+int mkstemp (char *__template);
+#endif
 static inline int xmkstemp(char *template)
 {
 	int fd;
@@ -435,7 +438,6 @@ int kill(pid_t pid, int sig);
 unsigned int sleep (unsigned int __seconds);
 const char *inet_ntop(int af, const void *src,
                              char *dst, size_t cnt);
-int mkstemp (char *__template);
 int gettimeofday(struct timeval *tv, void *tz);
 int pipe(int filedes[2]);
 
