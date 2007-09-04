@@ -82,11 +82,12 @@ proc dorunq {} {
 proc start_rev_list {view} {
     global startmsecs
     global commfd leftover tclencoding datemode
-    global viewargs viewfiles commitidx vnextroot
+    global viewargs viewfiles commitidx viewcomplete vnextroot
     global lookingforhead showlocalchanges
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
+    set viewcomplete($view) 0
     set vnextroot($view) 0
     set order "--topo-order"
     if {$datemode} {
@@ -148,7 +149,7 @@ proc strrep {n} {
 proc getcommitlines {fd view}  {
     global commitlisted
     global leftover commfd
-    global displayorder commitidx commitrow commitdata
+    global displayorder commitidx viewcomplete commitrow commitdata
     global parentlist children curview hlview
     global vparentlist vdisporder vcmitlisted
     global ordertok vnextroot idpending
@@ -179,6 +180,7 @@ proc getcommitlines {fd view}  {
 		lappend vcmitlisted($view) 0
 	    }
 	}
+	set viewcomplete($view) 1
 	global viewname
 	unset commfd($view)
 	notbusy $view
@@ -310,15 +312,12 @@ proc getcommitlines {fd view}  {
 }
 
 proc chewcommits {view} {
-    global curview hlview commfd
+    global curview hlview viewcomplete
     global selectedline pending_select
 
-    set more 0
     if {$view == $curview} {
-	set allread [expr {![info exists commfd($view)]}]
-	set tlimit [expr {[clock clicks -milliseconds] + 50}]
-	set more [layoutmore $tlimit $allread]
-	if {$allread && !$more} {
+	layoutmore
+	if {$viewcomplete($view)} {
 	    global displayorder commitidx phase
 	    global numcommits startmsecs
 
@@ -339,7 +338,7 @@ proc chewcommits {view} {
     if {[info exists hlview] && $view == $hlview} {
 	vhighlightmore
     }
-    return $more
+    return 0
 }
 
 proc readcommit {id} {
@@ -1949,7 +1948,7 @@ proc unflatten {var l} {
 
 proc showview {n} {
     global curview viewdata viewfiles
-    global displayorder parentlist rowidlist rowisopt
+    global displayorder parentlist rowidlist rowisopt rowfinal
     global colormap rowtextx commitrow nextcolor canvxmax
     global numcommits commitlisted
     global selectedline currentid canv canvy0
@@ -1985,13 +1984,11 @@ proc showview {n} {
 	set vparentlist($curview) $parentlist
 	set vdisporder($curview) $displayorder
 	set vcmitlisted($curview) $commitlisted
-	if {$phase ne {}} {
+	if {$phase ne {} ||
+	    ![info exists viewdata($curview)] ||
+	    [lindex $viewdata($curview) 0] ne {}} {
 	    set viewdata($curview) \
-		[list $phase $rowidlist $rowisopt $numcommits]
-	} elseif {![info exists viewdata($curview)]
-		  || [lindex $viewdata($curview) 0] ne {}} {
-	    set viewdata($curview) \
-		[list {} $rowidlist $rowisopt]
+		[list $phase $rowidlist $rowisopt $rowfinal]
 	}
     }
     catch {unset treediffs}
@@ -2023,11 +2020,8 @@ proc showview {n} {
     set commitlisted $vcmitlisted($n)
     set rowidlist [lindex $v 1]
     set rowisopt [lindex $v 2]
-    if {$phase eq {}} {
-	set numcommits [llength $displayorder]
-    } else {
-	set numcommits [lindex $v 3]
-    }
+    set rowfinal [lindex $v 3]
+    set numcommits $commitidx($n)
 
     catch {unset colormap}
     catch {unset rowtextx}
@@ -2660,7 +2654,7 @@ proc idcol {idlist id {i 0}} {
 }
 
 proc initlayout {} {
-    global rowidlist rowisopt displayorder commitlisted
+    global rowidlist rowisopt rowfinal displayorder commitlisted
     global numcommits canvxmax canv
     global nextcolor
     global parentlist
@@ -2674,6 +2668,7 @@ proc initlayout {} {
     set nextcolor 0
     set rowidlist {}
     set rowisopt {}
+    set rowfinal {}
     set canvxmax [$canv cget -width]
     catch {unset colormap}
     catch {unset rowtextx}
@@ -2708,19 +2703,14 @@ proc visiblerows {} {
     return [list $r0 $r1]
 }
 
-proc layoutmore {tmax allread} {
-    global commitidx numcommits
+proc layoutmore {} {
+    global commitidx viewcomplete numcommits
     global uparrowlen downarrowlen mingaplen curview
 
     set show $commitidx($curview)
-    if {!$allread} {
-	set delay [expr {$uparrowlen + $mingaplen + $downarrowlen + 3}]
-	set show [expr {$show - $delay}]
-    }
     if {$show > $numcommits} {
-	showstuff $show $allread
+	showstuff $show $viewcomplete($curview)
     }
-    return 0
 }
 
 proc showstuff {canshow last} {
@@ -2901,6 +2891,21 @@ proc nextuse {id row} {
     return -1
 }
 
+proc prevuse {id row} {
+    global commitrow curview children
+
+    set ret -1
+    if {[info exists children($curview,$id)]} {
+	foreach kid $children($curview,$id) {
+	    if {![info exists commitrow($curview,$kid)]} break
+	    if {$commitrow($curview,$kid) < $row} {
+		set ret $commitrow($curview,$kid)
+	    }
+	}
+    }
+    return $ret
+}
+
 proc make_idlist {row} {
     global displayorder parentlist uparrowlen downarrowlen mingaplen
     global commitidx curview ordertok children commitrow
@@ -2964,11 +2969,42 @@ proc make_idlist {row} {
     return $idlist
 }
 
+proc rowsequal {a b} {
+    while {[set i [lsearch -exact $a {}]] >= 0} {
+	set a [lreplace $a $i $i]
+    }
+    while {[set i [lsearch -exact $b {}]] >= 0} {
+	set b [lreplace $b $i $i]
+    }
+    return [expr {$a eq $b}]
+}
+
+proc makeupline {id row rend col} {
+    global rowidlist uparrowlen downarrowlen mingaplen
+
+    for {set r $rend} {1} {set r $rstart} {
+	set rstart [prevuse $id $r]
+	if {$rstart < 0} return
+	if {$rstart < $row} break
+    }
+    if {$rstart + $uparrowlen + $mingaplen + $downarrowlen < $rend} {
+	set rstart [expr {$rend - $uparrowlen - 1}]
+    }
+    for {set r $rstart} {[incr r] <= $row} {} {
+	set idlist [lindex $rowidlist $r]
+	if {$idlist ne {} && [lsearch -exact $idlist $id] < 0} {
+	    set col [idcol $idlist $id $col]
+	    lset rowidlist $r [linsert $idlist $col $id]
+	    changedrow $r
+	}
+    }
+}
+
 proc layoutrows {row endrow} {
-    global rowidlist rowisopt displayorder
+    global rowidlist rowisopt rowfinal displayorder
     global uparrowlen downarrowlen maxwidth mingaplen
     global children parentlist
-    global commitidx curview commitrow
+    global commitidx viewcomplete curview commitrow
 
     set idlist {}
     if {$row > 0} {
@@ -2982,14 +3018,20 @@ proc layoutrows {row endrow} {
 	set rm1 [expr {$row - 1}]
 	if {$rm1 < 0 || [lindex $rowidlist $rm1] eq {}} {
 	    set idlist [make_idlist $row]
+	    set final 1
 	} else {
 	    set id [lindex $displayorder $rm1]
+	    set final [lindex $rowfinal $rm1]
 	    set col [lsearch -exact $idlist $id]
 	    set idlist [lreplace $idlist $col $col]
 	    foreach p [lindex $parentlist $rm1] {
 		if {[lsearch -exact $idlist $p] < 0} {
 		    set col [idcol $idlist $p $col]
 		    set idlist [linsert $idlist $col $p]
+		    # if not the first child, we have to insert a line going up
+		    if {$id ne [lindex $children($curview,$p) 0]} {
+			makeupline $p $rm1 $row $col
+		    }
 		}
 	    }
 	    set id [lindex $displayorder $row]
@@ -3008,6 +3050,9 @@ proc layoutrows {row endrow} {
 	    if {$col < 0} {
 		set col [idcol $idlist $id]
 		set idlist [linsert $idlist $col $id]
+		if {$children($curview,$id) ne {}} {
+		    makeupline $id $rm1 $row $col
+		}
 	    }
 	    set r [expr {$row + $uparrowlen - 1}]
 	    if {$r < $commitidx($curview)} {
@@ -3032,18 +3077,28 @@ proc layoutrows {row endrow} {
 		}
 	    }
 	}
+	if {$final && !$viewcomplete($curview) &&
+	    $row + $uparrowlen + $mingaplen + $downarrowlen
+		>= $commitidx($curview)} {
+	    set final 0
+	}
 	set l [llength $rowidlist]
 	if {$row == $l} {
 	    lappend rowidlist $idlist
 	    lappend rowisopt 0
+	    lappend rowfinal $final
 	} elseif {$row < $l} {
-	    if {$idlist ne [lindex $rowidlist $row]} {
+	    if {![rowsequal $idlist [lindex $rowidlist $row]]} {
 		lset rowidlist $row $idlist
+		lset rowfinal $row $final
 		changedrow $row
 	    }
 	} else {
-	    set rowidlist [concat $rowidlist [ntimes [expr {$row - $l}] {}]]
+	    set pad [ntimes [expr {$row - $l}] {}]
+	    set rowidlist [concat $rowidlist $pad]
 	    lappend rowidlist $idlist
+	    set rowfinal [concat $rowfinal $pad]
+	    lappend rowfinal $final
 	    set rowisopt [concat $rowisopt [ntimes [expr {$row - $l + 1}] 0]]
 	}
     }
@@ -3659,7 +3714,7 @@ proc drawcmitrow {row} {
 
 proc drawcommits {row {endrow {}}} {
     global numcommits iddrawn displayorder curview need_redisplay
-    global parentlist rowidlist uparrowlen downarrowlen nrows_drawn
+    global parentlist rowidlist rowfinal uparrowlen downarrowlen nrows_drawn
 
     if {$row < 0} {
 	set row 0
@@ -3684,7 +3739,7 @@ proc drawcommits {row {endrow {}}} {
 	set r2 $numcommits
     }
     for {set r $rl1} {$r < $r2} {incr r} {
-	if {[lindex $rowidlist $r] ne {}} {
+	if {[lindex $rowidlist $r] ne {} && [lindex $rowfinal $r]} {
 	    if {$rl1 < $r} {
 		layoutrows $rl1 $r
 	    }
