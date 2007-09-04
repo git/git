@@ -185,8 +185,9 @@ cba
 EOF
 test_expect_success \
 	'listing tags with substring as pattern must print those matching' '
-	git-tag -l "*a*" > actual &&
-	git diff expect actual
+	rm *a* &&
+	git-tag -l "*a*" > current &&
+	git diff expect current
 '
 
 cat >expect <<EOF
