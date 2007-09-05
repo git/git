@@ -20,6 +20,7 @@ static const char builtin_gc_usage[] = "git-gc [--prune] [--aggressive]";
 
 static int pack_refs = 1;
 static int aggressive_window = -1;
+static int gc_auto_threshold = 6700;
 
 #define MAX_ADD 10
 static const char *argv_pack_refs[] = {"pack-refs", "--all", "--prune", NULL};
@@ -27,6 +28,8 @@ static const char *argv_reflog[] = {"reflog", "expire", "--all", NULL};
 static const char *argv_repack[MAX_ADD] = {"repack", "-a", "-d", "-l", NULL};
 static const char *argv_prune[] = {"prune", NULL};
 static const char *argv_rerere[] = {"rerere", "gc", NULL};
+
+static const char *argv_repack_auto[] = {"repack", "-d", "-l", NULL};
 
 static int gc_config(const char *var, const char *value)
 {
@@ -39,6 +42,10 @@ static int gc_config(const char *var, const char *value)
 	}
 	if (!strcmp(var, "gc.aggressivewindow")) {
 		aggressive_window = git_config_int(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "gc.auto")) {
+		gc_auto_threshold = git_config_int(var, value);
 		return 0;
 	}
 	return git_default_config(var, value);
@@ -57,10 +64,49 @@ static void append_option(const char **cmd, const char *opt, int max_length)
 	cmd[i] = NULL;
 }
 
+static int need_to_gc(void)
+{
+	/*
+	 * Quickly check if a "gc" is needed, by estimating how
+	 * many loose objects there are.  Because SHA-1 is evenly
+	 * distributed, we can check only one and get a reasonable
+	 * estimate.
+	 */
+	char path[PATH_MAX];
+	const char *objdir = get_object_directory();
+	DIR *dir;
+	struct dirent *ent;
+	int auto_threshold;
+	int num_loose = 0;
+	int needed = 0;
+
+	if (sizeof(path) <= snprintf(path, sizeof(path), "%s/17", objdir)) {
+		warning("insanely long object directory %.*s", 50, objdir);
+		return 0;
+	}
+	dir = opendir(path);
+	if (!dir)
+		return 0;
+
+	auto_threshold = (gc_auto_threshold + 255) / 256;
+	while ((ent = readdir(dir)) != NULL) {
+		if (strspn(ent->d_name, "0123456789abcdef") != 38 ||
+		    ent->d_name[38] != '\0')
+			continue;
+		if (++num_loose > auto_threshold) {
+			needed = 1;
+			break;
+		}
+	}
+	closedir(dir);
+	return needed;
+}
+
 int cmd_gc(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int prune = 0;
+	int auto_gc = 0;
 	char buf[80];
 
 	git_config(gc_config);
@@ -82,11 +128,27 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			}
 			continue;
 		}
-		/* perhaps other parameters later... */
+		if (!strcmp(arg, "--auto")) {
+			if (gc_auto_threshold <= 0)
+				return 0;
+			auto_gc = 1;
+			continue;
+		}
 		break;
 	}
 	if (i != argc)
 		usage(builtin_gc_usage);
+
+	if (auto_gc) {
+		/*
+		 * Auto-gc should be least intrusive as possible.
+		 */
+		prune = 0;
+		for (i = 0; i < ARRAY_SIZE(argv_repack_auto); i++)
+			argv_repack[i] = argv_repack_auto[i];
+		if (!need_to_gc())
+			return 0;
+	}
 
 	if (pack_refs && run_command_v_opt(argv_pack_refs, RUN_GIT_CMD))
 		return error(FAILED_RUN, argv_pack_refs[0]);
