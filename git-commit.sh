@@ -652,6 +652,7 @@ git rerere
 
 if test "$ret" = 0
 then
+	git gc --auto
 	if test -x "$GIT_DIR"/hooks/post-commit
 	then
 		"$GIT_DIR"/hooks/post-commit

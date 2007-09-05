@@ -307,6 +307,8 @@ do_next () {
 	rm -rf "$DOTEST" &&
 	warn "Successfully rebased and updated $HEADNAME."
 
+	git gc --auto
+
 	exit
 }
 

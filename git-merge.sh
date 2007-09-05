@@ -82,6 +82,7 @@ finish () {
 			;;
 		*)
 			git update-ref -m "$rlogm" HEAD "$1" "$head" || exit 1
+			git gc --auto
 			;;
 		esac
 		;;

@@ -466,6 +466,8 @@ do
 		"$GIT_DIR"/hooks/post-applypatch
 	fi
 
+	git gc --auto
+
 	go_next
 done
 
