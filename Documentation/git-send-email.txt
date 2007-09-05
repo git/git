@@ -75,6 +75,12 @@ The --cc option must be repeated for each user you want on the cc list.
 	Make git-send-email less verbose.  One line per email should be
 	all that is output.
 
+--identity::
+	A configuration identity. When given, causes values in the
+	'sendemail.<identity>' subsection to take precedence over
+	values in the 'sendemail' section. The default identity is
+	the value of 'sendemail.identity'.
+
 --smtp-server::
 	If set, specifies the outgoing SMTP server to use (e.g.
 	`smtp.example.com` or a raw IP address).  Alternatively it can
@@ -84,6 +90,17 @@ The --cc option must be repeated for each user you want on the cc list.
 	option; the built-in default is `/usr/sbin/sendmail` or
 	`/usr/lib/sendmail` if such program is available, or
 	`localhost` otherwise.
+
+--smtp-user, --smtp-pass::
+	Username and password for SMTP-AUTH. Defaults are the values of
+	the configuration values 'sendemail.smtpuser' and
+	'sendemail.smtppass', but see also 'sendemail.identity'.
+	If not set, authentication is not attempted.
+
+--smtp-ssl::
+	If set, connects to the SMTP server using SSL.
+	Default is the value of the 'sendemail.smtpssl' configuration value;
+	if that is unspecified, does not use SSL.
 
 --subject::
 	Specify the initial subject of the email thread.
@@ -122,6 +139,13 @@ The --to option must be repeated for each user you want on the to list.
 
 CONFIGURATION
 -------------
+sendemail.identity::
+	The default configuration identity. When specified,
+	'sendemail.<identity>.<item>' will have higher precedence than
+	'sendemail.<item>'. This is useful to declare multiple SMTP
+	identities and to hoist sensitive authentication information
+	out of the repository and into the global configuation file.
+
 sendemail.aliasesfile::
 	To avoid typing long email addresses, point this to one or more
 	email aliases files.  You must also supply 'sendemail.aliasfiletype'.
@@ -141,7 +165,16 @@ sendemail.chainreplyto::
 	parameter.
 
 sendemail.smtpserver::
-	Default smtp server to use.
+	Default SMTP server to use.
+
+sendemail.smtpuser::
+	Default SMTP-AUTH username.
+
+sendemail.smtppass::
+	Default SMTP-AUTH password.
+
+sendemail.smtpssl::
+	Boolean value specifying the default to the '--smtp-ssl' parameter.
 
 Author
 ------
