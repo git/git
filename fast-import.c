@@ -1595,7 +1595,7 @@ static void read_next_command(void)
 		} else {
 			struct recent_command *rc;
 
-			command_buf.buf = NULL;
+			strbuf_detach(&command_buf);
 			read_line(&command_buf, stdin, '\n');
 			if (command_buf.eof)
 				return;
@@ -1649,7 +1649,6 @@ static void *cmd_data (size_t *size)
 		size_t sz = 8192, term_len = command_buf.len - 5 - 2;
 		length = 0;
 		buffer = xmalloc(sz);
-		command_buf.buf = NULL;
 		for (;;) {
 			read_line(&command_buf, stdin, '\n');
 			if (command_buf.eof)
@@ -1657,11 +1656,11 @@ static void *cmd_data (size_t *size)
 			if (term_len == command_buf.len
 				&& !strcmp(term, command_buf.buf))
 				break;
-			ALLOC_GROW(buffer, length + command_buf.len, sz);
+			ALLOC_GROW(buffer, length + command_buf.len + 1, sz);
 			memcpy(buffer + length,
 				command_buf.buf,
-				command_buf.len - 1);
-			length += command_buf.len - 1;
+				command_buf.len);
+			length += command_buf.len;
 			buffer[length++] = '\n';
 		}
 		free(term);
@@ -2101,7 +2100,7 @@ static void cmd_new_commit(void)
 	}
 
 	/* file_change* */
-	while (!command_buf.eof && command_buf.len > 1) {
+	while (!command_buf.eof && command_buf.len > 0) {
 		if (!prefixcmp(command_buf.buf, "M "))
 			file_change_m(b);
 		else if (!prefixcmp(command_buf.buf, "D "))
@@ -2256,7 +2255,7 @@ static void cmd_reset_branch(void)
 	else
 		b = new_branch(sp);
 	read_next_command();
-	if (!cmd_from(b) && command_buf.len > 1)
+	if (!cmd_from(b) && command_buf.len > 0)
 		unread_command_buf = 1;
 }
 
@@ -2273,7 +2272,7 @@ static void cmd_checkpoint(void)
 
 static void cmd_progress(void)
 {
-	fwrite(command_buf.buf, 1, command_buf.len - 1, stdout);
+	fwrite(command_buf.buf, 1, command_buf.len, stdout);
 	fputc('\n', stdout);
 	fflush(stdout);
 	skip_optional_lf();

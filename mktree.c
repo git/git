@@ -92,7 +92,6 @@ int main(int ac, char **av)
 
 	strbuf_init(&sb);
 	while (1) {
-		int len;
 		char *ptr, *ntr;
 		unsigned mode;
 		enum object_type type;
@@ -101,7 +100,6 @@ int main(int ac, char **av)
 		read_line(&sb, stdin, line_termination);
 		if (sb.eof)
 			break;
-		len = sb.len;
 		ptr = sb.buf;
 		/* Input is non-recursive ls-tree output format
 		 * mode SP type SP sha1 TAB name
@@ -111,7 +109,7 @@ int main(int ac, char **av)
 			die("input format error: %s", sb.buf);
 		ptr = ntr + 1; /* type */
 		ntr = strchr(ptr, ' ');
-		if (!ntr || sb.buf + len <= ntr + 41 ||
+		if (!ntr || sb.buf + sb.len <= ntr + 40 ||
 		    ntr[41] != '\t' ||
 		    get_sha1_hex(ntr + 1, sha1))
 			die("input format error: %s", sb.buf);
