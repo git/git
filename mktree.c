@@ -44,30 +44,23 @@ static int ent_compare(const void *a_, const void *b_)
 
 static void write_tree(unsigned char *sha1)
 {
-	char *buffer;
-	unsigned long size, offset;
+	struct strbuf buf;
+	size_t size;
 	int i;
 
 	qsort(entries, used, sizeof(*entries), ent_compare);
 	for (size = i = 0; i < used; i++)
 		size += 32 + entries[i]->len;
-	buffer = xmalloc(size);
-	offset = 0;
+	strbuf_init(&buf);
+	strbuf_grow(&buf, size);
 
 	for (i = 0; i < used; i++) {
 		struct treeent *ent = entries[i];
-
-		if (offset + ent->len + 100 < size) {
-			size = alloc_nr(offset + ent->len + 100);
-			buffer = xrealloc(buffer, size);
-		}
-		offset += sprintf(buffer + offset, "%o ", ent->mode);
-		offset += sprintf(buffer + offset, "%s", ent->name);
-		buffer[offset++] = 0;
-		hashcpy((unsigned char*)buffer + offset, ent->sha1);
-		offset += 20;
+		strbuf_addf(&buf, "%o %s%c", ent->mode, ent->name, '\0');
+		strbuf_add(&buf, ent->sha1, 20);
 	}
-	write_sha1_file(buffer, offset, tree_type, sha1);
+
+	write_sha1_file(buf.buf, buf.len, tree_type, sha1);
 }
 
 static const char mktree_usage[] = "git-mktree [-z]";
