@@ -117,6 +117,12 @@ git push origin master:satellite/master::
 	the ref that matches `satellite/master` (most likely, it would
 	be `refs/remotes/satellite/master`) in `origin` repository with it.
 
+git push origin master:refs/heads/experimental::
+	Create the branch `experimental` in the `origin` repository
+	by copying the current `master` branch.  This form is usually
+	needed to create a new branch in the remote repository as
+	there is no `experimental` branch to match.
+
 Author
 ------
 Written by Junio C Hamano <junkio@cox.net>, later rewritten in C
