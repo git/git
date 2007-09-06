@@ -281,6 +281,19 @@ def createOrUpdateBranchesFromOrigin(localRefPrefix = "refs/remotes/p4/", silent
 def originP4BranchesExist():
         return gitBranchExists("origin") or gitBranchExists("origin/p4") or gitBranchExists("origin/p4/master")
 
+def p4ChangesForPaths(depotPaths, changeRange):
+    assert depotPaths
+    output = read_pipe_lines("p4 changes " + ' '.join (["%s...%s" % (p, changeRange)
+                                                        for p in depotPaths]))
+
+    changes = []
+    for line in output:
+        changeNum = line.split(" ")[1]
+        changes.append(int(changeNum))
+
+    changes.sort()
+    return changes
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
@@ -664,9 +677,8 @@ class P4Submit(Command):
             f.close();
 
         os.chdir(self.clientPath)
-        response = raw_input("Do you want to sync %s with p4 sync? [y]es/[n]o " % self.clientPath)
-        if response == "y" or response == "yes":
-            system("p4 sync ...")
+        print "Syncronizing p4 checkout..."
+        system("p4 sync ...")
 
         if self.reset:
             self.firstTime = True
@@ -705,10 +717,14 @@ class P4Submit(Command):
             else:
                 print "All changes applied!"
                 os.chdir(self.oldWorkingDirectory)
-                response = raw_input("Do you want to sync from Perforce now using git-p4 rebase? [y]es/[n]o ")
+
+                sync = P4Sync()
+                sync.run([])
+
+                response = raw_input("Do you want to rebase current HEAD from Perforce now using git-p4 rebase? [y]es/[n]o ")
                 if response == "y" or response == "yes":
                     rebase = P4Rebase()
-                    rebase.run([])
+                    rebase.rebase()
             os.remove(self.configFile)
 
         return True
@@ -1102,6 +1118,186 @@ class P4Sync(Command):
         self.keepRepoPath = (d.has_key('options')
                              and ('keepRepoPath' in d['options']))
 
+    def gitRefForBranch(self, branch):
+        if branch == "main":
+            return self.refPrefix + "master"
+
+        if len(branch) <= 0:
+            return branch
+
+        return self.refPrefix + self.projectName + branch
+
+    def gitCommitByP4Change(self, ref, change):
+        if self.verbose:
+            print "looking in ref " + ref + " for change %s using bisect..." % change
+
+        earliestCommit = ""
+        latestCommit = parseRevision(ref)
+
+        while True:
+            if self.verbose:
+                print "trying: earliest %s latest %s" % (earliestCommit, latestCommit)
+            next = read_pipe("git rev-list --bisect %s %s" % (latestCommit, earliestCommit)).strip()
+            if len(next) == 0:
+                if self.verbose:
+                    print "argh"
+                return ""
+            log = extractLogMessageFromGitCommit(next)
+            settings = extractSettingsGitLog(log)
+            currentChange = int(settings['change'])
+            if self.verbose:
+                print "current change %s" % currentChange
+
+            if currentChange == change:
+                if self.verbose:
+                    print "found %s" % next
+                return next
+
+            if currentChange < change:
+                earliestCommit = "^%s" % next
+            else:
+                latestCommit = "%s" % next
+
+        return ""
+
+    def importNewBranch(self, branch, maxChange):
+        # make fast-import flush all changes to disk and update the refs using the checkpoint
+        # command so that we can try to find the branch parent in the git history
+        self.gitStream.write("checkpoint\n\n");
+        self.gitStream.flush();
+        branchPrefix = self.depotPaths[0] + branch + "/"
+        range = "@1,%s" % maxChange
+        #print "prefix" + branchPrefix
+        changes = p4ChangesForPaths([branchPrefix], range)
+        if len(changes) <= 0:
+            return False
+        firstChange = changes[0]
+        #print "first change in branch: %s" % firstChange
+        sourceBranch = self.knownBranches[branch]
+        sourceDepotPath = self.depotPaths[0] + sourceBranch
+        sourceRef = self.gitRefForBranch(sourceBranch)
+        #print "source " + sourceBranch
+
+        branchParentChange = int(p4Cmd("changes -m 1 %s...@1,%s" % (sourceDepotPath, firstChange))["change"])
+        #print "branch parent: %s" % branchParentChange
+        gitParent = self.gitCommitByP4Change(sourceRef, branchParentChange)
+        if len(gitParent) > 0:
+            self.initialParents[self.gitRefForBranch(branch)] = gitParent
+            #print "parent git commit: %s" % gitParent
+
+        self.importChanges(changes)
+        return True
+
+    def importChanges(self, changes):
+        cnt = 1
+        for change in changes:
+            description = p4Cmd("describe %s" % change)
+            self.updateOptionDict(description)
+
+            if not self.silent:
+                sys.stdout.write("\rImporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
+                sys.stdout.flush()
+            cnt = cnt + 1
+
+            try:
+                if self.detectBranches:
+                    branches = self.splitFilesIntoBranches(description)
+                    for branch in branches.keys():
+                        ## HACK  --hwn
+                        branchPrefix = self.depotPaths[0] + branch + "/"
+
+                        parent = ""
+
+                        filesForCommit = branches[branch]
+
+                        if self.verbose:
+                            print "branch is %s" % branch
+
+                        self.updatedBranches.add(branch)
+
+                        if branch not in self.createdBranches:
+                            self.createdBranches.add(branch)
+                            parent = self.knownBranches[branch]
+                            if parent == branch:
+                                parent = ""
+                            else:
+                                fullBranch = self.projectName + branch
+                                if fullBranch not in self.p4BranchesInGit:
+                                    if not self.silent:
+                                        print("\n    Importing new branch %s" % fullBranch);
+                                    if self.importNewBranch(branch, change - 1):
+                                        parent = ""
+                                        self.p4BranchesInGit.append(fullBranch)
+                                    if not self.silent:
+                                        print("\n    Resuming with change %s" % change);
+
+                                if self.verbose:
+                                    print "parent determined through known branches: %s" % parent
+
+                        branch = self.gitRefForBranch(branch)
+                        parent = self.gitRefForBranch(parent)
+
+                        if self.verbose:
+                            print "looking for initial parent for %s; current parent is %s" % (branch, parent)
+
+                        if len(parent) == 0 and branch in self.initialParents:
+                            parent = self.initialParents[branch]
+                            del self.initialParents[branch]
+
+                        self.commit(description, filesForCommit, branch, [branchPrefix], parent)
+                else:
+                    files = self.extractFilesFromCommit(description)
+                    self.commit(description, files, self.branch, self.depotPaths,
+                                self.initialParent)
+                    self.initialParent = ""
+            except IOError:
+                print self.gitError.read()
+                sys.exit(1)
+
+    def importHeadRevision(self, revision):
+        print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
+
+        details = { "user" : "git perforce import user", "time" : int(time.time()) }
+        details["desc"] = ("Initial import of %s from the state at revision %s"
+                           % (' '.join(self.depotPaths), revision))
+        details["change"] = revision
+        newestRevision = 0
+
+        fileCnt = 0
+        for info in p4CmdList("files "
+                              +  ' '.join(["%s...%s"
+                                           % (p, revision)
+                                           for p in self.depotPaths])):
+
+            if info['code'] == 'error':
+                sys.stderr.write("p4 returned an error: %s\n"
+                                 % info['data'])
+                sys.exit(1)
+
+
+            change = int(info["change"])
+            if change > newestRevision:
+                newestRevision = change
+
+            if info["action"] == "delete":
+                # don't increase the file cnt, otherwise details["depotFile123"] will have gaps!
+                #fileCnt = fileCnt + 1
+                continue
+
+            for prop in ["depotFile", "rev", "action", "type" ]:
+                details["%s%s" % (prop, fileCnt)] = info[prop]
+
+            fileCnt = fileCnt + 1
+
+        details["change"] = newestRevision
+        self.updateOptionDict(details)
+        try:
+            self.commit(details, self.extractFilesFromCommit(details), self.branch, self.depotPaths)
+        except IOError:
+            print "IO error with git fast-import. Is your git version recent enough?"
+            print self.gitError.read()
+
+
     def run(self, args):
         self.depotPaths = []
         self.changeRange = ""
@@ -1199,7 +1395,7 @@ class P4Sync(Command):
 
             self.depotPaths = sorted(args)
 
-        self.revision = ""
+        revision = ""
         self.users = {}
 
         newPaths = []
@@ -1210,15 +1406,15 @@ class P4Sync(Command):
                 if self.changeRange == "@all":
                     self.changeRange = ""
                 elif ',' not in self.changeRange:
-                    self.revision = self.changeRange
+                    revision = self.changeRange
                     self.changeRange = ""
                 p = p[:atIdx]
             elif p.find("#") != -1:
                 hashIdx = p.index("#")
-                self.revision = p[hashIdx:]
+                revision = p[hashIdx:]
                 p = p[:hashIdx]
             elif self.previousDepotPaths == []:
-                self.revision = "#head"
+                revision = "#head"
 
             p = re.sub ("\.\.\.$", "", p)
             if not p.endswith("/"):
@@ -1259,49 +1455,8 @@ class P4Sync(Command):
         self.gitStream = importProcess.stdin
         self.gitError = importProcess.stderr
 
-        if self.revision:
-            print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), self.revision, self.branch)
-
-            details = { "user" : "git perforce import user", "time" : int(time.time()) }
-            details["desc"] = ("Initial import of %s from the state at revision %s"
-                               % (' '.join(self.depotPaths), self.revision))
-            details["change"] = self.revision
-            newestRevision = 0
-
-            fileCnt = 0
-            for info in p4CmdList("files "
-                                  +  ' '.join(["%s...%s"
-                                               % (p, self.revision)
-                                               for p in self.depotPaths])):
-
-                if info['code'] == 'error':
-                    sys.stderr.write("p4 returned an error: %s\n"
-                                     % info['data'])
-                    sys.exit(1)
-
-
-                change = int(info["change"])
-                if change > newestRevision:
-                    newestRevision = change
-
-                if info["action"] == "delete":
-                    # don't increase the file cnt, otherwise details["depotFile123"] will have gaps!
-                    #fileCnt = fileCnt + 1
-                    continue
-
-                for prop in ["depotFile", "rev", "action", "type" ]:
-                    details["%s%s" % (prop, fileCnt)] = info[prop]
-
-                fileCnt = fileCnt + 1
-
-            details["change"] = newestRevision
-            self.updateOptionDict(details)
-            try:
-                self.commit(details, self.extractFilesFromCommit(details), self.branch, self.depotPaths)
-            except IOError:
-                print "IO error with git fast-import. Is your git version recent enough?"
-                print self.gitError.read()
-
+        if revision:
+            self.importHeadRevision(revision)
         else:
             changes = []
 
@@ -1319,15 +1474,7 @@ class P4Sync(Command):
                 if self.verbose:
                     print "Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
                                                               self.changeRange)
-                assert self.depotPaths
-                output = read_pipe_lines("p4 changes " + ' '.join (["%s...%s" % (p, self.changeRange)
-                                                                    for p in self.depotPaths]))
-
-                for line in output:
-                    changeNum = line.split(" ")[1]
-                    changes.append(int(changeNum))
-
-                changes.sort()
+                changes = p4ChangesForPaths(self.depotPaths, self.changeRange)
 
                 if len(self.maxChanges) > 0:
                     changes = changes[:min(int(self.maxChanges), len(changes))]
@@ -1342,74 +1489,7 @@ class P4Sync(Command):
 
             self.updatedBranches = set()
 
-            cnt = 1
-            for change in changes:
-                description = p4Cmd("describe %s" % change)
-                self.updateOptionDict(description)
-
-                if not self.silent:
-                    sys.stdout.write("\rImporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
-                    sys.stdout.flush()
-                cnt = cnt + 1
-
-                try:
-                    if self.detectBranches:
-                        branches = self.splitFilesIntoBranches(description)
-                        for branch in branches.keys():
-                            ## HACK  --hwn
-                            branchPrefix = self.depotPaths[0] + branch + "/"
-
-                            parent = ""
-
-                            filesForCommit = branches[branch]
-
-                            if self.verbose:
-                                print "branch is %s" % branch
-
-                            self.updatedBranches.add(branch)
-
-                            if branch not in self.createdBranches:
-                                self.createdBranches.add(branch)
-                                parent = self.knownBranches[branch]
-                                if parent == branch:
-                                    parent = ""
-                                elif self.verbose:
-                                    print "parent determined through known branches: %s" % parent
-
-                            # main branch? use master
-                            if branch == "main":
-                                branch = "master"
-                            else:
-
-                                ## FIXME
-                                branch = self.projectName + branch
-
-                            if parent == "main":
-                                parent = "master"
-                            elif len(parent) > 0:
-                                ## FIXME
-                                parent = self.projectName + parent
-
-                            branch = self.refPrefix + branch
-                            if len(parent) > 0:
-                                parent = self.refPrefix + parent
-
-                            if self.verbose:
-                                print "looking for initial parent for %s; current parent is %s" % (branch, parent)
-
-                            if len(parent) == 0 and branch in self.initialParents:
-                                parent = self.initialParents[branch]
-                                del self.initialParents[branch]
-
-                            self.commit(description, filesForCommit, branch, [branchPrefix], parent)
-                    else:
-                        files = self.extractFilesFromCommit(description)
-                        self.commit(description, files, self.branch, self.depotPaths,
-                                    self.initialParent)
-                        self.initialParent = ""
-                except IOError:
-                    print self.gitError.read()
-                    sys.exit(1)
+            self.importChanges(changes)
 
             if not self.silent:
                 print ""
@@ -1418,7 +1498,6 @@ class P4Sync(Command):
                     for b in self.updatedBranches:
                         sys.stdout.write("%s " % b)
                     sys.stdout.write("\n")
-
 
         self.gitStream.close()
         if importProcess.wait() != 0:
@@ -1440,6 +1519,9 @@ class P4Rebase(Command):
         sync = P4Sync()
         sync.run([])
 
+        return self.rebase()
+
+    def rebase(self):
         [upstream, settings] = findUpstreamBranchPoint()
         if len(upstream) == 0:
             die("Cannot find upstream branchpoint for rebase")
