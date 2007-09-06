@@ -15,6 +15,10 @@
 #include "list-objects.h"
 #include "progress.h"
 
+#ifdef THREADED_DELTA_SEARCH
+#include <pthread.h>
+#endif
+
 static const char pack_usage[] = "\
 git-pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--max-pack-size=N] [--local] [--incremental] \n\
@@ -1290,6 +1294,25 @@ static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
 	return 0;
 }
 
+#ifdef THREADED_DELTA_SEARCH
+
+static pthread_mutex_t read_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define read_lock()		pthread_mutex_lock(&read_mutex)
+#define read_unlock()		pthread_mutex_unlock(&read_mutex)
+
+static pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define progress_lock()		pthread_mutex_lock(&progress_mutex)
+#define progress_unlock()	pthread_mutex_unlock(&progress_mutex)
+
+#else
+
+#define read_lock()		0
+#define read_unlock()		0
+#define progress_lock()		0
+#define progress_unlock()	0
+
+#endif
+
 /*
  * We search for deltas _backwards_ in a list sorted by type and
  * by size, so that we see progressively smaller and smaller files.
@@ -1348,7 +1371,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
 	/* Load data if not already done */
 	if (!trg->data) {
+		read_lock();
 		trg->data = read_sha1_file(trg_entry->idx.sha1, &type, &sz);
+		read_unlock();
 		if (!trg->data)
 			die("object %s cannot be read",
 			    sha1_to_hex(trg_entry->idx.sha1));
@@ -1358,7 +1383,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		*mem_usage += sz;
 	}
 	if (!src->data) {
+		read_lock();
 		src->data = read_sha1_file(src_entry->idx.sha1, &type, &sz);
+		read_unlock();
 		if (!src->data)
 			die("object %s cannot be read",
 			    sha1_to_hex(src_entry->idx.sha1));
@@ -1470,9 +1497,11 @@ static void find_deltas(struct object_entry **list, unsigned list_size,
 		if (entry->preferred_base)
 			goto next;
 
+		progress_lock();
 		(*processed)++;
 		if (progress)
 			display_progress(&progress_state, *processed);
+		progress_unlock();
 
 		/*
 		 * If the current object is at pack edge, take the depth the
@@ -1542,6 +1571,58 @@ static void find_deltas(struct object_entry **list, unsigned list_size,
 	free(array);
 }
 
+#ifdef THREADED_DELTA_SEARCH
+
+struct thread_params {
+	pthread_t thread;
+	struct object_entry **list;
+	unsigned list_size;
+	int window;
+	int depth;
+	unsigned *processed;
+};
+
+static void *threaded_find_deltas(void *arg)
+{
+	struct thread_params *p = arg;
+	if (p->list_size)
+		find_deltas(p->list, p->list_size,
+			    p->window, p->depth, p->processed);
+	return NULL;
+}
+
+#define NR_THREADS	8
+
+static void ll_find_deltas(struct object_entry **list, unsigned list_size,
+			   int window, int depth, unsigned *processed)
+{
+	struct thread_params p[NR_THREADS];
+	int i, ret;
+
+	for (i = 0; i < NR_THREADS; i++) {
+		unsigned sublist_size = list_size / (NR_THREADS - i);
+		p[i].list = list;
+		p[i].list_size = sublist_size;
+		p[i].window = window;
+		p[i].depth = depth;
+		p[i].processed = processed;
+		ret = pthread_create(&p[i].thread, NULL,
+				     threaded_find_deltas, &p[i]);
+		if (ret)
+			die("unable to create thread: %s", strerror(ret));
+		list += sublist_size;
+		list_size -= sublist_size;
+	}
+
+	for (i = 0; i < NR_THREADS; i++) {
+		pthread_join(p[i].thread, NULL);
+	}
+}
+
+#else
+#define ll_find_deltas find_deltas
+#endif
+
 static void prepare_pack(int window, int depth)
 {
 	struct object_entry **delta_list;
@@ -1583,7 +1664,7 @@ static void prepare_pack(int window, int depth)
 				       "Deltifying %u objects...", "",
 				       nr_deltas);
 		qsort(delta_list, n, sizeof(*delta_list), type_size_sort);
-		find_deltas(delta_list, n, window+1, depth, &nr_done);
+		ll_find_deltas(delta_list, n, window+1, depth, &nr_done);
 		if (progress)
 			stop_progress(&progress_state);
 		if (nr_done != nr_deltas)
