@@ -1514,7 +1514,8 @@ static int find_offset(const char *buf, unsigned long size, const char *fragment
 	}
 
 	/* Exact line number? */
-	if (!memcmp(buf + start, fragment, fragsize))
+	if ((start + fragsize <= size) &&
+	    !memcmp(buf + start, fragment, fragsize))
 		return start;
 
 	/*
