@@ -1313,12 +1313,6 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	if (trg_entry->type != src_entry->type)
 		return -1;
 
-	/* We do not compute delta to *create* objects we are not
-	 * going to pack.
-	 */
-	if (trg_entry->preferred_base)
-		return -1;
-
 	/*
 	 * We do not bother to try a delta that we discarded
 	 * on an earlier try, but only when reusing delta data.
@@ -1443,42 +1437,23 @@ static void free_unpacked(struct unpacked *n)
 	n->depth = 0;
 }
 
-static void find_deltas(struct object_entry **list, int window, int depth)
+static void find_deltas(struct object_entry **list, unsigned list_size,
+			unsigned nr_deltas, int window, int depth)
 {
-	uint32_t i = nr_objects, idx = 0, count = 0, processed = 0;
+	uint32_t i = list_size, idx = 0, count = 0, processed = 0;
 	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array;
 	int max_depth;
 
-	if (!nr_objects)
-		return;
 	array = xmalloc(array_size);
 	memset(array, 0, array_size);
 	if (progress)
-		start_progress(&progress_state, "Deltifying %u objects...", "", nr_result);
+		start_progress(&progress_state, "Deltifying %u objects...", "", nr_deltas);
 
 	do {
 		struct object_entry *entry = list[--i];
 		struct unpacked *n = array + idx;
 		int j, best_base = -1;
-
-		if (!entry->preferred_base)
-			processed++;
-
-		if (progress)
-			display_progress(&progress_state, processed);
-
-		if (entry->delta)
-			/* This happens if we decided to reuse existing
-			 * delta from a pack.  "!no_reuse_delta &&" is implied.
-			 */
-			continue;
-
-		if (entry->size < 50)
-			continue;
-
-		if (entry->no_try_delta)
-			continue;
 
 		free_unpacked(n);
 		n->entry = entry;
@@ -1490,6 +1465,15 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			free_unpacked(array + tail);
 			count--;
 		}
+
+		/* We do not compute delta to *create* objects we are not
+		 * going to pack.
+		 */
+		if (entry->preferred_base)
+			goto next;
+
+		if (progress)
+			display_progress(&progress_state, ++processed);
 
 		/*
 		 * If the current object is at pack edge, take the depth the
@@ -1565,18 +1549,41 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 static void prepare_pack(int window, int depth)
 {
 	struct object_entry **delta_list;
-	uint32_t i;
+	uint32_t i, n, nr_deltas;
 
 	get_object_details();
 
-	if (!window || !depth)
+	if (!nr_objects || !window || !depth)
 		return;
 
 	delta_list = xmalloc(nr_objects * sizeof(*delta_list));
-	for (i = 0; i < nr_objects; i++)
-		delta_list[i] = objects + i;
-	qsort(delta_list, nr_objects, sizeof(*delta_list), type_size_sort);
-	find_deltas(delta_list, window+1, depth);
+	nr_deltas = n = 0;
+
+	for (i = 0; i < nr_objects; i++) {
+		struct object_entry *entry = objects + i;
+
+		if (entry->delta)
+			/* This happens if we decided to reuse existing
+			 * delta from a pack.  "!no_reuse_delta &&" is implied.
+			 */
+			continue;
+
+		if (entry->size < 50)
+			continue;
+
+		if (entry->no_try_delta)
+			continue;
+
+		if (!entry->preferred_base)
+			nr_deltas++;
+
+		delta_list[n++] = entry;
+	}
+
+	if (nr_deltas) {
+		qsort(delta_list, n, sizeof(*delta_list), type_size_sort);
+		find_deltas(delta_list, n, nr_deltas, window+1, depth);
+	}
 	free(delta_list);
 }
 
