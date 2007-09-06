@@ -81,14 +81,58 @@ static int run_remote_archiver(const char *remote, int argc,
 	return !!rv;
 }
 
+static void *format_specfile(const struct commit *commit, const char *format,
+                             unsigned long *sizep)
+{
+	unsigned long len = *sizep, result_len = 0;
+	const char *a = format;
+	char *result = NULL;
+
+	for (;;) {
+		const char *b, *c;
+		char *fmt, *formatted = NULL;
+		unsigned long a_len, fmt_len, formatted_len, allocated = 0;
+
+		b = memmem(a, len, "$Format:", 8);
+		if (!b || a + len < b + 9)
+			break;
+		c = memchr(b + 8, '$', len - 8);
+		if (!c)
+			break;
+
+		a_len = b - a;
+		fmt_len = c - b - 8;
+		fmt = xmalloc(fmt_len + 1);
+		memcpy(fmt, b + 8, fmt_len);
+		fmt[fmt_len] = '\0';
+
+		formatted_len = format_commit_message(commit, fmt, &formatted,
+		                                      &allocated);
+		result = xrealloc(result, result_len + a_len + formatted_len);
+		memcpy(result + result_len, a, a_len);
+		memcpy(result + result_len + a_len, formatted, formatted_len);
+		result_len += a_len + formatted_len;
+		len -= c + 1 - a;
+		a = c + 1;
+	}
+
+	if (result && len) {
+		result = xrealloc(result, result_len + len);
+		memcpy(result + result_len, a, len);
+		result_len += len;
+	}
+
+	*sizep = result_len;
+
+	return result;
+}
+
 static void *convert_to_archive(const char *path,
                                 const void *src, unsigned long *sizep,
                                 const struct commit *commit)
 {
 	static struct git_attr *attr_specfile;
 	struct git_attr_check check[1];
-	char *interpolated = NULL;
-	unsigned long allocated = 0;
 
 	if (!commit)
 		return NULL;
@@ -102,9 +146,7 @@ static void *convert_to_archive(const char *path,
 	if (!ATTR_TRUE(check[0].value))
 		return NULL;
 
-	*sizep = format_commit_message(commit, src, &interpolated, &allocated);
-
-	return interpolated;
+	return format_specfile(commit, src, sizep);
 }
 
 void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
