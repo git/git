@@ -424,10 +424,10 @@ frotz	unspecified
 Creating an archive
 ~~~~~~~~~~~~~~~~~~~
 
-`specfile`
-^^^^^^^^^^
+`export-subst`
+^^^^^^^^^^^^^^
 
-If the attribute `specfile` is set for a file then git will expand
+If the attribute `export-subst` is set for a file then git will expand
 several placeholders when adding this file to an archive.  The
 expansion depends on the availability of a commit ID, i.e. if
 gitlink:git-archive[1] has been given a tree instead of a commit or a

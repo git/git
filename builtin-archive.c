@@ -81,8 +81,8 @@ static int run_remote_archiver(const char *remote, int argc,
 	return !!rv;
 }
 
-static void *format_specfile(const struct commit *commit, const char *format,
-                             unsigned long *sizep)
+static void *format_subst(const struct commit *commit, const char *format,
+                          unsigned long *sizep)
 {
 	unsigned long len = *sizep, result_len = 0;
 	const char *a = format;
@@ -131,22 +131,22 @@ static void *convert_to_archive(const char *path,
                                 const void *src, unsigned long *sizep,
                                 const struct commit *commit)
 {
-	static struct git_attr *attr_specfile;
+	static struct git_attr *attr_export_subst;
 	struct git_attr_check check[1];
 
 	if (!commit)
 		return NULL;
 
-        if (!attr_specfile)
-                attr_specfile = git_attr("specfile", 8);
+        if (!attr_export_subst)
+                attr_export_subst = git_attr("export-subst", 12);
 
-	check[0].attr = attr_specfile;
+	check[0].attr = attr_export_subst;
 	if (git_checkattr(path, ARRAY_SIZE(check), check))
 		return NULL;
 	if (!ATTR_TRUE(check[0].value))
 		return NULL;
 
-	return format_specfile(commit, src, sizep);
+	return format_subst(commit, src, sizep);
 }
 
 void *sha1_file_to_archive(const char *path, const unsigned char *sha1,

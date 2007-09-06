@@ -28,7 +28,7 @@ commit id embedding:
 TAR=${TAR:-tar}
 UNZIP=${UNZIP:-unzip}
 
-SPECFILEFORMAT=%H%n
+SUBSTFORMAT=%H%n
 
 test_expect_success \
     'populate workdir' \
@@ -36,7 +36,7 @@ test_expect_success \
      echo simple textfile >a/a &&
      mkdir a/bin &&
      cp /bin/sh a/bin &&
-     printf "A\$Format:%s\$O" "$SPECFILEFORMAT" >a/specfile &&
+     printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile &&
      ln -s a a/l1 &&
      (p=long_path_to_a_file && cd a &&
       for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
@@ -108,20 +108,20 @@ test_expect_success \
     'diff -r a c/prefix/a'
 
 test_expect_success \
-    'create an archive with a specfile' \
-    'echo specfile specfile >a/.gitattributes &&
+    'create an archive with a substfile' \
+    'echo substfile export-subst >a/.gitattributes &&
      git archive HEAD >f.tar &&
      rm a/.gitattributes'
 
 test_expect_success \
-    'extract specfile' \
+    'extract substfile' \
     '(mkdir f && cd f && $TAR xf -) <f.tar'
 
 test_expect_success \
-     'validate specfile contents' \
-     'git log --max-count=1 "--pretty=format:A${SPECFILEFORMAT}O" HEAD \
-      >f/a/specfile.expected &&
-      diff f/a/specfile.expected f/a/specfile'
+     'validate substfile contents' \
+     'git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
+      >f/a/substfile.expected &&
+      diff f/a/substfile.expected f/a/substfile'
 
 test_expect_success \
     'git archive --format=zip' \
