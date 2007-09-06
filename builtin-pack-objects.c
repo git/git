@@ -1438,17 +1438,15 @@ static unsigned long free_unpacked(struct unpacked *n)
 }
 
 static void find_deltas(struct object_entry **list, unsigned list_size,
-			unsigned nr_deltas, int window, int depth)
+			int window, int depth, unsigned *processed)
 {
-	uint32_t i = list_size, idx = 0, count = 0, processed = 0;
+	uint32_t i = list_size, idx = 0, count = 0;
 	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array;
 	unsigned long mem_usage = 0;
 
 	array = xmalloc(array_size);
 	memset(array, 0, array_size);
-	if (progress)
-		start_progress(&progress_state, "Deltifying %u objects...", "", nr_deltas);
 
 	do {
 		struct object_entry *entry = list[--i];
@@ -1472,8 +1470,9 @@ static void find_deltas(struct object_entry **list, unsigned list_size,
 		if (entry->preferred_base)
 			goto next;
 
+		(*processed)++;
 		if (progress)
-			display_progress(&progress_state, ++processed);
+			display_progress(&progress_state, *processed);
 
 		/*
 		 * If the current object is at pack edge, take the depth the
@@ -1536,9 +1535,6 @@ static void find_deltas(struct object_entry **list, unsigned list_size,
 			idx = 0;
 	} while (i > 0);
 
-	if (progress)
-		stop_progress(&progress_state);
-
 	for (i = 0; i < window; ++i) {
 		free_delta_index(array[i].index);
 		free(array[i].data);
@@ -1581,8 +1577,17 @@ static void prepare_pack(int window, int depth)
 	}
 
 	if (nr_deltas) {
+		unsigned nr_done = 0;
+		if (progress)
+			start_progress(&progress_state,
+				       "Deltifying %u objects...", "",
+				       nr_deltas);
 		qsort(delta_list, n, sizeof(*delta_list), type_size_sort);
-		find_deltas(delta_list, n, nr_deltas, window+1, depth);
+		find_deltas(delta_list, n, window+1, depth, &nr_done);
+		if (progress)
+			stop_progress(&progress_state);
+		if (nr_done != nr_deltas)
+			die("inconsistency with delta count");
 	}
 	free(delta_list);
 }
