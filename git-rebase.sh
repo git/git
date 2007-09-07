@@ -221,7 +221,6 @@ do
 		;;
 	-C*)
 		git_am_opt="$git_am_opt $1"
-		shift
 		;;
 	-*)
 		usage
