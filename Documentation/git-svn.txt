@@ -317,16 +317,6 @@ This is only used with the 'dcommit' command.
 Print out the series of git arguments that would show
 which diffs would be committed to SVN.
 
---first-parent::
-
-This is only used with the 'dcommit', 'rebase', 'log', 'find-rev' and
-'show-ignore' commands.
-
-These commands tries to detect the upstream subversion branch by means of
-the embedded 'git-svn-id' line in commit messages. When --first-parent is
-specified, git-svn only follows the first parent of each commit, effectively
-ignoring commits brought into the current branch through merge-operations.
-
 --
 
 ADVANCED OPTIONS
