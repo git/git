@@ -115,7 +115,11 @@ static const unsigned int U[256] = {
 struct index_entry {
 	const unsigned char *ptr;
 	unsigned int val;
-	struct index_entry *next;
+};
+
+struct unpacked_index_entry {
+	struct index_entry entry;
+	struct unpacked_index_entry *next;
 };
 
 struct delta_index {
@@ -131,7 +135,8 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	unsigned int i, hsize, hmask, entries, prev_val, *hash_count;
 	const unsigned char *data, *buffer = buf;
 	struct delta_index *index;
-	struct index_entry *entry, **hash;
+	struct unpacked_index_entry *entry, **hash;
+	struct index_entry *packed_entry, **packed_hash;
 	void *mem;
 	unsigned long memsize;
 
@@ -148,28 +153,21 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	hmask = hsize - 1;
 
 	/* allocate lookup index */
-	memsize = sizeof(*index) +
-		  sizeof(*hash) * hsize +
+	memsize = sizeof(*hash) * hsize +
 		  sizeof(*entry) * entries;
 	mem = malloc(memsize);
 	if (!mem)
 		return NULL;
-	index = mem;
-	mem = index + 1;
 	hash = mem;
 	mem = hash + hsize;
 	entry = mem;
 
-	index->memsize = memsize;
-	index->src_buf = buf;
-	index->src_size = bufsize;
-	index->hash_mask = hmask;
 	memset(hash, 0, hsize * sizeof(*hash));
 
 	/* allocate an array to count hash entries */
 	hash_count = calloc(hsize, sizeof(*hash_count));
 	if (!hash_count) {
-		free(index);
+		free(hash);
 		return NULL;
 	}
 
@@ -183,12 +181,13 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 			val = ((val << 8) | data[i]) ^ T[val >> RABIN_SHIFT];
 		if (val == prev_val) {
 			/* keep the lowest of consecutive identical blocks */
-			entry[-1].ptr = data + RABIN_WINDOW;
+			entry[-1].entry.ptr = data + RABIN_WINDOW;
+			--entries;
 		} else {
 			prev_val = val;
 			i = val & hmask;
-			entry->ptr = data + RABIN_WINDOW;
-			entry->val = val;
+			entry->entry.ptr = data + RABIN_WINDOW;
+			entry->entry.val = val;
 			entry->next = hash[i];
 			hash[i] = entry++;
 			hash_count[i]++;
@@ -212,15 +211,58 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 			continue;
 		entry = hash[i];
 		do {
-			struct index_entry *keep = entry;
+			struct unpacked_index_entry *keep = entry;
 			int skip = hash_count[i] / HASH_LIMIT;
 			do {
+				--entries;
 				entry = entry->next;
 			} while(--skip && entry);
+			++entries;
 			keep->next = entry;
 		} while(entry);
 	}
 	free(hash_count);
+
+	/* Now create the packed index in array form rather than
+	 * linked lists */
+
+	memsize = sizeof(*index)
+		+ sizeof(*packed_hash) * (hsize+1)
+		+ sizeof(*packed_entry) * entries;
+
+	mem = malloc(memsize);
+
+	if (!mem) {
+		free(hash);
+		return NULL;
+	}
+
+	index = mem;
+	index->memsize = memsize;
+	index->src_buf = buf;
+	index->src_size = bufsize;
+	index->hash_mask = hmask;
+
+	mem = index + 1;
+	packed_hash = mem;
+	mem = packed_hash + (hsize+1);
+	packed_entry = mem;
+
+	/* Coalesce all entries belonging to one linked list into
+	 * consecutive array entries */
+
+	for (i = 0; i < hsize; i++) {
+		packed_hash[i] = packed_entry;
+		for (entry = hash[i]; entry; entry = entry->next)
+			*packed_entry++ = entry->entry;
+	}
+
+	/* Sentinel value to indicate the length of the last hash
+	 * bucket */
+
+	packed_hash[hsize] = packed_entry;
+	assert(packed_entry - (struct index_entry *)mem == entries);
+	free(hash);
 
 	return index;
 }
@@ -302,7 +344,7 @@ create_delta(const struct delta_index *index,
 			val ^= U[data[-RABIN_WINDOW]];
 			val = ((val << 8) | *data) ^ T[val >> RABIN_SHIFT];
 			i = val & index->hash_mask;
-			for (entry = index->hash[i]; entry; entry = entry->next) {
+			for (entry = index->hash[i]; entry < index->hash[i+1]; entry++) {
 				const unsigned char *ref = entry->ptr;
 				const unsigned char *src = data;
 				unsigned int ref_size = ref_top - ref;
