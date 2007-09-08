@@ -2809,7 +2809,7 @@ sub git_difftree_body {
 	      "diff_tree\">\n";
 
 	# header only for combined diff in 'commitdiff' view
-	my $has_header = @parents > 1 && $action eq 'commitdiff';
+	my $has_header = @$difftree && @parents > 1 && $action eq 'commitdiff';
 	if ($has_header) {
 		# table header
 		print "<thead><tr>\n" .
