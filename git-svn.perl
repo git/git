@@ -841,14 +841,9 @@ sub working_head_info {
 
 sub read_commit_parents {
 	my ($parents, $c) = @_;
-	my ($fh, $ctx) = command_output_pipe(qw/cat-file commit/, $c);
-	while (<$fh>) {
-		chomp;
-		last if '';
-		/^parent ($sha1)/ or next;
-		push @{$parents->{$c}}, $1;
-	}
-	close $fh; # break the pipe
+	chomp(my $p = command_oneline(qw/rev-list --parents -1/, $c));
+	$p =~ s/^($c)\s*// or die "rev-list --parents -1 $c failed!\n";
+	@{$parents->{$c}} = split(/ /, $p);
 }
 
 sub linearize_history {
