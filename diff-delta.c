@@ -207,19 +207,40 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	 * the reference buffer.
 	 */
 	for (i = 0; i < hsize; i++) {
-		if (hash_count[i] < HASH_LIMIT)
+		int acc;
+
+		if (hash_count[i] <= HASH_LIMIT)
 			continue;
+
+		entries -= hash_count[i] - HASH_LIMIT;
+		/* We leave exactly HASH_LIMIT entries in the bucket */
+
 		entry = hash[i];
+		acc = 0;
 		do {
-			struct unpacked_index_entry *keep = entry;
-			int skip = hash_count[i] / HASH_LIMIT;
-			do {
-				--entries;
-				entry = entry->next;
-			} while(--skip && entry);
-			++entries;
-			keep->next = entry;
-		} while(entry);
+			acc += hash_count[i] - HASH_LIMIT;
+			if (acc > 0) {
+				struct unpacked_index_entry *keep = entry;
+				do {
+					entry = entry->next;
+					acc -= HASH_LIMIT;
+				} while (acc > 0);
+				keep->next = entry->next;
+			}
+			entry = entry->next;
+		} while (entry);
+
+		/* Assume that this loop is gone through exactly
+		 * HASH_LIMIT times and is entered and left with
+		 * acc==0.  So the first statement in the loop
+		 * contributes (hash_count[i]-HASH_LIMIT)*HASH_LIMIT
+		 * to the accumulator, and the inner loop consequently
+		 * is run (hash_count[i]-HASH_LIMIT) times, removing
+		 * one element from the list each time.  Since acc
+		 * balances out to 0 at the final run, the inner loop
+		 * body can't be left with entry==NULL.  So we indeed
+		 * encounter entry==NULL in the outer loop only.
+		 */
 	}
 	free(hash_count);
 
