@@ -30,7 +30,7 @@ exit 1
 
 check_entries () {
 	# $1 == directory, $2 == expected
-	grep '^/' "$1/CVS/Entries" | /usr/bin/sort | cut -d/ -f2,3,5 >actual
+	grep '^/' "$1/CVS/Entries" | sort | cut -d/ -f2,3,5 >actual
 	if test -z "$2"
 	then
 		>expected
@@ -186,7 +186,7 @@ test_expect_success \
 if p="Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö" &&
 	mkdir -p "tst/$p" &&
 	date >"tst/$p/day" &&
-	found=$(/usr/bin/find tst -type f -print) &&
+	found=$(find tst -type f -print) &&
 	test "z$found" = "ztst/$p/day" &&
 	rm -fr tst
 then

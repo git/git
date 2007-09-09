@@ -92,7 +92,7 @@ rsync://* )
 		head=$(cat "$tmpdir/$head") || exit
 	esac &&
 	echo "$head	HEAD"
-	(cd $tmpdir && /usr/bin/find refs -type f) |
+	(cd $tmpdir && find refs -type f) |
 	while read path
 	do
 		tr -d '\012' <"$tmpdir/$path"
@@ -111,7 +111,7 @@ rsync://* )
 	fi
 	;;
 esac |
-/usr/bin/sort -t '	' -k 2 |
+sort -t '	' -k 2 |
 while read sha1 path
 do
 	case "$sha1" in

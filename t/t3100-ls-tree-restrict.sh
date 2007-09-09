@@ -38,7 +38,7 @@ test_expect_success \
      echo Lo >path2/foo &&
      ln -s ../path1 path2/bazbo &&
      echo Mi >path2/baz/b &&
-     /usr/bin/find path? \( -type f -o -type l \) -print |
+     find path? \( -type f -o -type l \) -print |
      xargs git update-index --add &&
      tree=`git write-tree` &&
      echo $tree'

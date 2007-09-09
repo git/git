@@ -48,7 +48,7 @@ case ",$all_into_one," in
 	;;
 ,t,)
 	if [ -d "$PACKDIR" ]; then
-		for e in `cd "$PACKDIR" && /usr/bin/find . -type f -name '*.pack' \
+		for e in `cd "$PACKDIR" && find . -type f -name '*.pack' \
 			| sed -e 's/^\.\///' -e 's/\.pack$//'`
 		do
 			if [ -e "$PACKDIR/$e.keep" ]; then
@@ -105,7 +105,7 @@ then
 	# We know $existing are all redundant.
 	if [ -n "$existing" ]
 	then
-		sync 2> /dev/null
+		sync
 		( cd "$PACKDIR" &&
 		  for e in $existing
 		  do

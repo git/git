@@ -53,7 +53,7 @@ do
 		shift
 		;;
 	esac
-	git rev-parse --symbolic --tags | /usr/bin/sort |
+	git rev-parse --symbolic --tags | sort |
 	    while read TAG
 	    do
 	        case "$TAG" in

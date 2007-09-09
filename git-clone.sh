@@ -285,7 +285,7 @@ yes)
 		then
 			# See if we can hardlink and drop "l" if not.
 			sample_file=$(cd "$repo" && \
-				      /usr/bin/find objects -type f -print | sed -e 1q)
+				      find objects -type f -print | sed -e 1q)
 			# objects directory should not be empty because
 			# we are cloning!
 			test -f "$repo/$sample_file" || exit
@@ -299,7 +299,7 @@ yes)
 			fi
 		fi &&
 		cd "$repo" &&
-		/usr/bin/find objects -depth -print | cpio -pumd$l "$GIT_DIR/" || exit 1
+		find objects -depth -print | cpio -pumd$l "$GIT_DIR/" || exit 1
 	fi
 	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
 	;;
@@ -416,7 +416,7 @@ then
 		(
 			test -f "$GIT_DIR/$remote_top/master" && echo "master"
 			cd "$GIT_DIR/$remote_top" &&
-			/usr/bin/find . -type f -print | sed -e 's/^\.\///'
+			find . -type f -print | sed -e 's/^\.\///'
 		) | (
 		done=f
 		while read name
