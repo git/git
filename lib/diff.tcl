@@ -85,11 +85,16 @@ proc show_diff {path w {lno {}}} {
 	if {$m eq {_O}} {
 		set max_sz [expr {128 * 1024}]
 		if {[catch {
-				set fd [open $path r]
-				fconfigure $fd -eofchar {}
-				set content [read $fd $max_sz]
-				close $fd
-				set sz [file size $path]
+				if {[file type $path] == {link}} {
+					set content [file readlink $path]
+					set sz [string length $content]
+				} else {
+					set fd [open $path r]
+					fconfigure $fd -eofchar {}
+					set content [read $fd $max_sz]
+					close $fd
+					set sz [file size $path]
+				}
 			} err ]} {
 			set diff_active 0
 			unlock_index
