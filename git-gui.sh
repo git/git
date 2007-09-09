@@ -42,6 +42,8 @@ if {[catch {package require Tcl 8.4} err]
 	exit 1
 }
 
+rename send {} ; # What an evil concept...
+
 ######################################################################
 ##
 ## locate our library
