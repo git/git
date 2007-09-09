@@ -990,6 +990,13 @@ test_expect_success \
 	git diff expect actual
 '
 
+# try to sign with bad user.signingkey
+git config user.signingkey BobTheMouse
+test_expect_failure \
+	'git-tag -s fails if gpg is misconfigured' \
+	'git tag -s -m tail tag-gpg-failure'
+git config --unset user.signingkey
+
 # try to verify without gpg:
 
 rm -rf gpghome
