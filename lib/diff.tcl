@@ -203,6 +203,7 @@ proc read_diff {fd} {
 		if {[string match {mode *} $line]
 			|| [string match {new file *} $line]
 			|| [string match {deleted file *} $line]
+			|| [string match {deleted symlink} $line]
 			|| [string match {Binary files * and * differ} $line]
 			|| $line eq {\ No newline at end of file}
 			|| [regexp {^\* Unmerged path } $line]} {
