@@ -129,3 +129,20 @@ test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
 }
 
 : ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
+
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) sort and find
+	sort () {
+		/usr/bin/sort "$@"
+	}
+	find () {
+		/usr/bin/find "$@"
+	}
+	# sync is missing
+	sync () {
+		:	# no implementation
+	}
+	;;
+esac

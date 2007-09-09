@@ -305,3 +305,16 @@ do
 		test_done
 	esac
 done
+
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) sort and find
+	sort () {
+		/usr/bin/sort "$@"
+	}
+	find () {
+		/usr/bin/find "$@"
+	}
+	;;
+esac

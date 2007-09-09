@@ -13,6 +13,16 @@ die() {
 	exit 1
 }
 
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) find
+	find () {
+		/usr/bin/find "$@"
+	}
+	;;
+esac
+
 usage() {
 	die "Usage: $0 [--template=<template_directory>] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] <repo> [<dir>]"
 }
