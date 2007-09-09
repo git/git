@@ -76,8 +76,8 @@ SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 TCL_PATH_SQ = $(subst ','\'',$(TCL_PATH))
 TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 
-libdir   ?= $(sharedir)/git-gui/lib
-libdir_SQ = $(subst ','\'',$(libdir))
+gg_libdir ?= $(sharedir)/git-gui/lib
+libdir_SQ  = $(subst ','\'',$(gg_libdir))
 
 exedir    = $(dir $(gitexecdir))share/git-gui/lib
 exedir_SQ = $(subst ','\'',$(exedir))
@@ -126,7 +126,7 @@ TRACK_VARS = \
 	$(subst ','\'',TCL_PATH='$(TCL_PATH_SQ)') \
 	$(subst ','\'',TCLTK_PATH='$(TCLTK_PATH_SQ)') \
 	$(subst ','\'',gitexecdir='$(gitexecdir_SQ)') \
-	$(subst ','\'',libdir='$(libdir_SQ)') \
+	$(subst ','\'',gg_libdir='$(libdir_SQ)') \
 #end TRACK_VARS
 
 GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
