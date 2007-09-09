@@ -2952,8 +2952,8 @@ references in .git/refs/tags/).
 How git stores objects efficiently: pack files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We've seen how git stores each object in a file named after the
-object's SHA1 hash.
+Newly created objects are initially created in a file named after the
+object's SHA1 hash (stored in .git/objects).
 
 Unfortunately this system becomes inefficient once a project has a
 lot of objects.  Try this on an old project:
