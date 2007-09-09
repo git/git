@@ -2948,6 +2948,153 @@ objects.  (Note that gitlink:git-tag[1] can also be used to create
 "lightweight tags", which are not tag objects at all, but just simple
 references in .git/refs/tags/).
 
+[[pack-files]]
+How git stores objects efficiently: pack files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We've seen how git stores each object in a file named after the
+object's SHA1 hash.
+
+Unfortunately this system becomes inefficient once a project has a
+lot of objects.  Try this on an old project:
+
+------------------------------------------------
+$ git count-objects
+6930 objects, 47620 kilobytes
+------------------------------------------------
+
+The first number is the number of objects which are kept in
+individual files.  The second is the amount of space taken up by
+those "loose" objects.
+
+You can save space and make git faster by moving these loose objects in
+to a "pack file", which stores a group of objects in an efficient
+compressed format; the details of how pack files are formatted can be
+found in link:technical/pack-format.txt[technical/pack-format.txt].
+
+To put the loose objects into a pack, just run git repack:
+
+------------------------------------------------
+$ git repack
+Generating pack...
+Done counting 6020 objects.
+Deltifying 6020 objects.
+ 100% (6020/6020) done
+Writing 6020 objects.
+ 100% (6020/6020) done
+Total 6020, written 6020 (delta 4070), reused 0 (delta 0)
+Pack pack-3e54ad29d5b2e05838c75df582c65257b8d08e1c created.
+------------------------------------------------
+
+You can then run
+
+------------------------------------------------
+$ git prune
+------------------------------------------------
+
+to remove any of the "loose" objects that are now contained in the
+pack.  This will also remove any unreferenced objects (which may be
+created when, for example, you use "git reset" to remove a commit).
+You can verify that the loose objects are gone by looking at the
+.git/objects directory or by running
+
+------------------------------------------------
+$ git count-objects
+0 objects, 0 kilobytes
+------------------------------------------------
+
+Although the object files are gone, any commands that refer to those
+objects will work exactly as they did before.
+
+The gitlink:git-gc[1] command performs packing, pruning, and more for
+you, so is normally the only high-level command you need.
+
+[[dangling-objects]]
+Dangling objects
+~~~~~~~~~~~~~~~~
+
+The gitlink:git-fsck[1] command will sometimes complain about dangling
+objects.  They are not a problem.
+
+The most common cause of dangling objects is that you've rebased a
+branch, or you have pulled from somebody else who rebased a branch--see
+<<cleaning-up-history>>.  In that case, the old head of the original
+branch still exists, as does everything it pointed to. The branch
+pointer itself just doesn't, since you replaced it with another one.
+
+There are also other situations that cause dangling objects. For
+example, a "dangling blob" may arise because you did a "git add" of a
+file, but then, before you actually committed it and made it part of the
+bigger picture, you changed something else in that file and committed
+that *updated* thing - the old state that you added originally ends up
+not being pointed to by any commit or tree, so it's now a dangling blob
+object.
+
+Similarly, when the "recursive" merge strategy runs, and finds that
+there are criss-cross merges and thus more than one merge base (which is
+fairly unusual, but it does happen), it will generate one temporary
+midway tree (or possibly even more, if you had lots of criss-crossing
+merges and more than two merge bases) as a temporary internal merge
+base, and again, those are real objects, but the end result will not end
+up pointing to them, so they end up "dangling" in your repository.
+
+Generally, dangling objects aren't anything to worry about. They can
+even be very useful: if you screw something up, the dangling objects can
+be how you recover your old tree (say, you did a rebase, and realized
+that you really didn't want to - you can look at what dangling objects
+you have, and decide to reset your head to some old dangling state).
+
+For commits, you can just use:
+
+------------------------------------------------
+$ gitk <dangling-commit-sha-goes-here> --not --all
+------------------------------------------------
+
+This asks for all the history reachable from the given commit but not
+from any branch, tag, or other reference.  If you decide it's something
+you want, you can always create a new reference to it, e.g.,
+
+------------------------------------------------
+$ git branch recovered-branch <dangling-commit-sha-goes-here>
+------------------------------------------------
+
+For blobs and trees, you can't do the same, but you can still examine
+them.  You can just do
+
+------------------------------------------------
+$ git show <dangling-blob/tree-sha-goes-here>
+------------------------------------------------
+
+to show what the contents of the blob were (or, for a tree, basically
+what the "ls" for that directory was), and that may give you some idea
+of what the operation was that left that dangling object.
+
+Usually, dangling blobs and trees aren't very interesting. They're
+almost always the result of either being a half-way mergebase (the blob
+will often even have the conflict markers from a merge in it, if you
+have had conflicting merges that you fixed up by hand), or simply
+because you interrupted a "git fetch" with ^C or something like that,
+leaving _some_ of the new objects in the object database, but just
+dangling and useless.
+
+Anyway, once you are sure that you're not interested in any dangling
+state, you can just prune all unreachable objects:
+
+------------------------------------------------
+$ git prune
+------------------------------------------------
+
+and they'll be gone. But you should only run "git prune" on a quiescent
+repository - it's kind of like doing a filesystem fsck recovery: you
+don't want to do that while the filesystem is mounted.
+
+(The same is true of "git-fsck" itself, btw - but since
+git-fsck never actually *changes* the repository, it just reports
+on what it found, git-fsck itself is never "dangerous" to run.
+Running it while somebody is actually changing the repository can cause
+confusing and scary messages, but it won't actually do anything bad. In
+contrast, running "git prune" while somebody is actively changing the
+repository is a *BAD* idea).
 
 [[the-index]]
 The index
@@ -3384,154 +3531,6 @@ $ git-merge-index git-merge-one-file hello.c
 -------------------------------------------------
 
 and that is what higher level `git merge -s resolve` is implemented with.
-
-[[pack-files]]
-How git stores objects efficiently: pack files
-----------------------------------------------
-
-We've seen how git stores each object in a file named after the
-object's SHA1 hash.
-
-Unfortunately this system becomes inefficient once a project has a
-lot of objects.  Try this on an old project:
-
-------------------------------------------------
-$ git count-objects
-6930 objects, 47620 kilobytes
-------------------------------------------------
-
-The first number is the number of objects which are kept in
-individual files.  The second is the amount of space taken up by
-those "loose" objects.
-
-You can save space and make git faster by moving these loose objects in
-to a "pack file", which stores a group of objects in an efficient
-compressed format; the details of how pack files are formatted can be
-found in link:technical/pack-format.txt[technical/pack-format.txt].
-
-To put the loose objects into a pack, just run git repack:
-
-------------------------------------------------
-$ git repack
-Generating pack...
-Done counting 6020 objects.
-Deltifying 6020 objects.
- 100% (6020/6020) done
-Writing 6020 objects.
- 100% (6020/6020) done
-Total 6020, written 6020 (delta 4070), reused 0 (delta 0)
-Pack pack-3e54ad29d5b2e05838c75df582c65257b8d08e1c created.
-------------------------------------------------
-
-You can then run
-
-------------------------------------------------
-$ git prune
-------------------------------------------------
-
-to remove any of the "loose" objects that are now contained in the
-pack.  This will also remove any unreferenced objects (which may be
-created when, for example, you use "git reset" to remove a commit).
-You can verify that the loose objects are gone by looking at the
-.git/objects directory or by running
-
-------------------------------------------------
-$ git count-objects
-0 objects, 0 kilobytes
-------------------------------------------------
-
-Although the object files are gone, any commands that refer to those
-objects will work exactly as they did before.
-
-The gitlink:git-gc[1] command performs packing, pruning, and more for
-you, so is normally the only high-level command you need.
-
-[[dangling-objects]]
-Dangling objects
-----------------
-
-The gitlink:git-fsck[1] command will sometimes complain about dangling
-objects.  They are not a problem.
-
-The most common cause of dangling objects is that you've rebased a
-branch, or you have pulled from somebody else who rebased a branch--see
-<<cleaning-up-history>>.  In that case, the old head of the original
-branch still exists, as does everything it pointed to. The branch
-pointer itself just doesn't, since you replaced it with another one.
-
-There are also other situations that cause dangling objects. For
-example, a "dangling blob" may arise because you did a "git add" of a
-file, but then, before you actually committed it and made it part of the
-bigger picture, you changed something else in that file and committed
-that *updated* thing - the old state that you added originally ends up
-not being pointed to by any commit or tree, so it's now a dangling blob
-object.
-
-Similarly, when the "recursive" merge strategy runs, and finds that
-there are criss-cross merges and thus more than one merge base (which is
-fairly unusual, but it does happen), it will generate one temporary
-midway tree (or possibly even more, if you had lots of criss-crossing
-merges and more than two merge bases) as a temporary internal merge
-base, and again, those are real objects, but the end result will not end
-up pointing to them, so they end up "dangling" in your repository.
-
-Generally, dangling objects aren't anything to worry about. They can
-even be very useful: if you screw something up, the dangling objects can
-be how you recover your old tree (say, you did a rebase, and realized
-that you really didn't want to - you can look at what dangling objects
-you have, and decide to reset your head to some old dangling state).
-
-For commits, you can just use:
-
-------------------------------------------------
-$ gitk <dangling-commit-sha-goes-here> --not --all
-------------------------------------------------
-
-This asks for all the history reachable from the given commit but not
-from any branch, tag, or other reference.  If you decide it's something
-you want, you can always create a new reference to it, e.g.,
-
-------------------------------------------------
-$ git branch recovered-branch <dangling-commit-sha-goes-here>
-------------------------------------------------
-
-For blobs and trees, you can't do the same, but you can still examine
-them.  You can just do
-
-------------------------------------------------
-$ git show <dangling-blob/tree-sha-goes-here>
-------------------------------------------------
-
-to show what the contents of the blob were (or, for a tree, basically
-what the "ls" for that directory was), and that may give you some idea
-of what the operation was that left that dangling object.
-
-Usually, dangling blobs and trees aren't very interesting. They're
-almost always the result of either being a half-way mergebase (the blob
-will often even have the conflict markers from a merge in it, if you
-have had conflicting merges that you fixed up by hand), or simply
-because you interrupted a "git fetch" with ^C or something like that,
-leaving _some_ of the new objects in the object database, but just
-dangling and useless.
-
-Anyway, once you are sure that you're not interested in any dangling
-state, you can just prune all unreachable objects:
-
-------------------------------------------------
-$ git prune
-------------------------------------------------
-
-and they'll be gone. But you should only run "git prune" on a quiescent
-repository - it's kind of like doing a filesystem fsck recovery: you
-don't want to do that while the filesystem is mounted.
-
-(The same is true of "git-fsck" itself, btw - but since
-git-fsck never actually *changes* the repository, it just reports
-on what it found, git-fsck itself is never "dangerous" to run.
-Running it while somebody is actually changing the repository can cause
-confusing and scary messages, but it won't actually do anything bad. In
-contrast, running "git prune" while somebody is actively changing the
-repository is a *BAD* idea).
 
 [[hacking-git]]
 Hacking git
