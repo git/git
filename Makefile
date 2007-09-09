@@ -398,6 +398,7 @@ ifeq ($(uname_S),Darwin)
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = UnfortunatelyYes
 	NO_STRLCPY = YesPlease
+	NO_MEMMEM = YesPlease
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
