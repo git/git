@@ -841,14 +841,9 @@ sub working_head_info {
 
 sub read_commit_parents {
 	my ($parents, $c) = @_;
-	my ($fh, $ctx) = command_output_pipe(qw/cat-file commit/, $c);
-	while (<$fh>) {
-		chomp;
-		last if '';
-		/^parent ($sha1)/ or next;
-		push @{$parents->{$c}}, $1;
-	}
-	close $fh; # break the pipe
+	chomp(my $p = command_oneline(qw/rev-list --parents -1/, $c));
+	$p =~ s/^($c)\s*// or die "rev-list --parents -1 $c failed!\n";
+	@{$parents->{$c}} = split(/ /, $p);
 }
 
 sub linearize_history {
@@ -3013,7 +3008,7 @@ package Git::SVN::Ra;
 use vars qw/@ISA $config_dir $_log_window_size/;
 use strict;
 use warnings;
-my ($can_do_switch, %ignored_err, $RA);
+my ($ra_invalid, $can_do_switch, %ignored_err, $RA);
 
 BEGIN {
 	# enforce temporary pool usage for some simple functions
@@ -3174,7 +3169,11 @@ sub gs_do_switch {
 			$self->{url} = $full_url;
 			$reparented = 1;
 		} else {
+			$_[0] = undef;
+			$self = undef;
+			$RA = undef;
 			$ra = Git::SVN::Ra->new($full_url);
+			$ra_invalid = 1;
 		}
 	}
 	$ra ||= $self;
@@ -3234,6 +3233,7 @@ sub gs_fetch_loop_common {
 	my $inc = $_log_window_size;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my $longest_path = longest_common_path($gsv, $globs);
+	my $ra_url = $self->{url};
 	while (1) {
 		my %revs;
 		my $err;
@@ -3294,6 +3294,13 @@ sub gs_fetch_loop_common {
 				my $k = "svn-remote.$g->{remote}." .
 				        "$g->{t}-maxRev";
 				Git::SVN::tmp_config($k, $r);
+			}
+			if ($ra_invalid) {
+				$_[0] = undef;
+				$self = undef;
+				$RA = undef;
+				$self = Git::SVN::Ra->new($ra_url);
+				$ra_invalid = undef;
 			}
 		}
 		# pre-fill the .rev_db since it'll eventually get filled in

@@ -3144,6 +3144,22 @@ static void diffcore_apply_filter(const char *filter)
 	*q = outq;
 }
 
+/* Check whether two filespecs with the same mode and size are identical */
+static int diff_filespec_is_identical(struct diff_filespec *one,
+				      struct diff_filespec *two)
+{
+	if (S_ISGITLINK(one->mode)) {
+		diff_fill_sha1_info(one);
+		diff_fill_sha1_info(two);
+		return !hashcmp(one->sha1, two->sha1);
+	}
+	if (diff_populate_filespec(one, 0))
+		return 0;
+	if (diff_populate_filespec(two, 0))
+		return 0;
+	return !memcmp(one->data, two->data, one->size);
+}
+
 static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 {
 	int i;
@@ -3175,10 +3191,7 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 		    diff_populate_filespec(p->one, 1) ||
 		    diff_populate_filespec(p->two, 1) ||
 		    (p->one->size != p->two->size) ||
-
-		    diff_populate_filespec(p->one, 0) || /* (2) */
-		    diff_populate_filespec(p->two, 0) ||
-		    memcmp(p->one->data, p->two->data, p->one->size))
+		    !diff_filespec_is_identical(p->one, p->two)) /* (2) */
 			diff_q(&outq, p);
 		else {
 			/*

@@ -873,7 +873,7 @@ sub commit {
 
 		$dest =~ tr/_/\./ if $opt_u;
 
-		system('git-tag', $dest, $cid) == 0
+		system('git-tag', '-f', $dest, $cid) == 0
 			or die "Cannot create tag $dest: $!\n";
 
 		print "Created tag '$dest' on '$branch'\n" if $opt_v;
