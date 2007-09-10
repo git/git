@@ -1010,7 +1010,11 @@ proc read_ls_others {fd after} {
 	set pck [split $buf_rlo "\0"]
 	set buf_rlo [lindex $pck end]
 	foreach p [lrange $pck 0 end-1] {
-		merge_state [encoding convertfrom $p] ?O
+		set p [encoding convertfrom $p]
+		if {[string index $p end] eq {/}} {
+			set p [string range $p 0 end-1]
+		}
+		merge_state $p ?O
 	}
 	rescan_done $fd buf_rlo $after
 }
