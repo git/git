@@ -630,8 +630,16 @@ pack.deltaCacheSize::
 	A value of 0 means no limit. Defaults to 0.
 
 pack.deltaCacheLimit::
-	The maxium size of a delta, that is cached in
+	The maximum size of a delta, that is cached in
 	gitlink:git-pack-objects[1]. Defaults to 1000.
+
+pack.threads::
+	Specifies the number of threads to spawn when searching for best
+	delta matches.  This requires that gitlink:git-pack-objects[1]
+	be compiled with pthreads otherwise this option is ignored with a
+	warning. This is meant to reduce packing time on multiprocessor
+	machines. The required amount of memory for the delta search window
+	is however multiplied by the number of threads.
 
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches
