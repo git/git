@@ -369,6 +369,11 @@ shorthand:
 The full name is occasionally useful if, for example, there ever
 exists a tag and a branch with the same name.
 
+(Newly created refs are actually stored in the .git/refs directory,
+under the path given by their name.  However, for efficiency reasons
+they may also be packed together in a single file; see
+gitlink:git-pack-refs[1]).
+
 As another useful shortcut, the "HEAD" of a repository can be referred
 to just using the name of that repository.  So, for example, "origin"
 is usually a shortcut for the HEAD branch in the repository "origin".
@@ -2189,9 +2194,9 @@ test|release)
 	git checkout $1 && git pull . origin
 	;;
 origin)
-	before=$(cat .git/refs/remotes/origin/master)
+	before=$(git rev-parse refs/remotes/origin/master)
 	git fetch origin
-	after=$(cat .git/refs/remotes/origin/master)
+	after=$(git rev-parse refs/remotes/origin/master)
 	if [ $before != $after ]
 	then
 		git log $before..$after | git shortlog
@@ -2216,11 +2221,10 @@ usage()
 	exit 1
 }
 
-if [ ! -f .git/refs/heads/"$1" ]
-then
+git show-ref -q --verify -- refs/heads/"$1" || {
 	echo "Can't see branch <$1>" 1>&2
 	usage
-fi
+}
 
 case "$2" in
 test|release)
@@ -2251,7 +2255,7 @@ then
 	git log test..release
 fi
 
-for branch in `ls .git/refs/heads`
+for branch in `git show-ref --heads | sed 's|^.*/||'`
 do
 	if [ $branch = test -o $branch = release ]
 	then
@@ -2946,7 +2950,7 @@ nLE/L9aUXdWeTFPron96DLA=
 See the gitlink:git-tag[1] command to learn how to create and verify tag
 objects.  (Note that gitlink:git-tag[1] can also be used to create
 "lightweight tags", which are not tag objects at all, but just simple
-references in .git/refs/tags/).
+references whose names begin with "refs/tags/").
 
 [[pack-files]]
 How git stores objects efficiently: pack files
