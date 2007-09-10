@@ -84,14 +84,16 @@ static int run_remote_archiver(const char *remote, int argc,
 static void *format_subst(const struct commit *commit, const char *format,
                           unsigned long *sizep)
 {
-	unsigned long len = *sizep, result_len = 0;
+	unsigned long len = *sizep;
 	const char *a = format;
-	char *result = NULL;
+	struct strbuf result;
+	struct strbuf fmt;
+
+	strbuf_init(&result, 0);
+	strbuf_init(&fmt, 0);
 
 	for (;;) {
 		const char *b, *c;
-		char *fmt, *formatted = NULL;
-		unsigned long a_len, fmt_len, formatted_len, allocated = 0;
 
 		b = memmem(a, len, "$Format:", 8);
 		if (!b || a + len < b + 9)
@@ -100,32 +102,23 @@ static void *format_subst(const struct commit *commit, const char *format,
 		if (!c)
 			break;
 
-		a_len = b - a;
-		fmt_len = c - b - 8;
-		fmt = xmalloc(fmt_len + 1);
-		memcpy(fmt, b + 8, fmt_len);
-		fmt[fmt_len] = '\0';
+		strbuf_reset(&fmt);
+		strbuf_add(&fmt, b + 8, c - b - 8);
 
-		formatted_len = format_commit_message(commit, fmt, &formatted,
-		                                      &allocated);
-		free(fmt);
-		result = xrealloc(result, result_len + a_len + formatted_len);
-		memcpy(result + result_len, a, a_len);
-		memcpy(result + result_len + a_len, formatted, formatted_len);
-		result_len += a_len + formatted_len;
+		strbuf_add(&result, a, b - a);
+		format_commit_message(commit, fmt.buf, &result);
 		len -= c + 1 - a;
 		a = c + 1;
 	}
 
-	if (result && len) {
-		result = xrealloc(result, result_len + len);
-		memcpy(result + result_len, a, len);
-		result_len += len;
+	if (result.len && len) {
+		strbuf_add(&result, a, len);
 	}
 
-	*sizep = result_len;
+	*sizep = result.len;
 
-	return result;
+	strbuf_release(&fmt);
+	return strbuf_detach(&result);
 }
 
 static void *convert_to_archive(const char *path,
