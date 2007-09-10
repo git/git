@@ -200,6 +200,10 @@ static ssize_t do_sign(char *buffer, size_t size, size_t max)
 			bracket[1] = '\0';
 	}
 
+	/* When the username signingkey is bad, program could be terminated
+	 * because gpg exits without reading and then write gets SIGPIPE. */
+	signal(SIGPIPE, SIG_IGN);
+
 	memset(&gpg, 0, sizeof(gpg));
 	gpg.argv = args;
 	gpg.in = -1;
@@ -212,12 +216,17 @@ static ssize_t do_sign(char *buffer, size_t size, size_t max)
 	if (start_command(&gpg))
 		return error("could not run gpg.");
 
-	write_or_die(gpg.in, buffer, size);
+	if (write_in_full(gpg.in, buffer, size) != size) {
+		close(gpg.in);
+		finish_command(&gpg);
+		return error("gpg did not accept the tag data");
+	}
 	close(gpg.in);
 	gpg.close_in = 0;
 	len = read_in_full(gpg.out, buffer + size, max - size);
 
-	finish_command(&gpg);
+	if (finish_command(&gpg) || !len || len < 0)
+		return error("gpg failed to sign the tag");
 
 	if (len == max - size)
 		return error("could not read the entire signature from gpg.");
@@ -310,9 +319,10 @@ static void create_tag(const unsigned char *object, const char *tag,
 	size += header_len;
 
 	if (sign) {
-		size = do_sign(buffer, size, max_size);
-		if (size < 0)
+		ssize_t r = do_sign(buffer, size, max_size);
+		if (r < 0)
 			die("unable to sign the tag");
+		size = r;
 	}
 
 	if (write_sha1_file(buffer, size, tag_type, result) < 0)
