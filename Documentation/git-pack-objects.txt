@@ -173,6 +173,14 @@ base-name::
 	length, this option typically shrinks the resulting
 	packfile by 3-5 per-cent.
 
+--threads=<n>::
+	Specifies the number of threads to spawn when searching for best
+	delta matches.  This requires that pack-objects be compiled with
+	pthreads otherwise this option is ignored with a warning.
+	This is meant to reduce packing time on multiprocessor machines.
+	The required amount of memory for the delta search window is
+	however multiplied by the number of threads.
+
 --index-version=<version>[,<offset>]::
 	This is intended to be used by the test suite only. It allows
 	to force the version for the generated pack index, and to force

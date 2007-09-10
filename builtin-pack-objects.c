@@ -24,7 +24,7 @@ git-pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--max-pack-size=N] [--local] [--incremental] \n\
 	[--window=N] [--window-memory=N] [--depth=N] \n\
 	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
-	[--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
+	[--threads=N] [--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
 	[--stdout | base-name] [<ref-list | <object-list]";
 
 struct object_entry {
@@ -72,6 +72,7 @@ static int progress = 1;
 static int window = 10;
 static uint32_t pack_size_limit;
 static int depth = 50;
+static int delta_search_threads = 1;
 static int pack_to_stdout;
 static int num_preferred_base;
 static struct progress progress_state;
@@ -1605,19 +1606,22 @@ static void *threaded_find_deltas(void *arg)
 	}
 }
 
-#define NR_THREADS	4
-
 static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 			   int window, int depth, unsigned *processed)
 {
-	struct thread_params p[NR_THREADS];
+	struct thread_params p[delta_search_threads];
 	int i, ret;
 	unsigned chunk_size;
+
+	if (delta_search_threads <= 1) {
+		find_deltas(list, list_size, window, depth, processed);
+		return;
+	}
 
 	pthread_mutex_lock(&data_provider);
 	pthread_mutex_lock(&data_ready);
 
-	for (i = 0; i < NR_THREADS; i++) {
+	for (i = 0; i < delta_search_threads; i++) {
 		p[i].window = window;
 		p[i].depth = depth;
 		p[i].processed = processed;
@@ -1898,6 +1902,18 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		if (!prefixcmp(arg, "--window-memory=")) {
 			if (!git_parse_ulong(arg+16, &window_memory_limit))
 				usage(pack_usage);
+			continue;
+		}
+		if (!prefixcmp(arg, "--threads=")) {
+			char *end;
+			delta_search_threads = strtoul(arg+10, &end, 0);
+			if (!arg[10] || *end || delta_search_threads < 1)
+				usage(pack_usage);
+#ifndef THREADED_DELTA_SEARCH
+			if (delta_search_threads > 1)
+				warning("no threads support, "
+					"ignoring %s", arg);
+#endif
 			continue;
 		}
 		if (!prefixcmp(arg, "--depth=")) {
