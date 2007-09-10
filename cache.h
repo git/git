@@ -592,7 +592,6 @@ extern void trace_argv_printf(const char **argv, int count, const char *format, 
 /* convert.c */
 extern char *convert_to_git(const char *path, const char *src, unsigned long *sizep);
 extern char *convert_to_working_tree(const char *path, const char *src, unsigned long *sizep);
-extern void *convert_sha1_file(const char *path, const unsigned char *sha1, unsigned int mode, enum object_type *type, unsigned long *size);
 
 /* diff.c */
 extern int diff_auto_refresh_index;

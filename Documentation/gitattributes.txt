@@ -421,6 +421,23 @@ frotz	unspecified
 ----------------------------------------------------------------
 
 
+Creating an archive
+~~~~~~~~~~~~~~~~~~~
+
+`export-subst`
+^^^^^^^^^^^^^^
+
+If the attribute `export-subst` is set for a file then git will expand
+several placeholders when adding this file to an archive.  The
+expansion depends on the availability of a commit ID, i.e. if
+gitlink:git-archive[1] has been given a tree instead of a commit or a
+tag then no replacement will be done.  The placeholders are the same
+as those for the option `--pretty=format:` of gitlink:git-log[1],
+except that they need to be wrapped like this: `$Format:PLACEHOLDERS$`
+in the file.  E.g. the string `$Format:%H$` will be replaced by the
+commit hash.
+
+
 GIT
 ---
 Part of the gitlink:git[7] suite
