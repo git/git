@@ -2,27 +2,16 @@
 #include "cache.h"
 #include "refs.h"
 #include "commit.h"
-
-#define CHUNK_SIZE 1024
+#include "strbuf.h"
 
 static char *get_stdin(void)
 {
-	size_t offset = 0;
-	char *data = xmalloc(CHUNK_SIZE);
-
-	while (1) {
-		ssize_t cnt = xread(0, data + offset, CHUNK_SIZE);
-		if (cnt < 0)
-			die("error reading standard input: %s",
-			    strerror(errno));
-		if (cnt == 0) {
-			data[offset] = 0;
-			break;
-		}
-		offset += cnt;
-		data = xrealloc(data, offset + CHUNK_SIZE);
+	struct strbuf buf;
+	strbuf_init(&buf, 0);
+	if (strbuf_read(&buf, 0, 1024) < 0) {
+		die("error reading standard input: %s", strerror(errno));
 	}
-	return data;
+	return strbuf_detach(&buf);
 }
 
 static void show_new(enum object_type type, unsigned char *sha1_new)
