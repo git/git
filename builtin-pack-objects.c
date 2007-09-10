@@ -1597,6 +1597,7 @@ static void *threaded_find_deltas(void *arg)
 		data_requester = me;
 		pthread_mutex_unlock(&data_provider);
 		pthread_mutex_lock(&data_ready);
+		pthread_mutex_unlock(&data_request);
 
 		if (!me->list_size)
 			return NULL;
@@ -1609,7 +1610,7 @@ static void *threaded_find_deltas(void *arg)
 static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 			   int window, int depth, unsigned *processed)
 {
-	struct thread_params p[delta_search_threads];
+	struct thread_params *target, p[delta_search_threads];
 	int i, ret;
 	unsigned chunk_size;
 
@@ -1645,17 +1646,17 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 			sublist_size++;
 
 		pthread_mutex_lock(&data_provider);
-		data_requester->list = list;
-		data_requester->list_size = sublist_size;
+		target = data_requester;
+		target->list = list;
+		target->list_size = sublist_size;
 		pthread_mutex_unlock(&data_ready);
 
 		list += sublist_size;
 		list_size -= sublist_size;
 		if (!sublist_size) {
-			pthread_join(data_requester->thread, NULL);
+			pthread_join(target->thread, NULL);
 			i--;
 		}
-		pthread_mutex_unlock(&data_request);
 	} while (i);
 }
 
