@@ -1301,6 +1301,10 @@ static pthread_mutex_t read_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define read_lock()		pthread_mutex_lock(&read_mutex)
 #define read_unlock()		pthread_mutex_unlock(&read_mutex)
 
+static pthread_mutex_t cache_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define cache_lock()		pthread_mutex_lock(&cache_mutex)
+#define cache_unlock()		pthread_mutex_unlock(&cache_mutex)
+
 static pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define progress_lock()		pthread_mutex_lock(&progress_mutex)
 #define progress_unlock()	pthread_mutex_unlock(&progress_mutex)
@@ -1309,6 +1313,8 @@ static pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define read_lock()		0
 #define read_unlock()		0
+#define cache_lock()		0
+#define cache_unlock()		0
 #define progress_lock()		0
 #define progress_unlock()	0
 
@@ -1423,17 +1429,27 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	trg_entry->delta_size = delta_size;
 	trg->depth = src->depth + 1;
 
+	/*
+	 * Handle memory allocation outside of the cache
+	 * accounting lock.  Compiler will optimize the strangeness
+	 * away when THREADED_DELTA_SEARCH is not defined.
+	 */
+	if (trg_entry->delta_data)
+		free(trg_entry->delta_data);
+	cache_lock();
 	if (trg_entry->delta_data) {
 		delta_cache_size -= trg_entry->delta_size;
-		free(trg_entry->delta_data);
 		trg_entry->delta_data = NULL;
 	}
-
 	if (delta_cacheable(src_size, trg_size, delta_size)) {
-		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
 		delta_cache_size += trg_entry->delta_size;
-	} else
+		cache_unlock();
+		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
+	} else {
+		cache_unlock();
 		free(delta_buf);
+	}
+
 	return 1;
 }
 
