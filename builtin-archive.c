@@ -108,6 +108,7 @@ static void *format_subst(const struct commit *commit, const char *format,
 
 		formatted_len = format_commit_message(commit, fmt, &formatted,
 		                                      &allocated);
+		free(fmt);
 		result = xrealloc(result, result_len + a_len + formatted_len);
 		memcpy(result + result_len, a, a_len);
 		memcpy(result + result_len + a_len, formatted, formatted_len);
