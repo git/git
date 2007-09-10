@@ -527,14 +527,14 @@ method _open_tooltip {} {
 	set last [_reflog_last $this [lindex $spec 1]]
 	if {$last ne {}} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "updated"
+		$tooltip_t insert end [mc "Updated"]
 		$tooltip_t insert end " $last"
 	}
 	$tooltip_t insert end "\n"
 
 	if {$tag ne {}} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "tag" section_header
+		$tooltip_t insert end [mc "Tag"] section_header
 		$tooltip_t insert end "  [lindex $tag 1]\n"
 		$tooltip_t insert end [lindex $tag 2]
 		$tooltip_t insert end " ([lindex $tag 3])\n"
@@ -544,7 +544,7 @@ method _open_tooltip {} {
 
 	if {$cmit ne {}} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "commit" section_header
+		$tooltip_t insert end [mc "Commit"] section_header
 		$tooltip_t insert end "  [lindex $cmit 1]\n"
 		$tooltip_t insert end [lindex $cmit 2]
 		$tooltip_t insert end " ([lindex $cmit 3])\n"
@@ -553,11 +553,11 @@ method _open_tooltip {} {
 
 	if {[llength $spec] > 2} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "remote" section_header
+		$tooltip_t insert end [mc "Remote"] section_header
 		$tooltip_t insert end "  [lindex $spec 2]\n"
-		$tooltip_t insert end "url"
+		$tooltip_t insert end [mc "URL"]
 		$tooltip_t insert end " $remote_url([lindex $spec 2])\n"
-		$tooltip_t insert end "branch"
+		$tooltip_t insert end [mc "Branch"]
 		$tooltip_t insert end " [lindex $spec 3]"
 	}
 
