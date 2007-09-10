@@ -1635,6 +1635,11 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 		if (sublist_size > list_size)
 			sublist_size = list_size;
 
+		/* try to split chunks on "path" boundaries */
+		while (sublist_size < list_size && list[sublist_size]->hash &&
+		       list[sublist_size]->hash == list[sublist_size-1]->hash)
+			sublist_size++;
+
 		pthread_mutex_lock(&data_provider);
 		data_requester->list = list;
 		data_requester->list_size = sublist_size;
