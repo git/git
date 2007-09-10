@@ -8,8 +8,9 @@ git-rebase - Forward-port local commits to the updated upstream head
 SYNOPSIS
 --------
 [verse]
-'git-rebase' [-i | --interactive] [-v | --verbose] [-m | --merge] [-C<n>]
-	[-p | --preserve-merges] [--onto <newbase>] <upstream> [<branch>]
+'git-rebase' [-i | --interactive] [-v | --verbose] [-m | --merge]
+	[-C<n>] [ --whitespace=<option>] [-p | --preserve-merges]
+	[--onto <newbase>] <upstream> [<branch>]
 'git-rebase' --continue | --skip | --abort
 
 DESCRIPTION
@@ -208,6 +209,10 @@ OPTIONS
 	and after each change.  When fewer lines of surrounding
 	context exist they all must match.  By default no context is
 	ever ignored.
+
+--whitespace=<nowarn|warn|error|error-all|strip>::
+	This flag is passed to the `git-apply` program
+	(see gitlink:git-apply[1]) that applies the patch.
 
 -i, \--interactive::
 	Make a list of the commits which are about to be rebased.  Let the

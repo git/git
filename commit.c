@@ -787,8 +787,8 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	interp_set_entry(table, 6, show_date(date, tz, DATE_ISO8601));
 }
 
-static long format_commit_message(const struct commit *commit,
-		const char *msg, char **buf_p, unsigned long *space_p)
+long format_commit_message(const struct commit *commit, const void *format,
+                           char **buf_p, unsigned long *space_p)
 {
 	struct interp table[] = {
 		{ "%H" },	/* commit hash */
@@ -843,6 +843,7 @@ static long format_commit_message(const struct commit *commit,
 	char parents[1024];
 	int i;
 	enum { HEADER, SUBJECT, BODY } state;
+	const char *msg = commit->buffer;
 
 	if (ILEFT_RIGHT + 1 != ARRAY_SIZE(table))
 		die("invalid interp table!");
@@ -924,7 +925,7 @@ static long format_commit_message(const struct commit *commit,
 		char *buf = *buf_p;
 		unsigned long space = *space_p;
 
-		space = interpolate(buf, space, user_format,
+		space = interpolate(buf, space, format,
 				    table, ARRAY_SIZE(table));
 		if (!space)
 			break;
@@ -1165,7 +1166,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 	char *buf;
 
 	if (fmt == CMIT_FMT_USERFORMAT)
-		return format_commit_message(commit, msg, buf_p, space_p);
+		return format_commit_message(commit, user_format, buf_p, space_p);
 
 	encoding = (git_log_output_encoding
 		    ? git_log_output_encoding

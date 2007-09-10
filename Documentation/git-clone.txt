@@ -68,7 +68,7 @@ OPTIONS
 	automatically setup .git/objects/info/alternates to
 	obtain objects from the reference repository.  Using
 	an already existing repository as an alternate will
-	require less objects to be copied from the repository
+	require fewer objects to be copied from the repository
 	being cloned, reducing network and local storage costs.
 
 --quiet::

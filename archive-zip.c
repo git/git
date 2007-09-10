@@ -12,6 +12,7 @@
 static int verbose;
 static int zip_date;
 static int zip_time;
+static const struct commit *commit;
 
 static unsigned char *zip_dir;
 static unsigned int zip_dir_size;
@@ -195,7 +196,8 @@ static int write_zip_entry(const unsigned char *sha1,
 		if (S_ISREG(mode) && zlib_compression_level != 0)
 			method = 8;
 		result = 0;
-		buffer = convert_sha1_file(path, sha1, mode, &type, &size);
+		buffer = sha1_file_to_archive(path, sha1, mode, &type, &size,
+		                              commit);
 		if (!buffer)
 			die("cannot read %s", sha1_to_hex(sha1));
 		crc = crc32(crc, buffer, size);
@@ -316,6 +318,7 @@ int write_zip_archive(struct archiver_args *args)
 	zip_dir = xmalloc(ZIP_DIRECTORY_MIN_SIZE);
 	zip_dir_size = ZIP_DIRECTORY_MIN_SIZE;
 	verbose = args->verbose;
+	commit = args->commit;
 
 	if (args->base && plen > 0 && args->base[plen - 1] == '/') {
 		char *base = xstrdup(args->base);

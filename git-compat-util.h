@@ -172,6 +172,12 @@ extern uintmax_t gitstrtoumax(const char *, char **, int);
 extern const char *githstrerror(int herror);
 #endif
 
+#ifdef NO_MEMMEM
+#define memmem gitmemmem
+void *gitmemmem(const void *haystack, size_t haystacklen,
+                const void *needle, size_t needlelen);
+#endif
+
 extern void release_pack_memory(size_t, int);
 
 static inline char* xstrdup(const char *str)

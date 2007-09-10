@@ -9,7 +9,7 @@
 
 static const char push_usage[] = "git-push [--all] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
 
-static int all, force, thin = 1, verbose;
+static int all, force, thin, verbose;
 static const char *receivepack;
 
 static const char **refspec;
