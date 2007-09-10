@@ -293,8 +293,7 @@ static int update_one(struct cache_tree *it,
 	/*
 	 * Then write out the tree object for this level.
 	 */
-	strbuf_init(&buffer);
-	strbuf_grow(&buffer, 8192);
+	strbuf_init(&buffer, 8192);
 
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = cache[i];
@@ -419,7 +418,7 @@ void *cache_tree_write(struct cache_tree *root, unsigned long *size_p)
 	struct strbuf buffer;
 
 	path[0] = 0;
-	strbuf_init(&buffer);
+	strbuf_init(&buffer, 0);
 	write_one(root, path, 0, &buffer);
 	*size_p = buffer.len;
 	return strbuf_detach(&buffer);

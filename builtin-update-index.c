@@ -303,7 +303,7 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 static void read_index_info(int line_termination)
 {
 	struct strbuf buf;
-	strbuf_init(&buf);
+	strbuf_init(&buf, 0);
 	while (1) {
 		char *ptr, *tab;
 		char *path_name;
@@ -716,7 +716,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	}
 	if (read_from_stdin) {
 		struct strbuf buf;
-		strbuf_init(&buf);
+		strbuf_init(&buf, 0);
 		while (1) {
 			char *path_name;
 			const char *p;

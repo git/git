@@ -2023,7 +2023,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 
 	origin = make_origin(commit, path);
 
-	strbuf_init(&buf);
+	strbuf_init(&buf, 0);
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;
 		const char *read_from;
@@ -2046,7 +2046,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 			fd = open(read_from, O_RDONLY);
 			if (fd < 0)
 				die("cannot open %s", read_from);
-			if (strbuf_read(&buf, fd) != xsize_t(st.st_size))
+			if (strbuf_read(&buf, fd, 0) != xsize_t(st.st_size))
 				die("cannot read %s", read_from);
 			break;
 		case S_IFLNK:
@@ -2062,7 +2062,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 		/* Reading from stdin */
 		contents_from = "standard input";
 		mode = 0;
-		if (strbuf_read(&buf, 0) < 0)
+		if (strbuf_read(&buf, 0, 0) < 0)
 			die("read error %s from stdin", strerror(errno));
 	}
 	origin->file.ptr = buf.buf;

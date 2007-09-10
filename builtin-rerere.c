@@ -78,8 +78,8 @@ static int handle_file(const char *path,
 	FILE *f = fopen(path, "r");
 	FILE *out;
 
-	strbuf_init(&minus);
-	strbuf_init(&plus);
+	strbuf_init(&minus, 0);
+	strbuf_init(&plus,  0);
 
 	if (!f)
 		return error("Could not open %s", path);

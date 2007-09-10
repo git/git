@@ -51,7 +51,7 @@ struct strbuf {
 #define STRBUF_INIT  { 0, 0, 0, NULL }
 
 /*----- strbuf life cycle -----*/
-extern void strbuf_init(struct strbuf *);
+extern void strbuf_init(struct strbuf *, size_t);
 extern void strbuf_release(struct strbuf *);
 extern void strbuf_reset(struct strbuf *);
 extern char *strbuf_detach(struct strbuf *);
@@ -68,12 +68,18 @@ static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
 
 extern void strbuf_grow(struct strbuf *, size_t);
 
+/*----- content related -----*/
+extern void strbuf_rtrim(struct strbuf *);
+
 /*----- add data in your buffer -----*/
 static inline void strbuf_addch(struct strbuf *sb, int c) {
 	strbuf_grow(sb, 1);
 	sb->buf[sb->len++] = c;
 	sb->buf[sb->len] = '\0';
 }
+
+/* inserts after pos, or appends if pos >= sb->len */
+extern void strbuf_insert(struct strbuf *, size_t pos, const void *, size_t);
 
 extern void strbuf_add(struct strbuf *, const void *, size_t);
 static inline void strbuf_addstr(struct strbuf *sb, const char *s) {
@@ -88,7 +94,7 @@ extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
 
 extern size_t strbuf_fread(struct strbuf *, size_t, FILE *);
 /* XXX: if read fails, any partial read is undone */
-extern ssize_t strbuf_read(struct strbuf *, int fd);
+extern ssize_t strbuf_read(struct strbuf *, int fd, size_t hint);
 
 extern void read_line(struct strbuf *, FILE *, int);
 

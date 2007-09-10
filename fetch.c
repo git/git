@@ -218,7 +218,7 @@ int pull_targets_stdin(char ***target, const char ***write_ref)
 	int targets = 0, targets_alloc = 0;
 	struct strbuf buf;
 	*target = NULL; *write_ref = NULL;
-	strbuf_init(&buf);
+	strbuf_init(&buf, 0);
 	while (1) {
 		char *rf_one = NULL;
 		char *tg_one;

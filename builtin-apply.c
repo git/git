@@ -184,8 +184,8 @@ static void *read_patch_file(int fd, unsigned long *sizep)
 {
 	struct strbuf buf;
 
-	strbuf_init(&buf);
-	if (strbuf_read(&buf, fd) < 0)
+	strbuf_init(&buf, 0);
+	if (strbuf_read(&buf, fd, 0) < 0)
 		die("git-apply: read returned %s", strerror(errno));
 	*sizep = buf.len;
 

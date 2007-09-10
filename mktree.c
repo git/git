@@ -51,9 +51,8 @@ static void write_tree(unsigned char *sha1)
 	qsort(entries, used, sizeof(*entries), ent_compare);
 	for (size = i = 0; i < used; i++)
 		size += 32 + entries[i]->len;
-	strbuf_init(&buf);
-	strbuf_grow(&buf, size);
 
+	strbuf_init(&buf, size);
 	for (i = 0; i < used; i++) {
 		struct treeent *ent = entries[i];
 		strbuf_addf(&buf, "%o %s%c", ent->mode, ent->name, '\0');
@@ -83,7 +82,7 @@ int main(int ac, char **av)
 		av++;
 	}
 
-	strbuf_init(&sb);
+	strbuf_init(&sb, 0);
 	while (1) {
 		char *ptr, *ntr;
 		unsigned mode;

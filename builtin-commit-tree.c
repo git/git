@@ -87,8 +87,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	/* Not having i18n.commitencoding is the same as having utf-8 */
 	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
 
-	strbuf_init(&buffer);
-	strbuf_grow(&buffer, 8192); /* should avoid reallocs for the headers */
+	strbuf_init(&buffer, 8192); /* should avoid reallocs for the headers */
 	strbuf_addf(&buffer, "tree %s\n", sha1_to_hex(tree_sha1));
 
 	/*
@@ -107,7 +106,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	strbuf_addch(&buffer, '\n');
 
 	/* And add the comment */
-	if (strbuf_read(&buffer, 0) < 0)
+	if (strbuf_read(&buffer, 0, 0) < 0)
 		die("git-commit-tree: read returned %s", strerror(errno));
 
 	/* And check the encoding */

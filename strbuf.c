@@ -1,8 +1,10 @@
 #include "cache.h"
 #include "strbuf.h"
 
-void strbuf_init(struct strbuf *sb) {
+void strbuf_init(struct strbuf *sb, size_t hint) {
 	memset(sb, 0, sizeof(*sb));
+	if (hint)
+		strbuf_grow(sb, hint);
 }
 
 void strbuf_release(struct strbuf *sb) {
@@ -18,7 +20,7 @@ void strbuf_reset(struct strbuf *sb) {
 
 char *strbuf_detach(struct strbuf *sb) {
 	char *res = sb->buf;
-	strbuf_init(sb);
+	strbuf_init(sb, 0);
 	return res;
 }
 
@@ -26,6 +28,24 @@ void strbuf_grow(struct strbuf *sb, size_t extra) {
 	if (sb->len + extra + 1 <= sb->len)
 		die("you want to use way too much memory");
 	ALLOC_GROW(sb->buf, sb->len + extra + 1, sb->alloc);
+}
+
+void strbuf_rtrim(struct strbuf *sb)
+{
+	while (sb->len > 0 && isspace((unsigned char)sb->buf[sb->len - 1]))
+		sb->len--;
+	sb->buf[sb->len] = '\0';
+}
+
+void strbuf_insert(struct strbuf *sb, size_t pos, const void *data, size_t len) {
+	strbuf_grow(sb, len);
+	if (pos >= sb->len) {
+		pos = sb->len;
+	} else {
+		memmove(sb->buf + pos + len, sb->buf + pos, sb->len - pos);
+	}
+	memcpy(sb->buf + pos, data, len);
+	strbuf_setlen(sb, sb->len + len);
 }
 
 void strbuf_add(struct strbuf *sb, const void *data, size_t len) {
@@ -44,12 +64,12 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...) {
 	if (len < 0) {
 		len = 0;
 	}
-	if (len >= strbuf_avail(sb)) {
+	if (len > strbuf_avail(sb)) {
 		strbuf_grow(sb, len);
 		va_start(ap, fmt);
 		len = vsnprintf(sb->buf + sb->len, sb->alloc - sb->len, fmt, ap);
 		va_end(ap);
-		if (len >= strbuf_avail(sb)) {
+		if (len > strbuf_avail(sb)) {
 			die("this should not happen, your snprintf is broken");
 		}
 	}
@@ -67,14 +87,14 @@ size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f) {
 	return res;
 }
 
-ssize_t strbuf_read(struct strbuf *sb, int fd)
+ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 {
 	size_t oldlen = sb->len;
 
+	strbuf_grow(sb, hint ? hint : 8192);
 	for (;;) {
 		ssize_t cnt;
 
-		strbuf_grow(sb, 8192);
 		cnt = xread(fd, sb->buf + sb->len, sb->alloc - sb->len - 1);
 		if (cnt < 0) {
 			strbuf_setlen(sb, oldlen);
@@ -83,6 +103,7 @@ ssize_t strbuf_read(struct strbuf *sb, int fd)
 		if (!cnt)
 			break;
 		sb->len += cnt;
+		strbuf_grow(sb, 8192);
 	}
 
 	sb->buf[sb->len] = '\0';

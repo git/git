@@ -1640,7 +1640,7 @@ static void *cmd_data (size_t *size)
 {
 	struct strbuf buffer;
 
-	strbuf_init(&buffer);
+	strbuf_init(&buffer, 0);
 	if (prefixcmp(command_buf.buf, "data "))
 		die("Expected 'data n' command, found: %s", command_buf.buf);
 
@@ -2318,7 +2318,7 @@ int main(int argc, const char **argv)
 
 	git_config(git_default_config);
 	alloc_objects(object_entry_alloc);
-	strbuf_init(&command_buf);
+	strbuf_init(&command_buf, 0);
 	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
 	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));

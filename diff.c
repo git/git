@@ -1548,8 +1548,8 @@ static int populate_from_stdin(struct diff_filespec *s)
 {
 	struct strbuf buf;
 
-	strbuf_init(&buf);
-	if (strbuf_read(&buf, 0) < 0)
+	strbuf_init(&buf, 0);
+	if (strbuf_read(&buf, 0, 0) < 0)
 		return error("error while reading from stdin %s",
 				     strerror(errno));
 

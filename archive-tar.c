@@ -132,7 +132,7 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 	struct strbuf ext_header;
 
 	memset(&header, 0, sizeof(header));
-	strbuf_init(&ext_header);
+	strbuf_init(&ext_header, 0);
 
 	if (!sha1) {
 		*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
@@ -214,7 +214,7 @@ static void write_global_extended_header(const unsigned char *sha1)
 {
 	struct strbuf ext_header;
 
-	strbuf_init(&ext_header);
+	strbuf_init(&ext_header, 0);
 	strbuf_append_ext_header(&ext_header, "comment", sha1_to_hex(sha1), 40);
 	write_entry(NULL, NULL, 0, ext_header.buf, ext_header.len);
 	strbuf_release(&ext_header);

@@ -274,7 +274,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		struct strbuf buf;
 		if (all)
 			die("git-checkout-index: don't mix '--all' and '--stdin'");
-		strbuf_init(&buf);
+		strbuf_init(&buf, 0);
 		while (1) {
 			char *path_name;
 			const char *p;
