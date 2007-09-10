@@ -743,20 +743,14 @@ method _showcommit {cur_w lno} {
 		set author_time {}
 		catch {set author_name $header($cmit,author)}
 		catch {set author_email $header($cmit,author-mail)}
-		catch {set author_time [clock format \
-			$header($cmit,author-time) \
-			-format {%Y-%m-%d %H:%M:%S}
-		]}
+		catch {set author_time [format_date $header($cmit,author-time)]}
 
 		set committer_name {}
 		set committer_email {}
 		set committer_time {}
 		catch {set committer_name $header($cmit,committer)}
 		catch {set committer_email $header($cmit,committer-mail)}
-		catch {set committer_time [clock format \
-			$header($cmit,committer-time) \
-			-format {%Y-%m-%d %H:%M:%S}
-		]}
+		catch {set committer_time [format_date $header($cmit,committer-time)]}
 
 		if {[catch {set msg $header($cmit,message)}]} {
 			set msg {}
@@ -892,10 +886,7 @@ method _open_tooltip {cur_w} {
 	set author_time {}
 	catch {set author_name $header($cmit,author)}
 	catch {set summary     $header($cmit,summary)}
-	catch {set author_time [clock format \
-		$header($cmit,author-time) \
-		-format {%Y-%m-%d %H:%M:%S}
-	]}
+	catch {set author_time [format_date $header($cmit,author-time)]}
 
 	$tooltip_t insert end "commit $cmit\n"
 	$tooltip_t insert end "$author_name  $author_time\n"
@@ -914,10 +905,7 @@ method _open_tooltip {cur_w} {
 		set author_time {}
 		catch {set author_name $header($cmit,author)}
 		catch {set summary     $header($cmit,summary)}
-		catch {set author_time [clock format \
-			$header($cmit,author-time) \
-			-format {%Y-%m-%d %H:%M:%S}
-		]}
+		catch {set author_time [foramt_date $header($cmit,author-time)]}
 
 		$tooltip_t insert end "Originally By:\n" section_header
 		$tooltip_t insert end "commit $cmit\n"

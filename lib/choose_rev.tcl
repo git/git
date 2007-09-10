@@ -133,13 +133,13 @@ constructor _new {path unmerged_only title} {
 	append fmt { %(objecttype)}
 	append fmt { %(objectname)}
 	append fmt { [concat %(taggername) %(authorname)]}
-	append fmt { [concat %(taggerdate) %(authordate)]}
+	append fmt { [reformat_date [concat %(taggerdate) %(authordate)]]}
 	append fmt { %(subject)}
 	append fmt {] [list}
 	append fmt { %(*objecttype)}
 	append fmt { %(*objectname)}
 	append fmt { %(*authorname)}
-	append fmt { %(*authordate)}
+	append fmt { [reformat_date %(*authordate)]}
 	append fmt { %(*subject)}
 	append fmt {]}
 	set all_refn [list]
@@ -583,7 +583,7 @@ method _reflog_last {name} {
 	}
 
 	if {$last ne {}} {
-		set last [clock format $last -format {%a %b %e %H:%M:%S %Y}]
+		set last [format_date $last]
 	}
 	set reflog_last($name) $last
 	return $last
