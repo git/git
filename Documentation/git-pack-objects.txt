@@ -155,12 +155,8 @@ base-name::
 	generated pack.  If not specified,  pack compression level is
 	determined first by pack.compression,  then by core.compression,
 	and defaults to -1,  the zlib default,  if neither is set.
-	Data copied from loose objects will be recompressed
-	if core.legacyheaders was true when they were created or if
-	the loose compression level (see core.loosecompression and
-	core.compression) is now a different value than the pack
-	compression level.  Add --no-reuse-object if you want to force
-	a uniform compression level on all data no matter the source.
+	Add \--no-reuse-object if you want to force a uniform compression
+	level on all data no matter the source.
 
 --delta-base-offset::
 	A packed archive can express base object of a delta as
