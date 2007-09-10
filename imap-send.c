@@ -23,6 +23,7 @@
  */
 
 #include "cache.h"
+#include "strbuf.h"
 
 typedef struct store_conf {
 	char *name;
@@ -1160,28 +1161,18 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
 static int
 read_message( FILE *f, msg_data_t *msg )
 {
-	int len, r;
+	struct strbuf buf;
 
-	memset( msg, 0, sizeof *msg );
-	len = CHUNKSIZE;
-	msg->data = xmalloc( len+1 );
-	msg->data[0] = 0;
+	memset(msg, 0, sizeof(*msg));
+	strbuf_init(&buf, 0);
 
-	while(!feof( f )) {
-		if (msg->len >= len) {
-			void *p;
-			len += CHUNKSIZE;
-			p = xrealloc(msg->data, len+1);
-			if (!p)
-				break;
-			msg->data = p;
-		}
-		r = fread( &msg->data[msg->len], 1, len - msg->len, f );
-		if (r <= 0)
+	do {
+		if (strbuf_fread(&buf, CHUNKSIZE, f) <= 0)
 			break;
-		msg->len += r;
-	}
-	msg->data[msg->len] = 0;
+	} while (!feof(f));
+
+	msg->len  = buf.len;
+	msg->data = strbuf_detach(&buf);
 	return msg->len;
 }
 
