@@ -923,15 +923,14 @@ long format_commit_message(const struct commit *commit, const void *format,
 
 	do {
 		char *buf = *buf_p;
-		unsigned long space = *space_p;
+		unsigned long len;
 
-		space = interpolate(buf, space, format,
+		len = interpolate(buf, *space_p, format,
 				    table, ARRAY_SIZE(table));
-		if (!space)
+		if (len < *space_p)
 			break;
-		buf = xrealloc(buf, space);
+		ALLOC_GROW(buf, len + 1, *space_p);
 		*buf_p = buf;
-		*space_p = space;
 	} while (1);
 	interp_clear_table(table, ARRAY_SIZE(table));
 
