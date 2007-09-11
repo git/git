@@ -16,6 +16,7 @@ struct remote {
 	int fetch_refspec_nr;
 
 	const char *receivepack;
+	const char *uploadpack;
 };
 
 struct remote *remote_get(const char *name);
