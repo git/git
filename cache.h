@@ -264,6 +264,7 @@ extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int reall
 extern int remove_index_entry_at(struct index_state *, int pos);
 extern int remove_file_from_index(struct index_state *, const char *path);
 extern int add_file_to_index(struct index_state *, const char *path, int verbose);
+extern struct cache_entry *make_cache_entry(unsigned int mode, const unsigned char *sha1, const char *path, int stage, int refresh);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 extern int ie_match_stat(struct index_state *, struct cache_entry *, struct stat *, int);
 extern int ie_modified(struct index_state *, struct cache_entry *, struct stat *, int);
