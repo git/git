@@ -324,10 +324,11 @@ branch.<name>.remote::
 	If this option is not given, `git fetch` defaults to remote "origin".
 
 branch.<name>.merge::
-	When in branch <name>, it tells `git fetch` the default refspec to
-	be marked for merging in FETCH_HEAD. The value has exactly to match
-	a remote part of one of the refspecs which are fetched from the remote
-	given by "branch.<name>.remote".
+	When in branch <name>, it tells `git fetch` the default
+	refspec to be marked for merging in FETCH_HEAD. The value is
+	handled like the remote part of a refspec, and must match a
+	ref which is fetched from the remote given by
+	"branch.<name>.remote".
 	The merge information is used by `git pull` (which at first calls
 	`git fetch`) to lookup the default branch for merging. Without
 	this option, `git pull` defaults to merge the first refspec fetched.
