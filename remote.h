@@ -49,4 +49,22 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
  */
 int remote_find_tracking(struct remote *remote, struct refspec *refspec);
 
+struct branch {
+	const char *name;
+	const char *refname;
+
+	const char *remote_name;
+	struct remote *remote;
+
+	const char **merge_name;
+	struct refspec **merge;
+	int merge_nr;
+};
+
+struct branch *branch_get(const char *name);
+
+int branch_has_merge_config(struct branch *branch);
+
+int branch_merges(struct branch *branch, const char *refname);
+
 #endif
