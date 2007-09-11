@@ -97,7 +97,8 @@ This hook cannot affect the outcome of `git-merge`.
 
 This hook can be used in conjunction with a corresponding pre-commit hook to
 save and restore any form of metadata associated with the working tree
-(eg: permissions/ownership, ACLS, etc).
+(eg: permissions/ownership, ACLS, etc).  See contrib/hooks/setgitperms.perl
+for an example of how to do this.
 
 [[pre-receive]]
 pre-receive
