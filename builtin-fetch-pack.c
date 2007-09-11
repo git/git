@@ -6,6 +6,7 @@
 #include "exec_cmd.h"
 #include "pack.h"
 #include "sideband.h"
+#include "fetch-pack.h"
 
 static int keep_pack;
 static int transfer_unpack_limit = -1;
@@ -573,7 +574,7 @@ static int get_pack(int xd[2])
 	die("%s died of unnatural causes %d", argv[0], status);
 }
 
-static int fetch_pack(int fd[2], int nr_match, char **match)
+static struct ref *do_fetch_pack(int fd[2], int nr_match, char **match)
 {
 	struct ref *ref;
 	unsigned char sha1[20];
@@ -615,12 +616,7 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		die("git-fetch-pack: fetch failed.");
 
  all_done:
-	while (ref) {
-		printf("%s %s\n",
-		       sha1_to_hex(ref->old_sha1), ref->name);
-		ref = ref->next;
-	}
-	return 0;
+	return ref;
 }
 
 static int remove_duplicates(int nr_heads, char **heads)
@@ -663,15 +659,28 @@ static int fetch_pack_config(const char *var, const char *value)
 
 static struct lock_file lock;
 
-int main(int argc, char **argv)
+void setup_fetch_pack(struct fetch_pack_args *args)
+{
+	uploadpack = args->uploadpack;
+	quiet = args->quiet;
+	keep_pack = args->keep_pack;
+	if (args->unpacklimit >= 0)
+		unpack_limit = args->unpacklimit;
+	if (args->keep_pack)
+		unpack_limit = 0;
+	use_thin_pack = args->use_thin_pack;
+	fetch_all = args->fetch_all;
+	verbose = args->verbose;
+	depth = args->depth;
+	no_progress = args->no_progress;
+}
+
+int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 {
 	int i, ret, nr_heads;
+	struct ref *ref;
 	char *dest = NULL, **heads;
-	int fd[2];
-	pid_t pid;
-	struct stat st;
 
-	setup_git_directory();
 	git_config(fetch_pack_config);
 
 	if (0 <= transfer_unpack_limit)
@@ -682,7 +691,7 @@ int main(int argc, char **argv)
 	nr_heads = 0;
 	heads = NULL;
 	for (i = 1; i < argc; i++) {
-		char *arg = argv[i];
+		const char *arg = argv[i];
 
 		if (*arg == '-') {
 			if (!prefixcmp(arg, "--upload-pack=")) {
@@ -716,8 +725,6 @@ int main(int argc, char **argv)
 			}
 			if (!prefixcmp(arg, "--depth=")) {
 				depth = strtol(arg + 8, NULL, 0);
-				if (stat(git_path("shallow"), &st))
-					st.st_mtime = 0;
 				continue;
 			}
 			if (!strcmp("--no-progress", arg)) {
@@ -726,22 +733,52 @@ int main(int argc, char **argv)
 			}
 			usage(fetch_pack_usage);
 		}
-		dest = arg;
-		heads = argv + i + 1;
+		dest = (char *)arg;
+		heads = (char **)(argv + i + 1);
 		nr_heads = argc - i - 1;
 		break;
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
-	pid = git_connect(fd, dest, uploadpack, verbose ? CONNECT_VERBOSE : 0);
+
+	ref = fetch_pack(dest, nr_heads, heads);
+
+	ret = !ref;
+
+	while (ref) {
+		printf("%s %s\n",
+		       sha1_to_hex(ref->old_sha1), ref->name);
+		ref = ref->next;
+	}
+
+	return ret;
+}
+
+struct ref *fetch_pack(const char *dest, int nr_heads, char **heads)
+{
+	int i, ret;
+	int fd[2];
+	pid_t pid;
+	struct ref *ref;
+	struct stat st;
+
+	if (depth > 0) {
+		if (stat(git_path("shallow"), &st))
+			st.st_mtime = 0;
+	}
+
+	printf("connect to %s\n", dest);
+
+	pid = git_connect(fd, (char *)dest, uploadpack,
+                          verbose ? CONNECT_VERBOSE : 0);
 	if (pid < 0)
-		return 1;
+		return NULL;
 	if (heads && nr_heads)
 		nr_heads = remove_duplicates(nr_heads, heads);
-	ret = fetch_pack(fd, nr_heads, heads);
+	ref = do_fetch_pack(fd, nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
-	ret |= finish_connect(pid);
+	ret = finish_connect(pid);
 
 	if (!ret && nr_heads) {
 		/* If the heads to pull were given, we should have
@@ -785,5 +822,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	return !!ret;
+	if (ret)
+		ref = NULL;
+
+	return ref;
 }
