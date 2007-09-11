@@ -87,6 +87,18 @@ parameter, and is invoked after a commit is made.
 This hook is meant primarily for notification, and cannot affect
 the outcome of `git-commit`.
 
+post-merge
+-----------
+
+This hook is invoked by `git-merge`, which happens when a `git pull`
+is done on a local repository.  The hook takes a single parameter, a status
+flag specifying whether or not the merge being done was a squash merge.
+This hook cannot affect the outcome of `git-merge`.
+
+This hook can be used in conjunction with a corresponding pre-commit hook to
+save and restore any form of metadata associated with the working tree
+(eg: permissions/ownership, ACLS, etc).
+
 [[pre-receive]]
 pre-receive
 -----------
