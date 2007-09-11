@@ -234,14 +234,14 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
 	git-convert-objects$X git-fetch-pack$X \
-	git-hash-object$X git-index-pack$X git-local-fetch$X \
+	git-hash-object$X git-index-pack$X \
 	git-fast-import$X \
 	git-daemon$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
 	git-peek-remote$X git-receive-pack$X \
 	git-send-pack$X git-shell$X \
-	git-show-index$X git-ssh-fetch$X \
-	git-ssh-upload$X git-unpack-file$X \
+	git-show-index$X \
+	git-unpack-file$X \
 	git-update-server-info$X \
 	git-upload-pack$X \
 	git-pack-redundant$X git-var$X \
@@ -268,9 +268,6 @@ OTHER_PROGRAMS = git$X gitweb/gitweb.cgi
 ifndef NO_TCLTK
 OTHER_PROGRAMS += gitk-wish
 endif
-
-# Backward compatibility -- to be removed after 1.0
-PROGRAMS += git-ssh-pull$X git-ssh-push$X
 
 # Set paths to tools early so that they can be used for version tests.
 ifndef SHELL_PATH
@@ -894,14 +891,6 @@ endif
 git-%$X: %.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
-ssh-pull.o: ssh-fetch.c
-ssh-push.o: ssh-upload.c
-git-local-fetch$X: fetch.o
-git-ssh-fetch$X: rsh.o fetch.o
-git-ssh-upload$X: rsh.o
-git-ssh-pull$X: rsh.o fetch.o
-git-ssh-push$X: rsh.o
-
 git-imap-send$X: imap-send.o $(LIB_FILE)
 
 http.o http-fetch.o http-push.o: http.h
@@ -1122,8 +1111,7 @@ check-docs::
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | \
 		git-add--interactive | git-fsck-objects | git-init-db | \
-		git-repo-config | git-fetch--tool | \
-		git-ssh-pull | git-ssh-push ) continue ;; \
+		git-repo-config | git-fetch--tool ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
 		echo "no doc: $$v"; \
