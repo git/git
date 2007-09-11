@@ -317,7 +317,7 @@ static void release_object_request(struct object_request *obj_req)
 }
 
 #ifdef USE_CURL_MULTI
-int fill_active_slot(void)
+static int fill_active_slot(void *unused)
 {
 	struct object_request *obj_req;
 
@@ -1034,6 +1034,10 @@ int main(int argc, const char **argv)
 	alt->got_indices = 0;
 	alt->packs = NULL;
 	alt->next = NULL;
+
+#ifdef USE_CURL_MULTI
+	add_fill_function(NULL, fill_active_slot);
+#endif
 
 	if (pull(commits, commit_id, write_ref, url))
 		rc = 1;

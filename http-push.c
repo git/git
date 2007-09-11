@@ -795,7 +795,7 @@ static void finish_request(struct transfer_request *request)
 }
 
 #ifdef USE_CURL_MULTI
-int fill_active_slot(void)
+static int fill_active_slot(void *unused)
 {
 	struct transfer_request *request = request_queue_head;
 
@@ -2496,6 +2496,7 @@ int main(int argc, char **argv)
 				objects_to_send);
 #ifdef USE_CURL_MULTI
 		fill_active_slots();
+		add_fill_function(NULL, fill_active_slot);
 #endif
 		finish_all_active_slots();
 

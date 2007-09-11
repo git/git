@@ -70,10 +70,8 @@ extern void release_active_slot(struct active_request_slot *slot);
 
 #ifdef USE_CURL_MULTI
 extern void fill_active_slots(void);
+extern void add_fill_function(void *data, int (*fill)(void *));
 extern void step_active_slots(void);
-
-/* Provided by the program using http. */
-extern int fill_active_slot(void);
 #endif
 
 extern void http_init(void);

@@ -391,13 +391,39 @@ int start_active_slot(struct active_request_slot *slot)
 }
 
 #ifdef USE_CURL_MULTI
+struct fill_chain {
+	void *data;
+	int (*fill)(void *);
+	struct fill_chain *next;
+};
+
+static struct fill_chain *fill_cfg = NULL;
+
+void add_fill_function(void *data, int (*fill)(void *))
+{
+	struct fill_chain *new = malloc(sizeof(*new));
+	struct fill_chain **linkp = &fill_cfg;
+	new->data = data;
+	new->fill = fill;
+	new->next = NULL;
+	while (*linkp)
+		linkp = &(*linkp)->next;
+	*linkp = new;
+}
+
 void fill_active_slots(void)
 {
 	struct active_request_slot *slot = active_queue_head;
 
-	while (active_requests < max_requests)
-		if (!fill_active_slot())
+	while (active_requests < max_requests) {
+		struct fill_chain *fill;
+		for (fill = fill_cfg; fill; fill = fill->next)
+			if (fill->fill(fill->data))
+				break;
+
+		if (!fill)
 			break;
+	}
 
 	while (slot != NULL) {
 		if (!slot->in_use && slot->curl != NULL) {
