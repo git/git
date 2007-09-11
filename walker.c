@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "fetch.h"
+#include "walker.h"
 #include "commit.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -8,16 +8,11 @@
 #include "refs.h"
 #include "strbuf.h"
 
-int get_tree = 0;
-int get_history = 0;
-int get_all = 0;
-int get_verbosely = 0;
-int get_recover = 0;
 static unsigned char current_commit_sha1[20];
 
-void pull_say(const char *fmt, const char *hex)
+void walker_say(struct walker *walker, const char *fmt, const char *hex)
 {
-	if (get_verbosely)
+	if (walker->get_verbosely)
 		fprintf(stderr, fmt, hex);
 }
 
@@ -32,9 +27,9 @@ static void report_missing(const struct object *obj)
 			sha1_to_hex(current_commit_sha1));
 }
 
-static int process(struct object *obj);
+static int process(struct walker *walker, struct object *obj);
 
-static int process_tree(struct tree *tree)
+static int process_tree(struct walker *walker, struct tree *tree)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
@@ -59,7 +54,7 @@ static int process_tree(struct tree *tree)
 			if (blob)
 				obj = &blob->object;
 		}
-		if (!obj || process(obj))
+		if (!obj || process(walker, obj))
 			return -1;
 	}
 	free(tree->buffer);
@@ -74,7 +69,7 @@ static int process_tree(struct tree *tree)
 
 static struct commit_list *complete = NULL;
 
-static int process_commit(struct commit *commit)
+static int process_commit(struct walker *walker, struct commit *commit)
 {
 	if (parse_commit(commit))
 		return -1;
@@ -88,43 +83,43 @@ static int process_commit(struct commit *commit)
 
 	hashcpy(current_commit_sha1, commit->object.sha1);
 
-	pull_say("walk %s\n", sha1_to_hex(commit->object.sha1));
+	walker_say(walker, "walk %s\n", sha1_to_hex(commit->object.sha1));
 
-	if (get_tree) {
-		if (process(&commit->tree->object))
+	if (walker->get_tree) {
+		if (process(walker, &commit->tree->object))
 			return -1;
-		if (!get_all)
-			get_tree = 0;
+		if (!walker->get_all)
+			walker->get_tree = 0;
 	}
-	if (get_history) {
+	if (walker->get_history) {
 		struct commit_list *parents = commit->parents;
 		for (; parents; parents = parents->next) {
-			if (process(&parents->item->object))
+			if (process(walker, &parents->item->object))
 				return -1;
 		}
 	}
 	return 0;
 }
 
-static int process_tag(struct tag *tag)
+static int process_tag(struct walker *walker, struct tag *tag)
 {
 	if (parse_tag(tag))
 		return -1;
-	return process(tag->tagged);
+	return process(walker, tag->tagged);
 }
 
 static struct object_list *process_queue = NULL;
 static struct object_list **process_queue_end = &process_queue;
 
-static int process_object(struct object *obj)
+static int process_object(struct walker *walker, struct object *obj)
 {
 	if (obj->type == OBJ_COMMIT) {
-		if (process_commit((struct commit *)obj))
+		if (process_commit(walker, (struct commit *)obj))
 			return -1;
 		return 0;
 	}
 	if (obj->type == OBJ_TREE) {
-		if (process_tree((struct tree *)obj))
+		if (process_tree(walker, (struct tree *)obj))
 			return -1;
 		return 0;
 	}
@@ -132,7 +127,7 @@ static int process_object(struct object *obj)
 		return 0;
 	}
 	if (obj->type == OBJ_TAG) {
-		if (process_tag((struct tag *)obj))
+		if (process_tag(walker, (struct tag *)obj))
 			return -1;
 		return 0;
 	}
@@ -141,7 +136,7 @@ static int process_object(struct object *obj)
 		     typename(obj->type), sha1_to_hex(obj->sha1));
 }
 
-static int process(struct object *obj)
+static int process(struct walker *walker, struct object *obj)
 {
 	if (obj->flags & SEEN)
 		return 0;
@@ -154,7 +149,7 @@ static int process(struct object *obj)
 	else {
 		if (obj->flags & COMPLETE)
 			return 0;
-		prefetch(obj->sha1);
+		walker->prefetch(walker, obj->sha1);
 	}
 
 	object_list_insert(obj, process_queue_end);
@@ -162,7 +157,7 @@ static int process(struct object *obj)
 	return 0;
 }
 
-static int loop(void)
+static int loop(struct walker *walker)
 {
 	struct object_list *elem;
 
@@ -178,25 +173,25 @@ static int loop(void)
 		 * the queue because we needed to fetch it first.
 		 */
 		if (! (obj->flags & TO_SCAN)) {
-			if (fetch(obj->sha1)) {
+			if (walker->fetch(walker, obj->sha1)) {
 				report_missing(obj);
 				return -1;
 			}
 		}
 		if (!obj->type)
 			parse_object(obj->sha1);
-		if (process_object(obj))
+		if (process_object(walker, obj))
 			return -1;
 	}
 	return 0;
 }
 
-static int interpret_target(char *target, unsigned char *sha1)
+static int interpret_target(struct walker *walker, char *target, unsigned char *sha1)
 {
 	if (!get_sha1_hex(target, sha1))
 		return 0;
 	if (!check_ref_format(target)) {
-		if (!fetch_ref(target, sha1)) {
+		if (!walker->fetch_ref(walker, target, sha1)) {
 			return 0;
 		}
 	}
@@ -213,7 +208,7 @@ static int mark_complete(const char *path, const unsigned char *sha1, int flag, 
 	return 0;
 }
 
-int pull_targets_stdin(char ***target, const char ***write_ref)
+int walker_targets_stdin(char ***target, const char ***write_ref)
 {
 	int targets = 0, targets_alloc = 0;
 	struct strbuf buf;
@@ -243,7 +238,7 @@ int pull_targets_stdin(char ***target, const char ***write_ref)
 	return targets;
 }
 
-void pull_targets_free(int targets, char **target, const char **write_ref)
+void walker_targets_free(int targets, char **target, const char **write_ref)
 {
 	while (targets--) {
 		free(target[targets]);
@@ -252,8 +247,8 @@ void pull_targets_free(int targets, char **target, const char **write_ref)
 	}
 }
 
-int pull(int targets, char **target, const char **write_ref,
-         const char *write_ref_log_details)
+int walker_fetch(struct walker *walker, int targets, char **target,
+		 const char **write_ref, const char *write_ref_log_details)
 {
 	struct ref_lock **lock = xcalloc(targets, sizeof(struct ref_lock *));
 	unsigned char *sha1 = xmalloc(targets * 20);
@@ -275,19 +270,19 @@ int pull(int targets, char **target, const char **write_ref,
 		}
 	}
 
-	if (!get_recover)
+	if (!walker->get_recover)
 		for_each_ref(mark_complete, NULL);
 
 	for (i = 0; i < targets; i++) {
-		if (interpret_target(target[i], &sha1[20 * i])) {
+		if (interpret_target(walker, target[i], &sha1[20 * i])) {
 			error("Could not interpret %s as something to pull", target[i]);
 			goto unlock_and_fail;
 		}
-		if (process(lookup_unknown_object(&sha1[20 * i])))
+		if (process(walker, lookup_unknown_object(&sha1[20 * i])))
 			goto unlock_and_fail;
 	}
 
-	if (loop())
+	if (loop(walker))
 		goto unlock_and_fail;
 
 	if (write_ref_log_details) {
@@ -308,10 +303,16 @@ int pull(int targets, char **target, const char **write_ref,
 
 	return 0;
 
-
 unlock_and_fail:
 	for (i = 0; i < targets; i++)
 		if (lock[i])
 			unlock_ref(lock[i]);
+
 	return -1;
+}
+
+void walker_free(struct walker *walker)
+{
+	walker->cleanup(walker);
+	free(walker);
 }

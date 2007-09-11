@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "commit.h"
 #include "pack.h"
-#include "fetch.h"
 #include "tag.h"
 #include "blob.h"
 #include "http.h"
