@@ -795,38 +795,27 @@ static void finish_request(struct transfer_request *request)
 }
 
 #ifdef USE_CURL_MULTI
-void fill_active_slots(void)
+int fill_active_slot(void)
 {
 	struct transfer_request *request = request_queue_head;
-	struct transfer_request *next;
-	struct active_request_slot *slot = active_queue_head;
-	int num_transfers;
 
 	if (aborted)
-		return;
+		return 0;
 
-	while (active_requests < max_requests && request != NULL) {
-		next = request->next;
+	for (request = request_queue_head; request; request = request->next) {
 		if (request->state == NEED_FETCH) {
 			start_fetch_loose(request);
+			return 1;
 		} else if (pushing && request->state == NEED_PUSH) {
 			if (remote_dir_exists[request->obj->sha1[0]] == 1) {
 				start_put(request);
 			} else {
 				start_mkcol(request);
 			}
-			curl_multi_perform(curlm, &num_transfers);
+			return 1;
 		}
-		request = next;
 	}
-
-	while (slot != NULL) {
-		if (!slot->in_use && slot->curl != NULL) {
-			curl_easy_cleanup(slot->curl);
-			slot->curl = NULL;
-		}
-		slot = slot->next;
-	}
+	return 0;
 }
 #endif
 

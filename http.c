@@ -372,6 +372,7 @@ int start_active_slot(struct active_request_slot *slot)
 {
 #ifdef USE_CURL_MULTI
 	CURLMcode curlm_result = curl_multi_add_handle(curlm, slot->curl);
+	int num_transfers;
 
 	if (curlm_result != CURLM_OK &&
 	    curlm_result != CURLM_CALL_MULTI_PERFORM) {
@@ -379,11 +380,34 @@ int start_active_slot(struct active_request_slot *slot)
 		slot->in_use = 0;
 		return 0;
 	}
+
+	/*
+	 * We know there must be something to do, since we just added
+	 * something.
+	 */
+	curl_multi_perform(curlm, &num_transfers);
 #endif
 	return 1;
 }
 
 #ifdef USE_CURL_MULTI
+void fill_active_slots(void)
+{
+	struct active_request_slot *slot = active_queue_head;
+
+	while (active_requests < max_requests)
+		if (!fill_active_slot())
+			break;
+
+	while (slot != NULL) {
+		if (!slot->in_use && slot->curl != NULL) {
+			curl_easy_cleanup(slot->curl);
+			slot->curl = NULL;
+		}
+		slot = slot->next;
+	}
+}
+
 void step_active_slots(void)
 {
 	int num_transfers;

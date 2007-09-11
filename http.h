@@ -71,6 +71,9 @@ extern void release_active_slot(struct active_request_slot *slot);
 #ifdef USE_CURL_MULTI
 extern void fill_active_slots(void);
 extern void step_active_slots(void);
+
+/* Provided by the program using http. */
+extern int fill_active_slot(void);
 #endif
 
 extern void http_init(void);
@@ -79,10 +82,6 @@ extern void http_cleanup(void);
 extern int data_received;
 extern int active_requests;
 
-#ifdef USE_CURL_MULTI
-extern int max_requests;
-extern CURLM *curlm;
-#endif
 #ifndef NO_CURL_EASY_DUPHANDLE
 extern CURL *curl_default;
 #endif
@@ -102,7 +101,5 @@ extern long curl_low_speed_time;
 
 extern struct curl_slist *pragma_header;
 extern struct curl_slist *no_range_header;
-
-extern struct active_request_slot *active_queue_head;
 
 #endif /* HTTP_H */
