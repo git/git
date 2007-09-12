@@ -88,6 +88,15 @@ matching msgid lines.  A few tips:
    you would typically want to have corresponding ones in the string on
    your msgstr line.
 
+ - Some messages contain an optional context indicator at the end,
+   for example "@@noun" or "@@verb".  This indicator allows the
+   software to select the correct translation depending upon the use.
+   The indicator is not actually part of the message and will not
+   be shown to the end-user.
+
+   If your language does not require a different translation you
+   will still need to translate both messages.
+
  - Often the messages being translated are format strings given to
    "printf()"-like functions.  Make sure "%s", "%d", and "%%" in your
    translated messages match the original.
