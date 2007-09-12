@@ -131,4 +131,25 @@ test_expect_success \
     'validate git-rev-list output.' \
     'diff current expected'
 
+test_expect_success 'partial commit that involve removal (1)' '
+
+	git rm --cached file &&
+	mv file elif &&
+	git add elif &&
+	git commit -m "Partial: add elif" elif &&
+	git diff-tree --name-status HEAD^ HEAD >current &&
+	echo "A	elif" >expected &&
+	diff expected current
+
+'
+
+test_expect_success 'partial commit that involve removal (2)' '
+
+	git commit -m "Partial: remove file" file &&
+	git diff-tree --name-status HEAD^ HEAD >current &&
+	echo "D	file" >expected &&
+	diff expected current
+
+'
+
 test_done
