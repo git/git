@@ -379,8 +379,11 @@ t,)
 		then
 			refuse_partial "Cannot do a partial commit during a merge."
 		fi
+
 		TMP_INDEX="$GIT_DIR/tmp-index$$"
-		commit_only=`git ls-files --error-unmatch -- "$@"` || exit
+		W=
+		test -z "$initial_commit" && W=--with-tree=HEAD
+		commit_only=`git ls-files --error-unmatch $W -- "$@"` || exit
 
 		# Build a temporary index and update the real index
 		# the same way.
