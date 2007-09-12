@@ -57,7 +57,7 @@ save_stash () {
 
 	# state of the index
 	i_tree=$(git write-tree) &&
-	i_commit=$(printf 'index on %s' "$msg" |
+	i_commit=$(printf 'index on %s\n' "$msg" |
 		git commit-tree $i_tree -p $b_commit) ||
 		die "Cannot save the current index state"
 
