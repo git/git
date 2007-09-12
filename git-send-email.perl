@@ -361,7 +361,8 @@ if ($thread && !defined $initial_reply_to && $prompting) {
 	} while (!defined $_);
 
 	$initial_reply_to = $_;
-	$initial_reply_to =~ s/(^\s+|\s+$)//g;
+	$initial_reply_to =~ s/^\s+<?/</;
+	$initial_reply_to =~ s/>?\s+$/>/;
 }
 
 if (!defined $smtp_server) {
