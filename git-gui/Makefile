@@ -8,6 +8,7 @@ GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 -include GIT-VERSION-FILE
 
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 
 SCRIPT_SH = git-gui.sh
 GITGUI_BUILT_INS = git-citool
@@ -86,7 +87,8 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	$(QUIET_GEN)rm -f $@ $@+ && \
 	GITGUI_RELATIVE= && \
 	if test '$(exedir_SQ)' = '$(libdir_SQ)'; then \
-		if test "$(uname_O)" = Cygwin; \
+		if test "$(uname_O)" = Cygwin \
+			-o "$(findstring MINGW,$(uname_S))" = MINGW; \
 		then GITGUI_RELATIVE= ; \
 		else GITGUI_RELATIVE=1; \
 		fi; \
