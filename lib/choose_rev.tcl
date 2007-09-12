@@ -544,7 +544,7 @@ method _open_tooltip {} {
 
 	if {$cmit ne {}} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end [mc "Commit"] section_header
+		$tooltip_t insert end [mc "Commit@@noun"] section_header
 		$tooltip_t insert end "  [lindex $cmit 1]\n"
 		$tooltip_t insert end [lindex $cmit 2]
 		$tooltip_t insert end " ([lindex $cmit 3])\n"

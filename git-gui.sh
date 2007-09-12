@@ -10,7 +10,7 @@
 
 set appvers {@@GITGUI_VERSION@@}
 set copyright {
-Copyright © 2006, 2007 Shawn Pearce, et. al.
+Copyright Â© 2006, 2007 Shawn Pearce, et. al.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1704,7 +1704,7 @@ if {[is_enabled branch]} {
 	.mbar add cascade -label [mc Branch] -menu .mbar.branch
 }
 if {[is_enabled multicommit] || [is_enabled singlecommit]} {
-	.mbar add cascade -label [mc Commit] -menu .mbar.commit
+	.mbar add cascade -label [mc Commit@@noun] -menu .mbar.commit
 }
 if {[is_enabled transport]} {
 	.mbar add cascade -label [mc Merge] -menu .mbar.merge
@@ -1891,7 +1891,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 		-command do_signoff \
 		-accelerator $M1T-S
 
-	.mbar.commit add command -label [mc Commit] \
+	.mbar.commit add command -label [mc Commit@@verb] \
 		-command do_commit \
 		-accelerator $M1T-Return
 	lappend disable_on_lock \
@@ -2207,7 +2207,7 @@ button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
 	-command do_signoff
 pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 
-button .vpane.lower.commarea.buttons.commit -text [mc Commit] \
+button .vpane.lower.commarea.buttons.commit -text [mc Commit@@verb] \
 	-command do_commit
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
