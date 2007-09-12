@@ -86,7 +86,16 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 ## http://www.gnu.org/software/gettext/manual/html_node/Tcl.html
 
 package require msgcat
-namespace import ::msgcat::mc
+
+proc mc {fmt args} {
+	set fmt [::msgcat::mc $fmt]
+	set cmk [string first @@ $fmt]
+	if {$cmk > 0} {
+		set fmt [string range $fmt 0 [expr {$cmk - 1}]]
+	}
+	return [eval [list format $fmt] $args]
+}
+
 ::msgcat::mcload $oguimsg
 unset oguimsg
 
