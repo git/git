@@ -64,6 +64,18 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 
 ######################################################################
 ##
+## Fake internationalization to ease backporting of changes.
+
+proc mc {fmt args} {
+	set cmk [string first @@ $fmt]
+	if {$cmk > 0} {
+		set fmt [string range $fmt 0 [expr {$cmk - 1}]]
+	}
+	return [eval [list format $fmt] $args]
+}
+
+######################################################################
+##
 ## read only globals
 
 set _appname [lindex [file split $argv0] end]
