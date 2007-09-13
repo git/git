@@ -902,7 +902,7 @@ Return the list of files that haven't been handled."
 (defun git-add-file ()
   "Add marked file(s) to the index cache."
   (interactive)
-  (let ((files (git-get-filenames (git-marked-files-state 'unknown))))
+  (let ((files (git-get-filenames (git-marked-files-state 'unknown 'ignored))))
     (unless files
       (push (file-relative-name (read-file-name "File to add: " nil nil t)) files))
     (apply #'git-run-command nil nil "update-index" "--add" "--" files)
@@ -920,7 +920,7 @@ Return the list of files that haven't been handled."
 (defun git-remove-file ()
   "Remove the marked file(s)."
   (interactive)
-  (let ((files (git-get-filenames (git-marked-files-state 'added 'modified 'unknown 'uptodate))))
+  (let ((files (git-get-filenames (git-marked-files-state 'added 'modified 'unknown 'uptodate 'ignored))))
     (unless files
       (push (file-relative-name (read-file-name "File to remove: " nil nil t)) files))
     (if (yes-or-no-p
