@@ -111,9 +111,7 @@ static void *format_subst(const struct commit *commit, const char *format,
 		a = c + 1;
 	}
 
-	if (result.len && len) {
-		strbuf_add(&result, a, len);
-	}
+	strbuf_add(&result, a, len);
 
 	*sizep = result.len;
 
