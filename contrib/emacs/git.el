@@ -97,6 +97,21 @@ if there is already one that displays the same directory."
   :group 'git
   :type 'string)
 
+(defcustom git-show-uptodate nil
+  "Whether to display up-to-date files."
+  :group 'git
+  :type 'boolean)
+
+(defcustom git-show-ignored nil
+  "Whether to display ignored files."
+  :group 'git
+  :type 'boolean)
+
+(defcustom git-show-unknown t
+  "Whether to display unknown files."
+  :group 'git
+  :type 'boolean)
+
 
 (defface git-status-face
   '((((class color) (background light)) (:foreground "purple"))
@@ -646,23 +661,30 @@ Return the list of files that haven't been handled."
       (push config files))
     files))
 
+(defun git-run-ls-files-with-excludes (status files default-state &rest options)
+  "Run git-ls-files on FILES with appropriate --exclude-from options."
+  (let ((exclude-files (git-get-exclude-files)))
+    (apply #'git-run-ls-files status files default-state
+           (concat "--exclude-per-directory=" git-per-dir-ignore-file)
+           (append options (mapcar (lambda (f) (concat "--exclude-from=" f)) exclude-files)))))
+
 (defun git-update-status-files (files &optional default-state)
   "Update the status of FILES from the index."
   (unless git-status (error "Not in git-status buffer."))
-  (let* ((status git-status)
-         (remaining-files
+  (unless files
+    (when git-show-uptodate (git-run-ls-files git-status nil 'uptodate "-c")))
+  (let* ((remaining-files
           (if (git-empty-db-p) ; we need some special handling for an empty db
-              (git-run-ls-files status files 'added "-c")
-            (git-run-diff-index status files))))
-    (git-run-ls-unmerged status files)
-    (when (or (not files) remaining-files)
-      (let ((exclude-files (git-get-exclude-files)))
-        (setq remaining-files (apply #'git-run-ls-files status remaining-files 'unknown "-o"
-                                     (concat "--exclude-per-directory=" git-per-dir-ignore-file)
-                                     (mapcar (lambda (f) (concat "--exclude-from=" f)) exclude-files)))))
-    (git-set-filenames-state status remaining-files default-state)
+              (git-run-ls-files git-status files 'added "-c")
+            (git-run-diff-index git-status files))))
+    (git-run-ls-unmerged git-status files)
+    (when (or remaining-files (and git-show-unknown (not files)))
+      (setq remaining-files (git-run-ls-files-with-excludes git-status remaining-files 'unknown "-o")))
+    (when (or remaining-files (and git-show-ignored (not files)))
+      (setq remaining-files (git-run-ls-files-with-excludes git-status remaining-files 'ignored "-o" "-i")))
+    (git-set-filenames-state git-status remaining-files default-state)
     (git-refresh-files)
-    (git-refresh-ewoc-hf status)))
+    (git-refresh-ewoc-hf git-status)))
 
 (defun git-marked-files ()
   "Return a list of all marked files, or if none a list containing just the file at cursor position."
@@ -943,10 +965,40 @@ Return the list of files that haven't been handled."
   (interactive)
   (ewoc-filter git-status
                (lambda (info)
-                 (not (or (eq (git-fileinfo->state info) 'ignored)
-                          (eq (git-fileinfo->state info) 'uptodate)))))
+                 (case (git-fileinfo->state info)
+                   ('ignored git-show-ignored)
+                   ('uptodate git-show-uptodate)
+                   ('unknown git-show-unknown)
+                   (t t))))
   (unless (ewoc-nth git-status 0)  ; refresh header if list is empty
     (git-refresh-ewoc-hf git-status)))
+
+(defun git-toggle-show-uptodate ()
+  "Toogle the option for showing up-to-date files."
+  (interactive)
+  (if (setq git-show-uptodate (not git-show-uptodate))
+      (git-refresh-status)
+    (git-remove-handled)))
+
+(defun git-toggle-show-ignored ()
+  "Toogle the option for showing ignored files."
+  (interactive)
+  (if (setq git-show-ignored (not git-show-ignored))
+      (progn
+        (git-run-ls-files-with-excludes git-status nil 'ignored "-o" "-i")
+        (git-refresh-files)
+        (git-refresh-ewoc-hf git-status))
+    (git-remove-handled)))
+
+(defun git-toggle-show-unknown ()
+  "Toogle the option for showing unknown files."
+  (interactive)
+  (if (setq git-show-unknown (not git-show-unknown))
+      (progn
+        (git-run-ls-files-with-excludes git-status nil 'unknown "-o")
+        (git-refresh-files)
+        (git-refresh-ewoc-hf git-status))
+    (git-remove-handled)))
 
 (defun git-setup-diff-buffer (buffer)
   "Setup a buffer for displaying a diff."
@@ -1173,7 +1225,8 @@ Return the list of files that haven't been handled."
 
 (unless git-status-mode-map
   (let ((map (make-keymap))
-        (diff-map (make-sparse-keymap)))
+        (diff-map (make-sparse-keymap))
+        (toggle-map (make-sparse-keymap)))
     (suppress-keymap map)
     (define-key map "?"   'git-help)
     (define-key map "h"   'git-help)
@@ -1197,6 +1250,7 @@ Return the list of files that haven't been handled."
     (define-key map "q"   'git-status-quit)
     (define-key map "r"   'git-remove-file)
     (define-key map "R"   'git-resolve-file)
+    (define-key map "t"    toggle-map)
     (define-key map "T"   'git-toggle-all-marks)
     (define-key map "u"   'git-unmark-file)
     (define-key map "U"   'git-revert-file)
@@ -1213,6 +1267,11 @@ Return the list of files that haven't been handled."
     (define-key diff-map "h" 'git-diff-file-merge-head)
     (define-key diff-map "m" 'git-diff-file-mine)
     (define-key diff-map "o" 'git-diff-file-other)
+    ; the toggle submap
+    (define-key toggle-map "u" 'git-toggle-show-uptodate)
+    (define-key toggle-map "i" 'git-toggle-show-ignored)
+    (define-key toggle-map "k" 'git-toggle-show-unknown)
+    (define-key toggle-map "m" 'git-toggle-all-marks)
     (setq git-status-mode-map map)))
 
 ;; git mode should only run in the *git status* buffer
@@ -1234,6 +1293,9 @@ Commands:
   (let ((status (ewoc-create 'git-fileinfo-prettyprint "" "")))
     (set (make-local-variable 'git-status) status))
   (set (make-local-variable 'list-buffers-directory) default-directory)
+  (make-local-variable 'git-show-uptodate)
+  (make-local-variable 'git-show-ignored)
+  (make-local-variable 'git-show-unknown)
   (run-hooks 'git-status-mode-hook)))
 
 (defun git-find-status-buffer (dir)
