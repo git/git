@@ -529,6 +529,10 @@ class P4Submit(Command):
                                      "and with .rej files / [w]rite the patch to a file (patch.txt) ")
             if response == "s":
                 print "Skipping! Good luck with the next patches..."
+                for f in editedFiles:
+                    system("p4 revert \"%s\"" % f);
+                for f in filesToAdd:
+                    system("rm %s" %f)
                 return
             elif response == "a":
                 os.system(applyPatchCmd)
