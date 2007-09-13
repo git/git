@@ -105,11 +105,11 @@ proc hint_gc {} {
 		set objects_current [expr {$objects_current * 256}]
 		set object_limit    [expr {$object_limit    * 256}]
 		if {[ask_popup \
-			"This repository currently has approximately $objects_current loose objects.
+			[mc "This repository currently has approximately %i loose objects.
 
-To maintain optimal performance it is strongly recommended that you compress the database when more than $object_limit loose objects exist.
+To maintain optimal performance it is strongly recommended that you compress the database when more than %i loose objects exist.
 
-Compress the database now?"] eq yes} {
+Compress the database now?" $objects_current $object_limit]] eq yes} {
 			do_gc
 		}
 	}

@@ -37,7 +37,7 @@ if {[catch {package require Tcl 8.4} err]
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title "git-gui: fatal error" \
+		-title [mc "git-gui: fatal error"] \
 		-message $err
 	exit 1
 }
@@ -526,7 +526,7 @@ if {[catch {set _git_version [git --version]} err]} {
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title "git-gui: fatal error" \
+		-title [mc "git-gui: fatal error"] \
 		-message "Cannot determine Git version:
 
 $err
@@ -539,7 +539,7 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title "git-gui: fatal error" \
+		-title [mc "git-gui: fatal error"] \
 		-message [append [mc "Cannot parse Git version string:"] "\n\n$_git_version"]
 	exit 1
 }
@@ -621,7 +621,7 @@ if {[git-version < 1.5]} {
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title "git-gui: fatal error" \
+		-title [mc "git-gui: fatal error"] \
 		-message "[appname] requires Git 1.5.0 or later.
 
 You are using [git-version]:
@@ -640,7 +640,7 @@ if {[catch {set fd [open $idx r]} err]} {
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title "git-gui: fatal error" \
+		-title [mc "git-gui: fatal error"] \
 		-message $err
 	exit 1
 }
@@ -737,7 +737,7 @@ if {$_prefix ne {}} {
 	regsub -all {[^/]+/} $_prefix ../ cdup
 	if {[catch {cd $cdup} err]} {
 		catch {wm withdraw .}
-		error_popup "Cannot move to top of working directory:\n\n$err"
+		error_popup [append [mc "Cannot move to top of working directory:"] "\n\n$err"]
 		exit 1
 	}
 	unset cdup
@@ -2077,7 +2077,7 @@ blame {
 	}
 	blame   {
 		if {$head eq {} && ![file exists $path]} {
-			puts stderr "fatal: cannot stat path $path: No such file or directory"
+			puts stderr [mc "fatal: cannot stat path %s: No such file or directory" $path]
 			exit 1
 		}
 		blame::new $head $path
@@ -2588,13 +2588,13 @@ focus -force $ui_comm
 if {[is_Cygwin]} {
 	set ignored_env 0
 	set suggest_user {}
-	set msg "Possible environment issues exist.
+	set msg [mc "Possible environment issues exist.
 
 The following environment variables are probably
 going to be ignored by any Git subprocess run
-by [appname]:
+by %s:
 
-"
+" [appname]]
 	foreach name [array names env] {
 		switch -regexp -- $name {
 		{^GIT_INDEX_FILE$} -
@@ -2618,18 +2618,18 @@ by [appname]:
 		}
 	}
 	if {$ignored_env > 0} {
-		append msg "
+		append msg [mc "
 This is due to a known issue with the
-Tcl binary distributed by Cygwin."
+Tcl binary distributed by Cygwin."]
 
 		if {$suggest_user ne {}} {
-			append msg "
+			append msg [mc "
 
-A good replacement for $suggest_user
+A good replacement for %s
 is placing values for the user.name and
 user.email settings into your personal
 ~/.gitconfig file.
-"
+" $suggest_user]
 		}
 		warn_popup $msg
 	}

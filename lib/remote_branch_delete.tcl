@@ -181,9 +181,9 @@ method _delete {} {
 	}
 
 	if {$not_merged ne {}} {
-		set msg "The following branches are not completely merged into $check_head:
+		set msg [mc "The following branches are not completely merged into %s:
 
- - [join $not_merged "\n - "]"
+ - %s" $check_head [join $not_merged "\n - "]]
 
 		if {$need_fetch} {
 			append msg "\n\n" [mc "One or more of the merge tests failed because you have not fetched the necessary commits.  Try fetching from %s first." $uri]

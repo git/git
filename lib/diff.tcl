@@ -78,7 +78,7 @@ proc show_diff {path w {lno {}}} {
 	set current_diff_path $path
 	set current_diff_side $w
 	set current_diff_header {}
-	ui_status "Loading diff of [escape_path $path]..."
+	ui_status [mc "Loading diff of %s..." [escape_path $path]]
 
 	# - Git won't give us the diff, there's nothing to compare to!
 	#
@@ -111,7 +111,7 @@ proc show_diff {path w {lno {}}} {
 			} err ]} {
 			set diff_active 0
 			unlock_index
-			ui_status "Unable to display [escape_path $path]"
+			ui_status [mc "Unable to display %s" [escape_path $path]]
  		    error_popup [append [mc "Error loading file:"] "\n\n$err"]
 			return
 		}
@@ -131,7 +131,7 @@ proc show_diff {path w {lno {}}} {
 		}
 		if {[string first "\0" $content] != -1} {
 			$ui_diff insert end \
-				"* Binary file (not showing content)." \
+				[mc "* Binary file (not showing content)."] \
 				d_@
 		} else {
 			if {$sz > $max_sz} {
@@ -181,7 +181,7 @@ proc show_diff {path w {lno {}}} {
 	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
 		set diff_active 0
 		unlock_index
-		ui_status "Unable to display [escape_path $path]"
+		ui_status [mc "Unable to display %s" [escape_path $path]]
 		error_popup [append [mc "Error loading diff:"] "\n\n$err"]
 		return
 	}

@@ -272,7 +272,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 			&& [string length $old_tree] == 45} {
 			set old_tree [string range $old_tree 5 end]
 		} else {
-			error "Commit $PARENT appears to be corrupt"
+			error [mc "Commit %s appears to be corrupt" $PARENT]
 		}
 
 		if {$tree_id eq $old_tree} {
@@ -300,7 +300,7 @@ A rescan will be automatically started now.
 	if {$use_enc ne {}} {
 		fconfigure $msg_wt -encoding $use_enc
 	} else {
-		puts stderr "warning: Tcl does not support encoding '$enc'."
+		puts stderr [mc "warning: Tcl does not support encoding '%s'." $enc]
 		fconfigure $msg_wt -encoding utf-8
 	}
 	puts -nonewline $msg_wt $msg

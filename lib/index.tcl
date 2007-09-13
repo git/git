@@ -268,7 +268,7 @@ proc do_unstage_selection {} {
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		unstage_helper \
-			"Unstaging [short_path $current_diff_path] from commit" \
+			[mc "Unstaging %s from commit" [short_path $current_diff_path]] \
 			[list $current_diff_path]
 	}
 }
@@ -312,7 +312,7 @@ proc do_add_selection {} {
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		add_helper \
-			"Adding [short_path $current_diff_path]" \
+			[mc "Adding %s" [short_path $current_diff_path]] \
 			[list $current_diff_path]
 	}
 }

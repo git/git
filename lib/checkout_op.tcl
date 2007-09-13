@@ -124,7 +124,7 @@ method _finish_fetch {ok} {
 		}
 		if {[catch {set new_hash [git rev-parse --verify "$l_trck^0"]} err]} {
 			set ok 0
-			$w_cons insert "fatal: Cannot resolve $l_trck"
+			$w_cons insert [mc "fatal: Cannot resolve %s" $l_trck]
 			$w_cons insert $err
 		}
 	}
@@ -319,7 +319,7 @@ method _readtree {} {
 
 	set readtree_d {}
 	$::main_status start \
-		"Updating working directory to '[_name $this]'..." \
+		[mc "Updating working directory to '%s'..." [_name $this]] \
 		{files checked out}
 
 	set fd [git_read --stderr read-tree \
@@ -443,7 +443,7 @@ If you wanted to be on a branch, create one now starting from 'This Detached Che
 		$ui_comm delete 0.0 end
 		$ui_comm edit reset
 		$ui_comm edit modified false
-		rescan [list ui_status "Checked out '$name'."]
+		rescan [list ui_status [mc "Checked out '%s'." $name]]
 	} else {
 		repository_state commit_type HEAD MERGE_HEAD
 		set PARENT $HEAD

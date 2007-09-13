@@ -470,7 +470,7 @@ method _read_file {fd jump} {
 
 		_exec_blame $this $w_asim @asim_data \
 			[list] \
-			{ copy/move tracking}
+			[mc "Loading copy/move tracking annotations..."]
 	}
 } ifdeleted { catch {close $fd} }
 
@@ -489,8 +489,8 @@ method _exec_blame {cur_w cur_d options cur_s} {
 	set blame_lines 0
 
 	$status start \
-		"Loading$cur_s annotations..." \
-		{lines annotated}
+		$cur_s \
+		[mc "lines annotated"]
 }
 
 method _read_blame {fd cur_w cur_d} {
@@ -671,10 +671,10 @@ method _read_blame {fd cur_w cur_d} {
 		if {$cur_w eq $w_asim} {
 			_exec_blame $this $w_amov @amov_data \
 				$original_options \
-				{ original location}
+				[mc "Loading original location annotations..."]
 		} else {
 			set current_fd {}
-			$status stop {Annotation complete.}
+			$status stop [mc "Annotation complete."]
 		}
 	} else {
 		$status update $blame_lines $total_lines
@@ -728,7 +728,7 @@ method _showcommit {cur_w lno} {
 
 	if {$dat eq {}} {
 		set cmit {}
-		$w_cviewer insert end "Loading annotation..." still_loading
+		$w_cviewer insert end [mc "Loading annotation..."] still_loading
 	} else {
 		set cmit [lindex $dat 0]
 		set file [lindex $dat 1]
@@ -784,16 +784,16 @@ method _showcommit {cur_w lno} {
 		}
 
 		$w_cviewer insert end "commit $cmit\n" header_key
-		$w_cviewer insert end "Author:\t" header_key
+		$w_cviewer insert end [append [mc "Author:"] "\t"] header_key
 		$w_cviewer insert end "$author_name $author_email" header_val
 		$w_cviewer insert end "  $author_time\n" header_val
 
-		$w_cviewer insert end "Committer:\t" header_key
+		$w_cviewer insert end [append [mc "Committer:"] "\t"] header_key
 		$w_cviewer insert end "$committer_name $committer_email" header_val
 		$w_cviewer insert end "  $committer_time\n" header_val
 
 		if {$file ne $path} {
-			$w_cviewer insert end "Original File:\t" header_key
+			$w_cviewer insert end [append [mc "Original File:"] "\t"] header_key
 			$w_cviewer insert end "[escape_path $file]\n" header_val
 		}
 
@@ -907,18 +907,18 @@ method _open_tooltip {cur_w} {
 		catch {set summary     $header($cmit,summary)}
 		catch {set author_time [foramt_date $header($cmit,author-time)]}
 
-		$tooltip_t insert end "Originally By:\n" section_header
+		$tooltip_t insert end [append [mc "Originally By:"] "\n"] section_header
 		$tooltip_t insert end "commit $cmit\n"
 		$tooltip_t insert end "$author_name  $author_time\n"
 		$tooltip_t insert end "$summary\n"
 
 		if {$file ne $path} {
-			$tooltip_t insert end "In File: " section_header
+			$tooltip_t insert end [append [mc "In File:"] " "] section_header
 			$tooltip_t insert end "$file\n"
 		}
 
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "Copied Or Moved Here By:\n" section_header
+		$tooltip_t insert end [append [mc "Copied Or Moved Here By:"] "\n"] section_header
 		$tooltip_t insert end $save
 	}
 
