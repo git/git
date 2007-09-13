@@ -479,6 +479,27 @@ and returns the process output as a string."
       (setf (git-fileinfo->orig-name info) nil)
       (setf (git-fileinfo->needs-refresh info) t))))
 
+(defun git-set-filenames-state (status files state)
+  "Set the state of a list of named files."
+  (when files
+    (setq files (sort files #'string-lessp))
+    (let ((file (pop files))
+          (node (ewoc-nth status 0)))
+      (while (and file node)
+        (let ((info (ewoc-data node)))
+          (cond ((string-lessp (git-fileinfo->name info) file)
+                 (setq node (ewoc-next status node)))
+                ((string-equal (git-fileinfo->name info) file)
+                 (unless (eq (git-fileinfo->state info) state)
+                   (setf (git-fileinfo->state info) state)
+                   (setf (git-fileinfo->rename-state info) nil)
+                   (setf (git-fileinfo->orig-name info) nil)
+                   (setf (git-fileinfo->needs-refresh info) t))
+                 (setq file (pop files)))
+                (t (setq file (pop files)))))))
+    (unless state  ;; delete files whose state has been set to nil
+      (ewoc-filter status (lambda (info) (git-fileinfo->state info))))))
+
 (defun git-state-code (code)
   "Convert from a string to a added/deleted/modified state."
   (case (string-to-char code)
@@ -532,19 +553,36 @@ and returns the process output as a string."
                   "  " (git-escape-file-name (git-fileinfo->name info))
                   (git-rename-as-string info))))
 
-(defun git-insert-fileinfo (status info &optional refresh)
-  "Insert INFO in the status buffer, optionally refreshing an existing one."
-  (let ((node (and refresh
-                   (git-find-status-file status (git-fileinfo->name info)))))
-    (setf (git-fileinfo->needs-refresh info) t)
-    (when node   ;preserve the marked flag
-      (setf (git-fileinfo->marked info) (git-fileinfo->marked (ewoc-data node))))
-    (if node (setf (ewoc-data node) info) (ewoc-enter-last status info))))
+(defun git-insert-info-list (status infolist)
+  "Insert a list of file infos in the status buffer, replacing existing ones if any."
+  (setq infolist (sort infolist
+                       (lambda (info1 info2)
+                         (string-lessp (git-fileinfo->name info1)
+                                       (git-fileinfo->name info2)))))
+  (let ((info (pop infolist))
+        (node (ewoc-nth status 0)))
+    (while info
+      (setf (git-fileinfo->needs-refresh info) t)
+      (cond ((not node)
+             (ewoc-enter-last status info)
+             (setq info (pop infolist)))
+            ((string-lessp (git-fileinfo->name (ewoc-data node))
+                           (git-fileinfo->name info))
+             (setq node (ewoc-next status node)))
+            ((string-equal (git-fileinfo->name (ewoc-data node))
+                           (git-fileinfo->name info))
+              ;; preserve the marked flag
+              (setf (git-fileinfo->marked info) (git-fileinfo->marked (ewoc-data node)))
+              (setf (ewoc-data node) info)
+              (setq info (pop infolist)))
+            (t
+             (ewoc-enter-before status node info)
+             (setq info (pop infolist)))))))
 
 (defun git-run-diff-index (status files)
   "Run git-diff-index on FILES and parse the results into STATUS.
 Return the list of files that haven't been handled."
-  (let ((refresh files))
+  (let (infolist)
     (with-temp-buffer
       (apply #'git-run-command t nil "diff-index" "-z" "-M" "HEAD" "--" files)
       (goto-char (point-min))
@@ -558,13 +596,14 @@ Return the list of files that haven't been handled."
               (new-name (match-string 8)))
           (if new-name  ; copy or rename
               (if (eq ?C (string-to-char state))
-                  (git-insert-fileinfo status (git-create-fileinfo 'added new-name old-perm new-perm 'copy name) refresh)
-                (git-insert-fileinfo status (git-create-fileinfo 'deleted name 0 0 'rename new-name) refresh)
-                (git-insert-fileinfo status (git-create-fileinfo 'added new-name old-perm new-perm 'rename name)) refresh)
-            (git-insert-fileinfo status (git-create-fileinfo (git-state-code state) name old-perm new-perm) refresh))
+                  (push (git-create-fileinfo 'added new-name old-perm new-perm 'copy name) infolist)
+                (push (git-create-fileinfo 'deleted name 0 0 'rename new-name) infolist)
+                (push (git-create-fileinfo 'added new-name old-perm new-perm 'rename name) infolist))
+            (push (git-create-fileinfo (git-state-code state) name old-perm new-perm) infolist))
           (setq files (delete name files))
-          (when new-name (setq files (delete new-name files)))))))
-  files)
+          (when new-name (setq files (delete new-name files))))))
+    (git-insert-info-list status infolist)
+    files))
 
 (defun git-find-status-file (status file)
   "Find a given file in the status ewoc and return its node."
@@ -576,16 +615,16 @@ Return the list of files that haven't been handled."
 (defun git-run-ls-files (status files default-state &rest options)
   "Run git-ls-files on FILES and parse the results into STATUS.
 Return the list of files that haven't been handled."
-  (let ((refresh files))
+  (let (infolist)
     (with-temp-buffer
-      (apply #'git-run-command t nil "ls-files" "-z" "-t" (append options (list "--") files))
+      (apply #'git-run-command t nil "ls-files" "-z" (append options (list "--") files))
       (goto-char (point-min))
-      (while (re-search-forward "\\([HMRCK?]\\) \\([^\0]*\\)\0" nil t 1)
-        (let ((state (match-string 1))
-              (name (match-string 2)))
-          (git-insert-fileinfo status (git-create-fileinfo (or (git-state-code state) default-state) name) refresh)
-          (setq files (delete name files))))))
-  files)
+      (while (re-search-forward "\\([^\0]*\\)\0" nil t 1)
+        (let ((name (match-string 1)))
+          (push (git-create-fileinfo default-state name) infolist)
+          (setq files (delete name files)))))
+    (git-insert-info-list status infolist)
+    files))
 
 (defun git-run-ls-unmerged (status files)
   "Run git-ls-files -u on FILES and parse the results into STATUS."
@@ -594,9 +633,8 @@ Return the list of files that haven't been handled."
     (goto-char (point-min))
     (let (unmerged-files)
       (while (re-search-forward "[0-7]\\{6\\} [0-9a-f]\\{40\\} [123]\t\\([^\0]+\\)\0" nil t)
-        (let ((node (git-find-status-file status (match-string 1))))
-          (when node (push (ewoc-data node) unmerged-files))))
-      (git-set-files-state unmerged-files 'unmerged))))
+        (push (match-string 1) unmerged-files))
+      (git-set-filenames-state status unmerged-files 'unmerged))))
 
 (defun git-get-exclude-files ()
   "Get the list of exclude files to pass to git-ls-files."
@@ -622,18 +660,7 @@ Return the list of files that haven't been handled."
         (setq remaining-files (apply #'git-run-ls-files status remaining-files 'unknown "-o"
                                      (concat "--exclude-per-directory=" git-per-dir-ignore-file)
                                      (mapcar (lambda (f) (concat "--exclude-from=" f)) exclude-files)))))
-    ; mark remaining files with the default state (or remove them if nil)
-    (when remaining-files
-      (if default-state
-          (ewoc-map (lambda (info)
-                      (when (member (git-fileinfo->name info) remaining-files)
-                        (git-set-files-state (list info) default-state))
-                      nil)
-                    status)
-        (ewoc-filter status
-                     (lambda (info files)
-                       (not (member (git-fileinfo->name info) files)))
-                     remaining-files)))
+    (git-set-filenames-state status remaining-files default-state)
     (git-refresh-files)
     (git-refresh-ewoc-hf status)))
 
