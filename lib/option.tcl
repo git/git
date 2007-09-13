@@ -255,17 +255,23 @@ proc do_options {} {
 
 		frame $w.global.$name
 		label $w.global.$name.l -text "$text:"
-		pack $w.global.$name.l -side left -anchor w -fill x
-		eval tk_optionMenu $w.global.$name.family \
-			global_config_new(gui.$font^^family) \
-			$all_fonts
-		spinbox $w.global.$name.size \
-			-textvariable global_config_new(gui.$font^^size) \
-			-from 2 -to 80 -increment 1 \
-			-width 3
-		bind $w.global.$name.size <FocusIn> {%W selection range 0 end}
-		pack $w.global.$name.size -side right -anchor e
-		pack $w.global.$name.family -side right -anchor e
+		button $w.global.$name.b \
+			-text [mc "Change Font"] \
+			-command [list \
+				choose_font::pick \
+				$w \
+				[mc "Choose %s" $text] \
+				global_config_new(gui.$font^^family) \
+				global_config_new(gui.$font^^size) \
+				]
+		label $w.global.$name.f -textvariable global_config_new(gui.$font^^family)
+		label $w.global.$name.s -textvariable global_config_new(gui.$font^^size)
+		label $w.global.$name.pt -text [mc "pt."]
+		pack $w.global.$name.l -side left -anchor w
+		pack $w.global.$name.b -side right -anchor e
+		pack $w.global.$name.pt -side right -anchor w
+		pack $w.global.$name.s -side right -anchor w
+		pack $w.global.$name.f -side right -anchor w
 		pack $w.global.$name -side top -anchor w -fill x
 	}
 
