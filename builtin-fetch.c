@@ -12,9 +12,6 @@
 static const char fetch_usage[] = "git-fetch [-a | --append] [--upload-pack <upload-pack>] [-f | --force] [--no-tags] [-t | --tags] [-k | --keep] [-u | --update-head-ok] [--depth <depth>] [-v | --verbose] [<repository> <refspec>...]";
 
 static int append, force, tags, no_tags, update_head_ok, verbose, quiet;
-
-static int unpacklimit;
-
 static char *default_rla = NULL;
 
 static void find_merge_config(struct ref *ref_map, struct remote *remote)
@@ -395,21 +392,6 @@ static int do_fetch(struct transport *transport,
 	return 0;
 }
 
-static int fetch_config(const char *var, const char *value)
-{
-	if (strcmp(var, "fetch.unpacklimit") == 0) {
-		unpacklimit = git_config_int(var, value);
-		return 0;
-	}
-
-	if (strcmp(var, "transfer.unpacklimit") == 0) {
-		unpacklimit = git_config_int(var, value);
-		return 0;
-	}
-
-	return git_default_config(var, value);
-}
-
 int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	struct remote *remote;
@@ -420,8 +402,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	int cmd_len = 0;
 	const char *depth = NULL, *upload_pack = NULL;
 	int keep = 0;
-
-	git_config(fetch_config);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
