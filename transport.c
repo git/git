@@ -10,10 +10,12 @@
 /* Generic functions for using commit walkers */
 
 static int fetch_objs_via_walker(const struct transport *transport,
-				 int nr_objs, char **objs)
+				 int nr_objs, struct ref **to_fetch)
 {
 	char *dest = xstrdup(transport->url);
 	struct walker *walker = transport->data;
+	char **objs = xmalloc(nr_objs * sizeof(*objs));
+	int i;
 
 	walker->get_all = 1;
 	walker->get_tree = 1;
@@ -21,9 +23,15 @@ static int fetch_objs_via_walker(const struct transport *transport,
 	walker->get_verbosely = transport->verbose;
 	walker->get_recover = 0;
 
+	for (i = 0; i < nr_objs; i++)
+		objs[i] = xstrdup(sha1_to_hex(to_fetch[i]->old_sha1));
+
 	if (walker_fetch(walker, nr_objs, objs, NULL, dest))
 		die("Fetch failed.");
 
+	for (i = 0; i < nr_objs; i++)
+		free(objs[i]);
+	free(objs);
 	free(dest);
 	return 0;
 }
@@ -179,8 +187,7 @@ static struct ref *get_refs_via_curl(const struct transport *transport)
 static const struct transport_ops curl_transport = {
 	/* set_option */	NULL,
 	/* get_refs_list */	get_refs_via_curl,
-	/* fetch_refs */	NULL,
-	/* fetch_objs */	fetch_objs_via_walker,
+	/* fetch */		fetch_objs_via_walker,
 	/* push */		curl_transport_push,
 	/* disconnect */	disconnect_walker
 };
@@ -213,7 +220,7 @@ static struct ref *get_refs_from_bundle(const struct transport *transport)
 }
 
 static int fetch_refs_from_bundle(const struct transport *transport,
-			       int nr_heads, char **heads)
+			       int nr_heads, struct ref **to_fetch)
 {
 	struct bundle_transport_data *data = transport->data;
 	return unbundle(&data->header, data->fd);
@@ -230,8 +237,7 @@ static int close_bundle(struct transport *transport)
 static const struct transport_ops bundle_transport = {
 	/* set_option */	NULL,
 	/* get_refs_list */	get_refs_from_bundle,
-	/* fetch_refs */	fetch_refs_from_bundle,
-	/* fetch_objs */	NULL,
+	/* fetch */		fetch_refs_from_bundle,
 	/* push */		NULL,
 	/* disconnect */	close_bundle
 };
@@ -301,12 +307,14 @@ static struct ref *get_refs_via_connect(const struct transport *transport)
 }
 
 static int fetch_refs_via_pack(const struct transport *transport,
-			       int nr_heads, char **heads)
+			       int nr_heads, struct ref **to_fetch)
 {
 	struct git_transport_data *data = transport->data;
+	char **heads = xmalloc(nr_heads * sizeof(*heads));
 	struct ref *refs;
 	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
+	int i;
 
 	args.uploadpack = data->uploadpack;
 	args.quiet = 0;
@@ -320,14 +328,13 @@ static int fetch_refs_via_pack(const struct transport *transport,
 
 	setup_fetch_pack(&args);
 
+	for (i = 0; i < nr_heads; i++)
+		heads[i] = xstrdup(to_fetch[i]->name);
 	refs = fetch_pack(dest, nr_heads, heads);
 
-	// ???? check that refs got everything?
-
-	/* free the memory used for the refs list ... */
-
+	for (i = 0; i < nr_heads; i++)
+		free(heads[i]);
 	free_refs(refs);
-
 	free(dest);
 	return 0;
 }
@@ -379,8 +386,7 @@ static int git_transport_push(struct transport *transport, int refspec_nr, const
 static const struct transport_ops git_transport = {
 	/* set_option */	set_git_option,
 	/* get_refs_list */	get_refs_via_connect,
-	/* fetch_refs */	fetch_refs_via_pack,
-	/* fetch_objs */	NULL,
+	/* fetch */		fetch_refs_via_pack,
 	/* push */		git_transport_push
 };
 
@@ -476,37 +482,22 @@ struct ref *transport_get_remote_refs(struct transport *transport)
 
 int transport_fetch_refs(struct transport *transport, struct ref *refs)
 {
-	int i;
+	int rc;
 	int nr_heads = 0, nr_alloc = 0;
-	char **heads = NULL;
+	struct ref **heads = NULL;
 	struct ref *rm;
-	int use_objs = !transport->ops->fetch_refs;
 
 	for (rm = refs; rm; rm = rm->next) {
 		if (rm->peer_ref &&
 		    !hashcmp(rm->peer_ref->old_sha1, rm->old_sha1))
 			continue;
 		ALLOC_GROW(heads, nr_heads + 1, nr_alloc);
-		if (use_objs) {
-			heads[nr_heads++] = xstrdup(sha1_to_hex(rm->old_sha1));
-		} else {
-			heads[nr_heads++] = xstrdup(rm->name);
-		}
+		heads[nr_heads++] = rm;
 	}
 
-	if (use_objs) {
-		if (transport->ops->fetch_objs(transport, nr_heads, heads))
-			return -1;
-	} else {
-		if (transport->ops->fetch_refs(transport, nr_heads, heads))
-			return -1;
-	}
-
-	/* free the memory used for the heads list ... */
-	for (i = 0; i < nr_heads; i++)
-		free(heads[i]);
+	rc = transport->ops->fetch(transport, nr_heads, heads);
 	free(heads);
-	return 0;
+	return rc;
 }
 
 int transport_disconnect(struct transport *transport)

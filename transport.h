@@ -30,10 +30,7 @@ struct transport_ops {
 			  const char *value);
 
 	struct ref *(*get_refs_list)(const struct transport *transport);
-	int (*fetch_refs)(const struct transport *transport,
-			  int nr_refs, char **refs);
-	int (*fetch_objs)(const struct transport *transport,
-			  int nr_objs, char **objs);
+	int (*fetch)(const struct transport *transport, int refs_nr, struct ref **refs);
 	int (*push)(struct transport *connection, int refspec_nr, const char **refspec, int flags);
 
 	int (*disconnect)(struct transport *connection);
