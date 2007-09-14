@@ -404,7 +404,7 @@ t,)
 		(
 			GIT_INDEX_FILE="$NEXT_INDEX"
 			export GIT_INDEX_FILE
-			git update-index --remove --stdin
+			git update-index --add --remove --stdin
 		) || exit
 		;;
 	esac

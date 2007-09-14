@@ -131,7 +131,7 @@ test_expect_success \
     'validate git-rev-list output.' \
     'diff current expected'
 
-test_expect_success 'partial commit that involve removal (1)' '
+test_expect_success 'partial commit that involves removal (1)' '
 
 	git rm --cached file &&
 	mv file elif &&
@@ -143,11 +143,22 @@ test_expect_success 'partial commit that involve removal (1)' '
 
 '
 
-test_expect_success 'partial commit that involve removal (2)' '
+test_expect_success 'partial commit that involves removal (2)' '
 
 	git commit -m "Partial: remove file" file &&
 	git diff-tree --name-status HEAD^ HEAD >current &&
 	echo "D	file" >expected &&
+	diff expected current
+
+'
+
+test_expect_success 'partial commit that involves removal (3)' '
+
+	git rm --cached elif &&
+	echo elif >elif &&
+	git commit -m "Partial: modify elif" elif &&
+	git diff-tree --name-status HEAD^ HEAD >current &&
+	echo "M	elif" >expected &&
 	diff expected current
 
 '
