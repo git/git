@@ -217,7 +217,7 @@ static void store_updated_refs(const char *url, struct ref *ref_map)
 			strcpy(ref->name, rm->peer_ref->name);
 			hashcpy(ref->old_sha1, rm->peer_ref->old_sha1);
 			hashcpy(ref->new_sha1, rm->old_sha1);
-			ref->force = rm->force;
+			ref->force = rm->peer_ref->force;
 		}
 
 		commit = lookup_commit_reference(rm->old_sha1);
