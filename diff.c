@@ -17,7 +17,7 @@
 #endif
 
 static int diff_detect_rename_default;
-static int diff_rename_limit_default = -1;
+static int diff_rename_limit_default = 100;
 static int diff_use_color_default;
 int diff_auto_refresh_index = 1;
 
