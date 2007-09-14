@@ -311,6 +311,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 {
 	struct git_transport_data *data = transport->data;
 	char **heads = xmalloc(nr_heads * sizeof(*heads));
+	char **origh = xmalloc(nr_heads * sizeof(*origh));
 	struct ref *refs;
 	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
@@ -329,11 +330,13 @@ static int fetch_refs_via_pack(struct transport *transport,
 	setup_fetch_pack(&args);
 
 	for (i = 0; i < nr_heads; i++)
-		heads[i] = xstrdup(to_fetch[i]->name);
+		origh[i] = heads[i] = xstrdup(to_fetch[i]->name);
 	refs = fetch_pack(dest, nr_heads, heads, &transport->pack_lockfile);
 
 	for (i = 0; i < nr_heads; i++)
-		free(heads[i]);
+		free(origh[i]);
+	free(origh);
+	free(heads);
 	free_refs(refs);
 	free(dest);
 	return 0;
