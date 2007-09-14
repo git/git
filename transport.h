@@ -15,6 +15,7 @@ struct transport {
 	struct ref *remote_refs;
 
 	const struct transport_ops *ops;
+	char *pack_lockfile;
 };
 
 #define TRANSPORT_PUSH_ALL 1
@@ -30,7 +31,7 @@ struct transport_ops {
 			  const char *value);
 
 	struct ref *(*get_refs_list)(const struct transport *transport);
-	int (*fetch)(const struct transport *transport, int refs_nr, struct ref **refs);
+	int (*fetch)(struct transport *transport, int refs_nr, struct ref **refs);
 	int (*push)(struct transport *connection, int refspec_nr, const char **refspec, int flags);
 
 	int (*disconnect)(struct transport *connection);
@@ -73,7 +74,7 @@ int transport_push(struct transport *connection,
 struct ref *transport_get_remote_refs(struct transport *transport);
 
 int transport_fetch_refs(struct transport *transport, struct ref *refs);
-
+void transport_unlock_pack(struct transport *transport);
 int transport_disconnect(struct transport *transport);
 
 #endif

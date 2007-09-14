@@ -16,6 +16,6 @@ struct fetch_pack_args
 
 void setup_fetch_pack(struct fetch_pack_args *args);
 
-struct ref *fetch_pack(const char *dest, int nr_heads, char **heads);
+struct ref *fetch_pack(const char *dest, int nr_heads, char **heads, char **pack_lockfile);
 
 #endif

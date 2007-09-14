@@ -9,7 +9,7 @@
 
 /* Generic functions for using commit walkers */
 
-static int fetch_objs_via_walker(const struct transport *transport,
+static int fetch_objs_via_walker(struct transport *transport,
 				 int nr_objs, struct ref **to_fetch)
 {
 	char *dest = xstrdup(transport->url);
@@ -219,7 +219,7 @@ static struct ref *get_refs_from_bundle(const struct transport *transport)
 	return result;
 }
 
-static int fetch_refs_from_bundle(const struct transport *transport,
+static int fetch_refs_from_bundle(struct transport *transport,
 			       int nr_heads, struct ref **to_fetch)
 {
 	struct bundle_transport_data *data = transport->data;
@@ -306,7 +306,7 @@ static struct ref *get_refs_via_connect(const struct transport *transport)
 	return refs;
 }
 
-static int fetch_refs_via_pack(const struct transport *transport,
+static int fetch_refs_via_pack(struct transport *transport,
 			       int nr_heads, struct ref **to_fetch)
 {
 	struct git_transport_data *data = transport->data;
@@ -330,7 +330,7 @@ static int fetch_refs_via_pack(const struct transport *transport,
 
 	for (i = 0; i < nr_heads; i++)
 		heads[i] = xstrdup(to_fetch[i]->name);
-	refs = fetch_pack(dest, nr_heads, heads);
+	refs = fetch_pack(dest, nr_heads, heads, &transport->pack_lockfile);
 
 	for (i = 0; i < nr_heads; i++)
 		free(heads[i]);
@@ -445,6 +445,7 @@ struct transport *transport_get(struct remote *remote, const char *url,
 		ret->url = url;
 		ret->remote_refs = NULL;
 		ret->fetch = !!fetch;
+		ret->pack_lockfile = NULL;
 	}
 	return ret;
 }
@@ -498,6 +499,15 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 	rc = transport->ops->fetch(transport, nr_heads, heads);
 	free(heads);
 	return rc;
+}
+
+void transport_unlock_pack(struct transport *transport)
+{
+	if (transport->pack_lockfile) {
+		unlink(transport->pack_lockfile);
+		free(transport->pack_lockfile);
+		transport->pack_lockfile = NULL;
+	}
 }
 
 int transport_disconnect(struct transport *transport)

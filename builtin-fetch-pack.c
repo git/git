@@ -493,7 +493,7 @@ static pid_t setup_sideband(int fd[2], int xd[2])
 	return side_pid;
 }
 
-static int get_pack(int xd[2])
+static int get_pack(int xd[2], char **pack_lockfile)
 {
 	int status;
 	pid_t pid, side_pid;
@@ -503,6 +503,7 @@ static int get_pack(int xd[2])
 	char hdr_arg[256];
 	const char **av;
 	int do_keep = keep_pack;
+	int keep_pipe[2];
 
 	side_pid = setup_sideband(fd, xd);
 
@@ -522,6 +523,8 @@ static int get_pack(int xd[2])
 	}
 
 	if (do_keep) {
+		if (pack_lockfile && pipe(keep_pipe))
+			die("fetch-pack: pipe setup failure: %s", strerror(errno));
 		*av++ = "index-pack";
 		*av++ = "--stdin";
 		if (!quiet && !no_progress)
@@ -550,6 +553,11 @@ static int get_pack(int xd[2])
 		die("fetch-pack: unable to fork off %s", argv[0]);
 	if (!pid) {
 		dup2(fd[0], 0);
+		if (do_keep && pack_lockfile) {
+			dup2(keep_pipe[1], 1);
+			close(keep_pipe[0]);
+			close(keep_pipe[1]);
+		}
 		close(fd[0]);
 		close(fd[1]);
 		execv_git_cmd(argv);
@@ -557,6 +565,11 @@ static int get_pack(int xd[2])
 	}
 	close(fd[0]);
 	close(fd[1]);
+	if (do_keep && pack_lockfile) {
+		close(keep_pipe[1]);
+		*pack_lockfile = index_pack_lockfile(keep_pipe[0]);
+		close(keep_pipe[0]);
+	}
 	while (waitpid(pid, &status, 0) < 0) {
 		if (errno != EINTR)
 			die("waiting for %s: %s", argv[0], strerror(errno));
@@ -574,7 +587,10 @@ static int get_pack(int xd[2])
 	die("%s died of unnatural causes %d", argv[0], status);
 }
 
-static struct ref *do_fetch_pack(int fd[2], int nr_match, char **match)
+static struct ref *do_fetch_pack(int fd[2],
+		int nr_match,
+		char **match,
+		char **pack_lockfile)
 {
 	struct ref *ref;
 	unsigned char sha1[20];
@@ -612,7 +628,7 @@ static struct ref *do_fetch_pack(int fd[2], int nr_match, char **match)
 			 */
 			fprintf(stderr, "warning: no common commits\n");
 
-	if (get_pack(fd))
+	if (get_pack(fd, pack_lockfile))
 		die("git-fetch-pack: fetch failed.");
 
  all_done:
@@ -741,7 +757,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	if (!dest)
 		usage(fetch_pack_usage);
 
-	ref = fetch_pack(dest, nr_heads, heads);
+	ref = fetch_pack(dest, nr_heads, heads, NULL);
 
 	ret = !ref;
 
@@ -754,7 +770,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-struct ref *fetch_pack(const char *dest, int nr_heads, char **heads)
+struct ref *fetch_pack(const char *dest,
+		int nr_heads,
+		char **heads,
+		char **pack_lockfile)
 {
 	int i, ret;
 	int fd[2];
@@ -773,7 +792,7 @@ struct ref *fetch_pack(const char *dest, int nr_heads, char **heads)
 		return NULL;
 	if (heads && nr_heads)
 		nr_heads = remove_duplicates(nr_heads, heads);
-	ref = do_fetch_pack(fd, nr_heads, heads);
+	ref = do_fetch_pack(fd, nr_heads, heads, pack_lockfile);
 	close(fd[0]);
 	close(fd[1]);
 	ret = finish_connect(pid);
