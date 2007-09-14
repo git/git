@@ -503,7 +503,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	rla_offset = strlen(default_rla);
 	for (j = 1; j < argc; j++) {
 		sprintf(default_rla + rla_offset, " %s", argv[j]);
-		rla_offset += strlen(argv[j]);
+		rla_offset += strlen(argv[j]) + 1;
 	}
 
 	if (i == argc)
