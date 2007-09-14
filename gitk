@@ -83,7 +83,7 @@ proc start_rev_list {view} {
     global startmsecs
     global commfd leftover tclencoding datemode
     global viewargs viewfiles commitidx viewcomplete vnextroot
-    global lookingforhead showlocalchanges
+    global showlocalchanges commitinterest mainheadid
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
@@ -102,7 +102,9 @@ proc start_rev_list {view} {
     }
     set commfd($view) $fd
     set leftover($view) {}
-    set lookingforhead $showlocalchanges
+    if {$showlocalchanges} {
+	lappend commitinterest($mainheadid) {dodiffindex}
+    }
     fconfigure $fd -blocking 0 -translation lf -eofchar {}
     if {$tclencoding != {}} {
 	fconfigure $fd -encoding $tclencoding
@@ -147,7 +149,7 @@ proc strrep {n} {
 }
 
 proc getcommitlines {fd view}  {
-    global commitlisted
+    global commitlisted commitinterest
     global leftover commfd
     global displayorder commitidx viewcomplete commitrow commitdata
     global parentlist children curview hlview
@@ -302,6 +304,12 @@ proc getcommitlines {fd view}  {
 	    lappend vparentlist($view) $olds
 	    lappend vdisporder($view) $id
 	    lappend vcmitlisted($view) $listed
+	}
+	if {[info exists commitinterest($id)]} {
+	    foreach script $commitinterest($id) {
+		eval [string map [list "%I" $id] $script]
+	    }
+	    unset commitinterest($id)
 	}
 	set gotsome 1
     }
@@ -2715,22 +2723,13 @@ proc layoutmore {} {
 
 proc showstuff {canshow last} {
     global numcommits commitrow pending_select selectedline curview
-    global lookingforhead mainheadid displayorder selectfirst
+    global mainheadid displayorder selectfirst
     global lastscrollset commitinterest
 
     if {$numcommits == 0} {
 	global phase
 	set phase "incrdraw"
 	allcanvs delete all
-    }
-    for {set l $numcommits} {$l < $canshow} {incr l} {
-	set id [lindex $displayorder $l]
-	if {[info exists commitinterest($id)]} {
-	    foreach script $commitinterest($id) {
-		eval [string map [list "%I" $id] $script]
-	    }
-	    unset commitinterest($id)
-	}
     }
     set r0 $numcommits
     set prev $numcommits
@@ -2762,28 +2761,22 @@ proc showstuff {canshow last} {
 	    set selectfirst 0
 	}
     }
-    if {$lookingforhead && [info exists commitrow($curview,$mainheadid)]
-	&& ($last || $commitrow($curview,$mainheadid) < $numcommits - 1)} {
-	set lookingforhead 0
-	dodiffindex
-    }
 }
 
 proc doshowlocalchanges {} {
-    global lookingforhead curview mainheadid phase commitrow
+    global curview mainheadid phase commitrow
 
     if {[info exists commitrow($curview,$mainheadid)] &&
 	($phase eq {} || $commitrow($curview,$mainheadid) < $numcommits - 1)} {
 	dodiffindex
     } elseif {$phase ne {}} {
-	set lookingforhead 1
+	lappend commitinterest($mainheadid) {}
     }
 }
 
 proc dohidelocalchanges {} {
-    global lookingforhead localfrow localirow lserial
+    global localfrow localirow lserial
 
-    set lookingforhead 0
     if {$localfrow >= 0} {
 	removerow $localfrow
 	set localfrow -1
@@ -2800,8 +2793,9 @@ proc dohidelocalchanges {} {
 
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
-    global localirow localfrow lserial
+    global localirow localfrow lserial showlocalchanges
 
+    if {!$showlocalchanges} return
     incr lserial
     set localfrow -1
     set localirow -1
@@ -6188,7 +6182,6 @@ proc cherrypick {} {
 
 proc resethead {} {
     global mainheadid mainhead rowmenuid confirm_ok resettype
-    global showlocalchanges
 
     set confirm_ok 0
     set w ".confirmreset"
@@ -8249,7 +8242,6 @@ set cmdlineok 0
 set stopped 0
 set stuffsaved 0
 set patchnum 0
-set lookingforhead 0
 set localirow -1
 set localfrow -1
 set lserial 0
