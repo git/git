@@ -103,7 +103,6 @@ static void update_callback(struct diff_queue_struct *q,
 			break;
 		case DIFF_STATUS_DELETED:
 			remove_file_from_cache(path);
-			cache_tree_invalidate_path(active_cache_tree, path);
 			if (verbose)
 				printf("remove '%s'\n", path);
 			break;

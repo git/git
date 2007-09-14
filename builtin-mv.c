@@ -276,11 +276,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			add_file_to_cache(path, verbose);
 		}
 
-		for (i = 0; i < deleted.nr; i++) {
-			const char *path = deleted.items[i].path;
-			remove_file_from_cache(path);
-			cache_tree_invalidate_path(active_cache_tree, path);
-		}
+		for (i = 0; i < deleted.nr; i++)
+			remove_file_from_cache(deleted.items[i].path);
 
 		if (active_cache_changed) {
 			if (write_cache(newfd, active_cache, active_nr) ||

@@ -227,7 +227,6 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 		if (remove_file_from_cache(path))
 			die("git-rm: unable to remove %s", path);
-		cache_tree_invalidate_path(active_cache_tree, path);
 	}
 
 	if (show_only)
