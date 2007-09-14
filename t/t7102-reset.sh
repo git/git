@@ -386,4 +386,20 @@ test_expect_success 'test --mixed <paths>' '
 	git diff output cached_expect
 '
 
+test_expect_success 'test resetting the index at give paths' '
+
+	mkdir sub &&
+	>sub/file1 &&
+	>sub/file2 &&
+	git update-index --add sub/file1 sub/file2 &&
+	T=$(git write-tree) &&
+	! git reset HEAD sub/file2 &&
+	U=$(git write-tree) &&
+	echo "$T" &&
+	echo "$U" &&
+	! git diff-index --cached --exit-code "$T" &&
+	test "$T" != "$U"
+
+'
+
 test_done
