@@ -13,6 +13,20 @@ static const char fetch_usage[] = "git-fetch [-a | --append] [--upload-pack <upl
 
 static int append, force, tags, no_tags, update_head_ok, verbose, quiet;
 static char *default_rla = NULL;
+static struct transport *transport;
+
+static void unlock_pack(void)
+{
+	if (transport)
+		transport_unlock_pack(transport);
+}
+
+static void unlock_pack_on_signal(int signo)
+{
+	unlock_pack();
+	signal(SIGINT, SIG_DFL);
+	raise(signo);
+}
 
 static void find_merge_config(struct ref *ref_map, struct remote *remote)
 {
@@ -396,7 +410,6 @@ static int do_fetch(struct transport *transport,
 int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	struct remote *remote;
-	struct transport *transport;
 	int i, j, rla_offset;
 	static const char **refs = NULL;
 	int ref_nr = 0;
@@ -520,5 +533,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			printf("ref: %s\n", refs[j]);
 	}
 
+	signal(SIGINT, unlock_pack_on_signal);
+	atexit(unlock_pack);
 	return do_fetch(transport, parse_ref_spec(ref_nr, refs), ref_nr);
 }
