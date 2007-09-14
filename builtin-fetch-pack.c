@@ -654,7 +654,6 @@ static int remove_duplicates(int nr_heads, char **heads)
 			heads[dst] = heads[src];
 		dst++;
 	}
-	heads[dst] = 0;
 	return dst;
 }
 
