@@ -3008,20 +3008,21 @@ proc layoutrows {row endrow} {
 
     set idlist {}
     if {$row > 0} {
-	foreach id [lindex $rowidlist [expr {$row - 1}]] {
+	set rm1 [expr {$row - 1}]
+	foreach id [lindex $rowidlist $rm1] {
 	    if {$id ne {}} {
 		lappend idlist $id
 	    }
 	}
+	set final [lindex $rowfinal $rm1]
     }
     for {} {$row < $endrow} {incr row} {
 	set rm1 [expr {$row - 1}]
-	if {$rm1 < 0 || [lindex $rowidlist $rm1] eq {}} {
+	if {$rm1 < 0 || $idlist eq {}} {
 	    set idlist [make_idlist $row]
 	    set final 1
 	} else {
 	    set id [lindex $displayorder $rm1]
-	    set final [lindex $rowfinal $rm1]
 	    set col [lsearch -exact $idlist $id]
 	    set idlist [lreplace $idlist $col $col]
 	    foreach p [lindex $parentlist $rm1] {
@@ -3090,9 +3091,9 @@ proc layoutrows {row endrow} {
 	} elseif {$row < $l} {
 	    if {![rowsequal $idlist [lindex $rowidlist $row]]} {
 		lset rowidlist $row $idlist
-		lset rowfinal $row $final
 		changedrow $row
 	    }
+	    lset rowfinal $row $final
 	} else {
 	    set pad [ntimes [expr {$row - $l}] {}]
 	    set rowidlist [concat $rowidlist $pad]
@@ -4055,7 +4056,7 @@ proc show_status {msg} {
 # on that row and below will move down one row.
 proc insertrow {row newcmit} {
     global displayorder parentlist commitlisted children
-    global commitrow curview rowidlist rowisopt numcommits
+    global commitrow curview rowidlist rowisopt rowfinal numcommits
     global numcommits
     global selectedline commitidx ordertok
 
@@ -4089,6 +4090,7 @@ proc insertrow {row newcmit} {
     }
     set rowidlist [linsert $rowidlist $row $idlist]
     set rowisopt [linsert $rowisopt $row 0]
+    set rowfinal [linsert $rowfinal $row [lindex $rowfinal $row]]
 
     incr numcommits
 
@@ -4101,7 +4103,7 @@ proc insertrow {row newcmit} {
 # Remove a commit that was inserted with insertrow on row $row.
 proc removerow {row} {
     global displayorder parentlist commitlisted children
-    global commitrow curview rowidlist rowisopt numcommits
+    global commitrow curview rowidlist rowisopt rowfinal numcommits
     global numcommits
     global linesegends selectedline commitidx
 
@@ -4130,6 +4132,7 @@ proc removerow {row} {
 
     set rowidlist [lreplace $rowidlist $row $row]
     set rowisopt [lreplace $rowisopt $row $row]
+    set rowfinal [lreplace $rowfinal $row $row]
 
     incr numcommits -1
 
