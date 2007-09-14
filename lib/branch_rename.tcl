@@ -114,7 +114,7 @@ method _rename {} {
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message [append [mc "Failed to rename '%s'." $oldname] "\n\n$err"]
+			-message [strcat [mc "Failed to rename '%s'." $oldname] "\n\n$err"]
 		return
 	}
 

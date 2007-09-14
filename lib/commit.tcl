@@ -46,7 +46,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 			}
 			set msg [string trim $msg]
 		} err]} {
- 	    error_popup [append [mc "Error loading commit data for amend:"] "\n\n$err"]
+		error_popup [strcat [mc "Error loading commit data for amend:"] "\n\n$err"]
 		return
 	}
 
@@ -73,12 +73,12 @@ proc committer_ident {} {
 
 	if {$GIT_COMMITTER_IDENT eq {}} {
 		if {[catch {set me [git var GIT_COMMITTER_IDENT]} err]} {
-			error_popup [append [mc "Unable to obtain your identity:"] "\n\n$err"]
+			error_popup [strcat [mc "Unable to obtain your identity:"] "\n\n$err"]
 			return {}
 		}
 		if {![regexp {^(.*) [0-9]+ [-+0-9]+$} \
 			$me me GIT_COMMITTER_IDENT]} {
-			error_popup [append [mc "Invalid GIT_COMMITTER_IDENT:"] "\n\n$me"]
+			error_popup [strcat [mc "Invalid GIT_COMMITTER_IDENT:"] "\n\n$me"]
 			return {}
 		}
 	}
@@ -254,7 +254,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 
 	gets $fd_wt tree_id
 	if {$tree_id eq {} || [catch {close $fd_wt} err]} {
-		error_popup [append [mc "write-tree failed:"] "\n\n$err"]
+		error_popup [strcat [mc "write-tree failed:"] "\n\n$err"]
 		ui_status {Commit failed.}
 		unlock_index
 		return
@@ -314,7 +314,7 @@ A rescan will be automatically started now.
 	}
 	lappend cmd <$msg_p
 	if {[catch {set cmt_id [eval git $cmd]} err]} {
-		error_popup [append [mc "commit-tree failed:"] "\n\n$err"]
+		error_popup [strcat [mc "commit-tree failed:"] "\n\n$err"]
 		ui_status {Commit failed.}
 		unlock_index
 		return
@@ -336,7 +336,7 @@ A rescan will be automatically started now.
 	if {[catch {
 			git update-ref -m $reflogm HEAD $cmt_id $curHEAD
 		} err]} {
-		error_popup [append [mc "update-ref failed:"] "\n\n$err"]
+		error_popup [strcat [mc "update-ref failed:"] "\n\n$err"]
 		ui_status {Commit failed.}
 		unlock_index
 		return

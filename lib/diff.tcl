@@ -112,7 +112,7 @@ proc show_diff {path w {lno {}}} {
 			set diff_active 0
 			unlock_index
 			ui_status [mc "Unable to display %s" [escape_path $path]]
- 		    error_popup [append [mc "Error loading file:"] "\n\n$err"]
+			error_popup [strcat [mc "Error loading file:"] "\n\n$err"]
 			return
 		}
 		$ui_diff conf -state normal
@@ -182,7 +182,7 @@ proc show_diff {path w {lno {}}} {
 		set diff_active 0
 		unlock_index
 		ui_status [mc "Unable to display %s" [escape_path $path]]
-		error_popup [append [mc "Error loading diff:"] "\n\n$err"]
+		error_popup [strcat [mc "Error loading diff:"] "\n\n$err"]
 		return
 	}
 

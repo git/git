@@ -23,7 +23,7 @@ proc do_windows_shortcut {} {
 				puts $fd " \"[file normalize $argv0]\""
 				close $fd
 			} err]} {
-			error_popup [append [mc "Cannot write script:"] "\n\n$err"]
+			error_popup [strcat [mc "Cannot write script:"] "\n\n$err"]
 		}
 	}
 }
@@ -71,7 +71,7 @@ proc do_cygwin_shortcut {} {
 				puts $fd " &\""
 				close $fd
 			} err]} {
-			error_popup [append [mc "Cannot write script:"] "\n\n$err"]
+			error_popup [strcat [mc "Cannot write script:"] "\n\n$err"]
 		}
 	}
 }
@@ -146,7 +146,7 @@ proc do_macosx_app {} {
 
 				file attributes $exe -permissions u+x,g+x,o+x
 			} err]} {
-			error_popup [append [mc "Cannot write icon:"] "\n\n$err"]
+			error_popup [strcat [mc "Cannot write icon:"] "\n\n$err"]
 		}
 	}
 }

@@ -96,6 +96,10 @@ proc mc {fmt args} {
 	return [eval [list format $fmt] $args]
 }
 
+proc strcat {args} {
+	return [join $args {}]
+}
+
 ::msgcat::mcload $oguimsg
 unset oguimsg
 
@@ -540,7 +544,7 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 		-icon error \
 		-type ok \
 		-title [mc "git-gui: fatal error"] \
-		-message [append [mc "Cannot parse Git version string:"] "\n\n$_git_version"]
+		-message [strcat [mc "Cannot parse Git version string:"] "\n\n$_git_version"]
 	exit 1
 }
 
@@ -722,7 +726,7 @@ if {[catch {
 		set _prefix [git rev-parse --show-prefix]
 	} err]} {
 	catch {wm withdraw .}
-	error_popup [append [mc "Cannot find the git directory:"] "\n\n$err"]
+	error_popup [strcat [mc "Cannot find the git directory:"] "\n\n$err"]
 	exit 1
 }
 if {![file isdirectory $_gitdir] && [is_Cygwin]} {
@@ -730,26 +734,26 @@ if {![file isdirectory $_gitdir] && [is_Cygwin]} {
 }
 if {![file isdirectory $_gitdir]} {
 	catch {wm withdraw .}
-	error_popup [append [mc "Git directory not found:"] "\n\n$_gitdir"]
+	error_popup [strcat [mc "Git directory not found:"] "\n\n$_gitdir"]
 	exit 1
 }
 if {$_prefix ne {}} {
 	regsub -all {[^/]+/} $_prefix ../ cdup
 	if {[catch {cd $cdup} err]} {
 		catch {wm withdraw .}
-		error_popup [append [mc "Cannot move to top of working directory:"] "\n\n$err"]
+		error_popup [strcat [mc "Cannot move to top of working directory:"] "\n\n$err"]
 		exit 1
 	}
 	unset cdup
 } elseif {![is_enabled bare]} {
 	if {[lindex [file split $_gitdir] end] ne {.git}} {
 		catch {wm withdraw .}
-		error_popup [append [mc "Cannot use funny .git directory:"] "\n\n$_gitdir"]
+		error_popup [strcat [mc "Cannot use funny .git directory:"] "\n\n$_gitdir"]
 		exit 1
 	}
 	if {[catch {cd [file dirname $_gitdir]} err]} {
 		catch {wm withdraw .}
-		error_popup [append [mc "No working directory"] " [file dirname $_gitdir]:\n\n$err"]
+		error_popup [strcat [mc "No working directory"] " [file dirname $_gitdir]:\n\n$err"]
 		exit 1
 	}
 }
@@ -1658,7 +1662,7 @@ proc apply_config {} {
 				font configure $font $cn $cv
 			}
 			} err]} {
-			error_popup [append [mc "Invalid font specified in %s:" "gui.$name"] "\n\n$err"]
+			error_popup [strcat [mc "Invalid font specified in %s:" "gui.$name"] "\n\n$err"]
 		}
 		foreach {cn cv} [font configure $font] {
 			font configure ${font}bold $cn $cv

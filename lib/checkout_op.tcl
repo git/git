@@ -236,7 +236,7 @@ method _update_ref {} {
 		if {[catch {
 				git update-ref -m $reflog_msg $ref $new $cur
 			} err]} {
-			_error $this [append [mc "Failed to update '%s'." $newbranch] "\n\n$err"]
+			_error $this [strcat [mc "Failed to update '%s'." $newbranch] "\n\n$err"]
 			return 0
 		}
 	}
@@ -351,7 +351,7 @@ method _readtree_wait {fd} {
 		set err $readtree_d
 		regsub {^fatal: } $err {} err
 		$::main_status stop [mc "Aborted checkout of '%s' (file level merging is required)." [_name $this]]
-		warn_popup [append [mc "File level merge required."] "
+		warn_popup [strcat [mc "File level merge required."] "
 
 $err
 
@@ -575,7 +575,7 @@ method _toplevel {title} {
 }
 
 method _fatal {err} {
-	error_popup [append [mc "Failed to set current branch.
+	error_popup [strcat [mc "Failed to set current branch.
 
 This working directory is only partially switched.  We successfully updated your files, but failed to update an internal Git file.
 

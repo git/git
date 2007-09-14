@@ -784,16 +784,16 @@ method _showcommit {cur_w lno} {
 		}
 
 		$w_cviewer insert end "commit $cmit\n" header_key
-		$w_cviewer insert end [append [mc "Author:"] "\t"] header_key
+		$w_cviewer insert end [strcat [mc "Author:"] "\t"] header_key
 		$w_cviewer insert end "$author_name $author_email" header_val
 		$w_cviewer insert end "  $author_time\n" header_val
 
-		$w_cviewer insert end [append [mc "Committer:"] "\t"] header_key
+		$w_cviewer insert end [strcat [mc "Committer:"] "\t"] header_key
 		$w_cviewer insert end "$committer_name $committer_email" header_val
 		$w_cviewer insert end "  $committer_time\n" header_val
 
 		if {$file ne $path} {
-			$w_cviewer insert end [append [mc "Original File:"] "\t"] header_key
+			$w_cviewer insert end [strcat [mc "Original File:"] "\t"] header_key
 			$w_cviewer insert end "[escape_path $file]\n" header_val
 		}
 
@@ -907,18 +907,18 @@ method _open_tooltip {cur_w} {
 		catch {set summary     $header($cmit,summary)}
 		catch {set author_time [foramt_date $header($cmit,author-time)]}
 
-		$tooltip_t insert end [append [mc "Originally By:"] "\n"] section_header
+		$tooltip_t insert end [strcat [mc "Originally By:"] "\n"] section_header
 		$tooltip_t insert end "commit $cmit\n"
 		$tooltip_t insert end "$author_name  $author_time\n"
 		$tooltip_t insert end "$summary\n"
 
 		if {$file ne $path} {
-			$tooltip_t insert end [append [mc "In File:"] " "] section_header
+			$tooltip_t insert end [strcat [mc "In File:"] " "] section_header
 			$tooltip_t insert end "$file\n"
 		}
 
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end [append [mc "Copied Or Moved Here By:"] "\n"] section_header
+		$tooltip_t insert end [strcat [mc "Copied Or Moved Here By:"] "\n"] section_header
 		$tooltip_t insert end $save
 	}
 

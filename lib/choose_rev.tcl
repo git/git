@@ -314,7 +314,7 @@ method commit_or_die {} {
 		}
 
 		set top [winfo toplevel $w]
-		set msg [append [mc "Invalid revision: %s" [get $this]] "\n\n$err"]
+		set msg [strcat [mc "Invalid revision: %s" [get $this]] "\n\n$err"]
 		tk_messageBox \
 			-icon error \
 			-type ok \
