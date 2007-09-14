@@ -474,13 +474,11 @@ struct ref *transport_get_remote_refs(struct transport *transport)
 	return transport->remote_refs;
 }
 
-#define PACK_HEADS_CHUNK_COUNT 256
-
 int transport_fetch_refs(struct transport *transport, struct ref *refs)
 {
 	int i;
-	int nr_heads = 0;
-	char **heads = xmalloc(PACK_HEADS_CHUNK_COUNT * sizeof(char *));
+	int nr_heads = 0, nr_alloc = 0;
+	char **heads = NULL;
 	struct ref *rm;
 	int use_objs = !transport->ops->fetch_refs;
 
@@ -488,15 +486,12 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 		if (rm->peer_ref &&
 		    !hashcmp(rm->peer_ref->old_sha1, rm->old_sha1))
 			continue;
+		ALLOC_GROW(heads, nr_heads + 1, nr_alloc);
 		if (use_objs) {
 			heads[nr_heads++] = xstrdup(sha1_to_hex(rm->old_sha1));
 		} else {
 			heads[nr_heads++] = xstrdup(rm->name);
 		}
-		if (nr_heads % PACK_HEADS_CHUNK_COUNT == 0)
-			heads = xrealloc(heads,
-					 (nr_heads + PACK_HEADS_CHUNK_COUNT) *
-					 sizeof(char *));
 	}
 
 	if (use_objs) {
