@@ -31,6 +31,9 @@ ifndef INSTALL
 	INSTALL = install
 endif
 
+RM_F      ?= rm -f
+RMDIR     ?= rmdir
+
 INSTALL_D0 = $(INSTALL) -d -m755 # space is required here
 INSTALL_D1 =
 INSTALL_R0 = $(INSTALL) -m644 # space is required here
@@ -41,6 +44,12 @@ INSTALL_L0 = rm -f # space is required here
 INSTALL_L1 = && ln # space is required here
 INSTALL_L2 =
 INSTALL_L3 =
+
+REMOVE_D0  = $(RMDIR) # space is required here
+REMOVE_D1  = || true
+REMOVE_F0  = $(RM_F) # space is required here
+REMOVE_F1  =
+CLEAN_DST  = true
 
 ifndef V
 	QUIET          = @
@@ -62,6 +71,12 @@ ifndef V
 	INSTALL_L1 = && src=
 	INSTALL_L2 = && dst=
 	INSTALL_L3 = && echo '   ' 'LINK       ' `basename "$$dst"` '->' `basename "$$src"` && rm -f "$$dst" && ln "$$src" "$$dst"
+
+	CLEAN_DST = echo ' ' UNINSTALL
+	REMOVE_D0 = dir=
+	REMOVE_D1 = && echo ' ' REMOVE $$dir && test -d "$$dir" && $(RMDIR) "$$dir" || true
+	REMOVE_F0 = dst=
+	REMOVE_F1 = && echo '   ' REMOVE `basename "$$dst"` && $(RM_F) "$$dst"
 endif
 
 TCL_PATH   ?= tclsh
@@ -165,6 +180,20 @@ install: all
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(msgsdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(foreach p,$(ALL_MSGFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(msgsdir_SQ)' &&) true
 
+uninstall:
+	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(gitexecdir_SQ)'/git-gui $(REMOVE_F1)
+	$(QUIET)$(foreach p,$(GITGUI_BUILT_INS), $(REMOVE_F0)'$(DESTDIR_SQ)$(gitexecdir_SQ)'/$p $(REMOVE_F1) &&) true
+	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(libdir_SQ)'
+	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/tclIndex $(REMOVE_F1)
+	$(QUIET)$(foreach p,$(ALL_LIBFILES), $(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/$(notdir $p) $(REMOVE_F1) &&) true
+	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(msgsdir_SQ)'
+	$(QUIET)$(foreach p,$(ALL_MSGFILES), $(REMOVE_F0)'$(DESTDIR_SQ)$(msgsdir_SQ)'/$(notdir $p) $(REMOVE_F1) &&) true
+	$(QUIET)$(REMOVE_D0)'$(DESTDIR_SQ)$(gitexecdir_SQ)' $(REMOVE_D1)
+	$(QUIET)$(REMOVE_D0)'$(DESTDIR_SQ)$(msgsdir_SQ)' $(REMOVE_D1)
+	$(QUIET)$(REMOVE_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(REMOVE_D1)
+	$(QUIET)$(REMOVE_D0)`dirname '$(DESTDIR_SQ)$(libdir_SQ)'` $(REMOVE_D1)
+
 dist-version:
 	@mkdir -p $(TARDIR)
 	@echo $(GITGUI_VERSION) > $(TARDIR)/version
@@ -173,6 +202,6 @@ clean::
 	rm -f $(ALL_PROGRAMS) lib/tclIndex po/*.msg
 	rm -f GIT-VERSION-FILE GIT-GUI-VARS
 
-.PHONY: all install dist-version clean
+.PHONY: all install uninstall dist-version clean
 .PHONY: .FORCE-GIT-VERSION-FILE
 .PHONY: .FORCE-GIT-GUI-VARS

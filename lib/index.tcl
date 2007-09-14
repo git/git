@@ -168,7 +168,7 @@ proc checkout_index {msg pathList after} {
 
 	ui_status [format \
 		"%s... %i/%i files (%.2f%%)" \
-		$msg
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
