@@ -34,7 +34,11 @@ fi
 
 http_fetch () {
 	# $1 = Remote, $2 = Local
-	curl -nsfL $curl_extra_args "$1" >"$2"
+	curl -nsfL $curl_extra_args "$1" >"$2" ||
+		case $? in
+		126|127) exit ;;
+		*)	 return $? ;;
+		esac
 }
 
 clone_dumb_http () {

@@ -42,7 +42,7 @@ fi
 
 # --- Check types
 # if $newrev is 0000...0000, it's a commit to delete a branch
-if [ -z "${newrev##0*}" ]; then
+if [ "$newrev" = "0000000000000000000000000000000000000000" ]; then
 	newrev_type=commit
 else
 	newrev_type=$(git-cat-file -t $newrev)
