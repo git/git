@@ -276,6 +276,7 @@ void http_cleanup(void)
 #endif
 
 	while (slot != NULL) {
+		struct active_request_slot *next = slot->next;
 #ifdef USE_CURL_MULTI
 		if (slot->in_use) {
 			curl_easy_getinfo(slot->curl,
@@ -287,8 +288,10 @@ void http_cleanup(void)
 #endif
 		if (slot->curl != NULL)
 			curl_easy_cleanup(slot->curl);
-		slot = slot->next;
+		free(slot);
+		slot = next;
 	}
+	active_queue_head = NULL;
 
 #ifndef NO_CURL_EASY_DUPHANDLE
 	curl_easy_cleanup(curl_default);
@@ -300,7 +303,7 @@ void http_cleanup(void)
 	curl_global_cleanup();
 
 	curl_slist_free_all(pragma_header);
-        pragma_header = NULL;
+	pragma_header = NULL;
 }
 
 struct active_request_slot *get_active_slot(void)
