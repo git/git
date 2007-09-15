@@ -1,30 +1,45 @@
 #include "cache.h"
 #include "strbuf.h"
 
-void strbuf_init(struct strbuf *sb, size_t hint) {
+void strbuf_init(struct strbuf *sb, size_t hint)
+{
 	memset(sb, 0, sizeof(*sb));
 	if (hint)
 		strbuf_grow(sb, hint);
 }
 
-void strbuf_release(struct strbuf *sb) {
+void strbuf_release(struct strbuf *sb)
+{
 	free(sb->buf);
 	memset(sb, 0, sizeof(*sb));
 }
 
-void strbuf_reset(struct strbuf *sb) {
+void strbuf_reset(struct strbuf *sb)
+{
 	if (sb->len)
 		strbuf_setlen(sb, 0);
 	sb->eof = 0;
 }
 
-char *strbuf_detach(struct strbuf *sb) {
+char *strbuf_detach(struct strbuf *sb)
+{
 	char *res = sb->buf;
 	strbuf_init(sb, 0);
 	return res;
 }
 
-void strbuf_grow(struct strbuf *sb, size_t extra) {
+void strbuf_attach(struct strbuf *sb, void *buf, size_t len, size_t alloc)
+{
+	strbuf_release(sb);
+	sb->buf   = buf;
+	sb->len   = len;
+	sb->alloc = alloc;
+	strbuf_grow(sb, 0);
+	sb->buf[sb->len] = '\0';
+}
+
+void strbuf_grow(struct strbuf *sb, size_t extra)
+{
 	if (sb->len + extra + 1 <= sb->len)
 		die("you want to use way too much memory");
 	ALLOC_GROW(sb->buf, sb->len + extra + 1, sb->alloc);
@@ -37,24 +52,44 @@ void strbuf_rtrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-void strbuf_insert(struct strbuf *sb, size_t pos, const void *data, size_t len) {
+void strbuf_insert(struct strbuf *sb, size_t pos, const void *data, size_t len)
+{
 	strbuf_grow(sb, len);
-	if (pos >= sb->len) {
-		pos = sb->len;
-	} else {
-		memmove(sb->buf + pos + len, sb->buf + pos, sb->len - pos);
-	}
+	if (pos > sb->len)
+		die("`pos' is too far after the end of the buffer");
+	memmove(sb->buf + pos + len, sb->buf + pos, sb->len - pos);
 	memcpy(sb->buf + pos, data, len);
 	strbuf_setlen(sb, sb->len + len);
 }
 
-void strbuf_add(struct strbuf *sb, const void *data, size_t len) {
+void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
+				   const void *data, size_t dlen)
+{
+	if (pos + len < pos)
+		die("you want to use way too much memory");
+	if (pos > sb->len)
+		die("`pos' is too far after the end of the buffer");
+	if (pos + len > sb->len)
+		die("`pos + len' is too far after the end of the buffer");
+
+	if (dlen >= len)
+		strbuf_grow(sb, dlen - len);
+	memmove(sb->buf + pos + dlen,
+			sb->buf + pos + len,
+			sb->len - pos - len);
+	memcpy(sb->buf + pos, data, dlen);
+	strbuf_setlen(sb, sb->len + dlen - len);
+}
+
+void strbuf_add(struct strbuf *sb, const void *data, size_t len)
+{
 	strbuf_grow(sb, len);
 	memcpy(sb->buf + sb->len, data, len);
 	strbuf_setlen(sb, sb->len + len);
 }
 
-void strbuf_addf(struct strbuf *sb, const char *fmt, ...) {
+void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
+{
 	int len;
 	va_list ap;
 
@@ -76,7 +111,8 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...) {
 	strbuf_setlen(sb, sb->len + len);
 }
 
-size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f) {
+size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
+{
 	size_t res;
 
 	strbuf_grow(sb, size);
@@ -110,7 +146,8 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 	return sb->len - oldlen;
 }
 
-void read_line(struct strbuf *sb, FILE *fp, int term) {
+void read_line(struct strbuf *sb, FILE *fp, int term)
+{
 	int ch;
 	if (feof(fp)) {
 		strbuf_release(sb);

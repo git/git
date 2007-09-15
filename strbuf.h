@@ -55,6 +55,7 @@ extern void strbuf_init(struct strbuf *, size_t);
 extern void strbuf_release(struct strbuf *);
 extern void strbuf_reset(struct strbuf *);
 extern char *strbuf_detach(struct strbuf *);
+extern void strbuf_attach(struct strbuf *, void *, size_t, size_t);
 
 /*----- strbuf size related -----*/
 static inline size_t strbuf_avail(struct strbuf *sb) {
@@ -80,6 +81,10 @@ static inline void strbuf_addch(struct strbuf *sb, int c) {
 
 /* inserts after pos, or appends if pos >= sb->len */
 extern void strbuf_insert(struct strbuf *, size_t pos, const void *, size_t);
+
+/* splice pos..pos+len with given data */
+extern void strbuf_splice(struct strbuf *, size_t pos, size_t len,
+						  const void *, size_t);
 
 extern void strbuf_add(struct strbuf *, const void *, size_t);
 static inline void strbuf_addstr(struct strbuf *sb, const char *s) {
