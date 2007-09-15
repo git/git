@@ -15,7 +15,7 @@ SYNOPSIS
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>]
-		[--error-unmatch]
+		[--error-unmatch] [--with-tree=<tree-ish>]
 		[--full-name] [--abbrev] [--] [<file>]\*
 
 DESCRIPTION
@@ -80,6 +80,13 @@ OPTIONS
 --error-unmatch::
 	If any <file> does not appear in the index, treat this as an
 	error (return 1).
+
+--with-tree=<tree-ish>::
+	When using --error-unmatch to expand the user supplied
+	<file> (i.e. path pattern) arguments to paths, pretend
+	that paths which were removed in the index since the
+	named <tree-ish> are still present.  Using this option
+	with `-s` or `-u` options does not make any sense.
 
 -t::
 	Identify the file status with the following tags (followed by
