@@ -648,47 +648,34 @@ static char *get_header(const struct commit *commit, const char *key)
 
 static char *replace_encoding_header(char *buf, const char *encoding)
 {
-	char *encoding_header = strstr(buf, "\nencoding ");
-	char *header_end = strstr(buf, "\n\n");
-	char *end_of_encoding_header;
-	int encoding_header_pos;
-	int encoding_header_len;
-	int new_len;
-	int need_len;
-	int buflen = strlen(buf) + 1;
+	struct strbuf tmp;
+	size_t start, len;
+	char *cp = buf;
 
-	if (!header_end)
-		header_end = buf + buflen;
-	if (!encoding_header || encoding_header >= header_end)
-		return buf;
-	encoding_header++;
-	end_of_encoding_header = strchr(encoding_header, '\n');
-	if (!end_of_encoding_header)
+	/* guess if there is an encoding header before a \n\n */
+	while (strncmp(cp, "encoding ", strlen("encoding "))) {
+		cp = strchr(cp, '\n');
+		if (!cp || *++cp == '\n')
+			return buf;
+	}
+	start = cp - buf;
+	cp = strchr(cp, '\n');
+	if (!cp)
 		return buf; /* should not happen but be defensive */
-	end_of_encoding_header++;
+	len = cp + 1 - (buf + start);
 
-	encoding_header_len = end_of_encoding_header - encoding_header;
-	encoding_header_pos = encoding_header - buf;
-
+	strbuf_init(&tmp, 0);
+	strbuf_attach(&tmp, buf, strlen(buf), strlen(buf) + 1);
 	if (is_encoding_utf8(encoding)) {
 		/* we have re-coded to UTF-8; drop the header */
-		memmove(encoding_header, end_of_encoding_header,
-			buflen - (encoding_header_pos + encoding_header_len));
-		return buf;
+		strbuf_splice(&tmp, start, len, NULL, 0);
+	} else {
+		/* just replaces XXXX in 'encoding XXXX\n' */
+		strbuf_splice(&tmp, start + strlen("encoding "),
+					  len - strlen("encoding \n"),
+					  encoding, strlen(encoding));
 	}
-	new_len = strlen(encoding);
-	need_len = new_len + strlen("encoding \n");
-	if (encoding_header_len < need_len) {
-		buf = xrealloc(buf, buflen + (need_len - encoding_header_len));
-		encoding_header = buf + encoding_header_pos;
-		end_of_encoding_header = encoding_header + encoding_header_len;
-	}
-	memmove(end_of_encoding_header + (need_len - encoding_header_len),
-		end_of_encoding_header,
-		buflen - (encoding_header_pos + encoding_header_len));
-	memcpy(encoding_header + 9, encoding, strlen(encoding));
-	encoding_header[9 + new_len] = '\n';
-	return buf;
+	return tmp.buf;
 }
 
 static char *logmsg_reencode(const struct commit *commit,
