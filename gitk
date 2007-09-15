@@ -5920,6 +5920,8 @@ proc mkpatchgo {} {
     set newid [$patchtop.tosha1 get]
     set fname [$patchtop.fname get]
     set cmd [diffcmd [list $oldid $newid] -p]
+    # trim off the initial "|"
+    set cmd [lrange $cmd 1 end]
     lappend cmd >$fname &
     if {[catch {eval exec $cmd} err]} {
 	error_popup "Error creating patch: $err"
