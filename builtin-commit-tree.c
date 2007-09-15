@@ -8,7 +8,6 @@
 #include "tree.h"
 #include "builtin.h"
 #include "utf8.h"
-#include "strbuf.h"
 
 #define BLOCKING (1ul << 14)
 

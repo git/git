@@ -3,7 +3,6 @@
  */
 #include "cache.h"
 #include "commit.h"
-#include "strbuf.h"
 #include "tar.h"
 #include "builtin.h"
 #include "archive.h"

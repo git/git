@@ -2,7 +2,6 @@
 #include "cache.h"
 #include "refs.h"
 #include "commit.h"
-#include "strbuf.h"
 
 static char *get_stdin(void)
 {

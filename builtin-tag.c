@@ -8,7 +8,6 @@
 
 #include "cache.h"
 #include "builtin.h"
-#include "strbuf.h"
 #include "refs.h"
 #include "tag.h"
 #include "run-command.h"

@@ -1,5 +1,4 @@
 #include "cache.h"
-#include "strbuf.h"
 #include "tree.h"
 #include "cache-tree.h"
 

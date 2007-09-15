@@ -14,7 +14,6 @@
 #include "tag.h"
 #include "tree.h"
 #include "refs.h"
-#include "strbuf.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))

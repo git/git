@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "attr.h"
 #include "run-command.h"
-#include "strbuf.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.

@@ -12,7 +12,6 @@
 #include "blob.h"
 #include "delta.h"
 #include "builtin.h"
-#include "strbuf.h"
 
 /*
  *  --check turns on checking that the working tree matches the

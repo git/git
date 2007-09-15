@@ -6,7 +6,6 @@
 #include "tag.h"
 #include "blob.h"
 #include "refs.h"
-#include "strbuf.h"
 
 int get_tree = 0;
 int get_history = 0;

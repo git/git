@@ -23,7 +23,6 @@
  */
 
 #include "cache.h"
-#include "strbuf.h"
 
 typedef struct store_conf {
 	char *name;

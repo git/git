@@ -149,7 +149,6 @@ Format of STDIN stream:
 #include "pack.h"
 #include "refs.h"
 #include "csum-file.h"
-#include "strbuf.h"
 #include "quote.h"
 
 #define PACK_ID_BITS 16

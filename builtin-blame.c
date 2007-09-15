@@ -18,7 +18,6 @@
 #include "cache-tree.h"
 #include "path-list.h"
 #include "mailmap.h"
-#include "strbuf.h"
 
 static char blame_usage[] =
 "git-blame [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-w] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"

@@ -1,5 +1,4 @@
 #include "cache.h"
-#include "strbuf.h"
 #include "tag.h"
 
 /*

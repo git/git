@@ -4,7 +4,6 @@
  * Copyright (c) Junio C Hamano, 2006
  */
 #include "cache.h"
-#include "strbuf.h"
 #include "quote.h"
 #include "tree.h"
 

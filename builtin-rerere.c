@@ -1,7 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
 #include "path-list.h"
-#include "strbuf.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
 

@@ -1,6 +1,5 @@
 #include "builtin.h"
 #include "cache.h"
-#include "strbuf.h"
 
 /*
  * Returns the length of a line, without trailing spaces.

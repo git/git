@@ -9,7 +9,6 @@
 #include "xdiff-interface.h"
 #include "color.h"
 #include "attr.h"
-#include "strbuf.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
