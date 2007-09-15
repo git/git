@@ -496,7 +496,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	else
 		remote = remote_get(argv[i++]);
 
-	transport = transport_get(remote, remote->uri[0], 1);
+	transport = transport_get(remote, remote->uri[0]);
 	if (verbose >= 2)
 		transport->verbose = 1;
 	if (quiet)

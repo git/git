@@ -174,6 +174,14 @@ static struct ref *get_refs_via_curl(const struct transport *transport)
 	return refs;
 }
 
+static int fetch_objs_via_curl(struct transport *transport,
+				 int nr_objs, struct ref **to_fetch)
+{
+	if (!transport->data)
+		transport->data = get_http_walker(transport->url);
+	return fetch_objs_via_walker(transport, nr_objs, to_fetch);
+}
+
 #else
 
 static struct ref *get_refs_via_curl(const struct transport *transport)
@@ -182,12 +190,19 @@ static struct ref *get_refs_via_curl(const struct transport *transport)
 	return NULL;
 }
 
+static int fetch_objs_via_curl(struct transport *transport,
+				 int nr_objs, struct ref **to_fetch)
+{
+	die("Cannot fetch from '%s' without curl ...", transport->url);
+	return -1;
+}
+
 #endif
 
 static const struct transport_ops curl_transport = {
 	/* set_option */	NULL,
 	/* get_refs_list */	get_refs_via_curl,
-	/* fetch */		fetch_objs_via_walker,
+	/* fetch */		fetch_objs_via_curl,
 	/* push */		curl_transport_push,
 	/* disconnect */	disconnect_walker
 };
@@ -408,14 +423,12 @@ static int is_file(const char *url)
 	return S_ISREG(buf.st_mode);
 }
 
-struct transport *transport_get(struct remote *remote, const char *url,
-				int fetch)
+struct transport *transport_get(struct remote *remote, const char *url)
 {
 	struct transport *ret = xcalloc(1, sizeof(*ret));
 
 	ret->remote = remote;
 	ret->url = url;
-	ret->fetch = !!fetch;
 
 	if (!prefixcmp(url, "rsync://")) {
 		ret->ops = &rsync_transport;
@@ -423,8 +436,6 @@ struct transport *transport_get(struct remote *remote, const char *url,
 	        || !prefixcmp(url, "https://")
 	        || !prefixcmp(url, "ftp://")) {
 		ret->ops = &curl_transport;
-		if (fetch)
-			ret->data = get_http_walker(url);
 	} else if (is_local(url) && is_file(url)) {
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
 		ret->data = data;

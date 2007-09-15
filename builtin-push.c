@@ -59,7 +59,7 @@ static int do_push(const char *repo, int flags)
 	errs = 0;
 	for (i = 0; i < remote->uri_nr; i++) {
 		struct transport *transport =
-			transport_get(remote, remote->uri[i], 0);
+			transport_get(remote, remote->uri[i]);
 		int err;
 		if (receivepack)
 			transport_set_option(transport,

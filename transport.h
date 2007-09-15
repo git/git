@@ -6,7 +6,6 @@
 
 struct transport {
 	unsigned verbose : 1;
-	unsigned fetch : 1;
 	struct remote *remote;
 	const char *url;
 
@@ -38,8 +37,7 @@ struct transport_ops {
 };
 
 /* Returns a transport suitable for the url */
-struct transport *transport_get(struct remote *remote, const char *url,
-				int fetch);
+struct transport *transport_get(struct remote *, const char *);
 
 /* Transport options which apply to git:// and scp-style URLs */
 
