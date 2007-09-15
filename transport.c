@@ -411,27 +411,26 @@ static int is_file(const char *url)
 struct transport *transport_get(struct remote *remote, const char *url,
 				int fetch)
 {
-	struct transport *ret = NULL;
+	struct transport *ret = xcalloc(1, sizeof(*ret));
+
+	ret->remote = remote;
+	ret->url = url;
+	ret->fetch = !!fetch;
+
 	if (!prefixcmp(url, "rsync://")) {
-		ret = xmalloc(sizeof(*ret));
-		ret->data = NULL;
 		ret->ops = &rsync_transport;
-	} else if (!prefixcmp(url, "http://") || !prefixcmp(url, "https://") ||
-		   !prefixcmp(url, "ftp://")) {
-		ret = xmalloc(sizeof(*ret));
+	} else if (!prefixcmp(url, "http://")
+	        || !prefixcmp(url, "https://")
+	        || !prefixcmp(url, "ftp://")) {
 		ret->ops = &curl_transport;
 		if (fetch)
 			ret->data = get_http_walker(url);
-		else
-			ret->data = NULL;
 	} else if (is_local(url) && is_file(url)) {
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
-		ret = xmalloc(sizeof(*ret));
 		ret->data = data;
 		ret->ops = &bundle_transport;
 	} else {
 		struct git_transport_data *data = xcalloc(1, sizeof(*data));
-		ret = xcalloc(1, sizeof(*ret));
 		ret->data = data;
 		data->thin = 1;
 		data->uploadpack = "git-upload-pack";
@@ -443,13 +442,7 @@ struct transport *transport_get(struct remote *remote, const char *url,
 		data->unpacklimit = -1;
 		ret->ops = &git_transport;
 	}
-	if (ret) {
-		ret->remote = remote;
-		ret->url = url;
-		ret->remote_refs = NULL;
-		ret->fetch = !!fetch;
-		ret->pack_lockfile = NULL;
-	}
+
 	return ret;
 }
 
