@@ -323,13 +323,8 @@ static int read_convert_config(const char *var, const char *value)
 		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
 			break;
 	if (!drv) {
-		char *namebuf;
 		drv = xcalloc(1, sizeof(struct convert_driver));
-		namebuf = xmalloc(namelen + 1);
-		memcpy(namebuf, name, namelen);
-		namebuf[namelen] = 0;
-		drv->name = namebuf;
-		drv->next = NULL;
+		drv->name = xmemdupz(name, namelen);
 		*user_convert_tail = drv;
 		user_convert_tail = &(drv->next);
 	}

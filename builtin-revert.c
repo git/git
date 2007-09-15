@@ -168,9 +168,7 @@ static void set_author_ident_env(const char *message)
 			char *line, *pend, *email, *timestamp;
 
 			p += 7;
-			line = xmalloc(eol + 1 - p);
-			memcpy(line, p, eol - p);
-			line[eol - p] = '\0';
+			line = xmemdupz(p, eol - p);
 			email = strchr(line, '<');
 			if (!email)
 				die ("Could not extract author email from %s",

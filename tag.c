@@ -68,9 +68,7 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 	memcpy(type, type_line + 5, typelen);
 	type[typelen] = '\0';
 	taglen = sig_line - tag_line - strlen("tag \n");
-	item->tag = xmalloc(taglen + 1);
-	memcpy(item->tag, tag_line + 4, taglen);
-	item->tag[taglen] = '\0';
+	item->tag = xmemdupz(tag_line + 4, taglen);
 
 	if (!strcmp(type, blob_type)) {
 		item->tagged = &lookup_blob(sha1)->object;

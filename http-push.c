@@ -1271,10 +1271,7 @@ xml_cdata(void *userData, const XML_Char *s, int len)
 {
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
 	free(ctx->cdata);
-	ctx->cdata = xmalloc(len + 1);
-	/* NB: 's' is not null-terminated, can not use strlcpy here */
-	memcpy(ctx->cdata, s, len);
-	ctx->cdata[len] = '\0';
+	ctx->cdata = xmemdupz(s, len);
 }
 
 static struct remote_lock *lock_remote(const char *path, long timeout)
@@ -2172,9 +2169,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 
 	/* If it's a symref, set the refname; otherwise try for a sha1 */
 	if (!prefixcmp((char *)buffer.buffer, "ref: ")) {
-		*symref = xmalloc(buffer.posn - 5);
-		memcpy(*symref, (char *)buffer.buffer + 5, buffer.posn - 6);
-		(*symref)[buffer.posn - 6] = '\0';
+		*symref = xmemdupz((char *)buffer.buffer + 5, buffer.posn - 6);
 	} else {
 		get_sha1_hex(buffer.buffer, sha1);
 	}

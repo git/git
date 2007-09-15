@@ -1864,9 +1864,7 @@ static void file_change_cr(struct branch *b, int rename)
 		endp = strchr(s, ' ');
 		if (!endp)
 			die("Missing space after source: %s", command_buf.buf);
-		s_uq = xmalloc(endp - s + 1);
-		memcpy(s_uq, s, endp - s);
-		s_uq[endp - s] = 0;
+		s_uq = xmemdupz(s, endp - s);
 	}
 	s = s_uq;
 

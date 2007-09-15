@@ -222,19 +222,15 @@ static char *find_local_name(const char *remote_name, const char *refs,
 		}
 		if (!strncmp(remote_name, ref, len) && ref[len] == ':') {
 			const char *local_part = ref + len + 1;
-			char *ret;
 			int retlen;
 
 			if (!next)
 				retlen = strlen(local_part);
 			else
 				retlen = next - local_part;
-			ret = xmalloc(retlen + 1);
-			memcpy(ret, local_part, retlen);
-			ret[retlen] = 0;
 			*force_p = single_force;
 			*not_for_merge_p = not_for_merge;
-			return ret;
+			return xmemdupz(local_part, retlen);
 		}
 		ref = next;
 	}

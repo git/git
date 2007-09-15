@@ -393,9 +393,7 @@ static int git_proxy_command_options(const char *var, const char *value)
 			if (matchlen == 4 &&
 			    !memcmp(value, "none", 4))
 				matchlen = 0;
-			git_proxy_command = xmalloc(matchlen + 1);
-			memcpy(git_proxy_command, value, matchlen);
-			git_proxy_command[matchlen] = 0;
+			git_proxy_command = xmemdupz(value, matchlen);
 		}
 		return 0;
 	}

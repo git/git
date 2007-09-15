@@ -623,9 +623,7 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 					goto bail;
 			cur->len = s - p;
 			s++;
-			cur->val = xmalloc( cur->len + 1 );
-			memcpy( cur->val, p, cur->len );
-			cur->val[cur->len] = 0;
+			cur->val = xmemdupz(p, cur->len);
 		} else {
 			/* atom */
 			p = s;
@@ -633,12 +631,10 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 				if (level && *s == ')')
 					break;
 			cur->len = s - p;
-			if (cur->len == 3 && !memcmp ("NIL", p, 3))
+			if (cur->len == 3 && !memcmp ("NIL", p, 3)) {
 				cur->val = NIL;
-			else {
-				cur->val = xmalloc( cur->len + 1 );
-				memcpy( cur->val, p, cur->len );
-				cur->val[cur->len] = 0;
+			} else {
+				cur->val = xmemdupz(p, cur->len);
 			}
 		}
 
@@ -1221,13 +1217,7 @@ split_msg( msg_data_t *all_msgs, msg_data_t *msg, int *ofs )
 	if (p)
 		msg->len = &p[1] - data;
 
-	msg->data = xmalloc( msg->len + 1 );
-	if (!msg->data)
-		return 0;
-
-	memcpy( msg->data, data, msg->len );
-	msg->data[ msg->len ] = 0;
-
+	msg->data = xmemdupz(data, msg->len);
 	*ofs += msg->len;
 	return 1;
 }

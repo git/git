@@ -293,11 +293,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 			return def;
 	}
 
-	name = xmalloc(len + 1);
-	memcpy(name, start, len);
-	name[len] = 0;
-	free(def);
-	return name;
+	return xmemdupz(start, len);
 }
 
 static int count_slashes(const char *cp)
@@ -687,10 +683,7 @@ static char *git_header_name(char *line, int llen)
 					break;
 			}
 			if (second[len] == '\n' && !memcmp(name, second, len)) {
-				char *ret = xmalloc(len + 1);
-				memcpy(ret, name, len);
-				ret[len] = 0;
-				return ret;
+				return xmemdupz(name, len);
 			}
 		}
 	}

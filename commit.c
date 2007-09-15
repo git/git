@@ -628,11 +628,7 @@ static char *get_header(const struct commit *commit, const char *key)
 		if (eol - line > key_len &&
 		    !strncmp(line, key, key_len) &&
 		    line[key_len] == ' ') {
-			int len = eol - line - key_len;
-			char *ret = xmalloc(len);
-			memcpy(ret, line + key_len + 1, len - 1);
-			ret[len - 1] = '\0';
-			return ret;
+			return xmemdupz(line + key_len + 1, eol - line - key_len - 1);
 		}
 		line = next;
 	}
@@ -709,7 +705,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	start = end + 1;
 	while (end > 0 && isspace(msg[end - 1]))
 		end--;
-	table[0].value = xstrndup(msg, end);
+	table[0].value = xmemdupz(msg, end);
 
 	if (start >= len)
 		return;
@@ -721,7 +717,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	if (end >= len)
 		return;
 
-	table[1].value = xstrndup(msg + start, end - start);
+	table[1].value = xmemdupz(msg + start, end - start);
 
 	/* parse date */
 	for (start = end + 1; start < len && isspace(msg[start]); start++)
@@ -732,7 +728,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	if (msg + start == ep)
 		return;
 
-	table[5].value = xstrndup(msg + start, ep - (msg + start));
+	table[5].value = xmemdupz(msg + start, ep - (msg + start));
 
 	/* parse tz */
 	for (start = ep - msg + 1; start < len && isspace(msg[start]); start++)
@@ -859,7 +855,7 @@ void format_commit_message(const struct commit *commit,
 			; /* do nothing */
 
 		if (state == SUBJECT) {
-			table[ISUBJECT].value = xstrndup(msg + i, eol - i);
+			table[ISUBJECT].value = xmemdupz(msg + i, eol - i);
 			i = eol;
 		}
 		if (i == eol) {
@@ -875,7 +871,7 @@ void format_commit_message(const struct commit *commit,
 					msg + i + 10, eol - i - 10);
 		else if (!prefixcmp(msg + i, "encoding "))
 			table[IENCODING].value =
-				xstrndup(msg + i + 9, eol - i - 9);
+				xmemdupz(msg + i + 9, eol - i - 9);
 		i = eol;
 	}
 	if (msg[i])

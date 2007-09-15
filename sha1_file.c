@@ -1491,11 +1491,8 @@ found_cache_entry:
 		ent->lru.next->prev = ent->lru.prev;
 		ent->lru.prev->next = ent->lru.next;
 		delta_base_cached -= ent->size;
-	}
-	else {
-		ret = xmalloc(ent->size + 1);
-		memcpy(ret, ent->data, ent->size);
-		((char *)ret)[ent->size] = 0;
+	} else {
+		ret = xmemdupz(ent->data, ent->size);
 	}
 	*type = ent->type;
 	*base_size = ent->size;
@@ -1872,12 +1869,9 @@ void *read_sha1_file(const unsigned char *sha1, enum object_type *type,
 
 	co = find_cached_object(sha1);
 	if (co) {
-		buf = xmalloc(co->size + 1);
-		memcpy(buf, co->buf, co->size);
-		((char*)buf)[co->size] = 0;
 		*type = co->type;
 		*size = co->size;
-		return buf;
+		return xmemdupz(co->buf, co->size);
 	}
 
 	buf = read_packed_sha1(sha1, type, size);

@@ -299,7 +299,6 @@ static void prune_cache(const char *prefix)
 static const char *verify_pathspec(const char *prefix)
 {
 	const char **p, *n, *prev;
-	char *real_prefix;
 	unsigned long max;
 
 	prev = NULL;
@@ -326,14 +325,8 @@ static const char *verify_pathspec(const char *prefix)
 	if (prefix_offset > max || memcmp(prev, prefix, prefix_offset))
 		die("git-ls-files: cannot generate relative filenames containing '..'");
 
-	real_prefix = NULL;
 	prefix_len = max;
-	if (max) {
-		real_prefix = xmalloc(max + 1);
-		memcpy(real_prefix, prev, max);
-		real_prefix[max] = 0;
-	}
-	return real_prefix;
+	return max ? xmemdupz(prev, max) : NULL;
 }
 
 /*

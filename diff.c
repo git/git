@@ -83,13 +83,8 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
 		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
 			break;
 	if (!drv) {
-		char *namebuf;
 		drv = xcalloc(1, sizeof(struct ll_diff_driver));
-		namebuf = xmalloc(namelen + 1);
-		memcpy(namebuf, name, namelen);
-		namebuf[namelen] = 0;
-		drv->name = namebuf;
-		drv->next = NULL;
+		drv->name = xmemdupz(name, namelen);
 		if (!user_diff_tail)
 			user_diff_tail = &user_diff;
 		*user_diff_tail = drv;
@@ -126,12 +121,8 @@ static int parse_funcname_pattern(const char *var, const char *ep, const char *v
 		if (!strncmp(pp->name, name, namelen) && !pp->name[namelen])
 			break;
 	if (!pp) {
-		char *namebuf;
 		pp = xcalloc(1, sizeof(*pp));
-		namebuf = xmalloc(namelen + 1);
-		memcpy(namebuf, name, namelen);
-		namebuf[namelen] = 0;
-		pp->name = namebuf;
+		pp->name = xmemdupz(name, namelen);
 		pp->next = funcname_pattern_list;
 		funcname_pattern_list = pp;
 	}

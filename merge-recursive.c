@@ -432,19 +432,15 @@ static int update_stages(const char *path, struct diff_filespec *o,
 
 static int remove_path(const char *name)
 {
-	int ret, len;
+	int ret;
 	char *slash, *dirs;
 
 	ret = unlink(name);
 	if (ret)
 		return ret;
-	len = strlen(name);
-	dirs = xmalloc(len+1);
-	memcpy(dirs, name, len);
-	dirs[len] = '\0';
+	dirs = xstrdup(name);
 	while ((slash = strrchr(name, '/'))) {
 		*slash = '\0';
-		len = slash - name;
 		if (rmdir(name) != 0)
 			break;
 	}
@@ -578,9 +574,7 @@ static void update_file_flags(const unsigned char *sha,
 			flush_buffer(fd, buf, size);
 			close(fd);
 		} else if (S_ISLNK(mode)) {
-			char *lnk = xmalloc(size + 1);
-			memcpy(lnk, buf, size);
-			lnk[size] = '\0';
+			char *lnk = xmemdupz(buf, size);
 			mkdir_p(path, 0777);
 			unlink(path);
 			symlink(lnk, path);
@@ -872,14 +866,9 @@ static int read_merge_config(const char *var, const char *value)
 		if (!strncmp(fn->name, name, namelen) && !fn->name[namelen])
 			break;
 	if (!fn) {
-		char *namebuf;
 		fn = xcalloc(1, sizeof(struct ll_merge_driver));
-		namebuf = xmalloc(namelen + 1);
-		memcpy(namebuf, name, namelen);
-		namebuf[namelen] = 0;
-		fn->name = namebuf;
+		fn->name = xmemdupz(name, namelen);
 		fn->fn = ll_ext_merge;
-		fn->next = NULL;
 		*ll_user_merge_tail = fn;
 		ll_user_merge_tail = &(fn->next);
 	}

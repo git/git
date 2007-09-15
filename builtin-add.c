@@ -71,12 +71,8 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec,
 	baselen = common_prefix(pathspec);
 	path = ".";
 	base = "";
-	if (baselen) {
-		char *common = xmalloc(baselen + 1);
-		memcpy(common, *pathspec, baselen);
-		common[baselen] = 0;
-		path = base = common;
-	}
+	if (baselen)
+		path = base = xmemdupz(*pathspec, baselen);
 
 	/* Read the directory and prune it */
 	read_directory(dir, path, base, baselen, pathspec);
