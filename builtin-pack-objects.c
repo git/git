@@ -1311,12 +1311,12 @@ static pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #else
 
-#define read_lock()		0
-#define read_unlock()		0
-#define cache_lock()		0
-#define cache_unlock()		0
-#define progress_lock()		0
-#define progress_unlock()	0
+#define read_lock()		(void)0
+#define read_unlock()		(void)0
+#define cache_lock()		(void)0
+#define cache_unlock()		(void)0
+#define progress_lock()		(void)0
+#define progress_unlock()	(void)0
 
 #endif
 
