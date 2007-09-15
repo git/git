@@ -26,7 +26,7 @@ static int fetch_objs_via_walker(struct transport *transport,
 	for (i = 0; i < nr_objs; i++)
 		objs[i] = xstrdup(sha1_to_hex(to_fetch[i]->old_sha1));
 
-	if (walker_fetch(walker, nr_objs, objs, NULL, dest))
+	if (walker_fetch(walker, nr_objs, objs, NULL, NULL))
 		die("Fetch failed.");
 
 	for (i = 0; i < nr_objs; i++)
