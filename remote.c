@@ -356,10 +356,6 @@ struct remote *remote_get(const char *name)
 		add_uri(ret, name);
 	if (!ret->uri)
 		return NULL;
-	if (!strcmp(name, ".")) {
-		// we always fetch "refs/*:refs/*", which is trivial
-		add_fetch_refspec(ret, "refs/*:refs/*");
-	}
 	ret->fetch = parse_ref_spec(ret->fetch_refspec_nr, ret->fetch_refspec);
 	ret->push = parse_ref_spec(ret->push_refspec_nr, ret->push_refspec);
 	return ret;
