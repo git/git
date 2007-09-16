@@ -1642,15 +1642,22 @@ static int apply_line(char *output, const char *patch, int plen)
 
 	buf = output;
 	if (need_fix_leading_space) {
+		int consecutive_spaces = 0;
 		/* between patch[1..last_tab_in_indent] strip the
 		 * funny spaces, updating them to tab as needed.
 		 */
 		for (i = 1; i < last_tab_in_indent; i++, plen--) {
 			char ch = patch[i];
-			if (ch != ' ')
+			if (ch != ' ') {
+				consecutive_spaces = 0;
 				*output++ = ch;
-			else if ((i % 8) == 0)
-				*output++ = '\t';
+			} else {
+				consecutive_spaces++;
+				if (consecutive_spaces == 8) {
+					*output++ = '\t';
+					consecutive_spaces = 0;
+				}
+			}
 		}
 		fixed = 1;
 		i = last_tab_in_indent;
