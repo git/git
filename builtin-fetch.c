@@ -151,7 +151,8 @@ static int update_local_ref(struct ref *ref,
 		return 0;
 	}
 
-	if (!strcmp(ref->name, current_branch->name) &&
+	if (current_branch &&
+	    !strcmp(ref->name, current_branch->name) &&
 	    !(update_head_ok || is_bare_repository()) &&
 	    !is_null_sha1(ref->old_sha1)) {
 		/*
