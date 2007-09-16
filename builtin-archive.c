@@ -81,22 +81,21 @@ static int run_remote_archiver(const char *remote, int argc,
 	return !!rv;
 }
 
-static void *format_subst(const struct commit *commit, const char *format,
-                          unsigned long *sizep)
+static void format_subst(const struct commit *commit,
+                         const char *src, size_t len,
+                         struct strbuf *buf)
 {
-	unsigned long len = *sizep;
-	const char *a = format;
-	struct strbuf result;
+	char *to_free = NULL;
 	struct strbuf fmt;
 
-	strbuf_init(&result, 0);
+	if (src == buf->buf)
+		to_free = strbuf_detach(buf);
 	strbuf_init(&fmt, 0);
-
 	for (;;) {
 		const char *b, *c;
 
-		b = memmem(a, len, "$Format:", 8);
-		if (!b || a + len < b + 9)
+		b = memmem(src, len, "$Format:", 8);
+		if (!b || src + len < b + 9)
 			break;
 		c = memchr(b + 8, '$', len - 8);
 		if (!c)
@@ -105,62 +104,57 @@ static void *format_subst(const struct commit *commit, const char *format,
 		strbuf_reset(&fmt);
 		strbuf_add(&fmt, b + 8, c - b - 8);
 
-		strbuf_add(&result, a, b - a);
-		format_commit_message(commit, fmt.buf, &result);
-		len -= c + 1 - a;
-		a = c + 1;
+		strbuf_add(buf, src, b - src);
+		format_commit_message(commit, fmt.buf, buf);
+		len -= c + 1 - src;
+		src  = c + 1;
 	}
-
-	strbuf_add(&result, a, len);
-
-	*sizep = result.len;
-
+	strbuf_add(buf, src, len);
 	strbuf_release(&fmt);
-	return strbuf_detach(&result);
+	free(to_free);
 }
 
-static void *convert_to_archive(const char *path,
-                                const void *src, unsigned long *sizep,
-                                const struct commit *commit)
+static int convert_to_archive(const char *path,
+                              const void *src, size_t len,
+                              struct strbuf *buf,
+                              const struct commit *commit)
 {
 	static struct git_attr *attr_export_subst;
 	struct git_attr_check check[1];
 
 	if (!commit)
-		return NULL;
+		return 0;
 
-        if (!attr_export_subst)
-                attr_export_subst = git_attr("export-subst", 12);
+	if (!attr_export_subst)
+		attr_export_subst = git_attr("export-subst", 12);
 
 	check[0].attr = attr_export_subst;
 	if (git_checkattr(path, ARRAY_SIZE(check), check))
-		return NULL;
+		return 0;
 	if (!ATTR_TRUE(check[0].value))
-		return NULL;
+		return 0;
 
-	return format_subst(commit, src, sizep);
+	format_subst(commit, src, len, buf);
+	return 1;
 }
 
 void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
                            unsigned int mode, enum object_type *type,
-                           unsigned long *size,
+                           unsigned long *sizep,
                            const struct commit *commit)
 {
-	void *buffer, *converted;
+	void *buffer;
 
-	buffer = read_sha1_file(sha1, type, size);
+	buffer = read_sha1_file(sha1, type, sizep);
 	if (buffer && S_ISREG(mode)) {
-		converted = convert_to_working_tree(path, buffer, size);
-		if (converted) {
-			free(buffer);
-			buffer = converted;
-		}
+		struct strbuf buf;
 
-		converted = convert_to_archive(path, buffer, size, commit);
-		if (converted) {
-			free(buffer);
-			buffer = converted;
-		}
+		strbuf_init(&buf, 0);
+		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
+		convert_to_working_tree(path, buf.buf, buf.len, &buf);
+		convert_to_archive(path, buf.buf, buf.len, &buf, commit);
+		*sizep = buf.len;
+		buffer = buf.buf;
 	}
 
 	return buffer;

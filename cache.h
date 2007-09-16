@@ -2,6 +2,7 @@
 #define CACHE_H
 
 #include "git-compat-util.h"
+#include "strbuf.h"
 
 #include SHA1_HEADER
 #include <zlib.h>
@@ -589,8 +590,9 @@ extern void trace_printf(const char *format, ...);
 extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
 
 /* convert.c */
-extern char *convert_to_git(const char *path, const char *src, unsigned long *sizep);
-extern char *convert_to_working_tree(const char *path, const char *src, unsigned long *sizep);
+/* returns 1 if *dst was used */
+extern int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst);
+extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 
 /* diff.c */
 extern int diff_auto_refresh_index;

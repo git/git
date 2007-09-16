@@ -1600,10 +1600,9 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 
 	if (!s->sha1_valid ||
 	    reuse_worktree_file(s->path, s->sha1, 0)) {
+		struct strbuf buf;
 		struct stat st;
 		int fd;
-		char *buf;
-		unsigned long size;
 
 		if (!strcmp(s->path, "-"))
 			return populate_from_stdin(s);
@@ -1644,13 +1643,12 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		/*
 		 * Convert from working tree format to canonical git format
 		 */
-		size = s->size;
-		buf = convert_to_git(s->path, s->data, &size);
-		if (buf) {
+		strbuf_init(&buf, 0);
+		if (convert_to_git(s->path, s->data, s->size, &buf)) {
 			munmap(s->data, s->size);
 			s->should_munmap = 0;
-			s->data = buf;
-			s->size = size;
+			s->data = buf.buf;
+			s->size = buf.len;
 			s->should_free = 1;
 		}
 	}

@@ -1446,8 +1446,7 @@ static int read_old_data(struct stat *st, const char *path, char **buf_p, unsign
 {
 	int fd;
 	unsigned long got;
-	unsigned long nsize;
-	char *nbuf;
+	struct strbuf nbuf;
 	unsigned long size = *size_p;
 	char *buf = *buf_p;
 
@@ -1466,13 +1465,12 @@ static int read_old_data(struct stat *st, const char *path, char **buf_p, unsign
 			got += ret;
 		}
 		close(fd);
-		nsize = got;
-		nbuf = convert_to_git(path, buf, &nsize);
-		if (nbuf) {
+		strbuf_init(&nbuf, 0);
+		if (convert_to_git(path, buf, size, &nbuf)) {
 			free(buf);
-			*buf_p = nbuf;
-			*alloc_p = nsize;
-			*size_p = nsize;
+			*buf_p = nbuf.buf;
+			*alloc_p = nbuf.alloc;
+			*size_p = nbuf.len;
 		}
 		return got != size;
 	default:
@@ -2439,7 +2437,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
 	int fd;
-	char *nbuf;
+	struct strbuf nbuf;
 
 	if (S_ISGITLINK(mode)) {
 		struct stat st;
@@ -2458,9 +2456,11 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	if (fd < 0)
 		return -1;
 
-	nbuf = convert_to_working_tree(path, buf, &size);
-	if (nbuf)
-		buf = nbuf;
+	strbuf_init(&nbuf, 0);
+	if (convert_to_working_tree(path, buf, size, &nbuf)) {
+		size = nbuf.len;
+		buf  = nbuf.buf;
+	}
 
 	while (size) {
 		int written = xwrite(fd, buf, size);
@@ -2473,8 +2473,7 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	}
 	if (close(fd) < 0)
 		die("closing file %s: %s", path, strerror(errno));
-	if (nbuf)
-		free(nbuf);
+	strbuf_release(&nbuf);
 	return 0;
 }
 

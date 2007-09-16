@@ -2343,12 +2343,12 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	 * Convert blobs to git internal format
 	 */
 	if ((type == OBJ_BLOB) && S_ISREG(st->st_mode)) {
-		unsigned long nsize = size;
-		char *nbuf = convert_to_git(path, buf, &nsize);
-		if (nbuf) {
+		struct strbuf nbuf;
+		strbuf_init(&nbuf, 0);
+		if (convert_to_git(path, buf, size, &nbuf)) {
 			munmap(buf, size);
-			size = nsize;
-			buf = nbuf;
+			size = nbuf.len;
+			buf = nbuf.buf;
 			re_allocated = 1;
 		}
 	}
