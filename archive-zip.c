@@ -192,7 +192,8 @@ static int write_zip_entry(const unsigned char *sha1,
 		compressed_size = 0;
 	} else if (S_ISREG(mode) || S_ISLNK(mode)) {
 		method = 0;
-		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) : 0;
+		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
+			(mode & 0111) ? ((mode) << 16) : 0;
 		if (S_ISREG(mode) && zlib_compression_level != 0)
 			method = 8;
 		result = 0;
@@ -231,7 +232,8 @@ static int write_zip_entry(const unsigned char *sha1,
 	}
 
 	copy_le32(dirent.magic, 0x02014b50);
-	copy_le16(dirent.creator_version, S_ISLNK(mode) ? 0x0317 : 0);
+	copy_le16(dirent.creator_version,
+		S_ISLNK(mode) || (S_ISREG(mode) && (mode & 0111)) ? 0x0317 : 0);
 	copy_le16(dirent.version, 10);
 	copy_le16(dirent.flags, 0);
 	copy_le16(dirent.compression_method, method);
