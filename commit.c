@@ -501,6 +501,7 @@ static void add_rfc2047(struct strbuf *sb, const char *line, int len,
 	return;
 
 needquote:
+	strbuf_grow(sb, len * 3 + strlen(encoding) + 100);
 	strbuf_addf(sb, "=?%s?q?", encoding);
 	for (i = last = 0; i < len; i++) {
 		unsigned ch = line[i] & 0xFF;
@@ -518,14 +519,6 @@ needquote:
 	}
 	strbuf_add(sb, line + last, len - last);
 	strbuf_addstr(sb, "?=");
-}
-
-static unsigned long bound_rfc2047(unsigned long len, const char *encoding)
-{
-	/* upper bound of q encoded string of length 'len' */
-	unsigned long elen = strlen(encoding);
-
-	return len * 3 + elen + 100;
 }
 
 static void add_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
@@ -560,8 +553,7 @@ static void add_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb
 		add_rfc2047(sb, line, display_name_length, encoding);
 		strbuf_add(sb, name_tail, namelen - display_name_length);
 		strbuf_addch(sb, '\n');
-	}
-	else {
+	} else {
 		strbuf_addf(sb, "%s: %.*s%.*s\n", what,
 			      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
 			      filler, namelen, line);
@@ -955,19 +947,12 @@ static void pp_header(enum cmit_fmt fmt,
 		 * FULLER shows both authors and dates.
 		 */
 		if (!memcmp(line, "author ", 7)) {
-			unsigned long len = linelen;
-			if (fmt == CMIT_FMT_EMAIL)
-				len = bound_rfc2047(linelen, encoding);
-			strbuf_grow(sb, len + 80);
+			strbuf_grow(sb, linelen + 80);
 			add_user_info("Author", fmt, sb, line + 7, dmode, encoding);
 		}
-
 		if (!memcmp(line, "committer ", 10) &&
 		    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER)) {
-			unsigned long len = linelen;
-			if (fmt == CMIT_FMT_EMAIL)
-				len = bound_rfc2047(linelen, encoding);
-			strbuf_grow(sb, len + 80);
+			strbuf_grow(sb, linelen + 80);
 			add_user_info("Commit", fmt, sb, line + 10, dmode, encoding);
 		}
 	}
@@ -982,7 +967,6 @@ static void pp_title_line(enum cmit_fmt fmt,
 			  int plain_non_ascii)
 {
 	struct strbuf title;
-	unsigned long len;
 
 	strbuf_init(&title, 80);
 
@@ -1004,16 +988,7 @@ static void pp_title_line(enum cmit_fmt fmt,
 		strbuf_add(&title, line, linelen);
 	}
 
-	/* Enough slop for the MIME header and rfc2047 */
-	len = bound_rfc2047(title.len, encoding) + 1000;
-	if (subject)
-		len += strlen(subject);
-	if (after_subject)
-		len += strlen(after_subject);
-	if (encoding)
-		len += strlen(encoding);
-
-	strbuf_grow(sb, title.len + len);
+	strbuf_grow(sb, title.len + 1024);
 	if (subject) {
 		strbuf_addstr(sb, subject);
 		add_rfc2047(sb, title.buf, title.len, encoding);
