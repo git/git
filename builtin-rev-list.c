@@ -255,6 +255,30 @@ static void show_list(const char *debug, int counted, int nr,
 }
 #endif /* DEBUG_BISECT */
 
+static struct commit_list *best_bisection(struct commit_list *list, int nr)
+{
+	struct commit_list *p, *best;
+	int best_distance = -1;
+
+	best = list;
+	for (p = list; p; p = p->next) {
+		int distance;
+		unsigned flags = p->item->object.flags;
+
+		if (revs.prune_fn && !(flags & TREECHANGE))
+			continue;
+		distance = weight(p);
+		if (nr - distance < distance)
+			distance = nr - distance;
+		if (distance > best_distance) {
+			best = p;
+			best_distance = distance;
+		}
+	}
+
+	return best;
+}
+
 /*
  * zero or positive weight is the number of interesting commits it can
  * reach, including itself.  Especially, weight = 0 means it does not
@@ -272,7 +296,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 					     int nr, int *weights)
 {
 	int n, counted, distance;
-	struct commit_list *p, *best;
+	struct commit_list *p;
 
 	counted = 0;
 
@@ -377,22 +401,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 	show_list("bisection 2 counted all", counted, nr, list);
 
 	/* Then find the best one */
-	counted = -1;
-	best = list;
-	for (p = list; p; p = p->next) {
-		unsigned flags = p->item->object.flags;
-
-		if (revs.prune_fn && !(flags & TREECHANGE))
-			continue;
-		distance = weight(p);
-		if (nr - distance < distance)
-			distance = nr - distance;
-		if (distance > counted) {
-			best = p;
-			counted = distance;
-		}
-	}
-	return best;
+	return best_bisection(list, nr);
 }
 
 static struct commit_list *find_bisection(struct commit_list *list,
