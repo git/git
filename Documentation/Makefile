@@ -123,7 +123,7 @@ cmd-list.made: cmd-list.perl $(MAN1_TXT)
 	perl ./cmd-list.perl
 	date >$@
 
-git.7 git.html: git.txt core-intro.txt
+git.7 git.html: git.txt
 
 clean:
 	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 *.texi *.texi+ howto-index.txt howto/*.html doc.dep
