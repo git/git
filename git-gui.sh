@@ -481,6 +481,16 @@ proc tk_optionMenu {w varName args} {
 	return $m
 }
 
+proc rmsel_tag {text} {
+	$text tag conf sel \
+		-background [$text cget -background] \
+		-foreground [$text cget -foreground] \
+		-borderwidth 0
+	$text tag conf in_sel -background lightgray
+	bind $text <Motion> break
+	return $text
+}
+
 ######################################################################
 ##
 ## find git
@@ -2151,8 +2161,8 @@ pack $ui_workdir -side left -fill both -expand 1
 .vpane.files add .vpane.files.workdir -sticky nsew
 
 foreach i [list $ui_index $ui_workdir] {
-	$i tag conf in_diff -background lightgray
-	$i tag conf in_sel  -background lightgray
+	rmsel_tag $i
+	$i tag conf in_diff -background [$i tag cget in_sel -background]
 }
 unset i
 
