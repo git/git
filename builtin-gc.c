@@ -29,8 +29,6 @@ static const char *argv_repack[MAX_ADD] = {"repack", "-a", "-d", "-l", NULL};
 static const char *argv_prune[] = {"prune", NULL};
 static const char *argv_rerere[] = {"rerere", "gc", NULL};
 
-static const char *argv_repack_auto[] = {"repack", "-d", "-l", NULL};
-
 static int gc_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "gc.packrefs")) {
@@ -104,6 +102,8 @@ static int too_many_loose_objects(void)
 
 static int need_to_gc(void)
 {
+	int ac = 0;
+
 	/*
 	 * Setting gc.auto to 0 or negative can disable the
 	 * automatic gc
@@ -111,7 +111,14 @@ static int need_to_gc(void)
 	if (gc_auto_threshold <= 0)
 		return 0;
 
-	return too_many_loose_objects();
+	if (!too_many_loose_objects())
+		return 0;
+
+	argv_repack[ac++] = "repack";
+	argv_repack[ac++] = "-d";
+	argv_repack[ac++] = "-l";
+	argv_repack[ac++] = NULL;
+	return 1;
 }
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
@@ -154,8 +161,6 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		 * Auto-gc should be least intrusive as possible.
 		 */
 		prune = 0;
-		for (i = 0; i < ARRAY_SIZE(argv_repack_auto); i++)
-			argv_repack[i] = argv_repack_auto[i];
 		if (!need_to_gc())
 			return 0;
 	}
