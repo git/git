@@ -439,6 +439,13 @@ gc.aggressiveWindow::
 	algorithm used by 'git gc --aggressive'.  This defaults
 	to 10.
 
+gc.auto::
+	When there are approximately more than this many loose
+	objects in the repository, `git gc --auto` will pack them.
+	Some Porcelain commands use this command to perform a
+	light-weight garbage collection from time to time.  Setting
+	this to 0 disables it.
+
 gc.packrefs::
 	`git gc` does not run `git pack-refs` in a bare repository by
 	default so that older dumb-transport clients can still fetch

@@ -8,7 +8,7 @@ git-gc - Cleanup unnecessary files and optimize the local repository
 
 SYNOPSIS
 --------
-'git-gc' [--prune] [--aggressive]
+'git-gc' [--prune] [--aggressive] [--auto]
 
 DESCRIPTION
 -----------
@@ -42,6 +42,15 @@ OPTIONS
 	of taking much more time.  The effects of this optimization are
 	persistent, so this option only needs to be used occasionally; every
 	few hundred changesets or so.
+
+--auto::
+	With this option, `git gc` checks if there are too many
+	loose objects in the repository and runs
+	gitlink:git-repack[1] with `-d -l` option to pack them.
+	The threshold is set with `gc.auto` configuration
+	variable, and can be disabled by setting it to 0.  Some
+	Porcelain commands use this after they perform operation
+	that could create many loose objects automatically.
 
 Configuration
 -------------
