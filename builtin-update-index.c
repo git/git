@@ -327,8 +327,7 @@ static void read_index_info(int line_termination)
 		 * This format is to put higher order stages into the
 		 * index file and matches git-ls-files --stage output.
 		 */
-		read_line(&buf, stdin, line_termination);
-		if (buf.eof)
+		if (strbuf_getline(&buf, stdin, line_termination) == EOF)
 			break;
 
 		errno = 0;
@@ -391,6 +390,7 @@ static void read_index_info(int line_termination)
 	bad_line:
 		die("malformed index info %s", buf.buf);
 	}
+	strbuf_release(&buf);
 }
 
 static const char update_index_usage[] =
@@ -719,8 +719,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		while (1) {
 			char *path_name;
 			const char *p;
-			read_line(&buf, stdin, line_termination);
-			if (buf.eof)
+			if (strbuf_getline(&buf, stdin, line_termination) == EOF)
 				break;
 			if (line_termination && buf.buf[0] == '"')
 				path_name = unquote_c_style(buf.buf, NULL);
@@ -735,6 +734,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			if (path_name != buf.buf)
 				free(path_name);
 		}
+		strbuf_release(&buf);
 	}
 
  finish:

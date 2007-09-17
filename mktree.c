@@ -88,8 +88,7 @@ int main(int ac, char **av)
 		enum object_type type;
 		char *path;
 
-		read_line(&sb, stdin, line_termination);
-		if (sb.eof)
+		if (strbuf_getline(&sb, stdin, line_termination) == EOF)
 			break;
 		ptr = sb.buf;
 		/* Input is non-recursive ls-tree output format
@@ -121,6 +120,7 @@ int main(int ac, char **av)
 		if (path != ntr)
 			free(path);
 	}
+	strbuf_release(&sb);
 	write_tree(sha1);
 	puts(sha1_to_hex(sha1));
 	exit(0);

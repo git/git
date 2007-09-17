@@ -44,11 +44,10 @@
 struct strbuf {
 	size_t alloc;
 	size_t len;
-	int eof;
 	char *buf;
 };
 
-#define STRBUF_INIT  { 0, 0, 0, NULL }
+#define STRBUF_INIT  { 0, 0, NULL }
 
 /*----- strbuf life cycle -----*/
 extern void strbuf_init(struct strbuf *, size_t);
@@ -101,6 +100,6 @@ extern size_t strbuf_fread(struct strbuf *, size_t, FILE *);
 /* XXX: if read fails, any partial read is undone */
 extern ssize_t strbuf_read(struct strbuf *, int fd, size_t hint);
 
-extern void read_line(struct strbuf *, FILE *, int);
+extern int strbuf_getline(struct strbuf *, FILE *, int);
 
 #endif /* STRBUF_H */

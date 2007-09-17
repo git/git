@@ -1584,20 +1584,25 @@ static void dump_marks(void)
 			mark_file, strerror(errno));
 }
 
-static void read_next_command(void)
+static int read_next_command(void)
 {
+	static int stdin_eof = 0;
+
+	if (stdin_eof) {
+		unread_command_buf = 0;
+		return EOF;
+	}
+
 	do {
 		if (unread_command_buf) {
 			unread_command_buf = 0;
-			if (command_buf.eof)
-				return;
 		} else {
 			struct recent_command *rc;
 
 			strbuf_detach(&command_buf);
-			read_line(&command_buf, stdin, '\n');
-			if (command_buf.eof)
-				return;
+			stdin_eof = strbuf_getline(&command_buf, stdin, '\n');
+			if (stdin_eof)
+				return EOF;
 
 			rc = rc_free;
 			if (rc)
@@ -1616,6 +1621,8 @@ static void read_next_command(void)
 			cmd_tail = rc;
 		}
 	} while (command_buf.buf[0] == '#');
+
+	return 0;
 }
 
 static void skip_optional_lf(void)
@@ -1648,8 +1655,7 @@ static void *cmd_data (size_t *size)
 		size_t term_len = command_buf.len - 5 - 2;
 
 		for (;;) {
-			read_line(&command_buf, stdin, '\n');
-			if (command_buf.eof)
+			if (strbuf_getline(&command_buf, stdin, '\n') == EOF)
 				die("EOF in data (terminator '%s' not found)", term);
 			if (term_len == command_buf.len
 				&& !strcmp(term, command_buf.buf))
@@ -2095,7 +2101,7 @@ static void cmd_new_commit(void)
 	}
 
 	/* file_change* */
-	while (!command_buf.eof && command_buf.len > 0) {
+	while (command_buf.len > 0) {
 		if (!prefixcmp(command_buf.buf, "M "))
 			file_change_m(b);
 		else if (!prefixcmp(command_buf.buf, "D "))
@@ -2110,7 +2116,8 @@ static void cmd_new_commit(void)
 			unread_command_buf = 1;
 			break;
 		}
-		read_next_command();
+		if (read_next_command() == EOF)
+			break;
 	}
 
 	/* build the tree and the commit */
@@ -2375,11 +2382,8 @@ int main(int argc, const char **argv)
 	prepare_packed_git();
 	start_packfile();
 	set_die_routine(die_nicely);
-	for (;;) {
-		read_next_command();
-		if (command_buf.eof)
-			break;
-		else if (!strcmp("blob", command_buf.buf))
+	while (read_next_command() != EOF) {
+		if (!strcmp("blob", command_buf.buf))
 			cmd_new_blob();
 		else if (!prefixcmp(command_buf.buf, "commit "))
 			cmd_new_commit();

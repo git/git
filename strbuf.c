@@ -17,7 +17,6 @@ void strbuf_reset(struct strbuf *sb)
 {
 	if (sb->len)
 		strbuf_setlen(sb, 0);
-	sb->eof = 0;
 }
 
 char *strbuf_detach(struct strbuf *sb)
@@ -145,14 +144,13 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 	return sb->len - oldlen;
 }
 
-void read_line(struct strbuf *sb, FILE *fp, int term)
+int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
 {
 	int ch;
-	if (feof(fp)) {
-		strbuf_release(sb);
-		sb->eof = 1;
-		return;
-	}
+
+	strbuf_grow(sb, 0);
+	if (feof(fp))
+		return EOF;
 
 	strbuf_reset(sb);
 	while ((ch = fgetc(fp)) != EOF) {
@@ -161,11 +159,9 @@ void read_line(struct strbuf *sb, FILE *fp, int term)
 		strbuf_grow(sb, 1);
 		sb->buf[sb->len++] = ch;
 	}
-	if (ch == EOF && sb->len == 0) {
-		strbuf_release(sb);
-		sb->eof = 1;
-	}
+	if (ch == EOF && sb->len == 0)
+		return EOF;
 
-	strbuf_grow(sb, 1);
 	sb->buf[sb->len] = '\0';
+	return 0;
 }

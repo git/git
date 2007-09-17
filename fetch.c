@@ -222,8 +222,7 @@ int pull_targets_stdin(char ***target, const char ***write_ref)
 		char *rf_one = NULL;
 		char *tg_one;
 
-		read_line(&buf, stdin, '\n');
-		if (buf.eof)
+		if (strbuf_getline(&buf, stdin, '\n') == EOF)
 			break;
 		tg_one = buf.buf;
 		rf_one = strchr(tg_one, '\t');
@@ -239,6 +238,7 @@ int pull_targets_stdin(char ***target, const char ***write_ref)
 		(*write_ref)[targets] = rf_one ? xstrdup(rf_one) : NULL;
 		targets++;
 	}
+	strbuf_release(&buf);
 	return targets;
 }
 

@@ -277,9 +277,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		while (1) {
 			char *path_name;
 			const char *p;
-
-			read_line(&buf, stdin, line_termination);
-			if (buf.eof)
+			if (strbuf_getline(&buf, stdin, line_termination) == EOF)
 				break;
 			if (line_termination && buf.buf[0] == '"')
 				path_name = unquote_c_style(buf.buf, NULL);
@@ -292,6 +290,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 			if (path_name != buf.buf)
 				free(path_name);
 		}
+		strbuf_release(&buf);
 	}
 
 	if (all)
