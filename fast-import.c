@@ -182,11 +182,10 @@ struct mark_set
 
 struct last_object
 {
-	void *data;
-	unsigned long len;
+	struct strbuf data;
 	uint32_t offset;
 	unsigned int depth;
-	unsigned no_free:1;
+	unsigned no_swap : 1;
 };
 
 struct mem_pool
@@ -310,7 +309,7 @@ static struct mark_set *marks;
 static const char* mark_file;
 
 /* Our last blob */
-static struct last_object last_blob;
+static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
 
 /* Tree management */
 static unsigned int tree_entry_alloc = 1000;
@@ -950,9 +949,7 @@ static void end_packfile(void)
 	free(old_p);
 
 	/* We can't carry a delta across packfiles. */
-	free(last_blob.data);
-	last_blob.data = NULL;
-	last_blob.len = 0;
+	strbuf_release(&last_blob.data);
 	last_blob.offset = 0;
 	last_blob.depth = 0;
 }
@@ -1024,8 +1021,8 @@ static int store_object(
 		return 1;
 	}
 
-	if (last && last->data && last->depth < max_depth) {
-		delta = diff_delta(last->data, last->len,
+	if (last && last->data.buf && last->depth < max_depth) {
+		delta = diff_delta(last->data.buf, last->data.len,
 			dat->buf, dat->len,
 			&deltalen, 0);
 		if (delta && deltalen >= dat->len) {
@@ -1111,11 +1108,14 @@ static int store_object(
 	free(out);
 	free(delta);
 	if (last) {
-		if (!last->no_free)
-			free(last->data);
+		if (last->no_swap) {
+			last->data = *dat;
+		} else {
+			struct strbuf tmp = *dat;
+			*dat = last->data;
+			last->data = tmp;
+		}
 		last->offset = e->offset;
-		last->data = dat->buf;
-		last->len = dat->len;
 	}
 	return 0;
 }
@@ -1242,7 +1242,7 @@ static void store_tree(struct tree_entry *root)
 {
 	struct tree_content *t = root->tree;
 	unsigned int i, j, del;
-	struct last_object lo;
+	struct last_object lo = { STRBUF_INIT, 0, 0, /* no_swap */ 1 };
 	struct object_entry *le;
 
 	if (!is_null_sha1(root->versions[1].sha1))
@@ -1254,19 +1254,11 @@ static void store_tree(struct tree_entry *root)
 	}
 
 	le = find_object(root->versions[0].sha1);
-	if (!S_ISDIR(root->versions[0].mode)
-		|| !le
-		|| le->pack_id != pack_id) {
-		lo.data = NULL;
-		lo.depth = 0;
-		lo.no_free = 0;
-	} else {
+	if (S_ISDIR(root->versions[0].mode) && le && le->pack_id == pack_id) {
 		mktree(t, 0, &old_tree);
-		lo.len  = old_tree.len;
-		lo.data = old_tree.buf;
+		lo.data = old_tree;
 		lo.offset = le->offset;
 		lo.depth = t->delta_depth;
-		lo.no_free = 1;
 	}
 
 	mktree(t, 1, &new_tree);
@@ -1714,14 +1706,12 @@ static char *parse_ident(const char *buf)
 
 static void cmd_new_blob(void)
 {
-	struct strbuf buf;
+	static struct strbuf buf = STRBUF_INIT;
 
 	read_next_command();
 	cmd_mark();
-	strbuf_init(&buf, 0);
 	cmd_data(&buf);
-	if (store_object(OBJ_BLOB, &buf, &last_blob, NULL, next_mark))
-		strbuf_release(&buf);
+	store_object(OBJ_BLOB, &buf, &last_blob, NULL, next_mark);
 }
 
 static void unload_one_branch(void)
@@ -1817,15 +1807,13 @@ static void file_change_m(struct branch *b)
 	}
 
 	if (inline_data) {
-		struct strbuf buf;
+		static struct strbuf buf = STRBUF_INIT;
 
 		if (!p_uq)
 			p = p_uq = xstrdup(p);
 		read_next_command();
-		strbuf_init(&buf, 0);
 		cmd_data(&buf);
-		if (store_object(OBJ_BLOB, &buf, &last_blob, sha1, 0))
-			strbuf_release(&buf);
+		store_object(OBJ_BLOB, &buf, &last_blob, sha1, 0);
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
