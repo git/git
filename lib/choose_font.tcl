@@ -62,6 +62,7 @@ constructor pick {path title a_family a_size} {
 		-width 30 \
 		-height 10 \
 		-yscrollcommand [list $w.inner.family.sby set]
+	rmsel_tag $w_family
 	scrollbar $w.inner.family.sby -command [list $w_family yview]
 	pack $w.inner.family.l -side top -fill x
 	pack $w.inner.family.sby -side right -fill y
@@ -95,6 +96,7 @@ constructor pick {path title a_family a_size} {
 		-relief sunken \
 		-height 3 \
 		-width 40
+	rmsel_tag $w_example
 	$w_example tag conf example -justify center
 	$w_example insert end [mc "This is example text.\nIf you like this text, it can be your font."] example
 	$w_example conf -state disabled
@@ -108,11 +110,10 @@ constructor pick {path title a_family a_size} {
 
 	$w_family tag conf pick
 	$w_family tag bind pick <Button-1> [cb _pick_family %x %y]\;break
-	$w_family tag conf cpck -background lightgray
 	foreach f $all_families {
 		set sel [list pick]
 		if {$f eq $f_family} {
-			lappend sel cpck
+			lappend sel in_sel
 		}
 		$w_family insert end "$f\n" $sel
 	}
@@ -145,8 +146,8 @@ method _pick_family {x y} {
 	set i [lindex [split [$w_family index @$x,$y] .] 0]
 	set n [lindex $all_families [expr {$i - 1}]]
 	if {$n ne {}} {
-		$w_family tag remove cpck 0.0 end
-		$w_family tag add cpck $i.0 [expr {$i + 1}].0
+		$w_family tag remove in_sel 0.0 end
+		$w_family tag add in_sel $i.0 [expr {$i + 1}].0
 		set f_family $n
 		_update $this
 	}
