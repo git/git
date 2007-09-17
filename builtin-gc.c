@@ -64,7 +64,7 @@ static void append_option(const char **cmd, const char *opt, int max_length)
 	cmd[i] = NULL;
 }
 
-static int need_to_gc(void)
+static int too_many_loose_objects(void)
 {
 	/*
 	 * Quickly check if a "gc" is needed, by estimating how
@@ -79,13 +79,6 @@ static int need_to_gc(void)
 	int auto_threshold;
 	int num_loose = 0;
 	int needed = 0;
-
-	/*
-	 * Setting gc.auto to 0 or negative can disable the
-	 * automatic gc
-	 */
-	if (gc_auto_threshold <= 0)
-		return 0;
 
 	if (sizeof(path) <= snprintf(path, sizeof(path), "%s/17", objdir)) {
 		warning("insanely long object directory %.*s", 50, objdir);
@@ -107,6 +100,18 @@ static int need_to_gc(void)
 	}
 	closedir(dir);
 	return needed;
+}
+
+static int need_to_gc(void)
+{
+	/*
+	 * Setting gc.auto to 0 or negative can disable the
+	 * automatic gc
+	 */
+	if (gc_auto_threshold <= 0)
+		return 0;
+
+	return too_many_loose_objects();
 }
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
@@ -169,6 +174,10 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (run_command_v_opt(argv_rerere, RUN_GIT_CMD))
 		return error(FAILED_RUN, argv_rerere[0]);
+
+	if (auto_gc && too_many_loose_objects())
+		warning("There are too many unreachable loose objects; "
+			"run 'git prune' to remove them.");
 
 	return 0;
 }
