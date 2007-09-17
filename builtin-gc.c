@@ -21,6 +21,7 @@ static const char builtin_gc_usage[] = "git-gc [--prune] [--aggressive]";
 static int pack_refs = 1;
 static int aggressive_window = -1;
 static int gc_auto_threshold = 6700;
+static int gc_auto_pack_limit = 20;
 
 #define MAX_ADD 10
 static const char *argv_pack_refs[] = {"pack-refs", "--all", "--prune", NULL};
@@ -44,6 +45,10 @@ static int gc_config(const char *var, const char *value)
 	}
 	if (!strcmp(var, "gc.auto")) {
 		gc_auto_threshold = git_config_int(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "gc.autopacklimit")) {
+		gc_auto_pack_limit = git_config_int(var, value);
 		return 0;
 	}
 	return git_default_config(var, value);
@@ -78,6 +83,9 @@ static int too_many_loose_objects(void)
 	int num_loose = 0;
 	int needed = 0;
 
+	if (gc_auto_threshold <= 0)
+		return 0;
+
 	if (sizeof(path) <= snprintf(path, sizeof(path), "%s/17", objdir)) {
 		warning("insanely long object directory %.*s", 50, objdir);
 		return 0;
@@ -100,21 +108,61 @@ static int too_many_loose_objects(void)
 	return needed;
 }
 
+static int too_many_packs(void)
+{
+	struct packed_git *p;
+	int cnt;
+
+	if (gc_auto_pack_limit <= 0)
+		return 0;
+
+	prepare_packed_git();
+	for (cnt = 0, p = packed_git; p; p = p->next) {
+		char path[PATH_MAX];
+		size_t len;
+		int keep;
+
+		if (!p->pack_local)
+			continue;
+		len = strlen(p->pack_name);
+		if (PATH_MAX <= len + 1)
+			continue; /* oops, give up */
+		memcpy(path, p->pack_name, len-5);
+		memcpy(path + len - 5, ".keep", 6);
+		keep = access(p->pack_name, F_OK) && (errno == ENOENT);
+		if (keep)
+			continue;
+		/*
+		 * Perhaps check the size of the pack and count only
+		 * very small ones here?
+		 */
+		cnt++;
+	}
+	return gc_auto_pack_limit <= cnt;
+}
+
 static int need_to_gc(void)
 {
 	int ac = 0;
 
 	/*
-	 * Setting gc.auto to 0 or negative can disable the
-	 * automatic gc
+	 * Setting gc.auto and gc.autopacklimit to 0 or negative can
+	 * disable the automatic gc.
 	 */
-	if (gc_auto_threshold <= 0)
+	if (gc_auto_threshold <= 0 && gc_auto_pack_limit <= 0)
 		return 0;
 
-	if (!too_many_loose_objects())
-		return 0;
-
+	/*
+	 * If there are too many loose objects, but not too many
+	 * packs, we run "repack -d -l".  If there are too many packs,
+	 * we run "repack -A -d -l".  Otherwise we tell the caller
+	 * there is no need.
+	 */
 	argv_repack[ac++] = "repack";
+	if (too_many_packs())
+		argv_repack[ac++] = "-A";
+	else if (!too_many_loose_objects())
+		return 0;
 	argv_repack[ac++] = "-d";
 	argv_repack[ac++] = "-l";
 	argv_repack[ac++] = NULL;
