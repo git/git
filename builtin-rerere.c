@@ -389,18 +389,39 @@ static int is_rerere_enabled(void)
 	return 1;
 }
 
-int cmd_rerere(int argc, const char **argv, const char *prefix)
+static int setup_rerere(struct path_list *merge_rr)
 {
-	struct path_list merge_rr = { NULL, 0, 0, 1 };
-	int i, fd = -1;
+	int fd;
 
 	git_config(git_rerere_config);
 	if (!is_rerere_enabled())
-		return 0;
+		return -1;
 
 	merge_rr_path = xstrdup(git_path("rr-cache/MERGE_RR"));
 	fd = hold_lock_file_for_update(&write_lock, merge_rr_path, 1);
-	read_rr(&merge_rr);
+	read_rr(merge_rr);
+	return fd;
+}
+
+int rerere(void)
+{
+	struct path_list merge_rr = { NULL, 0, 0, 1 };
+	int fd;
+
+	fd = setup_rerere(&merge_rr);
+	if (fd < 0)
+		return 0;
+	return do_plain_rerere(&merge_rr, fd);
+}
+
+int cmd_rerere(int argc, const char **argv, const char *prefix)
+{
+	struct path_list merge_rr = { NULL, 0, 0, 1 };
+	int i, fd;
+
+	fd = setup_rerere(&merge_rr);
+	if (fd < 0)
+		return 0;
 
 	if (argc < 2)
 		return do_plain_rerere(&merge_rr, fd);

@@ -131,5 +131,6 @@ int in_merge_bases(struct commit *, struct commit **, int);
 
 extern int interactive_add(void);
 extern void add_files_to_cache(int verbose, const char *prefix, const char **files);
+extern int rerere(void);
 
 #endif /* COMMIT_H */
