@@ -177,3 +177,18 @@ int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
 	sb->buf[sb->len] = '\0';
 	return 0;
 }
+
+int strbuf_read_file(struct strbuf *sb, const char *path)
+{
+	int fd, len;
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	len = strbuf_read(sb, fd, 0);
+	close(fd);
+	if (len < 0)
+		return -1;
+
+	return len;
+}
