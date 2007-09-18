@@ -47,9 +47,7 @@ constructor new {commit {path {}}} {
 		-width 70 \
 		-xscrollcommand [list $w.list.sbx set] \
 		-yscrollcommand [list $w.list.sby set]
-	$w_list tag conf in_sel \
-		-background [$w_list cget -foreground] \
-		-foreground [$w_list cget -background]
+	rmsel_tag $w_list
 	scrollbar $w.list.sbx -orient h -command [list $w_list xview]
 	scrollbar $w.list.sby -orient v -command [list $w_list yview]
 	pack $w.list.sbx -side bottom -fill x

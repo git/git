@@ -84,12 +84,30 @@ proc show_diff {path w {lno {}}} {
 	#
 	if {$m eq {_O}} {
 		set max_sz [expr {128 * 1024}]
+		set type unknown
 		if {[catch {
-				set fd [open $path r]
-				fconfigure $fd -eofchar {}
-				set content [read $fd $max_sz]
-				close $fd
-				set sz [file size $path]
+				set type [file type $path]
+				switch -- $type {
+				directory {
+					set type submodule
+					set content {}
+					set sz 0
+				}
+				link {
+					set content [file readlink $path]
+					set sz [string length $content]
+				}
+				file {
+					set fd [open $path r]
+					fconfigure $fd -eofchar {}
+					set content [read $fd $max_sz]
+					close $fd
+					set sz [file size $path]
+				}
+				default {
+					error "'$type' not supported"
+				}
+				}
 			} err ]} {
 			set diff_active 0
 			unlock_index
@@ -98,7 +116,9 @@ proc show_diff {path w {lno {}}} {
 			return
 		}
 		$ui_diff conf -state normal
-		if {![catch {set type [exec file $path]}]} {
+		if {$type eq {submodule}} {
+			$ui_diff insert end "* Git Repository (subproject)\n" d_@
+		} elseif {![catch {set type [exec file $path]}]} {
 			set n [string length $path]
 			if {[string equal -length $n $path $type]} {
 				set type [string range $type $n end]
@@ -198,6 +218,7 @@ proc read_diff {fd} {
 		if {[string match {mode *} $line]
 			|| [string match {new file *} $line]
 			|| [string match {deleted file *} $line]
+			|| [string match {deleted symlink} $line]
 			|| [string match {Binary files * and * differ} $line]
 			|| $line eq {\ No newline at end of file}
 			|| [regexp {^\* Unmerged path } $line]} {
