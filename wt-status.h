@@ -21,6 +21,7 @@ struct wt_status {
 	int commitable;
 	int workdir_dirty;
 	int workdir_untracked;
+	const char *index_file;
 	FILE *fp;
 };
 

@@ -53,6 +53,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->branch = head ? xstrdup(head) : NULL;
 	s->reference = "HEAD";
 	s->fp = stdout;
+	s->index_file = get_index_file();
 }
 
 static void wt_status_print_cached_header(struct wt_status *s)
@@ -198,7 +199,7 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 static void wt_read_cache(struct wt_status *s)
 {
 	discard_cache();
-	read_cache();
+	read_cache_from(s->index_file);
 }
 
 static void wt_status_print_initial(struct wt_status *s)
