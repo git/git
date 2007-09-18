@@ -112,4 +112,6 @@ extern int strbuf_read_file(struct strbuf *sb, const char *path);
 
 extern int strbuf_getline(struct strbuf *, FILE *, int);
 
+extern void stripspace(struct strbuf *buf, int skip_comments);
+
 #endif /* STRBUF_H */

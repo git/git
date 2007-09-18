@@ -291,14 +291,11 @@ static void create_tag(const unsigned char *object, const char *tag,
 		free(path);
 	}
 
-	strbuf_setlen(buf, stripspace(buf->buf, buf->len, 1));
+	stripspace(buf, 1);
 
 	if (!message && !buf->len)
 		die("no tag message?");
 
-	/* insert the header and add the '\n' if needed: */
-	if (buf->len)
-		strbuf_addch(buf, '\n');
 	strbuf_insert(buf, 0, header_buf, header_len);
 
 	if (sign && do_sign(buf) < 0)
