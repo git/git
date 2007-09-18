@@ -88,7 +88,6 @@ struct branch {
 struct branch *branch_get(const char *name);
 
 int branch_has_merge_config(struct branch *branch);
-
-int branch_merges(struct branch *branch, const char *refname);
+int branch_merge_matches(struct branch *, int n, const char *);
 
 #endif

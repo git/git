@@ -772,16 +772,13 @@ int branch_has_merge_config(struct branch *branch)
 	return branch && !!branch->merge;
 }
 
-int branch_merges(struct branch *branch, const char *refname)
+int branch_merge_matches(struct branch *branch,
+		                 int i,
+		                 const char *refname)
 {
-	int i;
-	if (!branch)
+	if (!branch || i < 0 || i >= branch->merge_nr)
 		return 0;
-	for (i = 0; i < branch->merge_nr; i++) {
-		if (ref_matches_abbrev(branch->merge[i]->src, refname))
-			return 1;
-	}
-	return 0;
+	return ref_matches_abbrev(branch->merge[i]->src, refname);
 }
 
 static struct ref *get_expanded_map(struct ref *remote_refs,
