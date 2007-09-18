@@ -158,11 +158,11 @@ This uses two files, $GIT_DIR/info/allowed-users and
 allowed-groups, to describe which heads can be pushed into by
 whom.  The format of each file would look like this:
 
-	refs/heads/master	junio
+        refs/heads/master	junio
         refs/heads/cogito$	pasky
-	refs/heads/bw/		linus
-        refs/heads/tmp/		*
-        refs/tags/v[0-9]*	junio
+        refs/heads/bw/.*	linus
+        refs/heads/tmp/.*	.*
+        refs/tags/v[0-9].*	junio
 
 With this, Linus can push or create "bw/penguin" or "bw/zebra"
 or "bw/panda" branches, Pasky can do only "cogito", and JC can
