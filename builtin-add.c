@@ -12,6 +12,7 @@
 #include "diffcore.h"
 #include "commit.h"
 #include "revision.h"
+#include "run-command.h"
 
 static const char builtin_add_usage[] =
 "git-add [-n] [-v] [-f] [--interactive | -i] [-u] [--refresh] [--] <filepattern>...";
@@ -106,7 +107,7 @@ static void update_callback(struct diff_queue_struct *q,
 	}
 }
 
-static void update(int verbose, const char *prefix, const char **files)
+void add_files_to_cache(int verbose, const char *prefix, const char **files)
 {
 	struct rev_info rev;
 	init_revisions(&rev, prefix);
@@ -115,8 +116,6 @@ static void update(int verbose, const char *prefix, const char **files)
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = &verbose;
-	if (read_cache() < 0)
-		die("index file corrupt");
 	run_diff_files(&rev, 0);
 }
 
@@ -149,6 +148,13 @@ static int git_add_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
+int interactive_add(void)
+{
+	const char *argv[2] = { "add--interactive", NULL };
+
+	return run_command_v_opt(argv, RUN_GIT_CMD);
+}
+
 static struct lock_file lock_file;
 
 static const char ignore_error[] =
@@ -168,12 +174,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			add_interactive++;
 	}
 	if (add_interactive) {
-		const char *args[] = { "add--interactive", NULL };
-
-		if (add_interactive != 1 || argc != 2)
+		if (argc != 2)
 			die("add --interactive does not take any parameters");
-		execv_git_cmd(args);
-		exit(1);
+		exit(interactive_add());
 	}
 
 	git_config(git_add_config);
@@ -213,7 +216,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	if (take_worktree_changes) {
-		update(verbose, prefix, argv + i);
+		if (read_cache() < 0)
+			die("index file corrupt");
+		add_files_to_cache(verbose, prefix, argv + i);
 		goto finish;
 	}
 
