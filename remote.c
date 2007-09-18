@@ -875,8 +875,7 @@ int get_fetch_map(struct ref *remote_refs,
 					 refspec->src : "HEAD");
 
 		ref_map->peer_ref = get_local_ref(refspec->dst);
-
-		if (refspec->force)
+		if (ref_map->peer_ref && refspec->force)
 			ref_map->peer_ref->force = 1;
 	}
 
