@@ -4,14 +4,14 @@
 struct fetch_pack_args
 {
 	const char *uploadpack;
-	int quiet;
-	int keep_pack;
 	int unpacklimit;
-	int use_thin_pack;
-	int fetch_all;
-	int verbose;
 	int depth;
-	int no_progress;
+	unsigned quiet:1,
+		keep_pack:1,
+		use_thin_pack:1,
+		fetch_all:1,
+		verbose:1,
+		no_progress:1;
 };
 
 void setup_fetch_pack(struct fetch_pack_args *args);
