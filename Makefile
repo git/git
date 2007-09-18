@@ -211,7 +211,7 @@ SCRIPT_SH = \
 	git-ls-remote.sh \
 	git-merge-one-file.sh git-mergetool.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh git-rebase--interactive.sh \
-	git-repack.sh git-request-pull.sh git-reset.sh \
+	git-repack.sh git-request-pull.sh \
 	git-sh-setup.sh \
 	git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
@@ -358,6 +358,7 @@ BUILTIN_OBJS = \
 	builtin-reflog.o \
 	builtin-config.o \
 	builtin-rerere.o \
+	builtin-reset.o \
 	builtin-rev-list.o \
 	builtin-rev-parse.o \
 	builtin-revert.o \

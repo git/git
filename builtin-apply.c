@@ -2423,7 +2423,6 @@ static void remove_file(struct patch *patch, int rmdir_empty)
 	if (update_index) {
 		if (remove_file_from_cache(patch->old_name) < 0)
 			die("unable to remove %s from index", patch->old_name);
-		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
 	if (!cached) {
 		if (S_ISGITLINK(patch->old_mode)) {
@@ -2578,7 +2577,6 @@ static void create_file(struct patch *patch)
 		mode = S_IFREG | 0644;
 	create_one_file(path, mode, buf, size);
 	add_index_file(path, mode, buf, size);
-	cache_tree_invalidate_path(active_cache_tree, path);
 }
 
 /* phase zero is to remove, phase one is to create */

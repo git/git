@@ -195,11 +195,6 @@ static int process_path(const char *path)
 	int len;
 	struct stat st;
 
-	/* We probably want to do this in remove_file_from_cache() and
-	 * add_cache_entry() instead...
-	 */
-	cache_tree_invalidate_path(active_cache_tree, path);
-
 	/*
 	 * First things first: get the stat information, to decide
 	 * what to do about the pathname!
@@ -239,7 +234,6 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 		return error("%s: cannot add to the index - missing --add option?",
 			     path);
 	report("add '%s'", path);
-	cache_tree_invalidate_path(active_cache_tree, path);
 	return 0;
 }
 
@@ -284,7 +278,6 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 			die("Unable to mark file %s", path);
 		goto free_return;
 	}
-	cache_tree_invalidate_path(active_cache_tree, path);
 
 	if (force_remove) {
 		if (remove_file_from_cache(p))
@@ -367,7 +360,6 @@ static void read_index_info(int line_termination)
 				free(path_name);
 			continue;
 		}
-		cache_tree_invalidate_path(active_cache_tree, path_name);
 
 		if (!mode) {
 			/* mode == 0 means there is no such path -- remove */
@@ -474,7 +466,6 @@ static int unresolve_one(const char *path)
 		goto free_return;
 	}
 
-	cache_tree_invalidate_path(active_cache_tree, path);
 	remove_file_from_cache(path);
 	if (add_cache_entry(ce_2, ADD_CACHE_OK_TO_ADD)) {
 		error("%s: cannot add our version to the index.", path);
