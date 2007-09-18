@@ -430,6 +430,17 @@ static int do_fetch(struct transport *transport,
 	return 0;
 }
 
+static void set_option(const char *name, const char *value)
+{
+	int r = transport_set_option(transport, name, value);
+	if (r < 0)
+		die("Option \"%s\" value \"%s\" is not valid for %s\n",
+			name, value, transport->url);
+	if (r > 0)
+		warning("Option \"%s\" is ignored for %s\n",
+			name, transport->url);
+}
+
 int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	struct remote *remote;
@@ -525,10 +536,11 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (quiet)
 		transport->verbose = 0;
 	if (upload_pack)
-		transport_set_option(transport, TRANS_OPT_UPLOADPACK, upload_pack);
+		set_option(TRANS_OPT_UPLOADPACK, upload_pack);
 	if (keep)
-		transport_set_option(transport, TRANS_OPT_KEEP, "yes");
-	transport_set_option(transport, TRANS_OPT_DEPTH, depth);
+		set_option(TRANS_OPT_KEEP, "yes");
+	if (depth)
+		set_option(TRANS_OPT_DEPTH, depth);
 
 	if (!transport->url)
 		die("Where do you want to fetch from today?");
