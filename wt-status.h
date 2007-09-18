@@ -1,6 +1,8 @@
 #ifndef STATUS_H
 #define STATUS_H
 
+#include <stdio.h>
+
 enum color_wt_status {
 	WT_STATUS_HEADER,
 	WT_STATUS_UPDATED,
@@ -19,6 +21,7 @@ struct wt_status {
 	int commitable;
 	int workdir_dirty;
 	int workdir_untracked;
+	FILE *fp;
 };
 
 int git_status_config(const char *var, const char *value);
