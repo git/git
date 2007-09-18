@@ -42,6 +42,8 @@ if {[catch {package require Tcl 8.4} err]
 	exit 1
 }
 
+catch {rename send {}} ; # What an evil concept...
+
 ######################################################################
 ##
 ## enable verbose loading?
@@ -58,6 +60,18 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 		puts stderr "source    $name"
 		uplevel 1 real__source $name
 	}
+}
+
+######################################################################
+##
+## Fake internationalization to ease backporting of changes.
+
+proc mc {fmt args} {
+	set cmk [string first @@ $fmt]
+	if {$cmk > 0} {
+		set fmt [string range $fmt 0 [expr {$cmk - 1}]]
+	}
+	return [eval [list format $fmt] $args]
 }
 
 ######################################################################
@@ -261,7 +275,7 @@ proc _git_cmd {name} {
 			set s [gets $f]
 			close $f
 
-			switch -glob -- $s {
+			switch -glob -- [lindex $s 0] {
 			#!*sh     { set i sh     }
 			#!*perl   { set i perl   }
 			#!*python { set i python }
@@ -275,7 +289,7 @@ proc _git_cmd {name} {
 			if {$interp eq {}} {
 				error "git-$name requires $i (not in PATH)"
 			}
-			set v [list $interp $p]
+			set v [concat [list $interp] [lrange $s 1 end] [list $p]]
 		} else {
 			# Assume it is builtin to git somehow and we
 			# aren't actually able to see a file for it.
@@ -465,6 +479,16 @@ proc tk_optionMenu {w varName args} {
 	$m configure -font font_ui
 	$w configure -font font_ui
 	return $m
+}
+
+proc rmsel_tag {text} {
+	$text tag conf sel \
+		-background [$text cget -background] \
+		-foreground [$text cget -foreground] \
+		-borderwidth 0
+	$text tag conf in_sel -background lightgray
+	bind $text <Motion> break
+	return $text
 }
 
 ######################################################################
@@ -1008,7 +1032,11 @@ proc read_ls_others {fd after} {
 	set pck [split $buf_rlo "\0"]
 	set buf_rlo [lindex $pck end]
 	foreach p [lrange $pck 0 end-1] {
-		merge_state [encoding convertfrom $p] ?O
+		set p [encoding convertfrom $p]
+		if {[string index $p end] eq {/}} {
+			set p [string range $p 0 end-1]
+		}
+		merge_state $p ?O
 	}
 	rescan_done $fd buf_rlo $after
 }
@@ -2133,8 +2161,8 @@ pack $ui_workdir -side left -fill both -expand 1
 .vpane.files add .vpane.files.workdir -sticky nsew
 
 foreach i [list $ui_index $ui_workdir] {
-	$i tag conf in_diff -background lightgray
-	$i tag conf in_sel  -background lightgray
+	rmsel_tag $i
+	$i tag conf in_diff -background [$i tag cget in_sel -background]
 }
 unset i
 
@@ -2441,20 +2469,17 @@ proc popup_diff_menu {ctxm x y X Y} {
 	set ::cursorX $x
 	set ::cursorY $y
 	if {$::ui_index eq $::current_diff_side} {
-		set s normal
 		set l "Unstage Hunk From Commit"
 	} else {
-		if {$current_diff_path eq {}
-			|| ![info exists file_states($current_diff_path)]
-			|| {_O} eq [lindex $file_states($current_diff_path) 0]} {
-			set s disabled
-		} else {
-			set s normal
-		}
 		set l "Stage Hunk For Commit"
 	}
-	if {$::is_3way_diff} {
+	if {$::is_3way_diff
+		|| $current_diff_path eq {}
+		|| ![info exists file_states($current_diff_path)]
+		|| {_O} eq [lindex $file_states($current_diff_path) 0]} {
 		set s disabled
+	} else {
+		set s normal
 	}
 	$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
 	tk_popup $ctxm $X $Y
