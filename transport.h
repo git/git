@@ -5,22 +5,11 @@
 #include "remote.h"
 
 struct transport {
-	unsigned verbose : 1;
 	struct remote *remote;
 	const char *url;
-
 	void *data;
-
 	struct ref *remote_refs;
 
-	const struct transport_ops *ops;
-	char *pack_lockfile;
-};
-
-#define TRANSPORT_PUSH_ALL 1
-#define TRANSPORT_PUSH_FORCE 2
-
-struct transport_ops {
 	/**
 	 * Returns 0 if successful, positive if the option is not
 	 * recognized or is inapplicable, and negative if the option
@@ -34,7 +23,12 @@ struct transport_ops {
 	int (*push)(struct transport *connection, int refspec_nr, const char **refspec, int flags);
 
 	int (*disconnect)(struct transport *connection);
+	char *pack_lockfile;
+	unsigned verbose : 1;
 };
+
+#define TRANSPORT_PUSH_ALL 1
+#define TRANSPORT_PUSH_FORCE 2
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);

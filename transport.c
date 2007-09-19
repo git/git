@@ -44,8 +44,6 @@ static int disconnect_walker(struct transport *transport)
 	return 0;
 }
 
-static const struct transport_ops rsync_transport;
-
 static int curl_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags) {
 	const char **argv;
 	int argc;
@@ -199,14 +197,6 @@ static int fetch_objs_via_curl(struct transport *transport,
 
 #endif
 
-static const struct transport_ops curl_transport = {
-	/* set_option */	NULL,
-	/* get_refs_list */	get_refs_via_curl,
-	/* fetch */		fetch_objs_via_curl,
-	/* push */		curl_transport_push,
-	/* disconnect */	disconnect_walker
-};
-
 struct bundle_transport_data {
 	int fd;
 	struct bundle_header header;
@@ -248,14 +238,6 @@ static int close_bundle(struct transport *transport)
 		close(data->fd);
 	return 0;
 }
-
-static const struct transport_ops bundle_transport = {
-	/* set_option */	NULL,
-	/* get_refs_list */	get_refs_from_bundle,
-	/* fetch */		fetch_refs_from_bundle,
-	/* push */		NULL,
-	/* disconnect */	close_bundle
-};
 
 struct git_transport_data {
 	unsigned thin : 1;
@@ -401,13 +383,6 @@ static int git_transport_push(struct transport *transport, int refspec_nr, const
 	return !!err;
 }
 
-static const struct transport_ops git_transport = {
-	/* set_option */	set_git_option,
-	/* get_refs_list */	get_refs_via_connect,
-	/* fetch */		fetch_refs_via_pack,
-	/* push */		git_transport_push
-};
-
 static int is_local(const char *url)
 {
 	const char *colon = strchr(url, ':');
@@ -431,18 +406,31 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	ret->url = url;
 
 	if (!prefixcmp(url, "rsync://")) {
-		ret->ops = &rsync_transport;
+		/* not supported; don't populate any ops */
+
 	} else if (!prefixcmp(url, "http://")
 	        || !prefixcmp(url, "https://")
 	        || !prefixcmp(url, "ftp://")) {
-		ret->ops = &curl_transport;
+		ret->get_refs_list = get_refs_via_curl;
+		ret->fetch = fetch_objs_via_curl;
+		ret->push = curl_transport_push;
+		ret->disconnect = disconnect_walker;
+
 	} else if (is_local(url) && is_file(url)) {
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
 		ret->data = data;
-		ret->ops = &bundle_transport;
+		ret->get_refs_list = get_refs_from_bundle;
+		ret->fetch = fetch_refs_from_bundle;
+		ret->disconnect = close_bundle;
+
 	} else {
 		struct git_transport_data *data = xcalloc(1, sizeof(*data));
 		ret->data = data;
+		ret->set_option = set_git_option;
+		ret->get_refs_list = get_refs_via_connect;
+		ret->fetch = fetch_refs_via_pack;
+		ret->push = git_transport_push;
+
 		data->thin = 1;
 		data->uploadpack = "git-upload-pack";
 		if (remote && remote->uploadpack)
@@ -451,7 +439,6 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		if (remote && remote->receivepack)
 			data->receivepack = remote->receivepack;
 		data->unpacklimit = -1;
-		ret->ops = &git_transport;
 	}
 
 	return ret;
@@ -460,24 +447,23 @@ struct transport *transport_get(struct remote *remote, const char *url)
 int transport_set_option(struct transport *transport,
 			 const char *name, const char *value)
 {
-	if (transport->ops->set_option)
-		return transport->ops->set_option(transport, name, value);
+	if (transport->set_option)
+		return transport->set_option(transport, name, value);
 	return 1;
 }
 
 int transport_push(struct transport *transport,
 		   int refspec_nr, const char **refspec, int flags)
 {
-	if (!transport->ops->push)
+	if (!transport->push)
 		return 1;
-	return transport->ops->push(transport, refspec_nr, refspec, flags);
+	return transport->push(transport, refspec_nr, refspec, flags);
 }
 
 struct ref *transport_get_remote_refs(struct transport *transport)
 {
 	if (!transport->remote_refs)
-		transport->remote_refs =
-			transport->ops->get_refs_list(transport);
+		transport->remote_refs = transport->get_refs_list(transport);
 	return transport->remote_refs;
 }
 
@@ -496,7 +482,7 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 		heads[nr_heads++] = rm;
 	}
 
-	rc = transport->ops->fetch(transport, nr_heads, heads);
+	rc = transport->fetch(transport, nr_heads, heads);
 	free(heads);
 	return rc;
 }
@@ -513,8 +499,8 @@ void transport_unlock_pack(struct transport *transport)
 int transport_disconnect(struct transport *transport)
 {
 	int ret = 0;
-	if (transport->ops->disconnect)
-		ret = transport->ops->disconnect(transport);
+	if (transport->disconnect)
+		ret = transport->disconnect(transport);
 	free(transport);
 	return ret;
 }

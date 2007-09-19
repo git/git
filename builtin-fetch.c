@@ -392,8 +392,7 @@ static int do_fetch(struct transport *transport,
 	if (transport->remote->fetch_tags == -1)
 		no_tags = 1;
 
-	if (!transport->ops || !transport->ops->get_refs_list ||
-	    !transport->ops->fetch)
+	if (!transport->get_refs_list || !transport->fetch)
 		die("Don't know how to fetch from %s", transport->url);
 
 	/* if not appending, truncate FETCH_HEAD */
