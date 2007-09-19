@@ -12,37 +12,31 @@
  *  a'b      ==> a'\''b    ==> 'a'\''b'
  *  a!b      ==> a'\!'b    ==> 'a'\!'b'
  */
-#undef EMIT
-#define EMIT(x) do { if (++len < n) *bp++ = (x); } while(0)
-
 static inline int need_bs_quote(char c)
 {
 	return (c == '\'' || c == '!');
 }
 
-static size_t sq_quote_buf(char *dst, size_t n, const char *src)
+void sq_quote_buf(struct strbuf *dst, const char *src)
 {
-	char c;
-	char *bp = dst;
-	size_t len = 0;
+	char *to_free = NULL;
 
-	EMIT('\'');
-	while ((c = *src++)) {
-		if (need_bs_quote(c)) {
-			EMIT('\'');
-			EMIT('\\');
-			EMIT(c);
-			EMIT('\'');
-		} else {
-			EMIT(c);
+	if (dst->buf == src)
+		to_free = strbuf_detach(dst);
+
+	strbuf_addch(dst, '\'');
+	while (*src) {
+		size_t len = strcspn(src, "'\\");
+		strbuf_add(dst, src, len);
+		src += len;
+		while (need_bs_quote(*src)) {
+			strbuf_addstr(dst, "'\\");
+			strbuf_addch(dst, *src++);
+			strbuf_addch(dst, '\'');
 		}
 	}
-	EMIT('\'');
-
-	if ( n )
-		*bp = 0;
-
-	return len;
+	strbuf_addch(dst, '\'');
+	free(to_free);
 }
 
 void sq_quote_print(FILE *stream, const char *src)
@@ -62,11 +56,10 @@ void sq_quote_print(FILE *stream, const char *src)
 	fputc('\'', stream);
 }
 
-char *sq_quote_argv(const char** argv, int count)
+void sq_quote_argv(struct strbuf *dst, const char** argv, int count,
+                   size_t maxlen)
 {
-	char *buf, *to;
 	int i;
-	size_t len = 0;
 
 	/* Count argv if needed. */
 	if (count < 0) {
@@ -74,53 +67,14 @@ char *sq_quote_argv(const char** argv, int count)
 			; /* just counting */
 	}
 
-	/* Special case: no argv. */
-	if (!count)
-		return xcalloc(1,1);
-
-	/* Get destination buffer length. */
-	for (i = 0; i < count; i++)
-		len += sq_quote_buf(NULL, 0, argv[i]) + 1;
-
-	/* Alloc destination buffer. */
-	to = buf = xmalloc(len + 1);
-
 	/* Copy into destination buffer. */
+	strbuf_grow(dst, 32 * count);
 	for (i = 0; i < count; ++i) {
-		*to++ = ' ';
-		to += sq_quote_buf(to, len, argv[i]);
+		strbuf_addch(dst, ' ');
+		sq_quote_buf(dst, argv[i]);
+		if (maxlen && dst->len > maxlen)
+			die("Too many or long arguments");
 	}
-
-	return buf;
-}
-
-/*
- * Append a string to a string buffer, with or without shell quoting.
- * Return true if the buffer overflowed.
- */
-int add_to_string(char **ptrp, int *sizep, const char *str, int quote)
-{
-	char *p = *ptrp;
-	int size = *sizep;
-	int oc;
-	int err = 0;
-
-	if (quote)
-		oc = sq_quote_buf(p, size, str);
-	else {
-		oc = strlen(str);
-		memcpy(p, str, (size <= oc) ? size - 1 : oc);
-	}
-
-	if (size <= oc) {
-		err = 1;
-		oc = size - 1;
-	}
-
-	*ptrp += oc;
-	**ptrp = '\0';
-	*sizep -= oc;
-	return err;
 }
 
 char *sq_dequote(char *arg)

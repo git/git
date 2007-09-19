@@ -10,12 +10,9 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 	char *host;
 	char *path;
 	int sv[2];
-	char command[COMMAND_SIZE];
-	char *posn;
-	int sizen;
-	int of;
 	int i;
 	pid_t pid;
+	struct strbuf cmd;
 
 	if (!strcmp(url, "-")) {
 		*fd_in = 0;
@@ -36,24 +33,23 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 	if (!path) {
 		return error("Bad URL: %s", url);
 	}
-	/* $GIT_RSH <host> "env GIT_DIR=<path> <remote_prog> <args...>" */
-	sizen = COMMAND_SIZE;
-	posn = command;
-	of = 0;
-	of |= add_to_string(&posn, &sizen, "env ", 0);
-	of |= add_to_string(&posn, &sizen, GIT_DIR_ENVIRONMENT "=", 0);
-	of |= add_to_string(&posn, &sizen, path, 1);
-	of |= add_to_string(&posn, &sizen, " ", 0);
-	of |= add_to_string(&posn, &sizen, remote_prog, 1);
 
-	for ( i = 0 ; i < rmt_argc ; i++ ) {
-		of |= add_to_string(&posn, &sizen, " ", 0);
-		of |= add_to_string(&posn, &sizen, rmt_argv[i], 1);
+	/* $GIT_RSH <host> "env GIT_DIR=<path> <remote_prog> <args...>" */
+	strbuf_init(&cmd, COMMAND_SIZE);
+	strbuf_addstr(&cmd, "env ");
+	strbuf_addstr(&cmd, GIT_DIR_ENVIRONMENT "=");
+	sq_quote_buf(&cmd, path);
+	strbuf_addch(&cmd, ' ');
+	sq_quote_buf(&cmd, remote_prog);
+
+	for (i = 0 ; i < rmt_argc ; i++) {
+		strbuf_addch(&cmd, ' ');
+		sq_quote_buf(&cmd, rmt_argv[i]);
 	}
 
-	of |= add_to_string(&posn, &sizen, " -", 0);
+	strbuf_addstr(&cmd, " -");
 
-	if ( of )
+	if (cmd.len >= COMMAND_SIZE)
 		return error("Command line too long");
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv))
@@ -74,7 +70,7 @@ int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 		close(sv[1]);
 		dup2(sv[0], 0);
 		dup2(sv[0], 1);
-		execlp(ssh, ssh_basename, host, command, NULL);
+		execlp(ssh, ssh_basename, host, cmd.buf, NULL);
 	}
 	close(sv[0]);
 	*fd_in = sv[1];
