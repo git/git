@@ -163,15 +163,14 @@ static void say_patch_name(FILE *output, const char *pre, struct patch *patch, c
 	fputs(pre, output);
 	if (patch->old_name && patch->new_name &&
 	    strcmp(patch->old_name, patch->new_name)) {
-		write_name_quoted(NULL, 0, patch->old_name, 1, output);
+		quote_c_style(patch->old_name, NULL, output, 0);
 		fputs(" => ", output);
-		write_name_quoted(NULL, 0, patch->new_name, 1, output);
-	}
-	else {
+		quote_c_style(patch->new_name, NULL, output, 0);
+	} else {
 		const char *n = patch->new_name;
 		if (!n)
 			n = patch->old_name;
-		write_name_quoted(NULL, 0, n, 1, output);
+		quote_c_style(n, NULL, output, 0);
 	}
 	fputs(post, output);
 }
@@ -1379,61 +1378,50 @@ static const char minuses[]= "--------------------------------------------------
 
 static void show_stats(struct patch *patch)
 {
-	const char *prefix = "";
-	char *name = patch->new_name;
-	char *qname = NULL;
-	int len, max, add, del, total;
+	struct strbuf qname;
+	char *cp = patch->new_name ? patch->new_name : patch->old_name;
+	int max, add, del;
 
-	if (!name)
-		name = patch->old_name;
-
-	if (0 < (len = quote_c_style(name, NULL, NULL, 0))) {
-		qname = xmalloc(len + 1);
-		quote_c_style(name, qname, NULL, 0);
-		name = qname;
-	}
+	strbuf_init(&qname, 0);
+	quote_c_style(cp, &qname, NULL, 0);
 
 	/*
 	 * "scale" the filename
 	 */
-	len = strlen(name);
 	max = max_len;
 	if (max > 50)
 		max = 50;
-	if (len > max) {
-		char *slash;
-		prefix = "...";
-		max -= 3;
-		name += len - max;
-		slash = strchr(name, '/');
-		if (slash)
-			name = slash;
+
+	if (qname.len > max) {
+		cp = strchr(qname.buf + qname.len + 3 - max, '/');
+		if (!cp)
+			cp = qname.buf + qname.len + 3 - max;
+		strbuf_splice(&qname, 0, cp - qname.buf, "...", 3);
 	}
-	len = max;
+
+	if (patch->is_binary) {
+		printf(" %-*s |  Bin\n", max, qname.buf);
+		strbuf_release(&qname);
+		return;
+	}
+
+	printf(" %-*s |", max, qname.buf);
+	strbuf_release(&qname);
 
 	/*
 	 * scale the add/delete
 	 */
-	max = max_change;
-	if (max + len > 70)
-		max = 70 - len;
-
+	max = max + max_change > 70 ? 70 - max : max_change;
 	add = patch->lines_added;
 	del = patch->lines_deleted;
-	total = add + del;
 
 	if (max_change > 0) {
-		total = (total * max + max_change / 2) / max_change;
+		int total = ((add + del) * max + max_change / 2) / max_change;
 		add = (add * max + max_change / 2) / max_change;
 		del = total - add;
 	}
-	if (patch->is_binary)
-		printf(" %s%-*s |  Bin\n", prefix, len, name);
-	else
-		printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
-		       len, name, patch->lines_added + patch->lines_deleted,
-		       add, pluses, del, minuses);
-	free(qname);
+	printf("%5d %.*s%.*s\n", patch->lines_added + patch->lines_deleted,
+		add, pluses, del, minuses);
 }
 
 static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
@@ -2228,13 +2216,8 @@ static void numstat_patch_list(struct patch *patch)
 		if (patch->is_binary)
 			printf("-\t-\t");
 		else
-			printf("%d\t%d\t",
-			       patch->lines_added, patch->lines_deleted);
-		if (line_termination && quote_c_style(name, NULL, NULL, 0))
-			quote_c_style(name, NULL, stdout, 0);
-		else
-			fputs(name, stdout);
-		putchar(line_termination);
+			printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
+		write_name_quoted(name, stdout, line_termination);
 	}
 }
 
