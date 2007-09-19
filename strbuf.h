@@ -55,15 +55,20 @@ extern void strbuf_release(struct strbuf *);
 extern void strbuf_reset(struct strbuf *);
 extern char *strbuf_detach(struct strbuf *);
 extern void strbuf_attach(struct strbuf *, void *, size_t, size_t);
+static inline void strbuf_swap(struct strbuf *a, struct strbuf *b) {
+	struct strbuf tmp = *a;
+	*a = *b;
+	*b = tmp;
+}
 
 /*----- strbuf size related -----*/
 static inline size_t strbuf_avail(struct strbuf *sb) {
-    return sb->alloc ? sb->alloc - sb->len - 1 : 0;
+	return sb->alloc ? sb->alloc - sb->len - 1 : 0;
 }
 static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
-    assert (len < sb->alloc);
-    sb->len = len;
-    sb->buf[len] = '\0';
+	assert (len < sb->alloc);
+	sb->len = len;
+	sb->buf[len] = '\0';
 }
 
 extern void strbuf_grow(struct strbuf *, size_t);
@@ -78,12 +83,12 @@ static inline void strbuf_addch(struct strbuf *sb, int c) {
 	sb->buf[sb->len] = '\0';
 }
 
-/* inserts after pos, or appends if pos >= sb->len */
 extern void strbuf_insert(struct strbuf *, size_t pos, const void *, size_t);
+extern void strbuf_remove(struct strbuf *, size_t pos, size_t len);
 
 /* splice pos..pos+len with given data */
 extern void strbuf_splice(struct strbuf *, size_t pos, size_t len,
-						  const void *, size_t);
+                          const void *, size_t);
 
 extern void strbuf_add(struct strbuf *, const void *, size_t);
 static inline void strbuf_addstr(struct strbuf *sb, const char *s) {

@@ -1111,9 +1111,7 @@ static int store_object(
 		if (last->no_swap) {
 			last->data = *dat;
 		} else {
-			struct strbuf tmp = *dat;
-			*dat = last->data;
-			last->data = tmp;
+			strbuf_swap(&last->data, dat);
 		}
 		last->offset = e->offset;
 	}

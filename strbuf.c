@@ -50,16 +50,6 @@ void strbuf_rtrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-void strbuf_insert(struct strbuf *sb, size_t pos, const void *data, size_t len)
-{
-	strbuf_grow(sb, len);
-	if (pos > sb->len)
-		die("`pos' is too far after the end of the buffer");
-	memmove(sb->buf + pos + len, sb->buf + pos, sb->len - pos);
-	memcpy(sb->buf + pos, data, len);
-	strbuf_setlen(sb, sb->len + len);
-}
-
 void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
 				   const void *data, size_t dlen)
 {
@@ -77,6 +67,16 @@ void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
 			sb->len - pos - len);
 	memcpy(sb->buf + pos, data, dlen);
 	strbuf_setlen(sb, sb->len + dlen - len);
+}
+
+void strbuf_insert(struct strbuf *sb, size_t pos, const void *data, size_t len)
+{
+	strbuf_splice(sb, pos, 0, data, len);
+}
+
+void strbuf_remove(struct strbuf *sb, size_t pos, size_t len)
+{
+	strbuf_splice(sb, pos, len, NULL, 0);
 }
 
 void strbuf_add(struct strbuf *sb, const void *data, size_t len)
