@@ -231,35 +231,33 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 {
 	int len;
 	const char *start = line;
-	char *name;
 
 	if (*line == '"') {
+		struct strbuf name;
+
 		/* Proposed "new-style" GNU patch/diff format; see
 		 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
 		 */
-		name = unquote_c_style(line, NULL);
-		if (name) {
-			char *cp = name;
-			while (p_value) {
+		strbuf_init(&name, 0);
+		if (!unquote_c_style(&name, line, NULL)) {
+			char *cp;
+
+			for (cp = name.buf; p_value; p_value--) {
 				cp = strchr(cp, '/');
 				if (!cp)
 					break;
 				cp++;
-				p_value--;
 			}
 			if (cp) {
 				/* name can later be freed, so we need
 				 * to memmove, not just return cp
 				 */
-				memmove(name, cp, strlen(cp) + 1);
+				strbuf_remove(&name, 0, cp - name.buf);
 				free(def);
-				return name;
-			}
-			else {
-				free(name);
-				name = NULL;
+				return name.buf;
 			}
 		}
+		strbuf_release(&name);
 	}
 
 	for (;;) {
@@ -567,29 +565,30 @@ static const char *stop_at_slash(const char *line, int llen)
  */
 static char *git_header_name(char *line, int llen)
 {
-	int len;
 	const char *name;
 	const char *second = NULL;
+	size_t len;
 
 	line += strlen("diff --git ");
 	llen -= strlen("diff --git ");
 
 	if (*line == '"') {
 		const char *cp;
-		char *first = unquote_c_style(line, &second);
-		if (!first)
-			return NULL;
+		struct strbuf first;
+		struct strbuf sp;
+
+		strbuf_init(&first, 0);
+		strbuf_init(&sp, 0);
+
+		if (unquote_c_style(&first, line, &second))
+			goto free_and_fail1;
 
 		/* advance to the first slash */
-		cp = stop_at_slash(first, strlen(first));
-		if (!cp || cp == first) {
-			/* we do not accept absolute paths */
-		free_first_and_fail:
-			free(first);
-			return NULL;
-		}
-		len = strlen(cp+1);
-		memmove(first, cp+1, len+1); /* including NUL */
+		cp = stop_at_slash(first.buf, first.len);
+		/* we do not accept absolute paths */
+		if (!cp || cp == first.buf)
+			goto free_and_fail1;
+		strbuf_remove(&first, 0, cp + 1 - first.buf);
 
 		/* second points at one past closing dq of name.
 		 * find the second name.
@@ -598,40 +597,40 @@ static char *git_header_name(char *line, int llen)
 			second++;
 
 		if (line + llen <= second)
-			goto free_first_and_fail;
+			goto free_and_fail1;
 		if (*second == '"') {
-			char *sp = unquote_c_style(second, NULL);
-			if (!sp)
-				goto free_first_and_fail;
-			cp = stop_at_slash(sp, strlen(sp));
-			if (!cp || cp == sp) {
-			free_both_and_fail:
-				free(sp);
-				goto free_first_and_fail;
-			}
+			if (unquote_c_style(&sp, second, NULL))
+				goto free_and_fail1;
+			cp = stop_at_slash(sp.buf, sp.len);
+			if (!cp || cp == sp.buf)
+				goto free_and_fail1;
 			/* They must match, otherwise ignore */
-			if (strcmp(cp+1, first))
-				goto free_both_and_fail;
-			free(sp);
-			return first;
+			if (strcmp(cp + 1, first.buf))
+				goto free_and_fail1;
+			strbuf_release(&sp);
+			return first.buf;
 		}
 
 		/* unquoted second */
 		cp = stop_at_slash(second, line + llen - second);
 		if (!cp || cp == second)
-			goto free_first_and_fail;
+			goto free_and_fail1;
 		cp++;
-		if (line + llen - cp != len + 1 ||
-		    memcmp(first, cp, len))
-			goto free_first_and_fail;
-		return first;
+		if (line + llen - cp != first.len + 1 ||
+		    memcmp(first.buf, cp, first.len))
+			goto free_and_fail1;
+		return first.buf;
+
+	free_and_fail1:
+		strbuf_release(&first);
+		strbuf_release(&sp);
+		return NULL;
 	}
 
 	/* unquoted first name */
 	name = stop_at_slash(line, llen);
 	if (!name || name == line)
 		return NULL;
-
 	name++;
 
 	/* since the first name is unquoted, a dq if exists must be
@@ -639,28 +638,30 @@ static char *git_header_name(char *line, int llen)
 	 */
 	for (second = name; second < line + llen; second++) {
 		if (*second == '"') {
-			const char *cp = second;
+			struct strbuf sp;
 			const char *np;
-			char *sp = unquote_c_style(second, NULL);
 
-			if (!sp)
-				return NULL;
-			np = stop_at_slash(sp, strlen(sp));
-			if (!np || np == sp) {
-			free_second_and_fail:
-				free(sp);
-				return NULL;
-			}
+			strbuf_init(&sp, 0);
+			if (unquote_c_style(&sp, second, NULL))
+				goto free_and_fail2;
+
+			np = stop_at_slash(sp.buf, sp.len);
+			if (!np || np == sp.buf)
+				goto free_and_fail2;
 			np++;
-			len = strlen(np);
-			if (len < cp - name &&
+
+			len = sp.buf + sp.len - np;
+			if (len < second - name &&
 			    !strncmp(np, name, len) &&
 			    isspace(name[len])) {
 				/* Good */
-				memmove(sp, np, len + 1);
-				return sp;
+				strbuf_remove(&sp, 0, np - sp.buf);
+				return sp.buf;
 			}
-			goto free_second_and_fail;
+
+		free_and_fail2:
+			strbuf_release(&sp);
+			return NULL;
 		}
 	}
 

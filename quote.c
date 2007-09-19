@@ -239,73 +239,71 @@ int quote_c_style(const char *name, char *outbuf, FILE *outfp, int no_dq)
 /*
  * C-style name unquoting.
  *
- * Quoted should point at the opening double quote.  Returns
- * an allocated memory that holds unquoted name, which the caller
- * should free when done.  Updates endp pointer to point at
- * one past the ending double quote if given.
+ * Quoted should point at the opening double quote.
+ * + Returns 0 if it was able to unquote the string properly, and appends the
+ *   result in the strbuf `sb'.
+ * + Returns -1 in case of error, and doesn't touch the strbuf. Though note
+ *   that this function will allocate memory in the strbuf, so calling
+ *   strbuf_release is mandatory whichever result unquote_c_style returns.
+ *
+ * Updates endp pointer to point at one past the ending double quote if given.
  */
-
-char *unquote_c_style(const char *quoted, const char **endp)
+int unquote_c_style(struct strbuf *sb, const char *quoted, const char **endp)
 {
-	const char *sp;
-	char *name = NULL, *outp = NULL;
-	int count = 0, ch, ac;
-
-#undef EMIT
-#define EMIT(c) (outp ? (*outp++ = (c)) : (count++))
+	size_t oldlen = sb->len, len;
+	int ch, ac;
 
 	if (*quoted++ != '"')
-		return NULL;
+		return -1;
 
-	while (1) {
-		/* first pass counts and allocates, second pass fills */
-		for (sp = quoted; (ch = *sp++) != '"'; ) {
-			if (ch == '\\') {
-				switch (ch = *sp++) {
-				case 'a': ch = '\a'; break;
-				case 'b': ch = '\b'; break;
-				case 'f': ch = '\f'; break;
-				case 'n': ch = '\n'; break;
-				case 'r': ch = '\r'; break;
-				case 't': ch = '\t'; break;
-				case 'v': ch = '\v'; break;
+	for (;;) {
+		len = strcspn(quoted, "\"\\");
+		strbuf_add(sb, quoted, len);
+		quoted += len;
 
-				case '\\': case '"':
-					break; /* verbatim */
+		switch (*quoted++) {
+		  case '"':
+			if (endp)
+				*endp = quoted + 1;
+			return 0;
+		  case '\\':
+			break;
+		  default:
+			goto error;
+		}
 
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-					/* octal */
+		switch ((ch = *quoted++)) {
+		case 'a': ch = '\a'; break;
+		case 'b': ch = '\b'; break;
+		case 'f': ch = '\f'; break;
+		case 'n': ch = '\n'; break;
+		case 'r': ch = '\r'; break;
+		case 't': ch = '\t'; break;
+		case 'v': ch = '\v'; break;
+
+		case '\\': case '"':
+			break; /* verbatim */
+
+		/* octal values with first digit over 4 overflow */
+		case '0': case '1': case '2': case '3':
 					ac = ((ch - '0') << 6);
-					if ((ch = *sp++) < '0' || '7' < ch)
-						return NULL;
+			if ((ch = *quoted++) < '0' || '7' < ch)
+				goto error;
 					ac |= ((ch - '0') << 3);
-					if ((ch = *sp++) < '0' || '7' < ch)
-						return NULL;
+			if ((ch = *quoted++) < '0' || '7' < ch)
+				goto error;
 					ac |= (ch - '0');
 					ch = ac;
 					break;
 				default:
-					return NULL; /* malformed */
-				}
+			goto error;
 			}
-			EMIT(ch);
+		strbuf_addch(sb, ch);
 		}
 
-		if (name) {
-			*outp = 0;
-			if (endp)
-				*endp = sp;
-			return name;
-		}
-		outp = name = xmalloc(count + 1);
-	}
+  error:
+	strbuf_setlen(sb, oldlen);
+	return -1;
 }
 
 void write_name_quoted(const char *prefix, int prefix_len,

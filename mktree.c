@@ -66,6 +66,7 @@ static const char mktree_usage[] = "git-mktree [-z]";
 int main(int ac, char **av)
 {
 	struct strbuf sb;
+	struct strbuf p_uq;
 	unsigned char sha1[20];
 	int line_termination = '\n';
 
@@ -82,14 +83,13 @@ int main(int ac, char **av)
 	}
 
 	strbuf_init(&sb, 0);
-	while (1) {
+	strbuf_init(&p_uq, 0);
+	while (strbuf_getline(&sb, stdin, line_termination) != EOF) {
 		char *ptr, *ntr;
 		unsigned mode;
 		enum object_type type;
 		char *path;
 
-		if (strbuf_getline(&sb, stdin, line_termination) == EOF)
-			break;
 		ptr = sb.buf;
 		/* Input is non-recursive ls-tree output format
 		 * mode SP type SP sha1 TAB name
@@ -109,18 +109,21 @@ int main(int ac, char **av)
 		*ntr++ = 0; /* now at the beginning of SHA1 */
 		if (type != type_from_string(ptr))
 			die("object type %s mismatch (%s)", ptr, typename(type));
-		ntr += 41; /* at the beginning of name */
-		if (line_termination && ntr[0] == '"')
-			path = unquote_c_style(ntr, NULL);
-		else
-			path = ntr;
+
+		path = ntr + 41;  /* at the beginning of name */
+		if (line_termination && path[0] == '"') {
+			strbuf_reset(&p_uq);
+			if (unquote_c_style(&p_uq, path, NULL)) {
+				die("invalid quoting");
+			}
+			path = p_uq.buf;
+		}
 
 		append_to_tree(mode, sha1, path);
-
-		if (path != ntr)
-			free(path);
 	}
+	strbuf_release(&p_uq);
 	strbuf_release(&sb);
+
 	write_tree(sha1);
 	puts(sha1_to_hex(sha1));
 	exit(0);
