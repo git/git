@@ -32,13 +32,13 @@ static void add_fetch_refspec(struct remote *remote, const char *ref)
 	remote->fetch_refspec_nr = nr;
 }
 
-static void add_uri(struct remote *remote, const char *uri)
+static void add_url(struct remote *remote, const char *url)
 {
-	int nr = remote->uri_nr + 1;
-	remote->uri =
-		xrealloc(remote->uri, nr * sizeof(char *));
-	remote->uri[nr-1] = uri;
-	remote->uri_nr = nr;
+	int nr = remote->url_nr + 1;
+	remote->url =
+		xrealloc(remote->url, nr * sizeof(char *));
+	remote->url[nr-1] = url;
+	remote->url_nr = nr;
 }
 
 static struct remote *make_remote(const char *name, int len)
@@ -154,7 +154,7 @@ static void read_remotes_file(struct remote *remote)
 
 		switch (value_list) {
 		case 0:
-			add_uri(remote, xstrdup(s));
+			add_url(remote, xstrdup(s));
 			break;
 		case 1:
 			add_push_refspec(remote, xstrdup(s));
@@ -206,7 +206,7 @@ static void read_branches_file(struct remote *remote)
 	} else {
 		branch = "refs/heads/master";
 	}
-	add_uri(remote, p);
+	add_url(remote, p);
 	add_fetch_refspec(remote, branch);
 	remote->fetch_tags = 1; /* always auto-follow */
 }
@@ -260,7 +260,7 @@ static int handle_config(const char *key, const char *value)
 		return 0; /* ignore unknown booleans */
 	}
 	if (!strcmp(subkey, ".url")) {
-		add_uri(remote, xstrdup(value));
+		add_url(remote, xstrdup(value));
 	} else if (!strcmp(subkey, ".push")) {
 		add_push_refspec(remote, xstrdup(value));
 	} else if (!strcmp(subkey, ".fetch")) {
@@ -347,14 +347,14 @@ struct remote *remote_get(const char *name)
 		name = default_remote_name;
 	ret = make_remote(name, 0);
 	if (name[0] != '/') {
-		if (!ret->uri)
+		if (!ret->url)
 			read_remotes_file(ret);
-		if (!ret->uri)
+		if (!ret->url)
 			read_branches_file(ret);
 	}
-	if (!ret->uri)
-		add_uri(ret, name);
-	if (!ret->uri)
+	if (!ret->url)
+		add_url(ret, name);
+	if (!ret->url)
 		return NULL;
 	ret->fetch = parse_ref_spec(ret->fetch_refspec_nr, ret->fetch_refspec);
 	ret->push = parse_ref_spec(ret->push_refspec_nr, ret->push_refspec);
@@ -380,11 +380,11 @@ int for_each_remote(each_remote_fn fn, void *priv)
 	return result;
 }
 
-int remote_has_uri(struct remote *remote, const char *uri)
+int remote_has_url(struct remote *remote, const char *url)
 {
 	int i;
-	for (i = 0; i < remote->uri_nr; i++) {
-		if (!strcmp(remote->uri[i], uri))
+	for (i = 0; i < remote->url_nr; i++) {
+		if (!strcmp(remote->url[i], url))
 			return 1;
 	}
 	return 0;
