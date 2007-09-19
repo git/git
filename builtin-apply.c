@@ -291,6 +291,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 		int deflen = strlen(def);
 		if (deflen < len && !strncmp(start, def, deflen))
 			return def;
+		free(def);
 	}
 
 	return xmemdupz(start, len);
