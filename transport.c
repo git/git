@@ -236,6 +236,7 @@ static int close_bundle(struct transport *transport)
 	struct bundle_transport_data *data = transport->data;
 	if (data->fd > 0)
 		close(data->fd);
+	free(data);
 	return 0;
 }
 
@@ -372,6 +373,12 @@ static int git_transport_push(struct transport *transport, int refspec_nr, const
 	return !!err;
 }
 
+static int disconnect_git(struct transport *transport)
+{
+	free(transport->data);
+	return 0;
+}
+
 static int is_local(const char *url)
 {
 	const char *colon = strchr(url, ':');
@@ -419,6 +426,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->get_refs_list = get_refs_via_connect;
 		ret->fetch = fetch_refs_via_pack;
 		ret->push = git_transport_push;
+		ret->disconnect = disconnect_git;
 
 		data->thin = 1;
 		data->uploadpack = "git-upload-pack";
