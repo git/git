@@ -8005,4 +8005,5 @@ if {[info exists permviews]} {
 	addviewmenu $n
     }
 }
+focus -force .
 getcommits
