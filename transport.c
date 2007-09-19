@@ -314,21 +314,18 @@ static int fetch_refs_via_pack(struct transport *transport,
 	struct fetch_pack_args args;
 	int i;
 
+	memset(&args, 0, sizeof(args));
 	args.uploadpack = data->uploadpack;
-	args.quiet = 0;
 	args.keep_pack = data->keep;
+	args.lock_pack = 1;
 	args.unpacklimit = data->unpacklimit;
 	args.use_thin_pack = data->thin;
-	args.fetch_all = 0;
 	args.verbose = transport->verbose;
 	args.depth = data->depth;
-	args.no_progress = 0;
-
-	setup_fetch_pack(&args);
 
 	for (i = 0; i < nr_heads; i++)
 		origh[i] = heads[i] = xstrdup(to_fetch[i]->name);
-	refs = fetch_pack(dest, nr_heads, heads, &transport->pack_lockfile);
+	refs = fetch_pack(&args, dest, nr_heads, heads, &transport->pack_lockfile);
 
 	for (i = 0; i < nr_heads; i++)
 		free(origh[i]);

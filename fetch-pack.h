@@ -8,14 +8,17 @@ struct fetch_pack_args
 	int depth;
 	unsigned quiet:1,
 		keep_pack:1,
+		lock_pack:1,
 		use_thin_pack:1,
 		fetch_all:1,
 		verbose:1,
 		no_progress:1;
 };
 
-void setup_fetch_pack(struct fetch_pack_args *args);
-
-struct ref *fetch_pack(const char *dest, int nr_heads, char **heads, char **pack_lockfile);
+struct ref *fetch_pack(struct fetch_pack_args *args,
+		const char *dest,
+		int nr_heads,
+		char **heads,
+		char **pack_lockfile);
 
 #endif

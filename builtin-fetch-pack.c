@@ -8,15 +8,11 @@
 #include "sideband.h"
 #include "fetch-pack.h"
 
-static int keep_pack;
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
 static int unpack_limit = 100;
-static int quiet;
-static int verbose;
-static int fetch_all;
-static int depth;
-static int no_progress;
+static struct fetch_pack_args args;
+
 static const char fetch_pack_usage[] =
 "git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]";
 static const char *uploadpack = "git-upload-pack";
@@ -181,7 +177,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 				     (use_sideband == 2 ? " side-band-64k" : ""),
 				     (use_sideband == 1 ? " side-band" : ""),
 				     (use_thin_pack ? " thin-pack" : ""),
-				     (no_progress ? " no-progress" : ""),
+				     (args.no_progress ? " no-progress" : ""),
 				     " ofs-delta");
 		else
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
@@ -189,13 +185,13 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	}
 	if (is_repository_shallow())
 		write_shallow_commits(fd[1], 1);
-	if (depth > 0)
-		packet_write(fd[1], "deepen %d", depth);
+	if (args.depth > 0)
+		packet_write(fd[1], "deepen %d", args.depth);
 	packet_flush(fd[1]);
 	if (!fetching)
 		return 1;
 
-	if (depth > 0) {
+	if (args.depth > 0) {
 		char line[1024];
 		unsigned char sha1[20];
 		int len;
@@ -226,7 +222,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	retval = -1;
 	while ((sha1 = get_rev())) {
 		packet_write(fd[1], "have %s\n", sha1_to_hex(sha1));
-		if (verbose)
+		if (args.verbose)
 			fprintf(stderr, "have %s\n", sha1_to_hex(sha1));
 		in_vain++;
 		if (!(31 & ++count)) {
@@ -244,7 +240,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 
 			do {
 				ack = get_ack(fd[0], result_sha1);
-				if (verbose && ack)
+				if (args.verbose && ack)
 					fprintf(stderr, "got ack %d %s\n", ack,
 							sha1_to_hex(result_sha1));
 				if (ack == 1) {
@@ -263,7 +259,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			} while (ack);
 			flushes--;
 			if (got_continue && MAX_IN_VAIN < in_vain) {
-				if (verbose)
+				if (args.verbose)
 					fprintf(stderr, "giving up\n");
 				break; /* give up */
 			}
@@ -271,7 +267,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	}
 done:
 	packet_write(fd[1], "done\n");
-	if (verbose)
+	if (args.verbose)
 		fprintf(stderr, "done\n");
 	if (retval != 0) {
 		multi_ack = 0;
@@ -280,7 +276,7 @@ done:
 	while (flushes || multi_ack) {
 		int ack = get_ack(fd[0], result_sha1);
 		if (ack) {
-			if (verbose)
+			if (args.verbose)
 				fprintf(stderr, "got ack (%d) %s\n", ack,
 					sha1_to_hex(result_sha1));
 			if (ack == 1)
@@ -317,7 +313,7 @@ static int mark_complete(const char *path, const unsigned char *sha1, int flag, 
 static void mark_recent_complete_commits(unsigned long cutoff)
 {
 	while (complete && cutoff <= complete->item->date) {
-		if (verbose)
+		if (args.verbose)
 			fprintf(stderr, "Marking %s as complete\n",
 				sha1_to_hex(complete->item->object.sha1));
 		pop_most_recent_commit(&complete, COMPLETE);
@@ -332,7 +328,7 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 	struct ref *ref, *next;
 	struct ref *fastarray[32];
 
-	if (nr_match && !fetch_all) {
+	if (nr_match && !args.fetch_all) {
 		if (ARRAY_SIZE(fastarray) < nr_match)
 			return_refs = xcalloc(nr_match, sizeof(struct ref *));
 		else {
@@ -348,8 +344,8 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 		if (!memcmp(ref->name, "refs/", 5) &&
 		    check_ref_format(ref->name + 5))
 			; /* trash */
-		else if (fetch_all &&
-			 (!depth || prefixcmp(ref->name, "refs/tags/") )) {
+		else if (args.fetch_all &&
+			 (!args.depth || prefixcmp(ref->name, "refs/tags/") )) {
 			*newtail = ref;
 			ref->next = NULL;
 			newtail = &ref->next;
@@ -365,7 +361,7 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 		free(ref);
 	}
 
-	if (!fetch_all) {
+	if (!args.fetch_all) {
 		int i;
 		for (i = 0; i < nr_match; i++) {
 			ref = return_refs[i];
@@ -408,7 +404,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		}
 	}
 
-	if (!depth) {
+	if (!args.depth) {
 		for_each_ref(mark_complete, NULL);
 		if (cutoff)
 			mark_recent_complete_commits(cutoff);
@@ -442,7 +438,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		o = lookup_object(remote);
 		if (!o || !(o->flags & COMPLETE)) {
 			retval = 0;
-			if (!verbose)
+			if (!args.verbose)
 				continue;
 			fprintf(stderr,
 				"want %s (%s)\n", sha1_to_hex(remote),
@@ -451,7 +447,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		}
 
 		hashcpy(ref->new_sha1, local);
-		if (!verbose)
+		if (!args.verbose)
 			continue;
 		fprintf(stderr,
 			"already have %s (%s)\n", sha1_to_hex(remote),
@@ -502,14 +498,14 @@ static int get_pack(int xd[2], char **pack_lockfile)
 	char keep_arg[256];
 	char hdr_arg[256];
 	const char **av;
-	int do_keep = keep_pack;
+	int do_keep = args.keep_pack;
 	int keep_pipe[2];
 
 	side_pid = setup_sideband(fd, xd);
 
 	av = argv;
 	*hdr_arg = 0;
-	if (unpack_limit) {
+	if (!args.keep_pack && unpack_limit) {
 		struct pack_header header;
 
 		if (read_pack_header(fd[0], &header))
@@ -527,11 +523,11 @@ static int get_pack(int xd[2], char **pack_lockfile)
 			die("fetch-pack: pipe setup failure: %s", strerror(errno));
 		*av++ = "index-pack";
 		*av++ = "--stdin";
-		if (!quiet && !no_progress)
+		if (!args.quiet && !args.no_progress)
 			*av++ = "-v";
-		if (use_thin_pack)
+		if (args.use_thin_pack)
 			*av++ = "--fix-thin";
-		if (keep_pack > 1 || unpack_limit) {
+		if (args.lock_pack || unpack_limit) {
 			int s = sprintf(keep_arg,
 					"--keep=fetch-pack %d on ", getpid());
 			if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
@@ -541,7 +537,7 @@ static int get_pack(int xd[2], char **pack_lockfile)
 	}
 	else {
 		*av++ = "unpack-objects";
-		if (quiet)
+		if (args.quiet)
 			*av++ = "-q";
 	}
 	if (*hdr_arg)
@@ -599,17 +595,17 @@ static struct ref *do_fetch_pack(int fd[2],
 	if (is_repository_shallow() && !server_supports("shallow"))
 		die("Server does not support shallow clients");
 	if (server_supports("multi_ack")) {
-		if (verbose)
+		if (args.verbose)
 			fprintf(stderr, "Server supports multi_ack\n");
 		multi_ack = 1;
 	}
 	if (server_supports("side-band-64k")) {
-		if (verbose)
+		if (args.verbose)
 			fprintf(stderr, "Server supports side-band-64k\n");
 		use_sideband = 2;
 	}
 	else if (server_supports("side-band")) {
-		if (verbose)
+		if (args.verbose)
 			fprintf(stderr, "Server supports side-band\n");
 		use_sideband = 1;
 	}
@@ -622,7 +618,7 @@ static struct ref *do_fetch_pack(int fd[2],
 		goto all_done;
 	}
 	if (find_common(fd, sha1, ref) < 0)
-		if (keep_pack != 1)
+		if (!args.keep_pack)
 			/* When cloning, it is not unusual to have
 			 * no common commit.
 			 */
@@ -674,22 +670,6 @@ static int fetch_pack_config(const char *var, const char *value)
 
 static struct lock_file lock;
 
-void setup_fetch_pack(struct fetch_pack_args *args)
-{
-	uploadpack = args->uploadpack;
-	quiet = args->quiet;
-	keep_pack = args->keep_pack;
-	if (args->unpacklimit >= 0)
-		unpack_limit = args->unpacklimit;
-	if (args->keep_pack)
-		unpack_limit = 0;
-	use_thin_pack = args->use_thin_pack;
-	fetch_all = args->fetch_all;
-	verbose = args->verbose;
-	depth = args->depth;
-	no_progress = args->no_progress;
-}
-
 int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 {
 	int i, ret, nr_heads;
@@ -710,40 +690,40 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 
 		if (*arg == '-') {
 			if (!prefixcmp(arg, "--upload-pack=")) {
-				uploadpack = arg + 14;
+				args.uploadpack = arg + 14;
 				continue;
 			}
 			if (!prefixcmp(arg, "--exec=")) {
-				uploadpack = arg + 7;
+				args.uploadpack = arg + 7;
 				continue;
 			}
 			if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
-				quiet = 1;
+				args.quiet = 1;
 				continue;
 			}
 			if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
-				keep_pack++;
-				unpack_limit = 0;
+				args.lock_pack = args.keep_pack;
+				args.keep_pack = 1;
 				continue;
 			}
 			if (!strcmp("--thin", arg)) {
-				use_thin_pack = 1;
+				args.use_thin_pack = 1;
 				continue;
 			}
 			if (!strcmp("--all", arg)) {
-				fetch_all = 1;
+				args.fetch_all = 1;
 				continue;
 			}
 			if (!strcmp("-v", arg)) {
-				verbose = 1;
+				args.verbose = 1;
 				continue;
 			}
 			if (!prefixcmp(arg, "--depth=")) {
-				depth = strtol(arg + 8, NULL, 0);
+				args.depth = strtol(arg + 8, NULL, 0);
 				continue;
 			}
 			if (!strcmp("--no-progress", arg)) {
-				no_progress = 1;
+				args.no_progress = 1;
 				continue;
 			}
 			usage(fetch_pack_usage);
@@ -756,8 +736,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	if (!dest)
 		usage(fetch_pack_usage);
 
-	ref = fetch_pack(dest, nr_heads, heads, NULL);
-
+	ref = fetch_pack(&args, dest, nr_heads, heads, NULL);
 	ret = !ref;
 
 	while (ref) {
@@ -769,7 +748,8 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-struct ref *fetch_pack(const char *dest,
+struct ref *fetch_pack(struct fetch_pack_args *my_args,
+		const char *dest,
 		int nr_heads,
 		char **heads,
 		char **pack_lockfile)
@@ -780,13 +760,14 @@ struct ref *fetch_pack(const char *dest,
 	struct ref *ref;
 	struct stat st;
 
-	if (depth > 0) {
+	memcpy(&args, my_args, sizeof(args));
+	if (args.depth > 0) {
 		if (stat(git_path("shallow"), &st))
 			st.st_mtime = 0;
 	}
 
 	pid = git_connect(fd, (char *)dest, uploadpack,
-                          verbose ? CONNECT_VERBOSE : 0);
+                          args.verbose ? CONNECT_VERBOSE : 0);
 	if (pid < 0)
 		return NULL;
 	if (heads && nr_heads)
@@ -809,7 +790,7 @@ struct ref *fetch_pack(const char *dest,
 			}
 	}
 
-	if (!ret && depth > 0) {
+	if (!ret && args.depth > 0) {
 		struct cache_time mtime;
 		char *shallow = git_path("shallow");
 		int fd;
