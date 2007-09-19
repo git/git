@@ -32,7 +32,7 @@ OPTIONS
 
 \--all::
 	Instead of explicitly specifying which refs to update,
-	update all refs that locally exist.
+	update all heads that locally exist.
 
 \--force::
 	Usually, the command refuses to update a remote ref that
@@ -70,7 +70,7 @@ With '--all' flag, all refs that exist locally are transferred to
 the remote side.  You cannot specify any '<ref>' if you use
 this flag.
 
-Without '--all' and without any '<ref>', the refs that exist
+Without '--all' and without any '<ref>', the heads that exist
 both on the local side and on the remote side are updated.
 
 When one or more '<ref>' are specified explicitly, it can be either a

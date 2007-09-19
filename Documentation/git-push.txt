@@ -48,7 +48,7 @@ even if it does not result in a fast forward update.
 Note: If no explicit refspec is found, (that is neither
 on the command line nor in any Push line of the
 corresponding remotes file---see below), then all the
-refs that exist both on the local side and on the remote
+heads that exist both on the local side and on the remote
 side are updated.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
@@ -61,7 +61,7 @@ the remote repository.
 
 \--all::
 	Instead of naming each ref to push, specifies that all
-	refs be pushed.
+	refs under `$GIT_DIR/refs/heads/` be pushed.
 
 \--tags::
 	All refs under `$GIT_DIR/refs/tags` are pushed, in

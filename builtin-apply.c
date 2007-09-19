@@ -254,7 +254,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 		if (name) {
 			char *cp = name;
 			while (p_value) {
-				cp = strchr(name, '/');
+				cp = strchr(cp, '/');
 				if (!cp)
 					break;
 				cp++;
