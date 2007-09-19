@@ -20,11 +20,7 @@ clean:
 	$(RM) $(makfile).old
 
 ifdef NO_PERL_MAKEMAKER
-# We exploit that /bin/sh transforms the DOS-Stype path in TEMP into
-# the MSYS style pseudo-mount form.
-# This colon-free from is needed because our perl scripts look at
-# $(instdir_SQ) and split it at colons.
-instdir_SQ = $(subst ','\'',$(shell cmd /x/d/c "set TEMP=$(prefix)/lib && sh -c 'echo \$$TEMP'"))
+instdir_SQ = $(subst ','\'',$(prefix)/lib)
 $(makfile): ../GIT-CFLAGS Makefile
 	echo all: private-Error.pm Git.pm > $@
 	echo '	mkdir -p blib/lib' >> $@
