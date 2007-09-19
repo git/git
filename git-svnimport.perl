@@ -633,7 +633,7 @@ sub commit {
 
 	my $rev;
 	if($revision > $opt_s and defined $parent) {
-		open(H,"git-rev-parse --verify $parent |");
+		open(H,'-|',"git-rev-parse","--verify",$parent);
 		$rev = <H>;
 		close(H) or do {
 			print STDERR "$revision: cannot find commit '$parent'!\n";

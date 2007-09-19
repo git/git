@@ -1024,6 +1024,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--cherry-pick")) {
 				revs->cherry_pick = 1;
+				revs->limited = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--objects")) {

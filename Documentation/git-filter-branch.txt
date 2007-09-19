@@ -220,11 +220,6 @@ git filter-branch --commit-filter '
 	fi' HEAD
 ------------------------------------------------------------------------------
 
-Note that the changes introduced by the commits, and not reverted by
-subsequent commits, will still be in the rewritten branch. If you want
-to throw out _changes_ together with the commits, you should use the
-interactive mode of gitlink:git-rebase[1].
-
 The function 'skip_commits' is defined as follows:
 
 --------------------------

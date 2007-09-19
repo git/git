@@ -478,11 +478,12 @@ previous commits in SVN.
 DESIGN PHILOSOPHY
 -----------------
 Merge tracking in Subversion is lacking and doing branched development
-with Subversion is cumbersome as a result.  git-svn does not do
-automated merge/branch tracking by default and leaves it entirely up to
-the user on the git side.  git-svn does however follow copy
-history of the directory that it is tracking, however (much like
-how 'svn log' works).
+with Subversion can be cumbersome as a result.  While git-svn can track
+copy history (including branches and tags) for repositories adopting a
+standard layout, it cannot yet represent merge history that happened
+inside git back upstream to SVN users.  Therefore it is advised that
+users keep history as linear as possible inside git to ease
+compatibility with SVN (see the CAVEATS section below).
 
 CAVEATS
 -------

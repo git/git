@@ -124,7 +124,8 @@ my %cmd = (
 	                "Set an SVN repository to a git tree-ish",
 			{ 'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
-			{ 'revision|r=i' => \$_revision } ],
+			{ 'revision|r=i' => \$_revision
+			} ],
 	'multi-fetch' => [ \&cmd_multi_fetch,
 	                   "Deprecated alias for $0 fetch --all",
 			   { 'revision|r=s' => \$_revision, %fc_opts } ],
@@ -144,10 +145,10 @@ my %cmd = (
 			  'non-recursive' => \$Git::SVN::Log::non_recursive,
 			  'authors-file|A=s' => \$_authors,
 			  'color' => \$Git::SVN::Log::color,
-			  'pager=s' => \$Git::SVN::Log::pager,
+			  'pager=s' => \$Git::SVN::Log::pager
 			} ],
 	'find-rev' => [ \&cmd_find_rev, "Translate between SVN revision numbers and tree-ish",
-			{ } ],
+			{} ],
 	'rebase' => [ \&cmd_rebase, "Fetch and rebase your working directory",
 			{ 'merge|m|M' => \$_merge,
 			  'verbose|v' => \$_verbose,
@@ -811,7 +812,8 @@ sub cmt_metadata {
 
 sub working_head_info {
 	my ($head, $refs) = @_;
-	my ($fh, $ctx) = command_output_pipe('log', '--no-color', $head);
+	my @args = ('log', '--no-color', '--first-parent');
+	my ($fh, $ctx) = command_output_pipe(@args, $head);
 	my $hash;
 	my %max;
 	while (<$fh>) {

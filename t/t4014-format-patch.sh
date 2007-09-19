@@ -10,12 +10,15 @@ test_description='Format-patch skipping already incorporated patches'
 test_expect_success setup '
 
 	for i in 1 2 3 4 5 6 7 8 9 10; do echo "$i"; done >file &&
-	git add file &&
+	cat file >elif &&
+	git add file elif &&
 	git commit -m Initial &&
 	git checkout -b side &&
 
 	for i in 1 2 5 6 A B C 7 8 9 10; do echo "$i"; done >file &&
-	git update-index file &&
+	chmod +x elif &&
+	git update-index file elif &&
+	git update-index --chmod=+x elif &&
 	git commit -m "Side changes #1" &&
 
 	for i in D E F; do echo "$i"; done >>file &&

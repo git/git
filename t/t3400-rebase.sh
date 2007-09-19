@@ -68,4 +68,19 @@ test_expect_success \
      test 3 = $(git rev-list master.. | wc -l)
 '
 
+test_expect_success 'rebase a single mode change' '
+     git checkout master &&
+     echo 1 > X &&
+     git add X &&
+     test_tick &&
+     git commit -m prepare &&
+     git checkout -b modechange HEAD^ &&
+     echo 1 > X &&
+     git add X &&
+     chmod a+x A &&
+     test_tick &&
+     git commit -m modechange A X &&
+     GIT_TRACE=1 git rebase master
+'
+
 test_done

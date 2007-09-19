@@ -278,7 +278,9 @@ sub add_remote {
 
 	for (@$track) {
 		$git->command('config', '--add', "remote.$name.fetch",
-			      "+refs/heads/$_:refs/remotes/$name/$_");
+				$opts->{'mirror'} ?
+				"+refs/$_:refs/$_" :
+				"+refs/heads/$_:refs/remotes/$name/$_");
 	}
 	if ($opts->{'fetch'}) {
 		$git->command('fetch', $name);
@@ -407,6 +409,10 @@ elsif ($ARGV[0] eq 'add') {
 			}
 			$opts{'master'} = $ARGV[1];
 			shift @ARGV;
+			next;
+		}
+		if ($opt eq '--mirror') {
+			$opts{'mirror'} = 1;
 			next;
 		}
 		add_usage();

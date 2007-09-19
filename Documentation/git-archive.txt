@@ -15,7 +15,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Creates an archive of the specified format containing the tree
-structure for the named tree.  If <prefix> is specified it is
+structure for the named tree, and writes it out to the standard
+output.  If <prefix> is specified it is
 prepended to the filenames in the archive.
 
 'git-archive' behaves differently when given a tree ID versus when
@@ -31,7 +32,7 @@ OPTIONS
 -------
 
 --format=<fmt>::
-	Format of the resulting archive: 'tar', 'zip'...  The default
+	Format of the resulting archive: 'tar' or 'zip'.  The default
 	is 'tar'.
 
 --list, -l::

@@ -98,101 +98,71 @@ do
 		no_edit=t
 		log_given=t$log_given
 		logfile="$1"
-		shift
 		;;
 	-F*|-f*)
 		no_edit=t
 		log_given=t$log_given
-		logfile=`expr "z$1" : 'z-[Ff]\(.*\)'`
-		shift
+		logfile="${1#-[Ff]}"
 		;;
 	--F=*|--f=*|--fi=*|--fil=*|--file=*)
 		no_edit=t
 		log_given=t$log_given
-		logfile=`expr "z$1" : 'z-[^=]*=\(.*\)'`
-		shift
+		logfile="${1#*=}"
 		;;
 	-a|--a|--al|--all)
 		all=t
-		shift
 		;;
 	--au=*|--aut=*|--auth=*|--autho=*|--author=*)
-		force_author=`expr "z$1" : 'z-[^=]*=\(.*\)'`
-		shift
+		force_author="${1#*=}"
 		;;
 	--au|--aut|--auth|--autho|--author)
 		case "$#" in 1) usage ;; esac
 		shift
 		force_author="$1"
-		shift
 		;;
 	-e|--e|--ed|--edi|--edit)
 		edit_flag=t
-		shift
 		;;
 	-i|--i|--in|--inc|--incl|--inclu|--includ|--include)
 		also=t
-		shift
 		;;
 	--int|--inte|--inter|--intera|--interac|--interact|--interacti|\
 	--interactiv|--interactive)
 		interactive=t
-		shift
 		;;
 	-o|--o|--on|--onl|--only)
 		only=t
-		shift
 		;;
 	-m|--m|--me|--mes|--mess|--messa|--messag|--message)
 		case "$#" in 1) usage ;; esac
 		shift
 		log_given=m$log_given
-		if test "$log_message" = ''
-		then
-		    log_message="$1"
-		else
-		    log_message="$log_message
+		log_message="${log_message:+${log_message}
 
-$1"
-		fi
+}$1"
 		no_edit=t
-		shift
 		;;
 	-m*)
 		log_given=m$log_given
-		if test "$log_message" = ''
-		then
-		    log_message=`expr "z$1" : 'z-m\(.*\)'`
-		else
-		    log_message="$log_message
+		log_message="${log_message:+${log_message}
 
-`expr "z$1" : 'z-m\(.*\)'`"
-		fi
+}${1#-m}"
 		no_edit=t
-		shift
 		;;
 	--m=*|--me=*|--mes=*|--mess=*|--messa=*|--messag=*|--message=*)
 		log_given=m$log_given
-		if test "$log_message" = ''
-		then
-		    log_message=`expr "z$1" : 'z-[^=]*=\(.*\)'`
-		else
-		    log_message="$log_message
+		log_message="${log_message:+${log_message}
 
-`expr "z$1" : 'zq-[^=]*=\(.*\)'`"
-		fi
+}${1#*=}"
 		no_edit=t
-		shift
 		;;
 	-n|--n|--no|--no-|--no-v|--no-ve|--no-ver|--no-veri|--no-verif|\
 	--no-verify)
 		verify=
-		shift
 		;;
 	--a|--am|--ame|--amen|--amend)
 		amend=t
 		use_commit=HEAD
-		shift
 		;;
 	-c)
 		case "$#" in 1) usage ;; esac
@@ -200,15 +170,13 @@ $1"
 		log_given=t$log_given
 		use_commit="$1"
 		no_edit=
-		shift
 		;;
 	--ree=*|--reed=*|--reedi=*|--reedit=*|--reedit-=*|--reedit-m=*|\
 	--reedit-me=*|--reedit-mes=*|--reedit-mess=*|--reedit-messa=*|\
 	--reedit-messag=*|--reedit-message=*)
 		log_given=t$log_given
-		use_commit=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+		use_commit="${1#*=}"
 		no_edit=
-		shift
 		;;
 	--ree|--reed|--reedi|--reedit|--reedit-|--reedit-m|--reedit-me|\
 	--reedit-mes|--reedit-mess|--reedit-messa|--reedit-messag|\
@@ -218,7 +186,6 @@ $1"
 		log_given=t$log_given
 		use_commit="$1"
 		no_edit=
-		shift
 		;;
 	-C)
 		case "$#" in 1) usage ;; esac
@@ -226,15 +193,13 @@ $1"
 		log_given=t$log_given
 		use_commit="$1"
 		no_edit=t
-		shift
 		;;
 	--reu=*|--reus=*|--reuse=*|--reuse-=*|--reuse-m=*|--reuse-me=*|\
 	--reuse-mes=*|--reuse-mess=*|--reuse-messa=*|--reuse-messag=*|\
 	--reuse-message=*)
 		log_given=t$log_given
-		use_commit=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+		use_commit="${1#*=}"
 		no_edit=t
-		shift
 		;;
 	--reu|--reus|--reuse|--reuse-|--reuse-m|--reuse-me|--reuse-mes|\
 	--reuse-mess|--reuse-messa|--reuse-messag|--reuse-message)
@@ -243,32 +208,26 @@ $1"
 		log_given=t$log_given
 		use_commit="$1"
 		no_edit=t
-		shift
 		;;
 	-s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
 		signoff=t
-		shift
 		;;
 	-t|--t|--te|--tem|--temp|--templ|--templa|--templat|--template)
 		case "$#" in 1) usage ;; esac
 		shift
 		templatefile="$1"
 		no_edit=
-		shift
 		;;
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t
-		shift
 		;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
 		verbose=t
-		shift
 		;;
 	-u|--u|--un|--unt|--untr|--untra|--untrac|--untrack|--untracke|\
 	--untracked|--untracked-|--untracked-f|--untracked-fi|--untracked-fil|\
 	--untracked-file|--untracked-files)
 		untracked_files=t
-		shift
 		;;
 	--)
 		shift
@@ -281,6 +240,7 @@ $1"
 		break
 		;;
 	esac
+	shift
 done
 case "$edit_flag" in t) no_edit= ;; esac
 
@@ -379,8 +339,11 @@ t,)
 		then
 			refuse_partial "Cannot do a partial commit during a merge."
 		fi
+
 		TMP_INDEX="$GIT_DIR/tmp-index$$"
-		commit_only=`git ls-files --error-unmatch -- "$@"` || exit
+		W=
+		test -z "$initial_commit" && W=--with-tree=HEAD
+		commit_only=`git ls-files --error-unmatch $W -- "$@"` || exit
 
 		# Build a temporary index and update the real index
 		# the same way.
@@ -401,7 +364,7 @@ t,)
 		(
 			GIT_INDEX_FILE="$NEXT_INDEX"
 			export GIT_INDEX_FILE
-			git update-index --remove --stdin
+			git update-index --add --remove --stdin
 		) || exit
 		;;
 	esac
@@ -438,12 +401,8 @@ esac
 
 if test t = "$verify" && test -x "$GIT_DIR"/hooks/pre-commit
 then
-	if test "$TMP_INDEX"
-	then
-		GIT_INDEX_FILE="$TMP_INDEX" "$GIT_DIR"/hooks/pre-commit
-	else
-		GIT_INDEX_FILE="$USE_INDEX" "$GIT_DIR"/hooks/pre-commit
-	fi || exit
+    GIT_INDEX_FILE="${TMP_INDEX:-${USE_INDEX}}" "$GIT_DIR"/hooks/pre-commit \
+    || exit
 fi
 
 if test "$log_message" != ''
@@ -554,7 +513,7 @@ else
 	# we need to check if there is anything to commit
 	run_status >/dev/null
 fi
-if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" -a -z "$amend" ]
+if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
 then
 	rm -f "$GIT_DIR/COMMIT_EDITMSG" "$GIT_DIR/SQUASH_MSG"
 	use_status_color=t

@@ -13,7 +13,8 @@ proc update_indexinfo {msg pathList after} {
 	if {$batch > 25} {set batch 25}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
@@ -68,7 +69,8 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 	}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		[expr {100.0 * $update_index_cp / $totalCnt}]]
@@ -86,7 +88,8 @@ proc update_index {msg pathList after} {
 	if {$batch > 25} {set batch 25}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
@@ -145,7 +148,8 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 	}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		[expr {100.0 * $update_index_cp / $totalCnt}]]
@@ -163,7 +167,8 @@ proc checkout_index {msg pathList after} {
 	if {$batch > 25} {set batch 25}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
@@ -218,7 +223,8 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 	}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		[expr {100.0 * $update_index_cp / $totalCnt}]]

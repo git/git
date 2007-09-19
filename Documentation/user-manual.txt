@@ -182,7 +182,7 @@ has that commit at all).  Since the object name is computed as a hash over the
 contents of the commit, you are guaranteed that the commit can never change
 without its name also changing.
 
-In fact, in <<git-internals>> we shall see that everything stored in git
+In fact, in <<git-concepts>> we shall see that everything stored in git
 history, including file data and directory contents, is stored in an object
 with a name that is a hash of its contents.
 
@@ -2708,190 +2708,202 @@ See gitlink:git-config[1] for more details on the configuration
 options mentioned above.
 
 
-[[git-internals]]
-Git internals
-=============
+[[git-concepts]]
+Git concepts
+============
 
-Git depends on two fundamental abstractions: the "object database", and
-the "current directory cache" aka "index".
+Git is built on a small number of simple but powerful ideas.  While it
+is possible to get things done without understanding them, you will find
+git much more intuitive if you do.
+
+We start with the most important, the  <<def_object_database,object
+database>> and the <<def_index,index>>.
 
 [[the-object-database]]
 The Object Database
 -------------------
 
-The object database is literally just a content-addressable collection
-of objects.  All objects are named by their content, which is
-approximated by the SHA1 hash of the object itself.  Objects may refer
-to other objects (by referencing their SHA1 hash), and so you can
-build up a hierarchy of objects.
 
-All objects have a statically determined "type" which is
-determined at object creation time, and which identifies the format of
-the object (i.e. how it is used, and how it can refer to other
-objects).  There are currently four different object types: "blob",
-"tree", "commit", and "tag".
+We already saw in <<understanding-commits>> that all commits are stored
+under a 40-digit "object name".  In fact, all the information needed to
+represent the history of a project is stored in objects with such names.
+In each case the name is calculated by taking the SHA1 hash of the
+contents of the object.  The SHA1 hash is a cryptographic hash function.
+What that means to us is that it is impossible to find two different
+objects with the same name.  This has a number of advantages; among
+others:
 
-A <<def_blob_object,"blob" object>> cannot refer to any other object,
-and is, as the name implies, a pure storage object containing some
-user data.  It is used to actually store the file data, i.e. a blob
-object is associated with some particular version of some file.
+- Git can quickly determine whether two objects are identical or not,
+  just by comparing names.
+- Since object names are computed the same way in ever repository, the
+  same content stored in two repositories will always be stored under
+  the same name.
+- Git can detect errors when it reads an object, by checking that the
+  object's name is still the SHA1 hash of its contents.
 
-A <<def_tree_object,"tree" object>> is an object that ties one or more
-"blob" objects into a directory structure. In addition, a tree object
-can refer to other tree objects, thus creating a directory hierarchy.
+(See <<object-details>> for the details of the object formatting and
+SHA1 calculation.)
 
-A <<def_commit_object,"commit" object>> ties such directory hierarchies
-together into a <<def_DAG,directed acyclic graph>> of revisions - each
-"commit" is associated with exactly one tree (the directory hierarchy at
-the time of the commit). In addition, a "commit" refers to one or more
-"parent" commit objects that describe the history of how we arrived at
-that directory hierarchy.
+There are four different types of objects: "blob", "tree", "commit", and
+"tag".
 
-As a special case, a commit object with no parents is called the "root"
-commit, and is the point of an initial project commit.  Each project
-must have at least one root, and while you can tie several different
-root objects together into one project by creating a commit object which
-has two or more separate roots as its ultimate parents, that's probably
-just going to confuse people.  So aim for the notion of "one root object
-per project", even if git itself does not enforce that.
-
-A <<def_tag_object,"tag" object>> symbolically identifies and can be
-used to sign other objects. It contains the identifier and type of
-another object, a symbolic name (of course!) and, optionally, a
-signature.
-
-Regardless of object type, all objects share the following
-characteristics: they are all deflated with zlib, and have a header
-that not only specifies their type, but also provides size information
-about the data in the object.  It's worth noting that the SHA1 hash
-that is used to name the object is the hash of the original data
-plus this header, so `sha1sum` 'file' does not match the object name
-for 'file'.
-(Historical note: in the dawn of the age of git the hash
-was the sha1 of the 'compressed' object.)
-
-As a result, the general consistency of an object can always be tested
-independently of the contents or the type of the object: all objects can
-be validated by verifying that (a) their hashes match the content of the
-file and (b) the object successfully inflates to a stream of bytes that
-forms a sequence of <ascii type without space> {plus} <space> {plus} <ascii decimal
-size> {plus} <byte\0> {plus} <binary object data>.
-
-The structured objects can further have their structure and
-connectivity to other objects verified. This is generally done with
-the `git-fsck` program, which generates a full dependency graph
-of all objects, and verifies their internal consistency (in addition
-to just verifying their superficial consistency through the hash).
+- A <<def_blob_object,"blob" object>> is used to store file data.
+- A <<def_tree_object,"tree" object>> is an object that ties one or more
+  "blob" objects into a directory structure. In addition, a tree object
+  can refer to other tree objects, thus creating a directory hierarchy.
+- A <<def_commit_object,"commit" object>> ties such directory hierarchies
+  together into a <<def_DAG,directed acyclic graph>> of revisions - each
+  commit contains the object name of exactly one tree designating the
+  directory hierarchy at the time of the commit. In addition, a commit
+  refers to "parent" commit objects that describe the history of how we
+  arrived at that directory hierarchy.
+- A <<def_tag_object,"tag" object>> symbolically identifies and can be
+  used to sign other objects. It contains the object name and type of
+  another object, a symbolic name (of course!) and, optionally, a
+  signature.
 
 The object types in some more detail:
 
-[[blob-object]]
-Blob Object
------------
+[[commit-object]]
+Commit Object
+~~~~~~~~~~~~~
 
-A "blob" object is nothing but a binary blob of data, and doesn't
-refer to anything else.  There is no signature or any other
-verification of the data, so while the object is consistent (it 'is'
-indexed by its sha1 hash, so the data itself is certainly correct), it
-has absolutely no other attributes.  No name associations, no
-permissions.  It is purely a blob of data (i.e. normally "file
-contents").
+The "commit" object links a physical state of a tree with a description
+of how we got there and why.  Use the --pretty=raw option to
+gitlink:git-show[1] or gitlink:git-log[1] to examine your favorite
+commit:
 
-In particular, since the blob is entirely defined by its data, if two
-files in a directory tree (or in multiple different versions of the
-repository) have the same contents, they will share the same blob
-object. The object is totally independent of its location in the
-directory tree, and renaming a file does not change the object that
-file is associated with in any way.
+------------------------------------------------
+$ git show -s --pretty=raw 2be7fcb476
+commit 2be7fcb4764f2dbcee52635b91fedb1b3dcf7ab4
+tree fb3a8bdd0ceddd019615af4d57a53f43d8cee2bf
+parent 257a84d9d02e90447b149af58b271c19405edb6a
+author Dave Watson <dwatson@mimvista.com> 1187576872 -0400
+committer Junio C Hamano <gitster@pobox.com> 1187591163 -0700
 
-A blob is typically created when gitlink:git-update-index[1]
-is run, and its data can be accessed by gitlink:git-cat-file[1].
+    Fix misspelling of 'suppress' in docs
+
+    Signed-off-by: Junio C Hamano <gitster@pobox.com>
+------------------------------------------------
+
+As you can see, a commit is defined by:
+
+- a tree: The SHA1 name of a tree object (as defined below), representing
+  the contents of a directory at a certain point in time.
+- parent(s): The SHA1 name of some number of commits which represent the
+  immediately prevoius step(s) in the history of the project.  The
+  example above has one parent; merge commits may have more than
+  one.  A commit with no parents is called a "root" commit, and
+  represents the initial revision of a project.  Each project must have
+  at least one root.  A project can also have multiple roots, though
+  that isn't common (or necessarily a good idea).
+- an author: The name of the person responsible for this change, together
+  with its date.
+- a committer: The name of the person who actually created the commit,
+  with the date it was done.  This may be different from the author, for
+  example, if the author was someone who wrote a patch and emailed it
+  to the person who used it to create the commit.
+- a comment describing this commit.
+
+Note that a commit does not itself contain any information about what
+actually changed; all changes are calculated by comparing the contents
+of the tree referred to by this commit with the trees associated with
+its parents.  In particular, git does not attempt to record file renames
+explicitly, though it can identify cases where the existence of the same
+file data at changing paths suggests a rename.  (See, for example, the
+-M option to gitlink:git-diff[1]).
+
+A commit is usually created by gitlink:git-commit[1], which creates a
+commit whose parent is normally the current HEAD, and whose tree is
+taken from the content currently stored in the index.
 
 [[tree-object]]
 Tree Object
------------
+~~~~~~~~~~~
 
-The next hierarchical object type is the "tree" object.  A tree object
-is a list of mode/name/blob data, sorted by name.  Alternatively, the
-mode data may specify a directory mode, in which case instead of
-naming a blob, that name is associated with another TREE object.
+The ever-versatile gitlink:git-show[1] command can also be used to
+examine tree objects, but gitlink:git-ls-tree[1] will give you more
+details:
 
-Like the "blob" object, a tree object is uniquely determined by the
-set contents, and so two separate but identical trees will always
-share the exact same object. This is true at all levels, i.e. it's
-true for a "leaf" tree (which does not refer to any other trees, only
-blobs) as well as for a whole subdirectory.
+------------------------------------------------
+$ git ls-tree fb3a8bdd0ce
+100644 blob 63c918c667fa005ff12ad89437f2fdc80926e21c    .gitignore
+100644 blob 5529b198e8d14decbe4ad99db3f7fb632de0439d    .mailmap
+100644 blob 6ff87c4664981e4397625791c8ea3bbb5f2279a3    COPYING
+040000 tree 2fb783e477100ce076f6bf57e4a6f026013dc745    Documentation
+100755 blob 3c0032cec592a765692234f1cba47dfdcc3a9200    GIT-VERSION-GEN
+100644 blob 289b046a443c0647624607d471289b2c7dcd470b    INSTALL
+100644 blob 4eb463797adc693dc168b926b6932ff53f17d0b1    Makefile
+100644 blob 548142c327a6790ff8821d67c2ee1eff7a656b52    README
+...
+------------------------------------------------
 
-For that reason a "tree" object is just a pure data abstraction: it
-has no history, no signatures, no verification of validity, except
-that since the contents are again protected by the hash itself, we can
-trust that the tree is immutable and its contents never change.
+As you can see, a tree object contains a list of entries, each with a
+mode, object type, SHA1 name, and name, sorted by name.  It represents
+the contents of a single directory tree.
 
-So you can trust the contents of a tree to be valid, the same way you
-can trust the contents of a blob, but you don't know where those
-contents 'came' from.
+The object type may be a blob, representing the contents of a file, or
+another tree, representing the contents of a subdirectory.  Since trees
+and blobs, like all other objects, are named by the SHA1 hash of their
+contents, two trees have the same SHA1 name if and only if their
+contents (including, recursively, the contents of all subdirectories)
+are identical.  This allows git to quickly determine the differences
+between two related tree objects, since it can ignore any entries with
+identical object names.
 
-Side note on trees: since a "tree" object is a sorted list of
-"filename+content", you can create a diff between two trees without
-actually having to unpack two trees.  Just ignore all common parts,
-and your diff will look right.  In other words, you can effectively
-(and efficiently) tell the difference between any two random trees by
-O(n) where "n" is the size of the difference, rather than the size of
-the tree.
+(Note: in the presence of submodules, trees may also have commits as
+entries.   See gitlink:git-submodule[1] and gitlink:gitmodules.txt[1]
+for partial documentation.)
 
-Side note 2 on trees: since the name of a "blob" depends entirely and
-exclusively on its contents (i.e. there are no names or permissions
-involved), you can see trivial renames or permission changes by
-noticing that the blob stayed the same.  However, renames with data
-changes need a smarter "diff" implementation.
+Note that the files all have mode 644 or 755: git actually only pays
+attention to the executable bit.
 
-A tree is created with gitlink:git-write-tree[1] and
-its data can be accessed by gitlink:git-ls-tree[1].
-Two trees can be compared with gitlink:git-diff-tree[1].
+[[blob-object]]
+Blob Object
+~~~~~~~~~~~
 
-[[commit-object]]
-Commit Object
--------------
+You can use gitlink:git-show[1] to examine the contents of a blob; take,
+for example, the blob in the entry for "COPYING" from the tree above:
 
-The "commit" object is an object that introduces the notion of
-history into the picture.  In contrast to the other objects, it
-doesn't just describe the physical state of a tree, it describes how
-we got there, and why.
+------------------------------------------------
+$ git show 6ff87c4664
 
-A "commit" is defined by the tree-object that it results in, the
-parent commits (zero, one or more) that led up to that point, and a
-comment on what happened.  Again, a commit is not trusted per se:
-the contents are well-defined and "safe" due to the cryptographically
-strong signatures at all levels, but there is no reason to believe
-that the tree is "good" or that the merge information makes sense.
-The parents do not have to actually have any relationship with the
-result, for example.
+ Note that the only valid version of the GPL as far as this project
+ is concerned is _this_ particular version of the license (ie v2, not
+ v2.2 or v3.x or whatever), unless explicitly otherwise stated.
+...
+------------------------------------------------
 
-Note on commits: unlike some SCM's, commits do not contain
-rename information or file mode change information.  All of that is
-implicit in the trees involved (the result tree, and the result trees
-of the parents), and describing that makes no sense in this idiotic
-file manager.
+A "blob" object is nothing but a binary blob of data.  It doesn't refer
+to anything else or have attributes of any kind.
 
-A commit is created with gitlink:git-commit-tree[1] and
-its data can be accessed by gitlink:git-cat-file[1].
+Since the blob is entirely defined by its data, if two files in a
+directory tree (or in multiple different versions of the repository)
+have the same contents, they will share the same blob object. The object
+is totally independent of its location in the directory tree, and
+renaming a file does not change the object that file is associated with.
+
+Note that any tree or blob object can be examined using
+gitlink:git-show[1] with the <revision>:<path> syntax.  This can
+sometimes be useful for browsing the contents of a tree that is not
+currently checked out.
 
 [[trust]]
 Trust
------
+~~~~~
 
-An aside on the notion of "trust". Trust is really outside the scope
-of "git", but it's worth noting a few things.  First off, since
-everything is hashed with SHA1, you 'can' trust that an object is
-intact and has not been messed with by external sources.  So the name
-of an object uniquely identifies a known state - just not a state that
-you may want to trust.
+If you receive the SHA1 name of a blob from one source, and its contents
+from another (possibly untrusted) source, you can still trust that those
+contents are correct as long as the SHA1 name agrees.  This is because
+the SHA1 is designed so that it is infeasible to find different contents
+that produce the same hash.
 
-Furthermore, since the SHA1 signature of a commit refers to the
-SHA1 signatures of the tree it is associated with and the signatures
-of the parent, a single named commit specifies uniquely a whole set
-of history, with full contents.  You can't later fake any step of the
-way once you have the name of a commit.
+Similarly, you need only trust the SHA1 name of a top-level tree object
+to trust the contents of the entire directory that it refers to, and if
+you receive the SHA1 name of a commit from a trusted source, then you
+can easily verify the entire history of commits reachable through
+parents of that commit, and all of those contents of the trees referred
+to by those commits.
 
 So to introduce some real trust in the system, the only thing you need
 to do is to digitally sign just 'one' special note, which includes the
@@ -2908,103 +2920,294 @@ To assist in this, git also provides the tag object...
 
 [[tag-object]]
 Tag Object
-----------
+~~~~~~~~~~
 
-Git provides the "tag" object to simplify creating, managing and
-exchanging symbolic and signed tokens.  The "tag" object at its
-simplest simply symbolically identifies another object by containing
-the sha1, type and symbolic name.
+A tag object contains an object, object type, tag name, the name of the
+person ("tagger") who created the tag, and a message, which may contain
+a signature, as can be seen using the gitlink:git-cat-file[1]:
 
-However it can optionally contain additional signature information
-(which git doesn't care about as long as there's less than 8k of
-it). This can then be verified externally to git.
+------------------------------------------------
+$ git cat-file tag v1.5.0
+object 437b1b20df4b356c9342dac8d38849f24ef44f27
+type commit
+tag v1.5.0
+tagger Junio C Hamano <junkio@cox.net> 1171411200 +0000
 
-Note that despite the tag features, "git" itself only handles content
-integrity; the trust framework (and signature provision and
-verification) has to come from outside.
+GIT 1.5.0
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
 
-A tag is created with gitlink:git-mktag[1],
-its data can be accessed by gitlink:git-cat-file[1],
-and the signature can be verified by
-gitlink:git-verify-tag[1].
+iD8DBQBF0lGqwMbZpPMRm5oRAuRiAJ9ohBLd7s2kqjkKlq1qqC57SbnmzQCdG4ui
+nLE/L9aUXdWeTFPron96DLA=
+=2E+0
+-----END PGP SIGNATURE-----
+------------------------------------------------
 
+See the gitlink:git-tag[1] command to learn how to create and verify tag
+objects.  (Note that gitlink:git-tag[1] can also be used to create
+"lightweight tags", which are not tag objects at all, but just simple
+references in .git/refs/tags/).
+
+[[pack-files]]
+How git stores objects efficiently: pack files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Newly created objects are initially created in a file named after the
+object's SHA1 hash (stored in .git/objects).
+
+Unfortunately this system becomes inefficient once a project has a
+lot of objects.  Try this on an old project:
+
+------------------------------------------------
+$ git count-objects
+6930 objects, 47620 kilobytes
+------------------------------------------------
+
+The first number is the number of objects which are kept in
+individual files.  The second is the amount of space taken up by
+those "loose" objects.
+
+You can save space and make git faster by moving these loose objects in
+to a "pack file", which stores a group of objects in an efficient
+compressed format; the details of how pack files are formatted can be
+found in link:technical/pack-format.txt[technical/pack-format.txt].
+
+To put the loose objects into a pack, just run git repack:
+
+------------------------------------------------
+$ git repack
+Generating pack...
+Done counting 6020 objects.
+Deltifying 6020 objects.
+ 100% (6020/6020) done
+Writing 6020 objects.
+ 100% (6020/6020) done
+Total 6020, written 6020 (delta 4070), reused 0 (delta 0)
+Pack pack-3e54ad29d5b2e05838c75df582c65257b8d08e1c created.
+------------------------------------------------
+
+You can then run
+
+------------------------------------------------
+$ git prune
+------------------------------------------------
+
+to remove any of the "loose" objects that are now contained in the
+pack.  This will also remove any unreferenced objects (which may be
+created when, for example, you use "git reset" to remove a commit).
+You can verify that the loose objects are gone by looking at the
+.git/objects directory or by running
+
+------------------------------------------------
+$ git count-objects
+0 objects, 0 kilobytes
+------------------------------------------------
+
+Although the object files are gone, any commands that refer to those
+objects will work exactly as they did before.
+
+The gitlink:git-gc[1] command performs packing, pruning, and more for
+you, so is normally the only high-level command you need.
+
+[[dangling-objects]]
+Dangling objects
+~~~~~~~~~~~~~~~~
+
+The gitlink:git-fsck[1] command will sometimes complain about dangling
+objects.  They are not a problem.
+
+The most common cause of dangling objects is that you've rebased a
+branch, or you have pulled from somebody else who rebased a branch--see
+<<cleaning-up-history>>.  In that case, the old head of the original
+branch still exists, as does everything it pointed to. The branch
+pointer itself just doesn't, since you replaced it with another one.
+
+There are also other situations that cause dangling objects. For
+example, a "dangling blob" may arise because you did a "git add" of a
+file, but then, before you actually committed it and made it part of the
+bigger picture, you changed something else in that file and committed
+that *updated* thing - the old state that you added originally ends up
+not being pointed to by any commit or tree, so it's now a dangling blob
+object.
+
+Similarly, when the "recursive" merge strategy runs, and finds that
+there are criss-cross merges and thus more than one merge base (which is
+fairly unusual, but it does happen), it will generate one temporary
+midway tree (or possibly even more, if you had lots of criss-crossing
+merges and more than two merge bases) as a temporary internal merge
+base, and again, those are real objects, but the end result will not end
+up pointing to them, so they end up "dangling" in your repository.
+
+Generally, dangling objects aren't anything to worry about. They can
+even be very useful: if you screw something up, the dangling objects can
+be how you recover your old tree (say, you did a rebase, and realized
+that you really didn't want to - you can look at what dangling objects
+you have, and decide to reset your head to some old dangling state).
+
+For commits, you can just use:
+
+------------------------------------------------
+$ gitk <dangling-commit-sha-goes-here> --not --all
+------------------------------------------------
+
+This asks for all the history reachable from the given commit but not
+from any branch, tag, or other reference.  If you decide it's something
+you want, you can always create a new reference to it, e.g.,
+
+------------------------------------------------
+$ git branch recovered-branch <dangling-commit-sha-goes-here>
+------------------------------------------------
+
+For blobs and trees, you can't do the same, but you can still examine
+them.  You can just do
+
+------------------------------------------------
+$ git show <dangling-blob/tree-sha-goes-here>
+------------------------------------------------
+
+to show what the contents of the blob were (or, for a tree, basically
+what the "ls" for that directory was), and that may give you some idea
+of what the operation was that left that dangling object.
+
+Usually, dangling blobs and trees aren't very interesting. They're
+almost always the result of either being a half-way mergebase (the blob
+will often even have the conflict markers from a merge in it, if you
+have had conflicting merges that you fixed up by hand), or simply
+because you interrupted a "git fetch" with ^C or something like that,
+leaving _some_ of the new objects in the object database, but just
+dangling and useless.
+
+Anyway, once you are sure that you're not interested in any dangling
+state, you can just prune all unreachable objects:
+
+------------------------------------------------
+$ git prune
+------------------------------------------------
+
+and they'll be gone. But you should only run "git prune" on a quiescent
+repository - it's kind of like doing a filesystem fsck recovery: you
+don't want to do that while the filesystem is mounted.
+
+(The same is true of "git-fsck" itself, btw - but since
+git-fsck never actually *changes* the repository, it just reports
+on what it found, git-fsck itself is never "dangerous" to run.
+Running it while somebody is actually changing the repository can cause
+confusing and scary messages, but it won't actually do anything bad. In
+contrast, running "git prune" while somebody is actively changing the
+repository is a *BAD* idea).
 
 [[the-index]]
-The "index" aka "Current Directory Cache"
------------------------------------------
+The index
+-----------
 
-The index is a simple binary file, which contains an efficient
-representation of the contents of a virtual directory.  It
-does so by a simple array that associates a set of names, dates,
-permissions and content (aka "blob") objects together.  The cache is
-always kept ordered by name, and names are unique (with a few very
-specific rules) at any point in time, but the cache has no long-term
-meaning, and can be partially updated at any time.
+The index is a binary file (generally kept in .git/index) containing a
+sorted list of path names, each with permissions and the SHA1 of a blob
+object; gitlink:git-ls-files[1] can show you the contents of the index:
 
-In particular, the index certainly does not need to be consistent with
-the current directory contents (in fact, most operations will depend on
-different ways to make the index 'not' be consistent with the directory
-hierarchy), but it has three very important attributes:
+-------------------------------------------------
+$ git ls-files --stage
+100644 63c918c667fa005ff12ad89437f2fdc80926e21c 0	.gitignore
+100644 5529b198e8d14decbe4ad99db3f7fb632de0439d 0	.mailmap
+100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 0	COPYING
+100644 a37b2152bd26be2c2289e1f57a292534a51a93c7 0	Documentation/.gitignore
+100644 fbefe9a45b00a54b58d94d06eca48b03d40a50e0 0	Documentation/Makefile
+...
+100644 2511aef8d89ab52be5ec6a5e46236b4b6bcd07ea 0	xdiff/xtypes.h
+100644 2ade97b2574a9f77e7ae4002a4e07a6a38e46d07 0	xdiff/xutils.c
+100644 d5de8292e05e7c36c4b68857c1cf9855e3d2f70a 0	xdiff/xutils.h
+-------------------------------------------------
 
-'(a) it can re-generate the full state it caches (not just the
-directory structure: it contains pointers to the "blob" objects so
-that it can regenerate the data too)'
+Note that in older documentation you may see the index called the
+"current directory cache" or just the "cache".  It has three important
+properties:
 
-As a special case, there is a clear and unambiguous one-way mapping
-from a current directory cache to a "tree object", which can be
-efficiently created from just the current directory cache without
-actually looking at any other data.  So a directory cache at any one
-time uniquely specifies one and only one "tree" object (but has
-additional data to make it easy to match up that tree object with what
-has happened in the directory)
+1. The index contains all the information necessary to generate a single
+(uniquely determined) tree object.
++
+For example, running gitlink:git-commit[1] generates this tree object
+from the index, stores it in the object database, and uses it as the
+tree object associated with the new commit.
 
-'(b) it has efficient methods for finding inconsistencies between that
-cached state ("tree object waiting to be instantiated") and the
-current state.'
+2. The index enables fast comparisons between the tree object it defines
+and the working tree.
++
+It does this by storing some additional data for each entry (such as
+the last modified time).  This data is not displayed above, and is not
+stored in the created tree object, but it can be used to determine
+quickly which files in the working directory differ from what was
+stored in the index, and thus save git from having to read all of the
+data from such files to look for changes.
 
-'(c) it can additionally efficiently represent information about merge
-conflicts between different tree objects, allowing each pathname to be
+3. It can efficiently represent information about merge conflicts
+between different tree objects, allowing each pathname to be
 associated with sufficient information about the trees involved that
-you can create a three-way merge between them.'
+you can create a three-way merge between them.
++
+We saw in <<conflict-resolution>> that during a merge the index can
+store multiple versions of a single file (called "stages").  The third
+column in the gitlink:git-ls-files[1] output above is the stage
+number, and will take on values other than 0 for files with merge
+conflicts.
 
-Those are the ONLY three things that the directory cache does.  It's a
-cache, and the normal operation is to re-generate it completely from a
-known tree object, or update/compare it with a live tree that is being
-developed.  If you blow the directory cache away entirely, you generally
-haven't lost any information as long as you have the name of the tree
-that it described.
+The index is thus a sort of temporary staging area, which is filled with
+a tree which you are in the process of working on.
 
-At the same time, the index is also the staging area for creating
-new trees, and creating a new tree always involves a controlled
-modification of the index file.  In particular, the index file can
-have the representation of an intermediate tree that has not yet been
-instantiated.  So the index can be thought of as a write-back cache,
-which can contain dirty information that has not yet been written back
-to the backing store.
+If you blow the index away entirely, you generally haven't lost any
+information as long as you have the name of the tree that it described.
 
+[[low-level-operations]]
+Low-level git operations
+========================
 
+Many of the higher-level commands were originally implemented as shell
+scripts using a smaller core of low-level git commands.  These can still
+be useful when doing unusual things with git, or just as a way to
+understand its inner workings.
+
+[[object-manipulation]]
+Object access and manipulation
+------------------------------
+
+The gitlink:git-cat-file[1] command can show the contents of any object,
+though the higher-level gitlink:git-show[1] is usually more useful.
+
+The gitlink:git-commit-tree[1] command allows constructing commits with
+arbitrary parents and trees.
+
+A tree can be created with gitlink:git-write-tree[1] and its data can be
+accessed by gitlink:git-ls-tree[1].  Two trees can be compared with
+gitlink:git-diff-tree[1].
+
+A tag is created with gitlink:git-mktag[1], and the signature can be
+verified by gitlink:git-verify-tag[1], though it is normally simpler to
+use gitlink:git-tag[1] for both.
 
 [[the-workflow]]
 The Workflow
 ------------
 
+High-level operations such as gitlink:git-commit[1],
+gitlink:git-checkout[1] and git-reset[1] work by moving data between the
+working tree, the index, and the object database.  Git provides
+low-level operations which perform each of these steps individually.
+
 Generally, all "git" operations work on the index file. Some operations
 work *purely* on the index file (showing the current state of the
-index), but most operations move data to and from the index file. Either
-from the database or from the working directory. Thus there are four
-main combinations:
+index), but most operations move data between the index file and either
+the database or the working directory. Thus there are four main
+combinations:
 
 [[working-directory-to-index]]
 working directory -> index
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You update the index with information from the working directory with
-the gitlink:git-update-index[1] command.  You
-generally update the index information by just specifying the filename
-you want to update, like so:
+The gitlink:git-update-index[1] command updates the index with
+information from the working directory.  You generally update the
+index information by just specifying the filename you want to update,
+like so:
 
 -------------------------------------------------
-$ git-update-index filename
+$ git update-index filename
 -------------------------------------------------
 
 but to avoid common mistakes with filename globbing etc, the command
@@ -3028,6 +3231,9 @@ stat information. It will 'not' update the object status itself, and
 it will only update the fields that are used to quickly test whether
 an object still matches its old backing store object.
 
+The previously introduced gitlink:git-add[1] is just a wrapper for
+gitlink:git-update-index[1].
+
 [[index-to-object-database]]
 index -> object database
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3035,7 +3241,7 @@ index -> object database
 You write your current index file to a "tree" object with the program
 
 -------------------------------------------------
-$ git-write-tree
+$ git write-tree
 -------------------------------------------------
 
 that doesn't come with any options - it will just write out the
@@ -3326,153 +3532,44 @@ $ git-merge-index git-merge-one-file hello.c
 
 and that is what higher level `git merge -s resolve` is implemented with.
 
-[[pack-files]]
-How git stores objects efficiently: pack files
-----------------------------------------------
+[[hacking-git]]
+Hacking git
+===========
 
-We've seen how git stores each object in a file named after the
-object's SHA1 hash.
+This chapter covers internal details of the git implementation which
+probably only git developers need to understand.
 
-Unfortunately this system becomes inefficient once a project has a
-lot of objects.  Try this on an old project:
+[[object-details]]
+Object storage format
+---------------------
 
-------------------------------------------------
-$ git count-objects
-6930 objects, 47620 kilobytes
-------------------------------------------------
+All objects have a statically determined "type" which identifies the
+format of the object (i.e. how it is used, and how it can refer to other
+objects).  There are currently four different object types: "blob",
+"tree", "commit", and "tag".
 
-The first number is the number of objects which are kept in
-individual files.  The second is the amount of space taken up by
-those "loose" objects.
+Regardless of object type, all objects share the following
+characteristics: they are all deflated with zlib, and have a header
+that not only specifies their type, but also provides size information
+about the data in the object.  It's worth noting that the SHA1 hash
+that is used to name the object is the hash of the original data
+plus this header, so `sha1sum` 'file' does not match the object name
+for 'file'.
+(Historical note: in the dawn of the age of git the hash
+was the sha1 of the 'compressed' object.)
 
-You can save space and make git faster by moving these loose objects in
-to a "pack file", which stores a group of objects in an efficient
-compressed format; the details of how pack files are formatted can be
-found in link:technical/pack-format.txt[technical/pack-format.txt].
+As a result, the general consistency of an object can always be tested
+independently of the contents or the type of the object: all objects can
+be validated by verifying that (a) their hashes match the content of the
+file and (b) the object successfully inflates to a stream of bytes that
+forms a sequence of <ascii type without space> {plus} <space> {plus} <ascii decimal
+size> {plus} <byte\0> {plus} <binary object data>.
 
-To put the loose objects into a pack, just run git repack:
-
-------------------------------------------------
-$ git repack
-Generating pack...
-Done counting 6020 objects.
-Deltifying 6020 objects.
- 100% (6020/6020) done
-Writing 6020 objects.
- 100% (6020/6020) done
-Total 6020, written 6020 (delta 4070), reused 0 (delta 0)
-Pack pack-3e54ad29d5b2e05838c75df582c65257b8d08e1c created.
-------------------------------------------------
-
-You can then run
-
-------------------------------------------------
-$ git prune
-------------------------------------------------
-
-to remove any of the "loose" objects that are now contained in the
-pack.  This will also remove any unreferenced objects (which may be
-created when, for example, you use "git reset" to remove a commit).
-You can verify that the loose objects are gone by looking at the
-.git/objects directory or by running
-
-------------------------------------------------
-$ git count-objects
-0 objects, 0 kilobytes
-------------------------------------------------
-
-Although the object files are gone, any commands that refer to those
-objects will work exactly as they did before.
-
-The gitlink:git-gc[1] command performs packing, pruning, and more for
-you, so is normally the only high-level command you need.
-
-[[dangling-objects]]
-Dangling objects
-----------------
-
-The gitlink:git-fsck[1] command will sometimes complain about dangling
-objects.  They are not a problem.
-
-The most common cause of dangling objects is that you've rebased a
-branch, or you have pulled from somebody else who rebased a branch--see
-<<cleaning-up-history>>.  In that case, the old head of the original
-branch still exists, as does everything it pointed to. The branch
-pointer itself just doesn't, since you replaced it with another one.
-
-There are also other situations that cause dangling objects. For
-example, a "dangling blob" may arise because you did a "git add" of a
-file, but then, before you actually committed it and made it part of the
-bigger picture, you changed something else in that file and committed
-that *updated* thing - the old state that you added originally ends up
-not being pointed to by any commit or tree, so it's now a dangling blob
-object.
-
-Similarly, when the "recursive" merge strategy runs, and finds that
-there are criss-cross merges and thus more than one merge base (which is
-fairly unusual, but it does happen), it will generate one temporary
-midway tree (or possibly even more, if you had lots of criss-crossing
-merges and more than two merge bases) as a temporary internal merge
-base, and again, those are real objects, but the end result will not end
-up pointing to them, so they end up "dangling" in your repository.
-
-Generally, dangling objects aren't anything to worry about. They can
-even be very useful: if you screw something up, the dangling objects can
-be how you recover your old tree (say, you did a rebase, and realized
-that you really didn't want to - you can look at what dangling objects
-you have, and decide to reset your head to some old dangling state).
-
-For commits, you can just use:
-
-------------------------------------------------
-$ gitk <dangling-commit-sha-goes-here> --not --all
-------------------------------------------------
-
-This asks for all the history reachable from the given commit but not
-from any branch, tag, or other reference.  If you decide it's something
-you want, you can always create a new reference to it, e.g.,
-
-------------------------------------------------
-$ git branch recovered-branch <dangling-commit-sha-goes-here>
-------------------------------------------------
-
-For blobs and trees, you can't do the same, but you can still examine
-them.  You can just do
-
-------------------------------------------------
-$ git show <dangling-blob/tree-sha-goes-here>
-------------------------------------------------
-
-to show what the contents of the blob were (or, for a tree, basically
-what the "ls" for that directory was), and that may give you some idea
-of what the operation was that left that dangling object.
-
-Usually, dangling blobs and trees aren't very interesting. They're
-almost always the result of either being a half-way mergebase (the blob
-will often even have the conflict markers from a merge in it, if you
-have had conflicting merges that you fixed up by hand), or simply
-because you interrupted a "git fetch" with ^C or something like that,
-leaving _some_ of the new objects in the object database, but just
-dangling and useless.
-
-Anyway, once you are sure that you're not interested in any dangling
-state, you can just prune all unreachable objects:
-
-------------------------------------------------
-$ git prune
-------------------------------------------------
-
-and they'll be gone. But you should only run "git prune" on a quiescent
-repository - it's kind of like doing a filesystem fsck recovery: you
-don't want to do that while the filesystem is mounted.
-
-(The same is true of "git-fsck" itself, btw - but since
-git-fsck never actually *changes* the repository, it just reports
-on what it found, git-fsck itself is never "dangerous" to run.
-Running it while somebody is actually changing the repository can cause
-confusing and scary messages, but it won't actually do anything bad. In
-contrast, running "git prune" while somebody is actively changing the
-repository is a *BAD* idea).
+The structured objects can further have their structure and
+connectivity to other objects verified. This is generally done with
+the `git-fsck` program, which generates a full dependency graph
+of all objects, and verifies their internal consistency (in addition
+to just verifying their superficial consistency through the hash).
 
 [[birdview-on-the-source-code]]
 A birds-eye view of Git's source code
@@ -3926,25 +4023,26 @@ Appendix B: Notes and todo list for this manual
 This is a work in progress.
 
 The basic requirements:
-	- It must be readable in order, from beginning to end, by
-	  someone intelligent with a basic grasp of the UNIX
-	  command line, but without any special knowledge of git.  If
-	  necessary, any other prerequisites should be specifically
-	  mentioned as they arise.
-	- Whenever possible, section headings should clearly describe
-	  the task they explain how to do, in language that requires
-	  no more knowledge than necessary: for example, "importing
-	  patches into a project" rather than "the git-am command"
+
+- It must be readable in order, from beginning to end, by someone
+  intelligent with a basic grasp of the UNIX command line, but without
+  any special knowledge of git.  If necessary, any other prerequisites
+  should be specifically mentioned as they arise.
+- Whenever possible, section headings should clearly describe the task
+  they explain how to do, in language that requires no more knowledge
+  than necessary: for example, "importing patches into a project" rather
+  than "the git-am command"
 
 Think about how to create a clear chapter dependency graph that will
 allow people to get to important topics without necessarily reading
 everything in between.
 
 Scan Documentation/ for other stuff left out; in particular:
-	howto's
-	some of technical/?
-	hooks
-	list of commands in gitlink:git[1]
+
+- howto's
+- some of technical/?
+- hooks
+- list of commands in gitlink:git[1]
 
 Scan email archives for other stuff left out
 
@@ -3973,3 +4071,5 @@ Write a chapter on using plumbing and writing scripts.
 Alternates, clone -reference, etc.
 
 git unpack-objects -r for recovery
+
+submodules

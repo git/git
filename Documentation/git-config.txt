@@ -142,7 +142,7 @@ FILES
 If not set explicitly with '--file', there are three files where
 git-config will search for configuration options:
 
-.git/config::
+$GIT_DIR/config::
 	Repository specific configuration file. (The filename is
 	of course relative to the repository root, not the working
 	directory.)

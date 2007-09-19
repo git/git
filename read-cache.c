@@ -346,6 +346,7 @@ int remove_file_from_index(struct index_state *istate, const char *path)
 	int pos = index_name_pos(istate, path, strlen(path));
 	if (pos < 0)
 		pos = -pos-1;
+	cache_tree_invalidate_path(istate->cache_tree, path);
 	while (pos < istate->cache_nr && !strcmp(istate->cache[pos]->name, path))
 		remove_index_entry_at(istate, pos);
 	return 0;
@@ -430,8 +431,32 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 		die("unable to add %s to index",path);
 	if (verbose)
 		printf("add '%s'\n", path);
-	cache_tree_invalidate_path(istate->cache_tree, path);
 	return 0;
+}
+
+struct cache_entry *make_cache_entry(unsigned int mode,
+		const unsigned char *sha1, const char *path, int stage,
+		int refresh)
+{
+	int size, len;
+	struct cache_entry *ce;
+
+	if (!verify_path(path))
+		return NULL;
+
+	len = strlen(path);
+	size = cache_entry_size(len);
+	ce = xcalloc(1, size);
+
+	hashcpy(ce->sha1, sha1);
+	memcpy(ce->name, path, len);
+	ce->ce_flags = create_ce_flags(len, stage);
+	ce->ce_mode = create_ce_mode(mode);
+
+	if (refresh)
+		return refresh_cache_entry(ce, 0);
+
+	return ce;
 }
 
 int ce_same_name(struct cache_entry *a, struct cache_entry *b)
@@ -673,6 +698,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	int ok_to_replace = option & ADD_CACHE_OK_TO_REPLACE;
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
 
+	cache_tree_invalidate_path(istate->cache_tree, ce->name);
 	pos = index_name_pos(istate, ce->name, ntohs(ce->ce_flags));
 
 	/* existing match? Just replace it. */

@@ -298,9 +298,24 @@ void diffcore_rename(struct diff_options *options)
 		else if (detect_rename == DIFF_DETECT_COPY)
 			register_rename_src(p->one, 1, p->score);
 	}
-	if (rename_dst_nr == 0 || rename_src_nr == 0 ||
-	    (0 < rename_limit && rename_limit < rename_dst_nr))
+	if (rename_dst_nr == 0 || rename_src_nr == 0)
 		goto cleanup; /* nothing to do */
+
+	/*
+	 * This basically does a test for the rename matrix not
+	 * growing larger than a "rename_limit" square matrix, ie:
+	 *
+	 *    rename_dst_nr * rename_src_nr > rename_limit * rename_limit
+	 *
+	 * but handles the potential overflow case specially (and we
+	 * assume at least 32-bit integers)
+	 */
+	if (rename_limit <= 0 || rename_limit > 32767)
+		rename_limit = 32767;
+	if (rename_dst_nr > rename_limit && rename_src_nr > rename_limit)
+		goto cleanup;
+	if (rename_dst_nr * rename_src_nr > rename_limit * rename_limit)
+		goto cleanup;
 
 	/* We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.

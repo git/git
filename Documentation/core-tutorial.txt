@@ -4,34 +4,24 @@ A git core tutorial for developers
 Introduction
 ------------
 
-This is trying to be a short tutorial on setting up and using a git
-repository, mainly because being hands-on and using explicit examples is
-often the best way of explaining what is going on.
+This tutorial explains how to use the "core" git programs to set up and
+work with a git repository.
 
-In normal life, most people wouldn't use the "core" git programs
-directly, but rather script around them to make them more palatable.
-Understanding the core git stuff may help some people get those scripts
-done, though, and it may also be instructive in helping people
-understand what it is that the higher-level helper scripts are actually
-doing.
+If you just need to use git as a revision control system you may prefer
+to start with link:tutorial.html[a tutorial introduction to git] or
+link:user-manual.html[the git user manual].
+
+However, an understanding of these low-level tools can be helpful if
+you want to understand git's internals.
 
 The core git is often called "plumbing", with the prettier user
 interfaces on top of it called "porcelain". You may not want to use the
 plumbing directly very often, but it can be good to know what the
 plumbing does for when the porcelain isn't flushing.
 
-The material presented here often goes deep describing how things
-work internally.  If you are mostly interested in using git as a
-SCM, you can skip them during your first pass.
-
 [NOTE]
-And those "too deep" descriptions are often marked as Note.
-
-[NOTE]
-If you are already familiar with another version control system,
-like CVS, you may want to take a look at
-link:everyday.html[Everyday GIT in 20 commands or so] first
-before reading this.
+Deeper technical details are often marked as Notes, which you can
+skip on your first reading.
 
 
 Creating a git repository
@@ -1686,5 +1676,3 @@ merge two at a time, documenting how you resolved the conflicts,
 and the reason why you preferred changes made in one side over
 the other.  Otherwise it would make the project history harder
 to follow, not easier.
-
-[ to be continued.. cvsimports ]
