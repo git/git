@@ -242,11 +242,7 @@ static int close_bundle(struct transport *transport)
 struct git_transport_data {
 	unsigned thin : 1;
 	unsigned keep : 1;
-
-	int unpacklimit;
-
 	int depth;
-
 	const char *uploadpack;
 	const char *receivepack;
 };
@@ -266,9 +262,6 @@ static int set_git_option(struct transport *connection,
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_KEEP)) {
 		data->keep = !!value;
-		return 0;
-	} else if (!strcmp(name, TRANS_OPT_UNPACKLIMIT)) {
-		data->unpacklimit = atoi(value);
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_DEPTH)) {
 		if (!value)
@@ -318,7 +311,6 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.uploadpack = data->uploadpack;
 	args.keep_pack = data->keep;
 	args.lock_pack = 1;
-	args.unpacklimit = data->unpacklimit;
 	args.use_thin_pack = data->thin;
 	args.verbose = transport->verbose;
 	args.depth = data->depth;
@@ -435,7 +427,6 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		data->receivepack = "git-receive-pack";
 		if (remote && remote->receivepack)
 			data->receivepack = remote->receivepack;
-		data->unpacklimit = -1;
 	}
 
 	return ret;

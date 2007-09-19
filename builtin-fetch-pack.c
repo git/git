@@ -670,18 +670,24 @@ static int fetch_pack_config(const char *var, const char *value)
 
 static struct lock_file lock;
 
+static void fetch_pack_setup(void)
+{
+	static int did_setup;
+	if (did_setup)
+		return;
+	git_config(fetch_pack_config);
+	if (0 <= transfer_unpack_limit)
+		unpack_limit = transfer_unpack_limit;
+	else if (0 <= fetch_unpack_limit)
+		unpack_limit = fetch_unpack_limit;
+	did_setup = 1;
+}
+
 int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 {
 	int i, ret, nr_heads;
 	struct ref *ref;
 	char *dest = NULL, **heads;
-
-	git_config(fetch_pack_config);
-
-	if (0 <= transfer_unpack_limit)
-		unpack_limit = transfer_unpack_limit;
-	else if (0 <= fetch_unpack_limit)
-		unpack_limit = fetch_unpack_limit;
 
 	nr_heads = 0;
 	heads = NULL;
@@ -760,6 +766,7 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 	struct ref *ref;
 	struct stat st;
 
+	fetch_pack_setup();
 	memcpy(&args, my_args, sizeof(args));
 	if (args.depth > 0) {
 		if (stat(git_path("shallow"), &st))

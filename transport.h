@@ -47,9 +47,6 @@ struct transport *transport_get(struct remote *, const char *);
 /* Keep the pack that was transferred if not null */
 #define TRANS_OPT_KEEP "keep"
 
-/* Unpack the objects if fewer than this number of objects are fetched */
-#define TRANS_OPT_UNPACKLIMIT "unpacklimit"
-
 /* Limit the depth of the fetch if not null */
 #define TRANS_OPT_DEPTH "depth"
 
