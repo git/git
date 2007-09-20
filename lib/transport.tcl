@@ -3,7 +3,7 @@
 
 proc fetch_from {remote} {
 	set w [console::new \
-		"fetch $remote" \
+		[mc "fetch %s" $remote] \
 		[mc "Fetching new changes from %s" $remote]]
 	set cmds [list]
 	lappend cmds [list exec git fetch $remote]
@@ -15,14 +15,14 @@ proc fetch_from {remote} {
 
 proc prune_from {remote} {
 	set w [console::new \
-		"remote prune $remote" \
+		[mc "remote prune %s" $remote] \
 		[mc "Pruning tracking branches deleted from %s" $remote]]
 	console::exec $w [list git remote prune $remote]
 }
 
 proc push_to {remote} {
 	set w [console::new \
-		"push $remote" \
+		[mc "push %s" $remote] \
 		[mc "Pushing changes to %s" $remote]]
 	set cmd [list git push]
 	lappend cmd -v
@@ -64,7 +64,7 @@ proc start_push_anywhere_action {w} {
 	}
 
 	set cons [console::new \
-		"push $r_url" \
+		[mc "push %s" $r_url] \
 		[mc "Pushing %s %s to %s" $cnt $unit $r_url]]
 	console::exec $cons $cmd
 	destroy $w
