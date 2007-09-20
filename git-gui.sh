@@ -1669,7 +1669,7 @@ proc apply_config {} {
 		set font [lindex $option 1]
 		if {[catch {
 			foreach {cn cv} $repo_config(gui.$name) {
-				font configure $font $cn $cv
+				font configure $font $cn $cv -weight normal
 			}
 			} err]} {
 			error_popup [strcat [mc "Invalid font specified in %s:" "gui.$name"] "\n\n$err"]
