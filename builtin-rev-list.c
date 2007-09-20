@@ -436,10 +436,10 @@ static struct commit_list *find_bisection(struct commit_list *list,
 	/* Do the real work of finding bisection commit. */
 	best = do_find_bisection(list, nr, weights);
 
-	if (best)
+	if (best) {
 		best->next = NULL;
-
-	*reaches = weight(best);
+		*reaches = weight(best);
+	}
 	free(weights);
 
 	return best;
