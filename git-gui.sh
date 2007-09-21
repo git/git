@@ -907,6 +907,35 @@ proc rescan {after {honor_trustmtime 1}} {
 	}
 }
 
+if {[is_Cygwin]} {
+	set is_git_info_link {}
+	set is_git_info_exclude {}
+	proc have_info_exclude {} {
+		global is_git_info_link is_git_info_exclude
+
+		if {$is_git_info_link eq {}} {
+			set is_git_info_link [file isfile [gitdir info.lnk]]
+		}
+
+		if {$is_git_info_link} {
+			if {$is_git_info_exclude eq {}} {
+				if {[catch {exec test -f [gitdir info exclude]}]} {
+					set is_git_info_exclude 0
+				} else {
+					set is_git_info_exclude 1
+				}
+			}
+			return $is_git_info_exclude
+		} else {
+			return [file readable [gitdir info exclude]]
+		}
+	}
+} else {
+	proc have_info_exclude {} {
+		return [file readable [gitdir info exclude]]
+	}
+}
+
 proc rescan_stage2 {fd after} {
 	global rescan_active buf_rdi buf_rdf buf_rlo
 
@@ -917,9 +946,8 @@ proc rescan_stage2 {fd after} {
 	}
 
 	set ls_others [list --exclude-per-directory=.gitignore]
-	set info_exclude [gitdir info exclude]
-	if {[file readable $info_exclude]} {
-		lappend ls_others "--exclude-from=$info_exclude"
+	if {[have_info_exclude]} {
+		lappend ls_others "--exclude-from=[gitdir info exclude]"
 	}
 	set user_exclude [get_config core.excludesfile]
 	if {$user_exclude ne {} && [file readable $user_exclude]} {
