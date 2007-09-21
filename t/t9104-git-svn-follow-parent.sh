@@ -51,8 +51,10 @@ test_expect_success 'init and fetch from one svn-remote' "
         "
 
 test_expect_success 'follow deleted parent' "
-        svn cp -m 'resurrecting trunk as junk' \
-               -r2 $svnrepo/trunk $svnrepo/junk &&
+        (svn cp -m 'resurrecting trunk as junk' \
+               $svnrepo/trunk@2 $svnrepo/junk ||
+         svn cp -m 'resurrecting trunk as junk' \
+               -r2 $svnrepo/trunk $svnrepo/junk) &&
         git config --add svn-remote.svn.fetch \
           junk:refs/remotes/svn/junk &&
         git-svn fetch -i svn/thunk &&
