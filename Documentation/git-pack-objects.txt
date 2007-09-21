@@ -25,15 +25,15 @@ is efficient to access.  The packed archive format (.pack) is
 designed to be unpackable without having anything else, but for
 random access, accompanied with the pack index file (.idx).
 
+Placing both in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
+any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
+enables git to read from such an archive.
+
 'git-unpack-objects' command can read the packed archive and
 expand the objects contained in the pack into "one-file
 one-object" format; this is typically done by the smart-pull
 commands when a pack is created on-the-fly for efficient network
 transport by their peers.
-
-Placing both in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
-any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
-enables git to read from such an archive.
 
 In a packed archive, an object is either stored as a compressed
 whole, or as a difference from some other object.  The latter is
