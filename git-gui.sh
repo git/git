@@ -305,7 +305,7 @@ proc _which {what} {
 	global env _search_exe _search_path
 
 	if {$_search_path eq {}} {
-		if {[is_Cygwin]} {
+		if {[is_Cygwin] && [regexp {^(/|\.:)} $env(PATH)]} {
 			set _search_path [split [exec cygpath \
 				--windows \
 				--path \
