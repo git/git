@@ -29,7 +29,7 @@ THIS_INDEX="$GIT_DIR/index"
 NEXT_INDEX="$GIT_DIR/next-index$$"
 rm -f "$NEXT_INDEX"
 save_index () {
-	cp -p "$THIS_INDEX" "$NEXT_INDEX"
+	ln "$THIS_INDEX" "$NEXT_INDEX"
 }
 
 run_status () {
