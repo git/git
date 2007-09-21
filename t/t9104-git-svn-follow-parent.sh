@@ -19,8 +19,7 @@ test_expect_success 'initialize repo' "
 	poke trunk/readme &&
 	svn commit -m 'another commit' &&
 	svn up &&
-	svn mv -m 'rename to thunk' trunk thunk &&
-	svn up &&
+	svn mv trunk thunk &&
 	echo goodbye >> thunk/readme &&
 	poke thunk/readme &&
 	svn commit -m 'bye now' &&
