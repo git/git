@@ -521,6 +521,99 @@ proc rmsel_tag {text} {
 	return $text
 }
 
+set root_exists 0
+bind . <Visibility> {
+	bind . <Visibility> {}
+	set root_exists 1
+}
+
+######################################################################
+##
+## config defaults
+
+set cursor_ptr arrow
+font create font_diff -family Courier -size 10
+font create font_ui
+catch {
+	label .dummy
+	eval font configure font_ui [font actual [.dummy cget -font]]
+	destroy .dummy
+}
+
+font create font_uiitalic
+font create font_uibold
+font create font_diffbold
+font create font_diffitalic
+
+foreach class {Button Checkbutton Entry Label
+		Labelframe Listbox Menu Message
+		Radiobutton Spinbox Text} {
+	option add *$class.font font_ui
+}
+unset class
+
+if {[is_Windows] || [is_MacOSX]} {
+	option add *Menu.tearOff 0
+}
+
+if {[is_MacOSX]} {
+	set M1B M1
+	set M1T Cmd
+} else {
+	set M1B Control
+	set M1T Ctrl
+}
+
+proc bind_button3 {w cmd} {
+	bind $w <Any-Button-3> $cmd
+	if {[is_MacOSX]} {
+		# Mac OS X sends Button-2 on right click through three-button mouse,
+		# or through trackpad right-clicking (two-finger touch + click).
+		bind $w <Any-Button-2> $cmd
+		bind $w <Control-Button-1> $cmd
+	}
+}
+
+proc apply_config {} {
+	global repo_config font_descs
+
+	foreach option $font_descs {
+		set name [lindex $option 0]
+		set font [lindex $option 1]
+		if {[catch {
+			foreach {cn cv} $repo_config(gui.$name) {
+				font configure $font $cn $cv -weight normal
+			}
+			} err]} {
+			error_popup [strcat [mc "Invalid font specified in %s:" "gui.$name"] "\n\n$err"]
+		}
+		foreach {cn cv} [font configure $font] {
+			font configure ${font}bold $cn $cv
+			font configure ${font}italic $cn $cv
+		}
+		font configure ${font}bold -weight bold
+		font configure ${font}italic -slant italic
+	}
+}
+
+set default_config(merge.diffstat) true
+set default_config(merge.summary) false
+set default_config(merge.verbosity) 2
+set default_config(user.name) {}
+set default_config(user.email) {}
+
+set default_config(gui.matchtrackingbranch) false
+set default_config(gui.pruneduringfetch) false
+set default_config(gui.trustmtime) false
+set default_config(gui.diffcontext) 5
+set default_config(gui.newbranchtemplate) {}
+set default_config(gui.fontui) [font configure font_ui]
+set default_config(gui.fontdiff) [font configure font_diff]
+set font_descs {
+	{fontui   font_ui   {mc "Main Font"}}
+	{fontdiff font_diff {mc "Diff/Console Font"}}
+}
+
 ######################################################################
 ##
 ## find git
@@ -1448,16 +1541,6 @@ unset i
 ##
 ## util
 
-proc bind_button3 {w cmd} {
-	bind $w <Any-Button-3> $cmd
-	if {[is_MacOSX]} {
-		# Mac OS X sends Button-2 on right click through three-button mouse,
-		# or through trackpad right-clicking (two-finger touch + click).
-		bind $w <Any-Button-2> $cmd
-		bind $w <Control-Button-1> $cmd
-	}
-}
-
 proc scrollbar2many {list mode args} {
 	foreach w $list {eval $w $mode $args}
 }
@@ -1659,87 +1742,10 @@ proc add_range_to_selection {w x y} {
 
 ######################################################################
 ##
-## config defaults
-
-set cursor_ptr arrow
-font create font_diff -family Courier -size 10
-font create font_ui
-catch {
-	label .dummy
-	eval font configure font_ui [font actual [.dummy cget -font]]
-	destroy .dummy
-}
-
-font create font_uiitalic
-font create font_uibold
-font create font_diffbold
-font create font_diffitalic
-
-foreach class {Button Checkbutton Entry Label
-		Labelframe Listbox Menu Message
-		Radiobutton Spinbox Text} {
-	option add *$class.font font_ui
-}
-unset class
-
-if {[is_Windows] || [is_MacOSX]} {
-	option add *Menu.tearOff 0
-}
-
-if {[is_MacOSX]} {
-	set M1B M1
-	set M1T Cmd
-} else {
-	set M1B Control
-	set M1T Ctrl
-}
-
-proc apply_config {} {
-	global repo_config font_descs
-
-	foreach option $font_descs {
-		set name [lindex $option 0]
-		set font [lindex $option 1]
-		if {[catch {
-			foreach {cn cv} $repo_config(gui.$name) {
-				font configure $font $cn $cv -weight normal
-			}
-			} err]} {
-			error_popup [strcat [mc "Invalid font specified in %s:" "gui.$name"] "\n\n$err"]
-		}
-		foreach {cn cv} [font configure $font] {
-			font configure ${font}bold $cn $cv
-			font configure ${font}italic $cn $cv
-		}
-		font configure ${font}bold -weight bold
-		font configure ${font}italic -slant italic
-	}
-}
-
-set default_config(merge.diffstat) true
-set default_config(merge.summary) false
-set default_config(merge.verbosity) 2
-set default_config(user.name) {}
-set default_config(user.email) {}
-
-set default_config(gui.matchtrackingbranch) false
-set default_config(gui.pruneduringfetch) false
-set default_config(gui.trustmtime) false
-set default_config(gui.diffcontext) 5
-set default_config(gui.newbranchtemplate) {}
-set default_config(gui.fontui) [font configure font_ui]
-set default_config(gui.fontdiff) [font configure font_diff]
-set font_descs {
-	{fontui   font_ui   {mc "Main Font"}}
-	{fontdiff font_diff {mc "Diff/Console Font"}}
-}
-load_config 0
-apply_config
-
-######################################################################
-##
 ## ui construction
 
+load_config 0
+apply_config
 set ui_comm {}
 
 # -- Menu Bar
@@ -2038,12 +2044,6 @@ if {$browser ne {}} {
 		-command [list exec $browser $doc_url &]
 }
 unset browser doc_path doc_url
-
-set root_exists 0
-bind . <Visibility> {
-	bind . <Visibility> {}
-	set root_exists 1
-}
 
 # -- Standard bindings
 #
