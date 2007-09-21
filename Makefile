@@ -92,27 +92,35 @@ gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 TCL_PATH_SQ = $(subst ','\'',$(TCL_PATH))
 TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
+TCLTK_PATH_SED = $(subst ','\'',$(subst \,\\,$(TCLTK_PATH)))
 
 gg_libdir ?= $(sharedir)/git-gui/lib
 libdir_SQ  = $(subst ','\'',$(gg_libdir))
+libdir_SED = $(subst ','\'',$(subst \,\\,$(gg_libdir)))
+exedir     = $(dir $(gitexecdir))share/git-gui/lib
 
-exedir    = $(dir $(gitexecdir))share/git-gui/lib
-exedir_SQ = $(subst ','\'',$(exedir))
+GITGUI_SCRIPT   := $$0
+GITGUI_RELATIVE :=
+
+ifeq ($(exedir),$(gg_libdir))
+	GITGUI_RELATIVE := 1
+endif
+
+ifeq ($(uname_O),Cygwin)
+	GITGUI_SCRIPT := `cygpath --windows --absolute "$(GITGUI_SCRIPT)"`
+	ifeq ($(GITGUI_RELATIVE),)
+		gg_libdir := $(shell cygpath --windows --absolute "$(gg_libdir)")
+	endif
+endif
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	$(QUIET_GEN)rm -f $@ $@+ && \
-	GITGUI_RELATIVE= && \
-	if test '$(exedir_SQ)' = '$(libdir_SQ)'; then \
-		if test "$(uname_O)" = Cygwin; \
-		then GITGUI_RELATIVE= ; \
-		else GITGUI_RELATIVE=1; \
-		fi; \
-	fi && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
-		-e 's|^ exec wish "$$0"| exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
+		-e '1,30s|^ argv0=$$0| argv0=$(GITGUI_SCRIPT)|' \
+		-e '1,30s|^ exec wish | exec '\''$(TCLTK_PATH_SED)'\'' |' \
 		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
-		-e 's|@@GITGUI_RELATIVE@@|'$$GITGUI_RELATIVE'|' \
-		-e $$GITGUI_RELATIVE's|@@GITGUI_LIBDIR@@|$(libdir_SQ)|' \
+		-e 's|@@GITGUI_RELATIVE@@|$(GITGUI_RELATIVE)|' \
+		-e '$(GITGUI_RELATIVE)s|@@GITGUI_LIBDIR@@|$(libdir_SED)|' \
 		$@.sh >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@

@@ -6,7 +6,8 @@
 	echo 'git-gui version @@GITGUI_VERSION@@'; \
 	exit; \
  fi; \
- exec wish "$0" -- "$@"
+ argv0=$0; \
+ exec wish "$argv0" -- "$@"
 
 set appvers {@@GITGUI_VERSION@@}
 set copyright {
@@ -740,7 +741,7 @@ if {[catch {
 	exit 1
 }
 if {![file isdirectory $_gitdir] && [is_Cygwin]} {
-	catch {set _gitdir [exec cygpath --unix $_gitdir]}
+	catch {set _gitdir [exec cygpath --windows $_gitdir]}
 }
 if {![file isdirectory $_gitdir]} {
 	catch {wm withdraw .}
