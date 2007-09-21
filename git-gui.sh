@@ -498,7 +498,11 @@ proc rmsel_tag {text} {
 set _git  [_which git]
 if {$_git eq {}} {
 	catch {wm withdraw .}
-	error_popup "Cannot find git in PATH."
+	tk_messageBox \
+		-icon error \
+		-type ok \
+		-title [mc "git-gui: fatal error"] \
+		-message [mc "Cannot find git in PATH."]
 	exit 1
 }
 
