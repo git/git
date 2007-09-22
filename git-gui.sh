@@ -833,9 +833,9 @@ if {[catch {
 		set _gitdir [git rev-parse --git-dir]
 		set _prefix [git rev-parse --show-prefix]
 	} err]} {
-	catch {wm withdraw .}
-	error_popup [strcat [mc "Cannot find the git directory:"] "\n\n$err"]
-	exit 1
+	load_config 1
+	apply_config
+	choose_repository::pick
 }
 if {![file isdirectory $_gitdir] && [is_Cygwin]} {
 	catch {set _gitdir [exec cygpath --windows $_gitdir]}
