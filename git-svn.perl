@@ -3576,7 +3576,7 @@ sub config_pager {
 }
 
 sub run_pager {
-	return unless -t *STDOUT;
+	return unless -t *STDOUT && defined $pager;
 	pipe my $rfd, my $wfd or return;
 	defined(my $pid = fork) or ::fatal "Can't fork: $!\n";
 	if (!$pid) {
