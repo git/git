@@ -706,62 +706,43 @@ proc makewindow {} {
 	-state disabled -width 26
     pack .tf.bar.rightbut -side left -fill y
 
-    button .tf.bar.findbut -text "Find" -command dofind -font $uifont
-    pack .tf.bar.findbut -side left
-    set findstring {}
-    set fstring .tf.bar.findstring
-    lappend entries $fstring
-    entry $fstring -width 30 -font $textfont -textvariable findstring
-    trace add variable findstring write find_change
-    pack $fstring -side left -expand 1 -fill x -in .tf.bar
-    set findtype Exact
-    set findtypemenu [tk_optionMenu .tf.bar.findtype \
-		      findtype Exact IgnCase Regexp]
-    trace add variable findtype write find_change
-    .tf.bar.findtype configure -font $uifont
-    .tf.bar.findtype.menu configure -font $uifont
-    set findloc "All fields"
-    tk_optionMenu .tf.bar.findloc findloc "All fields" Headline \
-	Comments Author Committer
-    trace add variable findloc write find_change
-    .tf.bar.findloc configure -font $uifont
-    .tf.bar.findloc.menu configure -font $uifont
-    pack .tf.bar.findloc -side right
-    pack .tf.bar.findtype -side right
-
     # build up the bottom bar of upper window
-    label .tf.lbar.flabel -text "Highlight:  Commits " \
-    -font $uifont
-    pack .tf.lbar.flabel -side left -fill y
-    set gdttype "touching paths:"
-    set gm [tk_optionMenu .tf.lbar.gdttype gdttype "touching paths:" \
-	"adding/removing string:"]
-    trace add variable gdttype write hfiles_change
+    label .tf.lbar.flabel -text "Find " -font $uifont
+    button .tf.lbar.fnext -text "next" -command dofind -font $uifont
+    button .tf.lbar.fprev -text "prev" -command {dofind 1} -font $uifont
+    label .tf.lbar.flab2 -text " commit " -font $uifont
+    pack .tf.lbar.flabel .tf.lbar.fnext .tf.lbar.fprev .tf.lbar.flab2 \
+	-side left -fill y
+    set gdttype "containing:"
+    set gm [tk_optionMenu .tf.lbar.gdttype gdttype \
+		"containing:" \
+		"touching paths:" \
+		"adding/removing string:"]
+    trace add variable gdttype write gdttype_change
     $gm conf -font $uifont
     .tf.lbar.gdttype conf -font $uifont
     pack .tf.lbar.gdttype -side left -fill y
-    entry .tf.lbar.fent -width 25 -font $textfont \
-	-textvariable highlight_files
-    trace add variable highlight_files write hfiles_change
-    lappend entries .tf.lbar.fent
-    pack .tf.lbar.fent -side left -fill x -expand 1
-    label .tf.lbar.vlabel -text " OR in view" -font $uifont
-    pack .tf.lbar.vlabel -side left -fill y
-    global viewhlmenu selectedhlview
-    set viewhlmenu [tk_optionMenu .tf.lbar.vhl selectedhlview None]
-    $viewhlmenu entryconf None -command delvhighlight
-    $viewhlmenu conf -font $uifont
-    .tf.lbar.vhl conf -font $uifont
-    pack .tf.lbar.vhl -side left -fill y
-    label .tf.lbar.rlabel -text " OR " -font $uifont
-    pack .tf.lbar.rlabel -side left -fill y
-    global highlight_related
-    set m [tk_optionMenu .tf.lbar.relm highlight_related None \
-	"Descendent" "Not descendent" "Ancestor" "Not ancestor"]
-    $m conf -font $uifont
-    .tf.lbar.relm conf -font $uifont
-    trace add variable highlight_related write vrel_change
-    pack .tf.lbar.relm -side left -fill y
+
+    set findstring {}
+    set fstring .tf.lbar.findstring
+    lappend entries $fstring
+    entry $fstring -width 30 -font $textfont -textvariable findstring
+    trace add variable findstring write find_change
+    set findtype Exact
+    set findtypemenu [tk_optionMenu .tf.lbar.findtype \
+		      findtype Exact IgnCase Regexp]
+    trace add variable findtype write findcom_change
+    .tf.lbar.findtype configure -font $uifont
+    .tf.lbar.findtype.menu configure -font $uifont
+    set findloc "All fields"
+    tk_optionMenu .tf.lbar.findloc findloc "All fields" Headline \
+	Comments Author Committer
+    trace add variable findloc write find_change
+    .tf.lbar.findloc configure -font $uifont
+    .tf.lbar.findloc.menu configure -font $uifont
+    pack .tf.lbar.findloc -side right
+    pack .tf.lbar.findtype -side right
+    pack $fstring -side left -expand 1 -fill x
 
     # Finish putting the upper half of the viewer together
     pack .tf.lbar -in .tf -side bottom -fill x
@@ -914,8 +895,6 @@ proc makewindow {} {
     bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
-    bind . <Shift-Key-Up> "next_highlight -1"
-    bind . <Shift-Key-Down> "next_highlight 1"
     bindkey <Key-Right> "goforw"
     bindkey <Key-Left> "goback"
     bind . <Key-Prior> "selnextpage -1"
@@ -1852,10 +1831,10 @@ proc doviewmenu {m first cmd op argv} {
 }
 
 proc allviewmenus {n op args} {
-    global viewhlmenu
+    # global viewhlmenu
 
     doviewmenu .bar.view 5 [list showview $n] $op $args
-    doviewmenu $viewhlmenu 1 [list addvhighlight $n] $op $args
+    # doviewmenu $viewhlmenu 1 [list addvhighlight $n] $op $args
 }
 
 proc newviewok {top n} {
@@ -1898,8 +1877,8 @@ proc newviewok {top n} {
 	    set viewname($n) $newviewname($n)
 	    doviewmenu .bar.view 5 [list showview $n] \
 		entryconf [list -label $viewname($n)]
-	    doviewmenu $viewhlmenu 1 [list addvhighlight $n] \
-		entryconf [list -label $viewname($n) -value $viewname($n)]
+	    # doviewmenu $viewhlmenu 1 [list addvhighlight $n] \
+		# entryconf [list -label $viewname($n) -value $viewname($n)]
 	}
 	if {$files ne $viewfiles($n) || $newargs ne $viewargs($n)} {
 	    set viewfiles($n) $files
@@ -1931,8 +1910,8 @@ proc addviewmenu {n} {
 
     .bar.view add radiobutton -label $viewname($n) \
 	-command [list showview $n] -variable selectedview -value $n
-    $viewhlmenu add radiobutton -label $viewname($n) \
-	-command [list addvhighlight $n] -variable selectedhlview
+    #$viewhlmenu add radiobutton -label $viewname($n) \
+    #	-command [list addvhighlight $n] -variable selectedhlview
 }
 
 proc flatten {var} {
@@ -2208,9 +2187,9 @@ proc askvhighlight {row id} {
     }
 }
 
-proc hfiles_change {name ix op} {
+proc hfiles_change {} {
     global highlight_files filehighlight fhighlights fh_serial
-    global mainfont highlight_paths
+    global mainfont highlight_paths gdttype
 
     if {[info exists filehighlight]} {
 	# delete previous highlights
@@ -2225,6 +2204,66 @@ proc hfiles_change {name ix op} {
     incr fh_serial
     if {$highlight_files ne {}} {
 	after 300 do_file_hl $fh_serial
+    }
+}
+
+proc gdttype_change {name ix op} {
+    global gdttype highlight_files findstring findpattern
+
+    if {$findstring ne {}} {
+	if {$gdttype eq "containing:"} {
+	    if {$highlight_files ne {}} {
+		set highlight_files {}
+		hfiles_change
+	    }
+	    findcom_change
+	} else {
+	    if {$findpattern ne {}} {
+		set findpattern {}
+		findcom_change
+	    }
+	    set highlight_files $findstring
+	    hfiles_change
+	}
+	drawvisible
+    }
+    # enable/disable findtype/findloc menus too
+}
+
+proc find_change {name ix op} {
+    global gdttype findstring highlight_files
+
+    if {$gdttype eq "containing:"} {
+	findcom_change
+    } else {
+	if {$highlight_files ne $findstring} {
+	    set highlight_files $findstring
+	    hfiles_change
+	}
+    }
+    drawvisible
+}
+
+proc findcom_change {} {
+    global nhighlights mainfont boldnamerows
+    global findpattern findtype findstring gdttype
+
+    # delete previous highlights, if any
+    foreach row $boldnamerows {
+	bolden_name $row $mainfont
+    }
+    set boldnamerows {}
+    catch {unset nhighlights}
+    unbolden
+    unmarkmatches
+    if {$gdttype ne "containing:" || $findstring eq {}} {
+	set findpattern {}
+    } elseif {$findtype eq "Regexp"} {
+	set findpattern $findstring
+    } else {
+	set e [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} \
+		   $findstring]
+	set findpattern "*$e*"
     }
 }
 
@@ -2250,8 +2289,11 @@ proc do_file_hl {serial} {
 	set highlight_paths [makepatterns $paths]
 	highlight_filelist
 	set gdtargs [concat -- $paths]
-    } else {
+    } elseif {$gdttype eq "adding/removing string:"} {
 	set gdtargs [list "-S$highlight_files"]
+    } else {
+	# must be "containing:", i.e. we're searching commit info
+	return
     }
     set cmd [concat | git diff-tree -r -s --stdin $gdtargs]
     set filehighlight [open $cmd r+]
@@ -2282,7 +2324,7 @@ proc askfilehighlight {row id} {
 
 proc readfhighlight {} {
     global filehighlight fhighlights commitrow curview mainfont iddrawn
-    global fhl_list
+    global fhl_list find_dirn
 
     if {![info exists filehighlight]} {
 	return 0
@@ -2314,35 +2356,21 @@ proc readfhighlight {} {
 	unset filehighlight
 	return 0
     }
-    next_hlcont
+    if {[info exists find_dirn]} {
+	if {$find_dirn > 0} {
+	    run findmore
+	} else {
+	    run findmorerev
+	}
+    }
     return 1
 }
 
-proc find_change {name ix op} {
-    global nhighlights mainfont boldnamerows
-    global findstring findpattern findtype
-
-    # delete previous highlights, if any
-    foreach row $boldnamerows {
-	bolden_name $row $mainfont
-    }
-    set boldnamerows {}
-    catch {unset nhighlights}
-    unbolden
-    unmarkmatches
-    if {$findtype ne "Regexp"} {
-	set e [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} \
-		   $findstring]
-	set findpattern "*$e*"
-    }
-    drawvisible
-}
-
 proc doesmatch {f} {
-    global findtype findstring findpattern
+    global findtype findpattern
 
     if {$findtype eq "Regexp"} {
-	return [regexp $findstring $f]
+	return [regexp $findpattern $f]
     } elseif {$findtype eq "IgnCase"} {
 	return [string match -nocase $findpattern $f]
     } else {
@@ -2533,81 +2561,6 @@ proc askrelhighlight {row id} {
 	}
     }
     set rhighlights($row) $isbold
-}
-
-proc next_hlcont {} {
-    global fhl_row fhl_dirn displayorder numcommits
-    global vhighlights fhighlights nhighlights rhighlights
-    global hlview filehighlight findstring highlight_related
-
-    if {![info exists fhl_dirn] || $fhl_dirn == 0} return
-    set row $fhl_row
-    while {1} {
-	if {$row < 0 || $row >= $numcommits} {
-	    bell
-	    set fhl_dirn 0
-	    return
-	}
-	set id [lindex $displayorder $row]
-	if {[info exists hlview]} {
-	    if {![info exists vhighlights($row)]} {
-		askvhighlight $row $id
-	    }
-	    if {$vhighlights($row) > 0} break
-	}
-	if {$findstring ne {}} {
-	    if {![info exists nhighlights($row)]} {
-		askfindhighlight $row $id
-	    }
-	    if {$nhighlights($row) > 0} break
-	}
-	if {$highlight_related ne "None"} {
-	    if {![info exists rhighlights($row)]} {
-		askrelhighlight $row $id
-	    }
-	    if {$rhighlights($row) > 0} break
-	}
-	if {[info exists filehighlight]} {
-	    if {![info exists fhighlights($row)]} {
-		# ask for a few more while we're at it...
-		set r $row
-		for {set n 0} {$n < 100} {incr n} {
-		    if {![info exists fhighlights($r)]} {
-			askfilehighlight $r [lindex $displayorder $r]
-		    }
-		    incr r $fhl_dirn
-		    if {$r < 0 || $r >= $numcommits} break
-		}
-		flushhighlights
-	    }
-	    if {$fhighlights($row) < 0} {
-		set fhl_row $row
-		return
-	    }
-	    if {$fhighlights($row) > 0} break
-	}
-	incr row $fhl_dirn
-    }
-    set fhl_dirn 0
-    selectline $row 1
-}
-
-proc next_highlight {dirn} {
-    global selectedline fhl_row fhl_dirn
-    global hlview filehighlight findstring highlight_related
-
-    if {![info exists selectedline]} return
-    if {!([info exists hlview] || $findstring ne {} ||
-	  $highlight_related ne "None" || [info exists filehighlight])} return
-    set fhl_row [expr {$selectedline + $dirn}]
-    set fhl_dirn $dirn
-    next_hlcont
-}
-
-proc cancel_next_highlight {} {
-    global fhl_dirn
-
-    set fhl_dirn 0
 }
 
 # Graph layout functions
@@ -3669,7 +3622,7 @@ proc drawcmitrow {row} {
     global displayorder rowidlist nrows_drawn
     global iddrawn markingmatches
     global commitinfo parentlist numcommits
-    global filehighlight fhighlights findstring nhighlights
+    global filehighlight fhighlights findpattern nhighlights
     global hlview vhighlights
     global highlight_related rhighlights
 
@@ -3682,7 +3635,7 @@ proc drawcmitrow {row} {
     if {[info exists filehighlight] && ![info exists fhighlights($row)]} {
 	askfilehighlight $row $id
     }
-    if {$findstring ne {} && ![info exists nhighlights($row)]} {
+    if {$findpattern ne {} && ![info exists nhighlights($row)]} {
 	askfindhighlight $row $id
     }
     if {$highlight_related ne "None" && ![info exists rhighlights($row)]} {
@@ -4190,9 +4143,9 @@ proc findmatches {f} {
 
 proc dofind {{rev 0}} {
     global findstring findstartline findcurline selectedline numcommits
+    global gdttype filehighlight fh_serial find_dirn
 
     unmarkmatches
-    cancel_next_highlight
     focus .
     if {$findstring eq {} || $numcommits == 0} return
     if {![info exists selectedline]} {
@@ -4202,19 +4155,24 @@ proc dofind {{rev 0}} {
     }
     set findcurline $findstartline
     nowbusy finding
+    if {$gdttype ne "containing:" && ![info exists filehighlight]} {
+	after cancel do_file_hl $fh_serial
+	do_file_hl $fh_serial
+    }
     if {!$rev} {
+	set find_dirn 1
 	run findmore
     } else {
-	if {$findcurline == 0} {
-	    set findcurline $numcommits
-	}
-	incr findcurline -1
+	set find_dirn -1
 	run findmorerev
     }
 }
 
 proc findnext {restart} {
-    global findcurline
+    global findcurline find_dirn
+
+    if {[info exists find_dirn]} return
+    set find_dirn 1
     if {![info exists findcurline]} {
 	if {$restart} {
 	    dofind
@@ -4228,7 +4186,10 @@ proc findnext {restart} {
 }
 
 proc findprev {} {
-    global findcurline
+    global findcurline find_dirn
+
+    if {[info exists find_dirn]} return
+    set find_dirn -1
     if {![info exists findcurline]} {
 	dofind 1
     } else {
@@ -4238,8 +4199,9 @@ proc findprev {} {
 }
 
 proc findmore {} {
-    global commitdata commitinfo numcommits findstring findpattern findloc
+    global commitdata commitinfo numcommits findpattern findloc
     global findstartline findcurline displayorder
+    global find_dirn gdttype fhighlights
 
     set fldtypes {Headline Author Date Committer CDate Comments}
     set l [expr {$findcurline + 1}]
@@ -4254,28 +4216,56 @@ proc findmore {} {
     if {$lim - $l > 500} {
 	set lim [expr {$l + 500}]
     }
-    set last 0
-    for {} {$l < $lim} {incr l} {
-	set id [lindex $displayorder $l]
-	# shouldn't happen unless git log doesn't give all the commits...
-	if {![info exists commitdata($id)]} continue
-	if {![doesmatch $commitdata($id)]} continue
-	if {![info exists commitinfo($id)]} {
-	    getcommit $id
+    set found 0
+    set domore 1
+    if {$gdttype eq "containing:"} {
+	for {} {$l < $lim} {incr l} {
+	    set id [lindex $displayorder $l]
+	    # shouldn't happen unless git log doesn't give all the commits...
+	    if {![info exists commitdata($id)]} continue
+	    if {![doesmatch $commitdata($id)]} continue
+	    if {![info exists commitinfo($id)]} {
+		getcommit $id
+	    }
+	    set info $commitinfo($id)
+	    foreach f $info ty $fldtypes {
+		if {($findloc eq "All fields" || $findloc eq $ty) &&
+		    [doesmatch $f]} {
+		    set found 1
+		    break
+		}
+	    }
+	    if {$found} break
 	}
-	set info $commitinfo($id)
-	foreach f $info ty $fldtypes {
-	    if {($findloc eq "All fields" || $findloc eq $ty) &&
-		[doesmatch $f]} {
-		findselectline $l
-		notbusy finding
-		return 0
+    } else {
+	for {} {$l < $lim} {incr l} {
+	    set id [lindex $displayorder $l]
+	    if {![info exists fhighlights($l)]} {
+		askfilehighlight $l $id
+		if {$domore} {
+		    set domore 0
+		    set findcurline [expr {$l - 1}]
+		}
+	    } elseif {$fhighlights($l)} {
+		set found $domore
+		break
 	    }
 	}
+    }
+    if {$found} {
+	unset find_dirn
+	findselectline $l
+	notbusy finding
+	return 0
+    }
+    if {!$domore} {
+	flushhighlights
+	return 0
     }
     if {$l == $findstartline + 1} {
 	bell
 	unset findcurline
+	unset find_dirn
 	notbusy finding
 	return 0
     }
@@ -4284,8 +4274,9 @@ proc findmore {} {
 }
 
 proc findmorerev {} {
-    global commitdata commitinfo numcommits findstring findpattern findloc
+    global commitdata commitinfo numcommits findpattern findloc
     global findstartline findcurline displayorder
+    global find_dirn gdttype fhighlights
 
     set fldtypes {Headline Author Date Committer CDate Comments}
     set l $findcurline
@@ -4301,27 +4292,55 @@ proc findmorerev {} {
     if {$l - $lim > 500} {
 	set lim [expr {$l - 500}]
     }
-    set last 0
-    for {} {$l > $lim} {incr l -1} {
-	set id [lindex $displayorder $l]
-	if {![info exists commitdata($id)]} continue
-	if {![doesmatch $commitdata($id)]} continue
-	if {![info exists commitinfo($id)]} {
-	    getcommit $id
+    set found 0
+    set domore 1
+    if {$gdttype eq "containing:"} {
+	for {} {$l > $lim} {incr l -1} {
+	    set id [lindex $displayorder $l]
+	    if {![info exists commitdata($id)]} continue
+	    if {![doesmatch $commitdata($id)]} continue
+	    if {![info exists commitinfo($id)]} {
+		getcommit $id
+	    }
+	    set info $commitinfo($id)
+	    foreach f $info ty $fldtypes {
+		if {($findloc eq "All fields" || $findloc eq $ty) &&
+		    [doesmatch $f]} {
+		    set found 1
+		    break
+		}
+	    }
+	    if {$found} break
 	}
-	set info $commitinfo($id)
-	foreach f $info ty $fldtypes {
-	    if {($findloc eq "All fields" || $findloc eq $ty) &&
-		[doesmatch $f]} {
-		findselectline $l
-		notbusy finding
-		return 0
+    } else {
+	for {} {$l > $lim} {incr l -1} {
+	    set id [lindex $displayorder $l]
+	    if {![info exists fhighlights($l)]} {
+		askfilehighlight $l $id
+		if {$domore} {
+		    set domore 0
+		    set findcurline [expr {$l + 1}]
+		}
+	    } elseif {$fhighlights($l)} {
+		set found $domore
+		break
 	    }
 	}
+    }
+    if {$found} {
+	unset find_dirn
+	findselectline $l
+	notbusy finding
+	return 0
+    }
+    if {!$domore} {
+	flushhighlights
+	return 0
     }
     if {$l == -1} {
 	bell
 	unset findcurline
+	unset find_dirn
 	notbusy finding
 	return 0
     }
@@ -4330,7 +4349,7 @@ proc findmorerev {} {
 }
 
 proc findselectline {l} {
-    global findloc commentend ctext findcurline markingmatches
+    global findloc commentend ctext findcurline markingmatches gdttype
 
     set markingmatches 1
     set findcurline $l
@@ -4599,7 +4618,6 @@ proc selectline {l isnew} {
     catch {unset pending_select}
     $canv delete hover
     normalline
-    cancel_next_highlight
     unsel_reflist
     if {$l < 0 || $l >= $numcommits} return
     set y [expr {$canvy0 + $l * $linespc}]
@@ -4781,7 +4799,6 @@ proc unselectline {} {
     catch {unset currentid}
     allcanvs delete secsel
     rhighlight_none
-    cancel_next_highlight
 }
 
 proc reselectline {} {
@@ -8223,6 +8240,7 @@ set historyindex 0
 set fh_serial 0
 set nhl_names {}
 set highlight_paths {}
+set findpattern {}
 set searchdirn -forwards
 set boldrows {}
 set boldnamerows {}
@@ -8236,6 +8254,8 @@ set nextviewnum 1
 set curview 0
 set selectedview 0
 set selectedhlview None
+set highlight_related None
+set highlight_files {}
 set viewfiles(0) {}
 set viewperm(0) 0
 set viewargs(0) {}
