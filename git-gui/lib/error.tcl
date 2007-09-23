@@ -9,7 +9,7 @@ proc error_popup {msg} {
 	set cmd [list tk_messageBox \
 		-icon error \
 		-type ok \
-		-title "$title: error" \
+		-title [append "$title: " [mc "error"]] \
 		-message $msg]
 	if {[winfo ismapped .]} {
 		lappend cmd -parent .
@@ -25,7 +25,7 @@ proc warn_popup {msg} {
 	set cmd [list tk_messageBox \
 		-icon warning \
 		-type ok \
-		-title "$title: warning" \
+		-title [append "$title: " [mc "warning"]] \
 		-message $msg]
 	if {[winfo ismapped .]} {
 		lappend cmd -parent .
@@ -78,7 +78,7 @@ proc hook_failed_popup {hook msg} {
 		-font font_diff \
 		-yscrollcommand [list $w.m.sby set]
 	label $w.m.l2 \
-		-text {You must correct the above errors before committing.} \
+		-text [mc "You must correct the above errors before committing."] \
 		-anchor w \
 		-justify left \
 		-font font_uibold
@@ -99,6 +99,6 @@ proc hook_failed_popup {hook msg} {
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Return> "destroy $w"
-	wm title $w "[appname] ([reponame]): error"
+	wm title $w [append "[appname] ([reponame]): " [mc "error"]]
 	tkwait window $w
 }

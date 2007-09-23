@@ -24,14 +24,14 @@ proc do_stats {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text {Database Statistics}
+	label $w.header -text [mc "Database Statistics"]
 	pack $w.header -side top -fill x
 
 	frame $w.buttons -border 1
-	button $w.buttons.close -text Close \
+	button $w.buttons.close -text [mc Close] \
 		-default active \
 		-command [list destroy $w]
-	button $w.buttons.gc -text {Compress Database} \
+	button $w.buttons.gc -text [mc "Compress Database"] \
 		-default normal \
 		-command "destroy $w;do_gc"
 	pack $w.buttons.close -side right
@@ -40,16 +40,16 @@ proc do_stats {} {
 
 	frame $w.stat -borderwidth 1 -relief solid
 	foreach s {
-		{count           {Number of loose objects}}
-		{size            {Disk space used by loose objects} { KiB}}
-		{in-pack         {Number of packed objects}}
-		{packs           {Number of packs}}
-		{size-pack       {Disk space used by packed objects} { KiB}}
-		{prune-packable  {Packed objects waiting for pruning}}
-		{garbage         {Garbage files}}
+		{count           {mc "Number of loose objects"}}
+		{size            {mc "Disk space used by loose objects"} { KiB}}
+		{in-pack         {mc "Number of packed objects"}}
+		{packs           {mc "Number of packs"}}
+		{size-pack       {mc "Disk space used by packed objects"} { KiB}}
+		{prune-packable  {mc "Packed objects waiting for pruning"}}
+		{garbage         {mc "Garbage files"}}
 		} {
 		set name [lindex $s 0]
-		set label [lindex $s 1]
+		set label [eval [lindex $s 1]]
 		if {[catch {set value $stats($name)}]} continue
 		if {[llength $s] > 2} {
 			set value "$value[lindex $s 2]"
@@ -64,12 +64,12 @@ proc do_stats {} {
 	bind $w <Visibility> "grab $w; focus $w.buttons.close"
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [list destroy $w]
-	wm title $w "[appname] ([reponame]): Database Statistics"
+	wm title $w [append "[appname] ([reponame]): " [mc "Database Statistics"]]
 	tkwait window $w
 }
 
 proc do_gc {} {
-	set w [console::new {gc} {Compressing the object database}]
+	set w [console::new {gc} [mc "Compressing the object database"]]
 	console::chain $w {
 		{exec git pack-refs --prune}
 		{exec git reflog expire --all}
@@ -80,7 +80,7 @@ proc do_gc {} {
 
 proc do_fsck_objects {} {
 	set w [console::new {fsck-objects} \
-		{Verifying the object database with fsck-objects}]
+		[mc "Verifying the object database with fsck-objects"]]
 	set cmd [list git fsck-objects]
 	lappend cmd --full
 	lappend cmd --cache
@@ -105,11 +105,11 @@ proc hint_gc {} {
 		set objects_current [expr {$objects_current * 256}]
 		set object_limit    [expr {$object_limit    * 256}]
 		if {[ask_popup \
-			"This repository currently has approximately $objects_current loose objects.
+			[mc "This repository currently has approximately %i loose objects.
 
-To maintain optimal performance it is strongly recommended that you compress the database when more than $object_limit loose objects exist.
+To maintain optimal performance it is strongly recommended that you compress the database when more than %i loose objects exist.
 
-Compress the database now?"] eq yes} {
+Compress the database now?" $objects_current $object_limit]] eq yes} {
 			do_gc
 		}
 	}

@@ -13,7 +13,8 @@ proc update_indexinfo {msg pathList after} {
 	if {$batch > 25} {set batch 25}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
@@ -68,7 +69,8 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 	}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		[expr {100.0 * $update_index_cp / $totalCnt}]]
@@ -86,7 +88,8 @@ proc update_index {msg pathList after} {
 	if {$batch > 25} {set batch 25}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
@@ -145,7 +148,8 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 	}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		[expr {100.0 * $update_index_cp / $totalCnt}]]
@@ -163,7 +167,8 @@ proc checkout_index {msg pathList after} {
 	if {$batch > 25} {set batch 25}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
@@ -218,7 +223,8 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 	}
 
 	ui_status [format \
-		"$msg... %i/%i files (%.2f%%)" \
+		"%s... %i/%i files (%.2f%%)" \
+		$msg \
 		$update_index_cp \
 		$totalCnt \
 		[expr {100.0 * $update_index_cp / $totalCnt}]]
@@ -262,7 +268,7 @@ proc do_unstage_selection {} {
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		unstage_helper \
-			"Unstaging [short_path $current_diff_path] from commit" \
+			[mc "Unstaging %s from commit" [short_path $current_diff_path]] \
 			[list $current_diff_path]
 	}
 }
@@ -306,7 +312,7 @@ proc do_add_selection {} {
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		add_helper \
-			"Adding [short_path $current_diff_path]" \
+			[mc "Adding %s" [short_path $current_diff_path]] \
 			[list $current_diff_path]
 	}
 }
@@ -345,26 +351,35 @@ proc revert_helper {txt paths} {
 		}
 	}
 
+
+	# Split question between singular and plural cases, because
+	# such distinction is needed in some languages. Previously, the
+	# code used "Revert changes in" for both, but that can't work
+	# in languages where 'in' must be combined with word from
+	# rest of string (in diffrent way for both cases of course).
+	#
+	# FIXME: Unfortunately, even that isn't enough in some languages
+	# as they have quite complex plural-form rules. Unfortunately,
+	# msgcat doesn't seem to support that kind of string translation.
+	#
 	set n [llength $pathList]
 	if {$n == 0} {
 		unlock_index
 		return
 	} elseif {$n == 1} {
-		set s "[short_path [lindex $pathList]]"
+		set query [mc "Revert changes in file %s?" [short_path [lindex $pathList]]]
 	} else {
-		set s "these $n files"
+		set query [mc "Revert changes in these %i files?" $n]
 	}
 
 	set reply [tk_dialog \
 		.confirm_revert \
 		"[appname] ([reponame])" \
-		"Revert changes in $s?
-
-Any unstaged changes will be permanently lost by the revert." \
+		[mc "Any unstaged changes will be permanently lost by the revert."] \
 		question \
 		1 \
-		{Do Nothing} \
-		{Revert Changes} \
+		[mc "Do Nothing"] \
+		[mc "Revert Changes"] \
 		]
 	if {$reply == 1} {
 		checkout_index \
