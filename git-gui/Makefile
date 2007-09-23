@@ -141,7 +141,7 @@ $(PO_TEMPLATE): $(SCRIPT_SH) $(ALL_LIBFILES)
 update-po:: $(PO_TEMPLATE)
 	$(foreach p, $(ALL_POFILES), echo Updating $p ; msgmerge -U $p $(PO_TEMPLATE) ; )
 $(ALL_MSGFILES): %.msg : %.po
-	$(QUIET_MSGFMT0)$(MSGFMT) --statistics --tcl $< -l $(basename $(notdir $<)) -d $(dir $@) $(QUIET_MSGFMT1)
+	$(QUIET_MSGFMT0)touch $@ $(QUIET_MSGFMT1)
 
 lib/tclIndex: $(ALL_LIBFILES)
 	$(QUIET_INDEX)if echo \
