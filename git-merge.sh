@@ -168,9 +168,30 @@ parse_option () {
 	args_left=$#
 }
 
+parse_config () {
+	while test $# -gt 0
+	do
+		parse_option "$@" || usage
+		while test $args_left -lt $#
+		do
+			shift
+		done
+	done
+}
+
 test $# != 0 || usage
 
 have_message=
+
+if branch=$(git-symbolic-ref -q HEAD)
+then
+	mergeopts=$(git config "branch.${branch#refs/heads/}.mergeoptions")
+	if test -n "$mergeopts"
+	then
+		parse_config $mergeopts
+	fi
+fi
+
 while parse_option "$@"
 do
 	while test $args_left -lt $#

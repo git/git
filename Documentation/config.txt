@@ -337,6 +337,12 @@ branch.<name>.merge::
 	branch.<name>.merge to the desired branch, and use the special setting
 	`.` (a period) for branch.<name>.remote.
 
+branch.<name>.mergeoptions::
+	Sets default options for merging into branch <name>. The syntax and
+	supported options are equal to that of gitlink:git-merge[1], but
+	option values containing whitespace characters are currently not
+	supported.
+
 clean.requireForce::
 	A boolean to make git-clean do nothing unless given -f or -n.  Defaults
 	to false.

@@ -341,4 +341,58 @@ test_expect_success 'merge c1 with c2 and c3 (squash)' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'merge c1 with c2 (no-commit in config)' '
+	git reset --hard c1 &&
+	git config branch.master.mergeoptions "--no-commit" &&
+	git merge c2 &&
+	verify_merge file result.1-5 &&
+	verify_head $c1 &&
+	verify_mergeheads $c2
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c1 with c2 (squash in config)' '
+	git reset --hard c1 &&
+	git config branch.master.mergeoptions "--squash" &&
+	git merge c2 &&
+	verify_merge file result.1-5 &&
+	verify_head $c1 &&
+	verify_no_mergehead &&
+	verify_diff squash.1-5 .git/SQUASH_MSG "[OOPS] bad squash message"
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'override config option -n' '
+	git reset --hard c1 &&
+	git config branch.master.mergeoptions "-n" &&
+	test_tick &&
+	git merge --summary c2 >diffstat.txt &&
+	verify_merge file result.1-5 msg.1-5 &&
+	verify_parents $c1 $c2 &&
+	if ! grep -e "^ file | \+2 +-$" diffstat.txt
+	then
+		echo "[OOPS] diffstat was not generated"
+	fi
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'override config option --summary' '
+	git reset --hard c1 &&
+	git config branch.master.mergeoptions "--summary" &&
+	test_tick &&
+	git merge -n c2 >diffstat.txt &&
+	verify_merge file result.1-5 msg.1-5 &&
+	verify_parents $c1 $c2 &&
+	if grep -e "^ file | \+2 +-$" diffstat.txt
+	then
+		echo "[OOPS] diffstat was generated"
+		false
+	fi
+'
+
+test_debug 'gitk --all'
+
 test_done
