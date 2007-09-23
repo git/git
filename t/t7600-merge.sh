@@ -395,4 +395,26 @@ test_expect_success 'override config option --summary' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'merge c1 with c2 (override --no-commit)' '
+	git reset --hard c1 &&
+	git config branch.master.mergeoptions "--no-commit" &&
+	test_tick &&
+	git merge --commit c2 &&
+	verify_merge file result.1-5 msg.1-5 &&
+	verify_parents $c1 $c2
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c1 with c2 (override --squash)' '
+	git reset --hard c1 &&
+	git config branch.master.mergeoptions "--squash" &&
+	test_tick &&
+	git merge --no-squash c2 &&
+	verify_merge file result.1-5 msg.1-5 &&
+	verify_parents $c1 $c2
+'
+
+test_debug 'gitk --all'
+
 test_done

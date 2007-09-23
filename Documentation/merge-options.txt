@@ -10,6 +10,10 @@
 	not autocommit, to give the user a chance to inspect and
 	further tweak the merge result before committing.
 
+--commit::
+	Perform the merge and commit the result. This option can
+	be used to override --no-commit.
+
 --squash::
 	Produce the working tree and index state as if a real
 	merge happened, but do not actually make a commit or
@@ -18,6 +22,10 @@
 	commit.  This allows you to create a single commit on
 	top of the current branch whose effect is the same as
 	merging another branch (or more in case of an octopus).
+
+--no-squash::
+	Perform the merge and commit the result. This option can
+	be used to override --squash.
 
 -s <strategy>, \--strategy=<strategy>::
 	Use the given merge strategy; can be supplied more than
