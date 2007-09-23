@@ -9,7 +9,7 @@ SUBDIRECTORY_OK='Yes'
 
 no_update_info= all_into_one= remove_redundant=
 local= quiet= no_reuse= extra=
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	-n)	no_update_info=t ;;

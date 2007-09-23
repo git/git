@@ -5,7 +5,7 @@ SUBDIRECTORY_ON=Yes
 
 dry_run=""
 quilt_author=""
-while case "$#" in 0) break;; esac
+while test $# != 0
 do
 	case "$1" in
 	--au=*|--aut=*|--auth=*|--autho=*|--author=*)

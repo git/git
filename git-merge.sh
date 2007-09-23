@@ -122,7 +122,7 @@ merge_name () {
 case "$#" in 0) usage ;; esac
 
 have_message=
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\

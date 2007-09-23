@@ -89,7 +89,7 @@ force_author=
 only_include_assumed=
 untracked_files=
 templatefile="`git config commit.template`"
-while case "$#" in 0) break;; esac
+while test $# != 0
 do
 	case "$1" in
 	-F|--F|-f|--f|--fi|--fil|--file)
