@@ -27,6 +27,15 @@
 	Perform the merge and commit the result. This option can
 	be used to override --squash.
 
+--no-ff::
+	Generate a merge commit even if the merge resolved as a
+	fast-forward.
+
+--ff::
+	Do not generate a merge commit if the merge resolved as
+	a fast-forward, only update the branch pointer. This is
+	the default behavior of git-merge.
+
 -s <strategy>, \--strategy=<strategy>::
 	Use the given merge strategy; can be supplied more than
 	once to specify them in the order they should be tried.

@@ -417,4 +417,24 @@ test_expect_success 'merge c1 with c2 (override --squash)' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'merge c0 with c1 (no-ff)' '
+	git reset --hard c0 &&
+	test_tick &&
+	git merge --no-ff c1 &&
+	verify_merge file result.1 &&
+	verify_parents $c0 $c1
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c0 with c1 (ff overrides no-ff)' '
+	git reset --hard c0 &&
+	git config branch.master.mergeoptions "--no-ff" &&
+	git merge --ff c1 &&
+	verify_merge file result.1 &&
+	verify_head $c1
+'
+
+test_debug 'gitk --all'
+
 test_done

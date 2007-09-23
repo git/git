@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-USAGE='[-n] [--summary] [--[no-]commit] [--[no-]squash] [-s <strategy>] [-m=<merge-message>] <commit>+'
+USAGE='[-n] [--summary] [--[no-]commit] [--[no-]squash] [--[no-]ff] [-s <strategy>] [-m=<merge-message>] <commit>+'
 
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
@@ -127,13 +127,17 @@ parse_option () {
 	--summary)
 		show_diffstat=t ;;
 	--sq|--squ|--squa|--squas|--squash)
-		squash=t no_commit=t ;;
+		allow_fast_forward=t squash=t no_commit=t ;;
 	--no-sq|--no-squ|--no-squa|--no-squas|--no-squash)
-		squash= no_commit= ;;
+		allow_fast_forward=t squash= no_commit= ;;
 	--c|--co|--com|--comm|--commi|--commit)
-		squash= no_commit= ;;
+		allow_fast_forward=t squash= no_commit= ;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
-		squash= no_commit=t ;;
+		allow_fast_forward=t squash= no_commit=t ;;
+	--ff)
+		allow_fast_forward=t squash= no_commit= ;;
+	--no-ff)
+		allow_fast_forward=false squash= no_commit= ;;
 	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
 		--strateg=*|--strategy=*|\
 	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
@@ -477,7 +481,13 @@ done
 # auto resolved the merge cleanly.
 if test '' != "$result_tree"
 then
-    parents=$(git show-branch --independent "$head" "$@" | sed -e 's/^/-p /')
+    if test "$allow_fast_forward" = "t"
+    then
+        parents=$(git show-branch --independent "$head" "$@")
+    else
+        parents=$(git rev-parse "$head" "$@")
+    fi
+    parents=$(echo "$parents" | sed -e 's/^/-p /')
     result_commit=$(printf '%s\n' "$merge_msg" | git commit-tree $result_tree $parents) || exit
     finish "$result_commit" "Merge made by $wt_strategy."
     dropsave
