@@ -59,7 +59,7 @@ finish_up_to_date () {
 squash_message () {
 	echo Squashed commit of the following:
 	echo
-	git log --no-merges ^"$head" $remote
+	git log --no-merges ^"$head" $remoteheads
 }
 
 finish () {
