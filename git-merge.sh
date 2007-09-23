@@ -119,11 +119,7 @@ merge_name () {
 	fi
 }
 
-case "$#" in 0) usage ;; esac
-
-have_message=
-while test $# != 0
-do
+parse_option () {
 	case "$1" in
 	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
 		--no-summa|--no-summar|--no-summary)
@@ -166,9 +162,21 @@ do
 		have_message=t
 		;;
 	-*)	usage ;;
-	*)	break ;;
+	*)	return 1 ;;
 	esac
 	shift
+	args_left=$#
+}
+
+test $# != 0 || usage
+
+have_message=
+while parse_option "$@"
+do
+	while test $args_left -lt $#
+	do
+		shift
+	done
 done
 
 if test -z "$show_diffstat"; then
