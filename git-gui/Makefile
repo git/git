@@ -129,7 +129,7 @@ $(GITGUI_BUILT_INS): git-gui
 	$(QUIET_BUILT_IN)rm -f $@ && ln git-gui $@
 
 XGETTEXT   ?= xgettext
-MSGFMT     ?= msgfmt
+MSGFMT     ?= po/po2msg.sh
 msgsdir     = $(gg_libdir)/msgs
 msgsdir_SQ  = $(subst ','\'',$(msgsdir))
 PO_TEMPLATE = po/git-gui.pot
