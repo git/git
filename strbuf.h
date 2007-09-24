@@ -78,6 +78,7 @@ static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
 
 /*----- content related -----*/
 extern void strbuf_rtrim(struct strbuf *);
+extern int strbuf_cmp(struct strbuf *, struct strbuf *);
 
 /*----- add data in your buffer -----*/
 static inline void strbuf_addch(struct strbuf *sb, int c) {

@@ -50,6 +50,18 @@ void strbuf_rtrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
+int strbuf_cmp(struct strbuf *a, struct strbuf *b)
+{
+	int cmp;
+	if (a->len < b->len) {
+		cmp = memcmp(a->buf, b->buf, a->len);
+		return cmp ? cmp : -1;
+	} else {
+		cmp = memcmp(a->buf, b->buf, b->len);
+		return cmp ? cmp : a->len != b->len;
+	}
+}
+
 void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
 				   const void *data, size_t dlen)
 {
