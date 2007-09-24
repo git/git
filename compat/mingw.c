@@ -76,9 +76,6 @@ static int do_lstat(const char *file_name, struct stat *buf)
 	case ERROR_NOT_ENOUGH_MEMORY:
 		errno = ENOMEM;
 		break;
-	case ERROR_INVALID_NAME:
-		errno = EFAULT;
-		break;
 	default:
 		errno = ENOENT;
 		break;
