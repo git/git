@@ -470,6 +470,32 @@ method _do_clone2 {} {
 			[mc "buckets"]
 		update
 
+		if {[file exists [file join $objdir info alternates]]} {
+			set pwd [pwd]
+			if {[catch {
+				file mkdir [gitdir objects info]
+				set f_in [open [file join $objdir info alternates] r]
+				set f_cp [open [gitdir objects info alternates] w]
+				fconfigure $f_in -translation binary -encoding binary
+				fconfigure $f_cp -translation binary -encoding binary
+				cd $objdir
+				while {[gets $f_in line] >= 0} {
+					if {[is_Cygwin]} {
+						puts $f_cp [exec cygpath --unix --absolute $line]
+					} else {
+						puts $f_cp [file normalize $line]
+					}
+				}
+				close $f_in
+				close $f_cp
+				cd $pwd
+			} err]} {
+				catch {cd $pwd}
+				_clone_failed $this [mc "Unable to copy objects/info/alternates: %s" $err]
+				return
+			}
+		}
+
 		set tolink  [list]
 		set buckets [glob \
 			-tails \
