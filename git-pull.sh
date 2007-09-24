@@ -16,7 +16,7 @@ test -z "$(git ls-files -u)" ||
 	die "You are in the middle of a conflicted merge."
 
 strategy_args= no_summary= no_commit= squash=
-while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac
+while :
 do
 	case "$1" in
 	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
@@ -46,8 +46,8 @@ do
 	-h|--h|--he|--hel|--help)
 		usage
 		;;
-	-*)
-		# Pass thru anything that is meant for fetch.
+	*)
+		# Pass thru anything that may be meant for fetch.
 		break
 		;;
 	esac

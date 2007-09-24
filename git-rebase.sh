@@ -122,15 +122,14 @@ finish_rb_merge () {
 
 is_interactive () {
 	test -f "$dotest"/interactive ||
-	while case $#,"$1" in 0,|*,-i|*,--interactive) break ;; esac
-	do
+	while :; do case $#,"$1" in 0,|*,-i|*,--interactive) break ;; esac
 		shift
 	done && test -n "$1"
 }
 
 is_interactive "$@" && exec git-rebase--interactive "$@"
 
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	--continue)

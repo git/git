@@ -268,7 +268,7 @@ merge_file () {
     cleanup_temp_files
 }
 
-while case $# in 0) break ;; esac
+while test $# != 0
 do
     case "$1" in
 	-t|--tool*)

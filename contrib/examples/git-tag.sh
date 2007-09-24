@@ -14,7 +14,7 @@ username=
 list=
 verify=
 LINES=0
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
     case "$1" in
     -a)
