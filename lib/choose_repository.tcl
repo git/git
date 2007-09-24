@@ -496,10 +496,7 @@ method _do_clone2 {} {
 					[file join .git objects $i] \
 					[file join $objdir $i]
 			} err]} {
-			info_popup [strcat \
-				[mc "Hardlinks are unavailable.  Falling back to copying."] \
-				"\n" \
-				$err]
+			info_popup [mc "Hardlinks are unavailable.  Falling back to copying."]
 			set i [_copy_files $this $objdir $tolink]
 		} else {
 			set i [_link_files $this $objdir [lrange $tolink 1 end]]
