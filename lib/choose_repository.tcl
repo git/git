@@ -123,6 +123,7 @@ constructor pick {} {
 		grab $top
 		focus $top
 	"
+	wm deiconify $top
 	tkwait variable @done
 
 	if {$top eq {.}} {
