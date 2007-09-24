@@ -462,20 +462,42 @@ method _do_clone2 {} {
 
 	switch -exact -- $clone_type {
 	hardlink {
+		set o_cons [status_bar::new $w_body]
+		pack $w_body -fill x -padx 10
+
+		$o_cons start \
+			[mc "Counting objects"] \
+			[mc "buckets"]
+		update
+
 		set tolink  [list]
+		set buckets [glob \
+			-tails \
+			-nocomplain \
+			-directory [file join $objdir] ??]
+		set bcnt [expr {[llength $buckets] + 2}]
+		set bcur 1
+		$o_cons update $bcur $bcnt
+		update
+
 		file mkdir [file join .git objects pack]
 		foreach i [glob -tails -nocomplain \
 			-directory [file join $objdir pack] *] {
 			lappend tolink [file join pack $i]
 		}
-		foreach i [glob -tails -nocomplain \
-			-directory [file join $objdir] ??] {
+		$o_cons update [incr bcur] $bcnt
+		update
+
+		foreach i $buckets {
 			file mkdir [file join .git objects $i]
 			foreach j [glob -tails -nocomplain \
 				-directory [file join $objdir $i] *] {
 				lappend tolink [file join $i $j]
 			}
+			$o_cons update [incr bcur] $bcnt
+			update
 		}
+		$o_cons stop
 
 		if {$tolink eq {}} {
 			info_popup [strcat \
@@ -483,12 +505,10 @@ method _do_clone2 {} {
 				"\n" \
 				[mc "The 'master' branch has not been initialized."] \
 				]
+			destroy $w_body
 			set done 1
 			return
 		}
-
-		set o_cons [status_bar::new $w_body]
-		pack $w_body -fill x -padx 10
 
 		set i [lindex $tolink 0]
 		if {[catch {
