@@ -97,6 +97,19 @@ finish () {
 		fi
 		;;
 	esac
+
+	# Run a post-merge hook
+        if test -x "$GIT_DIR"/hooks/post-merge
+        then
+	    case "$squash" in
+	    t)
+                "$GIT_DIR"/hooks/post-merge 1
+		;;
+	    '')
+                "$GIT_DIR"/hooks/post-merge 0
+		;;
+	    esac
+        fi
 }
 
 merge_name () {
