@@ -72,8 +72,8 @@ mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
-	count=$(($(wc -l < "$DONE")))
-	total=$(($count+$(wc -l < "$TODO")))
+	count=$(($(grep -ve '^$' -e '^#' < "$DONE" | wc -l)))
+	total=$(($count+$(grep -ve '^$' -e '^#' < "$TODO" | wc -l)))
 	printf "Rebasing (%d/%d)\r" $count $total
 	test -z "$VERBOSE" || echo
 }
