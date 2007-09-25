@@ -41,9 +41,10 @@ output () {
 		test $status != 0 &&
 			cat "$DOTEST"/output
 		return $status
-	;;
+		;;
 	*)
 		"$@"
+		;;
 	esac
 }
 
@@ -63,6 +64,7 @@ comment_for_reflog () {
 	''|rebase*)
 		GIT_REFLOG_ACTION="rebase -i ($1)"
 		export GIT_REFLOG_ACTION
+		;;
 	esac
 }
 
@@ -96,13 +98,18 @@ die_abort () {
 	die "$1"
 }
 
+has_action () {
+	grep -vqe '^$' -e '^#' "$1"
+}
+
 pick_one () {
 	no_ff=
 	case "$1" in -n) sha1=$2; no_ff=t ;; *) sha1=$1 ;; esac
 	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$REWRITTEN" &&
 		pick_one_preserving_merges "$@" && return
-	parent_sha1=$(git rev-parse --verify $sha1^ 2>/dev/null)
+	parent_sha1=$(git rev-parse --verify $sha1^) ||
+		die "Could not get the parent of $sha1"
 	current_sha1=$(git rev-parse --verify HEAD)
 	if test $no_ff$current_sha1 = $parent_sha1; then
 		output git reset --hard $sha1
@@ -130,7 +137,7 @@ pick_one_preserving_merges () {
 	fast_forward=t
 	preserve=t
 	new_parents=
-	for p in $(git rev-list --parents -1 $sha1 | cut -d\  -f2-)
+	for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)
 	do
 		if test -f "$REWRITTEN"/$p
 		then
@@ -142,41 +149,43 @@ pick_one_preserving_merges () {
 				;; # do nothing; that parent is already there
 			*)
 				new_parents="$new_parents $new_p"
+				;;
 			esac
 		fi
 	done
 	case $fast_forward in
 	t)
 		output warn "Fast forward to $sha1"
-		test $preserve=f && echo $sha1 > "$REWRITTEN"/$sha1
+		test $preserve = f || echo $sha1 > "$REWRITTEN"/$sha1
 		;;
 	f)
 		test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
 
-		first_parent=$(expr "$new_parents" : " \([^ ]*\)")
+		first_parent=$(expr "$new_parents" : ' \([^ ]*\)')
 		# detach HEAD to current parent
 		output git checkout $first_parent 2> /dev/null ||
 			die "Cannot move HEAD to $first_parent"
 
 		echo $sha1 > "$DOTEST"/current-commit
 		case "$new_parents" in
-		\ *\ *)
+		' '*' '*)
 			# redo merge
 			author_script=$(get_author_ident_from_commit $sha1)
 			eval "$author_script"
-			msg="$(git cat-file commit $sha1 | \
-				sed -e '1,/^$/d' -e "s/[\"\\]/\\\\&/g")"
+			msg="$(git cat-file commit $sha1 | sed -e '1,/^$/d')"
 			# NEEDSWORK: give rerere a chance
 			if ! output git merge $STRATEGY -m "$msg" $new_parents
 			then
-				echo "$msg" > "$GIT_DIR"/MERGE_MSG
+				printf "%s\n" "$msg" > "$GIT_DIR"/MERGE_MSG
 				die Error redoing merge $sha1
 			fi
 			;;
 		*)
 			output git cherry-pick $STRATEGY "$@" ||
 				die_with_patch $sha1 "Could not pick $sha1"
+			;;
 		esac
+		;;
 	esac
 }
 
@@ -213,12 +222,11 @@ peek_next_command () {
 }
 
 do_next () {
-	test -f "$DOTEST"/message && rm "$DOTEST"/message
-	test -f "$DOTEST"/author-script && rm "$DOTEST"/author-script
-	test -f "$DOTEST"/amend && rm "$DOTEST"/amend
+	rm -f "$DOTEST"/message "$DOTEST"/author-script \
+		"$DOTEST"/amend || exit
 	read command sha1 rest < "$TODO"
 	case "$command" in
-	\#|'')
+	'#'*|'')
 		mark_action_done
 		;;
 	pick)
@@ -246,7 +254,7 @@ do_next () {
 	squash)
 		comment_for_reflog squash
 
-		test -z "$(grep -ve '^$' -e '^#' < $DONE)" &&
+		has_action "$DONE" ||
 			die "Cannot 'squash' without a previous commit"
 
 		mark_action_done
@@ -256,11 +264,12 @@ do_next () {
 			EDIT_COMMIT=
 			USE_OUTPUT=output
 			cp "$MSG" "$SQUASH_MSG"
-		;;
+			;;
 		*)
 			EDIT_COMMIT=-e
 			USE_OUTPUT=
-			test -f "$SQUASH_MSG" && rm "$SQUASH_MSG"
+			rm -f "$SQUASH_MSG" || exit
+			;;
 		esac
 
 		failed=f
@@ -280,11 +289,13 @@ do_next () {
 			warn
 			warn "Could not apply $sha1... $rest"
 			die_with_patch $sha1 ""
+			;;
 		esac
 		;;
 	*)
 		warn "Unknown command: $command $sha1 $rest"
 		die_with_patch $sha1 "Please fix this in the file $TODO."
+		;;
 	esac
 	test -s "$TODO" && return
 
@@ -473,17 +484,18 @@ EOF
 			$UPSTREAM...$HEAD | \
 			sed -n "s/^>/pick /p" >> "$TODO"
 
-		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&
+		has_action "$TODO" ||
 			die_abort "Nothing to do"
 
 		cp "$TODO" "$TODO".backup
 		git_editor "$TODO" ||
 			die "Could not execute editor"
 
-		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&
+		has_action "$TODO" ||
 			die_abort "Nothing to do"
 
 		output git checkout $ONTO && do_rest
+		;;
 	esac
 	shift
 done
