@@ -145,17 +145,6 @@ sign `$` upon checkout.  Any byte sequence that begins with
 with `$Id$` upon check-in.
 
 
-Interaction between checkin/checkout attributes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In the check-in codepath, the worktree file is first converted
-with `ident` (if specified), and then with `crlf` (again, if
-specified and applicable).
-
-In the check-out codepath, the blob content is first converted
-with `crlf`, and then `ident`.
-
-
 `filter`
 ^^^^^^^^
 
