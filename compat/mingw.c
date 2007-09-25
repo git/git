@@ -116,17 +116,20 @@ int git_lstat(const char *file_name, struct stat *buf)
 	return do_lstat(alt_name, buf);
 }
 
+#undef fstat
 int git_fstat(int fd, struct stat *buf)
 {
 	HANDLE fh = (HANDLE)_get_osfhandle(fd);
 	BY_HANDLE_FILE_INFORMATION fdata;
-	char dummy[sizeof(void*)];
-	int s = sizeof(void*);
 
 	if (fh == INVALID_HANDLE_VALUE) {
 		errno = EBADF;
 		return -1;
 	}
+	/* direct non-file handles to MS's fstat() */
+	if (GetFileType(fh) != FILE_TYPE_DISK)
+		return fstat(fd, buf);
+
 	if (GetFileInformationByHandle(fh, &fdata)) {
 		int fMode = S_IREAD;
 		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -148,22 +151,7 @@ int git_fstat(int fd, struct stat *buf)
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
 		return 0;
 	}
-	switch (GetLastError()) {
-	case ERROR_INVALID_FUNCTION:
-		/* check for socket */
-		if (getsockopt((int)fh, SOL_SOCKET, SO_KEEPALIVE, dummy, &s) &&
-		    WSAGetLastError() == WSAENOTSOCK)
-			goto badf;
-		memset(buf, sizeof(*buf), 0);
-		buf->st_mode = S_IREAD|S_IWRITE;
-		buf->st_mode |= 0x140000; /* S_IFSOCK */
-		return 0;
-	default:
-	case ERROR_INVALID_HANDLE:
-	badf:
-		errno = EBADF;
-		break;
-	}
+	errno = EBADF;
 	return -1;
 }
 
