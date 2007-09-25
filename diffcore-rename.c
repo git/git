@@ -184,7 +184,8 @@ static int estimate_similarity(struct diff_filespec *src,
 	if (base_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
-	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
+	if ((!src->cnt_data && diff_populate_filespec(src, 0))
+		|| (!dst->cnt_data && diff_populate_filespec(dst, 0)))
 		return 0; /* error but caught downstream */
 
 
@@ -377,10 +378,10 @@ void diffcore_rename(struct diff_options *options)
 			m->score = estimate_similarity(one, two,
 						       minimum_score);
 			m->name_score = basename_same(one, two);
-			diff_free_filespec_data(one);
+			diff_free_filespec_data_large(one);
 		}
 		/* We do not need the text anymore */
-		diff_free_filespec_data(two);
+		diff_free_filespec_data_large(two);
 		dst_cnt++;
 	}
 	/* cost matrix sorted by most to least similar pair */

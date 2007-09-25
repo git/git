@@ -1675,7 +1675,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	return 0;
 }
 
-void diff_free_filespec_data(struct diff_filespec *s)
+void diff_free_filespec_data_large(struct diff_filespec *s)
 {
 	if (s->should_free)
 		free(s->data);
@@ -1686,6 +1686,11 @@ void diff_free_filespec_data(struct diff_filespec *s)
 		s->should_free = s->should_munmap = 0;
 		s->data = NULL;
 	}
+}
+
+void diff_free_filespec_data(struct diff_filespec *s)
+{
+	diff_free_filespec_data_large(s);
 	free(s->cnt_data);
 	s->cnt_data = NULL;
 }
