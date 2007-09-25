@@ -25,7 +25,6 @@ git-clone
 git-commit
 git-commit-tree
 git-config
-git-convert-objects
 git-count-objects
 git-cvsexportcommit
 git-cvsimport

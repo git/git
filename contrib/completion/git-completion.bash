@@ -299,7 +299,6 @@ __git_commands ()
 		check-attr)       : plumbing;;
 		check-ref-format) : plumbing;;
 		commit-tree)      : plumbing;;
-		convert-objects)  : plumbing;;
 		cvsexportcommit)  : export;;
 		cvsimport)        : import;;
 		cvsserver)        : daemon;;
