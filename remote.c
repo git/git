@@ -416,7 +416,7 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 	int i;
 
 	if (find_src) {
-		if (refspec->dst == NULL)
+		if (!refspec->dst)
 			return error("find_tracking: need either src or dst");
 		needle = refspec->dst;
 		result = &refspec->src;
@@ -613,7 +613,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	if (!matched_src)
 		errs = 1;
 
-	if (dst_value == NULL)
+	if (!dst_value)
 		dst_value = matched_src->name;
 
 	switch (count_refspec_match(dst_value, dst, &matched_dst)) {
@@ -633,7 +633,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		      dst_value);
 		break;
 	}
-	if (errs || matched_dst == NULL)
+	if (errs || !matched_dst)
 		return 1;
 	if (matched_dst->peer_ref) {
 		errs = 1;
