@@ -80,7 +80,7 @@ cat "$1".tmp
 action=pick
 for line in $FAKE_LINES; do
 	case $line in
-	squash)
+	squash|edit)
 		action="$line";;
 	*)
 		echo sed -n "${line}s/^pick/$action/p"
@@ -295,6 +295,18 @@ test_expect_success 'ignore patch if in upstream' '
 	git cherry-pick $HEAD &&
 	EXPECT_COUNT=1 git rebase -i $HEAD &&
 	test $HEAD = $(git rev-parse HEAD^)
+'
+
+test_expect_success '--continue tries to commit, even for "edit"' '
+	parent=$(git rev-parse HEAD^) &&
+	test_tick &&
+	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
+	echo edited > file7 &&
+	git add file7 &&
+	FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue &&
+	test edited = $(git show HEAD:file7) &&
+	git show HEAD | grep chouette &&
+	test $parent = $(git rev-parse HEAD^)
 '
 
 test_done

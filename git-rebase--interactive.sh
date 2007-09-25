@@ -77,15 +77,16 @@ mark_action_done () {
 }
 
 make_patch () {
-	parent_sha1=$(git rev-parse --verify "$1"^ 2> /dev/null)
+	parent_sha1=$(git rev-parse --verify "$1"^) ||
+		die "Cannot get patch for $1^"
 	git diff "$parent_sha1".."$1" > "$DOTEST"/patch
+	test -f "$DOTEST"/message ||
+		git cat-file commit "$1" | sed "1,/^$/d" > "$DOTEST"/message
+	test -f "$DOTEST"/author-script ||
+		get_author_ident_from_commit "$1" > "$DOTEST"/author-script
 }
 
 die_with_patch () {
-	test -f "$DOTEST"/message ||
-		git cat-file commit $sha1 | sed "1,/^$/d" > "$DOTEST"/message
-	test -f "$DOTEST"/author-script ||
-		get_author_ident_from_commit $sha1 > "$DOTEST"/author-script
 	make_patch "$1"
 	die "$2"
 }
@@ -214,6 +215,7 @@ peek_next_command () {
 do_next () {
 	test -f "$DOTEST"/message && rm "$DOTEST"/message
 	test -f "$DOTEST"/author-script && rm "$DOTEST"/author-script
+	test -f "$DOTEST"/amend && rm "$DOTEST"/amend
 	read command sha1 rest < "$TODO"
 	case "$command" in
 	\#|'')
@@ -233,6 +235,7 @@ do_next () {
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		make_patch $sha1
+		: > "$DOTEST"/amend
 		warn
 		warn "You can amend the commit now, with"
 		warn
@@ -330,7 +333,9 @@ do
 		git update-index --refresh &&
 		git diff-files --quiet &&
 		! git diff-index --cached --quiet HEAD &&
-		. "$DOTEST"/author-script &&
+		. "$DOTEST"/author-script && {
+			test ! -f "$DOTEST"/amend || git reset --soft HEAD^
+		} &&
 		export GIT_AUTHOR_NAME GIT_AUTHOR_NAME GIT_AUTHOR_DATE &&
 		git commit -F "$DOTEST"/message -e
 
