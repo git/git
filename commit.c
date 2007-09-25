@@ -917,9 +917,6 @@ long format_commit_message(const struct commit *commit, const void *format,
 	}
 	if (msg[i])
 		table[IBODY].value = xstrdup(msg + i);
-	for (i = 0; i < ARRAY_SIZE(table); i++)
-		if (!table[i].value)
-			interp_set_entry(table, i, "<unknown>");
 
 	do {
 		char *buf = *buf_p;
