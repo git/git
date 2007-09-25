@@ -2,6 +2,10 @@ all::
 
 # Define V=1 to have a more verbose compile.
 #
+# Define NO_MSGFMT if you do not have msgfmt from the GNU gettext
+# package and want to use our rough pure Tcl po->msg translator.
+# TCL_PATH must be vaild for this to work.
+#
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -129,7 +133,12 @@ $(GITGUI_BUILT_INS): git-gui
 	$(QUIET_BUILT_IN)rm -f $@ && ln git-gui $@
 
 XGETTEXT   ?= xgettext
-MSGFMT     ?= msgfmt
+ifdef NO_MSGFMT
+	MSGFMT ?= $(TCL_PATH) po/po2msg.sh
+else
+	MSGFMT ?= msgfmt
+endif
+
 msgsdir     = $(gg_libdir)/msgs
 msgsdir_SQ  = $(subst ','\'',$(msgsdir))
 PO_TEMPLATE = po/git-gui.pot
