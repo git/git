@@ -309,4 +309,12 @@ test_expect_success '--continue tries to commit, even for "edit"' '
 	test $parent = $(git rev-parse HEAD^)
 '
 
+test_expect_success 'rebase a detached HEAD' '
+	grandparent=$(git rev-parse HEAD~2) &&
+	git checkout $(git rev-parse HEAD) &&
+	test_tick &&
+	FAKE_LINES="2 1" git rebase -i HEAD~2 &&
+	test $grandparent = $(git rev-parse HEAD~2)
+'
+
 test_done
