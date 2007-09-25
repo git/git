@@ -174,7 +174,11 @@ pick_one_preserving_merges () {
 			eval "$author_script"
 			msg="$(git cat-file commit $sha1 | sed -e '1,/^$/d')"
 			# NEEDSWORK: give rerere a chance
-			if ! output git merge $STRATEGY -m "$msg" $new_parents
+			if ! GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
+				GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
+				GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
+				output git merge $STRATEGY -m "$msg" \
+					$new_parents
 			then
 				printf "%s\n" "$msg" > "$GIT_DIR"/MERGE_MSG
 				die Error redoing merge $sha1
@@ -281,7 +285,9 @@ do_next () {
 		f)
 			# This is like --amend, but with a different message
 			eval "$author_script"
-			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
+			GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
+			GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
+			GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
 			$USE_OUTPUT git commit -F "$MSG" $EDIT_COMMIT
 			;;
 		t)
