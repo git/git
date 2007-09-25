@@ -1136,7 +1136,7 @@ int write_index(struct index_state *istate, int newfd)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
-	int i, removed;
+	int i, err, removed;
 	struct cache_entry **cache = istate->cache;
 	int entries = istate->cache_nr;
 
@@ -1165,16 +1165,15 @@ int write_index(struct index_state *istate, int newfd)
 
 	/* Write extension data here */
 	if (istate->cache_tree) {
-		unsigned long sz;
-		void *data = cache_tree_write(istate->cache_tree, &sz);
-		if (data &&
-		    !write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sz) &&
-		    !ce_write(&c, newfd, data, sz))
-			free(data);
-		else {
-			free(data);
+		struct strbuf sb;
+
+		strbuf_init(&sb, 0);
+		cache_tree_write(&sb, istate->cache_tree);
+		err = write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sb.len) < 0
+			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		strbuf_release(&sb);
+		if (err)
 			return -1;
-		}
 	}
 	return ce_flush(&c, newfd);
 }
