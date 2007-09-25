@@ -571,6 +571,15 @@ generate_delete_general_email()
 	echo $LOGEND
 }
 
+send_mail()
+{
+	if [ -n "$envelopesender" ]; then
+		/usr/sbin/sendmail -t -f "$envelopesender"
+	else
+		/usr/sbin/sendmail -t
+	fi
+}
+
 # ---------------------------- main()
 
 # --- Constants
@@ -607,13 +616,8 @@ if [ -n "$1" -a -n "$2" -a -n "$3" ]; then
 	# resend an email; they could redirect the output to sendmail themselves
 	PAGER= generate_email $2 $3 $1
 else
-	if [ -n "$envelopesender" ]; then
-		envelopesender="-f '$envelopesender'"
-	fi
-
 	while read oldrev newrev refname
 	do
-		generate_email $oldrev $newrev $refname |
-		/usr/sbin/sendmail -t $envelopesender
+		generate_email $oldrev $newrev $refname | send_mail
 	done
 fi
