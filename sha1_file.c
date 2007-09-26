@@ -1684,22 +1684,22 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	return 0;
 }
 
-static int matches_pack_name(struct packed_git *p, const char *ig)
+int matches_pack_name(struct packed_git *p, const char *name)
 {
 	const char *last_c, *c;
 
-	if (!strcmp(p->pack_name, ig))
-		return 0;
+	if (!strcmp(p->pack_name, name))
+		return 1;
 
 	for (c = p->pack_name, last_c = c; *c;)
 		if (*c == '/')
 			last_c = ++c;
 		else
 			++c;
-	if (!strcmp(last_c, ig))
-		return 0;
+	if (!strcmp(last_c, name))
+		return 1;
 
-	return 1;
+	return 0;
 }
 
 static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, const char **ignore_packed)
@@ -1717,7 +1717,7 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, cons
 		if (ignore_packed) {
 			const char **ig;
 			for (ig = ignore_packed; *ig; ig++)
-				if (!matches_pack_name(p, *ig))
+				if (matches_pack_name(p, *ig))
 					break;
 			if (*ig)
 				goto next;
