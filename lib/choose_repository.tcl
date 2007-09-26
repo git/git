@@ -3,19 +3,36 @@
 
 class choose_repository {
 
+# Henrik Nyh's alternative Git logo, from his blog post
+# http://henrik.nyh.se/2007/06/alternative-git-logo-and-favicon
+#
 image create photo ::choose_repository::git_logo -data {
-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
+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
+JwQAOw==
 }
 
 field top
@@ -66,7 +83,6 @@ constructor pick {} {
 				-command do_about
 		}
 
-		_center $top 500 350
 		wm protocol $top WM_DELETE_WINDOW exit
 		bind $top <$M1B-q> exit
 		bind $top <$M1B-Q> exit
@@ -81,7 +97,7 @@ constructor pick {} {
 		-relief sunken \
 		-background white \
 		-image ::choose_repository::git_logo
-	pack $w.git_logo -side top -fill x -padx 20 -pady 20
+	pack $w.git_logo -side left -fill y -padx 10 -pady 10
 
 	set w_body $w.body
 	frame $w_body
@@ -103,7 +119,7 @@ constructor pick {} {
 	pack $w_body.new -anchor w -fill x
 	pack $w_body.clone -anchor w -fill x
 	pack $w_body.open -anchor w -fill x
-	pack $w_body -fill x -padx 10
+	pack $w_body -fill x -padx 10 -pady 10
 
 	frame $w.buttons
 	set w_next $w.buttons.next
@@ -120,15 +136,16 @@ constructor pick {} {
 
 	bind $top <Return> [cb _invoke_next]
 	bind $top <Visibility> "
+		[cb _center]
 		grab $top
 		focus $top
+		bind $top <Visibility> {}
 	"
 	wm deiconify $top
 	tkwait variable @done
 
 	if {$top eq {.}} {
 		eval destroy [winfo children $top]
-		_center $top 500 600
 	}
 }
 
@@ -140,10 +157,12 @@ proc _home {} {
 	return $h
 }
 
-proc _center {top nx ny} {
-	set rx [expr {([winfo screenwidth  $top] - $nx) / 2}]
-	set ry [expr {([winfo screenheight $top] - $ny) / 2}]
-	wm geometry $top [format {%dx%d+%d+%d} $nx $ny $rx $ry]
+method _center {} {
+	set nx [winfo reqwidth $top]
+	set ny [winfo reqheight $top]
+	set rx [expr {([winfo screenwidth  $top] - $nx) / 3}]
+	set ry [expr {([winfo screenheight $top] - $ny) / 3}]
+	wm geometry $top [format {+%d+%d} $rx $ry]
 }
 
 method _invoke_next {} {
@@ -463,7 +482,7 @@ method _do_clone2 {} {
 	switch -exact -- $clone_type {
 	hardlink {
 		set o_cons [status_bar::new $w_body]
-		pack $w_body -fill x -padx 10
+		pack $w_body -fill x -padx 10 -pady 10
 
 		$o_cons start \
 			[mc "Counting objects"] \
@@ -762,7 +781,7 @@ method _do_clone_checkout {HEAD} {
 	}
 
 	set o_cons [status_bar::new $w_body]
-	pack $w_body -fill x -padx 10
+	pack $w_body -fill x -padx 10 -pady 10
 	$o_cons start \
 		[mc "Creating working directory"] \
 		[mc "files"]
