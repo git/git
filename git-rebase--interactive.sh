@@ -36,10 +36,9 @@ warn () {
 output () {
 	case "$VERBOSE" in
 	'')
-		"$@" > "$DOTEST"/output 2>&1
+		output=$("$@" 2>&1 )
 		status=$?
-		test $status != 0 &&
-			cat "$DOTEST"/output
+		test $status != 0 && printf "%s\n" "$output"
 		return $status
 		;;
 	*)
@@ -428,7 +427,6 @@ do
 
 		require_clean_work_tree
 
-		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
 		if test ! -z "$2"
 		then
 			output git show-ref --verify --quiet "refs/heads/$2" ||
@@ -439,6 +437,8 @@ do
 
 		HEAD=$(git rev-parse --verify HEAD) || die "No HEAD?"
 		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
+
+		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
 
 		test -z "$ONTO" && ONTO=$UPSTREAM
 
