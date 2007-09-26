@@ -213,7 +213,11 @@ sub list_and_choose {
 			print ">> ";
 		}
 		my $line = <STDIN>;
-		last if (!$line);
+		if (!$line) {
+			print "\n";
+			$opts->{ON_EOF}->() if $opts->{ON_EOF};
+			last;
+		}
 		chomp $line;
 		my $donesomething = 0;
 		for my $choice (split(/[\s,]+/, $line)) {
@@ -791,6 +795,7 @@ sub main_loop {
 					     SINGLETON => 1,
 					     LIST_FLAT => 4,
 					     HEADER => '*** Commands ***',
+					     ON_EOF => \&quit_cmd,
 					     IMMEDIATE => 1 }, @cmd);
 		if ($it) {
 			eval {
