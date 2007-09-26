@@ -219,7 +219,7 @@ sub list_and_choose {
 			last;
 		}
 		chomp $line;
-		my $donesomething = 0;
+		last if $line eq '';
 		for my $choice (split(/[\s,]+/, $line)) {
 			my $choose = 1;
 			my ($bottom, $top);
@@ -251,12 +251,11 @@ sub list_and_choose {
 				next TOPLOOP;
 			}
 			for ($i = $bottom-1; $i <= $top-1; $i++) {
-				next if (@stuff <= $i);
+				next if (@stuff <= $i || $i < 0);
 				$chosen[$i] = $choose;
-				$donesomething++;
 			}
 		}
-		last if (!$donesomething || $opts->{IMMEDIATE});
+		last if ($opts->{IMMEDIATE});
 	}
 	for ($i = 0; $i < @stuff; $i++) {
 		if ($chosen[$i]) {
