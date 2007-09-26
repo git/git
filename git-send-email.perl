@@ -77,7 +77,10 @@ Options:
                   the default section.
 
    --smtp-server  If set, specifies the outgoing SMTP server to use.
-                  Defaults to localhost.
+                  Defaults to localhost.  Port number can be specified here with
+                  hostname:port format or by using --smtp-server-port option.
+
+   --smtp-server-port Specify a port on the outgoing SMTP server to connect to.
 
    --smtp-user    The username for SMTP-AUTH.
 
@@ -172,8 +175,8 @@ my ($quiet, $dry_run) = (0, 0);
 
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
-my ($smtp_server, $smtp_authuser, $smtp_authpass, $smtp_ssl);
-my ($identity, $aliasfiletype, @alias_files);
+my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_authpass, $smtp_ssl);
+my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
 
 my %config_bool_settings = (
     "thread" => [\$thread, 1],
@@ -185,6 +188,7 @@ my %config_bool_settings = (
 
 my %config_settings = (
     "smtpserver" => \$smtp_server,
+    "smtpserverport" => \$smtp_server_port,
     "smtpuser" => \$smtp_authuser,
     "smtppass" => \$smtp_authpass,
     "cccmd" => \$cc_cmd,
@@ -204,6 +208,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "bcc=s" => \@bcclist,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "smtp-server=s" => \$smtp_server,
+		    "smtp-server-port=s" => \$smtp_server_port,
 		    "smtp-user=s" => \$smtp_authuser,
 		    "smtp-pass=s" => \$smtp_authpass,
 		    "smtp-ssl!" => \$smtp_ssl,
@@ -602,16 +607,30 @@ X-Mailer: git-send-email $gitversion
 		print $sm "$header\n$message";
 		close $sm or die $?;
 	} else {
+
+		if (!defined $smtp_server) {
+			die "The required SMTP server is not properly defined."
+		}
+
 		if ($smtp_ssl) {
+			$smtp_server_port ||= 465; # ssmtp
 			require Net::SMTP::SSL;
-			$smtp ||= Net::SMTP::SSL->new( $smtp_server, Port => 465 );
+			$smtp ||= Net::SMTP::SSL->new($smtp_server, Port => $smtp_server_port);
 		}
 		else {
 			require Net::SMTP;
-			$smtp ||= Net::SMTP->new( $smtp_server );
+			$smtp ||= Net::SMTP->new((defined $smtp_server_port)
+						 ? "$smtp_server:$smtp_server_port"
+						 : $smtp_server);
 		}
-		$smtp->auth( $smtp_authuser, $smtp_authpass )
-			or die $smtp->message if (defined $smtp_authuser);
+
+		if (!$smtp) {
+			die "Unable to initialize SMTP properly.  Is there something wrong with your config?";
+		}
+
+		if ((defined $smtp_authuser) && (defined $smtp_authpass)) {
+			$smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
+		}
 		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
 		$smtp->data or die $smtp->message;
