@@ -65,13 +65,16 @@ static inline void strbuf_swap(struct strbuf *a, struct strbuf *b) {
 static inline size_t strbuf_avail(struct strbuf *sb) {
 	return sb->alloc ? sb->alloc - sb->len - 1 : 0;
 }
+
+extern void strbuf_grow(struct strbuf *, size_t);
+
 static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
-	assert (len < sb->alloc);
+	if (!sb->alloc)
+		strbuf_grow(sb, 0);
+	assert(len < sb->alloc);
 	sb->len = len;
 	sb->buf[len] = '\0';
 }
-
-extern void strbuf_grow(struct strbuf *, size_t);
 
 /*----- content related -----*/
 extern void strbuf_rtrim(struct strbuf *);
