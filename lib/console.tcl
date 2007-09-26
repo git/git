@@ -202,14 +202,8 @@ method done {ok} {
 }
 
 method _sb_set {sb orient first last} {
-	if {$first == 0 && $last == 1} {
-		if {[winfo exists $sb]} {
-			destroy $sb
-		}
-		return
-	}
-
 	if {![winfo exists $sb]} {
+		if {$first == $last || ($first == 0 && $last == 1)} return
 		if {$orient eq {h}} {
 			scrollbar $sb -orient h -command [list $w_t xview]
 			pack $sb -fill x -side bottom -before $w_t
@@ -218,7 +212,7 @@ method _sb_set {sb orient first last} {
 			pack $sb -fill y -side right -before $w_t
 		}
 	}
-	catch {$sb set $first $last}
+	$sb set $first $last
 }
 
 }
