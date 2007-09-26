@@ -481,7 +481,7 @@ method _do_clone2 {} {
 
 	switch -exact -- $clone_type {
 	hardlink {
-		set o_cons [status_bar::new $w_body]
+		set o_cons [status_bar::two_line $w_body]
 		pack $w_body -fill x -padx 10 -pady 10
 
 		$o_cons start \
@@ -780,7 +780,7 @@ method _do_clone_checkout {HEAD} {
 		return
 	}
 
-	set o_cons [status_bar::new $w_body]
+	set o_cons [status_bar::two_line $w_body]
 	pack $w_body -fill x -padx 10 -pady 10
 	$o_cons start \
 		[mc "Creating working directory"] \
