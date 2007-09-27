@@ -377,8 +377,6 @@ static void read_index_info(int line_termination)
 				die("git-update-index: unable to update %s",
 				    path_name);
 		}
-		if (path_name != ptr)
-			free(path_name);
 		continue;
 
 	bad_line:
