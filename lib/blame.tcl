@@ -905,7 +905,7 @@ method _open_tooltip {cur_w} {
 		set author_time {}
 		catch {set author_name $header($cmit,author)}
 		catch {set summary     $header($cmit,summary)}
-		catch {set author_time [foramt_date $header($cmit,author-time)]}
+		catch {set author_time [format_date $header($cmit,author-time)]}
 
 		$tooltip_t insert end [strcat [mc "Originally By:"] "\n"] section_header
 		$tooltip_t insert end "commit $cmit\n"
