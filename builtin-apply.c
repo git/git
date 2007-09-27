@@ -178,12 +178,9 @@ static void say_patch_name(FILE *output, const char *pre, struct patch *patch, c
 #define CHUNKSIZE (8192)
 #define SLOP (16)
 
-static void *read_patch_file(int fd, size_t *sizep)
+static void read_patch_file(struct strbuf *sb, int fd)
 {
-	struct strbuf buf;
-
-	strbuf_init(&buf, 0);
-	if (strbuf_read(&buf, fd, 0) < 0)
+	if (strbuf_read(sb, fd, 0) < 0)
 		die("git-apply: read returned %s", strerror(errno));
 
 	/*
@@ -191,9 +188,8 @@ static void *read_patch_file(int fd, size_t *sizep)
 	 * so that we can do speculative "memcmp" etc, and
 	 * see to it that it is NUL-filled.
 	 */
-	strbuf_grow(&buf, SLOP);
-	memset(buf.buf + buf.len, 0, SLOP);
-	return strbuf_detach(&buf, sizep);
+	strbuf_grow(sb, SLOP);
+	memset(sb->buf + sb->len, 0, SLOP);
 }
 
 static unsigned long linelen(const char *buffer, unsigned long size)
@@ -2633,22 +2629,22 @@ static void prefix_patches(struct patch *p)
 
 static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 {
-	unsigned long offset, size;
-	char *buffer = read_patch_file(fd, &size);
+	size_t offset;
+	struct strbuf buf;
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
+	strbuf_init(&buf, 0);
 	patch_input_file = filename;
-	if (!buffer)
-		return -1;
+	read_patch_file(&buf, fd);
 	offset = 0;
-	while (size > 0) {
+	while (offset < buf.len) {
 		struct patch *patch;
 		int nr;
 
 		patch = xcalloc(1, sizeof(*patch));
 		patch->inaccurate_eof = inaccurate_eof;
-		nr = parse_chunk(buffer + offset, size, patch);
+		nr = parse_chunk(buf.buf + offset, buf.len, patch);
 		if (nr < 0)
 			break;
 		if (apply_in_reverse)
@@ -2666,7 +2662,6 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 			skipped_patch++;
 		}
 		offset += nr;
-		size -= nr;
 	}
 
 	if (whitespace_error && (new_whitespace == error_on_whitespace))
@@ -2701,7 +2696,7 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 	if (summary)
 		summary_patch_list(list);
 
-	free(buffer);
+	strbuf_release(&buf);
 	return 0;
 }
 
