@@ -178,14 +178,13 @@ static void say_patch_name(FILE *output, const char *pre, struct patch *patch, c
 #define CHUNKSIZE (8192)
 #define SLOP (16)
 
-static void *read_patch_file(int fd, unsigned long *sizep)
+static void *read_patch_file(int fd, size_t *sizep)
 {
 	struct strbuf buf;
 
 	strbuf_init(&buf, 0);
 	if (strbuf_read(&buf, fd, 0) < 0)
 		die("git-apply: read returned %s", strerror(errno));
-	*sizep = buf.len;
 
 	/*
 	 * Make sure that we have some slop in the buffer
@@ -194,7 +193,7 @@ static void *read_patch_file(int fd, unsigned long *sizep)
 	 */
 	strbuf_grow(&buf, SLOP);
 	memset(buf.buf + buf.len, 0, SLOP);
-	return strbuf_detach(&buf);
+	return strbuf_detach(&buf, sizep);
 }
 
 static unsigned long linelen(const char *buffer, unsigned long size)
@@ -253,7 +252,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 				 */
 				strbuf_remove(&name, 0, cp - name.buf);
 				free(def);
-				return name.buf;
+				return strbuf_detach(&name, NULL);
 			}
 		}
 		strbuf_release(&name);
@@ -607,7 +606,7 @@ static char *git_header_name(char *line, int llen)
 			if (strcmp(cp + 1, first.buf))
 				goto free_and_fail1;
 			strbuf_release(&sp);
-			return first.buf;
+			return strbuf_detach(&first, NULL);
 		}
 
 		/* unquoted second */
@@ -618,7 +617,7 @@ static char *git_header_name(char *line, int llen)
 		if (line + llen - cp != first.len + 1 ||
 		    memcmp(first.buf, cp, first.len))
 			goto free_and_fail1;
-		return first.buf;
+		return strbuf_detach(&first, NULL);
 
 	free_and_fail1:
 		strbuf_release(&first);
@@ -655,7 +654,7 @@ static char *git_header_name(char *line, int llen)
 			    isspace(name[len])) {
 				/* Good */
 				strbuf_remove(&sp, 0, np - sp.buf);
-				return sp.buf;
+				return strbuf_detach(&sp, NULL);
 			}
 
 		free_and_fail2:
@@ -1968,8 +1967,7 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 
 	if (apply_fragments(&buf, patch) < 0)
 		return -1; /* note with --reject this succeeds. */
-	patch->result = buf.buf;
-	patch->resultsize = buf.len;
+	patch->result = strbuf_detach(&buf, &patch->resultsize);
 
 	if (0 < patch->is_delete && patch->resultsize)
 		return error("removal patch leaves file contents");

@@ -2340,8 +2340,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 		strbuf_init(&nbuf, 0);
 		if (convert_to_git(path, buf, size, &nbuf)) {
 			munmap(buf, size);
-			size = nbuf.len;
-			buf = nbuf.buf;
+			buf = strbuf_detach(&nbuf, &size);
 			re_allocated = 1;
 		}
 	}

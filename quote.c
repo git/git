@@ -22,7 +22,7 @@ void sq_quote_buf(struct strbuf *dst, const char *src)
 	char *to_free = NULL;
 
 	if (dst->buf == src)
-		to_free = strbuf_detach(dst);
+		to_free = strbuf_detach(dst, NULL);
 
 	strbuf_addch(dst, '\'');
 	while (*src) {

@@ -89,7 +89,7 @@ static void format_subst(const struct commit *commit,
 	struct strbuf fmt;
 
 	if (src == buf->buf)
-		to_free = strbuf_detach(buf);
+		to_free = strbuf_detach(buf, NULL);
 	strbuf_init(&fmt, 0);
 	for (;;) {
 		const char *b, *c;
@@ -153,8 +153,7 @@ void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
 		convert_to_working_tree(path, buf.buf, buf.len, &buf);
 		convert_to_archive(path, buf.buf, buf.len, &buf, commit);
-		*sizep = buf.len;
-		buffer = buf.buf;
+		buffer = strbuf_detach(&buf, sizep);
 	}
 
 	return buffer;

@@ -120,8 +120,7 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		strbuf_init(&buf, 0);
 		if (convert_to_working_tree(ce->name, new, size, &buf)) {
 			free(new);
-			new = buf.buf;
-			size = buf.len;
+			new = strbuf_detach(&buf, &size);
 		}
 
 		if (to_tempfile) {

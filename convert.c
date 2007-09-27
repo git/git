@@ -168,7 +168,7 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 
 	/* are we "faking" in place editing ? */
 	if (src == buf->buf)
-		to_free = strbuf_detach(buf);
+		to_free = strbuf_detach(buf, NULL);
 
 	strbuf_grow(buf, len + stats.lf - stats.crlf);
 	for (;;) {
@@ -464,7 +464,7 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 
 	/* are we "faking" in place editing ? */
 	if (src == buf->buf)
-		to_free = strbuf_detach(buf);
+		to_free = strbuf_detach(buf, NULL);
 	hash_sha1_file(src, len, "blob", sha1);
 
 	strbuf_grow(buf, len + cnt * 43);

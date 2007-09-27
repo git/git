@@ -663,7 +663,7 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 					  len - strlen("encoding \n"),
 					  encoding, strlen(encoding));
 	}
-	return tmp.buf;
+	return strbuf_detach(&tmp, NULL);
 }
 
 static char *logmsg_reencode(const struct commit *commit,

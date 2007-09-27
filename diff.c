@@ -197,7 +197,7 @@ static char *quote_two(const char *one, const char *two)
 		strbuf_addstr(&res, one);
 		strbuf_addstr(&res, two);
 	}
-	return res.buf;
+	return strbuf_detach(&res, NULL);
 }
 
 static const char *external_diff(void)
@@ -662,7 +662,7 @@ static char *pprint_rename(const char *a, const char *b)
 		quote_c_style(a, &name, NULL, 0);
 		strbuf_addstr(&name, " => ");
 		quote_c_style(b, &name, NULL, 0);
-		return name.buf;
+		return strbuf_detach(&name, NULL);
 	}
 
 	/* Find common prefix */
@@ -710,7 +710,7 @@ static char *pprint_rename(const char *a, const char *b)
 		strbuf_addch(&name, '}');
 		strbuf_add(&name, a + len_a - sfx_length, sfx_length);
 	}
-	return name.buf;
+	return strbuf_detach(&name, NULL);
 }
 
 struct diffstat_t {
@@ -827,7 +827,7 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 			strbuf_init(&buf, 0);
 			if (quote_c_style(file->name, &buf, NULL, 0)) {
 				free(file->name);
-				file->name = buf.buf;
+				file->name = strbuf_detach(&buf, NULL);
 			} else {
 				strbuf_release(&buf);
 			}
@@ -1519,8 +1519,7 @@ static int populate_from_stdin(struct diff_filespec *s)
 				     strerror(errno));
 
 	s->should_munmap = 0;
-	s->size = buf.len;
-	s->data = strbuf_detach(&buf);
+	s->data = strbuf_detach(&buf, &s->size);
 	s->should_free = 1;
 	return 0;
 }
@@ -1612,8 +1611,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		if (convert_to_git(s->path, s->data, s->size, &buf)) {
 			munmap(s->data, s->size);
 			s->should_munmap = 0;
-			s->data = buf.buf;
-			s->size = buf.len;
+			s->data = strbuf_detach(&buf, &s->size);
 			s->should_free = 1;
 		}
 	}

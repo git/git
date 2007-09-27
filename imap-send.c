@@ -1180,7 +1180,7 @@ read_message( FILE *f, msg_data_t *msg )
 	} while (!feof(f));
 
 	msg->len  = buf.len;
-	msg->data = strbuf_detach(&buf);
+	msg->data = strbuf_detach(&buf, NULL);
 	return msg->len;
 }
 

@@ -10,8 +10,7 @@
  * 1. the ->buf member is always malloc-ed, hence strbuf's can be used to
  *    build complex strings/buffers whose final size isn't easily known.
  *
- *    It is legal to copy the ->buf pointer away. Though if you want to reuse
- *    the strbuf after that, setting ->buf to NULL isn't legal.
+ *    It is NOT legal to copy the ->buf pointer away.
  *    `strbuf_detach' is the operation that detachs a buffer from its shell
  *    while keeping the shell valid wrt its invariants.
  *
@@ -41,19 +40,19 @@
 
 #include <assert.h>
 
+extern char strbuf_slopbuf[];
 struct strbuf {
 	size_t alloc;
 	size_t len;
 	char *buf;
 };
 
-#define STRBUF_INIT  { 0, 0, NULL }
+#define STRBUF_INIT  { 0, 0, strbuf_slopbuf }
 
 /*----- strbuf life cycle -----*/
 extern void strbuf_init(struct strbuf *, size_t);
 extern void strbuf_release(struct strbuf *);
-extern void strbuf_reset(struct strbuf *);
-extern char *strbuf_detach(struct strbuf *);
+extern char *strbuf_detach(struct strbuf *, size_t *);
 extern void strbuf_attach(struct strbuf *, void *, size_t, size_t);
 static inline void strbuf_swap(struct strbuf *a, struct strbuf *b) {
 	struct strbuf tmp = *a;
@@ -75,6 +74,7 @@ static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
 	sb->len = len;
 	sb->buf[len] = '\0';
 }
+#define strbuf_reset(sb)  strbuf_setlen(sb, 0)
 
 /*----- content related -----*/
 extern void strbuf_rtrim(struct strbuf *);

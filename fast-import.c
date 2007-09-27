@@ -1562,7 +1562,7 @@ static int read_next_command(void)
 		} else {
 			struct recent_command *rc;
 
-			strbuf_detach(&command_buf);
+			strbuf_detach(&command_buf, NULL);
 			stdin_eof = strbuf_getline(&command_buf, stdin, '\n');
 			if (stdin_eof)
 				return EOF;

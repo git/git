@@ -10,7 +10,7 @@ static char *get_stdin(void)
 	if (strbuf_read(&buf, 0, 1024) < 0) {
 		die("error reading standard input: %s", strerror(errno));
 	}
-	return strbuf_detach(&buf);
+	return strbuf_detach(&buf, NULL);
 }
 
 static void show_new(enum object_type type, unsigned char *sha1_new)

@@ -1,27 +1,33 @@
 #include "cache.h"
 
+/*
+ * Used as the default ->buf value, so that people can always assume
+ * buf is non NULL and ->buf is NUL terminated even for a freshly
+ * initialized strbuf.
+ */
+char strbuf_slopbuf[1];
+
 void strbuf_init(struct strbuf *sb, size_t hint)
 {
-	memset(sb, 0, sizeof(*sb));
+	sb->alloc = sb->len = 0;
+	sb->buf = strbuf_slopbuf;
 	if (hint)
 		strbuf_grow(sb, hint);
 }
 
 void strbuf_release(struct strbuf *sb)
 {
-	free(sb->buf);
-	memset(sb, 0, sizeof(*sb));
+	if (sb->alloc) {
+		free(sb->buf);
+		strbuf_init(sb, 0);
+	}
 }
 
-void strbuf_reset(struct strbuf *sb)
+char *strbuf_detach(struct strbuf *sb, size_t *sz)
 {
-	if (sb->len)
-		strbuf_setlen(sb, 0);
-}
-
-char *strbuf_detach(struct strbuf *sb)
-{
-	char *res = sb->buf;
+	char *res = sb->alloc ? sb->buf : NULL;
+	if (sz)
+		*sz = sb->len;
 	strbuf_init(sb, 0);
 	return res;
 }
@@ -40,6 +46,8 @@ void strbuf_grow(struct strbuf *sb, size_t extra)
 {
 	if (sb->len + extra + 1 <= sb->len)
 		die("you want to use way too much memory");
+	if (!sb->alloc)
+		sb->buf = NULL;
 	ALLOC_GROW(sb->buf, sb->len + extra + 1, sb->alloc);
 }
 
