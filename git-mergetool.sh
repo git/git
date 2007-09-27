@@ -12,6 +12,7 @@ USAGE='[--tool=tool] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
+prefix=$(git rev-parse --show-prefix)
 
 # Returns true if the mode reflects a symlink
 is_symlink () {
@@ -162,9 +163,9 @@ merge_file () {
     local_mode=`git ls-files -u -- "$path" | awk '{if ($3==2) print $1;}'`
     remote_mode=`git ls-files -u -- "$path" | awk '{if ($3==3) print $1;}'`
 
-    base_present   && git cat-file blob ":1:$path" > "$BASE" 2>/dev/null
-    local_present  && git cat-file blob ":2:$path" > "$LOCAL" 2>/dev/null
-    remote_present && git cat-file blob ":3:$path" > "$REMOTE" 2>/dev/null
+    base_present   && git cat-file blob ":1:$prefix$path" >"$BASE" 2>/dev/null
+    local_present  && git cat-file blob ":2:$prefix$path" >"$LOCAL" 2>/dev/null
+    remote_present && git cat-file blob ":3:$prefix$path" >"$REMOTE" 2>/dev/null
 
     if test -z "$local_mode" -o -z "$remote_mode"; then
 	echo "Deleted merge conflict for '$path':"
