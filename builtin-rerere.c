@@ -113,8 +113,10 @@ static int handle_file(const char *path,
 				fputs(">>>>>>>\n", out);
 			}
 			if (sha1) {
-				SHA1_Update(&ctx, one.buf, one.len + 1);
-				SHA1_Update(&ctx, two.buf, two.len + 1);
+				SHA1_Update(&ctx, one.buf ? one.buf : "",
+					    one.len + 1);
+				SHA1_Update(&ctx, two.buf ? two.buf : "",
+					    two.len + 1);
 			}
 			strbuf_reset(&one);
 			strbuf_reset(&two);
