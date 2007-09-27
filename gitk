@@ -4027,17 +4027,21 @@ proc insertrow {row newcmit} {
     incr commitidx($curview)
     set ordertok($curview,$newcmit) $ordertok($curview,$p)
 
-    set idlist [lindex $rowidlist $row]
-    if {[llength $kids] == 1} {
-	set col [lsearch -exact $idlist $p]
-	lset idlist $col $newcmit
-    } else {
-	set col [llength $idlist]
-	lappend idlist $newcmit
+    if {$row < [llength $rowidlist]} {
+	set idlist [lindex $rowidlist $row]
+	if {$idlist ne {}} {
+	    if {[llength $kids] == 1} {
+		set col [lsearch -exact $idlist $p]
+		lset idlist $col $newcmit
+	    } else {
+		set col [llength $idlist]
+		lappend idlist $newcmit
+	    }
+	}
+	set rowidlist [linsert $rowidlist $row $idlist]
+	set rowisopt [linsert $rowisopt $row 0]
+	set rowfinal [linsert $rowfinal $row [lindex $rowfinal $row]]
     }
-    set rowidlist [linsert $rowidlist $row $idlist]
-    set rowisopt [linsert $rowisopt $row 0]
-    set rowfinal [linsert $rowfinal $row [lindex $rowfinal $row]]
 
     incr numcommits
 
@@ -4077,9 +4081,11 @@ proc removerow {row} {
     }
     incr commitidx($curview) -1
 
-    set rowidlist [lreplace $rowidlist $row $row]
-    set rowisopt [lreplace $rowisopt $row $row]
-    set rowfinal [lreplace $rowfinal $row $row]
+    if {$row < [llength $rowidlist]} {
+	set rowidlist [lreplace $rowidlist $row $row]
+	set rowisopt [lreplace $rowisopt $row $row]
+	set rowfinal [lreplace $rowfinal $row $row]
+    }
 
     incr numcommits -1
 
@@ -4443,6 +4449,7 @@ proc appendwithlinks {text tags} {
 	set e [lindex $l 1]
 	set linkid [string range $text $s $e]
 	incr e
+	$ctext tag delete link$linknum
 	$ctext tag add link$linknum "$start + $s c" "$start + $e c"
 	setlink $linkid link$linknum
 	incr linknum
