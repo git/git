@@ -84,6 +84,7 @@ proc start_rev_list {view} {
     global commfd leftover tclencoding datemode
     global viewargs viewfiles commitidx viewcomplete vnextroot
     global showlocalchanges commitinterest mainheadid
+    global progressdirn progresscoords proglastnc curview
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
@@ -111,6 +112,11 @@ proc start_rev_list {view} {
     }
     filerun $fd [list getcommitlines $fd $view]
     nowbusy $view
+    if {$view == $curview} {
+	set progressdirn 1
+	set progresscoords {0 0}
+	set proglastnc 0
+    }
 }
 
 proc stop_rev_list {} {
@@ -183,9 +189,11 @@ proc getcommitlines {fd view}  {
 	    }
 	}
 	set viewcomplete($view) 1
-	global viewname
+	global viewname progresscoords
 	unset commfd($view)
 	notbusy $view
+	set progresscoords {0 0}
+	adjustprogress
 	# set it blocking so we wait for the process to terminate
 	fconfigure $fd -blocking 1
 	if {[catch {close $fd} err]} {
@@ -315,6 +323,33 @@ proc getcommitlines {fd view}  {
     }
     if {$gotsome} {
 	run chewcommits $view
+	if {$view == $curview} {
+	    # update progress bar
+	    global progressdirn progresscoords proglastnc
+	    set inc [expr {($commitidx($view) - $proglastnc) * 0.0002}]
+	    set proglastnc $commitidx($view)
+	    set l [lindex $progresscoords 0]
+	    set r [lindex $progresscoords 1]
+	    if {$progressdirn} {
+		set r [expr {$r + $inc}]
+		if {$r >= 1.0} {
+		    set r 1.0
+		    set progressdirn 0
+		}
+		if {$r > 0.2} {
+		    set l [expr {$r - 0.2}]
+		}
+	    } else {
+		set l [expr {$l - $inc}]
+		if {$l <= 0.0} {
+		    set l 0.0
+		    set progressdirn 1
+		}
+		set r [expr {$l + 0.2}]
+	    }
+	    set progresscoords [list $l $r]
+	    adjustprogress
+	}
     }
     return 2
 }
@@ -589,7 +624,8 @@ proc makewindow {} {
     global highlight_files gdttype
     global searchstring sstring
     global bgcolor fgcolor bglist fglist diffcolors selectbgcolor
-    global headctxmenu
+    global headctxmenu progresscanv progressitem progresscoords statusw
+    global fprogitem fprogcoord lastprogupdate progupdatepending
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -705,6 +741,22 @@ proc makewindow {} {
     button .tf.bar.rightbut -image bm-right -command goforw \
 	-state disabled -width 26
     pack .tf.bar.rightbut -side left -fill y
+
+    # Status label and progress bar
+    set statusw .tf.bar.status
+    label $statusw -width 15 -relief sunken -font $uifont
+    pack $statusw -side left -padx 5
+    set h [expr {[font metrics $uifont -linespace] + 2}]
+    set progresscanv .tf.bar.progress
+    canvas $progresscanv -relief sunken -height $h -borderwidth 2
+    set progressitem [$progresscanv create rect -1 0 0 $h -fill green]
+    set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
+    pack $progresscanv -side right -expand 1 -fill x
+    set progresscoords {0 0}
+    set fprogcoord 0
+    bind $progresscanv <Configure> adjustprogress
+    set lastprogupdate [clock clicks -milliseconds]
+    set progupdatepending 0
 
     # build up the bottom bar of upper window
     label .tf.lbar.flabel -text "Find " -font $uifont
@@ -1049,6 +1101,37 @@ proc click {w} {
 	if {$w == $e} return
     }
     focus .
+}
+
+# Adjust the progress bar for a change in requested extent or canvas size
+proc adjustprogress {} {
+    global progresscanv progressitem progresscoords
+    global fprogitem fprogcoord lastprogupdate progupdatepending
+
+    set w [expr {[winfo width $progresscanv] - 4}]
+    set x0 [expr {$w * [lindex $progresscoords 0]}]
+    set x1 [expr {$w * [lindex $progresscoords 1]}]
+    set h [winfo height $progresscanv]
+    $progresscanv coords $progressitem $x0 0 $x1 $h
+    $progresscanv coords $fprogitem 0 0 [expr {$w * $fprogcoord}] $h
+    set now [clock clicks -milliseconds]
+    if {$now >= $lastprogupdate + 100} {
+	set progupdatepending 0
+	update
+    } elseif {!$progupdatepending} {
+	set progupdatepending 1
+	after [expr {$lastprogupdate + 100 - $now}] doprogupdate
+    }
+}
+
+proc doprogupdate {} {
+    global lastprogupdate progupdatepending
+
+    if {$progupdatepending} {
+	set progupdatepending 0
+	set lastprogupdate [clock clicks -milliseconds]
+	update
+    }
 }
 
 proc savestuff {w} {
@@ -1626,6 +1709,7 @@ proc pop_flist_menu {w X Y x y} {
     global ctext cflist cmitmode flist_menu flist_menu_file
     global treediffs diffids
 
+    stopfinding
     set l [lindex [split [$w index "@$x,$y"] "."] 0]
     if {$l <= 1} return
     if {$cmitmode eq "tree"} {
@@ -1639,14 +1723,15 @@ proc pop_flist_menu {w X Y x y} {
 }
 
 proc flist_hl {only} {
-    global flist_menu_file highlight_files
+    global flist_menu_file findstring gdttype
 
     set x [shellquote $flist_menu_file]
-    if {$only || $highlight_files eq {}} {
-	set highlight_files $x
+    if {$only || $findstring eq {} || $gdttype ne "touching paths:"} {
+	set findstring $x
     } else {
-	append highlight_files " " $x
+	append findstring " " $x
     }
+    set gdttype "touching paths:"
 }
 
 # Functions for adding and removing shell-type quoting
@@ -2210,6 +2295,7 @@ proc hfiles_change {} {
 proc gdttype_change {name ix op} {
     global gdttype highlight_files findstring findpattern
 
+    stopfinding
     if {$findstring ne {}} {
 	if {$gdttype eq "containing:"} {
 	    if {$highlight_files ne {}} {
@@ -2233,6 +2319,7 @@ proc gdttype_change {name ix op} {
 proc find_change {name ix op} {
     global gdttype findstring highlight_files
 
+    stopfinding
     if {$gdttype eq "containing:"} {
 	findcom_change
     } else {
@@ -2248,6 +2335,7 @@ proc findcom_change {} {
     global nhighlights mainfont boldnamerows
     global findpattern findtype findstring gdttype
 
+    stopfinding
     # delete previous highlights, if any
     foreach row $boldnamerows {
 	bolden_name $row $mainfont
@@ -4174,6 +4262,18 @@ proc dofind {{rev 0}} {
     }
 }
 
+proc stopfinding {} {
+    global find_dirn findcurline fprogcoord
+
+    if {[info exists find_dirn]} {
+	unset find_dirn
+	unset findcurline
+	notbusy finding
+	set fprogcoord 0
+	adjustprogress
+    }
+}
+
 proc findnext {restart} {
     global findcurline find_dirn
 
@@ -4207,8 +4307,11 @@ proc findprev {} {
 proc findmore {} {
     global commitdata commitinfo numcommits findpattern findloc
     global findstartline findcurline displayorder
-    global find_dirn gdttype fhighlights
+    global find_dirn gdttype fhighlights fprogcoord
 
+    if {![info exists find_dirn]} {
+	return 0
+    }
     set fldtypes {Headline Author Date Committer CDate Comments}
     set l [expr {$findcurline + 1}]
     if {$l >= $numcommits} {
@@ -4258,32 +4361,41 @@ proc findmore {} {
 	    }
 	}
     }
-    if {$found} {
+    if {$found || ($domore && $l == $findstartline + 1)} {
+	unset findcurline
 	unset find_dirn
-	findselectline $l
 	notbusy finding
+	set fprogcoord 0
+	adjustprogress
+	if {$found} {
+	    findselectline $l
+	} else {
+	    bell
+	}
 	return 0
     }
     if {!$domore} {
 	flushhighlights
-	return 0
+    } else {
+	set findcurline [expr {$l - 1}]
     }
-    if {$l == $findstartline + 1} {
-	bell
-	unset findcurline
-	unset find_dirn
-	notbusy finding
-	return 0
+    set n [expr {$findcurline - ($findstartline + 1)}]
+    if {$n < 0} {
+	incr n $numcommits
     }
-    set findcurline [expr {$l - 1}]
-    return 1
+    set fprogcoord [expr {$n * 1.0 / $numcommits}]
+    adjustprogress
+    return $domore
 }
 
 proc findmorerev {} {
     global commitdata commitinfo numcommits findpattern findloc
     global findstartline findcurline displayorder
-    global find_dirn gdttype fhighlights
+    global find_dirn gdttype fhighlights fprogcoord
 
+    if {![info exists find_dirn]} {
+	return 0
+    }
     set fldtypes {Headline Author Date Committer CDate Comments}
     set l $findcurline
     if {$l == 0} {
@@ -4333,25 +4445,31 @@ proc findmorerev {} {
 	    }
 	}
     }
-    if {$found} {
+    if {$found || ($domore && $l == $findstartline - 1)} {
+	unset findcurline
 	unset find_dirn
-	findselectline $l
 	notbusy finding
+	set fprogcoord 0
+	adjustprogress
+	if {$found} {
+	    findselectline $l
+	} else {
+	    bell
+	}
 	return 0
     }
     if {!$domore} {
 	flushhighlights
-	return 0
+    } else {
+	set findcurline [expr {$l + 1}]
     }
-    if {$l == -1} {
-	bell
-	unset findcurline
-	unset find_dirn
-	notbusy finding
-	return 0
+    set n [expr {($findstartline - 1) - $findcurline}]
+    if {$n < 0} {
+	incr n $numcommits
     }
-    set findcurline [expr {$l + 1}]
-    return 1
+    set fprogcoord [expr {$n * 1.0 / $numcommits}]
+    adjustprogress
+    return $domore
 }
 
 proc findselectline {l} {
@@ -4398,12 +4516,11 @@ proc markmatches {canv l str tag matches font row} {
 }
 
 proc unmarkmatches {} {
-    global findids markingmatches findcurline
+    global markingmatches
 
     allcanvs delete matches
-    catch {unset findids}
     set markingmatches 0
-    catch {unset findcurline}
+    stopfinding
 }
 
 proc selcanvline {w x y} {
@@ -4626,6 +4743,7 @@ proc selectline {l isnew} {
     $canv delete hover
     normalline
     unsel_reflist
+    stopfinding
     if {$l < 0 || $l >= $numcommits} return
     set y [expr {$canvy0 + $l * $linespc}]
     set ymax [lindex [$canv cget -scrollregion] 3]
@@ -5815,6 +5933,7 @@ proc rowmenu {x y id} {
     global rowctxmenu commitrow selectedline rowmenuid curview
     global nullid nullid2 fakerowmenu mainhead
 
+    stopfinding
     set rowmenuid $id
     if {![info exists selectedline]
 	|| $commitrow($curview,$id) eq $selectedline} {
@@ -6293,6 +6412,7 @@ proc readresetstat {fd w} {
 proc headmenu {x y id head} {
     global headmenuid headmenuhead headctxmenu mainhead
 
+    stopfinding
     set headmenuid $id
     set headmenuhead $head
     set state normal
