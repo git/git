@@ -51,7 +51,7 @@ static void launch_editor(const char *path, struct strbuf *buffer)
 	if (run_command(&child))
 		die("There was a problem with the editor %s.", editor);
 
-	if (strbuf_read_file(buffer, path) < 0)
+	if (strbuf_read_file(buffer, path, 0) < 0)
 		die("could not read message file '%s': %s",
 		    path, strerror(errno));
 }
@@ -356,8 +356,6 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp(arg, "-F")) {
-			int fd;
-
 			annotate = 1;
 			i++;
 			if (i == argc)
@@ -365,16 +363,13 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			if (message)
 				die("only one -F or -m option is allowed.");
 
-			if (!strcmp(argv[i], "-"))
-				fd = 0;
-			else {
-				fd = open(argv[i], O_RDONLY);
-				if (fd < 0)
-					die("could not open '%s': %s",
+			if (!strcmp(argv[i], "-")) {
+				if (strbuf_read(&buf, 0, 1024) < 0)
+					die("cannot read %s", argv[i]);
+			} else {
+				if (strbuf_read_file(&buf, argv[i], 1024) < 0)
+					die("could not open or read '%s': %s",
 						argv[i], strerror(errno));
-			}
-			if (strbuf_read(&buf, fd, 1024) < 0) {
-				die("cannot read %s", argv[i]);
 			}
 			message = 1;
 			continue;
