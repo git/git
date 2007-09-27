@@ -527,6 +527,10 @@ bind . <Visibility> {
 	set root_exists 1
 }
 
+if {[is_Windows]} {
+	wm iconbitmap . -default $oguilib/git-gui.ico
+}
+
 ######################################################################
 ##
 ## config defaults
