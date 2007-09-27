@@ -238,15 +238,14 @@ static int write_tar_entry(const unsigned char *sha1,
                            const char *filename, unsigned mode, int stage)
 {
 	static struct strbuf path = STRBUF_INIT;
-	int filenamelen = strlen(filename);
 	void *buffer;
 	enum object_type type;
 	unsigned long size;
 
-	strbuf_grow(&path, MAX(PATH_MAX, baselen + filenamelen + 1));
 	strbuf_reset(&path);
+	strbuf_grow(&path, PATH_MAX);
 	strbuf_add(&path, base, baselen);
-	strbuf_add(&path, filename, filenamelen);
+	strbuf_addstr(&path, filename);
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		strbuf_addch(&path, '/');
 		buffer = NULL;

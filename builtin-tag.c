@@ -22,7 +22,6 @@ static void launch_editor(const char *path, struct strbuf *buffer)
 	const char *editor, *terminal;
 	struct child_process child;
 	const char *args[3];
-	int fd;
 
 	editor = getenv("GIT_EDITOR");
 	if (!editor && editor_program)
@@ -52,13 +51,9 @@ static void launch_editor(const char *path, struct strbuf *buffer)
 	if (run_command(&child))
 		die("There was a problem with the editor %s.", editor);
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		die("could not open '%s': %s", path, strerror(errno));
-	if (strbuf_read(buffer, fd, 0) < 0) {
-		die("could not read message file '%s': %s", path, strerror(errno));
-	}
-	close(fd);
+	if (strbuf_read_file(buffer, path) < 0)
+		die("could not read message file '%s': %s",
+		    path, strerror(errno));
 }
 
 struct tag_filter {
@@ -296,14 +291,11 @@ static void create_tag(const unsigned char *object, const char *tag,
 		free(path);
 	}
 
-	strbuf_setlen(buf, stripspace(buf->buf, buf->len, 1));
+	stripspace(buf, 1);
 
 	if (!message && !buf->len)
 		die("no tag message?");
 
-	/* insert the header and add the '\n' if needed: */
-	if (buf->len)
-		strbuf_addch(buf, '\n');
 	strbuf_insert(buf, 0, header_buf, header_len);
 
 	if (sign && do_sign(buf) < 0)

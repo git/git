@@ -656,7 +656,7 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 	strbuf_attach(&tmp, buf, strlen(buf), strlen(buf) + 1);
 	if (is_encoding_utf8(encoding)) {
 		/* we have re-coded to UTF-8; drop the header */
-		strbuf_splice(&tmp, start, len, NULL, 0);
+		strbuf_remove(&tmp, start, len);
 	} else {
 		/* just replaces XXXX in 'encoding XXXX\n' */
 		strbuf_splice(&tmp, start + strlen("encoding "),

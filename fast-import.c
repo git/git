@@ -1111,9 +1111,7 @@ static int store_object(
 		if (last->no_swap) {
 			last->data = *dat;
 		} else {
-			struct strbuf tmp = *dat;
-			*dat = last->data;
-			last->data = tmp;
+			strbuf_swap(&last->data, dat);
 		}
 		last->offset = e->offset;
 	}
@@ -1761,7 +1759,7 @@ static void load_branch(struct branch *b)
 static void file_change_m(struct branch *b)
 {
 	const char *p = command_buf.buf + 2;
-	char *p_uq;
+	static struct strbuf uq = STRBUF_INIT;
 	const char *endp;
 	struct object_entry *oe = oe;
 	unsigned char sha1[20];
@@ -1799,18 +1797,20 @@ static void file_change_m(struct branch *b)
 	if (*p++ != ' ')
 		die("Missing space after SHA1: %s", command_buf.buf);
 
-	p_uq = unquote_c_style(p, &endp);
-	if (p_uq) {
+	strbuf_reset(&uq);
+	if (!unquote_c_style(&uq, p, &endp)) {
 		if (*endp)
 			die("Garbage after path in: %s", command_buf.buf);
-		p = p_uq;
+		p = uq.buf;
 	}
 
 	if (inline_data) {
 		static struct strbuf buf = STRBUF_INIT;
 
-		if (!p_uq)
-			p = p_uq = xstrdup(p);
+		if (p != uq.buf) {
+			strbuf_addstr(&uq, p);
+			p = uq.buf;
+		}
 		read_next_command();
 		cmd_data(&buf);
 		store_object(OBJ_BLOB, &buf, &last_blob, sha1, 0);
@@ -1828,56 +1828,54 @@ static void file_change_m(struct branch *b)
 	}
 
 	tree_content_set(&b->branch_tree, p, sha1, S_IFREG | mode, NULL);
-	free(p_uq);
 }
 
 static void file_change_d(struct branch *b)
 {
 	const char *p = command_buf.buf + 2;
-	char *p_uq;
+	static struct strbuf uq = STRBUF_INIT;
 	const char *endp;
 
-	p_uq = unquote_c_style(p, &endp);
-	if (p_uq) {
+	strbuf_reset(&uq);
+	if (!unquote_c_style(&uq, p, &endp)) {
 		if (*endp)
 			die("Garbage after path in: %s", command_buf.buf);
-		p = p_uq;
+		p = uq.buf;
 	}
 	tree_content_remove(&b->branch_tree, p, NULL);
-	free(p_uq);
 }
 
 static void file_change_cr(struct branch *b, int rename)
 {
 	const char *s, *d;
-	char *s_uq, *d_uq;
+	static struct strbuf s_uq = STRBUF_INIT;
+	static struct strbuf d_uq = STRBUF_INIT;
 	const char *endp;
 	struct tree_entry leaf;
 
 	s = command_buf.buf + 2;
-	s_uq = unquote_c_style(s, &endp);
-	if (s_uq) {
+	strbuf_reset(&s_uq);
+	if (!unquote_c_style(&s_uq, s, &endp)) {
 		if (*endp != ' ')
 			die("Missing space after source: %s", command_buf.buf);
-	}
-	else {
+	} else {
 		endp = strchr(s, ' ');
 		if (!endp)
 			die("Missing space after source: %s", command_buf.buf);
-		s_uq = xmemdupz(s, endp - s);
+		strbuf_add(&s_uq, s, endp - s);
 	}
-	s = s_uq;
+	s = s_uq.buf;
 
 	endp++;
 	if (!*endp)
 		die("Missing dest: %s", command_buf.buf);
 
 	d = endp;
-	d_uq = unquote_c_style(d, &endp);
-	if (d_uq) {
+	strbuf_reset(&d_uq);
+	if (!unquote_c_style(&d_uq, d, &endp)) {
 		if (*endp)
 			die("Garbage after dest in: %s", command_buf.buf);
-		d = d_uq;
+		d = d_uq.buf;
 	}
 
 	memset(&leaf, 0, sizeof(leaf));
@@ -1891,9 +1889,6 @@ static void file_change_cr(struct branch *b, int rename)
 		leaf.versions[1].sha1,
 		leaf.versions[1].mode,
 		leaf.tree);
-
-	free(s_uq);
-	free(d_uq);
 }
 
 static void file_change_deleteall(struct branch *b)

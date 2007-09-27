@@ -72,13 +72,9 @@ static int handle_file(const char *path,
 	SHA_CTX ctx;
 	char buf[1024];
 	int hunk = 0, hunk_no = 0;
-	struct strbuf minus, plus;
-	struct strbuf *one = &minus, *two = &plus;
+	struct strbuf one, two;
 	FILE *f = fopen(path, "r");
-	FILE *out;
-
-	strbuf_init(&minus, 0);
-	strbuf_init(&plus,  0);
+	FILE *out = NULL;
 
 	if (!f)
 		return error("Could not open %s", path);
@@ -89,51 +85,50 @@ static int handle_file(const char *path,
 			fclose(f);
 			return error("Could not write %s", output);
 		}
-	} else
-		out = NULL;
+	}
 
 	if (sha1)
 		SHA1_Init(&ctx);
 
+	strbuf_init(&one, 0);
+	strbuf_init(&two,  0);
 	while (fgets(buf, sizeof(buf), f)) {
 		if (!prefixcmp(buf, "<<<<<<< "))
 			hunk = 1;
 		else if (!prefixcmp(buf, "======="))
 			hunk = 2;
 		else if (!prefixcmp(buf, ">>>>>>> ")) {
-			int one_is_longer = (one->len > two->len);
-			int common_len = one_is_longer ? two->len : one->len;
-			int cmp = memcmp(one->buf, two->buf, common_len);
+			int cmp = strbuf_cmp(&one, &two);
 
 			hunk_no++;
 			hunk = 0;
-			if ((cmp > 0) || ((cmp == 0) && one_is_longer)) {
-				struct strbuf *swap = one;
-				one = two;
-				two = swap;
+			if (cmp > 0) {
+				strbuf_swap(&one, &two);
 			}
 			if (out) {
 				fputs("<<<<<<<\n", out);
-				fwrite(one->buf, one->len, 1, out);
+				fwrite(one.buf, one.len, 1, out);
 				fputs("=======\n", out);
-				fwrite(two->buf, two->len, 1, out);
+				fwrite(two.buf, two.len, 1, out);
 				fputs(">>>>>>>\n", out);
 			}
 			if (sha1) {
-				SHA1_Update(&ctx, one->buf, one->len);
-				SHA1_Update(&ctx, "\0", 1);
-				SHA1_Update(&ctx, two->buf, two->len);
-				SHA1_Update(&ctx, "\0", 1);
+				SHA1_Update(&ctx, one.buf ? one.buf : "",
+					    one.len + 1);
+				SHA1_Update(&ctx, two.buf ? two.buf : "",
+					    two.len + 1);
 			}
-			strbuf_release(one);
-			strbuf_release(two);
+			strbuf_reset(&one);
+			strbuf_reset(&two);
 		} else if (hunk == 1)
-			strbuf_addstr(one, buf);
+			strbuf_addstr(&one, buf);
 		else if (hunk == 2)
-			strbuf_addstr(two, buf);
+			strbuf_addstr(&two, buf);
 		else if (out)
 			fputs(buf, out);
 	}
+	strbuf_release(&one);
+	strbuf_release(&two);
 
 	fclose(f);
 	if (out)

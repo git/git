@@ -55,21 +55,30 @@ extern void strbuf_release(struct strbuf *);
 extern void strbuf_reset(struct strbuf *);
 extern char *strbuf_detach(struct strbuf *);
 extern void strbuf_attach(struct strbuf *, void *, size_t, size_t);
+static inline void strbuf_swap(struct strbuf *a, struct strbuf *b) {
+	struct strbuf tmp = *a;
+	*a = *b;
+	*b = tmp;
+}
 
 /*----- strbuf size related -----*/
 static inline size_t strbuf_avail(struct strbuf *sb) {
-    return sb->alloc ? sb->alloc - sb->len - 1 : 0;
-}
-static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
-    assert (len < sb->alloc);
-    sb->len = len;
-    sb->buf[len] = '\0';
+	return sb->alloc ? sb->alloc - sb->len - 1 : 0;
 }
 
 extern void strbuf_grow(struct strbuf *, size_t);
 
+static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
+	if (!sb->alloc)
+		strbuf_grow(sb, 0);
+	assert(len < sb->alloc);
+	sb->len = len;
+	sb->buf[len] = '\0';
+}
+
 /*----- content related -----*/
 extern void strbuf_rtrim(struct strbuf *);
+extern int strbuf_cmp(struct strbuf *, struct strbuf *);
 
 /*----- add data in your buffer -----*/
 static inline void strbuf_addch(struct strbuf *sb, int c) {
@@ -78,12 +87,12 @@ static inline void strbuf_addch(struct strbuf *sb, int c) {
 	sb->buf[sb->len] = '\0';
 }
 
-/* inserts after pos, or appends if pos >= sb->len */
 extern void strbuf_insert(struct strbuf *, size_t pos, const void *, size_t);
+extern void strbuf_remove(struct strbuf *, size_t pos, size_t len);
 
 /* splice pos..pos+len with given data */
 extern void strbuf_splice(struct strbuf *, size_t pos, size_t len,
-						  const void *, size_t);
+                          const void *, size_t);
 
 extern void strbuf_add(struct strbuf *, const void *, size_t);
 static inline void strbuf_addstr(struct strbuf *sb, const char *s) {
@@ -99,7 +108,10 @@ extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
 extern size_t strbuf_fread(struct strbuf *, size_t, FILE *);
 /* XXX: if read fails, any partial read is undone */
 extern ssize_t strbuf_read(struct strbuf *, int fd, size_t hint);
+extern int strbuf_read_file(struct strbuf *sb, const char *path);
 
 extern int strbuf_getline(struct strbuf *, FILE *, int);
+
+extern void stripspace(struct strbuf *buf, int skip_comments);
 
 #endif /* STRBUF_H */

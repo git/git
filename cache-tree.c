@@ -369,10 +369,8 @@ int cache_tree_update(struct cache_tree *it,
 	return 0;
 }
 
-static void write_one(struct cache_tree *it,
-		       char *path,
-		       int pathlen,
-			   struct strbuf *buffer)
+static void write_one(struct strbuf *buffer, struct cache_tree *it,
+                      const char *path, int pathlen)
 {
 	int i;
 
@@ -407,20 +405,13 @@ static void write_one(struct cache_tree *it,
 					     prev->name, prev->namelen) <= 0)
 				die("fatal - unsorted cache subtree");
 		}
-		write_one(down->cache_tree, down->name, down->namelen, buffer);
+		write_one(buffer, down->cache_tree, down->name, down->namelen);
 	}
 }
 
-void *cache_tree_write(struct cache_tree *root, unsigned long *size_p)
+void cache_tree_write(struct strbuf *sb, struct cache_tree *root)
 {
-	char path[PATH_MAX];
-	struct strbuf buffer;
-
-	path[0] = 0;
-	strbuf_init(&buffer, 0);
-	write_one(root, path, 0, &buffer);
-	*size_p = buffer.len;
-	return strbuf_detach(&buffer);
+	write_one(sb, root, "", 0);
 }
 
 static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)

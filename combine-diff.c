@@ -650,10 +650,7 @@ static void dump_quoted_path(const char *prefix, const char *path,
 			     const char *c_meta, const char *c_reset)
 {
 	printf("%s%s", c_meta, prefix);
-	if (quote_c_style(path, NULL, NULL, 0))
-		quote_c_style(path, NULL, stdout, 0);
-	else
-		printf("%s", path);
+	quote_c_style(path, NULL, stdout, 0);
 	printf("%s\n", c_reset);
 }
 
@@ -900,16 +897,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 		putchar(inter_name_termination);
 	}
 
-	if (line_termination) {
-		if (quote_c_style(p->path, NULL, NULL, 0))
-			quote_c_style(p->path, NULL, stdout, 0);
-		else
-			printf("%s", p->path);
-		putchar(line_termination);
-	}
-	else {
-		printf("%s%c", p->path, line_termination);
-	}
+	write_name_quoted(p->path, stdout, line_termination);
 }
 
 void show_combined_diff(struct combine_diff_path *p,

@@ -50,14 +50,16 @@ void strbuf_rtrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-void strbuf_insert(struct strbuf *sb, size_t pos, const void *data, size_t len)
+int strbuf_cmp(struct strbuf *a, struct strbuf *b)
 {
-	strbuf_grow(sb, len);
-	if (pos > sb->len)
-		die("`pos' is too far after the end of the buffer");
-	memmove(sb->buf + pos + len, sb->buf + pos, sb->len - pos);
-	memcpy(sb->buf + pos, data, len);
-	strbuf_setlen(sb, sb->len + len);
+	int cmp;
+	if (a->len < b->len) {
+		cmp = memcmp(a->buf, b->buf, a->len);
+		return cmp ? cmp : -1;
+	} else {
+		cmp = memcmp(a->buf, b->buf, b->len);
+		return cmp ? cmp : a->len != b->len;
+	}
 }
 
 void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
@@ -77,6 +79,16 @@ void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
 			sb->len - pos - len);
 	memcpy(sb->buf + pos, data, dlen);
 	strbuf_setlen(sb, sb->len + dlen - len);
+}
+
+void strbuf_insert(struct strbuf *sb, size_t pos, const void *data, size_t len)
+{
+	strbuf_splice(sb, pos, 0, data, len);
+}
+
+void strbuf_remove(struct strbuf *sb, size_t pos, size_t len)
+{
+	strbuf_splice(sb, pos, len, NULL, 0);
 }
 
 void strbuf_add(struct strbuf *sb, const void *data, size_t len)
@@ -164,4 +176,19 @@ int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
 
 	sb->buf[sb->len] = '\0';
 	return 0;
+}
+
+int strbuf_read_file(struct strbuf *sb, const char *path)
+{
+	int fd, len;
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	len = strbuf_read(sb, fd, 0);
+	close(fd);
+	if (len < 0)
+		return -1;
+
+	return len;
 }
