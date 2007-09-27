@@ -108,7 +108,7 @@ unset oguimsg
 ##
 ## read only globals
 
-set _appname [lindex [file split $argv0] end]
+set _appname {Git Gui}
 set _gitdir {}
 set _gitexec {}
 set _reponame {}
@@ -789,7 +789,7 @@ unset -nocomplain idx fd
 ##
 ## feature option selection
 
-if {[regexp {^git-(.+)$} [appname] _junk subcommand]} {
+if {[regexp {^git-(.+)$} [file tail $argv0] _junk subcommand]} {
 	unset _junk
 } else {
 	set subcommand gui
@@ -2140,7 +2140,8 @@ citool -
 gui {
 	if {[llength $argv] != 0} {
 		puts -nonewline stderr "usage: $argv0"
-		if {$subcommand ne {gui} && [appname] ne "git-$subcommand"} {
+		if {$subcommand ne {gui}
+			&& [file tail $argv0] ne "git-$subcommand"} {
 			puts -nonewline stderr " $subcommand"
 		}
 		puts stderr {}
