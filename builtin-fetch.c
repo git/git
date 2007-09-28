@@ -102,7 +102,7 @@ static struct ref *get_ref_map(struct transport *transport,
 				    remote->fetch[i].dst[0])
 					*autotags = 1;
 				if (!i && !has_merge && ref_map &&
-				    !strcmp(remote->fetch[0].src, ref_map->name))
+				    !remote->fetch[0].pattern)
 					ref_map->merge = 1;
 			}
 			if (has_merge)
