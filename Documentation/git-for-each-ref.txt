@@ -100,6 +100,11 @@ In any case, a field name that refers to a field inapplicable to
 the object referred by the ref does not cause an error.  It
 returns an empty string instead.
 
+As a special case for the date-type fields, you may specify a format for
+the date by adding one of `:default`, `:relative`, `:short`, `:local`,
+`:iso8601` or `:rfc2822` to the end of the fieldname; e.g.
+`%(taggerdate:relative)`.
+
 
 EXAMPLES
 --------
