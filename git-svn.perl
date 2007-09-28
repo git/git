@@ -1847,6 +1847,16 @@ sub find_parent_branch {
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
 					      $self->full_url, $ed)
 			  or die "SVN connection failed somewhere...\n";
+		} elsif ($self->ra->trees_match($new_url, $r0,
+			                        $self->full_url, $rev)) {
+			print STDERR "Trees match:\n",
+			             "  $new_url\@$r0\n",
+			             "  ${\$self->full_url}\@$rev\n",
+				     "Following parent with no changes\n";
+			$self->tmp_index_do(sub {
+			    command_noisy('read-tree', $parent);
+			});
+			$self->{last_commit} = $parent;
 		} else {
 			print STDERR "Following parent with do_update\n";
 			$ed = SVN::Git::Fetcher->new($self);
@@ -3027,28 +3037,32 @@ BEGIN {
 	}
 }
 
+sub _auth_providers () {
+	[
+	  SVN::Client::get_simple_provider(),
+	  SVN::Client::get_ssl_server_trust_file_provider(),
+	  SVN::Client::get_simple_prompt_provider(
+	    \&Git::SVN::Prompt::simple, 2),
+	  SVN::Client::get_ssl_client_cert_file_provider(),
+	  SVN::Client::get_ssl_client_cert_prompt_provider(
+	    \&Git::SVN::Prompt::ssl_client_cert, 2),
+	  SVN::Client::get_ssl_client_cert_pw_prompt_provider(
+	    \&Git::SVN::Prompt::ssl_client_cert_pw, 2),
+	  SVN::Client::get_username_provider(),
+	  SVN::Client::get_ssl_server_trust_prompt_provider(
+	    \&Git::SVN::Prompt::ssl_server_trust),
+	  SVN::Client::get_username_prompt_provider(
+	    \&Git::SVN::Prompt::username, 2)
+	]
+}
+
 sub new {
 	my ($class, $url) = @_;
 	$url =~ s!/+$!!;
 	return $RA if ($RA && $RA->{url} eq $url);
 
 	SVN::_Core::svn_config_ensure($config_dir, undef);
-	my ($baton, $callbacks) = SVN::Core::auth_open_helper([
-	    SVN::Client::get_simple_provider(),
-	    SVN::Client::get_ssl_server_trust_file_provider(),
-	    SVN::Client::get_simple_prompt_provider(
-	      \&Git::SVN::Prompt::simple, 2),
-	    SVN::Client::get_ssl_client_cert_file_provider(),
-	    SVN::Client::get_ssl_client_cert_prompt_provider(
-	      \&Git::SVN::Prompt::ssl_client_cert, 2),
-	    SVN::Client::get_ssl_client_cert_pw_prompt_provider(
-	      \&Git::SVN::Prompt::ssl_client_cert_pw, 2),
-	    SVN::Client::get_username_provider(),
-	    SVN::Client::get_ssl_server_trust_prompt_provider(
-	      \&Git::SVN::Prompt::ssl_server_trust),
-	    SVN::Client::get_username_prompt_provider(
-	      \&Git::SVN::Prompt::username, 2),
-	  ]);
+	my ($baton, $callbacks) = SVN::Core::auth_open_helper(_auth_providers);
 	my $config = SVN::Core::config_get_config($config_dir);
 	$RA = undef;
 	my $self = SVN::Ra->new(url => $url, auth => $baton,
@@ -3109,6 +3123,24 @@ sub get_log {
 	splice(@args, 3, 1) if ($SVN::Core::VERSION le '1.2.0');
 	my $ret = $self->SUPER::get_log(@args, $pool);
 	$pool->clear;
+	$ret;
+}
+
+sub trees_match {
+	my ($self, $url1, $rev1, $url2, $rev2) = @_;
+	my $ctx = SVN::Client->new(auth => _auth_providers);
+	my $out = IO::File->new_tmpfile;
+
+	# older SVN (1.1.x) doesn't take $pool as the last parameter for
+	# $ctx->diff(), so we'll create a default one
+	my $pool = SVN::Pool->new_default_sub;
+
+	$ra_invalid = 1; # this will open a new SVN::Ra connection to $url1
+	$ctx->diff([], $url1, $rev1, $url2, $rev2, 1, 1, 0, $out, $out);
+	$out->flush;
+	my $ret = (($out->stat)[7] == 0);
+	close $out or croak $!;
+
 	$ret;
 }
 
