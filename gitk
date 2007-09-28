@@ -626,6 +626,7 @@ proc makewindow {} {
     global bgcolor fgcolor bglist fglist diffcolors selectbgcolor
     global headctxmenu progresscanv progressitem progresscoords statusw
     global fprogitem fprogcoord lastprogupdate progupdatepending
+    global have_tk85
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -845,9 +846,11 @@ proc makewindow {} {
     pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left
     set ctext .bleft.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
-	-tabs "[expr {$tabstop * $charspc}]" \
 	-state disabled -font $textfont \
 	-yscrollcommand scrolltext -wrap none
+    if {$have_tk85} {
+	$ctext conf -tabstyle wordprocessor
+    }
     scrollbar .bleft.sb -command "$ctext yview"
     pack .bleft.top -side top -fill x
     pack .bleft.mid -side top -fill x
@@ -1135,7 +1138,7 @@ proc doprogupdate {} {
 }
 
 proc savestuff {w} {
-    global canv canv2 canv3 ctext cflist mainfont textfont uifont tabstop
+    global canv canv2 canv3 mainfont textfont uifont tabstop
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth showneartags showlocalchanges
     global viewname viewfiles viewargs viewperm nextviewnum
@@ -5092,6 +5095,7 @@ proc showfile {f} {
     $ctext insert end "$f\n" filesep
     $ctext config -state disabled
     $ctext yview $commentend
+    settabs 0
 }
 
 proc getblobline {bf id} {
@@ -5133,6 +5137,7 @@ proc mergediff {id l} {
     fconfigure $mdf -blocking 0
     set mdifffd($id) $mdf
     set np [llength [lindex $parentlist $l]]
+    settabs $np
     filerun $mdf [list getmergediffline $mdf $id $np]
 }
 
@@ -5210,6 +5215,7 @@ proc getmergediffline {mdf id np} {
 proc startdiff {ids} {
     global treediffs diffids treepending diffmergeid nullid nullid2
 
+    settabs 1
     set diffids $ids
     catch {unset diffmergeid}
     if {![info exists treediffs($ids)] ||
@@ -5515,6 +5521,23 @@ proc clear_ctext {{first 1.0}} {
     }
 }
 
+proc settabs {{firstab {}}} {
+    global firsttabstop tabstop textfont ctext have_tk85
+
+    if {$firstab ne {} && $have_tk85} {
+	set firsttabstop $firstab
+    }
+    set w [font measure $textfont "0"]
+    if {$firsttabstop != 0} {
+	$ctext conf -tabs [list [expr {$firsttabstop * $w}] \
+			       [expr {($firsttabstop + $tabstop) * $w}]]
+    } elseif {$have_tk85 || $tabstop != 8} {
+	$ctext conf -tabs [expr {$tabstop * $w}]
+    } else {
+	$ctext conf -tabs {}
+    }
+}
+
 proc incrsearch {name ix op} {
     global ctext searchstring searchdirn
 
@@ -5666,13 +5689,12 @@ proc redisplay {} {
 
 proc incrfont {inc} {
     global mainfont textfont ctext canv phase cflist showrefstop
-    global charspc tabstop
     global stopped entries
     unmarkmatches
     set mainfont [lreplace $mainfont 1 1 [expr {[lindex $mainfont 1] + $inc}]]
     set textfont [lreplace $textfont 1 1 [expr {[lindex $textfont 1] + $inc}]]
     setcoords
-    $ctext conf -font $textfont -tabs "[expr {$tabstop * $charspc}]"
+    settabs
     $cflist conf -font $textfont
     $ctext tag conf filesep -font [concat $textfont bold]
     foreach e $entries {
@@ -5876,6 +5898,7 @@ proc lineclick {x y id isnew} {
     # fill the details pane with info about this line
     $ctext conf -state normal
     clear_ctext
+    settabs 0
     $ctext insert end "Parent:\t"
     $ctext insert end $id link0
     setlink $id link0
@@ -7780,6 +7803,7 @@ proc showtag {tag isnew} {
     }
     $ctext conf -state normal
     clear_ctext
+    settabs 0
     set linknum 0
     if {![info exists tagcontents($tag)]} {
 	catch {
@@ -7951,11 +7975,10 @@ proc prefscan {} {
 proc prefsok {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
-    global charspc ctext tabstop
 
     catch {destroy $prefstop}
     unset prefstop
-    $ctext configure -tabs "[expr {$tabstop * $charspc}]"
+    settabs
     if {$showlocalchanges != $oldprefs(showlocalchanges)} {
 	if {$showlocalchanges} {
 	    doshowlocalchanges
@@ -8360,6 +8383,7 @@ if {$i >= [llength $argv] && $revtreeargs ne {}} {
 set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
 
+set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
 
 set runq {}
 set history {}
@@ -8376,6 +8400,7 @@ set markingmatches 0
 set linkentercount 0
 set need_redisplay 0
 set nrows_drawn 0
+set firsttabstop 0
 
 set nextviewnum 1
 set curview 0
