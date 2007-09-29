@@ -36,7 +36,6 @@
 ;; TODO
 ;;  - portability to XEmacs
 ;;  - better handling of subprocess errors
-;;  - hook into file save (after-save-hook)
 ;;  - diff against other branch
 ;;  - renaming files from the status buffer
 ;;  - creating tags
@@ -1352,8 +1351,23 @@ Commands:
         (cd dir)
         (git-status-mode)
         (git-refresh-status)
-        (goto-char (point-min)))
+        (goto-char (point-min))
+        (add-hook 'after-save-hook 'git-update-saved-file))
     (message "%s is not a git working tree." dir)))
+
+(defun git-update-saved-file ()
+  "Update the corresponding git-status buffer when a file is saved.
+Meant to be used in `after-save-hook'."
+  (let* ((file (expand-file-name buffer-file-name))
+         (dir (condition-case nil (git-get-top-dir (file-name-directory file))))
+         (buffer (and dir (git-find-status-buffer dir))))
+    (when buffer
+      (with-current-buffer buffer
+        (let ((filename (file-relative-name file dir)))
+          ; skip files located inside the .git directory
+          (unless (string-match "^\\.git/" filename)
+            (git-call-process-env nil nil "add" "--refresh" "--" filename)
+            (git-update-status-files (list filename) 'uptodate)))))))
 
 (defun git-help ()
   "Display help for Git mode."
