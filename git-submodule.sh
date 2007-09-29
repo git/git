@@ -138,8 +138,8 @@ module_add()
 		# it is local
 		if base=$(get_repo_base "$repo"); then
 			repo="$base"
-			realrepo=$repo
 		fi
+		realrepo=$repo
 		;;
 	esac
 
