@@ -494,24 +494,31 @@ and returns the process output as a string."
       (setf (git-fileinfo->orig-name info) nil)
       (setf (git-fileinfo->needs-refresh info) t))))
 
-(defun git-set-filenames-state (status files state)
-  "Set the state of a list of named files."
+(defun git-status-filenames-map (status func files &rest args)
+  "Apply FUNC to the status files names in the FILES list."
   (when files
     (setq files (sort files #'string-lessp))
     (let ((file (pop files))
           (node (ewoc-nth status 0)))
       (while (and file node)
         (let ((info (ewoc-data node)))
-          (cond ((string-lessp (git-fileinfo->name info) file)
-                 (setq node (ewoc-next status node)))
-                ((string-equal (git-fileinfo->name info) file)
-                 (unless (eq (git-fileinfo->state info) state)
-                   (setf (git-fileinfo->state info) state)
-                   (setf (git-fileinfo->rename-state info) nil)
-                   (setf (git-fileinfo->orig-name info) nil)
-                   (setf (git-fileinfo->needs-refresh info) t))
-                 (setq file (pop files)))
-                (t (setq file (pop files)))))))
+          (if (string-lessp (git-fileinfo->name info) file)
+              (setq node (ewoc-next status node))
+            (if (string-equal (git-fileinfo->name info) file)
+                (apply func info args))
+            (setq file (pop files))))))))
+
+(defun git-set-filenames-state (status files state)
+  "Set the state of a list of named files."
+  (when files
+    (git-status-filenames-map status
+                              (lambda (info state)
+                                (unless (eq (git-fileinfo->state info) state)
+                                  (setf (git-fileinfo->state info) state)
+                                  (setf (git-fileinfo->rename-state info) nil)
+                                  (setf (git-fileinfo->orig-name info) nil)
+                                  (setf (git-fileinfo->needs-refresh info) t)))
+                              files state)
     (unless state  ;; delete files whose state has been set to nil
       (ewoc-filter status (lambda (info) (git-fileinfo->state info))))))
 
@@ -1197,11 +1204,20 @@ Return the list of files that haven't been handled."
   (interactive)
   (let* ((status git-status)
          (pos (ewoc-locate status))
+         (marked-files (git-get-filenames (ewoc-collect status (lambda (info) (git-fileinfo->marked info)))))
          (cur-name (and pos (git-fileinfo->name (ewoc-data pos)))))
     (unless status (error "Not in git-status buffer."))
     (git-run-command nil nil "update-index" "--refresh")
     (git-clear-status status)
     (git-update-status-files nil)
+    ; restore file marks
+    (when marked-files
+      (git-status-filenames-map status
+                                (lambda (info)
+                                        (setf (git-fileinfo->marked info) t)
+                                        (setf (git-fileinfo->needs-refresh info) t))
+                                marked-files)
+      (git-refresh-files))
     ; move point to the current file name if any
     (let ((node (and cur-name (git-find-status-file status cur-name))))
       (when node (ewoc-goto-node status node)))))
