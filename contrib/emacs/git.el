@@ -484,14 +484,15 @@ and returns the process output as a string."
   "Remove everything from the status list."
   (ewoc-filter status (lambda (info) nil)))
 
-(defun git-set-files-state (files state)
-  "Set the state of a list of files."
-  (dolist (info files)
-    (unless (eq (git-fileinfo->state info) state)
-      (setf (git-fileinfo->state info) state)
-      (setf (git-fileinfo->rename-state info) nil)
-      (setf (git-fileinfo->orig-name info) nil)
-      (setf (git-fileinfo->needs-refresh info) t))))
+(defun git-set-fileinfo-state (info state)
+  "Set the state of a file info."
+  (unless (eq (git-fileinfo->state info) state)
+    (setf (git-fileinfo->state info) state
+          (git-fileinfo->old-perm info) 0
+          (git-fileinfo->new-perm info) 0
+          (git-fileinfo->rename-state info) nil
+          (git-fileinfo->orig-name info) nil
+          (git-fileinfo->needs-refresh info) t)))
 
 (defun git-status-filenames-map (status func files &rest args)
   "Apply FUNC to the status files names in the FILES list."
@@ -510,14 +511,7 @@ and returns the process output as a string."
 (defun git-set-filenames-state (status files state)
   "Set the state of a list of named files."
   (when files
-    (git-status-filenames-map status
-                              (lambda (info state)
-                                (unless (eq (git-fileinfo->state info) state)
-                                  (setf (git-fileinfo->state info) state)
-                                  (setf (git-fileinfo->rename-state info) nil)
-                                  (setf (git-fileinfo->orig-name info) nil)
-                                  (setf (git-fileinfo->needs-refresh info) t)))
-                              files state)
+    (git-status-filenames-map status #'git-set-fileinfo-state files state)
     (unless state  ;; delete files whose state has been set to nil
       (ewoc-filter status (lambda (info) (git-fileinfo->state info))))))
 
@@ -800,7 +794,7 @@ Return the list of files that haven't been handled."
                             (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
                             (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
                             (with-current-buffer buffer (erase-buffer))
-                            (git-set-files-state files 'uptodate)
+                            (dolist (info files) (git-set-fileinfo-state info 'uptodate))
                             (git-call-process-env nil nil "rerere")
                             (git-refresh-files)
                             (git-refresh-ewoc-hf git-status)
