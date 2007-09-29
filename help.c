@@ -193,6 +193,7 @@ static void show_man_page(const char *git_cmd)
 	   strcpy (htmlpath + prefix_len, page);
 	   strcpy (htmlpath + prefix_len + page_len, suffix);
 	   htmlpath[htmlpath_len] = 0;
+	   printf("Launching default browser to display html help...\n");
 	   /* We need sh here to run shell script /bin/start. */
 	   execlp("sh", "start", "/bin/start", htmlpath, NULL );
        }
