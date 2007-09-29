@@ -91,6 +91,11 @@ The --cc option must be repeated for each user you want on the cc list.
 	`/usr/lib/sendmail` if such program is available, or
 	`localhost` otherwise.
 
+--smtp-server-port::
+	Specifies a port different from the default port (SMTP
+	servers typically listen to smtp port 25 and ssmtp port
+	465).
+
 --smtp-user, --smtp-pass::
 	Username and password for SMTP-AUTH. Defaults are the values of
 	the configuration values 'sendemail.smtpuser' and
