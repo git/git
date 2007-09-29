@@ -1,0 +1,37 @@
+GIT v1.5.3.3 Release Notes
+==========================
+
+Fixes since v1.5.3.2
+--------------------
+
+ * git-quiltimport did not like it when a patch described in the
+   series file does not exist.
+
+ * p4 importer missed executable bit in some cases.
+
+ * The default shell on some FreeBSD did not execute the
+   argument parsing code correctly and made git unusable.
+
+ * git-svn incorrectly spawned pager even when the user user
+   explicitly asked not to.
+
+ * sample post-receive hook overquoted the envelope sender
+   value.
+
+ * git-am got confused when the patch contained a change that is
+   only about type and not contents.
+
+ * git-mergetool did not show our and their version of the
+   conflicted file when started from a subdirectory of the
+   project.
+
+ * git-mergetool did not pass correct options when invoking diff3.
+
+ * git-log sometimes invoked underlying "diff" machinery
+   unnecessarily.
+
+--
+exec >/var/tmp/1
+O=v1.5.3.2-29-gb7bb760
+echo O=`git describe refs/heads/maint`
+git shortlog --no-merges $O..refs/heads/maint
