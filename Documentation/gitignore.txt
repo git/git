@@ -26,7 +26,7 @@ precedence, the last matching pattern decides the outcome):
 
  * Patterns read from a `.gitignore` file in the same directory
    as the path, or in any parent directory, with patterns in the
-   higher level files (up to the root) being overriden by those in
+   higher level files (up to the root) being overridden by those in
    lower level files down to the directory containing the file.
    These patterns match relative to the location of the
    `.gitignore` file.  A project normally includes such

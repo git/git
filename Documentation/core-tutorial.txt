@@ -1459,7 +1459,8 @@ Although git is a truly distributed system, it is often
 convenient to organize your project with an informal hierarchy
 of developers. Linux kernel development is run this way. There
 is a nice illustration (page 17, "Merges to Mainline") in
-link:http://tinyurl.com/a2jdg[Randy Dunlap's presentation].
+link:http://www.xenotime.net/linux/mentor/linux-mentoring-2006.pdf
+[Randy Dunlap's presentation].
 
 It should be stressed that this hierarchy is purely *informal*.
 There is nothing fundamental in git that enforces the "chain of

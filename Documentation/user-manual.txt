@@ -2856,8 +2856,7 @@ between two related tree objects, since it can ignore any entries with
 identical object names.
 
 (Note: in the presence of submodules, trees may also have commits as
-entries.   See gitlink:git-submodule[1] and gitlink:gitmodules.txt[1]
-for partial documentation.)
+entries.  See <<submodules>> for documentation.)
 
 Note that the files all have mode 644 or 755: git actually only pays
 attention to the executable bit.
@@ -3163,12 +3162,45 @@ information as long as you have the name of the tree that it described.
 Submodules
 ==========
 
-This tutorial explains how to create and publish a repository with submodules
-using the gitlink:git-submodule[1] command.
+Large projects are often composed of smaller, self-contained modules.  For
+example, an embedded Linux distribution's source tree would include every
+piece of software in the distribution with some local modifications; a movie
+player might need to build against a specific, known-working version of a
+decompression library; several independent programs might all share the same
+build scripts.
 
-Submodules maintain their own identity; the submodule support just stores the
-submodule repository location and commit ID, so other developers who clone the
-superproject can easily clone all the submodules at the same revision.
+With centralized revision control systems this is often accomplished by
+including every module in one single repository.  Developers can check out
+all modules or only the modules they need to work with.  They can even modify
+files across several modules in a single commit while moving things around
+or updating APIs and translations.
+
+Git does not allow partial checkouts, so duplicating this approach in Git
+would force developers to keep a local copy of modules they are not
+interested in touching.  Commits in an enormous checkout would be slower
+than you'd expect as Git would have to scan every directory for changes.
+If modules have a lot of local history, clones would take forever.
+
+On the plus side, distributed revision control systems can much better
+integrate with external sources.  In a centralized model, a single arbitrary
+snapshot of the external project is exported from its own revision control
+and then imported into the local revision control on a vendor branch.  All
+the history is hidden.  With distributed revision control you can clone the
+entire external history and much more easily follow development and re-merge
+local changes.
+
+Git's submodule support allows a repository to contain, as a subdirectory, a
+checkout of an external project.  Submodules maintain their own identity;
+the submodule support just stores the submodule repository location and
+commit ID, so other developers who clone the containing project
+("superproject") can easily clone all the submodules at the same revision.
+Partial checkouts of the superproject are possible: you can tell Git to
+clone none, some or all of the submodules.
+
+The gitlink:git-submodule[1] command is available since Git 1.5.3.  Users
+with Git 1.5.2 can look up the submodule commits in the repository and
+manually check them out; earlier versions won't recognize the submodules at
+all.
 
 To see how submodule support works, create (for example) four example
 repositories that can be used later as a submodule:
@@ -3213,8 +3245,8 @@ The `git submodule add` command does a couple of things:
 
 - It clones the submodule under the current directory and by default checks out
   the master branch.
-- It adds the submodule's clone path to the `.gitmodules` file and adds this
-  file to the index, ready to be committed.
+- It adds the submodule's clone path to the gitlink:gitmodules[5] file and
+  adds this file to the index, ready to be committed.
 - It adds the submodule's current commit ID to the index, ready to be
   committed.
 
@@ -4277,5 +4309,3 @@ Write a chapter on using plumbing and writing scripts.
 Alternates, clone -reference, etc.
 
 git unpack-objects -r for recovery
-
-submodules

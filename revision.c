@@ -1209,8 +1209,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
-				if (strcmp(argv[i], "-z"))
-					revs->diff = 1;
 				i += opts - 1;
 				continue;
 			}
@@ -1253,6 +1251,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		object = get_reference(revs, def, sha1, 0);
 		add_pending_object_with_mode(revs, object, def, mode);
 	}
+
+	/* Did the user ask for any diff output? Run the diff! */
+	if (revs->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT)
+		revs->diff = 1;
+
+	/* Pickaxe needs diffs */
+	if (revs->diffopt.pickaxe)
+		revs->diff = 1;
 
 	if (revs->topo_order)
 		revs->limited = 1;
