@@ -232,14 +232,14 @@ do_next () {
 	'#'*|'')
 		mark_action_done
 		;;
-	pick)
+	pick|p)
 		comment_for_reflog pick
 
 		mark_action_done
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		;;
-	edit)
+	edit|e)
 		comment_for_reflog edit
 
 		mark_action_done
@@ -254,7 +254,7 @@ do_next () {
 		warn
 		exit 0
 		;;
-	squash)
+	squash|s)
 		comment_for_reflog squash
 
 		has_action "$DONE" ||
@@ -263,7 +263,7 @@ do_next () {
 		mark_action_done
 		make_squash_message $sha1 > "$MSG"
 		case "$(peek_next_command)" in
-		squash)
+		squash|s)
 			EDIT_COMMIT=
 			USE_OUTPUT=output
 			cp "$MSG" "$SQUASH_MSG"
