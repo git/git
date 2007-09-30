@@ -394,9 +394,7 @@ do
 		stop_here $this
 	fi
 
-	echo
 	printf 'Applying %s\n' "$SUBJECT"
-	echo
 
 	case "$resolved" in
 	'')
@@ -452,12 +450,10 @@ do
 	fi
 
 	tree=$(git write-tree) &&
-	echo Wrote tree $tree &&
 	parent=$(git rev-parse --verify HEAD) &&
 	commit=$(git commit-tree $tree -p $parent <"$dotest/final-commit") &&
-	echo Committed: $commit &&
 	git update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
-	stop_here $this
+	stop_here $thisy
 
 	if test -x "$GIT_DIR"/hooks/post-applypatch
 	then
