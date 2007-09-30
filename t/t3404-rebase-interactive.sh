@@ -180,7 +180,7 @@ test_expect_success 'squash' '
 '
 
 test_expect_success 'retain authorship when squashing' '
-	git show HEAD | grep "^Author: Nitfol"
+	git show HEAD | grep "^Author: Twerp Snog"
 '
 
 test_expect_success 'preserve merges with -p' '
