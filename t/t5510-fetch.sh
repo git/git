@@ -153,4 +153,39 @@ test_expect_success 'bundle should be able to create a full history' '
 
 '
 
+test "$TEST_RSYNC" && {
+test_expect_success 'fetch via rsync' '
+	git pack-refs &&
+	mkdir rsynced &&
+	cd rsynced &&
+	git init &&
+	git fetch rsync://127.0.0.1$(pwd)/../.git master:refs/heads/master &&
+	git gc --prune &&
+	test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
+	git fsck --full
+'
+
+test_expect_success 'push via rsync' '
+	mkdir ../rsynced2 &&
+	(cd ../rsynced2 &&
+	 git init) &&
+	git push rsync://127.0.0.1$(pwd)/../rsynced2/.git master &&
+	cd ../rsynced2 &&
+	git gc --prune &&
+	test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
+	git fsck --full
+'
+
+test_expect_success 'push via rsync' '
+	cd .. &&
+	mkdir rsynced3 &&
+	(cd rsynced3 &&
+	 git init) &&
+	git push --all rsync://127.0.0.1$(pwd)/rsynced3/.git &&
+	cd rsynced3 &&
+	test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
+	git fsck --full
+'
+}
+
 test_done
