@@ -322,7 +322,7 @@ sub rm_remote {
 	my ($name) = @_;
 	if (!exists $remote->{$name}) {
 		print STDERR "No such remote $name\n";
-		return;
+		return 1;
 	}
 
 	$git->command('config', '--remove-section', "remote.$name");
@@ -337,13 +337,13 @@ sub rm_remote {
 		}
 	};
 
-
 	my @refs = $git->command('for-each-ref',
 		'--format=%(refname) %(objectname)', "refs/remotes/$name");
 	for (@refs) {
 		($ref, $object) = split;
 		$git->command(qw(update-ref -d), $ref, $object);
 	}
+	return 0;
 }
 
 sub add_usage {
@@ -461,7 +461,7 @@ elsif ($ARGV[0] eq 'rm') {
 		print STDERR "Usage: git remote rm <remote>\n";
 		exit(1);
 	}
-	rm_remote($ARGV[1]);
+	exit(rm_remote($ARGV[1]));
 }
 else {
 	print STDERR "Usage: git remote\n";
