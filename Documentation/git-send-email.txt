@@ -159,6 +159,9 @@ sendemail.aliasfiletype::
 	Format of the file(s) specified in sendemail.aliasesfile. Must be
 	one of 'mutt', 'mailrc', 'pine', or 'gnus'.
 
+sendemail.to::
+	Email address (or alias) to always send to.
+
 sendemail.cccmd::
 	Command to execute to generate per patch file specific "Cc:"s.
 
