@@ -453,7 +453,7 @@ do
 	parent=$(git rev-parse --verify HEAD) &&
 	commit=$(git commit-tree $tree -p $parent <"$dotest/final-commit") &&
 	git update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
-	stop_here $thisy
+	stop_here $this
 
 	if test -x "$GIT_DIR"/hooks/post-applypatch
 	then
