@@ -222,7 +222,7 @@ static void show_man_page(const char *git_cmd)
 		strcpy (htmlpath + install_dir_len + html_dir_len, page);
 		strcpy (htmlpath + install_dir_len + html_dir_len + page_len, suffix);
 		htmlpath[htmlpath_len] = 0;
-		printf("Launching default browser to display html help...\n");
+		printf("Launching default browser to display HTML help ...\n");
 		ShellExecute(NULL, "open", htmlpath, NULL, NULL, 0);
 	}
 #else
