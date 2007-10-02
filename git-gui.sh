@@ -1468,7 +1468,27 @@ proc do_gitk {revs} {
 	if {! [file exists $exe]} {
 		error_popup "Unable to start gitk:\n\n$exe does not exist"
 	} else {
+		global env
+
+		if {[info exists env(GIT_DIR)]} {
+			set old_GIT_DIR $env(GIT_DIR)
+		} else {
+			set old_GIT_DIR {}
+		}
+
+		set pwd [pwd]
+		cd [file dirname [gitdir]]
+		set env(GIT_DIR) [file tail [gitdir]]
+
 		eval exec $cmd $revs &
+
+		if {$old_GIT_DIR eq {}} {
+			unset env(GIT_DIR)
+		} else {
+			set env(GIT_DIR) $old_GIT_DIR
+		}
+		cd $pwd
+
 		ui_status $::starting_gitk_msg
 		after 10000 {
 			ui_ready $starting_gitk_msg
