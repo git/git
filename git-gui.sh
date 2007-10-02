@@ -1125,11 +1125,17 @@ proc mapdesc {state path} {
 }
 
 proc ui_status {msg} {
-	$::main_status show $msg
+	global main_status
+	if {[info exists main_status]} {
+		$main_status show $msg
+	}
 }
 
 proc ui_ready {{test {}}} {
-	$::main_status show {Ready.} $test
+	global main_status
+	if {[info exists main_status]} {
+		$main_status show [mc "Ready."] $test
+	}
 }
 
 proc escape_path {path} {
