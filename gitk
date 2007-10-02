@@ -5221,8 +5221,7 @@ proc getblobdiffline {bdf ids} {
 	    set diffinhdr 0
 
 	} elseif {$diffinhdr} {
-	    if {![string compare -length 12 "rename from " $line] ||
-		![string compare -length 10 "copy from " $line]} {
+	    if {![string compare -length 12 "rename from " $line]} {
 		set fname [string range $line [expr 6 + [string first " from " $line] ] end]
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
