@@ -91,6 +91,21 @@ OPTIONS
 --no-abbrev::
 	Display the full sha1s in output listing rather than abbreviating them.
 
+--track::
+	Set up configuration so that git-pull will automatically
+	retrieve data from the remote branch.  Use this if you always
+	pull from the same remote branch into the new branch, or if you
+	don't want to use "git pull <repository> <refspec>" explicitly.  Set the
+	branch.autosetupmerge configuration variable to true if you
+	want git-checkout and git-branch to always behave as if
+	'--track' were given.
+
+--no-track::
+	When -b is given and a branch is created off a remote branch,
+	set up configuration so that git-pull will not retrieve data
+	from the remote branch, ignoring the branch.autosetupmerge
+	configuration variable.
+
 <branchname>::
 	The name of the branch to create or delete.
 	The new branch name must pass all checks defined by
