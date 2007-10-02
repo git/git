@@ -113,7 +113,7 @@ static int parse_atom(const char *atom, const char *ep)
 		 * table.
 		 */
 		const char *formatp = strchr(sp, ':');
-		if (!formatp)
+		if (!formatp || ep < formatp)
 			formatp = ep;
 		if (len == formatp - sp && !memcmp(valid_atom[i].name, sp, len))
 			break;
