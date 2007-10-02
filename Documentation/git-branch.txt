@@ -26,6 +26,10 @@ It will start out with a head equal to the one given as <start-point>.
 If no <start-point> is given, the branch will be created with a head
 equal to that of the currently checked out branch.
 
+Note that this will create the new branch, but it will not switch the
+working tree to it; use "git checkout <newbranch>" to switch to the
+new branch.
+
 When a local branch is started off a remote branch, git can setup the
 branch so that gitlink:git-pull[1] will appropriately merge from that
 remote branch.  If this behavior is desired, it is possible to make it
