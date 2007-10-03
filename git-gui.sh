@@ -1243,11 +1243,17 @@ proc mapdesc {state path} {
 }
 
 proc ui_status {msg} {
-	$::main_status show $msg
+	global main_status
+	if {[info exists main_status]} {
+		$main_status show $msg
+	}
 }
 
 proc ui_ready {{test {}}} {
-	$::main_status show [mc "Ready."] $test
+	global main_status
+	if {[info exists main_status]} {
+		$main_status show [mc "Ready."] $test
+	}
 }
 
 proc escape_path {path} {
@@ -1577,7 +1583,27 @@ proc do_gitk {revs} {
 	if {! [file exists $exe]} {
 		error_popup [mc "Unable to start gitk:\n\n%s does not exist" $exe]
 	} else {
+		global env
+
+		if {[info exists env(GIT_DIR)]} {
+			set old_GIT_DIR $env(GIT_DIR)
+		} else {
+			set old_GIT_DIR {}
+		}
+
+		set pwd [pwd]
+		cd [file dirname [gitdir]]
+		set env(GIT_DIR) [file tail [gitdir]]
+
 		eval exec $cmd $revs &
+
+		if {$old_GIT_DIR eq {}} {
+			unset env(GIT_DIR)
+		} else {
+			set env(GIT_DIR) $old_GIT_DIR
+		}
+		cd $pwd
+
 		ui_status $::starting_gitk_msg
 		after 10000 {
 			ui_ready $starting_gitk_msg
