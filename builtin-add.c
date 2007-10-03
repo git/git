@@ -12,9 +12,13 @@
 #include "diffcore.h"
 #include "commit.h"
 #include "revision.h"
+#include "run-command.h"
+#include "parse-options.h"
 
-static const char builtin_add_usage[] =
-"git-add [-n] [-v] [-f] [--interactive | -i] [-u] [--refresh] [--] <filepattern>...";
+static const char * const builtin_add_usage[] = {
+	"git-add [options] [--] <filepattern>...",
+	NULL
+};
 
 static int take_worktree_changes;
 static const char *excludes_file;
@@ -156,23 +160,32 @@ static struct lock_file lock_file;
 static const char ignore_error[] =
 "The following paths are ignored by one of your .gitignore files:\n";
 
+static int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
+static int add_interactive = 0;
+
+static struct option builtin_add_options[] = {
+	OPT__DRY_RUN(&show_only),
+	OPT__VERBOSE(&verbose),
+	OPT_GROUP(""),
+	OPT_BOOLEAN('i', "interactive", &add_interactive, "interactive picking"),
+	OPT_BOOLEAN('f', NULL, &ignored_too, "allow adding otherwise ignored files"),
+	OPT_BOOLEAN('u', NULL, &take_worktree_changes, "update tracked files"),
+	OPT_BOOLEAN( 0 , "refresh", &refresh_only, "don't add, only refresh the index"),
+	OPT_END(),
+};
+
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
-	int i, newfd;
-	int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
+	int i, newfd, orig_argc = argc;
 	const char **pathspec;
 	struct dir_struct dir;
-	int add_interactive = 0;
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp("--interactive", argv[i]) ||
-		    !strcmp("-i", argv[i]))
-			add_interactive++;
-	}
+	argc = parse_options(argc, argv, builtin_add_options,
+			  builtin_add_usage, 0);
 	if (add_interactive) {
 		const char *args[] = { "add--interactive", NULL };
 
-		if (add_interactive != 1 || argc != 2)
+		if (add_interactive != 1 || orig_argc != 2)
 			die("add --interactive does not take any parameters");
 		execv_git_cmd(args);
 		exit(1);
@@ -182,49 +195,17 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	newfd = hold_locked_index(&lock_file, 1);
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-
-		if (arg[0] != '-')
-			break;
-		if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-		if (!strcmp(arg, "-n")) {
-			show_only = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-f")) {
-			ignored_too = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-v")) {
-			verbose = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-u")) {
-			take_worktree_changes = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--refresh")) {
-			refresh_only = 1;
-			continue;
-		}
-		usage(builtin_add_usage);
-	}
-
 	if (take_worktree_changes) {
-		update(verbose, prefix, argv + i);
+		update(verbose, prefix, argv);
 		goto finish;
 	}
 
-	if (argc <= i) {
+	if (argc == 0) {
 		fprintf(stderr, "Nothing specified, nothing added.\n");
 		fprintf(stderr, "Maybe you wanted to say 'git add .'?\n");
 		return 0;
 	}
-	pathspec = get_pathspec(prefix, argv + i);
+	pathspec = get_pathspec(prefix, argv);
 
 	if (refresh_only) {
 		refresh(verbose, pathspec);
