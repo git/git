@@ -4,7 +4,6 @@
  * Copyright (c) Junio C Hamano, 2006
  */
 #include "cache.h"
-#include "strbuf.h"
 #include "quote.h"
 #include "tree.h"
 
@@ -44,30 +43,22 @@ static int ent_compare(const void *a_, const void *b_)
 
 static void write_tree(unsigned char *sha1)
 {
-	char *buffer;
-	unsigned long size, offset;
+	struct strbuf buf;
+	size_t size;
 	int i;
 
 	qsort(entries, used, sizeof(*entries), ent_compare);
 	for (size = i = 0; i < used; i++)
 		size += 32 + entries[i]->len;
-	buffer = xmalloc(size);
-	offset = 0;
 
+	strbuf_init(&buf, size);
 	for (i = 0; i < used; i++) {
 		struct treeent *ent = entries[i];
-
-		if (offset + ent->len + 100 < size) {
-			size = alloc_nr(offset + ent->len + 100);
-			buffer = xrealloc(buffer, size);
-		}
-		offset += sprintf(buffer + offset, "%o ", ent->mode);
-		offset += sprintf(buffer + offset, "%s", ent->name);
-		buffer[offset++] = 0;
-		hashcpy((unsigned char*)buffer + offset, ent->sha1);
-		offset += 20;
+		strbuf_addf(&buf, "%o %s%c", ent->mode, ent->name, '\0');
+		strbuf_add(&buf, ent->sha1, 20);
 	}
-	write_sha1_file(buffer, offset, tree_type, sha1);
+
+	write_sha1_file(buf.buf, buf.len, tree_type, sha1);
 }
 
 static const char mktree_usage[] = "git-mktree [-z]";
@@ -75,6 +66,7 @@ static const char mktree_usage[] = "git-mktree [-z]";
 int main(int ac, char **av)
 {
 	struct strbuf sb;
+	struct strbuf p_uq;
 	unsigned char sha1[20];
 	int line_termination = '\n';
 
@@ -90,18 +82,14 @@ int main(int ac, char **av)
 		av++;
 	}
 
-	strbuf_init(&sb);
-	while (1) {
-		int len;
+	strbuf_init(&sb, 0);
+	strbuf_init(&p_uq, 0);
+	while (strbuf_getline(&sb, stdin, line_termination) != EOF) {
 		char *ptr, *ntr;
 		unsigned mode;
 		enum object_type type;
 		char *path;
 
-		read_line(&sb, stdin, line_termination);
-		if (sb.eof)
-			break;
-		len = sb.len;
 		ptr = sb.buf;
 		/* Input is non-recursive ls-tree output format
 		 * mode SP type SP sha1 TAB name
@@ -111,7 +99,7 @@ int main(int ac, char **av)
 			die("input format error: %s", sb.buf);
 		ptr = ntr + 1; /* type */
 		ntr = strchr(ptr, ' ');
-		if (!ntr || sb.buf + len <= ntr + 41 ||
+		if (!ntr || sb.buf + sb.len <= ntr + 40 ||
 		    ntr[41] != '\t' ||
 		    get_sha1_hex(ntr + 1, sha1))
 			die("input format error: %s", sb.buf);
@@ -121,17 +109,21 @@ int main(int ac, char **av)
 		*ntr++ = 0; /* now at the beginning of SHA1 */
 		if (type != type_from_string(ptr))
 			die("object type %s mismatch (%s)", ptr, typename(type));
-		ntr += 41; /* at the beginning of name */
-		if (line_termination && ntr[0] == '"')
-			path = unquote_c_style(ntr, NULL);
-		else
-			path = ntr;
+
+		path = ntr + 41;  /* at the beginning of name */
+		if (line_termination && path[0] == '"') {
+			strbuf_reset(&p_uq);
+			if (unquote_c_style(&p_uq, path, NULL)) {
+				die("invalid quoting");
+			}
+			path = p_uq.buf;
+		}
 
 		append_to_tree(mode, sha1, path);
-
-		if (path != ntr)
-			free(path);
 	}
+	strbuf_release(&p_uq);
+	strbuf_release(&sb);
+
 	write_tree(sha1);
 	puts(sha1_to_hex(sha1));
 	exit(0);

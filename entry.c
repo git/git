@@ -104,7 +104,8 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 	long wrote;
 
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
-		char *buf, *new;
+		char *new;
+		struct strbuf buf;
 		unsigned long size;
 
 	case S_IFREG:
@@ -116,10 +117,10 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		/*
 		 * Convert from git internal format to working tree format
 		 */
-		buf = convert_to_working_tree(ce->name, new, &size);
-		if (buf) {
+		strbuf_init(&buf, 0);
+		if (convert_to_working_tree(ce->name, new, size, &buf)) {
 			free(new);
-			new = buf;
+			new = strbuf_detach(&buf, &size);
 		}
 
 		if (to_tempfile) {

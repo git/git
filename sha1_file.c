@@ -1491,11 +1491,8 @@ found_cache_entry:
 		ent->lru.next->prev = ent->lru.prev;
 		ent->lru.prev->next = ent->lru.next;
 		delta_base_cached -= ent->size;
-	}
-	else {
-		ret = xmalloc(ent->size + 1);
-		memcpy(ret, ent->data, ent->size);
-		((char *)ret)[ent->size] = 0;
+	} else {
+		ret = xmemdupz(ent->data, ent->size);
 	}
 	*type = ent->type;
 	*base_size = ent->size;
@@ -1872,12 +1869,9 @@ void *read_sha1_file(const unsigned char *sha1, enum object_type *type,
 
 	co = find_cached_object(sha1);
 	if (co) {
-		buf = xmalloc(co->size + 1);
-		memcpy(buf, co->buf, co->size);
-		((char*)buf)[co->size] = 0;
 		*type = co->type;
 		*size = co->size;
-		return buf;
+		return xmemdupz(co->buf, co->size);
 	}
 
 	buf = read_packed_sha1(sha1, type, size);
@@ -2302,68 +2296,25 @@ int has_sha1_file(const unsigned char *sha1)
 	return find_sha1_file(sha1, &st) ? 1 : 0;
 }
 
-/*
- * reads from fd as long as possible into a supplied buffer of size bytes.
- * If necessary the buffer's size is increased using realloc()
- *
- * returns 0 if anything went fine and -1 otherwise
- *
- * The buffer is always NUL-terminated, not including it in returned size.
- *
- * NOTE: both buf and size may change, but even when -1 is returned
- * you still have to free() it yourself.
- */
-int read_fd(int fd, char **return_buf, unsigned long *return_size)
-{
-	char *buf = *return_buf;
-	unsigned long size = *return_size;
-	ssize_t iret;
-	unsigned long off = 0;
-
-	if (!buf || size <= 1) {
-		size = 1024;
-		buf = xrealloc(buf, size);
-	}
-
-	do {
-		iret = xread(fd, buf + off, (size - 1) - off);
-		if (iret > 0) {
-			off += iret;
-			if (off == size - 1) {
-				size = alloc_nr(size);
-				buf = xrealloc(buf, size);
-			}
-		}
-	} while (iret > 0);
-
-	buf[off] = '\0';
-
-	*return_buf = buf;
-	*return_size = off;
-
-	if (iret < 0)
-		return -1;
-	return 0;
-}
-
 int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 {
-	unsigned long size = 4096;
-	char *buf = xmalloc(size);
+	struct strbuf buf;
 	int ret;
 
-	if (read_fd(fd, &buf, &size)) {
-		free(buf);
+	strbuf_init(&buf, 0);
+	if (strbuf_read(&buf, fd, 4096) < 0) {
+		strbuf_release(&buf);
 		return -1;
 	}
 
 	if (!type)
 		type = blob_type;
 	if (write_object)
-		ret = write_sha1_file(buf, size, type, sha1);
+		ret = write_sha1_file(buf.buf, buf.len, type, sha1);
 	else
-		ret = hash_sha1_file(buf, size, type, sha1);
-	free(buf);
+		ret = hash_sha1_file(buf.buf, buf.len, type, sha1);
+	strbuf_release(&buf);
+
 	return ret;
 }
 
@@ -2385,12 +2336,11 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	 * Convert blobs to git internal format
 	 */
 	if ((type == OBJ_BLOB) && S_ISREG(st->st_mode)) {
-		unsigned long nsize = size;
-		char *nbuf = convert_to_git(path, buf, &nsize);
-		if (nbuf) {
+		struct strbuf nbuf;
+		strbuf_init(&nbuf, 0);
+		if (convert_to_git(path, buf, size, &nbuf)) {
 			munmap(buf, size);
-			size = nsize;
-			buf = nbuf;
+			buf = strbuf_detach(&nbuf, &size);
 			re_allocated = 1;
 		}
 	}

@@ -79,25 +79,14 @@ static int detect_any_signoff(char *letter, int size)
 	return seen_head && seen_name;
 }
 
-static unsigned long append_signoff(char **buf_p, unsigned long *buf_sz_p,
-				    unsigned long at, const char *signoff)
+static void append_signoff(struct strbuf *sb, const char *signoff)
 {
 	static const char signed_off_by[] = "Signed-off-by: ";
 	size_t signoff_len = strlen(signoff);
 	int has_signoff = 0;
 	char *cp;
-	char *buf;
-	unsigned long buf_sz;
 
-	buf = *buf_p;
-	buf_sz = *buf_sz_p;
-	if (buf_sz <= at + strlen(signed_off_by) + signoff_len + 3) {
-		buf_sz += strlen(signed_off_by) + signoff_len + 3;
-		buf = xrealloc(buf, buf_sz);
-		*buf_p = buf;
-		*buf_sz_p = buf_sz;
-	}
-	cp = buf;
+	cp = sb->buf;
 
 	/* First see if we already have the sign-off by the signer */
 	while ((cp = strstr(cp, signed_off_by))) {
@@ -105,29 +94,25 @@ static unsigned long append_signoff(char **buf_p, unsigned long *buf_sz_p,
 		has_signoff = 1;
 
 		cp += strlen(signed_off_by);
-		if (cp + signoff_len >= buf + at)
+		if (cp + signoff_len >= sb->buf + sb->len)
 			break;
 		if (strncmp(cp, signoff, signoff_len))
 			continue;
 		if (!isspace(cp[signoff_len]))
 			continue;
 		/* we already have him */
-		return at;
+		return;
 	}
 
 	if (!has_signoff)
-		has_signoff = detect_any_signoff(buf, at);
+		has_signoff = detect_any_signoff(sb->buf, sb->len);
 
 	if (!has_signoff)
-		buf[at++] = '\n';
+		strbuf_addch(sb, '\n');
 
-	strcpy(buf + at, signed_off_by);
-	at += strlen(signed_off_by);
-	strcpy(buf + at, signoff);
-	at += signoff_len;
-	buf[at++] = '\n';
-	buf[at] = 0;
-	return at;
+	strbuf_addstr(sb, signed_off_by);
+	strbuf_add(sb, signoff, signoff_len);
+	strbuf_addch(sb, '\n');
 }
 
 static unsigned int digits_in_number(unsigned int number)
@@ -142,14 +127,12 @@ static unsigned int digits_in_number(unsigned int number)
 
 void show_log(struct rev_info *opt, const char *sep)
 {
-	char *msgbuf = NULL;
-	unsigned long msgbuf_len = 0;
+	struct strbuf msgbuf;
 	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
 	int abbrev = opt->diffopt.abbrev;
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
 	const char *extra;
-	int len;
 	const char *subject = NULL, *extra_headers = opt->extra_headers;
 
 	opt->loginfo = NULL;
@@ -288,18 +271,17 @@ void show_log(struct rev_info *opt, const char *sep)
 	/*
 	 * And then the pretty-printed message itself
 	 */
-	len = pretty_print_commit(opt->commit_format, commit, ~0u,
-				  &msgbuf, &msgbuf_len, abbrev, subject,
-				  extra_headers, opt->date_mode);
+	strbuf_init(&msgbuf, 0);
+	pretty_print_commit(opt->commit_format, commit, &msgbuf,
+				  abbrev, subject, extra_headers, opt->date_mode);
 
 	if (opt->add_signoff)
-		len = append_signoff(&msgbuf, &msgbuf_len, len,
-				     opt->add_signoff);
+		append_signoff(&msgbuf, opt->add_signoff);
 	if (opt->show_log_size)
-		printf("log size %i\n", len);
+		printf("log size %i\n", (int)msgbuf.len);
 
-	printf("%s%s%s", msgbuf, extra, sep);
-	free(msgbuf);
+	printf("%s%s%s", msgbuf.buf, extra, sep);
+	strbuf_release(&msgbuf);
 }
 
 int log_tree_diff_flush(struct rev_info *opt)

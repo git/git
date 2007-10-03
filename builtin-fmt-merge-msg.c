@@ -140,12 +140,10 @@ static int handle_line(char *line)
 	if (!strcmp(".", src) || !strcmp(src, origin)) {
 		int len = strlen(origin);
 		if (origin[0] == '\'' && origin[len - 1] == '\'') {
-			char *new_origin = xmalloc(len - 1);
-			memcpy(new_origin, origin + 1, len - 2);
-			new_origin[len - 2] = 0;
-			origin = new_origin;
-		} else
+			origin = xmemdupz(origin + 1, len - 2);
+		} else {
 			origin = xstrdup(origin);
+		}
 	} else {
 		char *new_origin = xmalloc(strlen(origin) + strlen(src) + 5);
 		sprintf(new_origin, "%s of %s", origin, src);
@@ -211,14 +209,11 @@ static void shortlog(const char *name, unsigned char *sha1,
 
 		bol += 2;
 		eol = strchr(bol, '\n');
-
 		if (eol) {
-			int len = eol - bol;
-			oneline = xmalloc(len + 1);
-			memcpy(oneline, bol, len);
-			oneline[len] = 0;
-		} else
+			oneline = xmemdupz(bol, eol - bol);
+		} else {
 			oneline = xstrdup(bol);
+		}
 		append_to_list(&subjects, oneline, NULL);
 	}
 

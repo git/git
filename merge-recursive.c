@@ -85,12 +85,6 @@ struct stage_data
 	unsigned processed:1;
 };
 
-struct output_buffer
-{
-	struct output_buffer *next;
-	char *str;
-};
-
 static struct path_list current_file_set = {NULL, 0, 0, 1};
 static struct path_list current_directory_set = {NULL, 0, 0, 1};
 
@@ -98,51 +92,52 @@ static int call_depth = 0;
 static int verbosity = 2;
 static int rename_limit = -1;
 static int buffer_output = 1;
-static struct output_buffer *output_list, *output_end;
+static struct strbuf obuf = STRBUF_INIT;
 
-static int show (int v)
+static int show(int v)
 {
 	return (!call_depth && verbosity >= v) || verbosity >= 5;
 }
 
-static void output(int v, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	if (buffer_output && show(v)) {
-		struct output_buffer *b = xmalloc(sizeof(*b));
-		nfvasprintf(&b->str, fmt, args);
-		b->next = NULL;
-		if (output_end)
-			output_end->next = b;
-		else
-			output_list = b;
-		output_end = b;
-	} else if (show(v)) {
-		int i;
-		for (i = call_depth; i--;)
-			fputs("  ", stdout);
-		vfprintf(stdout, fmt, args);
-		fputc('\n', stdout);
-	}
-	va_end(args);
-}
-
 static void flush_output(void)
 {
-	struct output_buffer *b, *n;
-	for (b = output_list; b; b = n) {
-		int i;
-		for (i = call_depth; i--;)
-			fputs("  ", stdout);
-		fputs(b->str, stdout);
-		fputc('\n', stdout);
-		n = b->next;
-		free(b->str);
-		free(b);
+	if (obuf.len) {
+		fputs(obuf.buf, stdout);
+		strbuf_reset(&obuf);
 	}
-	output_list = NULL;
-	output_end = NULL;
+}
+
+static void output(int v, const char *fmt, ...)
+{
+	int len;
+	va_list ap;
+
+	if (!show(v))
+		return;
+
+	strbuf_grow(&obuf, call_depth * 2 + 2);
+	memset(obuf.buf + obuf.len, ' ', call_depth * 2);
+	strbuf_setlen(&obuf, obuf.len + call_depth * 2);
+
+	va_start(ap, fmt);
+	len = vsnprintf(obuf.buf + obuf.len, strbuf_avail(&obuf), fmt, ap);
+	va_end(ap);
+
+	if (len < 0)
+		len = 0;
+	if (len >= strbuf_avail(&obuf)) {
+		strbuf_grow(&obuf, len + 2);
+		va_start(ap, fmt);
+		len = vsnprintf(obuf.buf + obuf.len, strbuf_avail(&obuf), fmt, ap);
+		va_end(ap);
+		if (len >= strbuf_avail(&obuf)) {
+			die("this should not happen, your snprintf is broken");
+		}
+	}
+	strbuf_setlen(&obuf, obuf.len + len);
+	strbuf_add(&obuf, "\n", 1);
+	if (!buffer_output)
+		flush_output();
 }
 
 static void output_commit_title(struct commit *commit)
@@ -434,19 +429,15 @@ static int update_stages(const char *path, struct diff_filespec *o,
 
 static int remove_path(const char *name)
 {
-	int ret, len;
+	int ret;
 	char *slash, *dirs;
 
 	ret = unlink(name);
 	if (ret)
 		return ret;
-	len = strlen(name);
-	dirs = xmalloc(len+1);
-	memcpy(dirs, name, len);
-	dirs[len] = '\0';
+	dirs = xstrdup(name);
 	while ((slash = strrchr(name, '/'))) {
 		*slash = '\0';
-		len = slash - name;
 		if (rmdir(name) != 0)
 			break;
 	}
@@ -580,9 +571,7 @@ static void update_file_flags(const unsigned char *sha,
 			flush_buffer(fd, buf, size);
 			close(fd);
 		} else if (S_ISLNK(mode)) {
-			char *lnk = xmalloc(size + 1);
-			memcpy(lnk, buf, size);
-			lnk[size] = '\0';
+			char *lnk = xmemdupz(buf, size);
 			mkdir_p(path, 0777);
 			unlink(path);
 			symlink(lnk, path);
@@ -874,14 +863,9 @@ static int read_merge_config(const char *var, const char *value)
 		if (!strncmp(fn->name, name, namelen) && !fn->name[namelen])
 			break;
 	if (!fn) {
-		char *namebuf;
 		fn = xcalloc(1, sizeof(struct ll_merge_driver));
-		namebuf = xmalloc(namelen + 1);
-		memcpy(namebuf, name, namelen);
-		namebuf[namelen] = 0;
-		fn->name = namebuf;
+		fn->name = xmemdupz(name, namelen);
 		fn->fn = ll_ext_merge;
-		fn->next = NULL;
 		*ll_user_merge_tail = fn;
 		ll_user_merge_tail = &(fn->next);
 	}

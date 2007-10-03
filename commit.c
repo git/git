@@ -458,11 +458,11 @@ void clear_commit_marks(struct commit *commit, unsigned int mark)
 /*
  * Generic support for pretty-printing the header
  */
-static int get_one_line(const char *msg, unsigned long len)
+static int get_one_line(const char *msg)
 {
 	int ret = 0;
 
-	while (len--) {
+	for (;;) {
 		char c = *msg++;
 		if (!c)
 			break;
@@ -485,31 +485,25 @@ static int is_rfc2047_special(char ch)
 	return (non_ascii(ch) || (ch == '=') || (ch == '?') || (ch == '_'));
 }
 
-static int add_rfc2047(char *buf, const char *line, int len,
+static void add_rfc2047(struct strbuf *sb, const char *line, int len,
 		       const char *encoding)
 {
-	char *bp = buf;
-	int i, needquote;
-	char q_encoding[128];
-	const char *q_encoding_fmt = "=?%s?q?";
+	int i, last;
 
-	for (i = needquote = 0; !needquote && i < len; i++) {
+	for (i = 0; i < len; i++) {
 		int ch = line[i];
 		if (non_ascii(ch))
-			needquote++;
-		if ((i + 1 < len) &&
-		    (ch == '=' && line[i+1] == '?'))
-			needquote++;
+			goto needquote;
+		if ((i + 1 < len) && (ch == '=' && line[i+1] == '?'))
+			goto needquote;
 	}
-	if (!needquote)
-		return sprintf(buf, "%.*s", len, line);
+	strbuf_add(sb, line, len);
+	return;
 
-	i = snprintf(q_encoding, sizeof(q_encoding), q_encoding_fmt, encoding);
-	if (sizeof(q_encoding) < i)
-		die("Insanely long encoding name %s", encoding);
-	memcpy(bp, q_encoding, i);
-	bp += i;
-	for (i = 0; i < len; i++) {
+needquote:
+	strbuf_grow(sb, len * 3 + strlen(encoding) + 100);
+	strbuf_addf(sb, "=?%s?q?", encoding);
+	for (i = last = 0; i < len; i++) {
 		unsigned ch = line[i] & 0xFF;
 		/*
 		 * We encode ' ' using '=20' even though rfc2047
@@ -518,40 +512,30 @@ static int add_rfc2047(char *buf, const char *line, int len,
 		 * leave the underscore in place.
 		 */
 		if (is_rfc2047_special(ch) || ch == ' ') {
-			sprintf(bp, "=%02X", ch);
-			bp += 3;
+			strbuf_add(sb, line + last, i - last);
+			strbuf_addf(sb, "=%02X", ch);
+			last = i + 1;
 		}
-		else
-			*bp++ = ch;
 	}
-	memcpy(bp, "?=", 2);
-	bp += 2;
-	return bp - buf;
+	strbuf_add(sb, line + last, len - last);
+	strbuf_addstr(sb, "?=");
 }
 
-static unsigned long bound_rfc2047(unsigned long len, const char *encoding)
-{
-	/* upper bound of q encoded string of length 'len' */
-	unsigned long elen = strlen(encoding);
-
-	return len * 3 + elen + 100;
-}
-
-static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
+static void add_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 			 const char *line, enum date_mode dmode,
 			 const char *encoding)
 {
 	char *date;
 	int namelen;
 	unsigned long time;
-	int tz, ret;
+	int tz;
 	const char *filler = "    ";
 
 	if (fmt == CMIT_FMT_ONELINE)
-		return 0;
+		return;
 	date = strchr(line, '>');
 	if (!date)
-		return 0;
+		return;
 	namelen = ++date - line;
 	time = strtoul(date, &date, 10);
 	tz = strtol(date, NULL, 10);
@@ -560,42 +544,34 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
 		char *name_tail = strchr(line, '<');
 		int display_name_length;
 		if (!name_tail)
-			return 0;
+			return;
 		while (line < name_tail && isspace(name_tail[-1]))
 			name_tail--;
 		display_name_length = name_tail - line;
 		filler = "";
-		strcpy(buf, "From: ");
-		ret = strlen(buf);
-		ret += add_rfc2047(buf + ret, line, display_name_length,
-				   encoding);
-		memcpy(buf + ret, name_tail, namelen - display_name_length);
-		ret += namelen - display_name_length;
-		buf[ret++] = '\n';
-	}
-	else {
-		ret = sprintf(buf, "%s: %.*s%.*s\n", what,
+		strbuf_addstr(sb, "From: ");
+		add_rfc2047(sb, line, display_name_length, encoding);
+		strbuf_add(sb, name_tail, namelen - display_name_length);
+		strbuf_addch(sb, '\n');
+	} else {
+		strbuf_addf(sb, "%s: %.*s%.*s\n", what,
 			      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
 			      filler, namelen, line);
 	}
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:
-		ret += sprintf(buf + ret, "Date:   %s\n",
-			       show_date(time, tz, dmode));
+		strbuf_addf(sb, "Date:   %s\n", show_date(time, tz, dmode));
 		break;
 	case CMIT_FMT_EMAIL:
-		ret += sprintf(buf + ret, "Date: %s\n",
-			       show_date(time, tz, DATE_RFC2822));
+		strbuf_addf(sb, "Date: %s\n", show_date(time, tz, DATE_RFC2822));
 		break;
 	case CMIT_FMT_FULLER:
-		ret += sprintf(buf + ret, "%sDate: %s\n", what,
-			       show_date(time, tz, dmode));
+		strbuf_addf(sb, "%sDate: %s\n", what, show_date(time, tz, dmode));
 		break;
 	default:
 		/* notin' */
 		break;
 	}
-	return ret;
 }
 
 static int is_empty_line(const char *line, int *len_p)
@@ -607,16 +583,16 @@ static int is_empty_line(const char *line, int *len_p)
 	return !len;
 }
 
-static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *commit, int abbrev)
+static void add_merge_info(enum cmit_fmt fmt, struct strbuf *sb,
+			const struct commit *commit, int abbrev)
 {
 	struct commit_list *parent = commit->parents;
-	int offset;
 
 	if ((fmt == CMIT_FMT_ONELINE) || (fmt == CMIT_FMT_EMAIL) ||
 	    !parent || !parent->next)
-		return 0;
+		return;
 
-	offset = sprintf(buf, "Merge:");
+	strbuf_addstr(sb, "Merge:");
 
 	while (parent) {
 		struct commit *p = parent->item;
@@ -629,10 +605,9 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 		dots = (abbrev && strlen(hex) != 40) ?  "..." : "";
 		parent = parent->next;
 
-		offset += sprintf(buf + offset, " %s%s", hex, dots);
+		strbuf_addf(sb, " %s%s", hex, dots);
 	}
-	buf[offset++] = '\n';
-	return offset;
+	strbuf_addch(sb, '\n');
 }
 
 static char *get_header(const struct commit *commit, const char *key)
@@ -653,11 +628,7 @@ static char *get_header(const struct commit *commit, const char *key)
 		if (eol - line > key_len &&
 		    !strncmp(line, key, key_len) &&
 		    line[key_len] == ' ') {
-			int len = eol - line - key_len;
-			char *ret = xmalloc(len);
-			memcpy(ret, line + key_len + 1, len - 1);
-			ret[len - 1] = '\0';
-			return ret;
+			return xmemdupz(line + key_len + 1, eol - line - key_len - 1);
 		}
 		line = next;
 	}
@@ -665,47 +636,34 @@ static char *get_header(const struct commit *commit, const char *key)
 
 static char *replace_encoding_header(char *buf, const char *encoding)
 {
-	char *encoding_header = strstr(buf, "\nencoding ");
-	char *header_end = strstr(buf, "\n\n");
-	char *end_of_encoding_header;
-	int encoding_header_pos;
-	int encoding_header_len;
-	int new_len;
-	int need_len;
-	int buflen = strlen(buf) + 1;
+	struct strbuf tmp;
+	size_t start, len;
+	char *cp = buf;
 
-	if (!header_end)
-		header_end = buf + buflen;
-	if (!encoding_header || encoding_header >= header_end)
-		return buf;
-	encoding_header++;
-	end_of_encoding_header = strchr(encoding_header, '\n');
-	if (!end_of_encoding_header)
+	/* guess if there is an encoding header before a \n\n */
+	while (strncmp(cp, "encoding ", strlen("encoding "))) {
+		cp = strchr(cp, '\n');
+		if (!cp || *++cp == '\n')
+			return buf;
+	}
+	start = cp - buf;
+	cp = strchr(cp, '\n');
+	if (!cp)
 		return buf; /* should not happen but be defensive */
-	end_of_encoding_header++;
+	len = cp + 1 - (buf + start);
 
-	encoding_header_len = end_of_encoding_header - encoding_header;
-	encoding_header_pos = encoding_header - buf;
-
+	strbuf_init(&tmp, 0);
+	strbuf_attach(&tmp, buf, strlen(buf), strlen(buf) + 1);
 	if (is_encoding_utf8(encoding)) {
 		/* we have re-coded to UTF-8; drop the header */
-		memmove(encoding_header, end_of_encoding_header,
-			buflen - (encoding_header_pos + encoding_header_len));
-		return buf;
+		strbuf_remove(&tmp, start, len);
+	} else {
+		/* just replaces XXXX in 'encoding XXXX\n' */
+		strbuf_splice(&tmp, start + strlen("encoding "),
+					  len - strlen("encoding \n"),
+					  encoding, strlen(encoding));
 	}
-	new_len = strlen(encoding);
-	need_len = new_len + strlen("encoding \n");
-	if (encoding_header_len < need_len) {
-		buf = xrealloc(buf, buflen + (need_len - encoding_header_len));
-		encoding_header = buf + encoding_header_pos;
-		end_of_encoding_header = encoding_header + encoding_header_len;
-	}
-	memmove(end_of_encoding_header + (need_len - encoding_header_len),
-		end_of_encoding_header,
-		buflen - (encoding_header_pos + encoding_header_len));
-	memcpy(encoding_header + 9, encoding, strlen(encoding));
-	encoding_header[9 + new_len] = '\n';
-	return buf;
+	return strbuf_detach(&tmp, NULL);
 }
 
 static char *logmsg_reencode(const struct commit *commit,
@@ -747,7 +705,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	start = end + 1;
 	while (end > 0 && isspace(msg[end - 1]))
 		end--;
-	table[0].value = xstrndup(msg, end);
+	table[0].value = xmemdupz(msg, end);
 
 	if (start >= len)
 		return;
@@ -759,7 +717,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	if (end >= len)
 		return;
 
-	table[1].value = xstrndup(msg + start, end - start);
+	table[1].value = xmemdupz(msg + start, end - start);
 
 	/* parse date */
 	for (start = end + 1; start < len && isspace(msg[start]); start++)
@@ -770,7 +728,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	if (msg + start == ep)
 		return;
 
-	table[5].value = xstrndup(msg + start, ep - (msg + start));
+	table[5].value = xmemdupz(msg + start, ep - (msg + start));
 
 	/* parse tz */
 	for (start = ep - msg + 1; start < len && isspace(msg[start]); start++)
@@ -787,8 +745,8 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	interp_set_entry(table, 6, show_date(date, tz, DATE_ISO8601));
 }
 
-long format_commit_message(const struct commit *commit, const void *format,
-                           char **buf_p, unsigned long *space_p)
+void format_commit_message(const struct commit *commit,
+                           const void *format, struct strbuf *sb)
 {
 	struct interp table[] = {
 		{ "%H" },	/* commit hash */
@@ -841,6 +799,7 @@ long format_commit_message(const struct commit *commit, const void *format,
 	};
 	struct commit_list *p;
 	char parents[1024];
+	unsigned long len;
 	int i;
 	enum { HEADER, SUBJECT, BODY } state;
 	const char *msg = commit->buffer;
@@ -896,7 +855,7 @@ long format_commit_message(const struct commit *commit, const void *format,
 			; /* do nothing */
 
 		if (state == SUBJECT) {
-			table[ISUBJECT].value = xstrndup(msg + i, eol - i);
+			table[ISUBJECT].value = xmemdupz(msg + i, eol - i);
 			i = eol;
 		}
 		if (i == eol) {
@@ -912,7 +871,7 @@ long format_commit_message(const struct commit *commit, const void *format,
 					msg + i + 10, eol - i - 10);
 		else if (!prefixcmp(msg + i, "encoding "))
 			table[IENCODING].value =
-				xstrndup(msg + i + 9, eol - i - 9);
+				xmemdupz(msg + i + 9, eol - i - 9);
 		i = eol;
 	}
 	if (msg[i])
@@ -921,21 +880,15 @@ long format_commit_message(const struct commit *commit, const void *format,
 		if (!table[i].value)
 			interp_set_entry(table, i, "<unknown>");
 
-	do {
-		char *buf = *buf_p;
-		unsigned long space = *space_p;
-
-		space = interpolate(buf, space, format,
-				    table, ARRAY_SIZE(table));
-		if (!space)
-			break;
-		buf = xrealloc(buf, space);
-		*buf_p = buf;
-		*space_p = space;
-	} while (1);
+	len = interpolate(sb->buf + sb->len, strbuf_avail(sb),
+				format, table, ARRAY_SIZE(table));
+	if (len > strbuf_avail(sb)) {
+		strbuf_grow(sb, len);
+		interpolate(sb->buf + sb->len, strbuf_avail(sb) + 1,
+					format, table, ARRAY_SIZE(table));
+	}
+	strbuf_setlen(sb, sb->len + len);
 	interp_clear_table(table, ARRAY_SIZE(table));
-
-	return strlen(*buf_p);
 }
 
 static void pp_header(enum cmit_fmt fmt,
@@ -944,34 +897,24 @@ static void pp_header(enum cmit_fmt fmt,
 		      const char *encoding,
 		      const struct commit *commit,
 		      const char **msg_p,
-		      unsigned long *len_p,
-		      unsigned long *ofs_p,
-		      char **buf_p,
-		      unsigned long *space_p)
+		      struct strbuf *sb)
 {
 	int parents_shown = 0;
 
 	for (;;) {
 		const char *line = *msg_p;
-		char *dst;
-		int linelen = get_one_line(*msg_p, *len_p);
-		unsigned long len;
+		int linelen = get_one_line(*msg_p);
 
 		if (!linelen)
 			return;
 		*msg_p += linelen;
-		*len_p -= linelen;
 
 		if (linelen == 1)
 			/* End of header */
 			return;
 
-		ALLOC_GROW(*buf_p, linelen + *ofs_p + 20, *space_p);
-		dst = *buf_p + *ofs_p;
-
 		if (fmt == CMIT_FMT_RAW) {
-			memcpy(dst, line, linelen);
-			*ofs_p += linelen;
+			strbuf_add(sb, line, linelen);
 			continue;
 		}
 
@@ -989,10 +932,8 @@ static void pp_header(enum cmit_fmt fmt,
 			     parent = parent->next, num++)
 				;
 			/* with enough slop */
-			num = *ofs_p + num * 50 + 20;
-			ALLOC_GROW(*buf_p, num, *space_p);
-			dst = *buf_p + *ofs_p;
-			*ofs_p += add_merge_info(fmt, dst, commit, abbrev);
+			strbuf_grow(sb, num * 50 + 20);
+			add_merge_info(fmt, sb, commit, abbrev);
 			parents_shown = 1;
 		}
 
@@ -1002,129 +943,82 @@ static void pp_header(enum cmit_fmt fmt,
 		 * FULLER shows both authors and dates.
 		 */
 		if (!memcmp(line, "author ", 7)) {
-			len = linelen;
-			if (fmt == CMIT_FMT_EMAIL)
-				len = bound_rfc2047(linelen, encoding);
-			ALLOC_GROW(*buf_p, *ofs_p + len + 80, *space_p);
-			dst = *buf_p + *ofs_p;
-			*ofs_p += add_user_info("Author", fmt, dst,
-						line + 7, dmode, encoding);
+			strbuf_grow(sb, linelen + 80);
+			add_user_info("Author", fmt, sb, line + 7, dmode, encoding);
 		}
-
 		if (!memcmp(line, "committer ", 10) &&
 		    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER)) {
-			len = linelen;
-			if (fmt == CMIT_FMT_EMAIL)
-				len = bound_rfc2047(linelen, encoding);
-			ALLOC_GROW(*buf_p, *ofs_p + len + 80, *space_p);
-			dst = *buf_p + *ofs_p;
-			*ofs_p += add_user_info("Commit", fmt, dst,
-						line + 10, dmode, encoding);
+			strbuf_grow(sb, linelen + 80);
+			add_user_info("Commit", fmt, sb, line + 10, dmode, encoding);
 		}
 	}
 }
 
 static void pp_title_line(enum cmit_fmt fmt,
 			  const char **msg_p,
-			  unsigned long *len_p,
-			  unsigned long *ofs_p,
-			  char **buf_p,
-			  unsigned long *space_p,
-			  int indent,
+			  struct strbuf *sb,
 			  const char *subject,
 			  const char *after_subject,
 			  const char *encoding,
 			  int plain_non_ascii)
 {
-	char *title;
-	unsigned long title_alloc, title_len;
-	unsigned long len;
+	struct strbuf title;
 
-	title_len = 0;
-	title_alloc = 80;
-	title = xmalloc(title_alloc);
+	strbuf_init(&title, 80);
+
 	for (;;) {
 		const char *line = *msg_p;
-		int linelen = get_one_line(line, *len_p);
-		*msg_p += linelen;
-		*len_p -= linelen;
+		int linelen = get_one_line(line);
 
+		*msg_p += linelen;
 		if (!linelen || is_empty_line(line, &linelen))
 			break;
 
-		if (title_alloc <= title_len + linelen + 2) {
-			title_alloc = title_len + linelen + 80;
-			title = xrealloc(title, title_alloc);
-		}
-		len = 0;
-		if (title_len) {
+		strbuf_grow(&title, linelen + 2);
+		if (title.len) {
 			if (fmt == CMIT_FMT_EMAIL) {
-				len++;
-				title[title_len++] = '\n';
+				strbuf_addch(&title, '\n');
 			}
-			len++;
-			title[title_len++] = ' ';
+			strbuf_addch(&title, ' ');
 		}
-		memcpy(title + title_len, line, linelen);
-		title_len += linelen;
+		strbuf_add(&title, line, linelen);
 	}
 
-	/* Enough slop for the MIME header and rfc2047 */
-	len = bound_rfc2047(title_len, encoding)+ 1000;
-	if (subject)
-		len += strlen(subject);
-	if (after_subject)
-		len += strlen(after_subject);
-	if (encoding)
-		len += strlen(encoding);
-	ALLOC_GROW(*buf_p, title_len + *ofs_p + len, *space_p);
-
+	strbuf_grow(sb, title.len + 1024);
 	if (subject) {
-		len = strlen(subject);
-		memcpy(*buf_p + *ofs_p, subject, len);
-		*ofs_p += len;
-		*ofs_p += add_rfc2047(*buf_p + *ofs_p,
-				      title, title_len, encoding);
+		strbuf_addstr(sb, subject);
+		add_rfc2047(sb, title.buf, title.len, encoding);
 	} else {
-		memcpy(*buf_p + *ofs_p, title, title_len);
-		*ofs_p += title_len;
+		strbuf_addbuf(sb, &title);
 	}
-	(*buf_p)[(*ofs_p)++] = '\n';
+	strbuf_addch(sb, '\n');
+
 	if (plain_non_ascii) {
 		const char *header_fmt =
 			"MIME-Version: 1.0\n"
 			"Content-Type: text/plain; charset=%s\n"
 			"Content-Transfer-Encoding: 8bit\n";
-		*ofs_p += snprintf(*buf_p + *ofs_p,
-				   *space_p - *ofs_p,
-				   header_fmt, encoding);
+		strbuf_addf(sb, header_fmt, encoding);
 	}
 	if (after_subject) {
-		len = strlen(after_subject);
-		memcpy(*buf_p + *ofs_p, after_subject, len);
-		*ofs_p += len;
+		strbuf_addstr(sb, after_subject);
 	}
-	free(title);
 	if (fmt == CMIT_FMT_EMAIL) {
-		ALLOC_GROW(*buf_p, *ofs_p + 20, *space_p);
-		(*buf_p)[(*ofs_p)++] = '\n';
+		strbuf_addch(sb, '\n');
 	}
+	strbuf_release(&title);
 }
 
 static void pp_remainder(enum cmit_fmt fmt,
 			 const char **msg_p,
-			 unsigned long *len_p,
-			 unsigned long *ofs_p,
-			 char **buf_p,
-			 unsigned long *space_p,
+			 struct strbuf *sb,
 			 int indent)
 {
 	int first = 1;
 	for (;;) {
 		const char *line = *msg_p;
-		int linelen = get_one_line(line, *len_p);
+		int linelen = get_one_line(line);
 		*msg_p += linelen;
-		*len_p -= linelen;
 
 		if (!linelen)
 			break;
@@ -1137,36 +1031,32 @@ static void pp_remainder(enum cmit_fmt fmt,
 		}
 		first = 0;
 
-		ALLOC_GROW(*buf_p, *ofs_p + linelen + indent + 20, *space_p);
+		strbuf_grow(sb, linelen + indent + 20);
 		if (indent) {
-			memset(*buf_p + *ofs_p, ' ', indent);
-			*ofs_p += indent;
+			memset(sb->buf + sb->len, ' ', indent);
+			strbuf_setlen(sb, sb->len + indent);
 		}
-		memcpy(*buf_p + *ofs_p, line, linelen);
-		*ofs_p += linelen;
-		(*buf_p)[(*ofs_p)++] = '\n';
+		strbuf_add(sb, line, linelen);
+		strbuf_addch(sb, '\n');
 	}
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt,
-				  const struct commit *commit,
-				  unsigned long len,
-				  char **buf_p, unsigned long *space_p,
-				  int abbrev, const char *subject,
-				  const char *after_subject,
+void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
+				  struct strbuf *sb, int abbrev,
+				  const char *subject, const char *after_subject,
 				  enum date_mode dmode)
 {
-	unsigned long offset = 0;
 	unsigned long beginning_of_body;
 	int indent = 4;
 	const char *msg = commit->buffer;
 	int plain_non_ascii = 0;
 	char *reencoded;
 	const char *encoding;
-	char *buf;
 
-	if (fmt == CMIT_FMT_USERFORMAT)
-		return format_commit_message(commit, user_format, buf_p, space_p);
+	if (fmt == CMIT_FMT_USERFORMAT) {
+		format_commit_message(commit, user_format, sb);
+		return;
+	}
 
 	encoding = (git_log_output_encoding
 		    ? git_log_output_encoding
@@ -1176,7 +1066,6 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 	reencoded = logmsg_reencode(commit, encoding);
 	if (reencoded) {
 		msg = reencoded;
-		len = strlen(reencoded);
 	}
 
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
@@ -1191,14 +1080,13 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 	if (fmt == CMIT_FMT_EMAIL && !after_subject) {
 		int i, ch, in_body;
 
-		for (in_body = i = 0; (ch = msg[i]) && i < len; i++) {
+		for (in_body = i = 0; (ch = msg[i]); i++) {
 			if (!in_body) {
 				/* author could be non 7-bit ASCII but
 				 * the log may be so; skip over the
 				 * header part first.
 				 */
-				if (ch == '\n' &&
-				    i + 1 < len && msg[i+1] == '\n')
+				if (ch == '\n' && msg[i+1] == '\n')
 					in_body = 1;
 			}
 			else if (non_ascii(ch)) {
@@ -1208,59 +1096,44 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 		}
 	}
 
-	pp_header(fmt, abbrev, dmode, encoding,
-		  commit, &msg, &len,
-		  &offset, buf_p, space_p);
+	pp_header(fmt, abbrev, dmode, encoding, commit, &msg, sb);
 	if (fmt != CMIT_FMT_ONELINE && !subject) {
-		ALLOC_GROW(*buf_p, offset + 20, *space_p);
-		(*buf_p)[offset++] = '\n';
+		strbuf_addch(sb, '\n');
 	}
 
 	/* Skip excess blank lines at the beginning of body, if any... */
 	for (;;) {
-		int linelen = get_one_line(msg, len);
+		int linelen = get_one_line(msg);
 		int ll = linelen;
 		if (!linelen)
 			break;
 		if (!is_empty_line(msg, &ll))
 			break;
 		msg += linelen;
-		len -= linelen;
 	}
 
 	/* These formats treat the title line specially. */
-	if (fmt == CMIT_FMT_ONELINE
-	    || fmt == CMIT_FMT_EMAIL)
-		pp_title_line(fmt, &msg, &len, &offset,
-			      buf_p, space_p, indent,
-			      subject, after_subject, encoding,
-			      plain_non_ascii);
+	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
+		pp_title_line(fmt, &msg, sb, subject,
+			      after_subject, encoding, plain_non_ascii);
 
-	beginning_of_body = offset;
+	beginning_of_body = sb->len;
 	if (fmt != CMIT_FMT_ONELINE)
-		pp_remainder(fmt, &msg, &len, &offset,
-			     buf_p, space_p, indent);
-
-	while (offset && isspace((*buf_p)[offset-1]))
-		offset--;
-
-	ALLOC_GROW(*buf_p, offset + 20, *space_p);
-	buf = *buf_p;
+		pp_remainder(fmt, &msg, sb, indent);
+	strbuf_rtrim(sb);
 
 	/* Make sure there is an EOLN for the non-oneline case */
 	if (fmt != CMIT_FMT_ONELINE)
-		buf[offset++] = '\n';
+		strbuf_addch(sb, '\n');
 
 	/*
 	 * The caller may append additional body text in e-mail
 	 * format.  Make sure we did not strip the blank line
 	 * between the header and the body.
 	 */
-	if (fmt == CMIT_FMT_EMAIL && offset <= beginning_of_body)
-		buf[offset++] = '\n';
-	buf[offset] = '\0';
+	if (fmt == CMIT_FMT_EMAIL && sb->len <= beginning_of_body)
+		strbuf_addch(sb, '\n');
 	free(reencoded);
-	return offset;
 }
 
 struct commit *pop_commit(struct commit_list **stack)
@@ -1339,12 +1212,12 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 		next=next->next;
 	}
 	/*
-         * find the tips
-         *
-         * tips are nodes not reachable from any other node in the list
-         *
-         * the tips serve as a starting set for the work queue.
-         */
+	 * find the tips
+	 *
+	 * tips are nodes not reachable from any other node in the list
+	 *
+	 * the tips serve as a starting set for the work queue.
+	 */
 	next=*list;
 	insert = &work;
 	while (next) {
@@ -1371,9 +1244,9 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 			if (pn) {
 				/*
 				 * parents are only enqueued for emission
-                                 * when all their children have been emitted thereby
-                                 * guaranteeing topological order.
-                                 */
+				 * when all their children have been emitted thereby
+				 * guaranteeing topological order.
+				 */
 				pn->indegree--;
 				if (!pn->indegree) {
 					if (!lifo)
@@ -1385,9 +1258,9 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 			parents=parents->next;
 		}
 		/*
-                 * work_item is a commit all of whose children
-                 * have already been emitted. we can emit it now.
-                 */
+		 * work_item is a commit all of whose children
+		 * have already been emitted. we can emit it now.
+		 */
 		*pptr = work_node->list_item;
 		pptr = &(*pptr)->next;
 		*pptr = NULL;
@@ -1483,8 +1356,7 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 }
 
 struct commit_list *get_merge_bases(struct commit *one,
-				    struct commit *two,
-                                    int cleanup)
+					struct commit *two, int cleanup)
 {
 	struct commit_list *list;
 	struct commit **rslt;

@@ -6,7 +6,6 @@
 #include "tag.h"
 #include "blob.h"
 #include "refs.h"
-#include "strbuf.h"
 
 int get_tree = 0;
 int get_history = 0;
@@ -218,13 +217,12 @@ int pull_targets_stdin(char ***target, const char ***write_ref)
 	int targets = 0, targets_alloc = 0;
 	struct strbuf buf;
 	*target = NULL; *write_ref = NULL;
-	strbuf_init(&buf);
+	strbuf_init(&buf, 0);
 	while (1) {
 		char *rf_one = NULL;
 		char *tg_one;
 
-		read_line(&buf, stdin, '\n');
-		if (buf.eof)
+		if (strbuf_getline(&buf, stdin, '\n') == EOF)
 			break;
 		tg_one = buf.buf;
 		rf_one = strchr(tg_one, '\t');
@@ -240,6 +238,7 @@ int pull_targets_stdin(char ***target, const char ***write_ref)
 		(*write_ref)[targets] = rf_one ? xstrdup(rf_one) : NULL;
 		targets++;
 	}
+	strbuf_release(&buf);
 	return targets;
 }
 

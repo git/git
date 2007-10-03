@@ -44,9 +44,8 @@ void interp_clear_table(struct interp *table, int ninterps)
  *        { "%%", "%"},
  *    }
  *
- * Returns 0 on a successful substitution pass that fits in result,
- * Returns a number of bytes needed to hold the full substituted
- * string otherwise.
+ * Returns the length of the substituted string (not including the final \0).
+ * Like with snprintf, if the result is >= reslen, then it overflowed.
  */
 
 unsigned long interpolate(char *result, unsigned long reslen,
@@ -60,8 +59,6 @@ unsigned long interpolate(char *result, unsigned long reslen,
 	unsigned long namelen, valuelen;
 	int i;
 	char c;
-
-        memset(result, 0, reslen);
 
 	while ((c = *src)) {
 		if (c == '%') {
@@ -78,9 +75,9 @@ unsigned long interpolate(char *result, unsigned long reslen,
 				value = interps[i].value;
 				valuelen = strlen(value);
 
-				if (newlen + valuelen + 1 < reslen) {
+				if (newlen + valuelen < reslen) {
 					/* Substitute. */
-					strncpy(dest, value, valuelen);
+					memcpy(dest, value, valuelen);
 					dest += valuelen;
 				}
 				newlen += valuelen;
@@ -95,8 +92,9 @@ unsigned long interpolate(char *result, unsigned long reslen,
 		newlen++;
 	}
 
-	if (newlen + 1 < reslen)
-		return 0;
-	else
-		return newlen + 2;
+	/* XXX: the previous loop always keep room for the ending NUL,
+	   we just need to check if there was room for a NUL in the first place */
+	if (reslen > 0)
+		*dest = '\0';
+	return newlen;
 }

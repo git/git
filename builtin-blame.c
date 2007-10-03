@@ -1430,8 +1430,7 @@ static void get_commit_info(struct commit *commit,
 static void write_filename_info(const char *path)
 {
 	printf("filename ");
-	write_name_quoted(NULL, 0, path, 1, stdout);
-	putchar('\n');
+	write_name_quoted(path, stdout, '\n');
 }
 
 /*
@@ -2001,11 +2000,9 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	struct commit *commit;
 	struct origin *origin;
 	unsigned char head_sha1[20];
-	char *buf;
+	struct strbuf buf;
 	const char *ident;
-	int fd;
 	time_t now;
-	unsigned long fin_size;
 	int size, len;
 	struct cache_entry *ce;
 	unsigned mode;
@@ -2023,9 +2020,11 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 
 	origin = make_origin(commit, path);
 
+	strbuf_init(&buf, 0);
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;
 		const char *read_from;
+		unsigned long fin_size;
 
 		if (contents_from) {
 			if (stat(contents_from, &st) < 0)
@@ -2038,19 +2037,16 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 			read_from = path;
 		}
 		fin_size = xsize_t(st.st_size);
-		buf = xmalloc(fin_size+1);
 		mode = canon_mode(st.st_mode);
 		switch (st.st_mode & S_IFMT) {
 		case S_IFREG:
-			fd = open(read_from, O_RDONLY);
-			if (fd < 0)
-				die("cannot open %s", read_from);
-			if (read_in_full(fd, buf, fin_size) != fin_size)
-				die("cannot read %s", read_from);
+			if (strbuf_read_file(&buf, read_from, st.st_size) != st.st_size)
+				die("cannot open or read %s", read_from);
 			break;
 		case S_IFLNK:
-			if (readlink(read_from, buf, fin_size+1) != fin_size)
+			if (readlink(read_from, buf.buf, buf.alloc) != fin_size)
 				die("cannot readlink %s", read_from);
+			buf.len = fin_size;
 			break;
 		default:
 			die("unsupported file type %s", read_from);
@@ -2059,26 +2055,13 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	else {
 		/* Reading from stdin */
 		contents_from = "standard input";
-		buf = NULL;
-		fin_size = 0;
 		mode = 0;
-		while (1) {
-			ssize_t cnt = 8192;
-			buf = xrealloc(buf, fin_size + cnt);
-			cnt = xread(0, buf + fin_size, cnt);
-			if (cnt < 0)
-				die("read error %s from stdin",
-				    strerror(errno));
-			if (!cnt)
-				break;
-			fin_size += cnt;
-		}
-		buf = xrealloc(buf, fin_size + 1);
+		if (strbuf_read(&buf, 0, 0) < 0)
+			die("read error %s from stdin", strerror(errno));
 	}
-	buf[fin_size] = 0;
-	origin->file.ptr = buf;
-	origin->file.size = fin_size;
-	pretend_sha1_file(buf, fin_size, OBJ_BLOB, origin->blob_sha1);
+	origin->file.ptr = buf.buf;
+	origin->file.size = buf.len;
+	pretend_sha1_file(buf.buf, buf.len, OBJ_BLOB, origin->blob_sha1);
 	commit->util = origin;
 
 	/*

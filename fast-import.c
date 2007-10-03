@@ -149,7 +149,6 @@ Format of STDIN stream:
 #include "pack.h"
 #include "refs.h"
 #include "csum-file.h"
-#include "strbuf.h"
 #include "quote.h"
 
 #define PACK_ID_BITS 16
@@ -183,11 +182,10 @@ struct mark_set
 
 struct last_object
 {
-	void *data;
-	unsigned long len;
+	struct strbuf data;
 	uint32_t offset;
 	unsigned int depth;
-	unsigned no_free:1;
+	unsigned no_swap : 1;
 };
 
 struct mem_pool
@@ -251,12 +249,6 @@ struct tag
 	unsigned char sha1[20];
 };
 
-struct dbuf
-{
-	void *buffer;
-	size_t capacity;
-};
-
 struct hash_list
 {
 	struct hash_list *next;
@@ -317,15 +309,15 @@ static struct mark_set *marks;
 static const char* mark_file;
 
 /* Our last blob */
-static struct last_object last_blob;
+static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
 
 /* Tree management */
 static unsigned int tree_entry_alloc = 1000;
 static void *avail_tree_entry;
 static unsigned int avail_tree_table_sz = 100;
 static struct avail_tree_content **avail_tree_table;
-static struct dbuf old_tree;
-static struct dbuf new_tree;
+static struct strbuf old_tree = STRBUF_INIT;
+static struct strbuf new_tree = STRBUF_INIT;
 
 /* Branch data */
 static unsigned long max_active_branches = 5;
@@ -340,14 +332,14 @@ static struct tag *last_tag;
 
 /* Input stream parsing */
 static whenspec_type whenspec = WHENSPEC_RAW;
-static struct strbuf command_buf;
+static struct strbuf command_buf = STRBUF_INIT;
 static int unread_command_buf;
 static struct recent_command cmd_hist = {&cmd_hist, &cmd_hist, NULL};
 static struct recent_command *cmd_tail = &cmd_hist;
 static struct recent_command *rc_free;
 static unsigned int cmd_save = 100;
 static uintmax_t next_mark;
-static struct dbuf new_data;
+static struct strbuf new_data = STRBUF_INIT;
 
 static void write_branch_report(FILE *rpt, struct branch *b)
 {
@@ -565,17 +557,6 @@ static char *pool_strdup(const char *s)
 	char *r = pool_alloc(strlen(s) + 1);
 	strcpy(r, s);
 	return r;
-}
-
-static void size_dbuf(struct dbuf *b, size_t maxlen)
-{
-	if (b->buffer) {
-		if (b->capacity >= maxlen)
-			return;
-		free(b->buffer);
-	}
-	b->capacity = ((maxlen / 1024) + 1) * 1024;
-	b->buffer = xmalloc(b->capacity);
 }
 
 static void insert_mark(uintmax_t idnum, struct object_entry *oe)
@@ -968,9 +949,7 @@ static void end_packfile(void)
 	free(old_p);
 
 	/* We can't carry a delta across packfiles. */
-	free(last_blob.data);
-	last_blob.data = NULL;
-	last_blob.len = 0;
+	strbuf_release(&last_blob.data);
 	last_blob.offset = 0;
 	last_blob.depth = 0;
 }
@@ -1006,8 +985,7 @@ static size_t encode_header(
 
 static int store_object(
 	enum object_type type,
-	void *dat,
-	size_t datlen,
+	struct strbuf *dat,
 	struct last_object *last,
 	unsigned char *sha1out,
 	uintmax_t mark)
@@ -1021,10 +999,10 @@ static int store_object(
 	z_stream s;
 
 	hdrlen = sprintf((char*)hdr,"%s %lu", typename(type),
-		(unsigned long)datlen) + 1;
+		(unsigned long)dat->len) + 1;
 	SHA1_Init(&c);
 	SHA1_Update(&c, hdr, hdrlen);
-	SHA1_Update(&c, dat, datlen);
+	SHA1_Update(&c, dat->buf, dat->len);
 	SHA1_Final(sha1, &c);
 	if (sha1out)
 		hashcpy(sha1out, sha1);
@@ -1043,11 +1021,11 @@ static int store_object(
 		return 1;
 	}
 
-	if (last && last->data && last->depth < max_depth) {
-		delta = diff_delta(last->data, last->len,
-			dat, datlen,
+	if (last && last->data.buf && last->depth < max_depth) {
+		delta = diff_delta(last->data.buf, last->data.len,
+			dat->buf, dat->len,
 			&deltalen, 0);
-		if (delta && deltalen >= datlen) {
+		if (delta && deltalen >= dat->len) {
 			free(delta);
 			delta = NULL;
 		}
@@ -1060,8 +1038,8 @@ static int store_object(
 		s.next_in = delta;
 		s.avail_in = deltalen;
 	} else {
-		s.next_in = dat;
-		s.avail_in = datlen;
+		s.next_in = (void *)dat->buf;
+		s.avail_in = dat->len;
 	}
 	s.avail_out = deflateBound(&s, s.avail_in);
 	s.next_out = out = xmalloc(s.avail_out);
@@ -1084,8 +1062,8 @@ static int store_object(
 
 			memset(&s, 0, sizeof(s));
 			deflateInit(&s, zlib_compression_level);
-			s.next_in = dat;
-			s.avail_in = datlen;
+			s.next_in = (void *)dat->buf;
+			s.avail_in = dat->len;
 			s.avail_out = deflateBound(&s, s.avail_in);
 			s.next_out = out = xrealloc(out, s.avail_out);
 			while (deflate(&s, Z_FINISH) == Z_OK)
@@ -1119,7 +1097,7 @@ static int store_object(
 	} else {
 		if (last)
 			last->depth = 0;
-		hdrlen = encode_header(type, datlen, hdr);
+		hdrlen = encode_header(type, dat->len, hdr);
 		write_or_die(pack_data->pack_fd, hdr, hdrlen);
 		pack_size += hdrlen;
 	}
@@ -1130,11 +1108,12 @@ static int store_object(
 	free(out);
 	free(delta);
 	if (last) {
-		if (!last->no_free)
-			free(last->data);
-		last->data = dat;
+		if (last->no_swap) {
+			last->data = *dat;
+		} else {
+			strbuf_swap(&last->data, dat);
+		}
 		last->offset = e->offset;
-		last->len = datlen;
 	}
 	return 0;
 }
@@ -1230,14 +1209,10 @@ static int tecmp1 (const void *_a, const void *_b)
 		b->name->str_dat, b->name->str_len, b->versions[1].mode);
 }
 
-static void mktree(struct tree_content *t,
-	int v,
-	unsigned long *szp,
-	struct dbuf *b)
+static void mktree(struct tree_content *t, int v, struct strbuf *b)
 {
 	size_t maxlen = 0;
 	unsigned int i;
-	char *c;
 
 	if (!v)
 		qsort(t->entries,t->entry_count,sizeof(t->entries[0]),tecmp0);
@@ -1249,28 +1224,23 @@ static void mktree(struct tree_content *t,
 			maxlen += t->entries[i]->name->str_len + 34;
 	}
 
-	size_dbuf(b, maxlen);
-	c = b->buffer;
+	strbuf_reset(b);
+	strbuf_grow(b, maxlen);
 	for (i = 0; i < t->entry_count; i++) {
 		struct tree_entry *e = t->entries[i];
 		if (!e->versions[v].mode)
 			continue;
-		c += sprintf(c, "%o", (unsigned int)e->versions[v].mode);
-		*c++ = ' ';
-		strcpy(c, e->name->str_dat);
-		c += e->name->str_len + 1;
-		hashcpy((unsigned char*)c, e->versions[v].sha1);
-		c += 20;
+		strbuf_addf(b, "%o %s%c", (unsigned int)e->versions[v].mode,
+					e->name->str_dat, '\0');
+		strbuf_add(b, e->versions[v].sha1, 20);
 	}
-	*szp = c - (char*)b->buffer;
 }
 
 static void store_tree(struct tree_entry *root)
 {
 	struct tree_content *t = root->tree;
 	unsigned int i, j, del;
-	unsigned long new_len;
-	struct last_object lo;
+	struct last_object lo = { STRBUF_INIT, 0, 0, /* no_swap */ 1 };
 	struct object_entry *le;
 
 	if (!is_null_sha1(root->versions[1].sha1))
@@ -1282,23 +1252,15 @@ static void store_tree(struct tree_entry *root)
 	}
 
 	le = find_object(root->versions[0].sha1);
-	if (!S_ISDIR(root->versions[0].mode)
-		|| !le
-		|| le->pack_id != pack_id) {
-		lo.data = NULL;
-		lo.depth = 0;
-		lo.no_free = 0;
-	} else {
-		mktree(t, 0, &lo.len, &old_tree);
-		lo.data = old_tree.buffer;
+	if (S_ISDIR(root->versions[0].mode) && le && le->pack_id == pack_id) {
+		mktree(t, 0, &old_tree);
+		lo.data = old_tree;
 		lo.offset = le->offset;
 		lo.depth = t->delta_depth;
-		lo.no_free = 1;
 	}
 
-	mktree(t, 1, &new_len, &new_tree);
-	store_object(OBJ_TREE, new_tree.buffer, new_len,
-		&lo, root->versions[1].sha1, 0);
+	mktree(t, 1, &new_tree);
+	store_object(OBJ_TREE, &new_tree, &lo, root->versions[1].sha1, 0);
 
 	t->delta_depth = lo.depth;
 	for (i = 0, j = 0, del = 0; i < t->entry_count; i++) {
@@ -1585,20 +1547,25 @@ static void dump_marks(void)
 			mark_file, strerror(errno));
 }
 
-static void read_next_command(void)
+static int read_next_command(void)
 {
+	static int stdin_eof = 0;
+
+	if (stdin_eof) {
+		unread_command_buf = 0;
+		return EOF;
+	}
+
 	do {
 		if (unread_command_buf) {
 			unread_command_buf = 0;
-			if (command_buf.eof)
-				return;
 		} else {
 			struct recent_command *rc;
 
-			command_buf.buf = NULL;
-			read_line(&command_buf, stdin, '\n');
-			if (command_buf.eof)
-				return;
+			strbuf_detach(&command_buf, NULL);
+			stdin_eof = strbuf_getline(&command_buf, stdin, '\n');
+			if (stdin_eof)
+				return EOF;
 
 			rc = rc_free;
 			if (rc)
@@ -1617,6 +1584,8 @@ static void read_next_command(void)
 			cmd_tail = rc;
 		}
 	} while (command_buf.buf[0] == '#');
+
+	return 0;
 }
 
 static void skip_optional_lf(void)
@@ -1636,42 +1605,35 @@ static void cmd_mark(void)
 		next_mark = 0;
 }
 
-static void *cmd_data (size_t *size)
+static void cmd_data(struct strbuf *sb)
 {
-	size_t length;
-	char *buffer;
+	strbuf_reset(sb);
 
 	if (prefixcmp(command_buf.buf, "data "))
 		die("Expected 'data n' command, found: %s", command_buf.buf);
 
 	if (!prefixcmp(command_buf.buf + 5, "<<")) {
 		char *term = xstrdup(command_buf.buf + 5 + 2);
-		size_t sz = 8192, term_len = command_buf.len - 5 - 2;
-		length = 0;
-		buffer = xmalloc(sz);
-		command_buf.buf = NULL;
+		size_t term_len = command_buf.len - 5 - 2;
+
 		for (;;) {
-			read_line(&command_buf, stdin, '\n');
-			if (command_buf.eof)
+			if (strbuf_getline(&command_buf, stdin, '\n') == EOF)
 				die("EOF in data (terminator '%s' not found)", term);
 			if (term_len == command_buf.len
 				&& !strcmp(term, command_buf.buf))
 				break;
-			ALLOC_GROW(buffer, length + command_buf.len, sz);
-			memcpy(buffer + length,
-				command_buf.buf,
-				command_buf.len - 1);
-			length += command_buf.len - 1;
-			buffer[length++] = '\n';
+			strbuf_addbuf(sb, &command_buf);
+			strbuf_addch(sb, '\n');
 		}
 		free(term);
 	}
 	else {
-		size_t n = 0;
+		size_t n = 0, length;
+
 		length = strtoul(command_buf.buf + 5, NULL, 10);
-		buffer = xmalloc(length);
+
 		while (n < length) {
-			size_t s = fread(buffer + n, 1, length - n, stdin);
+			size_t s = strbuf_fread(sb, length - n, stdin);
 			if (!s && feof(stdin))
 				die("EOF in data (%lu bytes remaining)",
 					(unsigned long)(length - n));
@@ -1680,8 +1642,6 @@ static void *cmd_data (size_t *size)
 	}
 
 	skip_optional_lf();
-	*size = length;
-	return buffer;
 }
 
 static int validate_raw_date(const char *src, char *result, int maxlen)
@@ -1744,15 +1704,12 @@ static char *parse_ident(const char *buf)
 
 static void cmd_new_blob(void)
 {
-	size_t l;
-	void *d;
+	static struct strbuf buf = STRBUF_INIT;
 
 	read_next_command();
 	cmd_mark();
-	d = cmd_data(&l);
-
-	if (store_object(OBJ_BLOB, d, l, &last_blob, NULL, next_mark))
-		free(d);
+	cmd_data(&buf);
+	store_object(OBJ_BLOB, &buf, &last_blob, NULL, next_mark);
 }
 
 static void unload_one_branch(void)
@@ -1802,7 +1759,7 @@ static void load_branch(struct branch *b)
 static void file_change_m(struct branch *b)
 {
 	const char *p = command_buf.buf + 2;
-	char *p_uq;
+	static struct strbuf uq = STRBUF_INIT;
 	const char *endp;
 	struct object_entry *oe = oe;
 	unsigned char sha1[20];
@@ -1840,22 +1797,23 @@ static void file_change_m(struct branch *b)
 	if (*p++ != ' ')
 		die("Missing space after SHA1: %s", command_buf.buf);
 
-	p_uq = unquote_c_style(p, &endp);
-	if (p_uq) {
+	strbuf_reset(&uq);
+	if (!unquote_c_style(&uq, p, &endp)) {
 		if (*endp)
 			die("Garbage after path in: %s", command_buf.buf);
-		p = p_uq;
+		p = uq.buf;
 	}
 
 	if (inline_data) {
-		size_t l;
-		void *d;
-		if (!p_uq)
-			p = p_uq = xstrdup(p);
+		static struct strbuf buf = STRBUF_INIT;
+
+		if (p != uq.buf) {
+			strbuf_addstr(&uq, p);
+			p = uq.buf;
+		}
 		read_next_command();
-		d = cmd_data(&l);
-		if (store_object(OBJ_BLOB, d, l, &last_blob, sha1, 0))
-			free(d);
+		cmd_data(&buf);
+		store_object(OBJ_BLOB, &buf, &last_blob, sha1, 0);
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
@@ -1870,58 +1828,54 @@ static void file_change_m(struct branch *b)
 	}
 
 	tree_content_set(&b->branch_tree, p, sha1, S_IFREG | mode, NULL);
-	free(p_uq);
 }
 
 static void file_change_d(struct branch *b)
 {
 	const char *p = command_buf.buf + 2;
-	char *p_uq;
+	static struct strbuf uq = STRBUF_INIT;
 	const char *endp;
 
-	p_uq = unquote_c_style(p, &endp);
-	if (p_uq) {
+	strbuf_reset(&uq);
+	if (!unquote_c_style(&uq, p, &endp)) {
 		if (*endp)
 			die("Garbage after path in: %s", command_buf.buf);
-		p = p_uq;
+		p = uq.buf;
 	}
 	tree_content_remove(&b->branch_tree, p, NULL);
-	free(p_uq);
 }
 
 static void file_change_cr(struct branch *b, int rename)
 {
 	const char *s, *d;
-	char *s_uq, *d_uq;
+	static struct strbuf s_uq = STRBUF_INIT;
+	static struct strbuf d_uq = STRBUF_INIT;
 	const char *endp;
 	struct tree_entry leaf;
 
 	s = command_buf.buf + 2;
-	s_uq = unquote_c_style(s, &endp);
-	if (s_uq) {
+	strbuf_reset(&s_uq);
+	if (!unquote_c_style(&s_uq, s, &endp)) {
 		if (*endp != ' ')
 			die("Missing space after source: %s", command_buf.buf);
-	}
-	else {
+	} else {
 		endp = strchr(s, ' ');
 		if (!endp)
 			die("Missing space after source: %s", command_buf.buf);
-		s_uq = xmalloc(endp - s + 1);
-		memcpy(s_uq, s, endp - s);
-		s_uq[endp - s] = 0;
+		strbuf_add(&s_uq, s, endp - s);
 	}
-	s = s_uq;
+	s = s_uq.buf;
 
 	endp++;
 	if (!*endp)
 		die("Missing dest: %s", command_buf.buf);
 
 	d = endp;
-	d_uq = unquote_c_style(d, &endp);
-	if (d_uq) {
+	strbuf_reset(&d_uq);
+	if (!unquote_c_style(&d_uq, d, &endp)) {
 		if (*endp)
 			die("Garbage after dest in: %s", command_buf.buf);
-		d = d_uq;
+		d = d_uq.buf;
 	}
 
 	memset(&leaf, 0, sizeof(leaf));
@@ -1935,9 +1889,6 @@ static void file_change_cr(struct branch *b, int rename)
 		leaf.versions[1].sha1,
 		leaf.versions[1].mode,
 		leaf.tree);
-
-	free(s_uq);
-	free(d_uq);
 }
 
 static void file_change_deleteall(struct branch *b)
@@ -2062,9 +2013,8 @@ static struct hash_list *cmd_merge(unsigned int *count)
 
 static void cmd_new_commit(void)
 {
+	static struct strbuf msg = STRBUF_INIT;
 	struct branch *b;
-	void *msg;
-	size_t msglen;
 	char *sp;
 	char *author = NULL;
 	char *committer = NULL;
@@ -2089,7 +2039,7 @@ static void cmd_new_commit(void)
 	}
 	if (!committer)
 		die("Expected committer but didn't get one");
-	msg = cmd_data(&msglen);
+	cmd_data(&msg);
 	read_next_command();
 	cmd_from(b);
 	merge_list = cmd_merge(&merge_count);
@@ -2101,7 +2051,7 @@ static void cmd_new_commit(void)
 	}
 
 	/* file_change* */
-	while (!command_buf.eof && command_buf.len > 1) {
+	while (command_buf.len > 0) {
 		if (!prefixcmp(command_buf.buf, "M "))
 			file_change_m(b);
 		else if (!prefixcmp(command_buf.buf, "D "))
@@ -2116,53 +2066,47 @@ static void cmd_new_commit(void)
 			unread_command_buf = 1;
 			break;
 		}
-		read_next_command();
+		if (read_next_command() == EOF)
+			break;
 	}
 
 	/* build the tree and the commit */
 	store_tree(&b->branch_tree);
 	hashcpy(b->branch_tree.versions[0].sha1,
 		b->branch_tree.versions[1].sha1);
-	size_dbuf(&new_data, 114 + msglen
-		+ merge_count * 49
-		+ (author
-			? strlen(author) + strlen(committer)
-			: 2 * strlen(committer)));
-	sp = new_data.buffer;
-	sp += sprintf(sp, "tree %s\n",
+
+	strbuf_reset(&new_data);
+	strbuf_addf(&new_data, "tree %s\n",
 		sha1_to_hex(b->branch_tree.versions[1].sha1));
 	if (!is_null_sha1(b->sha1))
-		sp += sprintf(sp, "parent %s\n", sha1_to_hex(b->sha1));
+		strbuf_addf(&new_data, "parent %s\n", sha1_to_hex(b->sha1));
 	while (merge_list) {
 		struct hash_list *next = merge_list->next;
-		sp += sprintf(sp, "parent %s\n", sha1_to_hex(merge_list->sha1));
+		strbuf_addf(&new_data, "parent %s\n", sha1_to_hex(merge_list->sha1));
 		free(merge_list);
 		merge_list = next;
 	}
-	sp += sprintf(sp, "author %s\n", author ? author : committer);
-	sp += sprintf(sp, "committer %s\n", committer);
-	*sp++ = '\n';
-	memcpy(sp, msg, msglen);
-	sp += msglen;
+	strbuf_addf(&new_data,
+		"author %s\n"
+		"committer %s\n"
+		"\n",
+		author ? author : committer, committer);
+	strbuf_addbuf(&new_data, &msg);
 	free(author);
 	free(committer);
-	free(msg);
 
-	if (!store_object(OBJ_COMMIT,
-		new_data.buffer, sp - (char*)new_data.buffer,
-		NULL, b->sha1, next_mark))
+	if (!store_object(OBJ_COMMIT, &new_data, NULL, b->sha1, next_mark))
 		b->pack_id = pack_id;
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
 }
 
 static void cmd_new_tag(void)
 {
+	static struct strbuf msg = STRBUF_INIT;
 	char *sp;
 	const char *from;
 	char *tagger;
 	struct branch *s;
-	void *msg;
-	size_t msglen;
 	struct tag *t;
 	uintmax_t from_mark = 0;
 	unsigned char sha1[20];
@@ -2213,24 +2157,21 @@ static void cmd_new_tag(void)
 
 	/* tag payload/message */
 	read_next_command();
-	msg = cmd_data(&msglen);
+	cmd_data(&msg);
 
 	/* build the tag object */
-	size_dbuf(&new_data, 67+strlen(t->name)+strlen(tagger)+msglen);
-	sp = new_data.buffer;
-	sp += sprintf(sp, "object %s\n", sha1_to_hex(sha1));
-	sp += sprintf(sp, "type %s\n", commit_type);
-	sp += sprintf(sp, "tag %s\n", t->name);
-	sp += sprintf(sp, "tagger %s\n", tagger);
-	*sp++ = '\n';
-	memcpy(sp, msg, msglen);
-	sp += msglen;
+	strbuf_reset(&new_data);
+	strbuf_addf(&new_data,
+		"object %s\n"
+		"type %s\n"
+		"tag %s\n"
+		"tagger %s\n"
+		"\n",
+		sha1_to_hex(sha1), commit_type, t->name, tagger);
+	strbuf_addbuf(&new_data, &msg);
 	free(tagger);
-	free(msg);
 
-	if (store_object(OBJ_TAG, new_data.buffer,
-		sp - (char*)new_data.buffer,
-		NULL, t->sha1, 0))
+	if (store_object(OBJ_TAG, &new_data, NULL, t->sha1, 0))
 		t->pack_id = MAX_PACK_ID;
 	else
 		t->pack_id = pack_id;
@@ -2256,7 +2197,7 @@ static void cmd_reset_branch(void)
 	else
 		b = new_branch(sp);
 	read_next_command();
-	if (!cmd_from(b) && command_buf.len > 1)
+	if (!cmd_from(b) && command_buf.len > 0)
 		unread_command_buf = 1;
 }
 
@@ -2273,7 +2214,7 @@ static void cmd_checkpoint(void)
 
 static void cmd_progress(void)
 {
-	fwrite(command_buf.buf, 1, command_buf.len - 1, stdout);
+	fwrite(command_buf.buf, 1, command_buf.len, stdout);
 	fputc('\n', stdout);
 	fflush(stdout);
 	skip_optional_lf();
@@ -2323,7 +2264,7 @@ int main(int argc, const char **argv)
 
 	git_config(git_default_config);
 	alloc_objects(object_entry_alloc);
-	strbuf_init(&command_buf);
+	strbuf_init(&command_buf, 0);
 	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
 	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
@@ -2381,11 +2322,8 @@ int main(int argc, const char **argv)
 	prepare_packed_git();
 	start_packfile();
 	set_die_routine(die_nicely);
-	for (;;) {
-		read_next_command();
-		if (command_buf.eof)
-			break;
-		else if (!strcmp("blob", command_buf.buf))
+	while (read_next_command() != EOF) {
+		if (!strcmp("blob", command_buf.buf))
 			cmd_new_blob();
 		else if (!prefixcmp(command_buf.buf, "commit "))
 			cmd_new_commit();

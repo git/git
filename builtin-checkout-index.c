@@ -38,7 +38,6 @@
  */
 #include "builtin.h"
 #include "cache.h"
-#include "strbuf.h"
 #include "quote.h"
 #include "cache-tree.h"
 
@@ -67,9 +66,7 @@ static void write_tempfile_record(const char *name, int prefix_length)
 		fputs(topath[checkout_stage], stdout);
 
 	putchar('\t');
-	write_name_quoted("", 0, name + prefix_length,
-		line_termination, stdout);
-	putchar(line_termination);
+	write_name_quoted(name + prefix_length, stdout, line_termination);
 
 	for (i = 0; i < 4; i++) {
 		topath[i][0] = 0;
@@ -271,28 +268,28 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	}
 
 	if (read_from_stdin) {
-		struct strbuf buf;
+		struct strbuf buf, nbuf;
+
 		if (all)
 			die("git-checkout-index: don't mix '--all' and '--stdin'");
-		strbuf_init(&buf);
-		while (1) {
-			char *path_name;
-			const char *p;
 
-			read_line(&buf, stdin, line_termination);
-			if (buf.eof)
-				break;
-			if (line_termination && buf.buf[0] == '"')
-				path_name = unquote_c_style(buf.buf, NULL);
-			else
-				path_name = buf.buf;
-			p = prefix_path(prefix, prefix_length, path_name);
+		strbuf_init(&buf, 0);
+		strbuf_init(&nbuf, 0);
+		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
+			const char *p;
+			if (line_termination && buf.buf[0] == '"') {
+				strbuf_reset(&nbuf);
+				if (unquote_c_style(&nbuf, buf.buf, NULL))
+					die("line is badly quoted");
+				strbuf_swap(&buf, &nbuf);
+			}
+			p = prefix_path(prefix, prefix_length, buf.buf);
 			checkout_file(p, prefix_length);
-			if (p < path_name || p > path_name + strlen(path_name))
+			if (p < buf.buf || p > buf.buf + buf.len)
 				free((char *)p);
-			if (path_name != buf.buf)
-				free(path_name);
 		}
+		strbuf_release(&nbuf);
+		strbuf_release(&buf);
 	}
 
 	if (all)

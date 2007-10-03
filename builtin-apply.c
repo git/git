@@ -163,15 +163,14 @@ static void say_patch_name(FILE *output, const char *pre, struct patch *patch, c
 	fputs(pre, output);
 	if (patch->old_name && patch->new_name &&
 	    strcmp(patch->old_name, patch->new_name)) {
-		write_name_quoted(NULL, 0, patch->old_name, 1, output);
+		quote_c_style(patch->old_name, NULL, output, 0);
 		fputs(" => ", output);
-		write_name_quoted(NULL, 0, patch->new_name, 1, output);
-	}
-	else {
+		quote_c_style(patch->new_name, NULL, output, 0);
+	} else {
 		const char *n = patch->new_name;
 		if (!n)
 			n = patch->old_name;
-		write_name_quoted(NULL, 0, n, 1, output);
+		quote_c_style(n, NULL, output, 0);
 	}
 	fputs(post, output);
 }
@@ -179,36 +178,18 @@ static void say_patch_name(FILE *output, const char *pre, struct patch *patch, c
 #define CHUNKSIZE (8192)
 #define SLOP (16)
 
-static void *read_patch_file(int fd, unsigned long *sizep)
+static void read_patch_file(struct strbuf *sb, int fd)
 {
-	unsigned long size = 0, alloc = CHUNKSIZE;
-	void *buffer = xmalloc(alloc);
-
-	for (;;) {
-		ssize_t nr = alloc - size;
-		if (nr < 1024) {
-			alloc += CHUNKSIZE;
-			buffer = xrealloc(buffer, alloc);
-			nr = alloc - size;
-		}
-		nr = xread(fd, (char *) buffer + size, nr);
-		if (!nr)
-			break;
-		if (nr < 0)
-			die("git-apply: read returned %s", strerror(errno));
-		size += nr;
-	}
-	*sizep = size;
+	if (strbuf_read(sb, fd, 0) < 0)
+		die("git-apply: read returned %s", strerror(errno));
 
 	/*
 	 * Make sure that we have some slop in the buffer
 	 * so that we can do speculative "memcmp" etc, and
 	 * see to it that it is NUL-filled.
 	 */
-	if (alloc < size + SLOP)
-		buffer = xrealloc(buffer, size + SLOP);
-	memset((char *) buffer + size, 0, SLOP);
-	return buffer;
+	strbuf_grow(sb, SLOP);
+	memset(sb->buf + sb->len, 0, SLOP);
 }
 
 static unsigned long linelen(const char *buffer, unsigned long size)
@@ -244,35 +225,33 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 {
 	int len;
 	const char *start = line;
-	char *name;
 
 	if (*line == '"') {
+		struct strbuf name;
+
 		/* Proposed "new-style" GNU patch/diff format; see
 		 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
 		 */
-		name = unquote_c_style(line, NULL);
-		if (name) {
-			char *cp = name;
-			while (p_value) {
+		strbuf_init(&name, 0);
+		if (!unquote_c_style(&name, line, NULL)) {
+			char *cp;
+
+			for (cp = name.buf; p_value; p_value--) {
 				cp = strchr(cp, '/');
 				if (!cp)
 					break;
 				cp++;
-				p_value--;
 			}
 			if (cp) {
 				/* name can later be freed, so we need
 				 * to memmove, not just return cp
 				 */
-				memmove(name, cp, strlen(cp) + 1);
+				strbuf_remove(&name, 0, cp - name.buf);
 				free(def);
-				return name;
-			}
-			else {
-				free(name);
-				name = NULL;
+				return strbuf_detach(&name, NULL);
 			}
 		}
+		strbuf_release(&name);
 	}
 
 	for (;;) {
@@ -304,13 +283,10 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 		int deflen = strlen(def);
 		if (deflen < len && !strncmp(start, def, deflen))
 			return def;
+		free(def);
 	}
 
-	name = xmalloc(len + 1);
-	memcpy(name, start, len);
-	name[len] = 0;
-	free(def);
-	return name;
+	return xmemdupz(start, len);
 }
 
 static int count_slashes(const char *cp)
@@ -583,29 +559,30 @@ static const char *stop_at_slash(const char *line, int llen)
  */
 static char *git_header_name(char *line, int llen)
 {
-	int len;
 	const char *name;
 	const char *second = NULL;
+	size_t len;
 
 	line += strlen("diff --git ");
 	llen -= strlen("diff --git ");
 
 	if (*line == '"') {
 		const char *cp;
-		char *first = unquote_c_style(line, &second);
-		if (!first)
-			return NULL;
+		struct strbuf first;
+		struct strbuf sp;
+
+		strbuf_init(&first, 0);
+		strbuf_init(&sp, 0);
+
+		if (unquote_c_style(&first, line, &second))
+			goto free_and_fail1;
 
 		/* advance to the first slash */
-		cp = stop_at_slash(first, strlen(first));
-		if (!cp || cp == first) {
-			/* we do not accept absolute paths */
-		free_first_and_fail:
-			free(first);
-			return NULL;
-		}
-		len = strlen(cp+1);
-		memmove(first, cp+1, len+1); /* including NUL */
+		cp = stop_at_slash(first.buf, first.len);
+		/* we do not accept absolute paths */
+		if (!cp || cp == first.buf)
+			goto free_and_fail1;
+		strbuf_remove(&first, 0, cp + 1 - first.buf);
 
 		/* second points at one past closing dq of name.
 		 * find the second name.
@@ -614,40 +591,40 @@ static char *git_header_name(char *line, int llen)
 			second++;
 
 		if (line + llen <= second)
-			goto free_first_and_fail;
+			goto free_and_fail1;
 		if (*second == '"') {
-			char *sp = unquote_c_style(second, NULL);
-			if (!sp)
-				goto free_first_and_fail;
-			cp = stop_at_slash(sp, strlen(sp));
-			if (!cp || cp == sp) {
-			free_both_and_fail:
-				free(sp);
-				goto free_first_and_fail;
-			}
+			if (unquote_c_style(&sp, second, NULL))
+				goto free_and_fail1;
+			cp = stop_at_slash(sp.buf, sp.len);
+			if (!cp || cp == sp.buf)
+				goto free_and_fail1;
 			/* They must match, otherwise ignore */
-			if (strcmp(cp+1, first))
-				goto free_both_and_fail;
-			free(sp);
-			return first;
+			if (strcmp(cp + 1, first.buf))
+				goto free_and_fail1;
+			strbuf_release(&sp);
+			return strbuf_detach(&first, NULL);
 		}
 
 		/* unquoted second */
 		cp = stop_at_slash(second, line + llen - second);
 		if (!cp || cp == second)
-			goto free_first_and_fail;
+			goto free_and_fail1;
 		cp++;
-		if (line + llen - cp != len + 1 ||
-		    memcmp(first, cp, len))
-			goto free_first_and_fail;
-		return first;
+		if (line + llen - cp != first.len + 1 ||
+		    memcmp(first.buf, cp, first.len))
+			goto free_and_fail1;
+		return strbuf_detach(&first, NULL);
+
+	free_and_fail1:
+		strbuf_release(&first);
+		strbuf_release(&sp);
+		return NULL;
 	}
 
 	/* unquoted first name */
 	name = stop_at_slash(line, llen);
 	if (!name || name == line)
 		return NULL;
-
 	name++;
 
 	/* since the first name is unquoted, a dq if exists must be
@@ -655,28 +632,30 @@ static char *git_header_name(char *line, int llen)
 	 */
 	for (second = name; second < line + llen; second++) {
 		if (*second == '"') {
-			const char *cp = second;
+			struct strbuf sp;
 			const char *np;
-			char *sp = unquote_c_style(second, NULL);
 
-			if (!sp)
-				return NULL;
-			np = stop_at_slash(sp, strlen(sp));
-			if (!np || np == sp) {
-			free_second_and_fail:
-				free(sp);
-				return NULL;
-			}
+			strbuf_init(&sp, 0);
+			if (unquote_c_style(&sp, second, NULL))
+				goto free_and_fail2;
+
+			np = stop_at_slash(sp.buf, sp.len);
+			if (!np || np == sp.buf)
+				goto free_and_fail2;
 			np++;
-			len = strlen(np);
-			if (len < cp - name &&
+
+			len = sp.buf + sp.len - np;
+			if (len < second - name &&
 			    !strncmp(np, name, len) &&
 			    isspace(name[len])) {
 				/* Good */
-				memmove(sp, np, len + 1);
-				return sp;
+				strbuf_remove(&sp, 0, np - sp.buf);
+				return strbuf_detach(&sp, NULL);
 			}
-			goto free_second_and_fail;
+
+		free_and_fail2:
+			strbuf_release(&sp);
+			return NULL;
 		}
 	}
 
@@ -700,10 +679,7 @@ static char *git_header_name(char *line, int llen)
 					break;
 			}
 			if (second[len] == '\n' && !memcmp(name, second, len)) {
-				char *ret = xmalloc(len + 1);
-				memcpy(ret, name, len);
-				ret[len] = 0;
-				return ret;
+				return xmemdupz(name, len);
 			}
 		}
 	}
@@ -1397,96 +1373,66 @@ static const char minuses[]= "--------------------------------------------------
 
 static void show_stats(struct patch *patch)
 {
-	const char *prefix = "";
-	char *name = patch->new_name;
-	char *qname = NULL;
-	int len, max, add, del, total;
+	struct strbuf qname;
+	char *cp = patch->new_name ? patch->new_name : patch->old_name;
+	int max, add, del;
 
-	if (!name)
-		name = patch->old_name;
-
-	if (0 < (len = quote_c_style(name, NULL, NULL, 0))) {
-		qname = xmalloc(len + 1);
-		quote_c_style(name, qname, NULL, 0);
-		name = qname;
-	}
+	strbuf_init(&qname, 0);
+	quote_c_style(cp, &qname, NULL, 0);
 
 	/*
 	 * "scale" the filename
 	 */
-	len = strlen(name);
 	max = max_len;
 	if (max > 50)
 		max = 50;
-	if (len > max) {
-		char *slash;
-		prefix = "...";
-		max -= 3;
-		name += len - max;
-		slash = strchr(name, '/');
-		if (slash)
-			name = slash;
+
+	if (qname.len > max) {
+		cp = strchr(qname.buf + qname.len + 3 - max, '/');
+		if (!cp)
+			cp = qname.buf + qname.len + 3 - max;
+		strbuf_splice(&qname, 0, cp - qname.buf, "...", 3);
 	}
-	len = max;
+
+	if (patch->is_binary) {
+		printf(" %-*s |  Bin\n", max, qname.buf);
+		strbuf_release(&qname);
+		return;
+	}
+
+	printf(" %-*s |", max, qname.buf);
+	strbuf_release(&qname);
 
 	/*
 	 * scale the add/delete
 	 */
-	max = max_change;
-	if (max + len > 70)
-		max = 70 - len;
-
+	max = max + max_change > 70 ? 70 - max : max_change;
 	add = patch->lines_added;
 	del = patch->lines_deleted;
-	total = add + del;
 
 	if (max_change > 0) {
-		total = (total * max + max_change / 2) / max_change;
+		int total = ((add + del) * max + max_change / 2) / max_change;
 		add = (add * max + max_change / 2) / max_change;
 		del = total - add;
 	}
-	if (patch->is_binary)
-		printf(" %s%-*s |  Bin\n", prefix, len, name);
-	else
-		printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
-		       len, name, patch->lines_added + patch->lines_deleted,
-		       add, pluses, del, minuses);
-	free(qname);
+	printf("%5d %.*s%.*s\n", patch->lines_added + patch->lines_deleted,
+		add, pluses, del, minuses);
 }
 
-static int read_old_data(struct stat *st, const char *path, char **buf_p, unsigned long *alloc_p, unsigned long *size_p)
+static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 {
-	int fd;
-	unsigned long got;
-	unsigned long nsize;
-	char *nbuf;
-	unsigned long size = *size_p;
-	char *buf = *buf_p;
-
 	switch (st->st_mode & S_IFMT) {
 	case S_IFLNK:
-		return readlink(path, buf, size) != size;
+		strbuf_grow(buf, st->st_size);
+		if (readlink(path, buf->buf, st->st_size) != st->st_size)
+			return -1;
+		strbuf_setlen(buf, st->st_size);
+		return 0;
 	case S_IFREG:
-		fd = open(path, O_RDONLY);
-		if (fd < 0)
-			return error("unable to open %s", path);
-		got = 0;
-		for (;;) {
-			ssize_t ret = xread(fd, buf + got, size - got);
-			if (ret <= 0)
-				break;
-			got += ret;
-		}
-		close(fd);
-		nsize = got;
-		nbuf = convert_to_git(path, buf, &nsize);
-		if (nbuf) {
-			free(buf);
-			*buf_p = nbuf;
-			*alloc_p = nsize;
-			*size_p = nsize;
-		}
-		return got != size;
+		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
+			return error("unable to open or read %s", path);
+		convert_to_git(path, buf->buf, buf->len, buf);
+		return 0;
 	default:
 		return -1;
 	}
@@ -1591,12 +1537,6 @@ static void remove_last_line(const char **rbuf, int *rsize)
 	*rsize = offset + 1;
 }
 
-struct buffer_desc {
-	char *buffer;
-	unsigned long size;
-	unsigned long alloc;
-};
-
 static int apply_line(char *output, const char *patch, int plen)
 {
 	/* plen is number of bytes to be copied from patch,
@@ -1673,10 +1613,9 @@ static int apply_line(char *output, const char *patch, int plen)
 	return output + plen - buf;
 }
 
-static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, int inaccurate_eof)
+static int apply_one_fragment(struct strbuf *buf, struct fragment *frag, int inaccurate_eof)
 {
 	int match_beginning, match_end;
-	char *buf = desc->buffer;
 	const char *patch = frag->patch;
 	int offset, size = frag->size;
 	char *old = xmalloc(size);
@@ -1787,23 +1726,16 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 	lines = 0;
 	pos = frag->newpos;
 	for (;;) {
-		offset = find_offset(buf, desc->size,
+		offset = find_offset(buf->buf, buf->len,
 				     oldlines, oldsize, pos, &lines);
-		if (match_end && offset + oldsize != desc->size)
+		if (match_end && offset + oldsize != buf->len)
 			offset = -1;
 		if (match_beginning && offset)
 			offset = -1;
 		if (offset >= 0) {
-			int diff;
-			unsigned long size, alloc;
-
 			if (new_whitespace == strip_whitespace &&
-			    (desc->size - oldsize - offset == 0)) /* end of file? */
+			    (buf->len - oldsize - offset == 0)) /* end of file? */
 				newsize -= new_blank_lines_at_end;
-
-			diff = newsize - oldsize;
-			size = desc->size + diff;
-			alloc = desc->alloc;
 
 			/* Warn if it was necessary to reduce the number
 			 * of context lines.
@@ -1814,19 +1746,8 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 					" to apply fragment at %d\n",
 					leading, trailing, pos + lines);
 
-			if (size > alloc) {
-				alloc = size + 8192;
-				desc->alloc = alloc;
-				buf = xrealloc(buf, alloc);
-				desc->buffer = buf;
-			}
-			desc->size = size;
-			memmove(buf + offset + newsize,
-				buf + offset + oldsize,
-				size - offset - newsize);
-			memcpy(buf + offset, newlines, newsize);
+			strbuf_splice(buf, offset, oldsize, newlines, newsize);
 			offset = 0;
-
 			break;
 		}
 
@@ -1862,12 +1783,11 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 	return offset;
 }
 
-static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
+static int apply_binary_fragment(struct strbuf *buf, struct patch *patch)
 {
-	unsigned long dst_size;
 	struct fragment *fragment = patch->fragments;
-	void *data;
-	void *result;
+	unsigned long len;
+	void *dst;
 
 	/* Binary patch is irreversible without the optional second hunk */
 	if (apply_in_reverse) {
@@ -1878,29 +1798,24 @@ static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
 				     ? patch->new_name : patch->old_name);
 		fragment = fragment->next;
 	}
-	data = (void*) fragment->patch;
 	switch (fragment->binary_patch_method) {
 	case BINARY_DELTA_DEFLATED:
-		result = patch_delta(desc->buffer, desc->size,
-				     data,
-				     fragment->size,
-				     &dst_size);
-		free(desc->buffer);
-		desc->buffer = result;
-		break;
+		dst = patch_delta(buf->buf, buf->len, fragment->patch,
+				  fragment->size, &len);
+		if (!dst)
+			return -1;
+		/* XXX patch_delta NUL-terminates */
+		strbuf_attach(buf, dst, len, len + 1);
+		return 0;
 	case BINARY_LITERAL_DEFLATED:
-		free(desc->buffer);
-		desc->buffer = data;
-		dst_size = fragment->size;
-		break;
+		strbuf_reset(buf);
+		strbuf_add(buf, fragment->patch, fragment->size);
+		return 0;
 	}
-	if (!desc->buffer)
-		return -1;
-	desc->size = desc->alloc = dst_size;
-	return 0;
+	return -1;
 }
 
-static int apply_binary(struct buffer_desc *desc, struct patch *patch)
+static int apply_binary(struct strbuf *buf, struct patch *patch)
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	unsigned char sha1[20];
@@ -1919,7 +1834,7 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 		/* See if the old one matches what the patch
 		 * applies to.
 		 */
-		hash_sha1_file(desc->buffer, desc->size, blob_type, sha1);
+		hash_sha1_file(buf->buf, buf->len, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
 			return error("the patch applies to '%s' (%s), "
 				     "which does not match the "
@@ -1928,16 +1843,14 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 	}
 	else {
 		/* Otherwise, the old one must be empty. */
-		if (desc->size)
+		if (buf->len)
 			return error("the patch applies to an empty "
 				     "'%s' but it is not empty", name);
 	}
 
 	get_sha1_hex(patch->new_sha1_prefix, sha1);
 	if (is_null_sha1(sha1)) {
-		free(desc->buffer);
-		desc->alloc = desc->size = 0;
-		desc->buffer = NULL;
+		strbuf_release(buf);
 		return 0; /* deletion patch */
 	}
 
@@ -1945,43 +1858,44 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 		/* We already have the postimage */
 		enum object_type type;
 		unsigned long size;
+		char *result;
 
-		free(desc->buffer);
-		desc->buffer = read_sha1_file(sha1, &type, &size);
-		if (!desc->buffer)
+		result = read_sha1_file(sha1, &type, &size);
+		if (!result)
 			return error("the necessary postimage %s for "
 				     "'%s' cannot be read",
 				     patch->new_sha1_prefix, name);
-		desc->alloc = desc->size = size;
-	}
-	else {
-		/* We have verified desc matches the preimage;
+		/* XXX read_sha1_file NUL-terminates */
+		strbuf_attach(buf, result, size, size + 1);
+	} else {
+		/* We have verified buf matches the preimage;
 		 * apply the patch data to it, which is stored
 		 * in the patch->fragments->{patch,size}.
 		 */
-		if (apply_binary_fragment(desc, patch))
+		if (apply_binary_fragment(buf, patch))
 			return error("binary patch does not apply to '%s'",
 				     name);
 
 		/* verify that the result matches */
-		hash_sha1_file(desc->buffer, desc->size, blob_type, sha1);
+		hash_sha1_file(buf->buf, buf->len, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->new_sha1_prefix))
-			return error("binary patch to '%s' creates incorrect result (expecting %s, got %s)", name, patch->new_sha1_prefix, sha1_to_hex(sha1));
+			return error("binary patch to '%s' creates incorrect result (expecting %s, got %s)",
+				name, patch->new_sha1_prefix, sha1_to_hex(sha1));
 	}
 
 	return 0;
 }
 
-static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
+static int apply_fragments(struct strbuf *buf, struct patch *patch)
 {
 	struct fragment *frag = patch->fragments;
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 
 	if (patch->is_binary)
-		return apply_binary(desc, patch);
+		return apply_binary(buf, patch);
 
 	while (frag) {
-		if (apply_one_fragment(desc, frag, patch->inaccurate_eof)) {
+		if (apply_one_fragment(buf, frag, patch->inaccurate_eof)) {
 			error("patch failed: %s:%ld", name, frag->oldpos);
 			if (!apply_with_reject)
 				return -1;
@@ -1992,76 +1906,56 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 	return 0;
 }
 
-static int read_file_or_gitlink(struct cache_entry *ce, char **buf_p,
-				unsigned long *size_p)
+static int read_file_or_gitlink(struct cache_entry *ce, struct strbuf *buf)
 {
 	if (!ce)
 		return 0;
 
 	if (S_ISGITLINK(ntohl(ce->ce_mode))) {
-		*buf_p = xmalloc(100);
-		*size_p = snprintf(*buf_p, 100,
-			"Subproject commit %s\n", sha1_to_hex(ce->sha1));
+		strbuf_grow(buf, 100);
+		strbuf_addf(buf, "Subproject commit %s\n", sha1_to_hex(ce->sha1));
 	} else {
 		enum object_type type;
-		*buf_p = read_sha1_file(ce->sha1, &type, size_p);
-		if (!*buf_p)
+		unsigned long sz;
+		char *result;
+
+		result = read_sha1_file(ce->sha1, &type, &sz);
+		if (!result)
 			return -1;
+		/* XXX read_sha1_file NUL-terminates */
+		strbuf_attach(buf, result, sz, sz + 1);
 	}
 	return 0;
 }
 
 static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
-	char *buf;
-	unsigned long size, alloc;
-	struct buffer_desc desc;
+	struct strbuf buf;
 
-	size = 0;
-	alloc = 0;
-	buf = NULL;
+	strbuf_init(&buf, 0);
 	if (cached) {
-		if (read_file_or_gitlink(ce, &buf, &size))
+		if (read_file_or_gitlink(ce, &buf))
 			return error("read of %s failed", patch->old_name);
-		alloc = size;
 	} else if (patch->old_name) {
 		if (S_ISGITLINK(patch->old_mode)) {
-			if (ce)
-				read_file_or_gitlink(ce, &buf, &size);
-			else {
+			if (ce) {
+				read_file_or_gitlink(ce, &buf);
+			} else {
 				/*
 				 * There is no way to apply subproject
 				 * patch without looking at the index.
 				 */
 				patch->fragments = NULL;
-				size = 0;
 			}
-		}
-		else {
-			size = xsize_t(st->st_size);
-			alloc = size + 8192;
-			buf = xmalloc(alloc);
-			if (read_old_data(st, patch->old_name,
-					  &buf, &alloc, &size))
-				return error("read of %s failed",
-					     patch->old_name);
+		} else {
+			if (read_old_data(st, patch->old_name, &buf))
+				return error("read of %s failed", patch->old_name);
 		}
 	}
 
-	desc.size = size;
-	desc.alloc = alloc;
-	desc.buffer = buf;
-
-	if (apply_fragments(&desc, patch) < 0)
+	if (apply_fragments(&buf, patch) < 0)
 		return -1; /* note with --reject this succeeds. */
-
-	/* NUL terminate the result */
-	if (desc.alloc <= desc.size)
-		desc.buffer = xrealloc(desc.buffer, desc.size + 1);
-	desc.buffer[desc.size] = 0;
-
-	patch->result = desc.buffer;
-	patch->resultsize = desc.size;
+	patch->result = strbuf_detach(&buf, &patch->resultsize);
 
 	if (0 < patch->is_delete && patch->resultsize)
 		return error("removal patch leaves file contents");
@@ -2315,13 +2209,8 @@ static void numstat_patch_list(struct patch *patch)
 		if (patch->is_binary)
 			printf("-\t-\t");
 		else
-			printf("%d\t%d\t",
-			       patch->lines_added, patch->lines_deleted);
-		if (line_termination && quote_c_style(name, NULL, NULL, 0))
-			quote_c_style(name, NULL, stdout, 0);
-		else
-			fputs(name, stdout);
-		putchar(line_termination);
+			printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
+		write_name_quoted(name, stdout, line_termination);
 	}
 }
 
@@ -2486,7 +2375,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
 	int fd;
-	char *nbuf;
+	struct strbuf nbuf;
 
 	if (S_ISGITLINK(mode)) {
 		struct stat st;
@@ -2505,23 +2394,16 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	if (fd < 0)
 		return -1;
 
-	nbuf = convert_to_working_tree(path, buf, &size);
-	if (nbuf)
-		buf = nbuf;
-
-	while (size) {
-		int written = xwrite(fd, buf, size);
-		if (written < 0)
-			die("writing file %s: %s", path, strerror(errno));
-		if (!written)
-			die("out of space writing file %s", path);
-		buf += written;
-		size -= written;
+	strbuf_init(&nbuf, 0);
+	if (convert_to_working_tree(path, buf, size, &nbuf)) {
+		size = nbuf.len;
+		buf  = nbuf.buf;
 	}
+	write_or_die(fd, buf, size);
+	strbuf_release(&nbuf);
+
 	if (close(fd) < 0)
 		die("closing file %s: %s", path, strerror(errno));
-	if (nbuf)
-		free(nbuf);
 	return 0;
 }
 
@@ -2754,22 +2636,22 @@ static void prefix_patches(struct patch *p)
 
 static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 {
-	unsigned long offset, size;
-	char *buffer = read_patch_file(fd, &size);
+	size_t offset;
+	struct strbuf buf;
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
+	strbuf_init(&buf, 0);
 	patch_input_file = filename;
-	if (!buffer)
-		return -1;
+	read_patch_file(&buf, fd);
 	offset = 0;
-	while (size > 0) {
+	while (offset < buf.len) {
 		struct patch *patch;
 		int nr;
 
 		patch = xcalloc(1, sizeof(*patch));
 		patch->inaccurate_eof = inaccurate_eof;
-		nr = parse_chunk(buffer + offset, size, patch);
+		nr = parse_chunk(buf.buf + offset, buf.len, patch);
 		if (nr < 0)
 			break;
 		if (apply_in_reverse)
@@ -2787,7 +2669,6 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 			skipped_patch++;
 		}
 		offset += nr;
-		size -= nr;
 	}
 
 	if (whitespace_error && (new_whitespace == error_on_whitespace))
@@ -2822,7 +2703,7 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 	if (summary)
 		summary_patch_list(list);
 
-	free(buffer);
+	strbuf_release(&buf);
 	return 0;
 }
 

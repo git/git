@@ -1246,15 +1246,11 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 static char *ref_msg(const char *line, const char *endp)
 {
 	const char *ep;
-	char *msg;
-
 	line += 82;
-	for (ep = line; ep < endp && *ep != '\n'; ep++)
-		;
-	msg = xmalloc(ep - line + 1);
-	memcpy(msg, line, ep - line);
-	msg[ep - line] = 0;
-	return msg;
+	ep = memchr(line, '\n', endp - line);
+	if (!ep)
+		ep = endp;
+	return xmemdupz(line, ep - line);
 }
 
 int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1, char **msg, unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt)

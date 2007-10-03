@@ -4,7 +4,6 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
-#include "strbuf.h"
 #include "quote.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
@@ -296,8 +295,11 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 static void read_index_info(int line_termination)
 {
 	struct strbuf buf;
-	strbuf_init(&buf);
-	while (1) {
+	struct strbuf uq;
+
+	strbuf_init(&buf, 0);
+	strbuf_init(&uq, 0);
+	while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
 		char *ptr, *tab;
 		char *path_name;
 		unsigned char sha1[20];
@@ -321,10 +323,6 @@ static void read_index_info(int line_termination)
 		 * This format is to put higher order stages into the
 		 * index file and matches git-ls-files --stage output.
 		 */
-		read_line(&buf, stdin, line_termination);
-		if (buf.eof)
-			break;
-
 		errno = 0;
 		ul = strtoul(buf.buf, &ptr, 8);
 		if (ptr == buf.buf || *ptr != ' '
@@ -349,15 +347,17 @@ static void read_index_info(int line_termination)
 		if (get_sha1_hex(tab - 40, sha1) || tab[-41] != ' ')
 			goto bad_line;
 
-		if (line_termination && ptr[0] == '"')
-			path_name = unquote_c_style(ptr, NULL);
-		else
-			path_name = ptr;
+		path_name = ptr;
+		if (line_termination && path_name[0] == '"') {
+			strbuf_reset(&uq);
+			if (unquote_c_style(&uq, path_name, NULL)) {
+				die("git-update-index: bad quoting of path name");
+			}
+			path_name = uq.buf;
+		}
 
 		if (!verify_path(path_name)) {
 			fprintf(stderr, "Ignoring path %s\n", path_name);
-			if (path_name != ptr)
-				free(path_name);
 			continue;
 		}
 
@@ -377,13 +377,13 @@ static void read_index_info(int line_termination)
 				die("git-update-index: unable to update %s",
 				    path_name);
 		}
-		if (path_name != ptr)
-			free(path_name);
 		continue;
 
 	bad_line:
 		die("malformed index info %s", buf.buf);
 	}
+	strbuf_release(&buf);
+	strbuf_release(&uq);
 }
 
 static const char update_index_usage[] =
@@ -706,27 +706,27 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			free((char*)p);
 	}
 	if (read_from_stdin) {
-		struct strbuf buf;
-		strbuf_init(&buf);
-		while (1) {
-			char *path_name;
+		struct strbuf buf, nbuf;
+
+		strbuf_init(&buf, 0);
+		strbuf_init(&nbuf, 0);
+		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
 			const char *p;
-			read_line(&buf, stdin, line_termination);
-			if (buf.eof)
-				break;
-			if (line_termination && buf.buf[0] == '"')
-				path_name = unquote_c_style(buf.buf, NULL);
-			else
-				path_name = buf.buf;
-			p = prefix_path(prefix, prefix_length, path_name);
+			if (line_termination && buf.buf[0] == '"') {
+				strbuf_reset(&nbuf);
+				if (unquote_c_style(&nbuf, buf.buf, NULL))
+					die("line is badly quoted");
+				strbuf_swap(&buf, &nbuf);
+			}
+			p = prefix_path(prefix, prefix_length, buf.buf);
 			update_one(p, NULL, 0);
 			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
-			if (p < path_name || p > path_name + strlen(path_name))
-				free((char*) p);
-			if (path_name != buf.buf)
-				free(path_name);
+			if (p < buf.buf || p > buf.buf + buf.len)
+				free((char *)p);
 		}
+		strbuf_release(&nbuf);
+		strbuf_release(&buf);
 	}
 
  finish:

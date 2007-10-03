@@ -105,6 +105,19 @@ static void free_generic_messages( message_t * );
 
 static int nfsnprintf( char *buf, int blen, const char *fmt, ... );
 
+static int nfvasprintf(char **strp, const char *fmt, va_list ap)
+{
+	int len;
+	char tmp[8192];
+
+	len = vsnprintf(tmp, sizeof(tmp), fmt, ap);
+	if (len < 0)
+		die("Fatal: Out of memory\n");
+	if (len >= sizeof(tmp))
+		die("imap command overflow !\n");
+	*strp = xmemdupz(tmp, len);
+	return len;
+}
 
 static void arc4_init( void );
 static unsigned char arc4_getbyte( void );
@@ -623,9 +636,7 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 					goto bail;
 			cur->len = s - p;
 			s++;
-			cur->val = xmalloc( cur->len + 1 );
-			memcpy( cur->val, p, cur->len );
-			cur->val[cur->len] = 0;
+			cur->val = xmemdupz(p, cur->len);
 		} else {
 			/* atom */
 			p = s;
@@ -633,12 +644,10 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 				if (level && *s == ')')
 					break;
 			cur->len = s - p;
-			if (cur->len == 3 && !memcmp ("NIL", p, 3))
+			if (cur->len == 3 && !memcmp ("NIL", p, 3)) {
 				cur->val = NIL;
-			else {
-				cur->val = xmalloc( cur->len + 1 );
-				memcpy( cur->val, p, cur->len );
-				cur->val[cur->len] = 0;
+			} else {
+				cur->val = xmemdupz(p, cur->len);
 			}
 		}
 
@@ -1160,28 +1169,18 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
 static int
 read_message( FILE *f, msg_data_t *msg )
 {
-	int len, r;
+	struct strbuf buf;
 
-	memset( msg, 0, sizeof *msg );
-	len = CHUNKSIZE;
-	msg->data = xmalloc( len+1 );
-	msg->data[0] = 0;
+	memset(msg, 0, sizeof(*msg));
+	strbuf_init(&buf, 0);
 
-	while(!feof( f )) {
-		if (msg->len >= len) {
-			void *p;
-			len += CHUNKSIZE;
-			p = xrealloc(msg->data, len+1);
-			if (!p)
-				break;
-			msg->data = p;
-		}
-		r = fread( &msg->data[msg->len], 1, len - msg->len, f );
-		if (r <= 0)
+	do {
+		if (strbuf_fread(&buf, CHUNKSIZE, f) <= 0)
 			break;
-		msg->len += r;
-	}
-	msg->data[msg->len] = 0;
+	} while (!feof(f));
+
+	msg->len  = buf.len;
+	msg->data = strbuf_detach(&buf, NULL);
 	return msg->len;
 }
 
@@ -1231,13 +1230,7 @@ split_msg( msg_data_t *all_msgs, msg_data_t *msg, int *ofs )
 	if (p)
 		msg->len = &p[1] - data;
 
-	msg->data = xmalloc( msg->len + 1 );
-	if (!msg->data)
-		return 0;
-
-	memcpy( msg->data, data, msg->len );
-	msg->data[ msg->len ] = 0;
-
+	msg->data = xmemdupz(data, msg->len);
 	*ofs += msg->len;
 	return 1;
 }

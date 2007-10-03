@@ -3,6 +3,7 @@
 
 #include "object.h"
 #include "tree.h"
+#include "strbuf.h"
 #include "decorate.h"
 
 struct commit_list {
@@ -61,8 +62,12 @@ enum cmit_fmt {
 };
 
 extern enum cmit_fmt get_commit_format(const char *arg);
-extern long format_commit_message(const struct commit *commit, const void *template, char **buf_p, unsigned long *space_p);
-extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *, unsigned long len, char **buf_p, unsigned long *space_p, int abbrev, const char *subject, const char *after_subject, enum date_mode dmode);
+extern void format_commit_message(const struct commit *commit,
+                                  const void *format, struct strbuf *sb);
+extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit*,
+                                struct strbuf *,
+                                int abbrev, const char *subject,
+                                const char *after_subject, enum date_mode);
 
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
