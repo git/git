@@ -137,6 +137,13 @@ Did you intend to checkout '$@' which can not be resolved as commit?"
 	git ls-files --error-unmatch -- "$@" >/dev/null || exit
 	git ls-files -- "$@" |
 	git checkout-index -f -u --stdin
+
+        # Run a post-checkout hook -- the HEAD does not change so the
+        # current HEAD is passed in for both args
+	if test -x "$GIT_DIR"/hooks/post-checkout; then
+	    "$GIT_DIR"/hooks/post-checkout $old $old 0
+	fi
+
 	exit $?
 else
 	# Make sure we did not fall back on $arg^{tree} codepath
@@ -283,4 +290,9 @@ if [ "$?" -eq 0 ]; then
 	rm -f "$GIT_DIR/MERGE_HEAD"
 else
 	exit 1
+fi
+
+# Run a post-checkout hook
+if test -x "$GIT_DIR"/hooks/post-checkout; then
+        "$GIT_DIR"/hooks/post-checkout $old $new 1
 fi
