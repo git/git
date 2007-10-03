@@ -280,7 +280,8 @@ static void prune_cache(const char *prefix)
 
 	if (pos < 0)
 		pos = -pos-1;
-	active_cache += pos;
+	memmove(active_cache, active_cache + pos,
+		(active_nr - pos) * sizeof(struct cache_entry *));
 	active_nr -= pos;
 	first = 0;
 	last = active_nr;
