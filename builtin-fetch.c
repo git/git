@@ -533,7 +533,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (verbose >= 2)
 		transport->verbose = 1;
 	if (quiet)
-		transport->verbose = 0;
+		transport->verbose = -1;
 	if (upload_pack)
 		set_option(TRANS_OPT_UPLOADPACK, upload_pack);
 	if (keep)

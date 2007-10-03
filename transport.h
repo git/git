@@ -24,7 +24,7 @@ struct transport {
 
 	int (*disconnect)(struct transport *connection);
 	char *pack_lockfile;
-	unsigned verbose : 1;
+	signed verbose : 2;
 };
 
 #define TRANSPORT_PUSH_ALL 1
