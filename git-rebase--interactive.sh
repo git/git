@@ -317,16 +317,19 @@ do_next () {
 	else
 		NEWHEAD=$(git rev-parse HEAD)
 	fi &&
-	message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
-	git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
-	git symbolic-ref HEAD $HEADNAME && {
+	case $HEADNAME in
+	refs/*)
+		message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
+		git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
+		git symbolic-ref HEAD $HEADNAME
+		;;
+	esac && {
 		test ! -f "$DOTEST"/verbose ||
 			git diff --stat $(cat "$DOTEST"/head)..HEAD
 	} &&
 	rm -rf "$DOTEST" &&
+	git gc --auto &&
 	warn "Successfully rebased and updated $HEADNAME."
-
-	git gc --auto
 
 	exit
 }
@@ -367,7 +370,11 @@ do
 
 		HEADNAME=$(cat "$DOTEST"/head-name)
 		HEAD=$(cat "$DOTEST"/head)
-		git symbolic-ref HEAD $HEADNAME &&
+		case $HEADNAME in
+		refs/*)
+			git symbolic-ref HEAD $HEADNAME
+			;;
+		esac &&
 		output git reset --hard $HEAD &&
 		rm -rf "$DOTEST"
 		exit
@@ -445,8 +452,8 @@ do
 		test -z "$ONTO" && ONTO=$UPSTREAM
 
 		: > "$DOTEST"/interactive || die "Could not mark as interactive"
-		git symbolic-ref HEAD > "$DOTEST"/head-name ||
-			die "Could not get HEAD"
+		git symbolic-ref HEAD > "$DOTEST"/head-name 2> /dev/null ||
+			echo "detached HEAD" > "$DOTEST"/head-name
 
 		echo $HEAD > "$DOTEST"/head
 		echo $UPSTREAM > "$DOTEST"/upstream
