@@ -252,6 +252,7 @@ static struct whitespace_rule {
 } whitespace_rule_names[] = {
 	{ "trailing-space", WS_TRAILING_SPACE },
 	{ "space-before-tab", WS_SPACE_BEFORE_TAB },
+	{ "indent-with-non-tab", WS_INDENT_WITH_NON_TAB },
 };
 
 static unsigned parse_whitespace_rule(const char *string)

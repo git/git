@@ -502,8 +502,11 @@ static void emit_line_with_ws(int nparents,
 	int i;
 	int tail = len;
 	int need_highlight_leading_space = 0;
-	/* The line is a newly added line.  Does it have funny leading
-	 * whitespaces?  In indent, SP should never precede a TAB.
+	/*
+	 * The line is a newly added line.  Does it have funny leading
+	 * whitespaces?  In indent, SP should never precede a TAB.  In
+	 * addition, under "indent with non tab" rule, there should not
+	 * be more than 8 consecutive spaces.
 	 */
 	for (i = col0; i < len; i++) {
 		if (line[i] == '\t') {
@@ -516,6 +519,13 @@ static void emit_line_with_ws(int nparents,
 			last_space_in_indent = i;
 		else
 			break;
+	}
+	if ((whitespace_rule & WS_INDENT_WITH_NON_TAB) &&
+	    0 <= last_space_in_indent &&
+	    last_tab_in_indent < 0 &&
+	    8 <= (i - col0)) {
+		last_tab_in_indent = i;
+		need_highlight_leading_space = 1;
 	}
 	fputs(set, stdout);
 	fwrite(line, col0, 1, stdout);
