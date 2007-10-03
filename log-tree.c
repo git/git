@@ -280,7 +280,8 @@ void show_log(struct rev_info *opt, const char *sep)
 	if (opt->show_log_size)
 		printf("log size %i\n", (int)msgbuf.len);
 
-	printf("%s%s%s", msgbuf.buf, extra, sep);
+	if (msgbuf.len)
+		printf("%s%s%s", msgbuf.buf, extra, sep);
 	strbuf_release(&msgbuf);
 }
 

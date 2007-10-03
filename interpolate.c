@@ -73,8 +73,12 @@ unsigned long interpolate(char *result, unsigned long reslen,
 			/* Check for valid interpolation. */
 			if (i < ninterps) {
 				value = interps[i].value;
-				valuelen = strlen(value);
+				if (!value) {
+					src += namelen;
+					continue;
+				}
 
+				valuelen = strlen(value);
 				if (newlen + valuelen < reslen) {
 					/* Substitute. */
 					memcpy(dest, value, valuelen);

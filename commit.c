@@ -876,9 +876,6 @@ void format_commit_message(const struct commit *commit,
 	}
 	if (msg[i])
 		table[IBODY].value = xstrdup(msg + i);
-	for (i = 0; i < ARRAY_SIZE(table); i++)
-		if (!table[i].value)
-			interp_set_entry(table, i, "<unknown>");
 
 	len = interpolate(sb->buf + sb->len, strbuf_avail(sb),
 				format, table, ARRAY_SIZE(table));

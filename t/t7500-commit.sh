@@ -81,7 +81,7 @@ test_expect_success 'explicit commit message should override template' '
 	git add foo &&
 	GIT_EDITOR=../t7500/add-content git commit --template "$TEMPLATE" \
 		-m "command line msg" &&
-	commit_msg_is "command line msg<unknown>"
+	commit_msg_is "command line msg"
 '
 
 test_expect_success 'commit message from file should override template' '
@@ -90,7 +90,7 @@ test_expect_success 'commit message from file should override template' '
 	echo "standard input msg" |
 		GIT_EDITOR=../t7500/add-content git commit \
 			--template "$TEMPLATE" --file - &&
-	commit_msg_is "standard input msg<unknown>"
+	commit_msg_is "standard input msg"
 '
 
 test_done
