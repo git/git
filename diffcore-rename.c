@@ -378,10 +378,10 @@ void diffcore_rename(struct diff_options *options)
 			m->score = estimate_similarity(one, two,
 						       minimum_score);
 			m->name_score = basename_same(one, two);
-			diff_free_filespec_data_large(one);
+			diff_free_filespec_blob(one);
 		}
 		/* We do not need the text anymore */
-		diff_free_filespec_data_large(two);
+		diff_free_filespec_blob(two);
 		dst_cnt++;
 	}
 	/* cost matrix sorted by most to least similar pair */

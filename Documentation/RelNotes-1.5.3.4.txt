@@ -4,25 +4,32 @@ GIT v1.5.3.4 Release Notes
 Fixes since v1.5.3.3
 --------------------
 
- * Sample 'post-receive-hook' incorrectly sent out push
+ * Change to "git-ls-files" in v1.5.3.3 that was introduced to support
+   partial commit of removal better had a segfaulting bug, which was
+   diagnosed and fixed by Keith and Carl.
+
+ * Performance improvements for rename detection has been backported
+   from the 'master' branch.
+
+ * "git-for-each-ref --format='%(numparent)'" was not working
+   correctly at all, and --format='%(parent)' was not working for
+   merge commits.
+
+ * Sample "post-receive-hook" incorrectly sent out push
    notification e-mails marked as "From: " the committer of the
    commit that happened to be at the tip of the branch that was
    pushed, not from the person who pushed.
 
- * git-remote did not exit non-zero status upon error.
+ * "git-remote" did not exit non-zero status upon error.
 
  * "git-add -i" did not respond very well to EOF from tty nor
    bogus input.
 
- * "git rebase -i" squash subcommand incorrectly made the
+ * "git-rebase -i" squash subcommand incorrectly made the
    author of later commit the author of resulting commit,
    instead of taking from the first one in the squashed series.
 
- * "git stash apply --index" was not documented.
+ * "git-stash apply --index" was not documented.
 
-
---
-exec >/var/tmp/1
-O=v1.5.3.3-6-g0bdcac5
-echo O=`git describe refs/heads/maint`
-git shortlog --no-merges $O..refs/heads/maint
+ * autoconfiguration learned that "ar" command is found as "gas" on
+   some systems.

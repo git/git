@@ -43,7 +43,7 @@ static struct {
 	{ "objectsize", FIELD_ULONG },
 	{ "objectname" },
 	{ "tree" },
-	{ "parent" }, /* NEEDSWORK: how to address 2nd and later parents? */
+	{ "parent" },
 	{ "numparent", FIELD_ULONG },
 	{ "object" },
 	{ "type" },
@@ -262,24 +262,26 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 		}
 		if (!strcmp(name, "numparent")) {
 			char *s = xmalloc(40);
+			v->ul = num_parents(commit);
 			sprintf(s, "%lu", v->ul);
 			v->s = s;
-			v->ul = num_parents(commit);
 		}
 		else if (!strcmp(name, "parent")) {
 			int num = num_parents(commit);
 			int i;
 			struct commit_list *parents;
-			char *s = xmalloc(42 * num);
+			char *s = xmalloc(41 * num + 1);
 			v->s = s;
 			for (i = 0, parents = commit->parents;
 			     parents;
-			     parents = parents->next, i = i + 42) {
+			     parents = parents->next, i = i + 41) {
 				struct commit *parent = parents->item;
 				strcpy(s+i, sha1_to_hex(parent->object.sha1));
 				if (parents->next)
 					s[i+40] = ' ';
 			}
+			if (!i)
+				*s = '\0';
 		}
 	}
 }
