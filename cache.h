@@ -432,6 +432,7 @@ const char *show_date(unsigned long time, int timezone, enum date_mode mode);
 int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
+enum date_mode parse_date_format(const char *format);
 
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
