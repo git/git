@@ -39,7 +39,7 @@ test_expect_success 'post-checkout receives the right arguments with HEAD unchan
         old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
         new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
         flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
-        test $old = $new -a $flag == 1
+        test $old = $new -a $flag = 1
 '
 
 test_expect_success 'post-checkout runs as expected ' '
@@ -52,7 +52,7 @@ test_expect_success 'post-checkout args are correct with git checkout -b ' '
         old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
         new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
         flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
-        test $old = $new -a $flag == 1
+        test $old = $new -a $flag = 1
 '
 
 test_expect_success 'post-checkout receives the right args with HEAD changed ' '
@@ -60,7 +60,7 @@ test_expect_success 'post-checkout receives the right args with HEAD changed ' '
         old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
         new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
         flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
-        test $old != $new -a $flag == 1
+        test $old != $new -a $flag = 1
 '
 
 test_expect_success 'post-checkout receives the right args when not switching branches ' '
@@ -68,7 +68,7 @@ test_expect_success 'post-checkout receives the right args when not switching br
         old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
         new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
         flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
-        test $old == $new -a $flag == 0
+        test $old = $new -a $flag = 0
 '
 
 test_done
