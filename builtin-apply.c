@@ -2651,7 +2651,7 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 
 		patch = xcalloc(1, sizeof(*patch));
 		patch->inaccurate_eof = inaccurate_eof;
-		nr = parse_chunk(buf.buf + offset, buf.len, patch);
+		nr = parse_chunk(buf.buf + offset, buf.len - offset, patch);
 		if (nr < 0)
 			break;
 		if (apply_in_reverse)
