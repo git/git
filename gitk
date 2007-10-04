@@ -2334,7 +2334,7 @@ proc find_change {name ix op} {
     drawvisible
 }
 
-proc findcom_change {} {
+proc findcom_change args {
     global nhighlights mainfont boldnamerows
     global findpattern findtype findstring gdttype
 
@@ -5529,8 +5529,8 @@ proc settabs {{firstab {}}} {
     }
     set w [font measure $textfont "0"]
     if {$firsttabstop != 0} {
-	$ctext conf -tabs [list [expr {$firsttabstop * $w}] \
-			       [expr {($firsttabstop + $tabstop) * $w}]]
+	$ctext conf -tabs [list [expr {($firsttabstop + $tabstop) * $w}] \
+			       [expr {($firsttabstop + 2 * $tabstop) * $w}]]
     } elseif {$have_tk85 || $tabstop != 8} {
 	$ctext conf -tabs [expr {$tabstop * $w}]
     } else {
