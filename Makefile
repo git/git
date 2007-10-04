@@ -1066,6 +1066,9 @@ dist-doc:
 
 ### Cleaning rules
 
+distclean: clean
+	$(RM) configure
+
 clean:
 	$(RM) *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
 		$(LIB_FILE) $(XDIFF_LIB)
@@ -1073,7 +1076,7 @@ clean:
 	$(RM) $(TEST_PROGRAMS)
 	$(RM) *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	$(RM) -r autom4te.cache
-	$(RM) configure config.log config.mak.autogen config.mak.append config.status config.cache
+	$(RM) config.log config.mak.autogen config.mak.append config.status config.cache
 	$(RM) -r $(GIT_TARNAME) .doc-tmp-dir
 	$(RM) $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
