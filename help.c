@@ -186,6 +186,8 @@ char* get_install_dir()
 			}
 		}
 	}
+	/* Note, according to the msdn documentation we have a full path
+	   if started through the shell and this error should never happen. */
 	fprintf(stderr, "Fatal Error: failed to locate installation root.\n");
 	exit(1);
 }
