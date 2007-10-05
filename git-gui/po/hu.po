@@ -1344,8 +1344,8 @@ msgstr "Nem sikerült írni az ikont:"
 
 #: lib/status_bar.tcl:58
 #, tcl-format
-msgid "%s ... %i of %i %s (%2i%%)"
-msgstr "%s ... %i / %i %s (%2i%%)"
+msgid "%s ... %*i of %*i %s (%3i%%)"
+msgstr "%s ... %*i / %*i %s (%3i%%)"
 
 #: lib/transport.tcl:7
 #, tcl-format

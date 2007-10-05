@@ -179,34 +179,31 @@ method insert {txt} {
 method done {ok} {
 	if {$ok} {
 		if {[winfo exists $w.m.s]} {
+			bind $w.m.s <Destroy> [list delete_this $this]
 			$w.m.s conf -background green -text [mc "Success"]
 			if {$is_toplevel} {
 				$w.ok conf -state normal
 				focus $w.ok
 			}
+		} else {
+			delete_this
 		}
 	} else {
 		if {![winfo exists $w.m.s]} {
 			_init $this
 		}
+		bind $w.m.s <Destroy> [list delete_this $this]
 		$w.m.s conf -background red -text [mc "Error: Command Failed"]
 		if {$is_toplevel} {
 			$w.ok conf -state normal
 			focus $w.ok
 		}
 	}
-	delete_this
 }
 
 method _sb_set {sb orient first last} {
-	if {$first == 0 && $last == 1} {
-		if {[winfo exists $sb]} {
-			destroy $sb
-		}
-		return
-	}
-
 	if {![winfo exists $sb]} {
+		if {$first == $last || ($first == 0 && $last == 1)} return
 		if {$orient eq {h}} {
 			scrollbar $sb -orient h -command [list $w_t xview]
 			pack $sb -fill x -side bottom -before $w_t
@@ -215,7 +212,7 @@ method _sb_set {sb orient first last} {
 			pack $sb -fill y -side right -before $w_t
 		}
 	}
-	catch {$sb set $first $last}
+	$sb set $first $last
 }
 
 }

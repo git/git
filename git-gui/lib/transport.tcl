@@ -32,6 +32,7 @@ proc push_to {remote} {
 
 proc start_push_anywhere_action {w} {
 	global push_urltype push_remote push_url push_thin push_tags
+	global push_force
 
 	set r_url {}
 	switch -- $push_urltype {
@@ -44,6 +45,9 @@ proc start_push_anywhere_action {w} {
 	lappend cmd -v
 	if {$push_thin} {
 		lappend cmd --thin
+	}
+	if {$push_force} {
+		lappend cmd --force
 	}
 	if {$push_tags} {
 		lappend cmd --tags
@@ -76,6 +80,7 @@ trace add variable push_remote write \
 proc do_push_anywhere {} {
 	global all_remotes current_branch
 	global push_urltype push_remote push_url push_thin push_tags
+	global push_force
 
 	set w .push_setup
 	toplevel $w
@@ -151,6 +156,10 @@ proc do_push_anywhere {} {
 	pack $w.dest -anchor nw -fill x -pady 5 -padx 5
 
 	labelframe $w.options -text [mc "Transfer Options"]
+	checkbutton $w.options.force \
+		-text [mc "Force overwrite existing branch (may discard changes)"] \
+		-variable push_force
+	grid $w.options.force -columnspan 2 -sticky w
 	checkbutton $w.options.thin \
 		-text [mc "Use thin pack (for slow network connections)"] \
 		-variable push_thin
@@ -163,6 +172,7 @@ proc do_push_anywhere {} {
 	pack $w.options -anchor nw -fill x -pady 5 -padx 5
 
 	set push_url {}
+	set push_force 0
 	set push_thin 0
 	set push_tags 0
 

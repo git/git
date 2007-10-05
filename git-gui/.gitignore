@@ -1,5 +1,7 @@
+.DS_Store
+Git Gui.app*
+git-gui.tcl
 GIT-VERSION-FILE
 GIT-GUI-VARS
-git-citool
 git-gui
 lib/tclIndex

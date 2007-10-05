@@ -1238,7 +1238,7 @@ msgstr ""
 
 #: lib/status_bar.tcl:58
 #, tcl-format
-msgid "%s ... %i of %i %s (%2i%%)"
+msgid "%s ... %*i of %*i %s (%3i%%)"
 msgstr ""
 
 #: lib/transport.tcl:7
