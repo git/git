@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-08-11 17:28+0200\n"
-"PO-Revision-Date: 2007-08-11 17:37+0200\n"
+"PO-Revision-Date: 2007-10-05 22:00+0200\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -80,15 +80,15 @@ msgstr "Verändert, nicht bereitgestellt"
 
 #: git-gui.sh:1325 git-gui.sh:1330
 msgid "Staged for commit"
-msgstr "Bereitgestellt zur Übertragung"
+msgstr "Bereitgestellt zum Eintragen"
 
 #: git-gui.sh:1326 git-gui.sh:1331
 msgid "Portions staged for commit"
-msgstr "Teilweise bereitgestellt zur Übertragung"
+msgstr "Teilweise bereitgestellt zum Eintragen"
 
 #: git-gui.sh:1327 git-gui.sh:1332
 msgid "Staged for commit, missing"
-msgstr "Bereitgestellt zur Übertragung, fehlend"
+msgstr "Bereitgestellt zum Eintragen, fehlend"
 
 #: git-gui.sh:1329
 msgid "Untracked, not staged"
@@ -152,7 +152,7 @@ msgstr "Zweig"
 
 #: git-gui.sh:1655 git-gui.sh:1842 git-gui.sh:2152
 msgid "Commit"
-msgstr "Übertragen"
+msgstr "Eintragen"
 
 #: git-gui.sh:1658 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
 msgid "Merge"
@@ -249,7 +249,7 @@ msgstr "Erstellen..."
 
 #: git-gui.sh:1764
 msgid "Checkout..."
-msgstr "Auschecken..."
+msgstr "Arbeitskopie erstellen..."
 
 #: git-gui.sh:1770
 msgid "Rename..."
@@ -265,11 +265,11 @@ msgstr "Zurücksetzen..."
 
 #: git-gui.sh:1792 git-gui.sh:2169
 msgid "New Commit"
-msgstr "Neu übertragen"
+msgstr "Neue Version"
 
 #: git-gui.sh:1800 git-gui.sh:2176
 msgid "Amend Last Commit"
-msgstr "Letzte Übertragung nachbessern"
+msgstr "Letzte Version nachbessern"
 
 #: git-gui.sh:1809 git-gui.sh:2136 lib/remote_branch_delete.tcl:99
 msgid "Rescan"
@@ -277,11 +277,11 @@ msgstr "Neu laden"
 
 #: git-gui.sh:1815
 msgid "Stage To Commit"
-msgstr "Zur Übertragung bereitstellen"
+msgstr "Zum Eintragen bereitstellen"
 
 #: git-gui.sh:1820
 msgid "Stage Changed Files To Commit"
-msgstr "Geänderte Dateien zur Übertragung bereitstellen"
+msgstr "Geänderte Dateien zum Eintragen bereitstellen"
 
 #: git-gui.sh:1826
 msgid "Unstage From Commit"
@@ -334,11 +334,11 @@ msgstr "Aktueller Zweig:"
 
 #: git-gui.sh:2075
 msgid "Staged Changes (Will Be Committed)"
-msgstr "Bereitgestellte Änderungen (werden übertragen)"
+msgstr "Bereitgestellte Änderungen (werden eingetragen)"
 
 #: git-gui.sh:2095
 msgid "Unstaged Changes (Will Not Be Committed)"
-msgstr "Nicht bereitgestellte Änderungen (werden nicht übertragen)"
+msgstr "Nicht bereitgestellte Änderungen (werden nicht eingetragen)"
 
 #: git-gui.sh:2142
 msgid "Stage Changed"
@@ -346,27 +346,27 @@ msgstr "Geänderte bereitstellen"
 
 #: git-gui.sh:2188
 msgid "Initial Commit Message:"
-msgstr "Erstmalige Übertragungsmeldung"
+msgstr "Beschreibung der ersten Version:"
 
 #: git-gui.sh:2189
 msgid "Amended Commit Message:"
-msgstr "Übertragungsmeldung mit Nachbesserung:"
+msgstr "Beschreibung der nachgebesserten Version:"
 
 #: git-gui.sh:2190
 msgid "Amended Initial Commit Message:"
-msgstr "Erstmalige Übertragungsmeldung mit Nachbesserung:"
+msgstr "Beschreibung der nachgebesserten ersten Version:"
 
 #: git-gui.sh:2191
 msgid "Amended Merge Commit Message:"
-msgstr "Zusammenführungs-Übertragungsmeldung mit Nachbesserung"
+msgstr "Beschreibung der nachgebesserten Zusammenführungs-Version:"
 
 #: git-gui.sh:2192
 msgid "Merge Commit Message:"
-msgstr "Übertragungsmeldung Zusammenführung:"
+msgstr "Beschreibung der Zusammenführungs-Version:"
 
 #: git-gui.sh:2193
 msgid "Commit Message:"
-msgstr "Übertragungsmeldung:"
+msgstr "Versionsbeschreibung:"
 
 #: git-gui.sh:2238 git-gui.sh:2376 lib/console.tcl:73
 msgid "Copy All"
@@ -418,11 +418,11 @@ msgstr "Datei-Browser"
 
 #: lib/blame.tcl:81
 msgid "Commit:"
-msgstr "Übertragung:"
+msgstr "Version:"
 
 #: lib/blame.tcl:249
 msgid "Copy Commit"
-msgstr "Übertragung kopieren"
+msgstr "Version kopieren"
 
 #: lib/blame.tcl:369
 #, tcl-format
@@ -431,11 +431,11 @@ msgstr "%s lesen..."
 
 #: lib/branch_checkout.tcl:14 lib/branch_checkout.tcl:19
 msgid "Checkout Branch"
-msgstr "Zweig auschecken"
+msgstr "Zweig umstellen"
 
 #: lib/branch_checkout.tcl:23
 msgid "Checkout"
-msgstr "Auschecken"
+msgstr "Umstellen"
 
 #: lib/branch_checkout.tcl:27 lib/branch_create.tcl:35
 #: lib/branch_delete.tcl:32 lib/branch_rename.tcl:30 lib/browser.tcl:283
@@ -507,7 +507,7 @@ msgstr "Zurücksetzen"
 
 #: lib/branch_create.tcl:97
 msgid "Checkout After Creation"
-msgstr "Auschecken nach Erstellen"
+msgstr "Arbeitskopie umstellen nach Erstellen"
 
 #: lib/branch_create.tcl:131
 msgid "Please select a tracking branch."
@@ -686,8 +686,7 @@ msgstr ""
 #: lib/checkout_op.tcl:353
 #, tcl-format
 msgid "Aborted checkout of '%s' (file level merging is required)."
-msgstr ""
-"Auschecken von »%s« abgebrochen (Zusammenführen der Dateien ist notwendig)."
+msgstr "Zweig umstellen von »%s« abgebrochen (Zusammenführen der Dateien ist notwendig)."
 
 #: lib/checkout_op.tcl:354
 msgid "File level merge required."
@@ -707,8 +706,7 @@ msgid ""
 msgstr ""
 "Die Arbeitskopie ist nicht auf einem lokalen Zweig.\n"
 "\n"
-"Wenn Sie auf einem Zwei arbeiten möchten, erstellen Sie bitte jetzt einen "
-"Zweig mit der Auswahl »Abgetrennte Auscheck-Version«."
+"Wenn Sie auf einem Zweig arbeiten möchten, erstellen Sie bitte jetzt einen Zweig mit der Auswahl »Abgetrennte Arbeitskopie-Version«."
 
 #: lib/checkout_op.tcl:478
 #, tcl-format
@@ -750,7 +748,7 @@ msgstr ""
 
 #: lib/choose_rev.tcl:53
 msgid "This Detached Checkout"
-msgstr "Abgetrennte Auscheck-Version"
+msgstr "Abgetrennte Arbeitskopie-Version"
 
 #: lib/choose_rev.tcl:60
 msgid "Revision Expression:"
@@ -831,8 +829,7 @@ msgid ""
 msgstr ""
 "Der letzte geladene Status stimmt nicht mehr mit dem Projektarchiv überein.\n"
 "\n"
-"Ein anderes Git-Programm hat das Projektarchiv seit dem letzten Laden "
-"geändert.  Vor einer neuen Übertragung muss neu geladen werden.\n"
+"Ein anderes Git-Programm hat das Projektarchiv seit dem letzten Laden geändert.  Vor dem Eintragen einer neuen Version muss neu geladen werden.\n"
 "\n"
 "Es wird gleich neu geladen.\n"
 
@@ -844,10 +841,9 @@ msgid ""
 "File %s has merge conflicts.  You must resolve them and stage the file "
 "before committing.\n"
 msgstr ""
-"Nicht zusammengeführte Dateien können nicht übertragen werden.\n"
+"Nicht zusammengeführte Dateien können nicht eingetragen werden.\n"
 "\n"
-"Die Datei %s hat noch nicht aufgelöste Zusammenführungs-Konflikte. Sie "
-"müssen diese Konflikte auflösen, bevor Sie übertragen können.\n"
+"Die Datei »%s« hat noch nicht aufgelöste Zusammenführungs-Konflikte. Sie müssen diese Konflikte auflösen, bevor Sie eintragen können.\n"
 
 #: lib/commit.tcl:162
 #, tcl-format
@@ -858,7 +854,7 @@ msgid ""
 msgstr ""
 "Unbekannter Dateizustand »%s«.\n"
 "\n"
-"Datei »%s« kann nicht übertragen werden.\n"
+"Datei »%s« kann nicht eingetragen werden.\n"
 
 #: lib/commit.tcl:170
 msgid ""
@@ -866,10 +862,9 @@ msgid ""
 "\n"
 "You must stage at least 1 file before you can commit.\n"
 msgstr ""
-"Keine Änderungen vorhanden, die übertragen werden könnten.\n"
+"Keine Änderungen vorhanden, die eingetragen werden könnten.\n"
 "\n"
-"Sie müssen mindestens eine Datei bereitstellen, bevor Sie übertragen "
-"können.\n"
+"Sie müssen mindestens eine Datei bereitstellen, bevor Sie eintragen können.\n"
 
 #: lib/commit.tcl:183
 msgid ""
@@ -881,16 +876,15 @@ msgid ""
 "- Second line: Blank\n"
 "- Remaining lines: Describe why this change is good.\n"
 msgstr ""
-"Bitte geben Sie eine Übertragungsmeldung ein.\n"
+"Bitte geben Sie eine Versionsbeschreibung ein.\n"
 "\n"
-"Eine gute Übertragungsmeldung enthält folgende Abschnitte:\n"
+"Eine gute Versionsbeschreibung enthält folgende Abschnitte:\n"
 "\n"
 "- Erste Zeile: Eine Zusammenfassung, was man gemacht hat.\n"
 "\n"
 "- Zweite Zeile: Leerzeile\n"
 "\n"
-"- Rest der Meldung: Eine ausführliche Beschreibung, warum diese Änderung "
-"hilfreich ist.\n"
+"- Rest: Eine ausführliche Beschreibung, warum diese Änderung hilfreich ist.\n"
 
 #: lib/commit.tcl:257
 msgid "write-tree failed:"
@@ -904,16 +898,15 @@ msgid ""
 "\n"
 "A rescan will be automatically started now.\n"
 msgstr ""
-"Keine Änderungen zu übertragen.\n"
+"Keine Änderungen einzutragen.\n"
 "\n"
-"Es gibt keine geänderte Datei bei dieser Übertragung und es wurde auch "
-"nichts zusammengeführt.\n"
+"Es gibt keine geänderte Datei bei dieser Version und es wurde auch nichts zusammengeführt.\n"
 "\n"
 "Das Arbeitsverzeichnis wird daher jetzt neu geladen.\n"
 
 #: lib/commit.tcl:286
 msgid "No changes to commit."
-msgstr "Keine Änderungen, die übertragen werden können."
+msgstr "Keine Änderungen, die eingetragen werden können."
 
 #: lib/commit.tcl:317
 msgid "commit-tree failed:"
@@ -1024,8 +1017,7 @@ msgstr "Warnung"
 
 #: lib/error.tcl:81
 msgid "You must correct the above errors before committing."
-msgstr ""
-"Sie müssen die obigen Fehler zuerst beheben, bevor Sie übertragen können."
+msgstr "Sie müssen die obigen Fehler zuerst beheben, bevor Sie eintragen können."
 
 #: lib/index.tcl:364
 #, tcl-format
@@ -1054,8 +1046,7 @@ msgid ""
 msgstr ""
 "Zusammenführen kann nicht gleichzeitig mit Nachbessern durchgeführt werden.\n"
 "\n"
-"Sie müssen zuerst die Nachbesserungs-Übertragung abschließen, bevor Sie "
-"zusammenführen können.\n"
+"Sie müssen zuerst die Nachbesserungs-Version abschließen, bevor Sie zusammenführen können.\n"
 
 #: lib/merge.tcl:27
 msgid ""
@@ -1085,10 +1076,7 @@ msgid ""
 msgstr ""
 "Zusammenführung mit Konflikten.\n"
 "\n"
-"Die Datei »%s« enthält Konflikte beim Zusammenführen. Sie müssen diese "
-"Konflikte per Hand auflösen. Anschließend müssen Sie die Datei wieder "
-"bereitstellen und übertragen, um die Zusammenführung abzuschließen. Erst "
-"danach kann eine neue Zusammenführung begonnen werden.\n"
+"Die Datei »%s« enthält Konflikte beim Zusammenführen. Sie müssen diese Konflikte per Hand auflösen. Anschließend müssen Sie die Datei wieder bereitstellen und eintragen, um die Zusammenführung abzuschließen. Erst danach kann eine neue Zusammenführung begonnen werden.\n"
 
 #: lib/merge.tcl:54
 #, tcl-format
@@ -1102,10 +1090,7 @@ msgid ""
 msgstr ""
 "Es liegen Änderungen vor.\n"
 "\n"
-"Die Datei »%s« wurde geändert.  Sie sollten zuerst die bereitgestellte "
-"Übertragung abschließen, bevor Sie eine Zusammenführung beginnen.  Mit "
-"dieser Reihenfolge können Sie mögliche Konflikte beim Zusammenführen "
-"wesentlich einfacher beheben oder abbrechen.\n"
+"Die Datei »%s« wurde geändert.  Sie sollten zuerst die bereitgestellte Version abschließen, bevor Sie eine Zusammenführung beginnen.  Mit dieser Reihenfolge können Sie mögliche Konflikte beim Zusammenführen wesentlich einfacher beheben oder abbrechen.\n"
 
 #: lib/merge.tcl:106
 #, tcl-format
@@ -1142,7 +1127,7 @@ msgid ""
 msgstr ""
 "Abbruch der Nachbesserung ist nicht möglich.\n"
 "\n"
-"Sie müssen die Nachbesserung der Übertragung abschließen.\n"
+"Sie müssen die Nachbesserung der Version abschließen.\n"
 
 #: lib/merge.tcl:222
 msgid ""
@@ -1154,7 +1139,7 @@ msgid ""
 msgstr ""
 "Zusammenführen abbrechen?\n"
 "\n"
-"Wenn Sie abbrechen, gehen alle noch nicht übertragenen Änderungen verloren.\n"
+"Wenn Sie abbrechen, gehen alle noch nicht eingetragenen Änderungen verloren.\n"
 "\n"
 "Zusammenführen jetzt abbrechen?"
 
@@ -1168,8 +1153,7 @@ msgid ""
 msgstr ""
 "Änderungen zurücksetzen?\n"
 "\n"
-"Wenn Sie zurücksetzen, gehen alle noch nicht übertragenen Änderungen "
-"verloren.\n"
+"Wenn Sie zurücksetzen, gehen alle noch nicht eingetragenen Änderungen verloren.\n"
 "\n"
 "Änderungen jetzt zurücksetzen?"
 
@@ -1216,7 +1200,7 @@ msgstr "E-Mail-Adresse"
 
 #: lib/option.tcl:188
 msgid "Summarize Merge Commits"
-msgstr "Zusammenführungs-Übertragungen zusammenfassen"
+msgstr "Zusammenführungs-Versionen zusammenfassen"
 
 #: lib/option.tcl:189
 msgid "Merge Verbosity"
@@ -1291,10 +1275,7 @@ msgstr "Für »Zusammenführen mit« muss ein Zweig angegeben werden."
 msgid ""
 "One or more of the merge tests failed because you have not fetched the "
 "necessary commits.  Try fetching from %s first."
-msgstr ""
-"Ein oder mehrere Zusammenführungen sind fehlgeschlagen, da Sie nicht die "
-"notwendigen Versionen vorher angefordert haben.  Sie sollten versuchen, "
-"zuerst von »%s« anzufordern."
+msgstr "Ein oder mehrere Zusammenführungen sind fehlgeschlagen, da Sie nicht die notwendigen Versionen vorher angefordert haben.  Sie sollten versuchen, zuerst von »%s« anzufordern."
 
 #: lib/remote_branch_delete.tcl:207
 msgid "Please select one or more branches to delete."
