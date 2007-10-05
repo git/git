@@ -2213,7 +2213,7 @@ pack .vpane -anchor n -side top -fill both -expand 1
 # -- Index File List
 #
 frame .vpane.files.index -height 100 -width 200
-label .vpane.files.index.title -text [mc "Staged Changes (Will Be Committed)"] \
+label .vpane.files.index.title -text [mc "Staged Changes (Will Commit)"] \
 	-background lightgreen
 text $ui_index -background white -borderwidth 0 \
 	-width 20 -height 10 \
@@ -2233,7 +2233,7 @@ pack $ui_index -side left -fill both -expand 1
 # -- Working Directory File List
 #
 frame .vpane.files.workdir -height 100 -width 200
-label .vpane.files.workdir.title -text [mc "Unstaged Changes (Will Not Be Committed)"] \
+label .vpane.files.workdir.title -text [mc "Unstaged Changes"] \
 	-background lightsalmon
 text $ui_workdir -background white -borderwidth 0 \
 	-width 20 -height 10 \
