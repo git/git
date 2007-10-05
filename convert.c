@@ -110,7 +110,9 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 			return 0;
 	}
 
-	strbuf_grow(buf, len);
+	/* only grow if not in place */
+	if (strbuf_avail(buf) + buf->len < len)
+		strbuf_grow(buf, len - buf->len);
 	dst = buf->buf;
 	if (action == CRLF_GUESS) {
 		/*
@@ -281,20 +283,19 @@ static int apply_filter(const char *path, const char *src, size_t len,
 		ret = 0;
 	}
 	if (close(pipe_feed[0])) {
-		ret = error("read from external filter %s failed", cmd);
+		error("read from external filter %s failed", cmd);
 		ret = 0;
 	}
 	status = finish_command(&child_process);
 	if (status) {
-		ret = error("external filter %s failed %d", cmd, -status);
+		error("external filter %s failed %d", cmd, -status);
 		ret = 0;
 	}
 
 	if (ret) {
-		*dst = nbuf;
-	} else {
-		strbuf_release(&nbuf);
+		strbuf_swap(dst, &nbuf);
 	}
+	strbuf_release(&nbuf);
 	return ret;
 }
 
@@ -422,7 +423,9 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 	if (!ident || !count_ident(src, len))
 		return 0;
 
-	strbuf_grow(buf, len);
+	/* only grow if not in place */
+	if (strbuf_avail(buf) + buf->len < len)
+		strbuf_grow(buf, len - buf->len);
 	dst = buf->buf;
 	for (;;) {
 		dollar = memchr(src, '$', len);
