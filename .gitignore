@@ -171,3 +171,6 @@ config.status
 config.mak.autogen
 config.mak.append
 configure
+tags
+TAGS
+cscope*
