@@ -27,7 +27,7 @@ OPTIONS
 	The HTTP daemon command-line that will be executed.
 	Command-line options may be specified here, and the
 	configuration file will be added at the end of the command-line.
-	Currently, lighttpd and apache2 are the only supported servers.
+	Currently lighttpd, apache2 and webrick are supported.
 	(Default: lighttpd)
 
 -m|--module-path::
