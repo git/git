@@ -5685,43 +5685,73 @@ proc redisplay {} {
     }
 }
 
-proc fontdescr {f} {
-    set d [list [font actual $f -family] [font actual $f -size]]
-    if {[font actual $f -weight] eq "bold"} {
-	lappend d "bold"
+proc parsefont {f n} {
+    global fontattr
+
+    set fontattr($f,family) [lindex $n 0]
+    set s [lindex $n 1]
+    if {$s eq {} || $s == 0} {
+	set s 10
+    } elseif {$s < 0} {
+	set s [expr {int(-$s / [winfo fpixels . 1p] + 0.5)}]
     }
-    if {[font actual $f -slant] eq "italic"} {
-	lappend d "italic"
+    set fontattr($f,size) $s
+    set fontattr($f,weight) normal
+    set fontattr($f,slant) roman
+    foreach style [lrange $n 2 end] {
+	switch -- $style {
+	    "normal" -
+	    "bold"   {set fontattr($f,weight) $style}
+	    "roman" -
+	    "italic" {set fontattr($f,slant) $style}
+	}
     }
-    if {[font actual $f -underline]} {
-	lappend d "underline"
+}
+
+proc fontflags {f {isbold 0}} {
+    global fontattr
+
+    return [list -family $fontattr($f,family) -size $fontattr($f,size) \
+		-weight [expr {$isbold? "bold": $fontattr($f,weight)}] \
+		-slant $fontattr($f,slant)]
+}
+
+proc fontname {f} {
+    global fontattr
+
+    set n [list $fontattr($f,family) $fontattr($f,size)]
+    if {$fontattr($f,weight) eq "bold"} {
+	lappend n "bold"
     }
-    if {[font actual $f -overstrike]} {
-	lappend d "overstrike"
+    if {$fontattr($f,slant) eq "italic"} {
+	lappend n "italic"
     }
-    return $d
+    return $n
 }
 
 proc incrfont {inc} {
     global mainfont textfont ctext canv phase cflist showrefstop
-    global stopped entries
+    global stopped entries fontattr
+
     unmarkmatches
-    set s [font actual mainfont -size]
+    set s $fontattr(mainfont,size)
     incr s $inc
     if {$s < 1} {
 	set s 1
     }
+    set fontattr(mainfont,size) $s
     font config mainfont -size $s
     font config mainfontbold -size $s
-    set mainfont [fontdescr mainfont]
-    set s [font actual textfont -size]
+    set mainfont [fontname mainfont]
+    set s $fontattr(textfont,size)
     incr s $inc
     if {$s < 1} {
 	set s 1
     }
+    set fontattr(textfont,size) $s
     font config textfont -size $s
     font config textfontbold -size $s
-    set textfont [fontdescr textfont]
+    set textfont [fontname textfont]
     setcoords
     settabs
     redisplay
@@ -8340,15 +8370,17 @@ set selectbgcolor gray85
 catch {source ~/.gitk}
 
 font create optionfont -family sans-serif -size -12
-font create mainfont
-catch {eval font config mainfont [font actual $mainfont]}
-eval font create mainfontbold [font actual mainfont] -weight bold
-font create textfont
-catch {eval font config textfont [font actual $textfont]}
-eval font create textfontbold [font actual textfont]
-font config textfontbold -weight bold
-font create uifont
-catch {eval font config uifont [font actual $uifont]}
+
+parsefont mainfont $mainfont
+eval font create mainfont [fontflags mainfont]
+eval font create mainfontbold [fontflags mainfont 1]
+
+parsefont textfont $textfont
+eval font create textfont [fontflags textfont]
+eval font create textfontbold [fontflags textfont 1]
+
+parsefont uifont $uifont
+eval font create uifont [fontflags uifont]
 
 # check that we can find a .git directory somewhere...
 if {[catch {set gitdir [gitdir]}]} {
