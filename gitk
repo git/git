@@ -5119,14 +5119,13 @@ proc getblobline {bf id} {
 }
 
 proc mergediff {id l} {
-    global diffmergeid diffopts mdifffd
+    global diffmergeid mdifffd
     global diffids
     global parentlist
 
     set diffmergeid $id
     set diffids $id
     # this doesn't seem to actually affect anything...
-    set env(GIT_DIFF_OPTS) $diffopts
     set cmd [concat | git diff-tree --no-commit-id --cc $id]
     if {[catch {set mdf [open $cmd r]} err]} {
 	error_popup "Error getting merge diffs: $err"
@@ -5333,11 +5332,10 @@ proc diffcontextchange {n1 n2 op} {
 }
 
 proc getblobdiffs {ids} {
-    global diffopts blobdifffd diffids env
+    global blobdifffd diffids env
     global diffinhdr treediffs
     global diffcontext
 
-    set env(GIT_DIFF_OPTS) $diffopts
     if {[catch {set bdf [open [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"] r]} err]} {
 	puts "error getting diffs: $err"
 	return
@@ -8000,7 +7998,7 @@ proc chg_fontparam {v sub op} {
 }
 
 proc doprefs {} {
-    global maxwidth maxgraphpct diffopts
+    global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor
     global uifont tabstop
@@ -8011,7 +8009,7 @@ proc doprefs {} {
 	raise $top
 	return
     }
-    foreach v {maxwidth maxgraphpct diffopts showneartags showlocalchanges} {
+    foreach v {maxwidth maxgraphpct showneartags showlocalchanges} {
 	set oldprefs($v) [set $v]
     }
     toplevel $top
@@ -8037,10 +8035,6 @@ proc doprefs {} {
     label $top.ddisp -text "Diff display options"
     $top.ddisp configure -font uifont
     grid $top.ddisp - -sticky w -pady 10
-    label $top.diffoptl -text "Options for diff program" \
-	-font optionfont
-    entry $top.diffopt -width 20 -textvariable diffopts
-    grid x $top.diffoptl $top.diffopt -sticky w
     frame $top.ntag
     label $top.ntag.l -text "Display nearby tags" -font optionfont
     checkbutton $top.ntag.b -variable showneartags
@@ -8141,10 +8135,10 @@ proc setfg {c} {
 }
 
 proc prefscan {} {
-    global maxwidth maxgraphpct diffopts
+    global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
 
-    foreach v {maxwidth maxgraphpct diffopts showneartags showlocalchanges} {
+    foreach v {maxwidth maxgraphpct showneartags showlocalchanges} {
 	set $v $oldprefs($v)
     }
     catch {destroy $prefstop}
@@ -8479,7 +8473,6 @@ proc tcl_encoding {enc} {
 
 # defaults...
 set datemode 0
-set diffopts "-U 5 -p"
 set wrcomcmd "git diff-tree --stdin -p --pretty"
 
 set gitencoding {}
