@@ -343,6 +343,9 @@ proc _which {what} {
 				$env(PATH)] {;}]
 			set _search_exe .exe
 		} elseif {[is_Windows]} {
+			set gitguidir [file dirname [info script]]
+			regsub -all ";" $gitguidir "\\;" gitguidir
+			set env(PATH) "$gitguidir;$env(PATH)"
 			set _search_path [split $env(PATH) {;}]
 			set _search_exe .exe
 		} else {
