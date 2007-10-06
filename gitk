@@ -2758,7 +2758,7 @@ proc layoutmore {} {
     global uparrowlen downarrowlen mingaplen curview
 
     set show $commitidx($curview)
-    if {$show > $numcommits} {
+    if {$show > $numcommits || $viewcomplete($curview)} {
 	showstuff $show $viewcomplete($curview)
     }
 }
