@@ -3065,6 +3065,29 @@ sub new {
 	my ($baton, $callbacks) = SVN::Core::auth_open_helper(_auth_providers);
 	my $config = SVN::Core::config_get_config($config_dir);
 	$RA = undef;
+	my $dont_store_passwords = 1;
+	my $conf_t = ${$config}{'config'};
+	{
+		# The usage of $SVN::_Core::SVN_CONFIG_* variables
+		# produces warnings that variables are used only once.
+		# I had not found the better way to shut them up, so
+		# warnings are disabled in this block.
+		no warnings;
+		if (SVN::_Core::svn_config_get_bool($conf_t,
+		    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
+		    $SVN::_Core::SVN_CONFIG_OPTION_STORE_PASSWORDS,
+		    1) == 0) {
+			SVN::_Core::svn_auth_set_parameter($baton,
+			    $SVN::_Core::SVN_AUTH_PARAM_DONT_STORE_PASSWORDS,
+			    bless (\$dont_store_passwords, "_p_void"));
+		}
+		if (SVN::_Core::svn_config_get_bool($conf_t,
+		    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
+		    $SVN::_Core::SVN_CONFIG_OPTION_STORE_AUTH_CREDS,
+		    1) == 0) {
+			$Git::SVN::Prompt::_no_auth_cache = 1;
+		}
+	}
 	my $self = SVN::Ra->new(url => $url, auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
