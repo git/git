@@ -7875,6 +7875,130 @@ proc doquit {} {
     destroy .
 }
 
+proc mkfontdisp {font top which} {
+    global fontattr fontpref $font
+
+    set fontpref($font) [set $font]
+    button $top.${font}but -text $which -font optionfont \
+	-command [list choosefont $font $which]
+    label $top.$font -relief flat -font $font \
+	-text $fontattr($font,family) -justify left
+    grid x $top.${font}but $top.$font -sticky w
+}
+
+proc choosefont {font which} {
+    global fontparam fontlist fonttop fontattr
+
+    set fontparam(which) $which
+    set fontparam(font) $font
+    set fontparam(family) [font actual $font -family]
+    set fontparam(size) $fontattr($font,size)
+    set fontparam(weight) $fontattr($font,weight)
+    set fontparam(slant) $fontattr($font,slant)
+    set top .gitkfont
+    set fonttop $top
+    if {![winfo exists $top]} {
+	font create sample
+	eval font config sample [font actual $font]
+	toplevel $top
+	wm title $top "Gitk font chooser"
+	label $top.l -textvariable fontparam(which) -font uifont
+	pack $top.l -side top
+	set fontlist [lsort [font families]]
+	frame $top.f
+	listbox $top.f.fam -listvariable fontlist \
+	    -yscrollcommand [list $top.f.sb set]
+	bind $top.f.fam <<ListboxSelect>> selfontfam
+	scrollbar $top.f.sb -command [list $top.f.fam yview]
+	pack $top.f.sb -side right -fill y
+	pack $top.f.fam -side left -fill both -expand 1
+	pack $top.f -side top -fill both -expand 1
+	frame $top.g
+	spinbox $top.g.size -from 4 -to 40 -width 4 \
+	    -textvariable fontparam(size) \
+	    -validatecommand {string is integer -strict %s}
+	checkbutton $top.g.bold -padx 5 \
+	    -font {{Times New Roman} 12 bold} -text "B" -indicatoron 0 \
+	    -variable fontparam(weight) -onvalue bold -offvalue normal
+	checkbutton $top.g.ital -padx 5 \
+	    -font {{Times New Roman} 12 italic} -text "I" -indicatoron 0  \
+	    -variable fontparam(slant) -onvalue italic -offvalue roman
+	pack $top.g.size $top.g.bold $top.g.ital -side left
+	pack $top.g -side top
+	canvas $top.c -width 150 -height 50 -border 2 -relief sunk \
+	    -background white
+	$top.c create text 100 25 -anchor center -text $which -font sample \
+	    -fill black -tags text
+	bind $top.c <Configure> [list centertext $top.c]
+	pack $top.c -side top -fill x
+	frame $top.buts
+	button $top.buts.ok -text "OK" -command fontok -default active \
+	    -font uifont
+	button $top.buts.can -text "Cancel" -command fontcan -default normal \
+	    -font uifont
+	grid $top.buts.ok $top.buts.can
+	grid columnconfigure $top.buts 0 -weight 1 -uniform a
+	grid columnconfigure $top.buts 1 -weight 1 -uniform a
+	pack $top.buts -side bottom -fill x
+	trace add variable fontparam write chg_fontparam
+    } else {
+	raise $top
+	$top.c itemconf text -text $which
+    }
+    set i [lsearch -exact $fontlist $fontparam(family)]
+    if {$i >= 0} {
+	$top.f.fam selection set $i
+	$top.f.fam see $i
+    }
+}
+
+proc centertext {w} {
+    $w coords text [expr {[winfo width $w] / 2}] [expr {[winfo height $w] / 2}]
+}
+
+proc fontok {} {
+    global fontparam fontpref prefstop
+
+    set f $fontparam(font)
+    set fontpref($f) [list $fontparam(family) $fontparam(size)]
+    if {$fontparam(weight) eq "bold"} {
+	lappend fontpref($f) "bold"
+    }
+    if {$fontparam(slant) eq "italic"} {
+	lappend fontpref($f) "italic"
+    }
+    set w $prefstop.$f
+    $w conf -text $fontparam(family) -font $fontpref($f)
+	
+    fontcan
+}
+
+proc fontcan {} {
+    global fonttop fontparam
+
+    if {[info exists fonttop]} {
+	catch {destroy $fonttop}
+	catch {font delete sample}
+	unset fonttop
+	unset fontparam
+    }
+}
+
+proc selfontfam {} {
+    global fonttop fontparam
+
+    set i [$fonttop.f.fam curselection]
+    if {$i ne {}} {
+	set fontparam(family) [$fonttop.f.fam get $i]
+    }
+}
+
+proc chg_fontparam {v sub op} {
+    global fontparam
+
+    font config sample -$sub $fontparam($sub)
+}
+
 proc doprefs {} {
     global maxwidth maxgraphpct diffopts
     global oldprefs prefstop showneartags showlocalchanges
@@ -7958,6 +8082,13 @@ proc doprefs {} {
 	-command [list choosecolor selectbgcolor 0 $top.selbgsep background setselbg]
     grid x $top.selbgbut $top.selbgsep -sticky w
 
+    label $top.cfont -text "Fonts: press to choose"
+    $top.cfont configure -font uifont
+    grid $top.cfont - -sticky w -pady 10
+    mkfontdisp mainfont $top "Main font"
+    mkfontdisp textfont $top "Diff display font"
+    mkfontdisp uifont $top "User interface font"
+
     frame $top.buts
     button $top.buts.ok -text "OK" -command prefsok -default active
     $top.buts.ok configure -font uifont
@@ -8018,14 +8149,37 @@ proc prefscan {} {
     }
     catch {destroy $prefstop}
     unset prefstop
+    fontcan
 }
 
 proc prefsok {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
+    global fontpref mainfont textfont uifont
 
     catch {destroy $prefstop}
     unset prefstop
+    fontcan
+    set fontchanged 0
+    if {$mainfont ne $fontpref(mainfont)} {
+	set mainfont $fontpref(mainfont)
+	parsefont mainfont $mainfont
+	eval font configure mainfont [fontflags mainfont]
+	eval font configure mainfontbold [fontflags mainfont 1]
+	setcoords
+	set fontchanged 1
+    }
+    if {$textfont ne $fontpref(textfont)} {
+	set textfont $fontpref(textfont)
+	parsefont textfont $textfont
+	eval font configure textfont [fontflags textfont]
+	eval font configure textfontbold [fontflags textfont 1]
+    }
+    if {$uifont ne $fontpref(uifont)} {
+	set uifont $fontpref(uifont)
+	parsefont uifont $uifont
+	eval font configure uifont [fontflags uifont]
+    }
     settabs
     if {$showlocalchanges != $oldprefs(showlocalchanges)} {
 	if {$showlocalchanges} {
@@ -8034,7 +8188,7 @@ proc prefsok {} {
 	    dohidelocalchanges
 	}
     }
-    if {$maxwidth != $oldprefs(maxwidth)
+    if {$fontchanged || $maxwidth != $oldprefs(maxwidth)
 	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
 	redisplay
     } elseif {$showneartags != $oldprefs(showneartags)} {
