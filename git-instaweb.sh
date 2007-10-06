@@ -37,7 +37,9 @@ start_httpd () {
 	else
 		# many httpds are installed in /usr/sbin or /usr/local/sbin
 		# these days and those are not in most users $PATHs
-		for i in /usr/local/sbin /usr/sbin
+		# in addition, we may have generated a server script
+		# in $fqgitdir/gitweb.
+		for i in /usr/local/sbin /usr/sbin "$fqgitdir/gitweb"
 		do
 			if test -x "$i/$httpd_only"
 			then
