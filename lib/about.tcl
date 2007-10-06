@@ -9,6 +9,7 @@ proc do_about {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
+	pack [git_logo $w.git_logo] -side left -fill y -padx 10 -pady 10
 	label $w.header -text [mc "About %s" [appname]] \
 		-font font_uibold
 	pack $w.header -side top -fill x
