@@ -7,6 +7,7 @@
 #include "run-command.h"
 #include "exec_cmd.h"
 #include "utf8.h"
+#include "parse-options.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -19,51 +20,42 @@
  * Copyright (c) 2005 Junio C Hamano
  */
 
-static const char *revert_usage = "git-revert [--edit | --no-edit] [-n] <commit-ish>";
+static const char * const revert_usage[] = {
+	"git-revert [options] <commit-ish>",
+	NULL
+};
 
-static const char *cherry_pick_usage = "git-cherry-pick [--edit] [-n] [-r] [-x] <commit-ish>";
+static const char * const cherry_pick_usage[] = {
+	"git-cherry-pick [options] <commit-ish>",
+	NULL
+};
 
-static int edit;
-static int replay;
+static int edit, no_replay, no_commit, needed_deref;
 static enum { REVERT, CHERRY_PICK } action;
-static int no_commit;
 static struct commit *commit;
-static int needed_deref;
 
 static const char *me;
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
-static void parse_options(int argc, const char **argv)
+static void parse_args(int argc, const char **argv)
 {
-	const char *usage_str = action == REVERT ?
-		revert_usage : cherry_pick_usage;
+	const char * const * usage_str =
+		action == REVERT ?  revert_usage : cherry_pick_usage;
 	unsigned char sha1[20];
 	const char *arg;
-	int i;
+	int noop;
+	struct option options[] = {
+		OPT_BOOLEAN('n', "no-commit", &no_commit, "don't automatically commit"),
+		OPT_BOOLEAN('e', "edit", &edit, "edit the commit message"),
+		OPT_BOOLEAN('x', NULL, &no_replay, "append commit name when cherry-picking"),
+		OPT_BOOLEAN('r', NULL, &noop, "no-op (backward compatibility)"),
+		OPT_END(),
+	};
 
-	if (argc < 2)
-		usage(usage_str);
-
-	for (i = 1; i < argc; i++) {
-		arg = argv[i];
-		if (arg[0] != '-')
-			break;
-		if (!strcmp(arg, "-n") || !strcmp(arg, "--no-commit"))
-			no_commit = 1;
-		else if (!strcmp(arg, "-e") || !strcmp(arg, "--edit"))
-			edit = 1;
-		else if (!strcmp(arg, "--no-edit"))
-			edit = 0;
-		else if (!strcmp(arg, "-x") || !strcmp(arg, "--i-really-want-"
-				"to-expose-my-private-commit-object-name"))
-			replay = 0;
-		else if (strcmp(arg, "-r"))
-			usage(usage_str);
-	}
-	if (i != argc - 1)
-		usage(usage_str);
-	arg = argv[argc - 1];
+	if (parse_options(argc, argv, options, usage_str, 0) != 1)
+		usage_with_options(usage_str, options);
+	arg = argv[0];
 	if (get_sha1(arg, sha1))
 		die ("Cannot find '%s'", arg);
 	commit = (struct commit *)parse_object(sha1);
@@ -243,10 +235,10 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	git_config(git_default_config);
 	me = action == REVERT ? "revert" : "cherry-pick";
 	setenv(GIT_REFLOG_ACTION, me, 0);
-	parse_options(argc, argv);
+	parse_args(argc, argv);
 
 	/* this is copied from the shell script, but it's never triggered... */
-	if (action == REVERT && replay)
+	if (action == REVERT && !no_replay)
 		die("revert is incompatible with replay");
 
 	if (no_commit) {
@@ -310,7 +302,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		next = commit;
 		set_author_ident_env(message);
 		add_message_to_msg(message);
-		if (!replay) {
+		if (no_replay) {
 			add_to_msg("(cherry picked from commit ");
 			add_to_msg(sha1_to_hex(commit->object.sha1));
 			add_to_msg(")\n");
@@ -388,13 +380,14 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 {
 	if (isatty(0))
 		edit = 1;
+	no_replay = 1;
 	action = REVERT;
 	return revert_or_cherry_pick(argc, argv);
 }
 
 int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
 {
-	replay = 1;
+	no_replay = 0;
 	action = CHERRY_PICK;
 	return revert_or_cherry_pick(argc, argv);
 }
