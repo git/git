@@ -78,10 +78,6 @@ proc do_options {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text [mc "Options"] \
-		-font font_uibold
-	pack $w.header -side top -fill x
-
 	frame $w.buttons
 	button $w.buttons.restore -text [mc "Restore Defaults"] \
 		-default normal \
@@ -199,7 +195,13 @@ proc do_options {} {
 	bind $w <Visibility> "grab $w; focus $w.buttons.save"
 	bind $w <Key-Escape> "destroy $w"
 	bind $w <Key-Return> [list do_save_config $w]
-	wm title $w [append "[appname] ([reponame]): " [mc "Options"]]
+
+	if {[is_MacOSX]} {
+		set t [mc "Preferences"]
+	} else {
+		set t [mc "Options"]
+	}
+	wm title $w "[appname] ([reponame]): $t"
 	tkwait window $w
 }
 

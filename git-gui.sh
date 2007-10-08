@@ -2018,8 +2018,12 @@ if {[is_MacOSX]} {
 
 	.mbar.apple add command -label [mc "About %s" [appname]] \
 		-command do_about
-	.mbar.apple add command -label [mc "Options..."] \
-		-command do_options
+	.mbar.apple add separator
+	.mbar.apple add command \
+		-label [mc "Preferences..."] \
+		-command do_options \
+		-accelerator $M1T-,
+	bind . <$M1B-,> do_options
 } else {
 	# -- Edit Menu
 	#
