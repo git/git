@@ -1792,8 +1792,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 }
 if {[is_enabled transport]} {
 	.mbar add cascade -label [mc Merge] -menu .mbar.merge
-	.mbar add cascade -label [mc Fetch] -menu .mbar.fetch
-	.mbar add cascade -label [mc Push] -menu .mbar.push
+	.mbar add cascade -label [mc Remote] -menu .mbar.remote
 }
 . configure -menu .mbar
 
@@ -2000,13 +1999,14 @@ if {[is_enabled branch]} {
 # -- Transport Menu
 #
 if {[is_enabled transport]} {
-	menu .mbar.fetch
+	menu .mbar.remote
 
-	menu .mbar.push
-	.mbar.push add command -label [mc "Push..."] \
+	.mbar.remote add command \
+		-label [mc "Push..."] \
 		-command do_push_anywhere \
 		-accelerator $M1T-P
-	.mbar.push add command -label [mc "Delete..."] \
+	.mbar.remote add command \
+		-label [mc "Delete..."] \
 		-command remote_branch_delete::dialog
 }
 
@@ -2720,8 +2720,14 @@ user.email settings into your personal
 if {[is_enabled transport]} {
 	load_all_remotes
 
-	populate_fetch_menu
+	set n [.mbar.remote index end]
 	populate_push_menu
+	populate_fetch_menu
+	set n [expr {[.mbar.remote index end] - $n}]
+	if {$n > 0} {
+		.mbar.remote insert $n separator
+	}
+	unset n
 }
 
 if {[winfo exists $ui_comm]} {
