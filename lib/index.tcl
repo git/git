@@ -12,12 +12,7 @@ proc update_indexinfo {msg pathList after} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		0.0]
+	$::main_status start $msg [mc "files"]
 	set fd [git_write update-index -z --index-info]
 	fconfigure $fd \
 		-blocking 0 \
@@ -31,18 +26,18 @@ proc update_indexinfo {msg pathList after} {
 		$pathList \
 		$totalCnt \
 		$batch \
-		$msg \
 		$after \
 		]
 }
 
-proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
+proc write_update_indexinfo {fd pathList totalCnt batch after} {
 	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
 		unlock_index
+		$::main_status stop
 		uplevel #0 $after
 		return
 	}
@@ -68,12 +63,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 		display_file $path $new
 	}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		[expr {100.0 * $update_index_cp / $totalCnt}]]
+	$::main_status update $update_index_cp $totalCnt
 }
 
 proc update_index {msg pathList after} {
@@ -87,12 +77,7 @@ proc update_index {msg pathList after} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		0.0]
+	$::main_status start $msg [mc "files"]
 	set fd [git_write update-index --add --remove -z --stdin]
 	fconfigure $fd \
 		-blocking 0 \
@@ -106,18 +91,18 @@ proc update_index {msg pathList after} {
 		$pathList \
 		$totalCnt \
 		$batch \
-		$msg \
 		$after \
 		]
 }
 
-proc write_update_index {fd pathList totalCnt batch msg after} {
+proc write_update_index {fd pathList totalCnt batch after} {
 	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
 		unlock_index
+		$::main_status stop
 		uplevel #0 $after
 		return
 	}
@@ -147,12 +132,7 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		display_file $path $new
 	}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		[expr {100.0 * $update_index_cp / $totalCnt}]]
+	$::main_status update $update_index_cp $totalCnt
 }
 
 proc checkout_index {msg pathList after} {
@@ -166,12 +146,7 @@ proc checkout_index {msg pathList after} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		0.0]
+	$::main_status start $msg [mc "files"]
 	set fd [git_write checkout-index \
 		--index \
 		--quiet \
@@ -191,18 +166,18 @@ proc checkout_index {msg pathList after} {
 		$pathList \
 		$totalCnt \
 		$batch \
-		$msg \
 		$after \
 		]
 }
 
-proc write_checkout_index {fd pathList totalCnt batch msg after} {
+proc write_checkout_index {fd pathList totalCnt batch after} {
 	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
 		unlock_index
+		$::main_status stop
 		uplevel #0 $after
 		return
 	}
@@ -222,12 +197,7 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 		}
 	}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		[expr {100.0 * $update_index_cp / $totalCnt}]]
+	$::main_status update $update_index_cp $totalCnt
 }
 
 proc unstage_helper {txt paths} {
