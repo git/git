@@ -49,6 +49,11 @@ struct ref *alloc_ref(unsigned namelen);
  */
 void free_refs(struct ref *ref);
 
+/*
+ * Removes and frees any duplicate refs in the map.
+ */
+void ref_remove_duplicates(struct ref *ref_map);
+
 struct refspec *parse_ref_spec(int nr_refspec, const char **refspec);
 
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,

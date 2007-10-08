@@ -112,6 +112,7 @@ static struct ref *get_ref_map(struct transport *transport,
 			ref_map->merge = 1;
 		}
 	}
+	ref_remove_duplicates(ref_map);
 
 	return ref_map;
 }
