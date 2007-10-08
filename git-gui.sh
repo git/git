@@ -205,6 +205,7 @@ proc disable_option {option} {
 
 proc is_many_config {name} {
 	switch -glob -- $name {
+	gui.recentrepo -
 	remote.*.fetch -
 	remote.*.push
 		{return 1}
