@@ -301,8 +301,8 @@ This commit is referred to as a "merge commit", or sometimes just a
 [[def_push]]push::
 	Pushing a <<def_branch,branch>> means to get the branch's
 	<<def_head_ref,head ref>> from a remote <<def_repository,repository>>,
-	find out if it is an ancestor to the branch's local
-	head ref is a direct, and in that case, putting all
+	find out if it is a direct ancestor to the branch's local
+	head ref, and in that case, putting all
 	objects, which are <<def_reachable,reachable>> from the local
 	head ref, and which are missing from the remote
 	repository, into the remote
