@@ -926,7 +926,7 @@ file such that it contained the given content either before or after the
 commit.  You can find out with this:
 
 -------------------------------------------------
-$  git log --raw --abbrev=40 --pretty=oneline -- filename |
+$  git log --raw --abbrev=40 --pretty=oneline |
 	grep -B 1 `git hash-object filename`
 -------------------------------------------------
 
