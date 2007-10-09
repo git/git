@@ -40,7 +40,7 @@ If "git-merge-index" is called with multiple <file>s (or -a) then it
 processes them in turn only stopping if merge returns a non-zero exit
 code.
 
-Typically this is run with the a script calling git's imitation of
+Typically this is run with a script calling git's imitation of
 the merge command from the RCS package.
 
 A sample script called "git-merge-one-file" is included in the

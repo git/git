@@ -125,7 +125,7 @@ $ git diff topic...master  <3>
 +
 <1> Changes between the tips of the topic and the master branches.
 <2> Same as above.
-<3> Changes that occured on the master branch since when the topic
+<3> Changes that occurred on the master branch since when the topic
 branch was started off it.
 
 Limiting the diff output::

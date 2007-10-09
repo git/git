@@ -188,7 +188,7 @@ core.worktree::
 	Set the path to the working tree.  The value will not be
 	used in combination with repositories found automatically in
 	a .git directory (i.e. $GIT_DIR is not set).
-	This can be overriden by the GIT_WORK_TREE environment
+	This can be overridden by the GIT_WORK_TREE environment
 	variable and the '--work-tree' command line option.
 
 core.logAllRefUpdates::
@@ -607,7 +607,7 @@ merge.verbosity::
 	message if conflicts were detected. Level 1 outputs only
 	conflicts, 2 outputs conflicts and file changes.  Level 5 and
 	above outputs debugging information.  The default is level 2.
-	Can be overriden by 'GIT_MERGE_VERBOSITY' environment variable.
+	Can be overridden by 'GIT_MERGE_VERBOSITY' environment variable.
 
 merge.<driver>.name::
 	Defines a human readable name for a custom low-level

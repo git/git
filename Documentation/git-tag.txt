@@ -112,7 +112,7 @@ You really want to call the new version "X" too, 'even though'
 others have already seen the old one. So just use "git tag -f"
 again, as if you hadn't already published the old one.
 
-However, Git does *not* (and it should not)change tags behind
+However, Git does *not* (and it should not) change tags behind
 users back. So if somebody already got the old tag, doing a "git
 pull" on your tree shouldn't just make them overwrite the old
 one.

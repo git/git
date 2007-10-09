@@ -1495,7 +1495,7 @@ Ensuring good performance
 -------------------------
 
 On large repositories, git depends on compression to keep the history
-information from taking up to much space on disk or in memory.
+information from taking up too much space on disk or in memory.
 
 This compression is not performed automatically.  Therefore you
 should occasionally run gitlink:git-gc[1]:
@@ -1920,7 +1920,7 @@ As with git-fetch, git-push will complain if this does not result in
 a <<fast-forwards,fast forward>>.  Normally this is a sign of
 something wrong.  However, if you are sure you know what you're
 doing, you may force git-push to perform the update anyway by
-proceeding the branch name by a plus sign:
+preceding the branch name by a plus sign:
 
 -------------------------------------------------
 $ git push ssh://yourserver.com/~you/proj.git +master
@@ -2040,7 +2040,7 @@ $ git branch --track test origin/master
 $ git branch --track release origin/master
 -------------------------------------------------
 
-These can be easily kept up to date using gitlink:git-pull[1]
+These can be easily kept up to date using gitlink:git-pull[1].
 
 -------------------------------------------------
 $ git checkout test && git pull
@@ -2132,7 +2132,7 @@ changes are in a specific branch, use:
 $ git log linux..branchname | git-shortlog
 -------------------------------------------------
 
-To see whether it has already been merged into the test or release branches
+To see whether it has already been merged into the test or release branches,
 use:
 
 -------------------------------------------------
@@ -2145,12 +2145,12 @@ or
 $ git log release..branchname
 -------------------------------------------------
 
-(If this branch has not yet been merged you will see some log entries.
+(If this branch has not yet been merged, you will see some log entries.
 If it has been merged, then there will be no output.)
 
 Once a patch completes the great cycle (moving from test to release,
 then pulled by Linus, and finally coming back into your local
-"origin/master" branch) the branch for this change is no longer needed.
+"origin/master" branch), the branch for this change is no longer needed.
 You detect this when the output from:
 
 -------------------------------------------------
@@ -2479,7 +2479,7 @@ $ git checkout -b mywork-new origin
 $ gitk origin..mywork &
 -------------------------------------------------
 
-And browse through the list of patches in the mywork branch using gitk,
+and browse through the list of patches in the mywork branch using gitk,
 applying them (possibly in a different order) to mywork-new using
 cherry-pick, and possibly modifying them as you go using commit --amend.
 The gitlink:git-gui[1] command may also help as it allows you to
@@ -2739,7 +2739,7 @@ others:
 
 - Git can quickly determine whether two objects are identical or not,
   just by comparing names.
-- Since object names are computed the same way in ever repository, the
+- Since object names are computed the same way in every repository, the
   same content stored in two repositories will always be stored under
   the same name.
 - Git can detect errors when it reads an object, by checking that the
@@ -3425,9 +3425,10 @@ The Workflow
 ------------
 
 High-level operations such as gitlink:git-commit[1],
-gitlink:git-checkout[1] and git-reset[1] work by moving data between the
-working tree, the index, and the object database.  Git provides
-low-level operations which perform each of these steps individually.
+gitlink:git-checkout[1] and gitlink:git-reset[1] work by moving data
+between the working tree, the index, and the object database.  Git
+provides low-level operations which perform each of these steps
+individually.
 
 Generally, all "git" operations work on the index file. Some operations
 work *purely* on the index file (showing the current state of the
@@ -3704,7 +3705,7 @@ Merging multiple trees, continued
 ---------------------------------
 
 Sadly, many merges aren't trivial. If there are files that have
-been added.moved or removed, or if both branches have modified the
+been added, moved or removed, or if both branches have modified the
 same file, you will be left with an index tree that contains "merge
 entries" in it. Such an index tree can 'NOT' be written out to a tree
 object, and you will have to resolve any such merge clashes using
@@ -4061,7 +4062,7 @@ $ git branch new     # create branch "new" starting at current HEAD
 $ git branch -d new  # delete branch "new"
 -----------------------------------------------
 
-Instead of basing new branch on current HEAD (the default), use:
+Instead of basing a new branch on current HEAD (the default), use:
 
 -----------------------------------------------
 $ git branch new test    # branch named "test"

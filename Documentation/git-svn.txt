@@ -404,7 +404,7 @@ section because they affect the 'git-svn-id:' metadata line.
 BASIC EXAMPLES
 --------------
 
-Tracking and contributing to a the trunk of a Subversion-managed project:
+Tracking and contributing to the trunk of a Subversion-managed project:
 
 ------------------------------------------------------------------------
 # Clone a repo (like git clone):
