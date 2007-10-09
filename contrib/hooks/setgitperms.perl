@@ -8,13 +8,14 @@
 # To save permissions/ownership data, place this script in your .git/hooks
 # directory and enable a `pre-commit` hook with the following lines:
 #      #!/bin/sh
-#     . git-sh-setup
+#     SUBDIRECTORY_OK=1 . git-sh-setup
 #     $GIT_DIR/hooks/setgitperms.perl -r
 #
 # To restore permissions/ownership data, place this script in your .git/hooks
-# directory and enable a `post-merge` hook with the following lines:
+# directory and enable a `post-merge` and `post-checkout` hook with the
+# following lines:
 #      #!/bin/sh
-#     . git-sh-setup
+#     SUBDIRECTORY_OK=1 . git-sh-setup
 #     $GIT_DIR/hooks/setgitperms.perl -w
 #
 use strict;
