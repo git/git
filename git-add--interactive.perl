@@ -360,7 +360,9 @@ sub hunk_splittable {
 sub parse_hunk_header {
 	my ($line) = @_;
 	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
-	    $line =~ /^@@ -(\d+)(?:,(\d+)) \+(\d+)(?:,(\d+)) @@/;
+	    $line =~ /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
+	$o_cnt = 1 unless defined $o_cnt;
+	$n_cnt = 1 unless defined $n_cnt;
 	return ($o_ofs, $o_cnt, $n_ofs, $n_cnt);
 }
 
@@ -705,9 +707,6 @@ sub patch_update_cmd {
 		    parse_hunk_header($text->[0]);
 
 		if (!$_->{USE}) {
-			if (!defined $o_cnt) { $o_cnt = 1; }
-			if (!defined $n_cnt) { $n_cnt = 1; }
-
 			# We would have added ($n_cnt - $o_cnt) lines
 			# to the postimage if we were to use this hunk,
 			# but we didn't.  So the line number that the next
@@ -719,10 +718,10 @@ sub patch_update_cmd {
 			if ($n_lofs) {
 				$n_ofs += $n_lofs;
 				$text->[0] = ("@@ -$o_ofs" .
-					      ((defined $o_cnt)
+					      (($o_cnt != 1)
 					       ? ",$o_cnt" : '') .
 					      " +$n_ofs" .
-					      ((defined $n_cnt)
+					      (($n_cnt != 1)
 					       ? ",$n_cnt" : '') .
 					      " @@\n");
 			}
