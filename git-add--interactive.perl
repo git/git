@@ -374,9 +374,8 @@ sub split_hunk {
 	# it can be split, but we would need to take care of
 	# overlaps later.
 
-	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) = parse_hunk_header($text->[0]);
+	my ($o_ofs, undef, $n_ofs) = parse_hunk_header($text->[0]);
 	my $hunk_start = 1;
-	my $next_hunk_start;
 
       OUTER:
 	while (1) {
@@ -443,8 +442,8 @@ sub split_hunk {
 	for my $hunk (@split) {
 		$o_ofs = $hunk->{OLD};
 		$n_ofs = $hunk->{NEW};
-		$o_cnt = $hunk->{OCNT};
-		$n_cnt = $hunk->{NCNT};
+		my $o_cnt = $hunk->{OCNT};
+		my $n_cnt = $hunk->{NCNT};
 
 		my $head = ("@@ -$o_ofs" .
 			    (($o_cnt != 1) ? ",$o_cnt" : '') .
@@ -459,7 +458,7 @@ sub split_hunk {
 sub find_last_o_ctx {
 	my ($it) = @_;
 	my $text = $it->{TEXT};
-	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) = parse_hunk_header($text->[0]);
+	my ($o_ofs, $o_cnt) = parse_hunk_header($text->[0]);
 	my $i = @{$text};
 	my $last_o_ctx = $o_ofs + $o_cnt;
 	while (0 < --$i) {
@@ -531,8 +530,7 @@ sub coalesce_overlapping_hunks {
 
 	for (grep { $_->{USE} } @in) {
 		my $text = $_->{TEXT};
-		my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
-		    parse_hunk_header($text->[0]);
+		my ($o_ofs) = parse_hunk_header($text->[0]);
 		if (defined $last_o_ctx &&
 		    $o_ofs <= $last_o_ctx) {
 			merge_hunk($out[-1], $_);
@@ -699,7 +697,7 @@ sub patch_update_cmd {
 
 	@hunk = coalesce_overlapping_hunks(@hunk);
 
-	my ($o_lofs, $n_lofs) = (0, 0);
+	my $n_lofs = 0;
 	my @result = ();
 	for (@hunk) {
 		my $text = $_->{TEXT};
@@ -805,8 +803,6 @@ sub main_loop {
 		}
 	}
 }
-
-my @z;
 
 refresh();
 status_cmd();
