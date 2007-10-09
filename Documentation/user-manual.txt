@@ -1782,7 +1782,7 @@ $ git clone /path/to/repository
 $ git pull /path/to/other/repository
 -------------------------------------------------
 
-or an ssh url:
+or an ssh URL:
 
 -------------------------------------------------
 $ git clone ssh://yourhost/~you/repository
@@ -1843,7 +1843,7 @@ Exporting a git repository via the git protocol
 This is the preferred method.
 
 If someone else administers the server, they should tell you what
-directory to put the repository in, and what git:// url it will appear
+directory to put the repository in, and what git:// URL it will appear
 at.  You can then skip to the section
 "<<pushing-changes-to-a-public-repository,Pushing changes to a public
 repository>>", below.
@@ -1880,8 +1880,8 @@ $ chmod a+x hooks/post-update
 gitlink:git-update-server-info[1], and the documentation
 link:hooks.html[Hooks used by git].)
 
-Advertise the url of proj.git.  Anybody else should then be able to
-clone or pull from that url, for example with a command line like:
+Advertise the URL of proj.git.  Anybody else should then be able to
+clone or pull from that URL, for example with a command line like:
 
 -------------------------------------------------
 $ git clone http://yourserver.com/~you/proj.git
