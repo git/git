@@ -1651,6 +1651,7 @@ def printUsage(commands):
 commands = {
     "debug" : P4Debug,
     "submit" : P4Submit,
+    "commit" : P4Submit,
     "sync" : P4Sync,
     "rebase" : P4Rebase,
     "clone" : P4Clone,
