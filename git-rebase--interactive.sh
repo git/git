@@ -78,7 +78,7 @@ mark_action_done () {
 
 make_patch () {
 	parent_sha1=$(git rev-parse --verify "$1"^ 2> /dev/null)
-	git diff "$parent_sha1".."$1" > "$DOTEST"/patch
+	git diff-tree -p "$parent_sha1".."$1" > "$DOTEST"/patch
 }
 
 die_with_patch () {
@@ -302,7 +302,7 @@ do_next () {
 	git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
 	git symbolic-ref HEAD $HEADNAME && {
 		test ! -f "$DOTEST"/verbose ||
-			git diff --stat $(cat "$DOTEST"/head)..HEAD
+			git diff-tree --stat $(cat "$DOTEST"/head)..HEAD
 	} &&
 	rm -rf "$DOTEST" &&
 	warn "Successfully rebased and updated $HEADNAME."
