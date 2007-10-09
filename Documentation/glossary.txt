@@ -281,7 +281,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 [[def_pickaxe]]pickaxe::
 	The term <<def_pickaxe,pickaxe>> refers to an option to the diffcore
 	routines that help select changes that add or delete a given text
-	string. With the --pickaxe-all option, it can be used to view the full
+	string. With the `--pickaxe-all` option, it can be used to view the full
 	<<def_changeset,changeset>> that introduced or removed, say, a
 	particular line of text. See gitlink:git-diff[1].
 
