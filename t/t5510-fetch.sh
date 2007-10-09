@@ -67,6 +67,18 @@ test_expect_success "fetch test for-merge" '
 	cut -f -2 .git/FETCH_HEAD >actual &&
 	diff expected actual'
 
+test_expect_success 'fetch tags when there is no tags' '
+
+    cd "$D" &&
+
+    mkdir notags &&
+    cd notags &&
+    git init &&
+
+    git fetch -t ..
+
+'
+
 test_expect_success 'fetch following tags' '
 
 	cd "$D" &&
