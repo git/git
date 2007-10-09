@@ -8,7 +8,7 @@ test_description='commit and log output encodings'
 . ./test-lib.sh
 
 compare_with () {
-	git show -s $1 | sed -e '1,/^$/d' -e 's/^    //' -e '$d' >current &&
+	git show -s $1 | sed -e '1,/^$/d' -e 's/^    //' >current &&
 	git diff current "$2"
 }
 
