@@ -298,7 +298,12 @@ void mingw_execve(const char *cmd, const char **argv, const char **env)
 {
 	/* check if git_command is a shell script */
 	if (!try_shell_exec(cmd, argv, env)) {
-		int ret = spawnve(_P_WAIT, cmd, argv, env);
+		const char **qargv;
+		int n;
+		for (n = 0; argv[n];) n++;
+		qargv = xmalloc((n+1)*sizeof(char*));
+		quote_argv(qargv, argv);
+		int ret = spawnve(_P_WAIT, cmd, qargv, env);
 		if (ret != -1)
 			exit(ret);
 	}
