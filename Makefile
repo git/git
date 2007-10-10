@@ -126,6 +126,9 @@ ifeq ($(uname_S),Darwin)
 		GITGUI_MACOSXAPP := YesPlease
 	endif
 endif
+ifneq (,$(findstring MINGW,$(uname_S)))
+	NO_MSGFMT=1
+endif
 
 ifdef GITGUI_MACOSXAPP
 GITGUI_MAIN := git-gui.tcl
