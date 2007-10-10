@@ -54,84 +54,6 @@ proc save_config {} {
 	}
 }
 
-proc do_about {} {
-	global appvers copyright oguilib
-	global tcl_patchLevel tk_patchLevel
-
-	set w .about_dialog
-	toplevel $w
-	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-
-	label $w.header -text [mc "About %s" [appname]] \
-		-font font_uibold
-	pack $w.header -side top -fill x
-
-	frame $w.buttons
-	button $w.buttons.close -text {Close} \
-		-default active \
-		-command [list destroy $w]
-	pack $w.buttons.close -side right
-	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
-
-	label $w.desc \
-		-text "[mc "git-gui - a graphical user interface for Git."]\n$copyright" \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
-	pack $w.desc -side top -fill x -padx 5 -pady 5
-
-	set v {}
-	append v "git-gui version $appvers\n"
-	append v "[git version]\n"
-	append v "\n"
-	if {$tcl_patchLevel eq $tk_patchLevel} {
-		append v "Tcl/Tk version $tcl_patchLevel"
-	} else {
-		append v "Tcl version $tcl_patchLevel"
-		append v ", Tk version $tk_patchLevel"
-	}
-
-	set d {}
-	append d "git wrapper: $::_git\n"
-	append d "git exec dir: [gitexec]\n"
-	append d "git-gui lib: $oguilib"
-
-	label $w.vers \
-		-text $v \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
-	pack $w.vers -side top -fill x -padx 5 -pady 5
-
-	label $w.dirs \
-		-text $d \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
-	pack $w.dirs -side top -fill x -padx 5 -pady 5
-
-	menu $w.ctxm -tearoff 0
-	$w.ctxm add command \
-		-label {Copy} \
-		-command "
-		clipboard clear
-		clipboard append -format STRING -type STRING -- \[$w.vers cget -text\]
-	"
-
-	bind $w <Visibility> "grab $w; focus $w.buttons.close"
-	bind $w <Key-Escape> "destroy $w"
-	bind $w <Key-Return> "destroy $w"
-	bind_button3 $w.vers "tk_popup $w.ctxm %X %Y; grab $w; focus $w"
-	wm title $w "About [appname]"
-	tkwait window $w
-}
-
 proc do_options {} {
 	global repo_config global_config font_descs
 	global repo_config_new global_config_new
@@ -155,10 +77,6 @@ proc do_options {} {
 	set w .options_editor
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-
-	label $w.header -text [mc "Options"] \
-		-font font_uibold
-	pack $w.header -side top -fill x
 
 	frame $w.buttons
 	button $w.buttons.restore -text [mc "Restore Defaults"] \
@@ -277,7 +195,13 @@ proc do_options {} {
 	bind $w <Visibility> "grab $w; focus $w.buttons.save"
 	bind $w <Key-Escape> "destroy $w"
 	bind $w <Key-Return> [list do_save_config $w]
-	wm title $w [append "[appname] ([reponame]): " [mc "Options"]]
+
+	if {[is_MacOSX]} {
+		set t [mc "Preferences"]
+	} else {
+		set t [mc "Options"]
+	}
+	wm title $w "[appname] ([reponame]): $t"
 	tkwait window $w
 }
 

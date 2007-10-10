@@ -343,6 +343,9 @@ proc _which {what} {
 				$env(PATH)] {;}]
 			set _search_exe .exe
 		} elseif {[is_Windows]} {
+			set gitguidir [file dirname [info script]]
+			regsub -all ";" $gitguidir "\\;" gitguidir
+			set env(PATH) "$gitguidir;$env(PATH)"
 			set _search_path [split $env(PATH) {;}]
 			set _search_exe .exe
 		} else {
@@ -665,6 +668,7 @@ regsub -- {-dirty$} $_git_version {} _git_version
 regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
 regsub {\.rc[0-9]+$} $_git_version {} _git_version
 regsub {\.GIT$} $_git_version {} _git_version
+regsub {\.[a-zA-Z]+\.[0-9]+$} $_git_version {} _git_version
 
 if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
 	catch {wm withdraw .}
@@ -1791,8 +1795,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 }
 if {[is_enabled transport]} {
 	.mbar add cascade -label [mc Merge] -menu .mbar.merge
-	.mbar add cascade -label [mc Fetch] -menu .mbar.fetch
-	.mbar add cascade -label [mc Push] -menu .mbar.push
+	.mbar add cascade -label [mc Remote] -menu .mbar.remote
 }
 . configure -menu .mbar
 
@@ -1999,13 +2002,14 @@ if {[is_enabled branch]} {
 # -- Transport Menu
 #
 if {[is_enabled transport]} {
-	menu .mbar.fetch
+	menu .mbar.remote
 
-	menu .mbar.push
-	.mbar.push add command -label [mc "Push..."] \
+	.mbar.remote add command \
+		-label [mc "Push..."] \
 		-command do_push_anywhere \
 		-accelerator $M1T-P
-	.mbar.push add command -label [mc "Delete..."] \
+	.mbar.remote add command \
+		-label [mc "Delete..."] \
 		-command remote_branch_delete::dialog
 }
 
@@ -2017,8 +2021,12 @@ if {[is_MacOSX]} {
 
 	.mbar.apple add command -label [mc "About %s" [appname]] \
 		-command do_about
-	.mbar.apple add command -label [mc "Options..."] \
-		-command do_options
+	.mbar.apple add separator
+	.mbar.apple add command \
+		-label [mc "Preferences..."] \
+		-command do_options \
+		-accelerator $M1T-,
+	bind . <$M1B-,> do_options
 } else {
 	# -- Edit Menu
 	#
@@ -2208,7 +2216,7 @@ pack .vpane -anchor n -side top -fill both -expand 1
 # -- Index File List
 #
 frame .vpane.files.index -height 100 -width 200
-label .vpane.files.index.title -text [mc "Staged Changes (Will Be Committed)"] \
+label .vpane.files.index.title -text [mc "Staged Changes (Will Commit)"] \
 	-background lightgreen
 text $ui_index -background white -borderwidth 0 \
 	-width 20 -height 10 \
@@ -2228,7 +2236,7 @@ pack $ui_index -side left -fill both -expand 1
 # -- Working Directory File List
 #
 frame .vpane.files.workdir -height 100 -width 200
-label .vpane.files.workdir.title -text [mc "Unstaged Changes (Will Not Be Committed)"] \
+label .vpane.files.workdir.title -text [mc "Unstaged Changes"] \
 	-background lightsalmon
 text $ui_workdir -background white -borderwidth 0 \
 	-width 20 -height 10 \
@@ -2719,8 +2727,14 @@ user.email settings into your personal
 if {[is_enabled transport]} {
 	load_all_remotes
 
-	populate_fetch_menu
+	set n [.mbar.remote index end]
 	populate_push_menu
+	populate_fetch_menu
+	set n [expr {[.mbar.remote index end] - $n}]
+	if {$n > 0} {
+		.mbar.remote insert $n separator
+	}
+	unset n
 }
 
 if {[winfo exists $ui_comm]} {
