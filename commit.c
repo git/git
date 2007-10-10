@@ -441,17 +441,22 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 
 void clear_commit_marks(struct commit *commit, unsigned int mark)
 {
-	struct commit_list *parents;
+	while (commit) {
+		struct commit_list *parents;
 
-	commit->object.flags &= ~mark;
-	parents = commit->parents;
-	while (parents) {
-		struct commit *parent = parents->item;
+		if (!(mark & commit->object.flags))
+			return;
 
-		/* Have we already cleared this? */
-		if (mark & parent->object.flags)
-			clear_commit_marks(parent, mark);
-		parents = parents->next;
+		commit->object.flags &= ~mark;
+
+		parents = commit->parents;
+		if (!parents)
+			return;
+
+		while ((parents = parents->next))
+			clear_commit_marks(parents->item, mark);
+
+		commit = commit->parents->item;
 	}
 }
 
