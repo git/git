@@ -128,6 +128,7 @@ ifeq ($(uname_S),Darwin)
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MSGFMT=1
+	GITGUI_WINDOWS_WRAPPER := YesPlease
 endif
 
 ifdef GITGUI_MACOSXAPP
@@ -166,6 +167,13 @@ Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-VARS \
 		macosx/AppMain.tcl \
 		>'$@'+/Contents/Resources/Scripts/AppMain.tcl && \
 	mv '$@'+ '$@'
+endif
+
+ifdef GITGUI_WINDOWS_WRAPPER
+GITGUI_MAIN := git-gui.tcl
+
+git-gui: windows/git-gui.sh
+	cp $< $@
 endif
 
 $(GITGUI_MAIN): git-gui.sh GIT-VERSION-FILE GIT-GUI-VARS
@@ -233,12 +241,18 @@ GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
 ifdef GITGUI_MACOSXAPP
 all:: git-gui Git\ Gui.app
 endif
+ifdef GITGUI_WINDOWS_WRAPPER
+all:: git-gui
+endif
 all:: $(GITGUI_MAIN) lib/tclIndex $(ALL_MSGFILES)
 
 install: all
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(gitexecdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(INSTALL_X0)git-gui $(INSTALL_X1) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(QUIET)$(foreach p,$(GITGUI_BUILT_INS), $(INSTALL_L0)'$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' $(INSTALL_L1)'$(DESTDIR_SQ)$(gitexecdir_SQ)/git-gui' $(INSTALL_L2)'$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' $(INSTALL_L3) &&) true
+ifdef GITGUI_WINDOWS_WRAPPER
+	$(QUIET)$(INSTALL_R0)git-gui.tcl $(INSTALL_R1) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+endif
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(INSTALL_R0)lib/tclIndex $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)'
 	$(QUIET)$(INSTALL_R0)lib/git-gui.ico $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)'
@@ -254,6 +268,9 @@ uninstall:
 	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(gitexecdir_SQ)'/git-gui $(REMOVE_F1)
 	$(QUIET)$(foreach p,$(GITGUI_BUILT_INS), $(REMOVE_F0)'$(DESTDIR_SQ)$(gitexecdir_SQ)'/$p $(REMOVE_F1) &&) true
+ifdef GITGUI_WINDOWS_WRAPPER
+	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(gitexecdir_SQ)'/git-gui.tcl $(REMOVE_F1)
+endif
 	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(libdir_SQ)'
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/tclIndex $(REMOVE_F1)
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/git-gui.ico $(REMOVE_F1)
@@ -278,6 +295,9 @@ clean::
 	$(RM_RF) GIT-VERSION-FILE GIT-GUI-VARS
 ifdef GITGUI_MACOSXAPP
 	$(RM_RF) 'Git Gui.app'* git-gui
+endif
+ifdef GITGUI_WINDOWS_WRAPPER
+	$(RM_RF) git-gui
 endif
 
 .PHONY: all install uninstall dist-version clean
