@@ -8,7 +8,7 @@ git-send-pack - Push objects over git protocol to another repository
 
 SYNOPSIS
 --------
-'git-send-pack' [--all] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]
+'git-send-pack' [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]
 
 DESCRIPTION
 -----------
@@ -33,6 +33,9 @@ OPTIONS
 \--all::
 	Instead of explicitly specifying which refs to update,
 	update all heads that locally exist.
+
+\--dry-run::
+	Do everything except actually send the updates.
 
 \--force::
 	Usually, the command refuses to update a remote ref that
