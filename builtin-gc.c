@@ -143,8 +143,6 @@ static int too_many_packs(void)
 
 static int need_to_gc(void)
 {
-	int ac = 0;
-
 	/*
 	 * Setting gc.auto and gc.autopacklimit to 0 or negative can
 	 * disable the automatic gc.
@@ -158,14 +156,10 @@ static int need_to_gc(void)
 	 * we run "repack -A -d -l".  Otherwise we tell the caller
 	 * there is no need.
 	 */
-	argv_repack[ac++] = "repack";
 	if (too_many_packs())
-		argv_repack[ac++] = "-A";
+		append_option(argv_repack, "-A", MAX_ADD);
 	else if (!too_many_loose_objects())
 		return 0;
-	argv_repack[ac++] = "-d";
-	argv_repack[ac++] = "-l";
-	argv_repack[ac++] = NULL;
 	return 1;
 }
 
