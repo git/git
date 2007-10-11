@@ -1,0 +1,1895 @@
+# Hungarian translations for git-gui-i package.
+# Copyright (C) 2007 THE git-gui-i'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the git-gui-i package.
+# Miklos Vajna <vmiklos@frugalware.org>, 2007.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: git-gui-i 18n\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-10-10 04:04-0400\n"
+"PO-Revision-Date: 2007-07-27 13:15+0200\n"
+"Last-Translator: Miklos Vajna <vmiklos@frugalware.org>\n"
+"Language-Team: Hungarian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: git-gui.sh:41 git-gui.sh:634 git-gui.sh:648 git-gui.sh:661 git-gui.sh:744
+#: git-gui.sh:763
+msgid "git-gui: fatal error"
+msgstr ""
+
+#: git-gui.sh:595
+#, fuzzy, tcl-format
+msgid "Invalid font specified in %s:"
+msgstr "Érvénytelen font lett megadva a grafikus felületben.%s:"
+
+#: git-gui.sh:620
+msgid "Main Font"
+msgstr "Fő betűtípus"
+
+#: git-gui.sh:621
+msgid "Diff/Console Font"
+msgstr "Diff/konzol betűtípus"
+
+#: git-gui.sh:635
+msgid "Cannot find git in PATH."
+msgstr "A git nem található a PATH-ban."
+
+#: git-gui.sh:662
+msgid "Cannot parse Git version string:"
+msgstr "Nem értelmezhető a Git verzió sztring:"
+
+#: git-gui.sh:680
+#, tcl-format
+msgid ""
+"Git version cannot be determined.\n"
+"\n"
+"%s claims it is version '%s'.\n"
+"\n"
+"%s requires at least Git 1.5.0 or later.\n"
+"\n"
+"Assume '%s' is version 1.5.0?\n"
+msgstr ""
+"Nem állípítható meg a Git verziója.\n"
+"\n"
+"A(z) %s szerint a verzió '%s'.\n"
+"\n"
+"A(z) %s a Git 1.5.0 vagy későbbi verzióját igényli.\n"
+"\n"
+"Feltételezhetjük, hogy a(z) '%s' verziója legalább 1.5.0?\n"
+
+#: git-gui.sh:853
+msgid "Git directory not found:"
+msgstr "A Git könyvtár nem található:"
+
+#: git-gui.sh:860
+#, fuzzy
+msgid "Cannot move to top of working directory:"
+msgstr "Nem használható vicces .git könyvtár:"
+
+#: git-gui.sh:867
+msgid "Cannot use funny .git directory:"
+msgstr "Nem használható vicces .git könyvtár:"
+
+#: git-gui.sh:872
+msgid "No working directory"
+msgstr "Nincs munkakönyvtár"
+
+#: git-gui.sh:1019
+msgid "Refreshing file status..."
+msgstr "A fájlok státuszának frissítése..."
+
+#: git-gui.sh:1084
+msgid "Scanning for modified files ..."
+msgstr "Módosított fájlok keresése ..."
+
+#: git-gui.sh:1259 lib/browser.tcl:245
+msgid "Ready."
+msgstr "Kész."
+
+#: git-gui.sh:1525
+msgid "Unmodified"
+msgstr "Nem módosított"
+
+#: git-gui.sh:1527
+msgid "Modified, not staged"
+msgstr "Módosított, de nem kiválasztott"
+
+#: git-gui.sh:1528 git-gui.sh:1533
+msgid "Staged for commit"
+msgstr "Kiválasztva commitolásra"
+
+#: git-gui.sh:1529 git-gui.sh:1534
+msgid "Portions staged for commit"
+msgstr "Részek kiválasztva commitolásra"
+
+#: git-gui.sh:1530 git-gui.sh:1535
+msgid "Staged for commit, missing"
+msgstr "Kiválasztva commitolásra, hiányzó"
+
+#: git-gui.sh:1532
+msgid "Untracked, not staged"
+msgstr "Nem követett, nem kiválasztott"
+
+#: git-gui.sh:1537
+msgid "Missing"
+msgstr "Hiányzó"
+
+#: git-gui.sh:1538
+msgid "Staged for removal"
+msgstr "Kiválasztva eltávolításra"
+
+#: git-gui.sh:1539
+msgid "Staged for removal, still present"
+msgstr "Kiválasztva eltávolításra, jelenleg is elérhető"
+
+#: git-gui.sh:1541 git-gui.sh:1542 git-gui.sh:1543 git-gui.sh:1544
+msgid "Requires merge resolution"
+msgstr "Merge feloldás szükséges"
+
+#: git-gui.sh:1579
+msgid "Starting gitk... please wait..."
+msgstr "A gitk indítása... várjunk..."
+
+#: git-gui.sh:1588
+#, tcl-format
+msgid ""
+"Unable to start gitk:\n"
+"\n"
+"%s does not exist"
+msgstr ""
+"A gitk indítása sikertelen:\n"
+"\n"
+"A(z) %s nem létezik"
+
+#: git-gui.sh:1788 lib/choose_repository.tcl:32
+msgid "Repository"
+msgstr "Repó"
+
+#: git-gui.sh:1789
+msgid "Edit"
+msgstr "Szerkesztés"
+
+#: git-gui.sh:1791 lib/choose_rev.tcl:560
+msgid "Branch"
+msgstr "Branch"
+
+#: git-gui.sh:1794 lib/choose_rev.tcl:547
+#, fuzzy
+msgid "Commit@@noun"
+msgstr "Commit"
+
+#: git-gui.sh:1797 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
+msgid "Merge"
+msgstr "Merge"
+
+#: git-gui.sh:1798 lib/choose_rev.tcl:556
+#, fuzzy
+msgid "Remote"
+msgstr "Távoli:"
+
+#: git-gui.sh:1807
+msgid "Browse Current Branch's Files"
+msgstr "A jelenlegi branch fájljainak böngészése"
+
+#: git-gui.sh:1811
+msgid "Browse Branch Files..."
+msgstr "A branch fájljainak böngészése..."
+
+#: git-gui.sh:1816
+msgid "Visualize Current Branch's History"
+msgstr "A jelenlegi branch történetének vizualizálása"
+
+#: git-gui.sh:1820
+msgid "Visualize All Branch History"
+msgstr "Az összes branch történetének vizualizálása"
+
+#: git-gui.sh:1827
+#, tcl-format
+msgid "Browse %s's Files"
+msgstr "A(z) %s branch fájljainak böngészése"
+
+#: git-gui.sh:1829
+#, tcl-format
+msgid "Visualize %s's History"
+msgstr "A(z) %s branch történetének vizualizálása"
+
+#: git-gui.sh:1834 lib/database.tcl:27 lib/database.tcl:67
+msgid "Database Statistics"
+msgstr "Adatbázis statisztikák"
+
+#: git-gui.sh:1837 lib/database.tcl:34
+msgid "Compress Database"
+msgstr "Adatbázis tömörítése"
+
+#: git-gui.sh:1840
+msgid "Verify Database"
+msgstr "Adatbázis ellenőrzése"
+
+#: git-gui.sh:1847 git-gui.sh:1851 git-gui.sh:1855 lib/shortcut.tcl:9
+#: lib/shortcut.tcl:45 lib/shortcut.tcl:84
+msgid "Create Desktop Icon"
+msgstr "Asztal ikon létrehozása"
+
+#: git-gui.sh:1860 lib/choose_repository.tcl:36 lib/choose_repository.tcl:95
+msgid "Quit"
+msgstr "Kilépés"
+
+#: git-gui.sh:1867
+msgid "Undo"
+msgstr "Visszavonás"
+
+#: git-gui.sh:1870
+msgid "Redo"
+msgstr "Mégis"
+
+#: git-gui.sh:1874 git-gui.sh:2366
+msgid "Cut"
+msgstr "Kivágás"
+
+#: git-gui.sh:1877 git-gui.sh:2369 git-gui.sh:2440 git-gui.sh:2512
+#: lib/console.tcl:67
+msgid "Copy"
+msgstr "Másolás"
+
+#: git-gui.sh:1880 git-gui.sh:2372
+msgid "Paste"
+msgstr "Beillesztés"
+
+#: git-gui.sh:1883 git-gui.sh:2375 lib/branch_delete.tcl:26
+#: lib/remote_branch_delete.tcl:38
+msgid "Delete"
+msgstr "Törlés"
+
+#: git-gui.sh:1887 git-gui.sh:2379 git-gui.sh:2516 lib/console.tcl:69
+msgid "Select All"
+msgstr "Mindent kiválaszt"
+
+#: git-gui.sh:1896
+msgid "Create..."
+msgstr "Létrehozás..."
+
+#: git-gui.sh:1902
+msgid "Checkout..."
+msgstr "Checkout..."
+
+#: git-gui.sh:1908
+msgid "Rename..."
+msgstr "Átnevezés..."
+
+#: git-gui.sh:1913 git-gui.sh:2012
+msgid "Delete..."
+msgstr "Törlés..."
+
+#: git-gui.sh:1918
+msgid "Reset..."
+msgstr "Visszaállítás..."
+
+#: git-gui.sh:1930 git-gui.sh:2313
+msgid "New Commit"
+msgstr "Új commit"
+
+#: git-gui.sh:1938 git-gui.sh:2320
+msgid "Amend Last Commit"
+msgstr "Utolsó commit javítása"
+
+#: git-gui.sh:1947 git-gui.sh:2280 lib/remote_branch_delete.tcl:99
+msgid "Rescan"
+msgstr "Keresés újra"
+
+#: git-gui.sh:1953
+msgid "Stage To Commit"
+msgstr "Kiválasztás commitolásra"
+
+#: git-gui.sh:1958
+msgid "Stage Changed Files To Commit"
+msgstr "Módosított fájlok kiválasztása commitolásra"
+
+#: git-gui.sh:1964
+msgid "Unstage From Commit"
+msgstr "Commitba való kiválasztás visszavonása"
+
+#: git-gui.sh:1969 lib/index.tcl:352
+msgid "Revert Changes"
+msgstr "Változtatások visszaállítása"
+
+#: git-gui.sh:1976 git-gui.sh:2292 git-gui.sh:2390
+msgid "Sign Off"
+msgstr "Aláír"
+
+#: git-gui.sh:1980 git-gui.sh:2296
+#, fuzzy
+msgid "Commit@@verb"
+msgstr "Commit"
+
+#: git-gui.sh:1991
+msgid "Local Merge..."
+msgstr "Helyi merge..."
+
+#: git-gui.sh:1996
+msgid "Abort Merge..."
+msgstr "Merge megszakítása..."
+
+#: git-gui.sh:2008
+msgid "Push..."
+msgstr "Push..."
+
+#: git-gui.sh:2019 lib/choose_repository.tcl:41
+msgid "Apple"
+msgstr "Apple"
+
+#: git-gui.sh:2022 git-gui.sh:2044 lib/about.tcl:13
+#: lib/choose_repository.tcl:44 lib/choose_repository.tcl:50
+#, tcl-format
+msgid "About %s"
+msgstr "Névjegy: %s"
+
+#: git-gui.sh:2026
+msgid "Preferences..."
+msgstr ""
+
+#: git-gui.sh:2034 git-gui.sh:2558
+msgid "Options..."
+msgstr "Opciók..."
+
+#: git-gui.sh:2040 lib/choose_repository.tcl:47
+msgid "Help"
+msgstr "Segítség"
+
+#: git-gui.sh:2081
+msgid "Online Documentation"
+msgstr "Online dokumentáció"
+
+#: git-gui.sh:2165
+#, tcl-format
+msgid "fatal: cannot stat path %s: No such file or directory"
+msgstr ""
+
+#: git-gui.sh:2198
+msgid "Current Branch:"
+msgstr "Jelenlegi branch:"
+
+#: git-gui.sh:2219
+#, fuzzy
+msgid "Staged Changes (Will Commit)"
+msgstr "Kiválasztott változtatások (commitolva lesz)"
+
+#: git-gui.sh:2239
+#, fuzzy
+msgid "Unstaged Changes"
+msgstr "Változtatások kiválasztása"
+
+#: git-gui.sh:2286
+msgid "Stage Changed"
+msgstr "Változtatások kiválasztása"
+
+#: git-gui.sh:2302 lib/transport.tcl:93 lib/transport.tcl:182
+msgid "Push"
+msgstr "Push"
+
+#: git-gui.sh:2332
+msgid "Initial Commit Message:"
+msgstr "Kezdeti commit üzenet:"
+
+#: git-gui.sh:2333
+msgid "Amended Commit Message:"
+msgstr "Javító commit üzenet:"
+
+#: git-gui.sh:2334
+msgid "Amended Initial Commit Message:"
+msgstr "Kezdeti javító commit üzenet:"
+
+#: git-gui.sh:2335
+msgid "Amended Merge Commit Message:"
+msgstr "Javító merge commit üzenet:"
+
+#: git-gui.sh:2336
+msgid "Merge Commit Message:"
+msgstr "Merge commit üzenet:"
+
+#: git-gui.sh:2337
+msgid "Commit Message:"
+msgstr "Commit üzenet:"
+
+#: git-gui.sh:2382 git-gui.sh:2520 lib/console.tcl:71
+msgid "Copy All"
+msgstr "Összes másolása"
+
+#: git-gui.sh:2406 lib/blame.tcl:104
+msgid "File:"
+msgstr "Fájl:"
+
+#: git-gui.sh:2508
+msgid "Refresh"
+msgstr "Frissítés"
+
+#: git-gui.sh:2529
+msgid "Apply/Reverse Hunk"
+msgstr "Hunk alkalmazása/visszaállítása"
+
+#: git-gui.sh:2535
+msgid "Decrease Font Size"
+msgstr "Font méret csökkentése"
+
+#: git-gui.sh:2539
+msgid "Increase Font Size"
+msgstr "Fönt méret növelése"
+
+#: git-gui.sh:2544
+msgid "Show Less Context"
+msgstr "Kevesebb környezet mutatása"
+
+#: git-gui.sh:2551
+msgid "Show More Context"
+msgstr "Több környezet mutatása"
+
+#: git-gui.sh:2565
+msgid "Unstage Hunk From Commit"
+msgstr "Hunk törlése commitból"
+
+#: git-gui.sh:2567
+msgid "Stage Hunk For Commit"
+msgstr "Hunk kiválasztása commitba"
+
+#: git-gui.sh:2586
+msgid "Initializing..."
+msgstr "Inicializálás..."
+
+#: git-gui.sh:2677
+#, tcl-format
+msgid ""
+"Possible environment issues exist.\n"
+"\n"
+"The following environment variables are probably\n"
+"going to be ignored by any Git subprocess run\n"
+"by %s:\n"
+"\n"
+msgstr ""
+
+#: git-gui.sh:2707
+msgid ""
+"\n"
+"This is due to a known issue with the\n"
+"Tcl binary distributed by Cygwin."
+msgstr ""
+
+#: git-gui.sh:2712
+#, tcl-format
+msgid ""
+"\n"
+"\n"
+"A good replacement for %s\n"
+"is placing values for the user.name and\n"
+"user.email settings into your personal\n"
+"~/.gitconfig file.\n"
+msgstr ""
+
+#: lib/about.tcl:25
+msgid "git-gui - a graphical user interface for Git."
+msgstr "git-gui - egy grafikus felület a Githez."
+
+#: lib/blame.tcl:77
+msgid "File Viewer"
+msgstr "Fájl néző"
+
+#: lib/blame.tcl:81
+msgid "Commit:"
+msgstr "Commit:"
+
+#: lib/blame.tcl:249
+msgid "Copy Commit"
+msgstr "Commit másolása"
+
+#: lib/blame.tcl:369
+#, tcl-format
+msgid "Reading %s..."
+msgstr "A(z) %s olvasása..."
+
+#: lib/blame.tcl:473
+msgid "Loading copy/move tracking annotations..."
+msgstr ""
+
+#: lib/blame.tcl:493
+msgid "lines annotated"
+msgstr ""
+
+#: lib/blame.tcl:674
+msgid "Loading original location annotations..."
+msgstr ""
+
+#: lib/blame.tcl:677
+msgid "Annotation complete."
+msgstr ""
+
+#: lib/blame.tcl:731
+#, fuzzy
+msgid "Loading annotation..."
+msgstr "A(z) %s betöltése..."
+
+#: lib/blame.tcl:787
+msgid "Author:"
+msgstr ""
+
+#: lib/blame.tcl:791
+#, fuzzy
+msgid "Committer:"
+msgstr "Commit:"
+
+#: lib/blame.tcl:796
+msgid "Original File:"
+msgstr ""
+
+#: lib/blame.tcl:910
+msgid "Originally By:"
+msgstr ""
+
+#: lib/blame.tcl:916
+#, fuzzy
+msgid "In File:"
+msgstr "Fájl:"
+
+#: lib/blame.tcl:921
+msgid "Copied Or Moved Here By:"
+msgstr ""
+
+#: lib/branch_checkout.tcl:14 lib/branch_checkout.tcl:19
+msgid "Checkout Branch"
+msgstr "Branch checkoutolása"
+
+#: lib/branch_checkout.tcl:23
+msgid "Checkout"
+msgstr "Checkout"
+
+#: lib/branch_checkout.tcl:27 lib/branch_create.tcl:35
+#: lib/branch_delete.tcl:32 lib/branch_rename.tcl:30 lib/browser.tcl:281
+#: lib/checkout_op.tcl:522 lib/choose_font.tcl:43 lib/merge.tcl:172
+#: lib/option.tcl:90 lib/remote_branch_delete.tcl:42 lib/transport.tcl:97
+msgid "Cancel"
+msgstr "Mégsem"
+
+#: lib/branch_checkout.tcl:32 lib/browser.tcl:286
+msgid "Revision"
+msgstr "Revízió"
+
+#: lib/branch_checkout.tcl:36 lib/branch_create.tcl:69 lib/option.tcl:202
+msgid "Options"
+msgstr "Opciók"
+
+#: lib/branch_checkout.tcl:39 lib/branch_create.tcl:92
+msgid "Fetch Tracking Branch"
+msgstr "Követő branch letöltése"
+
+#: lib/branch_checkout.tcl:44
+msgid "Detach From Local Branch"
+msgstr "Helyi branch leválasztása"
+
+#: lib/branch_create.tcl:22
+msgid "Create Branch"
+msgstr "Branch létrehozása"
+
+#: lib/branch_create.tcl:27
+msgid "Create New Branch"
+msgstr "Új branch létrehozása"
+
+#: lib/branch_create.tcl:31 lib/choose_repository.tcl:199
+msgid "Create"
+msgstr "Létrehozás"
+
+#: lib/branch_create.tcl:40
+msgid "Branch Name"
+msgstr "Branch neve"
+
+#: lib/branch_create.tcl:43
+msgid "Name:"
+msgstr "Név:"
+
+#: lib/branch_create.tcl:58
+msgid "Match Tracking Branch Name"
+msgstr "Egyeztetendő követési branch név"
+
+#: lib/branch_create.tcl:66
+msgid "Starting Revision"
+msgstr "A következő revíziótól"
+
+#: lib/branch_create.tcl:72
+msgid "Update Existing Branch:"
+msgstr "Létező branch frissítése"
+
+#: lib/branch_create.tcl:75
+msgid "No"
+msgstr "Nem"
+
+#: lib/branch_create.tcl:80
+msgid "Fast Forward Only"
+msgstr "Csak fast forward"
+
+#: lib/branch_create.tcl:85 lib/checkout_op.tcl:514
+msgid "Reset"
+msgstr "Visszaállítás"
+
+#: lib/branch_create.tcl:97
+msgid "Checkout After Creation"
+msgstr "Checkout létrehozás után"
+
+#: lib/branch_create.tcl:131
+msgid "Please select a tracking branch."
+msgstr "Válasszunk ki egy követő branchet."
+
+#: lib/branch_create.tcl:140
+#, tcl-format
+msgid "Tracking branch %s is not a branch in the remote repository."
+msgstr "A(z) %s követő branch nem branch a távoli repóban."
+
+#: lib/branch_create.tcl:153 lib/branch_rename.tcl:86
+msgid "Please supply a branch name."
+msgstr "Adjunk megy egy branch nevet."
+
+#: lib/branch_create.tcl:164 lib/branch_rename.tcl:106
+#, tcl-format
+msgid "'%s' is not an acceptable branch name."
+msgstr "A(z) '%s' nem egy elfogadható branch név."
+
+#: lib/branch_delete.tcl:15
+msgid "Delete Branch"
+msgstr "Branch törlése"
+
+#: lib/branch_delete.tcl:20
+msgid "Delete Local Branch"
+msgstr "Helyi branch törlése"
+
+#: lib/branch_delete.tcl:37
+msgid "Local Branches"
+msgstr "Helyi branchek"
+
+#: lib/branch_delete.tcl:52
+msgid "Delete Only If Merged Into"
+msgstr "Csak már merge-ölt törlése"
+
+#: lib/branch_delete.tcl:54
+msgid "Always (Do not perform merge test.)"
+msgstr "Mindig (Ne legyen merge teszt.)"
+
+#: lib/branch_delete.tcl:103
+#, tcl-format
+msgid "The following branches are not completely merged into %s:"
+msgstr "A következő branchek nem teljesen lettek merge-ölve ebbe: %s:"
+
+#: lib/branch_delete.tcl:115
+msgid ""
+"Recovering deleted branches is difficult. \n"
+"\n"
+" Delete the selected branches?"
+msgstr ""
+"A törölt branchek visszaállítása bonyolult. \n"
+"\n"
+" Biztosan törli a kiválasztott brancheket?"
+
+#: lib/branch_delete.tcl:141
+#, tcl-format
+msgid ""
+"Failed to delete branches:\n"
+"%s"
+msgstr ""
+"Nem sikerült törölni a következő brancheket:\n"
+"%s"
+
+#: lib/branch_rename.tcl:14 lib/branch_rename.tcl:22
+msgid "Rename Branch"
+msgstr "Branch átnevezése"
+
+#: lib/branch_rename.tcl:26
+msgid "Rename"
+msgstr "Átnevezés"
+
+#: lib/branch_rename.tcl:36
+msgid "Branch:"
+msgstr "Branch:"
+
+#: lib/branch_rename.tcl:39
+msgid "New Name:"
+msgstr "Új név:"
+
+#: lib/branch_rename.tcl:75
+msgid "Please select a branch to rename."
+msgstr "Válasszunk ki egy átnevezendő branchet."
+
+#: lib/branch_rename.tcl:96 lib/checkout_op.tcl:179
+#, tcl-format
+msgid "Branch '%s' already exists."
+msgstr "A(z) '%s' branch már létezik."
+
+#: lib/branch_rename.tcl:117
+#, tcl-format
+msgid "Failed to rename '%s'."
+msgstr "Nem sikerült átnevezni: '%s'."
+
+#: lib/browser.tcl:17
+msgid "Starting..."
+msgstr "Indítás..."
+
+#: lib/browser.tcl:26
+msgid "File Browser"
+msgstr "Fájl böngésző"
+
+#: lib/browser.tcl:125 lib/browser.tcl:142
+#, tcl-format
+msgid "Loading %s..."
+msgstr "A(z) %s betöltése..."
+
+#: lib/browser.tcl:186
+msgid "[Up To Parent]"
+msgstr "[Fel a szülőhöz]"
+
+#: lib/browser.tcl:266 lib/browser.tcl:272
+msgid "Browse Branch Files"
+msgstr "A branch fájljainak böngészése"
+
+#: lib/browser.tcl:277 lib/choose_repository.tcl:215
+#: lib/choose_repository.tcl:305 lib/choose_repository.tcl:315
+#: lib/choose_repository.tcl:811
+msgid "Browse"
+msgstr "Böngészés"
+
+#: lib/checkout_op.tcl:79
+#, tcl-format
+msgid "Fetching %s from %s"
+msgstr "A(z) %s letöltése innen: %s"
+
+#: lib/checkout_op.tcl:127
+#, tcl-format
+msgid "fatal: Cannot resolve %s"
+msgstr ""
+
+#: lib/checkout_op.tcl:140 lib/console.tcl:79 lib/database.tcl:31
+msgid "Close"
+msgstr "Bezárás"
+
+#: lib/checkout_op.tcl:169
+#, tcl-format
+msgid "Branch '%s' does not exist."
+msgstr "A(z) '%s' branch nem létezik."
+
+#: lib/checkout_op.tcl:206
+#, tcl-format
+msgid ""
+"Branch '%s' already exists.\n"
+"\n"
+"It cannot fast-forward to %s.\n"
+"A merge is required."
+msgstr ""
+"A(z) '%s' branch már létezik.\n"
+"\n"
+"Nem lehet fast-forwardolni a következőhöz: %s.\n"
+"Egy merge szükséges."
+
+#: lib/checkout_op.tcl:220
+#, tcl-format
+msgid "Merge strategy '%s' not supported."
+msgstr "A(z) '%s' merge strategy nem támogatott."
+
+#: lib/checkout_op.tcl:239
+#, tcl-format
+msgid "Failed to update '%s'."
+msgstr "Nem sikerült frissíteni a következőt: '%s'."
+
+#: lib/checkout_op.tcl:251
+msgid "Staging area (index) is already locked."
+msgstr "A kiválasztási terület (index) már zárolva van."
+
+#: lib/checkout_op.tcl:266
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before the current branch can be changed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Az utolsó keresési állapot nem egyezik meg a repó állpotával.\n"
+"\n"
+"Egy másik Git program módosította ezt a repót az utolsó keresés óta. Egy "
+"újrakeresés mindenképpen szükséges mielőtt a jelenlegi branchet módosítani "
+"lehetne.\n"
+"\n"
+"Az újrakeresés most automatikusan el fog indulni.\n"
+
+#: lib/checkout_op.tcl:322
+#, fuzzy, tcl-format
+msgid "Updating working directory to '%s'..."
+msgstr "Nincs munkakönyvtár"
+
+#: lib/checkout_op.tcl:353
+#, tcl-format
+msgid "Aborted checkout of '%s' (file level merging is required)."
+msgstr "A(z) '%s' checkoutja megszakítva (fájlszintű merge-ölés szükséges)."
+
+#: lib/checkout_op.tcl:354
+msgid "File level merge required."
+msgstr "Fájlszintű merge-ölés szükséges."
+
+#: lib/checkout_op.tcl:358
+#, tcl-format
+msgid "Staying on branch '%s'."
+msgstr "Jelenleg a(z) '%s' branchen."
+
+#: lib/checkout_op.tcl:429
+msgid ""
+"You are no longer on a local branch.\n"
+"\n"
+"If you wanted to be on a branch, create one now starting from 'This Detached "
+"Checkout'."
+msgstr ""
+"Már nem egy helyi branchen vagyunk.\n"
+"\n"
+"Ha egy branchen szeretnénk lenni, hozzunk létre egyet az 'Ez a leválasztott "
+"checkout'-ból."
+
+#: lib/checkout_op.tcl:446
+#, fuzzy, tcl-format
+msgid "Checked out '%s'."
+msgstr "Checkout..."
+
+#: lib/checkout_op.tcl:478
+#, tcl-format
+msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgstr ""
+"A(z) '%s' -> '%s' visszaállítás a következő commitok elvesztését jelenti:"
+
+#: lib/checkout_op.tcl:500
+msgid "Recovering lost commits may not be easy."
+msgstr "Az elveszett commitok helyreállítása nem biztos, hogy egyszerű."
+
+#: lib/checkout_op.tcl:505
+#, tcl-format
+msgid "Reset '%s'?"
+msgstr "Visszaállítjuk a következőt: '%s'?"
+
+#: lib/checkout_op.tcl:510 lib/merge.tcl:164
+msgid "Visualize"
+msgstr "Vizualizálás"
+
+#: lib/checkout_op.tcl:578
+#, tcl-format
+msgid ""
+"Failed to set current branch.\n"
+"\n"
+"This working directory is only partially switched.  We successfully updated "
+"your files, but failed to update an internal Git file.\n"
+"\n"
+"This should not have occurred.  %s will now close and give up."
+msgstr ""
+"Nem sikerült beállítani a jelenlegi branchet.\n"
+"\n"
+"A munkakönyvtár csak részben váltott át.  A fájlok sikeresen frissítve "
+"lettek, de nem sikerült frissíteni egy belső Git fájlt.\n"
+"\n"
+"Ennek nem szabad megtörténnie.  A(z) %s most kilép és feladja."
+
+#: lib/choose_font.tcl:39
+#, fuzzy
+msgid "Select"
+msgstr "Mindent kiválaszt"
+
+#: lib/choose_font.tcl:53
+msgid "Font Family"
+msgstr ""
+
+#: lib/choose_font.tcl:73
+#, fuzzy
+msgid "Font Size"
+msgstr "Font méret csökkentése"
+
+#: lib/choose_font.tcl:90
+msgid "Font Example"
+msgstr ""
+
+#: lib/choose_font.tcl:101
+msgid ""
+"This is example text.\n"
+"If you like this text, it can be your font."
+msgstr ""
+
+#: lib/choose_repository.tcl:25
+msgid "Git Gui"
+msgstr ""
+
+#: lib/choose_repository.tcl:69 lib/choose_repository.tcl:204
+#, fuzzy
+msgid "Create New Repository"
+msgstr "Forrás repó"
+
+#: lib/choose_repository.tcl:74 lib/choose_repository.tcl:291
+#, fuzzy
+msgid "Clone Existing Repository"
+msgstr "Cél repó"
+
+#: lib/choose_repository.tcl:79 lib/choose_repository.tcl:800
+#, fuzzy
+msgid "Open Existing Repository"
+msgstr "Cél repó"
+
+#: lib/choose_repository.tcl:91
+msgid "Next >"
+msgstr ""
+
+#: lib/choose_repository.tcl:152
+#, fuzzy, tcl-format
+msgid "Location %s already exists."
+msgstr "A(z) '%s' branch már létezik."
+
+#: lib/choose_repository.tcl:158 lib/choose_repository.tcl:165
+#: lib/choose_repository.tcl:172
+#, fuzzy, tcl-format
+msgid "Failed to create repository %s:"
+msgstr "Nem sikerült teljesen elmenteni a beállításokat:"
+
+#: lib/choose_repository.tcl:209 lib/choose_repository.tcl:309
+msgid "Directory:"
+msgstr ""
+
+#: lib/choose_repository.tcl:238 lib/choose_repository.tcl:363
+#: lib/choose_repository.tcl:834
+#, fuzzy
+msgid "Git Repository"
+msgstr "Repó"
+
+#: lib/choose_repository.tcl:253 lib/choose_repository.tcl:260
+#, fuzzy, tcl-format
+msgid "Directory %s already exists."
+msgstr "A(z) '%s' branch már létezik."
+
+#: lib/choose_repository.tcl:265
+#, fuzzy, tcl-format
+msgid "File %s already exists."
+msgstr "A(z) '%s' branch már létezik."
+
+#: lib/choose_repository.tcl:286
+#, fuzzy
+msgid "Clone"
+msgstr "Bezárás"
+
+#: lib/choose_repository.tcl:299
+msgid "URL:"
+msgstr ""
+
+#: lib/choose_repository.tcl:319
+msgid "Clone Type:"
+msgstr ""
+
+#: lib/choose_repository.tcl:325
+msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
+msgstr ""
+
+#: lib/choose_repository.tcl:331
+msgid "Full Copy (Slower, Redundant Backup)"
+msgstr ""
+
+#: lib/choose_repository.tcl:337
+msgid "Shared (Fastest, Not Recommended, No Backup)"
+msgstr ""
+
+#: lib/choose_repository.tcl:369 lib/choose_repository.tcl:418
+#: lib/choose_repository.tcl:560 lib/choose_repository.tcl:630
+#: lib/choose_repository.tcl:840 lib/choose_repository.tcl:848
+#, fuzzy, tcl-format
+msgid "Not a Git repository: %s"
+msgstr "Nincs kiválasztott repó."
+
+#: lib/choose_repository.tcl:405
+msgid "Standard only available for local repository."
+msgstr ""
+
+#: lib/choose_repository.tcl:409
+msgid "Shared only available for local repository."
+msgstr ""
+
+#: lib/choose_repository.tcl:439
+msgid "Failed to configure origin"
+msgstr ""
+
+#: lib/choose_repository.tcl:451
+msgid "Counting objects"
+msgstr ""
+
+#: lib/choose_repository.tcl:452
+msgid "buckets"
+msgstr ""
+
+#: lib/choose_repository.tcl:476
+#, tcl-format
+msgid "Unable to copy objects/info/alternates: %s"
+msgstr ""
+
+#: lib/choose_repository.tcl:512
+#, fuzzy, tcl-format
+msgid "Nothing to clone from %s."
+msgstr "Új változások letöltése innen: %s"
+
+#: lib/choose_repository.tcl:514 lib/choose_repository.tcl:728
+#: lib/choose_repository.tcl:740
+msgid "The 'master' branch has not been initialized."
+msgstr ""
+
+#: lib/choose_repository.tcl:527
+msgid "Hardlinks are unavailable.  Falling back to copying."
+msgstr ""
+
+#: lib/choose_repository.tcl:539
+#, fuzzy, tcl-format
+msgid "Cloning from %s"
+msgstr "A(z) %s letöltése innen: %s"
+
+#: lib/choose_repository.tcl:570
+#, fuzzy
+msgid "Copying objects"
+msgstr "Az objektum adatbázis tömörítése"
+
+#: lib/choose_repository.tcl:571
+msgid "KiB"
+msgstr ""
+
+#: lib/choose_repository.tcl:595
+#, tcl-format
+msgid "Unable to copy object: %s"
+msgstr ""
+
+#: lib/choose_repository.tcl:605
+msgid "Linking objects"
+msgstr ""
+
+#: lib/choose_repository.tcl:606
+msgid "objects"
+msgstr ""
+
+#: lib/choose_repository.tcl:614
+#, tcl-format
+msgid "Unable to hardlink object: %s"
+msgstr ""
+
+#: lib/choose_repository.tcl:669
+msgid "Cannot fetch branches and objects.  See console output for details."
+msgstr ""
+
+#: lib/choose_repository.tcl:680
+msgid "Cannot fetch tags.  See console output for details."
+msgstr ""
+
+#: lib/choose_repository.tcl:704
+msgid "Cannot determine HEAD.  See console output for details."
+msgstr ""
+
+#: lib/choose_repository.tcl:713
+#, tcl-format
+msgid "Unable to cleanup %s"
+msgstr ""
+
+#: lib/choose_repository.tcl:719
+#, fuzzy
+msgid "Clone failed."
+msgstr "A félbeszakítás nem sikerült."
+
+#: lib/choose_repository.tcl:726
+msgid "No default branch obtained."
+msgstr ""
+
+#: lib/choose_repository.tcl:737
+#, tcl-format
+msgid "Cannot resolve %s as a commit."
+msgstr ""
+
+#: lib/choose_repository.tcl:749
+#, fuzzy
+msgid "Creating working directory"
+msgstr "Nincs munkakönyvtár"
+
+#: lib/choose_repository.tcl:750 lib/index.tcl:15 lib/index.tcl:80
+#: lib/index.tcl:149
+msgid "files"
+msgstr ""
+
+#: lib/choose_repository.tcl:779
+msgid "Initial file checkout failed."
+msgstr ""
+
+#: lib/choose_repository.tcl:795
+msgid "Open"
+msgstr ""
+
+#: lib/choose_repository.tcl:805
+#, fuzzy
+msgid "Repository:"
+msgstr "Repó"
+
+#: lib/choose_repository.tcl:854
+#, fuzzy, tcl-format
+msgid "Failed to open repository %s:"
+msgstr "Nem sikerült teljesen elmenteni a beállításokat:"
+
+#: lib/choose_rev.tcl:53
+msgid "This Detached Checkout"
+msgstr "Ez a leválasztott checkout"
+
+#: lib/choose_rev.tcl:60
+msgid "Revision Expression:"
+msgstr "Revízió kifejezés:"
+
+#: lib/choose_rev.tcl:74
+msgid "Local Branch"
+msgstr "Helyi branch"
+
+#: lib/choose_rev.tcl:79
+msgid "Tracking Branch"
+msgstr "Követő branch"
+
+#: lib/choose_rev.tcl:84 lib/choose_rev.tcl:537
+msgid "Tag"
+msgstr "Tag"
+
+#: lib/choose_rev.tcl:317
+#, tcl-format
+msgid "Invalid revision: %s"
+msgstr "Érvénytelen revízió: %s"
+
+#: lib/choose_rev.tcl:338
+msgid "No revision selected."
+msgstr "Nincs kiválasztva revízió."
+
+#: lib/choose_rev.tcl:346
+msgid "Revision expression is empty."
+msgstr "A revízió kifejezés üres."
+
+#: lib/choose_rev.tcl:530
+msgid "Updated"
+msgstr ""
+
+#: lib/choose_rev.tcl:558
+msgid "URL"
+msgstr ""
+
+#: lib/commit.tcl:9
+msgid ""
+"There is nothing to amend.\n"
+"\n"
+"You are about to create the initial commit.  There is no commit before this "
+"to amend.\n"
+msgstr ""
+"Nincs semmi javítanivaló.\n"
+"\n"
+"Az első commit létrehozása előtt nincs semmilyen commit amit javitani "
+"lehetne.\n"
+
+#: lib/commit.tcl:18
+msgid ""
+"Cannot amend while merging.\n"
+"\n"
+"You are currently in the middle of a merge that has not been fully "
+"completed.  You cannot amend the prior commit unless you first abort the "
+"current merge activity.\n"
+msgstr ""
+"Nem lehet javítani merge alatt.\n"
+"\n"
+"A jelenlegi merge még nem teljesen fejeződött be. Csak akkor javíthat egy "
+"előbbi commitot, hogyha megszakítja a jelenlegi merge folyamatot.\n"
+
+#: lib/commit.tcl:49
+msgid "Error loading commit data for amend:"
+msgstr "Hiba a javítandó commit adat betöltése közben:"
+
+#: lib/commit.tcl:76
+msgid "Unable to obtain your identity:"
+msgstr "Nem sikerült megállapítani az azonosítót:"
+
+#: lib/commit.tcl:81
+msgid "Invalid GIT_COMMITTER_IDENT:"
+msgstr "Érvénytelen GIT_COMMITTER_IDENT:"
+
+#: lib/commit.tcl:133
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before another commit can be created.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Az utolsó keresési állapot nem egyezik meg a repó állapotával.\n"
+"\n"
+"Egy másik Git program módosította ezt a repót az utolsó keresés óta. Egy "
+"újrakeresés mindenképpen szükséges mielőtt a jelenlegi branchet módosítani "
+"lehetne.\n"
+"\n"
+"Az újrakeresés most automatikusan el fog indulni.\n"
+
+#: lib/commit.tcl:154
+#, tcl-format
+msgid ""
+"Unmerged files cannot be committed.\n"
+"\n"
+"File %s has merge conflicts.  You must resolve them and stage the file "
+"before committing.\n"
+msgstr ""
+"Nem commitolhatunk fájlokat merge előtt.\n"
+"\n"
+"A(z) %s fájlban ütközések vannak. Egyszer azokat ki kell javítani, majd "
+"hozzá ki kell választani a fájlt mielőtt commitolni lehetne.\n"
+
+#: lib/commit.tcl:162
+#, tcl-format
+msgid ""
+"Unknown file state %s detected.\n"
+"\n"
+"File %s cannot be committed by this program.\n"
+msgstr ""
+"Ismeretlen fájl típus %s érzékelve.\n"
+"\n"
+"A(z) %s fájlt nem tudja ez a program commitolni.\n"
+
+#: lib/commit.tcl:170
+msgid ""
+"No changes to commit.\n"
+"\n"
+"You must stage at least 1 file before you can commit.\n"
+msgstr ""
+"Nincs commitolandó változtatás.\n"
+"\n"
+"Legalább egy fájl ki kell választani, hogy commitolni lehessen.\n"
+
+#: lib/commit.tcl:183
+msgid ""
+"Please supply a commit message.\n"
+"\n"
+"A good commit message has the following format:\n"
+"\n"
+"- First line: Describe in one sentance what you did.\n"
+"- Second line: Blank\n"
+"- Remaining lines: Describe why this change is good.\n"
+msgstr ""
+"Adjunk megy egy commit üzenetet.\n"
+"\n"
+"Egy jó commit üzenetnek a következő a formátuma:\n"
+"\n"
+"- Első sor: Egy mondatban leírja, hogy mit csináltunk.\n"
+"- Második sor: Üres\n"
+"- A többi sor: Leírja, hogy miért jó ez a változtatás.\n"
+
+#: lib/commit.tcl:257
+msgid "write-tree failed:"
+msgstr "a write-tree sikertelen:"
+
+#: lib/commit.tcl:275
+#, tcl-format
+msgid "Commit %s appears to be corrupt"
+msgstr ""
+
+#: lib/commit.tcl:279
+msgid ""
+"No changes to commit.\n"
+"\n"
+"No files were modified by this commit and it was not a merge commit.\n"
+"\n"
+"A rescan will be automatically started now.\n"
+msgstr ""
+"Nincs commitolandó változtatás.\n"
+"\n"
+"Egyetlen fájlt se módosított ez a commit és merge commit se volt.\n"
+"\n"
+"Az újrakeresés most automatikusan el fog indulni.\n"
+
+#: lib/commit.tcl:286
+msgid "No changes to commit."
+msgstr "Nincs commitolandó változtatás."
+
+#: lib/commit.tcl:303
+#, tcl-format
+msgid "warning: Tcl does not support encoding '%s'."
+msgstr ""
+
+#: lib/commit.tcl:317
+msgid "commit-tree failed:"
+msgstr "a commit-tree sikertelen:"
+
+#: lib/commit.tcl:339
+msgid "update-ref failed:"
+msgstr "az update-ref sikertelen:"
+
+#: lib/commit.tcl:430
+#, tcl-format
+msgid "Created commit %s: %s"
+msgstr "Létrejött a %s commit: %s"
+
+#: lib/console.tcl:57
+msgid "Working... please wait..."
+msgstr "Munka folyamatban.. Várjunk..."
+
+#: lib/console.tcl:183
+msgid "Success"
+msgstr "Siker"
+
+#: lib/console.tcl:196
+msgid "Error: Command Failed"
+msgstr "Hiba: a parancs sikertelen"
+
+#: lib/database.tcl:43
+msgid "Number of loose objects"
+msgstr "Elvesztett objektumok száma"
+
+#: lib/database.tcl:44
+msgid "Disk space used by loose objects"
+msgstr "Elveszett objektumok által elfoglalt lemezterület"
+
+#: lib/database.tcl:45
+msgid "Number of packed objects"
+msgstr "Csomagolt objektumok számra"
+
+#: lib/database.tcl:46
+msgid "Number of packs"
+msgstr "Csomagok száma"
+
+#: lib/database.tcl:47
+msgid "Disk space used by packed objects"
+msgstr "A csomagolt objektumok által használt lemezterület"
+
+#: lib/database.tcl:48
+msgid "Packed objects waiting for pruning"
+msgstr "Eltávolításra váró csomagolt objektumok számra"
+
+#: lib/database.tcl:49
+msgid "Garbage files"
+msgstr "Hulladék fájlok"
+
+#: lib/database.tcl:72
+msgid "Compressing the object database"
+msgstr "Az objektum adatbázis tömörítése"
+
+#: lib/database.tcl:83
+msgid "Verifying the object database with fsck-objects"
+msgstr "Az objektum adatbázis ellenőrzése az fsck-objects használatával"
+
+#: lib/database.tcl:108
+#, tcl-format
+msgid ""
+"This repository currently has approximately %i loose objects.\n"
+"\n"
+"To maintain optimal performance it is strongly recommended that you compress "
+"the database when more than %i loose objects exist.\n"
+"\n"
+"Compress the database now?"
+msgstr ""
+
+#: lib/date.tcl:25
+#, fuzzy, tcl-format
+msgid "Invalid date from Git: %s"
+msgstr "Érvénytelen revízió: %s"
+
+#: lib/diff.tcl:42
+#, tcl-format
+msgid ""
+"No differences detected.\n"
+"\n"
+"%s has no changes.\n"
+"\n"
+"The modification date of this file was updated by another application, but "
+"the content within the file was not changed.\n"
+"\n"
+"A rescan will be automatically started to find other files which may have "
+"the same state."
+msgstr ""
+"Nincsenek változások.\n"
+"\n"
+"A(z) %s módosítatlan.\n"
+"\n"
+"A fájl módosítási dátumát frissítette egy másik alkalmazás, de a fájl "
+"tartalma változatlan.\n"
+"\n"
+"Egy újrakeresés fog indulni a hasonló állapotú fájlok megtalálása érdekében."
+
+#: lib/diff.tcl:81
+#, fuzzy, tcl-format
+msgid "Loading diff of %s..."
+msgstr "A(z) %s betöltése..."
+
+#: lib/diff.tcl:114 lib/diff.tcl:184
+#, tcl-format
+msgid "Unable to display %s"
+msgstr ""
+
+#: lib/diff.tcl:115
+msgid "Error loading file:"
+msgstr "Hiba a fájl betöltése közben:"
+
+#: lib/diff.tcl:122
+msgid "Git Repository (subproject)"
+msgstr ""
+
+#: lib/diff.tcl:134
+msgid "* Binary file (not showing content)."
+msgstr ""
+
+#: lib/diff.tcl:185
+msgid "Error loading diff:"
+msgstr "Hiba a diff betöltése közben:"
+
+#: lib/diff.tcl:302
+msgid "Failed to unstage selected hunk."
+msgstr "Nem visszavonni a hunk kiválasztását."
+
+#: lib/diff.tcl:309
+msgid "Failed to stage selected hunk."
+msgstr "Nem sikerült kiválasztani a hunkot."
+
+#: lib/error.tcl:12 lib/error.tcl:102
+msgid "error"
+msgstr "hiba"
+
+#: lib/error.tcl:28
+msgid "warning"
+msgstr "figyelmeztetés"
+
+#: lib/error.tcl:81
+msgid "You must correct the above errors before committing."
+msgstr "Ki kell javítanunk a fenti hibákat commit előtt."
+
+#: lib/index.tcl:241
+#, fuzzy, tcl-format
+msgid "Unstaging %s from commit"
+msgstr "Commitba való kiválasztás visszavonása"
+
+#: lib/index.tcl:285
+#, fuzzy, tcl-format
+msgid "Adding %s"
+msgstr "A(z) %s olvasása..."
+
+#: lib/index.tcl:340
+#, tcl-format
+msgid "Revert changes in file %s?"
+msgstr "Visszaállítja a változtatásokat a(z) %s fájlban?"
+
+#: lib/index.tcl:342
+#, tcl-format
+msgid "Revert changes in these %i files?"
+msgstr "Visszaállítja a változtatásokat ebben e %i fájlban?"
+
+#: lib/index.tcl:348
+msgid "Any unstaged changes will be permanently lost by the revert."
+msgstr ""
+"Minden nem kiválasztott változtatás el fog veszni ezáltal a visszaállítás "
+"által."
+
+#: lib/index.tcl:351
+msgid "Do Nothing"
+msgstr "Ne csináljunk semmit"
+
+#: lib/merge.tcl:13
+msgid ""
+"Cannot merge while amending.\n"
+"\n"
+"You must finish amending this commit before starting any type of merge.\n"
+msgstr ""
+"Javítás közben nem lehetséges a merge.\n"
+"\n"
+"Egyszer be kell fejezni ennek a commitnak a javítását, majd kezdődhet egy "
+"merge.\n"
+
+#: lib/merge.tcl:27
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before a merge can be performed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Az utolsó keresési állapot nem egyezik meg a repó állapotával.\n"
+"\n"
+"Egy másik Git program módosította ezt a repót az utolsó keresés óta. Egy "
+"újrakeresés mindenképpen szükséges mielőtt a jelenlegi branchet módosítani "
+"lehetne.\n"
+"\n"
+"Az újrakeresés most automatikusan el fog indulni.\n"
+
+#: lib/merge.tcl:44
+#, tcl-format
+msgid ""
+"You are in the middle of a conflicted merge.\n"
+"\n"
+"File %s has merge conflicts.\n"
+"\n"
+"You must resolve them, stage the file, and commit to complete the current "
+"merge.  Only then can you begin another merge.\n"
+msgstr ""
+"Jelenleg egy ütközés feloldása közben vagyunk.\n"
+"\n"
+"A(z) %s fájlban ütközések vannak.\n"
+"\n"
+"Fel kell oldanunk őket, kiválasztani a fájlt, és commitolni hogy befejezzük "
+"a jelenlegi merge-t. Csak ezután kezdhetünk el egy újabbat.\n"
+
+#: lib/merge.tcl:54
+#, tcl-format
+msgid ""
+"You are in the middle of a change.\n"
+"\n"
+"File %s is modified.\n"
+"\n"
+"You should complete the current commit before starting a merge.  Doing so "
+"will help you abort a failed merge, should the need arise.\n"
+msgstr ""
+"Jelenleg egy változtatás közben vagyunk.\n"
+"\n"
+"A(z) %s fájl megváltozott.\n"
+"\n"
+"Először be kell fejeznünk a jelenlegi commitot, hogy elkezdhessünk egy merge-"
+"t. Ez segíteni fog, hogy félbeszakíthassunk egy merge-t.\n"
+
+#: lib/merge.tcl:106
+#, tcl-format
+msgid "%s of %s"
+msgstr "%s / %s"
+
+#: lib/merge.tcl:119
+#, tcl-format
+msgid "Merging %s and %s"
+msgstr "A(z) %s és a(z) %s merge-ölése"
+
+#: lib/merge.tcl:131
+msgid "Merge completed successfully."
+msgstr "A merge sikeresen befejeződött."
+
+#: lib/merge.tcl:133
+msgid "Merge failed.  Conflict resolution is required."
+msgstr "A merge sikertelen. Fel kell oldanunk az ütközéseket."
+
+#: lib/merge.tcl:158
+#, tcl-format
+msgid "Merge Into %s"
+msgstr "Merge-ölés a következőbe: %s"
+
+#: lib/merge.tcl:177
+msgid "Revision To Merge"
+msgstr "Merge-ölni szándékozott revízió"
+
+#: lib/merge.tcl:212
+msgid ""
+"Cannot abort while amending.\n"
+"\n"
+"You must finish amending this commit.\n"
+msgstr ""
+"A commit javítás közben megszakítva.\n"
+"\n"
+"Be kell fejeznünk ennek a commitnak a javítását.\n"
+
+#: lib/merge.tcl:222
+msgid ""
+"Abort merge?\n"
+"\n"
+"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"\n"
+"Continue with aborting the current merge?"
+msgstr ""
+"Megszakítjuk a merge-t?\n"
+"\n"
+"A jelenlegi merge megszakítása *MINDEN* nem commitolt változtatás "
+"elvesztését jelenti.\n"
+"\n"
+"Folytatjuk a jelenlegi merge megszakítását?"
+
+#: lib/merge.tcl:228
+msgid ""
+"Reset changes?\n"
+"\n"
+"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"\n"
+"Continue with resetting the current changes?"
+msgstr ""
+"Visszavonjuk a módosításokat?\n"
+"\n"
+"A módosítások visszavonása *MINDEN* nem commitolt változtatás elvesztését "
+"jelenti.\n"
+"\n"
+"Folytatjuk a jelenlegi módosítások visszavonását?"
+
+#: lib/merge.tcl:239
+msgid "Aborting"
+msgstr "Félbeszakítás"
+
+#: lib/merge.tcl:266
+msgid "Abort failed."
+msgstr "A félbeszakítás nem sikerült."
+
+#: lib/merge.tcl:268
+msgid "Abort completed.  Ready."
+msgstr "A megkeszakítás befejeződött. Kész."
+
+#: lib/option.tcl:82
+msgid "Restore Defaults"
+msgstr "Alapértelmezés visszaállítása"
+
+#: lib/option.tcl:86
+msgid "Save"
+msgstr "Mentés"
+
+#: lib/option.tcl:96
+#, tcl-format
+msgid "%s Repository"
+msgstr "%s Repó"
+
+#: lib/option.tcl:97
+msgid "Global (All Repositories)"
+msgstr "Globális (minden repó)"
+
+#: lib/option.tcl:103
+msgid "User Name"
+msgstr "Felhasználónév"
+
+#: lib/option.tcl:104
+msgid "Email Address"
+msgstr "Email cím"
+
+#: lib/option.tcl:106
+msgid "Summarize Merge Commits"
+msgstr "A merge commitok összegzése"
+
+#: lib/option.tcl:107
+msgid "Merge Verbosity"
+msgstr "Merge beszédesség"
+
+#: lib/option.tcl:108
+msgid "Show Diffstat After Merge"
+msgstr "Diffstat mutatása merge után"
+
+#: lib/option.tcl:110
+msgid "Trust File Modification Timestamps"
+msgstr "A fájl módosítási dátumok megbízhatóak"
+
+#: lib/option.tcl:111
+msgid "Prune Tracking Branches During Fetch"
+msgstr "A követő branchek eltávolítása letöltés alatt"
+
+#: lib/option.tcl:112
+msgid "Match Tracking Branches"
+msgstr "A követő branchek egyeztetése"
+
+#: lib/option.tcl:113
+msgid "Number of Diff Context Lines"
+msgstr "A diff környezeti sorok száma"
+
+#: lib/option.tcl:114
+msgid "New Branch Name Template"
+msgstr "Új branch név sablon"
+
+#: lib/option.tcl:176
+#, fuzzy
+msgid "Change Font"
+msgstr "Fő betűtípus"
+
+#: lib/option.tcl:180
+#, tcl-format
+msgid "Choose %s"
+msgstr ""
+
+#: lib/option.tcl:186
+msgid "pt."
+msgstr ""
+
+#: lib/option.tcl:200
+msgid "Preferences"
+msgstr ""
+
+#: lib/option.tcl:235
+msgid "Failed to completely save options:"
+msgstr "Nem sikerült teljesen elmenteni a beállításokat:"
+
+#: lib/remote.tcl:165
+#, fuzzy
+msgid "Prune from"
+msgstr "Törlés innen: %s..."
+
+# tcl-format
+#: lib/remote.tcl:170
+#, fuzzy
+msgid "Fetch from"
+msgstr "Letöltés innen: %s..."
+
+#: lib/remote.tcl:213
+#, fuzzy
+msgid "Push to"
+msgstr "Push"
+
+#: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
+msgid "Delete Remote Branch"
+msgstr "Távoli branch törlése"
+
+#: lib/remote_branch_delete.tcl:47
+msgid "From Repository"
+msgstr "Forrás repó"
+
+#: lib/remote_branch_delete.tcl:50 lib/transport.tcl:123
+msgid "Remote:"
+msgstr "Távoli:"
+
+#: lib/remote_branch_delete.tcl:66 lib/transport.tcl:138
+msgid "Arbitrary URL:"
+msgstr "Tetszőleges URL:"
+
+#: lib/remote_branch_delete.tcl:84
+msgid "Branches"
+msgstr "Branchek"
+
+#: lib/remote_branch_delete.tcl:109
+msgid "Delete Only If"
+msgstr "Törlés csak akkor ha"
+
+#: lib/remote_branch_delete.tcl:111
+msgid "Merged Into:"
+msgstr "Merge-ölt a következőbe:"
+
+#: lib/remote_branch_delete.tcl:119
+msgid "Always (Do not perform merge checks)"
+msgstr "Mindig (Ne végezzen merge vizsgálatokat)"
+
+#: lib/remote_branch_delete.tcl:152
+msgid "A branch is required for 'Merged Into'."
+msgstr "Egy branch szükséges a 'Merge-ölt a következőbe'-hez."
+
+#: lib/remote_branch_delete.tcl:184
+#, fuzzy, tcl-format
+msgid ""
+"The following branches are not completely merged into %s:\n"
+"\n"
+" - %s"
+msgstr "A következő branchek nem teljesen lettek merge-ölve ebbe: %s:"
+
+#: lib/remote_branch_delete.tcl:189
+#, tcl-format
+msgid ""
+"One or more of the merge tests failed because you have not fetched the "
+"necessary commits.  Try fetching from %s first."
+msgstr ""
+"Egy vagy több merge teszt hibát jelzett, mivel nem töltöttük le a megfelelő "
+"commitokat. Próbáljunk meg letölteni a következőből: %s először."
+
+#: lib/remote_branch_delete.tcl:207
+msgid "Please select one or more branches to delete."
+msgstr "Válasszunk ki egy vagy több branchet törlésre."
+
+#: lib/remote_branch_delete.tcl:216
+msgid ""
+"Recovering deleted branches is difficult.\n"
+"\n"
+"Delete the selected branches?"
+msgstr ""
+"A törölt branchek visszaállítása nehéz.\n"
+"\n"
+"Töröljük a kiválasztott brancheket?"
+
+#: lib/remote_branch_delete.tcl:226
+#, tcl-format
+msgid "Deleting branches from %s"
+msgstr "Brancek törlése innen: %s"
+
+#: lib/remote_branch_delete.tcl:286
+msgid "No repository selected."
+msgstr "Nincs kiválasztott repó."
+
+#: lib/remote_branch_delete.tcl:291
+#, tcl-format
+msgid "Scanning %s..."
+msgstr "Keresés itt: %s..."
+
+#: lib/shortcut.tcl:26 lib/shortcut.tcl:74
+msgid "Cannot write script:"
+msgstr "Nem sikerült írni a scriptet:"
+
+#: lib/shortcut.tcl:149
+msgid "Cannot write icon:"
+msgstr "Nem sikerült írni az ikont:"
+
+#: lib/status_bar.tcl:83
+#, tcl-format
+msgid "%s ... %*i of %*i %s (%3i%%)"
+msgstr "%s ... %*i / %*i %s (%3i%%)"
+
+#: lib/transport.tcl:6
+#, fuzzy, tcl-format
+msgid "fetch %s"
+msgstr "Letöltés"
+
+#: lib/transport.tcl:7
+#, tcl-format
+msgid "Fetching new changes from %s"
+msgstr "Új változások letöltése innen: %s"
+
+#: lib/transport.tcl:18
+#, tcl-format
+msgid "remote prune %s"
+msgstr ""
+
+#: lib/transport.tcl:19
+#, tcl-format
+msgid "Pruning tracking branches deleted from %s"
+msgstr "A %s repóból törölt követő branchek törlése"
+
+#: lib/transport.tcl:25 lib/transport.tcl:71
+#, tcl-format
+msgid "push %s"
+msgstr ""
+
+#: lib/transport.tcl:26
+#, tcl-format
+msgid "Pushing changes to %s"
+msgstr "Változások pusholása ide: %s"
+
+#: lib/transport.tcl:72
+#, tcl-format
+msgid "Pushing %s %s to %s"
+msgstr "Pusholás: %s %s, ide: %s"
+
+#: lib/transport.tcl:89
+msgid "Push Branches"
+msgstr "Branchek pusholása"
+
+#: lib/transport.tcl:103
+msgid "Source Branches"
+msgstr "Forrás branchek"
+
+#: lib/transport.tcl:120
+msgid "Destination Repository"
+msgstr "Cél repó"
+
+#: lib/transport.tcl:158
+msgid "Transfer Options"
+msgstr "Átviteli opciók"
+
+#: lib/transport.tcl:160
+msgid "Force overwrite existing branch (may discard changes)"
+msgstr ""
+
+#: lib/transport.tcl:164
+msgid "Use thin pack (for slow network connections)"
+msgstr "Vékony csomagok használata (lassú hálózati kapcsolatok számára)"
+
+#: lib/transport.tcl:168
+msgid "Include tags"
+msgstr "Tageket is"
+
+#~ msgid "Cannot find the git directory:"
+#~ msgstr "Nem található a git könyvtár:"
+
+#~ msgid "Unstaged Changes (Will Not Be Committed)"
+#~ msgstr "Nem kiválasztott változtatások (nem lesz commitolva)"
+
+#~ msgid "Push to %s..."
+#~ msgstr "Pusholás ide: %s..."
+
+#~ msgid "Add To Commit"
+#~ msgstr "Hozzáadás a commithoz"
+
+#~ msgid "Add Existing To Commit"
+#~ msgstr "Hozzáadás létező commithoz"
+
+#~ msgid "Running miga..."
+#~ msgstr "A miga futtatása..."
+
+#~ msgid "Add Existing"
+#~ msgstr "Létező hozzáadása"
+
+#~ msgid ""
+#~ "Abort commit?\n"
+#~ "\n"
+#~ "Aborting the current commit will cause *ALL* uncommitted changes to be "
+#~ "lost.\n"
+#~ "\n"
+#~ "Continue with aborting the current commit?"
+#~ msgstr ""
+#~ "Megszakítjuk a commitot?\n"
+#~ "\n"
+#~ "A jelenlegi commit megszakítása *MINDEN* nem commitolt változtatás "
+#~ "elvesztését jelenti.\n"
+#~ "\n"
+#~ "Folytatjuk a jelenlegi commit megszakítását?"
+
+#~ msgid "Aborting... please wait..."
+#~ msgstr "Megszakítás... várjunk..."

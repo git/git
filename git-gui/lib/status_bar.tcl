@@ -6,6 +6,7 @@ class status_bar {
 field w         ; # our own window path
 field w_l       ; # text widget we draw messages into
 field w_c       ; # canvas we draw a progress bar into
+field c_pack    ; # script to pack the canvas with
 field status  {}; # single line of text we show
 field prefix  {}; # text we format into status
 field units   {}; # unit of progress
@@ -24,6 +25,29 @@ constructor new {path} {
 		-anchor w \
 		-justify left
 	pack $w_l -side left
+	set c_pack [cb _oneline_pack]
+
+	bind $w <Destroy> [cb _delete %W]
+	return $this
+}
+
+method _oneline_pack {} {
+	$w_c conf -width 100
+	pack $w_c -side right
+}
+
+constructor two_line {path} {
+	set w $path
+	set w_l $w.l
+	set w_c $w.c
+
+	frame $w
+	label $w_l \
+		-textvariable @status \
+		-anchor w \
+		-justify left
+	pack $w_l -anchor w -fill x
+	set c_pack [list pack $w_c -fill x]
 
 	bind $w <Destroy> [cb _delete %W]
 	return $this
@@ -34,13 +58,12 @@ method start {msg uds} {
 		$w_c coords bar 0 0 0 20
 	} else {
 		canvas $w_c \
-			-width 100 \
 			-height [expr {int([winfo reqheight $w_l] * 0.6)}] \
 			-borderwidth 1 \
 			-relief groove \
 			-highlightt 0
 		$w_c create rectangle 0 0 0 20 -tags bar -fill navy
-		pack $w_c -side right
+		eval $c_pack
 	}
 
 	set status $msg
@@ -53,11 +76,16 @@ method update {have total} {
 	set pdone 0
 	if {$total > 0} {
 		set pdone [expr {100 * $have / $total}]
+		set cdone [expr {[winfo width $w_c] * $have / $total}]
 	}
 
-	set status [format "%s ... %i of %i %s (%2i%%)" \
-		$prefix $have $total $units $pdone]
-	$w_c coords bar 0 0 $pdone 20
+	set prec [string length [format %i $total]]
+	set status [mc "%s ... %*i of %*i %s (%3i%%)" \
+		$prefix \
+		$prec $have \
+		$prec $total \
+		$units $pdone]
+	$w_c coords bar 0 0 $cdone 20
 }
 
 method update_meter {buf} {

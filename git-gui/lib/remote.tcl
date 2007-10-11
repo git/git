@@ -135,8 +135,10 @@ proc load_all_remotes {} {
 proc populate_fetch_menu {} {
 	global all_remotes repo_config
 
-	set m .mbar.fetch
-	set prune_list [list]
+	set remote_m .mbar.remote
+	set fetch_m $remote_m.fetch
+	set prune_m $remote_m.prune
+
 	foreach r $all_remotes {
 		set enable 0
 		if {![catch {set a $repo_config(remote.$r.url)}]} {
@@ -157,28 +159,34 @@ proc populate_fetch_menu {} {
 		}
 
 		if {$enable} {
-			lappend prune_list $r
-			$m add command \
-				-label "Fetch from $r..." \
-				-command [list fetch_from $r]
-		}
-	}
+			if {![winfo exists $fetch_m]} {
+				menu $prune_m
+				$remote_m insert 0 cascade \
+					-label [mc "Prune from"] \
+					-menu $prune_m
 
-	if {$prune_list ne {}} {
-		$m add separator
-	}
-	foreach r $prune_list {
-		$m add command \
-			-label "Prune from $r..." \
-			-command [list prune_from $r]
+				menu $fetch_m
+				$remote_m insert 0 cascade \
+					-label [mc "Fetch from"] \
+					-menu $fetch_m
+			}
+
+			$fetch_m add command \
+				-label $r \
+				-command [list fetch_from $r]
+			$prune_m add command \
+				-label $r \
+				-command [list prune_from $r]
+		}
 	}
 }
 
 proc populate_push_menu {} {
 	global all_remotes repo_config
 
-	set m .mbar.push
-	set fast_count 0
+	set remote_m .mbar.remote
+	set push_m $remote_m.push
+
 	foreach r $all_remotes {
 		set enable 0
 		if {![catch {set a $repo_config(remote.$r.url)}]} {
@@ -199,13 +207,16 @@ proc populate_push_menu {} {
 		}
 
 		if {$enable} {
-			if {!$fast_count} {
-				$m add separator
+			if {![winfo exists $push_m]} {
+				menu $push_m
+				$remote_m insert 0 cascade \
+					-label [mc "Push to"] \
+					-menu $push_m
 			}
-			$m add command \
-				-label "Push to $r..." \
+
+			$push_m add command \
+				-label $r \
 				-command [list push_to $r]
-			incr fast_count
 		}
 	}
 }

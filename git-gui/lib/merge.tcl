@@ -10,10 +10,10 @@ method _can_merge {} {
 	global HEAD commit_type file_states
 
 	if {[string match amend* $commit_type]} {
-		info_popup {Cannot merge while amending.
+		info_popup [mc "Cannot merge while amending.
 
 You must finish amending this commit before starting any type of merge.
-}
+"]
 		return 0
 	}
 
@@ -24,12 +24,12 @@ You must finish amending this commit before starting any type of merge.
 	#
 	repository_state curType curHEAD curMERGE_HEAD
 	if {$commit_type ne $curType || $HEAD ne $curHEAD} {
-		info_popup {Last scanned state does not match repository state.
+		info_popup [mc "Last scanned state does not match repository state.
 
 Another Git program has modified this repository since the last scan.  A rescan must be performed before a merge can be performed.
 
 The rescan will be automatically started now.
-}
+"]
 		unlock_index
 		rescan ui_ready
 		return 0
@@ -41,22 +41,22 @@ The rescan will be automatically started now.
 			continue; # and pray it works!
 		}
 		U? {
-			error_popup "You are in the middle of a conflicted merge.
+			error_popup [mc "You are in the middle of a conflicted merge.
 
-File [short_path $path] has merge conflicts.
+File %s has merge conflicts.
 
 You must resolve them, stage the file, and commit to complete the current merge.  Only then can you begin another merge.
-"
+" [short_path $path]]
 			unlock_index
 			return 0
 		}
 		?? {
-			error_popup "You are in the middle of a change.
+			error_popup [mc "You are in the middle of a change.
 
-File [short_path $path] is modified.
+File %s is modified.
 
 You should complete the current commit before starting a merge.  Doing so will help you abort a failed merge, should the need arise.
-"
+" [short_path $path]]
 			unlock_index
 			return 0
 		}
@@ -103,7 +103,7 @@ method _start {} {
 			regsub {^[^:@]*@} $remote {} remote
 		}
 		set branch [lindex $spec 2]
-		set stitle "$branch of $remote"
+		set stitle [mc "%s of %s" $branch $remote]
 	}
 	regsub ^refs/heads/ $branch {} branch
 	puts $fh "$cmit\t\tbranch '$branch' of $remote"
@@ -116,9 +116,9 @@ method _start {} {
 	lappend cmd HEAD
 	lappend cmd $name
 
-	set msg "Merging $current_branch and $stitle"
+	set msg [mc "Merging %s and %s" $current_branch $stitle]
 	ui_status "$msg..."
-	set cons [console::new "Merge" "merge $stitle"]
+	set cons [console::new [mc "Merge"] "merge $stitle"]
 	console::exec $cons $cmd [cb _finish $cons]
 
 	wm protocol $w WM_DELETE_WINDOW {}
@@ -128,9 +128,9 @@ method _start {} {
 method _finish {cons ok} {
 	console::done $cons $ok
 	if {$ok} {
-		set msg {Merge completed successfully.}
+		set msg [mc "Merge completed successfully."]
 	} else {
-		set msg {Merge failed.  Conflict resolution is required.}
+		set msg [mc "Merge failed.  Conflict resolution is required."]
 	}
 	unlock_index
 	rescan [list ui_status $msg]
@@ -147,7 +147,7 @@ constructor dialog {} {
 	}
 
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): Merge"
+	wm title $top [append "[appname] ([reponame]): " [mc "Merge"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
@@ -155,26 +155,26 @@ constructor dialog {} {
 	set _start [cb _start]
 
 	label $w.header \
-		-text "Merge Into $current_branch" \
+		-text [mc "Merge Into %s" $current_branch] \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
 	button $w.buttons.visualize \
-		-text Visualize \
+		-text [mc Visualize] \
 		-command [cb _visualize]
 	pack $w.buttons.visualize -side left
 	button $w.buttons.merge \
-		-text Merge \
+		-text [mc Merge] \
 		-command $_start
 	pack $w.buttons.merge -side right
 	button $w.buttons.cancel \
-		-text {Cancel} \
+		-text [mc "Cancel"] \
 		-command [cb _cancel]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	set w_rev [::choose_rev::new_unmerged $w.rev {Revision To Merge}]
+	set w_rev [::choose_rev::new_unmerged $w.rev [mc "Revision To Merge"]]
 	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 
 	bind $w <$M1B-Key-Return> $_start
@@ -209,34 +209,34 @@ proc reset_hard {} {
 	global HEAD commit_type file_states
 
 	if {[string match amend* $commit_type]} {
-		info_popup {Cannot abort while amending.
+		info_popup [mc "Cannot abort while amending.
 
 You must finish amending this commit.
-}
+"]
 		return
 	}
 
 	if {![lock_index abort]} return
 
 	if {[string match *merge* $commit_type]} {
-		set op_question "Abort merge?
+		set op_question [mc "Abort merge?
 
 Aborting the current merge will cause *ALL* uncommitted changes to be lost.
 
-Continue with aborting the current merge?"
+Continue with aborting the current merge?"]
 	} else {
-		set op_question "Reset changes?
+		set op_question [mc "Reset changes?
 
 Resetting the changes will cause *ALL* uncommitted changes to be lost.
 
-Continue with resetting the current changes?"
+Continue with resetting the current changes?"]
 	}
 
 	if {[ask_popup $op_question] eq {yes}} {
 		set fd [git_read --stderr read-tree --reset -u -v HEAD]
 		fconfigure $fd -blocking 0 -translation binary
 		fileevent $fd readable [namespace code [list _reset_wait $fd]]
-		$::main_status start {Aborting} {files reset}
+		$::main_status start [mc "Aborting"] {files reset}
 	} else {
 		unlock_index
 	}
@@ -263,9 +263,9 @@ proc _reset_wait {fd} {
 		catch {file delete [gitdir GITGUI_MSG]}
 
 		if {$fail} {
-			warn_popup "Abort failed.\n\n$err"
+			warn_popup "[mc "Abort failed."]\n\n$err"
 		}
-		rescan {ui_status {Abort completed.  Ready.}}
+		rescan {ui_status [mc "Abort completed.  Ready."]}
 	} else {
 		fconfigure $fd -blocking 0
 	}
