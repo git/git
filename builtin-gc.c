@@ -26,7 +26,7 @@ static int gc_auto_pack_limit = 20;
 #define MAX_ADD 10
 static const char *argv_pack_refs[] = {"pack-refs", "--all", "--prune", NULL};
 static const char *argv_reflog[] = {"reflog", "expire", "--all", NULL};
-static const char *argv_repack[MAX_ADD] = {"repack", "-a", "-d", "-l", NULL};
+static const char *argv_repack[MAX_ADD] = {"repack", "-d", "-l", NULL};
 static const char *argv_prune[] = {"prune", NULL};
 static const char *argv_rerere[] = {"rerere", "gc", NULL};
 
@@ -211,6 +211,16 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		prune = 0;
 		if (!need_to_gc())
 			return 0;
+	} else {
+		/*
+		 * Use safer (for shared repos) "-A" option to
+		 * repack when not pruning. Auto-gc makes its
+		 * own decision.
+		 */
+		if (prune)
+			append_option(argv_repack, "-a", MAX_ADD);
+		else
+			append_option(argv_repack, "-A", MAX_ADD);
 	}
 
 	if (pack_refs && run_command_v_opt(argv_pack_refs, RUN_GIT_CMD))
