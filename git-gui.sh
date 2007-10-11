@@ -1658,8 +1658,8 @@ proc do_quit {} {
 		#
 		set cfg_geometry [list]
 		lappend cfg_geometry [wm geometry .]
-		lappend cfg_geometry [lindex [.vpane sash coord 0] 1]
-		lappend cfg_geometry [lindex [.vpane.files sash coord 0] 0]
+		lappend cfg_geometry [lindex [.vpane sash coord 0] 0]
+		lappend cfg_geometry [lindex [.vpane.files sash coord 0] 1]
 		if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
 			set rc_geometry {}
 		}
@@ -2208,8 +2208,8 @@ pack .branch -side top -fill x
 
 # -- Main Window Layout
 #
-panedwindow .vpane -orient vertical
-panedwindow .vpane.files -orient horizontal
+panedwindow .vpane -orient horizontal
+panedwindow .vpane.files -orient vertical
 .vpane add .vpane.files -sticky nsew -height 100 -width 200
 pack .vpane -anchor n -side top -fill both -expand 1
 
@@ -2231,7 +2231,6 @@ pack .vpane.files.index.title -side top -fill x
 pack .vpane.files.index.sx -side bottom -fill x
 pack .vpane.files.index.sy -side right -fill y
 pack $ui_index -side left -fill both -expand 1
-.vpane.files add .vpane.files.index -sticky nsew
 
 # -- Working Directory File List
 #
@@ -2251,7 +2250,9 @@ pack .vpane.files.workdir.title -side top -fill x
 pack .vpane.files.workdir.sx -side bottom -fill x
 pack .vpane.files.workdir.sy -side right -fill y
 pack $ui_workdir -side left -fill both -expand 1
+
 .vpane.files add .vpane.files.workdir -sticky nsew
+.vpane.files add .vpane.files.index -sticky nsew
 
 foreach i [list $ui_index $ui_workdir] {
 	rmsel_tag $i
@@ -2264,8 +2265,8 @@ unset i
 frame .vpane.lower -height 300 -width 400
 frame .vpane.lower.commarea
 frame .vpane.lower.diff -relief sunken -borderwidth 1
-pack .vpane.lower.commarea -side top -fill x
-pack .vpane.lower.diff -side bottom -fill both -expand 1
+pack .vpane.lower.diff -fill both -expand 1
+pack .vpane.lower.commarea -side bottom -fill x
 .vpane add .vpane.lower -sticky nsew
 
 # -- Commit Area Buttons
@@ -2591,11 +2592,11 @@ catch {
 set gm $repo_config(gui.geometry)
 wm geometry . [lindex $gm 0]
 .vpane sash place 0 \
-	[lindex [.vpane sash coord 0] 0] \
-	[lindex $gm 1]
+	[lindex $gm 1] \
+	[lindex [.vpane sash coord 0] 1]
 .vpane.files sash place 0 \
-	[lindex $gm 2] \
-	[lindex [.vpane.files sash coord 0] 1]
+	[lindex [.vpane.files sash coord 0] 0] \
+	[lindex $gm 2]
 unset gm
 }
 
