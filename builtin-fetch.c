@@ -105,7 +105,13 @@ static struct ref *get_ref_map(struct transport *transport,
 				    !remote->fetch[0].pattern)
 					ref_map->merge = 1;
 			}
-			if (has_merge)
+			/*
+			 * if the remote we're fetching from is the same
+			 * as given in branch.<name>.remote, we add the
+			 * ref given in branch.<name>.merge, too.
+			 */
+			if (has_merge && !strcmp(branch->remote_name,
+						remote->name))
 				add_merge_config(&ref_map, remote_refs, branch, &tail);
 		} else {
 			ref_map = get_remote_ref(remote_refs, "HEAD");

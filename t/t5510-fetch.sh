@@ -200,4 +200,12 @@ test_expect_success 'push via rsync' '
 '
 }
 
+test_expect_success 'fetch with a non-applying branch.<name>.merge' '
+	git config branch.master.remote yeti &&
+	git config branch.master.merge refs/heads/bigfoot &&
+	git config remote.blub.url one &&
+	git config remote.blub.fetch "refs/heads/*:refs/remotes/one/*" &&
+	git fetch blub
+'
+
 test_done
