@@ -140,12 +140,16 @@ constructor pick {} {
 		$w_recentlist tag conf link \
 			-foreground blue \
 			-underline 1
-		set home "[file normalize $::env(HOME)][file separator]"
+		set home $::env(HOME)
+		if {[is_Cygwin]} {
+			set home [exec cygpath --windows --absolute $home]
+		}
+		set home "[file normalize $home]/"
 		set hlen [string length $home]
 		foreach p $sorted_recent {
 			set path $p
 			if {[string equal -length $hlen $home $p]} {
-				set p "~[file separator][string range $p $hlen end]"
+				set p "~/[string range $p $hlen end]"
 			}
 			regsub -all "\n" $p "\\n" p
 			$w_recentlist insert end $p link
