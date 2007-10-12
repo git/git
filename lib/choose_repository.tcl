@@ -7,11 +7,11 @@ field top
 field w
 field w_body      ; # Widget holding the center content
 field w_next      ; # Next button
+field w_quit      ; # Quit button
 field o_cons      ; # Console object (if active)
 field w_types     ; # List of type buttons in clone
 field w_recentlist ; # Listbox containing recent repositories
 
-field action          new ; # What action are we going to perform?
 field done              0 ; # Finished picking the repository?
 field local_path       {} ; # Where this repository is locally
 field origin_url       {} ; # Where we are cloning from
@@ -65,25 +65,32 @@ constructor pick {} {
 	pack [git_logo $w.git_logo] -side left -fill y -padx 10 -pady 10
 
 	set w_body $w.body
+	set opts $w_body.options
 	frame $w_body
-	radiobutton $w_body.new \
-		-anchor w \
-		-text [mc "Create New Repository"] \
-		-variable @action \
-		-value new
-	radiobutton $w_body.clone \
-		-anchor w \
-		-text [mc "Clone Existing Repository"] \
-		-variable @action \
-		-value clone
-	radiobutton $w_body.open \
-		-anchor w \
-		-text [mc "Open Existing Repository"] \
-		-variable @action \
-		-value open
-	pack $w_body.new -anchor w -fill x
-	pack $w_body.clone -anchor w -fill x
-	pack $w_body.open -anchor w -fill x
+	text $opts \
+		-cursor $::cursor_ptr \
+		-relief flat \
+		-background [$w_body cget -background] \
+		-wrap none \
+		-spacing1 5 \
+		-width 50 \
+		-height 3
+	pack $opts -anchor w -fill x
+
+	$opts tag conf link_new -foreground blue -underline 1
+	$opts tag bind link_new <1> [cb _next new]
+	$opts insert end [mc "Create New Repository"] link_new
+	$opts insert end "\n"
+
+	$opts tag conf link_clone -foreground blue -underline 1
+	$opts tag bind link_clone <1> [cb _next clone]
+	$opts insert end [mc "Clone Existing Repository"] link_clone
+	$opts insert end "\n"
+
+	$opts tag conf link_open -foreground blue -underline 1
+	$opts tag bind link_open <1> [cb _next open]
+	$opts insert end [mc "Open Existing Repository"] link_open
+	$opts insert end "\n"
 
 	set sorted_recent [_get_recentrepos]
 	if {[llength $sorted_recent] > 0} {
@@ -122,15 +129,11 @@ constructor pick {} {
 
 	frame $w.buttons
 	set w_next $w.buttons.next
-	button $w_next \
-		-default active \
-		-text [mc "Next >"] \
-		-command [cb _next]
-	pack $w_next -side right -padx 5
-	button $w.buttons.quit \
+	set w_quit $w.buttons.quit
+	button $w_quit \
 		-text [mc "Quit"] \
 		-command exit
-	pack $w.buttons.quit -side right -padx 5
+	pack $w_quit -side right -padx 5
 	pack $w.buttons -side bottom -fill x -padx 10 -pady 10
 
 	bind $top <Return> [cb _invoke_next]
@@ -214,8 +217,12 @@ method _open_recent {xy} {
 	_do_open2 $this
 }
 
-method _next {} {
+method _next {action} {
 	destroy $w_body
+	if {![winfo exists $w_next]} {
+		button $w_next -default active
+		pack $w_next -side right -padx 5 -before $w_quit
+	}
 	_do_$action $this
 }
 
