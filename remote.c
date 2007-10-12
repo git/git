@@ -909,7 +909,8 @@ int get_fetch_map(struct ref *remote_refs,
 			    rm->peer_ref->name);
 	}
 
-	tail_link_ref(ref_map, tail);
+	if (ref_map)
+		tail_link_ref(ref_map, tail);
 
 	return 0;
 }
