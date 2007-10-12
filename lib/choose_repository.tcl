@@ -84,6 +84,8 @@ constructor pick {} {
 			-command [cb _next new] \
 			-accelerator $M1T-N \
 			-label [mc "New..."]
+		bind $top <$M1B-n> [cb _next new]
+		bind $top <$M1B-N> [cb _next new]
 	}
 
 	$opts tag conf link_clone -foreground blue -underline 1
@@ -95,6 +97,8 @@ constructor pick {} {
 			-command [cb _next clone] \
 			-accelerator $M1T-C \
 			-label [mc "Clone..."]
+		bind $top <$M1B-c> [cb _next clone]
+		bind $top <$M1B-C> [cb _next clone]
 	}
 
 	$opts tag conf link_open -foreground blue -underline 1
@@ -106,6 +110,8 @@ constructor pick {} {
 			-command [cb _next open] \
 			-accelerator $M1T-O \
 			-label [mc "Open..."]
+		bind $top <$M1B-o> [cb _next open]
+		bind $top <$M1B-O> [cb _next open]
 	}
 
 	$opts conf -state disabled
