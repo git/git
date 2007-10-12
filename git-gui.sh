@@ -748,40 +748,33 @@ unset -nocomplain idx fd
 ##
 ## config file parsing
 
-proc load_config {include_global} {
-	global repo_config global_config default_config
-
-	array unset global_config
-	if {$include_global} {
+git-version proc _parse_config {arr_name args} {
+	default {
+		upvar $arr_name arr
+		array unset arr
 		catch {
-			set fd_rc [git_read config --global --list]
+			set fd_rc [eval [list git_read config --list] $args]
 			while {[gets $fd_rc line] >= 0} {
 				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
 					if {[is_many_config $name]} {
-						lappend global_config($name) $value
+						lappend arr($name) $value
 					} else {
-						set global_config($name) $value
+						set arr($name) $value
 					}
 				}
 			}
 			close $fd_rc
 		}
 	}
+}
 
-	array unset repo_config
-	catch {
-		set fd_rc [git_read config --list]
-		while {[gets $fd_rc line] >= 0} {
-			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
-				if {[is_many_config $name]} {
-					lappend repo_config($name) $value
-				} else {
-					set repo_config($name) $value
-				}
-			}
-		}
-		close $fd_rc
+proc load_config {include_global} {
+	global repo_config global_config default_config
+
+	if {$include_global} {
+		_parse_config global_config --global
 	}
+	_parse_config repo_config
 
 	foreach name [array names default_config] {
 		if {[catch {set v $global_config($name)}]} {
