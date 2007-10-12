@@ -324,7 +324,40 @@ proc _is_git {path} {
 	 && [file exists [file join $path config]]} {
 		return 1
 	}
+	if {[is_Cygwin]} {
+		if {[file exists [file join $path HEAD]]
+		 && [file exists [file join $path objects.lnk]]
+		 && [file exists [file join $path config.lnk]]} {
+			return 1
+		}
+	}
 	return 0
+}
+
+proc _objdir {path} {
+	set objdir [file join $path .git objects]
+	if {[file isdirectory $objdir]} {
+		return $objdir
+	}
+
+	set objdir [file join $path objects]
+	if {[file isdirectory $objdir]} {
+		return $objdir
+	}
+
+	if {[is_Cygwin]} {
+		set objdir [file join $path .git objects.lnk]
+		if {[file isfile $objdir]} {
+			return [win32_read_lnk $objdir]
+		}
+
+		set objdir [file join $path objects.lnk]
+		if {[file isfile $objdir]} {
+			return [win32_read_lnk $objdir]
+		}
+	}
+
+	return {}
 }
 
 ######################################################################
@@ -555,13 +588,10 @@ method _do_clone2 {} {
 	}
 
 	if {$clone_type eq {hardlink} || $clone_type eq {shared}} {
-		set objdir [file join $origin_url .git objects]
-		if {![file isdirectory $objdir]} {
-			set objdir [file join $origin_url objects]
-			if {![file isdirectory $objdir]} {
-				error_popup [mc "Not a Git repository: %s" [file tail $origin_url]]
-				return
-			}
+		set objdir [_objdir $origin_url]
+		if {$objdir eq {}} {
+			error_popup [mc "Not a Git repository: %s" [file tail $origin_url]]
+			return
 		}
 	}
 
