@@ -30,14 +30,11 @@ constructor pick {} {
 		menu $w.mbar -tearoff 0
 		$top configure -menu $w.mbar
 
+		set m_repo $w.mbar.repository
 		$w.mbar add cascade \
 			-label [mc Repository] \
-			-menu $w.mbar.repository
-		menu $w.mbar.repository
-		$w.mbar.repository add command \
-			-label [mc Quit] \
-			-command exit \
-			-accelerator $M1T-Q
+			-menu $m_repo
+		menu $m_repo
 
 		if {[is_MacOSX]} {
 			$w.mbar add cascade -label [mc Apple] -menu .mbar.apple
@@ -60,6 +57,7 @@ constructor pick {} {
 	} else {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 		bind $top <Key-Escape> [list destroy $top]
+		set m_repo {}
 	}
 
 	pack [git_logo $w.git_logo] -side left -fill y -padx 10 -pady 10
@@ -81,19 +79,44 @@ constructor pick {} {
 	$opts tag bind link_new <1> [cb _next new]
 	$opts insert end [mc "Create New Repository"] link_new
 	$opts insert end "\n"
+	if {$m_repo ne {}} {
+		$m_repo add command \
+			-command [cb _next new] \
+			-accelerator $M1T-N \
+			-label [mc "New..."]
+	}
 
 	$opts tag conf link_clone -foreground blue -underline 1
 	$opts tag bind link_clone <1> [cb _next clone]
 	$opts insert end [mc "Clone Existing Repository"] link_clone
 	$opts insert end "\n"
+	if {$m_repo ne {}} {
+		$m_repo add command \
+			-command [cb _next clone] \
+			-accelerator $M1T-C \
+			-label [mc "Clone..."]
+	}
 
 	$opts tag conf link_open -foreground blue -underline 1
 	$opts tag bind link_open <1> [cb _next open]
 	$opts insert end [mc "Open Existing Repository"] link_open
 	$opts insert end "\n"
+	if {$m_repo ne {}} {
+		$m_repo add command \
+			-command [cb _next open] \
+			-accelerator $M1T-O \
+			-label [mc "Open..."]
+	}
 
 	set sorted_recent [_get_recentrepos]
 	if {[llength $sorted_recent] > 0} {
+		if {$m_repo ne {}} {
+			$m_repo add separator
+			$m_repo add command \
+				-state disabled \
+				-label [mc "Recent Repositories"]
+		}
+
 		label $w_body.space
 		label $w_body.recentlabel \
 			-anchor w \
@@ -112,12 +135,19 @@ constructor pick {} {
 		set home "[file normalize $::env(HOME)][file separator]"
 		set hlen [string length $home]
 		foreach p $sorted_recent {
+			set path $p
 			if {[string equal -length $hlen $home $p]} {
 				set p "~[file separator][string range $p $hlen end]"
 			}
 			regsub -all "\n" $p "\\n" p
 			$w_recentlist insert end $p link
 			$w_recentlist insert end "\n"
+
+			if {$m_repo ne {}} {
+				$m_repo add command \
+					-command [cb _open_recent_path $path] \
+					-label "    $p"
+			}
 		}
 		$w_recentlist conf -state disabled
 		$w_recentlist tag bind link <1> [cb _open_recent %x,%y]
@@ -135,6 +165,14 @@ constructor pick {} {
 		-command exit
 	pack $w_quit -side right -padx 5
 	pack $w.buttons -side bottom -fill x -padx 10 -pady 10
+
+	if {$m_repo ne {}} {
+		$m_repo add separator
+		$m_repo add command \
+			-label [mc Quit] \
+			-command exit \
+			-accelerator $M1T-Q
+	}
 
 	bind $top <Return> [cb _invoke_next]
 	bind $top <Visibility> "
@@ -214,6 +252,11 @@ proc _append_recentrepos {path} {
 method _open_recent {xy} {
 	set id [lindex [split [$w_recentlist index @$xy] .] 0]
 	set local_path [lindex $sorted_recent [expr {$id - 1}]]
+	_do_open2 $this
+}
+
+method _open_recent_path {p} {
+	set local_path $p
 	_do_open2 $this
 }
 
