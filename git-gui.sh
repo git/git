@@ -749,6 +749,26 @@ unset -nocomplain idx fd
 ## config file parsing
 
 git-version proc _parse_config {arr_name args} {
+	>= 1.5.3 {
+		upvar $arr_name arr
+		array unset arr
+		set buf {}
+		catch {
+			set fd_rc [eval [list git_read config --null --list] $args]
+			fconfigure $fd_rc -translation binary
+			set buf [read $fd_rc]
+			close $fd_rc
+		}
+		foreach line [split $buf "\0"] {
+			if {[regexp {^([^\n]+)\n(.*)$} $line line name value]} {
+				if {[is_many_config $name]} {
+					lappend arr($name) $value
+				} else {
+					set arr($name) $value
+				}
+			}
+		}
+	}
 	default {
 		upvar $arr_name arr
 		array unset arr
