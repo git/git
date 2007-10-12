@@ -233,51 +233,6 @@ proc get_config {name} {
 	}
 }
 
-proc load_config {include_global} {
-	global repo_config global_config default_config
-
-	array unset global_config
-	if {$include_global} {
-		catch {
-			set fd_rc [git_read config --global --list]
-			while {[gets $fd_rc line] >= 0} {
-				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
-					if {[is_many_config $name]} {
-						lappend global_config($name) $value
-					} else {
-						set global_config($name) $value
-					}
-				}
-			}
-			close $fd_rc
-		}
-	}
-
-	array unset repo_config
-	catch {
-		set fd_rc [git_read config --list]
-		while {[gets $fd_rc line] >= 0} {
-			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
-				if {[is_many_config $name]} {
-					lappend repo_config($name) $value
-				} else {
-					set repo_config($name) $value
-				}
-			}
-		}
-		close $fd_rc
-	}
-
-	foreach name [array names default_config] {
-		if {[catch {set v $global_config($name)}]} {
-			set global_config($name) $default_config($name)
-		}
-		if {[catch {set v $repo_config($name)}]} {
-			set repo_config($name) $default_config($name)
-		}
-	}
-}
-
 ######################################################################
 ##
 ## handy utils
@@ -788,6 +743,55 @@ if {$idx ne {}} {
 	set auto_path [concat [list $oguilib] $auto_path]
 }
 unset -nocomplain idx fd
+
+######################################################################
+##
+## config file parsing
+
+proc load_config {include_global} {
+	global repo_config global_config default_config
+
+	array unset global_config
+	if {$include_global} {
+		catch {
+			set fd_rc [git_read config --global --list]
+			while {[gets $fd_rc line] >= 0} {
+				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
+					if {[is_many_config $name]} {
+						lappend global_config($name) $value
+					} else {
+						set global_config($name) $value
+					}
+				}
+			}
+			close $fd_rc
+		}
+	}
+
+	array unset repo_config
+	catch {
+		set fd_rc [git_read config --list]
+		while {[gets $fd_rc line] >= 0} {
+			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
+				if {[is_many_config $name]} {
+					lappend repo_config($name) $value
+				} else {
+					set repo_config($name) $value
+				}
+			}
+		}
+		close $fd_rc
+	}
+
+	foreach name [array names default_config] {
+		if {[catch {set v $global_config($name)}]} {
+			set global_config($name) $default_config($name)
+		}
+		if {[catch {set v $repo_config($name)}]} {
+			set repo_config($name) $default_config($name)
+		}
+	}
+}
 
 ######################################################################
 ##
