@@ -108,6 +108,8 @@ constructor pick {} {
 			-label [mc "Open..."]
 	}
 
+	$opts conf -state disabled
+
 	set sorted_recent [_get_recentrepos]
 	if {[llength $sorted_recent] > 0} {
 		if {$m_repo ne {}} {
