@@ -352,6 +352,7 @@ method _do_new {} {
 	pack $w_body.where -fill x
 
 	trace add variable @local_path write [cb _write_local_path]
+	bind $w_body.h <Destroy> [list trace remove variable @local_path write [cb _write_local_path]]
 	update
 	focus $w_body.where.t
 }
@@ -477,6 +478,10 @@ method _do_clone {} {
 
 	trace add variable @local_path write [cb _update_clone]
 	trace add variable @origin_url write [cb _update_clone]
+	bind $w_body.h <Destroy> "
+		[list trace remove variable @local_path write [cb _update_clone]]
+		[list trace remove variable @origin_url write [cb _update_clone]]
+	"
 	update
 	focus $args.origin_t
 }
@@ -948,6 +953,7 @@ method _do_open {} {
 	pack $w_body.where -fill x
 
 	trace add variable @local_path write [cb _write_local_path]
+	bind $w_body.h <Destroy> [list trace remove variable @local_path write [cb _write_local_path]]
 	update
 	focus $w_body.where.t
 }
