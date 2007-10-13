@@ -99,6 +99,8 @@ ifeq ($(findstring $(MAKEFLAGS),s),s)
 QUIET_GEN =
 endif
 
+-include config.mak
+
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
