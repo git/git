@@ -579,7 +579,7 @@ merge.summary::
 
 merge.tool::
 	Controls which merge resolution program is used by
-	gitlink:git-mergetool[l].  Valid values are: "kdiff3", "tkdiff",
+	gitlink:git-mergetool[1].  Valid values are: "kdiff3", "tkdiff",
 	"meld", "xxdiff", "emerge", "vimdiff", "gvimdiff", and "opendiff".
 
 merge.verbosity::

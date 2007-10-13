@@ -145,17 +145,6 @@ sign `$` upon checkout.  Any byte sequence that begins with
 with `$Id$` upon check-in.
 
 
-Interaction between checkin/checkout attributes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In the check-in codepath, the worktree file is first converted
-with `ident` (if specified), and then with `crlf` (again, if
-specified and applicable).
-
-In the check-out codepath, the blob content is first converted
-with `crlf`, and then `ident`.
-
-
 `filter`
 ^^^^^^^^
 
@@ -175,11 +164,10 @@ but makes the filter a no-op passthru.
 The content filtering is done to massage the content into a
 shape that is more convenient for the platform, filesystem, and
 the user to use.  The keyword here is "more convenient" and not
-"turning something unusable into usable".  In other words, it is
-"hanging yourself because we gave you a long rope" if your
-project uses filtering mechanism in such a way that it makes
-your project unusable unless the checkout is done with a
-specific filter in effect.
+"turning something unusable into usable".  In other words, the
+intent is that if someone unsets the filter driver definition,
+or does not have the appropriate filter program, the project
+should still be usable.
 
 
 Interaction between checkin/checkout attributes

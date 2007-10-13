@@ -6,7 +6,7 @@
 # it dies.
 
 # Having this variable in your environment would break scripts because
-# you would cause "cd" to be be taken to unexpected places.  If you
+# you would cause "cd" to be taken to unexpected places.  If you
 # like CDPATH, define it for your interactive shell sessions without
 # exporting it.
 unset CDPATH

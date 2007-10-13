@@ -61,7 +61,7 @@ stop_httpd () {
 	test -f "$fqgitdir/pid" && kill `cat "$fqgitdir/pid"`
 }
 
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	--stop|stop)

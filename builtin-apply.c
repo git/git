@@ -41,7 +41,7 @@ static int apply_in_reverse;
 static int apply_with_reject;
 static int apply_verbosely;
 static int no_add;
-static int show_index_info;
+static const char *fake_ancestor;
 static int line_termination = '\n';
 static unsigned long p_context = ULONG_MAX;
 static const char apply_usage[] =
@@ -254,7 +254,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 		if (name) {
 			char *cp = name;
 			while (p_value) {
-				cp = strchr(name, '/');
+				cp = strchr(cp, '/');
 				if (!cp)
 					break;
 				cp++;
@@ -1514,7 +1514,8 @@ static int find_offset(const char *buf, unsigned long size, const char *fragment
 	}
 
 	/* Exact line number? */
-	if (!memcmp(buf + start, fragment, fragsize))
+	if ((start + fragsize <= size) &&
+	    !memcmp(buf + start, fragment, fragsize))
 		return start;
 
 	/*
@@ -1641,15 +1642,22 @@ static int apply_line(char *output, const char *patch, int plen)
 
 	buf = output;
 	if (need_fix_leading_space) {
+		int consecutive_spaces = 0;
 		/* between patch[1..last_tab_in_indent] strip the
 		 * funny spaces, updating them to tab as needed.
 		 */
 		for (i = 1; i < last_tab_in_indent; i++, plen--) {
 			char ch = patch[i];
-			if (ch != ' ')
+			if (ch != ' ') {
+				consecutive_spaces = 0;
 				*output++ = ch;
-			else if ((i % 8) == 0)
-				*output++ = '\t';
+			} else {
+				consecutive_spaces++;
+				if (consecutive_spaces == 8) {
+					*output++ = '\t';
+					consecutive_spaces = 0;
+				}
+			}
 		}
 		fixed = 1;
 		i = last_tab_in_indent;
@@ -2226,9 +2234,26 @@ static int check_patch_list(struct patch *patch)
 	return err;
 }
 
-static void show_index_list(struct patch *list)
+/* This function tries to read the sha1 from the current index */
+static int get_current_sha1(const char *path, unsigned char *sha1)
+{
+	int pos;
+
+	if (read_cache() < 0)
+		return -1;
+	pos = cache_name_pos(path, strlen(path));
+	if (pos < 0)
+		return -1;
+	hashcpy(sha1, active_cache[pos]->sha1);
+	return 0;
+}
+
+/* Build an index that contains the just the files needed for a 3way merge */
+static void build_fake_ancestor(struct patch *list, const char *filename)
 {
 	struct patch *patch;
+	struct index_state result = { 0 };
+	int fd;
 
 	/* Once we start supporting the reverse patch, it may be
 	 * worth showing the new sha1 prefix, but until then...
@@ -2236,24 +2261,36 @@ static void show_index_list(struct patch *list)
 	for (patch = list; patch; patch = patch->next) {
 		const unsigned char *sha1_ptr;
 		unsigned char sha1[20];
+		struct cache_entry *ce;
 		const char *name;
 
 		name = patch->old_name ? patch->old_name : patch->new_name;
 		if (0 < patch->is_new)
-			sha1_ptr = null_sha1;
+			continue;
 		else if (get_sha1(patch->old_sha1_prefix, sha1))
-			die("sha1 information is lacking or useless (%s).",
-			    name);
+			/* git diff has no index line for mode/type changes */
+			if (!patch->lines_added && !patch->lines_deleted) {
+				if (get_current_sha1(patch->new_name, sha1) ||
+				    get_current_sha1(patch->old_name, sha1))
+					die("mode change for %s, which is not "
+						"in current HEAD", name);
+				sha1_ptr = sha1;
+			} else
+				die("sha1 information is lacking or useless "
+					"(%s).", name);
 		else
 			sha1_ptr = sha1;
 
-		printf("%06o %s	",patch->old_mode, sha1_to_hex(sha1_ptr));
-		if (line_termination && quote_c_style(name, NULL, NULL, 0))
-			quote_c_style(name, NULL, stdout, 0);
-		else
-			fputs(name, stdout);
-		putchar(line_termination);
+		ce = make_cache_entry(patch->old_mode, sha1_ptr, name, 0, 0);
+		if (add_index_entry(&result, ce, ADD_CACHE_OK_TO_ADD))
+			die ("Could not add %s to temporary index", name);
 	}
+
+	fd = open(filename, O_WRONLY | O_CREAT, 0666);
+	if (fd < 0 || write_index(&result, fd) || close(fd))
+		die ("Could not write temporary index to %s", filename);
+
+	discard_index(&result);
 }
 
 static void stat_patch_list(struct patch *patch)
@@ -2775,8 +2812,8 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 	if (apply && write_out_results(list, skipped_patch))
 		exit(1);
 
-	if (show_index_info)
-		show_index_list(list);
+	if (fake_ancestor)
+		build_fake_ancestor(list, fake_ancestor);
 
 	if (diffstat)
 		stat_patch_list(list);
@@ -2884,9 +2921,11 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			apply = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--index-info")) {
+		if (!strcmp(arg, "--build-fake-ancestor")) {
 			apply = 0;
-			show_index_info = 1;
+			if (++i >= argc)
+				die ("need a filename");
+			fake_ancestor = argv[i];
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {

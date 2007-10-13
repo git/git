@@ -9,7 +9,7 @@ SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
 no_prune=:
-while case $# in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	--prune)

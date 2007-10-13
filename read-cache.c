@@ -434,6 +434,31 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 	return 0;
 }
 
+struct cache_entry *make_cache_entry(unsigned int mode,
+		const unsigned char *sha1, const char *path, int stage,
+		int refresh)
+{
+	int size, len;
+	struct cache_entry *ce;
+
+	if (!verify_path(path))
+		return NULL;
+
+	len = strlen(path);
+	size = cache_entry_size(len);
+	ce = xcalloc(1, size);
+
+	hashcpy(ce->sha1, sha1);
+	memcpy(ce->name, path, len);
+	ce->ce_flags = create_ce_flags(len, stage);
+	ce->ce_mode = create_ce_mode(mode);
+
+	if (refresh)
+		return refresh_cache_entry(ce, 0);
+
+	return ce;
+}
+
 int ce_same_name(struct cache_entry *a, struct cache_entry *b)
 {
 	int len = ce_namelen(a);

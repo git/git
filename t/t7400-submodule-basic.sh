@@ -152,6 +152,10 @@ test_expect_success 'the --cached sha1 should be rev1' '
 	git-submodule --cached status | grep "^+$rev1"
 '
 
+test_expect_success 'git diff should report the SHA1 of the new submodule commit' '
+	git-diff | grep "^+Subproject commit $rev2"
+'
+
 test_expect_success 'update should checkout rev1' '
 	git-submodule update &&
 	head=$(cd lib && git rev-parse HEAD) &&

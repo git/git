@@ -27,7 +27,7 @@ shallow_depth=
 no_progress=
 test -t 1 || no_progress=--no-progress
 quiet=
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	-a|--a|--ap|--app|--appe|--appen|--append)

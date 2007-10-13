@@ -26,7 +26,7 @@ case $(uname -s) in
 esac
 
 exec=
-while case "$#" in 0) break;; esac
+while test $# != 0
 do
   case "$1" in
   -h|--h|--he|--hea|--head|--heads)

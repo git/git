@@ -179,8 +179,8 @@
 
 --ext-diff::
 	Allow an external diff helper to be executed. If you set an
-	external diff driver with gitlink:gitattributes(5), you need
-	to use this option with gitlink:git-log(1) and friends.
+	external diff driver with gitlink:gitattributes[5], you need
+	to use this option with gitlink:git-log[1] and friends.
 
 --no-ext-diff::
 	Disallow external diff drivers.

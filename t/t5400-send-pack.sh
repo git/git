@@ -113,4 +113,14 @@ test_expect_success \
 	! git diff .git/refs/heads/master victim/.git/refs/heads/master
 '
 
+test_expect_success \
+	'pushing does not include non-head refs' '
+	mkdir parent && cd parent &&
+	git-init && touch file && git-add file && git-commit -m add &&
+	cd .. &&
+	git-clone parent child && cd child && git-push --all &&
+	cd ../parent &&
+	git-branch -a >branches && ! grep -q origin/master branches
+'
+
 test_done

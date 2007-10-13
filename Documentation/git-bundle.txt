@@ -103,14 +103,20 @@ We set a tag in R1 (lastR2bundle) after the previous such transport,
 and move it afterwards to help build the bundle.
 
 in R1 on A:
+
+------------
 $ git-bundle create mybundle master ^lastR2bundle
 $ git tag -f lastR2bundle master
+------------
 
 (move mybundle from A to B by some mechanism)
 
 in R2 on B:
+
+------------
 $ git-bundle verify mybundle
 $ git-fetch mybundle  refspec
+------------
 
 where refspec is refInBundle:localRef
 
@@ -124,9 +130,11 @@ Also, with something like this in your config:
 You can first sneakernet the bundle file to ~/tmp/file.bdl and
 then these commands:
 
+------------
 $ git ls-remote bundle
 $ git fetch bundle
 $ git pull bundle
+------------
 
 would treat it as if it is talking with a remote side over the
 network.

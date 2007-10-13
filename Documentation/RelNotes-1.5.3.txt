@@ -152,7 +152,7 @@ Updates since v1.5.2
     cloning locally.
 
   - URL used for "git clone" and friends can specify nonstandard SSH port
-    by using sh://host:port/path/to/repo syntax.
+    by using ssh://host:port/path/to/repo syntax.
 
   - "git bundle create" can now create a bundle without negative refs,
     i.e. "everything since the beginning up to certain points".

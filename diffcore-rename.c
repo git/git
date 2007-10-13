@@ -184,7 +184,8 @@ static int estimate_similarity(struct diff_filespec *src,
 	if (base_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
-	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
+	if ((!src->cnt_data && diff_populate_filespec(src, 0))
+		|| (!dst->cnt_data && diff_populate_filespec(dst, 0)))
 		return 0; /* error but caught downstream */
 
 
@@ -298,9 +299,24 @@ void diffcore_rename(struct diff_options *options)
 		else if (detect_rename == DIFF_DETECT_COPY)
 			register_rename_src(p->one, 1, p->score);
 	}
-	if (rename_dst_nr == 0 || rename_src_nr == 0 ||
-	    (0 < rename_limit && rename_limit < rename_dst_nr))
+	if (rename_dst_nr == 0 || rename_src_nr == 0)
 		goto cleanup; /* nothing to do */
+
+	/*
+	 * This basically does a test for the rename matrix not
+	 * growing larger than a "rename_limit" square matrix, ie:
+	 *
+	 *    rename_dst_nr * rename_src_nr > rename_limit * rename_limit
+	 *
+	 * but handles the potential overflow case specially (and we
+	 * assume at least 32-bit integers)
+	 */
+	if (rename_limit <= 0 || rename_limit > 32767)
+		rename_limit = 32767;
+	if (rename_dst_nr > rename_limit && rename_src_nr > rename_limit)
+		goto cleanup;
+	if (rename_dst_nr * rename_src_nr > rename_limit * rename_limit)
+		goto cleanup;
 
 	/* We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.
@@ -362,10 +378,10 @@ void diffcore_rename(struct diff_options *options)
 			m->score = estimate_similarity(one, two,
 						       minimum_score);
 			m->name_score = basename_same(one, two);
-			diff_free_filespec_data(one);
+			diff_free_filespec_blob(one);
 		}
 		/* We do not need the text anymore */
-		diff_free_filespec_data(two);
+		diff_free_filespec_blob(two);
 		dst_cnt++;
 	}
 	/* cost matrix sorted by most to least similar pair */
