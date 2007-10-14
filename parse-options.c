@@ -39,7 +39,8 @@ static int opterror(const struct option *opt, const char *reason, int flags)
 static int get_value(struct optparse_t *p,
                      const struct option *opt, int flags)
 {
-	const char *s;
+	const char *s, *arg;
+	arg = p->opt ? p->opt : (p->argc > 1 ? p->argv[1] : NULL);
 
 	if (p->opt && (flags & OPT_UNSET))
 		return opterror(opt, "takes no value", flags);
@@ -59,17 +60,34 @@ static int get_value(struct optparse_t *p,
 			*(const char **)opt->value = (const char *)NULL;
 			return 0;
 		}
-		if (!p->opt && p->argc <= 1)
+		if (opt->flags & PARSE_OPT_OPTARG && (!arg || *arg == '-')) {
+			*(const char **)opt->value = (const char *)opt->defval;
+			return 0;
+		}
+		if (!arg)
 			return opterror(opt, "requires a value", flags);
 		*(const char **)opt->value = get_arg(p);
 		return 0;
+
+	case OPTION_CALLBACK:
+		if (flags & OPT_UNSET)
+			return (*opt->callback)(opt, NULL, 1);
+		if (opt->flags & PARSE_OPT_OPTARG && (!arg || *arg == '-'))
+			return (*opt->callback)(opt, NULL, 0);
+		if (!arg)
+			return opterror(opt, "requires a value", flags);
+		return (*opt->callback)(opt, get_arg(p), 0);
 
 	case OPTION_INTEGER:
 		if (flags & OPT_UNSET) {
 			*(int *)opt->value = 0;
 			return 0;
 		}
-		if (!p->opt && p->argc <= 1)
+		if (opt->flags & PARSE_OPT_OPTARG && (!arg || !isdigit(*arg))) {
+			*(int *)opt->value = opt->defval;
+			return 0;
+		}
+		if (!arg)
 			return opterror(opt, "requires a value", flags);
 		*(int *)opt->value = strtol(get_arg(p), (char **)&s, 10);
 		if (*s)
@@ -201,13 +219,24 @@ void usage_with_options(const char * const *usagestr,
 
 		switch (opts->type) {
 		case OPTION_INTEGER:
-			pos += fprintf(stderr, " <n>");
+			if (opts->flags & PARSE_OPT_OPTARG)
+				pos += fprintf(stderr, " [<n>]");
+			else
+				pos += fprintf(stderr, " <n>");
 			break;
 		case OPTION_STRING:
-			if (opts->argh)
-				pos += fprintf(stderr, " <%s>", opts->argh);
-			else
-				pos += fprintf(stderr, " ...");
+		case OPTION_CALLBACK:
+			if (opts->argh) {
+				if (opts->flags & PARSE_OPT_OPTARG)
+					pos += fprintf(stderr, " [<%s>]", opts->argh);
+				else
+					pos += fprintf(stderr, " <%s>", opts->argh);
+			} else {
+				if (opts->flags & PARSE_OPT_OPTARG)
+					pos += fprintf(stderr, " [...]");
+				else
+					pos += fprintf(stderr, " ...");
+			}
 			break;
 		default:
 			break;
