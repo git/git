@@ -123,7 +123,7 @@ static int parse_long_opt(struct optparse_t *p, const char *arg,
 }
 
 int parse_options(int argc, const char **argv, const struct option *options,
-                  const char *usagestr, int flags)
+                  const char * const usagestr[], int flags)
 {
 	struct optparse_t args = { argv + 1, argc - 1, NULL };
 	int j = 0;
@@ -140,9 +140,9 @@ int parse_options(int argc, const char **argv, const struct option *options,
 			args.opt = arg + 1;
 			do {
 				if (*args.opt == 'h')
-					usage(usagestr);
+					usage_with_options(usagestr, options);
 				if (parse_short_opt(&args, options) < 0)
-					usage(usagestr);
+					usage_with_options(usagestr, options);
 			} while (args.opt);
 			continue;
 		}
@@ -156,12 +156,75 @@ int parse_options(int argc, const char **argv, const struct option *options,
 		}
 
 		if (!strcmp(arg + 2, "help"))
-			usage(usagestr);
+			usage_with_options(usagestr, options);
 		if (parse_long_opt(&args, arg + 2, options))
-			usage(usagestr);
+			usage_with_options(usagestr, options);
 	}
 
 	memmove(argv + j, args.argv, args.argc * sizeof(*argv));
 	argv[j + args.argc] = NULL;
 	return j + args.argc;
+}
+
+#define USAGE_OPTS_WIDTH 24
+#define USAGE_GAP         2
+
+void usage_with_options(const char * const *usagestr,
+                        const struct option *opts)
+{
+	struct strbuf sb;
+
+	strbuf_init(&sb, 4096);
+	strbuf_addstr(&sb, *usagestr);
+	strbuf_addch(&sb, '\n');
+	while (*++usagestr)
+		strbuf_addf(&sb, "    %s\n", *usagestr);
+
+	if (opts->type != OPTION_GROUP)
+		strbuf_addch(&sb, '\n');
+
+	for (; opts->type != OPTION_END; opts++) {
+		size_t pos;
+		int pad;
+
+		if (opts->type == OPTION_GROUP) {
+			strbuf_addch(&sb, '\n');
+			if (*opts->help)
+				strbuf_addf(&sb, "%s\n", opts->help);
+			continue;
+		}
+
+		pos = sb.len;
+		strbuf_addstr(&sb, "    ");
+		if (opts->short_name)
+			strbuf_addf(&sb, "-%c", opts->short_name);
+		if (opts->long_name && opts->short_name)
+			strbuf_addstr(&sb, ", ");
+		if (opts->long_name)
+			strbuf_addf(&sb, "--%s", opts->long_name);
+
+		switch (opts->type) {
+		case OPTION_INTEGER:
+			strbuf_addstr(&sb, " <n>");
+			break;
+		case OPTION_STRING:
+			if (opts->argh)
+				strbuf_addf(&sb, " <%s>", opts->argh);
+			else
+				strbuf_addstr(&sb, " ...");
+			break;
+		default:
+			break;
+		}
+
+		pad = sb.len - pos;
+		if (pad <= USAGE_OPTS_WIDTH)
+			pad = USAGE_OPTS_WIDTH - pad;
+		else {
+			strbuf_addch(&sb, '\n');
+			pad = USAGE_OPTS_WIDTH;
+		}
+		strbuf_addf(&sb, "%*s%s\n", pad + USAGE_GAP, "", opts->help);
+	}
+	usage(sb.buf);
 }
