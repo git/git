@@ -55,4 +55,15 @@ extern int parse_options(int argc, const char **argv,
 extern NORETURN void usage_with_options(const char * const *usagestr,
                                         const struct option *options);
 
+/*----- some often used options -----*/
+extern int parse_opt_abbrev_cb(const struct option *, const char *, int);
+
+#define OPT__VERBOSE(var)  OPT_BOOLEAN('v', "verbose", (var), "be verbose")
+#define OPT__QUIET(var)    OPT_BOOLEAN('q', "quiet",   (var), "be quiet")
+#define OPT__DRY_RUN(var)  OPT_BOOLEAN('n', "dry-run", (var), "dry run")
+#define OPT__ABBREV(var)  \
+	{ OPTION_CALLBACK, 0, "abbrev", (var), "n", \
+	  "use <n> digits to display SHA-1s", \
+	  PARSE_OPT_OPTARG, &parse_opt_abbrev_cb, 0 }
+
 #endif
