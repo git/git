@@ -214,6 +214,27 @@ having tracking branches.  Again, the heuristic to automatically
 follow such tags is a good thing.
 
 
+On Backdating Tags
+~~~~~~~~~~~~~~~~~~
+
+If you have imported some changes from another VCS and would like
+to add tags for major releases of your work, it is useful to be able
+to specify the date to embed inside of the tag object.  The data in
+the tag object affects, for example, the ordering of tags in the
+gitweb interface.
+
+To set the date used in future tag objects, set the environment
+variable GIT_AUTHOR_DATE to one or more of the date and time.  The
+date and time can be specified in a number of ways; the most common
+is "YYYY-MM-DD HH:MM".
+
+An example follows.
+
+------------
+$ GIT_AUTHOR_DATE="2006-10-02 10:31" git tag -s v1.0.1
+------------
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>,
