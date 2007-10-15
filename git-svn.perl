@@ -2303,23 +2303,31 @@ sub ssl_server_trust {
 	my ($cred, $realm, $failures, $cert_info, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
 	print STDERR "Error validating server certificate for '$realm':\n";
-	if ($failures & $SVN::Auth::SSL::UNKNOWNCA) {
-		print STDERR " - The certificate is not issued by a trusted ",
-		      "authority. Use the\n",
-	              "   fingerprint to validate the certificate manually!\n";
-	}
-	if ($failures & $SVN::Auth::SSL::CNMISMATCH) {
-		print STDERR " - The certificate hostname does not match.\n";
-	}
-	if ($failures & $SVN::Auth::SSL::NOTYETVALID) {
-		print STDERR " - The certificate is not yet valid.\n";
-	}
-	if ($failures & $SVN::Auth::SSL::EXPIRED) {
-		print STDERR " - The certificate has expired.\n";
-	}
-	if ($failures & $SVN::Auth::SSL::OTHER) {
-		print STDERR " - The certificate has an unknown error.\n";
-	}
+	{
+		no warnings 'once';
+		# All variables SVN::Auth::SSL::* are used only once,
+		# so we're shutting up Perl warnings about this.
+		if ($failures & $SVN::Auth::SSL::UNKNOWNCA) {
+			print STDERR " - The certificate is not issued ",
+			    "by a trusted authority. Use the\n",
+			    "   fingerprint to validate ",
+			    "the certificate manually!\n";
+		}
+		if ($failures & $SVN::Auth::SSL::CNMISMATCH) {
+			print STDERR " - The certificate hostname ",
+			    "does not match.\n";
+		}
+		if ($failures & $SVN::Auth::SSL::NOTYETVALID) {
+			print STDERR " - The certificate is not yet valid.\n";
+		}
+		if ($failures & $SVN::Auth::SSL::EXPIRED) {
+			print STDERR " - The certificate has expired.\n";
+		}
+		if ($failures & $SVN::Auth::SSL::OTHER) {
+			print STDERR " - The certificate has ",
+			    "an unknown error.\n";
+		}
+	} # no warnings 'once'
 	printf STDERR
 	        "Certificate information:\n".
 	        " - Hostname: %s\n".
@@ -2401,20 +2409,6 @@ sub _read_password {
 	print STDERR "\n";
 	STDERR->flush;
 	$password;
-}
-
-package main;
-
-{
-	my $kill_stupid_warnings = $SVN::Node::none.$SVN::Node::file.
-				$SVN::Node::dir.$SVN::Node::unknown.
-				$SVN::Node::none.$SVN::Node::file.
-				$SVN::Node::dir.$SVN::Node::unknown.
-				$SVN::Auth::SSL::CNMISMATCH.
-				$SVN::Auth::SSL::NOTYETVALID.
-				$SVN::Auth::SSL::EXPIRED.
-				$SVN::Auth::SSL::UNKNOWNCA.
-				$SVN::Auth::SSL::OTHER;
 }
 
 package SVN::Git::Fetcher;
@@ -2833,16 +2827,21 @@ sub open_or_add_dir {
 	if (!defined $t) {
 		die "$full_path not known in r$self->{r} or we have a bug!\n";
 	}
-	if ($t == $SVN::Node::none) {
-		return $self->add_directory($full_path, $baton,
-						undef, -1, $self->{pool});
-	} elsif ($t == $SVN::Node::dir) {
-		return $self->open_directory($full_path, $baton,
-						$self->{r}, $self->{pool});
-	}
-	print STDERR "$full_path already exists in repository at ",
-		"r$self->{r} and it is not a directory (",
-		($t == $SVN::Node::file ? 'file' : 'unknown'),"/$t)\n";
+	{
+		no warnings 'once';
+		# SVN::Node::none and SVN::Node::file are used only once,
+		# so we're shutting up Perl's warnings about them.
+		if ($t == $SVN::Node::none) {
+			return $self->add_directory($full_path, $baton,
+			    undef, -1, $self->{pool});
+		} elsif ($t == $SVN::Node::dir) {
+			return $self->open_directory($full_path, $baton,
+			    $self->{r}, $self->{pool});
+		} # no warnings 'once'
+		print STDERR "$full_path already exists in repository at ",
+		    "r$self->{r} and it is not a directory (",
+		    ($t == $SVN::Node::file ? 'file' : 'unknown'),"/$t)\n";
+	} # no warnings 'once'
 	exit 1;
 }
 
@@ -3068,11 +3067,11 @@ sub new {
 	my $dont_store_passwords = 1;
 	my $conf_t = ${$config}{'config'};
 	{
+		no warnings 'once';
 		# The usage of $SVN::_Core::SVN_CONFIG_* variables
 		# produces warnings that variables are used only once.
 		# I had not found the better way to shut them up, so
-		# warnings are disabled in this block.
-		no warnings;
+		# the warnings of type 'once' are disabled in this block.
 		if (SVN::_Core::svn_config_get_bool($conf_t,
 		    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
 		    $SVN::_Core::SVN_CONFIG_OPTION_STORE_PASSWORDS,
@@ -3087,7 +3086,7 @@ sub new {
 		    1) == 0) {
 			$Git::SVN::Prompt::_no_auth_cache = 1;
 		}
-	}
+	} # no warnings 'once'
 	my $self = SVN::Ra->new(url => $url, auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
