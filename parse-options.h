@@ -16,6 +16,7 @@ enum parse_opt_flags {
 
 enum parse_opt_option_flags {
 	PARSE_OPT_OPTARG  = 1,
+	PARSE_OPT_NOARG   = 2,
 };
 
 struct option;

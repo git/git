@@ -72,6 +72,11 @@ static int get_value(struct optparse_t *p,
 	case OPTION_CALLBACK:
 		if (flags & OPT_UNSET)
 			return (*opt->callback)(opt, NULL, 1);
+		if (opt->flags & PARSE_OPT_NOARG) {
+			if (p->opt && !(flags & OPT_SHORT))
+				return opterror(opt, "takes no value", flags);
+			return (*opt->callback)(opt, NULL, 0);
+		}
 		if (opt->flags & PARSE_OPT_OPTARG && (!arg || *arg == '-'))
 			return (*opt->callback)(opt, NULL, 0);
 		if (!arg)
@@ -261,8 +266,11 @@ void usage_with_options(const char * const *usagestr,
 			else
 				pos += fprintf(stderr, " <n>");
 			break;
-		case OPTION_STRING:
 		case OPTION_CALLBACK:
+			if (opts->flags & PARSE_OPT_NOARG)
+				break;
+			/* FALLTHROUGH */
+		case OPTION_STRING:
 			if (opts->argh) {
 				if (opts->flags & PARSE_OPT_OPTARG)
 					pos += fprintf(stderr, " [<%s>]", opts->argh);
