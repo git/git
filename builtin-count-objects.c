@@ -6,8 +6,7 @@
 
 #include "cache.h"
 #include "builtin.h"
-
-static const char count_objects_usage[] = "git-count-objects [-v]";
+#include "parse-options.h"
 
 static void count_objects(DIR *d, char *path, int len, int verbose,
 			  unsigned long *loose,
@@ -67,29 +66,28 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 	}
 }
 
-int cmd_count_objects(int ac, const char **av, const char *prefix)
+static char const * const count_objects_usage[] = {
+	"git-count-objects [-v]",
+	NULL
+};
+
+int cmd_count_objects(int argc, const char **argv, const char *prefix)
 {
-	int i;
-	int verbose = 0;
+	int i, verbose = 0;
 	const char *objdir = get_object_directory();
 	int len = strlen(objdir);
 	char *path = xmalloc(len + 50);
 	unsigned long loose = 0, packed = 0, packed_loose = 0, garbage = 0;
 	unsigned long loose_size = 0;
+	struct option opts[] = {
+		OPT__VERBOSE(&verbose),
+		OPT_END(),
+	};
 
-	for (i = 1; i < ac; i++) {
-		const char *arg = av[i];
-		if (*arg != '-')
-			break;
-		else if (!strcmp(arg, "-v"))
-			verbose = 1;
-		else
-			usage(count_objects_usage);
-	}
-
+	argc = parse_options(argc, argv, opts, count_objects_usage, 0);
 	/* we do not take arguments other than flags for now */
-	if (i < ac)
-		usage(count_objects_usage);
+	if (argc)
+		usage_with_options(count_objects_usage, opts);
 	memcpy(path, objdir, len);
 	if (len && objdir[len-1] != '/')
 		path[len++] = '/';
