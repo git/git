@@ -30,11 +30,6 @@ if ($opt_d) {
 	@cvs = ('cvs');
 }
 
-# setup a tempdir
-our ($tmpdir, $tmpdirname) = tempdir('git-cvsapplycommit-XXXXXX',
-				     TMPDIR => 1,
-				     CLEANUP => 1);
-
 # resolve target commit
 my $commit;
 $commit = pop @ARGV;
