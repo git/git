@@ -10,7 +10,7 @@
  exec wish "$argv0" -- "$@"
 
 set appvers {@@GITGUI_VERSION@@}
-set copyright {
+set copyright [encoding convertfrom utf-8 {
 Copyright © 2006, 2007 Shawn Pearce, et. al.
 
 This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}]
 
 ######################################################################
 ##
@@ -205,6 +205,7 @@ proc disable_option {option} {
 
 proc is_many_config {name} {
 	switch -glob -- $name {
+	gui.recentrepo -
 	remote.*.fetch -
 	remote.*.push
 		{return 1}
@@ -230,51 +231,6 @@ proc get_config {name} {
 		return {}
 	} else {
 		return $v
-	}
-}
-
-proc load_config {include_global} {
-	global repo_config global_config default_config
-
-	array unset global_config
-	if {$include_global} {
-		catch {
-			set fd_rc [git_read config --global --list]
-			while {[gets $fd_rc line] >= 0} {
-				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
-					if {[is_many_config $name]} {
-						lappend global_config($name) $value
-					} else {
-						set global_config($name) $value
-					}
-				}
-			}
-			close $fd_rc
-		}
-	}
-
-	array unset repo_config
-	catch {
-		set fd_rc [git_read config --list]
-		while {[gets $fd_rc line] >= 0} {
-			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
-				if {[is_many_config $name]} {
-					lappend repo_config($name) $value
-				} else {
-					set repo_config($name) $value
-				}
-			}
-		}
-		close $fd_rc
-	}
-
-	foreach name [array names default_config] {
-		if {[catch {set v $global_config($name)}]} {
-			set global_config($name) $default_config($name)
-		}
-		if {[catch {set v $repo_config($name)}]} {
-			set repo_config($name) $default_config($name)
-		}
 	}
 }
 
@@ -788,6 +744,68 @@ if {$idx ne {}} {
 	set auto_path [concat [list $oguilib] $auto_path]
 }
 unset -nocomplain idx fd
+
+######################################################################
+##
+## config file parsing
+
+git-version proc _parse_config {arr_name args} {
+	>= 1.5.3 {
+		upvar $arr_name arr
+		array unset arr
+		set buf {}
+		catch {
+			set fd_rc [eval [list git_read config --null --list] $args]
+			fconfigure $fd_rc -translation binary
+			set buf [read $fd_rc]
+			close $fd_rc
+		}
+		foreach line [split $buf "\0"] {
+			if {[regexp {^([^\n]+)\n(.*)$} $line line name value]} {
+				if {[is_many_config $name]} {
+					lappend arr($name) $value
+				} else {
+					set arr($name) $value
+				}
+			}
+		}
+	}
+	default {
+		upvar $arr_name arr
+		array unset arr
+		catch {
+			set fd_rc [eval [list git_read config --list] $args]
+			while {[gets $fd_rc line] >= 0} {
+				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
+					if {[is_many_config $name]} {
+						lappend arr($name) $value
+					} else {
+						set arr($name) $value
+					}
+				}
+			}
+			close $fd_rc
+		}
+	}
+}
+
+proc load_config {include_global} {
+	global repo_config global_config default_config
+
+	if {$include_global} {
+		_parse_config global_config --global
+	}
+	_parse_config repo_config
+
+	foreach name [array names default_config] {
+		if {[catch {set v $global_config($name)}]} {
+			set global_config($name) $default_config($name)
+		}
+		if {[catch {set v $repo_config($name)}]} {
+			set repo_config($name) $default_config($name)
+		}
+	}
+}
 
 ######################################################################
 ##
@@ -1658,8 +1676,8 @@ proc do_quit {} {
 		#
 		set cfg_geometry [list]
 		lappend cfg_geometry [wm geometry .]
-		lappend cfg_geometry [lindex [.vpane sash coord 0] 1]
-		lappend cfg_geometry [lindex [.vpane.files sash coord 0] 0]
+		lappend cfg_geometry [lindex [.vpane sash coord 0] 0]
+		lappend cfg_geometry [lindex [.vpane.files sash coord 0] 1]
 		if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
 			set rc_geometry {}
 		}
@@ -2208,8 +2226,8 @@ pack .branch -side top -fill x
 
 # -- Main Window Layout
 #
-panedwindow .vpane -orient vertical
-panedwindow .vpane.files -orient horizontal
+panedwindow .vpane -orient horizontal
+panedwindow .vpane.files -orient vertical
 .vpane add .vpane.files -sticky nsew -height 100 -width 200
 pack .vpane -anchor n -side top -fill both -expand 1
 
@@ -2231,7 +2249,6 @@ pack .vpane.files.index.title -side top -fill x
 pack .vpane.files.index.sx -side bottom -fill x
 pack .vpane.files.index.sy -side right -fill y
 pack $ui_index -side left -fill both -expand 1
-.vpane.files add .vpane.files.index -sticky nsew
 
 # -- Working Directory File List
 #
@@ -2251,7 +2268,9 @@ pack .vpane.files.workdir.title -side top -fill x
 pack .vpane.files.workdir.sx -side bottom -fill x
 pack .vpane.files.workdir.sy -side right -fill y
 pack $ui_workdir -side left -fill both -expand 1
+
 .vpane.files add .vpane.files.workdir -sticky nsew
+.vpane.files add .vpane.files.index -sticky nsew
 
 foreach i [list $ui_index $ui_workdir] {
 	rmsel_tag $i
@@ -2264,8 +2283,8 @@ unset i
 frame .vpane.lower -height 300 -width 400
 frame .vpane.lower.commarea
 frame .vpane.lower.diff -relief sunken -borderwidth 1
-pack .vpane.lower.commarea -side top -fill x
-pack .vpane.lower.diff -side bottom -fill both -expand 1
+pack .vpane.lower.diff -fill both -expand 1
+pack .vpane.lower.commarea -side bottom -fill x
 .vpane add .vpane.lower -sticky nsew
 
 # -- Commit Area Buttons
@@ -2591,11 +2610,11 @@ catch {
 set gm $repo_config(gui.geometry)
 wm geometry . [lindex $gm 0]
 .vpane sash place 0 \
-	[lindex [.vpane sash coord 0] 0] \
-	[lindex $gm 1]
+	[lindex $gm 1] \
+	[lindex [.vpane sash coord 0] 1]
 .vpane.files sash place 0 \
-	[lindex $gm 2] \
-	[lindex [.vpane.files sash coord 0] 1]
+	[lindex [.vpane.files sash coord 0] 0] \
+	[lindex $gm 2]
 unset gm
 }
 

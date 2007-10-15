@@ -7,16 +7,18 @@ field top
 field w
 field w_body      ; # Widget holding the center content
 field w_next      ; # Next button
+field w_quit      ; # Quit button
 field o_cons      ; # Console object (if active)
 field w_types     ; # List of type buttons in clone
+field w_recentlist ; # Listbox containing recent repositories
 
-field action          new ; # What action are we going to perform?
 field done              0 ; # Finished picking the repository?
 field local_path       {} ; # Where this repository is locally
 field origin_url       {} ; # Where we are cloning from
 field origin_name  origin ; # What we shall call 'origin'
 field clone_type hardlink ; # Type of clone to construct
 field readtree_err        ; # Error output from read-tree (if any)
+field sorted_recent       ; # recent repositories (sorted)
 
 constructor pick {} {
 	global M1T M1B
@@ -28,14 +30,11 @@ constructor pick {} {
 		menu $w.mbar -tearoff 0
 		$top configure -menu $w.mbar
 
+		set m_repo $w.mbar.repository
 		$w.mbar add cascade \
 			-label [mc Repository] \
-			-menu $w.mbar.repository
-		menu $w.mbar.repository
-		$w.mbar.repository add command \
-			-label [mc Quit] \
-			-command exit \
-			-accelerator $M1T-Q
+			-menu $m_repo
+		menu $m_repo
 
 		if {[is_MacOSX]} {
 			$w.mbar add cascade -label [mc Apple] -menu .mbar.apple
@@ -58,44 +57,134 @@ constructor pick {} {
 	} else {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 		bind $top <Key-Escape> [list destroy $top]
+		set m_repo {}
 	}
 
 	pack [git_logo $w.git_logo] -side left -fill y -padx 10 -pady 10
 
 	set w_body $w.body
+	set opts $w_body.options
 	frame $w_body
-	radiobutton $w_body.new \
-		-anchor w \
-		-text [mc "Create New Repository"] \
-		-variable @action \
-		-value new
-	radiobutton $w_body.clone \
-		-anchor w \
-		-text [mc "Clone Existing Repository"] \
-		-variable @action \
-		-value clone
-	radiobutton $w_body.open \
-		-anchor w \
-		-text [mc "Open Existing Repository"] \
-		-variable @action \
-		-value open
-	pack $w_body.new -anchor w -fill x
-	pack $w_body.clone -anchor w -fill x
-	pack $w_body.open -anchor w -fill x
+	text $opts \
+		-cursor $::cursor_ptr \
+		-relief flat \
+		-background [$w_body cget -background] \
+		-wrap none \
+		-spacing1 5 \
+		-width 50 \
+		-height 3
+	pack $opts -anchor w -fill x
+
+	$opts tag conf link_new -foreground blue -underline 1
+	$opts tag bind link_new <1> [cb _next new]
+	$opts insert end [mc "Create New Repository"] link_new
+	$opts insert end "\n"
+	if {$m_repo ne {}} {
+		$m_repo add command \
+			-command [cb _next new] \
+			-accelerator $M1T-N \
+			-label [mc "New..."]
+		bind $top <$M1B-n> [cb _next new]
+		bind $top <$M1B-N> [cb _next new]
+	}
+
+	$opts tag conf link_clone -foreground blue -underline 1
+	$opts tag bind link_clone <1> [cb _next clone]
+	$opts insert end [mc "Clone Existing Repository"] link_clone
+	$opts insert end "\n"
+	if {$m_repo ne {}} {
+		$m_repo add command \
+			-command [cb _next clone] \
+			-accelerator $M1T-C \
+			-label [mc "Clone..."]
+		bind $top <$M1B-c> [cb _next clone]
+		bind $top <$M1B-C> [cb _next clone]
+	}
+
+	$opts tag conf link_open -foreground blue -underline 1
+	$opts tag bind link_open <1> [cb _next open]
+	$opts insert end [mc "Open Existing Repository"] link_open
+	$opts insert end "\n"
+	if {$m_repo ne {}} {
+		$m_repo add command \
+			-command [cb _next open] \
+			-accelerator $M1T-O \
+			-label [mc "Open..."]
+		bind $top <$M1B-o> [cb _next open]
+		bind $top <$M1B-O> [cb _next open]
+	}
+
+	$opts conf -state disabled
+
+	set sorted_recent [_get_recentrepos]
+	if {[llength $sorted_recent] > 0} {
+		if {$m_repo ne {}} {
+			$m_repo add separator
+			$m_repo add command \
+				-state disabled \
+				-label [mc "Recent Repositories"]
+		}
+
+		label $w_body.space
+		label $w_body.recentlabel \
+			-anchor w \
+			-text [mc "Open Recent Repository:"]
+		set w_recentlist $w_body.recentlist
+		text $w_recentlist \
+			-cursor $::cursor_ptr \
+			-relief flat \
+			-background [$w_body.recentlabel cget -background] \
+			-wrap none \
+			-width 50 \
+			-height 10
+		$w_recentlist tag conf link \
+			-foreground blue \
+			-underline 1
+		set home $::env(HOME)
+		if {[is_Cygwin]} {
+			set home [exec cygpath --windows --absolute $home]
+		}
+		set home "[file normalize $home]/"
+		set hlen [string length $home]
+		foreach p $sorted_recent {
+			set path $p
+			if {[string equal -length $hlen $home $p]} {
+				set p "~/[string range $p $hlen end]"
+			}
+			regsub -all "\n" $p "\\n" p
+			$w_recentlist insert end $p link
+			$w_recentlist insert end "\n"
+
+			if {$m_repo ne {}} {
+				$m_repo add command \
+					-command [cb _open_recent_path $path] \
+					-label "    $p"
+			}
+		}
+		$w_recentlist conf -state disabled
+		$w_recentlist tag bind link <1> [cb _open_recent %x,%y]
+		pack $w_body.space -anchor w -fill x
+		pack $w_body.recentlabel -anchor w -fill x
+		pack $w_recentlist -anchor w -fill x
+	}
 	pack $w_body -fill x -padx 10 -pady 10
 
 	frame $w.buttons
 	set w_next $w.buttons.next
-	button $w_next \
-		-default active \
-		-text [mc "Next >"] \
-		-command [cb _next]
-	pack $w_next -side right -padx 5
-	button $w.buttons.quit \
+	set w_quit $w.buttons.quit
+	button $w_quit \
 		-text [mc "Quit"] \
 		-command exit
-	pack $w.buttons.quit -side right -padx 5
+	pack $w_quit -side right -padx 5
 	pack $w.buttons -side bottom -fill x -padx 10 -pady 10
+
+	if {$m_repo ne {}} {
+		$m_repo add separator
+		$m_repo add command \
+			-label [mc Quit] \
+			-command exit \
+			-accelerator $M1T-Q
+	}
 
 	bind $top <Return> [cb _invoke_next]
 	bind $top <Visibility> "
@@ -134,8 +223,61 @@ method _invoke_next {} {
 	}
 }
 
-method _next {} {
+proc _get_recentrepos {} {
+	set recent [list]
+	foreach p [get_config gui.recentrepo] {
+		if {[_is_git [file join $p .git]]} {
+			lappend recent $p
+		}
+	}
+	return [lsort $recent]
+}
+
+proc _unset_recentrepo {p} {
+	regsub -all -- {([()\[\]{}\.^$+*?\\])} $p {\\\1} p
+	git config --global --unset gui.recentrepo "^$p\$"
+}
+
+proc _append_recentrepos {path} {
+	set path [file normalize $path]
+	set recent [get_config gui.recentrepo]
+
+	if {[lindex $recent end] eq $path} {
+		return
+	}
+
+	set i [lsearch $recent $path]
+	if {$i >= 0} {
+		_unset_recentrepo $path
+		set recent [lreplace $recent $i $i]
+	}
+
+	lappend recent $path
+	git config --global --add gui.recentrepo $path
+
+	while {[llength $recent] > 10} {
+		_unset_recentrepo [lindex $recent 0]
+		set recent [lrange $recent 1 end]
+	}
+}
+
+method _open_recent {xy} {
+	set id [lindex [split [$w_recentlist index @$xy] .] 0]
+	set local_path [lindex $sorted_recent [expr {$id - 1}]]
+	_do_open2 $this
+}
+
+method _open_recent_path {p} {
+	set local_path $p
+	_do_open2 $this
+}
+
+method _next {action} {
 	destroy $w_body
+	if {![winfo exists $w_next]} {
+		button $w_next -default active
+		pack $w_next -side right -padx 5 -before $w_quit
+	}
 	_do_$action $this
 }
 
@@ -174,6 +316,7 @@ method _git_init {} {
 		return 0
 	}
 
+	_append_recentrepos [pwd]
 	set ::_gitdir .git
 	set ::_prefix {}
 	return 1
@@ -185,7 +328,40 @@ proc _is_git {path} {
 	 && [file exists [file join $path config]]} {
 		return 1
 	}
+	if {[is_Cygwin]} {
+		if {[file exists [file join $path HEAD]]
+		 && [file exists [file join $path objects.lnk]]
+		 && [file exists [file join $path config.lnk]]} {
+			return 1
+		}
+	}
 	return 0
+}
+
+proc _objdir {path} {
+	set objdir [file join $path .git objects]
+	if {[file isdirectory $objdir]} {
+		return $objdir
+	}
+
+	set objdir [file join $path objects]
+	if {[file isdirectory $objdir]} {
+		return $objdir
+	}
+
+	if {[is_Cygwin]} {
+		set objdir [file join $path .git objects.lnk]
+		if {[file isfile $objdir]} {
+			return [win32_read_lnk $objdir]
+		}
+
+		set objdir [file join $path objects.lnk]
+		if {[file isfile $objdir]} {
+			return [win32_read_lnk $objdir]
+		}
+	}
+
+	return {}
 }
 
 ######################################################################
@@ -221,6 +397,7 @@ method _do_new {} {
 	pack $w_body.where -fill x
 
 	trace add variable @local_path write [cb _write_local_path]
+	bind $w_body.h <Destroy> [list trace remove variable @local_path write [cb _write_local_path]]
 	update
 	focus $w_body.where.t
 }
@@ -346,6 +523,10 @@ method _do_clone {} {
 
 	trace add variable @local_path write [cb _update_clone]
 	trace add variable @origin_url write [cb _update_clone]
+	bind $w_body.h <Destroy> "
+		[list trace remove variable @local_path write [cb _update_clone]]
+		[list trace remove variable @origin_url write [cb _update_clone]]
+	"
 	update
 	focus $args.origin_t
 }
@@ -411,13 +592,10 @@ method _do_clone2 {} {
 	}
 
 	if {$clone_type eq {hardlink} || $clone_type eq {shared}} {
-		set objdir [file join $origin_url .git objects]
-		if {![file isdirectory $objdir]} {
-			set objdir [file join $origin_url objects]
-			if {![file isdirectory $objdir]} {
-				error_popup [mc "Not a Git repository: %s" [file tail $origin_url]]
-				return
-			}
+		set objdir [_objdir $origin_url]
+		if {$objdir eq {}} {
+			error_popup [mc "Not a Git repository: %s" [file tail $origin_url]]
+			return
 		}
 	}
 
@@ -817,6 +995,7 @@ method _do_open {} {
 	pack $w_body.where -fill x
 
 	trace add variable @local_path write [cb _write_local_path]
+	bind $w_body.h <Destroy> [list trace remove variable @local_path write [cb _write_local_path]]
 	update
 	focus $w_body.where.t
 }
@@ -856,6 +1035,7 @@ method _do_open2 {} {
 		return
 	}
 
+	_append_recentrepos [pwd]
 	set ::_gitdir .git
 	set ::_prefix {}
 	set done 1

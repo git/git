@@ -1,4 +1,5 @@
 .DS_Store
+config.mak
 Git Gui.app*
 git-gui.tcl
 GIT-VERSION-FILE
