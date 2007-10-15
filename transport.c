@@ -1,7 +1,9 @@
 #include "cache.h"
 #include "transport.h"
 #include "run-command.h"
+#ifndef NO_CURL
 #include "http.h"
+#endif
 #include "pkt-line.h"
 #include "fetch-pack.h"
 #include "walker.h"
@@ -368,6 +370,7 @@ static int disconnect_walker(struct transport *transport)
 	return 0;
 }
 
+#ifndef NO_CURL
 static int curl_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags) {
 	const char **argv;
 	int argc;
@@ -400,7 +403,6 @@ static int curl_transport_push(struct transport *transport, int refspec_nr, cons
 	return !!err;
 }
 
-#ifndef NO_CURL
 static int missing__target(int code, int result)
 {
 	return	/* file:// URL -- do we ever use one??? */
@@ -502,21 +504,6 @@ static int fetch_objs_via_curl(struct transport *transport,
 	if (!transport->data)
 		transport->data = get_http_walker(transport->url);
 	return fetch_objs_via_walker(transport, nr_objs, to_fetch);
-}
-
-#else
-
-static struct ref *get_refs_via_curl(const struct transport *transport)
-{
-	die("Cannot fetch from '%s' without curl ...", transport->url);
-	return NULL;
-}
-
-static int fetch_objs_via_curl(struct transport *transport,
-				 int nr_objs, struct ref **to_fetch)
-{
-	die("Cannot fetch from '%s' without curl ...", transport->url);
-	return -1;
 }
 
 #endif
@@ -733,9 +720,13 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	} else if (!prefixcmp(url, "http://")
 	        || !prefixcmp(url, "https://")
 	        || !prefixcmp(url, "ftp://")) {
+#ifdef NO_CURL
+		error("git was compiled without libcurl support.");
+#else
 		ret->get_refs_list = get_refs_via_curl;
 		ret->fetch = fetch_objs_via_curl;
 		ret->push = curl_transport_push;
+#endif
 		ret->disconnect = disconnect_walker;
 
 	} else if (is_local(url) && is_file(url)) {
