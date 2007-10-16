@@ -193,4 +193,25 @@ test_expect_success 'test propget' "
 	git-svn propget svn:ignore .././deeply/nested | cmp - ../prop.expect
 	"
 
+cat >prop.expect <<\EOF
+Properties on '.':
+  svn:entry:committed-date
+  svn:entry:committed-rev
+  svn:entry:last-author
+  svn:entry:uuid
+  svn:ignore
+EOF
+cat >prop2.expect <<\EOF
+Properties on 'nested/directory/.keep':
+  svn:entry:committed-date
+  svn:entry:committed-rev
+  svn:entry:last-author
+  svn:entry:uuid
+EOF
+
+test_expect_success 'test proplist' "
+	git-svn proplist . | cmp - prop.expect &&
+	git-svn proplist nested/directory/.keep | cmp - prop2.expect
+	"
+
 test_done

@@ -135,6 +135,9 @@ my %cmd = (
         'propget' => [ \&cmd_propget,
 		       'Print the value of a property on a file or directory',
 		       { 'revision|r=i' => \$_revision } ],
+        'proplist' => [ \&cmd_proplist,
+		       'List all properties of a file or directory',
+		       { 'revision|r=i' => \$_revision } ],
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision
 			} ],
@@ -536,7 +539,7 @@ sub cmd_create_ignore {
 
 # get_svnprops(PATH)
 # ------------------
-# Helper for cmd_propget below.
+# Helper for cmd_propget and cmd_proplist below.
 sub get_svnprops {
 	my $path = shift;
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
@@ -581,6 +584,19 @@ sub cmd_propget {
 		fatal("`$path' does not have a `$prop' SVN property.\n");
 	}
 	print $props->{$prop} . "\n";
+}
+
+# cmd_proplist (PATH)
+# -------------------
+# Print the list of SVN properties for PATH.
+sub cmd_proplist {
+	my $path = shift;
+	$path = '.' if not defined $path;
+	my $props = get_svnprops($path);
+	print "Properties on '$path':\n";
+	foreach (sort keys %{$props}) {
+		print "  $_\n";
+	}
 }
 
 sub cmd_multi_init {
