@@ -399,6 +399,7 @@ class P4Submit(Command):
                 optparse.make_option("--dry-run", action="store_true"),
                 optparse.make_option("--direct", dest="directSubmit", action="store_true"),
                 optparse.make_option("--trust-me-like-a-fool", dest="trustMeLikeAFool", action="store_true"),
+                optparse.make_option("-M", dest="detectRename", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -411,6 +412,7 @@ class P4Submit(Command):
         self.origin = ""
         self.directSubmit = False
         self.trustMeLikeAFool = False
+        self.detectRename = False
         self.verbose = False
         self.isWindows = (platform.system() == "Windows")
 
@@ -491,7 +493,8 @@ class P4Submit(Command):
             diff = self.diffStatus
         else:
             print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
-            diff = read_pipe_lines("git diff-tree -r --name-status \"%s^\" \"%s\"" % (id, id))
+            diffOpts = ("", "-M")[self.detectRename]
+            diff = read_pipe_lines("git diff-tree -r --name-status %s \"%s^\" \"%s\"" % (diffOpts, id, id))
         filesToAdd = set()
         filesToDelete = set()
         editedFiles = set()
@@ -509,6 +512,13 @@ class P4Submit(Command):
                 filesToDelete.add(path)
                 if path in filesToAdd:
                     filesToAdd.remove(path)
+            elif modifier == "R":
+                src, dest = line.strip().split("\t")[1:3]
+                system("p4 integrate -Dt \"%s\" \"%s\"" % (src, dest))
+                system("p4 edit \"%s\"" % (dest))
+                os.unlink(dest)
+                editedFiles.add(dest)
+                filesToDelete.add(src)
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
