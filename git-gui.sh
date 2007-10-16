@@ -755,7 +755,10 @@ git-version proc _parse_config {arr_name args} {
 		array unset arr
 		set buf {}
 		catch {
-			set fd_rc [eval [list git_read config --null --list] $args]
+			set fd_rc [eval \
+				[list git_read config] \
+				$args \
+				[list --null --list]]
 			fconfigure $fd_rc -translation binary
 			set buf [read $fd_rc]
 			close $fd_rc
