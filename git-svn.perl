@@ -24,12 +24,12 @@ $Git::SVN::Log::TZ = $ENV{TZ};
 $ENV{TZ} = 'UTC';
 $| = 1; # unbuffer STDOUT
 
-sub fatal (@) { print STDERR @_; exit 1 }
+sub fatal (@) { print STDERR "@_\n"; exit 1 }
 require SVN::Core; # use()-ing this causes segfaults for me... *shrug*
 require SVN::Ra;
 require SVN::Delta;
 if ($SVN::Core::VERSION lt '1.1.0') {
-	fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)\n";
+	fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)";
 }
 push @Git::SVN::Ra::ISA, 'SVN::Ra';
 push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
@@ -372,7 +372,7 @@ sub cmd_set_tree {
 		} elsif (scalar @tmp > 1) {
 			push @revs, reverse(command('rev-list',@tmp));
 		} else {
-			fatal "Failed to rev-parse $c\n";
+			fatal "Failed to rev-parse $c";
 		}
 	}
 	my $gs = Git::SVN->new;
@@ -382,7 +382,7 @@ sub cmd_set_tree {
 		fatal "There are new revisions that were fetched ",
 		      "and need to be merged (or acknowledged) ",
 		      "before committing.\nlast rev: $r_last\n",
-		      " current: $gs->{last_rev}\n";
+		      " current: $gs->{last_rev}";
 	}
 	$gs->set_tree($_) foreach @revs;
 	print "Done committing ",scalar @revs," revisions to SVN\n";
@@ -411,7 +411,7 @@ sub cmd_dcommit {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
 			unless (defined $last_rev) {
 				fatal "Unable to extract revision information ",
-				      "from commit $d~1\n";
+				      "from commit $d~1";
 			}
 		}
 		if ($_dry_run) {
@@ -524,7 +524,7 @@ sub cmd_create_ignore {
 		my $ignore = '.' . $path . '.gitignore';
 		my $s = $props->{'svn:ignore'} or return;
 		open(GITIGNORE, '>', $ignore)
-		  or fatal("Failed to open `$ignore' for writing: $!\n");
+		  or fatal("Failed to open `$ignore' for writing: $!");
 		$s =~ s/[\r\n]+/\n/g;
 		chomp $s;
 		# Prefix all patterns so that the ignore doesn't apply
@@ -532,7 +532,7 @@ sub cmd_create_ignore {
 		$s =~ s#^#/#gm;
 		print GITIGNORE "$s\n";
 		close(GITIGNORE)
-		  or fatal("Failed to close `$ignore': $!\n");
+		  or fatal("Failed to close `$ignore': $!");
 		command_noisy('add', $ignore);
 	});
 }
@@ -548,7 +548,7 @@ sub get_svnprops {
 	# prefix THE PATH by the sub-directory from which the user
 	# invoked us.
 	$path = $cmd_dir_prefix . $path;
-	fatal("No such file or directory: $path\n") unless -e $path;
+	fatal("No such file or directory: $path") unless -e $path;
 	my $is_dir = -d $path ? 1 : 0;
 	$path = $gs->{path} . '/' . $path;
 
@@ -581,7 +581,7 @@ sub cmd_propget {
 	usage(1) if not defined $prop;
 	my $props = get_svnprops($path);
 	if (not defined $props->{$prop}) {
-		fatal("`$path' does not have a `$prop' SVN property.\n");
+		fatal("`$path' does not have a `$prop' SVN property.");
 	}
 	print $props->{$prop} . "\n";
 }
@@ -645,7 +645,7 @@ sub cmd_multi_fetch {
 sub cmd_commit_diff {
 	my ($ta, $tb, $url) = @_;
 	my $usage = "Usage: $0 commit-diff -r<revision> ".
-	            "<tree-ish> <tree-ish> [<URL>]\n";
+	            "<tree-ish> <tree-ish> [<URL>]";
 	fatal($usage) if (!defined $ta || !defined $tb);
 	my $svn_path;
 	if (!defined $url) {
@@ -663,7 +663,7 @@ sub cmd_commit_diff {
 	if (defined $_message && defined $_file) {
 		fatal("Both --message/-m and --file/-F specified ",
 		      "for the commit message.\n",
-		      "I have no idea what you mean\n");
+		      "I have no idea what you mean");
 	}
 	if (defined $_file) {
 		$_message = file_to_s($_file);
@@ -726,7 +726,7 @@ sub complete_svn_url {
 	if ($path !~ m#^[a-z\+]+://#) {
 		if (!defined $url || $url !~ m#^[a-z\+]+://#) {
 			fatal("E: '$path' is not a complete URL ",
-			      "and a separate URL is not specified\n");
+			      "and a separate URL is not specified");
 		}
 		return ($url, $path);
 	}
@@ -747,7 +747,7 @@ sub complete_url_ls_init {
 		$repo_path =~ s#^/+##;
 		unless ($ra) {
 			fatal("E: '$repo_path' is not a complete URL ",
-			      "and a separate URL is not specified\n");
+			      "and a separate URL is not specified");
 		}
 	}
 	my $url = $ra->{url};
@@ -1753,7 +1753,7 @@ sub assert_index_clean {
 		$x = command_oneline('write-tree');
 		if ($y ne $x) {
 			::fatal "trees ($treeish) $y != $x\n",
-			        "Something is seriously wrong...\n";
+			        "Something is seriously wrong...";
 		}
 	});
 }
@@ -2179,7 +2179,7 @@ sub set_tree {
 	my ($self, $tree) = (shift, shift);
 	my $log_entry = ::get_commit_entry($tree);
 	unless ($self->{last_rev}) {
-		fatal("Must have an existing revision to commit\n");
+		fatal("Must have an existing revision to commit");
 	}
 	my %ed_opts = ( r => $self->{last_rev},
 	                log => $log_entry->{log},
@@ -3128,7 +3128,7 @@ sub apply_diff {
 		if (defined $o{$f}) {
 			$self->$f($m);
 		} else {
-			fatal("Invalid change type: $f\n");
+			fatal("Invalid change type: $f");
 		}
 	}
 	$self->rmdirs if $_rmdir;
@@ -3759,15 +3759,15 @@ sub config_pager {
 sub run_pager {
 	return unless -t *STDOUT && defined $pager;
 	pipe my $rfd, my $wfd or return;
-	defined(my $pid = fork) or ::fatal "Can't fork: $!\n";
+	defined(my $pid = fork) or ::fatal "Can't fork: $!";
 	if (!$pid) {
 		open STDOUT, '>&', $wfd or
-		                     ::fatal "Can't redirect to stdout: $!\n";
+		                     ::fatal "Can't redirect to stdout: $!";
 		return;
 	}
-	open STDIN, '<&', $rfd or ::fatal "Can't redirect stdin: $!\n";
+	open STDIN, '<&', $rfd or ::fatal "Can't redirect stdin: $!";
 	$ENV{LESS} ||= 'FRSX';
-	exec $pager or ::fatal "Can't run pager: $! ($pager)\n";
+	exec $pager or ::fatal "Can't run pager: $! ($pager)";
 }
 
 sub tz_to_s_offset {
@@ -3903,7 +3903,7 @@ sub cmd_show_log {
 			$r_min = $r_max = $::_revision;
 		} else {
 			::fatal "-r$::_revision is not supported, use ",
-				"standard \'git log\' arguments instead\n";
+				"standard 'git log' arguments instead";
 		}
 	}
 
