@@ -105,8 +105,9 @@ filter_tag_name=
 filter_subdir=
 orig_namespace=refs/original/
 force=
-while case "$#" in 0) usage;; esac
+while :
 do
+	test $# = 0 && usage
 	case "$1" in
 	--)
 		shift

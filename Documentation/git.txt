@@ -46,6 +46,8 @@ Documentation for older releases are available here:
 * link:v1.5.3/git.html[documentation for release 1.5.3]
 
 * release notes for
+  link:RelNotes-1.5.3.4.txt[1.5.3.4],
+  link:RelNotes-1.5.3.3.txt[1.5.3.3],
   link:RelNotes-1.5.3.2.txt[1.5.3.2],
   link:RelNotes-1.5.3.1.txt[1.5.3.1].
 
@@ -324,7 +326,7 @@ For a more complete list of ways to spell object names, see
 File/Directory Structure
 ------------------------
 
-Please see link:repository-layout.html[repository layout] document.
+Please see the link:repository-layout.html[repository layout] document.
 
 Read link:hooks.html[hooks] for more details about each hook.
 
@@ -334,7 +336,7 @@ Higher level SCMs may provide and manage additional information in the
 
 Terminology
 -----------
-Please see link:glossary.html[glossary] document.
+Please see the link:glossary.html[glossary] document.
 
 
 Environment Variables

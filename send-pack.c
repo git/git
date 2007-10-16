@@ -7,13 +7,14 @@
 #include "remote.h"
 
 static const char send_pack_usage[] =
-"git-send-pack [--all] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
+"git-send-pack [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
 "  --all and explicit <ref> specification are mutually exclusive.";
 static const char *receivepack = "git-receive-pack";
 static int verbose;
 static int send_all;
 static int force_update;
 static int use_thin_pack;
+static int dry_run;
 
 /*
  * Make a pack stream and spit it out into file descriptor fd
@@ -282,16 +283,18 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
 
-		if (ask_for_status_report) {
-			packet_write(out, "%s %s %s%c%s",
-				     old_hex, new_hex, ref->name, 0,
-				     "report-status");
-			ask_for_status_report = 0;
-			expect_status_report = 1;
+		if (!dry_run) {
+			if (ask_for_status_report) {
+				packet_write(out, "%s %s %s%c%s",
+					old_hex, new_hex, ref->name, 0,
+					"report-status");
+				ask_for_status_report = 0;
+				expect_status_report = 1;
+			}
+			else
+				packet_write(out, "%s %s %s",
+					old_hex, new_hex, ref->name);
 		}
-		else
-			packet_write(out, "%s %s %s",
-				     old_hex, new_hex, ref->name);
 		if (will_delete_ref)
 			fprintf(stderr, "deleting '%s'\n", ref->name);
 		else {
@@ -302,7 +305,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 			fprintf(stderr, "\n  from %s\n  to   %s\n",
 				old_hex, new_hex);
 		}
-		if (remote) {
+		if (remote && !dry_run) {
 			struct refspec rs;
 			rs.src = ref->name;
 			rs.dst = NULL;
@@ -321,7 +324,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 	}
 
 	packet_flush(out);
-	if (new_refs)
+	if (new_refs && !dry_run)
 		ret = pack_objects(out, remote_refs);
 	close(out);
 
@@ -388,6 +391,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--all")) {
 				send_all = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--dry-run")) {
+				dry_run = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--force")) {

@@ -22,10 +22,7 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 	for (i = 0; i < count; i++) {
 		int length = strlen(result[i]);
 		if (length > 0 && result[i][length - 1] == '/') {
-			char *without_slash = xmalloc(length);
-			memcpy(without_slash, result[i], length - 1);
-			without_slash[length - 1] = '\0';
-			result[i] = without_slash;
+			result[i] = xmemdupz(result[i], length - 1);
 		}
 		if (base_name) {
 			const char *last_slash = strrchr(result[i], '/');

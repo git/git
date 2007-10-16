@@ -211,17 +211,18 @@ static inline void *xmalloc(size_t size)
 	return ret;
 }
 
-static inline char *xstrndup(const char *str, size_t len)
+static inline void *xmemdupz(const void *data, size_t len)
 {
-	char *p;
-
-	p = memchr(str, '\0', len);
-	if (p)
-		len = p - str;
-	p = xmalloc(len + 1);
-	memcpy(p, str, len);
+	char *p = xmalloc(len + 1);
+	memcpy(p, data, len);
 	p[len] = '\0';
 	return p;
+}
+
+static inline char *xstrndup(const char *str, size_t len)
+{
+	char *p = memchr(str, '\0', len);
+	return xmemdupz(str, p ? p - str : len);
 }
 
 static inline void *xrealloc(void *ptr, size_t size)

@@ -29,6 +29,8 @@ hgvers = {}
 hgchildren = {}
 # Current branch for each hg revision
 hgbranch = {}
+# Number of new changesets converted from hg
+hgnewcsets = 0
 
 #------------------------------------------------------------------------------
 
@@ -40,6 +42,8 @@ def usage():
 options:
     -s, --gitstate=FILE: name of the state to be saved/read
                          for incrementals
+    -n, --nrepack=INT:   number of changesets that will trigger
+                         a repack (default=0, -1 to deactivate)
 
 required:
     hgprj:  name of the HG project to import (directory)
@@ -68,14 +72,16 @@ def getgitenv(user, date):
 #------------------------------------------------------------------------------
 
 state = ''
+opt_nrepack = 0
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], 's:t:', ['gitstate=', 'tempdir='])
+    opts, args = getopt.getopt(sys.argv[1:], 's:t:n:', ['gitstate=', 'tempdir=', 'nrepack='])
     for o, a in opts:
         if o in ('-s', '--gitstate'):
             state = a
             state = os.path.abspath(state)
-
+        if o in ('-n', '--nrepack'):
+            opt_nrepack = int(a)
     if len(args) != 1:
         raise('params')
 except:
@@ -138,6 +144,7 @@ for cset in range(int(tip) + 1):
     # incremental, already seen
     if hgvers.has_key(str(cset)):
         continue
+    hgnewcsets += 1
 
     # get info
     prnts = os.popen('hg log -r %d | grep ^parent: | cut -f 2 -d :' % cset).readlines()
@@ -222,7 +229,8 @@ for cset in range(int(tip) + 1):
     print 'record', cset, '->', vvv
     hgvers[str(cset)] = vvv
 
-os.system('git-repack -a -d')
+if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
+    os.system('git-repack -a -d')
 
 # write the state for incrementals
 if state:

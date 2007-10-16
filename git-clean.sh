@@ -26,7 +26,7 @@ rmrf="rm -rf --"
 rm_refuse="echo Not removing"
 echo1="echo"
 
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	-d)

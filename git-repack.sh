@@ -3,17 +3,19 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-USAGE='[-a] [-d] [-f] [-l] [-n] [-q] [--max-pack-size=N] [--window=N] [--window-memory=N] [--depth=N]'
+USAGE='[-a|-A] [-d] [-f] [-l] [-n] [-q] [--max-pack-size=N] [--window=N] [--window-memory=N] [--depth=N]'
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
-no_update_info= all_into_one= remove_redundant=
+no_update_info= all_into_one= remove_redundant= keep_unreachable=
 local= quiet= no_reuse= extra=
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	-n)	no_update_info=t ;;
 	-a)	all_into_one=t ;;
+	-A)	all_into_one=t
+		keep_unreachable=--keep-unreachable ;;
 	-d)	remove_redundant=t ;;
 	-q)	quiet=-q ;;
 	-f)	no_reuse=--no-reuse-object ;;
@@ -59,7 +61,13 @@ case ",$all_into_one," in
 			fi
 		done
 	fi
-	[ -z "$args" ] && args='--unpacked --incremental'
+	if test -z "$args"
+	then
+		args='--unpacked --incremental'
+	elif test -n "$keep_unreachable"
+	then
+		args="$args $keep_unreachable"
+	fi
 	;;
 esac
 

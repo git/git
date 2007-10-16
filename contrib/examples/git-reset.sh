@@ -11,7 +11,7 @@ require_work_tree
 update= reset_type=--mixed
 unset rev
 
-while case $# in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	--mixed | --soft | --hard)

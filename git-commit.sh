@@ -25,6 +25,7 @@ refuse_partial () {
 	exit 1
 }
 
+TMP_INDEX=
 THIS_INDEX="$GIT_DIR/index"
 NEXT_INDEX="$GIT_DIR/next-index$$"
 rm -f "$NEXT_INDEX"
@@ -89,7 +90,7 @@ force_author=
 only_include_assumed=
 untracked_files=
 templatefile="`git config commit.template`"
-while case "$#" in 0) break;; esac
+while test $# != 0
 do
 	case "$1" in
 	-F|--F|-f|--f|--fi|--fil|--file)
@@ -611,6 +612,7 @@ git rerere
 
 if test "$ret" = 0
 then
+	git gc --auto
 	if test -x "$GIT_DIR"/hooks/post-commit
 	then
 		"$GIT_DIR"/hooks/post-commit

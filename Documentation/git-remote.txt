@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'git-remote'
 'git-remote' add [-t <branch>] [-m <branch>] [-f] [--mirror] <name> <url>
+'git-remote' rm <name>
 'git-remote' show <name>
 'git-remote' prune <name>
 'git-remote' update [group]
@@ -49,6 +50,11 @@ branch the `HEAD` at the remote repository actually points at.
 In mirror mode, enabled with `--mirror`, the refs will not be stored
 in the 'refs/remotes/' namespace, but in 'refs/heads/'.  This option
 only makes sense in bare repositories.
+
+'rm'::
+
+Remove the remote named <name>. All remote tracking branches and
+configuration settings for the remote are removed.
 
 'show'::
 

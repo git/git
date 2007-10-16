@@ -298,7 +298,7 @@ rebasing.
 If you want to fold two or more commits into one, replace the command
 "pick" with "squash" for the second and subsequent commit.  If the
 commits had different authors, it will attribute the squashed commit to
-the author of the last commit.
+the author of the first commit.
 
 In both cases, or when a "pick" does not succeed (because of merge
 errors), the loop will stop to let you fix things, and you can continue

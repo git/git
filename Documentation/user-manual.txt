@@ -369,6 +369,11 @@ shorthand:
 The full name is occasionally useful if, for example, there ever
 exists a tag and a branch with the same name.
 
+(Newly created refs are actually stored in the .git/refs directory,
+under the path given by their name.  However, for efficiency reasons
+they may also be packed together in a single file; see
+gitlink:git-pack-refs[1]).
+
 As another useful shortcut, the "HEAD" of a repository can be referred
 to just using the name of that repository.  So, for example, "origin"
 is usually a shortcut for the HEAD branch in the repository "origin".
@@ -921,7 +926,7 @@ file such that it contained the given content either before or after the
 commit.  You can find out with this:
 
 -------------------------------------------------
-$  git log --raw --abbrev=40 --pretty=oneline -- filename |
+$  git log --raw --abbrev=40 --pretty=oneline |
 	grep -B 1 `git hash-object filename`
 -------------------------------------------------
 
@@ -1490,7 +1495,7 @@ Ensuring good performance
 -------------------------
 
 On large repositories, git depends on compression to keep the history
-information from taking up to much space on disk or in memory.
+information from taking up too much space on disk or in memory.
 
 This compression is not performed automatically.  Therefore you
 should occasionally run gitlink:git-gc[1]:
@@ -1531,7 +1536,7 @@ dangling tree b24c2473f1fd3d91352a624795be026d64c8841f
 Dangling objects are not a problem.  At worst they may take up a little
 extra disk space.  They can sometimes provide a last-resort method for
 recovering lost work--see <<dangling-objects>> for details.  However, if
-you wish, you can remove them with gitlink:git-prune[1] or the --prune
+you wish, you can remove them with gitlink:git-prune[1] or the `--prune`
 option to gitlink:git-gc[1]:
 
 -------------------------------------------------
@@ -1550,7 +1555,7 @@ Recovering lost changes
 Reflogs
 ^^^^^^^
 
-Say you modify a branch with gitlink:git-reset[1] --hard, and then
+Say you modify a branch with `gitlink:git-reset[1] --hard`, and then
 realize that the branch was the only reference you had to that point in
 history.
 
@@ -1679,7 +1684,7 @@ $ git pull
 More generally, a branch that is created from a remote branch will pull
 by default from that branch.  See the descriptions of the
 branch.<name>.remote and branch.<name>.merge options in
-gitlink:git-config[1], and the discussion of the --track option in
+gitlink:git-config[1], and the discussion of the `--track` option in
 gitlink:git-checkout[1], to learn how to control these defaults.
 
 In addition to saving you keystrokes, "git pull" also helps you by
@@ -1777,7 +1782,7 @@ $ git clone /path/to/repository
 $ git pull /path/to/other/repository
 -------------------------------------------------
 
-or an ssh url:
+or an ssh URL:
 
 -------------------------------------------------
 $ git clone ssh://yourhost/~you/repository
@@ -1838,7 +1843,7 @@ Exporting a git repository via the git protocol
 This is the preferred method.
 
 If someone else administers the server, they should tell you what
-directory to put the repository in, and what git:// url it will appear
+directory to put the repository in, and what git:// URL it will appear
 at.  You can then skip to the section
 "<<pushing-changes-to-a-public-repository,Pushing changes to a public
 repository>>", below.
@@ -1875,8 +1880,8 @@ $ chmod a+x hooks/post-update
 gitlink:git-update-server-info[1], and the documentation
 link:hooks.html[Hooks used by git].)
 
-Advertise the url of proj.git.  Anybody else should then be able to
-clone or pull from that url, for example with a command line like:
+Advertise the URL of proj.git.  Anybody else should then be able to
+clone or pull from that URL, for example with a command line like:
 
 -------------------------------------------------
 $ git clone http://yourserver.com/~you/proj.git
@@ -1915,7 +1920,7 @@ As with git-fetch, git-push will complain if this does not result in
 a <<fast-forwards,fast forward>>.  Normally this is a sign of
 something wrong.  However, if you are sure you know what you're
 doing, you may force git-push to perform the update anyway by
-proceeding the branch name by a plus sign:
+preceding the branch name by a plus sign:
 
 -------------------------------------------------
 $ git push ssh://yourserver.com/~you/proj.git +master
@@ -2035,7 +2040,7 @@ $ git branch --track test origin/master
 $ git branch --track release origin/master
 -------------------------------------------------
 
-These can be easily kept up to date using gitlink:git-pull[1]
+These can be easily kept up to date using gitlink:git-pull[1].
 
 -------------------------------------------------
 $ git checkout test && git pull
@@ -2127,7 +2132,7 @@ changes are in a specific branch, use:
 $ git log linux..branchname | git-shortlog
 -------------------------------------------------
 
-To see whether it has already been merged into the test or release branches
+To see whether it has already been merged into the test or release branches,
 use:
 
 -------------------------------------------------
@@ -2140,12 +2145,12 @@ or
 $ git log release..branchname
 -------------------------------------------------
 
-(If this branch has not yet been merged you will see some log entries.
+(If this branch has not yet been merged, you will see some log entries.
 If it has been merged, then there will be no output.)
 
 Once a patch completes the great cycle (moving from test to release,
 then pulled by Linus, and finally coming back into your local
-"origin/master" branch) the branch for this change is no longer needed.
+"origin/master" branch), the branch for this change is no longer needed.
 You detect this when the output from:
 
 -------------------------------------------------
@@ -2189,9 +2194,9 @@ test|release)
 	git checkout $1 && git pull . origin
 	;;
 origin)
-	before=$(cat .git/refs/remotes/origin/master)
+	before=$(git rev-parse refs/remotes/origin/master)
 	git fetch origin
-	after=$(cat .git/refs/remotes/origin/master)
+	after=$(git rev-parse refs/remotes/origin/master)
 	if [ $before != $after ]
 	then
 		git log $before..$after | git shortlog
@@ -2216,11 +2221,10 @@ usage()
 	exit 1
 }
 
-if [ ! -f .git/refs/heads/"$1" ]
-then
+git show-ref -q --verify -- refs/heads/"$1" || {
 	echo "Can't see branch <$1>" 1>&2
 	usage
-fi
+}
 
 case "$2" in
 test|release)
@@ -2251,7 +2255,7 @@ then
 	git log test..release
 fi
 
-for branch in `ls .git/refs/heads`
+for branch in `git show-ref --heads | sed 's|^.*/||'`
 do
 	if [ $branch = test -o $branch = release ]
 	then
@@ -2408,7 +2412,7 @@ $ git rebase --continue
 
 and git will continue applying the rest of the patches.
 
-At any point you may use the --abort option to abort this process and
+At any point you may use the `--abort` option to abort this process and
 return mywork to the state it had before you started the rebase:
 
 -------------------------------------------------
@@ -2475,9 +2479,9 @@ $ git checkout -b mywork-new origin
 $ gitk origin..mywork &
 -------------------------------------------------
 
-And browse through the list of patches in the mywork branch using gitk,
+and browse through the list of patches in the mywork branch using gitk,
 applying them (possibly in a different order) to mywork-new using
-cherry-pick, and possibly modifying them as you go using commit --amend.
+cherry-pick, and possibly modifying them as you go using `commit --amend`.
 The gitlink:git-gui[1] command may also help as it allows you to
 individually select diff hunks for inclusion in the index (by
 right-clicking on the diff hunk and choosing "Stage Hunk for Commit").
@@ -2735,7 +2739,7 @@ others:
 
 - Git can quickly determine whether two objects are identical or not,
   just by comparing names.
-- Since object names are computed the same way in ever repository, the
+- Since object names are computed the same way in every repository, the
   same content stored in two repositories will always be stored under
   the same name.
 - Git can detect errors when it reads an object, by checking that the
@@ -2752,7 +2756,7 @@ There are four different types of objects: "blob", "tree", "commit", and
   "blob" objects into a directory structure. In addition, a tree object
   can refer to other tree objects, thus creating a directory hierarchy.
 - A <<def_commit_object,"commit" object>> ties such directory hierarchies
-  together into a <<def_DAG,directed acyclic graph>> of revisions - each
+  together into a <<def_DAG,directed acyclic graph>> of revisions--each
   commit contains the object name of exactly one tree designating the
   directory hierarchy at the time of the commit. In addition, a commit
   refers to "parent" commit objects that describe the history of how we
@@ -2852,8 +2856,7 @@ between two related tree objects, since it can ignore any entries with
 identical object names.
 
 (Note: in the presence of submodules, trees may also have commits as
-entries.   See gitlink:git-submodule[1] and gitlink:gitmodules.txt[1]
-for partial documentation.)
+entries.  See <<submodules>> for documentation.)
 
 Note that the files all have mode 644 or 755: git actually only pays
 attention to the executable bit.
@@ -2946,7 +2949,7 @@ nLE/L9aUXdWeTFPron96DLA=
 See the gitlink:git-tag[1] command to learn how to create and verify tag
 objects.  (Note that gitlink:git-tag[1] can also be used to create
 "lightweight tags", which are not tag objects at all, but just simple
-references in .git/refs/tags/).
+references whose names begin with "refs/tags/").
 
 [[pack-files]]
 How git stores objects efficiently: pack files
@@ -3026,7 +3029,7 @@ There are also other situations that cause dangling objects. For
 example, a "dangling blob" may arise because you did a "git add" of a
 file, but then, before you actually committed it and made it part of the
 bigger picture, you changed something else in that file and committed
-that *updated* thing - the old state that you added originally ends up
+that *updated* thing--the old state that you added originally ends up
 not being pointed to by any commit or tree, so it's now a dangling blob
 object.
 
@@ -3041,7 +3044,7 @@ up pointing to them, so they end up "dangling" in your repository.
 Generally, dangling objects aren't anything to worry about. They can
 even be very useful: if you screw something up, the dangling objects can
 be how you recover your old tree (say, you did a rebase, and realized
-that you really didn't want to - you can look at what dangling objects
+that you really didn't want to--you can look at what dangling objects
 you have, and decide to reset your head to some old dangling state).
 
 For commits, you can just use:
@@ -3085,10 +3088,10 @@ $ git prune
 ------------------------------------------------
 
 and they'll be gone. But you should only run "git prune" on a quiescent
-repository - it's kind of like doing a filesystem fsck recovery: you
+repository--it's kind of like doing a filesystem fsck recovery: you
 don't want to do that while the filesystem is mounted.
 
-(The same is true of "git-fsck" itself, btw - but since
+(The same is true of "git-fsck" itself, btw, but since
 git-fsck never actually *changes* the repository, it just reports
 on what it found, git-fsck itself is never "dangerous" to run.
 Running it while somebody is actually changing the repository can cause
@@ -3155,6 +3158,241 @@ a tree which you are in the process of working on.
 If you blow the index away entirely, you generally haven't lost any
 information as long as you have the name of the tree that it described.
 
+[[submodules]]
+Submodules
+==========
+
+Large projects are often composed of smaller, self-contained modules.  For
+example, an embedded Linux distribution's source tree would include every
+piece of software in the distribution with some local modifications; a movie
+player might need to build against a specific, known-working version of a
+decompression library; several independent programs might all share the same
+build scripts.
+
+With centralized revision control systems this is often accomplished by
+including every module in one single repository.  Developers can check out
+all modules or only the modules they need to work with.  They can even modify
+files across several modules in a single commit while moving things around
+or updating APIs and translations.
+
+Git does not allow partial checkouts, so duplicating this approach in Git
+would force developers to keep a local copy of modules they are not
+interested in touching.  Commits in an enormous checkout would be slower
+than you'd expect as Git would have to scan every directory for changes.
+If modules have a lot of local history, clones would take forever.
+
+On the plus side, distributed revision control systems can much better
+integrate with external sources.  In a centralized model, a single arbitrary
+snapshot of the external project is exported from its own revision control
+and then imported into the local revision control on a vendor branch.  All
+the history is hidden.  With distributed revision control you can clone the
+entire external history and much more easily follow development and re-merge
+local changes.
+
+Git's submodule support allows a repository to contain, as a subdirectory, a
+checkout of an external project.  Submodules maintain their own identity;
+the submodule support just stores the submodule repository location and
+commit ID, so other developers who clone the containing project
+("superproject") can easily clone all the submodules at the same revision.
+Partial checkouts of the superproject are possible: you can tell Git to
+clone none, some or all of the submodules.
+
+The gitlink:git-submodule[1] command is available since Git 1.5.3.  Users
+with Git 1.5.2 can look up the submodule commits in the repository and
+manually check them out; earlier versions won't recognize the submodules at
+all.
+
+To see how submodule support works, create (for example) four example
+repositories that can be used later as a submodule:
+
+-------------------------------------------------
+$ mkdir ~/git
+$ cd ~/git
+$ for i in a b c d
+do
+	mkdir $i
+	cd $i
+	git init
+	echo "module $i" > $i.txt
+	git add $i.txt
+	git commit -m "Initial commit, submodule $i"
+	cd ..
+done
+-------------------------------------------------
+
+Now create the superproject and add all the submodules:
+
+-------------------------------------------------
+$ mkdir super
+$ cd super
+$ git init
+$ for i in a b c d
+do
+	git submodule add ~/git/$i
+done
+-------------------------------------------------
+
+NOTE: Do not use local URLs here if you plan to publish your superproject!
+
+See what files `git submodule` created:
+
+-------------------------------------------------
+$ ls -a
+.  ..  .git  .gitmodules  a  b  c  d
+-------------------------------------------------
+
+The `git submodule add` command does a couple of things:
+
+- It clones the submodule under the current directory and by default checks out
+  the master branch.
+- It adds the submodule's clone path to the gitlink:gitmodules[5] file and
+  adds this file to the index, ready to be committed.
+- It adds the submodule's current commit ID to the index, ready to be
+  committed.
+
+Commit the superproject:
+
+-------------------------------------------------
+$ git commit -m "Add submodules a, b, c and d."
+-------------------------------------------------
+
+Now clone the superproject:
+
+-------------------------------------------------
+$ cd ..
+$ git clone super cloned
+$ cd cloned
+-------------------------------------------------
+
+The submodule directories are there, but they're empty:
+
+-------------------------------------------------
+$ ls -a a
+.  ..
+$ git submodule status
+-d266b9873ad50488163457f025db7cdd9683d88b a
+-e81d457da15309b4fef4249aba9b50187999670d b
+-c1536a972b9affea0f16e0680ba87332dc059146 c
+-d96249ff5d57de5de093e6baff9e0aafa5276a74 d
+-------------------------------------------------
+
+NOTE: The commit object names shown above would be different for you, but they
+should match the HEAD commit object names of your repositories.  You can check
+it by running `git ls-remote ../a`.
+
+Pulling down the submodules is a two-step process. First run `git submodule
+init` to add the submodule repository URLs to `.git/config`:
+
+-------------------------------------------------
+$ git submodule init
+-------------------------------------------------
+
+Now use `git submodule update` to clone the repositories and check out the
+commits specified in the superproject:
+
+-------------------------------------------------
+$ git submodule update
+$ cd a
+$ ls -a
+.  ..  .git  a.txt
+-------------------------------------------------
+
+One major difference between `git submodule update` and `git submodule add` is
+that `git submodule update` checks out a specific commit, rather than the tip
+of a branch. It's like checking out a tag: the head is detached, so you're not
+working on a branch.
+
+-------------------------------------------------
+$ git branch
+* (no branch)
+  master
+-------------------------------------------------
+
+If you want to make a change within a submodule and you have a detached head,
+then you should create or checkout a branch, make your changes, publish the
+change within the submodule, and then update the superproject to reference the
+new commit:
+
+-------------------------------------------------
+$ git checkout master
+-------------------------------------------------
+
+or
+
+-------------------------------------------------
+$ git checkout -b fix-up
+-------------------------------------------------
+
+then
+
+-------------------------------------------------
+$ echo "adding a line again" >> a.txt
+$ git commit -a -m "Updated the submodule from within the superproject."
+$ git push
+$ cd ..
+$ git diff
+diff --git a/a b/a
+index d266b98..261dfac 160000
+--- a/a
++++ b/a
+@@ -1 +1 @@
+-Subproject commit d266b9873ad50488163457f025db7cdd9683d88b
++Subproject commit 261dfac35cb99d380eb966e102c1197139f7fa24
+$ git add a
+$ git commit -m "Updated submodule a."
+$ git push
+-------------------------------------------------
+
+You have to run `git submodule update` after `git pull` if you want to update
+submodules, too.
+
+Pitfalls with submodules
+------------------------
+
+Always publish the submodule change before publishing the change to the
+superproject that references it. If you forget to publish the submodule change,
+others won't be able to clone the repository:
+
+-------------------------------------------------
+$ cd ~/git/super/a
+$ echo i added another line to this file >> a.txt
+$ git commit -a -m "doing it wrong this time"
+$ cd ..
+$ git add a
+$ git commit -m "Updated submodule a again."
+$ git push
+$ cd ~/git/cloned
+$ git pull
+$ git submodule update
+error: pathspec '261dfac35cb99d380eb966e102c1197139f7fa24' did not match any file(s) known to git.
+Did you forget to 'git add'?
+Unable to checkout '261dfac35cb99d380eb966e102c1197139f7fa24' in submodule path 'a'
+-------------------------------------------------
+
+You also should not rewind branches in a submodule beyond commits that were
+ever recorded in any superproject.
+
+It's not safe to run `git submodule update` if you've made and committed
+changes within a submodule without checking out a branch first. They will be
+silently overwritten:
+
+-------------------------------------------------
+$ cat a.txt
+module a
+$ echo line added from private2 >> a.txt
+$ git commit -a -m "line added inside private2"
+$ cd ..
+$ git submodule update
+Submodule path 'a': checked out 'd266b9873ad50488163457f025db7cdd9683d88b'
+$ cd a
+$ cat a.txt
+module a
+-------------------------------------------------
+
+NOTE: The changes are still visible in the submodule's reflog.
+
+This is not the case if you did not commit your changes.
+
 [[low-level-operations]]
 Low-level git operations
 ========================
@@ -3187,9 +3425,10 @@ The Workflow
 ------------
 
 High-level operations such as gitlink:git-commit[1],
-gitlink:git-checkout[1] and git-reset[1] work by moving data between the
-working tree, the index, and the object database.  Git provides
-low-level operations which perform each of these steps individually.
+gitlink:git-checkout[1] and gitlink:git-reset[1] work by moving data
+between the working tree, the index, and the object database.  Git
+provides low-level operations which perform each of these steps
+individually.
 
 Generally, all "git" operations work on the index file. Some operations
 work *purely* on the index file (showing the current state of the
@@ -3244,7 +3483,7 @@ You write your current index file to a "tree" object with the program
 $ git write-tree
 -------------------------------------------------
 
-that doesn't come with any options - it will just write out the
+that doesn't come with any options--it will just write out the
 current index into the set of tree objects that describe that state,
 and it will return the name of the resulting top-level tree. You can
 use that tree to re-generate the index at any time by going in the
@@ -3255,7 +3494,7 @@ object database -> index
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 You read a "tree" file from the object database, and use that to
-populate (and overwrite - don't do this if your index contains any
+populate (and overwrite--don't do this if your index contains any
 unsaved state that you might want to restore later!) your current
 index.  Normal operation is just
 
@@ -3303,7 +3542,7 @@ Tying it all together
 
 To commit a tree you have instantiated with "git-write-tree", you'd
 create a "commit" object that refers to that tree and the history
-behind it - most notably the "parent" commits that preceded it in
+behind it--most notably the "parent" commits that preceded it in
 history.
 
 Normally a "commit" has one parent: the previous state of the tree
@@ -3446,7 +3685,7 @@ Once you know the three trees you are going to merge (the one "original"
 tree, aka the common tree, and the two "result" trees, aka the branches
 you want to merge), you do a "merge" read into the index. This will
 complain if it has to throw away your old index contents, so you should
-make sure that you've committed those - in fact you would normally
+make sure that you've committed those--in fact you would normally
 always do a merge against your last commit (which should thus match what
 you have in your current index anyway).
 
@@ -3466,7 +3705,7 @@ Merging multiple trees, continued
 ---------------------------------
 
 Sadly, many merges aren't trivial. If there are files that have
-been added.moved or removed, or if both branches have modified the
+been added, moved or removed, or if both branches have modified the
 same file, you will be left with an index tree that contains "merge
 entries" in it. Such an index tree can 'NOT' be written out to a tree
 object, and you will have to resolve any such merge clashes using
@@ -3718,7 +3957,7 @@ Two things are interesting here:
 
 - `get_sha1()` returns 0 on _success_.  This might surprise some new
   Git hackers, but there is a long tradition in UNIX to return different
-  negative numbers in case of different errors -- and 0 on success.
+  negative numbers in case of different errors--and 0 on success.
 
 - the variable `sha1` in the function signature of `get_sha1()` is `unsigned
   char \*`, but is actually expected to be a pointer to `unsigned
@@ -3823,7 +4062,7 @@ $ git branch new     # create branch "new" starting at current HEAD
 $ git branch -d new  # delete branch "new"
 -----------------------------------------------
 
-Instead of basing new branch on current HEAD (the default), use:
+Instead of basing a new branch on current HEAD (the default), use:
 
 -----------------------------------------------
 $ git branch new test    # branch named "test"
@@ -4071,5 +4310,3 @@ Write a chapter on using plumbing and writing scripts.
 Alternates, clone -reference, etc.
 
 git unpack-objects -r for recovery
-
-submodules

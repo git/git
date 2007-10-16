@@ -57,13 +57,13 @@ stash@{1}: On master: 9cc0589... Add git-stash
 
 show [<stash>]::
 
-	Show the changes recorded in the stash as a diff between the the
+	Show the changes recorded in the stash as a diff between the
 	stashed state and its original parent. When no `<stash>` is given,
 	shows the latest one. By default, the command shows the diffstat, but
 	it will accept any format known to `git-diff` (e.g., `git-stash show
 	-p stash@\{1}` to view the second most recent stash in patch form).
 
-apply [<stash>]::
+apply [--index] [<stash>]::
 
 	Restore the changes recorded in the stash on top of the current
 	working tree state.  When no `<stash>` is given, applies the latest
@@ -71,6 +71,11 @@ apply [<stash>]::
 +
 This operation can fail with conflicts; you need to resolve them
 by hand in the working tree.
++
+If the `--index` option is used, then tries to reinstate not only the working
+tree's changes, but also the index's ones. However, this can fail, when you
+have conflicts (which are stored in the index, where you therefore can no
+longer apply the changes as they were originally).
 
 clear::
 	Remove all the stashed states. Note that those states will then

@@ -654,6 +654,8 @@ static int git_transport_push(struct transport *transport, int refspec_nr, const
 		argv[argc++] = "--all";
 	if (flags & TRANSPORT_PUSH_FORCE)
 		argv[argc++] = "--force";
+	if (flags & TRANSPORT_PUSH_DRY_RUN)
+		argv[argc++] = "--dry-run";
 	if (data->receivepack) {
 		char *rp = xmalloc(strlen(data->receivepack) + 16);
 		sprintf(rp, "--receive-pack=%s", data->receivepack);

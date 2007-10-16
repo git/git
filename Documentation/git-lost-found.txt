@@ -65,7 +65,7 @@ $ git rev-parse not-lost-anymore
 
 Author
 ------
-Written by Junio C Hamano 濱野 純 <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------

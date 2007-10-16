@@ -2,6 +2,7 @@
 #define CACHE_H
 
 #include "git-compat-util.h"
+#include "strbuf.h"
 
 #include SHA1_HEADER
 #include <zlib.h>
@@ -270,7 +271,6 @@ extern int ie_match_stat(struct index_state *, struct cache_entry *, struct stat
 extern int ie_modified(struct index_state *, struct cache_entry *, struct stat *, int);
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
-extern int read_fd(int fd, char **return_buf, unsigned long *return_size);
 extern int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object);
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
@@ -432,6 +432,7 @@ const char *show_date(unsigned long time, int timezone, enum date_mode mode);
 int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
+enum date_mode parse_date_format(const char *format);
 
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
@@ -531,6 +532,7 @@ extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsign
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 extern const char *packed_object_info_detail(struct packed_git *, off_t, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
+extern int matches_pack_name(struct packed_git *p, const char *name);
 
 /* Dumb servers support */
 extern int update_server_info(int);
@@ -586,14 +588,13 @@ extern void *alloc_object_node(void);
 extern void alloc_report(void);
 
 /* trace.c */
-extern int nfasprintf(char **str, const char *fmt, ...);
-extern int nfvasprintf(char **str, const char *fmt, va_list va);
 extern void trace_printf(const char *format, ...);
 extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
 
 /* convert.c */
-extern char *convert_to_git(const char *path, const char *src, unsigned long *sizep);
-extern char *convert_to_working_tree(const char *path, const char *src, unsigned long *sizep);
+/* returns 1 if *dst was used */
+extern int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst);
+extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 
 /* diff.c */
 extern int diff_auto_refresh_index;

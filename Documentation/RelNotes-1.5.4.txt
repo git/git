@@ -4,11 +4,32 @@ GIT v1.5.4 Release Notes
 Updates since v1.5.3
 --------------------
 
+ * git-reset is now built-in.
 
+ * git-send-email can optionally talk over ssmtp and use SMTP-AUTH.
+
+ * git-rebase learned --whitespace option.
+
+ * git-remote knows --mirror mode.
+
+ * git-merge can call the "post-merge" hook.
+
+ * git-pack-objects can optionally run deltification with multiple threads.
+
+ * git-archive can optionally substitute keywords in files marked with
+   export-subst attribute.
+
+ * Various Perforce importer updates.
 
 Fixes since v1.5.3
 ------------------
 
 All of the fixes in v1.5.3 maintenance series are included in
 this release, unless otherwise noted.
+
+--
+exec >/var/tmp/1
+O=v1.5.3.2-99-ge4b2890
+echo O=`git describe refs/heads/master`
+git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
 

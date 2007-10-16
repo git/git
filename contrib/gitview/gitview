@@ -28,11 +28,19 @@ import string
 import fcntl
 
 try:
+    import gtksourceview2
+    have_gtksourceview2 = True
+except ImportError:
+    have_gtksourceview2 = False
+
+try:
     import gtksourceview
     have_gtksourceview = True
 except ImportError:
     have_gtksourceview = False
-    print "Running without gtksourceview module"
+
+if not have_gtksourceview2 and not have_gtksourceview:
+    print "Running without gtksourceview2 or gtksourceview module"
 
 re_ident = re.compile('(author|committer) (?P<ident>.*) (?P<epoch>\d+) (?P<tz>[+-]\d{4})')
 
@@ -57,6 +65,26 @@ def show_date(epoch, tz):
 		secs -= tzsecs
 
 	return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(secs))
+
+def get_source_buffer_and_view():
+	if have_gtksourceview2:
+		buffer = gtksourceview2.Buffer()
+		slm = gtksourceview2.LanguageManager()
+		gsl = slm.get_language("diff")
+		buffer.set_highlight_syntax(True)
+		buffer.set_language(gsl)
+		view = gtksourceview2.View(buffer)
+	elif have_gtksourceview:
+		buffer = gtksourceview.SourceBuffer()
+		slm = gtksourceview.SourceLanguagesManager()
+		gsl = slm.get_language_from_mime_type("text/x-patch")
+		buffer.set_highlight(True)
+		buffer.set_language(gsl)
+		view = gtksourceview.SourceView(buffer)
+	else:
+		buffer = gtk.TextBuffer()
+		view = gtk.TextView(buffer)
+	return (buffer, view)
 
 
 class CellRendererGraph(gtk.GenericCellRenderer):
@@ -582,17 +610,7 @@ class DiffWindow(object):
 		hpan.pack1(scrollwin, True, True)
 		scrollwin.show()
 
-		if have_gtksourceview:
-			self.buffer = gtksourceview.SourceBuffer()
-			slm = gtksourceview.SourceLanguagesManager()
-			gsl = slm.get_language_from_mime_type("text/x-patch")
-			self.buffer.set_highlight(True)
-			self.buffer.set_language(gsl)
-			sourceview = gtksourceview.SourceView(self.buffer)
-		else:
-			self.buffer = gtk.TextBuffer()
-			sourceview = gtk.TextView(self.buffer)
-
+		(self.buffer, sourceview) = get_source_buffer_and_view()
 
 		sourceview.set_editable(False)
 		sourceview.modify_font(pango.FontDescription("Monospace"))
@@ -956,16 +974,7 @@ class GitView(object):
 		vbox.pack_start(scrollwin, expand=True, fill=True)
 		scrollwin.show()
 
-		if have_gtksourceview:
-			self.message_buffer = gtksourceview.SourceBuffer()
-			slm = gtksourceview.SourceLanguagesManager()
-			gsl = slm.get_language_from_mime_type("text/x-patch")
-			self.message_buffer.set_highlight(True)
-			self.message_buffer.set_language(gsl)
-			sourceview = gtksourceview.SourceView(self.message_buffer)
-		else:
-			self.message_buffer = gtk.TextBuffer()
-			sourceview = gtk.TextView(self.message_buffer)
+		(self.message_buffer, sourceview) = get_source_buffer_and_view()
 
 		sourceview.set_editable(False)
 		sourceview.modify_font(pango.FontDescription("Monospace"))

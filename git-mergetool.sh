@@ -12,6 +12,7 @@ USAGE='[--tool=tool] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
+prefix=$(git rev-parse --show-prefix)
 
 # Returns true if the mode reflects a symlink
 is_symlink () {
@@ -162,9 +163,9 @@ merge_file () {
     local_mode=`git ls-files -u -- "$path" | awk '{if ($3==2) print $1;}'`
     remote_mode=`git ls-files -u -- "$path" | awk '{if ($3==3) print $1;}'`
 
-    base_present   && git cat-file blob ":1:$path" > "$BASE" 2>/dev/null
-    local_present  && git cat-file blob ":2:$path" > "$LOCAL" 2>/dev/null
-    remote_present && git cat-file blob ":3:$path" > "$REMOTE" 2>/dev/null
+    base_present   && git cat-file blob ":1:$prefix$path" >"$BASE" 2>/dev/null
+    local_present  && git cat-file blob ":2:$prefix$path" >"$LOCAL" 2>/dev/null
+    remote_present && git cat-file blob ":3:$prefix$path" >"$REMOTE" 2>/dev/null
 
     if test -z "$local_mode" -o -z "$remote_mode"; then
 	echo "Deleted merge conflict for '$path':"
@@ -191,10 +192,10 @@ merge_file () {
     case "$merge_tool" in
 	kdiff3)
 	    if base_present ; then
-		(kdiff3 --auto --L1 "$path (Base)" -L2 "$path (Local)" --L3 "$path (Remote)" \
+		(kdiff3 --auto --L1 "$path (Base)" --L2 "$path (Local)" --L3 "$path (Remote)" \
 		    -o "$path" -- "$BASE" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    else
-		(kdiff3 --auto -L1 "$path (Local)" --L2 "$path (Remote)" \
+		(kdiff3 --auto --L1 "$path (Local)" --L2 "$path (Remote)" \
 		    -o "$path" -- "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    fi
 	    status=$?
@@ -251,9 +252,9 @@ merge_file () {
 	    ;;
 	emerge)
 	    if base_present ; then
-		emacs -f emerge-files-with-ancestor-command "$LOCAL" "$REMOTE" "$BASE" "$path"
+		emacs -f emerge-files-with-ancestor-command "$LOCAL" "$REMOTE" "$BASE" "$(basename "$path")"
 	    else
-		emacs -f emerge-files-command "$LOCAL" "$REMOTE" "$path"
+		emacs -f emerge-files-command "$LOCAL" "$REMOTE" "$(basename "$path")"
 	    fi
 	    status=$?
 	    save_backup
@@ -268,7 +269,7 @@ merge_file () {
     cleanup_temp_files
 }
 
-while case $# in 0) break ;; esac
+while test $# != 0
 do
     case "$1" in
 	-t|--tool*)

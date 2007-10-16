@@ -393,9 +393,7 @@ static int git_proxy_command_options(const char *var, const char *value)
 			if (matchlen == 4 &&
 			    !memcmp(value, "none", 4))
 				matchlen = 0;
-			git_proxy_command = xmalloc(matchlen + 1);
-			memcpy(git_proxy_command, value, matchlen);
-			git_proxy_command[matchlen] = 0;
+			git_proxy_command = xmemdupz(value, matchlen);
 		}
 		return 0;
 	}
@@ -579,16 +577,13 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 	if (pid < 0)
 		die("unable to fork");
 	if (!pid) {
-		char command[MAX_CMD_LEN];
-		char *posn = command;
-		int size = MAX_CMD_LEN;
-		int of = 0;
+		struct strbuf cmd;
 
-		of |= add_to_string(&posn, &size, prog, 0);
-		of |= add_to_string(&posn, &size, " ", 0);
-		of |= add_to_string(&posn, &size, path, 1);
-
-		if (of)
+		strbuf_init(&cmd, MAX_CMD_LEN);
+		strbuf_addstr(&cmd, prog);
+		strbuf_addch(&cmd, ' ');
+		sq_quote_buf(&cmd, path);
+		if (cmd.len >= MAX_CMD_LEN)
 			die("command line too long");
 
 		dup2(pipefd[1][0], 0);
@@ -608,10 +603,10 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 				ssh_basename++;
 
 			if (!port)
-				execlp(ssh, ssh_basename, host, command, NULL);
+				execlp(ssh, ssh_basename, host, cmd.buf, NULL);
 			else
 				execlp(ssh, ssh_basename, "-p", port, host,
-				       command, NULL);
+				       cmd.buf, NULL);
 		}
 		else {
 			unsetenv(ALTERNATE_DB_ENVIRONMENT);
@@ -620,7 +615,7 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 			unsetenv(GIT_WORK_TREE_ENVIRONMENT);
 			unsetenv(GRAFT_ENVIRONMENT);
 			unsetenv(INDEX_ENVIRONMENT);
-			execlp("sh", "sh", "-c", command, NULL);
+			execlp("sh", "sh", "-c", cmd.buf, NULL);
 		}
 		die("exec failed");
 	}

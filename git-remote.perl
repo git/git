@@ -218,7 +218,7 @@ sub prune_remote {
 	my ($name, $ls_remote) = @_;
 	if (!exists $remote->{$name}) {
 		print STDERR "No such remote $name\n";
-		return;
+		return 1;
 	}
 	my $info = $remote->{$name};
 	update_ls_remote($ls_remote, $info);
@@ -229,13 +229,14 @@ sub prune_remote {
 		my @v = $git->command(qw(rev-parse --verify), "$prefix/$to_prune");
 		$git->command(qw(update-ref -d), "$prefix/$to_prune", $v[0]);
 	}
+	return 0;
 }
 
 sub show_remote {
 	my ($name, $ls_remote) = @_;
 	if (!exists $remote->{$name}) {
 		print STDERR "No such remote $name\n";
-		return;
+		return 1;
 	}
 	my $info = $remote->{$name};
 	update_ls_remote($ls_remote, $info);
@@ -265,6 +266,7 @@ sub show_remote {
 		print "  Local branch(es) pushed with 'git push'\n";
 		print "    @pushed\n";
 	}
+	return 0;
 }
 
 sub add_remote {
@@ -316,6 +318,34 @@ sub update_remote {
 	}
 }
 
+sub rm_remote {
+	my ($name) = @_;
+	if (!exists $remote->{$name}) {
+		print STDERR "No such remote $name\n";
+		return 1;
+	}
+
+	$git->command('config', '--remove-section', "remote.$name");
+
+	eval {
+	    my @trackers = $git->command('config', '--get-regexp',
+			'branch.*.remote', $name);
+		for (@trackers) {
+			/^branch\.(.*)?\.remote/;
+			$git->config('--unset', "branch.$1.remote");
+			$git->config('--unset', "branch.$1.merge");
+		}
+	};
+
+	my @refs = $git->command('for-each-ref',
+		'--format=%(refname) %(objectname)', "refs/remotes/$name");
+	for (@refs) {
+		($ref, $object) = split;
+		$git->command(qw(update-ref -d), $ref, $object);
+	}
+	return 0;
+}
+
 sub add_usage {
 	print STDERR "Usage: git remote add [-f] [-t track]* [-m master] <name> <url>\n";
 	exit(1);
@@ -353,9 +383,11 @@ elsif ($ARGV[0] eq 'show') {
 		print STDERR "Usage: git remote show <remote>\n";
 		exit(1);
 	}
+	my $status = 0;
 	for (; $i < @ARGV; $i++) {
-		show_remote($ARGV[$i], $ls_remote);
+		$status |= show_remote($ARGV[$i], $ls_remote);
 	}
+	exit($status);
 }
 elsif ($ARGV[0] eq 'update') {
 	if (@ARGV <= 1) {
@@ -381,9 +413,11 @@ elsif ($ARGV[0] eq 'prune') {
 		print STDERR "Usage: git remote prune <remote>\n";
 		exit(1);
 	}
+	my $status = 0;
 	for (; $i < @ARGV; $i++) {
-		prune_remote($ARGV[$i], $ls_remote);
+		$status |= prune_remote($ARGV[$i], $ls_remote);
 	}
+        exit($status);
 }
 elsif ($ARGV[0] eq 'add') {
 	my %opts = ();
@@ -422,9 +456,17 @@ elsif ($ARGV[0] eq 'add') {
 	}
 	add_remote($ARGV[1], $ARGV[2], \%opts);
 }
+elsif ($ARGV[0] eq 'rm') {
+	if (@ARGV <= 1) {
+		print STDERR "Usage: git remote rm <remote>\n";
+		exit(1);
+	}
+	exit(rm_remote($ARGV[1]));
+}
 else {
 	print STDERR "Usage: git remote\n";
 	print STDERR "       git remote add <name> <url>\n";
+	print STDERR "       git remote rm <name>\n";
 	print STDERR "       git remote show <name>\n";
 	print STDERR "       git remote prune <name>\n";
 	print STDERR "       git remote update [group]\n";

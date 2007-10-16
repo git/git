@@ -56,8 +56,12 @@ merge.verbosity::
 	message if conflicts were detected. Level 1 outputs only
 	conflicts, 2 outputs conflicts and file changes.  Level 5 and
 	above outputs debugging information.  The default is level 2.
-	Can be overriden by 'GIT_MERGE_VERBOSITY' environment variable.
+	Can be overridden by 'GIT_MERGE_VERBOSITY' environment variable.
 
+branch.<name>.mergeoptions::
+	Sets default options for merging into branch <name>. The syntax and
+	supported options are equal to that of git-merge, but option values
+	containing whitespace characters are currently not supported.
 
 HOW MERGE WORKS
 ---------------

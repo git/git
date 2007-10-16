@@ -140,6 +140,7 @@ test_expect_success 'test show-ignore' "
 	cd test_wc &&
 	mkdir -p deeply/nested/directory &&
 	svn add deeply &&
+	svn up &&
 	svn propset -R svn:ignore 'no-such-file*' .
 	svn commit -m 'propset svn:ignore'
 	cd .. &&

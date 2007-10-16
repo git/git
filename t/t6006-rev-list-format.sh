@@ -79,9 +79,7 @@ EOF
 
 test_format encoding %e <<'EOF'
 commit 131a310eb913d107dd3c09a65d1651175898735d
-<unknown>
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
-<unknown>
 EOF
 
 test_format subject %s <<'EOF'
@@ -93,9 +91,7 @@ EOF
 
 test_format body %b <<'EOF'
 commit 131a310eb913d107dd3c09a65d1651175898735d
-<unknown>
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
-<unknown>
 EOF
 
 test_format colors %Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy <<'EOF'
@@ -121,9 +117,7 @@ test_format complex-encoding %e <<'EOF'
 commit f58db70b055c5718631e5c61528b28b12090cdea
 iso8859-1
 commit 131a310eb913d107dd3c09a65d1651175898735d
-<unknown>
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
-<unknown>
 EOF
 
 test_format complex-subject %s <<'EOF'
@@ -142,9 +136,7 @@ and it will be encoded in iso8859-1. We should therefore
 include an iso8859 character: ¡bueno!
 
 commit 131a310eb913d107dd3c09a65d1651175898735d
-<unknown>
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
-<unknown>
 EOF
 
 test_done

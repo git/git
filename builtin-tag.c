@@ -17,12 +17,11 @@ static const char builtin_tag_usage[] =
 
 static char signingkey[1000];
 
-static void launch_editor(const char *path, char **buffer, unsigned long *len)
+static void launch_editor(const char *path, struct strbuf *buffer)
 {
 	const char *editor, *terminal;
 	struct child_process child;
 	const char *args[3];
-	int fd;
 
 	editor = getenv("GIT_EDITOR");
 	if (!editor && editor_program)
@@ -52,15 +51,9 @@ static void launch_editor(const char *path, char **buffer, unsigned long *len)
 	if (run_command(&child))
 		die("There was a problem with the editor %s.", editor);
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		die("could not open '%s': %s", path, strerror(errno));
-	if (read_fd(fd, buffer, len)) {
-		free(*buffer);
+	if (strbuf_read_file(buffer, path, 0) < 0)
 		die("could not read message file '%s': %s",
-						path, strerror(errno));
-	}
-	close(fd);
+		    path, strerror(errno));
 }
 
 struct tag_filter {
@@ -184,7 +177,7 @@ static int verify_tag(const char *name, const char *ref,
 	return 0;
 }
 
-static ssize_t do_sign(char *buffer, size_t size, size_t max)
+static int do_sign(struct strbuf *buffer)
 {
 	struct child_process gpg;
 	const char *args[4];
@@ -216,22 +209,22 @@ static ssize_t do_sign(char *buffer, size_t size, size_t max)
 	if (start_command(&gpg))
 		return error("could not run gpg.");
 
-	if (write_in_full(gpg.in, buffer, size) != size) {
+	if (write_in_full(gpg.in, buffer->buf, buffer->len) != buffer->len) {
 		close(gpg.in);
 		finish_command(&gpg);
 		return error("gpg did not accept the tag data");
 	}
 	close(gpg.in);
 	gpg.close_in = 0;
-	len = read_in_full(gpg.out, buffer + size, max - size);
+	len = strbuf_read(buffer, gpg.out, 1024);
 
 	if (finish_command(&gpg) || !len || len < 0)
 		return error("gpg failed to sign the tag");
 
-	if (len == max - size)
+	if (len < 0)
 		return error("could not read the entire signature from gpg.");
 
-	return size + len;
+	return 0;
 }
 
 static const char tag_template[] =
@@ -254,15 +247,13 @@ static int git_tag_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
-#define MAX_SIGNATURE_LENGTH 1024
-/* message must be NULL or allocated, it will be reallocated and freed */
 static void create_tag(const unsigned char *object, const char *tag,
-		       char *message, int sign, unsigned char *result)
+		       struct strbuf *buf, int message, int sign,
+			   unsigned char *result)
 {
 	enum object_type type;
-	char header_buf[1024], *buffer = NULL;
-	int header_len, max_size;
-	unsigned long size = 0;
+	char header_buf[1024];
+	int header_len;
 
 	type = sha1_object_info(object, NULL);
 	if (type <= OBJ_NONE)
@@ -294,53 +285,37 @@ static void create_tag(const unsigned char *object, const char *tag,
 		write_or_die(fd, tag_template, strlen(tag_template));
 		close(fd);
 
-		launch_editor(path, &buffer, &size);
+		launch_editor(path, buf);
 
 		unlink(path);
 		free(path);
 	}
-	else {
-		buffer = message;
-		size = strlen(message);
-	}
 
-	size = stripspace(buffer, size, 1);
+	stripspace(buf, 1);
 
-	if (!message && !size)
+	if (!message && !buf->len)
 		die("no tag message?");
 
-	/* insert the header and add the '\n' if needed: */
-	max_size = header_len + size + (sign ? MAX_SIGNATURE_LENGTH : 0) + 1;
-	buffer = xrealloc(buffer, max_size);
-	if (size)
-		buffer[size++] = '\n';
-	memmove(buffer + header_len, buffer, size);
-	memcpy(buffer, header_buf, header_len);
-	size += header_len;
+	strbuf_insert(buf, 0, header_buf, header_len);
 
-	if (sign) {
-		ssize_t r = do_sign(buffer, size, max_size);
-		if (r < 0)
-			die("unable to sign the tag");
-		size = r;
-	}
-
-	if (write_sha1_file(buffer, size, tag_type, result) < 0)
+	if (sign && do_sign(buf) < 0)
+		die("unable to sign the tag");
+	if (write_sha1_file(buf->buf, buf->len, tag_type, result) < 0)
 		die("unable to write tag file");
-	free(buffer);
 }
 
 int cmd_tag(int argc, const char **argv, const char *prefix)
 {
+	struct strbuf buf;
 	unsigned char object[20], prev[20];
-	int annotate = 0, sign = 0, force = 0, lines = 0;
-	char *message = NULL;
+	int annotate = 0, sign = 0, force = 0, lines = 0, message = 0;
 	char ref[PATH_MAX];
 	const char *object_ref, *tag;
 	int i;
 	struct ref_lock *lock;
 
 	git_config(git_tag_config);
+	strbuf_init(&buf, 0);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -376,13 +351,11 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 				die("option -m needs an argument.");
 			if (message)
 				die("only one -F or -m option is allowed.");
-			message = xstrdup(argv[i]);
+			strbuf_addstr(&buf, argv[i]);
+			message = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-F")) {
-			unsigned long len;
-			int fd;
-
 			annotate = 1;
 			i++;
 			if (i == argc)
@@ -390,20 +363,15 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			if (message)
 				die("only one -F or -m option is allowed.");
 
-			if (!strcmp(argv[i], "-"))
-				fd = 0;
-			else {
-				fd = open(argv[i], O_RDONLY);
-				if (fd < 0)
-					die("could not open '%s': %s",
+			if (!strcmp(argv[i], "-")) {
+				if (strbuf_read(&buf, 0, 1024) < 0)
+					die("cannot read %s", argv[i]);
+			} else {
+				if (strbuf_read_file(&buf, argv[i], 1024) < 0)
+					die("could not open or read '%s': %s",
 						argv[i], strerror(errno));
 			}
-			len = 1024;
-			message = xmalloc(len);
-			if (read_fd(fd, &message, &len)) {
-				free(message);
-				die("cannot read %s", argv[i]);
-			}
+			message = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-u")) {
@@ -451,7 +419,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die("tag '%s' already exists", tag);
 
 	if (annotate)
-		create_tag(object, tag, message, sign, object);
+		create_tag(object, tag, &buf, message, sign, object);
 
 	lock = lock_any_ref_for_update(ref, prev, 0);
 	if (!lock)
@@ -459,5 +427,6 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (write_ref_sha1(lock, object, NULL) < 0)
 		die("%s: cannot update the ref", ref);
 
+	strbuf_release(&buf);
 	return 0;
 }

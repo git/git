@@ -7,7 +7,6 @@ extern const char git_version_string[];
 extern const char git_usage_string[];
 
 extern void help_unknown_cmd(const char *cmd);
-extern size_t stripspace(char *buffer, size_t length, int skip_comments);
 extern int write_tree(unsigned char *sha1, int missing_ok, const char *prefix);
 extern void prune_packed_objects(int);
 

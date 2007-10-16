@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git-archive' --format=<fmt> [--list] [--prefix=<prefix>/] [<extra>]
-	      [--remote=<repo>] <tree-ish> [path...]
+	      [--remote=<repo> [--exec=<git-upload-archive>]] <tree-ish>
+	      [path...]
 
 DESCRIPTION
 -----------
@@ -51,6 +52,10 @@ OPTIONS
 --remote=<repo>::
 	Instead of making a tar archive from local repository,
 	retrieve a tar archive from a remote repository.
+
+--exec=<git-upload-archive>::
+	Used with --remote to specify the path to the
+	git-upload-archive executable on the remote side.
 
 <tree-ish>::
 	The tree or commit to produce an archive for.

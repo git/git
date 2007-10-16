@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-apply' [--stat] [--numstat] [--summary] [--check] [--index]
-	  [--apply] [--no-add] [--index-info] [-R | --reverse]
+	  [--apply] [--no-add] [--build-fake-ancestor <file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-pNUM] [-CNUM] [--inaccurate-eof] [--cached]
 	  [--whitespace=<nowarn|warn|error|error-all|strip>]
@@ -63,12 +63,15 @@ OPTIONS
 	cached data, apply the patch, and store the result in the index,
 	without using the working tree. This implies '--index'.
 
---index-info::
+--build-fake-ancestor <file>::
 	Newer git-diff output has embedded 'index information'
 	for each blob to help identify the original version that
 	the patch applies to.  When this flag is given, and if
-	the original version of the blob is available locally,
-	outputs information about them to the standard output.
+	the original versions of the blobs is available locally,
+	builds a temporary index containing those blobs.
++
+When a pure mode change is encountered (which has no index information),
+the information is read from the current index instead.
 
 -R, --reverse::
 	Apply the patch in reverse.

@@ -188,7 +188,7 @@ core.worktree::
 	Set the path to the working tree.  The value will not be
 	used in combination with repositories found automatically in
 	a .git directory (i.e. $GIT_DIR is not set).
-	This can be overriden by the GIT_WORK_TREE environment
+	This can be overridden by the GIT_WORK_TREE environment
 	variable and the '--work-tree' command line option.
 
 core.logAllRefUpdates::
@@ -338,6 +338,12 @@ branch.<name>.merge::
 	branch.<name>.merge to the desired branch, and use the special setting
 	`.` (a period) for branch.<name>.remote.
 
+branch.<name>.mergeoptions::
+	Sets default options for merging into branch <name>. The syntax and
+	supported options are equal to that of gitlink:git-merge[1], but
+	option values containing whitespace characters are currently not
+	supported.
+
 clean.requireForce::
 	A boolean to make git-clean do nothing unless given -f or -n.  Defaults
 	to false.
@@ -439,6 +445,19 @@ gc.aggressiveWindow::
 	The window size parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
 	to 10.
+
+gc.auto::
+	When there are approximately more than this many loose
+	objects in the repository, `git gc --auto` will pack them.
+	Some Porcelain commands use this command to perform a
+	light-weight garbage collection from time to time.  Setting
+	this to 0 disables it.
+
+gc.autopacklimit::
+	When there are more than this many packs that are not
+	marked with `*.keep` file in the repository, `git gc
+	--auto` consolidates them into one larger pack.  Setting
+	this to 0 disables this.
 
 gc.packrefs::
 	`git gc` does not run `git pack-refs` in a bare repository by
@@ -580,7 +599,7 @@ merge.summary::
 
 merge.tool::
 	Controls which merge resolution program is used by
-	gitlink:git-mergetool[l].  Valid values are: "kdiff3", "tkdiff",
+	gitlink:git-mergetool[1].  Valid values are: "kdiff3", "tkdiff",
 	"meld", "xxdiff", "emerge", "vimdiff", "gvimdiff", and "opendiff".
 
 merge.verbosity::
@@ -589,7 +608,7 @@ merge.verbosity::
 	message if conflicts were detected. Level 1 outputs only
 	conflicts, 2 outputs conflicts and file changes.  Level 5 and
 	above outputs debugging information.  The default is level 2.
-	Can be overriden by 'GIT_MERGE_VERBOSITY' environment variable.
+	Can be overridden by 'GIT_MERGE_VERBOSITY' environment variable.
 
 merge.<driver>.name::
 	Defines a human readable name for a custom low-level

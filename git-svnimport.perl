@@ -54,6 +54,7 @@ my $branch_name = $opt_b || "branches";
 my $project_name = $opt_P || "";
 $project_name = "/" . $project_name if ($project_name);
 my $repack_after = $opt_R || 1000;
+my $root_pool = SVN::Pool->new_default;
 
 @ARGV == 1 or @ARGV == 2 or usage();
 
@@ -132,7 +133,7 @@ sub conn {
 	my $auth = SVN::Core::auth_open ([SVN::Client::get_simple_provider,
 			  SVN::Client::get_ssl_server_trust_file_provider,
 			  SVN::Client::get_username_provider]);
-	my $s = SVN::Ra->new(url => $repo, auth => $auth);
+	my $s = SVN::Ra->new(url => $repo, auth => $auth, pool => $root_pool);
 	die "SVN connection to $repo: $!\n" unless defined $s;
 	$self->{'svn'} = $s;
 	$self->{'repo'} = $repo;
@@ -147,11 +148,10 @@ sub file {
 
 	print "... $rev $path ...\n" if $opt_v;
 	my (undef, $properties);
-	my $pool = SVN::Pool->new();
 	$path =~ s#^/*##;
+	my $subpool = SVN::Pool::new_default_sub;
 	eval { (undef, $properties)
-		   = $self->{'svn'}->get_file($path,$rev,$fh,$pool); };
-	$pool->clear;
+		   = $self->{'svn'}->get_file($path,$rev,$fh); };
 	if($@) {
 		return undef if $@ =~ /Attempted to get checksum/;
 		die $@;
@@ -185,6 +185,7 @@ sub ignore {
 
 	print "... $rev $path ...\n" if $opt_v;
 	$path =~ s#^/*##;
+	my $subpool = SVN::Pool::new_default_sub;
 	my (undef,undef,$properties)
 	    = $self->{'svn'}->get_dir($path,$rev,undef);
 	if (exists $properties->{'svn:ignore'}) {
@@ -202,6 +203,7 @@ sub ignore {
 sub dir_list {
 	my($self,$path,$rev) = @_;
 	$path =~ s#^/*##;
+	my $subpool = SVN::Pool::new_default_sub;
 	my ($dirents,undef,$properties)
 	    = $self->{'svn'}->get_dir($path,$rev,undef);
 	return $dirents;
@@ -358,10 +360,9 @@ open BRANCHES,">>", "$git_dir/svn2git";
 
 sub node_kind($$) {
 	my ($svnpath, $revision) = @_;
-	my $pool=SVN::Pool->new;
 	$svnpath =~ s#^/*##;
-	my $kind = $svn->{'svn'}->check_path($svnpath,$revision,$pool);
-	$pool->clear;
+	my $subpool = SVN::Pool::new_default_sub;
+	my $kind = $svn->{'svn'}->check_path($svnpath,$revision);
 	return $kind;
 }
 
@@ -889,7 +890,7 @@ sub commit_all {
 	# Recursive use of the SVN connection does not work
 	local $svn = $svn2;
 
-	my ($changed_paths, $revision, $author, $date, $message, $pool) = @_;
+	my ($changed_paths, $revision, $author, $date, $message) = @_;
 	my %p;
 	while(my($path,$action) = each %$changed_paths) {
 		$p{$path} = [ $action->action,$action->copyfrom_path, $action->copyfrom_rev, $path ];
@@ -925,14 +926,14 @@ print "Processing from $current_rev to $opt_l ...\n" if $opt_v;
 my $from_rev;
 my $to_rev = $current_rev - 1;
 
+my $subpool = SVN::Pool::new_default_sub;
 while ($to_rev < $opt_l) {
+	$subpool->clear;
 	$from_rev = $to_rev + 1;
 	$to_rev = $from_rev + $repack_after;
 	$to_rev = $opt_l if $opt_l < $to_rev;
 	print "Fetching from $from_rev to $to_rev ...\n" if $opt_v;
-	my $pool=SVN::Pool->new;
-	$svn->{'svn'}->get_log("/",$from_rev,$to_rev,0,1,1,\&commit_all,$pool);
-	$pool->clear;
+	$svn->{'svn'}->get_log("/",$from_rev,$to_rev,0,1,1,\&commit_all);
 	my $pid = fork();
 	die "Fork: $!\n" unless defined $pid;
 	unless($pid) {

@@ -8,7 +8,7 @@
 #include "remote.h"
 #include "transport.h"
 
-static const char push_usage[] = "git-push [--all] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
+static const char push_usage[] = "git-push [--all] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
 
 static int all, thin, verbose;
 static const char *receivepack;
@@ -105,6 +105,10 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--all")) {
 			flags |= TRANSPORT_PUSH_ALL;
+			continue;
+		}
+		if (!strcmp(arg, "--dry-run")) {
+			flags |= TRANSPORT_PUSH_DRY_RUN;
 			continue;
 		}
 		if (!strcmp(arg, "--tags")) {

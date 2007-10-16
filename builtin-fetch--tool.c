@@ -3,26 +3,14 @@
 #include "refs.h"
 #include "commit.h"
 
-#define CHUNK_SIZE 1024
-
 static char *get_stdin(void)
 {
-	size_t offset = 0;
-	char *data = xmalloc(CHUNK_SIZE);
-
-	while (1) {
-		ssize_t cnt = xread(0, data + offset, CHUNK_SIZE);
-		if (cnt < 0)
-			die("error reading standard input: %s",
-			    strerror(errno));
-		if (cnt == 0) {
-			data[offset] = 0;
-			break;
-		}
-		offset += cnt;
-		data = xrealloc(data, offset + CHUNK_SIZE);
+	struct strbuf buf;
+	strbuf_init(&buf, 0);
+	if (strbuf_read(&buf, 0, 1024) < 0) {
+		die("error reading standard input: %s", strerror(errno));
 	}
-	return data;
+	return strbuf_detach(&buf, NULL);
 }
 
 static void show_new(enum object_type type, unsigned char *sha1_new)
@@ -234,19 +222,15 @@ static char *find_local_name(const char *remote_name, const char *refs,
 		}
 		if (!strncmp(remote_name, ref, len) && ref[len] == ':') {
 			const char *local_part = ref + len + 1;
-			char *ret;
 			int retlen;
 
 			if (!next)
 				retlen = strlen(local_part);
 			else
 				retlen = next - local_part;
-			ret = xmalloc(retlen + 1);
-			memcpy(ret, local_part, retlen);
-			ret[retlen] = 0;
 			*force_p = single_force;
 			*not_for_merge_p = not_for_merge;
-			return ret;
+			return xmemdupz(local_part, retlen);
 		}
 		ref = next;
 	}

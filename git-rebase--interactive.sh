@@ -36,14 +36,14 @@ warn () {
 output () {
 	case "$VERBOSE" in
 	'')
-		"$@" > "$DOTEST"/output 2>&1
+		output=$("$@" 2>&1 )
 		status=$?
-		test $status != 0 &&
-			cat "$DOTEST"/output
+		test $status != 0 && printf "%s\n" "$output"
 		return $status
-	;;
+		;;
 	*)
 		"$@"
+		;;
 	esac
 }
 
@@ -63,6 +63,7 @@ comment_for_reflog () {
 	''|rebase*)
 		GIT_REFLOG_ACTION="rebase -i ($1)"
 		export GIT_REFLOG_ACTION
+		;;
 	esac
 }
 
@@ -70,22 +71,23 @@ mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
-	count=$(($(wc -l < "$DONE")))
-	total=$(($count+$(wc -l < "$TODO")))
+	count=$(($(grep -ve '^$' -e '^#' < "$DONE" | wc -l)))
+	total=$(($count+$(grep -ve '^$' -e '^#' < "$TODO" | wc -l)))
 	printf "Rebasing (%d/%d)\r" $count $total
 	test -z "$VERBOSE" || echo
 }
 
 make_patch () {
-	parent_sha1=$(git rev-parse --verify "$1"^ 2> /dev/null)
-	git diff "$parent_sha1".."$1" > "$DOTEST"/patch
+	parent_sha1=$(git rev-parse --verify "$1"^) ||
+		die "Cannot get patch for $1^"
+	git diff-tree -p "$parent_sha1".."$1" > "$DOTEST"/patch
+	test -f "$DOTEST"/message ||
+		git cat-file commit "$1" | sed "1,/^$/d" > "$DOTEST"/message
+	test -f "$DOTEST"/author-script ||
+		get_author_ident_from_commit "$1" > "$DOTEST"/author-script
 }
 
 die_with_patch () {
-	test -f "$DOTEST"/message ||
-		git cat-file commit $sha1 | sed "1,/^$/d" > "$DOTEST"/message
-	test -f "$DOTEST"/author-script ||
-		get_author_ident_from_commit $sha1 > "$DOTEST"/author-script
 	make_patch "$1"
 	die "$2"
 }
@@ -95,13 +97,18 @@ die_abort () {
 	die "$1"
 }
 
+has_action () {
+	grep -vqe '^$' -e '^#' "$1"
+}
+
 pick_one () {
 	no_ff=
 	case "$1" in -n) sha1=$2; no_ff=t ;; *) sha1=$1 ;; esac
 	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$REWRITTEN" &&
 		pick_one_preserving_merges "$@" && return
-	parent_sha1=$(git rev-parse --verify $sha1^ 2>/dev/null)
+	parent_sha1=$(git rev-parse --verify $sha1^) ||
+		die "Could not get the parent of $sha1"
 	current_sha1=$(git rev-parse --verify HEAD)
 	if test $no_ff$current_sha1 = $parent_sha1; then
 		output git reset --hard $sha1
@@ -129,7 +136,7 @@ pick_one_preserving_merges () {
 	fast_forward=t
 	preserve=t
 	new_parents=
-	for p in $(git rev-list --parents -1 $sha1 | cut -d\  -f2-)
+	for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)
 	do
 		if test -f "$REWRITTEN"/$p
 		then
@@ -141,41 +148,47 @@ pick_one_preserving_merges () {
 				;; # do nothing; that parent is already there
 			*)
 				new_parents="$new_parents $new_p"
+				;;
 			esac
 		fi
 	done
 	case $fast_forward in
 	t)
 		output warn "Fast forward to $sha1"
-		test $preserve=f && echo $sha1 > "$REWRITTEN"/$sha1
+		test $preserve = f || echo $sha1 > "$REWRITTEN"/$sha1
 		;;
 	f)
 		test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
 
-		first_parent=$(expr "$new_parents" : " \([^ ]*\)")
+		first_parent=$(expr "$new_parents" : ' \([^ ]*\)')
 		# detach HEAD to current parent
 		output git checkout $first_parent 2> /dev/null ||
 			die "Cannot move HEAD to $first_parent"
 
 		echo $sha1 > "$DOTEST"/current-commit
 		case "$new_parents" in
-		\ *\ *)
+		' '*' '*)
 			# redo merge
 			author_script=$(get_author_ident_from_commit $sha1)
 			eval "$author_script"
-			msg="$(git cat-file commit $sha1 | \
-				sed -e '1,/^$/d' -e "s/[\"\\]/\\\\&/g")"
+			msg="$(git cat-file commit $sha1 | sed -e '1,/^$/d')"
 			# NEEDSWORK: give rerere a chance
-			if ! output git merge $STRATEGY -m "$msg" $new_parents
+			if ! GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
+				GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
+				GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
+				output git merge $STRATEGY -m "$msg" \
+					$new_parents
 			then
-				echo "$msg" > "$GIT_DIR"/MERGE_MSG
+				printf "%s\n" "$msg" > "$GIT_DIR"/MERGE_MSG
 				die Error redoing merge $sha1
 			fi
 			;;
 		*)
 			output git cherry-pick $STRATEGY "$@" ||
 				die_with_patch $sha1 "Could not pick $sha1"
+			;;
 		esac
+		;;
 	esac
 }
 
@@ -212,27 +225,28 @@ peek_next_command () {
 }
 
 do_next () {
-	test -f "$DOTEST"/message && rm "$DOTEST"/message
-	test -f "$DOTEST"/author-script && rm "$DOTEST"/author-script
+	rm -f "$DOTEST"/message "$DOTEST"/author-script \
+		"$DOTEST"/amend || exit
 	read command sha1 rest < "$TODO"
 	case "$command" in
-	\#|'')
+	'#'*|'')
 		mark_action_done
 		;;
-	pick)
+	pick|p)
 		comment_for_reflog pick
 
 		mark_action_done
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		;;
-	edit)
+	edit|e)
 		comment_for_reflog edit
 
 		mark_action_done
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		make_patch $sha1
+		: > "$DOTEST"/amend
 		warn
 		warn "You can amend the commit now, with"
 		warn
@@ -240,36 +254,39 @@ do_next () {
 		warn
 		exit 0
 		;;
-	squash)
+	squash|s)
 		comment_for_reflog squash
 
-		test -z "$(grep -ve '^$' -e '^#' < $DONE)" &&
+		has_action "$DONE" ||
 			die "Cannot 'squash' without a previous commit"
 
 		mark_action_done
 		make_squash_message $sha1 > "$MSG"
 		case "$(peek_next_command)" in
-		squash)
+		squash|s)
 			EDIT_COMMIT=
 			USE_OUTPUT=output
 			cp "$MSG" "$SQUASH_MSG"
-		;;
+			;;
 		*)
 			EDIT_COMMIT=-e
 			USE_OUTPUT=
-			test -f "$SQUASH_MSG" && rm "$SQUASH_MSG"
+			rm -f "$SQUASH_MSG" || exit
+			;;
 		esac
 
 		failed=f
+		author_script=$(get_author_ident_from_commit HEAD)
 		output git reset --soft HEAD^
 		pick_one -n $sha1 || failed=t
-		author_script=$(get_author_ident_from_commit $sha1)
 		echo "$author_script" > "$DOTEST"/author-script
 		case $failed in
 		f)
 			# This is like --amend, but with a different message
 			eval "$author_script"
-			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
+			GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
+			GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
+			GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
 			$USE_OUTPUT git commit -F "$MSG" $EDIT_COMMIT
 			;;
 		t)
@@ -277,11 +294,13 @@ do_next () {
 			warn
 			warn "Could not apply $sha1... $rest"
 			die_with_patch $sha1 ""
+			;;
 		esac
 		;;
 	*)
 		warn "Unknown command: $command $sha1 $rest"
 		die_with_patch $sha1 "Please fix this in the file $TODO."
+		;;
 	esac
 	test -s "$TODO" && return
 
@@ -298,13 +317,18 @@ do_next () {
 	else
 		NEWHEAD=$(git rev-parse HEAD)
 	fi &&
-	message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
-	git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
-	git symbolic-ref HEAD $HEADNAME && {
+	case $HEADNAME in
+	refs/*)
+		message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
+		git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
+		git symbolic-ref HEAD $HEADNAME
+		;;
+	esac && {
 		test ! -f "$DOTEST"/verbose ||
-			git diff --stat $(cat "$DOTEST"/head)..HEAD
+			git diff-tree --stat $(cat "$DOTEST"/head)..HEAD
 	} &&
 	rm -rf "$DOTEST" &&
+	git gc --auto &&
 	warn "Successfully rebased and updated $HEADNAME."
 
 	exit
@@ -317,7 +341,7 @@ do_rest () {
 	done
 }
 
-while case $# in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	--continue)
@@ -330,7 +354,9 @@ do
 		git update-index --refresh &&
 		git diff-files --quiet &&
 		! git diff-index --cached --quiet HEAD &&
-		. "$DOTEST"/author-script &&
+		. "$DOTEST"/author-script && {
+			test ! -f "$DOTEST"/amend || git reset --soft HEAD^
+		} &&
 		export GIT_AUTHOR_NAME GIT_AUTHOR_NAME GIT_AUTHOR_DATE &&
 		git commit -F "$DOTEST"/message -e
 
@@ -344,7 +370,11 @@ do
 
 		HEADNAME=$(cat "$DOTEST"/head-name)
 		HEAD=$(cat "$DOTEST"/head)
-		git symbolic-ref HEAD $HEADNAME &&
+		case $HEADNAME in
+		refs/*)
+			git symbolic-ref HEAD $HEADNAME
+			;;
+		esac &&
 		output git reset --hard $HEAD &&
 		rm -rf "$DOTEST"
 		exit
@@ -406,7 +436,6 @@ do
 
 		require_clean_work_tree
 
-		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
 		if test ! -z "$2"
 		then
 			output git show-ref --verify --quiet "refs/heads/$2" ||
@@ -418,11 +447,13 @@ do
 		HEAD=$(git rev-parse --verify HEAD) || die "No HEAD?"
 		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
 
+		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
+
 		test -z "$ONTO" && ONTO=$UPSTREAM
 
 		: > "$DOTEST"/interactive || die "Could not mark as interactive"
-		git symbolic-ref HEAD > "$DOTEST"/head-name ||
-			die "Could not get HEAD"
+		git symbolic-ref HEAD > "$DOTEST"/head-name 2> /dev/null ||
+			echo "detached HEAD" > "$DOTEST"/head-name
 
 		echo $HEAD > "$DOTEST"/head
 		echo $UPSTREAM > "$DOTEST"/upstream
@@ -468,17 +499,18 @@ EOF
 			$UPSTREAM...$HEAD | \
 			sed -n "s/^>/pick /p" >> "$TODO"
 
-		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&
+		has_action "$TODO" ||
 			die_abort "Nothing to do"
 
 		cp "$TODO" "$TODO".backup
 		git_editor "$TODO" ||
 			die "Could not execute editor"
 
-		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&
+		has_action "$TODO" ||
 			die_abort "Nothing to do"
 
 		output git checkout $ONTO && do_rest
+		;;
 	esac
 	shift
 done

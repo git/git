@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-USAGE='[-n] [--summary] [--no-commit] [--squash] [-s <strategy>] [-m=<merge-message>] <commit>+'
+USAGE='[-n] [--summary] [--[no-]commit] [--[no-]squash] [--[no-]ff] [-s <strategy>] [-m=<merge-message>] <commit>+'
 
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
@@ -59,7 +59,7 @@ finish_up_to_date () {
 squash_message () {
 	echo Squashed commit of the following:
 	echo
-	git log --no-merges ^"$head" $remote
+	git log --no-merges ^"$head" $remoteheads
 }
 
 finish () {
@@ -82,6 +82,7 @@ finish () {
 			;;
 		*)
 			git update-ref -m "$rlogm" HEAD "$1" "$head" || exit 1
+			git gc --auto
 			;;
 		esac
 		;;
@@ -97,6 +98,19 @@ finish () {
 		fi
 		;;
 	esac
+
+	# Run a post-merge hook
+        if test -x "$GIT_DIR"/hooks/post-merge
+        then
+	    case "$squash" in
+	    t)
+                "$GIT_DIR"/hooks/post-merge 1
+		;;
+	    '')
+                "$GIT_DIR"/hooks/post-merge 0
+		;;
+	    esac
+        fi
 }
 
 merge_name () {
@@ -119,11 +133,7 @@ merge_name () {
 	fi
 }
 
-case "$#" in 0) usage ;; esac
-
-have_message=
-while case "$#" in 0) break ;; esac
-do
+parse_option () {
 	case "$1" in
 	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
 		--no-summa|--no-summar|--no-summary)
@@ -131,9 +141,17 @@ do
 	--summary)
 		show_diffstat=t ;;
 	--sq|--squ|--squa|--squas|--squash)
-		squash=t no_commit=t ;;
+		allow_fast_forward=t squash=t no_commit=t ;;
+	--no-sq|--no-squ|--no-squa|--no-squas|--no-squash)
+		allow_fast_forward=t squash= no_commit= ;;
+	--c|--co|--com|--comm|--commi|--commit)
+		allow_fast_forward=t squash= no_commit= ;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
-		no_commit=t ;;
+		allow_fast_forward=t squash= no_commit=t ;;
+	--ff)
+		allow_fast_forward=t squash= no_commit= ;;
+	--no-ff)
+		allow_fast_forward=false squash= no_commit= ;;
 	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
 		--strateg=*|--strategy=*|\
 	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
@@ -166,9 +184,42 @@ do
 		have_message=t
 		;;
 	-*)	usage ;;
-	*)	break ;;
+	*)	return 1 ;;
 	esac
 	shift
+	args_left=$#
+}
+
+parse_config () {
+	while test $# -gt 0
+	do
+		parse_option "$@" || usage
+		while test $args_left -lt $#
+		do
+			shift
+		done
+	done
+}
+
+test $# != 0 || usage
+
+have_message=
+
+if branch=$(git-symbolic-ref -q HEAD)
+then
+	mergeopts=$(git config "branch.${branch#refs/heads/}.mergeoptions")
+	if test -n "$mergeopts"
+	then
+		parse_config $mergeopts
+	fi
+fi
+
+while parse_option "$@"
+do
+	while test $args_left -lt $#
+	do
+		shift
+	done
 done
 
 if test -z "$show_diffstat"; then
@@ -444,7 +495,13 @@ done
 # auto resolved the merge cleanly.
 if test '' != "$result_tree"
 then
-    parents=$(git show-branch --independent "$head" "$@" | sed -e 's/^/-p /')
+    if test "$allow_fast_forward" = "t"
+    then
+        parents=$(git show-branch --independent "$head" "$@")
+    else
+        parents=$(git rev-parse "$head" "$@")
+    fi
+    parents=$(echo "$parents" | sed -e 's/^/-p /')
     result_commit=$(printf '%s\n' "$merge_msg" | git commit-tree $result_tree $parents) || exit
     finish "$result_commit" "Merge made by $wt_strategy."
     dropsave
