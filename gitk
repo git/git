@@ -92,7 +92,7 @@ proc start_rev_list {view} {
 	set order "--date-order"
     }
     if {[catch {
-	set fd [open [concat | git log -z --pretty=raw $order --parents \
+	set fd [open [concat | git log --no-color -z --pretty=raw $order --parents \
 			 --boundary $viewargs($view) "--" $viewfiles($view)] r]
     } err]} {
 	error_popup "Error executing git rev-list: $err"
