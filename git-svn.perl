@@ -9,6 +9,11 @@ use vars qw/	$AUTHOR $VERSION
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
+# From which subdir have we been invoked?
+my $cmd_dir_prefix = eval {
+	command_oneline([qw/rev-parse --show-prefix/], STDERR => 0)
+} || '';
+
 my $git_dir_user_set = 1 if defined $ENV{GIT_DIR};
 $ENV{GIT_DIR} ||= '.git';
 $Git::SVN::default_repo_id = 'svn';
@@ -127,6 +132,9 @@ my %cmd = (
 			     'Create a .gitignore per svn:ignore',
 			     { 'revision|r=i' => \$_revision
 			     } ],
+        'propget' => [ \&cmd_propget,
+		       'Print the value of a property on a file or directory',
+		       { 'revision|r=i' => \$_revision } ],
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision
 			} ],
@@ -524,6 +532,55 @@ sub cmd_create_ignore {
 		  or fatal("Failed to close `$ignore': $!\n");
 		command_noisy('add', $ignore);
 	});
+}
+
+# get_svnprops(PATH)
+# ------------------
+# Helper for cmd_propget below.
+sub get_svnprops {
+	my $path = shift;
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	$gs ||= Git::SVN->new;
+
+	# prefix THE PATH by the sub-directory from which the user
+	# invoked us.
+	$path = $cmd_dir_prefix . $path;
+	fatal("No such file or directory: $path\n") unless -e $path;
+	my $is_dir = -d $path ? 1 : 0;
+	$path = $gs->{path} . '/' . $path;
+
+	# canonicalize the path (otherwise libsvn will abort or fail to
+	# find the file)
+	# File::Spec->canonpath doesn't collapse x/../y into y (for a
+	# good reason), so let's do this manually.
+	$path =~ s#/+#/#g;
+	$path =~ s#/\.(?:/|$)#/#g;
+	$path =~ s#/[^/]+/\.\.##g;
+	$path =~ s#/$##g;
+
+	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
+	my $props;
+	if ($is_dir) {
+		(undef, undef, $props) = $gs->ra->get_dir($path, $r);
+	}
+	else {
+		(undef, $props) = $gs->ra->get_file($path, $r, undef);
+	}
+	return $props;
+}
+
+# cmd_propget (PROP, PATH)
+# ------------------------
+# Print the SVN property PROP for PATH.
+sub cmd_propget {
+	my ($prop, $path) = @_;
+	$path = '.' if not defined $path;
+	usage(1) if not defined $prop;
+	my $props = get_svnprops($path);
+	if (not defined $props->{$prop}) {
+		fatal("`$path' does not have a `$prop' SVN property.\n");
+	}
+	print $props->{$prop} . "\n";
 }
 
 sub cmd_multi_init {

@@ -170,4 +170,27 @@ test_expect_success 'test create-ignore' "
 	git ls-files -s | grep gitignore | cmp - create-ignore-index.expect
 	"
 
+cat >prop.expect <<\EOF
+no-such-file*
+
+EOF
+cat >prop2.expect <<\EOF
+8
+EOF
+
+# This test can be improved: since all the svn:ignore contain the same
+# pattern, it can pass even though the propget did not execute on the
+# right directory.
+test_expect_success 'test propget' "
+	git-svn propget svn:ignore . | cmp - prop.expect &&
+	cd deeply &&
+	git-svn propget svn:ignore . | cmp - ../prop.expect &&
+	git-svn propget svn:entry:committed-rev nested/directory/.keep \
+	  | cmp - ../prop2.expect &&
+	git-svn propget svn:ignore .. | cmp - ../prop.expect &&
+	git-svn propget svn:ignore nested/ | cmp - ../prop.expect &&
+	git-svn propget svn:ignore ./nested | cmp - ../prop.expect &&
+	git-svn propget svn:ignore .././deeply/nested | cmp - ../prop.expect
+	"
+
 test_done
