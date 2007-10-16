@@ -10,7 +10,7 @@
 
 static const char push_usage[] = "git-push [--all] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
 
-static int all, thin, verbose;
+static int thin, verbose;
 static const char *receivepack;
 
 static const char **refspec;
@@ -52,7 +52,9 @@ static int do_push(const char *repo, int flags)
 	if (!remote)
 		die("bad repository '%s'", repo);
 
-	if (!refspec && !all && remote->push_refspec_nr) {
+	if (!refspec
+		&& !(flags & TRANSPORT_PUSH_ALL)
+		&& remote->push_refspec_nr) {
 		refspec = remote->push_refspec;
 		refspec_nr = remote->push_refspec_nr;
 	}
@@ -138,7 +140,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		usage(push_usage);
 	}
 	set_refspecs(argv + i, argc - i);
-	if (all && refspec)
+	if ((flags & TRANSPORT_PUSH_ALL) && refspec)
 		usage(push_usage);
 
 	return do_push(repo, flags);
