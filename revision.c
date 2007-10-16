@@ -1241,8 +1241,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (revs->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT)
 		revs->diff = 1;
 
-	/* Pickaxe needs diffs */
-	if (revs->diffopt.pickaxe)
+	/* Pickaxe and rename following needs diffs */
+	if (revs->diffopt.pickaxe || revs->diffopt.follow_renames)
 		revs->diff = 1;
 
 	if (revs->topo_order)

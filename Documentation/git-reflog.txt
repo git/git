@@ -16,7 +16,7 @@ The command takes various subcommands, and different options
 depending on the subcommand:
 
 [verse]
-git reflog expire [--dry-run] [--stale-fix]
+git reflog expire [--dry-run] [--stale-fix] [--verbose]
 	[--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...
 
 git reflog [show] [log-options]
@@ -67,6 +67,9 @@ them.
 
 --all::
 	Instead of listing <refs> explicitly, prune all refs.
+
+--verbose::
+	Print extra information on screen.
 
 Author
 ------

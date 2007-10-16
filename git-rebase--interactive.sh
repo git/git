@@ -80,7 +80,7 @@ mark_action_done () {
 make_patch () {
 	parent_sha1=$(git rev-parse --verify "$1"^) ||
 		die "Cannot get patch for $1^"
-	git diff "$parent_sha1".."$1" > "$DOTEST"/patch
+	git diff-tree -p "$parent_sha1".."$1" > "$DOTEST"/patch
 	test -f "$DOTEST"/message ||
 		git cat-file commit "$1" | sed "1,/^$/d" > "$DOTEST"/message
 	test -f "$DOTEST"/author-script ||
@@ -325,7 +325,7 @@ do_next () {
 		;;
 	esac && {
 		test ! -f "$DOTEST"/verbose ||
-			git diff --stat $(cat "$DOTEST"/head)..HEAD
+			git diff-tree --stat $(cat "$DOTEST"/head)..HEAD
 	} &&
 	rm -rf "$DOTEST" &&
 	git gc --auto &&

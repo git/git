@@ -165,15 +165,18 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = 0;
 	char* value;
-	setup_git_directory_gently(&nongit);
+	const char *file = setup_git_directory_gently(&nongit);
 
 	while (1 < argc) {
 		if (!strcmp(argv[1], "--int"))
 			type = T_INT;
 		else if (!strcmp(argv[1], "--bool"))
 			type = T_BOOL;
-		else if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l"))
+		else if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l")) {
+			if (argc != 2)
+				usage(git_config_set_usage);
 			return git_config(show_all_config);
+		}
 		else if (!strcmp(argv[1], "--global")) {
 			char *home = getenv("HOME");
 			if (home) {
@@ -189,7 +192,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "--file") || !strcmp(argv[1], "-f")) {
 			if (argc < 3)
 				usage(git_config_set_usage);
-			setenv(CONFIG_ENVIRONMENT, argv[2], 1);
+			if (!is_absolute_path(argv[2]) && file)
+				file = prefix_filename(file, strlen(file),
+						       argv[2]);
+			else
+				file = argv[2];
+			setenv(CONFIG_ENVIRONMENT, file, 1);
 			argc--;
 			argv++;
 		}

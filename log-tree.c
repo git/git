@@ -304,7 +304,8 @@ int log_tree_diff_flush(struct rev_info *opt)
 		 * output for readability.
 		 */
 		show_log(opt, opt->diffopt.msg_sep);
-		if (opt->verbose_header &&
+		if ((opt->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT) &&
+		    opt->verbose_header &&
 		    opt->commit_format != CMIT_FMT_ONELINE) {
 			int pch = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 			if ((pch & opt->diffopt.output_format) == pch)
