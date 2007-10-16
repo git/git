@@ -13,7 +13,7 @@
 #include <expat.h>
 
 static const char http_push_usage[] =
-"git-http-push [--all] [--force] [--verbose] <remote> [<head>...]\n";
+"git-http-push [--all] [--dry-run] [--force] [--verbose] <remote> [<head>...]\n";
 
 #ifndef XML_STATUS_OK
 enum XML_Status {
@@ -80,6 +80,7 @@ static struct curl_slist *default_headers;
 static int push_verbosely;
 static int push_all;
 static int force_all;
+static int dry_run;
 
 static struct object_list *objects;
 
@@ -2302,6 +2303,10 @@ int main(int argc, char **argv)
 				force_all = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--dry-run")) {
+				dry_run = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--verbose")) {
 				push_verbosely = 1;
 				continue;
@@ -2443,7 +2448,8 @@ int main(int argc, char **argv)
 		if (strcmp(ref->name, ref->peer_ref->name))
 			fprintf(stderr, " using '%s'", ref->peer_ref->name);
 		fprintf(stderr, "\n  from %s\n  to   %s\n", old_hex, new_hex);
-
+		if (dry_run)
+			continue;
 
 		/* Lock remote branch ref */
 		ref_lock = lock_remote(ref->name, LOCK_TIME);
@@ -2511,7 +2517,8 @@ int main(int argc, char **argv)
 	if (remote->has_info_refs && new_refs) {
 		if (info_ref_lock && remote->can_update_info_refs) {
 			fprintf(stderr, "Updating remote server info\n");
-			update_remote_info_refs(info_ref_lock);
+			if (!dry_run)
+				update_remote_info_refs(info_ref_lock);
 		} else {
 			fprintf(stderr, "Unable to update server info\n");
 		}

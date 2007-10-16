@@ -392,6 +392,8 @@ static int curl_transport_push(struct transport *transport, int refspec_nr, cons
 		argv[argc++] = "--all";
 	if (flags & TRANSPORT_PUSH_FORCE)
 		argv[argc++] = "--force";
+	if (flags & TRANSPORT_PUSH_DRY_RUN)
+		argv[argc++] = "--dry-run";
 	argv[argc++] = transport->url;
 	while (refspec_nr--)
 		argv[argc++] = *refspec++;
