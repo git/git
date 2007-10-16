@@ -129,7 +129,7 @@ my $context = $opt_p ? '' : '-C1';
 print "Checking if patch will apply\n";
 
 my @stat;
-open APPLY, "GIT_DIR= git-apply $context --binary --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
+open APPLY, "GIT_DIR= git-apply $context --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
 @stat=<APPLY>;
 close APPLY || die "Cannot patch";
 my (@bfiles,@files,@afiles,@dfiles);
@@ -215,7 +215,7 @@ if ($dirty) {
 }
 
 print "Applying\n";
-`GIT_DIR= git-apply $context --binary --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
+`GIT_DIR= git-apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
 my $dirtypatch = 0;
