@@ -126,19 +126,20 @@ cat > show-ignore.expect <<\EOF
 # /
 /no-such-file*
 
-# deeply
+# /deeply/
 /deeply/no-such-file*
 
-# deeply/nested
+# /deeply/nested/
 /deeply/nested/no-such-file*
 
-# deeply/nested/directory
+# /deeply/nested/directory/
 /deeply/nested/directory/no-such-file*
 EOF
 
 test_expect_success 'test show-ignore' "
 	cd test_wc &&
 	mkdir -p deeply/nested/directory &&
+	touch deeply/nested/directory/.keep &&
 	svn add deeply &&
 	svn up &&
 	svn propset -R svn:ignore 'no-such-file*' .
@@ -146,6 +147,27 @@ test_expect_success 'test show-ignore' "
 	cd .. &&
 	git-svn show-ignore > show-ignore.got &&
 	cmp show-ignore.expect show-ignore.got
+	"
+
+cat >create-ignore.expect <<\EOF
+/no-such-file*
+EOF
+
+cat >create-ignore-index.expect <<\EOF
+100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	.gitignore
+100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/.gitignore
+100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/nested/.gitignore
+100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/nested/directory/.gitignore
+EOF
+
+test_expect_success 'test create-ignore' "
+	git-svn fetch && git pull . remotes/git-svn &&
+	git-svn create-ignore &&
+	cmp ./.gitignore create-ignore.expect &&
+	cmp ./deeply/.gitignore create-ignore.expect &&
+	cmp ./deeply/nested/.gitignore create-ignore.expect &&
+	cmp ./deeply/nested/directory/.gitignore create-ignore.expect &&
+	git ls-files -s | grep gitignore | cmp - create-ignore-index.expect
 	"
 
 test_done
