@@ -281,7 +281,7 @@ static int rsync_transport_push(struct transport *transport,
 	struct strbuf buf = STRBUF_INIT, temp_dir = STRBUF_INIT;
 	int result = 0, i;
 	struct child_process rsync;
-	const char *args[8];
+	const char *args[10];
 
 	/* first push the objects */
 
@@ -291,14 +291,19 @@ static int rsync_transport_push(struct transport *transport,
 	memset(&rsync, 0, sizeof(rsync));
 	rsync.argv = args;
 	rsync.stdout_to_stderr = 1;
-	args[0] = "rsync";
-	args[1] = (transport->verbose > 0) ? "-av" : "-a";
-	args[2] = "--ignore-existing";
-	args[3] = "--exclude";
-	args[4] = "info";
-	args[5] = get_object_directory();;
-	args[6] = buf.buf;
-	args[7] = NULL;
+	i = 0;
+	args[i++] = "rsync";
+	args[i++] = "-a";
+	if (flags & TRANSPORT_PUSH_DRY_RUN)
+		args[i++] = "--dry-run";
+	if (transport->verbose > 0)
+		args[i++] = "-v";
+	args[i++] = "--ignore-existing";
+	args[i++] = "--exclude";
+	args[i++] = "info";
+	args[i++] = get_object_directory();
+	args[i++] = buf.buf;
+	args[i++] = NULL;
 
 	if (run_command(&rsync))
 		return error("Could not push objects to %s", transport->url);
@@ -316,7 +321,11 @@ static int rsync_transport_push(struct transport *transport,
 	} else if (write_refs_to_temp_dir(&temp_dir, refspec_nr, refspec))
 		return -1;
 
-	i = (flags & TRANSPORT_PUSH_FORCE) ? 2 : 3;
+	i = 2;
+	if (flags & TRANSPORT_PUSH_DRY_RUN)
+		args[i++] = "--dry-run";
+	if (!(flags & TRANSPORT_PUSH_FORCE))
+		args[i++] = "--ignore-existing";
 	args[i++] = temp_dir.buf;
 	args[i++] = transport->url;
 	args[i++] = NULL;
