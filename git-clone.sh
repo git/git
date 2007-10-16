@@ -20,6 +20,33 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
+	# need an emulation of cpio
+	cpio() {
+		case "$1" in
+		-pumd)	cp_arg=-pr;;
+		-pumdl)	cp_arg=-lr;;
+		*)	die "cpio $1 unexpected";;
+		esac
+		# copy only files and empty directories
+		prev=
+		while read f; do
+			if test -d "$f"; then
+				# here we assume that directories are listed after
+				# its files (aka 'find -depth'), hence, a directory
+				# that is not empty will be a leading sub-string
+				# of the preceding entry
+				case "$prev" in
+				"$f"/* ) ;;
+				*)	echo "$f";;
+				esac
+			else
+				echo "$f"
+			fi
+			prev="$f"
+		done |
+		xargs --no-run-if-empty \
+			cp $cp_arg --target-directory="$2" --parents
+	}
 	;;
 esac
 
