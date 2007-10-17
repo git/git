@@ -55,7 +55,7 @@ struct pack_idx_entry {
 	off_t offset;
 };
 
-extern const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, unsigned char *sha1);
+extern char *write_idx_file(char *index_name, struct pack_idx_entry **objects, int nr_objects, unsigned char *sha1);
 
 extern int verify_pack(struct packed_git *, int);
 extern void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t);

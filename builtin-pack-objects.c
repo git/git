@@ -652,7 +652,7 @@ static void write_pack_file(void)
 			umask(mode);
 			mode = 0444 & ~mode;
 
-			idx_tmp_name = (char *) write_idx_file(NULL,
+			idx_tmp_name = write_idx_file(NULL,
 					(struct pack_idx_entry **) written_list,
 					nr_written, sha1);
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",

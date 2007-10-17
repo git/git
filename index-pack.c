@@ -106,7 +106,7 @@ static void use(int bytes)
 	consumed_bytes += bytes;
 }
 
-static const char *open_pack_file(const char *pack_name)
+static char *open_pack_file(char *pack_name)
 {
 	if (from_stdin) {
 		input_fd = 0;
@@ -686,15 +686,15 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 int main(int argc, char **argv)
 {
 	int i, fix_thin_pack = 0;
-	const char *curr_pack, *pack_name = NULL;
-	const char *curr_index, *index_name = NULL;
+	char *curr_pack, *pack_name = NULL;
+	char *curr_index, *index_name = NULL;
 	const char *keep_name = NULL, *keep_msg = NULL;
 	char *index_name_buf = NULL, *keep_name_buf = NULL;
 	struct pack_idx_entry **idx_objects;
 	unsigned char sha1[20];
 
 	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
+		char *arg = argv[i];
 
 		if (*arg == '-') {
 			if (!strcmp(arg, "--stdin")) {
