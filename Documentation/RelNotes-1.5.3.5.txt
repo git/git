@@ -10,13 +10,28 @@ Fixes since v1.5.3.4
  * "git-config --file" failed if the argument used a relative path
    as it changed directories before opening the file.
 
+ * "git-config", "git-diff", "git-apply" failed if run from a
+   subdirectory with relative GIT_DIR and GIT_WORK_TREE set.
+
  * "git-add -i" did not handle single line hunks correctly.
+
+ * "git-rebase -i" failed if external diff drivers were used for one
+   or more files in a commit.  It now avoids calling the external
+   diff drivers.
 
  * "git-log --follow" did not work unless diff generation (e.g. -p)
    was also requested.
 
  * "git-log" printed extra newlines between commits when a diff
    was generated internally (e.g. -S or --follow) but not displayed.
+
+ * "git-push" error message is more helpful when pushing to a
+   repository with no matching refs and none specified.
+
+ * "git-filter-branch" now updates the working directory when it
+   has finished filtering the current branch.
+
+ * "git-instaweb" no longer fails on Mac OS X.
 
  * Documentation updates for supported (but previously undocumented)
    options of "git-archive" and "git-reflog".
