@@ -26,6 +26,24 @@ use_strategies=
 allow_fast_forward=t
 allow_trivial_merge=t
 
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# there's no cpio; emulate with tar
+	cpio () {
+		case "$*" in
+		"-0 -o")
+			tar --create --file=- --null --files-from=-
+			;;
+		"-iuv")
+			tar xvf -
+			;;
+		*)	die "internal error: unexpected cpio $*";;
+		esac
+	}
+	;;
+esac
+
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
 		 "$GIT_DIR/MERGE_SAVE" || exit 1
