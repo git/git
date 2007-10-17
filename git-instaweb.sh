@@ -30,8 +30,7 @@ test -z "$port" && port=1234
 
 start_httpd () {
 	httpd_only="`echo $httpd | cut -f1 -d' '`"
-	if test "`expr index $httpd_only /`" -eq '1' || \
-				which $httpd_only >/dev/null
+	if case "$httpd_only" in /*) : ;; *) which $httpd_only >/dev/null;; esac
 	then
 		$httpd $fqgitdir/gitweb/httpd.conf
 	else
