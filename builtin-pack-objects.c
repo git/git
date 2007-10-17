@@ -1714,7 +1714,7 @@ static void prepare_pack(int window, int depth)
 		delta_list[n++] = entry;
 	}
 
-	if (nr_deltas) {
+	if (nr_deltas && n > 1) {
 		unsigned nr_done = 0;
 		if (progress)
 			start_progress(&progress_state, "Deltifying objects",
