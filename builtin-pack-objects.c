@@ -65,8 +65,6 @@ static int no_reuse_delta, no_reuse_object, keep_unreachable;
 static int local;
 static int incremental;
 static int allow_ofs_delta;
-static const char *pack_tmp_name, *idx_tmp_name;
-static char tmpname[PATH_MAX];
 static const char *base_name;
 static int progress = 1;
 static int window = 10;
@@ -587,12 +585,6 @@ static off_t write_one(struct sha1file *f,
 	return offset + size;
 }
 
-static int open_object_dir_tmp(const char *path)
-{
-    snprintf(tmpname, sizeof(tmpname), "%s/%s", get_object_directory(), path);
-    return xmkstemp(tmpname);
-}
-
 /* forward declaration for write_pack_file */
 static int adjust_perm(const char *path, mode_t mode);
 
@@ -611,11 +603,16 @@ static void write_pack_file(void)
 
 	do {
 		unsigned char sha1[20];
+		char *pack_tmp_name = NULL;
 
 		if (pack_to_stdout) {
 			f = sha1fd(1, "<stdout>");
 		} else {
-			int fd = open_object_dir_tmp("tmp_pack_XXXXXX");
+			char tmpname[PATH_MAX];
+			int fd;
+			snprintf(tmpname, sizeof(tmpname),
+				 "%s/tmp_pack_XXXXXX", get_object_directory());
+			fd = xmkstemp(tmpname);
 			pack_tmp_name = xstrdup(tmpname);
 			f = sha1fd(fd, pack_tmp_name);
 		}
@@ -643,19 +640,21 @@ static void write_pack_file(void)
 		if (pack_to_stdout || nr_written == nr_remaining) {
 			sha1close(f, sha1, 1);
 		} else {
-			sha1close(f, sha1, 0);
-			fixup_pack_header_footer(f->fd, sha1, pack_tmp_name, nr_written);
-			close(f->fd);
+			int fd = sha1close(f, NULL, 0);
+			fixup_pack_header_footer(fd, sha1, pack_tmp_name, nr_written);
+			close(fd);
 		}
 
 		if (!pack_to_stdout) {
 			mode_t mode = umask(0);
+			char *idx_tmp_name, tmpname[PATH_MAX];
 
 			umask(mode);
 			mode = 0444 & ~mode;
 
-			idx_tmp_name = write_idx_file(NULL,
-				(struct pack_idx_entry **) written_list, nr_written, sha1);
+			idx_tmp_name = (char *) write_idx_file(NULL,
+					(struct pack_idx_entry **) written_list,
+					nr_written, sha1);
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
 				 base_name, sha1_to_hex(sha1));
 			if (adjust_perm(pack_tmp_name, mode))
@@ -672,6 +671,8 @@ static void write_pack_file(void)
 			if (rename(idx_tmp_name, tmpname))
 				die("unable to rename temporary index file: %s",
 				    strerror(errno));
+			free(idx_tmp_name);
+			free(pack_tmp_name);
 			puts(sha1_to_hex(sha1));
 		}
 
