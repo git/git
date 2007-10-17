@@ -500,7 +500,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NOEXECTEMPL = .noexec
 	template_dir = ../share/git-core/templates/
 	ETC_GITCONFIG = ../etc/gitconfig
-	SCRIPT_SH += cpio.sh
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease

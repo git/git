@@ -172,4 +172,3 @@ config.status
 config.mak.autogen
 config.mak.append
 configure
-cpio
