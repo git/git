@@ -145,8 +145,10 @@ if ($state->{method} eq 'pserver') {
     }
     my $request = $1;
     $line = <STDIN>; chomp $line;
-    req_Root('root', $line) # reuse Root
-       or die "E Invalid root $line \n";
+    unless (req_Root('root', $line)) { # reuse Root
+       print "E Invalid root $line \n";
+       exit 1;
+    }
     $line = <STDIN>; chomp $line;
     unless ($line eq 'anonymous') {
        print "E Only anonymous user allowed via pserver\n";
