@@ -250,6 +250,16 @@ merge_file () {
 	    check_unchanged
 	    save_backup
 	    ;;
+	ecmerge)
+	    touch "$BACKUP"
+	    if base_present; then
+		"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" --mode=merge3 --to="$path"
+	    else
+		"$merge_tool_path" "$LOCAL" "$REMOTE" --mode=merge2 --to="$path"
+	    fi
+	    check_unchanged
+	    save_backup
+	    ;;
 	emerge)
 	    if base_present ; then
 		"$merge_tool_path" -f emerge-files-with-ancestor-command "$LOCAL" "$REMOTE" "$BASE" "$(basename "$path")"
@@ -299,7 +309,7 @@ done
 
 valid_tool() {
 	case "$1" in
-		kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff)
+		kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge)
 			;; # happy
 		*)
 			return 1
