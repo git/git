@@ -4,7 +4,7 @@ GIT v1.5.3.5 Release Notes
 Fixes since v1.5.3.4
 --------------------
 
- * "git-config" silently ignored options after --list; now it wilh
+ * "git-config" silently ignored options after --list; now it will
    error out with a usage message.
 
  * "git-config --file" failed if the argument used a relative path
@@ -18,7 +18,7 @@ Fixes since v1.5.3.4
  * "git-log" printed extra newlines between commits when a diff
    was generated internally (e.g. -S or --follow) but not displayed.
 
- * Documention updates for supported (but previously undocumented)
+ * Documentation updates for supported (but previously undocumented)
    options of "git-archive" and "git-reflog".
 
  * "make clean" no longer deletes the configure script that ships
