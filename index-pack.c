@@ -815,6 +815,10 @@ int main(int argc, char **argv)
 	free(objects);
 	free(index_name_buf);
 	free(keep_name_buf);
+	if (pack_name == NULL)
+		free(curr_pack);
+	if (index_name == NULL)
+		free(curr_index);
 
 	return 0;
 }
