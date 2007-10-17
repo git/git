@@ -180,8 +180,7 @@ A significantly faster version:
 git filter-branch --index-filter 'git update-index --remove filename' HEAD
 --------------------------------------------------------------------------
 
-Now, you will get the rewritten history saved in the branch 'newbranch'
-(your current branch is left untouched).
+Now, you will get the rewritten history saved in HEAD.
 
 To set a commit (which typically is at the tip of another
 history) to be the parent of the current initial commit, in

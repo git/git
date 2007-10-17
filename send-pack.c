@@ -205,7 +205,8 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 		return -1;
 
 	if (!remote_refs) {
-		fprintf(stderr, "No refs in common and none specified; doing nothing.\n");
+		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
+			"Perhaps you should specify a branch such as 'master'.\n");
 		return 0;
 	}
 
