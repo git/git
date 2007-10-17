@@ -59,7 +59,7 @@ continue_merge () {
 		die "$RESOLVEMSG"
 	fi
 
-	cmt=`cat $dotest/current`
+	cmt=`cat "$dotest/current"`
 	if ! git diff-index --quiet HEAD
 	then
 		if ! git-commit -C "$cmt"
@@ -84,14 +84,14 @@ continue_merge () {
 }
 
 call_merge () {
-	cmt="$(cat $dotest/cmt.$1)"
+	cmt="$(cat "$dotest/cmt.$1")"
 	echo "$cmt" > "$dotest/current"
 	hd=$(git rev-parse --verify HEAD)
 	cmt_name=$(git symbolic-ref HEAD)
-	msgnum=$(cat $dotest/msgnum)
-	end=$(cat $dotest/end)
+	msgnum=$(cat "$dotest/msgnum")
+	end=$(cat "$dotest/end")
 	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
-	eval GITHEAD_$hd='"$(cat $dotest/onto_name)"'
+	eval GITHEAD_$hd='$(cat "$dotest/onto_name")'
 	export GITHEAD_$cmt GITHEAD_$hd
 	git-merge-$strategy "$cmt^" -- "$hd" "$cmt"
 	rv=$?
@@ -140,10 +140,10 @@ do
 		}
 		if test -d "$dotest"
 		then
-			prev_head="`cat $dotest/prev_head`"
-			end="`cat $dotest/end`"
-			msgnum="`cat $dotest/msgnum`"
-			onto="`cat $dotest/onto`"
+			prev_head=$(cat "$dotest/prev_head")
+			end=$(cat "$dotest/end")
+			msgnum=$(cat "$dotest/msgnum")
+			onto=$(cat "$dotest/onto")
 			continue_merge
 			while test "$msgnum" -le "$end"
 			do
@@ -160,11 +160,11 @@ do
 		if test -d "$dotest"
 		then
 			git rerere clear
-			prev_head="`cat $dotest/prev_head`"
-			end="`cat $dotest/end`"
-			msgnum="`cat $dotest/msgnum`"
+			prev_head=$(cat "$dotest/prev_head")
+			end=$(cat "$dotest/end")
+			msgnum=$(cat "$dotest/msgnum")
 			msgnum=$(($msgnum + 1))
-			onto="`cat $dotest/onto`"
+			onto=$(cat "$dotest/onto")
 			while test "$msgnum" -le "$end"
 			do
 				call_merge "$msgnum"
