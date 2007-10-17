@@ -18,6 +18,7 @@ gitweb_init () {
 our \$version = "current";
 our \$GIT = "git";
 our \$projectroot = "$(pwd)";
+our \$project_maxdepth = 8;
 our \$home_link_str = "projects";
 our \$site_name = "[localhost]";
 our \$site_header = "";
