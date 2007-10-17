@@ -19,6 +19,8 @@ depending on the subcommand:
 git reflog expire [--dry-run] [--stale-fix] [--verbose]
 	[--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...
 
+git reflog delete ref@\{specifier\}...
+
 git reflog [show] [log-options]
 
 Reflog is a mechanism to record when the tip of branches are
@@ -35,6 +37,9 @@ subcommands) will take all the normal log options, and show the log of
 `HEAD`, which will cover all recent actions, including branch switches.
 It is basically an alias for 'git log -g --abbrev-commit
 --pretty=oneline', see gitlink:git-log[1].
+
+To delete single entries from the reflog, use the subcommand "delete"
+and specify the _exact_ entry (e.g. ``git reflog delete master@\{2\}'').
 
 
 OPTIONS
