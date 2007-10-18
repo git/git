@@ -10,8 +10,13 @@ Fixes since v1.5.3.4
  * "git-config --file" failed if the argument used a relative path
    as it changed directories before opening the file.
 
+ * "git-config --file" now displays a proper error message if it
+   cannot read the file specified on the command line.
+
  * "git-config", "git-diff", "git-apply" failed if run from a
    subdirectory with relative GIT_DIR and GIT_WORK_TREE set.
+
+ * "git-blame" crashed if run during a merge conflict.
 
  * "git-add -i" did not handle single line hunks correctly.
 
@@ -32,6 +37,9 @@ Fixes since v1.5.3.4
    has finished filtering the current branch.
 
  * "git-instaweb" no longer fails on Mac OS X.
+
+ * post-receive-email example hook fixed was fixed for
+   non-fast-forward updates.
 
  * Documentation updates for supported (but previously undocumented)
    options of "git-archive" and "git-reflog".

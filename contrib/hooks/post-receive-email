@@ -331,7 +331,7 @@ generate_update_branch_email()
 		echo "       via  $rev ($revtype)"
 	done
 
-	if [ -z "$fastforward" ]; then
+	if [ "$fast_forward" ]; then
 		echo "      from  $oldrev ($oldrev_type)"
 	else
 		#  1. Existing revisions were removed.  In this case newrev is a
