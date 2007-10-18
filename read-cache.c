@@ -149,6 +149,8 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 		else if (ce_compare_gitlink(ce))
 			changed |= DATA_CHANGED;
 		return changed;
+	case 0: /* Special case: unmerged file in index */
+		return MODE_CHANGED | DATA_CHANGED | TYPE_CHANGED;
 	default:
 		die("internal error: ce_mode is %o", ntohl(ce->ce_mode));
 	}
