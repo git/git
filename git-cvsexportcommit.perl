@@ -224,6 +224,17 @@ print "Applying\n";
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
 my $dirtypatch = 0;
+
+#
+# We have to add the directories in order otherwise we will have
+# problems when we try and add the sub-directory of a directory we
+# have not added yet.
+#
+# Luckily this is easy to deal with by sorting the directories and
+# dealing with the shortest ones first.
+#
+@dirs = sort { length $a <=> length $b} @dirs;
+
 foreach my $d (@dirs) {
     if (system(@cvs,'add',$d)) {
 	$dirtypatch = 1;
