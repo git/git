@@ -334,7 +334,7 @@ init_merge_tool_path() {
 
 if test -z "$merge_tool"; then
     merge_tool=`git config merge.tool`
-    if ! valid_tool "$merge_tool"; then
+    if test -n "$merge_tool" && ! valid_tool "$merge_tool"; then
 	    echo >&2 "git config option merge.tool set to unknown tool: $merge_tool"
 	    echo >&2 "Resetting to default..."
 	    unset merge_tool
