@@ -192,7 +192,7 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 	return 1;
 }
 
-static int filter_buffer(const char *path, const char *src,
+static int filter_buffer(int fd, const char *src,
 			 unsigned long size, const char *cmd)
 {
 	/*
@@ -205,6 +205,7 @@ static int filter_buffer(const char *path, const char *src,
 	memset(&child_process, 0, sizeof(child_process));
 	child_process.argv = argv;
 	child_process.in = -1;
+	child_process.out = fd;
 
 	if (start_command(&child_process))
 		return error("cannot fork to run external filter %s", cmd);
@@ -254,10 +255,8 @@ static int apply_filter(const char *path, const char *src, size_t len,
 		return 0;
 	}
 	if (!child_process.pid) {
-		dup2(pipe_feed[1], 1);
 		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		exit(filter_buffer(path, src, len, cmd));
+		exit(filter_buffer(pipe_feed[1], src, len, cmd));
 	}
 	close(pipe_feed[1]);
 
