@@ -45,18 +45,23 @@ OPTIONS
 	few hundred changesets or so.
 
 --auto::
-	With this option, `git gc` checks if there are too many
-	loose objects in the repository and runs
-	gitlink:git-repack[1] with `-d -l` option to pack them.
-	The threshold for loose objects is set with `gc.auto` configuration
-	variable, and can be disabled by setting it to 0.  Some
-	Porcelain commands use this after they perform operation
-	that could create many loose objects automatically.
-	Additionally, when there are too many packs are present,
-	they are consolidated into one larger pack by running
-	the `git-repack` command with `-A` option.  The
-	threshold for number of packs is set with
-	`gc.autopacklimit` configuration variable.
+	With this option, `git gc` checks whether any housekeeping is
+	required; if not, it exits without performing any work.
+	Some git commands run `git gc --auto` after performing
+	operations that could create many loose objects.
++
+Housekeeping is required if there are too many loose objects or
+too many packs in the repository. If the number of loose objects
+exceeds the value of the `gc.auto` configuration variable, then
+all loose objects are combined into a single pack using
+`git-repack -d -l`.  Setting the value of `gc.auto` to 0
+disables automatic packing of loose objects.
++
+If the number of packs exceeds the value of `gc.autopacklimit`,
+then existing packs (except those marked with a `.keep` file)
+are consolidated into a single pack by using the `-A` option of
+`git-repack`. Setting `gc.autopacklimit` to 0 disables
+automatic consolidation of packs.
 
 Configuration
 -------------
