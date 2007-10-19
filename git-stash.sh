@@ -110,7 +110,7 @@ show_stash () {
 
 	w_commit=$(git rev-parse --verify "$s") &&
 	b_commit=$(git rev-parse --verify "$s^") &&
-	git diff-tree $flags $b_commit $w_commit
+	git diff $flags $b_commit $w_commit
 }
 
 apply_stash () {
