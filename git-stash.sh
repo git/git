@@ -110,7 +110,7 @@ show_stash () {
 
 	w_commit=$(git rev-parse --verify "$s") &&
 	b_commit=$(git rev-parse --verify "$s^") &&
-	git diff $flags $b_commit $w_commit
+	git diff-tree $flags $b_commit $w_commit
 }
 
 apply_stash () {
@@ -139,7 +139,7 @@ apply_stash () {
 	unstashed_index_tree=
 	if test -n "$unstash_index" && test "$b_tree" != "$i_tree"
 	then
-		git diff --binary $s^2^..$s^2 | git apply --cached
+		git diff-tree --binary $s^2^..$s^2 | git apply --cached
 		test $? -ne 0 &&
 			die 'Conflicts in index. Try without --index.'
 		unstashed_index_tree=$(git-write-tree) ||
@@ -162,7 +162,7 @@ apply_stash () {
 			git read-tree "$unstashed_index_tree"
 		else
 			a="$TMP-added" &&
-			git diff --cached --name-only --diff-filter=A $c_tree >"$a" &&
+			git diff-index --cached --name-only --diff-filter=A $c_tree >"$a" &&
 			git read-tree --reset $c_tree &&
 			git update-index --add --stdin <"$a" ||
 				die "Cannot unstage modified files"
