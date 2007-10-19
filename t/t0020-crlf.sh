@@ -371,4 +371,11 @@ test_expect_success 'in-tree .gitattributes (4)' '
 	}
 '
 
+test_expect_success 'invalid .gitattributes (must not crash)' '
+
+	echo "three +crlf" >>.gitattributes &&
+	git diff
+
+'
+
 test_done

@@ -131,7 +131,7 @@ static int append_fetch_head(FILE *fp,
 
 	if (get_sha1(head, sha1))
 		return error("Not a valid object name: %s", head);
-	commit = lookup_commit_reference(sha1);
+	commit = lookup_commit_reference_gently(sha1, 1);
 	if (!commit)
 		not_for_merge = 1;
 

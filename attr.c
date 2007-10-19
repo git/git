@@ -209,8 +209,11 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		num_attr = 0;
 		cp = name + namelen;
 		cp = cp + strspn(cp, blank);
-		while (*cp)
+		while (*cp) {
 			cp = parse_attr(src, lineno, cp, &num_attr, res);
+			if (!cp)
+				return NULL;
+		}
 		if (pass)
 			break;
 		res = xcalloc(1,
