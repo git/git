@@ -762,7 +762,7 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 {
 	int i, ret;
 	int fd[2];
-	pid_t pid;
+	struct child_process *conn;
 	struct ref *ref;
 	struct stat st;
 
@@ -773,16 +773,14 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 			st.st_mtime = 0;
 	}
 
-	pid = git_connect(fd, (char *)dest, uploadpack,
+	conn = git_connect(fd, (char *)dest, uploadpack,
                           args.verbose ? CONNECT_VERBOSE : 0);
-	if (pid < 0)
-		return NULL;
 	if (heads && nr_heads)
 		nr_heads = remove_duplicates(nr_heads, heads);
 	ref = do_fetch_pack(fd, nr_heads, heads, pack_lockfile);
 	close(fd[0]);
 	close(fd[1]);
-	ret = finish_connect(pid);
+	ret = finish_connect(conn);
 
 	if (!ret && nr_heads) {
 		/* If the heads to pull were given, we should have

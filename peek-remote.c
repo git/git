@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 	int i, ret;
 	char *dest = NULL;
 	int fd[2];
-	pid_t pid;
+	struct child_process *conn;
 	int nongit = 0;
 	unsigned flags = 0;
 
@@ -64,12 +64,10 @@ int main(int argc, char **argv)
 	if (!dest || i != argc - 1)
 		usage(peek_remote_usage);
 
-	pid = git_connect(fd, dest, uploadpack, 0);
-	if (pid < 0)
-		return 1;
+	conn = git_connect(fd, dest, uploadpack, 0);
 	ret = peek_remote(fd, flags);
 	close(fd[0]);
 	close(fd[1]);
-	ret |= finish_connect(pid);
+	ret |= finish_connect(conn);
 	return !!ret;
 }
