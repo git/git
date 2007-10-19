@@ -202,8 +202,8 @@ static int update_local_ref(struct ref *ref,
 		return s_update_ref("updating tag", ref, 0);
 	}
 
-	current = lookup_commit_reference(ref->old_sha1);
-	updated = lookup_commit_reference(ref->new_sha1);
+	current = lookup_commit_reference_gently(ref->old_sha1, 1);
+	updated = lookup_commit_reference_gently(ref->new_sha1, 1);
 	if (!current || !updated) {
 		char *msg;
 		if (!strncmp(ref->name, "refs/tags/", 10))
@@ -261,7 +261,7 @@ static void store_updated_refs(const char *url, struct ref *ref_map)
 			ref->force = rm->peer_ref->force;
 		}
 
-		commit = lookup_commit_reference(rm->old_sha1);
+		commit = lookup_commit_reference_gently(rm->old_sha1, 1);
 		if (!commit)
 			rm->merge = 0;
 
