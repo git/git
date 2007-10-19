@@ -1255,15 +1255,11 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 static char *ref_msg(const char *line, const char *endp)
 {
 	const char *ep;
-	char *msg;
-
 	line += 82;
-	for (ep = line; ep < endp && *ep != '\n'; ep++)
-		;
-	msg = xmalloc(ep - line + 1);
-	memcpy(msg, line, ep - line);
-	msg[ep - line] = 0;
-	return msg;
+	ep = memchr(line, '\n', endp - line);
+	if (!ep)
+		ep = endp;
+	return xmemdupz(line, ep - line);
 }
 
 int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1, char **msg, unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt)
@@ -1463,4 +1459,31 @@ static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 int for_each_reflog(each_ref_fn fn, void *cb_data)
 {
 	return do_for_each_reflog("", fn, cb_data);
+}
+
+int update_ref(const char *action, const char *refname,
+		const unsigned char *sha1, const unsigned char *oldval,
+		int flags, enum action_on_err onerr)
+{
+	static struct ref_lock *lock;
+	lock = lock_any_ref_for_update(refname, oldval, flags);
+	if (!lock) {
+		const char *str = "Cannot lock the ref '%s'.";
+		switch (onerr) {
+		case MSG_ON_ERR: error(str, refname); break;
+		case DIE_ON_ERR: die(str, refname); break;
+		case QUIET_ON_ERR: break;
+		}
+		return 1;
+	}
+	if (write_ref_sha1(lock, sha1, action) < 0) {
+		const char *str = "Cannot update the ref '%s'.";
+		switch (onerr) {
+		case MSG_ON_ERR: error(str, refname); break;
+		case DIE_ON_ERR: die(str, refname); break;
+		case QUIET_ON_ERR: break;
+		}
+		return 1;
+	}
+	return 0;
 }

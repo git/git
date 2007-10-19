@@ -410,9 +410,7 @@ static int git_proxy_command_options(const char *var, const char *value)
 			if (matchlen == 4 &&
 			    !memcmp(value, "none", 4))
 				matchlen = 0;
-			git_proxy_command = xmalloc(matchlen + 1);
-			memcpy(git_proxy_command, value, matchlen);
-			git_proxy_command[matchlen] = 0;
+			git_proxy_command = xmemdupz(value, matchlen);
 		}
 		return 0;
 	}
@@ -504,6 +502,7 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 	pid_t pid;
 	enum protocol protocol = PROTO_LOCAL;
 	int free_path = 0;
+	struct strbuf cmd;
 	char *port = NULL;
 
 	/* Without this we cannot rely on waitpid() to tell
@@ -594,20 +593,15 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
 		die("unable to create pipe pair for communication");
 
-	char command[MAX_CMD_LEN];
-	char *posn = command;
-	int size = MAX_CMD_LEN;
-	int of = 0;
-
-	of |= add_to_string(&posn, &size, prog, 0);
-	of |= add_to_string(&posn, &size, " ", 0);
-	of |= add_to_string(&posn, &size, path, 1);
-
-	if (of)
+	strbuf_init(&cmd, MAX_CMD_LEN);
+	strbuf_addstr(&cmd, prog);
+	strbuf_addch(&cmd, ' ');
+	sq_quote_buf(&cmd, path);
+	if (cmd.len >= MAX_CMD_LEN)
 		die("command line too long");
 
 	if (protocol == PROTO_SSH) {
-		const char *arg[] = { NULL, NULL, NULL, host, command, NULL };
+		const char *arg[] = { NULL, NULL, NULL, host, cmd.buf, NULL };
 		const char **argv;
 		const char *ssh = getenv("GIT_SSH");
 		if (!ssh) ssh = "ssh";
@@ -621,7 +615,7 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		pid = spawnvpe_pipe(ssh, argv, environ, pipefd[1], pipefd[0]);
 	}
 	else {
-		const char *argv[] = { NULL, "-c", command, NULL };
+		const char *argv[] = { NULL, "-c", cmd.buf, NULL };
 		const char **env = copy_environ();
 		env_unsetenv(env, ALTERNATE_DB_ENVIRONMENT);
 		env_unsetenv(env, DB_ENVIRONMENT);
@@ -635,6 +629,7 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		die("unable to fork");
 	fd[0] = pipefd[0][0];
 	fd[1] = pipefd[1][1];
+	strbuf_release(&cmd);
 	if (free_path)
 		free(path);
 	return pid;

@@ -30,11 +30,6 @@ if ($opt_d) {
 	@cvs = ('cvs');
 }
 
-# setup a tempdir
-our ($tmpdir, $tmpdirname) = tempdir('git-cvsapplycommit-XXXXXX',
-				     TMPDIR => 1,
-				     CLEANUP => 1);
-
 # resolve target commit
 my $commit;
 $commit = pop @ARGV;
@@ -134,7 +129,7 @@ my $context = $opt_p ? '' : '-C1';
 print "Checking if patch will apply\n";
 
 my @stat;
-open APPLY, "GIT_DIR= git-apply $context --binary --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
+open APPLY, "GIT_DIR= git-apply $context --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
 @stat=<APPLY>;
 close APPLY || die "Cannot patch";
 my (@bfiles,@files,@afiles,@dfiles);
@@ -220,10 +215,21 @@ if ($dirty) {
 }
 
 print "Applying\n";
-`GIT_DIR= git-apply $context --binary --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
+`GIT_DIR= git-apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
 my $dirtypatch = 0;
+
+#
+# We have to add the directories in order otherwise we will have
+# problems when we try and add the sub-directory of a directory we
+# have not added yet.
+#
+# Luckily this is easy to deal with by sorting the directories and
+# dealing with the shortest ones first.
+#
+@dirs = sort { length $a <=> length $b} @dirs;
+
 foreach my $d (@dirs) {
     if (system(@cvs,'add',$d)) {
 	$dirtypatch = 1;

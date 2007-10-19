@@ -57,7 +57,7 @@ stash@{1}: On master: 9cc0589... Add git-stash
 
 show [<stash>]::
 
-	Show the changes recorded in the stash as a diff between the the
+	Show the changes recorded in the stash as a diff between the
 	stashed state and its original parent. When no `<stash>` is given,
 	shows the latest one. By default, the command shows the diffstat, but
 	it will accept any format known to `git-diff` (e.g., `git-stash show

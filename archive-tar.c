@@ -3,7 +3,6 @@
  */
 #include "cache.h"
 #include "commit.h"
-#include "strbuf.h"
 #include "tar.h"
 #include "builtin.h"
 #include "archive.h"
@@ -17,6 +16,7 @@ static unsigned long offset;
 static time_t archive_time;
 static int tar_umask = 002;
 static int verbose;
+static const struct commit *commit;
 
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
@@ -78,19 +78,6 @@ static void write_trailer(void)
 	}
 }
 
-static void strbuf_append_string(struct strbuf *sb, const char *s)
-{
-	int slen = strlen(s);
-	int total = sb->len + slen;
-	if (total + 1 > sb->alloc) {
-		sb->buf = xrealloc(sb->buf, total + 1);
-		sb->alloc = total + 1;
-	}
-	memcpy(sb->buf + sb->len, s, slen);
-	sb->len = total;
-	sb->buf[total] = '\0';
-}
-
 /*
  * pax extended header records have the format "%u %s=%s\n".  %u contains
  * the size of the whole string (including the %u), the first %s is the
@@ -100,26 +87,17 @@ static void strbuf_append_string(struct strbuf *sb, const char *s)
 static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
                                      const char *value, unsigned int valuelen)
 {
-	char *p;
-	int len, total, tmp;
+	int len, tmp;
 
 	/* "%u %s=%s\n" */
 	len = 1 + 1 + strlen(keyword) + 1 + valuelen + 1;
 	for (tmp = len; tmp > 9; tmp /= 10)
 		len++;
 
-	total = sb->len + len;
-	if (total > sb->alloc) {
-		sb->buf = xrealloc(sb->buf, total);
-		sb->alloc = total;
-	}
-
-	p = sb->buf;
-	p += sprintf(p, "%u %s=", len, keyword);
-	memcpy(p, value, valuelen);
-	p += valuelen;
-	*p = '\n';
-	sb->len = total;
+	strbuf_grow(sb, len);
+	strbuf_addf(sb, "%u %s=", len, keyword);
+	strbuf_add(sb, value, valuelen);
+	strbuf_addch(sb, '\n');
 }
 
 static unsigned int ustar_header_chksum(const struct ustar_header *header)
@@ -153,8 +131,7 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 	struct strbuf ext_header;
 
 	memset(&header, 0, sizeof(header));
-	ext_header.buf = NULL;
-	ext_header.len = ext_header.alloc = 0;
+	strbuf_init(&ext_header, 0);
 
 	if (!sha1) {
 		*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
@@ -166,7 +143,7 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 		sprintf(header.name, "%s.paxheader", sha1_to_hex(sha1));
 	} else {
 		if (verbose)
-			fprintf(stderr, "%.*s\n", path->len, path->buf);
+			fprintf(stderr, "%.*s\n", (int)path->len, path->buf);
 		if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 			*header.typeflag = TYPEFLAG_DIR;
 			mode = (mode | 0777) & ~tar_umask;
@@ -225,8 +202,8 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 
 	if (ext_header.len > 0) {
 		write_entry(sha1, NULL, 0, ext_header.buf, ext_header.len);
-		free(ext_header.buf);
 	}
+	strbuf_release(&ext_header);
 	write_blocked(&header, sizeof(header));
 	if (S_ISREG(mode) && buffer && size > 0)
 		write_blocked(buffer, size);
@@ -235,11 +212,11 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 static void write_global_extended_header(const unsigned char *sha1)
 {
 	struct strbuf ext_header;
-	ext_header.buf = NULL;
-	ext_header.len = ext_header.alloc = 0;
+
+	strbuf_init(&ext_header, 0);
 	strbuf_append_ext_header(&ext_header, "comment", sha1_to_hex(sha1), 40);
 	write_entry(NULL, NULL, 0, ext_header.buf, ext_header.len);
-	free(ext_header.buf);
+	strbuf_release(&ext_header);
 }
 
 static int git_tar_config(const char *var, const char *value)
@@ -260,32 +237,22 @@ static int write_tar_entry(const unsigned char *sha1,
                            const char *base, int baselen,
                            const char *filename, unsigned mode, int stage)
 {
-	static struct strbuf path;
-	int filenamelen = strlen(filename);
+	static struct strbuf path = STRBUF_INIT;
 	void *buffer;
 	enum object_type type;
 	unsigned long size;
 
-	if (!path.alloc) {
-		path.buf = xmalloc(PATH_MAX);
-		path.alloc = PATH_MAX;
-		path.len = path.eof = 0;
-	}
-	if (path.alloc < baselen + filenamelen + 1) {
-		free(path.buf);
-		path.buf = xmalloc(baselen + filenamelen + 1);
-		path.alloc = baselen + filenamelen + 1;
-	}
-	memcpy(path.buf, base, baselen);
-	memcpy(path.buf + baselen, filename, filenamelen);
-	path.len = baselen + filenamelen;
-	path.buf[path.len] = '\0';
+	strbuf_reset(&path);
+	strbuf_grow(&path, PATH_MAX);
+	strbuf_add(&path, base, baselen);
+	strbuf_addstr(&path, filename);
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
-		strbuf_append_string(&path, "/");
+		strbuf_addch(&path, '/');
 		buffer = NULL;
 		size = 0;
 	} else {
-		buffer = convert_sha1_file(path.buf, sha1, mode, &type, &size);
+		buffer = sha1_file_to_archive(path.buf, sha1, mode, &type,
+		                              &size, commit);
 		if (!buffer)
 			die("cannot read %s", sha1_to_hex(sha1));
 	}
@@ -304,6 +271,7 @@ int write_tar_archive(struct archiver_args *args)
 
 	archive_time = args->time;
 	verbose = args->verbose;
+	commit = args->commit;
 
 	if (args->commit_sha1)
 		write_global_extended_header(args->commit_sha1);

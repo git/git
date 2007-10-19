@@ -215,9 +215,11 @@ do
 	-v|--verbose)
 		verbose=t
 		;;
+	--whitespace=*)
+		git_am_opt="$git_am_opt $1"
+		;;
 	-C*)
-		git_am_opt=$1
-		shift
+		git_am_opt="$git_am_opt $1"
 		;;
 	-*)
 		usage

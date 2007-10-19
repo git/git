@@ -66,40 +66,15 @@ static int write_rr(struct path_list *rr, int out_fd)
 	return commit_lock_file(&write_lock);
 }
 
-struct buffer {
-	char *ptr;
-	int nr, alloc;
-};
-
-static void append_line(struct buffer *buffer, const char *line)
-{
-	int len = strlen(line);
-
-	if (buffer->nr + len > buffer->alloc) {
-		buffer->alloc = alloc_nr(buffer->nr + len);
-		buffer->ptr = xrealloc(buffer->ptr, buffer->alloc);
-	}
-	memcpy(buffer->ptr + buffer->nr, line, len);
-	buffer->nr += len;
-}
-
-static void clear_buffer(struct buffer *buffer)
-{
-	free(buffer->ptr);
-	buffer->ptr = NULL;
-	buffer->nr = buffer->alloc = 0;
-}
-
 static int handle_file(const char *path,
 	 unsigned char *sha1, const char *output)
 {
 	SHA_CTX ctx;
 	char buf[1024];
 	int hunk = 0, hunk_no = 0;
-	struct buffer minus = { NULL, 0, 0 }, plus = { NULL, 0, 0 };
-	struct buffer *one = &minus, *two = &plus;
+	struct strbuf one, two;
 	FILE *f = fopen(path, "r");
-	FILE *out;
+	FILE *out = NULL;
 
 	if (!f)
 		return error("Could not open %s", path);
@@ -110,51 +85,50 @@ static int handle_file(const char *path,
 			fclose(f);
 			return error("Could not write %s", output);
 		}
-	} else
-		out = NULL;
+	}
 
 	if (sha1)
 		SHA1_Init(&ctx);
 
+	strbuf_init(&one, 0);
+	strbuf_init(&two,  0);
 	while (fgets(buf, sizeof(buf), f)) {
 		if (!prefixcmp(buf, "<<<<<<< "))
 			hunk = 1;
 		else if (!prefixcmp(buf, "======="))
 			hunk = 2;
 		else if (!prefixcmp(buf, ">>>>>>> ")) {
-			int one_is_longer = (one->nr > two->nr);
-			int common_len = one_is_longer ? two->nr : one->nr;
-			int cmp = memcmp(one->ptr, two->ptr, common_len);
+			int cmp = strbuf_cmp(&one, &two);
 
 			hunk_no++;
 			hunk = 0;
-			if ((cmp > 0) || ((cmp == 0) && one_is_longer)) {
-				struct buffer *swap = one;
-				one = two;
-				two = swap;
+			if (cmp > 0) {
+				strbuf_swap(&one, &two);
 			}
 			if (out) {
 				fputs("<<<<<<<\n", out);
-				fwrite(one->ptr, one->nr, 1, out);
+				fwrite(one.buf, one.len, 1, out);
 				fputs("=======\n", out);
-				fwrite(two->ptr, two->nr, 1, out);
+				fwrite(two.buf, two.len, 1, out);
 				fputs(">>>>>>>\n", out);
 			}
 			if (sha1) {
-				SHA1_Update(&ctx, one->ptr, one->nr);
-				SHA1_Update(&ctx, "\0", 1);
-				SHA1_Update(&ctx, two->ptr, two->nr);
-				SHA1_Update(&ctx, "\0", 1);
+				SHA1_Update(&ctx, one.buf ? one.buf : "",
+					    one.len + 1);
+				SHA1_Update(&ctx, two.buf ? two.buf : "",
+					    two.len + 1);
 			}
-			clear_buffer(one);
-			clear_buffer(two);
+			strbuf_reset(&one);
+			strbuf_reset(&two);
 		} else if (hunk == 1)
-			append_line(one, buf);
+			strbuf_addstr(&one, buf);
 		else if (hunk == 2)
-			append_line(two, buf);
+			strbuf_addstr(&two, buf);
 		else if (out)
 			fputs(buf, out);
 	}
+	strbuf_release(&one);
+	strbuf_release(&two);
 
 	fclose(f);
 	if (out)

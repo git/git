@@ -149,6 +149,8 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 		else if (ce_compare_gitlink(ce))
 			changed |= DATA_CHANGED;
 		return changed;
+	case 0: /* Special case: unmerged file in index */
+		return MODE_CHANGED | DATA_CHANGED | TYPE_CHANGED;
 	default:
 		die("internal error: ce_mode is %o", ntohl(ce->ce_mode));
 	}
@@ -346,6 +348,7 @@ int remove_file_from_index(struct index_state *istate, const char *path)
 	int pos = index_name_pos(istate, path, strlen(path));
 	if (pos < 0)
 		pos = -pos-1;
+	cache_tree_invalidate_path(istate->cache_tree, path);
 	while (pos < istate->cache_nr && !strcmp(istate->cache[pos]->name, path))
 		remove_index_entry_at(istate, pos);
 	return 0;
@@ -430,7 +433,6 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 		die("unable to add %s to index",path);
 	if (verbose)
 		printf("add '%s'\n", path);
-	cache_tree_invalidate_path(istate->cache_tree, path);
 	return 0;
 }
 
@@ -698,6 +700,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	int ok_to_replace = option & ADD_CACHE_OK_TO_REPLACE;
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
 
+	cache_tree_invalidate_path(istate->cache_tree, ce->name);
 	pos = index_name_pos(istate, ce->name, ntohs(ce->ce_flags));
 
 	/* existing match? Just replace it. */
@@ -1135,7 +1138,7 @@ int write_index(struct index_state *istate, int newfd)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
-	int i, removed;
+	int i, err, removed;
 	struct cache_entry **cache = istate->cache;
 	int entries = istate->cache_nr;
 
@@ -1164,16 +1167,15 @@ int write_index(struct index_state *istate, int newfd)
 
 	/* Write extension data here */
 	if (istate->cache_tree) {
-		unsigned long sz;
-		void *data = cache_tree_write(istate->cache_tree, &sz);
-		if (data &&
-		    !write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sz) &&
-		    !ce_write(&c, newfd, data, sz))
-			free(data);
-		else {
-			free(data);
+		struct strbuf sb;
+
+		strbuf_init(&sb, 0);
+		cache_tree_write(&sb, istate->cache_tree);
+		err = write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sb.len) < 0
+			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		strbuf_release(&sb);
+		if (err)
 			return -1;
-		}
 	}
 	return ce_flush(&c, newfd);
 }

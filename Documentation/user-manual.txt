@@ -926,7 +926,7 @@ file such that it contained the given content either before or after the
 commit.  You can find out with this:
 
 -------------------------------------------------
-$  git log --raw --abbrev=40 --pretty=oneline -- filename |
+$  git log --raw --abbrev=40 --pretty=oneline |
 	grep -B 1 `git hash-object filename`
 -------------------------------------------------
 
@@ -1495,7 +1495,7 @@ Ensuring good performance
 -------------------------
 
 On large repositories, git depends on compression to keep the history
-information from taking up to much space on disk or in memory.
+information from taking up too much space on disk or in memory.
 
 This compression is not performed automatically.  Therefore you
 should occasionally run gitlink:git-gc[1]:
@@ -1536,7 +1536,7 @@ dangling tree b24c2473f1fd3d91352a624795be026d64c8841f
 Dangling objects are not a problem.  At worst they may take up a little
 extra disk space.  They can sometimes provide a last-resort method for
 recovering lost work--see <<dangling-objects>> for details.  However, if
-you wish, you can remove them with gitlink:git-prune[1] or the --prune
+you wish, you can remove them with gitlink:git-prune[1] or the `--prune`
 option to gitlink:git-gc[1]:
 
 -------------------------------------------------
@@ -1555,7 +1555,7 @@ Recovering lost changes
 Reflogs
 ^^^^^^^
 
-Say you modify a branch with gitlink:git-reset[1] --hard, and then
+Say you modify a branch with `gitlink:git-reset[1] --hard`, and then
 realize that the branch was the only reference you had to that point in
 history.
 
@@ -1684,7 +1684,7 @@ $ git pull
 More generally, a branch that is created from a remote branch will pull
 by default from that branch.  See the descriptions of the
 branch.<name>.remote and branch.<name>.merge options in
-gitlink:git-config[1], and the discussion of the --track option in
+gitlink:git-config[1], and the discussion of the `--track` option in
 gitlink:git-checkout[1], to learn how to control these defaults.
 
 In addition to saving you keystrokes, "git pull" also helps you by
@@ -1782,7 +1782,7 @@ $ git clone /path/to/repository
 $ git pull /path/to/other/repository
 -------------------------------------------------
 
-or an ssh url:
+or an ssh URL:
 
 -------------------------------------------------
 $ git clone ssh://yourhost/~you/repository
@@ -1843,7 +1843,7 @@ Exporting a git repository via the git protocol
 This is the preferred method.
 
 If someone else administers the server, they should tell you what
-directory to put the repository in, and what git:// url it will appear
+directory to put the repository in, and what git:// URL it will appear
 at.  You can then skip to the section
 "<<pushing-changes-to-a-public-repository,Pushing changes to a public
 repository>>", below.
@@ -1880,8 +1880,8 @@ $ chmod a+x hooks/post-update
 gitlink:git-update-server-info[1], and the documentation
 link:hooks.html[Hooks used by git].)
 
-Advertise the url of proj.git.  Anybody else should then be able to
-clone or pull from that url, for example with a command line like:
+Advertise the URL of proj.git.  Anybody else should then be able to
+clone or pull from that URL, for example with a command line like:
 
 -------------------------------------------------
 $ git clone http://yourserver.com/~you/proj.git
@@ -1920,7 +1920,7 @@ As with git-fetch, git-push will complain if this does not result in
 a <<fast-forwards,fast forward>>.  Normally this is a sign of
 something wrong.  However, if you are sure you know what you're
 doing, you may force git-push to perform the update anyway by
-proceeding the branch name by a plus sign:
+preceding the branch name by a plus sign:
 
 -------------------------------------------------
 $ git push ssh://yourserver.com/~you/proj.git +master
@@ -2040,7 +2040,7 @@ $ git branch --track test origin/master
 $ git branch --track release origin/master
 -------------------------------------------------
 
-These can be easily kept up to date using gitlink:git-pull[1]
+These can be easily kept up to date using gitlink:git-pull[1].
 
 -------------------------------------------------
 $ git checkout test && git pull
@@ -2132,7 +2132,7 @@ changes are in a specific branch, use:
 $ git log linux..branchname | git-shortlog
 -------------------------------------------------
 
-To see whether it has already been merged into the test or release branches
+To see whether it has already been merged into the test or release branches,
 use:
 
 -------------------------------------------------
@@ -2145,12 +2145,12 @@ or
 $ git log release..branchname
 -------------------------------------------------
 
-(If this branch has not yet been merged you will see some log entries.
+(If this branch has not yet been merged, you will see some log entries.
 If it has been merged, then there will be no output.)
 
 Once a patch completes the great cycle (moving from test to release,
 then pulled by Linus, and finally coming back into your local
-"origin/master" branch) the branch for this change is no longer needed.
+"origin/master" branch), the branch for this change is no longer needed.
 You detect this when the output from:
 
 -------------------------------------------------
@@ -2412,7 +2412,7 @@ $ git rebase --continue
 
 and git will continue applying the rest of the patches.
 
-At any point you may use the --abort option to abort this process and
+At any point you may use the `--abort` option to abort this process and
 return mywork to the state it had before you started the rebase:
 
 -------------------------------------------------
@@ -2479,9 +2479,9 @@ $ git checkout -b mywork-new origin
 $ gitk origin..mywork &
 -------------------------------------------------
 
-And browse through the list of patches in the mywork branch using gitk,
+and browse through the list of patches in the mywork branch using gitk,
 applying them (possibly in a different order) to mywork-new using
-cherry-pick, and possibly modifying them as you go using commit --amend.
+cherry-pick, and possibly modifying them as you go using `commit --amend`.
 The gitlink:git-gui[1] command may also help as it allows you to
 individually select diff hunks for inclusion in the index (by
 right-clicking on the diff hunk and choosing "Stage Hunk for Commit").
@@ -2739,7 +2739,7 @@ others:
 
 - Git can quickly determine whether two objects are identical or not,
   just by comparing names.
-- Since object names are computed the same way in ever repository, the
+- Since object names are computed the same way in every repository, the
   same content stored in two repositories will always be stored under
   the same name.
 - Git can detect errors when it reads an object, by checking that the
@@ -2756,7 +2756,7 @@ There are four different types of objects: "blob", "tree", "commit", and
   "blob" objects into a directory structure. In addition, a tree object
   can refer to other tree objects, thus creating a directory hierarchy.
 - A <<def_commit_object,"commit" object>> ties such directory hierarchies
-  together into a <<def_DAG,directed acyclic graph>> of revisions - each
+  together into a <<def_DAG,directed acyclic graph>> of revisions--each
   commit contains the object name of exactly one tree designating the
   directory hierarchy at the time of the commit. In addition, a commit
   refers to "parent" commit objects that describe the history of how we
@@ -3029,7 +3029,7 @@ There are also other situations that cause dangling objects. For
 example, a "dangling blob" may arise because you did a "git add" of a
 file, but then, before you actually committed it and made it part of the
 bigger picture, you changed something else in that file and committed
-that *updated* thing - the old state that you added originally ends up
+that *updated* thing--the old state that you added originally ends up
 not being pointed to by any commit or tree, so it's now a dangling blob
 object.
 
@@ -3044,7 +3044,7 @@ up pointing to them, so they end up "dangling" in your repository.
 Generally, dangling objects aren't anything to worry about. They can
 even be very useful: if you screw something up, the dangling objects can
 be how you recover your old tree (say, you did a rebase, and realized
-that you really didn't want to - you can look at what dangling objects
+that you really didn't want to--you can look at what dangling objects
 you have, and decide to reset your head to some old dangling state).
 
 For commits, you can just use:
@@ -3088,10 +3088,10 @@ $ git prune
 ------------------------------------------------
 
 and they'll be gone. But you should only run "git prune" on a quiescent
-repository - it's kind of like doing a filesystem fsck recovery: you
+repository--it's kind of like doing a filesystem fsck recovery: you
 don't want to do that while the filesystem is mounted.
 
-(The same is true of "git-fsck" itself, btw - but since
+(The same is true of "git-fsck" itself, btw, but since
 git-fsck never actually *changes* the repository, it just reports
 on what it found, git-fsck itself is never "dangerous" to run.
 Running it while somebody is actually changing the repository can cause
@@ -3425,9 +3425,10 @@ The Workflow
 ------------
 
 High-level operations such as gitlink:git-commit[1],
-gitlink:git-checkout[1] and git-reset[1] work by moving data between the
-working tree, the index, and the object database.  Git provides
-low-level operations which perform each of these steps individually.
+gitlink:git-checkout[1] and gitlink:git-reset[1] work by moving data
+between the working tree, the index, and the object database.  Git
+provides low-level operations which perform each of these steps
+individually.
 
 Generally, all "git" operations work on the index file. Some operations
 work *purely* on the index file (showing the current state of the
@@ -3482,7 +3483,7 @@ You write your current index file to a "tree" object with the program
 $ git write-tree
 -------------------------------------------------
 
-that doesn't come with any options - it will just write out the
+that doesn't come with any options--it will just write out the
 current index into the set of tree objects that describe that state,
 and it will return the name of the resulting top-level tree. You can
 use that tree to re-generate the index at any time by going in the
@@ -3493,7 +3494,7 @@ object database -> index
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 You read a "tree" file from the object database, and use that to
-populate (and overwrite - don't do this if your index contains any
+populate (and overwrite--don't do this if your index contains any
 unsaved state that you might want to restore later!) your current
 index.  Normal operation is just
 
@@ -3541,7 +3542,7 @@ Tying it all together
 
 To commit a tree you have instantiated with "git-write-tree", you'd
 create a "commit" object that refers to that tree and the history
-behind it - most notably the "parent" commits that preceded it in
+behind it--most notably the "parent" commits that preceded it in
 history.
 
 Normally a "commit" has one parent: the previous state of the tree
@@ -3684,7 +3685,7 @@ Once you know the three trees you are going to merge (the one "original"
 tree, aka the common tree, and the two "result" trees, aka the branches
 you want to merge), you do a "merge" read into the index. This will
 complain if it has to throw away your old index contents, so you should
-make sure that you've committed those - in fact you would normally
+make sure that you've committed those--in fact you would normally
 always do a merge against your last commit (which should thus match what
 you have in your current index anyway).
 
@@ -3704,7 +3705,7 @@ Merging multiple trees, continued
 ---------------------------------
 
 Sadly, many merges aren't trivial. If there are files that have
-been added.moved or removed, or if both branches have modified the
+been added, moved or removed, or if both branches have modified the
 same file, you will be left with an index tree that contains "merge
 entries" in it. Such an index tree can 'NOT' be written out to a tree
 object, and you will have to resolve any such merge clashes using
@@ -3956,7 +3957,7 @@ Two things are interesting here:
 
 - `get_sha1()` returns 0 on _success_.  This might surprise some new
   Git hackers, but there is a long tradition in UNIX to return different
-  negative numbers in case of different errors -- and 0 on success.
+  negative numbers in case of different errors--and 0 on success.
 
 - the variable `sha1` in the function signature of `get_sha1()` is `unsigned
   char \*`, but is actually expected to be a pointer to `unsigned
@@ -4061,7 +4062,7 @@ $ git branch new     # create branch "new" starting at current HEAD
 $ git branch -d new  # delete branch "new"
 -----------------------------------------------
 
-Instead of basing new branch on current HEAD (the default), use:
+Instead of basing a new branch on current HEAD (the default), use:
 
 -----------------------------------------------
 $ git branch new test    # branch named "test"

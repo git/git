@@ -94,7 +94,6 @@ git-clone                               mainporcelain
 git-commit                              mainporcelain
 git-commit-tree                         plumbingmanipulators
 git-config                              ancillarymanipulators
-git-convert-objects                     ancillarymanipulators
 git-count-objects                       ancillaryinterrogators
 git-cvsexportcommit                     foreignscminterface
 git-cvsimport                           foreignscminterface

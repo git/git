@@ -22,10 +22,7 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 	for (i = 0; i < count; i++) {
 		int length = strlen(result[i]);
 		if (length > 0 && result[i][length - 1] == '/') {
-			char *without_slash = xmalloc(length);
-			memcpy(without_slash, result[i], length - 1);
-			without_slash[length - 1] = '\0';
-			result[i] = without_slash;
+			result[i] = xmemdupz(result[i], length - 1);
 		}
 		if (base_name) {
 			const char *last_slash = strrchr(result[i], '/');
@@ -276,11 +273,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			add_file_to_cache(path, verbose);
 		}
 
-		for (i = 0; i < deleted.nr; i++) {
-			const char *path = deleted.items[i].path;
-			remove_file_from_cache(path);
-			cache_tree_invalidate_path(active_cache_tree, path);
-		}
+		for (i = 0; i < deleted.nr; i++)
+			remove_file_from_cache(deleted.items[i].path);
 
 		if (active_cache_changed) {
 			if (write_cache(newfd, active_cache, active_nr) ||

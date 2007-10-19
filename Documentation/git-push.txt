@@ -9,7 +9,7 @@ git-push - Update remote refs along with associated objects
 SYNOPSIS
 --------
 [verse]
-'git-push' [--all] [--tags] [--receive-pack=<git-receive-pack>]
+'git-push' [--all] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>]
            [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]
 
 DESCRIPTION
@@ -62,6 +62,9 @@ the remote repository.
 \--all::
 	Instead of naming each ref to push, specifies that all
 	refs under `$GIT_DIR/refs/heads/` be pushed.
+
+\--dry-run::
+	Do everything except actually send the updates.
 
 \--tags::
 	All refs under `$GIT_DIR/refs/tags` are pushed, in

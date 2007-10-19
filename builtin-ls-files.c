@@ -84,8 +84,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 		return;
 
 	fputs(tag, stdout);
-	write_name_quoted("", 0, ent->name + offset, line_terminator, stdout);
-	putchar(line_terminator);
+	write_name_quoted(ent->name + offset, stdout, line_terminator);
 }
 
 static void show_other_files(struct dir_struct *dir)
@@ -208,21 +207,15 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 
 	if (!show_stage) {
 		fputs(tag, stdout);
-		write_name_quoted("", 0, ce->name + offset,
-				  line_terminator, stdout);
-		putchar(line_terminator);
-	}
-	else {
+	} else {
 		printf("%s%06o %s %d\t",
 		       tag,
 		       ntohl(ce->ce_mode),
 		       abbrev ? find_unique_abbrev(ce->sha1,abbrev)
 				: sha1_to_hex(ce->sha1),
 		       ce_stage(ce));
-		write_name_quoted("", 0, ce->name + offset,
-				  line_terminator, stdout);
-		putchar(line_terminator);
 	}
+	write_name_quoted(ce->name + offset, stdout, line_terminator);
 }
 
 static void show_files(struct dir_struct *dir, const char *prefix)
@@ -300,7 +293,6 @@ static void prune_cache(const char *prefix)
 static const char *verify_pathspec(const char *prefix)
 {
 	const char **p, *n, *prev;
-	char *real_prefix;
 	unsigned long max;
 
 	prev = NULL;
@@ -327,14 +319,8 @@ static const char *verify_pathspec(const char *prefix)
 	if (prefix_offset > max || memcmp(prev, prefix, prefix_offset))
 		die("git-ls-files: cannot generate relative filenames containing '..'");
 
-	real_prefix = NULL;
 	prefix_len = max;
-	if (max) {
-		real_prefix = xmalloc(max + 1);
-		memcpy(real_prefix, prev, max);
-		real_prefix[max] = 0;
-	}
-	return real_prefix;
+	return max ? xmemdupz(prev, max) : NULL;
 }
 
 /*

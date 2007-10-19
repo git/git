@@ -8,7 +8,6 @@ static const char git_update_ref_usage[] =
 int cmd_update_ref(int argc, const char **argv, const char *prefix)
 {
 	const char *refname=NULL, *value=NULL, *oldval=NULL, *msg=NULL;
-	struct ref_lock *lock;
 	unsigned char sha1[20], oldsha1[20];
 	int i, delete, ref_flags;
 
@@ -62,10 +61,6 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	if (oldval && *oldval && get_sha1(oldval, oldsha1))
 		die("%s: not a valid old SHA1", oldval);
 
-	lock = lock_any_ref_for_update(refname, oldval ? oldsha1 : NULL, ref_flags);
-	if (!lock)
-		die("%s: cannot lock the ref", refname);
-	if (write_ref_sha1(lock, sha1, msg) < 0)
-		die("%s: cannot update the ref", refname);
-	return 0;
+	return update_ref(msg, refname, sha1, oldval ? oldsha1 : NULL,
+			  ref_flags, DIE_ON_ERR);
 }

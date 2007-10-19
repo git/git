@@ -87,7 +87,6 @@ static int used_atom_cnt, sort_atom_limit, need_tagged;
 static int parse_atom(const char *atom, const char *ep)
 {
 	const char *sp;
-	char *n;
 	int i, at;
 
 	sp = atom;
@@ -106,7 +105,16 @@ static int parse_atom(const char *atom, const char *ep)
 	/* Is the atom a valid one? */
 	for (i = 0; i < ARRAY_SIZE(valid_atom); i++) {
 		int len = strlen(valid_atom[i].name);
-		if (len == ep - sp && !memcmp(valid_atom[i].name, sp, len))
+		/*
+		 * If the atom name has a colon, strip it and everything after
+		 * it off - it specifies the format for this entry, and
+		 * shouldn't be used for checking against the valid_atom
+		 * table.
+		 */
+		const char *formatp = strchr(sp, ':');
+		if (!formatp || ep < formatp)
+			formatp = ep;
+		if (len == formatp - sp && !memcmp(valid_atom[i].name, sp, len))
 			break;
 	}
 
@@ -120,10 +128,7 @@ static int parse_atom(const char *atom, const char *ep)
 			     (sizeof *used_atom) * used_atom_cnt);
 	used_atom_type = xrealloc(used_atom_type,
 				  (sizeof(*used_atom_type) * used_atom_cnt));
-	n = xmalloc(ep - atom + 1);
-	memcpy(n, atom, ep - atom);
-	n[ep-atom] = 0;
-	used_atom[at] = n;
+	used_atom[at] = xmemdupz(atom, ep - atom);
 	used_atom_type[at] = valid_atom[i].cmp_type;
 	return at;
 }
@@ -307,54 +312,50 @@ static const char *find_wholine(const char *who, int wholen, const char *buf, un
 static const char *copy_line(const char *buf)
 {
 	const char *eol = strchr(buf, '\n');
-	char *line;
-	int len;
 	if (!eol)
 		return "";
-	len = eol - buf;
-	line = xmalloc(len + 1);
-	memcpy(line, buf, len);
-	line[len] = 0;
-	return line;
+	return xmemdupz(buf, eol - buf);
 }
 
 static const char *copy_name(const char *buf)
 {
-	const char *eol = strchr(buf, '\n');
-	const char *eoname = strstr(buf, " <");
-	char *line;
-	int len;
-	if (!(eoname && eol && eoname < eol))
-		return "";
-	len = eoname - buf;
-	line = xmalloc(len + 1);
-	memcpy(line, buf, len);
-	line[len] = 0;
-	return line;
+	const char *cp;
+	for (cp = buf; *cp && *cp != '\n'; cp++) {
+		if (!strncmp(cp, " <", 2))
+			return xmemdupz(buf, cp - buf);
+	}
+	return "";
 }
 
 static const char *copy_email(const char *buf)
 {
 	const char *email = strchr(buf, '<');
 	const char *eoemail = strchr(email, '>');
-	char *line;
-	int len;
 	if (!email || !eoemail)
 		return "";
-	eoemail++;
-	len = eoemail - email;
-	line = xmalloc(len + 1);
-	memcpy(line, email, len);
-	line[len] = 0;
-	return line;
+	return xmemdupz(email, eoemail + 1 - email);
 }
 
-static void grab_date(const char *buf, struct atom_value *v)
+static void grab_date(const char *buf, struct atom_value *v, const char *atomname)
 {
 	const char *eoemail = strstr(buf, "> ");
 	char *zone;
 	unsigned long timestamp;
 	long tz;
+	enum date_mode date_mode = DATE_NORMAL;
+	const char *formatp;
+
+	/*
+	 * We got here because atomname ends in "date" or "date<something>";
+	 * it's not possible that <something> is not ":<format>" because
+	 * parse_atom() wouldn't have allowed it, so we can assume that no
+	 * ":" means no format is specified, and use the default.
+	 */
+	formatp = strchr(atomname, ':');
+	if (formatp != NULL) {
+		formatp++;
+		date_mode = parse_date_format(formatp);
+	}
 
 	if (!eoemail)
 		goto bad;
@@ -364,7 +365,7 @@ static void grab_date(const char *buf, struct atom_value *v)
 	tz = strtol(zone, NULL, 10);
 	if ((tz == LONG_MIN || tz == LONG_MAX) && errno == ERANGE)
 		goto bad;
-	v->s = xstrdup(show_date(timestamp, tz, 0));
+	v->s = xstrdup(show_date(timestamp, tz, date_mode));
 	v->ul = timestamp;
 	return;
  bad:
@@ -391,7 +392,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 		if (name[wholen] != 0 &&
 		    strcmp(name + wholen, "name") &&
 		    strcmp(name + wholen, "email") &&
-		    strcmp(name + wholen, "date"))
+		    prefixcmp(name + wholen, "date"))
 			continue;
 		if (!wholine)
 			wholine = find_wholine(who, wholen, buf, sz);
@@ -403,8 +404,8 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 			v->s = copy_name(wholine);
 		else if (!strcmp(name + wholen, "email"))
 			v->s = copy_email(wholine);
-		else if (!strcmp(name + wholen, "date"))
-			grab_date(wholine, v);
+		else if (!prefixcmp(name + wholen, "date"))
+			grab_date(wholine, v, name);
 	}
 
 	/* For a tag or a commit object, if "creator" or "creatordate" is
@@ -424,8 +425,8 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 		if (deref)
 			name++;
 
-		if (!strcmp(name, "creatordate"))
-			grab_date(wholine, v);
+		if (!prefixcmp(name, "creatordate"))
+			grab_date(wholine, v, name);
 		else if (!strcmp(name, "creator"))
 			v->s = copy_line(wholine);
 	}

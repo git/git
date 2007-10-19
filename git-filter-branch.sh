@@ -94,6 +94,10 @@ USAGE="[--env-filter <command>] [--tree-filter <command>] \
 
 . git-sh-setup
 
+git diff-files --quiet &&
+	git diff-index --cached --quiet HEAD ||
+	die "Cannot rewrite branch(es) with a dirty working directory."
+
 tempdir=.git-rewrite
 filter_env=
 filter_tree=
@@ -196,6 +200,9 @@ do
 	esac
 done < "$tempdir"/backup-refs
 
+ORIG_GIT_DIR="$GIT_DIR"
+ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
+ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
 export GIT_DIR GIT_WORK_TREE=.
 
 # These refs should be updated if their heads were rewritten
@@ -412,5 +419,13 @@ rm -rf "$tempdir"
 echo
 test $count -gt 0 && echo "These refs were rewritten:"
 git show-ref | grep ^"$orig_namespace"
+
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+test -z "$ORIG_GIT_DIR" || GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
+test -z "$ORIG_GIT_WORK_TREE" || GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
+	export GIT_WORK_TREE
+test -z "$ORIG_GIT_INDEX_FILE" || GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
+	export GIT_INDEX_FILE
+git read-tree -u -m HEAD
 
 exit $ret

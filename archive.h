@@ -8,6 +8,7 @@ struct archiver_args {
 	const char *base;
 	struct tree *tree;
 	const unsigned char *commit_sha1;
+	const struct commit *commit;
 	time_t time;
 	const char **pathspec;
 	unsigned int verbose : 1;
@@ -41,5 +42,7 @@ extern void parse_pathspec_arg(const char **pathspec,
 extern int write_tar_archive(struct archiver_args *);
 extern int write_zip_archive(struct archiver_args *);
 extern void *parse_extra_zip_args(int argc, const char **argv);
+
+extern void *sha1_file_to_archive(const char *path, const unsigned char *sha1, unsigned int mode, enum object_type *type, unsigned long *size, const struct commit *commit);
 
 #endif	/* ARCHIVE_H */

@@ -126,25 +126,92 @@ cat > show-ignore.expect <<\EOF
 # /
 /no-such-file*
 
-# deeply
+# /deeply/
 /deeply/no-such-file*
 
-# deeply/nested
+# /deeply/nested/
 /deeply/nested/no-such-file*
 
-# deeply/nested/directory
+# /deeply/nested/directory/
 /deeply/nested/directory/no-such-file*
 EOF
 
 test_expect_success 'test show-ignore' "
 	cd test_wc &&
 	mkdir -p deeply/nested/directory &&
+	touch deeply/nested/directory/.keep &&
 	svn add deeply &&
+	svn up &&
 	svn propset -R svn:ignore 'no-such-file*' .
 	svn commit -m 'propset svn:ignore'
 	cd .. &&
 	git-svn show-ignore > show-ignore.got &&
 	cmp show-ignore.expect show-ignore.got
+	"
+
+cat >create-ignore.expect <<\EOF
+/no-such-file*
+EOF
+
+cat >create-ignore-index.expect <<\EOF
+100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	.gitignore
+100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/.gitignore
+100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/nested/.gitignore
+100644 8c52e5dfcd0a8b6b6bcfe6b41b89bcbf493718a5 0	deeply/nested/directory/.gitignore
+EOF
+
+test_expect_success 'test create-ignore' "
+	git-svn fetch && git pull . remotes/git-svn &&
+	git-svn create-ignore &&
+	cmp ./.gitignore create-ignore.expect &&
+	cmp ./deeply/.gitignore create-ignore.expect &&
+	cmp ./deeply/nested/.gitignore create-ignore.expect &&
+	cmp ./deeply/nested/directory/.gitignore create-ignore.expect &&
+	git ls-files -s | grep gitignore | cmp - create-ignore-index.expect
+	"
+
+cat >prop.expect <<\EOF
+no-such-file*
+
+EOF
+cat >prop2.expect <<\EOF
+8
+EOF
+
+# This test can be improved: since all the svn:ignore contain the same
+# pattern, it can pass even though the propget did not execute on the
+# right directory.
+test_expect_success 'test propget' "
+	git-svn propget svn:ignore . | cmp - prop.expect &&
+	cd deeply &&
+	git-svn propget svn:ignore . | cmp - ../prop.expect &&
+	git-svn propget svn:entry:committed-rev nested/directory/.keep \
+	  | cmp - ../prop2.expect &&
+	git-svn propget svn:ignore .. | cmp - ../prop.expect &&
+	git-svn propget svn:ignore nested/ | cmp - ../prop.expect &&
+	git-svn propget svn:ignore ./nested | cmp - ../prop.expect &&
+	git-svn propget svn:ignore .././deeply/nested | cmp - ../prop.expect
+	"
+
+cat >prop.expect <<\EOF
+Properties on '.':
+  svn:entry:committed-date
+  svn:entry:committed-rev
+  svn:entry:last-author
+  svn:entry:uuid
+  svn:ignore
+EOF
+cat >prop2.expect <<\EOF
+Properties on 'nested/directory/.keep':
+  svn:entry:committed-date
+  svn:entry:committed-rev
+  svn:entry:last-author
+  svn:entry:uuid
+EOF
+
+test_expect_success 'test proplist' "
+	git-svn proplist . | cmp - prop.expect &&
+	git-svn proplist nested/directory/.keep | cmp - prop2.expect
 	"
 
 test_done

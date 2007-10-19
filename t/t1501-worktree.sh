@@ -103,4 +103,13 @@ test_expect_success 'repo finds its work tree from work tree, too' '
 	 test sub/dir/tracked = "$(git ls-files)")
 '
 
+test_expect_success '_gently() groks relative GIT_DIR & GIT_WORK_TREE' '
+	cd repo.git/work/sub/dir &&
+	GIT_DIR=../../.. GIT_WORK_TREE=../.. GIT_PAGER= \
+		git diff --exit-code tracked &&
+	echo changed > tracked &&
+	! GIT_DIR=../../.. GIT_WORK_TREE=../.. GIT_PAGER= \
+		git diff --exit-code tracked
+'
+
 test_done

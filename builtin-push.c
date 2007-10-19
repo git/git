@@ -7,9 +7,9 @@
 #include "builtin.h"
 #include "remote.h"
 
-static const char push_usage[] = "git-push [--all] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
+static const char push_usage[] = "git-push [--all] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
 
-static int all, force, thin, verbose;
+static int all, dry_run, force, thin, verbose;
 static const char *receivepack;
 
 static const char **refspec;
@@ -69,6 +69,8 @@ static int do_push(const char *repo)
 	argc = 1;
 	if (all)
 		argv[argc++] = "--all";
+	if (dry_run)
+		argv[argc++] = "--dry-run";
 	if (force)
 		argv[argc++] = "--force";
 	if (receivepack)
@@ -145,6 +147,10 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--all")) {
 			all = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--dry-run")) {
+			dry_run = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--tags")) {

@@ -244,4 +244,14 @@ test_expect_success 'push with colon-less refspec (4)' '
 
 '
 
+test_expect_success 'push with dry-run' '
+
+	mk_test heads/master &&
+	cd testrepo &&
+	old_commit=$(git show-ref -s --verify refs/heads/master) &&
+	cd .. &&
+	git push --dry-run testrepo &&
+	check_push_result $old_commit heads/master
+'
+
 test_done

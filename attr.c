@@ -160,12 +160,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		else if (!equals)
 			e->setto = ATTR__TRUE;
 		else {
-			char *value;
-			int vallen = ep - equals;
-			value = xmalloc(vallen);
-			memcpy(value, equals+1, vallen-1);
-			value[vallen-1] = 0;
-			e->setto = value;
+			e->setto = xmemdupz(equals + 1, ep - equals - 1);
 		}
 		e->attr = git_attr(cp, len);
 	}
@@ -214,8 +209,11 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		num_attr = 0;
 		cp = name + namelen;
 		cp = cp + strspn(cp, blank);
-		while (*cp)
+		while (*cp) {
 			cp = parse_attr(src, lineno, cp, &num_attr, res);
+			if (!cp)
+				return NULL;
+		}
 		if (pass)
 			break;
 		res = xcalloc(1,
