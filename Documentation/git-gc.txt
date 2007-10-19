@@ -19,7 +19,8 @@ created from prior invocations of gitlink:git-add[1].
 
 Users are encouraged to run this task on a regular basis within
 each repository to maintain good disk space utilization and good
-operating performance.
+operating performance. Some git commands may automatically run
+`git-gc`; see the `--auto` flag below for details.
 
 OPTIONS
 -------
