@@ -4279,7 +4279,6 @@ proc findnext {restart} {
     global findcurline find_dirn
 
     if {[info exists find_dirn]} return
-    set find_dirn 1
     if {![info exists findcurline]} {
 	if {$restart} {
 	    dofind
@@ -4287,6 +4286,7 @@ proc findnext {restart} {
 	    bell
 	}
     } else {
+	set find_dirn 1
 	run findmore
 	nowbusy finding
     }
@@ -4296,10 +4296,10 @@ proc findprev {} {
     global findcurline find_dirn
 
     if {[info exists find_dirn]} return
-    set find_dirn -1
     if {![info exists findcurline]} {
 	dofind 1
     } else {
+	set find_dirn -1
 	run findmorerev
 	nowbusy finding
     }
