@@ -17,8 +17,8 @@ static inline void dup_devnull(int to)
 
 int start_command(struct child_process *cmd)
 {
-	int need_in, need_out;
-	int fdin[2], fdout[2];
+	int need_in, need_out, need_err;
+	int fdin[2], fdout[2], fderr[2];
 
 	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
@@ -41,12 +41,26 @@ int start_command(struct child_process *cmd)
 		cmd->close_out = 1;
 	}
 
+	need_err = cmd->err < 0;
+	if (need_err) {
+		if (pipe(fderr) < 0) {
+			if (need_in)
+				close_pair(fdin);
+			if (need_out)
+				close_pair(fdout);
+			return -ERR_RUN_COMMAND_PIPE;
+		}
+		cmd->err = fderr[0];
+	}
+
 	cmd->pid = fork();
 	if (cmd->pid < 0) {
 		if (need_in)
 			close_pair(fdin);
 		if (need_out)
 			close_pair(fdout);
+		if (need_err)
+			close_pair(fderr);
 		return -ERR_RUN_COMMAND_FORK;
 	}
 
@@ -71,6 +85,11 @@ int start_command(struct child_process *cmd)
 		} else if (cmd->out > 1) {
 			dup2(cmd->out, 1);
 			close(cmd->out);
+		}
+
+		if (need_err) {
+			dup2(fderr[1], 2);
+			close_pair(fderr);
 		}
 
 		if (cmd->dir && chdir(cmd->dir))
@@ -101,6 +120,9 @@ int start_command(struct child_process *cmd)
 		close(fdout[1]);
 	else if (cmd->out > 1)
 		close(cmd->out);
+
+	if (need_err)
+		close(fderr[1]);
 
 	return 0;
 }

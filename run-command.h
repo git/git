@@ -16,6 +16,7 @@ struct child_process {
 	pid_t pid;
 	int in;
 	int out;
+	int err;
 	const char *dir;
 	const char *const *env;
 	unsigned close_in:1;
