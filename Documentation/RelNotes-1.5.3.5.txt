@@ -20,9 +20,9 @@ Fixes since v1.5.3.4
 
  * "git-add -i" did not handle single line hunks correctly.
 
- * "git-rebase -i" failed if external diff drivers were used for one
-   or more files in a commit.  It now avoids calling the external
-   diff drivers.
+ * "git-rebase -i" and "git-stash apply" failed if external diff
+   drivers were used for one or more files in a commit.  They now
+   avoid calling the external diff drivers.
 
  * "git-log --follow" did not work unless diff generation (e.g. -p)
    was also requested.
@@ -37,6 +37,16 @@ Fixes since v1.5.3.4
    has finished filtering the current branch.
 
  * "git-instaweb" no longer fails on Mac OS X.
+
+ * "git-cvsexportcommit" didn't always create new parent directories
+   before trying to create new child directories.  Fixed.
+
+ * "git-fetch" printed a scary (but bogus) error message while
+   fetching a tag that pointed to a tree or blob.  The error did
+   not impact correctness, only user perception.  The bogus error
+   is no longer printed.
+
+ * Git segfaulted when reading an invalid .gitattributes file.  Fixed.
 
  * post-receive-email example hook fixed was fixed for
    non-fast-forward updates.
