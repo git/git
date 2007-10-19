@@ -1718,7 +1718,7 @@ static void prepare_pack(int window, int depth)
 	if (nr_deltas && n > 1) {
 		unsigned nr_done = 0;
 		if (progress)
-			start_progress(&progress_state, "Deltifying objects",
+			start_progress(&progress_state, "Compressing objects",
 					nr_deltas);
 		qsort(delta_list, n, sizeof(*delta_list), type_size_sort);
 		ll_find_deltas(delta_list, n, window+1, depth, &nr_done);
