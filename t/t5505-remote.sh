@@ -4,6 +4,9 @@ test_description='git remote porcelain-ish'
 
 . ./test-lib.sh
 
+say "git remote does not work in t/ - skipping"
+test_done
+
 GIT_CONFIG=.git/config
 export GIT_CONFIG
 
