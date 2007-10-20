@@ -409,13 +409,14 @@ int main(int argc, const char **argv)
 	/*
 	 * Take the basename of argv[0] as the command
 	 * name, and the dirname as the default exec_path
-	 * if it's an absolute path and we don't have
-	 * anything better.
+	 * if we don't have anything better.
 	 */
 	if (slash) {
 		*slash++ = 0;
 		if (*cmd == '/')
 			exec_path = cmd;
+		else
+			exec_path = xstrdup(make_absolute_path(cmd));
 		cmd = slash;
 	}
 
