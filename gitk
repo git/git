@@ -6648,7 +6648,7 @@ proc addnewchild {id p} {
     global arcnos arcids arctags arcout arcend arcstart archeads growing
     global seeds allcommits
 
-    if {![info exists allcommits]} return
+    if {![info exists allcommits] || ![info exists arcnos($p)]} return
     lappend allids $id
     set allparents($id) [list $p]
     set allchildren($id) {}
