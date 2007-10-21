@@ -123,4 +123,52 @@ test_expect_success \
 	git-branch -a >branches && ! grep -q origin/master branches
 '
 
+rewound_push_setup() {
+	rm -rf parent child &&
+	mkdir parent && cd parent &&
+	git-init && echo one >file && git-add file && git-commit -m one &&
+	echo two >file && git-commit -a -m two &&
+	cd .. &&
+	git-clone parent child && cd child && git-reset --hard HEAD^
+}
+
+rewound_push_succeeded() {
+	cmp ../parent/.git/refs/heads/master .git/refs/heads/master
+}
+
+rewound_push_failed() {
+	if rewound_push_succeeded
+	then
+		false
+	else
+		true
+	fi
+}
+
+test_expect_success \
+	'pushing explicit refspecs respects forcing' '
+	rewound_push_setup &&
+	if git-send-pack ../parent/.git refs/heads/master:refs/heads/master
+	then
+		false
+	else
+		true
+	fi && rewound_push_failed &&
+	git-send-pack ../parent/.git +refs/heads/master:refs/heads/master &&
+	rewound_push_succeeded
+'
+
+test_expect_success \
+	'pushing wildcard refspecs respects forcing' '
+	rewound_push_setup &&
+	if git-send-pack ../parent/.git refs/heads/*:refs/heads/*
+	then
+		false
+	else
+		true
+	fi && rewound_push_failed &&
+	git-send-pack ../parent/.git +refs/heads/*:refs/heads/* &&
+	rewound_push_succeeded
+'
+
 test_done

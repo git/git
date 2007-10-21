@@ -69,7 +69,10 @@ method update_meter {buf} {
 
 	set prior [string range $meter 0 $r]
 	set meter [string range $meter [expr {$r + 1}] end]
-	if {[regexp "\\((\\d+)/(\\d+)\\)\\s+done\r\$" $prior _j a b]} {
+	set p "\\((\\d+)/(\\d+)\\)"
+	if {[regexp ":\\s*\\d+% $p\(?:, done.\\s*\n|\\s*\r)\$" $prior _j a b]} {
+		update $this $a $b
+	} elseif {[regexp "$p\\s+done\r\$" $prior _j a b]} {
 		update $this $a $b
 	}
 }

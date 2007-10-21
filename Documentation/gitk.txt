@@ -69,7 +69,7 @@ gitk --since="2 weeks ago" \-- gitk::
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
 
-gitk --max-count=100 --all -- Makefile::
+gitk --max-count=100 --all \-- Makefile::
 
 	Show at most 100 changes made to the file 'Makefile'. Instead of only
 	looking for changes in the current branch look in all branches.

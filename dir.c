@@ -443,6 +443,24 @@ static int in_pathspec(const char *path, int len, const struct path_simplify *si
 	return 0;
 }
 
+static int get_dtype(struct dirent *de, const char *path)
+{
+	int dtype = DTYPE(de);
+	struct stat st;
+
+	if (dtype != DT_UNKNOWN)
+		return dtype;
+	if (lstat(path, &st))
+		return dtype;
+	if (S_ISREG(st.st_mode))
+		return DT_REG;
+	if (S_ISDIR(st.st_mode))
+		return DT_DIR;
+	if (S_ISLNK(st.st_mode))
+		return DT_LNK;
+	return dtype;
+}
+
 /*
  * Read a directory tree. We currently ignore anything but
  * directories, regular files and symlinks. That's because git
@@ -466,7 +484,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 		exclude_stk = push_exclude_per_directory(dir, base, baselen);
 
 		while ((de = readdir(fdir)) != NULL) {
-			int len;
+			int len, dtype;
 			int exclude;
 
 			if ((de->d_name[0] == '.') &&
@@ -486,24 +504,30 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			if (exclude && dir->collect_ignored
 			    && in_pathspec(fullname, baselen + len, simplify))
 				dir_add_ignored(dir, fullname, baselen + len);
-			if (exclude != dir->show_ignored) {
-				if (!dir->show_ignored || DTYPE(de) != DT_DIR) {
+
+			/*
+			 * Excluded? If we don't explicitly want to show
+			 * ignored files, ignore it
+			 */
+			if (exclude && !dir->show_ignored)
+				continue;
+
+			dtype = get_dtype(de, fullname);
+
+			/*
+			 * Do we want to see just the ignored files?
+			 * We still need to recurse into directories,
+			 * even if we don't ignore them, since the
+			 * directory may contain files that we do..
+			 */
+			if (!exclude && dir->show_ignored) {
+				if (dtype != DT_DIR)
 					continue;
-				}
 			}
 
-			switch (DTYPE(de)) {
-			struct stat st;
+			switch (dtype) {
 			default:
 				continue;
-			case DT_UNKNOWN:
-				if (lstat(fullname, &st))
-					continue;
-				if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))
-					break;
-				if (!S_ISDIR(st.st_mode))
-					continue;
-				/* fallthrough */
 			case DT_DIR:
 				memcpy(fullname + baselen + len, "/", 2);
 				len++;

@@ -305,7 +305,7 @@ proc _which {what} {
 	global env _search_exe _search_path
 
 	if {$_search_path eq {}} {
-		if {[is_Cygwin]} {
+		if {[is_Cygwin] && [regexp {^(/|\.:)} $env(PATH)]} {
 			set _search_path [split [exec cygpath \
 				--windows \
 				--path \
@@ -498,7 +498,11 @@ proc rmsel_tag {text} {
 set _git  [_which git]
 if {$_git eq {}} {
 	catch {wm withdraw .}
-	error_popup "Cannot find git in PATH."
+	tk_messageBox \
+		-icon error \
+		-type ok \
+		-title [mc "git-gui: fatal error"] \
+		-message [mc "Cannot find git in PATH."]
 	exit 1
 }
 
@@ -534,6 +538,7 @@ regsub -- {-dirty$} $_git_version {} _git_version
 regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
 regsub {\.rc[0-9]+$} $_git_version {} _git_version
 regsub {\.GIT$} $_git_version {} _git_version
+regsub {\.[a-zA-Z]+\.[0-9]+$} $_git_version {} _git_version
 
 if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
 	catch {wm withdraw .}
@@ -903,6 +908,35 @@ proc rescan {after {honor_trustmtime 1}} {
 	}
 }
 
+if {[is_Cygwin]} {
+	set is_git_info_link {}
+	set is_git_info_exclude {}
+	proc have_info_exclude {} {
+		global is_git_info_link is_git_info_exclude
+
+		if {$is_git_info_link eq {}} {
+			set is_git_info_link [file isfile [gitdir info.lnk]]
+		}
+
+		if {$is_git_info_link} {
+			if {$is_git_info_exclude eq {}} {
+				if {[catch {exec test -f [gitdir info exclude]}]} {
+					set is_git_info_exclude 0
+				} else {
+					set is_git_info_exclude 1
+				}
+			}
+			return $is_git_info_exclude
+		} else {
+			return [file readable [gitdir info exclude]]
+		}
+	}
+} else {
+	proc have_info_exclude {} {
+		return [file readable [gitdir info exclude]]
+	}
+}
+
 proc rescan_stage2 {fd after} {
 	global rescan_active buf_rdi buf_rdf buf_rlo
 
@@ -913,9 +947,8 @@ proc rescan_stage2 {fd after} {
 	}
 
 	set ls_others [list --exclude-per-directory=.gitignore]
-	set info_exclude [gitdir info exclude]
-	if {[file readable $info_exclude]} {
-		lappend ls_others "--exclude-from=$info_exclude"
+	if {[have_info_exclude]} {
+		lappend ls_others "--exclude-from=[gitdir info exclude]"
 	}
 	set user_exclude [get_config core.excludesfile]
 	if {$user_exclude ne {} && [file readable $user_exclude]} {
@@ -1093,11 +1126,17 @@ proc mapdesc {state path} {
 }
 
 proc ui_status {msg} {
-	$::main_status show $msg
+	global main_status
+	if {[info exists main_status]} {
+		$main_status show $msg
+	}
 }
 
 proc ui_ready {{test {}}} {
-	$::main_status show {Ready.} $test
+	global main_status
+	if {[info exists main_status]} {
+		$main_status show [mc "Ready."] $test
+	}
 }
 
 proc escape_path {path} {
@@ -1436,7 +1475,27 @@ proc do_gitk {revs} {
 	if {! [file exists $exe]} {
 		error_popup "Unable to start gitk:\n\n$exe does not exist"
 	} else {
+		global env
+
+		if {[info exists env(GIT_DIR)]} {
+			set old_GIT_DIR $env(GIT_DIR)
+		} else {
+			set old_GIT_DIR {}
+		}
+
+		set pwd [pwd]
+		cd [file dirname [gitdir]]
+		set env(GIT_DIR) [file tail [gitdir]]
+
 		eval exec $cmd $revs &
+
+		if {$old_GIT_DIR eq {}} {
+			unset env(GIT_DIR)
+		} else {
+			set env(GIT_DIR) $old_GIT_DIR
+		}
+		cd $pwd
+
 		ui_status $::starting_gitk_msg
 		after 10000 {
 			ui_ready $starting_gitk_msg
@@ -1648,7 +1707,7 @@ proc apply_config {} {
 		set font [lindex $option 1]
 		if {[catch {
 			foreach {cn cv} $repo_config(gui.$name) {
-				font configure $font $cn $cv
+				font configure $font $cn $cv -weight normal
 			}
 			} err]} {
 			error_popup "Invalid font specified in gui.$name:\n\n$err"

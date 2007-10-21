@@ -1817,7 +1817,7 @@ static void file_change_m(struct branch *b)
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
-				command_buf.buf, typename(oe->type));
+				typename(oe->type), command_buf.buf);
 	} else {
 		enum object_type type = sha1_object_info(sha1, NULL);
 		if (type < 0)

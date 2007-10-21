@@ -45,8 +45,8 @@ static int should_break(struct diff_filespec *src,
 	 * The value we return is 1 if we want the pair to be broken,
 	 * or 0 if we do not.
 	 */
-	unsigned long delta_size, base_size, src_copied, literal_added,
-		src_removed;
+	unsigned long delta_size, base_size, max_size;
+	unsigned long src_copied, literal_added, src_removed;
 
 	*merge_score_p = 0; /* assume no deletion --- "do not break"
 			     * is the default.
@@ -63,7 +63,8 @@ static int should_break(struct diff_filespec *src,
 		return 0; /* error but caught downstream */
 
 	base_size = ((src->size < dst->size) ? src->size : dst->size);
-	if (base_size < MINIMUM_BREAK_SIZE)
+	max_size = ((src->size > dst->size) ? src->size : dst->size);
+	if (max_size < MINIMUM_BREAK_SIZE)
 		return 0; /* we do not break too small filepair */
 
 	if (diffcore_count_changes(src, dst,
@@ -89,12 +90,14 @@ static int should_break(struct diff_filespec *src,
 	 * less than the minimum, after rename/copy runs.
 	 */
 	*merge_score_p = (int)(src_removed * MAX_SCORE / src->size);
+	if (*merge_score_p > break_score)
+		return 1;
 
 	/* Extent of damage, which counts both inserts and
 	 * deletes.
 	 */
 	delta_size = src_removed + literal_added;
-	if (delta_size * MAX_SCORE / base_size < break_score)
+	if (delta_size * MAX_SCORE / max_size < break_score)
 		return 0;
 
 	/* If you removed a lot without adding new material, that is
