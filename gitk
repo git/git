@@ -3695,34 +3695,23 @@ proc drawcommits {row {endrow {}}} {
 	drawcmitrow $r
 	if {$r == $er} break
 	set nextid [lindex $displayorder [expr {$r + 1}]]
-	if {$wasdrawn && [info exists iddrawn($nextid)]} {
-	    catch {unset prevlines}
-	    continue
-	}
+	if {$wasdrawn && [info exists iddrawn($nextid)]} continue
 	drawparentlinks $id $r
 
-	if {[info exists lineends($r)]} {
-	    foreach lid $lineends($r) {
-		unset prevlines($lid)
-	    }
-	}
 	set rowids [lindex $rowidlist $r]
 	foreach lid $rowids {
 	    if {$lid eq {}} continue
+	    if {[info exists lineend($lid)] && $lineend($lid) > $r} continue
 	    if {$lid eq $id} {
 		# see if this is the first child of any of its parents
 		foreach p [lindex $parentlist $r] {
 		    if {[lsearch -exact $rowids $p] < 0} {
 			# make this line extend up to the child
-			set le [drawlineseg $p $r $er 0]
-			lappend lineends($le) $p
-			set prevlines($p) 1
+			set lineend($p) [drawlineseg $p $r $er 0]
 		    }
 		}
-	    } elseif {![info exists prevlines($lid)]} {
-		set le [drawlineseg $lid $r $er 1]
-		lappend lineends($le) $lid
-		set prevlines($lid) 1
+	    } else {
+		set lineend($lid) [drawlineseg $lid $r $er 1]
 	    }
 	}
     }
