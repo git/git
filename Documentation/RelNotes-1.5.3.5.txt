@@ -4,6 +4,8 @@ GIT v1.5.3.5 Release Notes
 Fixes since v1.5.3.4
 --------------------
 
+ * Comes with git-gui 0.8.4.
+
  * "git-config" silently ignored options after --list; now it will
    error out with a usage message.
 
@@ -27,11 +29,19 @@ Fixes since v1.5.3.4
  * "git-log --follow" did not work unless diff generation (e.g. -p)
    was also requested.
 
+ * "git-log --follow -B" did not work at all.  Fixed.
+
+ * "git-log -M -B" did not correctly handle cases of very large files
+   being renamed and replaced by very small files in the same commit.
+
  * "git-log" printed extra newlines between commits when a diff
    was generated internally (e.g. -S or --follow) but not displayed.
 
  * "git-push" error message is more helpful when pushing to a
    repository with no matching refs and none specified.
+
+ * "git-push" now respects + (force push) on wildcard refspecs,
+   matching the behavior of git-fetch.
 
  * "git-filter-branch" now updates the working directory when it
    has finished filtering the current branch.
@@ -45,6 +55,11 @@ Fixes since v1.5.3.4
    fetching a tag that pointed to a tree or blob.  The error did
    not impact correctness, only user perception.  The bogus error
    is no longer printed.
+
+ * "git-ls-files --ignored" did not properly descend into non-ignored
+   directories that themselves contained ignored files if d_type
+   was not supported by the filesystem.  This bug impacted systems
+   such as AFS.  Fixed.
 
  * Git segfaulted when reading an invalid .gitattributes file.  Fixed.
 
