@@ -288,7 +288,7 @@ static void cleanup_space(char *buf)
 }
 
 static void decode_header(char *it, unsigned itsize);
-static char *header[MAX_HDR_PARSED] = {
+static const char *header[MAX_HDR_PARSED] = {
 	"From","Subject","Date",
 };
 

@@ -132,7 +132,7 @@ static void match_trees(const unsigned char *hash1,
 			const unsigned char *hash2,
 			int *best_score,
 			char **best_match,
-			char *base,
+			const char *base,
 			int recurse_limit)
 {
 	struct tree_desc one;

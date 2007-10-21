@@ -169,7 +169,7 @@ static void prepend_reflog_action(const char *action, char *buf, size_t size)
 }
 
 enum reset_type { MIXED, SOFT, HARD, NONE };
-static char *reset_type_names[] = { "mixed", "soft", "hard", NULL };
+static const char *reset_type_names[] = { "mixed", "soft", "hard", NULL };
 
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
