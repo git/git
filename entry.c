@@ -119,8 +119,10 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		 */
 		strbuf_init(&buf, 0);
 		if (convert_to_working_tree(ce->name, new, size, &buf)) {
+			size_t newsize = 0;
 			free(new);
-			new = strbuf_detach(&buf, &size);
+			new = strbuf_detach(&buf, &newsize);
+			size = newsize;
 		}
 
 		if (to_tempfile) {

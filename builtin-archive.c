@@ -148,12 +148,14 @@ void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
 	buffer = read_sha1_file(sha1, type, sizep);
 	if (buffer && S_ISREG(mode)) {
 		struct strbuf buf;
+		size_t size = 0;
 
 		strbuf_init(&buf, 0);
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
 		convert_to_working_tree(path, buf.buf, buf.len, &buf);
 		convert_to_archive(path, buf.buf, buf.len, &buf, commit);
-		buffer = strbuf_detach(&buf, sizep);
+		buffer = strbuf_detach(&buf, &size);
+		*sizep = size;
 	}
 
 	return buffer;

@@ -152,7 +152,7 @@ struct patch {
 	unsigned int is_rename:1;
 	struct fragment *fragments;
 	char *result;
-	unsigned long resultsize;
+	size_t resultsize;
 	char old_sha1_prefix[41];
 	char new_sha1_prefix[41];
 	struct patch *next;

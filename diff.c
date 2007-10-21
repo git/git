@@ -1512,6 +1512,7 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 static int populate_from_stdin(struct diff_filespec *s)
 {
 	struct strbuf buf;
+	size_t size = 0;
 
 	strbuf_init(&buf, 0);
 	if (strbuf_read(&buf, 0, 0) < 0)
@@ -1519,7 +1520,8 @@ static int populate_from_stdin(struct diff_filespec *s)
 				     strerror(errno));
 
 	s->should_munmap = 0;
-	s->data = strbuf_detach(&buf, &s->size);
+	s->data = strbuf_detach(&buf, &size);
+	s->size = size;
 	s->should_free = 1;
 	return 0;
 }
@@ -1609,9 +1611,11 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		 */
 		strbuf_init(&buf, 0);
 		if (convert_to_git(s->path, s->data, s->size, &buf)) {
+			size_t size = 0;
 			munmap(s->data, s->size);
 			s->should_munmap = 0;
-			s->data = strbuf_detach(&buf, &s->size);
+			s->data = strbuf_detach(&buf, &size);
+			s->size = size;
 			s->should_free = 1;
 		}
 	}
