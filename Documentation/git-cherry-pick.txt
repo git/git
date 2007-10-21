@@ -27,11 +27,12 @@ OPTIONS
 	message prior committing.
 
 -x::
-	Cause the command to append which commit was
-	cherry-picked after the original commit message when
-	making a commit.  Do not use this option if you are
-	cherry-picking from your private branch because the
-	information is useless to the recipient.  If on the
+	When recording the commit, append to the original commit
+	message a note that indicates which commit this change
+	was cherry-picked from.  Append the note only for cherry
+	picks without conflicts.  Do not use this option if
+	you are cherry-picking from your private branch because
+	the information is useless to the recipient.  If on the
 	other hand you are cherry-picking between two publicly
 	visible branches (e.g. backporting a fix to a
 	maintenance branch for an older release from a
