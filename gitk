@@ -92,7 +92,7 @@ proc start_rev_list {view} {
 	set order "--date-order"
     }
     if {[catch {
-	set fd [open [concat | git log -z --pretty=raw $order --parents \
+	set fd [open [concat | git log --no-color -z --pretty=raw $order --parents \
 			 --boundary $viewargs($view) "--" $viewfiles($view)] r]
     } err]} {
 	error_popup "Error executing git rev-list: $err"
@@ -843,6 +843,12 @@ proc makewindow {} {
     } else {
 	bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
 	bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
+        if {[tk windowingsystem] eq "aqua"} {
+            bindall <MouseWheel> {
+                set delta [expr {- (%D)}]
+                allcanvs yview scroll $delta units
+            }
+        }
     }
     bindall <2> "canvscan mark %W %x %y"
     bindall <B2-Motion> "canvscan dragto %W %x %y"
@@ -3689,34 +3695,23 @@ proc drawcommits {row {endrow {}}} {
 	drawcmitrow $r
 	if {$r == $er} break
 	set nextid [lindex $displayorder [expr {$r + 1}]]
-	if {$wasdrawn && [info exists iddrawn($nextid)]} {
-	    catch {unset prevlines}
-	    continue
-	}
+	if {$wasdrawn && [info exists iddrawn($nextid)]} continue
 	drawparentlinks $id $r
 
-	if {[info exists lineends($r)]} {
-	    foreach lid $lineends($r) {
-		unset prevlines($lid)
-	    }
-	}
 	set rowids [lindex $rowidlist $r]
 	foreach lid $rowids {
 	    if {$lid eq {}} continue
+	    if {[info exists lineend($lid)] && $lineend($lid) > $r} continue
 	    if {$lid eq $id} {
 		# see if this is the first child of any of its parents
 		foreach p [lindex $parentlist $r] {
 		    if {[lsearch -exact $rowids $p] < 0} {
 			# make this line extend up to the child
-			set le [drawlineseg $p $r $er 0]
-			lappend lineends($le) $p
-			set prevlines($p) 1
+			set lineend($p) [drawlineseg $p $r $er 0]
 		    }
 		}
-	    } elseif {![info exists prevlines($lid)]} {
-		set le [drawlineseg $lid $r $er 1]
-		lappend lineends($le) $lid
-		set prevlines($lid) 1
+	    } else {
+		set lineend($lid) [drawlineseg $lid $r $er 1]
 	    }
 	}
     }
@@ -5215,8 +5210,7 @@ proc getblobdiffline {bdf ids} {
 	    set diffinhdr 0
 
 	} elseif {$diffinhdr} {
-	    if {![string compare -length 12 "rename from " $line] ||
-		![string compare -length 10 "copy from " $line]} {
+	    if {![string compare -length 12 "rename from " $line]} {
 		set fname [string range $line [expr 6 + [string first " from " $line] ] end]
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
@@ -6643,7 +6637,7 @@ proc addnewchild {id p} {
     global arcnos arcids arctags arcout arcend arcstart archeads growing
     global seeds allcommits
 
-    if {![info exists allcommits]} return
+    if {![info exists allcommits] || ![info exists arcnos($p)]} return
     lappend allids $id
     set allparents($id) [list $p]
     set allchildren($id) {}
@@ -7831,6 +7825,13 @@ proc tcl_encoding {enc} {
 	return [lindex $names $i]
     }
     return {}
+}
+
+# First check that Tcl/Tk is recent enough
+if {[catch {package require Tk 8.4} err]} {
+    show_error {} . "Sorry, gitk cannot run with this version of Tcl/Tk.\n\
+		     Gitk requires at least Tcl/Tk 8.4."
+    exit 1
 }
 
 # defaults...
