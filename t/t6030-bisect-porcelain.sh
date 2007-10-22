@@ -167,6 +167,13 @@ test_expect_success 'bisect skip: add line and then a new test' '
 	git bisect skip &&
 	git bisect good > my_bisect_log.txt &&
 	grep "$HASH5 is first bad commit" my_bisect_log.txt &&
+	git bisect log > log_to_replay.txt
+	git bisect reset
+'
+
+test_expect_success 'bisect skip and bisect replay' '
+	git bisect replay log_to_replay.txt > my_bisect_log.txt &&
+	grep "$HASH5 is first bad commit" my_bisect_log.txt &&
 	git bisect reset
 '
 
