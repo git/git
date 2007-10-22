@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-10 04:04-0400\n"
-"PO-Revision-Date: 2007-10-20 14:29-0500\n"
-"Last-Translator: Kirill <kirillathome@gmail.com>\n"
+"PO-Revision-Date: 2007-10-22 22:30-0200\n"
+"Last-Translator: Alex Riesen <raa.lkml@gmail.com>\n"
 "Language-Team: Russian Translation <git@vger.kernel.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -21,9 +21,9 @@ msgid "git-gui: fatal error"
 msgstr "git-gui: критическая ошибка"
 
 #: git-gui.sh:595
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Invalid font specified in %s:"
-msgstr "В оболочке установлен неверный шрифт.%s:"
+msgstr "В %s установлен неверный шрифт:"
 
 #: git-gui.sh:620
 msgid "Main Font"
@@ -31,7 +31,7 @@ msgstr "Шрифт интерфейса"
 
 #: git-gui.sh:621
 msgid "Diff/Console Font"
-msgstr "Шрифт в консоли diff"
+msgstr "Шрифт консоли и изменений (diff)"
 
 #: git-gui.sh:635
 msgid "Cannot find git in PATH."
@@ -64,9 +64,8 @@ msgid "Git directory not found:"
 msgstr "Каталог Git не найден:"
 
 #: git-gui.sh:860
-#, fuzzy
 msgid "Cannot move to top of working directory:"
-msgstr "Каталог.git испорчен: "
+msgstr "Невозможно перейти к корню рабочего каталога репозитория: "
 
 #: git-gui.sh:867
 msgid "Cannot use funny .git directory:"
@@ -78,7 +77,7 @@ msgstr "Отсутствует рабочий каталог"
 
 #: git-gui.sh:1019
 msgid "Refreshing file status..."
-msgstr "Обновление состояния файлов проекта..."
+msgstr "Обновление информации о состоянии файлов..."
 
 #: git-gui.sh:1084
 msgid "Scanning for modified files ..."
@@ -94,7 +93,7 @@ msgstr "Не изменено"
 
 #: git-gui.sh:1527
 msgid "Modified, not staged"
-msgstr "Изменено, но не включено"
+msgstr "Изменено, не подготовлено"
 
 #: git-gui.sh:1528 git-gui.sh:1533
 msgid "Staged for commit"
@@ -105,7 +104,6 @@ msgid "Portions staged for commit"
 msgstr "Части, подготовленные для сохранения"
 
 #: git-gui.sh:1530 git-gui.sh:1535
-#, fuzzy
 msgid "Staged for commit, missing"
 msgstr "Подготовлено для сохранения, отсутствует"
 
@@ -123,7 +121,7 @@ msgstr "Подготовлено для удаления"
 
 #: git-gui.sh:1539
 msgid "Staged for removal, still present"
-msgstr "Подготовлено для удаления, но еще не удалено"
+msgstr "Подготовлено для удаления, еще не удалено"
 
 #: git-gui.sh:1541 git-gui.sh:1542 git-gui.sh:1543 git-gui.sh:1544
 msgid "Requires merge resolution"
@@ -157,7 +155,6 @@ msgid "Branch"
 msgstr "Ветвь"
 
 #: git-gui.sh:1794 lib/choose_rev.tcl:547
-#, fuzzy
 msgid "Commit@@noun"
 msgstr "Состояние"
 
@@ -166,18 +163,16 @@ msgid "Merge"
 msgstr "Объединить"
 
 #: git-gui.sh:1798 lib/choose_rev.tcl:556
-#, fuzzy
 msgid "Remote"
-msgstr "внешний:"
+msgstr "Внешние репозитории"
 
 #: git-gui.sh:1807
 msgid "Browse Current Branch's Files"
 msgstr "Просмотреть файлы текущей ветви"
 
 #: git-gui.sh:1811
-#, fuzzy
 msgid "Browse Branch Files..."
-msgstr "Показать файлы ветви"
+msgstr "Показать файлы ветви..."
 
 #: git-gui.sh:1816
 msgid "Visualize Current Branch's History"
@@ -188,9 +183,9 @@ msgid "Visualize All Branch History"
 msgstr "История всех ветвей наглядно"
 
 #: git-gui.sh:1827
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Browse %s's Files"
-msgstr "Показать файлы ветви"
+msgstr "Показать файлы ветви %s"
 
 #: git-gui.sh:1829
 #, tcl-format
@@ -281,12 +276,10 @@ msgid "Rescan"
 msgstr "Перечитать"
 
 #: git-gui.sh:1953
-#, fuzzy
 msgid "Stage To Commit"
 msgstr "Подготовить для сохранения"
 
 #: git-gui.sh:1958
-#, fuzzy
 msgid "Stage Changed Files To Commit"
 msgstr "Подготовить измененные файлы для сохранения"
 
@@ -303,7 +296,6 @@ msgid "Sign Off"
 msgstr "Подписать"
 
 #: git-gui.sh:1980 git-gui.sh:2296
-#, fuzzy
 msgid "Commit@@verb"
 msgstr "Сохранить"
 
@@ -319,11 +311,10 @@ msgstr "Прервать объединение..."
 msgid "Push..."
 msgstr "Отправить..."
 
-# carbon copy
 #: git-gui.sh:2019 lib/choose_repository.tcl:41
 #, fuzzy
 msgid "Apple"
-msgstr "Apple"
+msgstr ""
 
 #: git-gui.sh:2022 git-gui.sh:2044 lib/about.tcl:13
 #: lib/choose_repository.tcl:44 lib/choose_repository.tcl:50
@@ -347,9 +338,8 @@ msgstr "Помощь"
 msgid "Online Documentation"
 msgstr "Документация в интернете"
 
-# TOVERIFY
 #: git-gui.sh:2165
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr "критическая ошибка: %s: нет такого файла или каталога"
 
@@ -358,43 +348,34 @@ msgid "Current Branch:"
 msgstr "Текущая ветвь:"
 
 #: git-gui.sh:2219
-#, fuzzy
 msgid "Staged Changes (Will Commit)"
 msgstr "Подготовлено (будет сохранено)"
 
-# TOVERIFY
 #: git-gui.sh:2239
-#, fuzzy
 msgid "Unstaged Changes"
-msgstr "Изменено"
+msgstr "Изменено (не будет сохранено)"
 
-# carbon copy
 #: git-gui.sh:2286
-#, fuzzy
 msgid "Stage Changed"
-msgstr "Stage Changed"
+msgstr "Подготовить все"
 
 #: git-gui.sh:2302 lib/transport.tcl:93 lib/transport.tcl:182
 msgid "Push"
 msgstr "Отправить"
 
 #: git-gui.sh:2332
-#, fuzzy
 msgid "Initial Commit Message:"
-msgstr "Первоначальный комментарий к состоянию:"
+msgstr "Комментарий к первому состоянию:"
 
 #: git-gui.sh:2333
-#, fuzzy
 msgid "Amended Commit Message:"
-msgstr "Исправленный комментарий к состоянию:"
+msgstr "Комментарий к исправленному состоянию:"
 
 #: git-gui.sh:2334
-#, fuzzy
 msgid "Amended Initial Commit Message:"
-msgstr "Первоначальный комментарий к исправленному состоянию:"
+msgstr "Комментарий к исправленному первоначальному состоянию:"
 
 #: git-gui.sh:2335
-#, fuzzy
 msgid "Amended Merge Commit Message:"
 msgstr "Комментарий к исправленному объединению:"
 
@@ -467,9 +448,7 @@ msgstr ""
 "запущенными из %s\n"
 "\n"
 
-# TOVERIFY
 #: git-gui.sh:2707
-#, fuzzy
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
@@ -491,10 +470,10 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Хорошая замена для %s\n"
-"сохраняет значения для user.name и\n"
-"user.email в Ваш персональный\n"
-"~/.gitconfig файл.\n"
+"Вместо использования %s можно\n"
+"сохранить значения user.name и\n"
+"user.email в Вашем персональном\n"
+"файле ~/.gitconfig.\n"
 
 #: lib/about.tcl:25
 msgid "git-gui - a graphical user interface for Git."
@@ -510,69 +489,56 @@ msgstr "Сохраненное состояние:"
 
 #: lib/blame.tcl:249
 msgid "Copy Commit"
-msgstr "Копировать сохраненное состояние"
+msgstr "Скопировать SHA-1"
 
 #: lib/blame.tcl:369
 #, tcl-format
 msgid "Reading %s..."
 msgstr "Чтение %s..."
 
-# carbon copy
 #: lib/blame.tcl:473
-#, fuzzy
 msgid "Loading copy/move tracking annotations..."
-msgstr "Loading copy/move tracking annotations..."
+msgstr "Загрузка аннотации копирований/переименований..."
 
-# TOVERIFY
 #: lib/blame.tcl:493
-#, fuzzy
 msgid "lines annotated"
-msgstr "строк прокоментировано"
+msgstr "строк прокомментировано"
 
-# carbon copy
 #: lib/blame.tcl:674
-#, fuzzy
 msgid "Loading original location annotations..."
-msgstr "Loading original location annotations..."
+msgstr "Загрузка аннотаций первоначального положения объекта..."
 
-# carbon copy
 #: lib/blame.tcl:677
-#, fuzzy
 msgid "Annotation complete."
-msgstr "Annotation complete."
+msgstr "Аннотация завершена."
 
 #: lib/blame.tcl:731
-#, fuzzy
 msgid "Loading annotation..."
-msgstr "Загрузка %s..."
+msgstr "Загрузка аннотации..."
 
 #: lib/blame.tcl:787
 msgid "Author:"
 msgstr "Автор:"
 
 #: lib/blame.tcl:791
-#, fuzzy
 msgid "Committer:"
-msgstr "Сохраненное состояние:"
+msgstr "Сохранил:"
 
 #: lib/blame.tcl:796
 msgid "Original File:"
 msgstr "Исходный файл:"
 
-# carbon copy
 #: lib/blame.tcl:910
-#, fuzzy
 msgid "Originally By:"
-msgstr "Originally By:"
+msgstr "Источник:"
 
 #: lib/blame.tcl:916
-#, fuzzy
 msgid "In File:"
 msgstr "Файл:"
 
 #: lib/blame.tcl:921
 msgid "Copied Or Moved Here By:"
-msgstr "Кто скопировал/переместил сюда:"
+msgstr "Скопировано/перемещено в:"
 
 #: lib/branch_checkout.tcl:14 lib/branch_checkout.tcl:19
 msgid "Checkout Branch"
@@ -702,7 +668,7 @@ msgid ""
 "\n"
 " Delete the selected branches?"
 msgstr ""
-"Восстановить удаленную ветвь сложно. \n"
+"Восстанавливать удаленные ветви сложно. \n"
 "\n"
 " Удалить выбранные ветви?"
 
@@ -773,14 +739,14 @@ msgid "Browse"
 msgstr "Показать"
 
 #: lib/checkout_op.tcl:79
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Fetching %s from %s"
-msgstr "Получение изменений из %s "
+msgstr "Получение %s из %s "
 
 #: lib/checkout_op.tcl:127
 #, tcl-format
 msgid "fatal: Cannot resolve %s"
-msgstr "критическая ошибка: не могу распознать %s"
+msgstr "критическая ошибка: невозможно разрешить %s"
 
 #: lib/checkout_op.tcl:140 lib/console.tcl:79 lib/database.tcl:31
 msgid "Close"
@@ -807,7 +773,7 @@ msgstr ""
 #: lib/checkout_op.tcl:220
 #, tcl-format
 msgid "Merge strategy '%s' not supported."
-msgstr "Операция объединения '%s' не поддерживается."
+msgstr "Стратегия объединения '%s' не поддерживается."
 
 #: lib/checkout_op.tcl:239
 #, tcl-format
@@ -815,9 +781,8 @@ msgid "Failed to update '%s'."
 msgstr "Не удалось обновить '%s'."
 
 #: lib/checkout_op.tcl:251
-#, fuzzy
 msgid "Staging area (index) is already locked."
-msgstr "Индекс заблокирован."
+msgstr "Рабочая область заблокирована другим процессом."
 
 #: lib/checkout_op.tcl:266
 msgid ""
@@ -829,14 +794,15 @@ msgid ""
 msgstr ""
 "Последнее прочитанное состояние репозитория не соответствует текущему.\n"
 "\n"
-"С момента последней проверки репозиторий был изменен другой программой Git.Необходимо перечитать репозиторий, прежде чем изменять текущую ветвь. \n"
+"С момента последней проверки репозиторий был изменен другой программой Git. "
+"Необходимо перечитать репозиторий, прежде чем изменять текущую ветвь.\n"
 "\n"
 "Это будет сделано сейчас автоматически.\n"
 
 #: lib/checkout_op.tcl:322
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Updating working directory to '%s'..."
-msgstr "Отсутствует рабочий каталог"
+msgstr "Обновление рабочего каталога из '%s'..."
 
 #: lib/checkout_op.tcl:353
 #, tcl-format
@@ -863,9 +829,9 @@ msgstr ""
 "Если вы хотите снова вернуться к какой-нибудь ветви, создайте ее сейчас, начиная с 'Текущего отсоединенного состояния'."
 
 #: lib/checkout_op.tcl:446
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Checked out '%s'."
-msgstr "Перейти..."
+msgstr "Ветвь '%s' сделана текущей."
 
 #: lib/checkout_op.tcl:478
 #, tcl-format
@@ -901,7 +867,6 @@ msgstr ""
 "Этого не должно было произойти. %s завершается."
 
 #: lib/choose_font.tcl:39
-#, fuzzy
 msgid "Select"
 msgstr "Выделить все"
 
@@ -910,15 +875,13 @@ msgid "Font Family"
 msgstr "Шрифт"
 
 #: lib/choose_font.tcl:73
-#, fuzzy
 msgid "Font Size"
-msgstr "Уменьшить размер шрифта"
+msgstr "Размер шрифта"
 
 #: lib/choose_font.tcl:90
 msgid "Font Example"
 msgstr "Пример текста"
 
-# TOVERIFY: what's the Russian version of the font sample (see Windows Fonts).
 #: lib/choose_font.tcl:101
 msgid ""
 "This is example text.\n"
@@ -929,39 +892,34 @@ msgstr ""
 
 #: lib/choose_repository.tcl:25
 msgid "Git Gui"
-msgstr "Git Gui"
+msgstr ""
 
 #: lib/choose_repository.tcl:69 lib/choose_repository.tcl:204
-#, fuzzy
 msgid "Create New Repository"
-msgstr "Из репозитория"
+msgstr "Создать новый репозиторий"
 
 #: lib/choose_repository.tcl:74 lib/choose_repository.tcl:291
-#, fuzzy
 msgid "Clone Existing Repository"
-msgstr "Репозиторий назначения"
+msgstr "Склонировать существующий репозиторий"
 
 #: lib/choose_repository.tcl:79 lib/choose_repository.tcl:800
-#, fuzzy
 msgid "Open Existing Repository"
-msgstr "Репозиторий назначения"
+msgstr "Выбрать существующий репозиторий"
 
-# TOVERIFY
 #: lib/choose_repository.tcl:91
-#, fuzzy
 msgid "Next >"
 msgstr "Дальше >"
 
 #: lib/choose_repository.tcl:152
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Location %s already exists."
-msgstr "Ветвь '%s' уже существует."
+msgstr "Путь '%s' уже существует."
 
 #: lib/choose_repository.tcl:158 lib/choose_repository.tcl:165
 #: lib/choose_repository.tcl:172
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Failed to create repository %s:"
-msgstr "Не удалось полностью сохранить настройки:"
+msgstr "Не удалось создать репозиторий %s:"
 
 #: lib/choose_repository.tcl:209 lib/choose_repository.tcl:309
 msgid "Directory:"
@@ -969,121 +927,98 @@ msgstr "Каталог:"
 
 #: lib/choose_repository.tcl:238 lib/choose_repository.tcl:363
 #: lib/choose_repository.tcl:834
-#, fuzzy
 msgid "Git Repository"
 msgstr "Репозиторий"
 
 #: lib/choose_repository.tcl:253 lib/choose_repository.tcl:260
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Directory %s already exists."
-msgstr "Ветвь '%s' уже существует."
+msgstr "Каталог '%s' уже существует."
 
 #: lib/choose_repository.tcl:265
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "File %s already exists."
-msgstr "Ветвь '%s' уже существует."
+msgstr "Файл '%s' уже существует."
 
 #: lib/choose_repository.tcl:286
-#, fuzzy
 msgid "Clone"
-msgstr "Закрыть"
+msgstr "Склонировать"
 
 #: lib/choose_repository.tcl:299
 msgid "URL:"
 msgstr "Ссылка:"
 
-# TOVERIFY
 #: lib/choose_repository.tcl:319
-#, fuzzy
 msgid "Clone Type:"
 msgstr "Тип клона:"
 
-# TOVERIFY
 #: lib/choose_repository.tcl:325
-#, fuzzy
 msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
 msgstr "Стандартный (Быстрый, полуизбыточный, \"жесткие\" ссылки)"
 
-# TOVERIFY
 #: lib/choose_repository.tcl:331
-#, fuzzy
 msgid "Full Copy (Slower, Redundant Backup)"
-msgstr "Полная копия (Медленный, избыточная резервная копия)"
+msgstr "Полная копия (Медленный, создает резервную копию)"
 
-# TOVERIFY
 #: lib/choose_repository.tcl:337
-#, fuzzy
 msgid "Shared (Fastest, Not Recommended, No Backup)"
 msgstr "Общий (Самый быстрый, не рекомендуется, без резервной копии)"
 
 #: lib/choose_repository.tcl:369 lib/choose_repository.tcl:418
 #: lib/choose_repository.tcl:560 lib/choose_repository.tcl:630
 #: lib/choose_repository.tcl:840 lib/choose_repository.tcl:848
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Not a Git repository: %s"
-msgstr "Не указан репозиторий"
+msgstr "Каталог не является репозиторием: %s"
 
-# TOVERIFY
 #: lib/choose_repository.tcl:405
-#, fuzzy
 msgid "Standard only available for local repository."
 msgstr "Стандартный клон возможен только для локального репозитория."
 
-# TOVERIFY
 #: lib/choose_repository.tcl:409
-#, fuzzy
 msgid "Shared only available for local repository."
 msgstr "Общий клон возможен только для локального репозитория."
 
-# TOVERIFY
 #: lib/choose_repository.tcl:439
-#, fuzzy
 msgid "Failed to configure origin"
-msgstr "Не могу сконфигурировать искходник."
+msgstr "Не могу сконфигурировать исходный репозиторий."
 
 #: lib/choose_repository.tcl:451
 msgid "Counting objects"
 msgstr "Считаю объекты"
 
-# carbon copy
 #: lib/choose_repository.tcl:452
 #, fuzzy
 msgid "buckets"
-msgstr "buckets"
+msgstr ""
 
-# TOVERIFY
 #: lib/choose_repository.tcl:476
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Unable to copy objects/info/alternates: %s"
-msgstr "Не могу скопировать объекты/инфо/альтернативы: %s"
+msgstr "Не могу скопировать objects/info/alternates: %s"
 
 #: lib/choose_repository.tcl:512
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Nothing to clone from %s."
-msgstr "Получение изменений из %s "
+msgstr "Нечего клонировать с %s."
 
-# TOVERIFY
 #: lib/choose_repository.tcl:514 lib/choose_repository.tcl:728
 #: lib/choose_repository.tcl:740
-#, fuzzy
 msgid "The 'master' branch has not been initialized."
 msgstr "Не инициализирована ветвь 'master'."
 
-# TOVERIFY
 #: lib/choose_repository.tcl:527
-#, fuzzy
 msgid "Hardlinks are unavailable.  Falling back to copying."
 msgstr "\"Жесткие ссылки\" не доступны. Буду использовать копирование."
 
 #: lib/choose_repository.tcl:539
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Cloning from %s"
-msgstr "Получение изменений из %s "
+msgstr "Клонирование %s"
 
 #: lib/choose_repository.tcl:570
-#, fuzzy
 msgid "Copying objects"
-msgstr "Сжатие базы объектов"
+msgstr "Копирование objects"
 
 #: lib/choose_repository.tcl:571
 msgid "KiB"
@@ -1096,42 +1031,33 @@ msgstr "Не могу скопировать объект: %s"
 
 #: lib/choose_repository.tcl:605
 msgid "Linking objects"
-msgstr "Связываю объекты"
+msgstr "Создание ссылок на objects"
 
-# TOVERIFY
 #: lib/choose_repository.tcl:606
-#, fuzzy
 msgid "objects"
-msgstr "объектов"
+msgstr "объекты"
 
-# TOVERIFY
 #: lib/choose_repository.tcl:614
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Unable to hardlink object: %s"
 msgstr "Не могу \"жестко связать\" объект: %s"
 
-# TOVERIFY
 #: lib/choose_repository.tcl:669
-#, fuzzy
 msgid "Cannot fetch branches and objects.  See console output for details."
-msgstr "Не могу получить ветви и объекты. Детали - на консоле."
+msgstr "Не могу получить ветви и объекты. Дополнительная информация на консоли."
 
-# TOVERIFY
 #: lib/choose_repository.tcl:680
-#, fuzzy
 msgid "Cannot fetch tags.  See console output for details."
-msgstr "Не могу получить таги. Детали - на консоле."
+msgstr "Не могу получить метки. Дополнительная информация на консоли."
 
-# TOVERIFY
 #: lib/choose_repository.tcl:704
-#, fuzzy
 msgid "Cannot determine HEAD.  See console output for details."
-msgstr "Не могу определить главную ветвь. Детали - на консоле."
+msgstr "Не могу определить HEAD. Дополнительная информация на консоли."
 
 #: lib/choose_repository.tcl:713
 #, tcl-format
 msgid "Unable to cleanup %s"
-msgstr "Не могу почистить %s"
+msgstr "Не могу очистить %s"
 
 #: lib/choose_repository.tcl:719
 msgid "Clone failed."
@@ -1139,7 +1065,7 @@ msgstr "Клонирование не удалось."
 
 #: lib/choose_repository.tcl:726
 msgid "No default branch obtained."
-msgstr "Не возможно получить ветвь по умолчанию."
+msgstr "Не было получено ветви по умолчанию."
 
 #: lib/choose_repository.tcl:737
 #, tcl-format
@@ -1147,9 +1073,8 @@ msgid "Cannot resolve %s as a commit."
 msgstr "Не могу распознать %s как состояние."
 
 #: lib/choose_repository.tcl:749
-#, fuzzy
 msgid "Creating working directory"
-msgstr "Отсутствует рабочий каталог"
+msgstr "Создаю рабочий каталог"
 
 #: lib/choose_repository.tcl:750 lib/index.tcl:15 lib/index.tcl:80
 #: lib/index.tcl:149
@@ -1158,21 +1083,20 @@ msgstr "файлов"
 
 #: lib/choose_repository.tcl:779
 msgid "Initial file checkout failed."
-msgstr "Первое получение файла не удалось."
+msgstr "Не удалось получить начальное состояние файлов репозитория."
 
 #: lib/choose_repository.tcl:795
 msgid "Open"
 msgstr "Открыть"
 
 #: lib/choose_repository.tcl:805
-#, fuzzy
 msgid "Repository:"
-msgstr "Репозиторий"
+msgstr "Репозиторий:"
 
 #: lib/choose_repository.tcl:854
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Failed to open repository %s:"
-msgstr "Не удалось полностью сохранить настройки:"
+msgstr "Не удалось открыть репозиторий %s:"
 
 #: lib/choose_rev.tcl:53
 msgid "This Detached Checkout"
@@ -1205,7 +1129,7 @@ msgstr "Версия не указана."
 
 #: lib/choose_rev.tcl:346
 msgid "Revision expression is empty."
-msgstr "Пустое выражения для определения версии."
+msgstr "Пустое выражение для определения версии."
 
 #: lib/choose_rev.tcl:530
 msgid "Updated"
@@ -1223,7 +1147,7 @@ msgid ""
 msgstr ""
 "Отсутствует состояние для исправления.\n"
 "\n"
-"Вы можете создать начальное сохраненное состояние. Других состояний для исправления нет.\n"
+"Вы создаете первое состояние в репозитории, здесь еще нечего исправлять.\n"
 
 #: lib/commit.tcl:18
 msgid ""
@@ -1257,12 +1181,12 @@ msgid ""
 msgstr ""
 "Последнее прочитанное состояние репозитория не соответствует текущему.\n"
 "\n"
-"С момента последней проверки репозиторий был изменен другой программой Git.Необходимо перечитать репозиторий, прежде чем изменять текущую ветвь. \n"
+"С момента последней проверки репозиторий был изменен другой программой Git. Необходимо перечитать репозиторий, прежде чем изменять текущую ветвь. \n"
 "\n"
 "Это будет сделано сейчас автоматически.\n"
 
 #: lib/commit.tcl:154
-#, fuzzy, tcl-format
+#, tcl-format
 msgid ""
 "Unmerged files cannot be committed.\n"
 "\n"
@@ -1284,7 +1208,6 @@ msgstr ""
 "Файл %s не может быть сохранен данной программой.\n"
 
 #: lib/commit.tcl:170
-#, fuzzy
 msgid ""
 "No changes to commit.\n"
 "\n"
@@ -1416,14 +1339,14 @@ msgid ""
 msgstr ""
 "Этот репозиторий сейчас содержит примерно %i свободных объектов\n"
 "\n"
-"Для лучшей производительности рекомендуется сжать базу данных, когда есть более %i свободных объектов.\n"
+"Для лучшей производительности рекомендуется сжать базу данных, когда есть более %i несвязанных объектов.\n"
 "\n"
 "Сжать базу данных сейчас?"
 
 #: lib/date.tcl:25
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Invalid date from Git: %s"
-msgstr "Неверная версия: %s"
+msgstr "Неправильная дата в репозитории: %s"
 
 #: lib/diff.tcl:42
 #, tcl-format
@@ -1445,9 +1368,9 @@ msgstr ""
 "Сейчас будет запущено перечитывание репозитория, чтобы найти подобные файлы."
 
 #: lib/diff.tcl:81
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Loading diff of %s..."
-msgstr "Загрузка %s..."
+msgstr "Загрузка изменений в %s..."
 
 #: lib/diff.tcl:114 lib/diff.tcl:184
 #, tcl-format
@@ -1460,7 +1383,7 @@ msgstr "Ошибка загрузки файла:"
 
 #: lib/diff.tcl:122
 msgid "Git Repository (subproject)"
-msgstr "Репозиторий Git (под-проект)"
+msgstr "Репозиторий Git (подпроект)"
 
 #: lib/diff.tcl:134
 msgid "* Binary file (not showing content)."
@@ -1472,11 +1395,11 @@ msgstr "Ошибка загрузки diff:"
 
 #: lib/diff.tcl:302
 msgid "Failed to unstage selected hunk."
-msgstr "Не удалось исключить выбранную часть"
+msgstr "Не удалось исключить выбранную часть."
 
 #: lib/diff.tcl:309
 msgid "Failed to stage selected hunk."
-msgstr "Не удалось подготовить к сохранению выбранную часть"
+msgstr "Не удалось подготовить к сохранению выбранную часть."
 
 #: lib/error.tcl:12 lib/error.tcl:102
 msgid "error"
@@ -1491,19 +1414,19 @@ msgid "You must correct the above errors before committing."
 msgstr "Прежде чем сохранить, исправьте вышеуказанные ошибки."
 
 #: lib/index.tcl:241
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Unstaging %s from commit"
-msgstr "Убрать из подготовленного"
+msgstr "Удаление %s из подготовленного"
 
 #: lib/index.tcl:285
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Adding %s"
-msgstr "Чтение %s..."
+msgstr "Добавление %s..."
 
 #: lib/index.tcl:340
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Revert changes in file %s?"
-msgstr "Отменить изменения"
+msgstr "Отменить изменения в файле %s?"
 
 #: lib/index.tcl:342
 #, tcl-format
@@ -1511,11 +1434,8 @@ msgid "Revert changes in these %i files?"
 msgstr "Отменить изменения в %i файле(-ах)?"
 
 #: lib/index.tcl:348
-#, fuzzy
 msgid "Any unstaged changes will be permanently lost by the revert."
 msgstr ""
-"Отменить изменения в %s?\n"
-"\n"
 "Любые изменения, не подготовленные к сохранению, будут потеряны при данной операции."
 
 #: lib/index.tcl:351
@@ -1542,12 +1462,12 @@ msgid ""
 msgstr ""
 "Последнее прочитанное состояние репозитория не соответствует текущему.\n"
 "\n"
-"С момента последней проверки репозиторий был изменен другой программой Git.Необходимо перечитать репозиторий, прежде чем изменять текущую ветвь. \n"
+"С момента последней проверки репозиторий был изменен другой программой Git. Необходимо перечитать репозиторий, прежде чем изменять текущую ветвь.\n"
 "\n"
 "Это будет сделано сейчас автоматически.\n"
 
 #: lib/merge.tcl:44
-#, fuzzy, tcl-format
+#, tcl-format
 msgid ""
 "You are in the middle of a conflicted merge.\n"
 "\n"
@@ -1599,9 +1519,8 @@ msgid "Merge Into %s"
 msgstr "Объединить с %s"
 
 #: lib/merge.tcl:177
-#, fuzzy
 msgid "Revision To Merge"
-msgstr "Версия"
+msgstr "Версия для объединения"
 
 #: lib/merge.tcl:212
 msgid ""
@@ -1622,12 +1541,12 @@ msgid ""
 "Continue with aborting the current merge?"
 msgstr ""
 "Прервать объединение?\n"
+"\n"
 "Прерывание объединения приведет к потере *ВСЕХ* несохраненных изменений.\n"
 "\n"
 "Продолжить?"
 
 #: lib/merge.tcl:228
-#, fuzzy
 msgid ""
 "Reset changes?\n"
 "\n"
@@ -1636,6 +1555,7 @@ msgid ""
 "Continue with resetting the current changes?"
 msgstr ""
 "Прервать объединение?\n"
+"\n"
 "Прерывание объединения приведет к потере *ВСЕХ* несохраненных изменений.\n"
 "\n"
 "Продолжить?"
@@ -1663,7 +1583,7 @@ msgstr "Сохранить"
 #: lib/option.tcl:96
 #, tcl-format
 msgid "%s Repository"
-msgstr "для репозитория %s "
+msgstr "для репозитория %s"
 
 #: lib/option.tcl:97
 msgid "Global (All Repositories)"
@@ -1710,7 +1630,6 @@ msgid "New Branch Name Template"
 msgstr "Шаблон для имени новой ветви"
 
 #: lib/option.tcl:176
-#, fuzzy
 msgid "Change Font"
 msgstr "Шрифт интерфейса"
 
@@ -1723,7 +1642,7 @@ msgstr "Выберите %s"
 #: lib/option.tcl:186
 #, fuzzy
 msgid "pt."
-msgstr "pt."
+msgstr ""
 
 #: lib/option.tcl:200
 msgid "Preferences"
@@ -1734,17 +1653,14 @@ msgid "Failed to completely save options:"
 msgstr "Не удалось полностью сохранить настройки:"
 
 #: lib/remote.tcl:165
-#, fuzzy
 msgid "Prune from"
-msgstr "Чистка %s... "
+msgstr "Чистка"
 
 #: lib/remote.tcl:170
-#, fuzzy
 msgid "Fetch from"
-msgstr "Чистка %s... "
+msgstr "Получение из"
 
 #: lib/remote.tcl:213
-#, fuzzy
 msgid "Push to"
 msgstr "Отправить"
 
@@ -1785,18 +1701,22 @@ msgid "A branch is required for 'Merged Into'."
 msgstr "Для опции 'Объединено с' требуется указать ветвь."
 
 #: lib/remote_branch_delete.tcl:184
-#, fuzzy, tcl-format
+#, tcl-format
 msgid ""
 "The following branches are not completely merged into %s:\n"
 "\n"
 " - %s"
-msgstr "Следующие ветви объединены с %s не полностью:"
+msgstr ""
+"Следующие ветви объединены с %s не полностью:"
+"\n"
+" - %s"
 
-# TOVERIFY
 #: lib/remote_branch_delete.tcl:189
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "One or more of the merge tests failed because you have not fetched the necessary commits.  Try fetching from %s first."
-msgstr "Один или несколько тестов на объединение не прошли, потому что Вы не получили необходимые состояния. Попробуйте сначала получить из %s."
+msgstr ""
+"Один или несколько тестов на объединение не прошли, потому что "
+"Вы не получили необходимые состояния. Попробуйте сначала получить их из %s."
 
 #: lib/remote_branch_delete.tcl:207
 msgid "Please select one or more branches to delete."
@@ -1819,7 +1739,7 @@ msgstr "Удаление ветвей из %s"
 
 #: lib/remote_branch_delete.tcl:286
 msgid "No repository selected."
-msgstr "Не указан репозиторий"
+msgstr "Не указан репозиторий."
 
 #: lib/remote_branch_delete.tcl:291
 #, tcl-format
@@ -1840,9 +1760,9 @@ msgid "%s ... %*i of %*i %s (%3i%%)"
 msgstr "%s ... %*i из %*i %s (%3i%%)"
 
 #: lib/transport.tcl:6
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "fetch %s"
-msgstr "Получить"
+msgstr "получение %s"
 
 #: lib/transport.tcl:7
 #, tcl-format
@@ -1851,9 +1771,9 @@ msgstr "Получение изменений из %s "
 
 # carbon copy
 #: lib/transport.tcl:18
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "remote prune %s"
-msgstr "remote prune %s"
+msgstr "чистка внешнего %s"
 
 #: lib/transport.tcl:19
 #, tcl-format
@@ -1877,7 +1797,7 @@ msgstr "Отправка %s %s в %s"
 
 #: lib/transport.tcl:89
 msgid "Push Branches"
-msgstr "Отправить изменения"
+msgstr "Отправить изменения в ветвях"
 
 #: lib/transport.tcl:103
 msgid "Source Branches"
@@ -1889,7 +1809,7 @@ msgstr "Репозиторий назначения"
 
 #: lib/transport.tcl:158
 msgid "Transfer Options"
-msgstr "Настройки передачи"
+msgstr "Настройки отправки"
 
 #: lib/transport.tcl:160
 msgid "Force overwrite existing branch (may discard changes)"
@@ -1902,32 +1822,4 @@ msgstr "Использовать thin pack (для медленных сетев
 #: lib/transport.tcl:168
 msgid "Include tags"
 msgstr "Включить метки"
-
-#~ msgid "Cannot find the git directory:"
-#~ msgstr "Каталог Git не найден:"
-#~ msgid "Add To Commit"
-#~ msgstr "Подготовить к сохранению"
-#~ msgid "Add Existing To Commit"
-#~ msgstr "Подготовить имеющиеся файлы к сохранению"
-#~ msgid "Unstaged Changes (Will Not Be Committed)"
-#~ msgstr "Изменено (не будет сохранено)"
-#~ msgid "Add Existing"
-#~ msgstr "Добавить имеющиеся файлы"
-#~ msgid ""
-#~ "Abort commit?\n"
-#~ "\n"
-#~ "Aborting the current commit will cause *ALL* uncommitted changes to be "
-#~ "lost.\n"
-#~ "\n"
-#~ "Continue with aborting the current commit?"
-#~ msgstr ""
-#~ "Отменить изменения?\n"
-#~ "\n"
-#~ "Вызванная операция приведет к потере *ВСЕХ* несохраненных изменений.\n"
-#~ "\n"
-#~ "Продолжить?"
-#~ msgid "Aborting... please wait..."
-#~ msgstr "Прерывание выполнения... Пожалуйста, ждите..."
-#~ msgid "Push to %s..."
-#~ msgstr "Отправка в %s..."
 
