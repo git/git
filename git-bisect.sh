@@ -64,7 +64,7 @@ bisect_start() {
 		    branch=`cat "$GIT_DIR/head-name"`
 		else
 		    branch=master
-	        fi
+		fi
 		git checkout $branch || exit
 		;;
 	refs/heads/*)
@@ -95,11 +95,11 @@ bisect_start() {
 	    arg="$1"
 	    case "$arg" in
 	    --)
-	        shift
+		shift
 		break
 		;;
 	    *)
-	        rev=$(git rev-parse --verify "$arg^{commit}" 2>/dev/null) || {
+		rev=$(git rev-parse --verify "$arg^{commit}" 2>/dev/null) || {
 		    test $has_double_dash -eq 1 &&
 		        die "'$arg' does not appear to be a valid revision"
 		    break
@@ -110,10 +110,10 @@ bisect_start() {
 		else
 		    bisect_write_good "$rev"
 		fi
-	        shift
+		shift
 		;;
 	    esac
-        done
+	done
 
 	sq "$@" >"$GIT_DIR/BISECT_NAMES"
 	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG"
@@ -143,7 +143,7 @@ bisect_write_bad() {
 
 bisect_good() {
 	bisect_autostart
-        case "$#" in
+	case "$#" in
 	0)    revs=$(git rev-parse --verify HEAD) || exit ;;
 	*)    revs=$(git rev-parse --revs-only --no-flags "$@") &&
 		test '' != "$revs" || die "Bad rev input: $@" ;;
@@ -153,7 +153,6 @@ bisect_good() {
 		rev=$(git rev-parse --verify "$rev^{commit}") || exit
 		bisect_write_good "$rev"
 		echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
-
 	done
 	bisect_auto_next
 }
@@ -207,7 +206,7 @@ bisect_auto_next() {
 }
 
 bisect_next() {
-        case "$#" in 0) ;; *) usage ;; esac
+	case "$#" in 0) ;; *) usage ;; esac
 	bisect_autostart
 	bisect_next_check good
 
@@ -255,7 +254,7 @@ bisect_reset() {
 	       exit 1
 	   }
 	   branch="$1" ;;
-        *)
+	*)
 	    usage ;;
 	esac
 	if git checkout "$branch"; then
