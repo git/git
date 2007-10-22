@@ -3437,9 +3437,15 @@ sub git_shortlog_body {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
+		my $author = chop_str($co{'author_name'}, 10);
+		if ($author ne $co{'author_name'}) {
+			$author = "<span title=\"" . esc_html($co{'author_name'}) . "\">" . esc_html($author) . "</span>";
+		} else {
+			$author = esc_html($author);
+		}
 		# git_summary() used print "<td><i>$co{'age_string'}</i></td>\n" .
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
-		      "<td><i>" . esc_html(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
+		      "<td><i>" . $author . "</i></td>\n" .
 		      "<td>";
 		print format_subject_html($co{'title'}, $co{'title_short'},
 		                          href(action=>"commit", hash=>$commit), $ref);
@@ -3487,9 +3493,15 @@ sub git_history_body {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
+	# shortlog uses      chop_str($co{'author_name'}, 10)
+		my $author = chop_str($co{'author_name'}, 15, 3);
+		if ($author ne $co{'author_name'}) {
+			"<span title=\"" . esc_html($co{'author_name'}) . "\">" . esc_html($author) . "</span>";
+		} else {
+			$author = esc_html($author);
+		}
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
-		      # shortlog uses      chop_str($co{'author_name'}, 10)
-		      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 3)) . "</i></td>\n" .
+		      "<td><i>" . $author . "</i></td>\n" .
 		      "<td>";
 		# originally git_history used chop_str($co{'title'}, 50)
 		print format_subject_html($co{'title'}, $co{'title_short'},
@@ -3643,8 +3655,14 @@ sub git_search_grep_body {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
+		my $author = chop_str($co{'author_name'}, 15, 5);
+		if ($author ne $co{'author_name'}) {
+			$author = "<span title=\"" . esc_html($co{'author_name'}) . "\">" . esc_html($author) . "</span>";
+		} else {
+			$author = esc_html($author);
+		}
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
-		      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
+		      "<td><i>" . $author . "</i></td>\n" .
 		      "<td>" .
 		      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}), -class => "list subject"},
 			       esc_html(chop_str($co{'title'}, 50)) . "<br/>");
@@ -5157,8 +5175,14 @@ sub git_search {
 						print "<tr class=\"light\">\n";
 					}
 					$alternate ^= 1;
+					my $author = chop_str($co{'author_name'}, 15, 5);
+					if ($author ne $co{'author_name'}) {
+						$author = "<span title=\"" . esc_html($co{'author_name'}) . "\">" . esc_html($author) . "</span>";
+					} else {
+						$author = esc_html($author);
+					}
 					print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
-					      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
+					      "<td><i>" . $author . "</i></td>\n" .
 					      "<td>" .
 					      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}),
 					              -class => "list subject"},
