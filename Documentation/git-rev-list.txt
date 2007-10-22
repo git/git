@@ -34,6 +34,7 @@ SYNOPSIS
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
 	     [ \--bisect-vars ]
+	     [ \--bisect-all ]
 	     [ \--merge ]
 	     [ \--reverse ]
 	     [ \--walk-reflogs ]
@@ -353,6 +354,21 @@ tested if `bisect_rev` turns out to be good to `bisect_good`,
 the expected number of commits to be tested if `bisect_rev`
 turns out to be bad to `bisect_bad`, and the number of commits
 we are bisecting right now to `bisect_all`.
+
+--bisect-all::
+
+This outputs all the commit objects between the included and excluded
+commits, ordered by their distance to the included and excluded
+commits. The farthest from them is displayed first. (This is the only
+one displayed by `--bisect`.)
+
+This is useful because it makes it easy to choose a good commit to
+test when you want to avoid to test some of them for some reason (they
+may not compile for example).
+
+This option can be used along with `--bisect-vars`, in this case,
+after all the sorted commit objects, there will be the same text as if
+`--bisect-vars` had been used alone.
 
 --
 
