@@ -25,7 +25,7 @@ static int update_ref_env(const char *action,
 		      unsigned char *oldval)
 {
 	char msg[1024];
-	char *rla = getenv("GIT_REFLOG_ACTION");
+	const char *rla = getenv("GIT_REFLOG_ACTION");
 
 	if (!rla)
 		rla = "(reflog update)";
@@ -61,7 +61,7 @@ static int update_local_ref(const char *name,
 	}
 
 	if (get_sha1(name, sha1_old)) {
-		char *msg;
+		const char *msg;
 	just_store:
 		/* new ref */
 		if (!strncmp(name, "refs/tags/", 10))

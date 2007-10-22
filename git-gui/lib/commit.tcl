@@ -253,7 +253,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	global repo_config
 
 	gets $fd_wt tree_id
-	if {$tree_id eq {} || [catch {close $fd_wt} err]} {
+	if {[catch {close $fd_wt} err]} {
 		error_popup "write-tree failed:\n\n$err"
 		ui_status {Commit failed.}
 		unlock_index
