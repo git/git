@@ -17,6 +17,8 @@ git bisect replay <logfile>
         replay bisection log.
 git bisect log
         show bisect log.
+git bisect skip [<rev>...]
+        mark <rev>... untestable revisions.
 git bisect run <cmd>...
         use <cmd>... to automatically bisect.'
 
@@ -163,6 +165,28 @@ bisect_write_good() {
 	echo "# good: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 }
 
+bisect_skip() {
+	bisect_autostart
+	case "$#" in
+	0)    revs=$(git rev-parse --verify HEAD) || exit ;;
+	*)    revs=$(git rev-parse --revs-only --no-flags "$@") &&
+		test '' != "$revs" || die "Bad rev input: $@" ;;
+	esac
+	for rev in $revs
+	do
+		rev=$(git rev-parse --verify "$rev^{commit}") || exit
+		bisect_write_skip "$rev"
+		echo "git-bisect skip $rev" >>"$GIT_DIR/BISECT_LOG"
+	done
+	bisect_auto_next
+}
+
+bisect_write_skip() {
+	rev="$1"
+	echo "$rev" >"$GIT_DIR/refs/bisect/skip-$rev"
+	echo "# skip: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+}
+
 bisect_next_check() {
 	missing_good= missing_bad=
 	git show-ref -q --verify refs/bisect/bad || missing_bad=t
@@ -205,17 +229,97 @@ bisect_auto_next() {
 	bisect_next_check && bisect_next || :
 }
 
+filter_skipped() {
+	_eval="$1"
+	_skip="$2"
+
+	if [ -z "$_skip" ]; then
+		eval $_eval
+		return
+	fi
+
+	# Let's parse the output of:
+	# "git rev-list --bisect-vars --bisect-all ..."
+	eval $_eval | while read hash line
+	do
+		case "$VARS,$FOUND,$TRIED,$hash" in
+			# We display some vars.
+			1,*,*,*) echo "$hash $line" ;;
+
+			# Split line.
+			,*,*,---*) ;;
+
+			# We had nothing to search.
+			,,,bisect_rev*)
+				echo "bisect_rev="
+				VARS=1
+				;;
+
+			# We did not find a good bisect rev.
+			# This should happen only if the "bad"
+			# commit is also a "skip" commit.
+			,,*,bisect_rev*)
+				echo "bisect_rev=$TRIED"
+				VARS=1
+				;;
+
+			# We are searching.
+			,,*,*)
+				TRIED="${TRIED:+$TRIED|}$hash"
+				case "$_skip" in
+				*$hash*) ;;
+				*)
+					echo "bisect_rev=$hash"
+					echo "bisect_tried=\"$TRIED\""
+					FOUND=1
+					;;
+				esac
+				;;
+
+			# We have already found a rev to be tested.
+			,1,*,bisect_rev*) VARS=1 ;;
+			,1,*,*) ;;
+
+			# ???
+			*) die "filter_skipped error " \
+			    "VARS: '$VARS' " \
+			    "FOUND: '$FOUND' " \
+			    "TRIED: '$TRIED' " \
+			    "hash: '$hash' " \
+			    "line: '$line'"
+			;;
+		esac
+	done
+}
+
+exit_if_skipped_commits () {
+	_tried=$1
+	if expr "$_tried" : ".*[|].*" > /dev/null ; then
+		echo "There are only 'skip'ped commit left to test."
+		echo "The first bad commit could be any of:"
+		echo "$_tried" | sed -e 's/[|]/\n/g'
+		echo "We cannot bisect more!"
+		exit 2
+	fi
+}
+
 bisect_next() {
 	case "$#" in 0) ;; *) usage ;; esac
 	bisect_autostart
 	bisect_next_check good
 
+	skip=$(git for-each-ref --format='%(objectname)' \
+		"refs/bisect/skip-*" | tr '[\012]' ' ') || exit
+
+	BISECT_OPT=''
+	test -n "$skip" && BISECT_OPT='--bisect-all'
+
 	bad=$(git rev-parse --verify refs/bisect/bad) &&
 	good=$(git for-each-ref --format='^%(objectname)' \
 		"refs/bisect/good-*" | tr '[\012]' ' ') &&
-	eval="git rev-list --bisect-vars $good $bad --" &&
+	eval="git rev-list --bisect-vars $BISECT_OPT $good $bad --" &&
 	eval="$eval $(cat "$GIT_DIR/BISECT_NAMES")" &&
-	eval=$(eval "$eval") &&
+	eval=$(filter_skipped "$eval" "$skip") &&
 	eval "$eval" || exit
 
 	if [ -z "$bisect_rev" ]; then
@@ -223,10 +327,15 @@ bisect_next() {
 		exit 1
 	fi
 	if [ "$bisect_rev" = "$bad" ]; then
+		exit_if_skipped_commits "$bisect_tried"
 		echo "$bisect_rev is first bad commit"
 		git diff-tree --pretty $bisect_rev
 		exit 0
 	fi
+
+	# We should exit here only if the "bad"
+	# commit is also a "skip" commit (see above).
+	exit_if_skipped_commits "$bisect_rev"
 
 	echo "Bisecting: $bisect_nr revisions left to test after this"
 	echo "$bisect_rev" >"$GIT_DIR/refs/heads/new-bisect"
@@ -286,14 +395,16 @@ bisect_replay () {
 			eval "$cmd"
 			;;
 		good)
-			echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
-			echo "# good: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+			bisect_write_good "$rev"
 			echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
 			;;
 		bad)
-			echo "$rev" >"$GIT_DIR/refs/bisect/bad"
-			echo "# bad: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+			bisect_write_bad "$rev"
 			echo "git-bisect bad $rev" >>"$GIT_DIR/BISECT_LOG"
+			;;
+		skip)
+			bisect_write_skip "$rev"
+			echo "git-bisect skip $rev" >>"$GIT_DIR/BISECT_LOG"
 			;;
 		*)
 			echo >&2 "?? what are you talking about?"
@@ -362,6 +473,8 @@ case "$#" in
         bisect_bad "$@" ;;
     good)
         bisect_good "$@" ;;
+    skip)
+        bisect_skip "$@" ;;
     next)
         # Not sure we want "next" at the UI level anymore.
         bisect_next "$@" ;;
