@@ -503,6 +503,10 @@ int git_fstat(int fd, struct stat *buf);
 #define lstat(x,y) git_lstat(x,y)
 #define stat(x,y) git_lstat(x,y)
 #define fstat(x,y) git_fstat(x,y)
+
+int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
+#define vsnprintf mingw_vsnprintf
+
 #endif /* __MINGW32__ */
 
 #endif

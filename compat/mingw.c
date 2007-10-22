@@ -459,3 +459,29 @@ int mingw_rename(const char *pold, const char *pnew)
 	errno = EACCES;
 	return -1;
 }
+
+#undef vsnprintf
+/* this is out of line because it uses alloca() behind the scenes,
+ * which must not be called in a loop (alloca() reclaims the allocations
+ * only at function exit)
+ */
+static int try_vsnprintf(size_t size, const char *fmt, va_list args)
+{
+	char buf[size];	/* gcc-ism */
+	return vsnprintf(buf, size, fmt, args);
+}
+
+int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
+{
+	int len = vsnprintf(buf, size, fmt, args);
+	if (len >= 0)
+		return len;
+	/* ouch, buffer too small; need to compute the size */
+	if (size < 250)
+		size = 250;
+	do {
+		size *= 4;
+		len = try_vsnprintf(size, fmt, args);
+	} while (len < 0);
+	return len;
+}
