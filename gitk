@@ -626,6 +626,7 @@ proc makewindow {} {
     global bgcolor fgcolor bglist fglist diffcolors selectbgcolor
     global headctxmenu progresscanv progressitem progresscoords statusw
     global fprogitem fprogcoord lastprogupdate progupdatepending
+    global rprogitem rprogcoord
     global have_tk85
 
     menu .bar
@@ -752,9 +753,11 @@ proc makewindow {} {
     canvas $progresscanv -relief sunken -height $h -borderwidth 2
     set progressitem [$progresscanv create rect -1 0 0 $h -fill green]
     set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
+    set rprogitem [$progresscanv create rect -1 0 0 $h -fill red]
     pack $progresscanv -side right -expand 1 -fill x
     set progresscoords {0 0}
     set fprogcoord 0
+    set rprogcoord 0
     bind $progresscanv <Configure> adjustprogress
     set lastprogupdate [clock clicks -milliseconds]
     set progupdatepending 0
@@ -1110,6 +1113,7 @@ proc click {w} {
 proc adjustprogress {} {
     global progresscanv progressitem progresscoords
     global fprogitem fprogcoord lastprogupdate progupdatepending
+    global rprogitem rprogcoord
 
     set w [expr {[winfo width $progresscanv] - 4}]
     set x0 [expr {$w * [lindex $progresscoords 0]}]
@@ -1117,6 +1121,7 @@ proc adjustprogress {} {
     set h [winfo height $progresscanv]
     $progresscanv coords $progressitem $x0 0 $x1 $h
     $progresscanv coords $fprogitem 0 0 [expr {$w * $fprogcoord}] $h
+    $progresscanv coords $rprogitem 0 0 [expr {$w * $rprogcoord}] $h
     set now [clock clicks -milliseconds]
     if {$now >= $lastprogupdate + 100} {
 	set progupdatepending 0
@@ -4195,20 +4200,30 @@ proc settextcursor {c} {
     set curtextcursor $c
 }
 
-proc nowbusy {what} {
-    global isbusy
+proc nowbusy {what {name {}}} {
+    global isbusy busyname statusw
 
     if {[array names isbusy] eq {}} {
 	. config -cursor watch
 	settextcursor watch
     }
     set isbusy($what) 1
+    set busyname($what) $name
+    if {$name ne {}} {
+	$statusw conf -text $name
+    }
 }
 
 proc notbusy {what} {
-    global isbusy maincursor textcursor
+    global isbusy maincursor textcursor busyname statusw
 
-    catch {unset isbusy($what)}
+    catch {
+	unset isbusy($what)
+	if {$busyname($what) ne {} &&
+	    [$statusw cget -text] eq $busyname($what)} {
+	    $statusw conf -text {}
+	}
+    }
     if {[array names isbusy] eq {}} {
 	. config -cursor $maincursor
 	settextcursor $textcursor
@@ -6432,32 +6447,23 @@ proc resethead {} {
 	error_popup $err
     } else {
 	dohidelocalchanges
-	set w ".resetprogress"
-	filerun $fd [list readresetstat $fd $w]
-	toplevel $w
-	wm transient $w
-	wm title $w "Reset progress"
-	message $w.m -text "Reset in progress, please wait..." \
-	    -justify center -aspect 1000
-	pack $w.m -side top -fill x -padx 20 -pady 5
-	canvas $w.c -width 150 -height 20 -bg white
-	$w.c create rect 0 0 0 20 -fill green -tags rect
-	pack $w.c -side top -fill x -padx 20 -pady 5 -expand 1
-	nowbusy reset
+	filerun $fd [list readresetstat $fd]
+	nowbusy reset "Resetting"
     }
 }
 
-proc readresetstat {fd w} {
-    global mainhead mainheadid showlocalchanges
+proc readresetstat {fd} {
+    global mainhead mainheadid showlocalchanges rprogcoord
 
     if {[gets $fd line] >= 0} {
 	if {[regexp {([0-9]+)% \(([0-9]+)/([0-9]+)\)} $line match p m n]} {
-	    set x [expr {($m * 150) / $n}]
-	    $w.c coords rect 0 0 $x 20
+	    set rprogcoord [expr {1.0 * $m / $n}]
+	    adjustprogress
 	}
 	return 1
     }
-    destroy $w
+    set rprogcoord 0
+    adjustprogress
     notbusy reset
     if {[catch {close $fd} err]} {
 	error_popup $err
