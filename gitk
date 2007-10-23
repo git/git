@@ -111,7 +111,7 @@ proc start_rev_list {view} {
 	fconfigure $fd -encoding $tclencoding
     }
     filerun $fd [list getcommitlines $fd $view]
-    nowbusy $view
+    nowbusy $view "Reading"
     if {$view == $curview} {
 	set progressdirn 1
 	set progresscoords {0 0}
@@ -4264,7 +4264,7 @@ proc dofind {{rev 0}} {
 	set findstartline $selectedline
     }
     set findcurline $findstartline
-    nowbusy finding
+    nowbusy finding "Searching"
     if {$gdttype ne "containing:" && ![info exists filehighlight]} {
 	after cancel do_file_hl $fh_serial
 	do_file_hl $fh_serial
@@ -4303,7 +4303,7 @@ proc findnext {restart} {
     } else {
 	set find_dirn 1
 	run findmore
-	nowbusy finding
+	nowbusy finding "Searching"
     }
 }
 
@@ -4316,7 +4316,7 @@ proc findprev {} {
     } else {
 	set find_dirn -1
 	run findmorerev
-	nowbusy finding
+	nowbusy finding "Searching"
     }
 }
 
@@ -6381,7 +6381,7 @@ proc cherrypick {} {
 			included in branch $mainhead -- really re-apply it?"]
 	if {!$ok} return
     }
-    nowbusy cherrypick
+    nowbusy cherrypick "Cherry-picking"
     update
     # Unfortunately git-cherry-pick writes stuff to stderr even when
     # no error occurs, and exec takes that as an indication of error...
@@ -6505,7 +6505,7 @@ proc cobranch {} {
 
     # check the tree is clean first??
     set oldmainhead $mainhead
-    nowbusy checkout
+    nowbusy checkout "Checking out"
     update
     dohidelocalchanges
     if {[catch {
