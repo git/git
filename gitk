@@ -1019,7 +1019,7 @@ proc savestuff {w} {
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth showneartags showlocalchanges
     global viewname viewfiles viewargs viewperm nextviewnum
-    global cmitmode wrapcomment datetimeformat
+    global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
 
     if {$stuffsaved} return
@@ -1038,6 +1038,7 @@ proc savestuff {w} {
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
+	puts $f [list set limitdiffs $limitdiffs]
 	puts $f [list set bgcolor $bgcolor]
 	puts $f [list set fgcolor $fgcolor]
 	puts $f [list set colors $colors]
@@ -5015,9 +5016,31 @@ proc startdiff {ids} {
     }
 }
 
+proc path_filter {filter name} {
+    foreach p $filter {
+	set l [string length $p]
+	if {[string compare -length $l $p $name] == 0 &&
+	    ([string length $name] == $l || [string index $name $l] eq "/")} {
+	    return 1
+	}
+    }
+    return 0
+}
+
 proc addtocflist {ids} {
-    global treediffs cflist
-    add_flist $treediffs($ids)
+    global treediffs cflist viewfiles curview limitdiffs
+
+    if {$limitdiffs && $viewfiles($curview) ne {}} {
+	set flist {}
+	foreach f $treediffs($ids) {
+	    if {[path_filter $viewfiles($curview) $f]} {
+		lappend flist $f
+	    }
+	}
+    } else {
+	set flist $treediffs($ids)
+    }
+    add_flist $flist
     getblobdiffs $ids
 }
 
@@ -5124,9 +5147,14 @@ proc getblobdiffs {ids} {
     global diffopts blobdifffd diffids env
     global diffinhdr treediffs
     global diffcontext
+    global limitdiffs viewfiles curview
 
     set env(GIT_DIFF_OPTS) $diffopts
-    if {[catch {set bdf [open [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"] r]} err]} {
+    set cmd [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"]
+    if {$limitdiffs && $viewfiles($curview) ne {}} {
+	set cmd [concat $cmd $viewfiles($curview)]
+    }
+    if {[catch {set bdf [open $cmd r]} err]} {
 	puts "error getting diffs: $err"
 	return
     }
@@ -7382,7 +7410,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct diffopts
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor
-    global uifont tabstop
+    global uifont tabstop limitdiffs
 
     set top .gitkprefs
     set prefstop $top
@@ -7390,7 +7418,8 @@ proc doprefs {} {
 	raise $top
 	return
     }
-    foreach v {maxwidth maxgraphpct diffopts showneartags showlocalchanges} {
+    foreach v {maxwidth maxgraphpct diffopts showneartags showlocalchanges \
+		   limitdiffs} {
 	set oldprefs($v) [set $v]
     }
     toplevel $top
@@ -7428,6 +7457,11 @@ proc doprefs {} {
     label $top.tabstopl -text "tabstop" -font optionfont
     spinbox $top.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
     grid x $top.tabstopl $top.tabstop -sticky w
+    frame $top.ldiff
+    label $top.ldiff.l -text "Limit diffs to listed paths" -font optionfont
+    checkbutton $top.ldiff.b -variable limitdiffs
+    pack $top.ldiff.b $top.ldiff.l -side left
+    grid x $top.ldiff -sticky w
 
     label $top.cdisp -text "Colors: press to choose"
     $top.cdisp configure -font $uifont
@@ -7514,9 +7548,10 @@ proc setfg {c} {
 
 proc prefscan {} {
     global maxwidth maxgraphpct diffopts
-    global oldprefs prefstop showneartags showlocalchanges
+    global oldprefs prefstop showneartags showlocalchanges limitdiffs
 
-    foreach v {maxwidth maxgraphpct diffopts showneartags showlocalchanges} {
+    foreach v {maxwidth maxgraphpct diffopts showneartags showlocalchanges \
+		   limitdiffs} {
 	set $v $oldprefs($v)
     }
     catch {destroy $prefstop}
@@ -7526,7 +7561,7 @@ proc prefscan {} {
 proc prefsok {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
-    global charspc ctext tabstop
+    global charspc ctext tabstop limitdiffs
 
     catch {destroy $prefstop}
     unset prefstop
@@ -7541,7 +7576,8 @@ proc prefsok {} {
     if {$maxwidth != $oldprefs(maxwidth)
 	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
 	redisplay
-    } elseif {$showneartags != $oldprefs(showneartags)} {
+    } elseif {$showneartags != $oldprefs(showneartags) ||
+	  $limitdiffs != $oldprefs(limitdiffs)} {
 	reselectline
     }
 }
@@ -7869,6 +7905,7 @@ set showneartags 1
 set maxrefs 20
 set maxlinelen 200
 set showlocalchanges 1
+set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 
 set colors {green red blue magenta darkgrey brown orange}
@@ -7892,6 +7929,7 @@ if {![file isdirectory $gitdir]} {
     exit 1
 }
 
+set mergeonly 0
 set revtreeargs {}
 set cmdline_files {}
 set i 0
@@ -7899,6 +7937,10 @@ foreach arg $argv {
     switch -- $arg {
 	"" { }
 	"-d" { set datemode 1 }
+	"--merge" {
+	    set mergeonly 1
+	    lappend revtreeargs $arg
+	}
 	"--" {
 	    set cmdline_files [lrange $argv [expr {$i + 1}] end]
 	    break
@@ -7937,6 +7979,40 @@ if {$i >= [llength $argv] && $revtreeargs ne {}} {
 	show_error {} . "Bad arguments to gitk:\n$err"
 	exit 1
     }
+}
+
+if {$mergeonly} {
+    # find the list of unmerged files
+    set mlist {}
+    set nr_unmerged 0
+    if {[catch {
+	set fd [open "| git ls-files -u" r]
+    } err]} {
+	show_error {} . "Couldn't get list of unmerged files: $err"
+	exit 1
+    }
+    while {[gets $fd line] >= 0} {
+	set i [string first "\t" $line]
+	if {$i < 0} continue
+	set fname [string range $line [expr {$i+1}] end]
+	if {[lsearch -exact $mlist $fname] >= 0} continue
+	incr nr_unmerged
+	if {$cmdline_files eq {} || [path_filter $cmdline_files $fname]} {
+	    lappend mlist $fname
+	}
+    }
+    catch {close $fd}
+    if {$mlist eq {}} {
+	if {$nr_unmerged == 0} {
+	    show_error {} . "No files selected: --merge specified but\
+			     no files are unmerged."
+	} else {
+	    show_error {} . "No files selected: --merge specified but\
+			     no unmerged files are within file limit."
+	}
+	exit 1
+    }
+    set cmdline_files $mlist
 }
 
 set nullid "0000000000000000000000000000000000000000"
