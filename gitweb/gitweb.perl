@@ -846,6 +846,23 @@ sub chop_str {
 	return "$body$tail";
 }
 
+# takes the same arguments as chop_str, but also wraps a <span> around the
+# result with a title attribute if it does get chopped. Additionally, the
+# string is HTML-escaped.
+sub chop_and_escape_str {
+	my $str = shift;
+	my $len = shift;
+	my $add_len = shift || 10;
+
+	my $chopped = chop_str($str, $len, $add_len);
+	if ($chopped eq $str) {
+		return esc_html($chopped);
+	} else {
+		return qq{<span title="} . esc_html($str) . qq{">} .
+			esc_html($chopped) . qq{</span>};
+	}
+}
+
 ## ----------------------------------------------------------------------
 ## functions returning short strings
 
@@ -3437,12 +3454,7 @@ sub git_shortlog_body {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		my $author = chop_str($co{'author_name'}, 10);
-		if ($author ne $co{'author_name'}) {
-			$author = "<span title=\"" . esc_html($co{'author_name'}) . "\">" . esc_html($author) . "</span>";
-		} else {
-			$author = esc_html($author);
-		}
+		my $author = chop_and_escape_str($co{'author_name'}, 10);
 		# git_summary() used print "<td><i>$co{'age_string'}</i></td>\n" .
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 		      "<td><i>" . $author . "</i></td>\n" .
@@ -3494,12 +3506,7 @@ sub git_history_body {
 		}
 		$alternate ^= 1;
 	# shortlog uses      chop_str($co{'author_name'}, 10)
-		my $author = chop_str($co{'author_name'}, 15, 3);
-		if ($author ne $co{'author_name'}) {
-			"<span title=\"" . esc_html($co{'author_name'}) . "\">" . esc_html($author) . "</span>";
-		} else {
-			$author = esc_html($author);
-		}
+		my $author = chop_and_escape_str($co{'author_name'}, 15, 3);
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 		      "<td><i>" . $author . "</i></td>\n" .
 		      "<td>";
@@ -3655,12 +3662,7 @@ sub git_search_grep_body {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		my $author = chop_str($co{'author_name'}, 15, 5);
-		if ($author ne $co{'author_name'}) {
-			$author = "<span title=\"" . esc_html($co{'author_name'}) . "\">" . esc_html($author) . "</span>";
-		} else {
-			$author = esc_html($author);
-		}
+		my $author = chop_and_escape_str($co{'author_name'}, 15, 5);
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 		      "<td><i>" . $author . "</i></td>\n" .
 		      "<td>" .
@@ -5175,12 +5177,7 @@ sub git_search {
 						print "<tr class=\"light\">\n";
 					}
 					$alternate ^= 1;
-					my $author = chop_str($co{'author_name'}, 15, 5);
-					if ($author ne $co{'author_name'}) {
-						$author = "<span title=\"" . esc_html($co{'author_name'}) . "\">" . esc_html($author) . "</span>";
-					} else {
-						$author = esc_html($author);
-					}
+					my $author = chop_and_escape_str($co{'author_name'}, 15, 5);
 					print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 					      "<td><i>" . $author . "</i></td>\n" .
 					      "<td>" .
