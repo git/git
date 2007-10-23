@@ -95,7 +95,7 @@ proc start_rev_list {view} {
 	set order "--date-order"
     }
     if {[catch {
-	set fd [open [concat | git log -z --pretty=raw $order --parents \
+	set fd [open [concat | git log --no-color -z --pretty=raw $order --parents \
 			 --boundary $viewargs($view) "--" $viewfiles($view)] r]
     } err]} {
 	error_popup "Error executing git rev-list: $err"
@@ -946,6 +946,12 @@ proc makewindow {} {
     } else {
 	bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
 	bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
+        if {[tk windowingsystem] eq "aqua"} {
+            bindall <MouseWheel> {
+                set delta [expr {- (%D)}]
+                allcanvs yview scroll $delta units
+            }
+        }
     }
     bindall <2> "canvscan mark %W %x %y"
     bindall <B2-Motion> "canvscan dragto %W %x %y"
@@ -1147,7 +1153,7 @@ proc savestuff {w} {
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth showneartags showlocalchanges
     global viewname viewfiles viewargs viewperm nextviewnum
-    global cmitmode wrapcomment datetimeformat
+    global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
 
     if {$stuffsaved} return
@@ -1166,6 +1172,7 @@ proc savestuff {w} {
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
+	puts $f [list set limitdiffs $limitdiffs]
 	puts $f [list set bgcolor $bgcolor]
 	puts $f [list set fgcolor $fgcolor]
 	puts $f [list set colors $colors]
@@ -3813,34 +3820,23 @@ proc drawcommits {row {endrow {}}} {
 	drawcmitrow $r
 	if {$r == $er} break
 	set nextid [lindex $displayorder [expr {$r + 1}]]
-	if {$wasdrawn && [info exists iddrawn($nextid)]} {
-	    catch {unset prevlines}
-	    continue
-	}
+	if {$wasdrawn && [info exists iddrawn($nextid)]} continue
 	drawparentlinks $id $r
 
-	if {[info exists lineends($r)]} {
-	    foreach lid $lineends($r) {
-		unset prevlines($lid)
-	    }
-	}
 	set rowids [lindex $rowidlist $r]
 	foreach lid $rowids {
 	    if {$lid eq {}} continue
+	    if {[info exists lineend($lid)] && $lineend($lid) > $r} continue
 	    if {$lid eq $id} {
 		# see if this is the first child of any of its parents
 		foreach p [lindex $parentlist $r] {
 		    if {[lsearch -exact $rowids $p] < 0} {
 			# make this line extend up to the child
-			set le [drawlineseg $p $r $er 0]
-			lappend lineends($le) $p
-			set prevlines($p) 1
+			set lineend($p) [drawlineseg $p $r $er 0]
 		    }
 		}
-	    } elseif {![info exists prevlines($lid)]} {
-		set le [drawlineseg $lid $r $er 1]
-		lappend lineends($le) $lid
-		set prevlines($lid) 1
+	    } else {
+		set lineend($lid) [drawlineseg $lid $r $er 1]
 	    }
 	}
     }
@@ -5137,11 +5133,15 @@ proc mergediff {id l} {
     global diffmergeid mdifffd
     global diffids
     global parentlist
+    global limitdiffs viewfiles curview
 
     set diffmergeid $id
     set diffids $id
     # this doesn't seem to actually affect anything...
     set cmd [concat | git diff-tree --no-commit-id --cc $id]
+    if {$limitdiffs && $viewfiles($curview) ne {}} {
+	set cmd [concat $cmd -- $viewfiles($curview)]
+    }
     if {[catch {set mdf [open $cmd r]} err]} {
 	error_popup "Error getting merge diffs: $err"
 	return
@@ -5241,9 +5241,31 @@ proc startdiff {ids} {
     }
 }
 
+proc path_filter {filter name} {
+    foreach p $filter {
+	set l [string length $p]
+	if {[string compare -length $l $p $name] == 0 &&
+	    ([string length $name] == $l || [string index $name $l] eq "/")} {
+	    return 1
+	}
+    }
+    return 0
+}
+
 proc addtocflist {ids} {
-    global treediffs cflist
-    add_flist $treediffs($ids)
+    global treediffs cflist viewfiles curview limitdiffs
+
+    if {$limitdiffs && $viewfiles($curview) ne {}} {
+	set flist {}
+	foreach f $treediffs($ids) {
+	    if {[path_filter $viewfiles($curview) $f]} {
+		lappend flist $f
+	    }
+	}
+    } else {
+	set flist $treediffs($ids)
+    }
+    add_flist $flist
     getblobdiffs $ids
 }
 
@@ -5350,8 +5372,13 @@ proc getblobdiffs {ids} {
     global blobdifffd diffids env
     global diffinhdr treediffs
     global diffcontext
+    global limitdiffs viewfiles curview
 
-    if {[catch {set bdf [open [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"] r]} err]} {
+    set cmd [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"]
+    if {$limitdiffs && $viewfiles($curview) ne {}} {
+	set cmd [concat $cmd -- $viewfiles($curview)]
+    }
+    if {[catch {set bdf [open $cmd r]} err]} {
 	puts "error getting diffs: $err"
 	return
     }
@@ -5435,8 +5462,7 @@ proc getblobdiffline {bdf ids} {
 	    set diffinhdr 0
 
 	} elseif {$diffinhdr} {
-	    if {![string compare -length 12 "rename from " $line] ||
-		![string compare -length 10 "copy from " $line]} {
+	    if {![string compare -length 12 "rename from " $line]} {
 		set fname [string range $line [expr 6 + [string first " from " $line] ] end]
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
@@ -6973,7 +6999,7 @@ proc addnewchild {id p} {
     global arcnos arcids arctags arcout arcend arcstart archeads growing
     global seeds allcommits
 
-    if {![info exists allcommits]} return
+    if {![info exists allcommits] || ![info exists arcnos($p)]} return
     set allparents($id) [list $p]
     set allchildren($id) {}
     set arcnos($id) {}
@@ -8007,7 +8033,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor
-    global uifont tabstop
+    global uifont tabstop limitdiffs
 
     set top .gitkprefs
     set prefstop $top
@@ -8015,7 +8041,8 @@ proc doprefs {} {
 	raise $top
 	return
     }
-    foreach v {maxwidth maxgraphpct showneartags showlocalchanges} {
+    foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
+		   limitdiffs tabstop} {
 	set oldprefs($v) [set $v]
     }
     toplevel $top
@@ -8041,14 +8068,19 @@ proc doprefs {} {
     label $top.ddisp -text "Diff display options"
     $top.ddisp configure -font uifont
     grid $top.ddisp - -sticky w -pady 10
+    label $top.tabstopl -text "Tab spacing" -font optionfont
+    spinbox $top.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
+    grid x $top.tabstopl $top.tabstop -sticky w
     frame $top.ntag
     label $top.ntag.l -text "Display nearby tags" -font optionfont
     checkbutton $top.ntag.b -variable showneartags
     pack $top.ntag.b $top.ntag.l -side left
     grid x $top.ntag -sticky w
-    label $top.tabstopl -text "tabstop" -font optionfont
-    spinbox $top.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
-    grid x $top.tabstopl $top.tabstop -sticky w
+    frame $top.ldiff
+    label $top.ldiff.l -text "Limit diffs to listed paths" -font optionfont
+    checkbutton $top.ldiff.b -variable limitdiffs
+    pack $top.ldiff.b $top.ldiff.l -side left
+    grid x $top.ldiff -sticky w
 
     label $top.cdisp -text "Colors: press to choose"
     $top.cdisp configure -font uifont
@@ -8141,10 +8173,11 @@ proc setfg {c} {
 }
 
 proc prefscan {} {
-    global maxwidth maxgraphpct
-    global oldprefs prefstop showneartags showlocalchanges
+    global oldprefs prefstop
 
-    foreach v {maxwidth maxgraphpct showneartags showlocalchanges} {
+    foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
+		   limitdiffs tabstop} {
+	global $v
 	set $v $oldprefs($v)
     }
     catch {destroy $prefstop}
@@ -8156,6 +8189,7 @@ proc prefsok {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
     global fontpref mainfont textfont uifont
+    global limitdiffs
 
     catch {destroy $prefstop}
     unset prefstop
@@ -8191,7 +8225,8 @@ proc prefsok {} {
     if {$fontchanged || $maxwidth != $oldprefs(maxwidth)
 	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
 	redisplay
-    } elseif {$showneartags != $oldprefs(showneartags)} {
+    } elseif {$showneartags != $oldprefs(showneartags) ||
+	  $limitdiffs != $oldprefs(limitdiffs)} {
 	reselectline
     }
 }
@@ -8477,6 +8512,13 @@ proc tcl_encoding {enc} {
     return {}
 }
 
+# First check that Tcl/Tk is recent enough
+if {[catch {package require Tk 8.4} err]} {
+    show_error {} . "Sorry, gitk cannot run with this version of Tcl/Tk.\n\
+		     Gitk requires at least Tcl/Tk 8.4."
+    exit 1
+}
+
 # defaults...
 set datemode 0
 set wrcomcmd "git diff-tree --stdin -p --pretty"
@@ -8511,6 +8553,7 @@ set showneartags 1
 set maxrefs 20
 set maxlinelen 200
 set showlocalchanges 1
+set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 
 set colors {green red blue magenta darkgrey brown orange}
@@ -8545,6 +8588,7 @@ if {![file isdirectory $gitdir]} {
     exit 1
 }
 
+set mergeonly 0
 set revtreeargs {}
 set cmdline_files {}
 set i 0
@@ -8552,6 +8596,10 @@ foreach arg $argv {
     switch -- $arg {
 	"" { }
 	"-d" { set datemode 1 }
+	"--merge" {
+	    set mergeonly 1
+	    lappend revtreeargs $arg
+	}
 	"--" {
 	    set cmdline_files [lrange $argv [expr {$i + 1}] end]
 	    break
@@ -8590,6 +8638,40 @@ if {$i >= [llength $argv] && $revtreeargs ne {}} {
 	show_error {} . "Bad arguments to gitk:\n$err"
 	exit 1
     }
+}
+
+if {$mergeonly} {
+    # find the list of unmerged files
+    set mlist {}
+    set nr_unmerged 0
+    if {[catch {
+	set fd [open "| git ls-files -u" r]
+    } err]} {
+	show_error {} . "Couldn't get list of unmerged files: $err"
+	exit 1
+    }
+    while {[gets $fd line] >= 0} {
+	set i [string first "\t" $line]
+	if {$i < 0} continue
+	set fname [string range $line [expr {$i+1}] end]
+	if {[lsearch -exact $mlist $fname] >= 0} continue
+	incr nr_unmerged
+	if {$cmdline_files eq {} || [path_filter $cmdline_files $fname]} {
+	    lappend mlist $fname
+	}
+    }
+    catch {close $fd}
+    if {$mlist eq {}} {
+	if {$nr_unmerged == 0} {
+	    show_error {} . "No files selected: --merge specified but\
+			     no files are unmerged."
+	} else {
+	    show_error {} . "No files selected: --merge specified but\
+			     no unmerged files are within file limit."
+	}
+	exit 1
+    }
+    set cmdline_files $mlist
 }
 
 set nullid "0000000000000000000000000000000000000000"
