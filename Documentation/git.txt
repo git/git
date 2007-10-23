@@ -49,7 +49,8 @@ Documentation for older releases are available here:
   link:RelNotes-1.5.3.4.txt[1.5.3.4],
   link:RelNotes-1.5.3.3.txt[1.5.3.3],
   link:RelNotes-1.5.3.2.txt[1.5.3.2],
-  link:RelNotes-1.5.3.1.txt[1.5.3.1].
+  link:RelNotes-1.5.3.1.txt[1.5.3.1],
+  link:RelNotes-1.5.3.txt[1.5.3].
 
 * release notes for
   link:RelNotes-1.5.2.5.txt[1.5.2.5],
