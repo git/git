@@ -461,21 +461,29 @@ int mingw_rename(const char *pold, const char *pnew)
 }
 
 #undef vsnprintf
-/* this is out of line because it uses alloca() behind the scenes,
+/* Note that the size parameter specifies the available space, i.e.
+ * includes the trailing NUL byte; but Windows's vsnprintf expects the
+ * number of characters to write without the trailing NUL.
+ */
+
+/* This is out of line because it uses alloca() behind the scenes,
  * which must not be called in a loop (alloca() reclaims the allocations
- * only at function exit)
+ * only at function exit).
  */
 static int try_vsnprintf(size_t size, const char *fmt, va_list args)
 {
 	char buf[size];	/* gcc-ism */
-	return vsnprintf(buf, size, fmt, args);
+	return vsnprintf(buf, size-1, fmt, args);
 }
 
 int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 {
-	int len = vsnprintf(buf, size, fmt, args);
-	if (len >= 0)
-		return len;
+	int len;
+	if (size > 0) {
+		len = vsnprintf(buf, size-1, fmt, args);
+		if (len >= 0)
+			return len;
+	}
 	/* ouch, buffer too small; need to compute the size */
 	if (size < 250)
 		size = 250;
