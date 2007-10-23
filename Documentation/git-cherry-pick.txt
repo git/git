@@ -7,7 +7,7 @@ git-cherry-pick - Apply the change introduced by an existing commit
 
 SYNOPSIS
 --------
-'git-cherry-pick' [--edit] [-n] [-x] <commit>
+'git-cherry-pick' [--edit] [-n] [-m parent-number] [-x] <commit>
 
 DESCRIPTION
 -----------
@@ -43,6 +43,13 @@ OPTIONS
 	It used to be that the command defaulted to do `-x`
 	described above, and `-r` was to disable it.  Now the
 	default is not to do `-x` so this option is a no-op.
+
+-m parent-number|--mainline parent-number::
+	Usually you cannot revert a merge because you do not know which
+	side of the merge should be considered the mainline.  This
+	option specifies the parent number (starting from 1) of
+	the mainline and allows cherry-pick to replay the change
+	relative to the specified parent.
 
 -n|--no-commit::
 	Usually the command automatically creates a commit with
