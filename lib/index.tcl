@@ -1,6 +1,55 @@
 # git-gui index (add/remove) support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+proc _delete_indexlock {} {
+	if {[catch {file delete -- [gitdir index.lock]} err]} {
+		error_popup [strcat [mc "Unable to unlock the index."] "\n\n$err"]
+	}
+}
+
+proc _close_updateindex {fd after} {
+	fconfigure $fd -blocking 1
+	if {[catch {close $fd} err]} {
+		set w .indexfried
+		toplevel $w
+		wm title $w [strcat "[appname] ([reponame]): " [mc "Index Error"]]
+		wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+		pack [label $w.msg \
+			-justify left \
+			-anchor w \
+			-text [strcat \
+				[mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."] \
+				"\n\n$err"] \
+			] -anchor w
+
+		frame $w.buttons
+		button $w.buttons.continue \
+			-text [mc "Continue"] \
+			-command [list destroy $w]
+		pack $w.buttons.continue -side right -padx 5
+		button $w.buttons.unlock \
+			-text [mc "Unlock Index"] \
+			-command "destroy $w; _delete_indexlock"
+		pack $w.buttons.unlock -side right
+		pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+		wm protocol $w WM_DELETE_WINDOW update
+		bind $w.buttons.continue <Visibility> "
+			grab $w
+			focus $w.buttons.continue
+		"
+		tkwait window $w
+
+		$::main_status stop
+		unlock_index
+		rescan $after 0
+		return
+	}
+
+	unlock_index
+	uplevel #0 $after
+}
+
 proc update_indexinfo {msg pathList after} {
 	global update_index_cp
 
@@ -41,9 +90,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
-		close $fd
-		unlock_index
-		uplevel #0 $after
+		_close_updateindex $fd $after
 		return
 	}
 
@@ -116,9 +163,7 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
-		close $fd
-		unlock_index
-		uplevel #0 $after
+		_close_updateindex $fd $after
 		return
 	}
 
@@ -201,9 +246,7 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
-		close $fd
-		unlock_index
-		uplevel #0 $after
+		_close_updateindex $fd $after
 		return
 	}
 
