@@ -88,13 +88,20 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 
 package require msgcat
 
-proc mc {fmt args} {
-	set fmt [::msgcat::mc $fmt]
+proc _mc_trim {fmt} {
 	set cmk [string first @@ $fmt]
 	if {$cmk > 0} {
-		set fmt [string range $fmt 0 [expr {$cmk - 1}]]
+		return [string range $fmt 0 [expr {$cmk - 1}]]
 	}
-	return [eval [list format $fmt] $args]
+	return $fmt
+}
+
+proc mc {en_fmt args} {
+	set fmt [_mc_trim [::msgcat::mc $en_fmt]]
+	if {[catch {set msg [eval [list format $fmt] $args]} err]} {
+		set msg [eval [list format [_mc_trim $en_fmt]] $args]
+	}
+	return $msg
 }
 
 proc strcat {args} {
