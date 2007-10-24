@@ -108,9 +108,9 @@ bisect_start() {
 		}
 		if [ $bad_seen -eq 0 ]; then
 		    bad_seen=1
-		    bisect_write_bad "$rev"
+		    bisect_write 'bad' "$rev"
 		else
-		    bisect_write_good "$rev"
+		    bisect_write 'good' "$rev"
 		fi
 		shift
 		;;
@@ -120,6 +120,18 @@ bisect_start() {
 	sq "$@" >"$GIT_DIR/BISECT_NAMES"
 	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG"
 	bisect_auto_next
+}
+
+bisect_write() {
+	state="$1"
+	rev="$2"
+	case "$state" in
+		bad)		tag="$state" ;;
+		good|skip)	tag="$state"-"$rev" ;;
+		*)		die "Bad bisect_write argument: $state" ;;
+	esac
+	echo "$rev" >"$GIT_DIR/refs/bisect/$tag"
+	echo "# $state: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_bad() {
@@ -132,15 +144,9 @@ bisect_bad() {
 	*)
 		usage ;;
 	esac || exit
-	bisect_write_bad "$rev"
+	bisect_write 'bad' "$rev"
 	echo "git-bisect bad $rev" >>"$GIT_DIR/BISECT_LOG"
 	bisect_auto_next
-}
-
-bisect_write_bad() {
-	rev="$1"
-	echo "$rev" >"$GIT_DIR/refs/bisect/bad"
-	echo "# bad: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_good() {
@@ -153,16 +159,10 @@ bisect_good() {
 	for rev in $revs
 	do
 		rev=$(git rev-parse --verify "$rev^{commit}") || exit
-		bisect_write_good "$rev"
+		bisect_write 'good' "$rev"
 		echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
 	done
 	bisect_auto_next
-}
-
-bisect_write_good() {
-	rev="$1"
-	echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
-	echo "# good: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_skip() {
@@ -175,16 +175,10 @@ bisect_skip() {
 	for rev in $revs
 	do
 		rev=$(git rev-parse --verify "$rev^{commit}") || exit
-		bisect_write_skip "$rev"
+		bisect_write 'skip' "$rev"
 		echo "git-bisect skip $rev" >>"$GIT_DIR/BISECT_LOG"
 	done
 	bisect_auto_next
-}
-
-bisect_write_skip() {
-	rev="$1"
-	echo "$rev" >"$GIT_DIR/refs/bisect/skip-$rev"
-	echo "# skip: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_next_check() {
@@ -395,15 +389,15 @@ bisect_replay () {
 			eval "$cmd"
 			;;
 		good)
-			bisect_write_good "$rev"
+			bisect_write 'good' "$rev"
 			echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
 			;;
 		bad)
-			bisect_write_bad "$rev"
+			bisect_write 'bad' "$rev"
 			echo "git-bisect bad $rev" >>"$GIT_DIR/BISECT_LOG"
 			;;
 		skip)
-			bisect_write_skip "$rev"
+			bisect_write 'skip' "$rev"
 			echo "git-bisect skip $rev" >>"$GIT_DIR/BISECT_LOG"
 			;;
 		*)
