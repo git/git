@@ -135,47 +135,33 @@ bisect_write() {
 	test -z "$nolog" && echo "git-bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
 }
 
-bisect_bad() {
+bisect_state() {
 	bisect_autostart
-	case "$#" in
-	0)
-		rev=$(git rev-parse --verify HEAD) ;;
-	1)
-		rev=$(git rev-parse --verify "$1^{commit}") ;;
+	state=$1
+	case "$#,$state" in
+	0,*)
+		die "Please call 'bisect_state' with at least one argument." ;;
+	1,bad|1,good|1,skip)
+		rev=$(git rev-parse --verify HEAD) ||
+			die "Bad rev input: HEAD"
+		bisect_write "$state" "$rev" ;;
+	2,bad)
+		rev=$(git rev-parse --verify "$2^{commit}") ||
+			die "Bad rev input: $2"
+		bisect_write "$state" "$rev" ;;
+	*,good|*,skip)
+		shift
+		revs=$(git rev-parse --revs-only --no-flags "$@") &&
+			test '' != "$revs" || die "Bad rev input: $@"
+		for rev in $revs
+		do
+			rev=$(git rev-parse --verify "$rev^{commit}") ||
+				die "Bad rev commit: $rev^{commit}"
+			bisect_write "$state" "$rev"
+		done ;;
 	*)
 		usage ;;
-	esac || exit
-	bisect_write 'bad' "$rev"
-	bisect_auto_next
-}
-
-bisect_good() {
-	bisect_autostart
-	case "$#" in
-	0)    revs=$(git rev-parse --verify HEAD) || exit ;;
-	*)    revs=$(git rev-parse --revs-only --no-flags "$@") &&
-		test '' != "$revs" || die "Bad rev input: $@" ;;
 	esac
-	for rev in $revs
-	do
-		rev=$(git rev-parse --verify "$rev^{commit}") || exit
-		bisect_write 'good' "$rev"
-	done
-	bisect_auto_next
-}
-
-bisect_skip() {
-	bisect_autostart
-	case "$#" in
-	0)    revs=$(git rev-parse --verify HEAD) || exit ;;
-	*)    revs=$(git rev-parse --revs-only --no-flags "$@") &&
-		test '' != "$revs" || die "Bad rev input: $@" ;;
-	esac
-	for rev in $revs
-	do
-		rev=$(git rev-parse --verify "$rev^{commit}") || exit
-		bisect_write 'skip' "$rev"
-	done
 	bisect_auto_next
 }
 
@@ -405,24 +391,22 @@ bisect_run () {
 	  exit $res
       fi
 
-      # Use "bisect_good" or "bisect_bad"
-      # depending on run success or failure.
+      # Find current state depending on run success or failure.
       if [ $res -gt 0 ]; then
-	  next_bisect='bisect_bad'
+	  state='bad'
       else
-	  next_bisect='bisect_good'
+	  state='good'
       fi
 
-      # We have to use a subshell because bisect_good or
-      # bisect_bad functions can exit.
-      ( $next_bisect > "$GIT_DIR/BISECT_RUN" )
+      # We have to use a subshell because "bisect_state" can exit.
+      ( bisect_state $state > "$GIT_DIR/BISECT_RUN" )
       res=$?
 
       cat "$GIT_DIR/BISECT_RUN"
 
       if [ $res -ne 0 ]; then
 	  echo >&2 "bisect run failed:"
-	  echo >&2 "$next_bisect exited with error code $res"
+	  echo >&2 "'bisect_state $state' exited with error code $res"
 	  exit $res
       fi
 
@@ -444,12 +428,8 @@ case "$#" in
     case "$cmd" in
     start)
         bisect_start "$@" ;;
-    bad)
-        bisect_bad "$@" ;;
-    good)
-        bisect_good "$@" ;;
-    skip)
-        bisect_skip "$@" ;;
+    bad|good|skip)
+        bisect_state "$cmd" "$@" ;;
     next)
         # Not sure we want "next" at the UI level anymore.
         bisect_next "$@" ;;
