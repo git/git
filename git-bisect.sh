@@ -106,12 +106,11 @@ bisect_start() {
 		        die "'$arg' does not appear to be a valid revision"
 		    break
 		}
-		if [ $bad_seen -eq 0 ]; then
-		    bad_seen=1
-		    bisect_write 'bad' "$rev"
-		else
-		    bisect_write 'good' "$rev"
-		fi
+		case $bad_seen in
+		0) state='bad' ; bad_seen=1 ;;
+		*) state='good' ;;
+		esac
+		bisect_write "$state" "$rev" 'nolog'
 		shift
 		;;
 	    esac
@@ -125,6 +124,7 @@ bisect_start() {
 bisect_write() {
 	state="$1"
 	rev="$2"
+	nolog="$3"
 	case "$state" in
 		bad)		tag="$state" ;;
 		good|skip)	tag="$state"-"$rev" ;;
@@ -132,6 +132,7 @@ bisect_write() {
 	esac
 	echo "$rev" >"$GIT_DIR/refs/bisect/$tag"
 	echo "# $state: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+	test -z "$nolog" && echo "git-bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_bad() {
@@ -145,7 +146,6 @@ bisect_bad() {
 		usage ;;
 	esac || exit
 	bisect_write 'bad' "$rev"
-	echo "git-bisect bad $rev" >>"$GIT_DIR/BISECT_LOG"
 	bisect_auto_next
 }
 
@@ -160,7 +160,6 @@ bisect_good() {
 	do
 		rev=$(git rev-parse --verify "$rev^{commit}") || exit
 		bisect_write 'good' "$rev"
-		echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
 	done
 	bisect_auto_next
 }
@@ -176,7 +175,6 @@ bisect_skip() {
 	do
 		rev=$(git rev-parse --verify "$rev^{commit}") || exit
 		bisect_write 'skip' "$rev"
-		echo "git-bisect skip $rev" >>"$GIT_DIR/BISECT_LOG"
 	done
 	bisect_auto_next
 }
@@ -352,10 +350,8 @@ bisect_reset() {
 	   else
 	       branch=master
 	   fi ;;
-	1) git show-ref --verify --quiet -- "refs/heads/$1" || {
-	       echo >&2 "$1 does not seem to be a valid branch"
-	       exit 1
-	   }
+	1) git show-ref --verify --quiet -- "refs/heads/$1" ||
+	       die "$1 does not seem to be a valid branch"
 	   branch="$1" ;;
 	*)
 	    usage ;;
@@ -375,10 +371,7 @@ bisect_clean_state() {
 }
 
 bisect_replay () {
-	test -r "$1" || {
-		echo >&2 "cannot read $1 for replaying"
-		exit 1
-	}
+	test -r "$1" || die "cannot read $1 for replaying"
 	bisect_reset
 	while read bisect command rev
 	do
@@ -386,23 +379,11 @@ bisect_replay () {
 		case "$command" in
 		start)
 			cmd="bisect_start $rev"
-			eval "$cmd"
-			;;
-		good)
-			bisect_write 'good' "$rev"
-			echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
-			;;
-		bad)
-			bisect_write 'bad' "$rev"
-			echo "git-bisect bad $rev" >>"$GIT_DIR/BISECT_LOG"
-			;;
-		skip)
-			bisect_write 'skip' "$rev"
-			echo "git-bisect skip $rev" >>"$GIT_DIR/BISECT_LOG"
-			;;
+			eval "$cmd" ;;
+		good|bad|skip)
+			bisect_write "$command" "$rev" ;;
 		*)
-			echo >&2 "?? what are you talking about?"
-			exit 1 ;;
+			die "?? what are you talking about?" ;;
 		esac
 	done <"$1"
 	bisect_auto_next
