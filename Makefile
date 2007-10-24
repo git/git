@@ -735,12 +735,12 @@ endif
 # Shell quote (do not use $(call) to accommodate ancient setups);
 
 SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
-ETC_GITCONFIG_SQ = $(subst ','\'',$(ETC_GITCONFIG))
+ETC_GITCONFIG_SQ = \057etc/gitconfig
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 bindir_SQ = $(subst ','\'',$(bindir))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
-template_dir_SQ = $(subst ','\'',$(template_dir))
+template_dir_SQ = \057share/git-core/templates
 prefix_SQ = $(subst ','\'',$(prefix))
 sysconfdir_SQ = $(subst ','\'',$(sysconfdir))
 
