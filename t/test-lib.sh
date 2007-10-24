@@ -80,6 +80,8 @@ do
 		exit 0 ;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
 		verbose=t; shift ;;
+	-q|--q|--qu|--qui|--quie|--quiet)
+		quiet=t; shift ;;
 	--no-color)
 	    color=; shift ;;
 	--no-python)
@@ -97,7 +99,7 @@ if test -n "$color"; then
 			skip)  tput bold; tput setaf 2;; # bold green
 			pass)  tput setaf 2;;            # green
 			info)  tput setaf 3;;            # brown
-			*);;
+			*) test -n "$quiet" && return;;
 		esac
 		shift
 		echo "* $*"
@@ -105,6 +107,7 @@ if test -n "$color"; then
 	}
 else
 	say_color() {
+		test -z "$1" && test -n "$quiet" && return
 		shift
 		echo "* $*"
 	}
