@@ -778,7 +778,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)): perl/perl.mak
 
-perl/perl.mak: GIT-CFLAGS
+perl/perl.mak: GIT-CFLAGS perl/Makefile perl/Makefile.PL
 	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' $(@F)
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
@@ -906,10 +906,6 @@ $(XDIFF_OBJS): xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
 $(XDIFF_LIB): $(XDIFF_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
-
-perl/Makefile: perl/Git.pm perl/Makefile.PL GIT-CFLAGS
-	(cd perl && $(PERL_PATH) Makefile.PL \
-		PREFIX='$(prefix_SQ)')
 
 doc:
 	$(MAKE) -C Documentation all
