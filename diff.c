@@ -1440,7 +1440,16 @@ struct diff_filespec *alloc_filespec(const char *path)
 	memset(spec, 0, sizeof(*spec));
 	spec->path = (char *)(spec + 1);
 	memcpy(spec->path, path, namelen+1);
+	spec->count = 1;
 	return spec;
+}
+
+void free_filespec(struct diff_filespec *spec)
+{
+	if (!--spec->count) {
+		diff_free_filespec_data(spec);
+		free(spec);
+	}
 }
 
 void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
@@ -2435,10 +2444,8 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 
 void diff_free_filepair(struct diff_filepair *p)
 {
-	diff_free_filespec_data(p->one);
-	diff_free_filespec_data(p->two);
-	free(p->one);
-	free(p->two);
+	free_filespec(p->one);
+	free_filespec(p->two);
 	free(p);
 }
 

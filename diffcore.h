@@ -29,6 +29,7 @@ struct diff_filespec {
 	void *cnt_data;
 	const char *funcname_pattern_ident;
 	unsigned long size;
+	int count;               /* Reference count */
 	int xfrm_flags;		 /* for use by the xfrm */
 	unsigned short mode;	 /* file mode */
 	unsigned sha1_valid : 1; /* if true, use sha1 and trust mode;
@@ -43,6 +44,7 @@ struct diff_filespec {
 };
 
 extern struct diff_filespec *alloc_filespec(const char *);
+extern void free_filespec(struct diff_filespec *);
 extern void fill_filespec(struct diff_filespec *, const unsigned char *,
 			  unsigned short);
 

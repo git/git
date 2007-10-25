@@ -209,21 +209,19 @@ static int estimate_similarity(struct diff_filespec *src,
 
 static void record_rename_pair(int dst_index, int src_index, int score)
 {
-	struct diff_filespec *one, *two, *src, *dst;
+	struct diff_filespec *src, *dst;
 	struct diff_filepair *dp;
 
 	if (rename_dst[dst_index].pair)
 		die("internal error: dst already matched.");
 
 	src = rename_src[src_index].one;
-	one = alloc_filespec(src->path);
-	fill_filespec(one, src->sha1, src->mode);
+	src->count++;
 
 	dst = rename_dst[dst_index].two;
-	two = alloc_filespec(dst->path);
-	fill_filespec(two, dst->sha1, dst->mode);
+	dst->count++;
 
-	dp = diff_queue(NULL, one, two);
+	dp = diff_queue(NULL, src, dst);
 	dp->renamed_pair = 1;
 	if (!strcmp(src->path, dst->path))
 		dp->score = rename_src[src_index].score;
@@ -526,10 +524,8 @@ void diffcore_rename(struct diff_options *options)
 		}
 	}
 
-	for (i = 0; i < rename_dst_nr; i++) {
-		diff_free_filespec_data(rename_dst[i].two);
-		free(rename_dst[i].two);
-	}
+	for (i = 0; i < rename_dst_nr; i++)
+		free_filespec(rename_dst[i].two);
 
 	free(rename_dst);
 	rename_dst = NULL;
