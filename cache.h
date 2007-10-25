@@ -493,6 +493,7 @@ struct ref {
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
 	unsigned char force;
+	unsigned char merge;
 	struct ref *peer_ref; /* when renaming */
 	char name[FLEX_ARRAY]; /* more */
 };

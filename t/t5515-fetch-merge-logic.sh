@@ -84,8 +84,7 @@ test_expect_success setup '
 		git config branch.br-$remote-merge.merge refs/heads/three &&
 		git config branch.br-$remote-octopus.remote $remote &&
 		git config branch.br-$remote-octopus.merge refs/heads/one &&
-		git config --add branch.br-$remote-octopus.merge two &&
-		git config --add branch.br-$remote-octopus.merge remotes/rem/three
+		git config --add branch.br-$remote-octopus.merge two
 	done
 '
 

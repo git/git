@@ -1,18 +1,11 @@
 #include "cache.h"
 #include "commit.h"
 #include "pack.h"
-#include "fetch.h"
+#include "walker.h"
 #include "http.h"
 
 #define PREV_BUF_SIZE 4096
 #define RANGE_HEADER_SIZE 30
-
-static int commits_on_stdin;
-
-static int got_alternates = -1;
-static int corrupt_object_found;
-
-static struct curl_slist *no_pragma_header;
 
 struct alt_base
 {
@@ -21,8 +14,6 @@ struct alt_base
 	struct packed_git *packs;
 	struct alt_base *next;
 };
-
-static struct alt_base *alt;
 
 enum object_request_state {
 	WAITING,
@@ -33,6 +24,7 @@ enum object_request_state {
 
 struct object_request
 {
+	struct walker *walker;
 	unsigned char sha1[20];
 	struct alt_base *repo;
 	char *url;
@@ -53,11 +45,19 @@ struct object_request
 };
 
 struct alternates_request {
+	struct walker *walker;
 	const char *base;
 	char *url;
 	struct buffer *buffer;
 	struct active_request_slot *slot;
 	int http_specific;
+};
+
+struct walker_data {
+	const char *url;
+	int got_alternates;
+	struct alt_base *alt;
+	struct curl_slist *no_pragma_header;
 };
 
 static struct object_request *object_queue_head;
@@ -103,11 +103,12 @@ static int missing__target(int code, int result)
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
-static void fetch_alternates(const char *base);
+static void fetch_alternates(struct walker *walker, const char *base);
 
 static void process_object_response(void *callback_data);
 
-static void start_object_request(struct object_request *obj_req)
+static void start_object_request(struct walker *walker,
+				 struct object_request *obj_req)
 {
 	char *hex = sha1_to_hex(obj_req->sha1);
 	char prevfile[PATH_MAX];
@@ -120,6 +121,7 @@ static void start_object_request(struct object_request *obj_req)
 	char range[RANGE_HEADER_SIZE];
 	struct curl_slist *range_header = NULL;
 	struct active_request_slot *slot;
+	struct walker_data *data = walker->data;
 
 	snprintf(prevfile, sizeof(prevfile), "%s.prev", obj_req->filename);
 	unlink(prevfile);
@@ -212,12 +214,12 @@ static void start_object_request(struct object_request *obj_req)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, obj_req->errorstr);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, data->no_pragma_header);
 
 	/* If we have successfully processed data from a previous fetch
 	   attempt, only fetch the data we don't already have. */
 	if (prev_posn>0) {
-		if (get_verbosely)
+		if (walker->get_verbosely)
 			fprintf(stderr,
 				"Resuming fetch of object %s at byte %ld\n",
 				hex, prev_posn);
@@ -268,13 +270,16 @@ static void finish_object_request(struct object_request *obj_req)
 		move_temp_to_file(obj_req->tmpfile, obj_req->filename);
 
 	if (obj_req->rename == 0)
-		pull_say("got %s\n", sha1_to_hex(obj_req->sha1));
+		walker_say(obj_req->walker, "got %s\n", sha1_to_hex(obj_req->sha1));
 }
 
 static void process_object_response(void *callback_data)
 {
 	struct object_request *obj_req =
 		(struct object_request *)callback_data;
+	struct walker *walker = obj_req->walker;
+	struct walker_data *data = walker->data;
+	struct alt_base *alt = data->alt;
 
 	obj_req->curl_result = obj_req->slot->curl_result;
 	obj_req->http_code = obj_req->slot->http_code;
@@ -283,13 +288,13 @@ static void process_object_response(void *callback_data)
 
 	/* Use alternates if necessary */
 	if (missing_target(obj_req)) {
-		fetch_alternates(alt->base);
+		fetch_alternates(walker, alt->base);
 		if (obj_req->repo->next != NULL) {
 			obj_req->repo =
 				obj_req->repo->next;
 			close(obj_req->local);
 			obj_req->local = -1;
-			start_object_request(obj_req);
+			start_object_request(walker, obj_req);
 			return;
 		}
 	}
@@ -317,42 +322,35 @@ static void release_object_request(struct object_request *obj_req)
 }
 
 #ifdef USE_CURL_MULTI
-void fill_active_slots(void)
+static int fill_active_slot(struct walker *walker)
 {
-	struct object_request *obj_req = object_queue_head;
-	struct active_request_slot *slot = active_queue_head;
-	int num_transfers;
+	struct object_request *obj_req;
 
-	while (active_requests < max_requests && obj_req != NULL) {
+	for (obj_req = object_queue_head; obj_req; obj_req = obj_req->next) {
 		if (obj_req->state == WAITING) {
 			if (has_sha1_file(obj_req->sha1))
 				obj_req->state = COMPLETE;
-			else
-				start_object_request(obj_req);
-			curl_multi_perform(curlm, &num_transfers);
+			else {
+				start_object_request(walker, obj_req);
+				return 1;
+			}
 		}
-		obj_req = obj_req->next;
 	}
-
-	while (slot != NULL) {
-		if (!slot->in_use && slot->curl != NULL) {
-			curl_easy_cleanup(slot->curl);
-			slot->curl = NULL;
-		}
-		slot = slot->next;
-	}
+	return 0;
 }
 #endif
 
-void prefetch(unsigned char *sha1)
+static void prefetch(struct walker *walker, unsigned char *sha1)
 {
 	struct object_request *newreq;
 	struct object_request *tail;
+	struct walker_data *data = walker->data;
 	char *filename = sha1_file_name(sha1);
 
 	newreq = xmalloc(sizeof(*newreq));
+	newreq->walker = walker;
 	hashcpy(newreq->sha1, sha1);
-	newreq->repo = alt;
+	newreq->repo = data->alt;
 	newreq->url = NULL;
 	newreq->local = -1;
 	newreq->state = WAITING;
@@ -378,7 +376,7 @@ void prefetch(unsigned char *sha1)
 #endif
 }
 
-static int fetch_index(struct alt_base *repo, unsigned char *sha1)
+static int fetch_index(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
 	char *filename;
@@ -387,6 +385,7 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 	long prev_posn = 0;
 	char range[RANGE_HEADER_SIZE];
 	struct curl_slist *range_header = NULL;
+	struct walker_data *data = walker->data;
 
 	FILE *indexfile;
 	struct active_request_slot *slot;
@@ -395,7 +394,7 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 	if (has_pack_index(sha1))
 		return 0;
 
-	if (get_verbosely)
+	if (walker->get_verbosely)
 		fprintf(stderr, "Getting index for pack %s\n", hex);
 
 	url = xmalloc(strlen(repo->base) + 64);
@@ -413,14 +412,14 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, indexfile);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, data->no_pragma_header);
 	slot->local = indexfile;
 
 	/* If there is data present from a previous transfer attempt,
 	   resume where it left off */
 	prev_posn = ftell(indexfile);
 	if (prev_posn>0) {
-		if (get_verbosely)
+		if (walker->get_verbosely)
 			fprintf(stderr,
 				"Resuming fetch of index for pack %s at byte %ld\n",
 				hex, prev_posn);
@@ -446,13 +445,13 @@ static int fetch_index(struct alt_base *repo, unsigned char *sha1)
 	return move_temp_to_file(tmpfile, filename);
 }
 
-static int setup_index(struct alt_base *repo, unsigned char *sha1)
+static int setup_index(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
 {
 	struct packed_git *new_pack;
 	if (has_pack_file(sha1))
 		return 0; /* don't list this as something we can get */
 
-	if (fetch_index(repo, sha1))
+	if (fetch_index(walker, repo, sha1))
 		return -1;
 
 	new_pack = parse_pack_index(sha1);
@@ -465,8 +464,10 @@ static void process_alternates_response(void *callback_data)
 {
 	struct alternates_request *alt_req =
 		(struct alternates_request *)callback_data;
+	struct walker *walker = alt_req->walker;
+	struct walker_data *cdata = walker->data;
 	struct active_request_slot *slot = alt_req->slot;
-	struct alt_base *tail = alt;
+	struct alt_base *tail = cdata->alt;
 	const char *base = alt_req->base;
 	static const char null_byte = '\0';
 	char *data;
@@ -487,7 +488,7 @@ static void process_alternates_response(void *callback_data)
 			if (slot->finished != NULL)
 				(*slot->finished) = 0;
 			if (!start_active_slot(slot)) {
-				got_alternates = -1;
+				cdata->got_alternates = -1;
 				slot->in_use = 0;
 				if (slot->finished != NULL)
 					(*slot->finished) = 1;
@@ -496,7 +497,7 @@ static void process_alternates_response(void *callback_data)
 		}
 	} else if (slot->curl_result != CURLE_OK) {
 		if (!missing_target(slot)) {
-			got_alternates = -1;
+			cdata->got_alternates = -1;
 			return;
 		}
 	}
@@ -573,7 +574,7 @@ static void process_alternates_response(void *callback_data)
 				memcpy(target + serverlen, data + i,
 				       posn - i - 7);
 				target[serverlen + posn - i - 7] = 0;
-				if (get_verbosely)
+				if (walker->get_verbosely)
 					fprintf(stderr,
 						"Also look at %s\n", target);
 				newalt = xmalloc(sizeof(*newalt));
@@ -590,39 +591,40 @@ static void process_alternates_response(void *callback_data)
 		i = posn + 1;
 	}
 
-	got_alternates = 1;
+	cdata->got_alternates = 1;
 }
 
-static void fetch_alternates(const char *base)
+static void fetch_alternates(struct walker *walker, const char *base)
 {
 	struct buffer buffer;
 	char *url;
 	char *data;
 	struct active_request_slot *slot;
 	struct alternates_request alt_req;
+	struct walker_data *cdata = walker->data;
 
 	/* If another request has already started fetching alternates,
 	   wait for them to arrive and return to processing this request's
 	   curl message */
 #ifdef USE_CURL_MULTI
-	while (got_alternates == 0) {
+	while (cdata->got_alternates == 0) {
 		step_active_slots();
 	}
 #endif
 
 	/* Nothing to do if they've already been fetched */
-	if (got_alternates == 1)
+	if (cdata->got_alternates == 1)
 		return;
 
 	/* Start the fetch */
-	got_alternates = 0;
+	cdata->got_alternates = 0;
 
 	data = xmalloc(4096);
 	buffer.size = 4096;
 	buffer.posn = 0;
 	buffer.buffer = data;
 
-	if (get_verbosely)
+	if (walker->get_verbosely)
 		fprintf(stderr, "Getting alternates list for %s\n", base);
 
 	url = xmalloc(strlen(base) + 31);
@@ -632,6 +634,7 @@ static void fetch_alternates(const char *base)
 	   may fail and need to have alternates loaded before continuing */
 	slot = get_active_slot();
 	slot->callback_func = process_alternates_response;
+	alt_req.walker = walker;
 	slot->callback_data = &alt_req;
 
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
@@ -647,13 +650,13 @@ static void fetch_alternates(const char *base)
 	if (start_active_slot(slot))
 		run_active_slot(slot);
 	else
-		got_alternates = -1;
+		cdata->got_alternates = -1;
 
 	free(data);
 	free(url);
 }
 
-static int fetch_indices(struct alt_base *repo)
+static int fetch_indices(struct walker *walker, struct alt_base *repo)
 {
 	unsigned char sha1[20];
 	char *url;
@@ -672,7 +675,7 @@ static int fetch_indices(struct alt_base *repo)
 	buffer.posn = 0;
 	buffer.buffer = data;
 
-	if (get_verbosely)
+	if (walker->get_verbosely)
 		fprintf(stderr, "Getting pack list for %s\n", repo->base);
 
 	url = xmalloc(strlen(repo->base) + 21);
@@ -712,7 +715,7 @@ static int fetch_indices(struct alt_base *repo)
 			    !prefixcmp(data + i, " pack-") &&
 			    !prefixcmp(data + i + 46, ".pack\n")) {
 				get_sha1_hex(data + i + 6, sha1);
-				setup_index(repo, sha1);
+				setup_index(walker, repo, sha1);
 				i += 51;
 				break;
 			}
@@ -728,7 +731,7 @@ static int fetch_indices(struct alt_base *repo)
 	return 0;
 }
 
-static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
+static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
 {
 	char *url;
 	struct packed_git *target;
@@ -740,17 +743,18 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 	long prev_posn = 0;
 	char range[RANGE_HEADER_SIZE];
 	struct curl_slist *range_header = NULL;
+	struct walker_data *data = walker->data;
 
 	struct active_request_slot *slot;
 	struct slot_results results;
 
-	if (fetch_indices(repo))
+	if (fetch_indices(walker, repo))
 		return -1;
 	target = find_sha1_pack(sha1, repo->packs);
 	if (!target)
 		return -1;
 
-	if (get_verbosely) {
+	if (walker->get_verbosely) {
 		fprintf(stderr, "Getting pack %s\n",
 			sha1_to_hex(target->sha1));
 		fprintf(stderr, " which contains %s\n",
@@ -773,14 +777,14 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, packfile);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, data->no_pragma_header);
 	slot->local = packfile;
 
 	/* If there is data present from a previous transfer attempt,
 	   resume where it left off */
 	prev_posn = ftell(packfile);
 	if (prev_posn>0) {
-		if (get_verbosely)
+		if (walker->get_verbosely)
 			fprintf(stderr,
 				"Resuming fetch of pack %s at byte %ld\n",
 				sha1_to_hex(target->sha1), prev_posn);
@@ -834,7 +838,7 @@ static void abort_object_request(struct object_request *obj_req)
 	release_object_request(obj_req);
 }
 
-static int fetch_object(struct alt_base *repo, unsigned char *sha1)
+static int fetch_object(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
 	int ret = 0;
@@ -855,7 +859,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 		step_active_slots();
 	}
 #else
-	start_object_request(obj_req);
+	start_object_request(walker, obj_req);
 #endif
 
 	while (obj_req->state == ACTIVE) {
@@ -876,7 +880,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 				    obj_req->errorstr, obj_req->curl_result,
 				    obj_req->http_code, hex);
 	} else if (obj_req->zret != Z_STREAM_END) {
-		corrupt_object_found++;
+		walker->corrupt_object_found++;
 		ret = error("File %s (%s) corrupt", hex, obj_req->url);
 	} else if (hashcmp(obj_req->sha1, obj_req->real_sha1)) {
 		ret = error("File %s has bad hash", hex);
@@ -889,20 +893,21 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	return ret;
 }
 
-int fetch(unsigned char *sha1)
+static int fetch(struct walker *walker, unsigned char *sha1)
 {
-	struct alt_base *altbase = alt;
+	struct walker_data *data = walker->data;
+	struct alt_base *altbase = data->alt;
 
-	if (!fetch_object(altbase, sha1))
+	if (!fetch_object(walker, altbase, sha1))
 		return 0;
 	while (altbase) {
-		if (!fetch_pack(altbase, sha1))
+		if (!fetch_pack(walker, altbase, sha1))
 			return 0;
-		fetch_alternates(alt->base);
+		fetch_alternates(walker, data->alt->base);
 		altbase = altbase->next;
 	}
 	return error("Unable to find %s under %s", sha1_to_hex(sha1),
-		     alt->base);
+		     data->alt->base);
 }
 
 static inline int needs_quote(int ch)
@@ -951,12 +956,13 @@ static char *quote_ref_url(const char *base, const char *ref)
 	return qref;
 }
 
-int fetch_ref(char *ref, unsigned char *sha1)
+static int fetch_ref(struct walker *walker, char *ref, unsigned char *sha1)
 {
         char *url;
         char hex[42];
         struct buffer buffer;
-	const char *base = alt->base;
+	struct walker_data *data = walker->data;
+	const char *base = data->alt->base;
 	struct active_request_slot *slot;
 	struct slot_results results;
         buffer.size = 41;
@@ -985,80 +991,45 @@ int fetch_ref(char *ref, unsigned char *sha1)
         return 0;
 }
 
-int main(int argc, const char **argv)
+static void cleanup(struct walker *walker)
 {
-	int commits;
-	const char **write_ref = NULL;
-	char **commit_id;
-	const char *url;
+	struct walker_data *data = walker->data;
+	http_cleanup();
+
+	curl_slist_free_all(data->no_pragma_header);
+}
+
+struct walker *get_http_walker(const char *url)
+{
 	char *s;
-	int arg = 1;
-	int rc = 0;
-
-	setup_git_directory();
-	git_config(git_default_config);
-
-	while (arg < argc && argv[arg][0] == '-') {
-		if (argv[arg][1] == 't') {
-			get_tree = 1;
-		} else if (argv[arg][1] == 'c') {
-			get_history = 1;
-		} else if (argv[arg][1] == 'a') {
-			get_all = 1;
-			get_tree = 1;
-			get_history = 1;
-		} else if (argv[arg][1] == 'v') {
-			get_verbosely = 1;
-		} else if (argv[arg][1] == 'w') {
-			write_ref = &argv[arg + 1];
-			arg++;
-		} else if (!strcmp(argv[arg], "--recover")) {
-			get_recover = 1;
-		} else if (!strcmp(argv[arg], "--stdin")) {
-			commits_on_stdin = 1;
-		}
-		arg++;
-	}
-	if (argc < arg + 2 - commits_on_stdin) {
-		usage("git-http-fetch [-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin] commit-id url");
-		return 1;
-	}
-	if (commits_on_stdin) {
-		commits = pull_targets_stdin(&commit_id, &write_ref);
-	} else {
-		commit_id = (char **) &argv[arg++];
-		commits = 1;
-	}
-	url = argv[arg];
+	struct walker_data *data = xmalloc(sizeof(struct walker_data));
+	struct walker *walker = xmalloc(sizeof(struct walker));
 
 	http_init();
 
-	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
+	data->no_pragma_header = curl_slist_append(NULL, "Pragma:");
 
-	alt = xmalloc(sizeof(*alt));
-	alt->base = xmalloc(strlen(url) + 1);
-	strcpy(alt->base, url);
-	for (s = alt->base + strlen(alt->base) - 1; *s == '/'; --s)
+	data->alt = xmalloc(sizeof(*data->alt));
+	data->alt->base = xmalloc(strlen(url) + 1);
+	strcpy(data->alt->base, url);
+	for (s = data->alt->base + strlen(data->alt->base) - 1; *s == '/'; --s)
 		*s = 0;
-	alt->got_indices = 0;
-	alt->packs = NULL;
-	alt->next = NULL;
 
-	if (pull(commits, commit_id, write_ref, url))
-		rc = 1;
+	data->alt->got_indices = 0;
+	data->alt->packs = NULL;
+	data->alt->next = NULL;
+	data->got_alternates = -1;
 
-	http_cleanup();
+	walker->corrupt_object_found = 0;
+	walker->fetch = fetch;
+	walker->fetch_ref = fetch_ref;
+	walker->prefetch = prefetch;
+	walker->cleanup = cleanup;
+	walker->data = data;
 
-	curl_slist_free_all(no_pragma_header);
+#ifdef USE_CURL_MULTI
+	add_fill_function(walker, (int (*)(void *)) fill_active_slot);
+#endif
 
-	if (commits_on_stdin)
-		pull_targets_free(commits, commit_id, write_ref);
-
-	if (corrupt_object_found) {
-		fprintf(stderr,
-"Some loose object were found to be corrupt, but they might be just\n"
-"a false '404 Not Found' error message sent with incorrect HTTP\n"
-"status code.  Suggest running git-fsck.\n");
-	}
-	return rc;
+	return walker;
 }

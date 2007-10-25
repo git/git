@@ -276,6 +276,7 @@ void http_cleanup(void)
 #endif
 
 	while (slot != NULL) {
+		struct active_request_slot *next = slot->next;
 #ifdef USE_CURL_MULTI
 		if (slot->in_use) {
 			curl_easy_getinfo(slot->curl,
@@ -287,8 +288,10 @@ void http_cleanup(void)
 #endif
 		if (slot->curl != NULL)
 			curl_easy_cleanup(slot->curl);
-		slot = slot->next;
+		free(slot);
+		slot = next;
 	}
+	active_queue_head = NULL;
 
 #ifndef NO_CURL_EASY_DUPHANDLE
 	curl_easy_cleanup(curl_default);
@@ -300,7 +303,7 @@ void http_cleanup(void)
 	curl_global_cleanup();
 
 	curl_slist_free_all(pragma_header);
-        pragma_header = NULL;
+	pragma_header = NULL;
 }
 
 struct active_request_slot *get_active_slot(void)
@@ -372,6 +375,7 @@ int start_active_slot(struct active_request_slot *slot)
 {
 #ifdef USE_CURL_MULTI
 	CURLMcode curlm_result = curl_multi_add_handle(curlm, slot->curl);
+	int num_transfers;
 
 	if (curlm_result != CURLM_OK &&
 	    curlm_result != CURLM_CALL_MULTI_PERFORM) {
@@ -379,11 +383,60 @@ int start_active_slot(struct active_request_slot *slot)
 		slot->in_use = 0;
 		return 0;
 	}
+
+	/*
+	 * We know there must be something to do, since we just added
+	 * something.
+	 */
+	curl_multi_perform(curlm, &num_transfers);
 #endif
 	return 1;
 }
 
 #ifdef USE_CURL_MULTI
+struct fill_chain {
+	void *data;
+	int (*fill)(void *);
+	struct fill_chain *next;
+};
+
+static struct fill_chain *fill_cfg = NULL;
+
+void add_fill_function(void *data, int (*fill)(void *))
+{
+	struct fill_chain *new = malloc(sizeof(*new));
+	struct fill_chain **linkp = &fill_cfg;
+	new->data = data;
+	new->fill = fill;
+	new->next = NULL;
+	while (*linkp)
+		linkp = &(*linkp)->next;
+	*linkp = new;
+}
+
+void fill_active_slots(void)
+{
+	struct active_request_slot *slot = active_queue_head;
+
+	while (active_requests < max_requests) {
+		struct fill_chain *fill;
+		for (fill = fill_cfg; fill; fill = fill->next)
+			if (fill->fill(fill->data))
+				break;
+
+		if (!fill)
+			break;
+	}
+
+	while (slot != NULL) {
+		if (!slot->in_use && slot->curl != NULL) {
+			curl_easy_cleanup(slot->curl);
+			slot->curl = NULL;
+		}
+		slot = slot->next;
+	}
+}
+
 void step_active_slots(void)
 {
 	int num_transfers;

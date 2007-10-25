@@ -147,6 +147,11 @@ extern ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 extern int gitsetenv(const char *, const char *, int);
 #endif
 
+#ifdef NO_MKDTEMP
+#define mkdtemp gitmkdtemp
+extern char *gitmkdtemp(char *);
+#endif
+
 #ifdef NO_UNSETENV
 #define unsetenv gitunsetenv
 extern void gitunsetenv(const char *);
