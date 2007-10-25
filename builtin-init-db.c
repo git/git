@@ -145,6 +145,17 @@ static void copy_templates(const char *git_dir, int len, const char *template_di
 			template_dir = prefix_path(exec_path, strlen(exec_path),
 						   template_dir);
 		}
+#if __MINGW32__
+		/*
+		 * If it is an absolute Unix path it is prefixed with
+		 * the git_install_prefix().
+		 */
+		else if (template_dir[0] == '/') {
+			const char* prefix = git_install_prefix();
+			template_dir = prefix_path(prefix, strlen(prefix),
+			                           template_dir);
+		}
+#endif
 	}
 	strcpy(template_path, template_dir);
 	template_len = strlen(template_path);
