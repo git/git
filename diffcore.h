@@ -31,6 +31,7 @@ struct diff_filespec {
 	unsigned long size;
 	int count;               /* Reference count */
 	int xfrm_flags;		 /* for use by the xfrm */
+	int rename_used;         /* Count of rename users */
 	unsigned short mode;	 /* file mode */
 	unsigned sha1_valid : 1; /* if true, use sha1 and trust mode;
 				  * if false, use the name and read from
@@ -58,7 +59,6 @@ struct diff_filepair {
 	struct diff_filespec *two;
 	unsigned short int score;
 	char status; /* M C R N D U (see Documentation/diff-format.txt) */
-	unsigned source_stays : 1; /* all of R/C are copies */
 	unsigned broken_pair : 1;
 	unsigned renamed_pair : 1;
 	unsigned is_unmerged : 1;

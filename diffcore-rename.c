@@ -55,12 +55,10 @@ static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two,
 static struct diff_rename_src {
 	struct diff_filespec *one;
 	unsigned short score; /* to remember the break score */
-	unsigned src_path_left : 1;
 } *rename_src;
 static int rename_src_nr, rename_src_alloc;
 
 static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
-						   int src_path_left,
 						   unsigned short score)
 {
 	int first, last;
@@ -92,7 +90,6 @@ static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
 			(rename_src_nr - first - 1) * sizeof(*rename_src));
 	rename_src[first].one = one;
 	rename_src[first].score = score;
-	rename_src[first].src_path_left = src_path_left;
 	return &(rename_src[first]);
 }
 
@@ -216,6 +213,7 @@ static void record_rename_pair(int dst_index, int src_index, int score)
 		die("internal error: dst already matched.");
 
 	src = rename_src[src_index].one;
+	src->rename_used++;
 	src->count++;
 
 	dst = rename_dst[dst_index].two;
@@ -227,7 +225,6 @@ static void record_rename_pair(int dst_index, int src_index, int score)
 		dp->score = rename_src[src_index].score;
 	else
 		dp->score = score;
-	dp->source_stays = rename_src[src_index].src_path_left;
 	rename_dst[dst_index].pair = dp;
 }
 
@@ -243,21 +240,6 @@ static int score_compare(const void *a_, const void *b_)
 		return b->name_score - a->name_score;
 
 	return b->score - a->score;
-}
-
-static int compute_stays(struct diff_queue_struct *q,
-			 struct diff_filespec *one)
-{
-	int i;
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		if (strcmp(one->path, p->two->path))
-			continue;
-		if (DIFF_PAIR_RENAME(p)) {
-			return 0; /* something else is renamed into this */
-		}
-	}
-	return 1;
 }
 
 /*
@@ -338,15 +320,25 @@ void diffcore_rename(struct diff_options *options)
 				locate_rename_dst(p->two, 1);
 		}
 		else if (!DIFF_FILE_VALID(p->two)) {
-			/* If the source is a broken "delete", and
+			/*
+			 * If the source is a broken "delete", and
 			 * they did not really want to get broken,
 			 * that means the source actually stays.
+			 * So we increment the "rename_used" score
+			 * by one, to indicate ourselves as a user
 			 */
-			int stays = (p->broken_pair && !p->score);
-			register_rename_src(p->one, stays, p->score);
+			if (p->broken_pair && !p->score)
+				p->one->rename_used++;
+			register_rename_src(p->one, p->score);
 		}
-		else if (detect_rename == DIFF_DETECT_COPY)
-			register_rename_src(p->one, 1, p->score);
+		else if (detect_rename == DIFF_DETECT_COPY) {
+			/*
+			 * Increment the "rename_used" score by
+			 * one, to indicate ourselves as a user.
+			 */
+			p->one->rename_used++;
+			register_rename_src(p->one, p->score);
+		}
 	}
 	if (rename_dst_nr == 0 || rename_src_nr == 0)
 		goto cleanup; /* nothing to do */
@@ -472,16 +464,7 @@ void diffcore_rename(struct diff_options *options)
 					pair_to_free = p;
 			}
 			else {
-				for (j = 0; j < rename_dst_nr; j++) {
-					if (!rename_dst[j].pair)
-						continue;
-					if (strcmp(rename_dst[j].pair->
-						   one->path,
-						   p->one->path))
-						continue;
-					break;
-				}
-				if (j < rename_dst_nr)
+				if (p->one->rename_used)
 					/* this path remains */
 					pair_to_free = p;
 			}
@@ -506,23 +489,6 @@ void diffcore_rename(struct diff_options *options)
 	free(q->queue);
 	*q = outq;
 	diff_debug_queue("done collapsing", q);
-
-	/* We need to see which rename source really stays here;
-	 * earlier we only checked if the path is left in the result,
-	 * but even if a path remains in the result, if that is coming
-	 * from copying something else on top of it, then the original
-	 * source is lost and does not stay.
-	 */
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		if (DIFF_PAIR_RENAME(p) && p->source_stays) {
-			/* If one appears as the target of a rename-copy,
-			 * then mark p->source_stays = 0; otherwise
-			 * leave it as is.
-			 */
-			p->source_stays = compute_stays(q, p->one);
-		}
-	}
 
 	for (i = 0; i < rename_dst_nr; i++)
 		free_filespec(rename_dst[i].two);
