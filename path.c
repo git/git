@@ -370,3 +370,51 @@ const char *make_absolute_path(const char *path)
 
 	return buf;
 }
+
+const char* git_install_prefix()
+{
+#ifdef __MINGW32__
+	static char* prefix;
+
+	if (prefix) {
+		return prefix;
+	}
+
+	char* p;
+	int pgm_len = strlen(_pgmptr);
+	prefix = xmalloc(pgm_len + 1);
+	strcpy(prefix, _pgmptr);
+	p = strrchr(prefix, '\\'); /* <gitroot>\bin\ <- p */
+	if (p) {
+		*p = '\0';
+		p = strrchr(prefix, '\\'); /* <gitroot>\ <- p */
+		if (p) {
+			*p = '\0';
+			for (p = prefix; *p; p++)
+				if (*p == '\\')
+					*p = '/';
+			return prefix;
+		}
+	}
+
+	/* Note, according to the msdn documentation we have a full path
+	   if started through the shell and this error should never happen. */
+	fprintf(stderr, "Fatal Error: failed to locate installation root.\n");
+	exit(1);
+#else
+	return "";
+#endif
+}
+
+char *make_native_separator(char* path) {
+#ifdef __MINGW32__
+	char* c;
+	for (c = path; *c; c++) {
+		if (*c == '/')
+			*c = '\\';
+	}
+	return path;
+#else
+	return path;
+#endif
+}

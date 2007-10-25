@@ -165,34 +165,6 @@ static void list_common_cmds_help(void)
 	puts("(use 'git help -a' to get a list of all installed git commands)");
 }
 
-#ifdef __MINGW32__
-char* get_install_dir()
-{
-	static char* pgm = 0;
-	if (pgm) {
-		return pgm;
-	} else {
-		char* p;
-		int pgm_len = strlen(_pgmptr);
-		pgm = xmalloc(pgm_len + 1);
-		strcpy(pgm, _pgmptr);
-		p = strrchr(pgm, '\\'); /* <gitroot>\bin\ <- p */
-		if (p) {
-			*p = '\0';
-			p = strrchr(pgm, '\\'); /* <gitroot>\ <- p */
-			if (p) {
-				*p = '\0';
-				return pgm;
-			}
-		}
-	}
-	/* Note, according to the msdn documentation we have a full path
-	   if started through the shell and this error should never happen. */
-	fprintf(stderr, "Fatal Error: failed to locate installation root.\n");
-	exit(1);
-}
-#endif
-
 static void show_man_page(const char *git_cmd)
 {
 	const char *page;
@@ -210,20 +182,11 @@ static void show_man_page(const char *git_cmd)
 
 #ifdef __MINGW32__
 	{
-		char* install_dir = get_install_dir();
-		int install_dir_len = strlen(install_dir);
-		char* html_dir = "\\doc\\git\\html\\";
-		int html_dir_len = strlen(html_dir);
-		char* suffix = ".html";
-		int suffix_len = strlen(suffix);
-		int page_len = strlen(page);
-		int htmlpath_len = install_dir_len + html_dir_len + page_len + suffix_len;
-		char* htmlpath = xmalloc(htmlpath_len + 1);
-		strcpy (htmlpath, install_dir);
-		strcpy (htmlpath + install_dir_len, html_dir);
-		strcpy (htmlpath + install_dir_len + html_dir_len, page);
-		strcpy (htmlpath + install_dir_len + html_dir_len + page_len, suffix);
-		htmlpath[htmlpath_len] = 0;
+		const char *htmlpath = make_native_separator(
+		                         mkpath("%s/doc/git/html/%s.html"
+		                                  , git_install_prefix()
+		                                  , page)
+		                       );
 		printf("Launching default browser to display HTML help ...\n");
 		ShellExecute(NULL, "open", htmlpath, NULL, NULL, 0);
 	}
