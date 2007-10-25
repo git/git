@@ -262,6 +262,58 @@ static int compute_stays(struct diff_queue_struct *q,
 	return 1;
 }
 
+/*
+ * Find exact renames first.
+ *
+ * The first round matches up the up-to-date entries,
+ * and then during the second round we try to match
+ * cache-dirty entries as well.
+ *
+ * Note: the rest of the rename logic depends on this
+ * phase also populating all the filespecs for any
+ * entry that isn't matched up with an exact rename,
+ * see "is_exact_match()".
+ */
+static int find_exact_renames(void)
+{
+	int rename_count = 0;
+	int contents_too;
+
+	for (contents_too = 0; contents_too < 2; contents_too++) {
+		int i;
+
+		for (i = 0; i < rename_dst_nr; i++) {
+			struct diff_filespec *two = rename_dst[i].two;
+			int j;
+
+			if (rename_dst[i].pair)
+				continue; /* dealt with an earlier round */
+			for (j = 0; j < rename_src_nr; j++) {
+				int k;
+				struct diff_filespec *one = rename_src[j].one;
+				if (!is_exact_match(one, two, contents_too))
+					continue;
+
+				/* see if there is a basename match, too */
+				for (k = j; k < rename_src_nr; k++) {
+					one = rename_src[k].one;
+					if (basename_same(one, two) &&
+						is_exact_match(one, two,
+							contents_too)) {
+						j = k;
+						break;
+					}
+				}
+
+				record_rename_pair(i, j, (int)MAX_SCORE);
+				rename_count++;
+				break; /* we are done with this entry */
+			}
+		}
+	}
+	return rename_count;
+}
+
 void diffcore_rename(struct diff_options *options)
 {
 	int detect_rename = options->detect_rename;
@@ -270,12 +322,11 @@ void diffcore_rename(struct diff_options *options)
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
 	struct diff_score *mx;
-	int i, j, rename_count, contents_too;
+	int i, j, rename_count;
 	int num_create, num_src, dst_cnt;
 
 	if (!minimum_score)
 		minimum_score = DEFAULT_RENAME_SCORE;
-	rename_count = 0;
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
@@ -318,40 +369,11 @@ void diffcore_rename(struct diff_options *options)
 	if (rename_dst_nr * rename_src_nr > rename_limit * rename_limit)
 		goto cleanup;
 
-	/* We really want to cull the candidates list early
+	/*
+	 * We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.
-	 * The first round matches up the up-to-date entries,
-	 * and then during the second round we try to match
-	 * cache-dirty entries as well.
 	 */
-	for (contents_too = 0; contents_too < 2; contents_too++) {
-		for (i = 0; i < rename_dst_nr; i++) {
-			struct diff_filespec *two = rename_dst[i].two;
-			if (rename_dst[i].pair)
-				continue; /* dealt with an earlier round */
-			for (j = 0; j < rename_src_nr; j++) {
-				int k;
-				struct diff_filespec *one = rename_src[j].one;
-				if (!is_exact_match(one, two, contents_too))
-					continue;
-
-				/* see if there is a basename match, too */
-				for (k = j; k < rename_src_nr; k++) {
-					one = rename_src[k].one;
-					if (basename_same(one, two) &&
-						is_exact_match(one, two,
-							contents_too)) {
-						j = k;
-						break;
-					}
-				}
-
-				record_rename_pair(i, j, (int)MAX_SCORE);
-				rename_count++;
-				break; /* we are done with this entry */
-			}
-		}
-	}
+	rename_count = find_exact_renames();
 
 	/* Have we run out the created file pool?  If so we can avoid
 	 * doing the delta matrix altogether.
