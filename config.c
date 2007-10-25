@@ -466,6 +466,17 @@ const char *git_etc_gitconfig(void)
 			system_wide = prefix_path(exec_path, strlen(exec_path),
 						system_wide);
 		}
+#if __MINGW32__
+		/*
+		 * If it is an absolute Unix path it is prefixed with
+		 * the git_install_prefix().
+		 */
+		else if (system_wide[0] == '/') {
+			const char* prefix = git_install_prefix();
+			system_wide = prefix_path(prefix, strlen(prefix),
+			                           system_wide);
+		}
+#endif
 	}
 	return system_wide;
 }
