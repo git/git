@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "hash.h"
 
 /* Table of rename/copy destinations */
 
@@ -91,29 +92,6 @@ static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
 	rename_src[first].one = one;
 	rename_src[first].score = score;
 	return &(rename_src[first]);
-}
-
-static int is_exact_match(struct diff_filespec *src,
-			  struct diff_filespec *dst,
-			  int contents_too)
-{
-	if (src->sha1_valid && dst->sha1_valid &&
-	    !hashcmp(src->sha1, dst->sha1))
-		return 1;
-	if (!contents_too)
-		return 0;
-	if (diff_populate_filespec(src, 1) || diff_populate_filespec(dst, 1))
-		return 0;
-	if (src->size != dst->size)
-		return 0;
-	if (src->sha1_valid && dst->sha1_valid)
-	    return !hashcmp(src->sha1, dst->sha1);
-	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
-		return 0;
-	if (src->size == dst->size &&
-	    !memcmp(src->data, dst->data, src->size))
-		return 1;
-	return 0;
 }
 
 static int basename_same(struct diff_filespec *src, struct diff_filespec *dst)
@@ -242,56 +220,163 @@ static int score_compare(const void *a_, const void *b_)
 	return b->score - a->score;
 }
 
+struct file_similarity {
+	int src_dst, index;
+	struct diff_filespec *filespec;
+	struct file_similarity *next;
+};
+
+static int find_identical_files(struct file_similarity *src,
+				struct file_similarity *dst)
+{
+	int renames = 0;
+
+	/*
+	 * Walk over all the destinations ...
+	 */
+	do {
+		struct diff_filespec *one = dst->filespec;
+		struct file_similarity *p, *best;
+		int i = 100;
+
+		/*
+		 * .. to find the best source match
+		 */
+		best = NULL;
+		for (p = src; p; p = p->next) {
+			struct diff_filespec *two = p->filespec;
+
+			/* False hash collission? */
+			if (hashcmp(one->sha1, two->sha1))
+				continue;
+			/* Non-regular files? If so, the modes must match! */
+			if (!S_ISREG(one->mode) || !S_ISREG(two->mode)) {
+				if (one->mode != two->mode)
+					continue;
+			}
+			best = p;
+			if (basename_same(one, two))
+				break;
+
+			/* Too many identical alternatives? Pick one */
+			if (!--i)
+				break;
+		}
+		if (best) {
+			record_rename_pair(dst->index, best->index, MAX_SCORE);
+			renames++;
+		}
+	} while ((dst = dst->next) != NULL);
+	return renames;
+}
+
+/*
+ * Note: the rest of the rename logic depends on this
+ * phase also populating all the filespecs for any
+ * entry that isn't matched up with an exact rename.
+ */
+static void free_similarity_list(struct file_similarity *p)
+{
+	while (p) {
+		struct file_similarity *entry = p;
+		p = p->next;
+
+		/* Stupid special case, see note above! */
+		diff_populate_filespec(entry->filespec, 0);
+		free(entry);
+	}
+}
+
+static int find_same_files(void *ptr)
+{
+	int ret;
+	struct file_similarity *p = ptr;
+	struct file_similarity *src = NULL, *dst = NULL;
+
+	/* Split the hash list up into sources and destinations */
+	do {
+		struct file_similarity *entry = p;
+		p = p->next;
+		if (entry->src_dst < 0) {
+			entry->next = src;
+			src = entry;
+		} else {
+			entry->next = dst;
+			dst = entry;
+		}
+	} while (p);
+
+	/*
+	 * If we have both sources *and* destinations, see if
+	 * we can match them up
+	 */
+	ret = (src && dst) ? find_identical_files(src, dst) : 0;
+
+	/* Free the hashes and return the number of renames found */
+	free_similarity_list(src);
+	free_similarity_list(dst);
+	return ret;
+}
+
+static unsigned int hash_filespec(struct diff_filespec *filespec)
+{
+	unsigned int hash;
+	if (!filespec->sha1_valid) {
+		if (diff_populate_filespec(filespec, 0))
+			return 0;
+		hash_sha1_file(filespec->data, filespec->size, "blob", filespec->sha1);
+	}
+	memcpy(&hash, filespec->sha1, sizeof(hash));
+	return hash;
+}
+
+static void insert_file_table(struct hash_table *table, int src_dst, int index, struct diff_filespec *filespec)
+{
+	void **pos;
+	unsigned int hash;
+	struct file_similarity *entry = xmalloc(sizeof(*entry));
+
+	entry->src_dst = src_dst;
+	entry->index = index;
+	entry->filespec = filespec;
+	entry->next = NULL;
+
+	hash = hash_filespec(filespec);
+	pos = insert_hash(hash, entry, table);
+
+	/* We already had an entry there? */
+	if (pos) {
+		entry->next = *pos;
+		*pos = entry;
+	}
+}
+
 /*
  * Find exact renames first.
  *
  * The first round matches up the up-to-date entries,
  * and then during the second round we try to match
  * cache-dirty entries as well.
- *
- * Note: the rest of the rename logic depends on this
- * phase also populating all the filespecs for any
- * entry that isn't matched up with an exact rename,
- * see "is_exact_match()".
  */
 static int find_exact_renames(void)
 {
-	int rename_count = 0;
-	int contents_too;
+	int i;
+	struct hash_table file_table;
 
-	for (contents_too = 0; contents_too < 2; contents_too++) {
-		int i;
+	init_hash(&file_table);
+	for (i = 0; i < rename_src_nr; i++)
+		insert_file_table(&file_table, -1, i, rename_src[i].one);
 
-		for (i = 0; i < rename_dst_nr; i++) {
-			struct diff_filespec *two = rename_dst[i].two;
-			int j;
+	for (i = 0; i < rename_dst_nr; i++)
+		insert_file_table(&file_table, 1, i, rename_dst[i].two);
 
-			if (rename_dst[i].pair)
-				continue; /* dealt with an earlier round */
-			for (j = 0; j < rename_src_nr; j++) {
-				int k;
-				struct diff_filespec *one = rename_src[j].one;
-				if (!is_exact_match(one, two, contents_too))
-					continue;
+	/* Find the renames */
+	i = for_each_hash(&file_table, find_same_files);
 
-				/* see if there is a basename match, too */
-				for (k = j; k < rename_src_nr; k++) {
-					one = rename_src[k].one;
-					if (basename_same(one, two) &&
-						is_exact_match(one, two,
-							contents_too)) {
-						j = k;
-						break;
-					}
-				}
+	/* .. and free the hash data structure */
+	free_hash(&file_table);
 
-				record_rename_pair(i, j, (int)MAX_SCORE);
-				rename_count++;
-				break; /* we are done with this entry */
-			}
-		}
-	}
-	return rename_count;
+	return i;
 }
 
 void diffcore_rename(struct diff_options *options)
