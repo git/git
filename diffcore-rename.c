@@ -429,6 +429,12 @@ void diffcore_rename(struct diff_options *options)
 		goto cleanup; /* nothing to do */
 
 	/*
+	 * We really want to cull the candidates list early
+	 * with cheap tests in order to avoid doing deltas.
+	 */
+	rename_count = find_exact_renames();
+
+	/*
 	 * This basically does a test for the rename matrix not
 	 * growing larger than a "rename_limit" square matrix, ie:
 	 *
@@ -443,12 +449,6 @@ void diffcore_rename(struct diff_options *options)
 		goto cleanup;
 	if (rename_dst_nr * rename_src_nr > rename_limit * rename_limit)
 		goto cleanup;
-
-	/*
-	 * We really want to cull the candidates list early
-	 * with cheap tests in order to avoid doing deltas.
-	 */
-	rename_count = find_exact_renames();
 
 	/* Have we run out the created file pool?  If so we can avoid
 	 * doing the delta matrix altogether.
