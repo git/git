@@ -177,6 +177,46 @@ test_expect_success 'bisect skip and bisect replay' '
 	git bisect reset
 '
 
+HASH6=
+test_expect_success 'bisect run & skip: cannot tell between 2' '
+	add_line_into_file "6: Yet a line." hello &&
+	HASH6=$(git rev-parse --verify HEAD) &&
+	echo "#"\!"/bin/sh" > test_script.sh &&
+	echo "tail -1 hello | grep Ciao > /dev/null && exit 125" >> test_script.sh &&
+	echo "grep line hello > /dev/null" >> test_script.sh &&
+	echo "test \$? -ne 0" >> test_script.sh &&
+	chmod +x test_script.sh &&
+	git bisect start $HASH6 $HASH1 &&
+	if git bisect run ./test_script.sh > my_bisect_log.txt
+	then
+		echo Oops, should have failed.
+		false
+	else
+		test $? -eq 2 &&
+		grep "first bad commit could be any of" my_bisect_log.txt &&
+		! grep $HASH3 my_bisect_log.txt &&
+		! grep $HASH6 my_bisect_log.txt &&
+		grep $HASH4 my_bisect_log.txt &&
+		grep $HASH5 my_bisect_log.txt
+	fi
+'
+
+HASH7=
+test_expect_success 'bisect run & skip: find first bad' '
+	git bisect reset &&
+	add_line_into_file "7: Should be the last line." hello &&
+	HASH7=$(git rev-parse --verify HEAD) &&
+	echo "#"\!"/bin/sh" > test_script.sh &&
+	echo "tail -1 hello | grep Ciao > /dev/null && exit 125" >> test_script.sh &&
+	echo "tail -1 hello | grep day > /dev/null && exit 125" >> test_script.sh &&
+	echo "grep Yet hello > /dev/null" >> test_script.sh &&
+	echo "test \$? -ne 0" >> test_script.sh &&
+	chmod +x test_script.sh &&
+	git bisect start $HASH7 $HASH1 &&
+	git bisect run ./test_script.sh > my_bisect_log.txt &&
+	grep "$HASH6 is first bad commit" my_bisect_log.txt
+'
+
 #
 #
 test_done

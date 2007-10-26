@@ -392,7 +392,10 @@ bisect_run () {
       fi
 
       # Find current state depending on run success or failure.
-      if [ $res -gt 0 ]; then
+      # A special exit code of 125 means cannot test.
+      if [ $res -eq 125 ]; then
+	  state='skip'
+      elif [ $res -gt 0 ]; then
 	  state='bad'
       else
 	  state='good'
@@ -403,6 +406,12 @@ bisect_run () {
       res=$?
 
       cat "$GIT_DIR/BISECT_RUN"
+
+      if grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
+		> /dev/null; then
+	  echo >&2 "bisect run cannot continue any more"
+	  exit $res
+      fi
 
       if [ $res -ne 0 ]; then
 	  echo >&2 "bisect run failed:"

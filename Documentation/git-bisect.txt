@@ -182,13 +182,17 @@ $ git bisect run my_script
 ------------
 
 Note that the "run" script (`my_script` in the above example) should
-exit with code 0 in case the current source code is good and with a
-code between 1 and 127 (included) in case the current source code is
-bad.
+exit with code 0 in case the current source code is good.  Exit with a
+code between 1 and 127 (inclusive), except 125, if the current
+source code is bad.
 
 Any other exit code will abort the automatic bisect process. (A
 program that does "exit(-1)" leaves $? = 255, see exit(3) manual page,
 the value is chopped with "& 0377".)
+
+The special exit code 125 should be used when the current source code
+cannot be tested. If the "run" script exits with this code, the current
+revision will be skipped, see `git bisect skip` above.
 
 You may often find that during bisect you want to have near-constant
 tweaks (e.g., s/#define DEBUG 0/#define DEBUG 1/ in a header file, or
