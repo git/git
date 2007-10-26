@@ -144,6 +144,20 @@ static int estimate_similarity(struct diff_filespec *src,
 	if (!S_ISREG(src->mode) || !S_ISREG(dst->mode))
 		return 0;
 
+	/*
+	 * Need to check that source and destination sizes are
+	 * filled in before comparing them.
+	 *
+	 * If we already have "cnt_data" filled in, we know it's
+	 * all good (avoid checking the size for zero, as that
+	 * is a possible size - we really should have a flag to
+	 * say whether the size is valid or not!)
+	 */
+	if (!src->cnt_data && diff_populate_filespec(src, 0))
+		return 0;
+	if (!dst->cnt_data && diff_populate_filespec(dst, 0))
+		return 0;
+
 	max_size = ((src->size > dst->size) ? src->size : dst->size);
 	base_size = ((src->size < dst->size) ? src->size : dst->size);
 	delta_size = max_size - base_size;
@@ -158,11 +172,6 @@ static int estimate_similarity(struct diff_filespec *src,
 	 */
 	if (base_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
 		return 0;
-
-	if ((!src->cnt_data && diff_populate_filespec(src, 0))
-		|| (!dst->cnt_data && diff_populate_filespec(dst, 0)))
-		return 0; /* error but caught downstream */
-
 
 	delta_limit = (unsigned long)
 		(base_size * (MAX_SCORE-minimum_score) / MAX_SCORE);
@@ -270,19 +279,11 @@ static int find_identical_files(struct file_similarity *src,
 	return renames;
 }
 
-/*
- * Note: the rest of the rename logic depends on this
- * phase also populating all the filespecs for any
- * entry that isn't matched up with an exact rename.
- */
 static void free_similarity_list(struct file_similarity *p)
 {
 	while (p) {
 		struct file_similarity *entry = p;
 		p = p->next;
-
-		/* Stupid special case, see note above! */
-		diff_populate_filespec(entry->filespec, 0);
 		free(entry);
 	}
 }
