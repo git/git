@@ -4,6 +4,8 @@ test_description='GIT_EDITOR, core.editor, and stuff'
 
 . ./test-lib.sh
 
+OLD_TERM="$TERM"
+
 for i in GIT_EDITOR core_editor EDITOR VISUAL vi
 do
 	cat >e-$i.sh <<-EOF
@@ -87,5 +89,7 @@ do
 		diff actual expect
 	'
 done
+
+TERM="$OLD_TERM"
 
 test_done
