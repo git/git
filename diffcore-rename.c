@@ -435,33 +435,37 @@ void diffcore_rename(struct diff_options *options)
 	 */
 	rename_count = find_exact_renames();
 
+	/* Did we only want exact renames? */
+	if (minimum_score == MAX_SCORE)
+		goto cleanup;
+
+	/*
+	 * Calculate how many renames are left (but all the source
+	 * files still remain as options for rename/copies!)
+	 */
+	num_create = (rename_dst_nr - rename_count);
+	num_src = rename_src_nr;
+
+	/* All done? */
+	if (!num_create)
+		goto cleanup;
+
 	/*
 	 * This basically does a test for the rename matrix not
 	 * growing larger than a "rename_limit" square matrix, ie:
 	 *
-	 *    rename_dst_nr * rename_src_nr > rename_limit * rename_limit
+	 *    num_create * num_src > rename_limit * rename_limit
 	 *
 	 * but handles the potential overflow case specially (and we
 	 * assume at least 32-bit integers)
 	 */
 	if (rename_limit <= 0 || rename_limit > 32767)
 		rename_limit = 32767;
-	if (rename_dst_nr > rename_limit && rename_src_nr > rename_limit)
+	if (num_create > rename_limit && num_src > rename_limit)
 		goto cleanup;
-	if (rename_dst_nr * rename_src_nr > rename_limit * rename_limit)
-		goto cleanup;
-
-	/* Have we run out the created file pool?  If so we can avoid
-	 * doing the delta matrix altogether.
-	 */
-	if (rename_count == rename_dst_nr)
+	if (num_create * num_src > rename_limit * rename_limit)
 		goto cleanup;
 
-	if (minimum_score == MAX_SCORE)
-		goto cleanup;
-
-	num_create = (rename_dst_nr - rename_count);
-	num_src = rename_src_nr;
 	mx = xmalloc(sizeof(*mx) * num_create * num_src);
 	for (dst_cnt = i = 0; i < rename_dst_nr; i++) {
 		int base = dst_cnt * num_src;
