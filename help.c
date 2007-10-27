@@ -147,7 +147,7 @@ static void list_commands(const char *exec_path, const char *pattern)
 	putchar('\n');
 }
 
-static void list_common_cmds_help(void)
+void list_common_cmds_help(void)
 {
 	int i, longest = 0;
 
@@ -203,14 +203,14 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	if (!help_cmd) {
 		printf("usage: %s\n\n", git_usage_string);
 		list_common_cmds_help();
-		exit(1);
+		exit(0);
 	}
 
 	else if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a")) {
 		printf("usage: %s\n\n", git_usage_string);
 		if(exec_path)
 			list_commands(exec_path, "git-*");
-		exit(1);
+		exit(0);
 	}
 
 	else
