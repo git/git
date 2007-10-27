@@ -185,8 +185,7 @@ static void show_man_page(const char *git_cmd)
 
 void help_unknown_cmd(const char *cmd)
 {
-	printf("git: '%s' is not a git-command\n\n", cmd);
-	list_common_cmds_help();
+	fprintf(stderr, "git: '%s' is not a git-command. See 'git --help'.\n", cmd);
 	exit(1);
 }
 
