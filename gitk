@@ -830,11 +830,11 @@ proc makewindow {} {
     lappend entries $sstring
     trace add variable searchstring write incrsearch
     pack $sstring -side left -expand 1 -fill x
-    radiobutton .bleft.mid.diff -text "Diff" \
+    radiobutton .bleft.mid.diff -text "Diff" -font uifont \
 	-command changediffdisp -variable diffelide -value {0 0}
-    radiobutton .bleft.mid.old -text "Old version" \
+    radiobutton .bleft.mid.old -text "Old version" -font uifont \
 	-command changediffdisp -variable diffelide -value {0 1}
-    radiobutton .bleft.mid.new -text "New version" \
+    radiobutton .bleft.mid.new -text "New version" -font uifont \
 	-command changediffdisp -variable diffelide -value {1 0}
     label .bleft.mid.labeldiffcontext -text "      Lines of context: " \
 	-font uifont
