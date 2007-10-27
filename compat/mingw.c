@@ -303,6 +303,7 @@ void openlog(const char *ident, int option, int facility)
 {
 }
 
+/* See http://msdn2.microsoft.com/en-us/library/17w5ykft(vs.71).aspx (Parsing C++ Command-Line Arguments */
 static const char *quote_arg(const char *arg)
 {
 	/* count chars to quote */
@@ -310,11 +311,23 @@ static const char *quote_arg(const char *arg)
 	int force_quotes = 0;
 	char *q, *d;
 	const char *p = arg;
+	if (!*p) force_quotes = 1;
 	while (*p) {
-		if (isspace(*p))
+		if (isspace(*p) || *p == '*' || *p == '?')
 			force_quotes = 1;
-		else if (*p == '"' || *p == '\\')
+		else if (*p == '"')
 			n++;
+		else if (*p == '\\') {
+			int count = 0;
+			while (*p == '\\') {
+				count++;
+				p++;
+				len++;
+			}
+			if (*p == '"')
+				n += count*2 + 1;
+			continue;
+		}
 		len++;
 		p++;
 	}
@@ -325,8 +338,20 @@ static const char *quote_arg(const char *arg)
 	d = q = xmalloc(len+n+3);
 	*d++ = '"';
 	while (*arg) {
-		if (*arg == '"' || *arg == '\\')
+		if (*arg == '"')
 			*d++ = '\\';
+		else if (*arg == '\\') {
+			int count = 0;
+			while (*arg == '\\') {
+				count++;
+				*d++ = *arg++;
+			}
+			if (*arg == '"') {
+				while (count-- > 0)
+					*d++ = '\\';
+				*d++ = '\\';
+			}
+		}
 		*d++ = *arg++;
 	}
 	*d++ = '"';
