@@ -93,10 +93,12 @@ static void pretty_print_string_list(struct cmdname **cmdname, int longest)
 	}
 }
 
-static void list_commands(const char *exec_path, const char *pattern)
+static void list_commands(const char *exec_path)
 {
 	unsigned int longest = 0;
 	char path[PATH_MAX];
+	const char *prefix = "git-";
+	int prefix_len = strlen(prefix);
 	int dirlen;
 	DIR *dir = opendir(exec_path);
 	struct dirent *de;
@@ -120,7 +122,7 @@ static void list_commands(const char *exec_path, const char *pattern)
 		struct stat st;
 		int entlen;
 
-		if (prefixcmp(de->d_name, "git-"))
+		if (prefixcmp(de->d_name, prefix))
 			continue;
 		strcpy(path+dirlen, de->d_name);
 		if (stat(path, &st) || /* stat, not lstat */
@@ -128,14 +130,14 @@ static void list_commands(const char *exec_path, const char *pattern)
 		    !(st.st_mode & S_IXUSR))
 			continue;
 
-		entlen = strlen(de->d_name);
+		entlen = strlen(de->d_name) - prefix_len;
 		if (has_extension(de->d_name, ".exe"))
 			entlen -= 4;
 
 		if (longest < entlen)
 			longest = entlen;
 
-		add_cmdname(de->d_name + 4, entlen-4);
+		add_cmdname(de->d_name + prefix_len, entlen);
 	}
 	closedir(dir);
 
@@ -143,7 +145,7 @@ static void list_commands(const char *exec_path, const char *pattern)
 	printf("----------------------------");
 	mput_char('-', strlen(exec_path));
 	putchar('\n');
-	pretty_print_string_list(cmdname, longest - 4);
+	pretty_print_string_list(cmdname, longest);
 	putchar('\n');
 }
 
@@ -209,7 +211,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	else if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a")) {
 		printf("usage: %s\n\n", git_usage_string);
 		if(exec_path)
-			list_commands(exec_path, "git-*");
+			list_commands(exec_path);
 		exit(0);
 	}
 
