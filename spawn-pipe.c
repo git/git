@@ -123,6 +123,7 @@ int spawnvppe_pipe(const char *cmd, const char **argv, const char **env,
 		  int pin[], int pout[])
 {
 	const char *cmd_basename = strrchr(cmd, '/');
+	const char *argv0 = argv[0];
 	pid_t pid;
 
 #ifdef __MINGW32__
@@ -213,6 +214,8 @@ int spawnvppe_pipe(const char *cmd, const char **argv, const char **env,
 		close(s1);
 	}
 #endif
+
+	argv[0] = argv0;
 
 	return pid;
 }
