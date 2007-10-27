@@ -5,11 +5,11 @@
 
 extern char **environ;
 static const char *builtin_exec_path = GIT_EXEC_PATH;
-static const char *current_exec_path;
+static const char *argv_exec_path;
 
-void git_set_exec_path(const char *exec_path)
+void git_set_argv_exec_path(const char *exec_path)
 {
-	current_exec_path = exec_path;
+	argv_exec_path = exec_path;
 }
 
 
@@ -18,8 +18,8 @@ const char *git_exec_path(void)
 {
 	const char *env;
 
-	if (current_exec_path)
-		return current_exec_path;
+	if (argv_exec_path)
+		return argv_exec_path;
 
 	env = getenv(EXEC_PATH_ENVIRONMENT);
 	if (env && *env) {
@@ -34,7 +34,7 @@ int execv_git_cmd(const char **argv)
 {
 	char git_command[PATH_MAX + 1];
 	int i;
-	const char *paths[] = { current_exec_path,
+	const char *paths[] = { argv_exec_path,
 				getenv(EXEC_PATH_ENVIRONMENT),
 				builtin_exec_path };
 
