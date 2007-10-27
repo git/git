@@ -170,11 +170,8 @@ static void create_pack_file(void)
 	pack_objects.git_cmd = 1;
 	pack_objects.argv = argv;
 
-	if (start_command(&pack_objects)) {
-		/* daemon sets things up to ignore TERM */
-		kill(rev_list.pid, SIGKILL);
+	if (start_command(&pack_objects))
 		die("git-upload-pack: unable to fork git-pack-objects");
-	}
 
 #ifndef __MINGW32__
 	/* We read from pack_objects.err to capture stderr output for
