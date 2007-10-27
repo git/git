@@ -764,8 +764,8 @@ proc makewindow {} {
 
     # build up the bottom bar of upper window
     label .tf.lbar.flabel -text "Find " -font uifont
-    button .tf.lbar.fnext -text "next" -command dofind -font uifont
-    button .tf.lbar.fprev -text "prev" -command {dofind 1} -font uifont
+    button .tf.lbar.fnext -text "next" -command {dofind 1 1} -font uifont
+    button .tf.lbar.fprev -text "prev" -command {dofind -1 1} -font uifont
     label .tf.lbar.flab2 -text " commit " -font uifont
     pack .tf.lbar.flabel .tf.lbar.fnext .tf.lbar.fprev .tf.lbar.flab2 \
 	-side left -fill y
@@ -959,6 +959,8 @@ proc makewindow {} {
     bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
+    bind . <Shift-Key-Up> "dofind -1 0"
+    bind . <Shift-Key-Down> "dofind 1 0"
     bindkey <Key-Right> "goforw"
     bindkey <Key-Left> "goback"
     bind . <Key-Prior> "selnextpage -1"
@@ -983,14 +985,14 @@ proc makewindow {} {
     bindkey b "$ctext yview scroll -1 pages"
     bindkey d "$ctext yview scroll 18 units"
     bindkey u "$ctext yview scroll -18 units"
-    bindkey / {findnext 1}
-    bindkey <Key-Return> {findnext 0}
-    bindkey ? findprev
+    bindkey / {dofind 1 1}
+    bindkey <Key-Return> {dofind 1 1}
+    bindkey ? {dofind -1 1}
     bindkey f nextfile
     bindkey <F5> updatecommits
     bind . <$M1B-q> doquit
-    bind . <$M1B-f> dofind
-    bind . <$M1B-g> {findnext 0}
+    bind . <$M1B-f> {dofind 1 1}
+    bind . <$M1B-g> {dofind 1 0}
     bind . <$M1B-r> dosearchback
     bind . <$M1B-s> dosearch
     bind . <$M1B-equal> {incrfont 1}
@@ -999,7 +1001,7 @@ proc makewindow {} {
     bind . <$M1B-KP_Subtract> {incrfont -1}
     wm protocol . WM_DELETE_WINDOW doquit
     bind . <Button-1> "click %W"
-    bind $fstring <Key-Return> dofind
+    bind $fstring <Key-Return> {dofind 1 1}
     bind $sha1entry <Key-Return> gotocommit
     bind $sha1entry <<PasteSelection>> clearsha1
     bind $cflist <1> {sel_flist %W %x %y; break}
@@ -1325,8 +1327,8 @@ Gitk key bindings:
 <$M1T-Down>	Scroll commit list down one line
 <$M1T-PageUp>	Scroll commit list up one page
 <$M1T-PageDown>	Scroll commit list down one page
-<Shift-Up>	Move to previous highlighted line
-<Shift-Down>	Move to next highlighted line
+<Shift-Up>	Find backwards (upwards, later commits)
+<Shift-Down>	Find forwards (downwards, earlier commits)
 <Delete>, b	Scroll diff view up one page
 <Backspace>	Scroll diff view up one page
 <Space>		Scroll diff view down one page
@@ -2459,11 +2461,7 @@ proc readfhighlight {} {
 	return 0
     }
     if {[info exists find_dirn]} {
-	if {$find_dirn > 0} {
-	    run findmore
-	} else {
-	    run findmorerev
-	}
+	run findmore
     }
     return 1
 }
@@ -4247,15 +4245,18 @@ proc findmatches {f} {
     return $matches
 }
 
-proc dofind {{rev 0}} {
+proc dofind {{dirn 1} {wrap 1}} {
     global findstring findstartline findcurline selectedline numcommits
-    global gdttype filehighlight fh_serial find_dirn
+    global gdttype filehighlight fh_serial find_dirn findallowwrap
 
-    unmarkmatches
+    if {[info exists find_dirn]} {
+	if {$find_dirn == $dirn} return
+	stopfinding
+    }
     focus .
     if {$findstring eq {} || $numcommits == 0} return
     if {![info exists selectedline]} {
-	set findstartline [lindex [visiblerows] $rev]
+	set findstartline [lindex [visiblerows] [expr {$dirn < 0}]]
     } else {
 	set findstartline $selectedline
     }
@@ -4265,13 +4266,9 @@ proc dofind {{rev 0}} {
 	after cancel do_file_hl $fh_serial
 	do_file_hl $fh_serial
     }
-    if {!$rev} {
-	set find_dirn 1
-	run findmore
-    } else {
-	set find_dirn -1
-	run findmorerev
-    }
+    set find_dirn $dirn
+    set findallowwrap $wrap
+    run findmore
 }
 
 proc stopfinding {} {
@@ -4286,61 +4283,50 @@ proc stopfinding {} {
     }
 }
 
-proc findnext {restart} {
-    global findcurline find_dirn
-
-    if {[info exists find_dirn]} return
-    if {![info exists findcurline]} {
-	if {$restart} {
-	    dofind
-	} else {
-	    bell
-	}
-    } else {
-	set find_dirn 1
-	run findmore
-	nowbusy finding "Searching"
-    }
-}
-
-proc findprev {} {
-    global findcurline find_dirn
-
-    if {[info exists find_dirn]} return
-    if {![info exists findcurline]} {
-	dofind 1
-    } else {
-	set find_dirn -1
-	run findmorerev
-	nowbusy finding "Searching"
-    }
-}
-
 proc findmore {} {
     global commitdata commitinfo numcommits findpattern findloc
     global findstartline findcurline displayorder
     global find_dirn gdttype fhighlights fprogcoord
+    global findallowwrap
 
     if {![info exists find_dirn]} {
 	return 0
     }
     set fldtypes {Headline Author Date Committer CDate Comments}
-    set l [expr {$findcurline + 1}]
-    if {$l >= $numcommits} {
-	set l 0
-    }
-    if {$l <= $findstartline} {
-	set lim [expr {$findstartline + 1}]
+    set l $findcurline
+    set moretodo 0
+    if {$find_dirn > 0} {
+	incr l
+	if {$l >= $numcommits} {
+	    set l 0
+	}
+	if {$l <= $findstartline} {
+	    set lim [expr {$findstartline + 1}]
+	} else {
+	    set lim $numcommits
+	    set moretodo $findallowwrap
+	}
     } else {
-	set lim $numcommits
+	if {$l == 0} {
+	    set l $numcommits
+	}
+	incr l -1
+	if {$l >= $findstartline} {
+	    set lim [expr {$findstartline - 1}]
+	} else {
+	    set lim -1
+	    set moretodo $findallowwrap
+	}
     }
-    if {$lim - $l > 500} {
-	set lim [expr {$l + 500}]
+    set n [expr {($lim - $l) * $find_dirn}]
+    if {$n > 500} {
+	set n 500
+	set moretodo 1
     }
     set found 0
     set domore 1
     if {$gdttype eq "containing:"} {
-	for {} {$l < $lim} {incr l} {
+	for {} {$n > 0} {incr n -1; incr l $find_dirn} {
 	    set id [lindex $displayorder $l]
 	    # shouldn't happen unless git log doesn't give all the commits...
 	    if {![info exists commitdata($id)]} continue
@@ -4359,13 +4345,13 @@ proc findmore {} {
 	    if {$found} break
 	}
     } else {
-	for {} {$l < $lim} {incr l} {
+	for {} {$n > 0} {incr n -1; incr l $find_dirn} {
 	    set id [lindex $displayorder $l]
 	    if {![info exists fhighlights($l)]} {
 		askfilehighlight $l $id
 		if {$domore} {
 		    set domore 0
-		    set findcurline [expr {$l - 1}]
+		    set findcurline [expr {$l - $find_dirn}]
 		}
 	    } elseif {$fhighlights($l)} {
 		set found $domore
@@ -4373,7 +4359,7 @@ proc findmore {} {
 	    }
 	}
     }
-    if {$found || ($domore && $l == $findstartline + 1)} {
+    if {$found || ($domore && !$moretodo)} {
 	unset findcurline
 	unset find_dirn
 	notbusy finding
@@ -4389,93 +4375,9 @@ proc findmore {} {
     if {!$domore} {
 	flushhighlights
     } else {
-	set findcurline [expr {$l - 1}]
+	set findcurline [expr {$l - $find_dirn}]
     }
-    set n [expr {$findcurline - ($findstartline + 1)}]
-    if {$n < 0} {
-	incr n $numcommits
-    }
-    set fprogcoord [expr {$n * 1.0 / $numcommits}]
-    adjustprogress
-    return $domore
-}
-
-proc findmorerev {} {
-    global commitdata commitinfo numcommits findpattern findloc
-    global findstartline findcurline displayorder
-    global find_dirn gdttype fhighlights fprogcoord
-
-    if {![info exists find_dirn]} {
-	return 0
-    }
-    set fldtypes {Headline Author Date Committer CDate Comments}
-    set l $findcurline
-    if {$l == 0} {
-	set l $numcommits
-    }
-    incr l -1
-    if {$l >= $findstartline} {
-	set lim [expr {$findstartline - 1}]
-    } else {
-	set lim -1
-    }
-    if {$l - $lim > 500} {
-	set lim [expr {$l - 500}]
-    }
-    set found 0
-    set domore 1
-    if {$gdttype eq "containing:"} {
-	for {} {$l > $lim} {incr l -1} {
-	    set id [lindex $displayorder $l]
-	    if {![info exists commitdata($id)]} continue
-	    if {![doesmatch $commitdata($id)]} continue
-	    if {![info exists commitinfo($id)]} {
-		getcommit $id
-	    }
-	    set info $commitinfo($id)
-	    foreach f $info ty $fldtypes {
-		if {($findloc eq "All fields" || $findloc eq $ty) &&
-		    [doesmatch $f]} {
-		    set found 1
-		    break
-		}
-	    }
-	    if {$found} break
-	}
-    } else {
-	for {} {$l > $lim} {incr l -1} {
-	    set id [lindex $displayorder $l]
-	    if {![info exists fhighlights($l)]} {
-		askfilehighlight $l $id
-		if {$domore} {
-		    set domore 0
-		    set findcurline [expr {$l + 1}]
-		}
-	    } elseif {$fhighlights($l)} {
-		set found $domore
-		break
-	    }
-	}
-    }
-    if {$found || ($domore && $l == $findstartline - 1)} {
-	unset findcurline
-	unset find_dirn
-	notbusy finding
-	set fprogcoord 0
-	adjustprogress
-	if {$found} {
-	    findselectline $l
-	} else {
-	    bell
-	}
-	return 0
-    }
-    if {!$domore} {
-	flushhighlights
-    } else {
-	set findcurline [expr {$l + 1}]
-    }
-    set n [expr {($findstartline - 1) - $findcurline}]
+    set n [expr {($findcurline - $findstartline) * $find_dirn - 1}]
     if {$n < 0} {
 	incr n $numcommits
     }
