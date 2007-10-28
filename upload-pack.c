@@ -9,6 +9,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "run-command.h"
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
@@ -96,11 +97,12 @@ static void show_edge(struct commit *commit)
 	fprintf(pack_pipe, "-%s\n", sha1_to_hex(commit->object.sha1));
 }
 
-static void do_rev_list(void *create_full_pack)
+static int do_rev_list(int fd, void *create_full_pack)
 {
 	int i;
 	struct rev_info revs;
 
+	pack_pipe = fdopen(fd, "w");
 	if (create_full_pack)
 		use_thin_pack = 0; /* no point doing it */
 	init_revisions(&revs, NULL);
@@ -132,81 +134,52 @@ static void do_rev_list(void *create_full_pack)
 	traverse_commit_list(&revs, show_commit, show_object);
 	fflush(pack_pipe);
 	fclose(pack_pipe);
+	return 0;
 }
 
 static void create_pack_file(void)
 {
-#ifndef __MINGW32__
-	/* Pipes between rev-list to pack-objects, pack-objects to us
-	 * and pack-objects error stream for progress bar.
-	 */
-	int lp_pipe[2], pu_pipe[2], pe_pipe[2];
-	pid_t pid_rev_list, pid_pack_objects;
+	struct async rev_list;
+	struct child_process pack_objects;
 	int create_full_pack = (nr_our_refs == want_obj.nr && !have_obj.nr);
 	char data[8193], progress[128];
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
 	int buffered = -1;
+	const char *argv[10];
+	int arg = 0;
 
-	if (pipe(lp_pipe) < 0)
-		die("git-upload-pack: unable to create pipe");
-	pid_rev_list = fork();
-	if (pid_rev_list < 0)
+	rev_list.proc = do_rev_list;
+	/* .data is just a boolean: any non-NULL value will do */
+	rev_list.data = create_full_pack ? &rev_list : NULL;
+	if (start_async(&rev_list))
 		die("git-upload-pack: unable to fork git-rev-list");
 
-	if (!pid_rev_list) {
-		close(lp_pipe[0]);
-		pack_pipe = fdopen(lp_pipe[1], "w");
-		do_rev_list(create_full_pack);
-		exit(0);
-	}
+	argv[arg++] = "pack-objects";
+	argv[arg++] = "--stdout";
+	if (!no_progress)
+		argv[arg++] = "--progress";
+	if (use_ofs_delta)
+		argv[arg++] = "--delta-base-offset";
+	argv[arg++] = NULL;
 
-	if (pipe(pu_pipe) < 0)
-		die("git-upload-pack: unable to create pipe");
-	if (pipe(pe_pipe) < 0)
-		die("git-upload-pack: unable to create pipe");
-	pid_pack_objects = fork();
-	if (pid_pack_objects < 0) {
+	memset(&pack_objects, 0, sizeof(pack_objects));
+	pack_objects.in = rev_list.out;	/* start_command closes it */
+	pack_objects.out = -1;
+	pack_objects.err = -1;
+	pack_objects.git_cmd = 1;
+	pack_objects.argv = argv;
+
+	if (start_command(&pack_objects)) {
 		/* daemon sets things up to ignore TERM */
-		kill(pid_rev_list, SIGKILL);
+		kill(rev_list.pid, SIGKILL);
 		die("git-upload-pack: unable to fork git-pack-objects");
 	}
-	if (!pid_pack_objects) {
-		const char *argv[10];
-		int i = 0;
 
-		dup2(lp_pipe[0], 0);
-		dup2(pu_pipe[1], 1);
-		dup2(pe_pipe[1], 2);
-
-		close(lp_pipe[0]);
-		close(lp_pipe[1]);
-		close(pu_pipe[0]);
-		close(pu_pipe[1]);
-		close(pe_pipe[0]);
-		close(pe_pipe[1]);
-
-		argv[i++] = "pack-objects";
-		argv[i++] = "--stdout";
-		if (!no_progress)
-			argv[i++] = "--progress";
-		if (use_ofs_delta)
-			argv[i++] = "--delta-base-offset";
-		argv[i++] = NULL;
-
-		execv_git_cmd(argv);
-		kill(pid_rev_list, SIGKILL);
-		die("git-upload-pack: unable to exec git-pack-objects");
-	}
-
-	close(lp_pipe[0]);
-	close(lp_pipe[1]);
-
-	/* We read from pe_pipe[0] to capture stderr output for
-	 * progress bar, and pu_pipe[0] to capture the pack data.
+#ifndef __MINGW32__
+	/* We read from pack_objects.err to capture stderr output for
+	 * progress bar, and pack_objects.out to capture the pack data.
 	 */
-	close(pe_pipe[1]);
-	close(pu_pipe[1]);
 
 	while (1) {
 		const char *who;
@@ -221,14 +194,14 @@ static void create_pack_file(void)
 		pollsize = 0;
 		pe = pu = -1;
 
-		if (0 <= pu_pipe[0]) {
-			pfd[pollsize].fd = pu_pipe[0];
+		if (0 <= pack_objects.out) {
+			pfd[pollsize].fd = pack_objects.out;
 			pfd[pollsize].events = POLLIN;
 			pu = pollsize;
 			pollsize++;
 		}
-		if (0 <= pe_pipe[0]) {
-			pfd[pollsize].fd = pe_pipe[0];
+		if (0 <= pack_objects.err) {
+			pfd[pollsize].fd = pack_objects.err;
 			pfd[pollsize].events = POLLIN;
 			pe = pollsize;
 			pollsize++;
@@ -261,13 +234,13 @@ static void create_pack_file(void)
 					*cp++ = buffered;
 					outsz++;
 				}
-				sz = xread(pu_pipe[0], cp,
+				sz = xread(pack_objects.out, cp,
 					  sizeof(data) - outsz);
 				if (0 < sz)
 						;
 				else if (sz == 0) {
-					close(pu_pipe[0]);
-					pu_pipe[0] = -1;
+					close(pack_objects.out);
+					pack_objects.out = -1;
 				}
 				else
 					goto fail;
@@ -286,13 +259,13 @@ static void create_pack_file(void)
 				/* Status ready; we ship that in the side-band
 				 * or dump to the standard error.
 				 */
-				sz = xread(pe_pipe[0], progress,
+				sz = xread(pack_objects.err, progress,
 					  sizeof(progress));
 				if (0 < sz)
 					send_client_data(2, progress, sz);
 				else if (sz == 0) {
-					close(pe_pipe[0]);
-					pe_pipe[0] = -1;
+					close(pack_objects.err);
+					pack_objects.err = -1;
 				}
 				else
 					goto fail;
@@ -300,12 +273,12 @@ static void create_pack_file(void)
 		}
 
 		/* See if the children are still there */
-		if (pid_rev_list || pid_pack_objects) {
+		if (rev_list.pid || pack_objects.pid) {
 			pid = waitpid(-1, &status, WNOHANG);
 			if (!pid)
 				continue;
-			who = ((pid == pid_rev_list) ? "git-rev-list" :
-			       (pid == pid_pack_objects) ? "git-pack-objects" :
+			who = ((pid == rev_list.pid) ? "git-rev-list" :
+			       (pid == pack_objects.pid) ? "git-pack-objects" :
 			       NULL);
 			if (!who) {
 				if (pid < 0) {
@@ -322,11 +295,11 @@ static void create_pack_file(void)
 				      who);
 				goto fail;
 			}
-			if (pid == pid_rev_list)
-				pid_rev_list = 0;
-			if (pid == pid_pack_objects)
-				pid_pack_objects = 0;
-			if (pid_rev_list || pid_pack_objects)
+			if (pid == rev_list.pid)
+				rev_list.pid = 0;
+			if (pid == pack_objects.pid)
+				pack_objects.pid = 0;
+			if (rev_list.pid || pack_objects.pid)
 				continue;
 		}
 
@@ -347,51 +320,19 @@ static void create_pack_file(void)
 		return;
 	}
  fail:
-	if (pid_pack_objects)
-		kill(pid_pack_objects, SIGKILL);
-	if (pid_rev_list)
-		kill(pid_rev_list, SIGKILL);
+	if (pack_objects.pid)
+		kill(pack_objects.pid, SIGKILL);
+	if (rev_list.pid)
+		kill(rev_list.pid, SIGKILL);
 	send_client_data(3, abort_msg, sizeof(abort_msg));
 	die("git-upload-pack: %s", abort_msg);
 #else
-	/* Pipes between rev-list to pack-objects, pack-objects to us. */
-	int lp_pipe[2], pu_pipe[2];
-	pid_t pid_pack_objects;
-	int create_full_pack = (nr_our_refs == want_obj.nr && !have_obj.nr);
-	char data[8193];
-	char abort_msg[] = "aborting due to possible repository "
-		"corruption on the remote side.";
-	int buffered = -1;
 	ssize_t sz;
 	char *cp;
-	const char *argv[10];
-	int i = 0;
 
-	if (pipe(lp_pipe) < 0)
-		die("git-upload-pack: unable to create pipe");
-	pack_pipe = fdopen(lp_pipe[1], "w");
-	if (_beginthread(do_rev_list, 0, create_full_pack ? &create_full_pack : NULL) < 0)
-		die("git-upload-pack: unable to run rev-list: %s", strerror(errno));
+	/* We read from pack_objects.out to capture the pack data. */
 
-	if (pipe(pu_pipe) < 0)
-		die("git-upload-pack: unable to create pipe");
-
-	argv[i++] = "pack-objects";
-	argv[i++] = "--stdout";
-	argv[i++] = "-q";
-	if (!no_progress)
-		argv[i++] = "--progress";
-	if (use_ofs_delta)
-		argv[i++] = "--delta-base-offset";
-	argv[i++] = NULL;
-
-	pid_pack_objects = spawnv_git_cmd(argv, lp_pipe, pu_pipe);
-	if (pid_pack_objects < 0)
-		die("git-upload-pack: unable to run git-pack-objects");
-
-	/* We read from pu_pipe[0] to capture the pack data. */
-
-	while ((sz = xread(pu_pipe[0], data+1, sizeof(data)-1)) > 0) {
+	while ((sz = xread(pack_objects.out, data+1, sizeof(data)-1)) > 0) {
 		cp = data+1;
 		/* Data ready; we keep the last byte to ourselves in case we
 		 * detect broken rev-list, so that we can leave the stream
@@ -415,8 +356,8 @@ static void create_pack_file(void)
 			goto fail;
 	}
 	if (sz == 0) {
-		close(pu_pipe[0]);
-		pu_pipe[0] = -1;
+		close(pack_objects.out);
+		pack_objects.out = -1;
 	}
 	else
 		goto fail;
@@ -431,13 +372,13 @@ static void create_pack_file(void)
 	}
 	if (use_sideband)
 		packet_flush(1);
-	if (waitpid(pid_pack_objects, NULL, 0) < 0)
+	if (waitpid(pack_objects.pid, NULL, 0) < 0)
 		die("git-upload-pack: waiting for pack-objects: %s",
 			strerror(errno));
 	return;
 
  fail:
-	kill(pid_pack_objects, SIGKILL);
+	kill(pack_objects.pid, SIGKILL);
 	send_client_data(3, abort_msg, sizeof(abort_msg));
 	die("git-upload-pack: %s", abort_msg);
 #endif

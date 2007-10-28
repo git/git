@@ -5,6 +5,12 @@
 static struct remote **remotes;
 static int allocated_remotes;
 
+static struct branch **branches;
+static int allocated_branches;
+
+static struct branch *current_branch;
+static const char *default_remote_name;
+
 #define BUF_SIZE (2048)
 static char buffer[BUF_SIZE];
 
@@ -26,13 +32,13 @@ static void add_fetch_refspec(struct remote *remote, const char *ref)
 	remote->fetch_refspec_nr = nr;
 }
 
-static void add_uri(struct remote *remote, const char *uri)
+static void add_url(struct remote *remote, const char *url)
 {
-	int nr = remote->uri_nr + 1;
-	remote->uri =
-		xrealloc(remote->uri, nr * sizeof(char *));
-	remote->uri[nr-1] = uri;
-	remote->uri_nr = nr;
+	int nr = remote->url_nr + 1;
+	remote->url =
+		xrealloc(remote->url, nr * sizeof(char *));
+	remote->url[nr-1] = url;
+	remote->url_nr = nr;
 }
 
 static struct remote *make_remote(const char *name, int len)
@@ -65,6 +71,54 @@ static struct remote *make_remote(const char *name, int len)
 	else
 		remotes[empty]->name = xstrdup(name);
 	return remotes[empty];
+}
+
+static void add_merge(struct branch *branch, const char *name)
+{
+	int nr = branch->merge_nr + 1;
+	branch->merge_name =
+		xrealloc(branch->merge_name, nr * sizeof(char *));
+	branch->merge_name[nr-1] = name;
+	branch->merge_nr = nr;
+}
+
+static struct branch *make_branch(const char *name, int len)
+{
+	int i, empty = -1;
+	char *refname;
+
+	for (i = 0; i < allocated_branches; i++) {
+		if (!branches[i]) {
+			if (empty < 0)
+				empty = i;
+		} else {
+			if (len ? (!strncmp(name, branches[i]->name, len) &&
+				   !branches[i]->name[len]) :
+			    !strcmp(name, branches[i]->name))
+				return branches[i];
+		}
+	}
+
+	if (empty < 0) {
+		empty = allocated_branches;
+		allocated_branches += allocated_branches ? allocated_branches : 1;
+		branches = xrealloc(branches,
+				   sizeof(*branches) * allocated_branches);
+		memset(branches + empty, 0,
+		       (allocated_branches - empty) * sizeof(*branches));
+	}
+	branches[empty] = xcalloc(1, sizeof(struct branch));
+	if (len)
+		branches[empty]->name = xstrndup(name, len);
+	else
+		branches[empty]->name = xstrdup(name);
+	refname = malloc(strlen(name) + strlen("refs/heads/") + 1);
+	strcpy(refname, "refs/heads/");
+	strcpy(refname + strlen("refs/heads/"),
+	       branches[empty]->name);
+	branches[empty]->refname = refname;
+
+	return branches[empty];
 }
 
 static void read_remotes_file(struct remote *remote)
@@ -100,7 +154,7 @@ static void read_remotes_file(struct remote *remote)
 
 		switch (value_list) {
 		case 0:
-			add_uri(remote, xstrdup(s));
+			add_url(remote, xstrdup(s));
 			break;
 		case 1:
 			add_push_refspec(remote, xstrdup(s));
@@ -116,6 +170,8 @@ static void read_remotes_file(struct remote *remote)
 static void read_branches_file(struct remote *remote)
 {
 	const char *slash = strchr(remote->name, '/');
+	char *frag;
+	char *branch;
 	int n = slash ? slash - remote->name : 1000;
 	FILE *f = fopen(git_path("branches/%.*s", n, remote->name), "r");
 	char *s, *p;
@@ -141,23 +197,41 @@ static void read_branches_file(struct remote *remote)
 	strcpy(p, s);
 	if (slash)
 		strcat(p, slash);
-	add_uri(remote, p);
+	frag = strchr(p, '#');
+	if (frag) {
+		*(frag++) = '\0';
+		branch = xmalloc(strlen(frag) + 12);
+		strcpy(branch, "refs/heads/");
+		strcat(branch, frag);
+	} else {
+		branch = "refs/heads/master";
+	}
+	add_url(remote, p);
+	add_fetch_refspec(remote, branch);
+	remote->fetch_tags = 1; /* always auto-follow */
 }
-
-static char *default_remote_name = NULL;
-static const char *current_branch = NULL;
-static int current_branch_len = 0;
 
 static int handle_config(const char *key, const char *value)
 {
 	const char *name;
 	const char *subkey;
 	struct remote *remote;
-	if (!prefixcmp(key, "branch.") && current_branch &&
-	    !strncmp(key + 7, current_branch, current_branch_len) &&
-	    !strcmp(key + 7 + current_branch_len, ".remote")) {
-		free(default_remote_name);
-		default_remote_name = xstrdup(value);
+	struct branch *branch;
+	if (!prefixcmp(key, "branch.")) {
+		name = key + 7;
+		subkey = strrchr(name, '.');
+		branch = make_branch(name, subkey - name);
+		if (!subkey)
+			return 0;
+		if (!value)
+			return 0;
+		if (!strcmp(subkey, ".remote")) {
+			branch->remote_name = xstrdup(value);
+			if (branch == current_branch)
+				default_remote_name = branch->remote_name;
+		} else if (!strcmp(subkey, ".merge"))
+			add_merge(branch, xstrdup(value));
+		return 0;
 	}
 	if (prefixcmp(key,  "remote."))
 		return 0;
@@ -186,7 +260,7 @@ static int handle_config(const char *key, const char *value)
 		return 0; /* ignore unknown booleans */
 	}
 	if (!strcmp(subkey, ".url")) {
-		add_uri(remote, xstrdup(value));
+		add_url(remote, xstrdup(value));
 	} else if (!strcmp(subkey, ".push")) {
 		add_push_refspec(remote, xstrdup(value));
 	} else if (!strcmp(subkey, ".fetch")) {
@@ -196,6 +270,14 @@ static int handle_config(const char *key, const char *value)
 			remote->receivepack = xstrdup(value);
 		else
 			error("more than one receivepack given, using the first");
+	} else if (!strcmp(subkey, ".uploadpack")) {
+		if (!remote->uploadpack)
+			remote->uploadpack = xstrdup(value);
+		else
+			error("more than one uploadpack given, using the first");
+	} else if (!strcmp(subkey, ".tagopt")) {
+		if (!strcmp(value, "--no-tags"))
+			remote->fetch_tags = -1;
 	}
 	return 0;
 }
@@ -212,13 +294,13 @@ static void read_config(void)
 	head_ref = resolve_ref("HEAD", sha1, 0, &flag);
 	if (head_ref && (flag & REF_ISSYMREF) &&
 	    !prefixcmp(head_ref, "refs/heads/")) {
-		current_branch = head_ref + strlen("refs/heads/");
-		current_branch_len = strlen(current_branch);
+		current_branch =
+			make_branch(head_ref + strlen("refs/heads/"), 0);
 	}
 	git_config(handle_config);
 }
 
-static struct refspec *parse_ref_spec(int nr_refspec, const char **refspec)
+struct refspec *parse_ref_spec(int nr_refspec, const char **refspec)
 {
 	int i;
 	struct refspec *rs = xcalloc(sizeof(*rs), nr_refspec);
@@ -265,14 +347,14 @@ struct remote *remote_get(const char *name)
 		name = default_remote_name;
 	ret = make_remote(name, 0);
 	if (name[0] != '/') {
-		if (!ret->uri)
+		if (!ret->url)
 			read_remotes_file(ret);
-		if (!ret->uri)
+		if (!ret->url)
 			read_branches_file(ret);
 	}
-	if (!ret->uri)
-		add_uri(ret, name);
-	if (!ret->uri)
+	if (!ret->url)
+		add_url(ret, name);
+	if (!ret->url)
 		return NULL;
 	ret->fetch = parse_ref_spec(ret->fetch_refspec_nr, ret->fetch_refspec);
 	ret->push = parse_ref_spec(ret->push_refspec_nr, ret->push_refspec);
@@ -298,14 +380,60 @@ int for_each_remote(each_remote_fn fn, void *priv)
 	return result;
 }
 
-int remote_has_uri(struct remote *remote, const char *uri)
+void ref_remove_duplicates(struct ref *ref_map)
+{
+	struct ref **posn;
+	struct ref *next;
+	for (; ref_map; ref_map = ref_map->next) {
+		if (!ref_map->peer_ref)
+			continue;
+		posn = &ref_map->next;
+		while (*posn) {
+			if ((*posn)->peer_ref &&
+			    !strcmp((*posn)->peer_ref->name,
+				    ref_map->peer_ref->name)) {
+				if (strcmp((*posn)->name, ref_map->name))
+					die("%s tracks both %s and %s",
+					    ref_map->peer_ref->name,
+					    (*posn)->name, ref_map->name);
+				next = (*posn)->next;
+				free((*posn)->peer_ref);
+				free(*posn);
+				*posn = next;
+			} else {
+				posn = &(*posn)->next;
+			}
+		}
+	}
+}
+
+int remote_has_url(struct remote *remote, const char *url)
 {
 	int i;
-	for (i = 0; i < remote->uri_nr; i++) {
-		if (!strcmp(remote->uri[i], uri))
+	for (i = 0; i < remote->url_nr; i++) {
+		if (!strcmp(remote->url[i], url))
 			return 1;
 	}
 	return 0;
+}
+
+/*
+ * Returns true if, under the matching rules for fetching, name is the
+ * same as the given full name.
+ */
+static int ref_matches_abbrev(const char *name, const char *full)
+{
+	if (!prefixcmp(name, "refs/") || !strcmp(name, "HEAD"))
+		return !strcmp(name, full);
+	if (prefixcmp(full, "refs/"))
+		return 0;
+	if (!prefixcmp(name, "heads/") ||
+	    !prefixcmp(name, "tags/") ||
+	    !prefixcmp(name, "remotes/"))
+		return !strcmp(name, full + 5);
+	if (prefixcmp(full + 5, "heads/"))
+		return 0;
+	return !strcmp(full + 11, name);
 }
 
 int remote_find_tracking(struct remote *remote, struct refspec *refspec)
@@ -315,7 +443,7 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 	int i;
 
 	if (find_src) {
-		if (refspec->dst == NULL)
+		if (!refspec->dst)
 			return error("find_tracking: need either src or dst");
 		needle = refspec->dst;
 		result = &refspec->src;
@@ -354,6 +482,14 @@ struct ref *alloc_ref(unsigned namelen)
 {
 	struct ref *ret = xmalloc(sizeof(struct ref) + namelen);
 	memset(ret, 0, sizeof(struct ref) + namelen);
+	return ret;
+}
+
+static struct ref *copy_ref(struct ref *ref)
+{
+	struct ref *ret = xmalloc(sizeof(struct ref) + strlen(ref->name) + 1);
+	memcpy(ret, ref, sizeof(struct ref) + strlen(ref->name) + 1);
+	ret->next = NULL;
 	return ret;
 }
 
@@ -489,23 +625,23 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		 * way to delete 'other' ref at the remote end.
 		 */
 		matched_src = try_explicit_object_name(rs->src);
-		if (matched_src)
-			break;
-		error("src refspec %s does not match any.",
-		      rs->src);
+		if (!matched_src)
+			error("src refspec %s does not match any.", rs->src);
 		break;
 	default:
 		matched_src = NULL;
-		error("src refspec %s matches more than one.",
-		      rs->src);
+		error("src refspec %s matches more than one.", rs->src);
 		break;
 	}
 
 	if (!matched_src)
 		errs = 1;
 
-	if (dst_value == NULL)
+	if (!dst_value) {
+		if (!matched_src)
+			return errs;
 		dst_value = matched_src->name;
+	}
 
 	switch (count_refspec_match(dst_value, dst, &matched_dst)) {
 	case 1:
@@ -524,7 +660,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		      dst_value);
 		break;
 	}
-	if (errs || matched_dst == NULL)
+	if (errs || !matched_dst)
 		return 1;
 	if (matched_dst->peer_ref) {
 		errs = 1;
@@ -631,5 +767,152 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	free_name:
 		free(dst_name);
 	}
+	return 0;
+}
+
+struct branch *branch_get(const char *name)
+{
+	struct branch *ret;
+
+	read_config();
+	if (!name || !*name || !strcmp(name, "HEAD"))
+		ret = current_branch;
+	else
+		ret = make_branch(name, 0);
+	if (ret && ret->remote_name) {
+		ret->remote = remote_get(ret->remote_name);
+		if (ret->merge_nr) {
+			int i;
+			ret->merge = xcalloc(sizeof(*ret->merge),
+					     ret->merge_nr);
+			for (i = 0; i < ret->merge_nr; i++) {
+				ret->merge[i] = xcalloc(1, sizeof(**ret->merge));
+				ret->merge[i]->src = xstrdup(ret->merge_name[i]);
+				remote_find_tracking(ret->remote,
+						     ret->merge[i]);
+			}
+		}
+	}
+	return ret;
+}
+
+int branch_has_merge_config(struct branch *branch)
+{
+	return branch && !!branch->merge;
+}
+
+int branch_merge_matches(struct branch *branch,
+		                 int i,
+		                 const char *refname)
+{
+	if (!branch || i < 0 || i >= branch->merge_nr)
+		return 0;
+	return ref_matches_abbrev(branch->merge[i]->src, refname);
+}
+
+static struct ref *get_expanded_map(struct ref *remote_refs,
+				    const struct refspec *refspec)
+{
+	struct ref *ref;
+	struct ref *ret = NULL;
+	struct ref **tail = &ret;
+
+	int remote_prefix_len = strlen(refspec->src);
+	int local_prefix_len = strlen(refspec->dst);
+
+	for (ref = remote_refs; ref; ref = ref->next) {
+		if (strchr(ref->name, '^'))
+			continue; /* a dereference item */
+		if (!prefixcmp(ref->name, refspec->src)) {
+			char *match;
+			struct ref *cpy = copy_ref(ref);
+			match = ref->name + remote_prefix_len;
+
+			cpy->peer_ref = alloc_ref(local_prefix_len +
+						  strlen(match) + 1);
+			sprintf(cpy->peer_ref->name, "%s%s",
+				refspec->dst, match);
+			if (refspec->force)
+				cpy->peer_ref->force = 1;
+			*tail = cpy;
+			tail = &cpy->next;
+		}
+	}
+
+	return ret;
+}
+
+static struct ref *find_ref_by_name_abbrev(struct ref *refs, const char *name)
+{
+	struct ref *ref;
+	for (ref = refs; ref; ref = ref->next) {
+		if (ref_matches_abbrev(name, ref->name))
+			return ref;
+	}
+	return NULL;
+}
+
+struct ref *get_remote_ref(struct ref *remote_refs, const char *name)
+{
+	struct ref *ref = find_ref_by_name_abbrev(remote_refs, name);
+
+	if (!ref)
+		die("Couldn't find remote ref %s\n", name);
+
+	return copy_ref(ref);
+}
+
+static struct ref *get_local_ref(const char *name)
+{
+	struct ref *ret;
+	if (!name)
+		return NULL;
+
+	if (!prefixcmp(name, "refs/")) {
+		ret = alloc_ref(strlen(name) + 1);
+		strcpy(ret->name, name);
+		return ret;
+	}
+
+	if (!prefixcmp(name, "heads/") ||
+	    !prefixcmp(name, "tags/") ||
+	    !prefixcmp(name, "remotes/")) {
+		ret = alloc_ref(strlen(name) + 6);
+		sprintf(ret->name, "refs/%s", name);
+		return ret;
+	}
+
+	ret = alloc_ref(strlen(name) + 12);
+	sprintf(ret->name, "refs/heads/%s", name);
+	return ret;
+}
+
+int get_fetch_map(struct ref *remote_refs,
+		  const struct refspec *refspec,
+		  struct ref ***tail)
+{
+	struct ref *ref_map, *rm;
+
+	if (refspec->pattern) {
+		ref_map = get_expanded_map(remote_refs, refspec);
+	} else {
+		ref_map = get_remote_ref(remote_refs,
+					 refspec->src[0] ?
+					 refspec->src : "HEAD");
+
+		ref_map->peer_ref = get_local_ref(refspec->dst);
+		if (ref_map->peer_ref && refspec->force)
+			ref_map->peer_ref->force = 1;
+	}
+
+	for (rm = ref_map; rm; rm = rm->next) {
+		if (rm->peer_ref && check_ref_format(rm->peer_ref->name + 5))
+			die("* refusing to create funny ref '%s' locally",
+			    rm->peer_ref->name);
+	}
+
+	if (ref_map)
+		tail_link_ref(ref_map, tail);
+
 	return 0;
 }
