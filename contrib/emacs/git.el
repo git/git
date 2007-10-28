@@ -955,7 +955,7 @@ Return the list of files that haven't been handled."
       (when modified
         (apply #'git-call-process-env nil nil "checkout" "HEAD" modified))
       (git-update-status-files (append added modified) 'uptodate)
-      (git-success-message "Reverted" files))))
+      (git-success-message "Reverted" (git-get-filenames files)))))
 
 (defun git-resolve-file ()
   "Resolve conflicts in marked file(s)."
