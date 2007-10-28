@@ -82,11 +82,14 @@ proc dorunq {} {
 proc start_rev_list {view} {
     global startmsecs
     global commfd leftover tclencoding datemode
-    global viewargs viewfiles commitidx
-    global lookingforhead showlocalchanges
+    global viewargs viewfiles commitidx viewcomplete vnextroot
+    global showlocalchanges commitinterest mainheadid
+    global progressdirn progresscoords proglastnc curview
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
+    set viewcomplete($view) 0
+    set vnextroot($view) 0
     set order "--topo-order"
     if {$datemode} {
 	set order "--date-order"
@@ -100,13 +103,20 @@ proc start_rev_list {view} {
     }
     set commfd($view) $fd
     set leftover($view) {}
-    set lookingforhead $showlocalchanges
+    if {$showlocalchanges} {
+	lappend commitinterest($mainheadid) {dodiffindex}
+    }
     fconfigure $fd -blocking 0 -translation lf -eofchar {}
     if {$tclencoding != {}} {
 	fconfigure $fd -encoding $tclencoding
     }
     filerun $fd [list getcommitlines $fd $view]
-    nowbusy $view
+    nowbusy $view "Reading"
+    if {$view == $curview} {
+	set progressdirn 1
+	set progresscoords {0 0}
+	set proglastnc 0
+    }
 }
 
 proc stop_rev_list {} {
@@ -123,7 +133,7 @@ proc stop_rev_list {} {
 }
 
 proc getcommits {} {
-    global phase canv mainfont curview
+    global phase canv curview
 
     set phase getcommits
     initlayout
@@ -131,12 +141,26 @@ proc getcommits {} {
     show_status "Reading commits..."
 }
 
+# This makes a string representation of a positive integer which
+# sorts as a string in numerical order
+proc strrep {n} {
+    if {$n < 16} {
+	return [format "%x" $n]
+    } elseif {$n < 256} {
+	return [format "x%.2x" $n]
+    } elseif {$n < 65536} {
+	return [format "y%.4x" $n]
+    }
+    return [format "z%.8x" $n]
+}
+
 proc getcommitlines {fd view}  {
-    global commitlisted
+    global commitlisted commitinterest
     global leftover commfd
-    global displayorder commitidx commitrow commitdata
+    global displayorder commitidx viewcomplete commitrow commitdata
     global parentlist children curview hlview
     global vparentlist vdisporder vcmitlisted
+    global ordertok vnextroot idpending
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
@@ -147,9 +171,29 @@ proc getcommitlines {fd view}  {
 	if {![eof $fd]} {
 	    return 1
 	}
-	global viewname
+	# Check if we have seen any ids listed as parents that haven't
+	# appeared in the list
+	foreach vid [array names idpending "$view,*"] {
+	    # should only get here if git log is buggy
+	    set id [lindex [split $vid ","] 1]
+	    set commitrow($vid) $commitidx($view)
+	    incr commitidx($view)
+	    if {$view == $curview} {
+		lappend parentlist {}
+		lappend displayorder $id
+		lappend commitlisted 0
+	    } else {
+		lappend vparentlist($view) {}
+		lappend vdisporder($view) $id
+		lappend vcmitlisted($view) 0
+	    }
+	}
+	set viewcomplete($view) 1
+	global viewname progresscoords
 	unset commfd($view)
 	notbusy $view
+	set progresscoords {0 0}
+	adjustprogress
 	# set it blocking so we wait for the process to terminate
 	fconfigure $fd -blocking 1
 	if {[catch {close $fd} err]} {
@@ -221,14 +265,35 @@ proc getcommitlines {fd view}  {
 	    exit 1
 	}
 	set id [lindex $ids 0]
+	if {![info exists ordertok($view,$id)]} {
+	    set otok "o[strrep $vnextroot($view)]"
+	    incr vnextroot($view)
+	    set ordertok($view,$id) $otok
+	} else {
+	    set otok $ordertok($view,$id)
+	    unset idpending($view,$id)
+	}
 	if {$listed} {
 	    set olds [lrange $ids 1 end]
-	    set i 0
-	    foreach p $olds {
-		if {$i == 0 || [lsearch -exact $olds $p] >= $i} {
-		    lappend children($view,$p) $id
+	    if {[llength $olds] == 1} {
+		set p [lindex $olds 0]
+		lappend children($view,$p) $id
+		if {![info exists ordertok($view,$p)]} {
+		    set ordertok($view,$p) $ordertok($view,$id)
+		    set idpending($view,$p) 1
 		}
-		incr i
+	    } else {
+		set i 0
+		foreach p $olds {
+		    if {$i == 0 || [lsearch -exact $olds $p] >= $i} {
+			lappend children($view,$p) $id
+		    }
+		    if {![info exists ordertok($view,$p)]} {
+			set ordertok($view,$p) "$otok[strrep $i]]"
+			set idpending($view,$p) 1
+		    }
+		    incr i
+		}
 	    }
 	} else {
 	    set olds {}
@@ -248,24 +313,54 @@ proc getcommitlines {fd view}  {
 	    lappend vdisporder($view) $id
 	    lappend vcmitlisted($view) $listed
 	}
+	if {[info exists commitinterest($id)]} {
+	    foreach script $commitinterest($id) {
+		eval [string map [list "%I" $id] $script]
+	    }
+	    unset commitinterest($id)
+	}
 	set gotsome 1
     }
     if {$gotsome} {
 	run chewcommits $view
+	if {$view == $curview} {
+	    # update progress bar
+	    global progressdirn progresscoords proglastnc
+	    set inc [expr {($commitidx($view) - $proglastnc) * 0.0002}]
+	    set proglastnc $commitidx($view)
+	    set l [lindex $progresscoords 0]
+	    set r [lindex $progresscoords 1]
+	    if {$progressdirn} {
+		set r [expr {$r + $inc}]
+		if {$r >= 1.0} {
+		    set r 1.0
+		    set progressdirn 0
+		}
+		if {$r > 0.2} {
+		    set l [expr {$r - 0.2}]
+		}
+	    } else {
+		set l [expr {$l - $inc}]
+		if {$l <= 0.0} {
+		    set l 0.0
+		    set progressdirn 1
+		}
+		set r [expr {$l + 0.2}]
+	    }
+	    set progresscoords [list $l $r]
+	    adjustprogress
+	}
     }
     return 2
 }
 
 proc chewcommits {view} {
-    global curview hlview commfd
+    global curview hlview viewcomplete
     global selectedline pending_select
 
-    set more 0
     if {$view == $curview} {
-	set allread [expr {![info exists commfd($view)]}]
-	set tlimit [expr {[clock clicks -milliseconds] + 50}]
-	set more [layoutmore $tlimit $allread]
-	if {$allread && !$more} {
+	layoutmore
+	if {$viewcomplete($view)} {
 	    global displayorder commitidx phase
 	    global numcommits startmsecs
 
@@ -286,7 +381,7 @@ proc chewcommits {view} {
     if {[info exists hlview] && $view == $hlview} {
 	vhighlightmore
     }
-    return $more
+    return 0
 }
 
 proc readcommit {id} {
@@ -295,7 +390,7 @@ proc readcommit {id} {
 }
 
 proc updatecommits {} {
-    global viewdata curview phase displayorder
+    global viewdata curview phase displayorder ordertok idpending
     global children commitrow selectedline thickerline showneartags
 
     if {$phase ne {}} {
@@ -306,6 +401,10 @@ proc updatecommits {} {
     foreach id $displayorder {
 	catch {unset children($n,$id)}
 	catch {unset commitrow($n,$id)}
+	catch {unset ordertok($n,$id)}
+    }
+    foreach vid [array names idpending "$n,*"] {
+	unset idpending($vid)
     }
     set curview -1
     catch {unset selectedline}
@@ -516,7 +615,7 @@ proc confirm_popup msg {
 
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist
-    global textfont mainfont uifont tabstop
+    global tabstop
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global diffcontextstring diffcontext
@@ -525,23 +624,26 @@ proc makewindow {} {
     global highlight_files gdttype
     global searchstring sstring
     global bgcolor fgcolor bglist fglist diffcolors selectbgcolor
-    global headctxmenu
+    global headctxmenu progresscanv progressitem progresscoords statusw
+    global fprogitem fprogcoord lastprogupdate progupdatepending
+    global rprogitem rprogcoord
+    global have_tk85
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
-    .bar configure -font $uifont
+    .bar configure -font uifont
     menu .bar.file
     .bar.file add command -label "Update" -command updatecommits
     .bar.file add command -label "Reread references" -command rereadrefs
     .bar.file add command -label "List references" -command showrefs
     .bar.file add command -label "Quit" -command doquit
-    .bar.file configure -font $uifont
+    .bar.file configure -font uifont
     menu .bar.edit
     .bar add cascade -label "Edit" -menu .bar.edit
     .bar.edit add command -label "Preferences" -command doprefs
-    .bar.edit configure -font $uifont
+    .bar.edit configure -font uifont
 
-    menu .bar.view -font $uifont
+    menu .bar.view -font uifont
     .bar add cascade -label "View" -menu .bar.view
     .bar.view add command -label "New view..." -command {newview 0}
     .bar.view add command -label "Edit view..." -command editview \
@@ -555,7 +657,7 @@ proc makewindow {} {
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
     .bar.help add command -label "Key bindings" -command keys
-    .bar.help configure -font $uifont
+    .bar.help configure -font uifont
     . configure -menu .bar
 
     # the gui has upper and lower half, parts of a paned window.
@@ -612,10 +714,10 @@ proc makewindow {} {
     set entries $sha1entry
     set sha1but .tf.bar.sha1label
     button $sha1but -text "SHA1 ID: " -state disabled -relief flat \
-	-command gotocommit -width 8 -font $uifont
+	-command gotocommit -width 8 -font uifont
     $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .tf.bar.sha1label -side left
-    entry $sha1entry -width 40 -font $textfont -textvariable sha1string
+    entry $sha1entry -width 40 -font textfont -textvariable sha1string
     trace add variable sha1string write sha1change
     pack $sha1entry -side left -pady 2
 
@@ -642,62 +744,61 @@ proc makewindow {} {
 	-state disabled -width 26
     pack .tf.bar.rightbut -side left -fill y
 
-    button .tf.bar.findbut -text "Find" -command dofind -font $uifont
-    pack .tf.bar.findbut -side left
-    set findstring {}
-    set fstring .tf.bar.findstring
-    lappend entries $fstring
-    entry $fstring -width 30 -font $textfont -textvariable findstring
-    trace add variable findstring write find_change
-    pack $fstring -side left -expand 1 -fill x -in .tf.bar
-    set findtype Exact
-    set findtypemenu [tk_optionMenu .tf.bar.findtype \
-		      findtype Exact IgnCase Regexp]
-    trace add variable findtype write find_change
-    .tf.bar.findtype configure -font $uifont
-    .tf.bar.findtype.menu configure -font $uifont
-    set findloc "All fields"
-    tk_optionMenu .tf.bar.findloc findloc "All fields" Headline \
-	Comments Author Committer
-    trace add variable findloc write find_change
-    .tf.bar.findloc configure -font $uifont
-    .tf.bar.findloc.menu configure -font $uifont
-    pack .tf.bar.findloc -side right
-    pack .tf.bar.findtype -side right
+    # Status label and progress bar
+    set statusw .tf.bar.status
+    label $statusw -width 15 -relief sunken -font uifont
+    pack $statusw -side left -padx 5
+    set h [expr {[font metrics uifont -linespace] + 2}]
+    set progresscanv .tf.bar.progress
+    canvas $progresscanv -relief sunken -height $h -borderwidth 2
+    set progressitem [$progresscanv create rect -1 0 0 $h -fill green]
+    set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
+    set rprogitem [$progresscanv create rect -1 0 0 $h -fill red]
+    pack $progresscanv -side right -expand 1 -fill x
+    set progresscoords {0 0}
+    set fprogcoord 0
+    set rprogcoord 0
+    bind $progresscanv <Configure> adjustprogress
+    set lastprogupdate [clock clicks -milliseconds]
+    set progupdatepending 0
 
     # build up the bottom bar of upper window
-    label .tf.lbar.flabel -text "Highlight:  Commits " \
-    -font $uifont
-    pack .tf.lbar.flabel -side left -fill y
-    set gdttype "touching paths:"
-    set gm [tk_optionMenu .tf.lbar.gdttype gdttype "touching paths:" \
-	"adding/removing string:"]
-    trace add variable gdttype write hfiles_change
-    $gm conf -font $uifont
-    .tf.lbar.gdttype conf -font $uifont
+    label .tf.lbar.flabel -text "Find " -font uifont
+    button .tf.lbar.fnext -text "next" -command {dofind 1 1} -font uifont
+    button .tf.lbar.fprev -text "prev" -command {dofind -1 1} -font uifont
+    label .tf.lbar.flab2 -text " commit " -font uifont
+    pack .tf.lbar.flabel .tf.lbar.fnext .tf.lbar.fprev .tf.lbar.flab2 \
+	-side left -fill y
+    set gdttype "containing:"
+    set gm [tk_optionMenu .tf.lbar.gdttype gdttype \
+		"containing:" \
+		"touching paths:" \
+		"adding/removing string:"]
+    trace add variable gdttype write gdttype_change
+    $gm conf -font uifont
+    .tf.lbar.gdttype conf -font uifont
     pack .tf.lbar.gdttype -side left -fill y
-    entry .tf.lbar.fent -width 25 -font $textfont \
-	-textvariable highlight_files
-    trace add variable highlight_files write hfiles_change
-    lappend entries .tf.lbar.fent
-    pack .tf.lbar.fent -side left -fill x -expand 1
-    label .tf.lbar.vlabel -text " OR in view" -font $uifont
-    pack .tf.lbar.vlabel -side left -fill y
-    global viewhlmenu selectedhlview
-    set viewhlmenu [tk_optionMenu .tf.lbar.vhl selectedhlview None]
-    $viewhlmenu entryconf None -command delvhighlight
-    $viewhlmenu conf -font $uifont
-    .tf.lbar.vhl conf -font $uifont
-    pack .tf.lbar.vhl -side left -fill y
-    label .tf.lbar.rlabel -text " OR " -font $uifont
-    pack .tf.lbar.rlabel -side left -fill y
-    global highlight_related
-    set m [tk_optionMenu .tf.lbar.relm highlight_related None \
-	"Descendent" "Not descendent" "Ancestor" "Not ancestor"]
-    $m conf -font $uifont
-    .tf.lbar.relm conf -font $uifont
-    trace add variable highlight_related write vrel_change
-    pack .tf.lbar.relm -side left -fill y
+
+    set findstring {}
+    set fstring .tf.lbar.findstring
+    lappend entries $fstring
+    entry $fstring -width 30 -font textfont -textvariable findstring
+    trace add variable findstring write find_change
+    set findtype Exact
+    set findtypemenu [tk_optionMenu .tf.lbar.findtype \
+		      findtype Exact IgnCase Regexp]
+    trace add variable findtype write findcom_change
+    .tf.lbar.findtype configure -font uifont
+    .tf.lbar.findtype.menu configure -font uifont
+    set findloc "All fields"
+    tk_optionMenu .tf.lbar.findloc findloc "All fields" Headline \
+	Comments Author Committer
+    trace add variable findloc write find_change
+    .tf.lbar.findloc configure -font uifont
+    .tf.lbar.findloc.menu configure -font uifont
+    pack .tf.lbar.findloc -side right
+    pack .tf.lbar.findtype -side right
+    pack $fstring -side left -expand 1 -fill x
 
     # Finish putting the upper half of the viewer together
     pack .tf.lbar -in .tf -side bottom -fill x
@@ -722,23 +823,23 @@ proc makewindow {} {
     frame .bleft.mid
 
     button .bleft.top.search -text "Search" -command dosearch \
-	-font $uifont
+	-font uifont
     pack .bleft.top.search -side left -padx 5
     set sstring .bleft.top.sstring
-    entry $sstring -width 20 -font $textfont -textvariable searchstring
+    entry $sstring -width 20 -font textfont -textvariable searchstring
     lappend entries $sstring
     trace add variable searchstring write incrsearch
     pack $sstring -side left -expand 1 -fill x
-    radiobutton .bleft.mid.diff -text "Diff" \
+    radiobutton .bleft.mid.diff -text "Diff" -font uifont \
 	-command changediffdisp -variable diffelide -value {0 0}
-    radiobutton .bleft.mid.old -text "Old version" \
+    radiobutton .bleft.mid.old -text "Old version" -font uifont \
 	-command changediffdisp -variable diffelide -value {0 1}
-    radiobutton .bleft.mid.new -text "New version" \
+    radiobutton .bleft.mid.new -text "New version" -font uifont \
 	-command changediffdisp -variable diffelide -value {1 0}
     label .bleft.mid.labeldiffcontext -text "      Lines of context: " \
-	-font $uifont
+	-font uifont
     pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left
-    spinbox .bleft.mid.diffcontext -width 5 -font $textfont \
+    spinbox .bleft.mid.diffcontext -width 5 -font textfont \
 	-from 1 -increment 1 -to 10000000 \
 	-validate all -validatecommand "diffcontextvalidate %P" \
 	-textvariable diffcontextstring
@@ -748,9 +849,11 @@ proc makewindow {} {
     pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left
     set ctext .bleft.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
-	-tabs "[expr {$tabstop * $charspc}]" \
-	-state disabled -font $textfont \
+	-state disabled -font textfont \
 	-yscrollcommand scrolltext -wrap none
+    if {$have_tk85} {
+	$ctext conf -tabstyle wordprocessor
+    }
     scrollbar .bleft.sb -command "$ctext yview"
     pack .bleft.top -side top -fill x
     pack .bleft.mid -side top -fill x
@@ -760,7 +863,7 @@ proc makewindow {} {
     lappend fglist $ctext
 
     $ctext tag conf comment -wrap $wrapcomment
-    $ctext tag conf filesep -font [concat $textfont bold] -back "#aaaaaa"
+    $ctext tag conf filesep -font textfontbold -back "#aaaaaa"
     $ctext tag conf hunksep -fore [lindex $diffcolors 2]
     $ctext tag conf d0 -fore [lindex $diffcolors 0]
     $ctext tag conf d1 -fore [lindex $diffcolors 1]
@@ -782,8 +885,8 @@ proc makewindow {} {
     $ctext tag conf m15 -fore "#ff70b0"
     $ctext tag conf mmax -fore darkgrey
     set mergemax 16
-    $ctext tag conf mresult -font [concat $textfont bold]
-    $ctext tag conf msep -font [concat $textfont bold]
+    $ctext tag conf mresult -font textfontbold
+    $ctext tag conf msep -font textfontbold
     $ctext tag conf found -back yellow
 
     .pwbottom add .bleft
@@ -794,18 +897,18 @@ proc makewindow {} {
     frame .bright.mode
     radiobutton .bright.mode.patch -text "Patch" \
 	-command reselectline -variable cmitmode -value "patch"
-    .bright.mode.patch configure -font $uifont
+    .bright.mode.patch configure -font uifont
     radiobutton .bright.mode.tree -text "Tree" \
 	-command reselectline -variable cmitmode -value "tree"
-    .bright.mode.tree configure -font $uifont
+    .bright.mode.tree configure -font uifont
     grid .bright.mode.patch .bright.mode.tree -sticky ew
     pack .bright.mode -side top -fill x
     set cflist .bright.cfiles
-    set indent [font measure $mainfont "nn"]
+    set indent [font measure mainfont "nn"]
     text $cflist \
 	-selectbackground $selectbgcolor \
 	-background $bgcolor -foreground $fgcolor \
-	-font $mainfont \
+	-font mainfont \
 	-tabs [list $indent [expr {2 * $indent}]] \
 	-yscrollcommand ".bright.sb set" \
 	-cursor [. cget -cursor] \
@@ -817,7 +920,7 @@ proc makewindow {} {
     pack $cflist -side left -fill both -expand 1
     $cflist tag configure highlight \
 	-background [$cflist cget -selectbackground]
-    $cflist tag configure bold -font [concat $mainfont bold]
+    $cflist tag configure bold -font mainfontbold
 
     .pwbottom add .bright
     .ctop add .pwbottom
@@ -856,8 +959,8 @@ proc makewindow {} {
     bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
     bind . <Key-Down> "selnextline 1"
-    bind . <Shift-Key-Up> "next_highlight -1"
-    bind . <Shift-Key-Down> "next_highlight 1"
+    bind . <Shift-Key-Up> "dofind -1 0"
+    bind . <Shift-Key-Down> "dofind 1 0"
     bindkey <Key-Right> "goforw"
     bindkey <Key-Left> "goback"
     bind . <Key-Prior> "selnextpage -1"
@@ -882,14 +985,14 @@ proc makewindow {} {
     bindkey b "$ctext yview scroll -1 pages"
     bindkey d "$ctext yview scroll 18 units"
     bindkey u "$ctext yview scroll -18 units"
-    bindkey / {findnext 1}
-    bindkey <Key-Return> {findnext 0}
-    bindkey ? findprev
+    bindkey / {dofind 1 1}
+    bindkey <Key-Return> {dofind 1 1}
+    bindkey ? {dofind -1 1}
     bindkey f nextfile
     bindkey <F5> updatecommits
     bind . <$M1B-q> doquit
-    bind . <$M1B-f> dofind
-    bind . <$M1B-g> {findnext 0}
+    bind . <$M1B-f> {dofind 1 1}
+    bind . <$M1B-g> {dofind 1 0}
     bind . <$M1B-r> dosearchback
     bind . <$M1B-s> dosearch
     bind . <$M1B-equal> {incrfont 1}
@@ -898,7 +1001,7 @@ proc makewindow {} {
     bind . <$M1B-KP_Subtract> {incrfont -1}
     wm protocol . WM_DELETE_WINDOW doquit
     bind . <Button-1> "click %W"
-    bind $fstring <Key-Return> dofind
+    bind $fstring <Key-Return> {dofind 1 1}
     bind $sha1entry <Key-Return> gotocommit
     bind $sha1entry <<PasteSelection>> clearsha1
     bind $cflist <1> {sel_flist %W %x %y; break}
@@ -1014,12 +1117,45 @@ proc click {w} {
     focus .
 }
 
+# Adjust the progress bar for a change in requested extent or canvas size
+proc adjustprogress {} {
+    global progresscanv progressitem progresscoords
+    global fprogitem fprogcoord lastprogupdate progupdatepending
+    global rprogitem rprogcoord
+
+    set w [expr {[winfo width $progresscanv] - 4}]
+    set x0 [expr {$w * [lindex $progresscoords 0]}]
+    set x1 [expr {$w * [lindex $progresscoords 1]}]
+    set h [winfo height $progresscanv]
+    $progresscanv coords $progressitem $x0 0 $x1 $h
+    $progresscanv coords $fprogitem 0 0 [expr {$w * $fprogcoord}] $h
+    $progresscanv coords $rprogitem 0 0 [expr {$w * $rprogcoord}] $h
+    set now [clock clicks -milliseconds]
+    if {$now >= $lastprogupdate + 100} {
+	set progupdatepending 0
+	update
+    } elseif {!$progupdatepending} {
+	set progupdatepending 1
+	after [expr {$lastprogupdate + 100 - $now}] doprogupdate
+    }
+}
+
+proc doprogupdate {} {
+    global lastprogupdate progupdatepending
+
+    if {$progupdatepending} {
+	set progupdatepending 0
+	set lastprogupdate [clock clicks -milliseconds]
+	update
+    }
+}
+
 proc savestuff {w} {
-    global canv canv2 canv3 ctext cflist mainfont textfont uifont tabstop
+    global canv canv2 canv3 mainfont textfont uifont tabstop
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth showneartags showlocalchanges
     global viewname viewfiles viewargs viewperm nextviewnum
-    global cmitmode wrapcomment datetimeformat
+    global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
 
     if {$stuffsaved} return
@@ -1038,6 +1174,7 @@ proc savestuff {w} {
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
+	puts $f [list set limitdiffs $limitdiffs]
 	puts $f [list set bgcolor $bgcolor]
 	puts $f [list set fgcolor $fgcolor]
 	puts $f [list set colors $colors]
@@ -1149,10 +1286,10 @@ Copyright © 2005-2006 Paul Mackerras
 Use and redistribute under the terms of the GNU General Public License} \
 	    -justify center -aspect 400 -border 2 -bg white -relief groove
     pack $w.m -side top -fill x -padx 2 -pady 2
-    $w.m configure -font $uifont
+    $w.m configure -font uifont
     button $w.ok -text Close -command "destroy $w" -default active
     pack $w.ok -side bottom
-    $w.ok configure -font $uifont
+    $w.ok configure -font uifont
     bind $w <Visibility> "focus $w.ok"
     bind $w <Key-Escape> "destroy $w"
     bind $w <Key-Return> "destroy $w"
@@ -1190,8 +1327,8 @@ Gitk key bindings:
 <$M1T-Down>	Scroll commit list down one line
 <$M1T-PageUp>	Scroll commit list up one page
 <$M1T-PageDown>	Scroll commit list down one page
-<Shift-Up>	Move to previous highlighted line
-<Shift-Down>	Move to next highlighted line
+<Shift-Up>	Find backwards (upwards, later commits)
+<Shift-Down>	Find forwards (downwards, earlier commits)
 <Delete>, b	Scroll diff view up one page
 <Backspace>	Scroll diff view up one page
 <Space>		Scroll diff view down one page
@@ -1213,10 +1350,10 @@ f		Scroll diff view to next file
 " \
 	    -justify left -bg white -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
-    $w.m configure -font $uifont
+    $w.m configure -font uifont
     button $w.ok -text Close -command "destroy $w" -default active
     pack $w.ok -side bottom
-    $w.ok configure -font $uifont
+    $w.ok configure -font uifont
     bind $w <Visibility> "focus $w.ok"
     bind $w <Key-Escape> "destroy $w"
     bind $w <Key-Return> "destroy $w"
@@ -1589,6 +1726,7 @@ proc pop_flist_menu {w X Y x y} {
     global ctext cflist cmitmode flist_menu flist_menu_file
     global treediffs diffids
 
+    stopfinding
     set l [lindex [split [$w index "@$x,$y"] "."] 0]
     if {$l <= 1} return
     if {$cmitmode eq "tree"} {
@@ -1602,14 +1740,15 @@ proc pop_flist_menu {w X Y x y} {
 }
 
 proc flist_hl {only} {
-    global flist_menu_file highlight_files
+    global flist_menu_file findstring gdttype
 
     set x [shellquote $flist_menu_file]
-    if {$only || $highlight_files eq {}} {
-	set highlight_files $x
+    if {$only || $findstring eq {} || $gdttype ne "touching paths:"} {
+	set findstring $x
     } else {
-	append highlight_files " " $x
+	append findstring " " $x
     }
+    set gdttype "touching paths:"
 }
 
 # Functions for adding and removing shell-type quoting
@@ -1746,22 +1885,22 @@ proc vieweditor {top n title} {
 
     toplevel $top
     wm title $top $title
-    label $top.nl -text "Name" -font $uifont
-    entry $top.name -width 20 -textvariable newviewname($n) -font $uifont
+    label $top.nl -text "Name" -font uifont
+    entry $top.name -width 20 -textvariable newviewname($n) -font uifont
     grid $top.nl $top.name -sticky w -pady 5
     checkbutton $top.perm -text "Remember this view" -variable newviewperm($n) \
-	-font $uifont
+	-font uifont
     grid $top.perm - -pady 5 -sticky w
-    message $top.al -aspect 1000 -font $uifont \
+    message $top.al -aspect 1000 -font uifont \
 	-text "Commits to include (arguments to git rev-list):"
     grid $top.al - -sticky w -pady 5
     entry $top.args -width 50 -textvariable newviewargs($n) \
-	-background white -font $uifont
+	-background white -font uifont
     grid $top.args - -sticky ew -padx 5
-    message $top.l -aspect 1000 -font $uifont \
+    message $top.l -aspect 1000 -font uifont \
 	-text "Enter files and directories to include, one per line:"
     grid $top.l - -sticky w
-    text $top.t -width 40 -height 10 -background white -font $uifont
+    text $top.t -width 40 -height 10 -background white -font uifont
     if {[info exists viewfiles($n)]} {
 	foreach f $viewfiles($n) {
 	    $top.t insert end $f
@@ -1773,9 +1912,9 @@ proc vieweditor {top n title} {
     grid $top.t - -sticky ew -padx 5
     frame $top.buts
     button $top.buts.ok -text "OK" -command [list newviewok $top $n] \
-	-font $uifont
+	-font uifont
     button $top.buts.can -text "Cancel" -command [list destroy $top] \
-	-font $uifont
+	-font uifont
     grid $top.buts.ok $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -1794,10 +1933,10 @@ proc doviewmenu {m first cmd op argv} {
 }
 
 proc allviewmenus {n op args} {
-    global viewhlmenu
+    # global viewhlmenu
 
     doviewmenu .bar.view 5 [list showview $n] $op $args
-    doviewmenu $viewhlmenu 1 [list addvhighlight $n] $op $args
+    # doviewmenu $viewhlmenu 1 [list addvhighlight $n] $op $args
 }
 
 proc newviewok {top n} {
@@ -1840,8 +1979,8 @@ proc newviewok {top n} {
 	    set viewname($n) $newviewname($n)
 	    doviewmenu .bar.view 5 [list showview $n] \
 		entryconf [list -label $viewname($n)]
-	    doviewmenu $viewhlmenu 1 [list addvhighlight $n] \
-		entryconf [list -label $viewname($n) -value $viewname($n)]
+	    # doviewmenu $viewhlmenu 1 [list addvhighlight $n] \
+		# entryconf [list -label $viewname($n) -value $viewname($n)]
 	}
 	if {$files ne $viewfiles($n) || $newargs ne $viewargs($n)} {
 	    set viewfiles($n) $files
@@ -1873,8 +2012,8 @@ proc addviewmenu {n} {
 
     .bar.view add radiobutton -label $viewname($n) \
 	-command [list showview $n] -variable selectedview -value $n
-    $viewhlmenu add radiobutton -label $viewname($n) \
-	-command [list addvhighlight $n] -variable selectedhlview
+    #$viewhlmenu add radiobutton -label $viewname($n) \
+    #	-command [list addvhighlight $n] -variable selectedhlview
 }
 
 proc flatten {var} {
@@ -1898,17 +2037,17 @@ proc unflatten {var l} {
 
 proc showview {n} {
     global curview viewdata viewfiles
-    global displayorder parentlist rowidlist rowoffsets
+    global displayorder parentlist rowidlist rowisopt rowfinal
     global colormap rowtextx commitrow nextcolor canvxmax
-    global numcommits rowrangelist commitlisted idrowranges rowchk
+    global numcommits commitlisted
     global selectedline currentid canv canvy0
     global treediffs
     global pending_select phase
-    global commitidx rowlaidout rowoptim
+    global commitidx
     global commfd
     global selectedview selectfirst
     global vparentlist vdisporder vcmitlisted
-    global hlview selectedhlview
+    global hlview selectedhlview commitinterest
 
     if {$n == $curview} return
     set selid {}
@@ -1934,15 +2073,11 @@ proc showview {n} {
 	set vparentlist($curview) $parentlist
 	set vdisporder($curview) $displayorder
 	set vcmitlisted($curview) $commitlisted
-	if {$phase ne {}} {
+	if {$phase ne {} ||
+	    ![info exists viewdata($curview)] ||
+	    [lindex $viewdata($curview) 0] ne {}} {
 	    set viewdata($curview) \
-		[list $phase $rowidlist $rowoffsets $rowrangelist \
-		     [flatten idrowranges] [flatten idinlist] \
-		     $rowlaidout $rowoptim $numcommits]
-	} elseif {![info exists viewdata($curview)]
-		  || [lindex $viewdata($curview) 0] ne {}} {
-	    set viewdata($curview) \
-		[list {} $rowidlist $rowoffsets $rowrangelist]
+		[list $phase $rowidlist $rowisopt $rowfinal]
 	}
     }
     catch {unset treediffs}
@@ -1951,12 +2086,14 @@ proc showview {n} {
 	unset hlview
 	set selectedhlview None
     }
+    catch {unset commitinterest}
 
     set curview $n
     set selectedview $n
     .bar.view entryconf Edit* -state [expr {$n == 0? "disabled": "normal"}]
     .bar.view entryconf Delete* -state [expr {$n == 0? "disabled": "normal"}]
 
+    run refill_reflist
     if {![info exists viewdata($n)]} {
 	if {$selid ne {}} {
 	    set pending_select $selid
@@ -1971,19 +2108,9 @@ proc showview {n} {
     set parentlist $vparentlist($n)
     set commitlisted $vcmitlisted($n)
     set rowidlist [lindex $v 1]
-    set rowoffsets [lindex $v 2]
-    set rowrangelist [lindex $v 3]
-    if {$phase eq {}} {
-	set numcommits [llength $displayorder]
-	catch {unset idrowranges}
-    } else {
-	unflatten idrowranges [lindex $v 4]
-	unflatten idinlist [lindex $v 5]
-	set rowlaidout [lindex $v 6]
-	set rowoptim [lindex $v 7]
-	set numcommits [lindex $v 8]
-	catch {unset rowchk}
-    }
+    set rowisopt [lindex $v 2]
+    set rowfinal [lindex $v 3]
+    set numcommits $commitidx($n)
 
     catch {unset colormap}
     catch {unset rowtextx}
@@ -2027,7 +2154,6 @@ proc showview {n} {
     } elseif {$numcommits == 0} {
 	show_status "No commits selected"
     }
-    run refill_reflist
 }
 
 # Stuff relating to the highlighting facility
@@ -2079,12 +2205,12 @@ proc bolden_name {row font} {
 }
 
 proc unbolden {} {
-    global mainfont boldrows
+    global boldrows
 
     set stillbold {}
     foreach row $boldrows {
 	if {![ishighlighted $row]} {
-	    bolden $row $mainfont
+	    bolden $row mainfont
 	} else {
 	    lappend stillbold $row
 	}
@@ -2100,7 +2226,7 @@ proc addvhighlight {n} {
     }
     set hlview $n
     if {$n != $curview && ![info exists viewdata($n)]} {
-	set viewdata($n) [list getcommits {{}} {{}} {} {} {} 0 0 0 {}]
+	set viewdata($n) [list getcommits {{}} 0 0 0]
 	set vparentlist($n) {}
 	set vdisporder($n) {}
 	set vcmitlisted($n) {}
@@ -2123,9 +2249,8 @@ proc delvhighlight {} {
 
 proc vhighlightmore {} {
     global hlview vhl_done commitidx vhighlights
-    global displayorder vdisporder curview mainfont
+    global displayorder vdisporder curview
 
-    set font [concat $mainfont bold]
     set max $commitidx($hlview)
     if {$hlview == $curview} {
 	set disp $displayorder
@@ -2141,7 +2266,7 @@ proc vhighlightmore {} {
 	    set row $commitrow($curview,$id)
 	    if {$r0 <= $row && $row <= $r1} {
 		if {![highlighted $row]} {
-		    bolden $row $font
+		    bolden $row mainfontbold
 		}
 		set vhighlights($row) 1
 	    }
@@ -2151,11 +2276,11 @@ proc vhighlightmore {} {
 }
 
 proc askvhighlight {row id} {
-    global hlview vhighlights commitrow iddrawn mainfont
+    global hlview vhighlights commitrow iddrawn
 
     if {[info exists commitrow($hlview,$id)]} {
 	if {[info exists iddrawn($id)] && ![ishighlighted $row]} {
-	    bolden $row [concat $mainfont bold]
+	    bolden $row mainfontbold
 	}
 	set vhighlights($row) 1
     } else {
@@ -2163,9 +2288,9 @@ proc askvhighlight {row id} {
     }
 }
 
-proc hfiles_change {name ix op} {
+proc hfiles_change {} {
     global highlight_files filehighlight fhighlights fh_serial
-    global mainfont highlight_paths
+    global highlight_paths gdttype
 
     if {[info exists filehighlight]} {
 	# delete previous highlights
@@ -2180,6 +2305,69 @@ proc hfiles_change {name ix op} {
     incr fh_serial
     if {$highlight_files ne {}} {
 	after 300 do_file_hl $fh_serial
+    }
+}
+
+proc gdttype_change {name ix op} {
+    global gdttype highlight_files findstring findpattern
+
+    stopfinding
+    if {$findstring ne {}} {
+	if {$gdttype eq "containing:"} {
+	    if {$highlight_files ne {}} {
+		set highlight_files {}
+		hfiles_change
+	    }
+	    findcom_change
+	} else {
+	    if {$findpattern ne {}} {
+		set findpattern {}
+		findcom_change
+	    }
+	    set highlight_files $findstring
+	    hfiles_change
+	}
+	drawvisible
+    }
+    # enable/disable findtype/findloc menus too
+}
+
+proc find_change {name ix op} {
+    global gdttype findstring highlight_files
+
+    stopfinding
+    if {$gdttype eq "containing:"} {
+	findcom_change
+    } else {
+	if {$highlight_files ne $findstring} {
+	    set highlight_files $findstring
+	    hfiles_change
+	}
+    }
+    drawvisible
+}
+
+proc findcom_change args {
+    global nhighlights boldnamerows
+    global findpattern findtype findstring gdttype
+
+    stopfinding
+    # delete previous highlights, if any
+    foreach row $boldnamerows {
+	bolden_name $row mainfont
+    }
+    set boldnamerows {}
+    catch {unset nhighlights}
+    unbolden
+    unmarkmatches
+    if {$gdttype ne "containing:" || $findstring eq {}} {
+	set findpattern {}
+    } elseif {$findtype eq "Regexp"} {
+	set findpattern $findstring
+    } else {
+	set e [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} \
+		   $findstring]
+	set findpattern "*$e*"
     }
 }
 
@@ -2205,8 +2393,11 @@ proc do_file_hl {serial} {
 	set highlight_paths [makepatterns $paths]
 	highlight_filelist
 	set gdtargs [concat -- $paths]
-    } else {
+    } elseif {$gdttype eq "adding/removing string:"} {
 	set gdtargs [list "-S$highlight_files"]
+    } else {
+	# must be "containing:", i.e. we're searching commit info
+	return
     }
     set cmd [concat | git diff-tree -r -s --stdin $gdtargs]
     set filehighlight [open $cmd r+]
@@ -2236,8 +2427,8 @@ proc askfilehighlight {row id} {
 }
 
 proc readfhighlight {} {
-    global filehighlight fhighlights commitrow curview mainfont iddrawn
-    global fhl_list
+    global filehighlight fhighlights commitrow curview iddrawn
+    global fhl_list find_dirn
 
     if {![info exists filehighlight]} {
 	return 0
@@ -2258,7 +2449,7 @@ proc readfhighlight {} {
 	if {![info exists commitrow($curview,$line)]} continue
 	set row $commitrow($curview,$line)
 	if {[info exists iddrawn($line)] && ![ishighlighted $row]} {
-	    bolden $row [concat $mainfont bold]
+	    bolden $row mainfontbold
 	}
 	set fhighlights($row) 1
     }
@@ -2269,35 +2460,17 @@ proc readfhighlight {} {
 	unset filehighlight
 	return 0
     }
-    next_hlcont
+    if {[info exists find_dirn]} {
+	run findmore
+    }
     return 1
 }
 
-proc find_change {name ix op} {
-    global nhighlights mainfont boldnamerows
-    global findstring findpattern findtype
-
-    # delete previous highlights, if any
-    foreach row $boldnamerows {
-	bolden_name $row $mainfont
-    }
-    set boldnamerows {}
-    catch {unset nhighlights}
-    unbolden
-    unmarkmatches
-    if {$findtype ne "Regexp"} {
-	set e [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} \
-		   $findstring]
-	set findpattern "*$e*"
-    }
-    drawvisible
-}
-
 proc doesmatch {f} {
-    global findtype findstring findpattern
+    global findtype findpattern
 
     if {$findtype eq "Regexp"} {
-	return [regexp $findstring $f]
+	return [regexp $findpattern $f]
     } elseif {$findtype eq "IgnCase"} {
 	return [string match -nocase $findpattern $f]
     } else {
@@ -2306,7 +2479,7 @@ proc doesmatch {f} {
 }
 
 proc askfindhighlight {row id} {
-    global nhighlights commitinfo iddrawn mainfont
+    global nhighlights commitinfo iddrawn
     global findloc
     global markingmatches
 
@@ -2327,11 +2500,10 @@ proc askfindhighlight {row id} {
 	}
     }
     if {$isbold && [info exists iddrawn($id)]} {
-	set f [concat $mainfont bold]
 	if {![ishighlighted $row]} {
-	    bolden $row $f
+	    bolden $row mainfontbold
 	    if {$isbold > 1} {
-		bolden_name $row $f
+		bolden_name $row mainfontbold
 	    }
 	}
 	if {$markingmatches} {
@@ -2460,7 +2632,7 @@ proc is_ancestor {a} {
 }
 
 proc askrelhighlight {row id} {
-    global descendent highlight_related iddrawn mainfont rhighlights
+    global descendent highlight_related iddrawn rhighlights
     global selectedline ancestor
 
     if {![info exists selectedline]} return
@@ -2484,85 +2656,10 @@ proc askrelhighlight {row id} {
     }
     if {[info exists iddrawn($id)]} {
 	if {$isbold && ![ishighlighted $row]} {
-	    bolden $row [concat $mainfont bold]
+	    bolden $row mainfontbold
 	}
     }
     set rhighlights($row) $isbold
-}
-
-proc next_hlcont {} {
-    global fhl_row fhl_dirn displayorder numcommits
-    global vhighlights fhighlights nhighlights rhighlights
-    global hlview filehighlight findstring highlight_related
-
-    if {![info exists fhl_dirn] || $fhl_dirn == 0} return
-    set row $fhl_row
-    while {1} {
-	if {$row < 0 || $row >= $numcommits} {
-	    bell
-	    set fhl_dirn 0
-	    return
-	}
-	set id [lindex $displayorder $row]
-	if {[info exists hlview]} {
-	    if {![info exists vhighlights($row)]} {
-		askvhighlight $row $id
-	    }
-	    if {$vhighlights($row) > 0} break
-	}
-	if {$findstring ne {}} {
-	    if {![info exists nhighlights($row)]} {
-		askfindhighlight $row $id
-	    }
-	    if {$nhighlights($row) > 0} break
-	}
-	if {$highlight_related ne "None"} {
-	    if {![info exists rhighlights($row)]} {
-		askrelhighlight $row $id
-	    }
-	    if {$rhighlights($row) > 0} break
-	}
-	if {[info exists filehighlight]} {
-	    if {![info exists fhighlights($row)]} {
-		# ask for a few more while we're at it...
-		set r $row
-		for {set n 0} {$n < 100} {incr n} {
-		    if {![info exists fhighlights($r)]} {
-			askfilehighlight $r [lindex $displayorder $r]
-		    }
-		    incr r $fhl_dirn
-		    if {$r < 0 || $r >= $numcommits} break
-		}
-		flushhighlights
-	    }
-	    if {$fhighlights($row) < 0} {
-		set fhl_row $row
-		return
-	    }
-	    if {$fhighlights($row) > 0} break
-	}
-	incr row $fhl_dirn
-    }
-    set fhl_dirn 0
-    selectline $row 1
-}
-
-proc next_highlight {dirn} {
-    global selectedline fhl_row fhl_dirn
-    global hlview filehighlight findstring highlight_related
-
-    if {![info exists selectedline]} return
-    if {!([info exists hlview] || $findstring ne {} ||
-	  $highlight_related ne "None" || [info exists filehighlight])} return
-    set fhl_row [expr {$selectedline + $dirn}]
-    set fhl_dirn $dirn
-    next_hlcont
-}
-
-proc cancel_next_highlight {} {
-    global fhl_dirn
-
-    set fhl_dirn 0
 }
 
 # Graph layout functions
@@ -2581,108 +2678,43 @@ proc shortids {ids} {
     return $res
 }
 
-proc incrange {l x o} {
-    set n [llength $l]
-    while {$x < $n} {
-	set e [lindex $l $x]
-	if {$e ne {}} {
-	    lset l $x [expr {$e + $o}]
-	}
-	incr x
-    }
-    return $l
-}
-
 proc ntimes {n o} {
     set ret {}
-    for {} {$n > 0} {incr n -1} {
-	lappend ret $o
+    set o [list $o]
+    for {set mask 1} {$mask <= $n} {incr mask $mask} {
+	if {($n & $mask) != 0} {
+	    set ret [concat $ret $o]
+	}
+	set o [concat $o $o]
     }
     return $ret
 }
 
-proc usedinrange {id l1 l2} {
-    global children commitrow curview
+# Work out where id should go in idlist so that order-token
+# values increase from left to right
+proc idcol {idlist id {i 0}} {
+    global ordertok curview
 
-    if {[info exists commitrow($curview,$id)]} {
-	set r $commitrow($curview,$id)
-	if {$l1 <= $r && $r <= $l2} {
-	    return [expr {$r - $l1 + 1}]
+    set t $ordertok($curview,$id)
+    if {$i >= [llength $idlist] ||
+	$t < $ordertok($curview,[lindex $idlist $i])} {
+	if {$i > [llength $idlist]} {
+	    set i [llength $idlist]
+	}
+	while {[incr i -1] >= 0 &&
+	       $t < $ordertok($curview,[lindex $idlist $i])} {}
+	incr i
+    } else {
+	if {$t > $ordertok($curview,[lindex $idlist $i])} {
+	    while {[incr i] < [llength $idlist] &&
+		   $t >= $ordertok($curview,[lindex $idlist $i])} {}
 	}
     }
-    set kids $children($curview,$id)
-    foreach c $kids {
-	set r $commitrow($curview,$c)
-	if {$l1 <= $r && $r <= $l2} {
-	    return [expr {$r - $l1 + 1}]
-	}
-    }
-    return 0
-}
-
-proc sanity {row {full 0}} {
-    global rowidlist rowoffsets
-
-    set col -1
-    set ids [lindex $rowidlist $row]
-    foreach id $ids {
-	incr col
-	if {$id eq {}} continue
-	if {$col < [llength $ids] - 1 &&
-	    [lsearch -exact -start [expr {$col+1}] $ids $id] >= 0} {
-	    puts "oops: [shortids $id] repeated in row $row col $col: {[shortids [lindex $rowidlist $row]]}"
-	}
-	set o [lindex $rowoffsets $row $col]
-	set y $row
-	set x $col
-	while {$o ne {}} {
-	    incr y -1
-	    incr x $o
-	    if {[lindex $rowidlist $y $x] != $id} {
-		puts "oops: rowoffsets wrong at row [expr {$y+1}] col [expr {$x-$o}]"
-		puts "  id=[shortids $id] check started at row $row"
-		for {set i $row} {$i >= $y} {incr i -1} {
-		    puts "  row $i ids={[shortids [lindex $rowidlist $i]]} offs={[lindex $rowoffsets $i]}"
-		}
-		break
-	    }
-	    if {!$full} break
-	    set o [lindex $rowoffsets $y $x]
-	}
-    }
-}
-
-proc makeuparrow {oid x y z} {
-    global rowidlist rowoffsets uparrowlen idrowranges displayorder
-
-    for {set i 1} {$i < $uparrowlen && $y > 1} {incr i} {
-	incr y -1
-	incr x $z
-	set off0 [lindex $rowoffsets $y]
-	for {set x0 $x} {1} {incr x0} {
-	    if {$x0 >= [llength $off0]} {
-		set x0 [llength [lindex $rowoffsets [expr {$y-1}]]]
-		break
-	    }
-	    set z [lindex $off0 $x0]
-	    if {$z ne {}} {
-		incr x0 $z
-		break
-	    }
-	}
-	set z [expr {$x0 - $x}]
-	lset rowidlist $y [linsert [lindex $rowidlist $y] $x $oid]
-	lset rowoffsets $y [linsert [lindex $rowoffsets $y] $x $z]
-    }
-    set tmp [lreplace [lindex $rowoffsets $y] $x $x {}]
-    lset rowoffsets $y [incrange $tmp [expr {$x+1}] -1]
-    lappend idrowranges($oid) [lindex $displayorder $y]
+    return $i
 }
 
 proc initlayout {} {
-    global rowidlist rowoffsets displayorder commitlisted
-    global rowlaidout rowoptim
-    global idinlist rowchk rowrangelist idrowranges
+    global rowidlist rowisopt rowfinal displayorder commitlisted
     global numcommits canvxmax canv
     global nextcolor
     global parentlist
@@ -2693,18 +2725,13 @@ proc initlayout {} {
     set displayorder {}
     set commitlisted {}
     set parentlist {}
-    set rowrangelist {}
     set nextcolor 0
-    set rowidlist {{}}
-    set rowoffsets {{}}
-    catch {unset idinlist}
-    catch {unset rowchk}
-    set rowlaidout 0
-    set rowoptim 0
+    set rowidlist {}
+    set rowisopt {}
+    set rowfinal {}
     set canvxmax [$canv cget -width]
     catch {unset colormap}
     catch {unset rowtextx}
-    catch {unset idrowranges}
     set selectfirst 1
 }
 
@@ -2736,76 +2763,25 @@ proc visiblerows {} {
     return [list $r0 $r1]
 }
 
-proc layoutmore {tmax allread} {
-    global rowlaidout rowoptim commitidx numcommits optim_delay
-    global uparrowlen curview rowidlist idinlist
+proc layoutmore {} {
+    global commitidx viewcomplete numcommits
+    global uparrowlen downarrowlen mingaplen curview
 
-    set showlast 0
-    set showdelay $optim_delay
-    set optdelay [expr {$uparrowlen + 1}]
-    while {1} {
-	if {$rowoptim - $showdelay > $numcommits} {
-	    showstuff [expr {$rowoptim - $showdelay}] $showlast
-	} elseif {$rowlaidout - $optdelay > $rowoptim} {
-	    set nr [expr {$rowlaidout - $optdelay - $rowoptim}]
-	    if {$nr > 100} {
-		set nr 100
-	    }
-	    optimize_rows $rowoptim 0 [expr {$rowoptim + $nr}]
-	    incr rowoptim $nr
-	} elseif {$commitidx($curview) > $rowlaidout} {
-	    set nr [expr {$commitidx($curview) - $rowlaidout}]
-	    # may need to increase this threshold if uparrowlen or
-	    # mingaplen are increased...
-	    if {$nr > 150} {
-		set nr 150
-	    }
-	    set row $rowlaidout
-	    set rowlaidout [layoutrows $row [expr {$row + $nr}] $allread]
-	    if {$rowlaidout == $row} {
-		return 0
-	    }
-	} elseif {$allread} {
-	    set optdelay 0
-	    set nrows $commitidx($curview)
-	    if {[lindex $rowidlist $nrows] ne {} ||
-		[array names idinlist] ne {}} {
-		layouttail
-		set rowlaidout $commitidx($curview)
-	    } elseif {$rowoptim == $nrows} {
-		set showdelay 0
-		set showlast 1
-		if {$numcommits == $nrows} {
-		    return 0
-		}
-	    }
-	} else {
-	    return 0
-	}
-	if {$tmax ne {} && [clock clicks -milliseconds] >= $tmax} {
-	    return 1
-	}
+    set show $commitidx($curview)
+    if {$show > $numcommits || $viewcomplete($curview)} {
+	showstuff $show $viewcomplete($curview)
     }
 }
 
 proc showstuff {canshow last} {
     global numcommits commitrow pending_select selectedline curview
-    global lookingforhead mainheadid displayorder selectfirst
+    global mainheadid displayorder selectfirst
     global lastscrollset commitinterest
 
     if {$numcommits == 0} {
 	global phase
 	set phase "incrdraw"
 	allcanvs delete all
-    }
-    for {set l $numcommits} {$l < $canshow} {incr l} {
-	set id [lindex $displayorder $l]
-	if {[info exists commitinterest($id)]} {
-	    foreach script $commitinterest($id) {
-		eval [string map [list "%I" $id] $script]
-	    }
-	    unset commitinterest($id)
-	}
     }
     set r0 $numcommits
     set prev $numcommits
@@ -2837,28 +2813,22 @@ proc showstuff {canshow last} {
 	    set selectfirst 0
 	}
     }
-    if {$lookingforhead && [info exists commitrow($curview,$mainheadid)]
-	&& ($last || $commitrow($curview,$mainheadid) < $numcommits - 1)} {
-	set lookingforhead 0
-	dodiffindex
-    }
 }
 
 proc doshowlocalchanges {} {
-    global lookingforhead curview mainheadid phase commitrow
+    global curview mainheadid phase commitrow
 
     if {[info exists commitrow($curview,$mainheadid)] &&
 	($phase eq {} || $commitrow($curview,$mainheadid) < $numcommits - 1)} {
 	dodiffindex
     } elseif {$phase ne {}} {
-	set lookingforhead 1
+	lappend commitinterest($mainheadid) {}
     }
 }
 
 proc dohidelocalchanges {} {
-    global lookingforhead localfrow localirow lserial
+    global localfrow localirow lserial
 
-    set lookingforhead 0
     if {$localfrow >= 0} {
 	removerow $localfrow
 	set localfrow -1
@@ -2875,8 +2845,9 @@ proc dohidelocalchanges {} {
 
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
-    global localirow localfrow lserial
+    global localirow localfrow lserial showlocalchanges
 
+    if {!$showlocalchanges} return
     incr lserial
     set localfrow -1
     set localirow -1
@@ -2947,206 +2918,324 @@ proc readdifffiles {fd serial} {
     return 0
 }
 
-proc layoutrows {row endrow last} {
-    global rowidlist rowoffsets displayorder
+proc nextuse {id row} {
+    global commitrow curview children
+
+    if {[info exists children($curview,$id)]} {
+	foreach kid $children($curview,$id) {
+	    if {![info exists commitrow($curview,$kid)]} {
+		return -1
+	    }
+	    if {$commitrow($curview,$kid) > $row} {
+		return $commitrow($curview,$kid)
+	    }
+	}
+    }
+    if {[info exists commitrow($curview,$id)]} {
+	return $commitrow($curview,$id)
+    }
+    return -1
+}
+
+proc prevuse {id row} {
+    global commitrow curview children
+
+    set ret -1
+    if {[info exists children($curview,$id)]} {
+	foreach kid $children($curview,$id) {
+	    if {![info exists commitrow($curview,$kid)]} break
+	    if {$commitrow($curview,$kid) < $row} {
+		set ret $commitrow($curview,$kid)
+	    }
+	}
+    }
+    return $ret
+}
+
+proc make_idlist {row} {
+    global displayorder parentlist uparrowlen downarrowlen mingaplen
+    global commitidx curview ordertok children commitrow
+
+    set r [expr {$row - $mingaplen - $downarrowlen - 1}]
+    if {$r < 0} {
+	set r 0
+    }
+    set ra [expr {$row - $downarrowlen}]
+    if {$ra < 0} {
+	set ra 0
+    }
+    set rb [expr {$row + $uparrowlen}]
+    if {$rb > $commitidx($curview)} {
+	set rb $commitidx($curview)
+    }
+    set ids {}
+    for {} {$r < $ra} {incr r} {
+	set nextid [lindex $displayorder [expr {$r + 1}]]
+	foreach p [lindex $parentlist $r] {
+	    if {$p eq $nextid} continue
+	    set rn [nextuse $p $r]
+	    if {$rn >= $row &&
+		$rn <= $r + $downarrowlen + $mingaplen + $uparrowlen} {
+		lappend ids [list $ordertok($curview,$p) $p]
+	    }
+	}
+    }
+    for {} {$r < $row} {incr r} {
+	set nextid [lindex $displayorder [expr {$r + 1}]]
+	foreach p [lindex $parentlist $r] {
+	    if {$p eq $nextid} continue
+	    set rn [nextuse $p $r]
+	    if {$rn < 0 || $rn >= $row} {
+		lappend ids [list $ordertok($curview,$p) $p]
+	    }
+	}
+    }
+    set id [lindex $displayorder $row]
+    lappend ids [list $ordertok($curview,$id) $id]
+    while {$r < $rb} {
+	foreach p [lindex $parentlist $r] {
+	    set firstkid [lindex $children($curview,$p) 0]
+	    if {$commitrow($curview,$firstkid) < $row} {
+		lappend ids [list $ordertok($curview,$p) $p]
+	    }
+	}
+	incr r
+	set id [lindex $displayorder $r]
+	if {$id ne {}} {
+	    set firstkid [lindex $children($curview,$id) 0]
+	    if {$firstkid ne {} && $commitrow($curview,$firstkid) < $row} {
+		lappend ids [list $ordertok($curview,$id) $id]
+	    }
+	}
+    }
+    set idlist {}
+    foreach idx [lsort -unique $ids] {
+	lappend idlist [lindex $idx 1]
+    }
+    return $idlist
+}
+
+proc rowsequal {a b} {
+    while {[set i [lsearch -exact $a {}]] >= 0} {
+	set a [lreplace $a $i $i]
+    }
+    while {[set i [lsearch -exact $b {}]] >= 0} {
+	set b [lreplace $b $i $i]
+    }
+    return [expr {$a eq $b}]
+}
+
+proc makeupline {id row rend col} {
+    global rowidlist uparrowlen downarrowlen mingaplen
+
+    for {set r $rend} {1} {set r $rstart} {
+	set rstart [prevuse $id $r]
+	if {$rstart < 0} return
+	if {$rstart < $row} break
+    }
+    if {$rstart + $uparrowlen + $mingaplen + $downarrowlen < $rend} {
+	set rstart [expr {$rend - $uparrowlen - 1}]
+    }
+    for {set r $rstart} {[incr r] <= $row} {} {
+	set idlist [lindex $rowidlist $r]
+	if {$idlist ne {} && [lsearch -exact $idlist $id] < 0} {
+	    set col [idcol $idlist $id $col]
+	    lset rowidlist $r [linsert $idlist $col $id]
+	    changedrow $r
+	}
+    }
+}
+
+proc layoutrows {row endrow} {
+    global rowidlist rowisopt rowfinal displayorder
     global uparrowlen downarrowlen maxwidth mingaplen
     global children parentlist
-    global idrowranges
-    global commitidx curview
-    global idinlist rowchk rowrangelist
+    global commitidx viewcomplete curview commitrow
 
-    set idlist [lindex $rowidlist $row]
-    set offs [lindex $rowoffsets $row]
-    while {$row < $endrow} {
-	set id [lindex $displayorder $row]
-	set nev [expr {[llength $idlist] - $maxwidth + 1}]
-	foreach p [lindex $parentlist $row] {
-	    if {![info exists idinlist($p)] || !$idinlist($p)} {
-		incr nev
+    set idlist {}
+    if {$row > 0} {
+	set rm1 [expr {$row - 1}]
+	foreach id [lindex $rowidlist $rm1] {
+	    if {$id ne {}} {
+		lappend idlist $id
 	    }
 	}
-	if {$nev > 0} {
-	    if {!$last &&
-		$row + $uparrowlen + $mingaplen >= $commitidx($curview)} break
-	    for {set x [llength $idlist]} {[incr x -1] >= 0} {} {
-		set i [lindex $idlist $x]
-		if {![info exists rowchk($i)] || $row >= $rowchk($i)} {
-		    set r [usedinrange $i [expr {$row - $downarrowlen}] \
-			       [expr {$row + $uparrowlen + $mingaplen}]]
-		    if {$r == 0} {
-			set idlist [lreplace $idlist $x $x]
-			set offs [lreplace $offs $x $x]
-			set offs [incrange $offs $x 1]
-			set idinlist($i) 0
-			set rm1 [expr {$row - 1}]
-			lappend idrowranges($i) [lindex $displayorder $rm1]
-			if {[incr nev -1] <= 0} break
-			continue
+	set final [lindex $rowfinal $rm1]
+    }
+    for {} {$row < $endrow} {incr row} {
+	set rm1 [expr {$row - 1}]
+	if {$rm1 < 0 || $idlist eq {}} {
+	    set idlist [make_idlist $row]
+	    set final 1
+	} else {
+	    set id [lindex $displayorder $rm1]
+	    set col [lsearch -exact $idlist $id]
+	    set idlist [lreplace $idlist $col $col]
+	    foreach p [lindex $parentlist $rm1] {
+		if {[lsearch -exact $idlist $p] < 0} {
+		    set col [idcol $idlist $p $col]
+		    set idlist [linsert $idlist $col $p]
+		    # if not the first child, we have to insert a line going up
+		    if {$id ne [lindex $children($curview,$p) 0]} {
+			makeupline $p $rm1 $row $col
 		    }
-		    set rowchk($i) [expr {$row + $r}]
 		}
 	    }
-	    lset rowidlist $row $idlist
-	    lset rowoffsets $row $offs
+	    set id [lindex $displayorder $row]
+	    if {$row > $downarrowlen} {
+		set termrow [expr {$row - $downarrowlen - 1}]
+		foreach p [lindex $parentlist $termrow] {
+		    set i [lsearch -exact $idlist $p]
+		    if {$i < 0} continue
+		    set nr [nextuse $p $termrow]
+		    if {$nr < 0 || $nr >= $row + $mingaplen + $uparrowlen} {
+			set idlist [lreplace $idlist $i $i]
+		    }
+		}
+	    }
+	    set col [lsearch -exact $idlist $id]
+	    if {$col < 0} {
+		set col [idcol $idlist $id]
+		set idlist [linsert $idlist $col $id]
+		if {$children($curview,$id) ne {}} {
+		    makeupline $id $rm1 $row $col
+		}
+	    }
+	    set r [expr {$row + $uparrowlen - 1}]
+	    if {$r < $commitidx($curview)} {
+		set x $col
+		foreach p [lindex $parentlist $r] {
+		    if {[lsearch -exact $idlist $p] >= 0} continue
+		    set fk [lindex $children($curview,$p) 0]
+		    if {$commitrow($curview,$fk) < $row} {
+			set x [idcol $idlist $p $x]
+			set idlist [linsert $idlist $x $p]
+		    }
+		}
+		if {[incr r] < $commitidx($curview)} {
+		    set p [lindex $displayorder $r]
+		    if {[lsearch -exact $idlist $p] < 0} {
+			set fk [lindex $children($curview,$p) 0]
+			if {$fk ne {} && $commitrow($curview,$fk) < $row} {
+			    set x [idcol $idlist $p $x]
+			    set idlist [linsert $idlist $x $p]
+			}
+		    }
+		}
+	    }
 	}
-	set oldolds {}
-	set newolds {}
-	foreach p [lindex $parentlist $row] {
-	    if {![info exists idinlist($p)]} {
-		lappend newolds $p
-	    } elseif {!$idinlist($p)} {
-		lappend oldolds $p
-	    }
-	    set idinlist($p) 1
+	if {$final && !$viewcomplete($curview) &&
+	    $row + $uparrowlen + $mingaplen + $downarrowlen
+		>= $commitidx($curview)} {
+	    set final 0
 	}
-	set col [lsearch -exact $idlist $id]
-	if {$col < 0} {
-	    set col [llength $idlist]
-	    lappend idlist $id
-	    lset rowidlist $row $idlist
-	    set z {}
-	    if {$children($curview,$id) ne {}} {
-		set z [expr {[llength [lindex $rowidlist [expr {$row-1}]]] - $col}]
-		unset idinlist($id)
+	set l [llength $rowidlist]
+	if {$row == $l} {
+	    lappend rowidlist $idlist
+	    lappend rowisopt 0
+	    lappend rowfinal $final
+	} elseif {$row < $l} {
+	    if {![rowsequal $idlist [lindex $rowidlist $row]]} {
+		lset rowidlist $row $idlist
+		changedrow $row
 	    }
-	    lappend offs $z
-	    lset rowoffsets $row $offs
-	    if {$z ne {}} {
-		makeuparrow $id $col $row $z
-	    }
+	    lset rowfinal $row $final
 	} else {
-	    unset idinlist($id)
+	    set pad [ntimes [expr {$row - $l}] {}]
+	    set rowidlist [concat $rowidlist $pad]
+	    lappend rowidlist $idlist
+	    set rowfinal [concat $rowfinal $pad]
+	    lappend rowfinal $final
+	    set rowisopt [concat $rowisopt [ntimes [expr {$row - $l + 1}] 0]]
 	}
-	set ranges {}
-	if {[info exists idrowranges($id)]} {
-	    set ranges $idrowranges($id)
-	    lappend ranges $id
-	    unset idrowranges($id)
-	}
-	lappend rowrangelist $ranges
-	incr row
-	set offs [ntimes [llength $idlist] 0]
-	set l [llength $newolds]
-	set idlist [eval lreplace \$idlist $col $col $newolds]
-	set o 0
-	if {$l != 1} {
-	    set offs [lrange $offs 0 [expr {$col - 1}]]
-	    foreach x $newolds {
-		lappend offs {}
-		incr o -1
-	    }
-	    incr o
-	    set tmp [expr {[llength $idlist] - [llength $offs]}]
-	    if {$tmp > 0} {
-		set offs [concat $offs [ntimes $tmp $o]]
-	    }
-	} else {
-	    lset offs $col {}
-	}
-	foreach i $newolds {
-	    set idrowranges($i) $id
-	}
-	incr col $l
-	foreach oid $oldolds {
-	    set idlist [linsert $idlist $col $oid]
-	    set offs [linsert $offs $col $o]
-	    makeuparrow $oid $col $row $o
-	    incr col
-	}
-	lappend rowidlist $idlist
-	lappend rowoffsets $offs
     }
     return $row
 }
 
-proc addextraid {id row} {
-    global displayorder commitrow commitinfo
-    global commitidx commitlisted
-    global parentlist children curview
+proc changedrow {row} {
+    global displayorder iddrawn rowisopt need_redisplay
 
-    incr commitidx($curview)
-    lappend displayorder $id
-    lappend commitlisted 0
-    lappend parentlist {}
-    set commitrow($curview,$id) $row
-    readcommit $id
-    if {![info exists commitinfo($id)]} {
-	set commitinfo($id) {"No commit information available"}
+    set l [llength $rowisopt]
+    if {$row < $l} {
+	lset rowisopt $row 0
+	if {$row + 1 < $l} {
+	    lset rowisopt [expr {$row + 1}] 0
+	    if {$row + 2 < $l} {
+		lset rowisopt [expr {$row + 2}] 0
+	    }
+	}
     }
-    if {![info exists children($curview,$id)]} {
-	set children($curview,$id) {}
-    }
-}
-
-proc layouttail {} {
-    global rowidlist rowoffsets idinlist commitidx curview
-    global idrowranges rowrangelist
-
-    set row $commitidx($curview)
-    set idlist [lindex $rowidlist $row]
-    while {$idlist ne {}} {
-	set col [expr {[llength $idlist] - 1}]
-	set id [lindex $idlist $col]
-	addextraid $id $row
-	catch {unset idinlist($id)}
-	lappend idrowranges($id) $id
-	lappend rowrangelist $idrowranges($id)
-	unset idrowranges($id)
-	incr row
-	set offs [ntimes $col 0]
-	set idlist [lreplace $idlist $col $col]
-	lappend rowidlist $idlist
-	lappend rowoffsets $offs
-    }
-
-    foreach id [array names idinlist] {
-	unset idinlist($id)
-	addextraid $id $row
-	lset rowidlist $row [list $id]
-	lset rowoffsets $row 0
-	makeuparrow $id 0 $row 0
-	lappend idrowranges($id) $id
-	lappend rowrangelist $idrowranges($id)
-	unset idrowranges($id)
-	incr row
-	lappend rowidlist {}
-	lappend rowoffsets {}
+    set id [lindex $displayorder $row]
+    if {[info exists iddrawn($id)]} {
+	set need_redisplay 1
     }
 }
 
 proc insert_pad {row col npad} {
-    global rowidlist rowoffsets
+    global rowidlist
 
     set pad [ntimes $npad {}]
-    lset rowidlist $row [eval linsert [list [lindex $rowidlist $row]] $col $pad]
-    set tmp [eval linsert [list [lindex $rowoffsets $row]] $col $pad]
-    lset rowoffsets $row [incrange $tmp [expr {$col + $npad}] [expr {-$npad}]]
+    set idlist [lindex $rowidlist $row]
+    set bef [lrange $idlist 0 [expr {$col - 1}]]
+    set aft [lrange $idlist $col end]
+    set i [lsearch -exact $aft {}]
+    if {$i > 0} {
+	set aft [lreplace $aft $i $i]
+    }
+    lset rowidlist $row [concat $bef $pad $aft]
+    changedrow $row
 }
 
 proc optimize_rows {row col endrow} {
-    global rowidlist rowoffsets displayorder
+    global rowidlist rowisopt displayorder curview children
 
-    for {} {$row < $endrow} {incr row} {
-	set idlist [lindex $rowidlist $row]
-	set offs [lindex $rowoffsets $row]
+    if {$row < 1} {
+	set row 1
+    }
+    for {} {$row < $endrow} {incr row; set col 0} {
+	if {[lindex $rowisopt $row]} continue
 	set haspad 0
-	for {} {$col < [llength $offs]} {incr col} {
-	    if {[lindex $idlist $col] eq {}} {
+	set y0 [expr {$row - 1}]
+	set ym [expr {$row - 2}]
+	set idlist [lindex $rowidlist $row]
+	set previdlist [lindex $rowidlist $y0]
+	if {$idlist eq {} || $previdlist eq {}} continue
+	if {$ym >= 0} {
+	    set pprevidlist [lindex $rowidlist $ym]
+	    if {$pprevidlist eq {}} continue
+	} else {
+	    set pprevidlist {}
+	}
+	set x0 -1
+	set xm -1
+	for {} {$col < [llength $idlist]} {incr col} {
+	    set id [lindex $idlist $col]
+	    if {[lindex $previdlist $col] eq $id} continue
+	    if {$id eq {}} {
 		set haspad 1
 		continue
 	    }
-	    set z [lindex $offs $col]
-	    if {$z eq {}} continue
+	    set x0 [lsearch -exact $previdlist $id]
+	    if {$x0 < 0} continue
+	    set z [expr {$x0 - $col}]
 	    set isarrow 0
-	    set x0 [expr {$col + $z}]
-	    set y0 [expr {$row - 1}]
-	    set z0 [lindex $rowoffsets $y0 $x0]
+	    set z0 {}
+	    if {$ym >= 0} {
+		set xm [lsearch -exact $pprevidlist $id]
+		if {$xm >= 0} {
+		    set z0 [expr {$xm - $x0}]
+		}
+	    }
 	    if {$z0 eq {}} {
-		set id [lindex $idlist $col]
-		set ranges [rowranges $id]
-		if {$ranges ne {} && $y0 > [lindex $ranges 0]} {
+		# if row y0 is the first child of $id then it's not an arrow
+		if {[lindex $children($curview,$id) 0] ne
+		    [lindex $displayorder $y0]} {
 		    set isarrow 1
 		}
+	    }
+	    if {!$isarrow && $id ne [lindex $displayorder $row] &&
+		[lsearch -exact [lindex $rowidlist [expr {$row+1}]] $id] < 0} {
+		set isarrow 1
 	    }
 	    # Looking at lines from this row to the previous row,
 	    # make them go straight up if they end in an arrow on
@@ -3156,43 +3245,32 @@ proc optimize_rows {row col endrow} {
 		# Line currently goes left too much;
 		# insert pads in the previous row, then optimize it
 		set npad [expr {-1 - $z + $isarrow}]
-		set offs [incrange $offs $col $npad]
 		insert_pad $y0 $x0 $npad
 		if {$y0 > 0} {
 		    optimize_rows $y0 $x0 $row
 		}
-		set z [lindex $offs $col]
-		set x0 [expr {$col + $z}]
-		set z0 [lindex $rowoffsets $y0 $x0]
+		set previdlist [lindex $rowidlist $y0]
+		set x0 [lsearch -exact $previdlist $id]
+		set z [expr {$x0 - $col}]
+		if {$z0 ne {}} {
+		    set pprevidlist [lindex $rowidlist $ym]
+		    set xm [lsearch -exact $pprevidlist $id]
+		    set z0 [expr {$xm - $x0}]
+		}
 	    } elseif {$z > 1 || ($z > 0 && $isarrow)} {
 		# Line currently goes right too much;
-		# insert pads in this line and adjust the next's rowoffsets
+		# insert pads in this line
 		set npad [expr {$z - 1 + $isarrow}]
-		set y1 [expr {$row + 1}]
-		set offs2 [lindex $rowoffsets $y1]
-		set x1 -1
-		foreach z $offs2 {
-		    incr x1
-		    if {$z eq {} || $x1 + $z < $col} continue
-		    if {$x1 + $z > $col} {
-			incr npad
-		    }
-		    lset rowoffsets $y1 [incrange $offs2 $x1 $npad]
-		    break
-		}
-		set pad [ntimes $npad {}]
-		set idlist [eval linsert \$idlist $col $pad]
-		set tmp [eval linsert \$offs $col $pad]
+		insert_pad $row $col $npad
+		set idlist [lindex $rowidlist $row]
 		incr col $npad
-		set offs [incrange $tmp $col [expr {-$npad}]]
-		set z [lindex $offs $col]
+		set z [expr {$x0 - $col}]
 		set haspad 1
 	    }
-	    if {$z0 eq {} && !$isarrow} {
+	    if {$z0 eq {} && !$isarrow && $ym >= 0} {
 		# this line links to its first child on row $row-2
-		set rm2 [expr {$row - 2}]
-		set id [lindex $displayorder $rm2]
-		set xc [lsearch -exact [lindex $rowidlist $rm2] $id]
+		set id [lindex $displayorder $ym]
+		set xc [lsearch -exact $pprevidlist $id]
 		if {$xc >= 0} {
 		    set z0 [expr {$xc - $x0}]
 		}
@@ -3200,52 +3278,35 @@ proc optimize_rows {row col endrow} {
 	    # avoid lines jigging left then immediately right
 	    if {$z0 ne {} && $z < 0 && $z0 > 0} {
 		insert_pad $y0 $x0 1
-		set offs [incrange $offs $col 1]
-		optimize_rows $y0 [expr {$x0 + 1}] $row
+		incr x0
+		optimize_rows $y0 $x0 $row
+		set previdlist [lindex $rowidlist $y0]
 	    }
 	}
 	if {!$haspad} {
-	    set o {}
 	    # Find the first column that doesn't have a line going right
 	    for {set col [llength $idlist]} {[incr col -1] >= 0} {} {
-		set o [lindex $offs $col]
-		if {$o eq {}} {
+		set id [lindex $idlist $col]
+		if {$id eq {}} break
+		set x0 [lsearch -exact $previdlist $id]
+		if {$x0 < 0} {
 		    # check if this is the link to the first child
-		    set id [lindex $idlist $col]
-		    set ranges [rowranges $id]
-		    if {$ranges ne {} && $row == [lindex $ranges 0]} {
+		    set kid [lindex $displayorder $y0]
+		    if {[lindex $children($curview,$id) 0] eq $kid} {
 			# it is, work out offset to child
-			set y0 [expr {$row - 1}]
-			set id [lindex $displayorder $y0]
-			set x0 [lsearch -exact [lindex $rowidlist $y0] $id]
-			if {$x0 >= 0} {
-			    set o [expr {$x0 - $col}]
-			}
+			set x0 [lsearch -exact $previdlist $kid]
 		    }
 		}
-		if {$o eq {} || $o <= 0} break
+		if {$x0 <= $col} break
 	    }
 	    # Insert a pad at that column as long as it has a line and
-	    # isn't the last column, and adjust the next row' offsets
-	    if {$o ne {} && [incr col] < [llength $idlist]} {
-		set y1 [expr {$row + 1}]
-		set offs2 [lindex $rowoffsets $y1]
-		set x1 -1
-		foreach z $offs2 {
-		    incr x1
-		    if {$z eq {} || $x1 + $z < $col} continue
-		    lset rowoffsets $y1 [incrange $offs2 $x1 1]
-		    break
-		}
+	    # isn't the last column
+	    if {$x0 >= 0 && [incr col] < [llength $idlist]} {
 		set idlist [linsert $idlist $col {}]
-		set tmp [linsert $offs $col {}]
-		incr col
-		set offs [incrange $tmp $col -1]
+		lset rowidlist $row $idlist
+		changedrow $row
 	    }
 	}
-	lset rowidlist $row $idlist
-	lset rowoffsets $row $offs
-	set col 0
     }
 }
 
@@ -3270,51 +3331,64 @@ proc linewidth {id} {
 }
 
 proc rowranges {id} {
-    global phase idrowranges commitrow rowlaidout rowrangelist curview
+    global commitrow curview children uparrowlen downarrowlen
+    global rowidlist
 
-    set ranges {}
-    if {$phase eq {} ||
-	([info exists commitrow($curview,$id)]
-	 && $commitrow($curview,$id) < $rowlaidout)} {
-	set ranges [lindex $rowrangelist $commitrow($curview,$id)]
-    } elseif {[info exists idrowranges($id)]} {
-	set ranges $idrowranges($id)
+    set kids $children($curview,$id)
+    if {$kids eq {}} {
+	return {}
     }
-    set linenos {}
-    foreach rid $ranges {
-	lappend linenos $commitrow($curview,$rid)
-    }
-    if {$linenos ne {}} {
-	lset linenos 0 [expr {[lindex $linenos 0] + 1}]
-    }
-    return $linenos
-}
-
-# work around tk8.4 refusal to draw arrows on diagonal segments
-proc adjarrowhigh {coords} {
-    global linespc
-
-    set x0 [lindex $coords 0]
-    set x1 [lindex $coords 2]
-    if {$x0 != $x1} {
-	set y0 [lindex $coords 1]
-	set y1 [lindex $coords 3]
-	if {$y0 - $y1 <= 2 * $linespc && $x1 == [lindex $coords 4]} {
-	    # we have a nearby vertical segment, just trim off the diag bit
-	    set coords [lrange $coords 2 end]
+    set ret {}
+    lappend kids $id
+    foreach child $kids {
+	if {![info exists commitrow($curview,$child)]} break
+	set row $commitrow($curview,$child)
+	if {![info exists prev]} {
+	    lappend ret [expr {$row + 1}]
 	} else {
-	    set slope [expr {($x0 - $x1) / ($y0 - $y1)}]
-	    set xi [expr {$x0 - $slope * $linespc / 2}]
-	    set yi [expr {$y0 - $linespc / 2}]
-	    set coords [lreplace $coords 0 1 $xi $y0 $xi $yi]
+	    if {$row <= $prevrow} {
+		puts "oops children out of order [shortids $id] $row < [shortids $prev] $prevrow"
+	    }
+	    # see if the line extends the whole way from prevrow to row
+	    if {$row > $prevrow + $uparrowlen + $downarrowlen &&
+		[lsearch -exact [lindex $rowidlist \
+			    [expr {int(($row + $prevrow) / 2)}]] $id] < 0} {
+		# it doesn't, see where it ends
+		set r [expr {$prevrow + $downarrowlen}]
+		if {[lsearch -exact [lindex $rowidlist $r] $id] < 0} {
+		    while {[incr r -1] > $prevrow &&
+			   [lsearch -exact [lindex $rowidlist $r] $id] < 0} {}
+		} else {
+		    while {[incr r] <= $row &&
+			   [lsearch -exact [lindex $rowidlist $r] $id] >= 0} {}
+		    incr r -1
+		}
+		lappend ret $r
+		# see where it starts up again
+		set r [expr {$row - $uparrowlen}]
+		if {[lsearch -exact [lindex $rowidlist $r] $id] < 0} {
+		    while {[incr r] < $row &&
+			   [lsearch -exact [lindex $rowidlist $r] $id] < 0} {}
+		} else {
+		    while {[incr r -1] >= $prevrow &&
+			   [lsearch -exact [lindex $rowidlist $r] $id] >= 0} {}
+		    incr r
+		}
+		lappend ret $r
+	    }
 	}
+	if {$child eq $id} {
+	    lappend ret $row
+	}
+	set prev $id
+	set prevrow $row
     }
-    return $coords
+    return $ret
 }
 
 proc drawlineseg {id row endrow arrowlow} {
     global rowidlist displayorder iddrawn linesegs
-    global canv colormap linespc curview maxlinelen
+    global canv colormap linespc curview maxlinelen parentlist
 
     set cols [list [lsearch -exact [lindex $rowidlist $row] $id]]
     set le [expr {$row + 1}]
@@ -3389,9 +3463,11 @@ proc drawlineseg {id row endrow arrowlow} {
 	set itl [lindex $lines [expr {$i-1}] 2]
 	set al [$canv itemcget $itl -arrow]
 	set arrowlow [expr {$al eq "last" || $al eq "both"}]
-    } elseif {$arrowlow &&
-	      [lsearch -exact [lindex $rowidlist [expr {$row-1}]] $id] >= 0} {
-	set arrowlow 0
+    } elseif {$arrowlow} {
+	if {[lsearch -exact [lindex $rowidlist [expr {$row-1}]] $id] >= 0 ||
+	    [lsearch -exact [lindex $parentlist [expr {$row-1}]] $id] >= 0} {
+	    set arrowlow 0
+	}
     }
     set arrow [lindex {none first last both} [expr {$arrowhigh + 2*$arrowlow}]]
     for {set y $le} {[incr y -1] > $row} {} {
@@ -3410,8 +3486,19 @@ proc drawlineseg {id row endrow arrowlow} {
 	    set xc [lsearch -exact [lindex $rowidlist $row] $ch]
 	    if {$xc < 0} {
 		puts "oops: drawlineseg: child $ch not on row $row"
-	    } else {
-		if {$xc < $x - 1} {
+	    } elseif {$xc != $x} {
+		if {($arrowhigh && $le == $row + 1) || $dir == 0} {
+		    set d [expr {int(0.5 * $linespc)}]
+		    set x1 [xc $row $x]
+		    if {$xc < $x} {
+			set x2 [expr {$x1 - $d}]
+		    } else {
+			set x2 [expr {$x1 + $d}]
+		    }
+		    set y2 [yc $row]
+		    set y1 [expr {$y2 + $d}]
+		    lappend coords $x1 $y1 $x2 $y2
+		} elseif {$xc < $x - 1} {
 		    lappend coords [xc $row [expr {$x-1}]] [yc $row]
 		} elseif {$xc > $x + 1} {
 		    lappend coords [xc $row [expr {$x+1}]] [yc $row]
@@ -3422,23 +3509,9 @@ proc drawlineseg {id row endrow arrowlow} {
 	} else {
 	    set xn [xc $row $xp]
 	    set yn [yc $row]
-	    # work around tk8.4 refusal to draw arrows on diagonal segments
-	    if {$arrowlow && $xn != [lindex $coords end-1]} {
-		if {[llength $coords] < 4 ||
-		    [lindex $coords end-3] != [lindex $coords end-1] ||
-		    [lindex $coords end] - $yn > 2 * $linespc} {
-		    set xn [xc $row [expr {$xp - 0.5 * $dir}]]
-		    set yo [yc [expr {$row + 0.5}]]
-		    lappend coords $xn $yo $xn $yn
-		}
-	    } else {
-		lappend coords $xn $yn
-	    }
+	    lappend coords $xn $yn
 	}
 	if {!$joinhigh} {
-	    if {$arrowhigh} {
-		set coords [adjarrowhigh $coords]
-	    }
 	    assigncolor $id
 	    set t [$canv create line $coords -width [linewidth $id] \
 		       -fill $colormap($id) -tags lines.$id -arrow $arrow]
@@ -3462,9 +3535,6 @@ proc drawlineseg {id row endrow arrowlow} {
 	set coords [concat $coords $clow]
 	if {!$joinhigh} {
 	    lset lines [expr {$i-1}] 1 $le
-	    if {$arrowhigh} {
-		set coords [adjarrowhigh $coords]
-	    }
 	} else {
 	    # coalesce two pieces
 	    $canv delete $ith
@@ -3484,7 +3554,7 @@ proc drawlineseg {id row endrow arrowlow} {
 
 proc drawparentlinks {id row} {
     global rowidlist canv colormap curview parentlist
-    global idpos
+    global idpos linespc
 
     set rowids [lindex $rowidlist $row]
     set col [lsearch -exact $rowids $id]
@@ -3494,6 +3564,8 @@ proc drawparentlinks {id row} {
     set x [xc $row $col]
     set y [yc $row]
     set y2 [yc $row2]
+    set d [expr {int(0.5 * $linespc)}]
+    set ymid [expr {$y + $d}]
     set ids [lindex $rowidlist $row2]
     # rmx = right-most X coord used
     set rmx 0
@@ -3507,19 +3579,37 @@ proc drawparentlinks {id row} {
 	if {$x2 > $rmx} {
 	    set rmx $x2
 	}
-	if {[lsearch -exact $rowids $p] < 0} {
+	set j [lsearch -exact $rowids $p]
+	if {$j < 0} {
 	    # drawlineseg will do this one for us
 	    continue
 	}
 	assigncolor $p
 	# should handle duplicated parents here...
 	set coords [list $x $y]
-	if {$i < $col - 1} {
-	    lappend coords [xc $row [expr {$i + 1}]] $y
-	} elseif {$i > $col + 1} {
-	    lappend coords [xc $row [expr {$i - 1}]] $y
+	if {$i != $col} {
+	    # if attaching to a vertical segment, draw a smaller
+	    # slant for visual distinctness
+	    if {$i == $j} {
+		if {$i < $col} {
+		    lappend coords [expr {$x2 + $d}] $y $x2 $ymid
+		} else {
+		    lappend coords [expr {$x2 - $d}] $y $x2 $ymid
+		}
+	    } elseif {$i < $col && $i < $j} {
+		# segment slants towards us already
+		lappend coords [xc $row $j] $y
+	    } else {
+		if {$i < $col - 1} {
+		    lappend coords [expr {$x2 + $linespc}] $y
+		} elseif {$i > $col + 1} {
+		    lappend coords [expr {$x2 - $linespc}] $y
+		}
+		lappend coords $x2 $y2
+	    }
+	} else {
+	    lappend coords $x2 $y2
 	}
-	lappend coords $x2 $y2
 	set t [$canv create line $coords -width [linewidth $p] \
 		   -fill $colormap($p) -tags lines.$p]
 	$canv lower $t
@@ -3541,8 +3631,8 @@ proc drawcmittext {id row col} {
     global linespc canv canv2 canv3 canvy0 fgcolor curview
     global commitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
-    global linehtag linentag linedtag
-    global mainfont canvxmax boldrows boldnamerows fgcolor nullid nullid2
+    global linehtag linentag linedtag selectedline
+    global canvxmax boldrows boldnamerows fgcolor nullid nullid2
 
     # listed is 0 for boundary, 1 for normal, 2 for left, 3 for right
     set listed [lindex $commitlisted $row]
@@ -3599,15 +3689,15 @@ proc drawcmittext {id row col} {
     set name [lindex $commitinfo($id) 1]
     set date [lindex $commitinfo($id) 2]
     set date [formatdate $date]
-    set font $mainfont
-    set nfont $mainfont
+    set font mainfont
+    set nfont mainfont
     set isbold [ishighlighted $row]
     if {$isbold > 0} {
 	lappend boldrows $row
-	lappend font bold
+	set font mainfontbold
 	if {$isbold > 1} {
 	    lappend boldnamerows $row
-	    lappend nfont bold
+	    set nfont mainfontbold
 	}
     }
     set linehtag($row) [$canv create text $xt $y -anchor w -fill $fgcolor \
@@ -3616,8 +3706,11 @@ proc drawcmittext {id row col} {
     set linentag($row) [$canv2 create text 3 $y -anchor w -fill $fgcolor \
 			    -text $name -font $nfont -tags text]
     set linedtag($row) [$canv3 create text 3 $y -anchor w -fill $fgcolor \
-			    -text $date -font $mainfont -tags text]
-    set xr [expr {$xt + [font measure $mainfont $headline]}]
+			    -text $date -font mainfont -tags text]
+    if {[info exists selectedline] && $selectedline == $row} {
+	make_secsel $row
+    }
+    set xr [expr {$xt + [font measure $font $headline]}]
     if {$xr > $canvxmax} {
 	set canvxmax $xr
 	setcanvscroll
@@ -3625,10 +3718,10 @@ proc drawcmittext {id row col} {
 }
 
 proc drawcmitrow {row} {
-    global displayorder rowidlist
+    global displayorder rowidlist nrows_drawn
     global iddrawn markingmatches
     global commitinfo parentlist numcommits
-    global filehighlight fhighlights findstring nhighlights
+    global filehighlight fhighlights findpattern nhighlights
     global hlview vhighlights
     global highlight_related rhighlights
 
@@ -3641,7 +3734,7 @@ proc drawcmitrow {row} {
     if {[info exists filehighlight] && ![info exists fhighlights($row)]} {
 	askfilehighlight $row $id
     }
-    if {$findstring ne {} && ![info exists nhighlights($row)]} {
+    if {$findpattern ne {} && ![info exists nhighlights($row)]} {
 	askfindhighlight $row $id
     }
     if {$highlight_related ne "None" && ![info exists rhighlights($row)]} {
@@ -3659,6 +3752,7 @@ proc drawcmitrow {row} {
 	assigncolor $id
 	drawcmittext $id $row $col
 	set iddrawn($id) 1
+	incr nrows_drawn
     }
     if {$markingmatches} {
 	markrowmatches $row $id
@@ -3666,8 +3760,8 @@ proc drawcmitrow {row} {
 }
 
 proc drawcommits {row {endrow {}}} {
-    global numcommits iddrawn displayorder curview
-    global parentlist rowidlist
+    global numcommits iddrawn displayorder curview need_redisplay
+    global parentlist rowidlist rowfinal uparrowlen downarrowlen nrows_drawn
 
     if {$row < 0} {
 	set row 0
@@ -3677,6 +3771,35 @@ proc drawcommits {row {endrow {}}} {
     }
     if {$endrow >= $numcommits} {
 	set endrow [expr {$numcommits - 1}]
+    }
+
+    set rl1 [expr {$row - $downarrowlen - 3}]
+    if {$rl1 < 0} {
+	set rl1 0
+    }
+    set ro1 [expr {$row - 3}]
+    if {$ro1 < 0} {
+	set ro1 0
+    }
+    set r2 [expr {$endrow + $uparrowlen + 3}]
+    if {$r2 > $numcommits} {
+	set r2 $numcommits
+    }
+    for {set r $rl1} {$r < $r2} {incr r} {
+	if {[lindex $rowidlist $r] ne {} && [lindex $rowfinal $r]} {
+	    if {$rl1 < $r} {
+		layoutrows $rl1 $r
+	    }
+	    set rl1 [expr {$r + 1}]
+	}
+    }
+    if {$rl1 < $r} {
+	layoutrows $rl1 $r
+    }
+    optimize_rows $ro1 0 $r2
+    if {$need_redisplay || $nrows_drawn > 2000} {
+	clear_display
+	drawvisible
     }
 
     # make the lines join to already-drawn rows either side
@@ -3735,7 +3858,7 @@ proc drawvisible {} {
 }
 
 proc clear_display {} {
-    global iddrawn linesegs
+    global iddrawn linesegs need_redisplay nrows_drawn
     global vhighlights fhighlights nhighlights rhighlights
 
     allcanvs delete all
@@ -3745,10 +3868,12 @@ proc clear_display {} {
     catch {unset fhighlights}
     catch {unset nhighlights}
     catch {unset rhighlights}
+    set need_redisplay 0
+    set nrows_drawn 0
 }
 
 proc findcrossings {id} {
-    global rowidlist parentlist numcommits rowoffsets displayorder
+    global rowidlist parentlist numcommits displayorder
 
     set cross {}
     set ccross {}
@@ -3757,12 +3882,9 @@ proc findcrossings {id} {
 	    set e [expr {$numcommits - 1}]
 	}
 	if {$e <= $s} continue
-	set x [lsearch -exact [lindex $rowidlist $e] $id]
-	if {$x < 0} {
-	    puts "findcrossings: oops, no [shortids $id] in row $e"
-	    continue
-	}
 	for {set row $e} {[incr row -1] >= $s} {} {
+	    set x [lsearch -exact [lindex $rowidlist $row] $id]
+	    if {$x < 0} break
 	    set olds [lindex $parentlist $row]
 	    set kid [lindex $displayorder $row]
 	    set kidx [lsearch -exact [lindex $rowidlist $row] $kid]
@@ -3780,9 +3902,6 @@ proc findcrossings {id} {
 		    }
 		}
 	    }
-	    set inc [lindex $rowoffsets $row $x]
-	    if {$inc eq {}} break
-	    incr x $inc
 	}
     }
     return [concat $ccross {{}} $cross]
@@ -3863,7 +3982,7 @@ proc bindline {t id} {
 proc drawtags {id x xt y1} {
     global idtags idheads idotherrefs mainhead
     global linespc lthickness
-    global canv mainfont commitrow rowtextx curview fgcolor bgcolor
+    global canv commitrow rowtextx curview fgcolor bgcolor
 
     set marks {}
     set ntags 0
@@ -3892,9 +4011,9 @@ proc drawtags {id x xt y1} {
     foreach tag $marks {
 	incr i
 	if {$i >= $ntags && $i < $ntags + $nheads && $tag eq $mainhead} {
-	    set wid [font measure [concat $mainfont bold] $tag]
+	    set wid [font measure mainfontbold $tag]
 	} else {
-	    set wid [font measure $mainfont $tag]
+	    set wid [font measure mainfont $tag]
 	}
 	lappend xvals $xt
 	lappend wvals $wid
@@ -3906,7 +4025,7 @@ proc drawtags {id x xt y1} {
     foreach tag $marks x $xvals wid $wvals {
 	set xl [expr {$x + $delta}]
 	set xr [expr {$x + $delta + $wid + $lthickness}]
-	set font $mainfont
+	set font mainfont
 	if {[incr ntags -1] >= 0} {
 	    # draw a tag
 	    set t [$canv create polygon $x [expr {$yt + $delta}] $xl $yt \
@@ -3919,7 +4038,7 @@ proc drawtags {id x xt y1} {
 	    if {[incr nheads -1] >= 0} {
 		set col green
 		if {$tag eq $mainhead} {
-		    lappend font bold
+		    set font mainfontbold
 		}
 	    } else {
 		set col "#ddddff"
@@ -3928,7 +4047,7 @@ proc drawtags {id x xt y1} {
 	    $canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
 		-width 1 -outline black -fill $col -tags tag.$id
 	    if {[regexp {^(remotes/.*/|remotes/)} $tag match remoteprefix]} {
-	        set rwid [font measure $mainfont $remoteprefix]
+	        set rwid [font measure mainfont $remoteprefix]
 		set xi [expr {$x + 1}]
 		set yti [expr {$yt + 1}]
 		set xri [expr {$x + $rwid}]
@@ -3960,10 +4079,10 @@ proc xcoord {i level ln} {
 }
 
 proc show_status {msg} {
-    global canv mainfont fgcolor
+    global canv fgcolor
 
     clear_display
-    $canv create text 3 3 -anchor nw -text $msg -font $mainfont \
+    $canv create text 3 3 -anchor nw -text $msg -font mainfont \
 	-tags text -fill $fgcolor
 }
 
@@ -3972,9 +4091,9 @@ proc show_status {msg} {
 # on that row and below will move down one row.
 proc insertrow {row newcmit} {
     global displayorder parentlist commitlisted children
-    global commitrow curview rowidlist rowoffsets numcommits
-    global rowrangelist rowlaidout rowoptim numcommits
-    global selectedline rowchk commitidx
+    global commitrow curview rowidlist rowisopt rowfinal numcommits
+    global numcommits
+    global selectedline commitidx ordertok
 
     if {$row >= $numcommits} {
 	puts "oops, inserting new row $row but only have $numcommits rows"
@@ -3994,45 +4113,24 @@ proc insertrow {row newcmit} {
 	set commitrow($curview,$id) $r
     }
     incr commitidx($curview)
+    set ordertok($curview,$newcmit) $ordertok($curview,$p)
 
-    set idlist [lindex $rowidlist $row]
-    set offs [lindex $rowoffsets $row]
-    set newoffs {}
-    foreach x $idlist {
-	if {$x eq {} || ($x eq $p && [llength $kids] == 1)} {
-	    lappend newoffs {}
-	} else {
-	    lappend newoffs 0
+    if {$row < [llength $rowidlist]} {
+	set idlist [lindex $rowidlist $row]
+	if {$idlist ne {}} {
+	    if {[llength $kids] == 1} {
+		set col [lsearch -exact $idlist $p]
+		lset idlist $col $newcmit
+	    } else {
+		set col [llength $idlist]
+		lappend idlist $newcmit
+	    }
 	}
-    }
-    if {[llength $kids] == 1} {
-	set col [lsearch -exact $idlist $p]
-	lset idlist $col $newcmit
-    } else {
-	set col [llength $idlist]
-	lappend idlist $newcmit
-	lappend offs {}
-	lset rowoffsets $row $offs
-    }
-    set rowidlist [linsert $rowidlist $row $idlist]
-    set rowoffsets [linsert $rowoffsets [expr {$row+1}] $newoffs]
-
-    set rowrangelist [linsert $rowrangelist $row {}]
-    if {[llength $kids] > 1} {
-	set rp1 [expr {$row + 1}]
-	set ranges [lindex $rowrangelist $rp1]
-	if {$ranges eq {}} {
-	    set ranges [list $newcmit $p]
-	} elseif {[lindex $ranges end-1] eq $p} {
-	    lset ranges end-1 $newcmit
-	}
-	lset rowrangelist $rp1 $ranges
+	set rowidlist [linsert $rowidlist $row $idlist]
+	set rowisopt [linsert $rowisopt $row 0]
+	set rowfinal [linsert $rowfinal $row [lindex $rowfinal $row]]
     }
 
-    catch {unset rowchk}
-
-    incr rowlaidout
-    incr rowoptim
     incr numcommits
 
     if {[info exists selectedline] && $selectedline >= $row} {
@@ -4044,9 +4142,9 @@ proc insertrow {row newcmit} {
 # Remove a commit that was inserted with insertrow on row $row.
 proc removerow {row} {
     global displayorder parentlist commitlisted children
-    global commitrow curview rowidlist rowoffsets numcommits
-    global rowrangelist idrowranges rowlaidout rowoptim numcommits
-    global linesegends selectedline rowchk commitidx
+    global commitrow curview rowidlist rowisopt rowfinal numcommits
+    global numcommits
+    global linesegends selectedline commitidx
 
     if {$row >= $numcommits} {
 	puts "oops, removing row $row but only have $numcommits rows"
@@ -4071,27 +4169,12 @@ proc removerow {row} {
     }
     incr commitidx($curview) -1
 
-    set rowidlist [lreplace $rowidlist $row $row]
-    set rowoffsets [lreplace $rowoffsets $rp1 $rp1]
-    if {$kids ne {}} {
-	set offs [lindex $rowoffsets $row]
-	set offs [lreplace $offs end end]
-	lset rowoffsets $row $offs
+    if {$row < [llength $rowidlist]} {
+	set rowidlist [lreplace $rowidlist $row $row]
+	set rowisopt [lreplace $rowisopt $row $row]
+	set rowfinal [lreplace $rowfinal $row $row]
     }
 
-    set rowrangelist [lreplace $rowrangelist $row $row]
-    if {[llength $kids] > 0} {
-	set ranges [lindex $rowrangelist $row]
-	if {[lindex $ranges end-1] eq $id} {
-	    set ranges [lreplace $ranges end-1 end]
-	    lset rowrangelist $row $ranges
-	}
-    }
-
-    catch {unset rowchk}
-
-    incr rowlaidout -1
-    incr rowoptim -1
     incr numcommits -1
 
     if {[info exists selectedline] && $selectedline > $row} {
@@ -4111,20 +4194,30 @@ proc settextcursor {c} {
     set curtextcursor $c
 }
 
-proc nowbusy {what} {
-    global isbusy
+proc nowbusy {what {name {}}} {
+    global isbusy busyname statusw
 
     if {[array names isbusy] eq {}} {
 	. config -cursor watch
 	settextcursor watch
     }
     set isbusy($what) 1
+    set busyname($what) $name
+    if {$name ne {}} {
+	$statusw conf -text $name
+    }
 }
 
 proc notbusy {what} {
-    global isbusy maincursor textcursor
+    global isbusy maincursor textcursor busyname statusw
 
-    catch {unset isbusy($what)}
+    catch {
+	unset isbusy($what)
+	if {$busyname($what) ne {} &&
+	    [$statusw cget -text] eq $busyname($what)} {
+	    $statusw conf -text {}
+	}
+    }
     if {[array names isbusy] eq {}} {
 	. config -cursor $maincursor
 	settextcursor $textcursor
@@ -4152,148 +4245,149 @@ proc findmatches {f} {
     return $matches
 }
 
-proc dofind {{rev 0}} {
+proc dofind {{dirn 1} {wrap 1}} {
     global findstring findstartline findcurline selectedline numcommits
+    global gdttype filehighlight fh_serial find_dirn findallowwrap
 
-    unmarkmatches
-    cancel_next_highlight
+    if {[info exists find_dirn]} {
+	if {$find_dirn == $dirn} return
+	stopfinding
+    }
     focus .
     if {$findstring eq {} || $numcommits == 0} return
     if {![info exists selectedline]} {
-	set findstartline [lindex [visiblerows] $rev]
+	set findstartline [lindex [visiblerows] [expr {$dirn < 0}]]
     } else {
 	set findstartline $selectedline
     }
     set findcurline $findstartline
-    nowbusy finding
-    if {!$rev} {
-	run findmore
-    } else {
-	if {$findcurline == 0} {
-	    set findcurline $numcommits
-	}
-	incr findcurline -1
-	run findmorerev
+    nowbusy finding "Searching"
+    if {$gdttype ne "containing:" && ![info exists filehighlight]} {
+	after cancel do_file_hl $fh_serial
+	do_file_hl $fh_serial
     }
+    set find_dirn $dirn
+    set findallowwrap $wrap
+    run findmore
 }
 
-proc findnext {restart} {
-    global findcurline
-    if {![info exists findcurline]} {
-	if {$restart} {
-	    dofind
-	} else {
-	    bell
-	}
-    } else {
-	run findmore
-	nowbusy finding
-    }
-}
+proc stopfinding {} {
+    global find_dirn findcurline fprogcoord
 
-proc findprev {} {
-    global findcurline
-    if {![info exists findcurline]} {
-	dofind 1
-    } else {
-	run findmorerev
-	nowbusy finding
+    if {[info exists find_dirn]} {
+	unset find_dirn
+	unset findcurline
+	notbusy finding
+	set fprogcoord 0
+	adjustprogress
     }
 }
 
 proc findmore {} {
-    global commitdata commitinfo numcommits findstring findpattern findloc
+    global commitdata commitinfo numcommits findpattern findloc
     global findstartline findcurline displayorder
+    global find_dirn gdttype fhighlights fprogcoord
+    global findallowwrap
 
-    set fldtypes {Headline Author Date Committer CDate Comments}
-    set l [expr {$findcurline + 1}]
-    if {$l >= $numcommits} {
-	set l 0
-    }
-    if {$l <= $findstartline} {
-	set lim [expr {$findstartline + 1}]
-    } else {
-	set lim $numcommits
-    }
-    if {$lim - $l > 500} {
-	set lim [expr {$l + 500}]
-    }
-    set last 0
-    for {} {$l < $lim} {incr l} {
-	set id [lindex $displayorder $l]
-	# shouldn't happen unless git log doesn't give all the commits...
-	if {![info exists commitdata($id)]} continue
-	if {![doesmatch $commitdata($id)]} continue
-	if {![info exists commitinfo($id)]} {
-	    getcommit $id
-	}
-	set info $commitinfo($id)
-	foreach f $info ty $fldtypes {
-	    if {($findloc eq "All fields" || $findloc eq $ty) &&
-		[doesmatch $f]} {
-		findselectline $l
-		notbusy finding
-		return 0
-	    }
-	}
-    }
-    if {$l == $findstartline + 1} {
-	bell
-	unset findcurline
-	notbusy finding
+    if {![info exists find_dirn]} {
 	return 0
     }
-    set findcurline [expr {$l - 1}]
-    return 1
-}
-
-proc findmorerev {} {
-    global commitdata commitinfo numcommits findstring findpattern findloc
-    global findstartline findcurline displayorder
-
     set fldtypes {Headline Author Date Committer CDate Comments}
     set l $findcurline
-    if {$l == 0} {
-	set l $numcommits
-    }
-    incr l -1
-    if {$l >= $findstartline} {
-	set lim [expr {$findstartline - 1}]
-    } else {
-	set lim -1
-    }
-    if {$l - $lim > 500} {
-	set lim [expr {$l - 500}]
-    }
-    set last 0
-    for {} {$l > $lim} {incr l -1} {
-	set id [lindex $displayorder $l]
-	if {![doesmatch $commitdata($id)]} continue
-	if {![info exists commitinfo($id)]} {
-	    getcommit $id
+    set moretodo 0
+    if {$find_dirn > 0} {
+	incr l
+	if {$l >= $numcommits} {
+	    set l 0
 	}
-	set info $commitinfo($id)
-	foreach f $info ty $fldtypes {
-	    if {($findloc eq "All fields" || $findloc eq $ty) &&
-		[doesmatch $f]} {
-		findselectline $l
-		notbusy finding
-		return 0
+	if {$l <= $findstartline} {
+	    set lim [expr {$findstartline + 1}]
+	} else {
+	    set lim $numcommits
+	    set moretodo $findallowwrap
+	}
+    } else {
+	if {$l == 0} {
+	    set l $numcommits
+	}
+	incr l -1
+	if {$l >= $findstartline} {
+	    set lim [expr {$findstartline - 1}]
+	} else {
+	    set lim -1
+	    set moretodo $findallowwrap
+	}
+    }
+    set n [expr {($lim - $l) * $find_dirn}]
+    if {$n > 500} {
+	set n 500
+	set moretodo 1
+    }
+    set found 0
+    set domore 1
+    if {$gdttype eq "containing:"} {
+	for {} {$n > 0} {incr n -1; incr l $find_dirn} {
+	    set id [lindex $displayorder $l]
+	    # shouldn't happen unless git log doesn't give all the commits...
+	    if {![info exists commitdata($id)]} continue
+	    if {![doesmatch $commitdata($id)]} continue
+	    if {![info exists commitinfo($id)]} {
+		getcommit $id
+	    }
+	    set info $commitinfo($id)
+	    foreach f $info ty $fldtypes {
+		if {($findloc eq "All fields" || $findloc eq $ty) &&
+		    [doesmatch $f]} {
+		    set found 1
+		    break
+		}
+	    }
+	    if {$found} break
+	}
+    } else {
+	for {} {$n > 0} {incr n -1; incr l $find_dirn} {
+	    set id [lindex $displayorder $l]
+	    if {![info exists fhighlights($l)]} {
+		askfilehighlight $l $id
+		if {$domore} {
+		    set domore 0
+		    set findcurline [expr {$l - $find_dirn}]
+		}
+	    } elseif {$fhighlights($l)} {
+		set found $domore
+		break
 	    }
 	}
     }
-    if {$l == -1} {
-	bell
+    if {$found || ($domore && !$moretodo)} {
 	unset findcurline
+	unset find_dirn
 	notbusy finding
+	set fprogcoord 0
+	adjustprogress
+	if {$found} {
+	    findselectline $l
+	} else {
+	    bell
+	}
 	return 0
     }
-    set findcurline [expr {$l + 1}]
-    return 1
+    if {!$domore} {
+	flushhighlights
+    } else {
+	set findcurline [expr {$l - $find_dirn}]
+    }
+    set n [expr {($findcurline - $findstartline) * $find_dirn - 1}]
+    if {$n < 0} {
+	incr n $numcommits
+    }
+    set fprogcoord [expr {$n * 1.0 / $numcommits}]
+    adjustprogress
+    return $domore
 }
 
 proc findselectline {l} {
-    global findloc commentend ctext findcurline markingmatches
+    global findloc commentend ctext findcurline markingmatches gdttype
 
     set markingmatches 1
     set findcurline $l
@@ -4336,12 +4430,11 @@ proc markmatches {canv l str tag matches font row} {
 }
 
 proc unmarkmatches {} {
-    global findids markingmatches findcurline
+    global markingmatches
 
     allcanvs delete matches
-    catch {unset findids}
     set markingmatches 0
-    catch {unset findcurline}
+    stopfinding
 }
 
 proc selcanvline {w x y} {
@@ -4377,7 +4470,7 @@ proc commit_descriptor {p} {
 # append some text to the ctext widget, and make any SHA1 ID
 # that we know about be a clickable link.
 proc appendwithlinks {text tags} {
-    global ctext commitrow linknum curview
+    global ctext commitrow linknum curview pendinglinks
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text $tags
@@ -4386,17 +4479,49 @@ proc appendwithlinks {text tags} {
 	set s [lindex $l 0]
 	set e [lindex $l 1]
 	set linkid [string range $text $s $e]
-	if {![info exists commitrow($curview,$linkid)]} continue
 	incr e
-	$ctext tag add link "$start + $s c" "$start + $e c"
+	$ctext tag delete link$linknum
 	$ctext tag add link$linknum "$start + $s c" "$start + $e c"
-	$ctext tag bind link$linknum <1> \
-	    [list selectline $commitrow($curview,$linkid) 1]
+	setlink $linkid link$linknum
 	incr linknum
     }
-    $ctext tag conf link -foreground blue -underline 1
-    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
-    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
+}
+
+proc setlink {id lk} {
+    global curview commitrow ctext pendinglinks commitinterest
+
+    if {[info exists commitrow($curview,$id)]} {
+	$ctext tag conf $lk -foreground blue -underline 1
+	$ctext tag bind $lk <1> [list selectline $commitrow($curview,$id) 1]
+	$ctext tag bind $lk <Enter> {linkcursor %W 1}
+	$ctext tag bind $lk <Leave> {linkcursor %W -1}
+    } else {
+	lappend pendinglinks($id) $lk
+	lappend commitinterest($id) {makelink %I}
+    }
+}
+
+proc makelink {id} {
+    global pendinglinks
+
+    if {![info exists pendinglinks($id)]} return
+    foreach lk $pendinglinks($id) {
+	setlink $id $lk
+    }
+    unset pendinglinks($id)
+}
+
+proc linkcursor {w inc} {
+    global linkentercount curtextcursor
+
+    if {[incr linkentercount $inc] > 0} {
+	$w configure -cursor hand2
+    } else {
+	$w configure -cursor $curtextcursor
+	if {$linkentercount < 0} {
+	    set linkentercount 0
+	}
+    }
 }
 
 proc viewnextline {dir} {
@@ -4443,15 +4568,7 @@ proc appendrefs {pos ids var} {
 	    $ctext tag delete $lk
 	    $ctext insert $pos $sep
 	    $ctext insert $pos [lindex $ti 0] $lk
-	    if {[info exists commitrow($curview,$id)]} {
-		$ctext tag conf $lk -foreground blue
-		$ctext tag bind $lk <1> \
-		    [list selectline $commitrow($curview,$id) 1]
-		$ctext tag conf $lk -underline 1
-		$ctext tag bind $lk <Enter> { %W configure -cursor hand2 }
-		$ctext tag bind $lk <Leave> \
-		    { %W configure -cursor $curtextcursor }
-	    }
+	    setlink $id $lk
 	    set sep ", "
 	}
     }
@@ -4509,9 +4626,27 @@ proc dispnexttag {} {
     }
 }
 
+proc make_secsel {l} {
+    global linehtag linentag linedtag canv canv2 canv3
+
+    if {![info exists linehtag($l)]} return
+    $canv delete secsel
+    set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
+	       -tags secsel -fill [$canv cget -selectbackground]]
+    $canv lower $t
+    $canv2 delete secsel
+    set t [eval $canv2 create rect [$canv2 bbox $linentag($l)] -outline {{}} \
+	       -tags secsel -fill [$canv2 cget -selectbackground]]
+    $canv2 lower $t
+    $canv3 delete secsel
+    set t [eval $canv3 create rect [$canv3 bbox $linedtag($l)] -outline {{}} \
+	       -tags secsel -fill [$canv3 cget -selectbackground]]
+    $canv3 lower $t
+}
+
 proc selectline {l isnew} {
-    global canv canv2 canv3 ctext commitinfo selectedline
-    global displayorder linehtag linentag linedtag
+    global canv ctext commitinfo selectedline
+    global displayorder
     global canvy0 linespc parentlist children curview
     global currentid sha1entry
     global commentend idtags linknum
@@ -4521,8 +4656,8 @@ proc selectline {l isnew} {
     catch {unset pending_select}
     $canv delete hover
     normalline
-    cancel_next_highlight
     unsel_reflist
+    stopfinding
     if {$l < 0 || $l >= $numcommits} return
     set y [expr {$canvy0 + $l * $linespc}]
     set ymax [lindex [$canv cget -scrollregion] 3]
@@ -4560,19 +4695,7 @@ proc selectline {l isnew} {
 	drawvisible
     }
 
-    if {![info exists linehtag($l)]} return
-    $canv delete secsel
-    set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
-	       -tags secsel -fill [$canv cget -selectbackground]]
-    $canv lower $t
-    $canv2 delete secsel
-    set t [eval $canv2 create rect [$canv2 bbox $linentag($l)] -outline {{}} \
-	       -tags secsel -fill [$canv2 cget -selectbackground]]
-    $canv2 lower $t
-    $canv3 delete secsel
-    set t [eval $canv3 create rect [$canv3 bbox $linedtag($l)] -outline {{}} \
-	       -tags secsel -fill [$canv3 cget -selectbackground]]
-    $canv3 lower $t
+    make_secsel $l
 
     if {$isnew} {
 	addtohistory [list selectline $l 0]
@@ -4715,7 +4838,6 @@ proc unselectline {} {
     catch {unset currentid}
     allcanvs delete secsel
     rhighlight_none
-    cancel_next_highlight
 }
 
 proc reselectline {} {
@@ -4884,6 +5006,7 @@ proc showfile {f} {
     $ctext insert end "$f\n" filesep
     $ctext config -state disabled
     $ctext yview $commentend
+    settabs 0
 }
 
 proc getblobline {bf id} {
@@ -4909,15 +5032,18 @@ proc getblobline {bf id} {
 }
 
 proc mergediff {id l} {
-    global diffmergeid diffopts mdifffd
+    global diffmergeid mdifffd
     global diffids
     global parentlist
+    global limitdiffs viewfiles curview
 
     set diffmergeid $id
     set diffids $id
     # this doesn't seem to actually affect anything...
-    set env(GIT_DIFF_OPTS) $diffopts
     set cmd [concat | git diff-tree --no-commit-id --cc $id]
+    if {$limitdiffs && $viewfiles($curview) ne {}} {
+	set cmd [concat $cmd -- $viewfiles($curview)]
+    }
     if {[catch {set mdf [open $cmd r]} err]} {
 	error_popup "Error getting merge diffs: $err"
 	return
@@ -4925,6 +5051,7 @@ proc mergediff {id l} {
     fconfigure $mdf -blocking 0
     set mdifffd($id) $mdf
     set np [llength [lindex $parentlist $l]]
+    settabs $np
     filerun $mdf [list getmergediffline $mdf $id $np]
 }
 
@@ -5002,6 +5129,7 @@ proc getmergediffline {mdf id np} {
 proc startdiff {ids} {
     global treediffs diffids treepending diffmergeid nullid nullid2
 
+    settabs 1
     set diffids $ids
     catch {unset diffmergeid}
     if {![info exists treediffs($ids)] ||
@@ -5015,8 +5143,27 @@ proc startdiff {ids} {
     }
 }
 
+proc path_filter {filter name} {
+    foreach p $filter {
+	set l [string length $p]
+	if {[string index $p end] eq "/"} {
+	    if {[string compare -length $l $p $name] == 0} {
+		return 1
+	    }
+	} else {
+	    if {[string compare -length $l $p $name] == 0 &&
+		([string length $name] == $l ||
+		 [string index $name $l] eq "/")} {
+		return 1
+	    }
+	}
+    }
+    return 0
+}
+
 proc addtocflist {ids} {
-    global treediffs cflist
+    global treediffs
+
     add_flist $treediffs($ids)
     getblobdiffs $ids
 }
@@ -5073,7 +5220,7 @@ proc gettreediffs {ids} {
 
 proc gettreediffline {gdtf ids} {
     global treediff treediffs treepending diffids diffmergeid
-    global cmitmode
+    global cmitmode viewfiles curview limitdiffs
 
     set nr 0
     while {[incr nr] <= 1000 && [gets $gdtf line] >= 0} {
@@ -5090,7 +5237,17 @@ proc gettreediffline {gdtf ids} {
 	return [expr {$nr >= 1000? 2: 1}]
     }
     close $gdtf
-    set treediffs($ids) $treediff
+    if {$limitdiffs && $viewfiles($curview) ne {}} {
+	set flist {}
+	foreach f $treediff {
+	    if {[path_filter $viewfiles($curview) $f]} {
+		lappend flist $f
+	    }
+	}
+	set treediffs($ids) $flist
+    } else {
+	set treediffs($ids) $treediff
+    }
     unset treepending
     if {$cmitmode eq "tree"} {
 	gettree $diffids
@@ -5121,12 +5278,16 @@ proc diffcontextchange {n1 n2 op} {
 }
 
 proc getblobdiffs {ids} {
-    global diffopts blobdifffd diffids env
+    global blobdifffd diffids env
     global diffinhdr treediffs
     global diffcontext
+    global limitdiffs viewfiles curview
 
-    set env(GIT_DIFF_OPTS) $diffopts
-    if {[catch {set bdf [open [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"] r]} err]} {
+    set cmd [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"]
+    if {$limitdiffs && $viewfiles($curview) ne {}} {
+	set cmd [concat $cmd -- $viewfiles($curview)]
+    }
+    if {[catch {set bdf [open $cmd r]} err]} {
 	puts "error getting diffs: $err"
 	return
     }
@@ -5291,6 +5452,7 @@ proc nextfile {} {
 
 proc clear_ctext {{first 1.0}} {
     global ctext smarktop smarkbot
+    global pendinglinks
 
     set l [lindex [split $first .] 0]
     if {![info exists smarktop] || [$ctext compare $first < $smarktop.0]} {
@@ -5300,6 +5462,26 @@ proc clear_ctext {{first 1.0}} {
 	set smarkbot $l
     }
     $ctext delete $first end
+    if {$first eq "1.0"} {
+	catch {unset pendinglinks}
+    }
+}
+
+proc settabs {{firstab {}}} {
+    global firsttabstop tabstop ctext have_tk85
+
+    if {$firstab ne {} && $have_tk85} {
+	set firsttabstop $firstab
+    }
+    set w [font measure textfont "0"]
+    if {$firsttabstop != 0} {
+	$ctext conf -tabs [list [expr {($firsttabstop + $tabstop) * $w}] \
+			       [expr {($firsttabstop + 2 * $tabstop) * $w}]]
+    } elseif {$have_tk85 || $tabstop != 8} {
+	$ctext conf -tabs [expr {$tabstop * $w}]
+    } else {
+	$ctext conf -tabs {}
+    }
 }
 
 proc incrsearch {name ix op} {
@@ -5422,11 +5604,11 @@ proc scrolltext {f0 f1} {
 }
 
 proc setcoords {} {
-    global linespc charspc canvx0 canvy0 mainfont
+    global linespc charspc canvx0 canvy0
     global xspc1 xspc2 lthickness
 
-    set linespc [font metrics $mainfont -linespace]
-    set charspc [font measure $mainfont "m"]
+    set linespc [font metrics mainfont -linespace]
+    set charspc [font measure mainfont "m"]
     set canvy0 [expr {int(3 + 0.5 * $linespc)}]
     set canvx0 [expr {int(3 + 0.5 * $linespc)}]
     set lthickness [expr {int($linespc / 9) + 1}]
@@ -5451,26 +5633,75 @@ proc redisplay {} {
     }
 }
 
+proc parsefont {f n} {
+    global fontattr
+
+    set fontattr($f,family) [lindex $n 0]
+    set s [lindex $n 1]
+    if {$s eq {} || $s == 0} {
+	set s 10
+    } elseif {$s < 0} {
+	set s [expr {int(-$s / [winfo fpixels . 1p] + 0.5)}]
+    }
+    set fontattr($f,size) $s
+    set fontattr($f,weight) normal
+    set fontattr($f,slant) roman
+    foreach style [lrange $n 2 end] {
+	switch -- $style {
+	    "normal" -
+	    "bold"   {set fontattr($f,weight) $style}
+	    "roman" -
+	    "italic" {set fontattr($f,slant) $style}
+	}
+    }
+}
+
+proc fontflags {f {isbold 0}} {
+    global fontattr
+
+    return [list -family $fontattr($f,family) -size $fontattr($f,size) \
+		-weight [expr {$isbold? "bold": $fontattr($f,weight)}] \
+		-slant $fontattr($f,slant)]
+}
+
+proc fontname {f} {
+    global fontattr
+
+    set n [list $fontattr($f,family) $fontattr($f,size)]
+    if {$fontattr($f,weight) eq "bold"} {
+	lappend n "bold"
+    }
+    if {$fontattr($f,slant) eq "italic"} {
+	lappend n "italic"
+    }
+    return $n
+}
+
 proc incrfont {inc} {
     global mainfont textfont ctext canv phase cflist showrefstop
-    global charspc tabstop
-    global stopped entries
+    global stopped entries fontattr
+
     unmarkmatches
-    set mainfont [lreplace $mainfont 1 1 [expr {[lindex $mainfont 1] + $inc}]]
-    set textfont [lreplace $textfont 1 1 [expr {[lindex $textfont 1] + $inc}]]
+    set s $fontattr(mainfont,size)
+    incr s $inc
+    if {$s < 1} {
+	set s 1
+    }
+    set fontattr(mainfont,size) $s
+    font config mainfont -size $s
+    font config mainfontbold -size $s
+    set mainfont [fontname mainfont]
+    set s $fontattr(textfont,size)
+    incr s $inc
+    if {$s < 1} {
+	set s 1
+    }
+    set fontattr(textfont,size) $s
+    font config textfont -size $s
+    font config textfontbold -size $s
+    set textfont [fontname textfont]
     setcoords
-    $ctext conf -font $textfont -tabs "[expr {$tabstop * $charspc}]"
-    $cflist conf -font $textfont
-    $ctext tag conf filesep -font [concat $textfont bold]
-    foreach e $entries {
-	$e conf -font $mainfont
-    }
-    if {$phase eq "getcommits"} {
-	$canv itemconf textitems -font $mainfont
-    }
-    if {[info exists showrefstop] && [winfo exists $showrefstop]} {
-	$showrefstop.list conf -font $mainfont
-    }
+    settabs
     redisplay
 }
 
@@ -5581,7 +5812,7 @@ proc lineleave {id} {
 proc linehover {} {
     global hoverx hovery hoverid hovertimer
     global canv linespc lthickness
-    global commitinfo mainfont
+    global commitinfo
 
     set text [lindex $commitinfo($hoverid) 0]
     set ymax [lindex [$canv cget -scrollregion] 3]
@@ -5591,13 +5822,13 @@ proc linehover {} {
     set y [expr {$hovery + $yfrac * $ymax - $linespc / 2}]
     set x0 [expr {$x - 2 * $lthickness}]
     set y0 [expr {$y - 2 * $lthickness}]
-    set x1 [expr {$x + [font measure $mainfont $text] + 2 * $lthickness}]
+    set x1 [expr {$x + [font measure mainfont $text] + 2 * $lthickness}]
     set y1 [expr {$y + $linespc + 2 * $lthickness}]
     set t [$canv create rectangle $x0 $y0 $x1 $y1 \
 	       -fill \#ffff80 -outline black -width 1 -tags hover]
     $canv raise $t
     set t [$canv create text $x $y -anchor nw -text $text -tags hover \
-	       -font $mainfont]
+	       -font mainfont]
     $canv raise $t
 }
 
@@ -5635,7 +5866,7 @@ proc arrowjump {id n y} {
 }
 
 proc lineclick {x y id isnew} {
-    global ctext commitinfo children canv thickerline curview
+    global ctext commitinfo children canv thickerline curview commitrow
 
     if {![info exists commitinfo($id)] && ![getcommit $id]} return
     unmarkmatches
@@ -5663,12 +5894,10 @@ proc lineclick {x y id isnew} {
     # fill the details pane with info about this line
     $ctext conf -state normal
     clear_ctext
-    $ctext tag conf link -foreground blue -underline 1
-    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
-    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
+    settabs 0
     $ctext insert end "Parent:\t"
-    $ctext insert end $id [list link link0]
-    $ctext tag bind link0 <1> [list selbyid $id]
+    $ctext insert end $id link0
+    setlink $id link0
     set info $commitinfo($id)
     $ctext insert end "\n\t[lindex $info 0]\n"
     $ctext insert end "\tAuthor:\t[lindex $info 1]\n"
@@ -5683,8 +5912,8 @@ proc lineclick {x y id isnew} {
 	    if {![info exists commitinfo($child)] && ![getcommit $child]} continue
 	    set info $commitinfo($child)
 	    $ctext insert end "\n\t"
-	    $ctext insert end $child [list link link$i]
-	    $ctext tag bind link$i <1> [list selbyid $child]
+	    $ctext insert end $child link$i
+	    setlink $child link$i
 	    $ctext insert end "\n\t[lindex $info 0]"
 	    $ctext insert end "\n\tAuthor:\t[lindex $info 1]"
 	    set date [formatdate [lindex $info 2]]
@@ -5723,6 +5952,7 @@ proc rowmenu {x y id} {
     global rowctxmenu commitrow selectedline rowmenuid curview
     global nullid nullid2 fakerowmenu mainhead
 
+    stopfinding
     set rowmenuid $id
     if {![info exists selectedline]
 	|| $commitrow($curview,$id) eq $selectedline} {
@@ -5765,16 +5995,13 @@ proc doseldiff {oldid newid} {
     clear_ctext
     init_flist "Top"
     $ctext insert end "From "
-    $ctext tag conf link -foreground blue -underline 1
-    $ctext tag bind link <Enter> { %W configure -cursor hand2 }
-    $ctext tag bind link <Leave> { %W configure -cursor $curtextcursor }
-    $ctext tag bind link0 <1> [list selbyid $oldid]
-    $ctext insert end $oldid [list link link0]
+    $ctext insert end $oldid link0
+    setlink $oldid link0
     $ctext insert end "\n     "
     $ctext insert end [lindex $commitinfo($oldid) 0]
     $ctext insert end "\n\nTo   "
-    $ctext tag bind link1 <1> [list selbyid $newid]
-    $ctext insert end $newid [list link link1]
+    $ctext insert end $newid link1
+    setlink $newid link1
     $ctext insert end "\n     "
     $ctext insert end [lindex $commitinfo($newid) 0]
     $ctext insert end "\n"
@@ -5855,6 +6082,8 @@ proc mkpatchgo {} {
     set newid [$patchtop.tosha1 get]
     set fname [$patchtop.fname get]
     set cmd [diffcmd [list $oldid $newid] -p]
+    # trim off the initial "|"
+    set cmd [lrange $cmd 1 end]
     lappend cmd >$fname &
     if {[catch {eval exec $cmd} err]} {
 	error_popup "Error creating patch: $err"
@@ -5935,7 +6164,7 @@ proc domktag {} {
 
 proc redrawtags {id} {
     global canv linehtag commitrow idpos selectedline curview
-    global mainfont canvxmax iddrawn
+    global canvxmax iddrawn
 
     if {![info exists commitrow($curview,$id)]} return
     if {![info exists iddrawn($id)]} return
@@ -5944,7 +6173,7 @@ proc redrawtags {id} {
     set xt [eval drawtags $id $idpos($id)]
     $canv coords $linehtag($commitrow($curview,$id)) $xt [lindex $idpos($id) 2]
     set text [$canv itemcget $linehtag($commitrow($curview,$id)) -text]
-    set xr [expr {$xt + [font measure $mainfont $text]}]
+    set xr [expr {$xt + [font measure mainfont $text]}]
     if {$xr > $canvxmax} {
 	set canvxmax $xr
 	setcanvscroll
@@ -6087,7 +6316,7 @@ proc cherrypick {} {
 			included in branch $mainhead -- really re-apply it?"]
 	if {!$ok} return
     }
-    nowbusy cherrypick
+    nowbusy cherrypick "Cherry-picking"
     update
     # Unfortunately git-cherry-pick writes stuff to stderr even when
     # no error occurs, and exec takes that as an indication of error...
@@ -6117,7 +6346,6 @@ proc cherrypick {} {
 
 proc resethead {} {
     global mainheadid mainhead rowmenuid confirm_ok resettype
-    global showlocalchanges
 
     set confirm_ok 0
     set w ".confirmreset"
@@ -6154,32 +6382,23 @@ proc resethead {} {
 	error_popup $err
     } else {
 	dohidelocalchanges
-	set w ".resetprogress"
-	filerun $fd [list readresetstat $fd $w]
-	toplevel $w
-	wm transient $w
-	wm title $w "Reset progress"
-	message $w.m -text "Reset in progress, please wait..." \
-	    -justify center -aspect 1000
-	pack $w.m -side top -fill x -padx 20 -pady 5
-	canvas $w.c -width 150 -height 20 -bg white
-	$w.c create rect 0 0 0 20 -fill green -tags rect
-	pack $w.c -side top -fill x -padx 20 -pady 5 -expand 1
-	nowbusy reset
+	filerun $fd [list readresetstat $fd]
+	nowbusy reset "Resetting"
     }
 }
 
-proc readresetstat {fd w} {
-    global mainhead mainheadid showlocalchanges
+proc readresetstat {fd} {
+    global mainhead mainheadid showlocalchanges rprogcoord
 
     if {[gets $fd line] >= 0} {
 	if {[regexp {([0-9]+)% \(([0-9]+)/([0-9]+)\)} $line match p m n]} {
-	    set x [expr {($m * 150) / $n}]
-	    $w.c coords rect 0 0 $x 20
+	    set rprogcoord [expr {1.0 * $m / $n}]
+	    adjustprogress
 	}
 	return 1
     }
-    destroy $w
+    set rprogcoord 0
+    adjustprogress
     notbusy reset
     if {[catch {close $fd} err]} {
 	error_popup $err
@@ -6203,6 +6422,7 @@ proc readresetstat {fd w} {
 proc headmenu {x y id head} {
     global headmenuid headmenuhead headctxmenu mainhead
 
+    stopfinding
     set headmenuid $id
     set headmenuhead $head
     set state normal
@@ -6220,7 +6440,7 @@ proc cobranch {} {
 
     # check the tree is clean first??
     set oldmainhead $mainhead
-    nowbusy checkout
+    nowbusy checkout "Checking out"
     update
     dohidelocalchanges
     if {[catch {
@@ -6276,8 +6496,8 @@ proc rmbranch {} {
 
 # Display a list of tags and heads
 proc showrefs {} {
-    global showrefstop bgcolor fgcolor selectbgcolor mainfont
-    global bglist fglist uifont reflistfilter reflist maincursor
+    global showrefstop bgcolor fgcolor selectbgcolor
+    global bglist fglist reflistfilter reflist maincursor
 
     set top .showrefs
     set showrefstop $top
@@ -6289,7 +6509,7 @@ proc showrefs {} {
     toplevel $top
     wm title $top "Tags and heads: [file tail [pwd]]"
     text $top.list -background $bgcolor -foreground $fgcolor \
-	-selectbackground $selectbgcolor -font $mainfont \
+	-selectbackground $selectbgcolor -font mainfont \
 	-xscrollcommand "$top.xsb set" -yscrollcommand "$top.ysb set" \
 	-width 30 -height 20 -cursor $maincursor \
 	-spacing1 1 -spacing3 1 -state disabled
@@ -6301,15 +6521,15 @@ proc showrefs {} {
     grid $top.list $top.ysb -sticky nsew
     grid $top.xsb x -sticky ew
     frame $top.f
-    label $top.f.l -text "Filter: " -font $uifont
-    entry $top.f.e -width 20 -textvariable reflistfilter -font $uifont
+    label $top.f.l -text "Filter: " -font uifont
+    entry $top.f.e -width 20 -textvariable reflistfilter -font uifont
     set reflistfilter "*"
     trace add variable reflistfilter write reflistfilter_change
     pack $top.f.e -side right -fill x -expand 1
     pack $top.f.l -side left
     grid $top.f - -sticky ew -pady 2
     button $top.close -command [list destroy $top] -text "Close" \
-	-font $uifont
+	-font uifont
     grid $top.close -
     grid columnconfigure $top 0 -weight 1
     grid rowconfigure $top 0 -weight 1
@@ -6432,25 +6652,59 @@ proc refill_reflist {} {
 
 # Stuff for finding nearby tags
 proc getallcommits {} {
-    global allcommits allids nbmp nextarc seeds
+    global allcommits nextarc seeds allccache allcwait cachedarcs allcupdate
+    global idheads idtags idotherrefs allparents tagobjid
 
     if {![info exists allcommits]} {
-	set allids {}
-	set nbmp 0
 	set nextarc 0
 	set allcommits 0
 	set seeds {}
+	set allcwait 0
+	set cachedarcs 0
+	set allccache [file join [gitdir] "gitk.cache"]
+	if {![catch {
+	    set f [open $allccache r]
+	    set allcwait 1
+	    getcache $f
+	}]} return
     }
 
-    set cmd [concat | git rev-list --all --parents]
-    foreach id $seeds {
-	lappend cmd "^$id"
+    if {$allcwait} {
+	return
     }
-    set fd [open $cmd r]
-    fconfigure $fd -blocking 0
-    incr allcommits
-    nowbusy allcommits
-    filerun $fd [list getallclines $fd]
+    set cmd [list | git rev-list --parents]
+    set allcupdate [expr {$seeds ne {}}]
+    if {!$allcupdate} {
+	set ids "--all"
+    } else {
+	set refs [concat [array names idheads] [array names idtags] \
+		      [array names idotherrefs]]
+	set ids {}
+	set tagobjs {}
+	foreach name [array names tagobjid] {
+	    lappend tagobjs $tagobjid($name)
+	}
+	foreach id [lsort -unique $refs] {
+	    if {![info exists allparents($id)] &&
+		[lsearch -exact $tagobjs $id] < 0} {
+		lappend ids $id
+	    }
+	}
+	if {$ids ne {}} {
+	    foreach id $seeds {
+		lappend ids "^$id"
+	    }
+	}
+    }
+    if {$ids ne {}} {
+	set fd [open [concat $cmd $ids] r]
+	fconfigure $fd -blocking 0
+	incr allcommits
+	nowbusy allcommits
+	filerun $fd [list getallclines $fd]
+    } else {
+	dispneartags 0
+    }
 }
 
 # Since most commits have 1 parent and 1 child, we group strings of
@@ -6469,10 +6723,10 @@ proc getallcommits {} {
 # coming from descendents, and "outgoing" means going towards ancestors.
 
 proc getallclines {fd} {
-    global allids allparents allchildren idtags idheads nextarc nbmp
+    global allparents allchildren idtags idheads nextarc
     global arcnos arcids arctags arcout arcend arcstart archeads growing
-    global seeds allcommits
-
+    global seeds allcommits cachedarcs allcupdate
+    
     set nid 0
     while {[incr nid] <= 1000 && [gets $fd line] >= 0} {
 	set id [lindex $line 0]
@@ -6480,7 +6734,7 @@ proc getallclines {fd} {
 	    # seen it already
 	    continue
 	}
-	lappend allids $id
+	set cachedarcs 0
 	set olds [lrange $line 1 end]
 	set allparents($id) $olds
 	if {![info exists allchildren($id)]} {
@@ -6511,7 +6765,6 @@ proc getallclines {fd} {
 		continue
 	    }
 	}
-	incr nbmp
 	foreach a $arcnos($id) {
 	    lappend arcids($a) $id
 	    set arcend($a) $id
@@ -6551,9 +6804,28 @@ proc getallclines {fd} {
     if {![eof $fd]} {
 	return [expr {$nid >= 1000? 2: 1}]
     }
-    close $fd
+    set cacheok 1
+    if {[catch {
+	fconfigure $fd -blocking 1
+	close $fd
+    } err]} {
+	# got an error reading the list of commits
+	# if we were updating, try rereading the whole thing again
+	if {$allcupdate} {
+	    incr allcommits -1
+	    dropcache $err
+	    return
+	}
+	error_popup "Error reading commit topology information;\
+		branch and preceding/following tag information\
+		will be incomplete.\n($err)"
+	set cacheok 0
+    }
     if {[incr allcommits -1] == 0} {
 	notbusy allcommits
+	if {$cacheok} {
+	    run savecache
+	}
     }
     dispneartags 0
     return 0
@@ -6577,7 +6849,7 @@ proc recalcarc {a} {
 }
 
 proc splitarc {p} {
-    global arcnos arcids nextarc nbmp arctags archeads idtags idheads
+    global arcnos arcids nextarc arctags archeads idtags idheads
     global arcstart arcend arcout allparents growing
 
     set a $arcnos($p)
@@ -6609,7 +6881,6 @@ proc splitarc {p} {
 	set growing($na) 1
 	unset growing($a)
     }
-    incr nbmp
 
     foreach id $tail {
 	if {[llength $arcnos($id)] == 1} {
@@ -6633,17 +6904,15 @@ proc splitarc {p} {
 # Update things for a new commit added that is a child of one
 # existing commit.  Used when cherry-picking.
 proc addnewchild {id p} {
-    global allids allparents allchildren idtags nextarc nbmp
+    global allparents allchildren idtags nextarc
     global arcnos arcids arctags arcout arcend arcstart archeads growing
     global seeds allcommits
 
     if {![info exists allcommits] || ![info exists arcnos($p)]} return
-    lappend allids $id
     set allparents($id) [list $p]
     set allchildren($id) {}
     set arcnos($id) {}
     lappend seeds $id
-    incr nbmp
     lappend allchildren($p) $id
     set a [incr nextarc]
     set arcstart($a) $id
@@ -6656,6 +6925,172 @@ proc addnewchild {id p} {
     }
     lappend arcnos($p) $a
     set arcout($id) [list $a]
+}
+
+# This implements a cache for the topology information.
+# The cache saves, for each arc, the start and end of the arc,
+# the ids on the arc, and the outgoing arcs from the end.
+proc readcache {f} {
+    global arcnos arcids arcout arcstart arcend arctags archeads nextarc
+    global idtags idheads allparents cachedarcs possible_seeds seeds growing
+    global allcwait
+
+    set a $nextarc
+    set lim $cachedarcs
+    if {$lim - $a > 500} {
+	set lim [expr {$a + 500}]
+    }
+    if {[catch {
+	if {$a == $lim} {
+	    # finish reading the cache and setting up arctags, etc.
+	    set line [gets $f]
+	    if {$line ne "1"} {error "bad final version"}
+	    close $f
+	    foreach id [array names idtags] {
+		if {[info exists arcnos($id)] && [llength $arcnos($id)] == 1 &&
+		    [llength $allparents($id)] == 1} {
+		    set a [lindex $arcnos($id) 0]
+		    if {$arctags($a) eq {}} {
+			recalcarc $a
+		    }
+		}
+	    }
+	    foreach id [array names idheads] {
+		if {[info exists arcnos($id)] && [llength $arcnos($id)] == 1 &&
+		    [llength $allparents($id)] == 1} {
+		    set a [lindex $arcnos($id) 0]
+		    if {$archeads($a) eq {}} {
+			recalcarc $a
+		    }
+		}
+	    }
+	    foreach id [lsort -unique $possible_seeds] {
+		if {$arcnos($id) eq {}} {
+		    lappend seeds $id
+		}
+	    }
+	    set allcwait 0
+	} else {
+	    while {[incr a] <= $lim} {
+		set line [gets $f]
+		if {[llength $line] != 3} {error "bad line"}
+		set s [lindex $line 0]
+		set arcstart($a) $s
+		lappend arcout($s) $a
+		if {![info exists arcnos($s)]} {
+		    lappend possible_seeds $s
+		    set arcnos($s) {}
+		}
+		set e [lindex $line 1]
+		if {$e eq {}} {
+		    set growing($a) 1
+		} else {
+		    set arcend($a) $e
+		    if {![info exists arcout($e)]} {
+			set arcout($e) {}
+		    }
+		}
+		set arcids($a) [lindex $line 2]
+		foreach id $arcids($a) {
+		    lappend allparents($s) $id
+		    set s $id
+		    lappend arcnos($id) $a
+		}
+		if {![info exists allparents($s)]} {
+		    set allparents($s) {}
+		}
+		set arctags($a) {}
+		set archeads($a) {}
+	    }
+	    set nextarc [expr {$a - 1}]
+	}
+    } err]} {
+	dropcache $err
+	return 0
+    }
+    if {!$allcwait} {
+	getallcommits
+    }
+    return $allcwait
+}
+
+proc getcache {f} {
+    global nextarc cachedarcs possible_seeds
+
+    if {[catch {
+	set line [gets $f]
+	if {[llength $line] != 2 || [lindex $line 0] ne "1"} {error "bad version"}
+	# make sure it's an integer
+	set cachedarcs [expr {int([lindex $line 1])}]
+	if {$cachedarcs < 0} {error "bad number of arcs"}
+	set nextarc 0
+	set possible_seeds {}
+	run readcache $f
+    } err]} {
+	dropcache $err
+    }
+    return 0
+}
+
+proc dropcache {err} {
+    global allcwait nextarc cachedarcs seeds
+
+    #puts "dropping cache ($err)"
+    foreach v {arcnos arcout arcids arcstart arcend growing \
+		   arctags archeads allparents allchildren} {
+	global $v
+	catch {unset $v}
+    }
+    set allcwait 0
+    set nextarc 0
+    set cachedarcs 0
+    set seeds {}
+    getallcommits
+}
+
+proc writecache {f} {
+    global cachearc cachedarcs allccache
+    global arcstart arcend arcnos arcids arcout
+
+    set a $cachearc
+    set lim $cachedarcs
+    if {$lim - $a > 1000} {
+	set lim [expr {$a + 1000}]
+    }
+    if {[catch {
+	while {[incr a] <= $lim} {
+	    if {[info exists arcend($a)]} {
+		puts $f [list $arcstart($a) $arcend($a) $arcids($a)]
+	    } else {
+		puts $f [list $arcstart($a) {} $arcids($a)]
+	    }
+	}
+    } err]} {
+	catch {close $f}
+	catch {file delete $allccache}
+	#puts "writing cache failed ($err)"
+	return 0
+    }
+    set cachearc [expr {$a - 1}]
+    if {$a > $cachedarcs} {
+	puts $f "1"
+	close $f
+	return 0
+    }
+    return 1
+}
+
+proc savecache {} {
+    global nextarc cachedarcs cachearc allccache
+
+    if {$nextarc == $cachedarcs} return
+    set cachearc 0
+    set cachedarcs $nextarc
+    catch {
+	set f [open $allccache w]
+	puts $f [list 1 $cachedarcs]
+	run writecache $f
+    }
 }
 
 # Returns 1 if a is an ancestor of b, -1 if b is an ancestor of a,
@@ -7355,6 +7790,7 @@ proc showtag {tag isnew} {
     }
     $ctext conf -state normal
     clear_ctext
+    settabs 0
     set linknum 0
     if {![info exists tagcontents($tag)]} {
 	catch {
@@ -7378,11 +7814,135 @@ proc doquit {} {
     destroy .
 }
 
+proc mkfontdisp {font top which} {
+    global fontattr fontpref $font
+
+    set fontpref($font) [set $font]
+    button $top.${font}but -text $which -font optionfont \
+	-command [list choosefont $font $which]
+    label $top.$font -relief flat -font $font \
+	-text $fontattr($font,family) -justify left
+    grid x $top.${font}but $top.$font -sticky w
+}
+
+proc choosefont {font which} {
+    global fontparam fontlist fonttop fontattr
+
+    set fontparam(which) $which
+    set fontparam(font) $font
+    set fontparam(family) [font actual $font -family]
+    set fontparam(size) $fontattr($font,size)
+    set fontparam(weight) $fontattr($font,weight)
+    set fontparam(slant) $fontattr($font,slant)
+    set top .gitkfont
+    set fonttop $top
+    if {![winfo exists $top]} {
+	font create sample
+	eval font config sample [font actual $font]
+	toplevel $top
+	wm title $top "Gitk font chooser"
+	label $top.l -textvariable fontparam(which) -font uifont
+	pack $top.l -side top
+	set fontlist [lsort [font families]]
+	frame $top.f
+	listbox $top.f.fam -listvariable fontlist \
+	    -yscrollcommand [list $top.f.sb set]
+	bind $top.f.fam <<ListboxSelect>> selfontfam
+	scrollbar $top.f.sb -command [list $top.f.fam yview]
+	pack $top.f.sb -side right -fill y
+	pack $top.f.fam -side left -fill both -expand 1
+	pack $top.f -side top -fill both -expand 1
+	frame $top.g
+	spinbox $top.g.size -from 4 -to 40 -width 4 \
+	    -textvariable fontparam(size) \
+	    -validatecommand {string is integer -strict %s}
+	checkbutton $top.g.bold -padx 5 \
+	    -font {{Times New Roman} 12 bold} -text "B" -indicatoron 0 \
+	    -variable fontparam(weight) -onvalue bold -offvalue normal
+	checkbutton $top.g.ital -padx 5 \
+	    -font {{Times New Roman} 12 italic} -text "I" -indicatoron 0  \
+	    -variable fontparam(slant) -onvalue italic -offvalue roman
+	pack $top.g.size $top.g.bold $top.g.ital -side left
+	pack $top.g -side top
+	canvas $top.c -width 150 -height 50 -border 2 -relief sunk \
+	    -background white
+	$top.c create text 100 25 -anchor center -text $which -font sample \
+	    -fill black -tags text
+	bind $top.c <Configure> [list centertext $top.c]
+	pack $top.c -side top -fill x
+	frame $top.buts
+	button $top.buts.ok -text "OK" -command fontok -default active \
+	    -font uifont
+	button $top.buts.can -text "Cancel" -command fontcan -default normal \
+	    -font uifont
+	grid $top.buts.ok $top.buts.can
+	grid columnconfigure $top.buts 0 -weight 1 -uniform a
+	grid columnconfigure $top.buts 1 -weight 1 -uniform a
+	pack $top.buts -side bottom -fill x
+	trace add variable fontparam write chg_fontparam
+    } else {
+	raise $top
+	$top.c itemconf text -text $which
+    }
+    set i [lsearch -exact $fontlist $fontparam(family)]
+    if {$i >= 0} {
+	$top.f.fam selection set $i
+	$top.f.fam see $i
+    }
+}
+
+proc centertext {w} {
+    $w coords text [expr {[winfo width $w] / 2}] [expr {[winfo height $w] / 2}]
+}
+
+proc fontok {} {
+    global fontparam fontpref prefstop
+
+    set f $fontparam(font)
+    set fontpref($f) [list $fontparam(family) $fontparam(size)]
+    if {$fontparam(weight) eq "bold"} {
+	lappend fontpref($f) "bold"
+    }
+    if {$fontparam(slant) eq "italic"} {
+	lappend fontpref($f) "italic"
+    }
+    set w $prefstop.$f
+    $w conf -text $fontparam(family) -font $fontpref($f)
+	
+    fontcan
+}
+
+proc fontcan {} {
+    global fonttop fontparam
+
+    if {[info exists fonttop]} {
+	catch {destroy $fonttop}
+	catch {font delete sample}
+	unset fonttop
+	unset fontparam
+    }
+}
+
+proc selfontfam {} {
+    global fonttop fontparam
+
+    set i [$fonttop.f.fam curselection]
+    if {$i ne {}} {
+	set fontparam(family) [$fonttop.f.fam get $i]
+    }
+}
+
+proc chg_fontparam {v sub op} {
+    global fontparam
+
+    font config sample -$sub $fontparam($sub)
+}
+
 proc doprefs {} {
-    global maxwidth maxgraphpct diffopts
+    global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor
-    global uifont tabstop
+    global uifont tabstop limitdiffs
 
     set top .gitkprefs
     set prefstop $top
@@ -7390,13 +7950,14 @@ proc doprefs {} {
 	raise $top
 	return
     }
-    foreach v {maxwidth maxgraphpct diffopts showneartags showlocalchanges} {
+    foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
+		   limitdiffs tabstop} {
 	set oldprefs($v) [set $v]
     }
     toplevel $top
     wm title $top "Gitk preferences"
     label $top.ldisp -text "Commit list display options"
-    $top.ldisp configure -font $uifont
+    $top.ldisp configure -font uifont
     grid $top.ldisp - -sticky w -pady 10
     label $top.spacer -text " "
     label $top.maxwidthl -text "Maximum graph width (lines)" \
@@ -7414,23 +7975,24 @@ proc doprefs {} {
     grid x $top.showlocal -sticky w
 
     label $top.ddisp -text "Diff display options"
-    $top.ddisp configure -font $uifont
+    $top.ddisp configure -font uifont
     grid $top.ddisp - -sticky w -pady 10
-    label $top.diffoptl -text "Options for diff program" \
-	-font optionfont
-    entry $top.diffopt -width 20 -textvariable diffopts
-    grid x $top.diffoptl $top.diffopt -sticky w
+    label $top.tabstopl -text "Tab spacing" -font optionfont
+    spinbox $top.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
+    grid x $top.tabstopl $top.tabstop -sticky w
     frame $top.ntag
     label $top.ntag.l -text "Display nearby tags" -font optionfont
     checkbutton $top.ntag.b -variable showneartags
     pack $top.ntag.b $top.ntag.l -side left
     grid x $top.ntag -sticky w
-    label $top.tabstopl -text "tabstop" -font optionfont
-    spinbox $top.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
-    grid x $top.tabstopl $top.tabstop -sticky w
+    frame $top.ldiff
+    label $top.ldiff.l -text "Limit diffs to listed paths" -font optionfont
+    checkbutton $top.ldiff.b -variable limitdiffs
+    pack $top.ldiff.b $top.ldiff.l -side left
+    grid x $top.ldiff -sticky w
 
     label $top.cdisp -text "Colors: press to choose"
-    $top.cdisp configure -font $uifont
+    $top.cdisp configure -font uifont
     grid $top.cdisp - -sticky w -pady 10
     label $top.bg -padx 40 -relief sunk -background $bgcolor
     button $top.bgbut -text "Background" -font optionfont \
@@ -7461,11 +8023,18 @@ proc doprefs {} {
 	-command [list choosecolor selectbgcolor 0 $top.selbgsep background setselbg]
     grid x $top.selbgbut $top.selbgsep -sticky w
 
+    label $top.cfont -text "Fonts: press to choose"
+    $top.cfont configure -font uifont
+    grid $top.cfont - -sticky w -pady 10
+    mkfontdisp mainfont $top "Main font"
+    mkfontdisp textfont $top "Diff display font"
+    mkfontdisp uifont $top "User interface font"
+
     frame $top.buts
     button $top.buts.ok -text "OK" -command prefsok -default active
-    $top.buts.ok configure -font $uifont
+    $top.buts.ok configure -font uifont
     button $top.buts.can -text "Cancel" -command prefscan -default normal
-    $top.buts.can configure -font $uifont
+    $top.buts.can configure -font uifont
     grid $top.buts.ok $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -7513,24 +8082,48 @@ proc setfg {c} {
 }
 
 proc prefscan {} {
-    global maxwidth maxgraphpct diffopts
-    global oldprefs prefstop showneartags showlocalchanges
+    global oldprefs prefstop
 
-    foreach v {maxwidth maxgraphpct diffopts showneartags showlocalchanges} {
+    foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
+		   limitdiffs tabstop} {
+	global $v
 	set $v $oldprefs($v)
     }
     catch {destroy $prefstop}
     unset prefstop
+    fontcan
 }
 
 proc prefsok {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
-    global charspc ctext tabstop
+    global fontpref mainfont textfont uifont
+    global limitdiffs treediffs
 
     catch {destroy $prefstop}
     unset prefstop
-    $ctext configure -tabs "[expr {$tabstop * $charspc}]"
+    fontcan
+    set fontchanged 0
+    if {$mainfont ne $fontpref(mainfont)} {
+	set mainfont $fontpref(mainfont)
+	parsefont mainfont $mainfont
+	eval font configure mainfont [fontflags mainfont]
+	eval font configure mainfontbold [fontflags mainfont 1]
+	setcoords
+	set fontchanged 1
+    }
+    if {$textfont ne $fontpref(textfont)} {
+	set textfont $fontpref(textfont)
+	parsefont textfont $textfont
+	eval font configure textfont [fontflags textfont]
+	eval font configure textfontbold [fontflags textfont 1]
+    }
+    if {$uifont ne $fontpref(uifont)} {
+	set uifont $fontpref(uifont)
+	parsefont uifont $uifont
+	eval font configure uifont [fontflags uifont]
+    }
+    settabs
     if {$showlocalchanges != $oldprefs(showlocalchanges)} {
 	if {$showlocalchanges} {
 	    doshowlocalchanges
@@ -7538,10 +8131,15 @@ proc prefsok {} {
 	    dohidelocalchanges
 	}
     }
-    if {$maxwidth != $oldprefs(maxwidth)
+    if {$limitdiffs != $oldprefs(limitdiffs)} {
+	# treediffs elements are limited by path
+	catch {unset treediffs}
+    }
+    if {$fontchanged || $maxwidth != $oldprefs(maxwidth)
 	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
 	redisplay
-    } elseif {$showneartags != $oldprefs(showneartags)} {
+    } elseif {$showneartags != $oldprefs(showneartags) ||
+	  $limitdiffs != $oldprefs(limitdiffs)} {
 	reselectline
     }
 }
@@ -7836,7 +8434,6 @@ if {[catch {package require Tk 8.4} err]} {
 
 # defaults...
 set datemode 0
-set diffopts "-U 5 -p"
 set wrcomcmd "git diff-tree --stdin -p --pretty"
 
 set gitencoding {}
@@ -7860,15 +8457,16 @@ set maxgraphpct 50
 set maxwidth 16
 set revlistorder 0
 set fastdate 0
-set uparrowlen 7
-set downarrowlen 7
-set mingaplen 30
+set uparrowlen 5
+set downarrowlen 5
+set mingaplen 100
 set cmitmode "patch"
 set wrapcomment "none"
 set showneartags 1
 set maxrefs 20
 set maxlinelen 200
 set showlocalchanges 1
+set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 
 set colors {green red blue magenta darkgrey brown orange}
@@ -7882,6 +8480,17 @@ catch {source ~/.gitk}
 
 font create optionfont -family sans-serif -size -12
 
+parsefont mainfont $mainfont
+eval font create mainfont [fontflags mainfont]
+eval font create mainfontbold [fontflags mainfont 1]
+
+parsefont textfont $textfont
+eval font create textfont [fontflags textfont]
+eval font create textfontbold [fontflags textfont 1]
+
+parsefont uifont $uifont
+eval font create uifont [fontflags uifont]
+
 # check that we can find a .git directory somewhere...
 if {[catch {set gitdir [gitdir]}]} {
     show_error {} . "Cannot find a git repository here."
@@ -7892,6 +8501,7 @@ if {![file isdirectory $gitdir]} {
     exit 1
 }
 
+set mergeonly 0
 set revtreeargs {}
 set cmdline_files {}
 set i 0
@@ -7899,6 +8509,10 @@ foreach arg $argv {
     switch -- $arg {
 	"" { }
 	"-d" { set datemode 1 }
+	"--merge" {
+	    set mergeonly 1
+	    lappend revtreeargs $arg
+	}
 	"--" {
 	    set cmdline_files [lrange $argv [expr {$i + 1}] end]
 	    break
@@ -7939,9 +8553,44 @@ if {$i >= [llength $argv] && $revtreeargs ne {}} {
     }
 }
 
+if {$mergeonly} {
+    # find the list of unmerged files
+    set mlist {}
+    set nr_unmerged 0
+    if {[catch {
+	set fd [open "| git ls-files -u" r]
+    } err]} {
+	show_error {} . "Couldn't get list of unmerged files: $err"
+	exit 1
+    }
+    while {[gets $fd line] >= 0} {
+	set i [string first "\t" $line]
+	if {$i < 0} continue
+	set fname [string range $line [expr {$i+1}] end]
+	if {[lsearch -exact $mlist $fname] >= 0} continue
+	incr nr_unmerged
+	if {$cmdline_files eq {} || [path_filter $cmdline_files $fname]} {
+	    lappend mlist $fname
+	}
+    }
+    catch {close $fd}
+    if {$mlist eq {}} {
+	if {$nr_unmerged == 0} {
+	    show_error {} . "No files selected: --merge specified but\
+			     no files are unmerged."
+	} else {
+	    show_error {} . "No files selected: --merge specified but\
+			     no unmerged files are within file limit."
+	}
+	exit 1
+    }
+    set cmdline_files $mlist
+}
+
 set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
 
+set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
 
 set runq {}
 set history {}
@@ -7949,18 +8598,23 @@ set historyindex 0
 set fh_serial 0
 set nhl_names {}
 set highlight_paths {}
+set findpattern {}
 set searchdirn -forwards
 set boldrows {}
 set boldnamerows {}
 set diffelide {0 0}
 set markingmatches 0
-
-set optim_delay 16
+set linkentercount 0
+set need_redisplay 0
+set nrows_drawn 0
+set firsttabstop 0
 
 set nextviewnum 1
 set curview 0
 set selectedview 0
 set selectedhlview None
+set highlight_related None
+set highlight_files {}
 set viewfiles(0) {}
 set viewperm(0) 0
 set viewargs(0) {}
@@ -7969,7 +8623,6 @@ set cmdlineok 0
 set stopped 0
 set stuffsaved 0
 set patchnum 0
-set lookingforhead 0
 set localirow -1
 set localfrow -1
 set lserial 0
