@@ -1353,7 +1353,7 @@ Commands:
   "Update the corresponding git-status buffer when a file is saved.
 Meant to be used in `after-save-hook'."
   (let* ((file (expand-file-name buffer-file-name))
-         (dir (condition-case nil (git-get-top-dir (file-name-directory file))))
+         (dir (condition-case nil (git-get-top-dir (file-name-directory file)) (error nil)))
          (buffer (and dir (git-find-status-buffer dir))))
     (when buffer
       (with-current-buffer buffer
