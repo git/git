@@ -28,7 +28,8 @@ get_repo_base() {
 	) 2>/dev/null
 }
 
-if [ -n "$GIT_SSL_NO_VERIFY" ]; then
+if [ -n "$GIT_SSL_NO_VERIFY" -o \
+	"`git config --bool http.sslVerify`" = false ]; then
     curl_extra_args="-k"
 fi
 
