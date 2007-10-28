@@ -842,7 +842,8 @@ Return the list of files that haven't been handled."
   "Mark all files."
   (interactive)
   (unless git-status (error "Not in git-status buffer."))
-  (ewoc-map (lambda (info) (setf (git-fileinfo->marked info) t) t) git-status)
+  (ewoc-map (lambda (info) (unless (git-fileinfo->marked info)
+                             (setf (git-fileinfo->marked info) t))) git-status)
   ; move back to goal column after invalidate
   (when goal-column (move-to-column goal-column)))
 
@@ -850,7 +851,9 @@ Return the list of files that haven't been handled."
   "Unmark all files."
   (interactive)
   (unless git-status (error "Not in git-status buffer."))
-  (ewoc-map (lambda (info) (setf (git-fileinfo->marked info) nil) t) git-status)
+  (ewoc-map (lambda (info) (when (git-fileinfo->marked info)
+                             (setf (git-fileinfo->marked info) nil)
+                             t)) git-status)
   ; move back to goal column after invalidate
   (when goal-column (move-to-column goal-column)))
 
