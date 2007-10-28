@@ -118,14 +118,32 @@ int match_pathspec(const char **pathspec, const char *name, int namelen, int pre
 	return retval;
 }
 
+static int no_wildcard(const char *string)
+{
+	return string[strcspn(string, "*?[{")] == '\0';
+}
+
 void add_exclude(const char *string, const char *base,
 		 int baselen, struct exclude_list *which)
 {
 	struct exclude *x = xmalloc(sizeof (*x));
 
+	x->to_exclude = 1;
+	if (*string == '!') {
+		x->to_exclude = 0;
+		string++;
+	}
 	x->pattern = string;
+	x->patternlen = strlen(string);
 	x->base = base;
 	x->baselen = baselen;
+	x->flags = 0;
+	if (!strchr(string, '/'))
+		x->flags |= EXC_FLAG_NODIR;
+	if (no_wildcard(string))
+		x->flags |= EXC_FLAG_NOWILDCARD;
+	if (*string == '*' && no_wildcard(string+1))
+		x->flags |= EXC_FLAG_ENDSWITH;
 	if (which->nr == which->alloc) {
 		which->alloc = alloc_nr(which->alloc);
 		which->excludes = xrealloc(which->excludes,
@@ -209,7 +227,7 @@ void pop_exclude_per_directory(struct dir_struct *dir, int stk)
  * Return 1 for exclude, 0 for include and -1 for undecided.
  */
 static int excluded_1(const char *pathname,
-		      int pathlen,
+		      int pathlen, const char *basename,
 		      struct exclude_list *el)
 {
 	int i;
@@ -218,19 +236,21 @@ static int excluded_1(const char *pathname,
 		for (i = el->nr - 1; 0 <= i; i--) {
 			struct exclude *x = el->excludes[i];
 			const char *exclude = x->pattern;
-			int to_exclude = 1;
+			int to_exclude = x->to_exclude;
 
-			if (*exclude == '!') {
-				to_exclude = 0;
-				exclude++;
-			}
-
-			if (!strchr(exclude, '/')) {
+			if (x->flags & EXC_FLAG_NODIR) {
 				/* match basename */
-				const char *basename = strrchr(pathname, '/');
-				basename = (basename) ? basename+1 : pathname;
-				if (fnmatch(exclude, basename, 0) == 0)
-					return to_exclude;
+				if (x->flags & EXC_FLAG_NOWILDCARD) {
+					if (!strcmp(exclude, basename))
+						return to_exclude;
+				} else if (x->flags & EXC_FLAG_ENDSWITH) {
+					if (x->patternlen - 1 <= pathlen &&
+					    !strcmp(exclude + 1, pathname + pathlen - x->patternlen + 1))
+						return to_exclude;
+				} else {
+					if (fnmatch(exclude, basename, 0) == 0)
+						return to_exclude;
+				}
 			}
 			else {
 				/* match with FNM_PATHNAME:
@@ -246,9 +266,14 @@ static int excluded_1(const char *pathname,
 				    strncmp(pathname, x->base, baselen))
 				    continue;
 
-				if (fnmatch(exclude, pathname+baselen,
-					    FNM_PATHNAME) == 0)
-					return to_exclude;
+				if (x->flags & EXC_FLAG_NOWILDCARD) {
+					if (!strcmp(exclude, pathname + baselen))
+						return to_exclude;
+				} else {
+					if (fnmatch(exclude, pathname+baselen,
+						    FNM_PATHNAME) == 0)
+					    return to_exclude;
+				}
 			}
 		}
 	}
@@ -259,9 +284,11 @@ int excluded(struct dir_struct *dir, const char *pathname)
 {
 	int pathlen = strlen(pathname);
 	int st;
+	const char *basename = strrchr(pathname, '/');
+	basename = (basename) ? basename+1 : pathname;
 
 	for (st = EXC_CMDL; st <= EXC_FILE; st++) {
-		switch (excluded_1(pathname, pathlen, &dir->exclude_list[st])) {
+		switch (excluded_1(pathname, pathlen, basename, &dir->exclude_list[st])) {
 		case 0:
 			return 0;
 		case 1:

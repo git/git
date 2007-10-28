@@ -17,13 +17,20 @@ struct dir_entry {
 	char name[FLEX_ARRAY]; /* more */
 };
 
+#define EXC_FLAG_NODIR 1
+#define EXC_FLAG_NOWILDCARD 2
+#define EXC_FLAG_ENDSWITH 4
+
 struct exclude_list {
 	int nr;
 	int alloc;
 	struct exclude {
 		const char *pattern;
+		int patternlen;
 		const char *base;
 		int baselen;
+		int to_exclude;
+		int flags;
 	} **excludes;
 };
 
