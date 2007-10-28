@@ -796,6 +796,7 @@ Return the list of files that haven't been handled."
                             (with-current-buffer buffer (erase-buffer))
                             (dolist (info files) (git-set-fileinfo-state info 'uptodate))
                             (git-call-process-env nil nil "rerere")
+                            (git-call-process-env nil nil "gc" "--auto")
                             (git-refresh-files)
                             (git-refresh-ewoc-hf git-status)
                             (message "Committed %s." commit)
