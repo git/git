@@ -71,3 +71,24 @@ Fixes since v1.5.3.4
 
  * "make clean" no longer deletes the configure script that ships
    with the git tarball, making multiple architecture builds easier.
+
+ * "git-remote show origin" spewed a warning message from Perl
+   when no remote is defined for the current branch via
+   branch.<name>.remote configuration settings.
+
+ * Building with NO_PERL_MAKEMAKER excessively rebuilt contents
+   of perl/ subdirectory by rewriting perl.mak.
+
+ * http.sslVerify configuration settings were not used in scripted
+   Porcelains.
+
+ * "git-add" leaked a bit of memory while scanning for files to add.
+
+ * A few workarounds to squelch false warnings from recent gcc have
+   been added.
+
+--
+exec >/var/tmp/1
+O=v1.5.3.4-55-gf120ae2
+echo O=`git describe refs/heads/maint`
+git shortlog --no-merges $O..refs/heads/maint
