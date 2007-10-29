@@ -521,13 +521,15 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 			munmap(idx_map, idx_size);
 			return error("wrong index v2 file size in %s", path);
 		}
-		if (idx_size != min_size) {
-			/* make sure we can deal with large pack offsets */
-			off_t x = 0x7fffffffUL, y = 0xffffffffUL;
-			if (x > (x + 1) || y > (y + 1)) {
-				munmap(idx_map, idx_size);
-				return error("pack too large for current definition of off_t in %s", path);
-			}
+		if (idx_size != min_size &&
+		    /*
+		     * make sure we can deal with large pack offsets.
+		     * 31-bit signed offset won't be enough, neither
+		     * 32-bit unsigned one will be.
+		     */
+		    (sizeof(off_t) <= 4)) {
+			munmap(idx_map, idx_size);
+			return error("pack too large for current definition of off_t in %s", path);
 		}
 	}
 
