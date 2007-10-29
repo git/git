@@ -1572,7 +1572,7 @@ static int merge(struct commit *h1,
 {
 	struct commit_list *iter;
 	struct commit *merged_common_ancestors;
-	struct tree *mrtree;
+	struct tree *mrtree = mrtree;
 	int clean;
 
 	if (show(4)) {

@@ -54,9 +54,10 @@ tmpdir=$tmp-d
 
 case "$peek_repo" in
 http://* | https://* | ftp://* )
-        if [ -n "$GIT_SSL_NO_VERIFY" ]; then
-            curl_extra_args="-k"
-        fi
+	if [ -n "$GIT_SSL_NO_VERIFY" -o \
+		"`git config --bool http.sslVerify`" = false ]; then
+		curl_extra_args="-k"
+	fi
 	if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
 		"`git config --bool http.noEPSV`" = true ]; then
 		curl_extra_args="${curl_extra_args} --disable-epsv"
