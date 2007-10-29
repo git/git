@@ -1,12 +1,14 @@
 #!/bin/sh
 
-USAGE='[start|bad|good|next|reset|visualize|replay|log|run]'
+USAGE='[start|bad|good|skip|next|reset|visualize|replay|log|run]'
 LONG_USAGE='git bisect start [<bad> [<good>...]] [--] [<pathspec>...]
         reset bisect state and start bisection.
 git bisect bad [<rev>]
         mark <rev> a known-bad revision.
 git bisect good [<rev>...]
         mark <rev>... known-good revisions.
+git bisect skip [<rev>...]
+        mark <rev>... untestable revisions.
 git bisect next
         find next bisection to test and check it out.
 git bisect reset [<branch>]
@@ -17,8 +19,6 @@ git bisect replay <logfile>
         replay bisection log.
 git bisect log
         show bisect log.
-git bisect skip [<rev>...]
-        mark <rev>... untestable revisions.
 git bisect run <cmd>...
         use <cmd>... to automatically bisect.'
 
