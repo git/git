@@ -44,6 +44,7 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 			die("pathspec '%s' did not match any files",
 					pathspec[i]);
 	}
+        free(seen);
 }
 
 static void fill_directory(struct dir_struct *dir, const char **pathspec,
@@ -140,6 +141,7 @@ static void refresh(int verbose, const char **pathspec)
 		if (!seen[i])
 			die("pathspec '%s' did not match any files", pathspec[i]);
 	}
+        free(seen);
 }
 
 static int git_add_config(const char *var, const char *value)
