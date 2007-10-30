@@ -351,7 +351,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			die ("Error wrapping up %s", defmsg);
 		fprintf(stderr, "Automatic %s failed.  "
 			"After resolving the conflicts,\n"
-			"mark the corrected paths with 'git-add <paths>'\n"
+			"mark the corrected paths with 'git add <paths>' "
 			"and commit the result.\n", me);
 		if (action == CHERRY_PICK) {
 			fprintf(stderr, "When commiting, use the option "
