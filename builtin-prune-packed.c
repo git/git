@@ -15,6 +15,9 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 	struct dirent *de;
 	char hex[40];
 
+	if (opts == VERBOSE)
+		display_progress(&progress, i + 1);
+
 	sprintf(hex, "%02x", i);
 	while ((de = readdir(dir)) != NULL) {
 		unsigned char sha1[20];
@@ -26,8 +29,6 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 		if (!has_sha1_pack(sha1, NULL))
 			continue;
 		memcpy(pathname + len, de->d_name, 38);
-		if (opts == VERBOSE)
-			display_progress(&progress, i + 1);
 		if (opts & DRY_RUN)
 			printf("rm -f %s\n", pathname);
 		else if (unlink(pathname) < 0)
