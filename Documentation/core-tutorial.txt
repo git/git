@@ -883,7 +883,7 @@ script called `git merge`, which wants to know which branches you want
 to resolve and what the merge is all about:
 
 ------------
-$ git merge "Merge work in mybranch" HEAD mybranch
+$ git merge -m "Merge work in mybranch" mybranch
 ------------
 
 where the first argument is going to be used as the commit message if
@@ -970,7 +970,7 @@ to the `master` branch. Let's go back to `mybranch`, and run
 
 ------------
 $ git checkout mybranch
-$ git merge "Merge upstream changes." HEAD master
+$ git merge -m "Merge upstream changes." master
 ------------
 
 This outputs something like this (the actual commit object names
@@ -1613,8 +1613,8 @@ in both of them.  You could merge in 'diff-fix' first and then
 'commit-fix' next, like this:
 
 ------------
-$ git merge 'Merge fix in diff-fix' master diff-fix
-$ git merge 'Merge fix in commit-fix' master commit-fix
+$ git merge -m 'Merge fix in diff-fix' diff-fix
+$ git merge -m 'Merge fix in commit-fix' commit-fix
 ------------
 
 Which would result in:
