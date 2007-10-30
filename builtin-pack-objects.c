@@ -606,7 +606,7 @@ static void write_pack_file(void)
 		char *pack_tmp_name = NULL;
 
 		if (pack_to_stdout) {
-			f = sha1fd(1, "<stdout>");
+			f = sha1fd_throughput(1, "<stdout>", progress_state);
 		} else {
 			char tmpname[PATH_MAX];
 			int fd;

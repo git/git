@@ -8,6 +8,7 @@
  * able to verify hasn't been messed with afterwards.
  */
 #include "cache.h"
+#include "progress.h"
 #include "csum-file.h"
 
 static void sha1flush(struct sha1file *f, unsigned int count)
@@ -17,6 +18,7 @@ static void sha1flush(struct sha1file *f, unsigned int count)
 	for (;;) {
 		int ret = xwrite(f->fd, buf, count);
 		if (ret > 0) {
+			display_throughput(f->tp, ret);
 			buf = (char *) buf + ret;
 			count -= ret;
 			if (count)
@@ -80,6 +82,11 @@ int sha1write(struct sha1file *f, void *buf, unsigned int count)
 
 struct sha1file *sha1fd(int fd, const char *name)
 {
+	return sha1fd_throughput(fd, name, NULL);
+}
+
+struct sha1file *sha1fd_throughput(int fd, const char *name, struct progress *tp)
+{
 	struct sha1file *f;
 	unsigned len;
 
@@ -94,6 +101,7 @@ struct sha1file *sha1fd(int fd, const char *name)
 	f->fd = fd;
 	f->error = 0;
 	f->offset = 0;
+	f->tp = tp;
 	f->do_crc = 0;
 	SHA1_Init(&f->ctx);
 	return f;
