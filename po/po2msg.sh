@@ -26,11 +26,17 @@ proc u2a {s} {
 set output_directory "."
 set lang "dummy"
 set files [list]
+set show_statistics 0
 
 # parse options
-for {set i 1} {$i < $argc} {incr i} {
+for {set i 0} {$i < $argc} {incr i} {
 	set arg [lindex $argv $i]
-	if {$arg == "--statistics" || $arg == "--tcl"} {
+	if {$arg == "--statistics"} {
+		incr show_statistics
+		continue
+	}
+	if {$arg == "--tcl"} {
+		# we know
 		continue
 	}
 	if {$arg == "-l"} {
@@ -49,12 +55,14 @@ for {set i 1} {$i < $argc} {incr i} {
 
 proc flush_msg {} {
 	global msgid msgstr mode lang out fuzzy
+	global translated_count fuzzy_count not_translated_count
 
 	if {![info exists msgid] || $mode == ""} {
 		return
 	}
 	set mode ""
 	if {$fuzzy == 1} {
+		incr fuzzy_count
 		set fuzzy 0
 		return
 	}
@@ -63,15 +71,20 @@ proc flush_msg {} {
 		set prefix "set ::msgcat::header"
 	} else {
 		if {$msgstr == ""} {
+			incr not_translated_count
 			return
 		}
 		set prefix "::msgcat::mcset $lang \"[u2a $msgid]\""
+		incr translated_count
 	}
 
 	puts $out "$prefix \"[u2a $msgstr]\""
 }
 
 set fuzzy 0
+set translated_count 0
+set fuzzy_count 0
+set not_translated_count 0
 foreach file $files {
 	regsub "^.*/\(\[^/\]*\)\.po$" $file "$output_directory\\1.msg" outfile
 	set in [open $file "r"]
@@ -113,3 +126,8 @@ foreach file $files {
 	close $out
 }
 
+if {$show_statistics} {
+	puts [concat "$translated_count translated messages, " \
+		"$fuzzy_count fuzzy ones, " \
+		"$not_translated_count untranslated ones."]
+}
