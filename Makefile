@@ -225,8 +225,7 @@ SCRIPT_SH = \
 SCRIPT_PERL = \
 	git-add--interactive.perl \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-cvsserver.perl git-remote.perl \
-	git-svnimport.perl git-cvsexportcommit.perl \
+	git-cvsserver.perl git-remote.perl git-cvsexportcommit.perl \
 	git-send-email.perl git-svn.perl
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
