@@ -358,6 +358,7 @@ BUILTIN_OBJS = \
 	builtin-push.o \
 	builtin-read-tree.o \
 	builtin-reflog.o \
+	builtin-send-pack.o \
 	builtin-config.o \
 	builtin-rerere.o \
 	builtin-reset.o \
