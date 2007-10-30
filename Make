@@ -45,7 +45,8 @@ do
 		$old_style_def_fix)
 			o=-Wold-style-definition ;;
 		esac
-		O="$O -Werror -Wall $o -ansi -pedantic -std=c99"
+		O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast"
+		O="$O -fwrapv -fno-strict-overflow"
 		;;
 	--)
 		shift
