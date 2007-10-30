@@ -326,11 +326,9 @@ static void unpack_all(void)
 	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
-		if (!quiet)
-			display_progress(progress, i + 1);
+		display_progress(progress, i + 1);
 	}
-	if (!quiet)
-		stop_progress(&progress);
+	stop_progress(&progress);
 
 	if (delta_list)
 		die("unresolved deltas left after unpacking");

@@ -629,8 +629,7 @@ static void write_pack_file(void)
 			if (!offset_one)
 				break;
 			offset = offset_one;
-			if (do_progress)
-				display_progress(progress_state, written);
+			display_progress(progress_state, written);
 		}
 
 		/*
@@ -684,8 +683,7 @@ static void write_pack_file(void)
 	} while (nr_remaining && i < nr_objects);
 
 	free(written_list);
-	if (do_progress)
-		stop_progress(&progress_state);
+	stop_progress(&progress_state);
 	if (written != nr_result)
 		die("wrote %u objects while expecting %u", written, nr_result);
 	/*
@@ -853,8 +851,7 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 	else
 		object_ix[-1 - ix] = nr_objects;
 
-	if (progress)
-		display_progress(progress_state, nr_objects);
+	display_progress(progress_state, nr_objects);
 
 	if (name && no_try_delta(name))
 		entry->no_try_delta = 1;
@@ -1517,8 +1514,7 @@ static void find_deltas(struct object_entry **list, unsigned list_size,
 
 		progress_lock();
 		(*processed)++;
-		if (progress)
-			display_progress(progress_state, *processed);
+		display_progress(progress_state, *processed);
 		progress_unlock();
 
 		/*
@@ -1722,8 +1718,7 @@ static void prepare_pack(int window, int depth)
 							nr_deltas);
 		qsort(delta_list, n, sizeof(*delta_list), type_size_sort);
 		ll_find_deltas(delta_list, n, window+1, depth, &nr_done);
-		if (progress)
-			stop_progress(&progress_state);
+		stop_progress(&progress_state);
 		if (nr_done != nr_deltas)
 			die("inconsistency with delta count");
 	}
@@ -2142,8 +2137,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		rp_av[rp_ac] = NULL;
 		get_object_list(rp_ac, rp_av);
 	}
-	if (progress)
-		stop_progress(&progress_state);
+	stop_progress(&progress_state);
 
 	if (non_empty && !nr_result)
 		return 0;

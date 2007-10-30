@@ -15,8 +15,7 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 	struct dirent *de;
 	char hex[40];
 
-	if (opts == VERBOSE)
-		display_progress(progress, i + 1);
+	display_progress(progress, i + 1);
 
 	sprintf(hex, "%02x", i);
 	while ((de = readdir(dir)) != NULL) {
@@ -64,8 +63,7 @@ void prune_packed_objects(int opts)
 		prune_dir(i, d, pathname, len + 3, opts);
 		closedir(d);
 	}
-	if (opts == VERBOSE)
-		stop_progress(&progress);
+	stop_progress(&progress);
 }
 
 int cmd_prune_packed(int argc, const char **argv, const char *prefix)

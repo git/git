@@ -316,9 +316,8 @@ static void check_updates(struct cache_entry **src, int nr,
 	while (nr--) {
 		struct cache_entry *ce = *src++;
 
-		if (total)
-			if (!ce->ce_mode || ce->ce_flags & mask)
-				display_progress(progress, ++cnt);
+		if (!ce->ce_mode || ce->ce_flags & mask)
+			display_progress(progress, ++cnt);
 		if (!ce->ce_mode) {
 			if (o->update)
 				unlink_entry(ce->name, last_symlink);
@@ -332,8 +331,7 @@ static void check_updates(struct cache_entry **src, int nr,
 			}
 		}
 	}
-	if (total)
-		stop_progress(&progress);
+	stop_progress(&progress);
 }
 
 int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)

@@ -418,12 +418,10 @@ static void parse_pack_objects(unsigned char *sha1)
 		} else
 			sha1_object(data, obj->size, obj->type, obj->idx.sha1);
 		free(data);
-		if (verbose)
-			display_progress(progress, i+1);
+		display_progress(progress, i+1);
 	}
 	objects[i].idx.offset = consumed_bytes;
-	if (verbose)
-		stop_progress(&progress);
+	stop_progress(&progress);
 
 	/* Check pack integrity */
 	flush();
@@ -486,8 +484,7 @@ static void parse_pack_objects(unsigned char *sha1)
 						      obj->size, obj->type);
 			}
 		free(data);
-		if (verbose)
-			display_progress(progress, nr_resolved_deltas);
+		display_progress(progress, nr_resolved_deltas);
 	}
 }
 
@@ -594,8 +591,7 @@ static void fix_unresolved_deltas(int nr_unresolved)
 			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
 		append_obj_to_pack(d->base.sha1, data, size, type);
 		free(data);
-		if (verbose)
-			display_progress(progress, nr_resolved_deltas);
+		display_progress(progress, nr_resolved_deltas);
 	}
 	free(sorted_by_pos);
 }
@@ -774,8 +770,7 @@ int main(int argc, char **argv)
 	deltas = xmalloc(nr_objects * sizeof(struct delta_entry));
 	parse_pack_objects(sha1);
 	if (nr_deltas == nr_resolved_deltas) {
-		if (verbose)
-			stop_progress(&progress);
+		stop_progress(&progress);
 		/* Flush remaining pack final 20-byte SHA1. */
 		flush();
 	} else {
@@ -788,11 +783,10 @@ int main(int argc, char **argv)
 					   (nr_objects + nr_unresolved + 1)
 					   * sizeof(*objects));
 			fix_unresolved_deltas(nr_unresolved);
-			if (verbose) {
-				stop_progress(&progress);
+			stop_progress(&progress);
+			if (verbose)
 				fprintf(stderr, "%d objects were added to complete this thin pack.\n",
 					nr_objects - nr_objects_initial);
-			}
 			fixup_pack_header_footer(output_fd, sha1,
 				curr_pack, nr_objects);
 		}
