@@ -62,6 +62,9 @@ proc flush_msg {} {
 	if {$msgid == ""} {
 		set prefix "set ::msgcat::header"
 	} else {
+		if {$msgstr == ""} {
+			return
+		}
 		set prefix "::msgcat::mcset $lang \"[u2a $msgid]\""
 	}
 
