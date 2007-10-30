@@ -48,12 +48,16 @@ for {set i 1} {$i < $argc} {incr i} {
 }
 
 proc flush_msg {} {
-	global msgid msgstr mode lang out
+	global msgid msgstr mode lang out fuzzy
 
 	if {![info exists msgid] || $mode == ""} {
 		return
 	}
 	set mode ""
+	if {$fuzzy == 1} {
+		set fuzzy 0
+		return
+	}
 
 	if {$msgid == ""} {
 		set prefix "set ::msgcat::header"
@@ -64,6 +68,7 @@ proc flush_msg {} {
 	puts $out "$prefix \"[u2a $msgstr]\""
 }
 
+set fuzzy 0
 foreach file $files {
 	regsub "^.*/\(\[^/\]*\)\.po$" $file "$output_directory\\1.msg" outfile
 	set in [open $file "r"]
@@ -73,7 +78,11 @@ foreach file $files {
 	set mode ""
 	while {[gets $in line] >= 0} {
 		if {[regexp "^#" $line]} {
-			flush_msg
+			if {[regexp ", fuzzy" $line]} {
+				set fuzzy 1
+			} else {
+				flush_msg
+			}
 			continue
 		} elseif {[regexp "^msgid \"(.*)\"$" $line dummy match]} {
 			flush_msg
