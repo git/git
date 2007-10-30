@@ -1,9 +1,10 @@
 #!/bin/sh
 
 me='Junio C Hamano <gitster@pobox.com>'
-smtp='smtp.west.cox.net'
+smtp='/usr/bin/msmtp'
 to='git@vger.kernel.org'
 
+#to='junkio@cox.net'
 #smtp=/var/tmp/smtp-server
 
 while case $# in 0) break ;; esac
@@ -25,10 +26,9 @@ done
 
 git-send-email \
 	--from="$me" \
-	--no-chain-reply-to \
+	--envelope-sender="$me" \
 	--to="$to" \
 	--suppress-from \
-	--no-signed-off-cc \
 	--smtp-server=$smtp \
 	$dryrun \
 	"$@"
