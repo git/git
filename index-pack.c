@@ -87,6 +87,8 @@ static void *fill(int min)
 				die("early EOF");
 			die("read error on input: %s", strerror(errno));
 		}
+		if (from_stdin)
+			display_throughput(progress, ret);
 		input_len += ret;
 	} while (input_len < min);
 	return input_buffer;
@@ -406,7 +408,9 @@ static void parse_pack_objects(unsigned char *sha1)
 	 * - remember base (SHA1 or offset) for all deltas.
 	 */
 	if (verbose)
-		progress = start_progress("Indexing objects", nr_objects);
+		progress = start_progress(
+				from_stdin ? "Receiving objects" : "Indexing objects",
+				nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		data = unpack_raw_entry(obj, &delta->base);
