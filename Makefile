@@ -239,7 +239,7 @@ PROGRAMS = \
 	git-fast-import$X \
 	git-daemon$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
-	git-peek-remote$X git-receive-pack$X \
+	git-receive-pack$X \
 	git-send-pack$X git-shell$X \
 	git-show-index$X \
 	git-unpack-file$X \
@@ -352,6 +352,7 @@ BUILTIN_OBJS = \
 	builtin-mv.o \
 	builtin-name-rev.o \
 	builtin-pack-objects.o \
+	builtin-peek-remote.o \
 	builtin-prune.o \
 	builtin-prune-packed.o \
 	builtin-push.o \
