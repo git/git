@@ -8,7 +8,7 @@ static const char prune_packed_usage[] =
 #define DRY_RUN 01
 #define VERBOSE 02
 
-static struct progress progress;
+static struct progress *progress;
 
 static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 {
@@ -16,7 +16,7 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 	char hex[40];
 
 	if (opts == VERBOSE)
-		display_progress(&progress, i + 1);
+		display_progress(progress, i + 1);
 
 	sprintf(hex, "%02x", i);
 	while ((de = readdir(dir)) != NULL) {
@@ -46,8 +46,7 @@ void prune_packed_objects(int opts)
 	int len = strlen(dir);
 
 	if (opts == VERBOSE)
-		start_progress_delay(&progress,
-			"Removing duplicate objects",
+		progress = start_progress_delay("Removing duplicate objects",
 			256, 95, 2);
 
 	if (len > PATH_MAX - 42)

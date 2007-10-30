@@ -46,7 +46,7 @@ static int nr_resolved_deltas;
 static int from_stdin;
 static int verbose;
 
-static struct progress progress;
+static struct progress *progress;
 
 /* We always read in 4kB chunks. */
 static unsigned char input_buffer[4096];
@@ -406,7 +406,7 @@ static void parse_pack_objects(unsigned char *sha1)
 	 * - remember base (SHA1 or offset) for all deltas.
 	 */
 	if (verbose)
-		start_progress(&progress, "Indexing objects", nr_objects);
+		progress = start_progress("Indexing objects", nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		data = unpack_raw_entry(obj, &delta->base);
@@ -419,7 +419,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			sha1_object(data, obj->size, obj->type, obj->idx.sha1);
 		free(data);
 		if (verbose)
-			display_progress(&progress, i+1);
+			display_progress(progress, i+1);
 	}
 	objects[i].idx.offset = consumed_bytes;
 	if (verbose)
@@ -455,7 +455,7 @@ static void parse_pack_objects(unsigned char *sha1)
 	 *   for some more deltas.
 	 */
 	if (verbose)
-		start_progress(&progress, "Resolving deltas", nr_deltas);
+		progress = start_progress("Resolving deltas", nr_deltas);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		union delta_base base;
@@ -487,7 +487,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			}
 		free(data);
 		if (verbose)
-			display_progress(&progress, nr_resolved_deltas);
+			display_progress(progress, nr_resolved_deltas);
 	}
 }
 
@@ -595,7 +595,7 @@ static void fix_unresolved_deltas(int nr_unresolved)
 		append_obj_to_pack(d->base.sha1, data, size, type);
 		free(data);
 		if (verbose)
-			display_progress(&progress, nr_resolved_deltas);
+			display_progress(progress, nr_resolved_deltas);
 	}
 	free(sorted_by_pos);
 }

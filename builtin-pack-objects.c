@@ -73,7 +73,7 @@ static int depth = 50;
 static int delta_search_threads = 1;
 static int pack_to_stdout;
 static int num_preferred_base;
-static struct progress progress_state;
+static struct progress *progress_state;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
 
@@ -598,7 +598,7 @@ static void write_pack_file(void)
 	uint32_t nr_remaining = nr_result;
 
 	if (do_progress)
-		start_progress(&progress_state, "Writing objects", nr_result);
+		progress_state = start_progress("Writing objects", nr_result);
 	written_list = xmalloc(nr_objects * sizeof(struct object_entry *));
 
 	do {
@@ -630,7 +630,7 @@ static void write_pack_file(void)
 				break;
 			offset = offset_one;
 			if (do_progress)
-				display_progress(&progress_state, written);
+				display_progress(progress_state, written);
 		}
 
 		/*
@@ -854,7 +854,7 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 		object_ix[-1 - ix] = nr_objects;
 
 	if (progress)
-		display_progress(&progress_state, nr_objects);
+		display_progress(progress_state, nr_objects);
 
 	if (name && no_try_delta(name))
 		entry->no_try_delta = 1;
@@ -1518,7 +1518,7 @@ static void find_deltas(struct object_entry **list, unsigned list_size,
 		progress_lock();
 		(*processed)++;
 		if (progress)
-			display_progress(&progress_state, *processed);
+			display_progress(progress_state, *processed);
 		progress_unlock();
 
 		/*
@@ -1718,8 +1718,8 @@ static void prepare_pack(int window, int depth)
 	if (nr_deltas && n > 1) {
 		unsigned nr_done = 0;
 		if (progress)
-			start_progress(&progress_state, "Compressing objects",
-					nr_deltas);
+			progress_state = start_progress("Compressing objects",
+							nr_deltas);
 		qsort(delta_list, n, sizeof(*delta_list), type_size_sort);
 		ll_find_deltas(delta_list, n, window+1, depth, &nr_done);
 		if (progress)
@@ -2135,7 +2135,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	prepare_packed_git();
 
 	if (progress)
-		start_progress(&progress_state, "Counting objects", 0);
+		progress_state = start_progress("Counting objects", 0);
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {
