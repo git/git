@@ -29,7 +29,7 @@ static void unlock_pack_on_signal(int signo)
 }
 
 static void add_merge_config(struct ref **head,
-		           struct ref *remote_refs,
+			   const struct ref *remote_refs,
 		           struct branch *branch,
 		           struct ref ***tail)
 {
@@ -77,7 +77,7 @@ static struct ref *get_ref_map(struct transport *transport,
 	struct ref *ref_map = NULL;
 	struct ref **tail = &ref_map;
 
-	struct ref *remote_refs = transport_get_remote_refs(transport);
+	const struct ref *remote_refs = transport_get_remote_refs(transport);
 
 	if (ref_count || tags) {
 		for (i = 0; i < ref_count; i++) {
@@ -345,12 +345,12 @@ static struct ref *find_non_local_tags(struct transport *transport,
 	struct path_list new_refs = { NULL, 0, 0, 1 };
 	char *ref_name;
 	int ref_name_len;
-	unsigned char *ref_sha1;
-	struct ref *tag_ref;
+	const unsigned char *ref_sha1;
+	const struct ref *tag_ref;
 	struct ref *rm = NULL;
 	struct ref *ref_map = NULL;
 	struct ref **tail = &ref_map;
-	struct ref *ref;
+	const struct ref *ref;
 
 	for_each_ref(add_existing, &existing_refs);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {

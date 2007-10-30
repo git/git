@@ -141,7 +141,7 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 	}
 }
 
-static struct ref *get_refs_via_rsync(const struct transport *transport)
+static struct ref *get_refs_via_rsync(struct transport *transport)
 {
 	struct strbuf buf = STRBUF_INIT, temp_dir = STRBUF_INIT;
 	struct ref dummy, *tail = &dummy;
@@ -427,7 +427,7 @@ static int missing__target(int code, int result)
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
-static struct ref *get_refs_via_curl(const struct transport *transport)
+static struct ref *get_refs_via_curl(struct transport *transport)
 {
 	struct buffer buffer;
 	char *data, *start, *mid;
@@ -524,7 +524,7 @@ struct bundle_transport_data {
 	struct bundle_header header;
 };
 
-static struct ref *get_refs_from_bundle(const struct transport *transport)
+static struct ref *get_refs_from_bundle(struct transport *transport)
 {
 	struct bundle_transport_data *data = transport->data;
 	struct ref *result = NULL;
@@ -596,7 +596,7 @@ static int set_git_option(struct transport *connection,
 	return 1;
 }
 
-static struct ref *get_refs_via_connect(const struct transport *transport)
+static struct ref *get_refs_via_connect(struct transport *transport)
 {
 	struct git_transport_data *data = transport->data;
 	struct ref *refs;
@@ -781,7 +781,7 @@ int transport_push(struct transport *transport,
 	return transport->push(transport, refspec_nr, refspec, flags);
 }
 
-struct ref *transport_get_remote_refs(struct transport *transport)
+const struct ref *transport_get_remote_refs(struct transport *transport)
 {
 	if (!transport->remote_refs)
 		transport->remote_refs = transport->get_refs_list(transport);

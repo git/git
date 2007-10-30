@@ -207,7 +207,7 @@ static void update_tracking_ref(struct remote *remote, struct ref *ref)
 	}
 }
 
-static int send_pack(int in, int out, struct remote *remote, int nr_refspec, char **refspec)
+static int send_pack(int in, int out, struct remote *remote, int nr_refspec, const char **refspec)
 {
 	struct ref *ref;
 	int new_refs;
@@ -357,7 +357,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 	return ret;
 }
 
-static void verify_remote_names(int nr_heads, char **heads)
+static void verify_remote_names(int nr_heads, const char **heads)
 {
 	int i;
 
@@ -382,7 +382,7 @@ int main(int argc, char **argv)
 {
 	int i, nr_heads = 0;
 	char *dest = NULL;
-	char **heads = NULL;
+	const char **heads = NULL;
 	int fd[2], ret;
 	struct child_process *conn;
 	char *remote_name = NULL;
@@ -434,7 +434,7 @@ int main(int argc, char **argv)
 			dest = arg;
 			continue;
 		}
-		heads = argv;
+		heads = (const char **) argv;
 		nr_heads = argc - i;
 		break;
 	}

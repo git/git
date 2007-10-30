@@ -485,11 +485,23 @@ struct ref *alloc_ref(unsigned namelen)
 	return ret;
 }
 
-static struct ref *copy_ref(struct ref *ref)
+static struct ref *copy_ref(const struct ref *ref)
 {
 	struct ref *ret = xmalloc(sizeof(struct ref) + strlen(ref->name) + 1);
 	memcpy(ret, ref, sizeof(struct ref) + strlen(ref->name) + 1);
 	ret->next = NULL;
+	return ret;
+}
+
+struct ref *copy_ref_list(const struct ref *ref)
+{
+	struct ref *ret = NULL;
+	struct ref **tail = &ret;
+	while (ref) {
+		*tail = copy_ref(ref);
+		ref = ref->next;
+		tail = &((*tail)->next);
+	}
 	return ret;
 }
 
@@ -710,7 +722,7 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
  * without thinking.
  */
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
-	       int nr_refspec, char **refspec, int all)
+	       int nr_refspec, const char **refspec, int all)
 {
 	struct refspec *rs =
 		parse_ref_spec(nr_refspec, (const char **) refspec);
@@ -810,10 +822,10 @@ int branch_merge_matches(struct branch *branch,
 	return ref_matches_abbrev(branch->merge[i]->src, refname);
 }
 
-static struct ref *get_expanded_map(struct ref *remote_refs,
+static struct ref *get_expanded_map(const struct ref *remote_refs,
 				    const struct refspec *refspec)
 {
-	struct ref *ref;
+	const struct ref *ref;
 	struct ref *ret = NULL;
 	struct ref **tail = &ret;
 
@@ -824,7 +836,7 @@ static struct ref *get_expanded_map(struct ref *remote_refs,
 		if (strchr(ref->name, '^'))
 			continue; /* a dereference item */
 		if (!prefixcmp(ref->name, refspec->src)) {
-			char *match;
+			const char *match;
 			struct ref *cpy = copy_ref(ref);
 			match = ref->name + remote_prefix_len;
 
@@ -842,9 +854,9 @@ static struct ref *get_expanded_map(struct ref *remote_refs,
 	return ret;
 }
 
-static struct ref *find_ref_by_name_abbrev(struct ref *refs, const char *name)
+static const struct ref *find_ref_by_name_abbrev(const struct ref *refs, const char *name)
 {
-	struct ref *ref;
+	const struct ref *ref;
 	for (ref = refs; ref; ref = ref->next) {
 		if (ref_matches_abbrev(name, ref->name))
 			return ref;
@@ -852,9 +864,9 @@ static struct ref *find_ref_by_name_abbrev(struct ref *refs, const char *name)
 	return NULL;
 }
 
-struct ref *get_remote_ref(struct ref *remote_refs, const char *name)
+struct ref *get_remote_ref(const struct ref *remote_refs, const char *name)
 {
-	struct ref *ref = find_ref_by_name_abbrev(remote_refs, name);
+	const struct ref *ref = find_ref_by_name_abbrev(remote_refs, name);
 
 	if (!ref)
 		return NULL;
@@ -887,7 +899,7 @@ static struct ref *get_local_ref(const char *name)
 	return ret;
 }
 
-int get_fetch_map(struct ref *remote_refs,
+int get_fetch_map(const struct ref *remote_refs,
 		  const struct refspec *refspec,
 		  struct ref ***tail,
 		  int missing_ok)
