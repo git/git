@@ -357,7 +357,6 @@ do
 		output git reset --hard && do_rest
 		;;
 	-s|--strategy)
-		shift
 		case "$#,$1" in
 		*,*=*)
 			STRATEGY="-s `expr "z$1" : 'z-[^=]*=\(.*\)'`" ;;
