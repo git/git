@@ -276,7 +276,7 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		if (commit && !parse_commit(commit)) {
 			pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
 					    &subject, &subject_len, 0,
-					    NULL, NULL, 0);
+					    NULL, NULL, 0, 0);
 			sub = subject;
 		}
 		printf("%c %s%-*s%s %s %s\n", c, branch_get_color(color),

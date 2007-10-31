@@ -795,7 +795,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 			char *buf = NULL;
 			unsigned long buflen = 0;
 			pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
-			                    &buf, &buflen, 0, NULL, NULL, 0);
+			                    &buf, &buflen, 0, NULL, NULL, 0, 0);
 			printf("%c %s %s\n", sign,
 			       sha1_to_hex(commit->object.sha1), buf);
 			free(buf);
