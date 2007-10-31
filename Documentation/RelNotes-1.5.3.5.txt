@@ -92,9 +92,3 @@ Fixes since v1.5.3.4
 
  * "git-rebase -interactive" did not handle its "--strategy" option
    properly.
-
---
-exec >/var/tmp/1
-O=v1.5.3.4-65-gf91333d
-echo O=`git describe refs/heads/maint`
-git shortlog --no-merges $O..refs/heads/maint
