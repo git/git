@@ -165,6 +165,8 @@ pick_one_preserving_merges () {
 			eval "$author_script"
 			msg="$(git cat-file commit $sha1 | \
 				sed -e '1,/^$/d' -e "s/[\"\\]/\\\\&/g")"
+			# No point in merging the first parent, that's HEAD
+			new_parents=${new_parents# $first_parent}
 			# NEEDSWORK: give rerere a chance
 			if ! output git merge $STRATEGY -m "$msg" $new_parents
 			then
