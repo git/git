@@ -109,7 +109,7 @@ pick_one () {
 		sha1=$(git rev-parse --short $sha1)
 		output warn Fast forward to $sha1
 	else
-		output git cherry-pick $STRATEGY "$@"
+		output git cherry-pick "$@"
 	fi
 }
 
@@ -173,7 +173,7 @@ pick_one_preserving_merges () {
 			fi
 			;;
 		*)
-			output git cherry-pick $STRATEGY "$@" ||
+			output git cherry-pick "$@" ||
 				die_with_patch $sha1 "Could not pick $sha1"
 		esac
 	esac
