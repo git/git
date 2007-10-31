@@ -15,7 +15,7 @@ static void show_parents(struct commit *commit, int abbrev)
 	}
 }
 
-static void show_decorations(struct commit *commit)
+void show_decorations(struct commit *commit)
 {
 	const char *prefix;
 	struct name_decoration *decoration;
