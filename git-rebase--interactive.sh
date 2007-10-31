@@ -116,7 +116,7 @@ pick_one () {
 		sha1=$(git rev-parse --short $sha1)
 		output warn Fast forward to $sha1
 	else
-		output git cherry-pick $STRATEGY "$@"
+		output git cherry-pick "$@"
 	fi
 }
 
@@ -172,6 +172,8 @@ pick_one_preserving_merges () {
 			author_script=$(get_author_ident_from_commit $sha1)
 			eval "$author_script"
 			msg="$(git cat-file commit $sha1 | sed -e '1,/^$/d')"
+			# No point in merging the first parent, that's HEAD
+			new_parents=${new_parents# $first_parent}
 			# NEEDSWORK: give rerere a chance
 			if ! GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
 				GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
@@ -184,7 +186,7 @@ pick_one_preserving_merges () {
 			fi
 			;;
 		*)
-			output git cherry-pick $STRATEGY "$@" ||
+			output git cherry-pick "$@" ||
 				die_with_patch $sha1 "Could not pick $sha1"
 			;;
 		esac
@@ -387,7 +389,6 @@ do
 		output git reset --hard && do_rest
 		;;
 	-s|--strategy)
-		shift
 		case "$#,$1" in
 		*,*=*)
 			STRATEGY="-s `expr "z$1" : 'z-[^=]*=\(.*\)'`" ;;
