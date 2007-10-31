@@ -87,8 +87,14 @@ Fixes since v1.5.3.4
  * A few workarounds to squelch false warnings from recent gcc have
    been added.
 
+ * "git-send-pack $remote frotz" segfaulted when there is nothing
+   named 'frotz' on the local end.
+
+ * "git-rebase -interactive" did not handle its "--strategy" option
+   properly.
+
 --
 exec >/var/tmp/1
-O=v1.5.3.4-55-gf120ae2
+O=v1.5.3.4-65-gf91333d
 echo O=`git describe refs/heads/maint`
 git shortlog --no-merges $O..refs/heads/maint
