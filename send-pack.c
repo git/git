@@ -178,6 +178,35 @@ static int receive_status(int in)
 	return ret;
 }
 
+static void update_tracking_ref(struct remote *remote, struct ref *ref)
+{
+	struct refspec rs;
+	int will_delete_ref;
+
+	rs.src = ref->name;
+	rs.dst = NULL;
+
+	if (!ref->peer_ref)
+		return;
+
+	will_delete_ref = is_null_sha1(ref->peer_ref->new_sha1);
+
+	if (!will_delete_ref &&
+			!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1))
+		return;
+
+	if (!remote_find_tracking(remote, &rs)) {
+		fprintf(stderr, "updating local tracking ref '%s'\n", rs.dst);
+		if (is_null_sha1(ref->peer_ref->new_sha1)) {
+			if (delete_ref(rs.dst, NULL))
+				error("Failed to delete");
+		} else
+			update_ref("update by push", rs.dst,
+					ref->new_sha1, NULL, 0, 0);
+		free(rs.dst);
+	}
+}
+
 static int send_pack(int in, int out, struct remote *remote, int nr_refspec, char **refspec)
 {
 	struct ref *ref;
@@ -306,22 +335,6 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 			fprintf(stderr, "\n  from %s\n  to   %s\n",
 				old_hex, new_hex);
 		}
-		if (remote && !dry_run) {
-			struct refspec rs;
-			rs.src = ref->name;
-			rs.dst = NULL;
-			if (!remote_find_tracking(remote, &rs)) {
-				fprintf(stderr, " Also local %s\n", rs.dst);
-				if (will_delete_ref) {
-					if (delete_ref(rs.dst, NULL)) {
-						error("Failed to delete");
-					}
-				} else
-					update_ref("update by push", rs.dst,
-						ref->new_sha1, NULL, 0, 0);
-				free(rs.dst);
-			}
-		}
 	}
 
 	packet_flush(out);
@@ -332,6 +345,11 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 	if (expect_status_report) {
 		if (receive_status(in))
 			ret = -4;
+	}
+
+	if (!dry_run && remote && ret == 0) {
+		for (ref = remote_refs; ref; ref = ref->next)
+			update_tracking_ref(remote, ref);
 	}
 
 	if (!new_refs && ret == 0)
