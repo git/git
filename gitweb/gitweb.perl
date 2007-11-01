@@ -1995,7 +1995,7 @@ sub parse_difftree_raw_line {
 		if ($res{'status'} eq 'R' || $res{'status'} eq 'C') { # renamed or copied
 			($res{'from_file'}, $res{'to_file'}) = map { unquote($_) } split("\t", $7);
 		} else {
-			$res{'file'} = unquote($7);
+			$res{'from_file'} = $res{'to_file'} = $res{'file'} = unquote($7);
 		}
 	}
 	# '::100755 100755 100755 60e79ca1b01bc8b057abe17ddab484699a7f5fdb 94067cc5f73388f33722d52ae02f44692bc07490 94067cc5f73388f33722d52ae02f44692bc07490 MR	git-gui/git-gui.sh'
@@ -2062,7 +2062,10 @@ sub parse_from_to_diffinfo {
 		fill_from_file_info($diffinfo, @parents)
 			unless exists $diffinfo->{'from_file'};
 		for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
-			$from->{'file'}[$i] = $diffinfo->{'from_file'}[$i] || $diffinfo->{'to_file'};
+			$from->{'file'}[$i] =
+				defined $diffinfo->{'from_file'}[$i] ?
+				        $diffinfo->{'from_file'}[$i] :
+				        $diffinfo->{'to_file'};
 			if ($diffinfo->{'status'}[$i] ne "A") { # not new (added) file
 				$from->{'href'}[$i] = href(action=>"blob",
 				                           hash_base=>$parents[$i],
@@ -2074,7 +2077,7 @@ sub parse_from_to_diffinfo {
 		}
 	} else {
 		# ordinary (not combined) diff
-		$from->{'file'} = $diffinfo->{'from_file'} || $diffinfo->{'file'};
+		$from->{'file'} = $diffinfo->{'from_file'};
 		if ($diffinfo->{'status'} ne "A") { # not new (added) file
 			$from->{'href'} = href(action=>"blob", hash_base=>$hash_parent,
 			                       hash=>$diffinfo->{'from_id'},
@@ -2084,7 +2087,7 @@ sub parse_from_to_diffinfo {
 		}
 	}
 
-	$to->{'file'} = $diffinfo->{'to_file'} || $diffinfo->{'file'};
+	$to->{'file'} = $diffinfo->{'to_file'};
 	if (!is_deleted($diffinfo)) { # file exists in result
 		$to->{'href'} = href(action=>"blob", hash_base=>$hash,
 		                     hash=>$diffinfo->{'to_id'},
@@ -2829,7 +2832,7 @@ sub is_patch_split {
 	my ($diffinfo, $patchinfo) = @_;
 
 	return defined $diffinfo && defined $patchinfo
-		&& ($diffinfo->{'to_file'} || $diffinfo->{'file'}) eq $patchinfo->{'to_file'};
+		&& $diffinfo->{'to_file'} eq $patchinfo->{'to_file'};
 }
 
 
@@ -4667,8 +4670,8 @@ sub git_blobdiff {
 		}
 
 		%diffinfo = parse_difftree_raw_line($difftree[0]);
-		$file_parent ||= $diffinfo{'from_file'} || $file_name || $diffinfo{'file'};
-		$file_name   ||= $diffinfo{'to_file'}   || $diffinfo{'file'};
+		$file_parent ||= $diffinfo{'from_file'} || $file_name;
+		$file_name   ||= $diffinfo{'to_file'};
 
 		$hash_parent ||= $diffinfo{'from_id'};
 		$hash        ||= $diffinfo{'to_id'};
