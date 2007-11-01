@@ -611,6 +611,15 @@ sub href(%) {
 	);
 	my %mapping = @mapping;
 
+	if ($params{-replay}) {
+		while (my ($name, $symbol) = each %mapping) {
+			if (!exists $params{$name}) {
+				# to allow for multivalued params we use arrayref form
+				$params{$name} = [ $cgi->param($symbol) ];
+			}
+		}
+	}
+
 	$params{'project'} = $project unless exists $params{'project'};
 
 	my ($use_pathinfo) = gitweb_check_feature('pathinfo');
