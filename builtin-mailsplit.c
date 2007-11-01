@@ -164,6 +164,7 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 {
 	char name[PATH_MAX];
 	int ret = -1;
+	int peek;
 
 	FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
 	int file_done = 0;
@@ -172,6 +173,11 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 		error("cannot open mbox %s", file);
 		goto out;
 	}
+
+	do {
+		peek = fgetc(f);
+	} while (isspace(peek));
+	ungetc(peek, f);
 
 	if (fgets(buf, sizeof(buf), f) == NULL) {
 		/* empty stdin is OK */
