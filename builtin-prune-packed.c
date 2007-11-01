@@ -15,8 +15,6 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 	struct dirent *de;
 	char hex[40];
 
-	display_progress(progress, i + 1);
-
 	sprintf(hex, "%02x", i);
 	while ((de = readdir(dir)) != NULL) {
 		unsigned char sha1[20];
@@ -32,6 +30,7 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 			printf("rm -f %s\n", pathname);
 		else if (unlink(pathname) < 0)
 			error("unable to unlink %s", pathname);
+		display_progress(progress, i + 1);
 	}
 	pathname[len] = 0;
 	rmdir(pathname);
