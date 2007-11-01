@@ -116,7 +116,7 @@ GITWEB_CONFIG file:
 	$feature{'pickaxe'}{'default'} = [1];
 	$feature{'pickaxe'}{'override'} = 1;
 
-	$feature{'snapshot'}{'default'} = ['x-gzip', 'gz', 'gzip'];
+	$feature{'snapshot'}{'default'} = ['zip', 'tgz'];
 	$feature{'snapshot'}{'override'} = 1;
 
 
