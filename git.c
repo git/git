@@ -6,28 +6,6 @@
 const char git_usage_string[] =
 	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate|--no-pager] [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE] [--help] COMMAND [ARGS]";
 
-static void prepend_to_path(const char *dir, int len)
-{
-	const char *old_path = getenv("PATH");
-	char *path;
-	int path_len = len;
-
-	if (!old_path)
-		old_path = "/usr/local/bin:/usr/bin:/bin";
-
-	path_len = len + strlen(old_path) + 1;
-
-	path = xmalloc(path_len + 1);
-
-	memcpy(path, dir, len);
-	path[len] = ':';
-	memcpy(path + len + 1, old_path, path_len - len);
-
-	setenv("PATH", path, 1);
-
-	free(path);
-}
-
 static int handle_options(const char*** argv, int* argc, int* envchanged)
 {
 	int handled = 0;
@@ -51,7 +29,7 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 		if (!prefixcmp(cmd, "--exec-path")) {
 			cmd += 11;
 			if (*cmd == '=')
-				git_set_exec_path(cmd + 1);
+				git_set_argv_exec_path(cmd + 1);
 			else {
 				puts(git_exec_path());
 				exit(0);
@@ -408,7 +386,7 @@ int main(int argc, const char **argv)
 {
 	const char *cmd = argv[0] ? argv[0] : "git-help";
 	char *slash = strrchr(cmd, '/');
-	const char *exec_path = NULL;
+	const char *cmd_path = NULL;
 	int done_alias = 0;
 
 	/*
@@ -418,10 +396,7 @@ int main(int argc, const char **argv)
 	 */
 	if (slash) {
 		*slash++ = 0;
-		if (*cmd == '/')
-			exec_path = cmd;
-		else
-			exec_path = xstrdup(make_absolute_path(cmd));
+		cmd_path = cmd;
 		cmd = slash;
 	}
 
@@ -450,23 +425,20 @@ int main(int argc, const char **argv)
 		if (!prefixcmp(argv[0], "--"))
 			argv[0] += 2;
 	} else {
-		/* Default command: "help" */
-		argv[0] = "help";
-		argc = 1;
+		/* The user didn't specify a command; give them help */
+		printf("usage: %s\n\n", git_usage_string);
+		list_common_cmds_help();
+		exit(1);
 	}
 	cmd = argv[0];
 
 	/*
-	 * We execute external git command via execv_git_cmd(),
-	 * which looks at "--exec-path" option, GIT_EXEC_PATH
-	 * environment, and $(gitexecdir) in Makefile while built,
-	 * in this order.  For scripted commands, we prepend
-	 * the value of the exec_path variable to the PATH.
+	 * We use PATH to find git commands, but we prepend some higher
+	 * precidence paths: the "--exec-path" option, the GIT_EXEC_PATH
+	 * environment, and the $(gitexecdir) from the Makefile at build
+	 * time.
 	 */
-	if (exec_path)
-		prepend_to_path(exec_path, strlen(exec_path));
-	exec_path = git_exec_path();
-	prepend_to_path(exec_path, strlen(exec_path));
+	setup_path(cmd_path);
 
 	while (1) {
 		/* See if it's an internal command */
