@@ -160,6 +160,9 @@ void display_throughput(struct progress *progress, unsigned long n)
 		tp->last_misecs[tp->idx] = misecs;
 		tp->idx = (tp->idx + 1) % TP_IDX_MAX;
 		tp->count = 0;
+
+		if (progress->last_value != -1 && progress_update)
+			display(progress, progress->last_value, 0);
 	}
 }
 
