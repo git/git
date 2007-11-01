@@ -3911,11 +3911,11 @@ sub git_blame2 {
 		or die_error(undef, "Open git-blame failed");
 	git_header_html();
 	my $formats_nav =
-		$cgi->a({-href => href(action=>"blob", hash=>$hash, hash_base=>$hash_base, file_name=>$file_name)},
+		$cgi->a({-href => href(action=>"blob", -replay=>1)},
 		        "blob") .
 		" | " .
-		$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base, file_name=>$file_name)},
-			"history") .
+		$cgi->a({-href => href(action=>"history", -replay=>1)},
+		        "history") .
 		" | " .
 		$cgi->a({-href => href(action=>"blame", file_name=>$file_name)},
 		        "HEAD");
@@ -4191,18 +4191,15 @@ sub git_blob {
 		if (defined $file_name) {
 			if ($have_blame) {
 				$formats_nav .=
-					$cgi->a({-href => href(action=>"blame", hash_base=>$hash_base,
-					                       hash=>$hash, file_name=>$file_name)},
+					$cgi->a({-href => href(action=>"blame", -replay=>1)},
 					        "blame") .
 					" | ";
 			}
 			$formats_nav .=
-				$cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
-				                       hash=>$hash, file_name=>$file_name)},
+				$cgi->a({-href => href(action=>"history", -replay=>1)},
 				        "history") .
 				" | " .
-				$cgi->a({-href => href(action=>"blob_plain",
-				                       hash=>$hash, file_name=>$file_name)},
+				$cgi->a({-href => href(action=>"blob_plain", -replay=>1)},
 				        "raw") .
 				" | " .
 				$cgi->a({-href => href(action=>"blob",
@@ -4210,7 +4207,8 @@ sub git_blob {
 				        "HEAD");
 		} else {
 			$formats_nav .=
-				$cgi->a({-href => href(action=>"blob_plain", hash=>$hash)}, "raw");
+				$cgi->a({-href => href(action=>"blob_plain", -replay=>1)},
+				        "raw");
 		}
 		git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
@@ -4273,8 +4271,7 @@ sub git_tree {
 		my @views_nav = ();
 		if (defined $file_name) {
 			push @views_nav,
-				$cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
-				                       hash=>$hash, file_name=>$file_name)},
+				$cgi->a({-href => href(action=>"history", -replay=>1)},
 				        "history"),
 				$cgi->a({-href => href(action=>"tree",
 				                       hash_base=>"HEAD", file_name=>$file_name)},
@@ -4742,10 +4739,7 @@ sub git_blobdiff {
 	# header
 	if ($format eq 'html') {
 		my $formats_nav =
-			$cgi->a({-href => href(action=>"blobdiff_plain",
-			                       hash=>$hash, hash_parent=>$hash_parent,
-			                       hash_base=>$hash_base, hash_parent_base=>$hash_parent_base,
-			                       file_name=>$file_name, file_parent=>$file_parent)},
+			$cgi->a({-href => href(action=>"blobdiff_plain", -replay=>1)},
 			        "raw");
 		git_header_html(undef, $expires);
 		if (defined $hash_base && (my %co = parse_commit($hash_base))) {
@@ -4819,8 +4813,7 @@ sub git_commitdiff {
 	my $formats_nav;
 	if ($format eq 'html') {
 		$formats_nav =
-			$cgi->a({-href => href(action=>"commitdiff_plain",
-			                       hash=>$hash, hash_parent=>$hash_parent)},
+			$cgi->a({-href => href(action=>"commitdiff_plain", -replay=>1)},
 			        "raw");
 
 		if (defined $hash_parent &&
