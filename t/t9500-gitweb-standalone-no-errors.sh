@@ -31,7 +31,6 @@ our \$projects_list = "";
 our \$export_ok = "";
 our \$strict_export = "";
 
-CGI::Carp::set_programname("gitweb/gitweb.cgi");
 EOF
 
 	cat >.git/description <<EOF
