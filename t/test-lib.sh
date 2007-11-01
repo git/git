@@ -60,6 +60,7 @@ esac
 # . ./test-lib.sh
 
 [ "x$TERM" != "xdumb" ] &&
+	[ -t 1 ] &&
 	tput bold >/dev/null 2>&1 &&
 	tput setaf 1 >/dev/null 2>&1 &&
 	tput sgr0 >/dev/null 2>&1 &&
