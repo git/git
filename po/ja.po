@@ -1776,7 +1776,7 @@ msgstr "アイコンが書けません:"
 #: lib/status_bar.tcl:83
 #, tcl-format
 msgid "%s ... %*i of %*i %s (%3i%%)"
-msgstr "%1$s ... %3$*i %4$s 中の %$2*i (%5$3i%%)"
+msgstr "%1$s ... %4$*i %6$s 中の %2$*i (%7$3i%%)"
 
 #: lib/transport.tcl:6
 #, tcl-format
