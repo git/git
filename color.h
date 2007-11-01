@@ -6,7 +6,7 @@
 
 int git_config_colorbool(const char *var, const char *value);
 void color_parse(const char *var, const char *value, char *dst);
-int color_printf(const char *color, const char *fmt, ...);
-int color_printf_ln(const char *color, const char *fmt, ...);
+int color_fprintf(FILE *fp, const char *color, const char *fmt, ...);
+int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
 
 #endif /* COLOR_H */
