@@ -2518,7 +2518,7 @@ sub format_paging_nav {
 
 	if ($page > 0) {
 		$paging_nav .= " &sdot; " .
-			$cgi->a({-href => href(action=>$action, hash=>$hash, page=>$page-1),
+			$cgi->a({-href => href(-replay=>1, page=>$page-1),
 			         -accesskey => "p", -title => "Alt-p"}, "prev");
 	} else {
 		$paging_nav .= " &sdot; prev";
@@ -2526,7 +2526,7 @@ sub format_paging_nav {
 
 	if ($nrevs >= (100 * ($page+1)-1)) {
 		$paging_nav .= " &sdot; " .
-			$cgi->a({-href => href(action=>$action, hash=>$hash, page=>$page+1),
+			$cgi->a({-href => href(-replay=>1, page=>$page+1),
 			         -accesskey => "n", -title => "Alt-n"}, "next");
 	} else {
 		$paging_nav .= " &sdot; next";
@@ -4448,7 +4448,7 @@ sub git_log {
 	}
 	if ($#commitlist >= 100) {
 		print "<div class=\"page_nav\">\n";
-		print $cgi->a({-href => href(action=>"log", hash=>$hash, page=>$page+1),
+		print $cgi->a({-href => href(-replay=>1, page=>$page+1),
 			       -accesskey => "n", -title => "Alt-n"}, "next");
 		print "</div>\n";
 	}
@@ -5015,27 +5015,20 @@ sub git_history {
 			                       file_name=>$file_name)},
 			        "first");
 		$paging_nav .= " &sdot; " .
-			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
-			                       file_name=>$file_name, page=>$page-1),
+			$cgi->a({-href => href(-replay=>1, page=>$page-1),
 			         -accesskey => "p", -title => "Alt-p"}, "prev");
 	} else {
 		$paging_nav .= "first";
 		$paging_nav .= " &sdot; prev";
 	}
-	if ($#commitlist >= 100) {
-		$paging_nav .= " &sdot; " .
-			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
-			                       file_name=>$file_name, page=>$page+1),
-			         -accesskey => "n", -title => "Alt-n"}, "next");
-	} else {
-		$paging_nav .= " &sdot; next";
-	}
 	my $next_link = '';
 	if ($#commitlist >= 100) {
 		$next_link =
-			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
-			                       file_name=>$file_name, page=>$page+1),
+			$cgi->a({-href => href(-replay=>1, page=>$page+1),
 			         -accesskey => "n", -title => "Alt-n"}, "next");
+		$paging_nav .= " &sdot; $next_link";
+	} else {
+		$paging_nav .= " &sdot; next";
 	}
 
 	git_header_html();
@@ -5105,30 +5098,23 @@ sub git_search {
 				                       searchtext=>$searchtext, searchtype=>$searchtype)},
 				        "first");
 			$paging_nav .= " &sdot; " .
-				$cgi->a({-href => href(action=>"search", hash=>$hash,
-				                       searchtext=>$searchtext, searchtype=>$searchtype,
-				                       page=>$page-1),
+				$cgi->a({-href => href(-replay=>1, page=>$page-1),
 				         -accesskey => "p", -title => "Alt-p"}, "prev");
 		} else {
 			$paging_nav .= "first";
 			$paging_nav .= " &sdot; prev";
 		}
-		if ($#commitlist >= 100) {
-			$paging_nav .= " &sdot; " .
-				$cgi->a({-href => href(action=>"search", hash=>$hash,
-				                       searchtext=>$searchtext, searchtype=>$searchtype,
-				                       page=>$page+1),
-				         -accesskey => "n", -title => "Alt-n"}, "next");
-		} else {
-			$paging_nav .= " &sdot; next";
-		}
 		my $next_link = '';
 		if ($#commitlist >= 100) {
 			$next_link =
-				$cgi->a({-href => href(action=>"search", hash=>$hash,
-				                       searchtext=>$searchtext, searchtype=>$searchtype,
-				                       page=>$page+1),
+				$cgi->a({-href => href(-replay=>1, page=>$page+1),
 				         -accesskey => "n", -title => "Alt-n"}, "next");
+			$paging_nav .= " &sdot; $next_link";
+		} else {
+			$paging_nav .= " &sdot; next";
+		}
+
+		if ($#commitlist >= 100) {
 		}
 
 		git_print_page_nav('','', $hash,$co{'tree'},$hash, $paging_nav);
@@ -5327,7 +5313,7 @@ sub git_shortlog {
 	my $next_link = '';
 	if ($#commitlist >= 100) {
 		$next_link =
-			$cgi->a({-href => href(action=>"shortlog", hash=>$hash, page=>$page+1),
+			$cgi->a({-href => href(-replay=>1, page=>$page+1),
 			         -accesskey => "n", -title => "Alt-n"}, "next");
 	}
 
