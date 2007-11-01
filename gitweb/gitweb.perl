@@ -1990,7 +1990,7 @@ sub parse_difftree_raw_line {
 		$res{'to_mode'} = $2;
 		$res{'from_id'} = $3;
 		$res{'to_id'} = $4;
-		$res{'status'} = $5;
+		$res{'status'} = $res{'status_str'} = $5;
 		$res{'similarity'} = $6;
 		if ($res{'status'} eq 'R' || $res{'status'} eq 'C') { # renamed or copied
 			($res{'from_file'}, $res{'to_file'}) = map { unquote($_) } split("\t", $7);
@@ -2006,6 +2006,7 @@ sub parse_difftree_raw_line {
 		$res{'to_mode'} = pop @{$res{'from_mode'}};
 		$res{'from_id'} = [ split(' ', $3) ];
 		$res{'to_id'} = pop @{$res{'from_id'}};
+		$res{'status_str'} = $4;
 		$res{'status'} = [ split('', $4) ];
 		$res{'to_file'} = unquote($5);
 	}
@@ -2821,7 +2822,7 @@ sub fill_from_file_info {
 sub is_deleted {
 	my $diffinfo = shift;
 
-	return $diffinfo->{'to_id'} eq ('0' x 40);
+	return $diffinfo->{'status_str'} =~ /D/;
 }
 
 # does patch correspond to [previous] difftree raw line
