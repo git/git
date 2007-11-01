@@ -192,48 +192,39 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 	return 1;
 }
 
-static int filter_buffer(const char *path, const char *src,
-			 unsigned long size, const char *cmd)
+struct filter_params {
+	const char *src;
+	unsigned long size;
+	const char *cmd;
+};
+
+static int filter_buffer(int fd, void *data)
 {
 	/*
 	 * Spawn cmd and feed the buffer contents through its stdin.
 	 */
 	struct child_process child_process;
-	int pipe_feed[2];
+	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
+	const char *argv[] = { "sh", "-c", params->cmd, NULL };
 
 	memset(&child_process, 0, sizeof(child_process));
+	child_process.argv = argv;
+	child_process.in = -1;
+	child_process.out = fd;
 
-	if (pipe(pipe_feed) < 0) {
-		error("cannot create pipe to run external filter %s", cmd);
-		return 1;
-	}
+	if (start_command(&child_process))
+		return error("cannot fork to run external filter %s", params->cmd);
 
-	child_process.pid = fork();
-	if (child_process.pid < 0) {
-		error("cannot fork to run external filter %s", cmd);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		return 1;
-	}
-	if (!child_process.pid) {
-		dup2(pipe_feed[0], 0);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		execlp("sh", "sh", "-c", cmd, NULL);
-		return 1;
-	}
-	close(pipe_feed[0]);
-
-	write_err = (write_in_full(pipe_feed[1], src, size) < 0);
-	if (close(pipe_feed[1]))
+	write_err = (write_in_full(child_process.in, params->src, params->size) < 0);
+	if (close(child_process.in))
 		write_err = 1;
 	if (write_err)
-		error("cannot feed the input to external filter %s", cmd);
+		error("cannot feed the input to external filter %s", params->cmd);
 
 	status = finish_command(&child_process);
 	if (status)
-		error("external filter %s failed %d", cmd, -status);
+		error("external filter %s failed %d", params->cmd, -status);
 	return (write_err || status);
 }
 
@@ -246,49 +237,36 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	 *
 	 * (child --> cmd) --> us
 	 */
-	int pipe_feed[2];
-	int status, ret = 1;
-	struct child_process child_process;
+	int ret = 1;
 	struct strbuf nbuf;
+	struct async async;
+	struct filter_params params;
 
 	if (!cmd)
 		return 0;
 
-	memset(&child_process, 0, sizeof(child_process));
-
-	if (pipe(pipe_feed) < 0) {
-		error("cannot create pipe to run external filter %s", cmd);
-		return 0;
-	}
+	memset(&async, 0, sizeof(async));
+	async.proc = filter_buffer;
+	async.data = &params;
+	params.src = src;
+	params.size = len;
+	params.cmd = cmd;
 
 	fflush(NULL);
-	child_process.pid = fork();
-	if (child_process.pid < 0) {
-		error("cannot fork to run external filter %s", cmd);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		return 0;
-	}
-	if (!child_process.pid) {
-		dup2(pipe_feed[1], 1);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		exit(filter_buffer(path, src, len, cmd));
-	}
-	close(pipe_feed[1]);
+	if (start_async(&async))
+		return 0;	/* error was already reported */
 
 	strbuf_init(&nbuf, 0);
-	if (strbuf_read(&nbuf, pipe_feed[0], len) < 0) {
+	if (strbuf_read(&nbuf, async.out, len) < 0) {
 		error("read from external filter %s failed", cmd);
 		ret = 0;
 	}
-	if (close(pipe_feed[0])) {
+	if (close(async.out)) {
 		error("read from external filter %s failed", cmd);
 		ret = 0;
 	}
-	status = finish_command(&child_process);
-	if (status) {
-		error("external filter %s failed %d", cmd, -status);
+	if (finish_async(&async)) {
+		error("external filter %s failed", cmd);
 		ret = 0;
 	}
 

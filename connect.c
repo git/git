@@ -468,24 +468,26 @@ char *get_port(char *host)
 }
 
 /*
- * This returns 0 if the transport protocol does not need fork(2),
- * or a process id if it does.  Once done, finish the connection
+ * This returns NULL if the transport protocol does not need fork(2), or a
+ * struct child_process object if it does.  Once done, finish the connection
  * with finish_connect() with the value returned from this function
- * (it is safe to call finish_connect() with 0 to support the former
+ * (it is safe to call finish_connect() with NULL to support the former
  * case).
  *
- * Does not return a negative value on error; it just dies.
+ * If it returns, the connect is successful; it just dies on errors.
  */
-pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
+struct child_process *git_connect(int fd[2], char *url,
+				  const char *prog, int flags)
 {
 	char *host, *path = url;
 	char *end;
 	int c;
-	int pipefd[2][2];
-	pid_t pid;
+	struct child_process *conn;
 	enum protocol protocol = PROTO_LOCAL;
 	int free_path = 0;
 	char *port = NULL;
+	const char **arg;
+	struct strbuf cmd;
 
 	/* Without this we cannot rely on waitpid() to tell
 	 * what happened to our children.
@@ -568,74 +570,68 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		free(target_host);
 		if (free_path)
 			free(path);
-		return 0;
+		return NULL;
 	}
 
-	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
-		die("unable to create pipe pair for communication");
-	pid = fork();
-	if (pid < 0)
+	conn = xcalloc(1, sizeof(*conn));
+
+	strbuf_init(&cmd, MAX_CMD_LEN);
+	strbuf_addstr(&cmd, prog);
+	strbuf_addch(&cmd, ' ');
+	sq_quote_buf(&cmd, path);
+	if (cmd.len >= MAX_CMD_LEN)
+		die("command line too long");
+
+	conn->in = conn->out = -1;
+	conn->argv = arg = xcalloc(6, sizeof(*arg));
+	if (protocol == PROTO_SSH) {
+		const char *ssh = getenv("GIT_SSH");
+		if (!ssh) ssh = "ssh";
+
+		*arg++ = ssh;
+		if (port) {
+			*arg++ = "-p";
+			*arg++ = port;
+		}
+		*arg++ = host;
+	}
+	else {
+		/* remove these from the environment */
+		const char *env[] = {
+			ALTERNATE_DB_ENVIRONMENT,
+			DB_ENVIRONMENT,
+			GIT_DIR_ENVIRONMENT,
+			GIT_WORK_TREE_ENVIRONMENT,
+			GRAFT_ENVIRONMENT,
+			INDEX_ENVIRONMENT,
+			NULL
+		};
+		conn->env = env;
+		*arg++ = "sh";
+		*arg++ = "-c";
+	}
+	*arg++ = cmd.buf;
+	*arg = NULL;
+
+	if (start_command(conn))
 		die("unable to fork");
-	if (!pid) {
-		struct strbuf cmd;
 
-		strbuf_init(&cmd, MAX_CMD_LEN);
-		strbuf_addstr(&cmd, prog);
-		strbuf_addch(&cmd, ' ');
-		sq_quote_buf(&cmd, path);
-		if (cmd.len >= MAX_CMD_LEN)
-			die("command line too long");
-
-		dup2(pipefd[1][0], 0);
-		dup2(pipefd[0][1], 1);
-		close(pipefd[0][0]);
-		close(pipefd[0][1]);
-		close(pipefd[1][0]);
-		close(pipefd[1][1]);
-		if (protocol == PROTO_SSH) {
-			const char *ssh, *ssh_basename;
-			ssh = getenv("GIT_SSH");
-			if (!ssh) ssh = "ssh";
-			ssh_basename = strrchr(ssh, '/');
-			if (!ssh_basename)
-				ssh_basename = ssh;
-			else
-				ssh_basename++;
-
-			if (!port)
-				execlp(ssh, ssh_basename, host, cmd.buf, NULL);
-			else
-				execlp(ssh, ssh_basename, "-p", port, host,
-				       cmd.buf, NULL);
-		}
-		else {
-			unsetenv(ALTERNATE_DB_ENVIRONMENT);
-			unsetenv(DB_ENVIRONMENT);
-			unsetenv(GIT_DIR_ENVIRONMENT);
-			unsetenv(GIT_WORK_TREE_ENVIRONMENT);
-			unsetenv(GRAFT_ENVIRONMENT);
-			unsetenv(INDEX_ENVIRONMENT);
-			execlp("sh", "sh", "-c", cmd.buf, NULL);
-		}
-		die("exec failed");
-	}
-	fd[0] = pipefd[0][0];
-	fd[1] = pipefd[1][1];
-	close(pipefd[0][1]);
-	close(pipefd[1][0]);
+	fd[0] = conn->out; /* read from child's stdout */
+	fd[1] = conn->in;  /* write to child's stdin */
+	strbuf_release(&cmd);
 	if (free_path)
 		free(path);
-	return pid;
+	return conn;
 }
 
-int finish_connect(pid_t pid)
+int finish_connect(struct child_process *conn)
 {
-	if (pid == 0)
+	int code;
+	if (!conn)
 		return 0;
 
-	while (waitpid(pid, NULL, 0) < 0) {
-		if (errno != EINTR)
-			return -1;
-	}
-	return 0;
+	code = finish_command(conn);
+	free(conn->argv);
+	free(conn);
+	return code;
 }

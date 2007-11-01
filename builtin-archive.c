@@ -30,7 +30,7 @@ static int run_remote_archiver(const char *remote, int argc,
 {
 	char *url, buf[LARGE_PACKET_MAX];
 	int fd[2], i, len, rv;
-	pid_t pid;
+	struct child_process *conn;
 	const char *exec = "git-upload-archive";
 	int exec_at = 0;
 
@@ -46,9 +46,7 @@ static int run_remote_archiver(const char *remote, int argc,
 	}
 
 	url = xstrdup(remote);
-	pid = git_connect(fd, url, exec, 0);
-	if (pid < 0)
-		return pid;
+	conn = git_connect(fd, url, exec, 0);
 
 	for (i = 1; i < argc; i++) {
 		if (i == exec_at)
@@ -76,7 +74,7 @@ static int run_remote_archiver(const char *remote, int argc,
 	rv = recv_sideband("archive", fd[0], 1, 2);
 	close(fd[0]);
 	close(fd[1]);
-	rv |= finish_connect(pid);
+	rv |= finish_connect(conn);
 
 	return !!rv;
 }

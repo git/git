@@ -17,8 +17,8 @@ static inline void dup_devnull(int to)
 
 int start_command(struct child_process *cmd)
 {
-	int need_in, need_out;
-	int fdin[2], fdout[2];
+	int need_in, need_out, need_err;
+	int fdin[2], fdout[2], fderr[2];
 
 	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
@@ -41,12 +41,26 @@ int start_command(struct child_process *cmd)
 		cmd->close_out = 1;
 	}
 
+	need_err = cmd->err < 0;
+	if (need_err) {
+		if (pipe(fderr) < 0) {
+			if (need_in)
+				close_pair(fdin);
+			if (need_out)
+				close_pair(fdout);
+			return -ERR_RUN_COMMAND_PIPE;
+		}
+		cmd->err = fderr[0];
+	}
+
 	cmd->pid = fork();
 	if (cmd->pid < 0) {
 		if (need_in)
 			close_pair(fdin);
 		if (need_out)
 			close_pair(fdout);
+		if (need_err)
+			close_pair(fderr);
 		return -ERR_RUN_COMMAND_FORK;
 	}
 
@@ -71,6 +85,11 @@ int start_command(struct child_process *cmd)
 		} else if (cmd->out > 1) {
 			dup2(cmd->out, 1);
 			close(cmd->out);
+		}
+
+		if (need_err) {
+			dup2(fderr[1], 2);
+			close_pair(fderr);
 		}
 
 		if (cmd->dir && chdir(cmd->dir))
@@ -102,19 +121,17 @@ int start_command(struct child_process *cmd)
 	else if (cmd->out > 1)
 		close(cmd->out);
 
+	if (need_err)
+		close(fderr[1]);
+
 	return 0;
 }
 
-int finish_command(struct child_process *cmd)
+static int wait_or_whine(pid_t pid)
 {
-	if (cmd->close_in)
-		close(cmd->in);
-	if (cmd->close_out)
-		close(cmd->out);
-
 	for (;;) {
 		int status, code;
-		pid_t waiting = waitpid(cmd->pid, &status, 0);
+		pid_t waiting = waitpid(pid, &status, 0);
 
 		if (waiting < 0) {
 			if (errno == EINTR)
@@ -122,7 +139,7 @@ int finish_command(struct child_process *cmd)
 			error("waitpid failed (%s)", strerror(errno));
 			return -ERR_RUN_COMMAND_WAITPID;
 		}
-		if (waiting != cmd->pid)
+		if (waiting != pid)
 			return -ERR_RUN_COMMAND_WAITPID_WRONG_PID;
 		if (WIFSIGNALED(status))
 			return -ERR_RUN_COMMAND_WAITPID_SIGNAL;
@@ -134,6 +151,15 @@ int finish_command(struct child_process *cmd)
 			return -code;
 		return 0;
 	}
+}
+
+int finish_command(struct child_process *cmd)
+{
+	if (cmd->close_in)
+		close(cmd->in);
+	if (cmd->close_out)
+		close(cmd->out);
+	return wait_or_whine(cmd->pid);
 }
 
 int run_command(struct child_process *cmd)
@@ -177,4 +203,35 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 	cmd.dir = dir;
 	cmd.env = env;
 	return run_command(&cmd);
+}
+
+int start_async(struct async *async)
+{
+	int pipe_out[2];
+
+	if (pipe(pipe_out) < 0)
+		return error("cannot create pipe: %s", strerror(errno));
+
+	async->pid = fork();
+	if (async->pid < 0) {
+		error("fork (async) failed: %s", strerror(errno));
+		close_pair(pipe_out);
+		return -1;
+	}
+	if (!async->pid) {
+		close(pipe_out[0]);
+		exit(!!async->proc(pipe_out[1], async->data));
+	}
+	async->out = pipe_out[0];
+	close(pipe_out[1]);
+	return 0;
+}
+
+int finish_async(struct async *async)
+{
+	int ret = 0;
+
+	if (wait_or_whine(async->pid))
+		ret = error("waitpid (async) failed");
+	return ret;
 }

@@ -7,6 +7,7 @@
 #include "pack.h"
 #include "sideband.h"
 #include "fetch-pack.h"
+#include "run-command.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -457,53 +458,49 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 	return retval;
 }
 
-static pid_t setup_sideband(int fd[2], int xd[2])
+static int sideband_demux(int fd, void *data)
 {
-	pid_t side_pid;
+	int *xd = data;
 
+	close(xd[1]);
+	return recv_sideband("fetch-pack", xd[0], fd, 2);
+}
+
+static void setup_sideband(int fd[2], int xd[2], struct async *demux)
+{
 	if (!use_sideband) {
 		fd[0] = xd[0];
 		fd[1] = xd[1];
-		return 0;
+		return;
 	}
 	/* xd[] is talking with upload-pack; subprocess reads from
 	 * xd[0], spits out band#2 to stderr, and feeds us band#1
-	 * through our fd[0].
+	 * through demux->out.
 	 */
-	if (pipe(fd) < 0)
-		die("fetch-pack: unable to set up pipe");
-	side_pid = fork();
-	if (side_pid < 0)
+	demux->proc = sideband_demux;
+	demux->data = xd;
+	if (start_async(demux))
 		die("fetch-pack: unable to fork off sideband demultiplexer");
-	if (!side_pid) {
-		/* subprocess */
-		close(fd[0]);
-		if (xd[0] != xd[1])
-			close(xd[1]);
-		if (recv_sideband("fetch-pack", xd[0], fd[1], 2))
-			exit(1);
-		exit(0);
-	}
 	close(xd[0]);
-	close(fd[1]);
+	fd[0] = demux->out;
 	fd[1] = xd[1];
-	return side_pid;
 }
 
 static int get_pack(int xd[2], char **pack_lockfile)
 {
-	int status;
-	pid_t pid, side_pid;
+	struct async demux;
 	int fd[2];
 	const char *argv[20];
 	char keep_arg[256];
 	char hdr_arg[256];
 	const char **av;
 	int do_keep = args.keep_pack;
-	int keep_pipe[2];
+	struct child_process cmd;
 
-	side_pid = setup_sideband(fd, xd);
+	setup_sideband(fd, xd, &demux);
 
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.argv = argv;
 	av = argv;
 	*hdr_arg = 0;
 	if (!args.keep_pack && unpack_limit) {
@@ -520,8 +517,8 @@ static int get_pack(int xd[2], char **pack_lockfile)
 	}
 
 	if (do_keep) {
-		if (pack_lockfile && pipe(keep_pipe))
-			die("fetch-pack: pipe setup failure: %s", strerror(errno));
+		if (pack_lockfile)
+			cmd.out = -1;
 		*av++ = "index-pack";
 		*av++ = "--stdin";
 		if (!args.quiet && !args.no_progress)
@@ -545,43 +542,19 @@ static int get_pack(int xd[2], char **pack_lockfile)
 		*av++ = hdr_arg;
 	*av++ = NULL;
 
-	pid = fork();
-	if (pid < 0)
+	cmd.in = fd[0];
+	cmd.git_cmd = 1;
+	if (start_command(&cmd))
 		die("fetch-pack: unable to fork off %s", argv[0]);
-	if (!pid) {
-		dup2(fd[0], 0);
-		if (do_keep && pack_lockfile) {
-			dup2(keep_pipe[1], 1);
-			close(keep_pipe[0]);
-			close(keep_pipe[1]);
-		}
-		close(fd[0]);
-		close(fd[1]);
-		execv_git_cmd(argv);
-		die("%s exec failed", argv[0]);
-	}
-	close(fd[0]);
 	close(fd[1]);
-	if (do_keep && pack_lockfile) {
-		close(keep_pipe[1]);
-		*pack_lockfile = index_pack_lockfile(keep_pipe[0]);
-		close(keep_pipe[0]);
-	}
-	while (waitpid(pid, &status, 0) < 0) {
-		if (errno != EINTR)
-			die("waiting for %s: %s", argv[0], strerror(errno));
-	}
-	if (WIFEXITED(status)) {
-		int code = WEXITSTATUS(status);
-		if (code)
-			die("%s died with error code %d", argv[0], code);
-		return 0;
-	}
-	if (WIFSIGNALED(status)) {
-		int sig = WTERMSIG(status);
-		die("%s died of signal %d", argv[0], sig);
-	}
-	die("%s died of unnatural causes %d", argv[0], status);
+	if (do_keep && pack_lockfile)
+		*pack_lockfile = index_pack_lockfile(cmd.out);
+
+	if (finish_command(&cmd))
+		die("%s failed", argv[0]);
+	if (use_sideband && finish_async(&demux))
+		die("error in sideband demultiplexer");
+	return 0;
 }
 
 static struct ref *do_fetch_pack(int fd[2],
@@ -763,7 +736,7 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 {
 	int i, ret;
 	int fd[2];
-	pid_t pid;
+	struct child_process *conn;
 	struct ref *ref;
 	struct stat st;
 
@@ -774,16 +747,14 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 			st.st_mtime = 0;
 	}
 
-	pid = git_connect(fd, (char *)dest, args.uploadpack,
+	conn = git_connect(fd, (char *)dest, args.uploadpack,
                           args.verbose ? CONNECT_VERBOSE : 0);
-	if (pid < 0)
-		return NULL;
 	if (heads && nr_heads)
 		nr_heads = remove_duplicates(nr_heads, heads);
 	ref = do_fetch_pack(fd, nr_heads, heads, pack_lockfile);
 	close(fd[0]);
 	close(fd[1]);
-	ret = finish_connect(pid);
+	ret = finish_connect(conn);
 
 	if (!ret && nr_heads) {
 		/* If the heads to pull were given, we should have
