@@ -27,6 +27,9 @@ OPTIONS
 
 include::pretty-options.txt[]
 
+:git-log: 1
+include::diff-options.txt[]
+
 -<n>::
 	Limits the number of commits to show.
 
@@ -42,9 +45,6 @@ include::pretty-options.txt[]
 	Follow only the first parent commit upon seeing a merge
 	commit.  This  option gives a better overview of the
 	evolution of a particular branch.
-
--p::
-	Show the change the commit introduces in a patch form.
 
 -g, \--walk-reflogs::
 	Show commits as they were recorded in the reflog. The log contains
@@ -78,6 +78,7 @@ include::pretty-options.txt[]
 
 include::pretty-formats.txt[]
 
+include::diff-generate-patch.txt[]
 
 Examples
 --------

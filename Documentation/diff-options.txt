@@ -6,7 +6,9 @@
 
 ifndef::git-format-patch[]
 ifndef::git-diff[]
+ifndef::git-log[]
 :git-diff-core: 1
+endif::git-log[]
 endif::git-diff[]
 endif::git-format-patch[]
 
