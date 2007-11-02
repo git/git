@@ -7,6 +7,8 @@ test_description='git-clean basic tests'
 
 . ./test-lib.sh
 
+git config clean.requireForce no
+
 test_expect_success 'setup' '
 
 	mkdir -p src &&
@@ -136,6 +138,13 @@ test_expect_success 'git-clean -d -X' '
 	test -f docs/manual.txt &&
 	test ! -f obj.o &&
 	test ! -d build
+
+'
+
+test_expect_success 'clean.requireForce defaults to true' '
+
+	git config --unset clean.requireForce &&
+	! git-clean
 
 '
 
