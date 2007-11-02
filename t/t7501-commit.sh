@@ -242,4 +242,19 @@ test_expect_success 'multiple -m' '
 
 '
 
+author="The Real Author <someguy@his.email.org>"
+test_expect_success 'amend commit to fix author' '
+
+	oldtick=$GIT_AUTHOR_DATE &&
+	test_tick &&
+	git reset --hard &&
+	git cat-file -p HEAD |
+	sed -e "s/author.*/author $author $oldtick/" \
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
+		expected &&
+	git commit --amend --author="$author" &&
+	git cat-file -p HEAD > current &&
+	diff expected current
+
+'
 test_done
