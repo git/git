@@ -529,6 +529,20 @@ void mingw_free_path_split(char **path)
 	free(path);
 }
 
+void mingw_execvp(const char *cmd, const char **argv)
+{
+	char **path = mingw_get_path_split();
+	char *prog = mingw_path_lookup(cmd, path);
+
+	if (prog) {
+		mingw_execve(prog, argv, (const char **) environ);
+		free(prog);
+	} else
+		errno = ENOENT;
+
+	mingw_free_path_split(path);
+}
+
 int mingw_socket(int domain, int type, int protocol)
 {
 	SOCKET s = WSASocket(domain, type, protocol, NULL, 0, 0);

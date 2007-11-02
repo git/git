@@ -430,6 +430,8 @@ unsigned int alarm(unsigned int seconds);
 #include <winsock2.h>
 void mingw_execve(const char *cmd, const char **argv, const char **env);
 #define execve mingw_execve
+extern void mingw_execvp(const char *cmd, const char **argv);
+#define execvp mingw_execvp
 int fork();
 typedef int pid_t;
 #define waitpid(pid, status, options) \
