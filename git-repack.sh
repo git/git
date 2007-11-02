@@ -83,9 +83,6 @@ for name in $names ; do
 	fullbases="$fullbases pack-$name"
 	chmod a-w "$PACKTMP-$name.pack"
 	chmod a-w "$PACKTMP-$name.idx"
-	if test "$quiet" != '-q'; then
-	    echo "Pack pack-$name created."
-	fi
 	mkdir -p "$PACKDIR" || exit
 
 	for sfx in pack idx

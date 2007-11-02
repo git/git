@@ -17,7 +17,7 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 	strcpy(buf, "remote:");
 	while (1) {
 		int band, len;
-		len	= packet_read_line(in_stream, buf+7, LARGE_PACKET_MAX);
+		len = packet_read_line(in_stream, buf+7, LARGE_PACKET_MAX);
 		if (len == 0)
 			break;
 		if (len < 1) {
@@ -35,7 +35,22 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 			return SIDEBAND_REMOTE_ERROR;
 		case 2:
 			buf[7] = ' ';
-			safe_write(err, buf, 8+len);
+			len += 8;
+			while (1) {
+				int brk = 8;
+				while (brk < len) {
+					brk++;
+					if (buf[brk-1] == '\n' ||
+					    buf[brk-1] == '\r')
+						break;
+				}
+				safe_write(err, buf, brk);
+				if (brk < len) {
+					memmove(buf + 8, buf + brk, len - brk);
+					len = len - brk + 8;
+				} else
+					break;
+			}
 			continue;
 		case 1:
 			safe_write(out, buf+8, len);

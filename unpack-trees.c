@@ -297,7 +297,7 @@ static void check_updates(struct cache_entry **src, int nr,
 {
 	unsigned short mask = htons(CE_UPDATE);
 	unsigned cnt = 0, total = 0;
-	struct progress progress;
+	struct progress *progress = NULL;
 	char last_symlink[PATH_MAX];
 
 	if (o->update && o->verbose_update) {
@@ -307,8 +307,8 @@ static void check_updates(struct cache_entry **src, int nr,
 				total++;
 		}
 
-		start_progress_delay(&progress, "Checking %u files out...",
-				     "", total, 50, 2);
+		progress = start_progress_delay("Checking out files",
+						total, 50, 2);
 		cnt = 0;
 	}
 
@@ -316,9 +316,8 @@ static void check_updates(struct cache_entry **src, int nr,
 	while (nr--) {
 		struct cache_entry *ce = *src++;
 
-		if (total)
-			if (!ce->ce_mode || ce->ce_flags & mask)
-				display_progress(&progress, ++cnt);
+		if (!ce->ce_mode || ce->ce_flags & mask)
+			display_progress(progress, ++cnt);
 		if (!ce->ce_mode) {
 			if (o->update)
 				unlink_entry(ce->name, last_symlink);
@@ -332,8 +331,7 @@ static void check_updates(struct cache_entry **src, int nr,
 			}
 		}
 	}
-	if (total)
-		stop_progress(&progress);;
+	stop_progress(&progress);
 }
 
 int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)
