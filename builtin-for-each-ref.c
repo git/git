@@ -7,6 +7,7 @@
 #include "tree.h"
 #include "blob.h"
 #include "quote.h"
+#include "parse-options.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
@@ -158,17 +159,18 @@ static const char *find_next(const char *cp)
  * Make sure the format string is well formed, and parse out
  * the used atoms.
  */
-static void verify_format(const char *format)
+static int verify_format(const char *format)
 {
 	const char *cp, *sp;
 	for (cp = format; *cp && (sp = find_next(cp)); ) {
 		const char *ep = strchr(sp, ')');
 		if (!ep)
-			die("malformatted format string %s", sp);
+			return error("malformatted format string %s", sp);
 		/* sp points at "%(" and ep points at the closing ")" */
 		parse_atom(sp + 2, ep);
 		cp = ep + 1;
 	}
+	return 0;
 }
 
 /*
@@ -800,94 +802,76 @@ static struct ref_sort *default_sort(void)
 	return sort;
 }
 
-int cmd_for_each_ref(int ac, const char **av, const char *prefix)
+int opt_parse_sort(const struct option *opt, const char *arg, int unset)
+{
+	struct ref_sort **sort_tail = opt->value;
+	struct ref_sort *s;
+	int len;
+
+	if (!arg) /* should --no-sort void the list ? */
+		return -1;
+
+	*sort_tail = s = xcalloc(1, sizeof(*s));
+	sort_tail = &s->next;
+
+	if (*arg == '-') {
+		s->reverse = 1;
+		arg++;
+	}
+	len = strlen(arg);
+	s->atom = parse_atom(arg, arg+len);
+	return 0;
+}
+
+static char const * const for_each_ref_usage[] = {
+	"git-for-each-ref [options] [<pattern>]",
+	NULL
+};
+
+int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 {
 	int i, num_refs;
-	const char *format = NULL;
+	const char *format = "%(objectname) %(objecttype)\t%(refname)";
 	struct ref_sort *sort = NULL, **sort_tail = &sort;
-	int maxcount = 0;
-	int quote_style = -1; /* unspecified yet */
+	int maxcount = 0, quote_style;
+	int quote_shell = 0, quote_perl = 0, quote_python = 0, quote_tcl = 0;
 	struct refinfo **refs;
 	struct grab_ref_cbdata cbdata;
 
-	for (i = 1; i < ac; i++) {
-		const char *arg = av[i];
-		if (arg[0] != '-')
-			break;
-		if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-		if (!prefixcmp(arg, "--format=")) {
-			if (format)
-				die("more than one --format?");
-			format = arg + 9;
-			continue;
-		}
-		if (!strcmp(arg, "-s") || !strcmp(arg, "--shell") ) {
-			if (0 <= quote_style)
-				die("more than one quoting style?");
-			quote_style = QUOTE_SHELL;
-			continue;
-		}
-		if (!strcmp(arg, "-p") || !strcmp(arg, "--perl") ) {
-			if (0 <= quote_style)
-				die("more than one quoting style?");
-			quote_style = QUOTE_PERL;
-			continue;
-		}
-		if (!strcmp(arg, "--python") ) {
-			if (0 <= quote_style)
-				die("more than one quoting style?");
-			quote_style = QUOTE_PYTHON;
-			continue;
-		}
-		if (!strcmp(arg, "--tcl") ) {
-			if (0 <= quote_style)
-				die("more than one quoting style?");
-			quote_style = QUOTE_TCL;
-			continue;
-		}
-		if (!prefixcmp(arg, "--count=")) {
-			if (maxcount)
-				die("more than one --count?");
-			maxcount = atoi(arg + 8);
-			if (maxcount <= 0)
-				die("The number %s did not parse", arg);
-			continue;
-		}
-		if (!prefixcmp(arg, "--sort=")) {
-			struct ref_sort *s = xcalloc(1, sizeof(*s));
-			int len;
+	struct option opts[] = {
+		OPT_BOOLEAN('s', "shell", &quote_shell, "quote placeholders suitably for shells"),
+		OPT_BOOLEAN('p', "perl",  &quote_perl, "quote placeholders suitably for perl"),
+		OPT_BOOLEAN( 0 , "python", &quote_python, "quote placeholders suitably for python"),
+		OPT_BOOLEAN( 0 , "tcl",  &quote_tcl, "quote placeholders suitably for tcl"),
 
-			s->next = NULL;
-			*sort_tail = s;
-			sort_tail = &s->next;
+		OPT_GROUP(""),
+		OPT_INTEGER( 0 , "count", &maxcount, "show only <n> matched refs"),
+		OPT_STRING(  0 , "format", &format, "format", "format to use for the output"),
+		OPT_CALLBACK(0 , "sort", &sort_tail, "key",
+		            "field name to sort on", &opt_parse_sort),
+		OPT_END(),
+	};
 
-			arg += 7;
-			if (*arg == '-') {
-				s->reverse = 1;
-				arg++;
-			}
-			len = strlen(arg);
-			sort->atom = parse_atom(arg, arg+len);
-			continue;
-		}
-		break;
+	parse_options(argc, argv, opts, for_each_ref_usage, 0);
+	if (maxcount < 0) {
+		error("invalid --count argument: `%d'", maxcount);
+		usage_with_options(for_each_ref_usage, opts);
 	}
-	if (quote_style < 0)
-		quote_style = QUOTE_NONE;
+	if (quote_shell + quote_perl + quote_python + quote_tcl > 1) {
+		error("more than one quoting style ?");
+		usage_with_options(for_each_ref_usage, opts);
+	}
+	if (verify_format(format))
+		usage_with_options(for_each_ref_usage, opts);
 
+	quote_style = QUOTE_SHELL * quote_shell + QUOTE_PERL * quote_perl +
+		QUOTE_PYTHON * quote_python + QUOTE_TCL * quote_tcl;
 	if (!sort)
 		sort = default_sort();
 	sort_atom_limit = used_atom_cnt;
-	if (!format)
-		format = "%(objectname) %(objecttype)\t%(refname)";
-
-	verify_format(format);
 
 	memset(&cbdata, 0, sizeof(cbdata));
-	cbdata.grab_pattern = av + i;
+	cbdata.grab_pattern = argv;
 	for_each_ref(grab_single_ref, &cbdata);
 	refs = cbdata.grab_array;
 	num_refs = cbdata.grab_cnt;

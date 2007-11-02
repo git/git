@@ -50,10 +50,10 @@ OPTIONS
 	and `dir/file2`) can be given to add all files in the
 	directory, recursively.
 
--n::
+-n, \--dry-run::
         Don't actually add the file(s), just show if they exist.
 
--v::
+-v, \--verbose::
         Be verbose.
 
 -f::

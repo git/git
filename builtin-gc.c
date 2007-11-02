@@ -12,11 +12,15 @@
 
 #include "builtin.h"
 #include "cache.h"
+#include "parse-options.h"
 #include "run-command.h"
 
 #define FAILED_RUN "failed to run %s"
 
-static const char builtin_gc_usage[] = "git-gc [--prune] [--aggressive]";
+static const char * const builtin_gc_usage[] = {
+	"git-gc [options]",
+	NULL
+};
 
 static int pack_refs = 1;
 static int aggressive_window = -1;
@@ -165,38 +169,34 @@ static int need_to_gc(void)
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
 {
-	int i;
 	int prune = 0;
+	int aggressive = 0;
 	int auto_gc = 0;
 	char buf[80];
+
+	struct option builtin_gc_options[] = {
+		OPT_BOOLEAN(0, "prune", &prune, "prune unreferenced loose objects"),
+		OPT_BOOLEAN(0, "aggressive", &aggressive, "be more thorough (increased runtime)"),
+		OPT_BOOLEAN(0, "auto", &auto_gc, "enable auto-gc mode"),
+		OPT_END()
+	};
 
 	git_config(gc_config);
 
 	if (pack_refs < 0)
 		pack_refs = !is_bare_repository();
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (!strcmp(arg, "--prune")) {
-			prune = 1;
-			continue;
+	argc = parse_options(argc, argv, builtin_gc_options, builtin_gc_usage, 0);
+	if (argc > 0)
+		usage_with_options(builtin_gc_usage, builtin_gc_options);
+
+	if (aggressive) {
+		append_option(argv_repack, "-f", MAX_ADD);
+		if (aggressive_window > 0) {
+			sprintf(buf, "--window=%d", aggressive_window);
+			append_option(argv_repack, buf, MAX_ADD);
 		}
-		if (!strcmp(arg, "--aggressive")) {
-			append_option(argv_repack, "-f", MAX_ADD);
-			if (aggressive_window > 0) {
-				sprintf(buf, "--window=%d", aggressive_window);
-				append_option(argv_repack, buf, MAX_ADD);
-			}
-			continue;
-		}
-		if (!strcmp(arg, "--auto")) {
-			auto_gc = 1;
-			continue;
-		}
-		break;
 	}
-	if (i != argc)
-		usage(builtin_gc_usage);
 
 	if (auto_gc) {
 		/*
