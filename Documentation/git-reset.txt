@@ -157,7 +157,7 @@ need to get to the other branch for a quick bugfix.
 ------------
 $ git checkout feature ;# you were working in "feature" branch and
 $ work work work       ;# got interrupted
-$ git commit -a -m 'snapshot WIP'                 <1>
+$ git commit -a -m "snapshot WIP"                 <1>
 $ git checkout master
 $ fix fix fix
 $ git commit ;# commit with real log
