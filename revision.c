@@ -677,9 +677,6 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->prune_fn = NULL;
 	revs->prune_data = NULL;
 
-	revs->topo_setter = topo_sort_default_setter;
-	revs->topo_getter = topo_sort_default_getter;
-
 	revs->commit_format = CMIT_FMT_DEFAULT;
 
 	diff_setup(&revs->diffopt);
@@ -1303,9 +1300,7 @@ int prepare_revision_walk(struct rev_info *revs)
 		if (limit_list(revs) < 0)
 			return -1;
 	if (revs->topo_order)
-		sort_in_topological_order_fn(&revs->commits, revs->lifo,
-					     revs->topo_setter,
-					     revs->topo_getter);
+		sort_in_topological_order(&revs->commits, revs->lifo);
 	return 0;
 }
 

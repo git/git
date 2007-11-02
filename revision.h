@@ -10,6 +10,7 @@
 #define CHILD_SHOWN	(1u<<6)
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
+#define TOPOSORT	(1u<<9)	/* In the active toposort list.. */
 
 struct rev_info;
 struct log_info;
@@ -95,9 +96,6 @@ struct rev_info {
 	/* diff info for patches and for paths limiting */
 	struct diff_options diffopt;
 	struct diff_options pruning;
-
-	topo_sort_set_fn_t topo_setter;
-	topo_sort_get_fn_t topo_getter;
 
 	struct reflog_walk_info *reflog_info;
 };
