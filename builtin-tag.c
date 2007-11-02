@@ -17,7 +17,7 @@ static const char builtin_tag_usage[] =
 
 static char signingkey[1000];
 
-static void launch_editor(const char *path, struct strbuf *buffer)
+void launch_editor(const char *path, struct strbuf *buffer)
 {
 	const char *editor, *terminal;
 	struct child_process child;
@@ -41,6 +41,9 @@ static void launch_editor(const char *path, struct strbuf *buffer)
 
 	if (!editor)
 		editor = "vi";
+
+	if (!strcmp(editor, ":"))
+		return;
 
 	memset(&child, 0, sizeof(child));
 	child.argv = args;
