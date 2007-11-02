@@ -441,6 +441,94 @@ void mingw_execve(const char *cmd, const char **argv, const char **env)
 	}
 }
 
+static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
+{
+	char path[MAX_PATH];
+	snprintf(path, sizeof(path), "%s/%s.exe", dir, cmd);
+
+	if (tryexe && access(path, 0) == 0)
+		return xstrdup(path);
+	path[strlen(path)-4] = '\0';
+	if (access(path, 0) == 0)
+		return xstrdup(path);
+	return NULL;
+}
+
+/*
+ * Determines the absolute path of cmd using the the split path in path.
+ * If cmd contains a slash or backslash, no lookup is performed.
+ */
+char *mingw_path_lookup(const char *cmd, char **path)
+{
+	char **p = path;
+	char *prog = NULL;
+	int len = strlen(cmd);
+	int tryexe = len < 4 || strcasecmp(cmd+len-4, ".exe");
+
+	if (strchr(cmd, '/') || strchr(cmd, '\\'))
+		prog = xstrdup(cmd);
+
+	while (!prog && *p) {
+		prog = lookup_prog(*p++, cmd, tryexe);
+	}
+	if (!prog) {
+		prog = lookup_prog(".", cmd, tryexe);
+		if (!prog)
+			prog = xstrdup(cmd);
+	}
+	return prog;
+}
+
+/*
+ * Splits the PATH into parts.
+ */
+char **mingw_get_path_split(void)
+{
+	char *p, **path, *envpath = getenv("PATH");
+	int i, n = 0;
+
+	if (!envpath || !*envpath)
+		return NULL;
+
+	envpath = xstrdup(envpath);
+	p = envpath;
+	while (p) {
+		char *dir = p;
+		p = strchr(p, ';');
+		if (p) *p++ = '\0';
+		if (*dir) {	/* not earlier, catches series of ; */
+			++n;
+		}
+	}
+	if (!n)
+		return NULL;
+
+	path = xmalloc((n+1)*sizeof(char*));
+	p = envpath;
+	i = 0;
+	do {
+		if (*p)
+			path[i++] = xstrdup(p);
+		p = p+strlen(p)+1;
+	} while (i < n);
+	path[i] = NULL;
+
+	free(envpath);
+
+	return path;
+}
+
+void mingw_free_path_split(char **path)
+{
+	if (!path)
+		return;
+
+	char **p = path;
+	while (*p)
+		free(*p++);
+	free(path);
+}
+
 int mingw_socket(int domain, int type, int protocol)
 {
 	SOCKET s = WSASocket(domain, type, protocol, NULL, 0, 0);

@@ -499,6 +499,9 @@ int mingw_rename(const char*, const char*);
 
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);
+extern char *mingw_path_lookup(const char *cmd, char **path);
+extern char **mingw_get_path_split(void);
+extern void mingw_free_path_split(char **path);
 
 /* Use git_lstat() instead of lstat()/stat() and
  * git_fstat() instead of fstat() on Windows
