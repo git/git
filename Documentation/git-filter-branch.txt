@@ -219,7 +219,7 @@ git filter-branch --commit-filter '
 	fi' HEAD
 ------------------------------------------------------------------------------
 
-The function 'skip_commits' is defined as follows:
+The function 'skip_commit' is defined as follows:
 
 --------------------------
 skip_commit()
