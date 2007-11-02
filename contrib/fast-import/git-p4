@@ -71,6 +71,46 @@ def isP4Exec(kind):
     a plus sign, it is also executable"""
     return (re.search(r"(^[cku]?x)|\+.*x", kind) != None)
 
+def diffTreePattern():
+    # This is a simple generator for the diff tree regex pattern. This could be
+    # a class variable if this and parseDiffTreeEntry were a part of a class.
+    pattern = re.compile(':(\d+) (\d+) (\w+) (\w+) ([A-Z])(\d+)?\t(.*?)((\t(.*))|$)')
+    while True:
+        yield pattern
+
+def parseDiffTreeEntry(entry):
+    """Parses a single diff tree entry into its component elements.
+
+    See git-diff-tree(1) manpage for details about the format of the diff
+    output. This method returns a dictionary with the following elements:
+
+    src_mode - The mode of the source file
+    dst_mode - The mode of the destination file
+    src_sha1 - The sha1 for the source file
+    dst_sha1 - The sha1 fr the destination file
+    status - The one letter status of the diff (i.e. 'A', 'M', 'D', etc)
+    status_score - The score for the status (applicable for 'C' and 'R'
+                   statuses). This is None if there is no score.
+    src - The path for the source file.
+    dst - The path for the destination file. This is only present for
+          copy or renames. If it is not present, this is None.
+
+    If the pattern is not matched, None is returned."""
+
+    match = diffTreePattern().next().match(entry)
+    if match:
+        return {
+            'src_mode': match.group(1),
+            'dst_mode': match.group(2),
+            'src_sha1': match.group(3),
+            'dst_sha1': match.group(4),
+            'status': match.group(5),
+            'status_score': match.group(6),
+            'src': match.group(7),
+            'dst': match.group(10)
+        }
+    return None
+
 def p4CmdList(cmd, stdin=None, stdin_mode='w+b'):
     cmd = "p4 -G %s" % cmd
     if verbose:
@@ -494,13 +534,14 @@ class P4Submit(Command):
         else:
             print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
             diffOpts = ("", "-M")[self.detectRename]
-            diff = read_pipe_lines("git diff-tree -r --name-status %s \"%s^\" \"%s\"" % (diffOpts, id, id))
+            diff = read_pipe_lines("git diff-tree -r %s \"%s^\" \"%s\"" % (diffOpts, id, id))
         filesToAdd = set()
         filesToDelete = set()
         editedFiles = set()
         for line in diff:
-            modifier = line[0]
-            path = line[1:].strip()
+            diff = parseDiffTreeEntry(line)
+            modifier = diff['status']
+            path = diff['src']
             if modifier == "M":
                 system("p4 edit \"%s\"" % path)
                 editedFiles.add(path)
@@ -513,7 +554,7 @@ class P4Submit(Command):
                 if path in filesToAdd:
                     filesToAdd.remove(path)
             elif modifier == "R":
-                src, dest = line.strip().split("\t")[1:3]
+                src, dest = diff['src'], diff['dst']
                 system("p4 integrate -Dt \"%s\" \"%s\"" % (src, dest))
                 system("p4 edit \"%s\"" % (dest))
                 os.unlink(dest)
