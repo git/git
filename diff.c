@@ -508,7 +508,8 @@ static void emit_line_with_ws(int nparents,
 	for (i = col0; i < len; i++) {
 		if (line[i] == '\t') {
 			last_tab_in_indent = i;
-			if (0 <= last_space_in_indent)
+			if ((whitespace_rule & WS_SPACE_BEFORE_TAB) &&
+			    0 <= last_space_in_indent)
 				need_highlight_leading_space = 1;
 		}
 		else if (line[i] == ' ')
@@ -540,10 +541,12 @@ static void emit_line_with_ws(int nparents,
 	tail = len - 1;
 	if (line[tail] == '\n' && i < tail)
 		tail--;
-	while (i < tail) {
-		if (!isspace(line[tail]))
-			break;
-		tail--;
+	if (whitespace_rule & WS_TRAILING_SPACE) {
+		while (i < tail) {
+			if (!isspace(line[tail]))
+				break;
+			tail--;
+		}
 	}
 	if ((i < tail && line[tail + 1] != '\n')) {
 		/* This has whitespace between tail+1..len */
