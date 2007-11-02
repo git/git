@@ -1606,7 +1606,9 @@ sub git_get_path_by_hash {
 sub git_get_project_description {
 	my $path = shift;
 
-	open my $fd, "$projectroot/$path/description" or return undef;
+	$git_dir = "$projectroot/$path";
+	open my $fd, "$projectroot/$path/description"
+		or return git_get_project_config('description');
 	my $descr = <$fd>;
 	close $fd;
 	if (defined $descr) {
@@ -1618,7 +1620,11 @@ sub git_get_project_description {
 sub git_get_project_url_list {
 	my $path = shift;
 
-	open my $fd, "$projectroot/$path/cloneurl" or return;
+	$git_dir = "$projectroot/$path";
+	open my $fd, "$projectroot/$path/cloneurl"
+		or return wantarray ?
+		@{ config_to_multi(git_get_project_config('url')) } :
+		   config_to_multi(git_get_project_config('url'));
 	my @git_project_url_list = map { chomp; $_ } <$fd>;
 	close $fd;
 
