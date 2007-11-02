@@ -796,6 +796,7 @@ Return the list of files that haven't been handled."
                             (with-current-buffer buffer (erase-buffer))
                             (dolist (info files) (git-set-fileinfo-state info 'uptodate))
                             (git-call-process-env nil nil "rerere")
+                            (git-call-process-env nil nil "gc" "--auto")
                             (git-refresh-files)
                             (git-refresh-ewoc-hf git-status)
                             (message "Committed %s." commit)
@@ -842,7 +843,8 @@ Return the list of files that haven't been handled."
   "Mark all files."
   (interactive)
   (unless git-status (error "Not in git-status buffer."))
-  (ewoc-map (lambda (info) (setf (git-fileinfo->marked info) t) t) git-status)
+  (ewoc-map (lambda (info) (unless (git-fileinfo->marked info)
+                             (setf (git-fileinfo->marked info) t))) git-status)
   ; move back to goal column after invalidate
   (when goal-column (move-to-column goal-column)))
 
@@ -850,7 +852,9 @@ Return the list of files that haven't been handled."
   "Unmark all files."
   (interactive)
   (unless git-status (error "Not in git-status buffer."))
-  (ewoc-map (lambda (info) (setf (git-fileinfo->marked info) nil) t) git-status)
+  (ewoc-map (lambda (info) (when (git-fileinfo->marked info)
+                             (setf (git-fileinfo->marked info) nil)
+                             t)) git-status)
   ; move back to goal column after invalidate
   (when goal-column (move-to-column goal-column)))
 
@@ -955,7 +959,7 @@ Return the list of files that haven't been handled."
       (when modified
         (apply #'git-call-process-env nil nil "checkout" "HEAD" modified))
       (git-update-status-files (append added modified) 'uptodate)
-      (git-success-message "Reverted" files))))
+      (git-success-message "Reverted" (git-get-filenames files)))))
 
 (defun git-resolve-file ()
   "Resolve conflicts in marked file(s)."
@@ -1353,7 +1357,7 @@ Commands:
   "Update the corresponding git-status buffer when a file is saved.
 Meant to be used in `after-save-hook'."
   (let* ((file (expand-file-name buffer-file-name))
-         (dir (condition-case nil (git-get-top-dir (file-name-directory file))))
+         (dir (condition-case nil (git-get-top-dir (file-name-directory file)) (error nil)))
          (buffer (and dir (git-find-status-buffer dir))))
     (when buffer
       (with-current-buffer buffer

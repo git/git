@@ -185,7 +185,6 @@ git-status                              mainporcelain
 git-stripspace                          purehelpers
 git-submodule                           mainporcelain
 git-svn                                 foreignscminterface
-git-svnimport                           foreignscminterface
 git-symbolic-ref                        plumbingmanipulators
 git-tag                                 mainporcelain
 git-tar-tree                            plumbinginterrogators

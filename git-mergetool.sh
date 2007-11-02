@@ -192,10 +192,10 @@ merge_file () {
     case "$merge_tool" in
 	kdiff3)
 	    if base_present ; then
-		(kdiff3 --auto --L1 "$path (Base)" --L2 "$path (Local)" --L3 "$path (Remote)" \
+		("$merge_tool_path" --auto --L1 "$path (Base)" --L2 "$path (Local)" --L3 "$path (Remote)" \
 		    -o "$path" -- "$BASE" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    else
-		(kdiff3 --auto --L1 "$path (Local)" --L2 "$path (Remote)" \
+		("$merge_tool_path" --auto --L1 "$path (Local)" --L2 "$path (Remote)" \
 		    -o "$path" -- "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    fi
 	    status=$?
@@ -203,35 +203,35 @@ merge_file () {
 	    ;;
 	tkdiff)
 	    if base_present ; then
-		tkdiff -a "$BASE" -o "$path" -- "$LOCAL" "$REMOTE"
+		"$merge_tool_path" -a "$BASE" -o "$path" -- "$LOCAL" "$REMOTE"
 	    else
-		tkdiff -o "$path" -- "$LOCAL" "$REMOTE"
+		"$merge_tool_path" -o "$path" -- "$LOCAL" "$REMOTE"
 	    fi
 	    status=$?
 	    save_backup
 	    ;;
 	meld|vimdiff)
 	    touch "$BACKUP"
-	    $merge_tool -- "$LOCAL" "$path" "$REMOTE"
+	    "$merge_tool_path" -- "$LOCAL" "$path" "$REMOTE"
 	    check_unchanged
 	    save_backup
 	    ;;
 	gvimdiff)
 		touch "$BACKUP"
-		gvimdiff -f -- "$LOCAL" "$path" "$REMOTE"
+		"$merge_tool_path" -f -- "$LOCAL" "$path" "$REMOTE"
 		check_unchanged
 		save_backup
 		;;
 	xxdiff)
 	    touch "$BACKUP"
 	    if base_present ; then
-		xxdiff -X --show-merged-pane \
+		"$merge_tool_path" -X --show-merged-pane \
 		    -R 'Accel.SaveAsMerged: "Ctrl-S"' \
 		    -R 'Accel.Search: "Ctrl+F"' \
 		    -R 'Accel.SearchForward: "Ctrl-G"' \
 		    --merged-file "$path" -- "$LOCAL" "$BASE" "$REMOTE"
 	    else
-		xxdiff -X --show-merged-pane \
+		"$merge_tool_path" -X --show-merged-pane \
 		    -R 'Accel.SaveAsMerged: "Ctrl-S"' \
 		    -R 'Accel.Search: "Ctrl+F"' \
 		    -R 'Accel.SearchForward: "Ctrl-G"' \
@@ -243,18 +243,28 @@ merge_file () {
 	opendiff)
 	    touch "$BACKUP"
 	    if base_present; then
-		opendiff "$LOCAL" "$REMOTE" -ancestor "$BASE" -merge "$path" | cat
+		"$merge_tool_path" "$LOCAL" "$REMOTE" -ancestor "$BASE" -merge "$path" | cat
 	    else
-		opendiff "$LOCAL" "$REMOTE" -merge "$path" | cat
+		"$merge_tool_path" "$LOCAL" "$REMOTE" -merge "$path" | cat
+	    fi
+	    check_unchanged
+	    save_backup
+	    ;;
+	ecmerge)
+	    touch "$BACKUP"
+	    if base_present; then
+		"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" --mode=merge3 --to="$path"
+	    else
+		"$merge_tool_path" "$LOCAL" "$REMOTE" --mode=merge2 --to="$path"
 	    fi
 	    check_unchanged
 	    save_backup
 	    ;;
 	emerge)
 	    if base_present ; then
-		emacs -f emerge-files-with-ancestor-command "$LOCAL" "$REMOTE" "$BASE" "$(basename "$path")"
+		"$merge_tool_path" -f emerge-files-with-ancestor-command "$LOCAL" "$REMOTE" "$BASE" "$(basename "$path")"
 	    else
-		emacs -f emerge-files-command "$LOCAL" "$REMOTE" "$(basename "$path")"
+		"$merge_tool_path" -f emerge-files-command "$LOCAL" "$REMOTE" "$(basename "$path")"
 	    fi
 	    status=$?
 	    save_backup
@@ -297,17 +307,38 @@ do
     shift
 done
 
+valid_tool() {
+	case "$1" in
+		kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge)
+			;; # happy
+		*)
+			return 1
+			;;
+	esac
+}
+
+init_merge_tool_path() {
+	merge_tool_path=`git config mergetool.$1.path`
+	if test -z "$merge_tool_path" ; then
+		case "$1" in
+			emerge)
+				merge_tool_path=emacs
+				;;
+			*)
+				merge_tool_path=$1
+				;;
+		esac
+	fi
+}
+
+
 if test -z "$merge_tool"; then
     merge_tool=`git config merge.tool`
-    case "$merge_tool" in
-	kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | "")
-	    ;; # happy
-	*)
+    if test -n "$merge_tool" && ! valid_tool "$merge_tool"; then
 	    echo >&2 "git config option merge.tool set to unknown tool: $merge_tool"
 	    echo >&2 "Resetting to default..."
 	    unset merge_tool
-	    ;;
-    esac
+    fi
 fi
 
 if test -z "$merge_tool" ; then
@@ -329,40 +360,30 @@ if test -z "$merge_tool" ; then
     merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
     echo "merge tool candidates: $merge_tool_candidates"
     for i in $merge_tool_candidates; do
-        if test $i = emerge ; then
-            cmd=emacs
-        else
-            cmd=$i
-        fi
-        if type $cmd > /dev/null 2>&1; then
+        init_merge_tool_path $i
+        if type "$merge_tool_path" > /dev/null 2>&1; then
             merge_tool=$i
             break
         fi
     done
     if test -z "$merge_tool" ; then
-	echo "No available merge resolution programs available."
+	echo "No known merge resolution program available."
 	exit 1
+    fi
+else
+    if ! valid_tool "$merge_tool"; then
+        echo >&2 "Unknown merge_tool $merge_tool"
+        exit 1
+    fi
+
+    init_merge_tool_path "$merge_tool"
+
+    if ! type "$merge_tool_path" > /dev/null 2>&1; then
+        echo "The merge tool $merge_tool is not available as '$merge_tool_path'"
+        exit 1
     fi
 fi
 
-case "$merge_tool" in
-    kdiff3|tkdiff|meld|xxdiff|vimdiff|gvimdiff|opendiff)
-	if ! type "$merge_tool" > /dev/null 2>&1; then
-	    echo "The merge tool $merge_tool is not available"
-	    exit 1
-	fi
-	;;
-    emerge)
-	if ! type "emacs" > /dev/null 2>&1; then
-	    echo "Emacs is not available"
-	    exit 1
-	fi
-	;;
-    *)
-	echo "Unknown merge tool: $merge_tool"
-	exit 1
-	;;
-esac
 
 if test $# -eq 0 ; then
 	files=`git ls-files -u | sed -e 's/^[^	]*	//' | sort -u`

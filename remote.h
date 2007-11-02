@@ -67,9 +67,12 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
  * *tail is the pointer to the tail pointer of the list of results
  * beforehand, and will be set to the tail pointer of the list of
  * results afterward.
+ *
+ * missing_ok is usually false, but when we are adding branch.$name.merge
+ * it is Ok if the branch is not at the remote anymore.
  */
 int get_fetch_map(struct ref *remote_refs, const struct refspec *refspec,
-		  struct ref ***tail);
+		  struct ref ***tail, int missing_ok);
 
 struct ref *get_remote_ref(struct ref *remote_refs, const char *name);
 

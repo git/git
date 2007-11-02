@@ -82,6 +82,7 @@ foreach my $line (@commit) {
     }
 }
 
+my $noparent = "0000000000000000000000000000000000000000";
 if ($parent) {
     my $found;
     # double check that it's a valid parent
@@ -95,8 +96,10 @@ if ($parent) {
 } else { # we don't have a parent from the cmdline...
     if (@parents == 1) { # it's safe to get it from the commit
 	$parent = $parents[0];
-    } else { # or perhaps not!
-	die "This commit has more than one parent -- please name the parent you want to use explicitly";
+    } elsif (@parents == 0) { # there is no parent
+        $parent = $noparent;
+    } else { # cannot choose automatically from multiple parents
+        die "This commit has more than one parent -- please name the parent you want to use explicitly";
     }
 }
 
@@ -116,7 +119,11 @@ if ($opt_a) {
 }
 close MSG;
 
-`git-diff-tree --binary -p $parent $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
+if ($parent eq $noparent) {
+    `git-diff-tree --binary -p --root $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
+} else {
+    `git-diff-tree --binary -p $parent $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
+}
 
 ## apply non-binary changes
 

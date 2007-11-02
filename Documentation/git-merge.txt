@@ -11,25 +11,26 @@ SYNOPSIS
 [verse]
 'git-merge' [-n] [--summary] [--no-commit] [--squash] [-s <strategy>]...
 	[-m <msg>] <remote> <remote>...
+'git-merge' <msg> HEAD <remote>...
 
 DESCRIPTION
 -----------
 This is the top-level interface to the merge machinery
 which drives multiple merge strategy scripts.
 
+The second syntax (<msg> `HEAD` <remote>) is supported for
+historical reasons.  Do not use it from the command line or in
+new scripts.  It is the same as `git merge -m <msg> <remote>`.
+
 
 OPTIONS
 -------
 include::merge-options.txt[]
 
-<msg>::
+-m <msg>::
 	The commit message to be used for the merge commit (in case
 	it is created). The `git-fmt-merge-msg` script can be used
 	to give a good default for automated `git-merge` invocations.
-
-<head>::
-	Our branch head commit.  This has to be `HEAD`, so new
-	syntax does not require it
 
 <remote>::
 	Other branch head merged into our branch.  You need at

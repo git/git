@@ -254,4 +254,32 @@ test_expect_success 'push with dry-run' '
 	check_push_result $old_commit heads/master
 '
 
+test_expect_success 'push updates local refs' '
+
+	rm -rf parent child &&
+	mkdir parent && cd parent && git init &&
+		echo one >foo && git add foo && git commit -m one &&
+	cd .. &&
+	git clone parent child && cd child &&
+		echo two >foo && git commit -a -m two &&
+		git push &&
+	test $(git rev-parse master) = $(git rev-parse remotes/origin/master)
+
+'
+
+test_expect_success 'push does not update local refs on failure' '
+
+	rm -rf parent child &&
+	mkdir parent && cd parent && git init &&
+		echo one >foo && git add foo && git commit -m one &&
+		echo exit 1 >.git/hooks/pre-receive &&
+		chmod +x .git/hooks/pre-receive &&
+	cd .. &&
+	git clone parent child && cd child &&
+		echo two >foo && git commit -a -m two || exit 1
+		git push && exit 1
+	test $(git rev-parse master) != $(git rev-parse remotes/origin/master)
+
+'
+
 test_done

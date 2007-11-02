@@ -58,7 +58,7 @@ perl -e '
 	    if (/\s$/) {
 		bad_line("trailing whitespace", $_);
 	    }
-	    if (/^\s* 	/) {
+	    if (/^\s* \t/) {
 		bad_line("indent SP followed by a TAB", $_);
 	    }
 	    if (/^(?:[<>=]){7}/) {

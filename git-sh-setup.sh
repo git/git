@@ -110,7 +110,7 @@ esac
 if [ -z "$SUBDIRECTORY_OK" ]
 then
 	: ${GIT_DIR=.git}
-	GIT_DIR=$(GIT_DIR="$GIT_DIR" git rev-parse --git-dir) || {
+	test -z "$(git rev-parse --show-cdup)" || {
 		exit=$?
 		echo >&2 "You need to run this command from the toplevel of the working tree."
 		exit $exit

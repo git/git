@@ -48,15 +48,21 @@ static void add_merge_config(struct ref **head,
 		if (rm)
 			continue;
 
-		/* Not fetched to a tracking branch?  We need to fetch
+		/*
+		 * Not fetched to a tracking branch?  We need to fetch
 		 * it anyway to allow this branch's "branch.$name.merge"
-		 * to be honored by git-pull.
+		 * to be honored by git-pull, but we do not have to
+		 * fail if branch.$name.merge is misconfigured to point
+		 * at a nonexisting branch.  If we were indeed called by
+		 * git-pull, it will notice the misconfiguration because
+		 * there is no entry in the resulting FETCH_HEAD marked
+		 * for merging.
 		 */
 		refspec.src = branch->merge[i]->src;
 		refspec.dst = NULL;
 		refspec.pattern = 0;
 		refspec.force = 0;
-		get_fetch_map(remote_refs, &refspec, tail);
+		get_fetch_map(remote_refs, &refspec, tail, 1);
 		for (rm = *old_tail; rm; rm = rm->next)
 			rm->merge = 1;
 	}
@@ -75,7 +81,7 @@ static struct ref *get_ref_map(struct transport *transport,
 
 	if (ref_count || tags) {
 		for (i = 0; i < ref_count; i++) {
-			get_fetch_map(remote_refs, &refs[i], &tail);
+			get_fetch_map(remote_refs, &refs[i], &tail, 0);
 			if (refs[i].dst && refs[i].dst[0])
 				*autotags = 1;
 		}
@@ -88,7 +94,7 @@ static struct ref *get_ref_map(struct transport *transport,
 			refspec.dst = "refs/tags/";
 			refspec.pattern = 1;
 			refspec.force = 0;
-			get_fetch_map(remote_refs, &refspec, &tail);
+			get_fetch_map(remote_refs, &refspec, &tail, 0);
 		}
 	} else {
 		/* Use the defaults */
@@ -97,7 +103,7 @@ static struct ref *get_ref_map(struct transport *transport,
 		int has_merge = branch_has_merge_config(branch);
 		if (remote && (remote->fetch_refspec_nr || has_merge)) {
 			for (i = 0; i < remote->fetch_refspec_nr; i++) {
-				get_fetch_map(remote_refs, &remote->fetch[i], &tail);
+				get_fetch_map(remote_refs, &remote->fetch[i], &tail, 0);
 				if (remote->fetch[i].dst &&
 				    remote->fetch[i].dst[0])
 					*autotags = 1;
@@ -110,11 +116,13 @@ static struct ref *get_ref_map(struct transport *transport,
 			 * as given in branch.<name>.remote, we add the
 			 * ref given in branch.<name>.merge, too.
 			 */
-			if (has_merge && !strcmp(branch->remote_name,
-						remote->name))
+			if (has_merge &&
+			    !strcmp(branch->remote_name, remote->name))
 				add_merge_config(&ref_map, remote_refs, branch, &tail);
 		} else {
 			ref_map = get_remote_ref(remote_refs, "HEAD");
+			if (!ref_map)
+				die("Couldn't find remote ref HEAD");
 			ref_map->merge = 1;
 		}
 	}

@@ -128,7 +128,6 @@ git-status
 git-stripspace
 git-submodule
 git-svn
-git-svnimport
 git-symbolic-ref
 git-tag
 git-tar-tree

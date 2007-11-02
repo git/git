@@ -346,7 +346,6 @@ __git_commands ()
 		ssh-*)            : transport;;
 		stripspace)       : plumbing;;
 		svn)              : import export;;
-		svnimport)        : import;;
 		symbolic-ref)     : plumbing;;
 		tar-tree)         : deprecated;;
 		unpack-file)      : plumbing;;

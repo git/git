@@ -244,7 +244,8 @@ sub show_remote {
 	print "* remote $name\n";
 	print "  URL: $info->{'URL'}\n";
 	for my $branchname (sort keys %$branch) {
-		next if ($branch->{$branchname}{'REMOTE'} ne $name);
+		next unless (defined $branch->{$branchname}{'REMOTE'} &&
+			     $branch->{$branchname}{'REMOTE'} eq $name);
 		my @merged = map {
 			s|^refs/heads/||;
 			$_;

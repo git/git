@@ -12,11 +12,12 @@
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
 static int unpack_limit = 100;
-static struct fetch_pack_args args;
+static struct fetch_pack_args args = {
+	/* .uploadpack = */ "git-upload-pack",
+};
 
 static const char fetch_pack_usage[] =
 "git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]";
-static const char *uploadpack = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
 #define COMMON		(1U << 1)
@@ -748,7 +749,7 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 			st.st_mtime = 0;
 	}
 
-	conn = git_connect(fd, (char *)dest, uploadpack,
+	conn = git_connect(fd, (char *)dest, args.uploadpack,
                           args.verbose ? CONNECT_VERBOSE : 0);
 	if (heads && nr_heads)
 		nr_heads = remove_duplicates(nr_heads, heads);

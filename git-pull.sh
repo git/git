@@ -4,7 +4,7 @@
 #
 # Fetch one or more remote refs and merge it/them into the current HEAD.
 
-USAGE='[-n | --no-summary] [--no-commit] [-s strategy]... [<fetch-options>] <repo> <head>...'
+USAGE='[-n | --no-summary] [--[no-]commit] [--[no-]squash] [--[no-]ff] [-s strategy]... [<fetch-options>] <repo> <head>...'
 LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEAD.'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
@@ -15,7 +15,7 @@ cd_to_toplevel
 test -z "$(git ls-files -u)" ||
 	die "You are in the middle of a conflicted merge."
 
-strategy_args= no_summary= no_commit= squash=
+strategy_args= no_summary= no_commit= squash= no_ff=
 while :
 do
 	case "$1" in
@@ -27,8 +27,16 @@ do
 		;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
 		no_commit=--no-commit ;;
+	--c|--co|--com|--comm|--commi|--commit)
+		no_commit=--commit ;;
 	--sq|--squ|--squa|--squas|--squash)
 		squash=--squash ;;
+	--no-sq|--no-squ|--no-squa|--no-squas|--no-squash)
+		squash=--no-squash ;;
+	--ff)
+		no_ff=--ff ;;
+	--no-ff)
+		no_ff=--no-ff ;;
 	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
 		--strateg=*|--strategy=*|\
 	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
@@ -133,5 +141,5 @@ then
 fi
 
 merge_name=$(git fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
-exec git-merge $no_summary $no_commit $squash $strategy_args \
+exec git-merge $no_summary $no_commit $squash $no_ff $strategy_args \
 	"$merge_name" HEAD $merge_head

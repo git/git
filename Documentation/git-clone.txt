@@ -111,11 +111,11 @@ OPTIONS
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
-	specified number of revs.  A shallow repository has
+	specified number of revisions.  A shallow repository has a
 	number of limitations (you cannot clone or fetch from
 	it, nor push from nor into it), but is adequate if you
-	want to only look at near the tip of a large project
-	with a long history, and would want to send in a fixes
+	are only interested in the recent history of a large project
+	with a long history, and would want to send in fixes
 	as patches.
 
 <repository>::

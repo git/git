@@ -1616,6 +1616,7 @@ static void cmd_data(struct strbuf *sb)
 		char *term = xstrdup(command_buf.buf + 5 + 2);
 		size_t term_len = command_buf.len - 5 - 2;
 
+		strbuf_detach(&command_buf, NULL);
 		for (;;) {
 			if (strbuf_getline(&command_buf, stdin, '\n') == EOF)
 				die("EOF in data (terminator '%s' not found)", term);

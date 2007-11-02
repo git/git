@@ -4,6 +4,8 @@ GIT v1.5.4 Release Notes
 Updates since v1.5.3
 --------------------
 
+ * Comes with much improved gitk.
+
  * git-reset is now built-in.
 
  * git-send-email can optionally talk over ssmtp and use SMTP-AUTH.
@@ -19,6 +21,29 @@ Updates since v1.5.3
  * git-archive can optionally substitute keywords in files marked with
    export-subst attribute.
 
+ * git-for-each-ref learned %(xxxdate:<dateformat>) syntax to
+   show the various date fields in different formats.
+
+ * git-gc --auto is a low-impact way to automatically run a
+   variant of git-repack that does not lose unreferenced objects
+   (read: safer than the usual one) after the user accumulates
+   too many loose objects.
+
+ * git-push has been rewritten in C.
+
+ * git-push learned --dry-run option to show what would happen
+   if a push is run.
+
+ * git-remote learned "rm" subcommand.
+
+ * git-rebase --interactive mode can now work on detached HEAD.
+
+ * git-cvsserver can be run via git-shell.
+
+ * git-am and git-rebase are far less verbose.
+
+ * git-pull learned to pass --[no-]ff option to underlying git-merge.
+
  * Various Perforce importer updates.
 
 Fixes since v1.5.3
@@ -29,7 +54,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3.2-99-ge4b2890
+O=v1.5.3.4-450-g952a9e5
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
-
