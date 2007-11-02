@@ -71,6 +71,31 @@ def isP4Exec(kind):
     a plus sign, it is also executable"""
     return (re.search(r"(^[cku]?x)|\+.*x", kind) != None)
 
+def setP4ExecBit(file, mode):
+    # Reopens an already open file and changes the execute bit to match
+    # the execute bit setting in the passed in mode.
+
+    p4Type = "+x"
+
+    if not isModeExec(mode):
+        p4Type = getP4OpenedType(file)
+        p4Type = re.sub('^([cku]?)x(.*)', '\\1\\2', p4Type)
+        p4Type = re.sub('(.*?\+.*?)x(.*?)', '\\1\\2', p4Type)
+        if p4Type[-1] == "+":
+            p4Type = p4Type[0:-1]
+
+    system("p4 reopen -t %s %s" % (p4Type, file))
+
+def getP4OpenedType(file):
+    # Returns the perforce file type for the given file.
+
+    result = read_pipe("p4 opened %s" % file)
+    match = re.match(".*\((.+)\)$", result)
+    if match:
+        return match.group(1)
+    else:
+        die("Could not determine file type for %s" % file)
+
 def diffTreePattern():
     # This is a simple generator for the diff tree regex pattern. This could be
     # a class variable if this and parseDiffTreeEntry were a part of a class.
@@ -110,6 +135,14 @@ def parseDiffTreeEntry(entry):
             'dst': match.group(10)
         }
     return None
+
+def isModeExec(mode):
+    # Returns True if the given git mode represents an executable file,
+    # otherwise False.
+    return mode[-3:] == "755"
+
+def isModeExecChanged(src_mode, dst_mode):
+    return isModeExec(src_mode) != isModeExec(dst_mode)
 
 def p4CmdList(cmd, stdin=None, stdin_mode='w+b'):
     cmd = "p4 -G %s" % cmd
@@ -538,15 +571,19 @@ class P4Submit(Command):
         filesToAdd = set()
         filesToDelete = set()
         editedFiles = set()
+        filesToChangeExecBit = {}
         for line in diff:
             diff = parseDiffTreeEntry(line)
             modifier = diff['status']
             path = diff['src']
             if modifier == "M":
                 system("p4 edit \"%s\"" % path)
+                if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
+                    filesToChangeExecBit[path] = diff['dst_mode']
                 editedFiles.add(path)
             elif modifier == "A":
                 filesToAdd.add(path)
+                filesToChangeExecBit[path] = diff['dst_mode']
                 if path in filesToDelete:
                     filesToDelete.remove(path)
             elif modifier == "D":
@@ -557,6 +594,8 @@ class P4Submit(Command):
                 src, dest = diff['src'], diff['dst']
                 system("p4 integrate -Dt \"%s\" \"%s\"" % (src, dest))
                 system("p4 edit \"%s\"" % (dest))
+                if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
+                    filesToChangeExecBit[dest] = diff['dst_mode']
                 os.unlink(dest)
                 editedFiles.add(dest)
                 filesToDelete.add(src)
@@ -608,6 +647,11 @@ class P4Submit(Command):
         for f in filesToDelete:
             system("p4 revert \"%s\"" % f)
             system("p4 delete \"%s\"" % f)
+
+        # Set/clear executable bits
+        for f in filesToChangeExecBit.keys():
+            mode = filesToChangeExecBit[f]
+            setP4ExecBit(f, mode)
 
         logMessage = ""
         if not self.directSubmit:
