@@ -833,7 +833,7 @@ that branch, and do some work there.
 ------------------------------------------------
 $ git checkout mybranch
 $ echo "Work, work, work" >>hello
-$ git commit -m 'Some work.' -i hello
+$ git commit -m "Some work." -i hello
 ------------------------------------------------
 
 Here, we just added another line to `hello`, and we used a shorthand for
@@ -858,7 +858,7 @@ hasn't happened in the `master` branch at all. Then do
 ------------
 $ echo "Play, play, play" >>hello
 $ echo "Lots of fun" >>example
-$ git commit -m 'Some fun.' -i hello example
+$ git commit -m "Some fun." -i hello example
 ------------
 
 since the master branch is obviously in a much better mood.
@@ -1613,8 +1613,8 @@ in both of them.  You could merge in 'diff-fix' first and then
 'commit-fix' next, like this:
 
 ------------
-$ git merge -m 'Merge fix in diff-fix' diff-fix
-$ git merge -m 'Merge fix in commit-fix' commit-fix
+$ git merge -m "Merge fix in diff-fix" diff-fix
+$ git merge -m "Merge fix in commit-fix" commit-fix
 ------------
 
 Which would result in:
