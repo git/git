@@ -1432,20 +1432,121 @@ sub git_get_type {
 	return $type;
 }
 
+# repository configuration
+our $config_file = '';
+our %config;
+
+# store multiple values for single key as anonymous array reference
+# single values stored directly in the hash, not as [ <value> ]
+sub hash_set_multi {
+	my ($hash, $key, $value) = @_;
+
+	if (!exists $hash->{$key}) {
+		$hash->{$key} = $value;
+	} elsif (!ref $hash->{$key}) {
+		$hash->{$key} = [ $hash->{$key}, $value ];
+	} else {
+		push @{$hash->{$key}}, $value;
+	}
+}
+
+# return hash of git project configuration
+# optionally limited to some section, e.g. 'gitweb'
+sub git_parse_project_config {
+	my $section_regexp = shift;
+	my %config;
+
+	local $/ = "\0";
+
+	open my $fh, "-|", git_cmd(), "config", '-z', '-l',
+		or return;
+
+	while (my $keyval = <$fh>) {
+		chomp $keyval;
+		my ($key, $value) = split(/\n/, $keyval, 2);
+
+		hash_set_multi(\%config, $key, $value)
+			if (!defined $section_regexp || $key =~ /^(?:$section_regexp)\./o);
+	}
+	close $fh;
+
+	return %config;
+}
+
+# convert config value to boolean, 'true' or 'false'
+# no value, number > 0, 'true' and 'yes' values are true
+# rest of values are treated as false (never as error)
+sub config_to_bool {
+	my $val = shift;
+
+	# strip leading and trailing whitespace
+	$val =~ s/^\s+//;
+	$val =~ s/\s+$//;
+
+	return (!defined $val ||               # section.key
+	        ($val =~ /^\d+$/ && $val) ||   # section.key = 1
+	        ($val =~ /^(?:true|yes)$/i));  # section.key = true
+}
+
+# convert config value to simple decimal number
+# an optional value suffix of 'k', 'm', or 'g' will cause the value
+# to be multiplied by 1024, 1048576, or 1073741824
+sub config_to_int {
+	my $val = shift;
+
+	# strip leading and trailing whitespace
+	$val =~ s/^\s+//;
+	$val =~ s/\s+$//;
+
+	if (my ($num, $unit) = ($val =~ /^([0-9]*)([kmg])$/i)) {
+		$unit = lc($unit);
+		# unknown unit is treated as 1
+		return $num * ($unit eq 'g' ? 1073741824 :
+		               $unit eq 'm' ?    1048576 :
+		               $unit eq 'k' ?       1024 : 1);
+	}
+	return $val;
+}
+
+# convert config value to array reference, if needed
+sub config_to_multi {
+	my $val = shift;
+
+	return ref($val) ? $val : [ $val ];
+}
+
 sub git_get_project_config {
 	my ($key, $type) = @_;
 
+	# key sanity check
 	return unless ($key);
 	$key =~ s/^gitweb\.//;
 	return if ($key =~ m/\W/);
 
-	my @x = (git_cmd(), 'config');
-	if (defined $type) { push @x, $type; }
-	push @x, "--get";
-	push @x, "gitweb.$key";
-	my $val = qx(@x);
-	chomp $val;
-	return ($val);
+	# type sanity check
+	if (defined $type) {
+		$type =~ s/^--//;
+		$type = undef
+			unless ($type eq 'bool' || $type eq 'int');
+	}
+
+	# get config
+	if (!defined $config_file ||
+	    $config_file ne "$git_dir/config") {
+		%config = git_parse_project_config('gitweb');
+		$config_file = "$git_dir/config";
+	}
+
+	# ensure given type
+	if (!defined $type) {
+		return $config{"gitweb.$key"};
+	} elsif ($type eq 'bool') {
+		# backward compatibility: 'git config --bool' returns true/false
+		return config_to_bool($config{"gitweb.$key"}) ? 'true' : 'false';
+	} elsif ($type eq 'int') {
+		return config_to_int($config{"gitweb.$key"});
+	}
+	return $config{"gitweb.$key"};
 }
 
 # get hash of given path at given ref
