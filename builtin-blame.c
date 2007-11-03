@@ -2231,9 +2231,6 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			argv[unk++] = arg;
 	}
 
-	if (!incremental)
-		setup_pager();
-
 	if (!blame_move_score)
 		blame_move_score = BLAME_DEFAULT_MOVE_SCORE;
 	if (!blame_copy_score)
@@ -2426,6 +2423,9 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		    revs_file, strerror(errno));
 
 	read_mailmap(&mailmap, ".mailmap", NULL);
+
+	if (!incremental)
+		setup_pager();
 
 	assign_blame(&sb, &revs, opt);
 
