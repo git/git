@@ -59,6 +59,15 @@ test_expect_success 'giving a non existing revision should fail' '
 	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
 '
 
+test_expect_success 'reset --soft with unmerged index should fail' '
+	touch .git/MERGE_HEAD &&
+	echo "100644 44c5b5884550c17758737edcced463447b91d42b 1	un" |
+		git update-index --index-info &&
+	! git reset --soft HEAD &&
+	rm .git/MERGE_HEAD &&
+	git rm --cached -- un
+'
+
 test_expect_success \
 	'giving paths with options different than --mixed should fail' '
 	! git reset --soft -- first &&
