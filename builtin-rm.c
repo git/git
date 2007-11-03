@@ -155,6 +155,9 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	if (!argc)
 		usage_with_options(builtin_rm_usage, builtin_rm_options);
 
+	if (!index_only)
+		setup_work_tree();
+
 	pathspec = get_pathspec(prefix, argv);
 	seen = NULL;
 	for (i = 0; pathspec[i] ; i++)
