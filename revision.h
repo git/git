@@ -30,6 +30,8 @@ struct rev_info {
 	void *prune_data;
 	prune_fn_t *prune_fn;
 
+	unsigned int early_output;
+
 	/* Traversal flags */
 	unsigned int	dense:1,
 			no_merges:1,
@@ -105,6 +107,8 @@ struct rev_info {
 #define REV_TREE_DIFFERENT	2
 
 /* revision.c */
+typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
+volatile show_early_output_fn_t show_early_output;
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);

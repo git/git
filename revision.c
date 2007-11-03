@@ -10,6 +10,8 @@
 #include "reflog-walk.h"
 #include "patch-ids.h"
 
+volatile show_early_output_fn_t show_early_output;
+
 static char *path_name(struct name_path *path, const char *name)
 {
 	struct name_path *p;
@@ -533,6 +535,7 @@ static int limit_list(struct rev_info *revs)
 		struct commit_list *entry = list;
 		struct commit *commit = list->item;
 		struct object *obj = &commit->object;
+		show_early_output_fn_t show;
 
 		list = list->next;
 		free(entry);
@@ -550,6 +553,13 @@ static int limit_list(struct rev_info *revs)
 		if (revs->min_age != -1 && (commit->date > revs->min_age))
 			continue;
 		p = &commit_list_insert(commit, p)->next;
+
+		show = show_early_output;
+		if (!show)
+			continue;
+
+		show(revs, newlist);
+		show_early_output = NULL;
 	}
 	if (revs->cherry_pick)
 		cherry_pick_list(newlist, revs);
@@ -990,6 +1000,18 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->lifo = 0;
 				revs->topo_order = 1;
 				continue;
+			}
+			if (!prefixcmp(arg, "--early-output")) {
+				int count = 100;
+				switch (arg[14]) {
+				case '=':
+					count = atoi(arg+15);
+					/* Fallthrough */
+				case 0:
+					revs->topo_order = 1;
+					revs->early_output = count;
+					continue;
+				}
 			}
 			if (!strcmp(arg, "--parents")) {
 				revs->parents = 1;
