@@ -142,7 +142,7 @@ static void create_pack_file(void)
 	struct async rev_list;
 	struct child_process pack_objects;
 	int create_full_pack = (nr_our_refs == want_obj.nr && !have_obj.nr);
-	char data[8193], progress[128];
+	char data[8193];
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
 	int buffered = -1;
