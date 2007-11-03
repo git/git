@@ -91,7 +91,7 @@ $ git remote
 origin
 $ git branch -r
 origin/master
-$ git remote add linux-nfs git://linux-nfs.org/pub/nfs-2.6.git
+$ git remote add linux-nfs git://linux-nfs.org/pub/linux/nfs-2.6.git
 $ git remote
 linux-nfs
 origin
