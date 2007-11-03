@@ -208,7 +208,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	if (!show_stage) {
 		fputs(tag, stdout);
 	} else {
-		printf("%s%06o %s %d\t",
+		printf("%s%06lo %s %d\t",
 		       tag,
 		       ntohl(ce->ce_mode),
 		       abbrev ? find_unique_abbrev(ce->sha1,abbrev)
