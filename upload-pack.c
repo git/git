@@ -265,29 +265,6 @@ static void create_pack_file(void)
 				goto fail;
 		}
 	}
-
-	if (finish_command(&pack_objects)) {
-		error("git-upload-pack: git-pack-objects died with error.");
-		goto fail;
-	}
-	if (finish_async(&rev_list))
-		goto fail;	/* error was already reported */
-
-	/* flush the data */
-	if (0 <= buffered) {
-		data[0] = buffered;
-		sz = send_client_data(1, data, 1);
-		if (sz < 0)
-			goto fail;
-		fprintf(stderr, "flushed.\n");
-	}
-	if (use_sideband)
-		packet_flush(1);
-	return;
-
- fail:
-	send_client_data(3, abort_msg, sizeof(abort_msg));
-	die("git-upload-pack: %s", abort_msg);
 #else
 	char *cp;
 
@@ -322,6 +299,14 @@ static void create_pack_file(void)
 	}
 	else
 		goto fail;
+#endif
+
+	if (finish_command(&pack_objects)) {
+		error("git-upload-pack: git-pack-objects died with error.");
+		goto fail;
+	}
+	if (finish_async(&rev_list))
+		goto fail;	/* error was already reported */
 
 	/* flush the data */
 	if (0 <= buffered) {
@@ -333,16 +318,11 @@ static void create_pack_file(void)
 	}
 	if (use_sideband)
 		packet_flush(1);
-	if (waitpid(pack_objects.pid, NULL, 0) < 0)
-		die("git-upload-pack: waiting for pack-objects: %s",
-			strerror(errno));
 	return;
 
  fail:
-	kill(pack_objects.pid, SIGKILL);
 	send_client_data(3, abort_msg, sizeof(abort_msg));
 	die("git-upload-pack: %s", abort_msg);
-#endif
 }
 
 static int got_sha1(char *hex, unsigned char *sha1)
