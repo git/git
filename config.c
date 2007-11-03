@@ -443,7 +443,7 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 	int ret;
 	FILE *f = fopen(filename, "r");
 
-	ret = 1;
+	ret = -1;
 	if (f) {
 		config_file = f;
 		config_file_name = filename;
