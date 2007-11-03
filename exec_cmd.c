@@ -121,7 +121,7 @@ int execv_git_cmd(const char **argv)
 	trace_argv_printf(argv, -1, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */
-	execvp(cmd.buf, (char **)argv);
+	execvp(cmd.buf, argv);
 
 	trace_printf("trace: exec failed: %s\n", strerror(errno));
 
@@ -175,7 +175,7 @@ int spawnv_git_cmd(const char **argv, int pin[2], int pout[2])
 
 	trace_argv_printf(argv, -1, "trace: exec:");
 
-	pid = spawnvpe_pipe(cmd.buf, argv, environ,
+	pid = spawnvpe_pipe(cmd.buf, argv, (const char **)environ,
 		pin, pout);
 
 	argv[0] = tmp;

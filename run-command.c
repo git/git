@@ -15,7 +15,7 @@ int start_command(struct child_process *cmd)
 	int fdin[2] = { -1, -1 };
 	int fdout[2] = { -1, -1 };
 	int fderr[2] = { -1, -1 };
-	char **env = environ;
+	const char **env = (const char **)environ;
 
 	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
