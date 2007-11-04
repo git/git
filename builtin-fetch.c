@@ -517,7 +517,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			depth = argv[i];
 			continue;
 		}
-		if (!strcmp(arg, "--quiet")) {
+		if (!strcmp(arg, "--quiet") || !strcmp(arg, "-q")) {
 			quiet = 1;
 			continue;
 		}
