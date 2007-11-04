@@ -8,8 +8,8 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [verse]
-'git-reset' [--mixed | --soft | --hard] [<commit>]
-'git-reset' [--mixed] <commit> [--] <paths>...
+'git-reset' [--mixed | --soft | --hard] [-q] [<commit>]
+'git-reset' [--mixed] [-q] <commit> [--] <paths>...
 
 DESCRIPTION
 -----------
@@ -44,6 +44,9 @@ OPTIONS
 	Matches the working tree and index to that of the tree being
 	switched to. Any changes to tracked files in the working tree
 	since <commit> are lost.
+
+-q::
+	Be quiet, only report errors.
 
 <commit>::
 	Commit to make the current HEAD.
