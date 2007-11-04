@@ -36,7 +36,7 @@ test_expect_success 'cherry-pick a non-merge with -m should fail' '
 	git reset --hard &&
 	git checkout a^0 &&
 	! git cherry-pick -m 1 b &&
-	git diff --exit-code a
+	git diff --exit-code a --
 
 '
 
@@ -45,7 +45,7 @@ test_expect_success 'cherry pick a merge without -m should fail' '
 	git reset --hard &&
 	git checkout a^0 &&
 	! git cherry-pick c &&
-	git diff --exit-code a
+	git diff --exit-code a --
 
 '
 
@@ -98,7 +98,7 @@ test_expect_success 'revert a merge (1)' '
 	git reset --hard &&
 	git checkout c^0 &&
 	git revert -m 1 c &&
-	git diff --exit-code a
+	git diff --exit-code a --
 
 '
 
@@ -107,7 +107,7 @@ test_expect_success 'revert a merge (2)' '
 	git reset --hard &&
 	git checkout c^0 &&
 	git revert -m 2 c &&
-	git diff --exit-code b
+	git diff --exit-code b --
 
 '
 
