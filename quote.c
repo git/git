@@ -26,7 +26,7 @@ void sq_quote_buf(struct strbuf *dst, const char *src)
 
 	strbuf_addch(dst, '\'');
 	while (*src) {
-		size_t len = strcspn(src, "'\\");
+		size_t len = strcspn(src, "'!");
 		strbuf_add(dst, src, len);
 		src += len;
 		while (need_bs_quote(*src)) {
