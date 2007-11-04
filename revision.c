@@ -1398,6 +1398,36 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 			   commit->buffer, strlen(commit->buffer));
 }
 
+enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
+{
+	if (commit->object.flags & SHOWN)
+		return commit_ignore;
+	if (revs->unpacked && has_sha1_pack(commit->object.sha1, revs->ignore_packed))
+		return commit_ignore;
+	if (commit->object.flags & UNINTERESTING)
+		return commit_ignore;
+	if (revs->min_age != -1 && (commit->date > revs->min_age))
+		return commit_ignore;
+	if (revs->no_merges && commit->parents && commit->parents->next)
+		return commit_ignore;
+	if (!commit_match(commit, revs))
+		return commit_ignore;
+	if (revs->prune_fn && revs->dense) {
+		/* Commit without changes? */
+		if (!(commit->object.flags & TREECHANGE)) {
+			/* drop merges unless we want parenthood */
+			if (!revs->parents)
+				return commit_ignore;
+			/* non-merge - always ignore it */
+			if (!commit->parents || !commit->parents->next)
+				return commit_ignore;
+		}
+		if (revs->parents && rewrite_parents(revs, commit) < 0)
+			return commit_error;
+	}
+	return commit_show;
+}
+
 static struct commit *get_revision_1(struct rev_info *revs)
 {
 	if (!revs->commits)
@@ -1425,36 +1455,15 @@ static struct commit *get_revision_1(struct rev_info *revs)
 			if (add_parents_to_list(revs, commit, &revs->commits) < 0)
 				return NULL;
 		}
-		if (commit->object.flags & SHOWN)
-			continue;
 
-		if (revs->unpacked && has_sha1_pack(commit->object.sha1,
-						    revs->ignore_packed))
-		    continue;
-
-		if (commit->object.flags & UNINTERESTING)
+		switch (simplify_commit(revs, commit)) {
+		case commit_ignore:
 			continue;
-		if (revs->min_age != -1 && (commit->date > revs->min_age))
-			continue;
-		if (revs->no_merges &&
-		    commit->parents && commit->parents->next)
-			continue;
-		if (!commit_match(commit, revs))
-			continue;
-		if (revs->prune_fn && revs->dense) {
-			/* Commit without changes? */
-			if (!(commit->object.flags & TREECHANGE)) {
-				/* drop merges unless we want parenthood */
-				if (!revs->parents)
-					continue;
-				/* non-merge - always ignore it */
-				if (!commit->parents || !commit->parents->next)
-					continue;
-			}
-			if (revs->parents && rewrite_parents(revs, commit) < 0)
-				return NULL;
+		case commit_error:
+			return NULL;
+		default:
+			return commit;
 		}
-		return commit;
 	} while (revs->commits);
 	return NULL;
 }

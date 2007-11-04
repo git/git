@@ -133,4 +133,12 @@ extern void add_object(struct object *obj,
 
 extern void add_pending_object(struct rev_info *revs, struct object *obj, const char *name);
 
+enum commit_action {
+	commit_ignore,
+	commit_show,
+	commit_error
+};
+
+extern enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit);
+
 #endif
