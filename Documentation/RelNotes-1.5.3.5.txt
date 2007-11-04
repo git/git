@@ -63,8 +63,8 @@ Fixes since v1.5.3.4
 
  * Git segfaulted when reading an invalid .gitattributes file.  Fixed.
 
- * post-receive-email example hook fixed was fixed for
-   non-fast-forward updates.
+ * post-receive-email example hook was fixed for non-fast-forward
+   updates.
 
  * Documentation updates for supported (but previously undocumented)
    options of "git-archive" and "git-reflog".
