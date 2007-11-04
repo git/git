@@ -7,6 +7,7 @@
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "common-cmds.h"
+#include "dir.h"
 //#include <sys/ioctl.h>
 
 /* most GUI terminals set COLUMNS (although some don't export it) */
@@ -242,6 +243,29 @@ void list_common_cmds_help(void)
 
 static void show_man_page(const char *git_cmd)
 {
+#ifdef __MINGW32__
+	{
+		char *htmlpath = make_native_separator(
+		                   mkpath("%s/doc/git/html/%s.html"
+		                          , git_install_prefix()
+		                         , git_cmd)
+		                 );
+		if (!file_exists(htmlpath)) {
+			htmlpath = make_native_separator(
+		                      mkpath("%s/doc/git/html/git-%s.html"
+		                             , git_install_prefix()
+		                             , git_cmd)
+		                    );
+			if (!file_exists(htmlpath)) {
+				fprintf(stderr, "Can't find help for '%s'.\n"
+				        , git_cmd);
+				exit(1);
+			}
+		}
+		printf("Launching default browser to display HTML help ...\n");
+		ShellExecute(NULL, "open", htmlpath, NULL, NULL, 0);
+	}
+#else
 	const char *page;
 
 	if (!prefixcmp(git_cmd, "git"))
@@ -255,17 +279,6 @@ static void show_man_page(const char *git_cmd)
 		page = p;
 	}
 
-#ifdef __MINGW32__
-	{
-		const char *htmlpath = make_native_separator(
-		                         mkpath("%s/doc/git/html/%s.html"
-		                                  , git_install_prefix()
-		                                  , page)
-		                       );
-		printf("Launching default browser to display HTML help ...\n");
-		ShellExecute(NULL, "open", htmlpath, NULL, NULL, 0);
-	}
-#else
 	execlp("man", "man", page, NULL);
 #endif
 }
