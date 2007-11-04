@@ -3,10 +3,10 @@
 #include "transport.h"
 #include "remote.h"
 
-static const char peek_remote_usage[] =
-"git-peek-remote [--upload-pack=<git-upload-pack>] [<host>:]<directory>";
+static const char ls_remote_usage[] =
+"git-ls-remote [--upload-pack=<git-upload-pack>] [<host>:]<directory>";
 
-int cmd_peek_remote(int argc, const char **argv, const char *prefix)
+int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	const char *dest = NULL;
@@ -43,14 +43,14 @@ int cmd_peek_remote(int argc, const char **argv, const char *prefix)
 				flags |= REF_NORMAL;
 				continue;
 			}
-			usage(peek_remote_usage);
+			usage(ls_remote_usage);
 		}
 		dest = arg;
 		break;
 	}
 
 	if (!dest || i != argc - 1)
-		usage(peek_remote_usage);
+		usage(ls_remote_usage);
 
 	transport = transport_get(NULL, dest);
 	if (uploadpack != NULL)

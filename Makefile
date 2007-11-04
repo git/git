@@ -210,7 +210,6 @@ BASIC_LDFLAGS =
 SCRIPT_SH = \
 	git-bisect.sh git-checkout.sh \
 	git-clean.sh git-clone.sh git-commit.sh \
-	git-ls-remote.sh \
 	git-merge-one-file.sh git-mergetool.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh git-rebase--interactive.sh \
 	git-repack.sh git-request-pull.sh \
@@ -345,6 +344,7 @@ BUILTIN_OBJS = \
 	builtin-log.o \
 	builtin-ls-files.o \
 	builtin-ls-tree.o \
+	builtin-ls-remote.o \
 	builtin-mailinfo.o \
 	builtin-mailsplit.o \
 	builtin-merge-base.o \
@@ -352,7 +352,6 @@ BUILTIN_OBJS = \
 	builtin-mv.o \
 	builtin-name-rev.o \
 	builtin-pack-objects.o \
-	builtin-peek-remote.o \
 	builtin-prune.o \
 	builtin-prune-packed.o \
 	builtin-push.o \
