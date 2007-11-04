@@ -3,16 +3,22 @@
 # Copyright (c) 2005-2006 Pavel Roskin
 #
 
-USAGE="[-d] [-f] [-n] [-q] [-x | -X] [--] <paths>..."
-LONG_USAGE='Clean untracked files from the working directory
-	-d	remove directories as well
-	-f	override clean.requireForce and clean anyway
-	-n 	don'\''t remove anything, just show what would be done
-	-q	be quiet, only report errors
-	-x	remove ignored files as well
-	-X	remove only ignored files
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git-clean [options] <paths>...
+
+Clean untracked files from the working directory
+
 When optional <paths>... arguments are given, the paths
-affected are further limited to those that match them.'
+affected are further limited to those that match them.
+--
+d remove directories as well
+f override clean.requireForce and clean anyway
+n don't remove anything, just show what would be done
+q be quiet, only report errors
+x remove ignored files as well
+X remove only ignored files"
+
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
@@ -55,23 +61,20 @@ do
 		shift
 		break
 		;;
-	-*)
-		usage
-		;;
 	*)
-		break
+		usage # should not happen
+		;;
 	esac
 	shift
 done
 
 if [ "$disabled" = true ]; then
-	echo "clean.requireForce set and -n or -f not given; refusing to clean"
-	exit 1
+	die "clean.requireForce set and -n or -f not given; refusing to clean"
 fi
 
-case "$ignored,$ignoredonly" in
-	1,1) usage;;
-esac
+if [ "$ignored,$ignoredonly" = "1,1" ]; then
+	die "-x and -X cannot be set together"
+fi
 
 if [ -z "$ignored" ]; then
 	excl="--exclude-per-directory=.gitignore"
