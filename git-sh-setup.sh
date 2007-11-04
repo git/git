@@ -16,9 +16,36 @@ die() {
 	exit 1
 }
 
-usage() {
-	die "Usage: $0 $USAGE"
-}
+if test -n "$OPTIONS_SPEC"; then
+	usage() {
+		exec "$0" -h
+	}
+
+	parseopt_extra=
+	[ -n "$OPTIONS_KEEPDASHDASH" ] &&
+		parseopt_extra="$parseopt_extra --keep-dashdash"
+
+	eval `echo "$OPTIONS_SPEC" | git rev-parse --parseopt $parseopt_extra -- "$@" || echo exit $?`
+else
+	usage() {
+		die "Usage: $0 $USAGE"
+	}
+
+	if [ -z "$LONG_USAGE" ]
+	then
+		LONG_USAGE="Usage: $0 $USAGE"
+	else
+		LONG_USAGE="Usage: $0 $USAGE
+
+$LONG_USAGE"
+	fi
+
+	case "$1" in
+		-h|--h|--he|--hel|--help)
+		echo "$LONG_USAGE"
+		exit
+	esac
+fi
 
 set_reflog_action() {
 	if [ -z "${GIT_REFLOG_ACTION:+set}" ]
@@ -90,21 +117,6 @@ get_author_ident_from_commit () {
 	git show -s --pretty=raw --encoding="$encoding" "$1" |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"
 }
-
-if [ -z "$LONG_USAGE" ]
-then
-	LONG_USAGE="Usage: $0 $USAGE"
-else
-	LONG_USAGE="Usage: $0 $USAGE
-
-$LONG_USAGE"
-fi
-
-case "$1" in
-	-h|--h|--he|--hel|--help)
-	echo "$LONG_USAGE"
-	exit
-esac
 
 # Make sure we are in a valid repository of a vintage we understand.
 if [ -z "$SUBDIRECTORY_OK" ]
