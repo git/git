@@ -282,7 +282,7 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		commit = lookup_commit(item->sha1);
 		if (commit && !parse_commit(commit)) {
 			pretty_print_commit(CMIT_FMT_ONELINE, commit,
-					    &subject, 0, NULL, NULL, 0);
+					    &subject, 0, NULL, NULL, 0, 0);
 			sub = subject.buf;
 		}
 		printf("%c %s%-*s%s %s %s\n", c, branch_get_color(color),
