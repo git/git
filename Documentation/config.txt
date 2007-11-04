@@ -432,6 +432,12 @@ fetch.unpackLimit::
 	pack from a push can make the push operation complete faster,
 	especially on slow filesystems.
 
+format.numbered::
+	A boolean which can enable sequence numbers in patch subjects.
+	Seting this option to "auto" will enable it only if there is
+	more than one patch.  See --numbered option in
+	gitlink:git-format-patch[1].
+
 format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See gitlink:git-format-patch[1].
