@@ -15,8 +15,6 @@
 struct rev_info;
 struct log_info;
 
-typedef void (prune_fn_t)(struct rev_info *revs, struct commit *commit);
-
 struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
@@ -28,12 +26,11 @@ struct rev_info {
 	/* Basic information */
 	const char *prefix;
 	void *prune_data;
-	prune_fn_t *prune_fn;
-
 	unsigned int early_output;
 
 	/* Traversal flags */
 	unsigned int	dense:1,
+			prune:1,
 			no_merges:1,
 			no_walk:1,
 			remove_empty_trees:1,

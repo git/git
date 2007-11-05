@@ -308,12 +308,29 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	struct commit_list **pp, *parent;
 	int tree_changed = 0, tree_same = 0;
 
+	/*
+	 * If we don't do pruning, everything is interesting
+	 */
+	if (!revs->prune) {
+		commit->object.flags |= TREECHANGE;
+		return;
+	}
+
 	if (!commit->tree)
 		return;
 
 	if (!commit->parents) {
 		if (!rev_same_tree_as_empty(revs, commit->tree))
 			commit->object.flags |= TREECHANGE;
+		return;
+	}
+
+	/*
+	 * Normal non-merge commit? If we don't want to make the
+	 * history dense, we consider it always to be a change..
+	 */
+	if (!revs->dense && !commit->parents->next) {
+		commit->object.flags |= TREECHANGE;
 		return;
 	}
 
@@ -415,8 +432,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 	 * simplify the commit history and find the parent
 	 * that has no differences in the path set if one exists.
 	 */
-	if (revs->prune_fn)
-		revs->prune_fn(revs, commit);
+	try_to_simplify_commit(revs, commit);
 
 	if (revs->no_walk)
 		return 0;
@@ -683,9 +699,6 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->min_age = -1;
 	revs->skip_count = -1;
 	revs->max_count = -1;
-
-	revs->prune_fn = NULL;
-	revs->prune_data = NULL;
 
 	revs->commit_format = CMIT_FMT_DEFAULT;
 
@@ -1271,7 +1284,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		diff_tree_setup_paths(revs->prune_data, &revs->pruning);
 		/* Can't prune commits with rename following: the paths change.. */
 		if (!revs->diffopt.follow_renames)
-			revs->prune_fn = try_to_simplify_commit;
+			revs->prune = 1;
 		if (!revs->full_diff)
 			diff_tree_setup_paths(revs->prune_data, &revs->diffopt);
 	}
@@ -1412,7 +1425,7 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 		return commit_ignore;
 	if (!commit_match(commit, revs))
 		return commit_ignore;
-	if (revs->prune_fn && revs->dense) {
+	if (revs->prune && revs->dense) {
 		/* Commit without changes? */
 		if (!(commit->object.flags & TREECHANGE)) {
 			/* drop merges unless we want parenthood */

@@ -117,4 +117,9 @@ extern int interactive_add(void);
 extern void add_files_to_cache(int verbose, const char *prefix, const char **files);
 extern int rerere(void);
 
+static inline int single_parent(struct commit *commit)
+{
+	return commit->parents && !commit->parents->next;
+}
+
 #endif /* COMMIT_H */

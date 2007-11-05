@@ -88,15 +88,9 @@ static int estimate_commit_count(struct rev_info *rev, struct commit_list *list)
 	while (list) {
 		struct commit *commit = list->item;
 		unsigned int flags = commit->object.flags;
-
 		list = list->next;
-		if (flags & UNINTERESTING)
-			continue;
-		if (rev->prune_fn && rev->dense && !(flags & TREECHANGE)) {
-			if (commit->parents && !commit->parents->next)
-				continue;
-		}
-		n++;
+		if ((flags & TREECHANGE) && !(flags & UNINTERESTING))
+			n++;
 	}
 	return n;
 }
