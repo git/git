@@ -8,6 +8,7 @@ struct sha1file {
 	int fd, error;
 	unsigned int offset, namelen;
 	SHA_CTX ctx;
+	off_t total;
 	struct progress *tp;
 	char name[PATH_MAX];
 	int do_crc;

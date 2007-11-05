@@ -14,11 +14,10 @@
 #define TP_IDX_MAX      8
 
 struct throughput {
+	off_t prev_total;
 	struct timeval prev_tv;
-	off_t total;
-	unsigned long count;
-	unsigned long avg_bytes;
-	unsigned long last_bytes[TP_IDX_MAX];
+	unsigned int avg_bytes;
+	unsigned int last_bytes[TP_IDX_MAX];
 	unsigned int avg_misecs;
 	unsigned int last_misecs[TP_IDX_MAX];
 	unsigned int idx;
@@ -110,7 +109,7 @@ static int display(struct progress *progress, unsigned n, int done)
 	return 0;
 }
 
-void display_throughput(struct progress *progress, unsigned long n)
+void display_throughput(struct progress *progress, off_t total)
 {
 	struct throughput *tp;
 	struct timeval tv;
@@ -124,13 +123,12 @@ void display_throughput(struct progress *progress, unsigned long n)
 
 	if (!tp) {
 		progress->throughput = tp = calloc(1, sizeof(*tp));
-		if (tp)
+		if (tp) {
+			tp->prev_total = total;
 			tp->prev_tv = tv;
+		}
 		return;
 	}
-
-	tp->total += n;
-	tp->count += n;
 
 	/*
 	 * We have x = bytes and y = microsecs.  We want z = KiB/s:
@@ -152,37 +150,37 @@ void display_throughput(struct progress *progress, unsigned long n)
 
 	if (misecs > 512) {
 		int l = sizeof(tp->display);
+		unsigned int count = total - tp->prev_total;
+		tp->prev_total = total;
 		tp->prev_tv = tv;
-		tp->avg_bytes += tp->count;
+		tp->avg_bytes += count;
 		tp->avg_misecs += misecs;
 
-		if (tp->total > 1 << 30) {
+		if (total > 1 << 30) {
 			l -= snprintf(tp->display, l, ", %u.%2.2u GiB",
-				      (int)(tp->total >> 30),
-				      (int)(tp->total & ((1 << 30) - 1)) / 10737419);
-		} else if (tp->total > 1 << 20) {
+				      (int)(total >> 30),
+				      (int)(total & ((1 << 30) - 1)) / 10737419);
+		} else if (total > 1 << 20) {
 			l -= snprintf(tp->display, l, ", %u.%2.2u MiB",
-				      (int)(tp->total >> 20),
-				      ((int)(tp->total & ((1 << 20) - 1))
+				      (int)(total >> 20),
+				      ((int)(total & ((1 << 20) - 1))
 				       * 100) >> 20);
-		} else if (tp->total > 1 << 10) {
+		} else if (total > 1 << 10) {
 			l -= snprintf(tp->display, l, ", %u.%2.2u KiB",
-				      (int)(tp->total >> 10),
-				      ((int)(tp->total & ((1 << 10) - 1))
+				      (int)(total >> 10),
+				      ((int)(total & ((1 << 10) - 1))
 				       * 100) >> 10);
 		} else {
-			l -= snprintf(tp->display, l, ", %u bytes",
-				      (int)tp->total);
+			l -= snprintf(tp->display, l, ", %u bytes", (int)total);
 		}
 		snprintf(tp->display + sizeof(tp->display) - l, l,
-			 " | %lu KiB/s", tp->avg_bytes / tp->avg_misecs);
+			 " | %u KiB/s", tp->avg_bytes / tp->avg_misecs);
 
 		tp->avg_bytes -= tp->last_bytes[tp->idx];
 		tp->avg_misecs -= tp->last_misecs[tp->idx];
-		tp->last_bytes[tp->idx] = tp->count;
+		tp->last_bytes[tp->idx] = count;
 		tp->last_misecs[tp->idx] = misecs;
 		tp->idx = (tp->idx + 1) % TP_IDX_MAX;
-		tp->count = 0;
 
 		if (progress->last_value != -1 && progress_update)
 			display(progress, progress->last_value, 0);

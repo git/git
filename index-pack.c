@@ -87,9 +87,9 @@ static void *fill(int min)
 				die("early EOF");
 			die("read error on input: %s", strerror(errno));
 		}
-		if (from_stdin)
-			display_throughput(progress, ret);
 		input_len += ret;
+		if (from_stdin)
+			display_throughput(progress, consumed_bytes + input_len);
 	} while (input_len < min);
 	return input_buffer;
 }
