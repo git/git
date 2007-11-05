@@ -390,7 +390,8 @@ sub cmd_dcommit {
 		     "If these changes depend on each other, re-running ",
 		     "without --no-rebase will be required."
 	}
-	foreach my $d (@$linear_refs) {
+	while (1) {
+		my $d = shift @$linear_refs or last;
 		unless (defined $last_rev) {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
 			unless (defined $last_rev) {
@@ -423,14 +424,14 @@ sub cmd_dcommit {
 
 			# we always want to rebase against the current HEAD,
 			# not any head that was passed to us
-			my @diff = command('diff-tree', 'HEAD',
+			my @diff = command('diff-tree', $d,
 			                   $gs->refname, '--');
 			my @finish;
 			if (@diff) {
 				@finish = rebase_cmd();
-				print STDERR "W: HEAD and ", $gs->refname,
+				print STDERR "W: $d and ", $gs->refname,
 				             " differ, using @finish:\n",
-				             "@diff";
+				             join("\n", @diff), "\n";
 			} else {
 				print "No changes between current HEAD and ",
 				      $gs->refname,
@@ -439,6 +440,45 @@ sub cmd_dcommit {
 				@finish = qw/reset --mixed/;
 			}
 			command_noisy(@finish, $gs->refname);
+			if (@diff) {
+				@refs = ();
+				my ($url_, $rev_, $uuid_, $gs_) =
+				              working_head_info($head, \@refs);
+				my ($linear_refs_, $parents_) =
+				              linearize_history($gs_, \@refs);
+				if (scalar(@$linear_refs) !=
+				    scalar(@$linear_refs_)) {
+					fatal "# of revisions changed ",
+					  "\nbefore:\n",
+					  join("\n", @$linear_refs),
+					  "\n\nafter:\n",
+					  join("\n", @$linear_refs_), "\n",
+					  'If you are attempting to commit ',
+					  "merges, try running:\n\t",
+					  'git rebase --interactive',
+					  '--preserve-merges ',
+					  $gs->refname,
+					  "\nBefore dcommitting";
+				}
+				if ($url_ ne $url) {
+					fatal "URL mismatch after rebase: ",
+					      "$url_ != $url";
+				}
+				if ($uuid_ ne $uuid) {
+					fatal "uuid mismatch after rebase: ",
+					      "$uuid_ != $uuid";
+				}
+				# remap parents
+				my (%p, @l, $i);
+				for ($i = 0; $i < scalar @$linear_refs; $i++) {
+					my $new = $linear_refs_->[$i] or next;
+					$p{$new} =
+						$parents->{$linear_refs->[$i]};
+					push @l, $new;
+				}
+				$parents = \%p;
+				$linear_refs = \@l;
+			}
 			$last_rev = $cmt_rev;
 		}
 	}
