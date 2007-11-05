@@ -188,7 +188,7 @@ core.worktree::
 	Set the path to the working tree.  The value will not be
 	used in combination with repositories found automatically in
 	a .git directory (i.e. $GIT_DIR is not set).
-	This can be overriden by the GIT_WORK_TREE environment
+	This can be overridden by the GIT_WORK_TREE environment
 	variable and the '--work-tree' command line option.
 
 core.logAllRefUpdates::
@@ -324,10 +324,11 @@ branch.<name>.remote::
 	If this option is not given, `git fetch` defaults to remote "origin".
 
 branch.<name>.merge::
-	When in branch <name>, it tells `git fetch` the default refspec to
-	be marked for merging in FETCH_HEAD. The value has exactly to match
-	a remote part of one of the refspecs which are fetched from the remote
-	given by "branch.<name>.remote".
+	When in branch <name>, it tells `git fetch` the default
+	refspec to be marked for merging in FETCH_HEAD. The value is
+	handled like the remote part of a refspec, and must match a
+	ref which is fetched from the remote given by
+	"branch.<name>.remote".
 	The merge information is used by `git pull` (which at first calls
 	`git fetch`) to lookup the default branch for merging. Without
 	this option, `git pull` defaults to merge the first refspec fetched.
@@ -336,6 +337,12 @@ branch.<name>.merge::
 	another branch in the local repository, you can point
 	branch.<name>.merge to the desired branch, and use the special setting
 	`.` (a period) for branch.<name>.remote.
+
+branch.<name>.mergeoptions::
+	Sets default options for merging into branch <name>. The syntax and
+	supported options are equal to that of gitlink:git-merge[1], but
+	option values containing whitespace characters are currently not
+	supported.
 
 clean.requireForce::
 	A boolean to make git-clean do nothing unless given -f or -n.  Defaults
@@ -438,6 +445,19 @@ gc.aggressiveWindow::
 	The window size parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
 	to 10.
+
+gc.auto::
+	When there are approximately more than this many loose
+	objects in the repository, `git gc --auto` will pack them.
+	Some Porcelain commands use this command to perform a
+	light-weight garbage collection from time to time.  Setting
+	this to 0 disables it.
+
+gc.autopacklimit::
+	When there are more than this many packs that are not
+	marked with `*.keep` file in the repository, `git gc
+	--auto` consolidates them into one larger pack.  Setting
+	this to 0 disables this.
 
 gc.packrefs::
 	`git gc` does not run `git pack-refs` in a bare repository by
@@ -579,7 +599,7 @@ merge.summary::
 
 merge.tool::
 	Controls which merge resolution program is used by
-	gitlink:git-mergetool[l].  Valid values are: "kdiff3", "tkdiff",
+	gitlink:git-mergetool[1].  Valid values are: "kdiff3", "tkdiff",
 	"meld", "xxdiff", "emerge", "vimdiff", "gvimdiff", and "opendiff".
 
 merge.verbosity::
@@ -588,7 +608,7 @@ merge.verbosity::
 	message if conflicts were detected. Level 1 outputs only
 	conflicts, 2 outputs conflicts and file changes.  Level 5 and
 	above outputs debugging information.  The default is level 2.
-	Can be overriden by 'GIT_MERGE_VERBOSITY' environment variable.
+	Can be overridden by 'GIT_MERGE_VERBOSITY' environment variable.
 
 merge.<driver>.name::
 	Defines a human readable name for a custom low-level
@@ -630,8 +650,16 @@ pack.deltaCacheSize::
 	A value of 0 means no limit. Defaults to 0.
 
 pack.deltaCacheLimit::
-	The maxium size of a delta, that is cached in
+	The maximum size of a delta, that is cached in
 	gitlink:git-pack-objects[1]. Defaults to 1000.
+
+pack.threads::
+	Specifies the number of threads to spawn when searching for best
+	delta matches.  This requires that gitlink:git-pack-objects[1]
+	be compiled with pthreads otherwise this option is ignored with a
+	warning. This is meant to reduce packing time on multiprocessor
+	machines. The required amount of memory for the delta search window
+	is however multiplied by the number of threads.
 
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches

@@ -23,7 +23,7 @@ the symlink path1 and create directory path1 and file path1/file1.
 
 show_files() {
 	# show filesystem files, just [-dl] for type and name
-	/usr/bin/find path? -ls |
+	find path? -ls |
 	sed -e 's/^[0-9]* * [0-9]* * \([-bcdl]\)[^ ]* *[0-9]* *[^ ]* *[^ ]* *[0-9]* [A-Z][a-z][a-z] [0-9][0-9] [^ ]* /fs: \1 /'
 	# what's in the cache, just mode and name
 	git ls-files --stage |

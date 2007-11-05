@@ -7,13 +7,14 @@
 #include "remote.h"
 
 static const char send_pack_usage[] =
-"git-send-pack [--all] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
+"git-send-pack [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
 "  --all and explicit <ref> specification are mutually exclusive.";
 static const char *receivepack = "git-receive-pack";
 static int verbose;
 static int send_all;
 static int force_update;
 static int use_thin_pack;
+static int dry_run;
 
 /*
  * Make a pack stream and spit it out into file descriptor fd
@@ -177,6 +178,35 @@ static int receive_status(int in)
 	return ret;
 }
 
+static void update_tracking_ref(struct remote *remote, struct ref *ref)
+{
+	struct refspec rs;
+	int will_delete_ref;
+
+	rs.src = ref->name;
+	rs.dst = NULL;
+
+	if (!ref->peer_ref)
+		return;
+
+	will_delete_ref = is_null_sha1(ref->peer_ref->new_sha1);
+
+	if (!will_delete_ref &&
+			!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1))
+		return;
+
+	if (!remote_find_tracking(remote, &rs)) {
+		fprintf(stderr, "updating local tracking ref '%s'\n", rs.dst);
+		if (is_null_sha1(ref->peer_ref->new_sha1)) {
+			if (delete_ref(rs.dst, NULL))
+				error("Failed to delete");
+		} else
+			update_ref("update by push", rs.dst,
+					ref->new_sha1, NULL, 0, 0);
+		free(rs.dst);
+	}
+}
+
 static int send_pack(int in, int out, struct remote *remote, int nr_refspec, char **refspec)
 {
 	struct ref *ref;
@@ -204,7 +234,8 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 		return -1;
 
 	if (!remote_refs) {
-		fprintf(stderr, "No refs in common and none specified; doing nothing.\n");
+		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
+			"Perhaps you should specify a branch such as 'master'.\n");
 		return 0;
 	}
 
@@ -282,16 +313,18 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
 
-		if (ask_for_status_report) {
-			packet_write(out, "%s %s %s%c%s",
-				     old_hex, new_hex, ref->name, 0,
-				     "report-status");
-			ask_for_status_report = 0;
-			expect_status_report = 1;
+		if (!dry_run) {
+			if (ask_for_status_report) {
+				packet_write(out, "%s %s %s%c%s",
+					old_hex, new_hex, ref->name, 0,
+					"report-status");
+				ask_for_status_report = 0;
+				expect_status_report = 1;
+			}
+			else
+				packet_write(out, "%s %s %s",
+					old_hex, new_hex, ref->name);
 		}
-		else
-			packet_write(out, "%s %s %s",
-				     old_hex, new_hex, ref->name);
 		if (will_delete_ref)
 			fprintf(stderr, "deleting '%s'\n", ref->name);
 		else {
@@ -302,38 +335,21 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 			fprintf(stderr, "\n  from %s\n  to   %s\n",
 				old_hex, new_hex);
 		}
-		if (remote) {
-			struct refspec rs;
-			rs.src = ref->name;
-			rs.dst = NULL;
-			if (!remote_find_tracking(remote, &rs)) {
-				struct ref_lock *lock;
-				fprintf(stderr, " Also local %s\n", rs.dst);
-				if (will_delete_ref) {
-					if (delete_ref(rs.dst, NULL)) {
-						error("Failed to delete");
-					}
-				} else {
-					lock = lock_any_ref_for_update(rs.dst, NULL, 0);
-					if (!lock)
-						error("Failed to lock");
-					else
-						write_ref_sha1(lock, ref->new_sha1,
-							       "update by push");
-				}
-				free(rs.dst);
-			}
-		}
 	}
 
 	packet_flush(out);
-	if (new_refs)
+	if (new_refs && !dry_run)
 		ret = pack_objects(out, remote_refs);
 	close(out);
 
 	if (expect_status_report) {
 		if (receive_status(in))
 			ret = -4;
+	}
+
+	if (!dry_run && remote && ret == 0) {
+		for (ref = remote_refs; ref; ref = ref->next)
+			update_tracking_ref(remote, ref);
 	}
 
 	if (!new_refs && ret == 0)
@@ -368,7 +384,7 @@ int main(int argc, char **argv)
 	char *dest = NULL;
 	char **heads = NULL;
 	int fd[2], ret;
-	pid_t pid;
+	struct child_process *conn;
 	char *remote_name = NULL;
 	struct remote *remote = NULL;
 
@@ -394,6 +410,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--all")) {
 				send_all = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--dry-run")) {
+				dry_run = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--force")) {
@@ -426,18 +446,16 @@ int main(int argc, char **argv)
 
 	if (remote_name) {
 		remote = remote_get(remote_name);
-		if (!remote_has_uri(remote, dest)) {
+		if (!remote_has_url(remote, dest)) {
 			die("Destination %s is not a uri for %s",
 			    dest, remote_name);
 		}
 	}
 
-	pid = git_connect(fd, dest, receivepack, verbose ? CONNECT_VERBOSE : 0);
-	if (pid < 0)
-		return 1;
+	conn = git_connect(fd, dest, receivepack, verbose ? CONNECT_VERBOSE : 0);
 	ret = send_pack(fd[0], fd[1], remote, nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
-	ret |= finish_connect(pid);
+	ret |= finish_connect(conn);
 	return !!ret;
 }

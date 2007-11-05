@@ -21,6 +21,9 @@ add::
 	repository is cloned at the specified path, added to the
 	changeset and registered in .gitmodules.   If no path is
 	specified, the path is deduced from the repository specification.
+	If the repository url begins with ./ or ../, it is stored as
+	given but resolved as a relative path from the main project's
+	url when cloning.
 
 status::
 	Show the status of the submodules. This will print the SHA-1 of the

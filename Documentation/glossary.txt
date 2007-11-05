@@ -52,8 +52,8 @@ GIT Glossary
 [[def_cherry-picking]]cherry-picking::
 	In <<def_SCM,SCM>> jargon, "cherry pick" means to choose a subset of
 	changes out of a series of changes (typically commits) and record them
-	as a new series of changes on top of different codebase. In GIT, this is
-	performed by "git cherry-pick" command to extract the change introduced
+	as a new series of changes on top of a different codebase. In GIT, this is
+	performed by the "git cherry-pick" command to extract the change introduced
 	by an existing <<def_commit,commit>> and to record it based on the tip
 	of the current <<def_branch,branch>> as a new commit.
 
@@ -281,7 +281,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 [[def_pickaxe]]pickaxe::
 	The term <<def_pickaxe,pickaxe>> refers to an option to the diffcore
 	routines that help select changes that add or delete a given text
-	string. With the --pickaxe-all option, it can be used to view the full
+	string. With the `--pickaxe-all` option, it can be used to view the full
 	<<def_changeset,changeset>> that introduced or removed, say, a
 	particular line of text. See gitlink:git-diff[1].
 
@@ -301,8 +301,8 @@ This commit is referred to as a "merge commit", or sometimes just a
 [[def_push]]push::
 	Pushing a <<def_branch,branch>> means to get the branch's
 	<<def_head_ref,head ref>> from a remote <<def_repository,repository>>,
-	find out if it is an ancestor to the branch's local
-	head ref is a direct, and in that case, putting all
+	find out if it is a direct ancestor to the branch's local
+	head ref, and in that case, putting all
 	objects, which are <<def_reachable,reachable>> from the local
 	head ref, and which are missing from the remote
 	repository, into the remote
@@ -347,7 +347,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	it as my origin branch head". And `git push
 	$URL refs/heads/master:refs/heads/to-upstream` means "publish my
 	master branch head as to-upstream branch at $URL". See also
-	gitlink:git-push[1]
+	gitlink:git-push[1].
 
 [[def_repository]]repository::
 	A collection of <<def_ref,refs>> together with an

@@ -1024,6 +1024,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--cherry-pick")) {
 				revs->cherry_pick = 1;
+				revs->limited = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--objects")) {
@@ -1133,22 +1134,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				continue;
 			}
 			if (!strncmp(arg, "--date=", 7)) {
-				if (!strcmp(arg + 7, "relative"))
-					revs->date_mode = DATE_RELATIVE;
-				else if (!strcmp(arg + 7, "iso8601") ||
-					 !strcmp(arg + 7, "iso"))
-					revs->date_mode = DATE_ISO8601;
-				else if (!strcmp(arg + 7, "rfc2822") ||
-					 !strcmp(arg + 7, "rfc"))
-					revs->date_mode = DATE_RFC2822;
-				else if (!strcmp(arg + 7, "short"))
-					revs->date_mode = DATE_SHORT;
-				else if (!strcmp(arg + 7, "local"))
-					revs->date_mode = DATE_LOCAL;
-				else if (!strcmp(arg + 7, "default"))
-					revs->date_mode = DATE_NORMAL;
-				else
-					die("unknown date format %s", arg);
+				revs->date_mode = parse_date_format(arg + 7);
 				continue;
 			}
 			if (!strcmp(arg, "--log-size")) {
@@ -1208,8 +1194,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
-				if (strcmp(argv[i], "-z"))
-					revs->diff = 1;
 				i += opts - 1;
 				continue;
 			}
@@ -1252,6 +1236,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		object = get_reference(revs, def, sha1, 0);
 		add_pending_object_with_mode(revs, object, def, mode);
 	}
+
+	/* Did the user ask for any diff output? Run the diff! */
+	if (revs->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT)
+		revs->diff = 1;
+
+	/* Pickaxe and rename following needs diffs */
+	if (revs->diffopt.pickaxe || revs->diffopt.follow_renames)
+		revs->diff = 1;
 
 	if (revs->topo_order)
 		revs->limited = 1;

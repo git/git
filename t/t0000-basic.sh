@@ -50,14 +50,14 @@ test "$no_symlinks" && {
 # git init has been done in an empty repository.
 # make sure it is empty.
 
-/usr/bin/find .git/objects -type f -print >should-be-empty
+find .git/objects -type f -print >should-be-empty
 test_expect_success \
     '.git/objects should be empty after git init in an empty repo.' \
     'cmp -s /dev/null should-be-empty'
 
 # also it should have 2 subdirectories; no fan-out anymore, pack, and info.
 # 3 is counting "objects" itself
-/usr/bin/find .git/objects -type d -print >full-of-directories
+find .git/objects -type d -print >full-of-directories
 test_expect_success \
     '.git/objects should have 3 subdirectories.' \
     'test $(wc -l < full-of-directories) = 3'
@@ -112,7 +112,7 @@ do
 done
 test_expect_success \
     'adding various types of objects with git update-index --add.' \
-    '/usr/bin/find path* ! -type d -print | xargs git update-index --add'
+    'find path* ! -type d -print | xargs git update-index --add'
 
 # Show them and see that matches what we expect.
 test_expect_success \
@@ -289,7 +289,7 @@ test_expect_success \
     'commit2=$(echo NO | git commit-tree $P -p $commit0 -p $commit0) &&
      parent=$(git show --pretty=raw $commit2 |
 	 sed -n -e "s/^parent //p" -e "/^author /q" |
-	 /usr/bin/sort -u) &&
+	 sort -u) &&
      test "z$commit0" = "z$parent" &&
      numparent=$(git show --pretty=raw $commit2 |
 	 sed -n -e "s/^parent //p" -e "/^author /q" |
@@ -305,7 +305,7 @@ test_expect_success 'update-index D/F conflict' '
 	test $numpath0 = 1
 '
 
-test "$no_symlinks" || {
+test "$no_symlinks" ||
 test_expect_success 'absolute path works as expected' '
 	mkdir first &&
 	ln -s ../.git first/.git &&
@@ -321,6 +321,5 @@ test_expect_success 'absolute path works as expected' '
 	sym="$(cd first; pwd -P)"/file &&
 	test "$sym" = "$(test-absolute-path $dir2/syml)"
 '
-}
 
 test_done

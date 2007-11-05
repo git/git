@@ -54,6 +54,8 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#else
+int mkstemp (char *__template);
 #endif
 #include <assert.h>
 #include <regex.h>
@@ -158,6 +160,11 @@ extern ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 extern int gitsetenv(const char *, const char *, int);
 #endif
 
+#ifdef NO_MKDTEMP
+#define mkdtemp gitmkdtemp
+extern char *gitmkdtemp(char *);
+#endif
+
 #ifdef NO_UNSETENV
 #define unsetenv gitunsetenv
 extern void gitunsetenv(const char *);
@@ -181,6 +188,12 @@ extern uintmax_t gitstrtoumax(const char *, char **, int);
 #ifdef NO_HSTRERROR
 #define hstrerror githstrerror
 extern const char *githstrerror(int herror);
+#endif
+
+#ifdef NO_MEMMEM
+#define memmem gitmemmem
+void *gitmemmem(const void *haystack, size_t haystacklen,
+                const void *needle, size_t needlelen);
 #endif
 
 extern void release_pack_memory(size_t, int);
@@ -216,17 +229,18 @@ static inline void *xmalloc(size_t size)
 	return ret;
 }
 
-static inline char *xstrndup(const char *str, size_t len)
+static inline void *xmemdupz(const void *data, size_t len)
 {
-	char *p;
-
-	p = memchr(str, '\0', len);
-	if (p)
-		len = p - str;
-	p = xmalloc(len + 1);
-	memcpy(p, str, len);
+	char *p = xmalloc(len + 1);
+	memcpy(p, data, len);
 	p[len] = '\0';
 	return p;
+}
+
+static inline char *xstrndup(const char *str, size_t len)
+{
+	char *p = memchr(str, '\0', len);
+	return xmemdupz(str, p ? p - str : len);
 }
 
 static inline void *xrealloc(void *ptr, size_t size)
@@ -419,6 +433,8 @@ unsigned int alarm(unsigned int seconds);
 #include <winsock2.h>
 void mingw_execve(const char *cmd, const char **argv, const char **env);
 #define execve mingw_execve
+extern void mingw_execvp(const char *cmd, const char **argv);
+#define execvp mingw_execvp
 int fork();
 typedef int pid_t;
 #define waitpid(pid, status, options) \
@@ -432,6 +448,7 @@ typedef int pid_t;
 #define SIGKILL 0
 #define SIGCHLD 0
 #define SIGALRM 0
+#define SIGPIPE 0
 #define ECONNABORTED 0
 
 int kill(pid_t pid, int sig);
@@ -478,11 +495,30 @@ char *mingw_getcwd(char *pointer, int len);
 int mingw_socket(int domain, int type, int protocol);
 #define socket mingw_socket
 
+int mingw_rename(const char*, const char*);
+#define rename mingw_rename
+
 #define setlinebuf(x)
 #define fsync(x) 0
+#define getppid() 1
 
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);
+extern char *mingw_path_lookup(const char *cmd, char **path);
+extern char **mingw_get_path_split(void);
+extern void mingw_free_path_split(char **path);
+
+/* Use git_lstat() instead of lstat()/stat() and
+ * git_fstat() instead of fstat() on Windows
+ */
+int git_lstat(const char *file_name, struct stat *buf);
+int git_fstat(int fd, struct stat *buf);
+#define lstat(x,y) git_lstat(x,y)
+#define stat(x,y) git_lstat(x,y)
+#define fstat(x,y) git_fstat(x,y)
+
+int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
+#define vsnprintf mingw_vsnprintf
 
 extern __attribute__((noreturn)) int git_exit(int code);
 #define exit git_exit

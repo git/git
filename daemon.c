@@ -9,6 +9,10 @@
 #define HOST_NAME_MAX 256
 #endif
 
+#ifndef NI_MAXSERV
+#define NI_MAXSERV 32
+#endif
+
 static int log_syslog;
 static int verbose;
 static int reuseaddr;

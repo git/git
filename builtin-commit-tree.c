@@ -14,36 +14,6 @@
 /*
  * FIXME! Share the code with "write-tree.c"
  */
-static void init_buffer(char **bufp, unsigned int *sizep)
-{
-	*bufp = xmalloc(BLOCKING);
-	*sizep = 0;
-}
-
-static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
-{
-	char one_line[2048];
-	va_list args;
-	int len;
-	unsigned long alloc, size, newsize;
-	char *buf;
-
-	va_start(args, fmt);
-	len = vsnprintf(one_line, sizeof(one_line), fmt, args);
-	va_end(args);
-	size = *sizep;
-	newsize = size + len + 1;
-	alloc = (size + 32767) & ~32767;
-	buf = *bufp;
-	if (newsize > alloc) {
-		alloc = (newsize + 32767) & ~32767;
-		buf = xrealloc(buf, alloc);
-		*bufp = buf;
-	}
-	*sizep = newsize - 1;
-	memcpy(buf + size, one_line, len);
-}
-
 static void check_valid(unsigned char *sha1, enum object_type expect)
 {
 	enum object_type type = sha1_object_info(sha1, NULL);
@@ -87,9 +57,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	int parents = 0;
 	unsigned char tree_sha1[20];
 	unsigned char commit_sha1[20];
-	char comment[1000];
-	char *buffer;
-	unsigned int size;
+	struct strbuf buffer;
 	int encoding_is_utf8;
 
 	git_config(git_default_config);
@@ -118,8 +86,8 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	/* Not having i18n.commitencoding is the same as having utf-8 */
 	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
 
-	init_buffer(&buffer, &size);
-	add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
+	strbuf_init(&buffer, 8192); /* should avoid reallocs for the headers */
+	strbuf_addf(&buffer, "tree %s\n", sha1_to_hex(tree_sha1));
 
 	/*
 	 * NOTE! This ordering means that the same exact tree merged with a
@@ -127,26 +95,24 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	 * if everything else stays the same.
 	 */
 	for (i = 0; i < parents; i++)
-		add_buffer(&buffer, &size, "parent %s\n", sha1_to_hex(parent_sha1[i]));
+		strbuf_addf(&buffer, "parent %s\n", sha1_to_hex(parent_sha1[i]));
 
 	/* Person/date information */
-	add_buffer(&buffer, &size, "author %s\n", git_author_info(1));
-	add_buffer(&buffer, &size, "committer %s\n", git_committer_info(1));
+	strbuf_addf(&buffer, "author %s\n", git_author_info(1));
+	strbuf_addf(&buffer, "committer %s\n", git_committer_info(1));
 	if (!encoding_is_utf8)
-		add_buffer(&buffer, &size,
-				"encoding %s\n", git_commit_encoding);
-	add_buffer(&buffer, &size, "\n");
+		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
+	strbuf_addch(&buffer, '\n');
 
 	/* And add the comment */
-	while (fgets(comment, sizeof(comment), stdin) != NULL)
-		add_buffer(&buffer, &size, "%s", comment);
+	if (strbuf_read(&buffer, 0, 0) < 0)
+		die("git-commit-tree: read returned %s", strerror(errno));
 
 	/* And check the encoding */
-	buffer[size] = '\0';
-	if (encoding_is_utf8 && !is_utf8(buffer))
+	if (encoding_is_utf8 && !is_utf8(buffer.buf))
 		fprintf(stderr, commit_utf8_warn);
 
-	if (!write_sha1_file(buffer, size, commit_type, commit_sha1)) {
+	if (!write_sha1_file(buffer.buf, buffer.len, commit_type, commit_sha1)) {
 		printf("%s\n", sha1_to_hex(commit_sha1));
 		return 0;
 	}

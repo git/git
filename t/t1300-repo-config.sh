@@ -601,7 +601,7 @@ echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
 
-test "$no_symlinks" || {
+test "$no_symlinks" ||
 test_expect_success 'symlinked configuration' '
 
 	ln -s notyet myconfig &&
@@ -616,6 +616,5 @@ test_expect_success 'symlinked configuration' '
 	test "z$(GIT_CONFIG=notyet git config test.xyzzy)" = zrezrov
 
 '
-}
 
 test_done

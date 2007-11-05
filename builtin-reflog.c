@@ -269,12 +269,6 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 		if (fclose(cb.newlog))
 			status |= error("%s: %s", strerror(errno),
 					newlog_path);
-#ifdef __MINGW32__
-		/* rename fails if the destination exists */
-		if (unlink(log_file))
-			status |= error("cannot remove %s", log_file);
-		else
-#endif
 		if (rename(newlog_path, log_file)) {
 			status |= error("cannot rename %s to %s",
 					newlog_path, log_file);

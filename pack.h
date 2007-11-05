@@ -59,6 +59,7 @@ extern const char *write_idx_file(const char *index_name, struct pack_idx_entry 
 
 extern int verify_pack(struct packed_git *, int);
 extern void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t);
+extern char *index_pack_lockfile(int fd);
 
 #define PH_ERROR_EOF		(-1)
 #define PH_ERROR_PACK_SIGNATURE	(-2)

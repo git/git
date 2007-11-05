@@ -8,8 +8,9 @@ git-rebase - Forward-port local commits to the updated upstream head
 SYNOPSIS
 --------
 [verse]
-'git-rebase' [-i | --interactive] [-v | --verbose] [-m | --merge] [-C<n>]
-	[-p | --preserve-merges] [--onto <newbase>] <upstream> [<branch>]
+'git-rebase' [-i | --interactive] [-v | --verbose] [-m | --merge]
+	[-C<n>] [ --whitespace=<option>] [-p | --preserve-merges]
+	[--onto <newbase>] <upstream> [<branch>]
 'git-rebase' --continue | --skip | --abort
 
 DESCRIPTION
@@ -27,7 +28,10 @@ The current branch is reset to <upstream>, or <newbase> if the
 `git reset --hard <upstream>` (or <newbase>).
 
 The commits that were previously saved into the temporary area are
-then reapplied to the current branch, one by one, in order.
+then reapplied to the current branch, one by one, in order. Note that
+any commits in HEAD which introduce the same textual changes as a commit
+in HEAD..<upstream> are omitted (i.e., a patch already accepted upstream
+with a different commit message or timestamp will be skipped).
 
 It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
@@ -60,6 +64,26 @@ would be:
 
 The latter form is just a short-hand of `git checkout topic`
 followed by `git rebase master`.
+
+If the upstream branch already contains a change you have made (e.g.,
+because you mailed a patch which was applied upstream), then that commit
+will be skipped. For example, running `git-rebase master` on the
+following history (in which A' and A introduce the same set of changes,
+but have different committer information):
+
+------------
+          A---B---C topic
+         /
+    D---E---A'---F master
+------------
+
+will result in:
+
+------------
+                   B'---C' topic
+                  /
+    D---E---A'---F master
+------------
 
 Here is how you would transplant a topic branch based on one
 branch to another, to pretend that you forked the topic branch
@@ -209,6 +233,10 @@ OPTIONS
 	context exist they all must match.  By default no context is
 	ever ignored.
 
+--whitespace=<nowarn|warn|error|error-all|strip>::
+	This flag is passed to the `git-apply` program
+	(see gitlink:git-apply[1]) that applies the patch.
+
 -i, \--interactive::
 	Make a list of the commits which are about to be rebased.  Let the
 	user edit that list before rebasing.  This mode can also be used to
@@ -293,7 +321,7 @@ rebasing.
 If you want to fold two or more commits into one, replace the command
 "pick" with "squash" for the second and subsequent commit.  If the
 commits had different authors, it will attribute the squashed commit to
-the author of the last commit.
+the author of the first commit.
 
 In both cases, or when a "pick" does not succeed (because of merge
 errors), the loop will stop to let you fix things, and you can continue

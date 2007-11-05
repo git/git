@@ -14,7 +14,7 @@ username=
 list=
 verify=
 LINES=0
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
     case "$1" in
     -a)
@@ -53,7 +53,7 @@ do
 		shift
 		;;
 	esac
-	git rev-parse --symbolic --tags | /usr/bin/sort |
+	git rev-parse --symbolic --tags | sort |
 	    while read TAG
 	    do
 	        case "$TAG" in

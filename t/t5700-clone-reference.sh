@@ -38,7 +38,7 @@ cd "$base_dir"
 
 test_expect_success 'pulling from reference' \
 'cd C &&
-git pull ../B'
+git pull ../B master'
 
 cd "$base_dir"
 
@@ -61,7 +61,7 @@ test_expect_success 'existence of info/alternates' \
 cd "$base_dir"
 
 test_expect_success 'pulling from reference' \
-'cd D && git pull ../B'
+'cd D && git pull ../B master'
 
 cd "$base_dir"
 

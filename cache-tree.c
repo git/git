@@ -235,8 +235,7 @@ static int update_one(struct cache_tree *it,
 		      int missing_ok,
 		      int dryrun)
 {
-	unsigned long size, offset;
-	char *buffer;
+	struct strbuf buffer;
 	int i;
 
 	if (0 <= it->entry_count && has_sha1_file(it->sha1))
@@ -293,9 +292,7 @@ static int update_one(struct cache_tree *it,
 	/*
 	 * Then write out the tree object for this level.
 	 */
-	size = 8192;
-	buffer = xmalloc(size);
-	offset = 0;
+	strbuf_init(&buffer, 8192);
 
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = cache[i];
@@ -332,15 +329,9 @@ static int update_one(struct cache_tree *it,
 		if (!ce->ce_mode)
 			continue; /* entry being removed */
 
-		if (size < offset + entlen + 100) {
-			size = alloc_nr(offset + entlen + 100);
-			buffer = xrealloc(buffer, size);
-		}
-		offset += sprintf(buffer + offset,
-				  "%o %.*s", mode, entlen, path + baselen);
-		buffer[offset++] = 0;
-		hashcpy((unsigned char*)buffer + offset, sha1);
-		offset += 20;
+		strbuf_grow(&buffer, entlen + 100);
+		strbuf_addf(&buffer, "%o %.*s%c", mode, entlen, path + baselen, '\0');
+		strbuf_add(&buffer, sha1, 20);
 
 #if DEBUG
 		fprintf(stderr, "cache-tree update-one %o %.*s\n",
@@ -349,10 +340,10 @@ static int update_one(struct cache_tree *it,
 	}
 
 	if (dryrun)
-		hash_sha1_file(buffer, offset, tree_type, it->sha1);
+		hash_sha1_file(buffer.buf, buffer.len, tree_type, it->sha1);
 	else
-		write_sha1_file(buffer, offset, tree_type, it->sha1);
-	free(buffer);
+		write_sha1_file(buffer.buf, buffer.len, tree_type, it->sha1);
+	strbuf_release(&buffer);
 	it->entry_count = i;
 #if DEBUG
 	fprintf(stderr, "cache-tree update-one (%d ent, %d subtree) %s\n",
@@ -378,12 +369,8 @@ int cache_tree_update(struct cache_tree *it,
 	return 0;
 }
 
-static void *write_one(struct cache_tree *it,
-		       char *path,
-		       int pathlen,
-		       char *buffer,
-		       unsigned long *size,
-		       unsigned long *offset)
+static void write_one(struct strbuf *buffer, struct cache_tree *it,
+                      const char *path, int pathlen)
 {
 	int i;
 
@@ -393,13 +380,9 @@ static void *write_one(struct cache_tree *it,
 	 * tree-sha1 (missing if invalid)
 	 * subtree_nr "cache-tree" entries for subtrees.
 	 */
-	if (*size < *offset + pathlen + 100) {
-		*size = alloc_nr(*offset + pathlen + 100);
-		buffer = xrealloc(buffer, *size);
-	}
-	*offset += sprintf(buffer + *offset, "%.*s%c%d %d\n",
-			   pathlen, path, 0,
-			   it->entry_count, it->subtree_nr);
+	strbuf_grow(buffer, pathlen + 100);
+	strbuf_add(buffer, path, pathlen);
+	strbuf_addf(buffer, "%c%d %d\n", 0, it->entry_count, it->subtree_nr);
 
 #if DEBUG
 	if (0 <= it->entry_count)
@@ -412,8 +395,7 @@ static void *write_one(struct cache_tree *it,
 #endif
 
 	if (0 <= it->entry_count) {
-		hashcpy((unsigned char*)buffer + *offset, it->sha1);
-		*offset += 20;
+		strbuf_add(buffer, it->sha1, 20);
 	}
 	for (i = 0; i < it->subtree_nr; i++) {
 		struct cache_tree_sub *down = it->down[i];
@@ -423,21 +405,13 @@ static void *write_one(struct cache_tree *it,
 					     prev->name, prev->namelen) <= 0)
 				die("fatal - unsorted cache subtree");
 		}
-		buffer = write_one(down->cache_tree, down->name, down->namelen,
-				   buffer, size, offset);
+		write_one(buffer, down->cache_tree, down->name, down->namelen);
 	}
-	return buffer;
 }
 
-void *cache_tree_write(struct cache_tree *root, unsigned long *size_p)
+void cache_tree_write(struct strbuf *sb, struct cache_tree *root)
 {
-	char path[PATH_MAX];
-	unsigned long size = 8192;
-	char *buffer = xmalloc(size);
-
-	*size_p = 0;
-	path[0] = 0;
-	return write_one(root, path, 0, buffer, &size, size_p);
+	write_one(sb, root, "", 0);
 }
 
 static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)

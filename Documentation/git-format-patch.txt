@@ -168,7 +168,7 @@ git-format-patch origin::
 	is created in the current directory.
 
 git-format-patch \--root origin::
-	Extract all commits which that leads to 'origin' since the
+	Extract all commits that lead to 'origin' since the
 	inception of the project.
 
 git-format-patch -M -B origin::

@@ -17,13 +17,20 @@ struct dir_entry {
 	char name[FLEX_ARRAY]; /* more */
 };
 
+#define EXC_FLAG_NODIR 1
+#define EXC_FLAG_NOWILDCARD 2
+#define EXC_FLAG_ENDSWITH 4
+
 struct exclude_list {
 	int nr;
 	int alloc;
 	struct exclude {
 		const char *pattern;
+		int patternlen;
 		const char *base;
 		int baselen;
+		int to_exclude;
+		int flags;
 	} **excludes;
 };
 
@@ -63,5 +70,7 @@ extern struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathna
 
 extern char *get_relative_cwd(char *buffer, int size, const char *dir);
 extern int is_inside_dir(const char *dir);
+
+extern int remove_dir_recursively(struct strbuf *path, int only_empty);
 
 #endif

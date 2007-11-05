@@ -39,10 +39,7 @@ static void insert_author_oneline(struct path_list *list,
 	while (authorlen > 0 && isspace(author[authorlen - 1]))
 		authorlen--;
 
-	buffer = xmalloc(authorlen + 1);
-	memcpy(buffer, author, authorlen);
-	buffer[authorlen] = '\0';
-
+	buffer = xmemdupz(author, authorlen);
 	item = path_list_insert(buffer, list);
 	if (item->util == NULL)
 		item->util = xcalloc(1, sizeof(struct path_list));
@@ -66,13 +63,9 @@ static void insert_author_oneline(struct path_list *list,
 		oneline++;
 		onelinelen--;
 	}
-
 	while (onelinelen > 0 && isspace(oneline[onelinelen - 1]))
 		onelinelen--;
-
-	buffer = xmalloc(onelinelen + 1);
-	memcpy(buffer, oneline, onelinelen);
-	buffer[onelinelen] = '\0';
+	buffer = xmemdupz(oneline, onelinelen);
 
 	if (dot3) {
 		int dot3len = strlen(dot3);

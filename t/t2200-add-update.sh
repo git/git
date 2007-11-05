@@ -16,11 +16,12 @@ only the updates to dir/sub.'
 test_expect_success setup '
 	echo initial >check &&
 	echo initial >top &&
+	echo initial >foo &&
 	mkdir dir1 dir2 &&
 	echo initial >dir1/sub1 &&
 	echo initial >dir1/sub2 &&
 	echo initial >dir2/sub3 &&
-	git add check dir1 dir2 top &&
+	git add check dir1 dir2 top foo &&
 	test_tick
 	git-commit -m initial &&
 
@@ -73,6 +74,14 @@ test_expect_success 'update from a subdirectory' '
 test_expect_success 'change gets noticed' '
 
 	test "$(git diff-files --name-status dir1)" = ""
+
+'
+
+test_expect_success 'replace a file with a symlink' '
+
+	rm foo &&
+	ln -s top foo &&
+	git add -u -- foo
 
 '
 

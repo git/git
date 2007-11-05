@@ -59,15 +59,12 @@ esac
 # '
 # . ./test-lib.sh
 
-error () {
-	echo "* error: $*"
-	trap - exit
-	exit 1
-}
-
-say () {
-	echo "* $*"
-}
+[ "x$TERM" != "xdumb" ] &&
+	[ -t 1 ] &&
+	tput bold >/dev/null 2>&1 &&
+	tput setaf 1 >/dev/null 2>&1 &&
+	tput sgr0 >/dev/null 2>&1 &&
+	color=t
 
 test "${test_description}" != "" ||
 error "Test script did not set test_description."
@@ -84,17 +81,50 @@ do
 		exit 0 ;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
 		verbose=t; shift ;;
+	-q|--q|--qu|--qui|--quie|--quiet)
+		quiet=t; shift ;;
+	--no-color)
+	    color=; shift ;;
 	--no-python)
 		# noop now...
 		shift ;;
-	--no-symlinks)
-		no_symlinks=t; shift ;;
 	--no-hardlinks)
 		no_hardlinks=t; shift ;;
 	*)
 		break ;;
 	esac
 done
+
+if test -n "$color"; then
+	say_color () {
+		case "$1" in
+			error) tput bold; tput setaf 1;; # bold red
+			skip)  tput bold; tput setaf 2;; # bold green
+			pass)  tput setaf 2;;            # green
+			info)  tput setaf 3;;            # brown
+			*) test -n "$quiet" && return;;
+		esac
+		shift
+		echo "* $*"
+		tput sgr0
+	}
+else
+	say_color() {
+		test -z "$1" && test -n "$quiet" && return
+		shift
+		echo "* $*"
+	}
+fi
+
+error () {
+	say_color error "error: $*"
+	trap - exit
+	exit 1
+}
+
+say () {
+	say_color info "$*"
+}
 
 exec 5>&1
 if test "$verbose" = "t"
@@ -126,13 +156,13 @@ test_tick () {
 
 test_ok_ () {
 	test_count=$(expr "$test_count" + 1)
-	say "  ok $test_count: $@"
+	say_color "" "  ok $test_count: $@"
 }
 
 test_failure_ () {
 	test_count=$(expr "$test_count" + 1)
 	test_failure=$(expr "$test_failure" + 1);
-	say "FAIL $test_count: $1"
+	say_color error "FAIL $test_count: $1"
 	shift
 	echo "$@" | sed -e 's/^/	/'
 	test "$immediate" = "" || { trap - exit; exit 1; }
@@ -162,9 +192,9 @@ test_skip () {
 	done
 	case "$to_skip" in
 	t)
-		say >&3 "skipping test: $@"
+		say_color skip >&3 "skipping test: $@"
 		test_count=$(expr "$test_count" + 1)
-		say "skip $test_count: $1"
+		say_color skip "skip $test_count: $1"
 		: true
 		;;
 	*)
@@ -251,11 +281,11 @@ test_done () {
 		# The Makefile provided will clean this test area so
 		# we will leave things as they are.
 
-		say "passed all $test_count test(s)"
+		say_color pass "passed all $test_count test(s)"
 		exit 0 ;;
 
 	*)
-		say "failed $test_failure among $test_count test(s)"
+		say_color error "failed $test_failure among $test_count test(s)"
 		exit 1 ;;
 
 	esac
@@ -287,6 +317,10 @@ rm -fr "$test"
 test_create_repo $test
 cd "$test"
 
+# test for symbolic link capability
+ln -s x y 2> /dev/null && test -l y 2> /dev/null || no_symlinks=1
+rm -f y
+
 this_test=$(expr "./$0" : '.*/\(t[0-9]*\)-[^/]*$')
 for skp in $GIT_SKIP_TESTS
 do
@@ -300,8 +334,21 @@ do
 	done
 	case "$to_skip" in
 	t)
-		say >&3 "skipping test $this_test altogether"
-		say "skip all tests in $this_test"
+		say_color skip >&3 "skipping test $this_test altogether"
+		say_color skip "skip all tests in $this_test"
 		test_done
 	esac
 done
+
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) sort and find
+	sort () {
+		/usr/bin/sort "$@"
+	}
+	find () {
+		/usr/bin/find "$@"
+	}
+	;;
+esac

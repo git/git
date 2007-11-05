@@ -88,10 +88,7 @@ const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 		return arg;
 #else
 	/* don't add prefix to absolute paths */
-	const int is_absolute =
-		is_dir_sep(arg[0]) ||
-		(arg[0] && arg[1] == ':' && is_dir_sep(arg[2]));
-	if (is_absolute)
+	if (is_absolute_path(arg))
 		pfx_len = 0;
 	else
 #endif
@@ -252,7 +249,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	const char *work_tree_env = getenv(GIT_WORK_TREE_ENVIRONMENT);
 	static char cwd[PATH_MAX+1];
 	const char *gitdirenv;
-	int len, offset, minoffset = 0;
+	int len, offset;
+	int minoffset = 0;
 
 	/*
 	 * If GIT_DIR is set explicitly, we're not going
@@ -264,9 +262,20 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		if (PATH_MAX - 40 < strlen(gitdirenv))
 			die("'$%s' too big", GIT_DIR_ENVIRONMENT);
 		if (is_git_directory(gitdirenv)) {
+			static char buffer[1024 + 1];
+			const char *retval;
+
 			if (!work_tree_env)
 				return set_work_tree(gitdirenv);
-			return NULL;
+			retval = get_relative_cwd(buffer, sizeof(buffer) - 1,
+					get_git_work_tree());
+			if (!retval || !*retval)
+				return NULL;
+			set_git_dir(make_absolute_path(gitdirenv));
+			if (chdir(work_tree_env) < 0)
+				die ("Could not chdir to %s", work_tree_env);
+			strcat(buffer, "/");
+			return retval;
 		}
 		if (nongit_ok) {
 			*nongit_ok = 1;
@@ -277,10 +286,9 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 	if (!getcwd(cwd, sizeof(cwd)-1))
 		die("Unable to read current working directory");
-
 #ifdef __MINGW32__
-		if (cwd[1] == ':')
-			minoffset = 2;
+	if (cwd[1] == ':')
+		minoffset = 2;
 #endif
 
 	/*
@@ -305,7 +313,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		}
 		chdir("..");
 		do {
-			if (offset == minoffset) {
+			if (offset <= minoffset) {
 				if (nongit_ok) {
 					if (chdir(cwd))
 						die("Cannot come back to cwd");
@@ -314,7 +322,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				}
 				die("Not a git repository");
 			}
-		} while (cwd[--offset] != '/');
+		} while (offset > minoffset && cwd[--offset] != '/');
 	}
 
 	inside_git_dir = 0;

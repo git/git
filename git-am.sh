@@ -62,10 +62,8 @@ fall_back_3way () {
     mkdir "$dotest/patch-merge-tmp-dir"
 
     # First see if the patch records the index info that we can use.
-    git apply -z --index-info "$dotest/patch" \
-	>"$dotest/patch-merge-index-info" &&
-    GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-    git update-index -z --index-info <"$dotest/patch-merge-index-info" &&
+    git apply --build-fake-ancestor "$dotest/patch-merge-tmp-index" \
+	"$dotest/patch" &&
     GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
     git write-tree >"$dotest/patch-merge-base+" ||
     cannot_fallback "Repository lacks necessary blobs to fall back on 3-way merge."
@@ -109,7 +107,7 @@ dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary=
 resolvemsg= resume=
 git_apply_opt=
 
-while case "$#" in 0) break;; esac
+while test $# != 0
 do
 	case "$1" in
 	-d=*|--d=*|--do=*|--dot=*|--dote=*|--dotes=*|--dotest=*)
@@ -396,9 +394,7 @@ do
 		stop_here $this
 	fi
 
-	echo
 	printf 'Applying %s\n' "$SUBJECT"
-	echo
 
 	case "$resolved" in
 	'')
@@ -454,10 +450,8 @@ do
 	fi
 
 	tree=$(git write-tree) &&
-	echo Wrote tree $tree &&
 	parent=$(git rev-parse --verify HEAD) &&
 	commit=$(git commit-tree $tree -p $parent <"$dotest/final-commit") &&
-	echo Committed: $commit &&
 	git update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
 	stop_here $this
 
@@ -465,6 +459,8 @@ do
 	then
 		"$GIT_DIR"/hooks/post-applypatch
 	fi
+
+	git gc --auto
 
 	go_next
 done

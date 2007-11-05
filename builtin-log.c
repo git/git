@@ -437,6 +437,28 @@ static void gen_message_id(char *dest, unsigned int length, char *base)
 		 (int)(email_end - email_start - 1), email_start + 1);
 }
 
+static const char *clean_message_id(const char *msg_id)
+{
+	char ch;
+	const char *a, *z, *m;
+
+	m = msg_id;
+	while ((ch = *m) && (isspace(ch) || (ch == '<')))
+		m++;
+	a = m;
+	z = NULL;
+	while ((ch = *m)) {
+		if (!isspace(ch) && (ch != '>'))
+			z = m;
+		m++;
+	}
+	if (!z)
+		die("insane in-reply-to: %s", msg_id);
+	if (++z == m)
+		return a;
+	return xmemdupz(a, z - a);
+}
+
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
@@ -513,9 +535,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			endpos = strchr(committer, '>');
 			if (!endpos)
 				die("bogos committer info %s\n", committer);
-			add_signoff = xmalloc(endpos - committer + 2);
-			memcpy(add_signoff, committer, endpos - committer + 1);
-			add_signoff[endpos - committer + 1] = 0;
+			add_signoff = xmemdupz(committer, endpos - committer + 1);
 		}
 		else if (!strcmp(argv[i], "--attach")) {
 			rev.mime_boundary = git_version_string;
@@ -625,7 +645,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (numbered)
 		rev.total = total + start_number - 1;
 	rev.add_signoff = add_signoff;
-	rev.ref_message_id = in_reply_to;
+	if (in_reply_to)
+		rev.ref_message_id = clean_message_id(in_reply_to);
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];
@@ -763,13 +784,13 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 			sign = '-';
 
 		if (verbose) {
-			char *buf = NULL;
-			unsigned long buflen = 0;
-			pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
-			                    &buf, &buflen, 0, NULL, NULL, 0);
+			struct strbuf buf;
+			strbuf_init(&buf, 0);
+			pretty_print_commit(CMIT_FMT_ONELINE, commit,
+			                    &buf, 0, NULL, NULL, 0);
 			printf("%c %s %s\n", sign,
-			       sha1_to_hex(commit->object.sha1), buf);
-			free(buf);
+			       sha1_to_hex(commit->object.sha1), buf.buf);
+			strbuf_release(&buf);
 		}
 		else {
 			printf("%c %s\n", sign,

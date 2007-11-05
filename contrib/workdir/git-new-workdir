@@ -48,6 +48,12 @@ then
 		"a complete repository."
 fi
 
+# don't recreate a workdir over an existing repository
+if test -e "$new_workdir"
+then
+	die "destination directory '$new_workdir' already exists."
+fi
+
 # make sure the the links use full paths
 git_dir=$(cd "$git_dir"; pwd)
 

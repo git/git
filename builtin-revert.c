@@ -168,9 +168,7 @@ static void set_author_ident_env(const char *message)
 			char *line, *pend, *email, *timestamp;
 
 			p += 7;
-			line = xmalloc(eol + 1 - p);
-			memcpy(line, p, eol - p);
-			line[eol - p] = '\0';
+			line = xmemdupz(p, eol - p);
 			email = strchr(line, '<');
 			if (!email)
 				die ("Could not extract author email from %s",
@@ -351,7 +349,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			die ("Error wrapping up %s", defmsg);
 		fprintf(stderr, "Automatic %s failed.  "
 			"After resolving the conflicts,\n"
-			"mark the corrected paths with 'git-add <paths>'\n"
+			"mark the corrected paths with 'git add <paths>' "
 			"and commit the result.\n", me);
 		if (action == CHERRY_PICK) {
 			fprintf(stderr, "When commiting, use the option "

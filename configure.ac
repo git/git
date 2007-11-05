@@ -104,7 +104,7 @@ AC_MSG_NOTICE([CHECKS for programs])
 #
 AC_PROG_CC([cc gcc])
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
-AC_CHECK_TOOL(AR, ar, :)
+AC_CHECK_TOOLS(AR, [gar ar], :)
 AC_CHECK_PROGS(TAR, [gtar tar])
 # TCLTK_PATH will be set to some value if we want Tcl/Tk
 # or will be empty otherwise.

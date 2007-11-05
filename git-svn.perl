@@ -9,6 +9,11 @@ use vars qw/	$AUTHOR $VERSION
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
+# From which subdir have we been invoked?
+my $cmd_dir_prefix = eval {
+	command_oneline([qw/rev-parse --show-prefix/], STDERR => 0)
+} || '';
+
 my $git_dir_user_set = 1 if defined $ENV{GIT_DIR};
 $ENV{GIT_DIR} ||= '.git';
 $Git::SVN::default_repo_id = 'svn';
@@ -19,12 +24,12 @@ $Git::SVN::Log::TZ = $ENV{TZ};
 $ENV{TZ} = 'UTC';
 $| = 1; # unbuffer STDOUT
 
-sub fatal (@) { print STDERR @_; exit 1 }
+sub fatal (@) { print STDERR "@_\n"; exit 1 }
 require SVN::Core; # use()-ing this causes segfaults for me... *shrug*
 require SVN::Ra;
 require SVN::Delta;
 if ($SVN::Core::VERSION lt '1.1.0') {
-	fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)\n";
+	fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)";
 }
 push @Git::SVN::Ra::ISA, 'SVN::Ra';
 push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
@@ -123,8 +128,19 @@ my %cmd = (
 	'set-tree' => [ \&cmd_set_tree,
 	                "Set an SVN repository to a git tree-ish",
 			{ 'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
+	'create-ignore' => [ \&cmd_create_ignore,
+			     'Create a .gitignore per svn:ignore',
+			     { 'revision|r=i' => \$_revision
+			     } ],
+        'propget' => [ \&cmd_propget,
+		       'Print the value of a property on a file or directory',
+		       { 'revision|r=i' => \$_revision } ],
+        'proplist' => [ \&cmd_proplist,
+		       'List all properties of a file or directory',
+		       { 'revision|r=i' => \$_revision } ],
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
-			{ 'revision|r=i' => \$_revision } ],
+			{ 'revision|r=i' => \$_revision
+			} ],
 	'multi-fetch' => [ \&cmd_multi_fetch,
 	                   "Deprecated alias for $0 fetch --all",
 			   { 'revision|r=s' => \$_revision, %fc_opts } ],
@@ -144,10 +160,10 @@ my %cmd = (
 			  'non-recursive' => \$Git::SVN::Log::non_recursive,
 			  'authors-file|A=s' => \$_authors,
 			  'color' => \$Git::SVN::Log::color,
-			  'pager=s' => \$Git::SVN::Log::pager,
+			  'pager=s' => \$Git::SVN::Log::pager
 			} ],
 	'find-rev' => [ \&cmd_find_rev, "Translate between SVN revision numbers and tree-ish",
-			{ } ],
+			{} ],
 	'rebase' => [ \&cmd_rebase, "Fetch and rebase your working directory",
 			{ 'merge|m|M' => \$_merge,
 			  'verbose|v' => \$_verbose,
@@ -356,7 +372,7 @@ sub cmd_set_tree {
 		} elsif (scalar @tmp > 1) {
 			push @revs, reverse(command('rev-list',@tmp));
 		} else {
-			fatal "Failed to rev-parse $c\n";
+			fatal "Failed to rev-parse $c";
 		}
 	}
 	my $gs = Git::SVN->new;
@@ -366,7 +382,7 @@ sub cmd_set_tree {
 		fatal "There are new revisions that were fetched ",
 		      "and need to be merged (or acknowledged) ",
 		      "before committing.\nlast rev: $r_last\n",
-		      " current: $gs->{last_rev}\n";
+		      " current: $gs->{last_rev}";
 	}
 	$gs->set_tree($_) foreach @revs;
 	print "Done committing ",scalar @revs," revisions to SVN\n";
@@ -395,7 +411,7 @@ sub cmd_dcommit {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
 			unless (defined $last_rev) {
 				fatal "Unable to extract revision information ",
-				      "from commit $d~1\n";
+				      "from commit $d~1";
 			}
 		}
 		if ($_dry_run) {
@@ -487,7 +503,100 @@ sub cmd_show_ignore {
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
 	$gs ||= Git::SVN->new;
 	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
-	$gs->traverse_ignore(\*STDOUT, $gs->{path}, $r);
+	$gs->prop_walk($gs->{path}, $r, sub {
+		my ($gs, $path, $props) = @_;
+		print STDOUT "\n# $path\n";
+		my $s = $props->{'svn:ignore'} or return;
+		$s =~ s/[\r\n]+/\n/g;
+		chomp $s;
+		$s =~ s#^#$path#gm;
+		print STDOUT "$s\n";
+	});
+}
+
+sub cmd_create_ignore {
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	$gs ||= Git::SVN->new;
+	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
+	$gs->prop_walk($gs->{path}, $r, sub {
+		my ($gs, $path, $props) = @_;
+		# $path is of the form /path/to/dir/
+		my $ignore = '.' . $path . '.gitignore';
+		my $s = $props->{'svn:ignore'} or return;
+		open(GITIGNORE, '>', $ignore)
+		  or fatal("Failed to open `$ignore' for writing: $!");
+		$s =~ s/[\r\n]+/\n/g;
+		chomp $s;
+		# Prefix all patterns so that the ignore doesn't apply
+		# to sub-directories.
+		$s =~ s#^#/#gm;
+		print GITIGNORE "$s\n";
+		close(GITIGNORE)
+		  or fatal("Failed to close `$ignore': $!");
+		command_noisy('add', $ignore);
+	});
+}
+
+# get_svnprops(PATH)
+# ------------------
+# Helper for cmd_propget and cmd_proplist below.
+sub get_svnprops {
+	my $path = shift;
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	$gs ||= Git::SVN->new;
+
+	# prefix THE PATH by the sub-directory from which the user
+	# invoked us.
+	$path = $cmd_dir_prefix . $path;
+	fatal("No such file or directory: $path") unless -e $path;
+	my $is_dir = -d $path ? 1 : 0;
+	$path = $gs->{path} . '/' . $path;
+
+	# canonicalize the path (otherwise libsvn will abort or fail to
+	# find the file)
+	# File::Spec->canonpath doesn't collapse x/../y into y (for a
+	# good reason), so let's do this manually.
+	$path =~ s#/+#/#g;
+	$path =~ s#/\.(?:/|$)#/#g;
+	$path =~ s#/[^/]+/\.\.##g;
+	$path =~ s#/$##g;
+
+	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
+	my $props;
+	if ($is_dir) {
+		(undef, undef, $props) = $gs->ra->get_dir($path, $r);
+	}
+	else {
+		(undef, $props) = $gs->ra->get_file($path, $r, undef);
+	}
+	return $props;
+}
+
+# cmd_propget (PROP, PATH)
+# ------------------------
+# Print the SVN property PROP for PATH.
+sub cmd_propget {
+	my ($prop, $path) = @_;
+	$path = '.' if not defined $path;
+	usage(1) if not defined $prop;
+	my $props = get_svnprops($path);
+	if (not defined $props->{$prop}) {
+		fatal("`$path' does not have a `$prop' SVN property.");
+	}
+	print $props->{$prop} . "\n";
+}
+
+# cmd_proplist (PATH)
+# -------------------
+# Print the list of SVN properties for PATH.
+sub cmd_proplist {
+	my $path = shift;
+	$path = '.' if not defined $path;
+	my $props = get_svnprops($path);
+	print "Properties on '$path':\n";
+	foreach (sort keys %{$props}) {
+		print "  $_\n";
+	}
 }
 
 sub cmd_multi_init {
@@ -536,7 +645,7 @@ sub cmd_multi_fetch {
 sub cmd_commit_diff {
 	my ($ta, $tb, $url) = @_;
 	my $usage = "Usage: $0 commit-diff -r<revision> ".
-	            "<tree-ish> <tree-ish> [<URL>]\n";
+	            "<tree-ish> <tree-ish> [<URL>]";
 	fatal($usage) if (!defined $ta || !defined $tb);
 	my $svn_path;
 	if (!defined $url) {
@@ -554,7 +663,7 @@ sub cmd_commit_diff {
 	if (defined $_message && defined $_file) {
 		fatal("Both --message/-m and --file/-F specified ",
 		      "for the commit message.\n",
-		      "I have no idea what you mean\n");
+		      "I have no idea what you mean");
 	}
 	if (defined $_file) {
 		$_message = file_to_s($_file);
@@ -617,7 +726,7 @@ sub complete_svn_url {
 	if ($path !~ m#^[a-z\+]+://#) {
 		if (!defined $url || $url !~ m#^[a-z\+]+://#) {
 			fatal("E: '$path' is not a complete URL ",
-			      "and a separate URL is not specified\n");
+			      "and a separate URL is not specified");
 		}
 		return ($url, $path);
 	}
@@ -638,7 +747,7 @@ sub complete_url_ls_init {
 		$repo_path =~ s#^/+##;
 		unless ($ra) {
 			fatal("E: '$repo_path' is not a complete URL ",
-			      "and a separate URL is not specified\n");
+			      "and a separate URL is not specified");
 		}
 	}
 	my $url = $ra->{url};
@@ -811,7 +920,8 @@ sub cmt_metadata {
 
 sub working_head_info {
 	my ($head, $refs) = @_;
-	my ($fh, $ctx) = command_output_pipe('log', '--no-color', $head);
+	my @args = ('log', '--no-color', '--first-parent');
+	my ($fh, $ctx) = command_output_pipe(@args, $head);
 	my $hash;
 	my %max;
 	while (<$fh>) {
@@ -841,14 +951,9 @@ sub working_head_info {
 
 sub read_commit_parents {
 	my ($parents, $c) = @_;
-	my ($fh, $ctx) = command_output_pipe(qw/cat-file commit/, $c);
-	while (<$fh>) {
-		chomp;
-		last if '';
-		/^parent ($sha1)/ or next;
-		push @{$parents->{$c}}, $1;
-	}
-	close $fh; # break the pipe
+	chomp(my $p = command_oneline(qw/rev-list --parents -1/, $c));
+	$p =~ s/^($c)\s*// or die "rev-list --parents -1 $c failed!\n";
+	@{$parents->{$c}} = split(/ /, $p);
 }
 
 sub linearize_history {
@@ -1483,28 +1588,45 @@ sub rel_path {
 	$url;
 }
 
-sub traverse_ignore {
-	my ($self, $fh, $path, $r) = @_;
-	$path =~ s#^/+##g;
-	my $ra = $self->ra;
-	my ($dirent, undef, $props) = $ra->get_dir($path, $r);
+# prop_walk(PATH, REV, SUB)
+# -------------------------
+# Recursively traverse PATH at revision REV and invoke SUB for each
+# directory that contains a SVN property.  SUB will be invoked as
+# follows:  &SUB(gs, path, props);  where `gs' is this instance of
+# Git::SVN, `path' the path to the directory where the properties
+# `props' were found.  The `path' will be relative to point of checkout,
+# that is, if url://repo/trunk is the current Git branch, and that
+# directory contains a sub-directory `d', SUB will be invoked with `/d/'
+# as `path' (note the trailing `/').
+sub prop_walk {
+	my ($self, $path, $rev, $sub) = @_;
+
+	my ($dirent, undef, $props) = $self->ra->get_dir($path, $rev);
+	$path =~ s#^/*#/#g;
 	my $p = $path;
-	$p =~ s#^\Q$self->{path}\E(/|$)##;
-	print $fh length $p ? "\n# $p\n" : "\n# /\n";
-	if (my $s = $props->{'svn:ignore'}) {
-		$s =~ s/[\r\n]+/\n/g;
-		chomp $s;
-		if (length $p == 0) {
-			$s =~ s#\n#\n/$p#g;
-			print $fh "/$s\n";
-		} else {
-			$s =~ s#\n#\n/$p/#g;
-			print $fh "/$p/$s\n";
-		}
+	# Strip the irrelevant part of the path.
+	$p =~ s#^/+\Q$self->{path}\E(/|$)#/#;
+	# Ensure the path is terminated by a `/'.
+	$p =~ s#/*$#/#;
+
+	# The properties contain all the internal SVN stuff nobody
+	# (usually) cares about.
+	my $interesting_props = 0;
+	foreach (keys %{$props}) {
+		# If it doesn't start with `svn:', it must be a
+		# user-defined property.
+		++$interesting_props and next if $_ !~ /^svn:/;
+		# FIXME: Fragile, if SVN adds new public properties,
+		# this needs to be updated.
+		++$interesting_props if /^svn:(?:ignore|keywords|executable
+		                                 |eol-style|mime-type
+						 |externals|needs-lock)$/x;
 	}
+	&$sub($self, $p, $props) if $interesting_props;
+
 	foreach (sort keys %$dirent) {
 		next if $dirent->{$_}->{kind} != $SVN::Node::dir;
-		$self->traverse_ignore($fh, "$path/$_", $r);
+		$self->prop_walk($path . '/' . $_, $rev, $sub);
 	}
 }
 
@@ -1631,7 +1753,7 @@ sub assert_index_clean {
 		$x = command_oneline('write-tree');
 		if ($y ne $x) {
 			::fatal "trees ($treeish) $y != $x\n",
-			        "Something is seriously wrong...\n";
+			        "Something is seriously wrong...";
 		}
 	});
 }
@@ -1850,6 +1972,16 @@ sub find_parent_branch {
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
 					      $self->full_url, $ed)
 			  or die "SVN connection failed somewhere...\n";
+		} elsif ($self->ra->trees_match($new_url, $r0,
+			                        $self->full_url, $rev)) {
+			print STDERR "Trees match:\n",
+			             "  $new_url\@$r0\n",
+			             "  ${\$self->full_url}\@$rev\n",
+				     "Following parent with no changes\n";
+			$self->tmp_index_do(sub {
+			    command_noisy('read-tree', $parent);
+			});
+			$self->{last_commit} = $parent;
 		} else {
 			print STDERR "Following parent with do_update\n";
 			$ed = SVN::Git::Fetcher->new($self);
@@ -2047,7 +2179,7 @@ sub set_tree {
 	my ($self, $tree) = (shift, shift);
 	my $log_entry = ::get_commit_entry($tree);
 	unless ($self->{last_rev}) {
-		fatal("Must have an existing revision to commit\n");
+		fatal("Must have an existing revision to commit");
 	}
 	my %ed_opts = ( r => $self->{last_rev},
 	                log => $log_entry->{log},
@@ -2296,23 +2428,31 @@ sub ssl_server_trust {
 	my ($cred, $realm, $failures, $cert_info, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
 	print STDERR "Error validating server certificate for '$realm':\n";
-	if ($failures & $SVN::Auth::SSL::UNKNOWNCA) {
-		print STDERR " - The certificate is not issued by a trusted ",
-		      "authority. Use the\n",
-	              "   fingerprint to validate the certificate manually!\n";
-	}
-	if ($failures & $SVN::Auth::SSL::CNMISMATCH) {
-		print STDERR " - The certificate hostname does not match.\n";
-	}
-	if ($failures & $SVN::Auth::SSL::NOTYETVALID) {
-		print STDERR " - The certificate is not yet valid.\n";
-	}
-	if ($failures & $SVN::Auth::SSL::EXPIRED) {
-		print STDERR " - The certificate has expired.\n";
-	}
-	if ($failures & $SVN::Auth::SSL::OTHER) {
-		print STDERR " - The certificate has an unknown error.\n";
-	}
+	{
+		no warnings 'once';
+		# All variables SVN::Auth::SSL::* are used only once,
+		# so we're shutting up Perl warnings about this.
+		if ($failures & $SVN::Auth::SSL::UNKNOWNCA) {
+			print STDERR " - The certificate is not issued ",
+			    "by a trusted authority. Use the\n",
+			    "   fingerprint to validate ",
+			    "the certificate manually!\n";
+		}
+		if ($failures & $SVN::Auth::SSL::CNMISMATCH) {
+			print STDERR " - The certificate hostname ",
+			    "does not match.\n";
+		}
+		if ($failures & $SVN::Auth::SSL::NOTYETVALID) {
+			print STDERR " - The certificate is not yet valid.\n";
+		}
+		if ($failures & $SVN::Auth::SSL::EXPIRED) {
+			print STDERR " - The certificate has expired.\n";
+		}
+		if ($failures & $SVN::Auth::SSL::OTHER) {
+			print STDERR " - The certificate has ",
+			    "an unknown error.\n";
+		}
+	} # no warnings 'once'
 	printf STDERR
 	        "Certificate information:\n".
 	        " - Hostname: %s\n".
@@ -2394,20 +2534,6 @@ sub _read_password {
 	print STDERR "\n";
 	STDERR->flush;
 	$password;
-}
-
-package main;
-
-{
-	my $kill_stupid_warnings = $SVN::Node::none.$SVN::Node::file.
-				$SVN::Node::dir.$SVN::Node::unknown.
-				$SVN::Node::none.$SVN::Node::file.
-				$SVN::Node::dir.$SVN::Node::unknown.
-				$SVN::Auth::SSL::CNMISMATCH.
-				$SVN::Auth::SSL::NOTYETVALID.
-				$SVN::Auth::SSL::EXPIRED.
-				$SVN::Auth::SSL::UNKNOWNCA.
-				$SVN::Auth::SSL::OTHER;
 }
 
 package SVN::Git::Fetcher;
@@ -2826,16 +2952,21 @@ sub open_or_add_dir {
 	if (!defined $t) {
 		die "$full_path not known in r$self->{r} or we have a bug!\n";
 	}
-	if ($t == $SVN::Node::none) {
-		return $self->add_directory($full_path, $baton,
-						undef, -1, $self->{pool});
-	} elsif ($t == $SVN::Node::dir) {
-		return $self->open_directory($full_path, $baton,
-						$self->{r}, $self->{pool});
-	}
-	print STDERR "$full_path already exists in repository at ",
-		"r$self->{r} and it is not a directory (",
-		($t == $SVN::Node::file ? 'file' : 'unknown'),"/$t)\n";
+	{
+		no warnings 'once';
+		# SVN::Node::none and SVN::Node::file are used only once,
+		# so we're shutting up Perl's warnings about them.
+		if ($t == $SVN::Node::none) {
+			return $self->add_directory($full_path, $baton,
+			    undef, -1, $self->{pool});
+		} elsif ($t == $SVN::Node::dir) {
+			return $self->open_directory($full_path, $baton,
+			    $self->{r}, $self->{pool});
+		} # no warnings 'once'
+		print STDERR "$full_path already exists in repository at ",
+		    "r$self->{r} and it is not a directory (",
+		    ($t == $SVN::Node::file ? 'file' : 'unknown'),"/$t)\n";
+	} # no warnings 'once'
 	exit 1;
 }
 
@@ -2997,7 +3128,7 @@ sub apply_diff {
 		if (defined $o{$f}) {
 			$self->$f($m);
 		} else {
-			fatal("Invalid change type: $f\n");
+			fatal("Invalid change type: $f");
 		}
 	}
 	$self->rmdirs if $_rmdir;
@@ -3013,7 +3144,7 @@ package Git::SVN::Ra;
 use vars qw/@ISA $config_dir $_log_window_size/;
 use strict;
 use warnings;
-my ($can_do_switch, %ignored_err, $RA);
+my ($ra_invalid, $can_do_switch, %ignored_err, $RA);
 
 BEGIN {
 	# enforce temporary pool usage for some simple functions
@@ -3030,30 +3161,57 @@ BEGIN {
 	}
 }
 
+sub _auth_providers () {
+	[
+	  SVN::Client::get_simple_provider(),
+	  SVN::Client::get_ssl_server_trust_file_provider(),
+	  SVN::Client::get_simple_prompt_provider(
+	    \&Git::SVN::Prompt::simple, 2),
+	  SVN::Client::get_ssl_client_cert_file_provider(),
+	  SVN::Client::get_ssl_client_cert_prompt_provider(
+	    \&Git::SVN::Prompt::ssl_client_cert, 2),
+	  SVN::Client::get_ssl_client_cert_pw_prompt_provider(
+	    \&Git::SVN::Prompt::ssl_client_cert_pw, 2),
+	  SVN::Client::get_username_provider(),
+	  SVN::Client::get_ssl_server_trust_prompt_provider(
+	    \&Git::SVN::Prompt::ssl_server_trust),
+	  SVN::Client::get_username_prompt_provider(
+	    \&Git::SVN::Prompt::username, 2)
+	]
+}
+
 sub new {
 	my ($class, $url) = @_;
 	$url =~ s!/+$!!;
 	return $RA if ($RA && $RA->{url} eq $url);
 
 	SVN::_Core::svn_config_ensure($config_dir, undef);
-	my ($baton, $callbacks) = SVN::Core::auth_open_helper([
-	    SVN::Client::get_simple_provider(),
-	    SVN::Client::get_ssl_server_trust_file_provider(),
-	    SVN::Client::get_simple_prompt_provider(
-	      \&Git::SVN::Prompt::simple, 2),
-	    SVN::Client::get_ssl_client_cert_file_provider(),
-	    SVN::Client::get_ssl_client_cert_prompt_provider(
-	      \&Git::SVN::Prompt::ssl_client_cert, 2),
-	    SVN::Client::get_ssl_client_cert_pw_prompt_provider(
-	      \&Git::SVN::Prompt::ssl_client_cert_pw, 2),
-	    SVN::Client::get_username_provider(),
-	    SVN::Client::get_ssl_server_trust_prompt_provider(
-	      \&Git::SVN::Prompt::ssl_server_trust),
-	    SVN::Client::get_username_prompt_provider(
-	      \&Git::SVN::Prompt::username, 2),
-	  ]);
+	my ($baton, $callbacks) = SVN::Core::auth_open_helper(_auth_providers);
 	my $config = SVN::Core::config_get_config($config_dir);
 	$RA = undef;
+	my $dont_store_passwords = 1;
+	my $conf_t = ${$config}{'config'};
+	{
+		no warnings 'once';
+		# The usage of $SVN::_Core::SVN_CONFIG_* variables
+		# produces warnings that variables are used only once.
+		# I had not found the better way to shut them up, so
+		# the warnings of type 'once' are disabled in this block.
+		if (SVN::_Core::svn_config_get_bool($conf_t,
+		    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
+		    $SVN::_Core::SVN_CONFIG_OPTION_STORE_PASSWORDS,
+		    1) == 0) {
+			SVN::_Core::svn_auth_set_parameter($baton,
+			    $SVN::_Core::SVN_AUTH_PARAM_DONT_STORE_PASSWORDS,
+			    bless (\$dont_store_passwords, "_p_void"));
+		}
+		if (SVN::_Core::svn_config_get_bool($conf_t,
+		    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
+		    $SVN::_Core::SVN_CONFIG_OPTION_STORE_AUTH_CREDS,
+		    1) == 0) {
+			$Git::SVN::Prompt::_no_auth_cache = 1;
+		}
+	} # no warnings 'once'
 	my $self = SVN::Ra->new(url => $url, auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
@@ -3112,6 +3270,24 @@ sub get_log {
 	splice(@args, 3, 1) if ($SVN::Core::VERSION le '1.2.0');
 	my $ret = $self->SUPER::get_log(@args, $pool);
 	$pool->clear;
+	$ret;
+}
+
+sub trees_match {
+	my ($self, $url1, $rev1, $url2, $rev2) = @_;
+	my $ctx = SVN::Client->new(auth => _auth_providers);
+	my $out = IO::File->new_tmpfile;
+
+	# older SVN (1.1.x) doesn't take $pool as the last parameter for
+	# $ctx->diff(), so we'll create a default one
+	my $pool = SVN::Pool->new_default_sub;
+
+	$ra_invalid = 1; # this will open a new SVN::Ra connection to $url1
+	$ctx->diff([], $url1, $rev1, $url2, $rev2, 1, 1, 0, $out, $out);
+	$out->flush;
+	my $ret = (($out->stat)[7] == 0);
+	close $out or croak $!;
+
 	$ret;
 }
 
@@ -3174,7 +3350,11 @@ sub gs_do_switch {
 			$self->{url} = $full_url;
 			$reparented = 1;
 		} else {
+			$_[0] = undef;
+			$self = undef;
+			$RA = undef;
 			$ra = Git::SVN::Ra->new($full_url);
+			$ra_invalid = 1;
 		}
 	}
 	$ra ||= $self;
@@ -3234,6 +3414,7 @@ sub gs_fetch_loop_common {
 	my $inc = $_log_window_size;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my $longest_path = longest_common_path($gsv, $globs);
+	my $ra_url = $self->{url};
 	while (1) {
 		my %revs;
 		my $err;
@@ -3294,6 +3475,13 @@ sub gs_fetch_loop_common {
 				my $k = "svn-remote.$g->{remote}." .
 				        "$g->{t}-maxRev";
 				Git::SVN::tmp_config($k, $r);
+			}
+			if ($ra_invalid) {
+				$_[0] = undef;
+				$self = undef;
+				$RA = undef;
+				$self = Git::SVN::Ra->new($ra_url);
+				$ra_invalid = undef;
 			}
 		}
 		# pre-fill the .rev_db since it'll eventually get filled in
@@ -3569,17 +3757,17 @@ sub config_pager {
 }
 
 sub run_pager {
-	return unless -t *STDOUT;
+	return unless -t *STDOUT && defined $pager;
 	pipe my $rfd, my $wfd or return;
-	defined(my $pid = fork) or ::fatal "Can't fork: $!\n";
+	defined(my $pid = fork) or ::fatal "Can't fork: $!";
 	if (!$pid) {
 		open STDOUT, '>&', $wfd or
-		                     ::fatal "Can't redirect to stdout: $!\n";
+		                     ::fatal "Can't redirect to stdout: $!";
 		return;
 	}
-	open STDIN, '<&', $rfd or ::fatal "Can't redirect stdin: $!\n";
+	open STDIN, '<&', $rfd or ::fatal "Can't redirect stdin: $!";
 	$ENV{LESS} ||= 'FRSX';
-	exec $pager or ::fatal "Can't run pager: $! ($pager)\n";
+	exec $pager or ::fatal "Can't run pager: $! ($pager)";
 }
 
 sub tz_to_s_offset {
@@ -3715,7 +3903,7 @@ sub cmd_show_log {
 			$r_min = $r_max = $::_revision;
 		} else {
 			::fatal "-r$::_revision is not supported, use ",
-				"standard \'git log\' arguments instead\n";
+				"standard 'git log' arguments instead";
 		}
 	}
 

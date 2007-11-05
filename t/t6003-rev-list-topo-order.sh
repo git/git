@@ -10,7 +10,7 @@ test_description='Tests git rev-list --topo-order functionality'
 
 list_duplicates()
 {
-    "$@" | /usr/bin/sort | uniq -d
+    "$@" | sort | uniq -d
 }
 
 date >path0

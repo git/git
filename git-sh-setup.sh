@@ -6,7 +6,7 @@
 # it dies.
 
 # Having this variable in your environment would break scripts because
-# you would cause "cd" to be be taken to unexpected places.  If you
+# you would cause "cd" to be taken to unexpected places.  If you
 # like CDPATH, define it for your interactive shell sessions without
 # exporting it.
 unset CDPATH
@@ -110,7 +110,7 @@ esac
 if [ -z "$SUBDIRECTORY_OK" ]
 then
 	: ${GIT_DIR=.git}
-	GIT_DIR=$(GIT_DIR="$GIT_DIR" git rev-parse --git-dir) || {
+	test -z "$(git rev-parse --show-cdup)" || {
 		exit=$?
 		echo >&2 "You need to run this command from the toplevel of the working tree."
 		exit $exit
@@ -129,3 +129,20 @@ test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
 }
 
 : ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
+
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) sort and find
+	sort () {
+		/usr/bin/sort "$@"
+	}
+	find () {
+		/usr/bin/find "$@"
+	}
+	# sync is missing
+	sync () {
+		:	# no implementation
+	}
+	;;
+esac

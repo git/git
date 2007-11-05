@@ -35,22 +35,26 @@ test "$no_symlinks" && {
 	}
 }
 
+SUBSTFORMAT=%H%n
+
 test_expect_success \
     'populate workdir' \
     'mkdir a b c &&
      echo simple textfile >a/a &&
      mkdir a/bin &&
      cp /bin/sh a/bin &&
+     printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
+     printf "A not substituted O" >a/substfile2 &&
      ln -s a a/l1 &&
      (p=long_path_to_a_file && cd a &&
       for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
       echo text >file_with_long_path) &&
-     (cd a && /usr/bin/find .) | /usr/bin/sort >a.lst'
+     (cd a && find .) | sort >a.lst'
 
 test_expect_success \
     'add files to repository' \
-    '/usr/bin/find a -type f | xargs git update-index --add &&
-     /usr/bin/find a -type l | xargs git update-index --add &&
+    'find a -type f | xargs git update-index --add &&
+     find a -type l | xargs git update-index --add &&
      treeid=`git write-tree` &&
      echo $treeid >treeid &&
      git update-ref HEAD $(TZ=GMT GIT_COMMITTER_DATE="2005-05-27 22:00:00" \
@@ -87,7 +91,7 @@ test_expect_success \
 
 test_expect_success \
     'validate filenames' \
-    '(cd b/a && /usr/bin/find .) | /usr/bin/sort >b.lst &&
+    '(cd b/a && find .) | sort >b.lst &&
      diff a.lst b.lst'
 
 test_expect_success \
@@ -104,12 +108,30 @@ test_expect_success \
 
 test_expect_success \
     'validate filenames with prefix' \
-    '(cd c/prefix/a && /usr/bin/find .) | /usr/bin/sort >c.lst &&
+    '(cd c/prefix/a && find .) | sort >c.lst &&
      diff a.lst c.lst'
 
 test_expect_success \
     'validate file contents with prefix' \
     'diff -r a c/prefix/a'
+
+test_expect_success \
+    'create an archive with a substfiles' \
+    'echo "substfile?" export-subst >a/.gitattributes &&
+     git archive HEAD >f.tar &&
+     rm a/.gitattributes'
+
+test_expect_success \
+    'extract substfiles' \
+    '(mkdir f && cd f && $TAR xf -) <f.tar'
+
+test_expect_success \
+     'validate substfile contents' \
+     'git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
+      >f/a/substfile1.expected &&
+      diff f/a/substfile1.expected f/a/substfile1 &&
+      diff a/substfile2 f/a/substfile2
+'
 
 test_expect_success \
     'git archive --format=zip' \
@@ -128,7 +150,7 @@ test_expect_success \
 
 test_expect_success \
     'validate filenames' \
-    '(cd d/a && /usr/bin/find .) | /usr/bin/sort >d.lst &&
+    '(cd d/a && find .) | sort >d.lst &&
      diff a.lst d.lst'
 
 test_expect_success \
@@ -145,7 +167,7 @@ test_expect_success \
 
 test_expect_success \
     'validate filenames with prefix' \
-    '(cd e/prefix/a && /usr/bin/find .) | /usr/bin/sort >e.lst &&
+    '(cd e/prefix/a && find .) | sort >e.lst &&
      diff a.lst e.lst'
 
 test_expect_success \

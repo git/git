@@ -43,7 +43,7 @@ OPTIONS
 	a default name determined from the pack content.  If
 	<pack-file> is not specified consider using --keep to
 	prevent a race condition between this process and
-	gitlink::git-repack[1] .
+	gitlink::git-repack[1].
 
 --fix-thin::
 	It is possible for gitlink:git-pack-objects[1] to build

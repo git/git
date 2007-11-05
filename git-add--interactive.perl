@@ -213,9 +213,13 @@ sub list_and_choose {
 			print ">> ";
 		}
 		my $line = <STDIN>;
-		last if (!$line);
+		if (!$line) {
+			print "\n";
+			$opts->{ON_EOF}->() if $opts->{ON_EOF};
+			last;
+		}
 		chomp $line;
-		my $donesomething = 0;
+		last if $line eq '';
 		for my $choice (split(/[\s,]+/, $line)) {
 			my $choose = 1;
 			my ($bottom, $top);
@@ -247,12 +251,11 @@ sub list_and_choose {
 				next TOPLOOP;
 			}
 			for ($i = $bottom-1; $i <= $top-1; $i++) {
-				next if (@stuff <= $i);
+				next if (@stuff <= $i || $i < 0);
 				$chosen[$i] = $choose;
-				$donesomething++;
 			}
 		}
-		last if (!$donesomething || $opts->{IMMEDIATE});
+		last if ($opts->{IMMEDIATE});
 	}
 	for ($i = 0; $i < @stuff; $i++) {
 		if ($chosen[$i]) {
@@ -357,7 +360,9 @@ sub hunk_splittable {
 sub parse_hunk_header {
 	my ($line) = @_;
 	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
-	    $line =~ /^@@ -(\d+)(?:,(\d+)) \+(\d+)(?:,(\d+)) @@/;
+	    $line =~ /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
+	$o_cnt = 1 unless defined $o_cnt;
+	$n_cnt = 1 unless defined $n_cnt;
 	return ($o_ofs, $o_cnt, $n_ofs, $n_cnt);
 }
 
@@ -369,9 +374,8 @@ sub split_hunk {
 	# it can be split, but we would need to take care of
 	# overlaps later.
 
-	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) = parse_hunk_header($text->[0]);
+	my ($o_ofs, undef, $n_ofs) = parse_hunk_header($text->[0]);
 	my $hunk_start = 1;
-	my $next_hunk_start;
 
       OUTER:
 	while (1) {
@@ -438,8 +442,8 @@ sub split_hunk {
 	for my $hunk (@split) {
 		$o_ofs = $hunk->{OLD};
 		$n_ofs = $hunk->{NEW};
-		$o_cnt = $hunk->{OCNT};
-		$n_cnt = $hunk->{NCNT};
+		my $o_cnt = $hunk->{OCNT};
+		my $n_cnt = $hunk->{NCNT};
 
 		my $head = ("@@ -$o_ofs" .
 			    (($o_cnt != 1) ? ",$o_cnt" : '') .
@@ -454,7 +458,7 @@ sub split_hunk {
 sub find_last_o_ctx {
 	my ($it) = @_;
 	my $text = $it->{TEXT};
-	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) = parse_hunk_header($text->[0]);
+	my ($o_ofs, $o_cnt) = parse_hunk_header($text->[0]);
 	my $i = @{$text};
 	my $last_o_ctx = $o_ofs + $o_cnt;
 	while (0 < --$i) {
@@ -526,8 +530,7 @@ sub coalesce_overlapping_hunks {
 
 	for (grep { $_->{USE} } @in) {
 		my $text = $_->{TEXT};
-		my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
-		    parse_hunk_header($text->[0]);
+		my ($o_ofs) = parse_hunk_header($text->[0]);
 		if (defined $last_o_ctx &&
 		    $o_ofs <= $last_o_ctx) {
 			merge_hunk($out[-1], $_);
@@ -694,7 +697,7 @@ sub patch_update_cmd {
 
 	@hunk = coalesce_overlapping_hunks(@hunk);
 
-	my ($o_lofs, $n_lofs) = (0, 0);
+	my $n_lofs = 0;
 	my @result = ();
 	for (@hunk) {
 		my $text = $_->{TEXT};
@@ -702,9 +705,6 @@ sub patch_update_cmd {
 		    parse_hunk_header($text->[0]);
 
 		if (!$_->{USE}) {
-			if (!defined $o_cnt) { $o_cnt = 1; }
-			if (!defined $n_cnt) { $n_cnt = 1; }
-
 			# We would have added ($n_cnt - $o_cnt) lines
 			# to the postimage if we were to use this hunk,
 			# but we didn't.  So the line number that the next
@@ -716,10 +716,10 @@ sub patch_update_cmd {
 			if ($n_lofs) {
 				$n_ofs += $n_lofs;
 				$text->[0] = ("@@ -$o_ofs" .
-					      ((defined $o_cnt)
+					      (($o_cnt != 1)
 					       ? ",$o_cnt" : '') .
 					      " +$n_ofs" .
-					      ((defined $n_cnt)
+					      (($n_cnt != 1)
 					       ? ",$n_cnt" : '') .
 					      " @@\n");
 			}
@@ -791,6 +791,7 @@ sub main_loop {
 					     SINGLETON => 1,
 					     LIST_FLAT => 4,
 					     HEADER => '*** Commands ***',
+					     ON_EOF => \&quit_cmd,
 					     IMMEDIATE => 1 }, @cmd);
 		if ($it) {
 			eval {
@@ -802,8 +803,6 @@ sub main_loop {
 		}
 	}
 }
-
-my @z;
 
 refresh();
 status_cmd();

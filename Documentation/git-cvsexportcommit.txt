@@ -73,7 +73,7 @@ Merge one patch into CVS::
 $ export GIT_DIR=~/project/.git
 $ cd ~/project_cvs_checkout
 $ git-cvsexportcommit -v <commit-sha1>
-$ cvs commit -F .mgs <files>
+$ cvs commit -F .msg <files>
 ------------
 
 Merge pending patches into CVS automatically -- only if you really know what you are doing::

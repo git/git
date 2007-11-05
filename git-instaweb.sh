@@ -30,14 +30,15 @@ test -z "$port" && port=1234
 
 start_httpd () {
 	httpd_only="`echo $httpd | cut -f1 -d' '`"
-	if test "`expr index $httpd_only /`" -eq '1' || \
-				which $httpd_only >/dev/null
+	if case "$httpd_only" in /*) : ;; *) which $httpd_only >/dev/null;; esac
 	then
 		$httpd $fqgitdir/gitweb/httpd.conf
 	else
 		# many httpds are installed in /usr/sbin or /usr/local/sbin
 		# these days and those are not in most users $PATHs
-		for i in /usr/local/sbin /usr/sbin
+		# in addition, we may have generated a server script
+		# in $fqgitdir/gitweb.
+		for i in /usr/local/sbin /usr/sbin "$fqgitdir/gitweb"
 		do
 			if test -x "$i/$httpd_only"
 			then
@@ -61,7 +62,7 @@ stop_httpd () {
 	test -f "$fqgitdir/pid" && kill `cat "$fqgitdir/pid"`
 }
 
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	--stop|stop)
@@ -136,6 +137,43 @@ GIT_EXEC_PATH="`git --exec-path`"
 GIT_DIR="$fqgitdir"
 export GIT_EXEC_PATH GIT_DIR
 
+
+webrick_conf () {
+	# generate a standalone server script in $fqgitdir/gitweb.
+	cat >"$fqgitdir/gitweb/$httpd.rb" <<EOF
+require 'webrick'
+require 'yaml'
+options = YAML::load_file(ARGV[0])
+options[:StartCallback] = proc do
+  File.open(options[:PidFile],"w") do |f|
+    f.puts Process.pid
+  end
+end
+options[:ServerType] = WEBrick::Daemon
+server = WEBrick::HTTPServer.new(options)
+['INT', 'TERM'].each do |signal|
+  trap(signal) {server.shutdown}
+end
+server.start
+EOF
+	# generate a shell script to invoke the above ruby script,
+	# which assumes _ruby_ is in the user's $PATH. that's _one_
+	# portable way to run ruby, which could be installed anywhere,
+	# really.
+	cat >"$fqgitdir/gitweb/$httpd" <<EOF
+#!/bin/sh
+exec ruby "$fqgitdir/gitweb/$httpd.rb" \$*
+EOF
+	chmod +x "$fqgitdir/gitweb/$httpd"
+
+	cat >"$conf" <<EOF
+:Port: $port
+:DocumentRoot: "$fqgitdir/gitweb"
+:DirectoryIndex: ["gitweb.cgi"]
+:PidFile: "$fqgitdir/pid"
+EOF
+	test "$local" = true && echo ':BindAddress: "127.0.0.1"' >> "$conf"
+}
 
 lighttpd_conf () {
 	cat > "$conf" <<EOF
@@ -236,6 +274,9 @@ case "$httpd" in
 	;;
 *apache2*)
 	apache2_conf
+	;;
+webrick)
+	webrick_conf
 	;;
 *)
 	echo "Unknown httpd specified: $httpd"

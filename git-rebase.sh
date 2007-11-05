@@ -59,7 +59,7 @@ continue_merge () {
 		die "$RESOLVEMSG"
 	fi
 
-	cmt=`cat $dotest/current`
+	cmt=`cat "$dotest/current"`
 	if ! git diff-index --quiet HEAD
 	then
 		if ! git-commit -C "$cmt"
@@ -84,14 +84,14 @@ continue_merge () {
 }
 
 call_merge () {
-	cmt="$(cat $dotest/cmt.$1)"
+	cmt="$(cat "$dotest/cmt.$1")"
 	echo "$cmt" > "$dotest/current"
 	hd=$(git rev-parse --verify HEAD)
 	cmt_name=$(git symbolic-ref HEAD)
-	msgnum=$(cat $dotest/msgnum)
-	end=$(cat $dotest/end)
+	msgnum=$(cat "$dotest/msgnum")
+	end=$(cat "$dotest/end")
 	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
-	eval GITHEAD_$hd='"$(cat $dotest/onto_name)"'
+	eval GITHEAD_$hd='$(cat "$dotest/onto_name")'
 	export GITHEAD_$cmt GITHEAD_$hd
 	git-merge-$strategy "$cmt^" -- "$hd" "$cmt"
 	rv=$?
@@ -122,15 +122,14 @@ finish_rb_merge () {
 
 is_interactive () {
 	test -f "$dotest"/interactive ||
-	while case $#,"$1" in 0,|*,-i|*,--interactive) break ;; esac
-	do
+	while :; do case $#,"$1" in 0,|*,-i|*,--interactive) break ;; esac
 		shift
 	done && test -n "$1"
 }
 
 is_interactive "$@" && exec git-rebase--interactive "$@"
 
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	--continue)
@@ -141,10 +140,10 @@ do
 		}
 		if test -d "$dotest"
 		then
-			prev_head="`cat $dotest/prev_head`"
-			end="`cat $dotest/end`"
-			msgnum="`cat $dotest/msgnum`"
-			onto="`cat $dotest/onto`"
+			prev_head=$(cat "$dotest/prev_head")
+			end=$(cat "$dotest/end")
+			msgnum=$(cat "$dotest/msgnum")
+			onto=$(cat "$dotest/onto")
 			continue_merge
 			while test "$msgnum" -le "$end"
 			do
@@ -161,11 +160,11 @@ do
 		if test -d "$dotest"
 		then
 			git rerere clear
-			prev_head="`cat $dotest/prev_head`"
-			end="`cat $dotest/end`"
-			msgnum="`cat $dotest/msgnum`"
+			prev_head=$(cat "$dotest/prev_head")
+			end=$(cat "$dotest/end")
+			msgnum=$(cat "$dotest/msgnum")
 			msgnum=$(($msgnum + 1))
-			onto="`cat $dotest/onto`"
+			onto=$(cat "$dotest/onto")
 			while test "$msgnum" -le "$end"
 			do
 				call_merge "$msgnum"
@@ -216,9 +215,11 @@ do
 	-v|--verbose)
 		verbose=t
 		;;
+	--whitespace=*)
+		git_am_opt="$git_am_opt $1"
+		;;
 	-C*)
-		git_am_opt=$1
-		shift
+		git_am_opt="$git_am_opt $1"
 		;;
 	-*)
 		usage

@@ -160,12 +160,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		else if (!equals)
 			e->setto = ATTR__TRUE;
 		else {
-			char *value;
-			int vallen = ep - equals;
-			value = xmalloc(vallen);
-			memcpy(value, equals+1, vallen-1);
-			value[vallen-1] = 0;
-			e->setto = value;
+			e->setto = xmemdupz(equals + 1, ep - equals - 1);
 		}
 		e->attr = git_attr(cp, len);
 	}

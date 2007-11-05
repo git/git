@@ -65,7 +65,7 @@ test_expect_success 'multi-fetch works on partial urls + paths' "
 	for i in trunk a b tags/0.1 tags/0.2 tags/0.3; do
 		git rev-parse --verify refs/remotes/\$i^0 >> refs.out || exit 1;
 	    done &&
-	test -z \"\`/usr/bin/sort < refs.out | uniq -d\`\" &&
+	test -z \"\`sort < refs.out | uniq -d\`\" &&
 	for i in trunk a b tags/0.1 tags/0.2 tags/0.3; do
 	  for j in trunk a b tags/0.1 tags/0.2 tags/0.3; do
 		if test \$j != \$i; then continue; fi

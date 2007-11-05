@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "commit.h"
 #include "pack.h"
-#include "fetch.h"
 #include "tag.h"
 #include "blob.h"
 #include "http.h"
@@ -14,7 +13,7 @@
 #include <expat.h>
 
 static const char http_push_usage[] =
-"git-http-push [--all] [--force] [--verbose] <remote> [<head>...]\n";
+"git-http-push [--all] [--dry-run] [--force] [--verbose] <remote> [<head>...]\n";
 
 #ifndef XML_STATUS_OK
 enum XML_Status {
@@ -81,6 +80,7 @@ static struct curl_slist *default_headers;
 static int push_verbosely;
 static int push_all;
 static int force_all;
+static int dry_run;
 
 static struct object_list *objects;
 
@@ -795,38 +795,27 @@ static void finish_request(struct transfer_request *request)
 }
 
 #ifdef USE_CURL_MULTI
-void fill_active_slots(void)
+static int fill_active_slot(void *unused)
 {
 	struct transfer_request *request = request_queue_head;
-	struct transfer_request *next;
-	struct active_request_slot *slot = active_queue_head;
-	int num_transfers;
 
 	if (aborted)
-		return;
+		return 0;
 
-	while (active_requests < max_requests && request != NULL) {
-		next = request->next;
+	for (request = request_queue_head; request; request = request->next) {
 		if (request->state == NEED_FETCH) {
 			start_fetch_loose(request);
+			return 1;
 		} else if (pushing && request->state == NEED_PUSH) {
 			if (remote_dir_exists[request->obj->sha1[0]] == 1) {
 				start_put(request);
 			} else {
 				start_mkcol(request);
 			}
-			curl_multi_perform(curlm, &num_transfers);
+			return 1;
 		}
-		request = next;
 	}
-
-	while (slot != NULL) {
-		if (!slot->in_use && slot->curl != NULL) {
-			curl_easy_cleanup(slot->curl);
-			slot->curl = NULL;
-		}
-		slot = slot->next;
-	}
+	return 0;
 }
 #endif
 
@@ -1271,10 +1260,7 @@ xml_cdata(void *userData, const XML_Char *s, int len)
 {
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
 	free(ctx->cdata);
-	ctx->cdata = xmalloc(len + 1);
-	/* NB: 's' is not null-terminated, can not use strlcpy here */
-	memcpy(ctx->cdata, s, len);
-	ctx->cdata[len] = '\0';
+	ctx->cdata = xmemdupz(s, len);
 }
 
 static struct remote_lock *lock_remote(const char *path, long timeout)
@@ -2172,9 +2158,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 
 	/* If it's a symref, set the refname; otherwise try for a sha1 */
 	if (!prefixcmp((char *)buffer.buffer, "ref: ")) {
-		*symref = xmalloc(buffer.posn - 5);
-		memcpy(*symref, (char *)buffer.buffer + 5, buffer.posn - 6);
-		(*symref)[buffer.posn - 6] = '\0';
+		*symref = xmemdupz((char *)buffer.buffer + 5, buffer.posn - 6);
 	} else {
 		get_sha1_hex(buffer.buffer, sha1);
 	}
@@ -2319,6 +2303,10 @@ int main(int argc, char **argv)
 				force_all = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--dry-run")) {
+				dry_run = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--verbose")) {
 				push_verbosely = 1;
 				continue;
@@ -2460,7 +2448,8 @@ int main(int argc, char **argv)
 		if (strcmp(ref->name, ref->peer_ref->name))
 			fprintf(stderr, " using '%s'", ref->peer_ref->name);
 		fprintf(stderr, "\n  from %s\n  to   %s\n", old_hex, new_hex);
-
+		if (dry_run)
+			continue;
 
 		/* Lock remote branch ref */
 		ref_lock = lock_remote(ref->name, LOCK_TIME);
@@ -2507,6 +2496,7 @@ int main(int argc, char **argv)
 				objects_to_send);
 #ifdef USE_CURL_MULTI
 		fill_active_slots();
+		add_fill_function(NULL, fill_active_slot);
 #endif
 		finish_all_active_slots();
 
@@ -2527,7 +2517,8 @@ int main(int argc, char **argv)
 	if (remote->has_info_refs && new_refs) {
 		if (info_ref_lock && remote->can_update_info_refs) {
 			fprintf(stderr, "Updating remote server info\n");
-			update_remote_info_refs(info_ref_lock);
+			if (!dry_run)
+				update_remote_info_refs(info_ref_lock);
 		} else {
 			fprintf(stderr, "Unable to update server info\n");
 		}

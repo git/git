@@ -64,4 +64,10 @@ extern int rename_ref(const char *oldref, const char *newref, const char *logmsg
 /** resolve ref in nested "gitlink" repository */
 extern int resolve_gitlink_ref(const char *name, const char *refname, unsigned char *result);
 
+/** lock a ref and then write its file */
+enum action_on_err { MSG_ON_ERR, DIE_ON_ERR, QUIET_ON_ERR };
+int update_ref(const char *action, const char *refname,
+		const unsigned char *sha1, const unsigned char *oldval,
+		int flags, enum action_on_err onerr);
+
 #endif /* REFS_H */

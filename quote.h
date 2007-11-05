@@ -29,13 +29,10 @@
  */
 
 extern void sq_quote_print(FILE *stream, const char *src);
-extern char *sq_quote_argv(const char** argv, int count);
 
-/*
- * Append a string to a string buffer, with or without shell quoting.
- * Return true if the buffer overflowed.
- */
-extern int add_to_string(char **ptrp, int *sizep, const char *str, int quote);
+extern void sq_quote_buf(struct strbuf *, const char *src);
+extern void sq_quote_argv(struct strbuf *, const char **argv, int count,
+                          size_t maxlen);
 
 /* This unwraps what sq_quote() produces in place, but returns
  * NULL if the input does not look like what sq_quote would have
@@ -43,12 +40,12 @@ extern int add_to_string(char **ptrp, int *sizep, const char *str, int quote);
  */
 extern char *sq_dequote(char *);
 
-extern int quote_c_style(const char *name, char *outbuf, FILE *outfp,
-			 int nodq);
-extern char *unquote_c_style(const char *quoted, const char **endp);
+extern int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);
+extern size_t quote_c_style(const char *name, struct strbuf *, FILE *, int no_dq);
 
-extern void write_name_quoted(const char *prefix, int prefix_len,
-			      const char *name, int quote, FILE *out);
+extern void write_name_quoted(const char *name, FILE *, int terminator);
+extern void write_name_quotedpfx(const char *pfx, size_t pfxlen,
+                                 const char *name, FILE *, int terminator);
 
 /* quoting as a string literal for other languages */
 extern void perl_quote_print(FILE *stream, const char *src);

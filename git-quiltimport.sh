@@ -5,7 +5,7 @@ SUBDIRECTORY_ON=Yes
 
 dry_run=""
 quilt_author=""
-while case "$#" in 0) break;; esac
+while test $# != 0
 do
 	case "$1" in
 	--au=*|--aut=*|--auth=*|--autho=*|--author=*)
@@ -71,6 +71,10 @@ commit=$(git rev-parse HEAD)
 
 mkdir $tmp_dir || exit 2
 for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
+	if ! [ -f "$QUILT_PATCHES/$patch_name" ] ; then
+		echo "$patch_name doesn't exist. Skipping."
+		continue
+	fi
 	echo $patch_name
 	git mailinfo "$tmp_msg" "$tmp_patch" \
 		<"$QUILT_PATCHES/$patch_name" >"$tmp_info" || exit 3

@@ -2,6 +2,7 @@
 #define CACHE_H
 
 #include "git-compat-util.h"
+#include "strbuf.h"
 
 #include SHA1_HEADER
 #include <zlib.h>
@@ -264,12 +265,12 @@ extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int reall
 extern int remove_index_entry_at(struct index_state *, int pos);
 extern int remove_file_from_index(struct index_state *, const char *path);
 extern int add_file_to_index(struct index_state *, const char *path, int verbose);
+extern struct cache_entry *make_cache_entry(unsigned int mode, const unsigned char *sha1, const char *path, int stage, int refresh);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 extern int ie_match_stat(struct index_state *, struct cache_entry *, struct stat *, int);
 extern int ie_modified(struct index_state *, struct cache_entry *, struct stat *, int);
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
-extern int read_fd(int fd, char **return_buf, unsigned long *return_size);
 extern int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object);
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
@@ -365,10 +366,10 @@ int safe_create_leading_directories(char *path);
 char *enter_repo(char *path, int strict);
 static inline int is_absolute_path(const char *path)
 {
-#ifdef __MINGW32__
-	return path[0] == '/' || (isalpha(path[0]) && path[1] == ':');
-#else
+#ifndef __MINGW32__
 	return path[0] == '/';
+#else
+	return path[0] == '/' || (path[0] && path[1] == ':');
 #endif
 }
 
@@ -448,6 +449,7 @@ const char *show_date(unsigned long time, int timezone, enum date_mode mode);
 int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
+enum date_mode parse_date_format(const char *format);
 
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
@@ -508,6 +510,7 @@ struct ref {
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
 	unsigned char force;
+	unsigned char merge;
 	struct ref *peer_ref; /* when renaming */
 	char name[FLEX_ARRAY]; /* more */
 };
@@ -517,8 +520,8 @@ struct ref {
 #define REF_TAGS	(1u << 2)
 
 #define CONNECT_VERBOSE       (1u << 0)
-extern pid_t git_connect(int fd[2], char *url, const char *prog, int flags);
-extern int finish_connect(pid_t pid);
+extern struct child_process *git_connect(int fd[2], char *url, const char *prog, int flags);
+extern int finish_connect(struct child_process *conn);
 extern int path_match(const char *path, int nr, char **match);
 extern int get_ack(int fd, unsigned char *result_sha1);
 extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match, unsigned int flags);
@@ -546,6 +549,7 @@ extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsign
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 extern const char *packed_object_info_detail(struct packed_git *, off_t, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
+extern int matches_pack_name(struct packed_git *p, const char *name);
 
 /* Dumb servers support */
 extern int update_server_info(int);
@@ -602,15 +606,13 @@ extern void *alloc_object_node(void);
 extern void alloc_report(void);
 
 /* trace.c */
-extern int nfasprintf(char **str, const char *fmt, ...);
-extern int nfvasprintf(char **str, const char *fmt, va_list va);
 extern void trace_printf(const char *format, ...);
 extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
 
 /* convert.c */
-extern char *convert_to_git(const char *path, const char *src, unsigned long *sizep);
-extern char *convert_to_working_tree(const char *path, const char *src, unsigned long *sizep);
-extern void *convert_sha1_file(const char *path, const unsigned char *sha1, unsigned int mode, enum object_type *type, unsigned long *size);
+/* returns 1 if *dst was used */
+extern int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst);
+extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 
 /* diff.c */
 extern int diff_auto_refresh_index;

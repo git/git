@@ -9,6 +9,7 @@
 #include "quote.h"
 #include "dir.h"
 #include "builtin.h"
+#include "tree.h"
 
 static int abbrev;
 static int show_deleted;
@@ -26,6 +27,7 @@ static int prefix_offset;
 static const char **pathspec;
 static int error_unmatch;
 static char *ps_matched;
+static const char *with_tree;
 
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";
@@ -82,8 +84,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 		return;
 
 	fputs(tag, stdout);
-	write_name_quoted("", 0, ent->name + offset, line_terminator, stdout);
-	putchar(line_terminator);
+	write_name_quoted(ent->name + offset, stdout, line_terminator);
 }
 
 static void show_other_files(struct dir_struct *dir)
@@ -206,21 +207,15 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 
 	if (!show_stage) {
 		fputs(tag, stdout);
-		write_name_quoted("", 0, ce->name + offset,
-				  line_terminator, stdout);
-		putchar(line_terminator);
-	}
-	else {
-		printf("%s%06lo %s %u\t",
+	} else {
+		printf("%s%06o %s %d\t",
 		       tag,
 		       ntohl(ce->ce_mode),
 		       abbrev ? find_unique_abbrev(ce->sha1,abbrev)
 				: sha1_to_hex(ce->sha1),
 		       ce_stage(ce));
-		write_name_quoted("", 0, ce->name + offset,
-				  line_terminator, stdout);
-		putchar(line_terminator);
 	}
+	write_name_quoted(ce->name + offset, stdout, line_terminator);
 }
 
 static void show_files(struct dir_struct *dir, const char *prefix)
@@ -246,6 +241,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 			if (excluded(dir, ce->name) != dir->show_ignored)
 				continue;
 			if (show_unmerged && !ce_stage(ce))
+				continue;
+			if (ce->ce_flags & htons(CE_UPDATE))
 				continue;
 			show_ce_entry(ce_stage(ce) ? tag_unmerged : tag_cached, ce);
 		}
@@ -276,7 +273,8 @@ static void prune_cache(const char *prefix)
 
 	if (pos < 0)
 		pos = -pos-1;
-	active_cache += pos;
+	memmove(active_cache, active_cache + pos,
+		(active_nr - pos) * sizeof(struct cache_entry *));
 	active_nr -= pos;
 	first = 0;
 	last = active_nr;
@@ -295,7 +293,6 @@ static void prune_cache(const char *prefix)
 static const char *verify_pathspec(const char *prefix)
 {
 	const char **p, *n, *prev;
-	char *real_prefix;
 	unsigned long max;
 
 	prev = NULL;
@@ -322,14 +319,69 @@ static const char *verify_pathspec(const char *prefix)
 	if (prefix_offset > max || memcmp(prev, prefix, prefix_offset))
 		die("git-ls-files: cannot generate relative filenames containing '..'");
 
-	real_prefix = NULL;
 	prefix_len = max;
-	if (max) {
-		real_prefix = xmalloc(max + 1);
-		memcpy(real_prefix, prev, max);
-		real_prefix[max] = 0;
+	return max ? xmemdupz(prev, max) : NULL;
+}
+
+/*
+ * Read the tree specified with --with-tree option
+ * (typically, HEAD) into stage #1 and then
+ * squash them down to stage #0.  This is used for
+ * --error-unmatch to list and check the path patterns
+ * that were given from the command line.  We are not
+ * going to write this index out.
+ */
+static void overlay_tree(const char *tree_name, const char *prefix)
+{
+	struct tree *tree;
+	unsigned char sha1[20];
+	const char **match;
+	struct cache_entry *last_stage0 = NULL;
+	int i;
+
+	if (get_sha1(tree_name, sha1))
+		die("tree-ish %s not found.", tree_name);
+	tree = parse_tree_indirect(sha1);
+	if (!tree)
+		die("bad tree-ish %s", tree_name);
+
+	/* Hoist the unmerged entries up to stage #3 to make room */
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (!ce_stage(ce))
+			continue;
+		ce->ce_flags |= htons(CE_STAGEMASK);
 	}
-	return real_prefix;
+
+	if (prefix) {
+		static const char *(matchbuf[2]);
+		matchbuf[0] = prefix;
+		matchbuf [1] = NULL;
+		match = matchbuf;
+	} else
+		match = NULL;
+	if (read_tree(tree, 1, match))
+		die("unable to read tree entries %s", tree_name);
+
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		switch (ce_stage(ce)) {
+		case 0:
+			last_stage0 = ce;
+			/* fallthru */
+		default:
+			continue;
+		case 1:
+			/*
+			 * If there is stage #0 entry for this, we do not
+			 * need to show it.  We use CE_UPDATE bit to mark
+			 * such an entry.
+			 */
+			if (last_stage0 &&
+			    !strcmp(last_stage0->name, ce->name))
+				ce->ce_flags |= htons(CE_UPDATE);
+		}
+	}
 }
 
 static const char ls_files_usage[] =
@@ -452,6 +504,10 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 			error_unmatch = 1;
 			continue;
 		}
+		if (!prefixcmp(arg, "--with-tree=")) {
+			with_tree = arg + 12;
+			continue;
+		}
 		if (!prefixcmp(arg, "--abbrev=")) {
 			abbrev = strtoul(arg+9, NULL, 10);
 			if (abbrev && abbrev < MINIMUM_ABBREV)
@@ -503,6 +559,15 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 	read_cache();
 	if (prefix)
 		prune_cache(prefix);
+	if (with_tree) {
+		/*
+		 * Basic sanity check; show-stages and show-unmerged
+		 * would not make any sense with this option.
+		 */
+		if (show_stage || show_unmerged)
+			die("ls-files --with-tree is incompatible with -s or -u");
+		overlay_tree(with_tree, prefix);
+	}
 	show_files(&dir, prefix);
 
 	if (ps_matched) {

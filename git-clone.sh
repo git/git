@@ -13,6 +13,43 @@ die() {
 	exit 1
 }
 
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) find
+	find () {
+		/usr/bin/find "$@"
+	}
+	# need an emulation of cpio
+	cpio() {
+		case "$1" in
+		-pumd)	cp_arg=-pr;;
+		-pumdl)	cp_arg=-lr;;
+		*)	die "cpio $1 unexpected";;
+		esac
+		# copy only files and empty directories
+		prev=
+		while read f; do
+			if test -d "$f"; then
+				# here we assume that directories are listed after
+				# its files (aka 'find -depth'), hence, a directory
+				# that is not empty will be a leading sub-string
+				# of the preceding entry
+				case "$prev" in
+				"$f"/* ) ;;
+				*)	echo "$f";;
+				esac
+			else
+				echo "$f"
+			fi
+			prev="$f"
+		done |
+		xargs --no-run-if-empty \
+			cp $cp_arg --target-directory="$2" --parents
+	}
+	;;
+esac
+
 usage() {
 	die "Usage: $0 [--template=<template_directory>] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] <repo> [<dir>]"
 }
@@ -28,13 +65,18 @@ get_repo_base() {
 	) 2>/dev/null
 }
 
-if [ -n "$GIT_SSL_NO_VERIFY" ]; then
+if [ -n "$GIT_SSL_NO_VERIFY" -o \
+	"`git config --bool http.sslVerify`" = false ]; then
     curl_extra_args="-k"
 fi
 
 http_fetch () {
 	# $1 = Remote, $2 = Local
-	curl -nsfL $curl_extra_args "$1" >"$2"
+	curl -nsfL $curl_extra_args "$1" >"$2" ||
+		case $? in
+		126|127) exit ;;
+		*)	 return $? ;;
+		esac
 }
 
 clone_dumb_http () {
@@ -408,7 +450,7 @@ then
 		(
 			test -f "$GIT_DIR/$remote_top/master" && echo "master"
 			cd "$GIT_DIR/$remote_top" &&
-			/usr/bin/find . -type f -print | sed -e 's/^\.\///'
+			find . -type f -print | sed -e 's/^\.\///'
 		) | (
 		done=f
 		while read name

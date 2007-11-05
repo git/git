@@ -6,32 +6,6 @@
 const char git_usage_string[] =
 	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate|--no-pager] [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE] [--help] COMMAND [ARGS]";
 
-static void prepend_to_path(const char *dir, int len)
-{
-	const char *old_path = getenv("PATH");
-	char *path;
-	int path_len = len;
-
-	if (!old_path)
-		old_path = "/usr/local/bin:/usr/bin:/bin";
-
-	path_len = len + strlen(old_path) + 1;
-
-	path = xmalloc(path_len + 1);
-
-	memcpy(path, dir, len);
-#ifdef __MINGW32__
-	path[len] = ';';
-#else
-	path[len] = ':';
-#endif
-	memcpy(path + len + 1, old_path, path_len - len);
-
-	setenv("PATH", path, 1);
-
-	free(path);
-}
-
 static int handle_options(const char*** argv, int* argc, int* envchanged)
 {
 	int handled = 0;
@@ -55,7 +29,7 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 		if (!prefixcmp(cmd, "--exec-path")) {
 			cmd += 11;
 			if (*cmd == '=')
-				git_set_exec_path(cmd + 1);
+				git_set_argv_exec_path(cmd + 1);
 			else {
 				puts(git_exec_path());
 				exit(0);
@@ -193,19 +167,13 @@ static int handle_alias(int *argcp, const char ***argv)
 	if (alias_string) {
 		if (alias_string[0] == '!') {
 			if (*argcp > 1) {
-				int i, sz = PATH_MAX;
-				char *s = xmalloc(sz), *new_alias = s;
+				struct strbuf buf;
 
-				add_to_string(&s, &sz, alias_string, 0);
+				strbuf_init(&buf, PATH_MAX);
+				strbuf_addstr(&buf, alias_string);
+				sq_quote_argv(&buf, (*argv) + 1, *argcp - 1, PATH_MAX);
 				free(alias_string);
-				alias_string = new_alias;
-				for (i = 1; i < *argcp &&
-					!add_to_string(&s, &sz, " ", 0) &&
-					!add_to_string(&s, &sz, (*argv)[i], 1)
-					; i++)
-					; /* do nothing */
-				if (!sz)
-					die("Too many or long arguments");
+				alias_string = buf.buf;
 			}
 			trace_printf("trace: alias to shell cmd: %s => %s\n",
 				     alias_command, alias_string + 1);
@@ -295,7 +263,7 @@ static int run_command(struct cmd_struct *p, int argc, const char **argv)
 
 	status = p->fn(argc, argv, prefix);
 	if (status)
-		return status;
+		return status & 0xff;
 
 	/* Somebody closed stdout? */
 	if (fstat(fileno(stdout), &st))
@@ -340,6 +308,8 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "diff-files", cmd_diff_files },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },
 		{ "diff-tree", cmd_diff_tree, RUN_SETUP },
+		{ "fetch", cmd_fetch, RUN_SETUP },
+		{ "fetch-pack", cmd_fetch_pack, RUN_SETUP },
 		{ "fetch--tool", cmd_fetch__tool, RUN_SETUP },
 		{ "fmt-merge-msg", cmd_fmt_merge_msg, RUN_SETUP },
 		{ "for-each-ref", cmd_for_each_ref, RUN_SETUP },
@@ -350,6 +320,9 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "get-tar-commit-id", cmd_get_tar_commit_id },
 		{ "grep", cmd_grep, RUN_SETUP | USE_PAGER },
 		{ "help", cmd_help },
+#ifndef NO_CURL
+		{ "http-fetch", cmd_http_fetch, RUN_SETUP },
+#endif
 		{ "init", cmd_init_db },
 		{ "init-db", cmd_init_db },
 		{ "log", cmd_log, RUN_SETUP | USE_PAGER },
@@ -370,6 +343,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "reflog", cmd_reflog, RUN_SETUP },
 		{ "repo-config", cmd_config },
 		{ "rerere", cmd_rerere, RUN_SETUP },
+		{ "reset", cmd_reset, RUN_SETUP },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },
 		{ "rev-parse", cmd_rev_parse, RUN_SETUP },
 		{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
@@ -423,31 +397,23 @@ int main(int argc, const char **argv)
 {
 	const char *cmd = argv[0] ? argv[0] : "git-help";
 	char *slash = strrchr(cmd, '/');
-	const char *exec_path = NULL;
+	const char *cmd_path = NULL;
 	int done_alias = 0;
 
 	/*
 	 * Take the basename of argv[0] as the command
 	 * name, and the dirname as the default exec_path
-	 * if it's an absolute path and we don't have
-	 * anything better.
+	 * if we don't have anything better.
 	 */
-	if (slash) {
-		*slash++ = 0;
-		if (*cmd == '/')
-			exec_path = cmd;
-		cmd = slash;
-	}
-
 #ifdef __MINGW32__
-	slash = strrchr(cmd, '\\');
+	if (!slash)
+		slash = strrchr(cmd, '\\');
+#endif
 	if (slash) {
 		*slash++ = 0;
-		if (cmd[1] == ':')
-			exec_path = cmd;
+		cmd_path = cmd;
 		cmd = slash;
 	}
-#endif
 
 	/*
 	 * "git-xxxx" is the same as "git xxxx", but we obviously:
@@ -474,23 +440,20 @@ int main(int argc, const char **argv)
 		if (!prefixcmp(argv[0], "--"))
 			argv[0] += 2;
 	} else {
-		/* Default command: "help" */
-		argv[0] = "help";
-		argc = 1;
+		/* The user didn't specify a command; give them help */
+		printf("usage: %s\n\n", git_usage_string);
+		list_common_cmds_help();
+		exit(1);
 	}
 	cmd = argv[0];
 
 	/*
-	 * We execute external git command via execv_git_cmd(),
-	 * which looks at "--exec-path" option, GIT_EXEC_PATH
-	 * environment, and $(gitexecdir) in Makefile while built,
-	 * in this order.  For scripted commands, we prepend
-	 * the value of the exec_path variable to the PATH.
+	 * We use PATH to find git commands, but we prepend some higher
+	 * precidence paths: the "--exec-path" option, the GIT_EXEC_PATH
+	 * environment, and the $(gitexecdir) from the Makefile at build
+	 * time.
 	 */
-	if (exec_path)
-		prepend_to_path(exec_path, strlen(exec_path));
-	exec_path = git_exec_path();
-	prepend_to_path(exec_path, strlen(exec_path));
+	setup_path(cmd_path);
 
 	while (1) {
 		/* See if it's an internal command */

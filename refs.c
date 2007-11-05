@@ -2,6 +2,7 @@
 #include "refs.h"
 #include "object.h"
 #include "tag.h"
+#include "dir.h"
 
 /* ISSYMREF=01 and ISPACKED=02 are public interfaces */
 #define REF_KNOWS_PEELED 04
@@ -671,57 +672,23 @@ static struct ref_lock *verify_lock(struct ref_lock *lock,
 	return lock;
 }
 
-static int remove_empty_dir_recursive(char *path, int len)
-{
-	DIR *dir = opendir(path);
-	struct dirent *e;
-	int ret = 0;
-
-	if (!dir)
-		return -1;
-	if (path[len-1] != '/')
-		path[len++] = '/';
-	while ((e = readdir(dir)) != NULL) {
-		struct stat st;
-		int namlen;
-		if ((e->d_name[0] == '.') &&
-		    ((e->d_name[1] == 0) ||
-		     ((e->d_name[1] == '.') && e->d_name[2] == 0)))
-			continue; /* "." and ".." */
-
-		namlen = strlen(e->d_name);
-		if ((len + namlen < PATH_MAX) &&
-		    strcpy(path + len, e->d_name) &&
-		    !lstat(path, &st) &&
-		    S_ISDIR(st.st_mode) &&
-		    !remove_empty_dir_recursive(path, len + namlen))
-			continue; /* happy */
-
-		/* path too long, stat fails, or non-directory still exists */
-		ret = -1;
-		break;
-	}
-	closedir(dir);
-	if (!ret) {
-		path[len] = 0;
-		ret = rmdir(path);
-	}
-	return ret;
-}
-
-static int remove_empty_directories(char *file)
+static int remove_empty_directories(const char *file)
 {
 	/* we want to create a file but there is a directory there;
 	 * if that is an empty directory (or a directory that contains
 	 * only empty directories), remove them.
 	 */
-	char path[PATH_MAX];
-	int len = strlen(file);
+	struct strbuf path;
+	int result;
 
-	if (len >= PATH_MAX) /* path too long ;-) */
-		return -1;
-	strcpy(path, file);
-	return remove_empty_dir_recursive(path, len);
+	strbuf_init(&path, 20);
+	strbuf_addstr(&path, file);
+
+	result = remove_dir_recursively(&path, 1);
+
+	strbuf_release(&path);
+
+	return result;
 }
 
 static int is_refname_available(const char *ref, const char *oldref,
@@ -964,15 +931,6 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 
  retry:
 	if (log && rename(git_path("tmp-renamed-log"), git_path("logs/%s", newref))) {
-#ifdef __MINGW32__
-		if (errno == EEXIST) {
-			struct stat st;
-			if (stat(git_path("logs/%s", newref), &st) == 0 && S_ISDIR(st.st_mode))
-				errno = EISDIR;
-			else
-				errno = EEXIST;
-		}
-#endif
 		if (errno==EISDIR || errno==ENOTDIR) {
 			/*
 			 * rename(a, b) when b is an existing
@@ -1238,7 +1196,6 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 		error("Unable to write to %s", lockpath);
 		goto error_unlink_return;
 	}
-	unlink(git_HEAD);
 	if (rename(lockpath, git_HEAD) < 0) {
 		error("Unable to create %s", git_HEAD);
 		goto error_unlink_return;
@@ -1265,15 +1222,11 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 static char *ref_msg(const char *line, const char *endp)
 {
 	const char *ep;
-	char *msg;
-
 	line += 82;
-	for (ep = line; ep < endp && *ep != '\n'; ep++)
-		;
-	msg = xmalloc(ep - line + 1);
-	memcpy(msg, line, ep - line);
-	msg[ep - line] = 0;
-	return msg;
+	ep = memchr(line, '\n', endp - line);
+	if (!ep)
+		ep = endp;
+	return xmemdupz(line, ep - line);
 }
 
 int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1, char **msg, unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt)
@@ -1473,4 +1426,31 @@ static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 int for_each_reflog(each_ref_fn fn, void *cb_data)
 {
 	return do_for_each_reflog("", fn, cb_data);
+}
+
+int update_ref(const char *action, const char *refname,
+		const unsigned char *sha1, const unsigned char *oldval,
+		int flags, enum action_on_err onerr)
+{
+	static struct ref_lock *lock;
+	lock = lock_any_ref_for_update(refname, oldval, flags);
+	if (!lock) {
+		const char *str = "Cannot lock the ref '%s'.";
+		switch (onerr) {
+		case MSG_ON_ERR: error(str, refname); break;
+		case DIE_ON_ERR: die(str, refname); break;
+		case QUIET_ON_ERR: break;
+		}
+		return 1;
+	}
+	if (write_ref_sha1(lock, sha1, action) < 0) {
+		const char *str = "Cannot update the ref '%s'.";
+		switch (onerr) {
+		case MSG_ON_ERR: error(str, refname); break;
+		case DIE_ON_ERR: die(str, refname); break;
+		case QUIET_ON_ERR: break;
+		}
+		return 1;
+	}
+	return 0;
 }

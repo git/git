@@ -12,8 +12,21 @@ die () {
     exit 1
 }
 
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) sort and find
+	sort () {
+		/usr/bin/sort "$@"
+	}
+	find () {
+		/usr/bin/find "$@"
+	}
+	;;
+esac
+
 exec=
-while case "$#" in 0) break;; esac
+while test $# != 0
 do
   case "$1" in
   -h|--h|--he|--hea|--head|--heads)
@@ -54,9 +67,10 @@ tmpdir=$tmp-d
 
 case "$peek_repo" in
 http://* | https://* | ftp://* )
-        if [ -n "$GIT_SSL_NO_VERIFY" ]; then
-            curl_extra_args="-k"
-        fi
+	if [ -n "$GIT_SSL_NO_VERIFY" -o \
+		"`git config --bool http.sslVerify`" = false ]; then
+		curl_extra_args="-k"
+	fi
 	if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
 		"`git config --bool http.noEPSV`" = true ]; then
 		curl_extra_args="${curl_extra_args} --disable-epsv"
@@ -79,7 +93,7 @@ rsync://* )
 		head=$(cat "$tmpdir/$head") || exit
 	esac &&
 	echo "$head	HEAD"
-	(cd $tmpdir && /usr/bin/find refs -type f) |
+	(cd $tmpdir && find refs -type f) |
 	while read path
 	do
 		tr -d '\012' <"$tmpdir/$path"
@@ -98,7 +112,7 @@ rsync://* )
 	fi
 	;;
 esac |
-/usr/bin/sort -t '	' -k 2 |
+sort -t '	' -k 2 |
 while read sha1 path
 do
 	case "$sha1" in

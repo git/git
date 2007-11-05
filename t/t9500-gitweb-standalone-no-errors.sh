@@ -18,6 +18,7 @@ gitweb_init () {
 our \$version = "current";
 our \$GIT = "git";
 our \$projectroot = "$(pwd)";
+our \$project_maxdepth = 8;
 our \$home_link_str = "projects";
 our \$site_name = "[localhost]";
 our \$site_header = "";
@@ -56,6 +57,14 @@ gitweb_run () {
 	if grep -q -s "^[[]" gitweb.log >/dev/null; then false; else true; fi
 
 	# gitweb.log is left for debugging
+}
+
+safe_chmod () {
+	chmod "$1" "$2" &&
+	if [ "$(git config --get core.filemode)" = false ]
+	then
+		git update-index --chmod="$1" "$2"
+	fi
 }
 
 . ./test-lib.sh
@@ -229,7 +238,7 @@ test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): mode change' \
-	'chmod a+x new_file &&
+	'safe_chmod +x new_file &&
 	 git commit -a -m "Mode changed." &&
 	 gitweb_run "p=.git;a=commitdiff"'
 test_debug 'cat gitweb.log'
@@ -268,7 +277,7 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'commitdiff(0): mode change and modified' \
 	'echo "New line" >> file2 &&
-	 chmod a+x file2 &&
+	 safe_chmod +x file2 &&
 	 git commit -a -m "Mode change and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
 test_debug 'cat gitweb.log'
@@ -295,7 +304,7 @@ test_expect_success \
 	'commitdiff(0): renamed, mode change and modified' \
 	'git mv file3 file2 &&
 	 echo "Propter nomen suum." >> file2 &&
-	 chmod a+x file2 &&
+	 safe_chmod +x file2 &&
 	 git commit -a -m "File rename, mode change and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
 test_debug 'cat gitweb.log'
@@ -412,10 +421,10 @@ test_expect_success \
 	 git add 03-new &&
 	 git mv 04-rename-from 04-rename-to &&
 	 echo "Changed" >> 04-rename-to &&
-	 chmod a+x 05-mode-change &&
+	 safe_chmod +x 05-mode-change &&
 	 rm -f 06-file-or-symlink && ln -s 01-change 06-file-or-symlink &&
 	 echo "Changed and have mode changed" > 07-change-mode-change	&&
-	 chmod a+x 07-change-mode-change &&
+	 safe_chmod +x 07-change-mode-change &&
 	 git commit -a -m "Large commit" &&
 	 git checkout master'
 

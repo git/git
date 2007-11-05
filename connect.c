@@ -73,9 +73,9 @@ struct ref **get_remote_heads(int in, struct ref **list,
 			continue;
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
-		ref = alloc_ref(len - 40);
+		ref = alloc_ref(name_len + 1);
 		hashcpy(ref->old_sha1, old_sha1);
-		memcpy(ref->name, buffer + 41, len - 40);
+		memcpy(ref->name, buffer + 41, name_len + 1);
 		*list = ref;
 		list = &ref->next;
 	}
@@ -410,9 +410,7 @@ static int git_proxy_command_options(const char *var, const char *value)
 			if (matchlen == 4 &&
 			    !memcmp(value, "none", 4))
 				matchlen = 0;
-			git_proxy_command = xmalloc(matchlen + 1);
-			memcpy(git_proxy_command, value, matchlen);
-			git_proxy_command[matchlen] = 0;
+			git_proxy_command = xmemdupz(value, matchlen);
 		}
 		return 0;
 	}
@@ -487,24 +485,26 @@ char *get_port(char *host)
 }
 
 /*
- * This returns 0 if the transport protocol does not need fork(2),
- * or a process id if it does.  Once done, finish the connection
+ * This returns NULL if the transport protocol does not need fork(2), or a
+ * struct child_process object if it does.  Once done, finish the connection
  * with finish_connect() with the value returned from this function
- * (it is safe to call finish_connect() with 0 to support the former
+ * (it is safe to call finish_connect() with NULL to support the former
  * case).
  *
- * Does not return a negative value on error; it just dies.
+ * If it returns, the connect is successful; it just dies on errors.
  */
-pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
+struct child_process *git_connect(int fd[2], char *url,
+				  const char *prog, int flags)
 {
 	char *host, *path = url;
 	char *end;
 	int c;
-	int pipefd[2][2];
-	pid_t pid;
+	struct child_process *conn;
 	enum protocol protocol = PROTO_LOCAL;
 	int free_path = 0;
 	char *port = NULL;
+	const char **arg;
+	struct strbuf cmd;
 
 	/* Without this we cannot rely on waitpid() to tell
 	 * what happened to our children.
@@ -534,19 +534,11 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		end = host;
 
 	path = strchr(end, c);
-	if (path) {
+	/* host must have at least 2 chars to catch DOS C:/path */
+	if (path && path - end > 1) {
 		if (c == ':') {
-#ifdef __MINGW32__
-			/* host must have at least 2 chars to
-			 * catch DOS C:/path */
-			if (path - end > 1) {
-#endif
-				protocol = PROTO_SSH;
-				*path++ = '\0';
-#ifdef __MINGW32__
-			} else
-				path = end;
-#endif
+			protocol = PROTO_SSH;
+			*path++ = '\0';
 		}
 	} else
 		path = end;
@@ -596,63 +588,68 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		free(target_host);
 		if (free_path)
 			free(path);
-		return 0;
+		return NULL;
 	}
 
-	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
-		die("unable to create pipe pair for communication");
+	conn = xcalloc(1, sizeof(*conn));
 
-	char command[MAX_CMD_LEN];
-	char *posn = command;
-	int size = MAX_CMD_LEN;
-	int of = 0;
-
-	of |= add_to_string(&posn, &size, prog, 0);
-	of |= add_to_string(&posn, &size, " ", 0);
-	of |= add_to_string(&posn, &size, path, 1);
-
-	if (of)
+	strbuf_init(&cmd, MAX_CMD_LEN);
+	strbuf_addstr(&cmd, prog);
+	strbuf_addch(&cmd, ' ');
+	sq_quote_buf(&cmd, path);
+	if (cmd.len >= MAX_CMD_LEN)
 		die("command line too long");
 
+	conn->in = conn->out = -1;
+	conn->argv = arg = xcalloc(6, sizeof(*arg));
 	if (protocol == PROTO_SSH) {
-		const char *argv[] = { NULL, host, command, NULL, NULL, NULL };
 		const char *ssh = getenv("GIT_SSH");
 		if (!ssh) ssh = "ssh";
+
+		*arg++ = ssh;
 		if (port) {
-			argv[2] = "-p";
-			argv[3] = port;
-			argv[4] = command;
+			*arg++ = "-p";
+			*arg++ = port;
 		}
-		pid = spawnvpe_pipe(ssh, argv, (const char**) environ, pipefd[1], pipefd[0]);
+		*arg++ = host;
 	}
 	else {
-		const char *argv[] = { NULL, "-c", command, NULL };
-		const char **env = copy_environ();
-		env_unsetenv(env, ALTERNATE_DB_ENVIRONMENT);
-		env_unsetenv(env, DB_ENVIRONMENT);
-		env_unsetenv(env, GIT_DIR_ENVIRONMENT);
-		env_unsetenv(env, GIT_WORK_TREE_ENVIRONMENT);
-		env_unsetenv(env, GRAFT_ENVIRONMENT);
-		env_unsetenv(env, INDEX_ENVIRONMENT);
-		pid = spawnvpe_pipe("sh", argv, env, pipefd[1], pipefd[0]);
+		/* remove these from the environment */
+		const char *env[] = {
+			ALTERNATE_DB_ENVIRONMENT,
+			DB_ENVIRONMENT,
+			GIT_DIR_ENVIRONMENT,
+			GIT_WORK_TREE_ENVIRONMENT,
+			GRAFT_ENVIRONMENT,
+			INDEX_ENVIRONMENT,
+			NULL
+		};
+		conn->env = env;
+		*arg++ = "sh";
+		*arg++ = "-c";
 	}
-	if (pid < 0)
+	*arg++ = cmd.buf;
+	*arg = NULL;
+
+	if (start_command(conn))
 		die("unable to fork");
-	fd[0] = pipefd[0][0];
-	fd[1] = pipefd[1][1];
+
+	fd[0] = conn->out; /* read from child's stdout */
+	fd[1] = conn->in;  /* write to child's stdin */
+	strbuf_release(&cmd);
 	if (free_path)
 		free(path);
-	return pid;
+	return conn;
 }
 
-int finish_connect(pid_t pid)
+int finish_connect(struct child_process *conn)
 {
-	if (pid == 0)
+	int code;
+	if (!conn)
 		return 0;
 
-	while (waitpid(pid, NULL, 0) < 0) {
-		if (errno != EINTR)
-			return -1;
-	}
-	return 0;
+	code = finish_command(conn);
+	free(conn->argv);
+	free(conn);
+	return code;
 }
