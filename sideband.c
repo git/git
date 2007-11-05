@@ -13,7 +13,7 @@
  */
 
 #define PREFIX "remote:"
-#define SUFFIX "\e[K"  /* change to "        " if ANSI sequences don't work */
+#define SUFFIX "\033[K"  /* change to "        " if ANSI sequences don't work */
 
 int recv_sideband(const char *me, int in_stream, int out, int err)
 {
