@@ -206,7 +206,18 @@ static void update_tracking_ref(struct remote *remote, struct ref *ref)
 	}
 }
 
-static int do_send_pack(int in, int out, struct remote *remote, int nr_refspec, const char **refspec)
+static const char *prettify_ref(const char *name)
+{
+	return name + (
+		!prefixcmp(name, "refs/heads/") ? 11 :
+		!prefixcmp(name, "refs/tags/") ? 10 :
+		!prefixcmp(name, "refs/remotes/") ? 13 :
+		0);
+}
+
+#define SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
+
+static int do_send_pack(int in, int out, struct remote *remote, const char *dest, int nr_refspec, const char **refspec)
 {
 	struct ref *ref;
 	int new_refs;
@@ -214,6 +225,7 @@ static int do_send_pack(int in, int out, struct remote *remote, int nr_refspec, 
 	int ask_for_status_report = 0;
 	int allow_deleting_refs = 0;
 	int expect_status_report = 0;
+	int shown_dest = 0;
 
 	/* No funny business with the matcher */
 	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, REF_NORMAL);
@@ -245,21 +257,33 @@ static int do_send_pack(int in, int out, struct remote *remote, int nr_refspec, 
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char old_hex[60], *new_hex;
 		int will_delete_ref;
+		const char *pretty_ref;
+		const char *pretty_peer;
 
 		if (!ref->peer_ref)
 			continue;
 
+		if (!shown_dest) {
+			fprintf(stderr, "To %s\n", dest);
+			shown_dest = 1;
+		}
+
+		pretty_ref = prettify_ref(ref->name);
+		pretty_peer = prettify_ref(ref->peer_ref->name);
 
 		will_delete_ref = is_null_sha1(ref->peer_ref->new_sha1);
 		if (will_delete_ref && !allow_deleting_refs) {
-			error("remote does not support deleting refs");
+			fprintf(stderr, " ! %-*s %s (remote does not support deleting refs)\n",
+					SUMMARY_WIDTH, "[rejected]", pretty_ref);
 			ret = -2;
 			continue;
 		}
 		if (!will_delete_ref &&
 		    !hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
 			if (args.verbose)
-				fprintf(stderr, "'%s': up-to-date\n", ref->name);
+				fprintf(stderr, " = %-*s %s -> %s\n",
+					SUMMARY_WIDTH, "[up to date]",
+					pretty_peer, pretty_ref);
 			continue;
 		}
 
@@ -296,12 +320,9 @@ static int do_send_pack(int in, int out, struct remote *remote, int nr_refspec, 
 				 * commits at the remote end and likely
 				 * we were not up to date to begin with.
 				 */
-				error("remote '%s' is not a strict "
-				      "subset of local ref '%s'. "
-				      "maybe you are not up-to-date and "
-				      "need to pull first?",
-				      ref->name,
-				      ref->peer_ref->name);
+				fprintf(stderr, " ! %-*s %s -> %s (non-fast forward)\n",
+						SUMMARY_WIDTH, "[rejected]",
+						pretty_peer, pretty_ref);
 				ret = -2;
 				continue;
 			}
@@ -325,14 +346,40 @@ static int do_send_pack(int in, int out, struct remote *remote, int nr_refspec, 
 					old_hex, new_hex, ref->name);
 		}
 		if (will_delete_ref)
-			fprintf(stderr, "deleting '%s'\n", ref->name);
+			fprintf(stderr, " - %-*s %s\n",
+				SUMMARY_WIDTH, "[deleting]",
+				pretty_ref);
+		else if (is_null_sha1(ref->old_sha1)) {
+			const char *msg;
+
+			if (!prefixcmp(ref->name, "refs/tags/"))
+				msg = "[new tag]";
+			else
+				msg = "[new branch]";
+			fprintf(stderr, " * %-*s %s -> %s\n",
+				SUMMARY_WIDTH, msg,
+				pretty_peer, pretty_ref);
+		}
 		else {
-			fprintf(stderr, "updating '%s'", ref->name);
-			if (strcmp(ref->name, ref->peer_ref->name))
-				fprintf(stderr, " using '%s'",
-					ref->peer_ref->name);
-			fprintf(stderr, "\n  from %s\n  to   %s\n",
-				old_hex, new_hex);
+			char quickref[83];
+			char type = ' ';
+			const char *msg = "";
+
+			strcpy(quickref, find_unique_abbrev(ref->old_sha1, DEFAULT_ABBREV));
+			if (ref_newer(ref->peer_ref->new_sha1, ref->old_sha1))
+				strcat(quickref, "..");
+			else {
+				strcat(quickref, "...");
+				type = '+';
+				msg = " (forced update)";
+			}
+			strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
+
+			fprintf(stderr, " %c %-*s %s -> %s%s\n",
+				type,
+				SUMMARY_WIDTH, quickref,
+				pretty_peer, pretty_ref,
+				msg);
 		}
 	}
 
@@ -460,7 +507,7 @@ int send_pack(struct send_pack_args *my_args,
 	verify_remote_names(nr_heads, heads);
 
 	conn = git_connect(fd, dest, args.receivepack, args.verbose ? CONNECT_VERBOSE : 0);
-	ret = do_send_pack(fd[0], fd[1], remote, nr_heads, heads);
+	ret = do_send_pack(fd[0], fd[1], remote, dest, nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
 	ret |= finish_connect(conn);
