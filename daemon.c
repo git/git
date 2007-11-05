@@ -540,7 +540,7 @@ static int execute(struct sockaddr *addr)
 		if (addr->sa_family == AF_INET) {
 			struct sockaddr_in *sin_addr = (void *) addr;
 			inet_ntop(addr->sa_family, &sin_addr->sin_addr, addrbuf, sizeof(addrbuf));
-			port = sin_addr->sin_port;
+			port = ntohs(sin_addr->sin_port);
 #ifndef NO_IPV6
 		} else if (addr && addr->sa_family == AF_INET6) {
 			struct sockaddr_in6 *sin6_addr = (void *) addr;
@@ -550,7 +550,7 @@ static int execute(struct sockaddr *addr)
 			inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(addrbuf) - 1);
 			strcat(buf, "]");
 
-			port = sin6_addr->sin6_port;
+			port = ntohs(sin6_addr->sin6_port);
 #endif
 		}
 		loginfo("Connection from %s:%d", addrbuf, port);
