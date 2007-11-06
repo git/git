@@ -30,7 +30,7 @@
 #   This is the list that all pushes of annotated tags will go to.  Leave it
 #   blank to default to the mailinglist field.  The announce emails lists the
 #   short log summary of the changes since the last annotated tag.
-# hook.envelopesender
+# hooks.envelopesender
 #   If set then the -f option is passed to sendmail to allow the envelope sender
 #   address to be set
 #
