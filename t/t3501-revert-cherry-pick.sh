@@ -44,7 +44,7 @@ test_expect_success setup '
 test_expect_success 'cherry-pick after renaming branch' '
 
 	git checkout rename2 &&
-	EDITOR=: VISUAL=: git cherry-pick added &&
+	git cherry-pick added &&
 	test -f opos &&
 	grep "Add extra line at the end" opos
 
@@ -53,7 +53,7 @@ test_expect_success 'cherry-pick after renaming branch' '
 test_expect_success 'revert after renaming branch' '
 
 	git checkout rename1 &&
-	EDITOR=: VISUAL=: git revert added &&
+	git revert added &&
 	test -f spoo &&
 	! grep "Add extra line at the end" spoo
 

@@ -51,7 +51,7 @@ case $(uname -s) in
 esac
 
 usage() {
-	die "Usage: $0 [--template=<template_directory>] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] <repo> [<dir>]"
+	die "Usage: $0 [--template=<template_directory>] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] [--] <repo> [<dir>]"
 }
 
 get_repo_base() {
@@ -197,6 +197,9 @@ while
 	*,--depth)
 		shift
 		depth="--depth=$1";;
+	*,--)
+		shift
+		break ;;
 	*,-*) usage ;;
 	*) break ;;
 	esac

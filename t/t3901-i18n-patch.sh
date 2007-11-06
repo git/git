@@ -154,7 +154,7 @@ test_expect_success 'cherry-pick(U/U)' '
 	git reset --hard master &&
 	git cherry-pick side^ &&
 	git cherry-pick side &&
-	EDITOR=: VISUAL=: git revert HEAD &&
+	git revert HEAD &&
 
 	check_encoding 3
 '
@@ -169,7 +169,7 @@ test_expect_success 'cherry-pick(L/L)' '
 	git reset --hard master &&
 	git cherry-pick side^ &&
 	git cherry-pick side &&
-	EDITOR=: VISUAL=: git revert HEAD &&
+	git revert HEAD &&
 
 	check_encoding 3 8859
 '
@@ -184,7 +184,7 @@ test_expect_success 'cherry-pick(U/L)' '
 	git reset --hard master &&
 	git cherry-pick side^ &&
 	git cherry-pick side &&
-	EDITOR=: VISUAL=: git revert HEAD &&
+	git revert HEAD &&
 
 	check_encoding 3
 '
@@ -200,7 +200,7 @@ test_expect_success 'cherry-pick(L/U)' '
 	git reset --hard master &&
 	git cherry-pick side^ &&
 	git cherry-pick side &&
-	EDITOR=: VISUAL=: git revert HEAD &&
+	git revert HEAD &&
 
 	check_encoding 3 8859
 '

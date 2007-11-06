@@ -4,12 +4,15 @@
 #include "refs.h"
 #include "builtin.h"
 #include "exec_cmd.h"
+#include "parse-options.h"
 
 #define SEEN		(1u<<0)
 #define MAX_TAGS	(FLAG_BITS - 1)
 
-static const char describe_usage[] =
-"git-describe [--all] [--tags] [--abbrev=<n>] <committish>*";
+static const char * const describe_usage[] = {
+	"git-describe [options] <committish>*",
+	NULL
+};
 
 static int debug;	/* Display lots of verbose info */
 static int all;	/* Default to annotated tags only */
@@ -242,57 +245,42 @@ static void describe(const char *arg, int last_one)
 
 int cmd_describe(int argc, const char **argv, const char *prefix)
 {
-	int i;
 	int contains = 0;
+	struct option options[] = {
+		OPT_BOOLEAN(0, "contains",   &contains, "find the tag that comes after the commit"),
+		OPT_BOOLEAN(0, "debug",      &debug, "debug search strategy on stderr"),
+		OPT_BOOLEAN(0, "all",        &all, "use any ref in .git/refs"),
+		OPT_BOOLEAN(0, "tags",       &tags, "use any tag in .git/refs/tags"),
+		OPT__ABBREV(&abbrev),
+		OPT_INTEGER(0, "candidates", &max_candidates,
+					"consider <n> most recent tags (default: 10)"),
+		OPT_END(),
+	};
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-
-		if (*arg != '-')
-			break;
-		else if (!strcmp(arg, "--contains"))
-			contains = 1;
-		else if (!strcmp(arg, "--debug"))
-			debug = 1;
-		else if (!strcmp(arg, "--all"))
-			all = 1;
-		else if (!strcmp(arg, "--tags"))
-			tags = 1;
-		else if (!prefixcmp(arg, "--abbrev=")) {
-			abbrev = strtoul(arg + 9, NULL, 10);
-			if (abbrev != 0 && (abbrev < MINIMUM_ABBREV || 40 < abbrev))
-				abbrev = DEFAULT_ABBREV;
-		}
-		else if (!prefixcmp(arg, "--candidates=")) {
-			max_candidates = strtoul(arg + 13, NULL, 10);
-			if (max_candidates < 1)
-				max_candidates = 1;
-			else if (max_candidates > MAX_TAGS)
-				max_candidates = MAX_TAGS;
-		}
-		else
-			usage(describe_usage);
-	}
+	argc = parse_options(argc, argv, options, describe_usage, 0);
+	if (max_candidates < 1)
+		max_candidates = 1;
+	else if (max_candidates > MAX_TAGS)
+		max_candidates = MAX_TAGS;
 
 	save_commit_buffer = 0;
 
 	if (contains) {
-		const char **args = xmalloc((4 + argc - i) * sizeof(char*));
+		const char **args = xmalloc((4 + argc) * sizeof(char*));
 		args[0] = "name-rev";
 		args[1] = "--name-only";
 		args[2] = "--tags";
-		memcpy(args + 3, argv + i, (argc - i) * sizeof(char*));
-		args[3 + argc - i] = NULL;
-		return cmd_name_rev(3 + argc - i, args, prefix);
+		memcpy(args + 3, argv, argc * sizeof(char*));
+		args[3 + argc] = NULL;
+		return cmd_name_rev(3 + argc, args, prefix);
 	}
 
-	if (argc <= i)
+	if (argc == 0) {
 		describe("HEAD", 1);
-	else
-		while (i < argc) {
-			describe(argv[i], (i == argc - 1));
-			i++;
+	} else {
+		while (argc-- > 0) {
+			describe(*argv++, argc == 0);
 		}
-
+	}
 	return 0;
 }

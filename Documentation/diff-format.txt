@@ -1,5 +1,5 @@
-The output format from "git-diff-index", "git-diff-tree" and
-"git-diff-files" are very similar.
+The output format from "git-diff-index", "git-diff-tree",
+"git-diff-files" and "git diff --raw" are very similar.
 
 These commands all compare two sets of things; what is
 compared differs:
@@ -62,7 +62,8 @@ respectively.
 diff format for merges
 ----------------------
 
-"git-diff-tree" and "git-diff-files" can take '-c' or '--cc' option
+"git-diff-tree", "git-diff-files" and "git-diff --raw"
+can take '-c' or '--cc' option
 to generate diff output also for merge commits.  The output differs
 from the format described above in the following way:
 
@@ -86,10 +87,10 @@ Generating patches with -p
 --------------------------
 
 When "git-diff-index", "git-diff-tree", or "git-diff-files" are run
-with a '-p' option, they do not produce the output described above;
-instead they produce a patch file.  You can customize the creation
-of such patches via the GIT_EXTERNAL_DIFF and the GIT_DIFF_OPTS
-environment variables.
+with a '-p' option, or "git diff" without the '--raw' option, they
+do not produce the output described above; instead they produce a
+patch file.  You can customize the creation of such patches via the
+GIT_EXTERNAL_DIFF and the GIT_DIFF_OPTS environment variables.
 
 What the -p option produces is slightly different from the traditional
 diff format.
@@ -137,8 +138,8 @@ file made it into the new one.
 combined diff format
 --------------------
 
-git-diff-tree and git-diff-files can take '-c' or '--cc' option
-to produce 'combined diff', which looks like this:
+"git-diff-tree", "git-diff-files" and "git-diff" can take '-c' or
+'--cc' option to produce 'combined diff', which looks like this:
 
 ------------
 diff --combined describe.c

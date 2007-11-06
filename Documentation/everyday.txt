@@ -109,7 +109,7 @@ $ tar zxf frotz.tar.gz
 $ cd frotz
 $ git-init
 $ git add . <1>
-$ git commit -m 'import of frotz source tree.'
+$ git commit -m "import of frotz source tree."
 $ git tag v2.43 <2>
 ------------
 +
@@ -300,7 +300,7 @@ $ git merge topic/one topic/two && git merge hold/linus <8>
 $ git checkout maint
 $ git cherry-pick master~4 <9>
 $ compile/test
-$ git tag -s -m 'GIT 0.99.9x' v0.99.9x <10>
+$ git tag -s -m "GIT 0.99.9x" v0.99.9x <10>
 $ git fetch ko && git show-branch master maint 'tags/ko-*' <11>
 $ git push ko <12>
 $ git push ko v0.99.9x <13>

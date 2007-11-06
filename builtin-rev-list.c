@@ -86,7 +86,8 @@ static void show_commit(struct commit *commit)
 		struct strbuf buf;
 		strbuf_init(&buf, 0);
 		pretty_print_commit(revs.commit_format, commit,
-					&buf, revs.abbrev, NULL, NULL, revs.date_mode);
+				    &buf, revs.abbrev, NULL, NULL,
+				    revs.date_mode, 0);
 		if (buf.len)
 			printf("%s%c", buf.buf, hdr_termination);
 		strbuf_release(&buf);

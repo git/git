@@ -8,9 +8,12 @@
 #include "dir.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
+#include "parse-options.h"
 
-static const char builtin_rm_usage[] =
-"git-rm [-f] [-n] [-r] [--cached] [--ignore-unmatch] [--quiet] [--] <file>...";
+static const char * const builtin_rm_usage[] = {
+	"git-rm [options] [--] <file>...",
+	NULL
+};
 
 static struct {
 	int nr, alloc;
@@ -121,11 +124,23 @@ static int check_local_mod(unsigned char *head, int index_only)
 
 static struct lock_file lock_file;
 
+static int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
+static int ignore_unmatch = 0;
+
+static struct option builtin_rm_options[] = {
+	OPT__DRY_RUN(&show_only),
+	OPT__QUIET(&quiet),
+	OPT_BOOLEAN( 0 , "cached",         &index_only, "only remove from the index"),
+	OPT_BOOLEAN('f', NULL,             &force,      "override the up-to-date check"),
+	OPT_BOOLEAN('r', NULL,             &recursive,  "allow recursive removal"),
+	OPT_BOOLEAN( 0 , "ignore-unmatch", &ignore_unmatch,
+				"exit with a zero status even if nothing matched"),
+	OPT_END(),
+};
+
 int cmd_rm(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
-	int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
-	int ignore_unmatch = 0;
 	const char **pathspec;
 	char *seen;
 
@@ -136,34 +151,11 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	if (read_cache() < 0)
 		die("index file corrupt");
 
-	for (i = 1 ; i < argc ; i++) {
-		const char *arg = argv[i];
+	argc = parse_options(argc, argv, builtin_rm_options, builtin_rm_usage, 0);
+	if (!argc)
+		usage_with_options(builtin_rm_usage, builtin_rm_options);
 
-		if (*arg != '-')
-			break;
-		else if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-		else if (!strcmp(arg, "-n"))
-			show_only = 1;
-		else if (!strcmp(arg, "--cached"))
-			index_only = 1;
-		else if (!strcmp(arg, "-f"))
-			force = 1;
-		else if (!strcmp(arg, "-r"))
-			recursive = 1;
-		else if (!strcmp(arg, "--quiet"))
-			quiet = 1;
-		else if (!strcmp(arg, "--ignore-unmatch"))
-			ignore_unmatch = 1;
-		else
-			usage(builtin_rm_usage);
-	}
-	if (argc <= i)
-		usage(builtin_rm_usage);
-
-	pathspec = get_pathspec(prefix, argv + i);
+	pathspec = get_pathspec(prefix, argv);
 	seen = NULL;
 	for (i = 0; pathspec[i] ; i++)
 		/* nothing */;

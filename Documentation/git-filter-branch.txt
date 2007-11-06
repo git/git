@@ -152,7 +152,7 @@ definition impossible to preserve signatures at any rate.)
 	does this in the '.git-rewrite/' directory but you can override
 	that choice by this parameter.
 
--f\|--force::
+-f|--force::
 	`git filter-branch` refuses to start with an existing temporary
 	directory or when there are already refs starting with
 	'refs/original/', unless forced.

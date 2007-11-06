@@ -8,6 +8,7 @@
 #include "pack.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
+#include "parse-options.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -666,9 +667,24 @@ static int fsck_cache_tree(struct cache_tree *it)
 	return err;
 }
 
-static const char fsck_usage[] =
-"git-fsck [--tags] [--root] [[--unreachable] [--cache] [--full] "
-"[--strict] [--verbose] <head-sha1>*]";
+static char const * const fsck_usage[] = {
+	"git-fsck [options] [<object>...]",
+	NULL
+};
+
+static struct option fsck_opts[] = {
+	OPT__VERBOSE(&verbose),
+	OPT_BOOLEAN(0, "unreachable", &show_unreachable, "show unreachable objects"),
+	OPT_BOOLEAN(0, "tags", &show_tags, "report tags"),
+	OPT_BOOLEAN(0, "root", &show_root, "report root nodes"),
+	OPT_BOOLEAN(0, "cache", &keep_cache_objects, "make index objects head nodes"),
+	OPT_BOOLEAN(0, "reflogs", &include_reflogs, "make reflogs head nodes (default)"),
+	OPT_BOOLEAN(0, "full", &check_full, "also consider alternate objects"),
+	OPT_BOOLEAN(0, "strict", &check_strict, "enable more strict checking"),
+	OPT_BOOLEAN(0, "lost-found", &write_lost_and_found,
+				"write dangling objects in .git/lost-found"),
+	OPT_END(),
+};
 
 int cmd_fsck(int argc, const char **argv, const char *prefix)
 {
@@ -677,49 +693,10 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	track_object_refs = 1;
 	errors_found = 0;
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-
-		if (!strcmp(arg, "--unreachable")) {
-			show_unreachable = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--tags")) {
-			show_tags = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--root")) {
-			show_root = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--cache")) {
-			keep_cache_objects = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--no-reflogs")) {
-			include_reflogs = 0;
-			continue;
-		}
-		if (!strcmp(arg, "--full")) {
-			check_full = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--strict")) {
-			check_strict = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--verbose")) {
-			verbose = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--lost-found")) {
-			check_full = 1;
-			include_reflogs = 0;
-			write_lost_and_found = 1;
-			continue;
-		}
-		if (*arg == '-')
-			usage(fsck_usage);
+	argc = parse_options(argc, argv, fsck_opts, fsck_usage, 0);
+	if (write_lost_and_found) {
+		check_full = 1;
+		include_reflogs = 0;
 	}
 
 	fsck_head_link();
@@ -741,22 +718,18 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			verify_pack(p, 0);
 
 		for (p = packed_git; p; p = p->next) {
-			uint32_t i, num;
+			uint32_t j, num;
 			if (open_pack_index(p))
 				continue;
 			num = p->num_objects;
-			for (i = 0; i < num; i++)
-				fsck_sha1(nth_packed_object_sha1(p, i));
+			for (j = 0; j < num; j++)
+				fsck_sha1(nth_packed_object_sha1(p, j));
 		}
 	}
 
 	heads = 0;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-
-		if (*arg == '-')
-			continue;
-
 		if (!get_sha1(arg, head_sha1)) {
 			struct object *obj = lookup_object(head_sha1);
 
@@ -783,7 +756,6 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	}
 
 	if (keep_cache_objects) {
-		int i;
 		read_cache();
 		for (i = 0; i < active_nr; i++) {
 			unsigned int mode;

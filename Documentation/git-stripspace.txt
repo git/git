@@ -16,7 +16,7 @@ Remove multiple empty lines, and empty lines at beginning and end.
 
 OPTIONS
 -------
--s\|--strip-comments::
+-s|--strip-comments::
 	In addition to empty lines, also strip lines starting with '#'.
 
 <stream>::

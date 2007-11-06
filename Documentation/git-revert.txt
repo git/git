@@ -7,7 +7,7 @@ git-revert - Revert an existing commit
 
 SYNOPSIS
 --------
-'git-revert' [--edit | --no-edit] [-n] <commit>
+'git-revert' [--edit | --no-edit] [-n] [-m parent-number] <commit>
 
 DESCRIPTION
 -----------
@@ -26,6 +26,13 @@ OPTIONS
 	With this option, `git-revert` will let you edit the commit
 	message prior committing the revert. This is the default if
 	you run the command from a terminal.
+
+-m parent-number|--mainline parent-number::
+	Usually you cannot revert a merge because you do not know which
+	side of the merge should be considered the mainline.  This
+	option specifies the parent number (starting from 1) of
+	the mainline and allows revert to reverse the change
+	relative to the specified parent.
 
 --no-edit::
 	With this option, `git-revert` will not start the commit
