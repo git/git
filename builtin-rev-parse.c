@@ -337,11 +337,11 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	int i, as_is = 0, verify = 0;
 	unsigned char sha1[20];
 
-	git_config(git_default_config);
-
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
 
+	prefix = setup_git_directory();
+	git_config(git_default_config);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
