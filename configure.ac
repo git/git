@@ -73,7 +73,7 @@ fi \
 AC_ARG_WITH([lib],
  [AS_HELP_STRING([--with-lib=ARG],
                  [ARG specifies alternative name for lib directory])],
- [if test "$withval" = "no" -o "$withval" = "yes"; then \
+ [if test "$withval" = "no" || test "$withval" = "yes"; then \
 	AC_MSG_WARN([You should provide name for --with-lib=ARG]); \
 else \
 	GIT_CONF_APPEND_LINE(lib=$withval); \
@@ -245,9 +245,9 @@ AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
 		[[char buf[64];
 		if (sprintf(buf, "%lld%hhd%jd%zd%td", (long long int)1, (char)2, (intmax_t)3, (size_t)4, (ptrdiff_t)5) != 5)
-		  exit(1);
+		  return 1;
 		else if (strcmp(buf, "12345"))
-		  exit(2);]])],
+		  return 2;]])],
 	[ac_cv_c_c99_format=yes],
 	[ac_cv_c_c99_format=no])
 ])
