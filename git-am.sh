@@ -131,7 +131,7 @@ do
 		binary=t ;;
 	-3|--3way)
 		threeway=t ;;
-	-s--signoff)
+	-s|--signoff)
 		sign=t ;;
 	-u|--utf8)
 		utf8=t ;; # this is now default
