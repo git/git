@@ -14,11 +14,12 @@
 #define TP_IDX_MAX      8
 
 struct throughput {
+	off_t curr_total;
 	off_t prev_total;
 	struct timeval prev_tv;
 	unsigned int avg_bytes;
-	unsigned int last_bytes[TP_IDX_MAX];
 	unsigned int avg_misecs;
+	unsigned int last_bytes[TP_IDX_MAX];
 	unsigned int last_misecs[TP_IDX_MAX];
 	unsigned int idx;
 	char display[32];
@@ -109,6 +110,30 @@ static int display(struct progress *progress, unsigned n, int done)
 	return 0;
 }
 
+static void throughput_string(struct throughput *tp, off_t total,
+			      unsigned int rate)
+{
+	int l = sizeof(tp->display);
+	if (total > 1 << 30) {
+		l -= snprintf(tp->display, l, ", %u.%2.2u GiB",
+			      (int)(total >> 30),
+			      (int)(total & ((1 << 30) - 1)) / 10737419);
+	} else if (total > 1 << 20) {
+		l -= snprintf(tp->display, l, ", %u.%2.2u MiB",
+			      (int)(total >> 20),
+			      ((int)(total & ((1 << 20) - 1)) * 100) >> 20);
+	} else if (total > 1 << 10) {
+		l -= snprintf(tp->display, l, ", %u.%2.2u KiB",
+			      (int)(total >> 10),
+			      ((int)(total & ((1 << 10) - 1)) * 100) >> 10);
+	} else {
+		l -= snprintf(tp->display, l, ", %u bytes", (int)total);
+	}
+	if (rate)
+		snprintf(tp->display + sizeof(tp->display) - l, l,
+			 " | %u KiB/s", rate);
+}
+
 void display_throughput(struct progress *progress, off_t total)
 {
 	struct throughput *tp;
@@ -124,11 +149,12 @@ void display_throughput(struct progress *progress, off_t total)
 	if (!tp) {
 		progress->throughput = tp = calloc(1, sizeof(*tp));
 		if (tp) {
-			tp->prev_total = total;
+			tp->prev_total = tp->curr_total = total;
 			tp->prev_tv = tv;
 		}
 		return;
 	}
+	tp->curr_total = total;
 
 	/*
 	 * We have x = bytes and y = microsecs.  We want z = KiB/s:
@@ -149,39 +175,21 @@ void display_throughput(struct progress *progress, off_t total)
 	misecs += (int)(tv.tv_usec - tp->prev_tv.tv_usec) / 977;
 
 	if (misecs > 512) {
-		int l = sizeof(tp->display);
-		unsigned int count = total - tp->prev_total;
+		unsigned int count, rate;
+
+		count = total - tp->prev_total;
 		tp->prev_total = total;
 		tp->prev_tv = tv;
 		tp->avg_bytes += count;
 		tp->avg_misecs += misecs;
-
-		if (total > 1 << 30) {
-			l -= snprintf(tp->display, l, ", %u.%2.2u GiB",
-				      (int)(total >> 30),
-				      (int)(total & ((1 << 30) - 1)) / 10737419);
-		} else if (total > 1 << 20) {
-			l -= snprintf(tp->display, l, ", %u.%2.2u MiB",
-				      (int)(total >> 20),
-				      ((int)(total & ((1 << 20) - 1))
-				       * 100) >> 20);
-		} else if (total > 1 << 10) {
-			l -= snprintf(tp->display, l, ", %u.%2.2u KiB",
-				      (int)(total >> 10),
-				      ((int)(total & ((1 << 10) - 1))
-				       * 100) >> 10);
-		} else {
-			l -= snprintf(tp->display, l, ", %u bytes", (int)total);
-		}
-		snprintf(tp->display + sizeof(tp->display) - l, l,
-			 " | %u KiB/s", tp->avg_bytes / tp->avg_misecs);
-
+		rate = tp->avg_bytes / tp->avg_misecs;
 		tp->avg_bytes -= tp->last_bytes[tp->idx];
 		tp->avg_misecs -= tp->last_misecs[tp->idx];
 		tp->last_bytes[tp->idx] = count;
 		tp->last_misecs[tp->idx] = misecs;
 		tp->idx = (tp->idx + 1) % TP_IDX_MAX;
 
+		throughput_string(tp, total, rate);
 		if (progress->last_value != -1 && progress_update)
 			display(progress, progress->last_value, 0);
 	}
@@ -225,6 +233,12 @@ void stop_progress(struct progress **p_progress)
 	*p_progress = NULL;
 	if (progress->last_value != -1) {
 		/* Force the last update */
+		struct throughput *tp = progress->throughput;
+		if (tp) {
+			unsigned int rate = !tp->avg_misecs ? 0 :
+					tp->avg_bytes / tp->avg_misecs;
+			throughput_string(tp, tp->curr_total, rate);
+		}
 		progress_update = 1;
 		display(progress, progress->last_value, 1);
 	}
