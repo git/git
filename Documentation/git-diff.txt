@@ -82,6 +82,9 @@ include::diff-options.txt[]
 	the diff to the named paths (you can give directory
 	names and get diff for all files under them).
 
+Output format
+-------------
+include::diff-format.txt[]
 
 EXAMPLES
 --------
