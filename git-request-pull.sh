@@ -8,6 +8,7 @@ USAGE='<commit> <url> [<head>]'
 LONG_USAGE='Summarizes the changes since <commit> to the standard output,
 and includes <url> in the message generated.'
 SUBDIRECTORY_OK='Yes'
+OPTIONS_SPEC=
 . git-sh-setup
 . git-parse-remote
 

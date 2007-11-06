@@ -22,6 +22,7 @@ git bisect log
 git bisect run <cmd>...
         use <cmd>... to automatically bisect.'
 
+OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 

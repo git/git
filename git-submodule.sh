@@ -5,6 +5,7 @@
 # Copyright (c) 2007 Lars Hjemli
 
 USAGE='[--quiet] [--cached] [add <repo> [-b branch]|status|init|update] [--] [<path>...]'
+OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 

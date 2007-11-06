@@ -2,6 +2,7 @@
 
 USAGE=''
 SUBDIRECTORY_OK='Yes'
+OPTIONS_SPEC=
 . git-sh-setup
 
 if [ "$#" != "0" ]

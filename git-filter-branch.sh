@@ -92,6 +92,7 @@ USAGE="[--env-filter <command>] [--tree-filter <command>] \
 [--original <namespace>] [-d <directory>] [-f | --force] \
 [<rev-list options>...]"
 
+OPTIONS_SPEC=
 . git-sh-setup
 
 git diff-files --quiet &&
