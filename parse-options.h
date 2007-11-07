@@ -2,9 +2,15 @@
 #define PARSE_OPTIONS_H
 
 enum parse_opt_type {
+	/* special types */
 	OPTION_END,
 	OPTION_GROUP,
-	OPTION_BOOLEAN,
+	/* options with no arguments */
+	OPTION_BIT,
+	OPTION_BOOLEAN, /* _INCR would have been a better name */
+	OPTION_SET_INT,
+	OPTION_SET_PTR,
+	/* options with arguments (usually) */
 	OPTION_STRING,
 	OPTION_INTEGER,
 	OPTION_CALLBACK,
@@ -17,6 +23,7 @@ enum parse_opt_flags {
 enum parse_opt_option_flags {
 	PARSE_OPT_OPTARG  = 1,
 	PARSE_OPT_NOARG   = 2,
+	PARSE_OPT_NONEG   = 4,
 };
 
 struct option;
@@ -49,12 +56,15 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *   mask of parse_opt_option_flags.
  *   PARSE_OPT_OPTARG: says that the argument is optionnal (not for BOOLEANs)
  *   PARSE_OPT_NOARG: says that this option takes no argument, for CALLBACKs
+ *   PARSE_OPT_NONEG: says that this option cannot be negated
  *
  * `callback`::
  *   pointer to the callback to use for OPTION_CALLBACK.
  *
  * `defval`::
  *   default value to fill (*->value) with for PARSE_OPT_OPTARG.
+ *   OPTION_{BIT,SET_INT,SET_PTR} store the {mask,integer,pointer} to put in
+ *   the value when met.
  *   CALLBACKS can use it like they want.
  */
 struct option {
@@ -72,7 +82,10 @@ struct option {
 
 #define OPT_END()                   { OPTION_END }
 #define OPT_GROUP(h)                { OPTION_GROUP, 0, NULL, NULL, NULL, (h) }
+#define OPT_BIT(s, l, v, h, b)      { OPTION_BIT, (s), (l), (v), NULL, (h), 0, NULL, (b) }
 #define OPT_BOOLEAN(s, l, v, h)     { OPTION_BOOLEAN, (s), (l), (v), NULL, (h) }
+#define OPT_SET_INT(s, l, v, h, i)  { OPTION_SET_INT, (s), (l), (v), NULL, (h), 0, NULL, (i) }
+#define OPT_SET_PTR(s, l, v, h, p)  { OPTION_SET_PTR, (s), (l), (v), NULL, (h), 0, NULL, (p) }
 #define OPT_INTEGER(s, l, v, h)     { OPTION_INTEGER, (s), (l), (v), NULL, (h) }
 #define OPT_STRING(s, l, v, a, h)   { OPTION_STRING,  (s), (l), (v), (a), (h) }
 #define OPT_CALLBACK(s, l, v, a, h, f) \
