@@ -769,11 +769,11 @@ proc makewindow {} {
     label .tf.lbar.flab2 -text " [mc "commit"] " -font uifont
     pack .tf.lbar.flabel .tf.lbar.fnext .tf.lbar.fprev .tf.lbar.flab2 \
 	-side left -fill y
-    set gdttype "containing:"
+    set gdttype [mc "containing:"]
     set gm [tk_optionMenu .tf.lbar.gdttype gdttype \
-		"containing:" \
-		"touching paths:" \
-		"adding/removing string:"]
+		[mc "containing:"] \
+		[mc "touching paths:"] \
+		[mc "adding/removing string:"]]
     trace add variable gdttype write gdttype_change
     $gm conf -font uifont
     .tf.lbar.gdttype conf -font uifont
@@ -784,15 +784,15 @@ proc makewindow {} {
     lappend entries $fstring
     entry $fstring -width 30 -font textfont -textvariable findstring
     trace add variable findstring write find_change
-    set findtype Exact
+    set findtype [mc "Exact"]
     set findtypemenu [tk_optionMenu .tf.lbar.findtype \
-		      findtype Exact IgnCase Regexp]
+		      findtype [mc "Exact"] [mc "IgnCase"] [mc "Regexp"]]
     trace add variable findtype write findcom_change
     .tf.lbar.findtype configure -font uifont
     .tf.lbar.findtype.menu configure -font uifont
-    set findloc "All fields"
-    tk_optionMenu .tf.lbar.findloc findloc "All fields" Headline \
-	Comments Author Committer
+    set findloc [mc "All fields"]
+    tk_optionMenu .tf.lbar.findloc findloc [mc "All fields"] [mc "Headline"] \
+	[mc "Comments"] [mc "Author"] [mc "Committer"]
     trace add variable findloc write find_change
     .tf.lbar.findloc configure -font uifont
     .tf.lbar.findloc.menu configure -font uifont
@@ -1743,12 +1743,12 @@ proc flist_hl {only} {
     global flist_menu_file findstring gdttype
 
     set x [shellquote $flist_menu_file]
-    if {$only || $findstring eq {} || $gdttype ne "touching paths:"} {
+    if {$only || $findstring eq {} || $gdttype ne [mc "touching paths:"]} {
 	set findstring $x
     } else {
 	append findstring " " $x
     }
-    set gdttype "touching paths:"
+    set gdttype [mc "touching paths:"]
 }
 
 # Functions for adding and removing shell-type quoting
@@ -1998,7 +1998,7 @@ proc delview {} {
 
     if {$curview == 0} return
     if {[info exists hlview] && $hlview == $curview} {
-	set selectedhlview None
+	set selectedhlview [mc "None"]
 	unset hlview
     }
     allviewmenus $curview delete
@@ -2084,7 +2084,7 @@ proc showview {n} {
     clear_display
     if {[info exists hlview] && $hlview == $n} {
 	unset hlview
-	set selectedhlview None
+	set selectedhlview [mc "None"]
     }
     catch {unset commitinterest}
 
@@ -2313,7 +2313,7 @@ proc gdttype_change {name ix op} {
 
     stopfinding
     if {$findstring ne {}} {
-	if {$gdttype eq "containing:"} {
+	if {$gdttype eq [mc "containing:"]} {
 	    if {$highlight_files ne {}} {
 		set highlight_files {}
 		hfiles_change
@@ -2336,7 +2336,7 @@ proc find_change {name ix op} {
     global gdttype findstring highlight_files
 
     stopfinding
-    if {$gdttype eq "containing:"} {
+    if {$gdttype eq [mc "containing:"]} {
 	findcom_change
     } else {
 	if {$highlight_files ne $findstring} {
@@ -2360,9 +2360,9 @@ proc findcom_change args {
     catch {unset nhighlights}
     unbolden
     unmarkmatches
-    if {$gdttype ne "containing:" || $findstring eq {}} {
+    if {$gdttype ne [mc "containing:"] || $findstring eq {}} {
 	set findpattern {}
-    } elseif {$findtype eq "Regexp"} {
+    } elseif {$findtype eq [mc "Regexp"]} {
 	set findpattern $findstring
     } else {
 	set e [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} \
@@ -2388,12 +2388,12 @@ proc makepatterns {l} {
 proc do_file_hl {serial} {
     global highlight_files filehighlight highlight_paths gdttype fhl_list
 
-    if {$gdttype eq "touching paths:"} {
+    if {$gdttype eq [mc "touching paths:"]} {
 	if {[catch {set paths [shellsplit $highlight_files]}]} return
 	set highlight_paths [makepatterns $paths]
 	highlight_filelist
 	set gdtargs [concat -- $paths]
-    } elseif {$gdttype eq "adding/removing string:"} {
+    } elseif {$gdttype eq [mc "adding/removing string:"]} {
 	set gdtargs [list "-S$highlight_files"]
     } else {
 	# must be "containing:", i.e. we're searching commit info
@@ -2469,9 +2469,9 @@ proc readfhighlight {} {
 proc doesmatch {f} {
     global findtype findpattern
 
-    if {$findtype eq "Regexp"} {
+    if {$findtype eq [mc "Regexp"]} {
 	return [regexp $findpattern $f]
-    } elseif {$findtype eq "IgnCase"} {
+    } elseif {$findtype eq [mc "IgnCase"]} {
 	return [string match -nocase $findpattern $f]
     } else {
 	return [string match $findpattern $f]
@@ -2488,11 +2488,11 @@ proc askfindhighlight {row id} {
     }
     set info $commitinfo($id)
     set isbold 0
-    set fldtypes {Headline Author Date Committer CDate Comments}
+    set fldtypes [list [mc Headline] [mc Author] [mc Date] [mc Committer] [mc CDate] [mc Comments]]
     foreach f $info ty $fldtypes {
-	if {($findloc eq "All fields" || $findloc eq $ty) &&
+	if {($findloc eq [mc "All fields"] || $findloc eq $ty) &&
 	    [doesmatch $f]} {
-	    if {$ty eq "Author"} {
+	    if {$ty eq [mc "Author"]} {
 		set isbold 2
 		break
 	    }
@@ -2520,14 +2520,14 @@ proc markrowmatches {row id} {
     set author [lindex $commitinfo($id) 1]
     $canv delete match$row
     $canv2 delete match$row
-    if {$findloc eq "All fields" || $findloc eq "Headline"} {
+    if {$findloc eq [mc "All fields"] || $findloc eq [mc "Headline"]} {
 	set m [findmatches $headline]
 	if {$m ne {}} {
 	    markmatches $canv $row $headline $linehtag($row) $m \
 		[$canv itemcget $linehtag($row) -font] $row
 	}
     }
-    if {$findloc eq "All fields" || $findloc eq "Author"} {
+    if {$findloc eq [mc "All fields"] || $findloc eq [mc "Author"]} {
 	set m [findmatches $author]
 	if {$m ne {}} {
 	    markmatches $canv2 $row $author $linentag($row) $m \
@@ -2540,7 +2540,7 @@ proc vrel_change {name ix op} {
     global highlight_related
 
     rhighlight_none
-    if {$highlight_related ne "None"} {
+    if {$highlight_related ne [mc "None"]} {
 	run drawvisible
     }
 }
@@ -2554,7 +2554,7 @@ proc rhighlight_sel {a} {
     set desc_todo [list $a]
     catch {unset ancestor}
     set anc_todo [list $a]
-    if {$highlight_related ne "None"} {
+    if {$highlight_related ne [mc "None"]} {
 	rhighlight_none
 	run drawvisible
     }
@@ -2637,20 +2637,20 @@ proc askrelhighlight {row id} {
 
     if {![info exists selectedline]} return
     set isbold 0
-    if {$highlight_related eq "Descendent" ||
-	$highlight_related eq "Not descendent"} {
+    if {$highlight_related eq [mc "Descendent"] ||
+	$highlight_related eq [mc "Not descendent"]} {
 	if {![info exists descendent($id)]} {
 	    is_descendent $id
 	}
-	if {$descendent($id) == ($highlight_related eq "Descendent")} {
+	if {$descendent($id) == ($highlight_related eq [mc "Descendent"])} {
 	    set isbold 1
 	}
-    } elseif {$highlight_related eq "Ancestor" ||
-	      $highlight_related eq "Not ancestor"} {
+    } elseif {$highlight_related eq [mc "Ancestor"] ||
+	      $highlight_related eq [mc "Not ancestor"]} {
 	if {![info exists ancestor($id)]} {
 	    is_ancestor $id
 	}
-	if {$ancestor($id) == ($highlight_related eq "Ancestor")} {
+	if {$ancestor($id) == ($highlight_related eq [mc "Ancestor"])} {
 	    set isbold 1
 	}
     }
@@ -3737,7 +3737,7 @@ proc drawcmitrow {row} {
     if {$findpattern ne {} && ![info exists nhighlights($row)]} {
 	askfindhighlight $row $id
     }
-    if {$highlight_related ne "None" && ![info exists rhighlights($row)]} {
+    if {$highlight_related ne [mc "None"] && ![info exists rhighlights($row)]} {
 	askrelhighlight $row $id
     }
     if {![info exists iddrawn($id)]} {
@@ -4226,11 +4226,11 @@ proc notbusy {what} {
 
 proc findmatches {f} {
     global findtype findstring
-    if {$findtype == "Regexp"} {
+    if {$findtype == [mc "Regexp"]} {
 	set matches [regexp -indices -all -inline $findstring $f]
     } else {
 	set fs $findstring
-	if {$findtype == "IgnCase"} {
+	if {$findtype == [mc "IgnCase"]} {
 	    set f [string tolower $f]
 	    set fs [string tolower $fs]
 	}
@@ -4261,8 +4261,8 @@ proc dofind {{dirn 1} {wrap 1}} {
 	set findstartline $selectedline
     }
     set findcurline $findstartline
-    nowbusy finding "Searching"
-    if {$gdttype ne "containing:" && ![info exists filehighlight]} {
+    nowbusy finding [mc "Searching"]
+    if {$gdttype ne [mc "containing:"] && ![info exists filehighlight]} {
 	after cancel do_file_hl $fh_serial
 	do_file_hl $fh_serial
     }
@@ -4292,7 +4292,7 @@ proc findmore {} {
     if {![info exists find_dirn]} {
 	return 0
     }
-    set fldtypes {Headline Author Date Committer CDate Comments}
+    set fldtypes [list [mc "Headline"] [mc "Author"] [mc "Date"] [mc "Committer"] [mc "CDate"] [mc "Comments"]]
     set l $findcurline
     set moretodo 0
     if {$find_dirn > 0} {
@@ -4325,7 +4325,7 @@ proc findmore {} {
     }
     set found 0
     set domore 1
-    if {$gdttype eq "containing:"} {
+    if {$gdttype eq [mc "containing:"]} {
 	for {} {$n > 0} {incr n -1; incr l $find_dirn} {
 	    set id [lindex $displayorder $l]
 	    # shouldn't happen unless git log doesn't give all the commits...
@@ -4336,7 +4336,7 @@ proc findmore {} {
 	    }
 	    set info $commitinfo($id)
 	    foreach f $info ty $fldtypes {
-		if {($findloc eq "All fields" || $findloc eq $ty) &&
+		if {($findloc eq [mc "All fields"] || $findloc eq $ty) &&
 		    [doesmatch $f]} {
 		    set found 1
 		    break
@@ -4392,7 +4392,7 @@ proc findselectline {l} {
     set markingmatches 1
     set findcurline $l
     selectline $l 1
-    if {$findloc == "All fields" || $findloc == "Comments"} {
+    if {$findloc == [mc "All fields"] || $findloc == [mc "Comments"]} {
 	# highlight the matches in the comments
 	set f [$ctext get 1.0 $commentend]
 	set matches [findmatches $f]
@@ -4780,7 +4780,7 @@ proc selectline {l isnew} {
     $ctext conf -state disabled
     set commentend [$ctext index "end - 1c"]
 
-    init_flist "Comments"
+    init_flist [mc "Comments"]
     if {$cmitmode eq "tree"} {
 	gettree $id
     } elseif {[llength $olds] <= 1} {
@@ -8632,8 +8632,8 @@ set firsttabstop 0
 set nextviewnum 1
 set curview 0
 set selectedview 0
-set selectedhlview None
-set highlight_related None
+set selectedhlview [mc "None"]
+set highlight_related [mc "None"]
 set highlight_files {}
 set viewfiles(0) {}
 set viewperm(0) 0
