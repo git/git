@@ -88,8 +88,7 @@ Options:
 
    --smtp-ssl     If set, connects to the SMTP server using SSL.
 
-   --suppress-from Suppress sending emails to yourself if your address
-                  appears in a From: line. Defaults to off.
+   --suppress-from Suppress sending emails to yourself. Defaults to off.
 
    --thread       Specify that the "In-Reply-To:" header should be set on all
                   emails. Defaults to on.
@@ -730,6 +729,7 @@ foreach my $t (@files) {
 			if (/^(Signed-off-by|Cc): (.*)$/i && $signed_off_cc) {
 				my $c = $2;
 				chomp $c;
+				next if ($c eq $sender and $suppress_from);
 				push @cc, $c;
 				printf("(sob) Adding cc: %s from line '%s'\n",
 					$c, $_) unless $quiet;
@@ -745,6 +745,7 @@ foreach my $t (@files) {
 			my $c = $_;
 			$c =~ s/^\s*//g;
 			$c =~ s/\n$//g;
+			next if ($c eq $sender and $suppress_from);
 			push @cc, $c;
 			printf("(cc-cmd) Adding cc: %s from: '%s'\n",
 				$c, $cc_cmd) unless $quiet;
