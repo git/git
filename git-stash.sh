@@ -21,7 +21,7 @@ no_changes () {
 clear_stash () {
 	if current=$(git rev-parse --verify $ref_stash 2>/dev/null)
 	then
-		git update-ref -d refs/stash $current
+		git update-ref -d $ref_stash $current
 	fi
 }
 
@@ -92,6 +92,10 @@ save_stash () {
 		clear_stash || die "Cannot initialize stash"
 
 	create_stash "$stash_msg"
+
+	# Make sure the reflog for stash is kept.
+	: >>"$GIT_DIR/logs/$ref_stash"
+
 	git update-ref -m "$stash_msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
 	printf >&2 'Saved "%s"\n' "$stash_msg"
