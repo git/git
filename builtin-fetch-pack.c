@@ -32,7 +32,7 @@ static const char fetch_pack_usage[] =
 #define MAX_IN_VAIN 256
 
 static struct commit_list *rev_list;
-static int non_common_revs, multi_ack, use_thin_pack, use_sideband;
+static int non_common_revs, multi_ack, use_sideband;
 
 static void rev_list_push(struct commit *commit, int mark)
 {
@@ -178,7 +178,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 				     (multi_ack ? " multi_ack" : ""),
 				     (use_sideband == 2 ? " side-band-64k" : ""),
 				     (use_sideband == 1 ? " side-band" : ""),
-				     (use_thin_pack ? " thin-pack" : ""),
+				     (args.use_thin_pack ? " thin-pack" : ""),
 				     (args.no_progress ? " no-progress" : ""),
 				     " ofs-delta");
 		else
