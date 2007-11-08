@@ -361,7 +361,7 @@ do
 	-s|--strategy)
 		case "$#,$1" in
 		*,*=*)
-			STRATEGY="-s `expr "z$1" : 'z-[^=]*=\(.*\)'`" ;;
+			STRATEGY="-s "$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
 		1,*)
 			usage ;;
 		*)
