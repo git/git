@@ -1986,7 +1986,8 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 	.mbar.commit add command -label [mc "Stage To Commit"] \
-		-command do_add_selection
+		-command do_add_selection \
+		-accelerator $M1T-T
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
@@ -2638,6 +2639,8 @@ unset gm
 # -- Key Bindings
 #
 bind $ui_comm <$M1B-Key-Return> {do_commit;break}
+bind $ui_comm <$M1B-Key-t> {do_add_selection;break}
+bind $ui_comm <$M1B-Key-T> {do_add_selection;break}
 bind $ui_comm <$M1B-Key-i> {do_add_all;break}
 bind $ui_comm <$M1B-Key-I> {do_add_all;break}
 bind $ui_comm <$M1B-Key-x> {tk_textCut %W;break}
@@ -2687,6 +2690,8 @@ bind .   <$M1B-Key-r> do_rescan
 bind .   <$M1B-Key-R> do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
+bind .   <$M1B-Key-t> do_add_selection
+bind .   <$M1B-Key-T> do_add_selection
 bind .   <$M1B-Key-i> do_add_all
 bind .   <$M1B-Key-I> do_add_all
 bind .   <$M1B-Key-Return> do_commit
