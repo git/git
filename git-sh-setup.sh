@@ -21,12 +21,15 @@ if test -n "$OPTIONS_SPEC"; then
 		exec "$0" -h
 	}
 
-	[ -n "$OPTIONS_KEEPDASHDASH" ] && parseopt_extra="--keep-dashdash"
-	parsed=$(
+	parseopt_extra=
+	[ -n "$OPTIONS_KEEPDASHDASH" ] &&
+		parseopt_extra="--keep-dashdash"
+
+	eval "$(
 		echo "$OPTIONS_SPEC" |
-		git rev-parse --parseopt $parseopt_extra -- "$@"
-	) &&
-	eval "$parsed" || exit
+			git rev-parse --parseopt $parseopt_extra -- "$@" ||
+		echo exit $?
+	)"
 else
 	usage() {
 		die "Usage: $0 $USAGE"

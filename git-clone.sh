@@ -36,7 +36,7 @@ usage() {
 	exec "$0" -h
 }
 
-eval `echo "$OPTIONS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?`
+eval "$(echo "$OPTIONS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
 
 get_repo_base() {
 	(
