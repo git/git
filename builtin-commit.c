@@ -488,7 +488,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	int header_len, parent_count = 0;
 	struct strbuf sb;
 	const char *index_file, *reflog_msg;
-	char *nl, *header_line;
+	char *nl;
 	unsigned char commit_sha1[20];
 	struct ref_lock *ref_lock;
 
@@ -585,12 +585,13 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 					   0);
 
 	nl = strchr(sb.buf + header_len, '\n');
-	header_line = xstrndup(sb.buf + header_len,
-			       nl - (sb.buf + header_len));
-	strbuf_release(&sb);
-	strbuf_addf(&sb, "%s: %s\n", reflog_msg, header_line);
-	strbuf_addch(&sb, '\0');
-	free(header_line);
+	if (nl)
+		strbuf_setlen(&sb, nl + 1 - sb.buf);
+	else
+		strbuf_addch(&sb, '\n');
+	strbuf_remove(&sb, 0, header_len);
+	strbuf_insert(&sb, 0, reflog_msg, strlen(reflog_msg));
+	strbuf_insert(&sb, strlen(reflog_msg), ": ", 2);
 
 	if (!ref_lock)
 		die("cannot lock HEAD ref");
