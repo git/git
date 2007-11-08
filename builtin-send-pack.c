@@ -365,8 +365,9 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 			char quickref[83];
 			char type = ' ';
 			const char *msg = "";
-
-			strcpy(quickref, find_unique_abbrev(ref->old_sha1, DEFAULT_ABBREV));
+			const char *old_abb;
+			old_abb = find_unique_abbrev(ref->old_sha1, DEFAULT_ABBREV);
+			strcpy(quickref, old_abb ? old_abb : old_hex);
 			if (ref_newer(ref->peer_ref->new_sha1, ref->old_sha1))
 				strcat(quickref, "..");
 			else {
