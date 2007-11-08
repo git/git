@@ -131,7 +131,8 @@ static signed char const sq_lookup[256] = {
 	/* 0x80 */ /* set to 0 */
 };
 
-static inline int sq_must_quote(char c) {
+static inline int sq_must_quote(char c)
+{
 	return sq_lookup[(unsigned char)c] + quote_path_fully > 0;
 }
 

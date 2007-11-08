@@ -406,7 +406,8 @@ static struct daemon_service daemon_service[] = {
 	{ "receive-pack", "receivepack", receive_pack, 0, 1 },
 };
 
-static void enable_service(const char *name, int ena) {
+static void enable_service(const char *name, int ena)
+{
 	int i;
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		if (!strcmp(daemon_service[i].name, name)) {
@@ -417,7 +418,8 @@ static void enable_service(const char *name, int ena) {
 	die("No such service %s", name);
 }
 
-static void make_service_overridable(const char *name, int ena) {
+static void make_service_overridable(const char *name, int ena)
+{
 	int i;
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		if (!strcmp(daemon_service[i].name, name)) {
