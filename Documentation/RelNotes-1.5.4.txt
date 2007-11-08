@@ -46,6 +46,9 @@ Updates since v1.5.3
 
  * Various Perforce importer updates.
 
+ * git-lost-found was deprecated in favor of git-fsck's --lost-found
+   option.
+
 Fixes since v1.5.3
 ------------------
 
