@@ -77,7 +77,7 @@ test_expect_success "checkout with dirty tree without -m" '
 test_expect_success "checkout -m with dirty tree" '
 
 	git checkout -f master &&
-	git clean &&
+	git clean -f &&
 
 	fill 0 1 2 3 4 5 6 7 8 >one &&
 	git checkout -m side &&
@@ -99,7 +99,7 @@ test_expect_success "checkout -m with dirty tree" '
 
 test_expect_success "checkout -m with dirty tree, renamed" '
 
-	git checkout -f master && git clean &&
+	git checkout -f master && git clean -f &&
 
 	fill 1 2 3 4 5 7 8 >one &&
 	if git checkout renamer
@@ -121,7 +121,7 @@ test_expect_success "checkout -m with dirty tree, renamed" '
 
 test_expect_success 'checkout -m with merge conflict' '
 
-	git checkout -f master && git clean &&
+	git checkout -f master && git clean -f &&
 
 	fill 1 T 3 4 5 6 S 8 >one &&
 	if git checkout renamer
@@ -144,7 +144,7 @@ test_expect_success 'checkout -m with merge conflict' '
 
 test_expect_success 'checkout to detach HEAD' '
 
-	git checkout -f renamer && git clean &&
+	git checkout -f renamer && git clean -f &&
 	git checkout renamer^ &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
@@ -160,7 +160,7 @@ test_expect_success 'checkout to detach HEAD' '
 
 test_expect_success 'checkout to detach HEAD with branchname^' '
 
-	git checkout -f master && git clean &&
+	git checkout -f master && git clean -f &&
 	git checkout renamer^ &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
@@ -176,7 +176,7 @@ test_expect_success 'checkout to detach HEAD with branchname^' '
 
 test_expect_success 'checkout to detach HEAD with HEAD^0' '
 
-	git checkout -f master && git clean &&
+	git checkout -f master && git clean -f &&
 	git checkout HEAD^0 &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&

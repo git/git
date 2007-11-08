@@ -345,8 +345,8 @@ branch.<name>.mergeoptions::
 	supported.
 
 clean.requireForce::
-	A boolean to make git-clean do nothing unless given -f or -n.  Defaults
-	to false.
+	A boolean to make git-clean do nothing unless given -f
+	or -n.   Defaults to true.
 
 color.branch::
 	A boolean to enable/disable color in the output of
