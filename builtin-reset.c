@@ -18,7 +18,7 @@
 #include "tree.h"
 
 static const char builtin_reset_usage[] =
-"git-reset [--mixed | --soft | --hard]  [<commit-ish>] [ [--] <paths>...]";
+"git-reset [--mixed | --soft | --hard] [-q] [<commit-ish>] [ [--] <paths>...]";
 
 static char *args_to_str(const char **argv)
 {
@@ -185,7 +185,7 @@ static const char *reset_type_names[] = { "mixed", "soft", "hard", NULL };
 
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
-	int i = 1, reset_type = NONE, update_ref_status = 0;
+	int i = 1, reset_type = NONE, update_ref_status = 0, quiet = 0;
 	const char *rev = "HEAD";
 	unsigned char sha1[20], *orig = NULL, sha1_orig[20],
 				*old_orig = NULL, sha1_old_orig[20];
@@ -197,7 +197,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	reflog_action = args_to_str(argv);
 	setenv("GIT_REFLOG_ACTION", reflog_action, 0);
 
-	if (i < argc) {
+	while (i < argc) {
 		if (!strcmp(argv[i], "--mixed")) {
 			reset_type = MIXED;
 			i++;
@@ -210,6 +210,12 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			reset_type = HARD;
 			i++;
 		}
+		else if (!strcmp(argv[i], "-q")) {
+			quiet = 1;
+			i++;
+		}
+		else
+			break;
 	}
 
 	if (i < argc && argv[i][0] != '-')
@@ -270,7 +276,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	switch (reset_type) {
 	case HARD:
-		if (!update_ref_status)
+		if (!update_ref_status && !quiet)
 			print_new_head_line(commit);
 		break;
 	case SOFT: /* Nothing else to do. */
