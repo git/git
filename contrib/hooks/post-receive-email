@@ -156,10 +156,6 @@ generate_email()
 	fi
 
 	# Email parameters
-	# The committer will be obtained from the latest existing rev; so
-	# for a deletion it will be the oldrev, for the others, then newrev
-	committer=$(git show --pretty=full -s $rev | sed -ne "s/^Commit: //p" |
-		sed -ne 's/\(.*\) </"\1" </p')
 	# The email subject will contain the best description of the ref
 	# that we can build from the parameters
 	describe=$(git describe $rev 2>/dev/null)
