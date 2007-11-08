@@ -34,8 +34,8 @@ fi
 allowunannotated=$(git-repo-config --bool hooks.allowunannotated)
 
 # check for no description
-projectdesc=$(sed -e '1p' "$GIT_DIR/description")
-if [ -z "$projectdesc" -o "$projectdesc" = "Unnamed repository; edit this file to name it for gitweb" ]; then
+projectdesc=$(sed -e '1q' "$GIT_DIR/description")
+if [ -z "$projectdesc" -o "$projectdesc" = "Unnamed repository; edit this file to name it for gitweb." ]; then
 	echo "*** Project description file hasn't been set" >&2
 	exit 1
 fi
