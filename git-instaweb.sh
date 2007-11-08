@@ -15,7 +15,7 @@ browser="`git config --get instaweb.browser`"
 port=`git config --get instaweb.port`
 module_path="`git config --get instaweb.modulepath`"
 
-conf=$GIT_DIR/gitweb/httpd.conf
+conf="$GIT_DIR/gitweb/httpd.conf"
 
 # Defaults:
 
@@ -32,7 +32,7 @@ start_httpd () {
 	httpd_only="`echo $httpd | cut -f1 -d' '`"
 	if case "$httpd_only" in /*) : ;; *) which $httpd_only >/dev/null;; esac
 	then
-		$httpd $fqgitdir/gitweb/httpd.conf
+		$httpd "$fqgitdir/gitweb/httpd.conf"
 	else
 		# many httpds are installed in /usr/sbin or /usr/local/sbin
 		# these days and those are not in most users $PATHs
@@ -146,14 +146,14 @@ server.pid-file = "$fqgitdir/pid"
 cgi.assign = ( ".cgi" => "" )
 mimetype.assign = ( ".css" => "text/css" )
 EOF
-	test "$local" = true && echo 'server.bind = "127.0.0.1"' >> "$conf"
+	test x"$local" = xtrue && echo 'server.bind = "127.0.0.1"' >> "$conf"
 }
 
 apache2_conf () {
 	test -z "$module_path" && module_path=/usr/lib/apache2/modules
 	mkdir -p "$GIT_DIR/gitweb/logs"
 	bind=
-	test "$local" = true && bind='127.0.0.1:'
+	test x"$local" = xtrue && bind='127.0.0.1:'
 	echo 'text/css css' > $fqgitdir/mime.types
 	cat > "$conf" <<EOF
 ServerName "git-instaweb"
@@ -206,7 +206,7 @@ EOF
 }
 
 script='
-s#^\(my\|our\) $projectroot =.*#\1 $projectroot = "'`dirname $fqgitdir`'";#
+s#^\(my\|our\) $projectroot =.*#\1 $projectroot = "'$(dirname "$fqgitdir")'";#
 s#\(my\|our\) $gitbin =.*#\1 $gitbin = "'$GIT_EXEC_PATH'";#
 s#\(my\|our\) $projects_list =.*#\1 $projects_list = $projectroot;#
 s#\(my\|our\) $git_temp =.*#\1 $git_temp = "'$fqgitdir/gitweb/tmp'";#'
@@ -226,8 +226,8 @@ gitweb_css () {
 EOFGITWEB
 }
 
-gitweb_cgi $GIT_DIR/gitweb/gitweb.cgi
-gitweb_css $GIT_DIR/gitweb/gitweb.css
+gitweb_cgi "$GIT_DIR/gitweb/gitweb.cgi"
+gitweb_css "$GIT_DIR/gitweb/gitweb.css"
 
 case "$httpd" in
 *lighttpd*)
@@ -243,6 +243,5 @@ case "$httpd" in
 esac
 
 start_httpd
-test -z "$browser" && browser=echo
 url=http://127.0.0.1:$port
-$browser $url || echo $url
+"$browser" $url || echo $url
