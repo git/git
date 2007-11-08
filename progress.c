@@ -69,9 +69,9 @@ static void clear_progress_signal(void)
 	progress_update = 0;
 }
 
-static int display(struct progress *progress, unsigned n, int done)
+static int display(struct progress *progress, unsigned n, const char *done)
 {
-	char *eol, *tp;
+	const char *eol, *tp;
 
 	if (progress->delay) {
 		if (!progress_update || --progress->delay)
@@ -90,7 +90,7 @@ static int display(struct progress *progress, unsigned n, int done)
 
 	progress->last_value = n;
 	tp = (progress->throughput) ? progress->throughput->display : "";
-	eol = done ? ", done.   \n" : "   \r";
+	eol = done ? done : "   \r";
 	if (progress->total) {
 		unsigned percent = n * 100 / progress->total;
 		if (percent != progress->last_percent || progress_update) {
@@ -191,13 +191,13 @@ void display_throughput(struct progress *progress, off_t total)
 
 		throughput_string(tp, total, rate);
 		if (progress->last_value != -1 && progress_update)
-			display(progress, progress->last_value, 0);
+			display(progress, progress->last_value, NULL);
 	}
 }
 
 int display_progress(struct progress *progress, unsigned n)
 {
-	return progress ? display(progress, n, 0) : 0;
+	return progress ? display(progress, n, NULL) : 0;
 }
 
 struct progress *start_progress_delay(const char *title, unsigned total,
@@ -227,12 +227,18 @@ struct progress *start_progress(const char *title, unsigned total)
 
 void stop_progress(struct progress **p_progress)
 {
+	stop_progress_msg(p_progress, "done");
+}
+
+void stop_progress_msg(struct progress **p_progress, const char *msg)
+{
 	struct progress *progress = *p_progress;
 	if (!progress)
 		return;
 	*p_progress = NULL;
 	if (progress->last_value != -1) {
 		/* Force the last update */
+		char buf[strlen(msg) + 5];
 		struct throughput *tp = progress->throughput;
 		if (tp) {
 			unsigned int rate = !tp->avg_misecs ? 0 :
@@ -240,7 +246,8 @@ void stop_progress(struct progress **p_progress)
 			throughput_string(tp, tp->curr_total, rate);
 		}
 		progress_update = 1;
-		display(progress, progress->last_value, 1);
+		sprintf(buf, ", %s.\n", msg);
+		display(progress, progress->last_value, buf);
 	}
 	clear_progress_signal();
 	free(progress->throughput);
