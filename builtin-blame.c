@@ -2342,6 +2342,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		 * do not default to HEAD, but use the working tree
 		 * or "--contents".
 		 */
+		setup_work_tree();
 		sb.final = fake_working_tree_commit(path, contents_from);
 		add_pending_object(&revs, &(sb.final->object), ":");
 	}
