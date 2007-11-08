@@ -182,6 +182,26 @@ AC_SUBST(NEEDS_LIBICONV)
 AC_SUBST(NO_ICONV)
 test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"
 #
+# Define NO_DEFLATE_BOUND if deflateBound is missing from zlib.
+AC_DEFUN([ZLIBTEST_SRC], [
+#include <zlib.h>
+
+int main(void)
+{
+	deflateBound(0, 0);
+	return 0;
+}
+])
+AC_MSG_CHECKING([for deflateBound in -lz])
+old_LIBS="$LIBS"
+LIBS="$LIBS -lz"
+AC_LINK_IFELSE(ZLIBTEST_SRC,
+	[AC_MSG_RESULT([yes])],
+	[AC_MSG_RESULT([no])
+	NO_DEFLATE_BOUND=yes])
+LIBS="$old_LIBS"
+AC_SUBST(NO_DEFLATE_BOUND)
+#
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 AC_CHECK_LIB([c], [socket],
