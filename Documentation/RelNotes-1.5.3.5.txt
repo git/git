@@ -90,5 +90,5 @@ Fixes since v1.5.3.4
  * "git-send-pack $remote frotz" segfaulted when there is nothing
    named 'frotz' on the local end.
 
- * "git-rebase -interactive" did not handle its "--strategy" option
+ * "git-rebase --interactive" did not handle its "--strategy" option
    properly.
