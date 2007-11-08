@@ -1,0 +1,112 @@
+Like other projects, we also have some guidelines to keep to the
+code.  For git in general, three rough rules are:
+
+ - Most importantly, we never say "It's in POSIX; we'll happily
+   ignore your needs should your system not conform to it."
+   We live in the real world.
+
+ - However, we often say "Let's stay away from that construct,
+   it's not even in POSIX".
+
+ - In spite of the above two rules, we sometimes say "Although
+   this is not in POSIX, it (is so convenient | makes the code
+   much more readable | has other good characteristics) and
+   practically all the platforms we care about support it, so
+   let's use it".
+
+   Again, we live in the real world, and it is sometimes a
+   judgement call, the decision based more on real world
+   constraints people face than what the paper standard says.
+
+
+As for more concrete guidelines, just imitate the existing code
+(this is a good guideline, no matter which project you are
+contributing to).  But if you must have a list of rules,
+here they are.
+
+For shell scripts specifically (not exhaustive):
+
+ - We prefer $( ... ) for command substitution; unlike ``, it
+   properly nests.  It should have been the way Bourne spelled
+   it from day one, but unfortunately isn't.
+
+ - We use ${parameter-word} and its [-=?+] siblings, and their
+   colon'ed "unset or null" form.
+
+ - We use ${parameter#word} and its [#%] siblings, and their
+   doubled "longest matching" form.
+
+ - We use Arithmetic Expansion $(( ... )).
+
+ - No "Substring Expansion" ${parameter:offset:length}.
+
+ - No shell arrays.
+
+ - No strlen ${#parameter}.
+
+ - No regexp ${parameter/pattern/string}.
+
+ - We do not use Process Substitution <(list) or >(list).
+
+ - We prefer "test" over "[ ... ]".
+
+ - We do not write the noiseword "function" in front of shell
+   functions.
+
+For C programs:
+
+ - We use tabs to indent, and interpret tabs as taking up to
+   8 spaces.
+
+ - We try to keep to at most 80 characters per line.
+
+ - When declaring pointers, the star sides with the variable
+   name, i.e. "char *string", not "char* string" or
+   "char * string".  This makes it easier to understand code
+   like "char *string, c;".
+
+ - We avoid using braces unnecessarily.  I.e.
+
+	if (bla) {
+		x = 1;
+	}
+
+   is frowned upon.  A gray area is when the statement extends
+   over a few lines, and/or you have a lengthy comment atop of
+   it.  Also, like in the Linux kernel, if there is a long list
+   of "else if" statements, it can make sense to add braces to
+   single line blocks.
+
+ - Try to make your code understandable.  You may put comments
+   in, but comments invariably tend to stale out when the code
+   they were describing changes.  Often splitting a function
+   into two makes the intention of the code much clearer.
+
+ - Double negation is often harder to understand than no negation
+   at all.
+
+ - Some clever tricks, like using the !! operator with arithmetic
+   constructs, can be extremely confusing to others.  Avoid them,
+   unless there is a compelling reason to use them.
+
+ - Use the API.  No, really.  We have a strbuf (variable length
+   string), several arrays with the ALLOC_GROW() macro, a
+   path_list for sorted string lists, a hash map (mapping struct
+   objects) named "struct decorate", amongst other things.
+
+ - When you come up with an API, document it.
+
+ - The first #include in C files, except in platform specific
+   compat/ implementations, should be git-compat-util.h or another
+   header file that includes it, such as cache.h or builtin.h.
+
+ - If you are planning a new command, consider writing it in shell
+   or perl first, so that changes in semantics can be easily
+   changed and discussed.  Many git commands started out like
+   that, and a few are still scripts.
+
+ - Avoid introducing a new dependency into git. This means you
+   usually should stay away from scripting languages not already
+   used in the git core command set (unless your command is clearly
+   separate from it, such as an importer to convert random-scm-X
+   repositories to git).
