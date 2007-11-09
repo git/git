@@ -128,7 +128,6 @@ git-index-pack                          plumbingmanipulators
 git-init                                mainporcelain
 git-instaweb                            ancillaryinterrogators
 gitk                                    mainporcelain
-git-local-fetch                         synchingrepositories
 git-log                                 mainporcelain
 git-lost-found                          ancillarymanipulators	deprecated
 git-ls-files                            plumbinginterrogators
@@ -182,8 +181,6 @@ git-show-branch                         ancillaryinterrogators
 git-show-index                          plumbinginterrogators
 git-show-ref                            plumbinginterrogators
 git-sh-setup                            purehelpers
-git-ssh-fetch                           synchingrepositories
-git-ssh-upload                          synchingrepositories
 git-stash                               mainporcelain
 git-status                              mainporcelain
 git-stripspace                          purehelpers
