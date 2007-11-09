@@ -3,7 +3,8 @@
 use File::Compare qw(compare);
 
 sub format_one {
-	my ($out, $name) = @_;
+	my ($out, $nameattr) = @_;
+	my ($name, $attr) = @$nameattr;
 	my ($state, $description);
 	$state = 0;
 	open I, '<', "$name.txt" or die "No such file $name.txt";
@@ -26,8 +27,11 @@ sub format_one {
 		die "No description found in $name.txt";
 	}
 	if (my ($verify_name, $text) = ($description =~ /^($name) - (.*)/)) {
-		print $out "gitlink:$name\[1\]::\n";
-		print $out "\t$text.\n\n";
+		print $out "gitlink:$name\[1\]::\n\t";
+		if ($attr) {
+			print $out "($attr) ";
+		}
+		print $out "$text.\n\n";
 	}
 	else {
 		die "Description does not match $name: $description";
@@ -39,8 +43,8 @@ while (<DATA>) {
 	next if /^#/;
 
 	chomp;
-	my ($name, $cat) = /^(\S+)\s+(.*)$/;
-	push @{$cmds{$cat}}, $name;
+	my ($name, $cat, $attr) = /^(\S+)\s+(.*?)(?:\s+(.*))?$/;
+	push @{$cmds{$cat}}, [$name, $attr];
 }
 
 for my $cat (qw(ancillaryinterrogators
@@ -126,7 +130,7 @@ git-instaweb                            ancillaryinterrogators
 gitk                                    mainporcelain
 git-local-fetch                         synchingrepositories
 git-log                                 mainporcelain
-git-lost-found                          ancillarymanipulators
+git-lost-found                          ancillarymanipulators	deprecated
 git-ls-files                            plumbinginterrogators
 git-ls-remote                           plumbinginterrogators
 git-ls-tree                             plumbinginterrogators
@@ -187,7 +191,7 @@ git-submodule                           mainporcelain
 git-svn                                 foreignscminterface
 git-symbolic-ref                        plumbingmanipulators
 git-tag                                 mainporcelain
-git-tar-tree                            plumbinginterrogators
+git-tar-tree                            plumbinginterrogators	deprecated
 git-unpack-file                         plumbinginterrogators
 git-unpack-objects                      plumbingmanipulators
 git-update-index                        plumbingmanipulators
