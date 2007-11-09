@@ -63,6 +63,14 @@ the remote repository.
 	Instead of naming each ref to push, specifies that all
 	refs under `$GIT_DIR/refs/heads/` be pushed.
 
+\--mirror::
+	Instead of naming each ref to push, specifies that all
+	refs under `$GIT_DIR/refs/heads/` and `$GIT_DIR/refs/tags/`
+	be mirrored to the remote repository.  Newly created local
+	refs will be pushed to the remote end, locally updated refs
+	will be force updated on the remote end, and deleted refs
+	will be removed from the remote end.
+
 \--dry-run::
 	Do everything except actually send the updates.
 
