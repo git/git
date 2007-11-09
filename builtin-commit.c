@@ -81,6 +81,7 @@ static char *prepare_index(const char **files, const char *prefix)
 
 	if (all || also) {
 		add_files_to_cache(verbose, also ? prefix : NULL, files);
+		refresh_cache(REFRESH_QUIET);
 		if (write_cache(fd, active_cache, active_nr) || close(fd))
 			die("unable to write new_index file");
 		return lock_file.filename;
@@ -110,6 +111,7 @@ static char *prepare_index(const char **files, const char *prefix)
 	fd = hold_lock_file_for_update(next_index_lock,
 				       git_path("next-index-%d", getpid()), 1);
 	add_files_to_cache(verbose, prefix, files);
+	refresh_cache(REFRESH_QUIET);
 	if (write_cache(fd, active_cache, active_nr) || close(fd))
 		die("unable to write new_index file");
 
