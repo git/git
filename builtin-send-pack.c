@@ -8,7 +8,7 @@
 #include "send-pack.h"
 
 static const char send_pack_usage[] =
-"git-send-pack [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
+"git-send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
 "  --all and explicit <ref> specification are mutually exclusive.";
 
 static struct send_pack_args args = {
@@ -227,6 +227,12 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 	int allow_deleting_refs = 0;
 	int expect_status_report = 0;
 	int shown_dest = 0;
+	int flags = MATCH_REFS_NONE;
+
+	if (args.send_all)
+		flags |= MATCH_REFS_ALL;
+	if (args.send_mirror)
+		flags |= MATCH_REFS_MIRROR;
 
 	/* No funny business with the matcher */
 	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, REF_NORMAL);
@@ -242,7 +248,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 	if (!remote_tail)
 		remote_tail = &remote_refs;
 	if (match_refs(local_refs, remote_refs, &remote_tail,
-		       nr_refspec, refspec, args.send_all))
+					       nr_refspec, refspec, flags))
 		return -1;
 
 	if (!remote_refs) {
@@ -259,20 +265,28 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 		char old_hex[60], *new_hex;
 		int will_delete_ref;
 		const char *pretty_ref;
-		const char *pretty_peer;
+		const char *pretty_peer = NULL; /* only used when not deleting */
+		const unsigned char *new_sha1;
 
-		if (!ref->peer_ref)
-			continue;
+		if (!ref->peer_ref) {
+			if (!args.send_mirror)
+				continue;
+			new_sha1 = null_sha1;
+		}
+		else
+			new_sha1 = ref->peer_ref->new_sha1;
 
 		if (!shown_dest) {
 			fprintf(stderr, "To %s\n", dest);
 			shown_dest = 1;
 		}
 
-		pretty_ref = prettify_ref(ref->name);
-		pretty_peer = prettify_ref(ref->peer_ref->name);
+		will_delete_ref = is_null_sha1(new_sha1);
 
-		will_delete_ref = is_null_sha1(ref->peer_ref->new_sha1);
+		pretty_ref = prettify_ref(ref->name);
+		if (!will_delete_ref)
+			pretty_peer = prettify_ref(ref->peer_ref->name);
+
 		if (will_delete_ref && !allow_deleting_refs) {
 			fprintf(stderr, " ! %-*s %s (remote does not support deleting refs)\n",
 					SUMMARY_WIDTH, "[rejected]", pretty_ref);
@@ -280,7 +294,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 			continue;
 		}
 		if (!will_delete_ref &&
-		    !hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
+		    !hashcmp(ref->old_sha1, new_sha1)) {
 			if (args.verbose)
 				fprintf(stderr, " = %-*s %s -> %s\n",
 					SUMMARY_WIDTH, "[up to date]",
@@ -312,8 +326,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 		    !is_null_sha1(ref->old_sha1) &&
 		    !ref->force) {
 			if (!has_sha1_file(ref->old_sha1) ||
-			    !ref_newer(ref->peer_ref->new_sha1,
-				       ref->old_sha1)) {
+			    !ref_newer(new_sha1, ref->old_sha1)) {
 				/* We do not have the remote ref, or
 				 * we know that the remote ref is not
 				 * an ancestor of what we are trying to
@@ -328,7 +341,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 				continue;
 			}
 		}
-		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
+		hashcpy(ref->new_sha1, new_sha1);
 		if (!will_delete_ref)
 			new_refs++;
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
@@ -459,6 +472,10 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 				args.dry_run = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--mirror")) {
+				args.send_mirror = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--force")) {
 				args.force_update = 1;
 				continue;
@@ -483,7 +500,12 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	}
 	if (!dest)
 		usage(send_pack_usage);
-	if (heads && args.send_all)
+	/*
+	 * --all and --mirror are incompatible; neither makes sense
+	 * with any refspecs.
+	 */
+	if ((heads && (args.send_all || args.send_mirror)) ||
+					(args.send_all && args.send_mirror))
 		usage(send_pack_usage);
 
 	if (remote_name) {

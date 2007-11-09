@@ -78,7 +78,7 @@ static struct curl_slist *no_pragma_header;
 static struct curl_slist *default_headers;
 
 static int push_verbosely;
-static int push_all;
+static int push_all = MATCH_REFS_NONE;
 static int force_all;
 static int dry_run;
 
@@ -2300,7 +2300,7 @@ int main(int argc, char **argv)
 
 		if (*arg == '-') {
 			if (!strcmp(arg, "--all")) {
-				push_all = 1;
+				push_all = MATCH_REFS_ALL;
 				continue;
 			}
 			if (!strcmp(arg, "--force")) {
