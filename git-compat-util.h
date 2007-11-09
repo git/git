@@ -183,6 +183,11 @@ void *gitmemmem(const void *haystack, size_t haystacklen,
                 const void *needle, size_t needlelen);
 #endif
 
+#ifdef NO_STRCHRNUL
+#define strchrnul gitstrchrnul
+char *gitstrchrnul(const char *s, int c);
+#endif
+
 extern void release_pack_memory(size_t, int);
 
 static inline char* xstrdup(const char *str)
