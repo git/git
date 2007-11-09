@@ -129,6 +129,30 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 	strbuf_setlen(sb, sb->len + len);
 }
 
+void strbuf_expand(struct strbuf *sb, const char *format,
+                   const char **placeholders, expand_fn_t fn, void *context)
+{
+	for (;;) {
+		const char *percent, **p;
+
+		percent = strchrnul(format, '%');
+		strbuf_add(sb, format, percent - format);
+		if (!*percent)
+			break;
+		format = percent + 1;
+
+		for (p = placeholders; *p; p++) {
+			if (!prefixcmp(format, *p))
+				break;
+		}
+		if (*p) {
+			fn(sb, *p, context);
+			format += strlen(*p);
+		} else
+			strbuf_addch(sb, '%');
+	}
+}
+
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
 {
 	size_t res;
