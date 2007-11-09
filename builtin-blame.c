@@ -2295,6 +2295,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			else if (i != argc - 1)
 				usage(blame_usage); /* garbage at end */
 
+			setup_work_tree();
 			if (!has_path_in_work_tree(path))
 				die("cannot stat path %s: %s",
 				    path, strerror(errno));
