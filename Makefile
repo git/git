@@ -1126,12 +1126,13 @@ endif
 ### Check documentation
 #
 check-docs::
-	@for v in $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk; \
+	@(for v in $(ALL_PROGRAMS) $(BUILT_INS) git gitk; \
 	do \
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
-		git-merge-resolve | git-merge-stupid | \
+		git-merge-resolve | git-merge-stupid | git-merge-subtree | \
 		git-add--interactive | git-fsck-objects | git-init-db | \
+		git-rebase--interactive | \
 		git-repo-config | git-fetch--tool ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
@@ -1142,7 +1143,30 @@ check-docs::
 		git) ;; \
 		*) echo "no link: $$v";; \
 		esac ; \
-	done | sort
+	done; \
+	( \
+		sed -e '1,/^__DATA__/d' \
+		    -e 's/[ 	].*//' \
+		    -e 's/^/listed /' Documentation/cmd-list.perl; \
+		ls -1 Documentation/git*txt | \
+		sed -e 's|Documentation/|documented |' \
+		    -e 's/\.txt//'; \
+	) | while read how cmd; \
+	do \
+		case "$$how,$$cmd" in \
+		*,git-citool | \
+		*,git-gui | \
+		documented,gitattributes | \
+		documented,gitignore | \
+		documented,gitmodules | \
+		documented,git-tools | \
+		sentinel,not,matching,is,ok ) continue ;; \
+		esac; \
+		case " $(ALL_PROGRAMS) $(BUILT_INS) git gitk " in \
+		*" $$cmd "*)	;; \
+		*) echo "removed but $$how: $$cmd" ;; \
+		esac; \
+	done ) | sort
 
 ### Make sure built-ins do not have dups and listed in git.c
 #
