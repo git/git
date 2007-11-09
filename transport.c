@@ -284,6 +284,9 @@ static int rsync_transport_push(struct transport *transport,
 	struct child_process rsync;
 	const char *args[10];
 
+	if (flags & TRANSPORT_PUSH_MIRROR)
+		return error("rsync transport does not support mirror mode");
+
 	/* first push the objects */
 
 	strbuf_addstr(&buf, transport->url);
@@ -386,6 +389,9 @@ static int curl_transport_push(struct transport *transport, int refspec_nr, cons
 	const char **argv;
 	int argc;
 	int err;
+
+	if (flags & TRANSPORT_PUSH_MIRROR)
+		return error("http transport does not support mirror mode");
 
 	argv = xmalloc((refspec_nr + 11) * sizeof(char *));
 	argv[0] = "http-push";
@@ -655,6 +661,7 @@ static int git_transport_push(struct transport *transport, int refspec_nr, const
 
 	args.receivepack = data->receivepack;
 	args.send_all = !!(flags & TRANSPORT_PUSH_ALL);
+	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
 	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
 	args.use_thin_pack = data->thin;
 	args.verbose = transport->verbose;
