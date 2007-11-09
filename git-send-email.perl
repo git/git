@@ -352,7 +352,7 @@ sub expand_aliases {
 
 if (!defined $initial_subject && $compose) {
 	do {
-		$_ = $term->readline("What subject should the emails start with? ",
+		$_ = $term->readline("What subject should the initial email start with? ",
 			$initial_subject);
 	} while (!defined $_);
 	$initial_subject = $_;

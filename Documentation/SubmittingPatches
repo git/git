@@ -20,9 +20,6 @@ Checklist (and a short version for the impatient):
 	Patch:
 
 	- use "git format-patch -M" to create the patch
-	- send your patch to <git@vger.kernel.org>. If you use
-	  git-send-email(1), please test it first by sending
-	  email to yourself.
 	- do not PGP sign your patch
 	- do not attach your patch, but read in the mail
 	  body, unless you cannot teach your mailer to
@@ -31,13 +28,15 @@ Checklist (and a short version for the impatient):
 	  corrupt whitespaces.
 	- provide additional information (which is unsuitable for
 	  the commit message) between the "---" and the diffstat
-	- send the patch to the list (git@vger.kernel.org) and the
-	  maintainer (gitster@pobox.com).
 	- if you change, add, or remove a command line option or
 	  make some other user interface change, the associated
 	  documentation should be updated as well.
 	- if your name is not writable in ASCII, make sure that
 	  you send off a message in the correct encoding.
+	- send the patch to the list (git@vger.kernel.org) and the
+	  maintainer (gitster@pobox.com). If you use
+	  git-send-email(1), please test it first by sending
+	  email to yourself.
 
 Long version:
 
