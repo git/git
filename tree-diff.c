@@ -39,7 +39,7 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 		show_entry(opt, "+", t2, base, baselen);
 		return 1;
 	}
-	if (!opt->find_copies_harder && !hashcmp(sha1, sha2) && mode1 == mode2)
+	if (!DIFF_OPT_TST(opt, FIND_COPIES_HARDER) && !hashcmp(sha1, sha2) && mode1 == mode2)
 		return 0;
 
 	/*
@@ -52,10 +52,10 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 		return 0;
 	}
 
-	if (opt->recursive && S_ISDIR(mode1)) {
+	if (DIFF_OPT_TST(opt, RECURSIVE) && S_ISDIR(mode1)) {
 		int retval;
 		char *newbase = malloc_base(base, baselen, path1, pathlen1);
-		if (opt->tree_in_recursive)
+		if (DIFF_OPT_TST(opt, TREE_IN_RECURSIVE))
 			opt->change(opt, mode1, mode2,
 				    sha1, sha2, base, path1);
 		retval = diff_tree_sha1(sha1, sha2, newbase, opt);
@@ -206,7 +206,7 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 	const char *path;
 	const unsigned char *sha1 = tree_entry_extract(desc, &path, &mode);
 
-	if (opt->recursive && S_ISDIR(mode)) {
+	if (DIFF_OPT_TST(opt, RECURSIVE) && S_ISDIR(mode)) {
 		enum object_type type;
 		int pathlen = tree_entry_len(path, sha1);
 		char *newbase = malloc_base(base, baselen, path, pathlen);
@@ -257,7 +257,7 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, stru
 	int baselen = strlen(base);
 
 	for (;;) {
-		if (opt->quiet && opt->has_changes)
+		if (DIFF_OPT_TST(opt, QUIET) && DIFF_OPT_TST(opt, HAS_CHANGES))
 			break;
 		if (opt->nr_paths) {
 			skip_uninteresting(t1, base, baselen, opt);
@@ -315,7 +315,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 	q->nr = 0;
 
 	diff_setup(&diff_opts);
-	diff_opts.recursive = 1;
+	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	diff_opts.detect_rename = DIFF_DETECT_RENAME;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_opts.single_follow = opt->paths[0];
@@ -380,7 +380,7 @@ int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const cha
 	init_tree_desc(&t1, tree1, size1);
 	init_tree_desc(&t2, tree2, size2);
 	retval = diff_tree(&t1, &t2, base, opt);
-	if (opt->follow_renames && diff_might_be_rename()) {
+	if (DIFF_OPT_TST(opt, FOLLOW_RENAMES) && diff_might_be_rename()) {
 		init_tree_desc(&t1, tree1, size1);
 		init_tree_desc(&t2, tree2, size2);
 		try_to_follow_renames(&t1, &t2, base, opt);

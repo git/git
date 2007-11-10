@@ -245,8 +245,7 @@ void show_log(struct rev_info *opt, const char *sep)
 			opt->diffopt.stat_sep = buffer;
 		}
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
-		fputs(diff_get_color(opt->diffopt.color_diff, DIFF_COMMIT),
-		      stdout);
+		fputs(diff_get_color_opt(&opt->diffopt, DIFF_COMMIT), stdout);
 		if (opt->commit_format != CMIT_FMT_ONELINE)
 			fputs("commit ", stdout);
 		if (commit->object.flags & BOUNDARY)
@@ -266,8 +265,7 @@ void show_log(struct rev_info *opt, const char *sep)
 			       diff_unique_abbrev(parent->object.sha1,
 						  abbrev_commit));
 		show_decorations(commit);
-		printf("%s",
-		       diff_get_color(opt->diffopt.color_diff, DIFF_RESET));
+		printf("%s", diff_get_color_opt(&opt->diffopt, DIFF_RESET));
 		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
 		if (opt->reflog_info) {
 			show_reflog_message(opt->reflog_info,

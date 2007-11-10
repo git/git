@@ -250,7 +250,7 @@ static void file_add_remove(struct diff_options *options,
 	}
 	tree_difference = diff;
 	if (tree_difference == REV_TREE_DIFFERENT)
-		options->has_changes = 1;
+		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 static void file_change(struct diff_options *options,
@@ -260,7 +260,7 @@ static void file_change(struct diff_options *options,
 		 const char *base, const char *path)
 {
 	tree_difference = REV_TREE_DIFFERENT;
-	options->has_changes = 1;
+	DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 static int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree *t2)
@@ -270,7 +270,7 @@ static int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree 
 	if (!t2)
 		return REV_TREE_DIFFERENT;
 	tree_difference = REV_TREE_SAME;
-	revs->pruning.has_changes = 0;
+	DIFF_OPT_CLR(&revs->pruning, HAS_CHANGES);
 	if (diff_tree_sha1(t1->object.sha1, t2->object.sha1, "",
 			   &revs->pruning) < 0)
 		return REV_TREE_DIFFERENT;
@@ -294,7 +294,7 @@ static int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
 	init_tree_desc(&empty, "", 0);
 
 	tree_difference = REV_TREE_SAME;
-	revs->pruning.has_changes = 0;
+	DIFF_OPT_CLR(&revs->pruning, HAS_CHANGES);
 	retval = diff_tree(&empty, &real, "", &revs->pruning);
 	free(tree);
 
@@ -662,8 +662,8 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->abbrev = DEFAULT_ABBREV;
 	revs->ignore_merges = 1;
 	revs->simplify_history = 1;
-	revs->pruning.recursive = 1;
-	revs->pruning.quiet = 1;
+	DIFF_OPT_SET(&revs->pruning, RECURSIVE);
+	DIFF_OPT_SET(&revs->pruning, QUIET);
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
 	revs->lifo = 1;
@@ -1054,13 +1054,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "-r")) {
 				revs->diff = 1;
-				revs->diffopt.recursive = 1;
+				DIFF_OPT_SET(&revs->diffopt, RECURSIVE);
 				continue;
 			}
 			if (!strcmp(arg, "-t")) {
 				revs->diff = 1;
-				revs->diffopt.recursive = 1;
-				revs->diffopt.tree_in_recursive = 1;
+				DIFF_OPT_SET(&revs->diffopt, RECURSIVE);
+				DIFF_OPT_SET(&revs->diffopt, TREE_IN_RECURSIVE);
 				continue;
 			}
 			if (!strcmp(arg, "-m")) {
@@ -1242,7 +1242,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		revs->diff = 1;
 
 	/* Pickaxe and rename following needs diffs */
-	if (revs->diffopt.pickaxe || revs->diffopt.follow_renames)
+	if (revs->diffopt.pickaxe || DIFF_OPT_TST(&revs->diffopt, FOLLOW_RENAMES))
 		revs->diff = 1;
 
 	if (revs->topo_order)
@@ -1251,7 +1251,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (revs->prune_data) {
 		diff_tree_setup_paths(revs->prune_data, &revs->pruning);
 		/* Can't prune commits with rename following: the paths change.. */
-		if (!revs->diffopt.follow_renames)
+		if (!DIFF_OPT_TST(&revs->diffopt, FOLLOW_RENAMES))
 			revs->prune_fn = try_to_simplify_commit;
 		if (!revs->full_diff)
 			diff_tree_setup_paths(revs->prune_data, &revs->diffopt);
