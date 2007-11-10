@@ -174,8 +174,8 @@ extern struct index_state the_index;
 #define remove_file_from_cache(path) remove_file_from_index(&the_index, (path))
 #define add_file_to_cache(path, verbose) add_file_to_index(&the_index, (path), (verbose))
 #define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL)
-#define ce_match_stat(ce, st, really) ie_match_stat(&the_index, (ce), (st), (really))
-#define ce_modified(ce, st, really) ie_modified(&the_index, (ce), (st), (really))
+#define ce_match_stat(ce, st, options) ie_match_stat(&the_index, (ce), (st), (options))
+#define ce_modified(ce, st, options) ie_modified(&the_index, (ce), (st), (options))
 #endif
 
 enum object_type {
@@ -266,8 +266,14 @@ extern int remove_file_from_index(struct index_state *, const char *path);
 extern int add_file_to_index(struct index_state *, const char *path, int verbose);
 extern struct cache_entry *make_cache_entry(unsigned int mode, const unsigned char *sha1, const char *path, int stage, int refresh);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
-extern int ie_match_stat(struct index_state *, struct cache_entry *, struct stat *, int);
-extern int ie_modified(struct index_state *, struct cache_entry *, struct stat *, int);
+
+/* do stat comparison even if CE_VALID is true */
+#define CE_MATCH_IGNORE_VALID		01
+/* do not check the contents but report dirty on racily-clean entries */
+#define CE_MATCH_RACY_IS_DIRTY	02
+extern int ie_match_stat(struct index_state *, struct cache_entry *, struct stat *, unsigned int);
+extern int ie_modified(struct index_state *, struct cache_entry *, struct stat *, unsigned int);
+
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
 extern int read_fd(int fd, char **return_buf, unsigned long *return_size);

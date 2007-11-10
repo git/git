@@ -406,7 +406,7 @@ static void verify_uptodate(struct cache_entry *ce,
 		return;
 
 	if (!lstat(ce->name, &st)) {
-		unsigned changed = ce_match_stat(ce, &st, 1);
+		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID);
 		if (!changed)
 			return;
 		/*
@@ -927,7 +927,7 @@ int oneway_merge(struct cache_entry **src,
 		if (o->reset) {
 			struct stat st;
 			if (lstat(old->name, &st) ||
-			    ce_match_stat(old, &st, 1))
+			    ce_match_stat(old, &st, CE_MATCH_IGNORE_VALID))
 				old->ce_flags |= htons(CE_UPDATE);
 		}
 		return keep_entry(old, o);
