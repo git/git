@@ -208,4 +208,11 @@ test_expect_success 'fetch with a non-applying branch.<name>.merge' '
 	git fetch blub
 '
 
+# the strange name is: a\!'b
+test_expect_success 'quoting of a strangely named repo' '
+	! git fetch "a\\!'\''b" > result 2>&1 &&
+	cat result &&
+	grep "fatal: '\''a\\\\!'\''b'\''" result
+'
+
 test_done

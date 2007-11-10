@@ -10,6 +10,12 @@
 # hooks.allowunannotated
 #   This boolean sets whether unannotated tags will be allowed into the
 #   repository.  By default they won't be.
+# hooks.allowdeletetag
+#   This boolean sets whether deleting tags will be allowed in the
+#   repository.  By default they won't be.
+# hooks.allowdeletebranch
+#   This boolean sets whether deleting branches will be allowed in the
+#   repository.  By default they won't be.
 #
 
 # --- Command line
@@ -32,18 +38,20 @@ fi
 
 # --- Config
 allowunannotated=$(git-repo-config --bool hooks.allowunannotated)
+allowdeletebranch=$(git-repo-config --bool hooks.allowdeletebranch)
+allowdeletetag=$(git-repo-config --bool hooks.allowdeletetag)
 
 # check for no description
-projectdesc=$(sed -e '1p' "$GIT_DIR/description")
-if [ -z "$projectdesc" -o "$projectdesc" = "Unnamed repository; edit this file to name it for gitweb" ]; then
+projectdesc=$(sed -e '1q' "$GIT_DIR/description")
+if [ -z "$projectdesc" -o "$projectdesc" = "Unnamed repository; edit this file to name it for gitweb." ]; then
 	echo "*** Project description file hasn't been set" >&2
 	exit 1
 fi
 
 # --- Check types
-# if $newrev is 0000...0000, it's a commit to delete a branch
+# if $newrev is 0000...0000, it's a commit to delete a ref.
 if [ "$newrev" = "0000000000000000000000000000000000000000" ]; then
-	newrev_type=commit
+	newrev_type=delete
 else
 	newrev_type=$(git-cat-file -t $newrev)
 fi
@@ -58,14 +66,35 @@ case "$refname","$newrev_type" in
 			exit 1
 		fi
 		;;
+	refs/tags/*,delete)
+		# delete tag
+		if [ "$allowdeletetag" != "true" ]; then
+			echo "*** Deleting a tag is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
 	refs/tags/*,tag)
 		# annotated tag
 		;;
 	refs/heads/*,commit)
 		# branch
 		;;
+	refs/heads/*,delete)
+		# delete branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
 	refs/remotes/*,commit)
 		# tracking branch
+		;;
+	refs/remotes/*,delete)
+		# delete tracking branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
+			exit 1
+		fi
 		;;
 	*)
 		# Anything else (is there anything else?)

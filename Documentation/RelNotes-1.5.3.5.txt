@@ -63,8 +63,8 @@ Fixes since v1.5.3.4
 
  * Git segfaulted when reading an invalid .gitattributes file.  Fixed.
 
- * post-receive-email example hook fixed was fixed for
-   non-fast-forward updates.
+ * post-receive-email example hook was fixed for non-fast-forward
+   updates.
 
  * Documentation updates for supported (but previously undocumented)
    options of "git-archive" and "git-reflog".
@@ -90,5 +90,5 @@ Fixes since v1.5.3.4
  * "git-send-pack $remote frotz" segfaulted when there is nothing
    named 'frotz' on the local end.
 
- * "git-rebase -interactive" did not handle its "--strategy" option
+ * "git-rebase --interactive" did not handle its "--strategy" option
    properly.

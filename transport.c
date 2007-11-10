@@ -381,7 +381,8 @@ static int disconnect_walker(struct transport *transport)
 }
 
 #ifndef NO_CURL
-static int curl_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags) {
+static int curl_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags)
+{
 	const char **argv;
 	int argc;
 	int err;
@@ -647,7 +648,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 	return 0;
 }
 
-static int git_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags) {
+static int git_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags)
+{
 	struct git_transport_data *data = transport->data;
 	struct send_pack_args args;
 

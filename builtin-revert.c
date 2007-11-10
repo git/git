@@ -30,7 +30,7 @@ static const char * const cherry_pick_usage[] = {
 	NULL
 };
 
-static int edit, no_replay, no_commit, needed_deref;
+static int edit, no_replay, no_commit, needed_deref, mainline;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
 
@@ -50,12 +50,14 @@ static void parse_args(int argc, const char **argv)
 		OPT_BOOLEAN('e', "edit", &edit, "edit the commit message"),
 		OPT_BOOLEAN('x', NULL, &no_replay, "append commit name when cherry-picking"),
 		OPT_BOOLEAN('r', NULL, &noop, "no-op (backward compatibility)"),
+		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
 		OPT_END(),
 	};
 
 	if (parse_options(argc, argv, options, usage_str, 0) != 1)
 		usage_with_options(usage_str, options);
 	arg = argv[0];
+
 	if (get_sha1(arg, sha1))
 		die ("Cannot find '%s'", arg);
 	commit = (struct commit *)parse_object(sha1);
@@ -226,7 +228,7 @@ static int merge_recursive(const char *base_sha1,
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
-	struct commit *base, *next;
+	struct commit *base, *next, *parent;
 	int i;
 	char *oneline, *reencoded_message = NULL;
 	const char *message, *encoding;
@@ -261,8 +263,29 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 
 	if (!commit->parents)
 		die ("Cannot %s a root commit", me);
-	if (commit->parents->next)
-		die ("Cannot %s a multi-parent commit.", me);
+	if (commit->parents->next) {
+		/* Reverting or cherry-picking a merge commit */
+		int cnt;
+		struct commit_list *p;
+
+		if (!mainline)
+			die("Commit %s is a merge but no -m option was given.",
+			    sha1_to_hex(commit->object.sha1));
+
+		for (cnt = 1, p = commit->parents;
+		     cnt != mainline && p;
+		     cnt++)
+			p = p->next;
+		if (cnt != mainline || !p)
+			die("Commit %s does not have parent %d",
+			    sha1_to_hex(commit->object.sha1), mainline);
+		parent = p->item;
+	} else if (0 < mainline)
+		die("Mainline was specified but commit %s is not a merge.",
+		    sha1_to_hex(commit->object.sha1));
+	else
+		parent = commit->parents->item;
+
 	if (!(message = commit->buffer))
 		die ("Cannot get commit message for %s",
 				sha1_to_hex(commit->object.sha1));
@@ -291,14 +314,14 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		char *oneline_body = strchr(oneline, ' ');
 
 		base = commit;
-		next = commit->parents->item;
+		next = parent;
 		add_to_msg("Revert \"");
 		add_to_msg(oneline_body + 1);
 		add_to_msg("\"\n\nThis reverts commit ");
 		add_to_msg(sha1_to_hex(commit->object.sha1));
 		add_to_msg(".\n");
 	} else {
-		base = commit->parents->item;
+		base = parent;
 		next = commit;
 		set_author_ident_env(message);
 		add_message_to_msg(message);

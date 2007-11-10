@@ -23,7 +23,8 @@ static void add_to_ref_list(const unsigned char *sha1, const char *name,
 }
 
 /* returns an fd */
-int read_bundle_header(const char *path, struct bundle_header *header) {
+int read_bundle_header(const char *path, struct bundle_header *header)
+{
 	char buffer[1024];
 	int fd;
 	long fpos;

@@ -23,12 +23,12 @@
  *    that way:
  *
  *    strbuf_grow(sb, SOME_SIZE);
- *    // ... here the memory areay starting at sb->buf, and of length
- *    // sb_avail(sb) is all yours, and you are sure that sb_avail(sb) is at
- *    // least SOME_SIZE
+ *       ... Here, the memory array starting at sb->buf, and of length
+ *       ... strbuf_avail(sb) is all yours, and you are sure that
+ *       ... strbuf_avail(sb) is at least SOME_SIZE.
  *    strbuf_setlen(sb, sb->len + SOME_OTHER_SIZE);
  *
- *    Of course, SOME_OTHER_SIZE must be smaller or equal to sb_avail(sb).
+ *    Of course, SOME_OTHER_SIZE must be smaller or equal to strbuf_avail(sb).
  *
  *    Doing so is safe, though if it has to be done in many places, adding the
  *    missing API to the strbuf module is the way to go.

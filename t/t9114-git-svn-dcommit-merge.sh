@@ -86,4 +86,9 @@ test_expect_success 'verify post-merge ancestry' "
 	git cat-file commit refs/heads/svn^ | grep '^friend$'
 	"
 
+test_expect_success 'verify merge commit message' "
+	git rev-list --pretty=raw -1 refs/heads/svn | \
+	  grep \"    Merge branch 'merge' into svn\"
+	"
+
 test_done

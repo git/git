@@ -79,7 +79,8 @@ static void uniq(struct cmdnames *cmds)
 	cmds->cnt = j;
 }
 
-static void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes) {
+static void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
+{
 	int ci, cj, ei;
 	int cmp;
 

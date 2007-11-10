@@ -20,11 +20,15 @@ require_work_tree
 ignored=
 ignoredonly=
 cleandir=
-disabled="`git config --bool clean.requireForce`"
 rmf="rm -f --"
 rmrf="rm -rf --"
 rm_refuse="echo Not removing"
 echo1="echo"
+
+# requireForce used to default to false but now it defaults to true.
+# IOW, lack of explicit "clean.requireForce = false" is taken as
+# "clean.requireForce = true".
+disabled=$(git config --bool clean.requireForce || echo true)
 
 while test $# != 0
 do

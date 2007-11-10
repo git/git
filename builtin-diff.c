@@ -200,15 +200,11 @@ static void refresh_index_quietly(void)
 	discard_cache();
 	read_cache();
 	refresh_cache(REFRESH_QUIET|REFRESH_UNMERGED);
-	if (active_cache_changed) {
-		if (write_cache(fd, active_cache, active_nr) ||
-		    close(fd) ||
-		    commit_locked_index(lock_file))
-			; /*
-			   * silently ignore it -- we haven't mucked
-			   * with the real index.
-			   */
-	}
+
+	if (active_cache_changed &&
+	    !write_cache(fd, active_cache, active_nr) && !close(fd))
+		commit_locked_index(lock_file);
+
 	rollback_lock_file(lock_file);
 }
 

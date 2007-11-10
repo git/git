@@ -7,6 +7,8 @@ test_description='git-clean basic tests'
 
 . ./test-lib.sh
 
+git config clean.requireForce no
+
 test_expect_success 'setup' '
 
 	mkdir -p src &&
@@ -31,6 +33,93 @@ test_expect_success 'git-clean' '
 	test -f src/part2.c &&
 	test ! -f a.out &&
 	test ! -f src/part3.c &&
+	test -f docs/manual.txt &&
+	test -f obj.o &&
+	test -f build/lib.so
+
+'
+
+test_expect_success 'git-clean src/' '
+
+	mkdir -p build docs &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	git-clean src/ &&
+	test -f Makefile &&
+	test -f README &&
+	test -f src/part1.c &&
+	test -f src/part2.c &&
+	test -f a.out &&
+	test ! -f src/part3.c &&
+	test -f docs/manual.txt &&
+	test -f obj.o &&
+	test -f build/lib.so
+
+'
+
+test_expect_success 'git-clean src/ src/' '
+
+	mkdir -p build docs &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	git-clean src/ src/ &&
+	test -f Makefile &&
+	test -f README &&
+	test -f src/part1.c &&
+	test -f src/part2.c &&
+	test -f a.out &&
+	test ! -f src/part3.c &&
+	test -f docs/manual.txt &&
+	test -f obj.o &&
+	test -f build/lib.so
+
+'
+
+test_expect_success 'git-clean with prefix' '
+
+	mkdir -p build docs &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	(cd src/ && git-clean) &&
+	test -f Makefile &&
+	test -f README &&
+	test -f src/part1.c &&
+	test -f src/part2.c &&
+	test -f a.out &&
+	test ! -f src/part3.c &&
+	test -f docs/manual.txt &&
+	test -f obj.o &&
+	test -f build/lib.so
+
+'
+test_expect_success 'git-clean -d with prefix and path' '
+
+	mkdir -p build docs src/feature &&
+	touch a.out src/part3.c src/feature/file.c docs/manual.txt obj.o build/lib.so &&
+	(cd src/ && git-clean -d feature/) &&
+	test -f Makefile &&
+	test -f README &&
+	test -f src/part1.c &&
+	test -f src/part2.c &&
+	test -f a.out &&
+	test -f src/part3.c &&
+	test ! -f src/feature/file.c &&
+	test -f docs/manual.txt &&
+	test -f obj.o &&
+	test -f build/lib.so
+
+'
+
+test_expect_success 'git-clean symbolic link' '
+
+	mkdir -p build docs &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	ln -s docs/manual.txt src/part4.c
+	git-clean &&
+	test -f Makefile &&
+	test -f README &&
+	test -f src/part1.c &&
+	test -f src/part2.c &&
+	test ! -f a.out &&
+	test ! -f src/part3.c &&
+	test ! -f src/part4.c &&
 	test -f docs/manual.txt &&
 	test -f obj.o &&
 	test -f build/lib.so
@@ -66,6 +155,24 @@ test_expect_success 'git-clean -d' '
 	test ! -f a.out &&
 	test ! -f src/part3.c &&
 	test ! -d docs &&
+	test -f obj.o &&
+	test -f build/lib.so
+
+'
+
+test_expect_success 'git-clean -d src/ examples/' '
+
+	mkdir -p build docs examples &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so examples/1.c &&
+	git-clean -d src/ examples/ &&
+	test -f Makefile &&
+	test -f README &&
+	test -f src/part1.c &&
+	test -f src/part2.c &&
+	test -f a.out &&
+	test ! -f src/part3.c &&
+	test ! -f examples/1.c &&
+	test -f docs/manual.txt &&
 	test -f obj.o &&
 	test -f build/lib.so
 
@@ -136,6 +243,13 @@ test_expect_success 'git-clean -d -X' '
 	test -f docs/manual.txt &&
 	test ! -f obj.o &&
 	test ! -d build
+
+'
+
+test_expect_success 'clean.requireForce defaults to true' '
+
+	git config --unset clean.requireForce &&
+	! git-clean
 
 '
 
