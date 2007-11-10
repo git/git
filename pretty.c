@@ -369,7 +369,29 @@ struct format_commit_context {
 	struct chunk committer;
 	struct chunk encoding;
 	size_t body_off;
+
+	/* The following ones are relative to the result struct strbuf. */
+	struct chunk abbrev_commit_hash;
+	struct chunk abbrev_tree_hash;
+	struct chunk abbrev_parent_hashes;
 };
+
+static int add_again(struct strbuf *sb, struct chunk *chunk)
+{
+	if (chunk->len) {
+		strbuf_adddup(sb, chunk->off, chunk->len);
+		return 1;
+	}
+
+	/*
+	 * We haven't seen this chunk before.  Our caller is surely
+	 * going to add it the hard way now.  Remember the most likely
+	 * start of the to-be-added chunk: the current end of the
+	 * struct strbuf.
+	 */
+	chunk->off = sb->len;
+	return 0;
+}
 
 static void parse_commit_header(struct format_commit_context *context)
 {
@@ -447,15 +469,21 @@ static void format_commit_item(struct strbuf *sb, const char *placeholder,
 		strbuf_addstr(sb, sha1_to_hex(commit->object.sha1));
 		return;
 	case 'h':		/* abbreviated commit hash */
+		if (add_again(sb, &c->abbrev_commit_hash))
+			return;
 		strbuf_addstr(sb, find_unique_abbrev(commit->object.sha1,
 		                                     DEFAULT_ABBREV));
+		c->abbrev_commit_hash.len = sb->len - c->abbrev_commit_hash.off;
 		return;
 	case 'T':		/* tree hash */
 		strbuf_addstr(sb, sha1_to_hex(commit->tree->object.sha1));
 		return;
 	case 't':		/* abbreviated tree hash */
+		if (add_again(sb, &c->abbrev_tree_hash))
+			return;
 		strbuf_addstr(sb, find_unique_abbrev(commit->tree->object.sha1,
 		                                     DEFAULT_ABBREV));
+		c->abbrev_tree_hash.len = sb->len - c->abbrev_tree_hash.off;
 		return;
 	case 'P':		/* parent hashes */
 		for (p = commit->parents; p; p = p->next) {
@@ -465,12 +493,16 @@ static void format_commit_item(struct strbuf *sb, const char *placeholder,
 		}
 		return;
 	case 'p':		/* abbreviated parent hashes */
+		if (add_again(sb, &c->abbrev_parent_hashes))
+			return;
 		for (p = commit->parents; p; p = p->next) {
 			if (p != commit->parents)
 				strbuf_addch(sb, ' ');
 			strbuf_addstr(sb, find_unique_abbrev(
 					p->item->object.sha1, DEFAULT_ABBREV));
 		}
+		c->abbrev_parent_hashes.len = sb->len -
+		                              c->abbrev_parent_hashes.off;
 		return;
 	case 'm':		/* left/right/bottom */
 		strbuf_addch(sb, (commit->object.flags & BOUNDARY)
