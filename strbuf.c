@@ -106,6 +106,13 @@ void strbuf_add(struct strbuf *sb, const void *data, size_t len)
 	strbuf_setlen(sb, sb->len + len);
 }
 
+void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len)
+{
+	strbuf_grow(sb, len);
+	memcpy(sb->buf + sb->len, sb->buf + pos, len);
+	strbuf_setlen(sb, sb->len + len);
+}
+
 void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 {
 	int len;
