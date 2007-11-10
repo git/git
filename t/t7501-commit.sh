@@ -163,4 +163,73 @@ test_expect_success 'partial commit that involves removal (3)' '
 
 '
 
+author="The Real Author <someguy@his.email.org>"
+test_expect_success 'amend commit to fix author' '
+
+	oldtick=$GIT_AUTHOR_DATE &&
+	test_tick &&
+	git reset --hard &&
+	git cat-file -p HEAD |
+	sed -e "s/author.*/author $author $oldtick/" \
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
+		expected &&
+	git commit --amend --author="$author" &&
+	git cat-file -p HEAD > current &&
+	diff expected current
+
+'
+
+test_expect_success 'sign off (1)' '
+
+	echo 1 >positive &&
+	git add positive &&
+	git commit -s -m "thank you" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	(
+		echo thank you
+		echo
+		git var GIT_COMMITTER_IDENT |
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+	) >expected &&
+	diff -u expected actual
+
+'
+
+test_expect_success 'sign off (2)' '
+
+	echo 2 >positive &&
+	git add positive &&
+	existing="Signed-off-by: Watch This <watchthis@example.com>" &&
+	git commit -s -m "thank you
+
+$existing" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	(
+		echo thank you
+		echo
+		echo $existing
+		git var GIT_COMMITTER_IDENT |
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+	) >expected &&
+	diff -u expected actual
+
+'
+
+test_expect_success 'multiple -m' '
+
+	>negative &&
+	git add negative &&
+	git commit -m "one" -m "two" -m "three" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	(
+		echo one
+		echo
+		echo two
+		echo
+		echo three
+	) >expected &&
+	diff -u expected actual
+
+'
+
 test_done
