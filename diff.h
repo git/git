@@ -226,6 +226,8 @@ extern const char *diff_unique_abbrev(const unsigned char *, int);
 
 /* do not report anything on removed paths */
 #define DIFF_SILENT_ON_REMOVED 01
+/* report racily-clean paths as modified */
+#define DIFF_RACY_IS_MODIFIED 02
 extern int run_diff_files(struct rev_info *revs, unsigned int option);
 extern int setup_diff_no_index(struct rev_info *revs,
 		int argc, const char ** argv, int nongit, const char *prefix);

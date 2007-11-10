@@ -338,6 +338,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 	int entries, i;
 	int diff_unmerged_stage = revs->max_count;
 	int silent_on_removed = option & DIFF_SILENT_ON_REMOVED;
+	unsigned ce_option = ((option & DIFF_RACY_IS_MODIFIED)
+			      ? CE_MATCH_RACY_IS_DIRTY : 0);
 
 	if (diff_unmerged_stage < 0)
 		diff_unmerged_stage = 2;
@@ -443,7 +445,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				       ce->sha1, ce->name, NULL);
 			continue;
 		}
-		changed = ce_match_stat(ce, &st, 0);
+		changed = ce_match_stat(ce, &st, ce_option);
 		if (!changed && !revs->diffopt.find_copies_harder)
 			continue;
 		oldmode = ntohl(ce->ce_mode);

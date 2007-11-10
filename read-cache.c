@@ -388,6 +388,7 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 	int size, namelen, pos;
 	struct stat st;
 	struct cache_entry *ce;
+	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_RACY_IS_DIRTY;
 
 	if (lstat(path, &st))
 		die("%s: unable to stat (%s)", path, strerror(errno));
@@ -422,7 +423,7 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 	pos = index_name_pos(istate, ce->name, namelen);
 	if (0 <= pos &&
 	    !ce_stage(istate->cache[pos]) &&
-	    !ie_modified(istate, istate->cache[pos], &st, CE_MATCH_IGNORE_VALID)) {
+	    !ie_match_stat(istate, istate->cache[pos], &st, ce_option)) {
 		/* Nothing changed, really */
 		free(ce);
 		return 0;
