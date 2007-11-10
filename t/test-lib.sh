@@ -66,9 +66,6 @@ esac
 	tput sgr0 >/dev/null 2>&1 &&
 	color=t
 
-test "${test_description}" != "" ||
-error "Test script did not set test_description."
-
 while test "$#" -ne 0
 do
 	case "$1" in
@@ -77,8 +74,7 @@ do
 	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
 		immediate=t; shift ;;
 	-h|--h|--he|--hel|--help)
-		echo "$test_description"
-		exit 0 ;;
+		help=t; shift ;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
 		verbose=t; shift ;;
 	-q|--q|--qu|--qui|--quie|--quiet)
@@ -123,6 +119,15 @@ error () {
 say () {
 	say_color info "$*"
 }
+
+test "${test_description}" != "" ||
+error "Test script did not set test_description."
+
+if test "$help" = "t"
+then
+	echo "$test_description"
+	exit 0
+fi
 
 exec 5>&1
 if test "$verbose" = "t"
