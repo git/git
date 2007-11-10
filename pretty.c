@@ -354,14 +354,67 @@ static void format_person_part(struct strbuf *sb, char part,
 	}
 }
 
+struct chunk {
+	size_t off;
+	size_t len;
+};
+
+struct format_commit_context {
+	const struct commit *commit;
+
+	/* These offsets are relative to the start of the commit message. */
+	int commit_header_parsed;
+	struct chunk subject;
+	struct chunk author;
+	struct chunk committer;
+	struct chunk encoding;
+	size_t body_off;
+};
+
+static void parse_commit_header(struct format_commit_context *context)
+{
+	const char *msg = context->commit->buffer;
+	int i;
+	enum { HEADER, SUBJECT, BODY } state;
+
+	for (i = 0, state = HEADER; msg[i] && state < BODY; i++) {
+		int eol;
+		for (eol = i; msg[eol] && msg[eol] != '\n'; eol++)
+			; /* do nothing */
+
+		if (state == SUBJECT) {
+			context->subject.off = i;
+			context->subject.len = eol - i;
+			i = eol;
+		}
+		if (i == eol) {
+			state++;
+			/* strip empty lines */
+			while (msg[eol + 1] == '\n')
+				eol++;
+		} else if (!prefixcmp(msg + i, "author ")) {
+			context->author.off = i + 7;
+			context->author.len = eol - i - 7;
+		} else if (!prefixcmp(msg + i, "committer ")) {
+			context->committer.off = i + 10;
+			context->committer.len = eol - i - 10;
+		} else if (!prefixcmp(msg + i, "encoding ")) {
+			context->encoding.off = i + 9;
+			context->encoding.len = eol - i - 9;
+		}
+		i = eol;
+	}
+	context->body_off = i;
+	context->commit_header_parsed = 1;
+}
+
 static void format_commit_item(struct strbuf *sb, const char *placeholder,
                                void *context)
 {
-	const struct commit *commit = context;
-	struct commit_list *p;
-	int i;
-	enum { HEADER, SUBJECT, BODY } state;
+	struct format_commit_context *c = context;
+	const struct commit *commit = c->commit;
 	const char *msg = commit->buffer;
+	struct commit_list *p;
 
 	/* these are independent of the commit */
 	switch (placeholder[0]) {
@@ -429,45 +482,28 @@ static void format_commit_item(struct strbuf *sb, const char *placeholder,
 	}
 
 	/* For the rest we have to parse the commit header. */
-	for (i = 0, state = HEADER; msg[i] && state < BODY; i++) {
-		int eol;
-		for (eol = i; msg[eol] && msg[eol] != '\n'; eol++)
-			; /* do nothing */
+	if (!c->commit_header_parsed)
+		parse_commit_header(c);
 
-		if (state == SUBJECT) {
-			if (placeholder[0] == 's') {
-				strbuf_add(sb, msg + i, eol - i);
-				return;
-			}
-			i = eol;
-		}
-		if (i == eol) {
-			state++;
-			/* strip empty lines */
-			while (msg[eol + 1] == '\n')
-				eol++;
-		} else if (!prefixcmp(msg + i, "author ")) {
-			if (placeholder[0] == 'a') {
-				format_person_part(sb, placeholder[1],
-				                   msg + i + 7, eol - i - 7);
-				return;
-			}
-		} else if (!prefixcmp(msg + i, "committer ")) {
-			if (placeholder[0] == 'c') {
-				format_person_part(sb, placeholder[1],
-				                   msg + i + 10, eol - i - 10);
-				return;
-			}
-		} else if (!prefixcmp(msg + i, "encoding ")) {
-			if (placeholder[0] == 'e') {
-				strbuf_add(sb, msg + i + 9, eol - i - 9);
-				return;
-			}
-		}
-		i = eol;
+	switch (placeholder[0]) {
+	case 's':
+		strbuf_add(sb, msg + c->subject.off, c->subject.len);
+		return;
+	case 'a':
+		format_person_part(sb, placeholder[1],
+		                   msg + c->author.off, c->author.len);
+		return;
+	case 'c':
+		format_person_part(sb, placeholder[1],
+		                   msg + c->committer.off, c->committer.len);
+		return;
+	case 'e':
+		strbuf_add(sb, msg + c->encoding.off, c->encoding.len);
+		return;
+	case 'b':
+		strbuf_addstr(sb, msg + c->body_off);
+		return;
 	}
-	if (msg[i] && placeholder[0] == 'b')	/* body */
-		strbuf_addstr(sb, msg + i);
 }
 
 void format_commit_message(const struct commit *commit,
@@ -505,7 +541,11 @@ void format_commit_message(const struct commit *commit,
 		"m",		/* left/right/bottom */
 		NULL
 	};
-	strbuf_expand(sb, format, placeholders, format_commit_item, (void *)commit);
+	struct format_commit_context context;
+
+	memset(&context, 0, sizeof(context));
+	context.commit = commit;
+	strbuf_expand(sb, format, placeholders, format_commit_item, &context);
 }
 
 static void pp_header(enum cmit_fmt fmt,
