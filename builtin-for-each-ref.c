@@ -847,7 +847,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		OPT_GROUP(""),
 		OPT_INTEGER( 0 , "count", &maxcount, "show only <n> matched refs"),
 		OPT_STRING(  0 , "format", &format, "format", "format to use for the output"),
-		OPT_CALLBACK(0 , "sort", &sort_tail, "key",
+		OPT_CALLBACK(0 , "sort", sort_tail, "key",
 		            "field name to sort on", &opt_parse_sort),
 		OPT_END(),
 	};
