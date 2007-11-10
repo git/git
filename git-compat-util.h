@@ -183,9 +183,14 @@ void *gitmemmem(const void *haystack, size_t haystacklen,
                 const void *needle, size_t needlelen);
 #endif
 
-#ifdef NO_STRCHRNUL
+#if !defined(__GLIBC_PREREQ) && !__GLIBC_PREREQ(2, 1)
 #define strchrnul gitstrchrnul
-char *gitstrchrnul(const char *s, int c);
+static inline char *gitstrchrnul(const char *s, int c)
+{
+	while (*s && *s != c)
+		s++;
+	return (char *)s;
+}
 #endif
 
 extern void release_pack_memory(size_t, int);
