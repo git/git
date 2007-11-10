@@ -2554,6 +2554,72 @@ branches into their own work.
 For true distributed development that supports proper merging,
 published branches should never be rewritten.
 
+[[bisect-merges]]
+Why bisecting merge commits can be harder than bisecting linear history
+-----------------------------------------------------------------------
+
+The gitlink:git-bisect[1] command correctly handles history that
+includes merge commits.  However, when the commit that it finds is a
+merge commit, the user may need to work harder than usual to figure out
+why that commit introduced a problem.
+
+Imagine this history:
+
+................................................
+      ---Z---o---X---...---o---A---C---D
+          \                       /
+           o---o---Y---...---o---B
+................................................
+
+Suppose that on the upper line of development, the meaning of one
+of the functions that exists at Z is changed at commit X.  The
+commits from Z leading to A change both the function's
+implementation and all calling sites that exist at Z, as well
+as new calling sites they add, to be consistent.  There is no
+bug at A.
+
+Suppose that in the meantime on the lower line of development somebody
+adds a new calling site for that function at commit Y.  The
+commits from Z leading to B all assume the old semantics of that
+function and the callers and the callee are consistent with each
+other.  There is no bug at B, either.
+
+Suppose further that the two development lines merge cleanly at C,
+so no conflict resolution is required.
+
+Nevertheless, the code at C is broken, because the callers added
+on the lower line of development have not been converted to the new
+semantics introduced on the upper line of development.  So if all
+you know is that D is bad, that Z is good, and that
+gitlink:git-bisect[1] identifies C as the culprit, how will you
+figure out that the problem is due to this change in semantics?
+
+When the result of a git-bisect is a non-merge commit, you should
+normally be able to discover the problem by examining just that commit.
+Developers can make this easy by breaking their changes into small
+self-contained commits.  That won't help in the case above, however,
+because the problem isn't obvious from examination of any single
+commit; instead, a global view of the development is required.  To
+make matters worse, the change in semantics in the problematic
+function may be just one small part of the changes in the upper
+line of development.
+
+On the other hand, if instead of merging at C you had rebased the
+history between Z to B on top of A, you would have gotten this
+linear history:
+
+................................................................
+    ---Z---o---X--...---o---A---o---o---Y*--...---o---B*--D*
+................................................................
+
+Bisecting between Z and D* would hit a single culprit commit Y*,
+and understanding why Y* was broken would probably be easier.
+
+Partly for this reason, many experienced git users, even when
+working on an otherwise merge-heavy project, keep the history
+linear by rebasing against the latest upstream version before
+publishing.
+
 [[advanced-branch-management]]
 Advanced branch management
 ==========================
