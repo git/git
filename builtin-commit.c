@@ -118,11 +118,12 @@ static char *prepare_index(const char **files, const char *prefix)
 	return next_index_lock->filename;
 }
 
-static int run_status(FILE *fp, const char *index_file)
+static int run_status(FILE *fp, const char *index_file, const char *prefix)
 {
 	struct wt_status s;
 
 	wt_status_prepare(&s);
+	s.prefix = prefix;
 
 	if (amend) {
 		s.amend = 1;
@@ -140,7 +141,7 @@ static int run_status(FILE *fp, const char *index_file)
 
 static const char sign_off_header[] = "Signed-off-by: ";
 
-static int prepare_log_message(const char *index_file)
+static int prepare_log_message(const char *index_file, const char *prefix)
 {
 	struct stat statbuf;
 	int commitable;
@@ -216,7 +217,7 @@ static int prepare_log_message(const char *index_file)
 	if (only_include_assumed)
 		fprintf(fp, "# %s\n", only_include_assumed);
 
-	commitable = run_status(fp, index_file);
+	commitable = run_status(fp, index_file, prefix);
 
 	fclose(fp);
 
@@ -409,7 +410,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	index_file = prepare_index(argv, prefix);
 
-	commitable = run_status(stdout, index_file);
+	commitable = run_status(stdout, index_file, prefix);
 
 	rollback_lock_file(&lock_file);
 
@@ -503,8 +504,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		exit(1);
 
-	if (!prepare_log_message(index_file) && !in_merge) {
-		run_status(stdout, index_file);
+	if (!prepare_log_message(index_file, prefix) && !in_merge) {
+		run_status(stdout, index_file, prefix);
 		unlink(commit_editmsg);
 		return 1;
 	}

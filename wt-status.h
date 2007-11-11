@@ -23,6 +23,7 @@ struct wt_status {
 	int workdir_untracked;
 	const char *index_file;
 	FILE *fp;
+	const char *prefix;
 };
 
 int git_status_config(const char *var, const char *value);
