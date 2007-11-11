@@ -310,6 +310,8 @@ int print_wrapped_text(const char *text, int indent, int indent2, int width)
 		if (!c || isspace(c)) {
 			if (w < width || !space) {
 				const char *start = bol;
+				if (!c && text == start)
+					return w;
 				if (space)
 					start = space;
 				else
@@ -317,13 +319,25 @@ int print_wrapped_text(const char *text, int indent, int indent2, int width)
 				fwrite(start, text - start, 1, stdout);
 				if (!c)
 					return w;
-				else if (c == '\t')
-					w |= 0x07;
 				space = text;
+				if (c == '\t')
+					w |= 0x07;
+				else if (c == '\n') {
+					space++;
+					if (*space == '\n') {
+						putchar('\n');
+						goto new_line;
+					}
+					else if (!isalnum(*space))
+						goto new_line;
+					else
+						putchar(' ');
+				}
 				w++;
 				text++;
 			}
 			else {
+new_line:
 				putchar('\n');
 				text = bol = space + isspace(*space);
 				space = NULL;
