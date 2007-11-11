@@ -126,6 +126,7 @@ test_expect_success 'using alternate GIT_INDEX_FILE (2)' '
 
 cat > expect << EOF
 zort
+
 Signed-off-by: C O Mitter <committer@example.com>
 EOF
 

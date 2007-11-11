@@ -197,8 +197,11 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 
 		for (i = sb.len - 1; i > 0 && sb.buf[i - 1] != '\n'; i--)
 			; /* do nothing */
-		if (prefixcmp(sb.buf + i, sob.buf))
+		if (prefixcmp(sb.buf + i, sob.buf)) {
+			if (prefixcmp(sb.buf + i, sign_off_header))
+				strbuf_addch(&sb, '\n');
 			strbuf_addbuf(&sb, &sob);
+		}
 		strbuf_release(&sob);
 	}
 
