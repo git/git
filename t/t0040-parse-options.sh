@@ -18,6 +18,7 @@ string options
     -s, --string <string>
                           get a string
     --string2 <str>       get another string
+    --st <st>             get another string (pervert ordering)
 
 EOF
 
@@ -88,6 +89,18 @@ test_expect_success 'unambiguously abbreviated option with "="' '
 test_expect_failure 'ambiguously abbreviated option' '
 	test-parse-options --strin 123;
         test $? != 129
+'
+
+cat > expect << EOF
+boolean: 0
+integer: 0
+string: 123
+EOF
+
+test_expect_success 'non ambiguous option (after two options it abbreviates)' '
+	test-parse-options --st 123 > output 2> output.err &&
+	test ! -s output.err &&
+	git diff expect output
 '
 
 test_done
