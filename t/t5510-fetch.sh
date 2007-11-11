@@ -95,6 +95,31 @@ test_expect_success 'fetch following tags' '
 
 '
 
+test_expect_failure 'fetch must not resolve short tag name' '
+
+	cd "$D" &&
+
+	mkdir five &&
+	cd five &&
+	git init &&
+
+	git fetch .. anno:five
+
+'
+
+test_expect_failure 'fetch must not resolve short remote name' '
+
+	cd "$D" &&
+	git-update-ref refs/remotes/six/HEAD HEAD
+
+	mkdir six &&
+	cd six &&
+	git init &&
+
+	git fetch .. six:six
+
+'
+
 test_expect_success 'create bundle 1' '
 	cd "$D" &&
 	echo >file updated again by origin &&
