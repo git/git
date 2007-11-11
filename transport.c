@@ -386,7 +386,7 @@ static int curl_transport_push(struct transport *transport, int refspec_nr, cons
 	int argc;
 	int err;
 
-	argv = xmalloc((refspec_nr + 11) * sizeof(char *));
+	argv = xmalloc((refspec_nr + 12) * sizeof(char *));
 	argv[0] = "http-push";
 	argc = 1;
 	if (flags & TRANSPORT_PUSH_ALL)
@@ -395,6 +395,8 @@ static int curl_transport_push(struct transport *transport, int refspec_nr, cons
 		argv[argc++] = "--force";
 	if (flags & TRANSPORT_PUSH_DRY_RUN)
 		argv[argc++] = "--dry-run";
+	if (flags & TRANSPORT_PUSH_VERBOSE)
+		argv[argc++] = "--verbose";
 	argv[argc++] = transport->url;
 	while (refspec_nr--)
 		argv[argc++] = *refspec++;
@@ -655,7 +657,7 @@ static int git_transport_push(struct transport *transport, int refspec_nr, const
 	int argc;
 	int err;
 
-	argv = xmalloc((refspec_nr + 11) * sizeof(char *));
+	argv = xmalloc((refspec_nr + 12) * sizeof(char *));
 	argv[0] = "send-pack";
 	argc = 1;
 	if (flags & TRANSPORT_PUSH_ALL)
@@ -664,6 +666,8 @@ static int git_transport_push(struct transport *transport, int refspec_nr, const
 		argv[argc++] = "--force";
 	if (flags & TRANSPORT_PUSH_DRY_RUN)
 		argv[argc++] = "--dry-run";
+	if (flags & TRANSPORT_PUSH_VERBOSE)
+		argv[argc++] = "--verbose";
 	if (data->receivepack) {
 		char *rp = xmalloc(strlen(data->receivepack) + 16);
 		sprintf(rp, "--receive-pack=%s", data->receivepack);
