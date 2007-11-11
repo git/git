@@ -85,7 +85,9 @@ Each pattern pair consists of the source side (before the colon)
 and the destination side (after the colon).  The ref to be
 pushed is determined by finding a match that matches the source
 side, and where it is pushed is determined by using the
-destination side.
+destination side. The rules used to match a ref are the same
+rules used by gitlink:git-rev-parse[1] to resolve a symbolic ref
+name.
 
  - It is an error if <src> does not match exactly one of the
    local refs.

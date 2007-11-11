@@ -519,10 +519,7 @@ static int count_refspec_match(const char *pattern,
 		char *name = refs->name;
 		int namelen = strlen(name);
 
-		if (namelen < patlen ||
-		    memcmp(name + namelen - patlen, pattern, patlen))
-			continue;
-		if (namelen != patlen && name[namelen - patlen - 1] != '/')
+		if (!refname_match(pattern, name, ref_rev_parse_rules))
 			continue;
 
 		/* A match is "weak" if it is with refs outside
