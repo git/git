@@ -254,7 +254,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 
 static void *get_data_from_pack(struct object_entry *obj)
 {
-	unsigned long from = obj[0].idx.offset + obj[0].hdr_size;
+	off_t from = obj[0].idx.offset + obj[0].hdr_size;
 	unsigned long len = obj[1].idx.offset - from;
 	unsigned long rdy = 0;
 	unsigned char *src, *data;
