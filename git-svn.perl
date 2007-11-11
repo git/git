@@ -3798,7 +3798,7 @@ sub git_svn_log_cmd {
 		$c_max = $gs->rev_db_get($r_max);
 		$c_min = $gs->rev_db_get($r_min);
 		if (defined $c_min && defined $c_max) {
-			if ($r_max > $r_max) {
+			if ($r_max > $r_min) {
 				push @cmd, "$c_min..$c_max";
 			} else {
 				push @cmd, "$c_max..$c_min";
