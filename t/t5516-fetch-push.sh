@@ -244,6 +244,23 @@ test_expect_success 'push with colon-less refspec (4)' '
 
 '
 
+test_expect_success 'push with HEAD' '
+
+	mk_test heads/master &&
+	git checkout master &&
+	git push testrepo HEAD &&
+	check_push_result $the_commit heads/master
+
+'
+
+test_expect_success 'push with HEAD nonexisting at remote' '
+
+	mk_test heads/master &&
+	git checkout -b local master &&
+	git push testrepo HEAD &&
+	check_push_result $the_commit heads/local
+'
+
 test_expect_success 'push with dry-run' '
 
 	mk_test heads/master &&
