@@ -53,4 +53,10 @@ test_expect_success 'change file but in unrelated area' "
 		test x\"\`sed -n -e 61p < file\`\" = x6611
 	"
 
+test_expect_failure 'attempt to dcommit with a dirty index' '
+	echo foo >>file &&
+	git add file &&
+	git svn dcommit
+'
+
 test_done
