@@ -931,12 +931,13 @@ Another useful tool, especially if you do not always work in X-Window
 environment, is `git show-branch`.
 
 ------------------------------------------------
-$ git show-branch --topo-order master mybranch
+$ git-show-branch --topo-order --more=1 master mybranch
 * [master] Merge work in mybranch
  ! [mybranch] Some work.
 --
 -  [master] Merge work in mybranch
 *+ [mybranch] Some work.
+*  [master^] Some fun.
 ------------------------------------------------
 
 The first two lines indicate that it is showing the two branches
@@ -954,9 +955,21 @@ because `mybranch` has not been merged to incorporate these
 commits from the master branch.  The string inside brackets
 before the commit log message is a short name you can use to
 name the commit.  In the above example, 'master' and 'mybranch'
-are branch heads.  'master~1' is the first parent of 'master'
+are branch heads.  'master^' is the first parent of 'master'
 branch head.  Please see 'git-rev-parse' documentation if you
 see more complex cases.
+
+[NOTE]
+Without the '--more=1' option, 'git-show-branch' would not output the
+'[master^]' commit, as '[mybranch]' commit is a common ancestor of
+both 'master' and 'mybranch' tips.  Please see 'git-show-branch'
+documentation for details.
+
+[NOTE]
+If there were more commits on the 'master' branch after the merge, the
+merge commit itself would not be shown by 'git-show-branch' by
+default.  You would need to provide '--sparse' option to make the
+merge commit visible in this case.
 
 Now, let's pretend you are the one who did all the work in
 `mybranch`, and the fruit of your hard work has finally been merged

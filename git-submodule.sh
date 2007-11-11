@@ -73,7 +73,7 @@ resolve_relative_url ()
 module_name()
 {
 	# Do we have "submodule.<something>.path = $1" defined in .gitmodules file?
-	re=$(printf '%s' "$1" | sed -e 's/\([^a-zA-Z0-9_]\)/\\\1/g')
+	re=$(printf '%s' "$1" | sed -e 's/[].[^$\\*]/\\&/g')
 	name=$( GIT_CONFIG=.gitmodules \
 		git config --get-regexp '^submodule\..*\.path$' |
 		sed -n -e 's|^submodule\.\(.*\)\.path '"$re"'$|\1|p' )

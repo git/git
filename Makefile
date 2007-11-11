@@ -98,6 +98,8 @@ all::
 # Define OLD_ICONV if your library has an old iconv(), where the second
 # (input buffer pointer) parameter is declared with type (const char **).
 #
+# Define NO_DEFLATE_BOUND if your zlib does not have deflateBound.
+#
 # Define NO_R_TO_GCC_LINKER if your gcc does not like "-R/path/lib"
 # that tells runtime paths to dynamic libraries;
 # "-Wl,-rpath=/path/lib" is used instead.
@@ -299,7 +301,7 @@ DIFF_OBJS = \
 LIB_OBJS = \
 	blob.o commit.o connect.o csum-file.o cache-tree.o base85.o \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o \
-	interpolate.o hash.o \
+	pretty.o interpolate.o hash.o \
 	lockfile.o \
 	spawn-pipe.o \
 	patch-ids.o \
@@ -690,6 +692,10 @@ ifdef OLD_ICONV
 	BASIC_CFLAGS += -DOLD_ICONV
 endif
 
+ifdef NO_DEFLATE_BOUND
+	BASIC_CFLAGS += -DNO_DEFLATE_BOUND
+endif
+
 ifdef PPC_SHA1
 	SHA1_HEADER = "ppc/sha1.h"
 	LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
@@ -948,6 +954,7 @@ git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H) $(wildcard */*.h)
+builtin-revert.o builtin-runstatus.o wt-status.o: wt-status.h
 
 $(LIB_FILE): $(LIB_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(LIB_OBJS)
@@ -1151,12 +1158,13 @@ endif
 ### Check documentation
 #
 check-docs::
-	@for v in $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk; \
+	@(for v in $(ALL_PROGRAMS) $(BUILT_INS) git gitk; \
 	do \
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
-		git-merge-resolve | git-merge-stupid | \
+		git-merge-resolve | git-merge-stupid | git-merge-subtree | \
 		git-add--interactive | git-fsck-objects | git-init-db | \
+		git-rebase--interactive | \
 		git-repo-config | git-fetch--tool ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
@@ -1167,7 +1175,30 @@ check-docs::
 		git) ;; \
 		*) echo "no link: $$v";; \
 		esac ; \
-	done | sort
+	done; \
+	( \
+		sed -e '1,/^__DATA__/d' \
+		    -e 's/[ 	].*//' \
+		    -e 's/^/listed /' Documentation/cmd-list.perl; \
+		ls -1 Documentation/git*txt | \
+		sed -e 's|Documentation/|documented |' \
+		    -e 's/\.txt//'; \
+	) | while read how cmd; \
+	do \
+		case "$$how,$$cmd" in \
+		*,git-citool | \
+		*,git-gui | \
+		documented,gitattributes | \
+		documented,gitignore | \
+		documented,gitmodules | \
+		documented,git-tools | \
+		sentinel,not,matching,is,ok ) continue ;; \
+		esac; \
+		case " $(ALL_PROGRAMS) $(BUILT_INS) git gitk " in \
+		*" $$cmd "*)	;; \
+		*) echo "removed but $$how: $$cmd" ;; \
+		esac; \
+	done ) | sort
 
 ### Make sure built-ins do not have dups and listed in git.c
 #

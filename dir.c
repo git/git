@@ -298,7 +298,8 @@ int excluded(struct dir_struct *dir, const char *pathname)
 	return 0;
 }
 
-static struct dir_entry *dir_entry_new(const char *pathname, int len) {
+static struct dir_entry *dir_entry_new(const char *pathname, int len)
+{
 	struct dir_entry *ent;
 
 	ent = xmalloc(sizeof(*ent) + len + 1);

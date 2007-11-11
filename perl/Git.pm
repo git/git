@@ -812,7 +812,7 @@ sub _cmd_exec {
 		$self->wc_subdir() and chdir($self->wc_subdir());
 	}
 	_execv_git_cmd(@args);
-	die "exec failed: $!";
+	die qq[exec "@args" failed: $!];
 }
 
 # Execute the given Git command ($_[0]) with arguments ($_[1..])

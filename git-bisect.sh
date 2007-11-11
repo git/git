@@ -275,7 +275,8 @@ exit_if_skipped_commits () {
 	if expr "$_tried" : ".*[|].*" > /dev/null ; then
 		echo "There are only 'skip'ped commit left to test."
 		echo "The first bad commit could be any of:"
-		echo "$_tried" | sed -e 's/[|]/\n/g'
+		echo "$_tried" | sed -e 's/[|]/\
+/g'
 		echo "We cannot bisect more!"
 		exit 2
 	fi

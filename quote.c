@@ -26,7 +26,7 @@ void sq_quote_buf(struct strbuf *dst, const char *src)
 
 	strbuf_addch(dst, '\'');
 	while (*src) {
-		size_t len = strcspn(src, "'\\");
+		size_t len = strcspn(src, "'!");
 		strbuf_add(dst, src, len);
 		src += len;
 		while (need_bs_quote(*src)) {
@@ -131,7 +131,8 @@ static signed char const sq_lookup[256] = {
 	/* 0x80 */ /* set to 0 */
 };
 
-static inline int sq_must_quote(char c) {
+static inline int sq_must_quote(char c)
+{
 	return sq_lookup[(unsigned char)c] + quote_path_fully > 0;
 }
 

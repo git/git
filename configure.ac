@@ -73,7 +73,7 @@ fi \
 AC_ARG_WITH([lib],
  [AS_HELP_STRING([--with-lib=ARG],
                  [ARG specifies alternative name for lib directory])],
- [if test "$withval" = "no" -o "$withval" = "yes"; then \
+ [if test "$withval" = "no" || test "$withval" = "yes"; then \
 	AC_MSG_WARN([You should provide name for --with-lib=ARG]); \
 else \
 	GIT_CONF_APPEND_LINE(lib=$withval); \
@@ -182,6 +182,26 @@ AC_SUBST(NEEDS_LIBICONV)
 AC_SUBST(NO_ICONV)
 test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"
 #
+# Define NO_DEFLATE_BOUND if deflateBound is missing from zlib.
+AC_DEFUN([ZLIBTEST_SRC], [
+#include <zlib.h>
+
+int main(void)
+{
+	deflateBound(0, 0);
+	return 0;
+}
+])
+AC_MSG_CHECKING([for deflateBound in -lz])
+old_LIBS="$LIBS"
+LIBS="$LIBS -lz"
+AC_LINK_IFELSE(ZLIBTEST_SRC,
+	[AC_MSG_RESULT([yes])],
+	[AC_MSG_RESULT([no])
+	NO_DEFLATE_BOUND=yes])
+LIBS="$old_LIBS"
+AC_SUBST(NO_DEFLATE_BOUND)
+#
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 AC_CHECK_LIB([c], [socket],
@@ -245,9 +265,9 @@ AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
 		[[char buf[64];
 		if (sprintf(buf, "%lld%hhd%jd%zd%td", (long long int)1, (char)2, (intmax_t)3, (size_t)4, (ptrdiff_t)5) != 5)
-		  exit(1);
+		  return 1;
 		else if (strcmp(buf, "12345"))
-		  exit(2);]])],
+		  return 2;]])],
 	[ac_cv_c_c99_format=yes],
 	[ac_cv_c_c99_format=no])
 ])
