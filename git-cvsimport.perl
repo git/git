@@ -818,6 +818,7 @@ while (<CVS>) {
 		$state = 4;
 	} elsif ($state == 4 and s/^Branch:\s+//) {
 		s/\s+$//;
+		tr/_/\./ if ( $opt_u );
 		s/[\/]/$opt_s/g;
 		$branch = $_;
 		$state = 5;

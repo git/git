@@ -252,7 +252,7 @@ Usage: $0 <command> [options] [arguments]\n
 		next if $cmd && $cmd ne $_;
 		next if /^multi-/; # don't show deprecated commands
 		print $fd '  ',pack('A17',$_),$cmd{$_}->[1],"\n";
-		foreach (keys %{$cmd{$_}->[2]}) {
+		foreach (sort keys %{$cmd{$_}->[2]}) {
 			# mixed-case options are for .git/config only
 			next if /[A-Z]/ && /^[a-z]+$/i;
 			# prints out arguments as they should be passed:

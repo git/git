@@ -31,7 +31,6 @@ our \$projects_list = "";
 our \$export_ok = "";
 our \$strict_export = "";
 
-CGI::Carp::set_programname("gitweb/gitweb.cgi");
 EOF
 
 	cat >.git/description <<EOF
@@ -556,6 +555,29 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'opt: tree --no-merges (invalid option for action)' \
 	'gitweb_run "p=.git;a=tree;opt=--no-merges"'
+test_debug 'cat gitweb.log'
+
+# ----------------------------------------------------------------------
+# gitweb config and repo config
+
+cat >>gitweb_config.perl <<EOF
+
+\$feature{'blame'}{'override'} = 1;
+\$feature{'snapshot'}{'override'} = 1;
+EOF
+
+test_expect_success \
+	'config override: tree view, features disabled in repo config' \
+	'git config gitweb.blame no &&
+	 git config gitweb.snapshot none &&
+	 gitweb_run "p=.git;a=tree"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'config override: tree view, features enabled in repo config' \
+	'git config gitweb.blame yes &&
+	 git config gitweb.snapshot "zip,tgz, tbz2" &&
+	 gitweb_run "p=.git;a=tree"'
 test_debug 'cat gitweb.log'
 
 test_done

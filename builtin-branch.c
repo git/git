@@ -11,9 +11,15 @@
 #include "commit.h"
 #include "builtin.h"
 #include "remote.h"
+#include "parse-options.h"
 
-static const char builtin_branch_usage[] =
-  "git-branch [-r] (-d | -D) <branchname> | [--track | --no-track] [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [--color | --no-color] [-r | -a] [-v [--abbrev=<length> | --no-abbrev]]";
+static const char * const builtin_branch_usage[] = {
+	"git-branch [options] [-r | -a]",
+	"git-branch [options] [-l] [-f] <branchname> [<start-point>]",
+	"git-branch [options] [-r] (-d | -D) <branchname>",
+	"git-branch [options] (-m | -M) [<oldbranch>] <newbranch>",
+	NULL
+};
 
 #define REF_UNKNOWN_TYPE    0x00
 #define REF_LOCAL_BRANCH    0x01
@@ -142,7 +148,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 
 		if (!force &&
 		    !in_merge_bases(rev, &head_rev, 1)) {
-			error("The branch '%s' is not a strict subset of "
+			error("The branch '%s' is not an ancestor of "
 				"your current HEAD.\n"
 				"If you are sure you want to delete it, "
 				"run 'git branch -D %s'.", argv[i], argv[i]);
@@ -276,7 +282,7 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		commit = lookup_commit(item->sha1);
 		if (commit && !parse_commit(commit)) {
 			pretty_print_commit(CMIT_FMT_ONELINE, commit,
-					    &subject, 0, NULL, NULL, 0);
+					    &subject, 0, NULL, NULL, 0, 0);
 			sub = subject.buf;
 		}
 		printf("%c %s%-*s%s %s %s\n", c, branch_get_color(color),
@@ -505,93 +511,45 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	int rename = 0, force_rename = 0;
 	int verbose = 0, abbrev = DEFAULT_ABBREV, detached = 0;
 	int reflog = 0, track;
-	int kinds = REF_LOCAL_BRANCH;
-	int i;
+	int kinds = REF_LOCAL_BRANCH, kind_remote = 0, kind_any = 0;
+
+	struct option options[] = {
+		OPT_GROUP("Generic options"),
+		OPT__VERBOSE(&verbose),
+		OPT_BOOLEAN( 0 , "track",  &track, "set up tracking mode (see git-pull(1))"),
+		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
+		OPT_BOOLEAN('r', NULL,     &kind_remote, "act on remote-tracking branches"),
+		OPT__ABBREV(&abbrev),
+
+		OPT_GROUP("Specific git-branch actions:"),
+		OPT_BOOLEAN('a', NULL,     &kind_any, "list both remote-tracking and local branches"),
+		OPT_BOOLEAN('d', NULL,     &delete, "delete fully merged branch"),
+		OPT_BOOLEAN('D', NULL,     &force_delete, "delete branch (even if not merged)"),
+		OPT_BOOLEAN('l', NULL,     &reflog, "create the branch's reflog"),
+		OPT_BOOLEAN('f', NULL,     &force_create, "force creation (when already exists)"),
+		OPT_BOOLEAN('m', NULL,     &rename, "move/rename a branch and its reflog"),
+		OPT_BOOLEAN('M', NULL,     &force_rename, "move/rename a branch, even if target exists"),
+		OPT_END(),
+	};
 
 	git_config(git_branch_config);
 	track = branch_track;
+	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-
-		if (arg[0] != '-')
-			break;
-		if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-		if (!strcmp(arg, "--track")) {
-			track = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--no-track")) {
-			track = 0;
-			continue;
-		}
-		if (!strcmp(arg, "-d")) {
-			delete = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-D")) {
-			delete = 1;
-			force_delete = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-f")) {
-			force_create = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-m")) {
-			rename = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-M")) {
-			rename = 1;
-			force_rename = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-r")) {
-			kinds = REF_REMOTE_BRANCH;
-			continue;
-		}
-		if (!strcmp(arg, "-a")) {
-			kinds = REF_REMOTE_BRANCH | REF_LOCAL_BRANCH;
-			continue;
-		}
-		if (!strcmp(arg, "-l")) {
-			reflog = 1;
-			continue;
-		}
-		if (!prefixcmp(arg, "--no-abbrev")) {
-			abbrev = 0;
-			continue;
-		}
-		if (!prefixcmp(arg, "--abbrev=")) {
-			abbrev = strtoul(arg + 9, NULL, 10);
-			if (abbrev < MINIMUM_ABBREV)
-				abbrev = MINIMUM_ABBREV;
-			else if (abbrev > 40)
-				abbrev = 40;
-			continue;
-		}
-		if (!strcmp(arg, "-v")) {
-			verbose = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--color")) {
-			branch_use_color = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--no-color")) {
-			branch_use_color = 0;
-			continue;
-		}
-		usage(builtin_branch_usage);
-	}
+	delete |= force_delete;
+	rename |= force_rename;
+	if (kind_remote)
+		kinds = REF_REMOTE_BRANCH;
+	if (kind_any)
+		kinds = REF_REMOTE_BRANCH | REF_LOCAL_BRANCH;
+	if (abbrev && abbrev < MINIMUM_ABBREV)
+		abbrev = MINIMUM_ABBREV;
+	else if (abbrev > 40)
+		abbrev = 40;
 
 	if ((delete && rename) || (delete && force_create) ||
 	    (rename && force_create))
-		usage(builtin_branch_usage);
+		usage_with_options(builtin_branch_usage, options);
 
 	head = resolve_ref("HEAD", head_sha1, 0, NULL);
 	if (!head)
@@ -599,26 +557,25 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	head = xstrdup(head);
 	if (!strcmp(head, "HEAD")) {
 		detached = 1;
-	}
-	else {
+	} else {
 		if (prefixcmp(head, "refs/heads/"))
 			die("HEAD not found below refs/heads!");
 		head += 11;
 	}
 
 	if (delete)
-		return delete_branches(argc - i, argv + i, force_delete, kinds);
-	else if (i == argc)
+		return delete_branches(argc, argv, force_delete, kinds);
+	else if (argc == 0)
 		print_ref_list(kinds, detached, verbose, abbrev);
-	else if (rename && (i == argc - 1))
-		rename_branch(head, argv[i], force_rename);
-	else if (rename && (i == argc - 2))
-		rename_branch(argv[i], argv[i + 1], force_rename);
-	else if (i == argc - 1 || i == argc - 2)
-		create_branch(argv[i], (i == argc - 2) ? argv[i+1] : head,
+	else if (rename && (argc == 1))
+		rename_branch(head, argv[0], force_rename);
+	else if (rename && (argc == 2))
+		rename_branch(argv[0], argv[1], force_rename);
+	else if (argc <= 2)
+		create_branch(argv[0], (argc == 2) ? argv[1] : head,
 			      force_create, reflog, track);
 	else
-		usage(builtin_branch_usage);
+		usage_with_options(builtin_branch_usage, options);
 
 	return 0;
 }

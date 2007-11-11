@@ -311,7 +311,7 @@ static void unpack_one(unsigned nr)
 static void unpack_all(void)
 {
 	int i;
-	struct progress progress;
+	struct progress *progress = NULL;
 	struct pack_header *hdr = fill(sizeof(struct pack_header));
 	unsigned nr_objects = ntohl(hdr->hdr_entries);
 
@@ -322,15 +322,13 @@ static void unpack_all(void)
 	use(sizeof(struct pack_header));
 
 	if (!quiet)
-		start_progress(&progress, "Unpacking %u objects...", "", nr_objects);
+		progress = start_progress("Unpacking objects", nr_objects);
 	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
-		if (!quiet)
-			display_progress(&progress, i + 1);
+		display_progress(progress, i + 1);
 	}
-	if (!quiet)
-		stop_progress(&progress);
+	stop_progress(&progress);
 
 	if (delta_list)
 		die("unresolved deltas left after unpacking");

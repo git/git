@@ -57,7 +57,7 @@ struct object_entry {
  * nice "minimum seek" order.
  */
 static struct object_entry *objects;
-static struct object_entry **written_list;
+static struct pack_idx_entry **written_list;
 static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
 
 static int non_empty;
@@ -65,8 +65,6 @@ static int no_reuse_delta, no_reuse_object, keep_unreachable;
 static int local;
 static int incremental;
 static int allow_ofs_delta;
-static const char *pack_tmp_name, *idx_tmp_name;
-static char tmpname[PATH_MAX];
 static const char *base_name;
 static int progress = 1;
 static int window = 10;
@@ -75,7 +73,7 @@ static int depth = 50;
 static int delta_search_threads = 1;
 static int pack_to_stdout;
 static int num_preferred_base;
-static struct progress progress_state;
+static struct progress *progress_state;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
 
@@ -579,18 +577,12 @@ static off_t write_one(struct sha1file *f,
 		e->idx.offset = 0;
 		return 0;
 	}
-	written_list[nr_written++] = e;
+	written_list[nr_written++] = &e->idx;
 
 	/* make sure off_t is sufficiently large not to wrap */
 	if (offset > offset + size)
 		die("pack too large for current definition of off_t");
 	return offset + size;
-}
-
-static int open_object_dir_tmp(const char *path)
-{
-    snprintf(tmpname, sizeof(tmpname), "%s/%s", get_object_directory(), path);
-    return xmkstemp(tmpname);
 }
 
 /* forward declaration for write_pack_file */
@@ -606,16 +598,21 @@ static void write_pack_file(void)
 	uint32_t nr_remaining = nr_result;
 
 	if (do_progress)
-		start_progress(&progress_state, "Writing %u objects...", "", nr_result);
-	written_list = xmalloc(nr_objects * sizeof(struct object_entry *));
+		progress_state = start_progress("Writing objects", nr_result);
+	written_list = xmalloc(nr_objects * sizeof(*written_list));
 
 	do {
 		unsigned char sha1[20];
+		char *pack_tmp_name = NULL;
 
 		if (pack_to_stdout) {
-			f = sha1fd(1, "<stdout>");
+			f = sha1fd_throughput(1, "<stdout>", progress_state);
 		} else {
-			int fd = open_object_dir_tmp("tmp_pack_XXXXXX");
+			char tmpname[PATH_MAX];
+			int fd;
+			snprintf(tmpname, sizeof(tmpname),
+				 "%s/tmp_pack_XXXXXX", get_object_directory());
+			fd = xmkstemp(tmpname);
 			pack_tmp_name = xstrdup(tmpname);
 			f = sha1fd(fd, pack_tmp_name);
 		}
@@ -632,8 +629,7 @@ static void write_pack_file(void)
 			if (!offset_one)
 				break;
 			offset = offset_one;
-			if (do_progress)
-				display_progress(&progress_state, written);
+			display_progress(progress_state, written);
 		}
 
 		/*
@@ -643,19 +639,20 @@ static void write_pack_file(void)
 		if (pack_to_stdout || nr_written == nr_remaining) {
 			sha1close(f, sha1, 1);
 		} else {
-			sha1close(f, sha1, 0);
-			fixup_pack_header_footer(f->fd, sha1, pack_tmp_name, nr_written);
-			close(f->fd);
+			int fd = sha1close(f, NULL, 0);
+			fixup_pack_header_footer(fd, sha1, pack_tmp_name, nr_written);
+			close(fd);
 		}
 
 		if (!pack_to_stdout) {
 			mode_t mode = umask(0);
+			char *idx_tmp_name, tmpname[PATH_MAX];
 
 			umask(mode);
 			mode = 0444 & ~mode;
 
-			idx_tmp_name = write_idx_file(NULL,
-				(struct pack_idx_entry **) written_list, nr_written, sha1);
+			idx_tmp_name = write_idx_file(NULL, written_list,
+						      nr_written, sha1);
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
 				 base_name, sha1_to_hex(sha1));
 			if (adjust_perm(pack_tmp_name, mode))
@@ -672,19 +669,20 @@ static void write_pack_file(void)
 			if (rename(idx_tmp_name, tmpname))
 				die("unable to rename temporary index file: %s",
 				    strerror(errno));
+			free(idx_tmp_name);
+			free(pack_tmp_name);
 			puts(sha1_to_hex(sha1));
 		}
 
 		/* mark written objects as written to previous pack */
 		for (j = 0; j < nr_written; j++) {
-			written_list[j]->idx.offset = (off_t)-1;
+			written_list[j]->offset = (off_t)-1;
 		}
 		nr_remaining -= nr_written;
 	} while (nr_remaining && i < nr_objects);
 
 	free(written_list);
-	if (do_progress)
-		stop_progress(&progress_state);
+	stop_progress(&progress_state);
 	if (written != nr_result)
 		die("wrote %u objects while expecting %u", written, nr_result);
 	/*
@@ -852,8 +850,7 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 	else
 		object_ix[-1 - ix] = nr_objects;
 
-	if (progress)
-		display_progress(&progress_state, nr_objects);
+	display_progress(progress_state, nr_objects);
 
 	if (name && no_try_delta(name))
 		entry->no_try_delta = 1;
@@ -1516,8 +1513,7 @@ static void find_deltas(struct object_entry **list, unsigned list_size,
 
 		progress_lock();
 		(*processed)++;
-		if (progress)
-			display_progress(&progress_state, *processed);
+		display_progress(progress_state, *processed);
 		progress_unlock();
 
 		/*
@@ -1714,16 +1710,14 @@ static void prepare_pack(int window, int depth)
 		delta_list[n++] = entry;
 	}
 
-	if (nr_deltas) {
+	if (nr_deltas && n > 1) {
 		unsigned nr_done = 0;
 		if (progress)
-			start_progress(&progress_state,
-				       "Deltifying %u objects...", "",
-				       nr_deltas);
+			progress_state = start_progress("Compressing objects",
+							nr_deltas);
 		qsort(delta_list, n, sizeof(*delta_list), type_size_sort);
 		ll_find_deltas(delta_list, n, window+1, depth, &nr_done);
-		if (progress)
-			stop_progress(&progress_state);
+		stop_progress(&progress_state);
 		if (nr_done != nr_deltas)
 			die("inconsistency with delta count");
 	}
@@ -1771,6 +1765,12 @@ static int git_pack_config(const char *k, const char *v)
 		if (delta_search_threads > 1)
 			warning("no threads support, ignoring %s", k);
 #endif
+		return 0;
+	}
+	if (!strcmp(k, "pack.indexversion")) {
+		pack_idx_default_version = git_config_int(k, v);
+		if (pack_idx_default_version > 2)
+			die("bad pack.indexversion=%d", pack_idx_default_version);
 		return 0;
 	}
 	return git_default_config(k, v);
@@ -2135,23 +2135,17 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	prepare_packed_git();
 
 	if (progress)
-		start_progress(&progress_state, "Generating pack...",
-			       "Counting objects: ", 0);
+		progress_state = start_progress("Counting objects", 0);
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {
 		rp_av[rp_ac] = NULL;
 		get_object_list(rp_ac, rp_av);
 	}
-	if (progress) {
-		stop_progress(&progress_state);
-		fprintf(stderr, "Done counting %u objects.\n", nr_objects);
-	}
+	stop_progress(&progress_state);
 
 	if (non_empty && !nr_result)
 		return 0;
-	if (progress && (nr_objects != nr_result))
-		fprintf(stderr, "Result has %u objects.\n", nr_result);
 	if (nr_result)
 		prepare_pack(window, depth);
 	write_pack_file();

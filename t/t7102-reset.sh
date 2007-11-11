@@ -402,4 +402,11 @@ test_expect_success 'test resetting the index at give paths' '
 
 '
 
+test_expect_success 'resetting an unmodified path is a no-op' '
+	git reset --hard &&
+	git reset -- file1 &&
+	git diff-files --exit-code &&
+	git diff-index --cached --exit-code HEAD
+'
+
 test_done

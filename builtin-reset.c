@@ -113,10 +113,17 @@ static int update_index_refresh(void)
 	return run_command_v_opt(argv_update_index, RUN_GIT_CMD);
 }
 
+struct update_cb_data {
+	int index_fd;
+	struct lock_file *lock;
+	int exit_code;
+};
+
 static void update_index_from_diff(struct diff_queue_struct *q,
 		struct diff_options *opt, void *data)
 {
 	int i;
+	struct update_cb_data *cb = data;
 
 	/* do_diff_cache() mangled the index */
 	discard_cache();
@@ -133,29 +140,34 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 		} else
 			remove_file_from_cache(one->path);
 	}
+
+	cb->exit_code = write_cache(cb->index_fd, active_cache, active_nr) ||
+		close(cb->index_fd) ||
+		commit_locked_index(cb->lock);
 }
 
 static int read_from_tree(const char *prefix, const char **argv,
 		unsigned char *tree_sha1)
 {
-        struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-	int index_fd;
 	struct diff_options opt;
+	struct update_cb_data cb;
 
 	memset(&opt, 0, sizeof(opt));
 	diff_tree_setup_paths(get_pathspec(prefix, (const char **)argv), &opt);
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
+	opt.format_callback_data = &cb;
 
-	index_fd = hold_locked_index(lock, 1);
+	cb.lock = xcalloc(1, sizeof(struct lock_file));
+	cb.index_fd = hold_locked_index(cb.lock, 1);
+	cb.exit_code = 0;
 	read_cache();
 	if (do_diff_cache(tree_sha1, &opt))
 		return 1;
 	diffcore_std(&opt);
 	diff_flush(&opt);
-	return write_cache(index_fd, active_cache, active_nr) ||
-		close(index_fd) ||
-		commit_locked_index(lock);
+
+	return cb.exit_code;
 }
 
 static void prepend_reflog_action(const char *action, char *buf, size_t size)

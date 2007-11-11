@@ -46,7 +46,7 @@ static int nr_resolved_deltas;
 static int from_stdin;
 static int verbose;
 
-static struct progress progress;
+static struct progress *progress;
 
 /* We always read in 4kB chunks. */
 static unsigned char input_buffer[4096];
@@ -87,6 +87,8 @@ static void *fill(int min)
 				die("early EOF");
 			die("read error on input: %s", strerror(errno));
 		}
+		if (from_stdin)
+			display_throughput(progress, ret);
 		input_len += ret;
 	} while (input_len < min);
 	return input_buffer;
@@ -106,7 +108,7 @@ static void use(int bytes)
 	consumed_bytes += bytes;
 }
 
-static const char *open_pack_file(const char *pack_name)
+static char *open_pack_file(char *pack_name)
 {
 	if (from_stdin) {
 		input_fd = 0;
@@ -406,7 +408,9 @@ static void parse_pack_objects(unsigned char *sha1)
 	 * - remember base (SHA1 or offset) for all deltas.
 	 */
 	if (verbose)
-		start_progress(&progress, "Indexing %u objects...", "", nr_objects);
+		progress = start_progress(
+				from_stdin ? "Receiving objects" : "Indexing objects",
+				nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		data = unpack_raw_entry(obj, &delta->base);
@@ -418,12 +422,10 @@ static void parse_pack_objects(unsigned char *sha1)
 		} else
 			sha1_object(data, obj->size, obj->type, obj->idx.sha1);
 		free(data);
-		if (verbose)
-			display_progress(&progress, i+1);
+		display_progress(progress, i+1);
 	}
 	objects[i].idx.offset = consumed_bytes;
-	if (verbose)
-		stop_progress(&progress);
+	stop_progress(&progress);
 
 	/* Check pack integrity */
 	flush();
@@ -455,7 +457,7 @@ static void parse_pack_objects(unsigned char *sha1)
 	 *   for some more deltas.
 	 */
 	if (verbose)
-		start_progress(&progress, "Resolving %u deltas...", "", nr_deltas);
+		progress = start_progress("Resolving deltas", nr_deltas);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		union delta_base base;
@@ -486,8 +488,7 @@ static void parse_pack_objects(unsigned char *sha1)
 						      obj->size, obj->type);
 			}
 		free(data);
-		if (verbose)
-			display_progress(&progress, nr_resolved_deltas);
+		display_progress(progress, nr_resolved_deltas);
 	}
 }
 
@@ -594,8 +595,7 @@ static void fix_unresolved_deltas(int nr_unresolved)
 			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
 		append_obj_to_pack(d->base.sha1, data, size, type);
 		free(data);
-		if (verbose)
-			display_progress(&progress, nr_resolved_deltas);
+		display_progress(progress, nr_resolved_deltas);
 	}
 	free(sorted_by_pos);
 }
@@ -683,18 +683,31 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	}
 }
 
+static int git_index_pack_config(const char *k, const char *v)
+{
+	if (!strcmp(k, "pack.indexversion")) {
+		pack_idx_default_version = git_config_int(k, v);
+		if (pack_idx_default_version > 2)
+			die("bad pack.indexversion=%d", pack_idx_default_version);
+		return 0;
+	}
+	return git_default_config(k, v);
+}
+
 int main(int argc, char **argv)
 {
 	int i, fix_thin_pack = 0;
-	const char *curr_pack, *pack_name = NULL;
-	const char *curr_index, *index_name = NULL;
+	char *curr_pack, *pack_name = NULL;
+	char *curr_index, *index_name = NULL;
 	const char *keep_name = NULL, *keep_msg = NULL;
 	char *index_name_buf = NULL, *keep_name_buf = NULL;
 	struct pack_idx_entry **idx_objects;
 	unsigned char sha1[20];
 
+	git_config(git_index_pack_config);
+
 	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
+		char *arg = argv[i];
 
 		if (*arg == '-') {
 			if (!strcmp(arg, "--stdin")) {
@@ -774,8 +787,7 @@ int main(int argc, char **argv)
 	deltas = xmalloc(nr_objects * sizeof(struct delta_entry));
 	parse_pack_objects(sha1);
 	if (nr_deltas == nr_resolved_deltas) {
-		if (verbose)
-			stop_progress(&progress);
+		stop_progress(&progress);
 		/* Flush remaining pack final 20-byte SHA1. */
 		flush();
 	} else {
@@ -788,11 +800,10 @@ int main(int argc, char **argv)
 					   (nr_objects + nr_unresolved + 1)
 					   * sizeof(*objects));
 			fix_unresolved_deltas(nr_unresolved);
-			if (verbose) {
-				stop_progress(&progress);
+			stop_progress(&progress);
+			if (verbose)
 				fprintf(stderr, "%d objects were added to complete this thin pack.\n",
 					nr_objects - nr_objects_initial);
-			}
 			fixup_pack_header_footer(output_fd, sha1,
 				curr_pack, nr_objects);
 		}
@@ -815,6 +826,10 @@ int main(int argc, char **argv)
 	free(objects);
 	free(index_name_buf);
 	free(keep_name_buf);
+	if (pack_name == NULL)
+		free(curr_pack);
+	if (index_name == NULL)
+		free(curr_index);
 
 	return 0;
 }
