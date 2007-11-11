@@ -63,8 +63,6 @@ int mkstemp (char *__template);
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#endif
-#ifndef NO_ETC_PASSWD
 #include <netdb.h>
 #include <pwd.h>
 #include <inttypes.h>
@@ -431,7 +429,6 @@ int symlink(const char *oldpath, const char *newpath);
 int fchmod(int fildes, mode_t mode);
 int lstat(const char *file_name, struct stat *buf);
 
-/* missing: link, mkstemp, fchmod, getuid (?), gettimeofday */
 int socketpair(int d, int type, int protocol, int sv[2]);
 #define AF_UNIX 0
 #define SOCK_STREAM 0

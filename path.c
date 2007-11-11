@@ -141,8 +141,6 @@ int validate_headref(const char *path)
 	return -1;
 }
 
-#ifndef NO_ETC_PASSWD
-
 static char *user_path(char *buf, char *path, int sz)
 {
 	struct passwd *pw;
@@ -181,15 +179,6 @@ static char *user_path(char *buf, char *path, int sz)
 	}
 	return buf;
 }
-
-#else
-
-static char *user_path(char *buf, char *path, int sz)
-{
-	return getenv("HOME");
-}
-
-#endif
 
 /*
  * First, one directory to try is determined by the following algorithm.

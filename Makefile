@@ -500,7 +500,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_CURL=YesPlease
 	NO_SYMLINK_HEAD=YesPlease
 	NO_IPV6=YesPlease
-	NO_ETC_PASSWD=YesPlease
 	NO_SETENV=YesPlease
 	NO_UNSETENV=YesPlease
 	NO_STRCASESTR=YesPlease
@@ -513,7 +512,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MKDTEMP = YesPlease
 	NO_SVN_TESTS=YesPlease
 	NO_PERL_MAKEMAKER=YesPlease
-	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -D__USE_MINGW_ACCESS -DNOGDI -I compat
+	COMPAT_CFLAGS += -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -D__USE_MINGW_ACCESS -DNOGDI -I compat
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
 	EXTLIBS += -lws2_32
 	X = .exe
