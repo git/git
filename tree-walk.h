@@ -7,6 +7,13 @@ struct name_entry {
 	unsigned int mode;
 };
 
+static inline enum object_type object_type(unsigned int mode)
+{
+	return S_ISDIR(mode) ? OBJ_TREE :
+		S_ISGITLINK(mode) ? OBJ_COMMIT :
+		OBJ_BLOB;
+}
+
 struct tree_desc {
 	const void *buffer;
 	struct name_entry entry;
