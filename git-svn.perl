@@ -3799,9 +3799,9 @@ sub git_svn_log_cmd {
 		$c_min = $gs->rev_db_get($r_min);
 		if (defined $c_min && defined $c_max) {
 			if ($r_max > $r_min) {
-				push @cmd, "$c_min..$c_max";
+				push @cmd, "--boundary", "$c_min..$c_max";
 			} else {
-				push @cmd, "$c_max..$c_min";
+				push @cmd, "--boundary", "$c_max..$c_min";
 			}
 		} elsif ($r_max > $r_min) {
 			push @cmd, $c_max;
@@ -3980,7 +3980,7 @@ sub cmd_show_log {
 	my (@k, $c, $d, $stat);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {
-		if (/^${esc_color}commit ($::sha1_short)/o) {
+		if (/^${esc_color}commit -?($::sha1_short)/o) {
 			my $cmt = $1;
 			if ($c && cmt_showable($c) && $c->{r} != $r_last) {
 				$r_last = $c->{r};

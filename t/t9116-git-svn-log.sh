@@ -45,18 +45,18 @@ test_expect_success 'run log against a from trunk' "
 	git svn log -r3 a | grep ^r3
 	"
 
-printf 'r2 \nr4 \n' > expected-range-r2-r4
+printf 'r1 \nr2 \nr4 \n' > expected-range-r1-r2-r4
 
 test_expect_success 'test ascending revision range' "
 	git reset --hard trunk &&
-	git svn log -r 1:4 | grep '^r[0-9]' | cut -d'|' -f1 | diff -u expected-range-r2-r4 -
+	git svn log -r 1:4 | grep '^r[0-9]' | cut -d'|' -f1 | diff -u expected-range-r1-r2-r4 -
 	"
 
-printf 'r4 \nr2 \n' > expected-range-r4-r2
+printf 'r4 \nr2 \nr1 \n' > expected-range-r4-r2-r1
 
 test_expect_success 'test descending revision range' "
 	git reset --hard trunk &&
-	git svn log -r 4:1 | grep '^r[0-9]' | cut -d'|' -f1 | diff -u expected-range-r4-r2 -
+	git svn log -r 4:1 | grep '^r[0-9]' | cut -d'|' -f1 | diff -u expected-range-r4-r2-r1 -
 	"
 
 test_done
