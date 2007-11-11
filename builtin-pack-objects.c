@@ -990,7 +990,7 @@ static void add_pbase_object(struct tree_desc *tree,
 			return;
 		if (name[cmplen] != '/') {
 			add_object_entry(entry.sha1,
-					 S_ISDIR(entry.mode) ? OBJ_TREE : OBJ_BLOB,
+					 object_type(entry.mode),
 					 fullname, 1);
 			return;
 		}
