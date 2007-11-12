@@ -3068,6 +3068,25 @@ BEGIN {
 	}
 }
 
+sub escape_uri_only {
+	my ($uri) = @_;
+	my @tmp;
+	foreach (split m{/}, $uri) {
+		s/([^\w.-])/sprintf("%%%02X",ord($1))/eg;
+		push @tmp, $_;
+	}
+	join('/', @tmp);
+}
+
+sub escape_url {
+	my ($url) = @_;
+	if ($url =~ m#^(https?)://([^/]+)(.*)$#) {
+		my ($scheme, $domain, $uri) = ($1, $2, escape_uri_only($3));
+		$url = "$scheme://$domain$uri";
+	}
+	$url;
+}
+
 sub new {
 	my ($class, $url) = @_;
 	$url =~ s!/+$!!;
@@ -3092,10 +3111,11 @@ sub new {
 	  ]);
 	my $config = SVN::Core::config_get_config($config_dir);
 	$RA = undef;
-	my $self = SVN::Ra->new(url => $url, auth => $baton,
+	my $self = SVN::Ra->new(url => escape_url($url), auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
 	                      auth_provider_callbacks => $callbacks);
+	$self->{url} = $url;
 	$self->{svn_path} = $url;
 	$self->{repos_root} = $self->get_repos_root;
 	$self->{svn_path} =~ s#^\Q$self->{repos_root}\E(/|$)##;
@@ -3203,7 +3223,7 @@ sub gs_do_switch {
 
 	my $full_url = $self->{url};
 	my $old_url = $full_url;
-	$full_url .= "/$path" if length $path;
+	$full_url .= '/' . escape_uri_only($path) if length $path;
 	my ($ra, $reparented);
 	if ($old_url ne $full_url) {
 		if ($old_url !~ m#^svn(\+ssh)?://#) {
