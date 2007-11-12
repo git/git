@@ -109,6 +109,7 @@ static char *prepare_index(const char **files, const char *prefix)
 
 	/* update the user index file */
 	add_files_to_cache(verbose, prefix, files);
+	refresh_cache(REFRESH_QUIET);
 	if (write_cache(fd, active_cache, active_nr) || close(fd))
 		die("unable to write new_index file");
 
