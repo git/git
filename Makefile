@@ -512,7 +512,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MKDTEMP = YesPlease
 	NO_SVN_TESTS=YesPlease
 	NO_PERL_MAKEMAKER=YesPlease
-	COMPAT_CFLAGS += -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -D__USE_MINGW_ACCESS -DNOGDI -I compat
+	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\" -D__USE_MINGW_ACCESS -DNOGDI -I compat
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
 	EXTLIBS += -lws2_32
 	X = .exe
