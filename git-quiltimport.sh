@@ -23,8 +23,8 @@ do
 		dry_run=1
 		;;
 	--patches)
-		QUILT_PATCHES="$1"
 		shift
+		QUILT_PATCHES="$1"
 		;;
 	--)
 		shift
