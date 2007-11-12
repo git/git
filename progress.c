@@ -37,26 +37,13 @@ struct progress {
 
 static volatile sig_atomic_t progress_update;
 
-#ifndef __MINGW32__
 static void progress_interval(int signum)
 {
 	progress_update = 1;
 }
-#else
-static HANDLE progress_event;
-static HANDLE progress_thread;
-
-static __stdcall unsigned heartbeat(void *dummy)
-{
-	while (WaitForSingleObject(progress_event, 1000) == WAIT_TIMEOUT)
-		progress_update = 1;
-	return 0;
-}
-#endif
 
 static void set_progress_signal(void)
 {
-#ifndef __MINGW32__
 	struct sigaction sa;
 	struct itimerval v;
 
@@ -72,43 +59,13 @@ static void set_progress_signal(void)
 	v.it_interval.tv_usec = 0;
 	v.it_value = v.it_interval;
 	setitimer(ITIMER_REAL, &v, NULL);
-#else
-	/* this is just eye candy: errors are not fatal */
-	progress_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-	if (progress_event) {
-		progress_thread = (HANDLE) _beginthreadex(NULL, 0, heartbeat, NULL, 0, NULL);
-		if (!progress_thread )
-			error("cannot create progress indicator");
-	} else
-		error("cannot allocate resources for progress indicator");
-#endif
 }
 
 static void clear_progress_signal(void)
 {
-#ifndef __MINGW32__
 	struct itimerval v = {{0,},};
 	setitimer(ITIMER_REAL, &v, NULL);
 	signal(SIGALRM, SIG_IGN);
-#else
-	/* this is just eye candy: errors are not fatal */
-	if (progress_event)
-		SetEvent(progress_event);	/* tells thread to terminate */
-	if (progress_thread) {
-		int rc = WaitForSingleObject(progress_thread, 1000);
-		if (rc == WAIT_TIMEOUT)
-			error("progress thread did not terminate timely");
-		else if (rc != WAIT_OBJECT_0)
-			error("waiting for progress thread failed: %lu",
-			      GetLastError());
-		CloseHandle(progress_thread);
-	}
-	if (progress_event)
-		CloseHandle(progress_event);
-	progress_event = NULL;
-	progress_thread = NULL;
-#endif
-
 	progress_update = 0;
 }
 
