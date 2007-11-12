@@ -25,10 +25,7 @@ rmrf="rm -rf --"
 rm_refuse="echo Not removing"
 echo1="echo"
 
-# requireForce used to default to false but now it defaults to true.
-# IOW, lack of explicit "clean.requireForce = false" is taken as
-# "clean.requireForce = true".
-disabled=$(git config --bool clean.requireForce || echo true)
+disabled=$(git config --bool clean.requireForce)
 
 while test $# != 0
 do
@@ -37,10 +34,10 @@ do
 		cleandir=1
 		;;
 	-f)
-		disabled=
+		disabled=false
 		;;
 	-n)
-		disabled=
+		disabled=false
 		rmf="echo Would remove"
 		rmrf="echo Would remove"
 		rm_refuse="echo Would not remove"
@@ -68,10 +65,17 @@ do
 	shift
 done
 
-if [ "$disabled" = true ]; then
-	echo "clean.requireForce set and -n or -f not given; refusing to clean"
-	exit 1
-fi
+# requireForce used to default to false but now it defaults to true.
+# IOW, lack of explicit "clean.requireForce = false" is taken as
+# "clean.requireForce = true".
+case "$disabled" in
+"")
+	die "clean.requireForce not set and -n or -f not given; refusing to clean"
+	;;
+"true")
+	die "clean.requireForce set and -n or -f not given; refusing to clean"
+	;;
+esac
 
 case "$ignored,$ignoredonly" in
 	1,1) usage;;
