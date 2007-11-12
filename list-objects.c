@@ -170,4 +170,11 @@ void traverse_commit_list(struct rev_info *revs,
 	}
 	for (i = 0; i < objects.nr; i++)
 		show_object(&objects.objects[i]);
+	free(objects.objects);
+	if (revs->pending.nr) {
+		free(revs->pending.objects);
+		revs->pending.nr = 0;
+		revs->pending.alloc = 0;
+		revs->pending.objects = NULL;
+	}
 }
