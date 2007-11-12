@@ -620,3 +620,17 @@ int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 	} while (len < 0);
 	return len;
 }
+
+struct passwd *mingw_getpwuid(int uid)
+{
+	static char user_name[100];
+	static struct passwd p;
+
+	DWORD len = sizeof(user_name);
+	if (!GetUserName(user_name, &len))
+		return NULL;
+	p.pw_name = user_name;
+	p.pw_gecos = "unknown";
+	p.pw_dir = NULL;
+	return &p;
+}

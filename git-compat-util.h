@@ -527,6 +527,16 @@ int git_fstat(int fd, struct stat *buf);
 int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
 #define vsnprintf mingw_vsnprintf
 
+struct passwd {
+	char *pw_name;
+	char *pw_gecos;
+	char *pw_dir;
+};
+struct passwd *mingw_getpwuid(int uid);
+#define getpwuid mingw_getpwuid
+static inline int getuid() { return 1; }
+static inline struct passwd *getpwnam(const char *name) { return NULL; }
+
 #endif /* __MINGW32__ */
 
 #endif
