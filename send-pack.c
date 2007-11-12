@@ -349,7 +349,8 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 
 	if (!dry_run && remote && ret == 0) {
 		for (ref = remote_refs; ref; ref = ref->next)
-			update_tracking_ref(remote, ref);
+			if (!is_null_sha1(ref->new_sha1))
+				update_tracking_ref(remote, ref);
 	}
 
 	if (!new_refs && ret == 0)
