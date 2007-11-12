@@ -315,10 +315,6 @@ char *mingw_getcwd(char *pointer, int len)
 	return ret;
 }
 
-void sync(void)
-{
-}
-
 void openlog(const char *ident, int option, int facility)
 {
 }

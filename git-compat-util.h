@@ -505,9 +505,9 @@ int mingw_socket(int domain, int type, int protocol);
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
 
-#define setlinebuf(x)
-#define fsync(x) 0
-#define getppid() 1
+static inline int fsync(int fd) { return 0; }
+static inline int getppid(void) { return 1; }
+static inline void sync(void) {}
 
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);
