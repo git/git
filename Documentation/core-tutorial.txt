@@ -1090,11 +1090,6 @@ server like git Native transport does.  Any stock HTTP server
 that does not even support directory index would suffice.  But
 you must prepare your repository with `git-update-server-info`
 to help dumb transport downloaders.
-+
-There are (confusingly enough) `git-ssh-fetch` and `git-ssh-upload`
-programs, which are 'commit walkers'; they outlived their
-usefulness when git Native and SSH transports were introduced,
-and are not used by `git pull` or `git push` scripts.
 
 Once you fetch from the remote repository, you `merge` that
 with your current branch.
