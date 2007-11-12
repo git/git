@@ -297,7 +297,7 @@ static const char *find_wholine(const char *who, int wholen, const char *buf, un
 		if (!eol)
 			return "";
 		eol++;
-		if (eol[1] == '\n')
+		if (*eol == '\n')
 			return ""; /* end of header */
 		buf = eol;
 	}
