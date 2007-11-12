@@ -238,7 +238,6 @@ void list_common_cmds_help(void)
 		mput_char(' ', longest - strlen(common_cmds[i].name));
 		puts(common_cmds[i].help);
 	}
-	puts("(use 'git help -a' to get a list of all installed git commands)");
 }
 
 static void show_man_page(const char *git_cmd)
