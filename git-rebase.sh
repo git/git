@@ -170,7 +170,11 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
+		head_name=$(cat .dotest/head-name) &&
+		onto=$(cat .dotest/onto) &&
+		orig_head=$(cat .dotest/orig-head) &&
+		git am --resolved --3way --resolvemsg="$RESOLVEMSG" &&
+		move_to_original_branch
 		exit
 		;;
 	--skip)
