@@ -577,8 +577,8 @@ int mingw_rename(const char *pold, const char *pnew)
 		return 0;
 	/* TODO: translate more errors */
 	if (GetLastError() == ERROR_ACCESS_DENIED) {
-		struct stat st;
-		if (!stat(pnew, &st) && S_ISDIR(st.st_mode)) {
+		DWORD attrs = GetFileAttributes(pnew);
+		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY)) {
 			errno = EISDIR;
 			return -1;
 		}
