@@ -11,6 +11,7 @@ my $base = 'next';
 my @stage = qw(next pu);
 my @mark = ('.', '?', '-', '+');
 my $all = 0;
+my $merges = 0;
 
 my @custom_stage;
 my @custom_mark;
@@ -18,16 +19,18 @@ GetOptions("topic=s" => \$topic_pattern,
 	   "base=s" => \$base,
 	   "stage=s" => \@custom_stage,
 	   "mark=s" => \@custom_mark,
+	   "merges!" => \$merges,
 	   "all!" => \$all)
     or die;
 
 if (@custom_stage) { @stage = @custom_stage; }
 if (@custom_mark) { @mark = @custom_mark; }
+my @nomerges = $merges ? qw(--no-merges) : ();
 
 sub read_revs_short {
 	my (@args) = @_;
 	my @revs;
-	open(REVS, '-|', qw(git rev-list --no-merges), @args)
+	open(REVS, '-|', qw(git rev-list), @nomerges, @args)
 	    or die;
 	while (<REVS>) {
 		chomp;
@@ -40,7 +43,7 @@ sub read_revs_short {
 sub read_revs {
 	my ($bottom, $top, $mask) = @_;
 	my @revs;
-	open(REVS, '-|', qw(git rev-list --pretty=oneline --no-merges),
+	open(REVS, '-|', qw(git rev-list --pretty=oneline), @nomerges,
 	     "$bottom..$top")
 	    or die;
 	while (<REVS>) {
