@@ -1,27 +1,7 @@
 #include <stdint.h>
-#include <stdlib.h>
-#include <fcntl.h>
 #include "../git-compat-util.h"
 
 unsigned int _CRT_fmode = _O_BINARY;
-
-int readlink(const char *path, char *buf, size_t bufsiz)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int symlink(const char *oldpath, const char *newpath)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int fchmod(int fildes, mode_t mode)
-{
-	errno = EBADF;
-	return -1;
-}
 
 static inline time_t filetime_to_time_t(const FILETIME *ft)
 {
@@ -175,29 +155,6 @@ int mingw_fstat(int fd, struct mingw_stat *buf)
 	return -1;
 }
 
-/* missing: link, mkstemp, fchmod, getuid (?), gettimeofday */
-int socketpair(int d, int type, int protocol, int sv[2])
-{
-	return -1;
-}
-int syslog(int type, char *bufp, ...)
-{
-	return -1;
-}
-unsigned int alarm(unsigned int seconds)
-{
-	return 0;
-}
-#include <winsock2.h>
-int fork()
-{
-	return -1;
-}
-
-int kill(pid_t pid, int sig)
-{
-	return -1;
-}
 unsigned int sleep (unsigned int __seconds)
 {
 	Sleep(__seconds*1000);

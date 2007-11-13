@@ -407,46 +407,46 @@ static inline int strtol_i(char const *s, int base, int *result)
 
 #ifdef __MINGW32__
 
-#ifndef S_ISLNK
+#include <winsock2.h>
+
 #define S_IFLNK    0120000 /* Symbolic link */
 #define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(x) 0
-#endif
-
-#ifndef S_ISGRP
-#define S_ISGRP(x) 0
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
 #define S_ISGID 0
 #define S_IROTH 0
 #define S_IXOTH 0
-#endif
 
-int readlink(const char *path, char *buf, size_t bufsiz);
-int symlink(const char *oldpath, const char *newpath);
-#define link symlink
-int fchmod(int fildes, mode_t mode);
-int lstat(const char *file_name, struct stat *buf);
+static inline int readlink(const char *path, char *buf, size_t bufsiz)
+{ errno = ENOSYS; return -1; }
+static inline int symlink(const char *oldpath, const char *newpath)
+{ errno = ENOSYS; return -1; }
+static inline int link(const char *oldpath, const char *newpath)
+{ errno = ENOSYS; return -1; }
+static inline int fchmod(int fildes, mode_t mode)
+{ errno = ENOSYS; return -1; }
+static inline int fork(void)
+{ errno = ENOSYS; return -1; }
+static inline int kill(pid_t pid, int sig)
+{ errno = ENOSYS; return -1; }
+static inline unsigned int alarm(unsigned int seconds)
+{ return 0; }
 
-int socketpair(int d, int type, int protocol, int sv[2]);
-#define AF_UNIX 0
-#define SOCK_STREAM 0
-int syslog(int type, char *bufp, ...);
-#define LOG_ERR 1
-#define LOG_INFO 2
-#define LOG_DAEMON 4
-unsigned int alarm(unsigned int seconds);
-#include <winsock2.h>
 void mingw_execve(const char *cmd, const char **argv, const char **env);
 #define execve mingw_execve
 extern void mingw_execvp(const char *cmd, const char **argv);
 #define execvp mingw_execvp
-int fork();
 typedef int pid_t;
-#define waitpid(pid, status, options) \
-	((options == 0) ? _cwait((status), (pid), 0) \
-		: (errno = EINVAL, -1))
+static inline int waitpid(pid_t pid, unsigned *status, unsigned options)
+{
+	if (options == 0)
+		return _cwait(status, pid, 0);
+	else
+		return errno = EINVAL, -1;
+}
+
 #define WIFEXITED(x) ((unsigned)(x) < 259)	/* STILL_ACTIVE */
 #define WEXITSTATUS(x) ((x) & 0xff)
 #define WIFSIGNALED(x) ((unsigned)(x) > 259)
@@ -455,9 +455,7 @@ typedef int pid_t;
 #define SIGKILL 0
 #define SIGCHLD 0
 #define SIGPIPE 0
-#define ECONNABORTED 0
 
-int kill(pid_t pid, int sig);
 unsigned int sleep (unsigned int __seconds);
 const char *inet_ntop(int af, const void *src,
                              char *dst, size_t cnt);
