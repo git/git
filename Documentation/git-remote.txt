@@ -69,7 +69,7 @@ caution.
 Fetch updates for a named set of remotes in the repository as defined by
 remotes.<group>.  If a named group is not specified on the command line,
 the configuration parameter remotes.default will get used; if
-remotes.default is not defined, all remotes which do not the
+remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
 be updated.  (See gitlink:git-config[1]).
 
