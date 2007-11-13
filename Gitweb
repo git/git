@@ -6,28 +6,14 @@ cd gitweb &&
 DEST=`cd ../../index && /bin/pwd` || exit
 
 differs=
+rsrc='gitweb.cgi gitweb.css git-favicon.png blame.js'
 
-if test -f "$DEST/gitweb.cgi"
-then
-	diff -u "$DEST/gitweb.cgi" gitweb.cgi || differs="g$differs"
-else
-	differs="g$differs"
-fi
+for r in $rsrc
+do
 
-if test -f "$DEST/gitweb.css"
-then
-	diff -u "$DEST/gitweb.css" gitweb.css || differs="s$differs"
-else
-	differs="s$differs"
-fi
-
-if test -f "$DEST/git-favicon.png"
-then
-	cmp "$DEST/git-favicon.png" git-favicon.png >/dev/null ||
-	differs="i$differs"
-else
-	differs="i$differs"
-fi
+	test -f "$DEST/$r" && diff -u "$DEST/$r" "$r" && continue
+	differs="$differs$r "
+done
 
 case "$differs" in
 '')
@@ -51,24 +37,11 @@ case "$differs" in
 	esac
 esac
 
-case "$differs" in
-*g*)
-	rm -f "$DEST/gitweb.cgi"
-	cp gitweb.cgi "$DEST/gitweb.cgi"
-	chmod +x "$DEST/gitweb.cgi"
-	;;
-esac
-
-case "$differs" in
-*s*)
-	rm -f "$DEST/gitweb.css"
-	cp gitweb.css "$DEST/gitweb.css"
-	;;
-esac
-
-case "$differs" in
-*i*)
-	rm -f "$DEST/git-favicon.png"
-	cp git-favicon.png "$DEST/git-favicon.png"
-	;;
-esac
+for r in $differs
+do
+	cp "$r" "$DEST/$r"
+	case "$r" in
+	gitweb.cgi)
+		chmod +x "$DEST/$r"
+	esac
+done
