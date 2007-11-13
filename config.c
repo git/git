@@ -459,6 +459,11 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 	return ret;
 }
 
+const char *git_etc_gitconfig(void)
+{
+	return ETC_GITCONFIG;
+}
+
 int git_config(config_fn_t fn)
 {
 	int ret = 0;
@@ -471,8 +476,8 @@ int git_config(config_fn_t fn)
 	 * config file otherwise. */
 	filename = getenv(CONFIG_ENVIRONMENT);
 	if (!filename) {
-		if (!access(ETC_GITCONFIG, R_OK))
-			ret += git_config_from_file(fn, ETC_GITCONFIG);
+		if (!access(git_etc_gitconfig(), R_OK))
+			ret += git_config_from_file(fn, git_etc_gitconfig());
 		home = getenv("HOME");
 		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!filename)
