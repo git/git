@@ -475,7 +475,7 @@ Bisecting: 3537 revisions left to test after this
 If you run "git branch" at this point, you'll see that git has
 temporarily moved you to a new branch named "bisect".  This branch
 points to a commit (with commit id 65934...) that is reachable from
-v2.6.19 but not from v2.6.18.  Compile and test it, and see whether
+"master" but not from v2.6.18.  Compile and test it, and see whether
 it crashes.  Assume it does crash.  Then:
 
 -------------------------------------------------
@@ -1567,8 +1567,8 @@ old history using, for example,
 $ git log master@{1}
 -------------------------------------------------
 
-This lists the commits reachable from the previous version of the head.
-This syntax can be used to with any git command that accepts a commit,
+This lists the commits reachable from the previous version of the branch.
+This syntax can be used with any git command that accepts a commit,
 not just with git log.  Some other examples:
 
 -------------------------------------------------
