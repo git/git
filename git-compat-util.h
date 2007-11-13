@@ -454,7 +454,6 @@ typedef int pid_t;
 #define WNOHANG 1
 #define SIGKILL 0
 #define SIGCHLD 0
-#define SIGALRM 0
 #define SIGPIPE 0
 #define ECONNABORTED 0
 
@@ -547,6 +546,24 @@ struct passwd *mingw_getpwuid(int uid);
 #define getpwuid mingw_getpwuid
 static inline int getuid() { return 1; }
 static inline struct passwd *getpwnam(const char *name) { return NULL; }
+
+struct itimerval {
+	struct timeval it_value, it_interval;
+};
+int setitimer(int type, struct itimerval *in, struct itimerval *out);
+#define ITIMER_REAL 0
+
+typedef void (__cdecl *sig_handler_t)(int);
+struct sigaction {
+	sig_handler_t sa_handler;
+	unsigned sa_flags;
+};
+int sigaction(int sig, struct sigaction *in, struct sigaction *out);
+#define sigemptyset(x) (void)0
+#define SA_RESTART 0
+#define SIGALRM 100
+sig_handler_t mingw_signal(int sig, sig_handler_t handler);
+#define signal mingw_signal
 
 #endif /* __MINGW32__ */
 
