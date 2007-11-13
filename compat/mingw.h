@@ -154,6 +154,9 @@ char *mingw_getcwd(char *pointer, int len);
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
 
+sig_handler_t mingw_signal(int sig, sig_handler_t handler);
+#define signal mingw_signal
+
 /*
  * git specific compatibility
  */
