@@ -17,4 +17,4 @@ order.
 
 EOF
 
-Meta/git-topic.perl --base=master | sed -e 's/^\*./*/'
+Meta/git-topic.perl --base=master | sed -e 's/^\*./\n*/'
