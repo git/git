@@ -142,7 +142,7 @@ static int count_distance(struct commit_list *entry)
 
 		if (commit->object.flags & (UNINTERESTING | COUNTED))
 			break;
-		if (commit->object.flags & TREECHANGE)
+		if (!(commit->object.flags & TREESAME))
 			nr++;
 		commit->object.flags |= COUNTED;
 		p = commit->parents;
@@ -198,7 +198,7 @@ static inline int halfway(struct commit_list *p, int nr)
 	/*
 	 * Don't short-cut something we are not going to return!
 	 */
-	if (!(p->item->object.flags & TREECHANGE))
+	if (p->item->object.flags & TREESAME)
 		return 0;
 	if (DEBUG_BISECT)
 		return 0;
@@ -234,7 +234,7 @@ static void show_list(const char *debug, int counted, int nr,
 		char *ep, *sp;
 
 		fprintf(stderr, "%c%c%c ",
-			(flags & TREECHANGE) ? 'T' : ' ',
+			(flags & TREESAME) ? ' ' : 'T',
 			(flags & UNINTERESTING) ? 'U' : ' ',
 			(flags & COUNTED) ? 'C' : ' ');
 		if (commit->util)
@@ -268,7 +268,7 @@ static struct commit_list *best_bisection(struct commit_list *list, int nr)
 		int distance;
 		unsigned flags = p->item->object.flags;
 
-		if (!(flags & TREECHANGE))
+		if (flags & TREESAME)
 			continue;
 		distance = weight(p);
 		if (nr - distance < distance)
@@ -308,7 +308,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 		int distance;
 		unsigned flags = p->item->object.flags;
 
-		if (!(flags & TREECHANGE))
+		if (flags & TREESAME)
 			continue;
 		distance = weight(p);
 		if (nr - distance < distance)
@@ -362,7 +362,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		p->item->util = &weights[n++];
 		switch (count_interesting_parents(commit)) {
 		case 0:
-			if (flags & TREECHANGE) {
+			if (!(flags & TREESAME)) {
 				weight_set(p, 1);
 				counted++;
 				show_list("bisection 2 count one",
@@ -435,7 +435,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			 * add one for p itself if p is to be counted,
 			 * otherwise inherit it from q directly.
 			 */
-			if (flags & TREECHANGE) {
+			if (!(flags & TREESAME)) {
 				weight_set(p, weight(q)+1);
 				counted++;
 				show_list("bisection 2 count one",
@@ -482,7 +482,7 @@ static struct commit_list *find_bisection(struct commit_list *list,
 			continue;
 		p->next = last;
 		last = p;
-		if (flags & TREECHANGE)
+		if (!(flags & TREESAME))
 			nr++;
 		on_list++;
 	}

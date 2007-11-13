@@ -3,7 +3,7 @@
 
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
-#define TREECHANGE	(1u<<2)
+#define TREESAME	(1u<<2)
 #define SHOWN		(1u<<3)
 #define TMP_MARK	(1u<<4) /* for isolated cases; clean after use */
 #define BOUNDARY	(1u<<5)

@@ -311,17 +311,15 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	/*
 	 * If we don't do pruning, everything is interesting
 	 */
-	if (!revs->prune) {
-		commit->object.flags |= TREECHANGE;
+	if (!revs->prune)
 		return;
-	}
 
 	if (!commit->tree)
 		return;
 
 	if (!commit->parents) {
-		if (!rev_same_tree_as_empty(revs, commit->tree))
-			commit->object.flags |= TREECHANGE;
+		if (rev_same_tree_as_empty(revs, commit->tree))
+			commit->object.flags |= TREESAME;
 		return;
 	}
 
@@ -329,10 +327,8 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	 * Normal non-merge commit? If we don't want to make the
 	 * history dense, we consider it always to be a change..
 	 */
-	if (!revs->dense && !commit->parents->next) {
-		commit->object.flags |= TREECHANGE;
+	if (!revs->dense && !commit->parents->next)
 		return;
-	}
 
 	pp = &commit->parents;
 	while ((parent = *pp) != NULL) {
@@ -357,6 +353,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 			}
 			parent->next = NULL;
 			commit->parents = parent;
+			commit->object.flags |= TREESAME;
 			return;
 
 		case REV_TREE_NEW:
@@ -385,7 +382,8 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		die("bad tree compare for commit %s", sha1_to_hex(commit->object.sha1));
 	}
 	if (tree_changed && !tree_same)
-		commit->object.flags |= TREECHANGE;
+		return;
+	commit->object.flags |= TREESAME;
 }
 
 static int add_parents_to_list(struct rev_info *revs, struct commit *commit, struct commit_list **list)
@@ -1354,7 +1352,9 @@ static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp
 				return rewrite_one_error;
 		if (p->parents && p->parents->next)
 			return rewrite_one_ok;
-		if (p->object.flags & (TREECHANGE | UNINTERESTING))
+		if (p->object.flags & UNINTERESTING)
+			return rewrite_one_ok;
+		if (!(p->object.flags & TREESAME))
 			return rewrite_one_ok;
 		if (!p->parents)
 			return rewrite_one_noparents;
@@ -1427,7 +1427,7 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 		return commit_ignore;
 	if (revs->prune && revs->dense) {
 		/* Commit without changes? */
-		if (!(commit->object.flags & TREECHANGE)) {
+		if (commit->object.flags & TREESAME) {
 			/* drop merges unless we want parenthood */
 			if (!revs->parents)
 				return commit_ignore;
