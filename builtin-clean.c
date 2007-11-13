@@ -11,7 +11,7 @@
 #include "dir.h"
 #include "parse-options.h"
 
-static int force;
+static int force = -1; /* unset */
 
 static const char *const builtin_clean_usage[] = {
 	"git-clean [-d] [-f] [-n] [-q] [-x | -X] [--] <paths>...",
@@ -29,7 +29,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 {
 	int j;
 	int show_only = 0, remove_directories = 0, quiet = 0, ignored = 0;
-	int ignored_only = 0, baselen = 0;
+	int ignored_only = 0, baselen = 0, config_set = 0;
 	struct strbuf directory;
 	struct dir_struct dir;
 	const char *path, *base;
@@ -47,6 +47,11 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	};
 
 	git_config(git_clean_config);
+	if (force < 0)
+		force = 0;
+	else
+		config_set = 1;
+
 	argc = parse_options(argc, argv, options, builtin_clean_usage, 0);
 
 	memset(&dir, 0, sizeof(dir));
@@ -59,7 +64,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		die("-x and -X cannot be used together");
 
 	if (!show_only && !force)
-		die("clean.requireForce set and -n or -f not given; refusing to clean");
+		die("clean.requireForce%s set and -n or -f not given; "
+		    "refusing to clean", config_set ? "" : " not");
 
 	dir.show_other_directories = 1;
 
