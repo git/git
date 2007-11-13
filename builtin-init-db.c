@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "builtin.h"
+#include "exec_cmd.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
@@ -131,10 +132,19 @@ static void copy_templates(const char *git_dir, int len, const char *template_di
 	int template_len;
 	DIR *dir;
 
-	if (!template_dir) {
+	if (!template_dir)
 		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
-		if (!template_dir)
-			template_dir = DEFAULT_GIT_TEMPLATE_DIR;
+	if (!template_dir) {
+		/*
+		 * if the hard-coded template is relative, it is
+		 * interpreted relative to the exec_dir
+		 */
+		template_dir = DEFAULT_GIT_TEMPLATE_DIR;
+		if (!is_absolute_path(template_dir)) {
+			const char *exec_path = git_exec_path();
+			template_dir = prefix_path(exec_path, strlen(exec_path),
+						   template_dir);
+		}
 	}
 	strcpy(template_path, template_dir);
 	template_len = strlen(template_path);
