@@ -264,7 +264,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		if (get_sha1("HEAD", head))
 			die ("You do not have a valid HEAD");
 		wt_status_prepare(&s);
-		if (s.commitable || s.workdir_dirty)
+		if (s.commitable)
 			die ("Dirty index: cannot %s", me);
 		discard_cache();
 	}
