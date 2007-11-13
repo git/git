@@ -290,6 +290,7 @@ extern int refresh_index(struct index_state *, unsigned int flags, const char **
 
 struct lock_file {
 	struct lock_file *next;
+	int fd;
 	pid_t owner;
 	char on_list;
 	char filename[PATH_MAX];
