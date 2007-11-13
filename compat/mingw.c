@@ -679,6 +679,7 @@ static inline int is_timeval_eq(const struct timeval *i1, const struct timeval *
 int setitimer(int type, struct itimerval *in, struct itimerval *out)
 {
 	static const struct timeval zero;
+	static int atexit_done;
 
 	if (out != NULL)
 		return errno = EINVAL,
@@ -697,7 +698,10 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out)
 
 	timer_interval = in->it_interval.tv_sec * 1000 + in->it_interval.tv_usec / 1000;
 	one_shot = is_timeval_eq(&in->it_value, &zero);
-	atexit(stop_timer_thread);
+	if (!atexit_done) {
+		atexit(stop_timer_thread);
+		atexit_done = 1;
+	}
 	return start_timer_thread();
 }
 
