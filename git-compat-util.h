@@ -563,6 +563,13 @@ int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 sig_handler_t mingw_signal(int sig, sig_handler_t handler);
 #define signal mingw_signal
 
+#define F_GETFD 1
+#define F_SETFD 2
+#define FD_CLOEXEC 0x1
+static inline int mingw_fcntl(int fd, int cmd, long arg)
+{ return cmd == F_GETFD || cmd == F_SETFD ? 0 : (errno = EINVAL, -1); }
+#define fcntl mingw_fcntl
+
 #endif /* __MINGW32__ */
 
 #endif
