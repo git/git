@@ -61,17 +61,33 @@ test_expect_success \
 
 test_expect_success \
     'index v2: force some 64-bit offsets with pack-objects' \
-    'pack3=$(git pack-objects --index-version=2,0x40000 test-3 <obj-list) &&
-     git verify-pack -v "test-3-${pack3}.pack"'
+    'pack3=$(git pack-objects --index-version=2,0x40000 test-3 <obj-list)'
 
+have_64bits=
+if msg=$(git verify-pack -v "test-3-${pack3}.pack" 2>&1) ||
+	! echo "$msg" | grep "pack too large .* off_t"
+then
+	have_64bits=t
+else
+	say "skipping tests concerning 64-bit offsets"
+fi
+
+test "$have_64bits" &&
+test_expect_success \
+    'index v2: verify a pack with some 64-bit offsets' \
+    'git verify-pack -v "test-3-${pack3}.pack"'
+
+test "$have_64bits" &&
 test_expect_failure \
     '64-bit offsets: should be different from previous index v2 results' \
     'cmp "test-2-${pack2}.idx" "test-3-${pack3}.idx"'
 
+test "$have_64bits" &&
 test_expect_success \
     'index v2: force some 64-bit offsets with index-pack' \
     'git-index-pack --index-version=2,0x40000 -o 3.idx "test-1-${pack1}.pack"'
 
+test "$have_64bits" &&
 test_expect_success \
     '64-bit offsets: index-pack result should match pack-objects one' \
     'cmp "test-3-${pack3}.idx" "3.idx"'
@@ -113,6 +129,7 @@ test_expect_failure \
     '[index v1] 6) newly created pack is BAD !' \
     'git verify-pack -v "test-4-${pack1}.pack"'
 
+test "$have_64bits" &&
 test_expect_success \
     '[index v2] 1) stream pack to repository' \
     'rm -f .git/objects/pack/* &&
@@ -122,6 +139,7 @@ test_expect_success \
      cmp "test-1-${pack1}.pack" ".git/objects/pack/pack-${pack1}.pack" &&
      cmp "test-3-${pack1}.idx"  ".git/objects/pack/pack-${pack1}.idx"'
 
+test "$have_64bits" &&
 test_expect_success \
     '[index v2] 2) create a stealth corruption in a delta base reference' \
     '# this test assumes a delta smaller than 16 bytes at the end of the pack
@@ -134,14 +152,17 @@ test_expect_success \
 	  bs=1 count=20 conv=notrunc &&
        git cat-file blob "$delta_sha1" > blob_4 )'
 
+test "$have_64bits" &&
 test_expect_failure \
     '[index v2] 3) corrupted delta happily returned wrong data' \
     'cmp blob_3 blob_4'
 
+test "$have_64bits" &&
 test_expect_failure \
     '[index v2] 4) confirm that the pack is actually corrupted' \
     'git fsck --full $commit'
 
+test "$have_64bits" &&
 test_expect_failure \
     '[index v2] 5) pack-objects refuses to reuse corrupted data' \
     'git pack-objects test-5 <obj-list'
