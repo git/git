@@ -391,7 +391,7 @@ sub cmd_set_tree {
 sub cmd_dcommit {
 	my $head = shift;
 	git_cmd_try { command_oneline(qw/diff-index --quiet HEAD/) }
-		'Cannot dcommit with a dirty index.  Commit your changes first'
+		'Cannot dcommit with a dirty index.  Commit your changes first, '
 		. "or stash them with `git stash'.\n";
 	$head ||= 'HEAD';
 	my @refs;
