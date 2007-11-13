@@ -149,7 +149,7 @@ test_expect_success 'stop on conflicting pick' '
 	diff -u expect .git/.dotest-merge/patch &&
 	diff -u expect2 file1 &&
 	test 4 = $(grep -v "^#" < .git/.dotest-merge/done | wc -l) &&
-	test 0 = $(grep -v "^#" < .git/.dotest-merge/todo | wc -l)
+	test 0 = $(grep -v "^#" < .git/.dotest-merge/git-rebase-todo | wc -l)
 '
 
 test_expect_success 'abort' '
