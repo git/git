@@ -152,6 +152,7 @@ static int s_update_ref(const char *action,
 }
 
 #define SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
+#define REFCOL_WIDTH  10
 
 static int update_local_ref(struct ref *ref,
 			    const char *remote,
@@ -181,8 +182,9 @@ static int update_local_ref(struct ref *ref,
 
 	if (!hashcmp(ref->old_sha1, ref->new_sha1)) {
 		if (verbose)
-			sprintf(display, "= %-*s %s -> %s", SUMMARY_WIDTH,
-				"[up to date]", remote, pretty_ref);
+			sprintf(display, "= %-*s %-*s -> %s", SUMMARY_WIDTH,
+				"[up to date]", REFCOL_WIDTH, remote,
+				pretty_ref);
 		return 0;
 	}
 
@@ -194,15 +196,17 @@ static int update_local_ref(struct ref *ref,
 		 * If this is the head, and it's not okay to update
 		 * the head, and the old value of the head isn't empty...
 		 */
-		sprintf(display, "! %-*s %s -> %s  (can't  fetch in current branch)",
-			SUMMARY_WIDTH, "[rejected]", remote, pretty_ref);
+		sprintf(display, "! %-*s %-*s -> %s  (can't fetch in current branch)",
+			SUMMARY_WIDTH, "[rejected]", REFCOL_WIDTH, remote,
+			pretty_ref);
 		return 1;
 	}
 
 	if (!is_null_sha1(ref->old_sha1) &&
 	    !prefixcmp(ref->name, "refs/tags/")) {
-		sprintf(display, "- %-*s %s -> %s",
-			SUMMARY_WIDTH, "[tag update]", remote, pretty_ref);
+		sprintf(display, "- %-*s %-*s -> %s",
+			SUMMARY_WIDTH, "[tag update]", REFCOL_WIDTH, remote,
+			pretty_ref);
 		return s_update_ref("updating tag", ref, 0);
 	}
 
@@ -220,8 +224,8 @@ static int update_local_ref(struct ref *ref,
 			what = "[new branch]";
 		}
 
-		sprintf(display, "* %-*s %s -> %s",
-			SUMMARY_WIDTH, what, remote, pretty_ref);
+		sprintf(display, "* %-*s %-*s -> %s", SUMMARY_WIDTH, what,
+			REFCOL_WIDTH, remote, pretty_ref);
 		return s_update_ref(msg, ref, 0);
 	}
 
@@ -230,20 +234,21 @@ static int update_local_ref(struct ref *ref,
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "..");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
-		sprintf(display, "  %-*s %s -> %s  (fast forward)",
-			SUMMARY_WIDTH, quickref, remote, pretty_ref);
+		sprintf(display, "  %-*s %-*s -> %s", SUMMARY_WIDTH, quickref,
+			REFCOL_WIDTH, remote, pretty_ref);
 		return s_update_ref("fast forward", ref, 1);
 	} else if (force || ref->force) {
 		char quickref[84];
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "...");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
-		sprintf(display, "+ %-*s %s -> %s  (forced update)",
-			SUMMARY_WIDTH, quickref, remote, pretty_ref);
+		sprintf(display, "+ %-*s %-*s -> %s  (forced update)",
+			SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote, pretty_ref);
 		return s_update_ref("forced-update", ref, 1);
 	} else {
-		sprintf(display, "! %-*s %s -> %s  (non fast forward)",
-			SUMMARY_WIDTH, "[rejected]", remote, pretty_ref);
+		sprintf(display, "! %-*s %-*s -> %s  (non fast forward)",
+			SUMMARY_WIDTH, "[rejected]", REFCOL_WIDTH, remote,
+			pretty_ref);
 		return 1;
 	}
 }

@@ -5,11 +5,12 @@ struct progress;
 
 /* A SHA1-protected file */
 struct sha1file {
-	int fd, error;
-	unsigned int offset, namelen;
+	int fd;
+	unsigned int offset;
 	SHA_CTX ctx;
+	off_t total;
 	struct progress *tp;
-	char name[PATH_MAX];
+	const char *name;
 	int do_crc;
 	uint32_t crc32;
 	unsigned char buffer[8192];
