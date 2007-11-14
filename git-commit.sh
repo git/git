@@ -282,9 +282,9 @@ unset only
 case "$all,$interactive,$also,$#" in
 *t,*t,*)
 	die "Cannot use -a, --interactive or -i at the same time." ;;
-t,,[1-9]*)
+t,,,[1-9]*)
 	die "Paths with -a does not make sense." ;;
-,t,[1-9]*)
+,t,,[1-9]*)
 	die "Paths with --interactive does not make sense." ;;
 ,,t,0)
 	die "No paths with -i does not make sense." ;;
