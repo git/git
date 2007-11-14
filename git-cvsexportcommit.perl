@@ -1,27 +1,41 @@
 #!/usr/bin/perl -w
 
-# Known limitations:
-# - does not propagate permissions
-# - error handling has not been extensively tested
-#
-
 use strict;
 use Getopt::Std;
 use File::Temp qw(tempdir);
 use Data::Dumper;
 use File::Basename qw(basename dirname);
 
-unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
-    die "GIT_DIR is not defined or is unreadable";
-}
+our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u, $opt_w);
 
-our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u);
-
-getopts('uhPpvcfam:d:');
+getopts('uhPpvcfam:d:w:');
 
 $opt_h && usage();
 
 die "Need at least one commit identifier!" unless @ARGV;
+
+if ($opt_w) {
+	unless ($ENV{GIT_DIR}) {
+		# Remember where our GIT_DIR is before changing to CVS checkout
+		my $gd =`git-rev-parse --git-dir`;
+		chomp($gd);
+		if ($gd eq '.git') {
+			my $wd = `pwd`;
+			chomp($wd);
+			$gd = $wd."/.git"	;
+		}
+		$ENV{GIT_DIR} = $gd;
+	}
+
+	if (! -d $opt_w."/CVS" ) {
+		die "$opt_w is not a CVS checkout";
+	}
+	chdir $opt_w or die "Cannot change to CVS checkout at $opt_w";
+}
+unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
+    die "GIT_DIR is not defined or is unreadable";
+}
+
 
 my @cvs;
 if ($opt_d) {
@@ -274,6 +288,7 @@ if ($dirtypatch) {
     print "You'll need to apply the patch in .cvsexportcommit.diff manually\n";
     print "using a patch program. After applying the patch and resolving the\n";
     print "problems you may commit using:";
+    print "\n    cd \"$opt_w\"" if $opt_w;
     print "\n    $cmd\n\n";
     exit(1);
 }
@@ -301,7 +316,7 @@ sleep(1);
 
 sub usage {
 	print STDERR <<END;
-Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [-f] [-m msgprefix] [ parent ] commit
+Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [-f] [-u] [-w cvsworkdir] [-m msgprefix] [ parent ] commit
 END
 	exit(1);
 }
