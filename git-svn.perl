@@ -425,6 +425,9 @@ sub cmd_dcommit {
 			my %ed_opts = ( r => $last_rev,
 			                log => get_commit_entry($d)->{log},
 			                ra => Git::SVN::Ra->new($gs->full_url),
+			                config => SVN::Core::config_get_config(
+			                        $Git::SVN::Ra::config_dir
+			                ),
 			                tree_a => "$d~1",
 			                tree_b => $d,
 			                editor_cb => sub {
