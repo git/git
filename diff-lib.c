@@ -173,9 +173,10 @@ static int is_in_index(const char *path)
 }
 
 static int handle_diff_files_args(struct rev_info *revs,
-		int argc, const char **argv, int *silent)
+				  int argc, const char **argv,
+				  unsigned int *options)
 {
-	*silent = 0;
+	*options = 0;
 
 	/* revs->max_count == -2 means --no-index */
 	while (1 < argc && argv[1][0] == '-') {
@@ -192,7 +193,7 @@ static int handle_diff_files_args(struct rev_info *revs,
 			revs->diffopt.no_index = 1;
 		}
 		else if (!strcmp(argv[1], "-q"))
-			*silent = 1;
+			*options |= DIFF_SILENT_ON_REMOVED;
 		else
 			return error("invalid option: %s", argv[1]);
 		argv++; argc--;
@@ -305,9 +306,9 @@ int setup_diff_no_index(struct rev_info *revs,
 
 int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv)
 {
-	int silent_on_removed;
+	unsigned int options;
 
-	if (handle_diff_files_args(revs, argc, argv, &silent_on_removed))
+	if (handle_diff_files_args(revs, argc, argv, &options))
 		return -1;
 
 	if (revs->diffopt.no_index) {
@@ -329,13 +330,16 @@ int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv)
 		perror("read_cache");
 		return -1;
 	}
-	return run_diff_files(revs, silent_on_removed);
+	return run_diff_files(revs, options);
 }
 
-int run_diff_files(struct rev_info *revs, int silent_on_removed)
+int run_diff_files(struct rev_info *revs, unsigned int option)
 {
 	int entries, i;
 	int diff_unmerged_stage = revs->max_count;
+	int silent_on_removed = option & DIFF_SILENT_ON_REMOVED;
+	unsigned ce_option = ((option & DIFF_RACY_IS_MODIFIED)
+			      ? CE_MATCH_RACY_IS_DIRTY : 0);
 
 	if (diff_unmerged_stage < 0)
 		diff_unmerged_stage = 2;
@@ -441,7 +445,7 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 				       ce->sha1, ce->name, NULL);
 			continue;
 		}
-		changed = ce_match_stat(ce, &st, 0);
+		changed = ce_match_stat(ce, &st, ce_option);
 		if (!changed && !revs->diffopt.find_copies_harder)
 			continue;
 		oldmode = ntohl(ce->ce_mode);

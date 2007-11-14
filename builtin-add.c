@@ -120,7 +120,7 @@ void add_files_to_cache(int verbose, const char *prefix, const char **files)
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = &verbose;
-	run_diff_files(&rev, 0);
+	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 }
 
 static void refresh(int verbose, const char **pathspec)
