@@ -5,6 +5,7 @@ struct send_pack_args {
 	const char *receivepack;
 	unsigned verbose:1,
 		send_all:1,
+		send_mirror:1,
 		force_update:1,
 		use_thin_pack:1,
 		dry_run:1;

@@ -722,10 +722,12 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
  * without thinking.
  */
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
-	       int nr_refspec, const char **refspec, int all)
+	       int nr_refspec, const char **refspec, int flags)
 {
 	struct refspec *rs =
 		parse_ref_spec(nr_refspec, (const char **) refspec);
+	int send_all = flags & MATCH_REFS_ALL;
+	int send_mirror = flags & MATCH_REFS_MIRROR;
 
 	if (match_explicit_refs(src, dst, dst_tail, rs, nr_refspec))
 		return -1;
@@ -742,7 +744,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 			if (!pat)
 				continue;
 		}
-		else if (prefixcmp(src->name, "refs/heads/"))
+		else if (!send_mirror && prefixcmp(src->name, "refs/heads/"))
 			/*
 			 * "matching refs"; traditionally we pushed everything
 			 * including refs outside refs/heads/ hierarchy, but
@@ -763,10 +765,13 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		if (dst_peer && dst_peer->peer_ref)
 			/* We're already sending something to this ref. */
 			goto free_name;
-		if (!dst_peer && !nr_refspec && !all)
-			/* Remote doesn't have it, and we have no
+
+		if (!dst_peer && !nr_refspec && !(send_all || send_mirror))
+			/*
+			 * Remote doesn't have it, and we have no
 			 * explicit pattern, and we don't have
-			 * --all. */
+			 * --all nor --mirror.
+			 */
 			goto free_name;
 		if (!dst_peer) {
 			/* Create a new one and link it */
