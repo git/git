@@ -21,7 +21,6 @@ static const char * const builtin_add_usage[] = {
 };
 
 static int take_worktree_changes;
-static const char *excludes_file;
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
@@ -61,12 +60,7 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec,
 	memset(dir, 0, sizeof(*dir));
 	if (!ignored_too) {
 		dir->collect_ignored = 1;
-		dir->exclude_per_dir = ".gitignore";
-		path = git_path("info/exclude");
-		if (!access(path, R_OK))
-			add_excludes_from_file(dir, path);
-		if (excludes_file != NULL && !access(excludes_file, R_OK))
-			add_excludes_from_file(dir, excludes_file);
+		setup_standard_excludes(dir);
 	}
 
 	/*
@@ -141,18 +135,6 @@ static void refresh(int verbose, const char **pathspec)
         free(seen);
 }
 
-static int git_add_config(const char *var, const char *value)
-{
-	if (!strcmp(var, "core.excludesfile")) {
-		if (!value)
-			die("core.excludesfile without value");
-		excludes_file = xstrdup(value);
-		return 0;
-	}
-
-	return git_default_config(var, value);
-}
-
 int interactive_add(void)
 {
 	const char *argv[2] = { "add--interactive", NULL };
@@ -193,7 +175,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		exit(interactive_add());
 	}
 
-	git_config(git_add_config);
+	git_config(git_default_config);
 
 	newfd = hold_locked_index(&lock_file, 1);
 
