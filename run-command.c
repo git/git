@@ -41,7 +41,7 @@ int start_command(struct child_process *cmd)
 		cmd->close_out = 1;
 	}
 
-	need_err = cmd->err < 0;
+	need_err = !cmd->no_stderr && cmd->err < 0;
 	if (need_err) {
 		if (pipe(fderr) < 0) {
 			if (need_in)
@@ -87,7 +87,9 @@ int start_command(struct child_process *cmd)
 			close(cmd->out);
 		}
 
-		if (need_err) {
+		if (cmd->no_stderr)
+			dup_devnull(2);
+		else if (need_err) {
 			dup2(fderr[1], 2);
 			close_pair(fderr);
 		}

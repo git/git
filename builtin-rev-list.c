@@ -26,6 +26,7 @@ static const char rev_list_usage[] =
 "    --remove-empty\n"
 "    --all\n"
 "    --stdin\n"
+"    --quiet\n"
 "  ordering output:\n"
 "    --topo-order\n"
 "    --date-order\n"
@@ -50,6 +51,7 @@ static int show_timestamp;
 static int hdr_termination;
 static const char *header_prefix;
 
+static void finish_commit(struct commit *commit);
 static void show_commit(struct commit *commit)
 {
 	if (show_timestamp)
@@ -93,12 +95,23 @@ static void show_commit(struct commit *commit)
 		strbuf_release(&buf);
 	}
 	maybe_flush_or_die(stdout, "stdout");
+	finish_commit(commit);
+}
+
+static void finish_commit(struct commit *commit)
+{
 	if (commit->parents) {
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
 	}
 	free(commit->buffer);
 	commit->buffer = NULL;
+}
+
+static void finish_object(struct object_array_entry *p)
+{
+	if (p->item->type == OBJ_BLOB && !has_sha1_file(p->item->sha1))
+		die("missing blob object '%s'", sha1_to_hex(p->item->sha1));
 }
 
 static void show_object(struct object_array_entry *p)
@@ -108,9 +121,7 @@ static void show_object(struct object_array_entry *p)
 	 */
 	const char *ep = strchr(p->name, '\n');
 
-	if (p->item->type == OBJ_BLOB && !has_sha1_file(p->item->sha1))
-		die("missing blob object '%s'", sha1_to_hex(p->item->sha1));
-
+	finish_object(p);
 	if (ep) {
 		printf("%s %.*s\n", sha1_to_hex(p->item->sha1),
 		       (int) (ep - p->name),
@@ -527,6 +538,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int read_from_stdin = 0;
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
+	int quiet = 0;
 
 	git_config(git_default_config);
 	init_revisions(&revs, prefix);
@@ -563,6 +575,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			if (read_from_stdin++)
 				die("--stdin given twice?");
 			read_revisions_from_stdin(&revs);
+			continue;
+		}
+		if (!strcmp(arg, "--quiet")) {
+			quiet = 1;
 			continue;
 		}
 		usage(rev_list_usage);
@@ -640,7 +656,9 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	traverse_commit_list(&revs, show_commit, show_object);
+	traverse_commit_list(&revs,
+		quiet ? finish_commit : show_commit,
+		quiet ? finish_object : show_object);
 
 	return 0;
 }
