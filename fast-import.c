@@ -154,13 +154,16 @@ Format of STDIN stream:
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
+#define DEPTH_BITS 13
+#define MAX_DEPTH ((1<<DEPTH_BITS)-1)
 
 struct object_entry
 {
 	struct object_entry *next;
 	uint32_t offset;
-	unsigned type : TYPE_BITS;
-	unsigned pack_id : PACK_ID_BITS;
+	uint32_t type : TYPE_BITS,
+		pack_id : PACK_ID_BITS,
+		depth : DEPTH_BITS;
 	unsigned char sha1[20];
 };
 
@@ -1105,7 +1108,7 @@ static int store_object(
 		unsigned pos = sizeof(hdr) - 1;
 
 		delta_count_by_type[type]++;
-		last->depth++;
+		e->depth = last->depth + 1;
 
 		hdrlen = encode_header(OBJ_OFS_DELTA, deltalen, hdr);
 		write_or_die(pack_data->pack_fd, hdr, hdrlen);
@@ -1117,8 +1120,7 @@ static int store_object(
 		write_or_die(pack_data->pack_fd, hdr + pos, sizeof(hdr) - pos);
 		pack_size += sizeof(hdr) - pos;
 	} else {
-		if (last)
-			last->depth = 0;
+		e->depth = 0;
 		hdrlen = encode_header(type, datlen, hdr);
 		write_or_die(pack_data->pack_fd, hdr, hdrlen);
 		pack_size += hdrlen;
@@ -1134,6 +1136,7 @@ static int store_object(
 			free(last->data);
 		last->data = dat;
 		last->offset = e->offset;
+		last->depth = e->depth;
 		last->len = datlen;
 	}
 	return 0;
@@ -1181,7 +1184,7 @@ static void load_tree(struct tree_entry *root)
 	if (myoe && myoe->pack_id != MAX_PACK_ID) {
 		if (myoe->type != OBJ_TREE)
 			die("Not a tree: %s", sha1_to_hex(sha1));
-		t->delta_depth = 0;
+		t->delta_depth = myoe->depth;
 		buf = gfi_unpack_entry(myoe, &size);
 	} else {
 		enum object_type type;
@@ -2347,8 +2350,11 @@ int main(int argc, const char **argv)
 		}
 		else if (!prefixcmp(a, "--max-pack-size="))
 			max_packsize = strtoumax(a + 16, NULL, 0) * 1024 * 1024;
-		else if (!prefixcmp(a, "--depth="))
+		else if (!prefixcmp(a, "--depth=")) {
 			max_depth = strtoul(a + 8, NULL, 0);
+			if (max_depth > MAX_DEPTH)
+				die("--depth cannot exceed %u", MAX_DEPTH);
+		}
 		else if (!prefixcmp(a, "--active-branches="))
 			max_active_branches = strtoul(a + 18, NULL, 0);
 		else if (!prefixcmp(a, "--import-marks="))
