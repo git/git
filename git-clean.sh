@@ -75,15 +75,22 @@ esac
 
 if [ -z "$ignored" ]; then
 	excl="--exclude-per-directory=.gitignore"
+	excl_info= excludes_file=
 	if [ -f "$GIT_DIR/info/exclude" ]; then
 		excl_info="--exclude-from=$GIT_DIR/info/exclude"
+	fi
+	if cfg_excl=$(git config core.excludesfile) && test -f "$cfg_excl"
+	then
+		excludes_file="--exclude-from=$cfg_excl"
 	fi
 	if [ "$ignoredonly" ]; then
 		excl="$excl --ignored"
 	fi
 fi
 
-git ls-files --others --directory $excl ${excl_info:+"$excl_info"} -- "$@" |
+git ls-files --others --directory \
+	$excl ${excl_info:+"$excl_info"} ${excludes_file:+"$excludes_file"} \
+	-- "$@" |
 while read -r file; do
 	if [ -d "$file" -a ! -L "$file" ]; then
 		if [ -z "$cleandir" ]; then
