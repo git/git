@@ -5,16 +5,15 @@
 #include "pkt-line.h"
 #include "run-command.h"
 #include "remote.h"
+#include "send-pack.h"
 
 static const char send_pack_usage[] =
 "git-send-pack [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
 "  --all and explicit <ref> specification are mutually exclusive.";
-static const char *receivepack = "git-receive-pack";
-static int verbose;
-static int send_all;
-static int force_update;
-static int use_thin_pack;
-static int dry_run;
+
+static struct send_pack_args args = {
+	/* .receivepack = */ "git-receive-pack",
+};
 
 /*
  * Make a pack stream and spit it out into file descriptor fd
@@ -26,7 +25,7 @@ static int pack_objects(int fd, struct ref *refs)
 	 * the revision parameters to it via its stdin and
 	 * let its stdout go back to the other end.
 	 */
-	const char *args[] = {
+	const char *argv[] = {
 		"pack-objects",
 		"--all-progress",
 		"--revs",
@@ -36,10 +35,10 @@ static int pack_objects(int fd, struct ref *refs)
 	};
 	struct child_process po;
 
-	if (use_thin_pack)
-		args[4] = "--thin";
+	if (args.use_thin_pack)
+		argv[4] = "--thin";
 	memset(&po, 0, sizeof(po));
-	po.argv = args;
+	po.argv = argv;
 	po.in = -1;
 	po.out = fd;
 	po.git_cmd = 1;
@@ -207,7 +206,7 @@ static void update_tracking_ref(struct remote *remote, struct ref *ref)
 	}
 }
 
-static int send_pack(int in, int out, struct remote *remote, int nr_refspec, char **refspec)
+static int do_send_pack(int in, int out, struct remote *remote, int nr_refspec, const char **refspec)
 {
 	struct ref *ref;
 	int new_refs;
@@ -230,7 +229,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 	if (!remote_tail)
 		remote_tail = &remote_refs;
 	if (match_refs(local_refs, remote_refs, &remote_tail,
-		       nr_refspec, refspec, send_all))
+		       nr_refspec, refspec, args.send_all))
 		return -1;
 
 	if (!remote_refs) {
@@ -259,7 +258,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 		}
 		if (!will_delete_ref &&
 		    !hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
-			if (verbose)
+			if (args.verbose)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			continue;
 		}
@@ -283,7 +282,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 		 *     always allowed.
 		 */
 
-		if (!force_update &&
+		if (!args.force_update &&
 		    !will_delete_ref &&
 		    !is_null_sha1(ref->old_sha1) &&
 		    !ref->force) {
@@ -313,7 +312,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
 
-		if (!dry_run) {
+		if (!args.dry_run) {
 			if (ask_for_status_report) {
 				packet_write(out, "%s %s %s%c%s",
 					old_hex, new_hex, ref->name, 0,
@@ -338,7 +337,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 	}
 
 	packet_flush(out);
-	if (new_refs && !dry_run)
+	if (new_refs && !args.dry_run)
 		ret = pack_objects(out, remote_refs);
 	close(out);
 
@@ -347,7 +346,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 			ret = -4;
 	}
 
-	if (!dry_run && remote && ret == 0) {
+	if (!args.dry_run && remote && ret == 0) {
 		for (ref = remote_refs; ref; ref = ref->next)
 			update_tracking_ref(remote, ref);
 	}
@@ -357,7 +356,7 @@ static int send_pack(int in, int out, struct remote *remote, int nr_refspec, cha
 	return ret;
 }
 
-static void verify_remote_names(int nr_heads, char **heads)
+static void verify_remote_names(int nr_heads, const char **heads)
 {
 	int i;
 
@@ -378,30 +377,25 @@ static void verify_remote_names(int nr_heads, char **heads)
 	}
 }
 
-int main(int argc, char **argv)
+int cmd_send_pack(int argc, const char **argv, const char *prefix)
 {
 	int i, nr_heads = 0;
-	char *dest = NULL;
-	char **heads = NULL;
-	int fd[2], ret;
-	struct child_process *conn;
-	char *remote_name = NULL;
+	const char **heads = NULL;
+	const char *remote_name = NULL;
 	struct remote *remote = NULL;
-
-	setup_git_directory();
-	git_config(git_default_config);
+	const char *dest = NULL;
 
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {
-		char *arg = *argv;
+		const char *arg = *argv;
 
 		if (*arg == '-') {
 			if (!prefixcmp(arg, "--receive-pack=")) {
-				receivepack = arg + 15;
+				args.receivepack = arg + 15;
 				continue;
 			}
 			if (!prefixcmp(arg, "--exec=")) {
-				receivepack = arg + 7;
+				args.receivepack = arg + 7;
 				continue;
 			}
 			if (!prefixcmp(arg, "--remote=")) {
@@ -409,23 +403,23 @@ int main(int argc, char **argv)
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
-				send_all = 1;
+				args.send_all = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--dry-run")) {
-				dry_run = 1;
+				args.dry_run = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--force")) {
-				force_update = 1;
+				args.force_update = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--verbose")) {
-				verbose = 1;
+				args.verbose = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--thin")) {
-				use_thin_pack = 1;
+				args.use_thin_pack = 1;
 				continue;
 			}
 			usage(send_pack_usage);
@@ -434,15 +428,14 @@ int main(int argc, char **argv)
 			dest = arg;
 			continue;
 		}
-		heads = argv;
+		heads = (const char **) argv;
 		nr_heads = argc - i;
 		break;
 	}
 	if (!dest)
 		usage(send_pack_usage);
-	if (heads && send_all)
+	if (heads && args.send_all)
 		usage(send_pack_usage);
-	verify_remote_names(nr_heads, heads);
 
 	if (remote_name) {
 		remote = remote_get(remote_name);
@@ -452,8 +445,22 @@ int main(int argc, char **argv)
 		}
 	}
 
-	conn = git_connect(fd, dest, receivepack, verbose ? CONNECT_VERBOSE : 0);
-	ret = send_pack(fd[0], fd[1], remote, nr_heads, heads);
+	return send_pack(&args, dest, remote, nr_heads, heads);
+}
+
+int send_pack(struct send_pack_args *my_args,
+	      const char *dest, struct remote *remote,
+	      int nr_heads, const char **heads)
+{
+	int fd[2], ret;
+	struct child_process *conn;
+
+	memcpy(&args, my_args, sizeof(args));
+
+	verify_remote_names(nr_heads, heads);
+
+	conn = git_connect(fd, dest, args.receivepack, args.verbose ? CONNECT_VERBOSE : 0);
+	ret = do_send_pack(fd[0], fd[1], remote, nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
 	ret |= finish_connect(conn);

@@ -212,7 +212,6 @@ BASIC_LDFLAGS =
 SCRIPT_SH = \
 	git-bisect.sh git-checkout.sh \
 	git-clean.sh git-clone.sh git-commit.sh \
-	git-ls-remote.sh \
 	git-merge-one-file.sh git-mergetool.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh git-rebase--interactive.sh \
 	git-repack.sh git-request-pull.sh \
@@ -241,7 +240,7 @@ PROGRAMS = \
 	git-fast-import$X \
 	git-daemon$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
-	git-peek-remote$X git-receive-pack$X \
+	git-receive-pack$X \
 	git-send-pack$X git-shell$X \
 	git-show-index$X \
 	git-unpack-file$X \
@@ -347,6 +346,7 @@ BUILTIN_OBJS = \
 	builtin-log.o \
 	builtin-ls-files.o \
 	builtin-ls-tree.o \
+	builtin-ls-remote.o \
 	builtin-mailinfo.o \
 	builtin-mailsplit.o \
 	builtin-merge-base.o \
@@ -359,6 +359,7 @@ BUILTIN_OBJS = \
 	builtin-push.o \
 	builtin-read-tree.o \
 	builtin-reflog.o \
+	builtin-send-pack.o \
 	builtin-config.o \
 	builtin-rerere.o \
 	builtin-reset.o \
