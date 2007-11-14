@@ -106,6 +106,13 @@ void strbuf_add(struct strbuf *sb, const void *data, size_t len)
 	strbuf_setlen(sb, sb->len + len);
 }
 
+void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len)
+{
+	strbuf_grow(sb, len);
+	memcpy(sb->buf + sb->len, sb->buf + pos, len);
+	strbuf_setlen(sb, sb->len + len);
+}
+
 void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 {
 	int len;
@@ -128,6 +135,30 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 		}
 	}
 	strbuf_setlen(sb, sb->len + len);
+}
+
+void strbuf_expand(struct strbuf *sb, const char *format,
+                   const char **placeholders, expand_fn_t fn, void *context)
+{
+	for (;;) {
+		const char *percent, **p;
+
+		percent = strchrnul(format, '%');
+		strbuf_add(sb, format, percent - format);
+		if (!*percent)
+			break;
+		format = percent + 1;
+
+		for (p = placeholders; *p; p++) {
+			if (!prefixcmp(format, *p))
+				break;
+		}
+		if (*p) {
+			fn(sb, *p, context);
+			format += strlen(*p);
+		} else
+			strbuf_addch(sb, '%');
+	}
 }
 
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)

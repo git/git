@@ -101,6 +101,10 @@ static inline void strbuf_addstr(struct strbuf *sb, const char *s) {
 static inline void strbuf_addbuf(struct strbuf *sb, struct strbuf *sb2) {
 	strbuf_add(sb, sb2->buf, sb2->len);
 }
+extern void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len);
+
+typedef void (*expand_fn_t) (struct strbuf *sb, const char *placeholder, void *context);
+extern void strbuf_expand(struct strbuf *sb, const char *format, const char **placeholders, expand_fn_t fn, void *context);
 
 __attribute__((format(printf,2,3)))
 extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
