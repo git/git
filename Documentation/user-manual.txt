@@ -1367,7 +1367,7 @@ If you make a commit that you later wish you hadn't, there are two
 fundamentally different ways to fix the problem:
 
 	1. You can create a new commit that undoes whatever was done
-	by the previous commit.  This is the correct thing if your
+	by the old commit.  This is the correct thing if your
 	mistake has already been made public.
 
 	2. You can go back and modify the old commit.  You should
@@ -1567,7 +1567,7 @@ old history using, for example,
 $ git log master@{1}
 -------------------------------------------------
 
-This lists the commits reachable from the previous version of the branch.
+This lists the commits reachable from the previous version of the head.
 This syntax can be used with any git command that accepts a commit,
 not just with git log.  Some other examples:
 
