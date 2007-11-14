@@ -515,7 +515,7 @@ static const char commit_utf8_warn[] =
 
 int cmd_commit(int argc, const char **argv, const char *prefix)
 {
-	int header_len, parent_count = 0;
+	int header_len;
 	struct strbuf sb;
 	const char *index_file, *reflog_msg;
 	char *nl;
@@ -551,7 +551,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	/* Determine parents */
 	if (initial_commit) {
 		reflog_msg = "commit (initial)";
-		parent_count = 0;
 	} else if (amend) {
 		struct commit_list *c;
 		struct commit *commit;
@@ -592,10 +591,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	/* Get the commit message and validate it */
 	header_len = sb.len;
-	if (!no_edit) {
-		fprintf(stderr, "launching editor, log %s\n", logfile);
+	if (!no_edit)
 		launch_editor(git_path(commit_editmsg), &sb);
-	} else if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0)
+	else if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0)
 		die("could not read commit message\n");
 	if (run_hook(index_file, "commit-msg", commit_editmsg))
 		exit(1);
