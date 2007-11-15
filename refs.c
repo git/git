@@ -1059,15 +1059,6 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 		if (!(oflags & O_CREAT) && errno == ENOENT)
 			return 0;
 
-#ifdef __MINGW32__
-		if ((oflags & O_CREAT) && errno == EACCES) {
-			struct stat st;
-			if (stat(log_file, &st) == 0 && S_ISDIR(st.st_mode))
-				errno = EISDIR;
-			else
-				errno = EACCES;
-		}
-#endif
 		if ((oflags & O_CREAT) && errno == EISDIR) {
 			if (remove_empty_directories(log_file)) {
 				return error("There are still logs under '%s'",
