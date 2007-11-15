@@ -22,7 +22,7 @@ static int git_clean_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "clean.requireforce"))
 		force = !git_config_bool(var, value);
-	return 0;
+	return git_default_config(var, value);
 }
 
 int cmd_clean(int argc, const char **argv, const char *prefix)
@@ -55,10 +55,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, options, builtin_clean_usage, 0);
 
 	memset(&dir, 0, sizeof(dir));
-	if (ignored_only) {
-		dir.show_ignored =1;
-		dir.exclude_per_dir = ".gitignore";
-	}
+	if (ignored_only)
+		dir.show_ignored = 1;
 
 	if (ignored && ignored_only)
 		die("-x and -X cannot be used together");
@@ -69,13 +67,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	dir.show_other_directories = 1;
 
-	if (!ignored) {
-		dir.exclude_per_dir = ".gitignore";
-		if (!access(git_path("info/exclude"), F_OK)) {
-			char *exclude_path = git_path("info/exclude");
-			add_excludes_from_file(&dir, exclude_path);
-		}
-	}
+	if (!ignored)
+		setup_standard_excludes(&dir);
 
 	pathspec = get_pathspec(prefix, argv);
 	read_cache();
