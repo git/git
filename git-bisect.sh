@@ -130,7 +130,7 @@ bisect_write() {
 		good|skip)	tag="$state"-"$rev" ;;
 		*)		die "Bad bisect_write argument: $state" ;;
 	esac
-	echo "$rev" >"$GIT_DIR/refs/bisect/$tag"
+	git update-ref "refs/bisect/$tag" "$rev"
 	echo "# $state: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 	test -z "$nolog" && echo "git-bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
 }
