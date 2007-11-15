@@ -351,7 +351,13 @@ bisect_reset() {
 
 bisect_clean_state() {
 	rm -fr "$GIT_DIR/refs/bisect"
-	rm -f "$GIT_DIR/refs/heads/bisect"
+
+	# There may be some refs packed during bisection.
+	git for-each-ref --format='%(refname) %(objectname)' refs/bisect/\* refs/heads/bisect |
+	while read ref hash
+	do
+		git update-ref -d $ref $hash
+	done
 	rm -f "$GIT_DIR/BISECT_LOG"
 	rm -f "$GIT_DIR/BISECT_NAMES"
 	rm -f "$GIT_DIR/BISECT_RUN"
