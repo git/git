@@ -1,5 +1,25 @@
+// Please don't remove this comment as asciidoc behaves badly when
+// the first non-empty line is ifdef/ifndef. The symptom is that
+// without this comment the <git-diff-core> attribute conditionally
+// defined below ends up being defined unconditionally.
+// Last checked with asciidoc 7.0.2.
+
+ifndef::git-format-patch[]
+ifndef::git-diff[]
+:git-diff-core: 1
+endif::git-diff[]
+endif::git-format-patch[]
+
+ifdef::git-format-patch[]
 -p::
-	Generate patch (see section on generating patches)
+	Generate patches without diffstat.
+endif::git-format-patch[]
+
+ifndef::git-format-patch[]
+-p::
+	Generate patch (see section on generating patches).
+	{git-diff? This is the default.}
+endif::git-format-patch[]
 
 -u::
 	Synonym for "-p".
@@ -13,6 +33,7 @@
 
 --raw::
 	Generate the raw format.
+	{git-diff-core? This is the default.}
 
 --patch-with-raw::
 	Synonym for "-p --raw".
@@ -41,6 +62,7 @@
 
 --patch-with-stat::
 	Synonym for "-p --stat".
+	{git-format-patch? This is the default.}
 
 -z::
 	NUL-line termination on output.  This affects the --raw
