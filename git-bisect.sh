@@ -316,10 +316,9 @@ bisect_next() {
 	exit_if_skipped_commits "$bisect_rev"
 
 	echo "Bisecting: $bisect_nr revisions left to test after this"
-	echo "$bisect_rev" >"$GIT_DIR/refs/heads/new-bisect"
+	git branch -f new-bisect "$bisect_rev"
 	git checkout -q new-bisect || exit
-	mv "$GIT_DIR/refs/heads/new-bisect" "$GIT_DIR/refs/heads/bisect" &&
-	GIT_DIR="$GIT_DIR" git symbolic-ref HEAD refs/heads/bisect
+	git branch -M new-bisect bisect
 	git show-branch "$bisect_rev"
 }
 
