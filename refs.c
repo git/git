@@ -580,18 +580,6 @@ int for_each_remote_ref(each_ref_fn fn, void *cb_data)
 	return do_for_each_ref("refs/remotes/", fn, 13, cb_data);
 }
 
-/* NEEDSWORK: This is only used by ssh-upload and it should go; the
- * caller should do resolve_ref or read_ref like everybody else.  Or
- * maybe everybody else should use get_ref_sha1() instead of doing
- * read_ref().
- */
-int get_ref_sha1(const char *ref, unsigned char *sha1)
-{
-	if (check_ref_format(ref))
-		return -1;
-	return read_ref(mkpath("refs/%s", ref), sha1);
-}
-
 /*
  * Make sure "ref" is something reasonable to have under ".git/refs/";
  * We do not like it if:
