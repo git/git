@@ -71,7 +71,7 @@ bisect_start() {
 		;;
 	refs/heads/*)
 		[ -s "$GIT_DIR/head-name" ] && die "won't bisect on seeked tree"
-		echo "$head" | sed 's#^refs/heads/##' >"$GIT_DIR/head-name"
+		echo "${head#refs/heads/}" >"$GIT_DIR/head-name"
 		;;
 	*)
 		die "Bad HEAD - strange symbolic ref"
@@ -275,8 +275,7 @@ exit_if_skipped_commits () {
 	if expr "$_tried" : ".*[|].*" > /dev/null ; then
 		echo "There are only 'skip'ped commit left to test."
 		echo "The first bad commit could be any of:"
-		echo "$_tried" | sed -e 's/[|]/\
-/g'
+		echo "$_tried" | tr '[|]' '[\012]'
 		echo "We cannot bisect more!"
 		exit 2
 	fi
