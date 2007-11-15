@@ -137,6 +137,9 @@ int sigaction(int sig, struct sigaction *in, struct sigaction *out);
  * replacements of existing functions
  */
 
+int mingw_open (const char *filename, int oflags, ...);
+#define open mingw_open
+
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
