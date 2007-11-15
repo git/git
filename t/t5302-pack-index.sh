@@ -129,17 +129,15 @@ test_expect_failure \
     '[index v1] 6) newly created pack is BAD !' \
     'git verify-pack -v "test-4-${pack1}.pack"'
 
-test "$have_64bits" &&
 test_expect_success \
     '[index v2] 1) stream pack to repository' \
     'rm -f .git/objects/pack/* &&
-     git-index-pack --index-version=2,0x40000 --stdin < "test-1-${pack1}.pack" &&
+     git-index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
      git prune-packed &&
      git count-objects | ( read nr rest && test "$nr" -eq 1 ) &&
      cmp "test-1-${pack1}.pack" ".git/objects/pack/pack-${pack1}.pack" &&
-     cmp "test-3-${pack1}.idx"  ".git/objects/pack/pack-${pack1}.idx"'
+     cmp "test-2-${pack1}.idx"  ".git/objects/pack/pack-${pack1}.idx"'
 
-test "$have_64bits" &&
 test_expect_success \
     '[index v2] 2) create a stealth corruption in a delta base reference' \
     '# this test assumes a delta smaller than 16 bytes at the end of the pack
@@ -152,17 +150,14 @@ test_expect_success \
 	  bs=1 count=20 conv=notrunc &&
        git cat-file blob "$delta_sha1" > blob_4 )'
 
-test "$have_64bits" &&
 test_expect_failure \
     '[index v2] 3) corrupted delta happily returned wrong data' \
     'cmp blob_3 blob_4'
 
-test "$have_64bits" &&
 test_expect_failure \
     '[index v2] 4) confirm that the pack is actually corrupted' \
     'git fsck --full $commit'
 
-test "$have_64bits" &&
 test_expect_failure \
     '[index v2] 5) pack-objects refuses to reuse corrupted data' \
     'git pack-objects test-5 <obj-list'
