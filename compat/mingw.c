@@ -3,6 +3,26 @@
 
 unsigned int _CRT_fmode = _O_BINARY;
 
+#undef open
+int mingw_open (const char *filename, int oflags, ...)
+{
+	va_list args;
+	unsigned mode;
+	va_start(args, oflags);
+	mode = va_arg(args, int);
+	va_end(args);
+
+	if (!strcmp(filename, "/dev/null"))
+		filename = "nul";
+	int fd = open(filename, oflags, mode);
+	if (fd < 0 && (oflags & O_CREAT) && errno == EACCES) {
+		DWORD attrs = GetFileAttributes(filename);
+		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
+			errno = EISDIR;
+	}
+	return fd;
+}
+
 static inline time_t filetime_to_time_t(const FILETIME *ft)
 {
 	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
