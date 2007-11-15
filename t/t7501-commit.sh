@@ -257,4 +257,14 @@ test_expect_success 'amend commit to fix author' '
 	diff expected current
 
 '
+
+test_expect_success 'git commit <file> with dirty index' '
+	echo tacocat > elif &&
+	echo tehlulz > chz &&
+	git add chz &&
+	git commit elif -m "tacocat is a palindrome" &&
+	git show --stat | grep elif &&
+	git diff --cached | grep chz
+'
+
 test_done
