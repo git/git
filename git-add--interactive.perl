@@ -37,10 +37,7 @@ sub list_untracked {
 		chomp $_;
 		$_;
 	}
-	run_cmd_pipe(qw(git ls-files --others
-			--exclude-per-directory=.gitignore),
-		     "--exclude-from=$GIT_DIR/info/exclude",
-		     '--', @_);
+	run_cmd_pipe(qw(git ls-files --others --exclude-standard --), @_);
 }
 
 my $status_fmt = '%12s %12s %s';

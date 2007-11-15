@@ -15,6 +15,7 @@ SYNOPSIS
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>]
+		[--exclude-standard]
 		[--error-unmatch] [--with-tree=<tree-ish>]
 		[--full-name] [--abbrev] [--] [<file>]\*
 
@@ -76,6 +77,10 @@ OPTIONS
 --exclude-per-directory=<file>::
 	read additional exclude patterns that apply only to the
 	directory and its subdirectories in <file>.
+
+--exclude-standard::
+	Add the standard git exclusions: .git/info/exclude, .gitignore
+	in each directory, and the user's global exclusion file.
 
 --error-unmatch::
 	If any <file> does not appear in the index, treat this as an
