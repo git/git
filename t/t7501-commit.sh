@@ -34,6 +34,16 @@ test_expect_failure \
 	"git-commit -C HEAD -m illegal"
 
 test_expect_failure \
+	"using paths with -a" \
+	"echo King of the bongo >file &&
+	git-commit -m foo -a file"
+
+test_expect_failure \
+	"using paths with --interactive" \
+	"echo bong-o-bong >file &&
+	echo 7 | git-commit -m foo --interactive file"
+
+test_expect_failure \
 	"using invalid commit with -C" \
 	"git-commit -C bogus"
 

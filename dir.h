@@ -71,6 +71,7 @@ extern struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathna
 extern char *get_relative_cwd(char *buffer, int size, const char *dir);
 extern int is_inside_dir(const char *dir);
 
+extern void setup_standard_excludes(struct dir_struct *dir);
 extern int remove_dir_recursively(struct strbuf *path, int only_empty);
 
 #endif

@@ -224,6 +224,7 @@ See Also
 --------
 gitlink:git-status[1]
 gitlink:git-rm[1]
+gitlink:git-reset[1]
 gitlink:git-mv[1]
 gitlink:git-commit[1]
 gitlink:git-update-index[1]

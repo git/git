@@ -46,26 +46,14 @@ static inline int is_merge(void)
 
 static int unmerged_files(void)
 {
-	char b;
-	ssize_t len;
-	struct child_process cmd;
-	const char *argv_ls_files[] = {"ls-files", "--unmerged", NULL};
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.argv = argv_ls_files;
-	cmd.git_cmd = 1;
-	cmd.out = -1;
-
-	if (start_command(&cmd))
-		die("Could not run sub-command: git ls-files");
-
-	len = xread(cmd.out, &b, 1);
-	if (len < 0)
-		die("Could not read output from git ls-files: %s",
-						strerror(errno));
-	finish_command(&cmd);
-
-	return len;
+	int i;
+	read_cache();
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (ce_stage(ce))
+			return 1;
+	}
+	return 0;
 }
 
 static int reset_index_file(const unsigned char *sha1, int is_hard_reset)
@@ -107,26 +95,34 @@ static void print_new_head_line(struct commit *commit)
 		printf("\n");
 }
 
-static int update_index_refresh(void)
+static int update_index_refresh(int fd, struct lock_file *index_lock)
 {
-	const char *argv_update_index[] = {"update-index", "--refresh", NULL};
-	return run_command_v_opt(argv_update_index, RUN_GIT_CMD);
-}
+	int result;
 
-struct update_cb_data {
-	int index_fd;
-	struct lock_file *lock;
-	int exit_code;
-};
+	if (!index_lock) {
+		index_lock = xcalloc(1, sizeof(struct lock_file));
+		fd = hold_locked_index(index_lock, 1);
+	}
+
+	if (read_cache() < 0)
+		return error("Could not read index");
+	result = refresh_cache(0) ? 1 : 0;
+	if (write_cache(fd, active_cache, active_nr) ||
+			close(fd) ||
+			commit_locked_index(index_lock))
+		return error ("Could not refresh index");
+	return result;
+}
 
 static void update_index_from_diff(struct diff_queue_struct *q,
 		struct diff_options *opt, void *data)
 {
 	int i;
-	struct update_cb_data *cb = data;
+	int *discard_flag = data;
 
 	/* do_diff_cache() mangled the index */
 	discard_cache();
+	*discard_flag = 1;
 	read_cache();
 
 	for (i = 0; i < q->nr; i++) {
@@ -140,34 +136,33 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 		} else
 			remove_file_from_cache(one->path);
 	}
-
-	cb->exit_code = write_cache(cb->index_fd, active_cache, active_nr) ||
-		close(cb->index_fd) ||
-		commit_locked_index(cb->lock);
 }
 
 static int read_from_tree(const char *prefix, const char **argv,
 		unsigned char *tree_sha1)
 {
+	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
+	int index_fd, index_was_discarded = 0;
 	struct diff_options opt;
-	struct update_cb_data cb;
 
 	memset(&opt, 0, sizeof(opt));
 	diff_tree_setup_paths(get_pathspec(prefix, (const char **)argv), &opt);
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
-	opt.format_callback_data = &cb;
+	opt.format_callback_data = &index_was_discarded;
 
-	cb.lock = xcalloc(1, sizeof(struct lock_file));
-	cb.index_fd = hold_locked_index(cb.lock, 1);
-	cb.exit_code = 0;
+	index_fd = hold_locked_index(lock, 1);
+	index_was_discarded = 0;
 	read_cache();
 	if (do_diff_cache(tree_sha1, &opt))
 		return 1;
 	diffcore_std(&opt);
 	diff_flush(&opt);
 
-	return cb.exit_code;
+	if (!index_was_discarded)
+		/* The index is still clobbered from do_diff_cache() */
+		discard_cache();
+	return update_index_refresh(index_fd, lock);
 }
 
 static void prepend_reflog_action(const char *action, char *buf, size_t size)
@@ -243,9 +238,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		else if (reset_type != NONE)
 			die("Cannot do %s reset with paths.",
 					reset_type_names[reset_type]);
-		if (read_from_tree(prefix, argv + i, sha1))
-			return 1;
-		return update_index_refresh() ? 1 : 0;
+		return read_from_tree(prefix, argv + i, sha1);
 	}
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
@@ -282,7 +275,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	case SOFT: /* Nothing else to do. */
 		break;
 	case MIXED: /* Report what has not been updated. */
-		update_index_refresh();
+		update_index_refresh(0, NULL);
 		break;
 	}
 

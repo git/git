@@ -87,9 +87,9 @@ static void *fill(int min)
 				die("early EOF");
 			die("read error on input: %s", strerror(errno));
 		}
-		if (from_stdin)
-			display_throughput(progress, ret);
 		input_len += ret;
+		if (from_stdin)
+			display_throughput(progress, consumed_bytes + input_len);
 	} while (input_len < min);
 	return input_buffer;
 }
@@ -256,7 +256,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 
 static void *get_data_from_pack(struct object_entry *obj)
 {
-	unsigned long from = obj[0].idx.offset + obj[0].hdr_size;
+	off_t from = obj[0].idx.offset + obj[0].hdr_size;
 	unsigned long len = obj[1].idx.offset - from;
 	unsigned long rdy = 0;
 	unsigned char *src, *data;
@@ -792,6 +792,7 @@ int main(int argc, char **argv)
 		flush();
 	} else {
 		if (fix_thin_pack) {
+			char msg[48];
 			int nr_unresolved = nr_deltas - nr_resolved_deltas;
 			int nr_objects_initial = nr_objects;
 			if (nr_unresolved <= 0)
@@ -800,12 +801,11 @@ int main(int argc, char **argv)
 					   (nr_objects + nr_unresolved + 1)
 					   * sizeof(*objects));
 			fix_unresolved_deltas(nr_unresolved);
-			stop_progress(&progress);
-			if (verbose)
-				fprintf(stderr, "%d objects were added to complete this thin pack.\n",
-					nr_objects - nr_objects_initial);
+			sprintf(msg, "completed with %d local objects",
+				nr_objects - nr_objects_initial);
+			stop_progress_msg(&progress, msg);
 			fixup_pack_header_footer(output_fd, sha1,
-				curr_pack, nr_objects);
+						 curr_pack, nr_objects);
 		}
 		if (nr_deltas != nr_resolved_deltas)
 			die("pack has %d unresolved deltas",

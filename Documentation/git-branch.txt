@@ -105,7 +105,7 @@ OPTIONS
 	'--track' were given.
 
 --no-track::
-	When -b is given and a branch is created off a remote branch,
+	When a branch is created off a remote branch,
 	set up configuration so that git-pull will not retrieve data
 	from the remote branch, ignoring the branch.autosetupmerge
 	configuration variable.

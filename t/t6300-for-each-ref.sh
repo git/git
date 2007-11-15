@@ -148,4 +148,26 @@ test_expect_success 'Check format "rfc2822" date fields output' '
 	git diff expected actual
 '
 
+cat >expected <<\EOF
+refs/heads/master
+refs/tags/testtag
+EOF
+
+test_expect_success 'Verify ascending sort' '
+	git-for-each-ref --format="%(refname)" --sort=refname >actual &&
+	git diff expected actual
+'
+
+
+cat >expected <<\EOF
+refs/tags/testtag
+refs/heads/master
+EOF
+
+test_expect_success 'Verify descending sort' '
+	git-for-each-ref --format="%(refname)" --sort=-refname >actual &&
+	git diff expected actual
+'
+
+
 test_done

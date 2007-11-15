@@ -194,11 +194,12 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 }
 
 int ie_match_stat(struct index_state *istate,
-		  struct cache_entry *ce, struct stat *st, int options)
+		  struct cache_entry *ce, struct stat *st,
+		  unsigned int options)
 {
 	unsigned int changed;
-	int ignore_valid = options & 01;
-	int assume_racy_is_modified = options & 02;
+	int ignore_valid = options & CE_MATCH_IGNORE_VALID;
+	int assume_racy_is_modified = options & CE_MATCH_RACY_IS_DIRTY;
 
 	/*
 	 * If it's marked as always valid in the index, it's
@@ -238,10 +239,11 @@ int ie_match_stat(struct index_state *istate,
 }
 
 int ie_modified(struct index_state *istate,
-		struct cache_entry *ce, struct stat *st, int really)
+		struct cache_entry *ce, struct stat *st, unsigned int options)
 {
 	int changed, changed_fs;
-	changed = ie_match_stat(istate, ce, st, really);
+
+	changed = ie_match_stat(istate, ce, st, options);
 	if (!changed)
 		return 0;
 	/*
@@ -387,6 +389,7 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 	int size, namelen, pos;
 	struct stat st;
 	struct cache_entry *ce;
+	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_RACY_IS_DIRTY;
 
 	if (lstat(path, &st))
 		die("%s: unable to stat (%s)", path, strerror(errno));
@@ -421,7 +424,7 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 	pos = index_name_pos(istate, ce->name, namelen);
 	if (0 <= pos &&
 	    !ce_stage(istate->cache[pos]) &&
-	    !ie_modified(istate, istate->cache[pos], &st, 1)) {
+	    !ie_match_stat(istate, istate->cache[pos], &st, ce_option)) {
 		/* Nothing changed, really */
 		free(ce);
 		return 0;
@@ -783,11 +786,13 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
  * to link up the stat cache details with the proper files.
  */
 static struct cache_entry *refresh_cache_ent(struct index_state *istate,
-					     struct cache_entry *ce, int really, int *err)
+					     struct cache_entry *ce,
+					     unsigned int options, int *err)
 {
 	struct stat st;
 	struct cache_entry *updated;
 	int changed, size;
+	int ignore_valid = options & CE_MATCH_IGNORE_VALID;
 
 	if (lstat(ce->name, &st) < 0) {
 		if (err)
@@ -795,16 +800,23 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 		return NULL;
 	}
 
-	changed = ie_match_stat(istate, ce, &st, really);
+	changed = ie_match_stat(istate, ce, &st, options);
 	if (!changed) {
-		if (really && assume_unchanged &&
+		/*
+		 * The path is unchanged.  If we were told to ignore
+		 * valid bit, then we did the actual stat check and
+		 * found that the entry is unmodified.  If the entry
+		 * is not marked VALID, this is the place to mark it
+		 * valid again, under "assume unchanged" mode.
+		 */
+		if (ignore_valid && assume_unchanged &&
 		    !(ce->ce_flags & htons(CE_VALID)))
 			; /* mark this one VALID again */
 		else
 			return ce;
 	}
 
-	if (ie_modified(istate, ce, &st, really)) {
+	if (ie_modified(istate, ce, &st, options)) {
 		if (err)
 			*err = EINVAL;
 		return NULL;
@@ -815,13 +827,14 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	memcpy(updated, ce, size);
 	fill_stat_cache_info(updated, &st);
 
-	/* In this case, if really is not set, we should leave
-	 * CE_VALID bit alone.  Otherwise, paths marked with
-	 * --no-assume-unchanged (i.e. things to be edited) will
-	 * reacquire CE_VALID bit automatically, which is not
-	 * really what we want.
+	/*
+	 * If ignore_valid is not set, we should leave CE_VALID bit
+	 * alone.  Otherwise, paths marked with --no-assume-unchanged
+	 * (i.e. things to be edited) will reacquire CE_VALID bit
+	 * automatically, which is not really what we want.
 	 */
-	if (!really && assume_unchanged && !(ce->ce_flags & htons(CE_VALID)))
+	if (!ignore_valid && assume_unchanged &&
+	    !(ce->ce_flags & htons(CE_VALID)))
 		updated->ce_flags &= ~htons(CE_VALID);
 
 	return updated;
@@ -835,6 +848,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	int allow_unmerged = (flags & REFRESH_UNMERGED) != 0;
 	int quiet = (flags & REFRESH_QUIET) != 0;
 	int not_new = (flags & REFRESH_IGNORE_MISSING) != 0;
+	unsigned int options = really ? CE_MATCH_IGNORE_VALID : 0;
 
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new;
@@ -856,7 +870,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 		if (pathspec && !match_pathspec(pathspec, ce->name, strlen(ce->name), 0, seen))
 			continue;
 
-		new = refresh_cache_ent(istate, ce, really, &cache_errno);
+		new = refresh_cache_ent(istate, ce, options, &cache_errno);
 		if (new == ce)
 			continue;
 		if (!new) {

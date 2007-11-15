@@ -115,6 +115,8 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		flags |= TRANSPORT_PUSH_FORCE;
 	if (dry_run)
 		flags |= TRANSPORT_PUSH_DRY_RUN;
+	if (verbose)
+		flags |= TRANSPORT_PUSH_VERBOSE;
 	if (tags)
 		add_refspec("refs/tags/*");
 	if (all)

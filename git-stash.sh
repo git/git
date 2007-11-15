@@ -21,23 +21,17 @@ no_changes () {
 clear_stash () {
 	if current=$(git rev-parse --verify $ref_stash 2>/dev/null)
 	then
-		git update-ref -d refs/stash $current
+		git update-ref -d $ref_stash $current
 	fi
 }
 
-save_stash () {
+create_stash () {
 	stash_msg="$1"
 
 	if no_changes
 	then
-		echo >&2 'No local changes to save'
 		exit 0
 	fi
-	test -f "$GIT_DIR/logs/$ref_stash" ||
-		clear_stash || die "Cannot initialize stash"
-
-	# Make sure the reflog for stash is kept.
-	: >>"$GIT_DIR/logs/$ref_stash"
 
 	# state of the base commit
 	if b_commit=$(git rev-parse --verify HEAD)
@@ -84,6 +78,23 @@ save_stash () {
 	w_commit=$(printf '%s\n' "$stash_msg" |
 		git commit-tree $w_tree -p $b_commit -p $i_commit) ||
 		die "Cannot record working tree state"
+}
+
+save_stash () {
+	stash_msg="$1"
+
+	if no_changes
+	then
+		echo >&2 'No local changes to save'
+		exit 0
+	fi
+	test -f "$GIT_DIR/logs/$ref_stash" ||
+		clear_stash || die "Cannot initialize stash"
+
+	create_stash "$stash_msg"
+
+	# Make sure the reflog for stash is kept.
+	: >>"$GIT_DIR/logs/$ref_stash"
 
 	git update-ref -m "$stash_msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
@@ -201,6 +212,13 @@ apply)
 	;;
 clear)
 	clear_stash
+	;;
+create)
+	if test $# -gt 0 && test "$1" = create
+	then
+		shift
+	fi
+	create_stash "$*" && echo "$w_commit"
 	;;
 help | usage)
 	usage

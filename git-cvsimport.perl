@@ -223,7 +223,8 @@ sub conn {
 			}
 		}
 
-		$user="anonymous" unless defined $user;
+		# if username is not explicit in CVSROOT, then use current user, as cvs would
+		$user=(getlogin() || $ENV{'LOGNAME'} || $ENV{'USER'} || "anonymous") unless $user;
 		my $rr2 = "-";
 		unless ($port) {
 			$rr2 = ":pserver:$user\@$serv:$repo";

@@ -26,7 +26,7 @@ refuse_partial () {
 }
 
 TMP_INDEX=
-THIS_INDEX="$GIT_DIR/index"
+THIS_INDEX="${GIT_INDEX_FILE:-$GIT_DIR/index}"
 NEXT_INDEX="$GIT_DIR/next-index$$"
 rm -f "$NEXT_INDEX"
 save_index () {
@@ -282,9 +282,9 @@ unset only
 case "$all,$interactive,$also,$#" in
 *t,*t,*)
 	die "Cannot use -a, --interactive or -i at the same time." ;;
-t,,[1-9]*)
+t,,,[1-9]*)
 	die "Paths with -a does not make sense." ;;
-,t,[1-9]*)
+,t,,[1-9]*)
 	die "Paths with --interactive does not make sense." ;;
 ,,t,0)
 	die "No paths with -i does not make sense." ;;

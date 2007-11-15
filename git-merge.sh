@@ -46,20 +46,19 @@ esac
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
-		 "$GIT_DIR/MERGE_SAVE" || exit 1
+		 "$GIT_DIR/MERGE_STASH" || exit 1
 }
 
 savestate() {
 	# Stash away any local modifications.
-	git diff-index -z --name-only $head |
-	cpio -0 -o >"$GIT_DIR/MERGE_SAVE"
+	git stash create >"$GIT_DIR/MERGE_STASH"
 }
 
 restorestate() {
-        if test -f "$GIT_DIR/MERGE_SAVE"
+        if test -f "$GIT_DIR/MERGE_STASH"
 	then
 		git reset --hard $head >/dev/null
-		cpio -iuv <"$GIT_DIR/MERGE_SAVE"
+		git stash apply $(cat "$GIT_DIR/MERGE_STASH")
 		git update-index --refresh >/dev/null
 	fi
 }
@@ -455,7 +454,7 @@ case "$use_strategies" in
     single_strategy=no
     ;;
 *)
-    rm -f "$GIT_DIR/MERGE_SAVE"
+    rm -f "$GIT_DIR/MERGE_STASH"
     single_strategy=yes
     ;;
 esac

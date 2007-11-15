@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git add -u with path limiting
+test_description='git add -u
 
 This test creates a working tree state with three files:
 
@@ -9,7 +9,10 @@ This test creates a working tree state with three files:
   dir/other (untracked)
 
 and issues a git add -u with path limiting on "dir" to add
-only the updates to dir/sub.'
+only the updates to dir/sub.
+
+Also tested are "git add -u" without limiting, and "git add -u"
+without contents changes.'
 
 . ./test-lib.sh
 
@@ -82,6 +85,29 @@ test_expect_success 'replace a file with a symlink' '
 	rm foo &&
 	ln -s top foo &&
 	git add -u -- foo
+
+'
+
+test_expect_success 'add everything changed' '
+
+	git add -u &&
+	test -z "$(git diff-files)"
+
+'
+
+test_expect_success 'touch and then add -u' '
+
+	touch check &&
+	git add -u &&
+	test -z "$(git diff-files)"
+
+'
+
+test_expect_success 'touch and then add explicitly' '
+
+	touch check &&
+	git add check &&
+	test -z "$(git diff-files)"
 
 '
 

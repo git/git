@@ -72,7 +72,7 @@ void trace_printf(const char *fmt, ...)
 	if (!fd)
 		return;
 
-	strbuf_init(&buf, 0);
+	strbuf_init(&buf, 64);
 	va_start(ap, fmt);
 	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
 	va_end(ap);
@@ -103,7 +103,7 @@ void trace_argv_printf(const char **argv, int count, const char *fmt, ...)
 	if (!fd)
 		return;
 
-	strbuf_init(&buf, 0);
+	strbuf_init(&buf, 64);
 	va_start(ap, fmt);
 	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
 	va_end(ap);

@@ -435,9 +435,7 @@ static int pick_rref(int sha1_only, const char *rref, const char *ls_remote_resu
 				cp++;
 			if (!*cp)
 				break;
-			np = strchr(cp, '\n');
-			if (!np)
-				np = cp + strlen(cp);
+			np = strchrnul(cp, '\n');
 			if (pass) {
 				lrr_list[i].line = cp;
 				lrr_list[i].name = cp + 41;
@@ -461,9 +459,7 @@ static int pick_rref(int sha1_only, const char *rref, const char *ls_remote_resu
 			rref++;
 		if (!*rref)
 			break;
-		next = strchr(rref, '\n');
-		if (!next)
-			next = rref + strlen(rref);
+		next = strchrnul(rref, '\n');
 		rreflen = next - rref;
 
 		for (i = 0; i < lrr_count; i++) {

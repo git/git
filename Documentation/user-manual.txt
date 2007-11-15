@@ -475,7 +475,7 @@ Bisecting: 3537 revisions left to test after this
 If you run "git branch" at this point, you'll see that git has
 temporarily moved you to a new branch named "bisect".  This branch
 points to a commit (with commit id 65934...) that is reachable from
-v2.6.19 but not from v2.6.18.  Compile and test it, and see whether
+"master" but not from v2.6.18.  Compile and test it, and see whether
 it crashes.  Assume it does crash.  Then:
 
 -------------------------------------------------
@@ -1367,7 +1367,7 @@ If you make a commit that you later wish you hadn't, there are two
 fundamentally different ways to fix the problem:
 
 	1. You can create a new commit that undoes whatever was done
-	by the previous commit.  This is the correct thing if your
+	by the old commit.  This is the correct thing if your
 	mistake has already been made public.
 
 	2. You can go back and modify the old commit.  You should
@@ -1568,7 +1568,7 @@ $ git log master@{1}
 -------------------------------------------------
 
 This lists the commits reachable from the previous version of the head.
-This syntax can be used to with any git command that accepts a commit,
+This syntax can be used with any git command that accepts a commit,
 not just with git log.  Some other examples:
 
 -------------------------------------------------

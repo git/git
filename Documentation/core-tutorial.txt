@@ -1090,11 +1090,6 @@ server like git Native transport does.  Any stock HTTP server
 that does not even support directory index would suffice.  But
 you must prepare your repository with `git-update-server-info`
 to help dumb transport downloaders.
-+
-There are (confusingly enough) `git-ssh-fetch` and `git-ssh-upload`
-programs, which are 'commit walkers'; they outlived their
-usefulness when git Native and SSH transports were introduced,
-and are not used by `git pull` or `git push` scripts.
 
 Once you fetch from the remote repository, you `merge` that
 with your current branch.
@@ -1157,7 +1152,7 @@ back to the earlier repository with "hello" and "example" file,
 and bring ourselves back to the pre-merge state:
 
 ------------
-$ git show-branch --more=3 master mybranch
+$ git show-branch --more=2 master mybranch
 ! [master] Merge work in mybranch
  * [mybranch] Merge work in mybranch
 --
@@ -1220,7 +1215,7 @@ $ git-read-tree -m -u $mb HEAD mybranch
 This is the same `git-read-tree` command we have already seen,
 but it takes three trees, unlike previous examples.  This reads
 the contents of each tree into different 'stage' in the index
-file (the first tree goes to stage 1, the second stage 2,
+file (the first tree goes to stage 1, the second to stage 2,
 etc.).  After reading three trees into three stages, the paths
 that are the same in all three stages are 'collapsed' into stage
 0.  Also paths that are the same in two of three stages are

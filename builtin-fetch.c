@@ -8,10 +8,12 @@
 #include "path-list.h"
 #include "remote.h"
 #include "transport.h"
+#include "run-command.h"
 
 static const char fetch_usage[] = "git-fetch [-a | --append] [--upload-pack <upload-pack>] [-f | --force] [--no-tags] [-t | --tags] [-k | --keep] [-u | --update-head-ok] [--depth <depth>] [-v | --verbose] [<repository> <refspec>...]";
 
 static int append, force, tags, no_tags, update_head_ok, verbose, quiet;
+static const char *depth;
 static char *default_rla = NULL;
 static struct transport *transport;
 
@@ -152,6 +154,7 @@ static int s_update_ref(const char *action,
 }
 
 #define SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
+#define REFCOL_WIDTH  10
 
 static int update_local_ref(struct ref *ref,
 			    const char *remote,
@@ -181,8 +184,9 @@ static int update_local_ref(struct ref *ref,
 
 	if (!hashcmp(ref->old_sha1, ref->new_sha1)) {
 		if (verbose)
-			sprintf(display, "= %-*s %s -> %s", SUMMARY_WIDTH,
-				"[up to date]", remote, pretty_ref);
+			sprintf(display, "= %-*s %-*s -> %s", SUMMARY_WIDTH,
+				"[up to date]", REFCOL_WIDTH, remote,
+				pretty_ref);
 		return 0;
 	}
 
@@ -194,15 +198,17 @@ static int update_local_ref(struct ref *ref,
 		 * If this is the head, and it's not okay to update
 		 * the head, and the old value of the head isn't empty...
 		 */
-		sprintf(display, "! %-*s %s -> %s  (can't  fetch in current branch)",
-			SUMMARY_WIDTH, "[rejected]", remote, pretty_ref);
+		sprintf(display, "! %-*s %-*s -> %s  (can't fetch in current branch)",
+			SUMMARY_WIDTH, "[rejected]", REFCOL_WIDTH, remote,
+			pretty_ref);
 		return 1;
 	}
 
 	if (!is_null_sha1(ref->old_sha1) &&
 	    !prefixcmp(ref->name, "refs/tags/")) {
-		sprintf(display, "- %-*s %s -> %s",
-			SUMMARY_WIDTH, "[tag update]", remote, pretty_ref);
+		sprintf(display, "- %-*s %-*s -> %s",
+			SUMMARY_WIDTH, "[tag update]", REFCOL_WIDTH, remote,
+			pretty_ref);
 		return s_update_ref("updating tag", ref, 0);
 	}
 
@@ -220,8 +226,8 @@ static int update_local_ref(struct ref *ref,
 			what = "[new branch]";
 		}
 
-		sprintf(display, "* %-*s %s -> %s",
-			SUMMARY_WIDTH, what, remote, pretty_ref);
+		sprintf(display, "* %-*s %-*s -> %s", SUMMARY_WIDTH, what,
+			REFCOL_WIDTH, remote, pretty_ref);
 		return s_update_ref(msg, ref, 0);
 	}
 
@@ -230,20 +236,21 @@ static int update_local_ref(struct ref *ref,
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "..");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
-		sprintf(display, "  %-*s %s -> %s  (fast forward)",
-			SUMMARY_WIDTH, quickref, remote, pretty_ref);
+		sprintf(display, "  %-*s %-*s -> %s", SUMMARY_WIDTH, quickref,
+			REFCOL_WIDTH, remote, pretty_ref);
 		return s_update_ref("fast forward", ref, 1);
 	} else if (force || ref->force) {
 		char quickref[84];
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "...");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
-		sprintf(display, "+ %-*s %s -> %s  (forced update)",
-			SUMMARY_WIDTH, quickref, remote, pretty_ref);
+		sprintf(display, "+ %-*s %-*s -> %s  (forced update)",
+			SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote, pretty_ref);
 		return s_update_ref("forced-update", ref, 1);
 	} else {
-		sprintf(display, "! %-*s %s -> %s  (non fast forward)",
-			SUMMARY_WIDTH, "[rejected]", remote, pretty_ref);
+		sprintf(display, "! %-*s %-*s -> %s  (non fast forward)",
+			SUMMARY_WIDTH, "[rejected]", REFCOL_WIDTH, remote,
+			pretty_ref);
 		return 1;
 	}
 }
@@ -330,9 +337,72 @@ static void store_updated_refs(const char *url, struct ref *ref_map)
 	fclose(fp);
 }
 
+/*
+ * We would want to bypass the object transfer altogether if
+ * everything we are going to fetch already exists and connected
+ * locally.
+ *
+ * The refs we are going to fetch are in to_fetch (nr_heads in
+ * total).  If running
+ *
+ *  $ git-rev-list --objects to_fetch[0] to_fetch[1] ... --not --all
+ *
+ * does not error out, that means everything reachable from the
+ * refs we are going to fetch exists and is connected to some of
+ * our existing refs.
+ */
+static int quickfetch(struct ref *ref_map)
+{
+	struct child_process revlist;
+	struct ref *ref;
+	char **argv;
+	int i, err;
+
+	/*
+	 * If we are deepening a shallow clone we already have these
+	 * objects reachable.  Running rev-list here will return with
+	 * a good (0) exit status and we'll bypass the fetch that we
+	 * really need to perform.  Claiming failure now will ensure
+	 * we perform the network exchange to deepen our history.
+	 */
+	if (depth)
+		return -1;
+
+	for (i = 0, ref = ref_map; ref; ref = ref->next)
+		i++;
+	if (!i)
+		return 0;
+
+	argv = xmalloc(sizeof(*argv) * (i + 6));
+	i = 0;
+	argv[i++] = xstrdup("rev-list");
+	argv[i++] = xstrdup("--quiet");
+	argv[i++] = xstrdup("--objects");
+	for (ref = ref_map; ref; ref = ref->next)
+		argv[i++] = xstrdup(sha1_to_hex(ref->old_sha1));
+	argv[i++] = xstrdup("--not");
+	argv[i++] = xstrdup("--all");
+	argv[i++] = NULL;
+
+	memset(&revlist, 0, sizeof(revlist));
+	revlist.argv = (const char**)argv;
+	revlist.git_cmd = 1;
+	revlist.no_stdin = 1;
+	revlist.no_stdout = 1;
+	revlist.no_stderr = 1;
+	err = run_command(&revlist);
+
+	for (i = 0; argv[i]; i++)
+		free(argv[i]);
+	free(argv);
+	return err;
+}
+
 static int fetch_refs(struct transport *transport, struct ref *ref_map)
 {
-	int ret = transport_fetch_refs(transport, ref_map);
+	int ret = quickfetch(ref_map);
+	if (ret)
+		ret = transport_fetch_refs(transport, ref_map);
 	if (!ret)
 		store_updated_refs(transport->url, ref_map);
 	transport_unlock_pack(transport);
@@ -384,7 +454,7 @@ static struct ref *find_non_local_tags(struct transport *transport,
 
 		if (!path_list_has_path(&existing_refs, ref_name) &&
 		    !path_list_has_path(&new_refs, ref_name) &&
-		    lookup_object(ref->old_sha1)) {
+		    has_sha1_file(ref->old_sha1)) {
 			path_list_insert(ref_name, &new_refs);
 
 			rm = alloc_ref(strlen(ref_name) + 1);
@@ -468,7 +538,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	static const char **refs = NULL;
 	int ref_nr = 0;
 	int cmd_len = 0;
-	const char *depth = NULL, *upload_pack = NULL;
+	const char *upload_pack = NULL;
 	int keep = 0;
 
 	for (i = 1; i < argc; i++) {

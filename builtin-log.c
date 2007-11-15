@@ -273,6 +273,8 @@ static int istitlechar(char c)
 static char *extra_headers = NULL;
 static int extra_headers_size = 0;
 static const char *fmt_patch_suffix = ".patch";
+static int numbered = 0;
+static int auto_number = 0;
 
 static int git_format_config(const char *var, const char *value)
 {
@@ -295,6 +297,15 @@ static int git_format_config(const char *var, const char *value)
 		return 0;
 	}
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
+		return 0;
+	}
+	if (!strcmp(var, "format.numbered")) {
+		if (!strcasecmp(value, "auto")) {
+			auto_number = 1;
+			return 0;
+		}
+
+		numbered = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -466,7 +477,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 	int nr = 0, total, i, j;
 	int use_stdout = 0;
-	int numbered = 0;
 	int start_number = -1;
 	int keep_subject = 0;
 	int numbered_files = 0;		/* _just_ numbers */
@@ -503,6 +513,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[i], "-n") ||
 				!strcmp(argv[i], "--numbered"))
 			numbered = 1;
+		else if (!strcmp(argv[i], "-N") ||
+				!strcmp(argv[i], "--no-numbered")) {
+			numbered = 0;
+			auto_number = 0;
+		}
 		else if (!prefixcmp(argv[i], "--start-number="))
 			start_number = strtol(argv[i] + 15, NULL, 10);
 		else if (!strcmp(argv[i], "--numbered-files"))
@@ -642,6 +657,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		list[nr - 1] = commit;
 	}
 	total = nr;
+	if (!keep_subject && auto_number && total > 1)
+		numbered = 1;
 	if (numbered)
 		rev.total = total + start_number - 1;
 	rev.add_signoff = add_signoff;

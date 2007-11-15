@@ -38,7 +38,7 @@ int start_command(struct child_process *cmd)
 		cmd->close_out = 1;
 	}
 
-	need_err = cmd->err < 0;
+	need_err = !cmd->no_stderr && cmd->err < 0;
 	if (need_err) {
 		if (pipe(fderr) < 0) {
 			if (need_in)
@@ -69,8 +69,10 @@ int start_command(struct child_process *cmd)
 			fdout[1] = cmd->out;
 		}
 
-		if (need_err) {
-			fderr[1] = cmd->err;
+		if (cmd->no_stderr)
+			fderr[1] = open("/dev/null", O_RDWR);
+		else if (need_err) {
+			/* nothing */
 		}
 
 		if (cmd->dir)

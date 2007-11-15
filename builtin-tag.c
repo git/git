@@ -246,9 +246,37 @@ static int git_tag_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
+static void write_tag_body(int fd, const unsigned char *sha1)
+{
+	unsigned long size;
+	enum object_type type;
+	char *buf, *sp, *eob;
+	size_t len;
+
+	buf = read_sha1_file(sha1, &type, &size);
+	if (!buf)
+		return;
+	/* skip header */
+	sp = strstr(buf, "\n\n");
+
+	if (!sp || !size || type != OBJ_TAG) {
+		free(buf);
+		return;
+	}
+	sp += 2; /* skip the 2 LFs */
+	eob = strstr(sp, "\n" PGP_SIGNATURE "\n");
+	if (eob)
+		len = eob - sp;
+	else
+		len = buf + size - sp;
+	write_or_die(fd, sp, len);
+
+	free(buf);
+}
+
 static void create_tag(const unsigned char *object, const char *tag,
 		       struct strbuf *buf, int message, int sign,
-			   unsigned char *result)
+			   unsigned char *prev, unsigned char *result)
 {
 	enum object_type type;
 	char header_buf[1024];
@@ -281,7 +309,11 @@ static void create_tag(const unsigned char *object, const char *tag,
 		if (fd < 0)
 			die("could not create file '%s': %s",
 						path, strerror(errno));
-		write_or_die(fd, tag_template, strlen(tag_template));
+
+		if (!is_null_sha1(prev))
+			write_tag_body(fd, prev);
+		else
+			write_or_die(fd, tag_template, strlen(tag_template));
 		close(fd);
 
 		launch_editor(path, buf);
@@ -418,7 +450,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die("tag '%s' already exists", tag);
 
 	if (annotate)
-		create_tag(object, tag, &buf, message, sign, object);
+		create_tag(object, tag, &buf, message, sign, prev, object);
 
 	lock = lock_any_ref_for_update(ref, prev, 0);
 	if (!lock)
