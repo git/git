@@ -284,7 +284,6 @@ int print_wrapped_text(const char *text, int indent, int indent2, int width)
 			text++;
 		}
 	}
-	return w;
 }
 
 int is_encoding_utf8(const char *name)

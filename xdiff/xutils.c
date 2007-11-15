@@ -232,8 +232,6 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 		return i1 >= s1 && i2 >= s2;
 	} else
 		return s1 == s2 && !memcmp(l1, l2, s1);
-
-	return 0;
 }
 
 static unsigned long xdl_hash_record_with_whitespace(char const **data,
