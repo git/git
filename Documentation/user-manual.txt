@@ -1567,9 +1567,9 @@ old history using, for example,
 $ git log master@{1}
 -------------------------------------------------
 
-This lists the commits reachable from the previous version of the head.
-This syntax can be used with any git command that accepts a commit,
-not just with git log.  Some other examples:
+This lists the commits reachable from the previous version of the
+"master" branch head.  This syntax can be used with any git command
+that accepts a commit, not just with git log.  Some other examples:
 
 -------------------------------------------------
 $ git show master@{2}		# See where the branch pointed 2,
