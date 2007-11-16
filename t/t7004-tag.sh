@@ -1004,10 +1004,20 @@ test_expect_failure \
 	'verify signed tag fails when public key is not present' \
 	'git-tag -v signed-tag'
 
+test_expect_failure \
+	'git-tag -a fails if tag annotation is empty' '
+	GIT_EDITOR=cat git tag -a initial-comment
+'
+
 test_expect_success \
 	'message in editor has initial comment' '
-	GIT_EDITOR=cat git tag -a initial-comment > actual || true &&
-	test $(sed -n "/^\(#\|\$\)/p" actual | wc -l) -gt 0
+	GIT_EDITOR=cat git tag -a initial-comment > actual
+	# check the first line --- should be empty
+	first=$(sed -e 1q <actual) &&
+	test -z "$first" &&
+	# remove commented lines from the remainder -- should be empty
+	rest=$(sed -e 1d -e '/^#/d' <actual) &&
+	test -z "$rest"
 '
 
 get_tag_header reuse $commit commit $time >expect
