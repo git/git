@@ -53,6 +53,7 @@
 #include <sys/wait.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <sys/select.h>
 #else
 int mkstemp (char *__template);
