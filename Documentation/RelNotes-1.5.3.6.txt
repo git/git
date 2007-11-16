@@ -1,0 +1,21 @@
+GIT v1.5.3.6 Release Notes
+==========================
+
+Fixes since v1.5.3.5
+--------------------
+
+ * git-cvsexportcommit handles root commits better;
+
+ * git-svn dcommit used to clobber when sending a series of
+   patches;
+
+ * git-grep sometimes refused to work when your index was
+   unmerged;
+
+ * Quite a lot of documentation clarifications.
+
+--
+exec >/var/tmp/1
+O=v1.5.3.5-32-gcb6c162
+echo O=`git describe refs/heads/maint`
+git shortlog --no-merges $O..refs/heads/maint

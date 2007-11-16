@@ -6,7 +6,10 @@ Updates since v1.5.3
 
  * Comes with much improved gitk.
 
- * git-reset is now built-in.
+ * "progress display" from many commands are a lot nicer to the
+   eye.  Transfer commands show throughput data.
+
+ * git-reset is now built-in and its output can be squelched with -q.
 
  * git-send-email can optionally talk over ssmtp and use SMTP-AUTH.
 
@@ -46,6 +49,28 @@ Updates since v1.5.3
 
  * Various Perforce importer updates.
 
+ * git-lost-found was deprecated in favor of git-fsck's --lost-found
+   option.
+
+ * git-svnimport was removed in favor of git-svn.
+
+ * git-bisect learned "skip" action to mark untestable commits.
+
+ * rename detection diff family, while detecting exact matches,
+   has been greatly optimized.
+
+ * Example update and post-receive hooks have been improved.
+
+ * In addition there are quite a few internal clean-ups. Notably
+
+   - many fork/exec have been replaced with run-command API,
+     brought from the msysgit effort.
+
+   - introduction and more use of the option parser API.
+
+   - enhancement and more use of the strbuf API.
+
+
 Fixes since v1.5.3
 ------------------
 
@@ -54,6 +79,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3.4-450-g952a9e5
+O=v1.5.3.5-618-g5d4138a
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

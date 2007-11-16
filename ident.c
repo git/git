@@ -9,8 +9,6 @@
 
 static char git_default_date[50];
 
-#ifndef NO_ETC_PASSWD
-
 static void copy_gecos(const struct passwd *w, char *name, size_t sz)
 {
 	char *src, *dst;
@@ -72,11 +70,8 @@ static void copy_email(const struct passwd *pw)
 	}
 }
 
-#endif
-
 static void setup_ident(void)
 {
-#ifndef NO_ETC_PASSWD
 	struct passwd *pw = NULL;
 
 	/* Get the name ("gecos") */
@@ -101,7 +96,6 @@ static void setup_ident(void)
 			copy_email(pw);
 		}
 	}
-#endif
 
 	/* And set the default date */
 	if (!git_default_date[0])
@@ -212,9 +206,7 @@ const char *fmt_ident(const char *name, const char *email,
 		email = git_default_email;
 
 	if (!*name) {
-#ifndef NO_ETC_PASSWD
 		struct passwd *pw;
-#endif
 
 		if (0 <= error_on_no_name &&
 		    name == git_default_name && env_hint) {
@@ -223,16 +215,11 @@ const char *fmt_ident(const char *name, const char *email,
 		}
 		if (0 < error_on_no_name)
 			die("empty ident %s <%s> not allowed", name, email);
-#ifndef NO_ETC_PASSWD
 		pw = getpwuid(getuid());
 		if (!pw)
 			die("You don't exist. Go away!");
 		strlcpy(git_default_name, pw->pw_name,
 			sizeof(git_default_name));
-#else
-		strlcpy(git_default_name, "unknown",
-			sizeof(git_default_name));
-#endif
 		name = git_default_name;
 	}
 

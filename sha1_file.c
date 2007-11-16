@@ -425,8 +425,6 @@ static size_t peak_pack_mapped;
 static size_t pack_mapped;
 struct packed_git *packed_git;
 
-extern size_t getpagesize();
-
 void pack_report(void)
 {
 	fprintf(stderr,

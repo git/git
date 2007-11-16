@@ -205,7 +205,7 @@ test_expect_success \
 	 echo $h_TEST >.git/MERGE_HEAD &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:45" \
 	 GIT_COMMITTER_DATE="2005-05-26 23:45" git-commit -F M &&
-	 h_MERGED=$(git rev-parse --verify HEAD)
+	 h_MERGED=$(git rev-parse --verify HEAD) &&
 	 rm -f M'
 
 cat >expect <<EOF

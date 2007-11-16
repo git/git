@@ -11,6 +11,10 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+
+*NOTE*: this command is deprecated.  Use gitlink:git-fsck[1] with
+the option '--lost-found' instead.
+
 Finds dangling commits and tags from the object database, and
 creates refs to them in the .git/lost-found/ directory.  Commits and
 tags that dereference to commits are stored in .git/lost-found/commit,

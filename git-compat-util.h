@@ -63,8 +63,6 @@ int mkstemp (char *__template);
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#endif
-#ifndef NO_ETC_PASSWD
 #include <netdb.h>
 #include <pwd.h>
 #include <inttypes.h>
@@ -434,7 +432,6 @@ int symlink(const char *oldpath, const char *newpath);
 int fchmod(int fildes, mode_t mode);
 int lstat(const char *file_name, struct stat *buf);
 
-/* missing: link, mkstemp, fchmod, getuid (?), gettimeofday */
 int socketpair(int d, int type, int protocol, int sv[2]);
 #define AF_UNIX 0
 #define SOCK_STREAM 0
@@ -460,7 +457,6 @@ typedef int pid_t;
 #define WNOHANG 1
 #define SIGKILL 0
 #define SIGCHLD 0
-#define SIGALRM 0
 #define SIGPIPE 0
 #define ECONNABORTED 0
 
@@ -511,9 +507,10 @@ int mingw_socket(int domain, int type, int protocol);
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
 
-#define setlinebuf(x)
-#define fsync(x) 0
-#define getppid() 1
+static inline int fsync(int fd) { return 0; }
+static inline int getppid(void) { return 1; }
+static inline void sync(void) {}
+extern int getpagesize(void);	/* defined in MinGW's libgcc.a */
 
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);
@@ -521,17 +518,55 @@ extern char *mingw_path_lookup(const char *cmd, char **path);
 extern char **mingw_get_path_split(void);
 extern void mingw_free_path_split(char **path);
 
-/* Use git_lstat() instead of lstat()/stat() and
- * git_fstat() instead of fstat() on Windows
+/* Use mingw_lstat() instead of lstat()/stat() and
+ * mingw_fstat() instead of fstat() on Windows.
+ * struct stat is redefined because it lacks the st_blocks member.
  */
-int git_lstat(const char *file_name, struct stat *buf);
-int git_fstat(int fd, struct stat *buf);
-#define lstat(x,y) git_lstat(x,y)
-#define stat(x,y) git_lstat(x,y)
-#define fstat(x,y) git_fstat(x,y)
+struct mingw_stat {
+	unsigned st_mode;
+	time_t st_mtime, st_atime, st_ctime;
+	unsigned st_dev, st_ino, st_uid, st_gid;
+	size_t st_size;
+	size_t st_blocks;
+};
+int mingw_lstat(const char *file_name, struct mingw_stat *buf);
+int mingw_fstat(int fd, struct mingw_stat *buf);
+#define fstat mingw_fstat
+#define lstat mingw_lstat
+#define stat mingw_stat
+static inline int mingw_stat(const char *file_name, struct mingw_stat *buf)
+{ return mingw_lstat(file_name, buf); }
 
 int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
 #define vsnprintf mingw_vsnprintf
+
+struct passwd {
+	char *pw_name;
+	char *pw_gecos;
+	char *pw_dir;
+};
+struct passwd *mingw_getpwuid(int uid);
+#define getpwuid mingw_getpwuid
+static inline int getuid() { return 1; }
+static inline struct passwd *getpwnam(const char *name) { return NULL; }
+
+struct itimerval {
+	struct timeval it_value, it_interval;
+};
+int setitimer(int type, struct itimerval *in, struct itimerval *out);
+#define ITIMER_REAL 0
+
+typedef void (__cdecl *sig_handler_t)(int);
+struct sigaction {
+	sig_handler_t sa_handler;
+	unsigned sa_flags;
+};
+int sigaction(int sig, struct sigaction *in, struct sigaction *out);
+#define sigemptyset(x) (void)0
+#define SA_RESTART 0
+#define SIGALRM 100
+sig_handler_t mingw_signal(int sig, sig_handler_t handler);
+#define signal mingw_signal
 
 extern __attribute__((noreturn)) int git_exit(int code);
 #define exit git_exit

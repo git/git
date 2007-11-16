@@ -2295,6 +2295,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			else if (i != argc - 1)
 				usage(blame_usage); /* garbage at end */
 
+			setup_work_tree();
 			if (!has_path_in_work_tree(path))
 				die("cannot stat path %s: %s",
 				    path, strerror(errno));
@@ -2342,6 +2343,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		 * do not default to HEAD, but use the working tree
 		 * or "--contents".
 		 */
+		setup_work_tree();
 		sb.final = fake_working_tree_commit(path, contents_from);
 		add_pending_object(&revs, &(sb.final->object), ":");
 	}

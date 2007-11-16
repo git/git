@@ -31,6 +31,11 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
 	return (time_t)winTime;
 }
 
+static inline size_t size_to_blocks(size_t s)
+{
+	return (s+511)/512;
+}
+
 extern int _getdrive( void );
 /* We keep the do_lstat code in a separate function to avoid recursion.
  * When a path ends with a slash, the stat will fail with ENOENT. In
@@ -52,10 +57,10 @@ static int do_lstat(const char *file_name, struct stat *buf)
 		buf->st_ino = 0;
 		buf->st_gid = 0;
 		buf->st_uid = 0;
-		buf->st_nlink = 1;
 		buf->st_mode = fMode;
 		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
-		buf->st_dev = buf->st_rdev = (_getdrive() - 1);
+		buf->st_blocks = size_to_blocks(buf->st_size);
+		buf->st_dev = _getdrive() - 1;
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
@@ -86,10 +91,10 @@ static int do_lstat(const char *file_name, struct stat *buf)
 /* We provide our own lstat/fstat functions, since the provided
  * lstat/fstat functions are so slow. These stat functions are
  * tailored for Git's usage (read: fast), and are not meant to be
- * complete. Note that Git stat()s are redirected to git_lstat()
+ * complete. Note that Git stat()s are redirected to mingw_lstat()
  * too, since Windows doesn't really handle symlinks that well.
  */
-int git_lstat(const char *file_name, struct stat *buf)
+int mingw_lstat(const char *file_name, struct mingw_stat *buf)
 {
 	int namelen;
 	static char alt_name[PATH_MAX];
@@ -117,7 +122,8 @@ int git_lstat(const char *file_name, struct stat *buf)
 }
 
 #undef fstat
-int git_fstat(int fd, struct stat *buf)
+#undef stat
+int mingw_fstat(int fd, struct mingw_stat *buf)
 {
 	HANDLE fh = (HANDLE)_get_osfhandle(fd);
 	BY_HANDLE_FILE_INFORMATION fdata;
@@ -127,8 +133,22 @@ int git_fstat(int fd, struct stat *buf)
 		return -1;
 	}
 	/* direct non-file handles to MS's fstat() */
-	if (GetFileType(fh) != FILE_TYPE_DISK)
-		return fstat(fd, buf);
+	if (GetFileType(fh) != FILE_TYPE_DISK) {
+		struct stat st;
+		if (fstat(fd, &st))
+			return -1;
+		buf->st_ino = st.st_ino;
+		buf->st_gid = st.st_gid;
+		buf->st_uid = st.st_uid;
+		buf->st_mode = st.st_mode;
+		buf->st_size = st.st_size;
+		buf->st_blocks = size_to_blocks(buf->st_size);
+		buf->st_dev = st.st_dev;
+		buf->st_atime = st.st_atime;
+		buf->st_mtime = st.st_mtime;
+		buf->st_ctime = st.st_ctime;
+		return 0;
+	}
 
 	if (GetFileInformationByHandle(fh, &fdata)) {
 		int fMode = S_IREAD;
@@ -142,10 +162,10 @@ int git_fstat(int fd, struct stat *buf)
 		buf->st_ino = 0;
 		buf->st_gid = 0;
 		buf->st_uid = 0;
-		buf->st_nlink = 1;
 		buf->st_mode = fMode;
 		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
-		buf->st_dev = buf->st_rdev = (_getdrive() - 1);
+		buf->st_blocks = size_to_blocks(buf->st_size);
+		buf->st_dev = _getdrive() - 1;
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
@@ -293,10 +313,6 @@ char *mingw_getcwd(char *pointer, int len)
 				pointer[i] = '/';
 	}
 	return ret;
-}
-
-void sync(void)
-{
 }
 
 void openlog(const char *ident, int option, int facility)
@@ -577,8 +593,8 @@ int mingw_rename(const char *pold, const char *pnew)
 		return 0;
 	/* TODO: translate more errors */
 	if (GetLastError() == ERROR_ACCESS_DENIED) {
-		struct stat st;
-		if (!stat(pnew, &st) && S_ISDIR(st.st_mode)) {
+		DWORD attrs = GetFileAttributes(pnew);
+		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY)) {
 			errno = EISDIR;
 			return -1;
 		}
@@ -619,6 +635,136 @@ int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 		len = try_vsnprintf(size, fmt, args);
 	} while (len < 0);
 	return len;
+}
+
+struct passwd *mingw_getpwuid(int uid)
+{
+	static char user_name[100];
+	static struct passwd p;
+
+	DWORD len = sizeof(user_name);
+	if (!GetUserName(user_name, &len))
+		return NULL;
+	p.pw_name = user_name;
+	p.pw_gecos = "unknown";
+	p.pw_dir = NULL;
+	return &p;
+}
+
+
+static HANDLE timer_event;
+static HANDLE timer_thread;
+static int timer_interval;
+static int one_shot;
+static sig_handler_t timer_fn = SIG_DFL;
+
+/* The timer works like this:
+ * The thread, ticktack(), is basically a trivial routine that most of the
+ * time only waits to receive the signal to terminate. The main thread
+ * tells the thread to terminate by setting the timer_event to the signalled
+ * state.
+ * But ticktack() does not wait indefinitely; instead, it interrupts the
+ * wait state every now and then, namely exactly after timer's interval
+ * length. At these opportunities it calls the signal handler.
+ */
+ 
+static __stdcall unsigned ticktack(void *dummy)
+{
+	while (WaitForSingleObject(timer_event, timer_interval) == WAIT_TIMEOUT) {
+		if (timer_fn == SIG_DFL)
+			die("Alarm");
+		if (timer_fn != SIG_IGN)
+			timer_fn(SIGALRM);
+		if (one_shot)
+			break;
+	}
+	return 0;
+}
+
+static int start_timer_thread(void)
+{
+	timer_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (timer_event) {
+		timer_thread = (HANDLE) _beginthreadex(NULL, 0, ticktack, NULL, 0, NULL);
+		if (!timer_thread )
+			return errno = ENOMEM,
+				error("cannot create progress indicator");
+	} else
+		return errno = ENOMEM,
+			error("cannot allocate resources for progress indicator");
+	return 0;
+}
+
+static void stop_timer_thread(void)
+{
+	if (timer_event)
+		SetEvent(timer_event);	/* tell thread to terminate */
+	if (timer_thread) {
+		int rc = WaitForSingleObject(timer_thread, 1000);
+		if (rc == WAIT_TIMEOUT)
+			error("timer thread did not terminate timely");
+		else if (rc != WAIT_OBJECT_0)
+			error("waiting for timer thread failed: %lu",
+			      GetLastError());
+		CloseHandle(timer_thread);
+	}
+	if (timer_event)
+		CloseHandle(timer_event);
+	timer_event = NULL;
+	timer_thread = NULL;
+}
+
+static inline int is_timeval_eq(const struct timeval *i1, const struct timeval *i2)
+{
+	return i1->tv_sec == i2->tv_sec && i1->tv_usec == i2->tv_usec;
+}
+
+int setitimer(int type, struct itimerval *in, struct itimerval *out)
+{
+	static const struct timeval zero;
+
+	if (out != NULL)
+		return errno = EINVAL,
+			error("setitmer param 3 != NULL not implemented");
+	if (!is_timeval_eq(&in->it_interval, &zero) &&
+	    !is_timeval_eq(&in->it_interval, &in->it_value))
+		return errno = EINVAL,
+			error("setitmer: it_interval must be zero or eq it_value");
+
+	if (timer_thread)
+		stop_timer_thread();
+
+	if (is_timeval_eq(&in->it_value, &zero) &&
+	    is_timeval_eq(&in->it_interval, &zero))
+		return 0;
+
+	timer_interval = in->it_interval.tv_sec * 1000 + in->it_interval.tv_usec / 1000;
+	one_shot = is_timeval_eq(&in->it_value, &zero);
+	atexit(stop_timer_thread);
+	return start_timer_thread();
+}
+
+int sigaction(int sig, struct sigaction *in, struct sigaction *out)
+{
+	if (sig != SIGALRM)
+		return errno = EINVAL,
+			error("sigaction only implemented for SIGALRM");
+	if (out != NULL)
+		return errno = EINVAL,
+			error("sigaction: param 3 != NULL not implemented");
+
+	timer_fn = in->sa_handler;
+	return 0;
+}
+
+#undef signal
+sig_handler_t mingw_signal(int sig, sig_handler_t handler)
+{
+	if (sig != SIGALRM)
+		return signal(sig, handler);
+	sig_handler_t old = timer_fn;
+	timer_fn = handler;
+	return old;
 }
 
 #undef exit
