@@ -104,9 +104,33 @@ test_expect_success 'add ignored ones with -f' '
 	git ls-files --error-unmatch d.ig/d.if d.ig/d.ig
 '
 
+test_expect_success 'add ignored ones with -f' '
+	rm -f .git/index &&
+	git add -f d.?? &&
+	git ls-files --error-unmatch d.ig/d.if d.ig/d.ig
+'
+
+test_expect_success '.gitignore with subdirectory' '
+
+	rm -f .git/index &&
+	mkdir -p sub/dir &&
+	echo "!dir/a.*" >sub/.gitignore &&
+	>sub/a.ig &&
+	>sub/dir/a.ig &&
+	git add sub/dir &&
+	git ls-files --error-unmatch sub/dir/a.ig &&
+	rm -f .git/index &&
+	(
+		cd sub/dir &&
+		git add .
+	) &&
+	git ls-files --error-unmatch sub/dir/a.ig
+'
+
 mkdir 1 1/2 1/3
 touch 1/2/a 1/3/b 1/2/c
 test_expect_success 'check correct prefix detection' '
+	rm -f .git/index &&
 	git add 1/2/a 1/3/b 1/2/c
 '
 
