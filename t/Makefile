@@ -48,9 +48,6 @@ valgrind:
 GIT_SKIP_TESTS := $(GIT_SKIP_TESTS_LOCAL)
 # git am does not treat absolute path to mbox file correctly
 GIT_SKIP_TESTS += t4150.18
-# git upload-pack does not write an error message in this case
-# (reason unknown; seems to be a race condition)
-GIT_SKIP_TESTS += t5530.6
 # output contains CRLF (I think)
 GIT_SKIP_TESTS += t7401.14
 # output contains CRLF (I think)
