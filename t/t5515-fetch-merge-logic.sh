@@ -20,7 +20,7 @@ test_expect_success setup '
 	git add file &&
 	git commit -a -m One &&
 	git tag tag-one &&
-	git-tag tag-one-tree HEAD^\{tree} &&
+	git tag tag-one-tree HEAD^{tree} &&
 	git branch one &&
 
 	echo two >> file &&
@@ -31,7 +31,7 @@ test_expect_success setup '
 	echo three >> file &&
 	git commit -a -m Three &&
 	git tag -a -m "Tag Three" tag-three &&
-	git-tag -a -m "Tag Three file" tag-three-file HEAD^\{tree}:file &&
+	git tag -a -m "Tag Three file" tag-three-file HEAD^{tree}:file &&
 	git branch three &&
 
 	echo master >> file &&
