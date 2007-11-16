@@ -150,6 +150,7 @@
 #endif
 
 /* General helper functions */
+extern void vreport(const char *prefix, const char *err, va_list params);
 extern void usage(const char *err) NORETURN;
 extern void die(const char *err, ...) NORETURN __attribute__((format (printf, 1, 2)));
 extern int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
