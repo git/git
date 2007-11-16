@@ -130,6 +130,7 @@ OPTIONS
 	for "host.xz:foo/.git").  Cloning into an existing directory
 	is not allowed.
 
+:git-clone: 1
 include::urls.txt[]
 
 Examples
