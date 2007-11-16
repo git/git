@@ -1,5 +1,4 @@
 #include "cache.h"
-#include "spawn-pipe.h"
 
 /*
  * This is split up from the rest of git so that we might do
@@ -23,12 +22,18 @@ static void run_pager(const char *pager)
 	execl("/bin/sh", "sh", "-c", pager, NULL);
 }
 #else
-static pid_t pager_pid;
+#include "run-command.h"
+
+const char *pager_argv[] = { "sh", "-c", NULL, NULL };
+static struct child_process pager_process = {
+	.argv = pager_argv,
+	.in = -1
+};
 static void collect_pager(void)
 {
 	fflush(stdout);
 	close(1);	/* signals EOF to pager */
-	cwait(NULL, pager_pid, 0);
+	finish_command(&pager_process);
 }
 #endif
 
@@ -36,10 +41,8 @@ void setup_pager(void)
 {
 #ifndef __MINGW32__
 	pid_t pid;
-#else
-	const char *pager_argv[] = { "sh", "-c", NULL, NULL };
-#endif
 	int fd[2];
+#endif
 	const char *pager = getenv("GIT_PAGER");
 
 	if (!isatty(1))
@@ -58,9 +61,9 @@ void setup_pager(void)
 
 	pager_in_use = 1; /* means we are emitting to terminal */
 
+#ifndef __MINGW32__
 	if (pipe(fd) < 0)
 		return;
-#ifndef __MINGW32__
 	pid = fork();
 	if (pid < 0) {
 		close(fd[0]);
@@ -88,13 +91,12 @@ void setup_pager(void)
 #else
 	/* spawn the pager */
 	pager_argv[2] = pager;
-	pager_pid = spawnvpe_pipe(pager_argv[0], pager_argv, environ, fd, NULL);
-	if (pager_pid < 0)
+	if (start_command(&pager_process))
 		return;
 
 	/* original process continues, but writes to the pipe */
-	dup2(fd[1], 1);
-	close(fd[1]);
+	dup2(pager_process.in, 1);
+	close(pager_process.in);
 
 	/* this makes sure that the parent terminates after the pager */
 	atexit(collect_pager);
