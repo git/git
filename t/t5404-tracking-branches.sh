@@ -19,7 +19,7 @@ test_expect_success 'setup' '
 	git commit -a -m b2
 '
 
-test_expect_success 'check tracking branches updated correctly after push' '
+test_expect_success 'prepare pushable branches' '
 	cd aa &&
 	b1=$(git rev-parse origin/b1) &&
 	b2=$(git rev-parse origin/b2) &&
@@ -31,8 +31,16 @@ test_expect_success 'check tracking branches updated correctly after push' '
 	git commit -a -m aa-b2 &&
 	git checkout master &&
 	echo aa-master >>file &&
-	git commit -a -m aa-master &&
-	git push &&
+	git commit -a -m aa-master
+'
+
+test_expect_success 'mixed-success push returns error' '! git push'
+
+test_expect_success 'check tracking branches updated correctly after push' '
+	test "$(git rev-parse origin/master)" = "$(git rev-parse master)"
+'
+
+test_expect_success 'check tracking branches not updated for failed refs' '
 	test "$(git rev-parse origin/b1)" = "$b1" &&
 	test "$(git rev-parse origin/b2)" = "$b2"
 '

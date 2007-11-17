@@ -493,8 +493,17 @@ struct ref {
 	struct ref *next;
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
-	unsigned char force;
-	unsigned char merge;
+	unsigned char force : 1;
+	unsigned char merge : 1;
+	unsigned char nonfastforward : 1;
+	unsigned char deletion : 1;
+	enum {
+		REF_STATUS_NONE = 0,
+		REF_STATUS_OK,
+		REF_STATUS_REJECT_NONFASTFORWARD,
+		REF_STATUS_REJECT_NODELETE,
+		REF_STATUS_UPTODATE,
+	} status;
 	struct ref *peer_ref; /* when renaming */
 	char name[FLEX_ARRAY]; /* more */
 };
