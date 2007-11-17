@@ -45,17 +45,22 @@ to happen.
 
 With a `-d` or `-D` option, `<branchname>` will be deleted.  You may
 specify more than one branch for deletion.  If the branch currently
-has a reflog then the reflog will also be deleted. Use -r together with -d
-to delete remote-tracking branches.
+has a reflog then the reflog will also be deleted.
+
+Use -r together with -d to delete remote-tracking branches. Note, that it
+only makes sense to delete remote-tracking branches if they no longer exist
+in remote repository or if gitlink:git-fetch[1] was configured not to fetch
+them again. See also 'prune' subcommand of gitlink:git-remote[1] for way to
+clean up all obsolete remote-tracking branches.
 
 
 OPTIONS
 -------
 -d::
-	Delete a branch. The branch must be fully merged.
+	Delete a branch. The branch must be fully merged in HEAD.
 
 -D::
-	Delete a branch irrespective of its index status.
+	Delete a branch irrespective of its merged status.
 
 -l::
 	Create the branch's reflog.  This activates recording of
@@ -153,9 +158,11 @@ $ git branch -d -r origin/todo origin/html origin/man   <1>
 $ git branch -D test                                    <2>
 ------------
 +
-<1> Delete remote-tracking branches "todo", "html", "man"
-<2> Delete "test" branch even if the "master" branch does not have all
-commits from test branch.
+<1> Delete remote-tracking branches "todo", "html", "man". Next 'fetch' or
+'pull' will create them again unless you configure them not to. See
+gitlink:git-fetch[1].
+<2> Delete "test" branch even if the "master" branch (or whichever branch is
+currently checked out) does not have all commits from test branch.
 
 
 Notes
