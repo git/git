@@ -146,19 +146,43 @@ static void get_local_heads(void)
 	for_each_ref(one_local_ref, NULL);
 }
 
-static int receive_status(int in)
+static struct ref *set_ref_error(struct ref *refs, const char *line)
 {
+	struct ref *ref;
+
+	for (ref = refs; ref; ref = ref->next) {
+		const char *msg;
+		if (prefixcmp(line, ref->name))
+			continue;
+		msg = line + strlen(ref->name);
+		if (*msg++ != ' ')
+			continue;
+		ref->status = REF_STATUS_REMOTE_REJECT;
+		ref->error = xstrdup(msg);
+		ref->error[strlen(ref->error)-1] = '\0';
+		return ref;
+	}
+	return NULL;
+}
+
+/* a return value of -1 indicates that an error occurred,
+ * but we were able to set individual ref errors. A return
+ * value of -2 means we couldn't even get that far. */
+static int receive_status(int in, struct ref *refs)
+{
+	struct ref *hint;
 	char line[1000];
 	int ret = 0;
 	int len = packet_read_line(in, line, sizeof(line));
 	if (len < 10 || memcmp(line, "unpack ", 7)) {
 		fprintf(stderr, "did not receive status back\n");
-		return -1;
+		return -2;
 	}
 	if (memcmp(line, "unpack ok\n", 10)) {
 		fputs(line, stderr);
 		ret = -1;
 	}
+	hint = NULL;
 	while (1) {
 		len = packet_read_line(in, line, sizeof(line));
 		if (!len)
@@ -171,7 +195,10 @@ static int receive_status(int in)
 		}
 		if (!memcmp(line, "ok", 2))
 			continue;
-		fputs(line, stderr);
+		if (hint)
+			hint = set_ref_error(hint, line + 3);
+		if (!hint)
+			hint = set_ref_error(refs, line + 3);
 		ret = -1;
 	}
 	return ret;
@@ -296,6 +323,12 @@ static void print_push_status(const char *dest, struct ref *refs)
 			print_ref_status('!', "[rejected]", ref, ref->peer_ref,
 					"non-fast forward");
 			break;
+		case REF_STATUS_REMOTE_REJECT:
+			if (ref->deletion)
+				print_ref_status('!', "[remote rejected]", ref, NULL, ref->error);
+			else
+				print_ref_status('!', "[remote rejected]", ref, ref->peer_ref, ref->error);
+			break;
 		case REF_STATUS_OK:
 			print_ok_ref_status(ref);
 			break;
@@ -311,6 +344,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 	int allow_deleting_refs = 0;
 	int expect_status_report = 0;
 	int flags = MATCH_REFS_NONE;
+	int ret;
 
 	if (args.send_all)
 		flags |= MATCH_REFS_ALL;
@@ -428,12 +462,15 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 	}
 	close(out);
 
-	print_push_status(dest, remote_refs);
-
 	if (expect_status_report) {
-		if (receive_status(in))
+		ret = receive_status(in, remote_refs);
+		if (ret == -2)
 			return -1;
 	}
+	else
+		ret = 0;
+
+	print_push_status(dest, remote_refs);
 
 	if (!args.dry_run && remote) {
 		for (ref = remote_refs; ref; ref = ref->next)
@@ -442,6 +479,8 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 
 	if (!new_refs)
 		fprintf(stderr, "Everything up-to-date\n");
+	if (ret < 0)
+		return ret;
 	for (ref = remote_refs; ref; ref = ref->next) {
 		switch (ref->status) {
 		case REF_STATUS_NONE:

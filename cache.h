@@ -503,7 +503,9 @@ struct ref {
 		REF_STATUS_REJECT_NONFASTFORWARD,
 		REF_STATUS_REJECT_NODELETE,
 		REF_STATUS_UPTODATE,
+		REF_STATUS_REMOTE_REJECT,
 	} status;
+	char *error;
 	struct ref *peer_ref; /* when renaming */
 	char name[FLEX_ARRAY]; /* more */
 };
