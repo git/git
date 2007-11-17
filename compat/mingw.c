@@ -352,7 +352,7 @@ static const char *quote_arg(const char *arg)
 	return q;
 }
 
-void quote_argv(const char **dst, const char **src)
+void quote_argv(const char **dst, const char *const *src)
 {
 	while (*src)
 		*dst++ = quote_arg(*src++);
@@ -394,7 +394,7 @@ const char *parse_interpreter(const char *cmd)
 	return p+1;
 }
 
-static int try_shell_exec(const char *cmd, const char **argv, const char **env)
+static int try_shell_exec(const char *cmd, char *const *argv, char *const *env)
 {
 	const char **sh_argv;
 	int n;
@@ -412,14 +412,14 @@ static int try_shell_exec(const char *cmd, const char **argv, const char **env)
 	sh_argv = xmalloc((n+2)*sizeof(char*));
 	sh_argv[0] = interpr;
 	sh_argv[1] = quote_arg(cmd);
-	quote_argv(&sh_argv[2], &argv[1]);
-	n = spawnvpe(_P_WAIT, interpr, sh_argv, env);
+	quote_argv(&sh_argv[2], (const char *const *)&argv[1]);
+	n = spawnvpe(_P_WAIT, interpr, sh_argv, (const char *const *)env);
 	if (n == -1)
 		return 1;	/* indicate that we tried but failed */
 	exit(n);
 }
 
-void mingw_execve(const char *cmd, const char **argv, const char **env)
+void mingw_execve(const char *cmd, char *const *argv, char *const *env)
 {
 	/* check if git_command is a shell script */
 	if (!try_shell_exec(cmd, argv, env)) {
@@ -427,8 +427,9 @@ void mingw_execve(const char *cmd, const char **argv, const char **env)
 		int n;
 		for (n = 0; argv[n];) n++;
 		qargv = xmalloc((n+1)*sizeof(char*));
-		quote_argv(qargv, argv);
-		int ret = spawnve(_P_WAIT, cmd, qargv, env);
+		quote_argv(qargv, (const char *const *)argv);
+		int ret = spawnve(_P_WAIT, cmd, qargv,
+		                          (const char *const *)env);
 		if (ret != -1)
 			exit(ret);
 	}
@@ -522,13 +523,13 @@ void mingw_free_path_split(char **path)
 	free(path);
 }
 
-void mingw_execvp(const char *cmd, const char **argv)
+void mingw_execvp(const char *cmd, char *const *argv)
 {
 	char **path = mingw_get_path_split();
 	char *prog = mingw_path_lookup(cmd, path);
 
 	if (prog) {
-		mingw_execve(prog, argv, (const char **) environ);
+		mingw_execve(prog, argv, environ);
 		free(prog);
 	} else
 		errno = ENOENT;
