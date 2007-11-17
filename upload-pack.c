@@ -143,6 +143,9 @@ static void create_pack_file(void)
 	struct child_process pack_objects;
 	int create_full_pack = (nr_our_refs == want_obj.nr && !have_obj.nr);
 	char data[8193];
+#ifndef __MINGW32__
+	char progress[128];
+#endif
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
 	int buffered = -1;
