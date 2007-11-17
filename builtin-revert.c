@@ -246,7 +246,9 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	if (no_commit) {
 		/*
 		 * We do not intend to commit immediately.  We just want to
-		 * merge the differences in.
+		 * merge the differences in, so let's compute the tree
+		 * that represents the "current" state for merge-recursive
+		 * to work on.
 		 */
 		if (write_tree(head, 0, NULL))
 			die ("Your index file is unmerged.");
@@ -256,7 +258,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		if (get_sha1("HEAD", head))
 			die ("You do not have a valid HEAD");
 		wt_status_prepare(&s);
-		if (s.commitable || s.workdir_dirty)
+		if (s.commitable)
 			die ("Dirty index: cannot %s", me);
 		discard_cache();
 	}

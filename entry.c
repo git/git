@@ -203,7 +203,7 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *t
 	strcpy(path + len, ce->name);
 
 	if (!lstat(path, &st)) {
-		unsigned changed = ce_match_stat(ce, &st, 1);
+		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID);
 		if (!changed)
 			return 0;
 		if (!state->force) {

@@ -9,9 +9,10 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--thread]
+'git-format-patch' [-k] [-o <dir> | --stdout] [--thread]
                    [--attach[=<boundary>] | --inline[=<boundary>]]
                    [-s | --signoff] [<common diff options>]
+                   [-n | --numbered | -N | --no-numbered]
                    [--start-number <n>] [--numbered-files]
                    [--in-reply-to=Message-Id] [--suffix=.<sfx>]
                    [--ignore-if-in-upstream]
@@ -76,6 +77,9 @@ include::diff-options.txt[]
 
 -n|--numbered::
 	Name output in '[PATCH n/m]' format.
+
+-N|--no-numbered::
+	Name output in '[PATCH]' format.
 
 --start-number <n>::
 	Start numbering the patches at <n> instead of 1.
@@ -142,15 +146,16 @@ not add any suffix.
 
 CONFIGURATION
 -------------
-You can specify extra mail header lines to be added to each
-message in the repository configuration.  You can also specify
-new defaults for the subject prefix and file suffix.
+You can specify extra mail header lines to be added to each message
+in the repository configuration, new defaults for the subject prefix
+and file suffix, and number patches when outputting more than one.
 
 ------------
 [format]
         headers = "Organization: git-foo\n"
         subjectprefix = CHANGE
         suffix = .txt
+        numbered = auto
 ------------
 
 

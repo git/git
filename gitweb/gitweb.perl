@@ -1856,7 +1856,7 @@ sub parse_date {
 	$date{'mday-time'} = sprintf "%d %s %02d:%02d",
 	                     $mday, $months[$mon], $hour ,$min;
 	$date{'iso-8601'}  = sprintf "%04d-%02d-%02dT%02d:%02d:%02dZ",
-	                     1900+$year, $mon, $mday, $hour ,$min, $sec;
+	                     1900+$year, 1+$mon, $mday, $hour ,$min, $sec;
 
 	$tz =~ m/^([+\-][0-9][0-9])([0-9][0-9])$/;
 	my $local = $epoch + ((int $1 + ($2/60)) * 3600);

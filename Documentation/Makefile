@@ -37,9 +37,6 @@ man7dir=$(mandir)/man7
 
 ASCIIDOC=asciidoc
 ASCIIDOC_EXTRA =
-ifdef ASCIIDOC8
-ASCIIDOC_EXTRA += -a asciidoc7compatible
-endif
 INSTALL?=install
 RM ?= rm -f
 DOC_REF = origin/man
@@ -51,6 +48,13 @@ DOCBOOK2X_TEXI=docbook2x-texi
 
 -include ../config.mak.autogen
 -include ../config.mak
+
+ifdef ASCIIDOC8
+ASCIIDOC_EXTRA += -a asciidoc7compatible
+endif
+ifdef DOCBOOK_XSL_172
+ASCIIDOC_EXTRA += -a docbook-xsl-172
+endif
 
 #
 # Please note that there is a minor bug in asciidoc.

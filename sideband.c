@@ -11,13 +11,19 @@
  * stream, aka "verbose").  A message over band #3 is a signal that
  * the remote died unexpectedly.  A flush() concludes the stream.
  */
+
+#define PREFIX "remote:"
+#define SUFFIX "\033[K"  /* change to "        " if ANSI sequences don't work */
+
 int recv_sideband(const char *me, int in_stream, int out, int err)
 {
-	char buf[7 + LARGE_PACKET_MAX + 1];
-	strcpy(buf, "remote:");
+	unsigned pf = strlen(PREFIX);
+	unsigned sf = strlen(SUFFIX);
+	char buf[pf + LARGE_PACKET_MAX + sf + 1];
+	memcpy(buf, PREFIX, pf);
 	while (1) {
 		int band, len;
-		len = packet_read_line(in_stream, buf+7, LARGE_PACKET_MAX);
+		len = packet_read_line(in_stream, buf + pf, LARGE_PACKET_MAX);
 		if (len == 0)
 			break;
 		if (len < 1) {
@@ -25,35 +31,52 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 			safe_write(err, buf, len);
 			return SIDEBAND_PROTOCOL_ERROR;
 		}
-		band = buf[7] & 0xff;
+		band = buf[pf] & 0xff;
 		len--;
 		switch (band) {
 		case 3:
-			buf[7] = ' ';
-			buf[8+len] = '\n';
-			safe_write(err, buf, 8+len+1);
+			buf[pf] = ' ';
+			buf[pf+1+len] = '\n';
+			safe_write(err, buf, pf+1+len+1);
 			return SIDEBAND_REMOTE_ERROR;
 		case 2:
-			buf[7] = ' ';
-			len += 8;
+			buf[pf] = ' ';
+			len += pf+1;
 			while (1) {
-				int brk = 8;
+				int brk = pf+1;
+
+				/* Break the buffer into separate lines. */
 				while (brk < len) {
 					brk++;
 					if (buf[brk-1] == '\n' ||
 					    buf[brk-1] == '\r')
 						break;
 				}
-				safe_write(err, buf, brk);
+
+				/*
+				 * Let's insert a suffix to clear the end
+				 * of the screen line, but only if current
+				 * line data actually contains something.
+				 */
+				if (brk > pf+1 + 1) {
+					char save[sf];
+					memcpy(save, buf + brk, sf);
+					buf[brk + sf - 1] = buf[brk - 1];
+					memcpy(buf + brk - 1, SUFFIX, sf);
+					safe_write(err, buf, brk + sf);
+					memcpy(buf + brk, save, sf);
+				} else
+					safe_write(err, buf, brk);
+
 				if (brk < len) {
-					memmove(buf + 8, buf + brk, len - brk);
-					len = len - brk + 8;
+					memmove(buf + pf+1, buf + brk, len - brk);
+					len = len - brk + pf+1;
 				} else
 					break;
 			}
 			continue;
 		case 1:
-			safe_write(out, buf+8, len);
+			safe_write(out, buf + pf+1, len);
 			continue;
 		default:
 			len = sprintf(buf,

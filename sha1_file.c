@@ -261,7 +261,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	int entlen = pfxlen + 43;
 	int base_len = -1;
 
-	if (!is_path_absolute(entry) && relative_base) {
+	if (!is_absolute_path(entry) && relative_base) {
 		/* Relative alt-odb */
 		if (base_len < 0)
 			base_len = strlen(relative_base) + 1;
@@ -270,7 +270,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	}
 	ent = xmalloc(sizeof(*ent) + entlen);
 
-	if (!is_path_absolute(entry) && relative_base) {
+	if (!is_absolute_path(entry) && relative_base) {
 		memcpy(ent->base, relative_base, base_len - 1);
 		ent->base[base_len - 1] = '/';
 		memcpy(ent->base + base_len, entry, len);
@@ -341,7 +341,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 		while (cp < ep && *cp != sep)
 			cp++;
 		if (last != cp) {
-			if (!is_path_absolute(last) && depth) {
+			if (!is_absolute_path(last) && depth) {
 				error("%s: ignoring relative alternate object store %s",
 						relative_base, last);
 			} else {
@@ -637,6 +637,7 @@ static int open_packed_git_1(struct packed_git *p)
 	struct pack_header hdr;
 	unsigned char sha1[20];
 	unsigned char *idx_sha1;
+	long fd_flag;
 
 	if (!p->index_data && open_pack_index(p))
 		return error("packfile %s index unavailable", p->pack_name);
@@ -653,7 +654,6 @@ static int open_packed_git_1(struct packed_git *p)
 	} else if (p->pack_size != st.st_size)
 		return error("packfile %s size changed", p->pack_name);
 
-#ifndef __MINGW32__
 	/* We leave these file descriptors open with sliding mmap;
 	 * there is no point keeping them open across exec(), though.
 	 */
@@ -663,7 +663,6 @@ static int open_packed_git_1(struct packed_git *p)
 	fd_flag |= FD_CLOEXEC;
 	if (fcntl(p->pack_fd, F_SETFD, fd_flag) == -1)
 		return error("cannot set FD_CLOEXEC");
-#endif
 
 	/* Verify we recognize this pack file format. */
 	if (read_in_full(p->pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))

@@ -291,4 +291,15 @@ test_expect_success 'clean.requireForce and -f' '
 
 '
 
+test_expect_success 'core.excludesfile' '
+
+	echo excludes >excludes &&
+	echo included >included &&
+	git config core.excludesfile excludes &&
+	output=$(git clean -n excludes included 2>&1) &&
+	expr "$output" : ".*included" >/dev/null &&
+	! expr "$output" : ".*excludes" >/dev/null
+
+'
+
 test_done

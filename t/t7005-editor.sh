@@ -16,7 +16,6 @@ do
 done
 unset vi
 mv e-vi.sh vi
-PATH=".:$PATH"
 unset EDITOR VISUAL GIT_EDITOR
 
 test_expect_success setup '
@@ -62,7 +61,7 @@ do
 		;;
 	esac
 	test_expect_success "Using $i" '
-		git commit --amend &&
+		git --exec-path=. commit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		diff actual expect
@@ -84,7 +83,7 @@ do
 		;;
 	esac
 	test_expect_success "Using $i (override)" '
-		git commit --amend &&
+		git --exec-path=. commit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		diff actual expect

@@ -8,7 +8,7 @@ git-cvsexportcommit - Export a single commit to a CVS checkout
 
 SYNOPSIS
 --------
-'git-cvsexportcommit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d cvsroot] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
+'git-cvsexportcommit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d cvsroot] [-w cvsworkdir] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
 
 
 DESCRIPTION
@@ -16,8 +16,9 @@ DESCRIPTION
 Exports a commit from GIT to a CVS checkout, making it easier
 to merge patches from a git repository into a CVS repository.
 
-Execute it from the root of the CVS working copy. GIT_DIR must be defined.
-See examples below.
+Specify the name of a CVS checkout using the -w switch or execute it
+from the root of the CVS working copy. In the latter case GIT_DIR must
+be defined. See examples below.
 
 It does its best to do the safe thing, it will check that the files are
 unchanged and up to date in the CVS checkout, and it will not autocommit
@@ -61,6 +62,11 @@ OPTIONS
 -u::
 	Update affected files from CVS repository before attempting export.
 
+-w::
+	Specify the location of the CVS checkout to use for the export. This
+	option does not require GIT_DIR to be set before execution if the
+	current directory is within a git repository.
+
 -v::
 	Verbose.
 
@@ -76,6 +82,12 @@ $ git-cvsexportcommit -v <commit-sha1>
 $ cvs commit -F .msg <files>
 ------------
 
+Merge one patch into CVS (-c and -w options). The working directory is within the Git Repo::
++
+------------
+	$ git-cvsexportcommit -v -c -w ~/project_cvs_checkout <commit-sha1>
+------------
+
 Merge pending patches into CVS automatically -- only if you really know what you are doing::
 +
 ------------
@@ -86,11 +98,11 @@ $ git-cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 git-cvsexportcommit 
 
 Author
 ------
-Written by Martin Langhoff <martin@catalyst.net.nz>
+Written by Martin Langhoff <martin@catalyst.net.nz> and others.
 
 Documentation
 --------------
-Documentation by Martin Langhoff <martin@catalyst.net.nz>
+Documentation by Martin Langhoff <martin@catalyst.net.nz> and others.
 
 GIT
 ---

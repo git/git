@@ -48,9 +48,14 @@ test_expect_success 'reference merge' '
 	git merge -s recursive "reference merge" HEAD master
 '
 
+PRE_REBASE=$(git rev-parse test-rebase)
 test_expect_success rebase '
 	git checkout test-rebase &&
-	git rebase --merge master
+	GIT_TRACE=1 git rebase --merge master
+'
+
+test_expect_success 'test-rebase@{1} is pre rebase' '
+	test $PRE_REBASE = $(git rev-parse test-rebase@{1})
 '
 
 test_expect_success 'merge and rebase should match' '

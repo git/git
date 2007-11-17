@@ -87,7 +87,7 @@ call_merge () {
 	cmt="$(cat "$dotest/cmt.$1")"
 	echo "$cmt" > "$dotest/current"
 	hd=$(git rev-parse --verify HEAD)
-	cmt_name=$(git symbolic-ref HEAD)
+	cmt_name=$(git symbolic-ref HEAD 2> /dev/null || echo HEAD)
 	msgnum=$(cat "$dotest/msgnum")
 	end=$(cat "$dotest/end")
 	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
@@ -115,7 +115,24 @@ call_merge () {
 	esac
 }
 
+move_to_original_branch () {
+	test -z "$head_name" &&
+		head_name="$(cat "$dotest"/head-name)" &&
+		onto="$(cat "$dotest"/onto)" &&
+		orig_head="$(cat "$dotest"/orig-head)"
+	case "$head_name" in
+	refs/*)
+		message="rebase finished: $head_name onto $onto"
+		git update-ref -m "$message" \
+			$head_name $(git rev-parse HEAD) $orig_head &&
+		git symbolic-ref HEAD $head_name ||
+		die "Could not move back to $head_name"
+		;;
+	esac
+}
+
 finish_rb_merge () {
+	move_to_original_branch
 	rm -r "$dotest"
 	echo "All done."
 }
@@ -153,7 +170,11 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
+		head_name=$(cat .dotest/head-name) &&
+		onto=$(cat .dotest/onto) &&
+		orig_head=$(cat .dotest/orig-head) &&
+		git am --resolved --3way --resolvemsg="$RESOLVEMSG" &&
+		move_to_original_branch
 		exit
 		;;
 	--skip)
@@ -173,16 +194,23 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am -3 --skip --resolvemsg="$RESOLVEMSG"
+		head_name=$(cat .dotest/head-name) &&
+		onto=$(cat .dotest/onto) &&
+		orig_head=$(cat .dotest/orig-head) &&
+		git am -3 --skip --resolvemsg="$RESOLVEMSG" &&
+		move_to_original_branch
 		exit
 		;;
 	--abort)
 		git rerere clear
 		if test -d "$dotest"
 		then
+			move_to_original_branch
 			rm -r "$dotest"
 		elif test -d .dotest
 		then
+			dotest=.dotest
+			move_to_original_branch
 			rm -r .dotest
 		else
 			die "No rebase in progress?"
@@ -318,6 +346,19 @@ then
 	GIT_PAGER='' git diff --stat --summary "$mb" "$onto"
 fi
 
+# move to a detached HEAD
+orig_head=$(git rev-parse HEAD^0)
+head_name=$(git symbolic-ref HEAD 2> /dev/null)
+case "$head_name" in
+'')
+	head_name="detached HEAD"
+	;;
+*)
+	git checkout "$orig_head" > /dev/null 2>&1 ||
+		die "could not detach HEAD"
+	;;
+esac
+
 # Rewind the head to "$onto"; this saves our current head in ORIG_HEAD.
 echo "First, rewinding head to replay your work on top of it..."
 git-reset --hard "$onto"
@@ -327,14 +368,21 @@ git-reset --hard "$onto"
 if test "$mb" = "$branch"
 then
 	echo >&2 "Fast-forwarded $branch_name to $onto_name."
+	move_to_original_branch
 	exit 0
 fi
 
 if test -z "$do_merge"
 then
 	git format-patch -k --stdout --full-index --ignore-if-in-upstream "$upstream"..ORIG_HEAD |
-	git am $git_am_opt --binary -3 -k --resolvemsg="$RESOLVEMSG"
-	exit $?
+	git am $git_am_opt --binary -3 -k --resolvemsg="$RESOLVEMSG" &&
+	move_to_original_branch
+	ret=$?
+	test 0 != $ret -a -d .dotest &&
+		echo $head_name > .dotest/head-name &&
+		echo $onto > .dotest/onto &&
+		echo $orig_head > .dotest/orig-head
+	exit $ret
 fi
 
 # start doing a rebase with git-merge
@@ -343,8 +391,10 @@ fi
 mkdir -p "$dotest"
 echo "$onto" > "$dotest/onto"
 echo "$onto_name" > "$dotest/onto_name"
-prev_head=`git rev-parse HEAD^0`
+prev_head=$orig_head
 echo "$prev_head" > "$dotest/prev_head"
+echo "$orig_head" > "$dotest/orig-head"
+echo "$head_name" > "$dotest/head-name"
 
 msgnum=0
 for cmt in `git rev-list --reverse --no-merges "$upstream"..ORIG_HEAD`

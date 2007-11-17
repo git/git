@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "commit.h"
-#include "interpolate.h"
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
@@ -283,7 +282,8 @@ static char *logmsg_reencode(const struct commit *commit,
 	return out;
 }
 
-static void fill_person(struct interp *table, const char *msg, int len)
+static void format_person_part(struct strbuf *sb, char part,
+                               const char *msg, int len)
 {
 	int start, end, tz = 0;
 	unsigned long date;
@@ -295,7 +295,10 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	start = end + 1;
 	while (end > 0 && isspace(msg[end - 1]))
 		end--;
-	table[0].value = xmemdupz(msg, end);
+	if (part == 'n') {	/* name */
+		strbuf_add(sb, msg, end);
+		return;
+	}
 
 	if (start >= len)
 		return;
@@ -307,7 +310,10 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	if (end >= len)
 		return;
 
-	table[1].value = xmemdupz(msg + start, end - start);
+	if (part == 'e') {	/* email */
+		strbuf_add(sb, msg + start, end - start);
+		return;
+	}
 
 	/* parse date */
 	for (start = end + 1; start < len && isspace(msg[start]); start++)
@@ -318,7 +324,10 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	if (msg + start == ep)
 		return;
 
-	table[5].value = xmemdupz(msg + start, ep - (msg + start));
+	if (part == 't') {	/* date, UNIX timestamp */
+		strbuf_add(sb, msg + start, ep - (msg + start));
+		return;
+	}
 
 	/* parse tz */
 	for (start = ep - msg + 1; start < len && isspace(msg[start]); start++)
@@ -329,115 +338,66 @@ static void fill_person(struct interp *table, const char *msg, int len)
 			tz = -tz;
 	}
 
-	interp_set_entry(table, 2, show_date(date, tz, DATE_NORMAL));
-	interp_set_entry(table, 3, show_date(date, tz, DATE_RFC2822));
-	interp_set_entry(table, 4, show_date(date, tz, DATE_RELATIVE));
-	interp_set_entry(table, 6, show_date(date, tz, DATE_ISO8601));
+	switch (part) {
+	case 'd':	/* date */
+		strbuf_addstr(sb, show_date(date, tz, DATE_NORMAL));
+		return;
+	case 'D':	/* date, RFC2822 style */
+		strbuf_addstr(sb, show_date(date, tz, DATE_RFC2822));
+		return;
+	case 'r':	/* date, relative */
+		strbuf_addstr(sb, show_date(date, tz, DATE_RELATIVE));
+		return;
+	case 'i':	/* date, ISO 8601 */
+		strbuf_addstr(sb, show_date(date, tz, DATE_ISO8601));
+		return;
+	}
 }
 
-void format_commit_message(const struct commit *commit,
-                           const void *format, struct strbuf *sb)
+struct chunk {
+	size_t off;
+	size_t len;
+};
+
+struct format_commit_context {
+	const struct commit *commit;
+
+	/* These offsets are relative to the start of the commit message. */
+	int commit_header_parsed;
+	struct chunk subject;
+	struct chunk author;
+	struct chunk committer;
+	struct chunk encoding;
+	size_t body_off;
+
+	/* The following ones are relative to the result struct strbuf. */
+	struct chunk abbrev_commit_hash;
+	struct chunk abbrev_tree_hash;
+	struct chunk abbrev_parent_hashes;
+};
+
+static int add_again(struct strbuf *sb, struct chunk *chunk)
 {
-	struct interp table[] = {
-		{ "%H" },	/* commit hash */
-		{ "%h" },	/* abbreviated commit hash */
-		{ "%T" },	/* tree hash */
-		{ "%t" },	/* abbreviated tree hash */
-		{ "%P" },	/* parent hashes */
-		{ "%p" },	/* abbreviated parent hashes */
-		{ "%an" },	/* author name */
-		{ "%ae" },	/* author email */
-		{ "%ad" },	/* author date */
-		{ "%aD" },	/* author date, RFC2822 style */
-		{ "%ar" },	/* author date, relative */
-		{ "%at" },	/* author date, UNIX timestamp */
-		{ "%ai" },	/* author date, ISO 8601 */
-		{ "%cn" },	/* committer name */
-		{ "%ce" },	/* committer email */
-		{ "%cd" },	/* committer date */
-		{ "%cD" },	/* committer date, RFC2822 style */
-		{ "%cr" },	/* committer date, relative */
-		{ "%ct" },	/* committer date, UNIX timestamp */
-		{ "%ci" },	/* committer date, ISO 8601 */
-		{ "%e" },	/* encoding */
-		{ "%s" },	/* subject */
-		{ "%b" },	/* body */
-		{ "%Cred" },	/* red */
-		{ "%Cgreen" },	/* green */
-		{ "%Cblue" },	/* blue */
-		{ "%Creset" },	/* reset color */
-		{ "%n" },	/* newline */
-		{ "%m" },	/* left/right/bottom */
-	};
-	enum interp_index {
-		IHASH = 0, IHASH_ABBREV,
-		ITREE, ITREE_ABBREV,
-		IPARENTS, IPARENTS_ABBREV,
-		IAUTHOR_NAME, IAUTHOR_EMAIL,
-		IAUTHOR_DATE, IAUTHOR_DATE_RFC2822, IAUTHOR_DATE_RELATIVE,
-		IAUTHOR_TIMESTAMP, IAUTHOR_ISO8601,
-		ICOMMITTER_NAME, ICOMMITTER_EMAIL,
-		ICOMMITTER_DATE, ICOMMITTER_DATE_RFC2822,
-		ICOMMITTER_DATE_RELATIVE, ICOMMITTER_TIMESTAMP,
-		ICOMMITTER_ISO8601,
-		IENCODING,
-		ISUBJECT,
-		IBODY,
-		IRED, IGREEN, IBLUE, IRESET_COLOR,
-		INEWLINE,
-		ILEFT_RIGHT,
-	};
-	struct commit_list *p;
-	char parents[1024];
-	unsigned long len;
+	if (chunk->len) {
+		strbuf_adddup(sb, chunk->off, chunk->len);
+		return 1;
+	}
+
+	/*
+	 * We haven't seen this chunk before.  Our caller is surely
+	 * going to add it the hard way now.  Remember the most likely
+	 * start of the to-be-added chunk: the current end of the
+	 * struct strbuf.
+	 */
+	chunk->off = sb->len;
+	return 0;
+}
+
+static void parse_commit_header(struct format_commit_context *context)
+{
+	const char *msg = context->commit->buffer;
 	int i;
 	enum { HEADER, SUBJECT, BODY } state;
-	const char *msg = commit->buffer;
-
-	if (ILEFT_RIGHT + 1 != ARRAY_SIZE(table))
-		die("invalid interp table!");
-
-	/* these are independent of the commit */
-	interp_set_entry(table, IRED, "\033[31m");
-	interp_set_entry(table, IGREEN, "\033[32m");
-	interp_set_entry(table, IBLUE, "\033[34m");
-	interp_set_entry(table, IRESET_COLOR, "\033[m");
-	interp_set_entry(table, INEWLINE, "\n");
-
-	/* these depend on the commit */
-	if (!commit->object.parsed)
-		parse_object(commit->object.sha1);
-	interp_set_entry(table, IHASH, sha1_to_hex(commit->object.sha1));
-	interp_set_entry(table, IHASH_ABBREV,
-			find_unique_abbrev(commit->object.sha1,
-				DEFAULT_ABBREV));
-	interp_set_entry(table, ITREE, sha1_to_hex(commit->tree->object.sha1));
-	interp_set_entry(table, ITREE_ABBREV,
-			find_unique_abbrev(commit->tree->object.sha1,
-				DEFAULT_ABBREV));
-	interp_set_entry(table, ILEFT_RIGHT,
-			 (commit->object.flags & BOUNDARY)
-			 ? "-"
-			 : (commit->object.flags & SYMMETRIC_LEFT)
-			 ? "<"
-			 : ">");
-
-	parents[1] = 0;
-	for (i = 0, p = commit->parents;
-			p && i < sizeof(parents) - 1;
-			p = p->next)
-		i += snprintf(parents + i, sizeof(parents) - i - 1, " %s",
-			sha1_to_hex(p->item->object.sha1));
-	interp_set_entry(table, IPARENTS, parents + 1);
-
-	parents[1] = 0;
-	for (i = 0, p = commit->parents;
-			p && i < sizeof(parents) - 1;
-			p = p->next)
-		i += snprintf(parents + i, sizeof(parents) - i - 1, " %s",
-			find_unique_abbrev(p->item->object.sha1,
-				DEFAULT_ABBREV));
-	interp_set_entry(table, IPARENTS_ABBREV, parents + 1);
 
 	for (i = 0, state = HEADER; msg[i] && state < BODY; i++) {
 		int eol;
@@ -445,7 +405,8 @@ void format_commit_message(const struct commit *commit,
 			; /* do nothing */
 
 		if (state == SUBJECT) {
-			table[ISUBJECT].value = xmemdupz(msg + i, eol - i);
+			context->subject.off = i;
+			context->subject.len = eol - i;
 			i = eol;
 		}
 		if (i == eol) {
@@ -453,29 +414,170 @@ void format_commit_message(const struct commit *commit,
 			/* strip empty lines */
 			while (msg[eol + 1] == '\n')
 				eol++;
-		} else if (!prefixcmp(msg + i, "author "))
-			fill_person(table + IAUTHOR_NAME,
-					msg + i + 7, eol - i - 7);
-		else if (!prefixcmp(msg + i, "committer "))
-			fill_person(table + ICOMMITTER_NAME,
-					msg + i + 10, eol - i - 10);
-		else if (!prefixcmp(msg + i, "encoding "))
-			table[IENCODING].value =
-				xmemdupz(msg + i + 9, eol - i - 9);
+		} else if (!prefixcmp(msg + i, "author ")) {
+			context->author.off = i + 7;
+			context->author.len = eol - i - 7;
+		} else if (!prefixcmp(msg + i, "committer ")) {
+			context->committer.off = i + 10;
+			context->committer.len = eol - i - 10;
+		} else if (!prefixcmp(msg + i, "encoding ")) {
+			context->encoding.off = i + 9;
+			context->encoding.len = eol - i - 9;
+		}
 		i = eol;
 	}
-	if (msg[i])
-		table[IBODY].value = xstrdup(msg + i);
+	context->body_off = i;
+	context->commit_header_parsed = 1;
+}
 
-	len = interpolate(sb->buf + sb->len, strbuf_avail(sb),
-				format, table, ARRAY_SIZE(table));
-	if (len > strbuf_avail(sb)) {
-		strbuf_grow(sb, len);
-		interpolate(sb->buf + sb->len, strbuf_avail(sb) + 1,
-					format, table, ARRAY_SIZE(table));
+static void format_commit_item(struct strbuf *sb, const char *placeholder,
+                               void *context)
+{
+	struct format_commit_context *c = context;
+	const struct commit *commit = c->commit;
+	const char *msg = commit->buffer;
+	struct commit_list *p;
+
+	/* these are independent of the commit */
+	switch (placeholder[0]) {
+	case 'C':
+		switch (placeholder[3]) {
+		case 'd':	/* red */
+			strbuf_addstr(sb, "\033[31m");
+			return;
+		case 'e':	/* green */
+			strbuf_addstr(sb, "\033[32m");
+			return;
+		case 'u':	/* blue */
+			strbuf_addstr(sb, "\033[34m");
+			return;
+		case 's':	/* reset color */
+			strbuf_addstr(sb, "\033[m");
+			return;
+		}
+	case 'n':		/* newline */
+		strbuf_addch(sb, '\n');
+		return;
 	}
-	strbuf_setlen(sb, sb->len + len);
-	interp_clear_table(table, ARRAY_SIZE(table));
+
+	/* these depend on the commit */
+	if (!commit->object.parsed)
+		parse_object(commit->object.sha1);
+
+	switch (placeholder[0]) {
+	case 'H':		/* commit hash */
+		strbuf_addstr(sb, sha1_to_hex(commit->object.sha1));
+		return;
+	case 'h':		/* abbreviated commit hash */
+		if (add_again(sb, &c->abbrev_commit_hash))
+			return;
+		strbuf_addstr(sb, find_unique_abbrev(commit->object.sha1,
+		                                     DEFAULT_ABBREV));
+		c->abbrev_commit_hash.len = sb->len - c->abbrev_commit_hash.off;
+		return;
+	case 'T':		/* tree hash */
+		strbuf_addstr(sb, sha1_to_hex(commit->tree->object.sha1));
+		return;
+	case 't':		/* abbreviated tree hash */
+		if (add_again(sb, &c->abbrev_tree_hash))
+			return;
+		strbuf_addstr(sb, find_unique_abbrev(commit->tree->object.sha1,
+		                                     DEFAULT_ABBREV));
+		c->abbrev_tree_hash.len = sb->len - c->abbrev_tree_hash.off;
+		return;
+	case 'P':		/* parent hashes */
+		for (p = commit->parents; p; p = p->next) {
+			if (p != commit->parents)
+				strbuf_addch(sb, ' ');
+			strbuf_addstr(sb, sha1_to_hex(p->item->object.sha1));
+		}
+		return;
+	case 'p':		/* abbreviated parent hashes */
+		if (add_again(sb, &c->abbrev_parent_hashes))
+			return;
+		for (p = commit->parents; p; p = p->next) {
+			if (p != commit->parents)
+				strbuf_addch(sb, ' ');
+			strbuf_addstr(sb, find_unique_abbrev(
+					p->item->object.sha1, DEFAULT_ABBREV));
+		}
+		c->abbrev_parent_hashes.len = sb->len -
+		                              c->abbrev_parent_hashes.off;
+		return;
+	case 'm':		/* left/right/bottom */
+		strbuf_addch(sb, (commit->object.flags & BOUNDARY)
+		                 ? '-'
+		                 : (commit->object.flags & SYMMETRIC_LEFT)
+		                 ? '<'
+		                 : '>');
+		return;
+	}
+
+	/* For the rest we have to parse the commit header. */
+	if (!c->commit_header_parsed)
+		parse_commit_header(c);
+
+	switch (placeholder[0]) {
+	case 's':
+		strbuf_add(sb, msg + c->subject.off, c->subject.len);
+		return;
+	case 'a':
+		format_person_part(sb, placeholder[1],
+		                   msg + c->author.off, c->author.len);
+		return;
+	case 'c':
+		format_person_part(sb, placeholder[1],
+		                   msg + c->committer.off, c->committer.len);
+		return;
+	case 'e':
+		strbuf_add(sb, msg + c->encoding.off, c->encoding.len);
+		return;
+	case 'b':
+		strbuf_addstr(sb, msg + c->body_off);
+		return;
+	}
+}
+
+void format_commit_message(const struct commit *commit,
+                           const void *format, struct strbuf *sb)
+{
+	const char *placeholders[] = {
+		"H",		/* commit hash */
+		"h",		/* abbreviated commit hash */
+		"T",		/* tree hash */
+		"t",		/* abbreviated tree hash */
+		"P",		/* parent hashes */
+		"p",		/* abbreviated parent hashes */
+		"an",		/* author name */
+		"ae",		/* author email */
+		"ad",		/* author date */
+		"aD",		/* author date, RFC2822 style */
+		"ar",		/* author date, relative */
+		"at",		/* author date, UNIX timestamp */
+		"ai",		/* author date, ISO 8601 */
+		"cn",		/* committer name */
+		"ce",		/* committer email */
+		"cd",		/* committer date */
+		"cD",		/* committer date, RFC2822 style */
+		"cr",		/* committer date, relative */
+		"ct",		/* committer date, UNIX timestamp */
+		"ci",		/* committer date, ISO 8601 */
+		"e",		/* encoding */
+		"s",		/* subject */
+		"b",		/* body */
+		"Cred",		/* red */
+		"Cgreen",	/* green */
+		"Cblue",	/* blue */
+		"Creset",	/* reset color */
+		"n",		/* newline */
+		"m",		/* left/right/bottom */
+		NULL
+	};
+	struct format_commit_context context;
+
+	memset(&context, 0, sizeof(context));
+	context.commit = commit;
+	strbuf_expand(sb, format, placeholders, format_commit_item, &context);
 }
 
 static void pp_header(enum cmit_fmt fmt,

@@ -1,26 +1,26 @@
 #include <stdint.h>
-#include <stdlib.h>
-#include <fcntl.h>
 #include "../git-compat-util.h"
 
 unsigned int _CRT_fmode = _O_BINARY;
 
-int readlink(const char *path, char *buf, size_t bufsiz)
+#undef open
+int mingw_open (const char *filename, int oflags, ...)
 {
-	errno = ENOSYS;
-	return -1;
-}
+	va_list args;
+	unsigned mode;
+	va_start(args, oflags);
+	mode = va_arg(args, int);
+	va_end(args);
 
-int symlink(const char *oldpath, const char *newpath)
-{
-	errno = ENOSYS;
-	return -1;
-}
-
-int fchmod(int fildes, mode_t mode)
-{
-	errno = EBADF;
-	return -1;
+	if (!strcmp(filename, "/dev/null"))
+		filename = "nul";
+	int fd = open(filename, oflags, mode);
+	if (fd < 0 && (oflags & O_CREAT) && errno == EACCES) {
+		DWORD attrs = GetFileAttributes(filename);
+		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
+			errno = EISDIR;
+	}
+	return fd;
 }
 
 static inline time_t filetime_to_time_t(const FILETIME *ft)
@@ -175,29 +175,6 @@ int mingw_fstat(int fd, struct mingw_stat *buf)
 	return -1;
 }
 
-/* missing: link, mkstemp, fchmod, getuid (?), gettimeofday */
-int socketpair(int d, int type, int protocol, int sv[2])
-{
-	return -1;
-}
-int syslog(int type, char *bufp, ...)
-{
-	return -1;
-}
-unsigned int alarm(unsigned int seconds)
-{
-	return 0;
-}
-#include <winsock2.h>
-int fork()
-{
-	return -1;
-}
-
-int kill(pid_t pid, int sig)
-{
-	return -1;
-}
 unsigned int sleep (unsigned int __seconds)
 {
 	Sleep(__seconds*1000);
@@ -722,6 +699,7 @@ static inline int is_timeval_eq(const struct timeval *i1, const struct timeval *
 int setitimer(int type, struct itimerval *in, struct itimerval *out)
 {
 	static const struct timeval zero;
+	static int atexit_done;
 
 	if (out != NULL)
 		return errno = EINVAL,
@@ -740,7 +718,10 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out)
 
 	timer_interval = in->it_interval.tv_sec * 1000 + in->it_interval.tv_usec / 1000;
 	one_shot = is_timeval_eq(&in->it_value, &zero);
-	atexit(stop_timer_thread);
+	if (!atexit_done) {
+		atexit(stop_timer_thread);
+		atexit_done = 1;
+	}
 	return start_timer_thread();
 }
 

@@ -434,6 +434,13 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.excludesfile")) {
+		if (!value)
+			die("core.excludesfile without value");
+		excludes_file = xstrdup(value);
+		return 0;
+	}
+
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
@@ -460,8 +467,8 @@ const char *git_etc_gitconfig(void)
 	static const char *system_wide;
 	if (!system_wide) {
 		system_wide = ETC_GITCONFIG;
-		/* interpret path relative to exec-dir */
 		if (!is_absolute_path(system_wide)) {
+			/* interpret path relative to exec-dir */
 			const char *exec_path = git_exec_path();
 			system_wide = prefix_path(exec_path, strlen(exec_path),
 						system_wide);
