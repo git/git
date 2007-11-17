@@ -670,13 +670,13 @@ static int open_packed_git_1(struct packed_git *p)
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
 		return error("file %s is not a GIT packfile", p->pack_name);
 	if (!pack_version_ok(hdr.hdr_version))
-		return error("packfile %s is version %lu and not supported"
+		return error("packfile %s is version %u and not supported"
 			" (try upgrading GIT to a newer version)",
 			p->pack_name, ntohl(hdr.hdr_version));
 
 	/* Verify the pack matches its index. */
 	if (p->num_objects != ntohl(hdr.hdr_entries))
-		return error("packfile %s claims to have %lu objects"
+		return error("packfile %s claims to have %u objects"
 			     " while index indicates %u objects",
 			     p->pack_name, ntohl(hdr.hdr_entries),
 			     p->num_objects);

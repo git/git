@@ -509,7 +509,7 @@ static int get_pack(int xd[2], char **pack_lockfile)
 
 		if (read_pack_header(fd[0], &header))
 			die("protocol error: bad pack header");
-		snprintf(hdr_arg, sizeof(hdr_arg), "--pack_header=%lu,%lu",
+		snprintf(hdr_arg, sizeof(hdr_arg), "--pack_header=%u,%u",
 			 ntohl(header.hdr_version), ntohl(header.hdr_entries));
 		if (ntohl(header.hdr_entries) < unpack_limit)
 			do_keep = 0;

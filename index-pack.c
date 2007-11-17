@@ -143,7 +143,7 @@ static void parse_pack_header(void)
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
 		die("pack signature mismatch");
 	if (!pack_version_ok(hdr->hdr_version))
-		die("pack version %lu unsupported", ntohl(hdr->hdr_version));
+		die("pack version %d unsupported", ntohl(hdr->hdr_version));
 
 	nr_objects = ntohl(hdr->hdr_entries);
 	use(sizeof(struct pack_header));
