@@ -136,6 +136,9 @@ all::
 # Define THREADED_DELTA_SEARCH if you have pthreads and wish to exploit
 # parallel delta searching when packing objects.
 #
+# Define NEEDS_QUICK_QSORT if your qsort() implementation has O(n^2)
+# worst case complexity.
+#
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@"$(SHELL_PATH)" ./GIT-VERSION-GEN
@@ -523,6 +526,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_SVN_TESTS = YesPlease
 	NO_PERL_MAKEMAKER = YesPlease
 	NO_R_TO_GCC_LINKER = YesPlease
+	NEEDS_QUICK_QSORT = YesPlease
 	NO_EXTRA_PROGRAMS = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
@@ -740,6 +744,10 @@ endif
 ifdef NO_MEMMEM
 	COMPAT_CFLAGS += -DNO_MEMMEM
 	COMPAT_OBJS += compat/memmem.o
+endif
+ifdef NEEDS_QUICK_QSORT
+	COMPAT_CFLAGS += -DNEEDS_QUICK_QSORT
+	COMPAT_OBJS += compat/qsort.o
 endif
 
 ifdef THREADED_DELTA_SEARCH

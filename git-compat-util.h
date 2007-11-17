@@ -645,4 +645,10 @@ extern __attribute__((noreturn)) int git_exit(int code);
 
 #endif /* __MINGW32__ */
 
+#ifdef NEEDS_QUICK_QSORT
+void git_qsort(void *base, size_t nmemb, size_t size,
+	       int(*compar)(const void *, const void *));
+#define qsort git_qsort
+#endif
+
 #endif
