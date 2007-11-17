@@ -451,9 +451,9 @@ static inline int kill(pid_t pid, int sig)
 static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
 
-void mingw_execve(const char *cmd, const char **argv, const char **env);
+void mingw_execve(const char *cmd, char *const *argv, char * const *env);
 #define execve mingw_execve
-extern void mingw_execvp(const char *cmd, const char **argv);
+extern void mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp
 typedef int pid_t;
 static inline int waitpid(pid_t pid, unsigned *status, unsigned options)
@@ -527,7 +527,7 @@ static inline int getppid(void) { return 1; }
 static inline void sync(void) {}
 extern int getpagesize(void);	/* defined in MinGW's libgcc.a */
 
-extern void quote_argv(const char **dst, const char **src);
+extern void quote_argv(const char **dst, const char *const *src);
 extern const char *parse_interpreter(const char *cmd);
 extern char *mingw_path_lookup(const char *cmd, char **path);
 extern char **mingw_get_path_split(void);
