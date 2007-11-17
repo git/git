@@ -32,6 +32,10 @@ Updates since v1.5.3
    (read: safer than the usual one) after the user accumulates
    too many loose objects.
 
+ * You need to explicitly set clean.requireForce to true to allow
+   git-clean to do any damage now (the configuration variable used
+   to default to false).
+
  * git-push has been rewritten in C.
 
  * git-push learned --dry-run option to show what would happen
@@ -56,7 +60,28 @@ Updates since v1.5.3
 
  * git-bisect learned "skip" action to mark untestable commits.
 
- * rename detection diff family, while detecting exact matches,
+ * git-format-patch learned "format.numbered" configuration variable
+   to automatically turn --numbered option on when more than one
+   commits are formatted.
+
+ * git-ls-files learned "--exclude-standard" to use the canned
+   set of exclude files.
+
+ * git-rebase now detaches head during its operation, so after a
+   successful "git rebase" operation, the reflog entry branch@{1}
+   for the current branch points at the commit before the rebase
+   was started.
+
+ * "git-tag -a -f existing" begins the editor session using the
+   existing annotation message.
+
+ * "git cvsexportcommit" learned -w option to specify and switch
+   to the CVS working directory.
+
+ * Output processing for '--pretty=format:<user format>' has
+   been optimized.
+
+ * Rename detection diff family, while detecting exact matches,
    has been greatly optimized.
 
  * Example update and post-receive hooks have been improved.
@@ -77,8 +102,11 @@ Fixes since v1.5.3
 All of the fixes in v1.5.3 maintenance series are included in
 this release, unless otherwise noted.
 
+ * git-svn talking with the SVN over http will correctly quote branch
+   and project names.
+
 --
 exec >/var/tmp/1
-O=v1.5.3.5-618-g5d4138a
+O=v1.5.3.5-736-geb9d2b9
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
