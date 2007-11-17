@@ -121,7 +121,7 @@ int execv_git_cmd(const char **argv)
 	trace_argv_printf(argv, -1, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */
-	execvp(cmd.buf, argv);
+	execvp(cmd.buf, (char **)argv);
 
 	trace_printf("trace: exec failed: %s\n", strerror(errno));
 
