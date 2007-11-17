@@ -8,8 +8,6 @@ static const char prune_packed_usage[] =
 #define DRY_RUN 01
 #define VERBOSE 02
 
-void sync(void);
-
 static struct progress *progress;
 
 static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
