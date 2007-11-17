@@ -596,8 +596,11 @@ static void receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	static const char *capabilities = "multi_ack thin-pack side-band"
-		" side-band-64k ofs-delta shallow no-progress";
+	static const char *capabilities = "multi_ack thin-pack"
+#ifndef __MINGW32__
+		" side-band side-band-64k"
+#endif
+		" ofs-delta shallow no-progress";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
