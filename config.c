@@ -15,8 +15,6 @@ static const char *config_file_name;
 static int config_linenr;
 static int zlib_compression_seen;
 
-extern int getpagesize();
-
 static int get_next_char(void)
 {
 	int c;
