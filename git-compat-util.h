@@ -153,6 +153,10 @@ extern int git_munmap(void *start, size_t length);
 #define pread git_pread
 extern ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 #endif
+/* Forward decl that will remind us if its twin in cache.h changes.
+   This function in used in compat/pread.c.  But we can't include
+   cache.h there. */
+extern int read_in_full(int fd, void *buf, size_t count);
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
