@@ -324,8 +324,8 @@ bisect_next() {
 
 bisect_visualize() {
 	bisect_next_check fail
-	not=`cd "$GIT_DIR/refs" && echo bisect/good-*`
-	eval gitk bisect/bad --not $not -- $(cat "$GIT_DIR/BISECT_NAMES")
+	not=$(git for-each-ref --format='%(refname)' "refs/bisect/good-*")
+	eval gitk refs/bisect/bad --not $not -- $(cat "$GIT_DIR/BISECT_NAMES")
 }
 
 bisect_reset() {
