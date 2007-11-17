@@ -180,24 +180,17 @@ static int receive_status(int in)
 static void update_tracking_ref(struct remote *remote, struct ref *ref)
 {
 	struct refspec rs;
-	int will_delete_ref;
+
+	if (ref->status != REF_STATUS_OK)
+		return;
 
 	rs.src = ref->name;
 	rs.dst = NULL;
 
-	if (!ref->peer_ref)
-		return;
-
-	will_delete_ref = is_null_sha1(ref->peer_ref->new_sha1);
-
-	if (!will_delete_ref &&
-			!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1))
-		return;
-
 	if (!remote_find_tracking(remote, &rs)) {
 		if (args.verbose)
 			fprintf(stderr, "updating local tracking ref '%s'\n", rs.dst);
-		if (is_null_sha1(ref->peer_ref->new_sha1)) {
+		if (ref->deletion) {
 			if (delete_ref(rs.dst, NULL))
 				error("Failed to delete");
 		} else
@@ -444,8 +437,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 
 	if (!args.dry_run && remote) {
 		for (ref = remote_refs; ref; ref = ref->next)
-			if (!is_null_sha1(ref->new_sha1))
-				update_tracking_ref(remote, ref);
+			update_tracking_ref(remote, ref);
 	}
 
 	if (!new_refs)

@@ -45,4 +45,9 @@ test_expect_success 'check tracking branches not updated for failed refs' '
 	test "$(git rev-parse origin/b2)" = "$b2"
 '
 
+test_expect_success 'deleted branches have their tracking branches removed' '
+	git push origin :b1 &&
+	test "$(git rev-parse origin/b1)" = "origin/b1"
+'
+
 test_done
