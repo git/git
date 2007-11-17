@@ -571,6 +571,7 @@ extern int pager_in_use;
 extern int pager_use_color;
 
 extern char *editor_program;
+extern char *excludes_file;
 
 /* base85 */
 int decode_85(char *dst, const char *line, int linelen);
