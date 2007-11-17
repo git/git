@@ -103,7 +103,7 @@ int spawnvppe_pipe(const char *cmd, const char **argv, const char **env,
 	qargv = xmalloc((argc+2)*sizeof(char*));
 	if (!interpr) {
 		quote_argv(qargv, argv);
-		pid = spawnve(_P_NOWAIT, prog, qargv, (const char**) env);
+		pid = spawnve(_P_NOWAIT, prog, qargv, env);
 	} else {
 		qargv[0] = interpr;
 		argv[0] = prog;
