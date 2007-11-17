@@ -94,6 +94,8 @@ all::
 # Define OLD_ICONV if your library has an old iconv(), where the second
 # (input buffer pointer) parameter is declared with type (const char **).
 #
+# Define NO_DEFLATE_BOUND if your zlib does not have deflateBound.
+#
 # Define NO_R_TO_GCC_LINKER if your gcc does not like "-R/path/lib"
 # that tells runtime paths to dynamic libraries;
 # "-Wl,-rpath=/path/lib" is used instead.
@@ -637,6 +639,10 @@ endif
 
 ifdef OLD_ICONV
 	BASIC_CFLAGS += -DOLD_ICONV
+endif
+
+ifdef NO_DEFLATE_BOUND
+	BASIC_CFLAGS += -DNO_DEFLATE_BOUND
 endif
 
 ifdef PPC_SHA1
