@@ -245,15 +245,16 @@ static void show_man_page(const char *git_cmd)
 {
 #ifdef __MINGW32__
 	{
+		const char* exec_path = git_exec_path();
 		char *htmlpath = make_native_separator(
-		                   mkpath("%s/doc/git/html/%s.html"
-		                          , git_install_prefix()
-		                         , git_cmd)
+		                   mkpath("%s/../doc/git/html/%s.html"
+		                          , exec_path
+		                          , git_cmd)
 		                 );
 		if (!file_exists(htmlpath)) {
 			htmlpath = make_native_separator(
-		                      mkpath("%s/doc/git/html/git-%s.html"
-		                             , git_install_prefix()
+		                      mkpath("%s/../doc/git/html/git-%s.html"
+		                             , exec_path
 		                             , git_cmd)
 		                    );
 			if (!file_exists(htmlpath)) {
