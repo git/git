@@ -593,6 +593,10 @@ static inline int mingw_fcntl(int fd, int cmd, long arg)
 { return cmd == F_GETFD || cmd == F_SETFD ? 0 : (errno = EINVAL, -1); }
 #define fcntl mingw_fcntl
 
+static inline unsigned int git_ntohl(unsigned int x)
+{ return (unsigned int)ntohl(x); }
+#define ntohl git_ntohl
+
 extern __attribute__((noreturn)) int git_exit(int code);
 #define exit git_exit
 
