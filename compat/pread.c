@@ -1,7 +1,5 @@
 #include "../git-compat-util.h"
 
-int read_in_full(int fd, void *buf, size_t count);
-
 ssize_t git_pread(int fd, void *buf, size_t count, off_t offset)
 {
         off_t current_offset;
