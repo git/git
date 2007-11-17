@@ -563,7 +563,6 @@ static struct ref *do_fetch_pack(int fd[2],
 			fprintf(stderr, "Server supports multi_ack\n");
 		multi_ack = 1;
 	}
-#ifndef __MINGW32__
 	if (server_supports("side-band-64k")) {
 		if (args.verbose)
 			fprintf(stderr, "Server supports side-band-64k\n");
@@ -574,7 +573,6 @@ static struct ref *do_fetch_pack(int fd[2],
 			fprintf(stderr, "Server supports side-band\n");
 		use_sideband = 1;
 	}
-#endif
 	if (!ref) {
 		packet_flush(fd[1]);
 		die("no matching remote head");
