@@ -391,7 +391,6 @@ static inline int is_dev_null(const char *str)
 const char *make_absolute_path(const char *path);
 /* Convert slashes in place. On Windows to backslashes. */
 char *make_native_separator(char *path);
-const char *git_install_prefix();
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int sha1_object_info(const unsigned char *, unsigned long *);
