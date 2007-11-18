@@ -696,14 +696,6 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 	return -errs;
 }
 
-static struct ref *find_ref_by_name(struct ref *list, const char *name)
-{
-	for ( ; list; list = list->next)
-		if (!strcmp(list->name, name))
-			return list;
-	return NULL;
-}
-
 static const struct refspec *check_pattern_match(const struct refspec *rs,
 						 int rs_nr,
 						 const struct ref *src)
