@@ -4,16 +4,18 @@ GIT v1.5.3.6 Release Notes
 Fixes since v1.5.3.5
 --------------------
 
- * git-cvsexportcommit handles root commits better;
+ * git-cvsexportcommit handles root commits better.
 
  * git-svn dcommit used to clobber when sending a series of
-   patches;
+   patches.
 
  * git-svn dcommit failed after attempting to rebase when
    started with a dirty index; now it stops upfront.
 
  * git-grep sometimes refused to work when your index was
-   unmerged;
+   unmerged.
+
+ * "git-grep -A1 -B2" acted as if it was told to run "git -A1 -B21".
 
  * git-hash-object did not honor configuration variables, such as
    core.compression.
@@ -44,9 +46,3 @@ Fixes since v1.5.3.5
    of deflateBound() has been added.
 
  * Quite a lot of documentation clarifications.
-
---
-exec >/var/tmp/1
-O=v1.5.3.5-57-gb574c8d
-echo O=`git describe refs/heads/maint`
-git shortlog --no-merges $O..refs/heads/maint
