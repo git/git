@@ -55,13 +55,13 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
 	rev->verbose_header = 1;
-	rev->diffopt.recursive = 1;
+	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
-	if (rev->diffopt.follow_renames) {
+	if (DIFF_OPT_TST(&rev->diffopt, FOLLOW_RENAMES)) {
 		rev->always_show_header = 0;
 		if (rev->diffopt.nr_paths != 1)
 			usage("git logs can only follow renames on one pathname at a time");
@@ -185,11 +185,9 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			struct tag *t = (struct tag *)o;
 
 			printf("%stag %s%s\n\n",
-					diff_get_color(rev.diffopt.color_diff,
-						DIFF_COMMIT),
+					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
 					t->tag,
-					diff_get_color(rev.diffopt.color_diff,
-						DIFF_RESET));
+					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			ret = show_object(o->sha1, 1);
 			objects[i].item = (struct object *)t->tagged;
 			i--;
@@ -197,11 +195,9 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 		}
 		case OBJ_TREE:
 			printf("%stree %s%s\n\n",
-					diff_get_color(rev.diffopt.color_diff,
-						DIFF_COMMIT),
+					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
 					name,
-					diff_get_color(rev.diffopt.color_diff,
-						DIFF_RESET));
+					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			read_tree_recursive((struct tree *)o, "", 0, 0, NULL,
 					show_tree_object);
 			break;
@@ -497,7 +493,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
 	rev.diffopt.msg_sep = "";
-	rev.diffopt.recursive = 1;
+	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
 
 	rev.subject_prefix = fmt_patch_subject_prefix;
 	rev.extra_headers = extra_headers;
@@ -605,8 +601,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
 
-	if (!rev.diffopt.text)
-		rev.diffopt.binary = 1;
+	if (!DIFF_OPT_TST(&rev.diffopt, TEXT))
+		DIFF_OPT_SET(&rev.diffopt, BINARY);
 
 	if (!output_directory && !use_stdout)
 		output_directory = prefix;
@@ -764,7 +760,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 	revs.diff = 1;
 	revs.combine_merges = 0;
 	revs.ignore_merges = 1;
-	revs.diffopt.recursive = 1;
+	DIFF_OPT_SET(&revs.diffopt, RECURSIVE);
 
 	if (add_pending_commit(head, &revs, 0))
 		die("Unknown commit %s", head);

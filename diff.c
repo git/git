@@ -814,10 +814,10 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 	}
 
 	/* Find the longest filename and max number of changes */
-	reset = diff_get_color(options->color_diff, DIFF_RESET);
-	set = diff_get_color(options->color_diff, DIFF_PLAIN);
-	add_c = diff_get_color(options->color_diff, DIFF_FILE_NEW);
-	del_c = diff_get_color(options->color_diff, DIFF_FILE_OLD);
+	reset = diff_get_color_opt(options, DIFF_RESET);
+	set   = diff_get_color_opt(options, DIFF_PLAIN);
+	add_c = diff_get_color_opt(options, DIFF_FILE_NEW);
+	del_c = diff_get_color_opt(options, DIFF_FILE_OLD);
 
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
@@ -1243,8 +1243,8 @@ static void builtin_diff(const char *name_a,
 	mmfile_t mf1, mf2;
 	const char *lbl[2];
 	char *a_one, *b_two;
-	const char *set = diff_get_color(o->color_diff, DIFF_METAINFO);
-	const char *reset = diff_get_color(o->color_diff, DIFF_RESET);
+	const char *set = diff_get_color_opt(o, DIFF_METAINFO);
+	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 
 	a_one = quote_two("a/", name_a + (*name_a == '/'));
 	b_two = quote_two("b/", name_b + (*name_b == '/'));
@@ -1277,7 +1277,7 @@ static void builtin_diff(const char *name_a,
 			goto free_ab_and_return;
 		if (complete_rewrite) {
 			emit_rewrite_diff(name_a, name_b, one, two,
-					o->color_diff);
+					DIFF_OPT_TST(o, COLOR_DIFF));
 			o->found_changes = 1;
 			goto free_ab_and_return;
 		}
@@ -1286,13 +1286,13 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (!o->text &&
+	if (!DIFF_OPT_TST(o, TEXT) &&
 	    (diff_filespec_is_binary(one) || diff_filespec_is_binary(two))) {
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
 			goto free_ab_and_return;
-		if (o->binary)
+		if (DIFF_OPT_TST(o, BINARY))
 			emit_binary_diff(&mf1, &mf2);
 		else
 			printf("Binary files %s and %s differ\n",
@@ -1315,7 +1315,7 @@ static void builtin_diff(const char *name_a,
 		memset(&xecfg, 0, sizeof(xecfg));
 		memset(&ecbdata, 0, sizeof(ecbdata));
 		ecbdata.label_path = lbl;
-		ecbdata.color_diff = o->color_diff;
+		ecbdata.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
 		ecbdata.found_changesp = &o->found_changes;
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
@@ -1331,11 +1331,11 @@ static void builtin_diff(const char *name_a,
 		ecb.outf = xdiff_outf;
 		ecb.priv = &ecbdata;
 		ecbdata.xm.consume = fn_out_consume;
-		if (o->color_diff_words)
+		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS))
 			ecbdata.diff_words =
 				xcalloc(1, sizeof(struct diff_words_data));
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
-		if (o->color_diff_words)
+		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS))
 			free_diff_words_data(&ecbdata);
 	}
 
@@ -1409,7 +1409,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.xm.consume = checkdiff_consume;
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
-	data.color_diff = o->color_diff;
+	data.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
 
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
@@ -1853,7 +1853,7 @@ static void run_diff_cmd(const char *pgm,
 			 struct diff_options *o,
 			 int complete_rewrite)
 {
-	if (!o->allow_external)
+	if (!DIFF_OPT_TST(o, ALLOW_EXTERNAL))
 		pgm = NULL;
 	else {
 		const char *cmd = external_diff_attr(name);
@@ -1951,9 +1951,9 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 	}
 
 	if (hashcmp(one->sha1, two->sha1)) {
-		int abbrev = o->full_index ? 40 : DEFAULT_ABBREV;
+		int abbrev = DIFF_OPT_TST(o, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
 
-		if (o->binary) {
+		if (DIFF_OPT_TST(o, BINARY)) {
 			mmfile_t mf;
 			if ((!fill_mmfile(&mf, one) && diff_filespec_is_binary(one)) ||
 			    (!fill_mmfile(&mf, two) && diff_filespec_is_binary(two)))
@@ -2045,7 +2045,10 @@ void diff_setup(struct diff_options *options)
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
-	options->color_diff = diff_use_color_default;
+	if (diff_use_color_default)
+		DIFF_OPT_SET(options, COLOR_DIFF);
+	else
+		DIFF_OPT_CLR(options, COLOR_DIFF);
 	options->detect_rename = diff_detect_rename_default;
 }
 
@@ -2064,7 +2067,7 @@ int diff_setup_done(struct diff_options *options)
 	if (count > 1)
 		die("--name-only, --name-status, --check and -s are mutually exclusive");
 
-	if (options->find_copies_harder)
+	if (DIFF_OPT_TST(options, FIND_COPIES_HARDER))
 		options->detect_rename = DIFF_DETECT_COPY;
 
 	if (options->output_format & (DIFF_FORMAT_NAME |
@@ -2088,12 +2091,12 @@ int diff_setup_done(struct diff_options *options)
 				      DIFF_FORMAT_SHORTSTAT |
 				      DIFF_FORMAT_SUMMARY |
 				      DIFF_FORMAT_CHECKDIFF))
-		options->recursive = 1;
+		DIFF_OPT_SET(options, RECURSIVE);
 	/*
 	 * Also pickaxe would not work very well if you do not say recursive
 	 */
 	if (options->pickaxe)
-		options->recursive = 1;
+		DIFF_OPT_SET(options, RECURSIVE);
 
 	if (options->detect_rename && options->rename_limit < 0)
 		options->rename_limit = diff_rename_limit_default;
@@ -2115,9 +2118,9 @@ int diff_setup_done(struct diff_options *options)
 	 * to have found.  It does not make sense not to return with
 	 * exit code in such a case either.
 	 */
-	if (options->quiet) {
+	if (DIFF_OPT_TST(options, QUIET)) {
 		options->output_format = DIFF_FORMAT_NO_OUTPUT;
-		options->exit_with_status = 1;
+		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	}
 
 	/*
@@ -2125,7 +2128,7 @@ int diff_setup_done(struct diff_options *options)
 	 * upon the first hit.  We need to run diff as usual.
 	 */
 	if (options->pickaxe || options->filter)
-		options->quiet = 0;
+		DIFF_OPT_CLR(options, QUIET);
 
 	return 0;
 }
@@ -2182,21 +2185,32 @@ static int diff_scoreopt_parse(const char *opt);
 int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 {
 	const char *arg = av[0];
+
+	/* Output format options */
 	if (!strcmp(arg, "-p") || !strcmp(arg, "-u"))
 		options->output_format |= DIFF_FORMAT_PATCH;
 	else if (opt_arg(arg, 'U', "unified", &options->context))
 		options->output_format |= DIFF_FORMAT_PATCH;
 	else if (!strcmp(arg, "--raw"))
 		options->output_format |= DIFF_FORMAT_RAW;
-	else if (!strcmp(arg, "--patch-with-raw")) {
+	else if (!strcmp(arg, "--patch-with-raw"))
 		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_RAW;
-	}
-	else if (!strcmp(arg, "--numstat")) {
+	else if (!strcmp(arg, "--numstat"))
 		options->output_format |= DIFF_FORMAT_NUMSTAT;
-	}
-	else if (!strcmp(arg, "--shortstat")) {
+	else if (!strcmp(arg, "--shortstat"))
 		options->output_format |= DIFF_FORMAT_SHORTSTAT;
-	}
+	else if (!strcmp(arg, "--check"))
+		options->output_format |= DIFF_FORMAT_CHECKDIFF;
+	else if (!strcmp(arg, "--summary"))
+		options->output_format |= DIFF_FORMAT_SUMMARY;
+	else if (!strcmp(arg, "--patch-with-stat"))
+		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_DIFFSTAT;
+	else if (!strcmp(arg, "--name-only"))
+		options->output_format |= DIFF_FORMAT_NAME;
+	else if (!strcmp(arg, "--name-status"))
+		options->output_format |= DIFF_FORMAT_NAME_STATUS;
+	else if (!strcmp(arg, "-s"))
+		options->output_format |= DIFF_FORMAT_NO_OUTPUT;
 	else if (!prefixcmp(arg, "--stat")) {
 		char *end;
 		int width = options->stat_width;
@@ -2224,68 +2238,80 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->stat_name_width = name_width;
 		options->stat_width = width;
 	}
-	else if (!strcmp(arg, "--check"))
-		options->output_format |= DIFF_FORMAT_CHECKDIFF;
-	else if (!strcmp(arg, "--summary"))
-		options->output_format |= DIFF_FORMAT_SUMMARY;
-	else if (!strcmp(arg, "--patch-with-stat")) {
-		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_DIFFSTAT;
-	}
-	else if (!strcmp(arg, "-z"))
-		options->line_termination = 0;
-	else if (!prefixcmp(arg, "-l"))
-		options->rename_limit = strtoul(arg+2, NULL, 10);
-	else if (!strcmp(arg, "--full-index"))
-		options->full_index = 1;
-	else if (!strcmp(arg, "--binary")) {
-		options->output_format |= DIFF_FORMAT_PATCH;
-		options->binary = 1;
-	}
-	else if (!strcmp(arg, "-a") || !strcmp(arg, "--text")) {
-		options->text = 1;
-	}
-	else if (!strcmp(arg, "--name-only"))
-		options->output_format |= DIFF_FORMAT_NAME;
-	else if (!strcmp(arg, "--name-status"))
-		options->output_format |= DIFF_FORMAT_NAME_STATUS;
-	else if (!strcmp(arg, "-R"))
-		options->reverse_diff = 1;
-	else if (!prefixcmp(arg, "-S"))
-		options->pickaxe = arg + 2;
-	else if (!strcmp(arg, "-s")) {
-		options->output_format |= DIFF_FORMAT_NO_OUTPUT;
-	}
-	else if (!prefixcmp(arg, "-O"))
-		options->orderfile = arg + 2;
-	else if (!prefixcmp(arg, "--diff-filter="))
-		options->filter = arg + 14;
-	else if (!strcmp(arg, "--pickaxe-all"))
-		options->pickaxe_opts = DIFF_PICKAXE_ALL;
-	else if (!strcmp(arg, "--pickaxe-regex"))
-		options->pickaxe_opts = DIFF_PICKAXE_REGEX;
+
+	/* renames options */
 	else if (!prefixcmp(arg, "-B")) {
-		if ((options->break_opt =
-		     diff_scoreopt_parse(arg)) == -1)
+		if ((options->break_opt = diff_scoreopt_parse(arg)) == -1)
 			return -1;
 	}
 	else if (!prefixcmp(arg, "-M")) {
-		if ((options->rename_score =
-		     diff_scoreopt_parse(arg)) == -1)
+		if ((options->rename_score = diff_scoreopt_parse(arg)) == -1)
 			return -1;
 		options->detect_rename = DIFF_DETECT_RENAME;
 	}
 	else if (!prefixcmp(arg, "-C")) {
 		if (options->detect_rename == DIFF_DETECT_COPY)
-			options->find_copies_harder = 1;
-		if ((options->rename_score =
-		     diff_scoreopt_parse(arg)) == -1)
+			DIFF_OPT_SET(options, FIND_COPIES_HARDER);
+		if ((options->rename_score = diff_scoreopt_parse(arg)) == -1)
 			return -1;
 		options->detect_rename = DIFF_DETECT_COPY;
 	}
+	else if (!strcmp(arg, "--no-renames"))
+		options->detect_rename = 0;
+
+	/* xdiff options */
+	else if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
+		options->xdl_opts |= XDF_IGNORE_WHITESPACE;
+	else if (!strcmp(arg, "-b") || !strcmp(arg, "--ignore-space-change"))
+		options->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
+	else if (!strcmp(arg, "--ignore-space-at-eol"))
+		options->xdl_opts |= XDF_IGNORE_WHITESPACE_AT_EOL;
+
+	/* flags options */
+	else if (!strcmp(arg, "--binary")) {
+		options->output_format |= DIFF_FORMAT_PATCH;
+		DIFF_OPT_SET(options, BINARY);
+	}
+	else if (!strcmp(arg, "--full-index"))
+		DIFF_OPT_SET(options, FULL_INDEX);
+	else if (!strcmp(arg, "-a") || !strcmp(arg, "--text"))
+		DIFF_OPT_SET(options, TEXT);
+	else if (!strcmp(arg, "-R"))
+		DIFF_OPT_SET(options, REVERSE_DIFF);
 	else if (!strcmp(arg, "--find-copies-harder"))
-		options->find_copies_harder = 1;
+		DIFF_OPT_SET(options, FIND_COPIES_HARDER);
 	else if (!strcmp(arg, "--follow"))
-		options->follow_renames = 1;
+		DIFF_OPT_SET(options, FOLLOW_RENAMES);
+	else if (!strcmp(arg, "--color"))
+		DIFF_OPT_SET(options, COLOR_DIFF);
+	else if (!strcmp(arg, "--no-color"))
+		DIFF_OPT_CLR(options, COLOR_DIFF);
+	else if (!strcmp(arg, "--color-words"))
+		options->flags |= DIFF_OPT_COLOR_DIFF | DIFF_OPT_COLOR_DIFF_WORDS;
+	else if (!strcmp(arg, "--exit-code"))
+		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
+	else if (!strcmp(arg, "--quiet"))
+		DIFF_OPT_SET(options, QUIET);
+	else if (!strcmp(arg, "--ext-diff"))
+		DIFF_OPT_SET(options, ALLOW_EXTERNAL);
+	else if (!strcmp(arg, "--no-ext-diff"))
+		DIFF_OPT_CLR(options, ALLOW_EXTERNAL);
+
+	/* misc options */
+	else if (!strcmp(arg, "-z"))
+		options->line_termination = 0;
+	else if (!prefixcmp(arg, "-l"))
+		options->rename_limit = strtoul(arg+2, NULL, 10);
+	else if (!prefixcmp(arg, "-S"))
+		options->pickaxe = arg + 2;
+	else if (!strcmp(arg, "--pickaxe-all"))
+		options->pickaxe_opts = DIFF_PICKAXE_ALL;
+	else if (!strcmp(arg, "--pickaxe-regex"))
+		options->pickaxe_opts = DIFF_PICKAXE_REGEX;
+	else if (!prefixcmp(arg, "-O"))
+		options->orderfile = arg + 2;
+	else if (!prefixcmp(arg, "--diff-filter="))
+		options->filter = arg + 14;
 	else if (!strcmp(arg, "--abbrev"))
 		options->abbrev = DEFAULT_ABBREV;
 	else if (!prefixcmp(arg, "--abbrev=")) {
@@ -2295,28 +2321,6 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		else if (40 < options->abbrev)
 			options->abbrev = 40;
 	}
-	else if (!strcmp(arg, "--color"))
-		options->color_diff = 1;
-	else if (!strcmp(arg, "--no-color"))
-		options->color_diff = 0;
-	else if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
-		options->xdl_opts |= XDF_IGNORE_WHITESPACE;
-	else if (!strcmp(arg, "-b") || !strcmp(arg, "--ignore-space-change"))
-		options->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
-	else if (!strcmp(arg, "--ignore-space-at-eol"))
-		options->xdl_opts |= XDF_IGNORE_WHITESPACE_AT_EOL;
-	else if (!strcmp(arg, "--color-words"))
-		options->color_diff = options->color_diff_words = 1;
-	else if (!strcmp(arg, "--no-renames"))
-		options->detect_rename = 0;
-	else if (!strcmp(arg, "--exit-code"))
-		options->exit_with_status = 1;
-	else if (!strcmp(arg, "--quiet"))
-		options->quiet = 1;
-	else if (!strcmp(arg, "--ext-diff"))
-		options->allow_external = 1;
-	else if (!strcmp(arg, "--no-ext-diff"))
-		options->allow_external = 0;
 	else
 		return 0;
 	return 1;
@@ -3071,7 +3075,7 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 			 * to determine how many paths were dirty only
 			 * due to stat info mismatch.
 			 */
-			if (!diffopt->no_index)
+			if (!DIFF_OPT_TST(diffopt, NO_INDEX))
 				diffopt->skip_stat_unmatch++;
 			diff_free_filepair(p);
 		}
@@ -3082,10 +3086,10 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 
 void diffcore_std(struct diff_options *options)
 {
-	if (options->quiet)
+	if (DIFF_OPT_TST(options, QUIET))
 		return;
 
-	if (options->skip_stat_unmatch && !options->find_copies_harder)
+	if (options->skip_stat_unmatch && !DIFF_OPT_TST(options, FIND_COPIES_HARDER))
 		diffcore_skip_stat_unmatch(options);
 	if (options->break_opt != -1)
 		diffcore_break(options->break_opt);
@@ -3100,7 +3104,10 @@ void diffcore_std(struct diff_options *options)
 	diff_resolve_rename_copy();
 	diffcore_apply_filter(options->filter);
 
-	options->has_changes = !!diff_queued_diff.nr;
+	if (diff_queued_diff.nr)
+		DIFF_OPT_SET(options, HAS_CHANGES);
+	else
+		DIFF_OPT_CLR(options, HAS_CHANGES);
 }
 
 
@@ -3124,7 +3131,7 @@ void diff_addremove(struct diff_options *options,
 	 * Before the final output happens, they are pruned after
 	 * merged into rename/copy pairs as appropriate.
 	 */
-	if (options->reverse_diff)
+	if (DIFF_OPT_TST(options, REVERSE_DIFF))
 		addremove = (addremove == '+' ? '-' :
 			     addremove == '-' ? '+' : addremove);
 
@@ -3139,7 +3146,7 @@ void diff_addremove(struct diff_options *options,
 		fill_filespec(two, sha1, mode);
 
 	diff_queue(&diff_queued_diff, one, two);
-	options->has_changes = 1;
+	DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 void diff_change(struct diff_options *options,
@@ -3151,7 +3158,7 @@ void diff_change(struct diff_options *options,
 	char concatpath[PATH_MAX];
 	struct diff_filespec *one, *two;
 
-	if (options->reverse_diff) {
+	if (DIFF_OPT_TST(options, REVERSE_DIFF)) {
 		unsigned tmp;
 		const unsigned char *tmp_c;
 		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
@@ -3165,7 +3172,7 @@ void diff_change(struct diff_options *options,
 	fill_filespec(two, new_sha1, new_mode);
 
 	diff_queue(&diff_queued_diff, one, two);
-	options->has_changes = 1;
+	DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 void diff_unmerge(struct diff_options *options,
