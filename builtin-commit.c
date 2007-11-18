@@ -159,7 +159,7 @@ static const char sign_off_header[] = "Signed-off-by: ";
 static int prepare_log_message(const char *index_file, const char *prefix)
 {
 	struct stat statbuf;
-	int commitable;
+	int commitable, saved_color_setting;
 	struct strbuf sb;
 	char *buffer;
 	FILE *fp;
@@ -243,7 +243,10 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 	if (only_include_assumed)
 		fprintf(fp, "# %s\n", only_include_assumed);
 
+	saved_color_setting = wt_status_use_color;
+	wt_status_use_color = 0;
 	commitable = run_status(fp, index_file, prefix);
+	wt_status_use_color = saved_color_setting;
 
 	fclose(fp);
 
