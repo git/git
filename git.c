@@ -72,11 +72,9 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 		} else if (!strcmp(cmd, "--bare")) {
 			static char git_dir[PATH_MAX+1];
 			is_bare_repository_cfg = 1;
-			if (!getenv(GIT_DIR_ENVIRONMENT)) {
-				set_git_dir(getcwd(git_dir, sizeof(git_dir)));
-				if (envchanged)
-					*envchanged = 1;
-			}
+			set_git_dir(getcwd(git_dir, sizeof(git_dir)));
+			if (envchanged)
+				*envchanged = 1;
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
 			usage(git_usage_string);
