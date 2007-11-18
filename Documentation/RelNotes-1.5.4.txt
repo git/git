@@ -32,9 +32,9 @@ Updates since v1.5.3
    (read: safer than the usual one) after the user accumulates
    too many loose objects.
 
- * You need to explicitly set clean.requireForce to true to allow
-   git-clean to do any damage now (the configuration variable used
-   to default to false).
+ * You need to explicitly set clean.requireForce to "false" to allow
+   git-clean to do any damage (lack of the configuration variable
+   used to mean "do not require", but we now use the safer default).
 
  * git-push has been rewritten in C.
 
@@ -107,6 +107,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3.5-736-geb9d2b9
+O=v1.5.3.6-706-gcb02958
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
