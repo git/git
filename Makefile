@@ -291,7 +291,6 @@ LIB_H = \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h list-objects.h sideband.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h \
-	spawn-pipe.h \
 	utf8.h reflog-walk.h patch-ids.h attr.h decorate.h progress.h \
 	mailmap.h remote.h parse-options.h transport.h diffcore.h hash.h
 
@@ -305,7 +304,6 @@ LIB_OBJS = \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o \
 	pretty.o interpolate.o hash.o \
 	lockfile.o \
-	spawn-pipe.o \
 	patch-ids.o \
 	object.o pack-check.o pack-write.o patch-delta.o path.o pkt-line.o \
 	sideband.o reachable.o reflog-walk.o \
