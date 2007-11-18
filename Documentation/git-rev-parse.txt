@@ -23,6 +23,13 @@ distinguish between them.
 
 OPTIONS
 -------
+--parseopt::
+	Use `git-rev-parse` in option parsing mode (see PARSEOPT section below).
+
+--keep-dash-dash::
+	Only meaningful in `--parseopt` mode. Tells the option parser to echo
+	out the first `--` met instead of skipping it.
+
 --revs-only::
 	Do not output flags and parameters not meant for
 	`git-rev-list` command.
@@ -288,10 +295,75 @@ Here are a handful examples:
    C^@              I J F
    F^! D            G H D F
 
+PARSEOPT
+--------
+
+In `--parseopt` mode, `git-rev-parse` helps massaging options to bring to shell
+scripts the same facilities C builtins have. It works as an option normalizer
+(e.g. splits single switches aggregate values), a bit like `getopt(1)` does.
+
+It takes on the standard input the specification of the options to parse and
+understand, and echoes on the standard output a line suitable for `sh(1)` `eval`
+to replace the arguments with normalized ones.  In case of error, it outputs
+usage on the standard error stream, and exits with code 129.
+
+Input Format
+~~~~~~~~~~~~
+
+`git-rev-parse --parseopt` input format is fully text based. It has two parts,
+separated by a line that contains only `--`. The lines before the separator
+(should be more than one) are used for the usage.
+The lines after the separator describe the options.
+
+Each line of options has this format:
+
+------------
+<opt_spec><arg_spec>? SP+ help LF
+------------
+
+`<opt_spec>`::
+	its format is the short option character, then the long option name
+	separated by a comma. Both parts are not required, though at least one
+	is necessary. `h,help`, `dry-run` and `f` are all three correct
+	`<opt_spec>`.
+
+`<arg_spec>`::
+	an `<arg_spec>` tells the option parser if the option has an argument
+	(`=`), an optional one (`?` though its use is discouraged) or none
+	(no `<arg_spec>` in that case).
+
+The remainder of the line, after stripping the spaces, is used
+as the help associated to the option.
+
+Blank lines are ignored, and lines that don't match this specification are used
+as option group headers (start the line with a space to create such
+lines on purpose).
+
+Example
+~~~~~~~
+
+------------
+OPTS_SPEC="\
+some-command [options] <args>...
+
+some-command does foo and bar!
+--
+h,help    show the help
+
+foo       some nifty option --foo
+bar=      some cool option --bar with an argument
+
+  An option group Header
+C?        option C with an optional argument"
+
+eval `echo "$OPTS_SPEC" | git-rev-parse --parseopt -- "$@" || echo exit $?`
+------------
+
+
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
+Written by Linus Torvalds <torvalds@osdl.org> .
+Junio C Hamano <junkio@cox.net> and Pierre Habouzit <madcoder@debian.org>
 
 Documentation
 --------------

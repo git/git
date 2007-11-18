@@ -5,6 +5,7 @@
 
 USAGE='[-a | --interactive] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit> | --amend] [-u] [-e] [--author <author>] [--template <file>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
+OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 

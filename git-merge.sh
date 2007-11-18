@@ -3,7 +3,19 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-USAGE='[-n] [--summary] [--[no-]commit] [--[no-]squash] [--[no-]ff] [-s <strategy>] [-m=<merge-message>] <commit>+'
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git-merge [options] <remote>...
+git-merge [options] <msg> HEAD <remote>
+--
+summary              show a diffstat at the end of the merge
+n,no-summary         don't show a diffstat at the end of the merge
+squash               create a single commit instead of doing a merge
+commit               perform a commit if the merge sucesses (default)
+ff                   allow fast forward (default)
+s,strategy=          merge strategy to use
+m,message=           message to be used for the merge commit (if any)
+"
 
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
@@ -132,72 +144,47 @@ merge_name () {
 	fi
 }
 
-parse_option () {
-	case "$1" in
-	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
-		--no-summa|--no-summar|--no-summary)
-		show_diffstat=false ;;
-	--summary)
-		show_diffstat=t ;;
-	--sq|--squ|--squa|--squas|--squash)
-		allow_fast_forward=t squash=t no_commit=t ;;
-	--no-sq|--no-squ|--no-squa|--no-squas|--no-squash)
-		allow_fast_forward=t squash= no_commit= ;;
-	--c|--co|--com|--comm|--commi|--commit)
-		allow_fast_forward=t squash= no_commit= ;;
-	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
-		allow_fast_forward=t squash= no_commit=t ;;
-	--ff)
-		allow_fast_forward=t squash= no_commit= ;;
-	--no-ff)
-		allow_fast_forward=false squash= no_commit= ;;
-	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
-		--strateg=*|--strategy=*|\
-	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
-		case "$#,$1" in
-		*,*=*)
-			strategy=`expr "z$1" : 'z-[^=]*=\(.*\)'` ;;
-		1,*)
-			usage ;;
-		*)
-			strategy="$2"
-			shift ;;
-		esac
-		case " $all_strategies " in
-		*" $strategy "*)
-			use_strategies="$use_strategies$strategy " ;;
-		*)
-			die "available strategies are: $all_strategies" ;;
-		esac
-		;;
-	-m=*|--m=*|--me=*|--mes=*|--mess=*|--messa=*|--messag=*|--message=*)
-		merge_msg=`expr "z$1" : 'z-[^=]*=\(.*\)'`
-		have_message=t
-		;;
-	-m|--m|--me|--mes|--mess|--messa|--messag|--message)
-		shift
-		case "$#" in
-		1)	usage ;;
-		esac
-		merge_msg="$1"
-		have_message=t
-		;;
-	-*)	usage ;;
-	*)	return 1 ;;
-	esac
-	shift
-	args_left=$#
-}
-
 parse_config () {
-	while test $# -gt 0
-	do
-		parse_option "$@" || usage
-		while test $args_left -lt $#
-		do
+	while test $# != 0; do
+		case "$1" in
+		-n|--no-summary)
+			show_diffstat=false ;;
+		--summary)
+			show_diffstat=t ;;
+		--squash)
+			allow_fast_forward=t squash=t no_commit=t ;;
+		--no-squash)
+			allow_fast_forward=t squash= no_commit= ;;
+		--commit)
+			allow_fast_forward=t squash= no_commit= ;;
+		--no-commit)
+			allow_fast_forward=t squash= no_commit=t ;;
+		--ff)
+			allow_fast_forward=t squash= no_commit= ;;
+		--no-ff)
+			allow_fast_forward=false squash= no_commit= ;;
+		-s|--strategy)
 			shift
-		done
+			case " $all_strategies " in
+			*" $1 "*)
+				use_strategies="$use_strategies$1 " ;;
+			*)
+				die "available strategies are: $all_strategies" ;;
+			esac
+			;;
+		-m|--message)
+			shift
+			merge_msg="$1"
+			have_message=t
+			;;
+		--)
+			shift
+			break ;;
+		*)	usage ;;
+		esac
+		shift
 	done
+	args_left=$#
 }
 
 test $# != 0 || usage
@@ -209,17 +196,12 @@ then
 	mergeopts=$(git config "branch.${branch#refs/heads/}.mergeoptions")
 	if test -n "$mergeopts"
 	then
-		parse_config $mergeopts
+		parse_config $mergeopts --
 	fi
 fi
 
-while parse_option "$@"
-do
-	while test $args_left -lt $#
-	do
-		shift
-	done
-done
+parse_config "$@"
+while test $args_left -lt $#; do shift; done
 
 if test -z "$show_diffstat"; then
     test "$(git config --bool merge.diffstat)" = false && show_diffstat=false

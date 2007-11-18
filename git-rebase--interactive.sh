@@ -13,6 +13,7 @@
 USAGE='(--continue | --abort | --skip | [--preserve-merges] [--verbose]
 	[--onto <branch>] <upstream> [<branch>])'
 
+OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 

@@ -4,6 +4,7 @@
 USAGE='[ | list | show | apply | clear]'
 
 SUBDIRECTORY_OK=Yes
+OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 cd_to_toplevel

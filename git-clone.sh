@@ -8,14 +8,35 @@
 # See git-sh-setup why.
 unset CDPATH
 
+OPTIONS_SPEC="\
+git-clone [options] [--] <repo> [<dir>]
+--
+n,no-checkout        don't create a checkout
+bare                 create a bare repository
+naked                create a bare repository
+l,local              to clone from a local repository
+no-hardlinks         don't use local hardlinks, always copy
+s,shared             setup as a shared repository
+template=            path to the template directory
+q,quiet              be quiet
+reference=           reference repository
+o,origin=            use <name> instead of 'origin' to track upstream
+u,upload-pack=       path to git-upload-pack on the remote
+depth=               create a shallow clone of that depth
+
+use-separate-remote  compatibility, do not use
+no-separate-remote   compatibility, do not use"
+
 die() {
 	echo >&2 "$@"
 	exit 1
 }
 
 usage() {
-	die "Usage: $0 [--template=<template_directory>] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] [--] <repo> [<dir>]"
+	exec "$0" -h
 }
+
+eval "$(echo "$OPTIONS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
 
 get_repo_base() {
 	(
@@ -106,67 +127,57 @@ depth=
 no_progress=
 local_explicitly_asked_for=
 test -t 1 || no_progress=--no-progress
-while
-	case "$#,$1" in
-	0,*) break ;;
-	*,-n|*,--no|*,--no-|*,--no-c|*,--no-ch|*,--no-che|*,--no-chec|\
-	*,--no-check|*,--no-checko|*,--no-checkou|*,--no-checkout)
-	  no_checkout=yes ;;
-	*,--na|*,--nak|*,--nake|*,--naked|\
-	*,-b|*,--b|*,--ba|*,--bar|*,--bare) bare=yes ;;
-	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local)
-	  local_explicitly_asked_for=yes
-	  use_local_hardlink=yes ;;
-	*,--no-h|*,--no-ha|*,--no-har|*,--no-hard|*,--no-hardl|\
-	*,--no-hardli|*,--no-hardlin|*,--no-hardlink|*,--no-hardlinks)
-	  use_local_hardlink=no ;;
-        *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared)
-          local_shared=yes; ;;
-	1,--template) usage ;;
-	*,--template)
+
+while test $# != 0
+do
+	case "$1" in
+	-n|--no-checkout)
+		no_checkout=yes ;;
+	--naked|--bare)
+		bare=yes ;;
+	-l|--local)
+		local_explicitly_asked_for=yes
+		use_local_hardlink=yes
+		;;
+	--no-hardlinks)
+		use_local_hardlink=no ;;
+	-s|--shared)
+		local_shared=yes ;;
+	--template)
 		shift; template="--template=$1" ;;
-	*,--template=*)
-	  template="$1" ;;
-	*,-q|*,--quiet) quiet=-q ;;
-	*,--use-separate-remote) ;;
-	*,--no-separate-remote)
+	-q|--quiet)
+		quiet=-q ;;
+	--use-separate-remote|--no-separate-remote)
 		die "clones are always made with separate-remote layout" ;;
-	1,--reference) usage ;;
-	*,--reference)
+	--reference)
 		shift; reference="$1" ;;
-	*,--reference=*)
-		reference=`expr "z$1" : 'z--reference=\(.*\)'` ;;
-	*,-o|*,--or|*,--ori|*,--orig|*,--origi|*,--origin)
-		case "$2" in
+	-o,--origin)
+		shift;
+		case "$1" in
 		'')
 		    usage ;;
 		*/*)
-		    die "'$2' is not suitable for an origin name"
+		    die "'$1' is not suitable for an origin name"
 		esac
-		git check-ref-format "heads/$2" ||
-		    die "'$2' is not suitable for a branch name"
+		git check-ref-format "heads/$1" ||
+		    die "'$1' is not suitable for a branch name"
 		test -z "$origin_override" ||
 		    die "Do not give more than one --origin options."
 		origin_override=yes
-		origin="$2"; shift
+		origin="$1"
 		;;
-	1,-u|1,--upload-pack) usage ;;
-	*,-u|*,--upload-pack)
+	-u|--upload-pack)
 		shift
 		upload_pack="--upload-pack=$1" ;;
-	*,--upload-pack=*)
-		upload_pack=--upload-pack=$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
-	1,--depth) usage;;
-	*,--depth)
+	--depth)
 		shift
-		depth="--depth=$1";;
-	*,--)
+		depth="--depth=$1" ;;
+	--)
 		shift
 		break ;;
-	*,-*) usage ;;
-	*) break ;;
+	*)
+		usage ;;
 	esac
-do
 	shift
 done
 

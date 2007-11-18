@@ -1,5 +1,12 @@
 #!/bin/sh
-USAGE='--dry-run --author <author> --patches </path/to/quilt/patch/directory>'
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git-quiltimport [options]
+--
+n,dry-run     dry run
+author=       author name and email address for patches without any
+patches=      path to the quilt series and patches
+"
 SUBDIRECTORY_ON=Yes
 . git-sh-setup
 
@@ -8,39 +15,25 @@ quilt_author=""
 while test $# != 0
 do
 	case "$1" in
-	--au=*|--aut=*|--auth=*|--autho=*|--author=*)
-		quilt_author=$(expr "z$1" : 'z-[^=]*\(.*\)')
-		shift
-		;;
-
-	--au|--aut|--auth|--autho|--author)
-		case "$#" in 1) usage ;; esac
+	--author)
 		shift
 		quilt_author="$1"
-		shift
 		;;
-
-	--dry-run)
-		shift
+	-n|--dry-run)
 		dry_run=1
 		;;
-
-	--pa=*|--pat=*|--patc=*|--patch=*|--patche=*|--patches=*)
-		QUILT_PATCHES=$(expr "z$1" : 'z-[^=]*\(.*\)')
-		shift
-		;;
-
-	--pa|--pat|--patc|--patch|--patche|--patches)
-		case "$#" in 1) usage ;; esac
+	--patches)
 		shift
 		QUILT_PATCHES="$1"
-		shift
 		;;
-
+	--)
+		shift
+		break;;
 	*)
-		break
+		usage
 		;;
 	esac
+	shift
 done
 
 # Quilt Author
