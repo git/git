@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "run-command.h"
 #include "exec_cmd.h"
-#include "spawn-pipe.h"
 
 static inline void close_pair(int fd[2])
 {
@@ -9,13 +8,17 @@ static inline void close_pair(int fd[2])
 	close(fd[1]);
 }
 
+static inline void dup_devnull(int to)
+{
+	int fd = open("/dev/null", O_RDWR);
+	dup2(fd, to);
+	close(fd);
+}
+
 int start_command(struct child_process *cmd)
 {
 	int need_in, need_out, need_err;
-	int fdin[2] = { -1, -1 };
-	int fdout[2] = { -1, -1 };
-	int fderr[2] = { -1, -1 };
-	char **env = environ;
+	int fdin[2], fdout[2], fderr[2];
 
 	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
@@ -50,53 +53,150 @@ int start_command(struct child_process *cmd)
 		cmd->err = fderr[0];
 	}
 
-	{
+#ifndef __MINGW32__
+	cmd->pid = fork();
+	if (!cmd->pid) {
 		if (cmd->no_stdin)
-			fdin[0] = open("/dev/null", O_RDWR);
+			dup_devnull(0);
 		else if (need_in) {
-			/* nothing */
+			dup2(fdin[0], 0);
+			close_pair(fdin);
 		} else if (cmd->in) {
-			fdin[0] = cmd->in;
+			dup2(cmd->in, 0);
+			close(cmd->in);
 		}
 
 		if (cmd->no_stdout)
-			fdout[1] = open("/dev/null", O_RDWR);
+			dup_devnull(1);
 		else if (cmd->stdout_to_stderr)
-			fdout[1] = dup(2);
+			dup2(2, 1);
 		else if (need_out) {
-			/* nothing */
+			dup2(fdout[1], 1);
+			close_pair(fdout);
 		} else if (cmd->out > 1) {
-			fdout[1] = cmd->out;
+			dup2(cmd->out, 1);
+			close(cmd->out);
 		}
 
 		if (cmd->no_stderr)
-			fderr[1] = open("/dev/null", O_RDWR);
+			dup_devnull(2);
 		else if (need_err) {
-			/* nothing */
+			dup2(fderr[1], 2);
+			close_pair(fderr);
 		}
 
-		if (cmd->dir)
-			die("chdir in start_command() not implemented");
 		if (cmd->dir && chdir(cmd->dir))
 			die("exec %s: cd to %s failed (%s)", cmd->argv[0],
 			    cmd->dir, strerror(errno));
 		if (cmd->env) {
-			if (cmd->git_cmd)
-				die("modifying environment for git_cmd in start_command() not implemented");
-			env = copy_environ();
 			for (; *cmd->env; cmd->env++) {
 				if (strchr(*cmd->env, '='))
-					die("setting environment in start_command() not implemented");
+					putenv((char*)*cmd->env);
 				else
-					env_unsetenv(env, *cmd->env);
+					unsetenv(*cmd->env);
 			}
 		}
 		if (cmd->git_cmd) {
-			cmd->pid = spawnv_git_cmd(cmd->argv, fdin, fdout);
+			execv_git_cmd(cmd->argv);
 		} else {
-			cmd->pid = spawnvpe_pipe(cmd->argv[0], cmd->argv, env, fdin, fdout);
+			execvp(cmd->argv[0], (char *const*) cmd->argv);
+		}
+		die("exec %s failed.", cmd->argv[0]);
+	}
+#else
+	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
+	const char *sargv0 = cmd->argv[0];
+	char **env = environ;
+	struct strbuf git_cmd;
+
+	if (cmd->no_stdin) {
+		s0 = dup(0);
+		dup_devnull(0);
+	} else if (need_in) {
+		s0 = dup(0);
+		dup2(fdin[0], 0);
+	} else if (cmd->in) {
+		s0 = dup(0);
+		dup2(cmd->in, 0);
+	}
+
+	if (cmd->no_stdout) {
+		s1 = dup(1);
+		dup_devnull(1);
+	} else if (cmd->stdout_to_stderr) {
+		s1 = dup(1);
+		dup2(2, 1);
+	} else if (need_out) {
+		s1 = dup(1);
+		dup2(fdout[1], 1);
+	} else if (cmd->out > 1) {
+		s1 = dup(1);
+		dup2(cmd->out, 1);
+	}
+
+	if (cmd->no_stderr) {
+		s2 = dup(2);
+		dup_devnull(2);
+	} else if (need_err) {
+		s2 = dup(2);
+		dup2(fderr[1], 2);
+	}
+
+	if (cmd->dir)
+		die("chdir in start_command() not implemented");
+	if (cmd->env) {
+		env = copy_environ();
+		for (; *cmd->env; cmd->env++) {
+			if (strchr(*cmd->env, '='))
+				die("setting environment in start_command() not implemented");
+			else
+				env_unsetenv(env, *cmd->env);
 		}
 	}
+
+	if (cmd->git_cmd) {
+		strbuf_init(&git_cmd, 0);
+		strbuf_addf(&git_cmd, "git-%s", cmd->argv[0]);
+		cmd->argv[0] = git_cmd.buf;
+	}
+
+	char **path = mingw_get_path_split();
+	const char *argv0 = cmd->argv[0];
+	const char **qargv;
+	char *prog = mingw_path_lookup(argv0, path);
+	const char *interpr = parse_interpreter(prog);
+	int argc;
+
+	for (argc = 0; cmd->argv[argc];) argc++;
+	qargv = xmalloc((argc+2)*sizeof(char*));
+	if (!interpr) {
+		quote_argv(qargv, cmd->argv);
+		cmd->pid = spawnve(_P_NOWAIT, prog, qargv, (const char **)env);
+	} else {
+		qargv[0] = interpr;
+		cmd->argv[0] = prog;
+		quote_argv(&qargv[1], cmd->argv);
+		cmd->pid = spawnvpe(_P_NOWAIT, interpr, qargv, (const char **)env);
+	}
+
+	free(qargv);	/* TODO: quoted args should be freed, too */
+	free(prog);
+
+	mingw_free_path_split(path);
+	/* TODO: if (cmd->env) free env; */
+
+	if (cmd->git_cmd)
+		strbuf_release(&git_cmd);
+
+	cmd->argv[0] = sargv0;
+	if (s0 >= 0)
+		dup2(s0, 0), close(s0);
+	if (s1 >= 0)
+		dup2(s1, 1), close(s1);
+	if (s2 >= 0)
+		dup2(s2, 2), close(s2);
+#endif
+
 	if (cmd->pid < 0) {
 		if (need_in)
 			close_pair(fdin);
@@ -106,6 +206,19 @@ int start_command(struct child_process *cmd)
 			close_pair(fderr);
 		return -ERR_RUN_COMMAND_FORK;
 	}
+
+	if (need_in)
+		close(fdin[0]);
+	else if (cmd->in)
+		close(cmd->in);
+
+	if (need_out)
+		close(fdout[1]);
+	else if (cmd->out > 1)
+		close(cmd->out);
+
+	if (need_err)
+		close(fderr[1]);
 
 	return 0;
 }
