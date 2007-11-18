@@ -38,28 +38,28 @@ static const char *tag_modified = "";
 
 
 /*
- * Match a pathspec against a filename. The first "len" characters
+ * Match a pathspec against a filename. The first "skiplen" characters
  * are the common prefix
  */
-static int match(const char **spec, char *ps_matched,
-		 const char *filename, int len)
+int pathspec_match(const char **spec, char *ps_matched,
+		   const char *filename, int skiplen)
 {
 	const char *m;
 
 	while ((m = *spec++) != NULL) {
-		int matchlen = strlen(m + len);
+		int matchlen = strlen(m + skiplen);
 
 		if (!matchlen)
 			goto matched;
-		if (!strncmp(m + len, filename + len, matchlen)) {
-			if (m[len + matchlen - 1] == '/')
+		if (!strncmp(m + skiplen, filename + skiplen, matchlen)) {
+			if (m[skiplen + matchlen - 1] == '/')
 				goto matched;
-			switch (filename[len + matchlen]) {
+			switch (filename[skiplen + matchlen]) {
 			case '/': case '\0':
 				goto matched;
 			}
 		}
-		if (!fnmatch(m + len, filename + len, 0))
+		if (!fnmatch(m + skiplen, filename + skiplen, 0))
 			goto matched;
 		if (ps_matched)
 			ps_matched++;
@@ -80,7 +80,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	if (len >= ent->len)
 		die("git-ls-files: internal error - directory entry not superset of prefix");
 
-	if (pathspec && !match(pathspec, ps_matched, ent->name, len))
+	if (pathspec && !pathspec_match(pathspec, ps_matched, ent->name, len))
 		return;
 
 	fputs(tag, stdout);
@@ -185,7 +185,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	if (len >= ce_namelen(ce))
 		die("git-ls-files: internal error - cache entry not superset of prefix");
 
-	if (pathspec && !match(pathspec, ps_matched, ce->name, len))
+	if (pathspec && !pathspec_match(pathspec, ps_matched, ce->name, len))
 		return;
 
 	if (tag && *tag && show_valid_bit &&
@@ -331,7 +331,7 @@ static const char *verify_pathspec(const char *prefix)
  * that were given from the command line.  We are not
  * going to write this index out.
  */
-static void overlay_tree(const char *tree_name, const char *prefix)
+void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 {
 	struct tree *tree;
 	unsigned char sha1[20];
@@ -382,6 +382,42 @@ static void overlay_tree(const char *tree_name, const char *prefix)
 				ce->ce_flags |= htons(CE_UPDATE);
 		}
 	}
+}
+
+int report_path_error(const char *ps_matched, const char **pathspec, int prefix_offset)
+{
+	/*
+	 * Make sure all pathspec matched; otherwise it is an error.
+	 */
+	int num, errors = 0;
+	for (num = 0; pathspec[num]; num++) {
+		int other, found_dup;
+
+		if (ps_matched[num])
+			continue;
+		/*
+		 * The caller might have fed identical pathspec
+		 * twice.  Do not barf on such a mistake.
+		 */
+		for (found_dup = other = 0;
+		     !found_dup && pathspec[other];
+		     other++) {
+			if (other == num || !ps_matched[other])
+				continue;
+			if (!strcmp(pathspec[other], pathspec[num]))
+				/*
+				 * Ok, we have a match already.
+				 */
+				found_dup = 1;
+		}
+		if (found_dup)
+			continue;
+
+		error("pathspec '%s' did not match any file(s) known to git.",
+		      pathspec[num] + prefix_offset);
+		errors++;
+	}
+	return errors;
 }
 
 static const char ls_files_usage[] =
@@ -568,47 +604,17 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		 */
 		if (show_stage || show_unmerged)
 			die("ls-files --with-tree is incompatible with -s or -u");
-		overlay_tree(with_tree, prefix);
+		overlay_tree_on_cache(with_tree, prefix);
 	}
 	show_files(&dir, prefix);
 
 	if (ps_matched) {
-		/* We need to make sure all pathspec matched otherwise
-		 * it is an error.
-		 */
-		int num, errors = 0;
-		for (num = 0; pathspec[num]; num++) {
-			int other, found_dup;
-
-			if (ps_matched[num])
-				continue;
-			/*
-			 * The caller might have fed identical pathspec
-			 * twice.  Do not barf on such a mistake.
-			 */
-			for (found_dup = other = 0;
-			     !found_dup && pathspec[other];
-			     other++) {
-				if (other == num || !ps_matched[other])
-					continue;
-				if (!strcmp(pathspec[other], pathspec[num]))
-					/*
-					 * Ok, we have a match already.
-					 */
-					found_dup = 1;
-			}
-			if (found_dup)
-				continue;
-
-			error("pathspec '%s' did not match any file(s) known to git.",
-			      pathspec[num] + prefix_offset);
-			errors++;
-		}
-
-		if (errors)
+		int bad;
+		bad = report_path_error(ps_matched, pathspec, prefix_offset);
+		if (bad)
 			fprintf(stderr, "Did you forget to 'git add'?\n");
 
-		return errors ? 1 : 0;
+		return bad ? 1 : 0;
 	}
 
 	return 0;
