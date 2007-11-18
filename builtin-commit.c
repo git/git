@@ -598,7 +598,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		launch_editor(git_path(commit_editmsg), &sb);
 	else if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0)
 		die("could not read commit message\n");
-	if (run_hook(index_file, "commit-msg", commit_editmsg))
+	if (run_hook(index_file, "commit-msg", git_path(commit_editmsg)))
 		exit(1);
 	stripspace(&sb, 1);
 	if (sb.len < header_len ||
