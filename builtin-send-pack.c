@@ -347,6 +347,20 @@ static void print_push_status(const char *dest, struct ref *refs)
 	}
 }
 
+static int refs_pushed(struct ref *ref)
+{
+	for (; ref; ref = ref->next) {
+		switch(ref->status) {
+		case REF_STATUS_NONE:
+		case REF_STATUS_UPTODATE:
+			break;
+		default:
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static int do_send_pack(int in, int out, struct remote *remote, const char *dest, int nr_refspec, const char **refspec)
 {
 	struct ref *ref;
@@ -487,7 +501,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 			update_tracking_ref(remote, ref);
 	}
 
-	if (!new_refs)
+	if (!refs_pushed(remote_refs))
 		fprintf(stderr, "Everything up-to-date\n");
 	if (ret < 0)
 		return ret;
