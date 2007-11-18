@@ -536,6 +536,45 @@ void mingw_execvp(const char *cmd, const char **argv)
 	mingw_free_path_split(path);
 }
 
+char **copy_environ()
+{
+	return copy_env(environ);
+}
+
+char **copy_env(char **env)
+{
+	char **s;
+	int n = 1;
+	for (s = env; *s; s++)
+		n++;
+	s = xmalloc(n*sizeof(char *));
+	memcpy(s, env, n*sizeof(char *));
+	return s;
+}
+
+void env_unsetenv(char **env, const char *name)
+{
+	int src, dst;
+	size_t nmln;
+
+	nmln = strlen(name);
+
+	for (src = dst = 0; env[src]; ++src) {
+		size_t enln;
+		enln = strlen(env[src]);
+		if (enln > nmln) {
+			/* might match, and can test for '=' safely */
+			if (0 == strncmp (env[src], name, nmln)
+			    && '=' == env[src][nmln])
+				/* matches, so skip */
+				continue;
+		}
+		env[dst] = env[src];
+		++dst;
+	}
+	env[dst] = NULL;
+}
+
 int mingw_socket(int domain, int type, int protocol)
 {
 	SOCKET s = WSASocket(domain, type, protocol, NULL, 0, 0);

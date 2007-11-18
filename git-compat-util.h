@@ -473,6 +473,10 @@ static inline int waitpid(pid_t pid, unsigned *status, unsigned options)
 #define SIGCHLD 0
 #define SIGPIPE 0
 
+char **copy_environ();
+char **copy_env(char **env);
+void env_unsetenv(char **env, const char *name);
+
 unsigned int sleep (unsigned int __seconds);
 const char *inet_ntop(int af, const void *src,
                              char *dst, size_t cnt);
