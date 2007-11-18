@@ -36,7 +36,7 @@ sq() {
 }
 
 bisect_autostart() {
-	test -d "$GIT_DIR/refs/bisect" || {
+	test -f "$GIT_DIR/BISECT_NAMES" || {
 		echo >&2 'You need to start by "git bisect start"'
 		if test -t 0
 		then
@@ -82,7 +82,6 @@ bisect_start() {
 	# Get rid of any old bisect state
 	#
 	bisect_clean_state
-	mkdir "$GIT_DIR/refs/bisect"
 
 	#
 	# Check for one bad and then some good revisions.
@@ -191,7 +190,7 @@ bisect_next_check() {
 		;;
 	*)
 		THEN=''
-		test -d "$GIT_DIR/refs/bisect" || {
+		test -f "$GIT_DIR/BISECT_NAMES" || {
 			echo >&2 'You need to start by "git bisect start".'
 			THEN='then '
 		}
@@ -348,8 +347,6 @@ bisect_reset() {
 }
 
 bisect_clean_state() {
-	rm -fr "$GIT_DIR/refs/bisect"
-
 	# There may be some refs packed during bisection.
 	git for-each-ref --format='%(refname) %(objectname)' refs/bisect/\* refs/heads/bisect |
 	while read ref hash
