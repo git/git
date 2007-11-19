@@ -557,7 +557,11 @@ sub sanitize_address
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
-	@cc = (map { sanitize_address($_) } @cc);
+	@cc = (grep { my $cc = extract_valid_address($_);
+		      not grep { $cc eq $_ } @recipients
+		    }
+	       map { sanitize_address($_) }
+	       @cc);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
 	@recipients = (map { extract_valid_address($_) } @recipients);
