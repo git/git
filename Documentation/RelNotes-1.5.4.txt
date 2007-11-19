@@ -56,6 +56,9 @@ Updates since v1.5.3
  * git-lost-found was deprecated in favor of git-fsck's --lost-found
    option.
 
+ * "git log" learned --early-output option to help interactive
+   GUI implementations.
+
  * git-svnimport was removed in favor of git-svn.
 
  * git-bisect learned "skip" action to mark untestable commits.
@@ -77,6 +80,10 @@ Updates since v1.5.3
 
  * "git cvsexportcommit" learned -w option to specify and switch
    to the CVS working directory.
+
+ * "git checkout" from a subdirectory learned to use "../path"
+   to allow checking out a path outside the current directory
+   without cd'ing up.
 
  * Output processing for '--pretty=format:<user format>' has
    been optimized.
@@ -105,8 +112,12 @@ this release, unless otherwise noted.
  * git-svn talking with the SVN over http will correctly quote branch
    and project names.
 
+ * "git rev-list --objects A..B" choked when the lower boundary
+   of the range involved a subproject.  This fix is also queued
+   for 'maint' (but not in there yet).
+
 --
 exec >/var/tmp/1
-O=v1.5.3.6-706-gcb02958
+O=v1.5.3.6-727-g5d3d1ca
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
