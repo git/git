@@ -226,6 +226,8 @@ core.compression::
 	An integer -1..9, indicating a default compression level.
 	-1 is the zlib default. 0 means no compression,
 	and 1..9 are various speed/size tradeoffs, 9 being slowest.
+	If set, this provides a default to other compression variables,
+	such as 'core.loosecompression' and 'pack.compression'.
 
 core.loosecompression::
 	An integer -1..9, indicating the compression level for objects that
@@ -622,7 +624,9 @@ pack.compression::
 	in a pack file. -1 is the zlib default. 0 means no
 	compression, and 1..9 are various speed/size tradeoffs, 9 being
 	slowest.  If not set,  defaults to core.compression.  If that is
-	not set,  defaults to -1.
+	not set,  defaults to -1, the zlib default, which is "a default
+	compromise between speed and compression (currently equivalent
+	to level 6)."
 
 pack.deltaCacheSize::
 	The maximum memory in bytes used for caching deltas in
