@@ -289,17 +289,35 @@ AC_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=YesPlease])
 AC_SUBST(NO_STRCASESTR)
 #
+# Define NO_MEMMEM if you don't have memmem.
+AC_CHECK_FUNC(memmem,
+[NO_MEMMEM=],
+[NO_MEMMEM=YesPlease])
+AC_SUBST(NO_MEMMEM)
+#
 # Define NO_STRLCPY if you don't have strlcpy.
 AC_CHECK_FUNC(strlcpy,
 [NO_STRLCPY=],
 [NO_STRLCPY=YesPlease])
 AC_SUBST(NO_STRLCPY)
 #
+# Define NO_STRTOUMAX if you don't have strtoumax in the C library.
+AC_CHECK_FUNC(strtoumax,
+[NO_STRTOUMAX=],
+[NO_STRTOUMAX=YesPlease])
+AC_SUBST(NO_STRTOUMAX)
+#
 # Define NO_SETENV if you don't have setenv in the C library.
 AC_CHECK_FUNC(setenv,
 [NO_SETENV=],
 [NO_SETENV=YesPlease])
 AC_SUBST(NO_SETENV)
+#
+# Define NO_MKDTEMP if you don't have mkdtemp in the C library.
+AC_CHECK_FUNC(mkdtemp,
+[NO_MKDTEMP=],
+[NO_MKDTEMP=YesPlease])
+AC_SUBST(NO_MKDTEMP)
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
