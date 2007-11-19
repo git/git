@@ -10,6 +10,7 @@ SYNOPSIS
 [verse]
 'git-branch' [--color | --no-color] [-r | -a]
 	   [-v [--abbrev=<length> | --no-abbrev]]
+	   [--contains <commit>]
 'git-branch' [--track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git-branch' (-m | -M) [<oldbranch>] <newbranch>
 'git-branch' (-d | -D) [-r] <branchname>...
@@ -20,6 +21,9 @@ With no arguments given a list of existing branches
 will be shown, the current branch will be highlighted with an asterisk.
 Option `-r` causes the remote-tracking branches to be listed,
 and option `-a` shows both.
+With `--contains <commit>`, shows only the branches that
+contains the named commit (in other words, the branches whose
+tip commits are descendant of the named commit).
 
 In its second form, a new branch named <branchname> will be created.
 It will start out with a head equal to the one given as <start-point>.
