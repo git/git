@@ -133,9 +133,9 @@ Did you intend to checkout '$@' which can not be resolved as commit?"
 	fi
 
 	# Make sure the request is about existing paths.
-	git ls-files --error-unmatch -- "$@" >/dev/null || exit
-	git ls-files -- "$@" |
-	git checkout-index -f -u --stdin
+	git ls-files --full-name --error-unmatch -- "$@" >/dev/null || exit
+	git ls-files --full-name -- "$@" |
+		(cd_to_toplevel && git checkout-index -f -u --stdin)
 
 	# Run a post-checkout hook -- the HEAD does not change so the
 	# current HEAD is passed in for both args
