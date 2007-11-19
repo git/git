@@ -98,11 +98,13 @@ static int display(struct progress *progress, unsigned n, const char *done)
 			fprintf(stderr, "%s: %3u%% (%u/%u)%s%s",
 				progress->title, percent, n,
 				progress->total, tp, eol);
+			fflush(stderr);
 			progress_update = 0;
 			return 1;
 		}
 	} else if (progress_update) {
 		fprintf(stderr, "%s: %u%s%s", progress->title, n, tp, eol);
+		fflush(stderr);
 		progress_update = 0;
 		return 1;
 	}
@@ -207,6 +209,7 @@ struct progress *start_progress_delay(const char *title, unsigned total,
 	if (!progress) {
 		/* unlikely, but here's a good fallback */
 		fprintf(stderr, "%s...\n", title);
+		fflush(stderr);
 		return NULL;
 	}
 	progress->title = title;
