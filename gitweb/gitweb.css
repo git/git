@@ -170,14 +170,10 @@ a.text:hover {
 
 table {
 	padding: 8px 4px;
-}
-
-table.project_list {
 	border-spacing: 0;
 }
 
 table.diff_tree {
-	border-spacing: 0;
 	font-family: monospace;
 }
 

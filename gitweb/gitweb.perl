@@ -3544,7 +3544,7 @@ sub git_shortlog_body {
 	$from = 0 unless defined $from;
 	$to = $#{$commitlist} if (!defined $to || $#{$commitlist} < $to);
 
-	print "<table class=\"shortlog\" cellspacing=\"0\">\n";
+	print "<table class=\"shortlog\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my %co = %{$commitlist->[$i]};
@@ -3590,7 +3590,7 @@ sub git_history_body {
 	$from = 0 unless defined $from;
 	$to = $#{$commitlist} unless (defined $to && $to <= $#{$commitlist});
 
-	print "<table class=\"history\" cellspacing=\"0\">\n";
+	print "<table class=\"history\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my %co = %{$commitlist->[$i]};
@@ -3650,7 +3650,7 @@ sub git_tags_body {
 	$from = 0 unless defined $from;
 	$to = $#{$taglist} if (!defined $to || $#{$taglist} < $to);
 
-	print "<table class=\"tags\" cellspacing=\"0\">\n";
+	print "<table class=\"tags\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my $entry = $taglist->[$i];
@@ -3713,7 +3713,7 @@ sub git_heads_body {
 	$from = 0 unless defined $from;
 	$to = $#{$headlist} if (!defined $to || $#{$headlist} < $to);
 
-	print "<table class=\"heads\" cellspacing=\"0\">\n";
+	print "<table class=\"heads\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my $entry = $headlist->[$i];
@@ -3750,7 +3750,7 @@ sub git_search_grep_body {
 	$from = 0 unless defined $from;
 	$to = $#{$commitlist} if (!defined $to || $#{$commitlist} < $to);
 
-	print "<table class=\"grep\" cellspacing=\"0\">\n";
+	print "<table class=\"commit_search\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my %co = %{$commitlist->[$i]};
@@ -3891,7 +3891,7 @@ sub git_summary {
 	git_print_page_nav('summary','', $head);
 
 	print "<div class=\"title\">&nbsp;</div>\n";
-	print "<table cellspacing=\"0\">\n" .
+	print "<table class=\"projects_list\">\n" .
 	      "<tr><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
 	      "<tr><td>owner</td><td>" . esc_html($owner) . "</td></tr>\n";
 	if (defined $cd{'rfc2822'}) {
@@ -3965,7 +3965,7 @@ sub git_tag {
 
 	git_print_header_div('commit', esc_html($tag{'name'}), $hash);
 	print "<div class=\"title_text\">\n" .
-	      "<table cellspacing=\"0\">\n" .
+	      "<table class=\"object_header\">\n" .
 	      "<tr>\n" .
 	      "<td>object</td>\n" .
 	      "<td>" . $cgi->a({-class => "list", -href => href(action=>$tag{'type'}, hash=>$tag{'object'})},
@@ -4405,7 +4405,7 @@ sub git_tree {
 	}
 	git_print_page_path($file_name, 'tree', $hash_base);
 	print "<div class=\"page_body\">\n";
-	print "<table cellspacing=\"0\">\n";
+	print "<table class=\"tree\">\n";
 	my $alternate = 1;
 	# '..' (top directory) link if possible
 	if (defined $hash_base &&
@@ -4627,7 +4627,7 @@ sub git_commit {
 		git_print_header_div('tree', esc_html($co{'title'}) . $ref, $co{'tree'}, $hash);
 	}
 	print "<div class=\"title_text\">\n" .
-	      "<table cellspacing=\"0\">\n";
+	      "<table class=\"object_header\">\n";
 	print "<tr><td>author</td><td>" . esc_html($co{'author'}) . "</td></tr>\n".
 	      "<tr>" .
 	      "<td></td><td> $ad{'rfc2822'}";
@@ -5226,7 +5226,7 @@ sub git_search {
 		git_print_page_nav('','', $hash,$co{'tree'},$hash);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash);
 
-		print "<table cellspacing=\"0\">\n";
+		print "<table class=\"pickaxe search\">\n";
 		my $alternate = 1;
 		$/ = "\n";
 		my $git_command = git_cmd_str();
@@ -5293,7 +5293,7 @@ sub git_search {
 		git_print_page_nav('','', $hash,$co{'tree'},$hash);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash);
 
-		print "<table cellspacing=\"0\">\n";
+		print "<table class=\"grep_search\">\n";
 		my $alternate = 1;
 		my $matches = 0;
 		$/ = "\n";
