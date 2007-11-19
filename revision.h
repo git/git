@@ -3,18 +3,17 @@
 
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
-#define TREECHANGE	(1u<<2)
+#define TREESAME	(1u<<2)
 #define SHOWN		(1u<<3)
 #define TMP_MARK	(1u<<4) /* for isolated cases; clean after use */
 #define BOUNDARY	(1u<<5)
 #define CHILD_SHOWN	(1u<<6)
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
+#define TOPOSORT	(1u<<9)	/* In the active toposort list.. */
 
 struct rev_info;
 struct log_info;
-
-typedef void (prune_fn_t)(struct rev_info *revs, struct commit *commit);
 
 struct rev_info {
 	/* Starting list */
@@ -27,10 +26,11 @@ struct rev_info {
 	/* Basic information */
 	const char *prefix;
 	void *prune_data;
-	prune_fn_t *prune_fn;
+	unsigned int early_output;
 
 	/* Traversal flags */
 	unsigned int	dense:1,
+			prune:1,
 			no_merges:1,
 			no_walk:1,
 			remove_empty_trees:1,
@@ -96,9 +96,6 @@ struct rev_info {
 	struct diff_options diffopt;
 	struct diff_options pruning;
 
-	topo_sort_set_fn_t topo_setter;
-	topo_sort_get_fn_t topo_getter;
-
 	struct reflog_walk_info *reflog_info;
 };
 
@@ -107,6 +104,8 @@ struct rev_info {
 #define REV_TREE_DIFFERENT	2
 
 /* revision.c */
+typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
+volatile show_early_output_fn_t show_early_output;
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
@@ -130,5 +129,13 @@ extern void add_object(struct object *obj,
 		       const char *name);
 
 extern void add_pending_object(struct rev_info *revs, struct object *obj, const char *name);
+
+enum commit_action {
+	commit_ignore,
+	commit_show,
+	commit_error
+};
+
+extern enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit);
 
 #endif

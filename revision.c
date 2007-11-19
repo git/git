@@ -10,6 +10,8 @@
 #include "reflog-walk.h"
 #include "patch-ids.h"
 
+volatile show_early_output_fn_t show_early_output;
+
 static char *path_name(struct name_path *path, const char *name)
 {
 	struct name_path *p;
@@ -306,14 +308,27 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	struct commit_list **pp, *parent;
 	int tree_changed = 0, tree_same = 0;
 
+	/*
+	 * If we don't do pruning, everything is interesting
+	 */
+	if (!revs->prune)
+		return;
+
 	if (!commit->tree)
 		return;
 
 	if (!commit->parents) {
-		if (!rev_same_tree_as_empty(revs, commit->tree))
-			commit->object.flags |= TREECHANGE;
+		if (rev_same_tree_as_empty(revs, commit->tree))
+			commit->object.flags |= TREESAME;
 		return;
 	}
+
+	/*
+	 * Normal non-merge commit? If we don't want to make the
+	 * history dense, we consider it always to be a change..
+	 */
+	if (!revs->dense && !commit->parents->next)
+		return;
 
 	pp = &commit->parents;
 	while ((parent = *pp) != NULL) {
@@ -338,6 +353,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 			}
 			parent->next = NULL;
 			commit->parents = parent;
+			commit->object.flags |= TREESAME;
 			return;
 
 		case REV_TREE_NEW:
@@ -366,7 +382,8 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		die("bad tree compare for commit %s", sha1_to_hex(commit->object.sha1));
 	}
 	if (tree_changed && !tree_same)
-		commit->object.flags |= TREECHANGE;
+		return;
+	commit->object.flags |= TREESAME;
 }
 
 static int add_parents_to_list(struct rev_info *revs, struct commit *commit, struct commit_list **list)
@@ -413,8 +430,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 	 * simplify the commit history and find the parent
 	 * that has no differences in the path set if one exists.
 	 */
-	if (revs->prune_fn)
-		revs->prune_fn(revs, commit);
+	try_to_simplify_commit(revs, commit);
 
 	if (revs->no_walk)
 		return 0;
@@ -533,6 +549,7 @@ static int limit_list(struct rev_info *revs)
 		struct commit_list *entry = list;
 		struct commit *commit = list->item;
 		struct object *obj = &commit->object;
+		show_early_output_fn_t show;
 
 		list = list->next;
 		free(entry);
@@ -550,6 +567,13 @@ static int limit_list(struct rev_info *revs)
 		if (revs->min_age != -1 && (commit->date > revs->min_age))
 			continue;
 		p = &commit_list_insert(commit, p)->next;
+
+		show = show_early_output;
+		if (!show)
+			continue;
+
+		show(revs, newlist);
+		show_early_output = NULL;
 	}
 	if (revs->cherry_pick)
 		cherry_pick_list(newlist, revs);
@@ -673,12 +697,6 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->min_age = -1;
 	revs->skip_count = -1;
 	revs->max_count = -1;
-
-	revs->prune_fn = NULL;
-	revs->prune_data = NULL;
-
-	revs->topo_setter = topo_sort_default_setter;
-	revs->topo_getter = topo_sort_default_getter;
 
 	revs->commit_format = CMIT_FMT_DEFAULT;
 
@@ -994,6 +1012,18 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->topo_order = 1;
 				continue;
 			}
+			if (!prefixcmp(arg, "--early-output")) {
+				int count = 100;
+				switch (arg[14]) {
+				case '=':
+					count = atoi(arg+15);
+					/* Fallthrough */
+				case 0:
+					revs->topo_order = 1;
+					revs->early_output = count;
+					continue;
+				}
+			}
 			if (!strcmp(arg, "--parents")) {
 				revs->parents = 1;
 				continue;
@@ -1252,7 +1282,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		diff_tree_setup_paths(revs->prune_data, &revs->pruning);
 		/* Can't prune commits with rename following: the paths change.. */
 		if (!DIFF_OPT_TST(&revs->diffopt, FOLLOW_RENAMES))
-			revs->prune_fn = try_to_simplify_commit;
+			revs->prune = 1;
 		if (!revs->full_diff)
 			diff_tree_setup_paths(revs->prune_data, &revs->diffopt);
 	}
@@ -1303,9 +1333,7 @@ int prepare_revision_walk(struct rev_info *revs)
 		if (limit_list(revs) < 0)
 			return -1;
 	if (revs->topo_order)
-		sort_in_topological_order_fn(&revs->commits, revs->lifo,
-					     revs->topo_setter,
-					     revs->topo_getter);
+		sort_in_topological_order(&revs->commits, revs->lifo);
 	return 0;
 }
 
@@ -1324,7 +1352,9 @@ static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp
 				return rewrite_one_error;
 		if (p->parents && p->parents->next)
 			return rewrite_one_ok;
-		if (p->object.flags & (TREECHANGE | UNINTERESTING))
+		if (p->object.flags & UNINTERESTING)
+			return rewrite_one_ok;
+		if (!(p->object.flags & TREESAME))
 			return rewrite_one_ok;
 		if (!p->parents)
 			return rewrite_one_noparents;
@@ -1381,6 +1411,36 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 			   commit->buffer, strlen(commit->buffer));
 }
 
+enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
+{
+	if (commit->object.flags & SHOWN)
+		return commit_ignore;
+	if (revs->unpacked && has_sha1_pack(commit->object.sha1, revs->ignore_packed))
+		return commit_ignore;
+	if (commit->object.flags & UNINTERESTING)
+		return commit_ignore;
+	if (revs->min_age != -1 && (commit->date > revs->min_age))
+		return commit_ignore;
+	if (revs->no_merges && commit->parents && commit->parents->next)
+		return commit_ignore;
+	if (!commit_match(commit, revs))
+		return commit_ignore;
+	if (revs->prune && revs->dense) {
+		/* Commit without changes? */
+		if (commit->object.flags & TREESAME) {
+			/* drop merges unless we want parenthood */
+			if (!revs->parents)
+				return commit_ignore;
+			/* non-merge - always ignore it */
+			if (!commit->parents || !commit->parents->next)
+				return commit_ignore;
+		}
+		if (revs->parents && rewrite_parents(revs, commit) < 0)
+			return commit_error;
+	}
+	return commit_show;
+}
+
 static struct commit *get_revision_1(struct rev_info *revs)
 {
 	if (!revs->commits)
@@ -1408,36 +1468,15 @@ static struct commit *get_revision_1(struct rev_info *revs)
 			if (add_parents_to_list(revs, commit, &revs->commits) < 0)
 				return NULL;
 		}
-		if (commit->object.flags & SHOWN)
-			continue;
 
-		if (revs->unpacked && has_sha1_pack(commit->object.sha1,
-						    revs->ignore_packed))
-		    continue;
-
-		if (commit->object.flags & UNINTERESTING)
+		switch (simplify_commit(revs, commit)) {
+		case commit_ignore:
 			continue;
-		if (revs->min_age != -1 && (commit->date > revs->min_age))
-			continue;
-		if (revs->no_merges &&
-		    commit->parents && commit->parents->next)
-			continue;
-		if (!commit_match(commit, revs))
-			continue;
-		if (revs->prune_fn && revs->dense) {
-			/* Commit without changes? */
-			if (!(commit->object.flags & TREECHANGE)) {
-				/* drop merges unless we want parenthood */
-				if (!revs->parents)
-					continue;
-				/* non-merge - always ignore it */
-				if (!commit->parents || !commit->parents->next)
-					continue;
-			}
-			if (revs->parents && rewrite_parents(revs, commit) < 0)
-				return NULL;
+		case commit_error:
+			return NULL;
+		default:
+			return commit;
 		}
-		return commit;
 	} while (revs->commits);
 	return NULL;
 }

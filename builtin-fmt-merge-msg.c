@@ -176,7 +176,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	struct commit *commit;
 	struct object *branch;
 	struct list subjects = { NULL, NULL, 0, 0 };
-	int flags = UNINTERESTING | TREECHANGE | SEEN | SHOWN | ADDED;
+	int flags = UNINTERESTING | TREESAME | SEEN | SHOWN | ADDED;
 
 	branch = deref_tag(parse_object(sha1), sha1_to_hex(sha1), 40);
 	if (!branch || branch->type != OBJ_COMMIT)
