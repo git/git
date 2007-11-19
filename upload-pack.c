@@ -174,7 +174,6 @@ static void create_pack_file(void)
 	if (start_command(&pack_objects))
 		die("git-upload-pack: unable to fork git-pack-objects");
 
-#ifndef __MINGW32__
 	/* We read from pack_objects.err to capture stderr output for
 	 * progress bar, and pack_objects.out to capture the pack data.
 	 */
@@ -265,41 +264,6 @@ static void create_pack_file(void)
 				goto fail;
 		}
 	}
-#else
-	char *cp;
-
-	/* We read from pack_objects.out to capture the pack data. */
-
-	while ((sz = xread(pack_objects.out, data+1, sizeof(data)-1)) > 0) {
-		cp = data+1;
-		/* Data ready; we keep the last byte to ourselves in case we
-		 * detect broken rev-list, so that we can leave the stream
-		 * corrupted.  This is unfortunate -- unpack-objects would
-		 * happily accept a valid pack data with trailing garbage, so
-		 * appending garbage after we pass all the pack data is not
-		 * good enough to signal breakage to downstream.
-		 */
-		if (0 <= buffered) {
-			*--cp = buffered;
-			sz++;
-		}
-		if (1 < sz) {
-			buffered = cp[sz-1] & 0xFF;
-			sz--;
-		}
-		else
-			buffered = -1;
-		sz = send_client_data(1, cp, sz);
-		if (sz < 0)
-			goto fail;
-	}
-	if (sz == 0) {
-		close(pack_objects.out);
-		pack_objects.out = -1;
-	}
-	else
-		goto fail;
-#endif
 
 	if (finish_command(&pack_objects)) {
 		error("git-upload-pack: git-pack-objects died with error.");
@@ -521,12 +485,10 @@ static void receive_needs(void)
 			use_thin_pack = 1;
 		if (strstr(line+45, "ofs-delta"))
 			use_ofs_delta = 1;
-#ifndef __MINGW32__
 		if (strstr(line+45, "side-band-64k"))
 			use_sideband = LARGE_PACKET_MAX;
 		else if (strstr(line+45, "side-band"))
 			use_sideband = DEFAULT_PACKET_MAX;
-#endif
 		if (strstr(line+45, "no-progress"))
 			no_progress = 1;
 
@@ -596,11 +558,8 @@ static void receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	static const char *capabilities = "multi_ack thin-pack"
-#ifndef __MINGW32__
-		" side-band side-band-64k"
-#endif
-		" ofs-delta shallow no-progress";
+	static const char *capabilities = "multi_ack thin-pack side-band"
+		" side-band-64k ofs-delta shallow no-progress";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
