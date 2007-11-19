@@ -33,8 +33,9 @@ Updates since v1.5.3
    too many loose objects.
 
  * You need to explicitly set clean.requireForce to "false" to allow
-   git-clean to do any damage (lack of the configuration variable
-   used to mean "do not require", but we now use the safer default).
+   git-clean without -f to do any damage (lack of the configuration
+   variable used to mean "do not require", but we now use the safer
+   default).
 
  * git-push has been rewritten in C.
 
