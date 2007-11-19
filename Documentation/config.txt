@@ -232,7 +232,7 @@ core.loosecompression::
 	are not in a pack file. -1 is the zlib default. 0 means no
 	compression, and 1..9 are various speed/size tradeoffs, 9 being
 	slowest.  If not set,  defaults to core.compression.  If that is
-	not set,  defaults to 0 (best speed).
+	not set,  defaults to 1 (best speed).
 
 core.packedGitWindowSize::
 	Number of bytes of a pack file to map into memory in a
