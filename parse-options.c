@@ -216,6 +216,9 @@ is_abbreviated:
 	return error("unknown option `%s'", arg);
 }
 
+static NORETURN void usage_with_options_internal(const char * const *,
+                                                 const struct option *, int);
+
 int parse_options(int argc, const char **argv, const struct option *options,
                   const char * const usagestr[], int flags)
 {
@@ -249,6 +252,8 @@ int parse_options(int argc, const char **argv, const struct option *options,
 			break;
 		}
 
+		if (!strcmp(arg + 2, "help-all"))
+			usage_with_options_internal(usagestr, options, 1);
 		if (!strcmp(arg + 2, "help"))
 			usage_with_options(usagestr, options);
 		if (parse_long_opt(&args, arg + 2, options))
@@ -263,8 +268,8 @@ int parse_options(int argc, const char **argv, const struct option *options,
 #define USAGE_OPTS_WIDTH 24
 #define USAGE_GAP         2
 
-void usage_with_options(const char * const *usagestr,
-                        const struct option *opts)
+void usage_with_options_internal(const char * const *usagestr,
+                                 const struct option *opts, int full)
 {
 	fprintf(stderr, "usage: %s\n", *usagestr++);
 	while (*usagestr && **usagestr)
@@ -285,6 +290,8 @@ void usage_with_options(const char * const *usagestr,
 				fprintf(stderr, "%s\n", opts->help);
 			continue;
 		}
+		if (!full && (opts->flags & PARSE_OPT_HIDDEN))
+			continue;
 
 		pos = fprintf(stderr, "    ");
 		if (opts->short_name)
@@ -333,6 +340,12 @@ void usage_with_options(const char * const *usagestr,
 	fputc('\n', stderr);
 
 	exit(129);
+}
+
+void usage_with_options(const char * const *usagestr,
+                        const struct option *opts)
+{
+	usage_with_options_internal(usagestr, opts, 0);
 }
 
 /*----- some often used options -----*/

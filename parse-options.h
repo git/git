@@ -24,6 +24,7 @@ enum parse_opt_option_flags {
 	PARSE_OPT_OPTARG  = 1,
 	PARSE_OPT_NOARG   = 2,
 	PARSE_OPT_NONEG   = 4,
+	PARSE_OPT_HIDDEN  = 8,
 };
 
 struct option;
@@ -57,6 +58,8 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *   PARSE_OPT_OPTARG: says that the argument is optionnal (not for BOOLEANs)
  *   PARSE_OPT_NOARG: says that this option takes no argument, for CALLBACKs
  *   PARSE_OPT_NONEG: says that this option cannot be negated
+ *   PARSE_OPT_HIDDEN this option is skipped in the default usage, showed in
+ *                    the long one.
  *
  * `callback`::
  *   pointer to the callback to use for OPTION_CALLBACK.
