@@ -3912,8 +3912,10 @@ sub git_summary {
 
 	if (-s "$projectroot/$project/README.html") {
 		if (open my $fd, "$projectroot/$project/README.html") {
-			print "<div class=\"title\">readme</div>\n";
+			print "<div class=\"title\">readme</div>\n" .
+			      "<div class=\"readme\">\n";
 			print $_ while (<$fd>);
+			print "\n</div>\n"; # class="readme"
 			close $fd;
 		}
 	}
