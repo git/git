@@ -1207,6 +1207,15 @@ class P4Sync(Command):
         for branch in lostAndFoundBranches:
             self.knownBranches[branch] = branch
 
+    def getBranchMappingFromGitBranches(self):
+        branches = p4BranchesInGit(self.importIntoRemotes)
+        for branch in branches.keys():
+            if branch == "master":
+                branch = "main"
+            else:
+                branch = branch[len(self.projectName):]
+            self.knownBranches[branch] = branch
+
     def listExistingP4GitBranches(self):
         # branches holds mapping from name to commit
         branches = p4BranchesInGit(self.importIntoRemotes)
@@ -1541,8 +1550,10 @@ class P4Sync(Command):
             ## FIXME - what's a P4 projectName ?
             self.projectName = self.guessProjectName()
 
-            if not self.hasOrigin:
-                self.getBranchMapping();
+            if self.hasOrigin:
+                self.getBranchMappingFromGitBranches()
+            else:
+                self.getBranchMapping()
             if self.verbose:
                 print "p4-git branches: %s" % self.p4BranchesInGit
                 print "initial parents: %s" % self.initialParents
