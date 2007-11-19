@@ -658,16 +658,23 @@ gitlink:git-diff[1]:
 $ git diff master..test
 -------------------------------------------------
 
-Sometimes what you want instead is a set of patches:
+That will produce the diff between the tips of the two branches.  If
+you'd prefer to find the diff from their common ancestor to test, you
+can use three dots instead of two:
+
+-------------------------------------------------
+$ git diff master...test
+-------------------------------------------------
+
+Sometimes what you want instead is a set of patches; for this you can
+use gitlink:git-format-patch[1]:
 
 -------------------------------------------------
 $ git format-patch master..test
 -------------------------------------------------
 
 will generate a file with a patch for each commit reachable from test
-but not from master.  Note that if master also has commits which are
-not reachable from test, then the combined result of these patches
-will not be the same as the diff produced by the git-diff example.
+but not from master.
 
 [[viewing-old-file-versions]]
 Viewing old file versions
