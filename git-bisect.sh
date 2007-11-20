@@ -328,6 +328,10 @@ bisect_visualize() {
 }
 
 bisect_reset() {
+	test -f "$GIT_DIR/BISECT_NAMES" || {
+		echo "We are not bisecting."
+		return
+	}
 	case "$#" in
 	0) if [ -s "$GIT_DIR/head-name" ]; then
 	       branch=`cat "$GIT_DIR/head-name"`
