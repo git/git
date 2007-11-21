@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include "quote.h"
-#include "spawn-pipe.h"
 #define MAX_ARGS	32
 
 extern char **environ;
@@ -154,31 +153,4 @@ int execl_git_cmd(const char *cmd,...)
 
 	argv[argc] = NULL;
 	return execv_git_cmd(argv);
-}
-
-int spawnv_git_cmd(const char **argv, int pin[2], int pout[2])
-{
-	pid_t pid;
-	struct strbuf cmd;
-	const char *tmp;
-
-	strbuf_init(&cmd, 0);
-	strbuf_addf(&cmd, "git-%s", argv[0]);
-
-	/* argv[0] must be the git command, but the argv array
-	 * belongs to the caller.  Save argv[0] and
-	 * restore it later.
-	 */
-
-	tmp = argv[0];
-	argv[0] = cmd.buf;
-
-	trace_argv_printf(argv, -1, "trace: exec:");
-
-	pid = spawnvpe_pipe(cmd.buf, argv, (const char **)environ,
-		pin, pout);
-
-	argv[0] = tmp;
-	return pid;
-
 }

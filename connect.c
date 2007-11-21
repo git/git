@@ -5,7 +5,6 @@
 #include "refs.h"
 #include "run-command.h"
 #include "remote.h"
-#include "spawn-pipe.h"
 
 static char *server_capabilities;
 

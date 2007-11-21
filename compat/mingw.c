@@ -235,7 +235,7 @@ int pipe(int filedes[2])
 		CloseHandle(h[0]);
 		return -1;
 	}
-	fd = _open_osfhandle( (int) h[0], O_NOINHERIT);
+	fd = _open_osfhandle((int)h[0], O_NOINHERIT);
 	if (fd < 0) {
 		close(filedes[0]);
 		close(filedes[1]);
@@ -245,7 +245,7 @@ int pipe(int filedes[2])
 	}
 	close(filedes[0]);
 	filedes[0] = fd;
-	fd = _open_osfhandle( (int) h[1], O_NOINHERIT);
+	fd = _open_osfhandle((int)h[1], O_NOINHERIT);
 	if (fd < 0) {
 		close(filedes[0]);
 		close(filedes[1]);
@@ -259,7 +259,62 @@ int pipe(int filedes[2])
 
 int poll(struct pollfd *ufds, unsigned int nfds, int timeout)
 {
-	return -1;
+	int i, pending;
+
+	if (timeout != -1)
+		return errno = EINVAL, error("poll timeout not supported");
+
+	/* When there is only one fd to wait for, then we pretend that
+	 * input is available and let the actual wait happen when the
+	 * caller invokes read().
+	 */
+	if (nfds == 1) {
+		if (!(ufds[0].events & POLLIN))
+			return errno = EINVAL, error("POLLIN not set");
+		ufds[0].revents = POLLIN;
+		return 0;
+	}
+
+repeat:
+	pending = 0;
+	for (i = 0; i < nfds; i++) {
+		DWORD avail = 0;
+		HANDLE h = (HANDLE) _get_osfhandle(ufds[i].fd);
+		if (h == INVALID_HANDLE_VALUE)
+			return -1;	/* errno was set */
+
+		if (!(ufds[i].events & POLLIN))
+			return errno = EINVAL, error("POLLIN not set");
+
+		/* this emulation works only for pipes */
+		if (!PeekNamedPipe(h, NULL, 0, NULL, &avail, NULL)) {
+			int err = GetLastError();
+			if (err == ERROR_BROKEN_PIPE) {
+				ufds[i].revents = POLLHUP;
+				pending++;
+			} else {
+				errno = EINVAL;
+				return error("PeekNamedPipe failed,"
+					" GetLastError: %u", err);
+			}
+		} else if (avail) {
+			ufds[i].revents = POLLIN;
+			pending++;
+		} else
+			ufds[i].revents = 0;
+	}
+	if (!pending) {
+		/* The only times that we spin here is when the process
+		 * that is connected through the pipes is waiting for
+		 * its own input data to become available. But since
+		 * the process (pack-objects) is itself CPU intensive,
+		 * it will happily pick up the time slice that we are
+		 * relinguishing here.
+		 */
+		Sleep(0);
+		goto repeat;
+	}
+	return 0;
 }
 
 #include <time.h>
@@ -537,6 +592,45 @@ void mingw_execvp(const char *cmd, char *const *argv)
 	mingw_free_path_split(path);
 }
 
+char **copy_environ()
+{
+	return copy_env(environ);
+}
+
+char **copy_env(char **env)
+{
+	char **s;
+	int n = 1;
+	for (s = env; *s; s++)
+		n++;
+	s = xmalloc(n*sizeof(char *));
+	memcpy(s, env, n*sizeof(char *));
+	return s;
+}
+
+void env_unsetenv(char **env, const char *name)
+{
+	int src, dst;
+	size_t nmln;
+
+	nmln = strlen(name);
+
+	for (src = dst = 0; env[src]; ++src) {
+		size_t enln;
+		enln = strlen(env[src]);
+		if (enln > nmln) {
+			/* might match, and can test for '=' safely */
+			if (0 == strncmp (env[src], name, nmln)
+			    && '=' == env[src][nmln])
+				/* matches, so skip */
+				continue;
+		}
+		env[dst] = env[src];
+		++dst;
+	}
+	env[dst] = NULL;
+}
+
 int mingw_socket(int domain, int type, int protocol)
 {
 	SOCKET s = WSASocket(domain, type, protocol, NULL, 0, 0);
@@ -666,10 +760,10 @@ static int start_timer_thread(void)
 		timer_thread = (HANDLE) _beginthreadex(NULL, 0, ticktack, NULL, 0, NULL);
 		if (!timer_thread )
 			return errno = ENOMEM,
-				error("cannot create progress indicator");
+				error("cannot start timer thread");
 	} else
 		return errno = ENOMEM,
-			error("cannot allocate resources for progress indicator");
+			error("cannot allocate resources timer");
 	return 0;
 }
 
