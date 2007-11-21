@@ -19,7 +19,7 @@ depending on the subcommand:
 git reflog expire [--dry-run] [--stale-fix] [--verbose]
 	[--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...
 
-git reflog [show] [log-options]
+git reflog [show] [log-options] [<ref>]
 
 Reflog is a mechanism to record when the tip of branches are
 updated.  This command is to manage the information recorded in it.
@@ -32,9 +32,16 @@ directly by the end users -- instead, see gitlink:git-gc[1].
 
 The subcommand "show" (which is also the default, in the absence of any
 subcommands) will take all the normal log options, and show the log of
-`HEAD`, which will cover all recent actions, including branch switches.
-It is basically an alias for 'git log -g --abbrev-commit
---pretty=oneline', see gitlink:git-log[1].
+the reference provided in the command-line (or `HEAD`, by default).
+The reflog will cover all recent actions (HEAD reflog records branch switching
+as well).  It is an alias for 'git log -g --abbrev-commit --pretty=oneline';
+see gitlink:git-log[1].
+
+The reflog is useful in various git commands, to specify the old value
+of a reference. For example, `HEAD@\{2\}` means "where HEAD used to be
+two moves ago", `master@\{one.week.ago\}` means "where master used to
+point to one week ago", and so on. See gitlink:git-rev-parse[1] for
+more details.
 
 
 OPTIONS

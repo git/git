@@ -785,7 +785,8 @@ foreach my $t (@files) {
 			else {
 				push @xh,
 				  'MIME-Version: 1.0',
-				  "Content-Type: text/plain; charset=$author_encoding";
+				  "Content-Type: text/plain; charset=$author_encoding",
+				  'Content-Transfer-Encoding: 8bit';
 			}
 		}
 	}
