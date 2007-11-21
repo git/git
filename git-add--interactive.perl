@@ -564,10 +564,12 @@ sub patch_update_cmd {
 				     IMMEDIATE => 1,
 				     HEADER => $status_head, },
 				   @mods);
-	return if (!$it);
+	patch_update_file($it->{VALUE}) if ($it);
+}
 
+sub patch_update_file {
 	my ($ix, $num);
-	my $path = $it->{VALUE};
+	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
 	for (@{$head->{TEXT}}) {
 		print;
