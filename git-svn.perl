@@ -65,7 +65,7 @@ my ($_stdin, $_help, $_edit,
 	$_template, $_shared,
 	$_version, $_fetch_all, $_no_rebase,
 	$_merge, $_strategy, $_dry_run, $_local,
-	$_prefix, $_no_checkout, $_verbose);
+	$_prefix, $_no_checkout, $_url, $_verbose);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -181,7 +181,7 @@ my %cmd = (
 	'info' => [ \&cmd_info,
 		    "Show info about the latest SVN revision
 		     on the current branch",
-		    { } ],
+		    { 'url' => \$_url, } ],
 );
 
 my $cmd;
@@ -772,6 +772,11 @@ sub cmd_info {
 		    "working tree history\n";
 	}
 	my $full_url = $url . ($path eq "." ? "" : "/$path");
+
+	if ($_url) {
+		print $full_url, "\n";
+		return;
+	}
 
 	my $result = "Path: $path\n";
 	$result .= "Name: " . basename($path) . "\n" if $file_type ne "dir";

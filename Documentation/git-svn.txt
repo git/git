@@ -196,7 +196,8 @@ Any other arguments are passed directly to `git log'
 'info'::
 	Shows information about a file or directory similar to what
 	`svn info' provides.  Does not currently support a -r/--revision
-	argument.
+	argument.  Use the --url option to output only the value of the
+	'URL:' field.
 
 --
 
