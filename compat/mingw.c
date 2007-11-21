@@ -631,8 +631,22 @@ void env_unsetenv(char **env, const char *name)
 	env[dst] = NULL;
 }
 
+/* this is the first function to call into WS_32; initialize it */
+#undef gethostbyname 
+struct hostent *mingw_gethostbyname(const char *host)
+{
+	WSADATA wsa;
+
+	if (WSAStartup(MAKEWORD(2,2), &wsa))
+		die("unable to initialize winsock subsystem, error %d",
+			WSAGetLastError());
+	atexit((void(*)(void)) WSACleanup);
+	return gethostbyname(host);
+}
+
 int mingw_socket(int domain, int type, int protocol)
 {
+	int sockfd;
 	SOCKET s = WSASocket(domain, type, protocol, NULL, 0, 0);
 	if (s == INVALID_SOCKET) {
 		/*
@@ -647,7 +661,20 @@ int mingw_socket(int domain, int type, int protocol)
 		errno = WSAGetLastError();
 		return -1;
 	}
-	return s;
+	/* convert into a file descriptor */
+	if ((sockfd = _open_osfhandle(s, O_RDWR|O_BINARY)) < 0) {
+		closesocket(s);
+		return error("unable to make a socket file descriptor: %s",
+			strerror(errno));
+	}
+	return sockfd;
+}
+
+#undef connect
+int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz)
+{
+	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
+	return connect(s, sa, sz);
 }
 
 #undef rename

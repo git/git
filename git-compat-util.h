@@ -520,8 +520,14 @@ struct tm *localtime_r(const time_t *timep, struct tm *result);
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
+struct hostent *mingw_gethostbyname(const char *host);
+#define gethostbyname mingw_gethostbyname
+
 int mingw_socket(int domain, int type, int protocol);
 #define socket mingw_socket
+
+int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
+#define connect mingw_connect
 
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
