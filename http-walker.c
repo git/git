@@ -405,7 +405,7 @@ static int fetch_index(struct walker *walker, struct alt_base *repo, unsigned ch
 	indexfile = fopen(tmpfile, "a");
 	if (!indexfile)
 		return error("Unable to open local file %s for pack index",
-			     filename);
+			     tmpfile);
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -770,7 +770,7 @@ static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned cha
 	packfile = fopen(tmpfile, "a");
 	if (!packfile)
 		return error("Unable to open local file %s for pack",
-			     filename);
+			     tmpfile);
 
 	slot = get_active_slot();
 	slot->results = &results;
