@@ -1141,7 +1141,7 @@ class P4Sync(Command):
 
         l = p4CmdList("labels %s..." % ' '.join (self.depotPaths))
         if len(l) > 0 and not self.silent:
-            print "Finding files belonging to labels in %s" % `self.depotPath`
+            print "Finding files belonging to labels in %s" % `self.depotPaths`
 
         for output in l:
             label = output["label"]
