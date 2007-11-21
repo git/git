@@ -760,10 +760,10 @@ static int start_timer_thread(void)
 		timer_thread = (HANDLE) _beginthreadex(NULL, 0, ticktack, NULL, 0, NULL);
 		if (!timer_thread )
 			return errno = ENOMEM,
-				error("cannot create progress indicator");
+				error("cannot start timer thread");
 	} else
 		return errno = ENOMEM,
-			error("cannot allocate resources for progress indicator");
+			error("cannot allocate resources timer");
 	return 0;
 }
 
