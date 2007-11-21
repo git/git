@@ -25,8 +25,10 @@
 
 #ifdef NO_C99_FORMAT
 #define SZ_FMT "lu"
+static unsigned long sz_fmt(size_t s) { return (unsigned long)s; }
 #else
 #define SZ_FMT "zu"
+static size_t sz_fmt(size_t s) { return s; }
 #endif
 
 const unsigned char null_sha1[20];
@@ -423,9 +425,9 @@ void pack_report(void)
 		"pack_report: getpagesize()            = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitWindowSize = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitLimit      = %10" SZ_FMT "\n",
-		(size_t) getpagesize(),
-		packed_git_window_size,
-		packed_git_limit);
+		sz_fmt(getpagesize()),
+		sz_fmt(packed_git_window_size),
+		sz_fmt(packed_git_limit));
 	fprintf(stderr,
 		"pack_report: pack_used_ctr            = %10u\n"
 		"pack_report: pack_mmap_calls          = %10u\n"
@@ -435,7 +437,7 @@ void pack_report(void)
 		pack_used_ctr,
 		pack_mmap_calls,
 		pack_open_windows, peak_pack_open_windows,
-		pack_mapped, peak_pack_mapped);
+		sz_fmt(pack_mapped), sz_fmt(peak_pack_mapped));
 }
 
 static int check_packed_git_idx(const char *path,  struct packed_git *p)
