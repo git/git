@@ -145,6 +145,7 @@ sub format_2822_time {
 
 my $have_email_valid = eval { require Email::Valid; 1 };
 my $smtp;
+my $auth;
 
 sub unique_email_list(@);
 sub cleanup_compose_files();
@@ -635,7 +636,7 @@ X-Mailer: git-send-email $gitversion
 		}
 
 		if ((defined $smtp_authuser) && (defined $smtp_authpass)) {
-			$smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
+			$auth ||= $smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
 		}
 		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
