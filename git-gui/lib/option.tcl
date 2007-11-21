@@ -54,85 +54,6 @@ proc save_config {} {
 	}
 }
 
-proc do_about {} {
-	global appvers copyright oguilib
-	global tcl_patchLevel tk_patchLevel
-
-	set w .about_dialog
-	toplevel $w
-	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-
-	label $w.header -text "About [appname]" \
-		-font font_uibold
-	pack $w.header -side top -fill x
-
-	frame $w.buttons
-	button $w.buttons.close -text {Close} \
-		-default active \
-		-command [list destroy $w]
-	pack $w.buttons.close -side right
-	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
-
-	label $w.desc \
-		-text "git-gui - a graphical user interface for Git.
-$copyright" \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
-	pack $w.desc -side top -fill x -padx 5 -pady 5
-
-	set v {}
-	append v "git-gui version $appvers\n"
-	append v "[git version]\n"
-	append v "\n"
-	if {$tcl_patchLevel eq $tk_patchLevel} {
-		append v "Tcl/Tk version $tcl_patchLevel"
-	} else {
-		append v "Tcl version $tcl_patchLevel"
-		append v ", Tk version $tk_patchLevel"
-	}
-
-	set d {}
-	append d "git wrapper: $::_git\n"
-	append d "git exec dir: [gitexec]\n"
-	append d "git-gui lib: $oguilib"
-
-	label $w.vers \
-		-text $v \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
-	pack $w.vers -side top -fill x -padx 5 -pady 5
-
-	label $w.dirs \
-		-text $d \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
-	pack $w.dirs -side top -fill x -padx 5 -pady 5
-
-	menu $w.ctxm -tearoff 0
-	$w.ctxm add command \
-		-label {Copy} \
-		-command "
-		clipboard clear
-		clipboard append -format STRING -type STRING -- \[$w.vers cget -text\]
-	"
-
-	bind $w <Visibility> "grab $w; focus $w.buttons.close"
-	bind $w <Key-Escape> "destroy $w"
-	bind $w <Key-Return> "destroy $w"
-	bind_button3 $w.vers "tk_popup $w.ctxm %X %Y; grab $w; focus $w"
-	wm title $w "About [appname]"
-	tkwait window $w
-}
-
 proc do_options {} {
 	global repo_config global_config font_descs
 	global repo_config_new global_config_new
@@ -157,48 +78,44 @@ proc do_options {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text "Options" \
-		-font font_uibold
-	pack $w.header -side top -fill x
-
 	frame $w.buttons
-	button $w.buttons.restore -text {Restore Defaults} \
+	button $w.buttons.restore -text [mc "Restore Defaults"] \
 		-default normal \
 		-command do_restore_defaults
 	pack $w.buttons.restore -side left
-	button $w.buttons.save -text Save \
+	button $w.buttons.save -text [mc Save] \
 		-default active \
 		-command [list do_save_config $w]
 	pack $w.buttons.save -side right
-	button $w.buttons.cancel -text {Cancel} \
+	button $w.buttons.cancel -text [mc "Cancel"] \
 		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.repo -text "[reponame] Repository"
-	labelframe $w.global -text {Global (All Repositories)}
+	labelframe $w.repo -text [mc "%s Repository" [reponame]]
+	labelframe $w.global -text [mc "Global (All Repositories)"]
 	pack $w.repo -side left -fill both -expand 1 -pady 5 -padx 5
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
 	set optid 0
 	foreach option {
-		{t user.name {User Name}}
-		{t user.email {Email Address}}
+		{t user.name {mc "User Name"}}
+		{t user.email {mc "Email Address"}}
 
-		{b merge.summary {Summarize Merge Commits}}
-		{i-1..5 merge.verbosity {Merge Verbosity}}
-		{b merge.diffstat {Show Diffstat After Merge}}
+		{b merge.summary {mc "Summarize Merge Commits"}}
+		{i-1..5 merge.verbosity {mc "Merge Verbosity"}}
+		{b merge.diffstat {mc "Show Diffstat After Merge"}}
 
-		{b gui.trustmtime  {Trust File Modification Timestamps}}
-		{b gui.pruneduringfetch {Prune Tracking Branches During Fetch}}
-		{b gui.matchtrackingbranch {Match Tracking Branches}}
-		{i-0..99 gui.diffcontext {Number of Diff Context Lines}}
-		{t gui.newbranchtemplate {New Branch Name Template}}
+		{b gui.trustmtime  {mc "Trust File Modification Timestamps"}}
+		{b gui.pruneduringfetch {mc "Prune Tracking Branches During Fetch"}}
+		{b gui.matchtrackingbranch {mc "Match Tracking Branches"}}
+		{i-0..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
+		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]
-		set text [lindex $option 2]
+		set text [eval [lindex $option 2]]
 		incr optid
 		foreach f {repo global} {
 			switch -glob -- $type {
@@ -246,7 +163,7 @@ proc do_options {} {
 	foreach option $font_descs {
 		set name [lindex $option 0]
 		set font [lindex $option 1]
-		set text [lindex $option 2]
+		set text [eval [lindex $option 2]]
 
 		set global_config_new(gui.$font^^family) \
 			[font configure $font -family]
@@ -278,7 +195,13 @@ proc do_options {} {
 	bind $w <Visibility> "grab $w; focus $w.buttons.save"
 	bind $w <Key-Escape> "destroy $w"
 	bind $w <Key-Return> [list do_save_config $w]
-	wm title $w "[appname] ([reponame]): Options"
+
+	if {[is_MacOSX]} {
+		set t [mc "Preferences"]
+	} else {
+		set t [mc "Options"]
+	}
+	wm title $w "[appname] ([reponame]): $t"
 	tkwait window $w
 }
 
@@ -309,7 +232,7 @@ proc do_restore_defaults {} {
 
 proc do_save_config {w} {
 	if {[catch {save_config} err]} {
-		error_popup "Failed to completely save options:\n\n$err"
+		error_popup [strcat [mc "Failed to completely save options:"] "\n\n$err"]
 	}
 	reshow_diff
 	destroy $w

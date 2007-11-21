@@ -2,18 +2,27 @@ all::
 
 # Define V=1 to have a more verbose compile.
 #
+# Define NO_MSGFMT if you do not have msgfmt from the GNU gettext
+# package and want to use our rough pure Tcl po->msg translator.
+# TCL_PATH must be vaild for this to work.
+#
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
 
 SCRIPT_SH = git-gui.sh
+GITGUI_MAIN := git-gui
 GITGUI_BUILT_INS = git-citool
-ALL_PROGRAMS = $(GITGUI_BUILT_INS) $(patsubst %.sh,%,$(SCRIPT_SH))
 ALL_LIBFILES = $(wildcard lib/*.tcl)
 PRELOAD_FILES = lib/class.tcl
+NONTCL_LIBFILES = \
+	lib/git-gui.ico \
+	$(wildcard lib/win32_*.js) \
+#end NONTCL_LIBFILES
 
 ifndef SHELL_PATH
 	SHELL_PATH = /bin/sh
@@ -31,7 +40,7 @@ ifndef INSTALL
 	INSTALL = install
 endif
 
-RM_F      ?= rm -f
+RM_RF     ?= rm -rf
 RMDIR     ?= rmdir
 
 INSTALL_D0 = $(INSTALL) -d -m755 # space is required here
@@ -40,6 +49,8 @@ INSTALL_R0 = $(INSTALL) -m644 # space is required here
 INSTALL_R1 =
 INSTALL_X0 = $(INSTALL) -m755 # space is required here
 INSTALL_X1 =
+INSTALL_A0 = find # space is required here
+INSTALL_A1 = | cpio -pud
 INSTALL_L0 = rm -f # space is required here
 INSTALL_L1 = && ln # space is required here
 INSTALL_L2 =
@@ -47,15 +58,16 @@ INSTALL_L3 =
 
 REMOVE_D0  = $(RMDIR) # space is required here
 REMOVE_D1  = || true
-REMOVE_F0  = $(RM_F) # space is required here
+REMOVE_F0  = $(RM_RF) # space is required here
 REMOVE_F1  =
 CLEAN_DST  = true
 
 ifndef V
 	QUIET          = @
-	QUIET_GEN      = $(QUIET)echo '   ' GEN $@ &&
-	QUIET_BUILT_IN = $(QUIET)echo '   ' BUILTIN $@ &&
+	QUIET_GEN      = $(QUIET)echo '   ' GEN '$@' &&
 	QUIET_INDEX    = $(QUIET)echo '   ' INDEX $(dir $@) &&
+	QUIET_MSGFMT0  = $(QUIET)printf '    MSGFMT %12s ' $@ && v=`
+	QUIET_MSGFMT1  = 2>&1` && echo "$$v" | sed -e 's/fuzzy translations/fuzzy/' | sed -e 's/ messages//g'
 	QUIET_2DEVNULL = 2>/dev/null
 
 	INSTALL_D0 = dir=
@@ -64,6 +76,8 @@ ifndef V
 	INSTALL_R1 = && echo '   ' INSTALL 644 `basename $$src` && $(INSTALL) -m644 $$src
 	INSTALL_X0 = src=
 	INSTALL_X1 = && echo '   ' INSTALL 755 `basename $$src` && $(INSTALL) -m755 $$src
+	INSTALL_A0 = src=
+	INSTALL_A1 = && echo '   ' INSTALL '   ' `basename "$$src"` && find "$$src" | cpio -pud
 
 	INSTALL_L0 = dst=
 	INSTALL_L1 = && src=
@@ -74,51 +88,133 @@ ifndef V
 	REMOVE_D0 = dir=
 	REMOVE_D1 = && echo ' ' REMOVE $$dir && test -d "$$dir" && $(RMDIR) "$$dir" || true
 	REMOVE_F0 = dst=
-	REMOVE_F1 = && echo '   ' REMOVE `basename "$$dst"` && $(RM_F) "$$dst"
+	REMOVE_F1 = && echo '   ' REMOVE `basename "$$dst"` && $(RM_RF) "$$dst"
 endif
 
 TCL_PATH   ?= tclsh
 TCLTK_PATH ?= wish
+TKFRAMEWORK = /Library/Frameworks/Tk.framework/Resources/Wish.app
 
 ifeq ($(findstring $(MAKEFLAGS),s),s)
 QUIET_GEN =
-QUIET_BUILT_IN =
 endif
+
+-include config.mak
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 TCL_PATH_SQ = $(subst ','\'',$(TCL_PATH))
 TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
+TCLTK_PATH_SED = $(subst ','\'',$(subst \,\\,$(TCLTK_PATH)))
 
 gg_libdir ?= $(sharedir)/git-gui/lib
 libdir_SQ  = $(subst ','\'',$(gg_libdir))
+libdir_SED = $(subst ','\'',$(subst \,\\,$(gg_libdir)))
+exedir     = $(dir $(gitexecdir))share/git-gui/lib
 
-exedir    = $(dir $(gitexecdir))share/git-gui/lib
-exedir_SQ = $(subst ','\'',$(exedir))
+GITGUI_SCRIPT   := $$0
+GITGUI_RELATIVE :=
+GITGUI_MACOSXAPP :=
 
-$(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
+ifeq ($(exedir),$(gg_libdir))
+	GITGUI_RELATIVE := 1
+endif
+
+ifeq ($(uname_O),Cygwin)
+	GITGUI_SCRIPT := `cygpath --windows --absolute "$(GITGUI_SCRIPT)"`
+	ifeq ($(GITGUI_RELATIVE),)
+		gg_libdir := $(shell cygpath --windows --absolute "$(gg_libdir)")
+	endif
+endif
+ifeq ($(uname_S),Darwin)
+	ifeq ($(shell test -d $(TKFRAMEWORK) && echo y),y)
+		GITGUI_MACOSXAPP := YesPlease
+	endif
+endif
+ifneq (,$(findstring MINGW,$(uname_S)))
+	NO_MSGFMT=1
+	GITGUI_WINDOWS_WRAPPER := YesPlease
+endif
+
+ifdef GITGUI_MACOSXAPP
+GITGUI_MAIN := git-gui.tcl
+
+git-gui: GIT-VERSION-FILE GIT-GUI-VARS
 	$(QUIET_GEN)rm -f $@ $@+ && \
-	GITGUI_RELATIVE= && \
-	if test '$(exedir_SQ)' = '$(libdir_SQ)'; then \
-		if test "$(uname_O)" = Cygwin; \
-		then GITGUI_RELATIVE= ; \
-		else GITGUI_RELATIVE=1; \
-		fi; \
-	fi && \
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
-		-e 's|^ exec wish "$$0"| exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
-		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
-		-e 's|@@GITGUI_RELATIVE@@|'$$GITGUI_RELATIVE'|' \
-		-e $$GITGUI_RELATIVE's|@@GITGUI_LIBDIR@@|$(libdir_SQ)|' \
-		$@.sh >$@+ && \
+	echo '#!$(SHELL_PATH_SQ)' >$@+ && \
+	echo 'if test "z$$*" = zversion ||' >>$@+ && \
+	echo '   test "z$$*" = z--version' >>$@+ && \
+	echo then >>$@+ && \
+	echo '	'echo \'git-gui version '$(GITGUI_VERSION)'\' >>$@+ && \
+	echo else >>$@+ && \
+	echo '	'exec \''$(libdir_SQ)/Git Gui.app/Contents/MacOS/Wish'\' \
+		'"$$0" "$$@"' >>$@+ && \
+	echo fi >>$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
 
-$(GITGUI_BUILT_INS): git-gui
-	$(QUIET_BUILT_IN)rm -f $@ && ln git-gui $@
+Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-VARS \
+		macosx/Info.plist \
+		macosx/git-gui.icns \
+		macosx/AppMain.tcl \
+		$(TKFRAMEWORK)/Contents/MacOS/Wish
+	$(QUIET_GEN)rm -rf '$@' '$@'+ && \
+	mkdir -p '$@'+/Contents/MacOS && \
+	mkdir -p '$@'+/Contents/Resources/Scripts && \
+	cp '$(subst ','\'',$(TKFRAMEWORK))/Contents/MacOS/Wish' \
+		'$@'+/Contents/MacOS && \
+	cp macosx/git-gui.icns '$@'+/Contents/Resources && \
+	sed -e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
+		macosx/Info.plist \
+		>'$@'+/Contents/Info.plist && \
+	sed -e 's|@@gitexecdir@@|$(gitexecdir_SQ)|' \
+		-e 's|@@GITGUI_LIBDIR@@|$(libdir_SED)|' \
+		macosx/AppMain.tcl \
+		>'$@'+/Contents/Resources/Scripts/AppMain.tcl && \
+	mv '$@'+ '$@'
+endif
 
-lib/tclIndex: $(ALL_LIBFILES)
+ifdef GITGUI_WINDOWS_WRAPPER
+GITGUI_MAIN := git-gui.tcl
+
+git-gui: windows/git-gui.sh
+	cp $< $@
+endif
+
+$(GITGUI_MAIN): git-gui.sh GIT-VERSION-FILE GIT-GUI-VARS
+	$(QUIET_GEN)rm -f $@ $@+ && \
+	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+		-e '1,30s|^ argv0=$$0| argv0=$(GITGUI_SCRIPT)|' \
+		-e '1,30s|^ exec wish | exec '\''$(TCLTK_PATH_SED)'\'' |' \
+		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
+		-e 's|@@GITGUI_RELATIVE@@|$(GITGUI_RELATIVE)|' \
+		-e '$(GITGUI_RELATIVE)s|@@GITGUI_LIBDIR@@|$(libdir_SED)|' \
+		git-gui.sh >$@+ && \
+	chmod +x $@+ && \
+	mv $@+ $@
+
+XGETTEXT   ?= xgettext
+ifdef NO_MSGFMT
+	MSGFMT ?= $(TCL_PATH) po/po2msg.sh
+else
+	MSGFMT ?= msgfmt
+endif
+
+msgsdir     = $(gg_libdir)/msgs
+msgsdir_SQ  = $(subst ','\'',$(msgsdir))
+PO_TEMPLATE = po/git-gui.pot
+ALL_POFILES = $(wildcard po/*.po)
+ALL_MSGFILES = $(subst .po,.msg,$(ALL_POFILES))
+
+$(PO_TEMPLATE): $(SCRIPT_SH) $(ALL_LIBFILES)
+	$(XGETTEXT) -kmc -LTcl -o $@ $(SCRIPT_SH) $(ALL_LIBFILES)
+update-po:: $(PO_TEMPLATE)
+	$(foreach p, $(ALL_POFILES), echo Updating $p ; msgmerge -U $p $(PO_TEMPLATE) ; )
+$(ALL_MSGFILES): %.msg : %.po
+	$(QUIET_MSGFMT0)$(MSGFMT) --statistics --tcl $< -l $(basename $(notdir $<)) -d $(dir $@) $(QUIET_MSGFMT1)
+
+lib/tclIndex: $(ALL_LIBFILES) GIT-GUI-VARS
 	$(QUIET_INDEX)if echo \
 	  $(foreach p,$(PRELOAD_FILES),source $p\;) \
 	  auto_mkindex lib '*.tcl' \
@@ -132,16 +228,13 @@ lib/tclIndex: $(ALL_LIBFILES)
 	 echo >>$@ ; \
 	fi
 
-# These can record GITGUI_VERSION
-$(patsubst %.sh,%,$(SCRIPT_SH)): GIT-VERSION-FILE GIT-GUI-VARS
-lib/tclIndex: GIT-GUI-VARS
-
 TRACK_VARS = \
 	$(subst ','\'',SHELL_PATH='$(SHELL_PATH_SQ)') \
 	$(subst ','\'',TCL_PATH='$(TCL_PATH_SQ)') \
 	$(subst ','\'',TCLTK_PATH='$(TCLTK_PATH_SQ)') \
 	$(subst ','\'',gitexecdir='$(gitexecdir_SQ)') \
 	$(subst ','\'',gg_libdir='$(libdir_SQ)') \
+	GITGUI_MACOSXAPP=$(GITGUI_MACOSXAPP) \
 #end TRACK_VARS
 
 GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
@@ -151,24 +244,49 @@ GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
 		echo 1>$@ "$$VARS"; \
 	fi
 
-all:: $(ALL_PROGRAMS) lib/tclIndex
+ifdef GITGUI_MACOSXAPP
+all:: git-gui Git\ Gui.app
+endif
+ifdef GITGUI_WINDOWS_WRAPPER
+all:: git-gui
+endif
+all:: $(GITGUI_MAIN) lib/tclIndex $(ALL_MSGFILES)
 
 install: all
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(gitexecdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(INSTALL_X0)git-gui $(INSTALL_X1) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(QUIET)$(foreach p,$(GITGUI_BUILT_INS), $(INSTALL_L0)'$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' $(INSTALL_L1)'$(DESTDIR_SQ)$(gitexecdir_SQ)/git-gui' $(INSTALL_L2)'$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' $(INSTALL_L3) &&) true
+ifdef GITGUI_WINDOWS_WRAPPER
+	$(QUIET)$(INSTALL_R0)git-gui.tcl $(INSTALL_R1) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+endif
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(INSTALL_R0)lib/tclIndex $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)'
-	$(QUIET)$(foreach p,$(ALL_LIBFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)' &&) true
+ifdef GITGUI_MACOSXAPP
+	$(QUIET)$(INSTALL_A0)'Git Gui.app' $(INSTALL_A1) '$(DESTDIR_SQ)$(libdir_SQ)'
+	$(QUIET)$(INSTALL_X0)git-gui.tcl $(INSTALL_X1) '$(DESTDIR_SQ)$(libdir_SQ)'
+endif
+	$(QUIET)$(foreach p,$(ALL_LIBFILES) $(NONTCL_LIBFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)' &&) true
+	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(msgsdir_SQ)' $(INSTALL_D1)
+	$(QUIET)$(foreach p,$(ALL_MSGFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(msgsdir_SQ)' &&) true
 
 uninstall:
 	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(gitexecdir_SQ)'/git-gui $(REMOVE_F1)
 	$(QUIET)$(foreach p,$(GITGUI_BUILT_INS), $(REMOVE_F0)'$(DESTDIR_SQ)$(gitexecdir_SQ)'/$p $(REMOVE_F1) &&) true
+ifdef GITGUI_WINDOWS_WRAPPER
+	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(gitexecdir_SQ)'/git-gui.tcl $(REMOVE_F1)
+endif
 	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(libdir_SQ)'
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/tclIndex $(REMOVE_F1)
-	$(QUIET)$(foreach p,$(ALL_LIBFILES), $(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/$(notdir $p) $(REMOVE_F1) &&) true
+ifdef GITGUI_MACOSXAPP
+	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)/Git Gui.app' $(REMOVE_F1)
+	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/git-gui.tcl $(REMOVE_F1)
+endif
+	$(QUIET)$(foreach p,$(ALL_LIBFILES) $(NONTCL_LIBFILES), $(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/$(notdir $p) $(REMOVE_F1) &&) true
+	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(msgsdir_SQ)'
+	$(QUIET)$(foreach p,$(ALL_MSGFILES), $(REMOVE_F0)'$(DESTDIR_SQ)$(msgsdir_SQ)'/$(notdir $p) $(REMOVE_F1) &&) true
 	$(QUIET)$(REMOVE_D0)'$(DESTDIR_SQ)$(gitexecdir_SQ)' $(REMOVE_D1)
+	$(QUIET)$(REMOVE_D0)'$(DESTDIR_SQ)$(msgsdir_SQ)' $(REMOVE_D1)
 	$(QUIET)$(REMOVE_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(REMOVE_D1)
 	$(QUIET)$(REMOVE_D0)`dirname '$(DESTDIR_SQ)$(libdir_SQ)'` $(REMOVE_D1)
 
@@ -177,8 +295,14 @@ dist-version:
 	@echo $(GITGUI_VERSION) > $(TARDIR)/version
 
 clean::
-	rm -f $(ALL_PROGRAMS) lib/tclIndex
-	rm -f GIT-VERSION-FILE GIT-GUI-VARS
+	$(RM_RF) $(GITGUI_MAIN) lib/tclIndex po/*.msg
+	$(RM_RF) GIT-VERSION-FILE GIT-GUI-VARS
+ifdef GITGUI_MACOSXAPP
+	$(RM_RF) 'Git Gui.app'* git-gui
+endif
+ifdef GITGUI_WINDOWS_WRAPPER
+	$(RM_RF) git-gui
+endif
 
 .PHONY: all install uninstall dist-version clean
 .PHONY: .FORCE-GIT-VERSION-FILE

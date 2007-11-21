@@ -6,19 +6,19 @@ proc load_last_commit {} {
 	global repo_config
 
 	if {[llength $PARENT] == 0} {
-		error_popup {There is nothing to amend.
+		error_popup [mc "There is nothing to amend.
 
 You are about to create the initial commit.  There is no commit before this to amend.
-}
+"]
 		return
 	}
 
 	repository_state curType curHEAD curMERGE_HEAD
 	if {$curType eq {merge}} {
-		error_popup {Cannot amend while merging.
+		error_popup [mc "Cannot amend while merging.
 
 You are currently in the middle of a merge that has not been fully completed.  You cannot amend the prior commit unless you first abort the current merge activity.
-}
+"]
 		return
 	}
 
@@ -46,7 +46,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 			}
 			set msg [string trim $msg]
 		} err]} {
-		error_popup "Error loading commit data for amend:\n\n$err"
+		error_popup [strcat [mc "Error loading commit data for amend:"] "\n\n$err"]
 		return
 	}
 
@@ -73,12 +73,12 @@ proc committer_ident {} {
 
 	if {$GIT_COMMITTER_IDENT eq {}} {
 		if {[catch {set me [git var GIT_COMMITTER_IDENT]} err]} {
-			error_popup "Unable to obtain your identity:\n\n$err"
+			error_popup [strcat [mc "Unable to obtain your identity:"] "\n\n$err"]
 			return {}
 		}
 		if {![regexp {^(.*) [0-9]+ [-+0-9]+$} \
 			$me me GIT_COMMITTER_IDENT]} {
-			error_popup "Invalid GIT_COMMITTER_IDENT:\n\n$me"
+			error_popup [strcat [mc "Invalid GIT_COMMITTER_IDENT:"] "\n\n$me"]
 			return {}
 		}
 	}
@@ -130,12 +130,12 @@ proc commit_tree {} {
 		&& $curType eq {normal}
 		&& $curHEAD eq $HEAD} {
 	} elseif {$commit_type ne $curType || $HEAD ne $curHEAD} {
-		info_popup {Last scanned state does not match repository state.
+		info_popup [mc "Last scanned state does not match repository state.
 
 Another Git program has modified this repository since the last scan.  A rescan must be performed before another commit can be created.
 
 The rescan will be automatically started now.
-}
+"]
 		unlock_index
 		rescan ui_ready
 		return
@@ -151,26 +151,26 @@ The rescan will be automatically started now.
 		D? -
 		M? {set files_ready 1}
 		U? {
-			error_popup "Unmerged files cannot be committed.
+			error_popup [mc "Unmerged files cannot be committed.
 
-File [short_path $path] has merge conflicts.  You must resolve them and stage the file before committing.
-"
+File %s has merge conflicts.  You must resolve them and stage the file before committing.
+" [short_path $path]]
 			unlock_index
 			return
 		}
 		default {
-			error_popup "Unknown file state [lindex $s 0] detected.
+			error_popup [mc "Unknown file state %s detected.
 
-File [short_path $path] cannot be committed by this program.
-"
+File %s cannot be committed by this program.
+" [lindex $s 0] [short_path $path]]
 		}
 		}
 	}
 	if {!$files_ready && ![string match *merge $curType]} {
-		info_popup {No changes to commit.
+		info_popup [mc "No changes to commit.
 
 You must stage at least 1 file before you can commit.
-}
+"]
 		unlock_index
 		return
 	}
@@ -180,14 +180,14 @@ You must stage at least 1 file before you can commit.
 	set msg [string trim [$ui_comm get 1.0 end]]
 	regsub -all -line {[ \t\r]+$} $msg {} msg
 	if {$msg eq {}} {
-		error_popup {Please supply a commit message.
+		error_popup [mc "Please supply a commit message.
 
 A good commit message has the following format:
 
 - First line: Describe in one sentance what you did.
 - Second line: Blank
 - Remaining lines: Describe why this change is good.
-}
+"]
 		unlock_index
 		return
 	}
@@ -254,7 +254,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 
 	gets $fd_wt tree_id
 	if {[catch {close $fd_wt} err]} {
-		error_popup "write-tree failed:\n\n$err"
+		error_popup [strcat [mc "write-tree failed:"] "\n\n$err"]
 		ui_status {Commit failed.}
 		unlock_index
 		return
@@ -272,18 +272,18 @@ proc commit_committree {fd_wt curHEAD msg} {
 			&& [string length $old_tree] == 45} {
 			set old_tree [string range $old_tree 5 end]
 		} else {
-			error "Commit $PARENT appears to be corrupt"
+			error [mc "Commit %s appears to be corrupt" $PARENT]
 		}
 
 		if {$tree_id eq $old_tree} {
-			info_popup {No changes to commit.
+			info_popup [mc "No changes to commit.
 
 No files were modified by this commit and it was not a merge commit.
 
 A rescan will be automatically started now.
-}
+"]
 			unlock_index
-			rescan {ui_status {No changes to commit.}}
+			rescan {ui_status [mc "No changes to commit."]}
 			return
 		}
 	}
@@ -300,7 +300,7 @@ A rescan will be automatically started now.
 	if {$use_enc ne {}} {
 		fconfigure $msg_wt -encoding $use_enc
 	} else {
-		puts stderr "warning: Tcl does not support encoding '$enc'."
+		puts stderr [mc "warning: Tcl does not support encoding '%s'." $enc]
 		fconfigure $msg_wt -encoding utf-8
 	}
 	puts -nonewline $msg_wt $msg
@@ -314,7 +314,7 @@ A rescan will be automatically started now.
 	}
 	lappend cmd <$msg_p
 	if {[catch {set cmt_id [eval git $cmd]} err]} {
-		error_popup "commit-tree failed:\n\n$err"
+		error_popup [strcat [mc "commit-tree failed:"] "\n\n$err"]
 		ui_status {Commit failed.}
 		unlock_index
 		return
@@ -336,7 +336,7 @@ A rescan will be automatically started now.
 	if {[catch {
 			git update-ref -m $reflogm HEAD $cmt_id $curHEAD
 		} err]} {
-		error_popup "update-ref failed:\n\n$err"
+		error_popup [strcat [mc "update-ref failed:"] "\n\n$err"]
 		ui_status {Commit failed.}
 		unlock_index
 		return
@@ -427,5 +427,5 @@ A rescan will be automatically started now.
 	display_all_files
 	unlock_index
 	reshow_diff
-	ui_status "Created commit [string range $cmt_id 0 7]: $subject"
+	ui_status [mc "Created commit %s: %s" [string range $cmt_id 0 7] $subject]
 }

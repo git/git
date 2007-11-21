@@ -12,29 +12,29 @@ constructor dialog {} {
 	global current_branch
 
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): Delete Branch"
+	wm title $top [append "[appname] ([reponame]): " [mc "Delete Branch"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	label $w.header -text {Delete Local Branch} -font font_uibold
+	label $w.header -text [mc "Delete Local Branch"] -font font_uibold
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
 	set w_delete $w.buttons.delete
 	button $w_delete \
-		-text Delete \
+		-text [mc Delete] \
 		-default active \
 		-state disabled \
 		-command [cb _delete]
 	pack $w_delete -side right
 	button $w.buttons.cancel \
-		-text {Cancel} \
+		-text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.list -text {Local Branches}
+	labelframe $w.list -text [mc "Local Branches"]
 	set w_heads $w.list.l
 	listbox $w_heads \
 		-height 10 \
@@ -49,9 +49,9 @@ constructor dialog {} {
 
 	set w_check [choose_rev::new \
 		$w.check \
-		{Delete Only If Merged Into} \
+		[mc "Delete Only If Merged Into"] \
 		]
-	$w_check none {Always (Do not perform merge test.)}
+	$w_check none [mc "Always (Do not perform merge test.)"]
 	pack $w.check -anchor nw -fill x -pady 5 -padx 5
 
 	foreach h [load_all_heads] {
@@ -100,7 +100,7 @@ method _delete {} {
 		lappend to_delete [list $b $o]
 	}
 	if {$not_merged ne {}} {
-		set msg "The following branches are not completely merged into [$w_check get]:
+		set msg "[mc "The following branches are not completely merged into %s:" [$w_check get]]
 
  - [join $not_merged "\n - "]"
 		tk_messageBox \
@@ -112,9 +112,7 @@ method _delete {} {
 	}
 	if {$to_delete eq {}} return
 	if {$check_cmt eq {}} {
-		set msg {Recovering deleted branches is difficult.
-
-Delete the selected branches?}
+		set msg [mc "Recovering deleted branches is difficult. \n\n Delete the selected branches?"]
 		if {[tk_messageBox \
 			-icon warning \
 			-type yesno \
@@ -140,7 +138,7 @@ Delete the selected branches?}
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message "Failed to delete branches:\n$failed"
+			-message [mc "Failed to delete branches:\n%s" $failed]
 	}
 
 	destroy $w
