@@ -399,8 +399,9 @@ int main(int argc, const char **argv)
 	 * if we don't have anything better.
 	 */
 #ifdef __MINGW32__
-	if (!slash)
-		slash = strrchr(cmd, '\\');
+	char *bslash = strrchr(cmd, '\\');
+	if (!slash || (bslash && bslash > slash))
+		slash = bslash;
 #endif
 	if (slash) {
 		*slash++ = 0;
