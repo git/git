@@ -153,4 +153,17 @@ test_expect_success 'bundle should be able to create a full history' '
 
 '
 
+test_expect_success 'bundle should record HEAD correctly' '
+
+	cd "$D" &&
+	git bundle create bundle5 HEAD master &&
+	git bundle list-heads bundle5 >actual &&
+	for h in HEAD refs/heads/master
+	do
+		echo "$(git rev-parse --verify $h) $h"
+	done >expect &&
+	diff -u expect actual
+
+'
+
 test_done
