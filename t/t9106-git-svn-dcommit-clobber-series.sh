@@ -22,6 +22,7 @@ test_expect_success '(supposedly) non-conflicting change from SVN' "
 	cd tmp &&
 		perl -i -p -e 's/^58\$/5588/' file &&
 		perl -i -p -e 's/^61\$/6611/' file &&
+		poke file &&
 		test x\"\`sed -n -e 58p < file\`\" = x5588 &&
 		test x\"\`sed -n -e 61p < file\`\" = x6611 &&
 		svn commit -m '58 => 5588, 61 => 6611' &&

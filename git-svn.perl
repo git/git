@@ -48,7 +48,8 @@ BEGIN {
 	foreach (qw/command command_oneline command_noisy command_output_pipe
 	            command_input_pipe command_close_pipe/) {
 		for my $package ( qw(SVN::Git::Editor SVN::Git::Fetcher
-			Git::SVN::Migration Git::SVN::Log Git::SVN),
+			Git::SVN::Migration Git::SVN::Log Git::SVN
+			Git::SVN::Util),
 			__PACKAGE__) {
 			*{"${package}::$_"} = \&{"Git::$_"};
 		}
@@ -64,7 +65,7 @@ my ($_stdin, $_help, $_edit,
 	$_template, $_shared,
 	$_version, $_fetch_all, $_no_rebase,
 	$_merge, $_strategy, $_dry_run, $_local,
-	$_prefix, $_no_checkout, $_verbose);
+	$_prefix, $_no_checkout, $_url, $_verbose);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -177,6 +178,10 @@ my %cmd = (
 			  'file|F=s' => \$_file,
 			  'revision|r=s' => \$_revision,
 			%cmt_opts } ],
+	'info' => [ \&cmd_info,
+		    "Show info about the latest SVN revision
+		     on the current branch",
+		    { 'url' => \$_url, } ],
 );
 
 my $cmd;
@@ -583,6 +588,23 @@ sub cmd_create_ignore {
 	});
 }
 
+sub canonicalize_path {
+	my ($path) = @_;
+	my $dot_slash_added = 0;
+	if (substr($path, 0, 1) ne "/") {
+		$path = "./" . $path;
+		$dot_slash_added = 1;
+	}
+	# File::Spec->canonpath doesn't collapse x/../y into y (for a
+	# good reason), so let's do this manually.
+	$path =~ s#/+#/#g;
+	$path =~ s#/\.(?:/|$)#/#g;
+	$path =~ s#/[^/]+/\.\.##g;
+	$path =~ s#/$##g;
+	$path =~ s#^\./## if $dot_slash_added;
+	return $path;
+}
+
 # get_svnprops(PATH)
 # ------------------
 # Helper for cmd_propget and cmd_proplist below.
@@ -600,12 +622,7 @@ sub get_svnprops {
 
 	# canonicalize the path (otherwise libsvn will abort or fail to
 	# find the file)
-	# File::Spec->canonpath doesn't collapse x/../y into y (for a
-	# good reason), so let's do this manually.
-	$path =~ s#/+#/#g;
-	$path =~ s#/\.(?:/|$)#/#g;
-	$path =~ s#/[^/]+/\.\.##g;
-	$path =~ s#/$##g;
+	$path = canonicalize_path($path);
 
 	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
 	my $props;
@@ -734,6 +751,114 @@ sub cmd_commit_diff {
 	if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
 		print "No changes\n$ta == $tb\n";
 	}
+}
+
+sub cmd_info {
+	my $path = canonicalize_path(shift or ".");
+	unless (scalar(@_) == 0) {
+		die "Too many arguments specified\n";
+	}
+
+	my ($file_type, $diff_status) = find_file_type_and_diff_status($path);
+
+	if (!$file_type && !$diff_status) {
+		print STDERR "$path:  (Not a versioned resource)\n\n";
+		return;
+	}
+
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	unless ($gs) {
+		die "Unable to determine upstream SVN information from ",
+		    "working tree history\n";
+	}
+	my $full_url = $url . ($path eq "." ? "" : "/$path");
+
+	if ($_url) {
+		print $full_url, "\n";
+		return;
+	}
+
+	my $result = "Path: $path\n";
+	$result .= "Name: " . basename($path) . "\n" if $file_type ne "dir";
+	$result .= "URL: " . $full_url . "\n";
+
+	eval {
+		my $repos_root = $gs->repos_root;
+		Git::SVN::remove_username($repos_root);
+		$result .= "Repository Root: $repos_root\n";
+	};
+	if ($@) {
+		$result .= "Repository Root: (offline)\n";
+	}
+	$result .= "Repository UUID: $uuid\n" unless $diff_status eq "A";
+	$result .= "Revision: " . ($diff_status eq "A" ? 0 : $rev) . "\n";
+
+	$result .= "Node Kind: " .
+		   ($file_type eq "dir" ? "directory" : "file") . "\n";
+
+	my $schedule = $diff_status eq "A"
+		       ? "add"
+		       : ($diff_status eq "D" ? "delete" : "normal");
+	$result .= "Schedule: $schedule\n";
+
+	if ($diff_status eq "A") {
+		print $result, "\n";
+		return;
+	}
+
+	my ($lc_author, $lc_rev, $lc_date_utc);
+	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $path);
+	my $log = command_output_pipe(@args);
+	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
+	while (<$log>) {
+		if (/^${esc_color}author (.+) <[^>]+> (\d+) ([\-\+]?\d+)$/o) {
+			$lc_author = $1;
+			$lc_date_utc = Git::SVN::Log::parse_git_date($2, $3);
+		} elsif (/^${esc_color}    (git-svn-id:.+)$/o) {
+			(undef, $lc_rev, undef) = ::extract_metadata($1);
+		}
+	}
+	close $log;
+
+	Git::SVN::Log::set_local_timezone();
+
+	$result .= "Last Changed Author: $lc_author\n";
+	$result .= "Last Changed Rev: $lc_rev\n";
+	$result .= "Last Changed Date: " .
+		   Git::SVN::Log::format_svn_date($lc_date_utc) . "\n";
+
+	if ($file_type ne "dir") {
+		my $text_last_updated_date =
+		    ($diff_status eq "D" ? $lc_date_utc : (stat $path)[9]);
+		$result .=
+		    "Text Last Updated: " .
+		    Git::SVN::Log::format_svn_date($text_last_updated_date) .
+		    "\n";
+		my $checksum;
+		if ($diff_status eq "D") {
+			my ($fh, $ctx) =
+			    command_output_pipe(qw(cat-file blob), "HEAD:$path");
+			if ($file_type eq "link") {
+				my $file_name = <$fh>;
+				$checksum = Git::SVN::Util::md5sum("link $file_name");
+			} else {
+				$checksum = Git::SVN::Util::md5sum($fh);
+			}
+			command_close_pipe($fh, $ctx);
+		} elsif ($file_type eq "link") {
+			my $file_name =
+			    command(qw(cat-file blob), "HEAD:$path");
+			$checksum =
+			    Git::SVN::Util::md5sum("link " . $file_name);
+		} else {
+			open FILE, "<", $path or die $!;
+			$checksum = Git::SVN::Util::md5sum(\*FILE);
+			close FILE or die $!;
+		}
+		$result .= "Checksum: " . $checksum . "\n";
+	}
+
+	print $result, "\n";
 }
 
 ########################### utility functions #########################
@@ -1041,6 +1166,52 @@ sub linearize_history {
 		}
 	}
 	(\@linear_refs, \%parents);
+}
+
+sub find_file_type_and_diff_status {
+	my ($path) = @_;
+	return ('dir', '') if $path eq '.';
+
+	my $diff_output =
+	    command_oneline(qw(diff --cached --name-status --), $path) || "";
+	my $diff_status = (split(' ', $diff_output))[0] || "";
+
+	my $ls_tree = command_oneline(qw(ls-tree HEAD), $path) || "";
+
+	return (undef, undef) if !$diff_status && !$ls_tree;
+
+	if ($diff_status eq "A") {
+		return ("link", $diff_status) if -l $path;
+		return ("dir", $diff_status) if -d $path;
+		return ("file", $diff_status);
+	}
+
+	my $mode = (split(' ', $ls_tree))[0] || "";
+
+	return ("link", $diff_status) if $mode eq "120000";
+	return ("dir", $diff_status) if $mode eq "040000";
+	return ("file", $diff_status);
+}
+
+package Git::SVN::Util;
+use strict;
+use warnings;
+use Digest::MD5;
+
+sub md5sum {
+	my $arg = shift;
+	my $ref = ref $arg;
+	my $md5 = Digest::MD5->new();
+        if ($ref eq 'GLOB' || $ref eq 'IO::File') {
+		$md5->addfile($arg) or croak $!;
+	} elsif ($ref eq 'SCALAR') {
+		$md5->add($$arg) or croak $!;
+	} elsif (!$ref) {
+		$md5->add($arg) or croak $!;
+	} else {
+		::fatal "Can't provide MD5 hash for unknown ref type: '", $ref, "'";
+	}
+	return $md5->hexdigest();
 }
 
 package Git::SVN;
@@ -1607,9 +1778,24 @@ sub ra_uuid {
 	$self->{ra_uuid};
 }
 
+sub _set_repos_root {
+	my ($self, $repos_root) = @_;
+	my $k = "svn-remote.$self->{repo_id}.reposRoot";
+	$repos_root ||= $self->ra->{repos_root};
+	tmp_config($k, $repos_root);
+	$repos_root;
+}
+
+sub repos_root {
+	my ($self) = @_;
+	my $k = "svn-remote.$self->{repo_id}.reposRoot";
+	eval { tmp_config('--get', $k) } || $self->_set_repos_root;
+}
+
 sub ra {
 	my ($self) = shift;
 	my $ra = Git::SVN::Ra->new($self->{url});
+	$self->_set_repos_root($ra->{repos_root});
 	if ($self->use_svm_props && !$self->{svm}) {
 		if ($self->no_metadata) {
 			die "Can't have both 'noMetadata' and ",
@@ -2610,7 +2796,6 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use IO::File qw//;
-use Digest::MD5;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
@@ -2762,9 +2947,7 @@ sub apply_textdelta {
 
 		if (defined $exp) {
 			seek $base, 0, 0 or croak $!;
-			my $md5 = Digest::MD5->new;
-			$md5->addfile($base);
-			my $got = $md5->hexdigest;
+			my $got = Git::SVN::Util::md5sum($base);
 			die "Checksum mismatch: $fb->{path} $fb->{blob}\n",
 			    "expected: $exp\n",
 			    "     got: $got\n" if ($got ne $exp);
@@ -2783,9 +2966,7 @@ sub close_file {
 	if (my $fh = $fb->{fh}) {
 		if (defined $exp) {
 			seek($fh, 0, 0) or croak $!;
-			my $md5 = Digest::MD5->new;
-			$md5->addfile($fh);
-			my $got = $md5->hexdigest;
+			my $got = Git::SVN::Util::md5sum($fh);
 			if ($got ne $exp) {
 				die "Checksum mismatch: $path\n",
 				    "expected: $exp\n    got: $got\n";
@@ -2837,7 +3018,6 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use IO::File;
-use Digest::MD5;
 
 sub new {
 	my ($class, $opts) = @_;
@@ -3141,11 +3321,9 @@ sub chg_file {
 	$fh->flush == 0 or croak $!;
 	seek $fh, 0, 0 or croak $!;
 
-	my $md5 = Digest::MD5->new;
-	$md5->addfile($fh) or croak $!;
+	my $exp = Git::SVN::Util::md5sum($fh);
 	seek $fh, 0, 0 or croak $!;
 
-	my $exp = $md5->hexdigest;
 	my $pool = SVN::Pool->new;
 	my $atd = $self->apply_textdelta($fbat, undef, $pool);
 	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
@@ -3859,6 +4037,29 @@ sub run_pager {
 	exec $pager or ::fatal "Can't run pager: $! ($pager)";
 }
 
+sub format_svn_date {
+	return strftime("%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)", localtime(shift));
+}
+
+sub parse_git_date {
+	my ($t, $tz) = @_;
+	# Date::Parse isn't in the standard Perl distro :(
+	if ($tz =~ s/^\+//) {
+		$t += tz_to_s_offset($tz);
+	} elsif ($tz =~ s/^\-//) {
+		$t -= tz_to_s_offset($tz);
+	}
+	return $t;
+}
+
+sub set_local_timezone {
+	if (defined $TZ) {
+		$ENV{TZ} = $TZ;
+	} else {
+		delete $ENV{TZ};
+	}
+}
+
 sub tz_to_s_offset {
 	my ($tz) = @_;
 	$tz =~ s/(\d\d)$//;
@@ -3879,13 +4080,7 @@ sub get_author_info {
 	$dest->{t} = $t;
 	$dest->{tz} = $tz;
 	$dest->{a} = $au;
-	# Date::Parse isn't in the standard Perl distro :(
-	if ($tz =~ s/^\+//) {
-		$t += tz_to_s_offset($tz);
-	} elsif ($tz =~ s/^\-//) {
-		$t -= tz_to_s_offset($tz);
-	}
-	$dest->{t_utc} = $t;
+	$dest->{t_utc} = parse_git_date($t, $tz);
 }
 
 sub process_commit {
@@ -3939,8 +4134,7 @@ sub show_commit_normal {
 	my ($c) = @_;
 	print commit_log_separator, "r$c->{r} | ";
 	print "$c->{c} | " if $show_commit;
-	print "$c->{a} | ", strftime("%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)",
-				 localtime($c->{t_utc})), ' | ';
+	print "$c->{a} | ", format_svn_date($c->{t_utc}), ' | ';
 	my $nr_line = 0;
 
 	if (my $l = $c->{l}) {
@@ -3980,11 +4174,7 @@ sub cmd_show_log {
 	my (@args) = @_;
 	my ($r_min, $r_max);
 	my $r_last = -1; # prevent dupes
-	if (defined $TZ) {
-		$ENV{TZ} = $TZ;
-	} else {
-		delete $ENV{TZ};
-	}
+	set_local_timezone();
 	if (defined $::_revision) {
 		if ($::_revision =~ /^(\d+):(\d+)$/) {
 			($r_min, $r_max) = ($1, $2);
