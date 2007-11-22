@@ -782,9 +782,14 @@ sub cmd_info {
 	$result .= "Name: " . basename($path) . "\n" if $file_type ne "dir";
 	$result .= "URL: " . $full_url . "\n";
 
-	my $repos_root = $gs->ra->{repos_root};
-	Git::SVN::remove_username($repos_root);
-	$result .= "Repository Root: $repos_root\n";
+	eval {
+		my $repos_root = $gs->repos_root;
+		Git::SVN::remove_username($repos_root);
+		$result .= "Repository Root: $repos_root\n";
+	};
+	if ($@) {
+		$result .= "Repository Root: (offline)\n";
+	}
 	$result .= "Repository UUID: $uuid\n" unless $diff_status eq "A";
 	$result .= "Revision: " . ($diff_status eq "A" ? 0 : $rev) . "\n";
 
@@ -1773,9 +1778,24 @@ sub ra_uuid {
 	$self->{ra_uuid};
 }
 
+sub _set_repos_root {
+	my ($self, $repos_root) = @_;
+	my $k = "svn-remote.$self->{repo_id}.reposRoot";
+	$repos_root ||= $self->ra->{repos_root};
+	tmp_config($k, $repos_root);
+	$repos_root;
+}
+
+sub repos_root {
+	my ($self) = @_;
+	my $k = "svn-remote.$self->{repo_id}.reposRoot";
+	eval { tmp_config('--get', $k) } || $self->_set_repos_root;
+}
+
 sub ra {
 	my ($self) = shift;
 	my $ra = Git::SVN::Ra->new($self->{url});
+	$self->_set_repos_root($ra->{repos_root});
 	if ($self->use_svm_props && !$self->{svm}) {
 		if ($self->no_metadata) {
 			die "Can't have both 'noMetadata' and ",
