@@ -260,7 +260,7 @@ sub list_and_choose {
 				$chosen[$i] = $choose;
 			}
 		}
-		last if ($opts->{IMMEDIATE});
+		last if ($opts->{IMMEDIATE} || $line eq '*');
 	}
 	for ($i = 0; $i < @stuff; $i++) {
 		if ($chosen[$i]) {
@@ -567,12 +567,12 @@ sub patch_update_cmd {
 	@mods = grep { !($_->{BINARY}) } @mods;
 	return if (!@mods);
 
-	my ($it) = list_and_choose({ PROMPT => 'Patch update',
-				     SINGLETON => 1,
-				     IMMEDIATE => 1,
-				     HEADER => $status_head, },
-				   @mods);
-	patch_update_file($it->{VALUE}) if ($it);
+	my (@them) = list_and_choose({ PROMPT => 'Patch update',
+				       HEADER => $status_head, },
+				     @mods);
+	for (@them) {
+		patch_update_file($_->{VALUE});
+	}
 }
 
 sub patch_update_file {
