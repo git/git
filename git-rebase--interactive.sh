@@ -485,8 +485,13 @@ do
 		SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
 		SHORTHEAD=$(git rev-parse --short $HEAD)
 		SHORTONTO=$(git rev-parse --short $ONTO)
-		cat > "$TODO" << EOF
-# Rebasing $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
+		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
+			--abbrev=7 --reverse --left-right --cherry-pick \
+			$UPSTREAM...$HEAD | \
+			sed -n "s/^>/pick /p" > "$TODO"
+		cat >> "$TODO" << EOF
+
+# Rebase $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
 #
 # Commands:
 #  pick = use commit
@@ -494,12 +499,9 @@ do
 #  squash = use commit, but meld into previous commit
 #
 # If you remove a line here THAT COMMIT WILL BE LOST.
+# However, if you remove everything, the rebase will be aborted.
 #
 EOF
-		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
-			--abbrev=7 --reverse --left-right --cherry-pick \
-			$UPSTREAM...$HEAD | \
-			sed -n "s/^>/pick /p" >> "$TODO"
 
 		has_action "$TODO" ||
 			die_abort "Nothing to do"
