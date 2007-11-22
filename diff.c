@@ -2716,7 +2716,7 @@ static void diff_summary(struct diff_filepair *p)
 		break;
 	default:
 		if (p->score) {
-			puts(" rewrite ");
+			fputs(" rewrite ", stdout);
 			write_name_quoted(p->two->path, stdout, ' ');
 			printf("(%d%%)\n", similarity_index(p));
 		}
