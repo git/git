@@ -662,7 +662,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	int header_len;
 	struct strbuf sb;
 	const char *index_file, *reflog_msg;
-	char *nl;
+	char *nl, *p;
 	unsigned char commit_sha1[20];
 	struct ref_lock *ref_lock;
 
@@ -758,6 +758,12 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		rollback_index_files();
 		exit(1);
 	}
+
+	/* Truncate the message just before the diff, if any. */
+	p = strstr(sb.buf, "\ndiff --git a/");
+	if (p != NULL)
+		strbuf_setlen(&sb, p - sb.buf);
+
 	stripspace(&sb, 1);
 	if (sb.len < header_len || message_is_empty(&sb, header_len)) {
 		rollback_index_files();
