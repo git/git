@@ -135,11 +135,17 @@ static void refresh(int verbose, const char **pathspec)
         free(seen);
 }
 
-int interactive_add(void)
+int interactive_add(int argc, const char **argv)
 {
-	const char *argv[2] = { "add--interactive", NULL };
+	int status;
+	const char **args = xmalloc(sizeof(const char *) * (argc + 1));
+	args[0] = "add--interactive";
+	memcpy((void *)args + sizeof(const char *), argv, sizeof(const char *) * argc);
+	args[argc + 1] = NULL;
 
-	return run_command_v_opt(argv, RUN_GIT_CMD);
+	status = run_command_v_opt(args, RUN_GIT_CMD);
+	free(args);
+	return status;
 }
 
 static struct lock_file lock_file;
@@ -163,17 +169,14 @@ static struct option builtin_add_options[] = {
 
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
-	int i, newfd, orig_argc = argc;
+	int i, newfd;
 	const char **pathspec;
 	struct dir_struct dir;
 
 	argc = parse_options(argc, argv, builtin_add_options,
 			  builtin_add_usage, 0);
-	if (add_interactive) {
-		if (add_interactive != 1 || orig_argc != 2)
-			die("add --interactive does not take any parameters");
-		exit(interactive_add());
-	}
+	if (add_interactive)
+		exit(interactive_add(argc, argv));
 
 	git_config(git_default_config);
 
