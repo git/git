@@ -37,7 +37,7 @@ sub list_untracked {
 		chomp $_;
 		$_;
 	}
-	run_cmd_pipe(qw(git ls-files --others --exclude-standard --), @_);
+	run_cmd_pipe(qw(git ls-files --others --exclude-standard --), @ARGV);
 }
 
 my $status_fmt = '%12s %12s %s';
@@ -56,9 +56,17 @@ sub list_modified {
 	my ($only) = @_;
 	my (%data, @return);
 	my ($add, $del, $adddel, $file);
+	my @tracked = ();
+
+	if (@ARGV) {
+		@tracked = map {
+			chomp $_; $_;
+		} run_cmd_pipe(qw(git ls-files --exclude-standard --), @ARGV);
+		return if (!@tracked);
+	}
 
 	for (run_cmd_pipe(qw(git diff-index --cached
-			     --numstat --summary HEAD))) {
+			     --numstat --summary HEAD --), @tracked)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			my ($change, $bin);
@@ -81,7 +89,7 @@ sub list_modified {
 		}
 	}
 
-	for (run_cmd_pipe(qw(git diff-files --numstat --summary))) {
+	for (run_cmd_pipe(qw(git diff-files --numstat --summary --), @tracked)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			if (!exists $data{$file}) {
