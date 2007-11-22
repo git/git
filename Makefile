@@ -221,7 +221,7 @@ SCRIPT_SH = \
 	git-sh-setup.sh \
 	git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
-	git-merge-resolve.sh git-merge-ours.sh \
+	git-merge-resolve.sh \
 	git-lost-found.sh git-quiltimport.sh git-submodule.sh \
 	git-filter-branch.sh \
 	git-stash.sh
@@ -353,6 +353,7 @@ BUILTIN_OBJS = \
 	builtin-mailsplit.o \
 	builtin-merge-base.o \
 	builtin-merge-file.o \
+	builtin-merge-ours.o \
 	builtin-mv.o \
 	builtin-name-rev.o \
 	builtin-pack-objects.o \
