@@ -282,7 +282,7 @@ static void write_tag_body(int fd, const unsigned char *sha1)
 
 static void create_tag(const unsigned char *object, const char *tag,
 		       struct strbuf *buf, int message, int sign,
-			   unsigned char *prev, unsigned char *result)
+		       unsigned char *prev, unsigned char *result)
 {
 	enum object_type type;
 	char header_buf[1024];
@@ -341,6 +341,24 @@ static void create_tag(const unsigned char *object, const char *tag,
 		die("unable to write tag file");
 }
 
+struct msg_arg {
+	int given;
+	struct strbuf buf;
+};
+
+static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
+{
+	struct msg_arg *msg = opt->value;
+
+	if (!arg)
+		return -1;
+	if (msg->buf.len)
+		strbuf_addstr(&(msg->buf), "\n\n");
+	strbuf_addstr(&(msg->buf), arg);
+	msg->given = 1;
+	return 0;
+}
+
 int cmd_tag(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf buf;
@@ -351,8 +369,9 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	int annotate = 0, sign = 0, force = 0, lines = 0,
 					delete = 0, verify = 0;
-	char *list = NULL, *msg = NULL, *msgfile = NULL, *keyid = NULL;
+	char *list = NULL, *msgfile = NULL, *keyid = NULL;
 	const char *no_pattern = "NO_PATTERN";
+	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct option options[] = {
 		{ OPTION_STRING, 'l', NULL, &list, "pattern", "list tag names",
 			PARSE_OPT_OPTARG, NULL, (intptr_t) no_pattern },
@@ -365,7 +384,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_GROUP("Tag creation options"),
 		OPT_BOOLEAN('a', NULL, &annotate,
 					"annotated tag, needs a message"),
-		OPT_STRING('m', NULL, &msg, "msg", "message for the tag"),
+		OPT_CALLBACK('m', NULL, &msg, "msg",
+			     "message for the tag", parse_msg_arg),
 		OPT_STRING('F', NULL, &msgfile, "file", "message in a file"),
 		OPT_BOOLEAN('s', NULL, &sign, "annotated and GPG-signed tag"),
 		OPT_STRING('u', NULL, &keyid, "key-id",
@@ -386,12 +406,12 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		return for_each_tag_name(argv, verify_tag);
 
 	strbuf_init(&buf, 0);
-	if (msg || msgfile) {
-		if (msg && msgfile)
+	if (msg.given || msgfile) {
+		if (msg.given && msgfile)
 			die("only one -F or -m option is allowed.");
 		annotate = 1;
-		if (msg)
-			strbuf_addstr(&buf, msg);
+		if (msg.given)
+			strbuf_addbuf(&buf, &(msg.buf));
 		else {
 			if (!strcmp(msgfile, "-")) {
 				if (strbuf_read(&buf, 0, 1024) < 0)
@@ -429,7 +449,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die("tag '%s' already exists", tag);
 
 	if (annotate)
-		create_tag(object, tag, &buf, msg || msgfile, sign, prev, object);
+		create_tag(object, tag, &buf, msg.given || msgfile,
+			   sign, prev, object);
 
 	lock = lock_any_ref_for_update(ref, prev, 0);
 	if (!lock)
