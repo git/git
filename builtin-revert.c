@@ -234,7 +234,7 @@ static char *help_msg(const unsigned char *sha1)
 
 	strcpy(helpbuf, "  After resolving the conflicts,\n"
 	       "mark the corrected paths with 'git add <paths>' "
-	       "and commit the result.");
+	       "or 'git rm <paths>' and commit the result.");
 
 	if (action == CHERRY_PICK) {
 		sprintf(helpbuf + strlen(helpbuf),
