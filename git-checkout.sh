@@ -266,7 +266,7 @@ if [ "$?" -eq 0 ]; then
 	if test -n "$branch"
 	then
 		old_branch_name=`expr "z$oldbranch" : 'zrefs/heads/\(.*\)'`
-		GIT_DIR="$GIT_DIR" git symbolic-ref -m "checkout: moving from $old_branch_name to $branch" HEAD "refs/heads/$branch"
+		GIT_DIR="$GIT_DIR" git symbolic-ref -m "checkout: moving from ${old_branch_name:-$old} to $branch" HEAD "refs/heads/$branch"
 		if test -n "$quiet"
 		then
 			true	# nothing
@@ -278,7 +278,8 @@ if [ "$?" -eq 0 ]; then
 		fi
 	elif test -n "$detached"
 	then
-		git update-ref --no-deref -m "checkout: moving to $arg" HEAD "$detached" ||
+		old_branch_name=`expr "z$oldbranch" : 'zrefs/heads/\(.*\)'`
+		git update-ref --no-deref -m "checkout: moving from ${old_branch_name:-$old} to $arg" HEAD "$detached" ||
 			die "Cannot detach HEAD"
 		if test -n "$detach_warn"
 		then
