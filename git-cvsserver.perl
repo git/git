@@ -1211,13 +1211,13 @@ sub req_ci
 
     chdir $tmpdir;
 
-    # populate the temporary index based
+    # populate the temporary index
     system("git-read-tree", $parenthash);
     unless ($? == 0)
     {
 	die "Error running git-read-tree $state->{module} $file_index $!";
     }
-    $log->info("Created index '$file_index' with for head $state->{module} - exit status $?");
+    $log->info("Created index '$file_index' for head $state->{module} - exit status $?");
 
     my @committedfiles = ();
     my %oldmeta;
@@ -1237,7 +1237,7 @@ sub req_ci
 
         my ( $filepart, $dirpart ) = filenamesplit($filename);
 
-        # do a checkout of the file if it part of this tree
+	# do a checkout of the file if it is part of this tree
         if ($wrev) {
             system('git-checkout-index', '-f', '-u', $filename);
             unless ($? == 0) {
@@ -1324,11 +1324,11 @@ sub req_ci
         exit;
     }
 
-	# Check that this is allowed, just as we would with a receive-pack
-	my @cmd = ( $ENV{GIT_DIR}.'hooks/update', "refs/heads/$state->{module}",
+	### Emulate git-receive-pack by running hooks/update
+	my @hook = ( $ENV{GIT_DIR}.'hooks/update', "refs/heads/$state->{module}",
 			$parenthash, $commithash );
-	if( -x $cmd[0] ) {
-		unless( system( @cmd ) == 0 )
+	if( -x $hook[0] ) {
+		unless( system( @hook ) == 0 )
 		{
 			$log->warn("Commit failed (update hook declined to update ref)");
 			print "error 1 Commit failed (update hook declined)\n";
@@ -1337,11 +1337,24 @@ sub req_ci
 		}
 	}
 
+	### Update the ref
 	if (system(qw(git update-ref -m), "cvsserver ci",
 			"refs/heads/$state->{module}", $commithash, $parenthash)) {
 		$log->warn("update-ref for $state->{module} failed.");
 		print "error 1 Cannot commit -- update first\n";
 		exit;
+	}
+
+	### Emulate git-receive-pack by running hooks/post-receive
+	my $hook = $ENV{GIT_DIR}.'hooks/post-receive';
+	if( -x $hook ) {
+		open(my $pipe, "| $hook") || die "can't fork $!";
+
+		local $SIG{PIPE} = sub { die 'pipe broke' };
+
+		print $pipe "$parenthash $commithash refs/heads/$state->{module}\n";
+
+		close $pipe || die "bad pipe: $! $?";
 	}
 
     $updater->update();
