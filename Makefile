@@ -234,7 +234,7 @@ SCRIPT_PERL = \
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
-	  git-status git-instaweb
+	  git-instaweb
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
