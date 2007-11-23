@@ -551,6 +551,20 @@ _git_describe ()
 
 _git_diff ()
 {
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--cached --stat --numstat --shortstat --summary
+			--patch-with-stat --name-only --name-status --color
+			--no-color --color-words --no-renames --check
+			--full-index --binary --abbrev --diff-filter
+			--find-copies-harder --pickaxe-all --pickaxe-regex
+			--text --ignore-space-at-eol --ignore-space-change
+			--ignore-all-space --exit-code --quiet --ext-diff
+			--no-ext-diff"
+		return
+		;;
+	esac
 	__git_complete_file
 }
 
