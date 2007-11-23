@@ -496,15 +496,19 @@ static void mingw_free_path_split(char **path)
 	free(path);
 }
 
-static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
+/*
+ * exe_only means that we only want to detect .exe files, but not scripts
+ * (which do not have an extension)
+ */
+static char *lookup_prog(const char *dir, const char *cmd, int isexe, int exe_only)
 {
 	char path[MAX_PATH];
 	snprintf(path, sizeof(path), "%s/%s.exe", dir, cmd);
 
-	if (tryexe && access(path, 0) == 0)
+	if (!isexe && access(path, F_OK) == 0)
 		return xstrdup(path);
 	path[strlen(path)-4] = '\0';
-	if (access(path, 0) == 0)
+	if ((!exe_only || isexe) && access(path, F_OK) == 0)
 		return xstrdup(path);
 	return NULL;
 }
@@ -513,21 +517,21 @@ static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
  * Determines the absolute path of cmd using the the split path in path.
  * If cmd contains a slash or backslash, no lookup is performed.
  */
-static char *mingw_path_lookup(const char *cmd, char **path)
+static char *mingw_path_lookup(const char *cmd, char **path, int exe_only)
 {
 	char **p = path;
 	char *prog = NULL;
 	int len = strlen(cmd);
-	int tryexe = len < 4 || strcasecmp(cmd+len-4, ".exe");
+	int isexe = len >= 4 && !strcasecmp(cmd+len-4, ".exe");
 
 	if (strchr(cmd, '/') || strchr(cmd, '\\'))
 		prog = xstrdup(cmd);
 
 	while (!prog && *p) {
-		prog = lookup_prog(*p++, cmd, tryexe);
+		prog = lookup_prog(*p++, cmd, isexe, exe_only);
 	}
 	if (!prog) {
-		prog = lookup_prog(".", cmd, tryexe);
+		prog = lookup_prog(".", cmd, isexe, exe_only);
 		if (!prog)
 			prog = xstrdup(cmd);
 	}
@@ -635,7 +639,7 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
 {
 	pid_t pid;
 	char **path = mingw_get_path_split();
-	char *prog = mingw_path_lookup(cmd, path);
+	char *prog = mingw_path_lookup(cmd, path, 0);
 
 	if (!prog) {
 		errno = ENOENT;
@@ -646,7 +650,7 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
 
 		if (interpr) {
 			const char *argv0 = argv[0];
-			char *iprog = mingw_path_lookup(interpr, path);
+			char *iprog = mingw_path_lookup(interpr, path, 1);
 			argv[0] = prog;
 			if (!iprog) {
 				errno = ENOENT;
@@ -676,7 +680,7 @@ static int try_shell_exec(const char *cmd, char *const *argv, char **env)
 	if (!interpr)
 		return 0;
 	path = mingw_get_path_split();
-	prog = mingw_path_lookup(interpr, path);
+	prog = mingw_path_lookup(interpr, path, 1);
 	if (prog) {
 		int argc = 0;
 		const char **argv2;
@@ -717,7 +721,7 @@ static void mingw_execve(const char *cmd, char *const *argv, char *const *env)
 void mingw_execvp(const char *cmd, char *const *argv)
 {
 	char **path = mingw_get_path_split();
-	char *prog = mingw_path_lookup(cmd, path);
+	char *prog = mingw_path_lookup(cmd, path, 0);
 
 	if (prog) {
 		mingw_execve(prog, argv, environ);
