@@ -449,85 +449,6 @@ const char *parse_interpreter(const char *cmd)
 	return p+1;
 }
 
-static int try_shell_exec(const char *cmd, char *const *argv, char *const *env)
-{
-	const char **sh_argv;
-	int n;
-	const char *interpr = parse_interpreter(cmd);
-	if (!interpr)
-		return 0;
-
-	/*
-	 * expand
-	 *    git-foo args...
-	 * into
-	 *    sh git-foo args...
-	 */
-	for (n = 0; argv[n];) n++;
-	sh_argv = xmalloc((n+2)*sizeof(char*));
-	sh_argv[0] = interpr;
-	sh_argv[1] = quote_arg(cmd);
-	quote_argv(&sh_argv[2], (const char *const *)&argv[1]);
-	n = spawnvpe(_P_WAIT, interpr, sh_argv, (const char *const *)env);
-	if (n == -1)
-		return 1;	/* indicate that we tried but failed */
-	exit(n);
-}
-
-void mingw_execve(const char *cmd, char *const *argv, char *const *env)
-{
-	/* check if git_command is a shell script */
-	if (!try_shell_exec(cmd, argv, env)) {
-		const char **qargv;
-		int n;
-		for (n = 0; argv[n];) n++;
-		qargv = xmalloc((n+1)*sizeof(char*));
-		quote_argv(qargv, (const char *const *)argv);
-		int ret = spawnve(_P_WAIT, cmd, qargv,
-		                          (const char *const *)env);
-		if (ret != -1)
-			exit(ret);
-	}
-}
-
-static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
-{
-	char path[MAX_PATH];
-	snprintf(path, sizeof(path), "%s/%s.exe", dir, cmd);
-
-	if (tryexe && access(path, 0) == 0)
-		return xstrdup(path);
-	path[strlen(path)-4] = '\0';
-	if (access(path, 0) == 0)
-		return xstrdup(path);
-	return NULL;
-}
-
-/*
- * Determines the absolute path of cmd using the the split path in path.
- * If cmd contains a slash or backslash, no lookup is performed.
- */
-char *mingw_path_lookup(const char *cmd, char **path)
-{
-	char **p = path;
-	char *prog = NULL;
-	int len = strlen(cmd);
-	int tryexe = len < 4 || strcasecmp(cmd+len-4, ".exe");
-
-	if (strchr(cmd, '/') || strchr(cmd, '\\'))
-		prog = xstrdup(cmd);
-
-	while (!prog && *p) {
-		prog = lookup_prog(*p++, cmd, tryexe);
-	}
-	if (!prog) {
-		prog = lookup_prog(".", cmd, tryexe);
-		if (!prog)
-			prog = xstrdup(cmd);
-	}
-	return prog;
-}
-
 /*
  * Splits the PATH into parts.
  */
@@ -576,6 +497,85 @@ void mingw_free_path_split(char **path)
 	while (*p)
 		free(*p++);
 	free(path);
+}
+
+static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
+{
+	char path[MAX_PATH];
+	snprintf(path, sizeof(path), "%s/%s.exe", dir, cmd);
+
+	if (tryexe && access(path, 0) == 0)
+		return xstrdup(path);
+	path[strlen(path)-4] = '\0';
+	if (access(path, 0) == 0)
+		return xstrdup(path);
+	return NULL;
+}
+
+/*
+ * Determines the absolute path of cmd using the the split path in path.
+ * If cmd contains a slash or backslash, no lookup is performed.
+ */
+char *mingw_path_lookup(const char *cmd, char **path)
+{
+	char **p = path;
+	char *prog = NULL;
+	int len = strlen(cmd);
+	int tryexe = len < 4 || strcasecmp(cmd+len-4, ".exe");
+
+	if (strchr(cmd, '/') || strchr(cmd, '\\'))
+		prog = xstrdup(cmd);
+
+	while (!prog && *p) {
+		prog = lookup_prog(*p++, cmd, tryexe);
+	}
+	if (!prog) {
+		prog = lookup_prog(".", cmd, tryexe);
+		if (!prog)
+			prog = xstrdup(cmd);
+	}
+	return prog;
+}
+
+static int try_shell_exec(const char *cmd, char *const *argv, char *const *env)
+{
+	const char **sh_argv;
+	int n;
+	const char *interpr = parse_interpreter(cmd);
+	if (!interpr)
+		return 0;
+
+	/*
+	 * expand
+	 *    git-foo args...
+	 * into
+	 *    sh git-foo args...
+	 */
+	for (n = 0; argv[n];) n++;
+	sh_argv = xmalloc((n+2)*sizeof(char*));
+	sh_argv[0] = interpr;
+	sh_argv[1] = quote_arg(cmd);
+	quote_argv(&sh_argv[2], (const char *const *)&argv[1]);
+	n = spawnvpe(_P_WAIT, interpr, sh_argv, (const char *const *)env);
+	if (n == -1)
+		return 1;	/* indicate that we tried but failed */
+	exit(n);
+}
+
+void mingw_execve(const char *cmd, char *const *argv, char *const *env)
+{
+	/* check if git_command is a shell script */
+	if (!try_shell_exec(cmd, argv, env)) {
+		const char **qargv;
+		int n;
+		for (n = 0; argv[n];) n++;
+		qargv = xmalloc((n+1)*sizeof(char*));
+		quote_argv(qargv, (const char *const *)argv);
+		int ret = spawnve(_P_WAIT, cmd, qargv,
+		                          (const char *const *)env);
+		if (ret != -1)
+			exit(ret);
+	}
 }
 
 void mingw_execvp(const char *cmd, char *const *argv)
