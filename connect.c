@@ -345,23 +345,7 @@ static int git_tcp_connect_sock(char *host, int flags)
 
 static void git_tcp_connect(int fd[2], char *host, int flags)
 {
-#ifndef __MINGW32__
 	int sockfd = git_tcp_connect_sock(host, flags);
-#else
-	int sockfd;
-	WSADATA wsa;
-
-	if (WSAStartup(MAKEWORD(2,2), &wsa))
-		die("unable to initialize winsock subsystem, error %d",
-			WSAGetLastError());
-	atexit((void(*)(void)) WSACleanup);
-
-	sockfd = git_tcp_connect_sock(host, flags);
-	/* convert into a file descriptor */
-	if ((sockfd = _open_osfhandle(sockfd, O_RDWR|O_BINARY)) < 0)
-		die("unable to make a socket file descriptor: %s",
-			strerror(errno));
-#endif
 
 	fd[0] = sockfd;
 	fd[1] = dup(sockfd);
