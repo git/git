@@ -55,6 +55,7 @@ test_expect_success 'upload-pack fails due to error in rev-list' '
 	! echo "0032want $(git rev-parse HEAD)
 00000009done
 0000" | git-upload-pack . > /dev/null 2> output.err &&
+	true ||
 	grep "waitpid (async) failed" output.err
 '
 
