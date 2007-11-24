@@ -168,7 +168,7 @@ int start_command(struct child_process *cmd)
 		cmd->argv[0] = git_cmd.buf;
 	}
 
-	cmd->pid = spawnvpe(_P_NOWAIT, cmd->argv[0], cmd->argv, (const char **)env);
+	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
 
 	if (cmd->env)
 		free_environ(env);

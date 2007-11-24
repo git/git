@@ -160,6 +160,7 @@ int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
 
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env);
 void mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp
 
