@@ -407,14 +407,14 @@ static const char *quote_arg(const char *arg)
 	return q;
 }
 
-void quote_argv(const char **dst, const char *const *src)
+static void quote_argv(const char **dst, const char *const *src)
 {
 	while (*src)
 		*dst++ = quote_arg(*src++);
 	*dst = NULL;
 }
 
-const char *parse_interpreter(const char *cmd)
+static const char *parse_interpreter(const char *cmd)
 {
 	static char buf[100];
 	char *p, *opt;
@@ -452,7 +452,7 @@ const char *parse_interpreter(const char *cmd)
 /*
  * Splits the PATH into parts.
  */
-char **mingw_get_path_split(void)
+static char **mingw_get_path_split(void)
 {
 	char *p, **path, *envpath = getenv("PATH");
 	int i, n = 0;
@@ -488,7 +488,7 @@ char **mingw_get_path_split(void)
 	return path;
 }
 
-void mingw_free_path_split(char **path)
+static void mingw_free_path_split(char **path)
 {
 	if (!path)
 		return;
@@ -516,7 +516,7 @@ static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
  * Determines the absolute path of cmd using the the split path in path.
  * If cmd contains a slash or backslash, no lookup is performed.
  */
-char *mingw_path_lookup(const char *cmd, char **path)
+static char *mingw_path_lookup(const char *cmd, char **path)
 {
 	char **p = path;
 	char *prog = NULL;
@@ -535,6 +535,35 @@ char *mingw_path_lookup(const char *cmd, char **path)
 			prog = xstrdup(cmd);
 	}
 	return prog;
+}
+
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
+{
+	pid_t pid;
+	char **path = mingw_get_path_split();
+	const char **qargv;
+	char *prog = mingw_path_lookup(cmd, path);
+	const char *interpr = parse_interpreter(prog);
+	int argc;
+
+	for (argc = 0; argv[argc];) argc++;
+	qargv = xmalloc((argc+2)*sizeof(char*));
+	if (!interpr) {
+		quote_argv(qargv, argv);
+		pid = spawnve(_P_NOWAIT, prog, qargv, (const char **)env);
+	} else {
+		qargv[0] = interpr;
+		qargv[1] = quote_arg(prog);
+		quote_argv(&qargv[2], &argv[1]);
+		pid = spawnvpe(_P_NOWAIT, interpr, qargv, (const char **)env);
+	}
+
+	free(qargv);	/* TODO: quoted args should be freed, too */
+	free(prog);
+
+	mingw_free_path_split(path);
+
+	return pid;
 }
 
 static int try_shell_exec(const char *cmd, char *const *argv, char *const *env)
@@ -562,7 +591,7 @@ static int try_shell_exec(const char *cmd, char *const *argv, char *const *env)
 	exit(n);
 }
 
-void mingw_execve(const char *cmd, char *const *argv, char *const *env)
+static void mingw_execve(const char *cmd, char *const *argv, char *const *env)
 {
 	/* check if git_command is a shell script */
 	if (!try_shell_exec(cmd, argv, env)) {
