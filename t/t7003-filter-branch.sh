@@ -3,9 +3,6 @@
 test_description='git-filter-branch'
 . ./test-lib.sh
 
-say "filter-branch has not been taken care of - skipping tests"
-test_done
-
 make_commit () {
 	lower=$(echo $1 | tr A-Z a-z)
 	echo $lower > $lower

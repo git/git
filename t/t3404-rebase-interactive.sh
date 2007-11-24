@@ -164,7 +164,7 @@ test_expect_success 'retain authorship' '
 	test_tick &&
 	GIT_AUTHOR_NAME="Twerp Snog" git commit -m "different author" &&
 	git tag twerp &&
-	git rebase -i --onto master HEAD~1 &&
+	git rebase -i --onto master HEAD^ &&
 	git show HEAD | grep "^Author: Twerp Snog"
 '
 
@@ -208,7 +208,7 @@ test_expect_success 'preserve merges with -p' '
 
 test_expect_success '--continue tries to commit' '
 	test_tick &&
-	! git rebase -i --onto new-branch1 HEAD~1 &&
+	! git rebase -i --onto new-branch1 HEAD^ &&
 	echo resolved > file1 &&
 	git add file1 &&
 	FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue &&
@@ -217,9 +217,9 @@ test_expect_success '--continue tries to commit' '
 '
 
 test_expect_success 'verbose flag is heeded, even after --continue' '
-	git reset --hard $(git rev-parse HEAD@{1}) &&
+	git reset --hard HEAD@{1} &&
 	test_tick &&
-	! git rebase -v -i --onto new-branch1 HEAD~1 &&
+	! git rebase -v -i --onto new-branch1 HEAD^ &&
 	echo resolved > file1 &&
 	git add file1 &&
 	git rebase --continue > output &&

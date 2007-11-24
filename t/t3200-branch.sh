@@ -17,7 +17,6 @@ test_expect_success \
      git-commit -m "Initial commit." &&
      HEAD=$(git rev-parse --verify HEAD)'
 
-true ||
 test_expect_failure \
     'git branch --help should not have created a bogus branch' \
     'git branch --help </dev/null >/dev/null 2>/dev/null || :

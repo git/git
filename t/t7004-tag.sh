@@ -116,9 +116,9 @@ mytag
 EOF
 test_expect_success \
 	'trying to delete tags without params should succeed and do nothing' '
-	git tag -l | cat > actual && git diff expect actual &&
+	git tag -l > actual && git diff expect actual &&
 	git-tag -d &&
-	git tag -l | cat > actual && git diff expect actual
+	git tag -l > actual && git diff expect actual
 '
 
 test_expect_success \
