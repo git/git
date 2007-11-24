@@ -13,7 +13,7 @@
 
 if git-rev-parse --verify HEAD 2>/dev/null
 then
-	git-diff-index -p -M --cached HEAD
+	git-diff-index -p -M --cached HEAD --
 else
 	# NEEDSWORK: we should produce a diff with an empty tree here
 	# if we want to do the same verification for the initial import.

@@ -1,6 +1,56 @@
 # git-gui index (add/remove) support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+proc _delete_indexlock {} {
+	if {[catch {file delete -- [gitdir index.lock]} err]} {
+		error_popup [strcat [mc "Unable to unlock the index."] "\n\n$err"]
+	}
+}
+
+proc _close_updateindex {fd after} {
+	fconfigure $fd -blocking 1
+	if {[catch {close $fd} err]} {
+		set w .indexfried
+		toplevel $w
+		wm title $w [strcat "[appname] ([reponame]): " [mc "Index Error"]]
+		wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+		pack [label $w.msg \
+			-justify left \
+			-anchor w \
+			-text [strcat \
+				[mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."] \
+				"\n\n$err"] \
+			] -anchor w
+
+		frame $w.buttons
+		button $w.buttons.continue \
+			-text [mc "Continue"] \
+			-command [list destroy $w]
+		pack $w.buttons.continue -side right -padx 5
+		button $w.buttons.unlock \
+			-text [mc "Unlock Index"] \
+			-command "destroy $w; _delete_indexlock"
+		pack $w.buttons.unlock -side right
+		pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+		wm protocol $w WM_DELETE_WINDOW update
+		bind $w.buttons.continue <Visibility> "
+			grab $w
+			focus $w.buttons.continue
+		"
+		tkwait window $w
+
+		$::main_status stop
+		unlock_index
+		rescan $after 0
+		return
+	}
+
+	$::main_status stop
+	unlock_index
+	uplevel #0 $after
+}
+
 proc update_indexinfo {msg pathList after} {
 	global update_index_cp
 
@@ -12,12 +62,7 @@ proc update_indexinfo {msg pathList after} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		0.0]
+	$::main_status start $msg [mc "files"]
 	set fd [git_write update-index -z --index-info]
 	fconfigure $fd \
 		-blocking 0 \
@@ -31,19 +76,16 @@ proc update_indexinfo {msg pathList after} {
 		$pathList \
 		$totalCnt \
 		$batch \
-		$msg \
 		$after \
 		]
 }
 
-proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
+proc write_update_indexinfo {fd pathList totalCnt batch after} {
 	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
-		close $fd
-		unlock_index
-		uplevel #0 $after
+		_close_updateindex $fd $after
 		return
 	}
 
@@ -68,12 +110,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 		display_file $path $new
 	}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		[expr {100.0 * $update_index_cp / $totalCnt}]]
+	$::main_status update $update_index_cp $totalCnt
 }
 
 proc update_index {msg pathList after} {
@@ -87,12 +124,7 @@ proc update_index {msg pathList after} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		0.0]
+	$::main_status start $msg [mc "files"]
 	set fd [git_write update-index --add --remove -z --stdin]
 	fconfigure $fd \
 		-blocking 0 \
@@ -106,19 +138,16 @@ proc update_index {msg pathList after} {
 		$pathList \
 		$totalCnt \
 		$batch \
-		$msg \
 		$after \
 		]
 }
 
-proc write_update_index {fd pathList totalCnt batch msg after} {
+proc write_update_index {fd pathList totalCnt batch after} {
 	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
-		close $fd
-		unlock_index
-		uplevel #0 $after
+		_close_updateindex $fd $after
 		return
 	}
 
@@ -147,12 +176,7 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		display_file $path $new
 	}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		[expr {100.0 * $update_index_cp / $totalCnt}]]
+	$::main_status update $update_index_cp $totalCnt
 }
 
 proc checkout_index {msg pathList after} {
@@ -166,12 +190,7 @@ proc checkout_index {msg pathList after} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		0.0]
+	$::main_status start $msg [mc "files"]
 	set fd [git_write checkout-index \
 		--index \
 		--quiet \
@@ -191,19 +210,16 @@ proc checkout_index {msg pathList after} {
 		$pathList \
 		$totalCnt \
 		$batch \
-		$msg \
 		$after \
 		]
 }
 
-proc write_checkout_index {fd pathList totalCnt batch msg after} {
+proc write_checkout_index {fd pathList totalCnt batch after} {
 	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
-		close $fd
-		unlock_index
-		uplevel #0 $after
+		_close_updateindex $fd $after
 		return
 	}
 
@@ -222,12 +238,7 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 		}
 	}
 
-	ui_status [format \
-		"%s... %i/%i files (%.2f%%)" \
-		$msg \
-		$update_index_cp \
-		$totalCnt \
-		[expr {100.0 * $update_index_cp / $totalCnt}]]
+	$::main_status update $update_index_cp $totalCnt
 }
 
 proc unstage_helper {txt paths} {
@@ -268,7 +279,7 @@ proc do_unstage_selection {} {
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		unstage_helper \
-			"Unstaging [short_path $current_diff_path] from commit" \
+			[mc "Unstaging %s from commit" [short_path $current_diff_path]] \
 			[list $current_diff_path]
 	}
 }
@@ -312,7 +323,7 @@ proc do_add_selection {} {
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		add_helper \
-			"Adding [short_path $current_diff_path]" \
+			[mc "Adding %s" [short_path $current_diff_path]] \
 			[list $current_diff_path]
 	}
 }
@@ -351,26 +362,35 @@ proc revert_helper {txt paths} {
 		}
 	}
 
+
+	# Split question between singular and plural cases, because
+	# such distinction is needed in some languages. Previously, the
+	# code used "Revert changes in" for both, but that can't work
+	# in languages where 'in' must be combined with word from
+	# rest of string (in diffrent way for both cases of course).
+	#
+	# FIXME: Unfortunately, even that isn't enough in some languages
+	# as they have quite complex plural-form rules. Unfortunately,
+	# msgcat doesn't seem to support that kind of string translation.
+	#
 	set n [llength $pathList]
 	if {$n == 0} {
 		unlock_index
 		return
 	} elseif {$n == 1} {
-		set s "[short_path [lindex $pathList]]"
+		set query [mc "Revert changes in file %s?" [short_path [lindex $pathList]]]
 	} else {
-		set s "these $n files"
+		set query [mc "Revert changes in these %i files?" $n]
 	}
 
 	set reply [tk_dialog \
 		.confirm_revert \
 		"[appname] ([reponame])" \
-		"Revert changes in $s?
-
-Any unstaged changes will be permanently lost by the revert." \
+		[mc "Any unstaged changes will be permanently lost by the revert."] \
 		question \
 		1 \
-		{Do Nothing} \
-		{Revert Changes} \
+		[mc "Do Nothing"] \
+		[mc "Revert Changes"] \
 		]
 	if {$reply == 1} {
 		checkout_index \

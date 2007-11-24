@@ -118,8 +118,8 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!read_stdin)
-		return opt->diffopt.exit_with_status ?
-		    opt->diffopt.has_changes: 0;
+		return DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS)
+			&& DIFF_OPT_TST(&opt->diffopt, HAS_CHANGES);
 
 	if (opt->diffopt.detect_rename)
 		opt->diffopt.setup |= (DIFF_SETUP_USE_SIZE_CACHE |
@@ -134,5 +134,6 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		else
 			diff_tree_stdin(line);
 	}
-	return opt->diffopt.exit_with_status ? opt->diffopt.has_changes: 0;
+	return DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS)
+		&& DIFF_OPT_TST(&opt->diffopt, HAS_CHANGES);
 }

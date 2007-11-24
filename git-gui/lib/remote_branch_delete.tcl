@@ -26,28 +26,28 @@ constructor dialog {} {
 	global all_remotes M1B
 
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): Delete Remote Branch"
+	wm title $top [append "[appname] ([reponame]): " [mc "Delete Remote Branch"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	label $w.header -text {Delete Remote Branch} -font font_uibold
+	label $w.header -text [mc "Delete Remote Branch"] -font font_uibold
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
-	button $w.buttons.delete -text Delete \
+	button $w.buttons.delete -text [mc Delete] \
 		-default active \
 		-command [cb _delete]
 	pack $w.buttons.delete -side right
-	button $w.buttons.cancel -text {Cancel} \
+	button $w.buttons.cancel -text [mc "Cancel"] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.dest -text {From Repository}
+	labelframe $w.dest -text [mc "From Repository"]
 	if {$all_remotes ne {}} {
 		radiobutton $w.dest.remote_r \
-			-text {Remote:} \
+			-text [mc "Remote:"] \
 			-value remote \
 			-variable @urltype
 		eval tk_optionMenu $w.dest.remote_m @remote $all_remotes
@@ -63,7 +63,7 @@ constructor dialog {} {
 		set urltype url
 	}
 	radiobutton $w.dest.url_r \
-		-text {Arbitrary URL:} \
+		-text [mc "Arbitrary URL:"] \
 		-value url \
 		-variable @urltype
 	entry $w.dest.url_t \
@@ -81,7 +81,7 @@ constructor dialog {} {
 	grid columnconfigure $w.dest 1 -weight 1
 	pack $w.dest -anchor nw -fill x -pady 5 -padx 5
 
-	labelframe $w.heads -text {Branches}
+	labelframe $w.heads -text [mc "Branches"]
 	listbox $w.heads.l \
 		-height 10 \
 		-width 70 \
@@ -96,7 +96,7 @@ constructor dialog {} {
 		-anchor w \
 		-justify left
 	button $w.heads.footer.rescan \
-		-text {Rescan} \
+		-text [mc "Rescan"] \
 		-command [cb _rescan]
 	pack $w.heads.footer.status -side left -fill x
 	pack $w.heads.footer.rescan -side right
@@ -106,9 +106,9 @@ constructor dialog {} {
 	pack $w.heads.l -side left -fill both -expand 1
 	pack $w.heads -fill both -expand 1 -pady 5 -padx 5
 
-	labelframe $w.validate -text {Delete Only If}
+	labelframe $w.validate -text [mc "Delete Only If"]
 	radiobutton $w.validate.head_r \
-		-text {Merged Into:} \
+		-text [mc "Merged Into:"] \
 		-value head \
 		-variable @checktype
 	set head_m [tk_optionMenu $w.validate.head_m @check_head {}]
@@ -116,7 +116,7 @@ constructor dialog {} {
 	trace add variable @check_head write [cb _write_check_head]
 	grid $w.validate.head_r $w.validate.head_m -sticky w
 	radiobutton $w.validate.always_r \
-		-text {Always (Do not perform merge checks)} \
+		-text [mc "Always (Do not perform merge checks)"] \
 		-value always \
 		-variable @checktype
 	grid $w.validate.always_r -columnspan 2 -sticky w
@@ -149,7 +149,7 @@ method _delete {} {
 				-type ok \
 				-title [wm title $w] \
 				-parent $w \
-				-message "A branch is required for 'Merged Into'."
+				-message [mc "A branch is required for 'Merged Into'."]
 			return
 		}
 		set crev $full_cache("$cache\nrefs/heads/$check_head")
@@ -181,14 +181,12 @@ method _delete {} {
 	}
 
 	if {$not_merged ne {}} {
-		set msg "The following branches are not completely merged into $check_head:
+		set msg [mc "The following branches are not completely merged into %s:
 
- - [join $not_merged "\n - "]"
+ - %s" $check_head [join $not_merged "\n - "]]
 
 		if {$need_fetch} {
-			append msg "
-
-One or more of the merge tests failed because you have not fetched the necessary commits.  Try fetching from $uri first."
+			append msg "\n\n" [mc "One or more of the merge tests failed because you have not fetched the necessary commits.  Try fetching from %s first." $uri]
 		}
 
 		tk_messageBox \
@@ -206,7 +204,7 @@ One or more of the merge tests failed because you have not fetched the necessary
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message "Please select one or more branches to delete."
+			-message [mc "Please select one or more branches to delete."]
 		return
 	}
 
@@ -215,9 +213,9 @@ One or more of the merge tests failed because you have not fetched the necessary
 		-type yesno \
 		-title [wm title $w] \
 		-parent $w \
-		-message {Recovering deleted branches is difficult.
+		-message [mc "Recovering deleted branches is difficult.
 
-Delete the selected branches?}] ne yes} {
+Delete the selected branches?"]] ne yes} {
 		return
 	}
 
@@ -225,7 +223,7 @@ Delete the selected branches?}] ne yes} {
 
 	set cons [console::new \
 		"push $uri" \
-		"Deleting branches from $uri"]
+		[mc "Deleting branches from %s" $uri]]
 	console::exec $cons $push_cmd
 }
 
@@ -285,12 +283,12 @@ method _load {cache uri} {
 		$w.heads.l conf -state disabled
 		set head_list [list]
 		set full_list [list]
-		set status {No repository selected.}
+		set status [mc "No repository selected."]
 		return
 	}
 
 	if {[catch {set x $cached($cache)}]} {
-		set status "Scanning $uri..."
+		set status [mc "Scanning %s..." $uri]
 		$w.heads.l conf -state disabled
 		set head_list [list]
 		set full_list [list]

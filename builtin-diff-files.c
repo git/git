@@ -31,5 +31,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
 	result = run_diff_files_cmd(&rev, argc, argv);
-	return rev.diffopt.exit_with_status ? rev.diffopt.has_changes: result;
+	if (DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS))
+		return DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES) != 0;
+	return result;
 }

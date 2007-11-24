@@ -122,19 +122,13 @@ static char const * const pack_refs_usage[] = {
 
 int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 {
-	int all = 0, prune = 1;
-	unsigned int flags = 0;
+	unsigned int flags = PACK_REFS_PRUNE;
 	struct option opts[] = {
-		OPT_BOOLEAN(0, "all", &all, "pack everything"),
-		OPT_BOOLEAN(0, "prune", &prune, "prune loose refs (default)"),
+		OPT_BIT(0, "all",   &flags, "pack everything", PACK_REFS_ALL),
+		OPT_BIT(0, "prune", &flags, "prune loose refs (default)", PACK_REFS_PRUNE),
 		OPT_END(),
 	};
-
 	if (parse_options(argc, argv, opts, pack_refs_usage, 0))
 		usage_with_options(pack_refs_usage, opts);
-	if (prune)
-		flags |= PACK_REFS_PRUNE;
-	if (all)
-		flags |= PACK_REFS_ALL;
 	return pack_refs(flags);
 }

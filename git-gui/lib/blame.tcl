@@ -74,11 +74,11 @@ constructor new {i_commit i_path} {
 	set path   $i_path
 
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): File Viewer"
+	wm title $top [append "[appname] ([reponame]): " [mc "File Viewer"]]
 
 	frame $w.header -background gold
 	label $w.header.commit_l \
-		-text {Commit:} \
+		-text [mc "Commit:"] \
 		-background gold \
 		-anchor w \
 		-justify left
@@ -101,7 +101,7 @@ constructor new {i_commit i_path} {
 		-anchor w \
 		-justify left
 	label $w.header.path_l \
-		-text {File:} \
+		-text [mc "File:"] \
 		-background gold \
 		-anchor w \
 		-justify left
@@ -246,7 +246,7 @@ constructor new {i_commit i_path} {
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
-		-label "Copy Commit" \
+		-label [mc "Copy Commit"] \
 		-command [cb _copycommit]
 
 	foreach i $w_columns {
@@ -366,7 +366,7 @@ method _load {jump} {
 	set amov_data [list [list]]
 	set asim_data [list [list]]
 
-	$status show "Reading $commit:[escape_path $path]..."
+	$status show [mc "Reading %s..." "$commit:[escape_path $path]"]
 	$w_path conf -text [escape_path $path]
 	if {$commit eq {}} {
 		set fd [open $path r]
@@ -470,7 +470,7 @@ method _read_file {fd jump} {
 
 		_exec_blame $this $w_asim @asim_data \
 			[list] \
-			{ copy/move tracking}
+			[mc "Loading copy/move tracking annotations..."]
 	}
 } ifdeleted { catch {close $fd} }
 
@@ -489,8 +489,8 @@ method _exec_blame {cur_w cur_d options cur_s} {
 	set blame_lines 0
 
 	$status start \
-		"Loading$cur_s annotations..." \
-		{lines annotated}
+		$cur_s \
+		[mc "lines annotated"]
 }
 
 method _read_blame {fd cur_w cur_d} {
@@ -671,10 +671,10 @@ method _read_blame {fd cur_w cur_d} {
 		if {$cur_w eq $w_asim} {
 			_exec_blame $this $w_amov @amov_data \
 				$original_options \
-				{ original location}
+				[mc "Loading original location annotations..."]
 		} else {
 			set current_fd {}
-			$status stop {Annotation complete.}
+			$status stop [mc "Annotation complete."]
 		}
 	} else {
 		$status update $blame_lines $total_lines
@@ -728,7 +728,7 @@ method _showcommit {cur_w lno} {
 
 	if {$dat eq {}} {
 		set cmit {}
-		$w_cviewer insert end "Loading annotation..." still_loading
+		$w_cviewer insert end [mc "Loading annotation..."] still_loading
 	} else {
 		set cmit [lindex $dat 0]
 		set file [lindex $dat 1]
@@ -743,20 +743,14 @@ method _showcommit {cur_w lno} {
 		set author_time {}
 		catch {set author_name $header($cmit,author)}
 		catch {set author_email $header($cmit,author-mail)}
-		catch {set author_time [clock format \
-			$header($cmit,author-time) \
-			-format {%Y-%m-%d %H:%M:%S}
-		]}
+		catch {set author_time [format_date $header($cmit,author-time)]}
 
 		set committer_name {}
 		set committer_email {}
 		set committer_time {}
 		catch {set committer_name $header($cmit,committer)}
 		catch {set committer_email $header($cmit,committer-mail)}
-		catch {set committer_time [clock format \
-			$header($cmit,committer-time) \
-			-format {%Y-%m-%d %H:%M:%S}
-		]}
+		catch {set committer_time [format_date $header($cmit,committer-time)]}
 
 		if {[catch {set msg $header($cmit,message)}]} {
 			set msg {}
@@ -790,16 +784,16 @@ method _showcommit {cur_w lno} {
 		}
 
 		$w_cviewer insert end "commit $cmit\n" header_key
-		$w_cviewer insert end "Author:\t" header_key
+		$w_cviewer insert end [strcat [mc "Author:"] "\t"] header_key
 		$w_cviewer insert end "$author_name $author_email" header_val
 		$w_cviewer insert end "  $author_time\n" header_val
 
-		$w_cviewer insert end "Committer:\t" header_key
+		$w_cviewer insert end [strcat [mc "Committer:"] "\t"] header_key
 		$w_cviewer insert end "$committer_name $committer_email" header_val
 		$w_cviewer insert end "  $committer_time\n" header_val
 
 		if {$file ne $path} {
-			$w_cviewer insert end "Original File:\t" header_key
+			$w_cviewer insert end [strcat [mc "Original File:"] "\t"] header_key
 			$w_cviewer insert end "[escape_path $file]\n" header_val
 		}
 
@@ -892,10 +886,7 @@ method _open_tooltip {cur_w} {
 	set author_time {}
 	catch {set author_name $header($cmit,author)}
 	catch {set summary     $header($cmit,summary)}
-	catch {set author_time [clock format \
-		$header($cmit,author-time) \
-		-format {%Y-%m-%d %H:%M:%S}
-	]}
+	catch {set author_time [format_date $header($cmit,author-time)]}
 
 	$tooltip_t insert end "commit $cmit\n"
 	$tooltip_t insert end "$author_name  $author_time\n"
@@ -914,23 +905,20 @@ method _open_tooltip {cur_w} {
 		set author_time {}
 		catch {set author_name $header($cmit,author)}
 		catch {set summary     $header($cmit,summary)}
-		catch {set author_time [clock format \
-			$header($cmit,author-time) \
-			-format {%Y-%m-%d %H:%M:%S}
-		]}
+		catch {set author_time [format_date $header($cmit,author-time)]}
 
-		$tooltip_t insert end "Originally By:\n" section_header
+		$tooltip_t insert end [strcat [mc "Originally By:"] "\n"] section_header
 		$tooltip_t insert end "commit $cmit\n"
 		$tooltip_t insert end "$author_name  $author_time\n"
 		$tooltip_t insert end "$summary\n"
 
 		if {$file ne $path} {
-			$tooltip_t insert end "In File: " section_header
+			$tooltip_t insert end [strcat [mc "In File:"] " "] section_header
 			$tooltip_t insert end "$file\n"
 		}
 
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "Copied Or Moved Here By:\n" section_header
+		$tooltip_t insert end [strcat [mc "Copied Or Moved Here By:"] "\n"] section_header
 		$tooltip_t insert end $save
 	}
 

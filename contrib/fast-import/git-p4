@@ -1141,7 +1141,7 @@ class P4Sync(Command):
 
         l = p4CmdList("labels %s..." % ' '.join (self.depotPaths))
         if len(l) > 0 and not self.silent:
-            print "Finding files belonging to labels in %s" % `self.depotPath`
+            print "Finding files belonging to labels in %s" % `self.depotPaths`
 
         for output in l:
             label = output["label"]
@@ -1205,6 +1205,15 @@ class P4Sync(Command):
 
 
         for branch in lostAndFoundBranches:
+            self.knownBranches[branch] = branch
+
+    def getBranchMappingFromGitBranches(self):
+        branches = p4BranchesInGit(self.importIntoRemotes)
+        for branch in branches.keys():
+            if branch == "master":
+                branch = "main"
+            else:
+                branch = branch[len(self.projectName):]
             self.knownBranches[branch] = branch
 
     def listExistingP4GitBranches(self):
@@ -1541,8 +1550,10 @@ class P4Sync(Command):
             ## FIXME - what's a P4 projectName ?
             self.projectName = self.guessProjectName()
 
-            if not self.hasOrigin:
-                self.getBranchMapping();
+            if self.hasOrigin:
+                self.getBranchMappingFromGitBranches()
+            else:
+                self.getBranchMapping()
             if self.verbose:
                 print "p4-git branches: %s" % self.p4BranchesInGit
                 print "initial parents: %s" % self.initialParents

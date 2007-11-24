@@ -66,6 +66,7 @@ reference.
 
 OPTIONS
 -------
+:git-format-patch: 1
 include::diff-options.txt[]
 
 -<n>::

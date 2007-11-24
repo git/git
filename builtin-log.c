@@ -55,13 +55,13 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
 	rev->verbose_header = 1;
-	rev->diffopt.recursive = 1;
+	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
-	if (rev->diffopt.follow_renames) {
+	if (DIFF_OPT_TST(&rev->diffopt, FOLLOW_RENAMES)) {
 		rev->always_show_header = 0;
 		if (rev->diffopt.nr_paths != 1)
 			usage("git logs can only follow renames on one pathname at a time");
@@ -77,11 +77,134 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	}
 }
 
+/*
+ * This gives a rough estimate for how many commits we
+ * will print out in the list.
+ */
+static int estimate_commit_count(struct rev_info *rev, struct commit_list *list)
+{
+	int n = 0;
+
+	while (list) {
+		struct commit *commit = list->item;
+		unsigned int flags = commit->object.flags;
+		list = list->next;
+		if (!(flags & (TREESAME | UNINTERESTING)))
+			n++;
+	}
+	return n;
+}
+
+static void show_early_header(struct rev_info *rev, const char *stage, int nr)
+{
+	if (rev->shown_one) {
+		rev->shown_one = 0;
+		if (rev->commit_format != CMIT_FMT_ONELINE)
+			putchar(rev->diffopt.line_termination);
+	}
+	printf("Final output: %d %s\n", nr, stage);
+}
+
+struct itimerval early_output_timer;
+
+static void log_show_early(struct rev_info *revs, struct commit_list *list)
+{
+	int i = revs->early_output;
+	int show_header = 1;
+
+	sort_in_topological_order(&list, revs->lifo);
+	while (list && i) {
+		struct commit *commit = list->item;
+		switch (simplify_commit(revs, commit)) {
+		case commit_show:
+			if (show_header) {
+				int n = estimate_commit_count(revs, list);
+				show_early_header(revs, "incomplete", n);
+				show_header = 0;
+			}
+			log_tree_commit(revs, commit);
+			i--;
+			break;
+		case commit_ignore:
+			break;
+		case commit_error:
+			return;
+		}
+		list = list->next;
+	}
+
+	/* Did we already get enough commits for the early output? */
+	if (!i)
+		return;
+
+	/*
+	 * ..if no, then repeat it twice a second until we
+	 * do.
+	 *
+	 * NOTE! We don't use "it_interval", because if the
+	 * reader isn't listening, we want our output to be
+	 * throttled by the writing, and not have the timer
+	 * trigger every second even if we're blocked on a
+	 * reader!
+	 */
+	early_output_timer.it_value.tv_sec = 0;
+	early_output_timer.it_value.tv_usec = 500000;
+	setitimer(ITIMER_REAL, &early_output_timer, NULL);
+}
+
+static void early_output(int signal)
+{
+	show_early_output = log_show_early;
+}
+
+static void setup_early_output(struct rev_info *rev)
+{
+	struct sigaction sa;
+
+	/*
+	 * Set up the signal handler, minimally intrusively:
+	 * we only set a single volatile integer word (not
+	 * using sigatomic_t - trying to avoid unnecessary
+	 * system dependencies and headers), and using
+	 * SA_RESTART.
+	 */
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = early_output;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sigaction(SIGALRM, &sa, NULL);
+
+	/*
+	 * If we can get the whole output in less than a
+	 * tenth of a second, don't even bother doing the
+	 * early-output thing..
+	 *
+	 * This is a one-time-only trigger.
+	 */
+	early_output_timer.it_value.tv_sec = 0;
+	early_output_timer.it_value.tv_usec = 100000;
+	setitimer(ITIMER_REAL, &early_output_timer, NULL);
+}
+
+static void finish_early_output(struct rev_info *rev)
+{
+	int n = estimate_commit_count(rev, rev->commits);
+	signal(SIGALRM, SIG_IGN);
+	show_early_header(rev, "done", n);
+}
+
 static int cmd_log_walk(struct rev_info *rev)
 {
 	struct commit *commit;
 
+	if (rev->early_output)
+		setup_early_output(rev);
+
 	prepare_revision_walk(rev);
+
+	if (rev->early_output)
+		finish_early_output(rev);
+
 	while ((commit = get_revision(rev)) != NULL) {
 		log_tree_commit(rev, commit);
 		if (!rev->reflog_info) {
@@ -185,11 +308,9 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			struct tag *t = (struct tag *)o;
 
 			printf("%stag %s%s\n\n",
-					diff_get_color(rev.diffopt.color_diff,
-						DIFF_COMMIT),
+					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
 					t->tag,
-					diff_get_color(rev.diffopt.color_diff,
-						DIFF_RESET));
+					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			ret = show_object(o->sha1, 1);
 			objects[i].item = (struct object *)t->tagged;
 			i--;
@@ -197,11 +318,9 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 		}
 		case OBJ_TREE:
 			printf("%stree %s%s\n\n",
-					diff_get_color(rev.diffopt.color_diff,
-						DIFF_COMMIT),
+					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
 					name,
-					diff_get_color(rev.diffopt.color_diff,
-						DIFF_RESET));
+					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			read_tree_recursive((struct tree *)o, "", 0, 0, NULL,
 					show_tree_object);
 			break;
@@ -497,7 +616,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
 	rev.diffopt.msg_sep = "";
-	rev.diffopt.recursive = 1;
+	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
 
 	rev.subject_prefix = fmt_patch_subject_prefix;
 	rev.extra_headers = extra_headers;
@@ -605,8 +724,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
 
-	if (!rev.diffopt.text)
-		rev.diffopt.binary = 1;
+	if (!DIFF_OPT_TST(&rev.diffopt, TEXT))
+		DIFF_OPT_SET(&rev.diffopt, BINARY);
 
 	if (!output_directory && !use_stdout)
 		output_directory = prefix;
@@ -764,7 +883,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 	revs.diff = 1;
 	revs.combine_merges = 0;
 	revs.ignore_merges = 1;
-	revs.diffopt.recursive = 1;
+	DIFF_OPT_SET(&revs.diffopt, RECURSIVE);
 
 	if (add_pending_commit(head, &revs, 0))
 		die("Unknown commit %s", head);

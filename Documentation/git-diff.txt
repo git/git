@@ -75,6 +75,7 @@ and the range notations ("<commit>..<commit>" and
 
 OPTIONS
 -------
+:git-diff: 1
 include::diff-options.txt[]
 
 <path>...::

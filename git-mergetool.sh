@@ -10,6 +10,7 @@
 
 USAGE='[--tool=tool] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
+OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 prefix=$(git rev-parse --show-prefix)

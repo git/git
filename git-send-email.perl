@@ -145,6 +145,7 @@ sub format_2822_time {
 
 my $have_email_valid = eval { require Email::Valid; 1 };
 my $smtp;
+my $auth;
 
 sub unique_email_list(@);
 sub cleanup_compose_files();
@@ -514,11 +515,13 @@ $time = time - scalar $#files;
 
 sub unquote_rfc2047 {
 	local ($_) = @_;
-	if (s/=\?utf-8\?q\?(.*)\?=/$1/g) {
+	my $encoding;
+	if (s/=\?([^?]+)\?q\?(.*)\?=/$2/g) {
+		$encoding = $1;
 		s/_/ /g;
 		s/=([0-9A-F]{2})/chr(hex($1))/eg;
 	}
-	return "$_";
+	return wantarray ? ($_, $encoding) : $_;
 }
 
 # use the simplest quoting being able to handle the recipient
@@ -555,7 +558,11 @@ sub sanitize_address
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
-	@cc = (map { sanitize_address($_) } @cc);
+	@cc = (grep { my $cc = extract_valid_address($_);
+		      not grep { $cc eq $_ } @recipients
+		    }
+	       map { sanitize_address($_) }
+	       @cc);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
 	@recipients = (map { extract_valid_address($_) } @recipients);
@@ -629,7 +636,7 @@ X-Mailer: git-send-email $gitversion
 		}
 
 		if ((defined $smtp_authuser) && (defined $smtp_authpass)) {
-			$smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
+			$auth ||= $smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
 		}
 		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
@@ -641,7 +648,7 @@ X-Mailer: git-send-email $gitversion
 	if ($quiet) {
 		printf (($dry_run ? "Dry-" : "")."Sent %s\n", $subject);
 	} else {
-		print (($dry_run ? "Dry-" : "")."OK. Log says:\nDate: $date\n");
+		print (($dry_run ? "Dry-" : "")."OK. Log says:\n");
 		if ($smtp_server !~ m#^/#) {
 			print "Server: $smtp_server\n";
 			print "MAIL FROM:<$raw_from>\n";
@@ -649,7 +656,7 @@ X-Mailer: git-send-email $gitversion
 		} else {
 			print "Sendmail: $smtp_server ".join(' ',@sendmail_parameters)."\n";
 		}
-		print "From: $sanitized_sender\nSubject: $subject\nCc: $cc\nTo: $to\n\n";
+		print $header, "\n";
 		if ($smtp) {
 			print "Result: ", $smtp->code, ' ',
 				($smtp->message =~ /\n([^\n]+\n)$/s), "\n";
@@ -667,6 +674,9 @@ foreach my $t (@files) {
 	open(F,"<",$t) or die "can't open file $t";
 
 	my $author = undef;
+	my $author_encoding;
+	my $has_content_type;
+	my $body_encoding;
 	@cc = @initial_cc;
 	@xh = ();
 	my $input_format = undef;
@@ -692,11 +702,19 @@ foreach my $t (@files) {
 						next if ($suppress_from);
 					}
 					elsif ($1 eq 'From') {
-						$author = unquote_rfc2047($2);
+						($author, $author_encoding)
+						  = unquote_rfc2047($2);
 					}
 					printf("(mbox) Adding cc: %s from line '%s'\n",
 						$2, $_) unless $quiet;
 					push @cc, $2;
+				}
+				elsif (/^Content-type:/i) {
+					$has_content_type = 1;
+					if (/charset="?[^ "]+/) {
+						$body_encoding = $1;
+					}
+					push @xh, $_;
 				}
 				elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
 					push @xh, $_;
@@ -756,6 +774,22 @@ foreach my $t (@files) {
 
 	if (defined $author) {
 		$message = "From: $author\n\n$message";
+		if (defined $author_encoding) {
+			if ($has_content_type) {
+				if ($body_encoding eq $author_encoding) {
+					# ok, we already have the right encoding
+				}
+				else {
+					# uh oh, we should re-encode
+				}
+			}
+			else {
+				push @xh,
+				  'MIME-Version: 1.0',
+				  "Content-Type: text/plain; charset=$author_encoding",
+				  'Content-Transfer-Encoding: 8bit';
+			}
+		}
 	}
 
 	send_message();

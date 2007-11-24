@@ -2,28 +2,22 @@
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc do_windows_shortcut {} {
-	global argv0
-
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title "[appname] ([reponame]): Create Desktop Icon" \
-		-initialfile "Git [reponame].bat"]
+		-title [append "[appname] ([reponame]): " [mc "Create Desktop Icon"]] \
+		-initialfile "Git [reponame].lnk"]
 	if {$fn != {}} {
-		if {[file extension $fn] ne {.bat}} {
-			set fn ${fn}.bat
+		if {[file extension $fn] ne {.lnk}} {
+			set fn ${fn}.lnk
 		}
 		if {[catch {
-				set ge [file normalize [file dirname $::_git]]
-				set fd [open $fn w]
-				puts $fd "@ECHO Entering [reponame]"
-				puts $fd "@ECHO Starting git-gui... please wait..."
-				puts $fd "@SET PATH=$ge;%PATH%"
-				puts $fd "@SET GIT_DIR=[file normalize [gitdir]]"
-				puts -nonewline $fd "@\"[info nameofexecutable]\""
-				puts $fd " \"[file normalize $argv0]\""
-				close $fd
+				win32_create_lnk $fn [list \
+					[info nameofexecutable] \
+					[file normalize $::argv0] \
+					] \
+					[file dirname [file normalize [gitdir]]]
 			} err]} {
-			error_popup "Cannot write script:\n\n$err"
+			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 		}
 	}
 }
@@ -42,15 +36,14 @@ proc do_cygwin_shortcut {} {
 	}
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title "[appname] ([reponame]): Create Desktop Icon" \
+		-title [append "[appname] ([reponame]): " [mc "Create Desktop Icon"]] \
 		-initialdir $desktop \
-		-initialfile "Git [reponame].bat"]
+		-initialfile "Git [reponame].lnk"]
 	if {$fn != {}} {
-		if {[file extension $fn] ne {.bat}} {
-			set fn ${fn}.bat
+		if {[file extension $fn] ne {.lnk}} {
+			set fn ${fn}.lnk
 		}
 		if {[catch {
-				set fd [open $fn w]
 				set sh [exec cygpath \
 					--windows \
 					--absolute \
@@ -59,19 +52,13 @@ proc do_cygwin_shortcut {} {
 					--unix \
 					--absolute \
 					$argv0]
-				set gd [exec cygpath \
-					--unix \
-					--absolute \
-					[gitdir]]
-				puts $fd "@ECHO Entering [reponame]"
-				puts $fd "@ECHO Starting git-gui... please wait..."
-				puts -nonewline $fd "@\"$sh\" --login -c \""
-				puts -nonewline $fd "GIT_DIR=[sq $gd]"
-				puts -nonewline $fd " [sq $me]"
-				puts $fd " &\""
-				close $fd
+				win32_create_lnk $fn [list \
+					$sh -c \
+					"CHERE_INVOKING=1 source /etc/profile;[sq $me]" \
+					] \
+					[file dirname [file normalize [gitdir]]]
 			} err]} {
-			error_popup "Cannot write script:\n\n$err"
+			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 		}
 	}
 }
@@ -81,7 +68,7 @@ proc do_macosx_app {} {
 
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title "[appname] ([reponame]): Create Desktop Icon" \
+		-title [append "[appname] ([reponame]): " [mc "Create Desktop Icon"]] \
 		-initialdir [file join $env(HOME) Desktop] \
 		-initialfile "Git [reponame].app"]
 	if {$fn != {}} {
@@ -146,7 +133,7 @@ proc do_macosx_app {} {
 
 				file attributes $exe -permissions u+x,g+x,o+x
 			} err]} {
-			error_popup "Cannot write icon:\n\n$err"
+			error_popup [strcat [mc "Cannot write icon:"] "\n\n$err"]
 		}
 	}
 }

@@ -36,5 +36,11 @@ To sync with a local directory, you can use:
 - file:///path/to/repo.git/
 ===============================================================
 
+ifndef::git-clone[]
 They are mostly equivalent, except when cloning.  See
 gitlink:git-clone[1] for details.
+endif::git-clone[]
+
+ifdef::git-clone[]
+They are equivalent, except the former implies --local option.
+endif::git-clone[]

@@ -14,7 +14,7 @@ field w
 field browser_commit
 field browser_path
 field browser_files  {}
-field browser_status {Starting...}
+field browser_status [mc "Starting..."]
 field browser_stack  {}
 field browser_busy   1
 
@@ -23,7 +23,7 @@ field ls_buf     {}; # Buffered record output from ls-tree
 constructor new {commit {path {}}} {
 	global cursor_ptr M1B
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): File Browser"
+	wm title $top [append "[appname] ([reponame]): " [mc "File Browser"]]
 
 	set browser_commit $commit
 	set browser_path $browser_commit:$path
@@ -122,7 +122,7 @@ method _parent {} {
 		} else {
 			regsub {/[^/]+$} $browser_path {} browser_path
 		}
-		set browser_status "Loading $browser_path..."
+		set browser_status [mc "Loading %s..." $browser_path]
 		_ls $this [lindex $parent 0] [lindex $parent 1]
 	}
 }
@@ -139,7 +139,7 @@ method _enter {} {
 		tree {
 			set name [lindex $info 2]
 			set escn [escape_path $name]
-			set browser_status "Loading $escn..."
+			set browser_status [mc "Loading %s..." $escn]
 			append browser_path $escn
 			_ls $this [lindex $info 1] $name
 		}
@@ -183,7 +183,7 @@ method _ls {tree_id {name {}}} {
 			-align center -padx 5 -pady 1 \
 			-name icon0 \
 			-image ::browser::img_parent
-		$w insert end {[Up To Parent]}
+		$w insert end [mc "\[Up To Parent\]"]
 		lappend browser_files parent
 	}
 	lappend browser_stack [list $tree_id $name]
@@ -242,7 +242,7 @@ method _read {fd} {
 
 	if {[eof $fd]} {
 		close $fd
-		set browser_status Ready.
+		set browser_status [mc "Ready."]
 		set browser_busy 0
 		set ls_buf {}
 		if {$n > 0} {
@@ -263,27 +263,27 @@ field w_rev          ; # mega-widget to pick the initial revision
 
 constructor dialog {} {
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): Browse Branch Files"
+	wm title $top [append "[appname] ([reponame]): " [mc "Browse Branch Files"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
 	label $w.header \
-		-text {Browse Branch Files} \
+		-text [mc "Browse Branch Files"] \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
-	button $w.buttons.browse -text Browse \
+	button $w.buttons.browse -text [mc Browse] \
 		-default active \
 		-command [cb _open]
 	pack $w.buttons.browse -side right
-	button $w.buttons.cancel -text {Cancel} \
+	button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	set w_rev [::choose_rev::new $w.rev {Revision}]
+	set w_rev [::choose_rev::new $w.rev [mc Revision]]
 	$w_rev bind_listbox <Double-Button-1> [cb _open]
 	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 

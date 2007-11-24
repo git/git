@@ -76,7 +76,7 @@ method run {} {
 		_toplevel $this {Refreshing Tracking Branch}
 		set w_cons [::console::embed \
 			$w.console \
-			"Fetching $r_name from $remote"]
+			[mc "Fetching %s from %s" $r_name $remote]]
 		pack $w.console -fill both -expand 1
 		$w_cons exec $cmd [cb _finish_fetch]
 
@@ -124,7 +124,7 @@ method _finish_fetch {ok} {
 		}
 		if {[catch {set new_hash [git rev-parse --verify "$l_trck^0"]} err]} {
 			set ok 0
-			$w_cons insert "fatal: Cannot resolve $l_trck"
+			$w_cons insert [mc "fatal: Cannot resolve %s" $l_trck]
 			$w_cons insert $err
 		}
 	}
@@ -137,7 +137,7 @@ method _finish_fetch {ok} {
 		destroy $w
 		set w {}
 	} else {
-		button $w.close -text Close -command [list destroy $w]
+		button $w.close -text [mc Close] -command [list destroy $w]
 		pack $w.close -side bottom -anchor e -padx 10 -pady 10
 	}
 
@@ -166,7 +166,7 @@ method _update_ref {} {
 		# Assume it does not exist, and that is what the error was.
 		#
 		if {!$create} {
-			_error $this "Branch '$newbranch' does not exist."
+			_error $this [mc "Branch '%s' does not exist." $newbranch]
 			return 0
 		}
 
@@ -176,7 +176,7 @@ method _update_ref {} {
 		# We were told to create it, but not do a merge.
 		# Bad.  Name shouldn't have existed.
 		#
-		_error $this "Branch '$newbranch' already exists."
+		_error $this [mc "Branch '%s' already exists." $newbranch]
 		return 0
 	} elseif {!$create && $merge_type eq {none}} {
 		# We aren't creating, it exists and we don't merge.
@@ -203,7 +203,7 @@ method _update_ref {} {
 					set new $cur
 					set new_hash $cur
 				} else {
-					_error $this "Branch '$newbranch' already exists.\n\nIt cannot fast-forward to $new_expr.\nA merge is required."
+					_error $this [mc "Branch '%s' already exists.\n\nIt cannot fast-forward to %s.\nA merge is required." $newbranch $new_expr]
 					return 0
 				}
 			}
@@ -217,7 +217,7 @@ method _update_ref {} {
 				}
 			}
 			default {
-				_error $this "Merge strategy '$merge_type' not supported."
+				_error $this [mc "Merge strategy '%s' not supported." $merge_type]
 				return 0
 			}
 			}
@@ -236,7 +236,7 @@ method _update_ref {} {
 		if {[catch {
 				git update-ref -m $reflog_msg $ref $new $cur
 			} err]} {
-			_error $this "Failed to update '$newbranch'.\n\n$err"
+			_error $this [strcat [mc "Failed to update '%s'." $newbranch] "\n\n$err"]
 			return 0
 		}
 	}
@@ -248,7 +248,7 @@ method _checkout {} {
 	if {[lock_index checkout_op]} {
 		after idle [cb _start_checkout]
 	} else {
-		_error $this "Staging area (index) is already locked."
+		_error $this [mc "Staging area (index) is already locked."]
 		delete_this
 	}
 }
@@ -263,12 +263,12 @@ method _start_checkout {} {
 		&& $curType eq {normal}
 		&& $curHEAD eq $HEAD} {
 	} elseif {$commit_type ne $curType || $HEAD ne $curHEAD} {
-		info_popup {Last scanned state does not match repository state.
+		info_popup [mc "Last scanned state does not match repository state.
 
 Another Git program has modified this repository since the last scan.  A rescan must be performed before the current branch can be changed.
 
 The rescan will be automatically started now.
-}
+"]
 		unlock_index
 		rescan ui_ready
 		delete_this
@@ -319,7 +319,7 @@ method _readtree {} {
 
 	set readtree_d {}
 	$::main_status start \
-		"Updating working directory to '[_name $this]'..." \
+		[mc "Updating working directory to '%s'..." [_name $this]] \
 		{files checked out}
 
 	set fd [git_read --stderr read-tree \
@@ -350,12 +350,12 @@ method _readtree_wait {fd} {
 	if {[catch {close $fd}]} {
 		set err $readtree_d
 		regsub {^fatal: } $err {} err
-		$::main_status stop "Aborted checkout of '[_name $this]' (file level merging is required)."
-		warn_popup "File level merge required.
+		$::main_status stop [mc "Aborted checkout of '%s' (file level merging is required)." [_name $this]]
+		warn_popup [strcat [mc "File level merge required."] "
 
 $err
 
-Staying on branch '$current_branch'."
+" [mc "Staying on branch '%s'." $current_branch]]
 		unlock_index
 		delete_this
 		return
@@ -426,9 +426,9 @@ method _after_readtree {} {
 	}
 
 	if {$is_detached} {
-		info_popup "You are no longer on a local branch.
+		info_popup [mc "You are no longer on a local branch.
 
-If you wanted to be on a branch, create one now starting from 'This Detached Checkout'."
+If you wanted to be on a branch, create one now starting from 'This Detached Checkout'."]
 	}
 
 	# -- Update our repository state.  If we were previously in
@@ -443,7 +443,7 @@ If you wanted to be on a branch, create one now starting from 'This Detached Che
 		$ui_comm delete 0.0 end
 		$ui_comm edit reset
 		$ui_comm edit modified false
-		rescan [list ui_status "Checked out '$name'."]
+		rescan [list ui_status [mc "Checked out '%s'." $name]]
 	} else {
 		repository_state commit_type HEAD MERGE_HEAD
 		set PARENT $HEAD
@@ -475,7 +475,7 @@ method _confirm_reset {cur} {
 	pack [label $w.msg1 \
 		-anchor w \
 		-justify left \
-		-text "Resetting '$name' to $new_expr will lose the following commits:" \
+		-text [mc "Resetting '%s' to '%s' will lose the following commits:" $name $new_expr]\
 		] -anchor w
 
 	set list $w.list.l
@@ -497,21 +497,21 @@ method _confirm_reset {cur} {
 	pack [label $w.msg2 \
 		-anchor w \
 		-justify left \
-		-text {Recovering lost commits may not be easy.} \
+		-text [mc "Recovering lost commits may not be easy."] \
 		]
 	pack [label $w.msg3 \
 		-anchor w \
 		-justify left \
-		-text "Reset '$name'?" \
+		-text [mc "Reset '%s'?" $name] \
 		]
 
 	frame $w.buttons
 	button $w.buttons.visualize \
-		-text Visualize \
+		-text [mc Visualize] \
 		-command $gitk
 	pack $w.buttons.visualize -side left
 	button $w.buttons.reset \
-		-text Reset \
+		-text [mc Reset] \
 		-command "
 			set @reset_ok 1
 			destroy $w
@@ -519,7 +519,7 @@ method _confirm_reset {cur} {
 	pack $w.buttons.reset -side right
 	button $w.buttons.cancel \
 		-default active \
-		-text Cancel \
+		-text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
@@ -575,13 +575,13 @@ method _toplevel {title} {
 }
 
 method _fatal {err} {
-	error_popup "Failed to set current branch.
+	error_popup [strcat [mc "Failed to set current branch.
 
 This working directory is only partially switched.  We successfully updated your files, but failed to update an internal Git file.
 
-This should not have occurred.  [appname] will now close and give up.
+This should not have occurred.  %s will now close and give up." [appname]] "
 
-$err"
+$err"]
 	exit 1
 }
 
