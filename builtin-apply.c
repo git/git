@@ -910,23 +910,35 @@ static void check_whitespace(const char *line, int len)
 	 * this function.  That is, an addition of an empty line would
 	 * check the '+' here.  Sneaky...
 	 */
-	if (isspace(line[len-2]))
+	if ((whitespace_rule & WS_TRAILING_SPACE) && isspace(line[len-2]))
 		goto error;
 
 	/*
 	 * Make sure that there is no space followed by a tab in
 	 * indentation.
 	 */
-	err = "Space in indent is followed by a tab";
-	for (i = 1; i < len; i++) {
-		if (line[i] == '\t') {
-			if (seen_space)
-				goto error;
+	if (whitespace_rule & WS_SPACE_BEFORE_TAB) {
+		err = "Space in indent is followed by a tab";
+		for (i = 1; i < len; i++) {
+			if (line[i] == '\t') {
+				if (seen_space)
+					goto error;
+			}
+			else if (line[i] == ' ')
+				seen_space = 1;
+			else
+				break;
 		}
-		else if (line[i] == ' ')
-			seen_space = 1;
-		else
-			break;
+	}
+
+	/*
+	 * Make sure that the indentation does not contain more than
+	 * 8 spaces.
+	 */
+	if ((whitespace_rule & WS_INDENT_WITH_NON_TAB) &&
+	    (8 < len) && !strncmp("+        ", line, 9)) {
+		err = "Indent more than 8 places with spaces";
+		goto error;
 	}
 	return;
 
@@ -1581,7 +1593,8 @@ static int apply_line(char *output, const char *patch, int plen)
 	/*
 	 * Strip trailing whitespace
 	 */
-	if (1 < plen && isspace(patch[plen-1])) {
+	if ((whitespace_rule & WS_TRAILING_SPACE) &&
+	    (1 < plen && isspace(patch[plen-1]))) {
 		if (patch[plen] == '\n')
 			add_nl_to_tail = 1;
 		plen--;
@@ -1597,11 +1610,16 @@ static int apply_line(char *output, const char *patch, int plen)
 		char ch = patch[i];
 		if (ch == '\t') {
 			last_tab_in_indent = i;
-			if (0 <= last_space_in_indent)
+			if ((whitespace_rule & WS_SPACE_BEFORE_TAB) &&
+			    0 <= last_space_in_indent)
+			    need_fix_leading_space = 1;
+		} else if (ch == ' ') {
+			last_space_in_indent = i;
+			if ((whitespace_rule & WS_INDENT_WITH_NON_TAB) &&
+			    last_tab_in_indent < 0 &&
+			    8 <= i)
 				need_fix_leading_space = 1;
 		}
-		else if (ch == ' ')
-			last_space_in_indent = i;
 		else
 			break;
 	}
@@ -1609,11 +1627,21 @@ static int apply_line(char *output, const char *patch, int plen)
 	buf = output;
 	if (need_fix_leading_space) {
 		int consecutive_spaces = 0;
+		int last = last_tab_in_indent + 1;
+
+		if (whitespace_rule & WS_INDENT_WITH_NON_TAB) {
+			/* have "last" point at one past the indent */
+			if (last_tab_in_indent < last_space_in_indent)
+				last = last_space_in_indent + 1;
+			else
+				last = last_tab_in_indent + 1;
+		}
+
 		/*
-		 * between patch[1..last_tab_in_indent] strip the
-		 * funny spaces, updating them to tab as needed.
+		 * between patch[1..last], strip the funny spaces,
+		 * updating them to tab as needed.
 		 */
-		for (i = 1; i < last_tab_in_indent; i++, plen--) {
+		for (i = 1; i < last; i++, plen--) {
 			char ch = patch[i];
 			if (ch != ' ') {
 				consecutive_spaces = 0;
@@ -1626,8 +1654,10 @@ static int apply_line(char *output, const char *patch, int plen)
 				}
 			}
 		}
+		while (0 < consecutive_spaces--)
+			*output++ = ' ';
 		fixed = 1;
-		i = last_tab_in_indent;
+		i = last;
 	}
 	else
 		i = 1;
