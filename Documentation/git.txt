@@ -153,6 +153,8 @@ introductions to the underlying git architecture.
 See also the link:howto-index.html[howto] documents for some useful
 examples.
 
+The internals are documented link:technical/api-index.html[here].
+
 GIT COMMANDS
 ------------
 

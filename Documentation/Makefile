@@ -24,6 +24,9 @@ ARTICLES += git-tools
 ARTICLES += glossary
 # with their own formatting rules.
 SP_ARTICLES = howto/revert-branch-rebase user-manual
+API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
+SP_ARTICLES += $(API_DOCS)
+SP_ARTICLES += technical/api-index
 
 DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
 
@@ -142,10 +145,12 @@ cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 git.7 git.html: git.txt
 
 clean:
-	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 *.texi *.texi+ howto-index.txt howto/*.html doc.dep
+	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 *.texi *.texi+ git.info
+	$(RM) howto-index.txt howto/*.html doc.dep
+	$(RM) technical/api-*.html technical/api-index.txt
 	$(RM) $(cmds_txt) *.made
 
-%.html : %.txt
+$(MAN_HTML): %.html : %.txt
 	$(RM) $@+ $@
 	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $<
@@ -163,6 +168,14 @@ clean:
 
 user-manual.xml: user-manual.txt user-manual.conf
 	$(ASCIIDOC) -b docbook -d book $<
+
+technical/api-index.txt: technical/api-index-skel.txt \
+	technical/api-index.sh $(patsubst %,%.txt,$(API_DOCS))
+	cd technical && sh ./api-index.sh
+
+$(patsubst %,%.html,$(API_DOCS) technical/api-index): %.html : %.txt
+	$(ASCIIDOC) -b xhtml11 -f asciidoc.conf \
+		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) $*.txt
 
 XSLT = docbook.xsl
 XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css

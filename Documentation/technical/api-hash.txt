@@ -1,0 +1,6 @@
+hash API
+========
+
+Talk about <hash.h>
+
+(Linus)
