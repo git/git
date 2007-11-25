@@ -141,3 +141,7 @@ else
 	echo "* No public html at $PUBLIC"
 fi || exit $?
 
+echo '
+
+*** ALL DONE ***
+' >>./:html.log
