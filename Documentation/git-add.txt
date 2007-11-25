@@ -61,7 +61,14 @@ OPTIONS
 
 -i, \--interactive::
 	Add modified contents in the working tree interactively to
-	the index.
+	the index. Optional path arguments may be supplied to limit
+	operation to a subset of the working tree. See ``Interactive
+	mode'' for details.
+
+-p, \--patch:
+	Similar to Interactive mode but the initial command loop is
+	bypassed and the 'patch' subcommand is invoked using each of
+	the specified filepatterns before exiting.
 
 -u::
 	Update only files that git already knows about. This is similar

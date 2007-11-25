@@ -19,7 +19,7 @@ static const char * const builtin_add_usage[] = {
 	"git-add [options] [--] <filepattern>...",
 	NULL
 };
-
+static int patch_interactive = 0, add_interactive = 0;
 static int take_worktree_changes;
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
@@ -144,7 +144,7 @@ static const char **validate_pathspec(int argc, const char **argv, const char *p
 
 int interactive_add(int argc, const char **argv, const char *prefix)
 {
-	int status;
+	int status, ac;
 	const char **args;
 	const char **pathspec = NULL;
 
@@ -154,11 +154,17 @@ int interactive_add(int argc, const char **argv, const char *prefix)
 			return -1;
 	}
 
-	args = xcalloc(sizeof(const char *), (argc + 2));
-	args[0] = "add--interactive";
-	if (argc)
-		memcpy(&(args[1]), pathspec, sizeof(const char *) * argc);
-	args[argc + 1] = NULL;
+	args = xcalloc(sizeof(const char *), (argc + 4));
+	ac = 0;
+	args[ac++] = "add--interactive";
+	if (patch_interactive)
+		args[ac++] = "--patch";
+	args[ac++] = "--";
+	if (argc) {
+		memcpy(&(args[ac]), pathspec, sizeof(const char *) * argc);
+		ac += argc;
+	}
+	args[ac] = NULL;
 
 	status = run_command_v_opt(args, RUN_GIT_CMD);
 	free(args);
@@ -171,13 +177,13 @@ static const char ignore_error[] =
 "The following paths are ignored by one of your .gitignore files:\n";
 
 static int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
-static int add_interactive = 0;
 
 static struct option builtin_add_options[] = {
 	OPT__DRY_RUN(&show_only),
 	OPT__VERBOSE(&verbose),
 	OPT_GROUP(""),
 	OPT_BOOLEAN('i', "interactive", &add_interactive, "interactive picking"),
+	OPT_BOOLEAN('p', "patch", &patch_interactive, "interactive patching"),
 	OPT_BOOLEAN('f', NULL, &ignored_too, "allow adding otherwise ignored files"),
 	OPT_BOOLEAN('u', NULL, &take_worktree_changes, "update tracked files"),
 	OPT_BOOLEAN( 0 , "refresh", &refresh_only, "don't add, only refresh the index"),
@@ -192,6 +198,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, builtin_add_options,
 			  builtin_add_usage, 0);
+	if (patch_interactive)
+		add_interactive = 1;
 	if (add_interactive)
 		exit(interactive_add(argc, argv, prefix));
 

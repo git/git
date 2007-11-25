@@ -2,6 +2,9 @@
 
 use strict;
 
+# command line options
+my $patch_mode;
+
 sub run_cmd_pipe {
 	if ($^O eq 'MSWin32') {
 		my @invalid = grep {m/[":*]/} @_;
@@ -552,8 +555,8 @@ sub help_patch_cmd {
 	print <<\EOF ;
 y - stage this hunk
 n - do not stage this hunk
-a - stage this and all the remaining hunks
-d - do not stage this hunk nor any of the remaining hunks
+a - stage this and all the remaining hunks in the file
+d - do not stage this hunk nor any of the remaining hunks in the file
 j - leave this hunk undecided, see next undecided hunk
 J - leave this hunk undecided, see next hunk
 k - leave this hunk undecided, see previous undecided hunk
@@ -563,13 +566,21 @@ EOF
 }
 
 sub patch_update_cmd {
-	my @mods = list_modified('file-only');
-	@mods = grep { !($_->{BINARY}) } @mods;
-	return if (!@mods);
+	my @mods = grep { !($_->{BINARY}) } list_modified('file-only');
+	my @them;
 
-	my (@them) = list_and_choose({ PROMPT => 'Patch update',
-				       HEADER => $status_head, },
-				     @mods);
+	if (!@mods) {
+		print STDERR "No changes.\n";
+		return 0;
+	}
+	if ($patch_mode) {
+		@them = @mods;
+	}
+	else {
+		@them = list_and_choose({ PROMPT => 'Patch update',
+					  HEADER => $status_head, },
+					@mods);
+	}
 	for (@them) {
 		patch_update_file($_->{VALUE});
 	}
@@ -783,6 +794,20 @@ add untracked - add contents of untracked files to the staged set of changes
 EOF
 }
 
+sub process_args {
+	return unless @ARGV;
+	my $arg = shift @ARGV;
+	if ($arg eq "--patch") {
+		$patch_mode = 1;
+		$arg = shift @ARGV or die "missing --";
+		die "invalid argument $arg, expecting --"
+		    unless $arg eq "--";
+	}
+	elsif ($arg ne "--") {
+		die "invalid argument $arg, expecting --";
+	}
+}
+
 sub main_loop {
 	my @cmd = ([ 'status', \&status_cmd, ],
 		   [ 'update', \&update_cmd, ],
@@ -811,6 +836,12 @@ sub main_loop {
 	}
 }
 
+process_args();
 refresh();
-status_cmd();
-main_loop();
+if ($patch_mode) {
+	patch_update_cmd();
+}
+else {
+	status_cmd();
+	main_loop();
+}
