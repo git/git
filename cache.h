@@ -500,8 +500,20 @@ struct ref {
 	struct ref *next;
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
-	unsigned char force;
-	unsigned char merge;
+	unsigned int force:1,
+		merge:1,
+		nonfastforward:1,
+		deletion:1;
+	enum {
+		REF_STATUS_NONE = 0,
+		REF_STATUS_OK,
+		REF_STATUS_REJECT_NONFASTFORWARD,
+		REF_STATUS_REJECT_NODELETE,
+		REF_STATUS_UPTODATE,
+		REF_STATUS_REMOTE_REJECT,
+		REF_STATUS_EXPECTING_REPORT,
+	} status;
+	char *remote_status;
 	struct ref *peer_ref; /* when renaming */
 	char name[FLEX_ARRAY]; /* more */
 };
@@ -510,8 +522,10 @@ struct ref {
 #define REF_HEADS	(1u << 1)
 #define REF_TAGS	(1u << 2)
 
+extern struct ref *find_ref_by_name(struct ref *list, const char *name);
+
 #define CONNECT_VERBOSE       (1u << 0)
-extern struct child_process *git_connect(int fd[2], char *url, const char *prog, int flags);
+extern struct child_process *git_connect(int fd[2], const char *url, const char *prog, int flags);
 extern int finish_connect(struct child_process *conn);
 extern int path_match(const char *path, int nr, char **match);
 extern int get_ack(int fd, unsigned char *result_sha1);

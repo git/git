@@ -8,7 +8,7 @@ struct transport {
 	struct remote *remote;
 	const char *url;
 	void *data;
-	struct ref *remote_refs;
+	const struct ref *remote_refs;
 
 	/**
 	 * Returns 0 if successful, positive if the option is not
@@ -18,7 +18,7 @@ struct transport {
 	int (*set_option)(struct transport *connection, const char *name,
 			  const char *value);
 
-	struct ref *(*get_refs_list)(const struct transport *transport);
+	struct ref *(*get_refs_list)(struct transport *transport);
 	int (*fetch)(struct transport *transport, int refs_nr, struct ref **refs);
 	int (*push)(struct transport *connection, int refspec_nr, const char **refspec, int flags);
 
@@ -30,7 +30,8 @@ struct transport {
 #define TRANSPORT_PUSH_ALL 1
 #define TRANSPORT_PUSH_FORCE 2
 #define TRANSPORT_PUSH_DRY_RUN 4
-#define TRANSPORT_PUSH_VERBOSE 8
+#define TRANSPORT_PUSH_MIRROR 8
+#define TRANSPORT_PUSH_VERBOSE 16
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
@@ -62,7 +63,7 @@ int transport_set_option(struct transport *transport, const char *name,
 int transport_push(struct transport *connection,
 		   int refspec_nr, const char **refspec, int flags);
 
-struct ref *transport_get_remote_refs(struct transport *transport);
+const struct ref *transport_get_remote_refs(struct transport *transport);
 
 int transport_fetch_refs(struct transport *transport, struct ref *refs);
 void transport_unlock_pack(struct transport *transport);

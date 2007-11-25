@@ -44,6 +44,10 @@ struct refspec {
 
 struct ref *alloc_ref(unsigned namelen);
 
+struct ref *copy_ref_list(const struct ref *ref);
+
+int check_ref_type(const struct ref *ref, int flags);
+
 /*
  * Frees the entire list and peers of elements.
  */
@@ -57,7 +61,7 @@ void ref_remove_duplicates(struct ref *ref_map);
 struct refspec *parse_ref_spec(int nr_refspec, const char **refspec);
 
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
-	       int nr_refspec, char **refspec, int all);
+	       int nr_refspec, const char **refspec, int all);
 
 /*
  * Given a list of the remote refs and the specification of things to
@@ -71,10 +75,10 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
  * missing_ok is usually false, but when we are adding branch.$name.merge
  * it is Ok if the branch is not at the remote anymore.
  */
-int get_fetch_map(struct ref *remote_refs, const struct refspec *refspec,
+int get_fetch_map(const struct ref *remote_refs, const struct refspec *refspec,
 		  struct ref ***tail, int missing_ok);
 
-struct ref *get_remote_ref(struct ref *remote_refs, const char *name);
+struct ref *get_remote_ref(const struct ref *remote_refs, const char *name);
 
 /*
  * For the given remote, reads the refspec's src and sets the other fields.
@@ -97,5 +101,12 @@ struct branch *branch_get(const char *name);
 
 int branch_has_merge_config(struct branch *branch);
 int branch_merge_matches(struct branch *, int n, const char *);
+
+/* Flags to match_refs. */
+enum match_refs_flags {
+	MATCH_REFS_NONE		= 0,
+	MATCH_REFS_ALL 		= (1 << 0),
+	MATCH_REFS_MIRROR	= (1 << 1),
+};
 
 #endif

@@ -36,6 +36,11 @@ static int check_ref(const char *name, int len, unsigned int flags)
 	return !(flags & ~REF_NORMAL);
 }
 
+int check_ref_type(const struct ref *ref, int flags)
+{
+	return check_ref(ref->name, strlen(ref->name), flags);
+}
+
 /*
  * Read all the refs from the other end
  */
@@ -476,9 +481,10 @@ char *get_port(char *host)
  *
  * If it returns, the connect is successful; it just dies on errors.
  */
-struct child_process *git_connect(int fd[2], char *url,
+struct child_process *git_connect(int fd[2], const char *url_orig,
 				  const char *prog, int flags)
 {
+	char *url = xstrdup(url_orig);
 	char *host, *path = url;
 	char *end;
 	int c;
@@ -568,6 +574,7 @@ struct child_process *git_connect(int fd[2], char *url,
 			     prog, path, 0,
 			     target_host, 0);
 		free(target_host);
+		free(url);
 		if (free_path)
 			free(path);
 		return NULL;
@@ -619,6 +626,7 @@ struct child_process *git_connect(int fd[2], char *url,
 	fd[0] = conn->out; /* read from child's stdout */
 	fd[1] = conn->in;  /* write to child's stdin */
 	strbuf_release(&cmd);
+	free(url);
 	if (free_path)
 		free(path);
 	return conn;
