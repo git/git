@@ -26,7 +26,7 @@ refuse_partial () {
 }
 
 TMP_INDEX=
-THIS_INDEX="$GIT_DIR/index"
+THIS_INDEX="${GIT_INDEX_FILE:-$GIT_DIR/index}"
 NEXT_INDEX="$GIT_DIR/next-index$$"
 rm -f "$NEXT_INDEX"
 save_index () {
