@@ -256,7 +256,7 @@ static int run_command(struct cmd_struct *p, int argc, const char **argv)
 
 	status = p->fn(argc, argv, prefix);
 	if (status)
-		return status;
+		return status & 0xff;
 
 	/* Somebody closed stdout? */
 	if (fstat(fileno(stdout), &st))

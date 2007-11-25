@@ -86,7 +86,7 @@ int safe_create_leading_directories(char *path)
 	char *pos = path;
 	struct stat st;
 
-	if (*pos == '/')
+	if (is_absolute_path(path))
 		pos++;
 
 	while (pos) {
@@ -253,7 +253,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	int entlen = pfxlen + 43;
 	int base_len = -1;
 
-	if (*entry != '/' && relative_base) {
+	if (!is_absolute_path(entry) && relative_base) {
 		/* Relative alt-odb */
 		if (base_len < 0)
 			base_len = strlen(relative_base) + 1;
@@ -262,7 +262,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	}
 	ent = xmalloc(sizeof(*ent) + entlen);
 
-	if (*entry != '/' && relative_base) {
+	if (!is_absolute_path(entry) && relative_base) {
 		memcpy(ent->base, relative_base, base_len - 1);
 		ent->base[base_len - 1] = '/';
 		memcpy(ent->base + base_len, entry, len);
@@ -333,7 +333,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 		while (cp < ep && *cp != sep)
 			cp++;
 		if (last != cp) {
-			if ((*last != '/') && depth) {
+			if (!is_absolute_path(last) && depth) {
 				error("%s: ignoring relative alternate object store %s",
 						relative_base, last);
 			} else {

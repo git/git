@@ -6,6 +6,7 @@
  *
  */
 #include "cache.h"
+#include "exec_cmd.h"
 
 #define MAXNAME (256)
 
@@ -459,6 +460,21 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 	return ret;
 }
 
+const char *git_etc_gitconfig(void)
+{
+	static const char *system_wide;
+	if (!system_wide) {
+		system_wide = ETC_GITCONFIG;
+		if (!is_absolute_path(system_wide)) {
+			/* interpret path relative to exec-dir */
+			const char *exec_path = git_exec_path();
+			system_wide = prefix_path(exec_path, strlen(exec_path),
+						system_wide);
+		}
+	}
+	return system_wide;
+}
+
 int git_config(config_fn_t fn)
 {
 	int ret = 0;
@@ -471,8 +487,8 @@ int git_config(config_fn_t fn)
 	 * config file otherwise. */
 	filename = getenv(CONFIG_ENVIRONMENT);
 	if (!filename) {
-		if (!access(ETC_GITCONFIG, R_OK))
-			ret += git_config_from_file(fn, ETC_GITCONFIG);
+		if (!access(git_etc_gitconfig(), R_OK))
+			ret += git_config_from_file(fn, git_etc_gitconfig());
 		home = getenv("HOME");
 		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!filename)

@@ -81,7 +81,7 @@ static int get_value(const char* key_, const char* regex_)
 			local = repo_config = xstrdup(git_path("config"));
 		if (home)
 			global = xstrdup(mkpath("%s/.gitconfig", home));
-		system_wide = ETC_GITCONFIG;
+		system_wide = git_etc_gitconfig();
 	}
 
 	key = xstrdup(key_);
@@ -191,7 +191,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			}
 		}
 		else if (!strcmp(argv[1], "--system"))
-			setenv(CONFIG_ENVIRONMENT, ETC_GITCONFIG, 1);
+			setenv(CONFIG_ENVIRONMENT, git_etc_gitconfig(), 1);
 		else if (!strcmp(argv[1], "--file") || !strcmp(argv[1], "-f")) {
 			if (argc < 3)
 				usage(git_config_set_usage);
