@@ -36,7 +36,6 @@ test_expect_failure 'rebase with git am -3 (default)' '
 '
 
 test_expect_success 'rebase --skip with am -3' '
-	git reset --hard HEAD &&
 	git rebase --skip
 	'
 
@@ -57,7 +56,6 @@ test_expect_success 'checkout skip-merge' 'git checkout -f skip-merge'
 test_expect_failure 'rebase with --merge' 'git rebase --merge master'
 
 test_expect_success 'rebase --skip with --merge' '
-	git reset --hard HEAD &&
 	git rebase --skip
 	'
 

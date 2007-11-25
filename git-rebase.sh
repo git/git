@@ -179,6 +179,7 @@ do
 		exit
 		;;
 	--skip)
+		git reset --hard HEAD || exit $?
 		if test -d "$dotest"
 		then
 			git rerere clear
