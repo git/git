@@ -37,10 +37,7 @@ sub list_untracked {
 		chomp $_;
 		$_;
 	}
-	run_cmd_pipe(qw(git ls-files --others
-			--exclude-per-directory=.gitignore),
-		     "--exclude-from=$GIT_DIR/info/exclude",
-		     '--', @_);
+	run_cmd_pipe(qw(git ls-files --others --exclude-standard --), @_);
 }
 
 my $status_fmt = '%12s %12s %s';
@@ -567,10 +564,12 @@ sub patch_update_cmd {
 				     IMMEDIATE => 1,
 				     HEADER => $status_head, },
 				   @mods);
-	return if (!$it);
+	patch_update_file($it->{VALUE}) if ($it);
+}
 
+sub patch_update_file {
 	my ($ix, $num);
-	my $path = $it->{VALUE};
+	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
 	for (@{$head->{TEXT}}) {
 		print;

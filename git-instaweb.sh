@@ -2,9 +2,21 @@
 #
 # Copyright (c) 2006 Eric Wong
 #
-USAGE='[--start] [--stop] [--restart]
-  [--local] [--httpd=<httpd>] [--port=<port>] [--browser=<browser>]
-  [--module-path=<path> (for Apache2 only)]'
+
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git-instaweb [options] (--start | --stop | --restart)
+--
+l,local        only bind on 127.0.0.1
+p,port=        the port to bind to
+d,httpd=       the command to launch
+b,browser=     the browser to launch
+m,module-path= the module path (only needed for apache2)
+ Action
+stop           stop the web server
+start          start the web server
+restart        restart the web server
+"
 
 . git-sh-setup
 
@@ -78,52 +90,26 @@ do
 		start_httpd
 		exit 0
 		;;
-	--local|-l)
+	-l|--local)
 		local=true
 		;;
-	-d|--httpd|--httpd=*)
-		case "$#,$1" in
-		*,*=*)
-			httpd=`expr "$1" : '-[^=]*=\(.*\)'` ;;
-		1,*)
-			usage ;;
-		*)
-			httpd="$2"
-			shift ;;
-		esac
+	-d|--httpd)
+		shift
+		httpd="$1"
 		;;
-	-b|--browser|--browser=*)
-		case "$#,$1" in
-		*,*=*)
-			browser=`expr "$1" : '-[^=]*=\(.*\)'` ;;
-		1,*)
-			usage ;;
-		*)
-			browser="$2"
-			shift ;;
-		esac
+	-b|--browser)
+		shift
+		browser="$1"
 		;;
-	-p|--port|--port=*)
-		case "$#,$1" in
-		*,*=*)
-			port=`expr "$1" : '-[^=]*=\(.*\)'` ;;
-		1,*)
-			usage ;;
-		*)
-			port="$2"
-			shift ;;
-		esac
+	-p|--port)
+		shift
+		port="$1"
 		;;
-	-m|--module-path=*|--module-path)
-		case "$#,$1" in
-		*,*=*)
-			module_path=`expr "$1" : '-[^=]*=\(.*\)'` ;;
-		1,*)
-			usage ;;
-		*)
-			module_path="$2"
-			shift ;;
-		esac
+	-m|--module-path)
+		shift
+		module_path="$1"
+		;;
+	--)
 		;;
 	*)
 		usage

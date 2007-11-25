@@ -344,6 +344,7 @@ static int rsync_transport_push(struct transport *transport,
 
 /* Generic functions for using commit walkers */
 
+#ifndef NO_CURL /* http fetch is the only user */
 static int fetch_objs_via_walker(struct transport *transport,
 				 int nr_objs, struct ref **to_fetch)
 {
@@ -370,6 +371,7 @@ static int fetch_objs_via_walker(struct transport *transport,
 	free(dest);
 	return 0;
 }
+#endif /* NO_CURL */
 
 static int disconnect_walker(struct transport *transport)
 {

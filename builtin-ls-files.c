@@ -387,8 +387,8 @@ static void overlay_tree(const char *tree_name, const char *prefix)
 static const char ls_files_usage[] =
 	"git-ls-files [-z] [-t] [-v] (--[cached|deleted|others|stage|unmerged|killed|modified])* "
 	"[ --ignored ] [--exclude=<pattern>] [--exclude-from=<file>] "
-	"[ --exclude-per-directory=<filename> ] [--full-name] [--abbrev] "
-	"[--] [<file>]*";
+	"[ --exclude-per-directory=<filename> ] [--exclude-standard] "
+	"[--full-name] [--abbrev] [--] [<file>]*";
 
 int cmd_ls_files(int argc, const char **argv, const char *prefix)
 {
@@ -494,6 +494,11 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		if (!prefixcmp(arg, "--exclude-per-directory=")) {
 			exc_given = 1;
 			dir.exclude_per_dir = arg + 24;
+			continue;
+		}
+		if (!strcmp(arg, "--exclude-standard")) {
+			exc_given = 1;
+			setup_standard_excludes(&dir);
 			continue;
 		}
 		if (!strcmp(arg, "--full-name")) {

@@ -85,6 +85,10 @@ div.title, a.title {
 	color: #000000;
 }
 
+div.readme {
+	padding: 8px;
+}
+
 a.title:hover {
 	background-color: #d9d8d1;
 }
@@ -170,14 +174,10 @@ a.text:hover {
 
 table {
 	padding: 8px 4px;
-}
-
-table.project_list {
 	border-spacing: 0;
 }
 
 table.diff_tree {
-	border-spacing: 0;
 	font-family: monospace;
 }
 

@@ -833,16 +833,19 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	int i, num_refs;
 	const char *format = "%(objectname) %(objecttype)\t%(refname)";
 	struct ref_sort *sort = NULL, **sort_tail = &sort;
-	int maxcount = 0, quote_style;
-	int quote_shell = 0, quote_perl = 0, quote_python = 0, quote_tcl = 0;
+	int maxcount = 0, quote_style = 0;
 	struct refinfo **refs;
 	struct grab_ref_cbdata cbdata;
 
 	struct option opts[] = {
-		OPT_BOOLEAN('s', "shell", &quote_shell, "quote placeholders suitably for shells"),
-		OPT_BOOLEAN('p', "perl",  &quote_perl, "quote placeholders suitably for perl"),
-		OPT_BOOLEAN( 0 , "python", &quote_python, "quote placeholders suitably for python"),
-		OPT_BOOLEAN( 0 , "tcl",  &quote_tcl, "quote placeholders suitably for tcl"),
+		OPT_BIT('s', "shell", &quote_style,
+		        "quote placeholders suitably for shells", QUOTE_SHELL),
+		OPT_BIT('p', "perl",  &quote_style,
+		        "quote placeholders suitably for perl", QUOTE_PERL),
+		OPT_BIT(0 , "python", &quote_style,
+		        "quote placeholders suitably for python", QUOTE_PYTHON),
+		OPT_BIT(0 , "tcl",  &quote_style,
+		        "quote placeholders suitably for tcl", QUOTE_TCL),
 
 		OPT_GROUP(""),
 		OPT_INTEGER( 0 , "count", &maxcount, "show only <n> matched refs"),
@@ -857,15 +860,13 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		error("invalid --count argument: `%d'", maxcount);
 		usage_with_options(for_each_ref_usage, opts);
 	}
-	if (quote_shell + quote_perl + quote_python + quote_tcl > 1) {
+	if (HAS_MULTI_BITS(quote_style)) {
 		error("more than one quoting style ?");
 		usage_with_options(for_each_ref_usage, opts);
 	}
 	if (verify_format(format))
 		usage_with_options(for_each_ref_usage, opts);
 
-	quote_style = QUOTE_SHELL * quote_shell + QUOTE_PERL * quote_perl +
-		QUOTE_PYTHON * quote_python + QUOTE_TCL * quote_tcl;
 	if (!sort)
 		sort = default_sort();
 	sort_atom_limit = used_atom_cnt;

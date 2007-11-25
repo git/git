@@ -683,7 +683,6 @@ static char *git_header_name(char *line, int llen)
 			}
 		}
 	}
-	return NULL;
 }
 
 /* Verify that we recognize the lines following a git header */

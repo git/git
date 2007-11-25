@@ -8,22 +8,6 @@
 
 int save_commit_buffer = 1;
 
-struct sort_node
-{
-	/*
-	 * the number of children of the associated commit
-	 * that also occur in the list being sorted.
-	 */
-	unsigned int indegree;
-
-	/*
-	 * reference to original list item that we will re-use
-	 * on output.
-	 */
-	struct commit_list * list_item;
-
-};
-
 const char *commit_type = "commit";
 
 static struct commit *check_commit(struct object *obj,
@@ -431,69 +415,38 @@ struct commit *pop_commit(struct commit_list **stack)
 	return item;
 }
 
-void topo_sort_default_setter(struct commit *c, void *data)
-{
-	c->util = data;
-}
-
-void *topo_sort_default_getter(struct commit *c)
-{
-	return c->util;
-}
-
 /*
  * Performs an in-place topological sort on the list supplied.
  */
 void sort_in_topological_order(struct commit_list ** list, int lifo)
 {
-	sort_in_topological_order_fn(list, lifo, topo_sort_default_setter,
-				     topo_sort_default_getter);
-}
+	struct commit_list *next, *orig = *list;
+	struct commit_list *work, **insert;
+	struct commit_list **pptr;
 
-void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
-				  topo_sort_set_fn_t setter,
-				  topo_sort_get_fn_t getter)
-{
-	struct commit_list * next = *list;
-	struct commit_list * work = NULL, **insert;
-	struct commit_list ** pptr = list;
-	struct sort_node * nodes;
-	struct sort_node * next_nodes;
-	int count = 0;
-
-	/* determine the size of the list */
-	while (next) {
-		next = next->next;
-		count++;
-	}
-
-	if (!count)
+	if (!orig)
 		return;
-	/* allocate an array to help sort the list */
-	nodes = xcalloc(count, sizeof(*nodes));
-	/* link the list to the array */
-	next_nodes = nodes;
-	next=*list;
-	while (next) {
-		next_nodes->list_item = next;
-		setter(next->item, next_nodes);
-		next_nodes++;
-		next = next->next;
+	*list = NULL;
+
+	/* Mark them and clear the indegree */
+	for (next = orig; next; next = next->next) {
+		struct commit *commit = next->item;
+		commit->object.flags |= TOPOSORT;
+		commit->indegree = 0;
 	}
+
 	/* update the indegree */
-	next=*list;
-	while (next) {
+	for (next = orig; next; next = next->next) {
 		struct commit_list * parents = next->item->parents;
 		while (parents) {
-			struct commit * parent=parents->item;
-			struct sort_node * pn = (struct sort_node *) getter(parent);
+			struct commit *parent = parents->item;
 
-			if (pn)
-				pn->indegree++;
-			parents=parents->next;
+			if (parent->object.flags & TOPOSORT)
+				parent->indegree++;
+			parents = parents->next;
 		}
-		next=next->next;
 	}
+
 	/*
 	 * find the tips
 	 *
@@ -501,55 +454,56 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 	 *
 	 * the tips serve as a starting set for the work queue.
 	 */
-	next=*list;
+	work = NULL;
 	insert = &work;
-	while (next) {
-		struct sort_node * node = (struct sort_node *) getter(next->item);
+	for (next = orig; next; next = next->next) {
+		struct commit *commit = next->item;
 
-		if (node->indegree == 0) {
-			insert = &commit_list_insert(next->item, insert)->next;
-		}
-		next=next->next;
+		if (!commit->indegree)
+			insert = &commit_list_insert(commit, insert)->next;
 	}
 
 	/* process the list in topological order */
 	if (!lifo)
 		sort_by_date(&work);
+
+	pptr = list;
+	*list = NULL;
 	while (work) {
-		struct commit * work_item = pop_commit(&work);
-		struct sort_node * work_node = (struct sort_node *) getter(work_item);
-		struct commit_list * parents = work_item->parents;
+		struct commit *commit;
+		struct commit_list *parents, *work_item;
 
-		while (parents) {
-			struct commit * parent=parents->item;
-			struct sort_node * pn = (struct sort_node *) getter(parent);
+		work_item = work;
+		work = work_item->next;
+		work_item->next = NULL;
 
-			if (pn) {
-				/*
-				 * parents are only enqueued for emission
-				 * when all their children have been emitted thereby
-				 * guaranteeing topological order.
-				 */
-				pn->indegree--;
-				if (!pn->indegree) {
-					if (!lifo)
-						insert_by_date(parent, &work);
-					else
-						commit_list_insert(parent, &work);
-				}
+		commit = work_item->item;
+		for (parents = commit->parents; parents ; parents = parents->next) {
+			struct commit *parent=parents->item;
+
+			if (!(parent->object.flags & TOPOSORT))
+				continue;
+
+			/*
+			 * parents are only enqueued for emission
+			 * when all their children have been emitted thereby
+			 * guaranteeing topological order.
+			 */
+			if (!--parent->indegree) {
+				if (!lifo)
+					insert_by_date(parent, &work);
+				else
+					commit_list_insert(parent, &work);
 			}
-			parents=parents->next;
 		}
 		/*
 		 * work_item is a commit all of whose children
 		 * have already been emitted. we can emit it now.
 		 */
-		*pptr = work_node->list_item;
-		pptr = &(*pptr)->next;
-		*pptr = NULL;
-		setter(work_item, NULL);
+		commit->object.flags &= ~TOPOSORT;
+		*pptr = work_item;
+		pptr = &work_item->next;
 	}
-	free(nodes);
 }
 
 /* merge-base stuff */

@@ -366,7 +366,7 @@ static struct path_list *get_renames(struct tree *tree,
 
 	renames = xcalloc(1, sizeof(struct path_list));
 	diff_setup(&opts);
-	opts.recursive = 1;
+	DIFF_OPT_SET(&opts, RECURSIVE);
 	opts.detect_rename = DIFF_DETECT_RENAME;
 	opts.rename_limit = rename_limit;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;

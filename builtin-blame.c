@@ -335,7 +335,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 	 * same and diff-tree is fairly efficient about this.
 	 */
 	diff_setup(&diff_opts);
-	diff_opts.recursive = 1;
+	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	diff_opts.detect_rename = 0;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	paths[0] = origin->path;
@@ -409,7 +409,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 	const char *paths[2];
 
 	diff_setup(&diff_opts);
-	diff_opts.recursive = 1;
+	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	diff_opts.detect_rename = DIFF_DETECT_RENAME;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_opts.single_follow = origin->path;
@@ -1075,7 +1075,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 		return 1; /* nothing remains for this target */
 
 	diff_setup(&diff_opts);
-	diff_opts.recursive = 1;
+	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 
 	paths[0] = NULL;
@@ -1093,7 +1093,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 	if ((opt & PICKAXE_BLAME_COPY_HARDEST)
 	    || ((opt & PICKAXE_BLAME_COPY_HARDER)
 		&& (!porigin || strcmp(target->path, porigin->path))))
-		diff_opts.find_copies_harder = 1;
+		DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
 
 	if (is_null_sha1(target->commit->object.sha1))
 		do_diff_cache(parent->tree->object.sha1, &diff_opts);
@@ -1102,7 +1102,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 			       target->commit->tree->object.sha1,
 			       "", &diff_opts);
 
-	if (!diff_opts.find_copies_harder)
+	if (!DIFF_OPT_TST(&diff_opts, FIND_COPIES_HARDER))
 		diffcore_std(&diff_opts);
 
 	retval = 0;

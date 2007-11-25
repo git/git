@@ -120,7 +120,7 @@ method _read {fd after} {
 			} else {
 				$w_t delete $console_cr end
 				$w_t insert end "\n"
-				$w_t insert end [string range $buf $c $cr]
+				$w_t insert end [string range $buf $c [expr {$cr - 1}]]
 				set c $cr
 				incr c
 			}

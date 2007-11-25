@@ -193,6 +193,12 @@ Any other arguments are passed directly to `git log'
 	repository (that has been init-ed with git-svn).
 	The -r<revision> option is required for this.
 
+'info'::
+	Shows information about a file or directory similar to what
+	`svn info' provides.  Does not currently support a -r/--revision
+	argument.  Use the --url option to output only the value of the
+	'URL:' field.
+
 --
 
 OPTIONS

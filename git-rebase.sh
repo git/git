@@ -29,6 +29,7 @@ Example:       git-rebase master~1 topic
 '
 
 SUBDIRECTORY_OK=Yes
+OPTIONS_SPEC=
 . git-sh-setup
 set_reflog_action rebase
 require_work_tree

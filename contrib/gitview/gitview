@@ -27,20 +27,17 @@ import math
 import string
 import fcntl
 
+have_gtksourceview2 = False
+have_gtksourceview = False
 try:
     import gtksourceview2
     have_gtksourceview2 = True
 except ImportError:
-    have_gtksourceview2 = False
-
-try:
-    import gtksourceview
-    have_gtksourceview = True
-except ImportError:
-    have_gtksourceview = False
-
-if not have_gtksourceview2 and not have_gtksourceview:
-    print "Running without gtksourceview2 or gtksourceview module"
+    try:
+        import gtksourceview
+        have_gtksourceview = True
+    except ImportError:
+        print "Running without gtksourceview2 or gtksourceview module"
 
 re_ident = re.compile('(author|committer) (?P<ident>.*) (?P<epoch>\d+) (?P<tz>[+-]\d{4})')
 

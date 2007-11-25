@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2007-10-05 22:30+0200\n"
+"POT-Creation-Date: 2007-10-19 21:43+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -86,7 +86,7 @@ msgstr ""
 msgid "message"
 msgstr ""
 
-#. ""
+#. "Deletes all stale tracking branches under <name>. These stale branches have already been removed from the remote repository referenced by <name>, but are still locally available in 'remotes/<name>'."
 msgid "prune"
 msgstr ""
 
@@ -100,6 +100,10 @@ msgstr ""
 
 #. ""
 msgid "redo"
+msgstr ""
+
+#. "An other repository ('remote'). One might have a set of remotes whose branches one tracks."
+msgid "remote"
 msgstr ""
 
 #. "A collection of refs (?) together with an object database containing all objects which are reachable from the refs... (oops, you've lost me here. Again, please an explanation for mere mortals?)"

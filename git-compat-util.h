@@ -4,10 +4,24 @@
 #define _FILE_OFFSET_BITS 64
 
 #ifndef FLEX_ARRAY
-#if defined(__GNUC__) && (__GNUC__ < 3)
-#define FLEX_ARRAY 0
-#else
-#define FLEX_ARRAY /* empty */
+/*
+ * See if our compiler is known to support flexible array members.
+ */
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+# define FLEX_ARRAY /* empty */
+#elif defined(__GNUC__)
+# if (__GNUC__ >= 3)
+#  define FLEX_ARRAY /* empty */
+# else
+#  define FLEX_ARRAY 0 /* older GNU extension */
+# endif
+#endif
+
+/*
+ * Otherwise, default to safer but a bit wasteful traditional style
+ */
+#ifndef FLEX_ARRAY
+# define FLEX_ARRAY 1
 #endif
 #endif
 
@@ -20,6 +34,7 @@
 #endif
 
 #define MSB(x, bits) ((x) & TYPEOF(x)(~0ULL << (sizeof(x) * 8 - (bits))))
+#define HAS_MULTI_BITS(i)  ((i) & ((i) - 1))  /* checks if an integer has more than 1 bit set */
 
 /* Approximation of the length of the decimal representation of this type. */
 #define decimal_length(x)	((int)(sizeof(x) * 2.56 + 0.5) + 1)

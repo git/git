@@ -507,48 +507,36 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
-	int delete = 0, force_delete = 0, force_create = 0;
-	int rename = 0, force_rename = 0;
+	int delete = 0, rename = 0, force_create = 0;
 	int verbose = 0, abbrev = DEFAULT_ABBREV, detached = 0;
 	int reflog = 0, track;
-	int kinds = REF_LOCAL_BRANCH, kind_remote = 0, kind_any = 0;
+	int kinds = REF_LOCAL_BRANCH;
 
 	struct option options[] = {
 		OPT_GROUP("Generic options"),
 		OPT__VERBOSE(&verbose),
 		OPT_BOOLEAN( 0 , "track",  &track, "set up tracking mode (see git-pull(1))"),
 		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
-		OPT_BOOLEAN('r', NULL,     &kind_remote, "act on remote-tracking branches"),
+		OPT_SET_INT('r', NULL,     &kinds, "act on remote-tracking branches",
+			REF_REMOTE_BRANCH),
 		OPT__ABBREV(&abbrev),
 
 		OPT_GROUP("Specific git-branch actions:"),
-		OPT_BOOLEAN('a', NULL,     &kind_any, "list both remote-tracking and local branches"),
-		OPT_BOOLEAN('d', NULL,     &delete, "delete fully merged branch"),
-		OPT_BOOLEAN('D', NULL,     &force_delete, "delete branch (even if not merged)"),
-		OPT_BOOLEAN('l', NULL,     &reflog, "create the branch's reflog"),
-		OPT_BOOLEAN('f', NULL,     &force_create, "force creation (when already exists)"),
-		OPT_BOOLEAN('m', NULL,     &rename, "move/rename a branch and its reflog"),
-		OPT_BOOLEAN('M', NULL,     &force_rename, "move/rename a branch, even if target exists"),
+		OPT_SET_INT('a', NULL, &kinds, "list both remote-tracking and local branches",
+			REF_REMOTE_BRANCH | REF_LOCAL_BRANCH),
+		OPT_BIT('d', NULL, &delete, "delete fully merged branch", 1),
+		OPT_BIT('D', NULL, &delete, "delete branch (even if not merged)", 2),
+		OPT_BIT('m', NULL, &rename, "move/rename a branch and its reflog", 1),
+		OPT_BIT('M', NULL, &rename, "move/rename a branch, even if target exists", 2),
+		OPT_BOOLEAN('l', NULL, &reflog, "create the branch's reflog"),
+		OPT_BOOLEAN('f', NULL, &force_create, "force creation (when already exists)"),
 		OPT_END(),
 	};
 
 	git_config(git_branch_config);
 	track = branch_track;
 	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
-
-	delete |= force_delete;
-	rename |= force_rename;
-	if (kind_remote)
-		kinds = REF_REMOTE_BRANCH;
-	if (kind_any)
-		kinds = REF_REMOTE_BRANCH | REF_LOCAL_BRANCH;
-	if (abbrev && abbrev < MINIMUM_ABBREV)
-		abbrev = MINIMUM_ABBREV;
-	else if (abbrev > 40)
-		abbrev = 40;
-
-	if ((delete && rename) || (delete && force_create) ||
-	    (rename && force_create))
+	if (!!delete + !!rename + !!force_create > 1)
 		usage_with_options(builtin_branch_usage, options);
 
 	head = resolve_ref("HEAD", head_sha1, 0, NULL);
@@ -564,13 +552,13 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (delete)
-		return delete_branches(argc, argv, force_delete, kinds);
+		return delete_branches(argc, argv, delete > 1, kinds);
 	else if (argc == 0)
 		print_ref_list(kinds, detached, verbose, abbrev);
 	else if (rename && (argc == 1))
-		rename_branch(head, argv[0], force_rename);
+		rename_branch(head, argv[0], rename > 1);
 	else if (rename && (argc == 2))
-		rename_branch(argv[0], argv[1], force_rename);
+		rename_branch(argv[0], argv[1], rename > 1);
 	else if (argc <= 2)
 		create_branch(argv[0], (argc == 2) ? argv[1] : head,
 			      force_create, reflog, track);
