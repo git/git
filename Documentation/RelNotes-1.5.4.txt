@@ -6,6 +6,14 @@ Updates since v1.5.3
 
  * Comes with much improved gitk.
 
+ * Comes with git-gui 0.9.0 with i18n.
+
+ * git-lost-found was deprecated in favor of git-fsck's --lost-found
+   option.
+
+ * git-peek-remote is deprecated, as git-ls-remote was written in C and
+   works for all transports.
+
  * "progress display" from many commands are a lot nicer to the
    eye.  Transfer commands show throughput data.
 
@@ -14,6 +22,11 @@ Updates since v1.5.3
  * git-send-email can optionally talk over ssmtp and use SMTP-AUTH.
 
  * git-rebase learned --whitespace option.
+
+ * In git-rebase, when you decide not to replay a particular change
+   after the command stopped with a conflict, you can say "git-rebase
+   --skip" without first running "git reset --hard", as the command now
+   run it for you.
 
  * git-remote knows --mirror mode.
 
@@ -37,10 +50,19 @@ Updates since v1.5.3
    variable used to mean "do not require", but we now use the safer
    default).
 
+ * git-clean has been rewritten in C.
+
  * git-push has been rewritten in C.
 
  * git-push learned --dry-run option to show what would happen
    if a push is run.
+
+ * git-push does not update a tracking ref on the pushing side when the
+   remote refused to update the corresponding ref.
+
+ * git-push learned --mirror option.  This is to push the local refs
+   one-to-one to the remote, and deletes refs from the remote that do
+   not exist anymore in the repository on the pushing side.
 
  * git-remote learned "rm" subcommand.
 
@@ -53,9 +75,6 @@ Updates since v1.5.3
  * git-pull learned to pass --[no-]ff option to underlying git-merge.
 
  * Various Perforce importer updates.
-
- * git-lost-found was deprecated in favor of git-fsck's --lost-found
-   option.
 
  * "git log" learned --early-output option to help interactive
    GUI implementations.
@@ -85,6 +104,17 @@ Updates since v1.5.3
  * "git checkout" from a subdirectory learned to use "../path"
    to allow checking out a path outside the current directory
    without cd'ing up.
+
+ * "git send-email --dry-run" shows full headers for easier
+   diagnosis.
+
+ * "git merge-ours" is built-in.
+
+ * "git svn" learned "info" subcommand.
+
+ * "git status" from a subdirectory now shows relative paths
+   which makes copy-and-pasting for git-checkout/git-add/git-rm
+   easier.
 
  * Output processing for '--pretty=format:<user format>' has
    been optimized.
@@ -119,6 +149,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3.6-727-g5d3d1ca
+O=v1.5.3.6-950-gda03a58
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
