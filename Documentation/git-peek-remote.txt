@@ -12,8 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Lists the references the remote repository has, and optionally
-stores them in the local repository under the same name.
+This command is deprecated; use `git-ls-remote` instead.
 
 OPTIONS
 -------
