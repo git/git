@@ -264,7 +264,7 @@ static void show_man_page(const char *git_cmd)
 			}
 		}
 		printf("Launching default browser to display HTML help ...\n");
-		ShellExecute(NULL, "open", htmlpath, NULL, NULL, 0);
+		ShellExecute(NULL, "open", htmlpath, NULL, "\\", 0);
 	}
 #else
 	const char *page;
