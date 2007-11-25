@@ -84,7 +84,7 @@ static void show_commit(struct commit *commit)
 		unsigned long buflen = 0;
 		pretty_print_commit(revs.commit_format, commit, ~0,
 				    &buf, &buflen,
-				    revs.abbrev, NULL, NULL, revs.date_mode);
+				    revs.abbrev, NULL, NULL, revs.date_mode, 0);
 		printf("%s%c", buf, hdr_termination);
 		free(buf);
 	}

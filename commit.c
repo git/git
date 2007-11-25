@@ -479,7 +479,7 @@ static int get_one_line(const char *msg, unsigned long len)
 }
 
 /* High bit set, or ISO-2022-INT */
-static int non_ascii(int ch)
+int non_ascii(int ch)
 {
 	ch = (ch & 0xff);
 	return ((ch & 0x80) || (ch == 0x1b));
@@ -1158,13 +1158,13 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				  char **buf_p, unsigned long *space_p,
 				  int abbrev, const char *subject,
 				  const char *after_subject,
-				  enum date_mode dmode)
+				  enum date_mode dmode,
+				  int plain_non_ascii)
 {
 	unsigned long offset = 0;
 	unsigned long beginning_of_body;
 	int indent = 4;
 	const char *msg = commit->buffer;
-	int plain_non_ascii = 0;
 	char *reencoded;
 	const char *encoding;
 	char *buf;
