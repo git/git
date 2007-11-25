@@ -56,11 +56,12 @@ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 The initial clone may be time-consuming for a large project, but you
 will only need to clone once.
 
-The clone command creates a new directory named after the project
-("git" or "linux-2.6" in the examples above).  After you cd into this
+The clone command creates a new directory named after the project ("git"
+or "linux-2.6" in the examples above).  After you cd into this
 directory, you will see that it contains a copy of the project files,
-together with a special top-level directory named ".git", which
-contains all the information about the history of the project.
+called the <<def_working_tree,working tree>>, together with a special
+top-level directory named ".git", which contains all the information
+about the history of the project.
 
 [[how-to-check-out]]
 How to check out a different version of a project
@@ -71,8 +72,13 @@ of files.  It stores the history as a compressed collection of
 interrelated snapshots of the project's contents.  In git each such
 version is called a <<def_commit,commit>>.
 
-A single git repository may contain multiple branches.  It keeps track
-of them by keeping a list of <<def_head,heads>> which reference the
+Those snapshots aren't necessarily all arranged in a single line from
+oldest to newest; instead, work may simultaneously proceed along
+parallel lines of development, called <def_branch,branches>>, which may
+merge and diverge.
+
+A single git repository can track development on multiple branches.  It
+does this by keeping a list of <<def_head,heads>> which reference the
 latest commit on each branch; the gitlink:git-branch[1] command shows
 you the list of branch heads:
 
