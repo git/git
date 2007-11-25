@@ -117,7 +117,7 @@ static void update(int verbose, const char *prefix, const char **files)
 	rev.diffopt.format_callback_data = &verbose;
 	if (read_cache() < 0)
 		die("index file corrupt");
-	run_diff_files(&rev, 0);
+	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 }
 
 static void refresh(int verbose, const char **pathspec)
