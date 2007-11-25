@@ -1929,15 +1929,9 @@ or just
 $ git push ssh://yourserver.com/~you/proj.git master
 -------------------------------------------------
 
-As with git-fetch, git-push will complain if this does not result in
-a <<fast-forwards,fast forward>>.  Normally this is a sign of
-something wrong.  However, if you are sure you know what you're
-doing, you may force git-push to perform the update anyway by
-proceeding the branch name by a plus sign:
-
--------------------------------------------------
-$ git push ssh://yourserver.com/~you/proj.git +master
--------------------------------------------------
+As with git-fetch, git-push will complain if this does not result in a
+<<fast-forwards,fast forward>>; see the following section for details on
+handling this case.
 
 Note that the target of a "push" is normally a
 <<def_bare_repository,bare>> repository.  You can also push to a
@@ -1964,6 +1958,52 @@ $ git push public-repo master
 See the explanations of the remote.<name>.url, branch.<name>.remote,
 and remote.<name>.push options in gitlink:git-config[1] for
 details.
+
+[[forcing-push]]
+What to do when a push fails
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If a push would not result in a <<fast-forwards,fast forward>> of the
+remote branch, then it will fail with an error like:
+
+-------------------------------------------------
+error: remote 'refs/heads/master' is not an ancestor of
+ local  'refs/heads/master'.
+ Maybe you are not up-to-date and need to pull first?
+error: failed to push to 'ssh://yourserver.com/~you/proj.git'
+-------------------------------------------------
+
+This can happen, for example, if you:
+
+	- use `git reset --hard` to remove already-published commits, or
+	- use `git commit --amend` to replace already-published commits
+	  (as in <<fixing-a-mistake-by-editing-history>>), or
+	- use `git rebase` to rebase any already-published commits (as
+	  in <<using-git-rebase>>).
+
+You may force git-push to perform the update anyway by preceding the
+branch name with a plus sign:
+
+-------------------------------------------------
+$ git push ssh://yourserver.com/~you/proj.git +master
+-------------------------------------------------
+
+Normally whenever a branch head in a public repository is modified, it
+is modified to point to a descendent of the commit that it pointed to
+before.  By forcing a push in this situation, you break that convention.
+(See <<problems-with-rewriting-history>>.)
+
+Nevertheless, this is a common practice for people that need a simple
+way to publish a work-in-progress patch series, and it is an acceptable
+compromise as long as you warn other developers that this is how you
+intend to manage the branch.
+
+It's also possible for a push to fail in this way when other people have
+the right to push to the same repository.  In that case, the correct
+solution is to retry the push after first updating your work by either a
+pull or a fetch followed by a rebase; see the
+<<setting-up-a-shared-repository,next section>> and
+link:cvs-migration.html[git for CVS users] for more.
 
 [[setting-up-a-shared-repository]]
 Setting up a shared repository
