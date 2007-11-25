@@ -473,11 +473,10 @@ static inline int kill(pid_t pid, int sig)
 static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
 
-void mingw_execve(const char *cmd, char *const *argv, char * const *env);
-#define execve mingw_execve
+typedef int pid_t;
+extern pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env);
 extern void mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp
-typedef int pid_t;
 static inline int waitpid(pid_t pid, unsigned *status, unsigned options)
 {
 	if (options == 0)
@@ -554,12 +553,6 @@ static inline int fsync(int fd) { return 0; }
 static inline int getppid(void) { return 1; }
 static inline void sync(void) {}
 extern int getpagesize(void);	/* defined in MinGW's libgcc.a */
-
-extern void quote_argv(const char **dst, const char *const *src);
-extern const char *parse_interpreter(const char *cmd);
-extern char *mingw_path_lookup(const char *cmd, char **path);
-extern char **mingw_get_path_split(void);
-extern void mingw_free_path_split(char **path);
 
 /* Use mingw_lstat() instead of lstat()/stat() and
  * mingw_fstat() instead of fstat() on Windows.

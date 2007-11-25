@@ -160,29 +160,8 @@ int start_command(struct child_process *cmd)
 		cmd->argv[0] = git_cmd.buf;
 	}
 
-	char **path = mingw_get_path_split();
-	const char *argv0 = cmd->argv[0];
-	const char **qargv;
-	char *prog = mingw_path_lookup(argv0, path);
-	const char *interpr = parse_interpreter(prog);
-	int argc;
+	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
 
-	for (argc = 0; cmd->argv[argc];) argc++;
-	qargv = xmalloc((argc+2)*sizeof(char*));
-	if (!interpr) {
-		quote_argv(qargv, cmd->argv);
-		cmd->pid = spawnve(_P_NOWAIT, prog, qargv, (const char **)env);
-	} else {
-		qargv[0] = interpr;
-		cmd->argv[0] = prog;
-		quote_argv(&qargv[1], cmd->argv);
-		cmd->pid = spawnvpe(_P_NOWAIT, interpr, qargv, (const char **)env);
-	}
-
-	free(qargv);	/* TODO: quoted args should be freed, too */
-	free(prog);
-
-	mingw_free_path_split(path);
 	/* TODO: if (cmd->env) free env; */
 
 	if (cmd->git_cmd)

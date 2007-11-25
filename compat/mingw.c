@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "../git-compat-util.h"
+#include "../strbuf.h"
 
 unsigned int _CRT_fmode = _O_BINARY;
 
@@ -351,7 +352,10 @@ void openlog(const char *ident, int option, int facility)
 {
 }
 
-/* See http://msdn2.microsoft.com/en-us/library/17w5ykft(vs.71).aspx (Parsing C++ Command-Line Arguments */
+/*
+ * See http://msdn2.microsoft.com/en-us/library/17w5ykft(vs.71).aspx
+ * (Parsing C++ Command-Line Arguments)
+ */
 static const char *quote_arg(const char *arg)
 {
 	/* count chars to quote */
@@ -407,14 +411,7 @@ static const char *quote_arg(const char *arg)
 	return q;
 }
 
-void quote_argv(const char **dst, const char *const *src)
-{
-	while (*src)
-		*dst++ = quote_arg(*src++);
-	*dst = NULL;
-}
-
-const char *parse_interpreter(const char *cmd)
+static const char *parse_interpreter(const char *cmd)
 {
 	static char buf[100];
 	char *p, *opt;
@@ -449,89 +446,10 @@ const char *parse_interpreter(const char *cmd)
 	return p+1;
 }
 
-static int try_shell_exec(const char *cmd, char *const *argv, char *const *env)
-{
-	const char **sh_argv;
-	int n;
-	const char *interpr = parse_interpreter(cmd);
-	if (!interpr)
-		return 0;
-
-	/*
-	 * expand
-	 *    git-foo args...
-	 * into
-	 *    sh git-foo args...
-	 */
-	for (n = 0; argv[n];) n++;
-	sh_argv = xmalloc((n+2)*sizeof(char*));
-	sh_argv[0] = interpr;
-	sh_argv[1] = quote_arg(cmd);
-	quote_argv(&sh_argv[2], (const char *const *)&argv[1]);
-	n = spawnvpe(_P_WAIT, interpr, sh_argv, (const char *const *)env);
-	if (n == -1)
-		return 1;	/* indicate that we tried but failed */
-	exit(n);
-}
-
-void mingw_execve(const char *cmd, char *const *argv, char *const *env)
-{
-	/* check if git_command is a shell script */
-	if (!try_shell_exec(cmd, argv, env)) {
-		const char **qargv;
-		int n;
-		for (n = 0; argv[n];) n++;
-		qargv = xmalloc((n+1)*sizeof(char*));
-		quote_argv(qargv, (const char *const *)argv);
-		int ret = spawnve(_P_WAIT, cmd, qargv,
-		                          (const char *const *)env);
-		if (ret != -1)
-			exit(ret);
-	}
-}
-
-static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
-{
-	char path[MAX_PATH];
-	snprintf(path, sizeof(path), "%s/%s.exe", dir, cmd);
-
-	if (tryexe && access(path, 0) == 0)
-		return xstrdup(path);
-	path[strlen(path)-4] = '\0';
-	if (access(path, 0) == 0)
-		return xstrdup(path);
-	return NULL;
-}
-
-/*
- * Determines the absolute path of cmd using the the split path in path.
- * If cmd contains a slash or backslash, no lookup is performed.
- */
-char *mingw_path_lookup(const char *cmd, char **path)
-{
-	char **p = path;
-	char *prog = NULL;
-	int len = strlen(cmd);
-	int tryexe = len < 4 || strcasecmp(cmd+len-4, ".exe");
-
-	if (strchr(cmd, '/') || strchr(cmd, '\\'))
-		prog = xstrdup(cmd);
-
-	while (!prog && *p) {
-		prog = lookup_prog(*p++, cmd, tryexe);
-	}
-	if (!prog) {
-		prog = lookup_prog(".", cmd, tryexe);
-		if (!prog)
-			prog = xstrdup(cmd);
-	}
-	return prog;
-}
-
 /*
  * Splits the PATH into parts.
  */
-char **mingw_get_path_split(void)
+static char **mingw_get_path_split(void)
 {
 	char *p, **path, *envpath = getenv("PATH");
 	int i, n = 0;
@@ -567,7 +485,7 @@ char **mingw_get_path_split(void)
 	return path;
 }
 
-void mingw_free_path_split(char **path)
+static void mingw_free_path_split(char **path)
 {
 	if (!path)
 		return;
@@ -578,10 +496,232 @@ void mingw_free_path_split(char **path)
 	free(path);
 }
 
+/*
+ * exe_only means that we only want to detect .exe files, but not scripts
+ * (which do not have an extension)
+ */
+static char *lookup_prog(const char *dir, const char *cmd, int isexe, int exe_only)
+{
+	char path[MAX_PATH];
+	snprintf(path, sizeof(path), "%s/%s.exe", dir, cmd);
+
+	if (!isexe && access(path, F_OK) == 0)
+		return xstrdup(path);
+	path[strlen(path)-4] = '\0';
+	if ((!exe_only || isexe) && access(path, F_OK) == 0)
+		return xstrdup(path);
+	return NULL;
+}
+
+/*
+ * Determines the absolute path of cmd using the the split path in path.
+ * If cmd contains a slash or backslash, no lookup is performed.
+ */
+static char *mingw_path_lookup(const char *cmd, char **path, int exe_only)
+{
+	char **p = path;
+	char *prog = NULL;
+	int len = strlen(cmd);
+	int isexe = len >= 4 && !strcasecmp(cmd+len-4, ".exe");
+
+	if (strchr(cmd, '/') || strchr(cmd, '\\'))
+		prog = xstrdup(cmd);
+
+	while (!prog && *p) {
+		prog = lookup_prog(*p++, cmd, isexe, exe_only);
+	}
+	if (!prog) {
+		prog = lookup_prog(".", cmd, isexe, exe_only);
+		if (!prog)
+			prog = xstrdup(cmd);
+	}
+	return prog;
+}
+
+static int env_compare(const void *a, const void *b)
+{
+	char *const *ea = a;
+	char *const *eb = b;
+	return strcasecmp(*ea, *eb);
+}
+
+static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
+			   int prepend_cmd)
+{
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	struct strbuf envblk, args;
+	unsigned flags;
+	BOOL ret;
+
+	/* Determine whether or not we are associated to a console */
+	HANDLE cons = CreateFile("CONOUT$", GENERIC_WRITE,
+			FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+			FILE_ATTRIBUTE_NORMAL, NULL);
+	if (cons == INVALID_HANDLE_VALUE) {
+		/* There is no console associated with this process.
+		 * Since the child is a console process, Windows
+		 * would normally create a console window. But
+		 * since we'll be redirecting std streams, we do
+		 * not need the console.
+		 */
+		flags = CREATE_NO_WINDOW;
+	} else {
+		/* There is already a console. If we specified
+		 * CREATE_NO_WINDOW here, too, Windows would
+		 * disassociate the child from the console.
+		 * Go figure!
+		 */
+		flags = 0;
+		CloseHandle(cons);
+	}
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	si.dwFlags = STARTF_USESTDHANDLES;
+	si.hStdInput = (HANDLE) _get_osfhandle(0);
+	si.hStdOutput = (HANDLE) _get_osfhandle(1);
+	si.hStdError = (HANDLE) _get_osfhandle(2);
+
+	/* concatenate argv, quoting args as we go */
+	strbuf_init(&args, 0);
+	if (prepend_cmd) {
+		char *quoted = (char *)quote_arg(cmd);
+		strbuf_addstr(&args, quoted);
+		if (quoted != cmd)
+			free(quoted);
+	}
+	for (; *argv; argv++) {
+		char *quoted = (char *)quote_arg(*argv);
+		if (*args.buf)
+			strbuf_addch(&args, ' ');
+		strbuf_addstr(&args, quoted);
+		if (quoted != *argv)
+			free(quoted);
+	}
+
+	if (env) {
+		int count = 0;
+		char **e, **sorted_env;
+
+		for (e = env; *e; e++)
+			count++;
+
+		/* environment must be sorted */
+		sorted_env = xmalloc(sizeof(*sorted_env) * (count + 1));
+		memcpy(sorted_env, env, sizeof(*sorted_env) * (count + 1));
+		qsort(sorted_env, count, sizeof(*sorted_env), env_compare);
+
+		strbuf_init(&envblk, 0);
+		for (e = sorted_env; *e; e++) {
+			strbuf_addstr(&envblk, *e);
+			strbuf_addch(&envblk, '\0');
+		}
+		free(sorted_env);
+	}
+
+	memset(&pi, 0, sizeof(pi));
+	ret = CreateProcess(cmd, args.buf, NULL, NULL, TRUE, flags,
+		env ? envblk.buf : NULL, NULL, &si, &pi);
+
+	if (env)
+		strbuf_release(&envblk);
+	strbuf_release(&args);
+
+	if (!ret) {
+		errno = ENOENT;
+		return -1;
+	}
+	CloseHandle(pi.hThread);
+	return (pid_t)pi.hProcess;
+}
+
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
+{
+	pid_t pid;
+	char **path = mingw_get_path_split();
+	char *prog = mingw_path_lookup(cmd, path, 0);
+
+	if (!prog) {
+		errno = ENOENT;
+		pid = -1;
+	}
+	else {
+		const char *interpr = parse_interpreter(prog);
+
+		if (interpr) {
+			const char *argv0 = argv[0];
+			char *iprog = mingw_path_lookup(interpr, path, 1);
+			argv[0] = prog;
+			if (!iprog) {
+				errno = ENOENT;
+				pid = -1;
+			}
+			else {
+				pid = mingw_spawnve(iprog, argv, env, 1);
+				free(iprog);
+			}
+			argv[0] = argv0;
+		}
+		else
+			pid = mingw_spawnve(prog, argv, env, 0);
+		free(prog);
+	}
+	mingw_free_path_split(path);
+	return pid;
+}
+
+static int try_shell_exec(const char *cmd, char *const *argv, char **env)
+{
+	const char *interpr = parse_interpreter(cmd);
+	char **path;
+	char *prog;
+	int pid = 0;
+
+	if (!interpr)
+		return 0;
+	path = mingw_get_path_split();
+	prog = mingw_path_lookup(interpr, path, 1);
+	if (prog) {
+		int argc = 0;
+		const char **argv2;
+		while (argv[argc]) argc++;
+		argv2 = xmalloc(sizeof(*argv) * (argc+1));
+		argv2[0] = (char *)cmd;	/* full path to the script file */
+		memcpy(&argv2[1], &argv[1], sizeof(*argv) * argc);
+		pid = mingw_spawnve(prog, argv2, env, 1);
+		if (pid >= 0) {
+			int status;
+			if (waitpid(pid, &status, 0) < 0)
+				status = 255;
+			exit(status);
+		}
+		pid = 1;	/* indicate that we tried but failed */
+		free(prog);
+		free(argv2);
+	}
+	mingw_free_path_split(path);
+	return pid;
+}
+
+static void mingw_execve(const char *cmd, char *const *argv, char *const *env)
+{
+	/* check if git_command is a shell script */
+	if (!try_shell_exec(cmd, argv, (char **)env)) {
+		int pid, status;
+
+		pid = mingw_spawnve(cmd, (const char **)argv, (char **)env, 0);
+		if (pid < 0)
+			return;
+		if (waitpid(pid, &status, 0) < 0)
+			status = 255;
+		exit(status);
+	}
+}
+
 void mingw_execvp(const char *cmd, char *const *argv)
 {
 	char **path = mingw_get_path_split();
-	char *prog = mingw_path_lookup(cmd, path);
+	char *prog = mingw_path_lookup(cmd, path, 0);
 
 	if (prog) {
 		mingw_execve(prog, argv, environ);
