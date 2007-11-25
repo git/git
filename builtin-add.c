@@ -135,13 +135,29 @@ static void refresh(int verbose, const char **pathspec)
         free(seen);
 }
 
-int interactive_add(int argc, const char **argv)
+static const char **validate_pathspec(int argc, const char **argv, const char *prefix)
+{
+	const char **pathspec = get_pathspec(prefix, argv);
+
+	return pathspec;
+}
+
+int interactive_add(int argc, const char **argv, const char *prefix)
 {
 	int status;
-	const char **args = xcalloc(sizeof(const char *), (argc + 2));
+	const char **args;
+	const char **pathspec = NULL;
 
+	if (argc) {
+		pathspec = validate_pathspec(argc, argv, prefix);
+		if (!pathspec)
+			return -1;
+	}
+
+	args = xcalloc(sizeof(const char *), (argc + 2));
 	args[0] = "add--interactive";
-	memcpy(&(args[1]), argv, sizeof(const char *) * argc);
+	if (argc)
+		memcpy(&(args[1]), pathspec, sizeof(const char *) * argc);
 	args[argc + 1] = NULL;
 
 	status = run_command_v_opt(args, RUN_GIT_CMD);
@@ -177,7 +193,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, builtin_add_options,
 			  builtin_add_usage, 0);
 	if (add_interactive)
-		exit(interactive_add(argc, argv));
+		exit(interactive_add(argc, argv, prefix));
 
 	git_config(git_default_config);
 

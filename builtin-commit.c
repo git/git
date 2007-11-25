@@ -165,7 +165,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 	const char **pathspec = NULL;
 
 	if (interactive) {
-		interactive_add(argc, argv);
+		interactive_add(argc, argv, prefix);
 		commit_style = COMMIT_AS_IS;
 		return get_index_file();
 	}
