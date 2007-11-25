@@ -105,12 +105,12 @@ static void update_callback(struct diff_queue_struct *q,
 	}
 }
 
-void add_files_to_cache(int verbose, const char *prefix, const char **files)
+void add_files_to_cache(int verbose, const char *prefix, const char **pathspec)
 {
 	struct rev_info rev;
 	init_revisions(&rev, prefix);
 	setup_revisions(0, NULL, &rev, NULL);
-	rev.prune_data = get_pathspec(prefix, files);
+	rev.prune_data = pathspec;
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = &verbose;
@@ -183,9 +183,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	newfd = hold_locked_index(&lock_file, 1);
 
 	if (take_worktree_changes) {
+		const char **pathspec;
 		if (read_cache() < 0)
 			die("index file corrupt");
-		add_files_to_cache(verbose, prefix, argv);
+		pathspec = get_pathspec(prefix, argv);
+		add_files_to_cache(verbose, prefix, pathspec);
 		goto finish;
 	}
 

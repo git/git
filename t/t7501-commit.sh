@@ -242,4 +242,29 @@ test_expect_success 'multiple -m' '
 
 '
 
+author="The Real Author <someguy@his.email.org>"
+test_expect_success 'amend commit to fix author' '
+
+	oldtick=$GIT_AUTHOR_DATE &&
+	test_tick &&
+	git reset --hard &&
+	git cat-file -p HEAD |
+	sed -e "s/author.*/author $author $oldtick/" \
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
+		expected &&
+	git commit --amend --author="$author" &&
+	git cat-file -p HEAD > current &&
+	diff expected current
+
+'
+
+test_expect_success 'git commit <file> with dirty index' '
+	echo tacocat > elif &&
+	echo tehlulz > chz &&
+	git add chz &&
+	git commit elif -m "tacocat is a palindrome" &&
+	git show --stat | grep elif &&
+	git diff --cached | grep chz
+'
+
 test_done

@@ -6,6 +6,7 @@
 #include "revision.h"
 #include "list-objects.h"
 #include "run-command.h"
+#include "refs.h"
 
 static const char bundle_signature[] = "# v2 git bundle\n";
 
@@ -232,11 +233,17 @@ int create_bundle(struct bundle_header *header, const char *path,
 		struct object_array_entry *e = revs.pending.objects + i;
 		unsigned char sha1[20];
 		char *ref;
+		const char *display_ref;
+		int flag;
 
 		if (e->item->flags & UNINTERESTING)
 			continue;
 		if (dwim_ref(e->name, strlen(e->name), sha1, &ref) != 1)
 			continue;
+		if (!resolve_ref(e->name, sha1, 1, &flag))
+			flag = 0;
+		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
+
 		/*
 		 * Make sure the refs we wrote out is correct; --max-count and
 		 * other limiting options could have prevented all the tips
@@ -287,7 +294,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 		ref_count++;
 		write_or_die(bundle_fd, sha1_to_hex(e->item->sha1), 40);
 		write_or_die(bundle_fd, " ", 1);
-		write_or_die(bundle_fd, ref, strlen(ref));
+		write_or_die(bundle_fd, display_ref, strlen(display_ref));
 		write_or_die(bundle_fd, "\n", 1);
 		free(ref);
 	}

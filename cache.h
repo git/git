@@ -604,10 +604,18 @@ extern void trace_argv_printf(const char **argv, int count, const char *format, 
 extern int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst);
 extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 
+/* add */
+void add_files_to_cache(int verbose, const char *prefix, const char **pathspec);
+
 /* diff.c */
 extern int diff_auto_refresh_index;
 
 /* match-trees.c */
 void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
+
+/* ls-files */
+int pathspec_match(const char **spec, char *matched, const char *filename, int skiplen);
+int report_path_error(const char *ps_matched, const char **pathspec, int prefix_offset);
+void overlay_tree_on_cache(const char *tree_name, const char *prefix);
 
 #endif /* CACHE_H */
