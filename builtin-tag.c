@@ -398,6 +398,9 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, options, git_tag_usage, 0);
 
+	if (sign)
+		annotate = 1;
+
 	if (list)
 		return list_tags(list == no_pattern ? NULL : list, lines);
 	if (delete)
