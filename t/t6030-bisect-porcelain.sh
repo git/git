@@ -71,6 +71,43 @@ test_expect_success 'bisect start with one bad and good' '
 	git bisect next
 '
 
+test_expect_success 'bisect reset: back in the master branch' '
+	git bisect reset &&
+	echo "* master" > branch.expect &&
+	git branch > branch.output &&
+	cmp branch.expect branch.output
+'
+
+test_expect_success 'bisect reset: back in another branch' '
+	git checkout -b other &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH3 &&
+	git bisect reset &&
+	echo "  master" > branch.expect &&
+	echo "* other" >> branch.expect &&
+	git branch > branch.output &&
+	cmp branch.expect branch.output
+'
+
+test_expect_success 'bisect reset when not bisecting' '
+	git bisect reset &&
+	git branch > branch.output &&
+	cmp branch.expect branch.output
+'
+
+test_expect_success 'bisect reset removes packed refs' '
+	git bisect reset &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH3 &&
+	git pack-refs --all --prune &&
+	git bisect next &&
+	git bisect reset &&
+	test -z "$(git for-each-ref "refs/bisect/*")" &&
+	test -z "$(git for-each-ref "refs/heads/bisect")"
+'
+
 # $HASH1 is good, $HASH4 is bad, we skip $HASH3
 # but $HASH2 is bad,
 # so we should find $HASH2 as the first bad commit
@@ -167,7 +204,7 @@ test_expect_success 'bisect skip: add line and then a new test' '
 	git bisect skip &&
 	git bisect good > my_bisect_log.txt &&
 	grep "$HASH5 is first bad commit" my_bisect_log.txt &&
-	git bisect log > log_to_replay.txt
+	git bisect log > log_to_replay.txt &&
 	git bisect reset
 '
 
