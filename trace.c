@@ -37,7 +37,7 @@ static int get_trace_fd(int *need_close)
 		return STDERR_FILENO;
 	if (strlen(trace) == 1 && isdigit(*trace))
 		return atoi(trace);
-	if (*trace == '/') {
+	if (is_absolute_path(trace)) {
 		int fd = open(trace, O_WRONLY | O_APPEND | O_CREAT, 0666);
 		if (fd == -1) {
 			fprintf(stderr,

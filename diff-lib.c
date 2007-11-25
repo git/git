@@ -231,7 +231,7 @@ static int handle_diff_files_args(struct rev_info *revs,
 static int is_outside_repo(const char *path, int nongit, const char *prefix)
 {
 	int i;
-	if (nongit || !strcmp(path, "-") || path[0] == '/')
+	if (nongit || !strcmp(path, "-") || is_absolute_path(path))
 		return 1;
 	if (prefixcmp(path, "../"))
 		return 0;
