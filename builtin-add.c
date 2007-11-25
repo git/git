@@ -138,9 +138,10 @@ static void refresh(int verbose, const char **pathspec)
 int interactive_add(int argc, const char **argv)
 {
 	int status;
-	const char **args = xmalloc(sizeof(const char *) * (argc + 1));
+	const char **args = xcalloc(sizeof(const char *), (argc + 2));
+
 	args[0] = "add--interactive";
-	memcpy((void *)args + sizeof(const char *), argv, sizeof(const char *) * argc);
+	memcpy(&(args[1]), argv, sizeof(const char *) * argc);
 	args[argc + 1] = NULL;
 
 	status = run_command_v_opt(args, RUN_GIT_CMD);
