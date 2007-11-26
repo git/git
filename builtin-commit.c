@@ -765,7 +765,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	/* Truncate the message just before the diff, if any. */
 	p = strstr(sb.buf, "\ndiff --git a/");
 	if (p != NULL)
-		strbuf_setlen(&sb, p - sb.buf);
+		strbuf_setlen(&sb, p - sb.buf + 1);
 
 	stripspace(&sb, 1);
 	if (sb.len < header_len || message_is_empty(&sb, header_len)) {
