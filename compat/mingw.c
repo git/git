@@ -978,8 +978,8 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out)
 	    is_timeval_eq(&in->it_interval, &zero))
 		return 0;
 
-	timer_interval = in->it_interval.tv_sec * 1000 + in->it_interval.tv_usec / 1000;
-	one_shot = is_timeval_eq(&in->it_value, &zero);
+	timer_interval = in->it_value.tv_sec * 1000 + in->it_value.tv_usec / 1000;
+	one_shot = is_timeval_eq(&in->it_interval, &zero);
 	if (!atexit_done) {
 		atexit(stop_timer_thread);
 		atexit_done = 1;
