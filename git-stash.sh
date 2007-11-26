@@ -37,7 +37,7 @@ create_stash () {
 	# state of the base commit
 	if b_commit=$(git rev-parse --verify HEAD)
 	then
-		head=$(git log --abbrev-commit --pretty=oneline -n 1 HEAD)
+		head=$(git log --no-color --abbrev-commit --pretty=oneline -n 1 HEAD --)
 	else
 		die "You do not have the initial commit yet"
 	fi
@@ -108,7 +108,7 @@ have_stash () {
 
 list_stash () {
 	have_stash || return 0
-	git log --pretty=oneline -g "$@" $ref_stash |
+	git log --no-color --pretty=oneline -g "$@" $ref_stash -- |
 	sed -n -e 's/^[.0-9a-f]* refs\///p'
 }
 
