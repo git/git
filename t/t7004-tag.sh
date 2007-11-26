@@ -667,6 +667,22 @@ test_expect_success 'creating a signed tag with -F - should succeed' '
 	git diff expect actual
 '
 
+cat >fakeeditor <<'EOF'
+#!/bin/sh
+test -n "$1" && exec >"$1"
+echo A signed tag message
+echo from a fake editor.
+EOF
+chmod +x fakeeditor
+get_tag_header implied-annotate $commit commit $time >expect
+./fakeeditor >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success '-s implies annotated tag' '
+	GIT_EDITOR=./fakeeditor git-tag -s implied-annotate &&
+	get_tag_msg implied-annotate >actual &&
+	git diff expect actual
+'
+
 test_expect_success \
 	'trying to create a signed tag with non-existing -F file should fail' '
 	! test -f nonexistingfile &&
