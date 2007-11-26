@@ -175,7 +175,7 @@ detach_warn=
 describe_detached_head () {
 	test -n "$quiet" || {
 		printf >&2 "$1 "
-		GIT_PAGER= git log >&2 -1 --pretty=oneline --abbrev-commit "$2"
+		GIT_PAGER= git log >&2 -1 --pretty=oneline --abbrev-commit "$2" --
 	}
 }
 

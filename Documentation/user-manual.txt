@@ -56,11 +56,12 @@ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 The initial clone may be time-consuming for a large project, but you
 will only need to clone once.
 
-The clone command creates a new directory named after the project
-("git" or "linux-2.6" in the examples above).  After you cd into this
+The clone command creates a new directory named after the project ("git"
+or "linux-2.6" in the examples above).  After you cd into this
 directory, you will see that it contains a copy of the project files,
-together with a special top-level directory named ".git", which
-contains all the information about the history of the project.
+called the <<def_working_tree,working tree>>, together with a special
+top-level directory named ".git", which contains all the information
+about the history of the project.
 
 [[how-to-check-out]]
 How to check out a different version of a project
@@ -71,8 +72,13 @@ of files.  It stores the history as a compressed collection of
 interrelated snapshots of the project's contents.  In git each such
 version is called a <<def_commit,commit>>.
 
-A single git repository may contain multiple branches.  It keeps track
-of them by keeping a list of <<def_head,heads>> which reference the
+Those snapshots aren't necessarily all arranged in a single line from
+oldest to newest; instead, work may simultaneously proceed along
+parallel lines of development, called <def_branch,branches>>, which may
+merge and diverge.
+
+A single git repository can track development on multiple branches.  It
+does this by keeping a list of <<def_head,heads>> which reference the
 latest commit on each branch; the gitlink:git-branch[1] command shows
 you the list of branch heads:
 
@@ -1410,8 +1416,8 @@ with the changes to be reverted, then you will be asked to fix
 conflicts manually, just as in the case of <<resolving-a-merge,
 resolving a merge>>.
 
-[[fixing-a-mistake-by-editing-history]]
-Fixing a mistake by editing history
+[[fixing-a-mistake-by-rewriting-history]]
+Fixing a mistake by rewriting history
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the problematic commit is the most recent commit, and you have not
@@ -1434,7 +1440,7 @@ Again, you should never do this to a commit that may already have
 been merged into another branch; use gitlink:git-revert[1] instead in
 that case.
 
-It is also possible to edit commits further back in the history, but
+It is also possible to replace commits further back in the history, but
 this is an advanced topic to be left for
 <<cleaning-up-history,another chapter>>.
 
@@ -1553,6 +1559,11 @@ $ git gc --prune
 This may be time-consuming.  Unlike most other git operations (including
 git-gc when run without any options), it is not safe to prune while
 other git operations are in progress in the same repository.
+
+If gitlink:git-fsck[1] complains about sha1 mismatches or missing
+objects, you may have a much more serious problem; your best option is
+probably restoring from backups.  See
+<<recovering-from-repository-corruption>> for a detailed discussion.
 
 [[recovering-lost-changes]]
 Recovering lost changes
@@ -1923,15 +1934,9 @@ or just
 $ git push ssh://yourserver.com/~you/proj.git master
 -------------------------------------------------
 
-As with git-fetch, git-push will complain if this does not result in
-a <<fast-forwards,fast forward>>.  Normally this is a sign of
-something wrong.  However, if you are sure you know what you're
-doing, you may force git-push to perform the update anyway by
-preceding the branch name by a plus sign:
-
--------------------------------------------------
-$ git push ssh://yourserver.com/~you/proj.git +master
--------------------------------------------------
+As with git-fetch, git-push will complain if this does not result in a
+<<fast-forwards,fast forward>>; see the following section for details on
+handling this case.
 
 Note that the target of a "push" is normally a
 <<def_bare_repository,bare>> repository.  You can also push to a
@@ -1958,6 +1963,52 @@ $ git push public-repo master
 See the explanations of the remote.<name>.url, branch.<name>.remote,
 and remote.<name>.push options in gitlink:git-config[1] for
 details.
+
+[[forcing-push]]
+What to do when a push fails
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If a push would not result in a <<fast-forwards,fast forward>> of the
+remote branch, then it will fail with an error like:
+
+-------------------------------------------------
+error: remote 'refs/heads/master' is not an ancestor of
+ local  'refs/heads/master'.
+ Maybe you are not up-to-date and need to pull first?
+error: failed to push to 'ssh://yourserver.com/~you/proj.git'
+-------------------------------------------------
+
+This can happen, for example, if you:
+
+	- use `git reset --hard` to remove already-published commits, or
+	- use `git commit --amend` to replace already-published commits
+	  (as in <<fixing-a-mistake-by-rewriting-history>>), or
+	- use `git rebase` to rebase any already-published commits (as
+	  in <<using-git-rebase>>).
+
+You may force git-push to perform the update anyway by preceding the
+branch name with a plus sign:
+
+-------------------------------------------------
+$ git push ssh://yourserver.com/~you/proj.git +master
+-------------------------------------------------
+
+Normally whenever a branch head in a public repository is modified, it
+is modified to point to a descendent of the commit that it pointed to
+before.  By forcing a push in this situation, you break that convention.
+(See <<problems-with-rewriting-history>>.)
+
+Nevertheless, this is a common practice for people that need a simple
+way to publish a work-in-progress patch series, and it is an acceptable
+compromise as long as you warn other developers that this is how you
+intend to manage the branch.
+
+It's also possible for a push to fail in this way when other people have
+the right to push to the same repository.  In that case, the correct
+solution is to retry the push after first updating your work by either a
+pull or a fetch followed by a rebase; see the
+<<setting-up-a-shared-repository,next section>> and
+link:cvs-migration.html[git for CVS users] for more.
 
 [[setting-up-a-shared-repository]]
 Setting up a shared repository
@@ -2426,11 +2477,11 @@ return mywork to the state it had before you started the rebase:
 $ git rebase --abort
 -------------------------------------------------
 
-[[modifying-one-commit]]
-Modifying a single commit
+[[rewriting-one-commit]]
+Rewriting a single commit
 -------------------------
 
-We saw in <<fixing-a-mistake-by-editing-history>> that you can replace the
+We saw in <<fixing-a-mistake-by-rewriting-history>> that you can replace the
 most recent commit using
 
 -------------------------------------------------
@@ -2440,8 +2491,10 @@ $ git commit --amend
 which will replace the old commit by a new commit incorporating your
 changes, giving you a chance to edit the old commit message first.
 
-You can also use a combination of this and gitlink:git-rebase[1] to edit
-commits further back in your history.  First, tag the problematic commit with
+You can also use a combination of this and gitlink:git-rebase[1] to
+replace a commit further back in your history and recreate the
+intervening changes on top of it.  First, tag the problematic commit
+with
 
 -------------------------------------------------
 $ git tag bad mywork~5
@@ -3171,6 +3224,127 @@ Running it while somebody is actually changing the repository can cause
 confusing and scary messages, but it won't actually do anything bad. In
 contrast, running "git prune" while somebody is actively changing the
 repository is a *BAD* idea).
+
+[[recovering-from-repository-corruption]]
+Recovering from repository corruption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By design, git treats data trusted to it with caution.  However, even in
+the absence of bugs in git itself, it is still possible that hardware or
+operating system errors could corrupt data.
+
+The first defense against such problems is backups.  You can back up a
+git directory using clone, or just using cp, tar, or any other backup
+mechanism.
+
+As a last resort, you can search for the corrupted objects and attempt
+to replace them by hand.  Back up your repository before attempting this
+in case you corrupt things even more in the process.
+
+We'll assume that the problem is a single missing or corrupted blob,
+which is sometimes a solveable problem.  (Recovering missing trees and
+especially commits is *much* harder).
+
+Before starting, verify that there is corruption, and figure out where
+it is with gitlink:git-fsck[1]; this may be time-consuming.
+
+Assume the output looks like this:
+
+------------------------------------------------
+$ git-fsck --full
+broken link from    tree 2d9263c6d23595e7cb2a21e5ebbb53655278dff8
+              to    blob 4b9458b3786228369c63936db65827de3cc06200
+missing blob 4b9458b3786228369c63936db65827de3cc06200
+------------------------------------------------
+
+(Typically there will be some "dangling object" messages too, but they
+aren't interesting.)
+
+Now you know that blob 4b9458b3 is missing, and that the tree 2d9263c6
+points to it.  If you could find just one copy of that missing blob
+object, possibly in some other repository, you could move it into
+.git/objects/4b/9458b3... and be done.  Suppose you can't.  You can
+still examine the tree that pointed to it with gitlink:git-ls-tree[1],
+which might output something like:
+
+------------------------------------------------
+$ git ls-tree 2d9263c6d23595e7cb2a21e5ebbb53655278dff8
+100644 blob 8d14531846b95bfa3564b58ccfb7913a034323b8	.gitignore
+100644 blob ebf9bf84da0aab5ed944264a5db2a65fe3a3e883	.mailmap
+100644 blob ca442d313d86dc67e0a2e5d584b465bd382cbf5c	COPYING
+...
+100644 blob 4b9458b3786228369c63936db65827de3cc06200	myfile
+...
+------------------------------------------------
+
+So now you know that the missing blob was the data for a file named
+"myfile".  And chances are you can also identify the directory--let's
+say it's in "somedirectory".  If you're lucky the missing copy might be
+the same as the copy you have checked out in your working tree at
+"somedirectory/myfile"; you can test whether that's right with
+gitlink:git-hash-object[1]:
+
+------------------------------------------------
+$ git hash-object -w somedirectory/myfile
+------------------------------------------------
+
+which will create and store a blob object with the contents of
+somedirectory/myfile, and output the sha1 of that object.  if you're
+extremely lucky it might be 4b9458b3786228369c63936db65827de3cc06200, in
+which case you've guessed right, and the corruption is fixed!
+
+Otherwise, you need more information.  How do you tell which version of
+the file has been lost?
+
+The easiest way to do this is with:
+
+------------------------------------------------
+$ git log --raw --all --full-history -- somedirectory/myfile
+------------------------------------------------
+
+Because you're asking for raw output, you'll now get something like
+
+------------------------------------------------
+commit abc
+Author:
+Date:
+...
+:100644 100644 4b9458b... newsha... M somedirectory/myfile
+
+
+commit xyz
+Author:
+Date:
+
+...
+:100644 100644 oldsha... 4b9458b... M somedirectory/myfile
+------------------------------------------------
+
+This tells you that the immediately preceding version of the file was
+"newsha", and that the immediately following version was "oldsha".
+You also know the commit messages that went with the change from oldsha
+to 4b9458b and with the change from 4b9458b to newsha.
+
+If you've been committing small enough changes, you may now have a good
+shot at reconstructing the contents of the in-between state 4b9458b.
+
+If you can do that, you can now recreate the missing object with
+
+------------------------------------------------
+$ git hash-object -w <recreated-file>
+------------------------------------------------
+
+and your repository is good again!
+
+(Btw, you could have ignored the fsck, and started with doing a
+
+------------------------------------------------
+$ git log --raw --all
+------------------------------------------------
+
+and just looked for the sha of the missing object (4b9458b..) in that
+whole thing. It's up to you - git does *have* a lot of information, it is
+just missing one particular blob version.
 
 [[the-index]]
 The index
@@ -4382,4 +4556,7 @@ Write a chapter on using plumbing and writing scripts.
 
 Alternates, clone -reference, etc.
 
-git unpack-objects -r for recovery
+More on recovery from repository corruption.  See:
+	http://marc.theaimsgroup.com/?l=git&m=117263864820799&w=2
+	http://marc.theaimsgroup.com/?l=git&m=117147855503798&w=2
+	http://marc.theaimsgroup.com/?l=git&m=117147855503798&w=2
