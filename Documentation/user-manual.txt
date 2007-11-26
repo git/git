@@ -1416,8 +1416,8 @@ with the changes to be reverted, then you will be asked to fix
 conflicts manually, just as in the case of <<resolving-a-merge,
 resolving a merge>>.
 
-[[fixing-a-mistake-by-editing-history]]
-Fixing a mistake by editing history
+[[fixing-a-mistake-by-rewriting-history]]
+Fixing a mistake by rewriting history
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the problematic commit is the most recent commit, and you have not
@@ -1440,7 +1440,7 @@ Again, you should never do this to a commit that may already have
 been merged into another branch; use gitlink:git-revert[1] instead in
 that case.
 
-It is also possible to edit commits further back in the history, but
+It is also possible to replace commits further back in the history, but
 this is an advanced topic to be left for
 <<cleaning-up-history,another chapter>>.
 
@@ -1977,7 +1977,7 @@ This can happen, for example, if you:
 
 	- use `git reset --hard` to remove already-published commits, or
 	- use `git commit --amend` to replace already-published commits
-	  (as in <<fixing-a-mistake-by-editing-history>>), or
+	  (as in <<fixing-a-mistake-by-rewriting-history>>), or
 	- use `git rebase` to rebase any already-published commits (as
 	  in <<using-git-rebase>>).
 
@@ -2472,11 +2472,11 @@ return mywork to the state it had before you started the rebase:
 $ git rebase --abort
 -------------------------------------------------
 
-[[modifying-one-commit]]
-Modifying a single commit
+[[rewriting-one-commit]]
+Rewriting a single commit
 -------------------------
 
-We saw in <<fixing-a-mistake-by-editing-history>> that you can replace the
+We saw in <<fixing-a-mistake-by-rewriting-history>> that you can replace the
 most recent commit using
 
 -------------------------------------------------
@@ -2486,8 +2486,10 @@ $ git commit --amend
 which will replace the old commit by a new commit incorporating your
 changes, giving you a chance to edit the old commit message first.
 
-You can also use a combination of this and gitlink:git-rebase[1] to edit
-commits further back in your history.  First, tag the problematic commit with
+You can also use a combination of this and gitlink:git-rebase[1] to
+replace a commit further back in your history and recreate the
+intervening changes on top of it.  First, tag the problematic commit
+with
 
 -------------------------------------------------
 $ git tag bad mywork~5
