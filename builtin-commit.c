@@ -748,9 +748,12 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	/* Get the commit message and validate it */
 	header_len = sb.len;
-	if (!no_edit)
-		launch_editor(git_path(commit_editmsg), &sb);
-	else if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
+	if (!no_edit) {
+		char index[PATH_MAX];
+		const char *env[2] = { index, NULL };
+		snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
+		launch_editor(git_path(commit_editmsg), &sb, env);
+	} else if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
 		rollback_index_files();
 		die("could not read commit message\n");
 	}

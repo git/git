@@ -17,7 +17,7 @@ static const char builtin_tag_usage[] =
 
 static char signingkey[1000];
 
-void launch_editor(const char *path, struct strbuf *buffer)
+void launch_editor(const char *path, struct strbuf *buffer, const char *const *env)
 {
 	const char *editor, *terminal;
 
@@ -43,7 +43,7 @@ void launch_editor(const char *path, struct strbuf *buffer)
 	if (strcmp(editor, ":")) {
 		const char *args[] = { editor, path, NULL };
 
-		if (run_command_v_opt(args, 0))
+		if (run_command_v_opt_cd_env(args, 0, NULL, env))
 			die("There was a problem with the editor %s.", editor);
 	}
 
@@ -312,7 +312,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 			write_or_die(fd, tag_template, strlen(tag_template));
 		close(fd);
 
-		launch_editor(path, buf);
+		launch_editor(path, buf, NULL);
 
 		unlink(path);
 		free(path);
