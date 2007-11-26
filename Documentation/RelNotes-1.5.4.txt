@@ -26,7 +26,7 @@ Updates since v1.5.3
  * In git-rebase, when you decide not to replay a particular change
    after the command stopped with a conflict, you can say "git-rebase
    --skip" without first running "git reset --hard", as the command now
-   run it for you.
+   runs it for you.
 
  * git-remote knows --mirror mode.
 
