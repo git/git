@@ -864,29 +864,27 @@ while (<CVS>) {
 				print STDERR "Branch $branch erroneously stems from itself -- changed ancestor to $opt_o\n";
 				$ancestor = $opt_o;
 			}
-			if (-f "$git_dir/$remote/$branch") {
+			if (defined get_headref("$remote/$branch")) {
 				print STDERR "Branch $branch already exists!\n";
 				$state=11;
 				next;
 			}
-			unless (open(H,"$git_dir/$remote/$ancestor")) {
+			my $id = get_headref("$remote/$ancestor");
+			if (!$id) {
 				print STDERR "Branch $ancestor does not exist!\n";
 				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
-			chomp(my $id = <H>);
-			close(H);
-			unless (open(H,"> $git_dir/$remote/$branch")) {
-				print STDERR "Could not create branch $branch: $!\n";
+
+			system(qw(git update-ref -m cvsimport),
+				"$remote/$branch", $id);
+			if($? != 0) {
+				print STDERR "Could not create branch $branch\n";
 				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
-			print H "$id\n"
-				or die "Could not write branch $branch: $!";
-			close(H)
-				or die "Could not write branch $branch: $!";
 		}
 		$last_branch = $branch if $branch ne $last_branch;
 		$state = 9;
@@ -998,7 +996,7 @@ if ($orig_branch) {
 	$orig_branch = "master";
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
 	system("git-update-ref", "refs/heads/master", "$remote/$opt_o")
-		unless -f "$git_dir/refs/heads/master";
+		unless defined get_headref('refs/heads/master');
 	system("git-symbolic-ref", "$remote/HEAD", "$remote/$opt_o")
 		if ($opt_r && $opt_o ne 'HEAD');
 	system('git-update-ref', 'HEAD', "$orig_branch");
