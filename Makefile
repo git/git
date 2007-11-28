@@ -174,7 +174,7 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 mandir = $(prefix)/share/man
 infodir = $(prefix)/share/info
-gitexecdir = $(bindir)
+gitexecdir = $(prefix)/libexec/git-core
 sharedir = $(prefix)/share
 template_dir = $(sharedir)/git-core/templates
 htmldir=$(sharedir)/doc/git-doc
@@ -1286,6 +1286,7 @@ endif
 ifneq (,$X)
 	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), $(RM) '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p';)
 endif
+	./check_bindir 'z$(bindir_SQ)' 'z$(gitexecdir_SQ)' '$(DESTDIR_SQ)$(bindir_SQ)/git-shell$X'
 
 install-doc:
 	$(MAKE) -C Documentation install
