@@ -30,6 +30,11 @@ test -d "$REWRITTEN" && PRESERVE_MERGES=t
 test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
 test -f "$DOTEST"/verbose && VERBOSE=t
 
+GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
+mark the corrected paths with 'git add <paths>', and
+run 'git rebase --continue'"
+export GIT_CHERRY_PICK_HELP
+
 warn () {
 	echo "$*" >&2
 }
