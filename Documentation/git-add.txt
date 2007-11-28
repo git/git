@@ -217,6 +217,8 @@ patch::
        k - do not decide on this hunk now, and view the previous
            undecided hunk
        K - do not decide on this hunk now, and view the previous hunk
+       s - split the current hunk into smaller hunks
+       ? - print help
 +
 After deciding the fate for all hunks, if there is any hunk
 that was chosen, the index is updated with the selected hunks.
