@@ -526,18 +526,12 @@ sub is_sha1 {
 	return $s =~ /^[a-f0-9]{40}$/;
 }
 
-sub get_headref ($$) {
-    my $name    = shift;
-    my $git_dir = shift;
-
-    my $f = "$git_dir/$remote/$name";
-    if (open(my $fh, $f)) {
-	    chomp(my $r = <$fh>);
-	    is_sha1($r) or die "Cannot get head id for $name ($r): $!";
-	    return $r;
-    }
-    die "unable to open $f: $!" unless $! == POSIX::ENOENT;
-    return undef;
+sub get_headref ($) {
+	my $name = shift;
+	my $r = `git rev-parse --verify '$name' 2>/dev/null`;
+	return undef unless $? == 0;
+	chomp $r;
+	return $r;
 }
 
 -d $git_tree
@@ -697,7 +691,8 @@ my (@old,@new,@skipped,%ignorebranch);
 $ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
 
 sub commit {
-	if ($branch eq $opt_o && !$index{branch} && !get_headref($branch, $git_dir)) {
+	if ($branch eq $opt_o && !$index{branch} &&
+		!get_headref("$remote/$branch")) {
 	    # looks like an initial commit
 	    # use the index primed by git-init
 	    $ENV{GIT_INDEX_FILE} = "$git_dir/index";
@@ -721,7 +716,7 @@ sub commit {
 	update_index(@old, @new);
 	@old = @new = ();
 	my $tree = write_tree();
-	my $parent = get_headref($last_branch, $git_dir);
+	my $parent = get_headref("$remote/$last_branch");
 	print "Parent ID " . ($parent ? $parent : "(empty)") . "\n" if $opt_v;
 
 	my @commit_args;
@@ -732,7 +727,7 @@ sub commit {
 	foreach my $rx (@mergerx) {
 		next unless $logmsg =~ $rx && $1;
 		my $mparent = $1 eq 'HEAD' ? $opt_o : $1;
-		if (my $sha1 = get_headref($mparent, $git_dir)) {
+		if (my $sha1 = get_headref("$remote/$mparent")) {
 			push @commit_args, '-p', $mparent;
 			print "Merge parent branch: $mparent\n" if $opt_v;
 		}

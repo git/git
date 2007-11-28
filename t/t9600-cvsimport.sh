@@ -57,6 +57,8 @@ test_expect_success 'import a trivial module' '
 
 '
 
+test_expect_success 'pack refs' 'cd module-git && git gc && cd ..'
+
 test_expect_success 'update cvs module' '
 
 	cd module-cvs &&
