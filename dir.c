@@ -144,11 +144,7 @@ void add_exclude(const char *string, const char *base,
 		x->flags |= EXC_FLAG_NOWILDCARD;
 	if (*string == '*' && no_wildcard(string+1))
 		x->flags |= EXC_FLAG_ENDSWITH;
-	if (which->nr == which->alloc) {
-		which->alloc = alloc_nr(which->alloc);
-		which->excludes = xrealloc(which->excludes,
-					   which->alloc * sizeof(x));
-	}
+	ALLOC_GROW(which->excludes, which->nr + 1, which->alloc);
 	which->excludes[which->nr++] = x;
 }
 
@@ -690,11 +686,10 @@ int read_directory(struct dir_struct *dir, const char *path, const char *base, i
 	return dir->nr;
 }
 
-int
-file_exists(const char *f)
+int file_exists(const char *f)
 {
-  struct stat sb;
-  return stat(f, &sb) == 0;
+	struct stat sb;
+	return stat(f, &sb) == 0;
 }
 
 /*
