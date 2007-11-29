@@ -230,8 +230,14 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			static char buffer[1024 + 1];
 			const char *retval;
 
-			if (!work_tree_env)
-				return set_work_tree(gitdirenv);
+			if (!work_tree_env) {
+				retval = set_work_tree(gitdirenv);
+				/* config may override worktree
+				 * see set_work_tree comment */
+				check_repository_format();
+				return retval;
+			}
+			check_repository_format();
 			retval = get_relative_cwd(buffer, sizeof(buffer) - 1,
 					get_git_work_tree());
 			if (!retval || !*retval)
@@ -271,6 +277,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			if (!work_tree_env)
 				inside_work_tree = 0;
 			setenv(GIT_DIR_ENVIRONMENT, ".", 1);
+			check_repository_format();
 			return NULL;
 		}
 		chdir("..");
@@ -291,6 +298,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	if (!work_tree_env)
 		inside_work_tree = 1;
 	git_work_tree_cfg = xstrndup(cwd, offset);
+	check_repository_format();
 	if (offset == len)
 		return NULL;
 
@@ -351,7 +359,6 @@ int check_repository_format(void)
 const char *setup_git_directory(void)
 {
 	const char *retval = setup_git_directory_gently(NULL);
-	check_repository_format();
 
 	/* If the work tree is not the default one, recompute prefix */
 	if (inside_work_tree < 0) {
