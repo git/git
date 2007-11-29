@@ -7,15 +7,24 @@
 
 static const char prune_usage[] = "git-prune [-n]";
 static int show_only;
+static unsigned long expire;
 
 static int prune_object(char *path, const char *filename, const unsigned char *sha1)
 {
+	const char *fullpath = mkpath("%s/%s", path, filename);
+	if (expire) {
+		struct stat st;
+		if (lstat(fullpath, &st))
+			return error("Could not stat '%s'", fullpath);
+		if (st.st_mtime > expire)
+			return 0;
+	}
 	if (show_only) {
 		enum object_type type = sha1_object_info(sha1, NULL);
 		printf("%s %s\n", sha1_to_hex(sha1),
 		       (type > 0) ? typename(type) : "unknown");
 	} else
-		unlink(mkpath("%s/%s", path, filename));
+		unlink(fullpath);
 	return 0;
 }
 
@@ -83,6 +92,16 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		if (!strcmp(arg, "-n")) {
 			show_only = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--expire")) {
+			if (++i < argc) {
+				expire = approxidate(argv[i]);
+				continue;
+			}
+		}
+		else if (!prefixcmp(arg, "--expire=")) {
+			expire = approxidate(arg + 9);
 			continue;
 		}
 		usage(prune_usage);
