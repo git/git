@@ -550,6 +550,8 @@ sub cmd_rebase {
 		exit 1;
 	}
 	unless ($_local) {
+		# rebase will checkout for us, so no need to do it explicitly
+		$_no_checkout = 'true';
 		$_fetch_all ? $gs->fetch_all : $gs->fetch;
 	}
 	command_noisy(rebase_cmd(), $gs->refname);
