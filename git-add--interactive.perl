@@ -47,7 +47,6 @@ my $status_fmt = '%12s %12s %s';
 my $status_head = sprintf($status_fmt, 'staged', 'unstaged', 'path');
 
 # Returns list of hashes, contents of each of which are:
-# PRINT:	print message
 # VALUE:	pathname
 # BINARY:	is a binary path
 # INDEX:	is index different from HEAD?
@@ -133,8 +132,6 @@ sub list_modified {
 		}
 		push @return, +{
 			VALUE => $_,
-			PRINT => (sprintf $status_fmt,
-				  $it->{INDEX}, $it->{FILE}, $_),
 			%$it,
 		};
 	}
@@ -170,10 +167,82 @@ sub find_unique {
 	return $found;
 }
 
+# inserts string into trie and updates count for each character
+sub update_trie {
+	my ($trie, $string) = @_;
+	foreach (split //, $string) {
+		$trie = $trie->{$_} ||= {COUNT => 0};
+		$trie->{COUNT}++;
+	}
+}
+
+# returns an array of tuples (prefix, remainder)
+sub find_unique_prefixes {
+	my @stuff = @_;
+	my @return = ();
+
+	# any single prefix exceeding the soft limit is omitted
+	# if any prefix exceeds the hard limit all are omitted
+	# 0 indicates no limit
+	my $soft_limit = 0;
+	my $hard_limit = 3;
+
+	# build a trie modelling all possible options
+	my %trie;
+	foreach my $print (@stuff) {
+		if ((ref $print) eq 'ARRAY') {
+			$print = $print->[0];
+		}
+		else {
+			$print = $print->{VALUE};
+		}
+		update_trie(\%trie, $print);
+		push @return, $print;
+	}
+
+	# use the trie to find the unique prefixes
+	for (my $i = 0; $i < @return; $i++) {
+		my $ret = $return[$i];
+		my @letters = split //, $ret;
+		my %search = %trie;
+		my ($prefix, $remainder);
+		my $j;
+		for ($j = 0; $j < @letters; $j++) {
+			my $letter = $letters[$j];
+			if ($search{$letter}{COUNT} == 1) {
+				$prefix = substr $ret, 0, $j + 1;
+				$remainder = substr $ret, $j + 1;
+				last;
+			}
+			else {
+				my $prefix = substr $ret, 0, $j;
+				return ()
+				    if ($hard_limit && $j + 1 > $hard_limit);
+			}
+			%search = %{$search{$letter}};
+		}
+		if ($soft_limit && $j + 1 > $soft_limit) {
+			$prefix = undef;
+			$remainder = $ret;
+		}
+		$return[$i] = [$prefix, $remainder];
+	}
+	return @return;
+}
+
+# given a prefix/remainder tuple return a string with the prefix highlighted
+# for now use square brackets; later might use ANSI colors (underline, bold)
+sub highlight_prefix {
+	my $prefix = shift;
+	my $remainder = shift;
+	return (defined $prefix) ? "[$prefix]$remainder" : $remainder;
+}
+
 sub list_and_choose {
 	my ($opts, @stuff) = @_;
 	my (@chosen, @return);
 	my $i;
+	my @prefixes = find_unique_prefixes(@stuff) unless $opts->{LIST_ONLY};
 
       TOPLOOP:
 	while (1) {
@@ -190,10 +259,18 @@ sub list_and_choose {
 			my $print = $stuff[$i];
 			if (ref $print) {
 				if ((ref $print) eq 'ARRAY') {
-					$print = $print->[0];
+					$print = @prefixes ?
+					    highlight_prefix(@{$prefixes[$i]}) :
+					    $print->[0];
 				}
 				else {
-					$print = $print->{PRINT};
+					my $value = @prefixes ?
+					    highlight_prefix(@{$prefixes[$i]}) :
+					    $print->{VALUE};
+					$print = sprintf($status_fmt,
+					    $print->{INDEX},
+					    $print->{FILE},
+					    $value);
 				}
 			}
 			printf("%s%2d: %s", $chosen, $i+1, $print);
