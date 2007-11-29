@@ -244,28 +244,35 @@ static int find_identical_files(struct file_similarity *src,
 	 * Walk over all the destinations ...
 	 */
 	do {
-		struct diff_filespec *one = dst->filespec;
+		struct diff_filespec *target = dst->filespec;
 		struct file_similarity *p, *best;
-		int i = 100;
+		int i = 100, best_score = -1;
 
 		/*
 		 * .. to find the best source match
 		 */
 		best = NULL;
 		for (p = src; p; p = p->next) {
-			struct diff_filespec *two = p->filespec;
+			int score;
+			struct diff_filespec *source = p->filespec;
 
 			/* False hash collission? */
-			if (hashcmp(one->sha1, two->sha1))
+			if (hashcmp(source->sha1, target->sha1))
 				continue;
 			/* Non-regular files? If so, the modes must match! */
-			if (!S_ISREG(one->mode) || !S_ISREG(two->mode)) {
-				if (one->mode != two->mode)
+			if (!S_ISREG(source->mode) || !S_ISREG(target->mode)) {
+				if (source->mode != target->mode)
 					continue;
 			}
-			best = p;
-			if (basename_same(one, two))
-				break;
+			/* Give higher scores to sources that haven't been used already */
+			score = !source->rename_used;
+			score += basename_same(source, target);
+			if (score > best_score) {
+				best = p;
+				best_score = score;
+				if (score == 2)
+					break;
+			}
 
 			/* Too many identical alternatives? Pick one */
 			if (!--i)
