@@ -14,7 +14,7 @@ trap 'rm -f "$TMP-*"' 0
 ref_stash=refs/stash
 
 no_changes () {
-	git diff-index --quiet --cached HEAD &&
+	git diff-index --quiet --cached HEAD -- &&
 	git diff-files --quiet
 }
 

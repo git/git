@@ -95,7 +95,7 @@ USAGE="[--env-filter <command>] [--tree-filter <command>] \
 . git-sh-setup
 
 git diff-files --quiet &&
-	git diff-index --cached --quiet HEAD ||
+	git diff-index --cached --quiet HEAD -- ||
 	die "Cannot rewrite branch(es) with a dirty working directory."
 
 tempdir=.git-rewrite

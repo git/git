@@ -214,7 +214,7 @@ fi
 
 case "$resolved" in
 '')
-	files=$(git diff-index --cached --name-only HEAD) || exit
+	files=$(git diff-index --cached --name-only HEAD --) || exit
 	if [ "$files" ]; then
 	   echo "Dirty index: cannot apply patches (dirty: $files)" >&2
 	   exit 1
@@ -348,7 +348,7 @@ do
 		case "$resolved$interactive" in
 		tt)
 			# This is used only for interactive view option.
-			git diff-index -p --cached HEAD >"$dotest/patch"
+			git diff-index -p --cached HEAD -- >"$dotest/patch"
 			;;
 		esac
 	esac
@@ -409,7 +409,7 @@ do
 		# trust what the user has in the index file and the
 		# working tree.
 		resolved=
-		git diff-index --quiet --cached HEAD && {
+		git diff-index --quiet --cached HEAD -- && {
 			echo "No changes - did you forget to use 'git add'?"
 			stop_here_user_resolve $this
 		}
@@ -431,7 +431,7 @@ do
 		then
 		    # Applying the patch to an earlier tree and merging the
 		    # result may have produced the same tree as ours.
-		    git diff-index --quiet --cached HEAD && {
+		    git diff-index --quiet --cached HEAD -- && {
 			echo No changes -- Patch already applied.
 			go_next
 			continue
