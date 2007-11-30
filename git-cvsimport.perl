@@ -526,18 +526,12 @@ sub is_sha1 {
 	return $s =~ /^[a-f0-9]{40}$/;
 }
 
-sub get_headref ($$) {
-    my $name    = shift;
-    my $git_dir = shift;
-
-    my $f = "$git_dir/$remote/$name";
-    if (open(my $fh, $f)) {
-	    chomp(my $r = <$fh>);
-	    is_sha1($r) or die "Cannot get head id for $name ($r): $!";
-	    return $r;
-    }
-    die "unable to open $f: $!" unless $! == POSIX::ENOENT;
-    return undef;
+sub get_headref ($) {
+	my $name = shift;
+	my $r = `git rev-parse --verify '$name' 2>/dev/null`;
+	return undef unless $? == 0;
+	chomp $r;
+	return $r;
 }
 
 -d $git_tree
@@ -697,7 +691,8 @@ my (@old,@new,@skipped,%ignorebranch);
 $ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
 
 sub commit {
-	if ($branch eq $opt_o && !$index{branch} && !get_headref($branch, $git_dir)) {
+	if ($branch eq $opt_o && !$index{branch} &&
+		!get_headref("$remote/$branch")) {
 	    # looks like an initial commit
 	    # use the index primed by git-init
 	    $ENV{GIT_INDEX_FILE} = "$git_dir/index";
@@ -721,7 +716,7 @@ sub commit {
 	update_index(@old, @new);
 	@old = @new = ();
 	my $tree = write_tree();
-	my $parent = get_headref($last_branch, $git_dir);
+	my $parent = get_headref("$remote/$last_branch");
 	print "Parent ID " . ($parent ? $parent : "(empty)") . "\n" if $opt_v;
 
 	my @commit_args;
@@ -732,7 +727,7 @@ sub commit {
 	foreach my $rx (@mergerx) {
 		next unless $logmsg =~ $rx && $1;
 		my $mparent = $1 eq 'HEAD' ? $opt_o : $1;
-		if (my $sha1 = get_headref($mparent, $git_dir)) {
+		if (my $sha1 = get_headref("$remote/$mparent")) {
 			push @commit_args, '-p', $mparent;
 			print "Merge parent branch: $mparent\n" if $opt_v;
 		}
@@ -869,29 +864,27 @@ while (<CVS>) {
 				print STDERR "Branch $branch erroneously stems from itself -- changed ancestor to $opt_o\n";
 				$ancestor = $opt_o;
 			}
-			if (-f "$git_dir/$remote/$branch") {
+			if (defined get_headref("$remote/$branch")) {
 				print STDERR "Branch $branch already exists!\n";
 				$state=11;
 				next;
 			}
-			unless (open(H,"$git_dir/$remote/$ancestor")) {
+			my $id = get_headref("$remote/$ancestor");
+			if (!$id) {
 				print STDERR "Branch $ancestor does not exist!\n";
 				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
-			chomp(my $id = <H>);
-			close(H);
-			unless (open(H,"> $git_dir/$remote/$branch")) {
-				print STDERR "Could not create branch $branch: $!\n";
+
+			system(qw(git update-ref -m cvsimport),
+				"$remote/$branch", $id);
+			if($? != 0) {
+				print STDERR "Could not create branch $branch\n";
 				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
-			print H "$id\n"
-				or die "Could not write branch $branch: $!";
-			close(H)
-				or die "Could not write branch $branch: $!";
 		}
 		$last_branch = $branch if $branch ne $last_branch;
 		$state = 9;
@@ -1003,7 +996,7 @@ if ($orig_branch) {
 	$orig_branch = "master";
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
 	system("git-update-ref", "refs/heads/master", "$remote/$opt_o")
-		unless -f "$git_dir/refs/heads/master";
+		unless defined get_headref('refs/heads/master');
 	system("git-symbolic-ref", "$remote/HEAD", "$remote/$opt_o")
 		if ($opt_r && $opt_o ne 'HEAD');
 	system('git-update-ref', 'HEAD', "$orig_branch");
