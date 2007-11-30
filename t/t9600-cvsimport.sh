@@ -98,4 +98,25 @@ test_expect_success 'update git module' '
 
 '
 
+test_expect_success 'update cvs module' '
+
+	cd module-cvs &&
+		echo 1 >tick &&
+		cvs add tick &&
+		cvs commit -m 1
+	cd ..
+
+'
+
+test_expect_success 'cvsimport.module config works' '
+
+	cd module-git &&
+		git config cvsimport.module module &&
+		git cvsimport -a -z0 &&
+		git merge origin &&
+	cd .. &&
+	git diff module-cvs/tick module-git/tick
+
+'
+
 test_done

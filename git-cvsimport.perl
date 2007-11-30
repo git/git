@@ -108,10 +108,6 @@ sub read_repo_config {
             }
 		}
 	}
-    if (@ARGV == 0) {
-        chomp(my $module = `git-repo-config --get cvsimport.module`);
-        push(@ARGV, $module);
-    }
 }
 
 my $opts = "haivmkuo:d:p:r:C:z:s:M:P:A:S:L:";
@@ -119,6 +115,10 @@ read_repo_config($opts);
 getopts($opts) or usage();
 usage if $opt_h;
 
+if (@ARGV == 0) {
+		chomp(my $module = `git-repo-config --get cvsimport.module`);
+		push(@ARGV, $module) if $? == 0;
+}
 @ARGV <= 1 or usage("You can't specify more than one CVS module");
 
 if ($opt_d) {
