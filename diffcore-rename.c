@@ -497,6 +497,19 @@ void diffcore_rename(struct diff_options *options)
 	qsort(mx, num_create * num_src, sizeof(*mx), score_compare);
 	for (i = 0; i < num_create * num_src; i++) {
 		struct diff_rename_dst *dst = &rename_dst[mx[i].dst];
+		struct diff_filespec *src;
+		if (dst->pair)
+			continue; /* already done, either exact or fuzzy. */
+		if (mx[i].score < minimum_score)
+			break; /* there is no more usable pair. */
+		src = rename_src[mx[i].src].one;
+		if (src->rename_used)
+			continue;
+		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
+		rename_count++;
+	}
+	for (i = 0; i < num_create * num_src; i++) {
+		struct diff_rename_dst *dst = &rename_dst[mx[i].dst];
 		if (dst->pair)
 			continue; /* already done, either exact or fuzzy. */
 		if (mx[i].score < minimum_score)
