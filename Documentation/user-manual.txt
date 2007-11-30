@@ -3706,7 +3706,7 @@ should use the `--remove` and `--add` flags respectively.
 NOTE! A `--remove` flag does 'not' mean that subsequent filenames will
 necessarily be removed: if the files still exist in your directory
 structure, the index will be updated with their new status, not
-removed. The only thing `--remove` means is that update-cache will be
+removed. The only thing `--remove` means is that update-index will be
 considering a removed file to be a valid thing, and if the file really
 does not exist any more, it will update the index accordingly.
 
