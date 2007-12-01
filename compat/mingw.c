@@ -38,7 +38,20 @@ int mkstemp(char *template)
 
 int gettimeofday(struct timeval *tv, void *tz)
 {
-	return -1;
+	SYSTEMTIME st;
+	struct tm tm;
+	GetSystemTime(&st);
+	tm.tm_year = st.wYear-1900;
+	tm.tm_mon = st.wMonth-1;
+	tm.tm_mday = st.wDay;
+	tm.tm_hour = st.wHour;
+	tm.tm_min = st.wMinute;
+	tm.tm_sec = st.wSecond;
+	tv->tv_sec = tm_to_time_t(&tm);
+	if (tv->tv_sec < 0)
+		return -1;
+	tv->tv_usec = st.wMilliseconds*1000;
+	return 0;
 }
 
 int poll(struct pollfd *ufds, unsigned int nfds, int timeout)
