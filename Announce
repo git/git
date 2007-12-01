@@ -21,6 +21,7 @@ esac
 
 echo "To: git@vger.kernel.org
 cc: linux-kernel@vger.kernel.org
+bcc: info@lwn.net
 Subject: [ANNOUNCE] GIT $vername
 "
 
