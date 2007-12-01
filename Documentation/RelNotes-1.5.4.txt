@@ -1,6 +1,36 @@
 GIT v1.5.4 Release Notes
 ========================
 
+Deprecation notices
+-------------------
+
+ * Next feature release of git (this change is scheduled for v1.5.5 but
+   it could slip) will by default install dashed form of commands
+   (e.g. "git-commit") outside of users' normal $PATH, and will install
+   only selected commands ("git" itself, and "gitk") in $PATH.  This
+   implies:
+
+   - Using dashed form of git commands (e.g. "git-commit") from the
+     command line has been informally deprecated since early 2006, but
+     now it officially is, and will be removed in the future.  Use
+     dashless form (e.g. "git commit") instead.
+
+   - Using dashed from from your scripts, without first prepending the
+     return value from "git --exec-path" to the scripts' PATH, has been
+     informally deprecated since early 2006, but now it officially is.
+
+   - Use of dashed form with "PATH=$(git --exec-path):$PATH; export
+     PATH" early in your script is not deprecated with this change.
+
+  Users are strongly encouraged to adjust their habits and scripts now
+  to prepare for this.
+
+ * The post-receive hook was introduced in March 2007 to supersede
+   post-update hook, primarily to overcome the command line length
+   limitation of the latter.  Use of post-update hook will be deprecated
+   in future versions of git, perhaps in v1.5.5.
+
+
 Updates since v1.5.3
 --------------------
 
@@ -14,8 +44,15 @@ Updates since v1.5.3
  * git-peek-remote is deprecated, as git-ls-remote was written in C and
    works for all transports.
 
+ * git-cherry-pick made a misguided attempt to repeat the original
+   command line in the generated log message, when told to cherry-pick a
+   commit by naming a tag that points at it.  It does not anymore.
+
  * "progress display" from many commands are a lot nicer to the
    eye.  Transfer commands show throughput data.
+
+ * many commands that pay attention to per-directory .gitignore now do
+   so lazily, which makes the usual case go much faster.
 
  * git-reset is now built-in and its output can be squelched with -q.
 
@@ -110,19 +147,35 @@ Updates since v1.5.3
 
  * "git merge-ours" is built-in.
 
- * "git svn" learned "info" subcommand.
+ * "git svn" learned "info" and "show-externals" subcommands.
+
+ * calling "git svn" from a subdirectory failed read settings from the
+   .git/config.
+
+ * "git svn" learned --use-log-author option, which picks up more
+   descriptive name from From: and Signed-off-by: lines in the commit
+   message.
 
  * "git status" from a subdirectory now shows relative paths
    which makes copy-and-pasting for git-checkout/git-add/git-rm
    easier.
 
+ * "git checkout" from and to detached HEAD leaves a bit more
+   information in the reflog.
+
  * Output processing for '--pretty=format:<user format>' has
    been optimized.
 
- * Rename detection diff family, while detecting exact matches,
-   has been greatly optimized.
+ * Rename detection of diff family, while detecting exact matches, has
+   been greatly optimized.
+
+ * Rename detection of diff family tries to make more naturally looking
+   pairing.  Earlier if more than one identical rename sources were
+   found in the preimage, they were picked pretty much at random.
 
  * Example update and post-receive hooks have been improved.
+
+ * A corrupt ref at the remote site can be removed via "git push".
 
  * In addition there are quite a few internal clean-ups. Notably
 
@@ -149,6 +202,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3.6-950-gda03a58
+O=v1.5.3.7-948-gb52e985
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
