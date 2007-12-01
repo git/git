@@ -4,6 +4,9 @@ test_description='git ls-remote'
 
 . ./test-lib.sh
 
+say "git remote does not work in t/ - skipping"
+test_done
+
 test_expect_success setup '
 
 	>file &&
