@@ -45,6 +45,9 @@ infodir?=$(prefix)/share/info
 MAKEINFO=makeinfo
 INSTALL_INFO=install-info
 DOCBOOK2X_TEXI=docbook2x-texi
+ifndef PERL_PATH
+	PERL_PATH = /usr/bin/perl
+endif
 
 -include ../config.mak.autogen
 -include ../config.mak
@@ -105,7 +108,7 @@ install-info: info
 #
 doc.dep : $(wildcard *.txt) build-docdep.perl
 	$(RM) $@+ $@
-	perl ./build-docdep.perl >$@+
+	$(PERL_PATH) ./build-docdep.perl >$@+
 	mv $@+ $@
 
 -include doc.dep
@@ -124,7 +127,7 @@ $(cmds_txt): cmd-list.made
 
 cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 	$(RM) $@
-	perl ./cmd-list.perl ../command-list.txt
+	$(PERL_PATH) ./cmd-list.perl ../command-list.txt
 	date >$@
 
 git.7 git.html: git.txt
@@ -161,7 +164,7 @@ user-manual.html: user-manual.xml
 git.info: user-manual.xml
 	$(RM) $@ $*.texi $*.texi+
 	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout >$*.texi+
-	perl fix-texi.perl <$*.texi+ >$*.texi
+	$(PERL_PATH) fix-texi.perl <$*.texi+ >$*.texi
 	$(MAKEINFO) --no-split $*.texi
 	$(RM) $*.texi $*.texi+
 
