@@ -496,25 +496,26 @@ ifeq ($(uname_S),IRIX64)
 	BASIC_LDFLAGS += -L/usr/lib32
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-	NO_MMAP=YesPlease
-	NO_PREAD=YesPlease
-	NO_OPENSSL=YesPlease
-	NO_CURL=YesPlease
-	NO_SYMLINK_HEAD=YesPlease
-	NO_IPV6=YesPlease
-	NO_SETENV=YesPlease
-	NO_UNSETENV=YesPlease
-	NO_STRCASESTR=YesPlease
-	NO_STRLCPY=YesPlease
+	NO_MMAP = YesPlease
+	NO_PREAD = YesPlease
+	NO_OPENSSL = YesPlease
+	NO_CURL = YesPlease
+	NO_SYMLINK_HEAD = YesPlease
+	NO_IPV6 = YesPlease
+	NO_SETENV = YesPlease
+	NO_UNSETENV = YesPlease
+	NO_STRCASESTR = YesPlease
+	NO_STRLCPY = YesPlease
 	NO_MEMMEM = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
 	NO_STRTOUMAX = YesPlease
 	NO_MKDTEMP = YesPlease
-	NO_SVN_TESTS=YesPlease
-	NO_PERL_MAKEMAKER=YesPlease
-	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\" -D__USE_MINGW_ACCESS -DNOGDI -I compat
+	NO_SVN_TESTS = YesPlease
+	NO_PERL_MAKEMAKER = YesPlease
+	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat
+	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
 	EXTLIBS += -lws2_32
 	X = .exe
