@@ -514,6 +514,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MKDTEMP = YesPlease
 	NO_SVN_TESTS = YesPlease
 	NO_PERL_MAKEMAKER = YesPlease
+	NO_EXTRA_PROGRAMS = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
@@ -583,6 +584,11 @@ ifdef ZLIB_PATH
 endif
 EXTLIBS += -lz
 
+ifndef NO_EXTRA_PROGRAMS
+	EXTRA_PROGRAMS += \
+		git-daemon$X \
+		git-imap-send$X
+endif
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR

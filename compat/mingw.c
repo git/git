@@ -181,11 +181,7 @@ unsigned int sleep (unsigned int __seconds)
 	Sleep(__seconds*1000);
 	return 0;
 }
-const char *inet_ntop(int af, const void *src,
-                             char *dst, size_t cnt)
-{
-	return NULL;
-}
+
 int mkstemp (char *__template)
 {
 	char *filename = mktemp(__template);
@@ -346,10 +342,6 @@ char *mingw_getcwd(char *pointer, int len)
 				pointer[i] = '/';
 	}
 	return ret;
-}
-
-void openlog(const char *ident, int option, int facility)
-{
 }
 
 /*
@@ -876,7 +868,7 @@ int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 	return len;
 }
 
-struct passwd *mingw_getpwuid(int uid)
+struct passwd *getpwuid(int uid)
 {
 	static char user_name[100];
 	static struct passwd p;
