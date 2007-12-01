@@ -335,6 +335,7 @@ LIB_H += builtin.h
 LIB_H += cache.h
 LIB_H += cache-tree.h
 LIB_H += commit.h
+LIB_H += compat/mingw.h
 LIB_H += csum-file.h
 LIB_H += decorate.h
 LIB_H += delta.h
@@ -710,6 +711,33 @@ ifeq ($(uname_S),HP-UX)
 	NO_UNSETENV = YesPlease
 	NO_HSTRERROR = YesPlease
 	NO_SYS_SELECT_H = YesPlease
+endif
+ifneq (,$(findstring MINGW,$(uname_S)))
+	NO_MMAP = YesPlease
+	NO_PREAD = YesPlease
+	NO_OPENSSL = YesPlease
+	NO_CURL = YesPlease
+	NO_SYMLINK_HEAD = YesPlease
+	NO_IPV6 = YesPlease
+	NO_SETENV = YesPlease
+	NO_UNSETENV = YesPlease
+	NO_STRCASESTR = YesPlease
+	NO_STRLCPY = YesPlease
+	NO_MEMMEM = YesPlease
+	NEEDS_LIBICONV = YesPlease
+	OLD_ICONV = YesPlease
+	NO_C99_FORMAT = YesPlease
+	NO_STRTOUMAX = YesPlease
+	NO_MKDTEMP = YesPlease
+	SNPRINTF_RETURNS_BOGUS = YesPlease
+	NO_SVN_TESTS = YesPlease
+	NO_PERL_MAKEMAKER = YesPlease
+	NO_POSIX_ONLY_PROGRAMS = YesPlease
+	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat
+	COMPAT_CFLAGS += -DSNPRINTF_SIZE_CORR=1
+	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
+	EXTLIBS += -lws2_32
+	X = .exe
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease

@@ -63,17 +63,18 @@
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
-#include <sys/wait.h>
 #include <fnmatch.h>
+#include <assert.h>
+#include <regex.h>
+#include <utime.h>
+#ifndef __MINGW32__
+#include <sys/wait.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <utime.h>
 #ifndef NO_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#include <assert.h>
-#include <regex.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -89,6 +90,10 @@
 #include <grp.h>
 #define _ALL_SOURCE 1
 #endif
+#else 	/* __MINGW32__ */
+/* pull in Windows compatibility stuff */
+#include "compat/mingw.h"
+#endif	/* __MINGW32__ */
 
 #ifndef NO_ICONV
 #include <iconv.h>
