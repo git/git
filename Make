@@ -30,7 +30,7 @@ snap)
 	d="prefix=$HOME/git-snap-$v"
 	;;
 *)
-	d="prefix=$HOME/git-test" ;;
+	d="prefix=$HOME/git-test gitexecdir=\$(prefix)/libexec/git-core" ;;
 esac
 
 : ${O=-O2}
