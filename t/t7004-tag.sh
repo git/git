@@ -339,19 +339,13 @@ test_expect_success \
 '
 
 test_expect_success \
-	'trying to create tags giving many -m or -F options should fail' '
+	'trying to create tags giving both -m or -F options should fail' '
 	echo "message file 1" >msgfile1 &&
 	echo "message file 2" >msgfile2 &&
-	! tag_exists msgtag &&
-	! git-tag -m "message 1" -m "message 2" msgtag &&
-	! tag_exists msgtag &&
-	! git-tag -F msgfile1 -F msgfile2 msgtag &&
 	! tag_exists msgtag &&
 	! git-tag -m "message 1" -F msgfile1 msgtag &&
 	! tag_exists msgtag &&
 	! git-tag -F msgfile1 -m "message 1" msgtag &&
-	! tag_exists msgtag &&
-	! git-tag -F msgfile1 -m "message 1" -F msgfile2 msgtag &&
 	! tag_exists msgtag &&
 	! git-tag -m "message 1" -F msgfile1 -m "message 2" msgtag &&
 	! tag_exists msgtag
@@ -670,6 +664,22 @@ echo '-----BEGIN PGP SIGNATURE-----' >>expect
 test_expect_success 'creating a signed tag with -F - should succeed' '
 	git-tag -s -F - stdin-signed-tag <siginputmsg &&
 	get_tag_msg stdin-signed-tag >actual &&
+	git diff expect actual
+'
+
+cat >fakeeditor <<'EOF'
+#!/bin/sh
+test -n "$1" && exec >"$1"
+echo A signed tag message
+echo from a fake editor.
+EOF
+chmod +x fakeeditor
+get_tag_header implied-annotate $commit commit $time >expect
+./fakeeditor >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success '-s implies annotated tag' '
+	GIT_EDITOR=./fakeeditor git-tag -s implied-annotate &&
+	get_tag_msg implied-annotate >actual &&
 	git diff expect actual
 '
 
