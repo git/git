@@ -61,7 +61,7 @@ continue_merge () {
 	fi
 
 	cmt=`cat "$dotest/current"`
-	if ! git diff-index --quiet HEAD
+	if ! git diff-index --quiet HEAD --
 	then
 		if ! git-commit -C "$cmt"
 		then
@@ -179,6 +179,7 @@ do
 		exit
 		;;
 	--skip)
+		git reset --hard HEAD || exit $?
 		if test -d "$dotest"
 		then
 			git rerere clear
@@ -284,7 +285,7 @@ fi
 
 # The tree must be really really clean.
 git update-index --refresh || exit
-diff=$(git diff-index --cached --name-status -r HEAD)
+diff=$(git diff-index --cached --name-status -r HEAD --)
 case "$diff" in
 ?*)	echo "cannot rebase: your index is not up-to-date"
 	echo "$diff"

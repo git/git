@@ -37,7 +37,7 @@ sq() {
 }
 
 bisect_autostart() {
-	test -d "$GIT_DIR/refs/bisect" || {
+	test -f "$GIT_DIR/BISECT_NAMES" || {
 		echo >&2 'You need to start by "git bisect start"'
 		if test -t 0
 		then
@@ -72,7 +72,7 @@ bisect_start() {
 		;;
 	refs/heads/*)
 		[ -s "$GIT_DIR/head-name" ] && die "won't bisect on seeked tree"
-		echo "$head" | sed 's#^refs/heads/##' >"$GIT_DIR/head-name"
+		echo "${head#refs/heads/}" >"$GIT_DIR/head-name"
 		;;
 	*)
 		die "Bad HEAD - strange symbolic ref"
@@ -83,7 +83,6 @@ bisect_start() {
 	# Get rid of any old bisect state
 	#
 	bisect_clean_state
-	mkdir "$GIT_DIR/refs/bisect"
 
 	#
 	# Check for one bad and then some good revisions.
@@ -131,7 +130,7 @@ bisect_write() {
 		good|skip)	tag="$state"-"$rev" ;;
 		*)		die "Bad bisect_write argument: $state" ;;
 	esac
-	echo "$rev" >"$GIT_DIR/refs/bisect/$tag"
+	git update-ref "refs/bisect/$tag" "$rev"
 	echo "# $state: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 	test -z "$nolog" && echo "git-bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
 }
@@ -192,7 +191,7 @@ bisect_next_check() {
 		;;
 	*)
 		THEN=''
-		test -d "$GIT_DIR/refs/bisect" || {
+		test -f "$GIT_DIR/BISECT_NAMES" || {
 			echo >&2 'You need to start by "git bisect start".'
 			THEN='then '
 		}
@@ -276,8 +275,7 @@ exit_if_skipped_commits () {
 	if expr "$_tried" : ".*[|].*" > /dev/null ; then
 		echo "There are only 'skip'ped commit left to test."
 		echo "The first bad commit could be any of:"
-		echo "$_tried" | sed -e 's/[|]/\
-/g'
+		echo "$_tried" | tr '[|]' '[\012]'
 		echo "We cannot bisect more!"
 		exit 2
 	fi
@@ -318,20 +316,23 @@ bisect_next() {
 	exit_if_skipped_commits "$bisect_rev"
 
 	echo "Bisecting: $bisect_nr revisions left to test after this"
-	echo "$bisect_rev" >"$GIT_DIR/refs/heads/new-bisect"
+	git branch -f new-bisect "$bisect_rev"
 	git checkout -q new-bisect || exit
-	mv "$GIT_DIR/refs/heads/new-bisect" "$GIT_DIR/refs/heads/bisect" &&
-	GIT_DIR="$GIT_DIR" git symbolic-ref HEAD refs/heads/bisect
+	git branch -M new-bisect bisect
 	git show-branch "$bisect_rev"
 }
 
 bisect_visualize() {
 	bisect_next_check fail
-	not=`cd "$GIT_DIR/refs" && echo bisect/good-*`
-	eval gitk bisect/bad --not $not -- $(cat "$GIT_DIR/BISECT_NAMES")
+	not=$(git for-each-ref --format='%(refname)' "refs/bisect/good-*")
+	eval gitk refs/bisect/bad --not $not -- $(cat "$GIT_DIR/BISECT_NAMES")
 }
 
 bisect_reset() {
+	test -f "$GIT_DIR/BISECT_NAMES" || {
+		echo "We are not bisecting."
+		return
+	}
 	case "$#" in
 	0) if [ -s "$GIT_DIR/head-name" ]; then
 	       branch=`cat "$GIT_DIR/head-name"`
@@ -351,8 +352,12 @@ bisect_reset() {
 }
 
 bisect_clean_state() {
-	rm -fr "$GIT_DIR/refs/bisect"
-	rm -f "$GIT_DIR/refs/heads/bisect"
+	# There may be some refs packed during bisection.
+	git for-each-ref --format='%(refname) %(objectname)' refs/bisect/\* refs/heads/bisect |
+	while read ref hash
+	do
+		git update-ref -d $ref $hash
+	done
 	rm -f "$GIT_DIR/BISECT_LOG"
 	rm -f "$GIT_DIR/BISECT_NAMES"
 	rm -f "$GIT_DIR/BISECT_RUN"

@@ -71,11 +71,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 	int remove;
 	int baselen = strlen(base);
 	int src_size = len + 1;
-	int i_stk = i_stk;
 	int retval = 0;
-
-	if (o->dir)
-		i_stk = push_exclude_per_directory(o->dir, base, strlen(base));
 
 	do {
 		int i;
@@ -255,8 +251,6 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 	} while (1);
 
  leave_directory:
-	if (o->dir)
-		pop_exclude_per_directory(o->dir, i_stk);
 	return retval;
 }
 

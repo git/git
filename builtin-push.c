@@ -10,7 +10,7 @@
 #include "parse-options.h"
 
 static const char * const push_usage[] = {
-	"git-push [--all] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]",
+	"git-push [--all | --mirror] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]",
 	NULL,
 };
 
@@ -91,6 +91,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 {
 	int flags = 0;
 	int all = 0;
+	int mirror = 0;
 	int dry_run = 0;
 	int force = 0;
 	int tags = 0;
@@ -100,6 +101,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT__VERBOSE(&verbose),
 		OPT_STRING( 0 , "repo", &repo, "repository", "repository"),
 		OPT_BOOLEAN( 0 , "all", &all, "push all refs"),
+		OPT_BOOLEAN( 0 , "mirror", &mirror, "mirror all refs"),
 		OPT_BOOLEAN( 0 , "tags", &tags, "push tags"),
 		OPT_BOOLEAN( 0 , "dry-run", &dry_run, "dry run"),
 		OPT_BOOLEAN('f', "force", &force, "force updates"),
@@ -121,13 +123,21 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		add_refspec("refs/tags/*");
 	if (all)
 		flags |= TRANSPORT_PUSH_ALL;
+	if (mirror)
+		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
 
 	if (argc > 0) {
 		repo = argv[0];
 		set_refspecs(argv + 1, argc - 1);
 	}
-	if ((flags & TRANSPORT_PUSH_ALL) && refspec)
+	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) && refspec)
 		usage_with_options(push_usage, options);
+
+	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) ==
+				(TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) {
+		error("--all and --mirror are incompatible");
+		usage_with_options(push_usage, options);
+	}
 
 	return do_push(repo, flags);
 }

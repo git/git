@@ -94,7 +94,7 @@ static char *resolve_symlink(char *p, size_t s)
 			return p;
 		}
 
-		if (link[0] == '/') {
+		if (is_absolute_path(link)) {
 			/* absolute path simply replaces p */
 			if (link_len < s)
 				strcpy(p, link);

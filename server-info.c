@@ -35,7 +35,7 @@ static int update_info_refs(int force)
 	safe_create_leading_directories(path0);
 	info_ref_fp = fopen(path1, "w");
 	if (!info_ref_fp)
-		return error("unable to update %s", path0);
+		return error("unable to update %s", path1);
 	for_each_ref(add_info_ref, NULL);
 	fclose(info_ref_fp);
 	adjust_shared_perm(path1);

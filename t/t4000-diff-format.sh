@@ -16,7 +16,7 @@ cat path0 >path1
 chmod +x path1
 
 test_expect_success \
-    'update-cache --add two files with and without +x.' \
+    'update-index --add two files with and without +x.' \
     'git update-index --add path0 path1'
 
 mv path0 path0-

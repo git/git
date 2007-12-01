@@ -200,12 +200,14 @@ static const char *update(struct command *cmd)
 	}
 
 	if (is_null_sha1(new_sha1)) {
+		if (!parse_object(old_sha1)) {
+			warning ("Allowing deletion of corrupt ref.");
+			old_sha1 = NULL;
+		}
 		if (delete_ref(name, old_sha1)) {
 			error("failed to delete %s", name);
 			return "failed to delete";
 		}
-		fprintf(stderr, "%s: %s -> deleted\n", name,
-			sha1_to_hex(old_sha1));
 		return NULL; /* good */
 	}
 	else {
@@ -217,8 +219,6 @@ static const char *update(struct command *cmd)
 		if (write_ref_sha1(lock, new_sha1, "push")) {
 			return "failed to write"; /* error() already called */
 		}
-		fprintf(stderr, "%s: %s -> %s\n", name,
-			sha1_to_hex(old_sha1), sha1_to_hex(new_sha1));
 		return NULL; /* good */
 	}
 }

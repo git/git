@@ -485,11 +485,23 @@ struct ref *alloc_ref(unsigned namelen)
 	return ret;
 }
 
-static struct ref *copy_ref(struct ref *ref)
+static struct ref *copy_ref(const struct ref *ref)
 {
 	struct ref *ret = xmalloc(sizeof(struct ref) + strlen(ref->name) + 1);
 	memcpy(ret, ref, sizeof(struct ref) + strlen(ref->name) + 1);
 	ret->next = NULL;
+	return ret;
+}
+
+struct ref *copy_ref_list(const struct ref *ref)
+{
+	struct ref *ret = NULL;
+	struct ref **tail = &ret;
+	while (ref) {
+		*tail = copy_ref(ref);
+		ref = ref->next;
+		tail = &((*tail)->next);
+	}
 	return ret;
 }
 
@@ -684,14 +696,6 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 	return -errs;
 }
 
-static struct ref *find_ref_by_name(struct ref *list, const char *name)
-{
-	for ( ; list; list = list->next)
-		if (!strcmp(list->name, name))
-			return list;
-	return NULL;
-}
-
 static const struct refspec *check_pattern_match(const struct refspec *rs,
 						 int rs_nr,
 						 const struct ref *src)
@@ -710,10 +714,12 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
  * without thinking.
  */
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
-	       int nr_refspec, char **refspec, int all)
+	       int nr_refspec, const char **refspec, int flags)
 {
 	struct refspec *rs =
 		parse_ref_spec(nr_refspec, (const char **) refspec);
+	int send_all = flags & MATCH_REFS_ALL;
+	int send_mirror = flags & MATCH_REFS_MIRROR;
 
 	if (match_explicit_refs(src, dst, dst_tail, rs, nr_refspec))
 		return -1;
@@ -730,7 +736,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 			if (!pat)
 				continue;
 		}
-		else if (prefixcmp(src->name, "refs/heads/"))
+		else if (!send_mirror && prefixcmp(src->name, "refs/heads/"))
 			/*
 			 * "matching refs"; traditionally we pushed everything
 			 * including refs outside refs/heads/ hierarchy, but
@@ -751,10 +757,13 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		if (dst_peer && dst_peer->peer_ref)
 			/* We're already sending something to this ref. */
 			goto free_name;
-		if (!dst_peer && !nr_refspec && !all)
-			/* Remote doesn't have it, and we have no
+
+		if (!dst_peer && !nr_refspec && !(send_all || send_mirror))
+			/*
+			 * Remote doesn't have it, and we have no
 			 * explicit pattern, and we don't have
-			 * --all. */
+			 * --all nor --mirror.
+			 */
 			goto free_name;
 		if (!dst_peer) {
 			/* Create a new one and link it */
@@ -810,10 +819,10 @@ int branch_merge_matches(struct branch *branch,
 	return ref_matches_abbrev(branch->merge[i]->src, refname);
 }
 
-static struct ref *get_expanded_map(struct ref *remote_refs,
+static struct ref *get_expanded_map(const struct ref *remote_refs,
 				    const struct refspec *refspec)
 {
-	struct ref *ref;
+	const struct ref *ref;
 	struct ref *ret = NULL;
 	struct ref **tail = &ret;
 
@@ -824,7 +833,7 @@ static struct ref *get_expanded_map(struct ref *remote_refs,
 		if (strchr(ref->name, '^'))
 			continue; /* a dereference item */
 		if (!prefixcmp(ref->name, refspec->src)) {
-			char *match;
+			const char *match;
 			struct ref *cpy = copy_ref(ref);
 			match = ref->name + remote_prefix_len;
 
@@ -842,9 +851,9 @@ static struct ref *get_expanded_map(struct ref *remote_refs,
 	return ret;
 }
 
-static struct ref *find_ref_by_name_abbrev(struct ref *refs, const char *name)
+static const struct ref *find_ref_by_name_abbrev(const struct ref *refs, const char *name)
 {
-	struct ref *ref;
+	const struct ref *ref;
 	for (ref = refs; ref; ref = ref->next) {
 		if (ref_matches_abbrev(name, ref->name))
 			return ref;
@@ -852,9 +861,9 @@ static struct ref *find_ref_by_name_abbrev(struct ref *refs, const char *name)
 	return NULL;
 }
 
-struct ref *get_remote_ref(struct ref *remote_refs, const char *name)
+struct ref *get_remote_ref(const struct ref *remote_refs, const char *name)
 {
-	struct ref *ref = find_ref_by_name_abbrev(remote_refs, name);
+	const struct ref *ref = find_ref_by_name_abbrev(remote_refs, name);
 
 	if (!ref)
 		return NULL;
@@ -887,7 +896,7 @@ static struct ref *get_local_ref(const char *name)
 	return ret;
 }
 
-int get_fetch_map(struct ref *remote_refs,
+int get_fetch_map(const struct ref *remote_refs,
 		  const struct refspec *refspec,
 		  struct ref ***tail,
 		  int missing_ok)

@@ -78,7 +78,7 @@ static struct curl_slist *no_pragma_header;
 static struct curl_slist *default_headers;
 
 static int push_verbosely;
-static int push_all;
+static int push_all = MATCH_REFS_NONE;
 static int force_all;
 static int dry_run;
 
@@ -433,7 +433,7 @@ static void start_fetch_packed(struct transfer_request *request)
 	packfile = fopen(request->tmpfile, "a");
 	if (!packfile) {
 		fprintf(stderr, "Unable to open local file %s for pack",
-			filename);
+			request->tmpfile);
 		remote->can_update_info_refs = 0;
 		free(url);
 		return;
@@ -941,7 +941,7 @@ static int fetch_index(unsigned char *sha1)
 	indexfile = fopen(tmpfile, "a");
 	if (!indexfile)
 		return error("Unable to open local file %s for pack index",
-			     filename);
+			     tmpfile);
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -2300,7 +2300,7 @@ int main(int argc, char **argv)
 
 		if (*arg == '-') {
 			if (!strcmp(arg, "--all")) {
-				push_all = 1;
+				push_all = MATCH_REFS_ALL;
 				continue;
 			}
 			if (!strcmp(arg, "--force")) {
@@ -2393,7 +2393,7 @@ int main(int argc, char **argv)
 	if (!remote_tail)
 		remote_tail = &remote_refs;
 	if (match_refs(local_refs, remote_refs, &remote_tail,
-		       nr_refspec, refspec, push_all))
+		       nr_refspec, (const char **) refspec, push_all))
 		return -1;
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n");

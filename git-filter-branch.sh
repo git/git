@@ -8,6 +8,9 @@
 # a new branch. You can specify a number of filters to modify the commits,
 # files and trees.
 
+# The following functions will also be available in the commit filter:
+
+functions=$(cat << \EOF
 warn () {
         echo "$*" >&2
 }
@@ -46,6 +49,10 @@ die()
 	echo "$*" >&2
 	exit 1
 }
+EOF
+)
+
+eval "$functions"
 
 # When piped a commit, output a script to set the ident of either
 # "author" or "committer
@@ -80,11 +87,6 @@ set_ident () {
 	echo "[ -n \"\$GIT_${uid}_NAME\" ] || export GIT_${uid}_NAME=\"\${GIT_${uid}_EMAIL%%@*}\""
 }
 
-# This script can be sourced by the commit filter to get the functions
-test "a$SOURCE_FUNCTIONS" = a1 && return
-this_script="$(cd "$(dirname "$0")"; pwd)"/$(basename "$0")
-export this_script
-
 USAGE="[--env-filter <command>] [--tree-filter <command>] \
 [--index-filter <command>] [--parent-filter <command>] \
 [--msg-filter <command>] [--commit-filter <command>] \
@@ -96,7 +98,7 @@ OPTIONS_SPEC=
 . git-sh-setup
 
 git diff-files --quiet &&
-	git diff-index --cached --quiet HEAD ||
+	git diff-index --cached --quiet HEAD -- ||
 	die "Cannot rewrite branch(es) with a dirty working directory."
 
 tempdir=.git-rewrite
@@ -156,7 +158,7 @@ do
 		filter_msg="$OPTARG"
 		;;
 	--commit-filter)
-		filter_commit='SOURCE_FUNCTIONS=1 . "$this_script";'" $OPTARG"
+		filter_commit="$functions; $OPTARG"
 		;;
 	--tag-name-filter)
 		filter_tag_name="$OPTARG"
