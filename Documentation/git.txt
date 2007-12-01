@@ -46,6 +46,7 @@ Documentation for older releases are available here:
 * link:v1.5.3/git.html[documentation for release 1.5.3]
 
 * release notes for
+  link:RelNotes-1.5.3.7.txt[1.5.3.7],
   link:RelNotes-1.5.3.6.txt[1.5.3.6],
   link:RelNotes-1.5.3.5.txt[1.5.3.5],
   link:RelNotes-1.5.3.4.txt[1.5.3.4],
