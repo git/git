@@ -184,8 +184,29 @@ struct ref_item {
 struct ref_list {
 	int index, alloc, maxwidth;
 	struct ref_item *list;
+	struct commit_list *with_commit;
 	int kinds;
 };
+
+static int has_commit(const unsigned char *sha1, struct commit_list *with_commit)
+{
+	struct commit *commit;
+
+	if (!with_commit)
+		return 1;
+	commit = lookup_commit_reference_gently(sha1, 1);
+	if (!commit)
+		return 0;
+	while (with_commit) {
+		struct commit *other;
+
+		other = with_commit->item;
+		with_commit = with_commit->next;
+		if (in_merge_bases(other, &commit, 1))
+			return 1;
+	}
+	return 0;
+}
 
 static int append_ref(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
 {
@@ -205,6 +226,10 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 		kind = REF_TAG;
 		refname += 10;
 	}
+
+	/* Filter with with_commit if specified */
+	if (!has_commit(sha1, ref_list->with_commit))
+		return 0;
 
 	/* Don't add types the caller doesn't want */
 	if ((kind & ref_list->kinds) == 0)
@@ -296,19 +321,20 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	}
 }
 
-static void print_ref_list(int kinds, int detached, int verbose, int abbrev)
+static void print_ref_list(int kinds, int detached, int verbose, int abbrev, struct commit_list *with_commit)
 {
 	int i;
 	struct ref_list ref_list;
 
 	memset(&ref_list, 0, sizeof(ref_list));
 	ref_list.kinds = kinds;
+	ref_list.with_commit = with_commit;
 	for_each_ref(append_ref, &ref_list);
 
 	qsort(ref_list.list, ref_list.index, sizeof(struct ref_item), ref_cmp);
 
 	detached = (detached && (kinds & REF_LOCAL_BRANCH));
-	if (detached) {
+	if (detached && has_commit(head_sha1, with_commit)) {
 		struct ref_item item;
 		item.name = xstrdup("(no branch)");
 		item.kind = REF_LOCAL_BRANCH;
@@ -505,12 +531,29 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 		die("Branch is renamed, but update of config-file failed");
 }
 
+static int opt_parse_with_commit(const struct option *opt, const char *arg, int unset)
+{
+	unsigned char sha1[20];
+	struct commit *commit;
+
+	if (!arg)
+		return -1;
+	if (get_sha1(arg, sha1))
+		die("malformed object name %s", arg);
+	commit = lookup_commit_reference(sha1);
+	if (!commit)
+		die("no such commit %s", arg);
+	commit_list_insert(commit, opt->value);
+	return 0;
+}
+
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, rename = 0, force_create = 0;
 	int verbose = 0, abbrev = DEFAULT_ABBREV, detached = 0;
 	int reflog = 0, track;
 	int kinds = REF_LOCAL_BRANCH;
+	struct commit_list *with_commit = NULL;
 
 	struct option options[] = {
 		OPT_GROUP("Generic options"),
@@ -519,6 +562,14 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
 		OPT_SET_INT('r', NULL,     &kinds, "act on remote-tracking branches",
 			REF_REMOTE_BRANCH),
+		OPT_CALLBACK(0, "contains", &with_commit, "commit",
+			     "print only branches that contain the commit",
+			     opt_parse_with_commit),
+		{
+			OPTION_CALLBACK, 0, "with", &with_commit, "commit",
+			"print only branches that contain the commit",
+			PARSE_OPT_HIDDEN, opt_parse_with_commit,
+		},
 		OPT__ABBREV(&abbrev),
 
 		OPT_GROUP("Specific git-branch actions:"),
@@ -554,7 +605,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (delete)
 		return delete_branches(argc, argv, delete > 1, kinds);
 	else if (argc == 0)
-		print_ref_list(kinds, detached, verbose, abbrev);
+		print_ref_list(kinds, detached, verbose, abbrev, with_commit);
 	else if (rename && (argc == 1))
 		rename_branch(head, argv[0], rename > 1);
 	else if (rename && (argc == 2))
