@@ -12,19 +12,6 @@ die () {
     exit 1
 }
 
-# Fix some commands on Windows
-case $(uname -s) in
-*MINGW*)
-	# Windows has its own (incompatible) sort and find
-	sort () {
-		/usr/bin/sort "$@"
-	}
-	find () {
-		/usr/bin/find "$@"
-	}
-	;;
-esac
-
 exec=
 while test $# != 0
 do

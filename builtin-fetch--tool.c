@@ -511,10 +511,14 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 	if (!strcmp("append-fetch-head", argv[1])) {
 		int result;
 		FILE *fp;
+		char *filename;
 
 		if (argc != 8)
 			return error("append-fetch-head takes 6 args");
-		fp = fopen(git_path("FETCH_HEAD"), "a");
+		filename = git_path("FETCH_HEAD");
+		fp = fopen(filename, "a");
+		if (!fp)
+			return error("cannot open %s: %s\n", filename, strerror(errno));
 		result = append_fetch_head(fp, argv[2], argv[3],
 					   argv[4], argv[5],
 					   argv[6], !!argv[7][0],
@@ -525,10 +529,14 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 	if (!strcmp("native-store", argv[1])) {
 		int result;
 		FILE *fp;
+		char *filename;
 
 		if (argc != 5)
 			return error("fetch-native-store takes 3 args");
-		fp = fopen(git_path("FETCH_HEAD"), "a");
+		filename = git_path("FETCH_HEAD");
+		fp = fopen(filename, "a");
+		if (!fp)
+			return error("cannot open %s: %s\n", filename, strerror(errno));
 		result = fetch_native_store(fp, argv[2], argv[3], argv[4],
 					    verbose, force);
 		fclose(fp);

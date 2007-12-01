@@ -6,6 +6,7 @@
 #endif
 #include "pkt-line.h"
 #include "fetch-pack.h"
+#include "send-pack.h"
 #include "walker.h"
 #include "bundle.h"
 #include "dir.h"
@@ -141,7 +142,7 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 	}
 }
 
-static struct ref *get_refs_via_rsync(const struct transport *transport)
+static struct ref *get_refs_via_rsync(struct transport *transport)
 {
 	struct strbuf buf = STRBUF_INIT, temp_dir = STRBUF_INIT;
 	struct ref dummy, *tail = &dummy;
@@ -283,6 +284,9 @@ static int rsync_transport_push(struct transport *transport,
 	struct child_process rsync;
 	const char *args[10];
 
+	if (flags & TRANSPORT_PUSH_MIRROR)
+		return error("rsync transport does not support mirror mode");
+
 	/* first push the objects */
 
 	strbuf_addstr(&buf, transport->url);
@@ -388,6 +392,9 @@ static int curl_transport_push(struct transport *transport, int refspec_nr, cons
 	int argc;
 	int err;
 
+	if (flags & TRANSPORT_PUSH_MIRROR)
+		return error("http transport does not support mirror mode");
+
 	argv = xmalloc((refspec_nr + 12) * sizeof(char *));
 	argv[0] = "http-push";
 	argc = 1;
@@ -432,7 +439,7 @@ static int missing__target(int code, int result)
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
-static struct ref *get_refs_via_curl(const struct transport *transport)
+static struct ref *get_refs_via_curl(struct transport *transport)
 {
 	struct buffer buffer;
 	char *data, *start, *mid;
@@ -529,7 +536,7 @@ struct bundle_transport_data {
 	struct bundle_header header;
 };
 
-static struct ref *get_refs_from_bundle(const struct transport *transport)
+static struct ref *get_refs_from_bundle(struct transport *transport)
 {
 	struct bundle_transport_data *data = transport->data;
 	struct ref *result = NULL;
@@ -601,7 +608,7 @@ static int set_git_option(struct transport *connection,
 	return 1;
 }
 
-static struct ref *get_refs_via_connect(const struct transport *transport)
+static struct ref *get_refs_via_connect(struct transport *transport)
 {
 	struct git_transport_data *data = transport->data;
 	struct ref *refs;
@@ -654,50 +661,17 @@ static int fetch_refs_via_pack(struct transport *transport,
 static int git_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags)
 {
 	struct git_transport_data *data = transport->data;
-	const char **argv;
-	char *rem;
-	int argc;
-	int err;
+	struct send_pack_args args;
 
-	argv = xmalloc((refspec_nr + 12) * sizeof(char *));
-	argv[0] = "send-pack";
-	argc = 1;
-	if (flags & TRANSPORT_PUSH_ALL)
-		argv[argc++] = "--all";
-	if (flags & TRANSPORT_PUSH_FORCE)
-		argv[argc++] = "--force";
-	if (flags & TRANSPORT_PUSH_DRY_RUN)
-		argv[argc++] = "--dry-run";
-	if (flags & TRANSPORT_PUSH_VERBOSE)
-		argv[argc++] = "--verbose";
-	if (data->receivepack) {
-		char *rp = xmalloc(strlen(data->receivepack) + 16);
-		sprintf(rp, "--receive-pack=%s", data->receivepack);
-		argv[argc++] = rp;
-	}
-	if (data->thin)
-		argv[argc++] = "--thin";
-	rem = xmalloc(strlen(transport->remote->name) + 10);
-	sprintf(rem, "--remote=%s", transport->remote->name);
-	argv[argc++] = rem;
-	argv[argc++] = transport->url;
-	while (refspec_nr--)
-		argv[argc++] = *refspec++;
-	argv[argc] = NULL;
-	err = run_command_v_opt(argv, RUN_GIT_CMD);
-	switch (err) {
-	case -ERR_RUN_COMMAND_FORK:
-		error("unable to fork for %s", argv[0]);
-	case -ERR_RUN_COMMAND_EXEC:
-		error("unable to exec %s", argv[0]);
-		break;
-	case -ERR_RUN_COMMAND_WAITPID:
-	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
-	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
-		error("%s died with strange error", argv[0]);
-	}
-	return !!err;
+	args.receivepack = data->receivepack;
+	args.send_all = !!(flags & TRANSPORT_PUSH_ALL);
+	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
+	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
+	args.use_thin_pack = data->thin;
+	args.verbose = !!(flags & TRANSPORT_PUSH_VERBOSE);
+	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
+
+	return send_pack(&args, transport->url, transport->remote, refspec_nr, refspec);
 }
 
 static int disconnect_git(struct transport *transport)
@@ -789,7 +763,7 @@ int transport_push(struct transport *transport,
 	return transport->push(transport, refspec_nr, refspec, flags);
 }
 
-struct ref *transport_get_remote_refs(struct transport *transport)
+const struct ref *transport_get_remote_refs(struct transport *transport)
 {
 	if (!transport->remote_refs)
 		transport->remote_refs = transport->get_refs_list(transport);

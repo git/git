@@ -114,7 +114,7 @@ test_expect_success 'use index-filter to move into a subdirectory' '
 
 test_expect_success 'stops when msg filter fails' '
 	old=$(git rev-parse HEAD) &&
-	! git-filter-branch -f --msg-filter false &&
+	! git-filter-branch -f --msg-filter false HEAD &&
 	test $old = $(git rev-parse HEAD) &&
 	rm -rf .git-rewrite
 '

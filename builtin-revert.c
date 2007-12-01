@@ -30,7 +30,7 @@ static const char * const cherry_pick_usage[] = {
 	NULL
 };
 
-static int edit, no_replay, no_commit, needed_deref, mainline;
+static int edit, no_replay, no_commit, mainline;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
 
@@ -66,7 +66,6 @@ static void parse_args(int argc, const char **argv)
 	if (commit->object.type == OBJ_TAG) {
 		commit = (struct commit *)
 			deref_tag((struct object *)commit, arg, strlen(arg));
-		needed_deref = 1;
 	}
 	if (commit->object.type != OBJ_COMMIT)
 		die ("'%s' does not point to a commit", arg);
@@ -332,17 +331,6 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			add_to_msg(sha1_to_hex(commit->object.sha1));
 			add_to_msg(")\n");
 		}
-	}
-	if (needed_deref) {
-		add_to_msg("(original 'git ");
-		add_to_msg(me);
-		add_to_msg("' arguments: ");
-		for (i = 0; i < argc; i++) {
-			if (i)
-				add_to_msg(" ");
-			add_to_msg(argv[i]);
-		}
-		add_to_msg(")\n");
 	}
 
 	if (merge_recursive(sha1_to_hex(base->object.sha1),

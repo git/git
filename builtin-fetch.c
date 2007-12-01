@@ -31,7 +31,7 @@ static void unlock_pack_on_signal(int signo)
 }
 
 static void add_merge_config(struct ref **head,
-		           struct ref *remote_refs,
+			   const struct ref *remote_refs,
 		           struct branch *branch,
 		           struct ref ***tail)
 {
@@ -79,7 +79,7 @@ static struct ref *get_ref_map(struct transport *transport,
 	struct ref *ref_map = NULL;
 	struct ref **tail = &ref_map;
 
-	struct ref *remote_refs = transport_get_remote_refs(transport);
+	const struct ref *remote_refs = transport_get_remote_refs(transport);
 
 	if (ref_count || tags) {
 		for (i = 0; i < ref_count; i++) {
@@ -255,7 +255,7 @@ static int update_local_ref(struct ref *ref,
 	}
 }
 
-static void store_updated_refs(const char *url, struct ref *ref_map)
+static int store_updated_refs(const char *url, struct ref *ref_map)
 {
 	FILE *fp;
 	struct commit *commit;
@@ -263,8 +263,11 @@ static void store_updated_refs(const char *url, struct ref *ref_map)
 	char note[1024];
 	const char *what, *kind;
 	struct ref *rm;
+	char *filename = git_path("FETCH_HEAD");
 
-	fp = fopen(git_path("FETCH_HEAD"), "a");
+	fp = fopen(filename, "a");
+	if (!fp)
+		return error("cannot open %s: %s\n", filename, strerror(errno));
 	for (rm = ref_map; rm; rm = rm->next) {
 		struct ref *ref = NULL;
 
@@ -335,6 +338,7 @@ static void store_updated_refs(const char *url, struct ref *ref_map)
 		}
 	}
 	fclose(fp);
+	return 0;
 }
 
 /*
@@ -404,7 +408,7 @@ static int fetch_refs(struct transport *transport, struct ref *ref_map)
 	if (ret)
 		ret = transport_fetch_refs(transport, ref_map);
 	if (!ret)
-		store_updated_refs(transport->url, ref_map);
+		ret |= store_updated_refs(transport->url, ref_map);
 	transport_unlock_pack(transport);
 	return ret;
 }
@@ -424,12 +428,12 @@ static struct ref *find_non_local_tags(struct transport *transport,
 	struct path_list new_refs = { NULL, 0, 0, 1 };
 	char *ref_name;
 	int ref_name_len;
-	unsigned char *ref_sha1;
-	struct ref *tag_ref;
+	const unsigned char *ref_sha1;
+	const struct ref *tag_ref;
 	struct ref *rm = NULL;
 	struct ref *ref_map = NULL;
 	struct ref **tail = &ref_map;
-	struct ref *ref;
+	const struct ref *ref;
 
 	for_each_ref(add_existing, &existing_refs);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
@@ -487,8 +491,13 @@ static int do_fetch(struct transport *transport,
 		die("Don't know how to fetch from %s", transport->url);
 
 	/* if not appending, truncate FETCH_HEAD */
-	if (!append)
-		fclose(fopen(git_path("FETCH_HEAD"), "w"));
+	if (!append) {
+		char *filename = git_path("FETCH_HEAD");
+		FILE *fp = fopen(filename, "w");
+		if (!fp)
+			return error("cannot open %s: %s\n", filename, strerror(errno));
+		fclose(fp);
+	}
 
 	ref_map = get_ref_map(transport, refs, ref_count, tags, &autotags);
 

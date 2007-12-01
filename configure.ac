@@ -415,7 +415,7 @@ GIT_PARSE_WITH(iconv))
 # times (my ext3 doesn't).
 #
 # Define USE_STDEV below if you want git to care about the underlying device
-# change being considered an inode change from the update-cache perspective.
+# change being considered an inode change from the update-index perspective.
 
 
 ## Output files

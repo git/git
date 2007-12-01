@@ -27,7 +27,7 @@ Line 15
 '
 
 test_expect_success \
-    'update-cache --add a file.' \
+    'update-index --add a file.' \
     'git update-index --add path0'
 
 test_expect_success \

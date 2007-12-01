@@ -53,7 +53,7 @@ require_clean_work_tree () {
 	git rev-parse --verify HEAD > /dev/null &&
 	git update-index --refresh &&
 	git diff-files --quiet &&
-	git diff-index --cached --quiet HEAD ||
+	git diff-index --cached --quiet HEAD -- ||
 	die "Working tree is dirty"
 }
 
@@ -356,7 +356,7 @@ do
 		git rev-parse --verify HEAD > /dev/null &&
 		git update-index --refresh &&
 		git diff-files --quiet &&
-		! git diff-index --cached --quiet HEAD &&
+		! git diff-index --cached --quiet HEAD -- &&
 		. "$DOTEST"/author-script && {
 			test ! -f "$DOTEST"/amend || git reset --soft HEAD^
 		} &&
