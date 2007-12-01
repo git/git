@@ -119,7 +119,7 @@ test_expect_success \
     'compare_diff_raw expected current'
 
 test_expect_success \
-    'run diff with -B' \
+    'run diff with -B -M' \
     'git diff-index -B -M "$tree" >current'
 
 # This should not mistake file0 as the copy source of new file1
