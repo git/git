@@ -273,11 +273,9 @@ EXTRA_PROGRAMS =
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS += $(EXTRA_PROGRAMS)
-PROGRAMS += git-daemon$X
 PROGRAMS += git-fast-import$X
 PROGRAMS += git-fetch-pack$X
 PROGRAMS += git-hash-object$X
-PROGRAMS += git-imap-send$X
 PROGRAMS += git-index-pack$X
 PROGRAMS += git-merge-index$X
 PROGRAMS += git-merge-tree$X
@@ -773,6 +771,10 @@ ifdef ZLIB_PATH
 endif
 EXTLIBS += -lz
 
+ifndef NO_POSIX_ONLY_PROGRAMS
+	PROGRAMS += git-daemon$X
+	PROGRAMS += git-imap-send$X
+endif
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
