@@ -193,7 +193,7 @@ sub find_unique_prefixes {
 		if ((ref $print) eq 'ARRAY') {
 			$print = $print->[0];
 		}
-		else {
+		elsif ((ref $print) eq 'HASH') {
 			$print = $print->{VALUE};
 		}
 		update_trie(\%trie, $print);
@@ -230,12 +230,25 @@ sub find_unique_prefixes {
 	return @return;
 }
 
+# filters out prefixes which have special meaning to list_and_choose()
+sub is_valid_prefix {
+	my $prefix = shift;
+	return (defined $prefix) &&
+	    !($prefix =~ /[\s,]/) && # separators
+	    !($prefix =~ /^-/) &&    # deselection
+	    !($prefix =~ /^\d+/) &&  # selection
+	    ($prefix ne '*');        # "all" wildcard
+}
+
 # given a prefix/remainder tuple return a string with the prefix highlighted
 # for now use square brackets; later might use ANSI colors (underline, bold)
 sub highlight_prefix {
 	my $prefix = shift;
 	my $remainder = shift;
-	return (defined $prefix) ? "[$prefix]$remainder" : $remainder;
+	return $remainder unless defined $prefix;
+	return is_valid_prefix($prefix) ?
+	    "[$prefix]$remainder" :
+	    "$prefix$remainder";
 }
 
 sub list_and_choose {
@@ -257,21 +270,21 @@ sub list_and_choose {
 		for ($i = 0; $i < @stuff; $i++) {
 			my $chosen = $chosen[$i] ? '*' : ' ';
 			my $print = $stuff[$i];
-			if (ref $print) {
-				if ((ref $print) eq 'ARRAY') {
-					$print = @prefixes ?
-					    highlight_prefix(@{$prefixes[$i]}) :
-					    $print->[0];
-				}
-				else {
-					my $value = @prefixes ?
-					    highlight_prefix(@{$prefixes[$i]}) :
-					    $print->{VALUE};
-					$print = sprintf($status_fmt,
-					    $print->{INDEX},
-					    $print->{FILE},
-					    $value);
-				}
+			my $ref = ref $print;
+			my $highlighted = highlight_prefix(@{$prefixes[$i]})
+			    if @prefixes;
+			if ($ref eq 'ARRAY') {
+				$print = $highlighted || $print->[0];
+			}
+			elsif ($ref eq 'HASH') {
+				my $value = $highlighted || $print->{VALUE};
+				$print = sprintf($status_fmt,
+				    $print->{INDEX},
+				    $print->{FILE},
+				    $value);
+			}
+			else {
+				$print = $highlighted || $print;
 			}
 			printf("%s%2d: %s", $chosen, $i+1, $print);
 			if (($opts->{LIST_FLAT}) &&
