@@ -9,29 +9,8 @@ struct cmdname_help
 
 static struct cmdname_help common_cmds[] = {"
 
-sort <<\EOF |
-add
-bisect
-branch
-checkout
-clone
-commit
-diff
-fetch
-grep
-init
-log
-merge
-mv
-pull
-push
-rebase
-reset
-rm
-show
-status
-tag
-EOF
+sed -n -e 's/^git-\([^ 	]*\)[ 	].* common.*/\1/p' command-list.txt |
+sort |
 while read cmd
 do
      sed -n '

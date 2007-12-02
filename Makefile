@@ -796,7 +796,7 @@ git-merge-subtree$X: git-merge-recursive$X
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)$(RM) $@ && ln git$X $@
 
-common-cmds.h: ./generate-cmdlist.sh
+common-cmds.h: ./generate-cmdlist.sh command-list.txt
 
 common-cmds.h: $(wildcard Documentation/git-*.txt)
 	$(QUIET_GEN)./generate-cmdlist.sh > $@+ && mv $@+ $@
@@ -1138,7 +1138,7 @@ check-docs::
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
 		echo "no doc: $$v"; \
-		sed -e '1,/^__DATA__/d' Documentation/cmd-list.perl | \
+		sed -e '/^#/d' command-list.txt | \
 		grep -q "^$$v[ 	]" || \
 		case "$$v" in \
 		git) ;; \
@@ -1146,9 +1146,9 @@ check-docs::
 		esac ; \
 	done; \
 	( \
-		sed -e '1,/^__DATA__/d' \
+		sed -e '/^#/d' \
 		    -e 's/[ 	].*//' \
-		    -e 's/^/listed /' Documentation/cmd-list.perl; \
+		    -e 's/^/listed /' command-list.txt; \
 		ls -1 Documentation/git*txt | \
 		sed -e 's|Documentation/|documented |' \
 		    -e 's/\.txt//'; \

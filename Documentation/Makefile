@@ -122,9 +122,9 @@ cmds_txt = cmds-ancillaryinterrogators.txt \
 
 $(cmds_txt): cmd-list.made
 
-cmd-list.made: cmd-list.perl $(MAN1_TXT)
+cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 	$(RM) $@
-	perl ./cmd-list.perl
+	perl ./cmd-list.perl ../command-list.txt
 	date >$@
 
 git.7 git.html: git.txt
