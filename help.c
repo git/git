@@ -241,7 +241,9 @@ void list_common_cmds_help(void)
 
 static const char *cmd_to_page(const char *git_cmd)
 {
-	if (!prefixcmp(git_cmd, "git"))
+	if (!git_cmd)
+		return "git";
+	else if (!prefixcmp(git_cmd, "git"))
 		return git_cmd;
 	else {
 		int page_len = strlen(git_cmd) + 4;
@@ -265,6 +267,12 @@ static void show_info_page(const char *git_cmd)
 	execlp("info", "info", page, NULL);
 }
 
+static void show_html_page(const char *git_cmd)
+{
+	const char *page = cmd_to_page(git_cmd);
+	execl_git_cmd("browse-help", page, NULL);
+}
+
 void help_unknown_cmd(const char *cmd)
 {
 	fprintf(stderr, "git: '%s' is not a git-command. See 'git --help'.\n", cmd);
@@ -277,31 +285,27 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static void check_help_cmd(const char *help_cmd)
+int cmd_help(int argc, const char **argv, const char *prefix)
 {
-	if (!help_cmd) {
+	const char *help_cmd = argv[1];
+
+	if (argc < 2) {
 		printf("usage: %s\n\n", git_usage_string);
 		list_common_cmds_help();
 		exit(0);
 	}
 
-	else if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a")) {
+	if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a")) {
 		printf("usage: %s\n\n", git_usage_string);
 		list_commands();
-		exit(0);
 	}
-}
 
-int cmd_help(int argc, const char **argv, const char *prefix)
-{
-	const char *help_cmd = argc > 1 ? argv[1] : NULL;
-	check_help_cmd(help_cmd);
+	else if (!strcmp(help_cmd, "--web") || !strcmp(help_cmd, "-w")) {
+		show_html_page(argc > 2 ? argv[2] : NULL);
+	}
 
-	if (!strcmp(help_cmd, "--info") || !strcmp(help_cmd, "-i")) {
-		help_cmd = argc > 2 ? argv[2] : NULL;
-		check_help_cmd(help_cmd);
-
-		show_info_page(help_cmd);
+	else if (!strcmp(help_cmd, "--info") || !strcmp(help_cmd, "-i")) {
+		show_info_page(argc > 2 ? argv[2] : NULL);
 	}
 
 	else
