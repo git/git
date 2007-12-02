@@ -70,9 +70,13 @@ do
 done
 
 if test -z "$browser"; then
-    browser=`git config web.browser`
+    for opt in "help.browser" "web.browser"
+    do
+	browser="`git config $opt`"
+	test -z "$browser" || break
+    done
     if test -n "$browser" && ! valid_tool "$browser"; then
-	    echo >&2 "git config option web.browser set to unknown browser: $browser"
+	    echo >&2 "git config option $opt set to unknown browser: $browser"
 	    echo >&2 "Resetting to default..."
 	    unset browser
     fi
