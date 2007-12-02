@@ -336,7 +336,7 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 
 	fp = fopen(git_path(commit_editmsg), "w");
 	if (fp == NULL)
-		die("could not open %s\n", git_path(commit_editmsg));
+		die("could not open %s", git_path(commit_editmsg));
 
 	stripspace(&sb, 0);
 
@@ -362,8 +362,7 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 	}
 
 	if (fwrite(sb.buf, 1, sb.len, fp) < sb.len)
-		die("could not write commit template: %s\n",
-		    strerror(errno));
+		die("could not write commit template: %s", strerror(errno));
 
 	strbuf_release(&sb);
 
@@ -470,13 +469,13 @@ static void determine_author_info(struct strbuf *sb)
 
 		a = strstr(use_message_buffer, "\nauthor ");
 		if (!a)
-			die("invalid commit: %s\n", use_message);
+			die("invalid commit: %s", use_message);
 
 		lb = strstr(a + 8, " <");
 		rb = strstr(a + 8, "> ");
 		eol = strchr(a + 8, '\n');
 		if (!lb || !rb || !eol)
-			die("invalid commit: %s\n", use_message);
+			die("invalid commit: %s", use_message);
 
 		name = xstrndup(a + 8, lb - (a + 8));
 		email = xstrndup(lb + 2, rb - (lb + 2));
@@ -488,7 +487,7 @@ static void determine_author_info(struct strbuf *sb)
 		const char *rb = strchr(force_author, '>');
 
 		if (!lb || !rb)
-			die("malformed --author parameter\n");
+			die("malformed --author parameter");
 		name = xstrndup(force_author, lb - force_author);
 		email = xstrndup(lb + 2, rb - (lb + 2));
 	}
@@ -518,7 +517,7 @@ static int parse_and_validate_options(int argc, const char *argv[])
 	if (amend && initial_commit)
 		die("You have nothing to amend.");
 	if (amend && in_merge)
-		die("You are in the middle of a merger -- cannot amend.");
+		die("You are in the middle of a merge -- cannot amend.");
 
 	if (use_message)
 		f++;
@@ -641,7 +640,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 	commit = lookup_commit(sha1);
 	if (!commit)
-		die("couldn't look up newly created commit\n");
+		die("couldn't look up newly created commit");
 	if (!commit || parse_commit(commit))
 		die("could not parse newly created commit");
 
@@ -777,7 +776,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		launch_editor(git_path(commit_editmsg), &sb, env);
 	} else if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
 		rollback_index_files();
-		die("could not read commit message\n");
+		die("could not read commit message");
 	}
 	if (run_hook(index_file, "commit-msg", git_path(commit_editmsg))) {
 		rollback_index_files();
@@ -792,7 +791,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	stripspace(&sb, 1);
 	if (sb.len < header_len || message_is_empty(&sb, header_len)) {
 		rollback_index_files();
-		die("* no commit message?  aborting commit.");
+		die("no commit message?  aborting commit.");
 	}
 	strbuf_addch(&sb, '\0');
 	if (is_encoding_utf8(git_commit_encoding) && !is_utf8(sb.buf))
