@@ -119,4 +119,16 @@ test_expect_success 'cvsimport.module config works' '
 
 '
 
+test_expect_success 'import from a CVS working tree' '
+
+	cvs co -d import-from-wt module &&
+	cd import-from-wt &&
+		git cvsimport -a -z0 &&
+		echo 1 >expect &&
+		git log -1 --pretty=format:%s%n >actual &&
+		git diff actual expect &&
+	cd ..
+
+'
+
 test_done
