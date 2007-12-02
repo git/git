@@ -47,12 +47,24 @@ proc filereadable {fd script} {
     lappend runq [list $fd $script]
 }
 
+proc nukefile {fd} {
+    global runq
+
+    for {set i 0} {$i < [llength $runq]} {} {
+	if {[lindex $runq $i 0] eq $fd} {
+	    set runq [lreplace $runq $i $i]
+	} else {
+	    incr i
+	}
+    }
+}
+
 proc dorunq {} {
     global isonrunq runq
 
     set tstart [clock clicks -milliseconds]
     set t0 $tstart
-    while {$runq ne {}} {
+    while {[llength $runq] > 0} {
 	set fd [lindex $runq 0 0]
 	set script [lindex $runq 0 1]
 	set repeat [eval $script]
@@ -85,24 +97,34 @@ proc start_rev_list {view} {
     global viewargs viewfiles commitidx viewcomplete vnextroot
     global showlocalchanges commitinterest mainheadid
     global progressdirn progresscoords proglastnc curview
+    global viewincl viewactive loginstance viewinstances
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
     set viewcomplete($view) 0
+    set viewactive($view) 1
     set vnextroot($view) 0
-    set order "--topo-order"
-    if {$datemode} {
-	set order "--date-order"
+    varcinit $view
+
+    set commits [exec git rev-parse --default HEAD --revs-only \
+		     $viewargs($view)]
+    set viewincl($view) {}
+    foreach c $commits {
+	if {![string match "^*" $c]} {
+	    lappend viewincl($view) $c
+	}
     }
     if {[catch {
-	set fd [open [concat | git log --no-color -z --pretty=raw $order --parents \
-			 --boundary $viewargs($view) "--" $viewfiles($view)] r]
+	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
+			 --boundary $commits "--" $viewfiles($view)] r]
     } err]} {
-	error_popup "Error executing git rev-list: $err"
+	error_popup "Error executing git log: $err"
 	exit 1
     }
-    set commfd($view) $fd
-    set leftover($view) {}
+    set i [incr loginstance]
+    set viewinstances($view) [list $i]
+    set commfd($i) $fd
+    set leftover($i) {}
     if {$showlocalchanges} {
 	lappend commitinterest($mainheadid) {dodiffindex}
     }
@@ -110,7 +132,7 @@ proc start_rev_list {view} {
     if {$tclencoding != {}} {
 	fconfigure $fd -encoding $tclencoding
     }
-    filerun $fd [list getcommitlines $fd $view]
+    filerun $fd [list getcommitlines $fd $i $view]
     nowbusy $view "Reading"
     if {$view == $curview} {
 	set progressdirn 1
@@ -119,26 +141,113 @@ proc start_rev_list {view} {
     }
 }
 
-proc stop_rev_list {} {
-    global commfd curview
+proc stop_rev_list {view} {
+    global commfd viewinstances leftover
 
-    if {![info exists commfd($curview)]} return
-    set fd $commfd($curview)
-    catch {
-	set pid [pid $fd]
-	exec kill $pid
+    foreach inst $viewinstances($view) {
+	set fd $commfd($inst)
+	catch {
+	    set pid [pid $fd]
+	    exec kill $pid
+	}
+	catch {close $fd}
+	nukefile $fd
+	unset commfd($inst)
+	unset leftover($inst)
     }
-    catch {close $fd}
-    unset commfd($curview)
+    set viewinstances($view) {}
 }
 
 proc getcommits {} {
-    global phase canv curview
+    global canv curview
 
-    set phase getcommits
     initlayout
     start_rev_list $curview
     show_status "Reading commits..."
+}
+
+proc updatecommits {} {
+    global curview viewargs viewfiles viewincl viewinstances
+    global viewactive viewcomplete loginstance tclencoding
+    global varcid startmsecs commfd getdbg showneartags leftover
+
+    set getdbg 1
+    set view $curview
+    set commits [exec git rev-parse --default HEAD --revs-only \
+		     $viewargs($view)]
+    set pos {}
+    set neg {}
+    foreach c $commits {
+	if {[string match "^*" $c]} {
+	    lappend neg $c
+	} else {
+	    if {!([info exists varcid($view,$c)] ||
+		  [lsearch -exact $viewincl($view) $c] >= 0)} {
+		lappend pos $c
+	    }
+	}
+    }
+    if {$pos eq {}} {
+	return
+    }
+    foreach id $viewincl($view) {
+	lappend neg "^$id"
+    }
+    set viewincl($view) [concat $viewincl($view) $pos]
+    if {[catch {
+	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
+			 --boundary $pos $neg "--" $viewfiles($view)] r]
+    } err]} {
+	error_popup "Error executing git log: $err"
+	exit 1
+    }
+    if {$viewactive($view) == 0} {
+	set startmsecs [clock clicks -milliseconds]
+    }
+    set i [incr loginstance]
+    lappend viewinstances($view) $i
+    set commfd($i) $fd
+    set leftover($i) {}
+    fconfigure $fd -blocking 0 -translation lf -eofchar {}
+    if {$tclencoding != {}} {
+	fconfigure $fd -encoding $tclencoding
+    }
+    filerun $fd [list getcommitlines $fd $i $view]
+    incr viewactive($view)
+    set viewcomplete($view) 0
+    nowbusy $view "Reading"
+    readrefs
+    changedrefs
+    if {$showneartags} {
+	getallcommits
+    }
+}
+
+proc reloadcommits {} {
+    global curview viewcomplete selectedline currentid thickerline
+    global showneartags treediffs commitinterest cached_commitrow
+    global progresscoords
+
+    if {!$viewcomplete($curview)} {
+	stop_rev_list $curview
+	set progresscoords {0 0}
+	adjustprogress
+    }
+    resetvarcs $curview
+    catch {unset selectedline}
+    catch {unset currentid}
+    catch {unset thickerline}
+    catch {unset treediffs}
+    readrefs
+    changedrefs
+    if {$showneartags} {
+	getallcommits
+    }
+    clear_display
+    catch {unset commitinterest}
+    catch {unset cached_commitrow}
+    setcanvscroll
+    getcommits
 }
 
 # This makes a string representation of a positive integer which
@@ -154,46 +263,585 @@ proc strrep {n} {
     return [format "z%.8x" $n]
 }
 
-proc getcommitlines {fd view}  {
-    global commitlisted commitinterest
-    global leftover commfd
-    global displayorder commitidx viewcomplete commitrow commitdata
-    global parentlist children curview hlview
-    global vparentlist vdisporder vcmitlisted
+# Procedures used in reordering commits from git log (without
+# --topo-order) into the order for display.
+
+proc varcinit {view} {
+    global vseeds varcstart vupptr vdownptr vleftptr varctok varcrow
+    global vtokmod varcmod varcix uat
+
+    set vseeds($view) {}
+    set varcstart($view) {{}}
+    set vupptr($view) {0}
+    set vdownptr($view) {0}
+    set vleftptr($view) {0}
+    set varctok($view) {{}}
+    set varcrow($view) {{}}
+    set vtokmod($view) {}
+    set varcmod($view) 0
+    set varcix($view) {{}}
+    set uat 0
+}
+
+proc resetvarcs {view} {
+    global varcid varccommits parents children vseedcount ordertok
+
+    foreach vid [array names varcid $view,*] {
+	unset varcid($vid)
+	unset children($vid)
+	unset parents($vid)
+    }
+    # some commits might have children but haven't been seen yet
+    foreach vid [array names children $view,*] {
+	unset children($vid)
+    }
+    foreach va [array names varccommits $view,*] {
+	unset varccommits($va)
+    }
+    foreach vd [array names vseedcount $view,*] {
+	unset vseedcount($vd)
+    }
+    foreach vid [array names ordertok $view,*] {
+	unset ordertok($vid)
+    }
+}
+
+proc newvarc {view id} {
+    global varcid varctok parents children vseeds
+    global vupptr vdownptr vleftptr varcrow varcix varcstart
+    global commitdata commitinfo vseedcount
+
+    set a [llength $varctok($view)]
+    set vid $view,$id
+    if {[llength $children($vid)] == 0} {
+	if {![info exists commitinfo($id)]} {
+	    parsecommit $id $commitdata($id) 1
+	}
+	set cdate [lindex $commitinfo($id) 4]
+	if {![string is integer -strict $cdate]} {
+	    set cdate 0
+	}
+	if {![info exists vseedcount($view,$cdate)]} {
+	    set vseedcount($view,$cdate) -1
+	}
+	set c [incr vseedcount($view,$cdate)]
+	set cdate [expr {$cdate ^ 0xffffffff}]
+	set tok "s[strrep $cdate][strrep $c]"
+	lappend vseeds($view) $id
+	lappend vupptr($view) 0
+	set ka [lindex $vdownptr($view) 0]
+	if {$ka == 0 ||
+	    [string compare $tok [lindex $varctok($view) $ka]] < 0} {
+	    lset vdownptr($view) 0 $a
+	    lappend vleftptr($view) $ka
+	} else {
+	    while {[set b [lindex $vleftptr($view) $ka]] != 0 &&
+		   [string compare $tok [lindex $varctok($view) $b]] >= 0} {
+		set ka $b
+	    }
+	    lset vleftptr($view) $ka $a
+	    lappend vleftptr($view) $b
+	}
+    } else {
+	set tok {}
+	foreach k $children($vid) {
+	    set ka $varcid($view,$k)
+	    if {[string compare [lindex $varctok($view) $ka] $tok] > 0} {
+		set ki $k
+		set tok [lindex $varctok($view) $ka]
+	    }
+	}
+	set ka $varcid($view,$ki)
+	lappend vupptr($view) $ka
+	set i [lsearch -exact $parents($view,$ki) $id]
+	set j [expr {[llength $parents($view,$ki)] - 1 - $i}]
+	set rsib 0
+	while {[incr i] < [llength $parents($view,$ki)]} {
+	    set bi [lindex $parents($view,$ki) $i]
+	    if {[info exists varcid($view,$bi)]} {
+		set b $varcid($view,$bi)
+		if {[lindex $vupptr($view) $b] == $ka} {
+		    set rsib $b
+		    lappend vleftptr($view) [lindex $vleftptr($view) $b]
+		    lset vleftptr($view) $b $a
+		    break
+		}
+	    }
+	}
+	if {$rsib == 0} {
+	    lappend vleftptr($view) [lindex $vdownptr($view) $ka]
+	    lset vdownptr($view) $ka $a
+	}
+	append tok [strrep $j]
+    }
+    lappend varctok($view) $tok
+    lappend varcstart($view) $id
+    lappend vdownptr($view) 0
+    lappend varcrow($view) {}
+    lappend varcix($view) {}
+    return $a
+}
+
+proc splitvarc {p v} {
+    global varcid varcstart varccommits varctok
+    global vupptr vdownptr vleftptr varcix varcrow
+
+    set oa $varcid($v,$p)
+    set ac $varccommits($v,$oa)
+    set i [lsearch -exact $varccommits($v,$oa) $p]
+    if {$i <= 0} return
+    set na [llength $varctok($v)]
+    # "%" sorts before "0"...
+    set tok "[lindex $varctok($v) $oa]%[strrep $i]"
+    lappend varctok($v) $tok
+    lappend varcrow($v) {}
+    lappend varcix($v) {}
+    set varccommits($v,$oa) [lrange $ac 0 [expr {$i - 1}]]
+    set varccommits($v,$na) [lrange $ac $i end]
+    lappend varcstart($v) $p
+    foreach id $varccommits($v,$na) {
+	set varcid($v,$id) $na
+    }
+    lappend vdownptr($v) [lindex $vdownptr($v) $oa]
+    lset vdownptr($v) $oa $na
+    lappend vupptr($v) $oa
+    lappend vleftptr($v) 0
+    for {set b [lindex $vdownptr($v) $na]} {$b != 0} {set b [lindex $vleftptr($v) $b]} {
+	lset vupptr($v) $b $na
+    }
+}
+
+proc renumbervarc {a v} {
+    global parents children varctok varcstart varccommits
+    global vupptr vdownptr vleftptr varcid vtokmod varcmod
+
+    set t1 [clock clicks -milliseconds]
+    set todo {}
+    set isrelated($a) 1
+    set ntot 0
+    while {$a != 0} {
+	if {[info exists isrelated($a)]} {
+	    lappend todo $a
+	    set id [lindex $varccommits($v,$a) end]
+	    foreach p $parents($v,$id) {
+		if {[info exists varcid($v,$p)]} {
+		    set isrelated($varcid($v,$p)) 1
+		}
+	    }
+	}
+	incr ntot
+	set b [lindex $vdownptr($v) $a]
+	if {$b == 0} {
+	    while {$a != 0} {
+		set b [lindex $vleftptr($v) $a]
+		if {$b != 0} break
+		set a [lindex $vupptr($v) $a]
+	    }
+	}
+	set a $b
+    }
+    foreach a $todo {
+	set id [lindex $varcstart($v) $a]
+	set tok {}
+	foreach k $children($v,$id) {
+	    set ka $varcid($v,$k)
+	    if {[string compare [lindex $varctok($v) $ka] $tok] > 0} {
+		set ki $k
+		set tok [lindex $varctok($v) $ka]
+	    }
+	}
+	if {$tok ne {}} {
+	    set ka $varcid($v,$ki)
+	    set i [lsearch -exact $parents($v,$ki) $id]
+	    set j [expr {[llength $parents($v,$ki)] - 1 - $i}]
+	    append tok [strrep $j]
+	    set oldtok [lindex $varctok($v) $a]
+	    if {$tok eq $oldtok} continue
+	    lset varctok($v) $a $tok
+	} else {
+	    set ka 0
+	}
+	set b [lindex $vupptr($v) $a]
+	if {$b != $ka} {
+	    set c [lindex $vdownptr($v) $b]
+	    if {$c == $a} {
+		lset vdownptr($v) $b [lindex $vleftptr($v) $a]
+	    } else {
+		set b $c
+		while {$b != 0 && [lindex $vleftptr($v) $b] != $a} {
+		    set b [lindex $vleftptr($v) $b]
+		}
+		if {$b != 0} {
+		    lset vleftptr($v) $b [lindex $vleftptr($v) $a]
+		} else {
+		    puts "oops couldn't find $a in chain for [lindex $vupptr($v) $a]"
+		}
+	    }
+	    lset vupptr($v) $a $ka
+	    set rsib 0
+	    while {[incr i] < [llength $parents($v,$ki)]} {
+		set bi [lindex $parents($v,$ki) $i]
+		if {[info exists varcid($v,$bi)]} {
+		    set b $varcid($v,$bi)
+		    if {[lindex $vupptr($v) $b] == $ka} {
+			set rsib $b
+			lset vleftptr($v) $a [lindex $vleftptr($v) $b]
+			lset vleftptr($v) $b $a
+			break
+		    }
+		}
+	    }
+	    if {$rsib == 0} {
+		lset vleftptr($v) $a [lindex $vdownptr($v) $ka]
+		lset vdownptr($v) $ka $a
+	    }
+	}
+    }
+    set t2 [clock clicks -milliseconds]
+    #puts "renumbervarc did [llength $todo] of $ntot arcs in [expr {$t2-$t1}]ms"
+}
+
+proc fix_reversal {p a v} {
+    global varcid varcstart varctok vupptr vseeds
+
+    set pa $varcid($v,$p)
+    if {$p ne [lindex $varcstart($v) $pa]} {
+	splitvarc $p $v
+	set pa $varcid($v,$p)
+    }
+    # seeds always need to be renumbered (and taken out of the seeds list)
+    if {[lindex $vupptr($v) $pa] == 0} {
+	set i [lsearch -exact $vseeds($v) $p]
+	if {$i >= 0} {
+	    set vseeds($v) [lreplace $vseeds($v) $i $i]
+	} else {
+	    puts "oops couldn't find [shortids $p] in seeds"
+	}
+	renumbervarc $pa $v
+    } elseif {[string compare [lindex $varctok($v) $a] \
+		   [lindex $varctok($v) $pa]] > 0} {
+	renumbervarc $pa $v
+    }
+}
+
+proc insertrow {id p v} {
+    global varcid varccommits parents children cmitlisted ordertok
+    global commitidx varctok vtokmod varcmod
+
+    set a $varcid($v,$p)
+    set i [lsearch -exact $varccommits($v,$a) $p]
+    if {$i < 0} {
+	puts "oops: insertrow can't find [shortids $p] on arc $a"
+	return
+    }
+    set children($v,$id) {}
+    set parents($v,$id) [list $p]
+    set varcid($v,$id) $a
+    if {[llength [lappend children($v,$p) $id]] > 1 &&
+	[vtokcmp $v [lindex $children($v,$p) end-1] $id] > 0} {
+	set children($v,$p) [lsort -command [list vtokcmp $v] $children($v,$p)]
+    }
+    set cmitlisted($v,$id) 1
+    incr commitidx($v)
+    set ordertok($v,$id) $ordertok($v,$p)
+    # note we deliberately don't update varcstart($v) even if $i == 0
+    set varccommits($v,$a) [linsert $varccommits($v,$a) $i $id]
+    set tok [lindex $varctok($v) $a]
+    if {[string compare $tok $vtokmod($v)] < 0} {
+	set vtokmod($v) $tok
+	set varcmod($v) $a
+    }
+    update_arcrows $v
+}
+
+proc removerow {id v} {
+    global varcid varccommits parents children commitidx ordertok
+    global varctok vtokmod varcmod
+
+    if {[llength $parents($v,$id)] != 1} {
+	puts "oops: removerow [shortids $id] has [llength $parents($v,$id)] parents"
+	return
+    }
+    set p [lindex $parents($v,$id) 0]
+    set a $varcid($v,$id)
+    set i [lsearch -exact $varccommits($v,$a) $id]
+    if {$i < 0} {
+	puts "oops: removerow can't find [shortids $id] on arc $a"
+	return
+    }
+    unset varcid($v,$id)
+    set varccommits($v,$a) [lreplace $varccommits($v,$a) $i $i]
+    unset parents($v,$id)
+    unset children($v,$id)
+    unset cmitlisted($v,$id)
+    unset ordertok($v,$id)
+    incr commitidx($v) -1
+    set j [lsearch -exact $children($v,$p) $id]
+    if {$j >= 0} {
+	set children($v,$p) [lreplace $children($v,$p) $j $j]
+    }
+    set tok [lindex $varctok($v) $a]
+    if {[string compare $tok $vtokmod($v)] < 0} {
+	set vtokmod($v) $tok
+	set varcmod($v) $a
+    }
+    update_arcrows $v
+}
+
+proc vtokcmp {v a b} {
+    global varctok varcid
+
+    return [string compare [lindex $varctok($v) $varcid($v,$a)] \
+		[lindex $varctok($v) $varcid($v,$b)]]
+}
+
+proc update_arcrows {v} {
+    global vtokmod varcmod varcrow commitidx currentid selectedline
+    global varcid vseeds vrownum varcorder varcix varccommits
+    global vupptr vdownptr vleftptr varctok
+    global uat displayorder parentlist curview cached_commitrow
+
+    set t1 [clock clicks -milliseconds]
+    set narctot [expr {[llength $varctok($v)] - 1}]
+    set a $varcmod($v)
+    while {$a != 0 && [lindex $varcix($v) $a] eq {}} {
+	# go up the tree until we find something that has a row number,
+	# or we get to a seed
+	set a [lindex $vupptr($v) $a]
+    }
+    if {$a == 0} {
+	set a [lindex $vdownptr($v) 0]
+	if {$a == 0} return
+	set vrownum($v) {0}
+	set varcorder($v) [list $a]
+	lset varcix($v) $a 0
+	lset varcrow($v) $a 0
+	set arcn 0
+	set row 0
+    } else {
+	set arcn [lindex $varcix($v) $a]
+	# see if a is the last arc; if so, nothing to do
+	if {$arcn == $narctot - 1} {
+	    return
+	}
+	if {[llength $vrownum($v)] > $arcn + 1} {
+	    set vrownum($v) [lrange $vrownum($v) 0 $arcn]
+	    set varcorder($v) [lrange $varcorder($v) 0 $arcn]
+	}
+	set row [lindex $varcrow($v) $a]
+    }
+    if {[llength $displayorder] > $row} {
+	set displayorder [lrange $displayorder 0 [expr {$row - 1}]]
+	set parentlist [lrange $parentlist 0 [expr {$row - 1}]]
+    }
+    if {$v == $curview} {
+	catch {unset cached_commitrow}
+    }
+    set startrow $row
+    while {1} {
+	set p $a
+	incr row [llength $varccommits($v,$a)]
+	# go down if possible
+	set b [lindex $vdownptr($v) $a]
+	if {$b == 0} {
+	    # if not, go left, or go up until we can go left
+	    while {$a != 0} {
+		set b [lindex $vleftptr($v) $a]
+		if {$b != 0} break
+		set a [lindex $vupptr($v) $a]
+	    }
+	    if {$a == 0} break
+	}
+	set a $b
+	incr arcn
+	lappend vrownum($v) $row
+	lappend varcorder($v) $a
+	lset varcix($v) $a $arcn
+	lset varcrow($v) $a $row
+    }
+    if {[info exists currentid]} {
+	set selectedline [rowofcommit $currentid]
+    }
+    undolayout $startrow
+    if {$row != $commitidx($v)} {
+	puts "oops update_arcrows got to row $row out of $commitidx($v)"
+	set vtokmod($v) {}
+	set varcmod($v) 0
+    } else {
+	set vtokmod($v) [lindex $varctok($v) $p]
+	set varcmod($v) $p
+    }
+    set t2 [clock clicks -milliseconds]
+    incr uat [expr {$t2-$t1}]
+}
+
+# Test whether view $v contains commit $id
+proc commitinview {id v} {
+    global varcid
+
+    return [info exists varcid($v,$id)]
+}
+
+# Return the row number for commit $id in the current view
+proc rowofcommit {id} {
+    global varcid varccommits varcrow curview cached_commitrow
+
+    if {[info exists cached_commitrow($id)]} {
+	return $cached_commitrow($id)
+    }
+    set v $curview
+    if {![info exists varcid($v,$id)]} {
+	puts "oops rowofcommit no arc for [shortids $id]"
+	return {}
+    }
+    set a $varcid($v,$id)
+    set i [lsearch -exact $varccommits($v,$a) $id]
+    if {$i < 0} {
+	puts "oops didn't find commit [shortids $id] in arc $a"
+	return {}
+    }
+    incr i [lindex $varcrow($v) $a]
+    set cached_commitrow($id) $i
+    return $i
+}
+
+proc bsearch {l elt} {
+    if {[llength $l] == 0 || $elt <= [lindex $l 0]} {
+	return 0
+    }
+    set lo 0
+    set hi [llength $l]
+    while {$hi - $lo > 1} {
+	set mid [expr {int(($lo + $hi) / 2)}]
+	set t [lindex $l $mid]
+	if {$elt < $t} {
+	    set hi $mid
+	} elseif {$elt > $t} {
+	    set lo $mid
+	} else {
+	    return $mid
+	}
+    }
+    return $lo
+}
+
+# Make sure rows $start..$end-1 are valid in displayorder and parentlist
+proc make_disporder {start end} {
+    global vrownum curview commitidx displayorder parentlist
+    global varccommits varcorder parents
+    global d_valid_start d_valid_end
+
+    set ai [bsearch $vrownum($curview) $start]
+    set start [lindex $vrownum($curview) $ai]
+    set narc [llength $vrownum($curview)]
+    for {set r $start} {$ai < $narc && $r < $end} {incr ai} {
+	set a [lindex $varcorder($curview) $ai]
+	set l [llength $displayorder]
+	set al [llength $varccommits($curview,$a)]
+	if {$l < $r + $al} {
+	    if {$l < $r} {
+		set pad [ntimes [expr {$r - $l}] {}]
+		set displayorder [concat $displayorder $pad]
+		set parentlist [concat $parentlist $pad]
+	    } elseif {$l > $r} {
+		set displayorder [lrange $displayorder 0 [expr {$r - 1}]]
+		set parentlist [lrange $parentlist 0 [expr {$r - 1}]]
+	    }
+	    foreach id $varccommits($curview,$a) {
+		lappend displayorder $id
+		lappend parentlist $parents($curview,$id)
+	    }
+	} elseif {[lindex $displayorder $r] eq {}} {
+	    set i $r
+	    foreach id $varccommits($curview,$a) {
+		lset displayorder $i $id
+		lset parentlist $i $parents($curview,$id)
+		incr i
+	    }
+	}
+	incr r $al
+    }
+}
+
+proc commitonrow {row} {
+    global displayorder
+
+    set id [lindex $displayorder $row]
+    if {$id eq {}} {
+	make_disporder $row [expr {$row + 1}]
+	set id [lindex $displayorder $row]
+    }
+    return $id
+}
+
+proc closevarcs {v} {
+    global varctok varccommits varcid parents children
+    global cmitlisted commitidx commitinterest vtokmod varcmod
+
+    set missing_parents 0
+    set scripts {}
+    set narcs [llength $varctok($v)]
+    for {set a 1} {$a < $narcs} {incr a} {
+	set id [lindex $varccommits($v,$a) end]
+	foreach p $parents($v,$id) {
+	    if {[info exists varcid($v,$p)]} continue
+	    # add p as a new commit
+	    incr missing_parents
+	    set cmitlisted($v,$p) 0
+	    set parents($v,$p) {}
+	    if {[llength $children($v,$p)] == 1 &&
+		[llength $parents($v,$id)] == 1} {
+		set b $a
+	    } else {
+		set b [newvarc $v $p]
+	    }
+	    set varcid($v,$p) $b
+	    lappend varccommits($v,$b) $p
+	    set tok [lindex $varctok($v) $b]
+	    if {[string compare $tok $vtokmod($v)] < 0} {
+		set vtokmod($v) $tok
+		set varcmod($v) $b
+	    }
+	    incr commitidx($v)
+	    if {[info exists commitinterest($p)]} {
+		foreach script $commitinterest($p) {
+		    lappend scripts [string map [list "%I" $p] $script]
+		}
+		unset commitinterest($id)
+	    }
+	}
+    }
+    if {$missing_parents > 0} {
+	update_arcrows $v
+	foreach s $scripts {
+	    eval $s
+	}
+    }
+}
+
+proc getcommitlines {fd inst view}  {
+    global cmitlisted commitinterest leftover getdbg
+    global commitidx commitdata
+    global parents children curview hlview
     global ordertok vnextroot idpending
+    global varccommits varcid varctok vtokmod varcmod
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
-    if {$stuff == {} && $leftover($view) ne {} && [eof $fd]} {
+    if {$stuff == {} && $leftover($inst) ne {} && [eof $fd]} {
 	set stuff "\0"
     }
     if {$stuff == {}} {
 	if {![eof $fd]} {
 	    return 1
 	}
-	# Check if we have seen any ids listed as parents that haven't
-	# appeared in the list
-	foreach vid [array names idpending "$view,*"] {
-	    # should only get here if git log is buggy
-	    set id [lindex [split $vid ","] 1]
-	    set commitrow($vid) $commitidx($view)
-	    incr commitidx($view)
-	    if {$view == $curview} {
-		lappend parentlist {}
-		lappend displayorder $id
-		lappend commitlisted 0
-	    } else {
-		lappend vparentlist($view) {}
-		lappend vdisporder($view) $id
-		lappend vcmitlisted($view) 0
-	    }
+	global commfd viewcomplete viewactive viewname progresscoords
+	global viewinstances
+	unset commfd($inst)
+	set i [lsearch -exact $viewinstances($view) $inst]
+	if {$i >= 0} {
+	    set viewinstances($view) [lreplace $viewinstances($view) $i $i]
 	}
-	set viewcomplete($view) 1
-	global viewname progresscoords
-	unset commfd($view)
-	notbusy $view
-	set progresscoords {0 0}
-	adjustprogress
 	# set it blocking so we wait for the process to terminate
 	fconfigure $fd -blocking 1
 	if {[catch {close $fd} err]} {
@@ -214,6 +862,15 @@ proc getcommitlines {fd view}  {
 	    }
 	    error_popup $err
 	}
+	if {[incr viewactive($view) -1] <= 0} {
+	    set viewcomplete($view) 1
+	    # Check if we have seen any ids listed as parents that haven't
+	    # appeared in the list
+	    closevarcs $view
+	    notbusy $view
+	    set progresscoords {0 0}
+	    adjustprogress
+	}
 	if {$view == $curview} {
 	    run chewcommits $view
 	}
@@ -221,16 +878,17 @@ proc getcommitlines {fd view}  {
     }
     set start 0
     set gotsome 0
+    set scripts {}
     while 1 {
 	set i [string first "\0" $stuff $start]
 	if {$i < 0} {
-	    append leftover($view) [string range $stuff $start end]
+	    append leftover($inst) [string range $stuff $start end]
 	    break
 	}
 	if {$start == 0} {
-	    set cmit $leftover($view)
+	    set cmit $leftover($inst)
 	    append cmit [string range $stuff 0 [expr {$i - 1}]]
-	    set leftover($view) {}
+	    set leftover($inst) {}
 	} else {
 	    set cmit [string range $stuff $start [expr {$i - 1}]]
 	}
@@ -265,32 +923,27 @@ proc getcommitlines {fd view}  {
 	    exit 1
 	}
 	set id [lindex $ids 0]
-	if {![info exists ordertok($view,$id)]} {
+	set vid $view,$id
+	if {!$listed && [info exists parents($vid)]} continue
+	if {![info exists ordertok($vid)]} {
 	    set otok "o[strrep $vnextroot($view)]"
 	    incr vnextroot($view)
-	    set ordertok($view,$id) $otok
+	    set ordertok($vid) $otok
 	} else {
-	    set otok $ordertok($view,$id)
-	    unset idpending($view,$id)
+	    set otok $ordertok($vid)
 	}
 	if {$listed} {
 	    set olds [lrange $ids 1 end]
 	    if {[llength $olds] == 1} {
 		set p [lindex $olds 0]
-		lappend children($view,$p) $id
 		if {![info exists ordertok($view,$p)]} {
-		    set ordertok($view,$p) $ordertok($view,$id)
-		    set idpending($view,$p) 1
+		    set ordertok($view,$p) $ordertok($vid)
 		}
 	    } else {
 		set i 0
 		foreach p $olds {
-		    if {$i == 0 || [lsearch -exact $olds $p] >= $i} {
-			lappend children($view,$p) $id
-		    }
 		    if {![info exists ordertok($view,$p)]} {
 			set ordertok($view,$p) "$otok[strrep $i]]"
-			set idpending($view,$p) 1
 		    }
 		    incr i
 		}
@@ -298,31 +951,62 @@ proc getcommitlines {fd view}  {
 	} else {
 	    set olds {}
 	}
-	if {![info exists children($view,$id)]} {
-	    set children($view,$id) {}
-	}
 	set commitdata($id) [string range $cmit [expr {$j + 1}] end]
-	set commitrow($view,$id) $commitidx($view)
-	incr commitidx($view)
-	if {$view == $curview} {
-	    lappend parentlist $olds
-	    lappend displayorder $id
-	    lappend commitlisted $listed
+	set cmitlisted($vid) $listed
+	set parents($vid) $olds
+	set a 0
+	if {![info exists children($vid)]} {
+	    set children($vid) {}
 	} else {
-	    lappend vparentlist($view) $olds
-	    lappend vdisporder($view) $id
-	    lappend vcmitlisted($view) $listed
+	    if {[llength $children($vid)] == 1} {
+		set k [lindex $children($vid) 0]
+		if {[llength $parents($view,$k)] == 1} {
+		    set a $varcid($view,$k)
+		}
+	    }
 	}
+	if {$a == 0} {
+	    # new arc
+	    set a [newvarc $view $id]
+	}
+	set varcid($vid) $a
+	lappend varccommits($view,$a) $id
+	set tok [lindex $varctok($view) $a]
+	set i 0
+	foreach p $olds {
+	    if {$i == 0 || [lsearch -exact $olds $p] >= $i} {
+		set vp $view,$p
+		if {[llength [lappend children($vp) $id]] > 1 &&
+		    [vtokcmp $view [lindex $children($vp) end-1] $id] > 0} {
+		    set children($vp) [lsort -command [list vtokcmp $view] \
+					   $children($vp)]
+		}
+	    }
+	    if {[info exists varcid($view,$p)]} {
+		fix_reversal $p $a $view
+	    }
+	    incr i
+	}
+	if {[string compare $tok $vtokmod($view)] < 0} {
+	    set vtokmod($view) $tok
+	    set varcmod($view) $a
+	}
+
+	incr commitidx($view)
 	if {[info exists commitinterest($id)]} {
 	    foreach script $commitinterest($id) {
-		eval [string map [list "%I" $id] $script]
+		lappend scripts [string map [list "%I" $id] $script]
 	    }
 	    unset commitinterest($id)
 	}
 	set gotsome 1
     }
     if {$gotsome} {
+	update_arcrows $view
 	run chewcommits $view
+	foreach s $scripts {
+	    eval $s
+	}
 	if {$view == $curview} {
 	    # update progress bar
 	    global progressdirn progresscoords proglastnc
@@ -356,13 +1040,14 @@ proc getcommitlines {fd view}  {
 
 proc chewcommits {view} {
     global curview hlview viewcomplete
-    global selectedline pending_select
+    global pending_select
 
     if {$view == $curview} {
 	layoutmore
 	if {$viewcomplete($view)} {
-	    global displayorder commitidx phase
+	    global commitidx
 	    global numcommits startmsecs
+	    global mainheadid commitinfo nullid
 
 	    if {[info exists pending_select]} {
 		set row [first_real_row]
@@ -371,11 +1056,12 @@ proc chewcommits {view} {
 	    if {$commitidx($curview) > 0} {
 		#set ms [expr {[clock clicks -milliseconds] - $startmsecs}]
 		#puts "overall $ms ms for $numcommits commits"
+		#global uat
+		#puts "${uat}ms in update_arcrows"
 	    } else {
 		show_status "No commits selected"
 	    }
 	    notbusy layout
-	    set phase {}
 	}
     }
     if {[info exists hlview] && $view == $hlview} {
@@ -387,35 +1073,6 @@ proc chewcommits {view} {
 proc readcommit {id} {
     if {[catch {set contents [exec git cat-file commit $id]}]} return
     parsecommit $id $contents 0
-}
-
-proc updatecommits {} {
-    global viewdata curview phase displayorder ordertok idpending
-    global children commitrow selectedline thickerline showneartags
-
-    if {$phase ne {}} {
-	stop_rev_list
-	set phase {}
-    }
-    set n $curview
-    foreach id $displayorder {
-	catch {unset children($n,$id)}
-	catch {unset commitrow($n,$id)}
-	catch {unset ordertok($n,$id)}
-    }
-    foreach vid [array names idpending "$n,*"] {
-	unset idpending($vid)
-    }
-    set curview -1
-    catch {unset selectedline}
-    catch {unset thickerline}
-    catch {unset viewdata($n)}
-    readrefs
-    changedrefs
-    if {$showneartags} {
-	getallcommits
-    }
-    showview $n
 }
 
 proc parsecommit {id contents listed} {
@@ -544,10 +1201,10 @@ proc readrefs {} {
 
 # skip over fake commits
 proc first_real_row {} {
-    global nullid nullid2 displayorder numcommits
+    global nullid nullid2 numcommits
 
     for {set row 0} {$row < $numcommits} {incr row} {
-	set id [lindex $displayorder $row]
+	set id [commitonrow $row]
 	if {$id ne $nullid && $id ne $nullid2} {
 	    break
 	}
@@ -634,6 +1291,7 @@ proc makewindow {} {
     .bar configure -font uifont
     menu .bar.file
     .bar.file add command -label "Update" -command updatecommits
+    .bar.file add command -label "Reload" -command reloadcommits
     .bar.file add command -label "Reread references" -command rereadrefs
     .bar.file add command -label "List references" -command showrefs
     .bar.file add command -label "Quit" -command doquit
@@ -1643,7 +2301,7 @@ image create bitmap reficon-o -background black -foreground "#ddddff" \
     -data $rectdata -maskdata $rectmask
 
 proc init_flist {first} {
-    global cflist cflist_top selectedline difffilestart
+    global cflist cflist_top difffilestart
 
     $cflist conf -state normal
     $cflist delete 0.0 end
@@ -1986,7 +2644,7 @@ proc newviewok {top n} {
 	    set viewfiles($n) $files
 	    set viewargs($n) $newargs
 	    if {$curview == $n} {
-		run updatecommits
+		run reloadcommits
 	    }
 	}
     }
@@ -1994,7 +2652,7 @@ proc newviewok {top n} {
 }
 
 proc delview {} {
-    global curview viewdata viewperm hlview selectedhlview
+    global curview viewperm hlview selectedhlview
 
     if {$curview == 0} return
     if {[info exists hlview] && $hlview == $curview} {
@@ -2002,7 +2660,6 @@ proc delview {} {
 	unset hlview
     }
     allviewmenus $curview delete
-    set viewdata($curview) {}
     set viewperm($curview) 0
     showview 0
 }
@@ -2016,52 +2673,30 @@ proc addviewmenu {n} {
     #	-command [list addvhighlight $n] -variable selectedhlview
 }
 
-proc flatten {var} {
-    global $var
-
-    set ret {}
-    foreach i [array names $var] {
-	lappend ret $i [set $var\($i\)]
-    }
-    return $ret
-}
-
-proc unflatten {var l} {
-    global $var
-
-    catch {unset $var}
-    foreach {i v} $l {
-	set $var\($i\) $v
-    }
-}
-
 proc showview {n} {
-    global curview viewdata viewfiles
+    global curview viewfiles cached_commitrow
     global displayorder parentlist rowidlist rowisopt rowfinal
-    global colormap rowtextx commitrow nextcolor canvxmax
-    global numcommits commitlisted
+    global colormap rowtextx nextcolor canvxmax
+    global numcommits viewcomplete
     global selectedline currentid canv canvy0
     global treediffs
-    global pending_select phase
+    global pending_select
     global commitidx
-    global commfd
     global selectedview selectfirst
-    global vparentlist vdisporder vcmitlisted
     global hlview selectedhlview commitinterest
 
     if {$n == $curview} return
     set selid {}
+    set ymax [lindex [$canv cget -scrollregion] 3]
+    set span [$canv yview]
+    set ytop [expr {[lindex $span 0] * $ymax}]
+    set ybot [expr {[lindex $span 1] * $ymax}]
+    set yscreen [expr {($ybot - $ytop) / 2}]
     if {[info exists selectedline]} {
 	set selid $currentid
 	set y [yc $selectedline]
-	set ymax [lindex [$canv cget -scrollregion] 3]
-	set span [$canv yview]
-	set ytop [expr {[lindex $span 0] * $ymax}]
-	set ybot [expr {[lindex $span 1] * $ymax}]
 	if {$ytop < $y && $y < $ybot} {
 	    set yscreen [expr {$y - $ytop}]
-	} else {
-	    set yscreen [expr {($ybot - $ytop) / 2}]
 	}
     } elseif {[info exists pending_select]} {
 	set selid $pending_select
@@ -2069,17 +2704,6 @@ proc showview {n} {
     }
     unselectline
     normalline
-    if {$curview >= 0} {
-	set vparentlist($curview) $parentlist
-	set vdisporder($curview) $displayorder
-	set vcmitlisted($curview) $commitlisted
-	if {$phase ne {} ||
-	    ![info exists viewdata($curview)] ||
-	    [lindex $viewdata($curview) 0] ne {}} {
-	    set viewdata($curview) \
-		[list $phase $rowidlist $rowisopt $rowfinal]
-	}
-    }
     catch {unset treediffs}
     clear_display
     if {[info exists hlview] && $hlview == $n} {
@@ -2087,6 +2711,7 @@ proc showview {n} {
 	set selectedhlview None
     }
     catch {unset commitinterest}
+    catch {unset cached_commitrow}
 
     set curview $n
     set selectedview $n
@@ -2094,7 +2719,7 @@ proc showview {n} {
     .bar.view entryconf Delete* -state [expr {$n == 0? "disabled": "normal"}]
 
     run refill_reflist
-    if {![info exists viewdata($n)]} {
+    if {![info exists viewcomplete($n)]} {
 	if {$selid ne {}} {
 	    set pending_select $selid
 	}
@@ -2102,14 +2727,11 @@ proc showview {n} {
 	return
     }
 
-    set v $viewdata($n)
-    set phase [lindex $v 0]
-    set displayorder $vdisporder($n)
-    set parentlist $vparentlist($n)
-    set commitlisted $vcmitlisted($n)
-    set rowidlist [lindex $v 1]
-    set rowisopt [lindex $v 2]
-    set rowfinal [lindex $v 3]
+    set displayorder {}
+    set parentlist {}
+    set rowidlist {}
+    set rowisopt {}
+    set rowfinal {}
     set numcommits $commitidx($n)
 
     catch {unset colormap}
@@ -2122,8 +2744,8 @@ proc showview {n} {
     set yf 0
     set row {}
     set selectfirst 0
-    if {$selid ne {} && [info exists commitrow($n,$selid)]} {
-	set row $commitrow($n,$selid)
+    if {$selid ne {} && [commitinview $selid $n]} {
+	set row [rowofcommit $selid]
 	# try to get the selected row in the same position on the screen
 	set ymax [lindex [$canv cget -scrollregion] 3]
 	set ytop [expr {[yc $row] - $yscreen}]
@@ -2146,11 +2768,12 @@ proc showview {n} {
 	    set selectfirst 1
 	}
     }
-    if {$phase ne {}} {
-	if {$phase eq "getcommits"} {
+    if {!$viewcomplete($n)} {
+	if {$numcommits == 0} {
 	    show_status "Reading commits..."
+	} else {
+	    run chewcommits $n
 	}
-	run chewcommits $n
     } elseif {$numcommits == 0} {
 	show_status "No commits selected"
     }
@@ -2219,17 +2842,13 @@ proc unbolden {} {
 }
 
 proc addvhighlight {n} {
-    global hlview curview viewdata vhl_done vhighlights commitidx
+    global hlview viewcomplete curview vhl_done vhighlights commitidx
 
     if {[info exists hlview]} {
 	delvhighlight
     }
     set hlview $n
-    if {$n != $curview && ![info exists viewdata($n)]} {
-	set viewdata($n) [list getcommits {{}} 0 0 0]
-	set vparentlist($n) {}
-	set vdisporder($n) {}
-	set vcmitlisted($n) {}
+    if {$n != $curview && ![info exists viewcomplete($n)]} {
 	start_rev_list $n
     }
     set vhl_done $commitidx($hlview)
@@ -2248,22 +2867,16 @@ proc delvhighlight {} {
 }
 
 proc vhighlightmore {} {
-    global hlview vhl_done commitidx vhighlights
-    global displayorder vdisporder curview
+    global hlview vhl_done commitidx vhighlights curview
 
     set max $commitidx($hlview)
-    if {$hlview == $curview} {
-	set disp $displayorder
-    } else {
-	set disp $vdisporder($hlview)
-    }
     set vr [visiblerows]
     set r0 [lindex $vr 0]
     set r1 [lindex $vr 1]
     for {set i $vhl_done} {$i < $max} {incr i} {
-	set id [lindex $disp $i]
-	if {[info exists commitrow($curview,$id)]} {
-	    set row $commitrow($curview,$id)
+	set id [commitonrow $i $hlview]
+	if {[commitinview $id $curview]} {
+	    set row [rowofcommit $id]
 	    if {$r0 <= $row && $row <= $r1} {
 		if {![highlighted $row]} {
 		    bolden $row mainfontbold
@@ -2276,9 +2889,9 @@ proc vhighlightmore {} {
 }
 
 proc askvhighlight {row id} {
-    global hlview vhighlights commitrow iddrawn
+    global hlview vhighlights iddrawn
 
-    if {[info exists commitrow($hlview,$id)]} {
+    if {[commitinview $id $hlview]} {
 	if {[info exists iddrawn($id)] && ![ishighlighted $row]} {
 	    bolden $row mainfontbold
 	}
@@ -2427,7 +3040,7 @@ proc askfilehighlight {row id} {
 }
 
 proc readfhighlight {} {
-    global filehighlight fhighlights commitrow curview iddrawn
+    global filehighlight fhighlights curview iddrawn
     global fhl_list find_dirn
 
     if {![info exists filehighlight]} {
@@ -2440,14 +3053,14 @@ proc readfhighlight {} {
 	if {$i < 0} continue
 	for {set j 0} {$j < $i} {incr j} {
 	    set id [lindex $fhl_list $j]
-	    if {[info exists commitrow($curview,$id)]} {
-		set fhighlights($commitrow($curview,$id)) 0
+	    if {[commitinview $id $curview]} {
+		set fhighlights([rowofcommit $id]) 0
 	    }
 	}
 	set fhl_list [lrange $fhl_list [expr {$i+1}] end]
 	if {$line eq {}} continue
-	if {![info exists commitrow($curview,$line)]} continue
-	set row $commitrow($curview,$line)
+	if {![commitinview $line $curview]} continue
+	set row [rowofcommit $line]
 	if {[info exists iddrawn($line)] && ![ishighlighted $row]} {
 	    bolden $row mainfontbold
 	}
@@ -2568,16 +3181,16 @@ proc rhighlight_none {} {
 }
 
 proc is_descendent {a} {
-    global curview children commitrow descendent desc_todo
+    global curview children descendent desc_todo
 
     set v $curview
-    set la $commitrow($v,$a)
+    set la [rowofcommit $a]
     set todo $desc_todo
     set leftover {}
     set done 0
     for {set i 0} {$i < [llength $todo]} {incr i} {
 	set do [lindex $todo $i]
-	if {$commitrow($v,$do) < $la} {
+	if {[rowofcommit $do] < $la} {
 	    lappend leftover $do
 	    continue
 	}
@@ -2600,20 +3213,20 @@ proc is_descendent {a} {
 }
 
 proc is_ancestor {a} {
-    global curview parentlist commitrow ancestor anc_todo
+    global curview parents ancestor anc_todo
 
     set v $curview
-    set la $commitrow($v,$a)
+    set la [rowofcommit $a]
     set todo $anc_todo
     set leftover {}
     set done 0
     for {set i 0} {$i < [llength $todo]} {incr i} {
 	set do [lindex $todo $i]
-	if {![info exists commitrow($v,$do)] || $commitrow($v,$do) > $la} {
+	if {![commitinview $do $v] || [rowofcommit $do] > $la} {
 	    lappend leftover $do
 	    continue
 	}
-	foreach np [lindex $parentlist $commitrow($v,$do)] {
+	foreach np $parents($v,$do) {
 	    if {![info exists ancestor($np)]} {
 		set ancestor($np) 1
 		lappend todo $np
@@ -2714,16 +3327,14 @@ proc idcol {idlist id {i 0}} {
 }
 
 proc initlayout {} {
-    global rowidlist rowisopt rowfinal displayorder commitlisted
+    global rowidlist rowisopt rowfinal displayorder parentlist
     global numcommits canvxmax canv
     global nextcolor
-    global parentlist
     global colormap rowtextx
     global selectfirst
 
     set numcommits 0
     set displayorder {}
-    set commitlisted {}
     set parentlist {}
     set nextcolor 0
     set rowidlist {}
@@ -2774,8 +3385,8 @@ proc layoutmore {} {
 }
 
 proc showstuff {canshow last} {
-    global numcommits commitrow pending_select selectedline curview
-    global mainheadid displayorder selectfirst
+    global numcommits pending_select selectedline curview
+    global selectfirst
     global lastscrollset commitinterest
 
     if {$numcommits == 0} {
@@ -2800,9 +3411,8 @@ proc showstuff {canshow last} {
 	drawcommits $r0 $r1
     }
     if {[info exists pending_select] &&
-	[info exists commitrow($curview,$pending_select)] &&
-	$commitrow($curview,$pending_select) < $numcommits} {
-	selectline $commitrow($curview,$pending_select) 1
+	[commitinview $pending_select $curview]} {
+	selectline [rowofcommit $pending_select] 1
     }
     if {$selectfirst} {
 	if {[info exists selectedline] || [info exists pending_select]} {
@@ -2816,10 +3426,9 @@ proc showstuff {canshow last} {
 }
 
 proc doshowlocalchanges {} {
-    global curview mainheadid phase commitrow
+    global curview mainheadid phase
 
-    if {[info exists commitrow($curview,$mainheadid)] &&
-	($phase eq {} || $commitrow($curview,$mainheadid) < $numcommits - 1)} {
+    if {[commitinview $mainheadid $curview]} {
 	dodiffindex
     } elseif {$phase ne {}} {
 	lappend commitinterest($mainheadid) {}
@@ -2827,38 +3436,30 @@ proc doshowlocalchanges {} {
 }
 
 proc dohidelocalchanges {} {
-    global localfrow localirow lserial
+    global nullid nullid2 lserial curview
 
-    if {$localfrow >= 0} {
-	removerow $localfrow
-	set localfrow -1
-	if {$localirow > 0} {
-	    incr localirow -1
-	}
+    if {[commitinview $nullid $curview]} {
+	removerow $nullid $curview
     }
-    if {$localirow >= 0} {
-	removerow $localirow
-	set localirow -1
+    if {[commitinview $nullid2 $curview]} {
+	removerow $nullid2 $curview
     }
     incr lserial
 }
 
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
-    global localirow localfrow lserial showlocalchanges
+    global lserial showlocalchanges
 
     if {!$showlocalchanges} return
     incr lserial
-    set localfrow -1
-    set localirow -1
     set fd [open "|git diff-index --cached HEAD" r]
     fconfigure $fd -blocking 0
     filerun $fd [list readdiffindex $fd $lserial]
 }
 
 proc readdiffindex {fd serial} {
-    global localirow commitrow mainheadid nullid2 curview
-    global commitinfo commitdata lserial
+    global mainheadid nullid2 curview commitinfo commitdata lserial
 
     set isdiff 1
     if {[gets $fd line] < 0} {
@@ -2877,19 +3478,18 @@ proc readdiffindex {fd serial} {
 	filerun $fd [list readdifffiles $fd $serial]
     }
 
-    if {$isdiff && $serial == $lserial && $localirow == -1} {
+    if {$isdiff && $serial == $lserial && ![commitinview $nullid2 $curview]} {
 	# add the line for the changes in the index to the graph
-	set localirow $commitrow($curview,$mainheadid)
 	set hl "Local changes checked in to index but not committed"
 	set commitinfo($nullid2) [list  $hl {} {} {} {} "    $hl\n"]
 	set commitdata($nullid2) "\n    $hl\n"
-	insertrow $localirow $nullid2
+	insertrow $nullid2 $mainheadid $curview
     }
     return 0
 }
 
 proc readdifffiles {fd serial} {
-    global localirow localfrow commitrow mainheadid nullid curview
+    global mainheadid nullid nullid2 curview
     global commitinfo commitdata lserial
 
     set isdiff 1
@@ -2902,50 +3502,49 @@ proc readdifffiles {fd serial} {
     # we only need to see one line and we don't really care what it says...
     close $fd
 
-    if {$isdiff && $serial == $lserial && $localfrow == -1} {
+    if {$isdiff && $serial == $lserial && ![commitinview $nullid $curview]} {
 	# add the line for the local diff to the graph
-	if {$localirow >= 0} {
-	    set localfrow $localirow
-	    incr localirow
-	} else {
-	    set localfrow $commitrow($curview,$mainheadid)
-	}
 	set hl "Local uncommitted changes, not checked in to index"
 	set commitinfo($nullid) [list  $hl {} {} {} {} "    $hl\n"]
 	set commitdata($nullid) "\n    $hl\n"
-	insertrow $localfrow $nullid
+	if {[commitinview $nullid2 $curview]} {
+	    set p $nullid2
+	} else {
+	    set p $mainheadid
+	}
+	insertrow $nullid $p $curview
     }
     return 0
 }
 
 proc nextuse {id row} {
-    global commitrow curview children
+    global curview children
 
     if {[info exists children($curview,$id)]} {
 	foreach kid $children($curview,$id) {
-	    if {![info exists commitrow($curview,$kid)]} {
+	    if {![commitinview $kid $curview]} {
 		return -1
 	    }
-	    if {$commitrow($curview,$kid) > $row} {
-		return $commitrow($curview,$kid)
+	    if {[rowofcommit $kid] > $row} {
+		return [rowofcommit $kid]
 	    }
 	}
     }
-    if {[info exists commitrow($curview,$id)]} {
-	return $commitrow($curview,$id)
+    if {[commitinview $id $curview]} {
+	return [rowofcommit $id]
     }
     return -1
 }
 
 proc prevuse {id row} {
-    global commitrow curview children
+    global curview children
 
     set ret -1
     if {[info exists children($curview,$id)]} {
 	foreach kid $children($curview,$id) {
-	    if {![info exists commitrow($curview,$kid)]} break
-	    if {$commitrow($curview,$kid) < $row} {
-		set ret $commitrow($curview,$kid)
+	    if {![commitinview $kid $curview]} break
+	    if {[rowofcommit $kid] < $row} {
+		set ret [rowofcommit $kid]
 	    }
 	}
     }
@@ -2954,7 +3553,7 @@ proc prevuse {id row} {
 
 proc make_idlist {row} {
     global displayorder parentlist uparrowlen downarrowlen mingaplen
-    global commitidx curview ordertok children commitrow
+    global commitidx curview ordertok children
 
     set r [expr {$row - $mingaplen - $downarrowlen - 1}]
     if {$r < 0} {
@@ -2968,6 +3567,7 @@ proc make_idlist {row} {
     if {$rb > $commitidx($curview)} {
 	set rb $commitidx($curview)
     }
+    make_disporder $r [expr {$rb + 1}]
     set ids {}
     for {} {$r < $ra} {incr r} {
 	set nextid [lindex $displayorder [expr {$r + 1}]]
@@ -2995,7 +3595,7 @@ proc make_idlist {row} {
     while {$r < $rb} {
 	foreach p [lindex $parentlist $r] {
 	    set firstkid [lindex $children($curview,$p) 0]
-	    if {$commitrow($curview,$firstkid) < $row} {
+	    if {[rowofcommit $firstkid] < $row} {
 		lappend ids [list $ordertok($curview,$p) $p]
 	    }
 	}
@@ -3003,7 +3603,7 @@ proc make_idlist {row} {
 	set id [lindex $displayorder $r]
 	if {$id ne {}} {
 	    set firstkid [lindex $children($curview,$id) 0]
-	    if {$firstkid ne {} && $commitrow($curview,$firstkid) < $row} {
+	    if {$firstkid ne {} && [rowofcommit $firstkid] < $row} {
 		lappend ids [list $ordertok($curview,$id) $id]
 	    }
 	}
@@ -3050,8 +3650,9 @@ proc layoutrows {row endrow} {
     global rowidlist rowisopt rowfinal displayorder
     global uparrowlen downarrowlen maxwidth mingaplen
     global children parentlist
-    global commitidx viewcomplete curview commitrow
+    global commitidx viewcomplete curview
 
+    make_disporder [expr {$row - 1}] [expr {$endrow + $uparrowlen}]
     set idlist {}
     if {$row > 0} {
 	set rm1 [expr {$row - 1}]
@@ -3107,7 +3708,7 @@ proc layoutrows {row endrow} {
 		foreach p [lindex $parentlist $r] {
 		    if {[lsearch -exact $idlist $p] >= 0} continue
 		    set fk [lindex $children($curview,$p) 0]
-		    if {$commitrow($curview,$fk) < $row} {
+		    if {[rowofcommit $fk] < $row} {
 			set x [idcol $idlist $p $x]
 			set idlist [linsert $idlist $x $p]
 		    }
@@ -3116,7 +3717,7 @@ proc layoutrows {row endrow} {
 		    set p [lindex $displayorder $r]
 		    if {[lsearch -exact $idlist $p] < 0} {
 			set fk [lindex $children($curview,$p) 0]
-			if {$fk ne {} && $commitrow($curview,$fk) < $row} {
+			if {$fk ne {} && [rowofcommit $fk] < $row} {
 			    set x [idcol $idlist $p $x]
 			    set idlist [linsert $idlist $x $p]
 			}
@@ -3331,7 +3932,7 @@ proc linewidth {id} {
 }
 
 proc rowranges {id} {
-    global commitrow curview children uparrowlen downarrowlen
+    global curview children uparrowlen downarrowlen
     global rowidlist
 
     set kids $children($curview,$id)
@@ -3341,13 +3942,13 @@ proc rowranges {id} {
     set ret {}
     lappend kids $id
     foreach child $kids {
-	if {![info exists commitrow($curview,$child)]} break
-	set row $commitrow($curview,$child)
+	if {![commitinview $child $curview]} break
+	set row [rowofcommit $child]
 	if {![info exists prev]} {
 	    lappend ret [expr {$row + 1}]
 	} else {
 	    if {$row <= $prevrow} {
-		puts "oops children out of order [shortids $id] $row < [shortids $prev] $prevrow"
+		puts "oops children of [shortids $id] out of order [shortids $child] $row <= [shortids $prev] $prevrow"
 	    }
 	    # see if the line extends the whole way from prevrow to row
 	    if {$row > $prevrow + $uparrowlen + $downarrowlen &&
@@ -3380,7 +3981,7 @@ proc rowranges {id} {
 	if {$child eq $id} {
 	    lappend ret $row
 	}
-	set prev $id
+	set prev $child
 	set prevrow $row
     }
     return $ret
@@ -3628,14 +4229,14 @@ proc drawlines {id} {
 }
 
 proc drawcmittext {id row col} {
-    global linespc canv canv2 canv3 canvy0 fgcolor curview
-    global commitlisted commitinfo rowidlist parentlist
+    global linespc canv canv2 canv3 fgcolor curview
+    global cmitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag selectedline
     global canvxmax boldrows boldnamerows fgcolor nullid nullid2
 
     # listed is 0 for boundary, 1 for normal, 2 for left, 3 for right
-    set listed [lindex $commitlisted $row]
+    set listed $cmitlisted($curview,$id)
     if {$id eq $nullid} {
 	set ofill red
     } elseif {$id eq $nullid2} {
@@ -3720,7 +4321,7 @@ proc drawcmittext {id row col} {
 proc drawcmitrow {row} {
     global displayorder rowidlist nrows_drawn
     global iddrawn markingmatches
-    global commitinfo parentlist numcommits
+    global commitinfo numcommits
     global filehighlight fhighlights findpattern nhighlights
     global hlview vhighlights
     global highlight_related rhighlights
@@ -3840,6 +4441,24 @@ proc drawcommits {row {endrow {}}} {
     }
 }
 
+proc undolayout {row} {
+    global uparrowlen mingaplen downarrowlen
+    global rowidlist rowisopt rowfinal need_redisplay
+
+    set r [expr {$row - ($uparrowlen + $mingaplen + $downarrowlen)}]
+    if {$r < 0} {
+	set r 0
+    }
+    if {[llength $rowidlist] > $r} {
+	incr r -1
+	set rowidlist [lrange $rowidlist 0 $r]
+	set rowfinal [lrange $rowfinal 0 $r]
+	set rowisopt [lrange $rowisopt 0 $r]
+	set need_redisplay 1
+	run drawvisible
+    }
+}
+
 proc drawfrac {f0 f1} {
     global canv linespc
 
@@ -3909,7 +4528,7 @@ proc findcrossings {id} {
 
 proc assigncolor {id} {
     global colormap colors nextcolor
-    global commitrow parentlist children children curview
+    global parents children children curview
 
     if {[info exists colormap($id)]} return
     set ncolors [llength $colors]
@@ -3921,7 +4540,7 @@ proc assigncolor {id} {
     if {[llength $kids] == 1} {
 	set child [lindex $kids 0]
 	if {[info exists colormap($child)]
-	    && [llength [lindex $parentlist $commitrow($curview,$child)]] == 1} {
+	    && [llength $parents($curview,$child)] == 1} {
 	    set colormap($id) $colormap($child)
 	    return
 	}
@@ -3949,7 +4568,7 @@ proc assigncolor {id} {
 		&& [lsearch -exact $badcolors $colormap($child)] < 0} {
 		lappend badcolors $colormap($child)
 	    }
-	    foreach p [lindex $parentlist $commitrow($curview,$child)] {
+	    foreach p $parents($curview,$child) {
 		if {[info exists colormap($p)]
 		    && [lsearch -exact $badcolors $colormap($p)] < 0} {
 		    lappend badcolors $colormap($p)
@@ -3982,7 +4601,7 @@ proc bindline {t id} {
 proc drawtags {id x xt y1} {
     global idtags idheads idotherrefs mainhead
     global linespc lthickness
-    global canv commitrow rowtextx curview fgcolor bgcolor
+    global canv rowtextx curview fgcolor bgcolor
 
     set marks {}
     set ntags 0
@@ -4032,7 +4651,7 @@ proc drawtags {id x xt y1} {
 		       $xr $yt $xr $yb $xl $yb $x [expr {$yb - $delta}] \
 		       -width 1 -outline black -fill yellow -tags tag.$id]
 	    $canv bind $t <1> [list showtag $tag 1]
-	    set rowtextx($commitrow($curview,$id)) [expr {$xr + $linespc}]
+	    set rowtextx([rowofcommit $id]) [expr {$xr + $linespc}]
 	} else {
 	    # draw a head or other ref
 	    if {[incr nheads -1] >= 0} {
@@ -4084,103 +4703,6 @@ proc show_status {msg} {
     clear_display
     $canv create text 3 3 -anchor nw -text $msg -font mainfont \
 	-tags text -fill $fgcolor
-}
-
-# Insert a new commit as the child of the commit on row $row.
-# The new commit will be displayed on row $row and the commits
-# on that row and below will move down one row.
-proc insertrow {row newcmit} {
-    global displayorder parentlist commitlisted children
-    global commitrow curview rowidlist rowisopt rowfinal numcommits
-    global numcommits
-    global selectedline commitidx ordertok
-
-    if {$row >= $numcommits} {
-	puts "oops, inserting new row $row but only have $numcommits rows"
-	return
-    }
-    set p [lindex $displayorder $row]
-    set displayorder [linsert $displayorder $row $newcmit]
-    set parentlist [linsert $parentlist $row $p]
-    set kids $children($curview,$p)
-    lappend kids $newcmit
-    set children($curview,$p) $kids
-    set children($curview,$newcmit) {}
-    set commitlisted [linsert $commitlisted $row 1]
-    set l [llength $displayorder]
-    for {set r $row} {$r < $l} {incr r} {
-	set id [lindex $displayorder $r]
-	set commitrow($curview,$id) $r
-    }
-    incr commitidx($curview)
-    set ordertok($curview,$newcmit) $ordertok($curview,$p)
-
-    if {$row < [llength $rowidlist]} {
-	set idlist [lindex $rowidlist $row]
-	if {$idlist ne {}} {
-	    if {[llength $kids] == 1} {
-		set col [lsearch -exact $idlist $p]
-		lset idlist $col $newcmit
-	    } else {
-		set col [llength $idlist]
-		lappend idlist $newcmit
-	    }
-	}
-	set rowidlist [linsert $rowidlist $row $idlist]
-	set rowisopt [linsert $rowisopt $row 0]
-	set rowfinal [linsert $rowfinal $row [lindex $rowfinal $row]]
-    }
-
-    incr numcommits
-
-    if {[info exists selectedline] && $selectedline >= $row} {
-	incr selectedline
-    }
-    redisplay
-}
-
-# Remove a commit that was inserted with insertrow on row $row.
-proc removerow {row} {
-    global displayorder parentlist commitlisted children
-    global commitrow curview rowidlist rowisopt rowfinal numcommits
-    global numcommits
-    global linesegends selectedline commitidx
-
-    if {$row >= $numcommits} {
-	puts "oops, removing row $row but only have $numcommits rows"
-	return
-    }
-    set rp1 [expr {$row + 1}]
-    set id [lindex $displayorder $row]
-    set p [lindex $parentlist $row]
-    set displayorder [lreplace $displayorder $row $row]
-    set parentlist [lreplace $parentlist $row $row]
-    set commitlisted [lreplace $commitlisted $row $row]
-    set kids $children($curview,$p)
-    set i [lsearch -exact $kids $id]
-    if {$i >= 0} {
-	set kids [lreplace $kids $i $i]
-	set children($curview,$p) $kids
-    }
-    set l [llength $displayorder]
-    for {set r $row} {$r < $l} {incr r} {
-	set id [lindex $displayorder $r]
-	set commitrow($curview,$id) $r
-    }
-    incr commitidx($curview) -1
-
-    if {$row < [llength $rowidlist]} {
-	set rowidlist [lreplace $rowidlist $row $row]
-	set rowisopt [lreplace $rowisopt $row $row]
-	set rowfinal [lreplace $rowfinal $row $row]
-    }
-
-    incr numcommits -1
-
-    if {[info exists selectedline] && $selectedline > $row} {
-	incr selectedline -1
-    }
-    redisplay
 }
 
 # Don't change the text pane cursor if it is currently the hand cursor,
@@ -4285,9 +4807,9 @@ proc stopfinding {} {
 
 proc findmore {} {
     global commitdata commitinfo numcommits findpattern findloc
-    global findstartline findcurline displayorder
+    global findstartline findcurline findallowwrap
     global find_dirn gdttype fhighlights fprogcoord
-    global findallowwrap
+    global curview varcorder vrownum varccommits
 
     if {![info exists find_dirn]} {
 	return 0
@@ -4325,12 +4847,26 @@ proc findmore {} {
     }
     set found 0
     set domore 1
+    set ai [bsearch $vrownum($curview) $l]
+    set a [lindex $varcorder($curview) $ai]
+    set arow [lindex $vrownum($curview) $ai]
+    set ids [lindex $varccommits($curview,$a)]
+    set arowend [expr {$arow + [llength $ids]}]
     if {$gdttype eq "containing:"} {
 	for {} {$n > 0} {incr n -1; incr l $find_dirn} {
-	    set id [lindex $displayorder $l]
+	    if {$l < $arow || $l >= $arowend} {
+		incr ai $find_dirn
+		set a [lindex $varcorder($curview) $ai]
+		set arow [lindex $vrownum($curview) $ai]
+		set ids [lindex $varccommits($curview,$a)]
+		set arowend [expr {$arow + [llength $ids]}]
+	    }
+	    set id [lindex $ids [expr {$l - $arow}]]
 	    # shouldn't happen unless git log doesn't give all the commits...
-	    if {![info exists commitdata($id)]} continue
-	    if {![doesmatch $commitdata($id)]} continue
+	    if {![info exists commitdata($id)] ||
+		![doesmatch $commitdata($id)]} {
+		continue
+	    }
 	    if {![info exists commitinfo($id)]} {
 		getcommit $id
 	    }
@@ -4346,7 +4882,14 @@ proc findmore {} {
 	}
     } else {
 	for {} {$n > 0} {incr n -1; incr l $find_dirn} {
-	    set id [lindex $displayorder $l]
+	    if {$l < $arow || $l >= $arowend} {
+		incr ai $find_dirn
+		set a [lindex $varcorder($curview) $ai]
+		set arow [lindex $vrownum($curview) $ai]
+		set ids [lindex $varccommits($curview,$a)]
+		set arowend [expr {$arow + [llength $ids]}]
+	    }
+	    set id [lindex $ids [expr {$l - $arow}]]
 	    if {![info exists fhighlights($l)]} {
 		askfilehighlight $l $id
 		if {$domore} {
@@ -4470,7 +5013,7 @@ proc commit_descriptor {p} {
 # append some text to the ctext widget, and make any SHA1 ID
 # that we know about be a clickable link.
 proc appendwithlinks {text tags} {
-    global ctext commitrow linknum curview pendinglinks
+    global ctext linknum curview pendinglinks
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text $tags
@@ -4488,11 +5031,11 @@ proc appendwithlinks {text tags} {
 }
 
 proc setlink {id lk} {
-    global curview commitrow ctext pendinglinks commitinterest
+    global curview ctext pendinglinks commitinterest
 
-    if {[info exists commitrow($curview,$id)]} {
+    if {[commitinview $id $curview]} {
 	$ctext tag conf $lk -foreground blue -underline 1
-	$ctext tag bind $lk <1> [list selectline $commitrow($curview,$id) 1]
+	$ctext tag bind $lk <1> [list selectline [rowofcommit $id] 1]
 	$ctext tag bind $lk <Enter> {linkcursor %W 1}
 	$ctext tag bind $lk <Leave> {linkcursor %W -1}
     } else {
@@ -4543,7 +5086,7 @@ proc viewnextline {dir} {
 # add a list of tag or branch names at position pos
 # returns the number of names inserted
 proc appendrefs {pos ids var} {
-    global ctext commitrow linknum curview $var maxrefs
+    global ctext linknum curview $var maxrefs
 
     if {[catch {$ctext index $pos}]} {
 	return 0
@@ -4646,8 +5189,7 @@ proc make_secsel {l} {
 
 proc selectline {l isnew} {
     global canv ctext commitinfo selectedline
-    global displayorder
-    global canvy0 linespc parentlist children curview
+    global canvy0 linespc parents children curview
     global currentid sha1entry
     global commentend idtags linknum
     global mergemax numcommits pending_select
@@ -4703,7 +5245,7 @@ proc selectline {l isnew} {
 
     set selectedline $l
 
-    set id [lindex $displayorder $l]
+    set id [commitonrow $l]
     set currentid $id
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
@@ -4728,7 +5270,7 @@ proc selectline {l isnew} {
     }
 
     set headers {}
-    set olds [lindex $parentlist $l]
+    set olds $parents($curview,$id)
     if {[llength $olds] > 1} {
 	set np 0
 	foreach p $olds {
@@ -4786,7 +5328,7 @@ proc selectline {l isnew} {
     } elseif {[llength $olds] <= 1} {
 	startdiff $id
     } else {
-	mergediff $id $l
+	mergediff $id
     }
 }
 
@@ -5031,10 +5573,10 @@ proc getblobline {bf id} {
     return [expr {$nl >= 1000? 2: 1}]
 }
 
-proc mergediff {id l} {
+proc mergediff {id} {
     global diffmergeid mdifffd
     global diffids
-    global parentlist
+    global parents
     global limitdiffs viewfiles curview
 
     set diffmergeid $id
@@ -5050,7 +5592,7 @@ proc mergediff {id l} {
     }
     fconfigure $mdf -blocking 0
     set mdifffd($id) $mdf
-    set np [llength [lindex $parentlist $l]]
+    set np [llength $parents($curview,$id)]
     settabs $np
     filerun $mdf [list getmergediffline $mdf $id $np]
 }
@@ -5678,7 +6220,7 @@ proc fontname {f} {
 }
 
 proc incrfont {inc} {
-    global mainfont textfont ctext canv phase cflist showrefstop
+    global mainfont textfont ctext canv cflist showrefstop
     global stopped entries fontattr
 
     unmarkmatches
@@ -5729,8 +6271,7 @@ proc sha1change {n1 n2 op} {
 }
 
 proc gotocommit {} {
-    global sha1string currentid commitrow tagids headids
-    global displayorder numcommits curview
+    global sha1string tagids headids curview varcid
 
     if {$sha1string == {}
 	|| ([info exists currentid] && $sha1string == $currentid)} return
@@ -5741,23 +6282,18 @@ proc gotocommit {} {
     } else {
 	set id [string tolower $sha1string]
 	if {[regexp {^[0-9a-f]{4,39}$} $id]} {
-	    set matches {}
-	    foreach i $displayorder {
-		if {[string match $id* $i]} {
-		    lappend matches $i
-		}
-	    }
+	    set matches [array names varcid "$curview,$id*"]
 	    if {$matches ne {}} {
 		if {[llength $matches] > 1} {
 		    error_popup "Short SHA1 id $id is ambiguous"
 		    return
 		}
-		set id [lindex $matches 0]
+		set id [lindex [split [lindex $matches 0] ","] 1]
 	    }
 	}
     }
-    if {[info exists commitrow($curview,$id)]} {
-	selectline $commitrow($curview,$id) 1
+    if {[commitinview $id $curview]} {
+	selectline [rowofcommit $id] 1
 	return
     }
     if {[regexp {^[0-9a-fA-F]{4,}$} $sha1string]} {
@@ -5866,7 +6402,7 @@ proc arrowjump {id n y} {
 }
 
 proc lineclick {x y id isnew} {
-    global ctext commitinfo children canv thickerline curview commitrow
+    global ctext commitinfo children canv thickerline curview
 
     if {![info exists commitinfo($id)] && ![getcommit $id]} return
     unmarkmatches
@@ -5934,9 +6470,9 @@ proc normalline {} {
 }
 
 proc selbyid {id} {
-    global commitrow curview
-    if {[info exists commitrow($curview,$id)]} {
-	selectline $commitrow($curview,$id) 1
+    global curview
+    if {[commitinview $id $curview]} {
+	selectline [rowofcommit $id] 1
     }
 }
 
@@ -5949,13 +6485,13 @@ proc mstime {} {
 }
 
 proc rowmenu {x y id} {
-    global rowctxmenu commitrow selectedline rowmenuid curview
+    global rowctxmenu selectedline rowmenuid curview
     global nullid nullid2 fakerowmenu mainhead
 
     stopfinding
     set rowmenuid $id
     if {![info exists selectedline]
-	|| $commitrow($curview,$id) eq $selectedline} {
+	|| [rowofcommit $id] eq $selectedline} {
 	set state disabled
     } else {
 	set state normal
@@ -5973,15 +6509,15 @@ proc rowmenu {x y id} {
 }
 
 proc diffvssel {dirn} {
-    global rowmenuid selectedline displayorder
+    global rowmenuid selectedline
 
     if {![info exists selectedline]} return
     if {$dirn} {
-	set oldid [lindex $displayorder $selectedline]
+	set oldid [commitonrow $selectedline]
 	set newid $rowmenuid
     } else {
 	set oldid $rowmenuid
-	set newid [lindex $displayorder $selectedline]
+	set newid [commitonrow $selectedline]
     }
     addtohistory [list doseldiff $oldid $newid]
     doseldiff $oldid $newid
@@ -6163,23 +6699,23 @@ proc domktag {} {
 }
 
 proc redrawtags {id} {
-    global canv linehtag commitrow idpos selectedline curview
+    global canv linehtag idpos selectedline curview
     global canvxmax iddrawn
 
-    if {![info exists commitrow($curview,$id)]} return
+    if {![commitinview $id $curview]} return
     if {![info exists iddrawn($id)]} return
-    drawcommits $commitrow($curview,$id)
+    drawcommits [rowofcommit $id]
     $canv delete tag.$id
     set xt [eval drawtags $id $idpos($id)]
-    $canv coords $linehtag($commitrow($curview,$id)) $xt [lindex $idpos($id) 2]
-    set text [$canv itemcget $linehtag($commitrow($curview,$id)) -text]
+    $canv coords $linehtag([rowofcommit $id]) $xt [lindex $idpos($id) 2]
+    set text [$canv itemcget $linehtag([rowofcommit $id]) -text]
     set xr [expr {$xt + [font measure mainfont $text]}]
     if {$xr > $canvxmax} {
 	set canvxmax $xr
 	setcanvscroll
     }
     if {[info exists selectedline]
-	&& $selectedline == $commitrow($curview,$id)} {
+	&& $selectedline == [rowofcommit $id]} {
 	selectline $selectedline 0
     }
 }
@@ -6306,7 +6842,7 @@ proc mkbrgo {top} {
 }
 
 proc cherrypick {} {
-    global rowmenuid curview commitrow
+    global rowmenuid curview
     global mainhead
 
     set oldhead [exec git rev-parse HEAD]
@@ -6332,8 +6868,8 @@ proc cherrypick {} {
 	return
     }
     addnewchild $newhead $oldhead
-    if {[info exists commitrow($curview,$oldhead)]} {
-	insertrow $commitrow($curview,$oldhead) $newhead
+    if {[commitinview $oldhead $curview]} {
+	insertrow $newhead $oldhead $curview
 	if {$mainhead ne {}} {
 	    movehead $newhead $mainhead
 	    movedhead $newhead $mainhead
@@ -6571,13 +7107,13 @@ proc reflistfilter_change {n1 n2 op} {
 
 proc refill_reflist {} {
     global reflist reflistfilter showrefstop headids tagids otherrefids
-    global commitrow curview commitinterest
+    global curview commitinterest
 
     if {![info exists showrefstop] || ![winfo exists $showrefstop]} return
     set refs {}
     foreach n [array names headids] {
 	if {[string match $reflistfilter $n]} {
-	    if {[info exists commitrow($curview,$headids($n))]} {
+	    if {[commitinview $headids($n) $curview]} {
 		lappend refs [list $n H]
 	    } else {
 		set commitinterest($headids($n)) {run refill_reflist}
@@ -6586,7 +7122,7 @@ proc refill_reflist {} {
     }
     foreach n [array names tagids] {
 	if {[string match $reflistfilter $n]} {
-	    if {[info exists commitrow($curview,$tagids($n))]} {
+	    if {[commitinview $tagids($n) $curview]} {
 		lappend refs [list $n T]
 	    } else {
 		set commitinterest($tagids($n)) {run refill_reflist}
@@ -6595,7 +7131,7 @@ proc refill_reflist {} {
     }
     foreach n [array names otherrefids] {
 	if {[string match $reflistfilter $n]} {
-	    if {[info exists commitrow($curview,$otherrefids($n))]} {
+	    if {[commitinview $otherrefids($n) $curview]} {
 		lappend refs [list $n o]
 	    } else {
 		set commitinterest($otherrefids($n)) {run refill_reflist}
@@ -8619,12 +9155,12 @@ set viewfiles(0) {}
 set viewperm(0) 0
 set viewargs(0) {}
 
+set loginstance 0
+set getdbg 0
 set cmdlineok 0
 set stopped 0
 set stuffsaved 0
 set patchnum 0
-set localirow -1
-set localfrow -1
 set lserial 0
 setcoords
 makewindow
