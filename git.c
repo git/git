@@ -384,6 +384,36 @@ static void handle_internal_command(int argc, const char **argv)
 	}
 }
 
+static void execv_dashed_external(const char **argv)
+{
+	struct strbuf cmd;
+	const char *tmp;
+
+	strbuf_init(&cmd, 0);
+	strbuf_addf(&cmd, "git-%s", argv[0]);
+
+	/*
+	 * argv[0] must be the git command, but the argv array
+	 * belongs to the caller, and may be reused in
+	 * subsequent loop iterations. Save argv[0] and
+	 * restore it on error.
+	 */
+	tmp = argv[0];
+	argv[0] = cmd.buf;
+
+	trace_argv_printf(argv, "trace: exec:");
+
+	/* execvp() can only ever return if it fails */
+	execvp(cmd.buf, (char **)argv);
+
+	trace_printf("trace: exec failed: %s\n", strerror(errno));
+
+	argv[0] = tmp;
+
+	strbuf_release(&cmd);
+}
+
+
 int main(int argc, const char **argv)
 {
 	const char *cmd = argv[0] ? argv[0] : "git-help";
@@ -448,7 +478,7 @@ int main(int argc, const char **argv)
 		handle_internal_command(argc, argv);
 
 		/* .. then try the external ones */
-		execv_git_cmd(argv);
+		execv_dashed_external(argv);
 
 		/* It could be an alias -- this works around the insanity
 		 * of overriding "git log" with "git show" by having

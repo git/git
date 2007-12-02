@@ -65,32 +65,25 @@ void setup_path(const char *cmd_path)
 
 int execv_git_cmd(const char **argv)
 {
-	struct strbuf cmd;
-	const char *tmp;
+	int argc;
+	const char **nargv;
 
-	strbuf_init(&cmd, 0);
-	strbuf_addf(&cmd, "git-%s", argv[0]);
+	for (argc = 0; argv[argc]; argc++)
+		; /* just counting */
+	nargv = xmalloc(sizeof(*nargv) * (argc + 2));
 
-	/*
-	 * argv[0] must be the git command, but the argv array
-	 * belongs to the caller, and may be reused in
-	 * subsequent loop iterations. Save argv[0] and
-	 * restore it on error.
-	 */
-	tmp = argv[0];
-	argv[0] = cmd.buf;
-
-	trace_argv_printf(argv, "trace: exec:");
+	nargv[0] = "git";
+	for (argc = 0; argv[argc]; argc++)
+		nargv[argc + 1] = argv[argc];
+	nargv[argc + 1] = NULL;
+	trace_argv_printf(nargv, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */
-	execvp(cmd.buf, (char **)argv);
+	execvp("git", (char **)nargv);
 
 	trace_printf("trace: exec failed: %s\n", strerror(errno));
 
-	argv[0] = tmp;
-
-	strbuf_release(&cmd);
-
+	free(nargv);
 	return -1;
 }
 
