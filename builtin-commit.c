@@ -346,11 +346,9 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 
 		strbuf_init(&sob, 0);
 		strbuf_addstr(&sob, sign_off_header);
-		strbuf_addstr(&sob, fmt_ident(getenv("GIT_COMMITTER_NAME"),
-					      getenv("GIT_COMMITTER_EMAIL"),
-					      "", 1));
+		strbuf_addstr(&sob, fmt_name(getenv("GIT_COMMITTER_NAME"),
+					     getenv("GIT_COMMITTER_EMAIL")));
 		strbuf_addch(&sob, '\n');
-
 		for (i = sb.len - 1; i > 0 && sb.buf[i - 1] != '\n'; i--)
 			; /* do nothing */
 		if (prefixcmp(sb.buf + i, sob.buf)) {
