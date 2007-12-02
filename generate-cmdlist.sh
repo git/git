@@ -11,12 +11,9 @@ static struct cmdname_help common_cmds[] = {"
 
 sort <<\EOF |
 add
-apply
-archive
 bisect
 branch
 checkout
-cherry-pick
 clone
 commit
 diff
@@ -26,15 +23,12 @@ init
 log
 merge
 mv
-prune
 pull
 push
 rebase
 reset
-revert
 rm
 show
-show-branch
 status
 tag
 EOF
