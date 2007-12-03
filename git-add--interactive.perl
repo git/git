@@ -237,7 +237,8 @@ sub is_valid_prefix {
 	    !($prefix =~ /[\s,]/) && # separators
 	    !($prefix =~ /^-/) &&    # deselection
 	    !($prefix =~ /^\d+/) &&  # selection
-	    ($prefix ne '*');        # "all" wildcard
+	    ($prefix ne '*') &&      # "all" wildcard
+	    ($prefix ne '?');        # prompt help
 }
 
 # given a prefix/remainder tuple return a string with the prefix highlighted
@@ -318,6 +319,12 @@ sub list_and_choose {
 		}
 		chomp $line;
 		last if $line eq '';
+		if ($line eq '?') {
+			$opts->{SINGLETON} ?
+			    singleton_prompt_help_cmd() :
+			    prompt_help_cmd();
+			next TOPLOOP;
+		}
 		for my $choice (split(/[\s,]+/, $line)) {
 			my $choose = 1;
 			my ($bottom, $top);
@@ -361,6 +368,28 @@ sub list_and_choose {
 		}
 	}
 	return @return;
+}
+
+sub singleton_prompt_help_cmd {
+	print <<\EOF ;
+Prompt help:
+1          - select a numbered item
+foo        - select item based on unique prefix
+           - (empty) select nothing
+EOF
+}
+
+sub prompt_help_cmd {
+	print <<\EOF ;
+Prompt help:
+1          - select a single item
+3-5        - select a range of items
+2-3,6-9    - select multiple ranges
+foo        - select item based on unique prefix
+-...       - unselect specified items
+*          - choose all items
+           - (empty) finish selecting
+EOF
 }
 
 sub status_cmd {
