@@ -1,8 +1,9 @@
 #include "builtin.h"
 #include "cache.h"
+#include "color.h"
 
 static const char git_config_set_usage[] =
-"git-config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list";
+"git-config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list | --get-color var [default]";
 
 static char *key;
 static regex_t *key_regexp;
@@ -161,6 +162,53 @@ char *normalize_value(const char *key, const char *value)
 	return normalized;
 }
 
+static int get_color_found;
+static const char *get_color_slot;
+static char parsed_color[COLOR_MAXLEN];
+
+static int git_get_color_config(const char *var, const char *value)
+{
+	if (!strcmp(var, get_color_slot)) {
+		color_parse(value, var, parsed_color);
+		get_color_found = 1;
+	}
+	return 0;
+}
+
+static int get_color(int argc, const char **argv)
+{
+	/*
+	 * grab the color setting for the given slot from the configuration,
+	 * or parse the default value if missing, and return ANSI color
+	 * escape sequence.
+	 *
+	 * e.g.
+	 * git config --get-color color.diff.whitespace "blue reverse"
+	 */
+	const char *def_color = NULL;
+
+	switch (argc) {
+	default:
+		usage(git_config_set_usage);
+	case 2:
+		def_color = argv[1];
+		/* fallthru */
+	case 1:
+		get_color_slot = argv[0];
+		break;
+	}
+
+	get_color_found = 0;
+	parsed_color[0] = '\0';
+	git_config(git_get_color_config);
+
+	if (!get_color_found && def_color)
+		color_parse(def_color, "command line", parsed_color);
+
+	fputs(parsed_color, stdout);
+	return 0;
+}
+
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = 0;
@@ -234,8 +282,9 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 				return 1;
 			}
 			return 0;
-		}
-		else
+		} else if (!strcmp(argv[1], "--get-color")) {
+			return get_color(argc-2, argv+2);
+		} else
 			break;
 		argc--;
 		argv++;
