@@ -256,6 +256,13 @@ test_expect_success 'same tree (single parent)' '
 
 '
 
+test_expect_success 'same tree (single parent) --allow-empty' '
+
+	git commit --allow-empty -m "forced empty" &&
+	git cat-file commit HEAD | grep forced
+
+'
+
 test_expect_success 'same tree (merge and amend merge)' '
 
 	git checkout -b side HEAD^ &&

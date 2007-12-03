@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git-commit' [-a | --interactive] [-s] [-v] [-u]
 	   [(-c | -C) <commit> | -F <file> | -m <msg> | --amend]
-	   [--no-verify] [-e] [--author <author>]
+	   [--allow-empty] [--no-verify] [-e] [--author <author>]
 	   [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
@@ -88,6 +88,12 @@ OPTIONS
 --no-verify::
 	This option bypasses the pre-commit hook.
 	See also link:hooks.html[hooks].
+
+--allow-empty::
+	Usually recording a commit that has the exact same tree as its
+	sole parent commit and the command prevents you from making such
+	a mistake.  This option bypasses the safety, and is primarily
+	for use by foreign scm interface scripts.
 
 -e|--edit::
 	The message taken from file with `-F`, command line with
