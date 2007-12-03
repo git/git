@@ -229,7 +229,7 @@ cleanup() {
 trap cleanup 0
 mkdir -p "$dir" && D=$(cd "$dir" && pwd) || usage
 test -n "$GIT_WORK_TREE" && mkdir -p "$GIT_WORK_TREE" &&
-W=$(cd "$GIT_WORK_TREE" && pwd) && export GIT_WORK_TREE="$W"
+W=$(cd "$GIT_WORK_TREE" && pwd) && GIT_WORK_TREE="$W" && export GIT_WORK_TREE
 if test yes = "$bare" || test -n "$GIT_WORK_TREE"; then
 	GIT_DIR="$D"
 else
