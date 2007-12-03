@@ -27,6 +27,11 @@ static const char * const builtin_commit_usage[] = {
 	NULL
 };
 
+static const char * const builtin_status_usage[] = {
+	"git-status [options] [--] <filepattern>...",
+	NULL
+};
+
 static unsigned char head_sha1[20], merge_head_sha1[20];
 static char *use_message_buffer;
 static const char commit_editmsg[] = "COMMIT_EDITMSG";
@@ -493,12 +498,12 @@ static void determine_author_info(struct strbuf *sb)
 	strbuf_addf(sb, "author %s\n", fmt_ident(name, email, date, 1));
 }
 
-static int parse_and_validate_options(int argc, const char *argv[])
+static int parse_and_validate_options(int argc, const char *argv[],
+				      const char * const usage[])
 {
 	int f = 0;
 
-	argc = parse_options(argc, argv, builtin_commit_options,
-			     builtin_commit_usage, 0);
+	argc = parse_options(argc, argv, builtin_commit_options, usage, 0);
 
 	if (logfile || message.len || use_message)
 		no_edit = 1;
@@ -595,7 +600,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	git_config(git_status_config);
 
-	argc = parse_and_validate_options(argc, argv);
+	argc = parse_and_validate_options(argc, argv, builtin_status_usage);
 
 	index_file = prepare_index(argv, prefix);
 
@@ -687,7 +692,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	git_config(git_commit_config);
 
-	argc = parse_and_validate_options(argc, argv);
+	argc = parse_and_validate_options(argc, argv, builtin_commit_usage);
 
 	index_file = prepare_index(argv, prefix);
 
