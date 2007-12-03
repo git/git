@@ -244,4 +244,36 @@ test_expect_success 'multiple -m' '
 
 '
 
+test_expect_success 'same tree (single parent)' '
+
+	if git commit -m empty
+	then
+		echo oops -- should have complained
+		false
+	else
+		: happy
+	fi
+
+'
+
+test_expect_success 'same tree (merge and amend merge)' '
+
+	git checkout -b side HEAD^ &&
+	echo zero >zero &&
+	git add zero &&
+	git commit -m "add zero" &&
+	git checkout master &&
+
+	git merge -s ours side -m "empty ok" &&
+	git diff HEAD^ HEAD >actual &&
+	: >expected &&
+	diff -u expected actual &&
+
+	git commit --amend -m "empty really ok" &&
+	git diff HEAD^ HEAD >actual &&
+	: >expected &&
+	diff -u expected actual
+
+'
+
 test_done

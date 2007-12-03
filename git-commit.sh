@@ -515,13 +515,16 @@ else
 	# we need to check if there is anything to commit
 	run_status >/dev/null
 fi
-if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
-then
+case "$?,$PARENTS" in
+0,* | *,-p' '?*-p' '?*)
+	# a merge commit can record the same tree as its parent.
+	;;
+*)
 	rm -f "$GIT_DIR/COMMIT_EDITMSG" "$GIT_DIR/SQUASH_MSG"
 	use_status_color=t
 	run_status
 	exit 1
-fi
+esac
 
 case "$no_edit" in
 '')
