@@ -46,7 +46,7 @@ static enum {
 static char *logfile, *force_author, *template_file;
 static char *edit_message, *use_message;
 static int all, edit_flag, also, interactive, only, amend, signoff;
-static int quiet, verbose, untracked_files, no_verify;
+static int quiet, verbose, untracked_files, no_verify, allow_empty;
 
 static int no_edit, initial_commit, in_merge;
 const char *only_include_assumed;
@@ -87,6 +87,7 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN('n', "no-verify", &no_verify, "bypass pre-commit hook"),
 	OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
 	OPT_BOOLEAN(0, "untracked-files", &untracked_files, "show all untracked files"),
+	OPT_BOOLEAN(0, "allow-empty", &allow_empty, "ok to record an empty change"),
 
 	OPT_END()
 };
@@ -710,7 +711,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!prepare_log_message(index_file, prefix) && !in_merge &&
-	    !(amend && is_a_merge(head_sha1))) {
+	    !allow_empty && !(amend && is_a_merge(head_sha1))) {
 		run_status(stdout, index_file, prefix);
 		rollback_index_files();
 		unlink(commit_editmsg);
