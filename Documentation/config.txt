@@ -552,7 +552,8 @@ access method.
 
 http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy'
-	environment variable (see gitlink:curl[1]).
+	environment variable (see gitlink:curl[1]).  This can be overridden
+	on a per-remote basis; see remote.<name>.proxy
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
@@ -701,6 +702,11 @@ pull.twohead::
 remote.<name>.url::
 	The URL of a remote repository.  See gitlink:git-fetch[1] or
 	gitlink:git-push[1].
+
+remote.<name>.proxy::
+	For remotes that require curl (http, https and ftp), the URL to
+	the proxy to use for that remote.  Set to the empty string to
+	disable proxying for that remote.
 
 remote.<name>.fetch::
 	The default set of "refspec" for gitlink:git-fetch[1]. See

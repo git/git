@@ -25,6 +25,11 @@ struct remote {
 
 	const char *receivepack;
 	const char *uploadpack;
+
+	/*
+	 * for curl remotes only
+	 */
+	char *http_proxy;
 };
 
 struct remote *remote_get(const char *name);

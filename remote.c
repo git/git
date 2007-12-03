@@ -278,6 +278,8 @@ static int handle_config(const char *key, const char *value)
 	} else if (!strcmp(subkey, ".tagopt")) {
 		if (!strcmp(value, "--no-tags"))
 			remote->fetch_tags = -1;
+	} else if (!strcmp(subkey, ".proxy")) {
+		remote->http_proxy = xstrdup(value);
 	}
 	return 0;
 }
