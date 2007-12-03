@@ -132,3 +132,9 @@ int getpagesize(void);	/* defined in MinGW's libgcc.a */
 struct passwd *getpwuid(int uid);
 int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
+
+/*
+ * git specific compatibility
+ */
+
+#define PATH_SEP ';'

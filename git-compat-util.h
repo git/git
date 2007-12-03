@@ -110,6 +110,10 @@
 #define PRIuMAX "llu"
 #endif
 
+#ifndef PATH_SEP
+#define PATH_SEP ':'
+#endif
+
 #ifdef __GNUC__
 #define NORETURN __attribute__((__noreturn__))
 #else
