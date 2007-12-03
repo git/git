@@ -169,7 +169,7 @@ static int handle_alias(int *argcp, const char ***argv)
 
 				strbuf_init(&buf, PATH_MAX);
 				strbuf_addstr(&buf, alias_string);
-				sq_quote_argv(&buf, (*argv) + 1, *argcp - 1, PATH_MAX);
+				sq_quote_argv(&buf, (*argv) + 1, PATH_MAX);
 				free(alias_string);
 				alias_string = buf.buf;
 			}
@@ -198,7 +198,7 @@ static int handle_alias(int *argcp, const char ***argv)
 		if (!strcmp(alias_command, new_argv[0]))
 			die("recursive alias: %s", alias_command);
 
-		trace_argv_printf(new_argv, count,
+		trace_argv_printf(new_argv,
 				  "trace: alias expansion: %s =>",
 				  alias_command);
 
@@ -252,7 +252,7 @@ static int run_command(struct cmd_struct *p, int argc, const char **argv)
 	if (p->option & NEED_WORK_TREE)
 		setup_work_tree();
 
-	trace_argv_printf(argv, argc, "trace: built-in: git");
+	trace_argv_printf(argv, "trace: built-in: git");
 
 	status = p->fn(argc, argv, prefix);
 	if (status)

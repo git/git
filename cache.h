@@ -620,7 +620,7 @@ extern void alloc_report(void);
 
 /* trace.c */
 extern void trace_printf(const char *format, ...);
-extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
+extern void trace_argv_printf(const char **argv, const char *format, ...);
 
 /* convert.c */
 /* returns 1 if *dst was used */

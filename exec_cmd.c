@@ -80,7 +80,7 @@ int execv_git_cmd(const char **argv)
 	tmp = argv[0];
 	argv[0] = cmd.buf;
 
-	trace_argv_printf(argv, -1, "trace: exec:");
+	trace_argv_printf(argv, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */
 	execvp(cmd.buf, (char **)argv);
