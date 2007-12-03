@@ -23,15 +23,15 @@ static const char *fast_export_usage[] = {
 };
 
 static int progress;
-static enum { IGNORE, WARN, STRIP, ABORT } signed_tag_mode = ABORT;
+static enum { VERBATIM, WARN, STRIP, ABORT } signed_tag_mode = ABORT;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
 				     const char *arg, int unset)
 {
 	if (unset || !strcmp(arg, "abort"))
 		signed_tag_mode = ABORT;
-	else if (!strcmp(arg, "ignore"))
-		signed_tag_mode = IGNORE;
+	else if (!strcmp(arg, "verbatim") || !strcmp(arg, "ignore"))
+		signed_tag_mode = VERBATIM;
 	else if (!strcmp(arg, "warn"))
 		signed_tag_mode = WARN;
 	else if (!strcmp(arg, "strip"))
@@ -270,7 +270,7 @@ static void handle_tag(const char *name, struct tag *tag)
 				warning ("Exporting signed tag %s",
 					 sha1_to_hex(tag->object.sha1));
 				/* fallthru */
-			case IGNORE:
+			case VERBATIM:
 				break;
 			case STRIP:
 				message_size = signature + 1 - message;
