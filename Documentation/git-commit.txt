@@ -91,9 +91,9 @@ OPTIONS
 
 --allow-empty::
 	Usually recording a commit that has the exact same tree as its
-	sole parent commit and the command prevents you from making such
-	a mistake.  This option bypasses the safety, and is primarily
-	for use by foreign scm interface scripts.
+	sole parent commit is a mistake, and the command prevents you
+	from making such a commit.  This option bypasses the safety, and
+	is primarily for use by foreign scm interface scripts.
 
 -e|--edit::
 	The message taken from file with `-F`, command line with
