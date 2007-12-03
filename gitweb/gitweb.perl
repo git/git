@@ -3786,6 +3786,8 @@ sub git_search_grep_body {
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})}, "commit") .
 		      " | " .
+		      $cgi->a({-href => href(action=>"commitdiff", hash=>$co{'id'})}, "commitdiff") .
+		      " | " .
 		      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$co{'id'})}, "tree");
 		print "</td>\n" .
 		      "</tr>\n";
