@@ -68,7 +68,7 @@ cat > expect << \EOF
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
 #
-#	modified:   ../dir1/modified
+#	modified:   modified
 #
 # Untracked files:
 #   (use "git add <file>..." to include in what will be committed)

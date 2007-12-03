@@ -82,12 +82,13 @@ static void wt_status_print_trailer(struct wt_status *s)
 }
 
 static char *quote_path(const char *in, int len,
-		struct strbuf *out, const char *prefix)
+			struct strbuf *out, const char *prefix)
 {
-	if (len > 0)
-		strbuf_grow(out, len);
-	strbuf_setlen(out, 0);
+	if (len < 0)
+		len = strlen(in);
 
+	strbuf_grow(out, len);
+	strbuf_setlen(out, 0);
 	if (prefix) {
 		int off = 0;
 		while (prefix[off] && off < len && prefix[off] == in[off])
@@ -104,7 +105,7 @@ static char *quote_path(const char *in, int len,
 				strbuf_addstr(out, "../");
 	}
 
-	for (; (len < 0 && *in) || len > 0; in++, len--) {
+	for ( ; len > 0; in++, len--) {
 		int ch = *in;
 
 		switch (ch) {
