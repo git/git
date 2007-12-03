@@ -346,6 +346,13 @@ branch.<name>.mergeoptions::
 	option values containing whitespace characters are currently not
 	supported.
 
+branch.<name>.rebase::
+	When true, rebase the branch <name> on top of the fetched branch,
+	instead of merging the default branch from the default remote.
+	*NOTE*: this is a possibly dangerous operation; do *not* use
+	it unless you understand the implications (see gitlink:git-rebase[1]
+	for details).
+
 clean.requireForce::
 	A boolean to make git-clean do nothing unless given -f
 	or -n.   Defaults to true.

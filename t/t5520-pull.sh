@@ -53,4 +53,26 @@ test_expect_success 'the default remote . should not break explicit pull' '
 	test `cat file` = modified
 '
 
+test_expect_success '--rebase' '
+	git branch to-rebase &&
+	echo modified again > file &&
+	git commit -m file file &&
+	git checkout to-rebase &&
+	echo new > file2 &&
+	git add file2 &&
+	git commit -m "new file" &&
+	git tag before-rebase &&
+	git pull --rebase . copy &&
+	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
+	test new = $(git show HEAD:file2)
+'
+
+test_expect_success 'branch.to-rebase.rebase' '
+	git reset --hard before-rebase &&
+	git config branch.to-rebase.rebase 1 &&
+	git pull . copy &&
+	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
+	test new = $(git show HEAD:file2)
+'
+
 test_done
