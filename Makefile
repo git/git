@@ -334,6 +334,7 @@ BUILTIN_OBJS = \
 	builtin-diff-files.o \
 	builtin-diff-index.o \
 	builtin-diff-tree.o \
+	builtin-fast-export.o \
 	builtin-fetch.o \
 	builtin-fetch-pack.o \
 	builtin-fetch--tool.o \
