@@ -113,25 +113,15 @@ static int add_raw(char *buf, size_t size, int offset, const char *str)
 
 static int crud(unsigned char c)
 {
-	static char crud_array[256];
-	static int crud_array_initialized = 0;
-
-	if (!crud_array_initialized) {
-		int k;
-
-		for (k = 0; k <= 31; ++k) crud_array[k] = 1;
-		crud_array[' '] = 1;
-		crud_array['.'] = 1;
-		crud_array[','] = 1;
-		crud_array[':'] = 1;
-		crud_array[';'] = 1;
-		crud_array['<'] = 1;
-		crud_array['>'] = 1;
-		crud_array['"'] = 1;
-		crud_array['\''] = 1;
-		crud_array_initialized = 1;
-	}
-	return crud_array[c];
+	return  c <= 32  ||
+		c == '.' ||
+		c == ',' ||
+		c == ':' ||
+		c == ';' ||
+		c == '<' ||
+		c == '>' ||
+		c == '"' ||
+		c == '\'';
 }
 
 /*
