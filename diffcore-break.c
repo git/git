@@ -52,8 +52,10 @@ static int should_break(struct diff_filespec *src,
 			     * is the default.
 			     */
 
-	if (!S_ISREG(src->mode) || !S_ISREG(dst->mode))
-		return 0; /* leave symlink rename alone */
+	if (S_ISREG(src->mode) != S_ISREG(dst->mode)) {
+		*merge_score_p = (int)MAX_SCORE;
+		return 1; /* even their types are different */
+	}
 
 	if (src->sha1_valid && dst->sha1_valid &&
 	    !hashcmp(src->sha1, dst->sha1))
@@ -168,11 +170,13 @@ void diffcore_break(int break_score)
 		struct diff_filepair *p = q->queue[i];
 		int score;
 
-		/* We deal only with in-place edit of non directory.
+		/*
+		 * We deal only with in-place edit of blobs.
 		 * We do not break anything else.
 		 */
 		if (DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two) &&
-		    !S_ISDIR(p->one->mode) && !S_ISDIR(p->two->mode) &&
+		    object_type(p->one->mode) == OBJ_BLOB &&
+		    object_type(p->two->mode) == OBJ_BLOB &&
 		    !strcmp(p->one->path, p->two->path)) {
 			if (should_break(p->one, p->two,
 					 break_score, &score)) {

@@ -231,6 +231,7 @@ static void wt_status_print_updated(struct wt_status *s)
 	rev.diffopt.format_callback_data = s;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
+	rev.diffopt.break_opt = 0;
 	wt_read_cache(s);
 	run_diff_index(&rev, 1);
 }
