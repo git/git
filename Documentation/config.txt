@@ -507,7 +507,9 @@ gc.rerereunresolved::
 rerere.enabled::
 	Activate recording of resolved conflicts, so that identical
 	conflict hunks can be resolved automatically, should they
-	be encountered again.  See gitlink:git-rerere[1].
+	be encountered again.  gitlink:git-rerere[1] command is by
+	default enabled, but can be disabled by setting this option to
+	false.
 
 gitcvs.enabled::
 	Whether the CVS server interface is enabled for this repository.
