@@ -33,6 +33,7 @@ git-diff                                mainporcelain common
 git-diff-files                          plumbinginterrogators
 git-diff-index                          plumbinginterrogators
 git-diff-tree                           plumbinginterrogators
+git-fast-export				ancillarymanipulators
 git-fast-import				ancillarymanipulators
 git-fetch                               mainporcelain common
 git-fetch-pack                          synchingrepositories
