@@ -1158,6 +1158,7 @@ check-docs::
 		case "$$how,$$cmd" in \
 		*,git-citool | \
 		*,git-gui | \
+		*,git-help | \
 		documented,gitattributes | \
 		documented,gitignore | \
 		documented,gitmodules | \
