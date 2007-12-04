@@ -86,6 +86,190 @@ char *mingw_getcwd(char *pointer, int len)
 	return ret;
 }
 
+static const char *parse_interpreter(const char *cmd)
+{
+	static char buf[100];
+	char *p, *opt;
+	int n, fd;
+
+	/* don't even try a .exe */
+	n = strlen(cmd);
+	if (n >= 4 && !strcasecmp(cmd+n-4, ".exe"))
+		return NULL;
+
+	fd = open(cmd, O_RDONLY);
+	if (fd < 0)
+		return NULL;
+	n = read(fd, buf, sizeof(buf)-1);
+	close(fd);
+	if (n < 4)	/* at least '#!/x' and not error */
+		return NULL;
+
+	if (buf[0] != '#' || buf[1] != '!')
+		return NULL;
+	buf[n] = '\0';
+	p = strchr(buf, '\n');
+	if (!p)
+		return NULL;
+
+	*p = '\0';
+	if (!(p = strrchr(buf+2, '/')) && !(p = strrchr(buf+2, '\\')))
+		return NULL;
+	/* strip options */
+	if ((opt = strchr(p+1, ' ')))
+		*opt = '\0';
+	return p+1;
+}
+
+/*
+ * Splits the PATH into parts.
+ */
+static char **get_path_split(void)
+{
+	char *p, **path, *envpath = getenv("PATH");
+	int i, n = 0;
+
+	if (!envpath || !*envpath)
+		return NULL;
+
+	envpath = xstrdup(envpath);
+	p = envpath;
+	while (p) {
+		char *dir = p;
+		p = strchr(p, ';');
+		if (p) *p++ = '\0';
+		if (*dir) {	/* not earlier, catches series of ; */
+			++n;
+		}
+	}
+	if (!n)
+		return NULL;
+
+	path = xmalloc((n+1)*sizeof(char*));
+	p = envpath;
+	i = 0;
+	do {
+		if (*p)
+			path[i++] = xstrdup(p);
+		p = p+strlen(p)+1;
+	} while (i < n);
+	path[i] = NULL;
+
+	free(envpath);
+
+	return path;
+}
+
+static void free_path_split(char **path)
+{
+	if (!path)
+		return;
+
+	char **p = path;
+	while (*p)
+		free(*p++);
+	free(path);
+}
+
+/*
+ * exe_only means that we only want to detect .exe files, but not scripts
+ * (which do not have an extension)
+ */
+static char *lookup_prog(const char *dir, const char *cmd, int isexe, int exe_only)
+{
+	char path[MAX_PATH];
+	snprintf(path, sizeof(path), "%s/%s.exe", dir, cmd);
+
+	if (!isexe && access(path, F_OK) == 0)
+		return xstrdup(path);
+	path[strlen(path)-4] = '\0';
+	if ((!exe_only || isexe) && access(path, F_OK) == 0)
+		return xstrdup(path);
+	return NULL;
+}
+
+/*
+ * Determines the absolute path of cmd using the the split path in path.
+ * If cmd contains a slash or backslash, no lookup is performed.
+ */
+static char *path_lookup(const char *cmd, char **path, int exe_only)
+{
+	char *prog = NULL;
+	int len = strlen(cmd);
+	int isexe = len >= 4 && !strcasecmp(cmd+len-4, ".exe");
+
+	if (strchr(cmd, '/') || strchr(cmd, '\\'))
+		prog = xstrdup(cmd);
+
+	while (!prog && *path)
+		prog = lookup_prog(*path++, cmd, isexe, exe_only);
+
+	return prog;
+}
+
+static int try_shell_exec(const char *cmd, char *const *argv, char **env)
+{
+	const char *interpr = parse_interpreter(cmd);
+	char **path;
+	char *prog;
+	int pid = 0;
+
+	if (!interpr)
+		return 0;
+	path = get_path_split();
+	prog = path_lookup(interpr, path, 1);
+	if (prog) {
+		int argc = 0;
+		const char **argv2;
+		while (argv[argc]) argc++;
+		argv2 = xmalloc(sizeof(*argv) * (argc+2));
+		argv2[0] = (char *)interpr;
+		argv2[1] = (char *)cmd;	/* full path to the script file */
+		memcpy(&argv2[2], &argv[1], sizeof(*argv) * argc);
+		pid = spawnve(_P_NOWAIT, prog, argv2, (const char **)env);
+		if (pid >= 0) {
+			int status;
+			if (waitpid(pid, &status, 0) < 0)
+				status = 255;
+			exit(status);
+		}
+		pid = 1;	/* indicate that we tried but failed */
+		free(prog);
+		free(argv2);
+	}
+	free_path_split(path);
+	return pid;
+}
+
+static void mingw_execve(const char *cmd, char *const *argv, char *const *env)
+{
+	/* check if git_command is a shell script */
+	if (!try_shell_exec(cmd, argv, (char **)env)) {
+		int pid, status;
+
+		pid = spawnve(_P_NOWAIT, cmd, (const char **)argv, (const char **)env);
+		if (pid < 0)
+			return;
+		if (waitpid(pid, &status, 0) < 0)
+			status = 255;
+		exit(status);
+	}
+}
+
+void mingw_execvp(const char *cmd, char *const *argv)
+{
+	char **path = get_path_split();
+	char *prog = path_lookup(cmd, path, 0);
+
+	if (prog) {
+		mingw_execve(prog, argv, environ);
+		free(prog);
+	} else
+		errno = ENOENT;
+
+	free_path_split(path);
+}
+
 #undef rename
 int mingw_rename(const char *pold, const char *pnew)
 {
