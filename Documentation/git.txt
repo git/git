@@ -536,7 +536,7 @@ Authors
 -------
 * git's founding father is Linus Torvalds <torvalds@osdl.org>.
 * The current git nurse is Junio C Hamano <gitster@pobox.com>.
-* The git potty was written by Andres Ericsson <ae@op5.se>.
+* The git potty was written by Andreas Ericsson <ae@op5.se>.
 * General upbringing is handled by the git-list <git@vger.kernel.org>.
 
 Documentation
