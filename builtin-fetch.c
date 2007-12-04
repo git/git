@@ -14,7 +14,7 @@ static const char fetch_usage[] = "git-fetch [-a | --append] [--upload-pack <upl
 
 static int append, force, tags, no_tags, update_head_ok, verbose, quiet;
 static const char *depth;
-static char *default_rla = NULL;
+static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *transport;
 
 static void unlock_pack(void)
@@ -142,7 +142,7 @@ static int s_update_ref(const char *action,
 	static struct ref_lock *lock;
 
 	if (!rla)
-		rla = default_rla;
+		rla = default_rla.buf;
 	snprintf(msg, sizeof(msg), "%s: %s", rla, action);
 	lock = lock_any_ref_for_update(ref->name,
 				       check_old ? ref->old_sha1 : NULL, 0);
@@ -543,16 +543,19 @@ static void set_option(const char *name, const char *value)
 int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	struct remote *remote;
-	int i, j, rla_offset;
+	int i;
 	static const char **refs = NULL;
 	int ref_nr = 0;
-	int cmd_len = 0;
 	const char *upload_pack = NULL;
 	int keep = 0;
 
+	/* Record the command line for the reflog */
+	strbuf_addstr(&default_rla, "fetch");
+	for (i = 1; i < argc; i++)
+		strbuf_addf(&default_rla, " %s", argv[i]);
+
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		cmd_len += strlen(arg);
 
 		if (arg[0] != '-')
 			break;
@@ -611,17 +614,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		usage(fetch_usage);
-	}
-
-	for (j = i; j < argc; j++)
-		cmd_len += strlen(argv[j]);
-
-	default_rla = xmalloc(cmd_len + 5 + argc + 1);
-	sprintf(default_rla, "fetch");
-	rla_offset = strlen(default_rla);
-	for (j = 1; j < argc; j++) {
-		sprintf(default_rla + rla_offset, " %s", argv[j]);
-		rla_offset += strlen(argv[j]) + 1;
 	}
 
 	if (i == argc)
