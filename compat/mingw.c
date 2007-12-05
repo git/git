@@ -736,10 +736,9 @@ void free_env(char **env)
 	free(env);
 }
 
-static int lookup_env(char **env, const char *name)
+static int lookup_env(char **env, const char *name, size_t nmln)
 {
 	int i;
-	size_t nmln = strlen(name);
 
 	for (i = 0; env[i]; i++) {
 		if (0 == strncmp(env[i], name, nmln)
@@ -750,15 +749,32 @@ static int lookup_env(char **env, const char *name)
 	return -1;
 }
 
-void env_unsetenv(char **env, const char *name)
+/*
+ * If name contains '=', then sets the variable, otherwise it unsets it
+ */
+char **env_setenv(char **env, const char *name)
 {
-	int i = lookup_env(env, name);
-	if (i < 0)
-		return;
+	char *eq = strchrnul(name, '=');
+	int i = lookup_env(env, name, eq-name);
 
-	free(env[i]);
-	for (; env[i]; i++)
-		env[i] = env[i+1];
+	if (i < 0) {
+		if (*eq) {
+			for (i = 0; env[i]; i++)
+				;
+			env = xrealloc(env, (i+2)*sizeof(*env));
+			env[i] = xstrdup(name);
+			env[i+1] = NULL;
+		}
+	}
+	else {
+		free(env[i]);
+		if (*eq)
+			env[i] = xstrdup(name);
+		else
+			for (; env[i]; i++)
+				env[i] = env[i+1];
+	}
+	return env;
 }
 
 /* this is the first function to call into WS_32; initialize it */
