@@ -581,6 +581,41 @@ sub config_int {
 	};
 }
 
+=item get_colorbool ( NAME )
+
+Finds if color should be used for NAMEd operation from the configuration,
+and returns boolean (true for "use color", false for "do not use color").
+
+=cut
+
+sub get_colorbool {
+	my ($self, $var) = @_;
+	my $stdout_to_tty = (-t STDOUT) ? "true" : "false";
+	my $use_color = $self->command_oneline('config', '--get-colorbool',
+					       $var, $stdout_to_tty);
+	return ($use_color eq 'true');
+}
+
+=item get_color ( SLOT, COLOR )
+
+Finds color for SLOT from the configuration, while defaulting to COLOR,
+and returns the ANSI color escape sequence:
+
+	print $repo->get_color("color.interactive.prompt", "underline blue white");
+	print "some text";
+	print $repo->get_color("", "normal");
+
+=cut
+
+sub get_color {
+	my ($self, $slot, $default) = @_;
+	my $color = $self->command_oneline('config', '--get-color', $slot, $default);
+	if (!defined $color) {
+		$color = "";
+	}
+	return $color;
+}
+
 =item ident ( TYPE | IDENTSTR )
 
 =item ident_person ( TYPE | IDENTSTR | IDENTARRAY )
