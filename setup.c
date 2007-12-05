@@ -206,6 +206,22 @@ static const char *set_work_tree(const char *dir)
 	return NULL;
 }
 
+static int check_repository_format_gently(int *nongit_ok)
+{
+	git_config(check_repository_format_version);
+	if (GIT_REPO_VERSION < repository_format_version) {
+		if (!nongit_ok)
+			die ("Expected git repo version <= %d, found %d",
+			     GIT_REPO_VERSION, repository_format_version);
+		warning("Expected git repo version <= %d, found %d",
+			GIT_REPO_VERSION, repository_format_version);
+		warning("Please upgrade Git");
+		*nongit_ok = -1;
+		return -1;
+	}
+	return 0;
+}
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
@@ -232,12 +248,13 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 			if (!work_tree_env) {
 				retval = set_work_tree(gitdirenv);
-				/* config may override worktree
-				 * see set_work_tree comment */
-				check_repository_format();
+				/* config may override worktree */
+				if (check_repository_format_gently(nongit_ok))
+					return NULL;
 				return retval;
 			}
-			check_repository_format();
+			if (check_repository_format_gently(nongit_ok))
+				return NULL;
 			retval = get_relative_cwd(buffer, sizeof(buffer) - 1,
 					get_git_work_tree());
 			if (!retval || !*retval)
@@ -246,7 +263,6 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			if (chdir(work_tree_env) < 0)
 				die ("Could not chdir to %s", work_tree_env);
 			strcat(buffer, "/");
-			inside_work_tree = 1;
 			return retval;
 		}
 		if (nongit_ok) {
@@ -277,7 +293,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			if (!work_tree_env)
 				inside_work_tree = 0;
 			setenv(GIT_DIR_ENVIRONMENT, ".", 1);
-			check_repository_format();
+			check_repository_format_gently(nongit_ok);
 			return NULL;
 		}
 		chdir("..");
@@ -298,7 +314,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	if (!work_tree_env)
 		inside_work_tree = 1;
 	git_work_tree_cfg = xstrndup(cwd, offset);
-	check_repository_format();
+	if (check_repository_format_gently(nongit_ok))
+		return NULL;
 	if (offset == len)
 		return NULL;
 
@@ -349,16 +366,13 @@ int check_repository_format_version(const char *var, const char *value)
 
 int check_repository_format(void)
 {
-	git_config(check_repository_format_version);
-	if (GIT_REPO_VERSION < repository_format_version)
-		die ("Expected git repo version <= %d, found %d",
-		     GIT_REPO_VERSION, repository_format_version);
-	return 0;
+	return check_repository_format_gently(NULL);
 }
 
 const char *setup_git_directory(void)
 {
 	const char *retval = setup_git_directory_gently(NULL);
+	check_repository_format();
 
 	/* If the work tree is not the default one, recompute prefix */
 	if (inside_work_tree < 0) {
