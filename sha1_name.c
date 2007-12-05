@@ -239,23 +239,13 @@ static int ambiguous_path(const char *path, int len)
 	return slash;
 }
 
-static const char *ref_fmt[] = {
-	"%.*s",
-	"refs/%.*s",
-	"refs/tags/%.*s",
-	"refs/heads/%.*s",
-	"refs/remotes/%.*s",
-	"refs/remotes/%.*s/HEAD",
-	NULL
-};
-
 int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 {
 	const char **p, *r;
 	int refs_found = 0;
 
 	*ref = NULL;
-	for (p = ref_fmt; *p; p++) {
+	for (p = ref_rev_parse_rules; *p; p++) {
 		unsigned char sha1_from_ref[20];
 		unsigned char *this_result;
 
@@ -277,7 +267,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 	int logs_found = 0;
 
 	*log = NULL;
-	for (p = ref_fmt; *p; p++) {
+	for (p = ref_rev_parse_rules; *p; p++) {
 		struct stat st;
 		unsigned char hash[20];
 		char path[PATH_MAX];

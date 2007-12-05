@@ -423,6 +423,10 @@ extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 
+extern int refname_match(const char *abbrev_name, const char *full_name, const char **rules);
+extern const char *ref_rev_parse_rules[];
+extern const char *ref_fetch_rules[];
+
 extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg);
 extern int validate_headref(const char *ref);
 
