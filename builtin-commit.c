@@ -163,7 +163,7 @@ static void add_remove_files(struct path_list *list)
 	}
 }
 
-static char *prepare_index(const char **files, const char *prefix)
+static char *prepare_index(int argc, const char **argv, const char *prefix)
 {
 	int fd;
 	struct tree *tree;
@@ -171,7 +171,7 @@ static char *prepare_index(const char **files, const char *prefix)
 	const char **pathspec = NULL;
 
 	if (interactive) {
-		interactive_add();
+		interactive_add(argc, argv, prefix);
 		commit_style = COMMIT_AS_IS;
 		return get_index_file();
 	}
@@ -179,8 +179,8 @@ static char *prepare_index(const char **files, const char *prefix)
 	if (read_cache() < 0)
 		die("index file corrupt");
 
-	if (*files)
-		pathspec = get_pathspec(prefix, files);
+	if (*argv)
+		pathspec = get_pathspec(prefix, argv);
 
 	/*
 	 * Non partial, non as-is commit.
@@ -603,7 +603,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	argc = parse_and_validate_options(argc, argv, builtin_status_usage);
 
-	index_file = prepare_index(argv, prefix);
+	index_file = prepare_index(argc, argv, prefix);
 
 	commitable = run_status(stdout, index_file, prefix);
 
@@ -703,7 +703,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage);
 
-	index_file = prepare_index(argv, prefix);
+	index_file = prepare_index(argc, argv, prefix);
 
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL)) {
 		rollback_index_files();
