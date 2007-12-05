@@ -118,21 +118,27 @@ bad:
 
 int git_config_colorbool(const char *var, const char *value)
 {
-	if (!value)
-		return 1;
-	if (!strcasecmp(value, "auto")) {
-		if (isatty(1) || (pager_in_use && pager_use_color)) {
-			char *term = getenv("TERM");
-			if (term && strcmp(term, "dumb"))
-				return 1;
-		}
-		return 0;
+	if (value) {
+		if (!strcasecmp(value, "never"))
+			return 0;
+		if (!strcasecmp(value, "always"))
+			return 1;
+		if (!strcasecmp(value, "auto"))
+			goto auto_color;
 	}
-	if (!strcasecmp(value, "never"))
+
+	/* Missing or explicit false to turn off colorization */
+	if (!git_config_bool(var, value))
 		return 0;
-	if (!strcasecmp(value, "always"))
-		return 1;
-	return git_config_bool(var, value);
+
+	/* any normal truth value defaults to 'auto' */
+ auto_color:
+	if (isatty(1) || (pager_in_use && pager_use_color)) {
+		char *term = getenv("TERM");
+		if (term && strcmp(term, "dumb"))
+			return 1;
+	}
+	return 0;
 }
 
 static int color_vfprintf(FILE *fp, const char *color, const char *fmt,

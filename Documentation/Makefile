@@ -79,16 +79,16 @@ man7: $(DOC_MAN7)
 info: git.info
 
 install: man
-	$(INSTALL) -d -m755 $(DESTDIR)$(man1dir)
-	$(INSTALL) -d -m755 $(DESTDIR)$(man5dir)
-	$(INSTALL) -d -m755 $(DESTDIR)$(man7dir)
-	$(INSTALL) -m644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
-	$(INSTALL) -m644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
-	$(INSTALL) -m644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man1dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man5dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man7dir)
+	$(INSTALL) -m 644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
+	$(INSTALL) -m 644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
+	$(INSTALL) -m 644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
 
 install-info: info
-	$(INSTALL) -d -m755 $(DESTDIR)$(infodir)
-	$(INSTALL) -m644 git.info $(DESTDIR)$(infodir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(infodir)
+	$(INSTALL) -m 644 git.info $(DESTDIR)$(infodir)
 	if test -r $(DESTDIR)$(infodir)/dir; then \
 	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) git.info ;\
 	else \
@@ -122,9 +122,9 @@ cmds_txt = cmds-ancillaryinterrogators.txt \
 
 $(cmds_txt): cmd-list.made
 
-cmd-list.made: cmd-list.perl $(MAN1_TXT)
+cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 	$(RM) $@
-	perl ./cmd-list.perl
+	perl ./cmd-list.perl ../command-list.txt
 	date >$@
 
 git.7 git.html: git.txt

@@ -307,9 +307,9 @@ do
 	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$dotest/info")"
 	GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$dotest/info")"
 
-	if test -z "$GIT_AUTHOR_EMAIL"
+	if test -z "$GIT_AUTHOR_EMAIL" || test -z "$GIT_AUTHOR_DATE"
 	then
-		echo "Patch does not have a valid e-mail address."
+		echo "Patch does not have valid authorship information."
 		stop_here $this
 	fi
 

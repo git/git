@@ -113,8 +113,7 @@ extern struct commit_list *get_shallow_commits(struct object_array *heads,
 
 int in_merge_bases(struct commit *, struct commit **, int);
 
-extern int interactive_add(void);
-extern void add_files_to_cache(int verbose, const char *prefix, const char **files);
+extern int interactive_add(int argc, const char **argv, const char *prefix);
 extern int rerere(void);
 
 static inline int single_parent(struct commit *commit)

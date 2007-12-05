@@ -20,6 +20,7 @@ SYNOPSIS
 'git-config' [<file-option>] --rename-section old_name new_name
 'git-config' [<file-option>] --remove-section name
 'git-config' [<file-option>] [-z|--null] -l | --list
+'git-config' [<file-option>] --get-color name [default]
 
 DESCRIPTION
 -----------
@@ -134,6 +135,12 @@ See also <<FILES>>.
 	output without getting confused e.g. by values that
 	contain line breaks.
 
+--get-color name default::
+
+	Find the color configured for `name` (e.g. `color.diff.new`) and
+	output it as the ANSI color escape sequence to the standard
+	output.  The optional `default` parameter is used instead, if
+	there is no color configured for `name`.
 
 [[FILES]]
 FILES
@@ -292,6 +299,15 @@ To add a new proxy, without altering any of the existing ones, use
 % git config core.gitproxy '"proxy-command" for example.com'
 ------------
 
+An example to use customized color from the configuration in your
+script:
+
+------------
+#!/bin/sh
+WS=$(git config --get-color color.diff.whitespace "blue reverse")
+RESET=$(git config --get-color "" "reset")
+echo "${WS}your whitespace color or blue reverse${RESET}"
+------------
 
 include::config.txt[]
 

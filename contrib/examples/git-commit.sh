@@ -31,7 +31,7 @@ THIS_INDEX="${GIT_INDEX_FILE:-$GIT_DIR/index}"
 NEXT_INDEX="$GIT_DIR/next-index$$"
 rm -f "$NEXT_INDEX"
 save_index () {
-	ln "$THIS_INDEX" "$NEXT_INDEX"
+	cp -p "$THIS_INDEX" "$NEXT_INDEX"
 }
 
 run_status () {
@@ -74,6 +74,7 @@ trap '
 
 all=
 also=
+allow_empty=f
 interactive=
 only=
 logfile=
@@ -113,6 +114,10 @@ do
 		;;
 	-a|--a|--al|--all)
 		all=t
+		;;
+	--allo|--allow|--allow-|--allow-e|--allow-em|--allow-emp|\
+	--allow-empt|--allow-empty)
+		allow_empty=t
 		;;
 	--au=*|--aut=*|--auth=*|--autho=*|--author=*)
 		force_author="${1#*=}"
@@ -515,13 +520,18 @@ else
 	# we need to check if there is anything to commit
 	run_status >/dev/null
 fi
-if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" ]
-then
+case "$allow_empty,$?,$PARENTS" in
+t,* | ?,0,* | ?,*,-p' '?*-p' '?*)
+	# an explicit --allow-empty, or a merge commit can record the
+	# same tree as its parent.  Otherwise having commitable paths
+	# is required.
+	;;
+*)
 	rm -f "$GIT_DIR/COMMIT_EDITMSG" "$GIT_DIR/SQUASH_MSG"
 	use_status_color=t
 	run_status
 	exit 1
-fi
+esac
 
 case "$no_edit" in
 '')

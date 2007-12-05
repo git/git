@@ -192,6 +192,13 @@ enum object_type {
 	OBJ_MAX,
 };
 
+static inline enum object_type object_type(unsigned int mode)
+{
+	return S_ISDIR(mode) ? OBJ_TREE :
+		S_ISGITLINK(mode) ? OBJ_COMMIT :
+		OBJ_BLOB;
+}
+
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
 #define GIT_WORK_TREE_ENVIRONMENT "GIT_WORK_TREE"
 #define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
@@ -420,6 +427,10 @@ extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 
+extern int refname_match(const char *abbrev_name, const char *full_name, const char **rules);
+extern const char *ref_rev_parse_rules[];
+extern const char *ref_fetch_rules[];
+
 extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg);
 extern int validate_headref(const char *ref);
 
@@ -449,6 +460,7 @@ enum date_mode parse_date_format(const char *format);
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 extern const char *fmt_ident(const char *name, const char *email, const char *date_str, int);
+extern const char *fmt_name(const char *name, const char *email);
 
 struct checkout {
 	const char *base_dir;
@@ -617,17 +629,25 @@ extern void alloc_report(void);
 
 /* trace.c */
 extern void trace_printf(const char *format, ...);
-extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
+extern void trace_argv_printf(const char **argv, const char *format, ...);
 
 /* convert.c */
 /* returns 1 if *dst was used */
 extern int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst);
 extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 
+/* add */
+void add_files_to_cache(int verbose, const char *prefix, const char **pathspec);
+
 /* diff.c */
 extern int diff_auto_refresh_index;
 
 /* match-trees.c */
 void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
+
+/* ls-files */
+int pathspec_match(const char **spec, char *matched, const char *filename, int skiplen);
+int report_path_error(const char *ps_matched, const char **pathspec, int prefix_offset);
+void overlay_tree_on_cache(const char *tree_name, const char *prefix);
 
 #endif /* CACHE_H */

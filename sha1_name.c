@@ -239,23 +239,13 @@ static int ambiguous_path(const char *path, int len)
 	return slash;
 }
 
-static const char *ref_fmt[] = {
-	"%.*s",
-	"refs/%.*s",
-	"refs/tags/%.*s",
-	"refs/heads/%.*s",
-	"refs/remotes/%.*s",
-	"refs/remotes/%.*s/HEAD",
-	NULL
-};
-
 int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 {
 	const char **p, *r;
 	int refs_found = 0;
 
 	*ref = NULL;
-	for (p = ref_fmt; *p; p++) {
+	for (p = ref_rev_parse_rules; *p; p++) {
 		unsigned char sha1_from_ref[20];
 		unsigned char *this_result;
 
@@ -277,7 +267,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 	int logs_found = 0;
 
 	*log = NULL;
-	for (p = ref_fmt; *p; p++) {
+	for (p = ref_rev_parse_rules; *p; p++) {
 		struct stat st;
 		unsigned char hash[20];
 		char path[PATH_MAX];
@@ -610,24 +600,35 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 {
 	struct commit_list *list = NULL, *backup = NULL, *l;
 	int retval = -1;
+	char *temp_commit_buffer = NULL;
 
 	if (prefix[0] == '!') {
 		if (prefix[1] != '!')
 			die ("Invalid search pattern: %s", prefix);
 		prefix++;
 	}
-	if (!save_commit_buffer)
-		return error("Could not expand oneline-name.");
 	for_each_ref(handle_one_ref, &list);
 	for (l = list; l; l = l->next)
 		commit_list_insert(l->item, &backup);
 	while (list) {
 		char *p;
 		struct commit *commit;
+		enum object_type type;
+		unsigned long size;
 
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
 		parse_object(commit->object.sha1);
-		if (!commit->buffer || !(p = strstr(commit->buffer, "\n\n")))
+		if (temp_commit_buffer)
+			free(temp_commit_buffer);
+		if (commit->buffer)
+			p = commit->buffer;
+		else {
+			p = read_sha1_file(commit->object.sha1, &type, &size);
+			if (!p)
+				continue;
+			temp_commit_buffer = p;
+		}
+		if (!(p = strstr(p, "\n\n")))
 			continue;
 		if (!prefixcmp(p + 2, prefix)) {
 			hashcpy(sha1, commit->object.sha1);
@@ -635,6 +636,8 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 			break;
 		}
 	}
+	if (temp_commit_buffer)
+		free(temp_commit_buffer);
 	free_commit_list(list);
 	for (l = backup; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);

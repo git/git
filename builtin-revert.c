@@ -224,6 +224,27 @@ static int merge_recursive(const char *base_sha1,
 	return run_command_v_opt(argv, RUN_COMMAND_NO_STDIN | RUN_GIT_CMD);
 }
 
+static char *help_msg(const unsigned char *sha1)
+{
+	static char helpbuf[1024];
+	char *msg = getenv("GIT_CHERRY_PICK_HELP");
+
+	if (msg)
+		return msg;
+
+	strcpy(helpbuf, "  After resolving the conflicts,\n"
+	       "mark the corrected paths with 'git add <paths>' "
+	       "or 'git rm <paths>' and commit the result.");
+
+	if (action == CHERRY_PICK) {
+		sprintf(helpbuf + strlen(helpbuf),
+			"\nWhen commiting, use the option "
+			"'-c %s' to retain authorship and message.",
+			find_unique_abbrev(sha1, DEFAULT_ABBREV));
+	}
+	return helpbuf;
+}
+
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
@@ -352,16 +373,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		}
 		if (close(msg_fd) || commit_lock_file(&msg_file) < 0)
 			die ("Error wrapping up %s", defmsg);
-		fprintf(stderr, "Automatic %s failed.  "
-			"After resolving the conflicts,\n"
-			"mark the corrected paths with 'git add <paths>' "
-			"and commit the result.\n", me);
-		if (action == CHERRY_PICK) {
-			fprintf(stderr, "When commiting, use the option "
-				"'-c %s' to retain authorship and message.\n",
-				find_unique_abbrev(commit->object.sha1,
-					DEFAULT_ABBREV));
-		}
+		fprintf(stderr, "Automatic %s failed.%s\n",
+			me, help_msg(commit->object.sha1));
 		exit(1);
 	}
 	if (close(msg_fd) || commit_lock_file(&msg_file) < 0)

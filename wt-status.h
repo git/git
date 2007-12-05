@@ -23,9 +23,11 @@ struct wt_status {
 	int workdir_untracked;
 	const char *index_file;
 	FILE *fp;
+	const char *prefix;
 };
 
 int git_status_config(const char *var, const char *value);
+int wt_status_use_color;
 void wt_status_prepare(struct wt_status *s);
 void wt_status_print(struct wt_status *s);
 

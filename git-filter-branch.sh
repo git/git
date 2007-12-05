@@ -66,17 +66,17 @@ set_ident () {
 			h
 			s/^'$lid' \([^<]*\) <[^>]*> .*$/\1/
 			s/'\''/'\''\'\'\''/g
-			s/.*/export GIT_'$uid'_NAME='\''&'\''/p
+			s/.*/GIT_'$uid'_NAME='\''&'\''; export GIT_'$uid'_NAME/p
 
 			g
 			s/^'$lid' [^<]* <\([^>]*\)> .*$/\1/
 			s/'\''/'\''\'\'\''/g
-			s/.*/export GIT_'$uid'_EMAIL='\''&'\''/p
+			s/.*/GIT_'$uid'_EMAIL='\''&'\''; export GIT_'$uid'_EMAIL/p
 
 			g
 			s/^'$lid' [^<]* <[^>]*> \(.*\)$/\1/
 			s/'\''/'\''\'\'\''/g
-			s/.*/export GIT_'$uid'_DATE='\''&'\''/p
+			s/.*/GIT_'$uid'_DATE='\''&'\''; export GIT_'$uid'_DATE/p
 
 			q
 		}
@@ -84,7 +84,7 @@ set_ident () {
 
 	LANG=C LC_ALL=C sed -ne "$pick_id_script"
 	# Ensure non-empty id name.
-	echo "[ -n \"\$GIT_${uid}_NAME\" ] || export GIT_${uid}_NAME=\"\${GIT_${uid}_EMAIL%%@*}\""
+	echo "case \"\$GIT_${uid}_NAME\" in \"\") GIT_${uid}_NAME=\"\${GIT_${uid}_EMAIL%%@*}\" && export GIT_${uid}_NAME;; esac"
 }
 
 USAGE="[--env-filter <command>] [--tree-filter <command>] \
@@ -206,7 +206,8 @@ done < "$tempdir"/backup-refs
 ORIG_GIT_DIR="$GIT_DIR"
 ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
 ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
-export GIT_DIR GIT_WORK_TREE=.
+GIT_WORK_TREE=.
+export GIT_DIR GIT_WORK_TREE
 
 # These refs should be updated if their heads were rewritten
 
@@ -231,7 +232,8 @@ done > "$tempdir"/heads
 test -s "$tempdir"/heads ||
 	die "Which ref do you want to rewrite?"
 
-export GIT_INDEX_FILE="$(pwd)/../index"
+GIT_INDEX_FILE="$(pwd)/../index"
+export GIT_INDEX_FILE
 git read-tree || die "Could not seed the index"
 
 ret=0
@@ -267,7 +269,8 @@ while read commit parents; do
 		git read-tree -i -m $commit:"$filter_subdir"
 	esac || die "Could not initialize the index"
 
-	export GIT_COMMIT=$commit
+	GIT_COMMIT=$commit
+	export GIT_COMMIT
 	git cat-file commit "$commit" >../commit ||
 		die "Cannot read commit $commit"
 
@@ -401,7 +404,8 @@ if [ "$filter_tag_name" ]; then
 
 		[ -f "../map/$sha1" ] || continue
 		new_sha1="$(cat "../map/$sha1")"
-		export GIT_COMMIT="$sha1"
+		GIT_COMMIT="$sha1"
+		export GIT_COMMIT
 		new_ref="$(echo "$ref" | eval "$filter_tag_name")" ||
 			die "tag name filter failed: $filter_tag_name"
 

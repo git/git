@@ -278,6 +278,8 @@ static int handle_config(const char *key, const char *value)
 	} else if (!strcmp(subkey, ".tagopt")) {
 		if (!strcmp(value, "--no-tags"))
 			remote->fetch_tags = -1;
+	} else if (!strcmp(subkey, ".proxy")) {
+		remote->http_proxy = xstrdup(value);
 	}
 	return 0;
 }
@@ -417,25 +419,6 @@ int remote_has_url(struct remote *remote, const char *url)
 	return 0;
 }
 
-/*
- * Returns true if, under the matching rules for fetching, name is the
- * same as the given full name.
- */
-static int ref_matches_abbrev(const char *name, const char *full)
-{
-	if (!prefixcmp(name, "refs/") || !strcmp(name, "HEAD"))
-		return !strcmp(name, full);
-	if (prefixcmp(full, "refs/"))
-		return 0;
-	if (!prefixcmp(name, "heads/") ||
-	    !prefixcmp(name, "tags/") ||
-	    !prefixcmp(name, "remotes/"))
-		return !strcmp(name, full + 5);
-	if (prefixcmp(full + 5, "heads/"))
-		return 0;
-	return !strcmp(full + 11, name);
-}
-
 int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 {
 	int find_src = refspec->src == NULL;
@@ -531,10 +514,7 @@ static int count_refspec_match(const char *pattern,
 		char *name = refs->name;
 		int namelen = strlen(name);
 
-		if (namelen < patlen ||
-		    memcmp(name + namelen - patlen, pattern, patlen))
-			continue;
-		if (namelen != patlen && name[namelen - patlen - 1] != '/')
+		if (!refname_match(pattern, name, ref_rev_parse_rules))
 			continue;
 
 		/* A match is "weak" if it is with refs outside
@@ -816,7 +796,7 @@ int branch_merge_matches(struct branch *branch,
 {
 	if (!branch || i < 0 || i >= branch->merge_nr)
 		return 0;
-	return ref_matches_abbrev(branch->merge[i]->src, refname);
+	return refname_match(branch->merge[i]->src, refname, ref_fetch_rules);
 }
 
 static struct ref *get_expanded_map(const struct ref *remote_refs,
@@ -855,7 +835,7 @@ static const struct ref *find_ref_by_name_abbrev(const struct ref *refs, const c
 {
 	const struct ref *ref;
 	for (ref = refs; ref; ref = ref->next) {
-		if (ref_matches_abbrev(name, ref->name))
+		if (refname_match(name, ref->name, ref_fetch_rules))
 			return ref;
 	}
 	return NULL;
