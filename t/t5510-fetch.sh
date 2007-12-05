@@ -253,4 +253,46 @@ test_expect_success 'bundle should record HEAD correctly' '
 
 '
 
+test_expect_success 'explicit fetch should not update tracking' '
+
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git fetch origin master &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" = "$n" &&
+		! git rev-parse --verify refs/remotes/origin/side
+	)
+'
+
+test_expect_success 'explicit pull should not update tracking' '
+
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git pull origin master &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" = "$n" &&
+		! git rev-parse --verify refs/remotes/origin/side
+	)
+'
+
+test_expect_success 'configured fetch updates tracking' '
+
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git fetch origin &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" != "$n" &&
+		git rev-parse --verify refs/remotes/origin/side
+	)
+'
+
 test_done
