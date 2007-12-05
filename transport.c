@@ -659,7 +659,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	free(heads);
 	free_refs(refs);
 	free(dest);
-	return 0;
+	return (refs ? 0 : -1);
 }
 
 static int git_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags)
