@@ -102,6 +102,10 @@ It does not apply to blobs recorded in its index."
     unset GITHEAD_$his_tree
 }
 
+reread_subject () {
+	git stripspace <"$1" | sed -e 1q
+}
+
 prec=4
 dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary=
 resolvemsg= resume=
@@ -372,6 +376,7 @@ do
 		[aA]*) action=yes interactive= ;;
 		[nN]*) action=skip ;;
 		[eE]*) git_editor "$dotest/final-commit"
+		       SUBJECT=$(reread_subject "$dotest/final-commit")
 		       action=again ;;
 		[vV]*) action=again
 		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;
