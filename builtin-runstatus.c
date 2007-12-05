@@ -14,6 +14,7 @@ int cmd_runstatus(int argc, const char **argv, const char *prefix)
 
 	git_config(git_status_config);
 	wt_status_prepare(&s);
+	s.prefix = prefix;
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "--color"))

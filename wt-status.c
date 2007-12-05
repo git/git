@@ -81,33 +81,47 @@ static void wt_status_print_trailer(struct wt_status *s)
 	color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
 }
 
-static const char *quote_crlf(const char *in, char *buf, size_t sz)
+static char *quote_path(const char *in, int len,
+			struct strbuf *out, const char *prefix)
 {
-	const char *scan;
-	char *out;
-	const char *ret = in;
+	if (len < 0)
+		len = strlen(in);
 
-	for (scan = in, out = buf; *scan; scan++) {
-		int ch = *scan;
-		int quoted;
+	strbuf_grow(out, len);
+	strbuf_setlen(out, 0);
+	if (prefix) {
+		int off = 0;
+		while (prefix[off] && off < len && prefix[off] == in[off])
+			if (prefix[off] == '/') {
+				prefix += off + 1;
+				in += off + 1;
+				len -= off + 1;
+				off = 0;
+			} else
+				off++;
+
+		for (; *prefix; prefix++)
+			if (*prefix == '/')
+				strbuf_addstr(out, "../");
+	}
+
+	for ( ; len > 0; in++, len--) {
+		int ch = *in;
 
 		switch (ch) {
 		case '\n':
-			quoted = 'n';
+			strbuf_addstr(out, "\\n");
 			break;
 		case '\r':
-			quoted = 'r';
+			strbuf_addstr(out, "\\r");
 			break;
 		default:
-			*out++ = ch;
+			strbuf_addch(out, ch);
 			continue;
 		}
-		*out++ = '\\';
-		*out++ = quoted;
-		ret = buf;
 	}
-	*out = '\0';
-	return ret;
+
+	return out->buf;
 }
 
 static void wt_status_print_filepair(struct wt_status *s,
@@ -115,10 +129,12 @@ static void wt_status_print_filepair(struct wt_status *s,
 {
 	const char *c = color(t);
 	const char *one, *two;
-	char onebuf[PATH_MAX], twobuf[PATH_MAX];
+	struct strbuf onebuf, twobuf;
 
-	one = quote_crlf(p->one->path, onebuf, sizeof(onebuf));
-	two = quote_crlf(p->two->path, twobuf, sizeof(twobuf));
+	strbuf_init(&onebuf, 0);
+	strbuf_init(&twobuf, 0);
+	one = quote_path(p->one->path, -1, &onebuf, s->prefix);
+	two = quote_path(p->two->path, -1, &twobuf, s->prefix);
 
 	color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
 	switch (p->status) {
@@ -150,6 +166,8 @@ static void wt_status_print_filepair(struct wt_status *s,
 		die("bug: unhandled diff status %c", p->status);
 	}
 	fprintf(s->fp, "\n");
+	strbuf_release(&onebuf);
+	strbuf_release(&twobuf);
 }
 
 static void wt_status_print_updated_cb(struct diff_queue_struct *q,
@@ -204,8 +222,9 @@ static void wt_read_cache(struct wt_status *s)
 static void wt_status_print_initial(struct wt_status *s)
 {
 	int i;
-	char buf[PATH_MAX];
+	struct strbuf buf;
 
+	strbuf_init(&buf, 0);
 	wt_read_cache(s);
 	if (active_nr) {
 		s->commitable = 1;
@@ -214,11 +233,12 @@ static void wt_status_print_initial(struct wt_status *s)
 	for (i = 0; i < active_nr; i++) {
 		color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
 		color_fprintf_ln(s->fp, color(WT_STATUS_UPDATED), "new file: %s",
-				quote_crlf(active_cache[i]->name,
-					   buf, sizeof(buf)));
+				quote_path(active_cache[i]->name, -1,
+					   &buf, s->prefix));
 	}
 	if (active_nr)
 		wt_status_print_trailer(s);
+	strbuf_release(&buf);
 }
 
 static void wt_status_print_updated(struct wt_status *s)
@@ -253,7 +273,9 @@ static void wt_status_print_untracked(struct wt_status *s)
 	struct dir_struct dir;
 	int i;
 	int shown_header = 0;
+	struct strbuf buf;
 
+	strbuf_init(&buf, 0);
 	memset(&dir, 0, sizeof(dir));
 
 	if (!s->untracked) {
@@ -285,20 +307,38 @@ static void wt_status_print_untracked(struct wt_status *s)
 			shown_header = 1;
 		}
 		color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
-		color_fprintf_ln(s->fp, color(WT_STATUS_UNTRACKED), "%.*s",
-				ent->len, ent->name);
+		color_fprintf_ln(s->fp, color(WT_STATUS_UNTRACKED), "%s",
+				quote_path(ent->name, ent->len,
+					&buf, s->prefix));
 	}
+	strbuf_release(&buf);
 }
 
 static void wt_status_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
+	int saved_stdout;
+
+	fflush(s->fp);
+
+	/* Sigh, the entire diff machinery is hardcoded to output to
+	 * stdout.  Do the dup-dance...*/
+	saved_stdout = dup(STDOUT_FILENO);
+	if (saved_stdout < 0 ||dup2(fileno(s->fp), STDOUT_FILENO) < 0)
+		die("couldn't redirect stdout\n");
+
 	init_revisions(&rev, NULL);
 	setup_revisions(0, NULL, &rev, s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
 	wt_read_cache(s);
 	run_diff_index(&rev, 1);
+
+	fflush(stdout);
+
+	if (dup2(saved_stdout, STDOUT_FILENO) < 0)
+		die("couldn't restore stdout\n");
+	close(saved_stdout);
 }
 
 void wt_status_print(struct wt_status *s)

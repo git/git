@@ -23,11 +23,9 @@ static const char * const git_tag_usage[] = {
 
 static char signingkey[1000];
 
-static void launch_editor(const char *path, struct strbuf *buffer)
+void launch_editor(const char *path, struct strbuf *buffer, const char *const *env)
 {
 	const char *editor, *terminal;
-	struct child_process child;
-	const char *args[3];
 
 	editor = getenv("GIT_EDITOR");
 	if (!editor && editor_program)
@@ -48,14 +46,12 @@ static void launch_editor(const char *path, struct strbuf *buffer)
 	if (!editor)
 		editor = "vi";
 
-	memset(&child, 0, sizeof(child));
-	child.argv = args;
-	args[0] = editor;
-	args[1] = path;
-	args[2] = NULL;
+	if (strcmp(editor, ":")) {
+		const char *args[] = { editor, path, NULL };
 
-	if (run_command(&child))
-		die("There was a problem with the editor %s.", editor);
+		if (run_command_v_opt_cd_env(args, 0, NULL, env))
+			die("There was a problem with the editor %s.", editor);
+	}
 
 	if (strbuf_read_file(buffer, path, 0) < 0)
 		die("could not read message file '%s': %s",
@@ -322,7 +318,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 			write_or_die(fd, tag_template, strlen(tag_template));
 		close(fd);
 
-		launch_editor(path, buf);
+		launch_editor(path, buf, NULL);
 
 		unlink(path);
 		free(path);
