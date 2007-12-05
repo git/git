@@ -717,41 +717,48 @@ void mingw_execvp(const char *cmd, char *const *argv)
 
 char **copy_environ()
 {
-	return copy_env(environ);
+	char **env;
+	int i = 0;
+	while (environ[i])
+		i++;
+	env = xmalloc((i+1)*sizeof(*env));
+	for (i = 0; environ[i]; i++)
+		env[i] = xstrdup(environ[i]);
+	env[i] = NULL;
+	return env;
 }
 
-char **copy_env(char **env)
+void free_env(char **env)
 {
-	char **s;
-	int n = 1;
-	for (s = env; *s; s++)
-		n++;
-	s = xmalloc(n*sizeof(char *));
-	memcpy(s, env, n*sizeof(char *));
-	return s;
+	int i;
+	for (i = 0; env[i]; i++)
+		free(env[i]);
+	free(env);
+}
+
+static int lookup_env(char **env, const char *name)
+{
+	int i;
+	size_t nmln = strlen(name);
+
+	for (i = 0; env[i]; i++) {
+		if (0 == strncmp(env[i], name, nmln)
+		    && '=' == env[i][nmln])
+			/* matches */
+			return i;
+	}
+	return -1;
 }
 
 void env_unsetenv(char **env, const char *name)
 {
-	int src, dst;
-	size_t nmln;
+	int i = lookup_env(env, name);
+	if (i < 0)
+		return;
 
-	nmln = strlen(name);
-
-	for (src = dst = 0; env[src]; ++src) {
-		size_t enln;
-		enln = strlen(env[src]);
-		if (enln > nmln) {
-			/* might match, and can test for '=' safely */
-			if (0 == strncmp (env[src], name, nmln)
-			    && '=' == env[src][nmln])
-				/* matches, so skip */
-				continue;
-		}
-		env[dst] = env[src];
-		++dst;
-	}
-	env[dst] = NULL;
+	free(env[i]);
+	for (; env[i]; i++)
+		env[i] = env[i+1];
 }
 
 /* this is the first function to call into WS_32; initialize it */

@@ -636,8 +636,8 @@ sig_handler_t mingw_signal(int sig, sig_handler_t handler);
  * helpers
  */
 
-char **copy_environ();
-char **copy_env(char **env);
+char **copy_environ(void);
+void free_environ(void);
 void env_unsetenv(char **env, const char *name);
 
 #endif /* __MINGW32__ */
