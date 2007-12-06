@@ -359,8 +359,8 @@ clean.requireForce::
 
 color.branch::
 	A boolean to enable/disable color in the output of
-	gitlink:git-branch[1]. May be set to `true` (or `always`),
-	`false` (or `never`) or `auto`, in which case colors are used
+	gitlink:git-branch[1]. May be set to `always`,
+	`false` (or `never`) or `auto` (or `true`), in which case colors are used
 	only when the output is to a terminal. Defaults to false.
 
 color.branch.<slot>::
@@ -378,9 +378,9 @@ second is the background.  The position of the attribute, if any,
 doesn't matter.
 
 color.diff::
-	When true (or `always`), always use colors in patch.
-	When false (or `never`), never.  When set to `auto`, use
-	colors only when the output is to the terminal.
+	When set to `always`, always use colors in patch.
+	When false (or `never`), never.  When set to `true` or `auto`, use
+	colors only when the output is to the terminal. Defaults to false.
 
 color.diff.<slot>::
 	Use customized color for diff colorization.  `<slot>` specifies
@@ -397,8 +397,8 @@ color.pager::
 
 color.status::
 	A boolean to enable/disable color in the output of
-	gitlink:git-status[1]. May be set to `true` (or `always`),
-	`false` (or `never`) or `auto`, in which case colors are used
+	gitlink:git-status[1]. May be set to `always`,
+	`false` (or `never`) or `auto` (or `true`), in which case colors are used
 	only when the output is to a terminal. Defaults to false.
 
 color.status.<slot>::
