@@ -343,12 +343,12 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 			memcpy(name + 2, ce->name, len + 1);
 		}
 		argv[argc++] = name;
-		if (argc < MAXARGS)
-			continue;
-		status = flush_grep(opt, argc, nr, argv, &kept);
-		if (0 < status)
-			hit = 1;
-		argc = nr + kept;
+		if (MAXARGS <= argc) {
+			status = flush_grep(opt, argc, nr, argv, &kept);
+			if (0 < status)
+				hit = 1;
+			argc = nr + kept;
+		}
 		if (ce_stage(ce)) {
 			do {
 				i++;
