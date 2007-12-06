@@ -116,7 +116,7 @@ bad:
 	die("bad config value '%s' for variable '%s'", value, var);
 }
 
-int git_config_colorbool(const char *var, const char *value)
+int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 {
 	if (value) {
 		if (!strcasecmp(value, "never"))
@@ -133,7 +133,9 @@ int git_config_colorbool(const char *var, const char *value)
 
 	/* any normal truth value defaults to 'auto' */
  auto_color:
-	if (isatty(1) || (pager_in_use && pager_use_color)) {
+	if (stdout_is_tty < 0)
+		stdout_is_tty = isatty(1);
+	if (stdout_is_tty || (pager_in_use && pager_use_color)) {
 		char *term = getenv("TERM");
 		if (term && strcmp(term, "dumb"))
 			return 1;
