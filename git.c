@@ -169,7 +169,7 @@ static int handle_alias(int *argcp, const char ***argv)
 
 				strbuf_init(&buf, PATH_MAX);
 				strbuf_addstr(&buf, alias_string);
-				sq_quote_argv(&buf, (*argv) + 1, *argcp - 1, PATH_MAX);
+				sq_quote_argv(&buf, (*argv) + 1, PATH_MAX);
 				free(alias_string);
 				alias_string = buf.buf;
 			}
@@ -198,7 +198,7 @@ static int handle_alias(int *argcp, const char ***argv)
 		if (!strcmp(alias_command, new_argv[0]))
 			die("recursive alias: %s", alias_command);
 
-		trace_argv_printf(new_argv, count,
+		trace_argv_printf(new_argv,
 				  "trace: alias expansion: %s =>",
 				  alias_command);
 
@@ -252,7 +252,7 @@ static int run_command(struct cmd_struct *p, int argc, const char **argv)
 	if (p->option & NEED_WORK_TREE)
 		setup_work_tree();
 
-	trace_argv_printf(argv, argc, "trace: built-in: git");
+	trace_argv_printf(argv, "trace: built-in: git");
 
 	status = p->fn(argc, argv, prefix);
 	if (status)
@@ -294,6 +294,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "cherry", cmd_cherry, RUN_SETUP },
 		{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NEED_WORK_TREE },
 		{ "clean", cmd_clean, RUN_SETUP | NEED_WORK_TREE },
+		{ "commit", cmd_commit, RUN_SETUP | NEED_WORK_TREE },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
 		{ "config", cmd_config },
 		{ "count-objects", cmd_count_objects, RUN_SETUP },
@@ -302,6 +303,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "diff-files", cmd_diff_files },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },
 		{ "diff-tree", cmd_diff_tree, RUN_SETUP },
+		{ "fast-export", cmd_fast_export, RUN_SETUP },
 		{ "fetch", cmd_fetch, RUN_SETUP },
 		{ "fetch-pack", cmd_fetch_pack, RUN_SETUP },
 		{ "fetch--tool", cmd_fetch__tool, RUN_SETUP },
@@ -345,11 +347,11 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "rev-parse", cmd_rev_parse },
 		{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
 		{ "rm", cmd_rm, RUN_SETUP },
-		{ "runstatus", cmd_runstatus, RUN_SETUP | NEED_WORK_TREE },
 		{ "send-pack", cmd_send_pack, RUN_SETUP },
 		{ "shortlog", cmd_shortlog, RUN_SETUP | USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP | USE_PAGER },
+		{ "status", cmd_status, RUN_SETUP | NEED_WORK_TREE },
 		{ "stripspace", cmd_stripspace },
 		{ "symbolic-ref", cmd_symbolic_ref, RUN_SETUP },
 		{ "tag", cmd_tag, RUN_SETUP },

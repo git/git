@@ -95,6 +95,31 @@ test_expect_success 'fetch following tags' '
 
 '
 
+test_expect_failure 'fetch must not resolve short tag name' '
+
+	cd "$D" &&
+
+	mkdir five &&
+	cd five &&
+	git init &&
+
+	git fetch .. anno:five
+
+'
+
+test_expect_failure 'fetch must not resolve short remote name' '
+
+	cd "$D" &&
+	git-update-ref refs/remotes/six/HEAD HEAD
+
+	mkdir six &&
+	cd six &&
+	git init &&
+
+	git fetch .. six:six
+
+'
+
 test_expect_success 'create bundle 1' '
 	cd "$D" &&
 	echo >file updated again by origin &&
@@ -226,6 +251,48 @@ test_expect_success 'bundle should record HEAD correctly' '
 	done >expect &&
 	diff -u expect actual
 
+'
+
+test_expect_success 'explicit fetch should not update tracking' '
+
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git fetch origin master &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" = "$n" &&
+		! git rev-parse --verify refs/remotes/origin/side
+	)
+'
+
+test_expect_success 'explicit pull should not update tracking' '
+
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git pull origin master &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" = "$n" &&
+		! git rev-parse --verify refs/remotes/origin/side
+	)
+'
+
+test_expect_success 'configured fetch updates tracking' '
+
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git fetch origin &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" != "$n" &&
+		git rev-parse --verify refs/remotes/origin/side
+	)
 '
 
 test_done

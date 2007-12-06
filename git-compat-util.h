@@ -64,18 +64,14 @@
 #include <time.h>
 #include <signal.h>
 #include <fnmatch.h>
+#include <assert.h>
+#include <regex.h>
 #ifndef __MINGW32__
 #include <sys/wait.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
-#else
-int mkstemp (char *__template);
-#endif
-#include <assert.h>
-#include <regex.h>
-#ifndef __MINGW32__
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -91,7 +87,7 @@ int mkstemp (char *__template);
 #include <grp.h>
 #define _ALL_SOURCE 1
 #endif
-#endif
+#endif	/* !__MINGW32__ */
 
 #ifndef NO_ICONV
 #include <iconv.h>
@@ -363,8 +359,9 @@ static inline FILE *xfdopen(int fd, const char *mode)
 }
 
 #ifdef __MINGW32__
-int mkstemp (char *__template);
+int mkstemp(char *template);
 #endif
+
 static inline int xmkstemp(char *template)
 {
 	int fd;
@@ -448,6 +445,13 @@ static inline int strtol_i(char const *s, int base, int *result)
 
 #include <winsock2.h>
 
+/*
+ * things that are not available in header files
+ */
+
+typedef int pid_t;
+#define hstrerror strerror
+
 #define S_IFLNK    0120000 /* Symbolic link */
 #define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(x) 0
@@ -457,6 +461,50 @@ static inline int strtol_i(char const *s, int base, int *result)
 #define S_ISGID 0
 #define S_IROTH 0
 #define S_IXOTH 0
+
+#define WIFEXITED(x) ((unsigned)(x) < 259)	/* STILL_ACTIVE */
+#define WEXITSTATUS(x) ((x) & 0xff)
+#define WIFSIGNALED(x) ((unsigned)(x) > 259)
+
+#define SIGKILL 0
+#define SIGCHLD 0
+#define SIGPIPE 0
+#define SIGALRM 100
+
+#define F_GETFD 1
+#define F_SETFD 2
+#define FD_CLOEXEC 0x1
+
+struct passwd {
+	char *pw_name;
+	char *pw_gecos;
+	char *pw_dir;
+};
+
+struct pollfd {
+	int fd;           /* file descriptor */
+	short events;     /* requested events */
+	short revents;    /* returned events */
+};
+#define POLLIN 1
+#define POLLHUP 2
+
+typedef void (__cdecl *sig_handler_t)(int);
+struct sigaction {
+	sig_handler_t sa_handler;
+	unsigned sa_flags;
+};
+#define sigemptyset(x) (void)0
+#define SA_RESTART 0
+
+struct itimerval {
+	struct timeval it_value, it_interval;
+};
+#define ITIMER_REAL 0
+
+/*
+ * trivial stubs
+ */
 
 static inline int readlink(const char *path, char *buf, size_t bufsiz)
 { errno = ENOSYS; return -1; }
@@ -468,71 +516,73 @@ static inline int fchmod(int fildes, mode_t mode)
 { errno = ENOSYS; return -1; }
 static inline int fork(void)
 { errno = ENOSYS; return -1; }
-static inline int kill(pid_t pid, int sig)
-{ errno = ENOSYS; return -1; }
 static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
-
-typedef int pid_t;
-extern pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env);
-extern void mingw_execvp(const char *cmd, char *const *argv);
-#define execvp mingw_execvp
-static inline int waitpid(pid_t pid, unsigned *status, unsigned options)
+static inline int fsync(int fd)
+{ return 0; }
+static inline int getppid(void)
+{ return 1; }
+static inline void sync(void)
+{}
+static inline int getuid()
+{ return 1; }
+static inline struct passwd *getpwnam(const char *name)
+{ return NULL; }
+static inline int fcntl(int fd, int cmd, long arg)
 {
-	if (options == 0)
-		return _cwait(status, pid, 0);
-	else
-		return errno = EINVAL, -1;
+	if (cmd == F_GETFD || cmd == F_SETFD)
+		return 0;
+	errno = EINVAL;
+	return -1;
 }
 
-#define WIFEXITED(x) ((unsigned)(x) < 259)	/* STILL_ACTIVE */
-#define WEXITSTATUS(x) ((x) & 0xff)
-#define WIFSIGNALED(x) ((unsigned)(x) > 259)
-#define WTERMSIG(x) (x)
-#define WNOHANG 1
-#define SIGKILL 0
-#define SIGCHLD 0
-#define SIGPIPE 0
+/*
+ * simple adaptors
+ */
 
-char **copy_environ();
-char **copy_env(char **env);
-void env_unsetenv(char **env, const char *name);
-
-unsigned int sleep (unsigned int __seconds);
-const char *inet_ntop(int af, const void *src,
-                             char *dst, size_t cnt);
-int gettimeofday(struct timeval *tv, void *tz);
-int pipe(int filedes[2]);
-
-struct pollfd {
-	int fd;           /* file descriptor */
-	short events;     /* requested events */
-	short revents;    /* returned events */
-};
-int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
-#define POLLIN 1
-#define POLLHUP 2
-
-static inline int git_mkdir(const char *path, int mode)
+static inline int mingw_mkdir(const char *path, int mode)
 {
 	return mkdir(path);
 }
-#define mkdir git_mkdir
+#define mkdir mingw_mkdir
 
-static inline int git_unlink(const char *pathname) {
+static inline int mingw_unlink(const char *pathname)
+{
 	/* read-only files cannot be removed */
 	chmod(pathname, 0666);
 	return unlink(pathname);
 }
-#define unlink git_unlink
+#define unlink mingw_unlink
+
+static inline int waitpid(pid_t pid, unsigned *status, unsigned options)
+{
+	if (options == 0)
+		return _cwait(status, pid, 0);
+	errno = EINVAL;
+	return -1;
+}
+
+/*
+ * implementations of missing functions
+ */
+
+int pipe(int filedes[2]);
+unsigned int sleep (unsigned int seconds);
+int gettimeofday(struct timeval *tv, void *tz);
+int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
+struct tm *gmtime_r(const time_t *timep, struct tm *result);
+struct tm *localtime_r(const time_t *timep, struct tm *result);
+int getpagesize(void);	/* defined in MinGW's libgcc.a */
+struct passwd *getpwuid(int uid);
+int setitimer(int type, struct itimerval *in, struct itimerval *out);
+int sigaction(int sig, struct sigaction *in, struct sigaction *out);
+
+/*
+ * replacements of existing functions
+ */
 
 int mingw_open (const char *filename, int oflags, ...);
 #define open mingw_open
-
-#include <time.h>
-struct tm *gmtime_r(const time_t *timep, struct tm *result);
-struct tm *localtime_r(const time_t *timep, struct tm *result);
-#define hstrerror strerror
 
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
@@ -548,11 +598,6 @@ int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
 
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
-
-static inline int fsync(int fd) { return 0; }
-static inline int getppid(void) { return 1; }
-static inline void sync(void) {}
-extern int getpagesize(void);	/* defined in MinGW's libgcc.a */
 
 /* Use mingw_lstat() instead of lstat()/stat() and
  * mingw_fstat() instead of fstat() on Windows.
@@ -576,44 +621,24 @@ static inline int mingw_stat(const char *file_name, struct mingw_stat *buf)
 int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
 #define vsnprintf mingw_vsnprintf
 
-struct passwd {
-	char *pw_name;
-	char *pw_gecos;
-	char *pw_dir;
-};
-struct passwd *mingw_getpwuid(int uid);
-#define getpwuid mingw_getpwuid
-static inline int getuid() { return 1; }
-static inline struct passwd *getpwnam(const char *name) { return NULL; }
-
-struct itimerval {
-	struct timeval it_value, it_interval;
-};
-int setitimer(int type, struct itimerval *in, struct itimerval *out);
-#define ITIMER_REAL 0
-
-typedef void (__cdecl *sig_handler_t)(int);
-struct sigaction {
-	sig_handler_t sa_handler;
-	unsigned sa_flags;
-};
-int sigaction(int sig, struct sigaction *in, struct sigaction *out);
-#define sigemptyset(x) (void)0
-#define SA_RESTART 0
-#define SIGALRM 100
-sig_handler_t mingw_signal(int sig, sig_handler_t handler);
-#define signal mingw_signal
-
-#define F_GETFD 1
-#define F_SETFD 2
-#define FD_CLOEXEC 0x1
-static inline int mingw_fcntl(int fd, int cmd, long arg)
-{ return cmd == F_GETFD || cmd == F_SETFD ? 0 : (errno = EINVAL, -1); }
-#define fcntl mingw_fcntl
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env);
+void mingw_execvp(const char *cmd, char *const *argv);
+#define execvp mingw_execvp
 
 static inline unsigned int git_ntohl(unsigned int x)
 { return (unsigned int)ntohl(x); }
 #define ntohl git_ntohl
+
+sig_handler_t mingw_signal(int sig, sig_handler_t handler);
+#define signal mingw_signal
+
+/*
+ * helpers
+ */
+
+char **copy_environ(void);
+void free_environ(void);
+char **env_setenv(char **env, const char *name);
 
 extern __attribute__((noreturn)) int git_exit(int code);
 #define exit git_exit

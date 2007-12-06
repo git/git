@@ -77,8 +77,9 @@ for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
 	}
 
 	# Parse the author information
-	export GIT_AUTHOR_NAME=$(sed -ne 's/Author: //p' "$tmp_info")
-	export GIT_AUTHOR_EMAIL=$(sed -ne 's/Email: //p' "$tmp_info")
+	GIT_AUTHOR_NAME=$(sed -ne 's/Author: //p' "$tmp_info")
+	GIT_AUTHOR_EMAIL=$(sed -ne 's/Email: //p' "$tmp_info")
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 	while test -z "$GIT_AUTHOR_EMAIL" && test -z "$GIT_AUTHOR_NAME" ; do
 		if [ -n "$quilt_author" ] ; then
 			GIT_AUTHOR_NAME="$quilt_author_name";
@@ -104,8 +105,9 @@ for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
 			GIT_AUTHOR_EMAIL="$patch_author_email"
 		fi
 	done
-	export GIT_AUTHOR_DATE=$(sed -ne 's/Date: //p' "$tmp_info")
-	export SUBJECT=$(sed -ne 's/Subject: //p' "$tmp_info")
+	GIT_AUTHOR_DATE=$(sed -ne 's/Date: //p' "$tmp_info")
+	SUBJECT=$(sed -ne 's/Subject: //p' "$tmp_info")
+	export GIT_AUTHOR_DATE SUBJECT
 	if [ -z "$SUBJECT" ] ; then
 		SUBJECT=$(echo $patch_name | sed -e 's/.patch$//')
 	fi

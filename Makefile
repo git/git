@@ -216,7 +216,7 @@ BASIC_LDFLAGS =
 
 SCRIPT_SH = \
 	git-bisect.sh git-checkout.sh \
-	git-clone.sh git-commit.sh \
+	git-clone.sh \
 	git-merge-one-file.sh git-mergetool.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh git-rebase--interactive.sh \
 	git-repack.sh git-request-pull.sh \
@@ -236,7 +236,7 @@ SCRIPT_PERL = \
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
-	  git-status git-instaweb
+	  git-instaweb
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
@@ -261,7 +261,7 @@ EXTRA_PROGRAMS =
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
 	git-get-tar-commit-id$X git-init$X git-repo-config$X \
-	git-fsck-objects$X git-cherry-pick$X \
+	git-fsck-objects$X git-cherry-pick$X git-peek-remote$X git-status$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -271,9 +271,6 @@ ALL_PROGRAMS += git-merge-subtree$X
 
 # what 'all' will build but not install in gitexecdir
 OTHER_PROGRAMS = git$X gitweb/gitweb.cgi
-ifndef NO_TCLTK
-OTHER_PROGRAMS += gitk-wish
-endif
 
 # Set paths to tools early so that they can be used for version tests.
 ifndef SHELL_PATH
@@ -332,6 +329,7 @@ BUILTIN_OBJS = \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \
 	builtin-clean.o \
+	builtin-commit.o \
 	builtin-commit-tree.o \
 	builtin-count-objects.o \
 	builtin-describe.o \
@@ -339,6 +337,7 @@ BUILTIN_OBJS = \
 	builtin-diff-files.o \
 	builtin-diff-index.o \
 	builtin-diff-tree.o \
+	builtin-fast-export.o \
 	builtin-fetch.o \
 	builtin-fetch-pack.o \
 	builtin-fetch--tool.o \
@@ -373,7 +372,6 @@ BUILTIN_OBJS = \
 	builtin-rev-parse.o \
 	builtin-revert.o \
 	builtin-rm.o \
-	builtin-runstatus.o \
 	builtin-shortlog.o \
 	builtin-show-branch.o \
 	builtin-stripspace.o \
@@ -448,6 +446,7 @@ ifeq ($(uname_O),Cygwin)
 	NEEDS_LIBICONV = YesPlease
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
 	NO_TRUSTABLE_FILEMODE = UnfortunatelyYes
+	OLD_ICONV = UnfortunatelyYes
 	# There are conflicting reports about this.
 	# On some boxes NO_MMAP is needed, and not so elsewhere.
 	# Try commenting this out if you suspect MMAP is more efficient
@@ -499,26 +498,28 @@ ifeq ($(uname_S),IRIX64)
 	BASIC_LDFLAGS += -L/usr/lib32
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-	NO_MMAP=YesPlease
-	NO_PREAD=YesPlease
-	NO_OPENSSL=YesPlease
-	NO_SYMLINK_HEAD=YesPlease
-	NO_HARDLINKS=YesPlease
-	NO_IPV6=YesPlease
-	NO_SETENV=YesPlease
-	NO_UNSETENV=YesPlease
-	NO_STRCASESTR=YesPlease
-	NO_STRLCPY=YesPlease
+	NO_MMAP = YesPlease
+	NO_PREAD = YesPlease
+	NO_OPENSSL = YesPlease
+	NO_SYMLINK_HEAD = YesPlease
+	NO_HARDLINKS = YesPlease
+	NO_IPV6 = YesPlease
+	NO_SETENV = YesPlease
+	NO_UNSETENV = YesPlease
+	NO_STRCASESTR = YesPlease
+	NO_STRLCPY = YesPlease
 	NO_MEMMEM = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
 	NO_STRTOUMAX = YesPlease
 	NO_MKDTEMP = YesPlease
-	NO_SVN_TESTS=YesPlease
-	NO_PERL_MAKEMAKER=YesPlease
+	NO_SVN_TESTS = YesPlease
+	NO_PERL_MAKEMAKER = YesPlease
 	NO_R_TO_GCC_LINKER = YesPlease
-	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\" -D__USE_MINGW_ACCESS -DNOGDI -I compat
+	NO_EXTRA_PROGRAMS = YesPlease
+	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat
+	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
 	EXTLIBS += -lws2_32
 	X = .exe
@@ -586,6 +587,11 @@ ifdef ZLIB_PATH
 endif
 EXTLIBS += -lz
 
+ifndef NO_EXTRA_PROGRAMS
+	EXTRA_PROGRAMS += \
+		git-daemon$X \
+		git-imap-send$X
+endif
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
@@ -810,18 +816,13 @@ endif
 all::
 ifndef NO_TCLTK
 	$(QUIET_SUBDIR0)git-gui $(QUIET_SUBDIR1) all
+	$(QUIET_SUBDIR0)gitk-git $(QUIET_SUBDIR1) all
 endif
 	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
 	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1) NOEXECTEMPL='$(NOEXECTEMPL)'
 
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
-
-gitk-wish: gitk GIT-GUI-VARS
-	$(QUIET_GEN)$(RM) $@ $@+ && \
-	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <gitk >$@+ && \
-	chmod +x $@+ && \
-	mv -f $@+ $@
 
 git.o: git.c common-cmds.h GIT-CFLAGS
 	$(QUIET_CC)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
@@ -839,7 +840,7 @@ git-merge-subtree$X: git-merge-recursive$X
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)$(RM) $@ && ln git$X $@
 
-common-cmds.h: ./generate-cmdlist.sh
+common-cmds.h: ./generate-cmdlist.sh command-list.txt
 
 common-cmds.h: $(wildcard Documentation/git-*.txt)
 	$(QUIET_GEN)./generate-cmdlist.sh > $@+ && mv $@+ $@
@@ -875,9 +876,6 @@ $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 	    $@.perl >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
-
-git-status: git-commit
-	$(QUIET_GEN)cp $< $@+ && mv $@+ $@
 
 gitweb/gitweb.cgi: gitweb/gitweb.perl
 	$(QUIET_GEN)$(RM) $@ $@+ && \
@@ -1060,9 +1058,9 @@ remove-dashes:
 ### Installation rules
 
 install: all
-	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
-	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(sysconfdir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(sysconfdir_SQ)'
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) git$X '$(DESTDIR_SQ)$(bindir_SQ)'
 	GIT_CONFIG='$(DESTDIR_SQ)$(sysconfdir_SQ)/gitconfig' \
@@ -1070,7 +1068,7 @@ install: all
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(MAKE) -C perl prefix='$(prefix_SQ)' install
 ifndef NO_TCLTK
-	$(INSTALL) gitk-wish '$(DESTDIR_SQ)$(bindir_SQ)'/gitk
+	$(MAKE) -C gitk-git install
 	$(MAKE) -C git-gui install
 endif
 	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
@@ -1163,7 +1161,7 @@ clean:
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
 ifndef NO_TCLTK
-	$(RM) gitk-wish
+	$(MAKE) -C gitk-git clean
 	$(MAKE) -C git-gui clean
 endif
 	$(RM) GIT-VERSION-FILE GIT-CFLAGS GIT-GUI-VARS
@@ -1185,7 +1183,7 @@ check-docs::
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
 		echo "no doc: $$v"; \
-		sed -e '1,/^__DATA__/d' Documentation/cmd-list.perl | \
+		sed -e '/^#/d' command-list.txt | \
 		grep -q "^$$v[ 	]" || \
 		case "$$v" in \
 		git) ;; \
@@ -1193,9 +1191,9 @@ check-docs::
 		esac ; \
 	done; \
 	( \
-		sed -e '1,/^__DATA__/d' \
+		sed -e '/^#/d' \
 		    -e 's/[ 	].*//' \
-		    -e 's/^/listed /' Documentation/cmd-list.perl; \
+		    -e 's/^/listed /' command-list.txt; \
 		ls -1 Documentation/git*txt | \
 		sed -e 's|Documentation/|documented |' \
 		    -e 's/\.txt//'; \
@@ -1204,6 +1202,7 @@ check-docs::
 		case "$$how,$$cmd" in \
 		*,git-citool | \
 		*,git-gui | \
+		*,git-help | \
 		documented,gitattributes | \
 		documented,gitignore | \
 		documented,gitmodules | \

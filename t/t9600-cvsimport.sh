@@ -3,12 +3,28 @@
 test_description='git-cvsimport basic tests'
 . ./test-lib.sh
 
-if ! ( type cvs && type cvsps ) >/dev/null 2>&1
+if ! type cvs >/dev/null 2>&1
 then
-	test_expect_success 'skipping cvsimport tests, cvs/cvsps not found' ''
+	say 'skipping cvsimport tests, cvs not found'
 	test_done
 	exit
 fi
+
+cvsps_version=`cvsps -h 2>&1 | sed -ne 's/cvsps version //p'`
+case "$cvsps_version" in
+2.1)
+	;;
+'')
+	say 'skipping cvsimport tests, cvsps not found'
+	test_done
+	exit
+	;;
+*)
+	say 'skipping cvsimport tests, cvsps too old'
+	test_done
+	exit
+	;;
+esac
 
 CVSROOT=$(pwd)/cvsroot
 export CVSROOT
@@ -116,6 +132,18 @@ test_expect_success 'cvsimport.module config works' '
 		git merge origin &&
 	cd .. &&
 	git diff module-cvs/tick module-git/tick
+
+'
+
+test_expect_success 'import from a CVS working tree' '
+
+	cvs co -d import-from-wt module &&
+	cd import-from-wt &&
+		git cvsimport -a -z0 &&
+		echo 1 >expect &&
+		git log -1 --pretty=format:%s%n >actual &&
+		git diff actual expect &&
+	cd ..
 
 '
 

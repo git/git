@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2007, Nanako Shiraishi
 
-USAGE='[ | list | show | apply | clear]'
+USAGE='[  | save | list | show | apply | clear | create ]'
 
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
@@ -207,6 +207,10 @@ show)
 	shift
 	show_stash "$@"
 	;;
+save)
+	shift
+	save_stash "$*" && git-reset --hard
+	;;
 apply)
 	shift
 	apply_stash "$@"
@@ -221,14 +225,12 @@ create)
 	fi
 	create_stash "$*" && echo "$w_commit"
 	;;
-help | usage)
-	usage
-	;;
 *)
-	if test $# -gt 0 && test "$1" = save
+	if test $# -eq 0
 	then
-		shift
+		save_stash && git-reset --hard
+	else
+		usage
 	fi
-	save_stash "$*" && git-reset --hard
 	;;
 esac

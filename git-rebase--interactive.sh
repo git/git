@@ -30,6 +30,11 @@ test -d "$REWRITTEN" && PRESERVE_MERGES=t
 test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
 test -f "$DOTEST"/verbose && VERBOSE=t
 
+GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
+mark the corrected paths with 'git add <paths>', and
+run 'git rebase --continue'"
+export GIT_CHERRY_PICK_HELP
+
 warn () {
 	echo "$*" >&2
 }
@@ -90,6 +95,7 @@ make_patch () {
 
 die_with_patch () {
 	make_patch "$1"
+	git rerere
 	die "$2"
 }
 
@@ -175,13 +181,13 @@ pick_one_preserving_merges () {
 			msg="$(git cat-file commit $sha1 | sed -e '1,/^$/d')"
 			# No point in merging the first parent, that's HEAD
 			new_parents=${new_parents# $first_parent}
-			# NEEDSWORK: give rerere a chance
 			if ! GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
 				GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
 				GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
 				output git merge $STRATEGY -m "$msg" \
 					$new_parents
 			then
+				git rerere
 				printf "%s\n" "$msg" > "$GIT_DIR"/MERGE_MSG
 				die Error redoing merge $sha1
 			fi
@@ -369,6 +375,7 @@ do
 	--abort)
 		comment_for_reflog abort
 
+		git rerere clear
 		test -d "$DOTEST" || die "No interactive rebase running"
 
 		HEADNAME=$(cat "$DOTEST"/head-name)
@@ -385,6 +392,7 @@ do
 	--skip)
 		comment_for_reflog skip
 
+		git rerere clear
 		test -d "$DOTEST" || die "No interactive rebase running"
 
 		output git reset --hard && do_rest

@@ -327,7 +327,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	                     keep_dashdash ? PARSE_OPT_KEEP_DASHDASH : 0);
 
 	strbuf_addf(&parsed, " --");
-	sq_quote_argv(&parsed, argv, argc, 0);
+	sq_quote_argv(&parsed, argv, 0);
 	puts(parsed.buf);
 	return 0;
 }

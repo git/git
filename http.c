@@ -24,6 +24,7 @@ char *ssl_cainfo = NULL;
 long curl_low_speed_limit = -1;
 long curl_low_speed_time = -1;
 int curl_ftp_no_epsv = 0;
+char *curl_http_proxy = NULL;
 
 struct curl_slist *pragma_header;
 
@@ -160,6 +161,13 @@ static int http_options(const char *var, const char *value)
 		curl_ftp_no_epsv = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp("http.proxy", var)) {
+		if (curl_http_proxy == NULL) {
+			curl_http_proxy = xmalloc(strlen(value)+1);
+			strcpy(curl_http_proxy, value);
+		}
+		return 0;
+	}
 
 	/* Fall back on the default ones */
 	return git_default_config(var, value);
@@ -204,6 +212,9 @@ static CURL* get_curl_handle(void)
 
 	if (curl_ftp_no_epsv)
 		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
+
+	if (curl_http_proxy)
+		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
 
 	return result;
 }

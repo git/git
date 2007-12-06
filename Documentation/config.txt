@@ -346,6 +346,13 @@ branch.<name>.mergeoptions::
 	option values containing whitespace characters are currently not
 	supported.
 
+branch.<name>.rebase::
+	When true, rebase the branch <name> on top of the fetched branch,
+	instead of merging the default branch from the default remote.
+	*NOTE*: this is a possibly dangerous operation; do *not* use
+	it unless you understand the implications (see gitlink:git-rebase[1]
+	for details).
+
 clean.requireForce::
 	A boolean to make git-clean do nothing unless given -f
 	or -n.   Defaults to true.
@@ -500,7 +507,9 @@ gc.rerereunresolved::
 rerere.enabled::
 	Activate recording of resolved conflicts, so that identical
 	conflict hunks can be resolved automatically, should they
-	be encountered again.  See gitlink:git-rerere[1].
+	be encountered again.  gitlink:git-rerere[1] command is by
+	default enabled, but can be disabled by setting this option to
+	false.
 
 gitcvs.enabled::
 	Whether the CVS server interface is enabled for this repository.
@@ -542,6 +551,11 @@ All gitcvs variables except for 'gitcvs.allbinary' can also be
 specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
+
+http.proxy::
+	Override the HTTP proxy, normally configured using the 'http_proxy'
+	environment variable (see gitlink:curl[1]).  This can be overridden
+	on a per-remote basis; see remote.<name>.proxy
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
@@ -690,6 +704,11 @@ pull.twohead::
 remote.<name>.url::
 	The URL of a remote repository.  See gitlink:git-fetch[1] or
 	gitlink:git-push[1].
+
+remote.<name>.proxy::
+	For remotes that require curl (http, https and ftp), the URL to
+	the proxy to use for that remote.  Set to the empty string to
+	disable proxying for that remote.
 
 remote.<name>.fetch::
 	The default set of "refspec" for gitlink:git-fetch[1]. See

@@ -695,10 +695,9 @@ sub validate_refname {
 # in utf-8 thanks to "binmode STDOUT, ':utf8'" at beginning
 sub to_utf8 {
 	my $str = shift;
-	my $res;
-	eval { $res = decode_utf8($str, Encode::FB_CROAK); };
-	if (defined $res) {
-		return $res;
+	if (utf8::valid($str)) {
+		utf8::decode($str);
+		return $str;
 	} else {
 		return decode($fallback_encoding, $str, Encode::FB_DEFAULT);
 	}
@@ -3785,6 +3784,8 @@ sub git_search_grep_body {
 		print "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})}, "commit") .
+		      " | " .
+		      $cgi->a({-href => href(action=>"commitdiff", hash=>$co{'id'})}, "commitdiff") .
 		      " | " .
 		      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$co{'id'})}, "tree");
 		print "</td>\n" .

@@ -113,25 +113,15 @@ static int add_raw(char *buf, size_t size, int offset, const char *str)
 
 static int crud(unsigned char c)
 {
-	static char crud_array[256];
-	static int crud_array_initialized = 0;
-
-	if (!crud_array_initialized) {
-		int k;
-
-		for (k = 0; k <= 31; ++k) crud_array[k] = 1;
-		crud_array[' '] = 1;
-		crud_array['.'] = 1;
-		crud_array[','] = 1;
-		crud_array[':'] = 1;
-		crud_array[';'] = 1;
-		crud_array['<'] = 1;
-		crud_array['>'] = 1;
-		crud_array['"'] = 1;
-		crud_array['\''] = 1;
-		crud_array_initialized = 1;
-	}
-	return crud_array[c];
+	return  c <= 32  ||
+		c == '.' ||
+		c == ',' ||
+		c == ':' ||
+		c == ';' ||
+		c == '<' ||
+		c == '>' ||
+		c == '"' ||
+		c == '\'';
 }
 
 /*
@@ -192,12 +182,14 @@ static const char *env_hint =
 "Omit --global to set the identity only in this repository.\n"
 "\n";
 
-const char *fmt_ident(const char *name, const char *email,
-		      const char *date_str, int error_on_no_name)
+static const char *fmt_ident_1(const char *name, const char *email,
+			       const char *date_str, int flag)
 {
 	static char buffer[1000];
 	char date[50];
 	int i;
+	int error_on_no_name = !!(flag & 01);
+	int name_addr_only = !!(flag & 02);
 
 	setup_ident();
 	if (!name)
@@ -224,18 +216,34 @@ const char *fmt_ident(const char *name, const char *email,
 	}
 
 	strcpy(date, git_default_date);
-	if (date_str)
+	if (!name_addr_only && date_str)
 		parse_date(date_str, date, sizeof(date));
 
 	i = copy(buffer, sizeof(buffer), 0, name);
 	i = add_raw(buffer, sizeof(buffer), i, " <");
 	i = copy(buffer, sizeof(buffer), i, email);
-	i = add_raw(buffer, sizeof(buffer), i, "> ");
-	i = copy(buffer, sizeof(buffer), i, date);
+	if (!name_addr_only) {
+		i = add_raw(buffer, sizeof(buffer), i,  "> ");
+		i = copy(buffer, sizeof(buffer), i, date);
+	} else {
+		i = add_raw(buffer, sizeof(buffer), i, ">");
+	}
 	if (i >= sizeof(buffer))
 		die("Impossibly long personal identifier");
 	buffer[i] = 0;
 	return buffer;
+}
+
+const char *fmt_ident(const char *name, const char *email,
+		      const char *date_str, int error_on_no_name)
+{
+	int flag = (error_on_no_name ? 01 : 0);
+	return fmt_ident_1(name, email, date_str, flag);
+}
+
+const char *fmt_name(const char *name, const char *email)
+{
+	return fmt_ident_1(name, email, NULL, 03);
 }
 
 const char *git_author_info(int error_on_no_name)

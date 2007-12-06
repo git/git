@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include "../git-compat-util.h"
 #include "../strbuf.h"
 
@@ -176,19 +175,15 @@ int mingw_fstat(int fd, struct mingw_stat *buf)
 	return -1;
 }
 
-unsigned int sleep (unsigned int __seconds)
+unsigned int sleep (unsigned int seconds)
 {
-	Sleep(__seconds*1000);
+	Sleep(seconds*1000);
 	return 0;
 }
-const char *inet_ntop(int af, const void *src,
-                             char *dst, size_t cnt)
+
+int mkstemp(char *template)
 {
-	return NULL;
-}
-int mkstemp (char *__template)
-{
-	char *filename = mktemp(__template);
+	char *filename = mktemp(template);
 	if (filename == NULL)
 		return -1;
 	return open(filename, O_RDWR | O_CREAT, 0600);
@@ -318,8 +313,6 @@ repeat:
 	return 0;
 }
 
-#include <time.h>
-
 struct tm *gmtime_r(const time_t *timep, struct tm *result)
 {
 	memcpy(result, gmtime(timep), sizeof(struct tm));
@@ -346,10 +339,6 @@ char *mingw_getcwd(char *pointer, int len)
 				pointer[i] = '/';
 	}
 	return ret;
-}
-
-void openlog(const char *ident, int option, int facility)
-{
 }
 
 /*
@@ -449,7 +438,7 @@ static const char *parse_interpreter(const char *cmd)
 /*
  * Splits the PATH into parts.
  */
-static char **mingw_get_path_split(void)
+static char **get_path_split(void)
 {
 	char *p, **path, *envpath = getenv("PATH");
 	int i, n = 0;
@@ -485,7 +474,7 @@ static char **mingw_get_path_split(void)
 	return path;
 }
 
-static void mingw_free_path_split(char **path)
+static void free_path_split(char **path)
 {
 	if (!path)
 		return;
@@ -517,9 +506,8 @@ static char *lookup_prog(const char *dir, const char *cmd, int isexe, int exe_on
  * Determines the absolute path of cmd using the the split path in path.
  * If cmd contains a slash or backslash, no lookup is performed.
  */
-static char *mingw_path_lookup(const char *cmd, char **path, int exe_only)
+static char *path_lookup(const char *cmd, char **path, int exe_only)
 {
-	char **p = path;
 	char *prog = NULL;
 	int len = strlen(cmd);
 	int isexe = len >= 4 && !strcasecmp(cmd+len-4, ".exe");
@@ -527,14 +515,9 @@ static char *mingw_path_lookup(const char *cmd, char **path, int exe_only)
 	if (strchr(cmd, '/') || strchr(cmd, '\\'))
 		prog = xstrdup(cmd);
 
-	while (!prog && *p) {
-		prog = lookup_prog(*p++, cmd, isexe, exe_only);
-	}
-	if (!prog) {
-		prog = lookup_prog(".", cmd, isexe, exe_only);
-		if (!prog)
-			prog = xstrdup(cmd);
-	}
+	while (!prog && *path)
+		prog = lookup_prog(*path++, cmd, isexe, exe_only);
+
 	return prog;
 }
 
@@ -638,8 +621,8 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
 {
 	pid_t pid;
-	char **path = mingw_get_path_split();
-	char *prog = mingw_path_lookup(cmd, path, 0);
+	char **path = get_path_split();
+	char *prog = path_lookup(cmd, path, 0);
 
 	if (!prog) {
 		errno = ENOENT;
@@ -650,7 +633,7 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
 
 		if (interpr) {
 			const char *argv0 = argv[0];
-			char *iprog = mingw_path_lookup(interpr, path, 1);
+			char *iprog = path_lookup(interpr, path, 1);
 			argv[0] = prog;
 			if (!iprog) {
 				errno = ENOENT;
@@ -666,7 +649,7 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
 			pid = mingw_spawnve(prog, argv, env, 0);
 		free(prog);
 	}
-	mingw_free_path_split(path);
+	free_path_split(path);
 	return pid;
 }
 
@@ -679,8 +662,8 @@ static int try_shell_exec(const char *cmd, char *const *argv, char **env)
 
 	if (!interpr)
 		return 0;
-	path = mingw_get_path_split();
-	prog = mingw_path_lookup(interpr, path, 1);
+	path = get_path_split();
+	prog = path_lookup(interpr, path, 1);
 	if (prog) {
 		int argc = 0;
 		const char **argv2;
@@ -699,7 +682,7 @@ static int try_shell_exec(const char *cmd, char *const *argv, char **env)
 		free(prog);
 		free(argv2);
 	}
-	mingw_free_path_split(path);
+	free_path_split(path);
 	return pid;
 }
 
@@ -720,8 +703,8 @@ static void mingw_execve(const char *cmd, char *const *argv, char *const *env)
 
 void mingw_execvp(const char *cmd, char *const *argv)
 {
-	char **path = mingw_get_path_split();
-	char *prog = mingw_path_lookup(cmd, path, 0);
+	char **path = get_path_split();
+	char *prog = path_lookup(cmd, path, 0);
 
 	if (prog) {
 		mingw_execve(prog, argv, environ);
@@ -729,46 +712,69 @@ void mingw_execvp(const char *cmd, char *const *argv)
 	} else
 		errno = ENOENT;
 
-	mingw_free_path_split(path);
+	free_path_split(path);
 }
 
 char **copy_environ()
 {
-	return copy_env(environ);
+	char **env;
+	int i = 0;
+	while (environ[i])
+		i++;
+	env = xmalloc((i+1)*sizeof(*env));
+	for (i = 0; environ[i]; i++)
+		env[i] = xstrdup(environ[i]);
+	env[i] = NULL;
+	return env;
 }
 
-char **copy_env(char **env)
+void free_env(char **env)
 {
-	char **s;
-	int n = 1;
-	for (s = env; *s; s++)
-		n++;
-	s = xmalloc(n*sizeof(char *));
-	memcpy(s, env, n*sizeof(char *));
-	return s;
+	int i;
+	for (i = 0; env[i]; i++)
+		free(env[i]);
+	free(env);
 }
 
-void env_unsetenv(char **env, const char *name)
+static int lookup_env(char **env, const char *name, size_t nmln)
 {
-	int src, dst;
-	size_t nmln;
+	int i;
 
-	nmln = strlen(name);
-
-	for (src = dst = 0; env[src]; ++src) {
-		size_t enln;
-		enln = strlen(env[src]);
-		if (enln > nmln) {
-			/* might match, and can test for '=' safely */
-			if (0 == strncmp (env[src], name, nmln)
-			    && '=' == env[src][nmln])
-				/* matches, so skip */
-				continue;
-		}
-		env[dst] = env[src];
-		++dst;
+	for (i = 0; env[i]; i++) {
+		if (0 == strncmp(env[i], name, nmln)
+		    && '=' == env[i][nmln])
+			/* matches */
+			return i;
 	}
-	env[dst] = NULL;
+	return -1;
+}
+
+/*
+ * If name contains '=', then sets the variable, otherwise it unsets it
+ */
+char **env_setenv(char **env, const char *name)
+{
+	char *eq = strchrnul(name, '=');
+	int i = lookup_env(env, name, eq-name);
+
+	if (i < 0) {
+		if (*eq) {
+			for (i = 0; env[i]; i++)
+				;
+			env = xrealloc(env, (i+2)*sizeof(*env));
+			env[i] = xstrdup(name);
+			env[i+1] = NULL;
+		}
+	}
+	else {
+		free(env[i]);
+		if (*eq)
+			env[i] = xstrdup(name);
+		else
+			for (; env[i]; i++)
+				env[i] = env[i+1];
+	}
+	return env;
 }
 
 /* this is the first function to call into WS_32; initialize it */
@@ -876,7 +882,7 @@ int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 	return len;
 }
 
-struct passwd *mingw_getpwuid(int uid)
+struct passwd *getpwuid(int uid)
 {
 	static char user_name[100];
 	static struct passwd p;
@@ -889,7 +895,6 @@ struct passwd *mingw_getpwuid(int uid)
 	p.pw_dir = NULL;
 	return &p;
 }
-
 
 static HANDLE timer_event;
 static HANDLE timer_thread;

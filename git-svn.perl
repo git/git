@@ -35,6 +35,7 @@ push @Git::SVN::Ra::ISA, 'SVN::Ra';
 push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
 push @SVN::Git::Fetcher::ISA, 'SVN::Delta::Editor';
 use Carp qw/croak/;
+use Digest::MD5;
 use IO::File qw//;
 use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
@@ -48,8 +49,7 @@ BEGIN {
 	foreach (qw/command command_oneline command_noisy command_output_pipe
 	            command_input_pipe command_close_pipe/) {
 		for my $package ( qw(SVN::Git::Editor SVN::Git::Fetcher
-			Git::SVN::Migration Git::SVN::Log Git::SVN
-			Git::SVN::Util),
+			Git::SVN::Migration Git::SVN::Log Git::SVN),
 			__PACKAGE__) {
 			*{"${package}::$_"} = \&{"Git::$_"};
 		}
@@ -81,6 +81,7 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'quiet|q' => \$_q,
 		'repack-flags|repack-args|repack-opts=s' =>
 		   \$Git::SVN::_repack_flags,
+		'use-log-author' => \$Git::SVN::_use_log_author,
 		%remote_opts );
 
 my ($_trunk, $_tags, $_branches, $_stdlayout);
@@ -142,6 +143,9 @@ my %cmd = (
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision
 			} ],
+	'show-externals' => [ \&cmd_show_externals, "Show svn:externals listings",
+			{ 'revision|r=i' => \$_revision
+			} ],
 	'multi-fetch' => [ \&cmd_multi_fetch,
 	                   "Deprecated alias for $0 fetch --all",
 			   { 'revision|r=s' => \$_revision, %fc_opts } ],
@@ -193,23 +197,6 @@ for (my $i = 0; $i < @ARGV; $i++) {
 	}
 };
 
-my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
-
-read_repo_config(\%opts);
-Getopt::Long::Configure('pass_through') if ($cmd && $cmd eq 'log');
-my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
-                    'minimize-connections' => \$Git::SVN::Migration::_minimize,
-                    'id|i=s' => \$Git::SVN::default_ref_id,
-                    'svn-remote|remote|R=s' => sub {
-                       $Git::SVN::no_reuse_existing = 1;
-                       $Git::SVN::default_repo_id = $_[1] });
-exit 1 if (!$rv && $cmd && $cmd ne 'log');
-
-usage(0) if $_help;
-version() if $_version;
-usage(1) unless defined $cmd;
-load_authors() if $_authors;
-
 # make sure we're always running
 unless ($cmd =~ /(?:clone|init|multi-init)$/) {
 	unless (-d $ENV{GIT_DIR}) {
@@ -231,6 +218,24 @@ unless ($cmd =~ /(?:clone|init|multi-init)$/) {
 		$ENV{GIT_DIR} = $git_dir;
 	}
 }
+
+my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
+
+read_repo_config(\%opts);
+Getopt::Long::Configure('pass_through') if ($cmd && $cmd eq 'log');
+my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
+                    'minimize-connections' => \$Git::SVN::Migration::_minimize,
+                    'id|i=s' => \$Git::SVN::default_ref_id,
+                    'svn-remote|remote|R=s' => sub {
+                       $Git::SVN::no_reuse_existing = 1;
+                       $Git::SVN::default_repo_id = $_[1] });
+exit 1 if (!$rv && $cmd && $cmd ne 'log');
+
+usage(0) if $_help;
+version() if $_version;
+usage(1) unless defined $cmd;
+load_authors() if $_authors;
+
 unless ($cmd =~ /^(?:clone|init|multi-init|commit-diff)$/) {
 	Git::SVN::Migration::migration_check();
 }
@@ -545,6 +550,8 @@ sub cmd_rebase {
 		exit 1;
 	}
 	unless ($_local) {
+		# rebase will checkout for us, so no need to do it explicitly
+		$_no_checkout = 'true';
 		$_fetch_all ? $gs->fetch_all : $gs->fetch;
 	}
 	command_noisy(rebase_cmd(), $gs->refname);
@@ -558,6 +565,21 @@ sub cmd_show_ignore {
 		my ($gs, $path, $props) = @_;
 		print STDOUT "\n# $path\n";
 		my $s = $props->{'svn:ignore'} or return;
+		$s =~ s/[\r\n]+/\n/g;
+		chomp $s;
+		$s =~ s#^#$path#gm;
+		print STDOUT "$s\n";
+	});
+}
+
+sub cmd_show_externals {
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	$gs ||= Git::SVN->new;
+	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
+	$gs->prop_walk($gs->{path}, $r, sub {
+		my ($gs, $path, $props) = @_;
+		print STDOUT "\n# $path\n";
+		my $s = $props->{'svn:externals'} or return;
 		$s =~ s/[\r\n]+/\n/g;
 		chomp $s;
 		$s =~ s#^#$path#gm;
@@ -840,19 +862,19 @@ sub cmd_info {
 			    command_output_pipe(qw(cat-file blob), "HEAD:$path");
 			if ($file_type eq "link") {
 				my $file_name = <$fh>;
-				$checksum = Git::SVN::Util::md5sum("link $file_name");
+				$checksum = md5sum("link $file_name");
 			} else {
-				$checksum = Git::SVN::Util::md5sum($fh);
+				$checksum = md5sum($fh);
 			}
 			command_close_pipe($fh, $ctx);
 		} elsif ($file_type eq "link") {
 			my $file_name =
 			    command(qw(cat-file blob), "HEAD:$path");
 			$checksum =
-			    Git::SVN::Util::md5sum("link " . $file_name);
+			    md5sum("link " . $file_name);
 		} else {
 			open FILE, "<", $path or die $!;
-			$checksum = Git::SVN::Util::md5sum(\*FILE);
+			$checksum = md5sum(\*FILE);
 			close FILE or die $!;
 		}
 		$result .= "Checksum: " . $checksum . "\n";
@@ -1193,11 +1215,6 @@ sub find_file_type_and_diff_status {
 	return ("file", $diff_status);
 }
 
-package Git::SVN::Util;
-use strict;
-use warnings;
-use Digest::MD5;
-
 sub md5sum {
 	my $arg = shift;
 	my $ref = ref $arg;
@@ -1219,7 +1236,8 @@ use strict;
 use warnings;
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags $_use_svm_props $_head
-            $_use_svnsync_props $no_reuse_existing $_minimize_url/;
+            $_use_svnsync_props $no_reuse_existing $_minimize_url
+	    $_use_log_author/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
@@ -2059,10 +2077,16 @@ sub do_git_commit {
 		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
 	}
-	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $log_entry->{name};
-	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} =
-	                                                  $log_entry->{email};
+	$ENV{GIT_AUTHOR_NAME} = $log_entry->{name};
+	$ENV{GIT_AUTHOR_EMAIL} = $log_entry->{email};
 	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
+
+	$ENV{GIT_COMMITTER_NAME} = (defined $log_entry->{commit_name})
+						? $log_entry->{commit_name}
+						: $log_entry->{name};
+	$ENV{GIT_COMMITTER_EMAIL} = (defined $log_entry->{commit_email})
+						? $log_entry->{commit_email}
+						: $log_entry->{email};
 
 	my $tree = $log_entry->{tree};
 	if (!defined $tree) {
@@ -2351,7 +2375,17 @@ sub make_log_entry {
 	$log_entry{log} .= "\n";
 	my $author = $log_entry{author} = check_author($log_entry{author});
 	my ($name, $email) = defined $::users{$author} ? @{$::users{$author}}
-	                                               : ($author, undef);
+						       : ($author, undef);
+
+	my ($commit_name, $commit_email) = ($name, $email);
+	if ($_use_log_author) {
+		if ($log_entry{log} =~ /From:\s+(.*?)\s+<(.*)>\s*\n/) {
+			($name, $email) = ($1, $2);
+		} elsif ($log_entry{log} =~
+		                      /Signed-off-by:\s+(.*?)\s+<(.*)>\s*\n/) {
+			($name, $email) = ($1, $2);
+		}
+	}
 	if (defined $headrev && $self->use_svm_props) {
 		if ($self->rewrite_root) {
 			die "Can't have both 'useSvmProps' and 'rewriteRoot' ",
@@ -2374,23 +2408,28 @@ sub make_log_entry {
 		remove_username($full_url);
 		$log_entry{metadata} = "$full_url\@$r $uuid";
 		$log_entry{svm_revision} = $r;
-		$email ||= "$author\@$uuid"
+		$email ||= "$author\@$uuid";
+		$commit_email ||= "$author\@$uuid";
 	} elsif ($self->use_svnsync_props) {
 		my $full_url = $self->svnsync->{url};
 		$full_url .= "/$self->{path}" if length $self->{path};
 		remove_username($full_url);
 		my $uuid = $self->svnsync->{uuid};
 		$log_entry{metadata} = "$full_url\@$rev $uuid";
-		$email ||= "$author\@$uuid"
+		$email ||= "$author\@$uuid";
+		$commit_email ||= "$author\@$uuid";
 	} else {
 		my $url = $self->metadata_url;
 		remove_username($url);
 		$log_entry{metadata} = "$url\@$rev " .
 		                       $self->ra->get_uuid;
 		$email ||= "$author\@" . $self->ra->get_uuid;
+		$commit_email ||= "$author\@" . $self->ra->get_uuid;
 	}
 	$log_entry{name} = $name;
 	$log_entry{email} = $email;
+	$log_entry{commit_name} = $commit_name;
+	$log_entry{commit_email} = $commit_email;
 	\%log_entry;
 }
 
@@ -2947,7 +2986,7 @@ sub apply_textdelta {
 
 		if (defined $exp) {
 			seek $base, 0, 0 or croak $!;
-			my $got = Git::SVN::Util::md5sum($base);
+			my $got = ::md5sum($base);
 			die "Checksum mismatch: $fb->{path} $fb->{blob}\n",
 			    "expected: $exp\n",
 			    "     got: $got\n" if ($got ne $exp);
@@ -2966,7 +3005,7 @@ sub close_file {
 	if (my $fh = $fb->{fh}) {
 		if (defined $exp) {
 			seek($fh, 0, 0) or croak $!;
-			my $got = Git::SVN::Util::md5sum($fh);
+			my $got = ::md5sum($fh);
 			if ($got ne $exp) {
 				die "Checksum mismatch: $path\n",
 				    "expected: $exp\n    got: $got\n";
@@ -3321,7 +3360,7 @@ sub chg_file {
 	$fh->flush == 0 or croak $!;
 	seek $fh, 0, 0 or croak $!;
 
-	my $exp = Git::SVN::Util::md5sum($fh);
+	my $exp = ::md5sum($fh);
 	seek $fh, 0, 0 or croak $!;
 
 	my $pool = SVN::Pool->new;

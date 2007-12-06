@@ -692,7 +692,7 @@ int read_directory(struct dir_struct *dir, const char *path, const char *base, i
 int file_exists(const char *f)
 {
 	struct stat sb;
-	return stat(f, &sb) == 0;
+	return lstat(f, &sb) == 0;
 }
 
 /*

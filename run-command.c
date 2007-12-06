@@ -146,12 +146,8 @@ int start_command(struct child_process *cmd)
 		die("chdir in start_command() not implemented");
 	if (cmd->env) {
 		env = copy_environ();
-		for (; *cmd->env; cmd->env++) {
-			if (strchr(*cmd->env, '='))
-				die("setting environment in start_command() not implemented");
-			else
-				env_unsetenv(env, *cmd->env);
-		}
+		for (; *cmd->env; cmd->env++)
+			env = env_setenv(env, *cmd->env);
 	}
 
 	if (cmd->git_cmd) {
@@ -162,8 +158,8 @@ int start_command(struct child_process *cmd)
 
 	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
 
-	/* TODO: if (cmd->env) free env; */
-
+	if (cmd->env)
+		free(env);
 	if (cmd->git_cmd)
 		strbuf_release(&git_cmd);
 
