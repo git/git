@@ -463,6 +463,16 @@ proc renumbervarc {a v} {
 	}
 	set b [lindex $vupptr($v) $a]
 	if {$b != $ka} {
+	    set tok [lindex $varctok($v) $ka]
+	    if {[string compare $tok $vtokmod($v)] < 0} {
+		set vtokmod($v) $tok
+		set varcmod($v) $ka
+	    }
+	    set tok [lindex $varctok($v) $b]
+	    if {[string compare $tok $vtokmod($v)] < 0} {
+		set vtokmod($v) $tok
+		set varcmod($v) $b
+	    }
 	    set c [lindex $vdownptr($v) $b]
 	    if {$c == $a} {
 		lset vdownptr($v) $b [lindex $vleftptr($v) $a]
@@ -1939,7 +1949,7 @@ proc about {} {
     message $w.m -text {
 Gitk - a commit viewer for git
 
-Copyright © 2005-2006 Paul Mackerras
+Copyright Â© 2005-2007 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License} \
 	    -justify center -aspect 400 -border 2 -bg white -relief groove
@@ -3375,30 +3385,20 @@ proc visiblerows {} {
 }
 
 proc layoutmore {} {
-    global commitidx viewcomplete numcommits
-    global uparrowlen downarrowlen mingaplen curview
-
-    set show $commitidx($curview)
-    if {$show > $numcommits || $viewcomplete($curview)} {
-	showstuff $show $viewcomplete($curview)
-    }
-}
-
-proc showstuff {canshow last} {
+    global commitidx viewcomplete curview
     global numcommits pending_select selectedline curview
-    global selectfirst
-    global lastscrollset commitinterest
+    global selectfirst lastscrollset commitinterest
 
+    set canshow $commitidx($curview)
+    if {$canshow <= $numcommits && !$viewcomplete($curview)} return
     if {$numcommits == 0} {
-	global phase
-	set phase "incrdraw"
 	allcanvs delete all
     }
     set r0 $numcommits
     set prev $numcommits
     set numcommits $canshow
     set t [clock clicks -milliseconds]
-    if {$prev < 100 || $last || $t - $lastscrollset > 500} {
+    if {$prev < 100 || $viewcomplete($curview) || $t - $lastscrollset > 500} {
 	set lastscrollset $t
 	setcanvscroll
     }
@@ -3426,12 +3426,12 @@ proc showstuff {canshow last} {
 }
 
 proc doshowlocalchanges {} {
-    global curview mainheadid phase
+    global curview mainheadid
 
     if {[commitinview $mainheadid $curview]} {
 	dodiffindex
-    } elseif {$phase ne {}} {
-	lappend commitinterest($mainheadid) {}
+    } else {
+	lappend commitinterest($mainheadid) {dodiffindex}
     }
 }
 
