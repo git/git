@@ -406,7 +406,9 @@ endif
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	OLD_ICONV = UnfortunatelyYes
+	ifneq ($(shell expr "$(uname_R)" : '9\.'),2)
+		OLD_ICONV = UnfortunatelyYes
+	endif
 	NO_STRLCPY = YesPlease
 	NO_MEMMEM = YesPlease
 endif
