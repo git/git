@@ -210,11 +210,17 @@ static int get_color(int argc, const char **argv)
 
 static int stdout_is_tty;
 static int get_colorbool_found;
+static int get_diff_color_found;
 static int git_get_colorbool_config(const char *var, const char *value)
 {
-	if (!strcmp(var, get_color_slot))
+	if (!strcmp(var, get_color_slot)) {
 		get_colorbool_found =
 			git_config_colorbool(var, value, stdout_is_tty);
+	}
+	if (!strcmp(var, "diff.color")) {
+		get_diff_color_found =
+			git_config_colorbool(var, value, stdout_is_tty);
+	}
 	return 0;
 }
 
@@ -233,9 +239,17 @@ static int get_colorbool(int argc, const char **argv)
 		stdout_is_tty = isatty(1);
 	else
 		usage(git_config_set_usage);
-	get_colorbool_found = 0;
+	get_colorbool_found = -1;
+	get_diff_color_found = -1;
 	get_color_slot = argv[0];
 	git_config(git_get_colorbool_config);
+
+	if (get_colorbool_found < 0) {
+		if (!strcmp(get_color_slot, "color.diff"))
+			get_colorbool_found = get_diff_color_found;
+		if (get_colorbool_found < 0)
+			get_colorbool_found = 0;
+	}
 
 	if (argc == 1) {
 		return get_colorbool_found ? 0 : 1;
