@@ -112,6 +112,15 @@ test_expect_success 'whitespace=error-all, no rule' '
 
 '
 
+test_expect_success 'whitespace=error-all, no rule (attribute)' '
+
+	git config --unset core.whitespace &&
+	echo "target -whitespace" >.gitattributes &&
+	apply_patch --whitespace=error-all &&
+	diff file target
+
+'
+
 for t in - ''
 do
 	case "$t" in '') tt='!' ;; *) tt= ;; esac
@@ -121,11 +130,20 @@ do
 		for i in - ''
 		do
 			case "$i" in '') ti='#' ;; *) ti= ;; esac
-			rule=${t}trailing,${s}space,${i}indent &&
+			rule=${t}trailing,${s}space,${i}indent
+
+			rm -f .gitattributes
 			test_expect_success "rule=$rule" '
 				git config core.whitespace "$rule" &&
 				test_fix "$tt$ts$ti"
 			'
+
+			test_expect_success "rule=$rule (attributes)" '
+				git config --unset core.whitespace &&
+				echo "target whitespace=$rule" >.gitattributes &&
+				test_fix "$tt$ts$ti"
+			'
+
 		done
 	done
 done

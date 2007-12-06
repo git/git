@@ -360,6 +360,37 @@ When left unspecified, the driver itself is used for both
 internal merge and the final merge.
 
 
+Checking whitespace errors
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`whitespace`
+^^^^^^^^^^^^
+
+The `core.whitespace` configuration variable allows you to define what
+`diff` and `apply` should consider whitespace errors for all paths in
+the project (See gitlink:git-config[1]).  This attribute gives you finer
+control per path.
+
+Set::
+
+	Notice all types of potential whitespace errors known to git.
+
+Unset::
+
+	Do not notice anything as error.
+
+Unspecified::
+
+	Use the value of `core.whitespace` configuration variable to
+	decide what to notice as error.
+
+String::
+
+	Specify a comma separate list of common whitespace problems to
+	notice in the same format as `core.whitespace` configuration
+	variable.
+
+
 EXAMPLE
 -------
 

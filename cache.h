@@ -610,6 +610,8 @@ void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, i
 #define WS_SPACE_BEFORE_TAB	02
 #define WS_INDENT_WITH_NON_TAB	04
 #define WS_DEFAULT_RULE (WS_TRAILING_SPACE|WS_SPACE_BEFORE_TAB)
-extern unsigned whitespace_rule;
+extern unsigned whitespace_rule_cfg;
+extern unsigned whitespace_rule(const char *);
+extern unsigned parse_whitespace_rule(const char *);
 
 #endif /* CACHE_H */

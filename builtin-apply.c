@@ -144,6 +144,7 @@ struct patch {
 	unsigned int old_mode, new_mode;
 	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
 	int rejected;
+	unsigned ws_rule;
 	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
@@ -898,7 +899,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 	return -1;
 }
 
-static void check_whitespace(const char *line, int len)
+static void check_whitespace(const char *line, int len, unsigned ws_rule)
 {
 	const char *err = "Adds trailing whitespace";
 	int seen_space = 0;
@@ -910,14 +911,14 @@ static void check_whitespace(const char *line, int len)
 	 * this function.  That is, an addition of an empty line would
 	 * check the '+' here.  Sneaky...
 	 */
-	if ((whitespace_rule & WS_TRAILING_SPACE) && isspace(line[len-2]))
+	if ((ws_rule & WS_TRAILING_SPACE) && isspace(line[len-2]))
 		goto error;
 
 	/*
 	 * Make sure that there is no space followed by a tab in
 	 * indentation.
 	 */
-	if (whitespace_rule & WS_SPACE_BEFORE_TAB) {
+	if (ws_rule & WS_SPACE_BEFORE_TAB) {
 		err = "Space in indent is followed by a tab";
 		for (i = 1; i < len; i++) {
 			if (line[i] == '\t') {
@@ -935,7 +936,7 @@ static void check_whitespace(const char *line, int len)
 	 * Make sure that the indentation does not contain more than
 	 * 8 spaces.
 	 */
-	if ((whitespace_rule & WS_INDENT_WITH_NON_TAB) &&
+	if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
 	    (8 < len) && !strncmp("+        ", line, 9)) {
 		err = "Indent more than 8 places with spaces";
 		goto error;
@@ -1001,7 +1002,7 @@ static int parse_fragment(char *line, unsigned long size,
 		case '-':
 			if (apply_in_reverse &&
 			    ws_error_action != nowarn_ws_error)
-				check_whitespace(line, len);
+				check_whitespace(line, len, patch->ws_rule);
 			deleted++;
 			oldlines--;
 			trailing = 0;
@@ -1009,7 +1010,7 @@ static int parse_fragment(char *line, unsigned long size,
 		case '+':
 			if (!apply_in_reverse &&
 			    ws_error_action != nowarn_ws_error)
-				check_whitespace(line, len);
+				check_whitespace(line, len, patch->ws_rule);
 			added++;
 			newlines--;
 			trailing = 0;
@@ -1318,6 +1319,10 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 	if (offset < 0)
 		return offset;
 
+	patch->ws_rule = whitespace_rule(patch->new_name
+					 ? patch->new_name
+					 : patch->old_name);
+
 	patchsize = parse_single_patch(buffer + offset + hdrsize,
 				       size - offset - hdrsize, patch);
 
@@ -1568,7 +1573,8 @@ static void remove_last_line(const char **rbuf, int *rsize)
 	*rsize = offset + 1;
 }
 
-static int apply_line(char *output, const char *patch, int plen)
+static int apply_line(char *output, const char *patch, int plen,
+		      unsigned ws_rule)
 {
 	/*
 	 * plen is number of bytes to be copied from patch,
@@ -1593,7 +1599,7 @@ static int apply_line(char *output, const char *patch, int plen)
 	/*
 	 * Strip trailing whitespace
 	 */
-	if ((whitespace_rule & WS_TRAILING_SPACE) &&
+	if ((ws_rule & WS_TRAILING_SPACE) &&
 	    (1 < plen && isspace(patch[plen-1]))) {
 		if (patch[plen] == '\n')
 			add_nl_to_tail = 1;
@@ -1610,12 +1616,12 @@ static int apply_line(char *output, const char *patch, int plen)
 		char ch = patch[i];
 		if (ch == '\t') {
 			last_tab_in_indent = i;
-			if ((whitespace_rule & WS_SPACE_BEFORE_TAB) &&
+			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
 			    0 <= last_space_in_indent)
 			    need_fix_leading_space = 1;
 		} else if (ch == ' ') {
 			last_space_in_indent = i;
-			if ((whitespace_rule & WS_INDENT_WITH_NON_TAB) &&
+			if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
 			    last_tab_in_indent < 0 &&
 			    8 <= i)
 				need_fix_leading_space = 1;
@@ -1629,7 +1635,7 @@ static int apply_line(char *output, const char *patch, int plen)
 		int consecutive_spaces = 0;
 		int last = last_tab_in_indent + 1;
 
-		if (whitespace_rule & WS_INDENT_WITH_NON_TAB) {
+		if (ws_rule & WS_INDENT_WITH_NON_TAB) {
 			/* have "last" point at one past the indent */
 			if (last_tab_in_indent < last_space_in_indent)
 				last = last_space_in_indent + 1;
@@ -1671,7 +1677,7 @@ static int apply_line(char *output, const char *patch, int plen)
 }
 
 static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
-			      int inaccurate_eof)
+			      int inaccurate_eof, unsigned ws_rule)
 {
 	int match_beginning, match_end;
 	const char *patch = frag->patch;
@@ -1730,7 +1736,7 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
 		case '+':
 			if (first != '+' || !no_add) {
 				int added = apply_line(new + newsize, patch,
-						       plen);
+						       plen, ws_rule);
 				newsize += added;
 				if (first == '+' &&
 				    added == 1 && new[newsize-1] == '\n')
@@ -1953,12 +1959,14 @@ static int apply_fragments(struct strbuf *buf, struct patch *patch)
 {
 	struct fragment *frag = patch->fragments;
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
+	unsigned ws_rule = patch->ws_rule;
+	unsigned inaccurate_eof = patch->inaccurate_eof;
 
 	if (patch->is_binary)
 		return apply_binary(buf, patch);
 
 	while (frag) {
-		if (apply_one_fragment(buf, frag, patch->inaccurate_eof)) {
+		if (apply_one_fragment(buf, frag, inaccurate_eof, ws_rule)) {
 			error("patch failed: %s:%ld", name, frag->oldpos);
 			if (!apply_with_reject)
 				return -1;

@@ -35,7 +35,7 @@ int pager_in_use;
 int pager_use_color = 1;
 char *editor_program;
 int auto_crlf = 0;	/* 1: both ways, -1: only when adding git objects */
-unsigned whitespace_rule = WS_DEFAULT_RULE;
+unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
 
 /* This is set by setup_git_dir_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
