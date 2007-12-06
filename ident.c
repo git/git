@@ -185,7 +185,7 @@ static const char *env_hint =
 "\n"
 "Run\n"
 "\n"
-"  git config --global user.email \"you@email.com\"\n"
+"  git config --global user.email \"you@example.com\"\n"
 "  git config --global user.name \"Your Name\"\n"
 "\n"
 "to set your account\'s default identity.\n"
