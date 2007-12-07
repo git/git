@@ -77,9 +77,10 @@ sub rebase_marker {
 
 sub describe_topic {
 	my ($topic) = @_;
+
 	open(CONF, '-|', qw(git repo-config --get),
-		"branch.$topic.description")
-		or die;
+	     "branch.$topic.description")
+	    or die;
 	my $it = join('',<CONF>);
 	close(CONF);
 	chomp($it);
@@ -88,29 +89,26 @@ sub describe_topic {
 	}
 }
 
-sub wrap_print {
-	my ($string) = @_;
-	format STDOUT =
-~^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-	$string
- ~~^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-	$string
-.
-	write;
-}
-
-open(TOPIC, '-|', qw(git for-each-ref),
-	'--sort=-authordate',
-	'--format=%(objectname) %(authordate) %(refname)',
-	"refs/heads/$topic_pattern")
-	or die;
-
 my @in_next = read_revs_short('^master', $stage[0]);
 
+open(TOPIC, '-|', qw(git for-each-ref),
+    '--sort=-authordate',
+    '--format=%(objectname) %(authordate) %(refname)',
+    "refs/heads/$topic_pattern")
+    or die;
+
+my @topic = ();
 while (<TOPIC>) {
 	chomp;
 	my ($sha1, $date, $topic) = m|^([0-9a-f]{40})\s(.*?)\srefs/heads/(.+)$|
-		or next;
+	    or next;
+	push @topic, [$sha1, $date, $topic];
+}
+
+my @last_merge_to_next = ();
+
+for (@topic) {
+	my ($sha1, $date, $topic) = @$_;
 	my @revs = read_revs($base, $sha1, (1<<@stage)-1);
 	next unless (@revs || $all);
 
@@ -140,4 +138,15 @@ while (<TOPIC>) {
 		}
 		wrap_print("$mark $item->[1]");
 	}
+}
+
+sub wrap_print {
+	my ($string) = @_;
+	format STDOUT =
+~^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+	$string
+ ~~^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+	$string
+.
+	write;
 }
