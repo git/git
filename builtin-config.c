@@ -3,7 +3,7 @@
 #include "color.h"
 
 static const char git_config_set_usage[] =
-"git-config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list | --get-color var [default]";
+"git-config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list | --get-color var [default] | --get-colorbool name [stdout-is-tty]";
 
 static char *key;
 static regex_t *key_regexp;
@@ -208,6 +208,57 @@ static int get_color(int argc, const char **argv)
 	return 0;
 }
 
+static int stdout_is_tty;
+static int get_colorbool_found;
+static int get_diff_color_found;
+static int git_get_colorbool_config(const char *var, const char *value)
+{
+	if (!strcmp(var, get_color_slot)) {
+		get_colorbool_found =
+			git_config_colorbool(var, value, stdout_is_tty);
+	}
+	if (!strcmp(var, "diff.color")) {
+		get_diff_color_found =
+			git_config_colorbool(var, value, stdout_is_tty);
+	}
+	return 0;
+}
+
+static int get_colorbool(int argc, const char **argv)
+{
+	/*
+	 * git config --get-colorbool <slot> [<stdout-is-tty>]
+	 *
+	 * returns "true" or "false" depending on how <slot>
+	 * is configured.
+	 */
+
+	if (argc == 2)
+		stdout_is_tty = git_config_bool("command line", argv[1]);
+	else if (argc == 1)
+		stdout_is_tty = isatty(1);
+	else
+		usage(git_config_set_usage);
+	get_colorbool_found = -1;
+	get_diff_color_found = -1;
+	get_color_slot = argv[0];
+	git_config(git_get_colorbool_config);
+
+	if (get_colorbool_found < 0) {
+		if (!strcmp(get_color_slot, "color.diff"))
+			get_colorbool_found = get_diff_color_found;
+		if (get_colorbool_found < 0)
+			get_colorbool_found = 0;
+	}
+
+	if (argc == 1) {
+		return get_colorbool_found ? 0 : 1;
+	} else {
+		printf("%s\n", get_colorbool_found ? "true" : "false");
+		return 0;
+	}
+}
+
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = 0;
@@ -283,6 +334,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			return 0;
 		} else if (!strcmp(argv[1], "--get-color")) {
 			return get_color(argc-2, argv+2);
+		} else if (!strcmp(argv[1], "--get-colorbool")) {
+			return get_colorbool(argc-2, argv+2);
 		} else
 			break;
 		argc--;

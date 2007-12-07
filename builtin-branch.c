@@ -65,7 +65,7 @@ static int parse_branch_color_slot(const char *var, int ofs)
 static int git_branch_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "color.branch")) {
-		branch_use_color = git_config_colorbool(var, value);
+		branch_use_color = git_config_colorbool(var, value, -1);
 		return 0;
 	}
 	if (!prefixcmp(var, "color.branch.")) {
