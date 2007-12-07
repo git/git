@@ -525,40 +525,21 @@ sub add_untracked_cmd {
 sub parse_diff {
 	my ($path) = @_;
 	my @diff = run_cmd_pipe(qw(git diff-files -p --), $path);
-	my (@hunk) = { TEXT => [] };
+	my @colored = ();
+	if ($diff_use_color) {
+		@colored = run_cmd_pipe(qw(git diff-files -p --color --), $path);
+	}
+	my (@hunk) = { TEXT => [], DISPLAY => [] };
 
-	for (@diff) {
-		if (/^@@ /) {
-			push @hunk, { TEXT => [] };
+	for (my $i = 0; $i < @diff; $i++) {
+		if ($diff[$i] =~ /^@@ /) {
+			push @hunk, { TEXT => [], DISPLAY => [] };
 		}
-		push @{$hunk[-1]{TEXT}}, $_;
+		push @{$hunk[-1]{TEXT}}, $diff[$i];
+		push @{$hunk[-1]{DISPLAY}},
+			($diff_use_color ? $colored[$i] : $diff[$i]);
 	}
 	return @hunk;
-}
-
-sub colored_diff_hunk {
-	my ($text) = @_;
-	# return the text, so that it can be passed to print()
-	my @ret;
-	for (@$text) {
-		if (!$diff_use_color) {
-			push @ret, $_;
-			next;
-		}
-
-		if (/^\+/) {
-			push @ret, colored($new_color, $_);
-		} elsif (/^\-/) {
-			push @ret, colored($old_color, $_);
-		} elsif (/^\@/) {
-			push @ret, colored($fraginfo_color, $_);
-		} elsif (/^ /) {
-			push @ret, colored($normal_color, $_);
-		} else {
-			push @ret, colored($metainfo_color, $_);
-		}
-	}
-	return @ret;
 }
 
 sub hunk_splittable {
@@ -578,9 +559,11 @@ sub parse_hunk_header {
 }
 
 sub split_hunk {
-	my ($text) = @_;
+	my ($text, $display) = @_;
 	my @split = ();
-
+	if (!defined $display) {
+		$display = $text;
+	}
 	# If there are context lines in the middle of a hunk,
 	# it can be split, but we would need to take care of
 	# overlaps later.
@@ -594,16 +577,19 @@ sub split_hunk {
 		my $i = $hunk_start - 1;
 		my $this = +{
 			TEXT => [],
+			DISPLAY => [],
 			OLD => $o_ofs,
 			NEW => $n_ofs,
 			OCNT => 0,
 			NCNT => 0,
 			ADDDEL => 0,
 			POSTCTX => 0,
+			USE => undef,
 		};
 
 		while (++$i < @$text) {
 			my $line = $text->[$i];
+			my $display = $display->[$i];
 			if ($line =~ /^ /) {
 				if ($this->{ADDDEL} &&
 				    !defined $next_hunk_start) {
@@ -615,6 +601,7 @@ sub split_hunk {
 					$next_hunk_start = $i;
 				}
 				push @{$this->{TEXT}}, $line;
+				push @{$this->{DISPLAY}}, $display;
 				$this->{OCNT}++;
 				$this->{NCNT}++;
 				if (defined $next_hunk_start) {
@@ -637,6 +624,7 @@ sub split_hunk {
 				redo OUTER;
 			}
 			push @{$this->{TEXT}}, $line;
+			push @{$this->{DISPLAY}}, $display;
 			$this->{ADDDEL}++;
 			if ($line =~ /^-/) {
 				$this->{OCNT}++;
@@ -661,9 +649,14 @@ sub split_hunk {
 			    " +$n_ofs" .
 			    (($n_cnt != 1) ? ",$n_cnt" : '') .
 			    " @@\n");
+		my $display_head = $head;
 		unshift @{$hunk->{TEXT}}, $head;
+		if ($diff_use_color) {
+			$display_head = colored($fraginfo_color, $head);
+		}
+		unshift @{$hunk->{DISPLAY}}, $display_head;
 	}
-	return map { $_->{TEXT} } @split;
+	return @split;
 }
 
 sub find_last_o_ctx {
@@ -794,7 +787,9 @@ sub patch_update_file {
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
-	print colored_diff_hunk($head->{TEXT});
+	for (@{$head->{DISPLAY}}) {
+		print;
+	}
 	$num = scalar @hunk;
 	$ix = 0;
 
@@ -836,7 +831,9 @@ sub patch_update_file {
 		if (hunk_splittable($hunk[$ix]{TEXT})) {
 			$other .= '/s';
 		}
-		print colored_diff_hunk($hunk[$ix]{TEXT});
+		for (@{$hunk[$ix]{DISPLAY}}) {
+			print;
+		}
 		print colored $prompt_color, "Stage this hunk [y/n/a/d$other/?]? ";
 		my $line = <STDIN>;
 		if ($line) {
@@ -889,14 +886,12 @@ sub patch_update_file {
 				next;
 			}
 			elsif ($other =~ /s/ && $line =~ /^s/) {
-				my @split = split_hunk($hunk[$ix]{TEXT});
+				my @split = split_hunk($hunk[$ix]{TEXT}, $hunk[$ix]{DISPLAY});
 				if (1 < @split) {
 					print colored $header_color, "Split into ",
 					scalar(@split), " hunks.\n";
 				}
-				splice(@hunk, $ix, 1,
-				       map { +{ TEXT => $_, USE => undef } }
-				       @split);
+				splice (@hunk, $ix, 1, @split);
 				$num = scalar @hunk;
 				next;
 			}
