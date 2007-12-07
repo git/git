@@ -12,8 +12,9 @@ X-next-at: $next_at
 
 Here are the topics that have been cooking.  Commits prefixed
 with '-' are only in 'pu' while commits prefixed with '+' are
-in 'next'.  The topics list the commits in reverse chronological
-order.
+in 'next'.  Others commits may be stashed in 'offcuts'.
+
+The topics list the commits in reverse chronological order.
 
 EOF
 
