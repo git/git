@@ -21,6 +21,7 @@ SYNOPSIS
 'git-config' [<file-option>] --remove-section name
 'git-config' [<file-option>] [-z|--null] -l | --list
 'git-config' [<file-option>] --get-color name [default]
+'git-config' [<file-option>] --get-colorbool name [stdout-is-tty]
 
 DESCRIPTION
 -----------
@@ -134,6 +135,15 @@ See also <<FILES>>.
 	key and value. This allows for secure parsing of the
 	output without getting confused e.g. by values that
 	contain line breaks.
+
+--get-colorbool name [stdout-is-tty]::
+
+	Find the color setting for `name` (e.g. `color.diff`) and output
+	"true" or "false".  `stdout-is-tty` should be either "true" or
+	"false", and is taken into account when configuration says
+	"auto".  If `stdout-is-tty` is missing, then checks the standard
+	output of the command itself, and exits with status 0 if color
+	is to be used, or exits with status 1 otherwise.
 
 --get-color name default::
 

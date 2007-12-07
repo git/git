@@ -9,13 +9,44 @@
 #include "remote.h"
 #include "transport.h"
 #include "run-command.h"
+#include "parse-options.h"
 
-static const char fetch_usage[] = "git-fetch [-a | --append] [--upload-pack <upload-pack>] [-f | --force] [--no-tags] [-t | --tags] [-k | --keep] [-u | --update-head-ok] [--depth <depth>] [-v | --verbose] [<repository> <refspec>...]";
+static const char * const builtin_fetch_usage[] = {
+	"git-fetch [options] [<repository> <refspec>...]",
+	NULL
+};
 
-static int append, force, tags, no_tags, update_head_ok, verbose, quiet;
+enum {
+	TAGS_UNSET = 0,
+	TAGS_DEFAULT = 1,
+	TAGS_SET = 2
+};
+
+static int append, force, keep, update_head_ok, verbose, quiet;
+static int tags = TAGS_DEFAULT;
 static const char *depth;
+static const char *upload_pack;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *transport;
+
+static struct option builtin_fetch_options[] = {
+	OPT__QUIET(&quiet),
+	OPT__VERBOSE(&verbose),
+	OPT_BOOLEAN('a', "append", &append,
+		    "append to .git/FETCH_HEAD instead of overwriting"),
+	OPT_STRING(0, "upload-pack", &upload_pack, "PATH",
+		   "path to upload pack on remote end"),
+	OPT_BOOLEAN('f', "force", &force,
+		    "force overwrite of local branch"),
+	OPT_SET_INT('t', "tags", &tags,
+		    "fetch all tags and associated objects", TAGS_SET),
+	OPT_BOOLEAN('k', "keep", &keep, "keep downloaded pack"),
+	OPT_BOOLEAN('u', "update-head-ok", &update_head_ok,
+		    "allow updating of HEAD ref"),
+	OPT_STRING(0, "depth", &depth, "DEPTH",
+		   "deepen history of shallow clone"),
+	OPT_END()
+};
 
 static void unlock_pack(void)
 {
@@ -81,7 +112,7 @@ static struct ref *get_ref_map(struct transport *transport,
 
 	const struct ref *remote_refs = transport_get_remote_refs(transport);
 
-	if (ref_count || tags) {
+	if (ref_count || tags == TAGS_SET) {
 		for (i = 0; i < ref_count; i++) {
 			get_fetch_map(remote_refs, &refs[i], &tail, 0);
 			if (refs[i].dst && refs[i].dst[0])
@@ -90,7 +121,7 @@ static struct ref *get_ref_map(struct transport *transport,
 		/* Merge everything on the command line, but not --tags */
 		for (rm = ref_map; rm; rm = rm->next)
 			rm->merge = 1;
-		if (tags) {
+		if (tags == TAGS_SET) {
 			struct refspec refspec;
 			refspec.src = "refs/tags/";
 			refspec.dst = "refs/tags/";
@@ -482,10 +513,10 @@ static int do_fetch(struct transport *transport,
 	struct ref *ref_map, *fetch_map;
 	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
-	if (transport->remote->fetch_tags == 2 && !no_tags)
-		tags = 1;
+	if (transport->remote->fetch_tags == 2 && tags != TAGS_UNSET)
+		tags = TAGS_SET;
 	if (transport->remote->fetch_tags == -1)
-		no_tags = 1;
+		tags = TAGS_UNSET;
 
 	if (!transport->get_refs_list || !transport->fetch)
 		die("Don't know how to fetch from %s", transport->url);
@@ -515,7 +546,7 @@ static int do_fetch(struct transport *transport,
 
 	/* if neither --no-tags nor --tags was specified, do automated tag
 	 * following ... */
-	if (!(tags || no_tags) && autotags) {
+	if (tags == TAGS_DEFAULT && autotags) {
 		ref_map = find_non_local_tags(transport, fetch_map);
 		if (ref_map) {
 			transport_set_option(transport, TRANS_OPT_DEPTH, "0");
@@ -546,80 +577,19 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	int i;
 	static const char **refs = NULL;
 	int ref_nr = 0;
-	const char *upload_pack = NULL;
-	int keep = 0;
 
 	/* Record the command line for the reflog */
 	strbuf_addstr(&default_rla, "fetch");
 	for (i = 1; i < argc; i++)
 		strbuf_addf(&default_rla, " %s", argv[i]);
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
+	argc = parse_options(argc, argv,
+			     builtin_fetch_options, builtin_fetch_usage, 0);
 
-		if (arg[0] != '-')
-			break;
-		if (!strcmp(arg, "--append") || !strcmp(arg, "-a")) {
-			append = 1;
-			continue;
-		}
-		if (!prefixcmp(arg, "--upload-pack=")) {
-			upload_pack = arg + 14;
-			continue;
-		}
-		if (!strcmp(arg, "--upload-pack")) {
-			i++;
-			if (i == argc)
-				usage(fetch_usage);
-			upload_pack = argv[i];
-			continue;
-		}
-		if (!strcmp(arg, "--force") || !strcmp(arg, "-f")) {
-			force = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--no-tags")) {
-			no_tags = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--tags") || !strcmp(arg, "-t")) {
-			tags = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--keep") || !strcmp(arg, "-k")) {
-			keep = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--update-head-ok") || !strcmp(arg, "-u")) {
-			update_head_ok = 1;
-			continue;
-		}
-		if (!prefixcmp(arg, "--depth=")) {
-			depth = arg + 8;
-			continue;
-		}
-		if (!strcmp(arg, "--depth")) {
-			i++;
-			if (i == argc)
-				usage(fetch_usage);
-			depth = argv[i];
-			continue;
-		}
-		if (!strcmp(arg, "--quiet") || !strcmp(arg, "-q")) {
-			quiet = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--verbose") || !strcmp(arg, "-v")) {
-			verbose++;
-			continue;
-		}
-		usage(fetch_usage);
-	}
-
-	if (i == argc)
+	if (argc == 0)
 		remote = remote_get(NULL);
 	else
-		remote = remote_get(argv[i++]);
+		remote = remote_get(argv[0]);
 
 	transport = transport_get(remote, remote->url[0]);
 	if (verbose >= 2)
@@ -636,10 +606,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (!transport->url)
 		die("Where do you want to fetch from today?");
 
-	if (i < argc) {
+	if (argc > 1) {
 		int j = 0;
-		refs = xcalloc(argc - i + 1, sizeof(const char *));
-		while (i < argc) {
+		refs = xcalloc(argc + 1, sizeof(const char *));
+		for (i = 1; i < argc; i++) {
 			if (!strcmp(argv[i], "tag")) {
 				char *ref;
 				i++;
@@ -651,7 +621,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 				refs[j++] = ref;
 			} else
 				refs[j++] = argv[i];
-			i++;
 		}
 		refs[j] = NULL;
 		ref_nr = j;

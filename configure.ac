@@ -212,6 +212,28 @@ test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 
 
 ## Checks for header files.
+AC_MSG_NOTICE([CHECKS for header files])
+#
+# Define OLD_ICONV if your library has an old iconv(), where the second
+# (input buffer pointer) parameter is declared with type (const char **).
+AC_DEFUN([OLDICONVTEST_SRC], [[
+#include <iconv.h>
+
+extern size_t iconv(iconv_t cd,
+		    char **inbuf, size_t *inbytesleft,
+		    char **outbuf, size_t *outbytesleft);
+
+int main(void)
+{
+	return 0;
+}
+]])
+AC_MSG_CHECKING([for old iconv()])
+AC_COMPILE_IFELSE(OLDICONVTEST_SRC,
+	[AC_MSG_RESULT([no])],
+	[AC_MSG_RESULT([yes])
+	OLD_ICONV=UnfortunatelyYes])
+AC_SUBST(OLD_ICONV)
 
 
 ## Checks for typedefs, structures, and compiler characteristics.
