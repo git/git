@@ -159,7 +159,7 @@ int start_command(struct child_process *cmd)
 	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
 
 	if (cmd->env)
-		free(env);
+		free_environ(env);
 	if (cmd->git_cmd)
 		strbuf_release(&git_cmd);
 
