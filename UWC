@@ -97,7 +97,7 @@ sub parse_whats_cooking {
 			next;
 		}
 
-		if (/^ [-+.?] / || /^   \S/) {
+		if (/^ [-+.?*] / || /^   \S/) {
 			$topic->{"names"} .= $_;
 			next;
 		}
@@ -151,8 +151,12 @@ sub merge_whats_cooking {
 			my $newtopic = delete $new_wc->{"topic hash"}{$name};
 
 			if (!defined $newtopic) {
+				$topic->{"text"} = ("<<deleted\n" .
+						    $topic->{"head"} .
+						    $topic->{"names"} .
+						    ">>\n\n" .
+						    $topic->{"text"});
 				$topic->{"names"} = "";
-				$topic->{"text"} = "<<deleted>>";
 				next;
 			}
 			if (($newtopic->{"names"} ne $topic->{"names"}) ||
