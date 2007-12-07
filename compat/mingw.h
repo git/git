@@ -165,3 +165,11 @@ sig_handler_t mingw_signal(int sig, sig_handler_t handler);
 #define is_dir_sep(c) ((c) == '/' || (c) == '\\')
 #define PATH_SEP ';'
 #define PRIuMAX "I64u"
+
+/*
+ * helpers
+ */
+
+char **copy_environ(void);
+void free_environ(char **env);
+char **env_setenv(char **env, const char *name);
