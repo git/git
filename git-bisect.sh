@@ -324,8 +324,23 @@ bisect_next() {
 
 bisect_visualize() {
 	bisect_next_check fail
+
+	if test $# = 0
+	then
+		case "${DISPLAY+set}" in
+		'')	set git log ;;
+		set)	set gitk ;;
+		esac
+	else
+		case "$1" in
+		git*|tig) ;;
+		-*)	set git log "$@" ;;
+		*)	set git "$@" ;;
+		esac
+	fi
+
 	not=$(git for-each-ref --format='%(refname)' "refs/bisect/good-*")
-	eval gitk refs/bisect/bad --not $not -- $(cat "$GIT_DIR/BISECT_NAMES")
+	eval '"$@"' refs/bisect/bad --not $not -- $(cat "$GIT_DIR/BISECT_NAMES")
 }
 
 bisect_reset() {
@@ -449,7 +464,7 @@ case "$#" in
     next)
         # Not sure we want "next" at the UI level anymore.
         bisect_next "$@" ;;
-    visualize)
+    visualize|view)
 	bisect_visualize "$@" ;;
     reset)
         bisect_reset "$@" ;;
