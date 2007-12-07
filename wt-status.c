@@ -121,6 +121,9 @@ static char *quote_path(const char *in, int len,
 		}
 	}
 
+	if (!out->len)
+		strbuf_addstr(out, "./");
+
 	return out->buf;
 }
 
