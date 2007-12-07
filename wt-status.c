@@ -8,6 +8,7 @@
 #include "revision.h"
 #include "diffcore.h"
 
+int wt_status_relative_paths = 1;
 int wt_status_use_color = 0;
 static char wt_status_colors[][COLOR_MAXLEN] = {
 	"",         /* WT_STATUS_HEADER: normal */
@@ -400,6 +401,11 @@ int git_status_config(const char *k, const char *v)
 	if (!prefixcmp(k, "status.color.") || !prefixcmp(k, "color.status.")) {
 		int slot = parse_status_slot(k, 13);
 		color_parse(v, k, wt_status_colors[slot]);
+		return 0;
+	}
+	if (!strcmp(k, "status.relativepaths")) {
+		wt_status_relative_paths = git_config_bool(k, v);
+		return 0;
 	}
 	return git_default_config(k, v);
 }

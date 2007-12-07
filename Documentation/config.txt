@@ -762,6 +762,12 @@ showbranch.default::
 	The default set of branches for gitlink:git-show-branch[1].
 	See gitlink:git-show-branch[1].
 
+status.relativePaths::
+	By default, gitlink:git-status[1] shows paths relative to the
+	current directory. Setting this variable to `false` shows paths
+	relative to the repository root (this was the default for git
+	prior to v1.5.4).
+
 tar.umask::
 	This variable can be used to restrict the permission bits of
 	tar archive entries.  The default is 0002, which turns off the

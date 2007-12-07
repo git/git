@@ -285,7 +285,8 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix)
 	struct wt_status s;
 
 	wt_status_prepare(&s);
-	s.prefix = prefix;
+	if (wt_status_relative_paths)
+		s.prefix = prefix;
 
 	if (amend) {
 		s.amend = 1;

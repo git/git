@@ -42,7 +42,8 @@ template comments, and all the output lines are prefixed with '#'.
 
 The paths mentioned in the output, unlike many other git commands, are
 made relative to the current directory, if you are working in a
-subdirectory (this is on purpose, to help cutting and pasting).
+subdirectory (this is on purpose, to help cutting and pasting). See
+the status.relativePaths config option below.
 
 
 CONFIGURATION
@@ -52,6 +53,10 @@ The command honors `color.status` (or `status.color` -- they
 mean the same thing and the latter is kept for backward
 compatibility) and `color.status.<slot>` configuration variables
 to colorize its output.
+
+If the config variable `status.relativePaths` is set to false, then all
+paths shown are relative to the repository root, not to the current
+directory.
 
 See Also
 --------
