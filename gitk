@@ -106,7 +106,7 @@ proc start_rev_list {view} {
     set vnextroot($view) 0
     varcinit $view
 
-    set commits [exec git rev-parse --default HEAD --revs-only \
+    set commits [eval exec git rev-parse --default HEAD --revs-only \
 		     $viewargs($view)]
     set viewincl($view) {}
     foreach c $commits {
