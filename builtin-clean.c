@@ -27,13 +27,14 @@ static int git_clean_config(const char *var, const char *value)
 
 int cmd_clean(int argc, const char **argv, const char *prefix)
 {
-	int j;
+	int i;
 	int show_only = 0, remove_directories = 0, quiet = 0, ignored = 0;
 	int ignored_only = 0, baselen = 0, config_set = 0;
 	struct strbuf directory;
 	struct dir_struct dir;
 	const char *path, *base;
 	static const char **pathspec;
+	char *seen = NULL;
 	struct option options[] = {
 		OPT__QUIET(&quiet),
 		OPT__DRY_RUN(&show_only),
@@ -85,12 +86,14 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	read_directory(&dir, path, base, baselen, pathspec);
 	strbuf_init(&directory, 0);
 
-	for (j = 0; j < dir.nr; ++j) {
-		struct dir_entry *ent = dir.entries[j];
-		int len, pos, specs;
+	if (pathspec)
+		seen = xmalloc(argc);
+
+	for (i = 0; i < dir.nr; i++) {
+		struct dir_entry *ent = dir.entries[i];
+		int len, pos, matches;
 		struct cache_entry *ce;
 		struct stat st;
-		char *seen;
 
 		/*
 		 * Remove the '/' at the end that directory
@@ -110,25 +113,29 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				continue; /* Yup, this one exists unmerged */
 		}
 
-		if (!lstat(ent->name, &st) && (S_ISDIR(st.st_mode))) {
-			int matched_path = 0;
+		/*
+		 * we might have removed this as part of earlier
+		 * recursive directory removal, so lstat() here could
+		 * fail with ENOENT.
+		 */
+		if (lstat(ent->name, &st))
+			continue;
+
+		if (pathspec) {
+			memset(seen, 0, argc);
+			matches = match_pathspec(pathspec, ent->name, ent->len,
+						 baselen, seen);
+		} else {
+			matches = 0;
+		}
+
+		if (S_ISDIR(st.st_mode)) {
 			strbuf_addstr(&directory, ent->name);
-			if (pathspec) {
-				for (specs =0; pathspec[specs]; ++specs)
-					/* nothing */;
-				seen = xcalloc(specs, 1);
-				/* Check if directory was explictly passed as
-				 * pathspec.  If so we want to remove it */
-				if (match_pathspec(pathspec, ent->name, ent->len,
-						   baselen, seen))
-					matched_path = 1;
-				free(seen);
-			}
-			if (show_only && (remove_directories || matched_path)) {
+			if (show_only && (remove_directories || matches)) {
 				printf("Would remove %s\n", directory.buf);
-			} else if (quiet && (remove_directories || matched_path)) {
+			} else if (quiet && (remove_directories || matches)) {
 				remove_dir_recursively(&directory, 0);
-			} else if (remove_directories || matched_path) {
+			} else if (remove_directories || matches) {
 				printf("Removing %s\n", directory.buf);
 				remove_dir_recursively(&directory, 0);
 			} else if (show_only) {
@@ -138,6 +145,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			}
 			strbuf_reset(&directory);
 		} else {
+			if (pathspec && !matches)
+				continue;
 			if (show_only) {
 				printf("Would remove %s\n", ent->name);
 				continue;
@@ -147,6 +156,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			unlink(ent->name);
 		}
 	}
+	free(seen);
 
 	strbuf_release(&directory);
 	return 0;
