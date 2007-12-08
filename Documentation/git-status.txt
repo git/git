@@ -12,20 +12,21 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Examines paths in the working tree that has changes unrecorded
-to the index file, and changes between the index file and the
-current HEAD commit.  The former paths are what you _could_
-commit by running 'git add' before running 'git
-commit', and the latter paths are what you _would_ commit by
-running 'git commit'.
-
-If there is no path that is different between the index file and
-the current HEAD commit, the command exits with non-zero
-status.
+Displays paths that have differences between the index file and the
+current HEAD commit, paths that have differences between the working
+tree and the index file, and paths in the working tree that are not
+tracked by git (and are not ignored by gitlink:gitignore[5]). The first
+are what you _would_ commit by running `git commit`; the second and
+third are what you _could_ commit by running `git add` before running
+`git commit`.
 
 The command takes the same set of options as `git-commit`; it
 shows what would be committed if the same options are given to
 `git-commit`.
+
+If there is no path that is different between the index file and
+the current HEAD commit (i.e., there is nothing to commit by running
+`git-commit`), the command exits with non-zero status.
 
 If any paths have been touched in the working tree (that is,
 their modification times have changed) but their contents and
@@ -38,10 +39,10 @@ contains many paths that have been touched but not modified.
 OUTPUT
 ------
 The output from this command is designed to be used as a commit
-template comments, and all the output lines are prefixed with '#'.
+template comment, and all the output lines are prefixed with '#'.
 
 The paths mentioned in the output, unlike many other git commands, are
-made relative to the current directory, if you are working in a
+made relative to the current directory if you are working in a
 subdirectory (this is on purpose, to help cutting and pasting). See
 the status.relativePaths config option below.
 
