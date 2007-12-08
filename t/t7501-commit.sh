@@ -119,6 +119,7 @@ test_expect_success \
 	"echo 'gak' >file && \
 	 git-commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a"
 
+echo "SKIP because msysgit does not support Git.pm" ||
 test_expect_success \
 	"interactive add" \
 	"echo 7 | git-commit --interactive | grep 'What now'"
