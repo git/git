@@ -1,8 +1,8 @@
 #include "cache.h"
 
 /*
- * This is split up from the rest of git so that we might do
- * something different on Windows, for example.
+ * This is split up from the rest of git so that we can do
+ * something different on Windows.
  */
 
 #ifndef __MINGW32__
@@ -24,12 +24,12 @@ static void run_pager(const char *pager)
 #else
 #include "run-command.h"
 
-const char *pager_argv[] = { "sh", "-c", NULL, NULL };
+static const char *pager_argv[] = { "sh", "-c", NULL, NULL };
 static struct child_process pager_process = {
 	.argv = pager_argv,
 	.in = -1
 };
-static void collect_pager(void)
+static void wait_for_pager(void)
 {
 	fflush(stdout);
 	close(1);	/* signals EOF to pager */
@@ -99,6 +99,6 @@ void setup_pager(void)
 	close(pager_process.in);
 
 	/* this makes sure that the parent terminates after the pager */
-	atexit(collect_pager);
+	atexit(wait_for_pager);
 #endif
 }
