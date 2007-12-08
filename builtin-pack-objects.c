@@ -1422,10 +1422,6 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		}
 	}
 
-	trg_entry->delta = src_entry;
-	trg_entry->delta_size = delta_size;
-	trg->depth = src->depth + 1;
-
 	/*
 	 * Handle memory allocation outside of the cache
 	 * accounting lock.  Compiler will optimize the strangeness
@@ -1439,13 +1435,17 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		trg_entry->delta_data = NULL;
 	}
 	if (delta_cacheable(src_size, trg_size, delta_size)) {
-		delta_cache_size += trg_entry->delta_size;
+		delta_cache_size += delta_size;
 		cache_unlock();
 		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
 	} else {
 		cache_unlock();
 		free(delta_buf);
 	}
+
+	trg_entry->delta = src_entry;
+	trg_entry->delta_size = delta_size;
+	trg->depth = src->depth + 1;
 
 	return 1;
 }
