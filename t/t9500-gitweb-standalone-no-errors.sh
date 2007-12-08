@@ -558,6 +558,31 @@ test_expect_success \
 test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
+# testing config_to_multi / cloneurl
+
+test_expect_success \
+       'URL: no project URLs, no base URL' \
+       'gitweb_run "p=.git;a=summary"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+       'URL: project URLs via gitweb.url' \
+       'git config --add gitweb.url git://example.com/git/trash.git &&
+        git config --add gitweb.url http://example.com/git/trash.git &&
+        gitweb_run "p=.git;a=summary"'
+test_debug 'cat gitweb.log'
+
+cat >.git/cloneurl <<\EOF
+git://example.com/git/trash.git
+http://example.com/git/trash.git
+EOF
+
+test_expect_success \
+       'URL: project URLs via cloneurl file' \
+       'gitweb_run "p=.git;a=summary"'
+test_debug 'cat gitweb.log'
+
+# ----------------------------------------------------------------------
 # gitweb config and repo config
 
 cat >>gitweb_config.perl <<EOF
