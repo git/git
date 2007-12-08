@@ -83,20 +83,18 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
-/* returns the number of chars to skip to first component */
-static inline int is_path_absolute(const char *path)
+static inline int offset_1st_component(const char *path)
 {
 #ifdef __MINGW32__
 	if (isalpha(path[0]) && path[1] == ':')
 		return 2 + (path[2] == '/');
-	/* TODO: C:dir/file 'relative' paths are not catered for */
 #endif
 	return *path == '/';
 }
 
 int safe_create_leading_directories(char *path)
 {
-	char *pos = path + is_path_absolute(path);
+	char *pos = path + offset_1st_component(path);
 	struct stat st;
 
 	while (pos) {
