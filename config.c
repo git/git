@@ -630,13 +630,19 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	int length = strlen(key+store.baselen+1);
 	int quote = 0;
 
-	/* Check to see if the value needs to be quoted. */
+	/*
+	 * Check to see if the value needs to be surrounded with a dq pair.
+	 * Note that problematic characters are always backslash-quoted; this
+	 * check is about not losing leading or trailing SP and strings that
+	 * follow beginning-of-comment characters (i.e. ';' and '#') by the
+	 * configuration parser.
+	 */
 	if (value[0] == ' ')
 		quote = 1;
 	for (i = 0; value[i]; i++)
 		if (value[i] == ';' || value[i] == '#')
 			quote = 1;
-	if (value[i-1] == ' ')
+	if (i && value[i-1] == ' ')
 		quote = 1;
 
 	if (write_in_full(fd, "\t", 1) != 1 ||
