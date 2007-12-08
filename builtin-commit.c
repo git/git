@@ -792,7 +792,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		rollback_index_files();
 		die("could not read commit message");
 	}
-	if (run_hook(index_file, "commit-msg", git_path(commit_editmsg))) {
+	if (!no_verify &&
+	    run_hook(index_file, "commit-msg", git_path(commit_editmsg))) {
 		rollback_index_files();
 		exit(1);
 	}
