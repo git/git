@@ -1245,28 +1245,37 @@ static void get_object_details(void)
 	free(sorted_by_offset);
 }
 
+/*
+ * We search for deltas in a list sorted by type, by filename hash, and then
+ * by size, so that we see progressively smaller and smaller files.
+ * That's because we prefer deltas to be from the bigger file
+ * to the smaller -- deletes are potentially cheaper, but perhaps
+ * more importantly, the bigger file is likely the more recent
+ * one.  The deepest deltas are therefore the oldest objects which are
+ * less susceptible to be accessed often.
+ */
 static int type_size_sort(const void *_a, const void *_b)
 {
 	const struct object_entry *a = *(struct object_entry **)_a;
 	const struct object_entry *b = *(struct object_entry **)_b;
 
-	if (a->type < b->type)
-		return -1;
 	if (a->type > b->type)
-		return 1;
-	if (a->hash < b->hash)
 		return -1;
+	if (a->type < b->type)
+		return 1;
 	if (a->hash > b->hash)
-		return 1;
-	if (a->preferred_base < b->preferred_base)
 		return -1;
+	if (a->hash < b->hash)
+		return 1;
 	if (a->preferred_base > b->preferred_base)
-		return 1;
-	if (a->size < b->size)
 		return -1;
-	if (a->size > b->size)
+	if (a->preferred_base < b->preferred_base)
 		return 1;
-	return a > b ? -1 : (a < b);  /* newest last */
+	if (a->size > b->size)
+		return -1;
+	if (a->size < b->size)
+		return 1;
+	return a < b ? -1 : (a > b);  /* newest first */
 }
 
 struct unpacked {
@@ -1317,14 +1326,6 @@ static pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #endif
 
-/*
- * We search for deltas _backwards_ in a list sorted by type and
- * by size, so that we see progressively smaller and smaller files.
- * That's because we prefer deltas to be from the bigger file
- * to the smaller - deletes are potentially cheaper, but perhaps
- * more importantly, the bigger file is likely the more recent
- * one.
- */
 static int try_delta(struct unpacked *trg, struct unpacked *src,
 		     unsigned max_depth, unsigned long *mem_usage)
 {
@@ -1481,7 +1482,7 @@ static unsigned long free_unpacked(struct unpacked *n)
 static void find_deltas(struct object_entry **list, unsigned list_size,
 			int window, int depth, unsigned *processed)
 {
-	uint32_t i = list_size, idx = 0, count = 0;
+	uint32_t i = 0, idx = 0, count = 0;
 	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array;
 	unsigned long mem_usage = 0;
@@ -1490,7 +1491,7 @@ static void find_deltas(struct object_entry **list, unsigned list_size,
 	memset(array, 0, array_size);
 
 	do {
-		struct object_entry *entry = list[--i];
+		struct object_entry *entry = list[i++];
 		struct unpacked *n = array + idx;
 		int j, max_depth, best_base = -1;
 
@@ -1575,7 +1576,7 @@ static void find_deltas(struct object_entry **list, unsigned list_size,
 			count++;
 		if (idx >= window)
 			idx = 0;
-	} while (i > 0);
+	} while (i < list_size);
 
 	for (i = 0; i < window; ++i) {
 		free_delta_index(array[i].index);
