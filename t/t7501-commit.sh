@@ -4,7 +4,7 @@
 #
 
 # FIXME: Test the various index usages, -i and -o, test reflog,
-# signoff, hooks
+# signoff
 
 test_description='git-commit'
 . ./test-lib.sh
