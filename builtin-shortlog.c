@@ -11,6 +11,7 @@ static const char shortlog_usage[] =
 "git-shortlog [-n] [-s] [<commit-id>... ]";
 
 static char *common_repo_prefix;
+static int email;
 
 static int compare_by_number(const void *a1, const void *a2)
 {
@@ -56,6 +57,14 @@ static void insert_one_record(struct path_list *list,
 		while (0 < len && isspace(namebuf[len-1]))
 			len--;
 		namebuf[len] = '\0';
+	}
+	else
+		len = strlen(namebuf);
+
+	if (email) {
+		size_t room = sizeof(namebuf) - len - 1;
+		int maillen = eoemail - boemail + 1;
+		snprintf(namebuf + len, room, " %.*s", maillen, boemail);
 	}
 
 	buffer = xstrdup(namebuf);
@@ -219,6 +228,9 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "-s") ||
 				!strcmp(argv[1], "--summary"))
 			summary = 1;
+		else if (!strcmp(argv[1], "-e") ||
+			 !strcmp(argv[1], "--email"))
+			email = 1;
 		else if (!prefixcmp(argv[1], "-w")) {
 			wrap_lines = 1;
 			parse_wrap_args(argv[1], &in1, &in2, &wrap);
