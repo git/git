@@ -288,13 +288,23 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 	return run_command(&cmd);
 }
 
+#ifdef __MINGW32__
+static __stdcall unsigned run_thread(void *data)
+{
+	struct async *async = data;
+	return async->proc(async->fd_for_proc, async->data);
+}
+#endif
+
 int start_async(struct async *async)
 {
 	int pipe_out[2];
 
 	if (pipe(pipe_out) < 0)
 		return error("cannot create pipe: %s", strerror(errno));
+	async->out = pipe_out[0];
 
+#ifndef __MINGW32__
 	async->pid = fork();
 	if (async->pid < 0) {
 		error("fork (async) failed: %s", strerror(errno));
@@ -305,16 +315,33 @@ int start_async(struct async *async)
 		close(pipe_out[0]);
 		exit(!!async->proc(pipe_out[1], async->data));
 	}
-	async->out = pipe_out[0];
 	close(pipe_out[1]);
+#else
+	async->fd_for_proc = pipe_out[1];
+	async->tid = (HANDLE) _beginthreadex(NULL, 0, run_thread, async, 0, NULL);
+	if (!async->tid) {
+		error("cannot create thread: %s", strerror(errno));
+		close_pair(pipe_out);
+		return -1;
+	}
+#endif
 	return 0;
 }
 
 int finish_async(struct async *async)
 {
+#ifndef __MINGW32__
 	int ret = 0;
 
 	if (wait_or_whine(async->pid))
 		ret = error("waitpid (async) failed");
+#else
+	DWORD ret = 0;
+	if (WaitForSingleObject(async->tid, INFINITE) != WAIT_OBJECT_0)
+		ret = error("waiting for thread failed: %lu", GetLastError());
+	else if (!GetExitCodeThread(async->tid, &ret))
+		ret = error("cannot get thread exit code: %lu", GetLastError());
+	CloseHandle(async->tid);
+#endif
 	return ret;
 }
