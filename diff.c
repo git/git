@@ -146,7 +146,7 @@ int git_diff_ui_config(const char *var, const char *value)
 		return 0;
 	}
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
-		diff_use_color_default = git_config_colorbool(var, value);
+		diff_use_color_default = git_config_colorbool(var, value, -1);
 		return 0;
 	}
 	if (!strcmp(var, "diff.renames")) {

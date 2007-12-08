@@ -184,7 +184,7 @@ You must stage at least 1 file before you can commit.
 
 A good commit message has the following format:
 
-- First line: Describe in one sentance what you did.
+- First line: Describe in one sentence what you did.
 - Second line: Blank
 - Remaining lines: Describe why this change is good.
 "]

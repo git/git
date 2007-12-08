@@ -1,6 +1,55 @@
 #!/usr/bin/perl -w
 
 use strict;
+use Git;
+
+# Prompt colors:
+my ($prompt_color, $header_color, $help_color, $normal_color);
+# Diff colors:
+my ($new_color, $old_color, $fraginfo_color, $metainfo_color, $whitespace_color);
+
+my ($use_color, $diff_use_color);
+my $repo = Git->repository();
+
+$use_color = $repo->get_colorbool('color.interactive');
+
+if ($use_color) {
+	# Set interactive colors:
+
+	# Grab the 3 main colors in git color string format, with sane
+	# (visible) defaults:
+	$prompt_color = $repo->get_color("color.interactive.prompt", "bold blue");
+	$header_color = $repo->get_color("color.interactive.header", "bold");
+	$help_color = $repo->get_color("color.interactive.help", "red bold");
+	$normal_color = $repo->get_color("", "reset");
+
+	# Do we also set diff colors?
+	$diff_use_color = $repo->get_colorbool('color.diff');
+	if ($diff_use_color) {
+		$new_color = $repo->get_color("color.diff.new", "green");
+		$old_color = $repo->get_color("color.diff.old", "red");
+		$fraginfo_color = $repo->get_color("color.diff.frag", "cyan");
+		$metainfo_color = $repo->get_color("color.diff.meta", "bold");
+		$whitespace_color = $repo->get_color("color.diff.whitespace", "normal red");
+	}
+}
+
+sub colored {
+	my $color = shift;
+	my $string = join("", @_);
+
+	if ($use_color) {
+		# Put a color code at the beginning of each line, a reset at the end
+		# color after newlines that are not at the end of the string
+		$string =~ s/(\n+)(.)/$1$color$2/g;
+		# reset before newlines
+		$string =~ s/(\n+)/$normal_color$1/g;
+		# codes at beginning and end (if necessary):
+		$string =~ s/^/$color/;
+		$string =~ s/$/$normal_color/ unless $string =~ /\n$/;
+	}
+	return $string;
+}
 
 # command line options
 my $patch_mode;
@@ -246,10 +295,20 @@ sub is_valid_prefix {
 sub highlight_prefix {
 	my $prefix = shift;
 	my $remainder = shift;
-	return $remainder unless defined $prefix;
-	return is_valid_prefix($prefix) ?
-	    "[$prefix]$remainder" :
-	    "$prefix$remainder";
+
+	if (!defined $prefix) {
+		return $remainder;
+	}
+
+	if (!is_valid_prefix($prefix)) {
+		return "$prefix$remainder";
+	}
+
+	if (!$use_color) {
+		return "[$prefix]$remainder";
+	}
+
+	return "$prompt_color$prefix$normal_color$remainder";
 }
 
 sub list_and_choose {
@@ -266,7 +325,7 @@ sub list_and_choose {
 			if (!$opts->{LIST_FLAT}) {
 				print "     ";
 			}
-			print "$opts->{HEADER}\n";
+			print colored $header_color, "$opts->{HEADER}\n";
 		}
 		for ($i = 0; $i < @stuff; $i++) {
 			my $chosen = $chosen[$i] ? '*' : ' ';
@@ -304,7 +363,7 @@ sub list_and_choose {
 
 		return if ($opts->{LIST_ONLY});
 
-		print $opts->{PROMPT};
+		print colored $prompt_color, $opts->{PROMPT};
 		if ($opts->{SINGLETON}) {
 			print "> ";
 		}
@@ -371,7 +430,7 @@ sub list_and_choose {
 }
 
 sub singleton_prompt_help_cmd {
-	print <<\EOF ;
+	print colored $help_color, <<\EOF ;
 Prompt help:
 1          - select a numbered item
 foo        - select item based on unique prefix
@@ -380,7 +439,7 @@ EOF
 }
 
 sub prompt_help_cmd {
-	print <<\EOF ;
+	print colored $help_color, <<\EOF ;
 Prompt help:
 1          - select a single item
 3-5        - select a range of items
@@ -475,6 +534,31 @@ sub parse_diff {
 		push @{$hunk[-1]{TEXT}}, $_;
 	}
 	return @hunk;
+}
+
+sub colored_diff_hunk {
+	my ($text) = @_;
+	# return the text, so that it can be passed to print()
+	my @ret;
+	for (@$text) {
+		if (!$diff_use_color) {
+			push @ret, $_;
+			next;
+		}
+
+		if (/^\+/) {
+			push @ret, colored($new_color, $_);
+		} elsif (/^\-/) {
+			push @ret, colored($old_color, $_);
+		} elsif (/^\@/) {
+			push @ret, colored($fraginfo_color, $_);
+		} elsif (/^ /) {
+			push @ret, colored($normal_color, $_);
+		} else {
+			push @ret, colored($metainfo_color, $_);
+		}
+	}
+	return @ret;
 }
 
 sub hunk_splittable {
@@ -671,7 +755,7 @@ sub coalesce_overlapping_hunks {
 }
 
 sub help_patch_cmd {
-	print <<\EOF ;
+	print colored $help_color, <<\EOF ;
 y - stage this hunk
 n - do not stage this hunk
 a - stage this and all the remaining hunks in the file
@@ -710,9 +794,7 @@ sub patch_update_file {
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
-	for (@{$head->{TEXT}}) {
-		print;
-	}
+	print colored_diff_hunk($head->{TEXT});
 	$num = scalar @hunk;
 	$ix = 0;
 
@@ -754,10 +836,8 @@ sub patch_update_file {
 		if (hunk_splittable($hunk[$ix]{TEXT})) {
 			$other .= '/s';
 		}
-		for (@{$hunk[$ix]{TEXT}}) {
-			print;
-		}
-		print "Stage this hunk [y/n/a/d$other/?]? ";
+		print colored_diff_hunk($hunk[$ix]{TEXT});
+		print colored $prompt_color, "Stage this hunk [y/n/a/d$other/?]? ";
 		my $line = <STDIN>;
 		if ($line) {
 			if ($line =~ /^y/i) {
@@ -811,7 +891,7 @@ sub patch_update_file {
 			elsif ($other =~ /s/ && $line =~ /^s/) {
 				my @split = split_hunk($hunk[$ix]{TEXT});
 				if (1 < @split) {
-					print "Split into ",
+					print colored $header_color, "Split into ",
 					scalar(@split), " hunks.\n";
 				}
 				splice(@hunk, $ix, 1,
@@ -894,8 +974,7 @@ sub diff_cmd {
 				     HEADER => $status_head, },
 				   @mods);
 	return if (!@them);
-	system(qw(git diff-index -p --cached HEAD --),
-	       map { $_->{VALUE} } @them);
+	system(qw(git diff -p --cached HEAD --), map { $_->{VALUE} } @them);
 }
 
 sub quit_cmd {
@@ -904,7 +983,7 @@ sub quit_cmd {
 }
 
 sub help_cmd {
-	print <<\EOF ;
+	print colored $help_color, <<\EOF ;
 status        - show paths with changes
 update        - add working tree state to the staged set of changes
 revert        - revert staged set of changes back to the HEAD version

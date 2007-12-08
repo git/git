@@ -155,6 +155,9 @@ Updates since v1.5.3
 
  * "git cvsserver" can be run via "git shell".
 
+ * "git cvsserver" acts more like receive-pack by running post-receive
+   and post-update hooks.
+
  * "git am" and "git rebase" are far less verbose.
 
  * "git pull" learned to pass --[no-]ff option to underlying "git
@@ -166,12 +169,21 @@ Updates since v1.5.3
  * "git fast-export" produces datastream that can be fed to fast-import
    to reproduce the history recorded in a git repository.
 
+ * "git add -i" takes pathspecs to limit the set of files to work on.
+
+ * "git add -p" is a short-hand to go directly to the selective patch
+   subcommand in the interactive command loop and to exit when done.
+
+ * "git add -i" UI has been colorized.
+
  * "git commit --allow-empty" allows you to create a single-parent
    commit that records the same tree as its parent, overriding the usual
    safety valve.
 
  * "git commit --amend" can amend a merge that does not change the tree
    from its first parent.
+
+ * "git commit" has been rewritten in C.
 
  * "git stash random-text" does not create a new stash anymore.  It was
    a UI mistake.  Use "git stash save random-text", or "git stash"
@@ -249,8 +261,11 @@ series.
  * "git svn" talking with the SVN over http will correctly quote branch
    and project names.
 
+ * "git config" did not work correctly on platforms that define
+   REG_NOMATCH to an even number.
+
 --
 exec >/var/tmp/1
-O=v1.5.3.7-1003-gf38ca7c
+O=v1.5.3.7-1111-gd9f4059
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

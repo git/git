@@ -637,7 +637,7 @@ sig_handler_t mingw_signal(int sig, sig_handler_t handler);
  */
 
 char **copy_environ(void);
-void free_environ(void);
+void free_environ(char **env);
 char **env_setenv(char **env, const char *name);
 
 extern __attribute__((noreturn)) int git_exit(int code);

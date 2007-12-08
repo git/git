@@ -8,7 +8,7 @@ git-add - Add file contents to the index
 SYNOPSIS
 --------
 [verse]
-'git-add' [-n] [-v] [-f] [--interactive | -i] [-u] [--refresh]
+'git-add' [-n] [-v] [-f] [--interactive | -i] [--patch | -p] [-u] [--refresh]
           [--] <filepattern>...
 
 DESCRIPTION

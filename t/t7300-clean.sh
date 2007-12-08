@@ -126,6 +126,20 @@ test_expect_success 'git-clean symbolic link' '
 
 '
 
+test_expect_success 'git-clean with wildcard' '
+
+	touch a.clean b.clean other.c &&
+	git-clean "*.clean" &&
+	test -f Makefile &&
+	test -f README &&
+	test -f src/part1.c &&
+	test -f src/part2.c &&
+	test ! -f a.clean &&
+	test ! -f b.clean &&
+	test -f other.c
+
+'
+
 test_expect_success 'git-clean -n' '
 
 	mkdir -p build docs &&

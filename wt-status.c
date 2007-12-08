@@ -391,7 +391,7 @@ void wt_status_print(struct wt_status *s)
 int git_status_config(const char *k, const char *v)
 {
 	if (!strcmp(k, "status.color") || !strcmp(k, "color.status")) {
-		wt_status_use_color = git_config_colorbool(k, v);
+		wt_status_use_color = git_config_colorbool(k, v, -1);
 		return 0;
 	}
 	if (!prefixcmp(k, "status.color.") || !prefixcmp(k, "color.status.")) {

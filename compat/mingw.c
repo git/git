@@ -728,7 +728,7 @@ char **copy_environ()
 	return env;
 }
 
-void free_env(char **env)
+void free_environ(char **env)
 {
 	int i;
 	for (i = 0; env[i]; i++)

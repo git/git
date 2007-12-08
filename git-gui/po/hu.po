@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui-i 18n\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-10-10 04:04-0400\n"
-"PO-Revision-Date: 2007-07-27 13:15+0200\n"
+"POT-Creation-Date: 2007-11-24 10:36+0100\n"
+"PO-Revision-Date: 2007-12-04 01:15+0100\n"
 "Last-Translator: Miklos Vajna <vmiklos@frugalware.org>\n"
 "Language-Team: Hungarian\n"
 "MIME-Version: 1.0\n"
@@ -16,33 +16,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: git-gui.sh:41 git-gui.sh:634 git-gui.sh:648 git-gui.sh:661 git-gui.sh:744
-#: git-gui.sh:763
+#: git-gui.sh:41 git-gui.sh:604 git-gui.sh:618 git-gui.sh:631 git-gui.sh:714
+#: git-gui.sh:733
 msgid "git-gui: fatal error"
-msgstr ""
+msgstr "git-gui: végzetes hiba"
 
-#: git-gui.sh:595
-#, fuzzy, tcl-format
+#: git-gui.sh:565
+#, tcl-format
 msgid "Invalid font specified in %s:"
-msgstr "Érvénytelen font lett megadva a grafikus felületben.%s:"
+msgstr "Érvénytelen font lett megadva itt: %s:"
 
-#: git-gui.sh:620
+#: git-gui.sh:590
 msgid "Main Font"
 msgstr "Fő betűtípus"
 
-#: git-gui.sh:621
+#: git-gui.sh:591
 msgid "Diff/Console Font"
 msgstr "Diff/konzol betűtípus"
 
-#: git-gui.sh:635
+#: git-gui.sh:605
 msgid "Cannot find git in PATH."
 msgstr "A git nem található a PATH-ban."
 
-#: git-gui.sh:662
+#: git-gui.sh:632
 msgid "Cannot parse Git version string:"
 msgstr "Nem értelmezhető a Git verzió sztring:"
 
-#: git-gui.sh:680
+#: git-gui.sh:650
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -61,80 +61,79 @@ msgstr ""
 "\n"
 "Feltételezhetjük, hogy a(z) '%s' verziója legalább 1.5.0?\n"
 
-#: git-gui.sh:853
+#: git-gui.sh:888
 msgid "Git directory not found:"
 msgstr "A Git könyvtár nem található:"
 
-#: git-gui.sh:860
-#, fuzzy
+#: git-gui.sh:895
 msgid "Cannot move to top of working directory:"
-msgstr "Nem használható vicces .git könyvtár:"
+msgstr "Nem lehet a munkakönyvtár tetejére lépni:"
 
-#: git-gui.sh:867
+#: git-gui.sh:902
 msgid "Cannot use funny .git directory:"
 msgstr "Nem használható vicces .git könyvtár:"
 
-#: git-gui.sh:872
+#: git-gui.sh:907
 msgid "No working directory"
 msgstr "Nincs munkakönyvtár"
 
-#: git-gui.sh:1019
+#: git-gui.sh:1054
 msgid "Refreshing file status..."
 msgstr "A fájlok státuszának frissítése..."
 
-#: git-gui.sh:1084
+#: git-gui.sh:1119
 msgid "Scanning for modified files ..."
 msgstr "Módosított fájlok keresése ..."
 
-#: git-gui.sh:1259 lib/browser.tcl:245
+#: git-gui.sh:1294 lib/browser.tcl:245
 msgid "Ready."
 msgstr "Kész."
 
-#: git-gui.sh:1525
+#: git-gui.sh:1560
 msgid "Unmodified"
 msgstr "Nem módosított"
 
-#: git-gui.sh:1527
+#: git-gui.sh:1562
 msgid "Modified, not staged"
 msgstr "Módosított, de nem kiválasztott"
 
-#: git-gui.sh:1528 git-gui.sh:1533
+#: git-gui.sh:1563 git-gui.sh:1568
 msgid "Staged for commit"
 msgstr "Kiválasztva commitolásra"
 
-#: git-gui.sh:1529 git-gui.sh:1534
+#: git-gui.sh:1564 git-gui.sh:1569
 msgid "Portions staged for commit"
 msgstr "Részek kiválasztva commitolásra"
 
-#: git-gui.sh:1530 git-gui.sh:1535
+#: git-gui.sh:1565 git-gui.sh:1570
 msgid "Staged for commit, missing"
 msgstr "Kiválasztva commitolásra, hiányzó"
 
-#: git-gui.sh:1532
+#: git-gui.sh:1567
 msgid "Untracked, not staged"
 msgstr "Nem követett, nem kiválasztott"
 
-#: git-gui.sh:1537
+#: git-gui.sh:1572
 msgid "Missing"
 msgstr "Hiányzó"
 
-#: git-gui.sh:1538
+#: git-gui.sh:1573
 msgid "Staged for removal"
 msgstr "Kiválasztva eltávolításra"
 
-#: git-gui.sh:1539
+#: git-gui.sh:1574
 msgid "Staged for removal, still present"
 msgstr "Kiválasztva eltávolításra, jelenleg is elérhető"
 
-#: git-gui.sh:1541 git-gui.sh:1542 git-gui.sh:1543 git-gui.sh:1544
+#: git-gui.sh:1576 git-gui.sh:1577 git-gui.sh:1578 git-gui.sh:1579
 msgid "Requires merge resolution"
 msgstr "Merge feloldás szükséges"
 
-#: git-gui.sh:1579
+#: git-gui.sh:1614
 msgid "Starting gitk... please wait..."
 msgstr "A gitk indítása... várjunk..."
 
-#: git-gui.sh:1588
+#: git-gui.sh:1623
 #, tcl-format
 msgid ""
 "Unable to start gitk:\n"
@@ -145,300 +144,295 @@ msgstr ""
 "\n"
 "A(z) %s nem létezik"
 
-#: git-gui.sh:1788 lib/choose_repository.tcl:32
+#: git-gui.sh:1823 lib/choose_repository.tcl:35
 msgid "Repository"
 msgstr "Repó"
 
-#: git-gui.sh:1789
+#: git-gui.sh:1824
 msgid "Edit"
 msgstr "Szerkesztés"
 
-#: git-gui.sh:1791 lib/choose_rev.tcl:560
+#: git-gui.sh:1826 lib/choose_rev.tcl:560
 msgid "Branch"
 msgstr "Branch"
 
-#: git-gui.sh:1794 lib/choose_rev.tcl:547
-#, fuzzy
+#: git-gui.sh:1829 lib/choose_rev.tcl:547
 msgid "Commit@@noun"
-msgstr "Commit"
+msgstr "Commit@@főnév"
 
-#: git-gui.sh:1797 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
+#: git-gui.sh:1832 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
 msgid "Merge"
 msgstr "Merge"
 
-#: git-gui.sh:1798 lib/choose_rev.tcl:556
-#, fuzzy
+#: git-gui.sh:1833 lib/choose_rev.tcl:556
 msgid "Remote"
-msgstr "Távoli:"
+msgstr "Távoli"
 
-#: git-gui.sh:1807
+#: git-gui.sh:1842
 msgid "Browse Current Branch's Files"
 msgstr "A jelenlegi branch fájljainak böngészése"
 
-#: git-gui.sh:1811
+#: git-gui.sh:1846
 msgid "Browse Branch Files..."
 msgstr "A branch fájljainak böngészése..."
 
-#: git-gui.sh:1816
+#: git-gui.sh:1851
 msgid "Visualize Current Branch's History"
 msgstr "A jelenlegi branch történetének vizualizálása"
 
-#: git-gui.sh:1820
+#: git-gui.sh:1855
 msgid "Visualize All Branch History"
 msgstr "Az összes branch történetének vizualizálása"
 
-#: git-gui.sh:1827
+#: git-gui.sh:1862
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr "A(z) %s branch fájljainak böngészése"
 
-#: git-gui.sh:1829
+#: git-gui.sh:1864
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr "A(z) %s branch történetének vizualizálása"
 
-#: git-gui.sh:1834 lib/database.tcl:27 lib/database.tcl:67
+#: git-gui.sh:1869 lib/database.tcl:27 lib/database.tcl:67
 msgid "Database Statistics"
 msgstr "Adatbázis statisztikák"
 
-#: git-gui.sh:1837 lib/database.tcl:34
+#: git-gui.sh:1872 lib/database.tcl:34
 msgid "Compress Database"
 msgstr "Adatbázis tömörítése"
 
-#: git-gui.sh:1840
+#: git-gui.sh:1875
 msgid "Verify Database"
 msgstr "Adatbázis ellenőrzése"
 
-#: git-gui.sh:1847 git-gui.sh:1851 git-gui.sh:1855 lib/shortcut.tcl:9
-#: lib/shortcut.tcl:45 lib/shortcut.tcl:84
+#: git-gui.sh:1882 git-gui.sh:1886 git-gui.sh:1890 lib/shortcut.tcl:7
+#: lib/shortcut.tcl:39 lib/shortcut.tcl:71
 msgid "Create Desktop Icon"
 msgstr "Asztal ikon létrehozása"
 
-#: git-gui.sh:1860 lib/choose_repository.tcl:36 lib/choose_repository.tcl:95
+#: git-gui.sh:1895 lib/choose_repository.tcl:176 lib/choose_repository.tcl:184
 msgid "Quit"
 msgstr "Kilépés"
 
-#: git-gui.sh:1867
+#: git-gui.sh:1902
 msgid "Undo"
 msgstr "Visszavonás"
 
-#: git-gui.sh:1870
+#: git-gui.sh:1905
 msgid "Redo"
 msgstr "Mégis"
 
-#: git-gui.sh:1874 git-gui.sh:2366
+#: git-gui.sh:1909 git-gui.sh:2403
 msgid "Cut"
 msgstr "Kivágás"
 
-#: git-gui.sh:1877 git-gui.sh:2369 git-gui.sh:2440 git-gui.sh:2512
+#: git-gui.sh:1912 git-gui.sh:2406 git-gui.sh:2477 git-gui.sh:2549
 #: lib/console.tcl:67
 msgid "Copy"
 msgstr "Másolás"
 
-#: git-gui.sh:1880 git-gui.sh:2372
+#: git-gui.sh:1915 git-gui.sh:2409
 msgid "Paste"
 msgstr "Beillesztés"
 
-#: git-gui.sh:1883 git-gui.sh:2375 lib/branch_delete.tcl:26
+#: git-gui.sh:1918 git-gui.sh:2412 lib/branch_delete.tcl:26
 #: lib/remote_branch_delete.tcl:38
 msgid "Delete"
 msgstr "Törlés"
 
-#: git-gui.sh:1887 git-gui.sh:2379 git-gui.sh:2516 lib/console.tcl:69
+#: git-gui.sh:1922 git-gui.sh:2416 git-gui.sh:2553 lib/console.tcl:69
 msgid "Select All"
 msgstr "Mindent kiválaszt"
 
-#: git-gui.sh:1896
+#: git-gui.sh:1931
 msgid "Create..."
 msgstr "Létrehozás..."
 
-#: git-gui.sh:1902
+#: git-gui.sh:1937
 msgid "Checkout..."
 msgstr "Checkout..."
 
-#: git-gui.sh:1908
+#: git-gui.sh:1943
 msgid "Rename..."
 msgstr "Átnevezés..."
 
-#: git-gui.sh:1913 git-gui.sh:2012
+#: git-gui.sh:1948 git-gui.sh:2048
 msgid "Delete..."
 msgstr "Törlés..."
 
-#: git-gui.sh:1918
+#: git-gui.sh:1953
 msgid "Reset..."
 msgstr "Visszaállítás..."
 
-#: git-gui.sh:1930 git-gui.sh:2313
+#: git-gui.sh:1965 git-gui.sh:2350
 msgid "New Commit"
 msgstr "Új commit"
 
-#: git-gui.sh:1938 git-gui.sh:2320
+#: git-gui.sh:1973 git-gui.sh:2357
 msgid "Amend Last Commit"
 msgstr "Utolsó commit javítása"
 
-#: git-gui.sh:1947 git-gui.sh:2280 lib/remote_branch_delete.tcl:99
+#: git-gui.sh:1982 git-gui.sh:2317 lib/remote_branch_delete.tcl:99
 msgid "Rescan"
 msgstr "Keresés újra"
 
-#: git-gui.sh:1953
+#: git-gui.sh:1988
 msgid "Stage To Commit"
 msgstr "Kiválasztás commitolásra"
 
-#: git-gui.sh:1958
+#: git-gui.sh:1994
 msgid "Stage Changed Files To Commit"
 msgstr "Módosított fájlok kiválasztása commitolásra"
 
-#: git-gui.sh:1964
+#: git-gui.sh:2000
 msgid "Unstage From Commit"
 msgstr "Commitba való kiválasztás visszavonása"
 
-#: git-gui.sh:1969 lib/index.tcl:352
+#: git-gui.sh:2005 lib/index.tcl:393
 msgid "Revert Changes"
 msgstr "Változtatások visszaállítása"
 
-#: git-gui.sh:1976 git-gui.sh:2292 git-gui.sh:2390
+#: git-gui.sh:2012 git-gui.sh:2329 git-gui.sh:2427
 msgid "Sign Off"
 msgstr "Aláír"
 
-#: git-gui.sh:1980 git-gui.sh:2296
-#, fuzzy
+#: git-gui.sh:2016 git-gui.sh:2333
 msgid "Commit@@verb"
-msgstr "Commit"
+msgstr "Commit@@ige"
 
-#: git-gui.sh:1991
+#: git-gui.sh:2027
 msgid "Local Merge..."
 msgstr "Helyi merge..."
 
-#: git-gui.sh:1996
+#: git-gui.sh:2032
 msgid "Abort Merge..."
 msgstr "Merge megszakítása..."
 
-#: git-gui.sh:2008
+#: git-gui.sh:2044
 msgid "Push..."
 msgstr "Push..."
 
-#: git-gui.sh:2019 lib/choose_repository.tcl:41
+#: git-gui.sh:2055 lib/choose_repository.tcl:40
 msgid "Apple"
 msgstr "Apple"
 
-#: git-gui.sh:2022 git-gui.sh:2044 lib/about.tcl:13
-#: lib/choose_repository.tcl:44 lib/choose_repository.tcl:50
+#: git-gui.sh:2058 git-gui.sh:2080 lib/about.tcl:13
+#: lib/choose_repository.tcl:43 lib/choose_repository.tcl:49
 #, tcl-format
 msgid "About %s"
 msgstr "Névjegy: %s"
 
-#: git-gui.sh:2026
+#: git-gui.sh:2062
 msgid "Preferences..."
-msgstr ""
+msgstr "Beállítások..."
 
-#: git-gui.sh:2034 git-gui.sh:2558
+#: git-gui.sh:2070 git-gui.sh:2595
 msgid "Options..."
 msgstr "Opciók..."
 
-#: git-gui.sh:2040 lib/choose_repository.tcl:47
+#: git-gui.sh:2076 lib/choose_repository.tcl:46
 msgid "Help"
 msgstr "Segítség"
 
-#: git-gui.sh:2081
+#: git-gui.sh:2117
 msgid "Online Documentation"
 msgstr "Online dokumentáció"
 
-#: git-gui.sh:2165
+#: git-gui.sh:2201
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
-msgstr ""
+msgstr "végzetes hiba: nem érhető el a(z) %s útvonal: Nincs ilyen fájl vagy könyvtár"
 
-#: git-gui.sh:2198
+#: git-gui.sh:2234
 msgid "Current Branch:"
 msgstr "Jelenlegi branch:"
 
-#: git-gui.sh:2219
-#, fuzzy
+#: git-gui.sh:2255
 msgid "Staged Changes (Will Commit)"
 msgstr "Kiválasztott változtatások (commitolva lesz)"
 
-#: git-gui.sh:2239
-#, fuzzy
+#: git-gui.sh:2274
 msgid "Unstaged Changes"
-msgstr "Változtatások kiválasztása"
+msgstr "Kiválasztatlan változtatások"
 
-#: git-gui.sh:2286
+#: git-gui.sh:2323
 msgid "Stage Changed"
 msgstr "Változtatások kiválasztása"
 
-#: git-gui.sh:2302 lib/transport.tcl:93 lib/transport.tcl:182
+#: git-gui.sh:2339 lib/transport.tcl:93 lib/transport.tcl:182
 msgid "Push"
 msgstr "Push"
 
-#: git-gui.sh:2332
+#: git-gui.sh:2369
 msgid "Initial Commit Message:"
 msgstr "Kezdeti commit üzenet:"
 
-#: git-gui.sh:2333
+#: git-gui.sh:2370
 msgid "Amended Commit Message:"
 msgstr "Javító commit üzenet:"
 
-#: git-gui.sh:2334
+#: git-gui.sh:2371
 msgid "Amended Initial Commit Message:"
 msgstr "Kezdeti javító commit üzenet:"
 
-#: git-gui.sh:2335
+#: git-gui.sh:2372
 msgid "Amended Merge Commit Message:"
 msgstr "Javító merge commit üzenet:"
 
-#: git-gui.sh:2336
+#: git-gui.sh:2373
 msgid "Merge Commit Message:"
 msgstr "Merge commit üzenet:"
 
-#: git-gui.sh:2337
+#: git-gui.sh:2374
 msgid "Commit Message:"
 msgstr "Commit üzenet:"
 
-#: git-gui.sh:2382 git-gui.sh:2520 lib/console.tcl:71
+#: git-gui.sh:2419 git-gui.sh:2557 lib/console.tcl:71
 msgid "Copy All"
 msgstr "Összes másolása"
 
-#: git-gui.sh:2406 lib/blame.tcl:104
+#: git-gui.sh:2443 lib/blame.tcl:104
 msgid "File:"
 msgstr "Fájl:"
 
-#: git-gui.sh:2508
+#: git-gui.sh:2545
 msgid "Refresh"
 msgstr "Frissítés"
 
-#: git-gui.sh:2529
+#: git-gui.sh:2566
 msgid "Apply/Reverse Hunk"
 msgstr "Hunk alkalmazása/visszaállítása"
 
-#: git-gui.sh:2535
+#: git-gui.sh:2572
 msgid "Decrease Font Size"
 msgstr "Font méret csökkentése"
 
-#: git-gui.sh:2539
+#: git-gui.sh:2576
 msgid "Increase Font Size"
 msgstr "Fönt méret növelése"
 
-#: git-gui.sh:2544
+#: git-gui.sh:2581
 msgid "Show Less Context"
 msgstr "Kevesebb környezet mutatása"
 
-#: git-gui.sh:2551
+#: git-gui.sh:2588
 msgid "Show More Context"
 msgstr "Több környezet mutatása"
 
-#: git-gui.sh:2565
+#: git-gui.sh:2602
 msgid "Unstage Hunk From Commit"
 msgstr "Hunk törlése commitból"
 
-#: git-gui.sh:2567
+#: git-gui.sh:2604
 msgid "Stage Hunk For Commit"
 msgstr "Hunk kiválasztása commitba"
 
-#: git-gui.sh:2586
+#: git-gui.sh:2623
 msgid "Initializing..."
 msgstr "Inicializálás..."
 
-#: git-gui.sh:2677
+#: git-gui.sh:2718
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -448,15 +442,24 @@ msgid ""
 "by %s:\n"
 "\n"
 msgstr ""
+"Lehetséges, hogy környezeti problémák vannak.\n"
+"\n"
+"A következő környezeti változók valószínűleg\n"
+"figyelmen kívül lesznek hagyva a(z) %s által\n"
+"indított folyamatok által:\n"
+"\n"
 
-#: git-gui.sh:2707
+#: git-gui.sh:2748
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
 "Tcl binary distributed by Cygwin."
 msgstr ""
+"\n"
+"Ez a Cygwin által terjesztett Tcl binárisban\n"
+"lévő ismert hiba miatt van."
 
-#: git-gui.sh:2712
+#: git-gui.sh:2753
 #, tcl-format
 msgid ""
 "\n"
@@ -466,6 +469,12 @@ msgid ""
 "user.email settings into your personal\n"
 "~/.gitconfig file.\n"
 msgstr ""
+"\n"
+"\n"
+"Egy jó helyettesítés a(z) %s számára\n"
+"a user.name és user.email beállítások\n"
+"elhelyezése a személyes\n"
+"~/.gitconfig fájlba.\n"
 
 #: lib/about.tcl:25
 msgid "git-gui - a graphical user interface for Git."
@@ -490,50 +499,47 @@ msgstr "A(z) %s olvasása..."
 
 #: lib/blame.tcl:473
 msgid "Loading copy/move tracking annotations..."
-msgstr ""
+msgstr "A másolást/átnevezést követő annotációk betöltése..."
 
 #: lib/blame.tcl:493
 msgid "lines annotated"
-msgstr ""
+msgstr "sor annotálva"
 
 #: lib/blame.tcl:674
 msgid "Loading original location annotations..."
-msgstr ""
+msgstr "Az eredeti hely annotációk betöltése..."
 
 #: lib/blame.tcl:677
 msgid "Annotation complete."
-msgstr ""
+msgstr "Az annotáció kész."
 
 #: lib/blame.tcl:731
-#, fuzzy
 msgid "Loading annotation..."
-msgstr "A(z) %s betöltése..."
+msgstr "Az annotáció betöltése..."
 
 #: lib/blame.tcl:787
 msgid "Author:"
-msgstr ""
+msgstr "Szerző:"
 
 #: lib/blame.tcl:791
-#, fuzzy
 msgid "Committer:"
-msgstr "Commit:"
+msgstr "Commiter:"
 
 #: lib/blame.tcl:796
 msgid "Original File:"
-msgstr ""
+msgstr "Eredeti fájl:"
 
 #: lib/blame.tcl:910
 msgid "Originally By:"
-msgstr ""
+msgstr "Eredeti szerző:"
 
 #: lib/blame.tcl:916
-#, fuzzy
 msgid "In File:"
-msgstr "Fájl:"
+msgstr "Ebben a fájlban:"
 
 #: lib/blame.tcl:921
 msgid "Copied Or Moved Here By:"
-msgstr ""
+msgstr "Ide másolta vagy helyezte:"
 
 #: lib/branch_checkout.tcl:14 lib/branch_checkout.tcl:19
 msgid "Checkout Branch"
@@ -574,7 +580,7 @@ msgstr "Branch létrehozása"
 msgid "Create New Branch"
 msgstr "Új branch létrehozása"
 
-#: lib/branch_create.tcl:31 lib/choose_repository.tcl:199
+#: lib/branch_create.tcl:31 lib/choose_repository.tcl:375
 msgid "Create"
 msgstr "Létrehozás"
 
@@ -727,9 +733,9 @@ msgstr "[Fel a szülőhöz]"
 msgid "Browse Branch Files"
 msgstr "A branch fájljainak böngészése"
 
-#: lib/browser.tcl:277 lib/choose_repository.tcl:215
-#: lib/choose_repository.tcl:305 lib/choose_repository.tcl:315
-#: lib/choose_repository.tcl:811
+#: lib/browser.tcl:277 lib/choose_repository.tcl:391
+#: lib/choose_repository.tcl:482 lib/choose_repository.tcl:492
+#: lib/choose_repository.tcl:989
 msgid "Browse"
 msgstr "Böngészés"
 
@@ -741,7 +747,7 @@ msgstr "A(z) %s letöltése innen: %s"
 #: lib/checkout_op.tcl:127
 #, tcl-format
 msgid "fatal: Cannot resolve %s"
-msgstr ""
+msgstr "végzetes: Nem lehet feloldani a következőt: %s"
 
 #: lib/checkout_op.tcl:140 lib/console.tcl:79 lib/database.tcl:31
 msgid "Close"
@@ -797,9 +803,9 @@ msgstr ""
 "Az újrakeresés most automatikusan el fog indulni.\n"
 
 #: lib/checkout_op.tcl:322
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Updating working directory to '%s'..."
-msgstr "Nincs munkakönyvtár"
+msgstr "A munkkönyvtár frissiítése a következőre: '%s'..."
 
 #: lib/checkout_op.tcl:353
 #, tcl-format
@@ -828,9 +834,9 @@ msgstr ""
 "checkout'-ból."
 
 #: lib/checkout_op.tcl:446
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Checked out '%s'."
-msgstr "Checkout..."
+msgstr "'%s' kifejtve."
 
 #: lib/checkout_op.tcl:478
 #, tcl-format
@@ -869,244 +875,251 @@ msgstr ""
 "Ennek nem szabad megtörténnie.  A(z) %s most kilép és feladja."
 
 #: lib/choose_font.tcl:39
-#, fuzzy
 msgid "Select"
-msgstr "Mindent kiválaszt"
+msgstr "Kiválaszt"
 
 #: lib/choose_font.tcl:53
 msgid "Font Family"
-msgstr ""
+msgstr "Font család"
 
 #: lib/choose_font.tcl:73
-#, fuzzy
 msgid "Font Size"
-msgstr "Font méret csökkentése"
+msgstr "Font méret"
 
 #: lib/choose_font.tcl:90
 msgid "Font Example"
-msgstr ""
+msgstr "Font példa"
 
 #: lib/choose_font.tcl:101
 msgid ""
 "This is example text.\n"
 "If you like this text, it can be your font."
 msgstr ""
+"Ez egy példa szöveg.\n"
+"Ha ez megfelel, ez lehet a betűtípus."
 
-#: lib/choose_repository.tcl:25
+#: lib/choose_repository.tcl:27
 msgid "Git Gui"
-msgstr ""
+msgstr "Git Gui"
 
-#: lib/choose_repository.tcl:69 lib/choose_repository.tcl:204
-#, fuzzy
+#: lib/choose_repository.tcl:80 lib/choose_repository.tcl:380
 msgid "Create New Repository"
-msgstr "Forrás repó"
+msgstr "Új repó létrehozása"
 
-#: lib/choose_repository.tcl:74 lib/choose_repository.tcl:291
-#, fuzzy
+#: lib/choose_repository.tcl:86
+msgid "New..."
+msgstr "Új..."
+
+#: lib/choose_repository.tcl:93 lib/choose_repository.tcl:468
 msgid "Clone Existing Repository"
-msgstr "Cél repó"
+msgstr "Létező repó másolása"
 
-#: lib/choose_repository.tcl:79 lib/choose_repository.tcl:800
-#, fuzzy
+#: lib/choose_repository.tcl:99
+msgid "Clone..."
+msgstr "Másolás..."
+
+#: lib/choose_repository.tcl:106 lib/choose_repository.tcl:978
 msgid "Open Existing Repository"
-msgstr "Cél repó"
+msgstr "Létező könyvtár megnyitása"
 
-#: lib/choose_repository.tcl:91
-msgid "Next >"
-msgstr ""
+#: lib/choose_repository.tcl:112
+msgid "Open..."
+msgstr "Meggyitás..."
 
-#: lib/choose_repository.tcl:152
-#, fuzzy, tcl-format
+#: lib/choose_repository.tcl:125
+msgid "Recent Repositories"
+msgstr "Legutóbbi repók"
+
+#: lib/choose_repository.tcl:131
+msgid "Open Recent Repository:"
+msgstr "Legutóbbi repók megnyitása:"
+
+#: lib/choose_repository.tcl:294
+#, tcl-format
 msgid "Location %s already exists."
-msgstr "A(z) '%s' branch már létezik."
+msgstr "A(z) '%s' hely már létezik."
 
-#: lib/choose_repository.tcl:158 lib/choose_repository.tcl:165
-#: lib/choose_repository.tcl:172
-#, fuzzy, tcl-format
+#: lib/choose_repository.tcl:300 lib/choose_repository.tcl:307
+#: lib/choose_repository.tcl:314
+#, tcl-format
 msgid "Failed to create repository %s:"
-msgstr "Nem sikerült teljesen elmenteni a beállításokat:"
+msgstr "Nem sikerült letrehozni a(z) %s repót:"
 
-#: lib/choose_repository.tcl:209 lib/choose_repository.tcl:309
+#: lib/choose_repository.tcl:385 lib/choose_repository.tcl:486
 msgid "Directory:"
-msgstr ""
+msgstr "Könyvtár:"
 
-#: lib/choose_repository.tcl:238 lib/choose_repository.tcl:363
-#: lib/choose_repository.tcl:834
-#, fuzzy
+#: lib/choose_repository.tcl:415 lib/choose_repository.tcl:544
+#: lib/choose_repository.tcl:1013
 msgid "Git Repository"
-msgstr "Repó"
+msgstr "Git repó"
 
-#: lib/choose_repository.tcl:253 lib/choose_repository.tcl:260
-#, fuzzy, tcl-format
+#: lib/choose_repository.tcl:430 lib/choose_repository.tcl:437
+#, tcl-format
 msgid "Directory %s already exists."
-msgstr "A(z) '%s' branch már létezik."
+msgstr "A(z) '%s' könyvtár már létezik."
 
-#: lib/choose_repository.tcl:265
-#, fuzzy, tcl-format
+#: lib/choose_repository.tcl:442
+#, tcl-format
 msgid "File %s already exists."
-msgstr "A(z) '%s' branch már létezik."
+msgstr "A(z) '%s' fájl már létezik."
 
-#: lib/choose_repository.tcl:286
-#, fuzzy
+#: lib/choose_repository.tcl:463
 msgid "Clone"
 msgstr "Bezárás"
 
-#: lib/choose_repository.tcl:299
-msgid "URL:"
-msgstr ""
-
-#: lib/choose_repository.tcl:319
-msgid "Clone Type:"
-msgstr ""
-
-#: lib/choose_repository.tcl:325
-msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
-msgstr ""
-
-#: lib/choose_repository.tcl:331
-msgid "Full Copy (Slower, Redundant Backup)"
-msgstr ""
-
-#: lib/choose_repository.tcl:337
-msgid "Shared (Fastest, Not Recommended, No Backup)"
-msgstr ""
-
-#: lib/choose_repository.tcl:369 lib/choose_repository.tcl:418
-#: lib/choose_repository.tcl:560 lib/choose_repository.tcl:630
-#: lib/choose_repository.tcl:840 lib/choose_repository.tcl:848
-#, fuzzy, tcl-format
-msgid "Not a Git repository: %s"
-msgstr "Nincs kiválasztott repó."
-
-#: lib/choose_repository.tcl:405
-msgid "Standard only available for local repository."
-msgstr ""
-
-#: lib/choose_repository.tcl:409
-msgid "Shared only available for local repository."
-msgstr ""
-
-#: lib/choose_repository.tcl:439
-msgid "Failed to configure origin"
-msgstr ""
-
-#: lib/choose_repository.tcl:451
-msgid "Counting objects"
-msgstr ""
-
-#: lib/choose_repository.tcl:452
-msgid "buckets"
-msgstr ""
-
 #: lib/choose_repository.tcl:476
+msgid "URL:"
+msgstr "URL:"
+
+#: lib/choose_repository.tcl:496
+msgid "Clone Type:"
+msgstr "Másolás típusa:"
+
+#: lib/choose_repository.tcl:502
+msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
+msgstr "Általános (Gyors, félig-redundáns, hardlinkek)"
+
+#: lib/choose_repository.tcl:508
+msgid "Full Copy (Slower, Redundant Backup)"
+msgstr "Teljes másolás (Lassabb, redundáns biztonsági mentés)"
+
+#: lib/choose_repository.tcl:514
+msgid "Shared (Fastest, Not Recommended, No Backup)"
+msgstr "Megosztott (Leggyorsabb, nem ajánlott, nincs mentés)"
+
+#: lib/choose_repository.tcl:550 lib/choose_repository.tcl:597
+#: lib/choose_repository.tcl:738 lib/choose_repository.tcl:808
+#: lib/choose_repository.tcl:1019 lib/choose_repository.tcl:1027
+#, tcl-format
+msgid "Not a Git repository: %s"
+msgstr "Nem Git repó: %s"
+
+#: lib/choose_repository.tcl:586
+msgid "Standard only available for local repository."
+msgstr "A standard csak helyi repókra érhető el."
+
+#: lib/choose_repository.tcl:590
+msgid "Shared only available for local repository."
+msgstr "A megosztott csak helyi repókra érhető el."
+
+#: lib/choose_repository.tcl:617
+msgid "Failed to configure origin"
+msgstr "Nem sikerült beállítani az origint"
+
+#: lib/choose_repository.tcl:629
+msgid "Counting objects"
+msgstr "Objektumok számolása"
+
+#: lib/choose_repository.tcl:630
+msgid "buckets"
+msgstr "vödrök"
+
+#: lib/choose_repository.tcl:654
 #, tcl-format
 msgid "Unable to copy objects/info/alternates: %s"
-msgstr ""
+msgstr "Nem sikerült másolni az objects/info/alternates-t: %s"
 
-#: lib/choose_repository.tcl:512
-#, fuzzy, tcl-format
+#: lib/choose_repository.tcl:690
+#, tcl-format
 msgid "Nothing to clone from %s."
-msgstr "Új változások letöltése innen: %s"
+msgstr "Semmi másolni való nincs innen: %s"
 
-#: lib/choose_repository.tcl:514 lib/choose_repository.tcl:728
-#: lib/choose_repository.tcl:740
+#: lib/choose_repository.tcl:692 lib/choose_repository.tcl:906
+#: lib/choose_repository.tcl:918
 msgid "The 'master' branch has not been initialized."
-msgstr ""
+msgstr "A 'master' branch nincs inicializálva."
 
-#: lib/choose_repository.tcl:527
+#: lib/choose_repository.tcl:705
 msgid "Hardlinks are unavailable.  Falling back to copying."
-msgstr ""
+msgstr "Nem érhetőek el hardlinkek.  Másolás használata."
 
-#: lib/choose_repository.tcl:539
-#, fuzzy, tcl-format
+#: lib/choose_repository.tcl:717
+#, tcl-format
 msgid "Cloning from %s"
-msgstr "A(z) %s letöltése innen: %s"
+msgstr "Másolás innen: %s"
 
-#: lib/choose_repository.tcl:570
-#, fuzzy
+#: lib/choose_repository.tcl:748
 msgid "Copying objects"
-msgstr "Az objektum adatbázis tömörítése"
-
-#: lib/choose_repository.tcl:571
-msgid "KiB"
-msgstr ""
-
-#: lib/choose_repository.tcl:595
-#, tcl-format
-msgid "Unable to copy object: %s"
-msgstr ""
-
-#: lib/choose_repository.tcl:605
-msgid "Linking objects"
-msgstr ""
-
-#: lib/choose_repository.tcl:606
-msgid "objects"
-msgstr ""
-
-#: lib/choose_repository.tcl:614
-#, tcl-format
-msgid "Unable to hardlink object: %s"
-msgstr ""
-
-#: lib/choose_repository.tcl:669
-msgid "Cannot fetch branches and objects.  See console output for details."
-msgstr ""
-
-#: lib/choose_repository.tcl:680
-msgid "Cannot fetch tags.  See console output for details."
-msgstr ""
-
-#: lib/choose_repository.tcl:704
-msgid "Cannot determine HEAD.  See console output for details."
-msgstr ""
-
-#: lib/choose_repository.tcl:713
-#, tcl-format
-msgid "Unable to cleanup %s"
-msgstr ""
-
-#: lib/choose_repository.tcl:719
-#, fuzzy
-msgid "Clone failed."
-msgstr "A félbeszakítás nem sikerült."
-
-#: lib/choose_repository.tcl:726
-msgid "No default branch obtained."
-msgstr ""
-
-#: lib/choose_repository.tcl:737
-#, tcl-format
-msgid "Cannot resolve %s as a commit."
-msgstr ""
+msgstr "Objektumok másolása"
 
 #: lib/choose_repository.tcl:749
-#, fuzzy
+msgid "KiB"
+msgstr "KiB"
+
+#: lib/choose_repository.tcl:773
+#, tcl-format
+msgid "Unable to copy object: %s"
+msgstr "Nem sikerült másolni az objektumot: %s"
+
+#: lib/choose_repository.tcl:783
+msgid "Linking objects"
+msgstr "Objektumok összefűzése"
+
+#: lib/choose_repository.tcl:784
+msgid "objects"
+msgstr "objektum"
+
+#: lib/choose_repository.tcl:792
+#, tcl-format
+msgid "Unable to hardlink object: %s"
+msgstr "Nem sikerült hardlinkelni az objektumot: %s"
+
+#: lib/choose_repository.tcl:847
+msgid "Cannot fetch branches and objects.  See console output for details."
+msgstr "Nem sikerült letölteni a branch-eket és az objektumokat.  Bővebben a konzolos kimenetben."
+
+#: lib/choose_repository.tcl:858
+msgid "Cannot fetch tags.  See console output for details."
+msgstr "Nem sikerült letölteni a tageket.  Bővebben a konzolos kimenetben."
+
+#: lib/choose_repository.tcl:882
+msgid "Cannot determine HEAD.  See console output for details."
+msgstr "Nem sikerült megállapítani a HEAD-et.  Bővebben a konzolos kimenetben."
+
+#: lib/choose_repository.tcl:891
+#, tcl-format
+msgid "Unable to cleanup %s"
+msgstr "Nem sikerült tiszítani: %s."
+
+#: lib/choose_repository.tcl:897
+msgid "Clone failed."
+msgstr "A másolás nem sikerült."
+
+#: lib/choose_repository.tcl:904
+msgid "No default branch obtained."
+msgstr "Nincs alapértelmezett branch."
+
+#: lib/choose_repository.tcl:915
+#, tcl-format
+msgid "Cannot resolve %s as a commit."
+msgstr "Nem sikerült felöldani a(z) %s objektumot commitként."
+
+#: lib/choose_repository.tcl:927
 msgid "Creating working directory"
-msgstr "Nincs munkakönyvtár"
+msgstr "Munkakönyvtár létrehozása"
 
-#: lib/choose_repository.tcl:750 lib/index.tcl:15 lib/index.tcl:80
-#: lib/index.tcl:149
+#: lib/choose_repository.tcl:928 lib/index.tcl:65 lib/index.tcl:127
+#: lib/index.tcl:193
 msgid "files"
-msgstr ""
+msgstr "fájl"
 
-#: lib/choose_repository.tcl:779
+#: lib/choose_repository.tcl:957
 msgid "Initial file checkout failed."
-msgstr ""
+msgstr "A kezdeti fájl-kibontás sikertelen."
 
-#: lib/choose_repository.tcl:795
+#: lib/choose_repository.tcl:973
 msgid "Open"
-msgstr ""
+msgstr "Megnyitás"
 
-#: lib/choose_repository.tcl:805
-#, fuzzy
+#: lib/choose_repository.tcl:983
 msgid "Repository:"
-msgstr "Repó"
+msgstr "Repó:"
 
-#: lib/choose_repository.tcl:854
-#, fuzzy, tcl-format
+#: lib/choose_repository.tcl:1033
+#, tcl-format
 msgid "Failed to open repository %s:"
-msgstr "Nem sikerült teljesen elmenteni a beállításokat:"
+msgstr "Nem sikerült megnyitni a(z) %s repót:"
 
 #: lib/choose_rev.tcl:53
 msgid "This Detached Checkout"
@@ -1143,11 +1156,11 @@ msgstr "A revízió kifejezés üres."
 
 #: lib/choose_rev.tcl:530
 msgid "Updated"
-msgstr ""
+msgstr "Frissítve"
 
 #: lib/choose_rev.tcl:558
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: lib/commit.tcl:9
 msgid ""
@@ -1243,7 +1256,7 @@ msgid ""
 "\n"
 "A good commit message has the following format:\n"
 "\n"
-"- First line: Describe in one sentance what you did.\n"
+"- First line: Describe in one sentence what you did.\n"
 "- Second line: Blank\n"
 "- Remaining lines: Describe why this change is good.\n"
 msgstr ""
@@ -1262,7 +1275,7 @@ msgstr "a write-tree sikertelen:"
 #: lib/commit.tcl:275
 #, tcl-format
 msgid "Commit %s appears to be corrupt"
-msgstr ""
+msgstr "A(z) %s commit sérültnek tűnik"
 
 #: lib/commit.tcl:279
 msgid ""
@@ -1285,7 +1298,7 @@ msgstr "Nincs commitolandó változtatás."
 #: lib/commit.tcl:303
 #, tcl-format
 msgid "warning: Tcl does not support encoding '%s'."
-msgstr ""
+msgstr "figyelmeztetés: a Tcl nem támogatja a(z) '%s' kódolást."
 
 #: lib/commit.tcl:317
 msgid "commit-tree failed:"
@@ -1358,11 +1371,17 @@ msgid ""
 "\n"
 "Compress the database now?"
 msgstr ""
+"Ennek a repónak jelenleg %i különálló objektuma van.\n"
+"\n"
+"Az optimális teljesítményhez erősen ajánlott az adatbázis tömörítése, ha "
+"több mint %i objektum létezik.\n"
+"\n"
+"Lehet most tömöríteni az adatbázist?"
 
 #: lib/date.tcl:25
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Invalid date from Git: %s"
-msgstr "Érvénytelen revízió: %s"
+msgstr "Érvénytelen dátum a Git-től: %s"
 
 #: lib/diff.tcl:42
 #, tcl-format
@@ -1387,14 +1406,14 @@ msgstr ""
 "Egy újrakeresés fog indulni a hasonló állapotú fájlok megtalálása érdekében."
 
 #: lib/diff.tcl:81
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Loading diff of %s..."
-msgstr "A(z) %s betöltése..."
+msgstr "A(z) %s diff-jének betöltése..."
 
 #: lib/diff.tcl:114 lib/diff.tcl:184
 #, tcl-format
 msgid "Unable to display %s"
-msgstr ""
+msgstr "Nem lehet megjeleníteni a következőt: %s"
 
 #: lib/diff.tcl:115
 msgid "Error loading file:"
@@ -1402,11 +1421,11 @@ msgstr "Hiba a fájl betöltése közben:"
 
 #: lib/diff.tcl:122
 msgid "Git Repository (subproject)"
-msgstr ""
+msgstr "Git repó (alprojekt)"
 
 #: lib/diff.tcl:134
 msgid "* Binary file (not showing content)."
-msgstr ""
+msgstr "* Bináris fájl (tartalom elrejtése)."
 
 #: lib/diff.tcl:185
 msgid "Error loading diff:"
@@ -1432,33 +1451,57 @@ msgstr "figyelmeztetés"
 msgid "You must correct the above errors before committing."
 msgstr "Ki kell javítanunk a fenti hibákat commit előtt."
 
-#: lib/index.tcl:241
-#, fuzzy, tcl-format
+#: lib/index.tcl:6
+msgid "Unable to unlock the index."
+msgstr "Nem sikerült az index zárolásának feloldása."
+
+#: lib/index.tcl:15
+msgid "Index Error"
+msgstr "Index hiba"
+
+#: lib/index.tcl:21
+msgid ""
+"Updating the Git index failed.  A rescan will be automatically started to "
+"resynchronize git-gui."
+msgstr ""
+"A Git index frissítése sikertelen volt.  Egy újraolvasás automatikusan elindult, hogy "
+"a git-gui újra szinkonban legyen."
+
+#: lib/index.tcl:27
+msgid "Continue"
+msgstr "Folytatás"
+
+#: lib/index.tcl:31
+msgid "Unlock Index"
+msgstr "Index zárolásának feloldása"
+
+#: lib/index.tcl:282
+#, tcl-format
 msgid "Unstaging %s from commit"
-msgstr "Commitba való kiválasztás visszavonása"
+msgstr "A(z) %s commitba való kiválasztásának visszavonása"
 
-#: lib/index.tcl:285
-#, fuzzy, tcl-format
+#: lib/index.tcl:326
+#, tcl-format
 msgid "Adding %s"
-msgstr "A(z) %s olvasása..."
+msgstr "A(z) %s hozzáadása..."
 
-#: lib/index.tcl:340
+#: lib/index.tcl:381
 #, tcl-format
 msgid "Revert changes in file %s?"
 msgstr "Visszaállítja a változtatásokat a(z) %s fájlban?"
 
-#: lib/index.tcl:342
+#: lib/index.tcl:383
 #, tcl-format
 msgid "Revert changes in these %i files?"
 msgstr "Visszaállítja a változtatásokat ebben e %i fájlban?"
 
-#: lib/index.tcl:348
+#: lib/index.tcl:389
 msgid "Any unstaged changes will be permanently lost by the revert."
 msgstr ""
 "Minden nem kiválasztott változtatás el fog veszni ezáltal a visszaállítás "
 "által."
 
-#: lib/index.tcl:351
+#: lib/index.tcl:392
 msgid "Do Nothing"
 msgstr "Ne csináljunk semmit"
 
@@ -1661,42 +1704,25 @@ msgid "New Branch Name Template"
 msgstr "Új branch név sablon"
 
 #: lib/option.tcl:176
-#, fuzzy
 msgid "Change Font"
-msgstr "Fő betűtípus"
+msgstr "Betűtípus megváltoztatása"
 
 #: lib/option.tcl:180
 #, tcl-format
 msgid "Choose %s"
-msgstr ""
+msgstr "%s választása"
 
 #: lib/option.tcl:186
 msgid "pt."
-msgstr ""
+msgstr "pt."
 
 #: lib/option.tcl:200
 msgid "Preferences"
-msgstr ""
+msgstr "Beállítások"
 
 #: lib/option.tcl:235
 msgid "Failed to completely save options:"
 msgstr "Nem sikerült teljesen elmenteni a beállításokat:"
-
-#: lib/remote.tcl:165
-#, fuzzy
-msgid "Prune from"
-msgstr "Törlés innen: %s..."
-
-# tcl-format
-#: lib/remote.tcl:170
-#, fuzzy
-msgid "Fetch from"
-msgstr "Letöltés innen: %s..."
-
-#: lib/remote.tcl:213
-#, fuzzy
-msgid "Push to"
-msgstr "Push"
 
 #: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
 msgid "Delete Remote Branch"
@@ -1735,12 +1761,15 @@ msgid "A branch is required for 'Merged Into'."
 msgstr "Egy branch szükséges a 'Merge-ölt a következőbe'-hez."
 
 #: lib/remote_branch_delete.tcl:184
-#, fuzzy, tcl-format
+#, tcl-format
 msgid ""
 "The following branches are not completely merged into %s:\n"
 "\n"
 " - %s"
-msgstr "A következő branchek nem teljesen lettek merge-ölve ebbe: %s:"
+msgstr ""
+"A következő branchek nem teljesen lettek merge-ölve ebbe: %s:"
+"\n"
+" - %s"
 
 #: lib/remote_branch_delete.tcl:189
 #, tcl-format
@@ -1779,11 +1808,24 @@ msgstr "Nincs kiválasztott repó."
 msgid "Scanning %s..."
 msgstr "Keresés itt: %s..."
 
-#: lib/shortcut.tcl:26 lib/shortcut.tcl:74
-msgid "Cannot write script:"
-msgstr "Nem sikerült írni a scriptet:"
+#: lib/remote.tcl:165
+msgid "Prune from"
+msgstr "Törlés innen"
 
-#: lib/shortcut.tcl:149
+# tcl-format
+#: lib/remote.tcl:170
+msgid "Fetch from"
+msgstr "Letöltés innen"
+
+#: lib/remote.tcl:213
+msgid "Push to"
+msgstr "Push ide"
+
+#: lib/shortcut.tcl:20 lib/shortcut.tcl:61
+msgid "Cannot write shortcut:"
+msgstr "Nem sikerült írni a gyorsbillentyűt:"
+
+#: lib/shortcut.tcl:136
 msgid "Cannot write icon:"
 msgstr "Nem sikerült írni az ikont:"
 
@@ -1793,9 +1835,9 @@ msgid "%s ... %*i of %*i %s (%3i%%)"
 msgstr "%s ... %*i / %*i %s (%3i%%)"
 
 #: lib/transport.tcl:6
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "fetch %s"
-msgstr "Letöltés"
+msgstr "a(z) %s letöltése"
 
 #: lib/transport.tcl:7
 #, tcl-format
@@ -1805,7 +1847,7 @@ msgstr "Új változások letöltése innen: %s"
 #: lib/transport.tcl:18
 #, tcl-format
 msgid "remote prune %s"
-msgstr ""
+msgstr "a(z) %s távoli törlése"
 
 #: lib/transport.tcl:19
 #, tcl-format
@@ -1815,7 +1857,7 @@ msgstr "A %s repóból törölt követő branchek törlése"
 #: lib/transport.tcl:25 lib/transport.tcl:71
 #, tcl-format
 msgid "push %s"
-msgstr ""
+msgstr "%s push-olása"
 
 #: lib/transport.tcl:26
 #, tcl-format
@@ -1845,7 +1887,7 @@ msgstr "Átviteli opciók"
 
 #: lib/transport.tcl:160
 msgid "Force overwrite existing branch (may discard changes)"
-msgstr ""
+msgstr "Létező branch felülírásának erőltetése (lehet, hogy el fog dobni változtatásokat)"
 
 #: lib/transport.tcl:164
 msgid "Use thin pack (for slow network connections)"

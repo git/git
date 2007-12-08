@@ -40,6 +40,10 @@ OUTPUT
 The output from this command is designed to be used as a commit
 template comments, and all the output lines are prefixed with '#'.
 
+The paths mentioned in the output, unlike many other git commands, are
+made relative to the current directory, if you are working in a
+subdirectory (this is on purpose, to help cutting and pasting).
+
 
 CONFIGURATION
 -------------
