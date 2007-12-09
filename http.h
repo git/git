@@ -6,6 +6,8 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
+#include "strbuf.h"
+
 #if LIBCURL_VERSION_NUM >= 0x071000
 #define USE_CURL_MULTI
 #define DEFAULT_MAX_REQUESTS 5
@@ -48,18 +50,17 @@ struct active_request_slot
 
 struct buffer
 {
-        size_t posn;
-        size_t size;
-        void *buffer;
+	struct strbuf buf;
+	size_t posn;
 };
 
 /* Curl request read/write callbacks */
 extern size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
 			   struct buffer *buffer);
 extern size_t fwrite_buffer(const void *ptr, size_t eltsize,
-			    size_t nmemb, struct buffer *buffer);
+			    size_t nmemb, struct strbuf *buffer);
 extern size_t fwrite_null(const void *ptr, size_t eltsize,
-			  size_t nmemb, struct buffer *buffer);
+			  size_t nmemb, struct strbuf *buffer);
 
 /* Slot lifecycle functions */
 extern struct active_request_slot *get_active_slot(void);

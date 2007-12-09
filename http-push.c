@@ -494,10 +494,11 @@ static void start_put(struct transfer_request *request)
 	memset(&stream, 0, sizeof(stream));
 	deflateInit(&stream, zlib_compression_level);
 	size = deflateBound(&stream, len + hdrlen);
-	request->buffer.buffer = xmalloc(size);
+	strbuf_init(&request->buffer.buf, size);
+	request->buffer.posn = 0;
 
 	/* Compress it */
-	stream.next_out = request->buffer.buffer;
+	stream.next_out = (unsigned char *)request->buffer.buf.buf;
 	stream.avail_out = size;
 
 	/* First header.. */
@@ -514,8 +515,7 @@ static void start_put(struct transfer_request *request)
 	deflateEnd(&stream);
 	free(unpacked);
 
-	request->buffer.size = stream.total_out;
-	request->buffer.posn = 0;
+	request->buffer.buf.len = stream.total_out;
 
 	request->url = xmalloc(strlen(remote->url) +
 			       strlen(request->lock->token) + 51);
@@ -537,7 +537,7 @@ static void start_put(struct transfer_request *request)
 	slot->callback_func = process_response;
 	slot->callback_data = request;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &request->buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, request->buffer.size);
+	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, request->buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PUT);
@@ -1007,17 +1007,12 @@ static int fetch_indices(void)
 {
 	unsigned char sha1[20];
 	char *url;
-	struct buffer buffer;
+	struct strbuf buffer = STRBUF_INIT;
 	char *data;
 	int i = 0;
 
 	struct active_request_slot *slot;
 	struct slot_results results;
-
-	data = xcalloc(1, 4096);
-	buffer.size = 4096;
-	buffer.posn = 0;
-	buffer.buffer = data;
 
 	if (push_verbosely)
 		fprintf(stderr, "Getting pack list\n");
@@ -1034,7 +1029,7 @@ static int fetch_indices(void)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (results.curl_result != CURLE_OK) {
-			free(buffer.buffer);
+			strbuf_release(&buffer);
 			free(url);
 			if (results.http_code == 404)
 				return 0;
@@ -1042,18 +1037,18 @@ static int fetch_indices(void)
 				return error("%s", curl_errorstr);
 		}
 	} else {
-		free(buffer.buffer);
+		strbuf_release(&buffer);
 		free(url);
 		return error("Unable to start request");
 	}
 	free(url);
 
-	data = buffer.buffer;
-	while (i < buffer.posn) {
+	data = buffer.buf;
+	while (i < buffer.len) {
 		switch (data[i]) {
 		case 'P':
 			i++;
-			if (i + 52 < buffer.posn &&
+			if (i + 52 < buffer.len &&
 			    !prefixcmp(data + i, " pack-") &&
 			    !prefixcmp(data + i + 46, ".pack\n")) {
 				get_sha1_hex(data + i + 6, sha1);
@@ -1068,7 +1063,7 @@ static int fetch_indices(void)
 		i++;
 	}
 
-	free(buffer.buffer);
+	strbuf_release(&buffer);
 	return 0;
 }
 
@@ -1119,16 +1114,11 @@ static char *quote_ref_url(const char *base, const char *ref)
 
 int fetch_ref(char *ref, unsigned char *sha1)
 {
-        char *url;
-        char hex[42];
-        struct buffer buffer;
+	char *url;
+	struct strbuf buffer = STRBUF_INIT;
 	char *base = remote->url;
 	struct active_request_slot *slot;
 	struct slot_results results;
-        buffer.size = 41;
-        buffer.posn = 0;
-        buffer.buffer = hex;
-        hex[41] = '\0';
 
 	url = quote_ref_url(base, ref);
 	slot = get_active_slot();
@@ -1148,10 +1138,10 @@ int fetch_ref(char *ref, unsigned char *sha1)
 		return error("Unable to start request");
 	}
 
-	if (buffer.posn != 41)
+	strbuf_rtrim(&buffer);
+	if (buffer.len != 40)
 		return 1;
-        hex[40] = '\0';
-	return get_sha1_hex(hex, sha1);
+	return get_sha1_hex(buffer.buf, sha1);
 }
 
 static void one_remote_object(const char *hex)
@@ -1274,10 +1264,8 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 {
 	struct active_request_slot *slot;
 	struct slot_results results;
-	struct buffer out_buffer;
-	struct buffer in_buffer;
-	char *out_data;
-	char *in_data;
+	struct buffer out_buffer = { STRBUF_INIT, 0 };
+	struct strbuf in_buffer = STRBUF_INIT;
 	char *url;
 	char *ep;
 	char timeout_header[25];
@@ -1317,16 +1305,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 		ep = strchr(ep + 1, '/');
 	}
 
-	out_buffer.size = strlen(LOCK_REQUEST) + strlen(git_default_email) - 2;
-	out_data = xmalloc(out_buffer.size + 1);
-	snprintf(out_data, out_buffer.size + 1, LOCK_REQUEST, git_default_email);
-	out_buffer.posn = 0;
-	out_buffer.buffer = out_data;
-
-	in_buffer.size = 4096;
-	in_data = xmalloc(in_buffer.size);
-	in_buffer.posn = 0;
-	in_buffer.buffer = in_data;
+	strbuf_addf(&out_buffer.buf, LOCK_REQUEST, git_default_email);
 
 	sprintf(timeout_header, "Timeout: Second-%ld", timeout);
 	dav_headers = curl_slist_append(dav_headers, timeout_header);
@@ -1335,7 +1314,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	slot = get_active_slot();
 	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
+	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
@@ -1361,8 +1340,8 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 			XML_SetElementHandler(parser, xml_start_tag,
 					      xml_end_tag);
 			XML_SetCharacterDataHandler(parser, xml_cdata);
-			result = XML_Parse(parser, in_buffer.buffer,
-					   in_buffer.posn, 1);
+			result = XML_Parse(parser, in_buffer.buf,
+					   in_buffer.len, 1);
 			free(ctx.name);
 			if (result != XML_STATUS_OK) {
 				fprintf(stderr, "XML error: %s\n",
@@ -1377,8 +1356,8 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	}
 
 	curl_slist_free_all(dav_headers);
-	free(out_data);
-	free(in_data);
+	strbuf_release(&out_buffer.buf);
+	strbuf_release(&in_buffer);
 
 	if (lock->token == NULL || lock->timeout <= 0) {
 		if (lock->token != NULL)
@@ -1529,10 +1508,8 @@ static void remote_ls(const char *path, int flags,
 	char *url = xmalloc(strlen(remote->url) + strlen(path) + 1);
 	struct active_request_slot *slot;
 	struct slot_results results;
-	struct buffer in_buffer;
-	struct buffer out_buffer;
-	char *in_data;
-	char *out_data;
+	struct strbuf in_buffer = STRBUF_INIT;
+	struct buffer out_buffer = { STRBUF_INIT, 0 };
 	struct curl_slist *dav_headers = NULL;
 	struct xml_ctx ctx;
 	struct remote_ls_ctx ls;
@@ -1546,16 +1523,7 @@ static void remote_ls(const char *path, int flags,
 
 	sprintf(url, "%s%s", remote->url, path);
 
-	out_buffer.size = strlen(PROPFIND_ALL_REQUEST);
-	out_data = xmalloc(out_buffer.size + 1);
-	snprintf(out_data, out_buffer.size + 1, PROPFIND_ALL_REQUEST);
-	out_buffer.posn = 0;
-	out_buffer.buffer = out_data;
-
-	in_buffer.size = 4096;
-	in_data = xmalloc(in_buffer.size);
-	in_buffer.posn = 0;
-	in_buffer.buffer = in_data;
+	strbuf_addf(&out_buffer.buf, PROPFIND_ALL_REQUEST);
 
 	dav_headers = curl_slist_append(dav_headers, "Depth: 1");
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
@@ -1563,7 +1531,7 @@ static void remote_ls(const char *path, int flags,
 	slot = get_active_slot();
 	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
+	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
@@ -1586,8 +1554,8 @@ static void remote_ls(const char *path, int flags,
 			XML_SetElementHandler(parser, xml_start_tag,
 					      xml_end_tag);
 			XML_SetCharacterDataHandler(parser, xml_cdata);
-			result = XML_Parse(parser, in_buffer.buffer,
-					   in_buffer.posn, 1);
+			result = XML_Parse(parser, in_buffer.buf,
+					   in_buffer.len, 1);
 			free(ctx.name);
 
 			if (result != XML_STATUS_OK) {
@@ -1603,8 +1571,8 @@ static void remote_ls(const char *path, int flags,
 
 	free(ls.path);
 	free(url);
-	free(out_data);
-	free(in_buffer.buffer);
+	strbuf_release(&out_buffer.buf);
+	strbuf_release(&in_buffer);
 	curl_slist_free_all(dav_headers);
 }
 
@@ -1625,27 +1593,13 @@ static int locking_available(void)
 {
 	struct active_request_slot *slot;
 	struct slot_results results;
-	struct buffer in_buffer;
-	struct buffer out_buffer;
-	char *in_data;
-	char *out_data;
+	struct strbuf in_buffer = STRBUF_INIT;
+	struct buffer out_buffer = { STRBUF_INIT, 0 };
 	struct curl_slist *dav_headers = NULL;
 	struct xml_ctx ctx;
 	int lock_flags = 0;
 
-	out_buffer.size =
-		strlen(PROPFIND_SUPPORTEDLOCK_REQUEST) +
-		strlen(remote->url) - 2;
-	out_data = xmalloc(out_buffer.size + 1);
-	snprintf(out_data, out_buffer.size + 1,
-		 PROPFIND_SUPPORTEDLOCK_REQUEST, remote->url);
-	out_buffer.posn = 0;
-	out_buffer.buffer = out_data;
-
-	in_buffer.size = 4096;
-	in_data = xmalloc(in_buffer.size);
-	in_buffer.posn = 0;
-	in_buffer.buffer = in_data;
+	strbuf_addf(&out_buffer.buf, PROPFIND_SUPPORTEDLOCK_REQUEST, remote->url);
 
 	dav_headers = curl_slist_append(dav_headers, "Depth: 0");
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
@@ -1653,7 +1607,7 @@ static int locking_available(void)
 	slot = get_active_slot();
 	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
+	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
@@ -1675,8 +1629,8 @@ static int locking_available(void)
 			XML_SetUserData(parser, &ctx);
 			XML_SetElementHandler(parser, xml_start_tag,
 					      xml_end_tag);
-			result = XML_Parse(parser, in_buffer.buffer,
-					   in_buffer.posn, 1);
+			result = XML_Parse(parser, in_buffer.buf,
+					   in_buffer.len, 1);
 			free(ctx.name);
 
 			if (result != XML_STATUS_OK) {
@@ -1691,8 +1645,8 @@ static int locking_available(void)
 		fprintf(stderr, "Unable to start PROPFIND request\n");
 	}
 
-	free(out_data);
-	free(in_buffer.buffer);
+	strbuf_release(&out_buffer.buf);
+	strbuf_release(&in_buffer);
 	curl_slist_free_all(dav_headers);
 
 	return lock_flags;
@@ -1810,30 +1764,20 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 {
 	struct active_request_slot *slot;
 	struct slot_results results;
-	char *out_data;
 	char *if_header;
-	struct buffer out_buffer;
+	struct buffer out_buffer = { STRBUF_INIT, 0 };
 	struct curl_slist *dav_headers = NULL;
-	int i;
 
 	if_header = xmalloc(strlen(lock->token) + 25);
 	sprintf(if_header, "If: (<opaquelocktoken:%s>)", lock->token);
 	dav_headers = curl_slist_append(dav_headers, if_header);
 
-	out_buffer.size = 41;
-	out_data = xmalloc(out_buffer.size + 1);
-	i = snprintf(out_data, out_buffer.size + 1, "%s\n", sha1_to_hex(sha1));
-	if (i != out_buffer.size) {
-		fprintf(stderr, "Unable to initialize PUT request body\n");
-		return 0;
-	}
-	out_buffer.posn = 0;
-	out_buffer.buffer = out_data;
+	strbuf_addf(&out_buffer.buf, "%s\n", sha1_to_hex(sha1));
 
 	slot = get_active_slot();
 	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
+	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PUT);
@@ -1844,7 +1788,7 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		free(out_data);
+		strbuf_release(&out_buffer.buf);
 		free(if_header);
 		if (results.curl_result != CURLE_OK) {
 			fprintf(stderr,
@@ -1854,7 +1798,7 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 			return 0;
 		}
 	} else {
-		free(out_data);
+		strbuf_release(&out_buffer.buf);
 		free(if_header);
 		fprintf(stderr, "Unable to start PUT request\n");
 		return 0;
@@ -2011,7 +1955,7 @@ static void mark_edges_uninteresting(struct commit_list *list)
 
 static void add_remote_info_ref(struct remote_ls_ctx *ls)
 {
-	struct buffer *buf = (struct buffer *)ls->userData;
+	struct strbuf *buf = (struct strbuf *)ls->userData;
 	unsigned char remote_sha1[20];
 	struct object *o;
 	int len;
@@ -2056,17 +2000,14 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 
 static void update_remote_info_refs(struct remote_lock *lock)
 {
-	struct buffer buffer;
+	struct buffer buffer = { STRBUF_INIT, 0 };
 	struct active_request_slot *slot;
 	struct slot_results results;
 	char *if_header;
 	struct curl_slist *dav_headers = NULL;
 
-	buffer.buffer = xcalloc(1, 4096);
-	buffer.size = 4096;
-	buffer.posn = 0;
 	remote_ls("refs/", (PROCESS_FILES | RECURSIVE),
-		  add_remote_info_ref, &buffer);
+		  add_remote_info_ref, &buffer.buf);
 	if (!aborted) {
 		if_header = xmalloc(strlen(lock->token) + 25);
 		sprintf(if_header, "If: (<opaquelocktoken:%s>)", lock->token);
@@ -2075,7 +2016,7 @@ static void update_remote_info_refs(struct remote_lock *lock)
 		slot = get_active_slot();
 		slot->results = &results;
 		curl_easy_setopt(slot->curl, CURLOPT_INFILE, &buffer);
-		curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, buffer.posn);
+		curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, buffer.buf.len);
 		curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
 		curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 		curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PUT);
@@ -2083,8 +2024,6 @@ static void update_remote_info_refs(struct remote_lock *lock)
 		curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 1);
 		curl_easy_setopt(slot->curl, CURLOPT_PUT, 1);
 		curl_easy_setopt(slot->curl, CURLOPT_URL, lock->url);
-
-		buffer.posn = 0;
 
 		if (start_active_slot(slot)) {
 			run_active_slot(slot);
@@ -2096,7 +2035,7 @@ static void update_remote_info_refs(struct remote_lock *lock)
 		}
 		free(if_header);
 	}
-	free(buffer.buffer);
+	strbuf_release(&buffer.buf);
 }
 
 static int remote_exists(const char *path)
@@ -2107,12 +2046,12 @@ static int remote_exists(const char *path)
 
 	sprintf(url, "%s%s", remote->url, path);
 
-        slot = get_active_slot();
+	slot = get_active_slot();
 	slot->results = &results;
-        curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-        curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 1);
+	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 1);
 
-        if (start_active_slot(slot)) {
+	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		free(url);
 		if (results.http_code == 404)
@@ -2132,16 +2071,12 @@ static int remote_exists(const char *path)
 static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 {
 	char *url;
-	struct buffer buffer;
+	struct strbuf buffer = STRBUF_INIT;
 	struct active_request_slot *slot;
 	struct slot_results results;
 
 	url = xmalloc(strlen(remote->url) + strlen(path) + 1);
 	sprintf(url, "%s%s", remote->url, path);
-
-	buffer.size = 4096;
-	buffer.posn = 0;
-	buffer.buffer = xmalloc(buffer.size);
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -2165,17 +2100,17 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	*symref = NULL;
 	hashclr(sha1);
 
-	if (buffer.posn == 0)
+	if (buffer.len == 0)
 		return;
 
 	/* If it's a symref, set the refname; otherwise try for a sha1 */
-	if (!prefixcmp((char *)buffer.buffer, "ref: ")) {
-		*symref = xmemdupz((char *)buffer.buffer + 5, buffer.posn - 6);
+	if (!prefixcmp((char *)buffer.buf, "ref: ")) {
+		*symref = xmemdupz((char *)buffer.buf + 5, buffer.len - 6);
 	} else {
-		get_sha1_hex(buffer.buffer, sha1);
+		get_sha1_hex(buffer.buf, sha1);
 	}
 
-	free(buffer.buffer);
+	strbuf_release(&buffer);
 }
 
 static int verify_merge_base(unsigned char *head_sha1, unsigned char *branch_sha1)

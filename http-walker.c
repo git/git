@@ -48,7 +48,7 @@ struct alternates_request {
 	struct walker *walker;
 	const char *base;
 	char *url;
-	struct buffer *buffer;
+	struct strbuf *buffer;
 	struct active_request_slot *slot;
 	int http_specific;
 };
@@ -462,7 +462,7 @@ static void process_alternates_response(void *callback_data)
 
 	if (alt_req->http_specific) {
 		if (slot->curl_result != CURLE_OK ||
-		    !alt_req->buffer->posn) {
+		    !alt_req->buffer->len) {
 
 			/* Try reusing the slot to get non-http alternates */
 			alt_req->http_specific = 0;
@@ -490,12 +490,12 @@ static void process_alternates_response(void *callback_data)
 	}
 
 	fwrite_buffer(&null_byte, 1, 1, alt_req->buffer);
-	alt_req->buffer->posn--;
-	data = alt_req->buffer->buffer;
+	alt_req->buffer->len--;
+	data = alt_req->buffer->buf;
 
-	while (i < alt_req->buffer->posn) {
+	while (i < alt_req->buffer->len) {
 		int posn = i;
-		while (posn < alt_req->buffer->posn && data[posn] != '\n')
+		while (posn < alt_req->buffer->len && data[posn] != '\n')
 			posn++;
 		if (data[posn] == '\n') {
 			int okay = 0;
@@ -583,9 +583,8 @@ static void process_alternates_response(void *callback_data)
 
 static void fetch_alternates(struct walker *walker, const char *base)
 {
-	struct buffer buffer;
+	struct strbuf buffer = STRBUF_INIT;
 	char *url;
-	char *data;
 	struct active_request_slot *slot;
 	struct alternates_request alt_req;
 	struct walker_data *cdata = walker->data;
@@ -605,11 +604,6 @@ static void fetch_alternates(struct walker *walker, const char *base)
 
 	/* Start the fetch */
 	cdata->got_alternates = 0;
-
-	data = xmalloc(4096);
-	buffer.size = 4096;
-	buffer.posn = 0;
-	buffer.buffer = data;
 
 	if (walker->get_verbosely)
 		fprintf(stderr, "Getting alternates list for %s\n", base);
@@ -639,7 +633,7 @@ static void fetch_alternates(struct walker *walker, const char *base)
 	else
 		cdata->got_alternates = -1;
 
-	free(data);
+	strbuf_release(&buffer);
 	free(url);
 }
 
@@ -647,7 +641,7 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 {
 	unsigned char sha1[20];
 	char *url;
-	struct buffer buffer;
+	struct strbuf buffer = STRBUF_INIT;
 	char *data;
 	int i = 0;
 
@@ -656,11 +650,6 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 
 	if (repo->got_indices)
 		return 0;
-
-	data = xmalloc(4096);
-	buffer.size = 4096;
-	buffer.posn = 0;
-	buffer.buffer = data;
 
 	if (walker->get_verbosely)
 		fprintf(stderr, "Getting pack list for %s\n", repo->base);
@@ -677,28 +666,27 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (results.curl_result != CURLE_OK) {
+			strbuf_release(&buffer);
 			if (missing_target(&results)) {
 				repo->got_indices = 1;
-				free(buffer.buffer);
 				return 0;
 			} else {
 				repo->got_indices = 0;
-				free(buffer.buffer);
 				return error("%s", curl_errorstr);
 			}
 		}
 	} else {
 		repo->got_indices = 0;
-		free(buffer.buffer);
+		strbuf_release(&buffer);
 		return error("Unable to start request");
 	}
 
-	data = buffer.buffer;
-	while (i < buffer.posn) {
+	data = buffer.buf;
+	while (i < buffer.len) {
 		switch (data[i]) {
 		case 'P':
 			i++;
-			if (i + 52 <= buffer.posn &&
+			if (i + 52 <= buffer.len &&
 			    !prefixcmp(data + i, " pack-") &&
 			    !prefixcmp(data + i + 46, ".pack\n")) {
 				get_sha1_hex(data + i + 6, sha1);
@@ -707,13 +695,13 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 				break;
 			}
 		default:
-			while (i < buffer.posn && data[i] != '\n')
+			while (i < buffer.len && data[i] != '\n')
 				i++;
 		}
 		i++;
 	}
 
-	free(buffer.buffer);
+	strbuf_release(&buffer);
 	repo->got_indices = 1;
 	return 0;
 }
@@ -945,17 +933,12 @@ static char *quote_ref_url(const char *base, const char *ref)
 
 static int fetch_ref(struct walker *walker, char *ref, unsigned char *sha1)
 {
-        char *url;
-        char hex[42];
-        struct buffer buffer;
+	char *url;
+	struct strbuf buffer = STRBUF_INIT;
 	struct walker_data *data = walker->data;
 	const char *base = data->alt->base;
 	struct active_request_slot *slot;
 	struct slot_results results;
-        buffer.size = 41;
-        buffer.posn = 0;
-        buffer.buffer = hex;
-        hex[41] = '\0';
 
 	url = quote_ref_url(base, ref);
 	slot = get_active_slot();
@@ -973,10 +956,10 @@ static int fetch_ref(struct walker *walker, char *ref, unsigned char *sha1)
 		return error("Unable to start request");
 	}
 
-	if (buffer.posn != 41)
+	strbuf_rtrim(&buffer);
+	if (buffer.len != 40)
 		return 1;
-        hex[40] = '\0';
-	return get_sha1_hex(hex, sha1);
+	return get_sha1_hex(buffer.buf, sha1);
 }
 
 static void cleanup(struct walker *walker)

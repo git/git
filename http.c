@@ -34,31 +34,25 @@ size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
 			   struct buffer *buffer)
 {
 	size_t size = eltsize * nmemb;
-	if (size > buffer->size - buffer->posn)
-		size = buffer->size - buffer->posn;
-	memcpy(ptr, (char *) buffer->buffer + buffer->posn, size);
+	if (size > buffer->buf.len - buffer->posn)
+		size = buffer->buf.len - buffer->posn;
+	memcpy(ptr, buffer->buf.buf + buffer->posn, size);
 	buffer->posn += size;
+
 	return size;
 }
 
 size_t fwrite_buffer(const void *ptr, size_t eltsize,
-			    size_t nmemb, struct buffer *buffer)
+			    size_t nmemb, struct strbuf *buffer)
 {
 	size_t size = eltsize * nmemb;
-	if (size > buffer->size - buffer->posn) {
-		buffer->size = buffer->size * 3 / 2;
-		if (buffer->size < buffer->posn + size)
-			buffer->size = buffer->posn + size;
-		buffer->buffer = xrealloc(buffer->buffer, buffer->size);
-	}
-	memcpy((char *) buffer->buffer + buffer->posn, ptr, size);
-	buffer->posn += size;
+	strbuf_add(buffer, ptr, size);
 	data_received++;
 	return size;
 }
 
 size_t fwrite_null(const void *ptr, size_t eltsize,
-			  size_t nmemb, struct buffer *buffer)
+			  size_t nmemb, struct strbuf *buffer)
 {
 	data_received++;
 	return eltsize * nmemb;
@@ -507,8 +501,8 @@ void run_active_slot(struct active_request_slot *slot)
 
 static void closedown_active_slot(struct active_request_slot *slot)
 {
-        active_requests--;
-        slot->in_use = 0;
+	active_requests--;
+	slot->in_use = 0;
 }
 
 void release_active_slot(struct active_request_slot *slot)
@@ -529,7 +523,7 @@ void release_active_slot(struct active_request_slot *slot)
 static void finish_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
-        curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
+	curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
 
 	if (slot->finished != NULL)
 		(*slot->finished) = 1;
@@ -540,10 +534,10 @@ static void finish_active_slot(struct active_request_slot *slot)
 		slot->results->http_code = slot->http_code;
 	}
 
-        /* Run callback if appropriate */
-        if (slot->callback_func != NULL) {
-                slot->callback_func(slot->callback_data);
-        }
+	/* Run callback if appropriate */
+	if (slot->callback_func != NULL) {
+		slot->callback_func(slot->callback_data);
+	}
 }
 
 void finish_all_active_slots(void)
