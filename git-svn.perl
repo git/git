@@ -1904,7 +1904,7 @@ sub last_rev_commit {
 		($self->{last_rev}, $self->{last_commit}) = (undef, undef);
 		return (undef, undef);
 	}
-	my ($rev, $commit) = $self->rev_map_max;
+	my ($rev, $commit) = $self->rev_map_max(1);
 	($self->{last_rev}, $self->{last_commit}) = ($rev, $commit);
 	return ($rev, $commit);
 }
@@ -2534,11 +2534,16 @@ sub rebuild {
 #     * 4 bytes for the integer representing an SVN revision number
 #     * 20 bytes representing the sha1 of a git commit
 #   - No empty padding records like the old format
+#     (except the last record, which can be overwritten)
 #   - new records are written append-only since SVN revision numbers
 #     increase monotonically
 #   - lookups on SVN revision number are done via a binary search
-#   - Piping the file to xxd(1) -c24 is a good way of dumping it for
-#     viewing or editing, should the need ever arise.
+#   - Piping the file to xxd -c24 is a good way of dumping it for
+#     viewing or editing (piped back through xxd -r), should the need
+#     ever arise.
+#   - The last record can be padding revision with an all-zero sha1
+#     This is used to optimize fetch performance when using multiple
+#     "fetch" directives in .git/config
 #
 # These files are disposable unless noMetadata or useSvmProps is set
 
@@ -2548,16 +2553,32 @@ sub _rev_map_set {
 	my $size = (stat($fh))[7];
 	($size % 24) == 0 or croak "inconsistent size: $size";
 
+	my $wr_offset = 0;
 	if ($size > 0) {
 		sysseek($fh, -24, SEEK_END) or croak "seek: $!";
 		my $read = sysread($fh, my $buf, 24) or croak "read: $!";
 		$read == 24 or croak "read only $read bytes (!= 24)";
 		my ($last_rev, $last_commit) = unpack(rev_map_fmt, $buf);
-		if ($last_rev >= $rev) {
-			croak "last_rev is higher!: $last_rev >= $rev";
+		if ($last_commit eq ('0' x40)) {
+			if ($size >= 48) {
+				sysseek($fh, -48, SEEK_END) or croak "seek: $!";
+				$read = sysread($fh, $buf, 24) or
+				    croak "read: $!";
+				$read == 24 or
+				    croak "read only $read bytes (!= 24)";
+				($last_rev, $last_commit) =
+				    unpack(rev_map_fmt, $buf);
+				if ($last_commit eq ('0' x40)) {
+					croak "inconsistent .rev_map\n";
+				}
+			}
+			if ($last_rev >= $rev) {
+				croak "last_rev is higher!: $last_rev >= $rev";
+			}
+			$wr_offset = -24;
 		}
 	}
-	sysseek($fh, 0, SEEK_END) or croak "seek: $!";
+	sysseek($fh, $wr_offset, SEEK_END) or croak "seek: $!";
 	syswrite($fh, pack(rev_map_fmt, $rev, $commit), 24) == 24 or
 	  croak "write: $!";
 }
@@ -2599,7 +2620,7 @@ sub rev_map_set {
 					    "$db => $db_lock ($!)\n";
 	}
 
-	sysopen(my $fh, $db_lock, O_RDWR | O_APPEND | O_CREAT)
+	sysopen(my $fh, $db_lock, O_RDWR | O_CREAT)
 	     or croak "Couldn't open $db_lock: $!\n";
 	_rev_map_set($fh, $rev, $commit);
 	if ($sync) {
@@ -2622,25 +2643,40 @@ sub rev_map_set {
 	}
 }
 
+# If want_commit, this will return an array of (rev, commit) where
+# commit _must_ be a valid commit in the archive.
+# Otherwise, it'll return the max revision (whether or not the
+# commit is valid or just a 0x40 placeholder).
 sub rev_map_max {
-	my ($self) = @_;
+	my ($self, $want_commit) = @_;
 	$self->rebuild;
 	my $map_path = $self->map_path;
-	stat $map_path or return wantarray ? (0, undef) : 0;
+	stat $map_path or return $want_commit ? (0, undef) : 0;
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
 	my $size = (stat($fh))[7];
 	($size % 24) == 0 or croak "inconsistent size: $size";
 
 	if ($size == 0) {
 		close $fh or croak "close: $!";
-		return wantarray ? (0, undef) : 0;
+		return $want_commit ? (0, undef) : 0;
 	}
 
-	sysseek($fh, -24, SEEK_END);
+	sysseek($fh, -24, SEEK_END) or croak "seek: $!";
 	sysread($fh, my $buf, 24) == 24 or croak "read: $!";
-	close $fh or croak "close: $!";
 	my ($r, $c) = unpack(rev_map_fmt, $buf);
-	wantarray ? ($r, $c) : $r;
+	if ($want_commit && $c eq ('0' x40)) {
+		if ($size < 48) {
+			return $want_commit ? (0, undef) : 0;
+		}
+		sysseek($fh, -48, SEEK_END) or croak "seek: $!";
+		sysread($fh, $buf, 24) == 24 or croak "read: $!";
+		($r, $c) = unpack(rev_map_fmt, $buf);
+		if ($c eq ('0'x40)) {
+			croak "Penultimate record is all-zeroes in $map_path";
+		}
+	}
+	close $fh or croak "close: $!";
+	$want_commit ? ($r, $c) : $r;
 }
 
 sub rev_map_get {
@@ -2672,7 +2708,7 @@ sub rev_map_get {
 			$u = $i - 24;
 		} else { # $r == $rev
 			close($fh) or croak "close: $!";
-			return $c;
+			return $c eq ('0' x 40) ? undef : $c;
 		}
 	}
 	close($fh) or croak "close: $!";
@@ -3862,6 +3898,13 @@ sub gs_fetch_loop_common {
 				$self = Git::SVN::Ra->new($ra_url);
 				$ra_invalid = undef;
 			}
+		}
+		# pre-fill the .rev_db since it'll eventually get filled in
+		# with '0' x40 if something new gets committed
+		foreach my $gs (@$gsv) {
+			next if $gs->rev_map_max >= $max;
+			next if defined $gs->rev_map_get($max);
+			$gs->rev_map_set($max, 0 x40);
 		}
 		foreach my $g (@$globs) {
 			my $k = "svn-remote.$g->{remote}.$g->{t}-maxRev";
