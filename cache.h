@@ -644,6 +644,18 @@ extern int diff_auto_refresh_index;
 /* match-trees.c */
 void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
 
+/*
+ * whitespace rules.
+ * used by both diff and apply
+ */
+#define WS_TRAILING_SPACE	01
+#define WS_SPACE_BEFORE_TAB	02
+#define WS_INDENT_WITH_NON_TAB	04
+#define WS_DEFAULT_RULE (WS_TRAILING_SPACE|WS_SPACE_BEFORE_TAB)
+extern unsigned whitespace_rule_cfg;
+extern unsigned whitespace_rule(const char *);
+extern unsigned parse_whitespace_rule(const char *);
+
 /* ls-files */
 int pathspec_match(const char **spec, char *matched, const char *filename, int skiplen);
 int report_path_error(const char *ps_matched, const char **pathspec, int prefix_offset);

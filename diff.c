@@ -454,6 +454,7 @@ static void diff_words_show(struct diff_words_data *diff_words)
 struct emit_callback {
 	struct xdiff_emit_state xm;
 	int nparents, color_diff;
+	unsigned ws_rule;
 	const char **label_path;
 	struct diff_words_data *diff_words;
 	int *found_changesp;
@@ -493,8 +494,8 @@ static void emit_line(const char *set, const char *reset, const char *line, int 
 }
 
 static void emit_line_with_ws(int nparents,
-		const char *set, const char *reset, const char *ws,
-		const char *line, int len)
+			      const char *set, const char *reset, const char *ws,
+			      const char *line, int len, unsigned ws_rule)
 {
 	int col0 = nparents;
 	int last_tab_in_indent = -1;
@@ -502,19 +503,30 @@ static void emit_line_with_ws(int nparents,
 	int i;
 	int tail = len;
 	int need_highlight_leading_space = 0;
-	/* The line is a newly added line.  Does it have funny leading
-	 * whitespaces?  In indent, SP should never precede a TAB.
+	/*
+	 * The line is a newly added line.  Does it have funny leading
+	 * whitespaces?  In indent, SP should never precede a TAB.  In
+	 * addition, under "indent with non tab" rule, there should not
+	 * be more than 8 consecutive spaces.
 	 */
 	for (i = col0; i < len; i++) {
 		if (line[i] == '\t') {
 			last_tab_in_indent = i;
-			if (0 <= last_space_in_indent)
+			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
+			    0 <= last_space_in_indent)
 				need_highlight_leading_space = 1;
 		}
 		else if (line[i] == ' ')
 			last_space_in_indent = i;
 		else
 			break;
+	}
+	if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
+	    0 <= last_space_in_indent &&
+	    last_tab_in_indent < 0 &&
+	    8 <= (i - col0)) {
+		last_tab_in_indent = i;
+		need_highlight_leading_space = 1;
 	}
 	fputs(set, stdout);
 	fwrite(line, col0, 1, stdout);
@@ -540,10 +552,12 @@ static void emit_line_with_ws(int nparents,
 	tail = len - 1;
 	if (line[tail] == '\n' && i < tail)
 		tail--;
-	while (i < tail) {
-		if (!isspace(line[tail]))
-			break;
-		tail--;
+	if (ws_rule & WS_TRAILING_SPACE) {
+		while (i < tail) {
+			if (!isspace(line[tail]))
+				break;
+			tail--;
+		}
 	}
 	if ((i < tail && line[tail + 1] != '\n')) {
 		/* This has whitespace between tail+1..len */
@@ -565,7 +579,7 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 		emit_line(set, reset, line, len);
 	else
 		emit_line_with_ws(ecbdata->nparents, set, reset, ws,
-				line, len);
+				  line, len, ecbdata->ws_rule);
 }
 
 static void fn_out_consume(void *priv, char *line, unsigned long len)
@@ -981,6 +995,7 @@ struct checkdiff_t {
 	struct xdiff_emit_state xm;
 	const char *filename;
 	int lineno, color_diff;
+	unsigned ws_rule;
 };
 
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
@@ -1016,7 +1031,8 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 			if (white_space_at_end)
 				printf("white space at end");
 			printf(":%s ", reset);
-			emit_line_with_ws(1, set, reset, ws, line, len);
+			emit_line_with_ws(1, set, reset, ws, line, len,
+					  data->ws_rule);
 		}
 
 		data->lineno++;
@@ -1317,6 +1333,7 @@ static void builtin_diff(const char *name_a,
 		ecbdata.label_path = lbl;
 		ecbdata.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
 		ecbdata.found_changesp = &o->found_changes;
+		ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
@@ -1410,6 +1427,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
 	data.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
+	data.ws_rule = whitespace_rule(data.filename);
 
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
