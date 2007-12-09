@@ -188,7 +188,7 @@ static int do_sign(struct strbuf *buffer)
 	int len;
 
 	if (!*signingkey) {
-		if (strlcpy(signingkey, git_committer_info(1),
+		if (strlcpy(signingkey, git_committer_info(IDENT_ERROR_ON_NO_NAME),
 				sizeof(signingkey)) > sizeof(signingkey) - 1)
 			return error("committer info too long.");
 		bracket = strchr(signingkey, '>');
@@ -298,7 +298,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 			  sha1_to_hex(object),
 			  typename(type),
 			  tag,
-			  git_committer_info(1));
+			  git_committer_info(IDENT_ERROR_ON_NO_NAME));
 
 	if (header_len > sizeof(header_buf) - 1)
 		die("tag header too big.");

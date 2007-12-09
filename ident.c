@@ -182,14 +182,15 @@ static const char *env_hint =
 "Omit --global to set the identity only in this repository.\n"
 "\n";
 
-static const char *fmt_ident_1(const char *name, const char *email,
-			       const char *date_str, int flag)
+const char *fmt_ident(const char *name, const char *email,
+		      const char *date_str, int flag)
 {
 	static char buffer[1000];
 	char date[50];
 	int i;
-	int error_on_no_name = !!(flag & 01);
-	int name_addr_only = !!(flag & 02);
+	int error_on_no_name = (flag & IDENT_ERROR_ON_NO_NAME);
+	int warn_on_no_name = (flag & IDENT_WARN_ON_NO_NAME);
+	int name_addr_only = (flag & IDENT_NO_DATE);
 
 	setup_ident();
 	if (!name)
@@ -200,12 +201,12 @@ static const char *fmt_ident_1(const char *name, const char *email,
 	if (!*name) {
 		struct passwd *pw;
 
-		if (0 <= error_on_no_name &&
+		if ((warn_on_no_name || error_on_no_name) &&
 		    name == git_default_name && env_hint) {
 			fprintf(stderr, env_hint, au_env, co_env);
 			env_hint = NULL; /* warn only once, for "git-var -l" */
 		}
-		if (0 < error_on_no_name)
+		if (error_on_no_name)
 			die("empty ident %s <%s> not allowed", name, email);
 		pw = getpwuid(getuid());
 		if (!pw)
@@ -234,30 +235,23 @@ static const char *fmt_ident_1(const char *name, const char *email,
 	return buffer;
 }
 
-const char *fmt_ident(const char *name, const char *email,
-		      const char *date_str, int error_on_no_name)
-{
-	int flag = (error_on_no_name ? 01 : 0);
-	return fmt_ident_1(name, email, date_str, flag);
-}
-
 const char *fmt_name(const char *name, const char *email)
 {
-	return fmt_ident_1(name, email, NULL, 03);
+	return fmt_ident(name, email, NULL, IDENT_ERROR_ON_NO_NAME | IDENT_NO_DATE);
 }
 
-const char *git_author_info(int error_on_no_name)
+const char *git_author_info(int flag)
 {
 	return fmt_ident(getenv("GIT_AUTHOR_NAME"),
 			 getenv("GIT_AUTHOR_EMAIL"),
 			 getenv("GIT_AUTHOR_DATE"),
-			 error_on_no_name);
+			 flag);
 }
 
-const char *git_committer_info(int error_on_no_name)
+const char *git_committer_info(int flag)
 {
 	return fmt_ident(getenv("GIT_COMMITTER_NAME"),
 			 getenv("GIT_COMMITTER_EMAIL"),
 			 getenv("GIT_COMMITTER_DATE"),
-			 error_on_no_name);
+			 flag);
 }

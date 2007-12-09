@@ -497,7 +497,7 @@ static void determine_author_info(struct strbuf *sb)
 		email = xstrndup(lb + 2, rb - (lb + 2));
 	}
 
-	strbuf_addf(sb, "author %s\n", fmt_ident(name, email, date, 1));
+	strbuf_addf(sb, "author %s\n", fmt_ident(name, email, date, IDENT_ERROR_ON_NO_NAME));
 }
 
 static int parse_and_validate_options(int argc, const char *argv[],
@@ -776,7 +776,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	determine_author_info(&sb);
-	strbuf_addf(&sb, "committer %s\n", git_committer_info(1));
+	strbuf_addf(&sb, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
 	if (!is_encoding_utf8(git_commit_encoding))
 		strbuf_addf(&sb, "encoding %s\n", git_commit_encoding);
 	strbuf_addch(&sb, '\n');
