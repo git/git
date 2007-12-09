@@ -152,10 +152,11 @@ merge_file () {
 	exit 1
     fi
 
-    BACKUP="$path.BACKUP.$$"
-    LOCAL="$path.LOCAL.$$"
-    REMOTE="$path.REMOTE.$$"
-    BASE="$path.BASE.$$"
+    ext="$$$(expr "$path" : '.*\(\.[^/]*\)$')"
+    BACKUP="$path.BACKUP.$ext"
+    LOCAL="$path.LOCAL.$ext"
+    REMOTE="$path.REMOTE.$ext"
+    BASE="$path.BASE.$ext"
 
     mv -- "$path" "$BACKUP"
     cp -- "$BACKUP" "$path"
