@@ -28,13 +28,6 @@ If there is no path that is different between the index file and
 the current HEAD commit (i.e., there is nothing to commit by running
 `git-commit`), the command exits with non-zero status.
 
-If any paths have been touched in the working tree (that is,
-their modification times have changed) but their contents and
-permissions are identical to those in the index file, the command
-updates the index file. Running `git-status` can thus speed up
-subsequent operations such as `git-diff` if the working tree
-contains many paths that have been touched but not modified.
-
 
 OUTPUT
 ------
