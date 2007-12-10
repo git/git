@@ -470,6 +470,10 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, refs_url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
+	if (transport->remote->http_proxy)
+		curl_easy_setopt(slot->curl, CURLOPT_PROXY,
+				 transport->remote->http_proxy);
+
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (results.curl_result != CURLE_OK) {
@@ -655,7 +659,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	free(heads);
 	free_refs(refs);
 	free(dest);
-	return 0;
+	return (refs ? 0 : -1);
 }
 
 static int git_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags)

@@ -13,7 +13,7 @@ SYNOPSIS
 	  [--apply] [--no-add] [--build-fake-ancestor <file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-pNUM] [-CNUM] [--inaccurate-eof] [--cached]
-	  [--whitespace=<nowarn|warn|error|error-all|strip>]
+	  [--whitespace=<nowarn|warn|fix|error|error-all>]
 	  [--exclude=PATH] [--verbose] [<patch>...]
 
 DESCRIPTION
@@ -135,25 +135,32 @@ discouraged.
 	be useful when importing patchsets, where you want to exclude certain
 	files or directories.
 
---whitespace=<option>::
-	When applying a patch, detect a new or modified line
-	that ends with trailing whitespaces (this includes a
-	line that solely consists of whitespaces).  By default,
-	the command outputs warning messages and applies the
-	patch.
-	When gitlink:git-apply[1] is used for statistics and not applying a
-	patch, it defaults to `nowarn`.
-	You can use different `<option>` to control this
-	behavior:
+--whitespace=<action>::
+	When applying a patch, detect a new or modified line that has
+	whitespace errors.  What are considered whitespace errors is
+	controlled by `core.whitespace` configuration.  By default,
+	trailing whitespaces (including lines that solely consist of
+	whitespaces) and a space character that is immediately followed
+	by a tab character inside the initial indent of the line are
+	considered whitespace errors.
++
+By default, the command outputs warning messages but applies the patch.
+When gitlink:git-apply[1] is used for statistics and not applying a
+patch, it defaults to `nowarn`.
++
+You can use different `<action>` to control this
+behavior:
 +
 * `nowarn` turns off the trailing whitespace warning.
 * `warn` outputs warnings for a few such errors, but applies the
-  patch (default).
+  patch as-is (default).
+* `fix` outputs warnings for a few such errors, and applies the
+  patch after fixing them (`strip` is a synonym --- the tool
+  used to consider only trailing whitespaces as errors, and the
+  fix involved 'stripping' them, but modern gits do more).
 * `error` outputs warnings for a few such errors, and refuses
   to apply the patch.
 * `error-all` is similar to `error` but shows all errors.
-* `strip` outputs warnings for a few such errors, strips out the
-  trailing whitespaces and applies the patch.
 
 --inaccurate-eof::
 	Under certain circumstances, some versions of diff do not correctly

@@ -4,30 +4,31 @@ int data_received;
 int active_requests = 0;
 
 #ifdef USE_CURL_MULTI
-int max_requests = -1;
-CURLM *curlm;
+static int max_requests = -1;
+static CURLM *curlm;
 #endif
 #ifndef NO_CURL_EASY_DUPHANDLE
-CURL *curl_default;
+static CURL *curl_default;
 #endif
 char curl_errorstr[CURL_ERROR_SIZE];
 
-int curl_ssl_verify = -1;
-char *ssl_cert = NULL;
+static int curl_ssl_verify = -1;
+static char *ssl_cert = NULL;
 #if LIBCURL_VERSION_NUM >= 0x070902
-char *ssl_key = NULL;
+static char *ssl_key = NULL;
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
-char *ssl_capath = NULL;
+static char *ssl_capath = NULL;
 #endif
-char *ssl_cainfo = NULL;
-long curl_low_speed_limit = -1;
-long curl_low_speed_time = -1;
-int curl_ftp_no_epsv = 0;
+static char *ssl_cainfo = NULL;
+static long curl_low_speed_limit = -1;
+static long curl_low_speed_time = -1;
+static int curl_ftp_no_epsv = 0;
+static char *curl_http_proxy = NULL;
 
-struct curl_slist *pragma_header;
+static struct curl_slist *pragma_header;
 
-struct active_request_slot *active_queue_head = NULL;
+static struct active_request_slot *active_queue_head = NULL;
 
 size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
 			   struct buffer *buffer)
@@ -160,6 +161,13 @@ static int http_options(const char *var, const char *value)
 		curl_ftp_no_epsv = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp("http.proxy", var)) {
+		if (curl_http_proxy == NULL) {
+			curl_http_proxy = xmalloc(strlen(value)+1);
+			strcpy(curl_http_proxy, value);
+		}
+		return 0;
+	}
 
 	/* Fall back on the default ones */
 	return git_default_config(var, value);
@@ -204,6 +212,9 @@ static CURL* get_curl_handle(void)
 
 	if (curl_ftp_no_epsv)
 		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
+
+	if (curl_http_proxy)
+		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
 
 	return result;
 }

@@ -557,7 +557,7 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const cha
 
 static void gen_message_id(char *dest, unsigned int length, char *base)
 {
-	const char *committer = git_committer_info(-1);
+	const char *committer = git_committer_info(IDENT_WARN_ON_NO_NAME);
 	const char *email_start = strrchr(committer, '<');
 	const char *email_end = strrchr(committer, '>');
 	if(!email_start || !email_end || email_start > email_end - 1)
@@ -665,7 +665,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			 !strcmp(argv[i], "-s")) {
 			const char *committer;
 			const char *endpos;
-			committer = git_committer_info(1);
+			committer = git_committer_info(IDENT_ERROR_ON_NO_NAME);
 			endpos = strchr(committer, '>');
 			if (!endpos)
 				die("bogos committer info %s\n", committer);

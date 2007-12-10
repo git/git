@@ -43,11 +43,11 @@ endif
 RM_RF     ?= rm -rf
 RMDIR     ?= rmdir
 
-INSTALL_D0 = $(INSTALL) -d -m755 # space is required here
+INSTALL_D0 = $(INSTALL) -d -m 755 # space is required here
 INSTALL_D1 =
-INSTALL_R0 = $(INSTALL) -m644 # space is required here
+INSTALL_R0 = $(INSTALL) -m 644 # space is required here
 INSTALL_R1 =
-INSTALL_X0 = $(INSTALL) -m755 # space is required here
+INSTALL_X0 = $(INSTALL) -m 755 # space is required here
 INSTALL_X1 =
 INSTALL_A0 = find # space is required here
 INSTALL_A1 = | cpio -pud
@@ -71,11 +71,11 @@ ifndef V
 	QUIET_2DEVNULL = 2>/dev/null
 
 	INSTALL_D0 = dir=
-	INSTALL_D1 = && echo ' ' DEST $$dir && $(INSTALL) -d -m755 "$$dir"
+	INSTALL_D1 = && echo ' ' DEST $$dir && $(INSTALL) -d -m 755 "$$dir"
 	INSTALL_R0 = src=
-	INSTALL_R1 = && echo '   ' INSTALL 644 `basename $$src` && $(INSTALL) -m644 $$src
+	INSTALL_R1 = && echo '   ' INSTALL 644 `basename $$src` && $(INSTALL) -m 644 $$src
 	INSTALL_X0 = src=
-	INSTALL_X1 = && echo '   ' INSTALL 755 `basename $$src` && $(INSTALL) -m755 $$src
+	INSTALL_X1 = && echo '   ' INSTALL 755 `basename $$src` && $(INSTALL) -m 755 $$src
 	INSTALL_A0 = src=
 	INSTALL_A1 = && echo '   ' INSTALL '   ' `basename "$$src"` && find "$$src" | cpio -pud
 
@@ -212,7 +212,7 @@ $(PO_TEMPLATE): $(SCRIPT_SH) $(ALL_LIBFILES)
 update-po:: $(PO_TEMPLATE)
 	$(foreach p, $(ALL_POFILES), echo Updating $p ; msgmerge -U $p $(PO_TEMPLATE) ; )
 $(ALL_MSGFILES): %.msg : %.po
-	$(QUIET_MSGFMT0)$(MSGFMT) --statistics --tcl $< -l $(basename $(notdir $<)) -d $(dir $@) $(QUIET_MSGFMT1)
+	$(QUIET_MSGFMT0)$(MSGFMT) --statistics --tcl -l $(basename $(notdir $<)) -d $(dir $@) $< $(QUIET_MSGFMT1)
 
 lib/tclIndex: $(ALL_LIBFILES) GIT-GUI-VARS
 	$(QUIET_INDEX)if echo \

@@ -1,6 +1,58 @@
 #!/usr/bin/perl -w
 
 use strict;
+use Git;
+
+# Prompt colors:
+my ($prompt_color, $header_color, $help_color, $normal_color);
+# Diff colors:
+my ($new_color, $old_color, $fraginfo_color, $metainfo_color, $whitespace_color);
+
+my ($use_color, $diff_use_color);
+my $repo = Git->repository();
+
+$use_color = $repo->get_colorbool('color.interactive');
+
+if ($use_color) {
+	# Set interactive colors:
+
+	# Grab the 3 main colors in git color string format, with sane
+	# (visible) defaults:
+	$prompt_color = $repo->get_color("color.interactive.prompt", "bold blue");
+	$header_color = $repo->get_color("color.interactive.header", "bold");
+	$help_color = $repo->get_color("color.interactive.help", "red bold");
+	$normal_color = $repo->get_color("", "reset");
+
+	# Do we also set diff colors?
+	$diff_use_color = $repo->get_colorbool('color.diff');
+	if ($diff_use_color) {
+		$new_color = $repo->get_color("color.diff.new", "green");
+		$old_color = $repo->get_color("color.diff.old", "red");
+		$fraginfo_color = $repo->get_color("color.diff.frag", "cyan");
+		$metainfo_color = $repo->get_color("color.diff.meta", "bold");
+		$whitespace_color = $repo->get_color("color.diff.whitespace", "normal red");
+	}
+}
+
+sub colored {
+	my $color = shift;
+	my $string = join("", @_);
+
+	if ($use_color) {
+		# Put a color code at the beginning of each line, a reset at the end
+		# color after newlines that are not at the end of the string
+		$string =~ s/(\n+)(.)/$1$color$2/g;
+		# reset before newlines
+		$string =~ s/(\n+)/$normal_color$1/g;
+		# codes at beginning and end (if necessary):
+		$string =~ s/^/$color/;
+		$string =~ s/$/$normal_color/ unless $string =~ /\n$/;
+	}
+	return $string;
+}
+
+# command line options
+my $patch_mode;
 
 sub run_cmd_pipe {
 	if ($^O eq 'MSWin32') {
@@ -37,14 +89,13 @@ sub list_untracked {
 		chomp $_;
 		$_;
 	}
-	run_cmd_pipe(qw(git ls-files --others --exclude-standard --), @_);
+	run_cmd_pipe(qw(git ls-files --others --exclude-standard --), @ARGV);
 }
 
 my $status_fmt = '%12s %12s %s';
 my $status_head = sprintf($status_fmt, 'staged', 'unstaged', 'path');
 
 # Returns list of hashes, contents of each of which are:
-# PRINT:	print message
 # VALUE:	pathname
 # BINARY:	is a binary path
 # INDEX:	is index different from HEAD?
@@ -56,9 +107,17 @@ sub list_modified {
 	my ($only) = @_;
 	my (%data, @return);
 	my ($add, $del, $adddel, $file);
+	my @tracked = ();
+
+	if (@ARGV) {
+		@tracked = map {
+			chomp $_; $_;
+		} run_cmd_pipe(qw(git ls-files --exclude-standard --), @ARGV);
+		return if (!@tracked);
+	}
 
 	for (run_cmd_pipe(qw(git diff-index --cached
-			     --numstat --summary HEAD))) {
+			     --numstat --summary HEAD --), @tracked)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			my ($change, $bin);
@@ -81,7 +140,7 @@ sub list_modified {
 		}
 	}
 
-	for (run_cmd_pipe(qw(git diff-files --numstat --summary))) {
+	for (run_cmd_pipe(qw(git diff-files --numstat --summary --), @tracked)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			if (!exists $data{$file}) {
@@ -122,8 +181,6 @@ sub list_modified {
 		}
 		push @return, +{
 			VALUE => $_,
-			PRINT => (sprintf $status_fmt,
-				  $it->{INDEX}, $it->{FILE}, $_),
 			%$it,
 		};
 	}
@@ -159,10 +216,106 @@ sub find_unique {
 	return $found;
 }
 
+# inserts string into trie and updates count for each character
+sub update_trie {
+	my ($trie, $string) = @_;
+	foreach (split //, $string) {
+		$trie = $trie->{$_} ||= {COUNT => 0};
+		$trie->{COUNT}++;
+	}
+}
+
+# returns an array of tuples (prefix, remainder)
+sub find_unique_prefixes {
+	my @stuff = @_;
+	my @return = ();
+
+	# any single prefix exceeding the soft limit is omitted
+	# if any prefix exceeds the hard limit all are omitted
+	# 0 indicates no limit
+	my $soft_limit = 0;
+	my $hard_limit = 3;
+
+	# build a trie modelling all possible options
+	my %trie;
+	foreach my $print (@stuff) {
+		if ((ref $print) eq 'ARRAY') {
+			$print = $print->[0];
+		}
+		elsif ((ref $print) eq 'HASH') {
+			$print = $print->{VALUE};
+		}
+		update_trie(\%trie, $print);
+		push @return, $print;
+	}
+
+	# use the trie to find the unique prefixes
+	for (my $i = 0; $i < @return; $i++) {
+		my $ret = $return[$i];
+		my @letters = split //, $ret;
+		my %search = %trie;
+		my ($prefix, $remainder);
+		my $j;
+		for ($j = 0; $j < @letters; $j++) {
+			my $letter = $letters[$j];
+			if ($search{$letter}{COUNT} == 1) {
+				$prefix = substr $ret, 0, $j + 1;
+				$remainder = substr $ret, $j + 1;
+				last;
+			}
+			else {
+				my $prefix = substr $ret, 0, $j;
+				return ()
+				    if ($hard_limit && $j + 1 > $hard_limit);
+			}
+			%search = %{$search{$letter}};
+		}
+		if ($soft_limit && $j + 1 > $soft_limit) {
+			$prefix = undef;
+			$remainder = $ret;
+		}
+		$return[$i] = [$prefix, $remainder];
+	}
+	return @return;
+}
+
+# filters out prefixes which have special meaning to list_and_choose()
+sub is_valid_prefix {
+	my $prefix = shift;
+	return (defined $prefix) &&
+	    !($prefix =~ /[\s,]/) && # separators
+	    !($prefix =~ /^-/) &&    # deselection
+	    !($prefix =~ /^\d+/) &&  # selection
+	    ($prefix ne '*') &&      # "all" wildcard
+	    ($prefix ne '?');        # prompt help
+}
+
+# given a prefix/remainder tuple return a string with the prefix highlighted
+# for now use square brackets; later might use ANSI colors (underline, bold)
+sub highlight_prefix {
+	my $prefix = shift;
+	my $remainder = shift;
+
+	if (!defined $prefix) {
+		return $remainder;
+	}
+
+	if (!is_valid_prefix($prefix)) {
+		return "$prefix$remainder";
+	}
+
+	if (!$use_color) {
+		return "[$prefix]$remainder";
+	}
+
+	return "$prompt_color$prefix$normal_color$remainder";
+}
+
 sub list_and_choose {
 	my ($opts, @stuff) = @_;
 	my (@chosen, @return);
 	my $i;
+	my @prefixes = find_unique_prefixes(@stuff) unless $opts->{LIST_ONLY};
 
       TOPLOOP:
 	while (1) {
@@ -172,18 +325,26 @@ sub list_and_choose {
 			if (!$opts->{LIST_FLAT}) {
 				print "     ";
 			}
-			print "$opts->{HEADER}\n";
+			print colored $header_color, "$opts->{HEADER}\n";
 		}
 		for ($i = 0; $i < @stuff; $i++) {
 			my $chosen = $chosen[$i] ? '*' : ' ';
 			my $print = $stuff[$i];
-			if (ref $print) {
-				if ((ref $print) eq 'ARRAY') {
-					$print = $print->[0];
-				}
-				else {
-					$print = $print->{PRINT};
-				}
+			my $ref = ref $print;
+			my $highlighted = highlight_prefix(@{$prefixes[$i]})
+			    if @prefixes;
+			if ($ref eq 'ARRAY') {
+				$print = $highlighted || $print->[0];
+			}
+			elsif ($ref eq 'HASH') {
+				my $value = $highlighted || $print->{VALUE};
+				$print = sprintf($status_fmt,
+				    $print->{INDEX},
+				    $print->{FILE},
+				    $value);
+			}
+			else {
+				$print = $highlighted || $print;
 			}
 			printf("%s%2d: %s", $chosen, $i+1, $print);
 			if (($opts->{LIST_FLAT}) &&
@@ -202,7 +363,7 @@ sub list_and_choose {
 
 		return if ($opts->{LIST_ONLY});
 
-		print $opts->{PROMPT};
+		print colored $prompt_color, $opts->{PROMPT};
 		if ($opts->{SINGLETON}) {
 			print "> ";
 		}
@@ -217,6 +378,12 @@ sub list_and_choose {
 		}
 		chomp $line;
 		last if $line eq '';
+		if ($line eq '?') {
+			$opts->{SINGLETON} ?
+			    singleton_prompt_help_cmd() :
+			    prompt_help_cmd();
+			next TOPLOOP;
+		}
 		for my $choice (split(/[\s,]+/, $line)) {
 			my $choose = 1;
 			my ($bottom, $top);
@@ -252,7 +419,7 @@ sub list_and_choose {
 				$chosen[$i] = $choose;
 			}
 		}
-		last if ($opts->{IMMEDIATE});
+		last if ($opts->{IMMEDIATE} || $line eq '*');
 	}
 	for ($i = 0; $i < @stuff; $i++) {
 		if ($chosen[$i]) {
@@ -260,6 +427,28 @@ sub list_and_choose {
 		}
 	}
 	return @return;
+}
+
+sub singleton_prompt_help_cmd {
+	print colored $help_color, <<\EOF ;
+Prompt help:
+1          - select a numbered item
+foo        - select item based on unique prefix
+           - (empty) select nothing
+EOF
+}
+
+sub prompt_help_cmd {
+	print colored $help_color, <<\EOF ;
+Prompt help:
+1          - select a single item
+3-5        - select a range of items
+2-3,6-9    - select multiple ranges
+foo        - select item based on unique prefix
+-...       - unselect specified items
+*          - choose all items
+           - (empty) finish selecting
+EOF
 }
 
 sub status_cmd {
@@ -336,13 +525,19 @@ sub add_untracked_cmd {
 sub parse_diff {
 	my ($path) = @_;
 	my @diff = run_cmd_pipe(qw(git diff-files -p --), $path);
-	my (@hunk) = { TEXT => [] };
+	my @colored = ();
+	if ($diff_use_color) {
+		@colored = run_cmd_pipe(qw(git diff-files -p --color --), $path);
+	}
+	my (@hunk) = { TEXT => [], DISPLAY => [] };
 
-	for (@diff) {
-		if (/^@@ /) {
-			push @hunk, { TEXT => [] };
+	for (my $i = 0; $i < @diff; $i++) {
+		if ($diff[$i] =~ /^@@ /) {
+			push @hunk, { TEXT => [], DISPLAY => [] };
 		}
-		push @{$hunk[-1]{TEXT}}, $_;
+		push @{$hunk[-1]{TEXT}}, $diff[$i];
+		push @{$hunk[-1]{DISPLAY}},
+			($diff_use_color ? $colored[$i] : $diff[$i]);
 	}
 	return @hunk;
 }
@@ -364,9 +559,11 @@ sub parse_hunk_header {
 }
 
 sub split_hunk {
-	my ($text) = @_;
+	my ($text, $display) = @_;
 	my @split = ();
-
+	if (!defined $display) {
+		$display = $text;
+	}
 	# If there are context lines in the middle of a hunk,
 	# it can be split, but we would need to take care of
 	# overlaps later.
@@ -380,16 +577,19 @@ sub split_hunk {
 		my $i = $hunk_start - 1;
 		my $this = +{
 			TEXT => [],
+			DISPLAY => [],
 			OLD => $o_ofs,
 			NEW => $n_ofs,
 			OCNT => 0,
 			NCNT => 0,
 			ADDDEL => 0,
 			POSTCTX => 0,
+			USE => undef,
 		};
 
 		while (++$i < @$text) {
 			my $line = $text->[$i];
+			my $display = $display->[$i];
 			if ($line =~ /^ /) {
 				if ($this->{ADDDEL} &&
 				    !defined $next_hunk_start) {
@@ -401,6 +601,7 @@ sub split_hunk {
 					$next_hunk_start = $i;
 				}
 				push @{$this->{TEXT}}, $line;
+				push @{$this->{DISPLAY}}, $display;
 				$this->{OCNT}++;
 				$this->{NCNT}++;
 				if (defined $next_hunk_start) {
@@ -423,6 +624,7 @@ sub split_hunk {
 				redo OUTER;
 			}
 			push @{$this->{TEXT}}, $line;
+			push @{$this->{DISPLAY}}, $display;
 			$this->{ADDDEL}++;
 			if ($line =~ /^-/) {
 				$this->{OCNT}++;
@@ -447,9 +649,14 @@ sub split_hunk {
 			    " +$n_ofs" .
 			    (($n_cnt != 1) ? ",$n_cnt" : '') .
 			    " @@\n");
+		my $display_head = $head;
 		unshift @{$hunk->{TEXT}}, $head;
+		if ($diff_use_color) {
+			$display_head = colored($fraginfo_color, $head);
+		}
+		unshift @{$hunk->{DISPLAY}}, $display_head;
 	}
-	return map { $_->{TEXT} } @split;
+	return @split;
 }
 
 sub find_last_o_ctx {
@@ -541,37 +748,46 @@ sub coalesce_overlapping_hunks {
 }
 
 sub help_patch_cmd {
-	print <<\EOF ;
+	print colored $help_color, <<\EOF ;
 y - stage this hunk
 n - do not stage this hunk
-a - stage this and all the remaining hunks
-d - do not stage this hunk nor any of the remaining hunks
+a - stage this and all the remaining hunks in the file
+d - do not stage this hunk nor any of the remaining hunks in the file
 j - leave this hunk undecided, see next undecided hunk
 J - leave this hunk undecided, see next hunk
 k - leave this hunk undecided, see previous undecided hunk
 K - leave this hunk undecided, see previous hunk
 s - split the current hunk into smaller hunks
+? - print help
 EOF
 }
 
 sub patch_update_cmd {
-	my @mods = list_modified('file-only');
-	@mods = grep { !($_->{BINARY}) } @mods;
-	return if (!@mods);
+	my @mods = grep { !($_->{BINARY}) } list_modified('file-only');
+	my @them;
 
-	my ($it) = list_and_choose({ PROMPT => 'Patch update',
-				     SINGLETON => 1,
-				     IMMEDIATE => 1,
-				     HEADER => $status_head, },
-				   @mods);
-	patch_update_file($it->{VALUE}) if ($it);
+	if (!@mods) {
+		print STDERR "No changes.\n";
+		return 0;
+	}
+	if ($patch_mode) {
+		@them = @mods;
+	}
+	else {
+		@them = list_and_choose({ PROMPT => 'Patch update',
+					  HEADER => $status_head, },
+					@mods);
+	}
+	for (@them) {
+		patch_update_file($_->{VALUE});
+	}
 }
 
 sub patch_update_file {
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
-	for (@{$head->{TEXT}}) {
+	for (@{$head->{DISPLAY}}) {
 		print;
 	}
 	$num = scalar @hunk;
@@ -615,10 +831,10 @@ sub patch_update_file {
 		if (hunk_splittable($hunk[$ix]{TEXT})) {
 			$other .= '/s';
 		}
-		for (@{$hunk[$ix]{TEXT}}) {
+		for (@{$hunk[$ix]{DISPLAY}}) {
 			print;
 		}
-		print "Stage this hunk [y/n/a/d$other/?]? ";
+		print colored $prompt_color, "Stage this hunk [y/n/a/d$other/?]? ";
 		my $line = <STDIN>;
 		if ($line) {
 			if ($line =~ /^y/i) {
@@ -670,14 +886,12 @@ sub patch_update_file {
 				next;
 			}
 			elsif ($other =~ /s/ && $line =~ /^s/) {
-				my @split = split_hunk($hunk[$ix]{TEXT});
+				my @split = split_hunk($hunk[$ix]{TEXT}, $hunk[$ix]{DISPLAY});
 				if (1 < @split) {
-					print "Split into ",
+					print colored $header_color, "Split into ",
 					scalar(@split), " hunks.\n";
 				}
-				splice(@hunk, $ix, 1,
-				       map { +{ TEXT => $_, USE => undef } }
-				       @split);
+				splice (@hunk, $ix, 1, @split);
 				$num = scalar @hunk;
 				next;
 			}
@@ -755,8 +969,7 @@ sub diff_cmd {
 				     HEADER => $status_head, },
 				   @mods);
 	return if (!@them);
-	system(qw(git diff-index -p --cached HEAD --),
-	       map { $_->{VALUE} } @them);
+	system(qw(git diff -p --cached HEAD --), map { $_->{VALUE} } @them);
 }
 
 sub quit_cmd {
@@ -765,7 +978,7 @@ sub quit_cmd {
 }
 
 sub help_cmd {
-	print <<\EOF ;
+	print colored $help_color, <<\EOF ;
 status        - show paths with changes
 update        - add working tree state to the staged set of changes
 revert        - revert staged set of changes back to the HEAD version
@@ -773,6 +986,20 @@ patch         - pick hunks and update selectively
 diff	      - view diff between HEAD and index
 add untracked - add contents of untracked files to the staged set of changes
 EOF
+}
+
+sub process_args {
+	return unless @ARGV;
+	my $arg = shift @ARGV;
+	if ($arg eq "--patch") {
+		$patch_mode = 1;
+		$arg = shift @ARGV or die "missing --";
+		die "invalid argument $arg, expecting --"
+		    unless $arg eq "--";
+	}
+	elsif ($arg ne "--") {
+		die "invalid argument $arg, expecting --";
+	}
 }
 
 sub main_loop {
@@ -803,6 +1030,12 @@ sub main_loop {
 	}
 }
 
+process_args();
 refresh();
-status_cmd();
-main_loop();
+if ($patch_mode) {
+	patch_update_cmd();
+}
+else {
+	status_cmd();
+	main_loop();
+}

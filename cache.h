@@ -423,6 +423,10 @@ extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 
+extern int refname_match(const char *abbrev_name, const char *full_name, const char **rules);
+extern const char *ref_rev_parse_rules[];
+extern const char *ref_fetch_rules[];
+
 extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg);
 extern int validate_headref(const char *ref);
 
@@ -449,9 +453,13 @@ void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
 enum date_mode parse_date_format(const char *format);
 
+#define IDENT_WARN_ON_NO_NAME  1
+#define IDENT_ERROR_ON_NO_NAME 2
+#define IDENT_NO_DATE	       4
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 extern const char *fmt_ident(const char *name, const char *email, const char *date_str, int);
+extern const char *fmt_name(const char *name, const char *email);
 
 struct checkout {
 	const char *base_dir;
@@ -620,17 +628,37 @@ extern void alloc_report(void);
 
 /* trace.c */
 extern void trace_printf(const char *format, ...);
-extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
+extern void trace_argv_printf(const char **argv, const char *format, ...);
 
 /* convert.c */
 /* returns 1 if *dst was used */
 extern int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst);
 extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 
+/* add */
+void add_files_to_cache(int verbose, const char *prefix, const char **pathspec);
+
 /* diff.c */
 extern int diff_auto_refresh_index;
 
 /* match-trees.c */
 void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
+
+/*
+ * whitespace rules.
+ * used by both diff and apply
+ */
+#define WS_TRAILING_SPACE	01
+#define WS_SPACE_BEFORE_TAB	02
+#define WS_INDENT_WITH_NON_TAB	04
+#define WS_DEFAULT_RULE (WS_TRAILING_SPACE|WS_SPACE_BEFORE_TAB)
+extern unsigned whitespace_rule_cfg;
+extern unsigned whitespace_rule(const char *);
+extern unsigned parse_whitespace_rule(const char *);
+
+/* ls-files */
+int pathspec_match(const char **spec, char *matched, const char *filename, int skiplen);
+int report_path_error(const char *ps_matched, const char **pathspec, int prefix_offset);
+void overlay_tree_on_cache(const char *tree_name, const char *prefix);
 
 #endif /* CACHE_H */

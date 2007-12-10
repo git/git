@@ -46,6 +46,9 @@ infodir?=$(prefix)/share/info
 MAKEINFO=makeinfo
 INSTALL_INFO=install-info
 DOCBOOK2X_TEXI=docbook2x-texi
+ifndef PERL_PATH
+	PERL_PATH = /usr/bin/perl
+endif
 
 -include ../config.mak.autogen
 -include ../config.mak
@@ -80,16 +83,16 @@ man7: $(DOC_MAN7)
 info: git.info
 
 install: man
-	$(INSTALL) -d -m755 $(DESTDIR)$(man1dir)
-	$(INSTALL) -d -m755 $(DESTDIR)$(man5dir)
-	$(INSTALL) -d -m755 $(DESTDIR)$(man7dir)
-	$(INSTALL) -m644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
-	$(INSTALL) -m644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
-	$(INSTALL) -m644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man1dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man5dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man7dir)
+	$(INSTALL) -m 644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
+	$(INSTALL) -m 644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
+	$(INSTALL) -m 644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
 
 install-info: info
-	$(INSTALL) -d -m755 $(DESTDIR)$(infodir)
-	$(INSTALL) -m644 git.info $(DESTDIR)$(infodir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(infodir)
+	$(INSTALL) -m 644 git.info $(DESTDIR)$(infodir)
 	if test -r $(DESTDIR)$(infodir)/dir; then \
 	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) git.info ;\
 	else \
@@ -109,7 +112,7 @@ install-html: html
 #
 doc.dep : $(wildcard *.txt) build-docdep.perl
 	$(RM) $@+ $@
-	perl ./build-docdep.perl >$@+
+	$(PERL_PATH) ./build-docdep.perl >$@+
 	mv $@+ $@
 
 -include doc.dep
@@ -128,7 +131,7 @@ $(cmds_txt): cmd-list.made
 
 cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 	$(RM) $@
-	perl ./cmd-list.perl ../command-list.txt
+	$(PERL_PATH) ./cmd-list.perl ../command-list.txt
 	date >$@
 
 git.7 git.html: git.txt
@@ -165,7 +168,7 @@ user-manual.html: user-manual.xml
 git.info: user-manual.xml
 	$(RM) $@ $*.texi $*.texi+
 	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout >$*.texi+
-	perl fix-texi.perl <$*.texi+ >$*.texi
+	$(PERL_PATH) fix-texi.perl <$*.texi+ >$*.texi
 	$(MAKEINFO) --no-split $*.texi
 	$(RM) $*.texi $*.texi+
 

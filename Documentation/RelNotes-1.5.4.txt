@@ -4,7 +4,8 @@ GIT v1.5.4 Release Notes
 Removal
 -------
 
- * "git svnimport" was removed in favor of "git svn".
+ * "git svnimport" was removed in favor of "git svn".  It is still there
+   in the source tree (contrib/examples) but unsupported.
 
 
 Deprecation notices
@@ -48,7 +49,10 @@ Updates since v1.5.3
 
  * Comes with much improved gitk.
 
- * Comes with "git gui" 0.9.0 with i18n.
+ * Comes with "git gui" 0.9.1 with i18n.
+
+ * gitk is now merged as a subdirectory of git.git project, in
+   preparation for its i18n.
 
  * progress display from many commands are a lot nicer to the eye.
    Transfer commands show throughput data.
@@ -66,6 +70,21 @@ Updates since v1.5.3
    pairing.  Earlier if more than one identical rename sources were
    found in the preimage, they were picked pretty much at random.
 
+ * Value "true" for color.diff and color.status configuration used to
+   mean "always" (even when the output is not going to a terminal).
+   This has been corrected to mean the same thing as "auto".
+
+ * HTTP proxy can be specified per remote repository using
+   remote.*.httpproxy configuration, or global http.proxy configuration
+   variable.
+
+ * Various Perforce importer updates.
+
+ * Example update and post-receive hooks have been improved.
+
+ * Any command that wants to take a commit object name can now use
+   ":/string" syntax to name a commit.
+
  * "git reset" is now built-in and its output can be squelched with -q.
 
  * "git send-email" can optionally talk over ssmtp and use SMTP-AUTH.
@@ -76,6 +95,15 @@ Updates since v1.5.3
    after the command stopped with a conflict, you can say "git rebase
    --skip" without first running "git reset --hard", as the command now
    runs it for you.
+
+ * "git rebase --interactive" mode can now work on detached HEAD.
+
+ * "git rebase" now detaches head during its operation, so after a
+   successful "git rebase" operation, the reflog entry branch@{1} for
+   the current branch points at the commit before the rebase was
+   started.
+
+ * "git rebase -i" also triggers rerere to help your repeated merges.
 
  * "git merge" can call the "post-merge" hook.
 
@@ -97,12 +125,16 @@ Updates since v1.5.3
    than the usual one) after the user accumulates too many loose
    objects.
 
+ * "git clean" has been rewritten in C.
+
  * You need to explicitly set clean.requireForce to "false" to allow
    "git clean" without -f to do any damage (lack of the configuration
    variable used to mean "do not require -f option to lose untracked
    files", but we now use the safer default).
 
- * "git clean" has been rewritten in C.
+ * The kinds of whitespace errors "git diff" and "git apply" notice (and
+   fix) can be controlled via 'core.whitespace' configuration variable
+   and 'whitespace' attribute in .gitattributes file.
 
  * "git push" learned --dry-run option to show what would happen if a
    push is run.
@@ -114,6 +146,9 @@ Updates since v1.5.3
    one-to-one to the remote, and deletes refs from the remote that do
    not exist anymore in the repository on the pushing side.
 
+ * "git push" can remove a corrupt ref at the remote site with the usual
+   ":ref" refspec.
+
  * "git remote" knows --mirror mode.  This is to set up configuration to
    push into a remote repository to store local branch heads to the same
    branch on the remote side, and remove branch heads locally removed
@@ -122,21 +157,58 @@ Updates since v1.5.3
 
  * "git remote" learned "rm" subcommand.
 
- * "git rebase --interactive" mode can now work on detached HEAD.
-
  * "git cvsserver" can be run via "git shell".
+
+ * "git cvsserver" acts more like receive-pack by running post-receive
+   and post-update hooks.
 
  * "git am" and "git rebase" are far less verbose.
 
  * "git pull" learned to pass --[no-]ff option to underlying "git
    merge".
 
- * Various Perforce importer updates.
+ * "git pull --rebase" is a different way to integrate what you fetched
+   into your current branch.
+
+ * "git fast-export" produces datastream that can be fed to fast-import
+   to reproduce the history recorded in a git repository.
+
+ * "git add -i" takes pathspecs to limit the set of files to work on.
+
+ * "git add -p" is a short-hand to go directly to the selective patch
+   subcommand in the interactive command loop and to exit when done.
+
+ * "git add -i" UI has been colorized.
+
+ * "git commit --allow-empty" allows you to create a single-parent
+   commit that records the same tree as its parent, overriding the usual
+   safety valve.
+
+ * "git commit --amend" can amend a merge that does not change the tree
+   from its first parent.
+
+ * "git commit" has been rewritten in C.
+
+ * "git stash random-text" does not create a new stash anymore.  It was
+   a UI mistake.  Use "git stash save random-text", or "git stash"
+   (without extra args) for that.
+
+ * "git prune --expire <time>" can exempt young loose objects from
+   getting pruned.
+
+ * "git branch --contains <commit>" can list branches that are
+   descendants of a given commit.
 
  * "git log" learned --early-output option to help interactive GUI
    implementations.
 
  * "git bisect" learned "skip" action to mark untestable commits.
+
+ * "git bisect visualize" learned a shorter synonym "git bisect view".
+
+ * "git bisect visualize" runs "git log" in a non-windowed
+   environments.  It also can be told what command to run (e.g. "git
+   bisect visualize tig").
 
  * "git format-patch" learned "format.numbered" configuration variable
    to automatically turn --numbered option on when more than one commits
@@ -144,11 +216,6 @@ Updates since v1.5.3
 
  * "git ls-files" learned "--exclude-standard" to use the canned set of
    exclude files.
-
- * "git rebase" now detaches head during its operation, so after a
-   successful "git rebase" operation, the reflog entry branch@{1} for
-   the current branch points at the commit before the rebase was
-   started.
 
  * "git tag -a -f existing" begins the editor session using the existing
    annotation message.
@@ -163,6 +230,9 @@ Updates since v1.5.3
  * "git checkout" from a subdirectory learned to use "../path" to allow
    checking out a path outside the current directory without cd'ing up.
 
+ * "git checkout" from and to detached HEAD leaves a bit more
+   information in the reflog.
+
  * "git send-email --dry-run" shows full headers for easier diagnosis.
 
  * "git merge-ours" is now built-in.
@@ -176,19 +246,11 @@ Updates since v1.5.3
    descriptive name from From: and Signed-off-by: lines in the commit
    message.
 
- * "git status" from a subdirectory now shows relative paths which makes
-   copy-and-pasting for git-checkout/git-add/git-rm easier.
-
- * "git checkout" from and to detached HEAD leaves a bit more
-   information in the reflog.
-
- * "git branch" learned --contains option, to show only branches that
-   can reach a given commit.
-
- * Example update and post-receive hooks have been improved.
-
- * "git push" can remove a corrupt ref at the remote site with the usual
-   ":ref" refspec.
+ * "git status" from a subdirectory now shows relative paths, which
+   makes copy-and-pasting for git-checkout/git-add/git-rm easier.  The
+   traditional behaviour to show the full path relative to the top of
+   the work tree can be had by setting status.relativepaths
+   configuration variable to true.
 
  * In addition there are quite a few internal clean-ups. Notably
 
@@ -212,8 +274,11 @@ series.
  * "git svn" talking with the SVN over http will correctly quote branch
    and project names.
 
+ * "git config" did not work correctly on platforms that define
+   REG_NOMATCH to an even number.
+
 --
 exec >/var/tmp/1
-O=v1.5.3.7-966-g6bda21b
+O=v1.5.3.7-1148-gcf7e147
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

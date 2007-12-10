@@ -211,7 +211,7 @@ for cset in range(int(tip) + 1):
     os.system('git-ls-files -x .hg --deleted | git-update-index --remove --stdin')
 
     # commit
-    os.system(getgitenv(user, date) + 'git-commit -a -F %s' % filecomment)
+    os.system(getgitenv(user, date) + 'git commit --allow-empty -a -F %s' % filecomment)
     os.unlink(filecomment)
 
     # tag

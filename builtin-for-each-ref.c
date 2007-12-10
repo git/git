@@ -13,8 +13,8 @@
 #define QUOTE_NONE 0
 #define QUOTE_SHELL 1
 #define QUOTE_PERL 2
-#define QUOTE_PYTHON 3
-#define QUOTE_TCL 4
+#define QUOTE_PYTHON 4
+#define QUOTE_TCL 8
 
 typedef enum { FIELD_STR, FIELD_ULONG, FIELD_TIME } cmp_type;
 
@@ -861,7 +861,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		usage_with_options(for_each_ref_usage, opts);
 	}
 	if (HAS_MULTI_BITS(quote_style)) {
-		error("more than one quoting style ?");
+		error("more than one quoting style?");
 		usage_with_options(for_each_ref_usage, opts);
 	}
 	if (verify_format(format))

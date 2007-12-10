@@ -98,8 +98,8 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&buffer, "parent %s\n", sha1_to_hex(parent_sha1[i]));
 
 	/* Person/date information */
-	strbuf_addf(&buffer, "author %s\n", git_author_info(1));
-	strbuf_addf(&buffer, "committer %s\n", git_committer_info(1));
+	strbuf_addf(&buffer, "author %s\n", git_author_info(IDENT_ERROR_ON_NO_NAME));
+	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
 	if (!encoding_is_utf8)
 		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
 	strbuf_addch(&buffer, '\n');

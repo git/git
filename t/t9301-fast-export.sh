@@ -106,9 +106,9 @@ test_expect_success 'signed-tags=abort' '
 
 '
 
-test_expect_success 'signed-tags=ignore' '
+test_expect_success 'signed-tags=verbatim' '
 
-	git fast-export --signed-tags=ignore sign-your-name > output &&
+	git fast-export --signed-tags=verbatim sign-your-name > output &&
 	grep PGP output
 
 '

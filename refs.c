@@ -643,6 +643,37 @@ int check_ref_format(const char *ref)
 	}
 }
 
+const char *ref_rev_parse_rules[] = {
+	"%.*s",
+	"refs/%.*s",
+	"refs/tags/%.*s",
+	"refs/heads/%.*s",
+	"refs/remotes/%.*s",
+	"refs/remotes/%.*s/HEAD",
+	NULL
+};
+
+const char *ref_fetch_rules[] = {
+	"%.*s",
+	"refs/%.*s",
+	"refs/heads/%.*s",
+	NULL
+};
+
+int refname_match(const char *abbrev_name, const char *full_name, const char **rules)
+{
+	const char **p;
+	const int abbrev_name_len = strlen(abbrev_name);
+
+	for (p = rules; *p; p++) {
+		if (!strcmp(full_name, mkpath(*p, abbrev_name_len, abbrev_name))) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static struct ref_lock *verify_lock(struct ref_lock *lock,
 	const unsigned char *old_sha1, int mustexist)
 {
@@ -1063,7 +1094,7 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 	adjust_shared_perm(log_file);
 
 	msglen = msg ? strlen(msg) : 0;
-	committer = git_committer_info(-1);
+	committer = git_committer_info(0);
 	maxlen = strlen(committer) + msglen + 100;
 	logrec = xmalloc(maxlen);
 	len = sprintf(logrec, "%s %s %s\n",

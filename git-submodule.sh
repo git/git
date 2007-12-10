@@ -158,7 +158,7 @@ module_add()
 	die "'$path' already exists in the index"
 
 	module_clone "$path" "$realrepo" || exit
-	(unset GIT_DIR && cd "$path" && git checkout -q ${branch:+-b "$branch" "origin/$branch"}) ||
+	(unset GIT_DIR; cd "$path" && git checkout -q ${branch:+-b "$branch" "origin/$branch"}) ||
 	die "Unable to checkout submodule '$path'"
 	git add "$path" ||
 	die "Failed to add submodule '$path'"
@@ -228,14 +228,14 @@ modules_update()
 			module_clone "$path" "$url" || exit
 			subsha1=
 		else
-			subsha1=$(unset GIT_DIR && cd "$path" &&
+			subsha1=$(unset GIT_DIR; cd "$path" &&
 				git rev-parse --verify HEAD) ||
 			die "Unable to find current revision in submodule path '$path'"
 		fi
 
 		if test "$subsha1" != "$sha1"
 		then
-			(unset GIT_DIR && cd "$path" && git-fetch &&
+			(unset GIT_DIR; cd "$path" && git-fetch &&
 				git-checkout -q "$sha1") ||
 			die "Unable to checkout '$sha1' in submodule path '$path'"
 
@@ -246,7 +246,7 @@ modules_update()
 
 set_name_rev () {
 	revname=$( (
-		unset GIT_DIR &&
+		unset GIT_DIR
 		cd "$1" && {
 			git describe "$2" 2>/dev/null ||
 			git describe --tags "$2" 2>/dev/null ||
@@ -285,7 +285,7 @@ modules_list()
 		else
 			if test -z "$cached"
 			then
-				sha1=$(unset GIT_DIR && cd "$path" && git rev-parse --verify HEAD)
+				sha1=$(unset GIT_DIR; cd "$path" && git rev-parse --verify HEAD)
 				set_name_rev "$path" "$sha1"
 			fi
 			say "+$sha1 $path$revname"

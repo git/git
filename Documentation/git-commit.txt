@@ -86,7 +86,7 @@ OPTIONS
 	Add Signed-off-by line at the end of the commit message.
 
 --no-verify::
-	This option bypasses the pre-commit hook.
+	This option bypasses the pre-commit and commit-msg hooks.
 	See also link:hooks.html[hooks].
 
 --allow-empty::

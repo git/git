@@ -93,7 +93,7 @@ void trace_printf(const char *fmt, ...)
 		close(fd);
 }
 
-void trace_argv_printf(const char **argv, int count, const char *fmt, ...)
+void trace_argv_printf(const char **argv, const char *fmt, ...)
 {
 	struct strbuf buf;
 	va_list ap;
@@ -117,7 +117,7 @@ void trace_argv_printf(const char **argv, int count, const char *fmt, ...)
 	}
 	strbuf_setlen(&buf, len);
 
-	sq_quote_argv(&buf, argv, count, 0);
+	sq_quote_argv(&buf, argv, 0);
 	strbuf_addch(&buf, '\n');
 	write_or_whine_pipe(fd, buf.buf, buf.len, err_msg);
 	strbuf_release(&buf);
