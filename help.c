@@ -286,6 +286,7 @@ static void show_man_page(const char *git_cmd)
 static void show_info_page(const char *git_cmd)
 {
 	const char *page = cmd_to_page(git_cmd);
+	setenv("INFOPATH", GIT_INFO_PATH, 1);
 	execlp("info", "info", "gitman", page, NULL);
 }
 
