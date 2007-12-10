@@ -286,7 +286,7 @@ static void show_man_page(const char *git_cmd)
 static void show_info_page(const char *git_cmd)
 {
 	const char *page = cmd_to_page(git_cmd);
-	execlp("info", "info", page, NULL);
+	execlp("info", "info", "gitman", page, NULL);
 }
 
 static void show_html_page(const char *git_cmd)
