@@ -90,19 +90,6 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	return size;
 }
 
-static int missing__target(int code, int result)
-{
-	return	/* file:// URL -- do we ever use one??? */
-		(result == CURLE_FILE_COULDNT_READ_FILE) ||
-		/* http:// and https:// URL */
-		(code == 404 && result == CURLE_HTTP_RETURNED_ERROR) ||
-		/* ftp:// URL */
-		(code == 550 && result == CURLE_FTP_COULDNT_RETR_FILE)
-		;
-}
-
-#define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
-
 static void fetch_alternates(struct walker *walker, const char *base);
 
 static void process_object_response(void *callback_data);
