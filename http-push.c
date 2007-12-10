@@ -75,7 +75,6 @@ static int aborted;
 static signed char remote_dir_exists[256];
 
 static struct curl_slist *no_pragma_header;
-static struct curl_slist *default_headers;
 
 static int push_verbosely;
 static int push_all = MATCH_REFS_NONE;
@@ -2364,11 +2363,6 @@ int main(int argc, char **argv)
 	http_init();
 
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
-	default_headers = curl_slist_append(default_headers, "Range:");
-	default_headers = curl_slist_append(default_headers, "Destination:");
-	default_headers = curl_slist_append(default_headers, "If:");
-	default_headers = curl_slist_append(default_headers,
-					    "Pragma: no-cache");
 
 	/* Verify DAV compliance/lock support */
 	if (!locking_available()) {
@@ -2548,7 +2542,6 @@ int main(int argc, char **argv)
 	free(remote);
 
 	curl_slist_free_all(no_pragma_header);
-	curl_slist_free_all(default_headers);
 
 	http_cleanup();
 
