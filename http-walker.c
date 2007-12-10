@@ -644,6 +644,7 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 	struct strbuf buffer = STRBUF_INIT;
 	char *data;
 	int i = 0;
+	int ret = 0;
 
 	struct active_request_slot *slot;
 	struct slot_results results;
@@ -666,19 +667,19 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (results.curl_result != CURLE_OK) {
-			strbuf_release(&buffer);
 			if (missing_target(&results)) {
 				repo->got_indices = 1;
-				return 0;
+				goto cleanup;
 			} else {
 				repo->got_indices = 0;
-				return error("%s", curl_errorstr);
+				ret = error("%s", curl_errorstr);
+				goto cleanup;
 			}
 		}
 	} else {
 		repo->got_indices = 0;
-		strbuf_release(&buffer);
-		return error("Unable to start request");
+		ret = error("Unable to start request");
+		goto cleanup;
 	}
 
 	data = buffer.buf;
@@ -701,9 +702,11 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 		i++;
 	}
 
-	strbuf_release(&buffer);
 	repo->got_indices = 1;
-	return 0;
+cleanup:
+	strbuf_release(&buffer);
+	free(url);
+	return ret;
 }
 
 static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
@@ -939,6 +942,7 @@ static int fetch_ref(struct walker *walker, char *ref, unsigned char *sha1)
 	const char *base = data->alt->base;
 	struct active_request_slot *slot;
 	struct slot_results results;
+	int ret;
 
 	url = quote_ref_url(base, ref);
 	slot = get_active_slot();
@@ -949,17 +953,23 @@ static int fetch_ref(struct walker *walker, char *ref, unsigned char *sha1)
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		if (results.curl_result != CURLE_OK)
-			return error("Couldn't get %s for %s\n%s",
-				     url, ref, curl_errorstr);
+		if (results.curl_result == CURLE_OK) {
+			strbuf_rtrim(&buffer);
+			if (buffer.len == 40)
+				ret = get_sha1_hex(buffer.buf, sha1);
+			else
+				ret = 1;
+		} else {
+			ret = error("Couldn't get %s for %s\n%s",
+				    url, ref, curl_errorstr);
+		}
 	} else {
-		return error("Unable to start request");
+		ret = error("Unable to start request");
 	}
 
-	strbuf_rtrim(&buffer);
-	if (buffer.len != 40)
-		return 1;
-	return get_sha1_hex(buffer.buf, sha1);
+	strbuf_release(&buffer);
+	free(url);
+	return ret;
 }
 
 static void cleanup(struct walker *walker)

@@ -1119,6 +1119,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
 	char *base = remote->url;
 	struct active_request_slot *slot;
 	struct slot_results results;
+	int ret;
 
 	url = quote_ref_url(base, ref);
 	slot = get_active_slot();
@@ -1129,19 +1130,23 @@ int fetch_ref(char *ref, unsigned char *sha1)
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
-		free(url);
-		if (results.curl_result != CURLE_OK)
-			return error("Couldn't get %s for %s\n%s",
-				     url, ref, curl_errorstr);
+		if (results.curl_result == CURLE_OK) {
+			strbuf_rtrim(&buffer);
+			if (buffer.len == 40)
+				ret = get_sha1_hex(buffer.buf, sha1);
+			else
+				ret = 1;
+		} else {
+			ret = error("Couldn't get %s for %s\n%s",
+				    url, ref, curl_errorstr);
+		}
 	} else {
-		free(url);
-		return error("Unable to start request");
+		ret = error("Unable to start request");
 	}
 
-	strbuf_rtrim(&buffer);
-	if (buffer.len != 40)
-		return 1;
-	return get_sha1_hex(buffer.buf, sha1);
+	strbuf_release(&buffer);
+	free(url);
+	return ret;
 }
 
 static void one_remote_object(const char *hex)
@@ -2043,6 +2048,7 @@ static int remote_exists(const char *path)
 	char *url = xmalloc(strlen(remote->url) + strlen(path) + 1);
 	struct active_request_slot *slot;
 	struct slot_results results;
+	int ret = -1;
 
 	sprintf(url, "%s%s", remote->url, path);
 
@@ -2055,9 +2061,9 @@ static int remote_exists(const char *path)
 		run_active_slot(slot);
 		free(url);
 		if (results.http_code == 404)
-			return 0;
+			ret = 0;
 		else if (results.curl_result == CURLE_OK)
-			return 1;
+			ret = 1;
 		else
 			fprintf(stderr, "HEAD HTTP error %ld\n", results.http_code);
 	} else {
@@ -2065,7 +2071,8 @@ static int remote_exists(const char *path)
 		fprintf(stderr, "Unable to start HEAD request\n");
 	}
 
-	return -1;
+	free(url);
+	return ret;
 }
 
 static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
