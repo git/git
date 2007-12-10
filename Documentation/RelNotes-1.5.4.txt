@@ -132,6 +132,10 @@ Updates since v1.5.3
    variable used to mean "do not require -f option to lose untracked
    files", but we now use the safer default).
 
+ * The kinds of whitespace errors "git diff" and "git apply" notice (and
+   fix) can be controlled via 'core.whitespace' configuration variable
+   and 'whitespace' attribute in .gitattributes file.
+
  * "git push" learned --dry-run option to show what would happen if a
    push is run.
 
@@ -200,6 +204,12 @@ Updates since v1.5.3
 
  * "git bisect" learned "skip" action to mark untestable commits.
 
+ * "git bisect visualize" learned a shorter synonym "git bisect view".
+
+ * "git bisect visualize" runs "git log" in a non-windowed
+   environments.  It also can be told what command to run (e.g. "git
+   bisect visualize tig").
+
  * "git format-patch" learned "format.numbered" configuration variable
    to automatically turn --numbered option on when more than one commits
    are formatted.
@@ -220,6 +230,9 @@ Updates since v1.5.3
  * "git checkout" from a subdirectory learned to use "../path" to allow
    checking out a path outside the current directory without cd'ing up.
 
+ * "git checkout" from and to detached HEAD leaves a bit more
+   information in the reflog.
+
  * "git send-email --dry-run" shows full headers for easier diagnosis.
 
  * "git merge-ours" is now built-in.
@@ -233,11 +246,11 @@ Updates since v1.5.3
    descriptive name from From: and Signed-off-by: lines in the commit
    message.
 
- * "git status" from a subdirectory now shows relative paths which makes
-   copy-and-pasting for git-checkout/git-add/git-rm easier.
-
- * "git checkout" from and to detached HEAD leaves a bit more
-   information in the reflog.
+ * "git status" from a subdirectory now shows relative paths, which
+   makes copy-and-pasting for git-checkout/git-add/git-rm easier.  The
+   traditional behaviour to show the full path relative to the top of
+   the work tree can be had by setting status.relativepaths
+   configuration variable to true.
 
  * In addition there are quite a few internal clean-ups. Notably
 
@@ -266,6 +279,6 @@ series.
 
 --
 exec >/var/tmp/1
-O=v1.5.3.7-1111-gd9f4059
+O=v1.5.3.7-1148-gcf7e147
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
