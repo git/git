@@ -301,9 +301,7 @@ proc resetvarcs {view} {
     foreach vd [array names vseedcount $view,*] {
 	unset vseedcount($vd)
     }
-    foreach vid [array names ordertok $view,*] {
-	unset ordertok($vid)
-    }
+    catch {unset ordertok}
 }
 
 proc newvarc {view id} {
@@ -413,7 +411,7 @@ proc splitvarc {p v} {
 
 proc renumbervarc {a v} {
     global parents children varctok varcstart varccommits
-    global vupptr vdownptr vleftptr varcid vtokmod varcmod
+    global vupptr vdownptr vleftptr varcid vtokmod
 
     set t1 [clock clicks -milliseconds]
     set todo {}
@@ -463,15 +461,11 @@ proc renumbervarc {a v} {
 	}
 	set b [lindex $vupptr($v) $a]
 	if {$b != $ka} {
-	    set tok [lindex $varctok($v) $ka]
-	    if {[string compare $tok $vtokmod($v)] < 0} {
-		set vtokmod($v) $tok
-		set varcmod($v) $ka
+	    if {[string compare [lindex $varctok($v) $ka] $vtokmod($v)] < 0} {
+		modify_arc $v $ka
 	    }
-	    set tok [lindex $varctok($v) $b]
-	    if {[string compare $tok $vtokmod($v)] < 0} {
-		set vtokmod($v) $tok
-		set varcmod($v) $b
+	    if {[string compare [lindex $varctok($v) $b] $vtokmod($v)] < 0} {
+		modify_arc $v $b
 	    }
 	    set c [lindex $vdownptr($v) $b]
 	    if {$c == $a} {
@@ -535,8 +529,8 @@ proc fix_reversal {p a v} {
 }
 
 proc insertrow {id p v} {
-    global varcid varccommits parents children cmitlisted ordertok
-    global commitidx varctok vtokmod varcmod
+    global varcid varccommits parents children cmitlisted
+    global commitidx varctok vtokmod
 
     set a $varcid($v,$p)
     set i [lsearch -exact $varccommits($v,$a) $p]
@@ -547,26 +541,20 @@ proc insertrow {id p v} {
     set children($v,$id) {}
     set parents($v,$id) [list $p]
     set varcid($v,$id) $a
-    if {[llength [lappend children($v,$p) $id]] > 1 &&
-	[vtokcmp $v [lindex $children($v,$p) end-1] $id] > 0} {
-	set children($v,$p) [lsort -command [list vtokcmp $v] $children($v,$p)]
-    }
+    lappend children($v,$p) $id
     set cmitlisted($v,$id) 1
     incr commitidx($v)
-    set ordertok($v,$id) $ordertok($v,$p)
     # note we deliberately don't update varcstart($v) even if $i == 0
     set varccommits($v,$a) [linsert $varccommits($v,$a) $i $id]
-    set tok [lindex $varctok($v) $a]
-    if {[string compare $tok $vtokmod($v)] < 0} {
-	set vtokmod($v) $tok
-	set varcmod($v) $a
+    if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
+	modify_arc $v $a
     }
-    update_arcrows $v
+    drawvisible
 }
 
 proc removerow {id v} {
-    global varcid varccommits parents children commitidx ordertok
-    global varctok vtokmod varcmod
+    global varcid varccommits parents children commitidx
+    global varctok vtokmod
 
     if {[llength $parents($v,$id)] != 1} {
 	puts "oops: removerow [shortids $id] has [llength $parents($v,$id)] parents"
@@ -584,18 +572,16 @@ proc removerow {id v} {
     unset parents($v,$id)
     unset children($v,$id)
     unset cmitlisted($v,$id)
-    unset ordertok($v,$id)
     incr commitidx($v) -1
     set j [lsearch -exact $children($v,$p) $id]
     if {$j >= 0} {
 	set children($v,$p) [lreplace $children($v,$p) $j $j]
     }
     set tok [lindex $varctok($v) $a]
-    if {[string compare $tok $vtokmod($v)] < 0} {
-	set vtokmod($v) $tok
-	set varcmod($v) $a
+    if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
+	modify_arc $v $a
     }
-    update_arcrows $v
+    drawvisible
 }
 
 proc vtokcmp {v a b} {
@@ -603,6 +589,19 @@ proc vtokcmp {v a b} {
 
     return [string compare [lindex $varctok($v) $varcid($v,$a)] \
 		[lindex $varctok($v) $varcid($v,$b)]]
+}
+
+proc modify_arc {v a} {
+    global varctok vtokmod varcmod varcrow vupptr curview
+
+    set vtokmod($v) [lindex $varctok($v) $a]
+    set varcmod($v) $a
+    if {$v == $curview} {
+	while {$a != 0 && [lindex $varcrow($v) $a] eq {}} {
+	    set a [lindex $vupptr($v) $a]
+	}
+	undolayout [lindex $varcrow($v) $a]
+    }
 }
 
 proc update_arcrows {v} {
@@ -647,7 +646,6 @@ proc update_arcrows {v} {
     if {$v == $curview} {
 	catch {unset cached_commitrow}
     }
-    set startrow $row
     while {1} {
 	set p $a
 	incr row [llength $varccommits($v,$a)]
@@ -672,15 +670,8 @@ proc update_arcrows {v} {
     if {[info exists currentid]} {
 	set selectedline [rowofcommit $currentid]
     }
-    undolayout $startrow
-    if {$row != $commitidx($v)} {
-	puts "oops update_arcrows got to row $row out of $commitidx($v)"
-	set vtokmod($v) {}
-	set varcmod($v) 0
-    } else {
-	set vtokmod($v) [lindex $varctok($v) $p]
-	set varcmod($v) $p
-    }
+    set vtokmod($v) [lindex $varctok($v) $p]
+    set varcmod($v) $p
     set t2 [clock clicks -milliseconds]
     incr uat [expr {$t2-$t1}]
 }
@@ -695,6 +686,7 @@ proc commitinview {id v} {
 # Return the row number for commit $id in the current view
 proc rowofcommit {id} {
     global varcid varccommits varcrow curview cached_commitrow
+    global varctok vtokmod
 
     if {[info exists cached_commitrow($id)]} {
 	return $cached_commitrow($id)
@@ -705,6 +697,9 @@ proc rowofcommit {id} {
 	return {}
     }
     set a $varcid($v,$id)
+    if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] > 0} {
+	update_arcrows $v
+    }
     set i [lsearch -exact $varccommits($v,$a) $id]
     if {$i < 0} {
 	puts "oops didn't find commit [shortids $id] in arc $a"
@@ -738,9 +733,15 @@ proc bsearch {l elt} {
 # Make sure rows $start..$end-1 are valid in displayorder and parentlist
 proc make_disporder {start end} {
     global vrownum curview commitidx displayorder parentlist
-    global varccommits varcorder parents
+    global varccommits varcorder parents varcmod varcrow
     global d_valid_start d_valid_end
 
+    set la $varcmod($curview)
+    set lrow [lindex $varcrow($curview) $la]
+    if {$la == 0 || $lrow eq {} || \
+	    $end < $lrow + [llength $varccommits($curview,$la)]} {
+	update_arcrows $curview
+    }
     set ai [bsearch $vrownum($curview) $start]
     set start [lindex $vrownum($curview) $ai]
     set narc [llength $vrownum($curview)]
@@ -786,7 +787,7 @@ proc commitonrow {row} {
 
 proc closevarcs {v} {
     global varctok varccommits varcid parents children
-    global cmitlisted commitidx commitinterest vtokmod varcmod
+    global cmitlisted commitidx commitinterest vtokmod
 
     set missing_parents 0
     set scripts {}
@@ -807,10 +808,8 @@ proc closevarcs {v} {
 	    }
 	    set varcid($v,$p) $b
 	    lappend varccommits($v,$b) $p
-	    set tok [lindex $varctok($v) $b]
-	    if {[string compare $tok $vtokmod($v)] < 0} {
-		set vtokmod($v) $tok
-		set varcmod($v) $b
+	    if {[string compare [lindex $varctok($v) $b] $vtokmod($v)] < 0} {
+		modify_arc $v $b
 	    }
 	    incr commitidx($v)
 	    if {[info exists commitinterest($p)]} {
@@ -822,7 +821,6 @@ proc closevarcs {v} {
 	}
     }
     if {$missing_parents > 0} {
-	update_arcrows $v
 	foreach s $scripts {
 	    eval $s
 	}
@@ -833,8 +831,8 @@ proc getcommitlines {fd inst view}  {
     global cmitlisted commitinterest leftover getdbg
     global commitidx commitdata
     global parents children curview hlview
-    global ordertok vnextroot idpending
-    global varccommits varcid varctok vtokmod varcmod
+    global vnextroot idpending ordertok
+    global varccommits varcid varctok vtokmod
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
@@ -935,29 +933,8 @@ proc getcommitlines {fd inst view}  {
 	set id [lindex $ids 0]
 	set vid $view,$id
 	if {!$listed && [info exists parents($vid)]} continue
-	if {![info exists ordertok($vid)]} {
-	    set otok "o[strrep $vnextroot($view)]"
-	    incr vnextroot($view)
-	    set ordertok($vid) $otok
-	} else {
-	    set otok $ordertok($vid)
-	}
 	if {$listed} {
 	    set olds [lrange $ids 1 end]
-	    if {[llength $olds] == 1} {
-		set p [lindex $olds 0]
-		if {![info exists ordertok($view,$p)]} {
-		    set ordertok($view,$p) $ordertok($vid)
-		}
-	    } else {
-		set i 0
-		foreach p $olds {
-		    if {![info exists ordertok($view,$p)]} {
-			set ordertok($view,$p) "$otok[strrep $i]]"
-		    }
-		    incr i
-		}
-	    }
 	} else {
 	    set olds {}
 	}
@@ -990,6 +967,7 @@ proc getcommitlines {fd inst view}  {
 		    [vtokcmp $view [lindex $children($vp) end-1] $id] > 0} {
 		    set children($vp) [lsort -command [list vtokcmp $view] \
 					   $children($vp)]
+		    catch {unset ordertok}
 		}
 	    }
 	    if {[info exists varcid($view,$p)]} {
@@ -998,8 +976,7 @@ proc getcommitlines {fd inst view}  {
 	    incr i
 	}
 	if {[string compare $tok $vtokmod($view)] < 0} {
-	    set vtokmod($view) $tok
-	    set varcmod($view) $a
+	    modify_arc $view $a
 	}
 
 	incr commitidx($view)
@@ -1012,7 +989,6 @@ proc getcommitlines {fd inst view}  {
 	set gotsome 1
     }
     if {$gotsome} {
-	update_arcrows $view
 	run chewcommits $view
 	foreach s $scripts {
 	    eval $s
@@ -2684,7 +2660,7 @@ proc addviewmenu {n} {
 }
 
 proc showview {n} {
-    global curview viewfiles cached_commitrow
+    global curview viewfiles cached_commitrow ordertok
     global displayorder parentlist rowidlist rowisopt rowfinal
     global colormap rowtextx nextcolor canvxmax
     global numcommits viewcomplete
@@ -2722,6 +2698,7 @@ proc showview {n} {
     }
     catch {unset commitinterest}
     catch {unset cached_commitrow}
+    catch {unset ordertok}
 
     set curview $n
     set selectedview $n
@@ -3313,24 +3290,70 @@ proc ntimes {n o} {
     return $ret
 }
 
+proc ordertoken {id} {
+    global ordertok curview varcid varcstart varctok curview parents children
+    global nullid nullid2
+
+    if {[info exists ordertok($id)]} {
+	return $ordertok($id)
+    }
+    set origid $id
+    set todo {}
+    while {1} {
+	if {[info exists varcid($curview,$id)]} {
+	    set a $varcid($curview,$id)
+	    set p [lindex $varcstart($curview) $a]
+	} else {
+	    set p [lindex $children($curview,$id) 0]
+	}
+	if {[info exists ordertok($p)]} {
+	    set tok $ordertok($p)
+	    break
+	}
+	if {[llength $children($curview,$p)] == 0} {
+	    # it's a root
+	    set tok [lindex $varctok($curview) $a]
+	    break
+	}
+	set id [lindex $children($curview,$p) 0]
+	if {$id eq $nullid || $id eq $nullid2} {
+	    # XXX treat it as a root
+	    set tok [lindex $varctok($curview) $a]
+	    break
+	}
+	if {[llength $parents($curview,$id)] == 1} {
+	    lappend todo [list $p {}]
+	} else {
+	    set j [lsearch -exact $parents($curview,$id) $p]
+	    if {$j < 0} {
+		puts "oops didn't find [shortids $p] in parents of [shortids $id]"
+	    }
+	    lappend todo [list $p [strrep $j]]
+	}
+    }
+    for {set i [llength $todo]} {[incr i -1] >= 0} {} {
+	set p [lindex $todo $i 0]
+	append tok [lindex $todo $i 1]
+	set ordertok($p) $tok
+    }
+    set ordertok($origid) $tok
+    return $tok
+}
+
 # Work out where id should go in idlist so that order-token
 # values increase from left to right
 proc idcol {idlist id {i 0}} {
-    global ordertok curview
-
-    set t $ordertok($curview,$id)
-    if {$i >= [llength $idlist] ||
-	$t < $ordertok($curview,[lindex $idlist $i])} {
+    set t [ordertoken $id]
+    if {$i >= [llength $idlist] || $t < [ordertoken [lindex $idlist $i]]} {
 	if {$i > [llength $idlist]} {
 	    set i [llength $idlist]
 	}
-	while {[incr i -1] >= 0 &&
-	       $t < $ordertok($curview,[lindex $idlist $i])} {}
+	while {[incr i -1] >= 0 && $t < [ordertoken [lindex $idlist $i]]} {}
 	incr i
     } else {
-	if {$t > $ordertok($curview,[lindex $idlist $i])} {
+	if {$t > [ordertoken [lindex $idlist $i]]} {
 	    while {[incr i] < [llength $idlist] &&
-		   $t >= $ordertok($curview,[lindex $idlist $i])} {}
+		   $t >= [ordertoken [lindex $idlist $i]]} {}
 	}
     }
     return $i
@@ -3553,7 +3576,7 @@ proc prevuse {id row} {
 
 proc make_idlist {row} {
     global displayorder parentlist uparrowlen downarrowlen mingaplen
-    global commitidx curview ordertok children
+    global commitidx curview children
 
     set r [expr {$row - $mingaplen - $downarrowlen - 1}]
     if {$r < 0} {
@@ -3576,7 +3599,7 @@ proc make_idlist {row} {
 	    set rn [nextuse $p $r]
 	    if {$rn >= $row &&
 		$rn <= $r + $downarrowlen + $mingaplen + $uparrowlen} {
-		lappend ids [list $ordertok($curview,$p) $p]
+		lappend ids [list [ordertoken $p] $p]
 	    }
 	}
     }
@@ -3586,17 +3609,17 @@ proc make_idlist {row} {
 	    if {$p eq $nextid} continue
 	    set rn [nextuse $p $r]
 	    if {$rn < 0 || $rn >= $row} {
-		lappend ids [list $ordertok($curview,$p) $p]
+		lappend ids [list [ordertoken $p] $p]
 	    }
 	}
     }
     set id [lindex $displayorder $row]
-    lappend ids [list $ordertok($curview,$id) $id]
+    lappend ids [list [ordertoken $id] $id]
     while {$r < $rb} {
 	foreach p [lindex $parentlist $r] {
 	    set firstkid [lindex $children($curview,$p) 0]
 	    if {[rowofcommit $firstkid] < $row} {
-		lappend ids [list $ordertok($curview,$p) $p]
+		lappend ids [list [ordertoken $p] $p]
 	    }
 	}
 	incr r
@@ -3604,7 +3627,7 @@ proc make_idlist {row} {
 	if {$id ne {}} {
 	    set firstkid [lindex $children($curview,$id) 0]
 	    if {$firstkid ne {} && [rowofcommit $firstkid] < $row} {
-		lappend ids [list $ordertok($curview,$id) $id]
+		lappend ids [list [ordertoken $id] $id]
 	    }
 	}
     }
