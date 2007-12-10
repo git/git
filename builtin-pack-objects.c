@@ -1709,6 +1709,16 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 				list++;
 				sub_size--;
 			}
+			if (!sub_size) {
+				/*
+				 * It is possible for some "paths" to have
+				 * so many objects that no hash boundary
+				 * might be found.  Let's just steal the
+				 * exact half in that case.
+				 */
+				sub_size = victim->remaining / 2;
+				list -= sub_size;
+			}
 			target->list = list;
 			victim->list_size -= sub_size;
 			victim->remaining -= sub_size;
