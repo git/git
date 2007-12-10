@@ -5,7 +5,11 @@ MAN1_TXT= \
 MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt
 MAN7_TXT=git.txt
 
-DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT))
+MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
+MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
+MAN_HTML=$(patsubst %.txt,%.html,$(MAN_TXT))
+
+DOC_HTML=$(MAN_HTML)
 
 ARTICLES = tutorial
 ARTICLES += tutorial-2
@@ -80,7 +84,7 @@ man1: $(DOC_MAN1)
 man5: $(DOC_MAN5)
 man7: $(DOC_MAN7)
 
-info: git.info
+info: git.info gitman.info
 
 install: man
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man1dir)
@@ -92,9 +96,10 @@ install: man
 
 install-info: info
 	$(INSTALL) -d -m 755 $(DESTDIR)$(infodir)
-	$(INSTALL) -m 644 git.info $(DESTDIR)$(infodir)
+	$(INSTALL) -m 644 git.info gitman.info $(DESTDIR)$(infodir)
 	if test -r $(DESTDIR)$(infodir)/dir; then \
 	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) git.info ;\
+	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) gitman.info ;\
 	else \
 	  echo "No directory found in $(DESTDIR)$(infodir)" >&2 ; \
 	fi
@@ -165,12 +170,27 @@ XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
 user-manual.html: user-manual.xml
 	xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
 
-git.info: user-manual.xml
-	$(RM) $@ $*.texi $*.texi+
-	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout >$*.texi+
-	$(PERL_PATH) fix-texi.perl <$*.texi+ >$*.texi
+git.info: git.texi
 	$(MAKEINFO) --no-split $*.texi
-	$(RM) $*.texi $*.texi+
+
+git.texi: user-manual.xml
+	$(RM) $@+ $@
+	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout | $(PERL_PATH) fix-texi.perl >$@+
+	mv $@+ $@
+
+gitman.texi: $(MAN_XML) cat-texi.perl
+	$(RM) $@+ $@
+	($(foreach xml,$(MAN_XML),$(DOCBOOK2X_TEXI) --to-stdout $(xml);)) | \
+	$(PERL_PATH) cat-texi.perl $@ >$@+
+	mv $@+ $@
+
+gitman.info: gitman.texi
+	$(MAKEINFO) --no-split $*.texi
+
+$(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
+	$(RM) $@+ $@
+	$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@+
+	mv $@+ $@
 
 howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
 	$(RM) $@+ $@
