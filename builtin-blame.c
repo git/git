@@ -388,6 +388,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
+	diff_tree_release_paths(&diff_opts);
 	if (porigin) {
 		/*
 		 * Create a freestanding copy that is not part of
@@ -444,6 +445,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
+	diff_tree_release_paths(&diff_opts);
 	return porigin;
 }
 
@@ -1165,7 +1167,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
-
+	diff_tree_release_paths(&diff_opts);
 	return retval;
 }
 
