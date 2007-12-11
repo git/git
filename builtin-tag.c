@@ -236,14 +236,18 @@ static const char tag_template[] =
 	"# Write a tag message\n"
 	"#\n";
 
+static void set_signingkey(const char *value)
+{
+	if (strlcpy(signingkey, value, sizeof(signingkey)) >= sizeof(signingkey))
+		die("signing key value too long (%.10s...)", value);
+}
+
 static int git_tag_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "user.signingkey")) {
 		if (!value)
 			die("user.signingkey without value");
-		if (strlcpy(signingkey, value, sizeof(signingkey))
-						>= sizeof(signingkey))
-			die("user.signingkey value too long");
+		set_signingkey(value);
 		return 0;
 	}
 
@@ -396,6 +400,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, options, git_tag_usage, 0);
 
+	if (keyid) {
+		sign = 1;
+		set_signingkey(keyid);
+	}
 	if (sign)
 		annotate = 1;
 

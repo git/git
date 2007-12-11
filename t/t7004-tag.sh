@@ -640,6 +640,46 @@ test_expect_success 'creating a signed tag with -m message should succeed' '
 	git diff expect actual
 '
 
+get_tag_header u-signed-tag $commit commit $time >expect
+echo 'Another message' >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success 'sign with a given key id' '
+
+	git tag -u committer@example.com -m "Another message" u-signed-tag &&
+	get_tag_msg u-signed-tag >actual &&
+	git diff expect actual
+
+'
+
+test_expect_success 'sign with an unknown id (1)' '
+
+	! git tag -u author@example.com -m "Another message" o-signed-tag
+
+'
+
+test_expect_success 'sign with an unknown id (2)' '
+
+	! git tag -u DEADBEEF -m "Another message" o-signed-tag
+
+'
+
+cat >fakeeditor <<'EOF'
+#!/bin/sh
+test -n "$1" && exec >"$1"
+echo A signed tag message
+echo from a fake editor.
+EOF
+chmod +x fakeeditor
+
+get_tag_header implied-sign $commit commit $time >expect
+./fakeeditor >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success '-u implies signed tag' '
+	GIT_EDITOR=./fakeeditor git-tag -u CDDE430D implied-sign &&
+	get_tag_msg implied-sign >actual &&
+	git diff expect actual
+'
+
 cat >sigmsgfile <<EOF
 Another signed tag
 message in a file.
@@ -667,13 +707,6 @@ test_expect_success 'creating a signed tag with -F - should succeed' '
 	git diff expect actual
 '
 
-cat >fakeeditor <<'EOF'
-#!/bin/sh
-test -n "$1" && exec >"$1"
-echo A signed tag message
-echo from a fake editor.
-EOF
-chmod +x fakeeditor
 get_tag_header implied-annotate $commit commit $time >expect
 ./fakeeditor >>expect
 echo '-----BEGIN PGP SIGNATURE-----' >>expect
