@@ -368,9 +368,10 @@ if ($thread && !defined $initial_reply_to && $prompting) {
 
 	$initial_reply_to = $_;
 }
-
-$initial_reply_to =~ s/^\s*<?/</;
-$initial_reply_to =~ s/>?\s*$/>/;
+if (defined $initial_reply_to && $_ ne "") {
+	$initial_reply_to =~ s/^\s*<?/</;
+	$initial_reply_to =~ s/>?\s*$/>/;
+}
 
 if (!defined $smtp_server) {
 	foreach (qw( /usr/sbin/sendmail /usr/lib/sendmail )) {
