@@ -205,7 +205,10 @@ fi
 # it is local
 if base=$(get_repo_base "$repo"); then
 	repo="$base"
-	local=yes
+	if test -z "$depth"
+	then
+		local=yes
+	fi
 fi
 
 dir="$2"
