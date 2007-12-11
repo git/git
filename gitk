@@ -600,7 +600,8 @@ proc modify_arc {v a} {
 	while {$a != 0 && [lindex $varcrow($v) $a] eq {}} {
 	    set a [lindex $vupptr($v) $a]
 	}
-	undolayout [lindex $varcrow($v) $a]
+	set r [expr {$a == 0? 0: [lindex $varcrow($v) $a]}]
+	undolayout $r
     }
 }
 
@@ -739,7 +740,7 @@ proc make_disporder {start end} {
     set la $varcmod($curview)
     set lrow [lindex $varcrow($curview) $la]
     if {$la == 0 || $lrow eq {} || \
-	    $end < $lrow + [llength $varccommits($curview,$la)]} {
+	    $end > $lrow + [llength $varccommits($curview,$la)]} {
 	update_arcrows $curview
     }
     set ai [bsearch $vrownum($curview) $start]
