@@ -734,7 +734,9 @@ struct diffstat_t {
 	int nr;
 	int alloc;
 	struct diffstat_file {
+		char *from_name;
 		char *name;
+		char *print_name;
 		unsigned is_unmerged:1;
 		unsigned is_binary:1;
 		unsigned is_renamed:1;
@@ -755,11 +757,14 @@ static struct diffstat_file *diffstat_add(struct diffstat_t *diffstat,
 	}
 	diffstat->files[diffstat->nr++] = x;
 	if (name_b) {
-		x->name = pprint_rename(name_a, name_b);
+		x->from_name = xstrdup(name_a);
+		x->name = xstrdup(name_b);
 		x->is_renamed = 1;
 	}
-	else
+	else {
+		x->from_name = NULL;
 		x->name = xstrdup(name_a);
+	}
 	return x;
 }
 
@@ -803,6 +808,28 @@ static void show_graph(char ch, int cnt, const char *set, const char *reset)
 	printf("%s", reset);
 }
 
+static void fill_print_name(struct diffstat_file *file)
+{
+	char *pname;
+
+	if (file->print_name)
+		return;
+
+	if (!file->is_renamed) {
+		struct strbuf buf;
+		strbuf_init(&buf, 0);
+		if (quote_c_style(file->name, &buf, NULL, 0)) {
+			pname = strbuf_detach(&buf, NULL);
+		} else {
+			pname = file->name;
+			strbuf_release(&buf);
+		}
+	} else {
+		pname = pprint_rename(file->from_name, file->name);
+	}
+	file->print_name = pname;
+}
+
 static void show_stats(struct diffstat_t* data, struct diff_options *options)
 {
 	int i, len, add, del, total, adds = 0, dels = 0;
@@ -836,19 +863,8 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 		int change = file->added + file->deleted;
-
-		if (!file->is_renamed) {  /* renames are already quoted by pprint_rename */
-			struct strbuf buf;
-			strbuf_init(&buf, 0);
-			if (quote_c_style(file->name, &buf, NULL, 0)) {
-				free(file->name);
-				file->name = strbuf_detach(&buf, NULL);
-			} else {
-				strbuf_release(&buf);
-			}
-		}
-
-		len = strlen(file->name);
+		fill_print_name(file);
+		len = strlen(file->print_name);
 		if (max_len < len)
 			max_len = len;
 
@@ -873,7 +889,7 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 
 	for (i = 0; i < data->nr; i++) {
 		const char *prefix = "";
-		char *name = data->files[i]->name;
+		char *name = data->files[i]->print_name;
 		int added = data->files[i]->added;
 		int deleted = data->files[i]->deleted;
 		int name_len;
@@ -901,17 +917,17 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 			printf("%s%d%s", add_c, added, reset);
 			printf(" bytes");
 			printf("\n");
-			goto free_diffstat_file;
+			continue;
 		}
 		else if (data->files[i]->is_unmerged) {
 			show_name(prefix, name, len, reset, set);
 			printf("  Unmerged\n");
-			goto free_diffstat_file;
+			continue;
 		}
 		else if (!data->files[i]->is_renamed &&
 			 (added + deleted == 0)) {
 			total_files--;
-			goto free_diffstat_file;
+			continue;
 		}
 
 		/*
@@ -933,11 +949,7 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 		show_graph('+', add, add_c, reset);
 		show_graph('-', del, del_c, reset);
 		putchar('\n');
-	free_diffstat_file:
-		free(data->files[i]->name);
-		free(data->files[i]);
 	}
-	free(data->files);
 	printf("%s %d files changed, %d insertions(+), %d deletions(-)%s\n",
 	       set, total_files, adds, dels, reset);
 }
@@ -962,11 +974,7 @@ static void show_shortstats(struct diffstat_t* data)
 				dels += deleted;
 			}
 		}
-		free(data->files[i]->name);
-		free(data->files[i]);
 	}
-	free(data->files);
-
 	printf(" %d files changed, %d insertions(+), %d deletions(-)\n",
 	       total_files, adds, dels);
 }
@@ -975,6 +983,9 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 {
 	int i;
 
+	if (data->nr == 0)
+		return;
+
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 
@@ -982,13 +993,37 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 			printf("-\t-\t");
 		else
 			printf("%d\t%d\t", file->added, file->deleted);
-		if (!file->is_renamed) {
-			write_name_quoted(file->name, stdout, options->line_termination);
+		if (options->line_termination) {
+			fill_print_name(file);
+			if (!file->is_renamed)
+				write_name_quoted(file->name, stdout,
+						  options->line_termination);
+			else {
+				fputs(file->print_name, stdout);
+				putchar(options->line_termination);
+			}
 		} else {
-			fputs(file->name, stdout);
-			putchar(options->line_termination);
+			if (file->is_renamed) {
+				putchar('\0');
+				write_name_quoted(file->from_name, stdout, '\0');
+			}
+			write_name_quoted(file->name, stdout, '\0');
 		}
 	}
+}
+
+static void free_diffstat_info(struct diffstat_t *diffstat)
+{
+	int i;
+	for (i = 0; i < diffstat->nr; i++) {
+		struct diffstat_file *f = diffstat->files[i];
+		if (f->name != f->print_name)
+			free(f->print_name);
+		free(f->name);
+		free(f->from_name);
+		free(f);
+	}
+	free(diffstat->files);
 }
 
 struct checkdiff_t {
@@ -2943,8 +2978,9 @@ void diff_flush(struct diff_options *options)
 			show_numstat(&diffstat, options);
 		if (output_format & DIFF_FORMAT_DIFFSTAT)
 			show_stats(&diffstat, options);
-		else if (output_format & DIFF_FORMAT_SHORTSTAT)
+		if (output_format & DIFF_FORMAT_SHORTSTAT)
 			show_shortstats(&diffstat);
+		free_diffstat_info(&diffstat);
 		separator++;
 	}
 
