@@ -83,19 +83,20 @@ BuildRequires:  perl(Error)
 %description -n perl-Git
 Perl interface to Git
 
+%define path_settings ETC_GITCONFIG=/etc/gitconfig prefix=%{_prefix} mandir=%{_mandir} htmldir=%{_docdir}/%{name}-core-%{version}
+
 %prep
 %setup -q
 
 %build
 make %{_smp_mflags} CFLAGS="$RPM_OPT_FLAGS" \
-     ETC_GITCONFIG=/etc/gitconfig \
-     prefix=%{_prefix} all %{!?_without_docs: doc}
+     %{path_settings} \
+     all %{!?_without_docs: doc}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 make %{_smp_mflags} CFLAGS="$RPM_OPT_FLAGS" DESTDIR=$RPM_BUILD_ROOT \
-     prefix=%{_prefix} mandir=%{_mandir} \
-     ETC_GITCONFIG=/etc/gitconfig \
+     %{path_settings} \
      INSTALLDIRS=vendor install %{!?_without_docs: install-doc}
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 find $RPM_BUILD_ROOT -type f -name '*.bs' -empty -exec rm -f {} ';'
@@ -171,6 +172,9 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %doc Documentation/technical}
 
 %changelog
+* Wed Dec 12 2007 Junio C Hamano <gitster@pobox.com>
+- Adjust htmldir to point at /usr/share/doc/git-core-$version/
+
 * Sun Jul 15 2007 Sean Estabrooks <seanlkml@sympatico.ca>
 - Removed p4import.
 
