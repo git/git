@@ -268,7 +268,7 @@ proc strrep {n} {
 
 proc varcinit {view} {
     global vseeds varcstart vupptr vdownptr vleftptr varctok varcrow
-    global vtokmod varcmod varcix uat
+    global vtokmod varcmod vrowmod varcix uat
 
     set vseeds($view) {}
     set varcstart($view) {{}}
@@ -279,6 +279,7 @@ proc varcinit {view} {
     set varcrow($view) {{}}
     set vtokmod($view) {}
     set varcmod($view) 0
+    set vrowmod($view) 0
     set varcix($view) {{}}
     set uat 0
 }
@@ -307,7 +308,7 @@ proc resetvarcs {view} {
 proc newvarc {view id} {
     global varcid varctok parents children vseeds
     global vupptr vdownptr vleftptr varcrow varcix varcstart
-    global commitdata commitinfo vseedcount
+    global commitdata commitinfo vseedcount varccommits
 
     set a [llength $varctok($view)]
     set vid $view,$id
@@ -377,6 +378,7 @@ proc newvarc {view id} {
     lappend vdownptr($view) 0
     lappend varcrow($view) {}
     lappend varcix($view) {}
+    set varccommits($view,$a) {}
     return $a
 }
 
@@ -547,7 +549,7 @@ proc insertrow {id p v} {
     # note we deliberately don't update varcstart($v) even if $i == 0
     set varccommits($v,$a) [linsert $varccommits($v,$a) $i $id]
     if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
-	modify_arc $v $a
+	modify_arc $v $a $i
     }
     drawvisible
 }
@@ -579,7 +581,7 @@ proc removerow {id v} {
     }
     set tok [lindex $varctok($v) $a]
     if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
-	modify_arc $v $a
+	modify_arc $v $a $i
     }
     drawvisible
 }
@@ -591,22 +593,30 @@ proc vtokcmp {v a b} {
 		[lindex $varctok($v) $varcid($v,$b)]]
 }
 
-proc modify_arc {v a} {
-    global varctok vtokmod varcmod varcrow vupptr curview
+proc modify_arc {v a {lim {}}} {
+    global varctok vtokmod varcmod varcrow vupptr curview vrowmod varccommits
 
     set vtokmod($v) [lindex $varctok($v) $a]
     set varcmod($v) $a
     if {$v == $curview} {
 	while {$a != 0 && [lindex $varcrow($v) $a] eq {}} {
 	    set a [lindex $vupptr($v) $a]
+	    set lim {}
 	}
-	set r [expr {$a == 0? 0: [lindex $varcrow($v) $a]}]
+	set r 0
+	if {$a != 0} {
+	    if {$lim eq {}} {
+		set lim [llength $varccommits($v,$a)]
+	    }
+	    set r [expr {[lindex $varcrow($v) $a] + $lim}]
+	}
+	set vrowmod($v) $r
 	undolayout $r
     }
 }
 
 proc update_arcrows {v} {
-    global vtokmod varcmod varcrow commitidx currentid selectedline
+    global vtokmod varcmod vrowmod varcrow commitidx currentid selectedline
     global varcid vseeds vrownum varcorder varcix varccommits
     global vupptr vdownptr vleftptr varctok
     global uat displayorder parentlist curview cached_commitrow
@@ -640,11 +650,11 @@ proc update_arcrows {v} {
 	}
 	set row [lindex $varcrow($v) $a]
     }
-    if {[llength $displayorder] > $row} {
-	set displayorder [lrange $displayorder 0 [expr {$row - 1}]]
-	set parentlist [lrange $parentlist 0 [expr {$row - 1}]]
-    }
     if {$v == $curview} {
+	if {[llength $displayorder] > $vrowmod($v)} {
+	    set displayorder [lrange $displayorder 0 [expr {$vrowmod($v) - 1}]]
+	    set parentlist [lrange $parentlist 0 [expr {$vrowmod($v) - 1}]]
+	}
 	catch {unset cached_commitrow}
     }
     while {1} {
@@ -668,11 +678,12 @@ proc update_arcrows {v} {
 	lset varcix($v) $a $arcn
 	lset varcrow($v) $a $row
     }
+    set vtokmod($v) [lindex $varctok($v) $p]
+    set varcmod($v) $p
+    set vrowmod($v) $row
     if {[info exists currentid]} {
 	set selectedline [rowofcommit $currentid]
     }
-    set vtokmod($v) [lindex $varctok($v) $p]
-    set varcmod($v) $p
     set t2 [clock clicks -milliseconds]
     incr uat [expr {$t2-$t1}]
 }
@@ -734,13 +745,10 @@ proc bsearch {l elt} {
 # Make sure rows $start..$end-1 are valid in displayorder and parentlist
 proc make_disporder {start end} {
     global vrownum curview commitidx displayorder parentlist
-    global varccommits varcorder parents varcmod varcrow
+    global varccommits varcorder parents vrowmod varcrow
     global d_valid_start d_valid_end
 
-    set la $varcmod($curview)
-    set lrow [lindex $varcrow($curview) $la]
-    if {$la == 0 || $lrow eq {} || \
-	    $end > $lrow + [llength $varccommits($curview,$la)]} {
+    if {$end > $vrowmod($curview)} {
 	update_arcrows $curview
     }
     set ai [bsearch $vrownum($curview) $start]
@@ -808,10 +816,10 @@ proc closevarcs {v} {
 		set b [newvarc $v $p]
 	    }
 	    set varcid($v,$p) $b
-	    lappend varccommits($v,$b) $p
 	    if {[string compare [lindex $varctok($v) $b] $vtokmod($v)] < 0} {
 		modify_arc $v $b
 	    }
+	    lappend varccommits($v,$b) $p
 	    incr commitidx($v)
 	    if {[info exists commitinterest($p)]} {
 		foreach script $commitinterest($p) {
@@ -958,8 +966,11 @@ proc getcommitlines {fd inst view}  {
 	    set a [newvarc $view $id]
 	}
 	set varcid($vid) $a
+	if {[string compare [lindex $varctok($view) $a] $vtokmod($view)] < 0} {
+	    modify_arc $view $a
+	}
 	lappend varccommits($view,$a) $id
-	set tok [lindex $varctok($view) $a]
+
 	set i 0
 	foreach p $olds {
 	    if {$i == 0 || [lsearch -exact $olds $p] >= $i} {
@@ -975,9 +986,6 @@ proc getcommitlines {fd inst view}  {
 		fix_reversal $p $a $view
 	    }
 	    incr i
-	}
-	if {[string compare $tok $vtokmod($view)] < 0} {
-	    modify_arc $view $a
 	}
 
 	incr commitidx($view)
@@ -3345,6 +3353,9 @@ proc ordertoken {id} {
 # values increase from left to right
 proc idcol {idlist id {i 0}} {
     set t [ordertoken $id]
+    if {$i < 0} {
+	set i 0
+    }
     if {$i >= [llength $idlist] || $t < [ordertoken [lindex $idlist $i]]} {
 	if {$i > [llength $idlist]} {
 	    set i [llength $idlist]
