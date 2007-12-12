@@ -170,10 +170,10 @@ XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
 user-manual.html: user-manual.xml
 	xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
 
-git.info: git.texi
-	$(MAKEINFO) --no-split $*.texi
+git.info: user-manual.texi
+	$(MAKEINFO) --no-split -o $@ user-manual.texi
 
-git.texi: user-manual.xml
+user-manual.texi: user-manual.xml
 	$(RM) $@+ $@
 	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout | $(PERL_PATH) fix-texi.perl >$@+
 	mv $@+ $@
