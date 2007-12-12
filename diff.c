@@ -1044,11 +1044,18 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		int i, spaces = 0, space_before_tab = 0, white_space_at_end = 0;
 
 		/* check space before tab */
-		for (i = 1; i < len && (line[i] == ' ' || line[i] == '\t'); i++)
+		for (i = 1; i < len; i++) {
 			if (line[i] == ' ')
 				spaces++;
-		if (line[i - 1] == '\t' && spaces)
-			space_before_tab = 1;
+			else if (line[i] == '\t') {
+				if (spaces) {
+					space_before_tab = 1;
+					break;
+				}
+			}
+			else
+				break;
+		}
 
 		/* check whitespace at line end */
 		if (line[len - 1] == '\n')
