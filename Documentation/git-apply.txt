@@ -119,7 +119,7 @@ discouraged.
 
 --no-add::
 	When applying a patch, ignore additions made by the
-	patch.  This can be used to extract common part between
+	patch.  This can be used to extract the common part between
 	two files by first running `diff` on them and applying
 	the result with this option, which would apply the
 	deletion part but not addition part.
