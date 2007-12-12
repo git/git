@@ -1015,7 +1015,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		if (line[i - 1] == '\t' && spaces)
 			space_before_tab = 1;
 
-		/* check white space at line end */
+		/* check whitespace at line end */
 		if (line[len - 1] == '\n')
 			len--;
 		if (isspace(line[len - 1]))
@@ -1029,7 +1029,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 					putchar(',');
 			}
 			if (white_space_at_end)
-				printf("white space at end");
+				printf("whitespace at end");
 			printf(":%s ", reset);
 			emit_line_with_ws(1, set, reset, ws, line, len,
 					  data->ws_rule);

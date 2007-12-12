@@ -175,19 +175,19 @@ endif::git-format-patch[]
 	Shorthand for "--text".
 
 --ignore-space-at-eol::
-	Ignore changes in white spaces at EOL.
+	Ignore changes in whitespace at EOL.
 
 --ignore-space-change::
-	Ignore changes in amount of white space.  This ignores white
-	space at line end, and consider all other sequences of one or
-	more white space characters to be equivalent.
+	Ignore changes in amount of whitespace.  This ignores whitespace
+	at line end, and considers all other sequences of one or
+	more whitespace characters to be equivalent.
 
 -b::
 	Shorthand for "--ignore-space-change".
 
 --ignore-all-space::
-	Ignore white space when comparing lines.  This ignores
-	difference even if one line has white space where the other
+	Ignore whitespace when comparing lines.  This ignores
+	differences even if one line has whitespace where the other
 	line has none.
 
 -w::
