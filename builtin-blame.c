@@ -130,6 +130,14 @@ static void origin_decref(struct origin *o)
 	}
 }
 
+static void drop_origin_blob(struct origin *o)
+{
+	if (o->file.ptr) {
+		free(o->file.ptr);
+		o->file.ptr = NULL;
+	}
+}
+
 /*
  * Each group of lines is described by a blame_entry; it can be split
  * as we pass blame to the parents.  They form a linked list in the
@@ -1274,8 +1282,13 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 		}
 
  finish:
-	for (i = 0; i < MAXPARENT; i++)
-		origin_decref(parent_origin[i]);
+	for (i = 0; i < MAXPARENT; i++) {
+		if (parent_origin[i]) {
+			drop_origin_blob(parent_origin[i]);
+			origin_decref(parent_origin[i]);
+		}
+	}
+	drop_origin_blob(origin);
 }
 
 /*
