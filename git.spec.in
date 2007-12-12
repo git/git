@@ -1,7 +1,5 @@
 # Pass --without docs to rpmbuild if you don't want the documentation
 
-%define python_path /usr/bin/python
-
 Name: 		git
 Version: 	@@VERSION@@
 Release: 	1%{?dist}
@@ -98,7 +96,6 @@ rm -rf $RPM_BUILD_ROOT
 make %{_smp_mflags} CFLAGS="$RPM_OPT_FLAGS" DESTDIR=$RPM_BUILD_ROOT \
      prefix=%{_prefix} mandir=%{_mandir} \
      ETC_GITCONFIG=/etc/gitconfig \
-     PYTHON_PATH=%{python_path} \
      INSTALLDIRS=vendor install %{!?_without_docs: install-doc}
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 find $RPM_BUILD_ROOT -type f -name '*.bs' -empty -exec rm -f {} ';'
