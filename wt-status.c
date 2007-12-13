@@ -381,6 +381,8 @@ void wt_status_print(struct wt_status *s)
 	if (!s->commitable) {
 		if (s->amend)
 			fprintf(s->fp, "# No changes\n");
+		else if (s->nowarn)
+			; /* nothing */
 		else if (s->workdir_dirty)
 			printf("no changes added to commit (use \"git add\" and/or \"git commit -a\")\n");
 		else if (s->workdir_untracked)
