@@ -139,6 +139,18 @@ void add_pending_object(struct rev_info *revs, struct object *obj, const char *n
 	add_pending_object_with_mode(revs, obj, name, S_IFINVALID);
 }
 
+void add_head_to_pending(struct rev_info *revs)
+{
+	unsigned char sha1[20];
+	struct object *obj;
+	if (get_sha1("HEAD", sha1))
+		return;
+	obj = parse_object(sha1);
+	if (!obj)
+		return;
+	add_pending_object(revs, obj, "HEAD");
+}
+
 static struct object *get_reference(struct rev_info *revs, const char *name, const unsigned char *sha1, unsigned int flags)
 {
 	struct object *object;

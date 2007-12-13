@@ -6,6 +6,27 @@
 static const char ls_remote_usage[] =
 "git-ls-remote [--upload-pack=<git-upload-pack>] [<host>:]<directory>";
 
+/*
+ * Is there one among the list of patterns that match the tail part
+ * of the path?
+ */
+static int tail_match(const char **pattern, const char *path)
+{
+	const char *p;
+	char pathbuf[PATH_MAX];
+
+	if (!pattern)
+		return 1; /* no restriction */
+
+	if (snprintf(pathbuf, sizeof(pathbuf), "/%s", path) > sizeof(pathbuf))
+		return error("insanely long ref %.*s...", 20, path);
+	while ((p = *(pattern++)) != NULL) {
+		if (!fnmatch(p, pathbuf, 0))
+			return 1;
+	}
+	return 0;
+}
+
 int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -13,6 +34,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	int nongit = 0;
 	unsigned flags = 0;
 	const char *uploadpack = NULL;
+	const char **pattern = NULL;
 
 	struct remote *remote;
 	struct transport *transport;
@@ -47,12 +69,23 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			usage(ls_remote_usage);
 		}
 		dest = arg;
+		i++;
 		break;
 	}
 
-	if (!dest || i != argc - 1)
+	if (!dest)
 		usage(ls_remote_usage);
 
+	if (argv[i]) {
+		int j;
+		pattern = xcalloc(sizeof(const char *), argc - i + 1);
+		for (j = i; j < argc; j++) {
+			int len = strlen(argv[j]);
+			char *p = xmalloc(len + 3);
+			sprintf(p, "*/%s", argv[j]);
+			pattern[j - i] = p;
+		}
+	}
 	remote = nongit ? NULL : remote_get(dest);
 	if (remote && !remote->url_nr)
 		die("remote %s has no configured URL", dest);
@@ -65,10 +98,12 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	if (!ref)
 		return 1;
 
-	while (ref) {
-		if (check_ref_type(ref, flags))
-			printf("%s	%s\n", sha1_to_hex(ref->old_sha1), ref->name);
-		ref = ref->next;
+	for ( ; ref; ref = ref->next) {
+		if (!check_ref_type(ref, flags))
+			continue;
+		if (!tail_match(pattern, ref->name))
+			continue;
+		printf("%s	%s\n", sha1_to_hex(ref->old_sha1), ref->name);
 	}
 	return 0;
 }

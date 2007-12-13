@@ -5,6 +5,8 @@
  * something different on Windows.
  */
 
+static int spawned_pager;
+
 #ifndef __MINGW32__
 static void run_pager(const char *pager)
 {
@@ -59,7 +61,7 @@ void setup_pager(void)
 	else if (!*pager || !strcmp(pager, "cat"))
 		return;
 
-	pager_in_use = 1; /* means we are emitting to terminal */
+	spawned_pager = 1; /* means we are emitting to terminal */
 
 #ifndef __MINGW32__
 	if (pipe(fd) < 0)
@@ -101,4 +103,15 @@ void setup_pager(void)
 	/* this makes sure that the parent terminates after the pager */
 	atexit(wait_for_pager);
 #endif
+}
+
+int pager_in_use(void)
+{
+	const char *env;
+
+	if (spawned_pager)
+		return 1;
+
+	env = getenv("GIT_PAGER_IN_USE");
+	return env ? git_config_bool("GIT_PAGER_IN_USE", env) : 0;
 }

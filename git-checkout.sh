@@ -2,13 +2,13 @@
 
 OPTIONS_KEEPDASHDASH=t
 OPTIONS_SPEC="\
-git-branch [options] [<branch>] [<paths>...]
+git-checkout [options] [<branch>] [<paths>...]
 --
 b=          create a new branch started at <branch>
-l           create the new branchs reflog
-track       tells if the new branch should track the remote branch
+l           create the new branch's reflog
+track       arrange that the new branch tracks the remote branch
 f           proceed even if the index or working tree is not HEAD
-m           performa  three-way merge on local modifications if needed
+m           merge local modifications into the new branch
 q,quiet     be quiet
 "
 SUBDIRECTORY_OK=Sometimes

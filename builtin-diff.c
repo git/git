@@ -176,18 +176,6 @@ static int builtin_diff_combined(struct rev_info *revs,
 	return 0;
 }
 
-void add_head(struct rev_info *revs)
-{
-	unsigned char sha1[20];
-	struct object *obj;
-	if (get_sha1("HEAD", sha1))
-		return;
-	obj = parse_object(sha1);
-	if (!obj)
-		return;
-	add_pending_object(revs, obj, "HEAD");
-}
-
 static void refresh_index_quietly(void)
 {
 	struct lock_file *lock_file;
@@ -272,7 +260,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--"))
 				break;
 			else if (!strcmp(arg, "--cached")) {
-				add_head(&rev);
+				add_head_to_pending(&rev);
 				if (!rev.pending.nr)
 					die("No HEAD commit to compare with (yet)");
 				break;

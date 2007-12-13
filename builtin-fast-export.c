@@ -103,7 +103,7 @@ static void handle_object(const unsigned char *sha1)
 	mark_object(object);
 
 	printf("blob\nmark :%d\ndata %lu\n", last_idnum, size);
-	if (fwrite(buf, size, 1, stdout) != 1)
+	if (size && fwrite(buf, size, 1, stdout) != 1)
 		die ("Could not write blob %s", sha1_to_hex(sha1));
 	printf("\n");
 

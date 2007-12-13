@@ -1094,7 +1094,7 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 	adjust_shared_perm(log_file);
 
 	msglen = msg ? strlen(msg) : 0;
-	committer = git_committer_info(-1);
+	committer = git_committer_info(0);
 	maxlen = strlen(committer) + msglen + 100;
 	logrec = xmalloc(maxlen);
 	len = sprintf(logrec, "%s %s %s\n",

@@ -117,4 +117,13 @@ EOF
 git diff -b > out
 test_expect_success 'another test, with -b' 'git diff expect out'
 
+
+test_expect_success 'check mixed spaces and tabs in indent' '
+
+	# This is indented with SP HT SP.
+	echo " 	 foo();" > x &&
+	git diff --check | grep "space before tab"
+
+'
+
 test_done

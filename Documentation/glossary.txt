@@ -244,8 +244,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	The unique identifier of an <<def_object,object>>. The <<def_hash,hash>>
 	of the object's contents using the Secure Hash Algorithm
 	1 and usually represented by the 40 character hexadecimal encoding of
-	the <<def_hash,hash>> of the object (possibly followed by
-	a white space).
+	the <<def_hash,hash>> of the object.
 
 [[def_object_type]]object type::
 	One of the identifiers

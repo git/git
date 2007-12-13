@@ -53,6 +53,8 @@ void launch_editor(const char *path, struct strbuf *buffer, const char *const *e
 			die("There was a problem with the editor %s.", editor);
 	}
 
+	if (!buffer)
+		return;
 	if (strbuf_read_file(buffer, path, 0) < 0)
 		die("could not read message file '%s': %s",
 		    path, strerror(errno));
@@ -186,7 +188,7 @@ static int do_sign(struct strbuf *buffer)
 	int len;
 
 	if (!*signingkey) {
-		if (strlcpy(signingkey, git_committer_info(1),
+		if (strlcpy(signingkey, git_committer_info(IDENT_ERROR_ON_NO_NAME),
 				sizeof(signingkey)) > sizeof(signingkey) - 1)
 			return error("committer info too long.");
 		bracket = strchr(signingkey, '>');
@@ -234,14 +236,18 @@ static const char tag_template[] =
 	"# Write a tag message\n"
 	"#\n";
 
+static void set_signingkey(const char *value)
+{
+	if (strlcpy(signingkey, value, sizeof(signingkey)) >= sizeof(signingkey))
+		die("signing key value too long (%.10s...)", value);
+}
+
 static int git_tag_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "user.signingkey")) {
 		if (!value)
 			die("user.signingkey without value");
-		if (strlcpy(signingkey, value, sizeof(signingkey))
-						>= sizeof(signingkey))
-			die("user.signingkey value too long");
+		set_signingkey(value);
 		return 0;
 	}
 
@@ -296,7 +302,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 			  sha1_to_hex(object),
 			  typename(type),
 			  tag,
-			  git_committer_info(1));
+			  git_committer_info(IDENT_ERROR_ON_NO_NAME));
 
 	if (header_len > sizeof(header_buf) - 1)
 		die("tag header too big.");
@@ -394,6 +400,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, options, git_tag_usage, 0);
 
+	if (keyid) {
+		sign = 1;
+		set_signingkey(keyid);
+	}
 	if (sign)
 		annotate = 1;
 

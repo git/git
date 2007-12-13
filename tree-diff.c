@@ -326,6 +326,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 		die("unable to set up diff options to follow renames");
 	diff_tree(t1, t2, base, &diff_opts);
 	diffcore_std(&diff_opts);
+	diff_tree_release_paths(&diff_opts);
 
 	/* Go through the new set of filepairing, and see if we find a more interesting one */
 	for (i = 0; i < q->nr; i++) {
@@ -342,6 +343,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 			choice = p;
 
 			/* Update the path we use from now on.. */
+			diff_tree_release_paths(opt);
 			opt->paths[0] = xstrdup(p->one->path);
 			diff_tree_setup_paths(opt->paths, opt);
 			break;

@@ -285,7 +285,8 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix)
 	struct wt_status s;
 
 	wt_status_prepare(&s);
-	s.prefix = prefix;
+	if (wt_status_relative_paths)
+		s.prefix = prefix;
 
 	if (amend) {
 		s.amend = 1;
@@ -496,7 +497,7 @@ static void determine_author_info(struct strbuf *sb)
 		email = xstrndup(lb + 2, rb - (lb + 2));
 	}
 
-	strbuf_addf(sb, "author %s\n", fmt_ident(name, email, date, 1));
+	strbuf_addf(sb, "author %s\n", fmt_ident(name, email, date, IDENT_ERROR_ON_NO_NAME));
 }
 
 static int parse_and_validate_options(int argc, const char *argv[],
@@ -659,12 +660,16 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	rev.verbose_header = 1;
 	rev.show_root_diff = 1;
 	rev.commit_format = get_commit_format("format:%h: %s");
-	rev.always_show_header = 1;
+	rev.always_show_header = 0;
 
 	printf("Created %scommit ", initial_commit ? "initial " : "");
 
-	log_tree_commit(&rev, commit);
-	printf("\n");
+	if (!log_tree_commit(&rev, commit)) {
+		struct strbuf buf = STRBUF_INIT;
+		format_commit_message(commit, "%h: %s", &buf);
+		printf("%s\n", buf.buf);
+		strbuf_release(&buf);
+	}
 }
 
 int git_commit_config(const char *k, const char *v)
@@ -775,7 +780,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	determine_author_info(&sb);
-	strbuf_addf(&sb, "committer %s\n", git_committer_info(1));
+	strbuf_addf(&sb, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
 	if (!is_encoding_utf8(git_commit_encoding))
 		strbuf_addf(&sb, "encoding %s\n", git_commit_encoding);
 	strbuf_addch(&sb, '\n');
@@ -786,14 +791,16 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		char index[PATH_MAX];
 		const char *env[2] = { index, NULL };
 		snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
-		launch_editor(git_path(commit_editmsg), &sb, env);
-	} else if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
-		rollback_index_files();
-		die("could not read commit message");
+		launch_editor(git_path(commit_editmsg), NULL, env);
 	}
-	if (run_hook(index_file, "commit-msg", git_path(commit_editmsg))) {
+	if (!no_verify &&
+	    run_hook(index_file, "commit-msg", git_path(commit_editmsg))) {
 		rollback_index_files();
 		exit(1);
+	}
+	if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
+		rollback_index_files();
+		die("could not read commit message");
 	}
 
 	/* Truncate the message just before the diff, if any. */

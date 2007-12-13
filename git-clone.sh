@@ -242,7 +242,10 @@ fi
 # it is local
 if base=$(get_repo_base "$repo"); then
 	repo="$base"
-	local=yes
+	if test -z "$depth"
+	then
+		local=yes
+	fi
 fi
 
 dir="$2"
@@ -334,7 +337,8 @@ yes)
 				      find objects -type f -print | sed -e 1q)
 			# objects directory should not be empty because
 			# we are cloning!
-			test -f "$repo/$sample_file" || exit
+			test -f "$repo/$sample_file" ||
+				die "fatal: cannot clone empty repository"
 			if ln "$repo/$sample_file" "$GIT_DIR/objects/sample" 2>/dev/null
 			then
 				rm -f "$GIT_DIR/objects/sample"

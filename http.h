@@ -80,24 +80,6 @@ extern void http_cleanup(void);
 extern int data_received;
 extern int active_requests;
 
-#ifndef NO_CURL_EASY_DUPHANDLE
-extern CURL *curl_default;
-#endif
 extern char curl_errorstr[CURL_ERROR_SIZE];
-
-extern int curl_ssl_verify;
-extern char *ssl_cert;
-#if LIBCURL_VERSION_NUM >= 0x070902
-extern char *ssl_key;
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-extern char *ssl_capath;
-#endif
-extern char *ssl_cainfo;
-extern long curl_low_speed_limit;
-extern long curl_low_speed_time;
-
-extern struct curl_slist *pragma_header;
-extern struct curl_slist *no_range_header;
 
 #endif /* HTTP_H */

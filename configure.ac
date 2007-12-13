@@ -122,6 +122,27 @@ if test -z "$NO_TCLTK"; then
     AC_SUBST(TCLTK_PATH)
   fi
 fi
+AC_CHECK_PROGS(ASCIIDOC, [asciidoc])
+if test -n "$ASCIIDOC"; then
+	AC_MSG_CHECKING([for asciidoc version])
+	asciidoc_version=`$ASCIIDOC --version 2>&1`
+	case "${asciidoc_version}" in
+	asciidoc' '8*)
+		ASCIIDOC8=YesPlease
+		AC_MSG_RESULT([${asciidoc_version} > 7])
+		;;
+	asciidoc' '7*)
+		ASCIIDOC8=
+		AC_MSG_RESULT([${asciidoc_version}])
+		;;
+	*)
+		ASCIIDOC8=
+		AC_MSG_RESULT([${asciidoc_version} (unknown)])
+		;;
+	esac
+fi
+AC_SUBST(ASCIIDOC8)
+
 
 ## Checks for libraries.
 AC_MSG_NOTICE([CHECKS for libraries])
