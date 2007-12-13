@@ -17,8 +17,10 @@
 #
 
 USAGE='[--browser=browser|--tool=browser] [cmd to display] ...'
-SUBDIRECTORY_OK=Yes
-OPTIONS_SPEC=
+
+# This must be capable of running outside of git directory, so
+# the vanilla git-sh-setup should not be used.
+NONGIT_OK=Yes
 . git-sh-setup
 
 # Install data.
@@ -37,7 +39,7 @@ valid_tool() {
 }
 
 init_browser_path() {
-	browser_path=`git config browser.$1.path`
+	test -z "$GIT_DIR" || browser_path=`git config browser.$1.path`
 	test -z "$browser_path" && browser_path=$1
 }
 
@@ -69,7 +71,8 @@ do
     shift
 done
 
-if test -z "$browser"; then
+if test -z "$browser" && test -n "$GIT_DIR"
+then
     for opt in "help.browser" "web.browser"
     do
 	browser="`git config $opt`"
@@ -91,7 +94,7 @@ if test -z "$browser" ; then
     else
 	browser_candidates="w3m links lynx"
     fi
-    echo "browser candidates: $browser_candidates"
+
     for i in $browser_candidates; do
 	init_browser_path $i
 	if type "$browser_path" > /dev/null 2>&1; then
