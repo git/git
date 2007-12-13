@@ -185,7 +185,7 @@ If you want to create a new branch from this checkout, you may do so
 HEAD is now at 7329388... Initial A one, A two
 EOF
 ) &&
-	git diff messages.expect messages &&
+	git diff -w messages.expect messages &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
