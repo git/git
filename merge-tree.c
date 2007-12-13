@@ -119,7 +119,7 @@ static void show_diff(struct merge_list *entry)
 	if (!dst.ptr)
 		size = 0;
 	dst.size = size;
-	xdl_diff(&src, &dst, &xpp, &xecfg, &ecb);
+	xdi_diff(&src, &dst, &xpp, &xecfg, &ecb);
 	free(src.ptr);
 	free(dst.ptr);
 }

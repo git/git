@@ -439,7 +439,7 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	ecb.outf = xdiff_outf;
 	ecb.priv = diff_words;
 	diff_words->xm.consume = fn_out_diff_words_aux;
-	xdl_diff(&minus, &plus, &xpp, &xecfg, &ecb);
+	xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 
 	free(minus.ptr);
 	free(plus.ptr);
@@ -1393,7 +1393,7 @@ static void builtin_diff(const char *name_a,
 		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS))
 			ecbdata.diff_words =
 				xcalloc(1, sizeof(struct diff_words_data));
-		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS))
 			free_diff_words_data(&ecbdata);
 	}
@@ -1446,7 +1446,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		ecb.outf = xdiff_outf;
 		ecb.priv = diffstat;
-		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
 
  free_and_return:
@@ -1486,7 +1486,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		xpp.flags = XDF_NEED_MINIMAL;
 		ecb.outf = xdiff_outf;
 		ecb.priv = &data;
-		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
  free_and_return:
 	diff_free_filespec_data(one);
@@ -2898,7 +2898,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		ecb.outf = xdiff_outf;
 		ecb.priv = &data;
-		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
 
 	SHA1_Final(sha1, &ctx);
