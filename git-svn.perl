@@ -529,7 +529,7 @@ sub cmd_find_rev {
 			    "$head history\n";
 		}
 		my $desired_revision = substr($revision_or_hash, 1);
-		$result = $gs->rev_db_get($desired_revision);
+		$result = $gs->rev_map_get($desired_revision);
 	} else {
 		my (undef, $rev, undef) = cmt_metadata($revision_or_hash);
 		$result = $rev;
@@ -1128,12 +1128,12 @@ sub working_head_info {
 		if (defined $url && defined $rev) {
 			next if $max{$url} and $max{$url} < $rev;
 			if (my $gs = Git::SVN->find_by_url($url)) {
-				my $c = $gs->rev_db_get($rev);
+				my $c = $gs->rev_map_get($rev);
 				if ($c && $c eq $hash) {
 					close $fh; # break the pipe
 					return ($url, $rev, $uuid, $gs);
 				} else {
-					$max{$url} ||= $gs->rev_db_max;
+					$max{$url} ||= $gs->rev_map_max;
 				}
 			}
 		}
@@ -1234,6 +1234,8 @@ sub md5sum {
 package Git::SVN;
 use strict;
 use warnings;
+use Fcntl qw/:DEFAULT :seek/;
+use constant rev_map_fmt => 'NH40';
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags $_use_svm_props $_head
             $_use_svnsync_props $no_reuse_existing $_minimize_url
@@ -1362,7 +1364,7 @@ sub fetch_all {
 	if ($fetch) {
 		foreach my $p (sort keys %$fetch) {
 			my $gs = Git::SVN->new($fetch->{$p}, $repo_id, $p);
-			my $lr = $gs->rev_db_max;
+			my $lr = $gs->rev_map_max;
 			if (defined $lr) {
 				$base = $lr if ($lr < $base);
 			}
@@ -1897,38 +1899,20 @@ sub last_rev_commit {
 			return ($rev, $c);
 		}
 	}
-	my $db_path = $self->db_path;
-	unless (-e $db_path) {
+	my $map_path = $self->map_path;
+	unless (-e $map_path) {
 		($self->{last_rev}, $self->{last_commit}) = (undef, undef);
 		return (undef, undef);
 	}
-	my $offset = -41; # from tail
-	my $rl;
-	open my $fh, '<', $db_path or croak "$db_path not readable: $!\n";
-	sysseek($fh, $offset, 2); # don't care for errors
-	sysread($fh, $rl, 41) == 41 or return (undef, undef);
-	chomp $rl;
-	while (('0' x40) eq $rl && sysseek($fh, 0, 1) != 0) {
-		$offset -= 41;
-		sysseek($fh, $offset, 2); # don't care for errors
-		sysread($fh, $rl, 41) == 41 or return (undef, undef);
-		chomp $rl;
-	}
-	if ($c && $c ne $rl) {
-		die "$db_path and ", $self->refname,
-		    " inconsistent!:\n$c != $rl\n";
-	}
-	my $rev = sysseek($fh, 0, 1) or croak $!;
-	$rev =  ($rev - 41) / 41;
-	close $fh or croak $!;
-	($self->{last_rev}, $self->{last_commit}) = ($rev, $c);
-	return ($rev, $c);
+	my ($rev, $commit) = $self->rev_map_max(1);
+	($self->{last_rev}, $self->{last_commit}) = ($rev, $commit);
+	return ($rev, $commit);
 }
 
 sub get_fetch_range {
 	my ($self, $min, $max) = @_;
 	$max ||= $self->ra->get_latest_revnum;
-	$min ||= $self->rev_db_max;
+	$min ||= $self->rev_map_max;
 	(++$min, $max);
 }
 
@@ -2073,7 +2057,7 @@ sub do_git_commit {
 		    " was r$lr, but we are about to fetch: ",
 		    "r$log_entry->{revision}!\n";
 	}
-	if (my $c = $self->rev_db_get($log_entry->{revision})) {
+	if (my $c = $self->rev_map_get($log_entry->{revision})) {
 		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
 	}
@@ -2116,14 +2100,14 @@ sub do_git_commit {
 		die "Failed to commit, invalid sha1: $commit\n";
 	}
 
-	$self->rev_db_set($log_entry->{revision}, $commit, 1);
+	$self->rev_map_set($log_entry->{revision}, $commit, 1);
 
 	$self->{last_rev} = $log_entry->{revision};
 	$self->{last_commit} = $commit;
 	print "r$log_entry->{revision}";
 	if (defined $log_entry->{svm_revision}) {
 		 print " (\@$log_entry->{svm_revision})";
-		 $self->rev_db_set($log_entry->{svm_revision}, $commit,
+		 $self->rev_map_set($log_entry->{svm_revision}, $commit,
 		                   0, $self->svm_uuid);
 	}
 	print " = $commit ($self->{ref_id})\n";
@@ -2465,25 +2449,44 @@ sub set_tree {
 	}
 }
 
+sub rebuild_from_rev_db {
+	my ($self, $path) = @_;
+	my $r = -1;
+	open my $fh, '<', $path or croak "open: $!";
+	while (<$fh>) {
+		length($_) == 41 or croak "inconsistent size in ($_) != 41";
+		chomp($_);
+		++$r;
+		next if $_ eq ('0' x 40);
+		$self->rev_map_set($r, $_);
+		print "r$r = $_\n";
+	}
+	close $fh or croak "close: $!";
+	unlink $path or croak "unlink: $!";
+}
+
 sub rebuild {
 	my ($self) = @_;
-	my $db_path = $self->db_path;
-	return if (-e $db_path && ! -z $db_path);
+	my $map_path = $self->map_path;
+	return if (-e $map_path && ! -z $map_path);
 	return unless ::verify_ref($self->refname.'^0');
-	if (-f $self->{db_root}) {
-		rename $self->{db_root}, $db_path or die
-		     "rename $self->{db_root} => $db_path failed: $!\n";
-		my ($dir, $base) = ($db_path =~ m#^(.*?)/?([^/]+)$#);
-		symlink $base, $self->{db_root} or die
-		     "symlink $base => $self->{db_root} failed: $!\n";
+	if ($self->use_svm_props || $self->no_metadata) {
+		my $rev_db = $self->rev_db_path;
+		$self->rebuild_from_rev_db($rev_db);
+		if ($self->use_svm_props) {
+			my $svm_rev_db = $self->rev_db_path($self->svm_uuid);
+			$self->rebuild_from_rev_db($svm_rev_db);
+		}
+		$self->unlink_rev_db_symlink;
 		return;
 	}
-	print "Rebuilding $db_path ...\n";
-	my ($log, $ctx) = command_output_pipe("log", '--no-color', $self->refname);
-	my $latest;
+	print "Rebuilding $map_path ...\n";
+	my ($log, $ctx) =
+	    command_output_pipe(qw/rev-list --pretty=raw --no-color --reverse/,
+	                        $self->refname, '--');
 	my $full_url = $self->full_url;
 	remove_username($full_url);
-	my $svn_uuid;
+	my $svn_uuid = $self->ra_uuid;
 	my $c;
 	while (<$log>) {
 		if ( m{^commit ($::sha1)$} ) {
@@ -2499,46 +2502,85 @@ sub rebuild {
 
 		# if we merged or otherwise started elsewhere, this is
 		# how we break out of it
-		if ((defined $svn_uuid && ($uuid ne $svn_uuid)) ||
+		if (($uuid ne $svn_uuid) ||
 		    ($full_url && $url && ($url ne $full_url))) {
 			next;
 		}
-		$latest ||= $rev;
-		$svn_uuid ||= $uuid;
 
-		$self->rev_db_set($rev, $c);
+		$self->rev_map_set($rev, $c);
 		print "r$rev = $c\n";
 	}
 	command_close_pipe($log, $ctx);
-	print "Done rebuilding $db_path\n";
+	print "Done rebuilding $map_path\n";
+	my $rev_db_path = $self->rev_db_path;
+	if (-f $self->rev_db_path) {
+		unlink $self->rev_db_path or croak "unlink: $!";
+	}
+	$self->unlink_rev_db_symlink;
 }
 
-# rev_db:
+# rev_map:
 # Tie::File seems to be prone to offset errors if revisions get sparse,
 # it's not that fast, either.  Tie::File is also not in Perl 5.6.  So
 # one of my favorite modules is out :<  Next up would be one of the DBM
-# modules, but I'm not sure which is most portable...  So I'll just
-# go with something that's plain-text, but still capable of
-# being randomly accessed.  So here's my ultra-simple fixed-width
-# database.  All records are 40 characters + "\n", so it's easy to seek
-# to a revision: (41 * rev) is the byte offset.
-# A record of 40 0s denotes an empty revision.
-# And yes, it's still pretty fast (faster than Tie::File).
+# modules, but I'm not sure which is most portable...
+#
+# This is the replacement for the rev_db format, which was too big
+# and inefficient for large repositories with a lot of sparse history
+# (mainly tags)
+#
+# The format is this:
+#   - 24 bytes for every record,
+#     * 4 bytes for the integer representing an SVN revision number
+#     * 20 bytes representing the sha1 of a git commit
+#   - No empty padding records like the old format
+#     (except the last record, which can be overwritten)
+#   - new records are written append-only since SVN revision numbers
+#     increase monotonically
+#   - lookups on SVN revision number are done via a binary search
+#   - Piping the file to xxd -c24 is a good way of dumping it for
+#     viewing or editing (piped back through xxd -r), should the need
+#     ever arise.
+#   - The last record can be padding revision with an all-zero sha1
+#     This is used to optimize fetch performance when using multiple
+#     "fetch" directives in .git/config
+#
 # These files are disposable unless noMetadata or useSvmProps is set
 
-sub _rev_db_set {
+sub _rev_map_set {
 	my ($fh, $rev, $commit) = @_;
-	my $offset = $rev * 41;
-	# assume that append is the common case:
-	seek $fh, 0, 2 or croak $!;
-	my $pos = tell $fh;
-	if ($pos < $offset) {
-		for (1 .. (($offset - $pos) / 41)) {
-			print $fh (('0' x 40),"\n") or croak $!;
+
+	my $size = (stat($fh))[7];
+	($size % 24) == 0 or croak "inconsistent size: $size";
+
+	my $wr_offset = 0;
+	if ($size > 0) {
+		sysseek($fh, -24, SEEK_END) or croak "seek: $!";
+		my $read = sysread($fh, my $buf, 24) or croak "read: $!";
+		$read == 24 or croak "read only $read bytes (!= 24)";
+		my ($last_rev, $last_commit) = unpack(rev_map_fmt, $buf);
+		if ($last_commit eq ('0' x40)) {
+			if ($size >= 48) {
+				sysseek($fh, -48, SEEK_END) or croak "seek: $!";
+				$read = sysread($fh, $buf, 24) or
+				    croak "read: $!";
+				$read == 24 or
+				    croak "read only $read bytes (!= 24)";
+				($last_rev, $last_commit) =
+				    unpack(rev_map_fmt, $buf);
+				if ($last_commit eq ('0' x40)) {
+					croak "inconsistent .rev_map\n";
+				}
+			}
+			if ($last_rev >= $rev) {
+				croak "last_rev is higher!: $last_rev >= $rev";
+			}
+			$wr_offset = -24;
 		}
 	}
-	seek $fh, $offset, 0 or croak $!;
-	print $fh $commit,"\n" or croak $!;
+	sysseek($fh, $wr_offset, SEEK_END) or croak "seek: $!";
+	syswrite($fh, pack(rev_map_fmt, $rev, $commit), 24) == 24 or
+	  croak "write: $!";
 }
 
 sub mkfile {
@@ -2551,10 +2593,10 @@ sub mkfile {
 	}
 }
 
-sub rev_db_set {
+sub rev_map_set {
 	my ($self, $rev, $commit, $update_ref, $uuid) = @_;
 	length $commit == 40 or die "arg3 must be a full SHA1 hexsum\n";
-	my $db = $self->db_path($uuid);
+	my $db = $self->map_path($uuid);
 	my $db_lock = "$db.lock";
 	my $sig;
 	if ($update_ref) {
@@ -2569,16 +2611,18 @@ sub rev_db_set {
 	# and we can't afford to lose it because rebuild() won't work
 	if ($self->use_svm_props || $self->no_metadata) {
 		$sync = 1;
-		copy($db, $db_lock) or die "rev_db_set(@_): ",
+		copy($db, $db_lock) or die "rev_map_set(@_): ",
 					   "Failed to copy: ",
 					   "$db => $db_lock ($!)\n";
 	} else {
-		rename $db, $db_lock or die "rev_db_set(@_): ",
+		rename $db, $db_lock or die "rev_map_set(@_): ",
 					    "Failed to rename: ",
 					    "$db => $db_lock ($!)\n";
 	}
-	open my $fh, '+<', $db_lock or die "Couldn't open $db_lock: $!\n";
-	_rev_db_set($fh, $rev, $commit);
+
+	sysopen(my $fh, $db_lock, O_RDWR | O_CREAT)
+	     or croak "Couldn't open $db_lock: $!\n";
+	_rev_map_set($fh, $rev, $commit);
 	if ($sync) {
 		$fh->flush or die "Couldn't flush $db_lock: $!\n";
 		$fh->sync or die "Couldn't sync $db_lock: $!\n";
@@ -2589,7 +2633,7 @@ sub rev_db_set {
 		command_noisy('update-ref', '-m', "r$rev",
 		              $self->refname, $commit);
 	}
-	rename $db_lock, $db or die "rev_db_set(@_): ", "Failed to rename: ",
+	rename $db_lock, $db or die "rev_map_set(@_): ", "Failed to rename: ",
 	                            "$db_lock => $db ($!)\n";
 	delete $LOCKFILES{$db_lock};
 	if ($update_ref) {
@@ -2599,29 +2643,76 @@ sub rev_db_set {
 	}
 }
 
-sub rev_db_max {
-	my ($self) = @_;
+# If want_commit, this will return an array of (rev, commit) where
+# commit _must_ be a valid commit in the archive.
+# Otherwise, it'll return the max revision (whether or not the
+# commit is valid or just a 0x40 placeholder).
+sub rev_map_max {
+	my ($self, $want_commit) = @_;
 	$self->rebuild;
-	my $db_path = $self->db_path;
-	my @stat = stat $db_path or return 0;
-	($stat[7] % 41) == 0 or die "$db_path inconsistent size: $stat[7]\n";
-	my $max = $stat[7] / 41;
-	(($max > 0) ? $max - 1 : 0);
+	my $map_path = $self->map_path;
+	stat $map_path or return $want_commit ? (0, undef) : 0;
+	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
+	my $size = (stat($fh))[7];
+	($size % 24) == 0 or croak "inconsistent size: $size";
+
+	if ($size == 0) {
+		close $fh or croak "close: $!";
+		return $want_commit ? (0, undef) : 0;
+	}
+
+	sysseek($fh, -24, SEEK_END) or croak "seek: $!";
+	sysread($fh, my $buf, 24) == 24 or croak "read: $!";
+	my ($r, $c) = unpack(rev_map_fmt, $buf);
+	if ($want_commit && $c eq ('0' x40)) {
+		if ($size < 48) {
+			return $want_commit ? (0, undef) : 0;
+		}
+		sysseek($fh, -48, SEEK_END) or croak "seek: $!";
+		sysread($fh, $buf, 24) == 24 or croak "read: $!";
+		($r, $c) = unpack(rev_map_fmt, $buf);
+		if ($c eq ('0'x40)) {
+			croak "Penultimate record is all-zeroes in $map_path";
+		}
+	}
+	close $fh or croak "close: $!";
+	$want_commit ? ($r, $c) : $r;
 }
 
-sub rev_db_get {
+sub rev_map_get {
 	my ($self, $rev, $uuid) = @_;
-	my $ret;
-	my $offset = $rev * 41;
-	my $db_path = $self->db_path($uuid);
-	return undef unless -e $db_path;
-	open my $fh, '<', $db_path or croak $!;
-	if (sysseek($fh, $offset, 0) == $offset) {
-		my $read = sysread($fh, $ret, 40);
-		$ret = undef if ($read != 40 || $ret eq ('0'x40));
+	my $map_path = $self->map_path($uuid);
+	return undef unless -e $map_path;
+
+	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
+	my $size = (stat($fh))[7];
+	($size % 24) == 0 or croak "inconsistent size: $size";
+
+	if ($size == 0) {
+		close $fh or croak "close: $fh";
+		return undef;
 	}
-	close $fh or croak $!;
-	$ret;
+
+	my ($l, $u) = (0, $size - 24);
+	my ($r, $c, $buf);
+
+	while ($l <= $u) {
+		my $i = int(($l/24 + $u/24) / 2) * 24;
+		sysseek($fh, $i, SEEK_SET) or croak "seek: $!";
+		sysread($fh, my $buf, 24) == 24 or croak "read: $!";
+		my ($r, $c) = unpack('NH40', $buf);
+
+		if ($r < $rev) {
+			$l = $i + 24;
+		} elsif ($r > $rev) {
+			$u = $i - 24;
+		} else { # $r == $rev
+			close($fh) or croak "close: $!";
+			return $c eq ('0' x 40) ? undef : $c;
+		}
+	}
+	close($fh) or croak "close: $!";
+	undef;
 }
 
 # Finds the first svn revision that exists on (if $eq_ok is true) or
@@ -2633,7 +2724,7 @@ sub find_rev_before {
 	--$rev unless $eq_ok;
 	$min_rev ||= 1;
 	while ($rev >= $min_rev) {
-		if (my $c = $self->rev_db_get($rev)) {
+		if (my $c = $self->rev_map_get($rev)) {
 			return ($rev, $c);
 		}
 		--$rev;
@@ -2648,9 +2739,9 @@ sub find_rev_before {
 sub find_rev_after {
 	my ($self, $rev, $eq_ok, $max_rev) = @_;
 	++$rev unless $eq_ok;
-	$max_rev ||= $self->rev_db_max();
+	$max_rev ||= $self->rev_map_max;
 	while ($rev <= $max_rev) {
-		if (my $c = $self->rev_db_get($rev)) {
+		if (my $c = $self->rev_map_get($rev)) {
 			return ($rev, $c);
 		}
 		++$rev;
@@ -2673,13 +2764,32 @@ sub _new {
 	bless {
 		ref_id => $ref_id, dir => $dir, index => "$dir/index",
 	        path => $path, config => "$ENV{GIT_DIR}/svn/config",
-	        db_root => "$dir/.rev_db", repo_id => $repo_id }, $class;
+	        map_root => "$dir/.rev_map", repo_id => $repo_id }, $class;
 }
 
-sub db_path {
+# for read-only access of old .rev_db formats
+sub unlink_rev_db_symlink {
+	my ($self) = @_;
+	my $link = $self->rev_db_path;
+	$link =~ s/\.[\w-]+$// or croak "missing UUID at the end of $link";
+	if (-l $link) {
+		unlink $link or croak "unlink: $link failed!";
+	}
+}
+
+sub rev_db_path {
+	my ($self, $uuid) = @_;
+	my $db_path = $self->map_path($uuid);
+	$db_path =~ s{/\.rev_map\.}{/\.rev_db\.}
+	    or croak "map_path: $db_path does not contain '/.rev_map.' !";
+	$db_path;
+}
+
+# the new replacement for .rev_db
+sub map_path {
 	my ($self, $uuid) = @_;
 	$uuid ||= $self->ra_uuid;
-	"$self->{db_root}.$uuid";
+	"$self->{map_root}.$uuid";
 }
 
 sub uri_encode {
@@ -3763,7 +3873,7 @@ sub gs_fetch_loop_common {
 
 			foreach my $gs ($self->match_globs(\%exists, $paths,
 			                                   $globs, $r)) {
-				if ($gs->rev_db_max >= $r) {
+				if ($gs->rev_map_max >= $r) {
 					next;
 				}
 				next unless $gs->match_paths($paths, $r);
@@ -3792,8 +3902,9 @@ sub gs_fetch_loop_common {
 		# pre-fill the .rev_db since it'll eventually get filled in
 		# with '0' x40 if something new gets committed
 		foreach my $gs (@$gsv) {
-			next if defined $gs->rev_db_get($max);
-			$gs->rev_db_set($max, 0 x40);
+			next if $gs->rev_map_max >= $max;
+			next if defined $gs->rev_map_get($max);
+			$gs->rev_map_set($max, 0 x40);
 		}
 		foreach my $g (@$globs) {
 			my $k = "svn-remote.$g->{remote}.$g->{t}-maxRev";
@@ -3998,7 +4109,7 @@ sub git_svn_log_cmd {
 	push @cmd, @log_opts;
 	if (defined $r_max && $r_max == $r_min) {
 		push @cmd, '--max-count=1';
-		if (my $c = $gs->rev_db_get($r_max)) {
+		if (my $c = $gs->rev_map_get($r_max)) {
 			push @cmd, $c;
 		}
 	} elsif (defined $r_max) {
@@ -4280,6 +4391,16 @@ package Git::SVN::Migration;
 #              --use-separate-remotes option in git-clone (now default)
 #            - we do not automatically migrate to this (following
 #              the example set by core git)
+#
+# v5 layout: .rev_db.$UUID => .rev_map.$UUID
+#            - newer, more-efficient format that uses 24-bytes per record
+#              with no filler space.
+#            - use xxd -c24 < .rev_map.$UUID to view and debug
+#            - This is a one-way migration, repositories updated to the
+#              new format will not be able to use old git-svn without
+#              rebuilding the .rev_db.  Rebuilding the rev_db is not
+#              possible if noMetadata or useSvmProps are set; but should
+#              be no problem for users that use the (sensible) defaults.
 use strict;
 use warnings;
 use Carp qw/croak/;
