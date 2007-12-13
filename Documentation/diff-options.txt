@@ -93,7 +93,9 @@ endif::git-format-patch[]
 
 --check::
 	Warn if changes introduce trailing whitespace
-	or an indent that uses a space before a tab.
+	or an indent that uses a space before a tab. Exits with
+	non-zero status if problems are found. Not compatible with
+	--exit-code.
 
 --full-index::
 	Instead of the first handful characters, show full

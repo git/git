@@ -117,12 +117,147 @@ EOF
 git diff -b > out
 test_expect_success 'another test, with -b' 'git diff expect out'
 
-
 test_expect_success 'check mixed spaces and tabs in indent' '
 
 	# This is indented with SP HT SP.
 	echo " 	 foo();" > x &&
 	git diff --check | grep "space before tab"
+
+'
+
+test_expect_success 'check with no whitespace errors' '
+
+	git commit -m "snapshot" &&
+	echo "foo();" > x &&
+	git diff --check
+
+'
+
+test_expect_failure 'check with trailing whitespace' '
+
+	echo "foo(); " > x &&
+	git diff --check
+
+'
+
+test_expect_failure 'check with space before tab in indent' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	git diff --check
+
+'
+
+test_expect_failure '--check and --exit-code are exclusive' '
+
+	git checkout x &&
+	git diff --check --exit-code
+
+'
+
+test_expect_failure '--check and --quiet are exclusive' '
+
+	git diff --check --quiet
+
+'
+
+test_expect_success 'check staged with no whitespace errors' '
+
+	echo "foo();" > x &&
+	git add x &&
+	git diff --cached --check
+
+'
+
+test_expect_failure 'check staged with trailing whitespace' '
+
+	echo "foo(); " > x &&
+	git add x &&
+	git diff --cached --check
+
+'
+
+test_expect_failure 'check staged with space before tab in indent' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	git add x &&
+	git diff --cached --check
+
+'
+
+test_expect_success 'check with no whitespace errors (diff-index)' '
+
+	echo "foo();" > x &&
+	git add x &&
+	git diff-index --check HEAD
+
+'
+
+test_expect_failure 'check with trailing whitespace (diff-index)' '
+
+	echo "foo(); " > x &&
+	git add x &&
+	git diff-index --check HEAD
+
+'
+
+test_expect_failure 'check with space before tab in indent (diff-index)' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	git add x &&
+	git diff-index --check HEAD
+
+'
+
+test_expect_success 'check staged with no whitespace errors (diff-index)' '
+
+	echo "foo();" > x &&
+	git add x &&
+	git diff-index --cached --check HEAD
+
+'
+
+test_expect_failure 'check staged with trailing whitespace (diff-index)' '
+
+	echo "foo(); " > x &&
+	git add x &&
+	git diff-index --cached --check HEAD
+
+'
+
+test_expect_failure 'check staged with space before tab in indent (diff-index)' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	git add x &&
+	git diff-index --cached --check HEAD
+
+'
+
+test_expect_success 'check with no whitespace errors (diff-tree)' '
+
+	echo "foo();" > x &&
+	git commit -m "new commit" x &&
+	git diff-tree --check HEAD^ HEAD
+
+'
+
+test_expect_failure 'check with trailing whitespace (diff-tree)' '
+
+	echo "foo(); " > x &&
+	git commit -m "another commit" x &&
+	git diff-tree --check HEAD^ HEAD
+
+'
+
+test_expect_failure 'check with space before tab in indent (diff-tree)' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	git commit -m "yet another" x &&
+	git diff-tree --check HEAD^ HEAD
 
 '
 

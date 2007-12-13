@@ -1031,6 +1031,7 @@ struct checkdiff_t {
 	const char *filename;
 	int lineno, color_diff;
 	unsigned ws_rule;
+	unsigned status;
 };
 
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
@@ -1064,6 +1065,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 			white_space_at_end = 1;
 
 		if (space_before_tab || white_space_at_end) {
+			data->status = 1;
 			printf("%s:%d: %s", data->filename, data->lineno, ws);
 			if (space_before_tab) {
 				printf("space before tab");
@@ -1491,6 +1493,8 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
  free_and_return:
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
+	if (data.status)
+		DIFF_OPT_SET(o, CHECK_FAILED);
 }
 
 struct diff_filespec *alloc_filespec(const char *path)
@@ -2121,7 +2125,12 @@ int diff_setup_done(struct diff_options *options)
 	if (options->output_format & DIFF_FORMAT_NAME_STATUS)
 		count++;
 	if (options->output_format & DIFF_FORMAT_CHECKDIFF)
+	{
 		count++;
+		if (DIFF_OPT_TST(options, QUIET) ||
+		    DIFF_OPT_TST(options, EXIT_WITH_STATUS))
+			die("--check may not be used with --quiet or --exit-code");
+	}
 	if (options->output_format & DIFF_FORMAT_NO_OUTPUT)
 		count++;
 	if (count > 1)
