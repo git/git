@@ -158,6 +158,7 @@ static int read_from_tree(const char *prefix, const char **argv,
 		return 1;
 	diffcore_std(&opt);
 	diff_flush(&opt);
+	diff_tree_release_paths(&opt);
 
 	if (!index_was_discarded)
 		/* The index is still clobbered from do_diff_cache() */

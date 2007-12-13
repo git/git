@@ -157,9 +157,12 @@ STRIP ?= strip
 
 prefix =
 bindir = $(prefix)/bin
+mandir = $(prefix)/share/man
+infodir = $(prefix)/share/info
 gitexecdir = $(bindir)
 sharedir = $(prefix)/share
 template_dir = $(sharedir)/git-core/templates
+htmldir=$(sharedir)/doc/git-doc
 ifeq ($(prefix),/usr)
 sysconfdir = /etc
 else
@@ -186,7 +189,7 @@ GITWEB_FAVICON = git-favicon.png
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 
-export prefix bindir gitexecdir sharedir template_dir sysconfdir
+export prefix bindir gitexecdir sharedir template_dir htmldir sysconfdir
 
 CC = gcc
 AR = ar
@@ -226,7 +229,8 @@ SCRIPT_SH = \
 	git-merge-resolve.sh \
 	git-lost-found.sh git-quiltimport.sh git-submodule.sh \
 	git-filter-branch.sh \
-	git-stash.sh
+	git-stash.sh \
+	git-browse-help.sh
 
 SCRIPT_PERL = \
 	git-add--interactive.perl \
@@ -314,7 +318,7 @@ LIB_OBJS = \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
 	convert.o attr.o decorate.o progress.o mailmap.o symlinks.o remote.o \
-	transport.o bundle.o walker.o parse-options.o
+	transport.o bundle.o walker.o parse-options.o ws.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
@@ -787,8 +791,11 @@ ETC_GITCONFIG_SQ = $(subst ','\'',$(ETC_GITCONFIG))
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 bindir_SQ = $(subst ','\'',$(bindir))
+mandir_SQ = $(subst ','\'',$(mandir))
+infodir_SQ = $(subst ','\'',$(infodir))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 template_dir_SQ = $(subst ','\'',$(template_dir))
+htmldir_SQ = $(subst ','\'',$(htmldir))
 prefix_SQ = $(subst ','\'',$(prefix))
 sysconfdir_SQ = $(subst ','\'',$(sysconfdir))
 
@@ -834,7 +841,10 @@ git$X: git.o $(BUILTIN_OBJS) $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ git.o \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
-help.o: common-cmds.h
+help.o: help.c common-cmds.h GIT-CFLAGS
+	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) \
+		'-DGIT_MAN_PATH="$(mandir_SQ)"' \
+		'-DGIT_INFO_PATH="$(infodir_SQ)"' $<
 
 git-merge-subtree$X: git-merge-recursive$X
 	$(QUIET_BUILT_IN)$(RM) $@ && ln git-merge-recursive$X $@
@@ -853,6 +863,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
+	    -e 's|@@HTMLDIR@@|$(htmldir_SQ)|g' \
 	    -e 's/@@NO_HARDLINKS@@/$(NO_HARDLINKS)/g' \
 	    $@.sh >$@+ && \
 	chmod +x $@+ && \
@@ -1068,7 +1079,7 @@ install: all
 	GIT_CONFIG='$(DESTDIR_SQ)$(sysconfdir_SQ)/gitconfig' \
 		$(DESTDIR_SQ)$(bindir_SQ)/git$X config core.symlinks false
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
-	$(MAKE) -C perl prefix='$(prefix_SQ)' install
+	$(MAKE) -C perl prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' install
 ifndef NO_TCLTK
 	$(MAKE) -C gitk-git install
 	$(MAKE) -C git-gui install

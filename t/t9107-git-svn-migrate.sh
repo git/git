@@ -97,15 +97,19 @@ test_expect_success 'migrate --minimize on old inited layout' "
 	grep '^:refs/remotes/git-svn' fetch.out
 	"
 
-test_expect_success  ".rev_db auto-converted to .rev_db.UUID" "
+test_expect_success  ".rev_db auto-converted to .rev_map.UUID" "
 	git-svn fetch -i trunk &&
-	expect=$GIT_DIR/svn/trunk/.rev_db.* &&
+	test -z \"\$(ls $GIT_DIR/svn/trunk/.rev_db.* 2>/dev/null)\" &&
+	expect=\"\$(ls $GIT_DIR/svn/trunk/.rev_map.*)\" &&
 	test -n \"\$expect\" &&
-	mv \$expect $GIT_DIR/svn/trunk/.rev_db &&
+	rev_db=\$(echo \$expect | sed -e 's,_map,_db,') &&
+	convert_to_rev_db \$expect \$rev_db &&
+	rm -f \$expect &&
+	test -f \$rev_db &&
 	git-svn fetch -i trunk &&
-	test -L $GIT_DIR/svn/trunk/.rev_db &&
-	test -f \$expect &&
-	cmp \$expect $GIT_DIR/svn/trunk/.rev_db
+	test -z \"\$(ls $GIT_DIR/svn/trunk/.rev_db.* 2>/dev/null)\" &&
+	test ! -e $GIT_DIR/svn/trunk/.rev_db &&
+	test -f \$expect
 	"
 
 test_done

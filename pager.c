@@ -1,9 +1,11 @@
 #include "cache.h"
 
 /*
- * This is split up from the rest of git so that we might do
- * something different on Windows, for example.
+ * This is split up from the rest of git so that we can do
+ * something different on Windows.
  */
+
+static int spawned_pager;
 
 #ifndef __MINGW32__
 static void run_pager(const char *pager)
@@ -24,12 +26,12 @@ static void run_pager(const char *pager)
 #else
 #include "run-command.h"
 
-const char *pager_argv[] = { "sh", "-c", NULL, NULL };
+static const char *pager_argv[] = { "sh", "-c", NULL, NULL };
 static struct child_process pager_process = {
 	.argv = pager_argv,
 	.in = -1
 };
-static void collect_pager(void)
+static void wait_for_pager(void)
 {
 	fflush(stdout);
 	close(1);	/* signals EOF to pager */
@@ -59,7 +61,7 @@ void setup_pager(void)
 	else if (!*pager || !strcmp(pager, "cat"))
 		return;
 
-	pager_in_use = 1; /* means we are emitting to terminal */
+	spawned_pager = 1; /* means we are emitting to terminal */
 
 #ifndef __MINGW32__
 	if (pipe(fd) < 0)
@@ -99,6 +101,17 @@ void setup_pager(void)
 	close(pager_process.in);
 
 	/* this makes sure that the parent terminates after the pager */
-	atexit(collect_pager);
+	atexit(wait_for_pager);
 #endif
+}
+
+int pager_in_use(void)
+{
+	const char *env;
+
+	if (spawned_pager)
+		return 1;
+
+	env = getenv("GIT_PAGER_IN_USE");
+	return env ? git_config_bool("GIT_PAGER_IN_USE", env) : 0;
 }

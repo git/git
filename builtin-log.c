@@ -18,9 +18,6 @@
 static int default_show_root = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
 
-/* this is in builtin-diff.c */
-void add_head(struct rev_info *revs);
-
 static void add_name_decoration(const char *prefix, const char *name, struct object *obj)
 {
 	int plen = strlen(prefix);
@@ -557,7 +554,7 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const cha
 
 static void gen_message_id(char *dest, unsigned int length, char *base)
 {
-	const char *committer = git_committer_info(-1);
+	const char *committer = git_committer_info(IDENT_WARN_ON_NO_NAME);
 	const char *email_start = strrchr(committer, '<');
 	const char *email_end = strrchr(committer, '>');
 	if(!email_start || !email_end || email_start > email_end - 1)
@@ -665,7 +662,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			 !strcmp(argv[i], "-s")) {
 			const char *committer;
 			const char *endpos;
-			committer = git_committer_info(1);
+			committer = git_committer_info(IDENT_ERROR_ON_NO_NAME);
 			endpos = strchr(committer, '>');
 			if (!endpos)
 				die("bogos committer info %s\n", committer);
@@ -746,7 +743,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			 * does not have.
 			 */
 			rev.pending.objects[0].item->flags |= UNINTERESTING;
-			add_head(&rev);
+			add_head_to_pending(&rev);
 		}
 		/*
 		 * Otherwise, it is "format-patch -22 HEAD", and/or

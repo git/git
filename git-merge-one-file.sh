@@ -80,6 +80,10 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: $4: Not merging symbolic link changes."
 		exit 1
 		;;
+	*,160000,*)
+		echo "ERROR: $4: Not merging conflicting submodule changes."
+		exit 1
+		;;
 	esac
 
 	src2=`git-unpack-file $3`

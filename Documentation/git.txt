@@ -104,6 +104,11 @@ OPTIONS
 	commands. If the option '--all' or '-a' is given then all
 	available commands are printed. If a git command is named this
 	option will bring up the manual page for that command.
++
+Other options are available to control how the manual page is
+displayed. See gitlink:git-help[1] for more information,
+because 'git --help ...' is converted internally into 'git
+help ...'.
 
 --exec-path::
 	Path to wherever your core git programs are installed.

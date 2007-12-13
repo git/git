@@ -5,6 +5,8 @@
 test_description='git-svn info'
 
 . ./lib-git-svn.sh
+say 'skipping svn-info test (has a race undiagnosed yet)'
+test_done
 
 ptouch() {
 	perl -w -e '

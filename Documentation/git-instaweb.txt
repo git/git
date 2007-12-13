@@ -71,6 +71,9 @@ You may specify configuration in your .git/config
 
 -----------------------------------------------------------------------
 
+If the configuration variable 'instaweb.browser' is not set,
+'web.browser' will be used instead if it is defined.
+
 Author
 ------
 Written by Eric Wong <normalperson@yhbt.net>

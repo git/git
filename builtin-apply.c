@@ -45,14 +45,14 @@ static const char *fake_ancestor;
 static int line_termination = '\n';
 static unsigned long p_context = ULONG_MAX;
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [--reject] [--verbose] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [--reject] [--verbose] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|fix|error|error-all>] <patch>...";
 
-static enum whitespace_eol {
-	nowarn_whitespace,
-	warn_on_whitespace,
-	error_on_whitespace,
-	strip_whitespace,
-} new_whitespace = warn_on_whitespace;
+static enum ws_error_action {
+	nowarn_ws_error,
+	warn_on_ws_error,
+	die_on_ws_error,
+	correct_ws_error,
+} ws_error_action = warn_on_ws_error;
 static int whitespace_error;
 static int squelch_whitespace_errors = 5;
 static int applied_after_fixing_ws;
@@ -61,28 +61,28 @@ static const char *patch_input_file;
 static void parse_whitespace_option(const char *option)
 {
 	if (!option) {
-		new_whitespace = warn_on_whitespace;
+		ws_error_action = warn_on_ws_error;
 		return;
 	}
 	if (!strcmp(option, "warn")) {
-		new_whitespace = warn_on_whitespace;
+		ws_error_action = warn_on_ws_error;
 		return;
 	}
 	if (!strcmp(option, "nowarn")) {
-		new_whitespace = nowarn_whitespace;
+		ws_error_action = nowarn_ws_error;
 		return;
 	}
 	if (!strcmp(option, "error")) {
-		new_whitespace = error_on_whitespace;
+		ws_error_action = die_on_ws_error;
 		return;
 	}
 	if (!strcmp(option, "error-all")) {
-		new_whitespace = error_on_whitespace;
+		ws_error_action = die_on_ws_error;
 		squelch_whitespace_errors = 0;
 		return;
 	}
-	if (!strcmp(option, "strip")) {
-		new_whitespace = strip_whitespace;
+	if (!strcmp(option, "strip") || !strcmp(option, "fix")) {
+		ws_error_action = correct_ws_error;
 		return;
 	}
 	die("unrecognized whitespace option '%s'", option);
@@ -90,11 +90,8 @@ static void parse_whitespace_option(const char *option)
 
 static void set_default_whitespace_mode(const char *whitespace_option)
 {
-	if (!whitespace_option && !apply_default_whitespace) {
-		new_whitespace = (apply
-				  ? warn_on_whitespace
-				  : nowarn_whitespace);
-	}
+	if (!whitespace_option && !apply_default_whitespace)
+		ws_error_action = (apply ? warn_on_ws_error : nowarn_ws_error);
 }
 
 /*
@@ -137,11 +134,17 @@ struct fragment {
 #define BINARY_DELTA_DEFLATED	1
 #define BINARY_LITERAL_DEFLATED 2
 
+/*
+ * This represents a "patch" to a file, both metainfo changes
+ * such as creation/deletion, filemode and content changes represented
+ * as a series of fragments.
+ */
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
 	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
 	int rejected;
+	unsigned ws_rule;
 	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
@@ -158,7 +161,8 @@ struct patch {
 	struct patch *next;
 };
 
-static void say_patch_name(FILE *output, const char *pre, struct patch *patch, const char *post)
+static void say_patch_name(FILE *output, const char *pre,
+			   struct patch *patch, const char *post)
 {
 	fputs(pre, output);
 	if (patch->old_name && patch->new_name &&
@@ -229,7 +233,8 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 	if (*line == '"') {
 		struct strbuf name;
 
-		/* Proposed "new-style" GNU patch/diff format; see
+		/*
+		 * Proposed "new-style" GNU patch/diff format; see
 		 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
 		 */
 		strbuf_init(&name, 0);
@@ -499,7 +504,8 @@ static int gitdiff_dissimilarity(const char *line, struct patch *patch)
 
 static int gitdiff_index(const char *line, struct patch *patch)
 {
-	/* index line is N hexadecimal, "..", N hexadecimal,
+	/*
+	 * index line is N hexadecimal, "..", N hexadecimal,
 	 * and optional space with octal mode.
 	 */
 	const char *ptr, *eol;
@@ -550,7 +556,8 @@ static const char *stop_at_slash(const char *line, int llen)
 	return NULL;
 }
 
-/* This is to extract the same name that appears on "diff --git"
+/*
+ * This is to extract the same name that appears on "diff --git"
  * line.  We do not find and return anything if it is a rename
  * patch, and it is OK because we will find the name elsewhere.
  * We need to reliably find name only when it is mode-change only,
@@ -584,7 +591,8 @@ static char *git_header_name(char *line, int llen)
 			goto free_and_fail1;
 		strbuf_remove(&first, 0, cp + 1 - first.buf);
 
-		/* second points at one past closing dq of name.
+		/*
+		 * second points at one past closing dq of name.
 		 * find the second name.
 		 */
 		while ((second < line + llen) && isspace(*second))
@@ -627,7 +635,8 @@ static char *git_header_name(char *line, int llen)
 		return NULL;
 	name++;
 
-	/* since the first name is unquoted, a dq if exists must be
+	/*
+	 * since the first name is unquoted, a dq if exists must be
 	 * the beginning of the second name.
 	 */
 	for (second = name; second < line + llen; second++) {
@@ -758,7 +767,7 @@ static int parse_num(const char *line, unsigned long *p)
 }
 
 static int parse_range(const char *line, int len, int offset, const char *expect,
-			unsigned long *p1, unsigned long *p2)
+		       unsigned long *p1, unsigned long *p2)
 {
 	int digits, ex;
 
@@ -867,14 +876,14 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 			return offset;
 		}
 
-		/** --- followed by +++ ? */
+		/* --- followed by +++ ? */
 		if (memcmp("--- ", line,  4) || memcmp("+++ ", line + len, 4))
 			continue;
 
 		/*
 		 * We only accept unified patches, so we want it to
 		 * at least have "@@ -a,b +c,d @@\n", which is 14 chars
-		 * minimum
+		 * minimum ("@@ -0,0 +1 @@\n" is the shortest).
 		 */
 		nextlen = linelen(line + len, size - len);
 		if (size < nextlen + 14 || memcmp("@@ -", line + len + nextlen, 4))
@@ -889,7 +898,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 	return -1;
 }
 
-static void check_whitespace(const char *line, int len)
+static void check_whitespace(const char *line, int len, unsigned ws_rule)
 {
 	const char *err = "Adds trailing whitespace";
 	int seen_space = 0;
@@ -901,23 +910,35 @@ static void check_whitespace(const char *line, int len)
 	 * this function.  That is, an addition of an empty line would
 	 * check the '+' here.  Sneaky...
 	 */
-	if (isspace(line[len-2]))
+	if ((ws_rule & WS_TRAILING_SPACE) && isspace(line[len-2]))
 		goto error;
 
 	/*
 	 * Make sure that there is no space followed by a tab in
 	 * indentation.
 	 */
-	err = "Space in indent is followed by a tab";
-	for (i = 1; i < len; i++) {
-		if (line[i] == '\t') {
-			if (seen_space)
-				goto error;
+	if (ws_rule & WS_SPACE_BEFORE_TAB) {
+		err = "Space in indent is followed by a tab";
+		for (i = 1; i < len; i++) {
+			if (line[i] == '\t') {
+				if (seen_space)
+					goto error;
+			}
+			else if (line[i] == ' ')
+				seen_space = 1;
+			else
+				break;
 		}
-		else if (line[i] == ' ')
-			seen_space = 1;
-		else
-			break;
+	}
+
+	/*
+	 * Make sure that the indentation does not contain more than
+	 * 8 spaces.
+	 */
+	if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
+	    (8 < len) && !strncmp("+        ", line, 9)) {
+		err = "Indent more than 8 places with spaces";
+		goto error;
 	}
 	return;
 
@@ -931,14 +952,14 @@ static void check_whitespace(const char *line, int len)
 			err, patch_input_file, linenr, len-2, line+1);
 }
 
-
 /*
  * Parse a unified diff. Note that this really needs to parse each
  * fragment separately, since the only way to know the difference
  * between a "---" that is part of a patch, and a "---" that starts
  * the next patch is to look at the line counts..
  */
-static int parse_fragment(char *line, unsigned long size, struct patch *patch, struct fragment *fragment)
+static int parse_fragment(char *line, unsigned long size,
+			  struct patch *patch, struct fragment *fragment)
 {
 	int added, deleted;
 	int len = linelen(line, size), offset;
@@ -979,22 +1000,23 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			break;
 		case '-':
 			if (apply_in_reverse &&
-					new_whitespace != nowarn_whitespace)
-				check_whitespace(line, len);
+			    ws_error_action != nowarn_ws_error)
+				check_whitespace(line, len, patch->ws_rule);
 			deleted++;
 			oldlines--;
 			trailing = 0;
 			break;
 		case '+':
 			if (!apply_in_reverse &&
-					new_whitespace != nowarn_whitespace)
-				check_whitespace(line, len);
+			    ws_error_action != nowarn_ws_error)
+				check_whitespace(line, len, patch->ws_rule);
 			added++;
 			newlines--;
 			trailing = 0;
 			break;
 
-                /* We allow "\ No newline at end of file". Depending
+		/*
+		 * We allow "\ No newline at end of file". Depending
                  * on locale settings when the patch was produced we
                  * don't know what this line looks like. The only
                  * thing we do know is that it begins with "\ ".
@@ -1012,7 +1034,8 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 	fragment->leading = leading;
 	fragment->trailing = trailing;
 
-	/* If a fragment ends with an incomplete line, we failed to include
+	/*
+	 * If a fragment ends with an incomplete line, we failed to include
 	 * it in the above loop because we hit oldlines == newlines == 0
 	 * before seeing it.
 	 */
@@ -1140,7 +1163,8 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 					  int *status_p,
 					  int *used_p)
 {
-	/* Expect a line that begins with binary patch method ("literal"
+	/*
+	 * Expect a line that begins with binary patch method ("literal"
 	 * or "delta"), followed by the length of data before deflating.
 	 * a sequence of 'length-byte' followed by base-85 encoded data
 	 * should follow, terminated by a newline.
@@ -1189,7 +1213,8 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 			size--;
 			break;
 		}
-		/* Minimum line is "A00000\n" which is 7-byte long,
+		/*
+		 * Minimum line is "A00000\n" which is 7-byte long,
 		 * and the line length must be multiple of 5 plus 2.
 		 */
 		if ((llen < 7) || (llen-2) % 5)
@@ -1240,7 +1265,8 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 
 static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 {
-	/* We have read "GIT binary patch\n"; what follows is a line
+	/*
+	 * We have read "GIT binary patch\n"; what follows is a line
 	 * that says the patch method (currently, either "literal" or
 	 * "delta") and the length of data before deflating; a
 	 * sequence of 'length-byte' followed by base-85 encoded data
@@ -1270,7 +1296,8 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 	if (reverse)
 		used += used_1;
 	else if (status) {
-		/* not having reverse hunk is not an error, but having
+		/*
+		 * Not having reverse hunk is not an error, but having
 		 * a corrupt reverse hunk is.
 		 */
 		free((void*) forward->patch);
@@ -1291,7 +1318,12 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 	if (offset < 0)
 		return offset;
 
-	patchsize = parse_single_patch(buffer + offset + hdrsize, size - offset - hdrsize, patch);
+	patch->ws_rule = whitespace_rule(patch->new_name
+					 ? patch->new_name
+					 : patch->old_name);
+
+	patchsize = parse_single_patch(buffer + offset + hdrsize,
+				       size - offset - hdrsize, patch);
 
 	if (!patchsize) {
 		static const char *binhdr[] = {
@@ -1367,8 +1399,10 @@ static void reverse_patches(struct patch *p)
 	}
 }
 
-static const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-static const char minuses[]= "----------------------------------------------------------------------";
+static const char pluses[] =
+"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+static const char minuses[]=
+"----------------------------------------------------------------------";
 
 static void show_stats(struct patch *patch)
 {
@@ -1437,7 +1471,9 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 	}
 }
 
-static int find_offset(const char *buf, unsigned long size, const char *fragment, unsigned long fragsize, int line, int *lines)
+static int find_offset(const char *buf, unsigned long size,
+		       const char *fragment, unsigned long fragsize,
+		       int line, int *lines)
 {
 	int i;
 	unsigned long start, backwards, forwards;
@@ -1536,9 +1572,11 @@ static void remove_last_line(const char **rbuf, int *rsize)
 	*rsize = offset + 1;
 }
 
-static int apply_line(char *output, const char *patch, int plen)
+static int apply_line(char *output, const char *patch, int plen,
+		      unsigned ws_rule)
 {
-	/* plen is number of bytes to be copied from patch,
+	/*
+	 * plen is number of bytes to be copied from patch,
 	 * starting at patch+1 (patch[0] is '+').  Typically
 	 * patch[plen] is '\n', unless this is the incomplete
 	 * last line.
@@ -1551,13 +1589,17 @@ static int apply_line(char *output, const char *patch, int plen)
 	int need_fix_leading_space = 0;
 	char *buf;
 
-	if ((new_whitespace != strip_whitespace) || !whitespace_error ||
+	if ((ws_error_action != correct_ws_error) || !whitespace_error ||
 	    *patch != '+') {
 		memcpy(output, patch + 1, plen);
 		return plen;
 	}
 
-	if (1 < plen && isspace(patch[plen-1])) {
+	/*
+	 * Strip trailing whitespace
+	 */
+	if ((ws_rule & WS_TRAILING_SPACE) &&
+	    (1 < plen && isspace(patch[plen-1]))) {
 		if (patch[plen] == '\n')
 			add_nl_to_tail = 1;
 		plen--;
@@ -1566,15 +1608,23 @@ static int apply_line(char *output, const char *patch, int plen)
 		fixed = 1;
 	}
 
+	/*
+	 * Check leading whitespaces (indent)
+	 */
 	for (i = 1; i < plen; i++) {
 		char ch = patch[i];
 		if (ch == '\t') {
 			last_tab_in_indent = i;
-			if (0 <= last_space_in_indent)
+			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
+			    0 <= last_space_in_indent)
+			    need_fix_leading_space = 1;
+		} else if (ch == ' ') {
+			last_space_in_indent = i;
+			if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
+			    last_tab_in_indent < 0 &&
+			    8 <= i)
 				need_fix_leading_space = 1;
 		}
-		else if (ch == ' ')
-			last_space_in_indent = i;
 		else
 			break;
 	}
@@ -1582,10 +1632,21 @@ static int apply_line(char *output, const char *patch, int plen)
 	buf = output;
 	if (need_fix_leading_space) {
 		int consecutive_spaces = 0;
-		/* between patch[1..last_tab_in_indent] strip the
-		 * funny spaces, updating them to tab as needed.
+		int last = last_tab_in_indent + 1;
+
+		if (ws_rule & WS_INDENT_WITH_NON_TAB) {
+			/* have "last" point at one past the indent */
+			if (last_tab_in_indent < last_space_in_indent)
+				last = last_space_in_indent + 1;
+			else
+				last = last_tab_in_indent + 1;
+		}
+
+		/*
+		 * between patch[1..last], strip the funny spaces,
+		 * updating them to tab as needed.
 		 */
-		for (i = 1; i < last_tab_in_indent; i++, plen--) {
+		for (i = 1; i < last; i++, plen--) {
 			char ch = patch[i];
 			if (ch != ' ') {
 				consecutive_spaces = 0;
@@ -1598,8 +1659,10 @@ static int apply_line(char *output, const char *patch, int plen)
 				}
 			}
 		}
+		while (0 < consecutive_spaces--)
+			*output++ = ' ';
 		fixed = 1;
-		i = last_tab_in_indent;
+		i = last;
 	}
 	else
 		i = 1;
@@ -1612,7 +1675,8 @@ static int apply_line(char *output, const char *patch, int plen)
 	return output + plen - buf;
 }
 
-static int apply_one_fragment(struct strbuf *buf, struct fragment *frag, int inaccurate_eof)
+static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
+			      int inaccurate_eof, unsigned ws_rule)
 {
 	int match_beginning, match_end;
 	const char *patch = frag->patch;
@@ -1671,7 +1735,7 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag, int ina
 		case '+':
 			if (first != '+' || !no_add) {
 				int added = apply_line(new + newsize, patch,
-						       plen);
+						       plen, ws_rule);
 				newsize += added;
 				if (first == '+' &&
 				    added == 1 && new[newsize-1] == '\n')
@@ -1694,8 +1758,9 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag, int ina
 		size -= len;
 	}
 
-	if (inaccurate_eof && oldsize > 0 && old[oldsize - 1] == '\n' &&
-			newsize > 0 && new[newsize - 1] == '\n') {
+	if (inaccurate_eof &&
+	    oldsize > 0 && old[oldsize - 1] == '\n' &&
+	    newsize > 0 && new[newsize - 1] == '\n') {
 		oldsize--;
 		newsize--;
 	}
@@ -1732,7 +1797,7 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag, int ina
 		if (match_beginning && offset)
 			offset = -1;
 		if (offset >= 0) {
-			if (new_whitespace == strip_whitespace &&
+			if (ws_error_action == correct_ws_error &&
 			    (buf->len - oldsize - offset == 0)) /* end of file? */
 				newsize -= new_blank_lines_at_end;
 
@@ -1757,9 +1822,10 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag, int ina
 			match_beginning = match_end = 0;
 			continue;
 		}
-		/* Reduce the number of context lines
-		 * Reduce both leading and trailing if they are equal
-		 * otherwise just reduce the larger context.
+		/*
+		 * Reduce the number of context lines; reduce both
+		 * leading and trailing if they are equal otherwise
+		 * just reduce the larger context.
 		 */
 		if (leading >= trailing) {
 			remove_first_line(&oldlines, &oldsize);
@@ -1819,7 +1885,8 @@ static int apply_binary(struct strbuf *buf, struct patch *patch)
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	unsigned char sha1[20];
 
-	/* For safety, we require patch index line to contain
+	/*
+	 * For safety, we require patch index line to contain
 	 * full 40-byte textual SHA1 for old and new, at least for now.
 	 */
 	if (strlen(patch->old_sha1_prefix) != 40 ||
@@ -1830,7 +1897,8 @@ static int apply_binary(struct strbuf *buf, struct patch *patch)
 			     "without full index line", name);
 
 	if (patch->old_name) {
-		/* See if the old one matches what the patch
+		/*
+		 * See if the old one matches what the patch
 		 * applies to.
 		 */
 		hash_sha1_file(buf->buf, buf->len, blob_type, sha1);
@@ -1867,7 +1935,8 @@ static int apply_binary(struct strbuf *buf, struct patch *patch)
 		/* XXX read_sha1_file NUL-terminates */
 		strbuf_attach(buf, result, size, size + 1);
 	} else {
-		/* We have verified buf matches the preimage;
+		/*
+		 * We have verified buf matches the preimage;
 		 * apply the patch data to it, which is stored
 		 * in the patch->fragments->{patch,size}.
 		 */
@@ -1889,12 +1958,14 @@ static int apply_fragments(struct strbuf *buf, struct patch *patch)
 {
 	struct fragment *frag = patch->fragments;
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
+	unsigned ws_rule = patch->ws_rule;
+	unsigned inaccurate_eof = patch->inaccurate_eof;
 
 	if (patch->is_binary)
 		return apply_binary(buf, patch);
 
 	while (frag) {
-		if (apply_one_fragment(buf, frag, patch->inaccurate_eof)) {
+		if (apply_one_fragment(buf, frag, inaccurate_eof, ws_rule)) {
 			error("patch failed: %s:%ld", name, frag->oldpos);
 			if (!apply_with_reject)
 				return -1;
@@ -2066,7 +2137,8 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 
 	if (new_name && prev_patch && 0 < prev_patch->is_delete &&
 	    !strcmp(prev_patch->old_name, new_name))
-		/* A type-change diff is always split into a patch to
+		/*
+		 * A type-change diff is always split into a patch to
 		 * delete old, immediately followed by a patch to
 		 * create new (see diff.c::run_diff()); in such a case
 		 * it is Ok that the entry to be deleted by the
@@ -2670,7 +2742,7 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 		offset += nr;
 	}
 
-	if (whitespace_error && (new_whitespace == error_on_whitespace))
+	if (whitespace_error && (ws_error_action == die_on_ws_error))
 		apply = 0;
 
 	update_index = check_index && apply;
@@ -2865,7 +2937,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 				squelched,
 				squelched == 1 ? "" : "s");
 		}
-		if (new_whitespace == error_on_whitespace)
+		if (ws_error_action == die_on_ws_error)
 			die("%d line%s add%s whitespace errors.",
 			    whitespace_error,
 			    whitespace_error == 1 ? "" : "s",

@@ -49,6 +49,7 @@
 (eval-when-compile (require 'cl))
 (require 'ewoc)
 (require 'log-edit)
+(require 'easymenu)
 
 
 ;;;; Customizations
@@ -1297,7 +1298,47 @@ Return the list of files that haven't been handled."
     (define-key toggle-map "i" 'git-toggle-show-ignored)
     (define-key toggle-map "k" 'git-toggle-show-unknown)
     (define-key toggle-map "m" 'git-toggle-all-marks)
-    (setq git-status-mode-map map)))
+    (setq git-status-mode-map map))
+  (easy-menu-define git-menu git-status-mode-map
+    "Git Menu"
+    `("Git"
+      ["Refresh" git-refresh-status t]
+      ["Commit" git-commit-file t]
+      ("Merge"
+	["Next Unmerged File" git-next-unmerged-file t]
+	["Prev Unmerged File" git-prev-unmerged-file t]
+	["Mark as Resolved" git-resolve-file t]
+	["Interactive Merge File" git-find-file-imerge t]
+	["Diff Against Common Base File" git-diff-file-base t]
+	["Diff Combined" git-diff-file-combined t]
+	["Diff Against Merge Head" git-diff-file-merge-head t]
+	["Diff Against Mine" git-diff-file-mine t]
+	["Diff Against Other" git-diff-file-other t])
+      "--------"
+      ["Add File" git-add-file t]
+      ["Revert File" git-revert-file t]
+      ["Ignore File" git-ignore-file t]
+      ["Remove File" git-remove-file t]
+      "--------"
+      ["Find File" git-find-file t]
+      ["View File" git-view-file t]
+      ["Diff File" git-diff-file t]
+      ["Interactive Diff File" git-diff-file-idiff t]
+      ["Log" git-log-file t]
+      "--------"
+      ["Mark" git-mark-file t]
+      ["Mark All" git-mark-all t]
+      ["Unmark" git-unmark-file t]
+      ["Unmark All" git-unmark-all t]
+      ["Toggle All Marks" git-toggle-all-marks t]
+      ["Hide Handled Files" git-remove-handled t]
+      "--------"
+      ["Show Uptodate Files" git-toggle-show-uptodate :style toggle :selected git-show-uptodate]
+      ["Show Ignored Files" git-toggle-show-ignored :style toggle :selected git-show-ignored]
+      ["Show Unknown Files" git-toggle-show-unknown :style toggle :selected git-show-unknown]
+      "--------"
+      ["Quit" git-status-quit t])))
+
 
 ;; git mode should only run in the *git status* buffer
 (put 'git-status-mode 'mode-class 'special)

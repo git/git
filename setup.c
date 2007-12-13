@@ -82,21 +82,23 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 {
 	static char path[PATH_MAX];
-	char *p;
 #ifndef __MINGW32__
 	if (!pfx || !*pfx || is_absolute_path(arg))
 		return arg;
+	memcpy(path, pfx, pfx_len);
+	strcpy(path + pfx_len, arg);
 #else
-	/* don't add prefix to absolute paths */
+	char *p;
+	/* don't add prefix to absolute paths, but still replace '\' by '/' */
 	if (is_absolute_path(arg))
 		pfx_len = 0;
 	else
-#endif
-	memcpy(path, pfx, pfx_len);
+		memcpy(path, pfx, pfx_len);
 	strcpy(path + pfx_len, arg);
 	for (p = path + pfx_len; *p; p++)
 		if (*p == '\\')
 			*p = '/';
+#endif
 	return path;
 }
 
@@ -427,7 +429,6 @@ int check_repository_format(void)
 const char *setup_git_directory(void)
 {
 	const char *retval = setup_git_directory_gently(NULL);
-	check_repository_format();
 
 	/* If the work tree is not the default one, recompute prefix */
 	if (inside_work_tree < 0) {

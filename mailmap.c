@@ -42,9 +42,10 @@ int read_mailmap(struct path_list *map, const char *filename, char **repo_abbrev
 			continue;
 		if (right_bracket == left_bracket + 1)
 			continue;
-		for (end_of_name = left_bracket; end_of_name != buffer
-				&& isspace(end_of_name[-1]); end_of_name--)
-			/* keep on looking */
+		for (end_of_name = left_bracket;
+		     end_of_name != buffer && isspace(end_of_name[-1]);
+		     end_of_name--)
+			; /* keep on looking */
 		if (end_of_name == buffer)
 			continue;
 		name = xmalloc(end_of_name - buffer + 1);

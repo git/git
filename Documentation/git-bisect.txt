@@ -92,7 +92,16 @@ During the bisection process, you can say
 $ git bisect visualize
 ------------
 
-to see the currently remaining suspects in `gitk`.
+to see the currently remaining suspects in `gitk`.  `visualize` is a bit
+too long to type and `view` is provided as a synonym.
+
+If `DISPLAY` environment variable is not set, `git log` is used
+instead.  You can even give command line options such as `-p` and
+`--stat`.
+
+------------
+$ git bisect view --stat
+------------
 
 Bisect log and bisect replay
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

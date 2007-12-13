@@ -468,6 +468,9 @@ void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
 enum date_mode parse_date_format(const char *format);
 
+#define IDENT_WARN_ON_NO_NAME  1
+#define IDENT_ERROR_ON_NO_NAME 2
+#define IDENT_NO_DATE	       4
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 extern const char *fmt_ident(const char *name, const char *email, const char *date_str, int);
@@ -620,7 +623,7 @@ extern int write_or_whine_pipe(int fd, const void *buf, size_t count, const char
 /* pager.c */
 extern void setup_pager(void);
 extern char *pager_program;
-extern int pager_in_use;
+extern int pager_in_use(void);
 extern int pager_use_color;
 
 extern char *editor_program;
@@ -655,6 +658,18 @@ extern int diff_auto_refresh_index;
 
 /* match-trees.c */
 void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
+
+/*
+ * whitespace rules.
+ * used by both diff and apply
+ */
+#define WS_TRAILING_SPACE	01
+#define WS_SPACE_BEFORE_TAB	02
+#define WS_INDENT_WITH_NON_TAB	04
+#define WS_DEFAULT_RULE (WS_TRAILING_SPACE|WS_SPACE_BEFORE_TAB)
+extern unsigned whitespace_rule_cfg;
+extern unsigned whitespace_rule(const char *);
+extern unsigned parse_whitespace_rule(const char *);
 
 /* ls-files */
 int pathspec_match(const char **spec, char *matched, const char *filename, int skiplen);
