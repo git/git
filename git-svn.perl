@@ -2363,11 +2363,20 @@ sub make_log_entry {
 
 	my ($commit_name, $commit_email) = ($name, $email);
 	if ($_use_log_author) {
-		if ($log_entry{log} =~ /From:\s+(.*?)\s+<(.*)>\s*\n/) {
+		my $name_field;
+		if ($log_entry{log} =~ /From:\s+(.*\S)\s*\n/i) {
+			$name_field = $1;
+		} elsif ($log_entry{log} =~ /Signed-off-by:\s+(.*\S)\s*\n/i) {
+			$name_field = $1;
+		}
+		if (!defined $name_field) {
+			#
+		} elsif ($name_field =~ /(.*?)\s+<(.*)>/) {
 			($name, $email) = ($1, $2);
-		} elsif ($log_entry{log} =~
-		                      /Signed-off-by:\s+(.*?)\s+<(.*)>\s*\n/) {
-			($name, $email) = ($1, $2);
+		} elsif ($name_field =~ /(.*)@/) {
+			($name, $email) = ($1, $name_field);
+		} else {
+			($name, $email) = ($name_field, 'unknown');
 		}
 	}
 	if (defined $headrev && $self->use_svm_props) {
