@@ -396,6 +396,7 @@ sub cmd_set_tree {
 	}
 	$gs->set_tree($_) foreach @revs;
 	print "Done committing ",scalar @revs," revisions to SVN\n";
+	unlink $gs->{index};
 }
 
 sub cmd_dcommit {
@@ -514,6 +515,7 @@ sub cmd_dcommit {
 			$last_rev = $cmt_rev;
 		}
 	}
+	unlink $gs->{index};
 }
 
 sub cmd_find_rev {
@@ -1374,6 +1376,7 @@ sub fetch_all {
 
 	($base, $head) = parse_revision_argument($base, $head);
 	$ra->gs_fetch_loop_common($base, $head, \@gs, \@globs);
+	unlink $_->{index} foreach @gs;
 }
 
 sub read_all_remotes {
