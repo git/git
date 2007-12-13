@@ -3969,39 +3969,7 @@ sub cmt_showable {
 }
 
 sub log_use_color {
-	return 1 if $color;
-	my ($dc, $dcvar);
-	$dcvar = 'color.diff';
-	$dc = `git-config --get $dcvar`;
-	if ($dc eq '') {
-		# nothing at all; fallback to "diff.color"
-		$dcvar = 'diff.color';
-		$dc = `git-config --get $dcvar`;
-	}
-	chomp($dc);
-	if ($dc eq 'auto') {
-		my $pc;
-		$pc = `git-config --get color.pager`;
-		if ($pc eq '') {
-			# does not have it -- fallback to pager.color
-			$pc = `git-config --bool --get pager.color`;
-		}
-		else {
-			$pc = `git-config --bool --get color.pager`;
-			if ($?) {
-				$pc = 'false';
-			}
-		}
-		chomp($pc);
-		if (-t *STDOUT || (defined $pager && $pc eq 'true')) {
-			return ($ENV{TERM} && $ENV{TERM} ne 'dumb');
-		}
-		return 0;
-	}
-	return 0 if $dc eq 'never';
-	return 1 if $dc eq 'always';
-	chomp($dc = `git-config --bool --get $dcvar`);
-	return ($dc eq 'true');
+	return $color || Git->repository->get_colorbool('color.diff');
 }
 
 sub git_svn_log_cmd {
@@ -4060,6 +4028,7 @@ sub config_pager {
 	} elsif (length $pager == 0 || $pager eq 'cat') {
 		$pager = undef;
 	}
+	$ENV{GIT_PAGER_IN_USE} = defined($pager);
 }
 
 sub run_pager {

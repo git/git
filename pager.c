@@ -5,6 +5,8 @@
  * something different on Windows, for example.
  */
 
+static int spawned_pager;
+
 static void run_pager(const char *pager)
 {
 	/*
@@ -41,7 +43,7 @@ void setup_pager(void)
 	else if (!*pager || !strcmp(pager, "cat"))
 		return;
 
-	pager_in_use = 1; /* means we are emitting to terminal */
+	spawned_pager = 1; /* means we are emitting to terminal */
 
 	if (pipe(fd) < 0)
 		return;
@@ -69,4 +71,15 @@ void setup_pager(void)
 	run_pager(pager);
 	die("unable to execute pager '%s'", pager);
 	exit(255);
+}
+
+int pager_in_use(void)
+{
+	const char *env;
+
+	if (spawned_pager)
+		return 1;
+
+	env = getenv("GIT_PAGER_IN_USE");
+	return env ? git_config_bool("GIT_PAGER_IN_USE", env) : 0;
 }
