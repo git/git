@@ -1,5 +1,0 @@
---
-exec >/var/tmp/1
-O=v1.5.3
-echo O=`git describe refs/heads/master`
-git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
