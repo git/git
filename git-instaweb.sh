@@ -24,6 +24,7 @@ fqgitdir="$GIT_DIR"
 local="`git config --bool --get instaweb.local`"
 httpd="`git config --get instaweb.httpd`"
 browser="`git config --get instaweb.browser`"
+test -z "$browser" && browser="`git config --get web.browser`"
 port=`git config --get instaweb.port`
 module_path="`git config --get instaweb.modulepath`"
 

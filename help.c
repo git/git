@@ -239,6 +239,22 @@ void list_common_cmds_help(void)
 	}
 }
 
+static const char *cmd_to_page(const char *git_cmd)
+{
+	if (!git_cmd)
+		return "git";
+	else if (!prefixcmp(git_cmd, "git"))
+		return git_cmd;
+	else {
+		int page_len = strlen(git_cmd) + 4;
+		char *p = xmalloc(page_len + 1);
+		strcpy(p, "git-");
+		strcpy(p + 4, git_cmd);
+		p[page_len] = 0;
+		return p;
+	}
+}
+
 static void setup_man_path(void)
 {
 	struct strbuf new_path;
@@ -262,21 +278,22 @@ static void setup_man_path(void)
 
 static void show_man_page(const char *git_cmd)
 {
-	const char *page;
-
-	if (!prefixcmp(git_cmd, "git"))
-		page = git_cmd;
-	else {
-		int page_len = strlen(git_cmd) + 4;
-		char *p = xmalloc(page_len + 1);
-		strcpy(p, "git-");
-		strcpy(p + 4, git_cmd);
-		p[page_len] = 0;
-		page = p;
-	}
-
+	const char *page = cmd_to_page(git_cmd);
 	setup_man_path();
 	execlp("man", "man", page, NULL);
+}
+
+static void show_info_page(const char *git_cmd)
+{
+	const char *page = cmd_to_page(git_cmd);
+	setenv("INFOPATH", GIT_INFO_PATH, 1);
+	execlp("info", "info", "gitman", page, NULL);
+}
+
+static void show_html_page(const char *git_cmd)
+{
+	const char *page = cmd_to_page(git_cmd);
+	execl_git_cmd("browse-help", page, NULL);
 }
 
 void help_unknown_cmd(const char *cmd)
@@ -293,18 +310,25 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 
 int cmd_help(int argc, const char **argv, const char *prefix)
 {
-	const char *help_cmd = argc > 1 ? argv[1] : NULL;
+	const char *help_cmd = argv[1];
 
-	if (!help_cmd) {
+	if (argc < 2) {
 		printf("usage: %s\n\n", git_usage_string);
 		list_common_cmds_help();
 		exit(0);
 	}
 
-	else if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a")) {
+	if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a")) {
 		printf("usage: %s\n\n", git_usage_string);
 		list_commands();
-		exit(0);
+	}
+
+	else if (!strcmp(help_cmd, "--web") || !strcmp(help_cmd, "-w")) {
+		show_html_page(argc > 2 ? argv[2] : NULL);
+	}
+
+	else if (!strcmp(help_cmd, "--info") || !strcmp(help_cmd, "-i")) {
+		show_info_page(argc > 2 ? argv[2] : NULL);
 	}
 
 	else
