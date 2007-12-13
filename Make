@@ -4,7 +4,8 @@
 # PATH=/usr/bin:/bin
 
 G=/opt/packrat/playpen/public/in-place/git/index/gitweb_config.perl
-PATH=$HOME/git-master/bin:/usr/bin:/bin
+GIT=$HOME/git-master/bin/git
+PATH=/usr/bin:/bin
 LANG=C
 LC_CTYPE=C
 export PATH LANG LC_CTYPE
@@ -15,14 +16,14 @@ export PATH LANG LC_CTYPE
 
 old_style_def_fix=b79d18c92d9f4841a6a1a29b7b2373a8ff9871e1
 
-head=`git symbolic-ref HEAD 2>/dev/null` &&
+head=`$GIT symbolic-ref HEAD 2>/dev/null` &&
 branch=`expr "$head" : 'refs/heads/\(.*\)'` || branch=detached
 
 case "$branch" in
 next | maint | master | pu)
 	d="prefix=$HOME/git-$branch" ;;
 snap)
-	v=`git describe HEAD`
+	v=`$GIT describe HEAD`
 	expr "$v" : '.*-g[0-9a-f]*$' >/dev/null && {
 	    echo >&2 "You are on 'snap' but $v is not an official version."
 	    exit 1
@@ -40,8 +41,8 @@ do
 	case "$1" in
 	-pedantic)
 		o= &&
-		rev=$(git-rev-parse HEAD) &&
-		case "$(git-merge-base "$old_style_def_fix" "$rev")" in
+		rev=$($GIT rev-parse HEAD) &&
+		case "$($GIT merge-base "$old_style_def_fix" "$rev")" in
 		$old_style_def_fix)
 			o=-Wold-style-definition ;;
 		esac
@@ -62,6 +63,8 @@ do
 	esac
 	shift
 done
+
+$GIT describe --abbrev=4 HEAD | sed -e 's/-/./g' >version
 
 make $d \
      GITWEB_CONFIG=$G \
