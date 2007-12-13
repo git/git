@@ -133,6 +133,10 @@ test_expect_success '--no-verify with failing hook (editor)' '
 '
 
 chmod -x "$HOOK"
+if test "$(git config --bool core.filemode)" = false; then
+	say "executable bit not honored - skipping tests of non-executable hook"
+else
+
 test_expect_success 'with non-executable hook' '
 
 	echo "content" >> file &&
@@ -166,6 +170,8 @@ test_expect_success '--no-verify with non-executable hook (editor)' '
 	GIT_EDITOR="$FAKE_EDITOR" git commit --no-verify
 
 '
+
+fi # non-executable hooks
 
 # now a hook that edits the commit message
 cat > "$HOOK" <<'EOF'
