@@ -246,11 +246,26 @@ Updates since v1.5.3
    descriptive name from From: and Signed-off-by: lines in the commit
    message.
 
+ * "git svn" wasted way too much disk to record revision mappings
+   between svn and git; a new representation that is much more compact
+   for this information has been introduced to correct this.
+
  * "git status" from a subdirectory now shows relative paths, which
    makes copy-and-pasting for git-checkout/git-add/git-rm easier.  The
    traditional behaviour to show the full path relative to the top of
    the work tree can be had by setting status.relativepaths
    configuration variable to true.
+
+ * "git blame" kept text for each annotated revision in core needlessly;
+   this has been corrected.
+
+ * "git shortlog" learned to default to HEAD when the standard input is
+   a terminal and the user did not give any revision parameter.
+
+ * "git shortlog" learned "-e" option to show e-mail addresses as well as
+   authors' names.
+
+ * "git help" learned "-w" option to show documentation in browsers.
 
  * In addition there are quite a few internal clean-ups. Notably
 
@@ -279,6 +294,6 @@ series.
 
 --
 exec >/var/tmp/1
-O=v1.5.3.7-1148-gcf7e147
+O=v1.5.4-rc0
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
