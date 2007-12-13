@@ -8,8 +8,8 @@ git-shortlog - Summarize 'git log' output
 SYNOPSIS
 --------
 [verse]
-git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s]
-git-shortlog [-n|--numbered] [-s|--summary] [<committish>...]
+git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s] [-e]
+git-shortlog [-n|--numbered] [-s|--summary] [-e|--email] [<committish>...]
 
 DESCRIPTION
 -----------
@@ -31,6 +31,9 @@ OPTIONS
 
 -s, \--summary::
 	Suppress commit description and provide a commit count summary only.
+
+-e, \--email::
+	Show the email address of each author.
 
 FILES
 -----

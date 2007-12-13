@@ -130,6 +130,8 @@ extern void add_object(struct object *obj,
 
 extern void add_pending_object(struct rev_info *revs, struct object *obj, const char *name);
 
+extern void add_head_to_pending(struct rev_info *);
+
 enum commit_action {
 	commit_ignore,
 	commit_show,
