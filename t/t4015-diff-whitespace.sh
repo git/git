@@ -121,7 +121,7 @@ test_expect_success 'check mixed spaces and tabs in indent' '
 
 	# This is indented with SP HT SP.
 	echo " 	 foo();" > x &&
-	git diff --check | grep "space before tab"
+	git diff --check | grep "Space in indent is followed by a tab"
 
 '
 
