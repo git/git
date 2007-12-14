@@ -244,11 +244,11 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
 
-	/* If the user asked for our exit code then don't start a
+	/*
+	 * If the user asked for our exit code then don't start a
 	 * pager or we would end up reporting its exit code instead.
 	 */
-	if (!DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS) &&
-	    (!(rev.diffopt.output_format & DIFF_FORMAT_CHECKDIFF)))
+	if (!DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS))
 		setup_pager();
 
 	/* Do we have --cached and not have a pending object, then
@@ -352,10 +352,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	else
 		result = builtin_diff_combined(&rev, argc, argv,
 					     ent, ents);
-	if (DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS))
-		result = DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES) != 0;
-	if (rev.diffopt.output_format & DIFF_FORMAT_CHECKDIFF)
-		return DIFF_OPT_TST(&rev.diffopt, CHECK_FAILED) != 0;
+	result = diff_result_code(&rev.diffopt, result);
 	if (1 < rev.diffopt.skip_stat_unmatch)
 		refresh_index_quietly();
 	return result;

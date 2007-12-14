@@ -44,9 +44,5 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 		return -1;
 	}
 	result = run_diff_index(&rev, cached);
-	if (DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS))
-		return DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES) != 0;
-	if (rev.diffopt.output_format & DIFF_FORMAT_CHECKDIFF)
-		return DIFF_OPT_TST(&rev.diffopt, CHECK_FAILED) != 0;
-	return result;
+	return diff_result_code(&rev.diffopt, result);
 }

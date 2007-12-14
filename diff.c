@@ -2125,12 +2125,7 @@ int diff_setup_done(struct diff_options *options)
 	if (options->output_format & DIFF_FORMAT_NAME_STATUS)
 		count++;
 	if (options->output_format & DIFF_FORMAT_CHECKDIFF)
-	{
 		count++;
-		if (DIFF_OPT_TST(options, QUIET) ||
-		    DIFF_OPT_TST(options, EXIT_WITH_STATUS))
-			die("--check may not be used with --quiet or --exit-code");
-	}
 	if (options->output_format & DIFF_FORMAT_NO_OUTPUT)
 		count++;
 	if (count > 1)
@@ -3180,6 +3175,20 @@ void diffcore_std(struct diff_options *options)
 		DIFF_OPT_CLR(options, HAS_CHANGES);
 }
 
+int diff_result_code(struct diff_options *opt, int status)
+{
+	int result = 0;
+	if (!DIFF_OPT_TST(opt, EXIT_WITH_STATUS) &&
+	    !(opt->output_format & DIFF_FORMAT_CHECKDIFF))
+		return status;
+	if (DIFF_OPT_TST(opt, EXIT_WITH_STATUS) &&
+	    DIFF_OPT_TST(opt, HAS_CHANGES))
+		result |= 01;
+	if ((opt->output_format & DIFF_FORMAT_CHECKDIFF) &&
+	    DIFF_OPT_TST(opt, CHECK_FAILED))
+		result |= 02;
+	return result;
+}
 
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,

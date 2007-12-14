@@ -132,8 +132,6 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 				diff_tree_stdin(line);
 		}
 	}
-	if (opt->diffopt.output_format & DIFF_FORMAT_CHECKDIFF)
-		return DIFF_OPT_TST(&opt->diffopt, CHECK_FAILED) != 0;
-	return DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS)
-		&& DIFF_OPT_TST(&opt->diffopt, HAS_CHANGES);
+
+	return diff_result_code(&opt->diffopt, 0);
 }
