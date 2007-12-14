@@ -43,6 +43,17 @@ Deprecation notices
  * "git peek-remote" is deprecated, as "git ls-remote" was written in C
    and works for all transports, and will be removed in the future.
 
+ * From v1.5.5, the repack.usedeltabaseoffset config option will default
+   to true, which will give denser packfile (i.e. more efficient storage).
+   The downside is that git older than version 1.4.4 will not be able
+   to directly use a repository packed using this setting.
+
+ * From v1.5.5, the pack.indexversion config option will default to 2,
+   which is slightly more efficient, and makes repacking more immune to
+   data corruptions.  Git older than version 1.5.2 may revert to version 1
+   of the pack index with a manual "git index-pack" to be able to directly
+   access corresponding pack files.
+
 
 Updates since v1.5.3
 --------------------
