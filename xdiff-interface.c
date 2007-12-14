@@ -107,11 +107,10 @@ int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
  * Trim down common substring at the end of the buffers,
  * but leave at least ctx lines at the end.
  */
-static void trim_common_tail(mmfile_t *a, mmfile_t *b, int ctx)
+static void trim_common_tail(mmfile_t *a, mmfile_t *b, long ctx)
 {
 	const int blk = 1024;
-	long trimmed = 0, recovered = 0;
-	int i;
+	long trimmed = 0, recovered = 0, i;
 	char *ap = a->ptr + a->size;
 	char *bp = b->ptr + b->size;
 	long smaller = (a->size < b->size) ? a->size : b->size;
