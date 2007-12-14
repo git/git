@@ -986,9 +986,10 @@ static int fetch_ref(struct walker *walker, char *ref, unsigned char *sha1)
 		return error("Unable to start request");
 	}
 
+	if (buffer.posn != 41)
+		return 1;
         hex[40] = '\0';
-        get_sha1_hex(hex, sha1);
-        return 0;
+	return get_sha1_hex(hex, sha1);
 }
 
 static void cleanup(struct walker *walker)
