@@ -610,46 +610,36 @@ static int write_error(void)
 
 static int store_write_section(int fd, const char* key)
 {
-	const char *dot = strchr(key, '.');
-	int len1 = store.baselen, len2 = -1;
+	const char *dot;
+	int i, success;
+	struct strbuf sb;
 
-	dot = strchr(key, '.');
+	strbuf_init(&sb, 0);
+	dot = memchr(key, '.', store.baselen);
 	if (dot) {
-		int dotlen = dot - key;
-		if (dotlen < len1) {
-			len2 = len1 - dotlen - 1;
-			len1 = dotlen;
+		strbuf_addf(&sb, "[%.*s \"", (int)(dot - key), key);
+		for (i = dot - key + 1; i < store.baselen; i++) {
+			if (key[i] == '"')
+				strbuf_addch(&sb, '\\');
+			strbuf_addch(&sb, key[i]);
 		}
+		strbuf_addstr(&sb, "\"]\n");
+	} else {
+		strbuf_addf(&sb, "[%.*s]\n", store.baselen, key);
 	}
 
-	if (write_in_full(fd, "[", 1) != 1 ||
-	    write_in_full(fd, key, len1) != len1)
-		return 0;
-	if (len2 >= 0) {
-		if (write_in_full(fd, " \"", 2) != 2)
-			return 0;
-		while (--len2 >= 0) {
-			unsigned char c = *++dot;
-			if (c == '"')
-				if (write_in_full(fd, "\\", 1) != 1)
-					return 0;
-			if (write_in_full(fd, &c, 1) != 1)
-				return 0;
-		}
-		if (write_in_full(fd, "\"", 1) != 1)
-			return 0;
-	}
-	if (write_in_full(fd, "]\n", 2) != 2)
-		return 0;
+	success = write_in_full(fd, sb.buf, sb.len) == sb.len;
+	strbuf_release(&sb);
 
-	return 1;
+	return success;
 }
 
 static int store_write_pair(int fd, const char* key, const char* value)
 {
-	int i;
-	int length = strlen(key+store.baselen+1);
-	int quote = 0;
+	int i, success;
+	int length = strlen(key + store.baselen + 1);
+	const char *quote = "";
+	struct strbuf sb;
 
 	/*
 	 * Check to see if the value needs to be surrounded with a dq pair.
@@ -659,43 +649,38 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	 * configuration parser.
 	 */
 	if (value[0] == ' ')
-		quote = 1;
+		quote = "\"";
 	for (i = 0; value[i]; i++)
 		if (value[i] == ';' || value[i] == '#')
-			quote = 1;
-	if (i && value[i-1] == ' ')
-		quote = 1;
+			quote = "\"";
+	if (i && value[i - 1] == ' ')
+		quote = "\"";
 
-	if (write_in_full(fd, "\t", 1) != 1 ||
-	    write_in_full(fd, key+store.baselen+1, length) != length ||
-	    write_in_full(fd, " = ", 3) != 3)
-		return 0;
-	if (quote && write_in_full(fd, "\"", 1) != 1)
-		return 0;
+	strbuf_init(&sb, 0);
+	strbuf_addf(&sb, "\t%.*s = %s",
+		    length, key + store.baselen + 1, quote);
+
 	for (i = 0; value[i]; i++)
 		switch (value[i]) {
 		case '\n':
-			if (write_in_full(fd, "\\n", 2) != 2)
-				return 0;
+			strbuf_addstr(&sb, "\\n");
 			break;
 		case '\t':
-			if (write_in_full(fd, "\\t", 2) != 2)
-				return 0;
+			strbuf_addstr(&sb, "\\t");
 			break;
 		case '"':
 		case '\\':
-			if (write_in_full(fd, "\\", 1) != 1)
-				return 0;
+			strbuf_addch(&sb, '\\');
 		default:
-			if (write_in_full(fd, value+i, 1) != 1)
-				return 0;
+			strbuf_addch(&sb, value[i]);
 			break;
 		}
-	if (quote && write_in_full(fd, "\"", 1) != 1)
-		return 0;
-	if (write_in_full(fd, "\n", 1) != 1)
-		return 0;
-	return 1;
+	strbuf_addf(&sb, "%s\n", quote);
+
+	success = write_in_full(fd, sb.buf, sb.len) == sb.len;
+	strbuf_release(&sb);
+
+	return success;
 }
 
 static ssize_t find_beginning_of_line(const char* contents, size_t size,
