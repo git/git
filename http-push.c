@@ -925,11 +925,14 @@ static int fetch_index(unsigned char *sha1)
 				     hex);
 		}
 	} else {
+		free(url);
 		return error("Unable to start request");
 	}
 
-	if (has_pack_index(sha1))
+	if (has_pack_index(sha1)) {
+		free(url);
 		return 0;
+	}
 
 	if (push_verbosely)
 		fprintf(stderr, "Getting index for pack %s\n", hex);
@@ -939,9 +942,11 @@ static int fetch_index(unsigned char *sha1)
 	filename = sha1_pack_index_name(sha1);
 	snprintf(tmpfile, sizeof(tmpfile), "%s.temp", filename);
 	indexfile = fopen(tmpfile, "a");
-	if (!indexfile)
+	if (!indexfile) {
+		free(url);
 		return error("Unable to open local file %s for pack index",
 			     tmpfile);
+	}
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -1135,10 +1140,12 @@ int fetch_ref(char *ref, unsigned char *sha1)
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
+		free(url);
 		if (results.curl_result != CURLE_OK)
 			return error("Couldn't get %s for %s\n%s",
 				     url, ref, curl_errorstr);
 	} else {
+		free(url);
 		return error("Unable to start request");
 	}
 
@@ -2107,6 +2114,7 @@ static int remote_exists(const char *path)
 
         if (start_active_slot(slot)) {
 		run_active_slot(slot);
+		free(url);
 		if (results.http_code == 404)
 			return 0;
 		else if (results.curl_result == CURLE_OK)
@@ -2114,6 +2122,7 @@ static int remote_exists(const char *path)
 		else
 			fprintf(stderr, "HEAD HTTP error %ld\n", results.http_code);
 	} else {
+		free(url);
 		fprintf(stderr, "Unable to start HEAD request\n");
 	}
 
