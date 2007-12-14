@@ -310,4 +310,21 @@ test_expect_success 'same tree (merge and amend merge)' '
 
 '
 
+test_expect_success 'amend using the message from another commit' '
+
+	git reset --hard &&
+	test_tick &&
+	git commit --allow-empty -m "old commit" &&
+	old=$(git rev-parse --verify HEAD) &&
+	test_tick &&
+	git commit --allow-empty -m "new commit" &&
+	new=$(git rev-parse --verify HEAD) &&
+	test_tick &&
+	git commit --allow-empty --amend -C "$old" &&
+	git show --pretty="format:%ad %s" "$old" >expected &&
+	git show --pretty="format:%ad %s" HEAD >actual &&
+	diff -u expected actual
+
+'
+
 test_done

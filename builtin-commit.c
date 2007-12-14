@@ -537,7 +537,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		die("Option -m cannot be combined with -c/-C/-F.");
 	if (edit_message)
 		use_message = edit_message;
-	if (amend)
+	if (amend && !use_message)
 		use_message = "HEAD";
 	if (use_message) {
 		unsigned char sha1[20];
