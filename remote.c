@@ -220,11 +220,11 @@ static int handle_config(const char *key, const char *value)
 	if (!prefixcmp(key, "branch.")) {
 		name = key + 7;
 		subkey = strrchr(name, '.');
-		branch = make_branch(name, subkey - name);
 		if (!subkey)
 			return 0;
 		if (!value)
 			return 0;
+		branch = make_branch(name, subkey - name);
 		if (!strcmp(subkey, ".remote")) {
 			branch->remote_name = xstrdup(value);
 			if (branch == current_branch)
