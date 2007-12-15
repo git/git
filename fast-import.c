@@ -196,7 +196,7 @@ struct mem_pool
 	struct mem_pool *next_pool;
 	char *next_free;
 	char *end;
-	char space[FLEX_ARRAY]; /* more */
+	uintmax_t space[FLEX_ARRAY]; /* more */
 };
 
 struct atom_str
@@ -534,15 +534,15 @@ static void *pool_alloc(size_t len)
 		total_allocd += sizeof(struct mem_pool) + mem_pool_alloc;
 		p = xmalloc(sizeof(struct mem_pool) + mem_pool_alloc);
 		p->next_pool = mem_pool;
-		p->next_free = p->space;
+		p->next_free = (char *) p->space;
 		p->end = p->next_free + mem_pool_alloc;
 		mem_pool = p;
 	}
 
 	r = p->next_free;
-	/* round out to a pointer alignment */
-	if (len & (sizeof(void*) - 1))
-		len += sizeof(void*) - (len & (sizeof(void*) - 1));
+	/* round out to a 'uintmax_t' alignment */
+	if (len & (sizeof(uintmax_t) - 1))
+		len += sizeof(uintmax_t) - (len & (sizeof(uintmax_t) - 1));
 	p->next_free += len;
 	return r;
 }
