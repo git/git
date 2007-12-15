@@ -227,7 +227,7 @@ SCRIPT_SH = \
 	git-lost-found.sh git-quiltimport.sh git-submodule.sh \
 	git-filter-branch.sh \
 	git-stash.sh \
-	git-browse-help.sh
+	git-browse--help.sh
 
 SCRIPT_PERL = \
 	git-add--interactive.perl \
@@ -1144,9 +1144,8 @@ check-docs::
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | git-merge-subtree | \
-		git-add--interactive | git-fsck-objects | git-init-db | \
-		git-rebase--interactive | \
-		git-repo-config | git-fetch--tool ) continue ;; \
+		git-fsck-objects | git-init-db | git-repo-config | \
+		git-?*--?* ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
 		echo "no doc: $$v"; \

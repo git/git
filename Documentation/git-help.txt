@@ -47,13 +47,13 @@ OPTIONS
 +
 The web browser can be specified using the configuration variable
 'help.browser', or 'web.browser' if the former is not set. If none of
-these config variables is set, the 'git-browse-help' script (called by
-'git-help') will pick a suitable default.
+these config variables is set, the 'git-browse--help' helper script
+(called by 'git-help') will pick a suitable default.
 +
 You can explicitly provide a full path to your prefered browser by
 setting the configuration variable 'browser.<tool>.path'. For example,
 you can configure the absolute path to firefox by setting
-'browser.firefox.path'. Otherwise, 'git-browse-help' assumes the tool
+'browser.firefox.path'. Otherwise, 'git-browse--help' assumes the tool
 is available in PATH.
 +
 Note that the script tries, as much as possible, to display the HTML

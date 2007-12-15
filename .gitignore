@@ -12,7 +12,7 @@ git-archive
 git-bisect
 git-blame
 git-branch
-git-browse-help
+git-browse--help
 git-bundle
 git-cat-file
 git-check-attr
