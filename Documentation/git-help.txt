@@ -7,7 +7,7 @@ git-help - display help information about git
 
 SYNOPSIS
 --------
-'git help' [-a|--all|-i|--info|-w|--web] [COMMAND]
+'git help' [-a|--all|-i|--info|-m|--man|-w|--web] [COMMAND]
 
 DESCRIPTION
 -----------
@@ -21,7 +21,7 @@ printed on the standard output.
 
 If a git command is named, a manual page for that command is brought
 up. The 'man' program is used by default for this purpose, but this
-can be overriden by other options.
+can be overriden by other options or configuration variables.
 
 Note that 'git --help ...' is identical as 'git help ...' because the
 former is internally converted into the latter.
@@ -35,6 +35,11 @@ OPTIONS
 -i|--info::
 	Use the 'info' program to display the manual page, instead of
 	the 'man' program that is used by default.
+
+-m|--man::
+	Use the 'man' program to display the manual page. This may be
+	used to override a value set in the 'help.format'
+	configuration variable.
 
 -w|--web::
 	Use a web browser to display the HTML manual page, instead of
@@ -53,6 +58,34 @@ is available in PATH.
 +
 Note that the script tries, as much as possible, to display the HTML
 page in a new tab on an already opened browser.
+
+CONFIGURATION VARIABLES
+-----------------------
+
+If no command line option is passed, the 'help.format' configuration
+variable will be checked. The following values are supported for this
+variable; they make 'git-help' behave as their corresponding command
+line option:
+
+* "man" corresponds to '-m|--man',
+* "info" corresponds to '-i|--info',
+* "web" or "html" correspond to '-w|--web',
+
+The 'help.browser', 'web.browser' and 'browser.<tool>.path' will also
+be checked if the 'web' format is choosen (either by command line
+option or configuration variable). See '-w|--web' in the OPTIONS
+section above.
+
+Note that these configuration variables should probably be set using
+the '--global' flag, for example like this:
+
+------------------------------------------------
+$ git config --global help.format web
+$ git config --global web.browser firefox
+------------------------------------------------
+
+as they are probably more user specific than repository specific.
+See gitlink:git-config[1] for more information about this.
 
 Author
 ------

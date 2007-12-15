@@ -124,13 +124,8 @@ get_author_ident_from_commit () {
 
 # Make sure we are in a valid repository of a vintage we understand,
 # if we require to be in a git repository.
-if test -n "$NONGIT_OK"
+if test -z "$NONGIT_OK"
 then
-	if git rev-parse --git-dir >/dev/null 2>&1
-	then
-		: ${GIT_DIR=.git}
-	fi
-else
 	if [ -z "$SUBDIRECTORY_OK" ]
 	then
 		: ${GIT_DIR=.git}

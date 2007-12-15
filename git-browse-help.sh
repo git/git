@@ -39,7 +39,7 @@ valid_tool() {
 }
 
 init_browser_path() {
-	test -z "$GIT_DIR" || browser_path=`git config browser.$1.path`
+	browser_path=`git config browser.$1.path`
 	test -z "$browser_path" && browser_path=$1
 }
 
@@ -71,7 +71,7 @@ do
     shift
 done
 
-if test -z "$browser" && test -n "$GIT_DIR"
+if test -z "$browser"
 then
     for opt in "help.browser" "web.browser"
     do
