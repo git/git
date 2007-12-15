@@ -20,7 +20,7 @@ case "$#,$1" in
 		base_branch=master
 		;;
 	2)
-		base_branch=$(git-rev-parse --verify "$2") || exit
+		base_branch=$(git rev-parse --verify "$2") || exit
 		;;
 	*)
 		echo >&2 "$usage"

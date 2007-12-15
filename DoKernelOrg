@@ -25,7 +25,7 @@ case "$1" in
 	nstalled=install
 	for branch in $branches
 	do
-		if git-rev-parse --verify refs/heads/$branch 2>/dev/null
+		if git rev-parse --verify refs/heads/$branch 2>/dev/null
 		then
 			echo "** $branch **" &&
 			git checkout $branch &&
@@ -84,7 +84,7 @@ maint | master)
 		;;
 	esac >>./:all.log 2>&1 &&
 	case "$V" in
-	*.rc[0-9]*)
+	*.rc[0-9]* | *-rc[0-9]*)
 		mkdir -p $G/testing &&
 		for a in $narch
 		do

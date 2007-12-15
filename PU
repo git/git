@@ -3,8 +3,8 @@
 # Rebuild "pu" from topic branches.
 #
 
-git-update-index --refresh || exit
-case "$(git-diff-index --name-status HEAD)" in
+git update-index --refresh || exit
+case "$(git diff-index --name-status HEAD)" in
 '')	;;
 *)	echo 2>&1 "Local modifications exist."
 	exit 1;;
@@ -36,14 +36,14 @@ case "$#" in
 		NHH=
 		for H in $HH
 		do
-			HSHA1=`git-rev-parse --verify $H` || continue
-			MB=`git-show-branch --merge-base pu $HSHA1`
+			HSHA1=`git rev-parse --verify $H` || continue
+			MB=`git show-branch --merge-base pu $HSHA1`
 			case "$LF$MB$LF" in
 			*"$LF$HSHA1$LF"*) continue ;; # already merged.
 			esac
 			I=$(($I+1))
 			echo -n "$I: "
-			git-show-branch $H
+			git show-branch $H
 			NHH="${NHH}$H "
 		done
 		case "$I" in

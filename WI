@@ -13,7 +13,7 @@ echo "X-maint-at: $maint_at"
 echo "X-master-at: $master_at"
 
 tagged=`git rev-parse --not --verify hold/sa/maint`
-list=`git-rev-list $tagged refs/heads/maint 2>/dev/null`
+list=`git rev-list $tagged refs/heads/maint 2>/dev/null`
 if test -n "$list"
 then
 	echo
@@ -23,7 +23,7 @@ then
 fi
 
 tagged=`git rev-parse --not --verify hold/sa/master`
-list=`git-rev-list $tagged refs/heads/master 2>/dev/null`
+list=`git rev-list $tagged refs/heads/master 2>/dev/null`
 if test -n "$list"
 then
 	echo

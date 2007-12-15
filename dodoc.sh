@@ -12,7 +12,7 @@ case " $* " in
         echo $HOME/git-doc/dodoc.sh | at now
         ;;
 esac
-exec git-update-server-info
+exec git update-server-info
 $ chmod +x hooks/post-update
 
 END_OF_COMMENTARY
@@ -25,7 +25,7 @@ END_OF_COMMENTARY
 # updated the updates are pushed back into their own branches
 # in git.git repository.
 
-ID=`git-rev-parse --verify refs/heads/master` || exit $?
+ID=`git rev-parse --verify refs/heads/master` || exit $?
 
 unset GIT_DIR
 
@@ -44,8 +44,8 @@ trap 'rm -f "$tmp".*' 0
 	git pull "$MASTERREPO" master &&
 	git fetch --tags "$MASTERREPO" 
 ) >/dev/null 2>/dev/null || exit $?
-test $(git-rev-parse --verify refs/heads/master) == "$ID" &&
-NID=$(git-describe --abbrev=4 "$ID") &&
+test $(git rev-parse --verify refs/heads/master) == "$ID" &&
+NID=$(git describe --abbrev=4 "$ID") &&
 test '' != "$NID" ||  exit $?
 
 # Set up subrepositories
