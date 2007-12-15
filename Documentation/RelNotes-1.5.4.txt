@@ -7,6 +7,9 @@ Removal
  * "git svnimport" was removed in favor of "git svn".  It is still there
    in the source tree (contrib/examples) but unsupported.
 
+ * As git-commit and git-status have been rewritten, "git runstatus"
+   helper script lost all its users and has been removed.
+
 
 Deprecation notices
 -------------------
@@ -261,6 +264,9 @@ Updates since v1.5.3
    between svn and git; a new representation that is much more compact
    for this information has been introduced to correct this.
 
+ * "git svn" left temporary index files it used without cleaning them
+   up; this was corrected.
+
  * "git status" from a subdirectory now shows relative paths, which
    makes copy-and-pasting for git-checkout/git-add/git-rm easier.  The
    traditional behaviour to show the full path relative to the top of
@@ -297,6 +303,9 @@ this release, unless otherwise noted.
 These fixes are only in v1.5.4 and not backported to v1.5.3 maintenance
 series.
 
+ * The way "git diff --check" behaves is much more consistent with the way
+   "git apply --whitespace=warn" works.
+
  * "git svn" talking with the SVN over http will correctly quote branch
    and project names.
 
@@ -305,6 +314,6 @@ series.
 
 --
 exec >/var/tmp/1
-O=v1.5.4-rc0
+O=v1.5.4-rc0-35-g530e741
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
