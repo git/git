@@ -121,7 +121,7 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 			     const char *reset, const char *ws)
 {
 	unsigned result = 0;
-	int leading_space = -1;
+	int written = 0;
 	int trailing_whitespace = -1;
 	int trailing_newline = 0;
 	int i;
@@ -147,18 +147,18 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 	/* Check for space before tab in initial indent. */
 	for (i = 0; i < len; i++) {
 		if (line[i] == ' ') {
-			leading_space = i;
+			written = i + 1;
 			continue;
 		}
 		if (line[i] != '\t')
 			break;
-		if ((ws_rule & WS_SPACE_BEFORE_TAB) && (leading_space != -1))
+		if ((ws_rule & WS_SPACE_BEFORE_TAB) && (written != 0))
 			result |= WS_SPACE_BEFORE_TAB;
 		break;
 	}
 
 	/* Check for indent using non-tab. */
-	if ((ws_rule & WS_INDENT_WITH_NON_TAB) && leading_space >= 7)
+	if ((ws_rule & WS_INDENT_WITH_NON_TAB) && written >= 8)
 		result |= WS_INDENT_WITH_NON_TAB;
 
 	if (stream) {
@@ -166,23 +166,20 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 		if ((result & WS_SPACE_BEFORE_TAB) ||
 		    (result & WS_INDENT_WITH_NON_TAB)) {
 			fputs(ws, stream);
-			fwrite(line, leading_space + 1, 1, stream);
+			fwrite(line, written, 1, stream);
 			fputs(reset, stream);
-			leading_space++;
 		}
-		else
-			leading_space = 0;
 
-		/* Now the rest of the line starts at leading_space.
+		/* Now the rest of the line starts at written.
 		 * The non-highlighted part ends at trailing_whitespace. */
 		if (trailing_whitespace == -1)
 			trailing_whitespace = len;
 
 		/* Emit non-highlighted (middle) segment. */
-		if (trailing_whitespace - leading_space > 0) {
+		if (trailing_whitespace - written > 0) {
 			fputs(set, stream);
-			fwrite(line + leading_space,
-			    trailing_whitespace - leading_space, 1, stream);
+			fwrite(line + written,
+			    trailing_whitespace - written, 1, stream);
 			fputs(reset, stream);
 		}
 
