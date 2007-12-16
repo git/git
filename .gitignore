@@ -12,7 +12,6 @@ git-archive
 git-bisect
 git-blame
 git-branch
-git-browse--help
 git-bundle
 git-cat-file
 git-check-attr
@@ -52,6 +51,7 @@ git-gc
 git-get-tar-commit-id
 git-grep
 git-hash-object
+git-help--browse
 git-http-fetch
 git-http-push
 git-imap-send
