@@ -336,28 +336,26 @@ static void show_info_page(const char *git_cmd)
 static void show_html_page(const char *git_cmd)
 {
 #ifdef __MINGW32__
-	{
-		const char* exec_path = git_exec_path();
-		char *htmlpath = make_native_separator(
-		                   mkpath("%s/../doc/git/html/%s.html"
-		                          , exec_path
-		                          , git_cmd)
-		                 );
+	const char* exec_path = git_exec_path();
+	char *htmlpath = make_native_separator(
+			   mkpath("%s/../doc/git/html/%s.html"
+				  , exec_path
+				  , git_cmd)
+			 );
+	if (!file_exists(htmlpath)) {
+		htmlpath = make_native_separator(
+			      mkpath("%s/../doc/git/html/git-%s.html"
+				     , exec_path
+				     , git_cmd)
+			   );
 		if (!file_exists(htmlpath)) {
-			htmlpath = make_native_separator(
-		                      mkpath("%s/../doc/git/html/git-%s.html"
-		                             , exec_path
-		                             , git_cmd)
-		                    );
-			if (!file_exists(htmlpath)) {
-				fprintf(stderr, "Can't find help for '%s'.\n"
-				        , git_cmd);
-				exit(1);
-			}
+			fprintf(stderr, "Can't find HTML help for '%s'.\n"
+				, git_cmd);
+			exit(1);
 		}
-		printf("Launching default browser to display HTML help ...\n");
-		ShellExecute(NULL, "open", htmlpath, NULL, "\\", 0);
 	}
+	printf("Launching default browser to display HTML help ...\n");
+	ShellExecute(NULL, "open", htmlpath, NULL, "\\", 0);
 #else
 	const char *page = cmd_to_page(git_cmd);
 	execl_git_cmd("help--browse", page, NULL);
