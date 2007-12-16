@@ -146,16 +146,15 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 
 	/* Check for space before tab in initial indent. */
 	for (i = 0; i < len; i++) {
-		if (line[i] == '\t') {
-			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
-			    (leading_space != -1))
-				result |= WS_SPACE_BEFORE_TAB;
-			break;
-		}
-		else if (line[i] == ' ')
+		if (line[i] == ' ') {
 			leading_space = i;
-		else
+			continue;
+		}
+		if (line[i] != '\t')
 			break;
+		if ((ws_rule & WS_SPACE_BEFORE_TAB) && (leading_space != -1))
+			result |= WS_SPACE_BEFORE_TAB;
+		break;
 	}
 
 	/* Check for indent using non-tab. */
