@@ -159,7 +159,7 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 	}
 
 	/* Check for indent using non-tab. */
-	if ((ws_rule & WS_INDENT_WITH_NON_TAB) && leading_space >= 8)
+	if ((ws_rule & WS_INDENT_WITH_NON_TAB) && leading_space >= 7)
 		result |= WS_INDENT_WITH_NON_TAB;
 
 	if (stream) {
