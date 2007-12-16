@@ -1587,8 +1587,7 @@ static int apply_line(char *output, const char *patch, int plen,
 		} else if (ch == ' ') {
 			last_space_in_indent = i;
 			if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
-			    last_tab_in_indent <= 0 &&
-			    8 <= i)
+			    8 <= i - last_tab_in_indent)
 				need_fix_leading_space = 1;
 		}
 		else
