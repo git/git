@@ -321,17 +321,15 @@ static void wt_status_print_untracked(struct wt_status *s)
 static void wt_status_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
-	int saved_stdout, redirected_stdout;
+	int saved_stdout;
 
 	fflush(s->fp);
 
 	/* Sigh, the entire diff machinery is hardcoded to output to
 	 * stdout.  Do the dup-dance...*/
 	saved_stdout = dup(STDOUT_FILENO);
-	redirected_stdout = dup(fileno(s->fp));
-	if (saved_stdout < 0 || dup2(redirected_stdout, STDOUT_FILENO) < 0)
+	if (saved_stdout < 0 ||dup2(fileno(s->fp), STDOUT_FILENO) < 0)
 		die("couldn't redirect stdout\n");
-	close(redirected_stdout);
 
 	init_revisions(&rev, NULL);
 	setup_revisions(0, NULL, &rev, s->reference);
