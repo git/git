@@ -110,7 +110,7 @@ int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 static void trim_common_tail(mmfile_t *a, mmfile_t *b, long ctx)
 {
 	const int blk = 1024;
-	long trimmed = 0, recovered = 0, i;
+	long trimmed = 0, recovered = 0;
 	char *ap = a->ptr + a->size;
 	char *bp = b->ptr + b->size;
 	long smaller = (a->size < b->size) ? a->size : b->size;
@@ -121,10 +121,9 @@ static void trim_common_tail(mmfile_t *a, mmfile_t *b, long ctx)
 		bp -= blk;
 	}
 
-	for (i = 0, recovered = 0; recovered < trimmed && i <= ctx; i++) {
-		while (recovered < trimmed && ap[recovered] != '\n')
-			recovered++;
-	}
+	while (recovered < trimmed && ctx)
+		if (ap[recovered++] == '\n')
+			ctx--;
 	a->size -= (trimmed - recovered);
 	b->size -= (trimmed - recovered);
 }
