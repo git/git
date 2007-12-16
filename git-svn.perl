@@ -2052,6 +2052,43 @@ sub full_url {
 	$self->{url} . (length $self->{path} ? '/' . $self->{path} : '');
 }
 
+
+sub set_commit_header_env {
+	my ($log_entry) = @_;
+	my %env;
+	foreach my $ned (qw/NAME EMAIL DATE/) {
+		foreach my $ac (qw/AUTHOR COMMITTER/) {
+			$env{"GIT_${ac}_${ned}"} = $ENV{"GIT_${ac}_${ned}"};
+		}
+	}
+
+	$ENV{GIT_AUTHOR_NAME} = $log_entry->{name};
+	$ENV{GIT_AUTHOR_EMAIL} = $log_entry->{email};
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
+
+	$ENV{GIT_COMMITTER_NAME} = (defined $log_entry->{commit_name})
+						? $log_entry->{commit_name}
+						: $log_entry->{name};
+	$ENV{GIT_COMMITTER_EMAIL} = (defined $log_entry->{commit_email})
+						? $log_entry->{commit_email}
+						: $log_entry->{email};
+	\%env;
+}
+
+sub restore_commit_header_env {
+	my ($env) = @_;
+	foreach my $ned (qw/NAME EMAIL DATE/) {
+		foreach my $ac (qw/AUTHOR COMMITTER/) {
+			my $k = "GIT_${ac}_${ned}";
+			if (defined $env->{$k}) {
+				$ENV{$k} = $env->{$k};
+			} else {
+				delete $ENV{$k};
+			}
+		}
+	}
+}
+
 sub do_git_commit {
 	my ($self, $log_entry) = @_;
 	my $lr = $self->last_rev;
@@ -2064,17 +2101,7 @@ sub do_git_commit {
 		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
 	}
-	$ENV{GIT_AUTHOR_NAME} = $log_entry->{name};
-	$ENV{GIT_AUTHOR_EMAIL} = $log_entry->{email};
-	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
-
-	$ENV{GIT_COMMITTER_NAME} = (defined $log_entry->{commit_name})
-						? $log_entry->{commit_name}
-						: $log_entry->{name};
-	$ENV{GIT_COMMITTER_EMAIL} = (defined $log_entry->{commit_email})
-						? $log_entry->{commit_email}
-						: $log_entry->{email};
-
+	my $old_env = set_commit_header_env($log_entry);
 	my $tree = $log_entry->{tree};
 	if (!defined $tree) {
 		$tree = $self->tmp_index_do(sub {
@@ -2089,6 +2116,7 @@ sub do_git_commit {
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
 	print $msg_fh $log_entry->{log} or croak $!;
+	restore_commit_header_env($old_env);
 	unless ($self->no_metadata) {
 		print $msg_fh "\ngit-svn-id: $log_entry->{metadata}\n"
 		              or croak $!;
