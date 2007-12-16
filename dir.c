@@ -169,7 +169,10 @@ static int add_excludes_from_file_1(const char *fname,
 	}
 	buf = xmalloc(size+1);
 	if (read_in_full(fd, buf, size) != size)
+	{
+		free(buf);
 		goto err;
+	}
 	close(fd);
 
 	if (buf_p)
