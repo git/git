@@ -121,7 +121,7 @@ static void trim_common_tail(mmfile_t *a, mmfile_t *b, long ctx)
 		bp -= blk;
 	}
 
-	while (recovered < trimmed && ctx)
+	while (recovered < trimmed && 0 <= ctx)
 		if (ap[recovered++] == '\n')
 			ctx--;
 	a->size -= (trimmed - recovered);
