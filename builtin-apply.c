@@ -1550,8 +1550,8 @@ static int apply_line(char *output, const char *patch, int plen,
 	int i;
 	int add_nl_to_tail = 0;
 	int fixed = 0;
-	int last_tab_in_indent = -1;
-	int last_space_in_indent = -1;
+	int last_tab_in_indent = 0;
+	int last_space_in_indent = 0;
 	int need_fix_leading_space = 0;
 	char *buf;
 
@@ -1582,12 +1582,12 @@ static int apply_line(char *output, const char *patch, int plen,
 		if (ch == '\t') {
 			last_tab_in_indent = i;
 			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
-			    0 <= last_space_in_indent)
+			    0 < last_space_in_indent)
 			    need_fix_leading_space = 1;
 		} else if (ch == ' ') {
 			last_space_in_indent = i;
 			if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
-			    last_tab_in_indent < 0 &&
+			    last_tab_in_indent <= 0 &&
 			    8 <= i)
 				need_fix_leading_space = 1;
 		}
