@@ -20,6 +20,7 @@
 static int diff_detect_rename_default;
 static int diff_rename_limit_default = 100;
 static int diff_use_color_default;
+static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 
 static char diff_colors[][COLOR_MAXLEN] = {
@@ -163,6 +164,10 @@ int git_diff_ui_config(const char *var, const char *value)
 		diff_auto_refresh_index = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "diff.external")) {
+		external_diff_cmd_cfg = xstrdup(value);
+		return 0;
+	}
 	if (!prefixcmp(var, "diff.")) {
 		const char *ep = strrchr(var, '.');
 
@@ -209,6 +214,8 @@ static const char *external_diff(void)
 	if (done_preparing)
 		return external_diff_cmd;
 	external_diff_cmd = getenv("GIT_EXTERNAL_DIFF");
+	if (!external_diff_cmd)
+		external_diff_cmd = external_diff_cmd_cfg;
 	done_preparing = 1;
 	return external_diff_cmd;
 }
