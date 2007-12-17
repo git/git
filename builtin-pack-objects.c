@@ -1670,8 +1670,6 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 		p[i].processed = processed;
 		p[i].working = 1;
 		p[i].data_ready = 0;
-		pthread_mutex_init(&p[i].mutex, NULL);
-		pthread_cond_init(&p[i].cond, NULL);
 
 		/* try to split chunks on "path" boundaries */
 		while (sub_size < list_size && list[sub_size]->hash &&
@@ -1690,6 +1688,8 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 	for (i = 0; i < delta_search_threads; i++) {
 		if (!p[i].list_size)
 			continue;
+		pthread_mutex_init(&p[i].mutex, NULL);
+		pthread_cond_init(&p[i].cond, NULL);
 		ret = pthread_create(&p[i].thread, NULL,
 				     threaded_find_deltas, &p[i]);
 		if (ret)
