@@ -5,7 +5,7 @@ test_description='CRLF conversion'
 . ./test-lib.sh
 
 q_to_nul () {
-	tr Q '\0'
+	tr Q '\000'
 }
 
 append_cr () {
