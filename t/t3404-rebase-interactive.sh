@@ -184,6 +184,12 @@ test_expect_success 'retain authorship when squashing' '
 	git show HEAD | grep "^Author: Twerp Snog"
 '
 
+test_expect_success '-p handles "no changes" gracefully' '
+	HEAD=$(git rev-parse HEAD) &&
+	git rebase -i -p HEAD^ &&
+	test $HEAD = $(git rev-parse HEAD)
+'
+
 test_expect_success 'preserve merges with -p' '
 	git checkout -b to-be-preserved master^ &&
 	: > unrelated-file &&

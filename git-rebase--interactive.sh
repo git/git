@@ -322,7 +322,12 @@ do_next () {
 		test -f "$DOTEST"/current-commit &&
 			current_commit=$(cat "$DOTEST"/current-commit) &&
 			git rev-parse HEAD > "$REWRITTEN"/$current_commit
-		NEWHEAD=$(cat "$REWRITTEN"/$OLDHEAD)
+		if test -f "$REWRITTEN"/$OLDHEAD
+		then
+			NEWHEAD=$(cat "$REWRITTEN"/$OLDHEAD)
+		else
+			NEWHEAD=$OLDHEAD
+		fi
 	else
 		NEWHEAD=$(git rev-parse HEAD)
 	fi &&
