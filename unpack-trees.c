@@ -590,7 +590,7 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		 * a match.
 		 */
 		if (same(old, merge)) {
-			*merge = *old;
+			memcpy(merge, old, offsetof(struct cache_entry, name));
 		} else {
 			verify_uptodate(old, o);
 			invalidate_ce_path(old);
