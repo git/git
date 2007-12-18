@@ -476,7 +476,7 @@ fetch.unpackLimit::
 
 format.numbered::
 	A boolean which can enable sequence numbers in patch subjects.
-	Seting this option to "auto" will enable it only if there is
+	Setting this option to "auto" will enable it only if there is
 	more than one patch.  See --numbered option in
 	gitlink:git-format-patch[1].
 

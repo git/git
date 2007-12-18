@@ -21,7 +21,7 @@ printed on the standard output.
 
 If a git command is named, a manual page for that command is brought
 up. The 'man' program is used by default for this purpose, but this
-can be overriden by other options or configuration variables.
+can be overridden by other options or configuration variables.
 
 Note that 'git --help ...' is identical as 'git help ...' because the
 former is internally converted into the latter.
@@ -30,7 +30,7 @@ OPTIONS
 -------
 -a|--all::
 	Prints all the available commands on the standard output. This
-	option superseeds any other option.
+	option supersedes any other option.
 
 -i|--info::
 	Use the 'info' program to display the manual page, instead of
@@ -50,7 +50,7 @@ The web browser can be specified using the configuration variable
 these config variables is set, the 'git-help--browse' helper script
 (called by 'git-help') will pick a suitable default.
 +
-You can explicitly provide a full path to your prefered browser by
+You can explicitly provide a full path to your preferred browser by
 setting the configuration variable 'browser.<tool>.path'. For example,
 you can configure the absolute path to firefox by setting
 'browser.firefox.path'. Otherwise, 'git-help--browse' assumes the tool
@@ -72,7 +72,7 @@ line option:
 * "web" or "html" correspond to '-w|--web',
 
 The 'help.browser', 'web.browser' and 'browser.<tool>.path' will also
-be checked if the 'web' format is choosen (either by command line
+be checked if the 'web' format is chosen (either by command line
 option or configuration variable). See '-w|--web' in the OPTIONS
 section above.
 

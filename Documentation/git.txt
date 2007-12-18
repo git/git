@@ -502,7 +502,7 @@ as tags and branch heads.
 
 The object database contains objects of three main types: blobs, which
 hold file data; trees, which point to blobs and other trees to build up
-directory heirarchies; and commits, which each reference a single tree
+directory hierarchies; and commits, which each reference a single tree
 and some number of parent commits.
 
 The commit, equivalent to what other systems call a "changeset" or
@@ -522,7 +522,7 @@ efficiency may later be compressed together into "pack files".
 Named pointers called refs mark interesting points in history.  A ref
 may contain the SHA1 name of an object or the name of another ref.  Refs
 with names beginning `ref/head/` contain the SHA1 name of the most
-recent commit (or "head") of a branch under developement.  SHA1 names of
+recent commit (or "head") of a branch under development.  SHA1 names of
 tags of interest are stored under `ref/tags/`.  A special ref named
 `HEAD` contains the name of the currently checked-out branch.
 

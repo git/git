@@ -148,7 +148,7 @@ sendemail.identity::
 	'sendemail.<identity>.<item>' will have higher precedence than
 	'sendemail.<item>'. This is useful to declare multiple SMTP
 	identities and to hoist sensitive authentication information
-	out of the repository and into the global configuation file.
+	out of the repository and into the global configuration file.
 
 sendemail.aliasesfile::
 	To avoid typing long email addresses, point this to one or more
