@@ -168,10 +168,12 @@ proc getcommits {} {
 
 proc updatecommits {} {
     global curview viewargs viewfiles viewincl viewinstances
-    global viewactive viewcomplete loginstance tclencoding
-    global varcid startmsecs commfd getdbg showneartags leftover
+    global viewactive viewcomplete loginstance tclencoding mainheadid
+    global varcid startmsecs commfd showneartags showlocalchanges leftover
 
-    set getdbg 1
+    if {$showlocalchanges && [commitinview $mainheadid $curview]} {
+	dodiffindex
+    }
     set view $curview
     set commits [exec git rev-parse --default HEAD --revs-only \
 		     $viewargs($view)]
@@ -267,10 +269,9 @@ proc strrep {n} {
 # --topo-order) into the order for display.
 
 proc varcinit {view} {
-    global vseeds varcstart vupptr vdownptr vleftptr varctok varcrow
-    global vtokmod varcmod vrowmod varcix uat
+    global varcstart vupptr vdownptr vleftptr varctok varcrow
+    global vtokmod varcmod vrowmod varcix
 
-    set vseeds($view) {}
     set varcstart($view) {{}}
     set vupptr($view) {0}
     set vdownptr($view) {0}
@@ -281,7 +282,6 @@ proc varcinit {view} {
     set varcmod($view) 0
     set vrowmod($view) 0
     set varcix($view) {{}}
-    set uat 0
 }
 
 proc resetvarcs {view} {
@@ -306,7 +306,7 @@ proc resetvarcs {view} {
 }
 
 proc newvarc {view id} {
-    global varcid varctok parents children vseeds
+    global varcid varctok parents children
     global vupptr vdownptr vleftptr varcrow varcix varcstart
     global commitdata commitinfo vseedcount varccommits
 
@@ -326,7 +326,6 @@ proc newvarc {view id} {
 	set c [incr vseedcount($view,$cdate)]
 	set cdate [expr {$cdate ^ 0xffffffff}]
 	set tok "s[strrep $cdate][strrep $c]"
-	lappend vseeds($view) $id
 	lappend vupptr($view) 0
 	set ka [lindex $vdownptr($view) 0]
 	if {$ka == 0 ||
@@ -508,24 +507,17 @@ proc renumbervarc {a v} {
 }
 
 proc fix_reversal {p a v} {
-    global varcid varcstart varctok vupptr vseeds
+    global varcid varcstart varctok vupptr
 
     set pa $varcid($v,$p)
     if {$p ne [lindex $varcstart($v) $pa]} {
 	splitvarc $p $v
 	set pa $varcid($v,$p)
     }
-    # seeds always need to be renumbered (and taken out of the seeds list)
-    if {[lindex $vupptr($v) $pa] == 0} {
-	set i [lsearch -exact $vseeds($v) $p]
-	if {$i >= 0} {
-	    set vseeds($v) [lreplace $vseeds($v) $i $i]
-	} else {
-	    puts "oops couldn't find [shortids $p] in seeds"
-	}
-	renumbervarc $pa $v
-    } elseif {[string compare [lindex $varctok($v) $a] \
-		   [lindex $varctok($v) $pa]] > 0} {
+    # seeds always need to be renumbered
+    if {[lindex $vupptr($v) $pa] == 0 ||
+	[string compare [lindex $varctok($v) $a] \
+	     [lindex $varctok($v) $pa]] > 0} {
 	renumbervarc $pa $v
     }
 }
@@ -556,7 +548,7 @@ proc insertrow {id p v} {
 
 proc removerow {id v} {
     global varcid varccommits parents children commitidx
-    global varctok vtokmod
+    global varctok vtokmod cmitlisted
 
     if {[llength $parents($v,$id)] != 1} {
 	puts "oops: removerow [shortids $id] has [llength $parents($v,$id)] parents"
@@ -579,7 +571,6 @@ proc removerow {id v} {
     if {$j >= 0} {
 	set children($v,$p) [lreplace $children($v,$p) $j $j]
     }
-    set tok [lindex $varctok($v) $a]
     if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
 	modify_arc $v $a $i
     }
@@ -595,6 +586,7 @@ proc vtokcmp {v a b} {
 
 proc modify_arc {v a {lim {}}} {
     global varctok vtokmod varcmod varcrow vupptr curview vrowmod varccommits
+    global vhighlights nhighlights fhighlights rhighlights
 
     set vtokmod($v) [lindex $varctok($v) $a]
     set varcmod($v) $a
@@ -613,15 +605,18 @@ proc modify_arc {v a {lim {}}} {
 	set vrowmod($v) $r
 	undolayout $r
     }
+    catch {unset nhighlights}
+    catch {unset fhighlights}
+    catch {unset vhighlights}
+    catch {unset rhighlights}
 }
 
 proc update_arcrows {v} {
     global vtokmod varcmod vrowmod varcrow commitidx currentid selectedline
-    global varcid vseeds vrownum varcorder varcix varccommits
+    global varcid vrownum varcorder varcix varccommits
     global vupptr vdownptr vleftptr varctok
-    global uat displayorder parentlist curview cached_commitrow
+    global displayorder parentlist curview cached_commitrow
 
-    set t1 [clock clicks -milliseconds]
     set narctot [expr {[llength $varctok($v)] - 1}]
     set a $varcmod($v)
     while {$a != 0 && [lindex $varcix($v) $a] eq {}} {
@@ -684,8 +679,6 @@ proc update_arcrows {v} {
     if {[info exists currentid]} {
 	set selectedline [rowofcommit $currentid]
     }
-    set t2 [clock clicks -milliseconds]
-    incr uat [expr {$t2-$t1}]
 }
 
 # Test whether view $v contains commit $id
@@ -837,7 +830,7 @@ proc closevarcs {v} {
 }
 
 proc getcommitlines {fd inst view}  {
-    global cmitlisted commitinterest leftover getdbg
+    global cmitlisted commitinterest leftover
     global commitidx commitdata
     global parents children curview hlview
     global vnextroot idpending ordertok
@@ -1051,8 +1044,6 @@ proc chewcommits {view} {
 	    if {$commitidx($curview) > 0} {
 		#set ms [expr {[clock clicks -milliseconds] - $startmsecs}]
 		#puts "overall $ms ms for $numcommits commits"
-		#global uat
-		#puts "${uat}ms in update_arcrows"
 	    } else {
 		show_status "No commits selected"
 	    }
@@ -3506,19 +3497,23 @@ proc readdiffindex {fd serial} {
     # we only need to see one line and we don't really care what it says...
     close $fd
 
-    # now see if there are any local changes not checked in to the index
-    if {$serial == $lserial} {
-	set fd [open "|git diff-files" r]
-	fconfigure $fd -blocking 0
-	filerun $fd [list readdifffiles $fd $serial]
+    if {$serial != $lserial} {
+	return 0
     }
 
-    if {$isdiff && $serial == $lserial && ![commitinview $nullid2 $curview]} {
+    # now see if there are any local changes not checked in to the index
+    set fd [open "|git diff-files" r]
+    fconfigure $fd -blocking 0
+    filerun $fd [list readdifffiles $fd $serial]
+
+    if {$isdiff && ![commitinview $nullid2 $curview]} {
 	# add the line for the changes in the index to the graph
 	set hl "Local changes checked in to index but not committed"
 	set commitinfo($nullid2) [list  $hl {} {} {} {} "    $hl\n"]
 	set commitdata($nullid2) "\n    $hl\n"
 	insertrow $nullid2 $mainheadid $curview
+    } elseif {!$isdiff && [commitinview $nullid2 $curview]} {
+	removerow $nullid2 $curview
     }
     return 0
 }
@@ -3537,7 +3532,11 @@ proc readdifffiles {fd serial} {
     # we only need to see one line and we don't really care what it says...
     close $fd
 
-    if {$isdiff && $serial == $lserial && ![commitinview $nullid $curview]} {
+    if {$serial != $lserial} {
+	return 0
+    }
+
+    if {$isdiff && ![commitinview $nullid $curview]} {
 	# add the line for the local diff to the graph
 	set hl "Local uncommitted changes, not checked in to index"
 	set commitinfo($nullid) [list  $hl {} {} {} {} "    $hl\n"]
@@ -3548,6 +3547,8 @@ proc readdifffiles {fd serial} {
 	    set p $mainheadid
 	}
 	insertrow $nullid $p $curview
+    } elseif {!$isdiff && [commitinview $nullid $curview]} {
+	removerow $nullid $curview
     }
     return 0
 }
@@ -9191,7 +9192,6 @@ set viewperm(0) 0
 set viewargs(0) {}
 
 set loginstance 0
-set getdbg 0
 set cmdlineok 0
 set stopped 0
 set stuffsaved 0
