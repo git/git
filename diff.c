@@ -290,9 +290,10 @@ static void emit_rewrite_diff(const char *name_a,
 			      const char *name_b,
 			      struct diff_filespec *one,
 			      struct diff_filespec *two,
-			      int color_diff)
+			      struct diff_options *o)
 {
 	int lc_a, lc_b;
+	int color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
 	const char *name_a_tab, *name_b_tab;
 	const char *metainfo = diff_get_color(color_diff, DIFF_METAINFO);
 	const char *fraginfo = diff_get_color(color_diff, DIFF_FRAGINFO);
@@ -309,9 +310,9 @@ static void emit_rewrite_diff(const char *name_a,
 	diff_populate_filespec(two, 0);
 	lc_a = count_lines(one->data, one->size);
 	lc_b = count_lines(two->data, two->size);
-	printf("%s--- a/%s%s%s\n%s+++ b/%s%s%s\n%s@@ -",
-	       metainfo, name_a, name_a_tab, reset,
-	       metainfo, name_b, name_b_tab, reset, fraginfo);
+	printf("%s--- %s%s%s%s\n%s+++ %s%s%s%s\n%s@@ -",
+	       metainfo, o->a_prefix, name_a, name_a_tab, reset,
+	       metainfo, o->b_prefix, name_b, name_b_tab, reset, fraginfo);
 	print_line_count(lc_a);
 	printf(" +");
 	print_line_count(lc_b);
@@ -1212,8 +1213,8 @@ static void builtin_diff(const char *name_a,
 	const char *set = diff_get_color_opt(o, DIFF_METAINFO);
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 
-	a_one = quote_two("a/", name_a + (*name_a == '/'));
-	b_two = quote_two("b/", name_b + (*name_b == '/'));
+	a_one = quote_two(o->a_prefix, name_a + (*name_a == '/'));
+	b_two = quote_two(o->b_prefix, name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
 	printf("%sdiff --git %s %s%s\n", set, a_one, b_two, reset);
@@ -1242,8 +1243,7 @@ static void builtin_diff(const char *name_a,
 		if ((one->mode ^ two->mode) & S_IFMT)
 			goto free_ab_and_return;
 		if (complete_rewrite) {
-			emit_rewrite_diff(name_a, name_b, one, two,
-					DIFF_OPT_TST(o, COLOR_DIFF));
+			emit_rewrite_diff(name_a, name_b, one, two, o);
 			o->found_changes = 1;
 			goto free_ab_and_return;
 		}
@@ -2020,6 +2020,9 @@ void diff_setup(struct diff_options *options)
 	else
 		DIFF_OPT_CLR(options, COLOR_DIFF);
 	options->detect_rename = diff_detect_rename_default;
+
+	options->a_prefix = "a/";
+	options->b_prefix = "b/";
 }
 
 int diff_setup_done(struct diff_options *options)
@@ -2291,6 +2294,12 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		else if (40 < options->abbrev)
 			options->abbrev = 40;
 	}
+	else if (!prefixcmp(arg, "--src-prefix="))
+		options->a_prefix = arg + 13;
+	else if (!prefixcmp(arg, "--dst-prefix="))
+		options->b_prefix = arg + 13;
+	else if (!strcmp(arg, "--no-prefix"))
+		options->a_prefix = options->b_prefix = "";
 	else
 		return 0;
 	return 1;
