@@ -342,7 +342,6 @@ done < "$tempdir"/heads
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-count=0
 echo
 while read ref
 do
@@ -380,7 +379,6 @@ do
 	;;
 	esac
 	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1
-	count=$(($count+1))
 done < "$tempdir"/heads
 
 # TODO: This should possibly go, with the semantics that all positive given
@@ -423,9 +421,6 @@ fi
 
 cd ../..
 rm -rf "$tempdir"
-echo
-test $count -gt 0 && echo "These refs were rewritten:"
-git show-ref | grep ^"$orig_namespace"
 
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 test -z "$ORIG_GIT_DIR" || GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
