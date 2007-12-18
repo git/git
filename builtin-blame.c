@@ -125,7 +125,6 @@ static void origin_decref(struct origin *o)
 	if (o && --o->refcnt <= 0) {
 		if (o->file.ptr)
 			free(o->file.ptr);
-		memset(o, 0, sizeof(*o));
 		free(o);
 	}
 }
