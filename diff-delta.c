@@ -264,7 +264,7 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	index->src_size = bufsize;
 	index->hash_mask = hmask;
 
-	mem = index + 1;
+	mem = index->hash;
 	packed_hash = mem;
 	mem = packed_hash + (hsize+1);
 	packed_entry = mem;
