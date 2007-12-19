@@ -269,19 +269,21 @@ proc strrep {n} {
 # --topo-order) into the order for display.
 
 proc varcinit {view} {
-    global varcstart vupptr vdownptr vleftptr varctok varcrow
-    global vtokmod varcmod vrowmod varcix
+    global varcstart vupptr vdownptr vleftptr vbackptr varctok varcrow
+    global vtokmod varcmod vrowmod varcix vlastins
 
     set varcstart($view) {{}}
     set vupptr($view) {0}
     set vdownptr($view) {0}
     set vleftptr($view) {0}
+    set vbackptr($view) {0}
     set varctok($view) {{}}
     set varcrow($view) {{}}
     set vtokmod($view) {}
     set varcmod($view) 0
     set vrowmod($view) 0
     set varcix($view) {{}}
+    set vlastins($view) {0}
 }
 
 proc resetvarcs {view} {
@@ -306,13 +308,13 @@ proc resetvarcs {view} {
 }
 
 proc newvarc {view id} {
-    global varcid varctok parents children
-    global vupptr vdownptr vleftptr varcrow varcix varcstart
-    global commitdata commitinfo vseedcount varccommits
+    global varcid varctok parents children datemode
+    global vupptr vdownptr vleftptr vbackptr varcrow varcix varcstart
+    global commitdata commitinfo vseedcount varccommits vlastins
 
     set a [llength $varctok($view)]
     set vid $view,$id
-    if {[llength $children($vid)] == 0} {
+    if {[llength $children($vid)] == 0 || $datemode} {
 	if {![info exists commitinfo($id)]} {
 	    parsecommit $id $commitdata($id) 1
 	}
@@ -326,51 +328,47 @@ proc newvarc {view id} {
 	set c [incr vseedcount($view,$cdate)]
 	set cdate [expr {$cdate ^ 0xffffffff}]
 	set tok "s[strrep $cdate][strrep $c]"
-	lappend vupptr($view) 0
-	set ka [lindex $vdownptr($view) 0]
-	if {$ka == 0 ||
-	    [string compare $tok [lindex $varctok($view) $ka]] < 0} {
-	    lset vdownptr($view) 0 $a
-	    lappend vleftptr($view) $ka
-	} else {
-	    while {[set b [lindex $vleftptr($view) $ka]] != 0 &&
-		   [string compare $tok [lindex $varctok($view) $b]] >= 0} {
-		set ka $b
-	    }
-	    lset vleftptr($view) $ka $a
-	    lappend vleftptr($view) $b
-	}
     } else {
 	set tok {}
-	foreach k $children($vid) {
-	    set ka $varcid($view,$k)
-	    if {[string compare [lindex $varctok($view) $ka] $tok] > 0} {
-		set ki $k
-		set tok [lindex $varctok($view) $ka]
-	    }
+    }
+    set ka 0
+    if {[llength $children($vid)] > 0} {
+	set kid [lindex $children($vid) end]
+	set k $varcid($view,$kid)
+	if {[string compare [lindex $varctok($view) $k] $tok] > 0} {
+	    set ki $kid
+	    set ka $k
+	    set tok [lindex $varctok($view) $k]
 	}
-	set ka $varcid($view,$ki)
-	lappend vupptr($view) $ka
+    }
+    if {$ka != 0} {
 	set i [lsearch -exact $parents($view,$ki) $id]
 	set j [expr {[llength $parents($view,$ki)] - 1 - $i}]
-	set rsib 0
-	while {[incr i] < [llength $parents($view,$ki)]} {
-	    set bi [lindex $parents($view,$ki) $i]
-	    if {[info exists varcid($view,$bi)]} {
-		set b $varcid($view,$bi)
-		if {[lindex $vupptr($view) $b] == $ka} {
-		    set rsib $b
-		    lappend vleftptr($view) [lindex $vleftptr($view) $b]
-		    lset vleftptr($view) $b $a
-		    break
-		}
-	    }
-	}
-	if {$rsib == 0} {
-	    lappend vleftptr($view) [lindex $vdownptr($view) $ka]
-	    lset vdownptr($view) $ka $a
-	}
 	append tok [strrep $j]
+    }
+    set c [lindex $vlastins($view) $ka]
+    if {$c == 0 || [string compare $tok [lindex $varctok($view) $c]] < 0} {
+	set c $ka
+	set b [lindex $vdownptr($view) $ka]
+    } else {
+	set b [lindex $vleftptr($view) $c]
+    }
+    while {$b != 0 && [string compare $tok [lindex $varctok($view) $b]] >= 0} {
+	set c $b
+	set b [lindex $vleftptr($view) $c]
+    }
+    if {$c == $ka} {
+	lset vdownptr($view) $ka $a
+	lappend vbackptr($view) 0
+    } else {
+	lset vleftptr($view) $c $a
+	lappend vbackptr($view) $c
+    }
+    lset vlastins($view) $ka $a
+    lappend vupptr($view) $ka
+    lappend vleftptr($view) $b
+    if {$b != 0} {
+	lset vbackptr($view) $b $a
     }
     lappend varctok($view) $tok
     lappend varcstart($view) $id
@@ -378,12 +376,13 @@ proc newvarc {view id} {
     lappend varcrow($view) {}
     lappend varcix($view) {}
     set varccommits($view,$a) {}
+    lappend vlastins($view) 0
     return $a
 }
 
 proc splitvarc {p v} {
     global varcid varcstart varccommits varctok
-    global vupptr vdownptr vleftptr varcix varcrow
+    global vupptr vdownptr vleftptr vbackptr varcix varcrow vlastins
 
     set oa $varcid($v,$p)
     set ac $varccommits($v,$oa)
@@ -405,6 +404,8 @@ proc splitvarc {p v} {
     lset vdownptr($v) $oa $na
     lappend vupptr($v) $oa
     lappend vleftptr($v) 0
+    lappend vbackptr($v) 0
+    lappend vlastins($v) 0
     for {set b [lindex $vdownptr($v) $na]} {$b != 0} {set b [lindex $vleftptr($v) $b]} {
 	lset vupptr($v) $b $na
     }
@@ -412,11 +413,12 @@ proc splitvarc {p v} {
 
 proc renumbervarc {a v} {
     global parents children varctok varcstart varccommits
-    global vupptr vdownptr vleftptr varcid vtokmod
+    global vupptr vdownptr vleftptr vbackptr vlastins varcid vtokmod datemode
 
     set t1 [clock clicks -milliseconds]
     set todo {}
     set isrelated($a) 1
+    set kidchanged($a) 1
     set ntot 0
     while {$a != 0} {
 	if {[info exists isrelated($a)]} {
@@ -440,26 +442,45 @@ proc renumbervarc {a v} {
 	set a $b
     }
     foreach a $todo {
+	if {![info exists kidchanged($a)]} continue
 	set id [lindex $varcstart($v) $a]
-	set tok {}
-	foreach k $children($v,$id) {
-	    set ka $varcid($v,$k)
-	    if {[string compare [lindex $varctok($v) $ka] $tok] > 0} {
-		set ki $k
-		set tok [lindex $varctok($v) $ka]
+	if {[llength $children($v,$id)] > 1} {
+	    set children($v,$id) [lsort -command [list vtokcmp $v] \
+				      $children($v,$id)]
+	}
+	set oldtok [lindex $varctok($v) $a]
+	if {!$datemode} {
+	    set tok {}
+	} else {
+	    set tok $oldtok
+	}
+	set ka 0
+	if {[llength $children($v,$id)] > 0} {
+	    set kid [lindex $children($v,$id) end]
+	    set k $varcid($v,$kid)
+	    if {[string compare [lindex $varctok($v) $k] $tok] > 0} {
+		set ki $kid
+		set ka $k
+		set tok [lindex $varctok($v) $k]
 	    }
 	}
-	if {$tok ne {}} {
-	    set ka $varcid($v,$ki)
+	if {$ka != 0} {
 	    set i [lsearch -exact $parents($v,$ki) $id]
 	    set j [expr {[llength $parents($v,$ki)] - 1 - $i}]
 	    append tok [strrep $j]
-	    set oldtok [lindex $varctok($v) $a]
-	    if {$tok eq $oldtok} continue
-	    lset varctok($v) $a $tok
-	} else {
-	    set ka 0
 	}
+	if {$tok eq $oldtok} {
+	    continue
+	}
+	set id [lindex $varccommits($v,$a) end]
+	foreach p $parents($v,$id) {
+	    if {[info exists varcid($v,$p)]} {
+		set kidchanged($varcid($v,$p)) 1
+	    } else {
+		set sortkids($p) 1
+	    }
+	}
+	lset varctok($v) $a $tok
 	set b [lindex $vupptr($v) $a]
 	if {$b != $ka} {
 	    if {[string compare [lindex $varctok($v) $ka] $vtokmod($v)] < 0} {
@@ -468,38 +489,48 @@ proc renumbervarc {a v} {
 	    if {[string compare [lindex $varctok($v) $b] $vtokmod($v)] < 0} {
 		modify_arc $v $b
 	    }
-	    set c [lindex $vdownptr($v) $b]
-	    if {$c == $a} {
-		lset vdownptr($v) $b [lindex $vleftptr($v) $a]
+	    set c [lindex $vbackptr($v) $a]
+	    set d [lindex $vleftptr($v) $a]
+	    if {$c == 0} {
+		lset vdownptr($v) $b $d
 	    } else {
-		set b $c
-		while {$b != 0 && [lindex $vleftptr($v) $b] != $a} {
-		    set b [lindex $vleftptr($v) $b]
-		}
-		if {$b != 0} {
-		    lset vleftptr($v) $b [lindex $vleftptr($v) $a]
-		} else {
-		    puts "oops couldn't find $a in chain for [lindex $vupptr($v) $a]"
-		}
+		lset vleftptr($v) $c $d
+	    }
+	    if {$d != 0} {
+		lset vbackptr($v) $d $c
 	    }
 	    lset vupptr($v) $a $ka
-	    set rsib 0
-	    while {[incr i] < [llength $parents($v,$ki)]} {
-		set bi [lindex $parents($v,$ki) $i]
-		if {[info exists varcid($v,$bi)]} {
-		    set b $varcid($v,$bi)
-		    if {[lindex $vupptr($v) $b] == $ka} {
-			set rsib $b
-			lset vleftptr($v) $a [lindex $vleftptr($v) $b]
-			lset vleftptr($v) $b $a
-			break
-		    }
-		}
+	    set c [lindex $vlastins($v) $ka]
+	    if {$c == 0 || \
+		    [string compare $tok [lindex $varctok($v) $c]] < 0} {
+		set c $ka
+		set b [lindex $vdownptr($v) $ka]
+	    } else {
+		set b [lindex $vleftptr($v) $c]
 	    }
-	    if {$rsib == 0} {
-		lset vleftptr($v) $a [lindex $vdownptr($v) $ka]
-		lset vdownptr($v) $ka $a
+	    while {$b != 0 && \
+		      [string compare $tok [lindex $varctok($v) $b]] >= 0} {
+		set c $b
+		set b [lindex $vleftptr($v) $c]
 	    }
+	    if {$c == $ka} {
+ 		lset vdownptr($v) $ka $a
+		lset vbackptr($v) $a 0
+	    } else {
+		lset vleftptr($v) $c $a
+		lset vbackptr($v) $a $c
+	    }
+	    lset vleftptr($v) $a $b
+	    if {$b != 0} {
+		lset vbackptr($v) $b $a
+	    }
+	    lset vlastins($v) $ka $a
+	}
+    }
+    foreach id [array names sortkids] {
+	if {[llength $children($v,$id)] > 1} {
+	    set children($v,$id) [lsort -command [list vtokcmp $v] \
+				      $children($v,$id)]
 	}
     }
     set t2 [clock clicks -milliseconds]
@@ -831,7 +862,7 @@ proc closevarcs {v} {
 
 proc getcommitlines {fd inst view}  {
     global cmitlisted commitinterest leftover
-    global commitidx commitdata
+    global commitidx commitdata datemode
     global parents children curview hlview
     global vnextroot idpending ordertok
     global varccommits varcid varctok vtokmod
@@ -946,12 +977,12 @@ proc getcommitlines {fd inst view}  {
 	set a 0
 	if {![info exists children($vid)]} {
 	    set children($vid) {}
-	} else {
-	    if {[llength $children($vid)] == 1} {
-		set k [lindex $children($vid) 0]
-		if {[llength $parents($view,$k)] == 1} {
-		    set a $varcid($view,$k)
-		}
+	} elseif {[llength $children($vid)] == 1} {
+	    set k [lindex $children($vid) 0]
+	    if {[llength $parents($view,$k)] == 1 &&
+		(!$datemode ||
+		 $varcid($view,$k) == [llength $varctok($view)] - 1)} {
+		set a $varcid($view,$k)
 	    }
 	}
 	if {$a == 0} {
@@ -974,9 +1005,9 @@ proc getcommitlines {fd inst view}  {
 					   $children($vp)]
 		    catch {unset ordertok}
 		}
-	    }
-	    if {[info exists varcid($view,$p)]} {
-		fix_reversal $p $a $view
+		if {[info exists varcid($view,$p)]} {
+		    fix_reversal $p $a $view
+		}
 	    }
 	    incr i
 	}
@@ -1033,7 +1064,7 @@ proc chewcommits {view} {
     if {$view == $curview} {
 	layoutmore
 	if {$viewcomplete($view)} {
-	    global commitidx
+	    global commitidx varctok
 	    global numcommits startmsecs
 	    global mainheadid commitinfo nullid
 
@@ -1044,6 +1075,7 @@ proc chewcommits {view} {
 	    if {$commitidx($curview) > 0} {
 		#set ms [expr {[clock clicks -milliseconds] - $startmsecs}]
 		#puts "overall $ms ms for $numcommits commits"
+		#puts "[llength $varctok($view)] arcs, $commitidx($view) commits"
 	    } else {
 		show_status "No commits selected"
 	    }
