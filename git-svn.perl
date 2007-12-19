@@ -197,8 +197,8 @@ for (my $i = 0; $i < @ARGV; $i++) {
 	}
 };
 
-# make sure we're always running
-unless ($cmd =~ /(?:clone|init|multi-init)$/) {
+# make sure we're always running at the top-level working directory
+unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 	unless (-d $ENV{GIT_DIR}) {
 		if ($git_dir_user_set) {
 			die "GIT_DIR=$ENV{GIT_DIR} explicitly set, ",
