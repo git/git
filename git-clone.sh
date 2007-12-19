@@ -152,7 +152,7 @@ do
 		die "clones are always made with separate-remote layout" ;;
 	--reference)
 		shift; reference="$1" ;;
-	-o,--origin)
+	-o|--origin)
 		shift;
 		case "$1" in
 		'')
