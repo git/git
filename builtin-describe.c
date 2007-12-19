@@ -267,12 +267,14 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 
 	if (contains) {
 		const char **args = xmalloc((4 + argc) * sizeof(char*));
-		args[0] = "name-rev";
-		args[1] = "--name-only";
-		args[2] = "--tags";
-		memcpy(args + 3, argv, argc * sizeof(char*));
-		args[3 + argc] = NULL;
-		return cmd_name_rev(3 + argc, args, prefix);
+		int i = 0;
+		args[i++] = "name-rev";
+		args[i++] = "--name-only";
+		if (!all)
+			args[i++] = "--tags";
+		memcpy(args + i, argv, argc * sizeof(char*));
+		args[i + argc] = NULL;
+		return cmd_name_rev(i + argc, args, prefix);
 	}
 
 	if (argc == 0) {
