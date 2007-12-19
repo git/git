@@ -371,7 +371,7 @@ do
 		. "$DOTEST"/author-script && {
 			test ! -f "$DOTEST"/amend || git reset --soft HEAD^
 		} &&
-		export GIT_AUTHOR_NAME GIT_AUTHOR_NAME GIT_AUTHOR_DATE &&
+		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
 		git commit -F "$DOTEST"/message -e
 
 		require_clean_work_tree
