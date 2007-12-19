@@ -289,22 +289,22 @@ do_next () {
 		output git reset --soft HEAD^
 		pick_one -n $sha1 || failed=t
 		echo "$author_script" > "$DOTEST"/author-script
-		case $failed in
-		f)
+		if test $failed = f
+		then
 			# This is like --amend, but with a different message
 			eval "$author_script"
 			GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
 			GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
 			GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-			$USE_OUTPUT git commit --no-verify -F "$MSG" $EDIT_COMMIT
-			;;
-		t)
+			$USE_OUTPUT git commit --no-verify -F "$MSG" $EDIT_COMMIT || failed=t
+		fi
+		if test $failed = t
+		then
 			cp "$MSG" "$GIT_DIR"/MERGE_MSG
 			warn
 			warn "Could not apply $sha1... $rest"
 			die_with_patch $sha1 ""
-			;;
-		esac
+		fi
 		;;
 	*)
 		warn "Unknown command: $command $sha1 $rest"
@@ -372,7 +372,8 @@ do
 			test ! -f "$DOTEST"/amend || git reset --soft HEAD^
 		} &&
 		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
-		git commit --no-verify -F "$DOTEST"/message -e
+		git commit --no-verify -F "$DOTEST"/message -e ||
+			die "Could not commit staged changes."
 
 		require_clean_work_tree
 		do_rest
