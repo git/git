@@ -296,7 +296,7 @@ do_next () {
 			GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
 			GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
 			GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-			$USE_OUTPUT git commit -F "$MSG" $EDIT_COMMIT
+			$USE_OUTPUT git commit --no-verify -F "$MSG" $EDIT_COMMIT
 			;;
 		t)
 			cp "$MSG" "$GIT_DIR"/MERGE_MSG
@@ -372,7 +372,7 @@ do
 			test ! -f "$DOTEST"/amend || git reset --soft HEAD^
 		} &&
 		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
-		git commit -F "$DOTEST"/message -e
+		git commit --no-verify -F "$DOTEST"/message -e
 
 		require_clean_work_tree
 		do_rest
