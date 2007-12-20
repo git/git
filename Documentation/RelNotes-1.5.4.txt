@@ -14,11 +14,10 @@ Removal
 Deprecation notices
 -------------------
 
- * Next feature release of git (this change is scheduled for v1.5.5 but
-   it could slip) will by default install dashed form of commands
-   (e.g. "git-commit") outside of users' normal $PATH, and will install
-   only selected commands ("git" itself, and "gitk") in $PATH.  This
-   implies:
+ * Next feature release of git (this change is scheduled for v1.6.0)
+   will by default install dashed form of commands (e.g. "git-commit")
+   outside of users' normal $PATH, and will install only selected
+   commands ("git" itself, and "gitk") in $PATH.  This implies:
 
    - Using dashed form of git commands (e.g. "git-commit") from the
      command line has been informally deprecated since early 2006, but
@@ -38,7 +37,7 @@ Deprecation notices
  * The post-receive hook was introduced in March 2007 to supersede
    post-update hook, primarily to overcome the command line length
    limitation of the latter.  Use of post-update hook will be deprecated
-   in future versions of git, perhaps in v1.5.5.
+   in future versions of git, starting from v1.6.0.
 
  * "git lost-found" was deprecated in favor of "git fsck"'s --lost-found
    option, and will be removed in the future.
@@ -46,12 +45,12 @@ Deprecation notices
  * "git peek-remote" is deprecated, as "git ls-remote" was written in C
    and works for all transports, and will be removed in the future.
 
- * From v1.5.5, the repack.usedeltabaseoffset config option will default
+ * From v1.6.0, the repack.usedeltabaseoffset config option will default
    to true, which will give denser packfile (i.e. more efficient storage).
    The downside is that git older than version 1.4.4 will not be able
    to directly use a repository packed using this setting.
 
- * From v1.5.5, the pack.indexversion config option will default to 2,
+ * From v1.6.0, the pack.indexversion config option will default to 2,
    which is slightly more efficient, and makes repacking more immune to
    data corruptions.  Git older than version 1.5.2 may revert to version 1
    of the pack index with a manual "git index-pack" to be able to directly
@@ -88,6 +87,9 @@ Updates since v1.5.3
    mean "always" (even when the output is not going to a terminal).
    This has been corrected to mean the same thing as "auto".
 
+ * "git diff" Porcelain now respects diff.external configuration, which
+   is another way to specify GIT_EXTERNAL_DIFF.
+
  * HTTP proxy can be specified per remote repository using
    remote.*.httpproxy configuration, or global http.proxy configuration
    variable.
@@ -111,6 +113,8 @@ Updates since v1.5.3
    runs it for you.
 
  * "git rebase --interactive" mode can now work on detached HEAD.
+
+ * Other minor to serious bugs in "git rebase -i" has been fixed.
 
  * "git rebase" now detaches head during its operation, so after a
    successful "git rebase" operation, the reflog entry branch@{1} for
@@ -238,6 +242,12 @@ Updates since v1.5.3
    "git commit"; the parameters to -m options are formatted as separate
    paragraphs.
 
+ * The format "git show" outputs an annotated tag has been updated to
+   include "Tagger: " and "Date: " lines from the tag itself.  Strictly
+   speaking this is a backward incompatible change, but this is a
+   reasonable usability fix and people's script shouldn't have been
+   relying on the exact output from "git show" Porcelain anyway.
+
  * "git cvsexportcommit" learned -w option to specify and switch to the
    CVS working directory.
 
@@ -314,6 +324,6 @@ series.
 
 --
 exec >/var/tmp/1
-O=v1.5.4-rc0-35-g530e741
+O=v1.5.4-rc0-85-gdbedf97
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
