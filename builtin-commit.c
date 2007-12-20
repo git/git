@@ -375,6 +375,7 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 	if (no_edit) {
 		struct rev_info rev;
 		unsigned char sha1[40];
+		const char *parent = "HEAD";
 
 		fclose(fp);
 
@@ -384,9 +385,12 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 		if (get_sha1("HEAD", sha1) != 0)
 			return !!active_nr;
 
+		if (amend)
+			parent = "HEAD^1";
+
 		init_revisions(&rev, "");
 		rev.abbrev = 0;
-		setup_revisions(0, NULL, &rev, "HEAD");
+		setup_revisions(0, NULL, &rev, parent);
 		DIFF_OPT_SET(&rev.diffopt, QUIET);
 		DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
 		run_diff_index(&rev, 1 /* cached */);
