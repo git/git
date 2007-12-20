@@ -591,12 +591,12 @@ Qsection.sub=section.val4
 Qsection.sub=section.val5Q
 EOF
 
-git config --null --list | tr '[\000]' 'Q' > result
+git config --null --list | tr '\000' 'Q' > result
 echo >>result
 
 test_expect_success '--null --list' 'cmp result expect'
 
-git config --null --get-regexp 'val[0-9]' | tr '[\000]' 'Q' > result
+git config --null --get-regexp 'val[0-9]' | tr '\000' 'Q' > result
 echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'

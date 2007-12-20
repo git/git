@@ -1511,7 +1511,7 @@ sub config_to_int {
 sub config_to_multi {
 	my $val = shift;
 
-	return ref($val) ? $val : [ $val ];
+       return ref($val) ? $val : (defined($val) ? [ $val ] : []);
 }
 
 sub git_get_project_config {
@@ -2233,6 +2233,7 @@ sub git_get_heads_list {
 		my ($hash, $name, $title) = split(' ', $refinfo, 3);
 		my ($committer, $epoch, $tz) =
 			($committerinfo =~ /^(.*) ([0-9]+) (.*)$/);
+		$ref_item{'fullname'}  = $name;
 		$name =~ s!^refs/heads/!!;
 
 		$ref_item{'name'}  = $name;
@@ -2270,6 +2271,7 @@ sub git_get_tags_list {
 		my ($id, $type, $name, $refid, $reftype, $title) = split(' ', $refinfo, 6);
 		my ($creator, $epoch, $tz) =
 			($creatorinfo =~ /^(.*) ([0-9]+) (.*)$/);
+		$ref_item{'fullname'} = $name;
 		$name =~ s!^refs/tags/!!;
 
 		$ref_item{'type'} = $type;
@@ -3690,8 +3692,8 @@ sub git_tags_body {
 		      "<td class=\"link\">" . " | " .
 		      $cgi->a({-href => href(action=>$tag{'reftype'}, hash=>$tag{'refid'})}, $tag{'reftype'});
 		if ($tag{'reftype'} eq "commit") {
-			print " | " . $cgi->a({-href => href(action=>"shortlog", hash=>$tag{'name'})}, "shortlog") .
-			      " | " . $cgi->a({-href => href(action=>"log", hash=>$tag{'name'})}, "log");
+			print " | " . $cgi->a({-href => href(action=>"shortlog", hash=>$tag{'fullname'})}, "shortlog") .
+			      " | " . $cgi->a({-href => href(action=>"log", hash=>$tag{'fullname'})}, "log");
 		} elsif ($tag{'reftype'} eq "blob") {
 			print " | " . $cgi->a({-href => href(action=>"blob_plain", hash=>$tag{'refid'})}, "raw");
 		}
@@ -3726,13 +3728,13 @@ sub git_heads_body {
 		$alternate ^= 1;
 		print "<td><i>$ref{'age'}</i></td>\n" .
 		      ($curr ? "<td class=\"current_head\">" : "<td>") .
-		      $cgi->a({-href => href(action=>"shortlog", hash=>$ref{'name'}),
+		      $cgi->a({-href => href(action=>"shortlog", hash=>$ref{'fullname'}),
 		               -class => "list name"},esc_html($ref{'name'})) .
 		      "</td>\n" .
 		      "<td class=\"link\">" .
-		      $cgi->a({-href => href(action=>"shortlog", hash=>$ref{'name'})}, "shortlog") . " | " .
-		      $cgi->a({-href => href(action=>"log", hash=>$ref{'name'})}, "log") . " | " .
-		      $cgi->a({-href => href(action=>"tree", hash=>$ref{'name'}, hash_base=>$ref{'name'})}, "tree") .
+		      $cgi->a({-href => href(action=>"shortlog", hash=>$ref{'fullname'})}, "shortlog") . " | " .
+		      $cgi->a({-href => href(action=>"log", hash=>$ref{'fullname'})}, "log") . " | " .
+		      $cgi->a({-href => href(action=>"tree", hash=>$ref{'fullname'}, hash_base=>$ref{'name'})}, "tree") .
 		      "</td>\n" .
 		      "</tr>";
 	}
@@ -4288,7 +4290,7 @@ sub git_blob {
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(undef, "Couldn't cat $file_name, $hash");
 	my $mimetype = blob_mimetype($fd, $file_name);
-	if ($mimetype !~ m!^(?:text/|image/(?:gif|png|jpeg)$)!) {
+	if ($mimetype !~ m!^(?:text/|image/(?:gif|png|jpeg)$)! && -B $fd) {
 		close $fd;
 		return git_blob_plain($mimetype);
 	}
@@ -4329,16 +4331,7 @@ sub git_blob {
 	}
 	git_print_page_path($file_name, "blob", $hash_base);
 	print "<div class=\"page_body\">\n";
-	if ($mimetype =~ m!^text/!) {
-		my $nr;
-		while (my $line = <$fd>) {
-			chomp $line;
-			$nr++;
-			$line = untabify($line);
-			printf "<div class=\"pre\"><a id=\"l%i\" href=\"#l%i\" class=\"linenr\">%4i</a> %s</div>\n",
-			       $nr, $nr, $nr, esc_html($line, -nbsp=>1);
-		}
-	} elsif ($mimetype =~ m!^image/!) {
+	if ($mimetype =~ m!^image/!) {
 		print qq!<img type="$mimetype"!;
 		if ($file_name) {
 			print qq! alt="$file_name" title="$file_name"!;
@@ -4347,6 +4340,15 @@ sub git_blob {
 		      href(action=>"blob_plain", hash=>$hash,
 		           hash_base=>$hash_base, file_name=>$file_name) .
 		      qq!" />\n!;
+	} else {
+		my $nr;
+		while (my $line = <$fd>) {
+			chomp $line;
+			$nr++;
+			$line = untabify($line);
+			printf "<div class=\"pre\"><a id=\"l%i\" href=\"#l%i\" class=\"linenr\">%4i</a> %s</div>\n",
+			       $nr, $nr, $nr, esc_html($line, -nbsp=>1);
+		}
 	}
 	close $fd
 		or print "Reading blob failed.\n";

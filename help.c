@@ -8,6 +8,44 @@
 #include "exec_cmd.h"
 #include "common-cmds.h"
 
+static const char *help_default_format;
+
+static enum help_format {
+	man_format,
+	info_format,
+	web_format,
+} help_format = man_format;
+
+static void parse_help_format(const char *format)
+{
+	if (!format) {
+		help_format = man_format;
+		return;
+	}
+	if (!strcmp(format, "man")) {
+		help_format = man_format;
+		return;
+	}
+	if (!strcmp(format, "info")) {
+		help_format = info_format;
+		return;
+	}
+	if (!strcmp(format, "web") || !strcmp(format, "html")) {
+		help_format = web_format;
+		return;
+	}
+	die("unrecognized help format '%s'", format);
+}
+
+static int git_help_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "help.format")) {
+		help_default_format = xstrdup(value);
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
 /* most GUI terminals set COLUMNS (although some don't export it) */
 static int term_columns(void)
 {
@@ -293,7 +331,7 @@ static void show_info_page(const char *git_cmd)
 static void show_html_page(const char *git_cmd)
 {
 	const char *page = cmd_to_page(git_cmd);
-	execl_git_cmd("browse-help", page, NULL);
+	execl_git_cmd("help--browse", page, NULL);
 }
 
 void help_unknown_cmd(const char *cmd)
@@ -331,8 +369,30 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		show_info_page(argc > 2 ? argv[2] : NULL);
 	}
 
-	else
-		show_man_page(help_cmd);
+	else if (!strcmp(help_cmd, "--man") || !strcmp(help_cmd, "-m")) {
+		show_man_page(argc > 2 ? argv[2] : NULL);
+	}
+
+	else {
+		int nongit;
+
+		setup_git_directory_gently(&nongit);
+		git_config(git_help_config);
+		if (help_default_format)
+			parse_help_format(help_default_format);
+
+		switch (help_format) {
+		case man_format:
+			show_man_page(help_cmd);
+			break;
+		case info_format:
+			show_info_page(help_cmd);
+			break;
+		case web_format:
+			show_html_page(help_cmd);
+			break;
+		}
+	}
 
 	return 0;
 }

@@ -1,0 +1,6 @@
+strbuf API
+==========
+
+Talk about <strbuf.h>
+
+(Pierre, JC)

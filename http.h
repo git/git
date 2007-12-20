@@ -6,6 +6,8 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
+#include "strbuf.h"
+
 #if LIBCURL_VERSION_NUM >= 0x071000
 #define USE_CURL_MULTI
 #define DEFAULT_MAX_REQUESTS 5
@@ -48,18 +50,17 @@ struct active_request_slot
 
 struct buffer
 {
-        size_t posn;
-        size_t size;
-        void *buffer;
+	struct strbuf buf;
+	size_t posn;
 };
 
 /* Curl request read/write callbacks */
 extern size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
 			   struct buffer *buffer);
 extern size_t fwrite_buffer(const void *ptr, size_t eltsize,
-			    size_t nmemb, struct buffer *buffer);
+			    size_t nmemb, struct strbuf *buffer);
 extern size_t fwrite_null(const void *ptr, size_t eltsize,
-			  size_t nmemb, struct buffer *buffer);
+			  size_t nmemb, struct strbuf *buffer);
 
 /* Slot lifecycle functions */
 extern struct active_request_slot *get_active_slot(void);
@@ -81,5 +82,20 @@ extern int data_received;
 extern int active_requests;
 
 extern char curl_errorstr[CURL_ERROR_SIZE];
+
+static inline int missing__target(int code, int result)
+{
+	return	/* file:// URL -- do we ever use one??? */
+		(result == CURLE_FILE_COULDNT_READ_FILE) ||
+		/* http:// and https:// URL */
+		(code == 404 && result == CURLE_HTTP_RETURNED_ERROR) ||
+		/* ftp:// URL */
+		(code == 550 && result == CURLE_FTP_COULDNT_RETR_FILE)
+		;
+}
+
+#define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
+
+extern int http_fetch_ref(const char *base, const char *ref, unsigned char *sha1);
 
 #endif /* HTTP_H */

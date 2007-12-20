@@ -160,7 +160,7 @@ to get a listing of all tags together with what they dereference.
 
 SEE ALSO
 --------
-gitlink:git-ls-remote[1], gitlink:git-peek-remote[1]
+gitlink:git-ls-remote[1]
 
 AUTHORS
 -------

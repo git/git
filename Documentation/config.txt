@@ -307,7 +307,7 @@ core.whitespace::
   before a tab character in the initial indent part of the line as an
   error (enabled by default).
 * `indent-with-non-tab` treats a line that is indented with 8 or more
-  space characters that can be replaced with tab characters.
+  space characters as an error (not enabled by default).
 
 alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.
@@ -448,6 +448,13 @@ diff.autorefreshindex::
 	affects only `git diff` Porcelain, and not lower level
 	`diff` commands, such as `git diff-files`.
 
+diff.external::
+	If this config variable is set, diff generation is not
+	performed using the internal diff machinery, but using the
+	given command.  Note: if you want to use an external diff
+	program only on a subset of your files, you might want to
+	use gitlink:gitattributes[5] instead.
+
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
 	detection; equivalent to the git diff option '-l'.
@@ -469,7 +476,7 @@ fetch.unpackLimit::
 
 format.numbered::
 	A boolean which can enable sequence numbers in patch subjects.
-	Seting this option to "auto" will enable it only if there is
+	Setting this option to "auto" will enable it only if there is
 	more than one patch.  See --numbered option in
 	gitlink:git-format-patch[1].
 
@@ -670,6 +677,10 @@ merge.<driver>.recursive::
 	Names a low-level merge driver to be used when
 	performing an internal merge between common ancestors.
 	See gitlink:gitattributes[5] for details.
+
+mergetool.<tool>.path::
+	Override the path for the given tool.  This is useful in case
+	your tool is not in the PATH.
 
 pack.window::
 	The size of the window used by gitlink:git-pack-objects[1] when no

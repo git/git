@@ -17,6 +17,7 @@ struct wt_status {
 	int verbose;
 	int amend;
 	int untracked;
+	int nowarn;
 	/* These are computed during processing of the individual sections */
 	int commitable;
 	int workdir_dirty;

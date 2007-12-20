@@ -1,0 +1,12 @@
+tree walking API
+================
+
+Talk about <tree-walk.h>, things like
+
+* struct tree_desc
+* init_tree_desc
+* tree_entry_extract
+* update_tree_entry
+* get_tree_entry
+
+(JC, Linus)

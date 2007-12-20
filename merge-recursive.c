@@ -549,6 +549,10 @@ static void update_file_flags(const unsigned char *sha,
 		void *buf;
 		unsigned long size;
 
+		if (S_ISGITLINK(mode))
+			die("cannot read object %s '%s': It is a submodule!",
+			    sha1_to_hex(sha), path);
+
 		buf = read_sha1_file(sha, &type, &size);
 		if (!buf)
 			die("cannot read object %s '%s'", sha1_to_hex(sha), path);
@@ -1463,10 +1467,13 @@ static int process_entry(const char *path, struct stage_data *entry,
 		mfi = merge_file(&o, &a, &b,
 				 branch1, branch2);
 
+		clean_merge = mfi.clean;
 		if (mfi.clean)
 			update_file(1, mfi.sha, mfi.mode, path);
+		else if (S_ISGITLINK(mfi.mode))
+			output(1, "CONFLICT (submodule): Merge conflict in %s "
+			       "- needs %s", path, sha1_to_hex(b.sha1));
 		else {
-			clean_merge = 0;
 			output(1, "CONFLICT (%s): Merge conflict in %s",
 					reason, path);
 

@@ -244,7 +244,28 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	return cmd_log_walk(&rev);
 }
 
-static int show_object(const unsigned char *sha1, int suppress_header)
+static void show_tagger(char *buf, int len, struct rev_info *rev)
+{
+	char *email_end, *p;
+	unsigned long date;
+	int tz;
+
+	email_end = memchr(buf, '>', len);
+	if (!email_end)
+		return;
+	p = ++email_end;
+	while (isspace(*p))
+		p++;
+	date = strtoul(p, &p, 10);
+	while (isspace(*p))
+		p++;
+	tz = (int)strtol(p, NULL, 10);
+	printf("Tagger: %.*s\nDate:   %s\n", (int)(email_end - buf), buf,
+	       show_date(date, tz, rev->date_mode));
+}
+
+static int show_object(const unsigned char *sha1, int show_tag_object,
+	struct rev_info *rev)
 {
 	unsigned long size;
 	enum object_type type;
@@ -254,11 +275,14 @@ static int show_object(const unsigned char *sha1, int suppress_header)
 	if (!buf)
 		return error("Could not read object %s", sha1_to_hex(sha1));
 
-	if (suppress_header)
-		while (offset < size && buf[offset++] != '\n') {
-			int new_offset = offset;
+	if (show_tag_object)
+		while (offset < size && buf[offset] != '\n') {
+			int new_offset = offset + 1;
 			while (new_offset < size && buf[new_offset++] != '\n')
 				; /* do nothing */
+			if (!prefixcmp(buf + offset, "tagger "))
+				show_tagger(buf + offset + 7,
+					    new_offset - offset - 7, rev);
 			offset = new_offset;
 		}
 
@@ -299,16 +323,16 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 		const char *name = objects[i].name;
 		switch (o->type) {
 		case OBJ_BLOB:
-			ret = show_object(o->sha1, 0);
+			ret = show_object(o->sha1, 0, NULL);
 			break;
 		case OBJ_TAG: {
 			struct tag *t = (struct tag *)o;
 
-			printf("%stag %s%s\n\n",
+			printf("%stag %s%s\n",
 					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
 					t->tag,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
-			ret = show_object(o->sha1, 1);
+			ret = show_object(o->sha1, 1, &rev);
 			objects[i].item = (struct object *)t->tagged;
 			i--;
 			break;

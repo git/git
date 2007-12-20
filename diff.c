@@ -20,6 +20,7 @@
 static int diff_detect_rename_default;
 static int diff_rename_limit_default = 100;
 static int diff_use_color_default;
+static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 
 static char diff_colors[][COLOR_MAXLEN] = {
@@ -163,6 +164,10 @@ int git_diff_ui_config(const char *var, const char *value)
 		diff_auto_refresh_index = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "diff.external")) {
+		external_diff_cmd_cfg = xstrdup(value);
+		return 0;
+	}
 	if (!prefixcmp(var, "diff.")) {
 		const char *ep = strrchr(var, '.');
 
@@ -209,6 +214,8 @@ static const char *external_diff(void)
 	if (done_preparing)
 		return external_diff_cmd;
 	external_diff_cmd = getenv("GIT_EXTERNAL_DIFF");
+	if (!external_diff_cmd)
+		external_diff_cmd = external_diff_cmd_cfg;
 	done_preparing = 1;
 	return external_diff_cmd;
 }
@@ -439,7 +446,7 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	ecb.outf = xdiff_outf;
 	ecb.priv = diff_words;
 	diff_words->xm.consume = fn_out_diff_words_aux;
-	xdl_diff(&minus, &plus, &xpp, &xecfg, &ecb);
+	xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 
 	free(minus.ptr);
 	free(plus.ptr);
@@ -486,88 +493,9 @@ const char *diff_get_color(int diff_use_color, enum color_diff ix)
 
 static void emit_line(const char *set, const char *reset, const char *line, int len)
 {
-	if (len > 0 && line[len-1] == '\n')
-		len--;
 	fputs(set, stdout);
 	fwrite(line, len, 1, stdout);
-	puts(reset);
-}
-
-static void emit_line_with_ws(int nparents,
-			      const char *set, const char *reset, const char *ws,
-			      const char *line, int len, unsigned ws_rule)
-{
-	int col0 = nparents;
-	int last_tab_in_indent = -1;
-	int last_space_in_indent = -1;
-	int i;
-	int tail = len;
-	int need_highlight_leading_space = 0;
-	/*
-	 * The line is a newly added line.  Does it have funny leading
-	 * whitespaces?  In indent, SP should never precede a TAB.  In
-	 * addition, under "indent with non tab" rule, there should not
-	 * be more than 8 consecutive spaces.
-	 */
-	for (i = col0; i < len; i++) {
-		if (line[i] == '\t') {
-			last_tab_in_indent = i;
-			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
-			    0 <= last_space_in_indent)
-				need_highlight_leading_space = 1;
-		}
-		else if (line[i] == ' ')
-			last_space_in_indent = i;
-		else
-			break;
-	}
-	if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
-	    0 <= last_space_in_indent &&
-	    last_tab_in_indent < 0 &&
-	    8 <= (i - col0)) {
-		last_tab_in_indent = i;
-		need_highlight_leading_space = 1;
-	}
-	fputs(set, stdout);
-	fwrite(line, col0, 1, stdout);
 	fputs(reset, stdout);
-	if (((i == len) || line[i] == '\n') && i != col0) {
-		/* The whole line was indent */
-		emit_line(ws, reset, line + col0, len - col0);
-		return;
-	}
-	i = col0;
-	if (need_highlight_leading_space) {
-		while (i < last_tab_in_indent) {
-			if (line[i] == ' ') {
-				fputs(ws, stdout);
-				putchar(' ');
-				fputs(reset, stdout);
-			}
-			else
-				putchar(line[i]);
-			i++;
-		}
-	}
-	tail = len - 1;
-	if (line[tail] == '\n' && i < tail)
-		tail--;
-	if (ws_rule & WS_TRAILING_SPACE) {
-		while (i < tail) {
-			if (!isspace(line[tail]))
-				break;
-			tail--;
-		}
-	}
-	if ((i < tail && line[tail + 1] != '\n')) {
-		/* This has whitespace between tail+1..len */
-		fputs(set, stdout);
-		fwrite(line + i, tail - i + 1, 1, stdout);
-		fputs(reset, stdout);
-		emit_line(ws, reset, line + tail + 1, len - tail - 1);
-	}
-	else
-		emit_line(set, reset, line + i, len - i);
 }
 
 static void emit_add_line(const char *reset, struct emit_callback *ecbdata, const char *line, int len)
@@ -577,9 +505,13 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 
 	if (!*ws)
 		emit_line(set, reset, line, len);
-	else
-		emit_line_with_ws(ecbdata->nparents, set, reset, ws,
-				  line, len, ecbdata->ws_rule);
+	else {
+		/* Emit just the prefix, then the rest. */
+		emit_line(set, reset, line, ecbdata->nparents);
+		(void)check_and_emit_line(line + ecbdata->nparents,
+		    len - ecbdata->nparents, ecbdata->ws_rule,
+		    stdout, set, reset, ws);
+	}
 }
 
 static void fn_out_consume(void *priv, char *line, unsigned long len)
@@ -1031,6 +963,7 @@ struct checkdiff_t {
 	const char *filename;
 	int lineno, color_diff;
 	unsigned ws_rule;
+	unsigned status;
 };
 
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
@@ -1039,44 +972,19 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	const char *ws = diff_get_color(data->color_diff, DIFF_WHITESPACE);
 	const char *reset = diff_get_color(data->color_diff, DIFF_RESET);
 	const char *set = diff_get_color(data->color_diff, DIFF_FILE_NEW);
+	char *err;
 
 	if (line[0] == '+') {
-		int i, spaces = 0, space_before_tab = 0, white_space_at_end = 0;
-
-		/* check space before tab */
-		for (i = 1; i < len; i++) {
-			if (line[i] == ' ')
-				spaces++;
-			else if (line[i] == '\t') {
-				if (spaces) {
-					space_before_tab = 1;
-					break;
-				}
-			}
-			else
-				break;
-		}
-
-		/* check whitespace at line end */
-		if (line[len - 1] == '\n')
-			len--;
-		if (isspace(line[len - 1]))
-			white_space_at_end = 1;
-
-		if (space_before_tab || white_space_at_end) {
-			printf("%s:%d: %s", data->filename, data->lineno, ws);
-			if (space_before_tab) {
-				printf("space before tab");
-				if (white_space_at_end)
-					putchar(',');
-			}
-			if (white_space_at_end)
-				printf("whitespace at end");
-			printf(":%s ", reset);
-			emit_line_with_ws(1, set, reset, ws, line, len,
-					  data->ws_rule);
-		}
-
+		data->status = check_and_emit_line(line + 1, len - 1,
+		    data->ws_rule, NULL, NULL, NULL, NULL);
+		if (!data->status)
+			return;
+		err = whitespace_error_string(data->status);
+		printf("%s:%d: %s.\n", data->filename, data->lineno, err);
+		free(err);
+		emit_line(set, reset, line, 1);
+		(void)check_and_emit_line(line + 1, len - 1, data->ws_rule,
+		    stdout, set, reset, ws);
 		data->lineno++;
 	} else if (line[0] == ' ')
 		data->lineno++;
@@ -1393,7 +1301,7 @@ static void builtin_diff(const char *name_a,
 		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS))
 			ecbdata.diff_words =
 				xcalloc(1, sizeof(struct diff_words_data));
-		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS))
 			free_diff_words_data(&ecbdata);
 	}
@@ -1446,7 +1354,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		ecb.outf = xdiff_outf;
 		ecb.priv = diffstat;
-		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
 
  free_and_return:
@@ -1486,11 +1394,13 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		xpp.flags = XDF_NEED_MINIMAL;
 		ecb.outf = xdiff_outf;
 		ecb.priv = &data;
-		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
  free_and_return:
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
+	if (data.status)
+		DIFF_OPT_SET(o, CHECK_FAILED);
 }
 
 struct diff_filespec *alloc_filespec(const char *path)
@@ -2898,7 +2808,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		ecb.outf = xdiff_outf;
 		ecb.priv = &data;
-		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
 
 	SHA1_Final(sha1, &ctx);
@@ -3171,6 +3081,20 @@ void diffcore_std(struct diff_options *options)
 		DIFF_OPT_CLR(options, HAS_CHANGES);
 }
 
+int diff_result_code(struct diff_options *opt, int status)
+{
+	int result = 0;
+	if (!DIFF_OPT_TST(opt, EXIT_WITH_STATUS) &&
+	    !(opt->output_format & DIFF_FORMAT_CHECKDIFF))
+		return status;
+	if (DIFF_OPT_TST(opt, EXIT_WITH_STATUS) &&
+	    DIFF_OPT_TST(opt, HAS_CHANGES))
+		result |= 01;
+	if ((opt->output_format & DIFF_FORMAT_CHECKDIFF) &&
+	    DIFF_OPT_TST(opt, CHECK_FAILED))
+		result |= 02;
+	return result;
+}
 
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,

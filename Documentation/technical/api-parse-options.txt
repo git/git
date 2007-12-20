@@ -1,0 +1,6 @@
+parse-options API
+=================
+
+Talk about <parse-options.h>
+
+(Pierre)

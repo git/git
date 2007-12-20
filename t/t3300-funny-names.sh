@@ -54,7 +54,7 @@ echo 'just space
 no-funny
 tabs	," (dq) and spaces' >expected
 test_expect_success 'git ls-files -z with-funny' \
-	'git ls-files -z | tr \\0 \\012 >current &&
+	'git ls-files -z | tr \\000 \\012 >current &&
 	git diff expected current'
 
 t1=`git write-tree`
@@ -83,11 +83,11 @@ test_expect_success 'git diff-tree with-funny' \
 echo 'A
 tabs	," (dq) and spaces' >expected
 test_expect_success 'git diff-index -z with-funny' \
-	'git diff-index -z --name-status $t0 | tr \\0 \\012 >current &&
+	'git diff-index -z --name-status $t0 | tr \\000 \\012 >current &&
 	git diff expected current'
 
 test_expect_success 'git diff-tree -z with-funny' \
-	'git diff-tree -z --name-status $t0 $t1 | tr \\0 \\012 >current &&
+	'git diff-tree -z --name-status $t0 $t1 | tr \\000 \\012 >current &&
 	git diff expected current'
 
 cat > expected <<\EOF

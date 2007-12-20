@@ -125,7 +125,6 @@ static void origin_decref(struct origin *o)
 	if (o && --o->refcnt <= 0) {
 		if (o->file.ptr)
 			free(o->file.ptr);
-		memset(o, 0, sizeof(*o));
 		free(o);
 	}
 }
@@ -542,7 +541,7 @@ static struct patch *compare_buffer(mmfile_t *file_p, mmfile_t *file_o,
 	state.ret->chunks = NULL;
 	state.ret->num = 0;
 
-	xdl_diff(file_p, file_o, &xpp, &xecfg, &ecb);
+	xdi_diff(file_p, file_o, &xpp, &xecfg, &ecb);
 
 	if (state.ret->num) {
 		struct chunk *chunk;

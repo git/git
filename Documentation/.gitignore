@@ -2,6 +2,7 @@
 *.html
 *.[1-8]
 *.made
+git.info
 howto-index.txt
 doc.dep
 cmds-*.txt

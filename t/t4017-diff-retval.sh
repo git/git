@@ -76,4 +76,33 @@ test_expect_success 'git diff-index --cached HEAD' '
 	}
 '
 
+test_expect_success '--check --exit-code returns 0 for no difference' '
+
+	git diff --check --exit-code
+
+'
+
+test_expect_success '--check --exit-code returns 1 for a clean difference' '
+
+	echo "good" > a &&
+	git diff --check --exit-code
+	test $? = 1
+
+'
+
+test_expect_success '--check --exit-code returns 3 for a dirty difference' '
+
+	echo "bad   " >> a &&
+	git diff --check --exit-code
+	test $? = 3
+
+'
+
+test_expect_success '--check with --no-pager returns 2 for dirty difference' '
+
+	git --no-pager diff --check
+	test $? = 2
+
+'
+
 test_done

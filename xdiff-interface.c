@@ -103,6 +103,41 @@ int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	return 0;
 }
 
+/*
+ * Trim down common substring at the end of the buffers,
+ * but leave at least ctx lines at the end.
+ */
+static void trim_common_tail(mmfile_t *a, mmfile_t *b, long ctx)
+{
+	const int blk = 1024;
+	long trimmed = 0, recovered = 0;
+	char *ap = a->ptr + a->size;
+	char *bp = b->ptr + b->size;
+	long smaller = (a->size < b->size) ? a->size : b->size;
+
+	while (blk + trimmed <= smaller && !memcmp(ap - blk, bp - blk, blk)) {
+		trimmed += blk;
+		ap -= blk;
+		bp -= blk;
+	}
+
+	while (recovered < trimmed && 0 <= ctx)
+		if (ap[recovered++] == '\n')
+			ctx--;
+	a->size -= (trimmed - recovered);
+	b->size -= (trimmed - recovered);
+}
+
+int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *xecb)
+{
+	mmfile_t a = *mf1;
+	mmfile_t b = *mf2;
+
+	trim_common_tail(&a, &b, xecfg->ctxlen);
+
+	return xdl_diff(&a, &b, xpp, xecfg, xecb);
+}
+
 int read_mmfile(mmfile_t *ptr, const char *filename)
 {
 	struct stat st;

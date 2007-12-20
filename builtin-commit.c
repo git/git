@@ -280,7 +280,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 	return false_lock.filename;
 }
 
-static int run_status(FILE *fp, const char *index_file, const char *prefix)
+static int run_status(FILE *fp, const char *index_file, const char *prefix, int nowarn)
 {
 	struct wt_status s;
 
@@ -296,6 +296,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix)
 	s.untracked = untracked_files;
 	s.index_file = index_file;
 	s.fp = fp;
+	s.nowarn = nowarn;
 
 	wt_status_print(&s);
 
@@ -412,7 +413,7 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 
 	saved_color_setting = wt_status_use_color;
 	wt_status_use_color = 0;
-	commitable = run_status(fp, index_file, prefix);
+	commitable = run_status(fp, index_file, prefix, 1);
 	wt_status_use_color = saved_color_setting;
 
 	fclose(fp);
@@ -536,7 +537,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		die("Option -m cannot be combined with -c/-C/-F.");
 	if (edit_message)
 		use_message = edit_message;
-	if (amend)
+	if (amend && !use_message)
 		use_message = "HEAD";
 	if (use_message) {
 		unsigned char sha1[20];
@@ -606,7 +607,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	index_file = prepare_index(argc, argv, prefix);
 
-	commitable = run_status(stdout, index_file, prefix);
+	commitable = run_status(stdout, index_file, prefix, 0);
 
 	rollback_index_files();
 
@@ -661,6 +662,10 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	rev.show_root_diff = 1;
 	rev.commit_format = get_commit_format("format:%h: %s");
 	rev.always_show_header = 0;
+	rev.diffopt.detect_rename = 1;
+	rev.diffopt.rename_limit = 100;
+	rev.diffopt.break_opt = 0;
+	diff_setup_done(&rev.diffopt);
 
 	printf("Created %scommit ", initial_commit ? "initial " : "");
 
@@ -717,7 +722,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	if (!prepare_log_message(index_file, prefix) && !in_merge &&
 	    !allow_empty && !(amend && is_a_merge(head_sha1))) {
-		run_status(stdout, index_file, prefix);
+		run_status(stdout, index_file, prefix, 0);
 		rollback_index_files();
 		unlink(commit_editmsg);
 		return 1;
