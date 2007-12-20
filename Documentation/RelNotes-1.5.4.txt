@@ -175,7 +175,9 @@ Updates since v1.5.3
 
  * "git remote" learned "rm" subcommand.
 
- * "git cvsserver" can be run via "git shell".
+ * "git cvsserver" can be run via "git shell".  Also, "cvs" is
+   recognized as a synonym for "git cvsserver", so that CVS users
+   can be switched to git just by changing their login shell.
 
  * "git cvsserver" acts more like receive-pack by running post-receive
    and post-update hooks.
