@@ -291,7 +291,7 @@ __git_commands ()
 	for i in $(git help -a|egrep '^ ')
 	do
 		case $i in
-		add--interactive) : plumbing;;
+		*--*)             : helper pattern;;
 		applymbox)        : ask gittus;;
 		applypatch)       : ask gittus;;
 		archimport)       : import;;
@@ -308,7 +308,6 @@ __git_commands ()
 		diff-tree)        : plumbing;;
 		fast-import)      : import;;
 		fsck-objects)     : plumbing;;
-		fetch--tool)      : plumbing;;
 		fetch-pack)       : plumbing;;
 		fmt-merge-msg)    : plumbing;;
 		for-each-ref)     : plumbing;;

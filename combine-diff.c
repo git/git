@@ -226,7 +226,7 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	state.num_parent = num_parent;
 	state.n = n;
 
-	xdl_diff(&parent_file, result_file, &xpp, &xecfg, &ecb);
+	xdi_diff(&parent_file, result_file, &xpp, &xecfg, &ecb);
 	free(parent_file.ptr);
 
 	/* Assign line numbers for this parent.

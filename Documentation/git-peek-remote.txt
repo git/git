@@ -28,9 +28,6 @@ OPTIONS
 	shells, but prefer having a lean .bashrc file (they set most of
 	the things up in .bash_profile).
 
-\--exec=<git-upload-pack>::
-	Same \--upload-pack=<git-upload-pack>.
-
 <host>::
 	A remote host that houses the repository.  When this
 	part is specified, 'git-upload-pack' is invoked via

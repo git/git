@@ -1994,7 +1994,7 @@ $ git push ssh://yourserver.com/~you/proj.git +master
 -------------------------------------------------
 
 Normally whenever a branch head in a public repository is modified, it
-is modified to point to a descendent of the commit that it pointed to
+is modified to point to a descendant of the commit that it pointed to
 before.  By forcing a push in this situation, you break that convention.
 (See <<problems-with-rewriting-history>>.)
 
@@ -2921,7 +2921,7 @@ As you can see, a commit is defined by:
 - a tree: The SHA1 name of a tree object (as defined below), representing
   the contents of a directory at a certain point in time.
 - parent(s): The SHA1 name of some number of commits which represent the
-  immediately prevoius step(s) in the history of the project.  The
+  immediately previous step(s) in the history of the project.  The
   example above has one parent; merge commits may have more than
   one.  A commit with no parents is called a "root" commit, and
   represents the initial revision of a project.  Each project must have
@@ -3242,7 +3242,7 @@ to replace them by hand.  Back up your repository before attempting this
 in case you corrupt things even more in the process.
 
 We'll assume that the problem is a single missing or corrupted blob,
-which is sometimes a solveable problem.  (Recovering missing trees and
+which is sometimes a solvable problem.  (Recovering missing trees and
 especially commits is *much* harder).
 
 Before starting, verify that there is corruption, and figure out where

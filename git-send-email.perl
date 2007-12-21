@@ -580,7 +580,7 @@ sub send_message
 		$ccline = "\nCc: $cc";
 	}
 	my $sanitized_sender = sanitize_address($sender);
-	make_message_id();
+	make_message_id() unless defined($message_id);
 
 	my $header = "From: $sanitized_sender
 To: $to${ccline}
@@ -718,6 +718,9 @@ foreach my $t (@files) {
 					}
 					push @xh, $_;
 				}
+				elsif (/^Message-Id: (.*)/i) {
+					$message_id = $1;
+				}
 				elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
 					push @xh, $_;
 				}
@@ -805,6 +808,7 @@ foreach my $t (@files) {
 			$references = "$message_id";
 		}
 	}
+	$message_id = undef;
 }
 
 if ($compose) {

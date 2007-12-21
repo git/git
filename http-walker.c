@@ -48,7 +48,7 @@ struct alternates_request {
 	struct walker *walker;
 	const char *base;
 	char *url;
-	struct buffer *buffer;
+	struct strbuf *buffer;
 	struct active_request_slot *slot;
 	int http_specific;
 };
@@ -89,19 +89,6 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	data_received++;
 	return size;
 }
-
-static int missing__target(int code, int result)
-{
-	return	/* file:// URL -- do we ever use one??? */
-		(result == CURLE_FILE_COULDNT_READ_FILE) ||
-		/* http:// and https:// URL */
-		(code == 404 && result == CURLE_HTTP_RETURNED_ERROR) ||
-		/* ftp:// URL */
-		(code == 550 && result == CURLE_FTP_COULDNT_RETR_FILE)
-		;
-}
-
-#define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
 static void fetch_alternates(struct walker *walker, const char *base);
 
@@ -475,7 +462,7 @@ static void process_alternates_response(void *callback_data)
 
 	if (alt_req->http_specific) {
 		if (slot->curl_result != CURLE_OK ||
-		    !alt_req->buffer->posn) {
+		    !alt_req->buffer->len) {
 
 			/* Try reusing the slot to get non-http alternates */
 			alt_req->http_specific = 0;
@@ -503,12 +490,12 @@ static void process_alternates_response(void *callback_data)
 	}
 
 	fwrite_buffer(&null_byte, 1, 1, alt_req->buffer);
-	alt_req->buffer->posn--;
-	data = alt_req->buffer->buffer;
+	alt_req->buffer->len--;
+	data = alt_req->buffer->buf;
 
-	while (i < alt_req->buffer->posn) {
+	while (i < alt_req->buffer->len) {
 		int posn = i;
-		while (posn < alt_req->buffer->posn && data[posn] != '\n')
+		while (posn < alt_req->buffer->len && data[posn] != '\n')
 			posn++;
 		if (data[posn] == '\n') {
 			int okay = 0;
@@ -596,9 +583,8 @@ static void process_alternates_response(void *callback_data)
 
 static void fetch_alternates(struct walker *walker, const char *base)
 {
-	struct buffer buffer;
+	struct strbuf buffer = STRBUF_INIT;
 	char *url;
-	char *data;
 	struct active_request_slot *slot;
 	struct alternates_request alt_req;
 	struct walker_data *cdata = walker->data;
@@ -618,11 +604,6 @@ static void fetch_alternates(struct walker *walker, const char *base)
 
 	/* Start the fetch */
 	cdata->got_alternates = 0;
-
-	data = xmalloc(4096);
-	buffer.size = 4096;
-	buffer.posn = 0;
-	buffer.buffer = data;
 
 	if (walker->get_verbosely)
 		fprintf(stderr, "Getting alternates list for %s\n", base);
@@ -652,7 +633,7 @@ static void fetch_alternates(struct walker *walker, const char *base)
 	else
 		cdata->got_alternates = -1;
 
-	free(data);
+	strbuf_release(&buffer);
 	free(url);
 }
 
@@ -660,20 +641,16 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 {
 	unsigned char sha1[20];
 	char *url;
-	struct buffer buffer;
+	struct strbuf buffer = STRBUF_INIT;
 	char *data;
 	int i = 0;
+	int ret = 0;
 
 	struct active_request_slot *slot;
 	struct slot_results results;
 
 	if (repo->got_indices)
 		return 0;
-
-	data = xmalloc(4096);
-	buffer.size = 4096;
-	buffer.posn = 0;
-	buffer.buffer = data;
 
 	if (walker->get_verbosely)
 		fprintf(stderr, "Getting pack list for %s\n", repo->base);
@@ -692,26 +669,25 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 		if (results.curl_result != CURLE_OK) {
 			if (missing_target(&results)) {
 				repo->got_indices = 1;
-				free(buffer.buffer);
-				return 0;
+				goto cleanup;
 			} else {
 				repo->got_indices = 0;
-				free(buffer.buffer);
-				return error("%s", curl_errorstr);
+				ret = error("%s", curl_errorstr);
+				goto cleanup;
 			}
 		}
 	} else {
 		repo->got_indices = 0;
-		free(buffer.buffer);
-		return error("Unable to start request");
+		ret = error("Unable to start request");
+		goto cleanup;
 	}
 
-	data = buffer.buffer;
-	while (i < buffer.posn) {
+	data = buffer.buf;
+	while (i < buffer.len) {
 		switch (data[i]) {
 		case 'P':
 			i++;
-			if (i + 52 <= buffer.posn &&
+			if (i + 52 <= buffer.len &&
 			    !prefixcmp(data + i, " pack-") &&
 			    !prefixcmp(data + i + 46, ".pack\n")) {
 				get_sha1_hex(data + i + 6, sha1);
@@ -720,15 +696,17 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 				break;
 			}
 		default:
-			while (i < buffer.posn && data[i] != '\n')
+			while (i < buffer.len && data[i] != '\n')
 				i++;
 		}
 		i++;
 	}
 
-	free(buffer.buffer);
 	repo->got_indices = 1;
-	return 0;
+cleanup:
+	strbuf_release(&buffer);
+	free(url);
+	return ret;
 }
 
 static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
@@ -910,85 +888,10 @@ static int fetch(struct walker *walker, unsigned char *sha1)
 		     data->alt->base);
 }
 
-static inline int needs_quote(int ch)
-{
-	if (((ch >= 'A') && (ch <= 'Z'))
-			|| ((ch >= 'a') && (ch <= 'z'))
-			|| ((ch >= '0') && (ch <= '9'))
-			|| (ch == '/')
-			|| (ch == '-')
-			|| (ch == '.'))
-		return 0;
-	return 1;
-}
-
-static inline int hex(int v)
-{
-	if (v < 10) return '0' + v;
-	else return 'A' + v - 10;
-}
-
-static char *quote_ref_url(const char *base, const char *ref)
-{
-	const char *cp;
-	char *dp, *qref;
-	int len, baselen, ch;
-
-	baselen = strlen(base);
-	len = baselen + 7; /* "/refs/" + NUL */
-	for (cp = ref; (ch = *cp) != 0; cp++, len++)
-		if (needs_quote(ch))
-			len += 2; /* extra two hex plus replacement % */
-	qref = xmalloc(len);
-	memcpy(qref, base, baselen);
-	memcpy(qref + baselen, "/refs/", 6);
-	for (cp = ref, dp = qref + baselen + 6; (ch = *cp) != 0; cp++) {
-		if (needs_quote(ch)) {
-			*dp++ = '%';
-			*dp++ = hex((ch >> 4) & 0xF);
-			*dp++ = hex(ch & 0xF);
-		}
-		else
-			*dp++ = ch;
-	}
-	*dp = 0;
-
-	return qref;
-}
-
 static int fetch_ref(struct walker *walker, char *ref, unsigned char *sha1)
 {
-        char *url;
-        char hex[42];
-        struct buffer buffer;
 	struct walker_data *data = walker->data;
-	const char *base = data->alt->base;
-	struct active_request_slot *slot;
-	struct slot_results results;
-        buffer.size = 41;
-        buffer.posn = 0;
-        buffer.buffer = hex;
-        hex[41] = '\0';
-
-	url = quote_ref_url(base, ref);
-	slot = get_active_slot();
-	slot->results = &results;
-	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
-	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	if (start_active_slot(slot)) {
-		run_active_slot(slot);
-		if (results.curl_result != CURLE_OK)
-			return error("Couldn't get %s for %s\n%s",
-				     url, ref, curl_errorstr);
-	} else {
-		return error("Unable to start request");
-	}
-
-        hex[40] = '\0';
-        get_sha1_hex(hex, sha1);
-        return 0;
+	return http_fetch_ref(data->alt->base, ref, sha1);
 }
 
 static void cleanup(struct walker *walker)

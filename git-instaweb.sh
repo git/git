@@ -3,6 +3,7 @@
 # Copyright (c) 2006 Eric Wong
 #
 
+PERL='@@PERL@@'
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
 git-instaweb [options] (--start | --stop | --restart)
@@ -232,16 +233,18 @@ EOF
 }
 
 script='
-s#^\(my\|our\) $projectroot =.*#\1 $projectroot = "'$(dirname "$fqgitdir")'";#
-s#\(my\|our\) $gitbin =.*#\1 $gitbin = "'$GIT_EXEC_PATH'";#
-s#\(my\|our\) $projects_list =.*#\1 $projects_list = $projectroot;#
-s#\(my\|our\) $git_temp =.*#\1 $git_temp = "'$fqgitdir/gitweb/tmp'";#'
+s#^(my|our) \$projectroot =.*#$1 \$projectroot = "'$(dirname "$fqgitdir")'";#;
+s#(my|our) \$gitbin =.*#$1 \$gitbin = "'$GIT_EXEC_PATH'";#;
+s#(my|our) \$projects_list =.*#$1 \$projects_list = \$projectroot;#;
+s#(my|our) \$git_temp =.*#$1 \$git_temp = "'$fqgitdir/gitweb/tmp'";#;'
 
 gitweb_cgi () {
 	cat > "$1.tmp" <<\EOFGITWEB
 @@GITWEB_CGI@@
 EOFGITWEB
-	sed "$script" "$1.tmp"  > "$1"
+	# Use the configured full path to perl to match the generated
+	# scripts' 'hashpling' line
+	"$PERL" -p -e "$script" "$1.tmp"  > "$1"
 	chmod +x "$1"
 	rm -f "$1.tmp"
 }
@@ -273,4 +276,4 @@ esac
 
 start_httpd
 url=http://127.0.0.1:$port
-"$browser" $url || echo $url
+test -n "$browser" && "$browser" $url || echo $url

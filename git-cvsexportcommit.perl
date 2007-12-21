@@ -195,11 +195,11 @@ foreach my $f (@files) {
 my %cvsstat;
 if (@canstatusfiles) {
     if ($opt_u) {
-      my @updated = safe_pipe_capture(@cvs, 'update', @canstatusfiles);
+      my @updated = xargs_safe_pipe_capture([@cvs, 'update'], @canstatusfiles);
       print @updated;
     }
     my @cvsoutput;
-    @cvsoutput= safe_pipe_capture(@cvs, 'status', @canstatusfiles);
+    @cvsoutput = xargs_safe_pipe_capture([@cvs, 'status'], @canstatusfiles);
     my $matchcount = 0;
     foreach my $l (@cvsoutput) {
         chomp $l;
@@ -295,7 +295,7 @@ if ($dirtypatch) {
 
 if ($opt_c) {
     print "Autocommit\n  $cmd\n";
-    print safe_pipe_capture(@cvs, 'commit', '-F', '.msg', @files);
+    print xargs_safe_pipe_capture([@cvs, 'commit', '-F', '.msg'], @files);
     if ($?) {
 	die "Exiting: The commit did not succeed";
     }
@@ -335,15 +335,24 @@ sub safe_pipe_capture {
     return wantarray ? @output : join('',@output);
 }
 
-sub safe_pipe_capture_blob {
-    my $output;
-    if (my $pid = open my $child, '-|') {
-        local $/;
-	undef $/;
-	$output = (<$child>);
-	close $child or die join(' ',@_).": $! $?";
-    } else {
-	exec(@_) or die "$! $?"; # exec() can fail the executable can't be found
-    }
-    return $output;
+sub xargs_safe_pipe_capture {
+	my $MAX_ARG_LENGTH = 65536;
+	my $cmd = shift;
+	my @output;
+	my $output;
+	while(@_) {
+		my @args;
+		my $length = 0;
+		while(@_ && $length < $MAX_ARG_LENGTH) {
+			push @args, shift;
+			$length += length($args[$#args]);
+		}
+		if (wantarray) {
+			push @output, safe_pipe_capture(@$cmd, @args);
+		}
+		else {
+			$output .= safe_pipe_capture(@$cmd, @args);
+		}
+	}
+	return wantarray ? @output : $output;
 }

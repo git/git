@@ -274,7 +274,7 @@ limiting may be applied.
 --quiet::
 
 	Don't print anything to standard output.  This form of
-	git-rev-list is primarly meant to allow the caller to
+	git-rev-list is primarily meant to allow the caller to
 	test the exit status to see if a range of objects is fully
 	connected (or not).  It is faster than redirecting stdout
 	to /dev/null as the output does not have to be formatted.

@@ -13,6 +13,7 @@ struct xdiff_emit_state {
 	unsigned long remainder_size;
 };
 
+int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *ecb);
 int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf);
 int parse_hunk_header(char *line, int len,
 		      int *ob, int *on,

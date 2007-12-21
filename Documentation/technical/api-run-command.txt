@@ -1,0 +1,10 @@
+run-command API
+===============
+
+Talk about <run-command.h>, and things like:
+
+* Environment the command runs with (e.g. GIT_DIR);
+* File descriptors and pipes;
+* Exit status;
+
+(Hannes, Dscho, Shawn)

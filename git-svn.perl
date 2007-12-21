@@ -197,8 +197,8 @@ for (my $i = 0; $i < @ARGV; $i++) {
 	}
 };
 
-# make sure we're always running
-unless ($cmd =~ /(?:clone|init|multi-init)$/) {
+# make sure we're always running at the top-level working directory
+unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 	unless (-d $ENV{GIT_DIR}) {
 		if ($git_dir_user_set) {
 			die "GIT_DIR=$ENV{GIT_DIR} explicitly set, ",
@@ -396,6 +396,7 @@ sub cmd_set_tree {
 	}
 	$gs->set_tree($_) foreach @revs;
 	print "Done committing ",scalar @revs," revisions to SVN\n";
+	unlink $gs->{index};
 }
 
 sub cmd_dcommit {
@@ -514,6 +515,7 @@ sub cmd_dcommit {
 			$last_rev = $cmt_rev;
 		}
 	}
+	unlink $gs->{index};
 }
 
 sub cmd_find_rev {
@@ -1374,6 +1376,7 @@ sub fetch_all {
 
 	($base, $head) = parse_revision_argument($base, $head);
 	$ra->gs_fetch_loop_common($base, $head, \@gs, \@globs);
+	unlink $_->{index} foreach @gs;
 }
 
 sub read_all_remotes {
@@ -2049,6 +2052,43 @@ sub full_url {
 	$self->{url} . (length $self->{path} ? '/' . $self->{path} : '');
 }
 
+
+sub set_commit_header_env {
+	my ($log_entry) = @_;
+	my %env;
+	foreach my $ned (qw/NAME EMAIL DATE/) {
+		foreach my $ac (qw/AUTHOR COMMITTER/) {
+			$env{"GIT_${ac}_${ned}"} = $ENV{"GIT_${ac}_${ned}"};
+		}
+	}
+
+	$ENV{GIT_AUTHOR_NAME} = $log_entry->{name};
+	$ENV{GIT_AUTHOR_EMAIL} = $log_entry->{email};
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
+
+	$ENV{GIT_COMMITTER_NAME} = (defined $log_entry->{commit_name})
+						? $log_entry->{commit_name}
+						: $log_entry->{name};
+	$ENV{GIT_COMMITTER_EMAIL} = (defined $log_entry->{commit_email})
+						? $log_entry->{commit_email}
+						: $log_entry->{email};
+	\%env;
+}
+
+sub restore_commit_header_env {
+	my ($env) = @_;
+	foreach my $ned (qw/NAME EMAIL DATE/) {
+		foreach my $ac (qw/AUTHOR COMMITTER/) {
+			my $k = "GIT_${ac}_${ned}";
+			if (defined $env->{$k}) {
+				$ENV{$k} = $env->{$k};
+			} else {
+				delete $ENV{$k};
+			}
+		}
+	}
+}
+
 sub do_git_commit {
 	my ($self, $log_entry) = @_;
 	my $lr = $self->last_rev;
@@ -2061,17 +2101,7 @@ sub do_git_commit {
 		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
 	}
-	$ENV{GIT_AUTHOR_NAME} = $log_entry->{name};
-	$ENV{GIT_AUTHOR_EMAIL} = $log_entry->{email};
-	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
-
-	$ENV{GIT_COMMITTER_NAME} = (defined $log_entry->{commit_name})
-						? $log_entry->{commit_name}
-						: $log_entry->{name};
-	$ENV{GIT_COMMITTER_EMAIL} = (defined $log_entry->{commit_email})
-						? $log_entry->{commit_email}
-						: $log_entry->{email};
-
+	my $old_env = set_commit_header_env($log_entry);
 	my $tree = $log_entry->{tree};
 	if (!defined $tree) {
 		$tree = $self->tmp_index_do(sub {
@@ -2086,6 +2116,7 @@ sub do_git_commit {
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
 	print $msg_fh $log_entry->{log} or croak $!;
+	restore_commit_header_env($old_env);
 	unless ($self->no_metadata) {
 		print $msg_fh "\ngit-svn-id: $log_entry->{metadata}\n"
 		              or croak $!;
@@ -2363,11 +2394,20 @@ sub make_log_entry {
 
 	my ($commit_name, $commit_email) = ($name, $email);
 	if ($_use_log_author) {
-		if ($log_entry{log} =~ /From:\s+(.*?)\s+<(.*)>\s*\n/) {
+		my $name_field;
+		if ($log_entry{log} =~ /From:\s+(.*\S)\s*\n/i) {
+			$name_field = $1;
+		} elsif ($log_entry{log} =~ /Signed-off-by:\s+(.*\S)\s*\n/i) {
+			$name_field = $1;
+		}
+		if (!defined $name_field) {
+			#
+		} elsif ($name_field =~ /(.*?)\s+<(.*)>/) {
 			($name, $email) = ($1, $2);
-		} elsif ($log_entry{log} =~
-		                      /Signed-off-by:\s+(.*?)\s+<(.*)>\s*\n/) {
-			($name, $email) = ($1, $2);
+		} elsif ($name_field =~ /(.*)@/) {
+			($name, $email) = ($1, $name_field);
+		} else {
+			($name, $email) = ($name_field, 'unknown');
 		}
 	}
 	if (defined $headrev && $self->use_svm_props) {
@@ -3033,6 +3073,20 @@ sub add_file {
 
 sub add_directory {
 	my ($self, $path, $cp_path, $cp_rev) = @_;
+	my $gpath = $self->git_path($path);
+	if ($gpath eq '') {
+		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
+		                                     -r --name-only -z/,
+				                     $self->{c});
+		local $/ = "\0";
+		while (<$ls>) {
+			chomp;
+			$self->{gii}->remove($_);
+			print "\tD\t$_\n" unless $::_q;
+		}
+		command_close_pipe($ls, $ctx);
+		$self->{empty}->{$path} = 0;
+	}
 	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
 	delete $self->{empty}->{$dir};
 	$self->{empty}->{$path} = 1;
@@ -3123,9 +3177,15 @@ sub close_file {
 		}
 		sysseek($fh, 0, 0) or croak $!;
 		if ($fb->{mode_b} == 120000) {
-			sysread($fh, my $buf, 5) == 5 or croak $!;
-			$buf eq 'link ' or die "$path has mode 120000",
-			                       "but is not a link\n";
+			eval {
+				sysread($fh, my $buf, 5) == 5 or croak $!;
+				$buf eq 'link ' or die "$path has mode 120000",
+						       " but is not a link";
+			};
+			if ($@) {
+				warn "$@\n";
+				sysseek($fh, 0, 0) or croak $!;
+			}
 		}
 		defined(my $pid = open my $out,'-|') or die "Can't fork: $!\n";
 		if (!$pid) {

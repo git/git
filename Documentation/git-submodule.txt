@@ -68,7 +68,8 @@ FILES
 When initializing submodules, a .gitmodules file in the top-level directory
 of the containing repository is used to find the url of each submodule.
 This file should be formatted in the same way as $GIR_DIR/config. The key
-to each submodule url is "submodule.$name.url".
+to each submodule url is "submodule.$name.url".  See gitlink:gitmodules[5]
+for details.
 
 
 AUTHOR
