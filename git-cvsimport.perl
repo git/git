@@ -848,7 +848,7 @@ while (<CVS>) {
 		}
 		if (!$opt_a && $starttime - 300 - (defined $opt_z ? $opt_z : 300) <= $date) {
 			# skip if the commit is too recent
-			# that the cvsps default fuzz is 300s, we give ourselves another
+			# given that the cvsps default fuzz is 300s, we give ourselves another
 			# 300s just in case -- this also prevents skipping commits
 			# due to server clock drift
 			print "skip patchset $patchset: $date too recent\n" if $opt_v;
