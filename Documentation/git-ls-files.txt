@@ -105,7 +105,8 @@ OPTIONS
 
 -v::
 	Similar to `-t`, but use lowercase letters for files
-	that are marked as 'always matching index'.
+	that are marked as 'assume unchanged' (see
+	gitlink:git-update-index[1]).
 
 --full-name::
 	When run from a subdirectory, the command usually
