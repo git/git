@@ -497,10 +497,6 @@ test_expect_success \
 	git diff expect actual &&
 
 	echo "tag-one-line    A msg" >expect &&
-	git-tag -n xxx -l | grep "^tag-one-line" >actual &&
-	git diff expect actual &&
-	git-tag -n "" -l | grep "^tag-one-line" >actual &&
-	git diff expect actual &&
 	git-tag -n 1 -l | grep "^tag-one-line" >actual &&
 	git diff expect actual &&
 	git-tag -n -l | grep "^tag-one-line" >actual &&
@@ -912,10 +908,6 @@ test_expect_success \
 	git diff expect actual &&
 
 	echo "stag-one-line   A message line signed" >expect &&
-	git-tag -n xxx -l | grep "^stag-one-line" >actual &&
-	git diff expect actual &&
-	git-tag -n "" -l | grep "^stag-one-line" >actual &&
-	git diff expect actual &&
 	git-tag -n 1 -l | grep "^stag-one-line" >actual &&
 	git diff expect actual &&
 	git-tag -n -l | grep "^stag-one-line" >actual &&
