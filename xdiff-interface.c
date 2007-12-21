@@ -115,17 +115,20 @@ static void trim_common_tail(mmfile_t *a, mmfile_t *b, long ctx)
 	char *bp = b->ptr + b->size;
 	long smaller = (a->size < b->size) ? a->size : b->size;
 
+	if (ctx)
+		return;
+
 	while (blk + trimmed <= smaller && !memcmp(ap - blk, bp - blk, blk)) {
 		trimmed += blk;
 		ap -= blk;
 		bp -= blk;
 	}
 
-	while (recovered < trimmed && 0 <= ctx)
+	while (recovered < trimmed)
 		if (ap[recovered++] == '\n')
-			ctx--;
-	a->size -= (trimmed - recovered);
-	b->size -= (trimmed - recovered);
+			break;
+	a->size -= trimmed - recovered;
+	b->size -= trimmed - recovered;
 }
 
 int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *xecb)
