@@ -89,7 +89,7 @@ static int get_value(struct optparse_t *p,
 			*(const char **)opt->value = NULL;
 			return 0;
 		}
-		if (opt->flags & PARSE_OPT_OPTARG && (!arg || *arg == '-')) {
+		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
 			*(const char **)opt->value = (const char *)opt->defval;
 			return 0;
 		}
@@ -103,7 +103,7 @@ static int get_value(struct optparse_t *p,
 			return (*opt->callback)(opt, NULL, 1);
 		if (opt->flags & PARSE_OPT_NOARG)
 			return (*opt->callback)(opt, NULL, 0);
-		if (opt->flags & PARSE_OPT_OPTARG && (!arg || *arg == '-'))
+		if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
 			return (*opt->callback)(opt, NULL, 0);
 		if (!arg)
 			return opterror(opt, "requires a value", flags);
@@ -114,7 +114,7 @@ static int get_value(struct optparse_t *p,
 			*(int *)opt->value = 0;
 			return 0;
 		}
-		if (opt->flags & PARSE_OPT_OPTARG && (!arg || !isdigit(*arg))) {
+		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
 			*(int *)opt->value = opt->defval;
 			return 0;
 		}
