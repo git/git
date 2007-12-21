@@ -136,29 +136,38 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 	struct object *obj;
 	int eaten = 0;
 
+	obj = NULL;
 	if (type == OBJ_BLOB) {
 		struct blob *blob = lookup_blob(sha1);
-		parse_blob_buffer(blob, buffer, size);
-		obj = &blob->object;
+		if (blob) {
+			parse_blob_buffer(blob, buffer, size);
+			obj = &blob->object;
+		}
 	} else if (type == OBJ_TREE) {
 		struct tree *tree = lookup_tree(sha1);
-		obj = &tree->object;
-		if (!tree->object.parsed) {
-			parse_tree_buffer(tree, buffer, size);
-			eaten = 1;
+		if (tree) {
+			obj = &tree->object;
+			if (!tree->object.parsed) {
+				parse_tree_buffer(tree, buffer, size);
+				eaten = 1;
+			}
 		}
 	} else if (type == OBJ_COMMIT) {
 		struct commit *commit = lookup_commit(sha1);
-		parse_commit_buffer(commit, buffer, size);
-		if (!commit->buffer) {
-			commit->buffer = buffer;
-			eaten = 1;
+		if (commit) {
+			parse_commit_buffer(commit, buffer, size);
+			if (!commit->buffer) {
+				commit->buffer = buffer;
+				eaten = 1;
+			}
+			obj = &commit->object;
 		}
-		obj = &commit->object;
 	} else if (type == OBJ_TAG) {
 		struct tag *tag = lookup_tag(sha1);
-		parse_tag_buffer(tag, buffer, size);
-		obj = &tag->object;
+		if (tag) {
+			parse_tag_buffer(tag, buffer, size);
+			obj = &tag->object;
+		}
 	} else {
 		warning("object %s has unknown type id %d\n", sha1_to_hex(sha1), type);
 		obj = NULL;
