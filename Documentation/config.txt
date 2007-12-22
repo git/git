@@ -658,7 +658,7 @@ remote.<name>.push::
 
 remote.<name>.skipDefaultUpdate::
 	If true, this remote will be skipped by default when updating
-	using the remote subcommand of gitlink:git-remote[1].
+	using the update subcommand of gitlink:git-remote[1].
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See
