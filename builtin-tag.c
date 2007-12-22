@@ -47,7 +47,19 @@ void launch_editor(const char *path, struct strbuf *buffer, const char *const *e
 		editor = "vi";
 
 	if (strcmp(editor, ":")) {
-		const char *args[] = { editor, path, NULL };
+		size_t len = strlen(editor);
+		int i = 0;
+		const char *args[6];
+
+		if (strcspn(editor, "$ \t'") != len) {
+			/* there are specials */
+			args[i++] = "sh";
+			args[i++] = "-c";
+			args[i++] = "$0 \"$@\"";
+		}
+		args[i++] = editor;
+		args[i++] = path;
+		args[i] = NULL;
 
 		if (run_command_v_opt_cd_env(args, 0, NULL, env))
 			die("There was a problem with the editor %s.", editor);
