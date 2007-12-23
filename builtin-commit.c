@@ -48,7 +48,7 @@ static char *edit_message, *use_message;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, untracked_files, no_verify, allow_empty;
 
-static int no_edit, initial_commit, in_merge;
+static int use_editor = 1, initial_commit, in_merge;
 const char *only_include_assumed;
 struct strbuf message;
 
@@ -372,7 +372,7 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 
 	strbuf_release(&sb);
 
-	if (no_edit) {
+	if (!use_editor) {
 		struct rev_info rev;
 		unsigned char sha1[20];
 		const char *parent = "HEAD";
@@ -398,7 +398,7 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 		return !!DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES);
 	}
 
-	if (in_merge && !no_edit)
+	if (in_merge)
 		fprintf(fp,
 			"#\n"
 			"# It looks like you may be committing a MERGE.\n"
@@ -513,9 +513,9 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	argc = parse_options(argc, argv, builtin_commit_options, usage, 0);
 
 	if (logfile || message.len || use_message)
-		no_edit = 1;
+		use_editor = 0;
 	if (edit_flag)
-		no_edit = 0;
+		use_editor = 1;
 
 	if (get_sha1("HEAD", head_sha1))
 		initial_commit = 1;
@@ -796,7 +796,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	/* Get the commit message and validate it */
 	header_len = sb.len;
-	if (!no_edit) {
+	if (use_editor) {
 		char index[PATH_MAX];
 		const char *env[2] = { index, NULL };
 		snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
