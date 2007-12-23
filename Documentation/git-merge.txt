@@ -163,7 +163,8 @@ After seeing a conflict, you can do two things:
 
 SEE ALSO
 --------
-gitlink:git-fmt-merge-msg[1], gitlink:git-pull[1]
+gitlink:git-fmt-merge-msg[1], gitlink:git-pull[1],
+gitlink:gitattributes[5]
 
 
 Author

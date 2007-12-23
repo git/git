@@ -322,12 +322,43 @@ String::
 	requested with "binary".
 
 
+Built-in merge drivers
+^^^^^^^^^^^^^^^^^^^^^^
+
+There are a few built-in low-level merge drivers defined that
+can be asked for via the `merge` attribute.
+
+text::
+
+	Usual 3-way file level merge for text files.  Conflicted
+	regions are marked with conflict markers `<<<<<<<`,
+	`=======` and `>>>>>>>`.  The version from your branch
+	appears before the `=======` marker, and the version
+	from the merged branch appears after the `=======`
+	marker.
+
+binary::
+
+	Keep the version from your branch in the work tree, but
+	leave the path in the conflicted state for the user to
+	sort out.
+
+union::
+
+	Run 3-way file level merge for text files, but take
+	lines from both versions, instead of leaving conflict
+	markers.  This tends to leave the added lines in the
+	resulting file in random order and the user should
+	verify the result. Do not use this if you do not
+	understand the implications.
+
+
 Defining a custom merge driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The definition of a merge driver is done in `gitconfig` not
-`gitattributes` file, so strictly speaking this manual page is a
-wrong place to talk about it.  However...
+The definition of a merge driver is done in the `.git/config`
+file, not in the `gitattributes` file, so strictly speaking this
+manual page is a wrong place to talk about it.  However...
 
 To define a custom merge driver `filfre`, add a section to your
 `$GIT_DIR/config` file (or `$HOME/.gitconfig` file) like this:
