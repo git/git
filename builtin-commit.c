@@ -374,7 +374,7 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 
 	if (no_edit) {
 		struct rev_info rev;
-		unsigned char sha1[40];
+		unsigned char sha1[20];
 		const char *parent = "HEAD";
 
 		fclose(fp);
@@ -382,11 +382,11 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 		if (!active_nr && read_cache() < 0)
 			die("Cannot read index");
 
-		if (get_sha1("HEAD", sha1) != 0)
-			return !!active_nr;
-
 		if (amend)
 			parent = "HEAD^1";
+
+		if (get_sha1(parent, sha1))
+			return !!active_nr;
 
 		init_revisions(&rev, "");
 		rev.abbrev = 0;
