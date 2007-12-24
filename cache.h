@@ -499,6 +499,9 @@ extern void *read_object_with_reference(const unsigned char *sha1,
 					unsigned long *size,
 					unsigned char *sha1_ret);
 
+extern struct object *peel_to_type(const char *name, int namelen,
+				   struct object *o, enum object_type);
+
 enum date_mode {
 	DATE_NORMAL = 0,
 	DATE_RELATIVE,
