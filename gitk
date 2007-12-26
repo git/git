@@ -174,6 +174,7 @@ proc updatecommits {} {
     if {$showlocalchanges && [commitinview $mainheadid $curview]} {
 	dodiffindex
     }
+    rereadrefs
     set view $curview
     set commits [exec git rev-parse --default HEAD --revs-only \
 		     $viewargs($view)]
@@ -218,8 +219,6 @@ proc updatecommits {} {
     incr viewactive($view)
     set viewcomplete($view) 0
     nowbusy $view "Reading"
-    readrefs
-    changedrefs
     if {$showneartags} {
 	getallcommits
     }
@@ -579,7 +578,7 @@ proc insertrow {id p v} {
 
 proc removerow {id v} {
     global varcid varccommits parents children commitidx
-    global varctok vtokmod cmitlisted
+    global varctok vtokmod cmitlisted currentid selectedline
 
     if {[llength $parents($v,$id)] != 1} {
 	puts "oops: removerow [shortids $id] has [llength $parents($v,$id)] parents"
@@ -604,6 +603,10 @@ proc removerow {id v} {
     }
     if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
 	modify_arc $v $a $i
+    }
+    if {[info exist currentid] && $id eq $currentid} {
+	unset currentid
+	unset selectedline
     }
     drawvisible
 }
@@ -733,7 +736,7 @@ proc rowofcommit {id} {
 	return {}
     }
     set a $varcid($v,$id)
-    if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] > 0} {
+    if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] >= 0} {
 	update_arcrows $v
     }
     set i [lsearch -exact $varccommits($v,$a) $id]
@@ -3515,7 +3518,7 @@ proc dodiffindex {} {
 }
 
 proc readdiffindex {fd serial} {
-    global mainheadid nullid2 curview commitinfo commitdata lserial
+    global mainheadid nullid nullid2 curview commitinfo commitdata lserial
 
     set isdiff 1
     if {[gets $fd line] < 0} {
@@ -3541,6 +3544,9 @@ proc readdiffindex {fd serial} {
 	set hl [mc "Local changes checked in to index but not committed"]
 	set commitinfo($nullid2) [list  $hl {} {} {} {} "    $hl\n"]
 	set commitdata($nullid2) "\n    $hl\n"
+	if {[commitinview $nullid $curview]} {
+	    removerow $nullid $curview
+	}
 	insertrow $nullid2 $mainheadid $curview
     } elseif {!$isdiff && [commitinview $nullid2 $curview]} {
 	removerow $nullid2 $curview
@@ -5058,7 +5064,9 @@ proc selcanvline {w x y} {
 	set l 0
     }
     if {$w eq $canv} {
-	if {![info exists rowtextx($l)] || $x < $rowtextx($l)} return
+	set xmax [lindex [$canv cget -scrollregion] 2]
+	set xleft [expr {[lindex [$canv xview] 0] * $xmax}]
+	if {![info exists rowtextx($l)] || $xleft + $x < $rowtextx($l)} return
     }
     unmarkmatches
     selectline $l 1
@@ -5305,13 +5313,12 @@ proc selectline {l isnew} {
 
     make_secsel $l
 
+    set id [commitonrow $l]
     if {$isnew} {
-	addtohistory [list selectline $l 0]
+	addtohistory [list selbyid $id]
     }
 
     set selectedline $l
-
-    set id [commitonrow $l]
     set currentid $id
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
@@ -6765,24 +6772,24 @@ proc domktag {} {
 }
 
 proc redrawtags {id} {
-    global canv linehtag idpos selectedline curview
+    global canv linehtag idpos currentid curview
     global canvxmax iddrawn
 
     if {![commitinview $id $curview]} return
     if {![info exists iddrawn($id)]} return
-    drawcommits [rowofcommit $id]
+    set row [rowofcommit $id]
     $canv delete tag.$id
     set xt [eval drawtags $id $idpos($id)]
-    $canv coords $linehtag([rowofcommit $id]) $xt [lindex $idpos($id) 2]
-    set text [$canv itemcget $linehtag([rowofcommit $id]) -text]
-    set xr [expr {$xt + [font measure mainfont $text]}]
+    $canv coords $linehtag($row) $xt [lindex $idpos($id) 2]
+    set text [$canv itemcget $linehtag($row) -text]
+    set font [$canv itemcget $linehtag($row) -font]
+    set xr [expr {$xt + [font measure $font $text]}]
     if {$xr > $canvxmax} {
 	set canvxmax $xr
 	setcanvscroll
     }
-    if {[info exists selectedline]
-	&& $selectedline == [rowofcommit $id]} {
-	selectline $selectedline 0
+    if {[info exists currentid] && $currentid == $id} {
+	make_secsel $row
     }
 }
 
@@ -8342,7 +8349,7 @@ proc changedrefs {} {
 }
 
 proc rereadrefs {} {
-    global idtags idheads idotherrefs mainhead
+    global idtags idheads idotherrefs mainheadid
 
     set refids [concat [array names idtags] \
 		    [array names idheads] [array names idotherrefs]]
@@ -8351,7 +8358,7 @@ proc rereadrefs {} {
 	    set ref($id) [listrefs $id]
 	}
     }
-    set oldmainhead $mainhead
+    set oldmainhead $mainheadid
     readrefs
     changedrefs
     set refids [lsort -unique [concat $refids [array names idtags] \
@@ -8359,8 +8366,8 @@ proc rereadrefs {} {
     foreach id $refids {
 	set v [listrefs $id]
 	if {![info exists ref($id)] || $ref($id) != $v ||
-	    ($id eq $oldmainhead && $id ne $mainhead) ||
-	    ($id eq $mainhead && $id ne $oldmainhead)} {
+	    ($id eq $oldmainhead && $id ne $mainheadid) ||
+	    ($id eq $mainheadid && $id ne $oldmainhead)} {
 	    redrawtags $id
 	}
     }
