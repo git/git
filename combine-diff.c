@@ -656,16 +656,7 @@ static void dump_quoted_path(const char *head,
 	strbuf_reset(&buf);
 	strbuf_addstr(&buf, c_meta);
 	strbuf_addstr(&buf, head);
-	if (quote_c_style(prefix, NULL, NULL, 0) ||
-	    quote_c_style(path, NULL, NULL, 0)) {
-		strbuf_addch(&buf, '"');
-		quote_c_style(prefix, &buf, NULL, 1);
-		quote_c_style(path, &buf, NULL, 1);
-		strbuf_addch(&buf, '"');
-	} else {
-		strbuf_addstr(&buf, prefix);
-		strbuf_addstr(&buf, path);
-	}
+	quote_two_c_style(&buf, prefix, path, 0);
 	strbuf_addstr(&buf, c_reset);
 	puts(buf.buf);
 }
