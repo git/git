@@ -1206,6 +1206,7 @@ check-docs::
 		documented,gitattributes | \
 		documented,gitignore | \
 		documented,gitmodules | \
+		documented,gitcli | \
 		documented,git-tools | \
 		sentinel,not,matching,is,ok ) continue ;; \
 		esac; \

@@ -646,12 +646,19 @@ static void reuse_combine_diff(struct sline *sline, unsigned long cnt,
 	sline->p_lno[i] = sline->p_lno[j];
 }
 
-static void dump_quoted_path(const char *prefix, const char *path,
+static void dump_quoted_path(const char *head,
+			     const char *prefix,
+			     const char *path,
 			     const char *c_meta, const char *c_reset)
 {
-	printf("%s%s", c_meta, prefix);
-	quote_c_style(path, NULL, stdout, 0);
-	printf("%s\n", c_reset);
+	static struct strbuf buf = STRBUF_INIT;
+
+	strbuf_reset(&buf);
+	strbuf_addstr(&buf, c_meta);
+	strbuf_addstr(&buf, head);
+	quote_two_c_style(&buf, prefix, path, 0);
+	strbuf_addstr(&buf, c_reset);
+	puts(buf.buf);
 }
 
 static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
@@ -793,7 +800,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		if (rev->loginfo && !rev->no_commit_id)
 			show_log(rev, opt->msg_sep);
 		dump_quoted_path(dense ? "diff --cc " : "diff --combined ",
-				 elem->path, c_meta, c_reset);
+				 "", elem->path, c_meta, c_reset);
 		printf("%sindex ", c_meta);
 		for (i = 0; i < num_parent; i++) {
 			abb = find_unique_abbrev(elem->parent[i].sha1,
@@ -829,14 +836,19 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			printf("%s\n", c_reset);
 		}
 		if (added)
-			dump_quoted_path("--- /dev/", "null", c_meta, c_reset);
+			dump_quoted_path("--- ", "", "/dev/null",
+					 c_meta, c_reset);
 		else
-			dump_quoted_path("--- a/", elem->path, c_meta, c_reset);
+			dump_quoted_path("--- ", opt->a_prefix, elem->path,
+					 c_meta, c_reset);
 		if (deleted)
-			dump_quoted_path("+++ /dev/", "null", c_meta, c_reset);
+			dump_quoted_path("+++ ", "", "/dev/null",
+					 c_meta, c_reset);
 		else
-			dump_quoted_path("+++ b/", elem->path, c_meta, c_reset);
-		dump_sline(sline, cnt, num_parent, DIFF_OPT_TST(opt, COLOR_DIFF));
+			dump_quoted_path("+++ ", opt->b_prefix, elem->path,
+					 c_meta, c_reset);
+		dump_sline(sline, cnt, num_parent,
+			   DIFF_OPT_TST(opt, COLOR_DIFF));
 	}
 	free(result);
 

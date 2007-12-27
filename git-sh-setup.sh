@@ -18,7 +18,8 @@ die() {
 
 if test -n "$OPTIONS_SPEC"; then
 	usage() {
-		exec "$0" -h
+		"$0" -h
+		exit 1
 	}
 
 	parseopt_extra=

@@ -1290,8 +1290,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (revs->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT)
 		revs->diff = 1;
 
-	/* Pickaxe and rename following needs diffs */
-	if (revs->diffopt.pickaxe || DIFF_OPT_TST(&revs->diffopt, FOLLOW_RENAMES))
+	/* Pickaxe, diff-filter and rename following need diffs */
+	if (revs->diffopt.pickaxe ||
+	    revs->diffopt.filter ||
+	    DIFF_OPT_TST(&revs->diffopt, FOLLOW_RENAMES))
 		revs->diff = 1;
 
 	if (revs->topo_order)

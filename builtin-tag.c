@@ -16,7 +16,7 @@
 static const char * const git_tag_usage[] = {
 	"git-tag [-a|-s|-u <key-id>] [-f] [-m <msg>|-F <file>] <tagname> [<head>]",
 	"git-tag -d <tagname>...",
-	"git-tag [-n [<num>]] -l [<pattern>]",
+	"git-tag -l [-n [<num>]] [<pattern>]",
 	"git-tag -v <tagname>...",
 	NULL
 };
@@ -47,7 +47,19 @@ void launch_editor(const char *path, struct strbuf *buffer, const char *const *e
 		editor = "vi";
 
 	if (strcmp(editor, ":")) {
-		const char *args[] = { editor, path, NULL };
+		size_t len = strlen(editor);
+		int i = 0;
+		const char *args[6];
+
+		if (strcspn(editor, "$ \t'") != len) {
+			/* there are specials */
+			args[i++] = "sh";
+			args[i++] = "-c";
+			args[i++] = "$0 \"$@\"";
+		}
+		args[i++] = editor;
+		args[i++] = path;
+		args[i] = NULL;
 
 		if (run_command_v_opt_cd_env(args, 0, NULL, env))
 			die("There was a problem with the editor %s.", editor);
@@ -370,13 +382,11 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	struct ref_lock *lock;
 
 	int annotate = 0, sign = 0, force = 0, lines = 0,
-					delete = 0, verify = 0;
-	char *list = NULL, *msgfile = NULL, *keyid = NULL;
-	const char *no_pattern = "NO_PATTERN";
+		list = 0, delete = 0, verify = 0;
+	char *msgfile = NULL, *keyid = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct option options[] = {
-		{ OPTION_STRING, 'l', NULL, &list, "pattern", "list tag names",
-			PARSE_OPT_OPTARG, NULL, (intptr_t) no_pattern },
+		OPT_BOOLEAN('l', NULL, &list, "list tag names"),
 		{ OPTION_INTEGER, 'n', NULL, &lines, NULL,
 				"print n lines of each tag message",
 				PARSE_OPT_OPTARG, NULL, 1 },
@@ -408,7 +418,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		annotate = 1;
 
 	if (list)
-		return list_tags(list == no_pattern ? NULL : list, lines);
+		return list_tags(argv[0], lines);
 	if (delete)
 		return for_each_tag_name(argv, delete_tag);
 	if (verify)

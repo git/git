@@ -30,10 +30,6 @@ Everybody uses these commands to maintain git repositories.
 
   * gitlink:git-fsck[1] to check the repository for errors.
 
-  * gitlink:git-prune[1] to remove unused objects in the repository.
-
-  * gitlink:git-repack[1] to pack loose objects for efficiency.
-
   * gitlink:git-gc[1] to do common housekeeping tasks such as
     repack and prune.
 
@@ -45,24 +41,21 @@ Check health and remove cruft.::
 ------------
 $ git fsck <1>
 $ git count-objects <2>
-$ git repack <3>
-$ git gc <4>
+$ git gc <3>
 ------------
 +
 <1> running without `\--full` is usually cheap and assures the
 repository health reasonably well.
 <2> check how many loose objects there are and how much
 disk space is wasted by not repacking.
-<3> without `-a` repacks incrementally.  repacking every 4-5MB
-of loose objects accumulation may be a good rule of thumb.
-<4> it is easier to use `git gc` than individual housekeeping commands
-such as `prune` and `repack`.  This runs `repack -a -d`.
+<3> repacks the local repository and performs other housekeeping tasks. Running
+without `--prune` is a safe operation even while other ones are in progress.
 
 Repack a small project into single pack.::
 +
 ------------
-$ git repack -a -d <1>
-$ git prune
+$ git gc <1>
+$ git gc --prune
 ------------
 +
 <1> pack all the objects reachable from the refs into one pack,
@@ -189,7 +182,7 @@ $ git pull <3>
 $ git log -p ORIG_HEAD.. arch/i386 include/asm-i386 <4>
 $ git pull git://git.kernel.org/pub/.../jgarzik/libata-dev.git ALL <5>
 $ git reset --hard ORIG_HEAD <6>
-$ git prune <7>
+$ git gc --prune <7>
 $ git fetch --tags <8>
 ------------
 +

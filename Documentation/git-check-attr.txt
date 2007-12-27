@@ -23,6 +23,11 @@ OPTIONS
 	be treated as an attribute.
 
 
+SEE ALSO
+--------
+gitlink:gitattributes[5].
+
+
 Author
 ------
 Written by Junio C Hamano <junkio@cox.net>

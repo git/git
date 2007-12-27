@@ -43,8 +43,12 @@ include::diff-options.txt[]
 
 --first-parent::
 	Follow only the first parent commit upon seeing a merge
-	commit.  This  option gives a better overview of the
-	evolution of a particular branch.
+	commit.  This option can give a better overview when
+	viewing the evolution of a particular topic branch,
+	because merges into a topic branch tend to be only about
+	adjusting to updated upstream from time to time, and
+	this option allows you to ignore the individual commits
+	brought in to your history by such a merge.
 
 -g, \--walk-reflogs::
 	Show commits as they were recorded in the reflog. The log contains

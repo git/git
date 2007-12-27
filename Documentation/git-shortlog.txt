@@ -38,15 +38,16 @@ OPTIONS
 FILES
 -----
 
-.mailmap::
-	If this file exists, it will be used for mapping author email
-	addresses to a real author name. One mapping per line, first
-	the author name followed by the email address enclosed by
-	'<' and '>'. Use hash '#' for comments. Example:
+If the file `.mailmap` exists, it will be used for mapping author
+email addresses to a real author name. One mapping per line, first
+the author name followed by the email address enclosed by
+'<' and '>'. Use hash '#' for comments. Example:
 
-		# Keep alphabetized
-		Adam Morrow <adam@localhost.localdomain>
-		Eve Jones <eve@laptop.(none)>
+------------
+# Keep alphabetized
+Adam Morrow <adam@localhost.localdomain>
+Eve Jones <eve@laptop.(none)>
+------------
 
 Author
 ------

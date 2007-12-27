@@ -412,7 +412,7 @@ static void parse_commit_header(struct format_commit_context *context)
 		if (i == eol) {
 			state++;
 			/* strip empty lines */
-			while (msg[eol + 1] == '\n')
+			while (msg[eol] == '\n' && msg[eol + 1] == '\n')
 				eol++;
 		} else if (!prefixcmp(msg + i, "author ")) {
 			context->author.off = i + 7;
@@ -425,6 +425,8 @@ static void parse_commit_header(struct format_commit_context *context)
 			context->encoding.len = eol - i - 9;
 		}
 		i = eol;
+		if (!msg[i])
+			break;
 	}
 	context->body_off = i;
 	context->commit_header_parsed = 1;

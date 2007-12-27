@@ -372,8 +372,10 @@ do
 			test ! -f "$DOTEST"/amend || git reset --soft HEAD^
 		} &&
 		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
-		git commit --no-verify -F "$DOTEST"/message -e ||
+		if ! git commit --no-verify -F "$DOTEST"/message -e
+		then
 			die "Could not commit staged changes."
+		fi
 
 		require_clean_work_tree
 		do_rest
