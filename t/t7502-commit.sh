@@ -89,4 +89,69 @@ test_expect_success 'verbose' '
 
 '
 
+test_expect_success 'cleanup commit messages (verbatim,-t)' '
+
+	echo >>negative &&
+	{ echo;echo "# text";echo; } >expect &&
+	git commit --cleanup=verbatim -t expect -a &&
+	git cat-file -p HEAD |sed -e "1,/^\$/d" |head -n 3 >actual &&
+	diff -u expect actual
+
+'
+
+test_expect_success 'cleanup commit messages (verbatim,-F)' '
+
+	echo >>negative &&
+	git commit --cleanup=verbatim -F expect -a &&
+	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	diff -u expect actual
+
+'
+
+test_expect_success 'cleanup commit messages (verbatim,-m)' '
+
+	echo >>negative &&
+	git commit --cleanup=verbatim -m "$(cat expect)" -a &&
+	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	diff -u expect actual
+
+'
+
+test_expect_success 'cleanup commit messages (whitespace,-F)' '
+
+	echo >>negative &&
+	{ echo;echo "# text";echo; } >text &&
+	echo "# text" >expect &&
+	git commit --cleanup=whitespace -F text -a &&
+	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	diff -u expect actual
+
+'
+
+test_expect_success 'cleanup commit messages (strip,-F)' '
+
+	echo >>negative &&
+	{ echo;echo "# text";echo sample;echo; } >text &&
+	echo sample >expect &&
+	git commit --cleanup=strip -F text -a &&
+	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	diff -u expect actual
+
+'
+
+echo "sample
+
+# Please enter the commit message for your changes.
+# (Comment lines starting with '#' will not be included)" >expect
+
+test_expect_success 'cleanup commit messages (strip,-F,-e)' '
+
+	echo >>negative &&
+	{ echo;echo sample;echo; } >text &&
+	git commit -e -F text -a &&
+	head -n 4 .git/COMMIT_EDITMSG >actual &&
+	diff -u expect actual
+
+'
+
 test_done

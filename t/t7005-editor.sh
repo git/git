@@ -37,7 +37,7 @@ test_expect_success 'dumb should error out when falling back on vi' '
 	if git commit --amend
 	then
 		echo "Oops?"
-		exit 1
+		false
 	else
 		: happy
 	fi
