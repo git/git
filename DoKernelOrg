@@ -46,7 +46,7 @@ maint | master)
 	hera.kernel.org)
 		narch='x86_64 i386'
 		arch=x86_64 ;;
-	demeter.kernel.org|demeter|old-hera.kernel.org|kunrun-vmw-fc5)
+	wing-fc?|kunrun-vmw-fc5)
 		arch=i386 ;;
 	*)	echo >&2 "What are you talking about???"
 		exit 1 ;;
