@@ -91,6 +91,16 @@ Updates since v1.5.3
  * "git diff" Porcelain now respects diff.external configuration, which
    is another way to specify GIT_EXTERNAL_DIFF.
 
+ * "git diff" can be told to use different prefixes other than
+   "a/" and "b/" e.g. "git diff --src-prefix=l/ --dst-prefix=k/".
+
+ * "git diff" sometimes did not quote paths with funny
+   characters properly.
+
+ * "git log" (and any revision traversal commands) misbehaved
+   when --diff-filter is given but was not asked to actually
+   produce diff.
+
  * HTTP proxy can be specified per remote repository using
    remote.*.httpproxy configuration, or global http.proxy configuration
    variable.
@@ -208,6 +218,10 @@ Updates since v1.5.3
  * "git commit --amend" can amend a merge that does not change the tree
    from its first parent.
 
+ * "git commit" used to unconditionally strip comment lines that
+   began with '#' and removed excess blank lines.  This
+   behaviour has been made configurable.
+
  * "git commit" has been rewritten in C.
 
  * "git stash random-text" does not create a new stash anymore.  It was
@@ -250,6 +264,9 @@ Updates since v1.5.3
    speaking this is a backward incompatible change, but this is a
    reasonable usability fix and people's scripts shouldn't have been
    relying on the exact output from "git show" Porcelain anyway.
+
+ * "git cvsimport" did not notice errors from underlying "cvsps"
+   and produced a corrupt import silently.
 
  * "git cvsexportcommit" learned -w option to specify and switch to the
    CVS working directory.
@@ -327,6 +344,6 @@ series.
 
 --
 exec >/var/tmp/1
-O=v1.5.4-rc0-85-gdbedf97
+O=v1.5.4-rc1-36-g49e6be5
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
