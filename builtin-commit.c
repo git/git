@@ -47,8 +47,21 @@ static char *logfile, *force_author, *template_file;
 static char *edit_message, *use_message;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, untracked_files, no_verify, allow_empty;
+/*
+ * The default commit message cleanup mode will remove the lines
+ * beginning with # (shell comments) and leading and trailing
+ * whitespaces (empty lines or containing only whitespaces)
+ * if editor is used, and only the whitespaces if the message
+ * is specified explicitly.
+ */
+static enum {
+	CLEANUP_SPACE,
+	CLEANUP_NONE,
+	CLEANUP_ALL,
+} cleanup_mode;
+static char *cleanup_arg;
 
-static int no_edit, initial_commit, in_merge;
+static int use_editor = 1, initial_commit, in_merge;
 const char *only_include_assumed;
 struct strbuf message;
 
@@ -88,6 +101,7 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
 	OPT_BOOLEAN(0, "untracked-files", &untracked_files, "show all untracked files"),
 	OPT_BOOLEAN(0, "allow-empty", &allow_empty, "ok to record an empty change"),
+	OPT_STRING(0, "cleanup", &cleanup_arg, "default", "how to strip spaces and #comments from message"),
 
 	OPT_END()
 };
@@ -346,7 +360,8 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 	if (fp == NULL)
 		die("could not open %s", git_path(commit_editmsg));
 
-	stripspace(&sb, 0);
+	if (cleanup_mode != CLEANUP_NONE)
+		stripspace(&sb, 0);
 
 	if (signoff) {
 		struct strbuf sob;
@@ -372,21 +387,25 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 
 	strbuf_release(&sb);
 
-	if (no_edit) {
+	if (!use_editor) {
 		struct rev_info rev;
-		unsigned char sha1[40];
+		unsigned char sha1[20];
+		const char *parent = "HEAD";
 
 		fclose(fp);
 
 		if (!active_nr && read_cache() < 0)
 			die("Cannot read index");
 
-		if (get_sha1("HEAD", sha1) != 0)
+		if (amend)
+			parent = "HEAD^1";
+
+		if (get_sha1(parent, sha1))
 			return !!active_nr;
 
 		init_revisions(&rev, "");
 		rev.abbrev = 0;
-		setup_revisions(0, NULL, &rev, "HEAD");
+		setup_revisions(0, NULL, &rev, parent);
 		DIFF_OPT_SET(&rev.diffopt, QUIET);
 		DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
 		run_diff_index(&rev, 1 /* cached */);
@@ -394,7 +413,7 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 		return !!DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES);
 	}
 
-	if (in_merge && !no_edit)
+	if (in_merge)
 		fprintf(fp,
 			"#\n"
 			"# It looks like you may be committing a MERGE.\n"
@@ -407,7 +426,12 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 	fprintf(fp,
 		"\n"
 		"# Please enter the commit message for your changes.\n"
-		"# (Comment lines starting with '#' will not be included)\n");
+		"# (Comment lines starting with '#' will ");
+	if (cleanup_mode == CLEANUP_ALL)
+		fprintf(fp, "not be included)\n");
+	else /* CLEANUP_SPACE, that is. */
+		fprintf(fp, "be kept.\n"
+			"# You can remove them yourself if you want to)\n");
 	if (only_include_assumed)
 		fprintf(fp, "# %s\n", only_include_assumed);
 
@@ -431,10 +455,13 @@ static int message_is_empty(struct strbuf *sb, int start)
 	const char *nl;
 	int eol, i;
 
+	if (cleanup_mode == CLEANUP_NONE && sb->len)
+		return 0;
+
 	/* See if the template is just a prefix of the message. */
 	strbuf_init(&tmpl, 0);
 	if (template_file && strbuf_read_file(&tmpl, template_file, 0) > 0) {
-		stripspace(&tmpl, 1);
+		stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
 		if (start + tmpl.len <= sb->len &&
 		    memcmp(tmpl.buf, sb->buf + start, tmpl.len) == 0)
 			start += tmpl.len;
@@ -509,9 +536,9 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	argc = parse_options(argc, argv, builtin_commit_options, usage, 0);
 
 	if (logfile || message.len || use_message)
-		no_edit = 1;
+		use_editor = 0;
 	if (edit_flag)
-		no_edit = 0;
+		use_editor = 1;
 
 	if (get_sha1("HEAD", head_sha1))
 		initial_commit = 1;
@@ -587,6 +614,16 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		only_include_assumed = "Explicit paths specified without -i nor -o; assuming --only paths...";
 		also = 0;
 	}
+	if (!cleanup_arg || !strcmp(cleanup_arg, "default"))
+		cleanup_mode = use_editor ? CLEANUP_ALL : CLEANUP_SPACE;
+	else if (!strcmp(cleanup_arg, "verbatim"))
+		cleanup_mode = CLEANUP_NONE;
+	else if (!strcmp(cleanup_arg, "whitespace"))
+		cleanup_mode = CLEANUP_SPACE;
+	else if (!strcmp(cleanup_arg, "strip"))
+		cleanup_mode = CLEANUP_ALL;
+	else
+		die("Invalid cleanup mode %s", cleanup_arg);
 
 	if (all && argc > 0)
 		die("Paths with -a does not make sense.");
@@ -792,7 +829,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	/* Get the commit message and validate it */
 	header_len = sb.len;
-	if (!no_edit) {
+	if (use_editor) {
 		char index[PATH_MAX];
 		const char *env[2] = { index, NULL };
 		snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
@@ -813,7 +850,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	if (p != NULL)
 		strbuf_setlen(&sb, p - sb.buf + 1);
 
-	stripspace(&sb, 1);
+	if (cleanup_mode != CLEANUP_NONE)
+		stripspace(&sb, cleanup_mode == CLEANUP_ALL);
 	if (sb.len < header_len || message_is_empty(&sb, header_len)) {
 		rollback_index_files();
 		die("no commit message?  aborting commit.");

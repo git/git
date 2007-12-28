@@ -211,5 +211,14 @@ endif::git-format-patch[]
 --no-ext-diff::
 	Disallow external diff drivers.
 
+--src-prefix=<prefix>::
+	Show the given source prefix instead of "a/".
+
+--dst-prefix=<prefix>::
+	Show the given destination prefix instead of "b/".
+
+--no-prefix::
+	Do not show any source or destination prefix.
+
 For more detailed explanation on these common options, see also
 link:diffcore.html[diffcore documentation].

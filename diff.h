@@ -69,6 +69,7 @@ struct diff_options {
 	const char *orderfile;
 	const char *pickaxe;
 	const char *single_follow;
+	const char *a_prefix, *b_prefix;
 	unsigned flags;
 	int context;
 	int break_opt;

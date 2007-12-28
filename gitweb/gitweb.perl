@@ -1511,7 +1511,7 @@ sub config_to_int {
 sub config_to_multi {
 	my $val = shift;
 
-       return ref($val) ? $val : (defined($val) ? [ $val ] : []);
+	return ref($val) ? $val : (defined($val) ? [ $val ] : []);
 }
 
 sub git_get_project_config {

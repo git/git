@@ -99,7 +99,7 @@ save_stash () {
 
 	git update-ref -m "$stash_msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
-	printf >&2 'Saved "%s"\n' "$stash_msg"
+	printf >&2 'Saved working directory and index state "%s"\n' "$stash_msg"
 }
 
 have_stash () {
@@ -228,7 +228,9 @@ create)
 *)
 	if test $# -eq 0
 	then
-		save_stash && git-reset --hard
+		save_stash &&
+		echo >&2 '(To restore them type "git stash apply")' &&
+		git-reset --hard
 	else
 		usage
 	fi
