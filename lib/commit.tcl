@@ -303,7 +303,7 @@ A rescan will be automatically started now.
 		puts stderr [mc "warning: Tcl does not support encoding '%s'." $enc]
 		fconfigure $msg_wt -encoding utf-8
 	}
-	puts -nonewline $msg_wt $msg
+	puts $msg_wt $msg
 	close $msg_wt
 
 	# -- Create the commit.
