@@ -332,4 +332,4 @@ Documentation by Johannes Schindelin, Petr Baudis and the git-list <git@vger.ker
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

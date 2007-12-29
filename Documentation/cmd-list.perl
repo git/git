@@ -27,7 +27,7 @@ sub format_one {
 		die "No description found in $name.txt";
 	}
 	if (my ($verify_name, $text) = ($description =~ /^($name) - (.*)/)) {
-		print $out "gitlink:$name\[1\]::\n\t";
+		print $out "linkgit:$name\[1\]::\n\t";
 		if ($attr =~ / deprecated /) {
 			print $out "(deprecated) ";
 		}

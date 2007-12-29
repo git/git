@@ -18,7 +18,7 @@ writes the commit log message in <msg> file, and the patches in
 <patch> file.  The author name, e-mail and e-mail subject are
 written out to the standard output to be used by git-am
 to create a commit.  It is usually not necessary to use this
-command directly.  See gitlink:git-am[1] instead.
+command directly.  See linkgit:git-am[1] instead.
 
 
 OPTIONS
@@ -66,4 +66,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

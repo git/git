@@ -156,10 +156,10 @@ $ git stash apply
 
 SEE ALSO
 --------
-gitlink:git-checkout[1],
-gitlink:git-commit[1],
-gitlink:git-reflog[1],
-gitlink:git-reset[1]
+linkgit:git-checkout[1],
+linkgit:git-commit[1],
+linkgit:git-reflog[1],
+linkgit:git-reset[1]
 
 AUTHOR
 ------
@@ -167,4 +167,4 @@ Written by Nanako Shiraishi <nanako3@bluebottle.com>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -36,12 +36,12 @@ them first before running git pull.
 ================================
 The `pull` command knows where to get updates from because of certain
 configuration variables that were set by the first `git clone`
-command; see `git config -l` and the gitlink:git-config[1] man
+command; see `git config -l` and the linkgit:git-config[1] man
 page for details.
 ================================
 
 You can update the shared repository with your changes by first committing
-your changes, and then using the gitlink:git-push[1] command:
+your changes, and then using the linkgit:git-push[1] command:
 
 ------------------------------------------------
 $ git push origin master
@@ -88,7 +88,7 @@ Next, give every team member read/write access to this repository.  One
 easy way to do this is to give all the team members ssh access to the
 machine where the repository is hosted.  If you don't want to give them a
 full shell on the machine, there is a restricted shell which only allows
-users to do git pushes and pulls; see gitlink:git-shell[1].
+users to do git pushes and pulls; see linkgit:git-shell[1].
 
 Put all the committers in the same group, and make the repository
 writable by that group:
@@ -106,7 +106,7 @@ Importing a CVS archive
 First, install version 2.1 or higher of cvsps from
 link:http://www.cobite.com/cvsps/[http://www.cobite.com/cvsps/] and make
 sure it is in your path.  Then cd to a checked out CVS working directory
-of the project you are interested in and run gitlink:git-cvsimport[1]:
+of the project you are interested in and run linkgit:git-cvsimport[1]:
 
 -------------------------------------------
 $ git cvsimport -C <destination> <module>
@@ -146,7 +146,7 @@ Providing CVS Access to a git Repository
 ----------------------------------------
 
 It is also possible to provide true CVS access to a git repository, so
-that developers can still use CVS; see gitlink:git-cvsserver[1] for
+that developers can still use CVS; see linkgit:git-cvsserver[1] for
 details.
 
 Alternative Development Models

@@ -19,7 +19,7 @@ trees this way, for example.  A repository with this kind of
 incomplete object store is not suitable to be published to the
 outside world but sometimes useful for private repository.
 . You also could have an incomplete but locally usable repository
-by cloning shallowly.  See gitlink:git-clone[1].
+by cloning shallowly.  See linkgit:git-clone[1].
 . You can be using `objects/info/alternates` mechanism, or
 `$GIT_ALTERNATE_OBJECT_DIRECTORIES` mechanism to 'borrow'
 objects from other object stores.  A repository with this kind
@@ -89,7 +89,7 @@ refs/remotes/`name`::
 packed-refs::
 	records the same information as refs/heads/, refs/tags/,
 	and friends record in a more efficient way.  See
-	gitlink:git-pack-refs[1].
+	linkgit:git-pack-refs[1].
 
 HEAD::
 	A symref (see glossary) to the `refs/heads/` namespace
@@ -106,7 +106,7 @@ HEAD::
 HEAD can also record a specific commit directly, instead of
 being a symref to point at the current branch.  Such a state
 is often called 'detached HEAD', and almost all commands work
-identically as normal.  See gitlink:git-checkout[1] for
+identically as normal.  See linkgit:git-checkout[1] for
 details.
 
 branches::
@@ -155,7 +155,7 @@ info/exclude::
 	exclude pattern list. `.gitignore` is the per-directory
 	ignore file.  `git status`, `git add`, `git rm` and `git
 	clean` look at it but the core git commands do not look
-	at it.  See also: gitlink:gitignore[5].
+	at it.  See also: linkgit:gitignore[5].
 
 remotes::
 	Stores shorthands to be used to give URL and default
@@ -176,4 +176,4 @@ logs/refs/tags/`name`::
 shallow::
 	This is similar to `info/grafts` but is internally used
 	and maintained by shallow clone mechanism.  See `--depth`
-	option to gitlink:git-clone[1] and gitlink:git-fetch[1].
+	option to linkgit:git-clone[1] and linkgit:git-fetch[1].

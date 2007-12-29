@@ -77,7 +77,7 @@ the information is read from the current index instead.
 	Apply the patch in reverse.
 
 --reject::
-	For atomicity, gitlink:git-apply[1] by default fails the whole patch and
+	For atomicity, linkgit:git-apply[1] by default fails the whole patch and
 	does not touch the working tree when some of the hunks
 	do not apply.  This option makes it apply
 	the parts of the patch that are applicable, and leave the
@@ -101,7 +101,7 @@ the information is read from the current index instead.
 	ever ignored.
 
 --unidiff-zero::
-	By default, gitlink:git-apply[1] expects that the patch being
+	By default, linkgit:git-apply[1] expects that the patch being
 	applied is a unified diff with at least one line of context.
 	This provides good safety measures, but breaks down when
 	applying a diff generated with --unified=0. To bypass these
@@ -112,7 +112,7 @@ discouraged.
 
 --apply::
 	If you use any of the options marked "Turns off
-	'apply'" above, gitlink:git-apply[1] reads and outputs the
+	'apply'" above, linkgit:git-apply[1] reads and outputs the
 	information you asked without actually applying the
 	patch.  Give this flag after those flags to also apply
 	the patch.
@@ -145,7 +145,7 @@ discouraged.
 	considered whitespace errors.
 +
 By default, the command outputs warning messages but applies the patch.
-When gitlink:git-apply[1] is used for statistics and not applying a
+When linkgit:git-apply[1] is used for statistics and not applying a
 patch, it defaults to `nowarn`.
 +
 You can use different `<action>` to control this
@@ -183,7 +183,7 @@ apply.whitespace::
 
 Submodules
 ----------
-If the patch contains any changes to submodules then gitlink:git-apply[1]
+If the patch contains any changes to submodules then linkgit:git-apply[1]
 treats these changes as follows.
 
 If --index is specified (explicitly or implicitly), then the submodule
@@ -206,4 +206,4 @@ Documentation by Junio C Hamano
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

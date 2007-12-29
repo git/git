@@ -21,7 +21,7 @@ tree and the index file, or the index file and the working tree.
 	the index (staging area for the next commit).  In other
 	words, the differences are what you _could_ tell git to
 	further add to the index but you still haven't.  You can
-	stage these changes by using gitlink:git-add[1].
+	stage these changes by using linkgit:git-add[1].
 +
 If exactly two paths are given, and at least one is untracked,
 compare the two files / directories. This behavior can be
@@ -67,11 +67,11 @@ for the last two forms that use ".." notations, can be any
 <tree-ish>.
 
 For a more complete list of ways to spell <commit>, see
-"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 However, "diff" is about comparing two _endpoints_, not ranges,
 and the range notations ("<commit>..<commit>" and
 "<commit>\...<commit>") do not mean a range as defined in the
-"SPECIFYING RANGES" section in gitlink:git-rev-parse[1].
+"SPECIFYING RANGES" section in linkgit:git-rev-parse[1].
 
 OPTIONS
 -------
@@ -168,4 +168,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

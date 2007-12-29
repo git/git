@@ -130,7 +130,7 @@ When using the '--verify' flag, the command requires an exact path:
 
 will only match the exact branch called "master".
 
-If nothing matches, gitlink:git-show-ref[1] will return an error code of 1,
+If nothing matches, linkgit:git-show-ref[1] will return an error code of 1,
 and in the case of verification, it will show an error message.
 
 For scripting, you can ask it to be quiet with the "--quiet" flag, which
@@ -160,7 +160,7 @@ to get a listing of all tags together with what they dereference.
 
 SEE ALSO
 --------
-gitlink:git-ls-remote[1]
+linkgit:git-ls-remote[1]
 
 AUTHORS
 -------
@@ -169,4 +169,4 @@ Man page by Jonas Fonseca <fonseca@diku.dk>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

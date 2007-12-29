@@ -58,4 +58,4 @@ Written by Junio C Hamano <junkio@cox.net>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

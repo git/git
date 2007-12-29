@@ -21,7 +21,7 @@ commit (or set of commits) and want to redo that part without showing
 the undo in the history.
 
 If you want to undo a commit other than the latest on a branch,
-gitlink:git-revert[1] is your friend.
+linkgit:git-revert[1] is your friend.
 
 The second form with 'paths' is used to revert selected paths in
 the index from a given commit, without moving HEAD.
@@ -37,7 +37,7 @@ OPTIONS
 --soft::
 	Does not touch the index file nor the working tree at all, but
 	requires them to be in a good order. This leaves all your changed
-	files "Added but not yet committed", as gitlink:git-status[1] would
+	files "Added but not yet committed", as linkgit:git-status[1] would
 	put it.
 
 --hard::
@@ -71,7 +71,7 @@ message, or both.  Leaves working tree as it was before "reset".
 commit by starting with its log message.  If you do not need to
 edit the message further, you can give -C option instead.
 +
-See also the --amend option to gitlink:git-commit[1].
+See also the --amend option to linkgit:git-commit[1].
 
 Undo commits permanently::
 +
@@ -186,4 +186,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -15,7 +15,7 @@ DESCRIPTION
 -----------
 Reads the tree information given by <tree-ish> into the index,
 but does not actually *update* any of the files it "caches". (see:
-gitlink:git-checkout-index[1])
+linkgit:git-checkout-index[1])
 
 Optionally, it can merge a tree into the index, perform a
 fast-forward (i.e. 2-way) merge, or a 3-way merge, with the `-m`
@@ -347,8 +347,8 @@ have finished your work-in-progress), attempt the merge again.
 
 See Also
 --------
-gitlink:git-write-tree[1]; gitlink:git-ls-files[1];
-gitlink:gitignore[5]
+linkgit:git-write-tree[1]; linkgit:git-ls-files[1];
+linkgit:gitignore[5]
 
 
 Author
@@ -361,4 +361,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

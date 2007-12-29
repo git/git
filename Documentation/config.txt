@@ -115,7 +115,7 @@ porcelain configuration variables in the respective porcelain documentation.
 core.fileMode::
 	If false, the executable bit differences between the index and
 	the working copy are ignored; useful on broken filesystems like FAT.
-	See gitlink:git-update-index[1]. True by default.
+	See linkgit:git-update-index[1]. True by default.
 
 core.quotepath::
 	The commands that output paths (e.g. `ls-files`,
@@ -141,8 +141,8 @@ core.autocrlf::
 
 core.symlinks::
 	If false, symbolic links are checked out as small plain files that
-	contain the link text. gitlink:git-update-index[1] and
-	gitlink:git-add[1] will not change the recorded type to regular
+	contain the link text. linkgit:git-update-index[1] and
+	linkgit:git-add[1] will not change the recorded type to regular
 	file. Useful on filesystems like FAT that do not support
 	symbolic links. True by default.
 
@@ -163,7 +163,7 @@ core.ignoreStat::
 	The working copy files are assumed to stay unchanged until you
 	mark them otherwise manually - Git will not detect the file changes
 	by lstat() calls. This is useful on systems where those are very
-	slow, such as Microsoft Windows.  See gitlink:git-update-index[1].
+	slow, such as Microsoft Windows.  See linkgit:git-update-index[1].
 	False by default.
 
 core.preferSymlinkRefs::
@@ -176,10 +176,10 @@ core.bare::
 	If true this repository is assumed to be 'bare' and has no
 	working directory associated with it.  If this is the case a
 	number of commands that require a working directory will be
-	disabled, such as gitlink:git-add[1] or gitlink:git-merge[1].
+	disabled, such as linkgit:git-add[1] or linkgit:git-merge[1].
 +
-This setting is automatically guessed by gitlink:git-clone[1] or
-gitlink:git-init[1] when the repository was created.  By default a
+This setting is automatically guessed by linkgit:git-clone[1] or
+linkgit:git-init[1] when the repository was created.  By default a
 repository that ends in "/.git" is assumed to be not bare (bare =
 false), while all other repositories are assumed to be bare (bare
 = true).
@@ -216,7 +216,7 @@ core.sharedRepository::
 	group-writable). When 'all' (or 'world' or 'everybody'), the
 	repository will be readable by all users, additionally to being
 	group-shareable. When 'umask' (or 'false'), git will use permissions
-	reported by umask(2). See gitlink:git-init[1]. False by default.
+	reported by umask(2). See linkgit:git-init[1]. False by default.
 
 core.warnAmbiguousRefs::
 	If true, git will warn you if the ref name you passed it is ambiguous
@@ -281,7 +281,7 @@ core.excludesfile::
 	In addition to '.gitignore' (per-directory) and
 	'.git/info/exclude', git looks into this file for patterns
 	of files which are not meant to be tracked.  See
-	gitlink:gitignore[5].
+	linkgit:gitignore[5].
 
 core.editor::
 	Commands such as `commit` and `tag` that lets you edit
@@ -310,7 +310,7 @@ core.whitespace::
   space characters as an error (not enabled by default).
 
 alias.*::
-	Command aliases for the gitlink:git[1] command wrapper - e.g.
+	Command aliases for the linkgit:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
 	"git last" is equivalent to "git cat-file commit HEAD". To avoid
 	confusion and troubles with script usage, aliases that
@@ -326,11 +326,11 @@ it will be treated as a shell command.  For example, defining
 
 apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
-	as the '--whitespace' option. See gitlink:git-apply[1].
+	as the '--whitespace' option. See linkgit:git-apply[1].
 
 branch.autosetupmerge::
 	Tells `git-branch` and `git-checkout` to setup new branches
-	so that gitlink:git-pull[1] will appropriately merge from that
+	so that linkgit:git-pull[1] will appropriately merge from that
 	remote branch.  Note that even if this option is not set,
 	this behavior can be chosen per-branch using the `--track`
 	and `--no-track` options.  This option defaults to false.
@@ -356,7 +356,7 @@ branch.<name>.merge::
 
 branch.<name>.mergeoptions::
 	Sets default options for merging into branch <name>. The syntax and
-	supported options are equal to that of gitlink:git-merge[1], but
+	supported options are equal to that of linkgit:git-merge[1], but
 	option values containing whitespace characters are currently not
 	supported.
 
@@ -364,7 +364,7 @@ branch.<name>.rebase::
 	When true, rebase the branch <name> on top of the fetched branch,
 	instead of merging the default branch from the default remote.
 	*NOTE*: this is a possibly dangerous operation; do *not* use
-	it unless you understand the implications (see gitlink:git-rebase[1]
+	it unless you understand the implications (see linkgit:git-rebase[1]
 	for details).
 
 clean.requireForce::
@@ -373,7 +373,7 @@ clean.requireForce::
 
 color.branch::
 	A boolean to enable/disable color in the output of
-	gitlink:git-branch[1]. May be set to `always`,
+	linkgit:git-branch[1]. May be set to `always`,
 	`false` (or `never`) or `auto` (or `true`), in which case colors are used
 	only when the output is to a terminal. Defaults to false.
 
@@ -423,7 +423,7 @@ color.pager::
 
 color.status::
 	A boolean to enable/disable color in the output of
-	gitlink:git-status[1]. May be set to `always`,
+	linkgit:git-status[1]. May be set to `always`,
 	`false` (or `never`) or `auto` (or `true`), in which case colors are used
 	only when the output is to a terminal. Defaults to false.
 
@@ -453,7 +453,7 @@ diff.external::
 	performed using the internal diff machinery, but using the
 	given command.  Note: if you want to use an external diff
 	program only on a subset of your files, you might want to
-	use gitlink:gitattributes[5] instead.
+	use linkgit:gitattributes[5] instead.
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
@@ -478,11 +478,11 @@ format.numbered::
 	A boolean which can enable sequence numbers in patch subjects.
 	Setting this option to "auto" will enable it only if there is
 	more than one patch.  See --numbered option in
-	gitlink:git-format-patch[1].
+	linkgit:git-format-patch[1].
 
 format.headers::
 	Additional email headers to include in a patch to be submitted
-	by mail.  See gitlink:git-format-patch[1].
+	by mail.  See linkgit:git-format-patch[1].
 
 format.suffix::
 	The default for format-patch is to output files with the suffix
@@ -530,27 +530,27 @@ gc.reflogexpireunreachable::
 gc.rerereresolved::
 	Records of conflicted merge you resolved earlier are
 	kept for this many days when `git rerere gc` is run.
-	The default is 60 days.  See gitlink:git-rerere[1].
+	The default is 60 days.  See linkgit:git-rerere[1].
 
 gc.rerereunresolved::
 	Records of conflicted merge you have not resolved are
 	kept for this many days when `git rerere gc` is run.
-	The default is 15 days.  See gitlink:git-rerere[1].
+	The default is 15 days.  See linkgit:git-rerere[1].
 
 rerere.enabled::
 	Activate recording of resolved conflicts, so that identical
 	conflict hunks can be resolved automatically, should they
-	be encountered again.  gitlink:git-rerere[1] command is by
+	be encountered again.  linkgit:git-rerere[1] command is by
 	default enabled, but can be disabled by setting this option to
 	false.
 
 gitcvs.enabled::
 	Whether the CVS server interface is enabled for this repository.
-	See gitlink:git-cvsserver[1].
+	See linkgit:git-cvsserver[1].
 
 gitcvs.logfile::
 	Path to a log file where the CVS server interface well... logs
-	various stuff. See gitlink:git-cvsserver[1].
+	various stuff. See linkgit:git-cvsserver[1].
 
 gitcvs.allbinary::
 	If true, all files are sent to the client in mode '-kb'. This
@@ -563,7 +563,7 @@ gitcvs.dbname::
 	derived from the git repository. The exact meaning depends on the
 	used database driver, for SQLite (which is the default driver) this
 	is a filename. Supports variable substitution (see
-	gitlink:git-cvsserver[1] for details). May not contain semicolons (`;`).
+	linkgit:git-cvsserver[1] for details). May not contain semicolons (`;`).
 	Default: '%Ggitcvs.%m.sqlite'
 
 gitcvs.dbdriver::
@@ -572,13 +572,13 @@ gitcvs.dbdriver::
 	with 'DBD::SQLite', reported to work with 'DBD::Pg', and
 	reported *not* to work with 'DBD::mysql'. Experimental feature.
 	May not contain double colons (`:`). Default: 'SQLite'.
-	See gitlink:git-cvsserver[1].
+	See linkgit:git-cvsserver[1].
 
 gitcvs.dbuser, gitcvs.dbpass::
 	Database user and password. Only useful if setting 'gitcvs.dbdriver',
 	since SQLite has no concept of database users and/or passwords.
 	'gitcvs.dbuser' supports variable substitution (see
-	gitlink:git-cvsserver[1] for details).
+	linkgit:git-cvsserver[1] for details).
 
 All gitcvs variables except for 'gitcvs.allbinary' can also be
 specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
@@ -587,7 +587,7 @@ access method.
 
 http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy'
-	environment variable (see gitlink:curl[1]).  This can be overridden
+	environment variable (see linkgit:curl[1]).  This can be overridden
 	on a per-remote basis; see remote.<name>.proxy
 
 http.sslVerify::
@@ -636,7 +636,7 @@ i18n.commitEncoding::
 	does not care per se, but this information is necessary e.g. when
 	importing commits from emails or in the gitk graphical history
 	browser (and possibly at other places in the future or in other
-	porcelains). See e.g. gitlink:git-mailinfo[1]. Defaults to 'utf-8'.
+	porcelains). See e.g. linkgit:git-mailinfo[1]. Defaults to 'utf-8'.
 
 i18n.logOutputEncoding::
 	Character encoding the commit messages are converted to when
@@ -645,7 +645,7 @@ i18n.logOutputEncoding::
 log.showroot::
 	If true, the initial commit will be shown as a big creation event.
 	This is equivalent to a diff against an empty tree.
-	Tools like gitlink:git-log[1] or gitlink:git-whatchanged[1], which
+	Tools like linkgit:git-log[1] or linkgit:git-whatchanged[1], which
 	normally hide the root commit will now show it. True by default.
 
 merge.summary::
@@ -654,7 +654,7 @@ merge.summary::
 
 merge.tool::
 	Controls which merge resolution program is used by
-	gitlink:git-mergetool[1].  Valid values are: "kdiff3", "tkdiff",
+	linkgit:git-mergetool[1].  Valid values are: "kdiff3", "tkdiff",
 	"meld", "xxdiff", "emerge", "vimdiff", "gvimdiff", and "opendiff".
 
 merge.verbosity::
@@ -667,31 +667,31 @@ merge.verbosity::
 
 merge.<driver>.name::
 	Defines a human readable name for a custom low-level
-	merge driver.  See gitlink:gitattributes[5] for details.
+	merge driver.  See linkgit:gitattributes[5] for details.
 
 merge.<driver>.driver::
 	Defines the command that implements a custom low-level
-	merge driver.  See gitlink:gitattributes[5] for details.
+	merge driver.  See linkgit:gitattributes[5] for details.
 
 merge.<driver>.recursive::
 	Names a low-level merge driver to be used when
 	performing an internal merge between common ancestors.
-	See gitlink:gitattributes[5] for details.
+	See linkgit:gitattributes[5] for details.
 
 mergetool.<tool>.path::
 	Override the path for the given tool.  This is useful in case
 	your tool is not in the PATH.
 
 pack.window::
-	The size of the window used by gitlink:git-pack-objects[1] when no
+	The size of the window used by linkgit:git-pack-objects[1] when no
 	window size is given on the command line. Defaults to 10.
 
 pack.depth::
-	The maximum delta depth used by gitlink:git-pack-objects[1] when no
+	The maximum delta depth used by linkgit:git-pack-objects[1] when no
 	maximum depth is given on the command line. Defaults to 50.
 
 pack.windowMemory::
-	The window memory size limit used by gitlink:git-pack-objects[1]
+	The window memory size limit used by linkgit:git-pack-objects[1]
 	when no limit is given on the command line.  The value can be
 	suffixed with "k", "m", or "g".  Defaults to 0, meaning no
 	limit.
@@ -707,16 +707,16 @@ pack.compression::
 
 pack.deltaCacheSize::
 	The maximum memory in bytes used for caching deltas in
-	gitlink:git-pack-objects[1].
+	linkgit:git-pack-objects[1].
 	A value of 0 means no limit. Defaults to 0.
 
 pack.deltaCacheLimit::
 	The maximum size of a delta, that is cached in
-	gitlink:git-pack-objects[1]. Defaults to 1000.
+	linkgit:git-pack-objects[1]. Defaults to 1000.
 
 pack.threads::
 	Specifies the number of threads to spawn when searching for best
-	delta matches.  This requires that gitlink:git-pack-objects[1]
+	delta matches.  This requires that linkgit:git-pack-objects[1]
 	be compiled with pthreads otherwise this option is ignored with a
 	warning. This is meant to reduce packing time on multiprocessor
 	machines. The required amount of memory for the delta search window
@@ -739,8 +739,8 @@ pull.twohead::
 	The default merge strategy to use when pulling a single branch.
 
 remote.<name>.url::
-	The URL of a remote repository.  See gitlink:git-fetch[1] or
-	gitlink:git-push[1].
+	The URL of a remote repository.  See linkgit:git-fetch[1] or
+	linkgit:git-push[1].
 
 remote.<name>.proxy::
 	For remotes that require curl (http, https and ftp), the URL to
@@ -748,24 +748,24 @@ remote.<name>.proxy::
 	disable proxying for that remote.
 
 remote.<name>.fetch::
-	The default set of "refspec" for gitlink:git-fetch[1]. See
-	gitlink:git-fetch[1].
+	The default set of "refspec" for linkgit:git-fetch[1]. See
+	linkgit:git-fetch[1].
 
 remote.<name>.push::
-	The default set of "refspec" for gitlink:git-push[1]. See
-	gitlink:git-push[1].
+	The default set of "refspec" for linkgit:git-push[1]. See
+	linkgit:git-push[1].
 
 remote.<name>.skipDefaultUpdate::
 	If true, this remote will be skipped by default when updating
-	using the update subcommand of gitlink:git-remote[1].
+	using the update subcommand of linkgit:git-remote[1].
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See
-	option \--exec of gitlink:git-push[1].
+	option \--exec of linkgit:git-push[1].
 
 remote.<name>.uploadpack::
 	The default program to execute on the remote side when fetching.  See
-	option \--exec of gitlink:git-fetch-pack[1].
+	option \--exec of linkgit:git-fetch-pack[1].
 
 remote.<name>.tagopt::
 	Setting this value to --no-tags disables automatic tag following when fetching
@@ -773,22 +773,22 @@ remote.<name>.tagopt::
 
 remotes.<group>::
 	The list of remotes which are fetched by "git remote update
-	<group>".  See gitlink:git-remote[1].
+	<group>".  See linkgit:git-remote[1].
 
 repack.usedeltabaseoffset::
-	Allow gitlink:git-repack[1] to create packs that uses
+	Allow linkgit:git-repack[1] to create packs that uses
 	delta-base offset.  Defaults to false.
 
 show.difftree::
-	The default gitlink:git-diff-tree[1] arguments to be used
-	for gitlink:git-show[1].
+	The default linkgit:git-diff-tree[1] arguments to be used
+	for linkgit:git-show[1].
 
 showbranch.default::
-	The default set of branches for gitlink:git-show-branch[1].
-	See gitlink:git-show-branch[1].
+	The default set of branches for linkgit:git-show-branch[1].
+	See linkgit:git-show-branch[1].
 
 status.relativePaths::
-	By default, gitlink:git-status[1] shows paths relative to the
+	By default, linkgit:git-status[1] shows paths relative to the
 	current directory. Setting this variable to `false` shows paths
 	relative to the repository root (this was the default for git
 	prior to v1.5.4).
@@ -798,32 +798,32 @@ tar.umask::
 	tar archive entries.  The default is 0002, which turns off the
 	world write bit.  The special value "user" indicates that the
 	archiving user's umask will be used instead.  See umask(2) and
-	gitlink:git-archive[1].
+	linkgit:git-archive[1].
 
 user.email::
 	Your email address to be recorded in any newly created commits.
 	Can be overridden by the 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_EMAIL', and
-	'EMAIL' environment variables.  See gitlink:git-commit-tree[1].
+	'EMAIL' environment variables.  See linkgit:git-commit-tree[1].
 
 user.name::
 	Your full name to be recorded in any newly created commits.
 	Can be overridden by the 'GIT_AUTHOR_NAME' and 'GIT_COMMITTER_NAME'
-	environment variables.  See gitlink:git-commit-tree[1].
+	environment variables.  See linkgit:git-commit-tree[1].
 
 user.signingkey::
-	If gitlink:git-tag[1] is not selecting the key you want it to
+	If linkgit:git-tag[1] is not selecting the key you want it to
 	automatically when creating a signed tag, you can override the
 	default selection with this variable.  This option is passed
 	unchanged to gpg's --local-user parameter, so you may specify a key
 	using any method that gpg supports.
 
 whatchanged.difftree::
-	The default gitlink:git-diff-tree[1] arguments to be used
-	for gitlink:git-whatchanged[1].
+	The default linkgit:git-diff-tree[1] arguments to be used
+	for linkgit:git-whatchanged[1].
 
 imap::
 	The configuration variables in the 'imap' section are described
-	in gitlink:git-imap-send[1].
+	in linkgit:git-imap-send[1].
 
 receive.unpackLimit::
 	If the number of objects received in a push is below this

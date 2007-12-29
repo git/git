@@ -44,9 +44,9 @@ Documentation by Ryan Anderson <ryan@michonline.com>
 
 See Also
 --------
-gitlink:git-pack-objects[1]
-gitlink:git-repack[1]
+linkgit:git-pack-objects[1]
+linkgit:git-repack[1]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

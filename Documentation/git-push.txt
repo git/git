@@ -20,7 +20,7 @@ necessary to complete the given refs.
 
 You can make interesting things happen to a repository
 every time you push into it, by setting up 'hooks' there.  See
-documentation for gitlink:git-receive-pack[1].
+documentation for linkgit:git-receive-pack[1].
 
 
 OPTIONS
@@ -145,4 +145,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

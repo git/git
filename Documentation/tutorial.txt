@@ -47,7 +47,7 @@ You've now initialized the working directory--you may notice a new
 directory created, named ".git".
 
 Next, tell git to take a snapshot of the contents of all files under the
-current directory (note the '.'), with gitlink:git-add[1]:
+current directory (note the '.'), with linkgit:git-add[1]:
 
 ------------------------------------------------
 $ git add .
@@ -55,7 +55,7 @@ $ git add .
 
 This snapshot is now stored in a temporary staging area which git calls
 the "index".  You can permanently store the contents of the index in the
-repository with gitlink:git-commit[1]:
+repository with linkgit:git-commit[1]:
 
 ------------------------------------------------
 $ git commit
@@ -74,15 +74,15 @@ $ git add file1 file2 file3
 ------------------------------------------------
 
 You are now ready to commit.  You can see what is about to be committed
-using gitlink:git-diff[1] with the --cached option:
+using linkgit:git-diff[1] with the --cached option:
 
 ------------------------------------------------
 $ git diff --cached
 ------------------------------------------------
 
-(Without --cached, gitlink:git-diff[1] will show you any changes that
+(Without --cached, linkgit:git-diff[1] will show you any changes that
 you've made but not yet added to the index.)  You can also get a brief
-summary of the situation with gitlink:git-status[1]:
+summary of the situation with linkgit:git-status[1]:
 
 ------------------------------------------------
 $ git status
@@ -358,7 +358,7 @@ $ git config --get remote.origin.url
 -------------------------------------
 
 (The complete configuration created by git-clone is visible using
-"git config -l", and the gitlink:git-config[1] man page
+"git config -l", and the linkgit:git-config[1] man page
 explains the meaning of each option.)
 
 Git also keeps a pristine copy of Alice's master branch under the
@@ -377,10 +377,10 @@ $ git clone alice.org:/home/alice/project myrepo
 -------------------------------------
 
 Alternatively, git has a native protocol, or can use rsync or http;
-see gitlink:git-pull[1] for details.
+see linkgit:git-pull[1] for details.
 
 Git can also be used in a CVS-like mode, with a central repository
-that various users push changes to; see gitlink:git-push[1] and
+that various users push changes to; see linkgit:git-push[1] and
 link:cvs-migration.html[git for CVS users].
 
 Exploring history
@@ -442,7 +442,7 @@ $ git-tag v2.5 1b2e1d63ff
 you can refer to 1b2e1d63ff by the name "v2.5".  If you intend to
 share this name with other people (for example, to identify a release
 version), you should create a "tag" object, and perhaps sign it; see
-gitlink:git-tag[1] for details.
+linkgit:git-tag[1] for details.
 
 Any git command that needs to know a commit can take any of these
 names.  For example:
@@ -461,7 +461,7 @@ this branch.  If this branch is the only branch containing those
 commits, they will be lost.  Also, don't use "git reset" on a
 publicly-visible branch that other developers pull from, as it will
 force needless merges on other developers to clean up the history.
-If you need to undo changes that you have pushed, use gitlink:git-revert[1]
+If you need to undo changes that you have pushed, use linkgit:git-revert[1]
 instead.
 
 The git grep command can search for strings in any version of your
@@ -567,12 +567,12 @@ need to make the most of git.
 If you don't want to continue with that right away, a few other
 digressions that may be interesting at this point are:
 
-  * gitlink:git-format-patch[1], gitlink:git-am[1]: These convert
+  * linkgit:git-format-patch[1], linkgit:git-am[1]: These convert
     series of git commits into emailed patches, and vice versa,
     useful for projects such as the linux kernel which rely heavily
     on emailed patches.
 
-  * gitlink:git-bisect[1]: When there is a regression in your
+  * linkgit:git-bisect[1]: When there is a regression in your
     project, one way to track down the bug is by searching through
     the history to find the exact commit that's to blame.  Git bisect
     can help you perform a binary search for that commit.  It is

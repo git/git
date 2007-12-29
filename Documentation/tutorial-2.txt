@@ -172,7 +172,7 @@ merge, with the parent references pointing to the heads of the merged
 branches.
 
 Besides blobs, trees, and commits, the only remaining type of object
-is a "tag", which we won't discuss here; refer to gitlink:git-tag[1]
+is a "tag", which we won't discuss here; refer to linkgit:git-tag[1]
 for details.
 
 So now we know how git uses the object database to represent a

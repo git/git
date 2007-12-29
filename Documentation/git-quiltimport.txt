@@ -57,4 +57,4 @@ Documentation by Eric Biederman <ebiederm@lnxi.com>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

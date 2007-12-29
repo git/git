@@ -12,7 +12,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 git-svn is a simple conduit for changesets between Subversion and git.
-It is not to be confused with gitlink:git-svnimport[1], which is
+It is not to be confused with linkgit:git-svnimport[1], which is
 read-only.
 
 git-svn was originally designed for an individual developer who wants a
@@ -208,7 +208,7 @@ OPTIONS
 --shared[={false|true|umask|group|all|world|everybody}]::
 --template=<template_directory>::
 	Only used with the 'init' command.
-	These are passed directly to gitlink:git-init[1].
+	These are passed directly to linkgit:git-init[1].
 
 -r <ARG>::
 --revision <ARG>::
@@ -261,7 +261,7 @@ config key: svn.edit
 Only used with the 'dcommit', 'set-tree' and 'commit-diff' commands.
 
 They are both passed directly to git-diff-tree see
-gitlink:git-diff-tree[1] for more information.
+linkgit:git-diff-tree[1] for more information.
 
 [verse]
 config key: svn.l
@@ -299,7 +299,7 @@ with many revisions.
 to fetch before repacking.  This defaults to repacking every
 1000 commits fetched if no argument is specified.
 
---repack-flags are passed directly to gitlink:git-repack[1].
+--repack-flags are passed directly to linkgit:git-repack[1].
 
 [verse]
 config key: svn.repack
@@ -561,11 +561,11 @@ however the remote wildcard may be anywhere as long as it's own
 independent path component (surrounded by '/' or EOL).   This
 type of configuration is not automatically created by 'init' and
 should be manually entered with a text-editor or using
-gitlink:git-config[1]
+linkgit:git-config[1]
 
 SEE ALSO
 --------
-gitlink:git-rebase[1]
+linkgit:git-rebase[1]
 
 Author
 ------

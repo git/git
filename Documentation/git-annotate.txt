@@ -20,7 +20,7 @@ include::blame-options.txt[]
 
 SEE ALSO
 --------
-gitlink:git-blame[1]
+linkgit:git-blame[1]
 
 AUTHOR
 ------
@@ -28,4 +28,4 @@ Written by Ryan Anderson <ryan@michonline.com>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

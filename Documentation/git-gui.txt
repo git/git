@@ -16,7 +16,7 @@ on allowing users to make changes to their repository by making
 new commits, amending existing ones, creating branches, performing
 local merges, and fetching/pushing to remote repositories.
 
-Unlike gitlink:gitk[1], git-gui focuses on commit generation
+Unlike linkgit:gitk[1], git-gui focuses on commit generation
 and single file annotation, and does not show project history.
 It does however supply menu actions to start a gitk session from
 within git-gui.
@@ -112,4 +112,4 @@ Documentation by Shawn O. Pearce <spearce@spearce.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

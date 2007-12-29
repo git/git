@@ -14,9 +14,9 @@ DESCRIPTION
 -----------
 Shows the commit logs.
 
-The command takes options applicable to the gitlink:git-rev-list[1]
+The command takes options applicable to the linkgit:git-rev-list[1]
 command to control what is shown and how, and options applicable to
-the gitlink:git-diff-tree[1] commands to control how the changes
+the linkgit:git-diff-tree[1] commands to control how the changes
 each commit introduces are shown.
 
 This manual page describes only the most frequently used options.
@@ -39,7 +39,7 @@ include::diff-options.txt[]
 	`HEAD`, i.e. the tip of the current branch.
 	For a more complete list of ways to spell <since>
 	and <until>, see "SPECIFYING REVISIONS" section in
-	gitlink:git-rev-parse[1].
+	linkgit:git-rev-parse[1].
 
 --first-parent::
 	Follow only the first parent commit upon seeing a merge
@@ -54,7 +54,7 @@ include::diff-options.txt[]
 	Show commits as they were recorded in the reflog. The log contains
 	a record about how the tip of a reference was changed.
 	Cannot be combined with --reverse.
-	See also gitlink:git-reflog[1].
+	See also linkgit:git-reflog[1].
 
 --decorate::
 	Print out the ref names of any commits that are shown.
@@ -129,4 +129,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

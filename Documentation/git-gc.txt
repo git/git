@@ -15,7 +15,7 @@ DESCRIPTION
 Runs a number of housekeeping tasks within the current repository,
 such as compressing file revisions (to reduce disk space and increase
 performance) and removing unreachable objects which may have been
-created from prior invocations of gitlink:git-add[1].
+created from prior invocations of linkgit:git-add[1].
 
 Users are encouraged to run this task on a regular basis within
 each repository to maintain good disk space utilization and good
@@ -98,15 +98,15 @@ The optional configuration variable 'gc.aggressiveWindow' controls how
 much time is spent optimizing the delta compression of the objects in
 the repository when the --aggressive option is specified.  The larger
 the value, the more time is spent optimizing the delta compression.  See
-the documentation for the --window' option in gitlink:git-repack[1] for
+the documentation for the --window' option in linkgit:git-repack[1] for
 more details.  This defaults to 10.
 
 See Also
 --------
-gitlink:git-prune[1]
-gitlink:git-reflog[1]
-gitlink:git-repack[1]
-gitlink:git-rerere[1]
+linkgit:git-prune[1]
+linkgit:git-reflog[1]
+linkgit:git-repack[1]
+linkgit:git-rerere[1]
 
 Author
 ------
@@ -114,4 +114,4 @@ Written by Shawn O. Pearce <spearce@spearce.org>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -23,7 +23,7 @@ be directly connected so the interactive git protocols (git, ssh,
 rsync, http) cannot be used.  This command provides support for
 git-fetch and git-pull to operate by packaging objects and references
 in an archive at the originating machine, then importing those into
-another repository using gitlink:git-fetch[1] and gitlink:git-pull[1]
+another repository using linkgit:git-fetch[1] and linkgit:git-pull[1]
 after moving the archive by some means (i.e., by sneakernet).  As no
 direct connection between repositories exists, the user must specify a
 basis for the bundle that is held by the destination repository: the
@@ -51,12 +51,12 @@ list-heads <file>::
        printed out.
 
 unbundle <file>::
-       Passes the objects in the bundle to gitlink:git-index-pack[1]
+       Passes the objects in the bundle to linkgit:git-index-pack[1]
        for storage in the repository, then prints the names of all
        defined references. If a reflist is given, only references
        matching those in the given list are printed. This command is
        really plumbing, intended to be called only by
-       gitlink:git-fetch[1].
+       linkgit:git-fetch[1].
 
 [git-rev-list-args...]::
        A list of arguments, acceptable to git-rev-parse and
@@ -73,7 +73,7 @@ unbundle <file>::
        available. This is principally of use to git-fetch, which
        expects to receive only those references asked for and not
        necessarily everything in the pack (in this case, git-bundle is
-       acting like gitlink:git-fetch-pack[1]).
+       acting like linkgit:git-fetch-pack[1]).
 
 SPECIFYING REFERENCES
 ---------------------
@@ -145,4 +145,4 @@ Written by Mark Levedahl <mdl123@verizon.net>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

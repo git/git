@@ -47,9 +47,9 @@ Your sysadmin must hate you!::
 
 See Also
 --------
-gitlink:git-commit-tree[1]
-gitlink:git-tag[1]
-gitlink:git-config[1]
+linkgit:git-commit-tree[1]
+linkgit:git-tag[1]
+linkgit:git-config[1]
 
 Author
 ------
@@ -61,4 +61,4 @@ Documentation by Eric Biederman and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

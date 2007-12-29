@@ -28,7 +28,7 @@ link:user-manual.html[Git User's Manual] for a more in-depth
 introduction.
 
 The COMMAND is either a name of a Git command (see below) or an alias
-as defined in the configuration file (see gitlink:git-config[1]).
+as defined in the configuration file (see linkgit:git-config[1]).
 
 Formatted and hyperlinked version of the latest git
 documentation can be viewed at
@@ -106,7 +106,7 @@ OPTIONS
 	option will bring up the manual page for that command.
 +
 Other options are available to control how the manual page is
-displayed. See gitlink:git-help[1] for more information,
+displayed. See linkgit:git-help[1] for more information,
 because 'git --help ...' is converted internally into 'git
 help ...'.
 
@@ -198,8 +198,8 @@ Low-level commands (plumbing)
 Although git includes its
 own porcelain layer, its low-level commands are sufficient to support
 development of alternative porcelains.  Developers of such porcelains
-might start by reading about gitlink:git-update-index[1] and
-gitlink:git-read-tree[1].
+might start by reading about linkgit:git-update-index[1] and
+linkgit:git-read-tree[1].
 
 The interface (input, output, set of options and the semantics)
 to these low-level commands are meant to be a lot more stable
@@ -331,7 +331,7 @@ HEAD::
 	(i.e. the contents of `$GIT_DIR/refs/heads/<head>`).
 
 For a more complete list of ways to spell object names, see
-"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
 
 File/Directory Structure
@@ -399,7 +399,7 @@ git Commits
 'GIT_COMMITTER_EMAIL'::
 'GIT_COMMITTER_DATE'::
 'EMAIL'::
-	see gitlink:git-commit-tree[1]
+	see linkgit:git-commit-tree[1]
 
 git Diffs
 ~~~~~~~~~
@@ -439,7 +439,7 @@ other
 'GIT_MERGE_VERBOSITY'::
 	A number controlling the amount of output shown by
 	the recursive merge strategy.  Overrides merge.verbosity.
-	See gitlink:git-merge[1]
+	See linkgit:git-merge[1]
 
 'GIT_PAGER'::
 	This environment variable overrides `$PAGER`. If it is set
@@ -447,8 +447,8 @@ other
 	a pager.
 
 'GIT_SSH'::
-	If this environment variable is set then gitlink:git-fetch[1]
-	and gitlink:git-push[1] will use this command instead
+	If this environment variable is set then linkgit:git-fetch[1]
+	and linkgit:git-push[1] will use this command instead
 	of `ssh` when they need to connect to a remote system.
 	The 'GIT_SSH' command will be given exactly two arguments:
 	the 'username@host' (or just 'host') from the URL and the
@@ -554,4 +554,4 @@ contributors on the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -27,7 +27,7 @@ Modifies the index or directory cache. Each file mentioned is updated
 into the index and any 'unmerged' or 'needs updating' state is
 cleared.
 
-See also gitlink:git-add[1] for a more user-friendly way to do some of
+See also linkgit:git-add[1] for a more user-friendly way to do some of
 the most common operations on the index.
 
 The way "git-update-index" handles files it is told about can be modified
@@ -292,14 +292,14 @@ Configuration
 
 The command honors `core.filemode` configuration variable.  If
 your repository is on an filesystem whose executable bits are
-unreliable, this should be set to 'false' (see gitlink:git-config[1]).
+unreliable, this should be set to 'false' (see linkgit:git-config[1]).
 This causes the command to ignore differences in file modes recorded
 in the index and the file mode on the filesystem if they differ only on
 executable bit.   On such an unfortunate filesystem, you may
 need to use `git-update-index --chmod=`.
 
 Quite similarly, if `core.symlinks` configuration variable is set
-to 'false' (see gitlink:git-config[1]), symbolic links are checked out
+to 'false' (see linkgit:git-config[1]), symbolic links are checked out
 as plain files, and this command does not modify a recorded file mode
 from symbolic link to regular file.
 
@@ -309,8 +309,8 @@ The command looks at `core.ignorestat` configuration variable.  See
 
 See Also
 --------
-gitlink:git-config[1],
-gitlink:git-add[1]
+linkgit:git-config[1],
+linkgit:git-add[1]
 
 
 Author
@@ -323,4 +323,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite
