@@ -398,7 +398,11 @@ static inline int sane_case(int x, int high)
 
 static inline int prefixcmp(const char *str, const char *prefix)
 {
-	return strncmp(str, prefix, strlen(prefix));
+	for (; ; str++, prefix++)
+		if (!*prefix)
+			return 0;
+		else if (*str != *prefix)
+			return (unsigned char)*prefix - (unsigned char)*str;
 }
 
 static inline int strtoul_ui(char const *s, int base, unsigned int *result)
