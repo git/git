@@ -170,11 +170,18 @@ proc updatecommits {} {
     global curview viewargs viewfiles viewincl viewinstances
     global viewactive viewcomplete loginstance tclencoding mainheadid
     global varcid startmsecs commfd showneartags showlocalchanges leftover
+    global mainheadid
 
-    if {$showlocalchanges && [commitinview $mainheadid $curview]} {
-	dodiffindex
-    }
+    set oldmainid $mainheadid
     rereadrefs
+    if {$showlocalchanges} {
+	if {$mainheadid ne $oldmainid} {
+	    dohidelocalchanges
+	}
+	if {[commitinview $mainheadid $curview]} {
+	    dodiffindex
+	}
+    }
     set view $curview
     set commits [exec git rev-parse --default HEAD --revs-only \
 		     $viewargs($view)]
