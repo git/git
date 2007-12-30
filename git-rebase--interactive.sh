@@ -215,15 +215,17 @@ make_squash_message () {
 		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([1-9][0-9]*\).*/\1/p" \
 			< "$SQUASH_MSG" | tail -n 1)+1))
 		echo "# This is a combination of $COUNT commits."
-		sed -n "2,\$p" < "$SQUASH_MSG"
+		sed -e 1d -e '2,/^./{
+			/^$/d
+		}' <"$SQUASH_MSG"
 	else
 		COUNT=2
 		echo "# This is a combination of two commits."
 		echo "# The first commit's message is:"
 		echo
 		git cat-file commit HEAD | sed -e '1,/^$/d'
-		echo
 	fi
+	echo
 	echo "# This is the $(nth_string $COUNT) commit message:"
 	echo
 	git cat-file commit $1 | sed -e '1,/^$/d'
