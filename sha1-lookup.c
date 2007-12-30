@@ -50,6 +50,12 @@
  * the midway of the table.  It can reasonably be expected to be near
  * 87% (222/256) from the top of the table.
  *
+ * However, we do not want to pick "mi" too precisely.  If the entry at
+ * the 87% in the above example turns out to be higher than the target
+ * we are looking for, we would end up narrowing the search space down
+ * only by 13%, instead of 50% we would get if we did a simple binary
+ * search.  So we would want to hedge our bets by being less aggressive.
+ *
  * The table at "table" holds at least "nr" entries of "elem_size"
  * bytes each.  Each entry has the SHA-1 key at "key_offset".  The
  * table is sorted by the SHA-1 key of the entries.  The caller wants
@@ -119,11 +125,25 @@ int sha1_entry_pos(const void *table,
 		if (hiv < kyv)
 			return -1 - hi;
 
-		if (kyv == lov && lov < hiv - 1)
-			kyv++;
-		else if (kyv == hiv - 1 && lov < kyv)
-			kyv--;
-
+		/*
+		 * Even if we know the target is much closer to 'hi'
+		 * than 'lo', if we pick too precisely and overshoot
+		 * (e.g. when we know 'mi' is closer to 'hi' than to
+		 * 'lo', pick 'mi' that is higher than the target), we
+		 * end up narrowing the search space by a smaller
+		 * amount (i.e. the distance between 'mi' and 'hi')
+		 * than what we would have (i.e. about half of 'lo'
+		 * and 'hi').  Hedge our bets to pick 'mi' less
+		 * aggressively, i.e. make 'mi' a bit closer to the
+		 * middle than we would otherwise pick.
+		 */
+		kyv = (kyv * 6 + lov + hiv) / 8;
+		if (lov < hiv - 1) {
+			if (kyv == lov)
+				kyv++;
+			else if (kyv == hiv)
+				kyv--;
+		}
 		mi = (range - 1) * (kyv - lov) / (hiv - lov) + lo;
 
 		if (debug_lookup) {
@@ -142,8 +162,7 @@ int sha1_entry_pos(const void *table,
 		if (cmp > 0) {
 			hi = mi;
 			hi_key = mi_key;
-		}
-		else {
+		} else {
 			lo = mi + 1;
 			lo_key = mi_key + elem_size;
 		}
