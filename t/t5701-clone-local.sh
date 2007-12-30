@@ -3,13 +3,6 @@
 test_description='test local clone'
 . ./test-lib.sh
 
-if test "$no_hardlinks"
-then
-    say 'Hard links not supported, skipping tests.'
-    test_done
-    exit
-fi
-
 D=`pwd`
 
 test_expect_success 'preparing origin repository' '
@@ -65,10 +58,6 @@ test_expect_success 'With -no-hardlinks, local will make a copy' '
 	linked=$(find objects -type f ! -links 1 | wc -l) &&
 	test 0 = $linked
 '
-
-say "hardlinks not supported, skipping tests."
-test_done
-exit 0
 
 test_expect_success 'Even without -l, local will make a hardlink' '
 	cd "$D" &&

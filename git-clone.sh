@@ -176,7 +176,7 @@ origin_override=
 use_separate_remote=t
 depth=
 no_progress=
-test "@@NO_HARDLINKS@@" && use_local_hardlink=no
+local_explicitly_asked_for=
 test -t 1 || no_progress=--no-progress
 
 while test $# != 0
@@ -188,8 +188,6 @@ do
 		bare=yes ;;
 	-l|--local)
 		local_explicitly_asked_for=yes
-       (test "@@NO_HARDLINKS@@" &&
-	    echo >&2 "Warning: -l asked but hardlinks are not supported") ||
 		use_local_hardlink=yes
 		;;
 	--no-hardlinks)
