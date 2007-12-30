@@ -734,9 +734,6 @@ proc rowofcommit {id} {
     global varcid varccommits varcrow curview cached_commitrow
     global varctok vtokmod
 
-    if {[info exists cached_commitrow($id)]} {
-	return $cached_commitrow($id)
-    }
     set v $curview
     if {![info exists varcid($v,$id)]} {
 	puts "oops rowofcommit no arc for [shortids $id]"
@@ -745,6 +742,9 @@ proc rowofcommit {id} {
     set a $varcid($v,$id)
     if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] >= 0} {
 	update_arcrows $v
+    }
+    if {[info exists cached_commitrow($id)]} {
+	return $cached_commitrow($id)
     }
     set i [lsearch -exact $varccommits($v,$a) $id]
     if {$i < 0} {
@@ -1299,7 +1299,7 @@ proc confirm_popup msg {
 }
 
 proc makewindow {} {
-    global canv canv2 canv3 linespc charspc ctext cflist
+    global canv canv2 canv3 linespc charspc ctext cflist cscroll
     global tabstop
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
@@ -1774,7 +1774,7 @@ proc canvscan {op w x y} {
 
 proc scrollcanv {cscroll f0 f1} {
     $cscroll set $f0 $f1
-    drawfrac $f0 $f1
+    drawvisible
     flushhighlights
 }
 
@@ -4538,21 +4538,50 @@ proc undolayout {row} {
     }
 }
 
-proc drawfrac {f0 f1} {
-    global canv linespc
+proc drawvisible {} {
+    global canv linespc curview vrowmod selectedline targetrow targetid
+    global need_redisplay cscroll
 
+    set fs [$canv yview]
     set ymax [lindex [$canv cget -scrollregion] 3]
     if {$ymax eq {} || $ymax == 0} return
+    set f0 [lindex $fs 0]
+    set f1 [lindex $fs 1]
     set y0 [expr {int($f0 * $ymax)}]
-    set row [expr {int(($y0 - 3) / $linespc) - 1}]
     set y1 [expr {int($f1 * $ymax)}]
-    set endrow [expr {int(($y1 - 3) / $linespc) + 1}]
-    drawcommits $row $endrow
-}
 
-proc drawvisible {} {
-    global canv
-    eval drawfrac [$canv yview]
+    if {[info exists targetid]} {
+	set r [rowofcommit $targetid]
+	if {$r != $targetrow} {
+	    # Fix up the scrollregion and change the scrolling position
+	    # now that our target row has moved.
+	    set diff [expr {($r - $targetrow) * $linespc}]
+	    set targetrow $r
+	    setcanvscroll
+	    set ymax [lindex [$canv cget -scrollregion] 3]
+	    incr y0 $diff
+	    incr y1 $diff
+	    set f0 [expr {$y0 / $ymax}]
+	    set f1 [expr {$y1 / $ymax}]
+	    allcanvs yview moveto $f0
+	    $cscroll set $f0 $f1
+	    set need_redisplay 1
+	}
+    }
+
+    set row [expr {int(($y0 - 3) / $linespc) - 1}]
+    set endrow [expr {int(($y1 - 3) / $linespc) + 1}]
+    if {$endrow >= $vrowmod($curview)} {
+	update_arcrows $curview
+    }
+    if {[info exists selectedline] &&
+	$row <= $selectedline && $selectedline <= $endrow} {
+	set targetrow $selectedline
+    } else {
+	set targetrow [expr {int(($row + $endrow) / 2)}]
+    }
+    set targetid [commitonrow $targetrow]
+    drawcommits $row $endrow
 }
 
 proc clear_display {} {
