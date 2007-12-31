@@ -33,7 +33,7 @@ msgstr "Git log Ausgabe kann nicht erkannt werden:"
 
 #: gitk:375 gitk:2155
 msgid "No commits selected"
-msgstr "Keine Versionen ausgewählt."
+msgstr "Keine Versionen ausgewÃ¤hlt."
 
 #: gitk:486
 msgid "No commit information available"
@@ -90,7 +90,7 @@ msgstr "Ansicht bearbeiten..."
 
 #: gitk:651 gitk:2094 gitk:8667
 msgid "Delete view"
-msgstr "Ansicht löschen"
+msgstr "Ansicht lÃ¶schen"
 
 #: gitk:653
 msgid "All files"
@@ -102,11 +102,11 @@ msgstr "Hilfe"
 
 #: gitk:658 gitk:1280
 msgid "About gitk"
-msgstr "Über gitk"
+msgstr "Ãœber gitk"
 
 #: gitk:659
 msgid "Key bindings"
-msgstr "Tastenkürzel"
+msgstr "TastenkÃ¼rzel"
 
 #: gitk:716
 msgid "SHA1 ID: "
@@ -118,7 +118,7 @@ msgstr "Suche"
 
 #: gitk:767
 msgid "next"
-msgstr "nächste"
+msgstr "nÃ¤chste"
 
 #: gitk:768
 msgid "prev"
@@ -138,7 +138,7 @@ msgstr "Pfad betreffend:"
 
 #: gitk:776 gitk:2396
 msgid "adding/removing string:"
-msgstr "String dazu/löschen:"
+msgstr "String dazu/lÃ¶schen:"
 
 #: gitk:787 gitk:789
 msgid "Exact"
@@ -146,7 +146,7 @@ msgstr "Exakt"
 
 #: gitk:789 gitk:2474 gitk:4233
 msgid "IgnCase"
-msgstr "Kein Groß/Klein"
+msgstr "Kein GroÃŸ/Klein"
 
 #: gitk:789 gitk:2365 gitk:2472 gitk:4229
 msgid "Regexp"
@@ -158,7 +158,7 @@ msgstr "Alle Felder"
 
 #: gitk:794 gitk:2491 gitk:2523 gitk:4295
 msgid "Headline"
-msgstr "Überschrift"
+msgstr "Ãœberschrift"
 
 #: gitk:795 gitk:2491 gitk:4295 gitk:4395 gitk:4783
 msgid "Comments"
@@ -203,11 +203,11 @@ msgstr "Baum"
 
 #: gitk:1018 gitk:1033 gitk:5969
 msgid "Diff this -> selected"
-msgstr "Vergleich diese -> gewählte"
+msgstr "Vergleich diese -> gewÃ¤hlte"
 
 #: gitk:1020 gitk:1035 gitk:5970
 msgid "Diff selected -> this"
-msgstr "Vergleich gewählte -> diese"
+msgstr "Vergleich gewÃ¤hlte -> diese"
 
 #: gitk:1022 gitk:1037 gitk:5971
 msgid "Make patch"
@@ -227,11 +227,11 @@ msgstr "Neuen Zweig erstellen"
 
 #: gitk:1026
 msgid "Cherry-pick this commit"
-msgstr "Diese Version pflücken"
+msgstr "Diese Version pflÃ¼cken"
 
 #: gitk:1028
 msgid "Reset HEAD branch to here"
-msgstr "HEAD-Zweig auf diese Version zurücksetzen"
+msgstr "HEAD-Zweig auf diese Version zurÃ¼cksetzen"
 
 #: gitk:1044
 msgid "Check out this branch"
@@ -239,7 +239,7 @@ msgstr "Auf diesen Zweig umstellen"
 
 #: gitk:1046
 msgid "Remove this branch"
-msgstr "Zweig löschen"
+msgstr "Zweig lÃ¶schen"
 
 #: gitk:1052
 msgid "Highlight this too"
@@ -254,14 +254,14 @@ msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
 "\n"
-"Copyright © 2005-2006 Paul Mackerras\n"
+"Copyright Â© 2005-2006 Paul Mackerras\n"
 "\n"
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 
 #: gitk:1290 gitk:1354 gitk:6532
 msgid "Close"
-msgstr "Schließen"
+msgstr "SchlieÃŸen"
 
 #: gitk:1311
 msgid "Gitk key bindings"
@@ -389,7 +389,7 @@ msgstr "Kinder"
 #: gitk:5965
 #, tcl-format
 msgid "Reset %s branch to here"
-msgstr "Zweig »%s« hierher zurücksetzen"
+msgstr "Zweig Â»%sÂ« hierher zurÃ¼cksetzen"
 
 #: gitk:5996
 msgid "Top"
@@ -450,7 +450,7 @@ msgstr ""
 #: gitk:6143
 #, tcl-format
 msgid "Tag \"%s\" already exists"
-msgstr "Markierung »%s« existiert bereits."
+msgstr "Markierung Â»%sÂ« existiert bereits."
 
 #: gitk:6153
 msgid "Error creating tag:"
@@ -483,15 +483,15 @@ msgstr ""
 
 #: gitk:6320
 msgid "Cherry-picking"
-msgstr "Version pflücken"
+msgstr "Version pflÃ¼cken"
 
 #: gitk:6332
 msgid "No changes committed"
-msgstr "Keine Änderungen eingetragen"
+msgstr "Keine Ã„nderungen eingetragen"
 
 #: gitk:6355
 msgid "Confirm reset"
-msgstr "Zurücksetzen bestätigen"
+msgstr "ZurÃ¼cksetzen bestÃ¤tigen"
 
 #: gitk:6357
 #, tcl-format
@@ -500,17 +500,17 @@ msgstr ""
 
 #: gitk:6361
 msgid "Reset type:"
-msgstr "Art des Zurücksetzens:"
+msgstr "Art des ZurÃ¼cksetzens:"
 
 #: gitk:6365
 msgid "Soft: Leave working tree and index untouched"
-msgstr "Weich: Arbeitskopie und Bereitstellung unverändert"
+msgstr "Weich: Arbeitskopie und Bereitstellung unverÃ¤ndert"
 
 #: gitk:6368
 msgid "Mixed: Leave working tree untouched, reset index"
 msgstr ""
-"Gemischt: Arbeitskopie unverändert,\n"
-"Bereitstellung zurückgesetzt"
+"Gemischt: Arbeitskopie unverÃ¤ndert,\n"
+"Bereitstellung zurÃ¼ckgesetzt"
 
 #: gitk:6371
 msgid ""
@@ -518,11 +518,11 @@ msgid ""
 "(discard ALL local changes)"
 msgstr ""
 "Hart: Arbeitskopie und Bereitstellung\n"
-"(Alle lokalen Änderungen werden gelöscht)"
+"(Alle lokalen Ã„nderungen werden gelÃ¶scht)"
 
 #: gitk:6387
 msgid "Resetting"
-msgstr "Zurücksetzen"
+msgstr "ZurÃ¼cksetzen"
 
 #: gitk:6444
 msgid "Checking out"
@@ -637,7 +637,7 @@ msgstr ""
 
 #: gitk:8023
 msgid "Select bg"
-msgstr "Hintergrundfarbe Auswählen"
+msgstr "Hintergrundfarbe AuswÃ¤hlen"
 
 #: gitk:8027
 msgid "Fonts: press to choose"
