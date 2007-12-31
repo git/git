@@ -74,7 +74,7 @@ version is called a <<def_commit,commit>>.
 
 Those snapshots aren't necessarily all arranged in a single line from
 oldest to newest; instead, work may simultaneously proceed along
-parallel lines of development, called <def_branch,branches>>, which may
+parallel lines of development, called <<def_branch,branches>>, which may
 merge and diverge.
 
 A single git repository can track development on multiple branches.  It
