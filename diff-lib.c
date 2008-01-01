@@ -35,7 +35,7 @@ static int get_mode(const char *path, int *mode)
 {
 	struct stat st;
 
-	if (!path || is_dev_null(path))
+	if (!path || !strcmp(path, "/dev/null"))
 		*mode = 0;
 	else if (!strcmp(path, "-"))
 		*mode = create_ce_mode(0666);
@@ -234,10 +234,6 @@ static int is_outside_repo(const char *path, int nongit, const char *prefix)
 	int i;
 	if (nongit || !strcmp(path, "-") || is_absolute_path(path))
 		return 1;
-#ifdef __MINGW32__
-	if (!strcmp(path, "nul"))
-		return 1;
-#endif
 	if (prefixcmp(path, "../"))
 		return 0;
 	if (!prefix)

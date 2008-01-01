@@ -285,7 +285,7 @@ static unsigned long linelen(const char *buffer, unsigned long size)
 	return len;
 }
 
-static int is_dev_null_line(const char *str)
+static int is_dev_null(const char *str)
 {
 	return !memcmp("/dev/null", str, 9) && isspace(str[9]);
 }
@@ -392,7 +392,7 @@ static int guess_p_value(const char *nameline)
 	char *name, *cp;
 	int val = -1;
 
-	if (is_dev_null_line(nameline))
+	if (is_dev_null(nameline))
 		return -1;
 	name = find_name(nameline, NULL, 0, TERM_SPACE | TERM_TAB);
 	if (!name)
@@ -440,12 +440,12 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 			p_value_known = 1;
 		}
 	}
-	if (is_dev_null_line(first)) {
+	if (is_dev_null(first)) {
 		patch->is_new = 1;
 		patch->is_delete = 0;
 		name = find_name(second, NULL, p_value, TERM_SPACE | TERM_TAB);
 		patch->new_name = name;
-	} else if (is_dev_null_line(second)) {
+	} else if (is_dev_null(second)) {
 		patch->is_new = 0;
 		patch->is_delete = 1;
 		name = find_name(first, NULL, p_value, TERM_SPACE | TERM_TAB);
