@@ -8,12 +8,12 @@ INSTALL ?= install
 TAR ?= tar
 RM ?= rm -f
 prefix ?= $(HOME)
-template_dir ?= $(prefix)/share/git-core/templates
+template_instdir ?= $(prefix)/share/git-core/templates
 # DESTDIR=
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
-template_dir_SQ = $(subst ','\'',$(template_dir))
+template_instdir_SQ = $(subst ','\'',$(template_instdir))
 
 all: boilerplates.made custom
 
@@ -46,6 +46,6 @@ clean:
 	$(RM) -r blt boilerplates.made
 
 install: all
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_dir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_instdir_SQ)'
 	(cd blt && $(TAR) cf - .) | \
-	(cd '$(DESTDIR_SQ)$(template_dir_SQ)' && umask 022 && $(TAR) xf -)
+	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && umask 022 && $(TAR) xf -)
