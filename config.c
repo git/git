@@ -13,6 +13,7 @@
 static FILE *config_file;
 static const char *config_file_name;
 static int config_linenr;
+static int config_file_eof;
 static int zlib_compression_seen;
 
 static int get_next_char(void)
@@ -34,7 +35,7 @@ static int get_next_char(void)
 		if (c == '\n')
 			config_linenr++;
 		if (c == EOF) {
-			config_file = NULL;
+			config_file_eof = 1;
 			c = '\n';
 		}
 	}
@@ -118,7 +119,7 @@ static int get_value(config_fn_t fn, char *name, unsigned int len)
 	/* Get the full name */
 	for (;;) {
 		c = get_next_char();
-		if (c == EOF)
+		if (config_file_eof)
 			break;
 		if (!iskeychar(c))
 			break;
@@ -182,7 +183,7 @@ static int get_base_var(char *name)
 
 	for (;;) {
 		int c = get_next_char();
-		if (c == EOF)
+		if (config_file_eof)
 			return -1;
 		if (c == ']')
 			return baselen;
@@ -205,8 +206,7 @@ static int git_parse_file(config_fn_t fn)
 	for (;;) {
 		int c = get_next_char();
 		if (c == '\n') {
-			/* EOF? */
-			if (!config_file)
+			if (config_file_eof)
 				return 0;
 			comment = 0;
 			continue;
@@ -469,6 +469,7 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 		config_file = f;
 		config_file_name = filename;
 		config_linenr = 1;
+		config_file_eof = 0;
 		ret = git_parse_file(fn);
 		fclose(f);
 		config_file_name = NULL;
@@ -917,6 +918,9 @@ int git_config_set_multivar(const char* key, const char* value,
 				copy_end = find_beginning_of_line(
 					contents, contents_sz,
 					store.offset[i]-2, &new_line);
+
+			if (copy_end > 0 && contents[copy_end-1] != '\n')
+				new_line = 1;
 
 			/* write the first part of the config */
 			if (copy_end > copy_begin) {
