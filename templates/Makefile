@@ -8,14 +8,14 @@ INSTALL ?= install
 TAR ?= tar
 RM ?= rm -f
 prefix ?= $(HOME)
-template_dir = $(prefix)/share/git-core/templates
+template_instdir ?= $(prefix)/share/git-core/templates
 # DESTDIR=
 # set NOEXECTEMPL to non-empty to change the names of hook scripts
 # so that the tools will not find them
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
-template_dir_SQ = $(subst ','\'',$(template_dir))
+template_instdir_SQ = $(subst ','\'',$(template_instdir))
 
 all: boilerplates.made custom
 
@@ -52,6 +52,6 @@ clean:
 	$(RM) -r blt boilerplates.made
 
 install: all
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_dir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_instdir_SQ)'
 	(cd blt && $(TAR) cf - .) | \
-	(cd '$(DESTDIR_SQ)$(template_dir_SQ)' && $(TAR) xf -)
+	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && $(TAR) xf -)
