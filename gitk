@@ -234,7 +234,7 @@ proc updatecommits {} {
 proc reloadcommits {} {
     global curview viewcomplete selectedline currentid thickerline
     global showneartags treediffs commitinterest cached_commitrow
-    global progresscoords
+    global progresscoords targetid
 
     if {!$viewcomplete($curview)} {
 	stop_rev_list $curview
@@ -254,6 +254,7 @@ proc reloadcommits {} {
     clear_display
     catch {unset commitinterest}
     catch {unset cached_commitrow}
+    catch {unset targetid}
     setcanvscroll
     getcommits
 }
@@ -561,7 +562,7 @@ proc fix_reversal {p a v} {
 
 proc insertrow {id p v} {
     global varcid varccommits parents children cmitlisted
-    global commitidx varctok vtokmod
+    global commitidx varctok vtokmod targetid targetrow
 
     set a $varcid($v,$p)
     set i [lsearch -exact $varccommits($v,$a) $p]
@@ -580,12 +581,18 @@ proc insertrow {id p v} {
     if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
 	modify_arc $v $a $i
     }
+    if {[info exists targetid]} {
+	if {![comes_before $targetid $p]} {
+	    incr targetrow
+	}
+    }
     drawvisible
 }
 
 proc removerow {id v} {
     global varcid varccommits parents children commitidx
     global varctok vtokmod cmitlisted currentid selectedline
+    global targetid
 
     if {[llength $parents($v,$id)] != 1} {
 	puts "oops: removerow [shortids $id] has [llength $parents($v,$id)] parents"
@@ -614,6 +621,9 @@ proc removerow {id v} {
     if {[info exist currentid] && $id eq $currentid} {
 	unset currentid
 	unset selectedline
+    }
+    if {[info exists targetid] && $targetid eq $id} {
+	set targetid $p
     }
     drawvisible
 }
@@ -754,6 +764,22 @@ proc rowofcommit {id} {
     incr i [lindex $varcrow($v) $a]
     set cached_commitrow($id) $i
     return $i
+}
+
+# Returns 1 if a is on an earlier row than b, otherwise 0
+proc comes_before {a b} {
+    global varcid varctok curview
+
+    set v $curview
+    if {$a eq $b || ![info exists varcid($v,$a)] || \
+	    ![info exists varcid($v,$b)]} {
+	return 0
+    }
+    if {$varcid($v,$a) != $varcid($v,$b)} {
+	return [expr {[string compare [lindex $varctok($v) $varcid($v,$a)] \
+			   [lindex $varctok($v) $varcid($v,$b)]] < 0}]
+    }
+    return [expr {[rowofcommit $a] < [rowofcommit $b]}]
 }
 
 proc bsearch {l elt} {
@@ -4540,7 +4566,7 @@ proc undolayout {row} {
 
 proc drawvisible {} {
     global canv linespc curview vrowmod selectedline targetrow targetid
-    global need_redisplay cscroll
+    global need_redisplay cscroll numcommits
 
     set fs [$canv yview]
     set ymax [lindex [$canv cget -scrollregion] 3]
@@ -4551,21 +4577,25 @@ proc drawvisible {} {
     set y1 [expr {int($f1 * $ymax)}]
 
     if {[info exists targetid]} {
-	set r [rowofcommit $targetid]
-	if {$r != $targetrow} {
-	    # Fix up the scrollregion and change the scrolling position
-	    # now that our target row has moved.
-	    set diff [expr {($r - $targetrow) * $linespc}]
-	    set targetrow $r
-	    setcanvscroll
-	    set ymax [lindex [$canv cget -scrollregion] 3]
-	    incr y0 $diff
-	    incr y1 $diff
-	    set f0 [expr {$y0 / $ymax}]
-	    set f1 [expr {$y1 / $ymax}]
-	    allcanvs yview moveto $f0
-	    $cscroll set $f0 $f1
-	    set need_redisplay 1
+	if {[commitinview $targetid $curview]} {
+	    set r [rowofcommit $targetid]
+	    if {$r != $targetrow} {
+		# Fix up the scrollregion and change the scrolling position
+		# now that our target row has moved.
+		set diff [expr {($r - $targetrow) * $linespc}]
+		set targetrow $r
+		setcanvscroll
+		set ymax [lindex [$canv cget -scrollregion] 3]
+		incr y0 $diff
+		incr y1 $diff
+		set f0 [expr {$y0 / $ymax}]
+		set f1 [expr {$y1 / $ymax}]
+		allcanvs yview moveto $f0
+		$cscroll set $f0 $f1
+		set need_redisplay 1
+	    }
+	} else {
+	    unset targetid
 	}
     }
 
@@ -4579,6 +4609,9 @@ proc drawvisible {} {
 	set targetrow $selectedline
     } else {
 	set targetrow [expr {int(($row + $endrow) / 2)}]
+    }
+    if {$targetrow >= $numcommits} {
+	set targetrow [expr {$numcommits - 1}]
     }
     set targetid [commitonrow $targetrow]
     drawcommits $row $endrow
