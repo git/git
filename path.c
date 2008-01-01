@@ -255,7 +255,7 @@ char *enter_repo(char *path, int strict)
 
 	if (access("objects", X_OK) == 0 && access("refs", X_OK) == 0 &&
 	    validate_headref("HEAD") == 0) {
-		set_git_dir(".");
+		setenv(GIT_DIR_ENVIRONMENT, ".", 1);
 		check_repository_format();
 		return path;
 	}
