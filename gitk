@@ -4950,7 +4950,7 @@ proc findmore {} {
     global commitdata commitinfo numcommits findpattern findloc
     global findstartline findcurline findallowwrap
     global find_dirn gdttype fhighlights fprogcoord
-    global curview varcorder vrownum varccommits
+    global curview varcorder vrownum varccommits vrowmod
 
     if {![info exists find_dirn]} {
 	return 0
@@ -4985,6 +4985,9 @@ proc findmore {} {
     if {$n > 500} {
 	set n 500
 	set moretodo 1
+    }
+    if {$l + ($find_dirn > 0? $n: 1) > $vrowmod($curview)} {
+	update_arcrows $curview
     }
     set found 0
     set domore 1
@@ -5032,14 +5035,18 @@ proc findmore {} {
 	    }
 	    set id [lindex $ids [expr {$l - $arow}]]
 	    if {![info exists fhighlights($l)]} {
+		# this sets fhighlights($l) to -1
 		askfilehighlight $l $id
+	    }
+	    if {$fhighlights($l) > 0} {
+		set found $domore
+		break
+	    }
+	    if {$fhighlights($l) < 0} {
 		if {$domore} {
 		    set domore 0
 		    set findcurline [expr {$l - $find_dirn}]
 		}
-	    } elseif {$fhighlights($l)} {
-		set found $domore
-		break
 	    }
 	}
     }
