@@ -10,6 +10,7 @@
 #include "color.h"
 #include "attr.h"
 #include "run-command.h"
+#include "utf8.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -469,10 +470,13 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	}
 }
 
+typedef unsigned long (*sane_truncate_fn)(char *line, unsigned long len);
+
 struct emit_callback {
 	struct xdiff_emit_state xm;
 	int nparents, color_diff;
 	unsigned ws_rule;
+	sane_truncate_fn truncate;
 	const char **label_path;
 	struct diff_words_data *diff_words;
 	int *found_changesp;
@@ -525,6 +529,24 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 	}
 }
 
+static unsigned long sane_truncate_line(struct emit_callback *ecb, char *line, unsigned long len)
+{
+	const char *cp;
+	unsigned long allot;
+	size_t l = len;
+
+	if (ecb->truncate)
+		return ecb->truncate(line, len);
+	cp = line;
+	allot = l;
+	while (0 < l) {
+		(void) utf8_width(&cp, &l);
+		if (!cp)
+			break; /* truncated in the middle? */
+	}
+	return allot - l;
+}
+
 static void fn_out_consume(void *priv, char *line, unsigned long len)
 {
 	int i;
@@ -555,8 +577,11 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		;
 	if (2 <= i && i < len && line[i] == ' ') {
 		ecbdata->nparents = i - 1;
+		len = sane_truncate_line(ecbdata, line, len);
 		emit_line(diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO),
 			  reset, line, len);
+		if (line[len-1] != '\n')
+			putchar('\n');
 		return;
 	}
 
