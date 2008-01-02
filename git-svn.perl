@@ -1283,8 +1283,11 @@ BEGIN {
 	}
 }
 
-my %LOCKFILES;
-END { unlink keys %LOCKFILES if %LOCKFILES }
+my (%LOCKFILES, %INDEX_FILES);
+END {
+	unlink keys %LOCKFILES if %LOCKFILES;
+	unlink keys %INDEX_FILES if %INDEX_FILES;
+}
 
 sub resolve_local_globs {
 	my ($url, $fetch, $glob_spec) = @_;
@@ -1376,7 +1379,6 @@ sub fetch_all {
 
 	($base, $head) = parse_revision_argument($base, $head);
 	$ra->gs_fetch_loop_common($base, $head, \@gs, \@globs);
-	unlink $_->{index} foreach @gs;
 }
 
 sub read_all_remotes {
@@ -3945,6 +3947,7 @@ sub gs_fetch_loop_common {
 				if ($log_entry) {
 					$gs->do_git_commit($log_entry);
 				}
+				$INDEX_FILES{$gs->{index}} = 1;
 			}
 			foreach my $g (@$globs) {
 				my $k = "svn-remote.$g->{remote}." .
