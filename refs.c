@@ -822,10 +822,10 @@ struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int flags)
 {
 	switch (check_ref_format(ref)) {
-	case CHECK_REF_FORMAT_ERROR:
-	case CHECK_REF_FORMAT_WILDCARD:
-		return NULL;
 	default:
+		return NULL;
+	case 0:
+	case CHECK_REF_FORMAT_ONELEVEL:
 		return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
 	}
 }
