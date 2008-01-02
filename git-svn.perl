@@ -418,7 +418,7 @@ sub cmd_dcommit {
 		warn "Attempting to commit more than one change while ",
 		     "--no-rebase is enabled.\n",
 		     "If these changes depend on each other, re-running ",
-		     "without --no-rebase will be required."
+		     "without --no-rebase may be required."
 	}
 	while (1) {
 		my $d = shift @$linear_refs or last;
@@ -453,6 +453,7 @@ sub cmd_dcommit {
 				                               $parents->{$d};
 			}
 			$_fetch_all ? $gs->fetch_all : $gs->fetch;
+			$last_rev = $cmt_rev;
 			next if $_no_rebase;
 
 			# we always want to rebase against the current HEAD,
@@ -512,7 +513,6 @@ sub cmd_dcommit {
 				$parents = \%p;
 				$linear_refs = \@l;
 			}
-			$last_rev = $cmt_rev;
 		}
 	}
 	unlink $gs->{index};
