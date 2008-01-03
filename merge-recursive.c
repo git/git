@@ -289,7 +289,7 @@ static int get_files_dirs(struct tree *tree)
 }
 
 /*
- * Returns a index_entry instance which doesn't have to correspond to
+ * Returns an index_entry instance which doesn't have to correspond to
  * a real cache entry in Git's index.
  */
 static struct stage_data *insert_stage_data(const char *path,

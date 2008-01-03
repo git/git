@@ -140,7 +140,7 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
  * Test if it looks like we're at a git directory.
  * We want to see:
  *
- *  - either a objects/ directory _or_ the proper
+ *  - either an objects/ directory _or_ the proper
  *    GIT_OBJECT_DIRECTORY environment variable
  *  - a refs/ directory
  *  - either a HEAD symlink or a HEAD file that is formatted as

@@ -22,7 +22,7 @@ does not forbid it.  However, there are a few things to keep in
 mind.
 
 . `git-commit-tree` (hence, `git-commit` which uses it) issues
-  an warning if the commit log message given to it does not look
+  a warning if the commit log message given to it does not look
   like a valid UTF-8 string, unless you explicitly say your
   project uses a legacy encoding.  The way to say this is to
   have i18n.commitencoding in `.git/config` file, like this:
