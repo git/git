@@ -122,6 +122,8 @@ extern void set_die_routine(void (*routine)(const char *err, va_list params) NOR
 extern void set_error_routine(void (*routine)(const char *err, va_list params));
 extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 
+extern int prefixcmp(const char *str, const char *prefix);
+
 #ifdef NO_MMAP
 
 #ifndef PROT_READ
@@ -394,15 +396,6 @@ static inline int sane_case(int x, int high)
 	if (sane_istest(x, GIT_ALPHA))
 		x = (x & ~0x20) | high;
 	return x;
-}
-
-static inline int prefixcmp(const char *str, const char *prefix)
-{
-	for (; ; str++, prefix++)
-		if (!*prefix)
-			return 0;
-		else if (*str != *prefix)
-			return (unsigned char)*prefix - (unsigned char)*str;
 }
 
 static inline int strtoul_ui(char const *s, int base, unsigned int *result)
