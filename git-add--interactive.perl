@@ -3,38 +3,29 @@
 use strict;
 use Git;
 
-# Prompt colors:
-my ($prompt_color, $header_color, $help_color, $normal_color);
-# Diff colors:
-my ($fraginfo_color);
-
-my ($use_color, $diff_use_color);
 my $repo = Git->repository();
 
-$use_color = $repo->get_colorbool('color.interactive');
+my $menu_use_color = $repo->get_colorbool('color.interactive');
+my ($prompt_color, $header_color, $help_color) =
+	$menu_use_color ? (
+		$repo->get_color('color.interactive.prompt', 'bold blue'),
+		$repo->get_color('color.interactive.header', 'bold'),
+		$repo->get_color('color.interactive.help', 'red bold'),
+	) : ();
 
-if ($use_color) {
-	# Set interactive colors:
+my $diff_use_color = $repo->get_colorbool('color.diff');
+my ($fraginfo_color) =
+	$diff_use_color ? (
+		$repo->get_color('color.diff.frag', 'cyan'),
+	) : ();
 
-	# Grab the 3 main colors in git color string format, with sane
-	# (visible) defaults:
-	$prompt_color = $repo->get_color("color.interactive.prompt", "bold blue");
-	$header_color = $repo->get_color("color.interactive.header", "bold");
-	$help_color = $repo->get_color("color.interactive.help", "red bold");
-	$normal_color = $repo->get_color("", "reset");
-
-	# Do we also set diff colors?
-	$diff_use_color = $repo->get_colorbool('color.diff');
-	if ($diff_use_color) {
-		$fraginfo_color = $repo->get_color("color.diff.frag", "cyan");
-	}
-}
+my $normal_color = $repo->get_color("", "reset");
 
 sub colored {
 	my $color = shift;
 	my $string = join("", @_);
 
-	if ($use_color) {
+	if (defined $color) {
 		# Put a color code at the beginning of each line, a reset at the end
 		# color after newlines that are not at the end of the string
 		$string =~ s/(\n+)(.)/$1$color$2/g;
@@ -300,7 +291,7 @@ sub highlight_prefix {
 		return "$prefix$remainder";
 	}
 
-	if (!$use_color) {
+	if (!$menu_use_color) {
 		return "[$prefix]$remainder";
 	}
 
