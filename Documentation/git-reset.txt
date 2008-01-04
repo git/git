@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git-reset' [--mixed | --soft | --hard] [-q] [<commit>]
-'git-reset' [--mixed] [-q] <commit> [--] <paths>...
+'git-reset' [--mixed] [-q] [<commit>] [--] <paths>...
 
 DESCRIPTION
 -----------
@@ -49,7 +49,7 @@ OPTIONS
 	Be quiet, only report errors.
 
 <commit>::
-	Commit to make the current HEAD.
+	Commit to make the current HEAD. If not given defaults to HEAD.
 
 Examples
 --------
