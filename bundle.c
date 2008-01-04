@@ -48,7 +48,7 @@ int read_bundle_header(const char *path, struct bundle_header *header)
 			: &header->references;
 		char delim;
 
-		if (buffer[len - 1] == '\n')
+		if (len && buffer[len - 1] == '\n')
 			buffer[len - 1] = '\0';
 		if (get_sha1_hex(buffer + offset, sha1)) {
 			warning("unrecognized header: %s", buffer);

@@ -644,7 +644,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 				die("'%s': %s", argv[1], strerror(errno));
 			while (fgets(buf, sizeof(buf), patterns)) {
 				int len = strlen(buf);
-				if (buf[len-1] == '\n')
+				if (len && buf[len-1] == '\n')
 					buf[len-1] = 0;
 				/* ignore empty line like grep does */
 				if (!buf[0])

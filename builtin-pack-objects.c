@@ -2013,7 +2013,7 @@ static void get_object_list(int ac, const char **av)
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = strlen(line);
-		if (line[len - 1] == '\n')
+		if (len && line[len - 1] == '\n')
 			line[--len] = 0;
 		if (!len)
 			break;
