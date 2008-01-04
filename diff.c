@@ -178,6 +178,12 @@ int git_diff_ui_config(const char *var, const char *value)
 				return parse_funcname_pattern(var, ep, value);
 		}
 	}
+
+	return git_diff_basic_config(var, value);
+}
+
+int git_diff_basic_config(const char *var, const char *value)
+{
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
 		color_parse(value, var, diff_colors[slot]);
