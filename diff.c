@@ -59,14 +59,6 @@ static struct ll_diff_driver {
 	char *cmd;
 } *user_diff, **user_diff_tail;
 
-static void read_config_if_needed(void)
-{
-	if (!user_diff_tail) {
-		user_diff_tail = &user_diff;
-		git_config(git_diff_ui_config);
-	}
-}
-
 /*
  * Currently there is only "diff.<drivername>.command" variable;
  * because there are "diff.color.<slot>" variables, we are parsing
@@ -1822,7 +1814,6 @@ static const char *external_diff_attr(const char *name)
 		    !ATTR_UNSET(value)) {
 			struct ll_diff_driver *drv;
 
-			read_config_if_needed();
 			for (drv = user_diff; drv; drv = drv->next)
 				if (!strcmp(drv->name, value))
 					return drv->cmd;
