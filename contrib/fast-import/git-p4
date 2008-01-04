@@ -469,9 +469,7 @@ class P4Submit(Command):
                 optparse.make_option("--origin", dest="origin"),
                 optparse.make_option("--reset", action="store_true", dest="reset"),
                 optparse.make_option("--log-substitutions", dest="substFile"),
-                optparse.make_option("--dry-run", action="store_true"),
                 optparse.make_option("--direct", dest="directSubmit", action="store_true"),
-                optparse.make_option("--trust-me-like-a-fool", dest="trustMeLikeAFool", action="store_true"),
                 optparse.make_option("-M", dest="detectRename", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
@@ -479,12 +477,10 @@ class P4Submit(Command):
         self.firstTime = True
         self.reset = False
         self.interactive = True
-        self.dryRun = False
         self.substFile = ""
         self.firstTime = True
         self.origin = ""
         self.directSubmit = False
-        self.trustMeLikeAFool = False
         self.detectRename = False
         self.verbose = False
         self.isWindows = (platform.system() == "Windows")
@@ -681,57 +677,30 @@ class P4Submit(Command):
                 separatorLine += "\r"
             separatorLine += "\n"
 
-            response = "e"
-            if self.trustMeLikeAFool:
-                response = "y"
+            [handle, fileName] = tempfile.mkstemp()
+            tmpFile = os.fdopen(handle, "w+")
+            tmpFile.write(submitTemplate + separatorLine + diff)
+            tmpFile.close()
+            defaultEditor = "vi"
+            if platform.system() == "Windows":
+                defaultEditor = "notepad"
+            editor = os.environ.get("EDITOR", defaultEditor);
+            system(editor + " " + fileName)
+            tmpFile = open(fileName, "rb")
+            message = tmpFile.read()
+            tmpFile.close()
+            os.remove(fileName)
+            submitTemplate = message[:message.index(separatorLine)]
+            if self.isWindows:
+                submitTemplate = submitTemplate.replace("\r\n", "\n")
 
-            firstIteration = True
-            while response == "e":
-                if not firstIteration:
-                    response = raw_input("Do you want to submit this change? [y]es/[e]dit/[n]o/[s]kip ")
-                firstIteration = False
-                if response == "e":
-                    [handle, fileName] = tempfile.mkstemp()
-                    tmpFile = os.fdopen(handle, "w+")
-                    tmpFile.write(submitTemplate + separatorLine + diff)
-                    tmpFile.close()
-                    defaultEditor = "vi"
-                    if platform.system() == "Windows":
-                        defaultEditor = "notepad"
-                    editor = os.environ.get("EDITOR", defaultEditor);
-                    system(editor + " " + fileName)
-                    tmpFile = open(fileName, "rb")
-                    message = tmpFile.read()
-                    tmpFile.close()
-                    os.remove(fileName)
-                    submitTemplate = message[:message.index(separatorLine)]
-                    if self.isWindows:
-                        submitTemplate = submitTemplate.replace("\r\n", "\n")
+            if self.directSubmit:
+                print "Submitting to git first"
+                os.chdir(self.oldWorkingDirectory)
+                write_pipe("git commit -a -F -", submitTemplate)
+                os.chdir(self.clientPath)
 
-            if response == "y" or response == "yes":
-               if self.dryRun:
-                   print submitTemplate
-                   raw_input("Press return to continue...")
-               else:
-                   if self.directSubmit:
-                       print "Submitting to git first"
-                       os.chdir(self.oldWorkingDirectory)
-                       write_pipe("git commit -a -F -", submitTemplate)
-                       os.chdir(self.clientPath)
-
-                   write_pipe("p4 submit -i", submitTemplate)
-            elif response == "s":
-                for f in editedFiles:
-                    system("p4 revert \"%s\"" % f);
-                for f in filesToAdd:
-                    system("p4 revert \"%s\"" % f);
-                    system("rm %s" %f)
-                for f in filesToDelete:
-                    system("p4 delete \"%s\"" % f);
-                return
-            else:
-                print "Not submitting!"
-                self.interactive = False
+            write_pipe("p4 submit -i", submitTemplate)
         else:
             fileName = "submit.txt"
             file = open(fileName, "w+")
@@ -828,10 +797,8 @@ class P4Submit(Command):
                 sync = P4Sync()
                 sync.run([])
 
-                response = raw_input("Do you want to rebase current HEAD from Perforce now using git-p4 rebase? [y]es/[n]o ")
-                if response == "y" or response == "yes":
-                    rebase = P4Rebase()
-                    rebase.rebase()
+                rebase = P4Rebase()
+                rebase.rebase()
             os.remove(self.configFile)
 
         return True
