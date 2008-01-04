@@ -174,8 +174,6 @@ int git_diff_ui_config(const char *var, const char *value)
 		if (ep != var + 4) {
 			if (!strcmp(ep, ".command"))
 				return parse_lldiff_command(var, ep, value);
-			if (!strcmp(ep, ".funcname"))
-				return parse_funcname_pattern(var, ep, value);
 		}
 	}
 
@@ -188,6 +186,14 @@ int git_diff_basic_config(const char *var, const char *value)
 		int slot = parse_diff_color_slot(var, 11);
 		color_parse(value, var, diff_colors[slot]);
 		return 0;
+	}
+
+	if (!prefixcmp(var, "diff.")) {
+		const char *ep = strrchr(var, '.');
+		if (ep != var + 4) {
+			if (!strcmp(ep, ".funcname"))
+				return parse_funcname_pattern(var, ep, value);
+		}
 	}
 
 	return git_default_config(var, value);
@@ -1160,7 +1166,6 @@ static const char *funcname_pattern(const char *ident)
 {
 	struct funcname_pattern *pp;
 
-	read_config_if_needed();
 	for (pp = funcname_pattern_list; pp; pp = pp->next)
 		if (!strcmp(ident, pp->name))
 			return pp->pattern;
