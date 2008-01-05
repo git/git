@@ -12,10 +12,11 @@ test_description='git-mktag: tag object verify test'
 # given in the expect.pat file.
 
 check_verify_failure () {
-    test_expect_success \
-        "$1" \
-        'git-mktag <tag.sig 2>message ||
-        grep -q -f expect.pat message'
+	expect="$2"
+	test_expect_success "$1" '
+		( ! git-mktag <tag.sig 2>message ) &&
+		grep -q "$expect" message
+	'
 }
 
 ###########################################################
@@ -33,11 +34,8 @@ cat >tag.sig <<EOF
 too short for a tag
 EOF
 
-cat >expect.pat <<EOF
-^error: .*size wrong.*$
-EOF
-
-check_verify_failure 'Tag object length check'
+check_verify_failure 'Tag object length check' \
+	'^error: .*size wrong.*$'
 
 ############################################################
 #  2. object line label check
@@ -48,11 +46,7 @@ type tag
 tag mytag
 EOF
 
-cat >expect.pat <<EOF
-^error: char0: .*"object "$
-EOF
-
-check_verify_failure '"object" line label check'
+check_verify_failure '"object" line label check' '^error: char0: .*"object "$'
 
 ############################################################
 #  3. object line SHA1 check
@@ -63,11 +57,7 @@ type tag
 tag mytag
 EOF
 
-cat >expect.pat <<EOF
-^error: char7: .*SHA1 hash$
-EOF
-
-check_verify_failure '"object" line SHA1 check'
+check_verify_failure '"object" line SHA1 check' '^error: char7: .*SHA1 hash$'
 
 ############################################################
 #  4. type line label check
@@ -78,11 +68,7 @@ xxxx tag
 tag mytag
 EOF
 
-cat >expect.pat <<EOF
-^error: char47: .*"[\]ntype "$
-EOF
-
-check_verify_failure '"type" line label check'
+check_verify_failure '"type" line label check' '^error: char47: .*"\\ntype "$'
 
 ############################################################
 #  5. type line eol check
@@ -90,11 +76,7 @@ check_verify_failure '"type" line label check'
 echo "object 779e9b33986b1c2670fff52c5067603117b3e895" >tag.sig
 printf "type tagsssssssssssssssssssssssssssssss" >>tag.sig
 
-cat >expect.pat <<EOF
-^error: char48: .*"[\]n"$
-EOF
-
-check_verify_failure '"type" line eol check'
+check_verify_failure '"type" line eol check' '^error: char48: .*"\\n"$'
 
 ############################################################
 #  6. tag line label check #1
@@ -105,11 +87,8 @@ type tag
 xxx mytag
 EOF
 
-cat >expect.pat <<EOF
-^error: char57: no "tag " found$
-EOF
-
-check_verify_failure '"tag" line label check #1'
+check_verify_failure '"tag" line label check #1' \
+	'^error: char57: no "tag " found$'
 
 ############################################################
 #  7. tag line label check #2
@@ -120,11 +99,8 @@ type taggggggggggggggggggggggggggggggg
 tag
 EOF
 
-cat >expect.pat <<EOF
-^error: char87: no "tag " found$
-EOF
-
-check_verify_failure '"tag" line label check #2'
+check_verify_failure '"tag" line label check #2' \
+	'^error: char87: no "tag " found$'
 
 ############################################################
 #  8. type line type-name length check
@@ -135,11 +111,8 @@ type taggggggggggggggggggggggggggggggg
 tag mytag
 EOF
 
-cat >expect.pat <<EOF
-^error: char53: type too long$
-EOF
-
-check_verify_failure '"type" line type-name length check'
+check_verify_failure '"type" line type-name length check' \
+	'^error: char53: type too long$'
 
 ############################################################
 #  9. verify object (SHA1/type) check
@@ -150,11 +123,8 @@ type tagggg
 tag mytag
 EOF
 
-cat >expect.pat <<EOF
-^error: char7: could not verify object.*$
-EOF
-
-check_verify_failure 'verify object (SHA1/type) check'
+check_verify_failure 'verify object (SHA1/type) check' \
+	'^error: char7: could not verify object.*$'
 
 ############################################################
 # 10. verify tag-name check
@@ -165,11 +135,8 @@ type commit
 tag my	tag
 EOF
 
-cat >expect.pat <<EOF
-^error: char67: could not verify tag name$
-EOF
-
-check_verify_failure 'verify tag-name check'
+check_verify_failure 'verify tag-name check' \
+	'^error: char67: could not verify tag name$'
 
 ############################################################
 # 11. tagger line label check #1
@@ -180,11 +147,8 @@ type commit
 tag mytag
 EOF
 
-cat >expect.pat <<EOF
-^error: char70: could not find "tagger"$
-EOF
-
-check_verify_failure '"tagger" line label check #1'
+check_verify_failure '"tagger" line label check #1' \
+	'^error: char70: could not find "tagger"$'
 
 ############################################################
 # 12. tagger line label check #2
@@ -196,11 +160,8 @@ tag mytag
 tagger
 EOF
 
-cat >expect.pat <<EOF
-^error: char70: could not find "tagger"$
-EOF
-
-check_verify_failure '"tagger" line label check #2'
+check_verify_failure '"tagger" line label check #2' \
+	'^error: char70: could not find "tagger"$'
 
 ############################################################
 # 13. create valid tag
