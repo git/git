@@ -220,6 +220,7 @@ proc read_diff {fd} {
 
 		if {[string match {mode *} $line]
 			|| [string match {new file *} $line]
+			|| [regexp {^(old|new) mode *} $line]
 			|| [string match {deleted file *} $line]
 			|| [string match {deleted symlink} $line]
 			|| [string match {Binary files * and * differ} $line]
