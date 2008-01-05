@@ -394,7 +394,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 		int recno;
 
 		if (!spec) {
-			status |= error("Not a reflog: %s", ref);
+			status |= error("Not a reflog: %s", argv[i]);
 			continue;
 		}
 
