@@ -224,6 +224,6 @@ install-webdoc : html
 	sh ./install-webdoc.sh $(WEBDOC_DEST)
 
 quick-install:
-	sh ./install-doc-quick.sh $(DOC_REF) $(mandir)
+	sh ./install-doc-quick.sh $(DOC_REF) $(DESTDIR)$(mandir)
 
 .PHONY: .FORCE-GIT-VERSION-FILE
