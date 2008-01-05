@@ -371,7 +371,7 @@ test_expect_success 'override config option -n' '
 	git merge --summary c2 >diffstat.txt &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2 &&
-	if ! grep -e "^ file | \+2 +-$" diffstat.txt
+	if ! grep -e "^ file |  *2 +-$" diffstat.txt
 	then
 		echo "[OOPS] diffstat was not generated"
 	fi
@@ -386,7 +386,7 @@ test_expect_success 'override config option --summary' '
 	git merge -n c2 >diffstat.txt &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2 &&
-	if grep -e "^ file | \+2 +-$" diffstat.txt
+	if grep -e "^ file |  *2 +-$" diffstat.txt
 	then
 		echo "[OOPS] diffstat was generated"
 		false
