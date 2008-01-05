@@ -20,6 +20,10 @@ no_changes () {
 }
 
 clear_stash () {
+	if test $# != 0
+	then
+		die "git stash clear with parameters is unimplemented"
+	fi
 	if current=$(git rev-parse --verify $ref_stash 2>/dev/null)
 	then
 		git update-ref -d $ref_stash $current
@@ -216,7 +220,8 @@ apply)
 	apply_stash "$@"
 	;;
 clear)
-	clear_stash
+	shift
+	clear_stash "$@"
 	;;
 create)
 	if test $# -gt 0 && test "$1" = create
