@@ -114,6 +114,9 @@ Updates since v1.5.3
 
  * "git reset" is now built-in and its output can be squelched with -q.
 
+ * "git reset --hard" does not make any sense in a bare
+   repository, but did not error out; fixed.
+
  * "git send-email" can optionally talk over ssmtp and use SMTP-AUTH.
 
  * "git rebase" learned --whitespace option.
@@ -344,6 +347,6 @@ series.
 
 --
 exec >/var/tmp/1
-O=v1.5.4-rc1-36-g49e6be5
+O=v1.5.4-rc2-37-ge0cd252
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
