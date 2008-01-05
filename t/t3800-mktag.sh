@@ -15,7 +15,7 @@ check_verify_failure () {
     test_expect_success \
         "$1" \
         'git-mktag <tag.sig 2>message ||
-         egrep -q -f expect.pat message'
+        grep -q -f expect.pat message'
 }
 
 ###########################################################

@@ -129,7 +129,7 @@ STDOUT post-update
 STDERR post-update
 EOF
 test_expect_success 'send-pack stderr contains hook messages' '
-	egrep ^STD send.err >actual &&
+	grep ^STD send.err >actual &&
 	git diff - actual <expect
 '
 
