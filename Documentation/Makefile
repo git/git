@@ -145,7 +145,8 @@ cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 git.7 git.html: git.txt
 
 clean:
-	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 *.texi *.texi+ git.info
+	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7
+	$(RM) *.texi *.texi+ git.info gitman.info
 	$(RM) howto-index.txt howto/*.html doc.dep
 	$(RM) technical/api-*.html technical/api-index.txt
 	$(RM) $(cmds_txt) *.made
