@@ -10,7 +10,15 @@ URL: 		http://kernel.org/pub/software/scm/git/
 Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
 BuildRequires:	zlib-devel >= 1.2, openssl-devel, curl-devel, expat-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires:	git-core, git-svn, git-cvs, git-arch, git-email, gitk, git-gui, perl-Git
+
+Requires:	git-core = %{version}-%{release}
+Requires:	git-svn = %{version}-%{release}
+Requires:	git-cvs = %{version}-%{release}
+Requires:	git-arch = %{version}-%{release}
+Requires:	git-email = %{version}-%{release}
+Requires:	gitk = %{version}-%{release}
+Requires:	git-gui = %{version}-%{release}
+Requires:	perl-Git = %{version}-%{release}
 
 %description
 Git is a fast, scalable, distributed revision control system with an
@@ -172,6 +180,9 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %doc Documentation/technical}
 
 %changelog
+* Sun Jan 06 2008 James Bowes <jbowes@dangerouslyinc.com>
+- Make the metapackage require the same version of the subpackages.
+
 * Wed Dec 12 2007 Junio C Hamano <gitster@pobox.com>
 - Adjust htmldir to point at /usr/share/doc/git-core-$version/
 
