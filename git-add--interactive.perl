@@ -6,7 +6,7 @@ use Git;
 # Prompt colors:
 my ($prompt_color, $header_color, $help_color, $normal_color);
 # Diff colors:
-my ($new_color, $old_color, $fraginfo_color, $metainfo_color, $whitespace_color);
+my ($fraginfo_color);
 
 my ($use_color, $diff_use_color);
 my $repo = Git->repository();
@@ -26,11 +26,7 @@ if ($use_color) {
 	# Do we also set diff colors?
 	$diff_use_color = $repo->get_colorbool('color.diff');
 	if ($diff_use_color) {
-		$new_color = $repo->get_color("color.diff.new", "green");
-		$old_color = $repo->get_color("color.diff.old", "red");
 		$fraginfo_color = $repo->get_color("color.diff.frag", "cyan");
-		$metainfo_color = $repo->get_color("color.diff.meta", "bold");
-		$whitespace_color = $repo->get_color("color.diff.whitespace", "normal red");
 	}
 }
 
