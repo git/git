@@ -489,8 +489,7 @@ and returns the process output as a string."
   "Set the state of a file info."
   (unless (eq (git-fileinfo->state info) state)
     (setf (git-fileinfo->state info) state
-          (git-fileinfo->old-perm info) 0
-          (git-fileinfo->new-perm info) 0
+	  (git-fileinfo->new-perm info) (git-fileinfo->old-perm info)
           (git-fileinfo->rename-state info) nil
           (git-fileinfo->orig-name info) nil
           (git-fileinfo->needs-refresh info) t)))
@@ -524,6 +523,7 @@ and returns the process output as a string."
     (?A 'added)
     (?D 'deleted)
     (?U 'unmerged)
+    (?T 'modified)
     (t nil)))
 
 (defun git-status-code-as-string (code)
@@ -537,6 +537,33 @@ and returns the process output as a string."
     ('uptodate (propertize "Uptodate" 'face 'git-uptodate-face))
     ('ignored  (propertize "Ignored " 'face 'git-ignored-face))
     (t "?       ")))
+
+(defun git-file-type-as-string (info)
+  "Return a string describing the file type of INFO."
+  (let* ((old-type (lsh (or (git-fileinfo->old-perm info) 0) -9))
+	 (new-type (lsh (or (git-fileinfo->new-perm info) 0) -9))
+	 (str (case new-type
+		(?\100  ;; file
+		 (case old-type
+		   (?\100 nil)
+		   (?\120 "   (type change symlink -> file)")
+		   (?\160 "   (type change subproject -> file)")))
+		 (?\120  ;; symlink
+		  (case old-type
+		    (?\100 "   (type change file -> symlink)")
+		    (?\160 "   (type change subproject -> symlink)")
+		    (t "   (symlink)")))
+		  (?\160  ;; subproject
+		   (case old-type
+		     (?\100 "   (type change file -> subproject)")
+		     (?\120 "   (type change symlink -> subproject)")
+		     (t "   (subproject)")))
+		  (?\000  ;; deleted or unknown
+		   (case old-type
+		     (?\120 "   (symlink)")
+		     (?\160 "   (subproject)")))
+		  (t (format "   (unknown type %o)" new-type)))))
+    (if str (propertize str 'face 'git-status-face) "")))
 
 (defun git-rename-as-string (info)
   "Return a string describing the copy or rename associated with INFO, or an empty string if none."
@@ -567,6 +594,7 @@ and returns the process output as a string."
                   " " (git-status-code-as-string (git-fileinfo->state info))
                   " " (git-permissions-as-string (git-fileinfo->old-perm info) (git-fileinfo->new-perm info))
                   "  " (git-escape-file-name (git-fileinfo->name info))
+		  (git-file-type-as-string info)
                   (git-rename-as-string info))))
 
 (defun git-insert-info-list (status infolist)
@@ -603,7 +631,7 @@ Return the list of files that haven't been handled."
       (apply #'git-call-process-env t nil "diff-index" "-z" "-M" "HEAD" "--" files)
       (goto-char (point-min))
       (while (re-search-forward
-              ":\\([0-7]\\{6\\}\\) \\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} [0-9a-f]\\{40\\} \\(\\([ADMU]\\)\0\\([^\0]+\\)\\|\\([CR]\\)[0-9]*\0\\([^\0]+\\)\0\\([^\0]+\\)\\)\0"
+	      ":\\([0-7]\\{6\\}\\) \\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} [0-9a-f]\\{40\\} \\(\\([ADMUT]\\)\0\\([^\0]+\\)\\|\\([CR]\\)[0-9]*\0\\([^\0]+\\)\0\\([^\0]+\\)\\)\0"
               nil t 1)
         (let ((old-perm (string-to-number (match-string 1) 8))
               (new-perm (string-to-number (match-string 2) 8))
