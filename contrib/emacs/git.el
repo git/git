@@ -642,6 +642,22 @@ Return the list of files that haven't been handled."
     (git-insert-info-list status infolist)
     files))
 
+(defun git-run-ls-files-cached (status files default-state)
+  "Run git-ls-files -c on FILES and parse the results into STATUS.
+Return the list of files that haven't been handled."
+  (let (infolist)
+    (with-temp-buffer
+      (apply #'git-call-process-env t nil "ls-files" "-z" "-s" "-c" "--" files)
+      (goto-char (point-min))
+      (while (re-search-forward "\\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} [0-3]\t\\([^\0]+\\)\0" nil t)
+	(let* ((new-perm (string-to-number (match-string 1) 8))
+	       (old-perm (if (eq default-state 'added) 0 new-perm))
+	       (name (match-string 2)))
+	  (push (git-create-fileinfo default-state name old-perm new-perm) infolist)
+	  (setq files (delete name files)))))
+    (git-insert-info-list status infolist)
+    files))
+
 (defun git-run-ls-unmerged (status files)
   "Run git-ls-files -u on FILES and parse the results into STATUS."
   (with-temp-buffer
@@ -673,10 +689,10 @@ Return the list of files that haven't been handled."
   "Update the status of FILES from the index."
   (unless git-status (error "Not in git-status buffer."))
   (unless files
-    (when git-show-uptodate (git-run-ls-files git-status nil 'uptodate "-c")))
+    (when git-show-uptodate (git-run-ls-files-cached git-status nil 'uptodate)))
   (let* ((remaining-files
           (if (git-empty-db-p) ; we need some special handling for an empty db
-              (git-run-ls-files git-status files 'added "-c")
+	      (git-run-ls-files-cached git-status files 'added)
             (git-run-diff-index git-status files))))
     (git-run-ls-unmerged git-status files)
     (when (or remaining-files (and git-show-unknown (not files)))
