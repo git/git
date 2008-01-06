@@ -462,8 +462,8 @@ proc renumbervarc {a v} {
 	    set tok $oldtok
 	}
 	set ka 0
-	if {[llength $children($v,$id)] > 0} {
-	    set kid [lindex $children($v,$id) end]
+	set kid [last_real_child $v,$id]
+	if {$kid ne {}} {
 	    set k $varcid($v,$kid)
 	    if {[string compare [lindex $varctok($v) $k] $tok] > 0} {
 		set ki $kid
@@ -626,6 +626,30 @@ proc removerow {id v} {
 	set targetid $p
     }
     drawvisible
+}
+
+proc first_real_child {vp} {
+    global children nullid nullid2
+
+    foreach id $children($vp) {
+	if {$id ne $nullid && $id ne $nullid2} {
+	    return $id
+	}
+    }
+    return {}
+}
+
+proc last_real_child {vp} {
+    global children nullid nullid2
+
+    set kids $children($vp)
+    for {set i [llength $kids]} {[incr i -1] >= 0} {} {
+	set id [lindex $kids $i]
+	if {$id ne $nullid && $id ne $nullid2} {
+	    return $id
+	}
+    }
+    return {}
 }
 
 proc vtokcmp {v a b} {
@@ -3376,14 +3400,9 @@ proc ordertoken {id} {
 	    set tok $ordertok($p)
 	    break
 	}
-	if {[llength $children($curview,$p)] == 0} {
+	set id [first_real_child $curview,$p]
+	if {$id eq {}} {
 	    # it's a root
-	    set tok [lindex $varctok($curview) $a]
-	    break
-	}
-	set id [lindex $children($curview,$p) 0]
-	if {$id eq $nullid || $id eq $nullid2} {
-	    # XXX treat it as a root
 	    set tok [lindex $varctok($curview) $a]
 	    break
 	}
