@@ -1024,7 +1024,9 @@ Return the list of files that haven't been handled."
       (setq default-directory dir)
       (setq buffer-read-only t)))
   (display-buffer buffer)
-  (shrink-window-if-larger-than-buffer))
+  ; shrink window only if it displays the status buffer
+  (when (eq (window-buffer) (current-buffer))
+    (shrink-window-if-larger-than-buffer)))
 
 (defun git-diff-file ()
   "Diff the marked file(s) against HEAD."
@@ -1096,6 +1098,11 @@ Return the list of files that haven't been handled."
   "Return a list of marked files for use in the log-edit buffer."
   (with-current-buffer log-edit-parent-buffer
     (git-get-filenames (git-marked-files-state 'added 'deleted 'modified))))
+
+(defun git-log-edit-diff ()
+  "Run a diff of the current files being committed from a log-edit buffer."
+  (with-current-buffer log-edit-parent-buffer
+    (git-diff-file)))
 
 (defun git-append-sign-off (name email)
   "Append a Signed-off-by entry to the current buffer, avoiding duplicates."
@@ -1169,7 +1176,10 @@ Return the list of files that haven't been handled."
             (when (re-search-forward "^Date: \\(.*\\)$" nil t)
               (setq date (match-string 1)))))
         (git-setup-log-buffer buffer author-name author-email subject date))
-      (log-edit #'git-do-commit nil #'git-log-edit-files buffer)
+      (if (boundp 'log-edit-diff-function)
+	  (log-edit 'git-do-commit nil '((log-edit-listfun . git-log-edit-files)
+					 (log-edit-diff-function . git-log-edit-diff)) buffer)
+	(log-edit 'git-do-commit nil 'git-log-edit-files buffer))
       (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
       (setq buffer-file-coding-system coding-system)
       (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t))))
