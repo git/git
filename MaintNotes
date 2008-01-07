@@ -22,13 +22,21 @@ floor --- please do not hesitate to remind me.
 
 The list archive is available at a few public sites as well:
 
+        http://news.gmane.org/gmane.comp.version-control.git/
         http://marc.theaimsgroup.com/?l=git
-        http://news.gmane.org/gmane.comp.version-control.git
-	http://www.spinics.net/lists/git/
+        http://www.spinics.net/lists/git/
 
 and some people seem to prefer to read it over NNTP:
 
         nntp://news.gmane.org/gmane.comp.version-control.git
+
+When you point at a message in a mailing list archive, using
+gmane is often the easiest to follow by readers, like this:
+
+        http://thread.gmane.org/gmane.comp.version-control.git/27/focus=217
+
+as it also allows people who subscribe to the mailing list as
+gmane newsgroup to "jump to" the article.
 
 * Repositories, branches and documentation.
 
@@ -45,8 +53,8 @@ Impatient people might have better luck with the latter one.
 
 Their gitweb interfaces are found at:
 
-	http://git.kernel.org/?p=git/git.git
-	http://repo.or.cz/w/alt-git.git
+        http://git.kernel.org/?p=git/git.git
+        http://repo.or.cz/w/alt-git.git
 
 There are three branches in git.git repository that are not
 about the source tree of git: "todo", "html" and "man".  The
@@ -72,26 +80,27 @@ a task.
 There are four branches in git.git repository that track the
 source tree of git: "master", "maint", "next", and "pu".  I may
 add more maintenance branches (e.g. "maint-1.5.1") if we have
-huge backward incompatible feature updates in the future to keep
+hugely backward incompatible feature updates in the future to keep
 an older release alive; I may not, but the distributed nature of
 git means any volunteer can run a stable-tree like that himself.
 
 The "master" branch is meant to contain what are very well
 tested and ready to be used in a production setting.  There
 could occasionally be minor breakages or brown paper bag bugs
-but they are not expected to be anything major.  Every now and
+but they are not expected to be anything major, and more
+importantly quickly and trivially fixable.  Every now and
 then, a "feature release" is cut from the tip of this branch and
 they typically are named with three dotted decimal digits.  The
-last such release was v1.5.3 done on Sep 2nd this year.  You
-can expect that the tip of the "master" branch is always as
-stable as any of the released versions, if not more stable.
+last such release was v1.5.3 done on Sep 2nd last year.  You
+can expect that the tip of the "master" branch is always more
+stable than any of the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off
 from "master" at that point.  Obvious, safe and urgent fixes
 after a feature release are applied to this branch and
 maintenance releases are cut from it.  The maintenance releases
 are named with four dotted decimal, named after the feature
-release they are updates to; the last such release was v1.5.2.5.
+release they are updates to; the last such release was v1.5.3.7.
 New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
@@ -122,13 +131,11 @@ but is expected to work more or less without major breakage.  I
 usually use "next" version of git for my own work, so it cannot
 be _that_ broken to prevent me from pushing the changes out.
 The "next" branch is where new and exciting things take place.
-Note that being in "next" does not mean the change will be in
-the next feature release.
 
 The above three branches, "master", "maint" and "next" are never
 rewound, so you should be able to safely track them (this
 automatically means the topics that have been merged into "next"
-are not rebased, and you can find the tip of topic branches you
+are never rebased, and you can find the tip of topic branches you
 are interested in from the output of "git log next").
 
 The "pu" (proposed updates) branch bundles all the remainder of
@@ -155,7 +162,7 @@ do it with this:
         git merge that-topic-branch
         git branch -d that-topic-branch
 
-However, being in "next" is not a guarantee to appear in the
+Note that being in "next" is not a guarantee to appear in the
 next release (being in "master" is such a guarantee, unless it
 is later found seriously broken and reverted), or even in any
 future release.  There even were cases that topics needed
@@ -195,8 +202,8 @@ relying on heavily:
 
  - Linus on general design issues.
 
- - Linus, Shawn Pearce, Johannes Schindelin, Nicolas Pitre, and
-   Rene Scharfe on general implementation issues.
+ - Linus, Shawn Pearce, Johannes Schindelin, Nicolas Pitre,
+   Réne Scharfe and Jeff King on general implementation issues.
 
  - Shawn and Nicolas Pitre on pack issues.
 
