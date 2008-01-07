@@ -95,7 +95,7 @@ $ git foo -oArg
 $ git foo -o Arg
 ----------------------------
 
-However, this is *NOT* allowed for switches with an optionnal value, where the
+However, this is *NOT* allowed for switches with an optional value, where the
 'sticked' form must be used:
 ----------------------------
 $ git describe --abbrev HEAD     # correct
