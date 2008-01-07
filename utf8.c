@@ -3,8 +3,6 @@
 
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
 
-typedef unsigned int ucs_char_t;  /* assuming 32bit int */
-
 struct interval {
   int first;
   int last;
@@ -153,11 +151,14 @@ static int git_wcwidth(ucs_char_t ch)
 }
 
 /*
- * This function returns the number of columns occupied by the character
- * pointed to by the variable start. The pointer is updated to point at
- * the next character. If it was not valid UTF-8, the pointer is set to NULL.
+ * Pick one ucs character starting from the location *start points at,
+ * and return it, while updating the *start pointer to point at the
+ * end of that character.
+ *
+ * If the string was not a valid UTF-8, *start pointer is set to NULL
+ * and the return value is undefined.
  */
-int utf8_width(const char **start)
+ucs_char_t pick_one_utf8_char(const char **start)
 {
 	unsigned char *s = (unsigned char *)*start;
 	ucs_char_t ch;
@@ -208,6 +209,20 @@ invalid:
 		return 0;
 	}
 
+	return ch;
+}
+
+/*
+ * This function returns the number of columns occupied by the character
+ * pointed to by the variable start. The pointer is updated to point at
+ * the next character.  If it was not valid UTF-8, the pointer is set to
+ * NULL.
+ */
+int utf8_width(const char **start)
+{
+	ucs_char_t ch = pick_one_utf8_char(start);
+	if (!*start)
+		return 0;
 	return git_wcwidth(ch);
 }
 
