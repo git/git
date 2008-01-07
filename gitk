@@ -661,7 +661,6 @@ proc vtokcmp {v a b} {
 
 proc modify_arc {v a {lim {}}} {
     global varctok vtokmod varcmod varcrow vupptr curview vrowmod varccommits
-    global vhighlights nhighlights fhighlights rhighlights
 
     set vtokmod($v) [lindex $varctok($v) $a]
     set varcmod($v) $a
@@ -680,10 +679,6 @@ proc modify_arc {v a {lim {}}} {
 	set vrowmod($v) $r
 	undolayout $r
     }
-    catch {unset nhighlights}
-    catch {unset fhighlights}
-    catch {unset vhighlights}
-    catch {unset rhighlights}
 }
 
 proc update_arcrows {v} {
@@ -2850,20 +2845,20 @@ proc showview {n} {
 
 # Stuff relating to the highlighting facility
 
-proc ishighlighted {row} {
+proc ishighlighted {id} {
     global vhighlights fhighlights nhighlights rhighlights
 
-    if {[info exists nhighlights($row)] && $nhighlights($row) > 0} {
-	return $nhighlights($row)
+    if {[info exists nhighlights($id)] && $nhighlights($id) > 0} {
+	return $nhighlights($id)
     }
-    if {[info exists vhighlights($row)] && $vhighlights($row) > 0} {
-	return $vhighlights($row)
+    if {[info exists vhighlights($id)] && $vhighlights($id) > 0} {
+	return $vhighlights($id)
     }
-    if {[info exists fhighlights($row)] && $fhighlights($row) > 0} {
-	return $fhighlights($row)
+    if {[info exists fhighlights($id)] && $fhighlights($id) > 0} {
+	return $fhighlights($id)
     }
-    if {[info exists rhighlights($row)] && $rhighlights($row) > 0} {
-	return $rhighlights($row)
+    if {[info exists rhighlights($id)] && $rhighlights($id) > 0} {
+	return $rhighlights($id)
     }
     return 0
 }
@@ -2901,7 +2896,7 @@ proc unbolden {} {
 
     set stillbold {}
     foreach row $boldrows {
-	if {![ishighlighted $row]} {
+	if {![ishighlighted [commitonrow $row]]} {
 	    bolden $row mainfont
 	} else {
 	    lappend stillbold $row
@@ -2911,7 +2906,7 @@ proc unbolden {} {
 }
 
 proc addvhighlight {n} {
-    global hlview viewcomplete curview vhl_done vhighlights commitidx
+    global hlview viewcomplete curview vhl_done commitidx
 
     if {[info exists hlview]} {
 	delvhighlight
@@ -2950,7 +2945,7 @@ proc vhighlightmore {} {
 		if {![highlighted $row]} {
 		    bolden $row mainfontbold
 		}
-		set vhighlights($row) 1
+		set vhighlights($id) 1
 	    }
 	}
     }
@@ -2961,12 +2956,12 @@ proc askvhighlight {row id} {
     global hlview vhighlights iddrawn
 
     if {[commitinview $id $hlview]} {
-	if {[info exists iddrawn($id)] && ![ishighlighted $row]} {
+	if {[info exists iddrawn($id)] && ![ishighlighted $id]} {
 	    bolden $row mainfontbold
 	}
-	set vhighlights($row) 1
+	set vhighlights($id) 1
     } else {
-	set vhighlights($row) 0
+	set vhighlights($id) 0
     }
 }
 
@@ -3104,7 +3099,7 @@ proc askfilehighlight {row id} {
     global filehighlight fhighlights fhl_list
 
     lappend fhl_list $id
-    set fhighlights($row) -1
+    set fhighlights($id) -1
     puts $filehighlight $id
 }
 
@@ -3122,18 +3117,16 @@ proc readfhighlight {} {
 	if {$i < 0} continue
 	for {set j 0} {$j < $i} {incr j} {
 	    set id [lindex $fhl_list $j]
-	    if {[commitinview $id $curview]} {
-		set fhighlights([rowofcommit $id]) 0
-	    }
+	    set fhighlights($id) 0
 	}
 	set fhl_list [lrange $fhl_list [expr {$i+1}] end]
 	if {$line eq {}} continue
 	if {![commitinview $line $curview]} continue
 	set row [rowofcommit $line]
-	if {[info exists iddrawn($line)] && ![ishighlighted $row]} {
+	if {[info exists iddrawn($line)] && ![ishighlighted $line]} {
 	    bolden $row mainfontbold
 	}
-	set fhighlights($row) 1
+	set fhighlights($line) 1
     }
     if {[eof $filehighlight]} {
 	# strange...
@@ -3182,7 +3175,7 @@ proc askfindhighlight {row id} {
 	}
     }
     if {$isbold && [info exists iddrawn($id)]} {
-	if {![ishighlighted $row]} {
+	if {![ishighlighted $id]} {
 	    bolden $row mainfontbold
 	    if {$isbold > 1} {
 		bolden_name $row mainfontbold
@@ -3192,7 +3185,7 @@ proc askfindhighlight {row id} {
 	    markrowmatches $row $id
 	}
     }
-    set nhighlights($row) $isbold
+    set nhighlights($id) $isbold
 }
 
 proc markrowmatches {row id} {
@@ -3230,7 +3223,7 @@ proc vrel_change {name ix op} {
 # prepare for testing whether commits are descendents or ancestors of a
 proc rhighlight_sel {a} {
     global descendent desc_todo ancestor anc_todo
-    global highlight_related rhighlights
+    global highlight_related
 
     catch {unset descendent}
     set desc_todo [list $a]
@@ -3337,11 +3330,11 @@ proc askrelhighlight {row id} {
 	}
     }
     if {[info exists iddrawn($id)]} {
-	if {$isbold && ![ishighlighted $row]} {
+	if {$isbold && ![ishighlighted $id]} {
 	    bolden $row mainfontbold
 	}
     }
-    set rhighlights($row) $isbold
+    set rhighlights($id) $isbold
 }
 
 # Graph layout functions
@@ -4408,7 +4401,7 @@ proc drawcmittext {id row col} {
     set date [formatdate $date]
     set font mainfont
     set nfont mainfont
-    set isbold [ishighlighted $row]
+    set isbold [ishighlighted $id]
     if {$isbold > 0} {
 	lappend boldrows $row
 	set font mainfontbold
@@ -4445,16 +4438,16 @@ proc drawcmitrow {row} {
     if {$row >= $numcommits} return
 
     set id [lindex $displayorder $row]
-    if {[info exists hlview] && ![info exists vhighlights($row)]} {
+    if {[info exists hlview] && ![info exists vhighlights($id)]} {
 	askvhighlight $row $id
     }
-    if {[info exists filehighlight] && ![info exists fhighlights($row)]} {
+    if {[info exists filehighlight] && ![info exists fhighlights($id)]} {
 	askfilehighlight $row $id
     }
-    if {$findpattern ne {} && ![info exists nhighlights($row)]} {
+    if {$findpattern ne {} && ![info exists nhighlights($id)]} {
 	askfindhighlight $row $id
     }
-    if {$highlight_related ne [mc "None"] && ![info exists rhighlights($row)]} {
+    if {$highlight_related ne [mc "None"] && ![info exists rhighlights($id)]} {
 	askrelhighlight $row $id
     }
     if {![info exists iddrawn($id)]} {
@@ -5045,15 +5038,15 @@ proc findmore {} {
 		set arowend [expr {$arow + [llength $ids]}]
 	    }
 	    set id [lindex $ids [expr {$l - $arow}]]
-	    if {![info exists fhighlights($l)]} {
-		# this sets fhighlights($l) to -1
+	    if {![info exists fhighlights($id)]} {
+		# this sets fhighlights($id) to -1
 		askfilehighlight $l $id
 	    }
-	    if {$fhighlights($l) > 0} {
+	    if {$fhighlights($id) > 0} {
 		set found $domore
 		break
 	    }
-	    if {$fhighlights($l) < 0} {
+	    if {$fhighlights($id) < 0} {
 		if {$domore} {
 		    set domore 0
 		    set findcurline [expr {$l - $find_dirn}]
