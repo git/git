@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-24 10:36+0100\n"
-"PO-Revision-Date: 2007-11-24 10:55+0100\n"
+"PO-Revision-Date: 2008-01-07 21:52+0100\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -272,7 +272,7 @@ msgstr "Neue Version"
 
 #: git-gui.sh:1973 git-gui.sh:2357
 msgid "Amend Last Commit"
-msgstr "Letzte Version nachbessern"
+msgstr "Letzte nachbessern"
 
 #: git-gui.sh:1982 git-gui.sh:2317 lib/remote_branch_delete.tcl:99
 msgid "Rescan"
@@ -284,7 +284,7 @@ msgstr "Zum Eintragen bereitstellen"
 
 #: git-gui.sh:1994
 msgid "Stage Changed Files To Commit"
-msgstr "Geänderte Dateien zum Eintragen bereitstellen"
+msgstr "Geänderte Dateien bereitstellen"
 
 #: git-gui.sh:2000
 msgid "Unstage From Commit"
@@ -292,7 +292,7 @@ msgstr "Aus der Bereitstellung herausnehmen"
 
 #: git-gui.sh:2005 lib/index.tcl:393
 msgid "Revert Changes"
-msgstr "Änderungen revidieren"
+msgstr "Änderungen verwerfen"
 
 #: git-gui.sh:2012 git-gui.sh:2329 git-gui.sh:2427
 msgid "Sign Off"
@@ -351,7 +351,7 @@ msgstr "Aktueller Zweig:"
 
 #: git-gui.sh:2255
 msgid "Staged Changes (Will Commit)"
-msgstr "Bereitgestellte Änderungen (zum Eintragen)"
+msgstr "Bereitstellung (zum Eintragen)"
 
 #: git-gui.sh:2274
 msgid "Unstaged Changes"
@@ -403,7 +403,7 @@ msgstr "Aktualisieren"
 
 #: git-gui.sh:2566
 msgid "Apply/Reverse Hunk"
-msgstr "Änderung anwenden/umkehren"
+msgstr "Kontext anwenden/umkehren"
 
 #: git-gui.sh:2572
 msgid "Decrease Font Size"
@@ -415,19 +415,19 @@ msgstr "Schriftgröße vergrößern"
 
 #: git-gui.sh:2581
 msgid "Show Less Context"
-msgstr "Weniger Kontext anzeigen"
+msgstr "Weniger Zeilen anzeigen"
 
 #: git-gui.sh:2588
 msgid "Show More Context"
-msgstr "Mehr Kontext anzeigen"
+msgstr "Mehr Zeilen anzeigen"
 
 #: git-gui.sh:2602
 msgid "Unstage Hunk From Commit"
-msgstr "Aus der Bereitstellung herausnehmen"
+msgstr "Kontext aus Bereitstellung herausnehmen"
 
 #: git-gui.sh:2604
 msgid "Stage Hunk For Commit"
-msgstr "In die Bereitstellung hinzufügen"
+msgstr "Kontext zur Bereitstellung hinzufügen"
 
 #: git-gui.sh:2623
 msgid "Initializing..."
@@ -1440,11 +1440,11 @@ msgstr "Fehler beim Laden des Vergleichs:"
 
 #: lib/diff.tcl:302
 msgid "Failed to unstage selected hunk."
-msgstr "Fehler beim Herausnehmen der gewählten Dateien aus der Bereitstellung."
+msgstr "Fehler beim Herausnehmen des gewählten Kontexts aus der Bereitstellung."
 
 #: lib/diff.tcl:309
 msgid "Failed to stage selected hunk."
-msgstr "Fehler beim Bereitstellen der gewählten Dateien."
+msgstr "Fehler beim Bereitstellen des gewählten Kontexts."
 
 #: lib/error.tcl:12 lib/error.tcl:102
 msgid "error"
@@ -1494,17 +1494,16 @@ msgstr "»%s« hinzufügen..."
 #: lib/index.tcl:381
 #, tcl-format
 msgid "Revert changes in file %s?"
-msgstr "Änderungen in Datei »%s« revidieren?"
+msgstr "Änderungen in Datei »%s« verwerfen?"
 
 #: lib/index.tcl:383
 #, tcl-format
 msgid "Revert changes in these %i files?"
-msgstr "Änderungen in den gewählten %i Dateien revidieren?"
+msgstr "Änderungen in den gewählten %i Dateien verwerfen?"
 
 #: lib/index.tcl:389
 msgid "Any unstaged changes will be permanently lost by the revert."
-msgstr ""
-"Alle nicht bereitgestellten Änderungen werden beim Revidieren verloren gehen."
+msgstr "Alle nicht bereitgestellten Änderungen werden beim Verwerfen verloren gehen."
 
 #: lib/index.tcl:392
 msgid "Do Nothing"
@@ -1730,7 +1729,7 @@ msgstr "Optionen konnten nicht gespeichert werden:"
 
 #: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
 msgid "Delete Remote Branch"
-msgstr "Zweig im anderen Projektarchiv löschen"
+msgstr "Zweig aus anderem Projektarchiv löschen"
 
 #: lib/remote_branch_delete.tcl:47
 msgid "From Repository"
@@ -1852,7 +1851,7 @@ msgstr "Neue Änderungen von »%s« holen"
 #: lib/transport.tcl:18
 #, tcl-format
 msgid "remote prune %s"
-msgstr "Entfernen von »%s« im anderen Archiv"
+msgstr "Entfernen von »%s« aus anderem Archiv"
 
 #: lib/transport.tcl:19
 #, tcl-format
