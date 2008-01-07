@@ -212,7 +212,10 @@ Updates since v1.5.3
  * "git add -p" is a short-hand to go directly to the selective patch
    subcommand in the interactive command loop and to exit when done.
 
- * "git add -i" UI has been colorized.
+ * "git add -i" UI has been colorized.  The interactive prompt
+   and menu can be colored by setting color.interactive
+   configuration.  The diff output (including the hunk picker)
+   are colored with color.diff configuration.
 
  * "git commit --allow-empty" allows you to create a single-parent
    commit that records the same tree as its parent, overriding the usual
@@ -230,6 +233,11 @@ Updates since v1.5.3
  * "git stash random-text" does not create a new stash anymore.  It was
    a UI mistake.  Use "git stash save random-text", or "git stash"
    (without extra args) for that.
+
+ * "git stash clear extra-text" does not clear the whole stash
+   anymore.  It is tempting to expect "git stash clear stash@{2}"
+   to drop only a single named stash entry, and it is rude to
+   discard everything when that is asked (but not provided).
 
  * "git prune --expire <time>" can exempt young loose objects from
    getting pruned.
@@ -345,8 +353,11 @@ series.
  * "git config" did not work correctly on platforms that define
    REG_NOMATCH to an even number.
 
+ * Recent versions of AsciiDoc 8 has a change to break our
+   documentation; a workaround has been implemented.
+
 --
 exec >/var/tmp/1
-O=v1.5.4-rc2-37-ge0cd252
+O=v1.5.4-rc2-59-g2370781
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
