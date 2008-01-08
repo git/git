@@ -608,7 +608,7 @@ and returns the process output as a string."
     (while info
       (setf (git-fileinfo->needs-refresh info) t)
       (cond ((not node)
-             (ewoc-enter-last status info)
+	     (setq node (ewoc-enter-last status info))
              (setq info (pop infolist)))
             ((string-lessp (git-fileinfo->name (ewoc-data node))
                            (git-fileinfo->name info))
@@ -620,7 +620,7 @@ and returns the process output as a string."
               (setf (ewoc-data node) info)
               (setq info (pop infolist)))
             (t
-             (ewoc-enter-before status node info)
+	     (setq node (ewoc-enter-before status node info))
              (setq info (pop infolist)))))))
 
 (defun git-run-diff-index (status files)
@@ -677,7 +677,7 @@ Return the list of files that haven't been handled."
     (with-temp-buffer
       (apply #'git-call-process-env t nil "ls-files" "-z" "-s" "-c" "--" files)
       (goto-char (point-min))
-      (while (re-search-forward "\\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} [0-3]\t\\([^\0]+\\)\0" nil t)
+      (while (re-search-forward "\\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} 0\t\\([^\0]+\\)\0" nil t)
 	(let* ((new-perm (string-to-number (match-string 1) 8))
 	       (old-perm (if (eq default-state 'added) 0 new-perm))
 	       (name (match-string 2)))
