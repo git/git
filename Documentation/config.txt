@@ -586,6 +586,15 @@ specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
 
+help.browser::
+	Specify the browser that will be used to display help in the
+	'web' format. See linkgit:git-help[1].
+
+help.format::
+	Override the default help format used by linkgit:git-help[1].
+	Values 'man', 'info', 'web' and 'html' are supported. 'man' is
+	the default. 'web' and 'html' are the same.
+
 http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy'
 	environment variable (see linkgit:curl[1]).  This can be overridden
@@ -642,6 +651,25 @@ i18n.commitEncoding::
 i18n.logOutputEncoding::
 	Character encoding the commit messages are converted to when
 	running `git-log` and friends.
+
+instaweb.browser::
+	Specify the program that will be used to browse your working
+	repository in gitweb. See linkgit:git-instaweb[1].
+
+instaweb.httpd::
+	The HTTP daemon command-line to start gitweb on your working
+	repository. See linkgit:git-instaweb[1].
+
+instaweb.local::
+	If true the web server started by linkgit:git-instaweb[1] will
+	be bound to the local IP (127.0.0.1).
+
+instaweb.modulepath::
+	The module path for an apache httpd used by linkgit:git-instaweb[1].
+
+instaweb.port::
+	The port number to bind the gitweb httpd to. See
+	linkgit:git-instaweb[1].
 
 log.showroot::
 	If true, the initial commit will be shown as a big creation event.
@@ -844,3 +872,8 @@ receive.denyNonFastForwards::
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
 	not set, the value of this variable is used instead.
+
+web.browser::
+	Specify a web browser that may be used by some commands.
+	Currently only linkgit:git-instaweb[1] and linkgit:git-help[1]
+	may use it.
