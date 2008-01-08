@@ -538,10 +538,10 @@ and returns the process output as a string."
     ('ignored  (propertize "Ignored " 'face 'git-ignored-face))
     (t "?       ")))
 
-(defun git-file-type-as-string (info)
-  "Return a string describing the file type of INFO."
-  (let* ((old-type (lsh (or (git-fileinfo->old-perm info) 0) -9))
-	 (new-type (lsh (or (git-fileinfo->new-perm info) 0) -9))
+(defun git-file-type-as-string (old-perm new-perm)
+  "Return a string describing the file type based on its permissions."
+  (let* ((old-type (lsh (or old-perm 0) -9))
+	 (new-type (lsh (or new-perm 0) -9))
 	 (str (case new-type
 		(?\100  ;; file
 		 (case old-type
@@ -590,12 +590,14 @@ and returns the process output as a string."
 
 (defun git-fileinfo-prettyprint (info)
   "Pretty-printer for the git-fileinfo structure."
-  (insert (concat "   " (if (git-fileinfo->marked info) (propertize "*" 'face 'git-mark-face) " ")
-                  " " (git-status-code-as-string (git-fileinfo->state info))
-                  " " (git-permissions-as-string (git-fileinfo->old-perm info) (git-fileinfo->new-perm info))
-                  "  " (git-escape-file-name (git-fileinfo->name info))
-		  (git-file-type-as-string info)
-                  (git-rename-as-string info))))
+  (let ((old-perm (git-fileinfo->old-perm info))
+	(new-perm (git-fileinfo->new-perm info)))
+    (insert (concat "   " (if (git-fileinfo->marked info) (propertize "*" 'face 'git-mark-face) " ")
+		    " " (git-status-code-as-string (git-fileinfo->state info))
+		    " " (git-permissions-as-string old-perm new-perm)
+		    "  " (git-escape-file-name (git-fileinfo->name info))
+		    (git-file-type-as-string old-perm new-perm)
+		    (git-rename-as-string info)))))
 
 (defun git-insert-info-list (status infolist)
   "Insert a list of file infos in the status buffer, replacing existing ones if any."
@@ -606,7 +608,6 @@ and returns the process output as a string."
   (let ((info (pop infolist))
         (node (ewoc-nth status 0)))
     (while info
-      (setf (git-fileinfo->needs-refresh info) t)
       (cond ((not node)
 	     (setq node (ewoc-enter-last status info))
              (setq info (pop infolist)))
@@ -617,6 +618,7 @@ and returns the process output as a string."
                            (git-fileinfo->name info))
               ;; preserve the marked flag
               (setf (git-fileinfo->marked info) (git-fileinfo->marked (ewoc-data node)))
+	      (setf (git-fileinfo->needs-refresh info) t)
               (setf (ewoc-data node) info)
               (setq info (pop infolist)))
             (t
