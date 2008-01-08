@@ -626,7 +626,8 @@ and returns the process output as a string."
 (defun git-run-diff-index (status files)
   "Run git-diff-index on FILES and parse the results into STATUS.
 Return the list of files that haven't been handled."
-  (let (infolist)
+  (let ((remaining (copy-sequence files))
+	infolist)
     (with-temp-buffer
       (apply #'git-call-process-env t nil "diff-index" "-z" "-M" "HEAD" "--" files)
       (goto-char (point-min))
@@ -644,10 +645,10 @@ Return the list of files that haven't been handled."
                 (push (git-create-fileinfo 'deleted name 0 0 'rename new-name) infolist)
                 (push (git-create-fileinfo 'added new-name old-perm new-perm 'rename name) infolist))
             (push (git-create-fileinfo (git-state-code state) name old-perm new-perm) infolist))
-          (setq files (delete name files))
-          (when new-name (setq files (delete new-name files))))))
+	  (setq remaining (delete name remaining))
+	  (when new-name (setq remaining (delete new-name remaining))))))
     (git-insert-info-list status infolist)
-    files))
+    remaining))
 
 (defun git-find-status-file (status file)
   "Find a given file in the status ewoc and return its node."
@@ -673,7 +674,8 @@ Return the list of files that haven't been handled."
 (defun git-run-ls-files-cached (status files default-state)
   "Run git-ls-files -c on FILES and parse the results into STATUS.
 Return the list of files that haven't been handled."
-  (let (infolist)
+  (let ((remaining (copy-sequence files))
+	infolist)
     (with-temp-buffer
       (apply #'git-call-process-env t nil "ls-files" "-z" "-s" "-c" "--" files)
       (goto-char (point-min))
@@ -682,9 +684,9 @@ Return the list of files that haven't been handled."
 	       (old-perm (if (eq default-state 'added) 0 new-perm))
 	       (name (match-string 2)))
 	  (push (git-create-fileinfo default-state name old-perm new-perm) infolist)
-	  (setq files (delete name files)))))
+	  (setq remaining (delete name remaining)))))
     (git-insert-info-list status infolist)
-    files))
+    remaining))
 
 (defun git-run-ls-unmerged (status files)
   "Run git-ls-files -u on FILES and parse the results into STATUS."
@@ -716,8 +718,8 @@ Return the list of files that haven't been handled."
 (defun git-update-status-files (files &optional default-state)
   "Update the status of FILES from the index."
   (unless git-status (error "Not in git-status buffer."))
-  (unless files
-    (when git-show-uptodate (git-run-ls-files-cached git-status nil 'uptodate)))
+  (when (or git-show-uptodate files)
+    (git-run-ls-files-cached git-status files 'uptodate))
   (let* ((remaining-files
           (if (git-empty-db-p) ; we need some special handling for an empty db
 	      (git-run-ls-files-cached git-status files 'added)
@@ -839,7 +841,7 @@ Return the list of files that haven't been handled."
                             (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
                             (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
                             (with-current-buffer buffer (erase-buffer))
-                            (dolist (info files) (git-set-fileinfo-state info 'uptodate))
+			    (git-update-status-files (git-get-filenames files) 'uptodate)
                             (git-call-process-env nil nil "rerere")
                             (git-call-process-env nil nil "gc" "--auto")
                             (git-refresh-files)
