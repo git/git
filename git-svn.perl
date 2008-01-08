@@ -4085,6 +4085,10 @@ sub skip_unknown_revs {
 			warn "W: Ignoring error from SVN, path probably ",
 			     "does not exist: ($errno): ",
 			     $err->expanded_message,"\n";
+			warn "W: Do not be alarmed at the above message ",
+			     "git-svn is just searching aggressively for ",
+			     "old history.\n",
+			     "This may take a while on large repositories\n";
 			$ignored_err{$err_key} = 1;
 		}
 		return;
