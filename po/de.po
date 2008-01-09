@@ -1,14 +1,14 @@
 # Translation of gitk to German.
-# Copyright (C) 2007 Paul Mackerras and Christian Stimming.
-# This file is distributed under the same license as the git package.
+# Copyright (C) 2007 Paul Mackerras.
+# This file is distributed under the same license as the gitk package.
 # Christian Stimming <stimming@tuhh.de>, 2007
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-11-07 12:27+0100\n"
-"PO-Revision-Date: 2007-11-07 12:36+0100\n"
+"POT-Creation-Date: 2007-12-21 12:04+0100\n"
+"PO-Revision-Date: 2008-01-08 21:48+0100\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -321,11 +321,11 @@ msgstr ""
 
 #: gitk:2883
 msgid "Local changes checked in to index but not committed"
-msgstr ""
+msgstr "Lokale Änderungen bereitgestellt, aber nicht eingetragen"
 
 #: gitk:2913
 msgid "Local uncommitted changes, not checked in to index"
-msgstr ""
+msgstr "Lokale Änderungen, nicht bereitgestellt"
 
 #: gitk:4264
 msgid "Searching"
@@ -496,7 +496,7 @@ msgstr "Zurücksetzen bestätigen"
 #: gitk:6357
 #, tcl-format
 msgid "Reset branch %s to %s?"
-msgstr ""
+msgstr "Zweig »%s« auf »%s« zurücksetzen?"
 
 #: gitk:6361
 msgid "Reset type:"
@@ -504,7 +504,7 @@ msgstr "Art des Zurücksetzens:"
 
 #: gitk:6365
 msgid "Soft: Leave working tree and index untouched"
-msgstr "Weich: Arbeitskopie und Bereitstellung unverändert"
+msgstr "Harmlos: Arbeitskopie und Bereitstellung unverändert"
 
 #: gitk:6368
 msgid "Mixed: Leave working tree untouched, reset index"
@@ -526,11 +526,11 @@ msgstr "Zurücksetzen"
 
 #: gitk:6444
 msgid "Checking out"
-msgstr ""
+msgstr "Umstellen"
 
 #: gitk:6474
 msgid "Cannot delete the currently checked-out branch"
-msgstr ""
+msgstr "Der Zweig, auf den die Arbeitskopie momentan umgestellt ist, kann nicht gelöscht werden."
 
 #: gitk:6480
 #, tcl-format
@@ -580,28 +580,28 @@ msgstr "Gitk Einstellungen"
 
 #: gitk:7960
 msgid "Commit list display options"
-msgstr ""
+msgstr "Anzeige Versionsliste"
 
 #: gitk:7964
 msgid "Maximum graph width (lines)"
-msgstr ""
+msgstr "Maximale Graphenbreite (Zeilen)"
 
 #: gitk:7968
 #, tcl-format
 msgid "Maximum graph width (% of pane)"
-msgstr ""
+msgstr "Maximale Graphenbreite (% des Fensters)"
 
 #: gitk:7973
 msgid "Show local changes"
-msgstr ""
+msgstr "Lokale Änderungen anzeigen"
 
 #: gitk:7978
 msgid "Diff display options"
-msgstr ""
+msgstr "Anzeige Vergleich"
 
 #: gitk:7981
 msgid "Tab spacing"
-msgstr ""
+msgstr "Tabulatorbreite"
 
 #: gitk:7985
 msgid "Display nearby tags"
@@ -609,11 +609,11 @@ msgstr ""
 
 #: gitk:7990
 msgid "Limit diffs to listed paths"
-msgstr ""
+msgstr "Vergleich nur für angezeigte Pfade"
 
 #: gitk:7995
 msgid "Colors: press to choose"
-msgstr ""
+msgstr "Farben: Klicken zum Wählen"
 
 #: gitk:7999
 msgid "Background"
@@ -625,15 +625,15 @@ msgstr "Hintergrund"
 
 #: gitk:8007
 msgid "Diff: old lines"
-msgstr ""
+msgstr "Vergleich: Alte Zeilen"
 
 #: gitk:8012
 msgid "Diff: new lines"
-msgstr ""
+msgstr "Vergleich: Neue Zeilen"
 
 #: gitk:8017
 msgid "Diff: hunk header"
-msgstr ""
+msgstr "Vergleich: Änderungstitel"
 
 #: gitk:8023
 msgid "Select bg"
@@ -641,24 +641,24 @@ msgstr "Hintergrundfarbe Auswählen"
 
 #: gitk:8027
 msgid "Fonts: press to choose"
-msgstr ""
+msgstr "Schriftart: Klicken zum Wählen"
 
 #: gitk:8030
 msgid "Main font"
-msgstr ""
+msgstr "Programmschriftart"
 
 #: gitk:8031
 msgid "Diff display font"
-msgstr ""
+msgstr "Vergleich"
 
 #: gitk:8032
 msgid "User interface font"
-msgstr ""
+msgstr "Beschriftungen"
 
 #: gitk:8050
 #, tcl-format
 msgid "Gitk: choose color for %s"
-msgstr ""
+msgstr "Gitk: Farbe wählen für %s"
 
 #: gitk:8431
 msgid ""
@@ -668,7 +668,7 @@ msgstr ""
 
 #: gitk:8516
 msgid "Cannot find a git repository here."
-msgstr ""
+msgstr "Kein Git-Projektarchiv gefunden."
 
 #: gitk:8520
 #, tcl-format
