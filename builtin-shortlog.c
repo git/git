@@ -8,7 +8,7 @@
 #include "mailmap.h"
 
 static const char shortlog_usage[] =
-"git-shortlog [-n] [-s] [<commit-id>... ]";
+"git-shortlog [-n] [-s] [-e] [<commit-id>... ]";
 
 static char *common_repo_prefix;
 static int email;
