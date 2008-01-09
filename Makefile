@@ -1,25 +1,52 @@
-# Set the installation directories; this section is needed only in
-# gitk.git but probably not in git.git.
-ifndef gitexecdir
-	gitexecdir := $(shell git --exec-path)
-endif
-ifndef sharedir
-	sharedir := $(dir $(gitexecdir))share
-endif
+# The default target of this Makefile is...
+all::
 
-# From here on, these are needed in git.git/gitk/Makefile.
+prefix ?= $(HOME)
+bindir ?= $(prefix)/bin
+sharedir ?= $(prefix)/share
 gitk_libdir   ?= $(sharedir)/gitk/lib
 msgsdir    ?= $(gitk_libdir)/msgs
 msgsdir_SQ  = $(subst ','\'',$(msgsdir))
 
-## Beginning of po-file creation rules
+TCLTK_PATH ?= wish
+INSTALL ?= install
+RM ?= rm -f
+
+DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
+bindir_SQ = $(subst ','\'',$(bindir))
+TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
+
+## po-file creation rules
 XGETTEXT   ?= xgettext
 MSGFMT     ?= msgfmt
 PO_TEMPLATE = po/gitk.pot
 ALL_POFILES = $(wildcard po/*.po)
 ALL_MSGFILES = $(subst .po,.msg,$(ALL_POFILES))
 
-all:: $(ALL_MSGFILES)
+ifndef V
+	QUIET          = @
+	QUIET_GEN      = $(QUIET)echo '   ' GEN $@ &&
+endif
+
+all:: gitk-wish $(ALL_MSGFILES)
+
+install:: all
+	$(INSTALL) gitk-wish '$(DESTDIR_SQ)$(bindir_SQ)'/gitk
+	$(INSTALL) -d '$(DESTDIR_SQ)$(msgsdir_SQ)'
+	$(foreach p,$(ALL_MSGFILES), $(INSTALL) $p '$(DESTDIR_SQ)$(msgsdir_SQ)' &&) true
+
+uninstall::
+	$(foreach p,$(ALL_MSGFILES), $(RM) '$(DESTDIR_SQ)$(msgsdir_SQ)'/$(notdir $p) &&) true
+	$(RM) '$(DESTDIR_SQ)$(bindir_SQ)'/gitk
+
+clean::
+	$(RM) gitk-wish po/*.msg
+
+gitk-wish: gitk
+	$(QUIET_GEN)$(RM) $@ $@+ && \
+	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <gitk >$@+ && \
+	chmod +x $@+ && \
+	mv -f $@+ $@
 
 $(PO_TEMPLATE): gitk
 	$(XGETTEXT) -kmc -LTcl -o $@ gitk
@@ -29,17 +56,3 @@ $(ALL_MSGFILES): %.msg : %.po
 	@echo Generating catalog $@
 	$(MSGFMT) --statistics --tcl $< -l $(basename $(notdir $<)) -d $(dir $@)
 
-clean::
-	rm -f $(ALL_PROGRAMS) po/*.msg
-## End of po-file creation rules
-
-# Install rules for po-files
-install: all
-	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(msgsdir_SQ)' $(INSTALL_D1)
-	$(QUIET)$(foreach p,$(ALL_MSGFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(msgsdir_SQ)' &&) true
-
-uninstall:
-	$(QUIET)$(foreach p,$(ALL_MSGFILES), $(REMOVE_F0)'$(DESTDIR_SQ)$(msgsdir_SQ)'/$(notdir $p) $(REMOVE_F1) &&) true
-	$(QUIET)$(REMOVE_D0)'$(DESTDIR_SQ)$(msgsdir_SQ)' $(REMOVE_D1)
-	$(QUIET)$(REMOVE_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(REMOVE_D1)
-	$(QUIET)$(REMOVE_D0)`dirname '$(DESTDIR_SQ)$(libdir_SQ)'` $(REMOVE_D1)
