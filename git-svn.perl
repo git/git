@@ -1858,6 +1858,7 @@ sub rel_path {
 sub prop_walk {
 	my ($self, $path, $rev, $sub) = @_;
 
+	$path =~ s#^/##;
 	my ($dirent, undef, $props) = $self->ra->get_dir($path, $rev);
 	$path =~ s#^/*#/#g;
 	my $p = $path;
