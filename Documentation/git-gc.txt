@@ -90,9 +90,9 @@ how long records of conflicted merge you have not resolved are
 kept.  This defaults to 15 days.
 
 The optional configuration variable 'gc.packrefs' determines if
-`git gc` runs `git-pack-refs`.  Without the configuration, `git-pack-refs`
-is not run in bare repositories by default, to allow older dumb-transport
-clients fetch from the repository,  but this will change in the future.
+`git gc` runs `git-pack-refs`. This can be set to "nobare" to enable
+it within all non-bare repos or it can be set to a boolean value.
+This defaults to true.
 
 The optional configuration variable 'gc.aggressiveWindow' controls how
 much time is spent optimizing the delta compression of the objects in
