@@ -1875,7 +1875,7 @@ proc editview {} {
 }
 
 proc vieweditor {top n title} {
-    global newviewname newviewperm viewfiles
+    global newviewname newviewperm viewfiles bgcolor
 
     toplevel $top
     wm title $top $title
@@ -1889,12 +1889,12 @@ proc vieweditor {top n title} {
 	-text [mc "Commits to include (arguments to git rev-list):"]
     grid $top.al - -sticky w -pady 5
     entry $top.args -width 50 -textvariable newviewargs($n) \
-	-background white
+	-background $bgcolor
     grid $top.args - -sticky ew -padx 5
     message $top.l -aspect 1000 \
 	-text [mc "Enter files and directories to include, one per line:"]
     grid $top.l - -sticky w
-    text $top.t -width 40 -height 10 -background white -font uifont
+    text $top.t -width 40 -height 10 -background $bgcolor -font uifont
     if {[info exists viewfiles($n)]} {
 	foreach f $viewfiles($n) {
 	    $top.t insert end $f
