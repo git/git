@@ -110,7 +110,7 @@ proc start_rev_list {view} {
 		     $viewargs($view)]
     set viewincl($view) {}
     foreach c $commits {
-	if {![string match "^*" $c]} {
+	if {[regexp {^[0-9a-fA-F]{40}$} $c]} {
 	    lappend viewincl($view) $c
 	}
     }
@@ -187,14 +187,17 @@ proc updatecommits {} {
 		     $viewargs($view)]
     set pos {}
     set neg {}
+    set flags {}
     foreach c $commits {
 	if {[string match "^*" $c]} {
 	    lappend neg $c
-	} else {
+	} elseif {[regexp {^[0-9a-fA-F]{40}$} $c]} {
 	    if {!([info exists varcid($view,$c)] ||
 		  [lsearch -exact $viewincl($view) $c] >= 0)} {
 		lappend pos $c
 	    }
+	} else {
+	    lappend flags $c
 	}
     }
     if {$pos eq {}} {
@@ -206,7 +209,7 @@ proc updatecommits {} {
     set viewincl($view) [concat $viewincl($view) $pos]
     if {[catch {
 	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			 --boundary $pos $neg "--" $viewfiles($view)] r]
+			 --boundary $pos $neg $flags "--" $viewfiles($view)] r]
     } err]} {
 	error_popup "Error executing git log: $err"
 	exit 1
