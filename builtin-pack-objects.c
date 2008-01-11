@@ -445,7 +445,7 @@ static unsigned long write_object(struct sha1file *f,
 			/* nothing */;
 		deflateEnd(&stream);
 		datalen = stream.total_out;
-		deflateEnd(&stream);
+
 		/*
 		 * The object header is a byte of 'type' followed by zero or
 		 * more bytes of length.
