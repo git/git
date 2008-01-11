@@ -996,6 +996,7 @@ proc makewindow {} {
     bind . <$M1B-r> dosearchback
     bind . <$M1B-s> dosearch
     bind . <$M1B-equal> {incrfont 1}
+    bind . <$M1B-plus> {incrfont 1}
     bind . <$M1B-KP_Add> {incrfont 1}
     bind . <$M1B-minus> {incrfont -1}
     bind . <$M1B-KP_Subtract> {incrfont -1}
