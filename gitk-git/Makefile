@@ -18,7 +18,12 @@ TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 
 ## po-file creation rules
 XGETTEXT   ?= xgettext
-MSGFMT     ?= msgfmt
+ifdef NO_MSGFMT
+	MSGFMT ?= $(TCL_PATH) po/po2msg.sh
+else
+	MSGFMT ?= msgfmt
+endif
+
 PO_TEMPLATE = po/gitk.pot
 ALL_POFILES = $(wildcard po/*.po)
 ALL_MSGFILES = $(subst .po,.msg,$(ALL_POFILES))

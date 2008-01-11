@@ -2629,12 +2629,12 @@ proc askrelhighlight {row id} {
 
     if {![info exists selectedline]} return
     set isbold 0
-    if {$highlight_related eq [mc "Descendent"] ||
-	$highlight_related eq [mc "Not descendent"]} {
+    if {$highlight_related eq [mc "Descendant"] ||
+	$highlight_related eq [mc "Not descendant"]} {
 	if {![info exists descendent($id)]} {
 	    is_descendent $id
 	}
-	if {$descendent($id) == ($highlight_related eq [mc "Descendent"])} {
+	if {$descendent($id) == ($highlight_related eq [mc "Descendant"])} {
 	    set isbold 1
 	}
     } elseif {$highlight_related eq [mc "Ancestor"] ||
