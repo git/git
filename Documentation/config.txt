@@ -473,7 +473,8 @@ fetch.unpackLimit::
 	exceeds this limit then the received pack will be stored as
 	a pack, after adding any missing delta bases.  Storing the
 	pack from a push can make the push operation complete faster,
-	especially on slow filesystems.
+	especially on slow filesystems.  If not set, the value of
+	`transfer.unpackLimit` is used instead.
 
 format.numbered::
 	A boolean which can enable sequence numbers in patch subjects.
@@ -499,14 +500,14 @@ gc.auto::
 	When there are approximately more than this many loose
 	objects in the repository, `git gc --auto` will pack them.
 	Some Porcelain commands use this command to perform a
-	light-weight garbage collection from time to time.  Setting
-	this to 0 disables it.
+	light-weight garbage collection from time to time.  The
+	default value is 6700.  Setting this to 0 disables it.
 
 gc.autopacklimit::
 	When there are more than this many packs that are not
 	marked with `*.keep` file in the repository, `git gc
-	--auto` consolidates them into one larger pack.  Setting
-	this to 0 disables this.
+	--auto` consolidates them into one larger pack.  The
+	default	value is 20.  Setting this to 0 disables it.
 
 gc.packrefs::
 	`git gc` does not run `git pack-refs` in a bare repository by
@@ -861,7 +862,8 @@ receive.unpackLimit::
 	exceeds this limit then the received pack will be stored as
 	a pack, after adding any missing delta bases.  Storing the
 	pack from a push can make the push operation complete faster,
-	especially on slow filesystems.
+	especially on slow filesystems.  If not set, the value of
+	`transfer.unpackLimit` is used instead.
 
 receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is
@@ -872,6 +874,7 @@ receive.denyNonFastForwards::
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
 	not set, the value of this variable is used instead.
+	The default value is 100.
 
 web.browser::
 	Specify a web browser that may be used by some commands.
