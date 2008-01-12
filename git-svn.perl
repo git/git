@@ -1758,10 +1758,16 @@ sub svnsync {
 	# see if we have it in our config, first:
 	eval {
 		my $section = "svn-remote.$self->{repo_id}";
-		$svnsync = {
-		  url => tmp_config('--get', "$section.svnsync-url"),
-		  uuid => tmp_config('--get', "$section.svnsync-uuid"),
-		}
+
+		my $url = tmp_config('--get', "$section.svnsync-url");
+		($url) = ($url =~ m{^([a-z\+]+://\S+)$}) or
+		   die "doesn't look right - svn:sync-from-url is '$url'\n";
+
+		my $uuid = tmp_config('--get', "$section.svnsync-uuid");
+		($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}) or
+		   die "doesn't look right - svn:sync-from-uuid is '$uuid'\n";
+
+		$svnsync = { url => $url, uuid => $uuid }
 	};
 	if ($svnsync && $svnsync->{url} && $svnsync->{uuid}) {
 		return $self->{svnsync} = $svnsync;
@@ -1772,11 +1778,11 @@ sub svnsync {
 	my $rp = $self->ra->rev_proplist(0);
 
 	my $url = $rp->{'svn:sync-from-url'} or die $err . "url\n";
-	$url =~ m{^[a-z\+]+://} or
+	($url) = ($url =~ m{^([a-z\+]+://\S+)$}) or
 	           die "doesn't look right - svn:sync-from-url is '$url'\n";
 
 	my $uuid = $rp->{'svn:sync-from-uuid'} or die $err . "uuid\n";
-	$uuid =~ m{^[0-9a-f\-]{30,}$} or
+	($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}) or
 	           die "doesn't look right - svn:sync-from-uuid is '$uuid'\n";
 
 	my $section = "svn-remote.$self->{repo_id}";
