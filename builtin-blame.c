@@ -606,7 +606,7 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
 
 /*
  * src typically is on-stack; we want to copy the information in it to
- * an malloced blame_entry that is already on the linked list of the
+ * a malloced blame_entry that is already on the linked list of the
  * scoreboard.  The origin of dst loses a refcnt while the origin of src
  * gains one.
  */

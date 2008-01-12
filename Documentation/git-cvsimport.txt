@@ -142,7 +142,7 @@ file each time git-cvsimport is run.
 +
 It is not recommended to use this feature if you intend to
 export changes back to CVS again later with
-gitlink:git-cvsexportcommit[1].
+linkgit:git-cvsexportcommit[1].
 
 -h::
 	Print a short usage message and exit.
@@ -166,4 +166,4 @@ Documentation by Matthias Urlichs <smurf@smurf.noris.de>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

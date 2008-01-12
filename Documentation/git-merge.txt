@@ -42,7 +42,7 @@ include::merge-strategies.txt[]
 
 If you tried a merge which resulted in a complex conflicts and
 would want to start over, you can recover with
-gitlink:git-reset[1].
+linkgit:git-reset[1].
 
 CONFIGURATION
 -------------
@@ -163,8 +163,8 @@ After seeing a conflict, you can do two things:
 
 SEE ALSO
 --------
-gitlink:git-fmt-merge-msg[1], gitlink:git-pull[1],
-gitlink:gitattributes[5]
+linkgit:git-fmt-merge-msg[1], linkgit:git-pull[1],
+linkgit:gitattributes[5]
 
 
 Author
@@ -178,4 +178,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

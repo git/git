@@ -642,8 +642,9 @@ static struct branch *new_branch(const char *name)
 	if (b)
 		die("Invalid attempt to create duplicate branch: %s", name);
 	switch (check_ref_format(name)) {
-	case  0: break; /* its valid */
-	case -2: break; /* valid, but too few '/', allow anyway */
+	case 0: break; /* its valid */
+	case CHECK_REF_FORMAT_ONELEVEL:
+		break; /* valid, but too few '/', allow anyway */
 	default:
 		die("Branch name doesn't conform to GIT standards: %s", name);
 	}
@@ -877,8 +878,9 @@ static char *keep_pack(char *curr_index_name)
 	keep_fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
 	if (keep_fd < 0)
 		die("cannot create keep file");
-	write(keep_fd, keep_msg, strlen(keep_msg));
-	close(keep_fd);
+	write_or_die(keep_fd, keep_msg, strlen(keep_msg));
+	if (close(keep_fd))
+		die("failed to write keep file");
 
 	snprintf(name, sizeof(name), "%s/pack/pack-%s.pack",
 		 get_object_directory(), sha1_to_hex(pack_data->sha1));

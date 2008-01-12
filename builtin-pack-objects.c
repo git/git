@@ -445,7 +445,7 @@ static unsigned long write_object(struct sha1file *f,
 			/* nothing */;
 		deflateEnd(&stream);
 		datalen = stream.total_out;
-		deflateEnd(&stream);
+
 		/*
 		 * The object header is a byte of 'type' followed by zero or
 		 * more bytes of length.
@@ -2013,7 +2013,7 @@ static void get_object_list(int ac, const char **av)
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = strlen(line);
-		if (line[len - 1] == '\n')
+		if (len && line[len - 1] == '\n')
 			line[--len] = 0;
 		if (!len)
 			break;

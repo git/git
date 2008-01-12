@@ -25,7 +25,7 @@ DESCRIPTION
 Prepare each commit with its patch in
 one file per commit, formatted to resemble UNIX mailbox format.
 The output of this command is convenient for e-mail submission or
-for use with gitlink:git-am[1].
+for use with linkgit:git-am[1].
 
 There are two ways to specify which commits to operate on.
 
@@ -34,7 +34,7 @@ There are two ways to specify which commits to operate on.
    that leads to the <since> to be output.
 
 2. Generic <revision range> expression (see "SPECIFYING
-   REVISIONS" section in gitlink:git-rev-parse[1]) means the
+   REVISIONS" section in linkgit:git-rev-parse[1]) means the
    commits in the specified range.
 
 A single commit, when interpreted as a <revision range>
@@ -192,7 +192,7 @@ git-format-patch -3::
 
 See Also
 --------
-gitlink:git-am[1], gitlink:git-send-email[1]
+linkgit:git-am[1], linkgit:git-send-email[1]
 
 
 Author
@@ -205,4 +205,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

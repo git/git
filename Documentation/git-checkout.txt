@@ -44,7 +44,7 @@ OPTIONS
 -b::
 	Create a new branch named <new_branch> and start it at
 	<branch>.  The new branch name must pass all checks defined
-	by gitlink:git-check-ref-format[1].  Some of these checks
+	by linkgit:git-check-ref-format[1].  Some of these checks
 	may restrict the characters allowed in a branch name.
 
 --track::
@@ -216,4 +216,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

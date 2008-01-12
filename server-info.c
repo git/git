@@ -101,7 +101,7 @@ static int read_pack_info_file(const char *infofile)
 
 	while (fgets(line, sizeof(line), fp)) {
 		int len = strlen(line);
-		if (line[len-1] == '\n')
+		if (len && line[len-1] == '\n')
 			line[--len] = 0;
 
 		if (!len)

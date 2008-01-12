@@ -125,7 +125,7 @@ Pack file entry: <+
 
   - A table of 4-byte CRC32 values of the packed object data.
     This is new in v2 so compressed data can be copied directly
-    from pack to pack during repacking withough undetected
+    from pack to pack during repacking without undetected
     data corruption.
 
   - A table of 4-byte offset values (in network byte order).

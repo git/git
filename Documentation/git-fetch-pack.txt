@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Usually you would want to use gitlink:git-fetch[1] which is a
+Usually you would want to use linkgit:git-fetch[1] which is a
 higher level wrapper of this command instead.
 
 Invokes 'git-upload-pack' on a potentially remote repository,
@@ -93,4 +93,4 @@ Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

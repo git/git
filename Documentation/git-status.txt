@@ -15,7 +15,7 @@ DESCRIPTION
 Displays paths that have differences between the index file and the
 current HEAD commit, paths that have differences between the working
 tree and the index file, and paths in the working tree that are not
-tracked by git (and are not ignored by gitlink:gitignore[5]). The first
+tracked by git (and are not ignored by linkgit:gitignore[5]). The first
 are what you _would_ commit by running `git commit`; the second and
 third are what you _could_ commit by running `git add` before running
 `git commit`.
@@ -54,7 +54,7 @@ directory.
 
 See Also
 --------
-gitlink:gitignore[5]
+linkgit:gitignore[5]
 
 Author
 ------
@@ -67,4 +67,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

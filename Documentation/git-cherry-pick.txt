@@ -20,7 +20,7 @@ OPTIONS
 <commit>::
 	Commit to cherry-pick.
 	For a more complete list of ways to spell commits, see
-	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
 -e|--edit::
 	With this option, `git-cherry-pick` will let you edit the commit
@@ -75,4 +75,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

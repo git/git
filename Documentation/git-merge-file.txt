@@ -41,7 +41,7 @@ conflicts otherwise. If the merge was clean, the exit value is 0.
 
 git-merge-file is designed to be a minimal clone of RCS merge, that is, it
 implements all of RCS merge's functionality which is needed by
-gitlink:git[1].
+linkgit:git[1].
 
 
 OPTIONS
@@ -89,4 +89,4 @@ with parts copied from the original documentation of RCS merge.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

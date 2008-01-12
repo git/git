@@ -489,8 +489,7 @@ and returns the process output as a string."
   "Set the state of a file info."
   (unless (eq (git-fileinfo->state info) state)
     (setf (git-fileinfo->state info) state
-          (git-fileinfo->old-perm info) 0
-          (git-fileinfo->new-perm info) 0
+	  (git-fileinfo->new-perm info) (git-fileinfo->old-perm info)
           (git-fileinfo->rename-state info) nil
           (git-fileinfo->orig-name info) nil
           (git-fileinfo->needs-refresh info) t)))
@@ -524,6 +523,7 @@ and returns the process output as a string."
     (?A 'added)
     (?D 'deleted)
     (?U 'unmerged)
+    (?T 'modified)
     (t nil)))
 
 (defun git-status-code-as-string (code)
@@ -537,6 +537,33 @@ and returns the process output as a string."
     ('uptodate (propertize "Uptodate" 'face 'git-uptodate-face))
     ('ignored  (propertize "Ignored " 'face 'git-ignored-face))
     (t "?       ")))
+
+(defun git-file-type-as-string (old-perm new-perm)
+  "Return a string describing the file type based on its permissions."
+  (let* ((old-type (lsh (or old-perm 0) -9))
+	 (new-type (lsh (or new-perm 0) -9))
+	 (str (case new-type
+		(?\100  ;; file
+		 (case old-type
+		   (?\100 nil)
+		   (?\120 "   (type change symlink -> file)")
+		   (?\160 "   (type change subproject -> file)")))
+		 (?\120  ;; symlink
+		  (case old-type
+		    (?\100 "   (type change file -> symlink)")
+		    (?\160 "   (type change subproject -> symlink)")
+		    (t "   (symlink)")))
+		  (?\160  ;; subproject
+		   (case old-type
+		     (?\100 "   (type change file -> subproject)")
+		     (?\120 "   (type change symlink -> subproject)")
+		     (t "   (subproject)")))
+		  (?\000  ;; deleted or unknown
+		   (case old-type
+		     (?\120 "   (symlink)")
+		     (?\160 "   (subproject)")))
+		  (t (format "   (unknown type %o)" new-type)))))
+    (if str (propertize str 'face 'git-status-face) "")))
 
 (defun git-rename-as-string (info)
   "Return a string describing the copy or rename associated with INFO, or an empty string if none."
@@ -563,11 +590,14 @@ and returns the process output as a string."
 
 (defun git-fileinfo-prettyprint (info)
   "Pretty-printer for the git-fileinfo structure."
-  (insert (concat "   " (if (git-fileinfo->marked info) (propertize "*" 'face 'git-mark-face) " ")
-                  " " (git-status-code-as-string (git-fileinfo->state info))
-                  " " (git-permissions-as-string (git-fileinfo->old-perm info) (git-fileinfo->new-perm info))
-                  "  " (git-escape-file-name (git-fileinfo->name info))
-                  (git-rename-as-string info))))
+  (let ((old-perm (git-fileinfo->old-perm info))
+	(new-perm (git-fileinfo->new-perm info)))
+    (insert (concat "   " (if (git-fileinfo->marked info) (propertize "*" 'face 'git-mark-face) " ")
+		    " " (git-status-code-as-string (git-fileinfo->state info))
+		    " " (git-permissions-as-string old-perm new-perm)
+		    "  " (git-escape-file-name (git-fileinfo->name info))
+		    (git-file-type-as-string old-perm new-perm)
+		    (git-rename-as-string info)))))
 
 (defun git-insert-info-list (status infolist)
   "Insert a list of file infos in the status buffer, replacing existing ones if any."
@@ -578,9 +608,8 @@ and returns the process output as a string."
   (let ((info (pop infolist))
         (node (ewoc-nth status 0)))
     (while info
-      (setf (git-fileinfo->needs-refresh info) t)
       (cond ((not node)
-             (ewoc-enter-last status info)
+	     (setq node (ewoc-enter-last status info))
              (setq info (pop infolist)))
             ((string-lessp (git-fileinfo->name (ewoc-data node))
                            (git-fileinfo->name info))
@@ -589,21 +618,23 @@ and returns the process output as a string."
                            (git-fileinfo->name info))
               ;; preserve the marked flag
               (setf (git-fileinfo->marked info) (git-fileinfo->marked (ewoc-data node)))
+	      (setf (git-fileinfo->needs-refresh info) t)
               (setf (ewoc-data node) info)
               (setq info (pop infolist)))
             (t
-             (ewoc-enter-before status node info)
+	     (setq node (ewoc-enter-before status node info))
              (setq info (pop infolist)))))))
 
 (defun git-run-diff-index (status files)
   "Run git-diff-index on FILES and parse the results into STATUS.
 Return the list of files that haven't been handled."
-  (let (infolist)
+  (let ((remaining (copy-sequence files))
+	infolist)
     (with-temp-buffer
       (apply #'git-call-process-env t nil "diff-index" "-z" "-M" "HEAD" "--" files)
       (goto-char (point-min))
       (while (re-search-forward
-              ":\\([0-7]\\{6\\}\\) \\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} [0-9a-f]\\{40\\} \\(\\([ADMU]\\)\0\\([^\0]+\\)\\|\\([CR]\\)[0-9]*\0\\([^\0]+\\)\0\\([^\0]+\\)\\)\0"
+	      ":\\([0-7]\\{6\\}\\) \\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} [0-9a-f]\\{40\\} \\(\\([ADMUT]\\)\0\\([^\0]+\\)\\|\\([CR]\\)[0-9]*\0\\([^\0]+\\)\0\\([^\0]+\\)\\)\0"
               nil t 1)
         (let ((old-perm (string-to-number (match-string 1) 8))
               (new-perm (string-to-number (match-string 2) 8))
@@ -616,10 +647,10 @@ Return the list of files that haven't been handled."
                 (push (git-create-fileinfo 'deleted name 0 0 'rename new-name) infolist)
                 (push (git-create-fileinfo 'added new-name old-perm new-perm 'rename name) infolist))
             (push (git-create-fileinfo (git-state-code state) name old-perm new-perm) infolist))
-          (setq files (delete name files))
-          (when new-name (setq files (delete new-name files))))))
+	  (setq remaining (delete name remaining))
+	  (when new-name (setq remaining (delete new-name remaining))))))
     (git-insert-info-list status infolist)
-    files))
+    remaining))
 
 (defun git-find-status-file (status file)
   "Find a given file in the status ewoc and return its node."
@@ -641,6 +672,23 @@ Return the list of files that haven't been handled."
           (setq files (delete name files)))))
     (git-insert-info-list status infolist)
     files))
+
+(defun git-run-ls-files-cached (status files default-state)
+  "Run git-ls-files -c on FILES and parse the results into STATUS.
+Return the list of files that haven't been handled."
+  (let ((remaining (copy-sequence files))
+	infolist)
+    (with-temp-buffer
+      (apply #'git-call-process-env t nil "ls-files" "-z" "-s" "-c" "--" files)
+      (goto-char (point-min))
+      (while (re-search-forward "\\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} 0\t\\([^\0]+\\)\0" nil t)
+	(let* ((new-perm (string-to-number (match-string 1) 8))
+	       (old-perm (if (eq default-state 'added) 0 new-perm))
+	       (name (match-string 2)))
+	  (push (git-create-fileinfo default-state name old-perm new-perm) infolist)
+	  (setq remaining (delete name remaining)))))
+    (git-insert-info-list status infolist)
+    remaining))
 
 (defun git-run-ls-unmerged (status files)
   "Run git-ls-files -u on FILES and parse the results into STATUS."
@@ -672,11 +720,11 @@ Return the list of files that haven't been handled."
 (defun git-update-status-files (files &optional default-state)
   "Update the status of FILES from the index."
   (unless git-status (error "Not in git-status buffer."))
-  (unless files
-    (when git-show-uptodate (git-run-ls-files git-status nil 'uptodate "-c")))
+  (when (or git-show-uptodate files)
+    (git-run-ls-files-cached git-status files 'uptodate))
   (let* ((remaining-files
           (if (git-empty-db-p) ; we need some special handling for an empty db
-              (git-run-ls-files git-status files 'added "-c")
+	      (git-run-ls-files-cached git-status files 'added)
             (git-run-diff-index git-status files))))
     (git-run-ls-unmerged git-status files)
     (when (or remaining-files (and git-show-unknown (not files)))
@@ -795,7 +843,7 @@ Return the list of files that haven't been handled."
                             (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
                             (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
                             (with-current-buffer buffer (erase-buffer))
-                            (dolist (info files) (git-set-fileinfo-state info 'uptodate))
+			    (git-update-status-files (git-get-filenames files) 'uptodate)
                             (git-call-process-env nil nil "rerere")
                             (git-call-process-env nil nil "gc" "--auto")
                             (git-refresh-files)
@@ -1024,7 +1072,9 @@ Return the list of files that haven't been handled."
       (setq default-directory dir)
       (setq buffer-read-only t)))
   (display-buffer buffer)
-  (shrink-window-if-larger-than-buffer))
+  ; shrink window only if it displays the status buffer
+  (when (eq (window-buffer) (current-buffer))
+    (shrink-window-if-larger-than-buffer)))
 
 (defun git-diff-file ()
   "Diff the marked file(s) against HEAD."
@@ -1096,6 +1146,11 @@ Return the list of files that haven't been handled."
   "Return a list of marked files for use in the log-edit buffer."
   (with-current-buffer log-edit-parent-buffer
     (git-get-filenames (git-marked-files-state 'added 'deleted 'modified))))
+
+(defun git-log-edit-diff ()
+  "Run a diff of the current files being committed from a log-edit buffer."
+  (with-current-buffer log-edit-parent-buffer
+    (git-diff-file)))
 
 (defun git-append-sign-off (name email)
   "Append a Signed-off-by entry to the current buffer, avoiding duplicates."
@@ -1169,7 +1224,10 @@ Return the list of files that haven't been handled."
             (when (re-search-forward "^Date: \\(.*\\)$" nil t)
               (setq date (match-string 1)))))
         (git-setup-log-buffer buffer author-name author-email subject date))
-      (log-edit #'git-do-commit nil #'git-log-edit-files buffer)
+      (if (boundp 'log-edit-diff-function)
+	  (log-edit 'git-do-commit nil '((log-edit-listfun . git-log-edit-files)
+					 (log-edit-diff-function . git-log-edit-diff)) buffer)
+	(log-edit 'git-do-commit nil 'git-log-edit-files buffer))
       (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
       (setq buffer-file-coding-system coding-system)
       (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t))))

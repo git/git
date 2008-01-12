@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This is usually not what an end user wants to run directly.  See
-gitlink:git-commit[1] instead.
+linkgit:git-commit[1] instead.
 
 Creates a new commit object based on the provided tree object and
 emits the new commit object id on stdout. If no parent is given then
@@ -90,7 +90,7 @@ include::i18n.txt[]
 
 See Also
 --------
-gitlink:git-write-tree[1]
+linkgit:git-write-tree[1]
 
 
 Author
@@ -103,4 +103,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

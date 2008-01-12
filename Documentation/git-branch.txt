@@ -35,7 +35,7 @@ working tree to it; use "git checkout <newbranch>" to switch to the
 new branch.
 
 When a local branch is started off a remote branch, git can setup the
-branch so that gitlink:git-pull[1] will appropriately merge from that
+branch so that linkgit:git-pull[1] will appropriately merge from that
 remote branch.  If this behavior is desired, it is possible to make it
 the default using the global `branch.autosetupmerge` configuration
 flag.  Otherwise, it can be chosen per-branch using the `--track`
@@ -53,8 +53,8 @@ has a reflog then the reflog will also be deleted.
 
 Use -r together with -d to delete remote-tracking branches. Note, that it
 only makes sense to delete remote-tracking branches if they no longer exist
-in remote repository or if gitlink:git-fetch[1] was configured not to fetch
-them again. See also 'prune' subcommand of gitlink:git-remote[1] for way to
+in remote repository or if linkgit:git-fetch[1] was configured not to fetch
+them again. See also 'prune' subcommand of linkgit:git-remote[1] for way to
 clean up all obsolete remote-tracking branches.
 
 
@@ -122,7 +122,7 @@ OPTIONS
 <branchname>::
 	The name of the branch to create or delete.
 	The new branch name must pass all checks defined by
-	gitlink:git-check-ref-format[1].  Some of these checks
+	linkgit:git-check-ref-format[1].  Some of these checks
 	may restrict the characters allowed in a branch name.
 
 <start-point>::
@@ -164,7 +164,7 @@ $ git branch -D test                                    <2>
 +
 <1> Delete remote-tracking branches "todo", "html", "man". Next 'fetch' or
 'pull' will create them again unless you configure them not to. See
-gitlink:git-fetch[1].
+linkgit:git-fetch[1].
 <2> Delete "test" branch even if the "master" branch (or whichever branch is
 currently checked out) does not have all commits from test branch.
 
@@ -187,4 +187,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

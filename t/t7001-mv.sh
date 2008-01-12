@@ -22,7 +22,7 @@ test_expect_success \
 test_expect_success \
     'checking the commit' \
     'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-    grep -E "^R100.+path0/COPYING.+path1/COPYING"'
+    grep "^R100..*path0/COPYING..*path1/COPYING"'
 
 test_expect_success \
     'moving the file back into subdirectory' \
@@ -36,7 +36,7 @@ test_expect_success \
 test_expect_success \
     'checking the commit' \
     'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-    grep -E "^R100.+path1/COPYING.+path0/COPYING"'
+    grep "^R100..*path1/COPYING..*path0/COPYING"'
 
 test_expect_success \
     'adding another file' \
@@ -55,9 +55,9 @@ test_expect_success \
 test_expect_success \
     'checking the commit' \
     'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep -E "^R100.+path0/COPYING.+path2/COPYING" &&
+     grep "^R100..*path0/COPYING..*path2/COPYING" &&
      git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep -E "^R100.+path0/README.+path2/README"'
+     grep "^R100..*path0/README..*path2/README"'
 
 test_expect_success \
     'succeed when source is a prefix of destination' \
@@ -74,9 +74,9 @@ test_expect_success \
 test_expect_success \
     'checking the commit' \
     'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep -E "^R100.+path2/COPYING.+path1/path2/COPYING" &&
+     grep "^R100..*path2/COPYING..*path1/path2/COPYING" &&
      git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep -E "^R100.+path2/README.+path1/path2/README"'
+     grep "^R100..*path2/README..*path1/path2/README"'
 
 test_expect_failure \
     'do not move directory over existing directory' \

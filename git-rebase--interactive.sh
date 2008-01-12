@@ -215,15 +215,17 @@ make_squash_message () {
 		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([1-9][0-9]*\).*/\1/p" \
 			< "$SQUASH_MSG" | tail -n 1)+1))
 		echo "# This is a combination of $COUNT commits."
-		sed -n "2,\$p" < "$SQUASH_MSG"
+		sed -e 1d -e '2,/^./{
+			/^$/d
+		}' <"$SQUASH_MSG"
 	else
 		COUNT=2
 		echo "# This is a combination of two commits."
 		echo "# The first commit's message is:"
 		echo
 		git cat-file commit HEAD | sed -e '1,/^$/d'
-		echo
 	fi
+	echo
 	echo "# This is the $(nth_string $COUNT) commit message:"
 	echo
 	git cat-file commit $1 | sed -e '1,/^$/d'
@@ -363,17 +365,26 @@ do
 
 		test -d "$DOTEST" || die "No interactive rebase running"
 
-		# commit if necessary
-		git rev-parse --verify HEAD > /dev/null &&
-		git update-index --refresh &&
-		git diff-files --quiet &&
-		! git diff-index --cached --quiet HEAD -- &&
-		. "$DOTEST"/author-script && {
-			test ! -f "$DOTEST"/amend || git reset --soft HEAD^
-		} &&
-		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
-		if ! git commit --no-verify -F "$DOTEST"/message -e
+		# Sanity check
+		git rev-parse --verify HEAD >/dev/null ||
+			die "Cannot read HEAD"
+		git update-index --refresh && git diff-files --quiet ||
+			die "Working tree is dirty"
+
+		# do we have anything to commit?
+		if git diff-index --cached --quiet HEAD --
 		then
+			: Nothing to commit -- skip this
+		else
+			. "$DOTEST"/author-script ||
+				die "Cannot find the author identity"
+			if test -f "$DOTEST"/amend
+			then
+				git reset --soft HEAD^ ||
+				die "Cannot rewind the HEAD"
+			fi
+			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
+			git commit --no-verify -F "$DOTEST"/message -e ||
 			die "Could not commit staged changes."
 		fi
 

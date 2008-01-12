@@ -20,11 +20,11 @@ commit along with a log message describing the changes you have made.
 
 The content to be added can be specified in several ways:
 
-1. by using gitlink:git-add[1] to incrementally "add" changes to the
+1. by using linkgit:git-add[1] to incrementally "add" changes to the
    index before using the 'commit' command (Note: even modified
    files must be "added");
 
-2. by using gitlink:git-rm[1] to remove files from the working tree
+2. by using linkgit:git-rm[1] to remove files from the working tree
    and the index, again before using the 'commit' command;
 
 3. by listing files as arguments to the 'commit' command, in which
@@ -41,13 +41,13 @@ The content to be added can be specified in several ways:
    by one which files should be part of the commit, before finalizing the
    operation.  Currently, this is done by invoking `git-add --interactive`.
 
-The gitlink:git-status[1] command can be used to obtain a
+The linkgit:git-status[1] command can be used to obtain a
 summary of what is included by any of the above for the next
 commit by giving the same set of parameters you would give to
 this command.
 
 If you make a commit and then found a mistake immediately after
-that, you can recover from it with gitlink:git-reset[1].
+that, you can recover from it with linkgit:git-reset[1].
 
 
 OPTIONS
@@ -170,7 +170,7 @@ EXAMPLES
 --------
 When recording your own work, the contents of modified files in
 your working tree are temporarily stored to a staging area
-called the "index" with gitlink:git-add[1].  A file can be
+called the "index" with linkgit:git-add[1].  A file can be
 reverted back, only in the index but not in the working tree,
 to that of the last commit with `git-reset HEAD -- <file>`,
 which effectively reverts `git-add` and prevents the changes to
@@ -229,13 +229,13 @@ $ git commit
 this second commit would record the changes to `hello.c` and
 `hello.h` as expected.
 
-After a merge (initiated by either gitlink:git-merge[1] or
-gitlink:git-pull[1]) stops because of conflicts, cleanly merged
+After a merge (initiated by either linkgit:git-merge[1] or
+linkgit:git-pull[1]) stops because of conflicts, cleanly merged
 paths are already staged to be committed for you, and paths that
 conflicted are left in unmerged state.  You would have to first
-check which paths are conflicting with gitlink:git-status[1]
+check which paths are conflicting with linkgit:git-status[1]
 and after fixing them manually in your working tree, you would
-stage the result as usual with gitlink:git-add[1]:
+stage the result as usual with linkgit:git-add[1]:
 
 ------------
 $ git status | grep unmerged
@@ -287,11 +287,11 @@ information.
 
 SEE ALSO
 --------
-gitlink:git-add[1],
-gitlink:git-rm[1],
-gitlink:git-mv[1],
-gitlink:git-merge[1],
-gitlink:git-commit-tree[1]
+linkgit:git-add[1],
+linkgit:git-rm[1],
+linkgit:git-mv[1],
+linkgit:git-merge[1],
+linkgit:git-commit-tree[1]
 
 Author
 ------
@@ -301,4 +301,4 @@ Junio C Hamano <junkio@cox.net>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

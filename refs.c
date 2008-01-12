@@ -613,32 +613,37 @@ int check_ref_format(const char *ref)
 		while ((ch = *cp++) == '/')
 			; /* tolerate duplicated slashes */
 		if (!ch)
-			return -1; /* should not end with slashes */
+			/* should not end with slashes */
+			return CHECK_REF_FORMAT_ERROR;
 
 		/* we are at the beginning of the path component */
 		if (ch == '.')
-			return -1;
+			return CHECK_REF_FORMAT_ERROR;
 		bad_type = bad_ref_char(ch);
 		if (bad_type) {
-			return (bad_type == 2 && !*cp) ? -3 : -1;
+			return (bad_type == 2 && !*cp)
+				? CHECK_REF_FORMAT_WILDCARD
+				: CHECK_REF_FORMAT_ERROR;
 		}
 
 		/* scan the rest of the path component */
 		while ((ch = *cp++) != 0) {
 			bad_type = bad_ref_char(ch);
 			if (bad_type) {
-				return (bad_type == 2 && !*cp) ? -3 : -1;
+				return (bad_type == 2 && !*cp)
+					? CHECK_REF_FORMAT_WILDCARD
+					: CHECK_REF_FORMAT_ERROR;
 			}
 			if (ch == '/')
 				break;
 			if (ch == '.' && *cp == '.')
-				return -1;
+				return CHECK_REF_FORMAT_ERROR;
 		}
 		level++;
 		if (!ch) {
 			if (level < 2)
-				return -2; /* at least of form "heads/blah" */
-			return 0;
+				return CHECK_REF_FORMAT_ONELEVEL;
+			return CHECK_REF_FORMAT_OK;
 		}
 	}
 }
@@ -816,9 +821,13 @@ struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 
 struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int flags)
 {
-	if (check_ref_format(ref) == -1)
+	switch (check_ref_format(ref)) {
+	default:
 		return NULL;
-	return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
+	case 0:
+	case CHECK_REF_FORMAT_ONELEVEL:
+		return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
+	}
 }
 
 static struct lock_file packlock;

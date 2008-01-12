@@ -118,7 +118,7 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 		if (hexval(buffer[0]) > 0xf)
 			continue;
 		len = strlen(buffer);
-		if (buffer[len - 1] == '\n')
+		if (len && buffer[len - 1] == '\n')
 			buffer[--len] = '\0';
 		if (len < 41)
 			continue;

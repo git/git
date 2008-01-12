@@ -15,7 +15,7 @@ DESCRIPTION
 
 The `.gitmodules` file, located in the top-level directory of a git
 working tree, is a text file with a syntax matching the requirements
-of gitlink:git-config[1].
+of linkgit:git-config[1].
 
 The file contains one subsection per submodule, and the subsection value
 is the name of the submodule. Each submodule section also contains the
@@ -51,7 +51,7 @@ submodules an url is specified which can be used for cloning the submodules.
 
 SEE ALSO
 --------
-gitlink:git-submodule[1] gitlink:git-config[1]
+linkgit:git-submodule[1] linkgit:git-config[1]
 
 DOCUMENTATION
 -------------
@@ -59,4 +59,4 @@ Documentation by Lars Hjemli <hjemli@gmail.com>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

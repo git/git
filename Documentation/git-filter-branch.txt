@@ -72,7 +72,7 @@ OPTIONS
 	This is the filter for modifying the environment in which
 	the commit will be performed.  Specifically, you might want
 	to rewrite the author/committer name/email/time environment
-	variables (see gitlink:git-commit[1] for details).  Do not forget
+	variables (see linkgit:git-commit[1] for details).  Do not forget
 	to re-export the variables.
 
 --tree-filter <command>::
@@ -86,13 +86,13 @@ OPTIONS
 --index-filter <command>::
 	This is the filter for rewriting the index.  It is similar to the
 	tree filter but does not check out the tree, which makes it much
-	faster.  For hairy cases, see gitlink:git-update-index[1].
+	faster.  For hairy cases, see linkgit:git-update-index[1].
 
 --parent-filter <command>::
 	This is the filter for rewriting the commit's parent list.
 	It will receive the parent string on stdin and shall output
 	the new parent string on stdout.  The parent string is in
-	a format accepted by gitlink:git-commit-tree[1]: empty for
+	a format accepted by linkgit:git-commit-tree[1]: empty for
 	the initial commit, "-p parent" for a normal commit and
 	"-p parent1 -p parent2 -p parent3 ..." for a merge commit.
 
@@ -105,7 +105,7 @@ OPTIONS
 --commit-filter <command>::
 	This is the filter for performing the commit.
 	If this filter is specified, it will be called instead of the
-	gitlink:git-commit-tree[1] command, with arguments of the form
+	linkgit:git-commit-tree[1] command, with arguments of the form
 	"<TREE_ID> [-p <PARENT_COMMIT_ID>]..." and the log message on
 	stdin.  The commit id is expected on stdout.
 +
@@ -116,7 +116,7 @@ have all of them as parents.
 You can use the 'map' convenience function in this filter, and other
 convenience functions, too.  For example, calling 'skip_commit "$@"'
 will leave out the current commit (but not its changes! If you want
-that, use gitlink:git-rebase[1] instead).
+that, use linkgit:git-rebase[1] instead).
 
 --tag-name-filter <command>::
 	This is the filter for rewriting tag names. When passed,
@@ -159,7 +159,7 @@ definition impossible to preserve signatures at any rate.)
 
 <rev-list-options>::
 	When options are given after the new branch name, they will
-	be passed to gitlink:git-rev-list[1].  Only commits in the resulting
+	be passed to linkgit:git-rev-list[1].  Only commits in the resulting
 	output will be filtered, although the filtered commits can still
 	reference parents which are outside of that set.
 
@@ -249,7 +249,7 @@ will print.
 *NOTE* the changes introduced by the commits, and which are not reverted
 by subsequent commits, will still be in the rewritten branch. If you want
 to throw out _changes_ together with the commits, you should use the
-interactive mode of gitlink:git-rebase[1].
+interactive mode of linkgit:git-rebase[1].
 
 
 Consider this history:
@@ -295,4 +295,4 @@ Documentation by Petr Baudis and the git list.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

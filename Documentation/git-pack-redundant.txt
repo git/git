@@ -48,10 +48,10 @@ Documentation by Lukas Sandström <lukass@etek.chalmers.se>
 
 See Also
 --------
-gitlink:git-pack-objects[1]
-gitlink:git-repack[1]
-gitlink:git-prune-packed[1]
+linkgit:git-pack-objects[1]
+linkgit:git-repack[1]
+linkgit:git-prune-packed[1]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

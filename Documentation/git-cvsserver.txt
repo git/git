@@ -28,7 +28,7 @@ OPTIONS
 -------
 
 All these options obviously only make sense if enforced by the server side.
-They have been implemented to resemble the gitlink:git-daemon[1] options as
+They have been implemented to resemble the linkgit:git-daemon[1] options as
 closely as possible.
 
 --base-path <path>::
@@ -319,4 +319,4 @@ Documentation by Martyn Smith <martyn@catalyst.net.nz>, Martin Langhoff <martin@
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

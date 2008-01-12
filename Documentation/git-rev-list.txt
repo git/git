@@ -79,11 +79,11 @@ between the two operands.  The following two commands are equivalent:
 	$ git-rev-list A...B
 -----------------------------------------------------------------------
 
-gitlink:git-rev-list[1] is a very essential git program, since it
+linkgit:git-rev-list[1] is a very essential git program, since it
 provides the ability to build and traverse commit ancestry graphs. For
 this reason, it has a lot of different options that enables it to be
-used by commands as different as gitlink:git-bisect[1] and
-gitlink:git-repack[1].
+used by commands as different as linkgit:git-bisect[1] and
+linkgit:git-repack[1].
 
 OPTIONS
 -------
@@ -91,9 +91,9 @@ OPTIONS
 Commit Formatting
 ~~~~~~~~~~~~~~~~~
 
-Using these options, gitlink:git-rev-list[1] will act similar to the
-more specialized family of commit log tools: gitlink:git-log[1],
-gitlink:git-show[1], and gitlink:git-whatchanged[1]
+Using these options, linkgit:git-rev-list[1] will act similar to the
+more specialized family of commit log tools: linkgit:git-log[1],
+linkgit:git-show[1], and linkgit:git-whatchanged[1]
 
 include::pretty-options.txt[]
 
@@ -167,8 +167,8 @@ Diff Formatting
 ~~~~~~~~~~~~~~~
 
 Below are listed options that control the formatting of diff output.
-Some of them are specific to gitlink:git-rev-list[1], however other diff
-options may be given. See gitlink:git-diff-files[1] for more options.
+Some of them are specific to linkgit:git-rev-list[1], however other diff
+options may be given. See linkgit:git-diff-files[1] for more options.
 
 -c::
 
@@ -428,7 +428,7 @@ These options are mostly targeted for packing of git repositories.
 
 	Similar to '--objects', but also print the IDs of excluded
 	commits prefixed with a "-" character.  This is used by
-	gitlink:git-pack-objects[1] to build "thin" pack, which records
+	linkgit:git-pack-objects[1] to build "thin" pack, which records
 	objects in deltified form based on objects contained in these
 	excluded commits to reduce network traffic.
 
@@ -460,4 +460,4 @@ and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

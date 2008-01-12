@@ -38,7 +38,7 @@ include::merge-strategies.txt[]
 	*NOTE:* This is a potentially _dangerous_ mode of operation.
 	It rewrites history, which does not bode well when you
 	published that history already.  Do *not* use this option
-	unless you have read gitlink:git-rebase[1] carefully.
+	unless you have read linkgit:git-rebase[1] carefully.
 
 \--no-rebase::
 	Override earlier \--rebase.
@@ -106,7 +106,7 @@ git pull, git pull origin::
 	current branch.  Normally the branch merged in is
 	the HEAD of the remote repository, but the choice is
 	determined by the branch.<name>.remote and
-	branch.<name>.merge options; see gitlink:git-config[1]
+	branch.<name>.merge options; see linkgit:git-config[1]
 	for details.
 
 git pull origin next::
@@ -153,12 +153,12 @@ The final command then merges the newly fetched `tmp` into master.
 
 If you tried a pull which resulted in a complex conflicts and
 would want to start over, you can recover with
-gitlink:git-reset[1].
+linkgit:git-reset[1].
 
 
 SEE ALSO
 --------
-gitlink:git-fetch[1], gitlink:git-merge[1], gitlink:git-config[1]
+linkgit:git-fetch[1], linkgit:git-merge[1], linkgit:git-config[1]
 
 
 Author
@@ -174,4 +174,4 @@ Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

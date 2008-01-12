@@ -140,7 +140,7 @@ to point at the new commit.
 	branch's <<def_head_ref,head ref>> from a remote
 	<<def_repository,repository>>, to find out which objects are
 	missing from the local <<def_object_database,object database>>,
-	and to get them, too.  See also gitlink:git-fetch[1].
+	and to get them, too.  See also linkgit:git-fetch[1].
 
 [[def_file_system]]file system::
 	Linus Torvalds originally designed git to be a user space file system,
@@ -164,7 +164,7 @@ to point at the new commit.
 	A <<def_ref,named reference>> to the <<def_commit,commit>> at the tip of a
 	<<def_branch,branch>>.  Heads are stored in
 	`$GIT_DIR/refs/heads/`, except when using packed refs. (See
-	gitlink:git-pack-refs[1].)
+	linkgit:git-pack-refs[1].)
 
 [[def_HEAD]]HEAD::
 	The current <<def_branch,branch>>.  In more detail: Your <<def_working_tree,
@@ -282,7 +282,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	routines that help select changes that add or delete a given text
 	string. With the `--pickaxe-all` option, it can be used to view the full
 	<<def_changeset,changeset>> that introduced or removed, say, a
-	particular line of text. See gitlink:git-diff[1].
+	particular line of text. See linkgit:git-diff[1].
 
 [[def_plumbing]]plumbing::
 	Cute name for <<def_core_git,core git>>.
@@ -295,7 +295,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 
 [[def_pull]]pull::
 	Pulling a <<def_branch,branch>> means to <<def_fetch,fetch>> it and
-	<<def_merge,merge>> it.  See also gitlink:git-pull[1].
+	<<def_merge,merge>> it.  See also linkgit:git-pull[1].
 
 [[def_push]]push::
 	Pushing a <<def_branch,branch>> means to get the branch's
@@ -333,7 +333,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	A reflog shows the local "history" of a ref.  In other words,
 	it can tell you what the 3rd last revision in _this_ repository
 	was, and what was the current state in _this_ repository,
-	yesterday 9:14pm.  See gitlink:git-reflog[1] for details.
+	yesterday 9:14pm.  See linkgit:git-reflog[1] for details.
 
 [[def_refspec]]refspec::
 	A "refspec" is used by <<def_fetch,fetch>> and
@@ -346,7 +346,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	it as my origin branch head". And `git push
 	$URL refs/heads/master:refs/heads/to-upstream` means "publish my
 	master branch head as to-upstream branch at $URL". See also
-	gitlink:git-push[1].
+	linkgit:git-push[1].
 
 [[def_repository]]repository::
 	A collection of <<def_ref,refs>> together with an
@@ -383,15 +383,15 @@ This commit is referred to as a "merge commit", or sometimes just a
 	object>>). This is sometimes useful when you are interested only in the
 	recent history of a project even though the real history recorded in the
 	upstream is much larger. A shallow repository
-	is created by giving the `--depth` option to gitlink:git-clone[1], and
-	its history can be later deepened with gitlink:git-fetch[1].
+	is created by giving the `--depth` option to linkgit:git-clone[1], and
+	its history can be later deepened with linkgit:git-fetch[1].
 
 [[def_symref]]symref::
 	Symbolic reference: instead of containing the <<def_SHA1,SHA1>>
 	id itself, it is of the format 'ref: refs/some/thing' and when
 	referenced, it recursively dereferences to this reference.
 	'<<def_HEAD,HEAD>>' is a prime example of a symref. Symbolic
-	references are manipulated with the gitlink:git-symbolic-ref[1]
+	references are manipulated with the linkgit:git-symbolic-ref[1]
 	command.
 
 [[def_tag]]tag::

@@ -81,7 +81,7 @@ remotes.<group>.  If a named group is not specified on the command line,
 the configuration parameter remotes.default will get used; if
 remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
-be updated.  (See gitlink:git-config[1]).
+be updated.  (See linkgit:git-config[1]).
 
 
 DISCUSSION
@@ -89,7 +89,7 @@ DISCUSSION
 
 The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
-gitlink:git-config[1]).
+linkgit:git-config[1]).
 
 Examples
 --------
@@ -128,9 +128,9 @@ $ git merge origin
 
 See Also
 --------
-gitlink:git-fetch[1]
-gitlink:git-branch[1]
-gitlink:git-config[1]
+linkgit:git-fetch[1]
+linkgit:git-branch[1]
+linkgit:git-config[1]
 
 Author
 ------
@@ -144,4 +144,4 @@ Documentation by J. Bruce Fields and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

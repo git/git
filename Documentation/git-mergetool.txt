@@ -13,7 +13,7 @@ DESCRIPTION
 -----------
 
 Use 'git mergetool' to run one of several merge utilities to resolve
-merge conflicts.  It is typically run after gitlink:git-merge[1].
+merge conflicts.  It is typically run after linkgit:git-merge[1].
 
 If one or more <file> parameters are given, the merge tool program will
 be run to resolve differences on each file.  If no <file> names are
@@ -48,4 +48,4 @@ Documentation by Theodore Y Ts'o.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite
