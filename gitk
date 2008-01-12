@@ -853,7 +853,7 @@ proc make_disporder {start end} {
 		lappend displayorder $id
 		lappend parentlist $parents($curview,$id)
 	    }
-	} elseif {[lindex $displayorder $r] eq {}} {
+	} elseif {[lindex $displayorder [expr {$r + $al - 1}]] eq {}} {
 	    set i $r
 	    foreach id $varccommits($curview,$a) {
 		lset displayorder $i $id
