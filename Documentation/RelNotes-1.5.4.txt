@@ -61,7 +61,7 @@ Deprecation notices
 Updates since v1.5.3
 --------------------
 
- * Comes with much improved gitk.
+ * Comes with much improved gitk, with i18n.
 
  * Comes with "git gui" 0.9.1 with i18n.
 
@@ -358,6 +358,6 @@ series.
 
 --
 exec >/var/tmp/1
-O=v1.5.4-rc2-59-g2370781
+O=v1.5.4-rc3
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
