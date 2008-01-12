@@ -166,6 +166,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %doc Documentation/*gitk*.txt
 %{_bindir}/*gitk*
+%{_datadir}/gitk/
 %{!?_without_docs: %{_mandir}/man1/*gitk*.1*}
 %{!?_without_docs: %doc Documentation/*gitk*.html }
 
@@ -180,6 +181,9 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %doc Documentation/technical}
 
 %changelog
+* Fri Jan 11 2008 Junio C Hamano <gitster@pobox.com>
+- Include gitk message files
+
 * Sun Jan 06 2008 James Bowes <jbowes@dangerouslyinc.com>
 - Make the metapackage require the same version of the subpackages.
 
