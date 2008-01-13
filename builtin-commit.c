@@ -21,6 +21,7 @@
 #include "utf8.h"
 #include "parse-options.h"
 #include "path-list.h"
+#include "unpack-trees.h"
 
 static const char * const builtin_commit_usage[] = {
 	"git-commit [options] [--] <filepattern>...",
@@ -177,10 +178,34 @@ static void add_remove_files(struct path_list *list)
 	}
 }
 
+static void create_base_index(void)
+{
+	struct tree *tree;
+	struct unpack_trees_options opts;
+	struct tree_desc t;
+
+	if (initial_commit) {
+		discard_cache();
+		return;
+	}
+
+	memset(&opts, 0, sizeof(opts));
+	opts.head_idx = 1;
+	opts.index_only = 1;
+	opts.merge = 1;
+
+	opts.fn = oneway_merge;
+	tree = parse_tree_indirect(head_sha1);
+	if (!tree)
+		die("failed to unpack HEAD tree object");
+	parse_tree(tree);
+	init_tree_desc(&t, tree->buffer, tree->size);
+	unpack_trees(1, &t, &opts);
+}
+
 static char *prepare_index(int argc, const char **argv, const char *prefix)
 {
 	int fd;
-	struct tree *tree;
 	struct path_list partial;
 	const char **pathspec = NULL;
 
@@ -278,14 +303,8 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 
 	fd = hold_lock_file_for_update(&false_lock,
 				       git_path("next-index-%d", getpid()), 1);
-	discard_cache();
-	if (!initial_commit) {
-		tree = parse_tree_indirect(head_sha1);
-		if (!tree)
-			die("failed to unpack HEAD tree object");
-		if (read_tree(tree, 0, NULL))
-			die("failed to read HEAD tree object");
-	}
+
+	create_base_index();
 	add_remove_files(&partial);
 	refresh_cache(REFRESH_QUIET);
 
