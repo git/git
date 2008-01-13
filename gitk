@@ -98,6 +98,7 @@ proc start_rev_list {view} {
     global showlocalchanges commitinterest mainheadid
     global progressdirn progresscoords proglastnc curview
     global viewincl viewactive loginstance viewinstances
+    global pending_select mainheadid
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
@@ -138,6 +139,7 @@ proc start_rev_list {view} {
 	set progressdirn 1
 	set progresscoords {0 0}
 	set proglastnc 0
+	set pending_select $mainheadid
     }
 }
 
@@ -170,7 +172,7 @@ proc updatecommits {} {
     global curview viewargs viewfiles viewincl viewinstances
     global viewactive viewcomplete loginstance tclencoding mainheadid
     global varcid startmsecs commfd showneartags showlocalchanges leftover
-    global mainheadid
+    global mainheadid pending_select
 
     set oldmainid $mainheadid
     rereadrefs
@@ -228,6 +230,7 @@ proc updatecommits {} {
     filerun $fd [list getcommitlines $fd $i $view]
     incr viewactive($view)
     set viewcomplete($view) 0
+    set pending_select $mainheadid
     nowbusy $view "Reading"
     if {$showneartags} {
 	getallcommits
@@ -2748,9 +2751,9 @@ proc showview {n} {
     global numcommits viewcomplete
     global selectedline currentid canv canvy0
     global treediffs
-    global pending_select
+    global pending_select mainheadid
     global commitidx
-    global selectedview selectfirst
+    global selectedview
     global hlview selectedhlview commitinterest
 
     if {$n == $curview} return
@@ -2812,7 +2815,6 @@ proc showview {n} {
     setcanvscroll
     set yf 0
     set row {}
-    set selectfirst 0
     if {$selid ne {} && [commitinview $selid $n]} {
 	set row [rowofcommit $selid]
 	# try to get the selected row in the same position on the screen
@@ -2827,14 +2829,18 @@ proc showview {n} {
     drawvisible
     if {$row ne {}} {
 	selectline $row 0
-    } elseif {$selid ne {}} {
-	set pending_select $selid
+    } elseif {$mainheadid ne {} && [commitinview $mainheadid $curview]} {
+	selectline [rowofcommit $mainheadid] 1
+    } elseif {!$viewcomplete($n)} {
+	if {$selid ne {}} {
+	    set pending_select $selid
+	} else {
+	    set pending_select $mainheadid
+	}
     } else {
 	set row [first_real_row]
 	if {$row < $numcommits} {
 	    selectline $row 0
-	} else {
-	    set selectfirst 1
 	}
     }
     if {!$viewcomplete($n)} {
@@ -3440,7 +3446,6 @@ proc initlayout {} {
     global numcommits canvxmax canv
     global nextcolor
     global colormap rowtextx
-    global selectfirst
 
     set numcommits 0
     set displayorder {}
@@ -3452,7 +3457,6 @@ proc initlayout {} {
     set canvxmax [$canv cget -width]
     catch {unset colormap}
     catch {unset rowtextx}
-    set selectfirst 1
 }
 
 proc setcanvscroll {} {
@@ -3486,7 +3490,7 @@ proc visiblerows {} {
 proc layoutmore {} {
     global commitidx viewcomplete curview
     global numcommits pending_select selectedline curview
-    global selectfirst lastscrollset commitinterest
+    global lastscrollset commitinterest
 
     set canshow $commitidx($curview)
     if {$canshow <= $numcommits && !$viewcomplete($curview)} return
@@ -3512,15 +3516,6 @@ proc layoutmore {} {
     if {[info exists pending_select] &&
 	[commitinview $pending_select $curview]} {
 	selectline [rowofcommit $pending_select] 1
-    }
-    if {$selectfirst} {
-	if {[info exists selectedline] || [info exists pending_select]} {
-	    set selectfirst 0
-	} else {
-	    set l [first_real_row]
-	    selectline $l 1
-	    set selectfirst 0
-	}
     }
 }
 
