@@ -192,7 +192,7 @@ GITWEB_FAVICON = git-favicon.png
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 
-export prefix bindir gitexecdir sharedir template_dir htmldir sysconfdir
+export prefix bindir gitexecdir sharedir htmldir sysconfdir
 
 CC = gcc
 AR = ar
@@ -1078,6 +1078,13 @@ remove-dashes:
 	./fixup-builtins $(BUILT_INS)
 
 ### Installation rules
+
+ifeq ($(firstword $(subst /, ,$(template_dir))),..)
+template_instdir = $(gitexecdir)/$(template_dir)
+else
+template_instdir = $template_dir
+endif
+export template_instdir
 
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'

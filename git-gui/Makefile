@@ -117,14 +117,12 @@ GITGUI_SCRIPT   := $$0
 GITGUI_RELATIVE :=
 GITGUI_MACOSXAPP :=
 
-ifeq ($(exedir),$(gg_libdir))
-	GITGUI_RELATIVE := 1
-endif
-
 ifeq ($(uname_O),Cygwin)
 	GITGUI_SCRIPT := `cygpath --windows --absolute "$(GITGUI_SCRIPT)"`
-	ifeq ($(GITGUI_RELATIVE),)
-		gg_libdir := $(shell cygpath --windows --absolute "$(gg_libdir)")
+	gg_libdir := $(shell cygpath --windows --absolute "$(gg_libdir)")
+else
+	ifeq ($(exedir),$(gg_libdir))
+		GITGUI_RELATIVE := 1
 	endif
 endif
 ifeq ($(uname_S),Darwin)

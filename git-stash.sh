@@ -20,6 +20,10 @@ no_changes () {
 }
 
 clear_stash () {
+	if test $# != 0
+	then
+		die "git stash clear with parameters is unimplemented"
+	fi
 	if current=$(git rev-parse --verify $ref_stash 2>/dev/null)
 	then
 		git update-ref -d $ref_stash $current
@@ -86,7 +90,7 @@ save_stash () {
 
 	if no_changes
 	then
-		echo >&2 'No local changes to save'
+		echo 'No local changes to save'
 		exit 0
 	fi
 	test -f "$GIT_DIR/logs/$ref_stash" ||
@@ -99,7 +103,7 @@ save_stash () {
 
 	git update-ref -m "$stash_msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
-	printf >&2 'Saved working directory and index state "%s"\n' "$stash_msg"
+	printf 'Saved working directory and index state "%s"\n' "$stash_msg"
 }
 
 have_stash () {
@@ -216,7 +220,8 @@ apply)
 	apply_stash "$@"
 	;;
 clear)
-	clear_stash
+	shift
+	clear_stash "$@"
 	;;
 create)
 	if test $# -gt 0 && test "$1" = create
@@ -229,7 +234,7 @@ create)
 	if test $# -eq 0
 	then
 		save_stash &&
-		echo >&2 '(To restore them type "git stash apply")' &&
+		echo '(To restore them type "git stash apply")' &&
 		git-reset --hard
 	else
 		usage

@@ -1,0 +1,1895 @@
+# Swedish translation of git-gui.
+# Copyright (C) 2007 Shawn Pearce, et al.
+# This file is distributed under the same license as the git-gui package.
+#
+# Peter Karlsson <peter@softwolves.pp.se>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: sv\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-11-24 10:36+0100\n"
+"PO-Revision-Date: 2007-12-27 13:31CET-1\n"
+"Last-Translator: Peter Karlsson <peter@softwolves.pp.se>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#: git-gui.sh:41 git-gui.sh:604 git-gui.sh:618 git-gui.sh:631 git-gui.sh:714
+#: git-gui.sh:733
+msgid "git-gui: fatal error"
+msgstr "git-gui: ödesdigert fel"
+
+#: git-gui.sh:565
+#, tcl-format
+msgid "Invalid font specified in %s:"
+msgstr "Ogiltigt teckensnitt angivet i %s:"
+
+#: git-gui.sh:590
+msgid "Main Font"
+msgstr "Huvudteckensnitt"
+
+#: git-gui.sh:591
+msgid "Diff/Console Font"
+msgstr "Diff/konsolteckensnitt"
+
+#: git-gui.sh:605
+msgid "Cannot find git in PATH."
+msgstr "Hittar inte git i PATH."
+
+#: git-gui.sh:632
+msgid "Cannot parse Git version string:"
+msgstr "Kan inte tolka versionssträng från Git:"
+
+#: git-gui.sh:650
+#, tcl-format
+msgid ""
+"Git version cannot be determined.\n"
+"\n"
+"%s claims it is version '%s'.\n"
+"\n"
+"%s requires at least Git 1.5.0 or later.\n"
+"\n"
+"Assume '%s' is version 1.5.0?\n"
+msgstr ""
+"Kan inte avgöra Gits version.\n"
+"\n"
+"%s säger att dess version är \"%s\".\n"
+"\n"
+"%s kräver minst Git 1.5.0 eller senare.\n"
+"\n"
+"Anta att \"%s\" är version 1.5.0?\n"
+
+#: git-gui.sh:888
+msgid "Git directory not found:"
+msgstr "Git-katalogen hittades inte:"
+
+#: git-gui.sh:895
+msgid "Cannot move to top of working directory:"
+msgstr "Kunde inte gå till början på arbetskatalogen:"
+
+#: git-gui.sh:902
+msgid "Cannot use funny .git directory:"
+msgstr "Kunde inte använda underlig .git-katalog:"
+
+#: git-gui.sh:907
+msgid "No working directory"
+msgstr "Ingen arbetskatalog"
+
+#: git-gui.sh:1054
+msgid "Refreshing file status..."
+msgstr "Uppdaterar filstatus..."
+
+#: git-gui.sh:1119
+msgid "Scanning for modified files ..."
+msgstr "Söker efter ändrade filer..."
+
+#: git-gui.sh:1294 lib/browser.tcl:245
+msgid "Ready."
+msgstr "Redo."
+
+#: git-gui.sh:1560
+msgid "Unmodified"
+msgstr "Oförändrade"
+
+#: git-gui.sh:1562
+msgid "Modified, not staged"
+msgstr "Förändrade, ej köade"
+
+#: git-gui.sh:1563 git-gui.sh:1568
+msgid "Staged for commit"
+msgstr "Köade för incheckning"
+
+#: git-gui.sh:1564 git-gui.sh:1569
+msgid "Portions staged for commit"
+msgstr "Delar köade för incheckning"
+
+#: git-gui.sh:1565 git-gui.sh:1570
+msgid "Staged for commit, missing"
+msgstr "Köade för incheckning, saknade"
+
+#: git-gui.sh:1567
+msgid "Untracked, not staged"
+msgstr "Ej spårade, ej köade"
+
+#: git-gui.sh:1572
+msgid "Missing"
+msgstr "Saknade"
+
+#: git-gui.sh:1573
+msgid "Staged for removal"
+msgstr "Köade för borttagning"
+
+#: git-gui.sh:1574
+msgid "Staged for removal, still present"
+msgstr "Köade för borttagning, fortfarande närvarande"
+
+#: git-gui.sh:1576 git-gui.sh:1577 git-gui.sh:1578 git-gui.sh:1579
+msgid "Requires merge resolution"
+msgstr "Kräver avgörande efter sammanslagning"
+
+#: git-gui.sh:1614
+msgid "Starting gitk... please wait..."
+msgstr "Startar gitk... vänta..."
+
+#: git-gui.sh:1623
+#, tcl-format
+msgid ""
+"Unable to start gitk:\n"
+"\n"
+"%s does not exist"
+msgstr ""
+"Kan inte starta gitk:\n"
+"\n"
+"%s finns inte"
+
+#: git-gui.sh:1823 lib/choose_repository.tcl:35
+msgid "Repository"
+msgstr "Arkiv"
+
+#: git-gui.sh:1824
+msgid "Edit"
+msgstr "Redigera"
+
+#: git-gui.sh:1826 lib/choose_rev.tcl:560
+msgid "Branch"
+msgstr "Gren"
+
+#: git-gui.sh:1829 lib/choose_rev.tcl:547
+msgid "Commit@@noun"
+msgstr "Incheckning"
+
+#: git-gui.sh:1832 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
+msgid "Merge"
+msgstr "Slå ihop"
+
+#: git-gui.sh:1833 lib/choose_rev.tcl:556
+msgid "Remote"
+msgstr "Fjärr"
+
+#: git-gui.sh:1842
+msgid "Browse Current Branch's Files"
+msgstr "Bläddra i grenens filer"
+
+#: git-gui.sh:1846
+msgid "Browse Branch Files..."
+msgstr "Bläddra filer på gren..."
+
+#: git-gui.sh:1851
+msgid "Visualize Current Branch's History"
+msgstr "Visualisera grenens historik"
+
+#: git-gui.sh:1855
+msgid "Visualize All Branch History"
+msgstr "Visualisera alla grenars historik"
+
+#: git-gui.sh:1862
+#, tcl-format
+msgid "Browse %s's Files"
+msgstr "Bläddra i filer för %s"
+
+#: git-gui.sh:1864
+#, tcl-format
+msgid "Visualize %s's History"
+msgstr "Visualisera historik för %s"
+
+#: git-gui.sh:1869 lib/database.tcl:27 lib/database.tcl:67
+msgid "Database Statistics"
+msgstr "Databasstatistik"
+
+#: git-gui.sh:1872 lib/database.tcl:34
+msgid "Compress Database"
+msgstr "Komprimera databas"
+
+#: git-gui.sh:1875
+msgid "Verify Database"
+msgstr "Verifiera databas"
+
+#: git-gui.sh:1882 git-gui.sh:1886 git-gui.sh:1890 lib/shortcut.tcl:7
+#: lib/shortcut.tcl:39 lib/shortcut.tcl:71
+msgid "Create Desktop Icon"
+msgstr "Skapa skrivbordsikon"
+
+#: git-gui.sh:1895 lib/choose_repository.tcl:176 lib/choose_repository.tcl:184
+msgid "Quit"
+msgstr "Avsluta"
+
+#: git-gui.sh:1902
+msgid "Undo"
+msgstr "Ångra"
+
+#: git-gui.sh:1905
+msgid "Redo"
+msgstr "Gör om"
+
+#: git-gui.sh:1909 git-gui.sh:2403
+msgid "Cut"
+msgstr "Klipp ut"
+
+#: git-gui.sh:1912 git-gui.sh:2406 git-gui.sh:2477 git-gui.sh:2549
+#: lib/console.tcl:67
+msgid "Copy"
+msgstr "Kopiera"
+
+#: git-gui.sh:1915 git-gui.sh:2409
+msgid "Paste"
+msgstr "Klistra in"
+
+#: git-gui.sh:1918 git-gui.sh:2412 lib/branch_delete.tcl:26
+#: lib/remote_branch_delete.tcl:38
+msgid "Delete"
+msgstr "Ta bort"
+
+#: git-gui.sh:1922 git-gui.sh:2416 git-gui.sh:2553 lib/console.tcl:69
+msgid "Select All"
+msgstr "Markera alla"
+
+#: git-gui.sh:1931
+msgid "Create..."
+msgstr "Skapa..."
+
+#: git-gui.sh:1937
+msgid "Checkout..."
+msgstr "Checka ut..."
+
+#: git-gui.sh:1943
+msgid "Rename..."
+msgstr "Byt namn..."
+
+#: git-gui.sh:1948 git-gui.sh:2048
+msgid "Delete..."
+msgstr "Ta bort..."
+
+#: git-gui.sh:1953
+msgid "Reset..."
+msgstr "Återställ..."
+
+#: git-gui.sh:1965 git-gui.sh:2350
+msgid "New Commit"
+msgstr "Ny incheckning"
+
+#: git-gui.sh:1973 git-gui.sh:2357
+msgid "Amend Last Commit"
+msgstr "Lägg till föregående incheckning"
+
+#: git-gui.sh:1982 git-gui.sh:2317 lib/remote_branch_delete.tcl:99
+msgid "Rescan"
+msgstr "Sök på nytt"
+
+#: git-gui.sh:1988
+msgid "Stage To Commit"
+msgstr "Köa för incheckning"
+
+#: git-gui.sh:1994
+msgid "Stage Changed Files To Commit"
+msgstr "Köa ändrade filer för incheckning"
+
+#: git-gui.sh:2000
+msgid "Unstage From Commit"
+msgstr "Ta bort från incheckningskö"
+
+#: git-gui.sh:2005 lib/index.tcl:393
+msgid "Revert Changes"
+msgstr "Återställ ändringar"
+
+#: git-gui.sh:2012 git-gui.sh:2329 git-gui.sh:2427
+msgid "Sign Off"
+msgstr "Skriv under"
+
+#: git-gui.sh:2016 git-gui.sh:2333
+msgid "Commit@@verb"
+msgstr "Checka in"
+
+#: git-gui.sh:2027
+msgid "Local Merge..."
+msgstr "Lokal sammanslagning..."
+
+#: git-gui.sh:2032
+msgid "Abort Merge..."
+msgstr "Avbryt sammanslagning..."
+
+#: git-gui.sh:2044
+msgid "Push..."
+msgstr "Sänd..."
+
+#: git-gui.sh:2055 lib/choose_repository.tcl:40
+msgid "Apple"
+msgstr "Äpple"
+
+#: git-gui.sh:2058 git-gui.sh:2080 lib/about.tcl:13
+#: lib/choose_repository.tcl:43 lib/choose_repository.tcl:49
+#, tcl-format
+msgid "About %s"
+msgstr "Om %s"
+
+#: git-gui.sh:2062
+msgid "Preferences..."
+msgstr "Inställningar..."
+
+#: git-gui.sh:2070 git-gui.sh:2595
+msgid "Options..."
+msgstr "Alternativ..."
+
+#: git-gui.sh:2076 lib/choose_repository.tcl:46
+msgid "Help"
+msgstr "Hjälp"
+
+#: git-gui.sh:2117
+msgid "Online Documentation"
+msgstr "Webbdokumentation"
+
+#: git-gui.sh:2201
+#, tcl-format
+msgid "fatal: cannot stat path %s: No such file or directory"
+msgstr "ödesdigert: kunde inte ta status på sökvägen %s: Fil eller katalog saknas"
+
+#: git-gui.sh:2234
+msgid "Current Branch:"
+msgstr "Aktuell gren:"
+
+#: git-gui.sh:2255
+msgid "Staged Changes (Will Commit)"
+msgstr "Köade ändringar (kommer att checkas in)"
+
+#: git-gui.sh:2274
+msgid "Unstaged Changes"
+msgstr "Oköade ändringar"
+
+#: git-gui.sh:2323
+msgid "Stage Changed"
+msgstr "Köa ändrade"
+
+#: git-gui.sh:2339 lib/transport.tcl:93 lib/transport.tcl:182
+msgid "Push"
+msgstr "Sänd"
+
+#: git-gui.sh:2369
+msgid "Initial Commit Message:"
+msgstr "Inledande incheckningsmeddelande:"
+
+#: git-gui.sh:2370
+msgid "Amended Commit Message:"
+msgstr "Utökat incheckningsmeddelande:"
+
+#: git-gui.sh:2371
+msgid "Amended Initial Commit Message:"
+msgstr "Utökat inledande incheckningsmeddelande:"
+
+#: git-gui.sh:2372
+msgid "Amended Merge Commit Message:"
+msgstr "Utökat incheckningsmeddelande för sammanslagning:"
+
+#: git-gui.sh:2373
+msgid "Merge Commit Message:"
+msgstr "Incheckningsmeddelande för sammanslagning:"
+
+#: git-gui.sh:2374
+msgid "Commit Message:"
+msgstr "Incheckningsmeddelande:"
+
+#: git-gui.sh:2419 git-gui.sh:2557 lib/console.tcl:71
+msgid "Copy All"
+msgstr "Kopiera alla"
+
+#: git-gui.sh:2443 lib/blame.tcl:104
+msgid "File:"
+msgstr "Fil:"
+
+#: git-gui.sh:2545
+msgid "Refresh"
+msgstr "Uppdatera"
+
+#: git-gui.sh:2566
+msgid "Apply/Reverse Hunk"
+msgstr "Använd/återställ del"
+
+#: git-gui.sh:2572
+msgid "Decrease Font Size"
+msgstr "Minska teckensnittsstorlek"
+
+#: git-gui.sh:2576
+msgid "Increase Font Size"
+msgstr "Öka teckensnittsstorlek"
+
+#: git-gui.sh:2581
+msgid "Show Less Context"
+msgstr "Visa mindre sammanhang"
+
+#: git-gui.sh:2588
+msgid "Show More Context"
+msgstr "Visa mer sammanhang"
+
+#: git-gui.sh:2602
+msgid "Unstage Hunk From Commit"
+msgstr "Ta bort del ur incheckningskö"
+
+#: git-gui.sh:2604
+msgid "Stage Hunk For Commit"
+msgstr "Ställ del i incheckningskö"
+
+#: git-gui.sh:2623
+msgid "Initializing..."
+msgstr "Initierar..."
+
+#: git-gui.sh:2718
+#, tcl-format
+msgid ""
+"Possible environment issues exist.\n"
+"\n"
+"The following environment variables are probably\n"
+"going to be ignored by any Git subprocess run\n"
+"by %s:\n"
+"\n"
+msgstr ""
+"Det finns möjliga problem med miljövariabler.\n"
+"\n"
+"Följande miljövariabler kommer troligen att\n"
+"ignoreras av alla Git-underprocesser som körs\n"
+"av %s:\n"
+"\n"
+
+#: git-gui.sh:2748
+msgid ""
+"\n"
+"This is due to a known issue with the\n"
+"Tcl binary distributed by Cygwin."
+msgstr ""
+"\n"
+"Detta beror på ett känt problem med\n"
+"Tcl-binären som följer med Cygwin."
+
+#: git-gui.sh:2753
+#, tcl-format
+msgid ""
+"\n"
+"\n"
+"A good replacement for %s\n"
+"is placing values for the user.name and\n"
+"user.email settings into your personal\n"
+"~/.gitconfig file.\n"
+msgstr ""
+"\n"
+"\n"
+"Du kan ersätta %s\n"
+"med att lägga in värden för inställningarna\n"
+"user.name och user.email i din personliga\n"
+"~/.gitconfig-fil.\n"
+
+#: lib/about.tcl:25
+msgid "git-gui - a graphical user interface for Git."
+msgstr "git-gui - ett grafiskt användargränssnitt för Git."
+
+#: lib/blame.tcl:77
+msgid "File Viewer"
+msgstr "Filvisare"
+
+#: lib/blame.tcl:81
+msgid "Commit:"
+msgstr "Incheckning:"
+
+#: lib/blame.tcl:249
+msgid "Copy Commit"
+msgstr "Kopiera incheckning"
+
+#: lib/blame.tcl:369
+#, tcl-format
+msgid "Reading %s..."
+msgstr "Läser %s..."
+
+#: lib/blame.tcl:473
+msgid "Loading copy/move tracking annotations..."
+msgstr "Läser spårningsanteckningar för kopiering/flyttning..."
+
+#: lib/blame.tcl:493
+msgid "lines annotated"
+msgstr "rader spårade"
+
+#: lib/blame.tcl:674
+msgid "Loading original location annotations..."
+msgstr "Läser in spårning av originalplacering..."
+
+#: lib/blame.tcl:677
+msgid "Annotation complete."
+msgstr "Spårning fullbordad."
+
+#: lib/blame.tcl:731
+msgid "Loading annotation..."
+msgstr "Läser in spårning..."
+
+#: lib/blame.tcl:787
+msgid "Author:"
+msgstr "Författare:"
+
+#: lib/blame.tcl:791
+msgid "Committer:"
+msgstr "Incheckare:"
+
+#: lib/blame.tcl:796
+msgid "Original File:"
+msgstr "Ursprunglig fil:"
+
+#: lib/blame.tcl:910
+msgid "Originally By:"
+msgstr "Ursprungligen av:"
+
+#: lib/blame.tcl:916
+msgid "In File:"
+msgstr "I filen:"
+
+#: lib/blame.tcl:921
+msgid "Copied Or Moved Here By:"
+msgstr "Kopierad eller flyttad hit av:"
+
+#: lib/branch_checkout.tcl:14 lib/branch_checkout.tcl:19
+msgid "Checkout Branch"
+msgstr "Checka ut gren"
+
+#: lib/branch_checkout.tcl:23
+msgid "Checkout"
+msgstr "Checka ut"
+
+#: lib/branch_checkout.tcl:27 lib/branch_create.tcl:35
+#: lib/branch_delete.tcl:32 lib/branch_rename.tcl:30 lib/browser.tcl:281
+#: lib/checkout_op.tcl:522 lib/choose_font.tcl:43 lib/merge.tcl:172
+#: lib/option.tcl:90 lib/remote_branch_delete.tcl:42 lib/transport.tcl:97
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: lib/branch_checkout.tcl:32 lib/browser.tcl:286
+msgid "Revision"
+msgstr "Revision"
+
+#: lib/branch_checkout.tcl:36 lib/branch_create.tcl:69 lib/option.tcl:202
+msgid "Options"
+msgstr "Alternativ"
+
+#: lib/branch_checkout.tcl:39 lib/branch_create.tcl:92
+msgid "Fetch Tracking Branch"
+msgstr "Hämta spårande gren"
+
+#: lib/branch_checkout.tcl:44
+msgid "Detach From Local Branch"
+msgstr "Koppla bort från lokal gren"
+
+#: lib/branch_create.tcl:22
+msgid "Create Branch"
+msgstr "Skapa gren"
+
+#: lib/branch_create.tcl:27
+msgid "Create New Branch"
+msgstr "Skapa ny gren"
+
+#: lib/branch_create.tcl:31 lib/choose_repository.tcl:375
+msgid "Create"
+msgstr "Skapa"
+
+#: lib/branch_create.tcl:40
+msgid "Branch Name"
+msgstr "Namn på gren"
+
+#: lib/branch_create.tcl:43
+msgid "Name:"
+msgstr "Namn:"
+
+#: lib/branch_create.tcl:58
+msgid "Match Tracking Branch Name"
+msgstr "Använd namn på spårad gren"
+
+#: lib/branch_create.tcl:66
+msgid "Starting Revision"
+msgstr "Inledande revision"
+
+#: lib/branch_create.tcl:72
+msgid "Update Existing Branch:"
+msgstr "Uppdatera befintlig gren:"
+
+#: lib/branch_create.tcl:75
+msgid "No"
+msgstr "Nej"
+
+#: lib/branch_create.tcl:80
+msgid "Fast Forward Only"
+msgstr "Endast snabbspolning"
+
+#: lib/branch_create.tcl:85 lib/checkout_op.tcl:514
+msgid "Reset"
+msgstr "Återställ"
+
+#: lib/branch_create.tcl:97
+msgid "Checkout After Creation"
+msgstr "Checka ut när skapad"
+
+#: lib/branch_create.tcl:131
+msgid "Please select a tracking branch."
+msgstr "Välj en gren att spåra."
+
+#: lib/branch_create.tcl:140
+#, tcl-format
+msgid "Tracking branch %s is not a branch in the remote repository."
+msgstr "Den spårade grenen %s är inte en gren i fjärrarkivet."
+
+#: lib/branch_create.tcl:153 lib/branch_rename.tcl:86
+msgid "Please supply a branch name."
+msgstr "Ange ett namn för grenen."
+
+#: lib/branch_create.tcl:164 lib/branch_rename.tcl:106
+#, tcl-format
+msgid "'%s' is not an acceptable branch name."
+msgstr "\"%s\" kan inte användas som namn på grenen."
+
+#: lib/branch_delete.tcl:15
+msgid "Delete Branch"
+msgstr "Ta bort gren"
+
+#: lib/branch_delete.tcl:20
+msgid "Delete Local Branch"
+msgstr "Ta bort lokal gren"
+
+#: lib/branch_delete.tcl:37
+msgid "Local Branches"
+msgstr "Lokala grenar"
+
+#: lib/branch_delete.tcl:52
+msgid "Delete Only If Merged Into"
+msgstr "Ta bara bort om sammanslagen med"
+
+#: lib/branch_delete.tcl:54
+msgid "Always (Do not perform merge test.)"
+msgstr "Alltid (utför inte sammanslagningstest)."
+
+#: lib/branch_delete.tcl:103
+#, tcl-format
+msgid "The following branches are not completely merged into %s:"
+msgstr "Följande grenar är inte till fullo sammanslagna med %s:"
+
+#: lib/branch_delete.tcl:115
+msgid ""
+"Recovering deleted branches is difficult. \n"
+"\n"
+" Delete the selected branches?"
+msgstr ""
+"Det är svårt att återställa borttagna grenar.\n"
+"\n"
+" Ta bort valda grenar?"
+
+#: lib/branch_delete.tcl:141
+#, tcl-format
+msgid ""
+"Failed to delete branches:\n"
+"%s"
+msgstr ""
+"Kunde inte ta bort grenar:\n"
+"%s"
+
+#: lib/branch_rename.tcl:14 lib/branch_rename.tcl:22
+msgid "Rename Branch"
+msgstr "Byt namn på gren"
+
+#: lib/branch_rename.tcl:26
+msgid "Rename"
+msgstr "Byt namn"
+
+#: lib/branch_rename.tcl:36
+msgid "Branch:"
+msgstr "Gren:"
+
+#: lib/branch_rename.tcl:39
+msgid "New Name:"
+msgstr "Nytt namn:"
+
+#: lib/branch_rename.tcl:75
+msgid "Please select a branch to rename."
+msgstr "Välj en gren att byta namn på."
+
+#: lib/branch_rename.tcl:96 lib/checkout_op.tcl:179
+#, tcl-format
+msgid "Branch '%s' already exists."
+msgstr "Grenen \"%s\" finns redan."
+
+#: lib/branch_rename.tcl:117
+#, tcl-format
+msgid "Failed to rename '%s'."
+msgstr "Kunde inte byta namn på \"%s\"."
+
+#: lib/browser.tcl:17
+msgid "Starting..."
+msgstr "Startar..."
+
+#: lib/browser.tcl:26
+msgid "File Browser"
+msgstr "Filbläddrare"
+
+#: lib/browser.tcl:125 lib/browser.tcl:142
+#, tcl-format
+msgid "Loading %s..."
+msgstr "Läser %s..."
+
+#: lib/browser.tcl:186
+msgid "[Up To Parent]"
+msgstr "[Upp till förälder]"
+
+#: lib/browser.tcl:266 lib/browser.tcl:272
+msgid "Browse Branch Files"
+msgstr "Bläddra filer på grenen"
+
+#: lib/browser.tcl:277 lib/choose_repository.tcl:391
+#: lib/choose_repository.tcl:482 lib/choose_repository.tcl:492
+#: lib/choose_repository.tcl:989
+msgid "Browse"
+msgstr "Bläddra"
+
+#: lib/checkout_op.tcl:79
+#, tcl-format
+msgid "Fetching %s from %s"
+msgstr "Hämtar %s från %s"
+
+#: lib/checkout_op.tcl:127
+#, tcl-format
+msgid "fatal: Cannot resolve %s"
+msgstr "ödesdigert: Kunde inte slå upp %s"
+
+#: lib/checkout_op.tcl:140 lib/console.tcl:79 lib/database.tcl:31
+msgid "Close"
+msgstr "Stäng"
+
+#: lib/checkout_op.tcl:169
+#, tcl-format
+msgid "Branch '%s' does not exist."
+msgstr "Grenen \"%s\" finns inte."
+
+#: lib/checkout_op.tcl:206
+#, tcl-format
+msgid ""
+"Branch '%s' already exists.\n"
+"\n"
+"It cannot fast-forward to %s.\n"
+"A merge is required."
+msgstr ""
+"Grenen \"%s\" finns redan.\n"
+"\n"
+"Den kan inte snabbspolas till %s.\n"
+"En sammanslagning krävs."
+
+#: lib/checkout_op.tcl:220
+#, tcl-format
+msgid "Merge strategy '%s' not supported."
+msgstr "Sammanslagningsstrategin \"%s\" stöds inte."
+
+#: lib/checkout_op.tcl:239
+#, tcl-format
+msgid "Failed to update '%s'."
+msgstr "Misslyckades med att uppdatera \"%s\"."
+
+#: lib/checkout_op.tcl:251
+msgid "Staging area (index) is already locked."
+msgstr "Köområdet (index) är redan låst."
+
+#: lib/checkout_op.tcl:266
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before the current branch can be changed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Det senaste inlästa tillståndet motsvarar inte tillståndet i arkivet.\n"
+"\n"
+"Ett annat Git-program har ändrat arkivet sedan senaste avsökningen. Du "
+"måste utföra en ny sökning innan den aktuella grenen kan ändras.\n"
+"\n"
+"Sökningen kommer att startas automatiskt nu.\n"
+
+#: lib/checkout_op.tcl:322
+#, tcl-format
+msgid "Updating working directory to '%s'..."
+msgstr "Uppdaterar arbetskatalogen till \"%s\"..."
+
+#: lib/checkout_op.tcl:353
+#, tcl-format
+msgid "Aborted checkout of '%s' (file level merging is required)."
+msgstr "Avbryter utcheckning av \"%s\" (sammanslagning på filnivå krävs)."
+
+#: lib/checkout_op.tcl:354
+msgid "File level merge required."
+msgstr "Sammanslagning på filnivå krävs."
+
+#: lib/checkout_op.tcl:358
+#, tcl-format
+msgid "Staying on branch '%s'."
+msgstr "Stannar på grenen \"%s\"."
+
+#: lib/checkout_op.tcl:429
+msgid ""
+"You are no longer on a local branch.\n"
+"\n"
+"If you wanted to be on a branch, create one now starting from 'This Detached "
+"Checkout'."
+msgstr ""
+"Du är inte längre på en lokal gren.\n"
+"\n"
+"Om du ville vara på en gren skapar du en nu, baserad på \"Denna "
+"frånkopplade utcheckning\"."
+
+#: lib/checkout_op.tcl:446
+#, tcl-format
+msgid "Checked out '%s'."
+msgstr "Checkade ut \"%s\"."
+
+#: lib/checkout_op.tcl:478
+#, tcl-format
+msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgstr "Om du återställer \"%s\" till \"%s\" får följande incheckningar förlorade:"
+
+#: lib/checkout_op.tcl:500
+msgid "Recovering lost commits may not be easy."
+msgstr "Det kanske inte är så enkelt att återskapa förlorade incheckningar."
+
+#: lib/checkout_op.tcl:505
+#, tcl-format
+msgid "Reset '%s'?"
+msgstr "Återställa \"%s\"?"
+
+#: lib/checkout_op.tcl:510 lib/merge.tcl:164
+msgid "Visualize"
+msgstr "Visualisera"
+
+#: lib/checkout_op.tcl:578
+#, tcl-format
+msgid ""
+"Failed to set current branch.\n"
+"\n"
+"This working directory is only partially switched.  We successfully updated "
+"your files, but failed to update an internal Git file.\n"
+"\n"
+"This should not have occurred.  %s will now close and give up."
+msgstr ""
+"Kunde inte ställa in aktuell gren.\n"
+"\n"
+"Arbetskatalogen har bara växlats delvis. Vi uppdaterade filerna "
+"utan problem, men kunde inte uppdatera en intern fil i Git.\n"
+"\n"
+"Detta skulle inte ha hänt. %s kommer nu stängas och ge upp."
+
+#: lib/choose_font.tcl:39
+msgid "Select"
+msgstr "Välj"
+
+#: lib/choose_font.tcl:53
+msgid "Font Family"
+msgstr "Teckensnittsfamilj"
+
+#: lib/choose_font.tcl:73
+msgid "Font Size"
+msgstr "Storlek"
+
+#: lib/choose_font.tcl:90
+msgid "Font Example"
+msgstr "Exempel"
+
+#: lib/choose_font.tcl:101
+msgid ""
+"This is example text.\n"
+"If you like this text, it can be your font."
+msgstr ""
+"Detta är en exempeltext.\n"
+"Om du tycker om den här texten kan den vara ditt teckensnitt."
+
+#: lib/choose_repository.tcl:27
+msgid "Git Gui"
+msgstr "Git Gui"
+
+#: lib/choose_repository.tcl:80 lib/choose_repository.tcl:380
+msgid "Create New Repository"
+msgstr "Skapa nytt arkiv"
+
+#: lib/choose_repository.tcl:86
+msgid "New..."
+msgstr "Nytt..."
+
+#: lib/choose_repository.tcl:93 lib/choose_repository.tcl:468
+msgid "Clone Existing Repository"
+msgstr "Klona befintligt arkiv"
+
+#: lib/choose_repository.tcl:99
+msgid "Clone..."
+msgstr "Klona..."
+
+#: lib/choose_repository.tcl:106 lib/choose_repository.tcl:978
+msgid "Open Existing Repository"
+msgstr "Öppna befintligt arkiv"
+
+#: lib/choose_repository.tcl:112
+msgid "Open..."
+msgstr "Öppna..."
+
+#: lib/choose_repository.tcl:125
+msgid "Recent Repositories"
+msgstr "Senaste arkiven"
+
+#: lib/choose_repository.tcl:131
+msgid "Open Recent Repository:"
+msgstr "Öppna tidigare arkiv:"
+
+#: lib/choose_repository.tcl:294
+#, tcl-format
+msgid "Location %s already exists."
+msgstr "Platsen %s finns redan."
+
+#: lib/choose_repository.tcl:300 lib/choose_repository.tcl:307
+#: lib/choose_repository.tcl:314
+#, tcl-format
+msgid "Failed to create repository %s:"
+msgstr "Kunde inte skapa arkivet %s:"
+
+#: lib/choose_repository.tcl:385 lib/choose_repository.tcl:486
+msgid "Directory:"
+msgstr "Katalog:"
+
+#: lib/choose_repository.tcl:415 lib/choose_repository.tcl:544
+#: lib/choose_repository.tcl:1013
+msgid "Git Repository"
+msgstr "Gitarkiv"
+
+#: lib/choose_repository.tcl:430 lib/choose_repository.tcl:437
+#, tcl-format
+msgid "Directory %s already exists."
+msgstr "Katalogen %s finns redan."
+
+#: lib/choose_repository.tcl:442
+#, tcl-format
+msgid "File %s already exists."
+msgstr "Filen %s finns redan."
+
+#: lib/choose_repository.tcl:463
+msgid "Clone"
+msgstr "Klona"
+
+#: lib/choose_repository.tcl:476
+msgid "URL:"
+msgstr "Webbadress:"
+
+#: lib/choose_repository.tcl:496
+msgid "Clone Type:"
+msgstr "Typ av klon:"
+
+#: lib/choose_repository.tcl:502
+msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
+msgstr "Standard (snabb, semiredundant, hårda länkar)"
+
+#: lib/choose_repository.tcl:508
+msgid "Full Copy (Slower, Redundant Backup)"
+msgstr "Full kopia (långsammare, redundant säkerhetskopia)"
+
+#: lib/choose_repository.tcl:514
+msgid "Shared (Fastest, Not Recommended, No Backup)"
+msgstr "Delad (snabbast, rekommenderas ej, ingen säkerhetskopia)"
+
+#: lib/choose_repository.tcl:550 lib/choose_repository.tcl:597
+#: lib/choose_repository.tcl:738 lib/choose_repository.tcl:808
+#: lib/choose_repository.tcl:1019 lib/choose_repository.tcl:1027
+#, tcl-format
+msgid "Not a Git repository: %s"
+msgstr "Inte ett Gitarkiv: %s"
+
+#: lib/choose_repository.tcl:586
+msgid "Standard only available for local repository."
+msgstr "Standard är endast tillgängligt för lokala arkiv."
+
+#: lib/choose_repository.tcl:590
+msgid "Shared only available for local repository."
+msgstr "Delat är endast tillgängligt för lokala arkiv."
+
+#: lib/choose_repository.tcl:617
+msgid "Failed to configure origin"
+msgstr "Kunde inte konfigurera ursprung"
+
+#: lib/choose_repository.tcl:629
+msgid "Counting objects"
+msgstr "Räknar objekt"
+
+#: lib/choose_repository.tcl:630
+msgid "buckets"
+msgstr "hinkar"
+
+#: lib/choose_repository.tcl:654
+#, tcl-format
+msgid "Unable to copy objects/info/alternates: %s"
+msgstr "Kunde inte kopiera objekt/info/alternativ: %s"
+
+#: lib/choose_repository.tcl:690
+#, tcl-format
+msgid "Nothing to clone from %s."
+msgstr "Ingenting att klona från %s."
+
+#: lib/choose_repository.tcl:692 lib/choose_repository.tcl:906
+#: lib/choose_repository.tcl:918
+msgid "The 'master' branch has not been initialized."
+msgstr "Grenen \"master\" har inte initierats."
+
+#: lib/choose_repository.tcl:705
+msgid "Hardlinks are unavailable.  Falling back to copying."
+msgstr "Hårda länkar är inte tillgängliga. Faller tillbaka på kopiering."
+
+#: lib/choose_repository.tcl:717
+#, tcl-format
+msgid "Cloning from %s"
+msgstr "Klonar från %s"
+
+#: lib/choose_repository.tcl:748
+msgid "Copying objects"
+msgstr "Kopierar objekt"
+
+#: lib/choose_repository.tcl:749
+msgid "KiB"
+msgstr "KiB"
+
+#: lib/choose_repository.tcl:773
+#, tcl-format
+msgid "Unable to copy object: %s"
+msgstr "Kunde inte kopiera objekt: %s"
+
+#: lib/choose_repository.tcl:783
+msgid "Linking objects"
+msgstr "Länkar objekt"
+
+#: lib/choose_repository.tcl:784
+msgid "objects"
+msgstr "objekt"
+
+#: lib/choose_repository.tcl:792
+#, tcl-format
+msgid "Unable to hardlink object: %s"
+msgstr "Kunde inte hårdlänka objekt: %s"
+
+#: lib/choose_repository.tcl:847
+msgid "Cannot fetch branches and objects.  See console output for details."
+msgstr "Kunde inte hämta grenar och objekt. Se konsolutdata för detaljer."
+
+#: lib/choose_repository.tcl:858
+msgid "Cannot fetch tags.  See console output for details."
+msgstr "Kunde inte hämta taggar. Se konsolutdata för detaljer."
+
+#: lib/choose_repository.tcl:882
+msgid "Cannot determine HEAD.  See console output for details."
+msgstr "Kunde inte avgöra HEAD. Se konsolutdata för detaljer."
+
+#: lib/choose_repository.tcl:891
+#, tcl-format
+msgid "Unable to cleanup %s"
+msgstr "Kunde inte städa upp %s"
+
+#: lib/choose_repository.tcl:897
+msgid "Clone failed."
+msgstr "Kloning misslyckades."
+
+#: lib/choose_repository.tcl:904
+msgid "No default branch obtained."
+msgstr "Hämtade ingen standardgren."
+
+#: lib/choose_repository.tcl:915
+#, tcl-format
+msgid "Cannot resolve %s as a commit."
+msgstr "Kunde inte slå upp %s till någon incheckning."
+
+#: lib/choose_repository.tcl:927
+msgid "Creating working directory"
+msgstr "Skapar arbetskatalog"
+
+#: lib/choose_repository.tcl:928 lib/index.tcl:65 lib/index.tcl:127
+#: lib/index.tcl:193
+msgid "files"
+msgstr "filer"
+
+#: lib/choose_repository.tcl:957
+msgid "Initial file checkout failed."
+msgstr "Inledande filutcheckning misslyckades."
+
+#: lib/choose_repository.tcl:973
+msgid "Open"
+msgstr "Öppna"
+
+#: lib/choose_repository.tcl:983
+msgid "Repository:"
+msgstr "Arkiv:"
+
+#: lib/choose_repository.tcl:1033
+#, tcl-format
+msgid "Failed to open repository %s:"
+msgstr "Kunde inte öppna arkivet %s:"
+
+#: lib/choose_rev.tcl:53
+msgid "This Detached Checkout"
+msgstr "Denna frånkopplade utcheckning"
+
+#: lib/choose_rev.tcl:60
+msgid "Revision Expression:"
+msgstr "Revisionsuttryck:"
+
+#: lib/choose_rev.tcl:74
+msgid "Local Branch"
+msgstr "Lokal gren"
+
+#: lib/choose_rev.tcl:79
+msgid "Tracking Branch"
+msgstr "Spårande gren"
+
+#: lib/choose_rev.tcl:84 lib/choose_rev.tcl:537
+msgid "Tag"
+msgstr "Tagg"
+
+#: lib/choose_rev.tcl:317
+#, tcl-format
+msgid "Invalid revision: %s"
+msgstr "Ogiltig revision: %s"
+
+#: lib/choose_rev.tcl:338
+msgid "No revision selected."
+msgstr "Ingen revision vald."
+
+#: lib/choose_rev.tcl:346
+msgid "Revision expression is empty."
+msgstr "Revisionsuttrycket är tomt."
+
+#: lib/choose_rev.tcl:530
+msgid "Updated"
+msgstr "Uppdaterad"
+
+#: lib/choose_rev.tcl:558
+msgid "URL"
+msgstr "Webbadress"
+
+#: lib/commit.tcl:9
+msgid ""
+"There is nothing to amend.\n"
+"\n"
+"You are about to create the initial commit.  There is no commit before this "
+"to amend.\n"
+msgstr ""
+"Det finns ingenting att utöka.\n"
+"\n"
+"Du håller på att skapa den inledande incheckningen. Det finns ingen tidigare "
+"incheckning att utöka.\n"
+
+#: lib/commit.tcl:18
+msgid ""
+"Cannot amend while merging.\n"
+"\n"
+"You are currently in the middle of a merge that has not been fully "
+"completed.  You cannot amend the prior commit unless you first abort the "
+"current merge activity.\n"
+msgstr ""
+"Kan inte utöka vid sammanslagning.\n"
+"\n"
+"Du är i mitten av en sammanslagning som inte är fullbordad. Du kan "
+"inte utöka tidigare incheckningar om du inte först avbryter den "
+"pågående sammanslagningen.\n"
+
+#: lib/commit.tcl:49
+msgid "Error loading commit data for amend:"
+msgstr "Fel vid inläsning av incheckningsdata för utökning:"
+
+#: lib/commit.tcl:76
+msgid "Unable to obtain your identity:"
+msgstr "Kunde inte hämta din identitet:"
+
+#: lib/commit.tcl:81
+msgid "Invalid GIT_COMMITTER_IDENT:"
+msgstr "Felaktig GIT_COMMITTER_IDENT:"
+
+#: lib/commit.tcl:133
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before another commit can be created.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Det senaste inlästa tillståndet motsvarar inte tillståndet i arkivet.\n"
+"\n"
+"Ett annat Git-program har ändrat arkivet sedan senaste avsökningen. Du "
+"måste utföra en ny sökning innan du kan göra en ny incheckning.\n"
+"\n"
+"Sökningen kommer att startas automatiskt nu.\n"
+
+#: lib/commit.tcl:154
+#, tcl-format
+msgid ""
+"Unmerged files cannot be committed.\n"
+"\n"
+"File %s has merge conflicts.  You must resolve them and stage the file "
+"before committing.\n"
+msgstr ""
+"Osammanslagna filer kan inte checkas in.\n"
+"\n"
+"Filen %s har sammanslagningskonflikter. Du måste lösa dem och köa filen "
+"innan du checkar in den.\n"
+
+#: lib/commit.tcl:162
+#, tcl-format
+msgid ""
+"Unknown file state %s detected.\n"
+"\n"
+"File %s cannot be committed by this program.\n"
+msgstr ""
+"Okänd filstatus %s upptäckt.\n"
+"\n"
+"Filen %s kan inte checkas in av programmet.\n"
+
+#: lib/commit.tcl:170
+msgid ""
+"No changes to commit.\n"
+"\n"
+"You must stage at least 1 file before you can commit.\n"
+msgstr ""
+"Inga ändringar att checka in.\n"
+"\n"
+"Du måste köa åtminstone en fil innan du kan checka in.\n"
+
+#: lib/commit.tcl:183
+msgid ""
+"Please supply a commit message.\n"
+"\n"
+"A good commit message has the following format:\n"
+"\n"
+"- First line: Describe in one sentence what you did.\n"
+"- Second line: Blank\n"
+"- Remaining lines: Describe why this change is good.\n"
+msgstr ""
+"Ange ett incheckningsmeddelande.\n"
+"\n"
+"Ett bra incheckningsmeddelande har följande format:\n"
+"\n"
+"- Första raden: Beskriv i en mening vad du gjorde.\n"
+"- Andra raden: Tom\n"
+"- Följande rader: Beskriv varför det här är en bra ändring.\n"
+
+#: lib/commit.tcl:257
+msgid "write-tree failed:"
+msgstr "write-tree misslyckades:"
+
+#: lib/commit.tcl:275
+#, tcl-format
+msgid "Commit %s appears to be corrupt"
+msgstr "Incheckningen %s verkar vara trasig"
+
+#: lib/commit.tcl:279
+msgid ""
+"No changes to commit.\n"
+"\n"
+"No files were modified by this commit and it was not a merge commit.\n"
+"\n"
+"A rescan will be automatically started now.\n"
+msgstr ""
+"Inga ändringar att checka in.\n"
+"\n"
+"Inga filer ändrades av incheckningen och det var inte en sammanslagning.\n"
+"\n"
+"En sökning kommer att startas automatiskt nu.\n"
+
+#: lib/commit.tcl:286
+msgid "No changes to commit."
+msgstr "Inga ändringar att checka in."
+
+#: lib/commit.tcl:303
+#, tcl-format
+msgid "warning: Tcl does not support encoding '%s'."
+msgstr "varning: Tcl stöder inte teckenkodningen \"%s\"."
+
+#: lib/commit.tcl:317
+msgid "commit-tree failed:"
+msgstr "commit-tree misslyckades:"
+
+#: lib/commit.tcl:339
+msgid "update-ref failed:"
+msgstr "update-ref misslyckades:"
+
+#: lib/commit.tcl:430
+#, tcl-format
+msgid "Created commit %s: %s"
+msgstr "Skapade incheckningen %s: %s"
+
+#: lib/console.tcl:57
+msgid "Working... please wait..."
+msgstr "Arbetar... vänta..."
+
+#: lib/console.tcl:183
+msgid "Success"
+msgstr "Lyckades"
+
+#: lib/console.tcl:196
+msgid "Error: Command Failed"
+msgstr "Fel: Kommando misslyckades"
+
+#: lib/database.tcl:43
+msgid "Number of loose objects"
+msgstr "Antal lösa objekt"
+
+#: lib/database.tcl:44
+msgid "Disk space used by loose objects"
+msgstr "Diskutrymme använt av lösa objekt"
+
+#: lib/database.tcl:45
+msgid "Number of packed objects"
+msgstr "Antal packade objekt"
+
+#: lib/database.tcl:46
+msgid "Number of packs"
+msgstr "Antal paket"
+
+#: lib/database.tcl:47
+msgid "Disk space used by packed objects"
+msgstr "Diskutrymme använt av packade objekt"
+
+#: lib/database.tcl:48
+msgid "Packed objects waiting for pruning"
+msgstr "Packade objekt som väntar på städning"
+
+#: lib/database.tcl:49
+msgid "Garbage files"
+msgstr "Skräpfiler"
+
+#: lib/database.tcl:72
+msgid "Compressing the object database"
+msgstr "Komprimerar objektdatabasen"
+
+#: lib/database.tcl:83
+msgid "Verifying the object database with fsck-objects"
+msgstr "Verifierar objektdatabasen med fsck-objects"
+
+#: lib/database.tcl:108
+#, tcl-format
+msgid ""
+"This repository currently has approximately %i loose objects.\n"
+"\n"
+"To maintain optimal performance it is strongly recommended that you compress "
+"the database when more than %i loose objects exist.\n"
+"\n"
+"Compress the database now?"
+msgstr ""
+"Arkivet har för närvarande omkring %i lösa objekt.\n"
+"\n"
+"För att bibehålla optimal prestanda rekommenderas det å det bestämdaste att "
+"du komprimerar databasen när den innehåller mer än %i lösa objekt.\n"
+"\n"
+"Komprimera databasen nu?"
+
+#: lib/date.tcl:25
+#, tcl-format
+msgid "Invalid date from Git: %s"
+msgstr "Ogiltigt datum från Git: %s"
+
+#: lib/diff.tcl:42
+#, tcl-format
+msgid ""
+"No differences detected.\n"
+"\n"
+"%s has no changes.\n"
+"\n"
+"The modification date of this file was updated by another application, but "
+"the content within the file was not changed.\n"
+"\n"
+"A rescan will be automatically started to find other files which may have "
+"the same state."
+msgstr ""
+"Hittade inga skillnader.\n"
+"\n"
+"%s innehåller inga ändringar.\n"
+"\n"
+"Modifieringsdatum för filen uppdaterades av ett annat program, men innehållet "
+"i filen har inte ändrats.\n"
+"\n"
+"En sökning kommer automatiskt att startas för att hitta andra filer som kan "
+"vara i samma tillstånd."
+
+#: lib/diff.tcl:81
+#, tcl-format
+msgid "Loading diff of %s..."
+msgstr "Läser differens för %s..."
+
+#: lib/diff.tcl:114 lib/diff.tcl:184
+#, tcl-format
+msgid "Unable to display %s"
+msgstr "Kan inte visa %s"
+
+#: lib/diff.tcl:115
+msgid "Error loading file:"
+msgstr "Fel vid läsning av fil:"
+
+#: lib/diff.tcl:122
+msgid "Git Repository (subproject)"
+msgstr "Gitarkiv (underprojekt)"
+
+#: lib/diff.tcl:134
+msgid "* Binary file (not showing content)."
+msgstr "* Binärfil (visar inte innehållet)."
+
+#: lib/diff.tcl:185
+msgid "Error loading diff:"
+msgstr "Fel vid inläsning av differens:"
+
+#: lib/diff.tcl:302
+msgid "Failed to unstage selected hunk."
+msgstr "Kunde inte ta bort den valda delen från kön."
+
+#: lib/diff.tcl:309
+msgid "Failed to stage selected hunk."
+msgstr "Kunde inte lägga till den valda delen till kön."
+
+#: lib/error.tcl:12 lib/error.tcl:102
+msgid "error"
+msgstr "fel"
+
+#: lib/error.tcl:28
+msgid "warning"
+msgstr "varning"
+
+#: lib/error.tcl:81
+msgid "You must correct the above errors before committing."
+msgstr "Du måste rätta till felen ovan innan du checkar in."
+
+#: lib/index.tcl:6
+msgid "Unable to unlock the index."
+msgstr "Kunde inte låsa upp indexet."
+
+#: lib/index.tcl:15
+msgid "Index Error"
+msgstr "Indexfel"
+
+#: lib/index.tcl:21
+msgid ""
+"Updating the Git index failed.  A rescan will be automatically started to "
+"resynchronize git-gui."
+msgstr ""
+"Misslyckades med att uppdatera Gitindexet. En omsökning kommer att startas "
+"automatiskt för att synkronisera om git-gui."
+
+#: lib/index.tcl:27
+msgid "Continue"
+msgstr "Forstätt"
+
+#: lib/index.tcl:31
+msgid "Unlock Index"
+msgstr "Lås upp index"
+
+#: lib/index.tcl:282
+#, tcl-format
+msgid "Unstaging %s from commit"
+msgstr "Tar bort %s för incheckningskön"
+
+#: lib/index.tcl:326
+#, tcl-format
+msgid "Adding %s"
+msgstr "Lägger till %s"
+
+#: lib/index.tcl:381
+#, tcl-format
+msgid "Revert changes in file %s?"
+msgstr "Återställ ändringarna i filen %s?"
+
+#: lib/index.tcl:383
+#, tcl-format
+msgid "Revert changes in these %i files?"
+msgstr "Återställ ändringarna i dessa %i filer?"
+
+#: lib/index.tcl:389
+msgid "Any unstaged changes will be permanently lost by the revert."
+msgstr "Alla oköade ändringar kommer permanent gå förlorade vid återställningen."
+
+#: lib/index.tcl:392
+msgid "Do Nothing"
+msgstr "Gör ingenting"
+
+#: lib/merge.tcl:13
+msgid ""
+"Cannot merge while amending.\n"
+"\n"
+"You must finish amending this commit before starting any type of merge.\n"
+msgstr ""
+"Kan inte slå ihop vid utökning.\n"
+"\n"
+"Du måste föra färdig utökningen av incheckningen innan du påbörjar någon "
+"slags sammanslagning.\n"
+
+#: lib/merge.tcl:27
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before a merge can be performed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Det senaste inlästa tillståndet motsvarar inte tillståndet i arkivet.\n"
+"\n"
+"Ett annat Git-program har ändrat arkivet sedan senaste avsökningen. Du "
+"måste utföra en ny sökning innan du kan utföra en sammanslagning.\n"
+"\n"
+"Sökningen kommer att startas automatiskt nu.\n"
+
+#: lib/merge.tcl:44
+#, tcl-format
+msgid ""
+"You are in the middle of a conflicted merge.\n"
+"\n"
+"File %s has merge conflicts.\n"
+"\n"
+"You must resolve them, stage the file, and commit to complete the current "
+"merge.  Only then can you begin another merge.\n"
+msgstr ""
+"Du är mitt i en sammanslagning med konflikter.\n"
+"\n"
+"Filen %s har sammanslagningskonflikter.\n"
+"\n"
+"Du måste lösa dem, köa filen och checka in för att fullborda den aktuella "
+"sammanslagningen. När du gjort det kan du påbörja en ny sammanslagning.\n"
+
+#: lib/merge.tcl:54
+#, tcl-format
+msgid ""
+"You are in the middle of a change.\n"
+"\n"
+"File %s is modified.\n"
+"\n"
+"You should complete the current commit before starting a merge.  Doing so "
+"will help you abort a failed merge, should the need arise.\n"
+msgstr ""
+"Du är mitt i en ändring.\n"
+"\n"
+"Filen %s har ändringar.\n"
+"\n"
+"Du bör fullborda den aktuella incheckningen innan du påbörjar en "
+"sammanslagning. Om du gör det blir det enklare att avbryta en misslyckad "
+"sammanslagning, om det skulle vara nödvändigt.\n"
+
+#: lib/merge.tcl:106
+#, tcl-format
+msgid "%s of %s"
+msgstr "%s av %s"
+
+#: lib/merge.tcl:119
+#, tcl-format
+msgid "Merging %s and %s"
+msgstr "Slår ihop %s och %s"
+
+#: lib/merge.tcl:131
+msgid "Merge completed successfully."
+msgstr "Sammanslagningen avslutades framgångsrikt."
+
+#: lib/merge.tcl:133
+msgid "Merge failed.  Conflict resolution is required."
+msgstr "Sammanslagningen misslyckades. Du måste lösa konflikterna."
+
+#: lib/merge.tcl:158
+#, tcl-format
+msgid "Merge Into %s"
+msgstr "Slå ihop i %s"
+
+#: lib/merge.tcl:177
+msgid "Revision To Merge"
+msgstr "Revisioner att slå ihop"
+
+#: lib/merge.tcl:212
+msgid ""
+"Cannot abort while amending.\n"
+"\n"
+"You must finish amending this commit.\n"
+msgstr ""
+"Kan inte avbryta vid utökning.\n"
+"\n"
+"Du måste göra dig färdig med att utöka incheckningen.\n"
+
+#: lib/merge.tcl:222
+msgid ""
+"Abort merge?\n"
+"\n"
+"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"\n"
+"Continue with aborting the current merge?"
+msgstr ""
+"Avbryt sammanslagning?\n"
+"\n"
+"Om du avbryter sammanslagningen kommer *ALLA* ej incheckade ändringar att "
+"gå förlorade.\n"
+"\n"
+"Gå vidare med att avbryta den aktuella sammanslagningen?"
+
+#: lib/merge.tcl:228
+msgid ""
+"Reset changes?\n"
+"\n"
+"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"\n"
+"Continue with resetting the current changes?"
+msgstr ""
+"Återställ ändringar?\n"
+"\n"
+"Om du återställer ändringarna kommer *ALLA* ej incheckade ändringar att "
+"gå förlorade.\n"
+"\n"
+"Gå vidare med att återställa de aktuella ändringarna?"
+
+#: lib/merge.tcl:239
+msgid "Aborting"
+msgstr "Avbryter"
+
+#: lib/merge.tcl:266
+msgid "Abort failed."
+msgstr "Misslyckades avbryta."
+
+#: lib/merge.tcl:268
+msgid "Abort completed.  Ready."
+msgstr "Avbrytning fullbordad. Redo."
+
+#: lib/option.tcl:82
+msgid "Restore Defaults"
+msgstr "Återställ standardvärden"
+
+#: lib/option.tcl:86
+msgid "Save"
+msgstr "Spara"
+
+#: lib/option.tcl:96
+#, tcl-format
+msgid "%s Repository"
+msgstr "Arkivet %s"
+
+#: lib/option.tcl:97
+msgid "Global (All Repositories)"
+msgstr "Globalt (alla arkiv)"
+
+#: lib/option.tcl:103
+msgid "User Name"
+msgstr "Användarnamn"
+
+#: lib/option.tcl:104
+msgid "Email Address"
+msgstr "E-postadress"
+
+#: lib/option.tcl:106
+msgid "Summarize Merge Commits"
+msgstr "Summera sammanslagningsincheckningar"
+
+#: lib/option.tcl:107
+msgid "Merge Verbosity"
+msgstr "Pratsamhet för sammanslagningar"
+
+#: lib/option.tcl:108
+msgid "Show Diffstat After Merge"
+msgstr "Visa diffstatistik efter sammanslagning"
+
+#: lib/option.tcl:110
+msgid "Trust File Modification Timestamps"
+msgstr "Lita på filändringstidsstämplar"
+
+#: lib/option.tcl:111
+msgid "Prune Tracking Branches During Fetch"
+msgstr "Städa spårade grenar vid hämtning"
+
+#: lib/option.tcl:112
+msgid "Match Tracking Branches"
+msgstr "Matcha spårade grenar"
+
+#: lib/option.tcl:113
+msgid "Number of Diff Context Lines"
+msgstr "Antal rader sammanhang i differenser"
+
+#: lib/option.tcl:114
+msgid "New Branch Name Template"
+msgstr "Mall för namn på nya grenar"
+
+#: lib/option.tcl:176
+msgid "Change Font"
+msgstr "Byt teckensnitt"
+
+#: lib/option.tcl:180
+#, tcl-format
+msgid "Choose %s"
+msgstr "Välj %s"
+
+#: lib/option.tcl:186
+msgid "pt."
+msgstr "p."
+
+#: lib/option.tcl:200
+msgid "Preferences"
+msgstr "Inställningar"
+
+#: lib/option.tcl:235
+msgid "Failed to completely save options:"
+msgstr "Misslyckades med att helt spara alternativ:"
+
+#: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
+msgid "Delete Remote Branch"
+msgstr "Ta bort fjärrgren"
+
+#: lib/remote_branch_delete.tcl:47
+msgid "From Repository"
+msgstr "Från arkiv"
+
+#: lib/remote_branch_delete.tcl:50 lib/transport.tcl:123
+msgid "Remote:"
+msgstr "Fjärr:"
+
+#: lib/remote_branch_delete.tcl:66 lib/transport.tcl:138
+msgid "Arbitrary URL:"
+msgstr "Godtycklig webbadress:"
+
+#: lib/remote_branch_delete.tcl:84
+msgid "Branches"
+msgstr "Grenar"
+
+#: lib/remote_branch_delete.tcl:109
+msgid "Delete Only If"
+msgstr "Ta endast bort om"
+
+#: lib/remote_branch_delete.tcl:111
+msgid "Merged Into:"
+msgstr "Sammanslagen i:"
+
+#: lib/remote_branch_delete.tcl:119
+msgid "Always (Do not perform merge checks)"
+msgstr "Alltid (utför inte sammanslagningstest)"
+
+#: lib/remote_branch_delete.tcl:152
+msgid "A branch is required for 'Merged Into'."
+msgstr "En gren krävs för \"Sammanslagen i\"."
+
+#: lib/remote_branch_delete.tcl:184
+#, tcl-format
+msgid ""
+"The following branches are not completely merged into %s:\n"
+"\n"
+" - %s"
+msgstr ""
+"Följande grenar har inte helt slagits samman i %s:\n"
+"\n"
+" - %s"
+
+#: lib/remote_branch_delete.tcl:189
+#, tcl-format
+msgid ""
+"One or more of the merge tests failed because you have not fetched the "
+"necessary commits.  Try fetching from %s first."
+msgstr ""
+"En eller flera av sammanslagningstesterna misslyckades eftersom du inte "
+"har hämtat de nödvändiga incheckningarna. Försök hämta från %s först."
+
+#: lib/remote_branch_delete.tcl:207
+msgid "Please select one or more branches to delete."
+msgstr "Välj en eller flera grenar att ta bort."
+
+#: lib/remote_branch_delete.tcl:216
+msgid ""
+"Recovering deleted branches is difficult.\n"
+"\n"
+"Delete the selected branches?"
+msgstr ""
+"Det kan vara svårt att återställa grenar.\n"
+"\n"
+"Ta bort de valda grenarna?"
+
+#: lib/remote_branch_delete.tcl:226
+#, tcl-format
+msgid "Deleting branches from %s"
+msgstr "Tar bort grenar från %s"
+
+#: lib/remote_branch_delete.tcl:286
+msgid "No repository selected."
+msgstr "Inget arkiv markerat."
+
+#: lib/remote_branch_delete.tcl:291
+#, tcl-format
+msgid "Scanning %s..."
+msgstr "Söker %s..."
+
+#: lib/remote.tcl:165
+msgid "Prune from"
+msgstr "Ta bort från"
+
+#: lib/remote.tcl:170
+msgid "Fetch from"
+msgstr "Hämta från"
+
+#: lib/remote.tcl:213
+msgid "Push to"
+msgstr "Sänd till"
+
+#: lib/shortcut.tcl:20 lib/shortcut.tcl:61
+msgid "Cannot write shortcut:"
+msgstr "Kan inte skriva genväg:"
+
+#: lib/shortcut.tcl:136
+msgid "Cannot write icon:"
+msgstr "Kan inte skriva ikon:"
+
+#: lib/status_bar.tcl:83
+#, tcl-format
+msgid "%s ... %*i of %*i %s (%3i%%)"
+msgstr "%s... %*i av %*i %s (%3i%%)"
+
+#: lib/transport.tcl:6
+#, tcl-format
+msgid "fetch %s"
+msgstr "hämta %s"
+
+#: lib/transport.tcl:7
+#, tcl-format
+msgid "Fetching new changes from %s"
+msgstr "Hämtar nya ändringar från %s"
+
+#: lib/transport.tcl:18
+#, tcl-format
+msgid "remote prune %s"
+msgstr "fjärrborttagning %s"
+
+#: lib/transport.tcl:19
+#, tcl-format
+msgid "Pruning tracking branches deleted from %s"
+msgstr "Tar bort spårande grenar som tagits bort från %s"
+
+#: lib/transport.tcl:25 lib/transport.tcl:71
+#, tcl-format
+msgid "push %s"
+msgstr "sänd %s"
+
+#: lib/transport.tcl:26
+#, tcl-format
+msgid "Pushing changes to %s"
+msgstr "Sänder ändringar till %s"
+
+#: lib/transport.tcl:72
+#, tcl-format
+msgid "Pushing %s %s to %s"
+msgstr "Sänder %s %s till %s"
+
+#: lib/transport.tcl:89
+msgid "Push Branches"
+msgstr "Sänder grenar"
+
+#: lib/transport.tcl:103
+msgid "Source Branches"
+msgstr "Källgrenar"
+
+#: lib/transport.tcl:120
+msgid "Destination Repository"
+msgstr "Destinationsarkiv"
+
+#: lib/transport.tcl:158
+msgid "Transfer Options"
+msgstr "Överföringsalternativ"
+
+#: lib/transport.tcl:160
+msgid "Force overwrite existing branch (may discard changes)"
+msgstr "Tvinga överskrivning av befintlig gren (kan kasta bort ändringar)"
+
+#: lib/transport.tcl:164
+msgid "Use thin pack (for slow network connections)"
+msgstr "Använd tunt paket (för långsamma nätverksanslutningar)"
+
+#: lib/transport.tcl:168
+msgid "Include tags"
+msgstr "Ta med taggar"
+

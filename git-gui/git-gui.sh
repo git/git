@@ -2542,6 +2542,27 @@ $ui_diff tag raise sel
 set ctxm .vpane.lower.diff.body.ctxm
 menu $ctxm -tearoff 0
 $ctxm add command \
+	-label [mc "Apply/Reverse Hunk"] \
+	-command {apply_hunk $cursorX $cursorY}
+set ui_diff_applyhunk [$ctxm index last]
+lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
+$ctxm add separator
+$ctxm add command \
+	-label [mc "Show Less Context"] \
+	-command {if {$repo_config(gui.diffcontext) >= 1} {
+		incr repo_config(gui.diffcontext) -1
+		reshow_diff
+	}}
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add command \
+	-label [mc "Show More Context"] \
+	-command {if {$repo_config(gui.diffcontext) < 99} {
+		incr repo_config(gui.diffcontext)
+		reshow_diff
+	}}
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add separator
+$ctxm add command \
 	-label [mc Refresh] \
 	-command reshow_diff
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
@@ -2563,33 +2584,12 @@ $ctxm add command \
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command \
-	-label [mc "Apply/Reverse Hunk"] \
-	-command {apply_hunk $cursorX $cursorY}
-set ui_diff_applyhunk [$ctxm index last]
-lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
-$ctxm add separator
-$ctxm add command \
 	-label [mc "Decrease Font Size"] \
 	-command {incr_font_size font_diff -1}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label [mc "Increase Font Size"] \
 	-command {incr_font_size font_diff 1}
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add separator
-$ctxm add command \
-	-label [mc "Show Less Context"] \
-	-command {if {$repo_config(gui.diffcontext) >= 1} {
-		incr repo_config(gui.diffcontext) -1
-		reshow_diff
-	}}
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add command \
-	-label [mc "Show More Context"] \
-	-command {if {$repo_config(gui.diffcontext) < 99} {
-		incr repo_config(gui.diffcontext)
-		reshow_diff
-	}}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command -label [mc "Options..."] \

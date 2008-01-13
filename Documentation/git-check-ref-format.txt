@@ -35,7 +35,7 @@ imposes the following rules on how refs are named:
 These rules makes it easy for shell script based tools to parse
 refnames, pathname expansion by the shell when a refname is used
 unquoted (by mistake), and also avoids ambiguities in certain
-refname expressions (see gitlink:git-rev-parse[1]).  Namely:
+refname expressions (see linkgit:git-rev-parse[1]).  Namely:
 
 . double-dot `..` are often used as in `ref1..ref2`, and in some
   context this notation means `{caret}ref1 ref2` (i.e. not in
@@ -47,9 +47,9 @@ refname expressions (see gitlink:git-rev-parse[1]).  Namely:
 . colon `:` is used as in `srcref:dstref` to mean "use srcref\'s
   value and store it in dstref" in fetch and push operations.
   It may also be used to select a specific object such as with
-  gitlink:git-cat-file[1] "git-cat-file blob v1.3.3:refs.c".
+  linkgit:git-cat-file[1] "git-cat-file blob v1.3.3:refs.c".
 
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

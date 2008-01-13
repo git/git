@@ -13,18 +13,18 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This program dumps the given revisions in a form suitable to be piped
-into gitlink:git-fast-import[1].
+into linkgit:git-fast-import[1].
 
 You can use it as a human readable bundle replacement (see
-gitlink:git-bundle[1]), or as a kind of an interactive
-gitlink:git-filter-branch[1].
+linkgit:git-bundle[1]), or as a kind of an interactive
+linkgit:git-filter-branch[1].
 
 
 OPTIONS
 -------
 --progress=<n>::
 	Insert 'progress' statements every <n> objects, to be shown by
-	gitlink:git-fast-import[1] during import.
+	linkgit:git-fast-import[1] during import.
 
 --signed-tags=(verbatim|warn|strip|abort)::
 	Specify how to handle signed tags.  Since any transformation
@@ -65,7 +65,7 @@ referenced by that revision range contains the string
 Limitations
 -----------
 
-Since gitlink:git-fast-import[1] cannot tag trees, you will not be
+Since linkgit:git-fast-import[1] cannot tag trees, you will not be
 able to export the linux-2.6.git repository completely, as it contains
 a tag referencing a tree instead of a commit.
 
@@ -80,4 +80,4 @@ Documentation by Johannes E. Schindelin <johannes.schindelin@gmx.de>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

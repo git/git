@@ -102,13 +102,13 @@ Notable members are:
 	and copies.
 
 `abbrev`::
-	Number of hexdigits to abbrevate raw format output to.
+	Number of hexdigits to abbreviate raw format output to.
 
 `pickaxe`::
 	A constant string (can and typically does contain newlines to
 	look for a block of text, not just a single line) to filter out
 	the filepairs that do not change the number of strings contained
-	in its preimage and postmage of the diff_queue.
+	in its preimage and postimage of the diff_queue.
 
 `flags`::
 	This is mostly a collection of boolean options that affects the
@@ -149,7 +149,7 @@ REVERSE_DIFF;;
 
 EXIT_WITH_STATUS;;
 	For communication between the calling program and the options
-	parser; tell the calling program to signal the presense of
+	parser; tell the calling program to signal the presence of
 	difference using program exit code.
 
 HAS_CHANGES;;

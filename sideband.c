@@ -13,14 +13,27 @@
  */
 
 #define PREFIX "remote:"
-#define SUFFIX "\033[K"  /* change to "        " if ANSI sequences don't work */
+
+#define ANSI_SUFFIX "\033[K"
+#define DUMB_SUFFIX "        "
+
+#define FIX_SIZE 10  /* large enough for any of the above */
 
 int recv_sideband(const char *me, int in_stream, int out, int err)
 {
 	unsigned pf = strlen(PREFIX);
-	unsigned sf = strlen(SUFFIX);
-	char buf[pf + LARGE_PACKET_MAX + sf + 1];
+	unsigned sf;
+	char buf[LARGE_PACKET_MAX + 2*FIX_SIZE];
+	char *suffix, *term;
+
 	memcpy(buf, PREFIX, pf);
+	term = getenv("TERM");
+	if (term && strcmp(term, "dumb"))
+		suffix = ANSI_SUFFIX;
+	else
+		suffix = DUMB_SUFFIX;
+	sf = strlen(suffix);
+
 	while (1) {
 		int band, len;
 		len = packet_read_line(in_stream, buf + pf, LARGE_PACKET_MAX);
@@ -59,10 +72,10 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 				 * line data actually contains something.
 				 */
 				if (brk > pf+1 + 1) {
-					char save[sf];
+					char save[FIX_SIZE];
 					memcpy(save, buf + brk, sf);
 					buf[brk + sf - 1] = buf[brk - 1];
-					memcpy(buf + brk - 1, SUFFIX, sf);
+					memcpy(buf + brk - 1, suffix, sf);
 					safe_write(err, buf, brk + sf);
 					memcpy(buf + brk, save, sf);
 				} else

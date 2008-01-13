@@ -10,6 +10,7 @@
 #include "color.h"
 #include "attr.h"
 #include "run-command.h"
+#include "utf8.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -58,14 +59,6 @@ static struct ll_diff_driver {
 	struct ll_diff_driver *next;
 	char *cmd;
 } *user_diff, **user_diff_tail;
-
-static void read_config_if_needed(void)
-{
-	if (!user_diff_tail) {
-		user_diff_tail = &user_diff;
-		git_config(git_diff_ui_config);
-	}
-}
 
 /*
  * Currently there is only "diff.<drivername>.command" variable;
@@ -174,14 +167,26 @@ int git_diff_ui_config(const char *var, const char *value)
 		if (ep != var + 4) {
 			if (!strcmp(ep, ".command"))
 				return parse_lldiff_command(var, ep, value);
-			if (!strcmp(ep, ".funcname"))
-				return parse_funcname_pattern(var, ep, value);
 		}
 	}
+
+	return git_diff_basic_config(var, value);
+}
+
+int git_diff_basic_config(const char *var, const char *value)
+{
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
 		color_parse(value, var, diff_colors[slot]);
 		return 0;
+	}
+
+	if (!prefixcmp(var, "diff.")) {
+		const char *ep = strrchr(var, '.');
+		if (ep != var + 4) {
+			if (!strcmp(ep, ".funcname"))
+				return parse_funcname_pattern(var, ep, value);
+		}
 	}
 
 	return git_default_config(var, value);
@@ -465,10 +470,13 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	}
 }
 
+typedef unsigned long (*sane_truncate_fn)(char *line, unsigned long len);
+
 struct emit_callback {
 	struct xdiff_emit_state xm;
 	int nparents, color_diff;
 	unsigned ws_rule;
+	sane_truncate_fn truncate;
 	const char **label_path;
 	struct diff_words_data *diff_words;
 	int *found_changesp;
@@ -521,6 +529,24 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 	}
 }
 
+static unsigned long sane_truncate_line(struct emit_callback *ecb, char *line, unsigned long len)
+{
+	const char *cp;
+	unsigned long allot;
+	size_t l = len;
+
+	if (ecb->truncate)
+		return ecb->truncate(line, len);
+	cp = line;
+	allot = l;
+	while (0 < l) {
+		(void) utf8_width(&cp, &l);
+		if (!cp)
+			break; /* truncated in the middle? */
+	}
+	return allot - l;
+}
+
 static void fn_out_consume(void *priv, char *line, unsigned long len)
 {
 	int i;
@@ -551,8 +577,11 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		;
 	if (2 <= i && i < len && line[i] == ' ') {
 		ecbdata->nparents = i - 1;
+		len = sane_truncate_line(ecbdata, line, len);
 		emit_line(diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO),
 			  reset, line, len);
+		if (line[len-1] != '\n')
+			putchar('\n');
 		return;
 	}
 
@@ -1154,7 +1183,6 @@ static const char *funcname_pattern(const char *ident)
 {
 	struct funcname_pattern *pp;
 
-	read_config_if_needed();
 	for (pp = funcname_pattern_list; pp; pp = pp->next)
 		if (!strcmp(ident, pp->name))
 			return pp->pattern;
@@ -1811,7 +1839,6 @@ static const char *external_diff_attr(const char *name)
 		    !ATTR_UNSET(value)) {
 			struct ll_diff_driver *drv;
 
-			read_config_if_needed();
 			for (drv = user_diff; drv; drv = drv->next)
 				if (!strcmp(drv->name, value))
 					return drv->cmd;

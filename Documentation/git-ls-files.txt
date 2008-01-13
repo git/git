@@ -106,7 +106,7 @@ OPTIONS
 -v::
 	Similar to `-t`, but use lowercase letters for files
 	that are marked as 'assume unchanged' (see
-	gitlink:git-update-index[1]).
+	linkgit:git-update-index[1]).
 
 --full-name::
 	When run from a subdirectory, the command usually
@@ -152,7 +152,7 @@ Exclude Patterns
 
 'git-ls-files' can use a list of "exclude patterns" when
 traversing the directory tree and finding files to show when the
-flags --others or --ignored are specified.  gitlink:gitignore[5]
+flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
 
 These exclude patterns come from these places, in order:
@@ -179,7 +179,7 @@ pattern file appears in.
 
 See Also
 --------
-gitlink:git-read-tree[1], gitlink:gitignore[5]
+linkgit:git-read-tree[1], linkgit:gitignore[5]
 
 
 Author
@@ -192,4 +192,4 @@ Documentation by David Greaves, Junio C Hamano, Josh Triplett, and the git-list 
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

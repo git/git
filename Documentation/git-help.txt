@@ -85,7 +85,7 @@ $ git config --global web.browser firefox
 ------------------------------------------------
 
 as they are probably more user specific than repository specific.
-See gitlink:git-config[1] for more information about this.
+See linkgit:git-config[1] for more information about this.
 
 Author
 ------
@@ -94,10 +94,10 @@ Written by Junio C Hamano <gitster@pobox.com> and the git-list
 
 Documentation
 -------------
-Initial documentation was part of the gitlink:git[7] man page.
+Initial documentation was part of the linkgit:git[7] man page.
 Christian Couder <chriscool@tuxfamily.org> extracted and rewrote it a
 little. Maintenance is done by the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

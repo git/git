@@ -21,7 +21,7 @@ last modified the line. Optionally, start annotating from the given revision.
 Also it can limit the range of lines annotated.
 
 This report doesn't tell you anything about lines which have been deleted or
-replaced; you need to use a tool such as gitlink:git-diff[1] or the "pickaxe"
+replaced; you need to use a tool such as linkgit:git-diff[1] or the "pickaxe"
 interface briefly mentioned in the following paragraph.
 
 Apart from supporting file annotation, git also supports searching the
@@ -41,7 +41,7 @@ OPTIONS
 include::blame-options.txt[]
 
 -c::
-	Use the same output mode as gitlink:git-annotate[1] (Default: off).
+	Use the same output mode as linkgit:git-annotate[1] (Default: off).
 
 --score-debug::
 	Include debugging information related to the movement of
@@ -184,7 +184,7 @@ commit commentary), a blame viewer won't ever care.
 
 SEE ALSO
 --------
-gitlink:git-annotate[1]
+linkgit:git-annotate[1]
 
 AUTHOR
 ------
@@ -192,4 +192,4 @@ Written by Junio C Hamano <junkio@cox.net>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -21,6 +21,9 @@ static const char *def;
 #define NORMAL 0
 #define REVERSED 1
 static int show_type = NORMAL;
+
+#define SHOW_SYMBOLIC_ASIS 1
+#define SHOW_SYMBOLIC_FULL 2
 static int symbolic;
 static int abbrev;
 static int output_sq;
@@ -103,8 +106,32 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 
 	if (type != show_type)
 		putchar('^');
-	if (symbolic && name)
-		show(name);
+	if (symbolic && name) {
+		if (symbolic == SHOW_SYMBOLIC_FULL) {
+			unsigned char discard[20];
+			char *full;
+
+			switch (dwim_ref(name, strlen(name), discard, &full)) {
+			case 0:
+				/*
+				 * Not found -- not a ref.  We could
+				 * emit "name" here, but symbolic-full
+				 * users are interested in finding the
+				 * refs spelled in full, and they would
+				 * need to filter non-refs if we did so.
+				 */
+				break;
+			case 1: /* happy */
+				show(full);
+				break;
+			default: /* ambiguous */
+				error("refname '%s' is ambiguous", name);
+				break;
+			}
+		} else {
+			show(name);
+		}
+	}
 	else if (abbrev)
 		show(find_unique_abbrev(sha1, abbrev));
 	else
@@ -421,7 +448,11 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--symbolic")) {
-				symbolic = 1;
+				symbolic = SHOW_SYMBOLIC_ASIS;
+				continue;
+			}
+			if (!strcmp(arg, "--symbolic-full-name")) {
+				symbolic = SHOW_SYMBOLIC_FULL;
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {

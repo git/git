@@ -61,7 +61,7 @@ Deprecation notices
 Updates since v1.5.3
 --------------------
 
- * Comes with much improved gitk.
+ * Comes with much improved gitk, with i18n.
 
  * Comes with "git gui" 0.9.1 with i18n.
 
@@ -113,6 +113,9 @@ Updates since v1.5.3
    ":/string" syntax to name a commit.
 
  * "git reset" is now built-in and its output can be squelched with -q.
+
+ * "git reset --hard" does not make any sense in a bare
+   repository, but did not error out; fixed.
 
  * "git send-email" can optionally talk over ssmtp and use SMTP-AUTH.
 
@@ -209,7 +212,10 @@ Updates since v1.5.3
  * "git add -p" is a short-hand to go directly to the selective patch
    subcommand in the interactive command loop and to exit when done.
 
- * "git add -i" UI has been colorized.
+ * "git add -i" UI has been colorized.  The interactive prompt
+   and menu can be colored by setting color.interactive
+   configuration.  The diff output (including the hunk picker)
+   are colored with color.diff configuration.
 
  * "git commit --allow-empty" allows you to create a single-parent
    commit that records the same tree as its parent, overriding the usual
@@ -227,6 +233,11 @@ Updates since v1.5.3
  * "git stash random-text" does not create a new stash anymore.  It was
    a UI mistake.  Use "git stash save random-text", or "git stash"
    (without extra args) for that.
+
+ * "git stash clear extra-text" does not clear the whole stash
+   anymore.  It is tempting to expect "git stash clear stash@{2}"
+   to drop only a single named stash entry, and it is rude to
+   discard everything when that is asked (but not provided).
 
  * "git prune --expire <time>" can exempt young loose objects from
    getting pruned.
@@ -342,8 +353,11 @@ series.
  * "git config" did not work correctly on platforms that define
    REG_NOMATCH to an even number.
 
+ * Recent versions of AsciiDoc 8 has a change to break our
+   documentation; a workaround has been implemented.
+
 --
 exec >/var/tmp/1
-O=v1.5.4-rc1-36-g49e6be5
+O=v1.5.4-rc3
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

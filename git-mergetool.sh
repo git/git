@@ -393,8 +393,11 @@ if test $# -eq 0 ; then
 		echo "No files need merging"
 		exit 0
 	fi
-	echo Merging the files: $files
-	git ls-files -u | sed -e 's/^[^	]*	//' | sort -u | while read i
+	echo Merging the files: "$files"
+	git ls-files -u |
+	sed -e 's/^[^	]*	//' |
+	sort -u |
+	while IFS= read i
 	do
 		printf "\n"
 		merge_file "$i" < /dev/tty > /dev/tty

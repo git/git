@@ -37,10 +37,10 @@ OPTIONS
 	area to store extracted patches.
 
 -k, --keep::
-	Pass `-k` flag to `git-mailinfo` (see gitlink:git-mailinfo[1]).
+	Pass `-k` flag to `git-mailinfo` (see linkgit:git-mailinfo[1]).
 
 -u, --utf8::
-	Pass `-u` flag to `git-mailinfo` (see gitlink:git-mailinfo[1]).
+	Pass `-u` flag to `git-mailinfo` (see linkgit:git-mailinfo[1]).
 	The proposed commit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
 	`i18n.commitencoding` can be used to specify project's
@@ -51,7 +51,7 @@ default.   You could use `--no-utf8` to override this.
 
 --no-utf8::
 	Pass `-n` flag to `git-mailinfo` (see
-	gitlink:git-mailinfo[1]).
+	linkgit:git-mailinfo[1]).
 
 -3, --3way::
 	When the patch does not apply cleanly, fall back on
@@ -61,15 +61,15 @@ default.   You could use `--no-utf8` to override this.
 
 -b, --binary::
 	Pass `--allow-binary-replacement` flag to `git-apply`
-	(see gitlink:git-apply[1]).
+	(see linkgit:git-apply[1]).
 
 --whitespace=<option>::
-	This flag is passed to the `git-apply` (see gitlink:git-apply[1])
+	This flag is passed to the `git-apply` (see linkgit:git-apply[1])
 	program that applies
 	the patch.
 
 -C<n>, -p<n>::
-	These flags are passed to the `git-apply` (see gitlink:git-apply[1])
+	These flags are passed to the `git-apply` (see linkgit:git-apply[1])
 	program that applies
 	the patch.
 
@@ -144,7 +144,7 @@ names.
 
 SEE ALSO
 --------
-gitlink:git-apply[1].
+linkgit:git-apply[1].
 
 
 Author
@@ -157,4 +157,4 @@ Documentation by Petr Baudis, Junio C Hamano and the git-list <git@vger.kernel.o
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

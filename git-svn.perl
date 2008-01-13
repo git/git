@@ -418,7 +418,7 @@ sub cmd_dcommit {
 		warn "Attempting to commit more than one change while ",
 		     "--no-rebase is enabled.\n",
 		     "If these changes depend on each other, re-running ",
-		     "without --no-rebase will be required."
+		     "without --no-rebase may be required."
 	}
 	while (1) {
 		my $d = shift @$linear_refs or last;
@@ -453,6 +453,7 @@ sub cmd_dcommit {
 				                               $parents->{$d};
 			}
 			$_fetch_all ? $gs->fetch_all : $gs->fetch;
+			$last_rev = $cmt_rev;
 			next if $_no_rebase;
 
 			# we always want to rebase against the current HEAD,
@@ -512,7 +513,6 @@ sub cmd_dcommit {
 				$parents = \%p;
 				$linear_refs = \@l;
 			}
-			$last_rev = $cmt_rev;
 		}
 	}
 	unlink $gs->{index};
@@ -1283,8 +1283,11 @@ BEGIN {
 	}
 }
 
-my %LOCKFILES;
-END { unlink keys %LOCKFILES if %LOCKFILES }
+my (%LOCKFILES, %INDEX_FILES);
+END {
+	unlink keys %LOCKFILES if %LOCKFILES;
+	unlink keys %INDEX_FILES if %INDEX_FILES;
+}
 
 sub resolve_local_globs {
 	my ($url, $fetch, $glob_spec) = @_;
@@ -1376,7 +1379,6 @@ sub fetch_all {
 
 	($base, $head) = parse_revision_argument($base, $head);
 	$ra->gs_fetch_loop_common($base, $head, \@gs, \@globs);
-	unlink $_->{index} foreach @gs;
 }
 
 sub read_all_remotes {
@@ -1856,6 +1858,7 @@ sub rel_path {
 sub prop_walk {
 	my ($self, $path, $rev, $sub) = @_;
 
+	$path =~ s#^/##;
 	my ($dirent, undef, $props) = $self->ra->get_dir($path, $rev);
 	$path =~ s#^/*#/#g;
 	my $p = $path;
@@ -3945,6 +3948,7 @@ sub gs_fetch_loop_common {
 				if ($log_entry) {
 					$gs->do_git_commit($log_entry);
 				}
+				$INDEX_FILES{$gs->{index}} = 1;
 			}
 			foreach my $g (@$globs) {
 				my $k = "svn-remote.$g->{remote}." .
@@ -4082,6 +4086,10 @@ sub skip_unknown_revs {
 			warn "W: Ignoring error from SVN, path probably ",
 			     "does not exist: ($errno): ",
 			     $err->expanded_message,"\n";
+			warn "W: Do not be alarmed at the above message ",
+			     "git-svn is just searching aggressively for ",
+			     "old history.\n",
+			     "This may take a while on large repositories\n";
 			$ignored_err{$err_key} = 1;
 		}
 		return;

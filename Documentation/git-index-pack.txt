@@ -43,10 +43,10 @@ OPTIONS
 	a default name determined from the pack content.  If
 	<pack-file> is not specified consider using --keep to
 	prevent a race condition between this process and
-	gitlink::git-repack[1].
+	linkgit:git-repack[1].
 
 --fix-thin::
-	It is possible for gitlink:git-pack-objects[1] to build
+	It is possible for linkgit:git-pack-objects[1] to build
 	"thin" pack, which records objects in deltified form based on
 	objects not included in the pack to reduce network traffic.
 	Those objects are expected to be present on the receiving end
@@ -59,7 +59,7 @@ OPTIONS
 	Before moving the index into its final destination
 	create an empty .keep file for the associated pack file.
 	This option is usually necessary with --stdin to prevent a
-	simultaneous gitlink:git-repack[1] process from deleting
+	simultaneous linkgit:git-repack[1] process from deleting
 	the newly constructed pack and index before refs can be
 	updated to use objects contained in the pack.
 
@@ -83,7 +83,7 @@ Once the index has been created, the list of object names is sorted
 and the SHA1 hash of that list is printed to stdout. If --stdin was
 also used then this is prefixed by either "pack\t", or "keep\t" if a
 new .keep file was successfully created. This is useful to remove a
-.keep file used as a lock to prevent the race with gitlink:git-repack[1]
+.keep file used as a lock to prevent the race with linkgit:git-repack[1]
 mentioned above.
 
 
@@ -97,4 +97,4 @@ Documentation by Sergey Vlasov
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

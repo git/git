@@ -2907,7 +2907,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			    whitespace_error,
 			    whitespace_error == 1 ? "" : "s",
 			    whitespace_error == 1 ? "s" : "");
-		if (applied_after_fixing_ws)
+		if (applied_after_fixing_ws && apply)
 			fprintf(stderr, "warning: %d line%s applied after"
 				" fixing whitespace errors.\n",
 				applied_after_fixing_ws,

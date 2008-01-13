@@ -209,25 +209,9 @@ ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
 GIT_WORK_TREE=.
 export GIT_DIR GIT_WORK_TREE
 
-# These refs should be updated if their heads were rewritten
-
-git rev-parse --revs-only --symbolic "$@" |
-while read ref
-do
-	# normalize ref
-	case "$ref" in
-	HEAD)
-		ref="$(git symbolic-ref "$ref")"
-	;;
-	refs/*)
-	;;
-	*)
-		ref="$(git for-each-ref --format='%(refname)' |
-			grep /"$ref")"
-	esac
-
-	git check-ref-format "$ref" && echo "$ref"
-done > "$tempdir"/heads
+# The refs should be updated if their heads were rewritten
+git rev-parse --no-flags --revs-only --symbolic-full-name "$@" |
+sed -e '/^^/d' >"$tempdir"/heads
 
 test -s "$tempdir"/heads ||
 	die "Which ref do you want to rewrite?"

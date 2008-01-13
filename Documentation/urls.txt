@@ -38,7 +38,7 @@ To sync with a local directory, you can use:
 
 ifndef::git-clone[]
 They are mostly equivalent, except when cloning.  See
-gitlink:git-clone[1] for details.
+linkgit:git-clone[1] for details.
 endif::git-clone[]
 
 ifdef::git-clone[]

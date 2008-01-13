@@ -7,6 +7,9 @@ static const char *get_mode(const char *str, unsigned int *modep)
 	unsigned char c;
 	unsigned int mode = 0;
 
+	if (*str == ' ')
+		return NULL;
+
 	while ((c = *str++) != ' ') {
 		if (c < '0' || c > '7')
 			return NULL;
@@ -16,13 +19,16 @@ static const char *get_mode(const char *str, unsigned int *modep)
 	return str;
 }
 
-static void decode_tree_entry(struct tree_desc *desc, const void *buf, unsigned long size)
+static void decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned long size)
 {
 	const char *path;
 	unsigned int mode, len;
 
+	if (size < 24 || buf[size - 21])
+		die("corrupt tree file");
+
 	path = get_mode(buf, &mode);
-	if (!path)
+	if (!path || !*path)
 		die("corrupt tree file");
 	len = strlen(path) + 1;
 

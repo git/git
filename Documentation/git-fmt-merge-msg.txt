@@ -46,7 +46,7 @@ merge.summary::
 
 SEE ALSO
 --------
-gitlink:git-merge[1]
+linkgit:git-merge[1]
 
 
 Author
@@ -59,4 +59,4 @@ Documentation by Petr Baudis, Junio C Hamano and the git-list <git@vger.kernel.o
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

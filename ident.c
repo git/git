@@ -152,7 +152,7 @@ static int copy(char *buf, size_t size, int offset, const char *src)
 	/*
 	 * Copy the rest to the buffer, but avoid the special
 	 * characters '\n' '<' and '>' that act as delimiters on
-	 * a identification line
+	 * an identification line
 	 */
 	for (i = 0; i < len; i++) {
 		c = *src++;

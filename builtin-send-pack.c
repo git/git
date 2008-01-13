@@ -541,10 +541,12 @@ static void verify_remote_names(int nr_heads, const char **heads)
 		remote = remote ? (remote + 1) : heads[i];
 		switch (check_ref_format(remote)) {
 		case 0: /* ok */
-		case -2: /* ok but a single level -- that is fine for
-			  * a match pattern.
-			  */
-		case -3: /* ok but ends with a pattern-match character */
+		case CHECK_REF_FORMAT_ONELEVEL:
+			/* ok but a single level -- that is fine for
+			 * a match pattern.
+			 */
+		case CHECK_REF_FORMAT_WILDCARD:
+			/* ok but ends with a pattern-match character */
 			continue;
 		}
 		die("remote part of refspec is not a valid name in %s",

@@ -48,7 +48,7 @@ int read_bundle_header(const char *path, struct bundle_header *header)
 			: &header->references;
 		char delim;
 
-		if (buffer[len - 1] == '\n')
+		if (len && buffer[len - 1] == '\n')
 			buffer[len - 1] = '\0';
 		if (get_sha1_hex(buffer + offset, sha1)) {
 			warning("unrecognized header: %s", buffer);
@@ -320,9 +320,9 @@ int create_bundle(struct bundle_header *header, const char *path,
 	for (i = 0; i < revs.pending.nr; i++) {
 		struct object *object = revs.pending.objects[i].item;
 		if (object->flags & UNINTERESTING)
-			write(rls.in, "^", 1);
-		write(rls.in, sha1_to_hex(object->sha1), 40);
-		write(rls.in, "\n", 1);
+			write_or_die(rls.in, "^", 1);
+		write_or_die(rls.in, sha1_to_hex(object->sha1), 40);
+		write_or_die(rls.in, "\n", 1);
 	}
 	if (finish_command(&rls))
 		return error ("pack-objects died");

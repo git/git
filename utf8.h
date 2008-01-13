@@ -1,7 +1,10 @@
 #ifndef GIT_UTF8_H
 #define GIT_UTF8_H
 
-int utf8_width(const char **start);
+typedef unsigned int ucs_char_t;  /* assuming 32bit int */
+
+ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p);
+int utf8_width(const char **start, size_t *remainder_p);
 int is_utf8(const char *text);
 int is_encoding_utf8(const char *name);
 
