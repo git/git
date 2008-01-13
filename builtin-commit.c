@@ -156,8 +156,6 @@ static int list_paths(struct path_list *list, const char *with_tree,
 
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
-		if (ce->ce_flags & htons(CE_UPDATE))
-			continue;
 		if (!pathspec_match(pattern, m, ce->name, 0))
 			continue;
 		path_list_insert(ce->name, list);
