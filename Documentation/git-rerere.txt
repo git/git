@@ -22,6 +22,10 @@ automerge results and corresponding hand-resolve results on the
 initial manual merge, and later by noticing the same automerge
 results and applying the previously recorded hand resolution.
 
+[NOTE]
+You need to set the configuration variable rerere.enabled to
+enable this command.
+
 
 COMMANDS
 --------
