@@ -248,24 +248,24 @@ generate_update_branch_email()
 	# In this case we want to issue an email containing only revisions
 	# 3, 4, and N.  Given (almost) by
 	#
-	#  git-rev-list N ^O --not --all
+	#  git rev-list N ^O --not --all
 	#
 	# The reason for the "almost", is that the "--not --all" will take
 	# precedence over the "N", and effectively will translate to
 	#
-	#  git-rev-list N ^O ^X ^N
+	#  git rev-list N ^O ^X ^N
 	#
-	# So, we need to build up the list more carefully.  git-rev-parse
-	# will generate a list of revs that may be fed into git-rev-list.
+	# So, we need to build up the list more carefully.  git rev-parse
+	# will generate a list of revs that may be fed into git rev-list.
 	# We can get it to make the "--not --all" part and then filter out
 	# the "^N" with:
 	#
-	#  git-rev-parse --not --all | grep -v N
+	#  git rev-parse --not --all | grep -v N
 	#
-	# Then, using the --stdin switch to git-rev-list we have effectively
+	# Then, using the --stdin switch to git rev-list we have effectively
 	# manufactured
 	#
-	#  git-rev-list N ^O ^X
+	#  git rev-list N ^O ^X
 	#
 	# This leaves a problem when someone else updates the repository
 	# while this script is running.  Their new value of the ref we're
@@ -274,10 +274,10 @@ generate_update_branch_email()
 	# all of our commits.  What we really want is to exclude the current
 	# value of $refname from the --not list, rather than N itself.  So:
 	#
-	#  git-rev-parse --not --all | grep -v $(git-rev-parse $refname)
+	#  git rev-parse --not --all | grep -v $(git rev-parse $refname)
 	#
 	# Get's us to something pretty safe (apart from the small time
-	# between refname being read, and git-rev-parse running - for that,
+	# between refname being read, and git rev-parse running - for that,
 	# I give up)
 	#
 	#
@@ -295,7 +295,7 @@ generate_update_branch_email()
 	# As above, we need to take into account the presence of X; if
 	# another branch is already in the repository and points at some of
 	# the revisions that we are about to output - we don't want them.
-	# The solution is as before: git-rev-parse output filtered.
+	# The solution is as before: git rev-parse output filtered.
 	#
 	# Finally, tags: 1 --- 2 --- O --- T --- 3 --- 4 --- N
 	#
@@ -305,7 +305,7 @@ generate_update_branch_email()
 	# for a branch update.  Therefore we still want to output revisions
 	# that have been output on a tag email.
 	#
-	# Luckily, git-rev-parse includes just the tool.  Instead of using
+	# Luckily, git rev-parse includes just the tool.  Instead of using
 	# "--all" we use "--branches"; this has the added benefit that
 	# "remotes/" will be ignored as well.
 
@@ -454,7 +454,7 @@ generate_update_atag_email()
 #
 generate_atag_email()
 {
-	# Use git-for-each-ref to pull out the individual fields from the
+	# Use git for-each-ref to pull out the individual fields from the
 	# tag
 	eval $(git for-each-ref --shell --format='
 	tagobject=%(*objectname)
@@ -572,7 +572,7 @@ generate_general_email()
 	else
 		# What can we do here?  The tag marks an object that is not
 		# a commit, so there is no log for us to display.  It's
-		# probably not wise to output git-cat-file as it could be a
+		# probably not wise to output git cat-file as it could be a
 		# binary blob.  We'll just say how big it is
 		echo "$newrev is a $newrev_type, and is $(git cat-file -s $newrev) bytes long."
 	fi
@@ -622,10 +622,10 @@ then
 	projectdesc="UNNAMED PROJECT"
 fi
 
-recipients=$(git repo-config hooks.mailinglist)
-announcerecipients=$(git repo-config hooks.announcelist)
-envelopesender=$(git-repo-config hooks.envelopesender)
-emailprefix=$(git-repo-config hooks.emailprefix || echo '[SCM] ')
+recipients=$(git config hooks.mailinglist)
+announcerecipients=$(git config hooks.announcelist)
+envelopesender=$(git config hooks.envelopesender)
+emailprefix=$(git config hooks.emailprefix || echo '[SCM] ')
 
 # --- Main loop
 # Allow dual mode: run from the command line just like the update hook, or
