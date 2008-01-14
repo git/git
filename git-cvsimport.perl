@@ -88,7 +88,7 @@ sub write_author_info($) {
 	close ($f);
 }
 
-# convert getopts specs for use by git-repo-config
+# convert getopts specs for use by git config
 sub read_repo_config {
     # Split the string between characters, unless there is a ':'
     # So "abc:de" becomes ["a", "b", "c:", "d", "e"]
@@ -96,7 +96,7 @@ sub read_repo_config {
 	foreach my $o (@opts) {
 		my $key = $o;
 		$key =~ s/://g;
-		my $arg = 'git-repo-config';
+		my $arg = 'git config';
 		$arg .= ' --bool' if ($o !~ /:$/);
 
         chomp(my $tmp = `$arg --get cvsimport.$key`);
@@ -116,7 +116,7 @@ getopts($opts) or usage();
 usage if $opt_h;
 
 if (@ARGV == 0) {
-		chomp(my $module = `git-repo-config --get cvsimport.module`);
+		chomp(my $module = `git config --get cvsimport.module`);
 		push(@ARGV, $module) if $? == 0;
 }
 @ARGV <= 1 or usage("You can't specify more than one CVS module");
