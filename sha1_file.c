@@ -395,7 +395,11 @@ void prepare_alt_odb(void)
 	if (!alt) alt = "";
 
 	alt_odb_tail = &alt_odb_list;
+#ifdef __MINGW32__
+	link_alt_odb_entries(alt, alt + strlen(alt), ';', NULL, 0);
+#else
 	link_alt_odb_entries(alt, alt + strlen(alt), ':', NULL, 0);
+#endif
 
 	read_info_alternates(get_object_directory(), 0);
 }
