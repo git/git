@@ -37,7 +37,7 @@ static int get_mode(const char *path, int *mode)
 	if (!path || !strcmp(path, "/dev/null"))
 		*mode = 0;
 	else if (!strcmp(path, "-"))
-		*mode = ntohl(create_ce_mode(0666));
+		*mode = create_ce_mode(0666);
 	else if (stat(path, &st))
 		return error("Could not access '%s'", path);
 	else
@@ -384,7 +384,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 					continue;
 			}
 			else
-				dpath->mode = ntohl(ce_mode_from_stat(ce, st.st_mode));
+				dpath->mode = ce_mode_from_stat(ce, st.st_mode);
 
 			while (i < entries) {
 				struct cache_entry *nce = active_cache[i];
@@ -398,10 +398,10 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				 */
 				stage = ce_stage(nce);
 				if (2 <= stage) {
-					int mode = ntohl(nce->ce_mode);
+					int mode = nce->ce_mode;
 					num_compare_stages++;
 					hashcpy(dpath->parent[stage-2].sha1, nce->sha1);
-					dpath->parent[stage-2].mode = ntohl(ce_mode_from_stat(nce, mode));
+					dpath->parent[stage-2].mode = ce_mode_from_stat(nce, mode);
 					dpath->parent[stage-2].status =
 						DIFF_STATUS_MODIFIED;
 				}
@@ -442,15 +442,15 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			}
 			if (silent_on_removed)
 				continue;
-			diff_addremove(&revs->diffopt, '-', ntohl(ce->ce_mode),
+			diff_addremove(&revs->diffopt, '-', ce->ce_mode,
 				       ce->sha1, ce->name, NULL);
 			continue;
 		}
 		changed = ce_match_stat(ce, &st, ce_option);
 		if (!changed && !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 			continue;
-		oldmode = ntohl(ce->ce_mode);
-		newmode = ntohl(ce_mode_from_stat(ce, st.st_mode));
+		oldmode = ce->ce_mode;
+		newmode = ce_mode_from_stat(ce, st.st_mode);
 		diff_change(&revs->diffopt, oldmode, newmode,
 			    ce->sha1, (changed ? null_sha1 : ce->sha1),
 			    ce->name, NULL);
@@ -471,7 +471,7 @@ static void diff_index_show_file(struct rev_info *revs,
 				 struct cache_entry *ce,
 				 unsigned char *sha1, unsigned int mode)
 {
-	diff_addremove(&revs->diffopt, prefix[0], ntohl(mode),
+	diff_addremove(&revs->diffopt, prefix[0], mode,
 		       sha1, ce->name, NULL);
 }
 
@@ -550,14 +550,14 @@ static int show_modified(struct rev_info *revs,
 		p->len = pathlen;
 		memcpy(p->path, new->name, pathlen);
 		p->path[pathlen] = 0;
-		p->mode = ntohl(mode);
+		p->mode = mode;
 		hashclr(p->sha1);
 		memset(p->parent, 0, 2 * sizeof(struct combine_diff_parent));
 		p->parent[0].status = DIFF_STATUS_MODIFIED;
-		p->parent[0].mode = ntohl(new->ce_mode);
+		p->parent[0].mode = new->ce_mode;
 		hashcpy(p->parent[0].sha1, new->sha1);
 		p->parent[1].status = DIFF_STATUS_MODIFIED;
-		p->parent[1].mode = ntohl(old->ce_mode);
+		p->parent[1].mode = old->ce_mode;
 		hashcpy(p->parent[1].sha1, old->sha1);
 		show_combined_diff(p, 2, revs->dense_combined_merges, revs);
 		free(p);
@@ -568,9 +568,6 @@ static int show_modified(struct rev_info *revs,
 	if (mode == oldmode && !hashcmp(sha1, old->sha1) &&
 	    !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 		return 0;
-
-	mode = ntohl(mode);
-	oldmode = ntohl(oldmode);
 
 	diff_change(&revs->diffopt, oldmode, mode,
 		    old->sha1, sha1, old->name, NULL);
@@ -628,7 +625,7 @@ static int diff_cache(struct rev_info *revs,
 					   cached, match_missing))
 				break;
 			diff_unmerge(&revs->diffopt, ce->name,
-				     ntohl(ce->ce_mode), ce->sha1);
+				     ce->ce_mode, ce->sha1);
 			break;
 		case 3:
 			diff_unmerge(&revs->diffopt, ce->name,
@@ -664,7 +661,7 @@ static void mark_merge_entries(void)
 		struct cache_entry *ce = active_cache[i];
 		if (!ce_stage(ce))
 			continue;
-		ce->ce_flags |= htons(CE_STAGEMASK);
+		ce->ce_flags |= CE_STAGEMASK;
 	}
 }
 
@@ -722,8 +719,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 			cache_tree_invalidate_path(active_cache_tree,
 						   ce->name);
 			last = ce;
-			ce->ce_mode = 0;
-			ce->ce_flags &= ~htons(CE_STAGEMASK);
+			ce->ce_flags |= CE_REMOVE;
 		}
 		*dst++ = ce;
 	}

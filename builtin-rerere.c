@@ -149,8 +149,8 @@ static int find_conflict(struct path_list *conflict)
 		if (ce_stage(e2) == 2 &&
 		    ce_stage(e3) == 3 &&
 		    ce_same_name(e2, e3) &&
-		    S_ISREG(ntohl(e2->ce_mode)) &&
-		    S_ISREG(ntohl(e3->ce_mode))) {
+		    S_ISREG(e2->ce_mode) &&
+		    S_ISREG(e3->ce_mode)) {
 			path_list_insert((const char *)e2->name, conflict);
 			i++; /* skip over both #2 and #3 */
 		}

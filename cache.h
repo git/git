@@ -94,48 +94,66 @@ struct cache_time {
  * We save the fields in big-endian order to allow using the
  * index file over NFS transparently.
  */
+struct ondisk_cache_entry {
+	struct cache_time ctime;
+	struct cache_time mtime;
+	unsigned int dev;
+	unsigned int ino;
+	unsigned int mode;
+	unsigned int uid;
+	unsigned int gid;
+	unsigned int size;
+	unsigned char sha1[20];
+	unsigned short flags;
+	char name[FLEX_ARRAY]; /* more */
+};
+
 struct cache_entry {
-	struct cache_time ce_ctime;
-	struct cache_time ce_mtime;
+	unsigned int ce_ctime;
+	unsigned int ce_mtime;
 	unsigned int ce_dev;
 	unsigned int ce_ino;
 	unsigned int ce_mode;
 	unsigned int ce_uid;
 	unsigned int ce_gid;
 	unsigned int ce_size;
+	unsigned int ce_flags;
 	unsigned char sha1[20];
-	unsigned short ce_flags;
 	char name[FLEX_ARRAY]; /* more */
 };
 
 #define CE_NAMEMASK  (0x0fff)
 #define CE_STAGEMASK (0x3000)
-#define CE_UPDATE    (0x4000)
 #define CE_VALID     (0x8000)
 #define CE_STAGESHIFT 12
 
-#define create_ce_flags(len, stage) htons((len) | ((stage) << CE_STAGESHIFT))
-#define ce_namelen(ce) (CE_NAMEMASK & ntohs((ce)->ce_flags))
+/* In-memory only */
+#define CE_UPDATE    (0x10000)
+#define CE_REMOVE    (0x20000)
+
+#define create_ce_flags(len, stage) ((len) | ((stage) << CE_STAGESHIFT))
+#define ce_namelen(ce) (CE_NAMEMASK & (ce)->ce_flags)
 #define ce_size(ce) cache_entry_size(ce_namelen(ce))
-#define ce_stage(ce) ((CE_STAGEMASK & ntohs((ce)->ce_flags)) >> CE_STAGESHIFT)
+#define ondisk_ce_size(ce) ondisk_cache_entry_size(ce_namelen(ce))
+#define ce_stage(ce) ((CE_STAGEMASK & (ce)->ce_flags) >> CE_STAGESHIFT)
 
 #define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
 static inline unsigned int create_ce_mode(unsigned int mode)
 {
 	if (S_ISLNK(mode))
-		return htonl(S_IFLNK);
+		return S_IFLNK;
 	if (S_ISDIR(mode) || S_ISGITLINK(mode))
-		return htonl(S_IFGITLINK);
-	return htonl(S_IFREG | ce_permissions(mode));
+		return S_IFGITLINK;
+	return S_IFREG | ce_permissions(mode);
 }
 static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
 {
 	extern int trust_executable_bit, has_symlinks;
 	if (!has_symlinks && S_ISREG(mode) &&
-	    ce && S_ISLNK(ntohl(ce->ce_mode)))
+	    ce && S_ISLNK(ce->ce_mode))
 		return ce->ce_mode;
 	if (!trust_executable_bit && S_ISREG(mode)) {
-		if (ce && S_ISREG(ntohl(ce->ce_mode)))
+		if (ce && S_ISREG(ce->ce_mode))
 			return ce->ce_mode;
 		return create_ce_mode(0666);
 	}
@@ -146,14 +164,14 @@ static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned in
 	S_ISLNK(mode) ? S_IFLNK : S_ISDIR(mode) ? S_IFDIR : S_IFGITLINK)
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
+#define ondisk_cache_entry_size(len) ((offsetof(struct ondisk_cache_entry,name) + (len) + 8) & ~7)
 
 struct index_state {
 	struct cache_entry **cache;
 	unsigned int cache_nr, cache_alloc, cache_changed;
 	struct cache_tree *cache_tree;
 	time_t timestamp;
-	void *mmap;
-	size_t mmap_size;
+	void *alloc;
 };
 
 extern struct index_state the_index;

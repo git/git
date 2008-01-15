@@ -391,7 +391,7 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
 			break;
 		if (endchar == '/')
 			return index_directory;
-		if (!endchar && S_ISGITLINK(ntohl(ce->ce_mode)))
+		if (!endchar && S_ISGITLINK(ce->ce_mode))
 			return index_gitdir;
 	}
 	return index_nonexistent;
