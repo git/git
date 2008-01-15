@@ -263,6 +263,7 @@ proc reloadcommits {} {
     catch {unset targetid}
     setcanvscroll
     getcommits
+    return 0
 }
 
 # This makes a string representation of a positive integer which
