@@ -7,12 +7,19 @@ test_description='Test git update-ref and basic ref logging'
 . ./test-lib.sh
 
 Z=0000000000000000000000000000000000000000
-A=1111111111111111111111111111111111111111
-B=2222222222222222222222222222222222222222
-C=3333333333333333333333333333333333333333
-D=4444444444444444444444444444444444444444
-E=5555555555555555555555555555555555555555
-F=6666666666666666666666666666666666666666
+
+test_expect_success setup '
+
+	for name in A B C D E F
+	do
+		test_tick &&
+		T=$(git write-tree) &&
+		sha1=$(echo $name | git commit-tree $T) &&
+		eval $name=$sha1
+	done
+
+'
+
 m=refs/heads/master
 n_dir=refs/heads/gu
 n=$n_dir/fixes
