@@ -237,7 +237,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 		int fd = hold_locked_index(&index_lock, 1);
 		add_files_to_cache(0, also ? prefix : NULL, pathspec);
 		refresh_cache(REFRESH_QUIET);
-		if (write_cache(fd, active_cache, active_nr) || close(fd))
+		if (write_cache(fd, active_cache, active_nr))
 			die("unable to write new_index file");
 		commit_style = COMMIT_NORMAL;
 		return index_lock.filename;
@@ -256,7 +256,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 		fd = hold_locked_index(&index_lock, 1);
 		refresh_cache(REFRESH_QUIET);
 		if (write_cache(fd, active_cache, active_nr) ||
-		    close(fd) || commit_locked_index(&index_lock))
+		    commit_locked_index(&index_lock))
 			die("unable to write new_index file");
 		commit_style = COMMIT_AS_IS;
 		return get_index_file();
@@ -298,7 +298,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 	fd = hold_locked_index(&index_lock, 1);
 	add_remove_files(&partial);
 	refresh_cache(REFRESH_QUIET);
-	if (write_cache(fd, active_cache, active_nr) || close(fd))
+	if (write_cache(fd, active_cache, active_nr))
 		die("unable to write new_index file");
 
 	fd = hold_lock_file_for_update(&false_lock,
@@ -308,7 +308,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 	add_remove_files(&partial);
 	refresh_cache(REFRESH_QUIET);
 
-	if (write_cache(fd, active_cache, active_nr) || close(fd))
+	if (write_cache(fd, active_cache, active_nr))
 		die("unable to write temporary index file");
 	return false_lock.filename;
 }
