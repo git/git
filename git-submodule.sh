@@ -9,11 +9,8 @@ OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 
-add=
+command=
 branch=
-init=
-update=
-status=
 quiet=
 cached=
 
@@ -123,6 +120,32 @@ module_clone()
 #
 cmd_add()
 {
+	# parse $args after "submodule ... add".
+	while test $# -ne 0
+	do
+		case "$1" in
+		-b | --branch)
+			case "$2" in '') usage ;; esac
+			branch=$2
+			shift
+			;;
+		-q|--quiet)
+			quiet=1
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
 	repo=$1
 	path=$2
 
@@ -176,6 +199,27 @@ cmd_add()
 #
 cmd_init()
 {
+	# parse $args after "submodule ... init".
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			quiet=1
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
 	do
@@ -209,6 +253,27 @@ cmd_init()
 #
 cmd_update()
 {
+	# parse $args after "submodule ... update".
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			quiet=1
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
 	do
@@ -268,6 +333,30 @@ set_name_rev () {
 #
 cmd_status()
 {
+	# parse $args after "submodule ... status".
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			quiet=1
+			;;
+		--cached)
+			cached=1
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
 	do
@@ -293,20 +382,17 @@ cmd_status()
 	done
 }
 
-while test $# != 0
+# This loop parses the command line arguments to find the
+# subcommand name to dispatch.  Parsing of the subcommand specific
+# options are primarily done by the subcommand implementations.
+# Subcommand specific options such as --branch and --cached are
+# parsed here as well, for backward compatibility.
+
+while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add)
-		add=1
-		;;
-	init)
-		init=1
-		;;
-	update)
-		update=1
-		;;
-	status)
-		status=1
+	add | init | update | status)
+		command=$1
 		;;
 	-q|--quiet)
 		quiet=1
@@ -335,30 +421,19 @@ do
 	shift
 done
 
-case "$add,$branch" in
-1,*)
-	;;
-,)
-	;;
-,*)
-	usage
-	;;
-esac
+# No command word defaults to "status"
+test -n "$command" || command=status
 
-case "$add,$init,$update,$status,$cached" in
-1,,,,)
-	cmd_add "$@"
-	;;
-,1,,,)
-	cmd_init "$@"
-	;;
-,,1,,)
-	cmd_update "$@"
-	;;
-,,,*,*)
-	cmd_status "$@"
-	;;
-*)
+# "-b branch" is accepted only by "add"
+if test -n "$branch" && test "$command" != add
+then
 	usage
-	;;
-esac
+fi
+
+# "--cached" is accepted only by "status"
+if test -n "$cached" && test "$command" != status
+then
+	usage
+fi
+
+"cmd_$command" "$@"
