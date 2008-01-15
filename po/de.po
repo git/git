@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-24 10:36+0100\n"
-"PO-Revision-Date: 2008-01-07 21:52+0100\n"
+"PO-Revision-Date: 2008-01-15 20:33+0100\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -914,11 +914,11 @@ msgstr "Neu..."
 
 #: lib/choose_repository.tcl:93 lib/choose_repository.tcl:468
 msgid "Clone Existing Repository"
-msgstr "Projektarchiv kopieren"
+msgstr "Projektarchiv klonen"
 
 #: lib/choose_repository.tcl:99
 msgid "Clone..."
-msgstr "Kopieren..."
+msgstr "Klonen..."
 
 #: lib/choose_repository.tcl:106 lib/choose_repository.tcl:978
 msgid "Open Existing Repository"
@@ -968,7 +968,7 @@ msgstr "Datei »%s« existiert bereits."
 
 #: lib/choose_repository.tcl:463
 msgid "Clone"
-msgstr "Kopieren"
+msgstr "Klonen"
 
 #: lib/choose_repository.tcl:476
 msgid "URL:"
@@ -976,7 +976,7 @@ msgstr "URL:"
 
 #: lib/choose_repository.tcl:496
 msgid "Clone Type:"
-msgstr "Art der Kopie:"
+msgstr "Art des Klonens:"
 
 #: lib/choose_repository.tcl:502
 msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
@@ -1025,7 +1025,7 @@ msgstr "Kopien von Objekten/Info/Alternates konnten nicht erstellt werden: %s"
 #: lib/choose_repository.tcl:690
 #, tcl-format
 msgid "Nothing to clone from %s."
-msgstr "Von »%s« konnte nichts kopiert werden."
+msgstr "Von »%s« konnte nichts geklont werden."
 
 #: lib/choose_repository.tcl:692 lib/choose_repository.tcl:906
 #: lib/choose_repository.tcl:918
@@ -1086,7 +1086,7 @@ msgstr "Verzeichnis »%s« kann nicht aufgeräumt werden."
 
 #: lib/choose_repository.tcl:897
 msgid "Clone failed."
-msgstr "Kopieren fehlgeschlagen."
+msgstr "Klonen fehlgeschlagen."
 
 #: lib/choose_repository.tcl:904
 msgid "No default branch obtained."
