@@ -1525,6 +1525,7 @@ static int copy_wsfix(char *output, const char *patch, int plen,
 	 */
 	int i;
 	int add_nl_to_tail = 0;
+	int add_cr_to_tail = 0;
 	int fixed = 0;
 	int last_tab_in_indent = -1;
 	int last_space_in_indent = -1;
@@ -1536,12 +1537,19 @@ static int copy_wsfix(char *output, const char *patch, int plen,
 	 */
 	if ((ws_rule & WS_TRAILING_SPACE) &&
 	    (2 < plen && isspace(patch[plen-2]))) {
-		if (patch[plen-1] == '\n')
+		if (patch[plen - 1] == '\n') {
 			add_nl_to_tail = 1;
-		plen--;
-		while (0 < plen && isspace(patch[plen-1]))
 			plen--;
-		fixed = 1;
+			if (1 < plen && patch[plen - 1] == '\r') {
+				add_cr_to_tail = !!(ws_rule & WS_CR_AT_EOL);
+				plen--;
+			}
+		}
+		if (0 < plen && isspace(patch[plen - 1])) {
+			while (0 < plen && isspace(patch[plen-1]))
+				plen--;
+			fixed = 1;
+		}
 	}
 
 	/*
@@ -1602,6 +1610,8 @@ static int copy_wsfix(char *output, const char *patch, int plen,
 	}
 
 	memcpy(output, patch, plen);
+	if (add_cr_to_tail)
+		output[plen++] = '\r';
 	if (add_nl_to_tail)
 		output[plen++] = '\n';
 	if (fixed && count_error)

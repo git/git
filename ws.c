@@ -14,6 +14,7 @@ static struct whitespace_rule {
 	{ "trailing-space", WS_TRAILING_SPACE },
 	{ "space-before-tab", WS_SPACE_BEFORE_TAB },
 	{ "indent-with-non-tab", WS_INDENT_WITH_NON_TAB },
+	{ "cr-at-eol", WS_CR_AT_EOL },
 };
 
 unsigned parse_whitespace_rule(const char *string)
@@ -124,11 +125,17 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 	int written = 0;
 	int trailing_whitespace = -1;
 	int trailing_newline = 0;
+	int trailing_carriage_return = 0;
 	int i;
 
 	/* Logic is simpler if we temporarily ignore the trailing newline. */
 	if (len > 0 && line[len - 1] == '\n') {
 		trailing_newline = 1;
+		len--;
+	}
+	if ((ws_rule & WS_CR_AT_EOL) &&
+	    len > 0 && line[len - 1] == '\r') {
+		trailing_carriage_return = 1;
 		len--;
 	}
 
@@ -176,8 +183,10 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 	}
 
 	if (stream) {
-		/* Now the rest of the line starts at written.
-		 * The non-highlighted part ends at trailing_whitespace. */
+		/*
+		 * Now the rest of the line starts at "written".
+		 * The non-highlighted part ends at "trailing_whitespace".
+		 */
 		if (trailing_whitespace == -1)
 			trailing_whitespace = len;
 
@@ -196,6 +205,8 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 			    len - trailing_whitespace, 1, stream);
 			fputs(reset, stream);
 		}
+		if (trailing_carriage_return)
+			fputc('\r', stream);
 		if (trailing_newline)
 			fputc('\n', stream);
 	}
