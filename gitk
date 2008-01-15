@@ -3397,7 +3397,7 @@ proc ordertoken {id} {
 	set id [first_real_child $curview,$p]
 	if {$id eq {}} {
 	    # it's a root
-	    set tok [lindex $varctok($curview) $a]
+	    set tok [lindex $varctok($curview) $varcid($curview,$p)]
 	    break
 	}
 	if {[llength $parents($curview,$id)] == 1} {
@@ -7028,6 +7028,7 @@ proc cherrypick {} {
 	}
 	redrawtags $oldhead
 	redrawtags $newhead
+	selbyid $newhead
     }
     notbusy cherrypick
 }
@@ -7072,6 +7073,7 @@ proc resethead {} {
 	dohidelocalchanges
 	filerun $fd [list readresetstat $fd]
 	nowbusy reset [mc "Resetting"]
+	selbyid $rowmenuid
     }
 }
 
@@ -7144,6 +7146,7 @@ proc cobranch {} {
 	    redrawtags $headids($oldmainhead)
 	}
 	redrawtags $headmenuid
+	selbyid $headmenuid
     }
     if {$showlocalchanges} {
 	dodiffindex
