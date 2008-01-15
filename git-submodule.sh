@@ -86,9 +86,9 @@ module_name()
 #
 # Clone a submodule
 #
-# Prior to calling, modules_update checks that a possibly existing
+# Prior to calling, cmd_update checks that a possibly existing
 # path is not a git repository.
-# Likewise, module_add checks that path does not exist at all,
+# Likewise, cmd_add checks that path does not exist at all,
 # since it is the location of a new submodule.
 #
 module_clone()
@@ -121,7 +121,7 @@ module_clone()
 #
 # optional branch is stored in global branch variable
 #
-module_add()
+cmd_add()
 {
 	repo=$1
 	path=$2
@@ -174,7 +174,7 @@ module_add()
 #
 # $@ = requested paths (default to all)
 #
-modules_init()
+cmd_init()
 {
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
@@ -207,7 +207,7 @@ modules_init()
 #
 # $@ = requested paths (default to all)
 #
-modules_update()
+cmd_update()
 {
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
@@ -266,7 +266,7 @@ set_name_rev () {
 #
 # $@ = requested paths (default to all)
 #
-modules_list()
+cmd_status()
 {
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
@@ -347,16 +347,16 @@ esac
 
 case "$add,$init,$update,$status,$cached" in
 1,,,,)
-	module_add "$@"
+	cmd_add "$@"
 	;;
 ,1,,,)
-	modules_init "$@"
+	cmd_init "$@"
 	;;
 ,,1,,)
-	modules_update "$@"
+	cmd_update "$@"
 	;;
 ,,,*,*)
-	modules_list "$@"
+	cmd_status "$@"
 	;;
 *)
 	usage
