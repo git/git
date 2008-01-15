@@ -4573,7 +4573,7 @@ proc drawvisible {} {
 
     set fs [$canv yview]
     set ymax [lindex [$canv cget -scrollregion] 3]
-    if {$ymax eq {} || $ymax == 0} return
+    if {$ymax eq {} || $ymax == 0 || $numcommits == 0} return
     set f0 [lindex $fs 0]
     set f1 [lindex $fs 1]
     set y0 [expr {int($f0 * $ymax)}]
