@@ -1,12 +1,65 @@
 lockfile API
 ============
 
-Talk about <lockfile.c>, things like:
+The lockfile API serves two purposes:
 
-* lockfile lifetime -- atexit(3) looks at them, do not put them on the
-  stack;
-* hold_lock_file_for_update()
-* commit_lock_file()
-* rollback_rock_file()
+* Mutual exclusion.  When we write out a new index file, first
+  we create a new file `$GIT_DIR/index.lock`, write the new
+  contents into it, and rename it to the final destination
+  `$GIT_DIR/index`.  We try to create the `$GIT_DIR/index.lock`
+  file with O_EXCL so that we can notice and fail when somebody
+  else is already trying to update the index file.
 
-(JC, Dscho, Shawn)
+* Automatic cruft removal.  After we create the "lock" file, we
+  may decide to `die()`, and we would want to make sure that we
+  remove the file that has not been committed to its final
+  destination.  This is done by remembering the lockfiles we
+  created in a linked list and cleaning them up from an
+  `atexit(3)` handler.  Outstanding lockfiles are also removed
+  when the program dies on a signal.
+
+
+The functions
+-------------
+
+hold_lock_file_for_update::
+
+	Take a pointer to `struct lock_file`, the filename of
+	the final destination (e.g. `$GIT_DIR/index`) and a flag
+	`die_on_error`.  Attempt to create a lockfile for the
+	destination and return the file descriptor for writing
+	to the file.  If `die_on_error` flag is true, it dies if
+	a lock is already taken for the file; otherwise it
+	returns a negative integer to the caller on failure.
+
+commit_lock_file::
+
+	Take a pointer to the `struct lock_file` initialized
+	with an earlier call to `hold_lock_file_for_update()`,
+	close the file descriptor and rename the lockfile to its
+	final destination.
+
+rollback_lock_file::
+
+	Take a pointer to the `struct lock_file` initialized
+	with an earlier call to `hold_lock_file_for_update()`,
+	close the file descriptor and remove the lockfile.
+
+Because the structure is used in an `atexit(3)` handler, its
+storage has to stay throughout the life of the program.  It
+cannot be an auto variable allocated on the stack.
+
+Call `commit_lock_file()` or `rollback_lock_file()` when you are
+done writing to the file descriptor.  If you do not call either
+and simply `exit(3)` from the program, an `atexit(3)` handler
+will close and remove the lockfile.
+
+You should not close the file descriptor you obtained from
+`hold_lock_file_for_update` function yourself.  The `struct
+lock_file` structure still remembers that the file descriptor
+needs to be closed, and a later call to `commit_lock_file()` or
+`rollback_lock_file()` will result in duplicate calls to
+`close(2)`.  Worse yet, if you `close(2)`, open another file
+descriptor for completely different purpose, and then call
+`commit_lock_file()` or `rollback_lock_file()`, they may close
+that unrelated file descriptor.
