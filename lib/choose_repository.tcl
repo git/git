@@ -290,11 +290,6 @@ method _write_local_path {args} {
 }
 
 method _git_init {} {
-	if {[file exists $local_path]} {
-		error_popup [mc "Location %s already exists." $local_path]
-		return 0
-	}
-
 	if {[catch {file mkdir $local_path} err]} {
 		error_popup [strcat \
 			[mc "Failed to create repository %s:" $local_path] \
@@ -417,39 +412,33 @@ method _new_local_path {} {
 	if {$p eq {}} return
 
 	set p [file normalize $p]
-	if {[file isdirectory $p]} {
-		foreach i [glob \
-			-directory $p \
-			-tails \
-			-nocomplain \
-			* .*] {
-			switch -- $i {
-			 . continue
-			.. continue
-			default {
-				error_popup [mc "Directory %s already exists." $p]
-				return
-			}
-			}
-		}
-		if {[catch {file delete $p} err]} {
-			error_popup [strcat \
-				[mc "Directory %s already exists." $p] \
-				"\n\n$err"]
-			return
-		}
-	} elseif {[file exists $p]} {
-		error_popup [mc "File %s already exists." $p]
+	if {![_new_ok $p]} {
 		return
 	}
 	set local_path $p
 }
 
 method _do_new2 {} {
+	if {![_new_ok $local_path]} {
+		return
+	}
 	if {![_git_init $this]} {
 		return
 	}
 	set done 1
+}
+
+proc _new_ok {p} {
+	if {[file isdirectory $p]} {
+		if {[_is_git [file join $p .git]]} {
+			error_popup [mc "Directory %s already exists." $p]
+			return 0
+		}
+	} elseif {[file exists $p]} {
+		error_popup [mc "File %s already exists." $p]
+		return 0
+	}
+	return 1
 }
 
 ######################################################################
@@ -605,6 +594,11 @@ method _do_clone2 {} {
 		if {$clone_type eq {shared}} {
 			set objdir [exec cygpath --unix --absolute $objdir]
 		}
+	}
+
+	if {[file exists $local_path]} {
+		error_popup [mc "Location %s already exists." $local_path]
+		return
 	}
 
 	if {![_git_init $this]} return
