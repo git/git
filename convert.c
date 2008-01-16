@@ -17,8 +17,8 @@
 #define CRLF_INPUT	2
 
 struct text_stat {
-	/* CR, LF and CRLF counts */
-	unsigned cr, lf, crlf;
+	/* NUL, CR, LF and CRLF counts */
+	unsigned nul, cr, lf, crlf;
 
 	/* These are just approximations! */
 	unsigned printable, nonprintable;
@@ -51,6 +51,9 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 			case '\b': case '\t': case '\033': case '\014':
 				stats->printable++;
 				break;
+			case 0:
+				stats->nul++;
+				/* fall through */
 			default:
 				stats->nonprintable++;
 			}
@@ -66,6 +69,8 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 static int is_binary(unsigned long size, struct text_stat *stats)
 {
 
+	if (stats->nul)
+		return 1;
 	if ((stats->printable >> 7) < stats->nonprintable)
 		return 1;
 	/*
