@@ -1018,6 +1018,22 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	return 1;
 }
 
+static int close_ref(struct ref_lock *lock)
+{
+	if (close_lock_file(lock->lk))
+		return -1;
+	lock->lock_fd = -1;
+	return 0;
+}
+
+static int commit_ref(struct ref_lock *lock)
+{
+	if (commit_lock_file(lock->lk))
+		return -1;
+	lock->lock_fd = -1;
+	return 0;
+}
+
 void unlock_ref(struct ref_lock *lock)
 {
 	/* Do not free lock->lk -- atexit() still looks at them */
@@ -1147,7 +1163,7 @@ int write_ref_sha1(struct ref_lock *lock,
 	}
 	if (write_in_full(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
 	    write_in_full(lock->lock_fd, &term, 1) != 1
-		|| close_lock_file(lock->lk) < 0) {
+		|| close_ref(lock) < 0) {
 		error("Couldn't write %s", lock->lk->filename);
 		unlock_ref(lock);
 		return -1;
@@ -1180,12 +1196,11 @@ int write_ref_sha1(struct ref_lock *lock,
 		    !strcmp(head_ref, lock->ref_name))
 			log_ref_write("HEAD", lock->old_sha1, sha1, logmsg);
 	}
-	if (commit_lock_file(lock->lk)) {
+	if (commit_ref(lock)) {
 		error("Couldn't set %s", lock->ref_name);
 		unlock_ref(lock);
 		return -1;
 	}
-	lock->lock_fd = -1;
 	unlock_ref(lock);
 	return 0;
 }
