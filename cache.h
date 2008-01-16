@@ -308,7 +308,7 @@ extern int commit_lock_file(struct lock_file *);
 extern int hold_locked_index(struct lock_file *, int);
 extern int commit_locked_index(struct lock_file *);
 extern void set_alternate_index_output(const char *);
-
+extern int close_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
 extern int delete_ref(const char *, const unsigned char *sha1);
 

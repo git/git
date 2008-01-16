@@ -37,13 +37,20 @@ commit_lock_file::
 	Take a pointer to the `struct lock_file` initialized
 	with an earlier call to `hold_lock_file_for_update()`,
 	close the file descriptor and rename the lockfile to its
-	final destination.
+	final destination.  Returns 0 upon success, a negative
+	value on failure to close(2) or rename(2).
 
 rollback_lock_file::
 
 	Take a pointer to the `struct lock_file` initialized
 	with an earlier call to `hold_lock_file_for_update()`,
 	close the file descriptor and remove the lockfile.
+
+close_lock_file::
+	Take a pointer to the `struct lock_file` initialized
+	with an earlier call to `hold_lock_file_for_update()`,
+	and close the file descriptor.  Returns 0 upon success,
+	a negative value on failure to close(2).
 
 Because the structure is used in an `atexit(3)` handler, its
 storage has to stay throughout the life of the program.  It
@@ -54,8 +61,10 @@ done writing to the file descriptor.  If you do not call either
 and simply `exit(3)` from the program, an `atexit(3)` handler
 will close and remove the lockfile.
 
-You should not close the file descriptor you obtained from
-`hold_lock_file_for_update` function yourself.  The `struct
+If you need to close the file descriptor you obtained from
+`hold_lock_file_for_update` function yourself, do so by calling
+`close_lock_file()`.  You should never call `close(2)` yourself!
+Otherwise the `struct
 lock_file` structure still remembers that the file descriptor
 needs to be closed, and a later call to `commit_lock_file()` or
 `rollback_lock_file()` will result in duplicate calls to
