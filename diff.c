@@ -1224,7 +1224,7 @@ static const char *diff_funcname_pattern(struct diff_filespec *one)
 
 	/*
 	 * And define built-in fallback patterns here.  Note that
-	 * these can be overriden by the user's config settings.
+	 * these can be overridden by the user's config settings.
 	 */
 	for (i = 0; i < ARRAY_SIZE(builtin_funcname_pattern); i++)
 		if (!strcmp(ident, builtin_funcname_pattern[i].name))
