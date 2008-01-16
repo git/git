@@ -283,7 +283,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	}
 
 	if (write_cache(newfd, active_cache, active_nr) ||
-	    close(newfd) || commit_locked_index(&lock_file))
+	    commit_locked_index(&lock_file))
 		die("unable to write new index file");
 	return 0;
 }

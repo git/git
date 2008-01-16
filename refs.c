@@ -864,7 +864,6 @@ static int repack_without_ref(const char *refname)
 			die("too long a refname '%s'", list->name);
 		write_or_die(fd, line, len);
 	}
-	close(fd);
 	return commit_lock_file(&packlock);
 }
 
@@ -1021,12 +1020,9 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 
 void unlock_ref(struct ref_lock *lock)
 {
-	if (lock->lock_fd >= 0) {
-		close(lock->lock_fd);
-		/* Do not free lock->lk -- atexit() still looks at them */
-		if (lock->lk)
-			rollback_lock_file(lock->lk);
-	}
+	/* Do not free lock->lk -- atexit() still looks at them */
+	if (lock->lk)
+		rollback_lock_file(lock->lk);
 	free(lock->ref_name);
 	free(lock->orig_ref_name);
 	free(lock);
@@ -1151,7 +1147,7 @@ int write_ref_sha1(struct ref_lock *lock,
 	}
 	if (write_in_full(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
 	    write_in_full(lock->lock_fd, &term, 1) != 1
-		|| close(lock->lock_fd) < 0) {
+		|| close_lock_file(lock->lk) < 0) {
 		error("Couldn't write %s", lock->lk->filename);
 		unlock_ref(lock);
 		return -1;

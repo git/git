@@ -955,14 +955,12 @@ int git_config_set_multivar(const char* key, const char* value,
 		munmap(contents, contents_sz);
 	}
 
-	if (close(fd) || commit_lock_file(lock) < 0) {
+	if (commit_lock_file(lock) < 0) {
 		fprintf(stderr, "Cannot commit config file!\n");
 		ret = 4;
 		goto out_free;
 	}
 
-	/* fd is closed, so don't try to close it below. */
-	fd = -1;
 	/*
 	 * lock is committed, so don't try to roll it back below.
 	 * NOTE: Since lockfile.c keeps a linked list of all created
@@ -973,8 +971,6 @@ int git_config_set_multivar(const char* key, const char* value,
 	ret = 0;
 
 out_free:
-	if (0 <= fd)
-		close(fd);
 	if (lock)
 		rollback_lock_file(lock);
 	free(config_filename);
@@ -1072,7 +1068,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	}
 	fclose(config_file);
  unlock_and_out:
-	if (close(out_fd) || commit_lock_file(lock) < 0)
+	if (commit_lock_file(lock) < 0)
 			ret = error("Cannot commit config file!");
  out:
 	free(config_filename);
