@@ -632,6 +632,7 @@ proc makewindow {} {
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global diffcontextstring diffcontext
+    global ignorespace
     global maincursor textcursor curtextcursor
     global rowctxmenu fakerowmenu mergemax wrapcomment
     global highlight_files gdttype
@@ -849,6 +850,9 @@ proc makewindow {} {
     trace add variable diffcontextstring write diffcontextchange
     lappend entries .bleft.mid.diffcontext
     pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left
+    checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
+	-command changeignorespace -variable ignorespace
+    pack .bleft.mid.ignspace -side left -padx 5
     set ctext .bleft.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
 	-state disabled -font textfont \
@@ -5270,13 +5274,21 @@ proc diffcontextchange {n1 n2 op} {
     }
 }
 
+proc changeignorespace {} {
+    reselectline
+}
+
 proc getblobdiffs {ids} {
     global blobdifffd diffids env
     global diffinhdr treediffs
     global diffcontext
+    global ignorespace
     global limitdiffs viewfiles curview
 
     set cmd [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"]
+    if {$ignorespace} {
+	append cmd " -w"
+    }
     if {$limitdiffs && $viewfiles($curview) ne {}} {
 	set cmd [concat $cmd -- $viewfiles($curview)]
     }
@@ -8459,6 +8471,7 @@ set bgcolor white
 set fgcolor black
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
+set ignorespace 0
 set selectbgcolor gray85
 
 ## For msgcat loading, first locate the installation location.
