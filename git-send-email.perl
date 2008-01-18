@@ -314,6 +314,33 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 
 ($sender) = expand_aliases($sender) if defined $sender;
 
+# Now that all the defaults are set, process the rest of the command line
+# arguments and collect up the files that need to be processed.
+for my $f (@ARGV) {
+	if (-d $f) {
+		opendir(DH,$f)
+			or die "Failed to opendir $f: $!";
+
+		push @files, grep { -f $_ } map { +$f . "/" . $_ }
+				sort readdir(DH);
+
+	} elsif (-f $f) {
+		push @files, $f;
+
+	} else {
+		print STDERR "Skipping $f - not found.\n";
+	}
+}
+
+if (@files) {
+	unless ($quiet) {
+		print $_,"\n" for (@files);
+	}
+} else {
+	print STDERR "\nNo patch files specified!\n\n";
+	usage();
+}
+
 my $prompting = 0;
 if (!defined $sender) {
 	$sender = $repoauthor || $repocommitter;
@@ -425,34 +452,6 @@ EOT
 	}
 
 	@files = ($compose_filename . ".final");
-}
-
-
-# Now that all the defaults are set, process the rest of the command line
-# arguments and collect up the files that need to be processed.
-for my $f (@ARGV) {
-	if (-d $f) {
-		opendir(DH,$f)
-			or die "Failed to opendir $f: $!";
-
-		push @files, grep { -f $_ } map { +$f . "/" . $_ }
-				sort readdir(DH);
-
-	} elsif (-f $f) {
-		push @files, $f;
-
-	} else {
-		print STDERR "Skipping $f - not found.\n";
-	}
-}
-
-if (@files) {
-	unless ($quiet) {
-		print $_,"\n" for (@files);
-	}
-} else {
-	print STDERR "\nNo patch files specified!\n\n";
-	usage();
 }
 
 # Variables we set as part of the loop over files
