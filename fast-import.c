@@ -917,6 +917,7 @@ static void end_packfile(void)
 		struct branch *b;
 		struct tag *t;
 
+		close_pack_windows(pack_data);
 		fixup_pack_header_footer(pack_data->pack_fd, pack_data->sha1,
 				    pack_data->pack_name, object_count);
 		close(pack_data->pack_fd);
@@ -926,7 +927,6 @@ static void end_packfile(void)
 		new_p = add_packed_git(idx_name, strlen(idx_name), 1);
 		if (!new_p)
 			die("core git rejected index %s", idx_name);
-		new_p->windows = old_p->windows;
 		all_packs[pack_id] = new_p;
 		install_packed_git(new_p);
 
@@ -1129,8 +1129,10 @@ static void *gfi_unpack_entry(
 {
 	enum object_type type;
 	struct packed_git *p = all_packs[oe->pack_id];
-	if (p == pack_data)
+	if (p == pack_data && p->pack_size < (pack_size + 20)) {
+		close_pack_windows(p);
 		p->pack_size = pack_size + 20;
+	}
 	return unpack_entry(p, oe->offset, &type, sizep);
 }
 
