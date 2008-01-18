@@ -332,6 +332,11 @@ for my $f (@ARGV) {
 	}
 }
 
+foreach my $f (@files) {
+	my $error = validate_patch($f);
+	$error and die "fatal: $f: $error\nwarning: no patches were sent\n";
+}
+
 if (@files) {
 	unless ($quiet) {
 		print $_,"\n" for (@files);
@@ -836,4 +841,16 @@ sub unique_email_list(@) {
 		}
 	}
 	return @emails;
+}
+
+sub validate_patch {
+	my $fn = shift;
+	open(my $fh, '<', $fn)
+		or die "unable to open $fn: $!\n";
+	while (my $line = <$fh>) {
+		if (length($line) > 998) {
+			return "$.: patch contains a line longer than 998 characters";
+		}
+	}
+	return undef;
 }
