@@ -100,6 +100,8 @@ Options:
 
    --envelope-sender	Specify the envelope sender used to send the emails.
 
+   --no-validate	Don't perform any sanity checks on patches.
+
 EOT
 	exit(1);
 }
@@ -177,6 +179,7 @@ my ($quiet, $dry_run) = (0, 0);
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
 my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_authpass, $smtp_ssl);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
+my ($no_validate);
 
 my %config_bool_settings = (
     "thread" => [\$thread, 1],
@@ -222,6 +225,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
+		    "no-validate" => \$no_validate,
 	 );
 
 unless ($rc) {
@@ -332,9 +336,11 @@ for my $f (@ARGV) {
 	}
 }
 
-foreach my $f (@files) {
-	my $error = validate_patch($f);
-	$error and die "fatal: $f: $error\nwarning: no patches were sent\n";
+if (!$no_validate) {
+	foreach my $f (@files) {
+		my $error = validate_patch($f);
+		$error and die "fatal: $f: $error\nwarning: no patches were sent\n";
+	}
 }
 
 if (@files) {

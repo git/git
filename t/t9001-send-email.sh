@@ -98,4 +98,14 @@ test_expect_success 'no patch was sent' '
 	! test -e commandline
 '
 
+test_expect_success 'allow long lines with --no-validate' '
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--no-validate \
+		$patches longline.patch \
+		2>errors
+'
+
 test_done
