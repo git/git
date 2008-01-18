@@ -167,7 +167,7 @@ type=$(git cat-file -t $object) || exit 1
 tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 
 test -n "$username" ||
-	username=$(git repo-config user.signingkey) ||
+	username=$(git config user.signingkey) ||
 	username=$(expr "z$tagger" : 'z\(.*>\)')
 
 trap 'rm -f "$GIT_DIR"/TAG_TMP* "$GIT_DIR"/TAG_FINALMSG "$GIT_DIR"/TAG_EDITMSG' 0

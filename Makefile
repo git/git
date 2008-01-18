@@ -1145,7 +1145,7 @@ check-docs::
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | git-merge-subtree | \
-		git-fsck-objects | git-init-db | git-repo-config | \
+		git-fsck-objects | git-init-db | \
 		git-?*--?* ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \

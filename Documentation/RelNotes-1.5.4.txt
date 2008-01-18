@@ -46,6 +46,10 @@ Deprecation notices
    and works for all transports; "git peek-remote" will be removed in
    the future.
 
+ * "git repo-config" which was an old name for "git config" command
+   has been supported without being advertised for a long time.  The
+   next feature release will remove it.
+
  * From v1.6.0, the repack.usedeltabaseoffset config option will default
    to true, which will give denser packfiles (i.e. more efficient storage).
    The downside is that git older than version 1.4.4 will not be able

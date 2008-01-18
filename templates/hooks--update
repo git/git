@@ -37,9 +37,9 @@ if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
 fi
 
 # --- Config
-allowunannotated=$(git-repo-config --bool hooks.allowunannotated)
-allowdeletebranch=$(git-repo-config --bool hooks.allowdeletebranch)
-allowdeletetag=$(git-repo-config --bool hooks.allowdeletetag)
+allowunannotated=$(git config --bool hooks.allowunannotated)
+allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
+allowdeletetag=$(git config --bool hooks.allowdeletetag)
 
 # check for no description
 projectdesc=$(sed -e '1q' "$GIT_DIR/description")

@@ -19,7 +19,7 @@ remove_cr () {
 
 test_expect_success setup '
 
-	git repo-config core.autocrlf false &&
+	git config core.autocrlf false &&
 
 	for w in Hello world how are you; do echo $w; done >one &&
 	mkdir dir &&
@@ -46,7 +46,7 @@ test_expect_success 'update with autocrlf=input' '
 
 	rm -f tmp one dir/two three &&
 	git read-tree --reset -u HEAD &&
-	git repo-config core.autocrlf input &&
+	git config core.autocrlf input &&
 
 	for f in one dir/two
 	do
@@ -70,7 +70,7 @@ test_expect_success 'update with autocrlf=true' '
 
 	rm -f tmp one dir/two three &&
 	git read-tree --reset -u HEAD &&
-	git repo-config core.autocrlf true &&
+	git config core.autocrlf true &&
 
 	for f in one dir/two
 	do
@@ -93,7 +93,7 @@ test_expect_success 'update with autocrlf=true' '
 test_expect_success 'checkout with autocrlf=true' '
 
 	rm -f tmp one dir/two three &&
-	git repo-config core.autocrlf true &&
+	git config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
 	for f in one dir/two
@@ -117,7 +117,7 @@ test_expect_success 'checkout with autocrlf=true' '
 test_expect_success 'checkout with autocrlf=input' '
 
 	rm -f tmp one dir/two three &&
-	git repo-config core.autocrlf input &&
+	git config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 
 	for f in one dir/two
@@ -143,7 +143,7 @@ test_expect_success 'checkout with autocrlf=input' '
 test_expect_success 'apply patch (autocrlf=input)' '
 
 	rm -f tmp one dir/two three &&
-	git repo-config core.autocrlf input &&
+	git config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 
 	git apply patch.file &&
@@ -156,7 +156,7 @@ test_expect_success 'apply patch (autocrlf=input)' '
 test_expect_success 'apply patch --cached (autocrlf=input)' '
 
 	rm -f tmp one dir/two three &&
-	git repo-config core.autocrlf input &&
+	git config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 
 	git apply --cached patch.file &&
@@ -169,7 +169,7 @@ test_expect_success 'apply patch --cached (autocrlf=input)' '
 test_expect_success 'apply patch --index (autocrlf=input)' '
 
 	rm -f tmp one dir/two three &&
-	git repo-config core.autocrlf input &&
+	git config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 
 	git apply --index patch.file &&
@@ -183,7 +183,7 @@ test_expect_success 'apply patch --index (autocrlf=input)' '
 test_expect_success 'apply patch (autocrlf=true)' '
 
 	rm -f tmp one dir/two three &&
-	git repo-config core.autocrlf true &&
+	git config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
 	git apply patch.file &&
@@ -196,7 +196,7 @@ test_expect_success 'apply patch (autocrlf=true)' '
 test_expect_success 'apply patch --cached (autocrlf=true)' '
 
 	rm -f tmp one dir/two three &&
-	git repo-config core.autocrlf true &&
+	git config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
 	git apply --cached patch.file &&
@@ -209,7 +209,7 @@ test_expect_success 'apply patch --cached (autocrlf=true)' '
 test_expect_success 'apply patch --index (autocrlf=true)' '
 
 	rm -f tmp one dir/two three &&
-	git repo-config core.autocrlf true &&
+	git config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
 	git apply --index patch.file &&
@@ -224,7 +224,7 @@ test_expect_success '.gitattributes says two is binary' '
 
 	rm -f tmp one dir/two three &&
 	echo "two -crlf" >.gitattributes &&
-	git repo-config core.autocrlf true &&
+	git config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
 	if remove_cr dir/two >/dev/null

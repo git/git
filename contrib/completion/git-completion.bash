@@ -333,7 +333,7 @@ __git_commands ()
 		read-tree)        : plumbing;;
 		receive-pack)     : plumbing;;
 		reflog)           : plumbing;;
-		repo-config)      : plumbing;;
+		repo-config)      : deprecated;;
 		rerere)           : plumbing;;
 		rev-list)         : plumbing;;
 		rev-parse)        : plumbing;;
