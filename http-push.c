@@ -2264,11 +2264,14 @@ int main(int argc, char **argv)
 	if (!remote_tail)
 		remote_tail = &remote_refs;
 	if (match_refs(local_refs, remote_refs, &remote_tail,
-		       nr_refspec, (const char **) refspec, push_all))
-		return -1;
+		       nr_refspec, (const char **) refspec, push_all)) {
+		rc = -1;
+		goto cleanup;
+	}
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n");
-		return 0;
+		rc = 0;
+		goto cleanup;
 	}
 
 	new_refs = 0;
@@ -2399,10 +2402,10 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Unable to update server info\n");
 		}
 	}
-	if (info_ref_lock)
-		unlock_remote(info_ref_lock);
 
  cleanup:
+	if (info_ref_lock)
+		unlock_remote(info_ref_lock);
 	free(remote);
 
 	curl_slist_free_all(no_pragma_header);
