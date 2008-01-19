@@ -1437,6 +1437,17 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 	}
 }
 
+static int match_fragment(const char *buf, unsigned long size,
+			  unsigned long try,
+			  const char *fragment, unsigned long fragsize)
+{
+	if (try + fragsize > size)
+		return 0;
+	if (memcmp(buf + try, fragment, fragsize))
+		return 0;
+	return 1;
+}
+
 static int find_offset(const char *buf, unsigned long size,
 		       const char *fragment, unsigned long fragsize,
 		       int line, int *lines)
@@ -1461,8 +1472,7 @@ static int find_offset(const char *buf, unsigned long size,
 	}
 
 	/* Exact line number? */
-	if ((start + fragsize <= size) &&
-	    !memcmp(buf + start, fragment, fragsize))
+	if (match_fragment(buf, size, start, fragment, fragsize))
 		return start;
 
 	/*
@@ -1494,9 +1504,7 @@ static int find_offset(const char *buf, unsigned long size,
 			try = forwards;
 		}
 
-		if (try + fragsize > size)
-			continue;
-		if (memcmp(buf + try, fragment, fragsize))
+		if (!match_fragment(buf, size, try, fragment, fragsize))
 			continue;
 		n = (i >> 1)+1;
 		if (i & 1)
