@@ -1452,8 +1452,8 @@ static int find_offset(const char *buf, unsigned long size,
 		       const char *fragment, unsigned long fragsize,
 		       int line, int *lines)
 {
-	int i;
-	unsigned long start, backwards, forwards;
+	int i, no_more_backwards, no_more_forwards;
+	unsigned long start, backwards, forwards, try;
 
 	if (fragsize > size)
 		return -1;
@@ -1471,32 +1471,44 @@ static int find_offset(const char *buf, unsigned long size,
 		}
 	}
 
-	/* Exact line number? */
-	if (match_fragment(buf, size, start, fragment, fragsize))
-		return start;
-
 	/*
 	 * There's probably some smart way to do this, but I'll leave
 	 * that to the smart and beautiful people. I'm simple and stupid.
 	 */
 	backwards = start;
 	forwards = start;
-	for (i = 0; ; i++) {
-		unsigned long try;
-		int n;
+	try = start;
 
-		/* "backward" */
+	for (i = 0; ; i++) {
+		no_more_backwards = !backwards;
+		no_more_forwards = (forwards + fragsize > size);
+
+		if (match_fragment(buf, size, try, fragment, fragsize)) {
+			int shift = ((i+1) >> 1);
+			if (i & 1)
+				shift = -shift;
+			*lines = shift;
+			return try;
+		}
+
+	again:
+		if (no_more_backwards && no_more_forwards)
+			break;
+
 		if (i & 1) {
-			if (!backwards) {
-				if (forwards + fragsize > size)
-					break;
-				continue;
+			if (no_more_backwards) {
+				i++;
+				goto again;
 			}
 			do {
 				--backwards;
 			} while (backwards && buf[backwards-1] != '\n');
 			try = backwards;
 		} else {
+			if (no_more_forwards) {
+				i++;
+				goto again;
+			}
 			while (forwards + fragsize <= size) {
 				if (buf[forwards++] == '\n')
 					break;
@@ -1504,18 +1516,7 @@ static int find_offset(const char *buf, unsigned long size,
 			try = forwards;
 		}
 
-		if (!match_fragment(buf, size, try, fragment, fragsize))
-			continue;
-		n = (i >> 1)+1;
-		if (i & 1)
-			n = -n;
-		*lines = n;
-		return try;
 	}
-
-	/*
-	 * We should start searching forward and backward.
-	 */
 	return -1;
 }
 
