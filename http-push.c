@@ -2169,6 +2169,7 @@ int main(int argc, char **argv)
 	int i;
 	int new_refs;
 	struct ref *ref;
+	char *rewritten_url = NULL;
 
 	setup_git_directory();
 
@@ -2235,6 +2236,14 @@ int main(int argc, char **argv)
 	http_init();
 
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
+
+	if (remote->url && remote->url[strlen(remote->url)-1] != '/') {
+		rewritten_url = malloc(strlen(remote->url)+2);
+		strcpy(rewritten_url, remote->url);
+		strcat(rewritten_url, "/");
+		remote->url = rewritten_url;
+		++remote->path_len;
+	}
 
 	/* Verify DAV compliance/lock support */
 	if (!locking_available()) {
@@ -2416,6 +2425,8 @@ int main(int argc, char **argv)
 	}
 
  cleanup:
+	if (rewritten_url)
+		free(rewritten_url);
 	if (info_ref_lock)
 		unlock_remote(info_ref_lock);
 	free(remote);

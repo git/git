@@ -9,6 +9,7 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 	const char **write_ref = NULL;
 	char **commit_id;
 	const char *url;
+	char *rewritten_url = NULL;
 	int arg = 1;
 	int rc = 0;
 	int get_tree = 0;
@@ -51,6 +52,12 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 		commits = 1;
 	}
 	url = argv[arg];
+	if (url && url[strlen(url)-1] != '/') {
+		rewritten_url = malloc(strlen(url)+2);
+		strcpy(rewritten_url, url);
+		strcat(rewritten_url, "/");
+		url = rewritten_url;
+	}
 
 	walker = get_http_walker(url);
 	walker->get_tree = get_tree;
@@ -72,6 +79,9 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 	}
 
 	walker_free(walker);
+
+	if (rewritten_url)
+		free(rewritten_url);
 
 	return rc;
 }
