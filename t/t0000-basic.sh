@@ -297,4 +297,24 @@ test_expect_success 'absolute path works as expected' '
 	test "$sym" = "$(test-absolute-path $dir2/syml)"
 '
 
+test_expect_success 'very long name in the index handled sanely' '
+
+	a=a && # 1
+	a=$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a && # 16
+	a=$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a && # 256
+	a=$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a && # 4096
+	a=${a}q &&
+
+	>path4 &&
+	git update-index --add path4 &&
+	(
+		git ls-files -s path4 |
+		sed -e "s/	.*/	/" |
+		tr -d "\012"
+		echo "$a"
+	) | git update-index --index-info &&
+	len=$(git ls-files "a*" | wc -c) &&
+	test $len = 4098
+'
+
 test_done

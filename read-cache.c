@@ -928,6 +928,8 @@ int read_index(struct index_state *istate)
 
 static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_entry *ce)
 {
+	size_t len;
+
 	ce->ce_ctime = ntohl(ondisk->ctime.sec);
 	ce->ce_mtime = ntohl(ondisk->mtime.sec);
 	ce->ce_dev   = ntohl(ondisk->dev);
@@ -939,7 +941,15 @@ static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_en
 	/* On-disk flags are just 16 bits */
 	ce->ce_flags = ntohs(ondisk->flags);
 	hashcpy(ce->sha1, ondisk->sha1);
-	memcpy(ce->name, ondisk->name, ce_namelen(ce)+1);
+
+	len = ce->ce_flags & CE_NAMEMASK;
+	if (len == CE_NAMEMASK)
+		len = strlen(ondisk->name);
+	/*
+	 * NEEDSWORK: If the original index is crafted, this copy could
+	 * go unchecked.
+	 */
+	memcpy(ce->name, ondisk->name, len + 1);
 }
 
 /* remember to discard_cache() before reading a different cache! */
