@@ -130,6 +130,7 @@ struct cache_entry {
 /* In-memory only */
 #define CE_UPDATE    (0x10000)
 #define CE_REMOVE    (0x20000)
+#define CE_UPTODATE  (0x40000)
 
 static inline unsigned create_ce_flags(size_t len, unsigned stage)
 {
@@ -149,6 +150,8 @@ static inline size_t ce_namelen(const struct cache_entry *ce)
 #define ce_size(ce) cache_entry_size(ce_namelen(ce))
 #define ondisk_ce_size(ce) ondisk_cache_entry_size(ce_namelen(ce))
 #define ce_stage(ce) ((CE_STAGEMASK & (ce)->ce_flags) >> CE_STAGESHIFT)
+#define ce_uptodate(ce) ((ce)->ce_flags & CE_UPTODATE)
+#define ce_mark_uptodate(ce) ((ce)->ce_flags |= CE_UPTODATE)
 
 #define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
 static inline unsigned int create_ce_mode(unsigned int mode)

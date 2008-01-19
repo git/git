@@ -40,6 +40,9 @@ void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 
 	if (assume_unchanged)
 		ce->ce_flags |= CE_VALID;
+
+	if (S_ISREG(st->st_mode))
+		ce_mark_uptodate(ce);
 }
 
 static int ce_compare_data(struct cache_entry *ce, struct stat *st)
@@ -412,6 +415,7 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 	    !ie_match_stat(istate, istate->cache[pos], &st, ce_option)) {
 		/* Nothing changed, really */
 		free(ce);
+		ce_mark_uptodate(istate->cache[pos]);
 		return 0;
 	}
 
@@ -779,6 +783,9 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	int changed, size;
 	int ignore_valid = options & CE_MATCH_IGNORE_VALID;
 
+	if (ce_uptodate(ce))
+		return ce;
+
 	if (lstat(ce->name, &st) < 0) {
 		if (err)
 			*err = errno;
@@ -797,8 +804,15 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 		if (ignore_valid && assume_unchanged &&
 		    !(ce->ce_flags & CE_VALID))
 			; /* mark this one VALID again */
-		else
+		else {
+			/*
+			 * We do not mark the index itself "modified"
+			 * because CE_UPTODATE flag is in-core only;
+			 * we are not going to write this change out.
+			 */
+			ce_mark_uptodate(ce);
 			return ce;
+		}
 	}
 
 	if (ie_modified(istate, ce, &st, options)) {
