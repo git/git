@@ -1439,18 +1439,36 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 
 static int match_fragment(const char *buf, unsigned long size,
 			  unsigned long try,
-			  const char *fragment, unsigned long fragsize)
+			  const char *fragment, unsigned long fragsize,
+			  int match_beginning, int match_end)
 {
-	if (try + fragsize > size)
+	if (match_beginning && try)
 		return 0;
-	if (memcmp(buf + try, fragment, fragsize))
-		return 0;
-	return 1;
+
+	/*
+	 * Do we have an exact match?  If we were told to match
+	 * at the end, size must be exactly at try+fragsize,
+	 * otherwise try+fragsize must be still within the preimage,
+	 * and either case, the old piece should match the preimage
+	 * exactly.
+	 */
+	if ((match_end
+	     ? (try + fragsize == size)
+	     : (try + fragsize <= size)) &&
+	    !memcmp(buf + try, fragment, fragsize))
+		return 1;
+
+	/*
+	 * NEEDSWORK: We can optionally match fuzzily here, but
+	 * that is for a later round.
+	 */
+	return 0;
 }
 
 static int find_offset(const char *buf, unsigned long size,
 		       const char *fragment, unsigned long fragsize,
-		       int line, int *lines)
+		       int line, int *lines,
+		       int match_beginning, int match_end)
 {
 	int i, no_more_backwards, no_more_forwards;
 	unsigned long start, backwards, forwards, try;
@@ -1483,7 +1501,8 @@ static int find_offset(const char *buf, unsigned long size,
 		no_more_backwards = !backwards;
 		no_more_forwards = (forwards + fragsize > size);
 
-		if (match_fragment(buf, size, try, fragment, fragsize)) {
+		if (match_fragment(buf, size, try, fragment, fragsize,
+				   match_beginning, match_end)) {
 			int shift = ((i+1) >> 1);
 			if (i & 1)
 				shift = -shift;
@@ -1765,17 +1784,16 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
 	pos = frag->newpos;
 	for (;;) {
 		offset = find_offset(buf->buf, buf->len,
-				     oldlines, oldsize, pos, &lines);
-		if (match_end && offset + oldsize != buf->len)
-			offset = -1;
-		if (match_beginning && offset)
-			offset = -1;
+				     oldlines, oldsize, pos, &lines,
+				     match_beginning, match_end);
 		if (offset >= 0) {
 			if (ws_error_action == correct_ws_error &&
-			    (buf->len - oldsize - offset == 0)) /* end of file? */
+			    (buf->len - oldsize - offset == 0))
+				/* end of file? */
 				newsize -= new_blank_lines_at_end;
 
-			/* Warn if it was necessary to reduce the number
+			/*
+			 * Warn if it was necessary to reduce the number
 			 * of context lines.
 			 */
 			if ((leading != frag->leading) ||
