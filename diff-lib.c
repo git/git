@@ -9,6 +9,7 @@
 #include "revision.h"
 #include "cache-tree.h"
 #include "path-list.h"
+#include "unpack-trees.h"
 
 /*
  * diff-files
@@ -435,6 +436,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 		}
 
+		if (ce_uptodate(ce))
+			continue;
 		if (lstat(ce->name, &st) < 0) {
 			if (errno != ENOENT && errno != ENOTDIR) {
 				perror(ce->name);
@@ -665,20 +668,133 @@ static void mark_merge_entries(void)
 	}
 }
 
-int run_diff_index(struct rev_info *revs, int cached)
+/*
+ * This gets a mix of an existing index and a tree, one pathname entry
+ * at a time. The index entry may be a single stage-0 one, but it could
+ * also be multiple unmerged entries (in which case idx_pos/idx_nr will
+ * give you the position and number of entries in the index).
+ */
+static void do_oneway_diff(struct unpack_trees_options *o,
+	struct cache_entry *idx,
+	struct cache_entry *tree,
+	int idx_pos, int idx_nr)
 {
-	int ret;
-	struct object *ent;
-	struct tree *tree;
-	const char *tree_name;
-	int match_missing = 0;
+	struct rev_info *revs = o->unpack_data;
+	int match_missing, cached;
 
 	/*
 	 * Backward compatibility wart - "diff-index -m" does
-	 * not mean "do not ignore merges", but totally different.
+	 * not mean "do not ignore merges", but "match_missing".
+	 *
+	 * But with the revision flag parsing, that's found in
+	 * "!revs->ignore_merges".
 	 */
-	if (!revs->ignore_merges)
-		match_missing = 1;
+	cached = o->index_only;
+	match_missing = !revs->ignore_merges;
+
+	if (cached && idx && ce_stage(idx)) {
+		if (tree)
+			diff_unmerge(&revs->diffopt, idx->name, idx->ce_mode, idx->sha1);
+		return;
+	}
+
+	/*
+	 * Something added to the tree?
+	 */
+	if (!tree) {
+		show_new_file(revs, idx, cached, match_missing);
+		return;
+	}
+
+	/*
+	 * Something removed from the tree?
+	 */
+	if (!idx) {
+		diff_index_show_file(revs, "-", tree, tree->sha1, tree->ce_mode);
+		return;
+	}
+
+	/* Show difference between old and new */
+	show_modified(revs, tree, idx, 1, cached, match_missing);
+}
+
+/*
+ * Count how many index entries go with the first one
+ */
+static inline int count_skip(const struct cache_entry *src, int pos)
+{
+	int skip = 1;
+
+	/* We can only have multiple entries if the first one is not stage-0 */
+	if (ce_stage(src)) {
+		struct cache_entry **p = active_cache + pos;
+		int namelen = ce_namelen(src);
+
+		for (;;) {
+			const struct cache_entry *ce;
+			pos++;
+			if (pos >= active_nr)
+				break;
+			ce = *++p;
+			if (ce_namelen(ce) != namelen)
+				break;
+			if (memcmp(ce->name, src->name, namelen))
+				break;
+			skip++;
+		}
+	}
+	return skip;
+}
+
+/*
+ * The unpack_trees() interface is designed for merging, so
+ * the different source entries are designed primarily for
+ * the source trees, with the old index being really mainly
+ * used for being replaced by the result.
+ *
+ * For diffing, the index is more important, and we only have a
+ * single tree.
+ *
+ * We're supposed to return how many index entries we want to skip.
+ *
+ * This wrapper makes it all more readable, and takes care of all
+ * the fairly complex unpack_trees() semantic requirements, including
+ * the skipping, the path matching, the type conflict cases etc.
+ */
+static int oneway_diff(struct cache_entry **src,
+	struct unpack_trees_options *o,
+	int index_pos)
+{
+	int skip = 0;
+	struct cache_entry *idx = src[0];
+	struct cache_entry *tree = src[1];
+	struct rev_info *revs = o->unpack_data;
+
+	if (index_pos >= 0)
+		skip = count_skip(idx, index_pos);
+
+	/*
+	 * Unpack-trees generates a DF/conflict entry if
+	 * there was a directory in the index and a tree
+	 * in the tree. From a diff standpoint, that's a
+	 * delete of the tree and a create of the file.
+	 */
+	if (tree == o->df_conflict_entry)
+		tree = NULL;
+
+	if (ce_path_match(idx ? idx : tree, revs->prune_data))
+		do_oneway_diff(o, idx, tree, index_pos, skip);
+
+	return skip;
+}
+
+int run_diff_index(struct rev_info *revs, int cached)
+{
+	struct object *ent;
+	struct tree *tree;
+	const char *tree_name;
+	struct unpack_trees_options opts;
+	struct tree_desc t;
 
 	mark_merge_entries();
 
@@ -687,13 +803,20 @@ int run_diff_index(struct rev_info *revs, int cached)
 	tree = parse_tree_indirect(ent->sha1);
 	if (!tree)
 		return error("bad tree object %s", tree_name);
-	if (read_tree(tree, 1, revs->prune_data))
-		return error("unable to read tree object %s", tree_name);
-	ret = diff_cache(revs, active_cache, active_nr, revs->prune_data,
-			 cached, match_missing);
+
+	memset(&opts, 0, sizeof(opts));
+	opts.head_idx = 1;
+	opts.index_only = cached;
+	opts.merge = 1;
+	opts.fn = oneway_diff;
+	opts.unpack_data = revs;
+
+	init_tree_desc(&t, tree->buffer, tree->size);
+	unpack_trees(1, &t, &opts);
+
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
-	return ret;
+	return 0;
 }
 
 int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)

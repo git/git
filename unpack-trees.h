@@ -25,6 +25,7 @@ struct unpack_trees_options {
 	int merge_size;
 
 	struct cache_entry *df_conflict_entry;
+	void *unpack_data;
 };
 
 extern int unpack_trees(unsigned n, struct tree_desc *t,
