@@ -970,18 +970,18 @@ _git_remote ()
 	while [ $c -lt $COMP_CWORD ]; do
 		i="${COMP_WORDS[c]}"
 		case "$i" in
-		add|show|prune|update) command="$i"; break ;;
+		add|rm|show|prune|update) command="$i"; break ;;
 		esac
 		c=$((++c))
 	done
 
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
-		__gitcomp "add show prune update"
+		__gitcomp "add rm show prune update"
 		return
 	fi
 
 	case "$command" in
-	show|prune)
+	rm|show|prune)
 		__gitcomp "$(__git_remotes)"
 		;;
 	update)
