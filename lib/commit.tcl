@@ -212,26 +212,14 @@ A good commit message has the following format:
 
 	# -- Run the pre-commit hook.
 	#
-	set pchook [gitdir hooks pre-commit]
-
-	# On Cygwin [file executable] might lie so we need to ask
-	# the shell if the hook is executable.  Yes that's annoying.
-	#
-	if {[is_Cygwin] && [file isfile $pchook]} {
-		set pchook [list sh -c [concat \
-			"if test -x \"$pchook\";" \
-			"then exec \"$pchook\" 2>&1;" \
-			"fi"]]
-	} elseif {[file executable $pchook]} {
-		set pchook [list $pchook |& cat]
-	} else {
+	set fd_ph [githook_read pre-commit]
+	if {$fd_ph eq {}} {
 		commit_commitmsg $curHEAD $msg_p
 		return
 	}
 
 	ui_status {Calling pre-commit hook...}
 	set pch_error {}
-	set fd_ph [open "| $pchook" r]
 	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 	fileevent $fd_ph readable \
 		[list commit_prehook_wait $fd_ph $curHEAD $msg_p]
@@ -262,26 +250,14 @@ proc commit_commitmsg {curHEAD msg_p} {
 
 	# -- Run the commit-msg hook.
 	#
-	set pchook [gitdir hooks commit-msg]
-
-	# On Cygwin [file executable] might lie so we need to ask
-	# the shell if the hook is executable.  Yes that's annoying.
-	#
-	if {[is_Cygwin] && [file isfile $pchook]} {
-		set pchook [list sh -c [concat \
-			"if test -x \"$pchook\";" \
-			"then exec \"$pchook\" \"$msg_p\" 2>&1;" \
-			"fi"]]
-	} elseif {[file executable $pchook]} {
-		set pchook [list $pchook $msg_p |& cat]
-	} else {
+	set fd_ph [githook_read commit-msg $msg_p]
+	if {$fd_ph eq {}} {
 		commit_writetree $curHEAD $msg_p
 		return
 	}
 
 	ui_status {Calling commit-msg hook...}
 	set pch_error {}
-	set fd_ph [open "| $pchook" r]
 	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 	fileevent $fd_ph readable \
 		[list commit_commitmsg_wait $fd_ph $curHEAD $msg_p]
@@ -415,17 +391,13 @@ A rescan will be automatically started now.
 
 	# -- Run the post-commit hook.
 	#
-	set pchook [gitdir hooks post-commit]
-	if {[is_Cygwin] && [file isfile $pchook]} {
-		set pchook [list sh -c [concat \
-			"if test -x \"$pchook\";" \
-			"then exec \"$pchook\";" \
-			"fi"]]
-	} elseif {![file executable $pchook]} {
-		set pchook {}
-	}
-	if {$pchook ne {}} {
-		catch {exec $pchook &}
+	set fd_ph [githook_read post-commit]
+	if {$fd_ph ne {}} {
+		upvar #0 pch_error$cmt_id pc_err
+		set pc_err {}
+		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+		fileevent $fd_ph readable \
+			[list commit_postcommit_wait $fd_ph $cmt_id]
 	}
 
 	$ui_comm delete 0.0 end
@@ -480,4 +452,19 @@ A rescan will be automatically started now.
 	unlock_index
 	reshow_diff
 	ui_status [mc "Created commit %s: %s" [string range $cmt_id 0 7] $subject]
+}
+
+proc commit_postcommit_wait {fd_ph cmt_id} {
+	upvar #0 pch_error$cmt_id pch_error
+
+	append pch_error [read $fd_ph]
+	fconfigure $fd_ph -blocking 1
+	if {[eof $fd_ph]} {
+		if {[catch {close $fd_ph}]} {
+			hook_failed_popup post-commit $pch_error 0
+		}
+		unset pch_error
+		return
+	}
+	fconfigure $fd_ph -blocking 0
 }
