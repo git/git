@@ -99,6 +99,6 @@ proc hook_failed_popup {hook msg} {
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Return> "destroy $w"
-	wm title $w [append "[appname] ([reponame]): " [mc "error"]]
+	wm title $w [strcat "[appname] ([reponame]): " [mc "error"]]
 	tkwait window $w
 }
