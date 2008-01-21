@@ -10,6 +10,9 @@ Removal
  * As git-commit and git-status have been rewritten, "git runstatus"
    helper script lost all its users and has been removed.
 
+ * Curl library older than 7.10 is not supported by "git http-push",
+   as it does not work without CURLM.
+
 
 Deprecation notices
 -------------------
@@ -360,8 +363,10 @@ series.
  * Recent versions of AsciiDoc 8 has a change to break our
    documentation; a workaround has been implemented.
 
+ * "git diff --color-words" colored context lines in a wrong color.
+
 --
 exec >/var/tmp/1
-O=v1.5.4-rc3
+O=v1.5.4-rc4
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
