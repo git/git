@@ -358,5 +358,7 @@ proc apply_hunk {x y} {
 	display_file $current_diff_path $mi
 	if {$o eq {_}} {
 		clear_diff
+	} else {
+		set current_diff_path $current_diff_path
 	}
 }
