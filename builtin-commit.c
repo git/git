@@ -21,6 +21,7 @@
 #include "utf8.h"
 #include "parse-options.h"
 #include "path-list.h"
+#include "unpack-trees.h"
 
 static const char * const builtin_commit_usage[] = {
 	"git-commit [options] [--] <filepattern>...",
@@ -177,10 +178,34 @@ static void add_remove_files(struct path_list *list)
 	}
 }
 
+static void create_base_index(void)
+{
+	struct tree *tree;
+	struct unpack_trees_options opts;
+	struct tree_desc t;
+
+	if (initial_commit) {
+		discard_cache();
+		return;
+	}
+
+	memset(&opts, 0, sizeof(opts));
+	opts.head_idx = 1;
+	opts.index_only = 1;
+	opts.merge = 1;
+
+	opts.fn = oneway_merge;
+	tree = parse_tree_indirect(head_sha1);
+	if (!tree)
+		die("failed to unpack HEAD tree object");
+	parse_tree(tree);
+	init_tree_desc(&t, tree->buffer, tree->size);
+	unpack_trees(1, &t, &opts);
+}
+
 static char *prepare_index(int argc, const char **argv, const char *prefix)
 {
 	int fd;
-	struct tree *tree;
 	struct path_list partial;
 	const char **pathspec = NULL;
 
@@ -212,7 +237,8 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 		int fd = hold_locked_index(&index_lock, 1);
 		add_files_to_cache(0, also ? prefix : NULL, pathspec);
 		refresh_cache(REFRESH_QUIET);
-		if (write_cache(fd, active_cache, active_nr) || close(fd))
+		if (write_cache(fd, active_cache, active_nr) ||
+		    close_lock_file(&index_lock))
 			die("unable to write new_index file");
 		commit_style = COMMIT_NORMAL;
 		return index_lock.filename;
@@ -231,7 +257,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 		fd = hold_locked_index(&index_lock, 1);
 		refresh_cache(REFRESH_QUIET);
 		if (write_cache(fd, active_cache, active_nr) ||
-		    close(fd) || commit_locked_index(&index_lock))
+		    commit_locked_index(&index_lock))
 			die("unable to write new_index file");
 		commit_style = COMMIT_AS_IS;
 		return get_index_file();
@@ -273,23 +299,19 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 	fd = hold_locked_index(&index_lock, 1);
 	add_remove_files(&partial);
 	refresh_cache(REFRESH_QUIET);
-	if (write_cache(fd, active_cache, active_nr) || close(fd))
+	if (write_cache(fd, active_cache, active_nr) ||
+	    close_lock_file(&index_lock))
 		die("unable to write new_index file");
 
 	fd = hold_lock_file_for_update(&false_lock,
 				       git_path("next-index-%d", getpid()), 1);
-	discard_cache();
-	if (!initial_commit) {
-		tree = parse_tree_indirect(head_sha1);
-		if (!tree)
-			die("failed to unpack HEAD tree object");
-		if (read_tree(tree, 0, NULL))
-			die("failed to read HEAD tree object");
-	}
+
+	create_base_index();
 	add_remove_files(&partial);
 	refresh_cache(REFRESH_QUIET);
 
-	if (write_cache(fd, active_cache, active_nr) || close(fd))
+	if (write_cache(fd, active_cache, active_nr) ||
+	    close_lock_file(&false_lock))
 		die("unable to write temporary index file");
 	return false_lock.filename;
 }
@@ -737,6 +759,17 @@ static const char commit_utf8_warn[] =
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
+static void add_parent(struct strbuf *sb, const unsigned char *sha1)
+{
+	struct object *obj = parse_object(sha1);
+	const char *parent = sha1_to_hex(sha1);
+	if (!obj)
+		die("Unable to find commit parent %s", parent);
+	if (obj->type != OBJ_COMMIT)
+		die("Parent %s isn't a proper commit", parent);
+	strbuf_addf(sb, "parent %s\n", parent);
+}
+
 int cmd_commit(int argc, const char **argv, const char *prefix)
 {
 	int header_len;
@@ -799,21 +832,24 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			die("could not parse HEAD commit");
 
 		for (c = commit->parents; c; c = c->next)
-			strbuf_addf(&sb, "parent %s\n",
-				      sha1_to_hex(c->item->object.sha1));
+			add_parent(&sb, c->item->object.sha1);
 	} else if (in_merge) {
 		struct strbuf m;
 		FILE *fp;
 
 		reflog_msg = "commit (merge)";
-		strbuf_addf(&sb, "parent %s\n", sha1_to_hex(head_sha1));
+		add_parent(&sb, head_sha1);
 		strbuf_init(&m, 0);
 		fp = fopen(git_path("MERGE_HEAD"), "r");
 		if (fp == NULL)
 			die("could not open %s for reading: %s",
 			    git_path("MERGE_HEAD"), strerror(errno));
-		while (strbuf_getline(&m, fp, '\n') != EOF)
-			strbuf_addf(&sb, "parent %s\n", m.buf);
+		while (strbuf_getline(&m, fp, '\n') != EOF) {
+			unsigned char sha1[20];
+			if (get_sha1_hex(m.buf, sha1) < 0)
+				die("Corrupt MERGE_HEAD file (%s)", m.buf);
+			add_parent(&sb, sha1);
+		}
 		fclose(fp);
 		strbuf_release(&m);
 	} else {

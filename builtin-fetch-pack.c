@@ -783,7 +783,6 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 			unlink(shallow);
 			rollback_lock_file(&lock);
 		} else {
-			close(fd);
 			commit_lock_file(&lock);
 		}
 	}

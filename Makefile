@@ -38,6 +38,8 @@ all::
 #
 # Define NO_SETENV if you don't have setenv in the C library.
 #
+# Define NO_UNSETENV if you don't have unsetenv in the C library.
+#
 # Define NO_MKDTEMP if you don't have mkdtemp in the C library.
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
@@ -315,7 +317,7 @@ LIB_OBJS = \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
 	convert.o attr.o decorate.o progress.o mailmap.o symlinks.o remote.o \
-	transport.o bundle.o walker.o parse-options.o ws.o
+	transport.o bundle.o walker.o parse-options.o ws.o archive.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
@@ -1185,7 +1187,7 @@ check-docs::
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | git-merge-subtree | \
-		git-fsck-objects | git-init-db | git-repo-config | \
+		git-fsck-objects | git-init-db | \
 		git-?*--?* ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
@@ -1227,3 +1229,4 @@ check-docs::
 #
 check-builtins::
 	./check-builtins.sh
+

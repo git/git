@@ -386,7 +386,9 @@ proc revert_helper {txt paths} {
 	set reply [tk_dialog \
 		.confirm_revert \
 		"[appname] ([reponame])" \
-		[mc "Any unstaged changes will be permanently lost by the revert."] \
+		"$query
+
+[mc "Any unstaged changes will be permanently lost by the revert."]" \
 		question \
 		1 \
 		[mc "Do Nothing"] \

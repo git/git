@@ -356,6 +356,12 @@ AC_CHECK_FUNC(setenv,
 [NO_SETENV=YesPlease])
 AC_SUBST(NO_SETENV)
 #
+# Define NO_UNSETENV if you don't have unsetenv in the C library.
+AC_CHECK_FUNC(unsetenv,
+[NO_UNSETENV=],
+[NO_UNSETENV=YesPlease])
+AC_SUBST(NO_UNSETENV)
+#
 # Define NO_MKDTEMP if you don't have mkdtemp in the C library.
 AC_CHECK_FUNC(mkdtemp,
 [NO_MKDTEMP=],

@@ -225,7 +225,7 @@ test_expect_success \
       ! git-cvsexportcommit -c $id
       )'
 
-case "$(git repo-config --bool core.filemode)" in
+case "$(git config --bool core.filemode)" in
 false)
 	;;
 *)

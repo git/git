@@ -73,14 +73,19 @@ comment_for_reflog () {
 	esac
 }
 
+last_count=
 mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
 	count=$(($(grep -ve '^$' -e '^#' < "$DONE" | wc -l)))
 	total=$(($count+$(grep -ve '^$' -e '^#' < "$TODO" | wc -l)))
-	printf "Rebasing (%d/%d)\r" $count $total
-	test -z "$VERBOSE" || echo
+	if test "$last_count" != "$count"
+	then
+		last_count=$count
+		printf "Rebasing (%d/%d)\r" $count $total
+		test -z "$VERBOSE" || echo
+	fi
 }
 
 make_patch () {

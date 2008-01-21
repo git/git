@@ -54,11 +54,11 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 				uploadpack = arg + 7;
 				continue;
 			}
-			if (!strcmp("--tags", arg)) {
+			if (!strcmp("--tags", arg) || !strcmp("-t", arg)) {
 				flags |= REF_TAGS;
 				continue;
 			}
-			if (!strcmp("--heads", arg)) {
+			if (!strcmp("--heads", arg) || !strcmp("-h", arg)) {
 				flags |= REF_HEADS;
 				continue;
 			}

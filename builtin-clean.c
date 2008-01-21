@@ -90,7 +90,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	strbuf_init(&directory, 0);
 
 	if (pathspec)
-		seen = xmalloc(argc);
+		seen = xmalloc(argc > 0 ? argc : 1);
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
@@ -125,7 +125,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			continue;
 
 		if (pathspec) {
-			memset(seen, 0, argc);
+			memset(seen, 0, argc > 0 ? argc : 1);
 			matches = match_pathspec(pathspec, ent->name, ent->len,
 						 baselen, seen);
 		} else {

@@ -24,7 +24,7 @@ OPTIONS
 
 -e|--edit::
 	With this option, `git-revert` will let you edit the commit
-	message prior committing the revert. This is the default if
+	message prior to committing the revert. This is the default if
 	you run the command from a terminal.
 
 -m parent-number|--mainline parent-number::

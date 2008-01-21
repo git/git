@@ -2,13 +2,13 @@
 # Copyright (C) 2007 Shawn Pearce, et al.
 # This file is distributed under the same license as the git-gui package.
 #
-# Peter Karlsson <peter@softwolves.pp.se>, 2007.
+# Peter Karlsson <peter@softwolves.pp.se>, 2007-2008.
 msgid ""
 msgstr ""
 "Project-Id-Version: sv\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-24 10:36+0100\n"
-"PO-Revision-Date: 2007-12-27 13:31CET-1\n"
+"PO-Revision-Date: 2008-01-12 09:27+0100\n"
 "Last-Translator: Peter Karlsson <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -67,11 +67,11 @@ msgstr "Git-katalogen hittades inte:"
 
 #: git-gui.sh:895
 msgid "Cannot move to top of working directory:"
-msgstr "Kunde inte gå till början på arbetskatalogen:"
+msgstr "Kan inte gå till början på arbetskatalogen:"
 
 #: git-gui.sh:902
 msgid "Cannot use funny .git directory:"
-msgstr "Kunde inte använda underlig .git-katalog:"
+msgstr "Kan inte använda underlig .git-katalog:"
 
 #: git-gui.sh:907
 msgid "No working directory"
@@ -87,7 +87,7 @@ msgstr "Söker efter ändrade filer..."
 
 #: git-gui.sh:1294 lib/browser.tcl:245
 msgid "Ready."
-msgstr "Redo."
+msgstr "Klar."
 
 #: git-gui.sh:1560
 msgid "Unmodified"
@@ -127,7 +127,7 @@ msgstr "Köade för borttagning, fortfarande närvarande"
 
 #: git-gui.sh:1576 git-gui.sh:1577 git-gui.sh:1578 git-gui.sh:1579
 msgid "Requires merge resolution"
-msgstr "Kräver avgörande efter sammanslagning"
+msgstr "Kräver konflikthantering efter sammanslagning"
 
 #: git-gui.sh:1614
 msgid "Starting gitk... please wait..."
@@ -499,23 +499,23 @@ msgstr "Läser %s..."
 
 #: lib/blame.tcl:473
 msgid "Loading copy/move tracking annotations..."
-msgstr "Läser spårningsanteckningar för kopiering/flyttning..."
+msgstr "Läser annoteringar för kopiering/flyttning..."
 
 #: lib/blame.tcl:493
 msgid "lines annotated"
-msgstr "rader spårade"
+msgstr "rader annoterade"
 
 #: lib/blame.tcl:674
 msgid "Loading original location annotations..."
-msgstr "Läser in spårning av originalplacering..."
+msgstr "Läser in annotering av originalplacering..."
 
 #: lib/blame.tcl:677
 msgid "Annotation complete."
-msgstr "Spårning fullbordad."
+msgstr "Annotering fullbordad."
 
 #: lib/blame.tcl:731
 msgid "Loading annotation..."
-msgstr "Läser in spårning..."
+msgstr "Läser in annotering..."
 
 #: lib/blame.tcl:787
 msgid "Author:"

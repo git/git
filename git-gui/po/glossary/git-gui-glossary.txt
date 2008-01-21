@@ -12,6 +12,7 @@
 "diff [verb]"	""
 "fast forward merge"	"A fast-forward is a special type of merge where you have a revision and you are merging another branch's changes that happen to be a descendant of what you have."
 "fetch"	"Fetching a branch means to get the branch's head from a remote repository, to find out which objects are missing from the local object database, and to get them, too."
+"hunk"	"One context of consecutive lines in a whole patch, which consists of many such hunks"
 "index (in git-gui: staging area)"	"A collection of files. The index is a stored version of your working tree."
 "merge [noun]"	"A successful merge results in the creation of a new commit representing the result of the merge."
 "merge [verb]"	"To bring the contents of another branch into the current branch."

@@ -100,6 +100,8 @@ Options:
 
    --envelope-sender	Specify the envelope sender used to send the emails.
 
+   --no-validate	Don't perform any sanity checks on patches.
+
 EOT
 	exit(1);
 }
@@ -177,6 +179,7 @@ my ($quiet, $dry_run) = (0, 0);
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
 my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_authpass, $smtp_ssl);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
+my ($no_validate);
 
 my %config_bool_settings = (
     "thread" => [\$thread, 1],
@@ -222,6 +225,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
+		    "no-validate" => \$no_validate,
 	 );
 
 unless ($rc) {
@@ -313,6 +317,40 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 }
 
 ($sender) = expand_aliases($sender) if defined $sender;
+
+# Now that all the defaults are set, process the rest of the command line
+# arguments and collect up the files that need to be processed.
+for my $f (@ARGV) {
+	if (-d $f) {
+		opendir(DH,$f)
+			or die "Failed to opendir $f: $!";
+
+		push @files, grep { -f $_ } map { +$f . "/" . $_ }
+				sort readdir(DH);
+
+	} elsif (-f $f) {
+		push @files, $f;
+
+	} else {
+		print STDERR "Skipping $f - not found.\n";
+	}
+}
+
+if (!$no_validate) {
+	foreach my $f (@files) {
+		my $error = validate_patch($f);
+		$error and die "fatal: $f: $error\nwarning: no patches were sent\n";
+	}
+}
+
+if (@files) {
+	unless ($quiet) {
+		print $_,"\n" for (@files);
+	}
+} else {
+	print STDERR "\nNo patch files specified!\n\n";
+	usage();
+}
 
 my $prompting = 0;
 if (!defined $sender) {
@@ -425,34 +463,6 @@ EOT
 	}
 
 	@files = ($compose_filename . ".final");
-}
-
-
-# Now that all the defaults are set, process the rest of the command line
-# arguments and collect up the files that need to be processed.
-for my $f (@ARGV) {
-	if (-d $f) {
-		opendir(DH,$f)
-			or die "Failed to opendir $f: $!";
-
-		push @files, grep { -f $_ } map { +$f . "/" . $_ }
-				sort readdir(DH);
-
-	} elsif (-f $f) {
-		push @files, $f;
-
-	} else {
-		print STDERR "Skipping $f - not found.\n";
-	}
-}
-
-if (@files) {
-	unless ($quiet) {
-		print $_,"\n" for (@files);
-	}
-} else {
-	print STDERR "\nNo patch files specified!\n\n";
-	usage();
 }
 
 # Variables we set as part of the loop over files
@@ -837,4 +847,16 @@ sub unique_email_list(@) {
 		}
 	}
 	return @emails;
+}
+
+sub validate_patch {
+	my $fn = shift;
+	open(my $fh, '<', $fn)
+		or die "unable to open $fn: $!\n";
+	while (my $line = <$fh>) {
+		if (length($line) > 998) {
+			return "$.: patch contains a line longer than 998 characters";
+		}
+	}
+	return undef;
 }
