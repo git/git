@@ -62,7 +62,7 @@ proc ask_popup {msg} {
 	eval $cmd
 }
 
-proc hook_failed_popup {hook msg} {
+proc hook_failed_popup {hook msg {is_fatal 1}} {
 	set w .hookfail
 	toplevel $w
 
@@ -77,14 +77,16 @@ proc hook_failed_popup {hook msg} {
 		-width 80 -height 10 \
 		-font font_diff \
 		-yscrollcommand [list $w.m.sby set]
-	label $w.m.l2 \
-		-text [mc "You must correct the above errors before committing."] \
-		-anchor w \
-		-justify left \
-		-font font_uibold
 	scrollbar $w.m.sby -command [list $w.m.t yview]
 	pack $w.m.l1 -side top -fill x
-	pack $w.m.l2 -side bottom -fill x
+	if {$is_fatal} {
+		label $w.m.l2 \
+			-text [mc "You must correct the above errors before committing."] \
+			-anchor w \
+			-justify left \
+			-font font_uibold
+		pack $w.m.l2 -side bottom -fill x
+	}
 	pack $w.m.sby -side right -fill y
 	pack $w.m.t -side left -fill both -expand 1
 	pack $w.m -side top -fill both -expand 1 -padx 5 -pady 10
@@ -99,6 +101,6 @@ proc hook_failed_popup {hook msg} {
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Return> "destroy $w"
-	wm title $w [append "[appname] ([reponame]): " [mc "error"]]
+	wm title $w [strcat "[appname] ([reponame]): " [mc "error"]]
 	tkwait window $w
 }
