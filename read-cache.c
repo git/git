@@ -181,6 +181,12 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
+static int is_racy_timestamp(struct index_state *istate, struct cache_entry *ce)
+{
+	return (istate->timestamp &&
+		((unsigned int)istate->timestamp) <= ce->ce_mtime);
+}
+
 int ie_match_stat(struct index_state *istate,
 		  struct cache_entry *ce, struct stat *st,
 		  unsigned int options)
@@ -214,9 +220,7 @@ int ie_match_stat(struct index_state *istate,
 	 * whose mtime are the same as the index file timestamp more
 	 * carefully than others.
 	 */
-	if (!changed &&
-	    istate->timestamp &&
-	    istate->timestamp <= ce->ce_mtime) {
+	if (!changed && is_racy_timestamp(istate, ce)) {
 		if (assume_racy_is_modified)
 			changed |= DATA_CHANGED;
 		else
@@ -1233,8 +1237,7 @@ int write_index(struct index_state *istate, int newfd)
 		struct cache_entry *ce = cache[i];
 		if (ce->ce_flags & CE_REMOVE)
 			continue;
-		if (istate->timestamp &&
-		    istate->timestamp <= ce->ce_mtime)
+		if (is_racy_timestamp(istate, ce))
 			ce_smudge_racily_clean_entry(ce);
 		if (ce_write_entry(&c, newfd, ce) < 0)
 			return -1;
