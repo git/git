@@ -864,7 +864,6 @@ static int repack_without_ref(const char *refname)
 			die("too long a refname '%s'", list->name);
 		write_or_die(fd, line, len);
 	}
-	close(fd);
 	return commit_lock_file(&packlock);
 }
 
@@ -1019,14 +1018,27 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	return 1;
 }
 
+static int close_ref(struct ref_lock *lock)
+{
+	if (close_lock_file(lock->lk))
+		return -1;
+	lock->lock_fd = -1;
+	return 0;
+}
+
+static int commit_ref(struct ref_lock *lock)
+{
+	if (commit_lock_file(lock->lk))
+		return -1;
+	lock->lock_fd = -1;
+	return 0;
+}
+
 void unlock_ref(struct ref_lock *lock)
 {
-	if (lock->lock_fd >= 0) {
-		close(lock->lock_fd);
-		/* Do not free lock->lk -- atexit() still looks at them */
-		if (lock->lk)
-			rollback_lock_file(lock->lk);
-	}
+	/* Do not free lock->lk -- atexit() still looks at them */
+	if (lock->lk)
+		rollback_lock_file(lock->lk);
 	free(lock->ref_name);
 	free(lock->orig_ref_name);
 	free(lock);
@@ -1119,10 +1131,16 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 	return 0;
 }
 
+static int is_branch(const char *refname)
+{
+	return !strcmp(refname, "HEAD") || !prefixcmp(refname, "refs/heads/");
+}
+
 int write_ref_sha1(struct ref_lock *lock,
 	const unsigned char *sha1, const char *logmsg)
 {
 	static char term = '\n';
+	struct object *o;
 
 	if (!lock)
 		return -1;
@@ -1130,9 +1148,22 @@ int write_ref_sha1(struct ref_lock *lock,
 		unlock_ref(lock);
 		return 0;
 	}
+	o = parse_object(sha1);
+	if (!o) {
+		error("Trying to write ref %s with nonexistant object %s",
+			lock->ref_name, sha1_to_hex(sha1));
+		unlock_ref(lock);
+		return -1;
+	}
+	if (o->type != OBJ_COMMIT && is_branch(lock->ref_name)) {
+		error("Trying to write non-commit object %s to branch %s",
+			sha1_to_hex(sha1), lock->ref_name);
+		unlock_ref(lock);
+		return -1;
+	}
 	if (write_in_full(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
 	    write_in_full(lock->lock_fd, &term, 1) != 1
-		|| close(lock->lock_fd) < 0) {
+		|| close_ref(lock) < 0) {
 		error("Couldn't write %s", lock->lk->filename);
 		unlock_ref(lock);
 		return -1;
@@ -1165,12 +1196,11 @@ int write_ref_sha1(struct ref_lock *lock,
 		    !strcmp(head_ref, lock->ref_name))
 			log_ref_write("HEAD", lock->old_sha1, sha1, logmsg);
 	}
-	if (commit_lock_file(lock->lk)) {
+	if (commit_ref(lock)) {
 		error("Couldn't set %s", lock->ref_name);
 		unlock_ref(lock);
 		return -1;
 	}
-	lock->lock_fd = -1;
 	unlock_ref(lock);
 	return 0;
 }

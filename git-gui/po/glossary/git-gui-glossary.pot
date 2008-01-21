@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2007-10-19 21:43+0200\n"
+"POT-Creation-Date: 2008-01-07 21:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -68,6 +68,10 @@ msgstr ""
 
 #. "Fetching a branch means to get the branch's head from a remote repository, to find out which objects are missing from the local object database, and to get them, too."
 msgid "fetch"
+msgstr ""
+
+#. "One context of consecutive lines in a whole patch, which consists of many such hunks"
+msgid "hunk"
 msgstr ""
 
 #. "A collection of files. The index is a stored version of your working tree."

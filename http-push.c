@@ -1563,9 +1563,17 @@ static int locking_available(void)
 				lock_flags = 0;
 			}
 			XML_ParserFree(parser);
+			if (!lock_flags)
+				error("Error: no DAV locking support on %s",
+				      remote->url);
+
+		} else {
+			error("Cannot access URL %s, return code %d",
+			      remote->url, results.curl_result);
+			lock_flags = 0;
 		}
 	} else {
-		fprintf(stderr, "Unable to start PROPFIND request\n");
+		error("Unable to start PROPFIND request on %s", remote->url);
 	}
 
 	strbuf_release(&out_buffer.buf);
@@ -2161,6 +2169,7 @@ int main(int argc, char **argv)
 	int i;
 	int new_refs;
 	struct ref *ref;
+	char *rewritten_url = NULL;
 
 	setup_git_directory();
 
@@ -2212,6 +2221,10 @@ int main(int argc, char **argv)
 		break;
 	}
 
+#ifndef USE_CURL_MULTI
+	die("git-push is not available for http/https repository when not compiled with USE_CURL_MULTI");
+#endif
+
 	if (!remote->url)
 		usage(http_push_usage);
 
@@ -2224,9 +2237,16 @@ int main(int argc, char **argv)
 
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
+	if (remote->url && remote->url[strlen(remote->url)-1] != '/') {
+		rewritten_url = malloc(strlen(remote->url)+2);
+		strcpy(rewritten_url, remote->url);
+		strcat(rewritten_url, "/");
+		remote->url = rewritten_url;
+		++remote->path_len;
+	}
+
 	/* Verify DAV compliance/lock support */
 	if (!locking_available()) {
-		fprintf(stderr, "Error: no DAV locking support on remote repo %s\n", remote->url);
 		rc = 1;
 		goto cleanup;
 	}
@@ -2239,6 +2259,11 @@ int main(int argc, char **argv)
 		info_ref_lock = lock_remote("info/refs", LOCK_TIME);
 		if (info_ref_lock)
 			remote->can_update_info_refs = 1;
+		else {
+			fprintf(stderr, "Error: cannot lock existing info/refs\n");
+			rc = 1;
+			goto cleanup;
+		}
 	}
 	if (remote->has_info_packs)
 		fetch_indices();
@@ -2260,11 +2285,14 @@ int main(int argc, char **argv)
 	if (!remote_tail)
 		remote_tail = &remote_refs;
 	if (match_refs(local_refs, remote_refs, &remote_tail,
-		       nr_refspec, (const char **) refspec, push_all))
-		return -1;
+		       nr_refspec, (const char **) refspec, push_all)) {
+		rc = -1;
+		goto cleanup;
+	}
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n");
-		return 0;
+		rc = 0;
+		goto cleanup;
 	}
 
 	new_refs = 0;
@@ -2395,10 +2423,12 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Unable to update server info\n");
 		}
 	}
-	if (info_ref_lock)
-		unlock_remote(info_ref_lock);
 
  cleanup:
+	if (rewritten_url)
+		free(rewritten_url);
+	if (info_ref_lock)
+		unlock_remote(info_ref_lock);
 	free(remote);
 
 	curl_slist_free_all(no_pragma_header);

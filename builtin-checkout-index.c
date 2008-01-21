@@ -246,8 +246,8 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		 * want to update cache.
 		 */
 		if (state.refresh_cache) {
-			close(newfd); newfd = -1;
 			rollback_lock_file(&lock_file);
+			newfd = -1;
 		}
 		state.refresh_cache = 0;
 	}
@@ -297,7 +297,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 
 	if (0 <= newfd &&
 	    (write_cache(newfd, active_cache, active_nr) ||
-	     close(newfd) || commit_locked_index(&lock_file)))
+	     commit_locked_index(&lock_file)))
 		die("Unable to write new index file");
 	return 0;
 }

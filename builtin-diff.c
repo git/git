@@ -190,7 +190,7 @@ static void refresh_index_quietly(void)
 	refresh_cache(REFRESH_QUIET|REFRESH_UNMERGED);
 
 	if (active_cache_changed &&
-	    !write_cache(fd, active_cache, active_nr) && !close(fd))
+	    !write_cache(fd, active_cache, active_nr))
 		commit_locked_index(lock_file);
 
 	rollback_lock_file(lock_file);

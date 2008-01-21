@@ -1,189 +1,166 @@
-# Translation of git-gui glossary to German
-# Copyright (C) 2007 Shawn Pearce, et al.
-# This file is distributed under the same license as the git package.
-# Christian Stimming <stimming@tuhh.de>, 2007
+# translation of fr.po to French
+# Translation of git-gui glossary to French
+# Copyright (C) 2008 Shawn Pearce, et al.
 #
+# Christian Couder <chriscool@tuxfamily.org>, 2008.
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui glossary\n"
-"POT-Creation-Date: 2008-01-07 21:20+0100\n"
-"PO-Revision-Date: 2008-01-15 20:32+0100\n"
-"Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
-"Language-Team: German \n"
+"Project-Id-Version: fr\n"
+"POT-Creation-Date: 2008-01-15 21:04+0100\n"
+"PO-Revision-Date: 2008-01-15 21:17+0100\n"
+"Last-Translator: Christian Couder <chriscool@tuxfamily.org>\n"
+"Language-Team: French\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+"Plural-Forms:  nplurals=2; plural=(n > 1);\n"
 
 #. "English Definition (Dear translator: This file will never be visible to the user! It should only serve as a tool for you, the translator. Nothing more.)"
-msgid ""
-"English Term (Dear translator: This file will never be visible to the user!)"
+msgid "English Term (Dear translator: This file will never be visible to the user!)"
 msgstr ""
-"Deutsche Ãœbersetzung.\n"
-"Andere deutsche SCM:\n"
-"  http://tortoisesvn.net/docs/release/TortoiseSVN_de/index.html und http://"
-"tortoisesvn.tigris.org/svn/tortoisesvn/trunk/Languages/Tortoise_de.po "
-"(username=guest, password empty, gut),\n"
-"  http://msdn.microsoft.com/de-de/library/ms181038(vs.80).aspx (MS Visual "
-"Source Safe, kommerziell),\n"
-"  http://cvsbook.red-bean.com/translations/german/Kap_06.html "
-"(mittelmÃ¤ÃŸig),\n"
-"  http://tortoisecvs.cvs.sourceforge.net/tortoisecvs/po/TortoiseCVS/de_DE.po?"
-"view=markup (mittelmÃ¤ÃŸig),\n"
-"  http://rapidsvn.tigris.org/svn/rapidsvn/trunk/src/locale/de/rapidsvn.po "
-"(username=guest, password empty, schlecht)"
 
 #. ""
 msgid "amend"
-msgstr "nachbessern (ergÃ¤nzen)"
+msgstr "corriger"
 
 #. ""
 msgid "annotate"
-msgstr "annotieren"
+msgstr "annoter"
 
 #. "A 'branch' is an active line of development."
 msgid "branch [noun]"
-msgstr "Zweig"
+msgstr "branche"
 
 #. ""
 msgid "branch [verb]"
-msgstr "verzweigen"
+msgstr "créer une branche"
 
 #. ""
 msgid "checkout [noun]"
-msgstr ""
-"Arbeitskopie (Erstellung einer Arbeitskopie; Auscheck? Ausspielung? Abruf? "
-"Source Safe: Auscheckvorgang)"
+msgstr "emprunt"
 
 #. "The action of updating the working tree to a revision which was stored in the object database."
 msgid "checkout [verb]"
-msgstr ""
-"Arbeitskopie erstellen; Zweig umstellen [checkout a branch] (auschecken? "
-"ausspielen? abrufen? Source Safe: auschecken)"
+msgstr "emprunter"
 
 #. ""
 msgid "clone [verb]"
-msgstr "klonen"
+msgstr "cloner"
 
 #. "A single point in the git history."
 msgid "commit [noun]"
-msgstr ""
-"Version; Eintragung; Ã„nderung (Buchung?, Eintragung?, Ãœbertragung?, "
-"Sendung?, Ãœbergabe?, Einspielung?, Ablagevorgang?)"
+msgstr "commit"
 
 #. "The action of storing a new snapshot of the project's state in the git history."
 msgid "commit [verb]"
-msgstr ""
-"eintragen (TortoiseSVN: Ã¼bertragen; Source Safe: einchecken; senden?, "
-"Ã¼bergeben?, einspielen?, einpflegen?, ablegen?)"
+msgstr "commiter"
 
 #. ""
 msgid "diff [noun]"
-msgstr "Vergleich (Source Safe: Unterschiede)"
+msgstr "différence"
 
 #. ""
 msgid "diff [verb]"
-msgstr "vergleichen"
+msgstr "comparer"
 
 #. "A fast-forward is a special type of merge where you have a revision and you are merging another branch's changes that happen to be a descendant of what you have."
 msgid "fast forward merge"
-msgstr "SchnellzusammenfÃ¼hrung"
+msgstr "fusion par avance rapide"
 
 #. "Fetching a branch means to get the branch's head from a remote repository, to find out which objects are missing from the local object database, and to get them, too."
 msgid "fetch"
-msgstr "anfordern (holen?)"
-
-#. "One context of consecutive lines in a whole patch, which consists of many such hunks"
-msgid "hunk"
-msgstr "Kontext"
+msgstr "récupérer"
 
 #. "A collection of files. The index is a stored version of your working tree."
 msgid "index (in git-gui: staging area)"
-msgstr "Bereitstellung"
+msgstr "pré-commit"
 
 #. "A successful merge results in the creation of a new commit representing the result of the merge."
 msgid "merge [noun]"
-msgstr "ZusammenfÃ¼hrung"
+msgstr "fusion"
 
 #. "To bring the contents of another branch into the current branch."
 msgid "merge [verb]"
-msgstr "zusammenfÃ¼hren"
+msgstr "fusionner"
 
 #. ""
 msgid "message"
-msgstr "Beschreibung (Meldung?, Nachricht?; Source Safe: Kommentar)"
+msgstr "message"
 
 #. "Deletes all stale tracking branches under <name>. These stale branches have already been removed from the remote repository referenced by <name>, but are still locally available in 'remotes/<name>'."
 msgid "prune"
-msgstr "entfernen"
+msgstr "nettoyer"
 
 #. "Pulling a branch means to fetch it and merge it."
 msgid "pull"
-msgstr "Ã¼bernehmen (ziehen?)"
+msgstr "tirer"
 
 #. "Pushing a branch means to get the branch's head ref from a remote repository, and ... (well, can someone please explain it for mere mortals?)"
 msgid "push"
-msgstr "versenden (ausliefern? hochladen? verschicken? schieben?)"
+msgstr "pousser"
 
 #. ""
 msgid "redo"
-msgstr "wiederholen"
+msgstr "refaire"
 
 #. "An other repository ('remote'). One might have a set of remotes whose branches one tracks."
 msgid "remote"
-msgstr "Andere Archive (Gegenseite?, Entfernte?, Server?)"
+msgstr "référentiel distant"
 
 #. "A collection of refs (?) together with an object database containing all objects which are reachable from the refs... (oops, you've lost me here. Again, please an explanation for mere mortals?)"
 msgid "repository"
-msgstr "Projektarchiv"
+msgstr "référentiel"
 
 #. ""
 msgid "reset"
-msgstr "zurÃ¼cksetzen (zurÃ¼ckkehren?)"
+msgstr "réinitialiser"
 
 #. ""
 msgid "revert"
-msgstr "verwerfen (bei git-reset), revidieren (bei git-revert, also mit neuem commit)"
+msgstr "inverser"
 
 #. "A particular state of files and directories which was stored in the object database."
 msgid "revision"
-msgstr "Version (TortoiseSVN: Revision; Source Safe: Version)"
+msgstr "révision"
 
 #. ""
 msgid "sign off"
-msgstr "abzeichnen (gegenzeichnen?, freizeichnen?, absegnen?)"
+msgstr "signer"
 
 #. ""
 msgid "staging area"
-msgstr "Bereitstellung"
+msgstr "pré-commit"
 
 #. ""
 msgid "status"
-msgstr "Status"
+msgstr "état"
 
 #. "A ref pointing to a tag or commit object"
 msgid "tag [noun]"
-msgstr "Markierung"
+msgstr "marque"
 
 #. ""
 msgid "tag [verb]"
-msgstr "markieren"
+msgstr "marquer"
 
 #. "A regular git branch that is used to follow changes from another repository."
 msgid "tracking branch"
-msgstr "Ãœbernahmezweig"
+msgstr "branche de suivi"
 
 #. ""
 msgid "undo"
-msgstr "rÃ¼ckgÃ¤ngig"
+msgstr "défaire"
 
 #. ""
 msgid "update"
-msgstr "aktualisieren"
+msgstr "mise à jour"
 
 #. ""
 msgid "verify"
-msgstr "Ã¼berprÃ¼fen"
+msgstr "vérifier"
 
 #. "The tree of actual checked out files."
 msgid "working copy, working tree"
-msgstr "Arbeitskopie"
+msgstr "copie de travail, arborescence de travail"
+

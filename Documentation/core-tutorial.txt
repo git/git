@@ -578,7 +578,7 @@ particular state. You can, for example, do
 $ git diff my-first-tag
 ----------------
 
-to diff your current state against that tag (which at this point will
+to diff your current state against that tag which at this point will
 obviously be an empty diff, but if you continue to develop and commit
 stuff, you can use your tag as an "anchor-point" to see what has changed
 since you tagged it.

@@ -23,7 +23,7 @@ ARTICLES += everyday
 ARTICLES += git-tools
 ARTICLES += glossary
 # with their own formatting rules.
-SP_ARTICLES = howto/revert-branch-rebase user-manual
+SP_ARTICLES = howto/revert-branch-rebase howto/using-merge-subtree user-manual
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
 SP_ARTICLES += $(API_DOCS)
 SP_ARTICLES += technical/api-index

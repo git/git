@@ -395,7 +395,11 @@ void prepare_alt_odb(void)
 	if (!alt) alt = "";
 
 	alt_odb_tail = &alt_odb_list;
+#ifdef __MINGW32__
+	link_alt_odb_entries(alt, alt + strlen(alt), ';', NULL, 0);
+#else
 	link_alt_odb_entries(alt, alt + strlen(alt), ':', NULL, 0);
+#endif
 
 	read_info_alternates(get_object_directory(), 0);
 }
@@ -615,6 +619,22 @@ void release_pack_memory(size_t need, int fd)
 	size_t cur = pack_mapped;
 	while (need >= (cur - pack_mapped) && unuse_one_window(NULL, fd))
 		; /* nothing */
+}
+
+void close_pack_windows(struct packed_git *p)
+{
+	while (p->windows) {
+		struct pack_window *w = p->windows;
+
+		if (w->inuse_cnt)
+			die("pack '%s' still has open windows to it",
+			    p->pack_name);
+		munmap(w->base, w->len);
+		pack_mapped -= w->len;
+		pack_open_windows--;
+		p->windows = w->next;
+		free(w);
+	}
 }
 
 void unuse_pack(struct pack_window **w_cursor)

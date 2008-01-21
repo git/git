@@ -48,19 +48,32 @@ struct commit *lookup_commit(const unsigned char *sha1)
 	return check_commit(obj, sha1, 0);
 }
 
-static unsigned long parse_commit_date(const char *buf)
+static unsigned long parse_commit_date(const char *buf, const char *tail)
 {
 	unsigned long date;
+	const char *dateptr;
 
+	if (buf + 6 >= tail)
+		return 0;
 	if (memcmp(buf, "author", 6))
 		return 0;
-	while (*buf++ != '\n')
+	while (buf < tail && *buf++ != '\n')
 		/* nada */;
+	if (buf + 9 >= tail)
+		return 0;
 	if (memcmp(buf, "committer", 9))
 		return 0;
-	while (*buf++ != '>')
+	while (buf < tail && *buf++ != '>')
 		/* nada */;
-	date = strtoul(buf, NULL, 10);
+	if (buf >= tail)
+		return 0;
+	dateptr = buf;
+	while (buf < tail && *buf++ != '\n')
+		/* nada */;
+	if (buf >= tail)
+		return 0;
+	/* dateptr < buf && buf[-1] == '\n', so strtoul will stop at buf-1 */
+	date = strtoul(dateptr, NULL, 10);
 	if (date == ULONG_MAX)
 		date = 0;
 	return date;
@@ -236,9 +249,9 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 		return 0;
 	item->object.parsed = 1;
 	tail += size;
-	if (tail <= bufptr + 5 || memcmp(bufptr, "tree ", 5))
+	if (tail <= bufptr + 46 || memcmp(bufptr, "tree ", 5) || bufptr[45] != '\n')
 		return error("bogus commit object %s", sha1_to_hex(item->object.sha1));
-	if (tail <= bufptr + 45 || get_sha1_hex(bufptr + 5, parent) < 0)
+	if (get_sha1_hex(bufptr + 5, parent) < 0)
 		return error("bad tree pointer in commit %s",
 			     sha1_to_hex(item->object.sha1));
 	item->tree = lookup_tree(parent);
@@ -275,7 +288,7 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 			n_refs++;
 		}
 	}
-	item->date = parse_commit_date(bufptr);
+	item->date = parse_commit_date(bufptr, tail);
 
 	if (track_object_refs) {
 		unsigned i = 0;

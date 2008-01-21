@@ -74,14 +74,14 @@ it happens.  In other words, `git-diff --cached HEAD` must
 report no changes.
 
 [NOTE]
-This is a bit of lie.  In certain special cases, your index are
-allowed to be different from the tree of `HEAD` commit.  The most
+This is a bit of a lie.  In certain special cases, your index is
+allowed to be different from the tree of the `HEAD` commit.  The most
 notable case is when your `HEAD` commit is already ahead of what
 is being merged, in which case your index can have arbitrary
-difference from your `HEAD` commit.  Otherwise, your index entries
-are allowed have differences from your `HEAD` commit that match
-the result of trivial merge (e.g. you received the same patch
-from external source to produce the same result as what you are
+differences from your `HEAD` commit.  Also, your index entries
+may have differences from your `HEAD` commit that match
+the result of a trivial merge (e.g. you received the same patch
+from an external source to produce the same result as what you are
 merging).  For example, if a path did not exist in the common
 ancestor and your head commit but exists in the tree you are
 merging into your repository, and if you already happen to have

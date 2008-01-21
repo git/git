@@ -552,7 +552,8 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	int i;
 	int color;
 	struct emit_callback *ecbdata = priv;
-	const char *set = diff_get_color(ecbdata->color_diff, DIFF_METAINFO);
+	const char *meta = diff_get_color(ecbdata->color_diff, DIFF_METAINFO);
+	const char *plain = diff_get_color(ecbdata->color_diff, DIFF_PLAIN);
 	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
 
 	*(ecbdata->found_changesp) = 1;
@@ -564,9 +565,9 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		name_b_tab = strchr(ecbdata->label_path[1], ' ') ? "\t" : "";
 
 		printf("%s--- %s%s%s\n",
-		       set, ecbdata->label_path[0], reset, name_a_tab);
+		       meta, ecbdata->label_path[0], reset, name_a_tab);
 		printf("%s+++ %s%s%s\n",
-		       set, ecbdata->label_path[1], reset, name_b_tab);
+		       meta, ecbdata->label_path[1], reset, name_b_tab);
 		ecbdata->label_path[0] = ecbdata->label_path[1] = NULL;
 	}
 
@@ -586,7 +587,6 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	}
 
 	if (len < ecbdata->nparents) {
-		set = reset;
 		emit_line(reset, reset, line, len);
 		return;
 	}
@@ -610,7 +610,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 			diff_words_show(ecbdata->diff_words);
 		line++;
 		len--;
-		emit_line(set, reset, line, len);
+		emit_line(plain, reset, line, len);
 		return;
 	}
 	for (i = 0; i < ecbdata->nparents && len; i++) {
@@ -1224,7 +1224,7 @@ static const char *diff_funcname_pattern(struct diff_filespec *one)
 
 	/*
 	 * And define built-in fallback patterns here.  Note that
-	 * these can be overriden by the user's config settings.
+	 * these can be overridden by the user's config settings.
 	 */
 	for (i = 0; i < ARRAY_SIZE(builtin_funcname_pattern); i++)
 		if (!strcmp(ident, builtin_funcname_pattern[i].name))

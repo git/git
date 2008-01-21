@@ -61,7 +61,7 @@ perl -e '
 	    if (/^\s* \t/) {
 		bad_line("indent SP followed by a TAB", $_);
 	    }
-	    if (/^(?:[<>=]){7}/) {
+	    if (/^([<>])\1{6} |^={7}$/) {
 		bad_line("unresolved merge conflict", $_);
 	    }
 	}

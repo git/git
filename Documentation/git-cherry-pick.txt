@@ -24,7 +24,7 @@ OPTIONS
 
 -e|--edit::
 	With this option, `git-cherry-pick` will let you edit the commit
-	message prior committing.
+	message prior to committing.
 
 -x::
 	When recording the commit, append to the original commit
