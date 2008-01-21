@@ -9,8 +9,9 @@ git-submodule - Initialize, update or inspect submodules
 SYNOPSIS
 --------
 [verse]
-'git-submodule' [--quiet] [-b branch] add <repository> [<path>]
-'git-submodule' [--quiet] [--cached] [status|init|update] [--] [<path>...]
+'git-submodule' [--quiet] add [-b branch] [--] <repository> [<path>]
+'git-submodule' [--quiet] status [--cached] [--] [<path>...]
+'git-submodule' [--quiet] [init|update] [--] [<path>...]
 
 
 COMMANDS
