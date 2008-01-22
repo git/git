@@ -10,8 +10,18 @@ Removal
  * As git-commit and git-status have been rewritten, "git runstatus"
    helper script lost all its users and has been removed.
 
- * Curl library older than 7.10 is not supported by "git http-push",
-   as it does not work without CURLM.
+
+Temporarily Disabled
+--------------------
+
+ * "git http-push" is known not to work well with cURL library older
+   than 7.16, and we had reports of repository corruption.  It is
+   disabled on such platforms for now.  Unfortunately, 1.5.3.8 shares
+   the same issue.  In other words, this does not mean you will be
+   fine if you stick to an older git release.  For now, please do not
+   use http-push from older git with cURL older than 7.16 if you
+   value your data. A proper fix will hopefully materialize in
+   later versions.
 
 
 Deprecation notices
