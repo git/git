@@ -399,7 +399,10 @@ method _load {jump} {
 	} else {
 		set fd [git_read cat-file blob "$commit:$path"]
 	}
-	fconfigure $fd -blocking 0 -translation lf -encoding binary
+	fconfigure $fd \
+		-blocking 0 \
+		-translation lf \
+		-encoding [tcl_encoding [gitattr $path encoding UTF-8]]
 	fileevent $fd readable [cb _read_file $fd $jump]
 	set current_fd $fd
 }

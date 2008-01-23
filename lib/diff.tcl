@@ -164,8 +164,11 @@ proc show_other_diff {path w m scroll_pos} {
 					set sz [string length $content]
 				}
 				file {
+					set enc [gitattr $path encoding UTF-8]
 					set fd [open $path r]
-					fconfigure $fd -eofchar {}
+					fconfigure $fd \
+						-eofchar {} \
+						-encoding [tcl_encoding $enc]
 					set content [read $fd $max_sz]
 					close $fd
 					set sz [file size $path]
@@ -279,8 +282,8 @@ proc start_show_diff {scroll_pos {add_opts {}}} {
 	set ::current_diff_inheader 1
 	fconfigure $fd \
 		-blocking 0 \
-		-encoding binary \
-		-translation binary
+		-encoding [tcl_encoding [gitattr $path encoding UTF-8]] \
+		-translation lf
 	fileevent $fd readable [list read_diff $fd $scroll_pos]
 }
 

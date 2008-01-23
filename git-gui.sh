@@ -521,6 +521,19 @@ proc kill_file_process {fd} {
 	}
 }
 
+proc gitattr {path attr default} {
+	if {[catch {set r [git check-attr $attr -- $path]}]} {
+		set r unspecified
+	} else {
+		set r [join [lrange [split $r :] 2 end] :]
+		regsub {^ } $r {} r
+	}
+	if {$r eq {unspecified}} {
+		return $default
+	}
+	return $r
+}
+
 proc sq {value} {
 	regsub -all ' $value "'\\''" value
 	return "'$value'"
