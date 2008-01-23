@@ -511,7 +511,7 @@ method _exec_blame {cur_w cur_d options cur_s} {
 	}
 	lappend options -- $path
 	set fd [eval git_read --nice blame $options]
-	fconfigure $fd -blocking 0 -translation lf -encoding binary
+	fconfigure $fd -blocking 0 -translation lf -encoding utf-8
 	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd
 	set blame_lines 0
@@ -884,12 +884,6 @@ method _showcommit {cur_w lno} {
 				set enc [tcl_encoding $enc]
 				if {$enc ne {}} {
 					set msg [encoding convertfrom $enc $msg]
-					set author_name [encoding convertfrom $enc $author_name]
-					set committer_name [encoding convertfrom $enc $committer_name]
-					set header($cmit,author) $author_name
-					set header($cmit,committer) $committer_name
-					set header($cmit,summary) \
-					[encoding convertfrom $enc $header($cmit,summary)]
 				}
 				set msg [string trim $msg]
 			}
