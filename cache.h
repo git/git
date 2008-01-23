@@ -191,6 +191,7 @@ struct index_state {
 	struct cache_tree *cache_tree;
 	time_t timestamp;
 	void *alloc;
+	unsigned name_hash_initialized : 1;
 	struct hash_table name_hash;
 };
 
