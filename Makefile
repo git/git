@@ -198,6 +198,9 @@ ifdef NO_MSGFMT
 	MSGFMT ?= $(TCL_PATH) po/po2msg.sh
 else
 	MSGFMT ?= msgfmt
+	ifeq ($(shell $(MSGFMT) >/dev/null 2>&1 || echo $$?),127)
+		MSGFMT := $(TCL_PATH) po/po2msg.sh
+	endif
 endif
 
 msgsdir     = $(gg_libdir)/msgs
