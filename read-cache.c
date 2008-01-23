@@ -615,7 +615,7 @@ static int has_dir_name(struct index_state *istate,
 			 * it is Ok to have a directory at the same
 			 * path.
 			 */
-			if (stage || istate->cache[pos]->ce_mode) {
+			if (!(istate->cache[pos]->ce_flags & CE_REMOVE)) {
 				retval = -1;
 				if (!ok_to_replace)
 					break;
@@ -637,8 +637,9 @@ static int has_dir_name(struct index_state *istate,
 			    (p->name[len] != '/') ||
 			    memcmp(p->name, name, len))
 				break; /* not our subdirectory */
-			if (ce_stage(p) == stage && (stage || p->ce_mode))
-				/* p is at the same stage as our entry, and
+			if (ce_stage(p) == stage && !(p->ce_flags & CE_REMOVE))
+				/*
+				 * p is at the same stage as our entry, and
 				 * is a subdirectory of what we are looking
 				 * at, so we cannot have conflicts at our
 				 * level or anything shorter.
