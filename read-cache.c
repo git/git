@@ -23,6 +23,70 @@
 
 struct index_state the_index;
 
+static unsigned int hash_name(const char *name, int namelen)
+{
+	unsigned int hash = 0x123;
+
+	do {
+		unsigned char c = *name++;
+		hash = hash*101 + c;
+	} while (--namelen);
+	return hash;
+}
+
+static void set_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
+{
+	void **pos;
+	unsigned int hash = hash_name(ce->name, ce_namelen(ce));
+
+	istate->cache[nr] = ce;
+	pos = insert_hash(hash, ce, &istate->name_hash);
+	if (pos) {
+		ce->next = *pos;
+		*pos = ce;
+	}
+}
+
+/*
+ * We don't actually *remove* it, we can just mark it invalid so that
+ * we won't find it in lookups.
+ *
+ * Not only would we have to search the lists (simple enough), but
+ * we'd also have to rehash other hash buckets in case this makes the
+ * hash bucket empty (common). So it's much better to just mark
+ * it.
+ */
+static void remove_hash_entry(struct index_state *istate, struct cache_entry *ce)
+{
+	ce->ce_flags |= CE_UNHASHED;
+}
+
+static void replace_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
+{
+	struct cache_entry *old = istate->cache[nr];
+
+	if (ce != old) {
+		remove_hash_entry(istate, old);
+		set_index_entry(istate, nr, ce);
+	}
+	istate->cache_changed = 1;
+}
+
+int index_name_exists(struct index_state *istate, const char *name, int namelen)
+{
+	unsigned int hash = hash_name(name, namelen);
+	struct cache_entry *ce = lookup_hash(hash, &istate->name_hash);
+
+	while (ce) {
+		if (!(ce->ce_flags & CE_UNHASHED)) {
+			if (!cache_name_compare(name, namelen, ce->name, ce->ce_flags))
+				return 1;
+		}
+		ce = ce->next;
+	}
+	return 0;
+}
+
 /*
  * This only updates the "non-critical" parts of the directory
  * cache, ie the parts that aren't tracked by GIT, and only used
@@ -327,6 +391,9 @@ int index_name_pos(struct index_state *istate, const char *name, int namelen)
 /* Remove entry, return true if there are more entries to go.. */
 int remove_index_entry_at(struct index_state *istate, int pos)
 {
+	struct cache_entry *ce = istate->cache[pos];
+
+	remove_hash_entry(istate, ce);
 	istate->cache_changed = 1;
 	istate->cache_nr--;
 	if (pos >= istate->cache_nr)
@@ -702,8 +769,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 
 	/* existing match? Just replace it. */
 	if (pos >= 0) {
-		istate->cache_changed = 1;
-		istate->cache[pos] = ce;
+		replace_index_entry(istate, pos, ce);
 		return 0;
 	}
 	pos = -pos-1;
@@ -763,7 +829,7 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
 		memmove(istate->cache + pos + 1,
 			istate->cache + pos,
 			(istate->cache_nr - pos - 1) * sizeof(ce));
-	istate->cache[pos] = ce;
+	set_index_entry(istate, pos, ce);
 	istate->cache_changed = 1;
 	return 0;
 }
@@ -892,11 +958,8 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			has_errors = 1;
 			continue;
 		}
-		istate->cache_changed = 1;
-		/* You can NOT just free istate->cache[i] here, since it
-		 * might not be necessarily malloc()ed but can also come
-		 * from mmap(). */
-		istate->cache[i] = new;
+
+		replace_index_entry(istate, i, new);
 	}
 	return has_errors;
 }
@@ -971,6 +1034,20 @@ static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_en
 	memcpy(ce->name, ondisk->name, len + 1);
 }
 
+static inline size_t estimate_cache_size(size_t ondisk_size, unsigned int entries)
+{
+	long per_entry;
+
+	per_entry = sizeof(struct cache_entry) - sizeof(struct ondisk_cache_entry);
+
+	/*
+	 * Alignment can cause differences. This should be "alignof", but
+	 * since that's a gcc'ism, just use the size of a pointer.
+	 */
+	per_entry += sizeof(void *);
+	return ondisk_size + entries*per_entry;
+}
+
 /* remember to discard_cache() before reading a different cache! */
 int read_index_from(struct index_state *istate, const char *path)
 {
@@ -1021,7 +1098,7 @@ int read_index_from(struct index_state *istate, const char *path)
 	 * has room for a few  more flags, we can allocate using the same
 	 * index size
 	 */
-	istate->alloc = xmalloc(mmap_size);
+	istate->alloc = xmalloc(estimate_cache_size(mmap_size, istate->cache_nr));
 
 	src_offset = sizeof(*hdr);
 	dst_offset = 0;
@@ -1032,7 +1109,7 @@ int read_index_from(struct index_state *istate, const char *path)
 		disk_ce = (struct ondisk_cache_entry *)((char *)mmap + src_offset);
 		ce = (struct cache_entry *)((char *)istate->alloc + dst_offset);
 		convert_from_disk(disk_ce, ce);
-		istate->cache[i] = ce;
+		set_index_entry(istate, i, ce);
 
 		src_offset += ondisk_ce_size(ce);
 		dst_offset += ce_size(ce);
@@ -1070,6 +1147,7 @@ int discard_index(struct index_state *istate)
 	istate->cache_nr = 0;
 	istate->cache_changed = 0;
 	istate->timestamp = 0;
+	free_hash(&istate->name_hash);
 	cache_tree_free(&(istate->cache_tree));
 	free(istate->alloc);
 	istate->alloc = NULL;

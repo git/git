@@ -3,6 +3,7 @@
 
 #include "git-compat-util.h"
 #include "strbuf.h"
+#include "hash.h"
 
 #include SHA1_HEADER
 #include <zlib.h>
@@ -109,6 +110,7 @@ struct ondisk_cache_entry {
 };
 
 struct cache_entry {
+	struct cache_entry *next;
 	unsigned int ce_ctime;
 	unsigned int ce_mtime;
 	unsigned int ce_dev;
@@ -131,6 +133,7 @@ struct cache_entry {
 #define CE_UPDATE    (0x10000)
 #define CE_REMOVE    (0x20000)
 #define CE_UPTODATE  (0x40000)
+#define CE_UNHASHED  (0x80000)
 
 static inline unsigned create_ce_flags(size_t len, unsigned stage)
 {
@@ -188,6 +191,7 @@ struct index_state {
 	struct cache_tree *cache_tree;
 	time_t timestamp;
 	void *alloc;
+	struct hash_table name_hash;
 };
 
 extern struct index_state the_index;
@@ -211,6 +215,7 @@ extern struct index_state the_index;
 #define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL)
 #define ce_match_stat(ce, st, options) ie_match_stat(&the_index, (ce), (st), (options))
 #define ce_modified(ce, st, options) ie_modified(&the_index, (ce), (st), (options))
+#define cache_name_exists(name, namelen) index_name_exists(&the_index, (name), (namelen))
 #endif
 
 enum object_type {
@@ -297,6 +302,7 @@ extern int read_index_from(struct index_state *, const char *path);
 extern int write_index(struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
 extern int verify_path(const char *path);
+extern int index_name_exists(struct index_state *istate, const char *name, int namelen);
 extern int index_name_pos(struct index_state *, const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
