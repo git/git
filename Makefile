@@ -42,6 +42,8 @@ all::
 #
 # Define NO_MKDTEMP if you don't have mkdtemp in the C library.
 #
+# Define NO_SYS_SELECT_H if you don't have sys/select.h.
+#
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
@@ -634,6 +636,9 @@ endif
 ifdef NO_UNSETENV
 	COMPAT_CFLAGS += -DNO_UNSETENV
 	COMPAT_OBJS += compat/unsetenv.o
+endif
+ifdef NO_SYS_SELECT_H
+	BASIC_CFLAGS += -DNO_SYS_SELECT_H
 endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
