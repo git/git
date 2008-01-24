@@ -67,7 +67,7 @@ ifndef V
 	QUIET_GEN      = $(QUIET)echo '   ' GEN '$@' &&
 	QUIET_INDEX    = $(QUIET)echo '   ' INDEX $(dir $@) &&
 	QUIET_MSGFMT0  = $(QUIET)printf '    MSGFMT %12s ' $@ && v=`
-	QUIET_MSGFMT1  = 2>&1` && echo "$$v" | sed -e 's/fuzzy translations/fuzzy/' | sed -e 's/ messages//g'
+	QUIET_MSGFMT1  = 2>&1` && echo "$$v" | sed -e 's/fuzzy translations/fuzzy/' | sed -e 's/ messages*//g'
 	QUIET_2DEVNULL = 2>/dev/null
 
 	INSTALL_D0 = dir=
@@ -198,6 +198,9 @@ ifdef NO_MSGFMT
 	MSGFMT ?= $(TCL_PATH) po/po2msg.sh
 else
 	MSGFMT ?= msgfmt
+	ifeq ($(shell $(MSGFMT) >/dev/null 2>&1 || echo $$?),127)
+		MSGFMT := $(TCL_PATH) po/po2msg.sh
+	endif
 endif
 
 msgsdir     = $(gg_libdir)/msgs
