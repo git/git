@@ -505,6 +505,17 @@ ifeq ($(uname_S),IRIX64)
 	# for now, build 32-bit version
 	BASIC_LDFLAGS += -L/usr/lib32
 endif
+ifeq ($(uname_S),HP-UX)
+	NO_IPV6=YesPlease
+	NO_SETENV=YesPlease
+	NO_STRCASESTR=YesPlease
+	NO_MEMMEM = YesPlease
+	NO_STRLCPY = YesPlease
+	NO_MKDTEMP = YesPlease
+	NO_UNSETENV = YesPlease
+	NO_HSTRERROR = YesPlease
+	NO_SYS_SELECT_H = YesPlease
+endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
