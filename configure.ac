@@ -235,6 +235,12 @@ test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 ## Checks for header files.
 AC_MSG_NOTICE([CHECKS for header files])
 #
+# Define NO_SYS_SELECT_H if you don't have sys/select.h.
+AC_CHECK_HEADER([sys/select.h],
+[NO_SYS_SELECT_H=],
+[NO_SYS_SELECT_H=UnfortunatelyYes])
+AC_SUBST(NO_SYS_SELECT_H)
+#
 # Define OLD_ICONV if your library has an old iconv(), where the second
 # (input buffer pointer) parameter is declared with type (const char **).
 AC_DEFUN([OLDICONVTEST_SRC], [[
