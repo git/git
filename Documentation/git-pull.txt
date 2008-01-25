@@ -25,6 +25,7 @@ OPTIONS
 -------
 include::merge-options.txt[]
 
+:git-pull: 1
 include::fetch-options.txt[]
 
 include::pull-fetch-param.txt[]
