@@ -137,6 +137,8 @@ The --cc option must be repeated for each user you want on the cc list.
 	Specify the primary recipient of the emails generated.
 	Generally, this will be the upstream maintainer of the
 	project involved.
+	Default is the value of the 'sendemail.to' configuration value;
+	if that is unspecified, this will be prompted for.
 +
 The --to option must be repeated for each user you want on the to list.
 
