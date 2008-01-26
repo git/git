@@ -33,13 +33,14 @@ CVS_SERVER=git-cvsserver
 export CVSROOT CVS_SERVER
 
 rm -rf "$CVSWORK" "$SERVERDIR"
-echo >empty &&
+test_expect_success 'setup' '
+  echo >empty &&
   git add empty &&
   git commit -q -m "First Commit" &&
   git clone -q --local --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
   GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
-  GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log" ||
-  exit 1
+  GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log"
+'
 
 # note that cvs doesn't accept absolute pathnames
 # as argument to co -d
