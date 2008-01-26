@@ -35,7 +35,11 @@ include::urls-remotes.txt[]
 include::merge-strategies.txt[]
 
 \--rebase::
-	Instead of a merge, perform a rebase after fetching.
+	Instead of a merge, perform a rebase after fetching.  If
+	there is a remote ref for the upstream branch, and this branch
+	was rebased since last fetched, the rebase uses that information
+	to avoid rebasing non-local changes.
+
 	*NOTE:* This is a potentially _dangerous_ mode of operation.
 	It rewrites history, which does not bode well when you
 	published that history already.  Do *not* use this option
