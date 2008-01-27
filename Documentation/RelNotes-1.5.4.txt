@@ -11,7 +11,7 @@ Removal
    helper script lost all its users and has been removed.
 
 
-Temporarily Disabled
+Temporarily disabled
 --------------------
 
  * "git http-push" is known not to work well with cURL library older
@@ -27,10 +27,10 @@ Temporarily Disabled
 Deprecation notices
 -------------------
 
- * The next feature release of git (this change is scheduled for v1.6.0)
-   will by default install dashed form of commands (e.g. "git-commit")
-   outside of users' normal $PATH, and will install only selected
-   commands ("git" itself, and "gitk") in $PATH.  This implies:
+ * From v1.6.0, git will by default install dashed form of commands
+   (e.g. "git-commit") outside of users' normal $PATH, and will install
+   only selected commands ("git" itself, and "gitk") in $PATH.  This
+   implies:
 
    - Using dashed forms of git commands (e.g. "git-commit") from the
      command line has been informally deprecated since early 2006, but
@@ -44,8 +44,8 @@ Deprecation notices
    - Use of dashed forms with "PATH=$(git --exec-path):$PATH; export
      PATH" early in your script is not deprecated with this change.
 
-  Users are strongly encouraged to adjust their habits and scripts now
-  to prepare for this.
+   Users are strongly encouraged to adjust their habits and scripts now
+   to prepare for this change.
 
  * The post-receive hook was introduced in March 2007 to supersede
    the post-update hook, primarily to overcome the command line length
@@ -80,7 +80,7 @@ Updates since v1.5.3
 
  * Comes with much improved gitk, with i18n.
 
- * Comes with "git gui" 0.9.1 with i18n.
+ * Comes with git-gui 0.9.2 with i18n.
 
  * gitk is now merged as a subdirectory of git.git project, in
    preparation for its i18n.
@@ -242,8 +242,8 @@ Updates since v1.5.3
    from its first parent.
 
  * "git commit" used to unconditionally strip comment lines that
-   began with '#' and removed excess blank lines.  This
-   behaviour has been made configurable.
+   began with '#' and removed excess blank lines.  This behavior has
+   been made configurable.
 
  * "git commit" has been rewritten in C.
 
@@ -327,7 +327,7 @@ Updates since v1.5.3
 
  * "git status" from a subdirectory now shows relative paths, which
    makes copy-and-pasting for git-checkout/git-add/git-rm easier.  The
-   traditional behaviour to show the full path relative to the top of
+   traditional behavior to show the full path relative to the top of
    the work tree can be had by setting status.relativepaths
    configuration variable to false.
 
@@ -351,6 +351,7 @@ Updates since v1.5.3
 
    - enhancement and more use of the strbuf API.
 
+ * Makefile tweaks to support HP-UX is in.
 
 Fixes since v1.5.3
 ------------------
@@ -377,6 +378,6 @@ series.
 
 --
 exec >/var/tmp/1
-O=v1.5.4-rc4
+O=v1.5.4-rc5
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
