@@ -189,6 +189,9 @@ cd "$tempdir/t" &&
 workdir="$(pwd)" ||
 die ""
 
+# Remove tempdir on exit
+trap 'cd ../..; rm -rf "$tempdir"' 0
+
 # Make sure refs/original is empty
 git for-each-ref > "$tempdir"/backup-refs
 while read sha1 type name
@@ -405,6 +408,8 @@ fi
 
 cd ../..
 rm -rf "$tempdir"
+
+trap - 0
 
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 test -z "$ORIG_GIT_DIR" || GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
