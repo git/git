@@ -1579,6 +1579,16 @@ static int find_pos(struct image *img,
 	if (preimage->nr > img->nr)
 		return -1;
 
+	/*
+	 * If match_begining or match_end is specified, there is no
+	 * point starting from a wrong line that will never match and
+	 * wander around and wait for a match at the specified end.
+	 */
+	if (match_beginning)
+		line = 0;
+	else if (match_end)
+		line = img->nr - preimage->nr;
+
 	try = 0;
 	for (i = 0; i < line; i++)
 		try += img->line[i].len;
