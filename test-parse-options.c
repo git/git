@@ -19,6 +19,7 @@ int main(int argc, const char **argv)
 		OPT_STRING('s', "string", &string, "string", "get a string"),
 		OPT_STRING(0, "string2", &string, "str", "get another string"),
 		OPT_STRING(0, "st", &string, "st", "get another string (pervert ordering)"),
+		OPT_STRING('o', NULL, &string, "str", "get another string"),
 		OPT_END(),
 	};
 	int i;

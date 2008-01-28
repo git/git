@@ -106,6 +106,15 @@ error_on_no_merge_candidates () {
 	exit 1
 }
 
+test true = "$rebase" && {
+	. git-parse-remote &&
+	origin="$1"
+	test -z "$origin" && origin=$(get_default_remote)
+	reflist="$(get_remote_refs_for_fetch "$@" 2>/dev/null |
+		sed "s|refs/heads/\(.*\):|\1|")" &&
+	oldremoteref="$(git rev-parse --verify \
+		"refs/remotes/$origin/$reflist" 2>/dev/null)"
+}
 orig_head=$(git rev-parse --verify HEAD 2>/dev/null)
 git-fetch --update-head-ok "$@" || exit 1
 
@@ -164,6 +173,7 @@ then
 fi
 
 merge_name=$(git fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
-test true = "$rebase" && exec git-rebase $merge_head
+test true = "$rebase" &&
+	exec git-rebase --onto $merge_head ${oldremoteref:-$merge_head}
 exec git-merge $no_summary $no_commit $squash $no_ff $strategy_args \
 	"$merge_name" HEAD $merge_head

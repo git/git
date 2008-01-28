@@ -462,7 +462,7 @@ EOT
 		exit(0);
 	}
 
-	@files = ($compose_filename . ".final");
+	@files = ($compose_filename . ".final", @files);
 }
 
 # Variables we set as part of the loop over files

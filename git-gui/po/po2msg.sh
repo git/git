@@ -127,7 +127,26 @@ foreach file $files {
 }
 
 if {$show_statistics} {
-	puts [concat "$translated_count translated messages, " \
-		"$fuzzy_count fuzzy ones, " \
-		"$not_translated_count untranslated ones."]
+	set str ""
+
+	append str  "$translated_count translated message"
+	if {$translated_count != 1} {
+		append str s
+	}
+
+	if {$fuzzy_count > 1} {
+		append str  ", $fuzzy_count fuzzy translation"
+		if {$fuzzy_count != 1} {
+			append str s
+		}
+	}
+	if {$not_translated_count > 0} {
+		append str  ", $not_translated_count untranslated message"
+		if {$not_translated_count != 1} {
+			append str s
+		}
+	}
+
+	append str  .
+	puts $str
 }

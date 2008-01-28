@@ -1672,7 +1672,8 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 		p[i].data_ready = 0;
 
 		/* try to split chunks on "path" boundaries */
-		while (sub_size < list_size && list[sub_size]->hash &&
+		while (sub_size && sub_size < list_size &&
+		       list[sub_size]->hash &&
 		       list[sub_size]->hash == list[sub_size-1]->hash)
 			sub_size++;
 

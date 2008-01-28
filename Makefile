@@ -42,6 +42,8 @@ all::
 #
 # Define NO_MKDTEMP if you don't have mkdtemp in the C library.
 #
+# Define NO_SYS_SELECT_H if you don't have sys/select.h.
+#
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
@@ -502,6 +504,17 @@ ifeq ($(uname_S),IRIX64)
 	# for now, build 32-bit version
 	BASIC_LDFLAGS += -L/usr/lib32
 endif
+ifeq ($(uname_S),HP-UX)
+	NO_IPV6=YesPlease
+	NO_SETENV=YesPlease
+	NO_STRCASESTR=YesPlease
+	NO_MEMMEM = YesPlease
+	NO_STRLCPY = YesPlease
+	NO_MKDTEMP = YesPlease
+	NO_UNSETENV = YesPlease
+	NO_HSTRERROR = YesPlease
+	NO_SYS_SELECT_H = YesPlease
+endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MMAP = YesPlease
 	NO_PREAD = YesPlease
@@ -667,6 +680,9 @@ endif
 ifdef NO_UNSETENV
 	COMPAT_CFLAGS += -DNO_UNSETENV
 	COMPAT_OBJS += compat/unsetenv.o
+endif
+ifdef NO_SYS_SELECT_H
+	BASIC_CFLAGS += -DNO_SYS_SELECT_H
 endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
@@ -961,7 +977,7 @@ git-%$X: %.o $(GITLIBS)
 
 git-imap-send$X: imap-send.o $(LIB_FILE)
 
-http.o http-walker.o http-push.o: http.h
+http.o http-walker.o http-push.o transport.o: http.h
 
 git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \

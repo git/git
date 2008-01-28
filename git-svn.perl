@@ -1408,11 +1408,9 @@ sub read_all_remotes {
 }
 
 sub init_vars {
-	if (defined $_repack) {
-		$_repack = 1000 if ($_repack <= 0);
-		$_repack_nr = $_repack;
-		$_repack_flags ||= '-d';
-	}
+	$_repack = 1000 unless (defined $_repack && $_repack > 0);
+	$_repack_nr = $_repack;
+	$_repack_flags ||= '-d';
 }
 
 sub verify_remotes_sanity {
@@ -2151,7 +2149,7 @@ sub do_git_commit {
 		                   0, $self->svm_uuid);
 	}
 	print " = $commit ($self->{ref_id})\n";
-	if (defined $_repack && (--$_repack_nr == 0)) {
+	if ($_repack && (--$_repack_nr == 0)) {
 		$_repack_nr = $_repack;
 		# repack doesn't use any arguments with spaces in them, does it?
 		print "Running git repack $_repack_flags ...\n";
