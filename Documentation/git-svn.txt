@@ -456,10 +456,13 @@ have each person clone that repository with 'git clone':
 ------------------------------------------------------------------------
 # Do the initial import on a server
 	ssh server "cd /pub && git-svn clone http://svn.foo.org/project
-# Clone locally
-	git clone server:/pub/project
-# Tell git-svn which branch contains the Subversion commits
-	git update-ref refs/remotes/git-svn origin/master
+# Clone locally - make sure the refs/remotes/ space matches the server
+	mkdir project
+	cd project
+	git-init
+	git remote add origin server:/pub/project
+	git config --add remote.origin.fetch=+refs/remotes/*:refs/remotes/*
+	git fetch
 # Initialize git-svn locally (be sure to use the same URL and -T/-b/-t options as were used on server)
 	git-svn init http://svn.foo.org/project
 # Pull the latest changes from Subversion

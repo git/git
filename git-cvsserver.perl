@@ -2543,8 +2543,15 @@ sub update
                     if ($parent eq $lastpicked) {
                         next;
                     }
-                    my $base = safe_pipe_capture('git-merge-base',
+		    my $base = eval {
+			    safe_pipe_capture('git-merge-base',
 						 $lastpicked, $parent);
+		    };
+		    # The two branches may not be related at all,
+		    # in which case merge base simply fails to find
+		    # any, but that's Ok.
+		    next if ($@);
+
                     chomp $base;
                     if ($base) {
                         my @merged;

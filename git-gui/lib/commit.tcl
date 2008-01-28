@@ -192,45 +192,52 @@ A good commit message has the following format:
 		return
 	}
 
+	# -- Build the message file.
+	#
+	set msg_p [gitdir GITGUI_EDITMSG]
+	set msg_wt [open $msg_p w]
+	fconfigure $msg_wt -translation lf
+	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
+		set enc utf-8
+	}
+	set use_enc [tcl_encoding $enc]
+	if {$use_enc ne {}} {
+		fconfigure $msg_wt -encoding $use_enc
+	} else {
+		puts stderr [mc "warning: Tcl does not support encoding '%s'." $enc]
+		fconfigure $msg_wt -encoding utf-8
+	}
+	puts $msg_wt $msg
+	close $msg_wt
+
 	# -- Run the pre-commit hook.
 	#
-	set pchook [gitdir hooks pre-commit]
-
-	# On Cygwin [file executable] might lie so we need to ask
-	# the shell if the hook is executable.  Yes that's annoying.
-	#
-	if {[is_Cygwin] && [file isfile $pchook]} {
-		set pchook [list sh -c [concat \
-			"if test -x \"$pchook\";" \
-			"then exec \"$pchook\" 2>&1;" \
-			"fi"]]
-	} elseif {[file executable $pchook]} {
-		set pchook [list $pchook |& cat]
-	} else {
-		commit_writetree $curHEAD $msg
+	set fd_ph [githook_read pre-commit]
+	if {$fd_ph eq {}} {
+		commit_commitmsg $curHEAD $msg_p
 		return
 	}
 
 	ui_status {Calling pre-commit hook...}
 	set pch_error {}
-	set fd_ph [open "| $pchook" r]
 	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 	fileevent $fd_ph readable \
-		[list commit_prehook_wait $fd_ph $curHEAD $msg]
+		[list commit_prehook_wait $fd_ph $curHEAD $msg_p]
 }
 
-proc commit_prehook_wait {fd_ph curHEAD msg} {
+proc commit_prehook_wait {fd_ph curHEAD msg_p} {
 	global pch_error
 
 	append pch_error [read $fd_ph]
 	fconfigure $fd_ph -blocking 1
 	if {[eof $fd_ph]} {
 		if {[catch {close $fd_ph}]} {
+			catch {file delete $msg_p}
 			ui_status {Commit declined by pre-commit hook.}
 			hook_failed_popup pre-commit $pch_error
 			unlock_index
 		} else {
-			commit_writetree $curHEAD $msg
+			commit_commitmsg $curHEAD $msg_p
 		}
 		set pch_error {}
 		return
@@ -238,14 +245,52 @@ proc commit_prehook_wait {fd_ph curHEAD msg} {
 	fconfigure $fd_ph -blocking 0
 }
 
-proc commit_writetree {curHEAD msg} {
+proc commit_commitmsg {curHEAD msg_p} {
+	global pch_error
+
+	# -- Run the commit-msg hook.
+	#
+	set fd_ph [githook_read commit-msg $msg_p]
+	if {$fd_ph eq {}} {
+		commit_writetree $curHEAD $msg_p
+		return
+	}
+
+	ui_status {Calling commit-msg hook...}
+	set pch_error {}
+	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fileevent $fd_ph readable \
+		[list commit_commitmsg_wait $fd_ph $curHEAD $msg_p]
+}
+
+proc commit_commitmsg_wait {fd_ph curHEAD msg_p} {
+	global pch_error
+
+	append pch_error [read $fd_ph]
+	fconfigure $fd_ph -blocking 1
+	if {[eof $fd_ph]} {
+		if {[catch {close $fd_ph}]} {
+			catch {file delete $msg_p}
+			ui_status {Commit declined by commit-msg hook.}
+			hook_failed_popup commit-msg $pch_error
+			unlock_index
+		} else {
+			commit_writetree $curHEAD $msg_p
+		}
+		set pch_error {}
+		return
+	}
+	fconfigure $fd_ph -blocking 0
+}
+
+proc commit_writetree {curHEAD msg_p} {
 	ui_status {Committing changes...}
 	set fd_wt [git_read write-tree]
 	fileevent $fd_wt readable \
-		[list commit_committree $fd_wt $curHEAD $msg]
+		[list commit_committree $fd_wt $curHEAD $msg_p]
 }
 
-proc commit_committree {fd_wt curHEAD msg} {
+proc commit_committree {fd_wt curHEAD msg_p} {
 	global HEAD PARENT MERGE_HEAD commit_type
 	global current_branch
 	global ui_comm selected_commit_type
@@ -254,6 +299,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 
 	gets $fd_wt tree_id
 	if {[catch {close $fd_wt} err]} {
+		catch {file delete $msg_p}
 		error_popup [strcat [mc "write-tree failed:"] "\n\n$err"]
 		ui_status {Commit failed.}
 		unlock_index
@@ -276,6 +322,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 		}
 
 		if {$tree_id eq $old_tree} {
+			catch {file delete $msg_p}
 			info_popup [mc "No changes to commit.
 
 No files were modified by this commit and it was not a merge commit.
@@ -288,24 +335,6 @@ A rescan will be automatically started now.
 		}
 	}
 
-	# -- Build the message.
-	#
-	set msg_p [gitdir COMMIT_EDITMSG]
-	set msg_wt [open $msg_p w]
-	fconfigure $msg_wt -translation lf
-	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
-		set enc utf-8
-	}
-	set use_enc [tcl_encoding $enc]
-	if {$use_enc ne {}} {
-		fconfigure $msg_wt -encoding $use_enc
-	} else {
-		puts stderr [mc "warning: Tcl does not support encoding '%s'." $enc]
-		fconfigure $msg_wt -encoding utf-8
-	}
-	puts $msg_wt $msg
-	close $msg_wt
-
 	# -- Create the commit.
 	#
 	set cmd [list commit-tree $tree_id]
@@ -314,6 +343,7 @@ A rescan will be automatically started now.
 	}
 	lappend cmd <$msg_p
 	if {[catch {set cmt_id [eval git $cmd]} err]} {
+		catch {file delete $msg_p}
 		error_popup [strcat [mc "commit-tree failed:"] "\n\n$err"]
 		ui_status {Commit failed.}
 		unlock_index
@@ -326,16 +356,14 @@ A rescan will be automatically started now.
 	if {$commit_type ne {normal}} {
 		append reflogm " ($commit_type)"
 	}
-	set i [string first "\n" $msg]
-	if {$i >= 0} {
-		set subject [string range $msg 0 [expr {$i - 1}]]
-	} else {
-		set subject $msg
-	}
+	set msg_fd [open $msg_p r]
+	gets $msg_fd subject
+	close $msg_fd
 	append reflogm {: } $subject
 	if {[catch {
 			git update-ref -m $reflogm HEAD $cmt_id $curHEAD
 		} err]} {
+		catch {file delete $msg_p}
 		error_popup [strcat [mc "update-ref failed:"] "\n\n$err"]
 		ui_status {Commit failed.}
 		unlock_index
@@ -363,17 +391,13 @@ A rescan will be automatically started now.
 
 	# -- Run the post-commit hook.
 	#
-	set pchook [gitdir hooks post-commit]
-	if {[is_Cygwin] && [file isfile $pchook]} {
-		set pchook [list sh -c [concat \
-			"if test -x \"$pchook\";" \
-			"then exec \"$pchook\";" \
-			"fi"]]
-	} elseif {![file executable $pchook]} {
-		set pchook {}
-	}
-	if {$pchook ne {}} {
-		catch {exec $pchook &}
+	set fd_ph [githook_read post-commit]
+	if {$fd_ph ne {}} {
+		upvar #0 pch_error$cmt_id pc_err
+		set pc_err {}
+		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+		fileevent $fd_ph readable \
+			[list commit_postcommit_wait $fd_ph $cmt_id]
 	}
 
 	$ui_comm delete 0.0 end
@@ -428,4 +452,19 @@ A rescan will be automatically started now.
 	unlock_index
 	reshow_diff
 	ui_status [mc "Created commit %s: %s" [string range $cmt_id 0 7] $subject]
+}
+
+proc commit_postcommit_wait {fd_ph cmt_id} {
+	upvar #0 pch_error$cmt_id pch_error
+
+	append pch_error [read $fd_ph]
+	fconfigure $fd_ph -blocking 1
+	if {[eof $fd_ph]} {
+		if {[catch {close $fd_ph}]} {
+			hook_failed_popup post-commit $pch_error 0
+		}
+		unset pch_error
+		return
+	}
+	fconfigure $fd_ph -blocking 0
 }

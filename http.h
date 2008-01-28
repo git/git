@@ -8,6 +8,14 @@
 
 #include "strbuf.h"
 
+/*
+ * We detect based on the cURL version if multi-transfer is
+ * usable in this implementation and define this symbol accordingly.
+ * This is not something Makefile should set nor users should pass
+ * via CFLAGS.
+ */
+#undef USE_CURL_MULTI
+
 #if LIBCURL_VERSION_NUM >= 0x071000
 #define USE_CURL_MULTI
 #define DEFAULT_MAX_REQUESTS 5

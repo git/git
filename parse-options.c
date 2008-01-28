@@ -216,6 +216,26 @@ is_abbreviated:
 	return error("unknown option `%s'", arg);
 }
 
+void check_typos(const char *arg, const struct option *options)
+{
+	if (strlen(arg) < 3)
+		return;
+
+	if (!prefixcmp(arg, "no-")) {
+		error ("did you mean `--%s` (with two dashes ?)", arg);
+		exit(129);
+	}
+
+	for (; options->type != OPTION_END; options++) {
+		if (!options->long_name)
+			continue;
+		if (!prefixcmp(options->long_name, arg)) {
+			error ("did you mean `--%s` (with two dashes ?)", arg);
+			exit(129);
+		}
+	}
+}
+
 static NORETURN void usage_with_options_internal(const char * const *,
                                                  const struct option *, int);
 
@@ -235,12 +255,18 @@ int parse_options(int argc, const char **argv, const struct option *options,
 
 		if (arg[1] != '-') {
 			args.opt = arg + 1;
-			do {
+			if (*args.opt == 'h')
+				usage_with_options(usagestr, options);
+			if (parse_short_opt(&args, options) < 0)
+				usage_with_options(usagestr, options);
+			if (args.opt)
+				check_typos(arg + 1, options);
+			while (args.opt) {
 				if (*args.opt == 'h')
 					usage_with_options(usagestr, options);
 				if (parse_short_opt(&args, options) < 0)
 					usage_with_options(usagestr, options);
-			} while (args.opt);
+			}
 			continue;
 		}
 

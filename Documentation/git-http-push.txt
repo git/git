@@ -15,6 +15,9 @@ DESCRIPTION
 Sends missing objects to remote repository, and updates the
 remote branch.
 
+*NOTE*: This command is temporarily disabled if your cURL
+library is older than 7.16, as the combination has been reported
+not to work and sometimes corrupts repository.
 
 OPTIONS
 -------

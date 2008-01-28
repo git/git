@@ -19,6 +19,7 @@ string options
                           get a string
     --string2 <str>       get another string
     --st <st>             get another string (pervert ordering)
+    -o <str>              get another string
 
 EOF
 
@@ -101,6 +102,16 @@ test_expect_success 'non ambiguous option (after two options it abbreviates)' '
 	test-parse-options --st 123 > output 2> output.err &&
 	test ! -s output.err &&
 	git diff expect output
+'
+
+cat > expect.err << EOF
+error: did you mean \`--boolean\` (with two dashes ?)
+EOF
+
+test_expect_success 'detect possible typos' '
+	! test-parse-options -boolean > output 2> output.err &&
+	test ! -s output &&
+	git diff expect.err output.err
 '
 
 test_done
