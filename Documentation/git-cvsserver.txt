@@ -204,7 +204,7 @@ about `DBI->connect()`.
 
 gitcvs.dbname::
 	Database name. The exact meaning depends on the
-	used database driver, for SQLite this is a filename.
+	selected database driver, for SQLite this is a filename.
 	Supports variable substitution (see below). May
 	not contain semicolons (`;`).
 	Default: '%Ggitcvs.%m.sqlite'
@@ -215,7 +215,7 @@ gitcvs.dbdriver::
 	with 'DBD::SQLite', reported to work with
 	'DBD::Pg', and reported *not* to work with 'DBD::mysql'.
 	Please regard this as an experimental feature. May not
-	contain double colons (`:`).
+	contain colons (`:`).
 	Default: 'SQLite'
 
 gitcvs.dbuser::

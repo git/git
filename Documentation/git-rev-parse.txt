@@ -229,13 +229,13 @@ blobs contained in a commit.
 * A colon, optionally followed by a stage number (0 to 3) and a
   colon, followed by a path; this names a blob object in the
   index at the given path.  Missing stage number (and the colon
-  that follows it) names an stage 0 entry. During a merge, stage
+  that follows it) names a stage 0 entry. During a merge, stage
   1 is the common ancestor, stage 2 is the target branch's version
   (typically the current branch), and stage 3 is the version from
   the branch being merged.
 
 Here is an illustration, by Jon Loeliger.  Both node B and C are
-a commit parents of commit node A.  Parent commits are ordered
+commit parents of commit node A.  Parent commits are ordered
 left-to-right.
 
     G   H   I   J
@@ -291,7 +291,7 @@ and its parent commits exists.  `r1{caret}@` notation means all
 parents of `r1`.  `r1{caret}!` includes commit `r1` but excludes
 its all parents.
 
-Here are a handful examples:
+Here are a handful of examples:
 
    D                G H D
    D F              G H I J D F
