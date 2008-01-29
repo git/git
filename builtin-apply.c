@@ -170,6 +170,7 @@ struct line {
 	size_t len;
 	unsigned hash : 24;
 	unsigned flag : 8;
+#define LINE_COMMON     1
 };
 
 /*
@@ -179,6 +180,7 @@ struct image {
 	char *buf;
 	size_t len;
 	size_t nr;
+	size_t alloc;
 	struct line *line_allocated;
 	struct line *line;
 };
@@ -195,49 +197,39 @@ static uint32_t hash_line(const char *cp, size_t len)
 	return h;
 }
 
+static void add_line_info(struct image *img, const char *bol, size_t len, unsigned flag)
+{
+	ALLOC_GROW(img->line_allocated, img->nr + 1, img->alloc);
+	img->line_allocated[img->nr].len = len;
+	img->line_allocated[img->nr].hash = hash_line(bol, len);
+	img->line_allocated[img->nr].flag = flag;
+	img->nr++;
+}
+
 static void prepare_image(struct image *image, char *buf, size_t len,
 			  int prepare_linetable)
 {
 	const char *cp, *ep;
-	int n;
 
+	memset(image, 0, sizeof(*image));
 	image->buf = buf;
 	image->len = len;
 
-	if (!prepare_linetable) {
-		image->line = NULL;
-		image->line_allocated = NULL;
-		image->nr = 0;
+	if (!prepare_linetable)
 		return;
-	}
 
 	ep = image->buf + image->len;
-
-	/* First count lines */
 	cp = image->buf;
-	n = 0;
-	while (cp < ep) {
-		cp = strchrnul(cp, '\n');
-		n++;
-		cp++;
-	}
-
-	image->line_allocated = xcalloc(n, sizeof(struct line));
-	image->line = image->line_allocated;
-	image->nr = n;
-	cp = image->buf;
-	n = 0;
 	while (cp < ep) {
 		const char *next;
 		for (next = cp; next < ep && *next != '\n'; next++)
 			;
 		if (next < ep)
 			next++;
-		image->line[n].len = next - cp;
-		image->line[n].hash = hash_line(cp, next - cp);
+		add_line_info(image, cp, next - cp, 0);
 		cp = next;
-		n++;
 	}
+	image->line = image->line_allocated;
 }
 
 static void clear_image(struct image *image)
@@ -1822,6 +1814,9 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	struct image preimage;
 	struct image postimage;
 
+	memset(&preimage, 0, sizeof(preimage));
+	memset(&postimage, 0, sizeof(postimage));
+
 	while (size > 0) {
 		char first;
 		int len = linelen(patch, size);
@@ -1857,10 +1852,14 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				break;
 			old[oldsize++] = '\n';
 			new[newsize++] = '\n';
+			add_line_info(&preimage, "\n", 1, LINE_COMMON);
+			add_line_info(&postimage, "\n", 1, LINE_COMMON);
 			break;
 		case ' ':
 		case '-':
 			memcpy(old + oldsize, patch + 1, plen);
+			add_line_info(&preimage, old + oldsize, plen,
+				      (first == ' ' ? LINE_COMMON : 0));
 			oldsize += plen;
 			if (first == '-')
 				break;
@@ -1869,6 +1868,9 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 			if (first != '+' || !no_add) {
 				int added = apply_line(new + newsize, patch,
 						       plen, ws_rule);
+				add_line_info(&postimage, new + newsize, added,
+					      (first == '+' ? 0 : LINE_COMMON));
+
 				newsize += added;
 				if (first == '+' &&
 				    added == 1 && new[newsize-1] == '\n')
@@ -1921,8 +1923,13 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	}
 
 	pos = frag->newpos ? (frag->newpos - 1) : 0;
-	prepare_image(&preimage, oldlines, oldsize, 1);
-	prepare_image(&postimage, newlines, newsize, 1);
+	preimage.buf = old;
+	preimage.len = oldsize;
+	postimage.buf = new;
+	postimage.len = newsize;
+	preimage.line = preimage.line_allocated;
+	postimage.line = postimage.line_allocated;
+
 	for (;;) {
 
 		applied_pos = find_pos(img, &preimage, &postimage,
