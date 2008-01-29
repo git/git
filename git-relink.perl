@@ -40,7 +40,7 @@ my $master_dir = pop @dirs;
 opendir(D,$master_dir . "objects/")
 	or die "Failed to open $master_dir/objects/ : $!";
 
-my @hashdirs = grep !/^\.{1,2}$/, readdir(D);
+my @hashdirs = grep { ($_ eq 'pack') || /^[0-9a-f]{2}$/ } readdir(D);
 
 foreach my $repo (@dirs) {
 	$linked = 0;
