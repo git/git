@@ -114,7 +114,6 @@ orig_namespace=refs/original/
 force=
 while :
 do
-	test $# = 0 && usage
 	case "$1" in
 	--)
 		shift
@@ -213,7 +212,7 @@ GIT_WORK_TREE=.
 export GIT_DIR GIT_WORK_TREE
 
 # The refs should be updated if their heads were rewritten
-git rev-parse --no-flags --revs-only --symbolic-full-name "$@" |
+git rev-parse --no-flags --revs-only --symbolic-full-name --default HEAD "$@" |
 sed -e '/^^/d' >"$tempdir"/heads
 
 test -s "$tempdir"/heads ||
