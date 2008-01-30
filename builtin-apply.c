@@ -1614,6 +1614,7 @@ static int match_fragment(struct image *img,
 			  struct image *postimage,
 			  unsigned long try,
 			  int try_lno,
+			  unsigned ws_rule,
 			  int match_beginning, int match_end)
 {
 	int i;
@@ -1656,6 +1657,7 @@ static int find_pos(struct image *img,
 		    struct image *preimage,
 		    struct image *postimage,
 		    int line,
+		    unsigned ws_rule,
 		    int match_beginning, int match_end)
 {
 	int i;
@@ -1691,7 +1693,7 @@ static int find_pos(struct image *img,
 
 	for (i = 0; ; i++) {
 		if (match_fragment(img, preimage, postimage,
-				   try, try_lno,
+				   try, try_lno, ws_rule,
 				   match_beginning, match_end))
 			return try_lno;
 
@@ -1930,8 +1932,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 
 	for (;;) {
 
-		applied_pos = find_pos(img, &preimage, &postimage,
-				       pos, match_beginning, match_end);
+		applied_pos = find_pos(img, &preimage, &postimage, pos,
+				       ws_rule, match_beginning, match_end);
 
 		if (applied_pos >= 0)
 			break;
