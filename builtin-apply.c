@@ -1516,7 +1516,7 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 }
 
 static int copy_wsfix(char *output, const char *patch, int plen,
-		      unsigned ws_rule)
+		      unsigned ws_rule, int count_error)
 {
 	/*
 	 * plen is number of bytes to be copied from patch, starting
@@ -1604,9 +1604,72 @@ static int copy_wsfix(char *output, const char *patch, int plen,
 	memcpy(output, patch, plen);
 	if (add_nl_to_tail)
 		output[plen++] = '\n';
-	if (fixed)
+	if (fixed && count_error)
 		applied_after_fixing_ws++;
 	return output + plen - buf;
+}
+
+static void update_pre_post_images(struct image *preimage,
+				   struct image *postimage,
+				   char *buf,
+				   size_t len)
+{
+	int i, ctx;
+	char *new, *old, *fixed;
+	struct image fixed_preimage;
+
+	/*
+	 * Update the preimage with whitespace fixes.  Note that we
+	 * are not losing preimage->buf -- apply_one_fragment() will
+	 * free "oldlines".
+	 */
+	prepare_image(&fixed_preimage, buf, len, 1);
+	assert(fixed_preimage.nr == preimage->nr);
+	for (i = 0; i < preimage->nr; i++)
+		fixed_preimage.line[i].flag = preimage->line[i].flag;
+	free(preimage->line_allocated);
+	*preimage = fixed_preimage;
+
+	/*
+	 * Adjust the common context lines in postimage, in place.
+	 * This is possible because whitespace fixing does not make
+	 * the string grow.
+	 */
+	new = old = postimage->buf;
+	fixed = preimage->buf;
+	for (i = ctx = 0; i < postimage->nr; i++) {
+		size_t len = postimage->line[i].len;
+		if (!(postimage->line[i].flag & LINE_COMMON)) {
+			/* an added line -- no counterparts in preimage */
+			memmove(new, old, len);
+			old += len;
+			new += len;
+			continue;
+		}
+
+		/* a common context -- skip it in the original postimage */
+		old += len;
+
+		/* and find the corresponding one in the fixed preimage */
+		while (ctx < preimage->nr &&
+		       !(preimage->line[ctx].flag & LINE_COMMON)) {
+			fixed += preimage->line[ctx].len;
+			ctx++;
+		}
+		if (preimage->nr <= ctx)
+			die("oops");
+
+		/* and copy it in, while fixing the line length */
+		len = preimage->line[ctx].len;
+		memcpy(new, fixed, len);
+		new += len;
+		fixed += len;
+		postimage->line[i].len = len;
+		ctx++;
+	}
+
+	/* Fix the length of the whole thing */
+	postimage->len = new - postimage->buf;
 }
 
 static int match_fragment(struct image *img,
@@ -1618,6 +1681,7 @@ static int match_fragment(struct image *img,
 			  int match_beginning, int match_end)
 {
 	int i;
+	char *fixed_buf, *buf, *orig, *target;
 
 	if (preimage->nr + try_lno > img->nr)
 		return 0;
@@ -1646,10 +1710,68 @@ static int match_fragment(struct image *img,
 	    !memcmp(img->buf + try, preimage->buf, preimage->len))
 		return 1;
 
+	if (ws_error_action != correct_ws_error)
+		return 0;
+
 	/*
-	 * NEEDSWORK: We can optionally match fuzzily here, but
-	 * that is for a later round.
+	 * The hunk does not apply byte-by-byte, but the hash says
+	 * it might with whitespace fuzz.
 	 */
+	fixed_buf = xmalloc(preimage->len + 1);
+	buf = fixed_buf;
+	orig = preimage->buf;
+	target = img->buf + try;
+	for (i = 0; i < preimage->nr; i++) {
+		size_t fixlen; /* length after fixing the preimage */
+		size_t oldlen = preimage->line[i].len;
+		size_t tgtlen = img->line[try_lno + i].len;
+		size_t tgtfixlen; /* length after fixing the target line */
+		char tgtfixbuf[1024], *tgtfix;
+		int match;
+
+		/* Try fixing the line in the preimage */
+		fixlen = copy_wsfix(buf, orig, oldlen, ws_rule, 0);
+
+		/* Try fixing the line in the target */
+		if (sizeof(tgtfixbuf) < tgtlen)
+			tgtfix = tgtfixbuf;
+		else
+			tgtfix = xmalloc(tgtlen);
+		tgtfixlen = copy_wsfix(tgtfix, target, tgtlen, ws_rule, 0);
+
+		/*
+		 * If they match, either the preimage was based on
+		 * a version before our tree fixed whitespace breakage,
+		 * or we are lacking a whitespace-fix patch the tree
+		 * the preimage was based on already had (i.e. target
+		 * has whitespace breakage, the preimage doesn't).
+		 * In either case, we are fixing the whitespace breakages
+		 * so we might as well take the fix together with their
+		 * real change.
+		 */
+		match = (tgtfixlen == fixlen && !memcmp(tgtfix, buf, fixlen));
+
+		if (tgtfix != tgtfixbuf)
+			free(tgtfix);
+		if (!match)
+			goto unmatch_exit;
+
+		orig += oldlen;
+		buf += fixlen;
+		target += tgtlen;
+	}
+
+	/*
+	 * Yes, the preimage is based on an older version that still
+	 * has whitespace breakages unfixed, and fixing them makes the
+	 * hunk match.  Update the context lines in the postimage.
+	 */
+	update_pre_post_images(preimage, postimage,
+			       fixed_buf, buf - fixed_buf);
+	return 1;
+
+ unmatch_exit:
+	free(fixed_buf);
 	return 0;
 }
 
@@ -1871,7 +1993,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				added = plen;
 			}
 			else {
-				added = copy_wsfix(new, patch + 1, plen, ws_rule);
+				added = copy_wsfix(new, patch + 1, plen,
+						   ws_rule, 1);
 			}
 			add_line_info(&postimage, new, added,
 				      (first == '+' ? 0 : LINE_COMMON));
