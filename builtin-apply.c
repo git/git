@@ -1804,10 +1804,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	int match_beginning, match_end;
 	const char *patch = frag->patch;
 	int size = frag->size;
-	char *old = xmalloc(size);
-	char *new = xmalloc(size);
-	char *oldlines, *newlines;
-	int oldsize = 0, newsize = 0;
+	char *old, *new, *oldlines, *newlines;
 	int new_blank_lines_at_end = 0;
 	unsigned long leading, trailing;
 	int pos, applied_pos;
@@ -1816,7 +1813,11 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 
 	memset(&preimage, 0, sizeof(preimage));
 	memset(&postimage, 0, sizeof(postimage));
+	oldlines = xmalloc(size);
+	newlines = xmalloc(size);
 
+	old = oldlines;
+	new = newlines;
 	while (size > 0) {
 		char first;
 		int len = linelen(patch, size);
@@ -1833,7 +1834,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		 * followed by "\ No newline", then we also remove the
 		 * last one (which is the newline, of course).
 		 */
-		plen = len-1;
+		plen = len - 1;
 		if (len < size && patch[len] == '\\')
 			plen--;
 		first = *patch;
@@ -1850,30 +1851,30 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 			if (plen < 0)
 				/* ... followed by '\No newline'; nothing */
 				break;
-			old[oldsize++] = '\n';
-			new[newsize++] = '\n';
+			*old++ = '\n';
+			*new++ = '\n';
 			add_line_info(&preimage, "\n", 1, LINE_COMMON);
 			add_line_info(&postimage, "\n", 1, LINE_COMMON);
 			break;
 		case ' ':
 		case '-':
-			memcpy(old + oldsize, patch + 1, plen);
-			add_line_info(&preimage, old + oldsize, plen,
+			memcpy(old, patch + 1, plen);
+			add_line_info(&preimage, old, plen,
 				      (first == ' ' ? LINE_COMMON : 0));
-			oldsize += plen;
+			old += plen;
 			if (first == '-')
 				break;
 		/* Fall-through for ' ' */
 		case '+':
 			if (first != '+' || !no_add) {
-				int added = apply_line(new + newsize, patch,
+				int added = apply_line(new, patch,
 						       plen, ws_rule);
-				add_line_info(&postimage, new + newsize, added,
+				add_line_info(&postimage, new, added,
 					      (first == '+' ? 0 : LINE_COMMON));
 
-				newsize += added;
+				new += added;
 				if (first == '+' &&
-				    added == 1 && new[newsize-1] == '\n')
+				    added == 1 && new[-1] == '\n')
 					added_blank_line = 1;
 			}
 			break;
@@ -1892,16 +1893,13 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		patch += len;
 		size -= len;
 	}
-
 	if (inaccurate_eof &&
-	    oldsize > 0 && old[oldsize - 1] == '\n' &&
-	    newsize > 0 && new[newsize - 1] == '\n') {
-		oldsize--;
-		newsize--;
+	    old > oldlines && old[-1] == '\n' &&
+	    new > newlines && new[-1] == '\n') {
+		old--;
+		new--;
 	}
 
-	oldlines = old;
-	newlines = new;
 	leading = frag->leading;
 	trailing = frag->trailing;
 
@@ -1923,10 +1921,10 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	}
 
 	pos = frag->newpos ? (frag->newpos - 1) : 0;
-	preimage.buf = old;
-	preimage.len = oldsize;
-	postimage.buf = new;
-	postimage.len = newsize;
+	preimage.buf = oldlines;
+	preimage.len = old - oldlines;
+	postimage.buf = newlines;
+	postimage.len = new - newlines;
 	preimage.line = preimage.line_allocated;
 	postimage.line = postimage.line_allocated;
 
@@ -1990,11 +1988,12 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		update_image(img, applied_pos, &preimage, &postimage);
 	} else {
 		if (apply_verbosely)
-			error("while searching for:\n%.*s", oldsize, oldlines);
+			error("while searching for:\n%.*s",
+			      (int)(old - oldlines), oldlines);
 	}
 
-	free(old);
-	free(new);
+	free(oldlines);
+	free(newlines);
 	free(preimage.line_allocated);
 	free(postimage.line_allocated);
 
