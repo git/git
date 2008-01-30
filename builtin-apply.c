@@ -1642,7 +1642,7 @@ static void remove_last_line(struct image *img)
 	img->len -= img->line[--img->nr].len;
 }
 
-static int apply_line(char *output, const char *patch, int plen,
+static int copy_wsfix(char *output, const char *patch, int plen,
 		      unsigned ws_rule)
 {
 	/*
@@ -1658,12 +1658,6 @@ static int apply_line(char *output, const char *patch, int plen,
 	int last_space_in_indent = 0;
 	int need_fix_leading_space = 0;
 	char *buf;
-
-	if ((ws_error_action != correct_ws_error) || !whitespace_error ||
-	    *patch != '+') {
-		memcpy(output, patch + 1, plen);
-		return plen;
-	}
 
 	/*
 	 * Strip trailing whitespace
@@ -1821,7 +1815,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	while (size > 0) {
 		char first;
 		int len = linelen(patch, size);
-		int plen;
+		int plen, added;
 		int added_blank_line = 0;
 
 		if (!len)
@@ -1866,17 +1860,25 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				break;
 		/* Fall-through for ' ' */
 		case '+':
-			if (first != '+' || !no_add) {
-				int added = apply_line(new, patch,
-						       plen, ws_rule);
-				add_line_info(&postimage, new, added,
-					      (first == '+' ? 0 : LINE_COMMON));
+			/* --no-add does not add new lines */
+			if (first == '+' && no_add)
+				break;
 
-				new += added;
-				if (first == '+' &&
-				    added == 1 && new[-1] == '\n')
-					added_blank_line = 1;
+			if (first != '+' ||
+			    !whitespace_error ||
+			    ws_error_action != correct_ws_error) {
+				memcpy(new, patch + 1, plen);
+				added = plen;
 			}
+			else {
+				added = copy_wsfix(new, patch, plen, ws_rule);
+			}
+			add_line_info(&postimage, new, added,
+				      (first == '+' ? 0 : LINE_COMMON));
+			new += added;
+			if (first == '+' &&
+			    added == 1 && new[-1] == '\n')
+				added_blank_line = 1;
 			break;
 		case '@': case '\\':
 			/* Ignore it, we already handled it */
