@@ -234,8 +234,8 @@ blobs contained in a commit.
   (typically the current branch), and stage 3 is the version from
   the branch being merged.
 
-Here is an illustration, by Jon Loeliger.  Both node B and C are
-commit parents of commit node A.  Parent commits are ordered
+Here is an illustration, by Jon Loeliger.  Both commit nodes B
+and C are parents of commit node A.  Parent commits are ordered
 left-to-right.
 
     G   H   I   J
