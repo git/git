@@ -523,7 +523,7 @@ static void verify_absent(struct cache_entry *ce, const char *action,
 	if (!lstat(ce->name, &st)) {
 		int cnt;
 
-		if (o->dir && excluded(o->dir, ce->name))
+		if (o->dir && excluded(o->dir, ce->name, ce_to_dtype(ce)))
 			/*
 			 * ce->name is explicitly excluded, so it is Ok to
 			 * overwrite it.
