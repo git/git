@@ -68,8 +68,7 @@ struct ref **get_remote_heads(int in, struct ref **list,
 
 		name_len = strlen(name);
 		if (len != name_len + 41) {
-			if (server_capabilities)
-				free(server_capabilities);
+			free(server_capabilities);
 			server_capabilities = xstrdup(name + name_len + 1);
 		}
 

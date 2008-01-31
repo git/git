@@ -126,8 +126,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			continue;
 		}
 
-		if (name)
-			free(name);
+		free(name);
 
 		name = xstrdup(mkpath(fmt, argv[i]));
 		if (!resolve_ref(name, sha1, 1, NULL)) {
@@ -172,8 +171,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 		}
 	}
 
-	if (name)
-		free(name);
+	free(name);
 
 	return(ret);
 }
@@ -490,8 +488,7 @@ static void create_branch(const char *name, const char *start_name,
 	if (write_ref_sha1(lock, sha1, msg) < 0)
 		die("Failed to write ref: %s.", strerror(errno));
 
-	if (real_ref)
-		free(real_ref);
+	free(real_ref);
 }
 
 static void rename_branch(const char *oldname, const char *newname, int force)

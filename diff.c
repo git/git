@@ -118,8 +118,7 @@ static int parse_funcname_pattern(const char *var, const char *ep, const char *v
 		pp->next = funcname_pattern_list;
 		funcname_pattern_list = pp;
 	}
-	if (pp->pattern)
-		free(pp->pattern);
+	free(pp->pattern);
 	pp->pattern = xstrdup(value);
 	return 0;
 }
@@ -492,10 +491,8 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 				ecbdata->diff_words->plus.text.size)
 			diff_words_show(ecbdata->diff_words);
 
-		if (ecbdata->diff_words->minus.text.ptr)
-			free (ecbdata->diff_words->minus.text.ptr);
-		if (ecbdata->diff_words->plus.text.ptr)
-			free (ecbdata->diff_words->plus.text.ptr);
+		free (ecbdata->diff_words->minus.text.ptr);
+		free (ecbdata->diff_words->plus.text.ptr);
 		free(ecbdata->diff_words);
 		ecbdata->diff_words = NULL;
 	}

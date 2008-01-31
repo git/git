@@ -233,8 +233,7 @@ void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value)
 			expression = value;
 		if (regcomp(&reg->re, expression, 0))
 			die("Invalid regexp to look for hunk header: %s", expression);
-		if (buffer)
-			free(buffer);
+		free(buffer);
 		value = ep + 1;
 	}
 }
