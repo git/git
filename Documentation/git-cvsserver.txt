@@ -183,7 +183,7 @@ access method and requested operation.
 That means that even if you offer only read access (e.g. by using
 the pserver method), git-cvsserver should have write access to
 the database to work reliably (otherwise you need to make sure
-that the database if up-to-date all the time git-cvsserver is run).
+that the database is up-to-date any time git-cvsserver is executed).
 
 By default it uses SQLite databases in the git directory, named
 `gitcvs.<module_name>.sqlite`. Note that the SQLite backend creates
