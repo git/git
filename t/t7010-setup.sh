@@ -114,4 +114,51 @@ test_expect_success 'git ls-files (relative #3)' '
 
 '
 
+test_expect_success 'commit using absolute path names' '
+	git commit -m "foo" &&
+	echo aa >>a/b/c/d &&
+	git commit -m "aa" "$(pwd)/a/b/c/d"
+'
+
+test_expect_success 'log using absolute path names' '
+	echo bb >>a/b/c/d &&
+	git commit -m "bb" $(pwd)/a/b/c/d &&
+
+	git log a/b/c/d >f1.txt &&
+	git log "$(pwd)/a/b/c/d" >f2.txt &&
+	diff -u f1.txt f2.txt
+'
+
+test_expect_success 'blame using absolute path names' '
+	git blame a/b/c/d >f1.txt &&
+	git blame "$(pwd)/a/b/c/d" >f2.txt &&
+	diff -u f1.txt f2.txt
+'
+
+test_expect_success 'setup deeper work tree' '
+	test_create_repo tester
+'
+
+test_expect_success 'add a directory outside the work tree' '(
+	cd tester &&
+	d1="$(cd .. ; pwd)" &&
+	git add "$d1"
+)'
+
+test_expect_success 'add a file outside the work tree, nasty case 1' '(
+	cd tester &&
+	f="$(pwd)x" &&
+	echo "$f" &&
+	touch "$f" &&
+	git add "$f"
+)'
+
+test_expect_success 'add a file outside the work tree, nasty case 2' '(
+	cd tester &&
+	f="$(pwd | sed "s/.$//")x" &&
+	echo "$f" &&
+	touch "$f" &&
+	git add "$f"
+)'
+
 test_done
