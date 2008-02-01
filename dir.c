@@ -17,6 +17,7 @@ struct path_simplify {
 static int read_directory_recursive(struct dir_struct *dir,
 	const char *path, const char *base, int baselen,
 	int check_only, const struct path_simplify *simplify);
+static int get_dtype(struct dirent *de, const char *path);
 
 int common_prefix(const char **pathspec)
 {
@@ -277,7 +278,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
  * Return 1 for exclude, 0 for include and -1 for undecided.
  */
 static int excluded_1(const char *pathname,
-		      int pathlen, const char *basename, int dtype,
+		      int pathlen, const char *basename, int *dtype,
 		      struct exclude_list *el)
 {
 	int i;
@@ -288,9 +289,12 @@ static int excluded_1(const char *pathname,
 			const char *exclude = x->pattern;
 			int to_exclude = x->to_exclude;
 
-			if ((x->flags & EXC_FLAG_MUSTBEDIR) &&
-			    (dtype != DT_DIR))
-				continue;
+			if (x->flags & EXC_FLAG_MUSTBEDIR) {
+				if (*dtype == DT_UNKNOWN)
+					*dtype = get_dtype(NULL, pathname);
+				if (*dtype != DT_DIR)
+					continue;
+			}
 
 			if (x->flags & EXC_FLAG_NODIR) {
 				/* match basename */
@@ -334,7 +338,7 @@ static int excluded_1(const char *pathname,
 	return -1; /* undecided */
 }
 
-int excluded(struct dir_struct *dir, const char *pathname, int dtype)
+int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
 {
 	int pathlen = strlen(pathname);
 	int st;
@@ -344,7 +348,7 @@ int excluded(struct dir_struct *dir, const char *pathname, int dtype)
 	prep_exclude(dir, pathname, basename-pathname);
 	for (st = EXC_CMDL; st <= EXC_FILE; st++) {
 		switch (excluded_1(pathname, pathlen, basename,
-				   dtype, &dir->exclude_list[st])) {
+				   dtype_p, &dir->exclude_list[st])) {
 		case 0:
 			return 0;
 		case 1:
@@ -529,7 +533,7 @@ static int in_pathspec(const char *path, int len, const struct path_simplify *si
 
 static int get_dtype(struct dirent *de, const char *path)
 {
-	int dtype = DTYPE(de);
+	int dtype = de ? DTYPE(de) : DT_UNKNOWN;
 	struct stat st;
 
 	if (dtype != DT_UNKNOWN)
@@ -581,8 +585,8 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			if (simplify_away(fullname, baselen + len, simplify))
 				continue;
 
-			dtype = get_dtype(de, fullname);
-			exclude = excluded(dir, fullname, dtype);
+			dtype = DTYPE(de);
+			exclude = excluded(dir, fullname, &dtype);
 			if (exclude && dir->collect_ignored
 			    && in_pathspec(fullname, baselen + len, simplify))
 				dir_add_ignored(dir, fullname, baselen + len);
@@ -593,6 +597,9 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			 */
 			if (exclude && !dir->show_ignored)
 				continue;
+
+			if (dtype == DT_UNKNOWN)
+				dtype = get_dtype(de, fullname);
 
 			/*
 			 * Do we want to see just the ignored files?
