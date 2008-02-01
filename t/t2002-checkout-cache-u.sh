@@ -16,12 +16,12 @@ echo frotz >path0 &&
 git update-index --add path0 &&
 t=$(git write-tree)'
 
-test_expect_failure \
+test_expect_success \
 'without -u, git checkout-index smudges stat information.' '
 rm -f path0 &&
 git read-tree $t &&
 git checkout-index -f -a &&
-git diff-files | diff - /dev/null'
+! git diff-files | diff - /dev/null'
 
 test_expect_success \
 'with -u, git checkout-index picks up stat information from new files.' '

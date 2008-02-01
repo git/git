@@ -36,28 +36,28 @@ test_expect_success \
     'test -d path0 &&
      test -f path0/COPYING'
 
-test_expect_failure \
+test_expect_success \
     'checking lack of path1/path2/COPYING' \
-    'test -f path1/path2/COPYING'
+    '! test -f path1/path2/COPYING'
 
-test_expect_failure \
+test_expect_success \
     'checking lack of path1/COPYING' \
-    'test -f path1/COPYING'
+    '! test -f path1/COPYING'
 
-test_expect_failure \
+test_expect_success \
     'checking lack of COPYING' \
-    'test -f COPYING'
+    '! test -f COPYING'
 
-test_expect_failure \
+test_expect_success \
     'checking checking lack of path1/COPYING-TOO' \
-    'test -f path0/COPYING-TOO'
+    '! test -f path0/COPYING-TOO'
 
-test_expect_failure \
+test_expect_success \
     'checking lack of path1/path2' \
-    'test -d path1/path2'
+    '! test -d path1/path2'
 
-test_expect_failure \
+test_expect_success \
     'checking lack of path1' \
-    'test -d path1'
+    '! test -d path1'
 
 test_done

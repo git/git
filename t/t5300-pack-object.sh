@@ -264,8 +264,8 @@ test_expect_success \
      cp -f	.git/objects/9d/235ed07cd19811a6ceb342de82f190e49c9f68 \
 		.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67'
 
-test_expect_failure \
+test_expect_success \
     'make sure index-pack detects the SHA1 collision' \
-    'git-index-pack -o bad.idx test-3.pack'
+    '! git-index-pack -o bad.idx test-3.pack'
 
 test_done

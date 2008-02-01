@@ -47,12 +47,24 @@ test_expect_success \
     'test $(wc -l < full-of-directories) = 3'
 
 ################################################################
+# Test harness
+test_expect_success 'success is reported like this' '
+    :
+'
+test_expect_failure 'pretend we have a known breakage' '
+    false
+'
+test_expect_failure 'pretend we have fixed a known breakage' '
+    :
+'
+
+################################################################
 # Basics of the basics
 
 # updating a new file without --add should fail.
-test_expect_failure \
-    'git update-index without --add should fail adding.' \
-    'git update-index should-be-empty'
+test_expect_success 'git update-index without --add should fail adding.' '
+    ! git update-index should-be-empty
+'
 
 # and with --add it should succeed, even if it is empty (it used to fail).
 test_expect_success \
@@ -70,9 +82,9 @@ test_expect_success \
 
 # Removing paths.
 rm -f should-be-empty full-of-directories
-test_expect_failure \
-    'git update-index without --remove should fail removing.' \
-    'git update-index should-be-empty'
+test_expect_success 'git update-index without --remove should fail removing.' '
+    ! git update-index should-be-empty
+'
 
 test_expect_success \
     'git update-index with --remove should be able to remove.' \
@@ -204,9 +216,9 @@ test_expect_success \
     'put invalid objects into the index.' \
     'git update-index --index-info < badobjects'
 
-test_expect_failure \
-    'writing this tree without --missing-ok.' \
-    'git write-tree'
+test_expect_success 'writing this tree without --missing-ok.' '
+    ! git write-tree
+'
 
 test_expect_success \
     'writing this tree with --missing-ok.' \

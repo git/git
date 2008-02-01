@@ -17,49 +17,49 @@ test_expect_success \
 	 git-add file && \
 	 git-status | grep 'Initial commit'"
 
-test_expect_failure \
+test_expect_success \
 	"fail initial amend" \
-	"git-commit --amend"
+	"! git-commit --amend"
 
 test_expect_success \
 	"initial commit" \
 	"git-commit -m initial"
 
-test_expect_failure \
+test_expect_success \
 	"invalid options 1" \
-	"git-commit -m foo -m bar -F file"
+	"! git-commit -m foo -m bar -F file"
 
-test_expect_failure \
+test_expect_success \
 	"invalid options 2" \
-	"git-commit -C HEAD -m illegal"
+	"! git-commit -C HEAD -m illegal"
 
-test_expect_failure \
+test_expect_success \
 	"using paths with -a" \
 	"echo King of the bongo >file &&
-	git-commit -m foo -a file"
+	! git-commit -m foo -a file"
 
-test_expect_failure \
+test_expect_success \
 	"using paths with --interactive" \
 	"echo bong-o-bong >file &&
-	echo 7 | git-commit -m foo --interactive file"
+	! echo 7 | git-commit -m foo --interactive file"
 
-test_expect_failure \
+test_expect_success \
 	"using invalid commit with -C" \
-	"git-commit -C bogus"
+	"! git-commit -C bogus"
 
-test_expect_failure \
+test_expect_success \
 	"testing nothing to commit" \
-	"git-commit -m initial"
+	"! git-commit -m initial"
 
 test_expect_success \
 	"next commit" \
 	"echo 'bongo bongo bongo' >file \
 	 git-commit -m next -a"
 
-test_expect_failure \
+test_expect_success \
 	"commit message from non-existing file" \
 	"echo 'more bongo: bongo bongo bongo bongo' >file && \
-	 git-commit -F gah -a"
+	 ! git-commit -F gah -a"
 
 # Empty except stray tabs and spaces on a few lines.
 sed -e 's/@$//' >msg <<EOF
@@ -68,9 +68,9 @@ sed -e 's/@$//' >msg <<EOF
   @
 Signed-off-by: hula
 EOF
-test_expect_failure \
+test_expect_success \
 	"empty commit message" \
-	"git-commit -F msg -a"
+	"! git-commit -F msg -a"
 
 test_expect_success \
 	"commit message from file" \
@@ -88,10 +88,10 @@ test_expect_success \
 	"amend commit" \
 	"VISUAL=./editor git-commit --amend"
 
-test_expect_failure \
+test_expect_success \
 	"passing -m and -F" \
 	"echo 'enough with the bongos' >file && \
-	 git-commit -F msg -m amending ."
+	 ! git-commit -F msg -m amending ."
 
 test_expect_success \
 	"using message from other commit" \

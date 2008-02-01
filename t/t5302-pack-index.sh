@@ -42,9 +42,9 @@ test_expect_success \
     'both packs should be identical' \
     'cmp "test-1-${pack1}.pack" "test-2-${pack2}.pack"'
 
-test_expect_failure \
+test_expect_success \
     'index v1 and index v2 should be different' \
-    'cmp "test-1-${pack1}.idx" "test-2-${pack2}.idx"'
+    '! cmp "test-1-${pack1}.idx" "test-2-${pack2}.idx"'
 
 test_expect_success \
     'index-pack with index version 1' \
@@ -78,9 +78,9 @@ test_expect_success \
     'git verify-pack -v "test-3-${pack3}.pack"'
 
 test "$have_64bits" &&
-test_expect_failure \
+test_expect_success \
     '64-bit offsets: should be different from previous index v2 results' \
-    'cmp "test-2-${pack2}.idx" "test-3-${pack3}.idx"'
+    '! cmp "test-2-${pack2}.idx" "test-3-${pack3}.idx"'
 
 test "$have_64bits" &&
 test_expect_success \
@@ -112,22 +112,22 @@ test_expect_success \
 	  bs=1 count=20 conv=notrunc &&
        git cat-file blob "$delta_sha1" > blob_2 )'
 
-test_expect_failure \
+test_expect_success \
     '[index v1] 3) corrupted delta happily returned wrong data' \
-    'cmp blob_1 blob_2'
+    '! cmp blob_1 blob_2'
 
-test_expect_failure \
+test_expect_success \
     '[index v1] 4) confirm that the pack is actually corrupted' \
-    'git fsck --full $commit'
+    '! git fsck --full $commit'
 
 test_expect_success \
     '[index v1] 5) pack-objects happily reuses corrupted data' \
     'pack4=$(git pack-objects test-4 <obj-list) &&
      test -f "test-4-${pack1}.pack"'
 
-test_expect_failure \
+test_expect_success \
     '[index v1] 6) newly created pack is BAD !' \
-    'git verify-pack -v "test-4-${pack1}.pack"'
+    '! git verify-pack -v "test-4-${pack1}.pack"'
 
 test_expect_success \
     '[index v2] 1) stream pack to repository' \
@@ -150,16 +150,16 @@ test_expect_success \
 	  bs=1 count=20 conv=notrunc &&
        git cat-file blob "$delta_sha1" > blob_4 )'
 
-test_expect_failure \
+test_expect_success \
     '[index v2] 3) corrupted delta happily returned wrong data' \
-    'cmp blob_3 blob_4'
+    '! cmp blob_3 blob_4'
 
-test_expect_failure \
+test_expect_success \
     '[index v2] 4) confirm that the pack is actually corrupted' \
-    'git fsck --full $commit'
+    '! git fsck --full $commit'
 
-test_expect_failure \
+test_expect_success \
     '[index v2] 5) pack-objects refuses to reuse corrupted data' \
-    'git pack-objects test-5 <obj-list'
+    '! git pack-objects test-5 <obj-list'
 
 test_done

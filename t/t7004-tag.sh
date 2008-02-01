@@ -26,8 +26,8 @@ test_expect_success 'listing all tags in an empty tree should output nothing' '
 	test `git-tag | wc -l` -eq 0
 '
 
-test_expect_failure 'looking for a tag in an empty tree should fail' \
-	'tag_exists mytag'
+test_expect_success 'looking for a tag in an empty tree should fail' \
+	'! (tag_exists mytag)'
 
 test_expect_success 'creating a tag in an empty tree should fail' '
 	! git-tag mynotag &&
@@ -83,9 +83,9 @@ test_expect_success \
 
 # special cases for creating tags:
 
-test_expect_failure \
+test_expect_success \
 	'trying to create a tag with the name of one existing should fail' \
-	'git tag mytag'
+	'! git tag mytag'
 
 test_expect_success \
 	'trying to create a tag with a non-valid name should fail' '
@@ -146,8 +146,8 @@ test_expect_success \
 	! tag_exists myhead
 '
 
-test_expect_failure 'trying to delete an already deleted tag should fail' \
-	'git-tag -d mytag'
+test_expect_success 'trying to delete an already deleted tag should fail' \
+	'! git-tag -d mytag'
 
 # listing various tags with pattern matching:
 
@@ -265,16 +265,16 @@ test_expect_success \
 	test $(git rev-parse non-annotated-tag) = $(git rev-parse HEAD)
 '
 
-test_expect_failure 'trying to verify an unknown tag should fail' \
-	'git-tag -v unknown-tag'
+test_expect_success 'trying to verify an unknown tag should fail' \
+	'! git-tag -v unknown-tag'
 
-test_expect_failure \
+test_expect_success \
 	'trying to verify a non-annotated and non-signed tag should fail' \
-	'git-tag -v non-annotated-tag'
+	'! git-tag -v non-annotated-tag'
 
-test_expect_failure \
+test_expect_success \
 	'trying to verify many non-annotated or unknown tags, should fail' \
-	'git-tag -v unknown-tag1 non-annotated-tag unknown-tag2'
+	'! git-tag -v unknown-tag1 non-annotated-tag unknown-tag2'
 
 # creating annotated tags:
 
@@ -1027,21 +1027,21 @@ test_expect_success \
 
 # try to sign with bad user.signingkey
 git config user.signingkey BobTheMouse
-test_expect_failure \
+test_expect_success \
 	'git-tag -s fails if gpg is misconfigured' \
-	'git tag -s -m tail tag-gpg-failure'
+	'! git tag -s -m tail tag-gpg-failure'
 git config --unset user.signingkey
 
 # try to verify without gpg:
 
 rm -rf gpghome
-test_expect_failure \
+test_expect_success \
 	'verify signed tag fails when public key is not present' \
-	'git-tag -v signed-tag'
+	'! git-tag -v signed-tag'
 
-test_expect_failure \
+test_expect_success \
 	'git-tag -a fails if tag annotation is empty' '
-	GIT_EDITOR=cat git tag -a initial-comment
+	! (GIT_EDITOR=cat git tag -a initial-comment)
 '
 
 test_expect_success \

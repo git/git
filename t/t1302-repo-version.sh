@@ -40,7 +40,8 @@ test_expect_success 'gitdir required mode on normal repos' '
 	(git apply --check --index test.patch &&
 	cd test && git apply --check --index ../test.patch)'
 
-test_expect_failure 'gitdir required mode on unsupported repo' '
-	(cd test2 && git apply --check --index ../test.patch)'
+test_expect_success 'gitdir required mode on unsupported repo' '
+	(cd test2 && ! git apply --check --index ../test.patch)
+'
 
 test_done

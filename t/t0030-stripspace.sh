@@ -243,14 +243,14 @@ test_expect_success \
     test `printf "$ttt$sss$sss$sss" | git stripspace | wc -l` -gt 0
 '
 
-test_expect_failure \
+test_expect_success \
     'text plus spaces without newline at end should not show spaces' '
-    printf "$ttt$sss" | git stripspace | grep -q "  " ||
-    printf "$ttt$ttt$sss" | git stripspace | grep -q "  " ||
-    printf "$ttt$ttt$ttt$sss" | git stripspace | grep -q "  " ||
-    printf "$ttt$sss$sss" | git stripspace | grep -q "  " ||
-    printf "$ttt$ttt$sss$sss" | git stripspace | grep -q "  " ||
-    printf "$ttt$sss$sss$sss" | git stripspace | grep -q "  "
+    ! (printf "$ttt$sss" | git stripspace | grep -q "  ") &&
+    ! (printf "$ttt$ttt$sss" | git stripspace | grep -q "  ") &&
+    ! (printf "$ttt$ttt$ttt$sss" | git stripspace | grep -q "  ") &&
+    ! (printf "$ttt$sss$sss" | git stripspace | grep -q "  ") &&
+    ! (printf "$ttt$ttt$sss$sss" | git stripspace | grep -q "  ") &&
+    ! (printf "$ttt$sss$sss$sss" | git stripspace | grep -q "  ")
 '
 
 test_expect_success \
@@ -280,14 +280,14 @@ test_expect_success \
     git diff expect actual
 '
 
-test_expect_failure \
+test_expect_success \
     'text plus spaces at end should not show spaces' '
-    echo "$ttt$sss" | git stripspace | grep -q "  " ||
-    echo "$ttt$ttt$sss" | git stripspace | grep -q "  " ||
-    echo "$ttt$ttt$ttt$sss" | git stripspace | grep -q "  " ||
-    echo "$ttt$sss$sss" | git stripspace | grep -q "  " ||
-    echo "$ttt$ttt$sss$sss" | git stripspace | grep -q "  " ||
-    echo "$ttt$sss$sss$sss" | git stripspace | grep -q "  "
+    ! (echo "$ttt$sss" | git stripspace | grep -q "  ") &&
+    ! (echo "$ttt$ttt$sss" | git stripspace | grep -q "  ") &&
+    ! (echo "$ttt$ttt$ttt$sss" | git stripspace | grep -q "  ") &&
+    ! (echo "$ttt$sss$sss" | git stripspace | grep -q "  ") &&
+    ! (echo "$ttt$ttt$sss$sss" | git stripspace | grep -q "  ") &&
+    ! (echo "$ttt$sss$sss$sss" | git stripspace | grep -q "  ")
 '
 
 test_expect_success \
@@ -339,13 +339,13 @@ test_expect_success \
     git diff expect actual
 '
 
-test_expect_failure \
+test_expect_success \
     'spaces without newline at end should not show spaces' '
-    printf "" | git stripspace | grep -q " " ||
-    printf "$sss" | git stripspace | grep -q " " ||
-    printf "$sss$sss" | git stripspace | grep -q " " ||
-    printf "$sss$sss$sss" | git stripspace | grep -q " " ||
-    printf "$sss$sss$sss$sss" | git stripspace | grep -q " "
+    ! (printf "" | git stripspace | grep -q " ") &&
+    ! (printf "$sss" | git stripspace | grep -q " ") &&
+    ! (printf "$sss$sss" | git stripspace | grep -q " ") &&
+    ! (printf "$sss$sss$sss" | git stripspace | grep -q " ") &&
+    ! (printf "$sss$sss$sss$sss" | git stripspace | grep -q " ")
 '
 
 test_expect_success \

@@ -60,8 +60,8 @@ echo STDERR post-update >&2
 EOF
 chmod u+x victim/.git/hooks/post-update
 
-test_expect_failure push '
-	git-send-pack --force ./victim/.git master tofail >send.out 2>send.err
+test_expect_success push '
+    ! git-send-pack --force ./victim/.git master tofail >send.out 2>send.err
 '
 
 test_expect_success 'updated as expected' '
@@ -112,8 +112,8 @@ test_expect_success 'all *-receive hook args are empty' '
 	! test -s victim/.git/post-receive.args
 '
 
-test_expect_failure 'send-pack produced no output' '
-	test -s send.out
+test_expect_success 'send-pack produced no output' '
+	! test -s send.out
 '
 
 cat <<EOF >expect

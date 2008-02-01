@@ -44,8 +44,8 @@ date >path1/file1
 
 for p in path0/file0 path1/file1 path2 path3
 do
-	test_expect_failure \
+	test_expect_success \
 	    "git update-index to add conflicting path $p should fail." \
-	    "git update-index --add -- $p"
+	    "! git update-index --add -- $p"
 done
 test_done

@@ -56,19 +56,19 @@ test_expect_success "$name" "
 
 
 name='detect node change from file to directory #1'
-test_expect_failure "$name" "
+test_expect_success "$name" "
 	mkdir dir/new_file &&
 	mv dir/file dir/new_file/file &&
 	mv dir/new_file dir/file &&
 	git update-index --remove dir/file &&
 	git update-index --add dir/file/file &&
-	git commit -m '$name'  &&
-	git-svn set-tree --find-copies-harder --rmdir \
+	git commit -m '$name' &&
+	! git-svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch" || true
 
 
 name='detect node change from directory to file #1'
-test_expect_failure "$name" "
+test_expect_success "$name" "
 	rm -rf dir '$GIT_DIR'/index &&
 	git checkout -f -b mybranch2 remotes/git-svn &&
 	mv bar/zzz zzz &&
@@ -77,12 +77,12 @@ test_expect_failure "$name" "
 	git update-index --remove -- bar/zzz &&
 	git update-index --add -- bar &&
 	git commit -m '$name' &&
-	git-svn set-tree --find-copies-harder --rmdir \
+	! git-svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch2" || true
 
 
 name='detect node change from file to directory #2'
-test_expect_failure "$name" "
+test_expect_success "$name" "
 	rm -f '$GIT_DIR'/index &&
 	git checkout -f -b mybranch3 remotes/git-svn &&
 	rm bar/zzz &&
@@ -91,12 +91,12 @@ test_expect_failure "$name" "
 	echo yyy > bar/zzz/yyy &&
 	git update-index --add bar/zzz/yyy &&
 	git commit -m '$name' &&
-	git-svn set-tree --find-copies-harder --rmdir \
+	! git-svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch3" || true
 
 
 name='detect node change from directory to file #2'
-test_expect_failure "$name" "
+test_expect_success "$name" "
 	rm -f '$GIT_DIR'/index &&
 	git checkout -f -b mybranch4 remotes/git-svn &&
 	rm -rf dir &&
@@ -105,7 +105,7 @@ test_expect_failure "$name" "
 	echo asdf > dir &&
 	git update-index --add -- dir &&
 	git commit -m '$name' &&
-	git-svn set-tree --find-copies-harder --rmdir \
+	! git-svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch4" || true
 
 
@@ -213,18 +213,18 @@ EOF
 
 test_expect_success "$name" "git diff a expected"
 
-test_expect_failure 'exit if remote refs are ambigious' "
+test_expect_success 'exit if remote refs are ambigious' "
         git config --add svn-remote.svn.fetch \
                               bar:refs/remotes/git-svn &&
-        git-svn migrate
-        "
+	! git-svn migrate
+"
 
-test_expect_failure 'exit if init-ing a would clobber a URL' "
+test_expect_success 'exit if init-ing a would clobber a URL' "
         svnadmin create ${PWD}/svnrepo2 &&
         svn mkdir -m 'mkdir bar' ${svnrepo}2/bar &&
         git config --unset svn-remote.svn.fetch \
                                 '^bar:refs/remotes/git-svn$' &&
-        git-svn init ${svnrepo}2/bar
+	! git-svn init ${svnrepo}2/bar
         "
 
 test_expect_success \

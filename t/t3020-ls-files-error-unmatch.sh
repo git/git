@@ -15,9 +15,9 @@ touch foo bar
 git update-index --add foo bar
 git-commit -m "add foo bar"
 
-test_expect_failure \
+test_expect_success \
     'git ls-files --error-unmatch should fail with unmatched path.' \
-    'git ls-files --error-unmatch foo bar-does-not-match'
+    '! git ls-files --error-unmatch foo bar-does-not-match'
 
 test_expect_success \
     'git ls-files --error-unmatch should succeed eith matched paths.' \

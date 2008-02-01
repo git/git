@@ -43,8 +43,8 @@ test_expect_success 'Check atom names are valid' '
 	test -z "$bad"
 '
 
-test_expect_failure 'Check invalid atoms names are errors' '
-	git-for-each-ref --format="%(INVALID)" refs/heads
+test_expect_success 'Check invalid atoms names are errors' '
+	! git-for-each-ref --format="%(INVALID)" refs/heads
 '
 
 test_expect_success 'Check format specifiers are ignored in naming date atoms' '
@@ -63,8 +63,8 @@ test_expect_success 'Check valid format specifiers for date fields' '
 	git-for-each-ref --format="%(authordate:rfc2822)" refs/heads
 '
 
-test_expect_failure 'Check invalid format specifiers are errors' '
-	git-for-each-ref --format="%(authordate:INVALID)" refs/heads
+test_expect_success 'Check invalid format specifiers are errors' '
+	! git-for-each-ref --format="%(authordate:INVALID)" refs/heads
 '
 
 cat >expected <<\EOF

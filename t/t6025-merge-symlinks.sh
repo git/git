@@ -30,30 +30,29 @@ echo plain-file > symlink &&
 git add symlink &&
 git-commit -m b-file'
 
-test_expect_failure \
+test_expect_success \
 'merge master into b-symlink, which has a different symbolic link' '
-! git-checkout b-symlink ||
-git-merge master'
+git-checkout b-symlink &&
+! git-merge master'
 
 test_expect_success \
 'the merge result must be a file' '
 test -f symlink'
 
-test_expect_failure \
+test_expect_success \
 'merge master into b-file, which has a file instead of a symbolic link' '
-! (git-reset --hard &&
-git-checkout b-file) ||
-git-merge master'
+git-reset --hard && git-checkout b-file &&
+! git-merge master'
 
 test_expect_success \
 'the merge result must be a file' '
 test -f symlink'
 
-test_expect_failure \
+test_expect_success \
 'merge b-file, which has a file instead of a symbolic link, into master' '
-! (git-reset --hard &&
-git-checkout master) ||
-git-merge b-file'
+git-reset --hard &&
+git-checkout master &&
+! git-merge b-file'
 
 test_expect_success \
 'the merge result must be a file' '

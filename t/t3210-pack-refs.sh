@@ -39,12 +39,12 @@ test_expect_success \
      git show-ref b >result &&
      diff expect result'
 
-test_expect_failure \
-    'git branch c/d should barf if branch c exists' \
-    'git branch c &&
+test_expect_success 'git branch c/d should barf if branch c exists' '
+     git branch c &&
      git pack-refs --all &&
-     rm .git/refs/heads/c &&
-     git branch c/d'
+     rm -f .git/refs/heads/c &&
+     ! git branch c/d
+'
 
 test_expect_success \
     'see if a branch still exists after git pack-refs --prune' \
@@ -54,11 +54,11 @@ test_expect_success \
      git show-ref e >result &&
      diff expect result'
 
-test_expect_failure \
-    'see if git pack-refs --prune remove ref files' \
-    'git branch f &&
+test_expect_success 'see if git pack-refs --prune remove ref files' '
+     git branch f &&
      git pack-refs --all --prune &&
-     ls .git/refs/heads/f'
+     ! test -f .git/refs/heads/f
+'
 
 test_expect_success \
     'git branch g should work when git branch g/h has been deleted' \
@@ -69,11 +69,11 @@ test_expect_success \
      git pack-refs --all &&
      git branch -d g'
 
-test_expect_failure \
-    'git branch i/j/k should barf if branch i exists' \
-    'git branch i &&
+test_expect_success 'git branch i/j/k should barf if branch i exists' '
+     git branch i &&
      git pack-refs --all --prune &&
-     git branch i/j/k'
+     ! git branch i/j/k
+'
 
 test_expect_success \
     'test git branch k after branch k/l/m and k/lm have been deleted' \
