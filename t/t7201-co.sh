@@ -214,6 +214,22 @@ test_expect_success 'checkout to detach HEAD with branchname^' '
 	fi
 '
 
+test_expect_success 'checkout to detach HEAD with :/message' '
+
+	git checkout -f master && git clean -f &&
+	git checkout ":/Initial" &&
+	H=$(git rev-parse --verify HEAD) &&
+	M=$(git show-ref -s --verify refs/heads/master) &&
+	test "z$H" = "z$M" &&
+	if git symbolic-ref HEAD >/dev/null 2>&1
+	then
+		echo "OOPS, HEAD is still symbolic???"
+		false
+	else
+		: happy
+	fi
+'
+
 test_expect_success 'checkout to detach HEAD with HEAD^0' '
 
 	git checkout -f master && git clean -f &&
