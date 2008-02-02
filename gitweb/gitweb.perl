@@ -1606,7 +1606,7 @@ sub git_get_project_description {
 	my $path = shift;
 
 	$git_dir = "$projectroot/$path";
-	open my $fd, "$projectroot/$path/description"
+	open my $fd, "$git_dir/description"
 		or return git_get_project_config('description');
 	my $descr = <$fd>;
 	close $fd;
@@ -5048,16 +5048,15 @@ sub git_commitdiff {
 			-expires => $expires,
 			-content_disposition => 'inline; filename="' . "$filename" . '"');
 		my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
-		print <<TEXT;
-From: $co{'author'}
-Date: $ad{'rfc2822'} ($ad{'tz_local'})
-Subject: $co{'title'}
-TEXT
+		print "From: " . to_utf8($co{'author'}) . "\n";
+		print "Date: $ad{'rfc2822'} ($ad{'tz_local'})\n";
+		print "Subject: " . to_utf8($co{'title'}) . "\n";
+
 		print "X-Git-Tag: $tagname\n" if $tagname;
 		print "X-Git-Url: " . $cgi->self_url() . "\n\n";
 
 		foreach my $line (@{$co{'comment'}}) {
-			print "$line\n";
+			print to_utf8($line) . "\n";
 		}
 		print "---\n\n";
 	}

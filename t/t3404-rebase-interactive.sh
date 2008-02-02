@@ -324,4 +324,20 @@ test_expect_success 'rebase a detached HEAD' '
 	test $grandparent = $(git rev-parse HEAD~2)
 '
 
+test_expect_success 'rebase a commit violating pre-commit' '
+
+	mkdir -p .git/hooks &&
+	PRE_COMMIT=.git/hooks/pre-commit &&
+	echo "#!/bin/sh" > $PRE_COMMIT &&
+	echo "test -z \"\$(git diff --cached --check)\"" >> $PRE_COMMIT &&
+	chmod a+x $PRE_COMMIT &&
+	echo "monde! " >> file1 &&
+	test_tick &&
+	! git commit -m doesnt-verify file1 &&
+	git commit -m doesnt-verify --no-verify file1 &&
+	test_tick &&
+	FAKE_LINES=2 git rebase -i HEAD~2
+
+'
+
 test_done

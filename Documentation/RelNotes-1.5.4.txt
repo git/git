@@ -35,7 +35,7 @@ Deprecation notices
    - Using dashed forms of git commands (e.g. "git-commit") from the
      command line has been informally deprecated since early 2006, but
      now it officially is, and will be removed in the future.  Use
-     dashless forms (e.g. "git commit") instead.
+     dash-less forms (e.g. "git commit") instead.
 
    - Using dashed forms from your scripts, without first prepending the
      return value from "git --exec-path" to the scripts' PATH, has been
@@ -166,7 +166,7 @@ Updates since v1.5.3
    command line in the generated log message, when told to cherry-pick a
    commit by naming a tag that points at it.  It does not anymore.
 
- * "git for-each-ref" learned %(xxxdate:<dateformat>) syntax to show the
+ * "git for-each-ref" learned %(xxxdate:<date-format>) syntax to show the
    various date fields in different formats.
 
  * "git gc --auto" is a low-impact way to automatically run a variant of
@@ -221,7 +221,7 @@ Updates since v1.5.3
  * "git pull --rebase" is a different way to integrate what you fetched
    into your current branch.
 
- * "git fast-export" produces datastream that can be fed to fast-import
+ * "git fast-export" produces data-stream that can be fed to fast-import
    to reproduce the history recorded in a git repository.
 
  * "git add -i" takes pathspecs to limit the set of files to work on.
@@ -342,7 +342,7 @@ Updates since v1.5.3
 
  * "git help" learned "-w" option to show documentation in browsers.
 
- * In addition there are quite a few internal clean-ups. Notably
+ * In addition there are quite a few internal clean-ups. Notably:
 
    - many fork/exec have been replaced with run-command API,
      brought from the msysgit effort.
@@ -365,7 +365,7 @@ series.
  * The way "git diff --check" behaves is much more consistent with the way
    "git apply --whitespace=warn" works.
 
- * "git svn" talking with the SVN over http will correctly quote branch
+ * "git svn" talking with the SVN over HTTP will correctly quote branch
    and project names.
 
  * "git config" did not work correctly on platforms that define
@@ -375,9 +375,3 @@ series.
    documentation; a workaround has been implemented.
 
  * "git diff --color-words" colored context lines in a wrong color.
-
---
-exec >/var/tmp/1
-O=v1.5.4-rc5
-echo O=`git describe refs/heads/master`
-git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

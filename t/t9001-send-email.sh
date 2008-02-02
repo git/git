@@ -8,7 +8,7 @@ test_expect_success \
     'prepare reference tree' \
     'echo "1A quick brown fox jumps over the" >file &&
      echo "lazy dog" >>file &&
-     git add file
+     git add file &&
      GIT_AUTHOR_NAME="A" git commit -a -m "Initial."'
 
 test_expect_success \
@@ -20,9 +20,9 @@ test_expect_success \
       echo "  echo \"!\$a!\""
       echo "done >commandline"
       echo "cat > msgtxt"
-      ) >fake.sendmail
-     chmod +x ./fake.sendmail
-     git add fake.sendmail
+      ) >fake.sendmail &&
+     chmod +x ./fake.sendmail &&
+     git add fake.sendmail &&
      GIT_AUTHOR_NAME="A" git commit -a -m "Second."'
 
 test_expect_success 'Extract patches' '

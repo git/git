@@ -257,7 +257,7 @@ test_expect_code () {
 	echo >&3 ""
 }
 
-# Most tests can use the created repository, but some amy need to create more.
+# Most tests can use the created repository, but some may need to create more.
 # Usage: test_create_repo <directory>
 test_create_repo () {
 	test "$#" = 1 ||
