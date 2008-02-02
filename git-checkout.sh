@@ -71,7 +71,8 @@ while test $# != 0; do
 done
 
 arg="$1"
-if rev=$(git rev-parse --verify "$arg^0" 2>/dev/null)
+rev=$(git rev-parse --verify "$arg" 2>/dev/null)
+if rev=$(git rev-parse --verify "$rev^0" 2>/dev/null)
 then
 	[ -z "$rev" ] && die "unknown flag $arg"
 	new_name="$arg"
@@ -82,11 +83,11 @@ then
 	fi
 	new="$rev"
 	shift
-elif rev=$(git rev-parse --verify "$arg^{tree}" 2>/dev/null)
+elif rev=$(git rev-parse --verify "$rev^{tree}" 2>/dev/null)
 then
 	# checking out selected paths from a tree-ish.
 	new="$rev"
-	new_name="$arg^{tree}"
+	new_name="$rev^{tree}"
 	shift
 fi
 [ "$1" = "--" ] && shift
