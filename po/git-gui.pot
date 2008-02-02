@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-11-24 10:36+0100\n"
+"POT-Creation-Date: 2008-02-02 10:14+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -386,31 +386,31 @@ msgstr ""
 msgid "File:"
 msgstr ""
 
-#: git-gui.sh:2545
-msgid "Refresh"
-msgstr ""
-
-#: git-gui.sh:2566
+#: git-gui.sh:2573
 msgid "Apply/Reverse Hunk"
 msgstr ""
 
-#: git-gui.sh:2572
-msgid "Decrease Font Size"
-msgstr ""
-
-#: git-gui.sh:2576
-msgid "Increase Font Size"
-msgstr ""
-
-#: git-gui.sh:2581
+#: git-gui.sh:2579
 msgid "Show Less Context"
 msgstr ""
 
-#: git-gui.sh:2588
+#: git-gui.sh:2586
 msgid "Show More Context"
 msgstr ""
 
-#: git-gui.sh:2602
+#: git-gui.sh:2594
+msgid "Refresh"
+msgstr ""
+
+#: git-gui.sh:2615
+msgid "Decrease Font Size"
+msgstr ""
+
+#: git-gui.sh:2619
+msgid "Increase Font Size"
+msgstr ""
+
+#: git-gui.sh:2630
 msgid "Unstage Hunk From Commit"
 msgstr ""
 
@@ -764,6 +764,10 @@ msgstr ""
 #: lib/checkout_op.tcl:322
 #, tcl-format
 msgid "Updating working directory to '%s'..."
+msgstr ""
+
+#: lib/checkout_op.tcl:323
+msgid "files checked out"
 msgstr ""
 
 #: lib/checkout_op.tcl:353
@@ -1182,11 +1186,40 @@ msgid ""
 "- Remaining lines: Describe why this change is good.\n"
 msgstr ""
 
-#: lib/commit.tcl:257
+#: lib/commit.tcl:207
+#, tcl-format
+msgid "warning: Tcl does not support encoding '%s'."
+msgstr ""
+
+#: lib/commit.tcl:221
+msgid "Calling pre-commit hook..."
+msgstr ""
+
+#: lib/commit.tcl:236
+msgid "Commit declined by pre-commit hook."
+msgstr ""
+
+#: lib/commit.tcl:259
+msgid "Calling commit-msg hook..."
+msgstr ""
+
+#: lib/commit.tcl:274
+msgid "Commit declined by commit-msg hook."
+msgstr ""
+
+#: lib/commit.tcl:287
+msgid "Committing changes..."
+msgstr ""
+
+#: lib/commit.tcl:303
 msgid "write-tree failed:"
 msgstr ""
 
-#: lib/commit.tcl:275
+#: lib/commit.tcl:304 lib/commit.tcl:348 lib/commit.tcl:368
+msgid "Commit failed."
+msgstr ""
+
+#: lib/commit.tcl:321
 #, tcl-format
 msgid "Commit %s appears to be corrupt"
 msgstr ""
@@ -1204,12 +1237,7 @@ msgstr ""
 msgid "No changes to commit."
 msgstr ""
 
-#: lib/commit.tcl:303
-#, tcl-format
-msgid "warning: Tcl does not support encoding '%s'."
-msgstr ""
-
-#: lib/commit.tcl:317
+#: lib/commit.tcl:347
 msgid "commit-tree failed:"
 msgstr ""
 
@@ -1373,6 +1401,10 @@ msgstr ""
 msgid "Unstaging %s from commit"
 msgstr ""
 
+#: lib/index.tcl:313
+msgid "Ready to commit."
+msgstr ""
+
 #: lib/index.tcl:326
 #, tcl-format
 msgid "Adding %s"
@@ -1491,7 +1523,11 @@ msgstr ""
 msgid "Aborting"
 msgstr ""
 
-#: lib/merge.tcl:266
+#: lib/merge.tcl:238
+msgid "files reset"
+msgstr ""
+
+#: lib/merge.tcl:265
 msgid "Abort failed."
 msgstr ""
 

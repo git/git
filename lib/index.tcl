@@ -310,7 +310,7 @@ proc add_helper {txt paths} {
 		update_index \
 			$txt \
 			$pathList \
-			[concat $after {ui_status {Ready to commit.}}]
+			[concat $after {ui_status [mc "Ready to commit."]}]
 	}
 }
 
