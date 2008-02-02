@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-11-24 10:36+0100\n"
-"PO-Revision-Date: 2008-01-15 20:33+0100\n"
+"POT-Creation-Date: 2008-02-02 10:14+0100\n"
+"PO-Revision-Date: 2008-02-02 10:18+0100\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -343,7 +343,9 @@ msgstr "Online-Dokumentation"
 #: git-gui.sh:2201
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
-msgstr "Fehler: Verzeichnis »%s« kann nicht gelesen werden: Datei oder Verzeichnis nicht gefunden"
+msgstr ""
+"Fehler: Verzeichnis »%s« kann nicht gelesen werden: Datei oder Verzeichnis "
+"nicht gefunden"
 
 #: git-gui.sh:2234
 msgid "Current Branch:"
@@ -371,19 +373,19 @@ msgstr "Erste Versionsbeschreibung:"
 
 #: git-gui.sh:2370
 msgid "Amended Commit Message:"
-msgstr "Nachgebesserte Versionsbeschreibung:"
+msgstr "Nachgebesserte Beschreibung:"
 
 #: git-gui.sh:2371
 msgid "Amended Initial Commit Message:"
-msgstr "Nachgebesserte erste Versionsbeschreibung:"
+msgstr "Nachgebesserte erste Beschreibung:"
 
 #: git-gui.sh:2372
 msgid "Amended Merge Commit Message:"
-msgstr "Nachgebesserte Zusammenführungs-Versionsbeschreibung:"
+msgstr "Nachgebesserte Zusammenführungs-Beschreibung:"
 
 #: git-gui.sh:2373
 msgid "Merge Commit Message:"
-msgstr "Zusammenführungs-Versionsbeschreibung:"
+msgstr "Zusammenführungs-Beschreibung:"
 
 #: git-gui.sh:2374
 msgid "Commit Message:"
@@ -397,31 +399,31 @@ msgstr "Alle kopieren"
 msgid "File:"
 msgstr "Datei:"
 
-#: git-gui.sh:2545
-msgid "Refresh"
-msgstr "Aktualisieren"
-
-#: git-gui.sh:2566
+#: git-gui.sh:2573
 msgid "Apply/Reverse Hunk"
 msgstr "Kontext anwenden/umkehren"
 
-#: git-gui.sh:2572
-msgid "Decrease Font Size"
-msgstr "Schriftgröße verkleinern"
-
-#: git-gui.sh:2576
-msgid "Increase Font Size"
-msgstr "Schriftgröße vergrößern"
-
-#: git-gui.sh:2581
+#: git-gui.sh:2579
 msgid "Show Less Context"
 msgstr "Weniger Zeilen anzeigen"
 
-#: git-gui.sh:2588
+#: git-gui.sh:2586
 msgid "Show More Context"
 msgstr "Mehr Zeilen anzeigen"
 
-#: git-gui.sh:2602
+#: git-gui.sh:2594
+msgid "Refresh"
+msgstr "Aktualisieren"
+
+#: git-gui.sh:2615
+msgid "Decrease Font Size"
+msgstr "Schriftgröße verkleinern"
+
+#: git-gui.sh:2619
+msgid "Increase Font Size"
+msgstr "Schriftgröße vergrößern"
+
+#: git-gui.sh:2630
 msgid "Unstage Hunk From Commit"
 msgstr "Kontext aus Bereitstellung herausnehmen"
 
@@ -542,7 +544,7 @@ msgstr "Kopiert oder verschoben durch:"
 
 #: lib/branch_checkout.tcl:14 lib/branch_checkout.tcl:19
 msgid "Checkout Branch"
-msgstr "Zweig umstellen"
+msgstr "Auf Zweig umstellen"
 
 #: lib/branch_checkout.tcl:23
 msgid "Checkout"
@@ -805,11 +807,15 @@ msgstr ""
 msgid "Updating working directory to '%s'..."
 msgstr "Arbeitskopie umstellen auf »%s«..."
 
+#: lib/checkout_op.tcl:323
+msgid "files checked out"
+msgstr "Dateien aktualisiert"
+
 #: lib/checkout_op.tcl:353
 #, tcl-format
 msgid "Aborted checkout of '%s' (file level merging is required)."
 msgstr ""
-"Zweig umstellen von »%s« abgebrochen (Zusammenführen der Dateien ist "
+"Auf Zweig »%s« umstellen abgebrochen (Zusammenführen der Dateien ist "
 "notwendig)."
 
 #: lib/checkout_op.tcl:354
@@ -1069,15 +1075,21 @@ msgstr "Für Objekt konnte kein Hardlink erstellt werden: %s"
 
 #: lib/choose_repository.tcl:847
 msgid "Cannot fetch branches and objects.  See console output for details."
-msgstr "Zweige und Objekte konnten nicht angefordert werden.  Kontrollieren Sie die Ausgaben auf der Konsole für weitere Angaben."
+msgstr ""
+"Zweige und Objekte konnten nicht angefordert werden.  Kontrollieren Sie die "
+"Ausgaben auf der Konsole für weitere Angaben."
 
 #: lib/choose_repository.tcl:858
 msgid "Cannot fetch tags.  See console output for details."
-msgstr "Markierungen konnten nicht angefordert werden.  Kontrollieren Sie die Ausgaben auf der Konsole für weitere Angaben."
+msgstr ""
+"Markierungen konnten nicht angefordert werden.  Kontrollieren Sie die "
+"Ausgaben auf der Konsole für weitere Angaben."
 
 #: lib/choose_repository.tcl:882
 msgid "Cannot determine HEAD.  See console output for details."
-msgstr "Die Zweigspitze (HEAD) konnte nicht gefunden werden.  Kontrollieren Sie die Ausgaben auf der Konsole für weitere Angaben."
+msgstr ""
+"Die Zweigspitze (HEAD) konnte nicht gefunden werden.  Kontrollieren Sie die "
+"Ausgaben auf der Konsole für weitere Angaben."
 
 #: lib/choose_repository.tcl:891
 #, tcl-format
@@ -1273,11 +1285,40 @@ msgstr ""
 "\n"
 "- Rest: Eine ausführliche Beschreibung, warum diese Änderung hilfreich ist.\n"
 
-#: lib/commit.tcl:257
+#: lib/commit.tcl:207
+#, tcl-format
+msgid "warning: Tcl does not support encoding '%s'."
+msgstr "Warning: Tcl/Tk unterstützt die Zeichencodierung »%s« nicht."
+
+#: lib/commit.tcl:221
+msgid "Calling pre-commit hook..."
+msgstr ""
+
+#: lib/commit.tcl:236
+msgid "Commit declined by pre-commit hook."
+msgstr ""
+
+#: lib/commit.tcl:259
+msgid "Calling commit-msg hook..."
+msgstr ""
+
+#: lib/commit.tcl:274
+msgid "Commit declined by commit-msg hook."
+msgstr ""
+
+#: lib/commit.tcl:287
+msgid "Committing changes..."
+msgstr "Änderungen eintragen..."
+
+#: lib/commit.tcl:303
 msgid "write-tree failed:"
 msgstr "write-tree fehlgeschlagen:"
 
-#: lib/commit.tcl:275
+#: lib/commit.tcl:304 lib/commit.tcl:348 lib/commit.tcl:368
+msgid "Commit failed."
+msgstr "Eintragen fehlgeschlagen."
+
+#: lib/commit.tcl:321
 #, tcl-format
 msgid "Commit %s appears to be corrupt"
 msgstr "Version »%s« scheint beschädigt zu sein"
@@ -1301,12 +1342,7 @@ msgstr ""
 msgid "No changes to commit."
 msgstr "Keine Änderungen, die eingetragen werden können."
 
-#: lib/commit.tcl:303
-#, tcl-format
-msgid "warning: Tcl does not support encoding '%s'."
-msgstr "Warning: Tcl/Tk unterstützt die Zeichencodierung »%s« nicht."
-
-#: lib/commit.tcl:317
+#: lib/commit.tcl:347
 msgid "commit-tree failed:"
 msgstr "commit-tree fehlgeschlagen:"
 
@@ -1440,7 +1476,8 @@ msgstr "Fehler beim Laden des Vergleichs:"
 
 #: lib/diff.tcl:302
 msgid "Failed to unstage selected hunk."
-msgstr "Fehler beim Herausnehmen des gewählten Kontexts aus der Bereitstellung."
+msgstr ""
+"Fehler beim Herausnehmen des gewählten Kontexts aus der Bereitstellung."
 
 #: lib/diff.tcl:309
 msgid "Failed to stage selected hunk."
@@ -1471,7 +1508,10 @@ msgstr "Fehler in Bereitstellung"
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
 "resynchronize git-gui."
-msgstr "Das Aktualisieren der Git-Bereitstellung ist fehlgeschlagen. Eine allgemeine Git-Aktualisierung wird jetzt gestartet, um git-gui wieder mit git zu synchronisieren."
+msgstr ""
+"Das Aktualisieren der Git-Bereitstellung ist fehlgeschlagen. Eine allgemeine "
+"Git-Aktualisierung wird jetzt gestartet, um git-gui wieder mit git zu "
+"synchronisieren."
 
 #: lib/index.tcl:27
 msgid "Continue"
@@ -1485,6 +1525,10 @@ msgstr "Bereitstellung freigeben"
 #, tcl-format
 msgid "Unstaging %s from commit"
 msgstr "Datei »%s« aus der Bereitstellung herausnehmen"
+
+#: lib/index.tcl:313
+msgid "Ready to commit."
+msgstr "Bereit zum Eintragen."
 
 #: lib/index.tcl:326
 #, tcl-format
@@ -1503,7 +1547,8 @@ msgstr "Änderungen in den gewählten %i Dateien verwerfen?"
 
 #: lib/index.tcl:389
 msgid "Any unstaged changes will be permanently lost by the revert."
-msgstr "Alle nicht bereitgestellten Änderungen werden beim Verwerfen verloren gehen."
+msgstr ""
+"Alle nicht bereitgestellten Änderungen werden beim Verwerfen verloren gehen."
 
 #: lib/index.tcl:392
 msgid "Do Nothing"
@@ -1641,7 +1686,11 @@ msgstr ""
 msgid "Aborting"
 msgstr "Abbruch"
 
-#: lib/merge.tcl:266
+#: lib/merge.tcl:238
+msgid "files reset"
+msgstr "Dateien zurückgesetzt"
+
+#: lib/merge.tcl:265
 msgid "Abort failed."
 msgstr "Abbruch fehlgeschlagen."
 
