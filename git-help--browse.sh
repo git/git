@@ -16,7 +16,7 @@
 # git maintainer.
 #
 
-USAGE='[--browser=browser|--tool=browser] url/file ...'
+USAGE='[--browser=browser|--tool=browser] [--config=conf.var] url/file ...'
 
 # This must be capable of running outside of git directory, so
 # the vanilla git-sh-setup should not be used.
@@ -53,6 +53,18 @@ do
 		    shift ;;
 	    esac
 	    ;;
+	-c|--config*)
+	    case "$#,$1" in
+		*,*=*)
+		    conf=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+		    ;;
+		1,*)
+		    usage ;;
+		*)
+		    conf="$2"
+		    shift ;;
+	    esac
+	    ;;
 	--)
 	    break
 	    ;;
@@ -70,15 +82,16 @@ test $# = 0 && usage
 
 if test -z "$browser"
 then
-    for opt in "help.browser" "web.browser"
+    for opt in "$conf" "web.browser"
     do
+	test -z "$opt" && continue
 	browser="`git config $opt`"
 	test -z "$browser" || break
     done
     if test -n "$browser" && ! valid_tool "$browser"; then
-	    echo >&2 "git config option $opt set to unknown browser: $browser"
-	    echo >&2 "Resetting to default..."
-	    unset browser
+	echo >&2 "git config option $opt set to unknown browser: $browser"
+	echo >&2 "Resetting to default..."
+	unset browser
     fi
 fi
 
