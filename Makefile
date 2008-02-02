@@ -231,7 +231,7 @@ SCRIPT_SH = \
 	git-lost-found.sh git-quiltimport.sh git-submodule.sh \
 	git-filter-branch.sh \
 	git-stash.sh \
-	git-help--browse.sh
+	git-web--browse.sh
 
 SCRIPT_PERL = \
 	git-add--interactive.perl \

@@ -347,7 +347,7 @@ static void show_html_page(const char *git_cmd)
 
 	get_html_page_path(&page_path, page);
 
-	execl_git_cmd("help--browse", "-c", "help.browser", page_path.buf, NULL);
+	execl_git_cmd("web--browse", "-c", "help.browser", page_path.buf, NULL);
 }
 
 void help_unknown_cmd(const char *cmd)
