@@ -130,7 +130,7 @@ See also <<FILES>>.
 
 -z, --null::
 	For all options that output values and/or keys, always
-	end values with with the null character (instead of a
+	end values with the null character (instead of a
 	newline). Use newline instead as a delimiter between
 	key and value. This allows for secure parsing of the
 	output without getting confused e.g. by values that

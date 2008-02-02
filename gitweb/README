@@ -129,17 +129,30 @@ descriptions.
 Gitweb config file variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can set, among others,  the following variables in gitweb config files:
+You can set, among others, the following variables in gitweb config files
+(with the exception of $projectroot and $projects_list this list does
+not include variables usually directly set during build):
  * $GIT
    Cure git executable to use.  By default set to "$GIT_BINDIR/git", which
    in turn is by default set to "$(bindir)/git".  If you use git from binary
    package, set this to "/usr/bin/git".  This can just be "git" if your
    webserver has a sensible PATH.  If you have multiple git versions
-   installed it is / can be used to choose which one to use.
+   installed it can be used to choose which one to use.
  * $version
    Gitweb version, set automatically when creating gitweb.cgi from
    gitweb.perl. You might want to modify it if you are running modified
    gitweb.
+ * $projectroot
+   Absolute filesystem path which will be prepended to project path;
+   the path to repository is $projectroot/$project.  Set to
+   $GITWEB_PROJECTROOT during installation.  This variable have to be
+   set correctly for gitweb to find repositories.
+ * $projects_list
+   Source of projects list, either directory to scan, or text file
+   with list of repositories (in the "<URI-encoded repository path> SPC
+   <URI-encoded repository owner>" format).  Set to $GITWEB_LIST
+   during installation.  If empty, $projectroot is used to scan for
+   repositories.
  * $my_url, $my_uri
    URL and absolute URL of gitweb script; you might need to set those
    variables if you are using 'pathinfo' feature: see also below.

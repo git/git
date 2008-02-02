@@ -274,6 +274,14 @@ webrick)
 	;;
 esac
 
+init_browser_path() {
+	browser_path="`git config browser.$1.path`"
+	test -z "$browser_path" && browser_path="$1"
+}
+
 start_httpd
 url=http://127.0.0.1:$port
-test -n "$browser" && "$browser" $url || echo $url
+test -n "$browser" && {
+	init_browser_path "$browser"
+	"$browser_path" $url
+} || echo $url

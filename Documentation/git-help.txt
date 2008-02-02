@@ -58,6 +58,16 @@ is available in PATH.
 +
 Note that the script tries, as much as possible, to display the HTML
 page in a new tab on an already opened browser.
++
+The following browsers are currently supported by 'git-help--browse':
++
+* firefox (this is the default under X Window when not using KDE)
+* iceweasel
+* konqueror (this is the default under KDE)
+* w3m (this is the default outside X Window)
+* links
+* lynx
+* dillo
 
 CONFIGURATION VARIABLES
 -----------------------

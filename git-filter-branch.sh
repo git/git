@@ -114,7 +114,6 @@ orig_namespace=refs/original/
 force=
 while :
 do
-	test $# = 0 && usage
 	case "$1" in
 	--)
 		shift
@@ -189,6 +188,9 @@ cd "$tempdir/t" &&
 workdir="$(pwd)" ||
 die ""
 
+# Remove tempdir on exit
+trap 'cd ../..; rm -rf "$tempdir"' 0
+
 # Make sure refs/original is empty
 git for-each-ref > "$tempdir"/backup-refs
 while read sha1 type name
@@ -210,7 +212,7 @@ GIT_WORK_TREE=.
 export GIT_DIR GIT_WORK_TREE
 
 # The refs should be updated if their heads were rewritten
-git rev-parse --no-flags --revs-only --symbolic-full-name "$@" |
+git rev-parse --no-flags --revs-only --symbolic-full-name --default HEAD "$@" |
 sed -e '/^^/d' >"$tempdir"/heads
 
 test -s "$tempdir"/heads ||
@@ -405,6 +407,8 @@ fi
 
 cd ../..
 rm -rf "$tempdir"
+
+trap - 0
 
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 test -z "$ORIG_GIT_DIR" || GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR

@@ -34,6 +34,16 @@ struct expire_reflog_cb {
 	struct cmd_reflog_expire_cb *cmd;
 };
 
+struct collected_reflog {
+	unsigned char sha1[20];
+	char reflog[FLEX_ARRAY];
+};
+struct collect_reflog_cb {
+	struct collected_reflog **e;
+	int alloc;
+	int nr;
+};
+
 #define INCOMPLETE	(1u<<10)
 #define STUDYING	(1u<<11)
 
@@ -281,6 +291,20 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	return status;
 }
 
+static int collect_reflog(const char *ref, const unsigned char *sha1, int unused, void *cb_data)
+{
+	struct collected_reflog *e;
+	struct collect_reflog_cb *cb = cb_data;
+	size_t namelen = strlen(ref);
+
+	e = xmalloc(sizeof(*e) + namelen + 1);
+	hashcpy(e->sha1, sha1);
+	memcpy(e->reflog, ref, namelen + 1);
+	ALLOC_GROW(cb->e, cb->nr + 1, cb->alloc);
+	cb->e[cb->nr++] = e;
+	return 0;
+}
+
 static int reflog_expire_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "gc.reflogexpire"))
@@ -349,8 +373,20 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			putchar('\n');
 	}
 
-	if (do_all)
-		status |= for_each_reflog(expire_reflog, &cb);
+	if (do_all) {
+		struct collect_reflog_cb collected;
+		int i;
+
+		memset(&collected, 0, sizeof(collected));
+		for_each_reflog(collect_reflog, &collected);
+		for (i = 0; i < collected.nr; i++) {
+			struct collected_reflog *e = collected.e[i];
+			status |= expire_reflog(e->reflog, e->sha1, 0, &cb);
+			free(e);
+		}
+		free(collected.e);
+	}
+
 	while (i < argc) {
 		const char *ref = argv[i++];
 		unsigned char sha1[20];
