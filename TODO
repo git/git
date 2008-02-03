@@ -6,156 +6,42 @@ The latest copy of this document is found at
     http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
     http://repo.or.cz/w/alt-git.git?a=blob;hb=todo;f=TODO
 
-This is primarily meant for my personal reminder, but feel free
-to pick an item from the list and work on it.
-
 ----------------------------------------------------------------
 
-Recent issues
--------------
+Issues that I have looked at, but unprocessed, unconcluded
+and/or lack enough discussions to proceed.
 
-* cherry-pick unexpected conflicts
+* "git-apply --whitespace=fix" context adjustment
+  $gmane/72248
 
-From: Gerrit Pape <pape@smarden.org>
-Subject: Re: unexpected git-cherry-pick conflict
-Date: Wed, 13 Jun 2007 13:43:35 +0000
-Message-ID: <20070613134336.13661.qmail@c61f4fed932273.315fe32.mid.smarden.org>
+* pretty.c optimization (Marco)
+  $gmane/72260
 
-* 3way merge still has D/F conflict problems
+* zlib abstraction (Marco)
+  $gmane/72262
 
-Subject: [RFH] 3way still has D/F conflict problems...
-Date: Mon, 23 Jul 2007 00:22:51 -0700
-Message-ID: <7vejizmvn8.fsf@assigned-by-dhcp.cox.net>
+* revision.c::limit_list() breakage (Jeff King)
+  $gmane/72324
+  t/t6009
 
-I am punting on unpack-trees related D/F issues for 1.5.3.  We
-might end up rewriting read-tree after the release.
+* synopsys: use {} instead of () for grouping alternatives (Jari Aalto)
+  $gmane/72243
 
-* Pushing into a non-bare repository more gracefully.
+* A symref file for ".git/" (Lars Hjemli)
+  $gmane/72244
 
-When git-push is done to a non-bare repository and updates the
-branch that is currently checked out, we currently do not do
-anything special.
+* safecrlf (Steffen Prohaska)
+  $gmane/72285
 
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <Pine.LNX.4.64.0704160931550.5473@woody.linux-foundation.org>
+* git-send-email unechoed interactive password (Michael Witten)
+  $gmane/72220
 
-* git-daemon bug?
+* compat/qsort (Brian Downing)
+  $gmane/72311
 
-From: Franck Bui-Huu <vagabon.xyz@gmail.com>
-Message-ID: <450EABD0.1040102@innova-card.com>
+* unified "user's choice brower" (Christian Couder)
+  $gmane/72226
 
-Repeated requests against git-daemon makes it stuck under --syslog
+* "[alias] st = status" and "cd .git && git st" (Jeff King)
+  $gmane/72327
 
-[jc: does not reproduce easily for me; has anybody seen it?]
-
-* Use gitattributes for more things.
-
- - 'precious' files that are not tracked but not
-   build-products.  Currently people seem to put them in
-   .gitignore, but that is not quite right, as .gitignore is
-   meant for ignoring things that can be lost (build products,
-   editor backup files).  "git clean -x" and "git checkout" to
-   another branch that has a file where the current branch has a
-   directory could lose such 'precious' files.
-
- - Others???
-
-
-Technical (heavier)
--------------------
-
-* Subproject Porcelain.
-
- - recursive checkout
- - recursive diff
-
-  From: Junio C Hamano <junkio@cox.net>
-  Message-ID: <11793556371774-git-send-email-junkio@cox.net>
-
-* make merge-recursive and read-tree -u more robust when D/F
-  conflict is involved.
-
-  From: Junio C Hamano <junkio@cox.net>
-  Message-ID: <11793556371774-git-send-email-junkio@cox.net>
-
-* Use blame machinery to track a single file (not path) in a finer
-  grained way.
-
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <alpine.LFD.0.98.0704201554550.9964@woody.linux-foundation.org>
-
-[jc: I have a fixed-up one parked in 'pu' and also outlined what
-other things I think are needed in my response:
-
-    Message-ID: <7vwt06wqv8.fsf@assigned-by-dhcp.cox.net>
-]
-
-Technical (milder)
-------------------
-
-* perhaps add 'tree' entries to the index.
-
-  From: Junio C Hamano <junkio@cox.net>
-  Message-ID: <11793556371774-git-send-email-junkio@cox.net>
-
-* "pure" clones, that does not know about where it was cloned
-  from.  Specifically, no [remote "origin"] in .git/config, nor
-  refs/remotes/origin.
-
-  From: Junio C Hamano <junkio@cox.net>
-  Message-ID: <7vr6pac86g.fsf@assigned-by-dhcp.cox.net>
-
-* upload-pack support to start fetching from any valid point on
-  the history, not just published refs. (Erik W. Biederman
-  <m164jc9ekx.fsf@ebiederm.dsl.xmission.com>)
-
-* daemon --strict-symlink.
-
-* "git fetch" should be able to use foreign SCM import backends
-  such as svnimport and cvsimport.
-
-* "git clone" should be a thin wrapper around init/remote/fetch/checkout
-
-  From: Junio C Hamano <junkio@cox.net>
-  Message-ID: <11793556371774-git-send-email-junkio@cox.net>
-
-* Maybe grok PGP signed text/plain in mailinfo as well.
-
-
-Technical (trivial)
--------------------
-
-* Give --stdin to git-log, similar to git-rev-list
-
-  From: "Marco Costalba" <mcostalba@gmail.com>
-  Message-ID: <e5bfff550705110413q28aef3d8k3aeb0d342eeb2016@mail.gmail.com>
-
-[jc: but why is it needed?  shouldn't we be using rev-list plumbing,
- and if not perhaps rev-list needs to learn something log knows
- how to do?]
-
-* Update the lockfile protocol so that closing and renaming are
-  done inside lockfile commit time.  Some filesystems do not
-  like an open file renamed and then closed.  Come up with a
-  patch and pass Alex for an Ack.
-
-* Mbx (not mbox) support for git-mailsplit.
-
-* git-clone fail .git/refs/foo (Yann Dirson <ydirson@altern.org>)
-  <20060610225040.GA7766@nowhere.earth>
-
-* git-proxy should be spawned with sh -c 'command' $1 $2.
-
-[jc: should it? -- deciding if it should may not be "trivial",
-but if it turns out to be the right thing to do, the change
-itself is trivial.]
-
-* Maybe a true git-proxy command that reads the first request
-  pkt-line, and redirects the request to its real destination.
-
-* test scripts for the relative directory path stuff.
-
-
-Local Variables:
-mode: text
-End:
