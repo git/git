@@ -327,4 +327,22 @@ test_expect_success 'amend using the message from another commit' '
 
 '
 
+test_expect_success 'amend using the message from a commit named with tag' '
+
+	git reset --hard &&
+	test_tick &&
+	git commit --allow-empty -m "old commit" &&
+	old=$(git rev-parse --verify HEAD) &&
+	git tag -a -m "tag on old" tagged-old HEAD &&
+	test_tick &&
+	git commit --allow-empty -m "new commit" &&
+	new=$(git rev-parse --verify HEAD) &&
+	test_tick &&
+	git commit --allow-empty --amend -C tagged-old &&
+	git show --pretty="format:%ad %s" "$old" >expected &&
+	git show --pretty="format:%ad %s" HEAD >actual &&
+	diff -u expected actual
+
+'
+
 test_done

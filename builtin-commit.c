@@ -601,7 +601,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 		if (get_sha1(use_message, sha1))
 			die("could not lookup commit %s", use_message);
-		commit = lookup_commit(sha1);
+		commit = lookup_commit_reference(sha1);
 		if (!commit || parse_commit(commit))
 			die("could not parse commit %s", use_message);
 
