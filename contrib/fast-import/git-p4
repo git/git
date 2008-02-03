@@ -843,18 +843,25 @@ class P4Sync(Command):
         self.keepRepoPath = False
         self.depotPaths = None
         self.p4BranchesInGit = []
+        self.cloneExclude = []
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
 
     def extractFilesFromCommit(self, commit):
+        self.cloneExclude = [re.sub(r"\.\.\.$", "", path)
+                             for path in self.cloneExclude]
         files = []
         fnum = 0
         while commit.has_key("depotFile%s" % fnum):
             path =  commit["depotFile%s" % fnum]
 
-            found = [p for p in self.depotPaths
-                     if path.startswith (p)]
+            if [p for p in self.cloneExclude
+                if path.startswith (p)]:
+                found = False
+            else:
+                found = [p for p in self.depotPaths
+                         if path.startswith (p)]
             if not found:
                 fnum = fnum + 1
                 continue
@@ -1634,12 +1641,22 @@ class P4Clone(P4Sync):
         P4Sync.__init__(self)
         self.description = "Creates a new git repository and imports from Perforce into it"
         self.usage = "usage: %prog [options] //depot/path[@revRange]"
-        self.options.append(
+        self.options += [
             optparse.make_option("--destination", dest="cloneDestination",
                                  action='store', default=None,
-                                 help="where to leave result of the clone"))
+                                 help="where to leave result of the clone"),
+            optparse.make_option("-/", dest="cloneExclude",
+                                 action="append", type="string",
+                                 help="exclude depot path")
+        ]
         self.cloneDestination = None
         self.needsGit = False
+
+    # This is required for the "append" cloneExclude action
+    def ensure_value(self, attr, value):
+        if not hasattr(self, attr) or getattr(self, attr) is None:
+            setattr(self, attr, value)
+        return getattr(self, attr)
 
     def defaultDestination(self, args):
         ## TODO: use common prefix of args?
@@ -1664,6 +1681,7 @@ class P4Clone(P4Sync):
             self.cloneDestination = depotPaths[-1]
             depotPaths = depotPaths[:-1]
 
+        self.cloneExclude = ["/"+p for p in self.cloneExclude]
         for p in depotPaths:
             if not p.startswith("//"):
                 return False
