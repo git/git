@@ -5565,7 +5565,7 @@ XML
 			or next;
 
 		# print element (entry, item)
-		my $co_url = href(-full=>1, action=>"commit", hash=>$commit);
+		my $co_url = href(-full=>1, action=>"commitdiff", hash=>$commit);
 		if ($format eq 'rss') {
 			print "<item>\n" .
 			      "<title>" . esc_html($co{'title'}) . "</title>\n" .
