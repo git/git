@@ -295,6 +295,9 @@ test_done () {
 	if test "$test_broken" != 0
 	then
 		say_color error "still have $test_broken known breakage(s)"
+		msg="remaining $(($test_count-$test_broken)) test(s)"
+	else
+		msg="$test_count test(s)"
 	fi
 	case "$test_failure" in
 	0)
@@ -306,11 +309,11 @@ test_done () {
 		# The Makefile provided will clean this test area so
 		# we will leave things as they are.
 
-		say_color pass "passed all $test_count test(s)"
+		say_color pass "passed all $msg"
 		exit 0 ;;
 
 	*)
-		say_color error "failed $test_failure among $test_count test(s)"
+		say_color error "failed $test_failure among $msg"
 		exit 1 ;;
 
 	esac
