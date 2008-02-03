@@ -1247,6 +1247,8 @@ use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
 use IPC::Open3;
 
+my ($_gc_nr, $_gc_period);
+
 # properties that we do not log:
 my %SKIP_PROP;
 BEGIN {
@@ -1407,6 +1409,7 @@ sub read_all_remotes {
 }
 
 sub init_vars {
+	$_gc_nr = $_gc_period = 1000;
 	if (defined $_repack || defined $_repack_flags) {
 	       warn "Repack options are obsolete; they have no effect.\n";
 	}
@@ -2095,6 +2098,10 @@ sub restore_commit_header_env {
 	}
 }
 
+sub gc {
+	command_noisy('gc', '--auto');
+};
+
 sub do_git_commit {
 	my ($self, $log_entry) = @_;
 	my $lr = $self->last_rev;
@@ -2148,6 +2155,10 @@ sub do_git_commit {
 		                   0, $self->svm_uuid);
 	}
 	print " = $commit ($self->{ref_id})\n";
+	if (--$_gc_nr == 0) {
+		$_gc_nr = $_gc_period;
+		gc();
+	}
 	return $commit;
 }
 
@@ -3975,6 +3986,7 @@ sub gs_fetch_loop_common {
 		$max += $inc;
 		$max = $head if ($max > $head);
 	}
+	Git::SVN::gc();
 }
 
 sub match_globs {
