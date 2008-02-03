@@ -1247,7 +1247,6 @@ use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
 use IPC::Open3;
 
-my $_repack_nr;
 # properties that we do not log:
 my %SKIP_PROP;
 BEGIN {
@@ -1408,9 +1407,9 @@ sub read_all_remotes {
 }
 
 sub init_vars {
-	$_repack = 1000 unless (defined $_repack && $_repack > 0);
-	$_repack_nr = $_repack;
-	$_repack_flags ||= '-d';
+	if (defined $_repack || defined $_repack_flags) {
+	       warn "Repack options are obsolete; they have no effect.\n";
+	}
 }
 
 sub verify_remotes_sanity {
@@ -2149,13 +2148,6 @@ sub do_git_commit {
 		                   0, $self->svm_uuid);
 	}
 	print " = $commit ($self->{ref_id})\n";
-	if ($_repack && (--$_repack_nr == 0)) {
-		$_repack_nr = $_repack;
-		# repack doesn't use any arguments with spaces in them, does it?
-		print "Running git repack $_repack_flags ...\n";
-		command_noisy('repack', split(/\s+/, $_repack_flags));
-		print "Done repacking\n";
-	}
 	return $commit;
 }
 
