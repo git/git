@@ -360,6 +360,9 @@ static int fsck_commit(struct commit *commit)
 		fprintf(stderr, "Checking commit %s\n",
 			sha1_to_hex(commit->object.sha1));
 
+	if (!commit->date)
+		return objerror(&commit->object, "invalid author/committer line");
+
 	if (memcmp(buffer, "tree ", 5))
 		return objerror(&commit->object, "invalid format - expected 'tree' line");
 	if (get_sha1_hex(buffer+5, tree_sha1) || buffer[45] != '\n')
@@ -378,9 +381,6 @@ static int fsck_commit(struct commit *commit)
 		return objerror(&commit->object, "could not load commit's tree %s", tree_sha1);
 	if (!commit->parents && show_root)
 		printf("root %s\n", sha1_to_hex(commit->object.sha1));
-	if (!commit->date)
-		printf("bad commit date in %s\n",
-		       sha1_to_hex(commit->object.sha1));
 	return 0;
 }
 
