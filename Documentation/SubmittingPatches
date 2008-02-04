@@ -34,9 +34,9 @@ Checklist (and a short version for the impatient):
 	- if your name is not writable in ASCII, make sure that
 	  you send off a message in the correct encoding.
 	- send the patch to the list (git@vger.kernel.org) and the
-	  maintainer (gitster@pobox.com). If you use
-	  git-send-email(1), please test it first by sending
-	  email to yourself.
+	  maintainer (gitster@pobox.com) if (and only if) the patch
+	  is ready for inclusion. If you use git-send-email(1),
+	  please test it first by sending email to yourself.
 
 Long version:
 
@@ -162,7 +162,8 @@ Note that your maintainer does not necessarily read everything
 on the git mailing list.  If your patch is for discussion first,
 send it "To:" the mailing list, and optionally "cc:" him.  If it
 is trivially correct or after the list reached a consensus, send
-it "To:" the maintainer and optionally "cc:" the list.
+it "To:" the maintainer and optionally "cc:" the list for
+inclusion.
 
 Also note that your maintainer does not actively involve himself in
 maintaining what are in contrib/ hierarchy.  When you send fixes and
