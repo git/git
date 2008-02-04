@@ -1646,7 +1646,7 @@ class P4Clone(P4Sync):
         depotPath = args[0]
         depotDir = re.sub("(@[^@]*)$", "", depotPath)
         depotDir = re.sub("(#[^#]*)$", "", depotDir)
-	depotDir = re.sub(r"\.\.\.$", "", depotDir)
+        depotDir = re.sub(r"\.\.\.$", "", depotDir)
         depotDir = re.sub(r"/$", "", depotDir)
         return os.path.split(depotDir)[1]
 
