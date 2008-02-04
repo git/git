@@ -45,6 +45,7 @@ man7dir=$(mandir)/man7
 
 ASCIIDOC=asciidoc
 ASCIIDOC_EXTRA =
+MANPAGE_XSL = callouts.xsl
 INSTALL?=install
 RM ?= rm -f
 DOC_REF = origin/man
@@ -65,6 +66,7 @@ ASCIIDOC_EXTRA += -a asciidoc7compatible
 endif
 ifdef DOCBOOK_XSL_172
 ASCIIDOC_EXTRA += -a docbook-xsl-172
+MANPAGE_XSL = manpage-1.72.xsl
 endif
 
 #
@@ -159,7 +161,7 @@ $(MAN_HTML): %.html : %.txt
 
 %.1 %.5 %.7 : %.xml
 	$(RM) $@
-	xmlto -m callouts.xsl man $<
+	xmlto -m $(MANPAGE_XSL) man $<
 
 %.xml : %.txt
 	$(RM) $@+ $@
