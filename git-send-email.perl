@@ -157,7 +157,7 @@ my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@initial_cc,@bcclist,@xh,
-	$initial_reply_to,$initial_subject,@files,$author,$sender,$compose,$time);
+	$initial_reply_to,$initial_subject,@files,$author,$sender,$smtp_authpass,$compose,$time);
 
 my $envelope_sender;
 
@@ -177,7 +177,7 @@ my ($quiet, $dry_run) = (0, 0);
 
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
-my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_authpass, $smtp_ssl);
+my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_ssl);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
 my ($no_validate);
 
@@ -214,7 +214,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-server=s" => \$smtp_server,
 		    "smtp-server-port=s" => \$smtp_server_port,
 		    "smtp-user=s" => \$smtp_authuser,
-		    "smtp-pass=s" => \$smtp_authpass,
+		    "smtp-pass:s" => \$smtp_authpass,
 		    "smtp-ssl!" => \$smtp_ssl,
 		    "identity=s" => \$identity,
 		    "compose" => \$compose,
@@ -647,9 +647,26 @@ X-Mailer: git-send-email $gitversion
 			die "Unable to initialize SMTP properly.  Is there something wrong with your config?";
 		}
 
-		if ((defined $smtp_authuser) && (defined $smtp_authpass)) {
+		if (defined $smtp_authuser) {
+
+			if (!defined $smtp_authpass) {
+
+				system "stty -echo";
+
+				do {
+					print "Password: ";
+					$_ = <STDIN>;
+					print "\n";
+				} while (!defined $_);
+
+				chomp($smtp_authpass = $_);
+
+				system "stty echo";
+			}
+
 			$auth ||= $smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
 		}
+
 		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
 		$smtp->data or die $smtp->message;
