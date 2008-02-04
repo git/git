@@ -376,9 +376,12 @@ if (@files) {
 my $prompting = 0;
 if (!defined $sender) {
 	$sender = $repoauthor || $repocommitter;
-	do {
+
+	while (1) {
 		$_ = $term->readline("Who should the emails appear to be from? [$sender] ");
-	} while (!defined $_);
+		last if defined $_;
+		print "\n";
+	}
 
 	$sender = $_ if ($_);
 	print "Emails will be sent from: ", $sender, "\n";
@@ -386,10 +389,14 @@ if (!defined $sender) {
 }
 
 if (!@to) {
-	do {
-		$_ = $term->readline("Who should the emails be sent to? ",
-				"");
-	} while (!defined $_);
+
+
+	while (1) {
+		$_ = $term->readline("Who should the emails be sent to? ", "");
+		last if defined $_;
+		print "\n";
+	}
+
 	my $to = $_;
 	push @to, split /,/, $to;
 	$prompting++;
@@ -411,19 +418,22 @@ sub expand_aliases {
 @bcclist = expand_aliases(@bcclist);
 
 if (!defined $initial_subject && $compose) {
-	do {
-		$_ = $term->readline("What subject should the initial email start with? ",
-			$initial_subject);
-	} while (!defined $_);
+	while (1) {
+		$_ = $term->readline("What subject should the initial email start with? ", $initial_subject);
+		last if defined $_;
+		print "\n";
+	}
+
 	$initial_subject = $_;
 	$prompting++;
 }
 
 if ($thread && !defined $initial_reply_to && $prompting) {
-	do {
-		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ",
-			$initial_reply_to);
-	} while (!defined $_);
+	while (1) {
+		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ", $initial_reply_to);
+		last if defined $_;
+		print "\n";
+	}
 
 	$initial_reply_to = $_;
 }
@@ -474,9 +484,11 @@ EOT
 	close(C);
 	close(C2);
 
-	do {
+	while (1) {
 		$_ = $term->readline("Send this email? (y|n) ");
-	} while (!defined $_);
+		last if defined $_;
+		print "\n";
+	}
 
 	if (uc substr($_,0,1) ne 'Y') {
 		cleanup_compose_files();
