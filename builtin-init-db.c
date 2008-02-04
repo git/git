@@ -142,8 +142,7 @@ static void copy_templates(const char *git_dir, int len, const char *template_di
 		template_dir = DEFAULT_GIT_TEMPLATE_DIR;
 		if (!is_absolute_path(template_dir)) {
 			const char *exec_path = git_exec_path();
-			template_dir = prefix_path(exec_path, strlen(exec_path),
-						   template_dir);
+			template_dir = prefix_filename(exec_path, strlen(exec_path), template_dir);
 		}
 	}
 	strcpy(template_path, template_dir);

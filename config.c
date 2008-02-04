@@ -485,8 +485,9 @@ const char *git_etc_gitconfig(void)
 		if (!is_absolute_path(system_wide)) {
 			/* interpret path relative to exec-dir */
 			const char *exec_path = git_exec_path();
-			system_wide = prefix_path(exec_path, strlen(exec_path),
-						system_wide);
+			system_wide = strdup(prefix_filename(exec_path,
+							     strlen(exec_path),
+							     system_wide));
 		}
 	}
 	return system_wide;
