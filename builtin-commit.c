@@ -394,6 +394,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 	struct strbuf sb;
 	char *buffer;
 	FILE *fp;
+	const char *hook_arg1 = NULL;
+	const char *hook_arg2 = NULL;
 
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		return 0;
@@ -401,31 +403,46 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 	strbuf_init(&sb, 0);
 	if (message.len) {
 		strbuf_addbuf(&sb, &message);
+		hook_arg1 = "message";
 	} else if (logfile && !strcmp(logfile, "-")) {
 		if (isatty(0))
 			fprintf(stderr, "(reading log message from standard input)\n");
 		if (strbuf_read(&sb, 0, 0) < 0)
 			die("could not read log from standard input");
+		hook_arg1 = "message";
 	} else if (logfile) {
 		if (strbuf_read_file(&sb, logfile, 0) < 0)
 			die("could not read log file '%s': %s",
 			    logfile, strerror(errno));
+		hook_arg1 = "message";
 	} else if (use_message) {
 		buffer = strstr(use_message_buffer, "\n\n");
 		if (!buffer || buffer[2] == '\0')
 			die("commit has empty message");
 		strbuf_add(&sb, buffer + 2, strlen(buffer + 2));
+		hook_arg1 = "commit";
+		hook_arg2 = use_message;
 	} else if (!stat(git_path("MERGE_MSG"), &statbuf)) {
 		if (strbuf_read_file(&sb, git_path("MERGE_MSG"), 0) < 0)
 			die("could not read MERGE_MSG: %s", strerror(errno));
+		hook_arg1 = "merge";
 	} else if (!stat(git_path("SQUASH_MSG"), &statbuf)) {
 		if (strbuf_read_file(&sb, git_path("SQUASH_MSG"), 0) < 0)
 			die("could not read SQUASH_MSG: %s", strerror(errno));
+		hook_arg1 = "squash";
 	} else if (template_file && !stat(template_file, &statbuf)) {
 		if (strbuf_read_file(&sb, template_file, 0) < 0)
 			die("could not read %s: %s",
 			    template_file, strerror(errno));
+		hook_arg1 = "template";
 	}
+
+	/*
+	 * This final case does not modify the template message,
+	 * it just sets the argument to the prepare-commit-msg hook.
+	 */
+	else if (in_merge)
+		hook_arg1 = "merge";
 
 	fp = fopen(git_path(commit_editmsg), "w");
 	if (fp == NULL)
@@ -533,6 +550,10 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 		error("Error building trees");
 		return 0;
 	}
+
+	if (run_hook(index_file, "prepare-commit-msg",
+		     git_path(commit_editmsg), hook_arg1, hook_arg2, NULL))
+		return 0;
 
 	if (use_editor) {
 		char index[PATH_MAX];
