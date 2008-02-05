@@ -61,6 +61,10 @@ The default 'pre-commit' hook, when enabled, catches introduction
 of lines with trailing whitespaces and aborts the commit when
 such a line is found.
 
+All the `git-commit` hooks are invoked with the environment
+variable `GIT_EDITOR=:` if the command will not bring up an editor
+to modify the commit message.
+
 commit-msg
 ----------
 
