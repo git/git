@@ -343,6 +343,40 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 	return s.commitable;
 }
 
+static int run_hook(const char *index_file, const char *name, ...)
+{
+	struct child_process hook;
+	const char *argv[10], *env[2];
+	char index[PATH_MAX];
+	va_list args;
+	int i;
+
+	va_start(args, name);
+	argv[0] = git_path("hooks/%s", name);
+	i = 0;
+	do {
+		if (++i >= ARRAY_SIZE(argv))
+			die ("run_hook(): too many arguments");
+		argv[i] = va_arg(args, const char *);
+	} while (argv[i]);
+	va_end(args);
+
+	snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
+	env[0] = index;
+	env[1] = NULL;
+
+	if (access(argv[0], X_OK) < 0)
+		return 0;
+
+	memset(&hook, 0, sizeof(hook));
+	hook.argv = argv;
+	hook.no_stdin = 1;
+	hook.stdout_to_stderr = 1;
+	hook.env = env;
+
+	return run_command(&hook);
+}
+
 static const char sign_off_header[] = "Signed-off-by: ";
 
 static int prepare_log_message(const char *index_file, const char *prefix)
@@ -677,31 +711,6 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return commitable ? 0 : 1;
 }
 
-static int run_hook(const char *index_file, const char *name, const char *arg)
-{
-	struct child_process hook;
-	const char *argv[3], *env[2];
-	char index[PATH_MAX];
-
-	argv[0] = git_path("hooks/%s", name);
-	argv[1] = arg;
-	argv[2] = NULL;
-	snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
-	env[0] = index;
-	env[1] = NULL;
-
-	if (access(argv[0], X_OK) < 0)
-		return 0;
-
-	memset(&hook, 0, sizeof(hook));
-	hook.argv = argv;
-	hook.no_stdin = 1;
-	hook.stdout_to_stderr = 1;
-	hook.env = env;
-
-	return run_command(&hook);
-}
-
 static void print_summary(const char *prefix, const unsigned char *sha1)
 {
 	struct rev_info rev;
@@ -876,7 +885,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		launch_editor(git_path(commit_editmsg), NULL, env);
 	}
 	if (!no_verify &&
-	    run_hook(index_file, "commit-msg", git_path(commit_editmsg))) {
+	    run_hook(index_file, "commit-msg", git_path(commit_editmsg), NULL)) {
 		rollback_index_files();
 		exit(1);
 	}
