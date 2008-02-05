@@ -766,6 +766,12 @@ pack.indexVersion::
 	whenever the corresponding pack is larger than 2 GB.  Otherwise
 	the default is 1.
 
+pack.packSizeLimit:
+	The default maximum size of a pack.  This setting only affects
+	packing to a file, i.e. the git:// protocol is unaffected.  It
+	can be overridden by the `\--max-pack-size` option of
+	linkgit:git-repack[1].
+
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches
 	at once.

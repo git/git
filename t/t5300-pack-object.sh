@@ -268,4 +268,10 @@ test_expect_success \
     'make sure index-pack detects the SHA1 collision' \
     '! git-index-pack -o bad.idx test-3.pack'
 
+test_expect_success \
+    'honor pack.packSizeLimit' \
+    'git config pack.packSizeLimit 200 &&
+     packname_4=$(git pack-objects test-4 <obj-list) &&
+     test 3 = $(ls test-4-*.pack | wc -l)'
+
 test_done

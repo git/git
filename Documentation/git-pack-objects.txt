@@ -99,7 +99,8 @@ base-name::
 --max-pack-size=<n>::
 	Maximum size of each output packfile, expressed in MiB.
 	If specified,  multiple packfiles may be created.
-	The default is unlimited.
+	The default is unlimited, unless the config variable
+	`pack.packSizeLimit` is set.
 
 --incremental::
 	This flag causes an object already in a pack ignored
