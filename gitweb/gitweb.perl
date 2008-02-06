@@ -1620,7 +1620,7 @@ sub git_get_project_url_list {
 	my $path = shift;
 
 	$git_dir = "$projectroot/$path";
-	open my $fd, "$projectroot/$path/cloneurl"
+	open my $fd, "$git_dir/cloneurl"
 		or return wantarray ?
 		@{ config_to_multi(git_get_project_config('url')) } :
 		   config_to_multi(git_get_project_config('url'));
