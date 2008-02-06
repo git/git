@@ -1624,7 +1624,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		 * Convert from working tree format to canonical git format
 		 */
 		strbuf_init(&buf, 0);
-		if (convert_to_git(s->path, s->data, s->size, &buf)) {
+		if (convert_to_git(s->path, s->data, s->size, &buf, safe_crlf)) {
 			size_t size = 0;
 			munmap(s->data, s->size);
 			s->should_munmap = 0;

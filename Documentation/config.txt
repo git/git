@@ -139,6 +139,51 @@ core.autocrlf::
 	"text" (i.e. be subjected to the autocrlf mechanism) is
 	decided purely based on the contents.
 
+core.safecrlf::
+	If true, makes git check if converting `CRLF` as controlled by
+	`core.autocrlf` is reversible.  Git will verify if a command
+	modifies a file in the work tree either directly or indirectly.
+	For example, committing a file followed by checking out the
+	same file should yield the original file in the work tree.  If
+	this is not the case for the current setting of
+	`core.autocrlf`, git will reject the file.  The variable can
+	be set to "warn", in which case git will only warn about an
+	irreversible conversion but continue the operation.
++
+CRLF conversion bears a slight chance of corrupting data.
+autocrlf=true will convert CRLF to LF during commit and LF to
+CRLF during checkout.  A file that contains a mixture of LF and
+CRLF before the commit cannot be recreated by git.  For text
+files this is the right thing to do: it corrects line endings
+such that we have only LF line endings in the repository.
+But for binary files that are accidentally classified as text the
+conversion can corrupt data.
++
+If you recognize such corruption early you can easily fix it by
+setting the conversion type explicitly in .gitattributes.  Right
+after committing you still have the original file in your work
+tree and this file is not yet corrupted.  You can explicitly tell
+git that this file is binary and git will handle the file
+appropriately.
++
+Unfortunately, the desired effect of cleaning up text files with
+mixed line endings and the undesired effect of corrupting binary
+files cannot be distinguished.  In both cases CRLFs are removed
+in an irreversible way.  For text files this is the right thing
+to do because CRLFs are line endings, while for binary files
+converting CRLFs corrupts data.
++
+Note, this safety check does not mean that a checkout will generate a
+file identical to the original file for a different setting of
+`core.autocrlf`, but only for the current one.  For example, a text
+file with `LF` would be accepted with `core.autocrlf=input` and could
+later be checked out with `core.autocrlf=true`, in which case the
+resulting file would contain `CRLF`, although the original file
+contained `LF`.  However, in both work trees the line endings would be
+consistent, that is either all `LF` or all `CRLF`, but never mixed.  A
+file with mixed line endings would be reported by the `core.safecrlf`
+mechanism.
+
 core.symlinks::
 	If false, symbolic links are checked out as small plain files that
 	contain the link text. linkgit:git-update-index[1] and

@@ -2358,7 +2358,8 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	if ((type == OBJ_BLOB) && S_ISREG(st->st_mode)) {
 		struct strbuf nbuf;
 		strbuf_init(&nbuf, 0);
-		if (convert_to_git(path, buf, size, &nbuf)) {
+		if (convert_to_git(path, buf, size, &nbuf,
+		                   write_object ? safe_crlf : 0)) {
 			munmap(buf, size);
 			buf = strbuf_detach(&nbuf, &size);
 			re_allocated = 1;
