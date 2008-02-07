@@ -122,13 +122,13 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 
 #if DBRT_DEBUG > 1
 		if (first)
-			printf("index %s\n", first);
+			fprintf(stderr, "index %s\n", first);
 #endif
 		for (i = 0; i < len; i++) {
 			if (!posns[i] || posns[i] == df_conflict_list)
 				continue;
 #if DBRT_DEBUG > 1
-			printf("%d %s\n", i + 1, posns[i]->name);
+			fprintf(stderr, "%d %s\n", i + 1, posns[i]->name);
 #endif
 			if (!first || entcmp(first, firstdir,
 					     posns[i]->name,
@@ -209,13 +209,13 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 				int ret;
 
 #if DBRT_DEBUG > 1
-				printf("%s:\n", first);
+				fprintf(stderr, "%s:\n", first);
 				for (i = 0; i < src_size; i++) {
-					printf(" %d ", i);
+					fprintf(stderr, " %d ", i);
 					if (src[i])
-						printf("%s\n", sha1_to_hex(src[i]->sha1));
+						fprintf(stderr, "%06x %s\n", src[i]->ce_mode, sha1_to_hex(src[i]->sha1));
 					else
-						printf("\n");
+						fprintf(stderr, "\n");
 				}
 #endif
 				ret = o->fn(src, o, remove);
@@ -223,7 +223,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 					return ret;
 
 #if DBRT_DEBUG > 1
-				printf("Added %d entries\n", ret);
+				fprintf(stderr, "Added %d entries\n", ret);
 #endif
 				o->pos += ret;
 			} else {
