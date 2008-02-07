@@ -558,12 +558,15 @@ and returns the process output as a string."
 		     (?\100 "   (type change file -> subproject)")
 		     (?\120 "   (type change symlink -> subproject)")
 		     (t "   (subproject)")))
+                  (?\110 nil)  ;; directory (internal, not a real git state)
 		  (?\000  ;; deleted or unknown
 		   (case old-type
 		     (?\120 "   (symlink)")
 		     (?\160 "   (subproject)")))
 		  (t (format "   (unknown type %o)" new-type)))))
-    (if str (propertize str 'face 'git-status-face) "")))
+    (cond (str (propertize str 'face 'git-status-face))
+          ((eq new-type ?\110) "/")
+          (t ""))))
 
 (defun git-rename-as-string (info)
   "Return a string describing the copy or rename associated with INFO, or an empty string if none."
@@ -666,9 +669,11 @@ Return the list of files that haven't been handled."
     (with-temp-buffer
       (apply #'git-call-process-env t nil "ls-files" "-z" (append options (list "--") files))
       (goto-char (point-min))
-      (while (re-search-forward "\\([^\0]*\\)\0" nil t 1)
+      (while (re-search-forward "\\([^\0]*?\\)\\(/?\\)\0" nil t 1)
         (let ((name (match-string 1)))
-          (push (git-create-fileinfo default-state name) infolist)
+          (push (git-create-fileinfo default-state name 0
+                                     (if (string-equal "/" (match-string 2)) (lsh ?\110 9) 0))
+                infolist)
           (setq files (delete name files)))))
     (git-insert-info-list status infolist)
     files))
@@ -713,7 +718,7 @@ Return the list of files that haven't been handled."
 (defun git-run-ls-files-with-excludes (status files default-state &rest options)
   "Run git-ls-files on FILES with appropriate --exclude-from options."
   (let ((exclude-files (git-get-exclude-files)))
-    (apply #'git-run-ls-files status files default-state
+    (apply #'git-run-ls-files status files default-state "--directory"
            (concat "--exclude-per-directory=" git-per-dir-ignore-file)
            (append options (mapcar (lambda (f) (concat "--exclude-from=" f)) exclude-files)))))
 
@@ -957,6 +962,7 @@ Return the list of files that haven't been handled."
   "Add marked file(s) to the index cache."
   (interactive)
   (let ((files (git-get-filenames (git-marked-files-state 'unknown 'ignored))))
+    ;; FIXME: add support for directories
     (unless files
       (push (file-relative-name (read-file-name "File to add: " nil nil t)) files))
     (apply #'git-call-process-env nil nil "update-index" "--add" "--" files)
@@ -983,7 +989,10 @@ Return the list of files that haven't been handled."
          (format "Remove %d file%s? " (length files) (if (> (length files) 1) "s" "")))
         (progn
           (dolist (name files)
-            (when (file-exists-p name) (delete-file name)))
+            (ignore-errors
+              (if (file-directory-p name)
+                  (delete-directory name)
+                (delete-file name))))
           (apply #'git-call-process-env nil nil "update-index" "--remove" "--" files)
           (git-update-status-files files nil)
           (git-success-message "Removed" files))
@@ -992,7 +1001,7 @@ Return the list of files that haven't been handled."
 (defun git-revert-file ()
   "Revert changes to the marked file(s)."
   (interactive)
-  (let ((files (git-marked-files))
+  (let ((files (git-marked-files-state 'added 'deleted 'modified 'unmerged))
         added modified)
     (when (and files
                (yes-or-no-p
@@ -1062,6 +1071,16 @@ Return the list of files that haven't been handled."
         (git-refresh-ewoc-hf git-status)
         (message "Inserting unknown files...done"))
     (git-remove-handled)))
+
+(defun git-expand-directory (info)
+  "Expand the directory represented by INFO to list its files."
+  (when (eq (lsh (git-fileinfo->new-perm info) -9) ?\110)
+    (let ((dir (git-fileinfo->name info)))
+      (git-set-filenames-state git-status (list dir) nil)
+      (git-run-ls-files-with-excludes git-status (list (concat dir "/")) 'unknown "-o")
+      (git-refresh-files)
+      (git-refresh-ewoc-hf git-status)
+      t)))
 
 (defun git-setup-diff-buffer (buffer)
   "Setup a buffer for displaying a diff."
@@ -1237,9 +1256,10 @@ Return the list of files that haven't been handled."
   (interactive)
   (unless git-status (error "Not in git-status buffer."))
   (let ((info (ewoc-data (ewoc-locate git-status))))
-    (find-file (git-fileinfo->name info))
-    (when (eq 'unmerged (git-fileinfo->state info))
-      (smerge-mode 1))))
+    (unless (git-expand-directory info)
+      (find-file (git-fileinfo->name info))
+      (when (eq 'unmerged (git-fileinfo->state info))
+        (smerge-mode 1)))))
 
 (defun git-find-file-other-window ()
   "Visit the current file in its own buffer in another window."
