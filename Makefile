@@ -217,7 +217,7 @@ BASIC_CFLAGS =
 BASIC_LDFLAGS =
 
 SCRIPT_SH = \
-	git-bisect.sh git-checkout.sh \
+	git-bisect.sh \
 	git-clone.sh \
 	git-merge-one-file.sh git-mergetool.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh git-rebase--interactive.sh \
@@ -329,6 +329,7 @@ BUILTIN_OBJS = \
 	builtin-bundle.o \
 	builtin-cat-file.o \
 	builtin-check-attr.o \
+	builtin-checkout.o \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \
 	builtin-clean.o \

@@ -103,13 +103,6 @@ test_expect_success "checkout -m with dirty tree" '
 	test "$(git symbolic-ref HEAD)" = "refs/heads/side" &&
 
 	(cat >expect.messages <<EOF
-Merging side with local
-Merging:
-ab76817 Side M one, D two, A three
-virtual local
-found 1 common ancestor(s):
-7329388 Initial A one, A two
-Auto-merged one
 M	one
 EOF
 ) &&
