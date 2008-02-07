@@ -85,6 +85,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 		int any_dirs = 0;
 		char *cache_name;
 		int ce_stage;
+		int skip_entry = 0;
 
 		/* Find the first name in the input. */
 
@@ -153,6 +154,8 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			any_files = 1;
 			src[0] = active_cache[o->pos];
 			remove = o->pos;
+			if (o->skip_unmerged && ce_stage(src[0]))
+				skip_entry = 1;
 		}
 
 		for (i = 0; i < len; i++) {
@@ -181,6 +184,12 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 				continue;
 			}
 
+			if (skip_entry) {
+				subposns[i] = df_conflict_list;
+				posns[i] = posns[i]->next;
+				continue;
+			}
+
 			if (!o->merge)
 				ce_stage = 0;
 			else if (i + 1 < o->head_idx)
@@ -205,7 +214,13 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			posns[i] = posns[i]->next;
 		}
 		if (any_files) {
-			if (o->merge) {
+			if (skip_entry) {
+				o->pos++;
+				while (o->pos < active_nr &&
+				       !strcmp(active_cache[o->pos]->name,
+					       src[0]->name))
+					o->pos++;
+			} else if (o->merge) {
 				int ret;
 
 #if DBRT_DEBUG > 1
@@ -730,9 +745,8 @@ int threeway_merge(struct cache_entry **stages,
 	 * If we have an entry in the index cache, then we want to
 	 * make sure that it matches head.
 	 */
-	if (index && !same(index, head)) {
+	if (index && !same(index, head))
 		return o->gently ? -1 : reject_merge(index);
-	}
 
 	if (head) {
 		/* #5ALT, #15 */
