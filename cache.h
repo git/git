@@ -208,6 +208,7 @@ extern struct index_state the_index;
 #define read_cache_from(path) read_index_from(&the_index, (path))
 #define write_cache(newfd, cache, entries) write_index(&the_index, (newfd))
 #define discard_cache() discard_index(&the_index)
+#define unmerged_cache() unmerged_index(&the_index)
 #define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
 #define add_cache_entry(ce, option) add_index_entry(&the_index, (ce), (option))
 #define remove_cache_entry_at(pos) remove_index_entry_at(&the_index, (pos))
@@ -302,6 +303,7 @@ extern int read_index(struct index_state *);
 extern int read_index_from(struct index_state *, const char *path);
 extern int write_index(struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
+extern int unmerged_index(struct index_state *);
 extern int verify_path(const char *path);
 extern int index_name_exists(struct index_state *istate, const char *name, int namelen);
 extern int index_name_pos(struct index_state *, const char *name, int namelen);

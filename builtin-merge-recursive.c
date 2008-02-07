@@ -223,22 +223,11 @@ static int git_merge_trees(int index_only,
 	return rc;
 }
 
-static int unmerged_index(void)
-{
-	int i;
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		if (ce_stage(ce))
-			return 1;
-	}
-	return 0;
-}
-
 struct tree *write_tree_from_memory(void)
 {
 	struct tree *result = NULL;
 
-	if (unmerged_index()) {
+	if (unmerged_cache()) {
 		int i;
 		output(0, "There are unmerged index entries:");
 		for (i = 0; i < active_nr; i++) {
@@ -1524,7 +1513,7 @@ int merge_trees(struct tree *head,
 		    sha1_to_hex(head->object.sha1),
 		    sha1_to_hex(merge->object.sha1));
 
-	if (unmerged_index()) {
+	if (unmerged_cache()) {
 		struct path_list *entries, *re_head, *re_merge;
 		int i;
 		path_list_clear(&current_file_set, 1);

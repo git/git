@@ -44,18 +44,6 @@ static inline int is_merge(void)
 	return !access(git_path("MERGE_HEAD"), F_OK);
 }
 
-static int unmerged_files(void)
-{
-	int i;
-	read_cache();
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		if (ce_stage(ce))
-			return 1;
-	}
-	return 0;
-}
-
 static int reset_index_file(const unsigned char *sha1, int is_hard_reset)
 {
 	int i = 0;
@@ -250,7 +238,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	 * at all, but requires them in a good order.  Other resets reset
 	 * the index file to the tree object we are switching to. */
 	if (reset_type == SOFT) {
-		if (is_merge() || unmerged_files())
+		if (is_merge() || read_cache() < 0 || unmerged_cache())
 			die("Cannot do a soft reset in the middle of a merge.");
 	}
 	else if (reset_index_file(sha1, (reset_type == HARD)))
