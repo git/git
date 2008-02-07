@@ -35,7 +35,6 @@
 ;;
 ;; TODO
 ;;  - portability to XEmacs
-;;  - better handling of subprocess errors
 ;;  - diff against other branch
 ;;  - renaming files from the status buffer
 ;;  - creating tags
@@ -190,6 +189,18 @@ if there is already one that displays the same directory."
       (apply #'call-process "env" nil buffer nil
              (append (git-get-env-strings env) (list "git") args))
     (apply #'call-process "git" nil buffer nil args)))
+
+(defun git-call-process-display-error (&rest args)
+  "Wrapper for call-process that displays error messages."
+  (let* ((dir default-directory)
+         (buffer (get-buffer-create "*Git Command Output*"))
+         (ok (with-current-buffer buffer
+               (let ((default-directory dir)
+                     (buffer-read-only nil))
+                 (erase-buffer)
+                 (eq 0 (apply 'call-process "git" nil (list buffer t) nil args))))))
+    (unless ok (display-message-or-buffer buffer))
+    ok))
 
 (defun git-call-process-env-string (env &rest args)
   "Wrapper for call-process that sets environment strings,
@@ -377,7 +388,7 @@ and returns the process output as a string."
     (when reason
      (push reason args)
      (push "-m" args))
-    (eq 0 (apply #'git-call-process-env nil nil "update-ref" args))))
+    (apply 'git-call-process-display-error "update-ref" args)))
 
 (defun git-read-tree (tree &optional index-file)
   "Read a tree into the index file."
@@ -866,16 +877,17 @@ Return the list of files that haven't been handled."
                       (if (or (not (string-equal tree head-tree))
                               (yes-or-no-p "The tree was not modified, do you really want to perform an empty commit? "))
                           (let ((commit (git-commit-tree buffer tree head)))
-                            (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
-                            (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
-                            (with-current-buffer buffer (erase-buffer))
-			    (git-update-status-files (git-get-filenames files) 'uptodate)
-                            (git-call-process-env nil nil "rerere")
-                            (git-call-process-env nil nil "gc" "--auto")
-                            (git-refresh-files)
-                            (git-refresh-ewoc-hf git-status)
-                            (message "Committed %s." commit)
-                            (git-run-hook "post-commit" nil))
+                            (when commit
+                              (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
+                              (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
+                              (with-current-buffer buffer (erase-buffer))
+                              (git-update-status-files (git-get-filenames files) 'uptodate)
+                              (git-call-process-env nil nil "rerere")
+                              (git-call-process-env nil nil "gc" "--auto")
+                              (git-refresh-files)
+                              (git-refresh-ewoc-hf git-status)
+                              (message "Committed %s." commit)
+                              (git-run-hook "post-commit" nil)))
                         (message "Commit aborted."))))
                 (message "No files to commit.")))
           (delete-file index-file))))))
@@ -986,9 +998,9 @@ Return the list of files that haven't been handled."
     ;; FIXME: add support for directories
     (unless files
       (push (file-relative-name (read-file-name "File to add: " nil nil t)) files))
-    (apply #'git-call-process-env nil nil "update-index" "--add" "--" files)
-    (git-update-status-files files 'uptodate)
-    (git-success-message "Added" files)))
+    (when (apply 'git-call-process-display-error "update-index" "--add" "--" files)
+      (git-update-status-files files 'uptodate)
+      (git-success-message "Added" files))))
 
 (defun git-ignore-file ()
   "Add marked file(s) to the ignore list."
@@ -1014,9 +1026,9 @@ Return the list of files that haven't been handled."
               (if (file-directory-p name)
                   (delete-directory name)
                 (delete-file name))))
-          (apply #'git-call-process-env nil nil "update-index" "--remove" "--" files)
-          (git-update-status-files files nil)
-          (git-success-message "Removed" files))
+          (when (apply 'git-call-process-display-error "update-index" "--remove" "--" files)
+            (git-update-status-files files nil)
+            (git-success-message "Removed" files)))
       (message "Aborting"))))
 
 (defun git-revert-file ()
@@ -1034,28 +1046,30 @@ Return the list of files that haven't been handled."
           ('unmerged (push (git-fileinfo->name info) modified))
           ('modified (push (git-fileinfo->name info) modified))))
       ;; check if a buffer contains one of the files and isn't saved
-      (dolist (file (append added modified))
+      (dolist (file modified)
         (let ((buffer (get-file-buffer file)))
           (when (and buffer (buffer-modified-p buffer))
             (error "Buffer %s is modified. Please kill or save modified buffers before reverting." (buffer-name buffer)))))
-      (when added
-        (apply #'git-call-process-env nil nil "update-index" "--force-remove" "--" added))
-      (when modified
-        (apply #'git-call-process-env nil nil "checkout" "HEAD" modified))
-      (git-update-status-files (append added modified) 'uptodate)
-      (dolist (file (append added modified))
-        (let ((buffer (get-file-buffer file)))
-          (when buffer (with-current-buffer buffer (revert-buffer t t t)))))
-      (git-success-message "Reverted" (git-get-filenames files)))))
+      (let ((ok (and
+                 (or (not added)
+                     (apply 'git-call-process-display-error "update-index" "--force-remove" "--" added))
+                 (or (not modified)
+                     (apply 'git-call-process-display-error "checkout" "HEAD" modified)))))
+        (git-update-status-files (append added modified) 'uptodate)
+        (when ok
+          (dolist (file modified)
+            (let ((buffer (get-file-buffer file)))
+              (when buffer (with-current-buffer buffer (revert-buffer t t t)))))
+          (git-success-message "Reverted" (git-get-filenames files)))))))
 
 (defun git-resolve-file ()
   "Resolve conflicts in marked file(s)."
   (interactive)
   (let ((files (git-get-filenames (git-marked-files-state 'unmerged))))
     (when files
-      (apply #'git-call-process-env nil nil "update-index" "--" files)
-      (git-update-status-files files 'uptodate)
-      (git-success-message "Resolved" files))))
+      (when (apply 'git-call-process-display-error "update-index" "--" files)
+        (git-update-status-files files 'uptodate)
+        (git-success-message "Resolved" files)))))
 
 (defun git-remove-handled ()
   "Remove handled files from the status list."
@@ -1320,12 +1334,12 @@ amended version of it."
   (when (git-empty-db-p) (error "No commit to amend."))
   (let* ((commit (git-rev-parse "HEAD"))
          (files (git-get-commit-files commit)))
-    (git-call-process-env nil nil "reset" "--soft" "HEAD^")
-    (git-update-status-files (copy-sequence files) 'uptodate)
-    (git-mark-files git-status files)
-    (git-refresh-files)
-    (git-setup-commit-buffer commit)
-    (git-commit-file)))
+    (when (git-call-process-display-error "reset" "--soft" "HEAD^")
+      (git-update-status-files (copy-sequence files) 'uptodate)
+      (git-mark-files git-status files)
+      (git-refresh-files)
+      (git-setup-commit-buffer commit)
+      (git-commit-file))))
 
 (defun git-find-file ()
   "Visit the current file in its own buffer."
