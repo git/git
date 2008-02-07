@@ -256,7 +256,6 @@ PROGRAMS = \
 	git-upload-pack$X \
 	git-pack-redundant$X git-var$X \
 	git-merge-tree$X git-imap-send$X \
-	git-merge-recursive$X \
 	$(EXTRA_PROGRAMS)
 
 # Empty...
@@ -360,6 +359,7 @@ BUILTIN_OBJS = \
 	builtin-merge-base.o \
 	builtin-merge-file.o \
 	builtin-merge-ours.o \
+	builtin-merge-recursive.o \
 	builtin-mv.o \
 	builtin-name-rev.o \
 	builtin-pack-objects.o \

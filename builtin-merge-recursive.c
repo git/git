@@ -7,6 +7,7 @@
 #include "cache-tree.h"
 #include "commit.h"
 #include "blob.h"
+#include "builtin.h"
 #include "tree-walk.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -17,6 +18,7 @@
 #include "xdiff-interface.h"
 #include "interpolate.h"
 #include "attr.h"
+#include "merge-recursive.h"
 
 static int subtree_merge;
 
@@ -232,7 +234,7 @@ static int unmerged_index(void)
 	return 0;
 }
 
-static struct tree *git_write_tree(void)
+struct tree *write_tree_from_memory(void)
 {
 	struct tree *result = NULL;
 
@@ -1495,12 +1497,12 @@ static int process_entry(const char *path, struct stage_data *entry,
 	return clean_merge;
 }
 
-static int merge_trees(struct tree *head,
-		       struct tree *merge,
-		       struct tree *common,
-		       const char *branch1,
-		       const char *branch2,
-		       struct tree **result)
+int merge_trees(struct tree *head,
+		struct tree *merge,
+		struct tree *common,
+		const char *branch1,
+		const char *branch2,
+		struct tree **result)
 {
 	int code, clean;
 
@@ -1552,7 +1554,7 @@ static int merge_trees(struct tree *head,
 		clean = 1;
 
 	if (index_only)
-		*result = git_write_tree();
+		*result = write_tree_from_memory();
 
 	return clean;
 }
@@ -1572,12 +1574,12 @@ static struct commit_list *reverse_commit_list(struct commit_list *list)
  * Merge the commits h1 and h2, return the resulting virtual
  * commit object and a flag indicating the cleanness of the merge.
  */
-static int merge(struct commit *h1,
-		 struct commit *h2,
-		 const char *branch1,
-		 const char *branch2,
-		 struct commit_list *ca,
-		 struct commit **result)
+int merge_recursive(struct commit *h1,
+		    struct commit *h2,
+		    const char *branch1,
+		    const char *branch2,
+		    struct commit_list *ca,
+		    struct commit **result)
 {
 	struct commit_list *iter;
 	struct commit *merged_common_ancestors;
@@ -1622,11 +1624,11 @@ static int merge(struct commit *h1,
 		 * "conflicts" were already resolved.
 		 */
 		discard_cache();
-		merge(merged_common_ancestors, iter->item,
-		      "Temporary merge branch 1",
-		      "Temporary merge branch 2",
-		      NULL,
-		      &merged_common_ancestors);
+		merge_recursive(merged_common_ancestors, iter->item,
+				"Temporary merge branch 1",
+				"Temporary merge branch 2",
+				NULL,
+				&merged_common_ancestors);
 		call_depth--;
 
 		if (!merged_common_ancestors)
@@ -1695,7 +1697,7 @@ static int merge_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
-int main(int argc, char *argv[])
+int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 {
 	static const char *bases[20];
 	static unsigned bases_count = 0;
@@ -1749,7 +1751,7 @@ int main(int argc, char *argv[])
 		struct commit *ancestor = get_ref(bases[i]);
 		ca = commit_list_insert(ancestor, &ca);
 	}
-	clean = merge(h1, h2, branch1, branch2, ca, &result);
+	clean = merge_recursive(h1, h2, branch1, branch2, ca, &result);
 
 	if (active_cache_changed &&
 	    (write_cache(index_fd, active_cache, active_nr) ||
