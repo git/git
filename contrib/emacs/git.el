@@ -1033,11 +1033,19 @@ Return the list of files that haven't been handled."
           ('deleted (push (git-fileinfo->name info) modified))
           ('unmerged (push (git-fileinfo->name info) modified))
           ('modified (push (git-fileinfo->name info) modified))))
+      ;; check if a buffer contains one of the files and isn't saved
+      (dolist (file (append added modified))
+        (let ((buffer (get-file-buffer file)))
+          (when (and buffer (buffer-modified-p buffer))
+            (error "Buffer %s is modified. Please kill or save modified buffers before reverting." (buffer-name buffer)))))
       (when added
         (apply #'git-call-process-env nil nil "update-index" "--force-remove" "--" added))
       (when modified
         (apply #'git-call-process-env nil nil "checkout" "HEAD" modified))
       (git-update-status-files (append added modified) 'uptodate)
+      (dolist (file (append added modified))
+        (let ((buffer (get-file-buffer file)))
+          (when buffer (with-current-buffer buffer (revert-buffer t t t)))))
       (git-success-message "Reverted" (git-get-filenames files)))))
 
 (defun git-resolve-file ()
