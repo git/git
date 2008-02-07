@@ -283,15 +283,38 @@ test_expect_success '--add' \
 cat > .git/config << EOF
 [novalue]
 	variable
+[emptyvalue]
+	variable =
 EOF
 
 test_expect_success 'get variable with no value' \
 	'git config --get novalue.variable ^$'
 
+test_expect_success 'get variable with empty value' \
+	'git config --get emptyvalue.variable ^$'
+
 echo novalue.variable > expect
 
 test_expect_success 'get-regexp variable with no value' \
 	'git config --get-regexp novalue > output &&
+	 cmp output expect'
+
+echo 'emptyvalue.variable ' > expect
+
+test_expect_success 'get-regexp variable with empty value' \
+	'git config --get-regexp emptyvalue > output &&
+	 cmp output expect'
+
+echo true > expect
+
+test_expect_success 'get bool variable with no value' \
+	'git config --bool novalue.variable > output &&
+	 cmp output expect'
+
+echo false > expect
+
+test_expect_success 'get bool variable with empty value' \
+	'git config --bool emptyvalue.variable > output &&
 	 cmp output expect'
 
 git config > output 2>&1
