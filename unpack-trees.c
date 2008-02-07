@@ -288,16 +288,16 @@ static void unlink_entry(char *name, char *last_symlink)
 }
 
 static struct checkout state;
-static void check_updates(struct cache_entry **src, int nr,
-			struct unpack_trees_options *o)
+static void check_updates(struct unpack_trees_options *o)
 {
 	unsigned cnt = 0, total = 0;
 	struct progress *progress = NULL;
 	char last_symlink[PATH_MAX];
+	int i;
 
 	if (o->update && o->verbose_update) {
-		for (total = cnt = 0; cnt < nr; cnt++) {
-			struct cache_entry *ce = src[cnt];
+		for (total = cnt = 0; cnt < active_nr; cnt++) {
+			struct cache_entry *ce = active_cache[cnt];
 			if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
 				total++;
 		}
@@ -308,14 +308,16 @@ static void check_updates(struct cache_entry **src, int nr,
 	}
 
 	*last_symlink = '\0';
-	while (nr--) {
-		struct cache_entry *ce = *src++;
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
 
 		if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
 			display_progress(progress, ++cnt);
 		if (ce->ce_flags & CE_REMOVE) {
 			if (o->update)
 				unlink_entry(ce->name, last_symlink);
+			remove_cache_entry_at(i);
+			i--;
 			continue;
 		}
 		if (ce->ce_flags & CE_UPDATE) {
@@ -374,7 +376,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			error("Merge requires file-level merging");
 	}
 
-	check_updates(active_cache, active_nr, o);
+	check_updates(o);
 	return 0;
 }
 
