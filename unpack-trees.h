@@ -16,6 +16,7 @@ struct unpack_trees_options {
 	int trivial_merges_only;
 	int verbose_update;
 	int aggressive;
+	int gently;
 	const char *prefix;
 	int pos;
 	struct dir_struct *dir;
