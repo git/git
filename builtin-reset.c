@@ -16,6 +16,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "tree.h"
+#include "branch.h"
 
 static const char builtin_reset_usage[] =
 "git-reset [--mixed | --soft | --hard] [-q] [<commit-ish>] [ [--] <paths>...]";
@@ -270,10 +271,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
-	unlink(git_path("MERGE_HEAD"));
-	unlink(git_path("rr-cache/MERGE_RR"));
-	unlink(git_path("MERGE_MSG"));
-	unlink(git_path("SQUASH_MSG"));
+	remove_branch_state();
 
 	free(reflog_action);
 
