@@ -929,6 +929,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_MSG"));
+	unlink(git_path("SQUASH_MSG"));
 
 	if (commit_index_files())
 		die ("Repository has been updated, but unable to write\n"
