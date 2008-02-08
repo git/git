@@ -50,7 +50,6 @@ git-gc
 git-get-tar-commit-id
 git-grep
 git-hash-object
-git-help--browse
 git-http-fetch
 git-http-push
 git-imap-send
@@ -136,6 +135,7 @@ git-upload-pack
 git-var
 git-verify-pack
 git-verify-tag
+git-web--browse
 git-whatchanged
 git-write-tree
 git-core-*/?*
