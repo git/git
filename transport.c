@@ -441,10 +441,11 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	struct ref *ref = NULL;
 	struct ref *last_ref = NULL;
 
+	if (!transport->data)
+		transport->data = get_http_walker(transport->url);
+
 	refs_url = xmalloc(strlen(transport->url) + 11);
 	sprintf(refs_url, "%s/info/refs", transport->url);
-
-	http_init();
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -472,8 +473,6 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 		error("Unable to start request");
 		return NULL;
 	}
-
-	http_cleanup();
 
 	data = buffer.buf;
 	start = NULL;
