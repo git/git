@@ -34,8 +34,8 @@ valid_tool() {
 }
 
 init_browser_path() {
-	browser_path=`git config browser.$1.path`
-	test -z "$browser_path" && browser_path=$1
+	browser_path=$(git "config browser.$1.path")
+	test -z "$browser_path" && browser_path="$1"
 }
 
 while test $# != 0
