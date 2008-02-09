@@ -222,7 +222,7 @@ static void write_global_extended_header(const unsigned char *sha1)
 static int git_tar_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "tar.umask")) {
-		if (!strcmp(value, "user")) {
+		if (value && !strcmp(value, "user")) {
 			tar_umask = umask(0);
 			umask(tar_umask);
 		} else {
