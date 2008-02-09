@@ -240,11 +240,12 @@ proc getcommitlines {fd view}  {
 	set listed 1
 	if {$j >= 0 && [string match "commit *" $cmit]} {
 	    set ids [string range $cmit 7 [expr {$j - 1}]]
-	    if {[string match {[-<>]*} $ids]} {
+	    if {[string match {[-^<>]*} $ids]} {
 		switch -- [string index $ids 0] {
 		    "-" {set listed 0}
-		    "<" {set listed 2}
-		    ">" {set listed 3}
+		    "^" {set listed 2}
+		    "<" {set listed 3}
+		    ">" {set listed 4}
 		}
 		set ids [string range $ids 1 end]
 	    }
@@ -3631,23 +3632,23 @@ proc drawcmittext {id row col} {
     global linehtag linentag linedtag selectedline
     global canvxmax boldrows boldnamerows fgcolor nullid nullid2
 
-    # listed is 0 for boundary, 1 for normal, 2 for left, 3 for right
+    # listed is 0 for boundary, 1 for normal, 2 for negative, 3 for left, 4 for right
     set listed [lindex $commitlisted $row]
     if {$id eq $nullid} {
 	set ofill red
     } elseif {$id eq $nullid2} {
 	set ofill green
     } else {
-	set ofill [expr {$listed != 0? "blue": "white"}]
+	set ofill [expr {$listed != 0 ? $listed == 2 ? "gray" : "blue" : "white"}]
     }
     set x [xc $row $col]
     set y [yc $row]
     set orad [expr {$linespc / 3}]
-    if {$listed <= 1} {
+    if {$listed <= 2} {
 	set t [$canv create oval [expr {$x - $orad}] [expr {$y - $orad}] \
 		   [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
 		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
-    } elseif {$listed == 2} {
+    } elseif {$listed == 3} {
 	# triangle pointing left for left-side commits
 	set t [$canv create polygon \
 		   [expr {$x - $orad}] $y \
