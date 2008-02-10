@@ -230,6 +230,41 @@ to modify.  "Tested-by:" says the patch was tested by the person
 and found to have the desired effect.
 
 ------------------------------------------------
+An ideal patch flow
+
+Here is an ideal patch flow for this project the current maintainer
+suggests to the contributors:
+
+ (0) You come up with an itch.  You code it up.
+
+ (1) Send it to the list and cc people who may need to know about
+     the change.
+
+     The people who may need to know are the ones whose code you
+     are butchering.  These people happen to be the ones who are
+     most likely to be knowledgeable enough to help you, but
+     they have no obligation to help you (i.e. you ask for help,
+     don't demand).  "git log -p -- $area_you_are_modifying" would
+     help you find out who they are.
+
+ (2) You get comments and suggestions for improvements.  You may
+     even get them in a "on top of your change" patch form.
+
+ (3) Polish, refine, and re-send to the list and the people who
+     spend their time to improve your patch.  Go back to step (2).
+
+ (4) The list forms consensus that the last round of your patch is
+     good.  Send it to the list and cc the maintainer.
+
+ (5) A topic branch is created with the patch and is merged to 'next',
+     and cooked further and eventually graduates to 'master'.
+
+In any time between the (2)-(3) cycle, the maintainer may pick it up
+from the list and queue it to 'pu', in order to make it easier for
+people play with it without having to pick up and apply the patch to
+their trees themselves.
+
+------------------------------------------------
 MUA specific hints
 
 Some of patches I receive or pick up from the list share common
