@@ -129,7 +129,7 @@ case "$browser" in
 	vers=$(expr "$($browser_path -version)" : '.* \([0-9][0-9]*\)\..*')
 	NEWTAB='-new-tab'
 	test "$vers" -lt 2 && NEWTAB=''
-	nohup "$browser_path" $NEWTAB "$@" &
+	"$browser_path" $NEWTAB "$@" &
 	;;
     konqueror)
 	case "$(basename "$browser_path")" in
@@ -143,7 +143,7 @@ case "$browser" in
 		eval "$browser_path" newTab "$@"
 		;;
 	    *)
-		nohup "$browser_path" "$@" &
+		"$browser_path" "$@" &
 		;;
 	esac
 	;;
@@ -151,6 +151,6 @@ case "$browser" in
 	eval "$browser_path" "$@"
 	;;
     dillo)
-	nohup "$browser_path" "$@" &
+	"$browser_path" "$@" &
 	;;
 esac
