@@ -161,6 +161,13 @@ New features:
 +
 Any other arguments are passed directly to `git log'
 
+'blame'::
+       Show what revision and author last modified each line of a file. This is
+       identical to `git blame', but SVN revision numbers are shown instead of git
+       commit hashes.
++
+All arguments are passed directly to `git blame'.
+
 --
 'find-rev'::
 	When given an SVN revision number of the form 'rN', returns the

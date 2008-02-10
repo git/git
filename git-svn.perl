@@ -186,6 +186,9 @@ my %cmd = (
 		    "Show info about the latest SVN revision
 		     on the current branch",
 		    { 'url' => \$_url, } ],
+	'blame' => [ \&Git::SVN::Log::cmd_blame,
+	            "Show what revision and author last modified each line of a file",
+	            {} ],
 );
 
 my $cmd;
@@ -4446,6 +4449,24 @@ sub cmd_show_log {
 out:
 	close $log;
 	print commit_log_separator unless $incremental || $oneline;
+}
+
+sub cmd_blame {
+	my $path = shift;
+
+	config_pager();
+	run_pager();
+
+	my ($fh, $ctx) = command_output_pipe('blame', @_, $path);
+	while (my $line = <$fh>) {
+		if ($line =~ /^\^?([[:xdigit:]]+)\s/) {
+			my (undef, $rev, undef) = ::cmt_metadata($1);
+			$rev = sprintf('%-10s', $rev);
+			$line =~ s/^\^?[[:xdigit:]]+(\s)/$rev$1/;
+		}
+		print $line;
+	}
+	command_close_pipe($fh, $ctx);
 }
 
 package Git::SVN::Migration;
