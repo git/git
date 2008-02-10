@@ -254,6 +254,18 @@ test_expect_success 'bisect run & skip: find first bad' '
 	grep "$HASH6 is first bad commit" my_bisect_log.txt
 '
 
+test_expect_success 'bisect starting with a detached HEAD' '
+
+	git bisect reset &&
+	git checkout master^ &&
+	HEAD=$(git rev-parse --verify HEAD) &&
+	git bisect start &&
+	test $HEAD = $(cat .git/head-name) &&
+	git bisect reset &&
+	test $HEAD = $(git rev-parse --verify HEAD)
+
+'
+
 #
 #
 test_done
