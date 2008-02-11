@@ -370,6 +370,8 @@ static int git_proxy_command_options(const char *var, const char *value)
 
 		if (git_proxy_command)
 			return 0;
+		if (!value)
+			return config_error_nonbool(var);
 		/* [core]
 		 * ;# matches www.kernel.org as well
 		 * gitproxy = netcatter-1 for kernel.org
