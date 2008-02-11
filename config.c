@@ -408,21 +408,29 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "user.name")) {
+		if (!value)
+			return config_error_nonbool(var);
 		strlcpy(git_default_name, value, sizeof(git_default_name));
 		return 0;
 	}
 
 	if (!strcmp(var, "user.email")) {
+		if (!value)
+			return config_error_nonbool(var);
 		strlcpy(git_default_email, value, sizeof(git_default_email));
 		return 0;
 	}
 
 	if (!strcmp(var, "i18n.commitencoding")) {
+		if (!value)
+			return config_error_nonbool(var);
 		git_commit_encoding = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp(var, "i18n.logoutputencoding")) {
+		if (!value)
+			return config_error_nonbool(var);
 		git_log_output_encoding = xstrdup(value);
 		return 0;
 	}
@@ -434,23 +442,29 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "core.pager")) {
+		if (!value)
+			return config_error_nonbool(var);
 		pager_program = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.editor")) {
+		if (!value)
+			return config_error_nonbool(var);
 		editor_program = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.excludesfile")) {
 		if (!value)
-			die("core.excludesfile without value");
+			return config_error_nonbool(var);
 		excludes_file = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.whitespace")) {
+		if (!value)
+			return config_error_nonbool(var);
 		whitespace_rule_cfg = parse_whitespace_rule(value);
 		return 0;
 	}
@@ -701,12 +715,17 @@ static ssize_t find_beginning_of_line(const char* contents, size_t size,
 	size_t equal_offset = size, bracket_offset = size;
 	ssize_t offset;
 
+contline:
 	for (offset = offset_-2; offset > 0
 			&& contents[offset] != '\n'; offset--)
 		switch (contents[offset]) {
 			case '=': equal_offset = offset; break;
 			case ']': bracket_offset = offset; break;
 		}
+	if (offset > 0 && contents[offset-1] == '\\') {
+		offset_ = offset;
+		goto contline;
+	}
 	if (bracket_offset < equal_offset) {
 		*found_bracket = 1;
 		offset = bracket_offset+1;
@@ -1073,4 +1092,13 @@ int git_config_rename_section(const char *old_name, const char *new_name)
  out:
 	free(config_filename);
 	return ret;
+}
+
+/*
+ * Call this to report error for your variable that should not
+ * get a boolean value (i.e. "[my] var" means "true").
+ */
+int config_error_nonbool(const char *var)
+{
+	return error("Missing value for '%s'", var);
 }

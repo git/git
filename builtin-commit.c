@@ -743,6 +743,8 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 int git_commit_config(const char *k, const char *v)
 {
 	if (!strcmp(k, "commit.template")) {
+		if (!v)
+			return config_error_nonbool(v);
 		template_file = xstrdup(v);
 		return 0;
 	}
@@ -929,6 +931,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_MSG"));
+	unlink(git_path("SQUASH_MSG"));
 
 	if (commit_index_files())
 		die ("Repository has been updated, but unable to write\n"

@@ -26,6 +26,9 @@ OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+
 sq() {
 	@@PERL@@ -e '
 		for (@ARGV) {
@@ -60,7 +63,8 @@ bisect_start() {
 	# top-of-line master first!
 	#
 	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref HEAD) ||
-	die "Bad HEAD - I need a symbolic ref"
+	head=$(GIT_DIR="$GIT_DIR" git rev-parse --verify HEAD) ||
+	die "Bad HEAD - I need a HEAD"
 	case "$head" in
 	refs/heads/bisect)
 		if [ -s "$GIT_DIR/head-name" ]; then
@@ -70,7 +74,7 @@ bisect_start() {
 		fi
 		git checkout $branch || exit
 		;;
-	refs/heads/*)
+	refs/heads/*|$_x40)
 		[ -s "$GIT_DIR/head-name" ] && die "won't bisect on seeked tree"
 		echo "${head#refs/heads/}" >"$GIT_DIR/head-name"
 		;;

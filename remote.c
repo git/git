@@ -222,15 +222,18 @@ static int handle_config(const char *key, const char *value)
 		subkey = strrchr(name, '.');
 		if (!subkey)
 			return 0;
-		if (!value)
-			return 0;
 		branch = make_branch(name, subkey - name);
 		if (!strcmp(subkey, ".remote")) {
+			if (!value)
+				return config_error_nonbool(key);
 			branch->remote_name = xstrdup(value);
 			if (branch == current_branch)
 				default_remote_name = branch->remote_name;
-		} else if (!strcmp(subkey, ".merge"))
+		} else if (!strcmp(subkey, ".merge")) {
+			if (!value)
+				return config_error_nonbool(key);
 			add_merge(branch, xstrdup(value));
+		}
 		return 0;
 	}
 	if (prefixcmp(key,  "remote."))

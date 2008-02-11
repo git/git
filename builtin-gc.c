@@ -37,7 +37,7 @@ static const char *argv_rerere[] = {"rerere", "gc", NULL};
 static int gc_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "gc.packrefs")) {
-		if (!strcmp(value, "notbare"))
+		if (value && !strcmp(value, "notbare"))
 			pack_refs = -1;
 		else
 			pack_refs = git_config_bool(var, value);

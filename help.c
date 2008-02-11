@@ -40,6 +40,8 @@ static void parse_help_format(const char *format)
 static int git_help_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "help.format")) {
+		if (!value)
+			return config_error_nonbool(var);
 		help_default_format = xstrdup(value);
 		return 0;
 	}

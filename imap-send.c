@@ -1254,6 +1254,10 @@ git_imap_config(const char *key, const char *val)
 
 	if (strncmp( key, imap_key, sizeof imap_key - 1 ))
 		return 0;
+
+	if (!val)
+		return config_error_nonbool(key);
+
 	key += sizeof imap_key - 1;
 
 	if (!strcmp( "folder", key )) {
