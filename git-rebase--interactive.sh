@@ -432,7 +432,7 @@ do
 			shift ;;
 		esac
 		;;
-	--merge)
+	-m|--merge)
 		# we use merge anyway
 		;;
 	-C*)
