@@ -6149,11 +6149,7 @@ proc domktag {} {
 	return
     }
     if {[catch {
-	set dir [gitdir]
-	set fname [file join $dir "refs/tags" $tag]
-	set f [open $fname w]
-	puts $f $id
-	close $f
+	exec git tag $tag $id
     } err]} {
 	error_popup "[mc "Error creating tag:"] $err"
 	return
