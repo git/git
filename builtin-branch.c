@@ -70,12 +70,15 @@ static int git_branch_config(const char *var, const char *value)
 	}
 	if (!prefixcmp(var, "color.branch.")) {
 		int slot = parse_branch_color_slot(var, 13);
+		if (!value)
+			return config_error_nonbool(var);
 		color_parse(value, var, branch_colors[slot]);
 		return 0;
 	}
-	if (!strcmp(var, "branch.autosetupmerge"))
-			branch_track = git_config_bool(var, value);
-
+	if (!strcmp(var, "branch.autosetupmerge")) {
+		branch_track = git_config_bool(var, value);
+		return 0;
+	}
 	return git_default_config(var, value);
 }
 
