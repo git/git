@@ -402,6 +402,8 @@ int git_status_config(const char *k, const char *v)
 	}
 	if (!prefixcmp(k, "status.color.") || !prefixcmp(k, "color.status.")) {
 		int slot = parse_status_slot(k, 13);
+		if (!v)
+			return config_error_nonbool(k);
 		color_parse(v, k, wt_status_colors[slot]);
 		return 0;
 	}
