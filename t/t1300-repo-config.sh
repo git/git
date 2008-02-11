@@ -71,6 +71,25 @@ EOF
 
 test_expect_success 'non-match result' 'cmp .git/config expect'
 
+cat > .git/config <<\EOF
+[alpha]
+bar = foo
+[beta]
+baz = multiple \
+lines
+EOF
+
+test_expect_success 'unset with cont. lines' \
+	'git config --unset beta.baz'
+
+cat > expect <<\EOF
+[alpha]
+bar = foo
+[beta]
+EOF
+
+test_expect_success 'unset with cont. lines is correct' 'cmp .git/config expect'
+
 cat > .git/config << EOF
 [beta] ; silly comment # another comment
 noIndent= sillyValue ; 'nother silly comment
