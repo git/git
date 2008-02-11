@@ -1809,6 +1809,9 @@ static int find_pos(struct image *img,
 	else if (match_end)
 		line = img->nr - preimage->nr;
 
+	if (line > img->nr)
+		line = img->nr;
+
 	try = 0;
 	for (i = 0; i < line; i++)
 		try += img->line[i].len;
