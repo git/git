@@ -246,7 +246,7 @@ test_expect_success \
 	;;
 esac
 
-test_expect_failure '-w option should work with relative GIT_DIR' '
+test_expect_success '-w option should work with relative GIT_DIR' '
       mkdir W &&
       echo foobar >W/file1.txt &&
       echo bazzle >W/file2.txt &&
