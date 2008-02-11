@@ -408,21 +408,29 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "user.name")) {
+		if (!value)
+			return config_error_nonbool(var);
 		strlcpy(git_default_name, value, sizeof(git_default_name));
 		return 0;
 	}
 
 	if (!strcmp(var, "user.email")) {
+		if (!value)
+			return config_error_nonbool(var);
 		strlcpy(git_default_email, value, sizeof(git_default_email));
 		return 0;
 	}
 
 	if (!strcmp(var, "i18n.commitencoding")) {
+		if (!value)
+			return config_error_nonbool(var);
 		git_commit_encoding = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp(var, "i18n.logoutputencoding")) {
+		if (!value)
+			return config_error_nonbool(var);
 		git_log_output_encoding = xstrdup(value);
 		return 0;
 	}
@@ -434,23 +442,29 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "core.pager")) {
+		if (!value)
+			return config_error_nonbool(var);
 		pager_program = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.editor")) {
+		if (!value)
+			return config_error_nonbool(var);
 		editor_program = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.excludesfile")) {
 		if (!value)
-			die("core.excludesfile without value");
+			return config_error_nonbool(var);
 		excludes_file = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.whitespace")) {
+		if (!value)
+			return config_error_nonbool(var);
 		whitespace_rule_cfg = parse_whitespace_rule(value);
 		return 0;
 	}
