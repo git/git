@@ -589,6 +589,7 @@ extern int git_config_set_multivar(const char *, const char *, const char *, int
 extern int git_config_rename_section(const char *, const char *);
 extern const char *git_etc_gitconfig(void);
 extern int check_repository_format_version(const char *var, const char *value);
+extern int config_error_nonbool(const char *);
 
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];
