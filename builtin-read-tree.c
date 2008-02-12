@@ -45,8 +45,7 @@ static int read_cache_unmerged(void)
 				continue;
 			cache_tree_invalidate_path(active_cache_tree, ce->name);
 			last = ce;
-			ce->ce_mode = 0;
-			ce->ce_flags &= ~htons(CE_STAGEMASK);
+			ce->ce_flags |= CE_REMOVE;
 		}
 		*dst++ = ce;
 	}

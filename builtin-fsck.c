@@ -765,7 +765,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			struct blob *blob;
 			struct object *obj;
 
-			mode = ntohl(active_cache[i]->ce_mode);
+			mode = active_cache[i]->ce_mode;
 			if (S_ISGITLINK(mode))
 				continue;
 			blob = lookup_blob(active_cache[i]->sha1);

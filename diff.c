@@ -1520,17 +1520,22 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	if (pos < 0)
 		return 0;
 	ce = active_cache[pos];
-	if ((lstat(name, &st) < 0) ||
-	    !S_ISREG(st.st_mode) || /* careful! */
-	    ce_match_stat(ce, &st, 0) ||
-	    hashcmp(sha1, ce->sha1))
-		return 0;
-	/* we return 1 only when we can stat, it is a regular file,
-	 * stat information matches, and sha1 recorded in the cache
-	 * matches.  I.e. we know the file in the work tree really is
-	 * the same as the <name, sha1> pair.
+
+	/*
+	 * This is not the sha1 we are looking for, or
+	 * unreusable because it is not a regular file.
 	 */
-	return 1;
+	if (hashcmp(sha1, ce->sha1) || !S_ISREG(ce->ce_mode))
+		return 0;
+
+	/*
+	 * If ce matches the file in the work tree, we can reuse it.
+	 */
+	if (ce_uptodate(ce) ||
+	    (!lstat(name, &st) && !ce_match_stat(ce, &st, 0)))
+		return 1;
+
+	return 0;
 }
 
 static int populate_from_stdin(struct diff_filespec *s)

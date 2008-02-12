@@ -331,7 +331,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		struct cache_entry *ce = active_cache[i];
 		char *name;
 		int kept;
-		if (!S_ISREG(ntohl(ce->ce_mode)))
+		if (!S_ISREG(ce->ce_mode))
 			continue;
 		if (!pathspec_matches(paths, ce->name))
 			continue;
@@ -387,7 +387,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 
 	for (nr = 0; nr < active_nr; nr++) {
 		struct cache_entry *ce = active_cache[nr];
-		if (!S_ISREG(ntohl(ce->ce_mode)))
+		if (!S_ISREG(ce->ce_mode))
 			continue;
 		if (!pathspec_matches(paths, ce->name))
 			continue;

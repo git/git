@@ -47,10 +47,10 @@ static int mark_valid(const char *path)
 	if (0 <= pos) {
 		switch (mark_valid_only) {
 		case MARK_VALID:
-			active_cache[pos]->ce_flags |= htons(CE_VALID);
+			active_cache[pos]->ce_flags |= CE_VALID;
 			break;
 		case UNMARK_VALID:
-			active_cache[pos]->ce_flags &= ~htons(CE_VALID);
+			active_cache[pos]->ce_flags &= ~CE_VALID;
 			break;
 		}
 		cache_tree_invalidate_path(active_cache_tree, path);
@@ -95,7 +95,7 @@ static int add_one_path(struct cache_entry *old, const char *path, int len, stru
 	size = cache_entry_size(len);
 	ce = xcalloc(1, size);
 	memcpy(ce->name, path, len);
-	ce->ce_flags = htons(len);
+	ce->ce_flags = len;
 	fill_stat_cache_info(ce, st);
 	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
 
@@ -139,7 +139,7 @@ static int process_directory(const char *path, int len, struct stat *st)
 	/* Exact match: file or existing gitlink */
 	if (pos >= 0) {
 		struct cache_entry *ce = active_cache[pos];
-		if (S_ISGITLINK(ntohl(ce->ce_mode))) {
+		if (S_ISGITLINK(ce->ce_mode)) {
 
 			/* Do nothing to the index if there is no HEAD! */
 			if (resolve_gitlink_ref(path, "HEAD", sha1) < 0)
@@ -183,7 +183,7 @@ static int process_file(const char *path, int len, struct stat *st)
 	int pos = cache_name_pos(path, len);
 	struct cache_entry *ce = pos < 0 ? NULL : active_cache[pos];
 
-	if (ce && S_ISGITLINK(ntohl(ce->ce_mode)))
+	if (ce && S_ISGITLINK(ce->ce_mode))
 		return error("%s is already a gitlink, not replacing", path);
 
 	return add_one_path(ce, path, len, st);
@@ -226,7 +226,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 	ce->ce_flags = create_ce_flags(len, stage);
 	ce->ce_mode = create_ce_mode(mode);
 	if (assume_unchanged)
-		ce->ce_flags |= htons(CE_VALID);
+		ce->ce_flags |= CE_VALID;
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
 	if (add_cache_entry(ce, option))
@@ -246,14 +246,14 @@ static void chmod_path(int flip, const char *path)
 	if (pos < 0)
 		goto fail;
 	ce = active_cache[pos];
-	mode = ntohl(ce->ce_mode);
+	mode = ce->ce_mode;
 	if (!S_ISREG(mode))
 		goto fail;
 	switch (flip) {
 	case '+':
-		ce->ce_mode |= htonl(0111); break;
+		ce->ce_mode |= 0111; break;
 	case '-':
-		ce->ce_mode &= htonl(~0111); break;
+		ce->ce_mode &= ~0111; break;
 	default:
 		goto fail;
 	}

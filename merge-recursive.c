@@ -333,7 +333,7 @@ static struct path_list *get_unmerged(void)
 			item->util = xcalloc(1, sizeof(struct stage_data));
 		}
 		e = item->util;
-		e->stages[ce_stage(ce)].mode = ntohl(ce->ce_mode);
+		e->stages[ce_stage(ce)].mode = ce->ce_mode;
 		hashcpy(e->stages[ce_stage(ce)].sha, ce->sha1);
 	}
 

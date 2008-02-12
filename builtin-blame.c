@@ -2092,7 +2092,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	if (!mode) {
 		int pos = cache_name_pos(path, len);
 		if (0 <= pos)
-			mode = ntohl(active_cache[pos]->ce_mode);
+			mode = active_cache[pos]->ce_mode;
 		else
 			/* Let's not bother reading from HEAD tree */
 			mode = S_IFREG | 0644;
