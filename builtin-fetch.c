@@ -557,6 +557,8 @@ static int do_fetch(struct transport *transport,
 
 	free_refs(fetch_map);
 
+	transport_disconnect(transport);
+
 	return 0;
 }
 
