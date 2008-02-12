@@ -8,7 +8,6 @@ extern const char git_usage_string[];
 
 extern void list_common_cmds_help(void);
 extern void help_unknown_cmd(const char *cmd);
-extern int write_tree(unsigned char *sha1, int missing_ok, const char *prefix);
 extern void prune_packed_objects(int);
 
 extern int cmd_add(int argc, const char **argv, const char *prefix);
