@@ -170,6 +170,11 @@ endif::git-format-patch[]
 	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
 
+--relative::
+	When run from a subdirectory of the project, it can be
+	told to exclude changes outside the directory and show
+	pathnames relative to it with this option.
+
 --text::
 	Treat all files as text.
 
