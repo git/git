@@ -13,6 +13,7 @@ GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
+uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
 
 SCRIPT_SH = git-gui.sh
 GITGUI_MAIN := git-gui
@@ -93,7 +94,14 @@ endif
 
 TCL_PATH   ?= tclsh
 TCLTK_PATH ?= wish
-TKFRAMEWORK = /Library/Frameworks/Tk.framework/Resources/Wish.app
+
+ifeq ($(uname_S),Darwin)
+	TKFRAMEWORK = /Library/Frameworks/Tk.framework/Resources/Wish.app
+	ifeq ($(shell expr "$(uname_R)" : '9\.'),2)
+		TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish\ Shell.app
+	endif
+	TKEXECUTABLE = $(shell basename "$(TKFRAMEWORK)" .app)
+endif
 
 ifeq ($(findstring $(MAKEFLAGS),s),s)
 QUIET_GEN =
@@ -147,7 +155,7 @@ git-gui: GIT-VERSION-FILE GIT-GUI-VARS
 	echo then >>$@+ && \
 	echo '	'echo \'git-gui version '$(GITGUI_VERSION)'\' >>$@+ && \
 	echo else >>$@+ && \
-	echo '	'exec \''$(libdir_SQ)/Git Gui.app/Contents/MacOS/Wish'\' \
+	echo '	'exec \''$(libdir_SQ)/Git Gui.app/Contents/MacOS/$(subst \,,$(TKEXECUTABLE))'\' \
 		'"$$0" "$$@"' >>$@+ && \
 	echo fi >>$@+ && \
 	chmod +x $@+ && \
@@ -157,14 +165,15 @@ Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-VARS \
 		macosx/Info.plist \
 		macosx/git-gui.icns \
 		macosx/AppMain.tcl \
-		$(TKFRAMEWORK)/Contents/MacOS/Wish
+		$(TKFRAMEWORK)/Contents/MacOS/$(TKEXECUTABLE)
 	$(QUIET_GEN)rm -rf '$@' '$@'+ && \
 	mkdir -p '$@'+/Contents/MacOS && \
 	mkdir -p '$@'+/Contents/Resources/Scripts && \
-	cp '$(subst ','\'',$(TKFRAMEWORK))/Contents/MacOS/Wish' \
+	cp '$(subst ','\'',$(subst \,,$(TKFRAMEWORK)/Contents/MacOS/$(TKEXECUTABLE)))' \
 		'$@'+/Contents/MacOS && \
 	cp macosx/git-gui.icns '$@'+/Contents/Resources && \
 	sed -e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
+		-e 's/@@GITGUI_TKEXECUTABLE@@/$(TKEXECUTABLE)/g' \
 		macosx/Info.plist \
 		>'$@'+/Contents/Info.plist && \
 	sed -e 's|@@gitexecdir@@|$(gitexecdir_SQ)|' \
