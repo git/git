@@ -24,8 +24,6 @@ use Data::Dumper;
 use Term::ANSIColor;
 use Git;
 
-$SIG{INT} = sub { print color("reset"), "\n"; exit };
-
 package FakeTerm;
 sub new {
 	my ($class, $reason) = @_;
@@ -163,7 +161,7 @@ my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@initial_cc,@bcclist,@xh,
-	$initial_reply_to,$initial_subject,@files,$author,$sender,$compose,$time);
+	$initial_reply_to,$initial_subject,@files,$author,$sender,$smtp_authpass,$compose,$time);
 
 my $envelope_sender;
 
@@ -183,7 +181,7 @@ my ($quiet, $dry_run) = (0, 0);
 
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
-my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_authpass, $smtp_ssl);
+my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_ssl);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
 my ($no_validate);
 my (@suppress_cc);
@@ -209,6 +207,29 @@ my %config_settings = (
     "suppresscc" => \@suppress_cc,
 );
 
+# Handle Uncouth Termination
+sub signal_handler {
+
+	# Make text normal
+	print color("reset"), "\n";
+
+	# SMTP password masked
+	system "stty echo";
+
+	# tmp files from --compose
+	if (-e $compose_filename) {
+		print "'$compose_filename' contains an intermediate version of the email you were composing.\n";
+	}
+	if (-e ($compose_filename . ".final")) {
+		print "'$compose_filename.final' contains the composed email.\n"
+	}
+
+	exit;
+};
+
+$SIG{TERM} = \&signal_handler;
+$SIG{INT}  = \&signal_handler;
+
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
 
@@ -222,7 +243,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-server=s" => \$smtp_server,
 		    "smtp-server-port=s" => \$smtp_server_port,
 		    "smtp-user=s" => \$smtp_authuser,
-		    "smtp-pass=s" => \$smtp_authpass,
+		    "smtp-pass:s" => \$smtp_authpass,
 		    "smtp-ssl!" => \$smtp_ssl,
 		    "identity=s" => \$identity,
 		    "compose" => \$compose,
@@ -393,9 +414,12 @@ if (@files) {
 my $prompting = 0;
 if (!defined $sender) {
 	$sender = $repoauthor || $repocommitter;
-	do {
+
+	while (1) {
 		$_ = $term->readline("Who should the emails appear to be from? [$sender] ");
-	} while (!defined $_);
+		last if defined $_;
+		print "\n";
+	}
 
 	$sender = $_ if ($_);
 	print "Emails will be sent from: ", $sender, "\n";
@@ -403,10 +427,14 @@ if (!defined $sender) {
 }
 
 if (!@to) {
-	do {
-		$_ = $term->readline("Who should the emails be sent to? ",
-				"");
-	} while (!defined $_);
+
+
+	while (1) {
+		$_ = $term->readline("Who should the emails be sent to? ", "");
+		last if defined $_;
+		print "\n";
+	}
+
 	my $to = $_;
 	push @to, split /,/, $to;
 	$prompting++;
@@ -428,19 +456,22 @@ sub expand_aliases {
 @bcclist = expand_aliases(@bcclist);
 
 if (!defined $initial_subject && $compose) {
-	do {
-		$_ = $term->readline("What subject should the initial email start with? ",
-			$initial_subject);
-	} while (!defined $_);
+	while (1) {
+		$_ = $term->readline("What subject should the initial email start with? ", $initial_subject);
+		last if defined $_;
+		print "\n";
+	}
+
 	$initial_subject = $_;
 	$prompting++;
 }
 
 if ($thread && !defined $initial_reply_to && $prompting) {
-	do {
-		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ",
-			$initial_reply_to);
-	} while (!defined $_);
+	while (1) {
+		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ", $initial_reply_to);
+		last if defined $_;
+		print "\n";
+	}
 
 	$initial_reply_to = $_;
 }
@@ -491,9 +522,11 @@ EOT
 	close(C);
 	close(C2);
 
-	do {
+	while (1) {
 		$_ = $term->readline("Send this email? (y|n) ");
-	} while (!defined $_);
+		last if defined $_;
+		print "\n";
+	}
 
 	if (uc substr($_,0,1) ne 'Y') {
 		cleanup_compose_files();
@@ -685,9 +718,26 @@ X-Mailer: git-send-email $gitversion
 			die "Unable to initialize SMTP properly.  Is there something wrong with your config?";
 		}
 
-		if ((defined $smtp_authuser) && (defined $smtp_authpass)) {
+		if (defined $smtp_authuser) {
+
+			if (!defined $smtp_authpass) {
+
+				system "stty -echo";
+
+				do {
+					print "Password: ";
+					$_ = <STDIN>;
+					print "\n";
+				} while (!defined $_);
+
+				chomp($smtp_authpass = $_);
+
+				system "stty echo";
+			}
+
 			$auth ||= $smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
 		}
+
 		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
 		$smtp->data or die $smtp->message;

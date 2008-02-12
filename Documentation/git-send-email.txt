@@ -96,11 +96,40 @@ The --cc option must be repeated for each user you want on the cc list.
 	servers typically listen to smtp port 25 and ssmtp port
 	465).
 
---smtp-user, --smtp-pass::
-	Username and password for SMTP-AUTH. Defaults are the values of
-	the configuration values 'sendemail.smtpuser' and
-	'sendemail.smtppass', but see also 'sendemail.identity'.
-	If not set, authentication is not attempted.
+--smtp-user::
+	Username for SMTP-AUTH. In place of this option, the following
+	configuration variables can be specified:
++
+--
+		* sendemail.smtpuser
+		* sendemail.<identity>.smtpuser (see sendemail.identity).
+--
++
+However, --smtp-user always overrides these variables.
++
+If a username is not specified (with --smtp-user or a
+configuration variable), then authentication is not attempted.
+
+--smtp-pass::
+	Password for SMTP-AUTH. The argument is optional: If no
+	argument is specified, then the empty string is used as
+	the password.
++
+In place of this option, the following configuration variables
+can be specified:
++
+--
+		* sendemail.smtppass
+		* sendemail.<identity>.smtppass (see sendemail.identity).
+--
++
+However, --smtp-pass always overrides these variables.
++
+Furthermore, passwords need not be specified in configuration files
+or on the command line. If a username has been specified (with
+--smtp-user or a configuration variable), but no password has been
+specified (with --smtp-pass or a configuration variable), then the
+user is prompted for a password while the input is masked for privacy.
 
 --smtp-ssl::
 	If set, connects to the SMTP server using SSL.
