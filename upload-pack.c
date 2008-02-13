@@ -620,6 +620,9 @@ int main(int argc, char **argv)
 
 	if (i != argc-1)
 		usage(upload_pack_usage);
+
+	setup_path(NULL);
+
 	dir = argv[i];
 
 	if (!enter_repo(dir, strict))

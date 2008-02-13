@@ -119,7 +119,7 @@ get_author_ident_from_commit () {
 	}
 	'
 	encoding=$(git config i18n.commitencoding || echo UTF-8)
-	git show -s --pretty=raw --encoding="$encoding" "$1" |
+	git show -s --pretty=raw --encoding="$encoding" "$1" -- |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"
 }
 

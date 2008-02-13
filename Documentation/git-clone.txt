@@ -62,12 +62,13 @@ OPTIONS
 	.git/objects/info/alternates to share the objects
 	with the source repository.  The resulting repository
 	starts out without any object of its own.
-	*NOTE*: this is a possibly dangerous operation; do *not* use
-	it unless you understand what it does. If you clone your
-	repository using this option, then delete branches in the
-	source repository and then run linkgit:git-gc[1] using the
-	'--prune' option in the source repository, it may remove
-	objects which are referenced by the cloned repository.
++
+*NOTE*: this is a possibly dangerous operation; do *not* use
+it unless you understand what it does. If you clone your
+repository using this option, then delete branches in the
+source repository and then run linkgit:git-gc[1] using the
+'--prune' option in the source repository, it may remove
+objects which are referenced by the cloned repository.
 
 
 

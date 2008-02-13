@@ -107,8 +107,8 @@ If you need to pass multiple options, separate them with a comma.
 
 -M <regex>::
 	Attempt to detect merges based on the commit message with a custom
-	regex. It can be used with '-m' to also see the default regexes.
-	You must escape forward slashes.
+	regex. It can be used with '-m' to enable the default regexes
+	as well. You must escape forward slashes.
 
 -S <regex>::
 	Skip paths matching the regex.
