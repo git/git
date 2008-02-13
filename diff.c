@@ -2302,6 +2302,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->detect_rename = 0;
 	else if (!strcmp(arg, "--relative"))
 		DIFF_OPT_SET(options, RELATIVE_NAME);
+	else if (!prefixcmp(arg, "--relative=")) {
+		DIFF_OPT_SET(options, RELATIVE_NAME);
+		options->prefix = arg + 11;
+	}
 
 	/* xdiff options */
 	else if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
