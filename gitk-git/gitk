@@ -240,11 +240,12 @@ proc getcommitlines {fd view}  {
 	set listed 1
 	if {$j >= 0 && [string match "commit *" $cmit]} {
 	    set ids [string range $cmit 7 [expr {$j - 1}]]
-	    if {[string match {[-<>]*} $ids]} {
+	    if {[string match {[-^<>]*} $ids]} {
 		switch -- [string index $ids 0] {
 		    "-" {set listed 0}
-		    "<" {set listed 2}
-		    ">" {set listed 3}
+		    "^" {set listed 2}
+		    "<" {set listed 3}
+		    ">" {set listed 4}
 		}
 		set ids [string range $ids 1 end]
 	    }
@@ -632,6 +633,7 @@ proc makewindow {} {
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global diffcontextstring diffcontext
+    global ignorespace
     global maincursor textcursor curtextcursor
     global rowctxmenu fakerowmenu mergemax wrapcomment
     global highlight_files gdttype
@@ -849,6 +851,9 @@ proc makewindow {} {
     trace add variable diffcontextstring write diffcontextchange
     lappend entries .bleft.mid.diffcontext
     pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left
+    checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
+	-command changeignorespace -variable ignorespace
+    pack .bleft.mid.ignspace -side left -padx 5
     set ctext .bleft.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
 	-state disabled -font textfont \
@@ -1307,45 +1312,45 @@ proc keys {} {
     }
     toplevel $w
     wm title $w [mc "Gitk key bindings"]
-    message $w.m -text [mc "
-Gitk key bindings:
+    message $w.m -text "
+[mc "Gitk key bindings:"]
 
-<$M1T-Q>		Quit
-<Home>		Move to first commit
-<End>		Move to last commit
-<Up>, p, i	Move up one commit
-<Down>, n, k	Move down one commit
-<Left>, z, j	Go back in history list
-<Right>, x, l	Go forward in history list
-<PageUp>	Move up one page in commit list
-<PageDown>	Move down one page in commit list
-<$M1T-Home>	Scroll to top of commit list
-<$M1T-End>	Scroll to bottom of commit list
-<$M1T-Up>	Scroll commit list up one line
-<$M1T-Down>	Scroll commit list down one line
-<$M1T-PageUp>	Scroll commit list up one page
-<$M1T-PageDown>	Scroll commit list down one page
-<Shift-Up>	Find backwards (upwards, later commits)
-<Shift-Down>	Find forwards (downwards, earlier commits)
-<Delete>, b	Scroll diff view up one page
-<Backspace>	Scroll diff view up one page
-<Space>		Scroll diff view down one page
-u		Scroll diff view up 18 lines
-d		Scroll diff view down 18 lines
-<$M1T-F>		Find
-<$M1T-G>		Move to next find hit
-<Return>	Move to next find hit
-/		Move to next find hit, or redo find
-?		Move to previous find hit
-f		Scroll diff view to next file
-<$M1T-S>		Search for next hit in diff view
-<$M1T-R>		Search for previous hit in diff view
-<$M1T-KP+>	Increase font size
-<$M1T-plus>	Increase font size
-<$M1T-KP->	Decrease font size
-<$M1T-minus>	Decrease font size
-<F5>		Update
-"] \
+[mc "<%s-Q>		Quit" $M1T]
+[mc "<Home>		Move to first commit"]
+[mc "<End>		Move to last commit"]
+[mc "<Up>, p, i	Move up one commit"]
+[mc "<Down>, n, k	Move down one commit"]
+[mc "<Left>, z, j	Go back in history list"]
+[mc "<Right>, x, l	Go forward in history list"]
+[mc "<PageUp>	Move up one page in commit list"]
+[mc "<PageDown>	Move down one page in commit list"]
+[mc "<%s-Home>	Scroll to top of commit list" $M1T]
+[mc "<%s-End>	Scroll to bottom of commit list" $M1T]
+[mc "<%s-Up>	Scroll commit list up one line" $M1T]
+[mc "<%s-Down>	Scroll commit list down one line" $M1T]
+[mc "<%s-PageUp>	Scroll commit list up one page" $M1T]
+[mc "<%s-PageDown>	Scroll commit list down one page" $M1T]
+[mc "<Shift-Up>	Find backwards (upwards, later commits)"]
+[mc "<Shift-Down>	Find forwards (downwards, earlier commits)"]
+[mc "<Delete>, b	Scroll diff view up one page"]
+[mc "<Backspace>	Scroll diff view up one page"]
+[mc "<Space>		Scroll diff view down one page"]
+[mc "u		Scroll diff view up 18 lines"]
+[mc "d		Scroll diff view down 18 lines"]
+[mc "<%s-F>		Find" $M1T]
+[mc "<%s-G>		Move to next find hit" $M1T]
+[mc "<Return>	Move to next find hit"]
+[mc "/		Move to next find hit, or redo find"]
+[mc "?		Move to previous find hit"]
+[mc "f		Scroll diff view to next file"]
+[mc "<%s-S>		Search for next hit in diff view" $M1T]
+[mc "<%s-R>		Search for previous hit in diff view" $M1T]
+[mc "<%s-KP+>	Increase font size" $M1T]
+[mc "<%s-plus>	Increase font size" $M1T]
+[mc "<%s-KP->	Decrease font size" $M1T]
+[mc "<%s-minus>	Decrease font size" $M1T]
+[mc "<F5>		Update"]
+" \
 	    -justify left -bg white -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
     button $w.ok -text [mc "Close"] -command "destroy $w" -default active
@@ -3627,23 +3632,23 @@ proc drawcmittext {id row col} {
     global linehtag linentag linedtag selectedline
     global canvxmax boldrows boldnamerows fgcolor nullid nullid2
 
-    # listed is 0 for boundary, 1 for normal, 2 for left, 3 for right
+    # listed is 0 for boundary, 1 for normal, 2 for negative, 3 for left, 4 for right
     set listed [lindex $commitlisted $row]
     if {$id eq $nullid} {
 	set ofill red
     } elseif {$id eq $nullid2} {
 	set ofill green
     } else {
-	set ofill [expr {$listed != 0? "blue": "white"}]
+	set ofill [expr {$listed != 0 ? $listed == 2 ? "gray" : "blue" : "white"}]
     }
     set x [xc $row $col]
     set y [yc $row]
     set orad [expr {$linespc / 3}]
-    if {$listed <= 1} {
+    if {$listed <= 2} {
 	set t [$canv create oval [expr {$x - $orad}] [expr {$y - $orad}] \
 		   [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
 		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
-    } elseif {$listed == 2} {
+    } elseif {$listed == 3} {
 	# triangle pointing left for left-side commits
 	set t [$canv create polygon \
 		   [expr {$x - $orad}] $y \
@@ -5270,13 +5275,21 @@ proc diffcontextchange {n1 n2 op} {
     }
 }
 
+proc changeignorespace {} {
+    reselectline
+}
+
 proc getblobdiffs {ids} {
     global blobdifffd diffids env
     global diffinhdr treediffs
     global diffcontext
+    global ignorespace
     global limitdiffs viewfiles curview
 
     set cmd [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"]
+    if {$ignorespace} {
+	append cmd " -w"
+    }
     if {$limitdiffs && $viewfiles($curview) ne {}} {
 	set cmd [concat $cmd -- $viewfiles($curview)]
     }
@@ -6137,11 +6150,7 @@ proc domktag {} {
 	return
     }
     if {[catch {
-	set dir [gitdir]
-	set fname [file join $dir "refs/tags" $tag]
-	set f [open $fname w]
-	puts $f $id
-	close $f
+	exec git tag $tag $id
     } err]} {
 	error_popup "[mc "Error creating tag:"] $err"
 	return
@@ -8459,6 +8468,7 @@ set bgcolor white
 set fgcolor black
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
+set ignorespace 0
 set selectbgcolor gray85
 
 ## For msgcat loading, first locate the installation location.
