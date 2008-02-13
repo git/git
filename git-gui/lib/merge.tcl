@@ -116,8 +116,7 @@ method _start {} {
 	lappend cmd HEAD
 	lappend cmd $name
 
-	set msg [mc "Merging %s and %s" $current_branch $stitle]
-	ui_status "$msg..."
+	ui_status [mc "Merging %s and %s..." $current_branch $stitle]
 	set cons [console::new [mc "Merge"] "merge $stitle"]
 	console::exec $cons $cmd [cb _finish $cons]
 
@@ -236,7 +235,7 @@ Continue with resetting the current changes?"]
 		set fd [git_read --stderr read-tree --reset -u -v HEAD]
 		fconfigure $fd -blocking 0 -translation binary
 		fileevent $fd readable [namespace code [list _reset_wait $fd]]
-		$::main_status start [mc "Aborting"] {files reset}
+		$::main_status start [mc "Aborting"] [mc "files reset"]
 	} else {
 		unlock_index
 	}

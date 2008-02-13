@@ -5,6 +5,7 @@ proc save_config {} {
 	global default_config font_descs
 	global repo_config global_config
 	global repo_config_new global_config_new
+	global ui_comm_spell
 
 	foreach option $font_descs {
 		set name [lindex $option 0]
@@ -52,11 +53,23 @@ proc save_config {} {
 			set repo_config($name) $value
 		}
 	}
+
+	if {[info exists repo_config(gui.spellingdictionary)]} {
+		set value $repo_config(gui.spellingdictionary)
+		if {$value eq {none}} {
+			if {[info exists ui_comm_spell]} {
+				$ui_comm_spell stop
+			}
+		} elseif {[info exists ui_comm_spell]} {
+			$ui_comm_spell lang $value
+		}
+	}
 }
 
 proc do_options {} {
 	global repo_config global_config font_descs
 	global repo_config_new global_config_new
+	global ui_comm_spell
 
 	array unset repo_config_new
 	array unset global_config_new
@@ -158,6 +171,34 @@ proc do_options {} {
 			}
 		}
 	}
+
+	set all_dicts [linsert \
+		[spellcheck::available_langs] \
+		0 \
+		none]
+	incr optid
+	foreach f {repo global} {
+		if {![info exists ${f}_config_new(gui.spellingdictionary)]} {
+			if {[info exists ui_comm_spell]} {
+				set value [$ui_comm_spell lang]
+			} else {
+				set value none
+			}
+			set ${f}_config_new(gui.spellingdictionary) $value
+		}
+
+		frame $w.$f.$optid
+		label $w.$f.$optid.l -text [mc "Spelling Dictionary:"]
+		eval tk_optionMenu $w.$f.$optid.v \
+			${f}_config_new(gui.spellingdictionary) \
+			$all_dicts
+		pack $w.$f.$optid.l -side left -anchor w -fill x
+		pack $w.$f.$optid.v -side left -anchor w \
+			-fill x -expand 1 \
+			-padx 5
+		pack $w.$f.$optid -side top -anchor w -fill x
+	}
+	unset all_dicts
 
 	set all_fonts [lsort [font families]]
 	foreach option $font_descs {
