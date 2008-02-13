@@ -2,7 +2,7 @@
 #
 # Copyright (c) Robin Rosenberg
 #
-test_description='CVS export comit. '
+test_description='Test export of commits to CVS'
 
 . ./test-lib.sh
 
@@ -245,5 +245,21 @@ test_expect_success \
       )'
 	;;
 esac
+
+test_expect_failure '-w option should work with relative GIT_DIR' '
+      mkdir W &&
+      echo foobar >W/file1.txt &&
+      echo bazzle >W/file2.txt &&
+      git add W/file1.txt &&
+      git add W/file2.txt &&
+      git commit -m "More updates" &&
+      id=$(git rev-list --max-count=1 HEAD) &&
+      (cd "$GIT_DIR" &&
+      GIT_DIR=. git cvsexportcommit -w "$CVSWORK" -c $id &&
+      check_entries "$CVSWORK/W" "file1.txt/1.1/|file2.txt/1.1/" &&
+      diff -u "$CVSWORK/W/file1.txt" ../W/file1.txt &&
+      diff -u "$CVSWORK/W/file2.txt" ../W/file2.txt
+      )
+'
 
 test_done
