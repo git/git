@@ -568,13 +568,48 @@ proc fix_reversal {p a v} {
 }
 
 proc insertrow {id p v} {
-    global varcid varccommits parents children cmitlisted
-    global commitidx varctok vtokmod targetid targetrow
+    global cmitlisted children parents varcid varctok vtokmod
+    global varccommits ordertok commitidx numcommits curview
+    global targetid targetrow
 
+    readcommit $id
+    set vid $v,$id
+    set cmitlisted($vid) 1
+    set children($vid) {}
+    set parents($vid) [list $p]
+    set a [newvarc $v $id]
+    set varcid($vid) $a
+    if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
+	modify_arc $v $a
+    }
+    lappend varccommits($v,$a) $id
+    set vp $v,$p
+    if {[llength [lappend children($vp) $id]] > 1} {
+	set children($vp) [lsort -command [list vtokcmp $v] $children($vp)]
+	catch {unset ordertok}
+    }
+    fix_reversal $p $a $v
+    incr commitidx($v)
+    if {$v == $curview} {
+	set numcommits $commitidx($v)
+	setcanvscroll
+	if {[info exists targetid]} {
+	    if {![comes_before $targetid $p]} {
+		incr targetrow
+	    }
+	}
+    }
+}
+
+proc insertfakerow {id p} {
+    global varcid varccommits parents children cmitlisted
+    global commitidx varctok vtokmod targetid targetrow curview numcommits
+
+    set v $curview
     set a $varcid($v,$p)
     set i [lsearch -exact $varccommits($v,$a) $p]
     if {$i < 0} {
-	puts "oops: insertrow can't find [shortids $p] on arc $a"
+	puts "oops: insertfakerow can't find [shortids $p] on arc $a"
 	return
     }
     set children($v,$id) {}
@@ -582,7 +617,7 @@ proc insertrow {id p v} {
     set varcid($v,$id) $a
     lappend children($v,$p) $id
     set cmitlisted($v,$id) 1
-    incr commitidx($v)
+    set numcommits [incr commitidx($v)]
     # note we deliberately don't update varcstart($v) even if $i == 0
     set varccommits($v,$a) [linsert $varccommits($v,$a) $i $id]
     if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
@@ -593,23 +628,25 @@ proc insertrow {id p v} {
 	    incr targetrow
 	}
     }
+    setcanvscroll
     drawvisible
 }
 
-proc removerow {id v} {
+proc removefakerow {id} {
     global varcid varccommits parents children commitidx
     global varctok vtokmod cmitlisted currentid selectedline
-    global targetid
+    global targetid curview numcommits
 
+    set v $curview
     if {[llength $parents($v,$id)] != 1} {
-	puts "oops: removerow [shortids $id] has [llength $parents($v,$id)] parents"
+	puts "oops: removefakerow [shortids $id] has [llength $parents($v,$id)] parents"
 	return
     }
     set p [lindex $parents($v,$id) 0]
     set a $varcid($v,$id)
     set i [lsearch -exact $varccommits($v,$a) $id]
     if {$i < 0} {
-	puts "oops: removerow can't find [shortids $id] on arc $a"
+	puts "oops: removefakerow can't find [shortids $id] on arc $a"
 	return
     }
     unset varcid($v,$id)
@@ -617,7 +654,7 @@ proc removerow {id v} {
     unset parents($v,$id)
     unset children($v,$id)
     unset cmitlisted($v,$id)
-    incr commitidx($v) -1
+    set numcommits [incr commitidx($v) -1]
     set j [lsearch -exact $children($v,$p) $id]
     if {$j >= 0} {
 	set children($v,$p) [lreplace $children($v,$p) $j $j]
@@ -632,6 +669,7 @@ proc removerow {id v} {
     if {[info exists targetid] && $targetid eq $id} {
 	set targetid $p
     }
+    setcanvscroll
     drawvisible
 }
 
@@ -3534,10 +3572,10 @@ proc dohidelocalchanges {} {
     global nullid nullid2 lserial curview
 
     if {[commitinview $nullid $curview]} {
-	removerow $nullid $curview
+	removefakerow $nullid
     }
     if {[commitinview $nullid2 $curview]} {
-	removerow $nullid2 $curview
+	removefakerow $nullid2
     }
     incr lserial
 }
@@ -3581,11 +3619,11 @@ proc readdiffindex {fd serial} {
 	set commitinfo($nullid2) [list  $hl {} {} {} {} "    $hl\n"]
 	set commitdata($nullid2) "\n    $hl\n"
 	if {[commitinview $nullid $curview]} {
-	    removerow $nullid $curview
+	    removefakerow $nullid
 	}
-	insertrow $nullid2 $mainheadid $curview
+	insertfakerow $nullid2 $mainheadid
     } elseif {!$isdiff && [commitinview $nullid2 $curview]} {
-	removerow $nullid2 $curview
+	removefakerow $nullid2
     }
     return 0
 }
@@ -3618,9 +3656,9 @@ proc readdifffiles {fd serial} {
 	} else {
 	    set p $mainheadid
 	}
-	insertrow $nullid $p $curview
+	insertfakerow $nullid $p
     } elseif {!$isdiff && [commitinview $nullid $curview]} {
-	removerow $nullid $curview
+	removefakerow $nullid
     }
     return 0
 }
@@ -5347,6 +5385,7 @@ proc selectline {l isnew} {
     global commentend idtags linknum
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
+    global targetrow targetid
 
     catch {unset pending_select}
     $canv delete hover
@@ -5399,6 +5438,8 @@ proc selectline {l isnew} {
 
     set selectedline $l
     set currentid $id
+    set targetid $id
+    set targetrow $l
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
     $sha1entry selection from 0
@@ -6995,7 +7036,7 @@ proc mkbrgo {top} {
 
 proc cherrypick {} {
     global rowmenuid curview
-    global mainhead
+    global mainhead mainheadid
 
     set oldhead [exec git rev-parse HEAD]
     set dheads [descheads $rowmenuid]
@@ -7026,6 +7067,7 @@ proc cherrypick {} {
 	if {$mainhead ne {}} {
 	    movehead $newhead $mainhead
 	    movedhead $newhead $mainhead
+	    set mainheadid $newhead
 	}
 	redrawtags $oldhead
 	redrawtags $newhead
@@ -7035,7 +7077,7 @@ proc cherrypick {} {
 }
 
 proc resethead {} {
-    global mainheadid mainhead rowmenuid confirm_ok resettype
+    global mainhead rowmenuid confirm_ok resettype
 
     set confirm_ok 0
     set w ".confirmreset"
