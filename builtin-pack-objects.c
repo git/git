@@ -1464,7 +1464,7 @@ static unsigned int check_delta_limit(struct object_entry *me, unsigned int n)
 	return m;
 }
 
-static unsigned long free_unpacked_data(struct unpacked *n)
+static unsigned long free_unpacked(struct unpacked *n)
 {
 	unsigned long freed_mem = sizeof_delta_index(n->index);
 	free_delta_index(n->index);
@@ -1474,12 +1474,6 @@ static unsigned long free_unpacked_data(struct unpacked *n)
 		free(n->data);
 		n->data = NULL;
 	}
-	return freed_mem;
-}
-
-static unsigned long free_unpacked(struct unpacked *n)
-{
-	unsigned long freed_mem = free_unpacked_data(n);
 	n->entry = NULL;
 	n->depth = 0;
 	return freed_mem;
@@ -1520,7 +1514,7 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 		       mem_usage > window_memory_limit &&
 		       count > 1) {
 			uint32_t tail = (idx + window - count) % window;
-			mem_usage -= free_unpacked_data(array + tail);
+			mem_usage -= free_unpacked(array + tail);
 			count--;
 		}
 
@@ -1553,9 +1547,6 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 			if (!m->entry)
 				break;
 			ret = try_delta(n, m, max_depth, &mem_usage);
-			if (window_memory_limit &&
-			    mem_usage > window_memory_limit)
-				mem_usage -= free_unpacked_data(m);
 			if (ret < 0)
 				break;
 			else if (ret > 0)
