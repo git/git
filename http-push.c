@@ -2398,7 +2398,12 @@ int main(int argc, char **argv)
 		fill_active_slots();
 		add_fill_function(NULL, fill_active_slot);
 #endif
-		finish_all_active_slots();
+		do {
+			finish_all_active_slots();
+#ifdef USE_CURL_MULTI
+			fill_active_slots();
+#endif
+		} while (request_queue_head && !aborted);
 
 		/* Update the remote branch if all went well */
 		if (aborted || !update_remote(ref->new_sha1, ref_lock)) {
