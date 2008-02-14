@@ -611,6 +611,8 @@ sub href(%) {
 	);
 	my %mapping = @mapping;
 
+	$params{'project'} = $project unless exists $params{'project'};
+
 	if ($params{-replay}) {
 		while (my ($name, $symbol) = each %mapping) {
 			if (!exists $params{$name}) {
@@ -619,8 +621,6 @@ sub href(%) {
 			}
 		}
 	}
-
-	$params{'project'} = $project unless exists $params{'project'};
 
 	my ($use_pathinfo) = gitweb_check_feature('pathinfo');
 	if ($use_pathinfo) {
