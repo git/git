@@ -1634,12 +1634,19 @@ static struct object_list **process_tree(struct tree *tree,
 
 	init_tree_desc(&desc, tree->buffer, tree->size);
 
-	while (tree_entry(&desc, &entry)) {
-		if (S_ISDIR(entry.mode))
+	while (tree_entry(&desc, &entry))
+		switch (object_type(entry.mode)) {
+		case OBJ_TREE:
 			p = process_tree(lookup_tree(entry.sha1), p, &me, name);
-		else
+			break;
+		case OBJ_BLOB:
 			p = process_blob(lookup_blob(entry.sha1), p, &me, name);
-	}
+			break;
+		default:
+			/* Subproject commit - not in this repository */
+			break;
+		}
+
 	free(tree->buffer);
 	tree->buffer = NULL;
 	return p;
