@@ -308,7 +308,7 @@ method _read {} {
 		# try to round out the word.
 		#
 		while {$curr ne $orig
-		 && [string equal -length [llength $curr] $curr $orig]} {
+		 && [string equal -length [string length $curr] $curr $orig]} {
 			set n_loc  [$w_text index "$e_loc +1c"]
 			set n_curr [$w_text get $b_loc $n_loc]
 			if {$n_curr eq $curr} {
