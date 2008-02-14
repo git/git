@@ -372,6 +372,8 @@ static void write_branch_report(FILE *rpt, struct branch *b)
 	fputc('\n', rpt);
 }
 
+static void dump_marks_helper(FILE *, uintmax_t, struct mark_set *);
+
 static void write_crash_report(const char *err)
 {
 	char *loc = git_path("fast_import_crash_%d", getpid());
@@ -442,6 +444,14 @@ static void write_crash_report(const char *err)
 			fputc('\n', rpt);
 		}
 	}
+
+	fputc('\n', rpt);
+	fputs("Marks\n", rpt);
+	fputs("-----\n", rpt);
+	if (mark_file)
+		fprintf(rpt, "  exported to %s\n", mark_file);
+	else
+		dump_marks_helper(rpt, 0, marks);
 
 	fputc('\n', rpt);
 	fputs("-------------------\n", rpt);
