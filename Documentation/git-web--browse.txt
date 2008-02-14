@@ -1,0 +1,78 @@
+git-web--browse(1)
+==================
+
+NAME
+----
+git-web--browse - git helper script to launch a web browser
+
+SYNOPSIS
+--------
+'git-web--browse' [OPTIONS] URL/FILE ...
+
+DESCRIPTION
+-----------
+
+This script tries, as much as possible, to display the URLs and FILEs
+that are passed as arguments, as HTML pages in new tabs on an already
+opened web browser.
+
+The following browsers (or commands) are currently supported:
+
+* firefox (this is the default under X Window when not using KDE)
+* iceweasel
+* konqueror (this is the default under KDE)
+* w3m (this is the default outside graphical environments)
+* links
+* lynx
+* dillo
+* open (this is the default under Mac OS X GUI)
+
+OPTIONS
+-------
+-b BROWSER|--browser=BROWSER::
+	Use the specified BROWSER. It must be in the list of supported
+	browsers.
+
+-t BROWSER|--tool=BROWSER::
+	Same as above.
+
+-c CONF.VAR|--config=CONF.VAR::
+	CONF.VAR is looked up in the git config files. If it's set,
+	then its value specify the browser that should be used.
+
+CONFIGURATION VARIABLES
+-----------------------
+
+The web browser can be specified using a configuration variable passed
+with the -c (or --config) command line option, or the 'web.browser'
+configuration variable if the former is not used.
+
+You can explicitly provide a full path to your preferred browser by
+setting the configuration variable 'browser.<tool>.path'. For example,
+you can configure the absolute path to firefox by setting
+'browser.firefox.path'. Otherwise, 'git-web--browse' assumes the tool
+is available in PATH.
+
+Note that these configuration variables should probably be set using
+the '--global' flag, for example like this:
+
+------------------------------------------------
+$ git config --global web.browser firefox
+------------------------------------------------
+
+as they are probably more user specific than repository specific.
+See linkgit:git-config[1] for more information about this.
+
+Author
+------
+Written by Christian Couder <chriscool@tuxfamily.org> and the git-list
+<git@vger.kernel.org>, based on git-mergetool by Theodore Y. Ts'o.
+
+Documentation
+-------------
+Documentation by Christian Couder <chriscool@tuxfamily.org> and the
+git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the linkgit:git[7] suite

@@ -40,21 +40,9 @@ OPTIONS
 -b|--browser::
 	The web browser that should be used to view the gitweb
 	page. This will be passed to the 'git-web--browse' helper
-	script along with the URL of the gitweb instance. If the
-	script fails, the URL will be printed to stdout.
-+
-Note that the 'git-web--browse' script tries, as much as possible, to
-display the HTML page in a new tab on an already opened browser.
-+
-The following browsers are currently supported by 'git-web--browse':
-+
-* firefox (this is the default under X Window when not using KDE)
-* iceweasel
-* konqueror (this is the default under KDE)
-* w3m (this is the default outside X Window)
-* links
-* lynx
-* dillo
+	script along with the URL of the gitweb instance. See
+	linkgit:git-web--browse[1] for more information about this. If
+	the script fails, the URL will be printed to stdout.
 
 --start::
 	Start the httpd instance and exit.  This does not generate
@@ -85,13 +73,8 @@ You may specify configuration in your .git/config
 -----------------------------------------------------------------------
 
 If the configuration variable 'instaweb.browser' is not set,
-'web.browser' will be used instead if it is defined.
-
-You can explicitly provide a full path to your preferred browser by
-setting the configuration variable 'browser.<tool>.path'. For example,
-you can configure the absolute path to firefox by setting
-'browser.firefox.path'. Otherwise, 'git-web--browse' assumes the tool
-is available in PATH.
+'web.browser' will be used instead if it is defined. See
+linkgit:git-web--browse[1] for more information about this.
 
 Author
 ------
