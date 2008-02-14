@@ -459,6 +459,10 @@ static void write_crash_report(const char *err)
 	fclose(rpt);
 }
 
+static void end_packfile(void);
+static void unkeep_all_packs(void);
+static void dump_marks(void);
+
 static NORETURN void die_nicely(const char *err, va_list params)
 {
 	static int zombie;
@@ -472,6 +476,9 @@ static NORETURN void die_nicely(const char *err, va_list params)
 	if (!zombie) {
 		zombie = 1;
 		write_crash_report(message);
+		end_packfile();
+		unkeep_all_packs();
+		dump_marks();
 	}
 	exit(128);
 }
