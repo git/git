@@ -30,7 +30,7 @@ test -f "$html_dir/git.html" || die "No documentation directory found."
 
 valid_tool() {
 	case "$1" in
-		firefox | iceweasel | konqueror | w3m | links | lynx | dillo)
+		firefox | iceweasel | konqueror | w3m | links | lynx | dillo | open)
 			;; # happy
 		*)
 			return 1
@@ -94,6 +94,10 @@ if test -z "$browser" ; then
     else
 	browser_candidates="w3m links lynx"
     fi
+    # SECURITYSESSIONID indicates an OS X GUI login session
+    if test -n "$SECURITYSESSIONID"; then
+	browser_candidates="open $browser_candidates"
+    fi
 
     for i in $browser_candidates; do
 	init_browser_path $i
@@ -140,7 +144,7 @@ case "$browser" in
 		;;
 	esac
 	;;
-    w3m|links|lynx)
+    w3m|links|lynx|open)
 	eval "$browser_path" $pages
 	;;
     dillo)
