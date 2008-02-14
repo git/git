@@ -88,7 +88,7 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
 
 	if (!value)
 		return config_error_nonbool(var);
-	drv->cmd = strdup(value);
+	drv->cmd = xstrdup(value);
 	return 0;
 }
 
