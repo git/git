@@ -2413,12 +2413,9 @@ int main(int argc, char **argv)
 		} while (request_queue_head && !aborted);
 
 		/* Update the remote branch if all went well */
-		if (aborted || !update_remote(ref->new_sha1, ref_lock)) {
+		if (aborted || !update_remote(ref->new_sha1, ref_lock))
 			rc = 1;
-			goto unlock;
-		}
 
-	unlock:
 		if (!rc)
 			fprintf(stderr, "    done\n");
 		unlock_remote(ref_lock);
