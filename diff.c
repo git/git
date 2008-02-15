@@ -87,7 +87,7 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
 	}
 
 	if (!value)
-		return error("%s: lacks value", var);
+		return config_error_nonbool(var);
 	drv->cmd = strdup(value);
 	return 0;
 }
