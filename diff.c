@@ -1013,6 +1013,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	char *err;
 
 	if (line[0] == '+') {
+		data->lineno++;
 		data->status = check_and_emit_line(line + 1, len - 1,
 		    data->ws_rule, NULL, NULL, NULL, NULL);
 		if (!data->status)
@@ -1023,13 +1024,12 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		emit_line(set, reset, line, 1);
 		(void)check_and_emit_line(line + 1, len - 1, data->ws_rule,
 		    stdout, set, reset, ws);
-		data->lineno++;
 	} else if (line[0] == ' ')
 		data->lineno++;
 	else if (line[0] == '@') {
 		char *plus = strchr(line, '+');
 		if (plus)
-			data->lineno = strtol(plus, NULL, 10);
+			data->lineno = strtol(plus, NULL, 10) - 1;
 		else
 			die("invalid diff");
 	}
