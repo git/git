@@ -57,7 +57,7 @@ static int parse_diff_color_slot(const char *var, int ofs)
 static struct ll_diff_driver {
 	const char *name;
 	struct ll_diff_driver *next;
-	char *cmd;
+	const char *cmd;
 } *user_diff, **user_diff_tail;
 
 /*
@@ -86,10 +86,7 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
 		user_diff_tail = &(drv->next);
 	}
 
-	if (!value)
-		return config_error_nonbool(var);
-	drv->cmd = xstrdup(value);
-	return 0;
+	return git_config_string(&(drv->cmd), var, value);
 }
 
 /*
