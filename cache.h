@@ -614,7 +614,7 @@ extern const char *pager_program;
 extern int pager_in_use(void);
 extern int pager_use_color;
 
-extern char *editor_program;
+extern const char *editor_program;
 extern char *excludes_file;
 
 /* base85 */
