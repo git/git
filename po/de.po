@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-02-02 10:14+0100\n"
-"PO-Revision-Date: 2008-02-02 10:18+0100\n"
+"POT-Creation-Date: 2008-02-16 21:24+0100\n"
+"PO-Revision-Date: 2008-02-16 21:52+0100\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -653,7 +653,7 @@ msgstr "Lokale Zweige"
 
 #: lib/branch_delete.tcl:52
 msgid "Delete Only If Merged Into"
-msgstr "Nur löschen, wenn darin zusammengeführt"
+msgstr "Nur löschen, wenn zusammengeführt nach"
 
 #: lib/branch_delete.tcl:54
 msgid "Always (Do not perform merge test.)"
@@ -1292,19 +1292,19 @@ msgstr "Warning: Tcl/Tk unterstützt die Zeichencodierung »%s« nicht."
 
 #: lib/commit.tcl:221
 msgid "Calling pre-commit hook..."
-msgstr ""
+msgstr "Aufrufen der Vor-Eintragen-Kontrolle..."
 
 #: lib/commit.tcl:236
 msgid "Commit declined by pre-commit hook."
-msgstr ""
+msgstr "Eintragen abgelehnt durch Vor-Eintragen-Kontrolle (»pre-commit hook«)."
 
 #: lib/commit.tcl:259
 msgid "Calling commit-msg hook..."
-msgstr ""
+msgstr "Aufrufen der Versionsbeschreibungs-Kontrolle..."
 
 #: lib/commit.tcl:274
 msgid "Commit declined by commit-msg hook."
-msgstr ""
+msgstr "Eintragen abgelehnt durch Versionsbeschreibungs-Kontrolle (»commit-message hook«)."
 
 #: lib/commit.tcl:287
 msgid "Committing changes..."
@@ -1389,7 +1389,7 @@ msgstr "Festplattenplatz von komprimierten Objekten"
 
 #: lib/database.tcl:48
 msgid "Packed objects waiting for pruning"
-msgstr "Komprimierte Objekte, die zum Entfernen vorgesehen sind"
+msgstr "Komprimierte Objekte, die zum Aufräumen vorgesehen sind"
 
 #: lib/database.tcl:49
 msgid "Garbage files"
@@ -1622,10 +1622,10 @@ msgstr "%s von %s"
 
 #: lib/merge.tcl:119
 #, tcl-format
-msgid "Merging %s and %s"
-msgstr "Zusammenführen von %s und %s"
+msgid "Merging %s and %s..."
+msgstr "Zusammenführen von %s und %s..."
 
-#: lib/merge.tcl:131
+#: lib/merge.tcl:130
 msgid "Merge completed successfully."
 msgstr "Zusammenführen erfolgreich abgeschlossen."
 
@@ -1636,7 +1636,7 @@ msgstr "Zusammenführen fehlgeschlagen. Konfliktauflösung ist notwendig."
 #: lib/merge.tcl:158
 #, tcl-format
 msgid "Merge Into %s"
-msgstr "Zusammenführen in %s"
+msgstr "Zusammenführen in »%s«"
 
 #: lib/merge.tcl:177
 msgid "Revision To Merge"
@@ -1741,7 +1741,7 @@ msgstr "Auf Dateiänderungsdatum verlassen"
 
 #: lib/option.tcl:111
 msgid "Prune Tracking Branches During Fetch"
-msgstr "Übernahmezweige entfernen während Anforderung"
+msgstr "Übernahmezweige aufräumen während Anforderung"
 
 #: lib/option.tcl:112
 msgid "Match Tracking Branches"
@@ -1755,7 +1755,11 @@ msgstr "Anzahl der Kontextzeilen beim Vergleich"
 msgid "New Branch Name Template"
 msgstr "Namensvorschlag für neue Zweige"
 
-#: lib/option.tcl:176
+#: lib/option.tcl:191
+msgid "Spelling Dictionary:"
+msgstr "Wörterbuch Rechtschreibprüfung:"
+
+#: lib/option.tcl:215
 msgid "Change Font"
 msgstr "Schriftart ändern"
 
@@ -1778,11 +1782,11 @@ msgstr "Optionen konnten nicht gespeichert werden:"
 
 #: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
 msgid "Delete Remote Branch"
-msgstr "Zweig aus anderem Projektarchiv löschen"
+msgstr "Zweig in anderem Projektarchiv löschen"
 
 #: lib/remote_branch_delete.tcl:47
 msgid "From Repository"
-msgstr "Von Projektarchiv"
+msgstr "In Projektarchiv"
 
 #: lib/remote_branch_delete.tcl:50 lib/transport.tcl:123
 msgid "Remote:"
@@ -1790,7 +1794,7 @@ msgstr "Anderes Archiv:"
 
 #: lib/remote_branch_delete.tcl:66 lib/transport.tcl:138
 msgid "Arbitrary URL:"
-msgstr "Kommunikation mit URL:"
+msgstr "Archiv-URL:"
 
 #: lib/remote_branch_delete.tcl:84
 msgid "Branches"
@@ -1798,11 +1802,11 @@ msgstr "Zweige"
 
 #: lib/remote_branch_delete.tcl:109
 msgid "Delete Only If"
-msgstr "Löschen, falls"
+msgstr "Nur löschen, wenn"
 
 #: lib/remote_branch_delete.tcl:111
 msgid "Merged Into:"
-msgstr "Zusammenführen mit:"
+msgstr "Zusammengeführt mit:"
 
 #: lib/remote_branch_delete.tcl:119
 msgid "Always (Do not perform merge checks)"
@@ -1864,7 +1868,7 @@ msgstr "»%s« laden..."
 
 #: lib/remote.tcl:165
 msgid "Prune from"
-msgstr "Entfernen von"
+msgstr "Aufräumen von"
 
 #: lib/remote.tcl:170
 msgid "Fetch from"
@@ -1881,6 +1885,26 @@ msgstr "Fehler beim Schreiben der Verknüpfung:"
 #: lib/shortcut.tcl:136
 msgid "Cannot write icon:"
 msgstr "Fehler beim Erstellen des Icons:"
+
+#: lib/spellcheck.tcl:37
+msgid "Not connected to aspell"
+msgstr "Keine Verbindung zu »aspell«"
+
+#: lib/spellcheck.tcl:41
+msgid "Unrecognized aspell version"
+msgstr "Unbekannte Version von »aspell«"
+
+#: lib/spellcheck.tcl:135
+msgid "No Suggestions"
+msgstr "Keine Vorschläge"
+
+#: lib/spellcheck.tcl:336
+msgid "Unexpected EOF from aspell"
+msgstr "Unerwartetes EOF von »aspell«"
+
+#: lib/spellcheck.tcl:340
+msgid "Spell Checker Failed"
+msgstr "Rechtschreibprüfung fehlgeschlagen"
 
 #: lib/status_bar.tcl:83
 #, tcl-format
@@ -1900,12 +1924,12 @@ msgstr "Neue Änderungen von »%s« holen"
 #: lib/transport.tcl:18
 #, tcl-format
 msgid "remote prune %s"
-msgstr "Entfernen von »%s« aus anderem Archiv"
+msgstr "Aufräumen von »%s«"
 
 #: lib/transport.tcl:19
 #, tcl-format
 msgid "Pruning tracking branches deleted from %s"
-msgstr "Übernahmezweige entfernen, die in »%s« gelöscht wurden"
+msgstr "Übernahmezweige aufräumen und entfernen, die in »%s« gelöscht wurden"
 
 #: lib/transport.tcl:25 lib/transport.tcl:71
 #, tcl-format
@@ -1928,7 +1952,7 @@ msgstr "Zweige versenden"
 
 #: lib/transport.tcl:103
 msgid "Source Branches"
-msgstr "Herkunftszweige"
+msgstr "Lokale Zweige"
 
 #: lib/transport.tcl:120
 msgid "Destination Repository"
