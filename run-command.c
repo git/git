@@ -25,7 +25,6 @@ int start_command(struct child_process *cmd)
 		if (pipe(fdin) < 0)
 			return -ERR_RUN_COMMAND_PIPE;
 		cmd->in = fdin[1];
-		cmd->close_in = 1;
 	}
 
 	need_out = !cmd->no_stdout
@@ -38,7 +37,6 @@ int start_command(struct child_process *cmd)
 			return -ERR_RUN_COMMAND_PIPE;
 		}
 		cmd->out = fdout[0];
-		cmd->close_out = 1;
 	}
 
 	need_err = !cmd->no_stderr && cmd->err < 0;
@@ -157,10 +155,6 @@ static int wait_or_whine(pid_t pid)
 
 int finish_command(struct child_process *cmd)
 {
-	if (cmd->close_in)
-		close(cmd->in);
-	if (cmd->close_out)
-		close(cmd->out);
 	return wait_or_whine(cmd->pid);
 }
 

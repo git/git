@@ -52,7 +52,6 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 
 	write_in_full(gpg.in, buf, len);
 	close(gpg.in);
-	gpg.close_in = 0;
 	ret = finish_command(&gpg);
 
 	unlink(path);

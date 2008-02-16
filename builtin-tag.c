@@ -226,12 +226,13 @@ static int do_sign(struct strbuf *buffer)
 
 	if (write_in_full(gpg.in, buffer->buf, buffer->len) != buffer->len) {
 		close(gpg.in);
+		close(gpg.out);
 		finish_command(&gpg);
 		return error("gpg did not accept the tag data");
 	}
 	close(gpg.in);
-	gpg.close_in = 0;
 	len = strbuf_read(buffer, gpg.out, 1024);
+	close(gpg.out);
 
 	if (finish_command(&gpg) || !len || len < 0)
 		return error("gpg failed to sign the tag");

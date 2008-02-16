@@ -19,8 +19,6 @@ struct child_process {
 	int err;
 	const char *dir;
 	const char *const *env;
-	unsigned close_in:1;
-	unsigned close_out:1;
 	unsigned no_stdin:1;
 	unsigned no_stdout:1;
 	unsigned no_stderr:1;
