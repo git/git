@@ -440,12 +440,8 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.pager")) {
-		if (!value)
-			return config_error_nonbool(var);
-		pager_program = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "core.pager"))
+		return git_config_string(&pager_program, var, value);
 
 	if (!strcmp(var, "core.editor")) {
 		if (!value)
