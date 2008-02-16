@@ -343,6 +343,16 @@ struct refspec *parse_ref_spec(int nr_refspec, const char **refspec)
 	return rs;
 }
 
+static int valid_remote_nick(const char *name)
+{
+	if (!name[0] || /* not empty */
+	    (name[0] == '.' && /* not "." */
+	     (!name[1] || /* not ".." */
+	      (name[1] == '.' && !name[2]))))
+		return 0;
+	return !strchr(name, '/'); /* no slash */
+}
+
 struct remote *remote_get(const char *name)
 {
 	struct remote *ret;
@@ -351,7 +361,7 @@ struct remote *remote_get(const char *name)
 	if (!name)
 		name = default_remote_name;
 	ret = make_remote(name, 0);
-	if (name[0] != '/') {
+	if (valid_remote_nick(name)) {
 		if (!ret->url)
 			read_remotes_file(ret);
 		if (!ret->url)

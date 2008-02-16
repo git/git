@@ -57,7 +57,7 @@ static int parse_diff_color_slot(const char *var, int ofs)
 static struct ll_diff_driver {
 	const char *name;
 	struct ll_diff_driver *next;
-	char *cmd;
+	const char *cmd;
 } *user_diff, **user_diff_tail;
 
 /*
@@ -86,10 +86,7 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
 		user_diff_tail = &(drv->next);
 	}
 
-	if (!value)
-		return error("%s: lacks value", var);
-	drv->cmd = strdup(value);
-	return 0;
+	return git_config_string(&(drv->cmd), var, value);
 }
 
 /*
@@ -166,13 +163,8 @@ int git_diff_ui_config(const char *var, const char *value)
 	if (!prefixcmp(var, "diff.")) {
 		const char *ep = strrchr(var, '.');
 
-		if (ep != var + 4) {
-			if (!strcmp(ep, ".command")) {
-				if (!value)
-					return config_error_nonbool(var);
-				return parse_lldiff_command(var, ep, value);
-			}
-		}
+		if (ep != var + 4 && !strcmp(ep, ".command"))
+			return parse_lldiff_command(var, ep, value);
 	}
 
 	return git_diff_basic_config(var, value);
@@ -1021,6 +1013,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	char *err;
 
 	if (line[0] == '+') {
+		data->lineno++;
 		data->status = check_and_emit_line(line + 1, len - 1,
 		    data->ws_rule, NULL, NULL, NULL, NULL);
 		if (!data->status)
@@ -1031,13 +1024,12 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		emit_line(set, reset, line, 1);
 		(void)check_and_emit_line(line + 1, len - 1, data->ws_rule,
 		    stdout, set, reset, ws);
-		data->lineno++;
 	} else if (line[0] == ' ')
 		data->lineno++;
 	else if (line[0] == '@') {
 		char *plus = strchr(line, '+');
 		if (plus)
-			data->lineno = strtol(plus, NULL, 10);
+			data->lineno = strtol(plus, NULL, 10) - 1;
 		else
 			die("invalid diff");
 	}

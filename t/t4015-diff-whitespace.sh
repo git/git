@@ -326,4 +326,13 @@ test_expect_success 'check tabs and spaces as indentation (indent-with-non-tab: 
 	! git diff --check
 
 '
+
+test_expect_success 'line numbers in --check output are correct' '
+
+	echo "" > x &&
+	echo "foo(); " >> x &&
+	git diff --check | grep "x:2:"
+
+'
+
 test_done

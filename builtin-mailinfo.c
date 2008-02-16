@@ -818,6 +818,7 @@ static void handle_body(void)
 
 		switch (transfer_encoding) {
 		case TE_BASE64:
+		case TE_QP:
 		{
 			char *op = line;
 

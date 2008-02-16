@@ -165,4 +165,18 @@ test_expect_success '"map" works in commit filter' '
 	git rev-parse --verify master
 '
 
+test_expect_success 'Name needing quotes' '
+
+	git checkout -b rerere A &&
+	mkdir foo &&
+	name="れれれ" &&
+	>foo/$name &&
+	git add foo &&
+	git commit -m "Adding a file" &&
+	git filter-branch --tree-filter "rm -fr foo" &&
+	! git ls-files --error-unmatch "foo/$name" &&
+	test $(git rev-parse --verify rerere) != $(git rev-parse --verify A)
+
+'
+
 test_done
