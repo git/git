@@ -866,8 +866,8 @@ sub chop_and_escape_str {
 	if ($chopped eq $str) {
 		return esc_html($chopped);
 	} else {
-		return qq{<span title="} . esc_html($str) . qq{">} .
-			esc_html($chopped) . qq{</span>};
+		$str =~ s/([[:cntrl:]])/?/g;
+		return $cgi->span({-title=>$str}, esc_html($chopped));
 	}
 }
 
