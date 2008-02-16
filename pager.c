@@ -57,6 +57,7 @@ void setup_pager(void)
 	/* return in the child */
 	if (!pid) {
 		dup2(fd[1], 1);
+		dup2(fd[1], 2);
 		close(fd[0]);
 		close(fd[1]);
 		return;
