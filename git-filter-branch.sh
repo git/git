@@ -276,10 +276,11 @@ while read commit parents; do
 		eval "$filter_tree" < /dev/null ||
 			die "tree filter failed: $filter_tree"
 
-		git diff-index -r $commit | cut -f 2- | tr '\012' '\000' | \
-			xargs -0 git update-index --add --replace --remove
-		git ls-files -z --others | \
-			xargs -0 git update-index --add --replace --remove
+		(
+			git diff-index -r --name-only $commit
+			git ls-files --others
+		) |
+		git update-index --add --replace --remove --stdin
 	fi
 
 	eval "$filter_index" < /dev/null ||
