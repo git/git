@@ -446,12 +446,8 @@ int git_default_config(const char *var, const char *value)
 	if (!strcmp(var, "core.editor"))
 		return git_config_string(&editor_program, var, value);
 
-	if (!strcmp(var, "core.excludesfile")) {
-		if (!value)
-			return config_error_nonbool(var);
-		excludes_file = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "core.excludesfile"))
+		return git_config_string(&excludes_file, var, value);
 
 	if (!strcmp(var, "core.whitespace")) {
 		if (!value)
