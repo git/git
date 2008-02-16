@@ -37,7 +37,7 @@ OPTIONS
 --soft::
 	Does not touch the index file nor the working tree at all, but
 	requires them to be in a good order. This leaves all your changed
-	files "Added but not yet committed", as linkgit:git-status[1] would
+	files "Changes to be committed", as linkgit:git-status[1] would
 	put it.
 
 --hard::
