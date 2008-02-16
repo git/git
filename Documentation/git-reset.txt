@@ -8,8 +8,8 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [verse]
-'git-reset' [--mixed | --soft | --hard] [-q] [<commit>]
-'git-reset' [--mixed] [-q] [<commit>] [--] <paths>...
+'git reset' [--mixed | --soft | --hard] [-q] [<commit>]
+'git reset' [-q] [<commit>] [--] <paths>...
 
 DESCRIPTION
 -----------
