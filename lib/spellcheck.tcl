@@ -333,11 +333,11 @@ method _read {} {
 	fconfigure $s_fd -block 1
 	if {[eof $s_fd]} {
 		if {![catch {close $s_fd} err]} {
-			set err [mc "unexpected eof from aspell"]
+			set err [mc "Unexpected EOF from aspell"]
 		}
 		catch {after cancel $s_i}
 		$w_text tag remove misspelled 1.0 end
-		error_popup [strcat "Spell Checker Failed" "\n\n" $err]
+		error_popup [strcat [mc "Spell Checker Failed"] "\n\n" $err]
 		return
 	}
 	fconfigure $s_fd -block 0

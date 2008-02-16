@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-02-02 10:14+0100\n"
+"POT-Creation-Date: 2008-02-16 21:24+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1474,10 +1474,10 @@ msgstr ""
 
 #: lib/merge.tcl:119
 #, tcl-format
-msgid "Merging %s and %s"
+msgid "Merging %s and %s..."
 msgstr ""
 
-#: lib/merge.tcl:131
+#: lib/merge.tcl:130
 msgid "Merge completed successfully."
 msgstr ""
 
@@ -1592,7 +1592,11 @@ msgstr ""
 msgid "New Branch Name Template"
 msgstr ""
 
-#: lib/option.tcl:176
+#: lib/option.tcl:191
+msgid "Spelling Dictionary:"
+msgstr ""
+
+#: lib/option.tcl:215
 msgid "Change Font"
 msgstr ""
 
@@ -1707,6 +1711,26 @@ msgstr ""
 
 #: lib/shortcut.tcl:136
 msgid "Cannot write icon:"
+msgstr ""
+
+#: lib/spellcheck.tcl:37
+msgid "Not connected to aspell"
+msgstr ""
+
+#: lib/spellcheck.tcl:41
+msgid "Unrecognized aspell version"
+msgstr ""
+
+#: lib/spellcheck.tcl:135
+msgid "No Suggestions"
+msgstr ""
+
+#: lib/spellcheck.tcl:336
+msgid "Unexpected EOF from aspell"
+msgstr ""
+
+#: lib/spellcheck.tcl:340
+msgid "Spell Checker Failed"
 msgstr ""
 
 #: lib/status_bar.tcl:83
