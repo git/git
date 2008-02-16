@@ -176,6 +176,23 @@ $ git reset                                       <3>
     committed as 'snapshot WIP'.  This updates the index to show your
     WIP files as uncommitted.
 
+Reset a single file in the index::
++
+Suppose you have added a file to your index, but later decide you do not
+want to add it to your commit. You can remove the file from the index
+while keeping your changes with git reset.
++
+------------
+$ git reset -- frotz.c                      <1>
+$ git commit -m "Commit files in index"     <2>
+$ git add frotz.c                           <3>
+------------
++
+<1> This removes the file from the index while keeping it in the working
+    directory.
+<2> This commits all other changes in the index.
+<3> Adds the file to the index again.
+
 Author
 ------
 Written by Junio C Hamano <junkio@cox.net> and Linus Torvalds <torvalds@osdl.org>
