@@ -309,6 +309,14 @@ int git_config_bool(const char *name, const char *value)
 	return git_config_int(name, value) != 0;
 }
 
+int git_config_string(const char **dest, const char *var, const char *value)
+{
+	if (!value)
+		return config_error_nonbool(var);
+	*dest = xstrdup(value);
+	return 0;
+}
+
 int git_default_config(const char *var, const char *value)
 {
 	/* This needs a better name */
@@ -421,20 +429,11 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "i18n.commitencoding")) {
-		if (!value)
-			return config_error_nonbool(var);
-		git_commit_encoding = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "i18n.commitencoding"))
+		return git_config_string(&git_commit_encoding, var, value);
 
-	if (!strcmp(var, "i18n.logoutputencoding")) {
-		if (!value)
-			return config_error_nonbool(var);
-		git_log_output_encoding = xstrdup(value);
-		return 0;
-	}
-
+	if (!strcmp(var, "i18n.logoutputencoding"))
+		return git_config_string(&git_log_output_encoding, var, value);
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);
