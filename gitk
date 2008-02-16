@@ -1065,7 +1065,11 @@ proc getcommitlines {fd inst view}  {
 	}
 	set id [lindex $ids 0]
 	set vid $view,$id
-	if {!$listed && [info exists parents($vid)]} continue
+	set a 0
+	if {[info exists varcid($vid)]} {
+	    if {$cmitlisted($vid) || !$listed} continue
+	    set a $varcid($vid)
+	}
 	if {$listed} {
 	    set olds [lrange $ids 1 end]
 	} else {
@@ -1074,10 +1078,9 @@ proc getcommitlines {fd inst view}  {
 	set commitdata($id) [string range $cmit [expr {$j + 1}] end]
 	set cmitlisted($vid) $listed
 	set parents($vid) $olds
-	set a 0
 	if {![info exists children($vid)]} {
 	    set children($vid) {}
-	} elseif {[llength $children($vid)] == 1} {
+	} elseif {$a == 0 && [llength $children($vid)] == 1} {
 	    set k [lindex $children($vid) 0]
 	    if {[llength $parents($view,$k)] == 1 &&
 		(!$datemode ||
@@ -1089,11 +1092,14 @@ proc getcommitlines {fd inst view}  {
 	    # new arc
 	    set a [newvarc $view $id]
 	}
-	set varcid($vid) $a
 	if {[string compare [lindex $varctok($view) $a] $vtokmod($view)] < 0} {
 	    modify_arc $view $a
 	}
-	lappend varccommits($view,$a) $id
+	if {![info exists varcid($vid)]} {
+	    set varcid($vid) $a
+	    lappend varccommits($view,$a) $id
+	    incr commitidx($view)
+	}
 
 	set i 0
 	foreach p $olds {
@@ -1112,7 +1118,6 @@ proc getcommitlines {fd inst view}  {
 	    incr i
 	}
 
-	incr commitidx($view)
 	if {[info exists commitinterest($id)]} {
 	    foreach script $commitinterest($id) {
 		lappend scripts [string map [list "%I" $id] $script]
@@ -7035,7 +7040,7 @@ proc mkbrgo {top} {
 }
 
 proc cherrypick {} {
-    global rowmenuid curview
+    global rowmenuid curview viewincl
     global mainhead mainheadid
 
     set oldhead [exec git rev-parse HEAD]
@@ -7069,6 +7074,12 @@ proc cherrypick {} {
 	    movedhead $newhead $mainhead
 	    set mainheadid $newhead
 	}
+	# remove oldhead from viewincl and add newhead
+	set i [lsearch -exact $viewincl($curview) $oldhead]
+	if {$i >= 0} {
+	    set viewincl($curview) [lreplace $viewincl($curview) $i $i]
+	}
+	lappend viewincl($curview) $newhead
 	redrawtags $oldhead
 	redrawtags $newhead
 	selbyid $newhead
