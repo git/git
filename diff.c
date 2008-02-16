@@ -166,13 +166,8 @@ int git_diff_ui_config(const char *var, const char *value)
 	if (!prefixcmp(var, "diff.")) {
 		const char *ep = strrchr(var, '.');
 
-		if (ep != var + 4) {
-			if (!strcmp(ep, ".command")) {
-				if (!value)
-					return config_error_nonbool(var);
-				return parse_lldiff_command(var, ep, value);
-			}
-		}
+		if (ep != var + 4 && !strcmp(ep, ".command"))
+			return parse_lldiff_command(var, ep, value);
 	}
 
 	return git_diff_basic_config(var, value);
