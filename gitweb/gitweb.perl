@@ -753,29 +753,40 @@ sub esc_path {
 # Make control characters "printable", using character escape codes (CEC)
 sub quot_cec {
 	my $cntrl = shift;
+	my %opts = @_;
 	my %es = ( # character escape codes, aka escape sequences
-		   "\t" => '\t',   # tab            (HT)
-		   "\n" => '\n',   # line feed      (LF)
-		   "\r" => '\r',   # carrige return (CR)
-		   "\f" => '\f',   # form feed      (FF)
-		   "\b" => '\b',   # backspace      (BS)
-		   "\a" => '\a',   # alarm (bell)   (BEL)
-		   "\e" => '\e',   # escape         (ESC)
-		   "\013" => '\v', # vertical tab   (VT)
-		   "\000" => '\0', # nul character  (NUL)
-		   );
+		"\t" => '\t',   # tab            (HT)
+		"\n" => '\n',   # line feed      (LF)
+		"\r" => '\r',   # carrige return (CR)
+		"\f" => '\f',   # form feed      (FF)
+		"\b" => '\b',   # backspace      (BS)
+		"\a" => '\a',   # alarm (bell)   (BEL)
+		"\e" => '\e',   # escape         (ESC)
+		"\013" => '\v', # vertical tab   (VT)
+		"\000" => '\0', # nul character  (NUL)
+	);
 	my $chr = ( (exists $es{$cntrl})
 		    ? $es{$cntrl}
 		    : sprintf('\%03o', ord($cntrl)) );
-	return "<span class=\"cntrl\">$chr</span>";
+	if ($opts{-nohtml}) {
+		return $chr;
+	} else {
+		return "<span class=\"cntrl\">$chr</span>";
+	}
 }
 
 # Alternatively use unicode control pictures codepoints,
 # Unicode "printable representation" (PR)
 sub quot_upr {
 	my $cntrl = shift;
+	my %opts = @_;
+
 	my $chr = sprintf('&#%04d;', 0x2400+ord($cntrl));
-	return "<span class=\"cntrl\">$chr</span>";
+	if ($opts{-nohtml}) {
+		return $chr;
+	} else {
+		return "<span class=\"cntrl\">$chr</span>";
+	}
 }
 
 # git may return quoted and escaped filenames
@@ -800,7 +811,7 @@ sub unquote {
 			return chr(oct($seq));
 		} elsif (exists $es{$seq}) {
 			# C escape sequence, aka character escape code
-			return $es{$seq}
+			return $es{$seq};
 		}
 		# quoted ordinary character
 		return $seq;
