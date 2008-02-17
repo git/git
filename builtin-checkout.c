@@ -12,6 +12,7 @@
 #include "branch.h"
 #include "diff.h"
 #include "revision.h"
+#include "remote.h"
 
 static const char * const checkout_usage[] = {
 	"git checkout [options] <branch>",
@@ -290,6 +291,139 @@ static int merge_working_tree(struct checkout_opts *opts,
 	return 0;
 }
 
+/*
+ * We really should allow cb_data... Yuck
+ */
+static const char *branch_name;
+static int branch_name_len;
+static char *found_remote;
+static char *found_merge;
+static int read_branch_config(const char *var, const char *value)
+{
+	const char *name;
+	if (prefixcmp(var, "branch."))
+		return 0; /* not ours */
+	name = var + strlen("branch.");
+	if (strncmp(name, branch_name, branch_name_len) ||
+	    name[branch_name_len] != '.')
+		return 0; /* not ours either */
+	if (!strcmp(name + branch_name_len, ".remote")) {
+		/*
+		 * Yeah, I know Christian's clean-up should
+		 * be used here, but the topic is based on an
+		 * older fork point.
+		 */
+		if (!value)
+			return error("'%s' not string", var);
+		found_remote = xstrdup(value);
+		return 0;
+	}
+	if (!strcmp(name + branch_name_len, ".merge")) {
+		if (!value)
+			return error("'%s' not string", var);
+		found_merge = xstrdup(value);
+		return 0;
+	}
+	return 0; /* not ours */
+}
+
+static int find_build_base(const char *ours, char **base)
+{
+	struct remote *remote;
+	struct refspec spec;
+
+	*base = NULL;
+
+	branch_name = ours + strlen("refs/heads/");
+	branch_name_len = strlen(branch_name);
+	found_remote = NULL;
+	found_merge = NULL;
+	git_config(read_branch_config);
+
+	if (!found_remote || !found_merge) {
+	cleanup:
+		free(found_remote);
+		free(found_merge);
+		return 0;
+	}
+
+	remote = remote_get(found_remote);
+	memset(&spec, 0, sizeof(spec));
+	spec.src = found_merge;
+	if (remote_find_tracking(remote, &spec))
+		goto cleanup;
+	*base = spec.dst;
+	return 1;
+}
+
+static void adjust_to_tracking(struct branch_info *new, struct checkout_opts *opts)
+{
+	/*
+	 * We have switched to a new branch; is it building on
+	 * top of another branch, and if so does that other branch
+	 * have changes we do not have yet?
+	 */
+	char *base;
+	unsigned char sha1[20];
+	struct commit *ours, *theirs;
+	const char *msgfmt;
+	char symmetric[84];
+	int show_log;
+
+	if (!resolve_ref(new->path, sha1, 1, NULL))
+		return;
+	ours = lookup_commit(sha1);
+
+	if (!find_build_base(new->path, &base))
+		return;
+
+	sprintf(symmetric, "%s", sha1_to_hex(sha1));
+
+	/*
+	 * Ok, it is tracking base; is it ahead of us?
+	 */
+	if (!resolve_ref(base, sha1, 1, NULL))
+		return;
+	theirs = lookup_commit(sha1);
+
+	sprintf(symmetric + 40, "...%s", sha1_to_hex(sha1));
+
+	if (!hashcmp(sha1, ours->object.sha1))
+		return; /* we are the same */
+
+	show_log = 1;
+	if (in_merge_bases(theirs, &ours, 1)) {
+		msgfmt = "You are ahead of the tracked branch '%s'\n";
+		show_log = 0;
+	}
+	else if (in_merge_bases(ours, &theirs, 1))
+		msgfmt = "Your branch can be fast-forwarded to the tracked branch '%s'\n";
+	else
+		msgfmt = "Both your branch and the tracked branch '%s' have own changes, you would eventually need to merge\n";
+
+	if (!prefixcmp(base, "refs/remotes/"))
+		base += strlen("refs/remotes/");
+	fprintf(stderr, msgfmt, base);
+
+	if (show_log) {
+		const char *args[32];
+		int ac;
+
+		ac = 0;
+		args[ac++] = "log";
+		args[ac++] = "--pretty=oneline";
+		args[ac++] = "--abbrev-commit";
+		args[ac++] = "--left-right";
+		args[ac++] = "--boundary";
+		args[ac++] = symmetric;
+		args[ac++] = "--";
+		args[ac] = NULL;
+
+		run_command_v_opt(args, RUN_GIT_CMD);
+	}
+}
+
+
 static void update_refs_for_switch(struct checkout_opts *opts,
 				   struct branch_info *old,
 				   struct branch_info *new)
@@ -332,6 +466,8 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 	}
 	remove_branch_state();
 	strbuf_release(&msg);
+	if (new->path)
+		adjust_to_tracking(new, opts);
 }
 
 static int switch_branches(struct checkout_opts *opts,
