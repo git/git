@@ -17,7 +17,7 @@ static int parse_color(const char *name, int len)
 			return i - 1;
 	}
 	i = strtol(name, &end, 10);
-	if (*name && !*end && i >= -1 && i <= 255)
+	if (end - name == len && i >= -1 && i <= 255)
 		return i;
 	return -2;
 }

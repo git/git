@@ -5,6 +5,7 @@ use Getopt::Std;
 use File::Temp qw(tempdir);
 use Data::Dumper;
 use File::Basename qw(basename dirname);
+use File::Spec;
 
 our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u, $opt_w);
 
@@ -15,17 +16,15 @@ $opt_h && usage();
 die "Need at least one commit identifier!" unless @ARGV;
 
 if ($opt_w) {
+	# Remember where GIT_DIR is before changing to CVS checkout
 	unless ($ENV{GIT_DIR}) {
-		# Remember where our GIT_DIR is before changing to CVS checkout
+		# No GIT_DIR set. Figure it out for ourselves
 		my $gd =`git-rev-parse --git-dir`;
 		chomp($gd);
-		if ($gd eq '.git') {
-			my $wd = `pwd`;
-			chomp($wd);
-			$gd = $wd."/.git"	;
-		}
 		$ENV{GIT_DIR} = $gd;
 	}
+	# Make sure GIT_DIR is absolute
+	$ENV{GIT_DIR} = File::Spec->rel2abs($ENV{GIT_DIR});
 
 	if (! -d $opt_w."/CVS" ) {
 		die "$opt_w is not a CVS checkout";

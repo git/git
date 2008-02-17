@@ -11,13 +11,13 @@ remove the directory before attempting a clone again.'
 
 . ./test-lib.sh
 
-test_expect_failure \
+test_expect_success \
     'clone of non-existent source should fail' \
-    'git-clone foo bar'
+    '! git-clone foo bar'
 
-test_expect_failure \
+test_expect_success \
     'failed clone should not leave a directory' \
-    'cd bar'
+    '! test -d bar'
 
 # Need a repo to clone
 test_create_repo foo
@@ -27,9 +27,9 @@ test_create_repo foo
 
 # source repository given to git-clone should be relative to the
 # current path not to the target dir
-test_expect_failure \
+test_expect_success \
     'clone of non-existent (relative to $PWD) source should fail' \
-    'git-clone ../foo baz'
+    '! git-clone ../foo baz'
 
 test_expect_success \
     'clone should work now that source exists' \

@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>Wish</string>
+	<string>@@GITGUI_TKEXECUTABLE@@</string>
 	<key>CFBundleGetInfoString</key>
 	<string>Git Gui @@GITGUI_VERSION@@ © 2006-2007 Shawn Pearce, et. al.</string>
 	<key>CFBundleIconFile</key>

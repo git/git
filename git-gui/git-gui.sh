@@ -612,6 +612,7 @@ set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
 set default_config(gui.diffcontext) 5
 set default_config(gui.newbranchtemplate) {}
+set default_config(gui.spellingdictionary) {}
 set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
 set font_descs {
@@ -1683,6 +1684,7 @@ set is_quitting 0
 proc do_quit {} {
 	global ui_comm is_quitting repo_config commit_type
 	global GITGUI_BCK_exists GITGUI_BCK_i
+	global ui_comm_spell
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -1708,6 +1710,12 @@ proc do_quit {} {
 			} else {
 				catch {file delete $save}
 			}
+		}
+
+		# -- Cancel our spellchecker if its running.
+		#
+		if {[info exists ui_comm_spell]} {
+			$ui_comm_spell stop
 		}
 
 		# -- Remove our editor backup, its not needed.
@@ -2454,7 +2462,7 @@ $ctxm add separator
 $ctxm add command \
 	-label [mc "Sign Off"] \
 	-command do_signoff
-bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
+set ui_comm_ctxm $ctxm
 
 # -- Diff Header
 #
@@ -2857,6 +2865,30 @@ if {[winfo exists $ui_comm]} {
 	}
 
 	backup_commit_buffer
+
+	# -- If the user has aspell available we can drive it
+	#    in pipe mode to spellcheck the commit message.
+	#
+	set spell_cmd [list |]
+	set spell_dict [get_config gui.spellingdictionary]
+	lappend spell_cmd aspell
+	if {$spell_dict ne {}} {
+		lappend spell_cmd --master=$spell_dict
+	}
+	lappend spell_cmd --mode=none
+	lappend spell_cmd --encoding=utf-8
+	lappend spell_cmd pipe
+	if {$spell_dict eq {none}
+	 || [catch {set spell_fd [open $spell_cmd r+]} spell_err]} {
+		bind_button3 $ui_comm [list tk_popup $ui_comm_ctxm %X %Y]
+	} else {
+		set ui_comm_spell [spellcheck::init \
+			$spell_fd \
+			$ui_comm \
+			$ui_comm_ctxm \
+		]
+	}
+	unset -nocomplain spell_cmd spell_fd spell_err spell_dict
 }
 
 lock_index begin-read

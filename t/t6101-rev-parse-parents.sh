@@ -26,7 +26,7 @@ test_expect_success 'final^1^1^1 = final^^^' "test $(git rev-parse final^1^1^1) 
 test_expect_success 'final^1^2' "test $(git rev-parse start2) = $(git rev-parse final^1^2)"
 test_expect_success 'final^1^2 != final^1^1' "test $(git rev-parse final^1^2) != $(git rev-parse final^1^1)"
 test_expect_success 'final^1^3 not valid' "if git rev-parse --verify final^1^3; then false; else :; fi"
-test_expect_failure '--verify start2^1' 'git rev-parse --verify start2^1'
+test_expect_success '--verify start2^1' '! git rev-parse --verify start2^1'
 test_expect_success '--verify start2^0' 'git rev-parse --verify start2^0'
 
 test_expect_success 'repack for next test' 'git repack -a -d'

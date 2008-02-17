@@ -154,4 +154,33 @@ test_expect_success 'cleanup commit messages (strip,-F,-e)' '
 
 '
 
+pwd=`pwd`
+cat >> .git/FAKE_EDITOR << EOF
+#! /bin/sh
+echo editor started > "$pwd/.git/result"
+exit 0
+EOF
+chmod +x .git/FAKE_EDITOR
+
+test_expect_success 'do not fire editor in the presence of conflicts' '
+
+	git clean
+	echo f>g
+	git add g
+	git commit -myes
+	git branch second
+	echo master>g
+	echo g>h
+	git add g h
+	git commit -mmaster
+	git checkout second
+	echo second>g
+	git add g
+	git commit -msecond
+	git cherry-pick -n master
+	echo "editor not started" > .git/result
+	GIT_EDITOR=`pwd`/.git/FAKE_EDITOR git commit && exit 1  # should fail
+	test "`cat .git/result`" = "editor not started"
+'
+
 test_done

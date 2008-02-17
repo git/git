@@ -39,11 +39,11 @@ include::merge-strategies.txt[]
 	there is a remote ref for the upstream branch, and this branch
 	was rebased since last fetched, the rebase uses that information
 	to avoid rebasing non-local changes.
-
-	*NOTE:* This is a potentially _dangerous_ mode of operation.
-	It rewrites history, which does not bode well when you
-	published that history already.  Do *not* use this option
-	unless you have read linkgit:git-rebase[1] carefully.
++
+*NOTE:* This is a potentially _dangerous_ mode of operation.
+It rewrites history, which does not bode well when you
+published that history already.  Do *not* use this option
+unless you have read linkgit:git-rebase[1] carefully.
 
 \--no-rebase::
 	Override earlier \--rebase.

@@ -87,10 +87,10 @@ test_valid_repo"
 
 cd "$base_dir"
 
-test_expect_failure 'that info/alternates is necessary' \
+test_expect_success 'that info/alternates is necessary' \
 'cd C &&
-rm .git/objects/info/alternates &&
-test_valid_repo'
+rm -f .git/objects/info/alternates &&
+! (test_valid_repo)'
 
 cd "$base_dir"
 
@@ -101,9 +101,11 @@ test_valid_repo'
 
 cd "$base_dir"
 
-test_expect_failure 'that relative alternate is only possible for current dir' \
-'cd D &&
-test_valid_repo'
+test_expect_success \
+    'that relative alternate is only possible for current dir' '
+    cd D &&
+    ! (test_valid_repo)
+'
 
 cd "$base_dir"
 

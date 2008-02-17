@@ -8,8 +8,8 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [verse]
-'git-reset' [--mixed | --soft | --hard] [-q] [<commit>]
-'git-reset' [--mixed] [-q] [<commit>] [--] <paths>...
+'git reset' [--mixed | --soft | --hard] [-q] [<commit>]
+'git reset' [-q] [<commit>] [--] <paths>...
 
 DESCRIPTION
 -----------
@@ -37,7 +37,7 @@ OPTIONS
 --soft::
 	Does not touch the index file nor the working tree at all, but
 	requires them to be in a good order. This leaves all your changed
-	files "Added but not yet committed", as linkgit:git-status[1] would
+	files "Changes to be committed", as linkgit:git-status[1] would
 	put it.
 
 --hard::
@@ -175,6 +175,23 @@ $ git reset                                       <3>
 <3> At this point the index file still has all the WIP changes you
     committed as 'snapshot WIP'.  This updates the index to show your
     WIP files as uncommitted.
+
+Reset a single file in the index::
++
+Suppose you have added a file to your index, but later decide you do not
+want to add it to your commit. You can remove the file from the index
+while keeping your changes with git reset.
++
+------------
+$ git reset -- frotz.c                      <1>
+$ git commit -m "Commit files in index"     <2>
+$ git add frotz.c                           <3>
+------------
++
+<1> This removes the file from the index while keeping it in the working
+    directory.
+<2> This commits all other changes in the index.
+<3> Adds the file to the index again.
 
 Author
 ------

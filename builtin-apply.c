@@ -1430,7 +1430,7 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 	case S_IFREG:
 		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
 			return error("unable to open or read %s", path);
-		convert_to_git(path, buf->buf, buf->len, buf);
+		convert_to_git(path, buf->buf, buf->len, buf, 0);
 		return 0;
 	default:
 		return -1;
@@ -1946,7 +1946,7 @@ static int read_file_or_gitlink(struct cache_entry *ce, struct strbuf *buf)
 	if (!ce)
 		return 0;
 
-	if (S_ISGITLINK(ntohl(ce->ce_mode))) {
+	if (S_ISGITLINK(ce->ce_mode)) {
 		strbuf_grow(buf, 100);
 		strbuf_addf(buf, "Subproject commit %s\n", sha1_to_hex(ce->sha1));
 	} else {
@@ -2023,7 +2023,7 @@ static int check_to_create_blob(const char *new_name, int ok_if_exists)
 
 static int verify_index_match(struct cache_entry *ce, struct stat *st)
 {
-	if (S_ISGITLINK(ntohl(ce->ce_mode))) {
+	if (S_ISGITLINK(ce->ce_mode)) {
 		if (!S_ISDIR(st->st_mode))
 			return -1;
 		return 0;
@@ -2082,12 +2082,12 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 				return error("%s: does not match index",
 					     old_name);
 			if (cached)
-				st_mode = ntohl(ce->ce_mode);
+				st_mode = ce->ce_mode;
 		} else if (stat_ret < 0)
 			return error("%s: %s", old_name, strerror(errno));
 
 		if (!cached)
-			st_mode = ntohl(ce_mode_from_stat(ce, st.st_mode));
+			st_mode = ce_mode_from_stat(ce, st.st_mode);
 
 		if (patch->is_new < 0)
 			patch->is_new = 0;
@@ -2388,7 +2388,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	ce = xcalloc(1, ce_size);
 	memcpy(ce->name, path, namelen);
 	ce->ce_mode = create_ce_mode(mode);
-	ce->ce_flags = htons(namelen);
+	ce->ce_flags = namelen;
 	if (S_ISGITLINK(mode)) {
 		const char *s = buf;
 
@@ -2746,6 +2746,8 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 static int git_apply_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "apply.whitespace")) {
+		if (!value)
+			return config_error_nonbool(var);
 		apply_default_whitespace = xstrdup(value);
 		return 0;
 	}

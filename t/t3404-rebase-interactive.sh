@@ -340,4 +340,26 @@ test_expect_success 'rebase a commit violating pre-commit' '
 
 '
 
+test_expect_success 'rebase with a file named HEAD in worktree' '
+
+	rm -fr .git/hooks &&
+	git reset --hard &&
+	git checkout -b branch3 A &&
+
+	(
+		GIT_AUTHOR_NAME="Squashed Away" &&
+		export GIT_AUTHOR_NAME &&
+		>HEAD &&
+		git add HEAD &&
+		git commit -m "Add head" &&
+		>BODY &&
+		git add BODY &&
+		git commit -m "Add body"
+	) &&
+
+	FAKE_LINES="1 squash 2" git rebase -i to-be-rebased &&
+	test "$(git show -s --pretty=format:%an)" = "Squashed Away"
+
+'
+
 test_done

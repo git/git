@@ -140,7 +140,8 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 	if (type == OBJ_BLOB) {
 		struct blob *blob = lookup_blob(sha1);
 		if (blob) {
-			parse_blob_buffer(blob, buffer, size);
+			if (parse_blob_buffer(blob, buffer, size))
+				return NULL;
 			obj = &blob->object;
 		}
 	} else if (type == OBJ_TREE) {
@@ -148,14 +149,16 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 		if (tree) {
 			obj = &tree->object;
 			if (!tree->object.parsed) {
-				parse_tree_buffer(tree, buffer, size);
+				if (parse_tree_buffer(tree, buffer, size))
+					return NULL;
 				eaten = 1;
 			}
 		}
 	} else if (type == OBJ_COMMIT) {
 		struct commit *commit = lookup_commit(sha1);
 		if (commit) {
-			parse_commit_buffer(commit, buffer, size);
+			if (parse_commit_buffer(commit, buffer, size))
+				return NULL;
 			if (!commit->buffer) {
 				commit->buffer = buffer;
 				eaten = 1;
@@ -165,7 +168,8 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 	} else if (type == OBJ_TAG) {
 		struct tag *tag = lookup_tag(sha1);
 		if (tag) {
-			parse_tag_buffer(tag, buffer, size);
+			if (parse_tag_buffer(tag, buffer, size))
+			       return NULL;
 			obj = &tag->object;
 		}
 	} else {

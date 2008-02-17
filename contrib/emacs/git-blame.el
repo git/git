@@ -105,6 +105,13 @@ selected element from l."
      (setq ,l (remove e ,l))
      e))
 
+(defvar git-blame-log-oneline-format
+  "format:[%cr] %cn: %s"
+  "*Formatting option used for describing current line in the minibuffer.
+
+This option is used to pass to git log --pretty= command-line option,
+and describe which commit the current line was made.")
+
 (defvar git-blame-dark-colors
   (git-blame-color-scale "0c" "04" "24" "1c" "2c" "34" "14" "3c")
   "*List of colors (format #RGB) to use in a dark environment.
@@ -371,7 +378,8 @@ See also function `git-blame-mode'."
 (defun git-describe-commit (hash)
   (with-temp-buffer
     (call-process "git" nil t nil
-                  "log" "-1" "--pretty=oneline"
+                  "log" "-1"
+		  (concat "--pretty=" git-blame-log-oneline-format)
                   hash)
     (buffer-substring (point-min) (1- (point-max)))))
 

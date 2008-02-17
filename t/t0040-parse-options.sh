@@ -87,9 +87,9 @@ test_expect_success 'unambiguously abbreviated option with "="' '
 	git diff expect output
 '
 
-test_expect_failure 'ambiguously abbreviated option' '
+test_expect_success 'ambiguously abbreviated option' '
 	test-parse-options --strin 123;
-        test $? != 129
+	test $? = 129
 '
 
 cat > expect << EOF

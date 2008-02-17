@@ -2073,7 +2073,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 		if (strbuf_read(&buf, 0, 0) < 0)
 			die("read error %s from stdin", strerror(errno));
 	}
-	convert_to_git(path, buf.buf, buf.len, &buf);
+	convert_to_git(path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
 	pretend_sha1_file(buf.buf, buf.len, OBJ_BLOB, origin->blob_sha1);
@@ -2092,7 +2092,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	if (!mode) {
 		int pos = cache_name_pos(path, len);
 		if (0 <= pos)
-			mode = ntohl(active_cache[pos]->ce_mode);
+			mode = active_cache[pos]->ce_mode;
 		else
 			/* Let's not bother reading from HEAD tree */
 			mode = S_IFREG | 0644;

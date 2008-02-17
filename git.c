@@ -93,6 +93,8 @@ static char *alias_string;
 static int git_alias_config(const char *var, const char *value)
 {
 	if (!prefixcmp(var, "alias.") && !strcmp(var + 6, alias_command)) {
+		if (!value)
+			return config_error_nonbool(var);
 		alias_string = xstrdup(value);
 	}
 	return 0;

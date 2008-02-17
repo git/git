@@ -107,8 +107,8 @@ do
 		diff expected actual
 	'
 
-        test_expect_failure "grep -c $L (no /dev/null)" '
-		git grep -c test $H | grep -q "/dev/null"
+	test_expect_success "grep -c $L (no /dev/null)" '
+		! git grep -c test $H | grep -q /dev/null
         '
 
 done

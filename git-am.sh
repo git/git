@@ -14,7 +14,7 @@ b,binary        pass --allo-binary-replacement to git-apply
 3,3way          allow fall back on 3way merging if needed
 s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
-k,keep          pass -k flagg to git-mailinfo
+k,keep          pass -k flag to git-mailinfo
 whitespace=     pass it through git-apply
 C=              pass it through git-apply
 p=              pass it through git-apply

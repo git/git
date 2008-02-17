@@ -156,15 +156,19 @@ test_expect_success 'req_Root (strict paths)' \
   'cat request-anonymous | git-cvsserver --strict-paths pserver $SERVERDIR >log 2>&1 &&
    tail -n1 log | grep -q "^I LOVE YOU$"'
 
-test_expect_failure 'req_Root failure (strict-paths)' \
-  'cat request-anonymous | git-cvsserver --strict-paths pserver $WORKDIR >log 2>&1'
+test_expect_success 'req_Root failure (strict-paths)' '
+    ! cat request-anonymous |
+    git-cvsserver --strict-paths pserver $WORKDIR >log 2>&1
+'
 
 test_expect_success 'req_Root (w/o strict-paths)' \
   'cat request-anonymous | git-cvsserver pserver $WORKDIR/ >log 2>&1 &&
    tail -n1 log | grep -q "^I LOVE YOU$"'
 
-test_expect_failure 'req_Root failure (w/o strict-paths)' \
-  'cat request-anonymous | git-cvsserver pserver $WORKDIR/gitcvs >log 2>&1'
+test_expect_success 'req_Root failure (w/o strict-paths)' '
+    ! cat request-anonymous |
+    git-cvsserver pserver $WORKDIR/gitcvs >log 2>&1
+'
 
 cat >request-base  <<EOF
 BEGIN AUTH REQUEST
@@ -179,8 +183,10 @@ test_expect_success 'req_Root (base-path)' \
   'cat request-base | git-cvsserver --strict-paths --base-path $WORKDIR/ pserver $SERVERDIR >log 2>&1 &&
    tail -n1 log | grep -q "^I LOVE YOU$"'
 
-test_expect_failure 'req_Root failure (base-path)' \
-  'cat request-anonymous | git-cvsserver --strict-paths --base-path $WORKDIR pserver $SERVERDIR >log 2>&1'
+test_expect_success 'req_Root failure (base-path)' '
+    ! cat request-anonymous |
+    git-cvsserver --strict-paths --base-path $WORKDIR pserver $SERVERDIR >log 2>&1
+'
 
 GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false || exit 1
 
@@ -188,9 +194,8 @@ test_expect_success 'req_Root (export-all)' \
   'cat request-anonymous | git-cvsserver --export-all pserver $WORKDIR >log 2>&1 &&
    tail -n1 log | grep -q "^I LOVE YOU$"'
 
-test_expect_failure 'req_Root failure (export-all w/o whitelist)' \
-  'cat request-anonymous | git-cvsserver --export-all pserver >log 2>&1 ||
-   false'
+test_expect_success 'req_Root failure (export-all w/o whitelist)' \
+  '! (cat request-anonymous | git-cvsserver --export-all pserver >log 2>&1 || false)'
 
 test_expect_success 'req_Root (everything together)' \
   'cat request-base | git-cvsserver --export-all --strict-paths --base-path $WORKDIR/ pserver $SERVERDIR >log 2>&1 &&
@@ -290,15 +295,16 @@ test_expect_success 'cvs update (update existing file)' \
 
 cd "$WORKDIR"
 #TODO: cvsserver doesn't support update w/o -d
-test_expect_failure "cvs update w/o -d doesn't create subdir (TODO)" \
-  'mkdir test &&
+test_expect_failure "cvs update w/o -d doesn't create subdir (TODO)" '
+   mkdir test &&
    echo >test/empty &&
    git add test &&
    git commit -q -m "Single Subdirectory" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
-   test ! -d test'
+   test ! -d test
+'
 
 cd "$WORKDIR"
 test_expect_success 'cvs update (subdirectories)' \

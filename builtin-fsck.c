@@ -360,6 +360,9 @@ static int fsck_commit(struct commit *commit)
 		fprintf(stderr, "Checking commit %s\n",
 			sha1_to_hex(commit->object.sha1));
 
+	if (!commit->date)
+		return objerror(&commit->object, "invalid author/committer line");
+
 	if (memcmp(buffer, "tree ", 5))
 		return objerror(&commit->object, "invalid format - expected 'tree' line");
 	if (get_sha1_hex(buffer+5, tree_sha1) || buffer[45] != '\n')
@@ -378,9 +381,6 @@ static int fsck_commit(struct commit *commit)
 		return objerror(&commit->object, "could not load commit's tree %s", tree_sha1);
 	if (!commit->parents && show_root)
 		printf("root %s\n", sha1_to_hex(commit->object.sha1));
-	if (!commit->date)
-		printf("bad commit date in %s\n",
-		       sha1_to_hex(commit->object.sha1));
 	return 0;
 }
 
@@ -765,7 +765,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			struct blob *blob;
 			struct object *obj;
 
-			mode = ntohl(active_cache[i]->ce_mode);
+			mode = active_cache[i]->ce_mode;
 			if (S_ISGITLINK(mode))
 				continue;
 			blob = lookup_blob(active_cache[i]->sha1);

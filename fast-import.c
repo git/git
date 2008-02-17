@@ -372,6 +372,8 @@ static void write_branch_report(FILE *rpt, struct branch *b)
 	fputc('\n', rpt);
 }
 
+static void dump_marks_helper(FILE *, uintmax_t, struct mark_set *);
+
 static void write_crash_report(const char *err)
 {
 	char *loc = git_path("fast_import_crash_%d", getpid());
@@ -430,11 +432,36 @@ static void write_crash_report(const char *err)
 			write_branch_report(rpt, b);
 	}
 
+	if (first_tag) {
+		struct tag *tg;
+		fputc('\n', rpt);
+		fputs("Annotated Tags\n", rpt);
+		fputs("--------------\n", rpt);
+		for (tg = first_tag; tg; tg = tg->next_tag) {
+			fputs(sha1_to_hex(tg->sha1), rpt);
+			fputc(' ', rpt);
+			fputs(tg->name, rpt);
+			fputc('\n', rpt);
+		}
+	}
+
+	fputc('\n', rpt);
+	fputs("Marks\n", rpt);
+	fputs("-----\n", rpt);
+	if (mark_file)
+		fprintf(rpt, "  exported to %s\n", mark_file);
+	else
+		dump_marks_helper(rpt, 0, marks);
+
 	fputc('\n', rpt);
 	fputs("-------------------\n", rpt);
 	fputs("END OF CRASH REPORT\n", rpt);
 	fclose(rpt);
 }
+
+static void end_packfile(void);
+static void unkeep_all_packs(void);
+static void dump_marks(void);
 
 static NORETURN void die_nicely(const char *err, va_list params)
 {
@@ -449,6 +476,9 @@ static NORETURN void die_nicely(const char *err, va_list params)
 	if (!zombie) {
 		zombie = 1;
 		write_crash_report(message);
+		end_packfile();
+		unkeep_all_packs();
+		dump_marks();
 	}
 	exit(128);
 }
@@ -1204,6 +1234,8 @@ static void load_tree(struct tree_entry *root)
 			die("Not a tree: %s", sha1_to_hex(sha1));
 		t->delta_depth = myoe->depth;
 		buf = gfi_unpack_entry(myoe, &size);
+		if (!buf)
+			die("Can't load tree %s", sha1_to_hex(sha1));
 	} else {
 		enum object_type type;
 		buf = read_sha1_file(sha1, &type, &size);

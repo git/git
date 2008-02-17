@@ -164,7 +164,7 @@ if ($#ARGV == 0) {
 
 our @mergerx = ();
 if ($opt_m) {
-	@mergerx = ( qr/\W(?:from|of|merge|merging|merged) (\w+)/i );
+	@mergerx = ( qr/\b(?:from|of|merge|merging|merged) (\w+)/i );
 }
 if ($opt_M) {
 	push (@mergerx, qr/$opt_M/);

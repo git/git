@@ -95,7 +95,7 @@ test_expect_success 'fetch following tags' '
 
 '
 
-test_expect_failure 'fetch must not resolve short tag name' '
+test_expect_success 'fetch must not resolve short tag name' '
 
 	cd "$D" &&
 
@@ -103,11 +103,11 @@ test_expect_failure 'fetch must not resolve short tag name' '
 	cd five &&
 	git init &&
 
-	git fetch .. anno:five
+	! git fetch .. anno:five
 
 '
 
-test_expect_failure 'fetch must not resolve short remote name' '
+test_expect_success 'fetch must not resolve short remote name' '
 
 	cd "$D" &&
 	git-update-ref refs/remotes/six/HEAD HEAD
@@ -116,7 +116,7 @@ test_expect_failure 'fetch must not resolve short remote name' '
 	cd six &&
 	git init &&
 
-	git fetch .. six:six
+	! git fetch .. six:six
 
 '
 
@@ -139,10 +139,10 @@ test_expect_success 'create bundle 2' '
 	git bundle create bundle2 master~2..master
 '
 
-test_expect_failure 'unbundle 1' '
+test_expect_success 'unbundle 1' '
 	cd "$D/bundle" &&
 	git checkout -b some-branch &&
-	git fetch "$D/bundle1" master:master
+	! git fetch "$D/bundle1" master:master
 '
 
 test_expect_success 'bundle 1 has only 3 files ' '

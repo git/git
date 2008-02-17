@@ -57,6 +57,13 @@ Patterns have the following format:
    included again.  If a negated pattern matches, this will
    override lower precedence patterns sources.
 
+ - If the pattern ends with a slash, it is removed for the
+   purpose of the following description, but it would only find
+   a match with a directory.  In other words, `foo/` will match a
+   directory `foo` and paths underneath it, but will not match a
+   regular file or a symbolic link `foo` (this is consistent
+   with the way how pathspec works in general in git).
+
  - If the pattern does not contain a slash '/', git treats it as
    a shell glob pattern and checks for a match against the
    pathname without leading directories.

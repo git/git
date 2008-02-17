@@ -101,16 +101,18 @@ static int http_options(const char *var, const char *value)
 
 	if (!strcmp("http.sslcert", var)) {
 		if (ssl_cert == NULL) {
-			ssl_cert = xmalloc(strlen(value)+1);
-			strcpy(ssl_cert, value);
+			if (!value)
+				return config_error_nonbool(var);
+			ssl_cert = xstrdup(value);
 		}
 		return 0;
 	}
 #if LIBCURL_VERSION_NUM >= 0x070902
 	if (!strcmp("http.sslkey", var)) {
 		if (ssl_key == NULL) {
-			ssl_key = xmalloc(strlen(value)+1);
-			strcpy(ssl_key, value);
+			if (!value)
+				return config_error_nonbool(var);
+			ssl_key = xstrdup(value);
 		}
 		return 0;
 	}
@@ -118,16 +120,18 @@ static int http_options(const char *var, const char *value)
 #if LIBCURL_VERSION_NUM >= 0x070908
 	if (!strcmp("http.sslcapath", var)) {
 		if (ssl_capath == NULL) {
-			ssl_capath = xmalloc(strlen(value)+1);
-			strcpy(ssl_capath, value);
+			if (!value)
+				return config_error_nonbool(var);
+			ssl_capath = xstrdup(value);
 		}
 		return 0;
 	}
 #endif
 	if (!strcmp("http.sslcainfo", var)) {
 		if (ssl_cainfo == NULL) {
-			ssl_cainfo = xmalloc(strlen(value)+1);
-			strcpy(ssl_cainfo, value);
+			if (!value)
+				return config_error_nonbool(var);
+			ssl_cainfo = xstrdup(value);
 		}
 		return 0;
 	}
@@ -157,8 +161,9 @@ static int http_options(const char *var, const char *value)
 	}
 	if (!strcmp("http.proxy", var)) {
 		if (curl_http_proxy == NULL) {
-			curl_http_proxy = xmalloc(strlen(value)+1);
-			strcpy(curl_http_proxy, value);
+			if (!value)
+				return config_error_nonbool(var);
+			curl_http_proxy = xstrdup(value);
 		}
 		return 0;
 	}

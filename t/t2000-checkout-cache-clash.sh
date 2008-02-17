@@ -36,9 +36,9 @@ mkdir path0
 date >path0/file0
 date >path1
 
-test_expect_failure \
+test_expect_success \
     'git checkout-index without -f should fail on conflicting work tree.' \
-    'git checkout-index -a'
+    '! git checkout-index -a'
 
 test_expect_success \
     'git checkout-index with -f should succeed.' \

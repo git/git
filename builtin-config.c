@@ -79,9 +79,10 @@ static int get_value(const char* key_, const char* regex_)
 		local = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!local)
 			local = repo_config = xstrdup(git_path("config"));
-		if (home)
+		if (git_config_global() && home)
 			global = xstrdup(mkpath("%s/.gitconfig", home));
-		system_wide = git_etc_gitconfig();
+		if (git_config_system())
+			system_wide = git_etc_gitconfig();
 	}
 
 	key = xstrdup(key_);
@@ -168,6 +169,8 @@ static char parsed_color[COLOR_MAXLEN];
 static int git_get_color_config(const char *var, const char *value)
 {
 	if (!strcmp(var, get_color_slot)) {
+		if (!value)
+			config_error_nonbool(var);
 		color_parse(value, var, parsed_color);
 		get_color_found = 1;
 	}

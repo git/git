@@ -47,27 +47,9 @@ OPTIONS
 +
 The web browser can be specified using the configuration variable
 'help.browser', or 'web.browser' if the former is not set. If none of
-these config variables is set, the 'git-help--browse' helper script
-(called by 'git-help') will pick a suitable default.
-+
-You can explicitly provide a full path to your preferred browser by
-setting the configuration variable 'browser.<tool>.path'. For example,
-you can configure the absolute path to firefox by setting
-'browser.firefox.path'. Otherwise, 'git-help--browse' assumes the tool
-is available in PATH.
-+
-Note that the script tries, as much as possible, to display the HTML
-page in a new tab on an already opened browser.
-+
-The following browsers are currently supported by 'git-help--browse':
-+
-* firefox (this is the default under X Window when not using KDE)
-* iceweasel
-* konqueror (this is the default under KDE)
-* w3m (this is the default outside X Window)
-* links
-* lynx
-* dillo
+these config variables is set, the 'git-web--browse' helper script
+(called by 'git-help') will pick a suitable default. See
+linkgit:git-web--browse[1] for more information about this.
 
 CONFIGURATION VARIABLES
 -----------------------
@@ -84,7 +66,7 @@ line option:
 The 'help.browser', 'web.browser' and 'browser.<tool>.path' will also
 be checked if the 'web' format is chosen (either by command line
 option or configuration variable). See '-w|--web' in the OPTIONS
-section above.
+section above and linkgit:git-web--browse[1].
 
 Note that these configuration variables should probably be set using
 the '--global' flag, for example like this:
