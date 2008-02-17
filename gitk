@@ -415,11 +415,12 @@ proc splitvarc {p v} {
 	set varcid($v,$id) $na
     }
     lappend vdownptr($v) [lindex $vdownptr($v) $oa]
+    lappend vlastins($v) [lindex $vlastins($v) $oa]
     lset vdownptr($v) $oa $na
+    lset vlastins($v) $oa 0
     lappend vupptr($v) $oa
     lappend vleftptr($v) 0
     lappend vbackptr($v) 0
-    lappend vlastins($v) 0
     for {set b [lindex $vdownptr($v) $na]} {$b != 0} {set b [lindex $vleftptr($v) $b]} {
 	lset vupptr($v) $b $na
     }
@@ -512,6 +513,9 @@ proc renumbervarc {a v} {
 	    }
 	    if {$d != 0} {
 		lset vbackptr($v) $d $c
+	    }
+	    if {[lindex $vlastins($v) $b] == $a} {
+		lset vlastins($v) $b $c
 	    }
 	    lset vupptr($v) $a $ka
 	    set c [lindex $vlastins($v) $ka]
