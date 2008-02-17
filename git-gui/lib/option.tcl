@@ -193,9 +193,7 @@ proc do_options {} {
 			${f}_config_new(gui.spellingdictionary) \
 			$all_dicts
 		pack $w.$f.$optid.l -side left -anchor w -fill x
-		pack $w.$f.$optid.v -side left -anchor w \
-			-fill x -expand 1 \
-			-padx 5
+		pack $w.$f.$optid.v -side right -anchor e -padx 5
 		pack $w.$f.$optid -side top -anchor w -fill x
 	}
 	unset all_dicts
