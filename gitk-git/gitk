@@ -5032,13 +5032,14 @@ proc getblobline {bf id} {
 proc mergediff {id l} {
     global diffmergeid mdifffd
     global diffids
+    global diffcontext
     global parentlist
     global limitdiffs viewfiles curview
 
     set diffmergeid $id
     set diffids $id
     # this doesn't seem to actually affect anything...
-    set cmd [concat | git diff-tree --no-commit-id --cc $id]
+    set cmd [concat | git diff-tree --no-commit-id --cc -U$diffcontext $id]
     if {$limitdiffs && $viewfiles($curview) ne {}} {
 	set cmd [concat $cmd -- $viewfiles($curview)]
     }
