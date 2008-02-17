@@ -493,6 +493,22 @@ const char *git_etc_gitconfig(void)
 	return system_wide;
 }
 
+int git_env_bool(const char *k, int def)
+{
+	const char *v = getenv(k);
+	return v ? git_config_bool(k, v) : def;
+}
+
+int git_config_system(void)
+{
+	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
+}
+
+int git_config_global(void)
+{
+	return !git_env_bool("GIT_CONFIG_NOGLOBAL", 0);
+}
+
 int git_config(config_fn_t fn)
 {
 	int ret = 0;
@@ -505,7 +521,7 @@ int git_config(config_fn_t fn)
 	 * config file otherwise. */
 	filename = getenv(CONFIG_ENVIRONMENT);
 	if (!filename) {
-		if (!access(git_etc_gitconfig(), R_OK))
+		if (git_config_system() && !access(git_etc_gitconfig(), R_OK))
 			ret += git_config_from_file(fn, git_etc_gitconfig());
 		home = getenv("HOME");
 		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
@@ -513,7 +529,7 @@ int git_config(config_fn_t fn)
 			filename = repo_config = xstrdup(git_path("config"));
 	}
 
-	if (home) {
+	if (git_config_global() && home) {
 		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
 		if (!access(user_config, R_OK))
 			ret = git_config_from_file(fn, user_config);
