@@ -347,44 +347,106 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 	return s.commitable;
 }
 
+static int run_hook(const char *index_file, const char *name, ...)
+{
+	struct child_process hook;
+	const char *argv[10], *env[2];
+	char index[PATH_MAX];
+	va_list args;
+	int i;
+
+	va_start(args, name);
+	argv[0] = git_path("hooks/%s", name);
+	i = 0;
+	do {
+		if (++i >= ARRAY_SIZE(argv))
+			die ("run_hook(): too many arguments");
+		argv[i] = va_arg(args, const char *);
+	} while (argv[i]);
+	va_end(args);
+
+	snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
+	env[0] = index;
+	env[1] = NULL;
+
+	if (access(argv[0], X_OK) < 0)
+		return 0;
+
+	memset(&hook, 0, sizeof(hook));
+	hook.argv = argv;
+	hook.no_stdin = 1;
+	hook.stdout_to_stderr = 1;
+	hook.env = env;
+
+	return run_command(&hook);
+}
+
+static int is_a_merge(const unsigned char *sha1)
+{
+	struct commit *commit = lookup_commit(sha1);
+	if (!commit || parse_commit(commit))
+		die("could not parse HEAD commit");
+	return !!(commit->parents && commit->parents->next);
+}
+
 static const char sign_off_header[] = "Signed-off-by: ";
 
-static int prepare_log_message(const char *index_file, const char *prefix)
+static int prepare_to_commit(const char *index_file, const char *prefix)
 {
 	struct stat statbuf;
 	int commitable, saved_color_setting;
 	struct strbuf sb;
 	char *buffer;
 	FILE *fp;
+	const char *hook_arg1 = NULL;
+	const char *hook_arg2 = NULL;
+
+	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
+		return 0;
 
 	strbuf_init(&sb, 0);
 	if (message.len) {
 		strbuf_addbuf(&sb, &message);
+		hook_arg1 = "message";
 	} else if (logfile && !strcmp(logfile, "-")) {
 		if (isatty(0))
 			fprintf(stderr, "(reading log message from standard input)\n");
 		if (strbuf_read(&sb, 0, 0) < 0)
 			die("could not read log from standard input");
+		hook_arg1 = "message";
 	} else if (logfile) {
 		if (strbuf_read_file(&sb, logfile, 0) < 0)
 			die("could not read log file '%s': %s",
 			    logfile, strerror(errno));
+		hook_arg1 = "message";
 	} else if (use_message) {
 		buffer = strstr(use_message_buffer, "\n\n");
 		if (!buffer || buffer[2] == '\0')
 			die("commit has empty message");
 		strbuf_add(&sb, buffer + 2, strlen(buffer + 2));
+		hook_arg1 = "commit";
+		hook_arg2 = use_message;
 	} else if (!stat(git_path("MERGE_MSG"), &statbuf)) {
 		if (strbuf_read_file(&sb, git_path("MERGE_MSG"), 0) < 0)
 			die("could not read MERGE_MSG: %s", strerror(errno));
+		hook_arg1 = "merge";
 	} else if (!stat(git_path("SQUASH_MSG"), &statbuf)) {
 		if (strbuf_read_file(&sb, git_path("SQUASH_MSG"), 0) < 0)
 			die("could not read SQUASH_MSG: %s", strerror(errno));
+		hook_arg1 = "squash";
 	} else if (template_file && !stat(template_file, &statbuf)) {
 		if (strbuf_read_file(&sb, template_file, 0) < 0)
 			die("could not read %s: %s",
 			    template_file, strerror(errno));
+		hook_arg1 = "template";
 	}
+
+	/*
+	 * This final case does not modify the template message,
+	 * it just sets the argument to the prepare-commit-msg hook.
+	 */
+	else if (in_merge)
+		hook_arg1 = "merge";
 
 	fp = fopen(git_path(commit_editmsg), "w");
 	if (fp == NULL)
@@ -417,12 +479,37 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 
 	strbuf_release(&sb);
 
-	if (!use_editor) {
+	if (use_editor) {
+		if (in_merge)
+			fprintf(fp,
+				"#\n"
+				"# It looks like you may be committing a MERGE.\n"
+				"# If this is not correct, please remove the file\n"
+				"#	%s\n"
+				"# and try again.\n"
+				"#\n",
+				git_path("MERGE_HEAD"));
+
+		fprintf(fp,
+			"\n"
+			"# Please enter the commit message for your changes.\n"
+			"# (Comment lines starting with '#' will ");
+		if (cleanup_mode == CLEANUP_ALL)
+			fprintf(fp, "not be included)\n");
+		else /* CLEANUP_SPACE, that is. */
+			fprintf(fp, "be kept.\n"
+				"# You can remove them yourself if you want to)\n");
+		if (only_include_assumed)
+			fprintf(fp, "# %s\n", only_include_assumed);
+
+		saved_color_setting = wt_status_use_color;
+		wt_status_use_color = 0;
+		commitable = run_status(fp, index_file, prefix, 1);
+		wt_status_use_color = saved_color_setting;
+	} else {
 		struct rev_info rev;
 		unsigned char sha1[20];
 		const char *parent = "HEAD";
-
-		fclose(fp);
 
 		if (!active_nr && read_cache() < 0)
 			die("Cannot read index");
@@ -431,48 +518,60 @@ static int prepare_log_message(const char *index_file, const char *prefix)
 			parent = "HEAD^1";
 
 		if (get_sha1(parent, sha1))
-			return !!active_nr;
+			commitable = !!active_nr;
+		else {
+			init_revisions(&rev, "");
+			rev.abbrev = 0;
+			setup_revisions(0, NULL, &rev, parent);
+			DIFF_OPT_SET(&rev.diffopt, QUIET);
+			DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
+			run_diff_index(&rev, 1 /* cached */);
 
-		init_revisions(&rev, "");
-		rev.abbrev = 0;
-		setup_revisions(0, NULL, &rev, parent);
-		DIFF_OPT_SET(&rev.diffopt, QUIET);
-		DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
-		run_diff_index(&rev, 1 /* cached */);
-
-		return !!DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES);
+			commitable = !!DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES);
+		}
 	}
-
-	if (in_merge)
-		fprintf(fp,
-			"#\n"
-			"# It looks like you may be committing a MERGE.\n"
-			"# If this is not correct, please remove the file\n"
-			"#	%s\n"
-			"# and try again.\n"
-			"#\n",
-			git_path("MERGE_HEAD"));
-
-	fprintf(fp,
-		"\n"
-		"# Please enter the commit message for your changes.\n"
-		"# (Comment lines starting with '#' will ");
-	if (cleanup_mode == CLEANUP_ALL)
-		fprintf(fp, "not be included)\n");
-	else /* CLEANUP_SPACE, that is. */
-		fprintf(fp, "be kept.\n"
-			"# You can remove them yourself if you want to)\n");
-	if (only_include_assumed)
-		fprintf(fp, "# %s\n", only_include_assumed);
-
-	saved_color_setting = wt_status_use_color;
-	wt_status_use_color = 0;
-	commitable = run_status(fp, index_file, prefix, 1);
-	wt_status_use_color = saved_color_setting;
 
 	fclose(fp);
 
-	return commitable;
+	if (!commitable && !in_merge && !allow_empty &&
+	    !(amend && is_a_merge(head_sha1))) {
+		run_status(stdout, index_file, prefix, 0);
+		unlink(commit_editmsg);
+		return 0;
+	}
+
+	/*
+	 * Re-read the index as pre-commit hook could have updated it,
+	 * and write it out as a tree.  We must do this before we invoke
+	 * the editor and after we invoke run_status above.
+	 */
+	discard_cache();
+	read_cache_from(index_file);
+	if (!active_cache_tree)
+		active_cache_tree = cache_tree();
+	if (cache_tree_update(active_cache_tree,
+			      active_cache, active_nr, 0, 0) < 0) {
+		error("Error building trees");
+		return 0;
+	}
+
+	if (run_hook(index_file, "prepare-commit-msg",
+		     git_path(commit_editmsg), hook_arg1, hook_arg2, NULL))
+		return 0;
+
+	if (use_editor) {
+		char index[PATH_MAX];
+		const char *env[2] = { index, NULL };
+		snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
+		launch_editor(git_path(commit_editmsg), NULL, env);
+	}
+
+	if (!no_verify &&
+	    run_hook(index_file, "commit-msg", git_path(commit_editmsg), NULL)) {
+		return 0;
+	}
+
+	return 1;
 }
 
 /*
@@ -569,6 +668,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		use_editor = 0;
 	if (edit_flag)
 		use_editor = 1;
+	if (!use_editor)
+		setenv("GIT_EDITOR", ":", 1);
 
 	if (get_sha1("HEAD", head_sha1))
 		initial_commit = 1;
@@ -681,31 +782,6 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return commitable ? 0 : 1;
 }
 
-static int run_hook(const char *index_file, const char *name, const char *arg)
-{
-	struct child_process hook;
-	const char *argv[3], *env[2];
-	char index[PATH_MAX];
-
-	argv[0] = git_path("hooks/%s", name);
-	argv[1] = arg;
-	argv[2] = NULL;
-	snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
-	env[0] = index;
-	env[1] = NULL;
-
-	if (access(argv[0], X_OK) < 0)
-		return 0;
-
-	memset(&hook, 0, sizeof(hook));
-	hook.argv = argv;
-	hook.no_stdin = 1;
-	hook.stdout_to_stderr = 1;
-	hook.env = env;
-
-	return run_command(&hook);
-}
-
 static void print_summary(const char *prefix, const unsigned char *sha1)
 {
 	struct rev_info rev;
@@ -756,14 +832,6 @@ int git_commit_config(const char *k, const char *v)
 	return git_status_config(k, v);
 }
 
-static int is_a_merge(const unsigned char *sha1)
-{
-	struct commit *commit = lookup_commit(sha1);
-	if (!commit || parse_commit(commit))
-		die("could not parse HEAD commit");
-	return !!(commit->parents && commit->parents->next);
-}
-
 static const char commit_utf8_warn[] =
 "Warning: commit message does not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
@@ -795,31 +863,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	index_file = prepare_index(argc, argv, prefix);
 
-	if (!no_verify && run_hook(index_file, "pre-commit", NULL)) {
+	/* Set up everything for writing the commit object.  This includes
+	   running hooks, writing the trees, and interacting with the user.  */
+	if (!prepare_to_commit(index_file, prefix)) {
 		rollback_index_files();
 		return 1;
-	}
-
-	if (!prepare_log_message(index_file, prefix) && !in_merge &&
-	    !allow_empty && !(amend && is_a_merge(head_sha1))) {
-		run_status(stdout, index_file, prefix, 0);
-		rollback_index_files();
-		unlink(commit_editmsg);
-		return 1;
-	}
-
-	/*
-	 * Re-read the index as pre-commit hook could have updated it,
-	 * and write it out as a tree.
-	 */
-	discard_cache();
-	read_cache_from(index_file);
-	if (!active_cache_tree)
-		active_cache_tree = cache_tree();
-	if (cache_tree_update(active_cache_tree,
-			      active_cache, active_nr, 0, 0) < 0) {
-		rollback_index_files();
-		die("Error building trees");
 	}
 
 	/*
@@ -873,19 +921,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&sb, "encoding %s\n", git_commit_encoding);
 	strbuf_addch(&sb, '\n');
 
-	/* Get the commit message and validate it */
+	/* Finally, get the commit message */
 	header_len = sb.len;
-	if (use_editor) {
-		char index[PATH_MAX];
-		const char *env[2] = { index, NULL };
-		snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
-		launch_editor(git_path(commit_editmsg), NULL, env);
-	}
-	if (!no_verify &&
-	    run_hook(index_file, "commit-msg", git_path(commit_editmsg))) {
-		rollback_index_files();
-		exit(1);
-	}
 	if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
 		rollback_index_files();
 		die("could not read commit message");
