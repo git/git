@@ -16,17 +16,12 @@
 # git maintainer.
 #
 
-USAGE='[--browser=browser|--tool=browser] [cmd to display] ...'
+USAGE='[--browser=browser|--tool=browser] [--config=conf.var] url/file ...'
 
 # This must be capable of running outside of git directory, so
 # the vanilla git-sh-setup should not be used.
 NONGIT_OK=Yes
 . git-sh-setup
-
-# Install data.
-html_dir="@@HTMLDIR@@"
-
-test -f "$html_dir/git.html" || die "No documentation directory found."
 
 valid_tool() {
 	case "$1" in
@@ -39,8 +34,8 @@ valid_tool() {
 }
 
 init_browser_path() {
-	browser_path=`git config browser.$1.path`
-	test -z "$browser_path" && browser_path=$1
+	browser_path=$(git config "browser.$1.path")
+	test -z "$browser_path" && browser_path="$1"
 }
 
 while test $# != 0
@@ -58,6 +53,18 @@ do
 		    shift ;;
 	    esac
 	    ;;
+	-c|--config*)
+	    case "$#,$1" in
+		*,*=*)
+		    conf=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+		    ;;
+		1,*)
+		    usage ;;
+		*)
+		    conf="$2"
+		    shift ;;
+	    esac
+	    ;;
 	--)
 	    break
 	    ;;
@@ -71,17 +78,20 @@ do
     shift
 done
 
+test $# = 0 && usage
+
 if test -z "$browser"
 then
-    for opt in "help.browser" "web.browser"
+    for opt in "$conf" "web.browser"
     do
+	test -z "$opt" && continue
 	browser="`git config $opt`"
 	test -z "$browser" || break
     done
     if test -n "$browser" && ! valid_tool "$browser"; then
-	    echo >&2 "git config option $opt set to unknown browser: $browser"
-	    echo >&2 "Resetting to default..."
-	    unset browser
+	echo >&2 "git config option $opt set to unknown browser: $browser"
+	echo >&2 "Resetting to default..."
+	unset browser
     fi
 fi
 
@@ -117,16 +127,13 @@ else
     fi
 fi
 
-pages=$(for p in "$@"; do echo "$html_dir/$p.html" ; done)
-test -z "$pages" && pages="$html_dir/git.html"
-
 case "$browser" in
     firefox|iceweasel)
 	# Check version because firefox < 2.0 does not support "-new-tab".
 	vers=$(expr "$($browser_path -version)" : '.* \([0-9][0-9]*\)\..*')
 	NEWTAB='-new-tab'
 	test "$vers" -lt 2 && NEWTAB=''
-	nohup "$browser_path" $NEWTAB $pages &
+	"$browser_path" $NEWTAB "$@" &
 	;;
     konqueror)
 	case "$(basename "$browser_path")" in
@@ -134,20 +141,20 @@ case "$browser" in
 		# It's simpler to use kfmclient to open a new tab in konqueror.
 		browser_path="$(echo "$browser_path" | sed -e 's/konqueror$/kfmclient/')"
 		type "$browser_path" > /dev/null 2>&1 || die "No '$browser_path' found."
-		eval "$browser_path" newTab $pages
+		eval "$browser_path" newTab "$@"
 		;;
 	    kfmclient)
-		eval "$browser_path" newTab $pages
+		eval "$browser_path" newTab "$@"
 		;;
 	    *)
-	        nohup "$browser_path" $pages &
+		"$browser_path" "$@" &
 		;;
 	esac
 	;;
     w3m|links|lynx|open)
-	eval "$browser_path" $pages
+	eval "$browser_path" "$@"
 	;;
     dillo)
-	nohup "$browser_path" $pages &
+	"$browser_path" "$@" &
 	;;
 esac
