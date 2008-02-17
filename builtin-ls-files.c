@@ -238,7 +238,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 	if (show_cached | show_stage) {
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
-			if (excluded(dir, ce->name) != dir->show_ignored)
+			int dtype = ce_to_dtype(ce);
+			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
 				continue;
 			if (show_unmerged && !ce_stage(ce))
 				continue;
@@ -252,7 +253,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 			struct cache_entry *ce = active_cache[i];
 			struct stat st;
 			int err;
-			if (excluded(dir, ce->name) != dir->show_ignored)
+			int dtype = ce_to_dtype(ce);
+			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
 				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
