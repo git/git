@@ -137,6 +137,10 @@ all::
 # Define THREADED_DELTA_SEARCH if you have pthreads and wish to exploit
 # parallel delta searching when packing objects.
 #
+# Define INTERNAL_QSORT to use Git's implementation of qsort(), which
+# is a simplified version of the merge sort used in glibc. This is
+# recommended if Git triggers O(n^2) behavior in your platform's qsort().
+#
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -721,6 +725,10 @@ endif
 ifdef NO_MEMMEM
 	COMPAT_CFLAGS += -DNO_MEMMEM
 	COMPAT_OBJS += compat/memmem.o
+endif
+ifdef INTERNAL_QSORT
+	COMPAT_CFLAGS += -DINTERNAL_QSORT
+	COMPAT_OBJS += compat/qsort.o
 endif
 
 ifdef THREADED_DELTA_SEARCH
