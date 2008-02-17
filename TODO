@@ -11,9 +11,6 @@ The latest copy of this document is found at
 Issues that I have looked at, but unprocessed, unconcluded
 and/or lack enough discussions to proceed.
 
-* "git-apply --whitespace=fix" context adjustment
-  $gmane/72248
-
 * pretty.c optimization (Marco)
   $gmane/72260
 
@@ -30,18 +27,7 @@ and/or lack enough discussions to proceed.
 * A symref file for ".git/" (Lars Hjemli)
   $gmane/72244
 
-* safecrlf (Steffen Prohaska)
-  $gmane/72285
-
-* git-send-email unechoed interactive password (Michael Witten)
-  $gmane/72220
-
-* compat/qsort (Brian Downing)
-  $gmane/72311
-
-* unified "user's choice brower" (Christian Couder)
-  $gmane/72226
-
 * "[alias] st = status" and "cd .git && git st" (Jeff King)
   $gmane/72327
+
 
