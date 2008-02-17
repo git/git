@@ -43,7 +43,7 @@ sub parse_whats_cooking {
 		}
 
 		if (!defined $head) {
-			if (/^Here are the topics that have been cooking\./) {
+			if (/^Here are the topics that have been/) {
 				$head = $_;
 			}
 			next;
