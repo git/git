@@ -249,6 +249,49 @@ static int xdl_refine_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 }
 
 /*
+ * This function merges m and m->next, marking everything between those hunks
+ * as conflicting, too.
+ */
+static void xdl_merge_two_conflicts(xdmerge_t *m)
+{
+	xdmerge_t *next_m = m->next;
+	m->chg1 = next_m->i1 + next_m->chg1 - m->i1;
+	m->chg2 = next_m->i2 + next_m->chg2 - m->i2;
+	m->next = next_m->next;
+	free(next_m);
+}
+
+/*
+ * If there are less than 3 non-conflicting lines between conflicts,
+ * it appears simpler -- because it takes up less (or as many) lines --
+ * if the lines are moved into the conflicts.
+ */
+static int xdl_simplify_non_conflicts(xdfenv_t *xe1, xdmerge_t *m)
+{
+	int result = 0;
+
+	if (!m)
+		return result;
+	for (;;) {
+		xdmerge_t *next_m = m->next;
+		int begin, end;
+
+		if (!next_m)
+			return result;
+
+		begin = m->i1 + m->chg1;
+		end = next_m->i1;
+
+		if (m->mode != 0 || next_m->mode != 0 || end - begin > 3)
+			m = next_m;
+		else {
+			result++;
+			xdl_merge_two_conflicts(m);
+		}
+	}
+}
+
+/*
  * level == 0: mark all overlapping changes as conflict
  * level == 1: mark overlapping changes as conflict only if not identical
  * level == 2: analyze non-identical changes for minimal conflict set
@@ -355,7 +398,9 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	if (!changes)
 		changes = c;
 	/* refine conflicts */
-	if (level > 1 && xdl_refine_conflicts(xe1, xe2, changes, xpp) < 0) {
+	if (level > 1 &&
+	    (xdl_refine_conflicts(xe1, xe2, changes, xpp) < 0 ||
+	     xdl_simplify_non_conflicts(xe1, changes) < 0)) {
 		xdl_cleanup_merge(changes);
 		return -1;
 	}
