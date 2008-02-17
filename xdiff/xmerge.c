@@ -248,6 +248,23 @@ static int xdl_refine_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 	return 0;
 }
 
+static int line_contains_alnum(const char *ptr, long size)
+{
+	while (size--)
+		if (isalnum(*(ptr++)))
+			return 1;
+	return 0;
+}
+
+static int lines_contain_alnum(xdfenv_t *xe, int i, int chg)
+{
+	for (; chg; chg--, i++)
+		if (line_contains_alnum(xe->xdf2.recs[i]->ptr,
+				xe->xdf2.recs[i]->size))
+			return 1;
+	return 0;
+}
+
 /*
  * This function merges m and m->next, marking everything between those hunks
  * as conflicting, too.
@@ -266,7 +283,8 @@ static void xdl_merge_two_conflicts(xdmerge_t *m)
  * it appears simpler -- because it takes up less (or as many) lines --
  * if the lines are moved into the conflicts.
  */
-static int xdl_simplify_non_conflicts(xdfenv_t *xe1, xdmerge_t *m)
+static int xdl_simplify_non_conflicts(xdfenv_t *xe1, xdmerge_t *m,
+				      int simplify_if_no_alnum)
 {
 	int result = 0;
 
@@ -282,9 +300,12 @@ static int xdl_simplify_non_conflicts(xdfenv_t *xe1, xdmerge_t *m)
 		begin = m->i1 + m->chg1;
 		end = next_m->i1;
 
-		if (m->mode != 0 || next_m->mode != 0 || end - begin > 3)
+		if (m->mode != 0 || next_m->mode != 0 ||
+		    (end - begin > 3 &&
+		     (!simplify_if_no_alnum ||
+		      lines_contain_alnum(xe1, begin, end - begin)))) {
 			m = next_m;
-		else {
+		} else {
 			result++;
 			xdl_merge_two_conflicts(m);
 		}
@@ -295,6 +316,8 @@ static int xdl_simplify_non_conflicts(xdfenv_t *xe1, xdmerge_t *m)
  * level == 0: mark all overlapping changes as conflict
  * level == 1: mark overlapping changes as conflict only if not identical
  * level == 2: analyze non-identical changes for minimal conflict set
+ * level == 3: analyze non-identical changes for minimal conflict set, but
+ *             treat hunks not containing any letter or number as conflicting
  *
  * returns < 0 on error, == 0 for no conflicts, else number of conflicts
  */
@@ -400,7 +423,7 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	/* refine conflicts */
 	if (level > 1 &&
 	    (xdl_refine_conflicts(xe1, xe2, changes, xpp) < 0 ||
-	     xdl_simplify_non_conflicts(xe1, changes) < 0)) {
+	     xdl_simplify_non_conflicts(xe1, changes, level > 2) < 0)) {
 		xdl_cleanup_merge(changes);
 		return -1;
 	}

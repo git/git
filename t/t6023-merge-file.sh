@@ -149,4 +149,14 @@ test_expect_success 'MERGE_ZEALOUS simplifies non-conflicts' '
 
 '
 
+sed -e 's/deerit./&\n\n\n\n/' -e "s/locavit,/locavit;/" < new6.txt > new8.txt
+sed -e 's/deerit./&\n\n\n\n/' -e "s/locavit,/locavit --/" < new7.txt > new9.txt
+
+test_expect_success 'ZEALOUS_ALNUM' '
+
+	! git merge-file -p new8.txt new5.txt new9.txt > merge.out &&
+	test 1 = $(grep ======= < merge.out | wc -l)
+
+'
+
 test_done
