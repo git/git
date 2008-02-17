@@ -1,6 +1,7 @@
-Now a new feature release is out, it's a good time to welcome new
-people to the list.  This message talks about how git.git is managed,
-and how you can work with it.
+Welcome to git community.
+
+This message talks about how git.git is managed, and how you can work
+with it.
 
 * IRC and Mailing list
 
@@ -9,9 +10,9 @@ IRC channel on Freenode.  Its log is available at:
 
         http://colabti.de/irclogger/irclogger_log/git
 
-The development however is primarily done on this mailing list
-you are reading right now.  If you have patches, please send
-them to the list, following Documentation/SubmittingPatches.
+The development however is primarily done on the git mailing list
+(git@vger.kernel.org).  If you have patches, please send them to the
+list, following Documentation/SubmittingPatches.
 
 I usually try to read all patches posted to the list, and follow
 almost all the discussions on the list, unless the topic is about an
@@ -59,7 +60,7 @@ Their gitweb interfaces are found at:
 There are three branches in git.git repository that are not
 about the source tree of git: "todo", "html" and "man".  The
 first one was meant to contain TODO list for me, but I am not
-good at maintaining such a list so it is not as often updated as
+good at maintaining such a list and it is not as often updated as
 it could/should be.  It also contains some helper scripts I use
 to maintain git.
 
@@ -79,10 +80,10 @@ a task.
 
 There are four branches in git.git repository that track the
 source tree of git: "master", "maint", "next", and "pu".  I may
-add more maintenance branches (e.g. "maint-1.5.1") if we have
+add more maintenance branches (e.g. "maint-1.5.3") if we have
 hugely backward incompatible feature updates in the future to keep
 an older release alive; I may not, but the distributed nature of
-git means any volunteer can run a stable-tree like that himself.
+git means any volunteer can run a stable-tree like that herself.
 
 The "master" branch is meant to contain what are very well
 tested and ready to be used in a production setting.  There
@@ -91,7 +92,7 @@ but they are not expected to be anything major, and more
 importantly quickly and trivially fixable.  Every now and
 then, a "feature release" is cut from the tip of this branch and
 they typically are named with three dotted decimal digits.  The
-last such release was v1.5.4 done on Feb 2nd this year.  You
+last such release was 1.5.4 done on Feb 2nd this year.  You
 can expect that the tip of the "master" branch is always more
 stable than any of the released versions.
 
@@ -100,7 +101,7 @@ from "master" at that point.  Obvious, safe and urgent fixes
 after a feature release are applied to this branch and
 maintenance releases are cut from it.  The maintenance releases
 are named with four dotted decimal, named after the feature
-release they are updates to; the last such release was v1.5.3.8.
+release they are updates to; the last such release was 1.5.4.2.
 New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
@@ -116,13 +117,13 @@ tip of these branches in my public repository, however, partly
 to keep the number of branches that downstream developers need
 to worry about low, and primarily because I am lazy.
 
-I judge the quality of topic branches, taking advices from the
-mailing list discussions.  Some of them start out as "good idea
-but obviously is broken in some areas (e.g. breaks the existing
-testsuite)" and then with some more work (either by the original
-contributor or help from other people on the list) becomes "more
-or less done and can now be tested by wider audience".  Luckily,
-most of them start out in the latter, better shape.
+The quality of topic branches are judged primarily by the mailing list
+discussions.  Some of them start out as "good idea but obviously is
+broken in some areas (e.g. breaks the existing testsuite)" and then
+with some more work (either by the original contributor's effort or
+help from other people on the list) becomes "more or less done and can
+now be tested by wider audience".  Luckily, most of them start out in
+the latter, better shape.
 
 The "next" branch is to merge and test topic branches in the
 latter category.  In general, the branch always contains the tip
@@ -132,11 +133,19 @@ usually use "next" version of git for my own work, so it cannot
 be _that_ broken to prevent me from pushing the changes out.
 The "next" branch is where new and exciting things take place.
 
-The above three branches, "master", "maint" and "next" are never
-rewound, so you should be able to safely track them (this
-automatically means the topics that have been merged into "next"
-are never rebased, and you can find the tip of topic branches you
-are interested in from the output of "git log next").
+The two branches "master" and "maint" are never rewound, and
+"next" usually will not be either (this automatically means the
+topics that have been merged into "next" are usually not
+rebased, and you can find the tip of topic branches you are
+interested in from the output of "git log next"). You should be
+able to safely track them.
+
+After a feature release is made from "master", however, "next"
+will be rebuilt from the tip of "master" using the surviving
+topics.  The commit that replaces the tip of the "next" will
+have the identical tree, but it will have different ancestry
+from the tip of "master".  An announcement will be made to warn
+people about such a rebasing.
 
 The "pu" (proposed updates) branch bundles all the remainder of
 topic branches.  The "pu" branch, and topic branches that are
@@ -186,14 +195,13 @@ of them.
 Although the following are included in git.git repository, they
 have their own authoritative repository and maintainers:
 
- git-gui/ -- this subdirectory comes from Shawn Pearce's git-gui
-             project, which is found at:
+ - git-gui/ comes from Shawn Pearce's git-gui project:
 
-             git://repo.or.cz/git-gui.git
+        git://repo.or.cz/git-gui.git
 
- gitk     -- this file is maintained by Paul Mackerras, at:
+ - gitk-git/ comes from Paul Mackerras's gitk project:
 
-             git://git.kernel.org/pub/scm/gitk/gitk.git
+        git://git.kernel.org/pub/scm/gitk/gitk.git
 
 I would like to thank everybody who helped to raise git into the
 current shape.  Especially I would like to thank the git list
@@ -203,7 +211,7 @@ relying on heavily:
  - Linus on general design issues.
 
  - Linus, Shawn Pearce, Johannes Schindelin, Nicolas Pitre,
-   Réne Scharfe and Jeff King on general implementation issues.
+   René Scharfe and Jeff King on general implementation issues.
 
  - Shawn and Nicolas Pitre on pack issues.
 
@@ -213,12 +221,14 @@ relying on heavily:
 
  - Eric Wong on git-svn.
 
+ - Simon Hausmann on git-p4.
+
  - Jakub Narebski, Petr Baudis, and Luben Tuikov on gitweb.
 
  - J. Bruce Fields on documentaton issues.
 
- - Johannes Schindelin and Johannes Sixt for their effort to
-   move things forward on the Windows front.  Although my
+ - Johannes Schindelin, Johannes Sixt and others for their effort
+   to move things forward on the Windows front.  Although my
    repository does not have much from the effort of MinGW team,
    I expect a merge into mainline will happen so that everybody
    can work from the same codebase.
