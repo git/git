@@ -133,6 +133,26 @@ When `core.autocrlf` is set to "input", line endings are
 converted to LF upon checkin, but there is no conversion done
 upon checkout.
 
+If `core.safecrlf` is set to "true" or "warn", git verifies if
+the conversion is reversible for the current setting of
+`core.autocrlf`.  For "true", git rejects irreversible
+conversions; for "warn", git only prints a warning but accepts
+an irreversible conversion.  The safety triggers to prevent such
+a conversion done to the files in the work tree, but there are a
+few exceptions.  Even though...
+
+- "git add" itself does not touch the files in the work tree, the
+  next checkout would, so the safety triggers;
+
+- "git apply" to update a text file with a patch does touch the files
+  in the work tree, but the operation is about text files and CRLF
+  conversion is about fixing the line ending inconsistencies, so the
+  safety does not trigger;
+
+- "git diff" itself does not touch the files in the work tree, it is
+  often run to inspect the changes you intend to next "git add".  To
+  catch potential problems early, safety triggers.
+
 
 `ident`
 ^^^^^^^

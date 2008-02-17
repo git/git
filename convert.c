@@ -85,8 +85,39 @@ static int is_binary(unsigned long size, struct text_stat *stats)
 	return 0;
 }
 
+static void check_safe_crlf(const char *path, int action,
+                            struct text_stat *stats, enum safe_crlf checksafe)
+{
+	if (!checksafe)
+		return;
+
+	if (action == CRLF_INPUT || auto_crlf <= 0) {
+		/*
+		 * CRLFs would not be restored by checkout:
+		 * check if we'd remove CRLFs
+		 */
+		if (stats->crlf) {
+			if (checksafe == SAFE_CRLF_WARN)
+				warning("CRLF will be replaced by LF in %s.", path);
+			else /* i.e. SAFE_CRLF_FAIL */
+				die("CRLF would be replaced by LF in %s.", path);
+		}
+	} else if (auto_crlf > 0) {
+		/*
+		 * CRLFs would be added by checkout:
+		 * check if we have "naked" LFs
+		 */
+		if (stats->lf != stats->crlf) {
+			if (checksafe == SAFE_CRLF_WARN)
+				warning("LF will be replaced by CRLF in %s", path);
+			else /* i.e. SAFE_CRLF_FAIL */
+				die("LF would be replaced by CRLF in %s", path);
+		}
+	}
+}
+
 static int crlf_to_git(const char *path, const char *src, size_t len,
-                       struct strbuf *buf, int action)
+                       struct strbuf *buf, int action, enum safe_crlf checksafe)
 {
 	struct text_stat stats;
 	char *dst;
@@ -95,9 +126,6 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		return 0;
 
 	gather_stats(src, len, &stats);
-	/* No CR? Nothing to convert, regardless. */
-	if (!stats.cr)
-		return 0;
 
 	if (action == CRLF_GUESS) {
 		/*
@@ -114,6 +142,12 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		if (is_binary(len, &stats))
 			return 0;
 	}
+
+	check_safe_crlf(path, action, &stats, checksafe);
+
+	/* Optimization: No CR? Nothing to convert, regardless. */
+	if (!stats.cr)
+		return 0;
 
 	/* only grow if not in place */
 	if (strbuf_avail(buf) + buf->len < len)
@@ -536,7 +570,8 @@ static int git_path_check_ident(const char *path, struct git_attr_check *check)
 	return !!ATTR_TRUE(value);
 }
 
-int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst)
+int convert_to_git(const char *path, const char *src, size_t len,
+                   struct strbuf *dst, enum safe_crlf checksafe)
 {
 	struct git_attr_check check[3];
 	int crlf = CRLF_GUESS;
@@ -558,7 +593,7 @@ int convert_to_git(const char *path, const char *src, size_t len, struct strbuf 
 		src = dst->buf;
 		len = dst->len;
 	}
-	ret |= crlf_to_git(path, src, len, dst, crlf);
+	ret |= crlf_to_git(path, src, len, dst, crlf, checksafe);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
