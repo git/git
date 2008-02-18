@@ -1770,6 +1770,7 @@ sub git_get_project_owner {
 	my $owner;
 
 	return undef unless $project;
+	$git_dir = "$projectroot/$project";
 
 	if (!defined $gitweb_project_owner) {
 		git_get_project_list_from_file();
@@ -1778,8 +1779,11 @@ sub git_get_project_owner {
 	if (exists $gitweb_project_owner->{$project}) {
 		$owner = $gitweb_project_owner->{$project};
 	}
+	if (!defined $owner){
+		$owner = git_get_project_config('owner');
+	}
 	if (!defined $owner) {
-		$owner = get_file_owner("$projectroot/$project");
+		$owner = get_file_owner("$git_dir");
 	}
 
 	return $owner;
