@@ -79,7 +79,8 @@ static void process_tag(struct tag *tag, struct object_array *p, const char *nam
 
 	if (parse_tag(tag) < 0)
 		die("bad tag object %s", sha1_to_hex(obj->sha1));
-	add_object(tag->tagged, p, NULL, name);
+	if (tag->tagged)
+		add_object(tag->tagged, p, NULL, name);
 }
 
 static void walk_commit_list(struct rev_info *revs)
