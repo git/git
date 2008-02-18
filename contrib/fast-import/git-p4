@@ -745,7 +745,9 @@ class P4Sync(Command):
                                      help="Import into refs/heads/ , not refs/remotes"),
                 optparse.make_option("--max-changes", dest="maxChanges"),
                 optparse.make_option("--keep-path", dest="keepRepoPath", action='store_true',
-                                     help="Keep entire BRANCH/DIR/SUBDIR prefix during import")
+                                     help="Keep entire BRANCH/DIR/SUBDIR prefix during import"),
+                optparse.make_option("--use-client-spec", dest="useClientSpec", action='store_true',
+                                     help="Only sync files that are included in the Perforce Client Spec")
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -772,6 +774,8 @@ class P4Sync(Command):
         self.depotPaths = None
         self.p4BranchesInGit = []
         self.cloneExclude = []
+        self.useClientSpec = False
+        self.clientSpecDirs = []
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
@@ -846,11 +850,21 @@ class P4Sync(Command):
 
     ## Should move this out, doesn't use SELF.
     def readP4Files(self, files):
+        for f in files:
+            for val in self.clientSpecDirs:
+                if f['path'].startswith(val[0]):
+                    if val[1] > 0:
+                        f['include'] = True
+                    else:
+                        f['include'] = False
+                    break
+
         files = [f for f in files
-                 if f['action'] != 'delete']
+                 if f['action'] != 'delete' and
+                 (f.has_key('include') == False or f['include'] == True)]
 
         if not files:
-            return
+            return []
 
         filedata = p4CmdList('-x - print',
                              stdin='\n'.join(['%s#%s' % (f['path'], f['rev'])
@@ -885,6 +899,7 @@ class P4Sync(Command):
         for f in files:
             assert not f.has_key('data')
             f['data'] = contents[f['path']]
+        return files
 
     def commit(self, details, files, branch, branchPrefixes, parent = ""):
         epoch = details["time"]
@@ -901,11 +916,7 @@ class P4Sync(Command):
                 new_files.append (f)
             else:
                 sys.stderr.write("Ignoring file outside of prefix: %s\n" % path)
-        files = new_files
-        self.readP4Files(files)
-
-
-
+        files = self.readP4Files(new_files)
 
         self.gitStream.write("commit %s\n" % branch)
 #        gitStream.write("mark :%s\n" % details["change"])
@@ -1320,6 +1331,26 @@ class P4Sync(Command):
             print self.gitError.read()
 
 
+    def getClientSpec(self):
+        specList = p4CmdList( "client -o" )
+        temp = {}
+        for entry in specList:
+            for k,v in entry.iteritems():
+                if k.startswith("View"):
+                    if v.startswith('"'):
+                        start = 1
+                    else:
+                        start = 0
+                    index = v.find("...")
+                    v = v[start:index]
+                    if v.startswith("-"):
+                        v = v[1:]
+                        temp[v] = -len(v)
+                    else:
+                        temp[v] = len(v)
+        self.clientSpecDirs = temp.items()
+        self.clientSpecDirs.sort( lambda x, y: abs( y[1] ) - abs( x[1] ) )
+
     def run(self, args):
         self.depotPaths = []
         self.changeRange = ""
@@ -1351,6 +1382,9 @@ class P4Sync(Command):
             # create it /after/ importing, when master exists
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
+
+        if self.useClientSpec or gitConfig("p4.useclientspec") == "true":
+            self.getClientSpec()
 
         # TODO: should always look at previous commits,
         # merge with previous imports, if possible.
