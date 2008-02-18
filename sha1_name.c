@@ -617,7 +617,8 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 		unsigned long size;
 
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
-		parse_object(commit->object.sha1);
+		if (!parse_object(commit->object.sha1))
+			continue;
 		if (temp_commit_buffer)
 			free(temp_commit_buffer);
 		if (commit->buffer)
