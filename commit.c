@@ -552,8 +552,10 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 		 */
 		return commit_list_insert(one, &result);
 
-	parse_commit(one);
-	parse_commit(two);
+	if (parse_commit(one))
+		return NULL;
+	if (parse_commit(two))
+		return NULL;
 
 	one->object.flags |= PARENT1;
 	two->object.flags |= PARENT2;
@@ -586,7 +588,8 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 			parents = parents->next;
 			if ((p->object.flags & flags) == flags)
 				continue;
-			parse_commit(p);
+			if (parse_commit(p))
+				return NULL;
 			p->object.flags |= flags;
 			insert_by_date(p, &list);
 		}
