@@ -15,6 +15,8 @@ static void process_blob(struct blob *blob,
 {
 	struct object *obj = &blob->object;
 
+	if (!blob)
+		die("bad blob object");
 	if (obj->flags & SEEN)
 		return;
 	obj->flags |= SEEN;
@@ -39,6 +41,8 @@ static void process_tree(struct tree *tree,
 	struct name_entry entry;
 	struct name_path me;
 
+	if (!tree)
+		die("bad tree object");
 	if (obj->flags & SEEN)
 		return;
 	obj->flags |= SEEN;
