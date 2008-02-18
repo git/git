@@ -177,6 +177,8 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 		struct tag *tag = (struct tag *) object;
 		if (revs->tag_objects && !(flags & UNINTERESTING))
 			add_pending_object(revs, object, tag->tag);
+		if (!tag->tagged)
+			die("bad tag");
 		object = parse_object(tag->tagged->sha1);
 		if (!object)
 			die("bad object %s", sha1_to_hex(tag->tagged->sha1));
@@ -689,6 +691,8 @@ static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
 		it = get_reference(revs, arg, sha1, 0);
 		if (it->type != OBJ_TAG)
 			break;
+		if (!((struct tag*)it)->tagged)
+			return 0;
 		hashcpy(sha1, ((struct tag*)it)->tagged->sha1);
 	}
 	if (it->type != OBJ_COMMIT)
