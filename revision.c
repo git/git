@@ -46,6 +46,8 @@ void add_object(struct object *obj,
 
 static void mark_blob_uninteresting(struct blob *blob)
 {
+	if (!blob)
+		return;
 	if (blob->object.flags & UNINTERESTING)
 		return;
 	blob->object.flags |= UNINTERESTING;
@@ -57,6 +59,8 @@ void mark_tree_uninteresting(struct tree *tree)
 	struct name_entry entry;
 	struct object *obj = &tree->object;
 
+	if (!tree)
+		return;
 	if (obj->flags & UNINTERESTING)
 		return;
 	obj->flags |= UNINTERESTING;
