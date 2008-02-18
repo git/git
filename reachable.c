@@ -150,7 +150,8 @@ static int add_one_reflog(const char *path, const unsigned char *sha1, int flag,
 static void add_one_tree(const unsigned char *sha1, struct rev_info *revs)
 {
 	struct tree *tree = lookup_tree(sha1);
-	add_pending_object(revs, &tree->object, "");
+	if (tree)
+		add_pending_object(revs, &tree->object, "");
 }
 
 static void add_cache_tree(struct cache_tree *it, struct rev_info *revs)
