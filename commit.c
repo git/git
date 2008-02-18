@@ -387,8 +387,7 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 
 	while (parents) {
 		struct commit *commit = parents->item;
-		parse_commit(commit);
-		if (!(commit->object.flags & mark)) {
+		if (!parse_commit(commit) && !(commit->object.flags & mark)) {
 			commit->object.flags |= mark;
 			insert_by_date(commit, list);
 		}
