@@ -127,19 +127,13 @@ get_author_ident_from_commit () {
 # if we require to be in a git repository.
 if test -z "$NONGIT_OK"
 then
+	GIT_DIR=$(git rev-parse --git-dir) || exit
 	if [ -z "$SUBDIRECTORY_OK" ]
 	then
-		: ${GIT_DIR=.git}
 		test -z "$(git rev-parse --show-cdup)" || {
 			exit=$?
 			echo >&2 "You need to run this command from the toplevel of the working tree."
 			exit $exit
-		}
-	else
-		GIT_DIR=$(git rev-parse --git-dir) || {
-		    exit=$?
-		    echo >&2 "Failed to find a valid git directory."
-		    exit $exit
 		}
 	fi
 	test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
