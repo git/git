@@ -578,8 +578,11 @@ static int handle_one_ref(const char *path,
 	struct object *object = parse_object(sha1);
 	if (!object)
 		return 0;
-	if (object->type == OBJ_TAG)
+	if (object->type == OBJ_TAG) {
 		object = deref_tag(object, path, strlen(path));
+		if (!object)
+			return 0;
+	}
 	if (object->type != OBJ_COMMIT)
 		return 0;
 	insert_by_date((struct commit *)object, list);

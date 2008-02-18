@@ -56,7 +56,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 			if (i < heads->nr) {
 				commit = (struct commit *)
 					deref_tag(heads->objects[i++].item, NULL, 0);
-				if (commit->object.type != OBJ_COMMIT) {
+				if (!commit || commit->object.type != OBJ_COMMIT) {
 					commit = NULL;
 					continue;
 				}
