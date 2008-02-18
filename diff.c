@@ -20,7 +20,7 @@
 
 static int diff_detect_rename_default;
 static int diff_rename_limit_default = 100;
-static int diff_use_color_default;
+int diff_use_color_default = -1;
 static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 
@@ -191,7 +191,7 @@ int git_diff_basic_config(const char *var, const char *value)
 		}
 	}
 
-	return git_default_config(var, value);
+	return git_color_default_config(var, value);
 }
 
 static char *quote_two(const char *one, const char *two)
@@ -2055,7 +2055,7 @@ void diff_setup(struct diff_options *options)
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
-	if (diff_use_color_default)
+	if (diff_use_color_default > 0)
 		DIFF_OPT_SET(options, COLOR_DIFF);
 	else
 		DIFF_OPT_CLR(options, COLOR_DIFF);

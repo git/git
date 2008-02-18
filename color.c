@@ -3,6 +3,8 @@
 
 #define COLOR_RESET "\033[m"
 
+int git_use_color_default = 0;
+
 static int parse_color(const char *name, int len)
 {
 	static const char * const color_names[] = {
@@ -141,6 +143,16 @@ int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 			return 1;
 	}
 	return 0;
+}
+
+int git_color_default_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "color.ui")) {
+		git_use_color_default = git_config_colorbool(var, value, -1);
+		return 0;
+	}
+
+	return git_default_config(var, value);
 }
 
 static int color_vfprintf(FILE *fp, const char *color, const char *fmt,

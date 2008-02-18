@@ -7,6 +7,7 @@
 
 #include "cache.h"
 #include "cache-tree.h"
+#include "color.h"
 #include "dir.h"
 #include "builtin.h"
 #include "diff.h"
@@ -770,6 +771,9 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	int commitable;
 
 	git_config(git_status_config);
+
+	if (wt_status_use_color == -1)
+		wt_status_use_color = git_use_color_default;
 
 	argc = parse_and_validate_options(argc, argv, builtin_status_usage);
 
