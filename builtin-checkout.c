@@ -545,6 +545,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN( 0 , "track", &opts.track, "track"),
 		OPT_BOOLEAN('f', NULL, &opts.force, "force"),
 		OPT_BOOLEAN('m', NULL, &opts.merge, "merge"),
+		OPT_END(),
 	};
 
 	memset(&opts, 0, sizeof(opts));
