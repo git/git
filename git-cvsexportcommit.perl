@@ -198,15 +198,39 @@ if (@canstatusfiles) {
       my @updated = xargs_safe_pipe_capture([@cvs, 'update'], @canstatusfiles);
       print @updated;
     }
-    my @cvsoutput;
-    @cvsoutput = xargs_safe_pipe_capture([@cvs, 'status'], @canstatusfiles);
-    my $matchcount = 0;
-    foreach my $l (@cvsoutput) {
-        chomp $l;
-        if ( $l =~ /^File:/ and  $l =~ /Status: (.*)$/ ) {
-            $cvsstat{$canstatusfiles[$matchcount]} = $1;
-            $matchcount++;
+    # "cvs status" reorders the parameters, notably when there are multiple
+    # arguments with the same basename.  So be precise here.
+
+    my %added = map { $_ => 1 } @afiles;
+    my %todo = map { $_ => 1 } @canstatusfiles;
+
+    while (%todo) {
+      my @canstatusfiles2 = ();
+      my %fullname = ();
+      foreach my $name (keys %todo) {
+	my $basename = basename($name);
+
+	$basename = "no file " . $basename if (exists($added{$basename}));
+	chomp($basename);
+
+	if (!exists($fullname{$basename})) {
+	  $fullname{$basename} = $name;
+	  push (@canstatusfiles2, $name);
+	  delete($todo{$name});
         }
+      }
+      my @cvsoutput;
+      @cvsoutput = xargs_safe_pipe_capture([@cvs, 'status'], @canstatusfiles2);
+      foreach my $l (@cvsoutput) {
+        chomp $l;
+        if ($l =~ /^File:\s+(.*\S)\s+Status: (.*)$/) {
+	  if (!exists($fullname{$1})) {
+	    print STDERR "Huh? Status reported for unexpected file '$1'\n";
+	  } else {
+	    $cvsstat{$fullname{$1}} = $2;
+	  }
+	}
+      }
     }
 }
 
