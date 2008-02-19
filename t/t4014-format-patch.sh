@@ -88,6 +88,40 @@ test_expect_success 'replay did not screw up the log message' '
 
 '
 
+test_expect_success 'extra headers' '
+
+	git config format.headers "To: R. E. Cipient <rcipient@example.com>
+" &&
+	git config --add format.headers "Cc: S. E. Cipient <scipient@example.com>
+" &&
+	git format-patch --stdout master..side > patch2 &&
+	sed -e "/^$/Q" patch2 > hdrs2 &&
+	grep "^To: R. E. Cipient <rcipient@example.com>$" hdrs2 &&
+	grep "^Cc: S. E. Cipient <scipient@example.com>$" hdrs2
+	
+'
+
+test_expect_failure 'extra headers without newlines' '
+
+	git config --replace-all format.headers "To: R. E. Cipient <rcipient@example.com>" &&
+	git config --add format.headers "Cc: S. E. Cipient <scipient@example.com>" &&
+	git format-patch --stdout master..side >patch3 &&
+	sed -e "/^$/Q" patch3 > hdrs3 &&
+	grep "^To: R. E. Cipient <rcipient@example.com>$" hdrs3 &&
+	grep "^Cc: S. E. Cipient <scipient@example.com>$" hdrs3
+	
+'
+
+test_expect_failure 'extra headers with multiple To:s' '
+
+	git config --replace-all format.headers "To: R. E. Cipient <rcipient@example.com>" &&
+	git config --add format.headers "To: S. E. Cipient <scipient@example.com>" &&
+	git format-patch --stdout master..side > patch4 &&
+	sed -e "/^$/Q" patch4 > hdrs4 &&
+	grep "^To: R. E. Cipient <rcipient@example.com>,$" hdrs4 &&
+	grep "^ *S. E. Cipient <scipient@example.com>$" hdrs4
+'
+
 test_expect_success 'multiple files' '
 
 	rm -rf patches/ &&
