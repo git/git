@@ -47,9 +47,9 @@ even if it does not result in a fast forward update.
 +
 Note: If no explicit refspec is found, (that is neither
 on the command line nor in any Push line of the
-corresponding remotes file---see below), then all the
-heads that exist both on the local side and on the remote
-side are updated.
+corresponding remotes file---see below), then "matching" heads are
+pushed: for every head that exists on the local side, the remote side is
+updated if a head of the same name already exists on the remote side.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 +
