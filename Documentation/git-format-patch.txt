@@ -17,6 +17,7 @@ SYNOPSIS
 		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
 		   [--ignore-if-in-upstream]
 		   [--subject-prefix=Subject-Prefix]
+		   [--cc=<email>]
 		   [--cover-letter]
 		   [ <since> | <revision range> ]
 
@@ -135,6 +136,10 @@ include::diff-options.txt[]
 	line, instead use '[<Subject-Prefix>]'. This
 	allows for useful naming of a patch series, and can be
 	combined with the --numbered option.
+
+--cc=<email>::
+	Add a "Cc:" header to the email headers. This is in addition
+	to any configured headers, and may be used multiple times.
 
 --cover-letter::
 	Generate a cover letter template.  You still have to fill in

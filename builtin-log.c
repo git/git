@@ -771,6 +771,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				die("Need a number for --start-number");
 			start_number = strtol(argv[i], NULL, 10);
 		}
+		else if (!prefixcmp(argv[i], "--cc=")) {
+			ALLOC_GROW(extra_cc, extra_cc_nr + 1, extra_cc_alloc);
+			extra_cc[extra_cc_nr++] = xstrdup(argv[i] + 5);
+		}
 		else if (!strcmp(argv[i], "-k") ||
 				!strcmp(argv[i], "--keep-subject")) {
 			keep_subject = 1;

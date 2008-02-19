@@ -122,6 +122,14 @@ test_expect_success 'extra headers with multiple To:s' '
 	grep "^ *S. E. Cipient <scipient@example.com>$" hdrs4
 '
 
+test_expect_success 'additional command line cc' '
+
+	git config --replace-all format.headers "Cc: R. E. Cipient <rcipient@example.com>" &&
+	git format-patch --cc="S. E. Cipient <scipient@example.com>" --stdout master..side | sed -e "/^$/Q" >patch5 &&
+	grep "^Cc: R. E. Cipient <rcipient@example.com>,$" patch5 &&
+	grep "^ *S. E. Cipient <scipient@example.com>$" patch5
+'
+
 test_expect_success 'multiple files' '
 
 	rm -rf patches/ &&
