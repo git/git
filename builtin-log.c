@@ -411,28 +411,47 @@ static int istitlechar(char c)
 		(c >= '0' && c <= '9') || c == '.' || c == '_';
 }
 
-static char *extra_headers = NULL;
-static int extra_headers_size = 0;
 static const char *fmt_patch_suffix = ".patch";
 static int numbered = 0;
 static int auto_number = 0;
 
+static char **extra_hdr;
+static int extra_hdr_nr;
+static int extra_hdr_alloc;
+
+static char **extra_to;
+static int extra_to_nr;
+static int extra_to_alloc;
+
+static char **extra_cc;
+static int extra_cc_nr;
+static int extra_cc_alloc;
+
+static void add_header(const char *value)
+{
+	int len = strlen(value);
+	while (value[len - 1] == '\n')
+		len--;
+	if (!strncasecmp(value, "to: ", 4)) {
+		ALLOC_GROW(extra_to, extra_to_nr + 1, extra_to_alloc);
+		extra_to[extra_to_nr++] = xstrndup(value + 4, len - 4);
+		return;
+	}
+	if (!strncasecmp(value, "cc: ", 4)) {
+		ALLOC_GROW(extra_cc, extra_cc_nr + 1, extra_cc_alloc);
+		extra_cc[extra_cc_nr++] = xstrndup(value + 4, len - 4);
+		return;
+	}
+	ALLOC_GROW(extra_hdr, extra_hdr_nr + 1, extra_hdr_alloc);
+	extra_hdr[extra_hdr_nr++] = xstrndup(value, len);
+}
+
 static int git_format_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "format.headers")) {
-		int len;
-
 		if (!value)
 			die("format.headers without value");
-		len = strlen(value);
-		while (value[len - 1] == '\n')
-			len--;
-		extra_headers_size += len + 2;
-		extra_headers = xrealloc(extra_headers, extra_headers_size);
-		extra_headers[extra_headers_size - len - 2] = 0;
-		strcat(extra_headers, value);
-		extra_headers[extra_headers_size - 2] = '\n';
-		extra_headers[extra_headers_size - 1] = 0;
+		add_header(value);
 		return 0;
 	}
 	if (!strcmp(var, "format.suffix")) {
@@ -712,6 +731,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
 	char *add_signoff = NULL;
+	struct strbuf buf;
 
 	git_config(git_format_config);
 	init_revisions(&rev, prefix);
@@ -724,7 +744,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
 
 	rev.subject_prefix = fmt_patch_subject_prefix;
-	rev.extra_headers = extra_headers;
 
 	/*
 	 * Parse the arguments before setup_revisions(), or something
@@ -814,6 +833,37 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			argv[j++] = argv[i];
 	}
 	argc = j;
+
+	strbuf_init(&buf, 0);
+
+	for (i = 0; i < extra_hdr_nr; i++) {
+		strbuf_addstr(&buf, extra_hdr[i]);
+		strbuf_addch(&buf, '\n');
+	}
+
+	if (extra_to_nr)
+		strbuf_addstr(&buf, "To: ");
+	for (i = 0; i < extra_to_nr; i++) {
+		if (i)
+			strbuf_addstr(&buf, "    ");
+		strbuf_addstr(&buf, extra_to[i]);
+		if (i + 1 < extra_to_nr)
+			strbuf_addch(&buf, ',');
+		strbuf_addch(&buf, '\n');
+	}
+
+	if (extra_cc_nr)
+		strbuf_addstr(&buf, "Cc: ");
+	for (i = 0; i < extra_cc_nr; i++) {
+		if (i)
+			strbuf_addstr(&buf, "    ");
+		strbuf_addstr(&buf, extra_cc[i]);
+		if (i + 1 < extra_cc_nr)
+			strbuf_addch(&buf, ',');
+		strbuf_addch(&buf, '\n');
+	}
+
+	rev.extra_headers = strbuf_detach(&buf, 0);
 
 	if (start_number < 0)
 		start_number = 1;

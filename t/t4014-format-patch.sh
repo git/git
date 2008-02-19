@@ -112,7 +112,7 @@ test_expect_success 'extra headers without newlines' '
 	
 '
 
-test_expect_failure 'extra headers with multiple To:s' '
+test_expect_success 'extra headers with multiple To:s' '
 
 	git config --replace-all format.headers "To: R. E. Cipient <rcipient@example.com>" &&
 	git config --add format.headers "To: S. E. Cipient <scipient@example.com>" &&
