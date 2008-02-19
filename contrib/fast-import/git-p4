@@ -464,18 +464,13 @@ class P4Submit(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [
-                optparse.make_option("--continue", action="store_false", dest="firstTime"),
                 optparse.make_option("--verbose", dest="verbose", action="store_true"),
                 optparse.make_option("--origin", dest="origin"),
-                optparse.make_option("--reset", action="store_true", dest="reset"),
                 optparse.make_option("-M", dest="detectRename", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
-        self.firstTime = True
-        self.reset = False
         self.interactive = True
-        self.firstTime = True
         self.origin = ""
         self.detectRename = False
         self.verbose = False
@@ -484,19 +479,6 @@ class P4Submit(Command):
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
             die("You have files opened with perforce! Close them before starting the sync.")
-
-    def start(self):
-        if len(self.config) > 0 and not self.reset:
-            die("Cannot start sync. Previous sync config found at %s\n"
-                "If you want to start submitting again from scratch "
-                "maybe you want to call git-p4 submit --reset" % self.configFile)
-
-        commits = []
-        for line in read_pipe_lines("git rev-list --no-merges %s..%s" % (self.origin, self.master)):
-            commits.append(line.strip())
-        commits.reverse()
-
-        self.config["commits"] = commits
 
     # replaces everything between 'Description:' and the next P4 submit template field with the
     # commit message
@@ -723,42 +705,29 @@ class P4Submit(Command):
         print "Syncronizing p4 checkout..."
         system("p4 sync ...")
 
-        if self.reset:
-            self.firstTime = True
-
         self.check()
-        self.configFile = self.gitdir + "/p4-git-sync.cfg"
-        self.config = shelve.open(self.configFile, writeback=True)
 
-        if self.firstTime:
-            self.start()
-
-        commits = self.config.get("commits", [])
+        commits = []
+        for line in read_pipe_lines("git rev-list --no-merges %s..%s" % (self.origin, self.master)):
+            commits.append(line.strip())
+        commits.reverse()
 
         while len(commits) > 0:
-            self.firstTime = False
             commit = commits[0]
             commits = commits[1:]
-            self.config["commits"] = commits
             self.applyCommit(commit)
             if not self.interactive:
                 break
 
-        self.config.close()
-
         if len(commits) == 0:
-            if self.firstTime:
-                print "No changes found to apply between %s and current HEAD" % self.origin
-            else:
-                print "All changes applied!"
-                os.chdir(self.oldWorkingDirectory)
+            print "All changes applied!"
+            os.chdir(self.oldWorkingDirectory)
 
-                sync = P4Sync()
-                sync.run([])
+            sync = P4Sync()
+            sync.run([])
 
-                rebase = P4Rebase()
-                rebase.rebase()
-            os.remove(self.configFile)
+            rebase = P4Rebase()
+            rebase.rebase()
 
         return True
 
