@@ -110,9 +110,9 @@ needquote:
 	strbuf_addstr(sb, "?=");
 }
 
-static void add_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
-			 const char *line, enum date_mode dmode,
-			 const char *encoding)
+void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
+		  const char *line, enum date_mode dmode,
+		  const char *encoding)
 {
 	char *date;
 	int namelen;
@@ -295,7 +295,7 @@ static void format_person_part(struct strbuf *sb, char part,
 	/*
 	 * If it does not even have a '<' and '>', that is
 	 * quite a bogus commit author and we discard it;
-	 * this is in line with add_user_info() that is used
+	 * this is in line with pp_user_info() that is used
 	 * in the normal codepath.  When end points at the '<'
 	 * that we found, it should have matching '>' later,
 	 * which means start (beginning of email address) must
@@ -643,23 +643,23 @@ static void pp_header(enum cmit_fmt fmt,
 		 */
 		if (!memcmp(line, "author ", 7)) {
 			strbuf_grow(sb, linelen + 80);
-			add_user_info("Author", fmt, sb, line + 7, dmode, encoding);
+			pp_user_info("Author", fmt, sb, line + 7, dmode, encoding);
 		}
 		if (!memcmp(line, "committer ", 10) &&
 		    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER)) {
 			strbuf_grow(sb, linelen + 80);
-			add_user_info("Commit", fmt, sb, line + 10, dmode, encoding);
+			pp_user_info("Commit", fmt, sb, line + 10, dmode, encoding);
 		}
 	}
 }
 
-static void pp_title_line(enum cmit_fmt fmt,
-			  const char **msg_p,
-			  struct strbuf *sb,
-			  const char *subject,
-			  const char *after_subject,
-			  const char *encoding,
-			  int plain_non_ascii)
+void pp_title_line(enum cmit_fmt fmt,
+		   const char **msg_p,
+		   struct strbuf *sb,
+		   const char *subject,
+		   const char *after_subject,
+		   const char *encoding,
+		   int plain_non_ascii)
 {
 	struct strbuf title;
 
@@ -708,10 +708,10 @@ static void pp_title_line(enum cmit_fmt fmt,
 	strbuf_release(&title);
 }
 
-static void pp_remainder(enum cmit_fmt fmt,
-			 const char **msg_p,
-			 struct strbuf *sb,
-			 int indent)
+void pp_remainder(enum cmit_fmt fmt,
+		  const char **msg_p,
+		  struct strbuf *sb,
+		  int indent)
 {
 	int first = 1;
 	for (;;) {
