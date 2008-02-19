@@ -91,7 +91,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 {
 	const char *orig = path;
 	char *sanitized = xmalloc(len + strlen(path) + 1);
-	if (*orig == '/')
+	if (is_absolute_path(orig))
 		strcpy(sanitized, path);
 	else {
 		if (len)
@@ -100,7 +100,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 	}
 	if (sanitary_path_copy(sanitized, sanitized))
 		goto error_out;
-	if (*orig == '/') {
+	if (is_absolute_path(orig)) {
 		const char *work_tree = get_git_work_tree();
 		size_t len = strlen(work_tree);
 		size_t total = strlen(sanitized) + 1;
