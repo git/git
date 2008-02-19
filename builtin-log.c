@@ -425,10 +425,14 @@ static int git_format_config(const char *var, const char *value)
 		if (!value)
 			die("format.headers without value");
 		len = strlen(value);
-		extra_headers_size += len + 1;
+		while (value[len - 1] == '\n')
+			len--;
+		extra_headers_size += len + 2;
 		extra_headers = xrealloc(extra_headers, extra_headers_size);
-		extra_headers[extra_headers_size - len - 1] = 0;
+		extra_headers[extra_headers_size - len - 2] = 0;
 		strcat(extra_headers, value);
+		extra_headers[extra_headers_size - 2] = '\n';
+		extra_headers[extra_headers_size - 1] = 0;
 		return 0;
 	}
 	if (!strcmp(var, "format.suffix")) {
