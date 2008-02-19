@@ -263,4 +263,28 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 
 '
 
+test_expect_success \
+    'checkout w/--track sets up tracking' '
+    git config branch.autosetupmerge false &&
+    git checkout master &&
+    git checkout --track -b track1 &&
+    test "$(git config branch.track1.remote)" &&
+    test "$(git config branch.track1.merge)"'
+
+test_expect_success \
+    'checkout w/autosetupmerge=always sets up tracking' '
+    git config branch.autosetupmerge always &&
+    git checkout master &&
+    git checkout -b track2 &&
+    test "$(git config branch.track2.remote)" &&
+    test "$(git config branch.track2.merge)"
+    git config branch.autosetupmerge false'
+
+test_expect_success \
+    'checkout w/--track from non-branch HEAD fails' '
+    git checkout -b delete-me master &&
+    rm .git/refs/heads/delete-me &&
+    test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
+    !(git checkout --track -b track)'
+
 test_done

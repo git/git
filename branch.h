@@ -13,7 +13,7 @@
  * branch for (if any).
  */
 void create_branch(const char *head, const char *name, const char *start_name,
-		   int force, int reflog, int track);
+		   int force, int reflog, enum branch_track track);
 
 /*
  * Remove information about the state of working on the current

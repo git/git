@@ -186,7 +186,7 @@ struct checkout_opts {
 
 	char *new_branch;
 	int new_branch_log;
-	int track;
+	enum branch_track track;
 };
 
 struct branch_info {
@@ -457,13 +457,8 @@ static int switch_branches(struct checkout_opts *opts,
 	return post_checkout_hook(old.commit, new->commit, 1);
 }
 
-static int branch_track = 0;
-
 static int git_checkout_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "branch.autosetupmerge"))
-		branch_track = git_config_bool(var, value);
-
 	return git_default_config(var, value);
 }
 
@@ -478,7 +473,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&opts.quiet),
 		OPT_STRING('b', NULL, &opts.new_branch, "new branch", "branch"),
 		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, "log for new branch"),
-		OPT_BOOLEAN( 0 , "track", &opts.track, "track"),
+		OPT_SET_INT( 0 , "track",  &opts.track, "track",
+			BRANCH_TRACK_EXPLICIT),
 		OPT_BOOLEAN('f', NULL, &opts.force, "force"),
 		OPT_BOOLEAN('m', NULL, &opts.merge, "merge"),
 		OPT_END(),
@@ -489,7 +485,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	git_config(git_checkout_config);
 
-	opts.track = branch_track;
+	opts.track = git_branch_track;
 
 	argc = parse_options(argc, argv, options, checkout_usage, 0);
 	if (argc) {
@@ -518,7 +514,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		argc--;
 	}
 
-	if (!opts.new_branch && (opts.track != branch_track))
+	if (!opts.new_branch && (opts.track != git_branch_track))
 		die("git checkout: --track and --no-track require -b");
 
 	if (opts.force && opts.merge)
