@@ -122,6 +122,32 @@ test_expect_success 'thread in-reply-to' '
 	done
 '
 
+test_expect_success 'thread cover-letter' '
+
+	rm -rf patches/ &&
+	git checkout side &&
+	git format-patch --cover-letter --thread -o patches/ master &&
+	FIRST_MID=$(grep "Message-Id:" patches/0000-* | sed "s/^[^<]*\(<[^>]*>\).*$/\1/") &&
+	for i in patches/0001-* patches/0002-* patches/0003-* 
+	do
+	  grep "References: $FIRST_MID" $i &&
+	  grep "In-Reply-To: $FIRST_MID" $i
+	done
+'
+
+test_expect_success 'thread cover-letter in-reply-to' '
+
+	rm -rf patches/ &&
+	git checkout side &&
+	git format-patch --cover-letter --in-reply-to="<test.message>" --thread -o patches/ master &&
+	FIRST_MID="<test.message>" &&
+	for i in patches/*
+	do
+	  grep "References: $FIRST_MID" $i &&
+	  grep "In-Reply-To: $FIRST_MID" $i
+	done
+'
+
 test_expect_success 'excessive subject' '
 
 	rm -rf patches/ &&

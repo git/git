@@ -14,6 +14,7 @@
 #include "reflog-walk.h"
 #include "patch-ids.h"
 #include "refs.h"
+#include "run-command.h"
 
 static int default_show_root = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
@@ -452,74 +453,81 @@ static int git_format_config(const char *var, const char *value)
 }
 
 
-static FILE *realstdout = NULL;
-static const char *output_directory = NULL;
-
-static int reopen_stdout(struct commit *commit, int nr, int keep_subject,
-			 int numbered_files)
+static const char *get_oneline_for_filename(struct commit *commit,
+					    int keep_subject)
 {
-	char filename[PATH_MAX];
+	static char filename[PATH_MAX];
 	char *sol;
 	int len = 0;
 	int suffix_len = strlen(fmt_patch_suffix) + 1;
 
+	sol = strstr(commit->buffer, "\n\n");
+	if (!sol)
+		filename[0] = '\0';
+	else {
+		int j, space = 0;
+
+		sol += 2;
+		/* strip [PATCH] or [PATCH blabla] */
+		if (!keep_subject && !prefixcmp(sol, "[PATCH")) {
+			char *eos = strchr(sol + 6, ']');
+			if (eos) {
+				while (isspace(*eos))
+					eos++;
+				sol = eos;
+			}
+		}
+
+		for (j = 0;
+		     j < FORMAT_PATCH_NAME_MAX - suffix_len - 5 &&
+			     len < sizeof(filename) - suffix_len &&
+			     sol[j] && sol[j] != '\n';
+		     j++) {
+			if (istitlechar(sol[j])) {
+				if (space) {
+					filename[len++] = '-';
+					space = 0;
+				}
+				filename[len++] = sol[j];
+				if (sol[j] == '.')
+					while (sol[j + 1] == '.')
+						j++;
+			} else
+				space = 1;
+		}
+		while (filename[len - 1] == '.'
+		       || filename[len - 1] == '-')
+			len--;
+		filename[len] = '\0';
+	}
+	return filename;
+}
+
+static FILE *realstdout = NULL;
+static const char *output_directory = NULL;
+
+static int reopen_stdout(const char *oneline, int nr, int total)
+{
+	char filename[PATH_MAX];
+	int len = 0;
+	int suffix_len = strlen(fmt_patch_suffix) + 1;
+
 	if (output_directory) {
-		if (strlen(output_directory) >=
+		len = snprintf(filename, sizeof(filename), "%s",
+				output_directory);
+		if (len >=
 		    sizeof(filename) - FORMAT_PATCH_NAME_MAX - suffix_len)
 			return error("name of output directory is too long");
-		strlcpy(filename, output_directory, sizeof(filename) - suffix_len);
-		len = strlen(filename);
 		if (filename[len - 1] != '/')
 			filename[len++] = '/';
 	}
 
-	if (numbered_files) {
-		sprintf(filename + len, "%d", nr);
-		len = strlen(filename);
-
-	} else {
-		sprintf(filename + len, "%04d", nr);
-		len = strlen(filename);
-
-		sol = strstr(commit->buffer, "\n\n");
-		if (sol) {
-			int j, space = 1;
-
-			sol += 2;
-			/* strip [PATCH] or [PATCH blabla] */
-			if (!keep_subject && !prefixcmp(sol, "[PATCH")) {
-				char *eos = strchr(sol + 6, ']');
-				if (eos) {
-					while (isspace(*eos))
-						eos++;
-					sol = eos;
-				}
-			}
-
-			for (j = 0;
-			     j < FORMAT_PATCH_NAME_MAX - suffix_len - 5 &&
-				     len < sizeof(filename) - suffix_len &&
-				     sol[j] && sol[j] != '\n';
-			     j++) {
-				if (istitlechar(sol[j])) {
-					if (space) {
-						filename[len++] = '-';
-						space = 0;
-					}
-					filename[len++] = sol[j];
-					if (sol[j] == '.')
-						while (sol[j + 1] == '.')
-							j++;
-				} else
-					space = 1;
-			}
-			while (filename[len - 1] == '.'
-			       || filename[len - 1] == '-')
-				len--;
-			filename[len] = 0;
-		}
-		if (len + suffix_len >= sizeof(filename))
-			return error("Patch pathname too long");
+	if (!oneline)
+		len += sprintf(filename + len, "%d", nr);
+	else {
+		len += sprintf(filename + len, "%04d-", nr);
+		len += snprintf(filename + len, sizeof(filename) - len - 1
+				- suffix_len, "%s", oneline);
 		strcpy(filename + len, fmt_patch_suffix);
 	}
 
@@ -590,6 +598,76 @@ static void gen_message_id(struct rev_info *info, char *base)
 	info->message_id = strbuf_detach(&buf, NULL);
 }
 
+static void make_cover_letter(struct rev_info *rev,
+		int use_stdout, int numbered, int numbered_files,
+			      struct commit *origin, struct commit *head)
+{
+	const char *committer;
+	const char *origin_sha1, *head_sha1;
+	const char *argv[7];
+	const char *subject_start = NULL;
+	const char *body = "*** SUBJECT HERE ***\n\n*** BLURB HERE ***\n";
+	const char *msg;
+	const char *extra_headers = rev->extra_headers;
+	struct strbuf sb;
+	const char *encoding = "utf-8";
+
+	if (rev->commit_format != CMIT_FMT_EMAIL)
+		die("Cover letter needs email format");
+
+	if (!use_stdout && reopen_stdout(numbered_files ?
+				NULL : "cover-letter", 0, rev->total))
+		return;
+
+	origin_sha1 = sha1_to_hex(origin ? origin->object.sha1 : null_sha1);
+	head_sha1 = sha1_to_hex(head->object.sha1);
+
+	log_write_email_headers(rev, head_sha1, &subject_start, &extra_headers);
+
+	committer = git_committer_info(0);
+
+	msg = body;
+	strbuf_init(&sb, 0);
+	pp_user_info(NULL, CMIT_FMT_EMAIL, &sb, committer, DATE_RFC2822,
+		     encoding);
+	pp_title_line(CMIT_FMT_EMAIL, &msg, &sb, subject_start, extra_headers,
+		      encoding, 0);
+	pp_remainder(CMIT_FMT_EMAIL, &msg, &sb, 0);
+	printf("%s\n", sb.buf);
+
+	strbuf_release(&sb);
+
+	/*
+	 * We can only do diffstat with a unique reference point, and
+	 * log is a bit tricky, so just skip it.
+	 */
+	if (!origin)
+		return;
+
+	argv[0] = "shortlog";
+	argv[1] = head_sha1;
+	argv[2] = "--not";
+	argv[3] = origin_sha1;
+	argv[4] = "--";
+	argv[5] = NULL;
+	fflush(stdout);
+	run_command_v_opt(argv, RUN_GIT_CMD);
+
+	argv[0] = "diff";
+	argv[1] = "--stat";
+	argv[2] = "--summary";
+	argv[3] = head_sha1;
+	argv[4] = "--not";
+	argv[5] = origin_sha1;
+	argv[6] = "--";
+	argv[7] = NULL;
+	fflush(stdout);
+	run_command_v_opt(argv, RUN_GIT_CMD);
+
+	fflush(stdout);
+	printf("\n");
+}
+
 static const char *clean_message_id(const char *msg_id)
 {
 	char ch;
@@ -625,6 +703,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int subject_prefix = 0;
 	int ignore_if_in_upstream = 0;
 	int thread = 0;
+	int cover_letter = 0;
+	struct commit *origin = NULL, *head = NULL;
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
 	char *add_signoff = NULL;
@@ -724,6 +804,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			rev.subject_prefix = argv[i] + 17;
 		} else if (!prefixcmp(argv[i], "--suffix="))
 			fmt_patch_suffix = argv[i] + 9;
+		else if (!strcmp(argv[i], "--cover-letter"))
+			cover_letter = 1;
 		else
 			argv[j++] = argv[i];
 	}
@@ -775,6 +857,25 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		 * get_revision() to do the usual traversal.
 		 */
 	}
+	if (cover_letter) {
+		/* remember the range */
+		int negative_count = 0;
+		int i;
+		for (i = 0; i < rev.pending.nr; i++) {
+			struct object *o = rev.pending.objects[i].item;
+			if (o->flags & UNINTERESTING) {
+				origin = (struct commit *)o;
+				negative_count++;
+			} else
+				head = (struct commit *)o;
+		}
+		/* Multiple origins don't work for diffstat. */
+		if (negative_count > 1)
+			origin = NULL;
+		/* We can't generate a cover letter without any patches */
+		if (!head)
+			return 0;
+	}
 
 	if (ignore_if_in_upstream)
 		get_patch_ids(&rev, &ids, prefix);
@@ -801,16 +902,31 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		numbered = 1;
 	if (numbered)
 		rev.total = total + start_number - 1;
-	rev.add_signoff = add_signoff;
 	if (in_reply_to)
 		rev.ref_message_id = clean_message_id(in_reply_to);
+	if (cover_letter) {
+		if (thread)
+			gen_message_id(&rev, "cover");
+		make_cover_letter(&rev, use_stdout, numbered, numbered_files,
+				  origin, head);
+		total++;
+		start_number--;
+	}
+	rev.add_signoff = add_signoff;
 	while (0 <= --nr) {
 		int shown;
 		commit = list[nr];
 		rev.nr = total - nr + (start_number - 1);
 		/* Make the second and subsequent mails replies to the first */
 		if (thread) {
+			/* Have we already had a message ID? */
 			if (rev.message_id) {
+				/*
+				 * If we've got the ID to be a reply
+				 * to, discard the current ID;
+				 * otherwise, make everything a reply
+				 * to that.
+				 */
 				if (rev.ref_message_id)
 					free(rev.message_id);
 				else
@@ -818,10 +934,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			}
 			gen_message_id(&rev, sha1_to_hex(commit->object.sha1));
 		}
-		if (!use_stdout)
-			if (reopen_stdout(commit, rev.nr, keep_subject,
-					  numbered_files))
-				die("Failed to create output files");
+		if (!use_stdout && reopen_stdout(numbered_files ? NULL :
+				get_oneline_for_filename(commit, keep_subject),
+				rev.nr, rev.total))
+			die("Failed to create output files");
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;
