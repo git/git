@@ -575,16 +575,19 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const cha
 	o2->flags = flags2;
 }
 
-static void gen_message_id(char *dest, unsigned int length, char *base)
+static void gen_message_id(struct rev_info *info, char *base)
 {
 	const char *committer = git_committer_info(IDENT_WARN_ON_NO_NAME);
 	const char *email_start = strrchr(committer, '<');
 	const char *email_end = strrchr(committer, '>');
-	if(!email_start || !email_end || email_start > email_end - 1)
+	struct strbuf buf;
+	if (!email_start || !email_end || email_start > email_end - 1)
 		die("Could not extract email from committer identity.");
-	snprintf(dest, length, "%s.%lu.git.%.*s", base,
-		 (unsigned long) time(NULL),
-		 (int)(email_end - email_start - 1), email_start + 1);
+	strbuf_init(&buf, 0);
+	strbuf_addf(&buf, "%s.%lu.git.%.*s", base,
+		    (unsigned long) time(NULL),
+		    (int)(email_end - email_start - 1), email_start + 1);
+	info->message_id = strbuf_detach(&buf, NULL);
 }
 
 static const char *clean_message_id(const char *msg_id)
@@ -625,8 +628,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
 	char *add_signoff = NULL;
-	char message_id[1024];
-	char ref_message_id[1024];
 
 	git_config(git_format_config);
 	init_revisions(&rev, prefix);
@@ -809,15 +810,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		rev.nr = total - nr + (start_number - 1);
 		/* Make the second and subsequent mails replies to the first */
 		if (thread) {
-			if (nr == (total - 2)) {
-				strncpy(ref_message_id, message_id,
-					sizeof(ref_message_id));
-				ref_message_id[sizeof(ref_message_id)-1]='\0';
-				rev.ref_message_id = ref_message_id;
+			if (rev.message_id) {
+				if (rev.ref_message_id)
+					free(rev.message_id);
+				else
+					rev.ref_message_id = rev.message_id;
 			}
-			gen_message_id(message_id, sizeof(message_id),
-				       sha1_to_hex(commit->object.sha1));
-			rev.message_id = message_id;
+			gen_message_id(&rev, sha1_to_hex(commit->object.sha1));
 		}
 		if (!use_stdout)
 			if (reopen_stdout(commit, rev.nr, keep_subject,
