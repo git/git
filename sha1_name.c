@@ -494,8 +494,11 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 				return error("%.*s: expected %s type, but the object dereferences to %s type",
 					     len, name, typename(expected_type),
 					     typename(o->type));
+			if (!o)
+				return -1;
 			if (!o->parsed)
-				parse_object(o->sha1);
+				if (!parse_object(o->sha1))
+					return -1;
 		}
 	}
 	return 0;
@@ -620,7 +623,8 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 		unsigned long size;
 
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
-		parse_object(commit->object.sha1);
+		if (!parse_object(commit->object.sha1))
+			continue;
 		if (temp_commit_buffer)
 			free(temp_commit_buffer);
 		if (commit->buffer)
