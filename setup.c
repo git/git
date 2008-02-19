@@ -4,13 +4,26 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 
+#ifdef __MINGW32__
+static inline int is_dir_sep(char c) { return c == '/' || c == '\\'; }
+#else
+static inline int is_dir_sep(char c) { return c == '/'; }
+#endif
+
 static int sanitary_path_copy(char *dst, const char *src)
 {
 	char *dst0 = dst;
 
-	if (*src == '/') {
+#ifdef __MINGW32__
+	if (isalpha(*src) && src[1] == ':') {
+		src += 2;
+		dst += 2;
+		dst0 += 2;
+	}
+#endif
+	if (is_dir_sep(*src)) {
 		*dst++ = '/';
-		while (*src == '/')
+		while (is_dir_sep(*src))
 			src++;
 	}
 
@@ -32,9 +45,12 @@ static int sanitary_path_copy(char *dst, const char *src)
 				src++;
 				break;
 			case '/':
+#ifdef __MINGW32__
+			case '\\':
+#endif
 				/* (2) */
 				src += 2;
-				while (*src == '/')
+				while (is_dir_sep(*src))
 					src++;
 				continue;
 			case '.':
@@ -44,9 +60,12 @@ static int sanitary_path_copy(char *dst, const char *src)
 					src += 2;
 					goto up_one;
 				case '/':
+#ifdef __MINGW32__
+				case '\\':
+#endif
 					/* (4) */
 					src += 3;
-					while (*src == '/')
+					while (is_dir_sep(*src))
 						src++;
 					goto up_one;
 				}
@@ -54,11 +73,11 @@ static int sanitary_path_copy(char *dst, const char *src)
 		}
 
 		/* copy up to the next '/', and eat all '/' */
-		while ((c = *src++) != '\0' && c != '/')
+		while ((c = *src++) != '\0' && !is_dir_sep(c))
 			*dst++ = c;
-		if (c == '/') {
-			*dst++ = c;
-			while (c == '/')
+		if (is_dir_sep(c)) {
+			*dst++ = '/';
+			while (is_dir_sep(c))
 				c = *src++;
 			src--;
 		} else if (!c)
@@ -77,7 +96,7 @@ static int sanitary_path_copy(char *dst, const char *src)
 			if (dst <= dst0)
 				break;
 			c = *dst--;
-			if (c == '/') {
+			if (c == '/') {	/* MinGW: cannot be '\\' anymore */
 				dst += 2;
 				break;
 			}
