@@ -483,10 +483,6 @@ class P4Submit(Command):
         self.verbose = False
         self.isWindows = (platform.system() == "Windows")
 
-        self.logSubstitutions = {}
-        self.logSubstitutions["<enter description here>"] = "%log%"
-        self.logSubstitutions["\tDetails:"] = "\tDetails:  %log%"
-
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
             die("You have files opened with perforce! Close them before starting the sync.")
@@ -507,26 +503,31 @@ class P4Submit(Command):
 
         self.config["commits"] = commits
 
+    # replaces everything between 'Description:' and the next P4 submit template field with the
+    # commit message
     def prepareLogMessage(self, template, message):
         result = ""
+
+        inDescriptionSection = False
 
         for line in template.split("\n"):
             if line.startswith("#"):
                 result += line + "\n"
                 continue
 
-            substituted = False
-            for key in self.logSubstitutions.keys():
-                if line.find(key) != -1:
-                    value = self.logSubstitutions[key]
-                    value = value.replace("%log%", message)
-                    if value != "@remove@":
-                        result += line.replace(key, value) + "\n"
-                    substituted = True
-                    break
+            if inDescriptionSection:
+                if line.startswith("Files:"):
+                    inDescriptionSection = False
+                else:
+                    continue
+            else:
+                if line.startswith("Description:"):
+                    inDescriptionSection = True
+                    line += "\n"
+                    for messageLine in message.split("\n"):
+                        line += "\t" + messageLine + "\n"
 
-            if not substituted:
-                result += line + "\n"
+            result += line + "\n"
 
         return result
 
@@ -650,7 +651,6 @@ class P4Submit(Command):
         logMessage = ""
         if not self.directSubmit:
             logMessage = extractLogMessageFromGitCommit(id)
-            logMessage = logMessage.replace("\n", "\n\t")
             if self.isWindows:
                 logMessage = logMessage.replace("\n", "\r\n")
             logMessage = logMessage.strip()
