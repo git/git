@@ -34,12 +34,11 @@ Note that this will create the new branch, but it will not switch the
 working tree to it; use "git checkout <newbranch>" to switch to the
 new branch.
 
-When a local branch is started off a remote branch, git can setup the
-branch so that linkgit:git-pull[1] will appropriately merge from that
-remote branch.  If this behavior is desired, it is possible to make it
-the default using the global `branch.autosetupmerge` configuration
-flag.  Otherwise, it can be chosen per-branch using the `--track`
-and `--no-track` options.
+When a local branch is started off a remote branch, git sets up the
+branch so that linkgit:git-pull[1] will appropriately merge from
+the remote branch. This behavior may be changed via the global
+`branch.autosetupmerge` configuration flag. That setting can be
+overridden by using the `--track` and `--no-track` options.
 
 With a '-m' or '-M' option, <oldbranch> will be renamed to <newbranch>.
 If <oldbranch> had a corresponding reflog, it is renamed to match
@@ -105,19 +104,19 @@ OPTIONS
 	Display the full sha1s in output listing rather than abbreviating them.
 
 --track::
-	Set up configuration so that git-pull will automatically
-	retrieve data from the remote branch.  Use this if you always
-	pull from the same remote branch into the new branch, or if you
-	don't want to use "git pull <repository> <refspec>" explicitly.  Set the
-	branch.autosetupmerge configuration variable to true if you
-	want git-checkout and git-branch to always behave as if
-	'--track' were given.
+	When creating a new branch, set up configuration so that git-pull
+	will automatically retrieve data from the start point, which must be
+	a branch. Use this if you always pull from the same upstream branch
+	into the new branch, and if you don't want to use "git pull
+	<repository> <refspec>" explicitly. This behavior is the default
+	when the start point is a remote branch. Set the
+	branch.autosetupmerge configuration variable to `false` if you want
+	git-checkout and git-branch to always behave as if '--no-track' were
+	given. Set it to `always` if you want this behavior when the
+	start-point is either a local or remote branch.
 
 --no-track::
-	When a branch is created off a remote branch,
-	set up configuration so that git-pull will not retrieve data
-	from the remote branch, ignoring the branch.autosetupmerge
-	configuration variable.
+	Ignore the branch.autosetupmerge configuration variable.
 
 <branchname>::
 	The name of the branch to create or delete.

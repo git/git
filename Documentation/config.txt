@@ -330,10 +330,14 @@ apply.whitespace::
 
 branch.autosetupmerge::
 	Tells `git-branch` and `git-checkout` to setup new branches
-	so that linkgit:git-pull[1] will appropriately merge from that
-	remote branch.  Note that even if this option is not set,
+	so that linkgit:git-pull[1] will appropriately merge from the
+	starting point branch. Note that even if this option is not set,
 	this behavior can be chosen per-branch using the `--track`
-	and `--no-track` options.  This option defaults to false.
+	and `--no-track` options. The valid settings are: `false` -- no
+	automatic setup is done; `true` -- automatic setup is done when the
+	starting point is a remote branch; `always` -- automatic setup is
+	done when the starting point is either a local branch or remote
+	branch. This option defaults to true.
 
 branch.<name>.remote::
 	When in branch <name>, it tells `git fetch` which remote to fetch.
