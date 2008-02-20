@@ -301,64 +301,88 @@ static void adjust_to_tracking(struct branch_info *new, struct checkout_opts *op
 	char *base;
 	unsigned char sha1[20];
 	struct commit *ours, *theirs;
-	const char *msgfmt;
 	char symmetric[84];
-	int show_log;
+	struct rev_info revs;
+	const char *rev_argv[10];
+	int rev_argc;
+	int num_ours, num_theirs;
+	const char *remote_msg;
 	struct branch *branch = branch_get(NULL);
 
+	/*
+	 * Nothing to report unless we are marked to build on top of
+	 * somebody else.
+	 */
 	if (!branch || !branch->merge)
 		return;
 
-	base = branch->merge[0]->dst;
-
-	ours = new->commit;
-
-	sprintf(symmetric, "%s", sha1_to_hex(ours->object.sha1));
-
 	/*
-	 * Ok, it is tracking base; is it ahead of us?
+	 * If what we used to build on no longer exists, there is
+	 * nothing to report.
 	 */
+	base = branch->merge[0]->dst;
 	if (!resolve_ref(base, sha1, 1, NULL))
 		return;
+
 	theirs = lookup_commit(sha1);
-
-	sprintf(symmetric + 40, "...%s", sha1_to_hex(sha1));
-
+	ours = new->commit;
 	if (!hashcmp(sha1, ours->object.sha1))
 		return; /* we are the same */
 
-	show_log = 1;
-	if (in_merge_bases(theirs, &ours, 1)) {
-		msgfmt = "You are ahead of the tracked branch '%s'\n";
-		show_log = 0;
-	}
-	else if (in_merge_bases(ours, &theirs, 1))
-		msgfmt = "Your branch can be fast-forwarded to the tracked branch '%s'\n";
-	else
-		msgfmt = "Both your branch and the tracked branch '%s' have own changes, you would eventually need to merge\n";
+	/* Run "rev-list --left-right ours...theirs" internally... */
+	rev_argc = 0;
+	rev_argv[rev_argc++] = NULL;
+	rev_argv[rev_argc++] = "--left-right";
+	rev_argv[rev_argc++] = symmetric;
+	rev_argv[rev_argc++] = "--";
+	rev_argv[rev_argc] = NULL;
 
-	if (!prefixcmp(base, "refs/remotes/"))
+	strcpy(symmetric, sha1_to_hex(ours->object.sha1));
+	strcpy(symmetric + 40, "...");
+	strcpy(symmetric + 43, sha1_to_hex(theirs->object.sha1));
+
+	init_revisions(&revs, NULL);
+	setup_revisions(rev_argc, rev_argv, &revs, NULL);
+	prepare_revision_walk(&revs);
+
+	/* ... and count the commits on each side. */
+	num_ours = 0;
+	num_theirs = 0;
+	while (1) {
+		struct commit *c = get_revision(&revs);
+		if (!c)
+			break;
+		if (c->object.flags & SYMMETRIC_LEFT)
+			num_ours++;
+		else
+			num_theirs++;
+	}
+
+	if (!prefixcmp(base, "refs/remotes/")) {
+		remote_msg = " remote";
 		base += strlen("refs/remotes/");
-	fprintf(stderr, msgfmt, base);
-
-	if (show_log) {
-		const char *args[32];
-		int ac;
-
-		ac = 0;
-		args[ac++] = "log";
-		args[ac++] = "--pretty=oneline";
-		args[ac++] = "--abbrev-commit";
-		args[ac++] = "--left-right";
-		args[ac++] = "--boundary";
-		args[ac++] = symmetric;
-		args[ac++] = "--";
-		args[ac] = NULL;
-
-		run_command_v_opt(args, RUN_GIT_CMD);
+	} else {
+		remote_msg = "";
 	}
-}
 
+	if (!num_theirs)
+		printf("Your branch is ahead of the tracked%s branch '%s' "
+		       "by %d commit%s.\n",
+		       remote_msg, base,
+		       num_ours, (num_ours == 1) ? "" : "s");
+	else if (!num_ours)
+		printf("Your branch is behind of the tracked%s branch '%s' "
+		       "by %d commit%s,\n"
+		       "and can be fast-forwarded.\n",
+		       remote_msg, base,
+		       num_theirs, (num_theirs == 1) ? "" : "s");
+	else
+		printf("Your branch and the tracked%s branch '%s' "
+		       "have diverged,\nand respectively "
+		       "have %d and %d different commit(s) each.\n",
+		       remote_msg, base,
+		       num_ours, num_theirs);
+}
 
 static void update_refs_for_switch(struct checkout_opts *opts,
 				   struct branch_info *old,
@@ -402,7 +426,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 	}
 	remove_branch_state();
 	strbuf_release(&msg);
-	if (new->path || !strcmp(new->name, "HEAD"))
+	if (!opts->quiet && (new->path || !strcmp(new->name, "HEAD")))
 		adjust_to_tracking(new, opts);
 }
 
