@@ -271,6 +271,49 @@ test_expect_success 'push with HEAD nonexisting at remote' '
 	check_push_result $the_commit heads/local
 '
 
+test_expect_success 'push with +HEAD' '
+
+	mk_test heads/master &&
+	git checkout master &&
+	git branch -D local &&
+	git checkout -b local &&
+	git push testrepo master local &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_commit heads/local &&
+
+	# Without force rewinding should fail
+	git reset --hard HEAD^ &&
+	! git push testrepo HEAD &&
+	check_push_result $the_commit heads/local &&
+
+	# With force rewinding should succeed
+	git push testrepo +HEAD &&
+	check_push_result $the_first_commit heads/local
+
+'
+
+test_expect_success 'push with config remote.*.push = HEAD' '
+
+	mk_test heads/local &&
+	git checkout master &&
+	git branch -f local $the_commit &&
+	(
+		cd testrepo &&
+		git checkout local &&
+		git reset --hard $the_first_commit
+	) &&
+	git config remote.there.url testrepo &&
+	git config remote.there.push HEAD &&
+	git config branch.master.remote there &&
+	git push &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_first_commit heads/local
+'
+
+# clean up the cruft left with the previous one
+git config --remove-section remote.there
+git config --remove-section branch.master
+
 test_expect_success 'push with dry-run' '
 
 	mk_test heads/master &&
