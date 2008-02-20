@@ -263,4 +263,38 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 
 '
 
+test_expect_success 'switch branches while in subdirectory' '
+
+	git reset --hard &&
+	git checkout master &&
+
+	mkdir subs &&
+	(
+		cd subs &&
+		git checkout side
+	) &&
+	! test -f subs/one &&
+	rm -fr subs
+
+'
+
+test_expect_success 'checkout specific path while in subdirectory' '
+
+	git reset --hard &&
+	git checkout side &&
+	mkdir subs &&
+	>subs/bero &&
+	git add subs/bero &&
+	git commit -m "add subs/bero" &&
+
+	git checkout master &&
+	mkdir -p subs &&
+	(
+		cd subs &&
+		git checkout side -- bero
+	) &&
+	test -f subs/bero
+
+'
+
 test_done

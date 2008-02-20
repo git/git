@@ -237,7 +237,6 @@ static int merge_working_tree(struct checkout_opts *opts,
 			topts.dir = xcalloc(1, sizeof(*topts.dir));
 			topts.dir->show_ignored = 1;
 			topts.dir->exclude_per_dir = ".gitignore";
-			topts.prefix = prefix;
 			tree = parse_tree_indirect(old->commit->object.sha1);
 			init_tree_desc(&trees[0], tree->buffer, tree->size);
 			tree = parse_tree_indirect(new->commit->object.sha1);
