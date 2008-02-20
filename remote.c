@@ -2,6 +2,13 @@
 #include "remote.h"
 #include "refs.h"
 
+struct rewrite {
+	const char *base;
+	const char **instead_of;
+	int instead_of_nr;
+	int instead_of_alloc;
+};
+
 static struct remote **remotes;
 static int remotes_alloc;
 static int remotes_nr;
@@ -13,8 +20,32 @@ static int branches_nr;
 static struct branch *current_branch;
 static const char *default_remote_name;
 
+static struct rewrite **rewrite;
+static int rewrite_alloc;
+static int rewrite_nr;
+
 #define BUF_SIZE (2048)
 static char buffer[BUF_SIZE];
+
+static const char *alias_url(const char *url)
+{
+	int i, j;
+	for (i = 0; i < rewrite_nr; i++) {
+		if (!rewrite[i])
+			continue;
+		for (j = 0; j < rewrite[i]->instead_of_nr; j++) {
+			if (!prefixcmp(url, rewrite[i]->instead_of[j])) {
+				char *ret = malloc(strlen(rewrite[i]->base) -
+						   strlen(rewrite[i]->instead_of[j]) +
+						   strlen(url) + 1);
+				strcpy(ret, rewrite[i]->base);
+				strcat(ret, url + strlen(rewrite[i]->instead_of[j]));
+				return ret;
+			}
+		}
+	}
+	return url;
+}
 
 static void add_push_refspec(struct remote *remote, const char *ref)
 {
@@ -36,6 +67,11 @@ static void add_url(struct remote *remote, const char *url)
 {
 	ALLOC_GROW(remote->url, remote->url_nr + 1, remote->url_alloc);
 	remote->url[remote->url_nr++] = url;
+}
+
+static void add_url_alias(struct remote *remote, const char *url)
+{
+	add_url(remote, alias_url(url));
 }
 
 static struct remote *make_remote(const char *name, int len)
@@ -95,6 +131,35 @@ static struct branch *make_branch(const char *name, int len)
 	return ret;
 }
 
+static struct rewrite *make_rewrite(const char *base, int len)
+{
+	struct rewrite *ret;
+	int i;
+
+	for (i = 0; i < rewrite_nr; i++) {
+		if (len ? (!strncmp(base, rewrite[i]->base, len) &&
+			   !rewrite[i]->base[len]) :
+		    !strcmp(base, rewrite[i]->base))
+			return rewrite[i];
+	}
+
+	ALLOC_GROW(rewrite, rewrite_nr + 1, rewrite_alloc);
+	ret = xcalloc(1, sizeof(struct rewrite));
+	rewrite[rewrite_nr++] = ret;
+	if (len)
+		ret->base = xstrndup(base, len);
+	else
+		ret->base = xstrdup(base);
+
+	return ret;
+}
+
+static void add_instead_of(struct rewrite *rewrite, const char *instead_of)
+{
+	ALLOC_GROW(rewrite->instead_of, rewrite->instead_of_nr + 1, rewrite->instead_of_alloc);
+	rewrite->instead_of[rewrite->instead_of_nr++] = instead_of;
+}
+
 static void read_remotes_file(struct remote *remote)
 {
 	FILE *f = fopen(git_path("remotes/%s", remote->name), "r");
@@ -128,7 +193,7 @@ static void read_remotes_file(struct remote *remote)
 
 		switch (value_list) {
 		case 0:
-			add_url(remote, xstrdup(s));
+			add_url_alias(remote, xstrdup(s));
 			break;
 		case 1:
 			add_push_refspec(remote, xstrdup(s));
@@ -180,7 +245,7 @@ static void read_branches_file(struct remote *remote)
 	} else {
 		branch = "refs/heads/master";
 	}
-	add_url(remote, p);
+	add_url_alias(remote, p);
 	add_fetch_refspec(remote, branch);
 	remote->fetch_tags = 1; /* always auto-follow */
 }
@@ -209,6 +274,19 @@ static int handle_config(const char *key, const char *value)
 			add_merge(branch, xstrdup(value));
 		}
 		return 0;
+	}
+	if (!prefixcmp(key, "url.")) {
+		struct rewrite *rewrite;
+		name = key + 5;
+		subkey = strrchr(name, '.');
+		if (!subkey)
+			return 0;
+		rewrite = make_rewrite(name, subkey - name);
+		if (!strcmp(subkey, ".insteadof")) {
+			if (!value)
+				return config_error_nonbool(key);
+			add_instead_of(rewrite, xstrdup(value));
+		}
 	}
 	if (prefixcmp(key,  "remote."))
 		return 0;
@@ -261,6 +339,18 @@ static int handle_config(const char *key, const char *value)
 	return 0;
 }
 
+static void alias_all_urls(void)
+{
+	int i, j;
+	for (i = 0; i < remotes_nr; i++) {
+		if (!remotes[i])
+			continue;
+		for (j = 0; j < remotes[i]->url_nr; j++) {
+			remotes[i]->url[j] = alias_url(remotes[i]->url[j]);
+		}
+	}
+}
+
 static void read_config(void)
 {
 	unsigned char sha1[20];
@@ -277,6 +367,7 @@ static void read_config(void)
 			make_branch(head_ref + strlen("refs/heads/"), 0);
 	}
 	git_config(handle_config);
+	alias_all_urls();
 }
 
 struct refspec *parse_ref_spec(int nr_refspec, const char **refspec)
@@ -342,7 +433,7 @@ struct remote *remote_get(const char *name)
 			read_branches_file(ret);
 	}
 	if (!ret->url)
-		add_url(ret, name);
+		add_url_alias(ret, name);
 	if (!ret->url)
 		return NULL;
 	ret->fetch = parse_ref_spec(ret->fetch_refspec_nr, ret->fetch_refspec);
