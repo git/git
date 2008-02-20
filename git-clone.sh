@@ -409,11 +409,12 @@ else
 	cd "$D" || exit
 fi
 
-if test -z "$bare" && test -f "$GIT_DIR/REMOTE_HEAD"
+if test -z "$bare"
 then
 	# a non-bare repository is always in separate-remote layout
 	remote_top="refs/remotes/$origin"
-	head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
+	head_sha1=
+	test ! -r "$GIT_DIR/REMOTE_HEAD" || head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
 	case "$head_sha1" in
 	'ref: refs/'*)
 		# Uh-oh, the remote told us (http transport done against
@@ -470,9 +471,16 @@ then
 		git config branch."$head_points_at".merge "refs/heads/$head_points_at"
 		;;
 	'')
-		# Source had detached HEAD pointing nowhere
-		git update-ref --no-deref HEAD "$head_sha1" &&
-		rm -f "refs/remotes/$origin/HEAD"
+		if test -z "$head_sha1"
+		then
+			# Source had nonexistent ref in HEAD
+			echo >&2 "Warning: Remote HEAD refers to nonexistent ref, unable to checkout."
+			no_checkout=t
+		else
+			# Source had detached HEAD pointing nowhere
+			git update-ref --no-deref HEAD "$head_sha1" &&
+			rm -f "refs/remotes/$origin/HEAD"
+		fi
 		;;
 	esac
 
