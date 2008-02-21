@@ -316,4 +316,14 @@ test_expect_success 'core.excludesfile' '
 
 '
 
+test_expect_success 'removal failure' '
+
+	mkdir foo &&
+	touch foo/bar &&
+	chmod 0 foo &&
+	! git clean -f -d
+
+'
+chmod 755 foo
+
 test_done
