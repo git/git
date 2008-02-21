@@ -35,12 +35,25 @@ method _connect {pipe_fd} {
 		-translation lf
 
 	if {[gets $pipe_fd s_version] <= 0} {
-		close $pipe_fd
-		error [mc "Spell checker sliently failed on startup"]
+		if {[catch {close $pipe_fd} err]} {
+			regsub -nocase {^Error: } $err {} err
+			if {$s_fd eq {}} {
+				error_popup [strcat [mc "Spell checking is unavailable"] ":\n\n$err"]
+			} else {
+				error_popup [strcat \
+					[mc "Invalid spell checking configuration"] \
+					":\n\n$err\n\n" \
+					[mc "Reverting dictionary to %s." $s_lang]]
+			}
+		} else {
+			error_popup [mc "Spell checker sliently failed on startup"]
+		}
+		return
 	}
 	if {{@(#) } ne [string range $s_version 0 4]} {
-		close $pipe_fd
-		error [strcat [mc "Unrecognized spell checker"] ": $s_version"]
+		catch {close $pipe_fd}
+		error_popup [strcat [mc "Unrecognized spell checker"] ":\n\n$s_version"]
+		return
 	}
 	set s_version [string range $s_version 5 end]
 
