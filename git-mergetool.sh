@@ -127,18 +127,6 @@ check_unchanged () {
     fi
 }
 
-save_backup () {
-    if test "$status" -eq 0; then
-	mv -- "$BACKUP" "$path.orig"
-    fi
-}
-
-remove_backup () {
-    if test "$status" -eq 0; then
-	rm "$BACKUP"
-    fi
-}
-
 merge_file () {
     path="$1"
 
@@ -201,7 +189,6 @@ merge_file () {
 		    -o "$path" -- "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    fi
 	    status=$?
-	    remove_backup
 	    ;;
 	tkdiff)
 	    if base_present ; then
@@ -210,20 +197,17 @@ merge_file () {
 		"$merge_tool_path" -o "$path" -- "$LOCAL" "$REMOTE"
 	    fi
 	    status=$?
-	    save_backup
 	    ;;
 	meld|vimdiff)
 	    touch "$BACKUP"
 	    "$merge_tool_path" -- "$LOCAL" "$path" "$REMOTE"
 	    check_unchanged
-	    save_backup
 	    ;;
 	gvimdiff)
-		touch "$BACKUP"
-		"$merge_tool_path" -f -- "$LOCAL" "$path" "$REMOTE"
-		check_unchanged
-		save_backup
-		;;
+	    touch "$BACKUP"
+	    "$merge_tool_path" -f -- "$LOCAL" "$path" "$REMOTE"
+	    check_unchanged
+	    ;;
 	xxdiff)
 	    touch "$BACKUP"
 	    if base_present ; then
@@ -240,7 +224,6 @@ merge_file () {
 		    --merged-file "$path" -- "$LOCAL" "$REMOTE"
 	    fi
 	    check_unchanged
-	    save_backup
 	    ;;
 	opendiff)
 	    touch "$BACKUP"
@@ -250,7 +233,6 @@ merge_file () {
 		"$merge_tool_path" "$LOCAL" "$REMOTE" -merge "$path" | cat
 	    fi
 	    check_unchanged
-	    save_backup
 	    ;;
 	ecmerge)
 	    touch "$BACKUP"
@@ -260,7 +242,6 @@ merge_file () {
 		"$merge_tool_path" "$LOCAL" "$REMOTE" --mode=merge2 --to="$path"
 	    fi
 	    check_unchanged
-	    save_backup
 	    ;;
 	emerge)
 	    if base_present ; then
@@ -269,7 +250,6 @@ merge_file () {
 		"$merge_tool_path" -f emerge-files-command "$LOCAL" "$REMOTE" "$(basename "$path")"
 	    fi
 	    status=$?
-	    save_backup
 	    ;;
     esac
     if test "$status" -ne 0; then
@@ -277,6 +257,13 @@ merge_file () {
 	mv -- "$BACKUP" "$path"
 	exit 1
     fi
+
+    if test "$merge_keep_backup" = "true"; then
+	mv -- "$BACKUP" "$path.orig"
+    else
+	rm -- "$BACKUP"
+    fi
+
     git add -- "$path"
     cleanup_temp_files
 }
@@ -379,6 +366,8 @@ else
     fi
 
     init_merge_tool_path "$merge_tool"
+
+    merge_keep_backup="$(git config --bool merge.keepBackup || echo true)"
 
     if ! type "$merge_tool_path" > /dev/null 2>&1; then
         echo "The merge tool $merge_tool is not available as '$merge_tool_path'"
