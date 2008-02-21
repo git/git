@@ -1,6 +1,10 @@
 # git-gui branch (create/delete) support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+proc _error_parent {} {
+	return [grab current .]
+}
+
 proc error_popup {msg} {
 	set title [appname]
 	if {[reponame] ne {}} {
@@ -11,8 +15,8 @@ proc error_popup {msg} {
 		-type ok \
 		-title [append "$title: " [mc "error"]] \
 		-message $msg]
-	if {[winfo ismapped .]} {
-		lappend cmd -parent .
+	if {[winfo ismapped [_error_parent]]} {
+		lappend cmd -parent [_error_parent]
 	}
 	eval $cmd
 }
@@ -27,13 +31,13 @@ proc warn_popup {msg} {
 		-type ok \
 		-title [append "$title: " [mc "warning"]] \
 		-message $msg]
-	if {[winfo ismapped .]} {
-		lappend cmd -parent .
+	if {[winfo ismapped [_error_parent]]} {
+		lappend cmd -parent [_error_parent]
 	}
 	eval $cmd
 }
 
-proc info_popup {msg {parent .}} {
+proc info_popup {msg} {
 	set title [appname]
 	if {[reponame] ne {}} {
 		append title " ([reponame])"
@@ -56,8 +60,8 @@ proc ask_popup {msg} {
 		-type yesno \
 		-title $title \
 		-message $msg]
-	if {[winfo ismapped .]} {
-		lappend cmd -parent .
+	if {[winfo ismapped [_error_parent]]} {
+		lappend cmd -parent [_error_parent]
 	}
 	eval $cmd
 }
