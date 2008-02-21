@@ -1,10 +1,10 @@
-# git-gui spellchecking support through aspell
+# git-gui spellchecking support through ispell/aspell
 # Copyright (C) 2008 Shawn Pearce
 
 class spellcheck {
 
-field s_fd      {} ; # pipe to aspell
-field s_version {} ; # aspell version string
+field s_fd      {} ; # pipe to ispell/aspell
+field s_version {} ; # ispell/aspell version string
 field s_lang    {} ; # current language code
 
 field w_text      ; # text widget we are spelling
@@ -15,7 +15,7 @@ field s_i           {} ; # timer registration for _run callbacks
 field s_clear        0 ; # did we erase mispelled tags yet?
 field s_seen    [list] ; # lines last seen from $w_text in _run
 field s_checked [list] ; # lines already checked
-field s_pending [list] ; # [$line $data] sent to aspell
+field s_pending [list] ; # [$line $data] sent to ispell/aspell
 field s_suggest        ; # array, list of suggestions, keyed by misspelling
 
 constructor init {pipe_fd ui_text ui_menu} {
@@ -35,11 +35,11 @@ method _connect {pipe_fd} {
 
 	if {[gets $pipe_fd s_version] <= 0} {
 		close $pipe_fd
-		error [mc "Not connected to aspell"]
+		error [mc "Spell checker sliently failed on startup"]
 	}
 	if {{@(#) } ne [string range $s_version 0 4]} {
 		close $pipe_fd
-		error [strcat [mc "Unrecognized aspell version"] ": $s_version"]
+		error [strcat [mc "Unrecognized spell checker"] ": $s_version"]
 	}
 	set s_version [string range $s_version 5 end]
 
@@ -337,7 +337,7 @@ method _read {} {
 	fconfigure $s_fd -block 1
 	if {[eof $s_fd]} {
 		if {![catch {close $s_fd} err]} {
-			set err [mc "Unexpected EOF from aspell"]
+			set err [mc "Unexpected EOF from spell checker"]
 		}
 		catch {after cancel $s_i}
 		$w_text tag remove misspelled 1.0 end
