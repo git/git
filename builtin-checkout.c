@@ -205,8 +205,7 @@ static void setup_branch_path(struct branch_info *branch)
 }
 
 static int merge_working_tree(struct checkout_opts *opts,
-			      struct branch_info *old, struct branch_info *new,
-			      const char *prefix)
+			      struct branch_info *old, struct branch_info *new)
 {
 	int ret;
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
@@ -429,8 +428,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 		adjust_to_tracking(new, opts);
 }
 
-static int switch_branches(struct checkout_opts *opts,
-			   struct branch_info *new, const char *prefix)
+static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 {
 	int ret = 0;
 	struct branch_info old;
@@ -471,7 +469,7 @@ static int switch_branches(struct checkout_opts *opts,
 		opts->force = 1;
 	}
 
-	ret = merge_working_tree(opts, &old, new, prefix);
+	ret = merge_working_tree(opts, &old, new);
 	if (ret)
 		return ret;
 
@@ -569,5 +567,5 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		die("Cannot switch branch to a non-commit.");
 	}
 
-	return switch_branches(&opts, &new, prefix);
+	return switch_branches(&opts, &new);
 }
