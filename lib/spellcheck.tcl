@@ -23,6 +23,7 @@ constructor init {pipe_fd ui_text ui_menu} {
 	set w_menu $ui_menu
 	array unset s_suggest
 
+	bind_button3 $w_text [cb _popup_suggest %X %Y @%x,%y]
 	_connect $this $pipe_fd
 	return $this
 }
@@ -66,7 +67,6 @@ method _connect {pipe_fd} {
 	$w_text tag conf misspelled \
 		-foreground red \
 		-underline 1
-	bind_button3 $w_text [cb _popup_suggest %X %Y @%x,%y]
 
 	array unset s_suggest
 	set s_seen    [list]
