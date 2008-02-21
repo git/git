@@ -2,7 +2,11 @@
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc _error_parent {} {
-	return [grab current .]
+	set p [grab current .]
+	if {$p eq {}} {
+		return .
+	}
+	return $p
 }
 
 proc error_popup {msg} {
