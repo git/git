@@ -1199,7 +1199,7 @@ static struct builtin_funcname_pattern {
 			"new\\|return\\|switch\\|throw\\|while\\)\n"
 			"^[ 	]*\\(\\([ 	]*"
 			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
-			"[ 	]*([^;]*$\\)" },
+			"[ 	]*([^;]*\\)$" },
 	{ "tex", "^\\(\\\\\\(sub\\)*section{.*\\)$" },
 };
 
