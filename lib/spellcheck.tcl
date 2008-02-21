@@ -70,7 +70,7 @@ method _connect {pipe_fd} {
 					[mc "Reverting dictionary to %s." $s_lang]]
 			}
 		} else {
-			error_popup [mc "Spell checker sliently failed on startup"]
+			error_popup [mc "Spell checker silently failed on startup"]
 		}
 		return
 	}
