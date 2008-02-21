@@ -3,6 +3,9 @@ all::
 
 # Define V=1 to have a more verbose compile.
 #
+# Define FREAD_READS_DIRECTORIES if your are on a system which succeeds
+# when attempting to read from an fopen'ed directory.
+#
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # This also implies MOZILLA_SHA1.
 #
@@ -621,6 +624,10 @@ ifdef NO_D_INO_IN_DIRENT
 endif
 ifdef NO_C99_FORMAT
 	BASIC_CFLAGS += -DNO_C99_FORMAT
+endif
+ifdef FREAD_READS_DIRECTORIES
+	COMPAT_CFLAGS += -DFREAD_READS_DIRECTORIES
+	COMPAT_OBJS += compat/fopen.o
 endif
 ifdef NO_SYMLINK_HEAD
 	BASIC_CFLAGS += -DNO_SYMLINK_HEAD
