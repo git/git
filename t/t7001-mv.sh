@@ -118,4 +118,42 @@ test_expect_success "Sergey Vlasov's test case" '
 	git mv ab a
 '
 
+test_expect_success 'absolute pathname' '(
+
+	rm -fr mine &&
+	mkdir mine &&
+	cd mine &&
+	test_create_repo one &&
+	cd one &&
+	mkdir sub &&
+	>sub/file &&
+	git add sub/file &&
+
+	git mv sub "$(pwd)/in" &&
+	! test -d sub &&
+	test -d in &&
+	git ls-files --error-unmatch in/file
+
+
+)'
+
+test_expect_success 'absolute pathname outside should fail' '(
+
+	rm -fr mine &&
+	mkdir mine &&
+	cd mine &&
+	out=$(pwd) &&
+	test_create_repo one &&
+	cd one &&
+	mkdir sub &&
+	>sub/file &&
+	git add sub/file &&
+
+	! git mv sub "$out/out" &&
+	test -d sub &&
+	! test -d ../in &&
+	git ls-files --error-unmatch sub/file
+
+)'
+
 test_done

@@ -1894,9 +1894,7 @@ static unsigned parse_score(const char *arg)
 
 static const char *add_prefix(const char *prefix, const char *path)
 {
-	if (!prefix || !prefix[0])
-		return path;
-	return prefix_path(prefix, strlen(prefix), path);
+	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
 /*

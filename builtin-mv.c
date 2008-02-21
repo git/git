@@ -19,6 +19,7 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 				  int count, int base_name)
 {
 	int i;
+	int len = prefix ? strlen(prefix) : 0;
 	const char **result = xmalloc((count + 1) * sizeof(const char *));
 	memcpy(result, pathspec, count * sizeof(const char *));
 	result[count] = NULL;
@@ -32,8 +33,11 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 			if (last_slash)
 				result[i] = last_slash + 1;
 		}
+		result[i] = prefix_path(prefix, len, result[i]);
+		if (!result[i])
+			exit(1); /* error already given */
 	}
-	return get_pathspec(prefix, result);
+	return result;
 }
 
 static void show_list(const char *label, struct path_list *list)
@@ -164,7 +168,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				}
 
 				dst = add_slash(dst);
-				dst_len = strlen(dst) - 1;
+				dst_len = strlen(dst);
 
 				for (j = 0; j < last - first; j++) {
 					const char *path =
@@ -172,7 +176,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					source[argc + j] = path;
 					destination[argc + j] =
 						prefix_path(dst, dst_len,
-							path + length);
+							path + length + 1);
 					modes[argc + j] = INDEX;
 				}
 				argc += last - first;
