@@ -251,6 +251,18 @@ merge_file () {
 	    fi
 	    status=$?
 	    ;;
+	*)
+	    if test -n "$merge_tool_cmd"; then
+		if test "$merge_tool_trust_exit_code" = "false"; then
+		    touch "$BACKUP"
+		    ( eval $merge_tool_cmd )
+		    check_unchanged
+		else
+		    ( eval $merge_tool_cmd )
+		    status=$?
+		fi
+	    fi
+	    ;;
     esac
     if test "$status" -ne 0; then
 	echo "merge of $MERGED failed" 1>&2
@@ -296,12 +308,20 @@ do
     shift
 done
 
+valid_custom_tool()
+{
+    merge_tool_cmd="$(git config mergetool.$1.cmd)"
+    test -n "$merge_tool_cmd"
+}
+
 valid_tool() {
 	case "$1" in
 		kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge)
 			;; # happy
 		*)
-			return 1
+			if ! valid_custom_tool "$1"; then
+				return 1
+			fi
 			;;
 	esac
 }
@@ -369,9 +389,13 @@ else
 
     merge_keep_backup="$(git config --bool merge.keepBackup || echo true)"
 
-    if ! type "$merge_tool_path" > /dev/null 2>&1; then
+    if test -z "$merge_tool_cmd" && ! type "$merge_tool_path" > /dev/null 2>&1; then
         echo "The merge tool $merge_tool is not available as '$merge_tool_path'"
         exit 1
+    fi
+
+    if ! test -z "$merge_tool_cmd"; then
+        merge_tool_trust_exit_code="$(git config --bool mergetool.$merge_tool.trustExitCode || echo false)"
     fi
 fi
 
