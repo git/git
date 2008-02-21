@@ -289,7 +289,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 	return 0;
 }
 
-static void adjust_to_tracking(struct branch_info *new, struct checkout_opts *opts)
+static void report_tracking(struct branch_info *new, struct checkout_opts *opts)
 {
 	/*
 	 * We have switched to a new branch; is it building on
@@ -305,13 +305,13 @@ static void adjust_to_tracking(struct branch_info *new, struct checkout_opts *op
 	int rev_argc;
 	int num_ours, num_theirs;
 	const char *remote_msg;
-	struct branch *branch = branch_get(NULL);
+	struct branch *branch = branch_get(new->name);
 
 	/*
 	 * Nothing to report unless we are marked to build on top of
 	 * somebody else.
 	 */
-	if (!branch || !branch->merge)
+	if (!branch || !branch->merge || !branch->merge[0] || !branch->merge[0]->dst)
 		return;
 
 	/*
@@ -369,7 +369,7 @@ static void adjust_to_tracking(struct branch_info *new, struct checkout_opts *op
 		       remote_msg, base,
 		       num_ours, (num_ours == 1) ? "" : "s");
 	else if (!num_ours)
-		printf("Your branch is behind of the tracked%s branch '%s' "
+		printf("Your branch is behind the tracked%s branch '%s' "
 		       "by %d commit%s,\n"
 		       "and can be fast-forwarded.\n",
 		       remote_msg, base,
@@ -425,7 +425,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 	remove_branch_state();
 	strbuf_release(&msg);
 	if (!opts->quiet && (new->path || !strcmp(new->name, "HEAD")))
-		adjust_to_tracking(new, opts);
+		report_tracking(new, opts);
 }
 
 static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
