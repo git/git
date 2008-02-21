@@ -74,12 +74,16 @@ method _connect {pipe_fd} {
 		}
 		return
 	}
+
 	if {{@(#) } ne [string range $s_version 0 4]} {
 		catch {close $pipe_fd}
 		error_popup [strcat [mc "Unrecognized spell checker"] ":\n\n$s_version"]
 		return
 	}
 	set s_version [string range $s_version 5 end]
+	regexp \
+		{International Ispell Version .* \(but really (Aspell .*?)\)$} \
+		$s_version _junk s_version
 
 	puts $pipe_fd !             ; # enable terse mode
 	puts $pipe_fd {$$cr master} ; # fetch the language
