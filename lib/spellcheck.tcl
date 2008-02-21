@@ -3,15 +3,15 @@
 
 class spellcheck {
 
-field s_fd     {} ; # pipe to aspell
-field s_version   ; # aspell version string
-field s_lang      ; # current language code
+field s_fd      {} ; # pipe to aspell
+field s_version {} ; # aspell version string
+field s_lang    {} ; # current language code
 
 field w_text      ; # text widget we are spelling
 field w_menu      ; # context menu for the widget
 field s_menuidx 0 ; # last index of insertion into $w_menu
 
-field s_i              ; # timer registration for _run callbacks
+field s_i           {} ; # timer registration for _run callbacks
 field s_clear        0 ; # did we erase mispelled tags yet?
 field s_seen    [list] ; # lines last seen from $w_text in _run
 field s_checked [list] ; # lines already checked
@@ -21,6 +21,7 @@ field s_suggest        ; # array, list of suggestions, keyed by misspelling
 constructor init {pipe_fd ui_text ui_menu} {
 	set w_text $ui_text
 	set w_menu $ui_menu
+	array unset s_suggest
 
 	_connect $this $pipe_fd
 	return $this
@@ -88,7 +89,10 @@ method lang {{n {}}} {
 }
 
 method version {} {
-	return "$s_version, $s_lang"
+	if {$s_version ne {}} {
+		return "$s_version, $s_lang"
+	}
+	return {}
 }
 
 method stop {} {
