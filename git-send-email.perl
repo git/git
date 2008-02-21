@@ -475,7 +475,7 @@ if ($thread && !defined $initial_reply_to && $prompting) {
 
 	$initial_reply_to = $_;
 }
-if (defined $initial_reply_to && $_ ne "") {
+if (defined $initial_reply_to) {
 	$initial_reply_to =~ s/^\s*<?/</;
 	$initial_reply_to =~ s/>?\s*$/>/;
 }
