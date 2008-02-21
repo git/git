@@ -6,6 +6,8 @@ class spellcheck {
 field s_fd      {} ; # pipe to ispell/aspell
 field s_version {} ; # ispell/aspell version string
 field s_lang    {} ; # current language code
+field s_prog aspell; # are we actually old ispell?
+field s_failed   0 ; # is $s_prog bogus and not working?
 
 field w_text      ; # text widget we are spelling
 field w_menu      ; # context menu for the widget
@@ -36,6 +38,28 @@ method _connect {pipe_fd} {
 
 	if {[gets $pipe_fd s_version] <= 0} {
 		if {[catch {close $pipe_fd} err]} {
+
+			# Eh?  Is this actually ispell choking on aspell options?
+			#
+			if {$s_prog eq {aspell}
+				&& [regexp -nocase {^Usage: } $err]
+				&& ![catch {
+						set pipe_fd [open [list | $s_prog -v] r]
+						gets $pipe_fd s_version
+						close $pipe_fd
+				}]
+				&& $s_version ne {}} {
+				if {{@(#) } eq [string range $s_version 0 4]} {
+					set s_version [string range $s_version 5 end]
+				}
+				set s_failed 1
+				error_popup [strcat \
+					[mc "Unsupported spell checker"] \
+					":\n\n$s_version"]
+				set s_version {}
+				return
+			}
+
 			regsub -nocase {^Error: } $err {} err
 			if {$s_fd eq {}} {
 				error_popup [strcat [mc "Spell checking is unavailable"] ":\n\n$err"]
@@ -89,7 +113,7 @@ method _connect {pipe_fd} {
 }
 
 method lang {{n {}}} {
-	if {$n ne {} && $s_lang ne $n} {
+	if {$n ne {} && $s_lang ne $n && !$s_failed} {
 		set spell_cmd [list |]
 		lappend spell_cmd aspell
 		lappend spell_cmd --master=$n
