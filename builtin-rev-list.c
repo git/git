@@ -60,6 +60,8 @@ static void show_commit(struct commit *commit)
 		fputs(header_prefix, stdout);
 	if (commit->object.flags & BOUNDARY)
 		putchar('-');
+	else if (commit->object.flags & UNINTERESTING)
+		putchar('^');
 	else if (revs.left_right) {
 		if (commit->object.flags & SYMMETRIC_LEFT)
 			putchar('<');
@@ -84,7 +86,7 @@ static void show_commit(struct commit *commit)
 	else
 		putchar('\n');
 
-	if (revs.verbose_header) {
+	if (revs.verbose_header && commit->buffer) {
 		struct strbuf buf;
 		strbuf_init(&buf, 0);
 		pretty_print_commit(revs.commit_format, commit,

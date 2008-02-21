@@ -149,10 +149,12 @@ void show_log(struct rev_info *opt, const char *sep)
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
-		if (opt->left_right) {
-			if (commit->object.flags & BOUNDARY)
-				putchar('-');
-			else if (commit->object.flags & SYMMETRIC_LEFT)
+		if (commit->object.flags & BOUNDARY)
+			putchar('-');
+		else if (commit->object.flags & UNINTERESTING)
+			putchar('^');
+		else if (opt->left_right) {
+			if (commit->object.flags & SYMMETRIC_LEFT)
 				putchar('<');
 			else
 				putchar('>');
@@ -250,6 +252,8 @@ void show_log(struct rev_info *opt, const char *sep)
 			fputs("commit ", stdout);
 		if (commit->object.flags & BOUNDARY)
 			putchar('-');
+		else if (commit->object.flags & UNINTERESTING)
+			putchar('^');
 		else if (opt->left_right) {
 			if (commit->object.flags & SYMMETRIC_LEFT)
 				putchar('<');
@@ -277,6 +281,9 @@ void show_log(struct rev_info *opt, const char *sep)
 			}
 		}
 	}
+
+	if (!commit->buffer)
+		return;
 
 	/*
 	 * And then the pretty-printed message itself

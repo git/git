@@ -564,6 +564,12 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 	free_patch_ids(&ids);
 }
 
+static void add_to_list(struct commit_list **p, struct commit *commit, struct commit_list *n)
+{
+	p = &commit_list_insert(commit, p)->next;
+	*p = n;
+}
+
 static int limit_list(struct rev_info *revs)
 {
 	struct commit_list *list = revs->commits;
@@ -585,9 +591,13 @@ static int limit_list(struct rev_info *revs)
 			return -1;
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
-			if (everybody_uninteresting(list))
+			if (everybody_uninteresting(list)) {
+				if (revs->show_all)
+					add_to_list(p, commit, list);
 				break;
-			continue;
+			}
+			if (!revs->show_all)
+				continue;
 		}
 		if (revs->min_age != -1 && (commit->date > revs->min_age))
 			continue;
@@ -1063,6 +1073,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->dense = 0;
 				continue;
 			}
+			if (!strcmp(arg, "--show-all")) {
+				revs->show_all = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--remove-empty")) {
 				revs->remove_empty_trees = 1;
 				continue;
@@ -1446,6 +1460,8 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 		return commit_ignore;
 	if (revs->unpacked && has_sha1_pack(commit->object.sha1, revs->ignore_packed))
 		return commit_ignore;
+	if (revs->show_all)
+		return commit_show;
 	if (commit->object.flags & UNINTERESTING)
 		return commit_ignore;
 	if (revs->min_age != -1 && (commit->date > revs->min_age))
