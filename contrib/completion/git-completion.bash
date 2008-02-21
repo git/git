@@ -648,6 +648,7 @@ _git_format_patch ()
 			--in-reply-to=
 			--full-index --binary
 			--not --all
+			--cover-letter
 			"
 		return
 		;;
