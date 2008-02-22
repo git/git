@@ -131,7 +131,17 @@ GITGUI_MACOSXAPP :=
 
 ifeq ($(uname_O),Cygwin)
 	GITGUI_SCRIPT := `cygpath --windows --absolute "$(GITGUI_SCRIPT)"`
-	gg_libdir_sed_in := $(shell cygpath --windows --absolute "$(gg_libdir)")
+
+	# Is this a Cygwin Tcl/Tk binary?  If so it knows how to do
+	# POSIX path translation just like cygpath does and we must
+	# keep libdir in POSIX format so Cygwin packages of git-gui
+	# work no matter where the user installs them.
+	#
+	ifeq ($(shell echo 'puts [file normalize /]' | '$(TCL_PATH_SQ)'),$(shell cygpath --mixed --absolute /))
+		gg_libdir_sed_in := $(gg_libdir)
+	else
+		gg_libdir_sed_in := $(shell cygpath --windows --absolute "$(gg_libdir)")
+	endif
 else
 	ifeq ($(exedir),$(gg_libdir))
 		GITGUI_RELATIVE := 1
