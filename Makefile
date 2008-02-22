@@ -92,8 +92,12 @@ ifndef V
 	REMOVE_F1 = && echo '   ' REMOVE `basename "$$dst"` && $(RM_RF) "$$dst"
 endif
 
-TCL_PATH   ?= tclsh
 TCLTK_PATH ?= wish
+ifeq (./,$(dir $(TCLTK_PATH)))
+	TCL_PATH ?= $(subst wish,tclsh,$(TCLTK_PATH))
+else
+	TCL_PATH ?= $(dir $(TCLTK_PATH))$(notdir $(subst wish,tclsh,$(TCLTK_PATH)))
+endif
 
 ifeq ($(uname_S),Darwin)
 	TKFRAMEWORK = /Library/Frameworks/Tk.framework/Resources/Wish.app
