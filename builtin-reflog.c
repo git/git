@@ -276,10 +276,11 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	for_each_reflog_ent(ref, expire_reflog_ent, &cb);
  finish:
 	if (cb.newlog) {
-		if (fclose(cb.newlog))
+		if (fclose(cb.newlog)) {
 			status |= error("%s: %s", strerror(errno),
 					newlog_path);
-		if (rename(newlog_path, log_file)) {
+			unlink(newlog_path);
+		} else if (rename(newlog_path, log_file)) {
 			status |= error("cannot rename %s to %s",
 					newlog_path, log_file);
 			unlink(newlog_path);
