@@ -15,7 +15,7 @@
 static const char reflog_expire_usage[] =
 "git-reflog (show|expire) [--verbose] [--dry-run] [--stale-fix] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
 static const char reflog_delete_usage[] =
-"git-reflog delete [--verbose] [--dry-run] <refs>...";
+"git-reflog delete [--verbose] [--dry-run] [--rewrite] <refs>...";
 
 static unsigned long default_reflog_expire;
 static unsigned long default_reflog_expire_unreachable;
@@ -24,6 +24,7 @@ struct cmd_reflog_expire_cb {
 	struct rev_info revs;
 	int dry_run;
 	int stalefix;
+	int rewrite;
 	int verbose;
 	unsigned long expire_total;
 	unsigned long expire_unreachable;
@@ -35,6 +36,7 @@ struct expire_reflog_cb {
 	const char *ref;
 	struct commit *ref_commit;
 	struct cmd_reflog_expire_cb *cmd;
+	unsigned char last_kept_sha1[20];
 };
 
 struct collected_reflog {
@@ -216,6 +218,9 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	if (timestamp < cb->cmd->expire_total)
 		goto prune;
 
+	if (cb->cmd->rewrite)
+		osha1 = cb->last_kept_sha1;
+
 	old = new = NULL;
 	if (cb->cmd->stalefix &&
 	    (!keep_entry(&old, osha1) || !keep_entry(&new, nsha1)))
@@ -243,6 +248,7 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 			sha1_to_hex(osha1), sha1_to_hex(nsha1),
 			email, timestamp, sign, zone,
 			message);
+		hashcpy(cb->last_kept_sha1, nsha1);
 	}
 	if (cb->cmd->verbose)
 		printf("keep %s", message);
@@ -364,6 +370,8 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			cb.expire_unreachable = approxidate(arg + 21);
 		else if (!strcmp(arg, "--stale-fix"))
 			cb.stalefix = 1;
+		else if (!strcmp(arg, "--rewrite"))
+			cb.rewrite = 1;
 		else if (!strcmp(arg, "--all"))
 			do_all = 1;
 		else if (!strcmp(arg, "--verbose"))
@@ -433,6 +441,8 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
 			cb.dry_run = 1;
+		else if (!strcmp(arg, "--rewrite"))
+			cb.rewrite = 1;
 		else if (!strcmp(arg, "--verbose"))
 			cb.verbose = 1;
 		else if (!strcmp(arg, "--")) {
