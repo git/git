@@ -3784,18 +3784,24 @@ sub git_search_grep_body {
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 		      "<td><i>" . $author . "</i></td>\n" .
 		      "<td>" .
-		      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}), -class => "list subject"},
-			       chop_and_escape_str($co{'title'}, 50) . "<br/>");
+		      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}),
+		               -class => "list subject"},
+		              chop_and_escape_str($co{'title'}, 50) . "<br/>");
 		my $comment = $co{'comment'};
 		foreach my $line (@$comment) {
 			if ($line =~ m/^(.*)($search_regexp)(.*)$/i) {
-				my $lead = esc_html($1) || "";
-				$lead = chop_str($lead, 30, 10);
-				my $match = esc_html($2) || "";
-				my $trail = esc_html($3) || "";
-				$trail = chop_str($trail, 30, 10);
-				my $text = "$lead<span class=\"match\">$match</span>$trail";
-				print chop_str($text, 80, 5) . "<br/>\n";
+				my ($lead, $match, $trail) = ($1, $2, $3);
+				$match = chop_str($match, 70, 5);       # in case match is very long
+				my $contextlen = (80 - len($match))/2;  # is left for the remainder
+				$contextlen = 30 if ($contextlen > 30); # but not too much
+				$lead  = chop_str($lead,  $contextlen, 10);
+				$trail = chop_str($trail, $contextlen, 10);
+
+				$lead  = esc_html($lead);
+				$match = esc_html($match);
+				$trail = esc_html($trail);
+
+				print "$lead<span class=\"match\">$match</span>$trail<br />";
 			}
 		}
 		print "</td>\n" .
