@@ -15,7 +15,7 @@
 static const char reflog_expire_usage[] =
 "git-reflog (show|expire) [--verbose] [--dry-run] [--stale-fix] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
 static const char reflog_delete_usage[] =
-"git-reflog delete [--verbose] [--dry-run] [--rewrite] <refs>...";
+"git-reflog delete [--verbose] [--dry-run] [--rewrite] [--updateref] <refs>...";
 
 static unsigned long default_reflog_expire;
 static unsigned long default_reflog_expire_unreachable;
@@ -25,6 +25,7 @@ struct cmd_reflog_expire_cb {
 	int dry_run;
 	int stalefix;
 	int rewrite;
+	int updateref;
 	int verbose;
 	unsigned long expire_total;
 	unsigned long expire_unreachable;
@@ -292,10 +293,20 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 			status |= error("%s: %s", strerror(errno),
 					newlog_path);
 			unlink(newlog_path);
+		} else if (cmd->updateref &&
+			(write_in_full(lock->lock_fd,
+				sha1_to_hex(cb.last_kept_sha1), 40) != 40 ||
+			 write_in_full(lock->lock_fd, "\n", 1) != 1 ||
+			 close_ref(lock) < 0)) {
+			status |= error("Couldn't write %s",
+				lock->lk->filename);
+			unlink(newlog_path);
 		} else if (rename(newlog_path, log_file)) {
 			status |= error("cannot rename %s to %s",
 					newlog_path, log_file);
 			unlink(newlog_path);
+		} else if (cmd->updateref && commit_ref(lock)) {
+			status |= error("Couldn't set %s", lock->ref_name);
 		}
 	}
 	free(newlog_path);
@@ -372,6 +383,8 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			cb.stalefix = 1;
 		else if (!strcmp(arg, "--rewrite"))
 			cb.rewrite = 1;
+		else if (!strcmp(arg, "--updateref"))
+			cb.updateref = 1;
 		else if (!strcmp(arg, "--all"))
 			do_all = 1;
 		else if (!strcmp(arg, "--verbose"))
@@ -443,6 +456,8 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 			cb.dry_run = 1;
 		else if (!strcmp(arg, "--rewrite"))
 			cb.rewrite = 1;
+		else if (!strcmp(arg, "--updateref"))
+			cb.updateref = 1;
 		else if (!strcmp(arg, "--verbose"))
 			cb.verbose = 1;
 		else if (!strcmp(arg, "--")) {
