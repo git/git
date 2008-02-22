@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2007, Nanako Shiraishi
 
-USAGE='[  | save | list | show | apply | clear | drop | create ]'
+USAGE='[  | save | list | show | apply | clear | drop | pop | create ]'
 
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
@@ -255,6 +255,14 @@ create)
 drop)
 	shift
 	drop_stash "$@"
+	;;
+pop)
+	shift
+	if apply_stash "$@"
+	then
+		test -z "$unstash_index" || shift
+		drop_stash "$@"
+	fi
 	;;
 *)
 	if test $# -eq 0
