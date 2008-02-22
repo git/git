@@ -170,7 +170,9 @@ my $envelope_sender;
 
 my $repo = Git->repository();
 my $term = eval {
-	new Term::ReadLine 'git-send-email';
+	$ENV{"GIT_SEND_EMAIL_NOTTY"}
+		? new Term::ReadLine 'git-send-email', \*STDIN, \*STDOUT
+		: new Term::ReadLine 'git-send-email';
 };
 if ($@) {
 	$term = new FakeTerm "$@: going non-interactive";
@@ -476,8 +478,9 @@ if ($thread && !defined $initial_reply_to && $prompting) {
 	$initial_reply_to = $_;
 }
 if (defined $initial_reply_to) {
-	$initial_reply_to =~ s/^\s*<?/</;
-	$initial_reply_to =~ s/>?\s*$/>/;
+	$initial_reply_to =~ s/^\s*<?//;
+	$initial_reply_to =~ s/>?\s*$//;
+	$initial_reply_to = "<$initial_reply_to>" if $initial_reply_to ne '';
 }
 
 if (!defined $smtp_server) {
