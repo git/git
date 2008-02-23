@@ -301,7 +301,7 @@ static void check_updates(struct cache_entry **src, int nr,
 		}
 
 		progress = start_progress_delay("Checking out files",
-						total, 50, 2);
+						total, 50, 1);
 		cnt = 0;
 	}
 
