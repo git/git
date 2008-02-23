@@ -232,6 +232,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 			topts.update = 1;
 			topts.merge = 1;
 			topts.gently = opts->merge;
+			topts.verbose_update = !opts->quiet;
 			topts.fn = twoway_merge;
 			topts.dir = xcalloc(1, sizeof(*topts.dir));
 			topts.dir->show_ignored = 1;
