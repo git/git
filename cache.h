@@ -133,7 +133,9 @@ struct cache_entry {
 #define CE_UPDATE    (0x10000)
 #define CE_REMOVE    (0x20000)
 #define CE_UPTODATE  (0x40000)
-#define CE_UNHASHED  (0x80000)
+
+#define CE_HASHED    (0x100000)
+#define CE_UNHASHED  (0x200000)
 
 static inline unsigned create_ce_flags(size_t len, unsigned stage)
 {
