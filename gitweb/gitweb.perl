@@ -3792,7 +3792,7 @@ sub git_search_grep_body {
 			if ($line =~ m/^(.*)($search_regexp)(.*)$/i) {
 				my ($lead, $match, $trail) = ($1, $2, $3);
 				$match = chop_str($match, 70, 5);       # in case match is very long
-				my $contextlen = (80 - len($match))/2;  # is left for the remainder
+				my $contextlen = int((80 - length($match))/2); # for the remainder
 				$contextlen = 30 if ($contextlen > 30); # but not too much
 				$lead  = chop_str($lead,  $contextlen, 10);
 				$trail = chop_str($trail, $contextlen, 10);
