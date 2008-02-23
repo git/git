@@ -137,6 +137,20 @@ struct cache_entry {
 #define CE_HASHED    (0x100000)
 #define CE_UNHASHED  (0x200000)
 
+/*
+ * We don't actually *remove* it, we can just mark it invalid so that
+ * we won't find it in lookups.
+ *
+ * Not only would we have to search the lists (simple enough), but
+ * we'd also have to rehash other hash buckets in case this makes the
+ * hash bucket empty (common). So it's much better to just mark
+ * it.
+ */
+static inline void remove_index_entry(struct cache_entry *ce)
+{
+	ce->ce_flags |= CE_UNHASHED;
+}
+
 static inline unsigned create_ce_flags(size_t len, unsigned stage)
 {
 	if (len >= CE_NAMEMASK)
