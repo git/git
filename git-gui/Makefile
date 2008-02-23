@@ -13,6 +13,7 @@ GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
+uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
 
 SCRIPT_SH = git-gui.sh
 GITGUI_MAIN := git-gui
@@ -91,9 +92,20 @@ ifndef V
 	REMOVE_F1 = && echo '   ' REMOVE `basename "$$dst"` && $(RM_RF) "$$dst"
 endif
 
-TCL_PATH   ?= tclsh
 TCLTK_PATH ?= wish
-TKFRAMEWORK = /Library/Frameworks/Tk.framework/Resources/Wish.app
+ifeq (./,$(dir $(TCLTK_PATH)))
+	TCL_PATH ?= $(subst wish,tclsh,$(TCLTK_PATH))
+else
+	TCL_PATH ?= $(dir $(TCLTK_PATH))$(notdir $(subst wish,tclsh,$(TCLTK_PATH)))
+endif
+
+ifeq ($(uname_S),Darwin)
+	TKFRAMEWORK = /Library/Frameworks/Tk.framework/Resources/Wish.app
+	ifeq ($(shell expr "$(uname_R)" : '9\.'),2)
+		TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish\ Shell.app
+	endif
+	TKEXECUTABLE = $(shell basename "$(TKFRAMEWORK)" .app)
+endif
 
 ifeq ($(findstring $(MAKEFLAGS),s),s)
 QUIET_GEN =
@@ -119,7 +131,17 @@ GITGUI_MACOSXAPP :=
 
 ifeq ($(uname_O),Cygwin)
 	GITGUI_SCRIPT := `cygpath --windows --absolute "$(GITGUI_SCRIPT)"`
-	gg_libdir_sed_in := $(shell cygpath --windows --absolute "$(gg_libdir)")
+
+	# Is this a Cygwin Tcl/Tk binary?  If so it knows how to do
+	# POSIX path translation just like cygpath does and we must
+	# keep libdir in POSIX format so Cygwin packages of git-gui
+	# work no matter where the user installs them.
+	#
+	ifeq ($(shell echo 'puts [file normalize /]' | '$(TCL_PATH_SQ)'),$(shell cygpath --mixed --absolute /))
+		gg_libdir_sed_in := $(gg_libdir)
+	else
+		gg_libdir_sed_in := $(shell cygpath --windows --absolute "$(gg_libdir)")
+	endif
 else
 	ifeq ($(exedir),$(gg_libdir))
 		GITGUI_RELATIVE := 1
@@ -147,7 +169,7 @@ git-gui: GIT-VERSION-FILE GIT-GUI-VARS
 	echo then >>$@+ && \
 	echo '	'echo \'git-gui version '$(GITGUI_VERSION)'\' >>$@+ && \
 	echo else >>$@+ && \
-	echo '	'exec \''$(libdir_SQ)/Git Gui.app/Contents/MacOS/Wish'\' \
+	echo '	'exec \''$(libdir_SQ)/Git Gui.app/Contents/MacOS/$(subst \,,$(TKEXECUTABLE))'\' \
 		'"$$0" "$$@"' >>$@+ && \
 	echo fi >>$@+ && \
 	chmod +x $@+ && \
@@ -157,14 +179,15 @@ Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-VARS \
 		macosx/Info.plist \
 		macosx/git-gui.icns \
 		macosx/AppMain.tcl \
-		$(TKFRAMEWORK)/Contents/MacOS/Wish
+		$(TKFRAMEWORK)/Contents/MacOS/$(TKEXECUTABLE)
 	$(QUIET_GEN)rm -rf '$@' '$@'+ && \
 	mkdir -p '$@'+/Contents/MacOS && \
 	mkdir -p '$@'+/Contents/Resources/Scripts && \
-	cp '$(subst ','\'',$(TKFRAMEWORK))/Contents/MacOS/Wish' \
+	cp '$(subst ','\'',$(subst \,,$(TKFRAMEWORK)/Contents/MacOS/$(TKEXECUTABLE)))' \
 		'$@'+/Contents/MacOS && \
 	cp macosx/git-gui.icns '$@'+/Contents/Resources && \
 	sed -e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
+		-e 's/@@GITGUI_TKEXECUTABLE@@/$(TKEXECUTABLE)/g' \
 		macosx/Info.plist \
 		>'$@'+/Contents/Info.plist && \
 	sed -e 's|@@gitexecdir@@|$(gitexecdir_SQ)|' \
