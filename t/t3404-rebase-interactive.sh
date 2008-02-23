@@ -61,8 +61,8 @@ test_expect_success 'setup' '
 	git tag I
 '
 
-cat > fake-editor.sh <<\EOF
-#!/bin/sh
+echo "#!$SHELL" >fake-editor
+cat >> fake-editor.sh <<\EOF
 case "$1" in
 */COMMIT_EDITMSG)
 	test -z "$FAKE_COMMIT_MESSAGE" || echo "$FAKE_COMMIT_MESSAGE" > "$1"

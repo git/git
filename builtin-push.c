@@ -90,7 +90,7 @@ static int do_push(const char *repo, int flags)
 		if (!err)
 			continue;
 
-		error("failed to push to '%s'", remote->url[i]);
+		error("failed to push some refs to '%s'", remote->url[i]);
 		errs++;
 	}
 	return !!errs;

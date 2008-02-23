@@ -146,11 +146,12 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 	strbuf_setlen(sb, sb->len + len);
 }
 
-void strbuf_expand(struct strbuf *sb, const char *format,
-                   const char **placeholders, expand_fn_t fn, void *context)
+void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
+		   void *context)
 {
 	for (;;) {
-		const char *percent, **p;
+		const char *percent;
+		size_t consumed;
 
 		percent = strchrnul(format, '%');
 		strbuf_add(sb, format, percent - format);
@@ -158,14 +159,10 @@ void strbuf_expand(struct strbuf *sb, const char *format,
 			break;
 		format = percent + 1;
 
-		for (p = placeholders; *p; p++) {
-			if (!prefixcmp(format, *p))
-				break;
-		}
-		if (*p) {
-			fn(sb, *p, context);
-			format += strlen(*p);
-		} else
+		consumed = fn(sb, format, context);
+		if (consumed)
+			format += consumed;
+		else
 			strbuf_addch(sb, '%');
 	}
 }

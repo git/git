@@ -1634,12 +1634,19 @@ static struct object_list **process_tree(struct tree *tree,
 
 	init_tree_desc(&desc, tree->buffer, tree->size);
 
-	while (tree_entry(&desc, &entry)) {
-		if (S_ISDIR(entry.mode))
+	while (tree_entry(&desc, &entry))
+		switch (object_type(entry.mode)) {
+		case OBJ_TREE:
 			p = process_tree(lookup_tree(entry.sha1), p, &me, name);
-		else
+			break;
+		case OBJ_BLOB:
 			p = process_blob(lookup_blob(entry.sha1), p, &me, name);
-	}
+			break;
+		default:
+			/* Subproject commit - not in this repository */
+			break;
+		}
+
 	free(tree->buffer);
 	tree->buffer = NULL;
 	return p;
@@ -2383,7 +2390,8 @@ int main(int argc, char **argv)
 
 		/* Generate a list of objects that need to be pushed */
 		pushing = 0;
-		prepare_revision_walk(&revs);
+		if (prepare_revision_walk(&revs))
+			die("revision walk setup failed");
 		mark_edges_uninteresting(revs.commits);
 		objects_to_send = get_delta(&revs, ref_lock);
 		finish_all_active_slots();
@@ -2398,15 +2406,17 @@ int main(int argc, char **argv)
 		fill_active_slots();
 		add_fill_function(NULL, fill_active_slot);
 #endif
-		finish_all_active_slots();
+		do {
+			finish_all_active_slots();
+#ifdef USE_CURL_MULTI
+			fill_active_slots();
+#endif
+		} while (request_queue_head && !aborted);
 
 		/* Update the remote branch if all went well */
-		if (aborted || !update_remote(ref->new_sha1, ref_lock)) {
+		if (aborted || !update_remote(ref->new_sha1, ref_lock))
 			rc = 1;
-			goto unlock;
-		}
 
-	unlock:
 		if (!rc)
 			fprintf(stderr, "    done\n");
 		unlock_remote(ref_lock);

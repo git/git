@@ -108,4 +108,25 @@ test_expect_success 'allow long lines with --no-validate' '
 		2>errors
 '
 
+test_expect_success 'Invalid In-Reply-To' '
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--in-reply-to=" " \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches
+		2>errors
+	! grep "^In-Reply-To: < *>" msgtxt
+'
+
+test_expect_success 'Valid In-Reply-To when prompting' '
+	(echo "From Example <from@example.com>"
+	 echo "To Example <to@example.com>"
+	 echo ""
+	) | env GIT_SEND_EMAIL_NOTTY=1 git send-email \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches 2>errors &&
+	! grep "^In-Reply-To: < *>" msgtxt
+'
+
 test_done

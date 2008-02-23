@@ -47,9 +47,9 @@ even if it does not result in a fast forward update.
 +
 Note: If no explicit refspec is found, (that is neither
 on the command line nor in any Push line of the
-corresponding remotes file---see below), then all the
-heads that exist both on the local side and on the remote
-side are updated.
+corresponding remotes file---see below), then "matching" heads are
+pushed: for every head that exists on the local side, the remote side is
+updated if a head of the same name already exists on the remote side.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 +
@@ -108,6 +108,55 @@ the remote repository.
 
 include::urls-remotes.txt[]
 
+OUTPUT
+------
+
+The output of "git push" depends on the transport method used; this
+section describes the output when pushing over the git protocol (either
+locally or via ssh).
+
+The status of the push is output in tabular form, with each line
+representing the status of a single ref. Each line is of the form:
+
+-------------------------------
+ <flag> <summary> <from> -> <to> (<reason>)
+-------------------------------
+
+flag::
+	A single character indicating the status of the ref. This is
+	blank for a successfully pushed ref, `!` for a ref that was
+	rejected or failed to push, and '=' for a ref that was up to
+	date and did not need pushing (note that the status of up to
+	date refs is shown only when `git push` is running verbosely).
+
+summary::
+	For a successfully pushed ref, the summary shows the old and new
+	values of the ref in a form suitable for using as an argument to
+	`git log` (this is `<old>..<new>` in most cases, and
+	`<old>...<new>` for forced non-fast forward updates). For a
+	failed update, more details are given for the failure.
+	The string `rejected` indicates that git did not try to send the
+	ref at all (typically because it is not a fast forward). The
+	string `remote rejected` indicates that the remote end refused
+	the update; this rejection is typically caused by a hook on the
+	remote side. The string `remote failure` indicates that the
+	remote end did not report the successful update of the ref
+	(perhaps because of a temporary error on the remote side, a
+	break in the network connection, or other transient error).
+
+from::
+	The name of the local ref being pushed, minus its
+	`refs/<type>/` prefix. In the case of deletion, the
+	name of the local ref is omitted.
+
+to::
+	The name of the remote ref being updated, minus its
+	`refs/<type>/` prefix.
+
+reason::
+	A human-readable explanation. In the case of successfully pushed
+	refs, no explanation is needed. For a failed ref, the reason for
+	failure is described.
 
 Examples
 --------

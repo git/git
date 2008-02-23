@@ -33,6 +33,7 @@ struct rev_info {
 			prune:1,
 			no_merges:1,
 			no_walk:1,
+			show_all:1,
 			remove_empty_trees:1,
 			simplify_history:1,
 			lifo:1,

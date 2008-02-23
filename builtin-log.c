@@ -5,6 +5,7 @@
  *		 2006 Junio Hamano
  */
 #include "cache.h"
+#include "color.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
@@ -197,7 +198,8 @@ static int cmd_log_walk(struct rev_info *rev)
 	if (rev->early_output)
 		setup_early_output(rev);
 
-	prepare_revision_walk(rev);
+	if (prepare_revision_walk(rev))
+		die("revision walk setup failed");
 
 	if (rev->early_output)
 		finish_early_output(rev);
@@ -235,6 +237,10 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 
 	git_config(git_log_config);
+
+	if (diff_use_color_default == -1)
+		diff_use_color_default = git_use_color_default;
+
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.simplify_history = 0;
@@ -307,6 +313,10 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	int i, count, ret = 0;
 
 	git_config(git_log_config);
+
+	if (diff_use_color_default == -1)
+		diff_use_color_default = git_use_color_default;
+
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.combine_merges = 1;
@@ -367,6 +377,10 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 
 	git_config(git_log_config);
+
+	if (diff_use_color_default == -1)
+		diff_use_color_default = git_use_color_default;
+
 	init_revisions(&rev, prefix);
 	init_reflog_walk(&rev.reflog_info);
 	rev.abbrev_commit = 1;
@@ -395,6 +409,10 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 
 	git_config(git_log_config);
+
+	if (diff_use_color_default == -1)
+		diff_use_color_default = git_use_color_default;
+
 	init_revisions(&rev, prefix);
 	rev.always_show_header = 1;
 	cmd_log_init(argc, argv, prefix, &rev);
@@ -556,7 +574,8 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const cha
 	o2->flags ^= UNINTERESTING;
 	add_pending_object(&check_rev, o1, "o1");
 	add_pending_object(&check_rev, o2, "o2");
-	prepare_revision_walk(&check_rev);
+	if (prepare_revision_walk(&check_rev))
+		die("revision walk setup failed");
 
 	while ((commit = get_revision(&check_rev)) != NULL) {
 		/* ignore merges */
@@ -781,7 +800,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!use_stdout)
 		realstdout = xfdopen(xdup(1), "w");
 
-	prepare_revision_walk(&rev);
+	if (prepare_revision_walk(&rev))
+		die("revision walk setup failed");
 	while ((commit = get_revision(&rev)) != NULL) {
 		/* ignore merges */
 		if (commit->parents && commit->parents->next)
@@ -923,7 +943,8 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 		die("Unknown commit %s", limit);
 
 	/* reverse the list of commits */
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 	while ((commit = get_revision(&revs)) != NULL) {
 		/* ignore merges */
 		if (commit->parents && commit->parents->next)

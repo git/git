@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	signal(SIGCHLD, SIG_DFL);
 
 	if (argc < 3)
-		usage("git-merge-index [-o] [-q] <merge-program> (-a | <filename>*)");
+		usage("git-merge-index [-o] [-q] <merge-program> (-a | [--] <filename>*)");
 
 	setup_git_directory();
 	read_cache();

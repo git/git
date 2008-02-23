@@ -185,9 +185,8 @@ if there is already one that displays the same directory."
 
 (defun git-call-process-env (buffer env &rest args)
   "Wrapper for call-process that sets environment strings."
-  (if env
-      (apply #'call-process "env" nil buffer nil
-             (append (git-get-env-strings env) (list "git") args))
+  (let ((process-environment (append (git-get-env-strings env)
+                                     process-environment)))
     (apply #'call-process "git" nil buffer nil args)))
 
 (defun git-call-process-display-error (&rest args)
@@ -204,7 +203,7 @@ if there is already one that displays the same directory."
 
 (defun git-call-process-env-string (env &rest args)
   "Wrapper for call-process that sets environment strings,
-and returns the process output as a string."
+and returns the process output as a string, or nil if the git failed."
   (with-temp-buffer
     (and (eq 0 (apply #' git-call-process-env t env args))
          (buffer-string))))
