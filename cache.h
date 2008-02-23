@@ -110,7 +110,6 @@ struct ondisk_cache_entry {
 };
 
 struct cache_entry {
-	struct cache_entry *next;
 	unsigned int ce_ctime;
 	unsigned int ce_mtime;
 	unsigned int ce_dev;
@@ -121,6 +120,7 @@ struct cache_entry {
 	unsigned int ce_size;
 	unsigned int ce_flags;
 	unsigned char sha1[20];
+	struct cache_entry *next;
 	char name[FLEX_ARRAY]; /* more */
 };
 
@@ -136,6 +136,22 @@ struct cache_entry {
 
 #define CE_HASHED    (0x100000)
 #define CE_UNHASHED  (0x200000)
+
+/*
+ * Copy the sha1 and stat state of a cache entry from one to
+ * another. But we never change the name, or the hash state!
+ */
+#define CE_STATE_MASK (CE_HASHED | CE_UNHASHED)
+static inline void copy_cache_entry(struct cache_entry *dst, struct cache_entry *src)
+{
+	unsigned int state = dst->ce_flags & CE_STATE_MASK;
+
+	/* Don't copy hash chain and name */
+	memcpy(dst, src, offsetof(struct cache_entry, next));
+
+	/* Restore the hash state */
+	dst->ce_flags = (dst->ce_flags & ~CE_STATE_MASK) | state;
+}
 
 /*
  * We don't actually *remove* it, we can just mark it invalid so that
