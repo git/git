@@ -3,11 +3,9 @@
 #include "commit.h"
 #include "tag.h"
 #include "refs.h"
+#include "parse-options.h"
 
 #define CUTOFF_DATE_SLOP 86400 /* one day */
-
-static const char name_rev_usage[] =
-	"git-name-rev [--tags | --refs=<pattern>] ( --all | --stdin | committish [committish...] )\n";
 
 typedef struct rev_name {
 	const char *tip_name;
@@ -127,18 +125,18 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 }
 
 /* returns a static buffer */
-static const char* get_rev_name(struct object *o)
+static const char *get_rev_name(struct object *o)
 {
 	static char buffer[1024];
 	struct rev_name *n;
 	struct commit *c;
 
 	if (o->type != OBJ_COMMIT)
-		return "undefined";
+		return NULL;
 	c = (struct commit *) o;
 	n = c->util;
 	if (!n)
-		return "undefined";
+		return NULL;
 
 	if (!n->generation)
 		return n->tip_name;
@@ -153,50 +151,41 @@ static const char* get_rev_name(struct object *o)
 	}
 }
 
+static char const * const name_rev_usage[] = {
+	"git-name-rev [options] ( --all | --stdin | <commit>... )",
+	NULL
+};
+
 int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
 	struct object_array revs = { 0, 0, NULL };
-	int as_is = 0, all = 0, transform_stdin = 0;
+	int all = 0, transform_stdin = 0, allow_undefined = 1;
 	struct name_ref_data data = { 0, 0, NULL };
+	struct option opts[] = {
+		OPT_BOOLEAN(0, "name-only", &data.name_only, "print only names (no SHA-1)"),
+		OPT_BOOLEAN(0, "tags", &data.tags_only, "only use tags to name the commits"),
+		OPT_STRING(0, "refs", &data.ref_filter, "pattern",
+				   "only use refs matching <pattern>"),
+		OPT_GROUP(""),
+		OPT_BOOLEAN(0, "all", &all, "list all commits reachable from all refs"),
+		OPT_BOOLEAN(0, "stdin", &transform_stdin, "read from stdin"),
+		OPT_BOOLEAN(0, "undefined", &allow_undefined, "allow to print `undefined` names"),
+		OPT_END(),
+	};
 
 	git_config(git_default_config);
+	argc = parse_options(argc, argv, opts, name_rev_usage, 0);
+	if (!!all + !!transform_stdin + !!argc > 1) {
+		error("Specify either a list, or --all, not both!");
+		usage_with_options(name_rev_usage, opts);
+	}
+	if (all || transform_stdin)
+		cutoff = 0;
 
-	if (argc < 2)
-		usage(name_rev_usage);
-
-	for (--argc, ++argv; argc; --argc, ++argv) {
+	for (; argc; argc--, argv++) {
 		unsigned char sha1[20];
 		struct object *o;
 		struct commit *commit;
-
-		if (!as_is && (*argv)[0] == '-') {
-			if (!strcmp(*argv, "--")) {
-				as_is = 1;
-				continue;
-			} else if (!strcmp(*argv, "--name-only")) {
-				data.name_only = 1;
-				continue;
-			} else if (!strcmp(*argv, "--tags")) {
-				data.tags_only = 1;
-				continue;
-			} else  if (!prefixcmp(*argv, "--refs=")) {
-				data.ref_filter = *argv + 7;
-				continue;
-			} else if (!strcmp(*argv, "--all")) {
-				if (argc > 1)
-					die("Specify either a list, or --all, not both!");
-				all = 1;
-				cutoff = 0;
-				continue;
-			} else if (!strcmp(*argv, "--stdin")) {
-				if (argc > 1)
-					die("Specify either a list, or --stdin, not both!");
-				transform_stdin = 1;
-				cutoff = 0;
-				continue;
-			}
-			usage(name_rev_usage);
-		}
 
 		if (get_sha1(*argv, sha1)) {
 			fprintf(stderr, "Could not get sha1 for %s. Skipping.\n",
@@ -212,10 +201,8 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		}
 
 		commit = (struct commit *)o;
-
 		if (cutoff > commit->date)
 			cutoff = commit->date;
-
 		add_object_array((struct object *)commit, *argv, &revs);
 	}
 
@@ -240,7 +227,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 				else if (++forty == 40 &&
 						!ishex(*(p+1))) {
 					unsigned char sha1[40];
-					const char *name = "undefined";
+					const char *name = NULL;
 					char c = *(p+1);
 
 					forty = 0;
@@ -254,11 +241,10 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 					}
 					*(p+1) = c;
 
-					if (!strcmp(name, "undefined"))
+					if (!name)
 						continue;
 
-					fwrite(p_start, p - p_start + 1, 1,
-					       stdout);
+					fwrite(p_start, p - p_start + 1, 1, stdout);
 					printf(" (%s)", name);
 					p_start = p + 1;
 				}
@@ -274,18 +260,32 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		max = get_max_object_index();
 		for (i = 0; i < max; i++) {
 			struct object * obj = get_indexed_object(i);
+			const char *name;
 			if (!obj)
 				continue;
 			if (!data.name_only)
 				printf("%s ", sha1_to_hex(obj->sha1));
-			printf("%s\n", get_rev_name(obj));
+			name = get_rev_name(obj);
+			if (name)
+				printf("%s\n", name);
+			else if (allow_undefined)
+				printf("undefined\n");
+			else
+				die("cannot describe '%s'", sha1_to_hex(obj->sha1));
 		}
 	} else {
 		int i;
 		for (i = 0; i < revs.nr; i++) {
+			const char *name;
 			if (!data.name_only)
 				printf("%s ", revs.objects[i].name);
-			printf("%s\n", get_rev_name(revs.objects[i].item));
+			name = get_rev_name(revs.objects[i].item);
+			if (name)
+				printf("%s\n", name);
+			else if (allow_undefined)
+				printf("undefined\n");
+			else
+				die("cannot describe '%s'", sha1_to_hex(revs.objects[i].item->sha1));
 		}
 	}
 

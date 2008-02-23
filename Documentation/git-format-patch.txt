@@ -9,9 +9,10 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--thread]
+'git-format-patch' [-k] [-o <dir> | --stdout] [--thread]
                    [--attach[=<boundary>] | --inline[=<boundary>]]
                    [-s | --signoff] [<common diff options>]
+                   [-n | --numbered | -N | --no-numbered]
                    [--start-number <n>] [--numbered-files]
                    [--in-reply-to=Message-Id] [--suffix=.<sfx>]
                    [--ignore-if-in-upstream]
@@ -24,7 +25,7 @@ DESCRIPTION
 Prepare each commit with its patch in
 one file per commit, formatted to resemble UNIX mailbox format.
 The output of this command is convenient for e-mail submission or
-for use with gitlink:git-am[1].
+for use with linkgit:git-am[1].
 
 There are two ways to specify which commits to operate on.
 
@@ -33,7 +34,7 @@ There are two ways to specify which commits to operate on.
    that leads to the <since> to be output.
 
 2. Generic <revision range> expression (see "SPECIFYING
-   REVISIONS" section in gitlink:git-rev-parse[1]) means the
+   REVISIONS" section in linkgit:git-rev-parse[1]) means the
    commits in the specified range.
 
 A single commit, when interpreted as a <revision range>
@@ -65,6 +66,7 @@ reference.
 
 OPTIONS
 -------
+:git-format-patch: 1
 include::diff-options.txt[]
 
 -<n>::
@@ -76,6 +78,9 @@ include::diff-options.txt[]
 
 -n|--numbered::
 	Name output in '[PATCH n/m]' format.
+
+-N|--no-numbered::
+	Name output in '[PATCH]' format.
 
 --start-number <n>::
 	Start numbering the patches at <n> instead of 1.
@@ -142,15 +147,16 @@ not add any suffix.
 
 CONFIGURATION
 -------------
-You can specify extra mail header lines to be added to each
-message in the repository configuration.  You can also specify
-new defaults for the subject prefix and file suffix.
+You can specify extra mail header lines to be added to each message
+in the repository configuration, new defaults for the subject prefix
+and file suffix, and number patches when outputting more than one.
 
 ------------
 [format]
         headers = "Organization: git-foo\n"
         subjectprefix = CHANGE
         suffix = .txt
+        numbered = auto
 ------------
 
 
@@ -168,7 +174,7 @@ git-format-patch origin::
 	is created in the current directory.
 
 git-format-patch \--root origin::
-	Extract all commits which that leads to 'origin' since the
+	Extract all commits that lead to 'origin' since the
 	inception of the project.
 
 git-format-patch -M -B origin::
@@ -186,7 +192,7 @@ git-format-patch -3::
 
 See Also
 --------
-gitlink:git-am[1], gitlink:git-send-email[1]
+linkgit:git-am[1], linkgit:git-send-email[1]
 
 
 Author
@@ -199,4 +205,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

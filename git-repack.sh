@@ -3,7 +3,22 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-USAGE='[-a|-A] [-d] [-f] [-l] [-n] [-q] [--max-pack-size=N] [--window=N] [--window-memory=N] [--depth=N]'
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git-repack [options]
+--
+a               pack everything in a single pack
+A               same as -a, and keep unreachable objects too
+d               remove redundant packs, and run git-prune-packed
+f               pass --no-reuse-delta to git-pack-objects
+q,quiet         be quiet
+l               pass --local to git-pack-objects
+ Packing constraints
+window=         size of the window used for delta compression
+window-memory=  same as the above, but limit memory size instead of entries count
+depth=          limits the maximum delta depth
+max-pack-size=  maximum size of each packfile
+"
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
@@ -20,10 +35,9 @@ do
 	-q)	quiet=-q ;;
 	-f)	no_reuse=--no-reuse-object ;;
 	-l)	local=--local ;;
-	--max-pack-size=*) extra="$extra $1" ;;
-	--window=*) extra="$extra $1" ;;
-	--window-memory=*) extra="$extra $1" ;;
-	--depth=*) extra="$extra $1" ;;
+	--max-pack-size|--window|--window-memory|--depth)
+		extra="$extra $1=$2"; shift ;;
+	--) shift; break;;
 	*)	usage ;;
 	esac
 	shift
@@ -83,9 +97,6 @@ for name in $names ; do
 	fullbases="$fullbases pack-$name"
 	chmod a-w "$PACKTMP-$name.pack"
 	chmod a-w "$PACKTMP-$name.idx"
-	if test "$quiet" != '-q'; then
-	    echo "Pack pack-$name created."
-	fi
 	mkdir -p "$PACKDIR" || exit
 
 	for sfx in pack idx

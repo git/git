@@ -8,14 +8,35 @@
 # See git-sh-setup why.
 unset CDPATH
 
+OPTIONS_SPEC="\
+git-clone [options] [--] <repo> [<dir>]
+--
+n,no-checkout        don't create a checkout
+bare                 create a bare repository
+naked                create a bare repository
+l,local              to clone from a local repository
+no-hardlinks         don't use local hardlinks, always copy
+s,shared             setup as a shared repository
+template=            path to the template directory
+q,quiet              be quiet
+reference=           reference repository
+o,origin=            use <name> instead of 'origin' to track upstream
+u,upload-pack=       path to git-upload-pack on the remote
+depth=               create a shallow clone of that depth
+
+use-separate-remote  compatibility, do not use
+no-separate-remote   compatibility, do not use"
+
 die() {
 	echo >&2 "$@"
 	exit 1
 }
 
 usage() {
-	die "Usage: $0 [--template=<template_directory>] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] <repo> [<dir>]"
+	exec "$0" -h
 }
+
+eval "$(echo "$OPTIONS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
 
 get_repo_base() {
 	(
@@ -28,17 +49,19 @@ get_repo_base() {
 	) 2>/dev/null
 }
 
-if [ -n "$GIT_SSL_NO_VERIFY" ]; then
+if [ -n "$GIT_SSL_NO_VERIFY" -o \
+	"`git config --bool http.sslVerify`" = false ]; then
     curl_extra_args="-k"
 fi
 
 http_fetch () {
 	# $1 = Remote, $2 = Local
-	curl -nsfL $curl_extra_args "$1" >"$2" ||
-		case $? in
-		126|127) exit ;;
-		*)	 return $? ;;
-		esac
+	curl -nsfL $curl_extra_args "$1" >"$2"
+	curl_exit_status=$?
+	case $curl_exit_status in
+	126|127) exit ;;
+	*)	 return $curl_exit_status ;;
+	esac
 }
 
 clone_dumb_http () {
@@ -105,64 +128,57 @@ depth=
 no_progress=
 local_explicitly_asked_for=
 test -t 1 || no_progress=--no-progress
-while
-	case "$#,$1" in
-	0,*) break ;;
-	*,-n|*,--no|*,--no-|*,--no-c|*,--no-ch|*,--no-che|*,--no-chec|\
-	*,--no-check|*,--no-checko|*,--no-checkou|*,--no-checkout)
-	  no_checkout=yes ;;
-	*,--na|*,--nak|*,--nake|*,--naked|\
-	*,-b|*,--b|*,--ba|*,--bar|*,--bare) bare=yes ;;
-	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local)
-	  local_explicitly_asked_for=yes
-	  use_local_hardlink=yes ;;
-	*,--no-h|*,--no-ha|*,--no-har|*,--no-hard|*,--no-hardl|\
-	*,--no-hardli|*,--no-hardlin|*,--no-hardlink|*,--no-hardlinks)
-	  use_local_hardlink=no ;;
-        *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared)
-          local_shared=yes; ;;
-	1,--template) usage ;;
-	*,--template)
+
+while test $# != 0
+do
+	case "$1" in
+	-n|--no-checkout)
+		no_checkout=yes ;;
+	--naked|--bare)
+		bare=yes ;;
+	-l|--local)
+		local_explicitly_asked_for=yes
+		use_local_hardlink=yes
+		;;
+	--no-hardlinks)
+		use_local_hardlink=no ;;
+	-s|--shared)
+		local_shared=yes ;;
+	--template)
 		shift; template="--template=$1" ;;
-	*,--template=*)
-	  template="$1" ;;
-	*,-q|*,--quiet) quiet=-q ;;
-	*,--use-separate-remote) ;;
-	*,--no-separate-remote)
+	-q|--quiet)
+		quiet=-q ;;
+	--use-separate-remote|--no-separate-remote)
 		die "clones are always made with separate-remote layout" ;;
-	1,--reference) usage ;;
-	*,--reference)
+	--reference)
 		shift; reference="$1" ;;
-	*,--reference=*)
-		reference=`expr "z$1" : 'z--reference=\(.*\)'` ;;
-	*,-o|*,--or|*,--ori|*,--orig|*,--origi|*,--origin)
-		case "$2" in
+	-o|--origin)
+		shift;
+		case "$1" in
 		'')
 		    usage ;;
 		*/*)
-		    die "'$2' is not suitable for an origin name"
+		    die "'$1' is not suitable for an origin name"
 		esac
-		git check-ref-format "heads/$2" ||
-		    die "'$2' is not suitable for a branch name"
+		git check-ref-format "heads/$1" ||
+		    die "'$1' is not suitable for a branch name"
 		test -z "$origin_override" ||
 		    die "Do not give more than one --origin options."
 		origin_override=yes
-		origin="$2"; shift
+		origin="$1"
 		;;
-	1,-u|1,--upload-pack) usage ;;
-	*,-u|*,--upload-pack)
+	-u|--upload-pack)
 		shift
 		upload_pack="--upload-pack=$1" ;;
-	*,--upload-pack=*)
-		upload_pack=--upload-pack=$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
-	1,--depth) usage;;
-	*,--depth)
+	--depth)
 		shift
-		depth="--depth=$1";;
-	*,-*) usage ;;
-	*) break ;;
+		depth="--depth=$1" ;;
+	--)
+		shift
+		break ;;
+	*)
+		usage ;;
 	esac
-do
 	shift
 done
 
@@ -190,7 +206,10 @@ fi
 # it is local
 if base=$(get_repo_base "$repo"); then
 	repo="$base"
-	local=yes
+	if test -z "$depth"
+	then
+		local=yes
+	fi
 fi
 
 dir="$2"
@@ -214,7 +233,7 @@ cleanup() {
 trap cleanup 0
 mkdir -p "$dir" && D=$(cd "$dir" && pwd) || usage
 test -n "$GIT_WORK_TREE" && mkdir -p "$GIT_WORK_TREE" &&
-W=$(cd "$GIT_WORK_TREE" && pwd) && export GIT_WORK_TREE="$W"
+W=$(cd "$GIT_WORK_TREE" && pwd) && GIT_WORK_TREE="$W" && export GIT_WORK_TREE
 if test yes = "$bare" || test -n "$GIT_WORK_TREE"; then
 	GIT_DIR="$D"
 else
@@ -282,7 +301,8 @@ yes)
 				      find objects -type f -print | sed -e 1q)
 			# objects directory should not be empty because
 			# we are cloning!
-			test -f "$repo/$sample_file" || exit
+			test -f "$repo/$sample_file" ||
+				die "fatal: cannot clone empty repository"
 			if ln "$repo/$sample_file" "$GIT_DIR/objects/sample" 2>/dev/null
 			then
 				rm -f "$GIT_DIR/objects/sample"
@@ -389,11 +409,12 @@ else
 	cd "$D" || exit
 fi
 
-if test -z "$bare" && test -f "$GIT_DIR/REMOTE_HEAD"
+if test -z "$bare"
 then
 	# a non-bare repository is always in separate-remote layout
 	remote_top="refs/remotes/$origin"
-	head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
+	head_sha1=
+	test ! -r "$GIT_DIR/REMOTE_HEAD" || head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
 	case "$head_sha1" in
 	'ref: refs/'*)
 		# Uh-oh, the remote told us (http transport done against
@@ -450,9 +471,16 @@ then
 		git config branch."$head_points_at".merge "refs/heads/$head_points_at"
 		;;
 	'')
-		# Source had detached HEAD pointing nowhere
-		git update-ref --no-deref HEAD "$head_sha1" &&
-		rm -f "refs/remotes/$origin/HEAD"
+		if test -z "$head_sha1"
+		then
+			# Source had nonexistent ref in HEAD
+			echo >&2 "Warning: Remote HEAD refers to nonexistent ref, unable to checkout."
+			no_checkout=t
+		else
+			# Source had detached HEAD pointing nowhere
+			git update-ref --no-deref HEAD "$head_sha1" &&
+			rm -f "refs/remotes/$origin/HEAD"
+		fi
 		;;
 	esac
 

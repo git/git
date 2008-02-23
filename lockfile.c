@@ -12,8 +12,11 @@ static void remove_lock_file(void)
 
 	while (lock_file_list) {
 		if (lock_file_list->owner == me &&
-		    lock_file_list->filename[0])
+		    lock_file_list->filename[0]) {
+			if (lock_file_list->fd >= 0)
+				close(lock_file_list->fd);
 			unlink(lock_file_list->filename);
+		}
 		lock_file_list = lock_file_list->next;
 	}
 }
@@ -92,7 +95,7 @@ static char *resolve_symlink(char *p, size_t s)
 			return p;
 		}
 
-		if (link[0] == '/') {
+		if (is_absolute_path(link)) {
 			/* absolute path simply replaces p */
 			if (link_len < s)
 				strcpy(p, link);
@@ -120,8 +123,6 @@ static char *resolve_symlink(char *p, size_t s)
 
 static int lock_file(struct lock_file *lk, const char *path)
 {
-	int fd;
-
 	if (strlen(path) >= sizeof(lk->filename)) return -1;
 	strcpy(lk->filename, path);
 	/*
@@ -130,8 +131,8 @@ static int lock_file(struct lock_file *lk, const char *path)
 	 */
 	resolve_symlink(lk->filename, sizeof(lk->filename)-5);
 	strcat(lk->filename, ".lock");
-	fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
-	if (0 <= fd) {
+	lk->fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
+	if (0 <= lk->fd) {
 		if (!lock_file_list) {
 			signal(SIGINT, remove_lock_file_on_signal);
 			atexit(remove_lock_file);
@@ -148,7 +149,7 @@ static int lock_file(struct lock_file *lk, const char *path)
 	}
 	else
 		lk->filename[0] = 0;
-	return fd;
+	return lk->fd;
 }
 
 int hold_lock_file_for_update(struct lock_file *lk, const char *path, int die_on_error)
@@ -159,16 +160,26 @@ int hold_lock_file_for_update(struct lock_file *lk, const char *path, int die_on
 	return fd;
 }
 
+int close_lock_file(struct lock_file *lk)
+{
+	int fd = lk->fd;
+	lk->fd = -1;
+	return close(fd);
+}
+
 int commit_lock_file(struct lock_file *lk)
 {
 	char result_file[PATH_MAX];
-	int i;
+	size_t i;
+	if (lk->fd >= 0 && close_lock_file(lk))
+		return -1;
 	strcpy(result_file, lk->filename);
 	i = strlen(result_file) - 5; /* .lock */
 	result_file[i] = 0;
-	i = rename(lk->filename, result_file);
+	if (rename(lk->filename, result_file))
+		return -1;
 	lk->filename[0] = 0;
-	return i;
+	return 0;
 }
 
 int hold_locked_index(struct lock_file *lk, int die_on_error)
@@ -184,9 +195,12 @@ void set_alternate_index_output(const char *name)
 int commit_locked_index(struct lock_file *lk)
 {
 	if (alternate_index_output) {
-		int result = rename(lk->filename, alternate_index_output);
+		if (lk->fd >= 0 && close_lock_file(lk))
+			return -1;
+		if (rename(lk->filename, alternate_index_output))
+			return -1;
 		lk->filename[0] = 0;
-		return result;
+		return 0;
 	}
 	else
 		return commit_lock_file(lk);
@@ -194,7 +208,10 @@ int commit_locked_index(struct lock_file *lk)
 
 void rollback_lock_file(struct lock_file *lk)
 {
-	if (lk->filename[0])
+	if (lk->filename[0]) {
+		if (lk->fd >= 0)
+			close(lk->fd);
 		unlink(lk->filename);
+	}
 	lk->filename[0] = 0;
 }

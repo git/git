@@ -11,6 +11,10 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+
+*NOTE*: this command is deprecated.  Use linkgit:git-fsck[1] with
+the option '--lost-found' instead.
+
 Finds dangling commits and tags from the object database, and
 creates refs to them in the .git/lost-found/ directory.  Commits and
 tags that dereference to commits are stored in .git/lost-found/commit,
@@ -74,4 +78,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

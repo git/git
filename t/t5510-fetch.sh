@@ -67,6 +67,18 @@ test_expect_success "fetch test for-merge" '
 	cut -f -2 .git/FETCH_HEAD >actual &&
 	diff expected actual'
 
+test_expect_success 'fetch tags when there is no tags' '
+
+    cd "$D" &&
+
+    mkdir notags &&
+    cd notags &&
+    git init &&
+
+    git fetch -t ..
+
+'
+
 test_expect_success 'fetch following tags' '
 
 	cd "$D" &&
@@ -80,6 +92,31 @@ test_expect_success 'fetch following tags' '
 	git fetch .. :track &&
 	git show-ref --verify refs/tags/anno &&
 	git show-ref --verify refs/tags/light
+
+'
+
+test_expect_success 'fetch must not resolve short tag name' '
+
+	cd "$D" &&
+
+	mkdir five &&
+	cd five &&
+	git init &&
+
+	! git fetch .. anno:five
+
+'
+
+test_expect_success 'fetch must not resolve short remote name' '
+
+	cd "$D" &&
+	git-update-ref refs/remotes/six/HEAD HEAD
+
+	mkdir six &&
+	cd six &&
+	git init &&
+
+	! git fetch .. six:six
 
 '
 
@@ -102,10 +139,10 @@ test_expect_success 'create bundle 2' '
 	git bundle create bundle2 master~2..master
 '
 
-test_expect_failure 'unbundle 1' '
+test_expect_success 'unbundle 1' '
 	cd "$D/bundle" &&
 	git checkout -b some-branch &&
-	git fetch "$D/bundle1" master:master
+	! git fetch "$D/bundle1" master:master
 '
 
 test_expect_success 'bundle 1 has only 3 files ' '
@@ -151,6 +188,111 @@ test_expect_success 'bundle should be able to create a full history' '
 	git tag -a -m '1.0' v1.0 master &&
 	git bundle create bundle4 v1.0
 
+'
+
+test "$TEST_RSYNC" && {
+test_expect_success 'fetch via rsync' '
+	git pack-refs &&
+	mkdir rsynced &&
+	cd rsynced &&
+	git init &&
+	git fetch rsync://127.0.0.1$(pwd)/../.git master:refs/heads/master &&
+	git gc --prune &&
+	test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
+	git fsck --full
+'
+
+test_expect_success 'push via rsync' '
+	mkdir ../rsynced2 &&
+	(cd ../rsynced2 &&
+	 git init) &&
+	git push rsync://127.0.0.1$(pwd)/../rsynced2/.git master &&
+	cd ../rsynced2 &&
+	git gc --prune &&
+	test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
+	git fsck --full
+'
+
+test_expect_success 'push via rsync' '
+	cd .. &&
+	mkdir rsynced3 &&
+	(cd rsynced3 &&
+	 git init) &&
+	git push --all rsync://127.0.0.1$(pwd)/rsynced3/.git &&
+	cd rsynced3 &&
+	test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
+	git fsck --full
+'
+}
+
+test_expect_success 'fetch with a non-applying branch.<name>.merge' '
+	git config branch.master.remote yeti &&
+	git config branch.master.merge refs/heads/bigfoot &&
+	git config remote.blub.url one &&
+	git config remote.blub.fetch "refs/heads/*:refs/remotes/one/*" &&
+	git fetch blub
+'
+
+# the strange name is: a\!'b
+test_expect_success 'quoting of a strangely named repo' '
+	! git fetch "a\\!'\''b" > result 2>&1 &&
+	cat result &&
+	grep "fatal: '\''a\\\\!'\''b'\''" result
+'
+
+test_expect_success 'bundle should record HEAD correctly' '
+
+	cd "$D" &&
+	git bundle create bundle5 HEAD master &&
+	git bundle list-heads bundle5 >actual &&
+	for h in HEAD refs/heads/master
+	do
+		echo "$(git rev-parse --verify $h) $h"
+	done >expect &&
+	diff -u expect actual
+
+'
+
+test_expect_success 'explicit fetch should not update tracking' '
+
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git fetch origin master &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" = "$n" &&
+		! git rev-parse --verify refs/remotes/origin/side
+	)
+'
+
+test_expect_success 'explicit pull should not update tracking' '
+
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git pull origin master &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" = "$n" &&
+		! git rev-parse --verify refs/remotes/origin/side
+	)
+'
+
+test_expect_success 'configured fetch updates tracking' '
+
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git fetch origin &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" != "$n" &&
+		git rev-parse --verify refs/remotes/origin/side
+	)
 '
 
 test_done

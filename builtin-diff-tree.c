@@ -68,7 +68,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	int read_stdin = 0;
 
 	init_revisions(opt, prefix);
-	git_config(git_default_config); /* no "diff" UI options */
+	git_config(git_diff_basic_config); /* no "diff" UI options */
 	nr_sha1 = 0;
 	opt->abbrev = 0;
 	opt->diff = 1;
@@ -117,22 +117,21 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
-	if (!read_stdin)
-		return opt->diffopt.exit_with_status ?
-		    opt->diffopt.has_changes: 0;
+	if (read_stdin) {
+		if (opt->diffopt.detect_rename)
+			opt->diffopt.setup |= (DIFF_SETUP_USE_SIZE_CACHE |
+					       DIFF_SETUP_USE_CACHE);
+		while (fgets(line, sizeof(line), stdin)) {
+			unsigned char sha1[20];
 
-	if (opt->diffopt.detect_rename)
-		opt->diffopt.setup |= (DIFF_SETUP_USE_SIZE_CACHE |
-				       DIFF_SETUP_USE_CACHE);
-	while (fgets(line, sizeof(line), stdin)) {
-		unsigned char sha1[20];
-
-		if (get_sha1_hex(line, sha1)) {
-			fputs(line, stdout);
-			fflush(stdout);
+			if (get_sha1_hex(line, sha1)) {
+				fputs(line, stdout);
+				fflush(stdout);
+			}
+			else
+				diff_tree_stdin(line);
 		}
-		else
-			diff_tree_stdin(line);
 	}
-	return opt->diffopt.exit_with_status ? opt->diffopt.has_changes: 0;
+
+	return diff_result_code(&opt->diffopt, 0);
 }

@@ -13,7 +13,7 @@ DESCRIPTION
 -----------
 
 Use 'git mergetool' to run one of several merge utilities to resolve
-merge conflicts.  It is typically run after gitlink:git-merge[1].
+merge conflicts.  It is typically run after linkgit:git-merge[1].
 
 If one or more <file> parameters are given, the merge tool program will
 be run to resolve differences on each file.  If no <file> names are
@@ -25,12 +25,18 @@ OPTIONS
 -t or --tool=<tool>::
 	Use the merge resolution program specified by <tool>.
 	Valid merge tools are:
-	kdiff3, tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff, and opendiff
+	kdiff3, tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff, ecmerge, and opendiff
 +
 If a merge resolution program is not specified, 'git mergetool'
 will use the configuration variable merge.tool.  If the
 configuration variable merge.tool is not set, 'git mergetool'
 will pick a suitable default.
++
+You can explicitly provide a full path to the tool by setting the
+configuration variable mergetool.<tool>.path. For example, you
+can configure the absolute path to kdiff3 by setting
+mergetool.kdiff3.path. Otherwise, 'git mergetool' assumes the tool
+is available in PATH.
 
 Author
 ------
@@ -42,4 +48,4 @@ Documentation by Theodore Y Ts'o.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

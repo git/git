@@ -31,8 +31,8 @@ pass some directory paths as 'git-daemon' arguments, you can further restrict
 the offers to a whitelist comprising of those.
 
 By default, only `upload-pack` service is enabled, which serves
-`git-fetch-pack` and `git-peek-remote` clients that are invoked
-from `git-fetch`, `git-ls-remote`, and `git-clone`.
+`git-fetch-pack` and `git-ls-remote` clients, which are invoked
+from `git-fetch`, `git-pull`, and `git-clone`.
 
 This is ideally suited for read-only updates, i.e., pulling from
 git repositories.
@@ -166,7 +166,7 @@ the per-repository configuration file can be used to enable or
 disable them.
 
 upload-pack::
-	This serves `git-fetch-pack` and `git-peek-remote`
+	This serves `git-fetch-pack` and `git-ls-remote`
 	clients.  It is enabled by default, but a repository can
 	disable it by setting `daemon.uploadpack` configuration
 	item to `false`.
@@ -272,4 +272,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

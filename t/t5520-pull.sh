@@ -53,4 +53,43 @@ test_expect_success 'the default remote . should not break explicit pull' '
 	test `cat file` = modified
 '
 
+test_expect_success '--rebase' '
+	git branch to-rebase &&
+	echo modified again > file &&
+	git commit -m file file &&
+	git checkout to-rebase &&
+	echo new > file2 &&
+	git add file2 &&
+	git commit -m "new file" &&
+	git tag before-rebase &&
+	git pull --rebase . copy &&
+	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
+	test new = $(git show HEAD:file2)
+'
+
+test_expect_success 'branch.to-rebase.rebase' '
+	git reset --hard before-rebase &&
+	git config branch.to-rebase.rebase 1 &&
+	git pull . copy &&
+	git config branch.to-rebase.rebase 0 &&
+	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
+	test new = $(git show HEAD:file2)
+'
+
+test_expect_success '--rebase with rebased upstream' '
+
+	git remote add -f me . &&
+	git checkout copy &&
+	git reset --hard HEAD^ &&
+	echo conflicting modification > file &&
+	git commit -m conflict file &&
+	git checkout to-rebase &&
+	echo file > file2 &&
+	git commit -m to-rebase file2 &&
+	git pull --rebase me copy &&
+	test "conflicting modification" = "$(cat file)" &&
+	test file = $(cat file2)
+
+'
+
 test_done

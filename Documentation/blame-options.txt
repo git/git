@@ -39,7 +39,7 @@ of lines before or after the line given by <start>.
 	Show raw timestamp (Default: off).
 
 -S <revs-file>::
-	Use revs from revs-file instead of calling gitlink:git-rev-list[1].
+	Use revs from revs-file instead of calling linkgit:git-rev-list[1].
 
 -p, --porcelain::
 	Show in a format designed for machine consumption.
@@ -52,7 +52,7 @@ of lines before or after the line given by <start>.
 	When <rev> is not specified, the command annotates the
 	changes starting backwards from the working tree copy.
 	This flag makes the command pretend as if the working
-	tree copy has the contents of he named file (specify
+	tree copy has the contents of the named file (specify
 	`-` to make the command read from the standard input).
 
 -M|<num>|::

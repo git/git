@@ -3,9 +3,7 @@
 #include "refs.h"
 #include "object.h"
 #include "tag.h"
-
-static const char builtin_pack_refs_usage[] =
-"git-pack-refs [--all] [--prune | --no-prune]";
+#include "parse-options.h"
 
 struct ref_to_prune {
 	struct ref_to_prune *next;
@@ -110,6 +108,12 @@ static int pack_refs(unsigned int flags)
 		die("failed to write ref-pack file");
 	if (fflush(cbdata.refs_file) || fsync(fd) || fclose(cbdata.refs_file))
 		die("failed to write ref-pack file (%s)", strerror(errno));
+	/*
+	 * Since the lock file was fdopen()'ed and then fclose()'ed above,
+	 * assign -1 to the lock file descriptor so that commit_lock_file()
+	 * won't try to close() it.
+	 */
+	packed.fd = -1;
 	if (commit_lock_file(&packed) < 0)
 		die("unable to overwrite old ref-pack file (%s)", strerror(errno));
 	if (cbdata.flags & PACK_REFS_PRUNE)
@@ -117,31 +121,20 @@ static int pack_refs(unsigned int flags)
 	return 0;
 }
 
+static char const * const pack_refs_usage[] = {
+	"git-pack-refs [options]",
+	NULL
+};
+
 int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 {
-	int i;
-	unsigned int flags;
-
-	flags = PACK_REFS_PRUNE;
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (!strcmp(arg, "--prune")) {
-			flags |= PACK_REFS_PRUNE; /* now the default */
-			continue;
-		}
-		if (!strcmp(arg, "--no-prune")) {
-			flags &= ~PACK_REFS_PRUNE;
-			continue;
-		}
-		if (!strcmp(arg, "--all")) {
-			flags |= PACK_REFS_ALL;
-			continue;
-		}
-		/* perhaps other parameters later... */
-		break;
-	}
-	if (i != argc)
-		usage(builtin_pack_refs_usage);
-
+	unsigned int flags = PACK_REFS_PRUNE;
+	struct option opts[] = {
+		OPT_BIT(0, "all",   &flags, "pack everything", PACK_REFS_ALL),
+		OPT_BIT(0, "prune", &flags, "prune loose refs (default)", PACK_REFS_PRUNE),
+		OPT_END(),
+	};
+	if (parse_options(argc, argv, opts, pack_refs_usage, 0))
+		usage_with_options(pack_refs_usage, opts);
 	return pack_refs(flags);
 }

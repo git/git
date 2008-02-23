@@ -71,6 +71,25 @@ EOF
 
 test_expect_success 'non-match result' 'cmp .git/config expect'
 
+cat > .git/config <<\EOF
+[alpha]
+bar = foo
+[beta]
+baz = multiple \
+lines
+EOF
+
+test_expect_success 'unset with cont. lines' \
+	'git config --unset beta.baz'
+
+cat > expect <<\EOF
+[alpha]
+bar = foo
+[beta]
+EOF
+
+test_expect_success 'unset with cont. lines is correct' 'cmp .git/config expect'
+
 cat > .git/config << EOF
 [beta] ; silly comment # another comment
 noIndent= sillyValue ; 'nother silly comment
@@ -181,8 +200,9 @@ test_expect_success 'non-match' \
 test_expect_success 'non-match value' \
 	'test wow = $(git config --get nextsection.nonewline !for)'
 
-test_expect_failure 'ambiguous get' \
-	'git config --get nextsection.nonewline'
+test_expect_success 'ambiguous get' '
+	! git config --get nextsection.nonewline
+'
 
 test_expect_success 'get multivar' \
 	'git config --get-all nextsection.nonewline'
@@ -202,13 +222,17 @@ EOF
 
 test_expect_success 'multivar replace' 'cmp .git/config expect'
 
-test_expect_failure 'ambiguous value' 'git config nextsection.nonewline'
+test_expect_success 'ambiguous value' '
+	! git config nextsection.nonewline
+'
 
-test_expect_failure 'ambiguous unset' \
-	'git config --unset nextsection.nonewline'
+test_expect_success 'ambiguous unset' '
+	! git config --unset nextsection.nonewline
+'
 
-test_expect_failure 'invalid unset' \
-	'git config --unset somesection.nonewline'
+test_expect_success 'invalid unset' '
+	! git config --unset somesection.nonewline
+'
 
 git config --unset nextsection.nonewline "wow3$"
 
@@ -224,7 +248,7 @@ EOF
 
 test_expect_success 'multivar unset' 'cmp .git/config expect'
 
-test_expect_failure 'invalid key' 'git config inval.2key blabla'
+test_expect_success 'invalid key' '! git config inval.2key blabla'
 
 test_expect_success 'correct key' 'git config 123456.a123 987'
 
@@ -278,15 +302,38 @@ test_expect_success '--add' \
 cat > .git/config << EOF
 [novalue]
 	variable
+[emptyvalue]
+	variable =
 EOF
 
 test_expect_success 'get variable with no value' \
 	'git config --get novalue.variable ^$'
 
+test_expect_success 'get variable with empty value' \
+	'git config --get emptyvalue.variable ^$'
+
 echo novalue.variable > expect
 
 test_expect_success 'get-regexp variable with no value' \
 	'git config --get-regexp novalue > output &&
+	 cmp output expect'
+
+echo 'emptyvalue.variable ' > expect
+
+test_expect_success 'get-regexp variable with empty value' \
+	'git config --get-regexp emptyvalue > output &&
+	 cmp output expect'
+
+echo true > expect
+
+test_expect_success 'get bool variable with no value' \
+	'git config --bool novalue.variable > output &&
+	 cmp output expect'
+
+echo false > expect
+
+test_expect_success 'get bool variable with empty value' \
+	'git config --bool emptyvalue.variable > output &&
 	 cmp output expect'
 
 git config > output 2>&1
@@ -382,8 +429,9 @@ EOF
 
 test_expect_success "rename succeeded" "git diff expect .git/config"
 
-test_expect_failure "rename non-existing section" \
-	'git config --rename-section branch."world domination" branch.drei'
+test_expect_success "rename non-existing section" '
+	! git config --rename-section branch."world domination" branch.drei
+'
 
 test_expect_success "rename succeeded" "git diff expect .git/config"
 
@@ -448,6 +496,23 @@ test_expect_success numbers '
 	test z1048576 = "z$m"
 '
 
+cat > expect <<EOF
+fatal: bad config value for 'aninvalid.unit' in .git/config
+EOF
+
+test_expect_success 'invalid unit' '
+
+	git config aninvalid.unit "1auto" &&
+	s=$(git config aninvalid.unit) &&
+	test "z1auto" = "z$s" &&
+	if git config --int --get aninvalid.unit 2>actual
+	then
+		echo config should have failed
+		false
+	fi &&
+	cmp actual expect
+'
+
 cat > expect << EOF
 true
 false
@@ -477,14 +542,14 @@ test_expect_success bool '
         done &&
 	cmp expect result'
 
-test_expect_failure 'invalid bool (--get)' '
+test_expect_success 'invalid bool (--get)' '
 
 	git config bool.nobool foobar &&
-	git config --bool --get bool.nobool'
+	! git config --bool --get bool.nobool'
 
-test_expect_failure 'invalid bool (set)' '
+test_expect_success 'invalid bool (set)' '
 
-	git config --bool bool.nobool foobar'
+	! git config --bool bool.nobool foobar'
 
 rm .git/config
 
@@ -545,8 +610,9 @@ EOF
 
 test_expect_success 'quoting' 'cmp .git/config expect'
 
-test_expect_failure 'key with newline' 'git config key.with\\\
-newline 123'
+test_expect_success 'key with newline' '
+	! git config "key.with
+newline" 123'
 
 test_expect_success 'value with newline' 'git config key.sub value.with\\\
 newline'
@@ -591,12 +657,12 @@ Qsection.sub=section.val4
 Qsection.sub=section.val5Q
 EOF
 
-git config --null --list | tr '[\000]' 'Q' > result
+git config --null --list | tr '\000' 'Q' > result
 echo >>result
 
 test_expect_success '--null --list' 'cmp result expect'
 
-git config --null --get-regexp 'val[0-9]' | tr '[\000]' 'Q' > result
+git config --null --get-regexp 'val[0-9]' | tr '\000' 'Q' > result
 echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'

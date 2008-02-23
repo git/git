@@ -35,7 +35,7 @@ static int update_info_refs(int force)
 	safe_create_leading_directories(path0);
 	info_ref_fp = fopen(path1, "w");
 	if (!info_ref_fp)
-		return error("unable to update %s", path0);
+		return error("unable to update %s", path1);
 	for_each_ref(add_info_ref, NULL);
 	fclose(info_ref_fp);
 	adjust_shared_perm(path1);
@@ -101,7 +101,7 @@ static int read_pack_info_file(const char *infofile)
 
 	while (fgets(line, sizeof(line), fp)) {
 		int len = strlen(line);
-		if (line[len-1] == '\n')
+		if (len && line[len-1] == '\n')
 			line[--len] = 0;
 
 		if (!len)

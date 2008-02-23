@@ -1,5 +1,12 @@
 #!/bin/sh
-USAGE='--dry-run --author <author> --patches </path/to/quilt/patch/directory>'
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git-quiltimport [options]
+--
+n,dry-run     dry run
+author=       author name and email address for patches without any
+patches=      path to the quilt series and patches
+"
 SUBDIRECTORY_ON=Yes
 . git-sh-setup
 
@@ -8,39 +15,25 @@ quilt_author=""
 while test $# != 0
 do
 	case "$1" in
-	--au=*|--aut=*|--auth=*|--autho=*|--author=*)
-		quilt_author=$(expr "z$1" : 'z-[^=]*\(.*\)')
-		shift
-		;;
-
-	--au|--aut|--auth|--autho|--author)
-		case "$#" in 1) usage ;; esac
+	--author)
 		shift
 		quilt_author="$1"
-		shift
 		;;
-
-	--dry-run)
-		shift
+	-n|--dry-run)
 		dry_run=1
 		;;
-
-	--pa=*|--pat=*|--patc=*|--patch=*|--patche=*|--patches=*)
-		QUILT_PATCHES=$(expr "z$1" : 'z-[^=]*\(.*\)')
-		shift
-		;;
-
-	--pa|--pat|--patc|--patch|--patche|--patches)
-		case "$#" in 1) usage ;; esac
+	--patches)
 		shift
 		QUILT_PATCHES="$1"
-		shift
 		;;
-
+	--)
+		shift
+		break;;
 	*)
-		break
+		usage
 		;;
 	esac
+	shift
 done
 
 # Quilt Author
@@ -84,8 +77,9 @@ for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
 	}
 
 	# Parse the author information
-	export GIT_AUTHOR_NAME=$(sed -ne 's/Author: //p' "$tmp_info")
-	export GIT_AUTHOR_EMAIL=$(sed -ne 's/Email: //p' "$tmp_info")
+	GIT_AUTHOR_NAME=$(sed -ne 's/Author: //p' "$tmp_info")
+	GIT_AUTHOR_EMAIL=$(sed -ne 's/Email: //p' "$tmp_info")
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 	while test -z "$GIT_AUTHOR_EMAIL" && test -z "$GIT_AUTHOR_NAME" ; do
 		if [ -n "$quilt_author" ] ; then
 			GIT_AUTHOR_NAME="$quilt_author_name";
@@ -111,8 +105,9 @@ for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
 			GIT_AUTHOR_EMAIL="$patch_author_email"
 		fi
 	done
-	export GIT_AUTHOR_DATE=$(sed -ne 's/Date: //p' "$tmp_info")
-	export SUBJECT=$(sed -ne 's/Subject: //p' "$tmp_info")
+	GIT_AUTHOR_DATE=$(sed -ne 's/Date: //p' "$tmp_info")
+	SUBJECT=$(sed -ne 's/Subject: //p' "$tmp_info")
+	export GIT_AUTHOR_DATE SUBJECT
 	if [ -z "$SUBJECT" ] ; then
 		SUBJECT=$(echo $patch_name | sed -e 's/.patch$//')
 	fi

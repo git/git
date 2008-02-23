@@ -38,10 +38,11 @@ OPTIONS
 	The port number to bind the httpd to.  (Default: 1234)
 
 -b|--browser::
-
-	The web browser command-line to execute to view the gitweb page.
-	If blank, the URL of the gitweb instance will be printed to
-	stdout.  (Default: 'firefox')
+	The web browser that should be used to view the gitweb
+	page. This will be passed to the 'git-web--browse' helper
+	script along with the URL of the gitweb instance. See
+	linkgit:git-web--browse[1] for more information about this. If
+	the script fails, the URL will be printed to stdout.
 
 --start::
 	Start the httpd instance and exit.  This does not generate
@@ -71,6 +72,10 @@ You may specify configuration in your .git/config
 
 -----------------------------------------------------------------------
 
+If the configuration variable 'instaweb.browser' is not set,
+'web.browser' will be used instead if it is defined. See
+linkgit:git-web--browse[1] for more information about this.
+
 Author
 ------
 Written by Eric Wong <normalperson@yhbt.net>
@@ -81,4 +86,4 @@ Documentation by Eric Wong <normalperson@yhbt.net>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

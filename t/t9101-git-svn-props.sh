@@ -48,7 +48,7 @@ EOF
 	printf "\r\n" > empty_crlf
 	a_empty_crlf=`git-hash-object -w empty_crlf`
 
-	svn import -m 'import for git-svn' . "$svnrepo" >/dev/null
+	svn import --no-auto-props -m 'import for git-svn' . "$svnrepo" >/dev/null
 cd ..
 
 rm -rf import

@@ -93,4 +93,49 @@ test_expect_success 'commit message from file should override template' '
 	commit_msg_is "standard input msg"
 '
 
+test_expect_success 'using alternate GIT_INDEX_FILE (1)' '
+
+	cp .git/index saved-index &&
+	(
+		echo some new content >file &&
+	        GIT_INDEX_FILE=.git/another_index &&
+		export GIT_INDEX_FILE &&
+		git add file &&
+		git commit -m "commit using another index" &&
+		git diff-index --exit-code HEAD &&
+		git diff-files --exit-code
+	) &&
+	cmp .git/index saved-index >/dev/null
+
+'
+
+test_expect_success 'using alternate GIT_INDEX_FILE (2)' '
+
+	cp .git/index saved-index &&
+	(
+		rm -f .git/no-such-index &&
+		GIT_INDEX_FILE=.git/no-such-index &&
+		export GIT_INDEX_FILE &&
+		git commit -m "commit using nonexistent index" &&
+		test -z "$(git ls-files)" &&
+		test -z "$(git ls-tree HEAD)"
+
+	) &&
+	cmp .git/index saved-index >/dev/null
+'
+
+cat > expect << EOF
+zort
+
+Signed-off-by: C O Mitter <committer@example.com>
+EOF
+
+test_expect_success '--signoff' '
+	echo "yet another content *narf*" >> foo &&
+	echo "zort" |
+		GIT_EDITOR=../t7500/add-content git commit -s -F - foo &&
+	git cat-file commit HEAD | sed "1,/^$/d" > output &&
+	diff expect output
+'
+
 test_done

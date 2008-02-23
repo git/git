@@ -7,12 +7,13 @@ git-relink - Hardlink common objects in local repositories
 
 SYNOPSIS
 --------
-'git-relink' [--safe] <dir> <dir> [<dir>]\*
+'git-relink' [--safe] <dir> [<dir>]\* <master_dir>
 
 DESCRIPTION
 -----------
-This will scan 2 or more object repositories and look for common objects, check
-if they are hardlinked, and replace one with a hardlink to the other if not.
+This will scan 1 or more object repositories and look for objects in common
+with a master repository. Objects not already hardlinked to the master
+repository will be replaced with a hardlink to the master repository.
 
 OPTIONS
 -------
@@ -33,4 +34,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

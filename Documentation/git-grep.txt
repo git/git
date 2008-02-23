@@ -75,9 +75,11 @@ OPTIONS
 -n::
 	Prefix the line number to matching lines.
 
--l | --files-with-matches | -L | --files-without-match::
+-l | --files-with-matches | --name-only | -L | --files-without-match::
 	Instead of showing every matched line, show only the
 	names of files that contain (or do not contain) matches.
+	For better compatability with git-diff, --name-only is a
+	synonym for --files-with-matches.
 
 -c | --count::
 	Instead of showing every matched line, show the number of
@@ -143,4 +145,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -28,7 +28,7 @@ OPTIONS
 -------
 
 All these options obviously only make sense if enforced by the server side.
-They have been implemented to resemble the gitlink:git-daemon[1] options as
+They have been implemented to resemble the linkgit:git-daemon[1] options as
 closely as possible.
 
 --base-path <path>::
@@ -183,7 +183,7 @@ access method and requested operation.
 That means that even if you offer only read access (e.g. by using
 the pserver method), git-cvsserver should have write access to
 the database to work reliably (otherwise you need to make sure
-that the database if up-to-date all the time git-cvsserver is run).
+that the database is up-to-date any time git-cvsserver is executed).
 
 By default it uses SQLite databases in the git directory, named
 `gitcvs.<module_name>.sqlite`. Note that the SQLite backend creates
@@ -204,7 +204,7 @@ about `DBI->connect()`.
 
 gitcvs.dbname::
 	Database name. The exact meaning depends on the
-	used database driver, for SQLite this is a filename.
+	selected database driver, for SQLite this is a filename.
 	Supports variable substitution (see below). May
 	not contain semicolons (`;`).
 	Default: '%Ggitcvs.%m.sqlite'
@@ -215,7 +215,7 @@ gitcvs.dbdriver::
 	with 'DBD::SQLite', reported to work with
 	'DBD::Pg', and reported *not* to work with 'DBD::mysql'.
 	Please regard this as an experimental feature. May not
-	contain double colons (`:`).
+	contain colons (`:`).
 	Default: 'SQLite'
 
 gitcvs.dbuser::
@@ -319,4 +319,4 @@ Documentation by Martyn Smith <martyn@catalyst.net.nz>, Martin Langhoff <martin@
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

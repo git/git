@@ -9,8 +9,9 @@ git-submodule - Initialize, update or inspect submodules
 SYNOPSIS
 --------
 [verse]
-'git-submodule' [--quiet] [-b branch] add <repository> [<path>]
-'git-submodule' [--quiet] [--cached] [status|init|update] [--] [<path>...]
+'git-submodule' [--quiet] add [-b branch] [--] <repository> [<path>]
+'git-submodule' [--quiet] status [--cached] [--] [<path>...]
+'git-submodule' [--quiet] [init|update] [--] [<path>...]
 
 
 COMMANDS
@@ -28,7 +29,7 @@ add::
 status::
 	Show the status of the submodules. This will print the SHA-1 of the
 	currently checked out commit for each submodule, along with the
-	submodule path and the output of gitlink:git-describe[1] for the
+	submodule path and the output of linkgit:git-describe[1] for the
 	SHA-1. Each SHA-1 will be prefixed with `-` if the submodule is not
 	initialized and `+` if the currently checked out submodule commit
 	does not match the SHA-1 found in the index of the containing
@@ -67,8 +68,9 @@ FILES
 -----
 When initializing submodules, a .gitmodules file in the top-level directory
 of the containing repository is used to find the url of each submodule.
-This file should be formatted in the same way as $GIR_DIR/config. The key
-to each submodule url is "submodule.$name.url".
+This file should be formatted in the same way as `$GIT_DIR/config`. The key
+to each submodule url is "submodule.$name.url".  See linkgit:gitmodules[5]
+for details.
 
 
 AUTHOR
@@ -77,4 +79,4 @@ Written by Lars Hjemli <hjemli@gmail.com>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -6,10 +6,15 @@
 #include "run-command.h"
 #include "builtin.h"
 #include "remote.h"
+#include "transport.h"
+#include "parse-options.h"
 
-static const char push_usage[] = "git-push [--all] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
+static const char * const push_usage[] = {
+	"git-push [--all | --mirror] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]",
+	NULL,
+};
 
-static int all, dry_run, force, thin, verbose;
+static int thin, verbose;
 static const char *receivepack;
 
 static const char **refspec;
@@ -39,86 +44,53 @@ static void set_refspecs(const char **refs, int nr)
 			strcat(tag, refs[i]);
 			ref = tag;
 		}
+		if (!strcmp("HEAD", ref)) {
+			unsigned char sha1_dummy[20];
+			ref = resolve_ref(ref, sha1_dummy, 1, NULL);
+			if (!ref)
+				die("HEAD cannot be resolved.");
+			if (prefixcmp(ref, "refs/heads/"))
+				die("HEAD cannot be resolved to branch.");
+			ref = xstrdup(ref + 11);
+		}
 		add_refspec(ref);
 	}
 }
 
-static int do_push(const char *repo)
+static int do_push(const char *repo, int flags)
 {
 	int i, errs;
-	int common_argc;
-	const char **argv;
-	int argc;
 	struct remote *remote = remote_get(repo);
 
 	if (!remote)
 		die("bad repository '%s'", repo);
 
-	if (remote->receivepack) {
-		char *rp = xmalloc(strlen(remote->receivepack) + 16);
-		sprintf(rp, "--receive-pack=%s", remote->receivepack);
-		receivepack = rp;
-	}
-	if (!refspec && !all && remote->push_refspec_nr) {
+	if (!refspec
+		&& !(flags & TRANSPORT_PUSH_ALL)
+		&& remote->push_refspec_nr) {
 		refspec = remote->push_refspec;
 		refspec_nr = remote->push_refspec_nr;
 	}
-
-	argv = xmalloc((refspec_nr + 10) * sizeof(char *));
-	argv[0] = "dummy-send-pack";
-	argc = 1;
-	if (all)
-		argv[argc++] = "--all";
-	if (dry_run)
-		argv[argc++] = "--dry-run";
-	if (force)
-		argv[argc++] = "--force";
-	if (receivepack)
-		argv[argc++] = receivepack;
-	common_argc = argc;
-
 	errs = 0;
-	for (i = 0; i < remote->uri_nr; i++) {
+	for (i = 0; i < remote->url_nr; i++) {
+		struct transport *transport =
+			transport_get(remote, remote->url[i]);
 		int err;
-		int dest_argc = common_argc;
-		int dest_refspec_nr = refspec_nr;
-		const char **dest_refspec = refspec;
-		const char *dest = remote->uri[i];
-		const char *sender = "send-pack";
-		if (!prefixcmp(dest, "http://") ||
-		    !prefixcmp(dest, "https://"))
-			sender = "http-push";
-		else {
-			char *rem = xmalloc(strlen(remote->name) + 10);
-			sprintf(rem, "--remote=%s", remote->name);
-			argv[dest_argc++] = rem;
-			if (thin)
-				argv[dest_argc++] = "--thin";
-		}
-		argv[0] = sender;
-		argv[dest_argc++] = dest;
-		while (dest_refspec_nr--)
-			argv[dest_argc++] = *dest_refspec++;
-		argv[dest_argc] = NULL;
+		if (receivepack)
+			transport_set_option(transport,
+					     TRANS_OPT_RECEIVEPACK, receivepack);
+		if (thin)
+			transport_set_option(transport, TRANS_OPT_THIN, "yes");
+
 		if (verbose)
-			fprintf(stderr, "Pushing to %s\n", dest);
-		err = run_command_v_opt(argv, RUN_GIT_CMD);
+			fprintf(stderr, "Pushing to %s\n", remote->url[i]);
+		err = transport_push(transport, refspec_nr, refspec, flags);
+		err |= transport_disconnect(transport);
+
 		if (!err)
 			continue;
 
-		error("failed to push to '%s'", remote->uri[i]);
-		switch (err) {
-		case -ERR_RUN_COMMAND_FORK:
-			error("unable to fork for %s", sender);
-		case -ERR_RUN_COMMAND_EXEC:
-			error("unable to exec %s", sender);
-			break;
-		case -ERR_RUN_COMMAND_WAITPID:
-		case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
-		case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-		case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
-			error("%s died with strange error", sender);
-		}
+		error("failed to push some refs to '%s'", remote->url[i]);
 		errs++;
 	}
 	return !!errs;
@@ -126,62 +98,55 @@ static int do_push(const char *repo)
 
 int cmd_push(int argc, const char **argv, const char *prefix)
 {
-	int i;
+	int flags = 0;
+	int all = 0;
+	int mirror = 0;
+	int dry_run = 0;
+	int force = 0;
+	int tags = 0;
 	const char *repo = NULL;	/* default repository */
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
+	struct option options[] = {
+		OPT__VERBOSE(&verbose),
+		OPT_STRING( 0 , "repo", &repo, "repository", "repository"),
+		OPT_BOOLEAN( 0 , "all", &all, "push all refs"),
+		OPT_BOOLEAN( 0 , "mirror", &mirror, "mirror all refs"),
+		OPT_BOOLEAN( 0 , "tags", &tags, "push tags"),
+		OPT_BOOLEAN( 0 , "dry-run", &dry_run, "dry run"),
+		OPT_BOOLEAN('f', "force", &force, "force updates"),
+		OPT_BOOLEAN( 0 , "thin", &thin, "use thin pack"),
+		OPT_STRING( 0 , "receive-pack", &receivepack, "receive-pack", "receive pack program"),
+		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", "receive pack program"),
+		OPT_END()
+	};
 
-		if (arg[0] != '-') {
-			repo = arg;
-			i++;
-			break;
-		}
-		if (!strcmp(arg, "-v")) {
-			verbose=1;
-			continue;
-		}
-		if (!prefixcmp(arg, "--repo=")) {
-			repo = arg+7;
-			continue;
-		}
-		if (!strcmp(arg, "--all")) {
-			all = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--dry-run")) {
-			dry_run = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--tags")) {
-			add_refspec("refs/tags/*");
-			continue;
-		}
-		if (!strcmp(arg, "--force") || !strcmp(arg, "-f")) {
-			force = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--thin")) {
-			thin = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--no-thin")) {
-			thin = 0;
-			continue;
-		}
-		if (!prefixcmp(arg, "--receive-pack=")) {
-			receivepack = arg;
-			continue;
-		}
-		if (!prefixcmp(arg, "--exec=")) {
-			receivepack = arg;
-			continue;
-		}
-		usage(push_usage);
+	argc = parse_options(argc, argv, options, push_usage, 0);
+
+	if (force)
+		flags |= TRANSPORT_PUSH_FORCE;
+	if (dry_run)
+		flags |= TRANSPORT_PUSH_DRY_RUN;
+	if (verbose)
+		flags |= TRANSPORT_PUSH_VERBOSE;
+	if (tags)
+		add_refspec("refs/tags/*");
+	if (all)
+		flags |= TRANSPORT_PUSH_ALL;
+	if (mirror)
+		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
+
+	if (argc > 0) {
+		repo = argv[0];
+		set_refspecs(argv + 1, argc - 1);
 	}
-	set_refspecs(argv + i, argc - i);
-	if (all && refspec)
-		usage(push_usage);
+	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) && refspec)
+		usage_with_options(push_usage, options);
 
-	return do_push(repo);
+	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) ==
+				(TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) {
+		error("--all and --mirror are incompatible");
+		usage_with_options(push_usage, options);
+	}
+
+	return do_push(repo, flags);
 }

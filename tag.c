@@ -9,7 +9,10 @@ const char *tag_type = "tag";
 struct object *deref_tag(struct object *o, const char *warn, int warnlen)
 {
 	while (o && o->type == OBJ_TAG)
-		o = parse_object(((struct tag *)o)->tagged->sha1);
+		if (((struct tag *)o)->tagged)
+			o = parse_object(((struct tag *)o)->tagged->sha1);
+		else
+			o = NULL;
 	if (!o && warn) {
 		if (!warnlen)
 			warnlen = strlen(warn);
@@ -39,6 +42,7 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 	unsigned char sha1[20];
 	const char *type_line, *tag_line, *sig_line;
 	char type[20];
+	const char *start = data;
 
         if (item->object.parsed)
                 return 0;
@@ -53,11 +57,11 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 	if (memcmp("\ntype ", type_line-1, 6))
 		return -1;
 
-	tag_line = strchr(type_line, '\n');
+	tag_line = memchr(type_line, '\n', size - (type_line - start));
 	if (!tag_line || memcmp("tag ", ++tag_line, 4))
 		return -1;
 
-	sig_line = strchr(tag_line, '\n');
+	sig_line = memchr(tag_line, '\n', size - (tag_line - start));
 	if (!sig_line)
 		return -1;
 	sig_line++;

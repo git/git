@@ -266,7 +266,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 	strbuf_init(&pretty, 0);
 	if (commit->object.parsed) {
 		pretty_print_commit(CMIT_FMT_ONELINE, commit,
-					&pretty, 0, NULL, NULL, 0);
+				    &pretty, 0, NULL, NULL, 0, 0);
 		pretty_str = pretty.buf;
 	}
 	if (!prefixcmp(pretty_str, "[PATCH] "))
@@ -536,6 +536,8 @@ static void append_one_rev(const char *av)
 static int git_show_branch_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "showbranch.default")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (default_alloc <= default_num + 1) {
 			default_alloc = default_alloc * 3 / 2 + 20;
 			default_arg = xrealloc(default_arg, sizeof *default_arg * default_alloc);

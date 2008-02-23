@@ -1,5 +1,14 @@
 #include "cache.h"
 
+int prefixcmp(const char *str, const char *prefix)
+{
+	for (; ; str++, prefix++)
+		if (!*prefix)
+			return 0;
+		else if (*str != *prefix)
+			return (unsigned char)*prefix - (unsigned char)*str;
+}
+
 /*
  * Used as the default ->buf value, so that people can always assume
  * buf is non NULL and ->buf is NUL terminated even for a freshly
@@ -106,17 +115,25 @@ void strbuf_add(struct strbuf *sb, const void *data, size_t len)
 	strbuf_setlen(sb, sb->len + len);
 }
 
+void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len)
+{
+	strbuf_grow(sb, len);
+	memcpy(sb->buf + sb->len, sb->buf + pos, len);
+	strbuf_setlen(sb, sb->len + len);
+}
+
 void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 {
 	int len;
 	va_list ap;
 
+	if (!strbuf_avail(sb))
+		strbuf_grow(sb, 64);
 	va_start(ap, fmt);
 	len = vsnprintf(sb->buf + sb->len, sb->alloc - sb->len, fmt, ap);
 	va_end(ap);
-	if (len < 0) {
-		len = 0;
-	}
+	if (len < 0)
+		die("your vsnprintf is broken");
 	if (len > strbuf_avail(sb)) {
 		strbuf_grow(sb, len);
 		va_start(ap, fmt);
@@ -127,6 +144,27 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 		}
 	}
 	strbuf_setlen(sb, sb->len + len);
+}
+
+void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
+		   void *context)
+{
+	for (;;) {
+		const char *percent;
+		size_t consumed;
+
+		percent = strchrnul(format, '%');
+		strbuf_add(sb, format, percent - format);
+		if (!*percent)
+			break;
+		format = percent + 1;
+
+		consumed = fn(sb, format, context);
+		if (consumed)
+			format += consumed;
+		else
+			strbuf_addch(sb, '%');
+	}
 }
 
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)

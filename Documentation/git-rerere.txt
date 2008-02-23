@@ -23,8 +23,8 @@ initial manual merge, and later by noticing the same automerge
 results and applying the previously recorded hand resolution.
 
 [NOTE]
-You need to set the config variable rerere.enabled to enable this
-command.
+You need to set the configuration variable rerere.enabled to
+enable this command.
 
 
 COMMANDS
@@ -37,7 +37,7 @@ its working state.
 'clear'::
 
 This resets the metadata used by rerere if a merge resolution is to be
-is aborted.  Calling gitlink:git-am[1] --skip or gitlink:git-rebase[1]
+is aborted.  Calling linkgit:git-am[1] --skip or linkgit:git-rebase[1]
 [--skip|--abort] will automatically invoke this command.
 
 'diff'::
@@ -208,4 +208,4 @@ Written by Junio C Hamano <junkio@cox.net>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -23,11 +23,15 @@
 	fetches is a descendant of `<lbranch>`.  This option
 	overrides that check.
 
+ifdef::git-pull[]
+\--no-tags::
+endif::git-pull[]
+ifndef::git-pull[]
 -n, \--no-tags::
-	By default, `git-fetch` fetches tags that point at
-	objects that are downloaded from the remote repository
-	and stores them locally.  This option disables this
-	automatic tag following.
+endif::git-pull[]
+	By default, tags that point at objects that are downloaded
+	from the remote repository are fetched and stored locally.
+	This option disables this automatic tag following.
 
 -t, \--tags::
 	Most of the tags are fetched automatically as branch
@@ -50,5 +54,5 @@
 
 \--depth=<depth>::
 	Deepen the history of a 'shallow' repository created by
-	`git clone` with `--depth=<depth>` option (see gitlink:git-clone[1])
+	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
 	by the specified number of commits.

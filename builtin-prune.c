@@ -7,15 +7,24 @@
 
 static const char prune_usage[] = "git-prune [-n]";
 static int show_only;
+static unsigned long expire;
 
 static int prune_object(char *path, const char *filename, const unsigned char *sha1)
 {
+	const char *fullpath = mkpath("%s/%s", path, filename);
+	if (expire) {
+		struct stat st;
+		if (lstat(fullpath, &st))
+			return error("Could not stat '%s'", fullpath);
+		if (st.st_mtime > expire)
+			return 0;
+	}
 	if (show_only) {
 		enum object_type type = sha1_object_info(sha1, NULL);
 		printf("%s %s\n", sha1_to_hex(sha1),
 		       (type > 0) ? typename(type) : "unknown");
 	} else
-		unlink(mkpath("%s/%s", path, filename));
+		unlink(fullpath);
 	return 0;
 }
 
@@ -74,6 +83,44 @@ static void prune_object_dir(const char *path)
 	}
 }
 
+/*
+ * Write errors (particularly out of space) can result in
+ * failed temporary packs (and more rarely indexes and other
+ * files begining with "tmp_") accumulating in the
+ * object directory.
+ */
+static void remove_temporary_files(void)
+{
+	DIR *dir;
+	struct dirent *de;
+	char* dirname=get_object_directory();
+
+	dir = opendir(dirname);
+	if (!dir) {
+		fprintf(stderr, "Unable to open object directory %s\n",
+			dirname);
+		return;
+	}
+	while ((de = readdir(dir)) != NULL) {
+		if (!prefixcmp(de->d_name, "tmp_")) {
+			char name[PATH_MAX];
+			int c = snprintf(name, PATH_MAX, "%s/%s",
+					 dirname, de->d_name);
+			if (c < 0 || c >= PATH_MAX)
+				continue;
+			if (expire) {
+				struct stat st;
+				if (stat(name, &st) != 0 || st.st_mtime >= expire)
+					continue;
+			}
+			printf("Removing stale temporary file %s\n", name);
+			if (!show_only)
+				unlink(name);
+		}
+	}
+	closedir(dir);
+}
+
 int cmd_prune(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -83,6 +130,16 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		if (!strcmp(arg, "-n")) {
 			show_only = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--expire")) {
+			if (++i < argc) {
+				expire = approxidate(argv[i]);
+				continue;
+			}
+		}
+		else if (!prefixcmp(arg, "--expire=")) {
+			expire = approxidate(arg + 9);
 			continue;
 		}
 		usage(prune_usage);
@@ -96,5 +153,6 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 
 	sync();
 	prune_packed_objects(show_only);
+	remove_temporary_files();
 	return 0;
 }

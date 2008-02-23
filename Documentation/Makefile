@@ -2,10 +2,14 @@ MAN1_TXT= \
 	$(filter-out $(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
 		$(wildcard git-*.txt)) \
 	gitk.txt
-MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt
+MAN5_TXT=gitattributes.txt gitignore.txt gitcli.txt gitmodules.txt
 MAN7_TXT=git.txt
 
-DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT))
+MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
+MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
+MAN_HTML=$(patsubst %.txt,%.html,$(MAN_TXT))
+
+DOC_HTML=$(MAN_HTML)
 
 ARTICLES = tutorial
 ARTICLES += tutorial-2
@@ -19,7 +23,10 @@ ARTICLES += everyday
 ARTICLES += git-tools
 ARTICLES += glossary
 # with their own formatting rules.
-SP_ARTICLES = howto/revert-branch-rebase user-manual
+SP_ARTICLES = howto/revert-branch-rebase howto/using-merge-subtree user-manual
+API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
+SP_ARTICLES += $(API_DOCS)
+SP_ARTICLES += technical/api-index
 
 DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
 
@@ -29,6 +36,7 @@ DOC_MAN7=$(patsubst %.txt,%.7,$(MAN7_TXT))
 
 prefix?=$(HOME)
 bindir?=$(prefix)/bin
+htmldir?=$(prefix)/share/doc/git-doc
 mandir?=$(prefix)/share/man
 man1dir=$(mandir)/man1
 man5dir=$(mandir)/man5
@@ -37,9 +45,7 @@ man7dir=$(mandir)/man7
 
 ASCIIDOC=asciidoc
 ASCIIDOC_EXTRA =
-ifdef ASCIIDOC8
-ASCIIDOC_EXTRA += -a asciidoc7compatible
-endif
+MANPAGE_XSL = callouts.xsl
 INSTALL?=install
 RM ?= rm -f
 DOC_REF = origin/man
@@ -48,9 +54,20 @@ infodir?=$(prefix)/share/info
 MAKEINFO=makeinfo
 INSTALL_INFO=install-info
 DOCBOOK2X_TEXI=docbook2x-texi
+ifndef PERL_PATH
+	PERL_PATH = /usr/bin/perl
+endif
 
 -include ../config.mak.autogen
 -include ../config.mak
+
+ifdef ASCIIDOC8
+ASCIIDOC_EXTRA += -a asciidoc7compatible
+endif
+ifdef DOCBOOK_XSL_172
+ASCIIDOC_EXTRA += -a docbook-xsl-172
+MANPAGE_XSL = manpage-1.72.xsl
+endif
 
 #
 # Please note that there is a minor bug in asciidoc.
@@ -72,24 +89,28 @@ man1: $(DOC_MAN1)
 man5: $(DOC_MAN5)
 man7: $(DOC_MAN7)
 
-info: git.info
+info: git.info gitman.info
 
 install: man
-	$(INSTALL) -d -m755 $(DESTDIR)$(man1dir)
-	$(INSTALL) -d -m755 $(DESTDIR)$(man5dir)
-	$(INSTALL) -d -m755 $(DESTDIR)$(man7dir)
-	$(INSTALL) -m644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
-	$(INSTALL) -m644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
-	$(INSTALL) -m644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man1dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man5dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man7dir)
+	$(INSTALL) -m 644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
+	$(INSTALL) -m 644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
+	$(INSTALL) -m 644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
 
 install-info: info
-	$(INSTALL) -d -m755 $(DESTDIR)$(infodir)
-	$(INSTALL) -m644 git.info $(DESTDIR)$(infodir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(infodir)
+	$(INSTALL) -m 644 git.info gitman.info $(DESTDIR)$(infodir)
 	if test -r $(DESTDIR)$(infodir)/dir; then \
 	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) git.info ;\
+	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) gitman.info ;\
 	else \
 	  echo "No directory found in $(DESTDIR)$(infodir)" >&2 ; \
 	fi
+
+install-html: html
+	sh ./install-webdoc.sh $(DESTDIR)$(htmldir)
 
 ../GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	$(MAKE) -C ../ GIT-VERSION-FILE
@@ -101,7 +122,7 @@ install-info: info
 #
 doc.dep : $(wildcard *.txt) build-docdep.perl
 	$(RM) $@+ $@
-	perl ./build-docdep.perl >$@+
+	$(PERL_PATH) ./build-docdep.perl >$@+
 	mv $@+ $@
 
 -include doc.dep
@@ -118,18 +139,21 @@ cmds_txt = cmds-ancillaryinterrogators.txt \
 
 $(cmds_txt): cmd-list.made
 
-cmd-list.made: cmd-list.perl $(MAN1_TXT)
+cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 	$(RM) $@
-	perl ./cmd-list.perl
+	$(PERL_PATH) ./cmd-list.perl ../command-list.txt
 	date >$@
 
 git.7 git.html: git.txt
 
 clean:
-	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 *.texi *.texi+ howto-index.txt howto/*.html doc.dep
+	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7
+	$(RM) *.texi *.texi+ git.info gitman.info
+	$(RM) howto-index.txt howto/*.html doc.dep
+	$(RM) technical/api-*.html technical/api-index.txt
 	$(RM) $(cmds_txt) *.made
 
-%.html : %.txt
+$(MAN_HTML): %.html : %.txt
 	$(RM) $@+ $@
 	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $<
@@ -137,7 +161,7 @@ clean:
 
 %.1 %.5 %.7 : %.xml
 	$(RM) $@
-	xmlto -m callouts.xsl man $<
+	xmlto -m $(MANPAGE_XSL) man $<
 
 %.xml : %.txt
 	$(RM) $@+ $@
@@ -148,18 +172,41 @@ clean:
 user-manual.xml: user-manual.txt user-manual.conf
 	$(ASCIIDOC) -b docbook -d book $<
 
+technical/api-index.txt: technical/api-index-skel.txt \
+	technical/api-index.sh $(patsubst %,%.txt,$(API_DOCS))
+	cd technical && sh ./api-index.sh
+
+$(patsubst %,%.html,$(API_DOCS) technical/api-index): %.html : %.txt
+	$(ASCIIDOC) -b xhtml11 -f asciidoc.conf \
+		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) $*.txt
+
 XSLT = docbook.xsl
 XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
 
 user-manual.html: user-manual.xml
 	xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
 
-git.info: user-manual.xml
-	$(RM) $@ $*.texi $*.texi+
-	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout >$*.texi+
-	perl fix-texi.perl <$*.texi+ >$*.texi
+git.info: user-manual.texi
+	$(MAKEINFO) --no-split -o $@ user-manual.texi
+
+user-manual.texi: user-manual.xml
+	$(RM) $@+ $@
+	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout | $(PERL_PATH) fix-texi.perl >$@+
+	mv $@+ $@
+
+gitman.texi: $(MAN_XML) cat-texi.perl
+	$(RM) $@+ $@
+	($(foreach xml,$(MAN_XML),$(DOCBOOK2X_TEXI) --to-stdout $(xml);)) | \
+	$(PERL_PATH) cat-texi.perl $@ >$@+
+	mv $@+ $@
+
+gitman.info: gitman.texi
 	$(MAKEINFO) --no-split $*.texi
-	$(RM) $*.texi $*.texi+
+
+$(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
+	$(RM) $@+ $@
+	$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@+
+	mv $@+ $@
 
 howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
 	$(RM) $@+ $@
@@ -180,6 +227,6 @@ install-webdoc : html
 	sh ./install-webdoc.sh $(WEBDOC_DEST)
 
 quick-install:
-	sh ./install-doc-quick.sh $(DOC_REF) $(mandir)
+	sh ./install-doc-quick.sh $(DOC_REF) $(DESTDIR)$(mandir)
 
 .PHONY: .FORCE-GIT-VERSION-FILE

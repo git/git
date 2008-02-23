@@ -4,51 +4,118 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 
+static int sanitary_path_copy(char *dst, const char *src)
+{
+	char *dst0 = dst;
+
+	if (*src == '/') {
+		*dst++ = '/';
+		while (*src == '/')
+			src++;
+	}
+
+	for (;;) {
+		char c = *src;
+
+		/*
+		 * A path component that begins with . could be
+		 * special:
+		 * (1) "." and ends   -- ignore and terminate.
+		 * (2) "./"           -- ignore them, eat slash and continue.
+		 * (3) ".." and ends  -- strip one and terminate.
+		 * (4) "../"          -- strip one, eat slash and continue.
+		 */
+		if (c == '.') {
+			switch (src[1]) {
+			case '\0':
+				/* (1) */
+				src++;
+				break;
+			case '/':
+				/* (2) */
+				src += 2;
+				while (*src == '/')
+					src++;
+				continue;
+			case '.':
+				switch (src[2]) {
+				case '\0':
+					/* (3) */
+					src += 2;
+					goto up_one;
+				case '/':
+					/* (4) */
+					src += 3;
+					while (*src == '/')
+						src++;
+					goto up_one;
+				}
+			}
+		}
+
+		/* copy up to the next '/', and eat all '/' */
+		while ((c = *src++) != '\0' && c != '/')
+			*dst++ = c;
+		if (c == '/') {
+			*dst++ = c;
+			while (c == '/')
+				c = *src++;
+			src--;
+		} else if (!c)
+			break;
+		continue;
+
+	up_one:
+		/*
+		 * dst0..dst is prefix portion, and dst[-1] is '/';
+		 * go up one level.
+		 */
+		dst -= 2; /* go past trailing '/' if any */
+		if (dst < dst0)
+			return -1;
+		while (1) {
+			if (dst <= dst0)
+				break;
+			c = *dst--;
+			if (c == '/') {
+				dst += 2;
+				break;
+			}
+		}
+	}
+	*dst = '\0';
+	return 0;
+}
+
 const char *prefix_path(const char *prefix, int len, const char *path)
 {
 	const char *orig = path;
-	for (;;) {
-		char c;
-		if (*path != '.')
-			break;
-		c = path[1];
-		/* "." */
-		if (!c) {
-			path++;
-			break;
-		}
-		/* "./" */
-		if (c == '/') {
-			path += 2;
-			continue;
-		}
-		if (c != '.')
-			break;
-		c = path[2];
-		if (!c)
-			path += 2;
-		else if (c == '/')
-			path += 3;
-		else
-			break;
-		/* ".." and "../" */
-		/* Remove last component of the prefix */
-		do {
-			if (!len)
-				die("'%s' is outside repository", orig);
-			len--;
-		} while (len && prefix[len-1] != '/');
-		continue;
+	char *sanitized = xmalloc(len + strlen(path) + 1);
+	if (is_absolute_path(orig))
+		strcpy(sanitized, path);
+	else {
+		if (len)
+			memcpy(sanitized, prefix, len);
+		strcpy(sanitized + len, path);
 	}
-	if (len) {
-		int speclen = strlen(path);
-		char *n = xmalloc(speclen + len + 1);
-
-		memcpy(n, prefix, len);
-		memcpy(n + len, path, speclen+1);
-		path = n;
+	if (sanitary_path_copy(sanitized, sanitized))
+		goto error_out;
+	if (is_absolute_path(orig)) {
+		const char *work_tree = get_git_work_tree();
+		size_t len = strlen(work_tree);
+		size_t total = strlen(sanitized) + 1;
+		if (strncmp(sanitized, work_tree, len) ||
+		    (sanitized[len] != '\0' && sanitized[len] != '/')) {
+		error_out:
+			error("'%s' is outside repository", orig);
+			free(sanitized);
+			return NULL;
+		}
+		if (sanitized[len] == '/')
+			len++;
+		memmove(sanitized, sanitized + len, total - len);
 	}
-	return path;
+	return sanitized;
 }
 
 /*
@@ -59,7 +126,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 {
 	static char path[PATH_MAX];
-	if (!pfx || !*pfx || arg[0] == '/')
+	if (!pfx || !*pfx || is_absolute_path(arg))
 		return arg;
 	memcpy(path, pfx, pfx_len);
 	strcpy(path + pfx_len, arg);
@@ -114,7 +181,7 @@ void verify_non_filename(const char *prefix, const char *arg)
 const char **get_pathspec(const char *prefix, const char **pathspec)
 {
 	const char *entry = *pathspec;
-	const char **p;
+	const char **src, **dst;
 	int prefixlen;
 
 	if (!prefix && !entry)
@@ -128,19 +195,26 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 	}
 
 	/* Otherwise we have to re-write the entries.. */
-	p = pathspec;
+	src = pathspec;
+	dst = pathspec;
 	prefixlen = prefix ? strlen(prefix) : 0;
-	do {
-		*p = prefix_path(prefix, prefixlen, entry);
-	} while ((entry = *++p) != NULL);
-	return (const char **) pathspec;
+	while (*src) {
+		const char *p = prefix_path(prefix, prefixlen, *src);
+		if (p)
+			*(dst++) = p;
+		src++;
+	}
+	*dst = NULL;
+	if (!*pathspec)
+		return NULL;
+	return pathspec;
 }
 
 /*
  * Test if it looks like we're at a git directory.
  * We want to see:
  *
- *  - either a objects/ directory _or_ the proper
+ *  - either an objects/ directory _or_ the proper
  *    GIT_OBJECT_DIRECTORY environment variable
  *  - a refs/ directory
  *  - either a HEAD symlink or a HEAD file that is formatted as
@@ -206,6 +280,38 @@ static const char *set_work_tree(const char *dir)
 	return NULL;
 }
 
+void setup_work_tree(void)
+{
+	const char *work_tree, *git_dir;
+	static int initialized = 0;
+
+	if (initialized)
+		return;
+	work_tree = get_git_work_tree();
+	git_dir = get_git_dir();
+	if (!is_absolute_path(git_dir))
+		set_git_dir(make_absolute_path(git_dir));
+	if (!work_tree || chdir(work_tree))
+		die("This operation must be run in a work tree");
+	initialized = 1;
+}
+
+static int check_repository_format_gently(int *nongit_ok)
+{
+	git_config(check_repository_format_version);
+	if (GIT_REPO_VERSION < repository_format_version) {
+		if (!nongit_ok)
+			die ("Expected git repo version <= %d, found %d",
+			     GIT_REPO_VERSION, repository_format_version);
+		warning("Expected git repo version <= %d, found %d",
+			GIT_REPO_VERSION, repository_format_version);
+		warning("Please upgrade Git");
+		*nongit_ok = -1;
+		return -1;
+	}
+	return 0;
+}
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
@@ -230,8 +336,15 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			static char buffer[1024 + 1];
 			const char *retval;
 
-			if (!work_tree_env)
-				return set_work_tree(gitdirenv);
+			if (!work_tree_env) {
+				retval = set_work_tree(gitdirenv);
+				/* config may override worktree */
+				if (check_repository_format_gently(nongit_ok))
+					return NULL;
+				return retval;
+			}
+			if (check_repository_format_gently(nongit_ok))
+				return NULL;
 			retval = get_relative_cwd(buffer, sizeof(buffer) - 1,
 					get_git_work_tree());
 			if (!retval || !*retval)
@@ -270,6 +383,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			if (!work_tree_env)
 				inside_work_tree = 0;
 			setenv(GIT_DIR_ENVIRONMENT, ".", 1);
+			check_repository_format_gently(nongit_ok);
 			return NULL;
 		}
 		chdir("..");
@@ -290,6 +404,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	if (!work_tree_env)
 		inside_work_tree = 1;
 	git_work_tree_cfg = xstrndup(cwd, offset);
+	if (check_repository_format_gently(nongit_ok))
+		return NULL;
 	if (offset == len)
 		return NULL;
 
@@ -330,6 +446,8 @@ int check_repository_format_version(const char *var, const char *value)
 		if (is_bare_repository_cfg == 1)
 			inside_work_tree = -1;
 	} else if (strcmp(var, "core.worktree") == 0) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (git_work_tree_cfg)
 			free(git_work_tree_cfg);
 		git_work_tree_cfg = xstrdup(value);
@@ -340,17 +458,12 @@ int check_repository_format_version(const char *var, const char *value)
 
 int check_repository_format(void)
 {
-	git_config(check_repository_format_version);
-	if (GIT_REPO_VERSION < repository_format_version)
-		die ("Expected git repo version <= %d, found %d",
-		     GIT_REPO_VERSION, repository_format_version);
-	return 0;
+	return check_repository_format_gently(NULL);
 }
 
 const char *setup_git_directory(void)
 {
 	const char *retval = setup_git_directory_gently(NULL);
-	check_repository_format();
 
 	/* If the work tree is not the default one, recompute prefix */
 	if (inside_work_tree < 0) {

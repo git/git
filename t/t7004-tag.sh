@@ -26,8 +26,8 @@ test_expect_success 'listing all tags in an empty tree should output nothing' '
 	test `git-tag | wc -l` -eq 0
 '
 
-test_expect_failure 'looking for a tag in an empty tree should fail' \
-	'tag_exists mytag'
+test_expect_success 'looking for a tag in an empty tree should fail' \
+	'! (tag_exists mytag)'
 
 test_expect_success 'creating a tag in an empty tree should fail' '
 	! git-tag mynotag &&
@@ -83,9 +83,9 @@ test_expect_success \
 
 # special cases for creating tags:
 
-test_expect_failure \
+test_expect_success \
 	'trying to create a tag with the name of one existing should fail' \
-	'git tag mytag'
+	'! git tag mytag'
 
 test_expect_success \
 	'trying to create a tag with a non-valid name should fail' '
@@ -146,8 +146,8 @@ test_expect_success \
 	! tag_exists myhead
 '
 
-test_expect_failure 'trying to delete an already deleted tag should fail' \
-	'git-tag -d mytag'
+test_expect_success 'trying to delete an already deleted tag should fail' \
+	'! git-tag -d mytag'
 
 # listing various tags with pattern matching:
 
@@ -265,16 +265,16 @@ test_expect_success \
 	test $(git rev-parse non-annotated-tag) = $(git rev-parse HEAD)
 '
 
-test_expect_failure 'trying to verify an unknown tag should fail' \
-	'git-tag -v unknown-tag'
+test_expect_success 'trying to verify an unknown tag should fail' \
+	'! git-tag -v unknown-tag'
 
-test_expect_failure \
+test_expect_success \
 	'trying to verify a non-annotated and non-signed tag should fail' \
-	'git-tag -v non-annotated-tag'
+	'! git-tag -v non-annotated-tag'
 
-test_expect_failure \
+test_expect_success \
 	'trying to verify many non-annotated or unknown tags, should fail' \
-	'git-tag -v unknown-tag1 non-annotated-tag unknown-tag2'
+	'! git-tag -v unknown-tag1 non-annotated-tag unknown-tag2'
 
 # creating annotated tags:
 
@@ -339,19 +339,13 @@ test_expect_success \
 '
 
 test_expect_success \
-	'trying to create tags giving many -m or -F options should fail' '
+	'trying to create tags giving both -m or -F options should fail' '
 	echo "message file 1" >msgfile1 &&
 	echo "message file 2" >msgfile2 &&
-	! tag_exists msgtag &&
-	! git-tag -m "message 1" -m "message 2" msgtag &&
-	! tag_exists msgtag &&
-	! git-tag -F msgfile1 -F msgfile2 msgtag &&
 	! tag_exists msgtag &&
 	! git-tag -m "message 1" -F msgfile1 msgtag &&
 	! tag_exists msgtag &&
 	! git-tag -F msgfile1 -m "message 1" msgtag &&
-	! tag_exists msgtag &&
-	! git-tag -F msgfile1 -m "message 1" -F msgfile2 msgtag &&
 	! tag_exists msgtag &&
 	! git-tag -m "message 1" -F msgfile1 -m "message 2" msgtag &&
 	! tag_exists msgtag
@@ -497,25 +491,21 @@ test_expect_success \
 	echo "tag-one-line" >expect &&
 	git-tag -l | grep "^tag-one-line" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l | grep "^tag-one-line" >actual &&
+	git-tag -n0 -l | grep "^tag-one-line" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l tag-one-line >actual &&
+	git-tag -n0 -l tag-one-line >actual &&
 	git diff expect actual &&
 
 	echo "tag-one-line    A msg" >expect &&
-	git-tag -n xxx -l | grep "^tag-one-line" >actual &&
-	git diff expect actual &&
-	git-tag -n "" -l | grep "^tag-one-line" >actual &&
-	git diff expect actual &&
-	git-tag -n 1 -l | grep "^tag-one-line" >actual &&
+	git-tag -n1 -l | grep "^tag-one-line" >actual &&
 	git diff expect actual &&
 	git-tag -n -l | grep "^tag-one-line" >actual &&
 	git diff expect actual &&
-	git-tag -n 1 -l tag-one-line >actual &&
+	git-tag -n1 -l tag-one-line >actual &&
 	git diff expect actual &&
-	git-tag -n 2 -l tag-one-line >actual &&
+	git-tag -n2 -l tag-one-line >actual &&
 	git diff expect actual &&
-	git-tag -n 999 -l tag-one-line >actual &&
+	git-tag -n999 -l tag-one-line >actual &&
 	git diff expect actual
 '
 
@@ -526,21 +516,21 @@ test_expect_success \
 	echo "tag-zero-lines" >expect &&
 	git-tag -l | grep "^tag-zero-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l | grep "^tag-zero-lines" >actual &&
+	git-tag -n0 -l | grep "^tag-zero-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l tag-zero-lines >actual &&
+	git-tag -n0 -l tag-zero-lines >actual &&
 	git diff expect actual &&
 
 	echo "tag-zero-lines  " >expect &&
-	git-tag -n 1 -l | grep "^tag-zero-lines" >actual &&
+	git-tag -n1 -l | grep "^tag-zero-lines" >actual &&
 	git diff expect actual &&
 	git-tag -n -l | grep "^tag-zero-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 1 -l tag-zero-lines >actual &&
+	git-tag -n1 -l tag-zero-lines >actual &&
 	git diff expect actual &&
-	git-tag -n 2 -l tag-zero-lines >actual &&
+	git-tag -n2 -l tag-zero-lines >actual &&
 	git diff expect actual &&
-	git-tag -n 999 -l tag-zero-lines >actual &&
+	git-tag -n999 -l tag-zero-lines >actual &&
 	git diff expect actual
 '
 
@@ -554,37 +544,37 @@ test_expect_success \
 	echo "tag-lines" >expect &&
 	git-tag -l | grep "^tag-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l | grep "^tag-lines" >actual &&
+	git-tag -n0 -l | grep "^tag-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l tag-lines >actual &&
+	git-tag -n0 -l tag-lines >actual &&
 	git diff expect actual &&
 
 	echo "tag-lines       tag line one" >expect &&
-	git-tag -n 1 -l | grep "^tag-lines" >actual &&
+	git-tag -n1 -l | grep "^tag-lines" >actual &&
 	git diff expect actual &&
 	git-tag -n -l | grep "^tag-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 1 -l tag-lines >actual &&
+	git-tag -n1 -l tag-lines >actual &&
 	git diff expect actual &&
 
 	echo "    tag line two" >>expect &&
-	git-tag -n 2 -l | grep "^ *tag.line" >actual &&
+	git-tag -n2 -l | grep "^ *tag.line" >actual &&
 	git diff expect actual &&
-	git-tag -n 2 -l tag-lines >actual &&
+	git-tag -n2 -l tag-lines >actual &&
 	git diff expect actual &&
 
 	echo "    tag line three" >>expect &&
-	git-tag -n 3 -l | grep "^ *tag.line" >actual &&
+	git-tag -n3 -l | grep "^ *tag.line" >actual &&
 	git diff expect actual &&
-	git-tag -n 3 -l tag-lines >actual &&
+	git-tag -n3 -l tag-lines >actual &&
 	git diff expect actual &&
-	git-tag -n 4 -l | grep "^ *tag.line" >actual &&
+	git-tag -n4 -l | grep "^ *tag.line" >actual &&
 	git diff expect actual &&
-	git-tag -n 4 -l tag-lines >actual &&
+	git-tag -n4 -l tag-lines >actual &&
 	git diff expect actual &&
-	git-tag -n 99 -l | grep "^ *tag.line" >actual &&
+	git-tag -n99 -l | grep "^ *tag.line" >actual &&
 	git diff expect actual &&
-	git-tag -n 99 -l tag-lines >actual &&
+	git-tag -n99 -l tag-lines >actual &&
 	git diff expect actual
 '
 
@@ -646,6 +636,46 @@ test_expect_success 'creating a signed tag with -m message should succeed' '
 	git diff expect actual
 '
 
+get_tag_header u-signed-tag $commit commit $time >expect
+echo 'Another message' >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success 'sign with a given key id' '
+
+	git tag -u committer@example.com -m "Another message" u-signed-tag &&
+	get_tag_msg u-signed-tag >actual &&
+	git diff expect actual
+
+'
+
+test_expect_success 'sign with an unknown id (1)' '
+
+	! git tag -u author@example.com -m "Another message" o-signed-tag
+
+'
+
+test_expect_success 'sign with an unknown id (2)' '
+
+	! git tag -u DEADBEEF -m "Another message" o-signed-tag
+
+'
+
+cat >fakeeditor <<'EOF'
+#!/bin/sh
+test -n "$1" && exec >"$1"
+echo A signed tag message
+echo from a fake editor.
+EOF
+chmod +x fakeeditor
+
+get_tag_header implied-sign $commit commit $time >expect
+./fakeeditor >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success '-u implies signed tag' '
+	GIT_EDITOR=./fakeeditor git-tag -u CDDE430D implied-sign &&
+	get_tag_msg implied-sign >actual &&
+	git diff expect actual
+'
+
 cat >sigmsgfile <<EOF
 Another signed tag
 message in a file.
@@ -670,6 +700,15 @@ echo '-----BEGIN PGP SIGNATURE-----' >>expect
 test_expect_success 'creating a signed tag with -F - should succeed' '
 	git-tag -s -F - stdin-signed-tag <siginputmsg &&
 	get_tag_msg stdin-signed-tag >actual &&
+	git diff expect actual
+'
+
+get_tag_header implied-annotate $commit commit $time >expect
+./fakeeditor >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success '-s implies annotated tag' '
+	GIT_EDITOR=./fakeeditor git-tag -s implied-annotate &&
+	get_tag_msg implied-annotate >actual &&
 	git diff expect actual
 '
 
@@ -863,25 +902,21 @@ test_expect_success \
 	echo "stag-one-line" >expect &&
 	git-tag -l | grep "^stag-one-line" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l | grep "^stag-one-line" >actual &&
+	git-tag -n0 -l | grep "^stag-one-line" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l stag-one-line >actual &&
+	git-tag -n0 -l stag-one-line >actual &&
 	git diff expect actual &&
 
 	echo "stag-one-line   A message line signed" >expect &&
-	git-tag -n xxx -l | grep "^stag-one-line" >actual &&
-	git diff expect actual &&
-	git-tag -n "" -l | grep "^stag-one-line" >actual &&
-	git diff expect actual &&
-	git-tag -n 1 -l | grep "^stag-one-line" >actual &&
+	git-tag -n1 -l | grep "^stag-one-line" >actual &&
 	git diff expect actual &&
 	git-tag -n -l | grep "^stag-one-line" >actual &&
 	git diff expect actual &&
-	git-tag -n 1 -l stag-one-line >actual &&
+	git-tag -n1 -l stag-one-line >actual &&
 	git diff expect actual &&
-	git-tag -n 2 -l stag-one-line >actual &&
+	git-tag -n2 -l stag-one-line >actual &&
 	git diff expect actual &&
-	git-tag -n 999 -l stag-one-line >actual &&
+	git-tag -n999 -l stag-one-line >actual &&
 	git diff expect actual
 '
 
@@ -892,21 +927,21 @@ test_expect_success \
 	echo "stag-zero-lines" >expect &&
 	git-tag -l | grep "^stag-zero-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l | grep "^stag-zero-lines" >actual &&
+	git-tag -n0 -l | grep "^stag-zero-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l stag-zero-lines >actual &&
+	git-tag -n0 -l stag-zero-lines >actual &&
 	git diff expect actual &&
 
 	echo "stag-zero-lines " >expect &&
-	git-tag -n 1 -l | grep "^stag-zero-lines" >actual &&
+	git-tag -n1 -l | grep "^stag-zero-lines" >actual &&
 	git diff expect actual &&
 	git-tag -n -l | grep "^stag-zero-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 1 -l stag-zero-lines >actual &&
+	git-tag -n1 -l stag-zero-lines >actual &&
 	git diff expect actual &&
-	git-tag -n 2 -l stag-zero-lines >actual &&
+	git-tag -n2 -l stag-zero-lines >actual &&
 	git diff expect actual &&
-	git-tag -n 999 -l stag-zero-lines >actual &&
+	git-tag -n999 -l stag-zero-lines >actual &&
 	git diff expect actual
 '
 
@@ -920,37 +955,37 @@ test_expect_success \
 	echo "stag-lines" >expect &&
 	git-tag -l | grep "^stag-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l | grep "^stag-lines" >actual &&
+	git-tag -n0 -l | grep "^stag-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 0 -l stag-lines >actual &&
+	git-tag -n0 -l stag-lines >actual &&
 	git diff expect actual &&
 
 	echo "stag-lines      stag line one" >expect &&
-	git-tag -n 1 -l | grep "^stag-lines" >actual &&
+	git-tag -n1 -l | grep "^stag-lines" >actual &&
 	git diff expect actual &&
 	git-tag -n -l | grep "^stag-lines" >actual &&
 	git diff expect actual &&
-	git-tag -n 1 -l stag-lines >actual &&
+	git-tag -n1 -l stag-lines >actual &&
 	git diff expect actual &&
 
 	echo "    stag line two" >>expect &&
-	git-tag -n 2 -l | grep "^ *stag.line" >actual &&
+	git-tag -n2 -l | grep "^ *stag.line" >actual &&
 	git diff expect actual &&
-	git-tag -n 2 -l stag-lines >actual &&
+	git-tag -n2 -l stag-lines >actual &&
 	git diff expect actual &&
 
 	echo "    stag line three" >>expect &&
-	git-tag -n 3 -l | grep "^ *stag.line" >actual &&
+	git-tag -n3 -l | grep "^ *stag.line" >actual &&
 	git diff expect actual &&
-	git-tag -n 3 -l stag-lines >actual &&
+	git-tag -n3 -l stag-lines >actual &&
 	git diff expect actual &&
-	git-tag -n 4 -l | grep "^ *stag.line" >actual &&
+	git-tag -n4 -l | grep "^ *stag.line" >actual &&
 	git diff expect actual &&
-	git-tag -n 4 -l stag-lines >actual &&
+	git-tag -n4 -l stag-lines >actual &&
 	git diff expect actual &&
-	git-tag -n 99 -l | grep "^ *stag.line" >actual &&
+	git-tag -n99 -l | grep "^ *stag.line" >actual &&
 	git diff expect actual &&
-	git-tag -n 99 -l stag-lines >actual &&
+	git-tag -n99 -l stag-lines >actual &&
 	git diff expect actual
 '
 
@@ -992,16 +1027,42 @@ test_expect_success \
 
 # try to sign with bad user.signingkey
 git config user.signingkey BobTheMouse
-test_expect_failure \
+test_expect_success \
 	'git-tag -s fails if gpg is misconfigured' \
-	'git tag -s -m tail tag-gpg-failure'
+	'! git tag -s -m tail tag-gpg-failure'
 git config --unset user.signingkey
 
 # try to verify without gpg:
 
 rm -rf gpghome
-test_expect_failure \
+test_expect_success \
 	'verify signed tag fails when public key is not present' \
-	'git-tag -v signed-tag'
+	'! git-tag -v signed-tag'
+
+test_expect_success \
+	'git-tag -a fails if tag annotation is empty' '
+	! (GIT_EDITOR=cat git tag -a initial-comment)
+'
+
+test_expect_success \
+	'message in editor has initial comment' '
+	GIT_EDITOR=cat git tag -a initial-comment > actual
+	# check the first line --- should be empty
+	first=$(sed -e 1q <actual) &&
+	test -z "$first" &&
+	# remove commented lines from the remainder -- should be empty
+	rest=$(sed -e 1d -e '/^#/d' <actual) &&
+	test -z "$rest"
+'
+
+get_tag_header reuse $commit commit $time >expect
+echo "An annotation to be reused" >> expect
+test_expect_success \
+	'overwriting an annoted tag should use its previous body' '
+	git tag -a -m "An annotation to be reused" reuse &&
+	GIT_EDITOR=true git tag -f -a reuse &&
+	get_tag_msg reuse >actual &&
+	git diff expect actual
+'
 
 test_done

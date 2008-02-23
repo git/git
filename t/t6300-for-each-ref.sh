@@ -43,8 +43,8 @@ test_expect_success 'Check atom names are valid' '
 	test -z "$bad"
 '
 
-test_expect_failure 'Check invalid atoms names are errors' '
-	git-for-each-ref --format="%(INVALID)" refs/heads
+test_expect_success 'Check invalid atoms names are errors' '
+	! git-for-each-ref --format="%(INVALID)" refs/heads
 '
 
 test_expect_success 'Check format specifiers are ignored in naming date atoms' '
@@ -63,8 +63,8 @@ test_expect_success 'Check valid format specifiers for date fields' '
 	git-for-each-ref --format="%(authordate:rfc2822)" refs/heads
 '
 
-test_expect_failure 'Check invalid format specifiers are errors' '
-	git-for-each-ref --format="%(authordate:INVALID)" refs/heads
+test_expect_success 'Check invalid format specifiers are errors' '
+	! git-for-each-ref --format="%(authordate:INVALID)" refs/heads
 '
 
 cat >expected <<\EOF
@@ -147,5 +147,66 @@ test_expect_success 'Check format "rfc2822" date fields output' '
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
 	git diff expected actual
 '
+
+cat >expected <<\EOF
+refs/heads/master
+refs/tags/testtag
+EOF
+
+test_expect_success 'Verify ascending sort' '
+	git-for-each-ref --format="%(refname)" --sort=refname >actual &&
+	git diff expected actual
+'
+
+
+cat >expected <<\EOF
+refs/tags/testtag
+refs/heads/master
+EOF
+
+test_expect_success 'Verify descending sort' '
+	git-for-each-ref --format="%(refname)" --sort=-refname >actual &&
+	git diff expected actual
+'
+
+cat >expected <<\EOF
+'refs/heads/master'
+'refs/tags/testtag'
+EOF
+
+test_expect_success 'Quoting style: shell' '
+	git for-each-ref --shell --format="%(refname)" >actual &&
+	git diff expected actual
+'
+
+test_expect_success 'Quoting style: perl' '
+	git for-each-ref --perl --format="%(refname)" >actual &&
+	git diff expected actual
+'
+
+test_expect_success 'Quoting style: python' '
+	git for-each-ref --python --format="%(refname)" >actual &&
+	git diff expected actual
+'
+
+cat >expected <<\EOF
+"refs/heads/master"
+"refs/tags/testtag"
+EOF
+
+test_expect_success 'Quoting style: tcl' '
+	git for-each-ref --tcl --format="%(refname)" >actual &&
+	git diff expected actual
+'
+
+for i in "--perl --shell" "-s --python" "--python --tcl" "--tcl --perl"; do
+	test_expect_success "more than one quoting style: $i" "
+		git for-each-ref $i 2>&1 | (read line &&
+		case \$line in
+		\"error: more than one quoting style\"*) : happy;;
+		*) false
+		esac)
+	"
+done
 
 test_done

@@ -2,11 +2,26 @@
 #
 # Copyright (c) 2005, 2006 Junio C Hamano
 
-USAGE='[--signoff] [--dotest=<dir>] [--keep] [--utf8 | --no-utf8]
-  [--3way] [--interactive] [--binary]
-  [--whitespace=<option>] [-C<n>] [-p<n>]
-  <mbox>|<Maildir>...
-  or, when resuming [--skip | --resolved]'
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git-am [options] <mbox>|<Maildir>...
+git-am [options] --resolved
+git-am [options] --skip
+--
+d,dotest=       use <dir> and not .dotest
+i,interactive   run interactively
+b,binary        pass --allo-binary-replacement to git-apply
+3,3way          allow fall back on 3way merging if needed
+s,signoff       add a Signed-off-by line to the commit message
+u,utf8          recode into utf8 (default)
+k,keep          pass -k flag to git-mailinfo
+whitespace=     pass it through git-apply
+C=              pass it through git-apply
+p=              pass it through git-apply
+resolvemsg=     override error message when patch failure occurs
+r,resolved      to be used after a patch failure
+skip            skip the current patch"
+
 . git-sh-setup
 set_reflog_action am
 require_work_tree
@@ -102,6 +117,10 @@ It does not apply to blobs recorded in its index."
     unset GITHEAD_$his_tree
 }
 
+reread_subject () {
+	git stripspace <"$1" | sed -e 1q
+}
+
 prec=4
 dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary=
 resolvemsg= resume=
@@ -110,49 +129,38 @@ git_apply_opt=
 while test $# != 0
 do
 	case "$1" in
-	-d=*|--d=*|--do=*|--dot=*|--dote=*|--dotes=*|--dotest=*)
-	dotest=`expr "z$1" : 'z-[^=]*=\(.*\)'`; shift ;;
-	-d|--d|--do|--dot|--dote|--dotes|--dotest)
-	case "$#" in 1) usage ;; esac; shift
-	dotest="$1"; shift;;
-
-	-i|--i|--in|--int|--inte|--inter|--intera|--interac|--interact|\
-	--interacti|--interactiv|--interactive)
-	interactive=t; shift ;;
-
-	-b|--b|--bi|--bin|--bina|--binar|--binary)
-	binary=t; shift ;;
-
-	-3|--3|--3w|--3wa|--3way)
-	threeway=t; shift ;;
-	-s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
-	sign=t; shift ;;
-	-u|--u|--ut|--utf|--utf8)
-	utf8=t; shift ;; # this is now default
-	--no-u|--no-ut|--no-utf|--no-utf8)
-	utf8=; shift ;;
-	-k|--k|--ke|--kee|--keep)
-	keep=t; shift ;;
-
-	-r|--r|--re|--res|--reso|--resol|--resolv|--resolve|--resolved)
-	resolved=t; shift ;;
-
-	--sk|--ski|--skip)
-	skip=t; shift ;;
-
-	--whitespace=*|-C*|-p*)
-	git_apply_opt="$git_apply_opt $1"; shift ;;
-
-	--resolvemsg=*)
-	resolvemsg=${1#--resolvemsg=}; shift ;;
-
+	-i|--interactive)
+		interactive=t ;;
+	-b|--binary)
+		binary=t ;;
+	-3|--3way)
+		threeway=t ;;
+	-s|--signoff)
+		sign=t ;;
+	-u|--utf8)
+		utf8=t ;; # this is now default
+	--no-utf8)
+		utf8= ;;
+	-k|--keep)
+		keep=t ;;
+	-r|--resolved)
+		resolved=t ;;
+	--skip)
+		skip=t ;;
+	-d|--dotest)
+		shift; dotest=$1;;
+	--resolvemsg)
+		shift; resolvemsg=$1 ;;
+	--whitespace)
+		git_apply_opt="$git_apply_opt $1=$2"; shift ;;
+	-C|-p)
+		git_apply_opt="$git_apply_opt $1$2"; shift ;;
 	--)
-	shift; break ;;
-	-*)
-	usage ;;
+		shift; break ;;
 	*)
-	break ;;
+		usage ;;
 	esac
+	shift
 done
 
 # If the dotest directory exists, but we have finished applying all the
@@ -214,7 +222,7 @@ fi
 
 case "$resolved" in
 '')
-	files=$(git diff-index --cached --name-only HEAD) || exit
+	files=$(git diff-index --cached --name-only HEAD --) || exit
 	if [ "$files" ]; then
 	   echo "Dirty index: cannot apply patches (dirty: $files)" >&2
 	   exit 1
@@ -348,7 +356,7 @@ do
 		case "$resolved$interactive" in
 		tt)
 			# This is used only for interactive view option.
-			git diff-index -p --cached HEAD >"$dotest/patch"
+			git diff-index -p --cached HEAD -- >"$dotest/patch"
 			;;
 		esac
 	esac
@@ -372,6 +380,7 @@ do
 		[aA]*) action=yes interactive= ;;
 		[nN]*) action=skip ;;
 		[eE]*) git_editor "$dotest/final-commit"
+		       SUBJECT=$(reread_subject "$dotest/final-commit")
 		       action=again ;;
 		[vV]*) action=again
 		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;
@@ -394,9 +403,7 @@ do
 		stop_here $this
 	fi
 
-	echo
 	printf 'Applying %s\n' "$SUBJECT"
-	echo
 
 	case "$resolved" in
 	'')
@@ -409,7 +416,7 @@ do
 		# trust what the user has in the index file and the
 		# working tree.
 		resolved=
-		git diff-index --quiet --cached HEAD && {
+		git diff-index --quiet --cached HEAD -- && {
 			echo "No changes - did you forget to use 'git add'?"
 			stop_here_user_resolve $this
 		}
@@ -431,7 +438,7 @@ do
 		then
 		    # Applying the patch to an earlier tree and merging the
 		    # result may have produced the same tree as ours.
-		    git diff-index --quiet --cached HEAD && {
+		    git diff-index --quiet --cached HEAD -- && {
 			echo No changes -- Patch already applied.
 			go_next
 			continue
@@ -452,10 +459,8 @@ do
 	fi
 
 	tree=$(git write-tree) &&
-	echo Wrote tree $tree &&
 	parent=$(git rev-parse --verify HEAD) &&
 	commit=$(git commit-tree $tree -p $parent <"$dotest/final-commit") &&
-	echo Committed: $commit &&
 	git update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
 	stop_here $this
 
@@ -464,9 +469,9 @@ do
 		"$GIT_DIR"/hooks/post-applypatch
 	fi
 
-	git gc --auto
-
 	go_next
 done
+
+git gc --auto
 
 rm -fr "$dotest"

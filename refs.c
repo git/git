@@ -2,6 +2,7 @@
 #include "refs.h"
 #include "object.h"
 #include "tag.h"
+#include "dir.h"
 
 /* ISSYMREF=01 and ISPACKED=02 are public interfaces */
 #define REF_KNOWS_PEELED 04
@@ -579,18 +580,6 @@ int for_each_remote_ref(each_ref_fn fn, void *cb_data)
 	return do_for_each_ref("refs/remotes/", fn, 13, cb_data);
 }
 
-/* NEEDSWORK: This is only used by ssh-upload and it should go; the
- * caller should do resolve_ref or read_ref like everybody else.  Or
- * maybe everybody else should use get_ref_sha1() instead of doing
- * read_ref().
- */
-int get_ref_sha1(const char *ref, unsigned char *sha1)
-{
-	if (check_ref_format(ref))
-		return -1;
-	return read_ref(mkpath("refs/%s", ref), sha1);
-}
-
 /*
  * Make sure "ref" is something reasonable to have under ".git/refs/";
  * We do not like it if:
@@ -624,34 +613,70 @@ int check_ref_format(const char *ref)
 		while ((ch = *cp++) == '/')
 			; /* tolerate duplicated slashes */
 		if (!ch)
-			return -1; /* should not end with slashes */
+			/* should not end with slashes */
+			return CHECK_REF_FORMAT_ERROR;
 
 		/* we are at the beginning of the path component */
 		if (ch == '.')
-			return -1;
+			return CHECK_REF_FORMAT_ERROR;
 		bad_type = bad_ref_char(ch);
 		if (bad_type) {
-			return (bad_type == 2 && !*cp) ? -3 : -1;
+			return (bad_type == 2 && !*cp)
+				? CHECK_REF_FORMAT_WILDCARD
+				: CHECK_REF_FORMAT_ERROR;
 		}
 
 		/* scan the rest of the path component */
 		while ((ch = *cp++) != 0) {
 			bad_type = bad_ref_char(ch);
 			if (bad_type) {
-				return (bad_type == 2 && !*cp) ? -3 : -1;
+				return (bad_type == 2 && !*cp)
+					? CHECK_REF_FORMAT_WILDCARD
+					: CHECK_REF_FORMAT_ERROR;
 			}
 			if (ch == '/')
 				break;
 			if (ch == '.' && *cp == '.')
-				return -1;
+				return CHECK_REF_FORMAT_ERROR;
 		}
 		level++;
 		if (!ch) {
 			if (level < 2)
-				return -2; /* at least of form "heads/blah" */
-			return 0;
+				return CHECK_REF_FORMAT_ONELEVEL;
+			return CHECK_REF_FORMAT_OK;
 		}
 	}
+}
+
+const char *ref_rev_parse_rules[] = {
+	"%.*s",
+	"refs/%.*s",
+	"refs/tags/%.*s",
+	"refs/heads/%.*s",
+	"refs/remotes/%.*s",
+	"refs/remotes/%.*s/HEAD",
+	NULL
+};
+
+const char *ref_fetch_rules[] = {
+	"%.*s",
+	"refs/%.*s",
+	"refs/heads/%.*s",
+	NULL
+};
+
+int refname_match(const char *abbrev_name, const char *full_name, const char **rules)
+{
+	const char **p;
+	const int abbrev_name_len = strlen(abbrev_name);
+
+	for (p = rules; *p; p++) {
+		if (!strcmp(full_name, mkpath(*p, abbrev_name_len, abbrev_name))) {
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 static struct ref_lock *verify_lock(struct ref_lock *lock,
@@ -671,57 +696,23 @@ static struct ref_lock *verify_lock(struct ref_lock *lock,
 	return lock;
 }
 
-static int remove_empty_dir_recursive(char *path, int len)
-{
-	DIR *dir = opendir(path);
-	struct dirent *e;
-	int ret = 0;
-
-	if (!dir)
-		return -1;
-	if (path[len-1] != '/')
-		path[len++] = '/';
-	while ((e = readdir(dir)) != NULL) {
-		struct stat st;
-		int namlen;
-		if ((e->d_name[0] == '.') &&
-		    ((e->d_name[1] == 0) ||
-		     ((e->d_name[1] == '.') && e->d_name[2] == 0)))
-			continue; /* "." and ".." */
-
-		namlen = strlen(e->d_name);
-		if ((len + namlen < PATH_MAX) &&
-		    strcpy(path + len, e->d_name) &&
-		    !lstat(path, &st) &&
-		    S_ISDIR(st.st_mode) &&
-		    !remove_empty_dir_recursive(path, len + namlen))
-			continue; /* happy */
-
-		/* path too long, stat fails, or non-directory still exists */
-		ret = -1;
-		break;
-	}
-	closedir(dir);
-	if (!ret) {
-		path[len] = 0;
-		ret = rmdir(path);
-	}
-	return ret;
-}
-
-static int remove_empty_directories(char *file)
+static int remove_empty_directories(const char *file)
 {
 	/* we want to create a file but there is a directory there;
 	 * if that is an empty directory (or a directory that contains
 	 * only empty directories), remove them.
 	 */
-	char path[PATH_MAX];
-	int len = strlen(file);
+	struct strbuf path;
+	int result;
 
-	if (len >= PATH_MAX) /* path too long ;-) */
-		return -1;
-	strcpy(path, file);
-	return remove_empty_dir_recursive(path, len);
+	strbuf_init(&path, 20);
+	strbuf_addstr(&path, file);
+
+	result = remove_dir_recursively(&path, 1);
+
+	strbuf_release(&path);
+
+	return result;
 }
 
 static int is_refname_available(const char *ref, const char *oldref,
@@ -830,9 +821,13 @@ struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 
 struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int flags)
 {
-	if (check_ref_format(ref) == -1)
+	switch (check_ref_format(ref)) {
+	default:
 		return NULL;
-	return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
+	case 0:
+	case CHECK_REF_FORMAT_ONELEVEL:
+		return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
+	}
 }
 
 static struct lock_file packlock;
@@ -869,7 +864,6 @@ static int repack_without_ref(const char *refname)
 			die("too long a refname '%s'", list->name);
 		write_or_die(fd, line, len);
 	}
-	close(fd);
 	return commit_lock_file(&packlock);
 }
 
@@ -1024,14 +1018,27 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	return 1;
 }
 
+static int close_ref(struct ref_lock *lock)
+{
+	if (close_lock_file(lock->lk))
+		return -1;
+	lock->lock_fd = -1;
+	return 0;
+}
+
+static int commit_ref(struct ref_lock *lock)
+{
+	if (commit_lock_file(lock->lk))
+		return -1;
+	lock->lock_fd = -1;
+	return 0;
+}
+
 void unlock_ref(struct ref_lock *lock)
 {
-	if (lock->lock_fd >= 0) {
-		close(lock->lock_fd);
-		/* Do not free lock->lk -- atexit() still looks at them */
-		if (lock->lk)
-			rollback_lock_file(lock->lk);
-	}
+	/* Do not free lock->lk -- atexit() still looks at them */
+	if (lock->lk)
+		rollback_lock_file(lock->lk);
 	free(lock->ref_name);
 	free(lock->orig_ref_name);
 	free(lock);
@@ -1108,7 +1115,7 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 	adjust_shared_perm(log_file);
 
 	msglen = msg ? strlen(msg) : 0;
-	committer = git_committer_info(-1);
+	committer = git_committer_info(0);
 	maxlen = strlen(committer) + msglen + 100;
 	logrec = xmalloc(maxlen);
 	len = sprintf(logrec, "%s %s %s\n",
@@ -1124,10 +1131,16 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 	return 0;
 }
 
+static int is_branch(const char *refname)
+{
+	return !strcmp(refname, "HEAD") || !prefixcmp(refname, "refs/heads/");
+}
+
 int write_ref_sha1(struct ref_lock *lock,
 	const unsigned char *sha1, const char *logmsg)
 {
 	static char term = '\n';
+	struct object *o;
 
 	if (!lock)
 		return -1;
@@ -1135,9 +1148,22 @@ int write_ref_sha1(struct ref_lock *lock,
 		unlock_ref(lock);
 		return 0;
 	}
+	o = parse_object(sha1);
+	if (!o) {
+		error("Trying to write ref %s with nonexistant object %s",
+			lock->ref_name, sha1_to_hex(sha1));
+		unlock_ref(lock);
+		return -1;
+	}
+	if (o->type != OBJ_COMMIT && is_branch(lock->ref_name)) {
+		error("Trying to write non-commit object %s to branch %s",
+			sha1_to_hex(sha1), lock->ref_name);
+		unlock_ref(lock);
+		return -1;
+	}
 	if (write_in_full(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
 	    write_in_full(lock->lock_fd, &term, 1) != 1
-		|| close(lock->lock_fd) < 0) {
+		|| close_ref(lock) < 0) {
 		error("Couldn't write %s", lock->lk->filename);
 		unlock_ref(lock);
 		return -1;
@@ -1170,12 +1196,11 @@ int write_ref_sha1(struct ref_lock *lock,
 		    !strcmp(head_ref, lock->ref_name))
 			log_ref_write("HEAD", lock->old_sha1, sha1, logmsg);
 	}
-	if (commit_lock_file(lock->lk)) {
+	if (commit_ref(lock)) {
 		error("Couldn't set %s", lock->ref_name);
 		unlock_ref(lock);
 		return -1;
 	}
-	lock->lock_fd = -1;
 	unlock_ref(lock);
 	return 0;
 }
@@ -1477,4 +1502,12 @@ int update_ref(const char *action, const char *refname,
 		return 1;
 	}
 	return 0;
+}
+
+struct ref *find_ref_by_name(struct ref *list, const char *name)
+{
+	for ( ; list; list = list->next)
+		if (!strcmp(list->name, name))
+			return list;
+	return NULL;
 }

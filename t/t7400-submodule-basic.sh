@@ -13,11 +13,11 @@ subcommands of git-submodule.
 
 #
 # Test setup:
-#  -create a repository in directory lib
+#  -create a repository in directory init
 #  -add a couple of files
-#  -add directory lib to 'superproject', this creates a DIRLINK entry
+#  -add directory init to 'superproject', this creates a DIRLINK entry
 #  -add a couple of regular files to enable testing of submodule filtering
-#  -mv lib subrepo
+#  -mv init subrepo
 #  -add an entry to .gitmodules for submodule 'example'
 #
 test_expect_success 'Prepare submodule testing' '
@@ -25,8 +25,8 @@ test_expect_success 'Prepare submodule testing' '
 	git-add t &&
 	git-commit -m "initial commit" &&
 	git branch initial HEAD &&
-	mkdir lib &&
-	cd lib &&
+	mkdir init &&
+	cd init &&
 	git init &&
 	echo a >a &&
 	git add a &&
@@ -41,10 +41,10 @@ test_expect_success 'Prepare submodule testing' '
 	cd .. &&
 	echo a >a &&
 	echo z >z &&
-	git add a lib z &&
+	git add a init z &&
 	git-commit -m "super commit 1" &&
-	mv lib .subrepo &&
-	GIT_CONFIG=.gitmodules git config submodule.example.url git://example.com/lib.git
+	mv init .subrepo &&
+	GIT_CONFIG=.gitmodules git config submodule.example.url git://example.com/init.git
 '
 
 test_expect_success 'status should fail for unmapped paths' '
@@ -52,7 +52,7 @@ test_expect_success 'status should fail for unmapped paths' '
 	then
 		echo "[OOPS] submodule status succeeded"
 		false
-	elif ! GIT_CONFIG=.gitmodules git config submodule.example.path lib
+	elif ! GIT_CONFIG=.gitmodules git config submodule.example.path init
 	then
 		echo "[OOPS] git config failed to update .gitmodules"
 		false
@@ -71,7 +71,7 @@ test_expect_success 'status should initially be "missing"' '
 test_expect_success 'init should register submodule url in .git/config' '
 	git-submodule init &&
 	url=$(git config submodule.example.url) &&
-	if test "$url" != "git://example.com/lib.git"
+	if test "$url" != "git://example.com/init.git"
 	then
 		echo "[OOPS] init succeeded but submodule url is wrong"
 		false
@@ -83,41 +83,41 @@ test_expect_success 'init should register submodule url in .git/config' '
 '
 
 test_expect_success 'update should fail when path is used by a file' '
-	echo "hello" >lib &&
+	echo "hello" >init &&
 	if git-submodule update
 	then
 		echo "[OOPS] update should have failed"
 		false
-	elif test "$(cat lib)" != "hello"
+	elif test "$(cat init)" != "hello"
 	then
-		echo "[OOPS] update failed but lib file was molested"
+		echo "[OOPS] update failed but init file was molested"
 		false
 	else
-		rm lib
+		rm init
 	fi
 '
 
 test_expect_success 'update should fail when path is used by a nonempty directory' '
-	mkdir lib &&
-	echo "hello" >lib/a &&
+	mkdir init &&
+	echo "hello" >init/a &&
 	if git-submodule update
 	then
 		echo "[OOPS] update should have failed"
 		false
-	elif test "$(cat lib/a)" != "hello"
+	elif test "$(cat init/a)" != "hello"
 	then
-		echo "[OOPS] update failed but lib/a was molested"
+		echo "[OOPS] update failed but init/a was molested"
 		false
 	else
-		rm lib/a
+		rm init/a
 	fi
 '
 
 test_expect_success 'update should work when path is an empty dir' '
-	rm -rf lib &&
-	mkdir lib &&
+	rm -rf init &&
+	mkdir init &&
 	git-submodule update &&
-	head=$(cd lib && git rev-parse HEAD) &&
+	head=$(cd init && git rev-parse HEAD) &&
 	if test -z "$head"
 	then
 		echo "[OOPS] Failed to obtain submodule head"
@@ -134,7 +134,7 @@ test_expect_success 'status should be "up-to-date" after update' '
 '
 
 test_expect_success 'status should be "modified" after submodule commit' '
-	cd lib &&
+	cd init &&
 	echo b >b &&
 	git add b &&
 	git-commit -m "submodule commit 2" &&
@@ -157,8 +157,8 @@ test_expect_success 'git diff should report the SHA1 of the new submodule commit
 '
 
 test_expect_success 'update should checkout rev1' '
-	git-submodule update &&
-	head=$(cd lib && git rev-parse HEAD) &&
+	git-submodule update init &&
+	head=$(cd init && git rev-parse HEAD) &&
 	if test -z "$head"
 	then
 		echo "[OOPS] submodule git rev-parse returned nothing"
@@ -182,13 +182,13 @@ test_expect_success 'checkout superproject with subproject already present' '
 test_expect_success 'apply submodule diff' '
 	git branch second &&
 	(
-		cd lib &&
+		cd init &&
 		echo s >s &&
 		git add s &&
 		git commit -m "change subproject"
 	) &&
-	git update-index --add lib &&
-	git-commit -m "change lib" &&
+	git update-index --add init &&
+	git-commit -m "change init" &&
 	git-format-patch -1 --stdout >P.diff &&
 	git checkout second &&
 	git apply --index P.diff &&

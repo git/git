@@ -20,12 +20,12 @@ presents the merge commit in a special format as produced by
 
 For tags, it shows the tag message and the referenced objects.
 
-For trees, it shows the names (equivalent to gitlink:git-ls-tree[1]
+For trees, it shows the names (equivalent to linkgit:git-ls-tree[1]
 with \--name-only).
 
 For plain blobs, it shows the plain contents.
 
-The command takes options applicable to the gitlink:git-diff-tree[1] command to
+The command takes options applicable to the linkgit:git-diff-tree[1] command to
 control how the changes the commit introduces are shown.
 
 This manual page describes only the most frequently used options.
@@ -36,7 +36,7 @@ OPTIONS
 <object>::
 	The name of the object to show.
 	For a more complete list of ways to spell object names, see
-	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
 include::pretty-options.txt[]
 
@@ -83,4 +83,4 @@ This manual page is a stub. You can help the git documentation by expanding it.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

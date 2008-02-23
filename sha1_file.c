@@ -25,8 +25,10 @@
 
 #ifdef NO_C99_FORMAT
 #define SZ_FMT "lu"
+static unsigned long sz_fmt(size_t s) { return (unsigned long)s; }
 #else
 #define SZ_FMT "zu"
+static size_t sz_fmt(size_t s) { return s; }
 #endif
 
 const unsigned char null_sha1[20];
@@ -86,7 +88,7 @@ int safe_create_leading_directories(char *path)
 	char *pos = path;
 	struct stat st;
 
-	if (*pos == '/')
+	if (is_absolute_path(path))
 		pos++;
 
 	while (pos) {
@@ -146,7 +148,7 @@ static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
 
 /*
  * NOTE! This returns a statically allocated buffer, so you have to be
- * careful about using it. Do a "xstrdup()" if you need to save the
+ * careful about using it. Do an "xstrdup()" if you need to save the
  * filename.
  *
  * Also note that this returns the location for creating.  Reading
@@ -253,7 +255,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	int entlen = pfxlen + 43;
 	int base_len = -1;
 
-	if (*entry != '/' && relative_base) {
+	if (!is_absolute_path(entry) && relative_base) {
 		/* Relative alt-odb */
 		if (base_len < 0)
 			base_len = strlen(relative_base) + 1;
@@ -262,7 +264,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	}
 	ent = xmalloc(sizeof(*ent) + entlen);
 
-	if (*entry != '/' && relative_base) {
+	if (!is_absolute_path(entry) && relative_base) {
 		memcpy(ent->base, relative_base, base_len - 1);
 		ent->base[base_len - 1] = '/';
 		memcpy(ent->base + base_len, entry, len);
@@ -333,7 +335,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 		while (cp < ep && *cp != sep)
 			cp++;
 		if (last != cp) {
-			if ((*last != '/') && depth) {
+			if (!is_absolute_path(last) && depth) {
 				error("%s: ignoring relative alternate object store %s",
 						relative_base, last);
 			} else {
@@ -423,9 +425,9 @@ void pack_report(void)
 		"pack_report: getpagesize()            = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitWindowSize = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitLimit      = %10" SZ_FMT "\n",
-		(size_t) getpagesize(),
-		packed_git_window_size,
-		packed_git_limit);
+		sz_fmt(getpagesize()),
+		sz_fmt(packed_git_window_size),
+		sz_fmt(packed_git_limit));
 	fprintf(stderr,
 		"pack_report: pack_used_ctr            = %10u\n"
 		"pack_report: pack_mmap_calls          = %10u\n"
@@ -435,7 +437,7 @@ void pack_report(void)
 		pack_used_ctr,
 		pack_mmap_calls,
 		pack_open_windows, peak_pack_open_windows,
-		pack_mapped, peak_pack_mapped);
+		sz_fmt(pack_mapped), sz_fmt(peak_pack_mapped));
 }
 
 static int check_packed_git_idx(const char *path,  struct packed_git *p)
@@ -521,13 +523,15 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 			munmap(idx_map, idx_size);
 			return error("wrong index v2 file size in %s", path);
 		}
-		if (idx_size != min_size) {
-			/* make sure we can deal with large pack offsets */
-			off_t x = 0x7fffffffUL, y = 0xffffffffUL;
-			if (x > (x + 1) || y > (y + 1)) {
-				munmap(idx_map, idx_size);
-				return error("pack too large for current definition of off_t in %s", path);
-			}
+		if (idx_size != min_size &&
+		    /*
+		     * make sure we can deal with large pack offsets.
+		     * 31-bit signed offset won't be enough, neither
+		     * 32-bit unsigned one will be.
+		     */
+		    (sizeof(off_t) <= 4)) {
+			munmap(idx_map, idx_size);
+			return error("pack too large for current definition of off_t in %s", path);
 		}
 	}
 
@@ -605,6 +609,22 @@ void release_pack_memory(size_t need, int fd)
 	size_t cur = pack_mapped;
 	while (need >= (cur - pack_mapped) && unuse_one_window(NULL, fd))
 		; /* nothing */
+}
+
+void close_pack_windows(struct packed_git *p)
+{
+	while (p->windows) {
+		struct pack_window *w = p->windows;
+
+		if (w->inuse_cnt)
+			die("pack '%s' still has open windows to it",
+			    p->pack_name);
+		munmap(w->base, w->len);
+		pack_mapped -= w->len;
+		pack_open_windows--;
+		p->windows = w->next;
+		free(w);
+	}
 }
 
 void unuse_pack(struct pack_window **w_cursor)
@@ -1825,6 +1845,15 @@ static struct cached_object {
 } *cached_objects;
 static int cached_object_nr, cached_object_alloc;
 
+static struct cached_object empty_tree = {
+	/* empty tree sha1: 4b825dc642cb6eb9a060e54bf8d69288fbee4904 */
+	"\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60"
+	"\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04",
+	OBJ_TREE,
+	"",
+	0
+};
+
 static struct cached_object *find_cached_object(const unsigned char *sha1)
 {
 	int i;
@@ -1834,6 +1863,8 @@ static struct cached_object *find_cached_object(const unsigned char *sha1)
 		if (!hashcmp(co->sha1, sha1))
 			return co;
 	}
+	if (!hashcmp(sha1, empty_tree.sha1))
+		return &empty_tree;
 	return NULL;
 }
 
@@ -1923,7 +1954,8 @@ void *read_object_with_reference(const unsigned char *sha1,
 		}
 		ref_length = strlen(ref_type);
 
-		if (memcmp(buffer, ref_type, ref_length) ||
+		if (ref_length + 40 > isize ||
+		    memcmp(buffer, ref_type, ref_length) ||
 		    get_sha1_hex((char *) buffer + ref_length, actual_sha1)) {
 			free(buffer);
 			return NULL;
@@ -2338,7 +2370,8 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	if ((type == OBJ_BLOB) && S_ISREG(st->st_mode)) {
 		struct strbuf nbuf;
 		strbuf_init(&nbuf, 0);
-		if (convert_to_git(path, buf, size, &nbuf)) {
+		if (convert_to_git(path, buf, size, &nbuf,
+		                   write_object ? safe_crlf : 0)) {
 			munmap(buf, size);
 			buf = strbuf_detach(&nbuf, &size);
 			re_allocated = 1;

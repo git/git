@@ -6,12 +6,14 @@
  *
  */
 #include "cache.h"
+#include "exec_cmd.h"
 
 #define MAXNAME (256)
 
 static FILE *config_file;
 static const char *config_file_name;
 static int config_linenr;
+static int config_file_eof;
 static int zlib_compression_seen;
 
 static int get_next_char(void)
@@ -33,7 +35,7 @@ static int get_next_char(void)
 		if (c == '\n')
 			config_linenr++;
 		if (c == EOF) {
-			config_file = NULL;
+			config_file_eof = 1;
 			c = '\n';
 		}
 	}
@@ -117,7 +119,7 @@ static int get_value(config_fn_t fn, char *name, unsigned int len)
 	/* Get the full name */
 	for (;;) {
 		c = get_next_char();
-		if (c == EOF)
+		if (config_file_eof)
 			break;
 		if (!iskeychar(c))
 			break;
@@ -181,7 +183,7 @@ static int get_base_var(char *name)
 
 	for (;;) {
 		int c = get_next_char();
-		if (c == EOF)
+		if (config_file_eof)
 			return -1;
 		if (c == ']')
 			return baselen;
@@ -204,8 +206,7 @@ static int git_parse_file(config_fn_t fn)
 	for (;;) {
 		int c = get_next_char();
 		if (c == '\n') {
-			/* EOF? */
-			if (!config_file)
+			if (config_file_eof)
 				return 0;
 			comment = 0;
 			continue;
@@ -233,17 +234,23 @@ static int git_parse_file(config_fn_t fn)
 	die("bad config file line %d in %s", config_linenr, config_file_name);
 }
 
-static unsigned long get_unit_factor(const char *end)
+static int parse_unit_factor(const char *end, unsigned long *val)
 {
 	if (!*end)
 		return 1;
-	else if (!strcasecmp(end, "k"))
-		return 1024;
-	else if (!strcasecmp(end, "m"))
-		return 1024 * 1024;
-	else if (!strcasecmp(end, "g"))
-		return 1024 * 1024 * 1024;
-	die("unknown unit: '%s'", end);
+	else if (!strcasecmp(end, "k")) {
+		*val *= 1024;
+		return 1;
+	}
+	else if (!strcasecmp(end, "m")) {
+		*val *= 1024 * 1024;
+		return 1;
+	}
+	else if (!strcasecmp(end, "g")) {
+		*val *= 1024 * 1024 * 1024;
+		return 1;
+	}
+	return 0;
 }
 
 int git_parse_long(const char *value, long *ret)
@@ -251,7 +258,10 @@ int git_parse_long(const char *value, long *ret)
 	if (value && *value) {
 		char *end;
 		long val = strtol(value, &end, 0);
-		*ret = val * get_unit_factor(end);
+		unsigned long factor = 1;
+		if (!parse_unit_factor(end, &factor))
+			return 0;
+		*ret = val * factor;
 		return 1;
 	}
 	return 0;
@@ -262,17 +272,26 @@ int git_parse_ulong(const char *value, unsigned long *ret)
 	if (value && *value) {
 		char *end;
 		unsigned long val = strtoul(value, &end, 0);
-		*ret = val * get_unit_factor(end);
+		if (!parse_unit_factor(end, &val))
+			return 0;
+		*ret = val;
 		return 1;
 	}
 	return 0;
+}
+
+static void die_bad_config(const char *name)
+{
+	if (config_file_name)
+		die("bad config value for '%s' in %s", name, config_file_name);
+	die("bad config value for '%s'", name);
 }
 
 int git_config_int(const char *name, const char *value)
 {
 	long ret;
 	if (!git_parse_long(value, &ret))
-		die("bad config value for '%s' in %s", name, config_file_name);
+		die_bad_config(name);
 	return ret;
 }
 
@@ -280,7 +299,7 @@ unsigned long git_config_ulong(const char *name, const char *value)
 {
 	unsigned long ret;
 	if (!git_parse_ulong(value, &ret))
-		die("bad config value for '%s' in %s", name, config_file_name);
+		die_bad_config(name);
 	return ret;
 }
 
@@ -295,6 +314,14 @@ int git_config_bool(const char *name, const char *value)
 	if (!strcasecmp(value, "false") || !strcasecmp(value, "no"))
 		return 0;
 	return git_config_int(name, value) != 0;
+}
+
+int git_config_string(const char **dest, const char *var, const char *value)
+{
+	if (!value)
+		return config_error_nonbool(var);
+	*dest = xstrdup(value);
+	return 0;
 }
 
 int git_default_config(const char *var, const char *value)
@@ -395,39 +422,53 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.safecrlf")) {
+		if (value && !strcasecmp(value, "warn")) {
+			safe_crlf = SAFE_CRLF_WARN;
+			return 0;
+		}
+		safe_crlf = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "user.name")) {
+		if (!value)
+			return config_error_nonbool(var);
 		strlcpy(git_default_name, value, sizeof(git_default_name));
 		return 0;
 	}
 
 	if (!strcmp(var, "user.email")) {
+		if (!value)
+			return config_error_nonbool(var);
 		strlcpy(git_default_email, value, sizeof(git_default_email));
 		return 0;
 	}
 
-	if (!strcmp(var, "i18n.commitencoding")) {
-		git_commit_encoding = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "i18n.commitencoding"))
+		return git_config_string(&git_commit_encoding, var, value);
 
-	if (!strcmp(var, "i18n.logoutputencoding")) {
-		git_log_output_encoding = xstrdup(value);
-		return 0;
-	}
-
+	if (!strcmp(var, "i18n.logoutputencoding"))
+		return git_config_string(&git_log_output_encoding, var, value);
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);
 		return 0;
 	}
 
-	if (!strcmp(var, "core.pager")) {
-		pager_program = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "core.pager"))
+		return git_config_string(&pager_program, var, value);
 
-	if (!strcmp(var, "core.editor")) {
-		editor_program = xstrdup(value);
+	if (!strcmp(var, "core.editor"))
+		return git_config_string(&editor_program, var, value);
+
+	if (!strcmp(var, "core.excludesfile"))
+		return git_config_string(&excludes_file, var, value);
+
+	if (!strcmp(var, "core.whitespace")) {
+		if (!value)
+			return config_error_nonbool(var);
+		whitespace_rule_cfg = parse_whitespace_rule(value);
 		return 0;
 	}
 
@@ -445,11 +486,43 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 		config_file = f;
 		config_file_name = filename;
 		config_linenr = 1;
+		config_file_eof = 0;
 		ret = git_parse_file(fn);
 		fclose(f);
 		config_file_name = NULL;
 	}
 	return ret;
+}
+
+const char *git_etc_gitconfig(void)
+{
+	static const char *system_wide;
+	if (!system_wide) {
+		system_wide = ETC_GITCONFIG;
+		if (!is_absolute_path(system_wide)) {
+			/* interpret path relative to exec-dir */
+			struct strbuf d = STRBUF_INIT;
+			strbuf_addf(&d, "%s/%s", git_exec_path(), system_wide);
+			system_wide = strbuf_detach(&d, NULL);
+		}
+	}
+	return system_wide;
+}
+
+int git_env_bool(const char *k, int def)
+{
+	const char *v = getenv(k);
+	return v ? git_config_bool(k, v) : def;
+}
+
+int git_config_system(void)
+{
+	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
+}
+
+int git_config_global(void)
+{
+	return !git_env_bool("GIT_CONFIG_NOGLOBAL", 0);
 }
 
 int git_config(config_fn_t fn)
@@ -464,15 +537,15 @@ int git_config(config_fn_t fn)
 	 * config file otherwise. */
 	filename = getenv(CONFIG_ENVIRONMENT);
 	if (!filename) {
-		if (!access(ETC_GITCONFIG, R_OK))
-			ret += git_config_from_file(fn, ETC_GITCONFIG);
+		if (git_config_system() && !access(git_etc_gitconfig(), R_OK))
+			ret += git_config_from_file(fn, git_etc_gitconfig());
 		home = getenv("HOME");
 		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!filename)
 			filename = repo_config = xstrdup(git_path("config"));
 	}
 
-	if (home) {
+	if (git_config_global() && home) {
 		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
 		if (!access(user_config, R_OK))
 			ret = git_config_from_file(fn, user_config);
@@ -582,86 +655,77 @@ static int write_error(void)
 
 static int store_write_section(int fd, const char* key)
 {
-	const char *dot = strchr(key, '.');
-	int len1 = store.baselen, len2 = -1;
+	const char *dot;
+	int i, success;
+	struct strbuf sb;
 
-	dot = strchr(key, '.');
+	strbuf_init(&sb, 0);
+	dot = memchr(key, '.', store.baselen);
 	if (dot) {
-		int dotlen = dot - key;
-		if (dotlen < len1) {
-			len2 = len1 - dotlen - 1;
-			len1 = dotlen;
+		strbuf_addf(&sb, "[%.*s \"", (int)(dot - key), key);
+		for (i = dot - key + 1; i < store.baselen; i++) {
+			if (key[i] == '"')
+				strbuf_addch(&sb, '\\');
+			strbuf_addch(&sb, key[i]);
 		}
+		strbuf_addstr(&sb, "\"]\n");
+	} else {
+		strbuf_addf(&sb, "[%.*s]\n", store.baselen, key);
 	}
 
-	if (write_in_full(fd, "[", 1) != 1 ||
-	    write_in_full(fd, key, len1) != len1)
-		return 0;
-	if (len2 >= 0) {
-		if (write_in_full(fd, " \"", 2) != 2)
-			return 0;
-		while (--len2 >= 0) {
-			unsigned char c = *++dot;
-			if (c == '"')
-				if (write_in_full(fd, "\\", 1) != 1)
-					return 0;
-			if (write_in_full(fd, &c, 1) != 1)
-				return 0;
-		}
-		if (write_in_full(fd, "\"", 1) != 1)
-			return 0;
-	}
-	if (write_in_full(fd, "]\n", 2) != 2)
-		return 0;
+	success = write_in_full(fd, sb.buf, sb.len) == sb.len;
+	strbuf_release(&sb);
 
-	return 1;
+	return success;
 }
 
 static int store_write_pair(int fd, const char* key, const char* value)
 {
-	int i;
-	int length = strlen(key+store.baselen+1);
-	int quote = 0;
+	int i, success;
+	int length = strlen(key + store.baselen + 1);
+	const char *quote = "";
+	struct strbuf sb;
 
-	/* Check to see if the value needs to be quoted. */
+	/*
+	 * Check to see if the value needs to be surrounded with a dq pair.
+	 * Note that problematic characters are always backslash-quoted; this
+	 * check is about not losing leading or trailing SP and strings that
+	 * follow beginning-of-comment characters (i.e. ';' and '#') by the
+	 * configuration parser.
+	 */
 	if (value[0] == ' ')
-		quote = 1;
+		quote = "\"";
 	for (i = 0; value[i]; i++)
 		if (value[i] == ';' || value[i] == '#')
-			quote = 1;
-	if (value[i-1] == ' ')
-		quote = 1;
+			quote = "\"";
+	if (i && value[i - 1] == ' ')
+		quote = "\"";
 
-	if (write_in_full(fd, "\t", 1) != 1 ||
-	    write_in_full(fd, key+store.baselen+1, length) != length ||
-	    write_in_full(fd, " = ", 3) != 3)
-		return 0;
-	if (quote && write_in_full(fd, "\"", 1) != 1)
-		return 0;
+	strbuf_init(&sb, 0);
+	strbuf_addf(&sb, "\t%.*s = %s",
+		    length, key + store.baselen + 1, quote);
+
 	for (i = 0; value[i]; i++)
 		switch (value[i]) {
 		case '\n':
-			if (write_in_full(fd, "\\n", 2) != 2)
-				return 0;
+			strbuf_addstr(&sb, "\\n");
 			break;
 		case '\t':
-			if (write_in_full(fd, "\\t", 2) != 2)
-				return 0;
+			strbuf_addstr(&sb, "\\t");
 			break;
 		case '"':
 		case '\\':
-			if (write_in_full(fd, "\\", 1) != 1)
-				return 0;
+			strbuf_addch(&sb, '\\');
 		default:
-			if (write_in_full(fd, value+i, 1) != 1)
-				return 0;
+			strbuf_addch(&sb, value[i]);
 			break;
 		}
-	if (quote && write_in_full(fd, "\"", 1) != 1)
-		return 0;
-	if (write_in_full(fd, "\n", 1) != 1)
-		return 0;
-	return 1;
+	strbuf_addf(&sb, "%s\n", quote);
+
+	success = write_in_full(fd, sb.buf, sb.len) == sb.len;
+	strbuf_release(&sb);
+
+	return success;
 }
 
 static ssize_t find_beginning_of_line(const char* contents, size_t size,
@@ -670,12 +734,17 @@ static ssize_t find_beginning_of_line(const char* contents, size_t size,
 	size_t equal_offset = size, bracket_offset = size;
 	ssize_t offset;
 
+contline:
 	for (offset = offset_-2; offset > 0
 			&& contents[offset] != '\n'; offset--)
 		switch (contents[offset]) {
 			case '=': equal_offset = offset; break;
 			case ']': bracket_offset = offset; break;
 		}
+	if (offset > 0 && contents[offset-1] == '\\') {
+		offset_ = offset;
+		goto contline;
+	}
 	if (bracket_offset < equal_offset) {
 		*found_bracket = 1;
 		offset = bracket_offset+1;
@@ -888,6 +957,9 @@ int git_config_set_multivar(const char* key, const char* value,
 					contents, contents_sz,
 					store.offset[i]-2, &new_line);
 
+			if (copy_end > 0 && contents[copy_end-1] != '\n')
+				new_line = 1;
+
 			/* write the first part of the config */
 			if (copy_end > copy_begin) {
 				if (write_in_full(fd, contents + copy_begin,
@@ -921,14 +993,12 @@ int git_config_set_multivar(const char* key, const char* value,
 		munmap(contents, contents_sz);
 	}
 
-	if (close(fd) || commit_lock_file(lock) < 0) {
+	if (commit_lock_file(lock) < 0) {
 		fprintf(stderr, "Cannot commit config file!\n");
 		ret = 4;
 		goto out_free;
 	}
 
-	/* fd is closed, so don't try to close it below. */
-	fd = -1;
 	/*
 	 * lock is committed, so don't try to roll it back below.
 	 * NOTE: Since lockfile.c keeps a linked list of all created
@@ -939,8 +1009,6 @@ int git_config_set_multivar(const char* key, const char* value,
 	ret = 0;
 
 out_free:
-	if (0 <= fd)
-		close(fd);
 	if (lock)
 		rollback_lock_file(lock);
 	free(config_filename);
@@ -1038,9 +1106,18 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	}
 	fclose(config_file);
  unlock_and_out:
-	if (close(out_fd) || commit_lock_file(lock) < 0)
+	if (commit_lock_file(lock) < 0)
 			ret = error("Cannot commit config file!");
  out:
 	free(config_filename);
 	return ret;
+}
+
+/*
+ * Call this to report error for your variable that should not
+ * get a boolean value (i.e. "[my] var" means "true").
+ */
+int config_error_nonbool(const char *var)
+{
+	return error("Missing value for '%s'", var);
 }

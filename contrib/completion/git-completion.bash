@@ -64,12 +64,41 @@ __gitdir ()
 
 __git_ps1 ()
 {
-	local b="$(git symbolic-ref HEAD 2>/dev/null)"
-	if [ -n "$b" ]; then
-		if [ -n "$1" ]; then
-			printf "$1" "${b##refs/heads/}"
+	local g="$(git rev-parse --git-dir 2>/dev/null)"
+	if [ -n "$g" ]; then
+		local r
+		local b
+		if [ -d "$g/../.dotest" ]
+		then
+			r="|AM/REBASE"
+			b="$(git symbolic-ref HEAD 2>/dev/null)"
+		elif [ -f "$g/.dotest-merge/interactive" ]
+		then
+			r="|REBASE-i"
+			b="$(cat $g/.dotest-merge/head-name)"
+		elif [ -d "$g/.dotest-merge" ]
+		then
+			r="|REBASE-m"
+			b="$(cat $g/.dotest-merge/head-name)"
+		elif [ -f "$g/MERGE_HEAD" ]
+		then
+			r="|MERGING"
+			b="$(git symbolic-ref HEAD 2>/dev/null)"
 		else
-			printf " (%s)" "${b##refs/heads/}"
+			if [ -f $g/BISECT_LOG ]
+			then
+				r="|BISECTING"
+			fi
+			if ! b="$(git symbolic-ref HEAD 2>/dev/null)"
+			then
+				b="$(cut -c1-7 $g/HEAD)..."
+			fi
+		fi
+
+		if [ -n "$1" ]; then
+			printf "$1" "${b##refs/heads/}$r"
+		else
+			printf " (%s)" "${b##refs/heads/}$r"
 		fi
 	fi
 }
@@ -291,7 +320,7 @@ __git_commands ()
 	for i in $(git help -a|egrep '^ ')
 	do
 		case $i in
-		add--interactive) : plumbing;;
+		*--*)             : helper pattern;;
 		applymbox)        : ask gittus;;
 		applypatch)       : ask gittus;;
 		archimport)       : import;;
@@ -308,7 +337,6 @@ __git_commands ()
 		diff-tree)        : plumbing;;
 		fast-import)      : import;;
 		fsck-objects)     : plumbing;;
-		fetch--tool)      : plumbing;;
 		fetch-pack)       : plumbing;;
 		fmt-merge-msg)    : plumbing;;
 		for-each-ref)     : plumbing;;
@@ -334,7 +362,7 @@ __git_commands ()
 		read-tree)        : plumbing;;
 		receive-pack)     : plumbing;;
 		reflog)           : plumbing;;
-		repo-config)      : plumbing;;
+		repo-config)      : deprecated;;
 		rerere)           : plumbing;;
 		rev-list)         : plumbing;;
 		rev-parse)        : plumbing;;
@@ -346,7 +374,6 @@ __git_commands ()
 		ssh-*)            : transport;;
 		stripspace)       : plumbing;;
 		svn)              : import export;;
-		svnimport)        : import;;
 		symbolic-ref)     : plumbing;;
 		tar-tree)         : deprecated;;
 		unpack-file)      : plumbing;;
@@ -552,6 +579,20 @@ _git_describe ()
 
 _git_diff ()
 {
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--cached --stat --numstat --shortstat --summary
+			--patch-with-stat --name-only --name-status --color
+			--no-color --color-words --no-renames --check
+			--full-index --binary --abbrev --diff-filter
+			--find-copies-harder --pickaxe-all --pickaxe-regex
+			--text --ignore-space-at-eol --ignore-space-change
+			--ignore-all-space --exit-code --quiet --ext-diff
+			--no-ext-diff"
+		return
+		;;
+	esac
 	__git_complete_file
 }
 
@@ -958,18 +999,18 @@ _git_remote ()
 	while [ $c -lt $COMP_CWORD ]; do
 		i="${COMP_WORDS[c]}"
 		case "$i" in
-		add|show|prune|update) command="$i"; break ;;
+		add|rm|show|prune|update) command="$i"; break ;;
 		esac
 		c=$((++c))
 	done
 
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
-		__gitcomp "add show prune update"
+		__gitcomp "add rm show prune update"
 		return
 	fi
 
 	case "$command" in
-	show|prune)
+	rm|show|prune)
 		__gitcomp "$(__git_remotes)"
 		;;
 	update)

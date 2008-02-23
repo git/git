@@ -21,7 +21,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 
 	prefix = setup_git_directory_gently(&nongit);
 	init_revisions(&rev, prefix);
-	git_config(git_default_config); /* no "diff" UI options */
+	git_config(git_diff_basic_config); /* no "diff" UI options */
 	rev.abbrev = 0;
 
 	if (!setup_diff_no_index(&rev, argc, argv, nongit, prefix))
@@ -31,5 +31,5 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
 	result = run_diff_files_cmd(&rev, argc, argv);
-	return rev.diffopt.exit_with_status ? rev.diffopt.has_changes: result;
+	return diff_result_code(&rev.diffopt, result);
 }

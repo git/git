@@ -17,10 +17,11 @@ test_expect_success \
      git-commit -m "Initial commit." &&
      HEAD=$(git rev-parse --verify HEAD)'
 
-test_expect_failure \
-    'git branch --help should not have created a bogus branch' \
-    'git branch --help </dev/null >/dev/null 2>/dev/null || :
-     test -f .git/refs/heads/--help'
+test_expect_success \
+    'git branch --help should not have created a bogus branch' '
+     git branch --help </dev/null >/dev/null 2>/dev/null;
+     ! test -f .git/refs/heads/--help
+'
 
 test_expect_success \
     'git branch abc should create a branch' \
@@ -71,17 +72,17 @@ test_expect_success \
         git branch -m n/n n
         test -f .git/logs/refs/heads/n'
 
-test_expect_failure \
-    'git branch -m o/o o should fail when o/p exists' \
-       'git branch o/o &&
+test_expect_success 'git branch -m o/o o should fail when o/p exists' '
+	git branch o/o &&
         git branch o/p &&
-        git branch -m o/o o'
+	! git branch -m o/o o
+'
 
-test_expect_failure \
-    'git branch -m q r/q should fail when r exists' \
-       'git branch q &&
-         git branch r &&
-         git branch -m q r/q'
+test_expect_success 'git branch -m q r/q should fail when r exists' '
+	git branch q &&
+	git branch r &&
+	! git branch -m q r/q
+'
 
 mv .git/config .git/config-saved
 
@@ -108,12 +109,13 @@ test_expect_success 'config information was renamed, too' \
 	"test $(git config branch.s.dummy) = Hello &&
 	 ! git config branch.s/s/dummy"
 
-test_expect_failure \
-    'git branch -m u v should fail when the reflog for u is a symlink' \
-    'git branch -l u &&
+test_expect_success \
+    'git branch -m u v should fail when the reflog for u is a symlink' '
+     git branch -l u &&
      mv .git/logs/refs/heads/u real-u &&
      ln -s real-u .git/logs/refs/heads/u &&
-     git branch -m u v'
+     ! git branch -m u v
+'
 
 test_expect_success 'test tracking setup via --track' \
     'git config remote.local.url . &&

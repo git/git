@@ -20,6 +20,8 @@ Test switching across them.
 
 . ./test-lib.sh
 
+test_tick
+
 fill () {
 	for i
 	do
@@ -30,9 +32,10 @@ fill () {
 
 test_expect_success setup '
 
+	fill x y z > same &&
 	fill 1 2 3 4 5 6 7 8 >one &&
 	fill a b c d e >two &&
-	git add one two &&
+	git add same one two &&
 	git commit -m "Initial A one, A two" &&
 
 	git checkout -b renamer &&
@@ -74,15 +77,43 @@ test_expect_success "checkout with dirty tree without -m" '
 
 '
 
+test_expect_success "checkout with unrelated dirty tree without -m" '
+
+	git checkout -f master &&
+	fill 0 1 2 3 4 5 6 7 8 >same &&
+	cp same kept
+	git checkout side >messages &&
+	git diff same kept
+	(cat > messages.expect <<EOF
+M	same
+EOF
+) &&
+	touch messages.expect &&
+	git diff messages.expect messages
+'
+
 test_expect_success "checkout -m with dirty tree" '
 
 	git checkout -f master &&
-	git clean &&
+	git clean -f &&
 
 	fill 0 1 2 3 4 5 6 7 8 >one &&
-	git checkout -m side &&
+	git checkout -m side > messages &&
 
 	test "$(git symbolic-ref HEAD)" = "refs/heads/side" &&
+
+	(cat >expect.messages <<EOF
+Merging side with local
+Merging:
+ab76817 Side M one, D two, A three
+virtual local
+found 1 common ancestor(s):
+7329388 Initial A one, A two
+Auto-merged one
+M	one
+EOF
+) &&
+	git diff expect.messages messages &&
 
 	fill "M	one" "A	three" "D	two" >expect.master &&
 	git diff --name-status master >current.master &&
@@ -99,7 +130,7 @@ test_expect_success "checkout -m with dirty tree" '
 
 test_expect_success "checkout -m with dirty tree, renamed" '
 
-	git checkout -f master && git clean &&
+	git checkout -f master && git clean -f &&
 
 	fill 1 2 3 4 5 7 8 >one &&
 	if git checkout renamer
@@ -121,7 +152,7 @@ test_expect_success "checkout -m with dirty tree, renamed" '
 
 test_expect_success 'checkout -m with merge conflict' '
 
-	git checkout -f master && git clean &&
+	git checkout -f master && git clean -f &&
 
 	fill 1 T 3 4 5 6 S 8 >one &&
 	if git checkout renamer
@@ -144,8 +175,17 @@ test_expect_success 'checkout -m with merge conflict' '
 
 test_expect_success 'checkout to detach HEAD' '
 
-	git checkout -f renamer && git clean &&
-	git checkout renamer^ &&
+	git checkout -f renamer && git clean -f &&
+	git checkout renamer^ 2>messages &&
+	(cat >messages.expect <<EOF
+Note: moving to "renamer^" which isn'"'"'t a local branch
+If you want to create a new branch from this checkout, you may do so
+(now or later) by using -b with the checkout command again. Example:
+  git checkout -b <new_branch_name>
+HEAD is now at 7329388... Initial A one, A two
+EOF
+) &&
+	git diff messages.expect messages &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
@@ -160,8 +200,24 @@ test_expect_success 'checkout to detach HEAD' '
 
 test_expect_success 'checkout to detach HEAD with branchname^' '
 
-	git checkout -f master && git clean &&
+	git checkout -f master && git clean -f &&
 	git checkout renamer^ &&
+	H=$(git rev-parse --verify HEAD) &&
+	M=$(git show-ref -s --verify refs/heads/master) &&
+	test "z$H" = "z$M" &&
+	if git symbolic-ref HEAD >/dev/null 2>&1
+	then
+		echo "OOPS, HEAD is still symbolic???"
+		false
+	else
+		: happy
+	fi
+'
+
+test_expect_success 'checkout to detach HEAD with :/message' '
+
+	git checkout -f master && git clean -f &&
+	git checkout ":/Initial" &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
@@ -176,7 +232,7 @@ test_expect_success 'checkout to detach HEAD with branchname^' '
 
 test_expect_success 'checkout to detach HEAD with HEAD^0' '
 
-	git checkout -f master && git clean &&
+	git checkout -f master && git clean -f &&
 	git checkout HEAD^0 &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&

@@ -31,8 +31,7 @@
 extern void sq_quote_print(FILE *stream, const char *src);
 
 extern void sq_quote_buf(struct strbuf *, const char *src);
-extern void sq_quote_argv(struct strbuf *, const char **argv, int count,
-                          size_t maxlen);
+extern void sq_quote_argv(struct strbuf *, const char **argv, size_t maxlen);
 
 /* This unwraps what sq_quote() produces in place, but returns
  * NULL if the input does not look like what sq_quote would have
@@ -42,6 +41,7 @@ extern char *sq_dequote(char *);
 
 extern int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);
 extern size_t quote_c_style(const char *name, struct strbuf *, FILE *, int no_dq);
+extern void quote_two_c_style(struct strbuf *, const char *, const char *, int);
 
 extern void write_name_quoted(const char *name, FILE *, int terminator);
 extern void write_name_quotedpfx(const char *pfx, size_t pfxlen,

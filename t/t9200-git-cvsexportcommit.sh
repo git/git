@@ -2,7 +2,7 @@
 #
 # Copyright (c) Robin Rosenberg
 #
-test_description='CVS export comit. '
+test_description='Test export of commits to CVS'
 
 . ./test-lib.sh
 
@@ -225,7 +225,7 @@ test_expect_success \
       ! git-cvsexportcommit -c $id
       )'
 
-case "$(git repo-config --bool core.filemode)" in
+case "$(git config --bool core.filemode)" in
 false)
 	;;
 *)
@@ -245,5 +245,56 @@ test_expect_success \
       )'
 	;;
 esac
+
+test_expect_success '-w option should work with relative GIT_DIR' '
+      mkdir W &&
+      echo foobar >W/file1.txt &&
+      echo bazzle >W/file2.txt &&
+      git add W/file1.txt &&
+      git add W/file2.txt &&
+      git commit -m "More updates" &&
+      id=$(git rev-list --max-count=1 HEAD) &&
+      (cd "$GIT_DIR" &&
+      GIT_DIR=. git cvsexportcommit -w "$CVSWORK" -c $id &&
+      check_entries "$CVSWORK/W" "file1.txt/1.1/|file2.txt/1.1/" &&
+      diff -u "$CVSWORK/W/file1.txt" ../W/file1.txt &&
+      diff -u "$CVSWORK/W/file2.txt" ../W/file2.txt
+      )
+'
+
+test_expect_success 'check files before directories' '
+
+	echo Notes > release-notes &&
+	git add release-notes &&
+	git commit -m "Add release notes" release-notes &&
+	id=$(git rev-parse HEAD) &&
+	git cvsexportcommit -w "$CVSWORK" -c $id &&
+
+	echo new > DS &&
+	echo new > E/DS &&
+	echo modified > release-notes &&
+	git add DS E/DS release-notes &&
+	git commit -m "Add two files with the same basename" &&
+	id=$(git rev-parse HEAD) &&
+	git cvsexportcommit -w "$CVSWORK" -c $id &&
+	check_entries "$CVSWORK/E" "DS/1.1/|newfile5.txt/1.1/" &&
+	check_entries "$CVSWORK" "DS/1.1/|release-notes/1.2/" &&
+	diff -u "$CVSWORK/DS" DS &&
+	diff -u "$CVSWORK/E/DS" E/DS &&
+	diff -u "$CVSWORK/release-notes" release-notes
+
+'
+
+test_expect_success 'commit a file with leading spaces in the name' '
+
+	echo space > " space" &&
+	git add " space" &&
+	git commit -m "Add a file with a leading space" &&
+	id=$(git rev-parse HEAD) &&
+	git cvsexportcommit -w "$CVSWORK" -c $id &&
+	check_entries "$CVSWORK" " space/1.1/|DS/1.1/|release-notes/1.2/" &&
+	diff -u "$CVSWORK/ space" " space"
+
+'
 
 test_done

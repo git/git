@@ -71,6 +71,79 @@ def isP4Exec(kind):
     a plus sign, it is also executable"""
     return (re.search(r"(^[cku]?x)|\+.*x", kind) != None)
 
+def setP4ExecBit(file, mode):
+    # Reopens an already open file and changes the execute bit to match
+    # the execute bit setting in the passed in mode.
+
+    p4Type = "+x"
+
+    if not isModeExec(mode):
+        p4Type = getP4OpenedType(file)
+        p4Type = re.sub('^([cku]?)x(.*)', '\\1\\2', p4Type)
+        p4Type = re.sub('(.*?\+.*?)x(.*?)', '\\1\\2', p4Type)
+        if p4Type[-1] == "+":
+            p4Type = p4Type[0:-1]
+
+    system("p4 reopen -t %s %s" % (p4Type, file))
+
+def getP4OpenedType(file):
+    # Returns the perforce file type for the given file.
+
+    result = read_pipe("p4 opened %s" % file)
+    match = re.match(".*\((.+)\)$", result)
+    if match:
+        return match.group(1)
+    else:
+        die("Could not determine file type for %s" % file)
+
+def diffTreePattern():
+    # This is a simple generator for the diff tree regex pattern. This could be
+    # a class variable if this and parseDiffTreeEntry were a part of a class.
+    pattern = re.compile(':(\d+) (\d+) (\w+) (\w+) ([A-Z])(\d+)?\t(.*?)((\t(.*))|$)')
+    while True:
+        yield pattern
+
+def parseDiffTreeEntry(entry):
+    """Parses a single diff tree entry into its component elements.
+
+    See git-diff-tree(1) manpage for details about the format of the diff
+    output. This method returns a dictionary with the following elements:
+
+    src_mode - The mode of the source file
+    dst_mode - The mode of the destination file
+    src_sha1 - The sha1 for the source file
+    dst_sha1 - The sha1 fr the destination file
+    status - The one letter status of the diff (i.e. 'A', 'M', 'D', etc)
+    status_score - The score for the status (applicable for 'C' and 'R'
+                   statuses). This is None if there is no score.
+    src - The path for the source file.
+    dst - The path for the destination file. This is only present for
+          copy or renames. If it is not present, this is None.
+
+    If the pattern is not matched, None is returned."""
+
+    match = diffTreePattern().next().match(entry)
+    if match:
+        return {
+            'src_mode': match.group(1),
+            'dst_mode': match.group(2),
+            'src_sha1': match.group(3),
+            'dst_sha1': match.group(4),
+            'status': match.group(5),
+            'status_score': match.group(6),
+            'src': match.group(7),
+            'dst': match.group(10)
+        }
+    return None
+
+def isModeExec(mode):
+    # Returns True if the given git mode represents an executable file,
+    # otherwise False.
+    return mode[-3:] == "755"
+
+def isModeExecChanged(src_mode, dst_mode):
+    return isModeExec(src_mode) != isModeExec(dst_mode)
+
 def p4CmdList(cmd, stdin=None, stdin_mode='w+b'):
     cmd = "p4 -G %s" % cmd
     if verbose:
@@ -396,21 +469,19 @@ class P4Submit(Command):
                 optparse.make_option("--origin", dest="origin"),
                 optparse.make_option("--reset", action="store_true", dest="reset"),
                 optparse.make_option("--log-substitutions", dest="substFile"),
-                optparse.make_option("--dry-run", action="store_true"),
                 optparse.make_option("--direct", dest="directSubmit", action="store_true"),
-                optparse.make_option("--trust-me-like-a-fool", dest="trustMeLikeAFool", action="store_true"),
+                optparse.make_option("-M", dest="detectRename", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
         self.firstTime = True
         self.reset = False
         self.interactive = True
-        self.dryRun = False
         self.substFile = ""
         self.firstTime = True
         self.origin = ""
         self.directSubmit = False
-        self.trustMeLikeAFool = False
+        self.detectRename = False
         self.verbose = False
         self.isWindows = (platform.system() == "Windows")
 
@@ -491,24 +562,39 @@ class P4Submit(Command):
             diff = self.diffStatus
         else:
             print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
-            diff = read_pipe_lines("git diff-tree -r --name-status \"%s^\" \"%s\"" % (id, id))
+            diffOpts = ("", "-M")[self.detectRename]
+            diff = read_pipe_lines("git diff-tree -r %s \"%s^\" \"%s\"" % (diffOpts, id, id))
         filesToAdd = set()
         filesToDelete = set()
         editedFiles = set()
+        filesToChangeExecBit = {}
         for line in diff:
-            modifier = line[0]
-            path = line[1:].strip()
+            diff = parseDiffTreeEntry(line)
+            modifier = diff['status']
+            path = diff['src']
             if modifier == "M":
                 system("p4 edit \"%s\"" % path)
+                if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
+                    filesToChangeExecBit[path] = diff['dst_mode']
                 editedFiles.add(path)
             elif modifier == "A":
                 filesToAdd.add(path)
+                filesToChangeExecBit[path] = diff['dst_mode']
                 if path in filesToDelete:
                     filesToDelete.remove(path)
             elif modifier == "D":
                 filesToDelete.add(path)
                 if path in filesToAdd:
                     filesToAdd.remove(path)
+            elif modifier == "R":
+                src, dest = diff['src'], diff['dst']
+                system("p4 integrate -Dt \"%s\" \"%s\"" % (src, dest))
+                system("p4 edit \"%s\"" % (dest))
+                if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
+                    filesToChangeExecBit[dest] = diff['dst_mode']
+                os.unlink(dest)
+                editedFiles.add(dest)
+                filesToDelete.add(src)
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
@@ -529,6 +615,10 @@ class P4Submit(Command):
                                      "and with .rej files / [w]rite the patch to a file (patch.txt) ")
             if response == "s":
                 print "Skipping! Good luck with the next patches..."
+                for f in editedFiles:
+                    system("p4 revert \"%s\"" % f);
+                for f in filesToAdd:
+                    system("rm %s" %f)
                 return
             elif response == "a":
                 os.system(applyPatchCmd)
@@ -553,6 +643,11 @@ class P4Submit(Command):
         for f in filesToDelete:
             system("p4 revert \"%s\"" % f)
             system("p4 delete \"%s\"" % f)
+
+        # Set/clear executable bits
+        for f in filesToChangeExecBit.keys():
+            mode = filesToChangeExecBit[f]
+            setP4ExecBit(f, mode)
 
         logMessage = ""
         if not self.directSubmit:
@@ -582,57 +677,30 @@ class P4Submit(Command):
                 separatorLine += "\r"
             separatorLine += "\n"
 
-            response = "e"
-            if self.trustMeLikeAFool:
-                response = "y"
+            [handle, fileName] = tempfile.mkstemp()
+            tmpFile = os.fdopen(handle, "w+")
+            tmpFile.write(submitTemplate + separatorLine + diff)
+            tmpFile.close()
+            defaultEditor = "vi"
+            if platform.system() == "Windows":
+                defaultEditor = "notepad"
+            editor = os.environ.get("EDITOR", defaultEditor);
+            system(editor + " " + fileName)
+            tmpFile = open(fileName, "rb")
+            message = tmpFile.read()
+            tmpFile.close()
+            os.remove(fileName)
+            submitTemplate = message[:message.index(separatorLine)]
+            if self.isWindows:
+                submitTemplate = submitTemplate.replace("\r\n", "\n")
 
-            firstIteration = True
-            while response == "e":
-                if not firstIteration:
-                    response = raw_input("Do you want to submit this change? [y]es/[e]dit/[n]o/[s]kip ")
-                firstIteration = False
-                if response == "e":
-                    [handle, fileName] = tempfile.mkstemp()
-                    tmpFile = os.fdopen(handle, "w+")
-                    tmpFile.write(submitTemplate + separatorLine + diff)
-                    tmpFile.close()
-                    defaultEditor = "vi"
-                    if platform.system() == "Windows":
-                        defaultEditor = "notepad"
-                    editor = os.environ.get("EDITOR", defaultEditor);
-                    system(editor + " " + fileName)
-                    tmpFile = open(fileName, "rb")
-                    message = tmpFile.read()
-                    tmpFile.close()
-                    os.remove(fileName)
-                    submitTemplate = message[:message.index(separatorLine)]
-                    if self.isWindows:
-                        submitTemplate = submitTemplate.replace("\r\n", "\n")
+            if self.directSubmit:
+                print "Submitting to git first"
+                os.chdir(self.oldWorkingDirectory)
+                write_pipe("git commit -a -F -", submitTemplate)
+                os.chdir(self.clientPath)
 
-            if response == "y" or response == "yes":
-               if self.dryRun:
-                   print submitTemplate
-                   raw_input("Press return to continue...")
-               else:
-                   if self.directSubmit:
-                       print "Submitting to git first"
-                       os.chdir(self.oldWorkingDirectory)
-                       write_pipe("git commit -a -F -", submitTemplate)
-                       os.chdir(self.clientPath)
-
-                   write_pipe("p4 submit -i", submitTemplate)
-            elif response == "s":
-                for f in editedFiles:
-                    system("p4 revert \"%s\"" % f);
-                for f in filesToAdd:
-                    system("p4 revert \"%s\"" % f);
-                    system("rm %s" %f)
-                for f in filesToDelete:
-                    system("p4 delete \"%s\"" % f);
-                return
-            else:
-                print "Not submitting!"
-                self.interactive = False
+            write_pipe("p4 submit -i", submitTemplate)
         else:
             fileName = "submit.txt"
             file = open(fileName, "w+")
@@ -729,10 +797,8 @@ class P4Submit(Command):
                 sync = P4Sync()
                 sync.run([])
 
-                response = raw_input("Do you want to rebase current HEAD from Perforce now using git-p4 rebase? [y]es/[n]o ")
-                if response == "y" or response == "yes":
-                    rebase = P4Rebase()
-                    rebase.rebase()
+                rebase = P4Rebase()
+                rebase.rebase()
             os.remove(self.configFile)
 
         return True
@@ -865,9 +931,13 @@ class P4Sync(Command):
             stat = filedata[j]
             j += 1
             text = ''
-            while j < len(filedata) and filedata[j]['code'] in ('text',
-                                                                'binary'):
-                text += filedata[j]['data']
+            while j < len(filedata) and filedata[j]['code'] in ('text', 'unicode', 'binary'):
+                tmp = filedata[j]['data']
+                if stat['type'] in ('text+ko', 'unicode+ko', 'binary+ko'):
+                    tmp = re.sub(r'(?i)\$(Id|Header):[^$]*\$',r'$\1$', tmp)
+                elif stat['type'] in ('text+k', 'ktext', 'kxtext', 'unicode+k', 'binary+k'):
+                    tmp = re.sub(r'(?i)\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$]*\$',r'$\1$', tmp)
+                text += tmp
                 j += 1
 
 
@@ -1042,7 +1112,7 @@ class P4Sync(Command):
 
         l = p4CmdList("labels %s..." % ' '.join (self.depotPaths))
         if len(l) > 0 and not self.silent:
-            print "Finding files belonging to labels in %s" % `self.depotPath`
+            print "Finding files belonging to labels in %s" % `self.depotPaths`
 
         for output in l:
             label = output["label"]
@@ -1106,6 +1176,15 @@ class P4Sync(Command):
 
 
         for branch in lostAndFoundBranches:
+            self.knownBranches[branch] = branch
+
+    def getBranchMappingFromGitBranches(self):
+        branches = p4BranchesInGit(self.importIntoRemotes)
+        for branch in branches.keys():
+            if branch == "master":
+                branch = "main"
+            else:
+                branch = branch[len(self.projectName):]
             self.knownBranches[branch] = branch
 
     def listExistingP4GitBranches(self):
@@ -1442,8 +1521,10 @@ class P4Sync(Command):
             ## FIXME - what's a P4 projectName ?
             self.projectName = self.guessProjectName()
 
-            if not self.hasOrigin:
-                self.getBranchMapping();
+            if self.hasOrigin:
+                self.getBranchMappingFromGitBranches()
+            else:
+                self.getBranchMapping()
             if self.verbose:
                 print "p4-git branches: %s" % self.p4BranchesInGit
                 print "initial parents: %s" % self.initialParents
@@ -1530,6 +1611,11 @@ class P4Rebase(Command):
         return self.rebase()
 
     def rebase(self):
+        if os.system("git update-index --refresh") != 0:
+            die("Some files in your working directory are modified and different than what is in your index. You can use git update-index <filename> to bring the index up-to-date or stash away all your changes with git stash.");
+        if len(read_pipe("git diff-index HEAD --")) > 0:
+            die("You have uncommited changes. Please commit them before rebasing or stash them away with git stash.");
+
         [upstream, settings] = findUpstreamBranchPoint()
         if len(upstream) == 0:
             die("Cannot find upstream branchpoint for rebase")
@@ -1560,7 +1646,7 @@ class P4Clone(P4Sync):
         depotPath = args[0]
         depotDir = re.sub("(@[^@]*)$", "", depotPath)
         depotDir = re.sub("(#[^#]*)$", "", depotDir)
-        depotDir = re.sub(r"\.\.\.$,", "", depotDir)
+        depotDir = re.sub(r"\.\.\.$", "", depotDir)
         depotDir = re.sub(r"/$", "", depotDir)
         return os.path.split(depotDir)[1]
 

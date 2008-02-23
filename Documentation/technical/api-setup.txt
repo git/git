@@ -1,0 +1,13 @@
+setup API
+=========
+
+Talk about
+
+* setup_git_directory()
+* setup_git_directory_gently()
+* is_inside_git_dir()
+* is_inside_work_tree()
+* setup_work_tree()
+* get_pathspec()
+
+(Dscho)

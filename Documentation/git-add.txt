@@ -8,7 +8,7 @@ git-add - Add file contents to the index
 SYNOPSIS
 --------
 [verse]
-'git-add' [-n] [-v] [-f] [--interactive | -i] [-u] [--refresh]
+'git-add' [-n] [-v] [-f] [--interactive | -i] [--patch | -p] [-u] [--refresh]
           [--] <filepattern>...
 
 DESCRIPTION
@@ -37,7 +37,7 @@ directory recursion or filename globbing performed by Git (quote your
 globs before the shell) will be silently ignored.  The 'add' command can
 be used to add ignored files with the `-f` (force) option.
 
-Please see gitlink:git-commit[1] for alternative ways to add content to a
+Please see linkgit:git-commit[1] for alternative ways to add content to a
 commit.
 
 
@@ -50,10 +50,10 @@ OPTIONS
 	and `dir/file2`) can be given to add all files in the
 	directory, recursively.
 
--n::
+-n, \--dry-run::
         Don't actually add the file(s), just show if they exist.
 
--v::
+-v, \--verbose::
         Be verbose.
 
 -f::
@@ -61,14 +61,21 @@ OPTIONS
 
 -i, \--interactive::
 	Add modified contents in the working tree interactively to
-	the index.
+	the index. Optional path arguments may be supplied to limit
+	operation to a subset of the working tree. See ``Interactive
+	mode'' for details.
+
+-p, \--patch::
+	Similar to Interactive mode but the initial command loop is
+	bypassed and the 'patch' subcommand is invoked using each of
+	the specified filepatterns before exiting.
 
 -u::
 	Update only files that git already knows about. This is similar
 	to what "git commit -a" does in preparation for making a commit,
 	except that the update is limited to paths specified on the
-	command line. If no paths are specified, all tracked files are
-	updated.
+	command line. If no paths are specified, all tracked files in the
+	current directory and its subdirectories are updated.
 
 \--refresh::
 	Don't add the file(s), but only refresh their stat()
@@ -210,6 +217,8 @@ patch::
        k - do not decide on this hunk now, and view the previous
            undecided hunk
        K - do not decide on this hunk now, and view the previous hunk
+       s - split the current hunk into smaller hunks
+       ? - print help
 +
 After deciding the fate for all hunks, if there is any hunk
 that was chosen, the index is updated with the selected hunks.
@@ -222,11 +231,12 @@ diff::
 
 See Also
 --------
-gitlink:git-status[1]
-gitlink:git-rm[1]
-gitlink:git-mv[1]
-gitlink:git-commit[1]
-gitlink:git-update-index[1]
+linkgit:git-status[1]
+linkgit:git-rm[1]
+linkgit:git-reset[1]
+linkgit:git-mv[1]
+linkgit:git-commit[1]
+linkgit:git-update-index[1]
 
 Author
 ------
@@ -238,4 +248,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

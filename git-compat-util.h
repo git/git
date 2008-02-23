@@ -4,10 +4,24 @@
 #define _FILE_OFFSET_BITS 64
 
 #ifndef FLEX_ARRAY
-#if defined(__GNUC__) && (__GNUC__ < 3)
-#define FLEX_ARRAY 0
-#else
-#define FLEX_ARRAY /* empty */
+/*
+ * See if our compiler is known to support flexible array members.
+ */
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+# define FLEX_ARRAY /* empty */
+#elif defined(__GNUC__)
+# if (__GNUC__ >= 3)
+#  define FLEX_ARRAY /* empty */
+# else
+#  define FLEX_ARRAY 0 /* older GNU extension */
+# endif
+#endif
+
+/*
+ * Otherwise, default to safer but a bit wasteful traditional style
+ */
+#ifndef FLEX_ARRAY
+# define FLEX_ARRAY 1
 #endif
 #endif
 
@@ -20,6 +34,7 @@
 #endif
 
 #define MSB(x, bits) ((x) & TYPEOF(x)(~0ULL << (sizeof(x) * 8 - (bits))))
+#define HAS_MULTI_BITS(i)  ((i) & ((i) - 1))  /* checks if an integer has more than 1 bit set */
 
 /* Approximation of the length of the decimal representation of this type. */
 #define decimal_length(x)	((int)(sizeof(x) * 2.56 + 0.5) + 1)
@@ -52,6 +67,10 @@
 #include <fnmatch.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
+#ifndef NO_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 #include <assert.h>
 #include <regex.h>
 #include <netinet/in.h>
@@ -105,6 +124,8 @@ extern void set_die_routine(void (*routine)(const char *err, va_list params) NOR
 extern void set_error_routine(void (*routine)(const char *err, va_list params));
 extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 
+extern int prefixcmp(const char *str, const char *prefix);
+
 #ifdef NO_MMAP
 
 #ifndef PROT_READ
@@ -147,6 +168,11 @@ extern ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 extern int gitsetenv(const char *, const char *, int);
 #endif
 
+#ifdef NO_MKDTEMP
+#define mkdtemp gitmkdtemp
+extern char *gitmkdtemp(char *);
+#endif
+
 #ifdef NO_UNSETENV
 #define unsetenv gitunsetenv
 extern void gitunsetenv(const char *);
@@ -176,6 +202,27 @@ extern const char *githstrerror(int herror);
 #define memmem gitmemmem
 void *gitmemmem(const void *haystack, size_t haystacklen,
                 const void *needle, size_t needlelen);
+#endif
+
+#ifdef FREAD_READS_DIRECTORIES
+#define fopen(a,b) git_fopen(a,b)
+extern FILE *git_fopen(const char*, const char*);
+#endif
+
+#ifdef __GLIBC_PREREQ
+#if __GLIBC_PREREQ(2, 1)
+#define HAVE_STRCHRNUL
+#endif
+#endif
+
+#ifndef HAVE_STRCHRNUL
+#define strchrnul gitstrchrnul
+static inline char *gitstrchrnul(const char *s, int c)
+{
+	while (*s && *s != c)
+		s++;
+	return (char *)s;
+}
 #endif
 
 extern void release_pack_memory(size_t, int);
@@ -358,11 +405,6 @@ static inline int sane_case(int x, int high)
 	return x;
 }
 
-static inline int prefixcmp(const char *str, const char *prefix)
-{
-	return strncmp(str, prefix, strlen(prefix));
-}
-
 static inline int strtoul_ui(char const *s, int base, unsigned int *result)
 {
 	unsigned long ul;
@@ -375,5 +417,24 @@ static inline int strtoul_ui(char const *s, int base, unsigned int *result)
 	*result = ul;
 	return 0;
 }
+
+static inline int strtol_i(char const *s, int base, int *result)
+{
+	long ul;
+	char *p;
+
+	errno = 0;
+	ul = strtol(s, &p, base);
+	if (errno || *p || p == s || (int) ul != ul)
+		return -1;
+	*result = ul;
+	return 0;
+}
+
+#ifdef INTERNAL_QSORT
+void git_qsort(void *base, size_t nmemb, size_t size,
+	       int(*compar)(const void *, const void *));
+#define qsort git_qsort
+#endif
 
 #endif

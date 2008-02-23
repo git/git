@@ -24,8 +24,6 @@ use Data::Dumper;
 use Term::ANSIColor;
 use Git;
 
-$SIG{INT} = sub { print color("reset"), "\n"; exit };
-
 package FakeTerm;
 sub new {
 	my ($class, $reason) = @_;
@@ -88,8 +86,13 @@ Options:
 
    --smtp-ssl     If set, connects to the SMTP server using SSL.
 
-   --suppress-from Suppress sending emails to yourself if your address
-                  appears in a From: line. Defaults to off.
+   --suppress-cc  Suppress the specified category of auto-CC.  The category
+		  can be one of 'author' for the patch author, 'self' to
+		  avoid copying yourself, 'sob' for Signed-off-by lines,
+		  'cccmd' for the output of the cccmd, or 'all' to suppress
+		  all of these.
+
+   --suppress-from Suppress sending emails to yourself. Defaults to off.
 
    --thread       Specify that the "In-Reply-To:" header should be set on all
                   emails. Defaults to on.
@@ -100,6 +103,8 @@ Options:
    --dry-run	  Do everything except actually send the emails.
 
    --envelope-sender	Specify the envelope sender used to send the emails.
+
+   --no-validate	Don't perform any sanity checks on patches.
 
 EOT
 	exit(1);
@@ -146,6 +151,7 @@ sub format_2822_time {
 
 my $have_email_valid = eval { require Email::Valid; 1 };
 my $smtp;
+my $auth;
 
 sub unique_email_list(@);
 sub cleanup_compose_files();
@@ -155,7 +161,7 @@ my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@initial_cc,@bcclist,@xh,
-	$initial_reply_to,$initial_subject,@files,$author,$sender,$compose,$time);
+	$initial_reply_to,$initial_subject,@files,$author,$sender,$smtp_authpass,$compose,$time);
 
 my $envelope_sender;
 
@@ -164,7 +170,9 @@ my $envelope_sender;
 
 my $repo = Git->repository();
 my $term = eval {
-	new Term::ReadLine 'git-send-email';
+	$ENV{"GIT_SEND_EMAIL_NOTTY"}
+		? new Term::ReadLine 'git-send-email', \*STDIN, \*STDOUT
+		: new Term::ReadLine 'git-send-email';
 };
 if ($@) {
 	$term = new FakeTerm "$@: going non-interactive";
@@ -175,14 +183,16 @@ my ($quiet, $dry_run) = (0, 0);
 
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
-my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_authpass, $smtp_ssl);
+my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_ssl);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
+my ($no_validate);
+my (@suppress_cc);
 
 my %config_bool_settings = (
     "thread" => [\$thread, 1],
     "chainreplyto" => [\$chain_reply_to, 1],
-    "suppressfrom" => [\$suppress_from, 0],
-    "signedoffcc" => [\$signed_off_cc, 1],
+    "suppressfrom" => [\$suppress_from, undef],
+    "signedoffcc" => [\$signed_off_cc, undef],
     "smtpssl" => [\$smtp_ssl, 0],
 );
 
@@ -191,11 +201,36 @@ my %config_settings = (
     "smtpserverport" => \$smtp_server_port,
     "smtpuser" => \$smtp_authuser,
     "smtppass" => \$smtp_authpass,
+    "to" => \@to,
     "cccmd" => \$cc_cmd,
     "aliasfiletype" => \$aliasfiletype,
     "bcc" => \@bcclist,
     "aliasesfile" => \@alias_files,
+    "suppresscc" => \@suppress_cc,
 );
+
+# Handle Uncouth Termination
+sub signal_handler {
+
+	# Make text normal
+	print color("reset"), "\n";
+
+	# SMTP password masked
+	system "stty echo";
+
+	# tmp files from --compose
+	if (-e $compose_filename) {
+		print "'$compose_filename' contains an intermediate version of the email you were composing.\n";
+	}
+	if (-e ($compose_filename . ".final")) {
+		print "'$compose_filename.final' contains the composed email.\n"
+	}
+
+	exit;
+};
+
+$SIG{TERM} = \&signal_handler;
+$SIG{INT}  = \&signal_handler;
 
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
@@ -210,17 +245,19 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-server=s" => \$smtp_server,
 		    "smtp-server-port=s" => \$smtp_server_port,
 		    "smtp-user=s" => \$smtp_authuser,
-		    "smtp-pass=s" => \$smtp_authpass,
+		    "smtp-pass:s" => \$smtp_authpass,
 		    "smtp-ssl!" => \$smtp_ssl,
 		    "identity=s" => \$identity,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
 		    "cc-cmd=s" => \$cc_cmd,
 		    "suppress-from!" => \$suppress_from,
+		    "suppress-cc=s" => \@suppress_cc,
 		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_cc,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
+		    "no-validate" => \$no_validate,
 	 );
 
 unless ($rc) {
@@ -259,6 +296,35 @@ read_config("sendemail");
 # fall back on builtin bool defaults
 foreach my $setting (values %config_bool_settings) {
 	${$setting->[0]} = $setting->[1] unless (defined (${$setting->[0]}));
+}
+
+# Set CC suppressions
+my(%suppress_cc);
+if (@suppress_cc) {
+	foreach my $entry (@suppress_cc) {
+		die "Unknown --suppress-cc field: '$entry'\n"
+			unless $entry =~ /^(all|cccmd|cc|author|self|sob)$/;
+		$suppress_cc{$entry} = 1;
+	}
+}
+
+if ($suppress_cc{'all'}) {
+	foreach my $entry (qw (ccmd cc author self sob)) {
+		$suppress_cc{$entry} = 1;
+	}
+	delete $suppress_cc{'all'};
+}
+
+# If explicit old-style ones are specified, they trump --suppress-cc.
+$suppress_cc{'self'} = $suppress_from if defined $suppress_from;
+$suppress_cc{'sob'} = $signed_off_cc if defined $signed_off_cc;
+
+# Debugging, print out the suppressions.
+if (0) {
+	print "suppressions:\n";
+	foreach my $entry (keys %suppress_cc) {
+		printf "  %-5s -> $suppress_cc{$entry}\n", $entry;
+	}
 }
 
 my ($repoauthor) = $repo->ident_person('author');
@@ -313,12 +379,49 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 
 ($sender) = expand_aliases($sender) if defined $sender;
 
+# Now that all the defaults are set, process the rest of the command line
+# arguments and collect up the files that need to be processed.
+for my $f (@ARGV) {
+	if (-d $f) {
+		opendir(DH,$f)
+			or die "Failed to opendir $f: $!";
+
+		push @files, grep { -f $_ } map { +$f . "/" . $_ }
+				sort readdir(DH);
+
+	} elsif (-f $f) {
+		push @files, $f;
+
+	} else {
+		print STDERR "Skipping $f - not found.\n";
+	}
+}
+
+if (!$no_validate) {
+	foreach my $f (@files) {
+		my $error = validate_patch($f);
+		$error and die "fatal: $f: $error\nwarning: no patches were sent\n";
+	}
+}
+
+if (@files) {
+	unless ($quiet) {
+		print $_,"\n" for (@files);
+	}
+} else {
+	print STDERR "\nNo patch files specified!\n\n";
+	usage();
+}
+
 my $prompting = 0;
 if (!defined $sender) {
 	$sender = $repoauthor || $repocommitter;
-	do {
+
+	while (1) {
 		$_ = $term->readline("Who should the emails appear to be from? [$sender] ");
-	} while (!defined $_);
+		last if defined $_;
+		print "\n";
+	}
 
 	$sender = $_ if ($_);
 	print "Emails will be sent from: ", $sender, "\n";
@@ -326,10 +429,14 @@ if (!defined $sender) {
 }
 
 if (!@to) {
-	do {
-		$_ = $term->readline("Who should the emails be sent to? ",
-				"");
-	} while (!defined $_);
+
+
+	while (1) {
+		$_ = $term->readline("Who should the emails be sent to? ", "");
+		last if defined $_;
+		print "\n";
+	}
+
 	my $to = $_;
 	push @to, split /,/, $to;
 	$prompting++;
@@ -351,23 +458,29 @@ sub expand_aliases {
 @bcclist = expand_aliases(@bcclist);
 
 if (!defined $initial_subject && $compose) {
-	do {
-		$_ = $term->readline("What subject should the emails start with? ",
-			$initial_subject);
-	} while (!defined $_);
+	while (1) {
+		$_ = $term->readline("What subject should the initial email start with? ", $initial_subject);
+		last if defined $_;
+		print "\n";
+	}
+
 	$initial_subject = $_;
 	$prompting++;
 }
 
 if ($thread && !defined $initial_reply_to && $prompting) {
-	do {
-		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ",
-			$initial_reply_to);
-	} while (!defined $_);
+	while (1) {
+		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ", $initial_reply_to);
+		last if defined $_;
+		print "\n";
+	}
 
 	$initial_reply_to = $_;
-	$initial_reply_to =~ s/^\s+<?/</;
-	$initial_reply_to =~ s/>?\s+$/>/;
+}
+if (defined $initial_reply_to) {
+	$initial_reply_to =~ s/^\s*<?//;
+	$initial_reply_to =~ s/>?\s*$//;
+	$initial_reply_to = "<$initial_reply_to>" if $initial_reply_to ne '';
 }
 
 if (!defined $smtp_server) {
@@ -397,7 +510,7 @@ EOT
 	close(C);
 
 	my $editor = $ENV{GIT_EDITOR} || $repo->config("core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
-	system($editor, $compose_filename);
+	system('sh', '-c', '$0 $@', $editor, $compose_filename);
 
 	open(C2,">",$compose_filename . ".final")
 		or die "Failed to open $compose_filename.final : " . $!;
@@ -412,44 +525,18 @@ EOT
 	close(C);
 	close(C2);
 
-	do {
+	while (1) {
 		$_ = $term->readline("Send this email? (y|n) ");
-	} while (!defined $_);
+		last if defined $_;
+		print "\n";
+	}
 
 	if (uc substr($_,0,1) ne 'Y') {
 		cleanup_compose_files();
 		exit(0);
 	}
 
-	@files = ($compose_filename . ".final");
-}
-
-
-# Now that all the defaults are set, process the rest of the command line
-# arguments and collect up the files that need to be processed.
-for my $f (@ARGV) {
-	if (-d $f) {
-		opendir(DH,$f)
-			or die "Failed to opendir $f: $!";
-
-		push @files, grep { -f $_ } map { +$f . "/" . $_ }
-				sort readdir(DH);
-
-	} elsif (-f $f) {
-		push @files, $f;
-
-	} else {
-		print STDERR "Skipping $f - not found.\n";
-	}
-}
-
-if (@files) {
-	unless ($quiet) {
-		print $_,"\n" for (@files);
-	}
-} else {
-	print STDERR "\nNo patch files specified!\n\n";
-	usage();
+	@files = ($compose_filename . ".final", @files);
 }
 
 # Variables we set as part of the loop over files
@@ -514,11 +601,13 @@ $time = time - scalar $#files;
 
 sub unquote_rfc2047 {
 	local ($_) = @_;
-	if (s/=\?utf-8\?q\?(.*)\?=/$1/g) {
+	my $encoding;
+	if (s/=\?([^?]+)\?q\?(.*)\?=/$2/g) {
+		$encoding = $1;
 		s/_/ /g;
 		s/=([0-9A-F]{2})/chr(hex($1))/eg;
 	}
-	return "$_";
+	return wantarray ? ($_, $encoding) : $_;
 }
 
 # use the simplest quoting being able to handle the recipient
@@ -555,7 +644,11 @@ sub sanitize_address
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
-	@cc = (map { sanitize_address($_) } @cc);
+	@cc = (grep { my $cc = extract_valid_address($_);
+		      not grep { $cc eq $_ } @recipients
+		    }
+	       map { sanitize_address($_) }
+	       @cc);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
 	@recipients = (map { extract_valid_address($_) } @recipients);
@@ -571,7 +664,7 @@ sub send_message
 		$ccline = "\nCc: $cc";
 	}
 	my $sanitized_sender = sanitize_address($sender);
-	make_message_id();
+	make_message_id() unless defined($message_id);
 
 	my $header = "From: $sanitized_sender
 To: $to${ccline}
@@ -628,9 +721,26 @@ X-Mailer: git-send-email $gitversion
 			die "Unable to initialize SMTP properly.  Is there something wrong with your config?";
 		}
 
-		if ((defined $smtp_authuser) && (defined $smtp_authpass)) {
-			$smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
+		if (defined $smtp_authuser) {
+
+			if (!defined $smtp_authpass) {
+
+				system "stty -echo";
+
+				do {
+					print "Password: ";
+					$_ = <STDIN>;
+					print "\n";
+				} while (!defined $_);
+
+				chomp($smtp_authpass = $_);
+
+				system "stty echo";
+			}
+
+			$auth ||= $smtp->auth( $smtp_authuser, $smtp_authpass ) or die $smtp->message;
 		}
+
 		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
 		$smtp->data or die $smtp->message;
@@ -641,7 +751,7 @@ X-Mailer: git-send-email $gitversion
 	if ($quiet) {
 		printf (($dry_run ? "Dry-" : "")."Sent %s\n", $subject);
 	} else {
-		print (($dry_run ? "Dry-" : "")."OK. Log says:\nDate: $date\n");
+		print (($dry_run ? "Dry-" : "")."OK. Log says:\n");
 		if ($smtp_server !~ m#^/#) {
 			print "Server: $smtp_server\n";
 			print "MAIL FROM:<$raw_from>\n";
@@ -649,7 +759,7 @@ X-Mailer: git-send-email $gitversion
 		} else {
 			print "Sendmail: $smtp_server ".join(' ',@sendmail_parameters)."\n";
 		}
-		print "From: $sanitized_sender\nSubject: $subject\nCc: $cc\nTo: $to\n\n";
+		print $header, "\n";
 		if ($smtp) {
 			print "Result: ", $smtp->code, ' ',
 				($smtp->message =~ /\n([^\n]+\n)$/s), "\n";
@@ -667,6 +777,9 @@ foreach my $t (@files) {
 	open(F,"<",$t) or die "can't open file $t";
 
 	my $author = undef;
+	my $author_encoding;
+	my $has_content_type;
+	my $body_encoding;
 	@cc = @initial_cc;
 	@xh = ();
 	my $input_format = undef;
@@ -689,14 +802,28 @@ foreach my $t (@files) {
 
 				} elsif (/^(Cc|From):\s+(.*)$/) {
 					if (unquote_rfc2047($2) eq $sender) {
-						next if ($suppress_from);
+						next if ($suppress_cc{'self'});
 					}
 					elsif ($1 eq 'From') {
-						$author = unquote_rfc2047($2);
+						($author, $author_encoding)
+						  = unquote_rfc2047($2);
+						next if ($suppress_cc{'author'});
+					} else {
+						next if ($suppress_cc{'cc'});
 					}
 					printf("(mbox) Adding cc: %s from line '%s'\n",
 						$2, $_) unless $quiet;
 					push @cc, $2;
+				}
+				elsif (/^Content-type:/i) {
+					$has_content_type = 1;
+					if (/charset="?[^ "]+/) {
+						$body_encoding = $1;
+					}
+					push @xh, $_;
+				}
+				elsif (/^Message-Id: (.*)/i) {
+					$message_id = $1;
 				}
 				elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
 					push @xh, $_;
@@ -709,7 +836,7 @@ foreach my $t (@files) {
 				# line 2 = subject
 				# So let's support that, too.
 				$input_format = 'lots';
-				if (@cc == 0) {
+				if (@cc == 0 && !$suppress_cc{'cc'}) {
 					printf("(non-mbox) Adding cc: %s from line '%s'\n",
 						$_, $_) unless $quiet;
 
@@ -726,9 +853,11 @@ foreach my $t (@files) {
 			}
 		} else {
 			$message .=  $_;
-			if (/^(Signed-off-by|Cc): (.*)$/i && $signed_off_cc) {
+			if (/^(Signed-off-by|Cc): (.*)$/i) {
+				next if ($suppress_cc{'sob'});
 				my $c = $2;
 				chomp $c;
+				next if ($c eq $sender and $suppress_cc{'self'});
 				push @cc, $c;
 				printf("(sob) Adding cc: %s from line '%s'\n",
 					$c, $_) unless $quiet;
@@ -737,13 +866,14 @@ foreach my $t (@files) {
 	}
 	close F;
 
-	if (defined $cc_cmd) {
+	if (defined $cc_cmd && !$suppress_cc{'cccmd'}) {
 		open(F, "$cc_cmd $t |")
 			or die "(cc-cmd) Could not execute '$cc_cmd'";
 		while(<F>) {
 			my $c = $_;
 			$c =~ s/^\s*//g;
 			$c =~ s/\n$//g;
+			next if ($c eq $sender and $suppress_from);
 			push @cc, $c;
 			printf("(cc-cmd) Adding cc: %s from: '%s'\n",
 				$c, $cc_cmd) unless $quiet;
@@ -754,6 +884,22 @@ foreach my $t (@files) {
 
 	if (defined $author) {
 		$message = "From: $author\n\n$message";
+		if (defined $author_encoding) {
+			if ($has_content_type) {
+				if ($body_encoding eq $author_encoding) {
+					# ok, we already have the right encoding
+				}
+				else {
+					# uh oh, we should re-encode
+				}
+			}
+			else {
+				push @xh,
+				  'MIME-Version: 1.0',
+				  "Content-Type: text/plain; charset=$author_encoding",
+				  'Content-Transfer-Encoding: 8bit';
+			}
+		}
 	}
 
 	send_message();
@@ -767,6 +913,7 @@ foreach my $t (@files) {
 			$references = "$message_id";
 		}
 	}
+	$message_id = undef;
 }
 
 if ($compose) {
@@ -795,4 +942,16 @@ sub unique_email_list(@) {
 		}
 	}
 	return @emails;
+}
+
+sub validate_patch {
+	my $fn = shift;
+	open(my $fh, '<', $fn)
+		or die "unable to open $fn: $!\n";
+	while (my $line = <$fh>) {
+		if (length($line) > 998) {
+			return "$.: patch contains a line longer than 998 characters";
+		}
+	}
+	return undef;
 }

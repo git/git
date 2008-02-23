@@ -15,7 +15,7 @@ test_expect_success \
     'rm -f .git/index*
      for i in a b c
      do
-	     dd if=/dev/zero bs=4k count=1 | tr "\\0" $i >$i &&
+	     dd if=/dev/zero bs=4k count=1 | tr "\\000" $i >$i &&
 	     git update-index --add $i || return 1
      done &&
      cat c >d && echo foo >>d && git update-index --add d &&
@@ -187,49 +187,51 @@ test_expect_success \
 			test-3-${packname_3}.idx'
 
 test_expect_success \
-    'corrupt a pack and see if verify catches' \
+    'verify-pack catches mismatched .idx and .pack files' \
     'cat test-1-${packname_1}.idx >test-3.idx &&
      cat test-2-${packname_2}.pack >test-3.pack &&
      if git verify-pack test-3.idx
      then false
      else :;
-     fi &&
+     fi'
 
-     : PACK_SIGNATURE &&
-     cat test-1-${packname_1}.pack >test-3.pack &&
+test_expect_success \
+    'verify-pack catches a corrupted pack signature' \
+    'cat test-1-${packname_1}.pack >test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
      if git verify-pack test-3.idx
      then false
      else :;
-     fi &&
+     fi'
 
-     : PACK_VERSION &&
-     cat test-1-${packname_1}.pack >test-3.pack &&
+test_expect_success \
+    'verify-pack catches a corrupted pack version' \
+    'cat test-1-${packname_1}.pack >test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
      if git verify-pack test-3.idx
      then false
      else :;
-     fi &&
+     fi'
 
-     : TYPE/SIZE byte of the first packed object data &&
-     cat test-1-${packname_1}.pack >test-3.pack &&
+test_expect_success \
+    'verify-pack catches a corrupted type/size of the 1st packed object data' \
+    'cat test-1-${packname_1}.pack >test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
      if git verify-pack test-3.idx
      then false
      else :;
-     fi &&
+     fi'
 
-     : sum of the index file itself &&
-     l=`wc -c <test-3.idx` &&
+test_expect_success \
+    'verify-pack catches a corrupted sum of the index file itself' \
+    'l=`wc -c <test-3.idx` &&
      l=`expr $l - 20` &&
      cat test-1-${packname_1}.pack >test-3.pack &&
      dd if=/dev/zero of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
      if git verify-pack test-3.pack
      then false
      else :;
-     fi &&
-
-     :'
+     fi'
 
 test_expect_success \
     'build pack index for an existing pack' \
@@ -262,8 +264,14 @@ test_expect_success \
      cp -f	.git/objects/9d/235ed07cd19811a6ceb342de82f190e49c9f68 \
 		.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67'
 
-test_expect_failure \
+test_expect_success \
     'make sure index-pack detects the SHA1 collision' \
-    'git-index-pack -o bad.idx test-3.pack'
+    '! git-index-pack -o bad.idx test-3.pack'
+
+test_expect_success \
+    'honor pack.packSizeLimit' \
+    'git config pack.packSizeLimit 200 &&
+     packname_4=$(git pack-objects test-4 <obj-list) &&
+     test 3 = $(ls test-4-*.pack | wc -l)'
 
 test_done

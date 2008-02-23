@@ -14,6 +14,7 @@ struct commit_list {
 struct commit {
 	struct object object;
 	void *util;
+	unsigned int indegree;
 	unsigned long date;
 	struct commit_list *parents;
 	struct tree *tree;
@@ -61,13 +62,15 @@ enum cmit_fmt {
 	CMIT_FMT_UNSPECIFIED,
 };
 
+extern int non_ascii(int);
 extern enum cmit_fmt get_commit_format(const char *arg);
 extern void format_commit_message(const struct commit *commit,
                                   const void *format, struct strbuf *sb);
 extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit*,
                                 struct strbuf *,
                                 int abbrev, const char *subject,
-                                const char *after_subject, enum date_mode);
+                                const char *after_subject, enum date_mode,
+				int non_ascii_present);
 
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
@@ -82,31 +85,12 @@ void clear_commit_marks(struct commit *commit, unsigned int mark);
 /*
  * Performs an in-place topological sort of list supplied.
  *
- * Pre-conditions for sort_in_topological_order:
- *   all commits in input list and all parents of those
- *   commits must have object.util == NULL
- *
- * Pre-conditions for sort_in_topological_order_fn:
- *   all commits in input list and all parents of those
- *   commits must have getter(commit) == NULL
- *
- * Post-conditions:
  *   invariant of resulting list is:
  *      a reachable from b => ord(b) < ord(a)
  *   in addition, when lifo == 0, commits on parallel tracks are
  *   sorted in the dates order.
  */
-
-typedef void (*topo_sort_set_fn_t)(struct commit*, void *data);
-typedef void* (*topo_sort_get_fn_t)(struct commit*);
-
-void topo_sort_default_setter(struct commit *c, void *data);
-void *topo_sort_default_getter(struct commit *c);
-
 void sort_in_topological_order(struct commit_list ** list, int lifo);
-void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
-				  topo_sort_set_fn_t setter,
-				  topo_sort_get_fn_t getter);
 
 struct commit_graft {
 	unsigned char sha1[20];
@@ -128,4 +112,13 @@ extern struct commit_list *get_shallow_commits(struct object_array *heads,
 		int depth, int shallow_flag, int not_shallow_flag);
 
 int in_merge_bases(struct commit *, struct commit **, int);
+
+extern int interactive_add(int argc, const char **argv, const char *prefix);
+extern int rerere(void);
+
+static inline int single_parent(struct commit *commit)
+{
+	return commit->parents && !commit->parents->next;
+}
+
 #endif /* COMMIT_H */

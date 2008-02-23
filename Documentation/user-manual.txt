@@ -42,7 +42,7 @@ How to get a git repository
 It will be useful to have a git repository to experiment with as you
 read this manual.
 
-The best way to get one is by using the gitlink:git-clone[1] command to
+The best way to get one is by using the linkgit:git-clone[1] command to
 download a copy of an existing repository.  If you don't already have a
 project in mind, here are some interesting examples:
 
@@ -56,11 +56,12 @@ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 The initial clone may be time-consuming for a large project, but you
 will only need to clone once.
 
-The clone command creates a new directory named after the project
-("git" or "linux-2.6" in the examples above).  After you cd into this
+The clone command creates a new directory named after the project ("git"
+or "linux-2.6" in the examples above).  After you cd into this
 directory, you will see that it contains a copy of the project files,
-together with a special top-level directory named ".git", which
-contains all the information about the history of the project.
+called the <<def_working_tree,working tree>>, together with a special
+top-level directory named ".git", which contains all the information
+about the history of the project.
 
 [[how-to-check-out]]
 How to check out a different version of a project
@@ -71,9 +72,14 @@ of files.  It stores the history as a compressed collection of
 interrelated snapshots of the project's contents.  In git each such
 version is called a <<def_commit,commit>>.
 
-A single git repository may contain multiple branches.  It keeps track
-of them by keeping a list of <<def_head,heads>> which reference the
-latest commit on each branch; the gitlink:git-branch[1] command shows
+Those snapshots aren't necessarily all arranged in a single line from
+oldest to newest; instead, work may simultaneously proceed along
+parallel lines of development, called <<def_branch,branches>>, which may
+merge and diverge.
+
+A single git repository can track development on multiple branches.  It
+does this by keeping a list of <<def_head,heads>> which reference the
+latest commit on each branch; the linkgit:git-branch[1] command shows
 you the list of branch heads:
 
 ------------------------------------------------
@@ -87,7 +93,7 @@ the project referred to by that branch head.
 
 Most projects also use <<def_tag,tags>>.  Tags, like heads, are
 references into the project's history, and can be listed using the
-gitlink:git-tag[1] command:
+linkgit:git-tag[1] command:
 
 ------------------------------------------------
 $ git tag -l
@@ -107,14 +113,14 @@ Tags are expected to always point at the same version of a project,
 while heads are expected to advance as development progresses.
 
 Create a new branch head pointing to one of these versions and check it
-out using gitlink:git-checkout[1]:
+out using linkgit:git-checkout[1]:
 
 ------------------------------------------------
 $ git checkout -b new v2.6.13
 ------------------------------------------------
 
 The working directory then reflects the contents that the project had
-when it was tagged v2.6.13, and gitlink:git-branch[1] shows two
+when it was tagged v2.6.13, and linkgit:git-branch[1] shows two
 branches, with an asterisk marking the currently checked-out branch:
 
 ------------------------------------------------
@@ -140,7 +146,7 @@ Understanding History: Commits
 ------------------------------
 
 Every change in the history of a project is represented by a commit.
-The gitlink:git-show[1] command shows the most recent commit on the
+The linkgit:git-show[1] command shows the most recent commit on the
 current branch:
 
 ------------------------------------------------
@@ -202,7 +208,7 @@ representing a merge can therefore have more than one parent, with
 each parent representing the most recent commit on one of the lines
 of development leading to that point.
 
-The best way to see how this works is using the gitlink:gitk[1]
+The best way to see how this works is using the linkgit:gitk[1]
 command; running gitk now on a git repository and looking for merge
 commits will help understand how the git organizes history.
 
@@ -329,7 +335,7 @@ The "master" branch that was created at the time you cloned is a copy
 of the HEAD in the repository that you cloned from.  That repository
 may also have had other branches, though, and your local repository
 keeps branches which track each of those remote branches, which you
-can view using the "-r" option to gitlink:git-branch[1]:
+can view using the "-r" option to linkgit:git-branch[1]:
 
 ------------------------------------------------
 $ git branch -r
@@ -372,7 +378,7 @@ exists a tag and a branch with the same name.
 (Newly created refs are actually stored in the .git/refs directory,
 under the path given by their name.  However, for efficiency reasons
 they may also be packed together in a single file; see
-gitlink:git-pack-refs[1]).
+linkgit:git-pack-refs[1]).
 
 As another useful shortcut, the "HEAD" of a repository can be referred
 to just using the name of that repository.  So, for example, "origin"
@@ -381,7 +387,7 @@ is usually a shortcut for the HEAD branch in the repository "origin".
 For the complete list of paths which git checks for references, and
 the order it uses to decide which to choose when there are multiple
 references with the same shorthand name, see the "SPECIFYING
-REVISIONS" section of gitlink:git-rev-parse[1].
+REVISIONS" section of linkgit:git-rev-parse[1].
 
 [[Updating-a-repository-with-git-fetch]]
 Updating a repository with git fetch
@@ -401,7 +407,7 @@ Fetching branches from other repositories
 -----------------------------------------
 
 You can also track branches from repositories other than the one you
-cloned from, using gitlink:git-remote[1]:
+cloned from, using linkgit:git-remote[1]:
 
 -------------------------------------------------
 $ git remote add linux-nfs git://linux-nfs.org/pub/nfs-2.6.git
@@ -437,7 +443,7 @@ $ cat .git/config
 This is what causes git to track the remote's branches; you may modify
 or delete these configuration options by editing .git/config with a
 text editor.  (See the "CONFIGURATION FILE" section of
-gitlink:git-config[1] for details.)
+linkgit:git-config[1] for details.)
 
 [[exploring-git-history]]
 Exploring git history
@@ -462,7 +468,7 @@ Suppose version 2.6.18 of your project worked, but the version at
 "master" crashes.  Sometimes the best way to find the cause of such a
 regression is to perform a brute-force search through the project's
 history to find the particular commit that caused the problem.  The
-gitlink:git-bisect[1] command can help you do this:
+linkgit:git-bisect[1] command can help you do this:
 
 -------------------------------------------------
 $ git bisect start
@@ -475,7 +481,7 @@ Bisecting: 3537 revisions left to test after this
 If you run "git branch" at this point, you'll see that git has
 temporarily moved you to a new branch named "bisect".  This branch
 points to a commit (with commit id 65934...) that is reachable from
-v2.6.19 but not from v2.6.18.  Compile and test it, and see whether
+"master" but not from v2.6.18.  Compile and test it, and see whether
 it crashes.  Assume it does crash.  Then:
 
 -------------------------------------------------
@@ -491,7 +497,7 @@ half each time.
 
 After about 13 tests (in this case), it will output the commit id of
 the guilty commit.  You can then examine the commit with
-gitlink:git-show[1], find out who wrote it, and mail them your bug
+linkgit:git-show[1], find out who wrote it, and mail them your bug
 report with the commit id.  Finally, run
 
 -------------------------------------------------
@@ -537,7 +543,7 @@ We have seen several ways of naming commits already:
 	- HEAD: refers to the head of the current branch
 
 There are many more; see the "SPECIFYING REVISIONS" section of the
-gitlink:git-rev-parse[1] man page for the complete list of ways to
+linkgit:git-rev-parse[1] man page for the complete list of ways to
 name revisions.  Some examples:
 
 -------------------------------------------------
@@ -578,7 +584,7 @@ When we discuss merges we'll also see the special name MERGE_HEAD,
 which refers to the other branch that we're merging in to the current
 branch.
 
-The gitlink:git-rev-parse[1] command is a low-level command that is
+The linkgit:git-rev-parse[1] command is a low-level command that is
 occasionally useful for translating some name for a commit to the object
 name for that commit:
 
@@ -602,14 +608,14 @@ You can use stable-1 to refer to the commit 1b2e1d63ff.
 
 This creates a "lightweight" tag.  If you would also like to include a
 comment with the tag, and possibly sign it cryptographically, then you
-should create a tag object instead; see the gitlink:git-tag[1] man page
+should create a tag object instead; see the linkgit:git-tag[1] man page
 for details.
 
 [[browsing-revisions]]
 Browsing revisions
 ------------------
 
-The gitlink:git-log[1] command can show lists of commits.  On its
+The linkgit:git-log[1] command can show lists of commits.  On its
 own, it shows all commits reachable from the parent commit; but you
 can also make more specific requests:
 
@@ -639,7 +645,7 @@ You can also ask git log to show patches:
 $ git log -p
 -------------------------------------------------
 
-See the "--pretty" option in the gitlink:git-log[1] man page for more
+See the "--pretty" option in the linkgit:git-log[1] man page for more
 display options.
 
 Note that git log starts with the most recent commit and works
@@ -652,22 +658,29 @@ Generating diffs
 ----------------
 
 You can generate diffs between any two versions using
-gitlink:git-diff[1]:
+linkgit:git-diff[1]:
 
 -------------------------------------------------
 $ git diff master..test
 -------------------------------------------------
 
-Sometimes what you want instead is a set of patches:
+That will produce the diff between the tips of the two branches.  If
+you'd prefer to find the diff from their common ancestor to test, you
+can use three dots instead of two:
+
+-------------------------------------------------
+$ git diff master...test
+-------------------------------------------------
+
+Sometimes what you want instead is a set of patches; for this you can
+use linkgit:git-format-patch[1]:
 
 -------------------------------------------------
 $ git format-patch master..test
 -------------------------------------------------
 
 will generate a file with a patch for each commit reachable from test
-but not from master.  Note that if master also has commits which are
-not reachable from test, then the combined result of these patches
-will not be the same as the diff produced by the git-diff example.
+but not from master.
 
 [[viewing-old-file-versions]]
 Viewing old file versions
@@ -701,7 +714,7 @@ $ git log --pretty=oneline origin..mybranch | wc -l
 -------------------------------------------------
 
 Alternatively, you may often see this sort of thing done with the
-lower-level command gitlink:git-rev-list[1], which just lists the SHA1's
+lower-level command linkgit:git-rev-list[1], which just lists the SHA1's
 of all the given commits:
 
 -------------------------------------------------
@@ -759,7 +772,7 @@ You could just visually inspect the commits since e05db0fd:
 $ gitk e05db0fd..
 -------------------------------------------------
 
-Or you can use gitlink:git-name-rev[1], which will give the commit a
+Or you can use linkgit:git-name-rev[1], which will give the commit a
 name based on any tag it finds pointing to one of the commit's
 descendants:
 
@@ -768,7 +781,7 @@ $ git name-rev --tags e05db0fd
 e05db0fd tags/v1.5.0-rc1^0~23
 -------------------------------------------------
 
-The gitlink:git-describe[1] command does the opposite, naming the
+The linkgit:git-describe[1] command does the opposite, naming the
 revision using a tag on which the given commit is based:
 
 -------------------------------------------------
@@ -780,7 +793,7 @@ but that may sometimes help you guess which tags might come after the
 given commit.
 
 If you just want to verify whether a given tagged version contains a
-given commit, you could use gitlink:git-merge-base[1]:
+given commit, you could use linkgit:git-merge-base[1]:
 
 -------------------------------------------------
 $ git merge-base e05db0fd v1.5.0-rc1
@@ -801,7 +814,7 @@ $ git log v1.5.0-rc1..e05db0fd
 will produce empty output if and only if v1.5.0-rc1 includes e05db0fd,
 because it outputs only commits that are not reachable from v1.5.0-rc1.
 
-As yet another alternative, the gitlink:git-show-branch[1] command lists
+As yet another alternative, the linkgit:git-show-branch[1] command lists
 the commits reachable from its arguments with a display on the left-hand
 side that indicates which arguments that commit is reachable from.  So,
 you can run something like
@@ -834,7 +847,7 @@ Suppose you would like to see all the commits reachable from the branch
 head named "master" but not from any other head in your repository.
 
 We can list all the heads in this repository with
-gitlink:git-show-ref[1]:
+linkgit:git-show-ref[1]:
 
 -------------------------------------------------
 $ git show-ref --heads
@@ -871,14 +884,14 @@ commits reachable from some head but not from any tag in the repository:
 $ gitk $( git show-ref --heads ) --not  $( git show-ref --tags )
 -------------------------------------------------
 
-(See gitlink:git-rev-parse[1] for explanations of commit-selecting
+(See linkgit:git-rev-parse[1] for explanations of commit-selecting
 syntax such as `--not`.)
 
 [[making-a-release]]
 Creating a changelog and tarball for a software release
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The gitlink:git-archive[1] command can create a tar or zip archive from
+The linkgit:git-archive[1] command can create a tar or zip archive from
 any version of a project; for example:
 
 -------------------------------------------------
@@ -931,8 +944,8 @@ $  git log --raw --abbrev=40 --pretty=oneline |
 -------------------------------------------------
 
 Figuring out why this works is left as an exercise to the (advanced)
-student.  The gitlink:git-log[1], gitlink:git-diff-tree[1], and
-gitlink:git-hash-object[1] man pages may prove helpful.
+student.  The linkgit:git-log[1], linkgit:git-diff-tree[1], and
+linkgit:git-hash-object[1] man pages may prove helpful.
 
 [[Developing-with-git]]
 Developing with git
@@ -952,7 +965,7 @@ file named .gitconfig in your home directory:
 	email = you@yourdomain.example.com
 ------------------------------------------------
 
-(See the "CONFIGURATION FILE" section of gitlink:git-config[1] for
+(See the "CONFIGURATION FILE" section of linkgit:git-config[1] for
 details on the configuration file.)
 
 
@@ -1075,7 +1088,7 @@ $ git diff HEAD	    # difference between HEAD and working tree; what
 $ git status	    # a brief per-file summary of the above.
 -------------------------------------------------
 
-You can also use gitlink:git-gui[1] to create commits, view changes in
+You can also use linkgit:git-gui[1] to create commits, view changes in
 the index and the working tree files, and individually select diff hunks
 for inclusion in the index (by right-clicking on the diff hunk and
 choosing "Stage Hunk For Commit").
@@ -1118,7 +1131,7 @@ foo.txt
 *.[oa]
 -------------------------------------------------
 
-See gitlink:gitignore[5] for a detailed explanation of the syntax.  You can
+See linkgit:gitignore[5] for a detailed explanation of the syntax.  You can
 also place .gitignore files in other directories in your working tree, and they
 will apply to those directories and their subdirectories.  The `.gitignore`
 files can be added to your repository like any other files (just run `git add
@@ -1131,14 +1144,14 @@ If you wish the exclude patterns to affect only certain repositories
 them in a file in your repository named .git/info/exclude, or in any file
 specified by the `core.excludesfile` configuration variable.  Some git
 commands can also take exclude patterns directly on the command line.
-See gitlink:gitignore[5] for the details.
+See linkgit:gitignore[5] for the details.
 
 [[how-to-merge]]
 How to merge
 ------------
 
 You can rejoin two diverging branches of development using
-gitlink:git-merge[1]:
+linkgit:git-merge[1]:
 
 -------------------------------------------------
 $ git merge branchname
@@ -1175,7 +1188,7 @@ the working tree in a special state that gives you all the
 information you need to help resolve the merge.
 
 Files with conflicts are marked specially in the index, so until you
-resolve the problem and update the index, gitlink:git-commit[1] will
+resolve the problem and update the index, linkgit:git-commit[1] will
 fail:
 
 -------------------------------------------------
@@ -1183,7 +1196,7 @@ $ git commit
 file.txt: needs merge
 -------------------------------------------------
 
-Also, gitlink:git-status[1] will list those files as "unmerged", and the
+Also, linkgit:git-status[1] will list those files as "unmerged", and the
 files with conflicts will have conflict markers added, like this:
 
 -------------------------------------------------
@@ -1214,7 +1227,7 @@ Getting conflict-resolution help during a merge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All of the changes that git was able to merge automatically are
-already added to the index file, so gitlink:git-diff[1] shows only
+already added to the index file, so linkgit:git-diff[1] shows only
 the conflicts.  It uses an unusual syntax:
 
 -------------------------------------------------
@@ -1249,7 +1262,7 @@ $ git show :3:file.txt	# the version from MERGE_HEAD, but including any
 
 Since the stage 2 and stage 3 versions have already been updated with
 nonconflicting changes, the only remaining differences between them are
-the important ones; thus gitlink:git-diff[1] can use the information in
+the important ones; thus linkgit:git-diff[1] can use the information in
 the index to show only those conflicts.
 
 The diff above shows the differences between the working-tree version of
@@ -1258,7 +1271,7 @@ each line by a single "+" or "-", it now uses two columns: the first
 column is used for differences between the first parent and the working
 directory copy, and the second for differences between the second parent
 and the working directory copy.  (See the "COMBINED DIFF FORMAT" section
-of gitlink:git-diff-files[1] for a details of the format.)
+of linkgit:git-diff-files[1] for a details of the format.)
 
 After resolving the conflict in the obvious way (but before updating the
 index), the diff will look like:
@@ -1291,7 +1304,7 @@ $ git diff -3 file.txt		# diff against stage 3
 $ git diff --theirs file.txt	# same as the above.
 -------------------------------------------------
 
-The gitlink:git-log[1] and gitk[1] commands also provide special help
+The linkgit:git-log[1] and gitk[1] commands also provide special help
 for merges:
 
 -------------------------------------------------
@@ -1302,7 +1315,7 @@ $ gitk --merge
 These will display all commits which exist only on HEAD or on
 MERGE_HEAD, and which touch an unmerged file.
 
-You may also use gitlink:git-mergetool[1], which lets you merge the
+You may also use linkgit:git-mergetool[1], which lets you merge the
 unmerged files using external tools such as emacs or kdiff3.
 
 Each time you resolve the conflicts in a file and update the index:
@@ -1367,7 +1380,7 @@ If you make a commit that you later wish you hadn't, there are two
 fundamentally different ways to fix the problem:
 
 	1. You can create a new commit that undoes whatever was done
-	by the previous commit.  This is the correct thing if your
+	by the old commit.  This is the correct thing if your
 	mistake has already been made public.
 
 	2. You can go back and modify the old commit.  You should
@@ -1381,7 +1394,7 @@ Fixing a mistake with a new commit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating a new commit that reverts an earlier change is very easy;
-just pass the gitlink:git-revert[1] command a reference to the bad
+just pass the linkgit:git-revert[1] command a reference to the bad
 commit; for example, to revert the most recent commit:
 
 -------------------------------------------------
@@ -1403,8 +1416,8 @@ with the changes to be reverted, then you will be asked to fix
 conflicts manually, just as in the case of <<resolving-a-merge,
 resolving a merge>>.
 
-[[fixing-a-mistake-by-editing-history]]
-Fixing a mistake by editing history
+[[fixing-a-mistake-by-rewriting-history]]
+Fixing a mistake by rewriting history
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the problematic commit is the most recent commit, and you have not
@@ -1424,10 +1437,10 @@ which will replace the old commit by a new commit incorporating your
 changes, giving you a chance to edit the old commit message first.
 
 Again, you should never do this to a commit that may already have
-been merged into another branch; use gitlink:git-revert[1] instead in
+been merged into another branch; use linkgit:git-revert[1] instead in
 that case.
 
-It is also possible to edit commits further back in the history, but
+It is also possible to replace commits further back in the history, but
 this is an advanced topic to be left for
 <<cleaning-up-history,another chapter>>.
 
@@ -1437,7 +1450,7 @@ Checking out an old version of a file
 
 In the process of undoing a previous bad change, you may find it
 useful to check out an older version of a particular file using
-gitlink:git-checkout[1].  We've used git checkout before to switch
+linkgit:git-checkout[1].  We've used git checkout before to switch
 branches, but it has quite different behavior if it is given a path
 name: the command
 
@@ -1450,7 +1463,7 @@ also updates the index to match.  It does not change branches.
 
 If you just want to look at an old version of the file, without
 modifying the working directory, you can do that with
-gitlink:git-show[1]:
+linkgit:git-show[1]:
 
 -------------------------------------------------
 $ git show HEAD^:path/to/file
@@ -1464,7 +1477,7 @@ Temporarily setting aside work in progress
 
 While you are in the middle of working on something complicated, you
 find an unrelated but obvious and trivial bug.  You would like to fix it
-before continuing.  You can use gitlink:git-stash[1] to save the current
+before continuing.  You can use linkgit:git-stash[1] to save the current
 state of your work, and after fixing the bug (or, optionally after doing
 so on a different branch and then coming back), unstash the
 work-in-progress changes.
@@ -1498,7 +1511,7 @@ On large repositories, git depends on compression to keep the history
 information from taking up too much space on disk or in memory.
 
 This compression is not performed automatically.  Therefore you
-should occasionally run gitlink:git-gc[1]:
+should occasionally run linkgit:git-gc[1]:
 
 -------------------------------------------------
 $ git gc
@@ -1516,7 +1529,7 @@ Ensuring reliability
 Checking the repository for corruption
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The gitlink:git-fsck[1] command runs a number of self-consistency checks
+The linkgit:git-fsck[1] command runs a number of self-consistency checks
 on the repository, and reports on any problems.  This may take some
 time.  The most common warning by far is about "dangling" objects:
 
@@ -1536,8 +1549,8 @@ dangling tree b24c2473f1fd3d91352a624795be026d64c8841f
 Dangling objects are not a problem.  At worst they may take up a little
 extra disk space.  They can sometimes provide a last-resort method for
 recovering lost work--see <<dangling-objects>> for details.  However, if
-you wish, you can remove them with gitlink:git-prune[1] or the `--prune`
-option to gitlink:git-gc[1]:
+you wish, you can remove them with linkgit:git-prune[1] or the `--prune`
+option to linkgit:git-gc[1]:
 
 -------------------------------------------------
 $ git gc --prune
@@ -1547,6 +1560,11 @@ This may be time-consuming.  Unlike most other git operations (including
 git-gc when run without any options), it is not safe to prune while
 other git operations are in progress in the same repository.
 
+If linkgit:git-fsck[1] complains about sha1 mismatches or missing
+objects, you may have a much more serious problem; your best option is
+probably restoring from backups.  See
+<<recovering-from-repository-corruption>> for a detailed discussion.
+
 [[recovering-lost-changes]]
 Recovering lost changes
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -1555,7 +1573,7 @@ Recovering lost changes
 Reflogs
 ^^^^^^^
 
-Say you modify a branch with `gitlink:git-reset[1] --hard`, and then
+Say you modify a branch with `linkgit:git-reset[1] --hard`, and then
 realize that the branch was the only reference you had to that point in
 history.
 
@@ -1567,9 +1585,9 @@ old history using, for example,
 $ git log master@{1}
 -------------------------------------------------
 
-This lists the commits reachable from the previous version of the head.
-This syntax can be used to with any git command that accepts a commit,
-not just with git log.  Some other examples:
+This lists the commits reachable from the previous version of the
+"master" branch head.  This syntax can be used with any git command
+that accepts a commit, not just with git log.  Some other examples:
 
 -------------------------------------------------
 $ git show master@{2}		# See where the branch pointed 2,
@@ -1590,9 +1608,9 @@ pointed to one week ago.  This allows you to see the history of what
 you've checked out.
 
 The reflogs are kept by default for 30 days, after which they may be
-pruned.  See gitlink:git-reflog[1] and gitlink:git-gc[1] to learn
+pruned.  See linkgit:git-reflog[1] and linkgit:git-gc[1] to learn
 how to control this pruning, and see the "SPECIFYING REVISIONS"
-section of gitlink:git-rev-parse[1] for details.
+section of linkgit:git-rev-parse[1] for details.
 
 Note that the reflog history is very different from normal git history.
 While normal history is shared by every repository that works on the
@@ -1657,7 +1675,7 @@ may wish to check the original repository for updates and merge them
 into your own work.
 
 We have already seen <<Updating-a-repository-with-git-fetch,how to
-keep remote tracking branches up to date>> with gitlink:git-fetch[1],
+keep remote tracking branches up to date>> with linkgit:git-fetch[1],
 and how to merge two branches.  So you can merge in changes from the
 original repository's master branch with:
 
@@ -1666,7 +1684,7 @@ $ git fetch
 $ git merge origin/master
 -------------------------------------------------
 
-However, the gitlink:git-pull[1] command provides a way to do this in
+However, the linkgit:git-pull[1] command provides a way to do this in
 one step:
 
 -------------------------------------------------
@@ -1684,8 +1702,8 @@ $ git pull
 More generally, a branch that is created from a remote branch will pull
 by default from that branch.  See the descriptions of the
 branch.<name>.remote and branch.<name>.merge options in
-gitlink:git-config[1], and the discussion of the `--track` option in
-gitlink:git-checkout[1], to learn how to control these defaults.
+linkgit:git-config[1], and the discussion of the `--track` option in
+linkgit:git-checkout[1], to learn how to control these defaults.
 
 In addition to saving you keystrokes, "git pull" also helps you by
 producing a default commit message documenting the branch and
@@ -1713,7 +1731,7 @@ Submitting patches to a project
 If you just have a few changes, the simplest way to submit them may
 just be to send them as patches in email:
 
-First, use gitlink:git-format-patch[1]; for example:
+First, use linkgit:git-format-patch[1]; for example:
 
 -------------------------------------------------
 $ git format-patch origin
@@ -1724,7 +1742,7 @@ for each patch in the current branch but not in origin/HEAD.
 
 You can then import these into your mail client and send them by
 hand.  However, if you have a lot to send at once, you may prefer to
-use the gitlink:git-send-email[1] script to automate the process.
+use the linkgit:git-send-email[1] script to automate the process.
 Consult the mailing list for your project first to determine how they
 prefer such patches be handled.
 
@@ -1732,7 +1750,7 @@ prefer such patches be handled.
 Importing patches to a project
 ------------------------------
 
-Git also provides a tool called gitlink:git-am[1] (am stands for
+Git also provides a tool called linkgit:git-am[1] (am stands for
 "apply mailbox"), for importing such an emailed series of patches.
 Just save all of the patch-containing messages, in order, into a
 single mailbox file, say "patches.mbox", then run
@@ -1767,7 +1785,7 @@ Public git repositories
 
 Another way to submit changes to a project is to tell the maintainer
 of that project to pull the changes from your repository using
-gitlink:git-pull[1].  In the section "<<getting-updates-with-git-pull,
+linkgit:git-pull[1].  In the section "<<getting-updates-with-git-pull,
 Getting updates with git pull>>" we described this as a way to get
 updates from the "main" repository, but it works just as well in the
 other direction.
@@ -1848,14 +1866,14 @@ at.  You can then skip to the section
 "<<pushing-changes-to-a-public-repository,Pushing changes to a public
 repository>>", below.
 
-Otherwise, all you need to do is start gitlink:git-daemon[1]; it will
+Otherwise, all you need to do is start linkgit:git-daemon[1]; it will
 listen on port 9418.  By default, it will allow access to any directory
 that looks like a git directory and contains the magic file
 git-daemon-export-ok.  Passing some directory paths as git-daemon
 arguments will further restrict the exports to those paths.
 
 You can also run git-daemon as an inetd service; see the
-gitlink:git-daemon[1] man page for details.  (See especially the
+linkgit:git-daemon[1] man page for details.  (See especially the
 examples section.)
 
 [[exporting-via-http]]
@@ -1877,7 +1895,7 @@ $ chmod a+x hooks/post-update
 -------------------------------------------------
 
 (For an explanation of the last two lines, see
-gitlink:git-update-server-info[1], and the documentation
+linkgit:git-update-server-info[1], and the documentation
 link:hooks.html[Hooks used by git].)
 
 Advertise the URL of proj.git.  Anybody else should then be able to
@@ -1902,7 +1920,7 @@ maintainers to fetch your latest changes, but they do not allow write
 access, which you will need to update the public repository with the
 latest changes created in your private repository.
 
-The simplest way to do this is using gitlink:git-push[1] and ssh; to
+The simplest way to do this is using linkgit:git-push[1] and ssh; to
 update the remote branch named "master" with the latest state of your
 branch named "master", run
 
@@ -1916,15 +1934,9 @@ or just
 $ git push ssh://yourserver.com/~you/proj.git master
 -------------------------------------------------
 
-As with git-fetch, git-push will complain if this does not result in
-a <<fast-forwards,fast forward>>.  Normally this is a sign of
-something wrong.  However, if you are sure you know what you're
-doing, you may force git-push to perform the update anyway by
-preceding the branch name by a plus sign:
-
--------------------------------------------------
-$ git push ssh://yourserver.com/~you/proj.git +master
--------------------------------------------------
+As with git-fetch, git-push will complain if this does not result in a
+<<fast-forwards,fast forward>>; see the following section for details on
+handling this case.
 
 Note that the target of a "push" is normally a
 <<def_bare_repository,bare>> repository.  You can also push to a
@@ -1949,8 +1961,54 @@ $ git push public-repo master
 -------------------------------------------------
 
 See the explanations of the remote.<name>.url, branch.<name>.remote,
-and remote.<name>.push options in gitlink:git-config[1] for
+and remote.<name>.push options in linkgit:git-config[1] for
 details.
+
+[[forcing-push]]
+What to do when a push fails
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If a push would not result in a <<fast-forwards,fast forward>> of the
+remote branch, then it will fail with an error like:
+
+-------------------------------------------------
+error: remote 'refs/heads/master' is not an ancestor of
+ local  'refs/heads/master'.
+ Maybe you are not up-to-date and need to pull first?
+error: failed to push to 'ssh://yourserver.com/~you/proj.git'
+-------------------------------------------------
+
+This can happen, for example, if you:
+
+	- use `git reset --hard` to remove already-published commits, or
+	- use `git commit --amend` to replace already-published commits
+	  (as in <<fixing-a-mistake-by-rewriting-history>>), or
+	- use `git rebase` to rebase any already-published commits (as
+	  in <<using-git-rebase>>).
+
+You may force git-push to perform the update anyway by preceding the
+branch name with a plus sign:
+
+-------------------------------------------------
+$ git push ssh://yourserver.com/~you/proj.git +master
+-------------------------------------------------
+
+Normally whenever a branch head in a public repository is modified, it
+is modified to point to a descendant of the commit that it pointed to
+before.  By forcing a push in this situation, you break that convention.
+(See <<problems-with-rewriting-history>>.)
+
+Nevertheless, this is a common practice for people that need a simple
+way to publish a work-in-progress patch series, and it is an acceptable
+compromise as long as you warn other developers that this is how you
+intend to manage the branch.
+
+It's also possible for a push to fail in this way when other people have
+the right to push to the same repository.  In that case, the correct
+solution is to retry the push after first updating your work by either a
+pull or a fetch followed by a rebase; see the
+<<setting-up-a-shared-repository,next section>> and
+link:cvs-migration.html[git for CVS users] for more.
 
 [[setting-up-a-shared-repository]]
 Setting up a shared repository
@@ -2025,14 +2083,14 @@ $ cd work
 -------------------------------------------------
 
 Linus's tree will be stored in the remote branch named origin/master,
-and can be updated using gitlink:git-fetch[1]; you can track other
-public trees using gitlink:git-remote[1] to set up a "remote" and
-gitlink:git-fetch[1] to keep them up-to-date; see
+and can be updated using linkgit:git-fetch[1]; you can track other
+public trees using linkgit:git-remote[1] to set up a "remote" and
+linkgit:git-fetch[1] to keep them up-to-date; see
 <<repositories-and-branches>>.
 
 Now create the branches in which you are going to work; these start out
 at the current tip of origin/master branch, and should be set up (using
-the --track option to gitlink:git-branch[1]) to merge changes in from
+the --track option to linkgit:git-branch[1]) to merge changes in from
 Linus by default.
 
 -------------------------------------------------
@@ -2040,7 +2098,7 @@ $ git branch --track test origin/master
 $ git branch --track release origin/master
 -------------------------------------------------
 
-These can be easily kept up to date using gitlink:git-pull[1].
+These can be easily kept up to date using linkgit:git-pull[1].
 
 -------------------------------------------------
 $ git checkout test && git pull
@@ -2055,7 +2113,7 @@ doing this capriciously in the "release" branch, as these noisy commits
 will become part of the permanent history when you ask Linus to pull
 from the release branch.
 
-A few configuration variables (see gitlink:git-config[1]) can
+A few configuration variables (see linkgit:git-config[1]) can
 make it easy to push both branches to your public tree.  (See
 <<setting-up-a-public-repository>>.)
 
@@ -2069,7 +2127,7 @@ EOF
 -------------------------------------------------
 
 Then you can push both the test and release trees using
-gitlink:git-push[1]:
+linkgit:git-push[1]:
 
 -------------------------------------------------
 $ git push mytree
@@ -2382,7 +2440,7 @@ the result would create a new merge commit, like this:
 
 However, if you prefer to keep the history in mywork a simple series of
 commits without any merges, you may instead choose to use
-gitlink:git-rebase[1]:
+linkgit:git-rebase[1]:
 
 -------------------------------------------------
 $ git checkout mywork
@@ -2419,11 +2477,11 @@ return mywork to the state it had before you started the rebase:
 $ git rebase --abort
 -------------------------------------------------
 
-[[modifying-one-commit]]
-Modifying a single commit
+[[rewriting-one-commit]]
+Rewriting a single commit
 -------------------------
 
-We saw in <<fixing-a-mistake-by-editing-history>> that you can replace the
+We saw in <<fixing-a-mistake-by-rewriting-history>> that you can replace the
 most recent commit using
 
 -------------------------------------------------
@@ -2433,8 +2491,10 @@ $ git commit --amend
 which will replace the old commit by a new commit incorporating your
 changes, giving you a chance to edit the old commit message first.
 
-You can also use a combination of this and gitlink:git-rebase[1] to edit
-commits further back in your history.  First, tag the problematic commit with
+You can also use a combination of this and linkgit:git-rebase[1] to
+replace a commit further back in your history and recreate the
+intervening changes on top of it.  First, tag the problematic commit
+with
 
 -------------------------------------------------
 $ git tag bad mywork~5
@@ -2469,7 +2529,7 @@ new commits having new object names.
 Reordering or selecting from a patch series
 -------------------------------------------
 
-Given one existing commit, the gitlink:git-cherry-pick[1] command
+Given one existing commit, the linkgit:git-cherry-pick[1] command
 allows you to apply the change introduced by that commit and create a
 new commit that records it.  So, for example, if "mywork" points to a
 series of patches on top of "origin", you might do something like:
@@ -2482,7 +2542,7 @@ $ gitk origin..mywork &
 and browse through the list of patches in the mywork branch using gitk,
 applying them (possibly in a different order) to mywork-new using
 cherry-pick, and possibly modifying them as you go using `commit --amend`.
-The gitlink:git-gui[1] command may also help as it allows you to
+The linkgit:git-gui[1] command may also help as it allows you to
 individually select diff hunks for inclusion in the index (by
 right-clicking on the diff hunk and choosing "Stage Hunk for Commit").
 
@@ -2495,7 +2555,7 @@ $ git reset --hard origin
 -------------------------------------------------
 
 Then modify, reorder, or eliminate patches as preferred before applying
-them again with gitlink:git-am[1].
+them again with linkgit:git-am[1].
 
 [[patch-series-tools]]
 Other tools
@@ -2554,6 +2614,72 @@ branches into their own work.
 For true distributed development that supports proper merging,
 published branches should never be rewritten.
 
+[[bisect-merges]]
+Why bisecting merge commits can be harder than bisecting linear history
+-----------------------------------------------------------------------
+
+The linkgit:git-bisect[1] command correctly handles history that
+includes merge commits.  However, when the commit that it finds is a
+merge commit, the user may need to work harder than usual to figure out
+why that commit introduced a problem.
+
+Imagine this history:
+
+................................................
+      ---Z---o---X---...---o---A---C---D
+          \                       /
+           o---o---Y---...---o---B
+................................................
+
+Suppose that on the upper line of development, the meaning of one
+of the functions that exists at Z is changed at commit X.  The
+commits from Z leading to A change both the function's
+implementation and all calling sites that exist at Z, as well
+as new calling sites they add, to be consistent.  There is no
+bug at A.
+
+Suppose that in the meantime on the lower line of development somebody
+adds a new calling site for that function at commit Y.  The
+commits from Z leading to B all assume the old semantics of that
+function and the callers and the callee are consistent with each
+other.  There is no bug at B, either.
+
+Suppose further that the two development lines merge cleanly at C,
+so no conflict resolution is required.
+
+Nevertheless, the code at C is broken, because the callers added
+on the lower line of development have not been converted to the new
+semantics introduced on the upper line of development.  So if all
+you know is that D is bad, that Z is good, and that
+linkgit:git-bisect[1] identifies C as the culprit, how will you
+figure out that the problem is due to this change in semantics?
+
+When the result of a git-bisect is a non-merge commit, you should
+normally be able to discover the problem by examining just that commit.
+Developers can make this easy by breaking their changes into small
+self-contained commits.  That won't help in the case above, however,
+because the problem isn't obvious from examination of any single
+commit; instead, a global view of the development is required.  To
+make matters worse, the change in semantics in the problematic
+function may be just one small part of the changes in the upper
+line of development.
+
+On the other hand, if instead of merging at C you had rebased the
+history between Z to B on top of A, you would have gotten this
+linear history:
+
+................................................................
+    ---Z---o---X--...---o---A---o---o---Y*--...---o---B*--D*
+................................................................
+
+Bisecting between Z and D* would hit a single culprit commit Y*,
+and understanding why Y* was broken would probably be easier.
+
+Partly for this reason, many experienced git users, even when
+working on an otherwise merge-heavy project, keep the history
+linear by rebasing against the latest upstream version before
+publishing.
+
 [[advanced-branch-management]]
 Advanced branch management
 ==========================
@@ -2562,7 +2688,7 @@ Advanced branch management
 Fetching individual branches
 ----------------------------
 
-Instead of using gitlink:git-remote[1], you can also choose just
+Instead of using linkgit:git-remote[1], you can also choose just
 to update one branch at a time, and to store it locally under an
 arbitrary name:
 
@@ -2653,7 +2779,7 @@ Configuring remote branches
 We saw above that "origin" is just a shortcut to refer to the
 repository that you originally cloned from.  This information is
 stored in git configuration variables, which you can see using
-gitlink:git-config[1]:
+linkgit:git-config[1]:
 
 -------------------------------------------------
 $ git config -l
@@ -2706,9 +2832,9 @@ throwing away commits on mybranch.
 
 Also note that all of the above configuration can be performed by
 directly editing the file .git/config instead of using
-gitlink:git-config[1].
+linkgit:git-config[1].
 
-See gitlink:git-config[1] for more details on the configuration
+See linkgit:git-config[1] for more details on the configuration
 options mentioned above.
 
 
@@ -2774,7 +2900,7 @@ Commit Object
 
 The "commit" object links a physical state of a tree with a description
 of how we got there and why.  Use the --pretty=raw option to
-gitlink:git-show[1] or gitlink:git-log[1] to examine your favorite
+linkgit:git-show[1] or linkgit:git-log[1] to examine your favorite
 commit:
 
 ------------------------------------------------
@@ -2795,7 +2921,7 @@ As you can see, a commit is defined by:
 - a tree: The SHA1 name of a tree object (as defined below), representing
   the contents of a directory at a certain point in time.
 - parent(s): The SHA1 name of some number of commits which represent the
-  immediately prevoius step(s) in the history of the project.  The
+  immediately previous step(s) in the history of the project.  The
   example above has one parent; merge commits may have more than
   one.  A commit with no parents is called a "root" commit, and
   represents the initial revision of a project.  Each project must have
@@ -2815,9 +2941,9 @@ of the tree referred to by this commit with the trees associated with
 its parents.  In particular, git does not attempt to record file renames
 explicitly, though it can identify cases where the existence of the same
 file data at changing paths suggests a rename.  (See, for example, the
--M option to gitlink:git-diff[1]).
+-M option to linkgit:git-diff[1]).
 
-A commit is usually created by gitlink:git-commit[1], which creates a
+A commit is usually created by linkgit:git-commit[1], which creates a
 commit whose parent is normally the current HEAD, and whose tree is
 taken from the content currently stored in the index.
 
@@ -2825,8 +2951,8 @@ taken from the content currently stored in the index.
 Tree Object
 ~~~~~~~~~~~
 
-The ever-versatile gitlink:git-show[1] command can also be used to
-examine tree objects, but gitlink:git-ls-tree[1] will give you more
+The ever-versatile linkgit:git-show[1] command can also be used to
+examine tree objects, but linkgit:git-ls-tree[1] will give you more
 details:
 
 ------------------------------------------------
@@ -2865,7 +2991,7 @@ attention to the executable bit.
 Blob Object
 ~~~~~~~~~~~
 
-You can use gitlink:git-show[1] to examine the contents of a blob; take,
+You can use linkgit:git-show[1] to examine the contents of a blob; take,
 for example, the blob in the entry for "COPYING" from the tree above:
 
 ------------------------------------------------
@@ -2887,7 +3013,7 @@ is totally independent of its location in the directory tree, and
 renaming a file does not change the object that file is associated with.
 
 Note that any tree or blob object can be examined using
-gitlink:git-show[1] with the <revision>:<path> syntax.  This can
+linkgit:git-show[1] with the <revision>:<path> syntax.  This can
 sometimes be useful for browsing the contents of a tree that is not
 currently checked out.
 
@@ -2927,7 +3053,7 @@ Tag Object
 
 A tag object contains an object, object type, tag name, the name of the
 person ("tagger") who created the tag, and a message, which may contain
-a signature, as can be seen using the gitlink:git-cat-file[1]:
+a signature, as can be seen using the linkgit:git-cat-file[1]:
 
 ------------------------------------------------
 $ git cat-file tag v1.5.0
@@ -2946,8 +3072,8 @@ nLE/L9aUXdWeTFPron96DLA=
 -----END PGP SIGNATURE-----
 ------------------------------------------------
 
-See the gitlink:git-tag[1] command to learn how to create and verify tag
-objects.  (Note that gitlink:git-tag[1] can also be used to create
+See the linkgit:git-tag[1] command to learn how to create and verify tag
+objects.  (Note that linkgit:git-tag[1] can also be used to create
 "lightweight tags", which are not tag objects at all, but just simple
 references whose names begin with "refs/tags/").
 
@@ -3009,14 +3135,14 @@ $ git count-objects
 Although the object files are gone, any commands that refer to those
 objects will work exactly as they did before.
 
-The gitlink:git-gc[1] command performs packing, pruning, and more for
+The linkgit:git-gc[1] command performs packing, pruning, and more for
 you, so is normally the only high-level command you need.
 
 [[dangling-objects]]
 Dangling objects
 ~~~~~~~~~~~~~~~~
 
-The gitlink:git-fsck[1] command will sometimes complain about dangling
+The linkgit:git-fsck[1] command will sometimes complain about dangling
 objects.  They are not a problem.
 
 The most common cause of dangling objects is that you've rebased a
@@ -3099,13 +3225,134 @@ confusing and scary messages, but it won't actually do anything bad. In
 contrast, running "git prune" while somebody is actively changing the
 repository is a *BAD* idea).
 
+[[recovering-from-repository-corruption]]
+Recovering from repository corruption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By design, git treats data trusted to it with caution.  However, even in
+the absence of bugs in git itself, it is still possible that hardware or
+operating system errors could corrupt data.
+
+The first defense against such problems is backups.  You can back up a
+git directory using clone, or just using cp, tar, or any other backup
+mechanism.
+
+As a last resort, you can search for the corrupted objects and attempt
+to replace them by hand.  Back up your repository before attempting this
+in case you corrupt things even more in the process.
+
+We'll assume that the problem is a single missing or corrupted blob,
+which is sometimes a solvable problem.  (Recovering missing trees and
+especially commits is *much* harder).
+
+Before starting, verify that there is corruption, and figure out where
+it is with linkgit:git-fsck[1]; this may be time-consuming.
+
+Assume the output looks like this:
+
+------------------------------------------------
+$ git-fsck --full
+broken link from    tree 2d9263c6d23595e7cb2a21e5ebbb53655278dff8
+              to    blob 4b9458b3786228369c63936db65827de3cc06200
+missing blob 4b9458b3786228369c63936db65827de3cc06200
+------------------------------------------------
+
+(Typically there will be some "dangling object" messages too, but they
+aren't interesting.)
+
+Now you know that blob 4b9458b3 is missing, and that the tree 2d9263c6
+points to it.  If you could find just one copy of that missing blob
+object, possibly in some other repository, you could move it into
+.git/objects/4b/9458b3... and be done.  Suppose you can't.  You can
+still examine the tree that pointed to it with linkgit:git-ls-tree[1],
+which might output something like:
+
+------------------------------------------------
+$ git ls-tree 2d9263c6d23595e7cb2a21e5ebbb53655278dff8
+100644 blob 8d14531846b95bfa3564b58ccfb7913a034323b8	.gitignore
+100644 blob ebf9bf84da0aab5ed944264a5db2a65fe3a3e883	.mailmap
+100644 blob ca442d313d86dc67e0a2e5d584b465bd382cbf5c	COPYING
+...
+100644 blob 4b9458b3786228369c63936db65827de3cc06200	myfile
+...
+------------------------------------------------
+
+So now you know that the missing blob was the data for a file named
+"myfile".  And chances are you can also identify the directory--let's
+say it's in "somedirectory".  If you're lucky the missing copy might be
+the same as the copy you have checked out in your working tree at
+"somedirectory/myfile"; you can test whether that's right with
+linkgit:git-hash-object[1]:
+
+------------------------------------------------
+$ git hash-object -w somedirectory/myfile
+------------------------------------------------
+
+which will create and store a blob object with the contents of
+somedirectory/myfile, and output the sha1 of that object.  if you're
+extremely lucky it might be 4b9458b3786228369c63936db65827de3cc06200, in
+which case you've guessed right, and the corruption is fixed!
+
+Otherwise, you need more information.  How do you tell which version of
+the file has been lost?
+
+The easiest way to do this is with:
+
+------------------------------------------------
+$ git log --raw --all --full-history -- somedirectory/myfile
+------------------------------------------------
+
+Because you're asking for raw output, you'll now get something like
+
+------------------------------------------------
+commit abc
+Author:
+Date:
+...
+:100644 100644 4b9458b... newsha... M somedirectory/myfile
+
+
+commit xyz
+Author:
+Date:
+
+...
+:100644 100644 oldsha... 4b9458b... M somedirectory/myfile
+------------------------------------------------
+
+This tells you that the immediately preceding version of the file was
+"newsha", and that the immediately following version was "oldsha".
+You also know the commit messages that went with the change from oldsha
+to 4b9458b and with the change from 4b9458b to newsha.
+
+If you've been committing small enough changes, you may now have a good
+shot at reconstructing the contents of the in-between state 4b9458b.
+
+If you can do that, you can now recreate the missing object with
+
+------------------------------------------------
+$ git hash-object -w <recreated-file>
+------------------------------------------------
+
+and your repository is good again!
+
+(Btw, you could have ignored the fsck, and started with doing a
+
+------------------------------------------------
+$ git log --raw --all
+------------------------------------------------
+
+and just looked for the sha of the missing object (4b9458b..) in that
+whole thing. It's up to you - git does *have* a lot of information, it is
+just missing one particular blob version.
+
 [[the-index]]
 The index
 -----------
 
 The index is a binary file (generally kept in .git/index) containing a
 sorted list of path names, each with permissions and the SHA1 of a blob
-object; gitlink:git-ls-files[1] can show you the contents of the index:
+object; linkgit:git-ls-files[1] can show you the contents of the index:
 
 -------------------------------------------------
 $ git ls-files --stage
@@ -3127,7 +3374,7 @@ properties:
 1. The index contains all the information necessary to generate a single
 (uniquely determined) tree object.
 +
-For example, running gitlink:git-commit[1] generates this tree object
+For example, running linkgit:git-commit[1] generates this tree object
 from the index, stores it in the object database, and uses it as the
 tree object associated with the new commit.
 
@@ -3148,7 +3395,7 @@ you can create a three-way merge between them.
 +
 We saw in <<conflict-resolution>> that during a merge the index can
 store multiple versions of a single file (called "stages").  The third
-column in the gitlink:git-ls-files[1] output above is the stage
+column in the linkgit:git-ls-files[1] output above is the stage
 number, and will take on values other than 0 for files with merge
 conflicts.
 
@@ -3197,7 +3444,7 @@ commit ID, so other developers who clone the containing project
 Partial checkouts of the superproject are possible: you can tell Git to
 clone none, some or all of the submodules.
 
-The gitlink:git-submodule[1] command is available since Git 1.5.3.  Users
+The linkgit:git-submodule[1] command is available since Git 1.5.3.  Users
 with Git 1.5.2 can look up the submodule commits in the repository and
 manually check them out; earlier versions won't recognize the submodules at
 all.
@@ -3245,7 +3492,7 @@ The `git submodule add` command does a couple of things:
 
 - It clones the submodule under the current directory and by default checks out
   the master branch.
-- It adds the submodule's clone path to the gitlink:gitmodules[5] file and
+- It adds the submodule's clone path to the linkgit:gitmodules[5] file and
   adds this file to the index, ready to be committed.
 - It adds the submodule's current commit ID to the index, ready to be
   committed.
@@ -3406,26 +3653,26 @@ understand its inner workings.
 Object access and manipulation
 ------------------------------
 
-The gitlink:git-cat-file[1] command can show the contents of any object,
-though the higher-level gitlink:git-show[1] is usually more useful.
+The linkgit:git-cat-file[1] command can show the contents of any object,
+though the higher-level linkgit:git-show[1] is usually more useful.
 
-The gitlink:git-commit-tree[1] command allows constructing commits with
+The linkgit:git-commit-tree[1] command allows constructing commits with
 arbitrary parents and trees.
 
-A tree can be created with gitlink:git-write-tree[1] and its data can be
-accessed by gitlink:git-ls-tree[1].  Two trees can be compared with
-gitlink:git-diff-tree[1].
+A tree can be created with linkgit:git-write-tree[1] and its data can be
+accessed by linkgit:git-ls-tree[1].  Two trees can be compared with
+linkgit:git-diff-tree[1].
 
-A tag is created with gitlink:git-mktag[1], and the signature can be
-verified by gitlink:git-verify-tag[1], though it is normally simpler to
-use gitlink:git-tag[1] for both.
+A tag is created with linkgit:git-mktag[1], and the signature can be
+verified by linkgit:git-verify-tag[1], though it is normally simpler to
+use linkgit:git-tag[1] for both.
 
 [[the-workflow]]
 The Workflow
 ------------
 
-High-level operations such as gitlink:git-commit[1],
-gitlink:git-checkout[1] and gitlink:git-reset[1] work by moving data
+High-level operations such as linkgit:git-commit[1],
+linkgit:git-checkout[1] and linkgit:git-reset[1] work by moving data
 between the working tree, the index, and the object database.  Git
 provides low-level operations which perform each of these steps
 individually.
@@ -3440,7 +3687,7 @@ combinations:
 working directory -> index
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The gitlink:git-update-index[1] command updates the index with
+The linkgit:git-update-index[1] command updates the index with
 information from the working directory.  You generally update the
 index information by just specifying the filename you want to update,
 like so:
@@ -3460,7 +3707,7 @@ should use the `--remove` and `--add` flags respectively.
 NOTE! A `--remove` flag does 'not' mean that subsequent filenames will
 necessarily be removed: if the files still exist in your directory
 structure, the index will be updated with their new status, not
-removed. The only thing `--remove` means is that update-cache will be
+removed. The only thing `--remove` means is that update-index will be
 considering a removed file to be a valid thing, and if the file really
 does not exist any more, it will update the index accordingly.
 
@@ -3470,8 +3717,8 @@ stat information. It will 'not' update the object status itself, and
 it will only update the fields that are used to quickly test whether
 an object still matches its old backing store object.
 
-The previously introduced gitlink:git-add[1] is just a wrapper for
-gitlink:git-update-index[1].
+The previously introduced linkgit:git-add[1] is just a wrapper for
+linkgit:git-update-index[1].
 
 [[index-to-object-database]]
 index -> object database
@@ -3618,7 +3865,7 @@ Examining the data
 
 You can examine the data represented in the object database and the
 index with various helper tools. For every object, you can use
-gitlink:git-cat-file[1] to examine details about the
+linkgit:git-cat-file[1] to examine details about the
 object:
 
 -------------------------------------------------
@@ -4281,7 +4528,7 @@ Scan Documentation/ for other stuff left out; in particular:
 - howto's
 - some of technical/?
 - hooks
-- list of commands in gitlink:git[1]
+- list of commands in linkgit:git[1]
 
 Scan email archives for other stuff left out
 
@@ -4309,4 +4556,7 @@ Write a chapter on using plumbing and writing scripts.
 
 Alternates, clone -reference, etc.
 
-git unpack-objects -r for recovery
+More on recovery from repository corruption.  See:
+	http://marc.theaimsgroup.com/?l=git&m=117263864820799&w=2
+	http://marc.theaimsgroup.com/?l=git&m=117147855503798&w=2
+	http://marc.theaimsgroup.com/?l=git&m=117147855503798&w=2

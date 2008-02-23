@@ -235,7 +235,7 @@ OPTIONS
 
 --whitespace=<nowarn|warn|error|error-all|strip>::
 	This flag is passed to the `git-apply` program
-	(see gitlink:git-apply[1]) that applies the patch.
+	(see linkgit:git-apply[1]) that applies the patch.
 
 -i, \--interactive::
 	Make a list of the commits which are about to be rebased.  Let the
@@ -374,8 +374,8 @@ add other commits.  This can be used to split a commit into two:
   However, the working tree stays the same.
 
 - Now add the changes to the index that you want to have in the first
-  commit.  You can use gitlink:git-add[1] (possibly interactively) and/or
-  gitlink:git-gui[1] to do that.
+  commit.  You can use linkgit:git-add[1] (possibly interactively) and/or
+  linkgit:git-gui[1] to do that.
 
 - Commit the now-current index with whatever commit message is appropriate
   now.
@@ -386,7 +386,7 @@ add other commits.  This can be used to split a commit into two:
 
 If you are not absolutely sure that the intermediate revisions are
 consistent (they compile, pass the testsuite, etc.) you should use
-gitlink:git-stash[1] to stash away the not-yet-committed changes
+linkgit:git-stash[1] to stash away the not-yet-committed changes
 after each commit, test, and amend the commit if fixes are necessary.
 
 
@@ -401,4 +401,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

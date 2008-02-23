@@ -8,7 +8,8 @@
 #include "revision.h"
 #include "diffcore.h"
 
-int wt_status_use_color = 0;
+int wt_status_relative_paths = 1;
+int wt_status_use_color = -1;
 static char wt_status_colors[][COLOR_MAXLEN] = {
 	"",         /* WT_STATUS_HEADER: normal */
 	"\033[32m", /* WT_STATUS_UPDATED: green */
@@ -22,7 +23,6 @@ static const char use_add_rm_msg[] =
 "use \"git add/rm <file>...\" to update what will be committed";
 static const char use_add_to_include_msg[] =
 "use \"git add <file>...\" to include in what will be committed";
-static const char *excludes_file;
 
 static int parse_status_slot(const char *var, int offset)
 {
@@ -40,7 +40,7 @@ static int parse_status_slot(const char *var, int offset)
 
 static const char* color(int slot)
 {
-	return wt_status_use_color ? wt_status_colors[slot] : "";
+	return wt_status_use_color > 0 ? wt_status_colors[slot] : "";
 }
 
 void wt_status_prepare(struct wt_status *s)
@@ -52,101 +52,126 @@ void wt_status_prepare(struct wt_status *s)
 	head = resolve_ref("HEAD", sha1, 0, NULL);
 	s->branch = head ? xstrdup(head) : NULL;
 	s->reference = "HEAD";
+	s->fp = stdout;
+	s->index_file = get_index_file();
 }
 
-static void wt_status_print_cached_header(const char *reference)
+static void wt_status_print_cached_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER);
-	color_printf_ln(c, "# Changes to be committed:");
-	if (reference) {
-		color_printf_ln(c, "#   (use \"git reset %s <file>...\" to unstage)", reference);
+	color_fprintf_ln(s->fp, c, "# Changes to be committed:");
+	if (!s->is_initial) {
+		color_fprintf_ln(s->fp, c, "#   (use \"git reset %s <file>...\" to unstage)", s->reference);
 	} else {
-		color_printf_ln(c, "#   (use \"git rm --cached <file>...\" to unstage)");
+		color_fprintf_ln(s->fp, c, "#   (use \"git rm --cached <file>...\" to unstage)");
 	}
-	color_printf_ln(c, "#");
+	color_fprintf_ln(s->fp, c, "#");
 }
 
-static void wt_status_print_header(const char *main, const char *sub)
+static void wt_status_print_header(struct wt_status *s,
+				   const char *main, const char *sub)
 {
 	const char *c = color(WT_STATUS_HEADER);
-	color_printf_ln(c, "# %s:", main);
-	color_printf_ln(c, "#   (%s)", sub);
-	color_printf_ln(c, "#");
+	color_fprintf_ln(s->fp, c, "# %s:", main);
+	color_fprintf_ln(s->fp, c, "#   (%s)", sub);
+	color_fprintf_ln(s->fp, c, "#");
 }
 
-static void wt_status_print_trailer(void)
+static void wt_status_print_trailer(struct wt_status *s)
 {
-	color_printf_ln(color(WT_STATUS_HEADER), "#");
+	color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
 }
 
-static const char *quote_crlf(const char *in, char *buf, size_t sz)
+static char *quote_path(const char *in, int len,
+			struct strbuf *out, const char *prefix)
 {
-	const char *scan;
-	char *out;
-	const char *ret = in;
+	if (len < 0)
+		len = strlen(in);
 
-	for (scan = in, out = buf; *scan; scan++) {
-		int ch = *scan;
-		int quoted;
+	strbuf_grow(out, len);
+	strbuf_setlen(out, 0);
+	if (prefix) {
+		int off = 0;
+		while (prefix[off] && off < len && prefix[off] == in[off])
+			if (prefix[off] == '/') {
+				prefix += off + 1;
+				in += off + 1;
+				len -= off + 1;
+				off = 0;
+			} else
+				off++;
+
+		for (; *prefix; prefix++)
+			if (*prefix == '/')
+				strbuf_addstr(out, "../");
+	}
+
+	for ( ; len > 0; in++, len--) {
+		int ch = *in;
 
 		switch (ch) {
 		case '\n':
-			quoted = 'n';
+			strbuf_addstr(out, "\\n");
 			break;
 		case '\r':
-			quoted = 'r';
+			strbuf_addstr(out, "\\r");
 			break;
 		default:
-			*out++ = ch;
+			strbuf_addch(out, ch);
 			continue;
 		}
-		*out++ = '\\';
-		*out++ = quoted;
-		ret = buf;
 	}
-	*out = '\0';
-	return ret;
+
+	if (!out->len)
+		strbuf_addstr(out, "./");
+
+	return out->buf;
 }
 
-static void wt_status_print_filepair(int t, struct diff_filepair *p)
+static void wt_status_print_filepair(struct wt_status *s,
+				     int t, struct diff_filepair *p)
 {
 	const char *c = color(t);
 	const char *one, *two;
-	char onebuf[PATH_MAX], twobuf[PATH_MAX];
+	struct strbuf onebuf, twobuf;
 
-	one = quote_crlf(p->one->path, onebuf, sizeof(onebuf));
-	two = quote_crlf(p->two->path, twobuf, sizeof(twobuf));
+	strbuf_init(&onebuf, 0);
+	strbuf_init(&twobuf, 0);
+	one = quote_path(p->one->path, -1, &onebuf, s->prefix);
+	two = quote_path(p->two->path, -1, &twobuf, s->prefix);
 
-	color_printf(color(WT_STATUS_HEADER), "#\t");
+	color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
 	switch (p->status) {
 	case DIFF_STATUS_ADDED:
-		color_printf(c, "new file:   %s", one);
+		color_fprintf(s->fp, c, "new file:   %s", one);
 		break;
 	case DIFF_STATUS_COPIED:
-		color_printf(c, "copied:     %s -> %s", one, two);
+		color_fprintf(s->fp, c, "copied:     %s -> %s", one, two);
 		break;
 	case DIFF_STATUS_DELETED:
-		color_printf(c, "deleted:    %s", one);
+		color_fprintf(s->fp, c, "deleted:    %s", one);
 		break;
 	case DIFF_STATUS_MODIFIED:
-		color_printf(c, "modified:   %s", one);
+		color_fprintf(s->fp, c, "modified:   %s", one);
 		break;
 	case DIFF_STATUS_RENAMED:
-		color_printf(c, "renamed:    %s -> %s", one, two);
+		color_fprintf(s->fp, c, "renamed:    %s -> %s", one, two);
 		break;
 	case DIFF_STATUS_TYPE_CHANGED:
-		color_printf(c, "typechange: %s", one);
+		color_fprintf(s->fp, c, "typechange: %s", one);
 		break;
 	case DIFF_STATUS_UNKNOWN:
-		color_printf(c, "unknown:    %s", one);
+		color_fprintf(s->fp, c, "unknown:    %s", one);
 		break;
 	case DIFF_STATUS_UNMERGED:
-		color_printf(c, "unmerged:   %s", one);
+		color_fprintf(s->fp, c, "unmerged:   %s", one);
 		break;
 	default:
 		die("bug: unhandled diff status %c", p->status);
 	}
-	printf("\n");
+	fprintf(s->fp, "\n");
+	strbuf_release(&onebuf);
+	strbuf_release(&twobuf);
 }
 
 static void wt_status_print_updated_cb(struct diff_queue_struct *q,
@@ -160,14 +185,14 @@ static void wt_status_print_updated_cb(struct diff_queue_struct *q,
 		if (q->queue[i]->status == 'U')
 			continue;
 		if (!shown_header) {
-			wt_status_print_cached_header(s->reference);
+			wt_status_print_cached_header(s);
 			s->commitable = 1;
 			shown_header = 1;
 		}
-		wt_status_print_filepair(WT_STATUS_UPDATED, q->queue[i]);
+		wt_status_print_filepair(s, WT_STATUS_UPDATED, q->queue[i]);
 	}
 	if (shown_header)
-		wt_status_print_trailer();
+		wt_status_print_trailer(s);
 }
 
 static void wt_status_print_changed_cb(struct diff_queue_struct *q,
@@ -184,38 +209,33 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 				msg = use_add_rm_msg;
 				break;
 			}
-		wt_status_print_header("Changed but not updated", msg);
+		wt_status_print_header(s, "Changed but not updated", msg);
 	}
 	for (i = 0; i < q->nr; i++)
-		wt_status_print_filepair(WT_STATUS_CHANGED, q->queue[i]);
+		wt_status_print_filepair(s, WT_STATUS_CHANGED, q->queue[i]);
 	if (q->nr)
-		wt_status_print_trailer();
-}
-
-static void wt_read_cache(struct wt_status *s)
-{
-	discard_cache();
-	read_cache();
+		wt_status_print_trailer(s);
 }
 
 static void wt_status_print_initial(struct wt_status *s)
 {
 	int i;
-	char buf[PATH_MAX];
+	struct strbuf buf;
 
-	wt_read_cache(s);
+	strbuf_init(&buf, 0);
 	if (active_nr) {
 		s->commitable = 1;
-		wt_status_print_cached_header(NULL);
+		wt_status_print_cached_header(s);
 	}
 	for (i = 0; i < active_nr; i++) {
-		color_printf(color(WT_STATUS_HEADER), "#\t");
-		color_printf_ln(color(WT_STATUS_UPDATED), "new file: %s",
-				quote_crlf(active_cache[i]->name,
-					   buf, sizeof(buf)));
+		color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
+		color_fprintf_ln(s->fp, color(WT_STATUS_UPDATED), "new file: %s",
+				quote_path(active_cache[i]->name, -1,
+					   &buf, s->prefix));
 	}
 	if (active_nr)
-		wt_status_print_trailer();
+		wt_status_print_trailer(s);
+	strbuf_release(&buf);
 }
 
 static void wt_status_print_updated(struct wt_status *s)
@@ -228,7 +248,7 @@ static void wt_status_print_updated(struct wt_status *s)
 	rev.diffopt.format_callback_data = s;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
-	wt_read_cache(s);
+	rev.diffopt.break_opt = 0;
 	run_diff_index(&rev, 1);
 }
 
@@ -240,29 +260,24 @@ static void wt_status_print_changed(struct wt_status *s)
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_print_changed_cb;
 	rev.diffopt.format_callback_data = s;
-	wt_read_cache(s);
 	run_diff_files(&rev, 0);
 }
 
 static void wt_status_print_untracked(struct wt_status *s)
 {
 	struct dir_struct dir;
-	const char *x;
 	int i;
 	int shown_header = 0;
+	struct strbuf buf;
 
+	strbuf_init(&buf, 0);
 	memset(&dir, 0, sizeof(dir));
 
-	dir.exclude_per_dir = ".gitignore";
 	if (!s->untracked) {
 		dir.show_other_directories = 1;
 		dir.hide_empty_directories = 1;
 	}
-	x = git_path("info/exclude");
-	if (file_exists(x))
-		add_excludes_from_file(&dir, x);
-	if (excludes_file && file_exists(excludes_file))
-		add_excludes_from_file(&dir, excludes_file);
+	setup_standard_excludes(&dir);
 
 	read_directory(&dir, ".", "", 0, NULL);
 	for(i = 0; i < dir.nr; i++) {
@@ -282,25 +297,42 @@ static void wt_status_print_untracked(struct wt_status *s)
 		}
 		if (!shown_header) {
 			s->workdir_untracked = 1;
-			wt_status_print_header("Untracked files",
+			wt_status_print_header(s, "Untracked files",
 					       use_add_to_include_msg);
 			shown_header = 1;
 		}
-		color_printf(color(WT_STATUS_HEADER), "#\t");
-		color_printf_ln(color(WT_STATUS_UNTRACKED), "%.*s",
-				ent->len, ent->name);
+		color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
+		color_fprintf_ln(s->fp, color(WT_STATUS_UNTRACKED), "%s",
+				quote_path(ent->name, ent->len,
+					&buf, s->prefix));
 	}
+	strbuf_release(&buf);
 }
 
 static void wt_status_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
+	int saved_stdout;
+
+	fflush(s->fp);
+
+	/* Sigh, the entire diff machinery is hardcoded to output to
+	 * stdout.  Do the dup-dance...*/
+	saved_stdout = dup(STDOUT_FILENO);
+	if (saved_stdout < 0 ||dup2(fileno(s->fp), STDOUT_FILENO) < 0)
+		die("couldn't redirect stdout\n");
+
 	init_revisions(&rev, NULL);
 	setup_revisions(0, NULL, &rev, s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
-	wt_read_cache(s);
 	run_diff_index(&rev, 1);
+
+	fflush(stdout);
+
+	if (dup2(saved_stdout, STDOUT_FILENO) < 0)
+		die("couldn't restore stdout\n");
+	close(saved_stdout);
 }
 
 void wt_status_print(struct wt_status *s)
@@ -317,14 +349,14 @@ void wt_status_print(struct wt_status *s)
 			branch_name = "";
 			on_what = "Not currently on any branch.";
 		}
-		color_printf_ln(color(WT_STATUS_HEADER),
+		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER),
 			"# %s%s", on_what, branch_name);
 	}
 
 	if (s->is_initial) {
-		color_printf_ln(color(WT_STATUS_HEADER), "#");
-		color_printf_ln(color(WT_STATUS_HEADER), "# Initial commit");
-		color_printf_ln(color(WT_STATUS_HEADER), "#");
+		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
+		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "# Initial commit");
+		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
 		wt_status_print_initial(s);
 	}
 	else {
@@ -338,7 +370,9 @@ void wt_status_print(struct wt_status *s)
 		wt_status_print_verbose(s);
 	if (!s->commitable) {
 		if (s->amend)
-			printf("# No changes\n");
+			fprintf(s->fp, "# No changes\n");
+		else if (s->nowarn)
+			; /* nothing */
 		else if (s->workdir_dirty)
 			printf("no changes added to commit (use \"git add\" and/or \"git commit -a\")\n");
 		else if (s->workdir_untracked)
@@ -353,18 +387,19 @@ void wt_status_print(struct wt_status *s)
 int git_status_config(const char *k, const char *v)
 {
 	if (!strcmp(k, "status.color") || !strcmp(k, "color.status")) {
-		wt_status_use_color = git_config_colorbool(k, v);
+		wt_status_use_color = git_config_colorbool(k, v, -1);
 		return 0;
 	}
 	if (!prefixcmp(k, "status.color.") || !prefixcmp(k, "color.status.")) {
 		int slot = parse_status_slot(k, 13);
-		color_parse(v, k, wt_status_colors[slot]);
-	}
-	if (!strcmp(k, "core.excludesfile")) {
 		if (!v)
-			die("core.excludesfile without value");
-		excludes_file = xstrdup(v);
+			return config_error_nonbool(k);
+		color_parse(v, k, wt_status_colors[slot]);
 		return 0;
 	}
-	return git_default_config(k, v);
+	if (!strcmp(k, "status.relativepaths")) {
+		wt_status_relative_paths = git_config_bool(k, v);
+		return 0;
+	}
+	return git_color_default_config(k, v);
 }

@@ -7,6 +7,8 @@
 #include "run-command.h"
 #include "exec_cmd.h"
 #include "utf8.h"
+#include "parse-options.h"
+#include "cache-tree.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -19,51 +21,44 @@
  * Copyright (c) 2005 Junio C Hamano
  */
 
-static const char *revert_usage = "git-revert [--edit | --no-edit] [-n] <commit-ish>";
+static const char * const revert_usage[] = {
+	"git-revert [options] <commit-ish>",
+	NULL
+};
 
-static const char *cherry_pick_usage = "git-cherry-pick [--edit] [-n] [-r] [-x] <commit-ish>";
+static const char * const cherry_pick_usage[] = {
+	"git-cherry-pick [options] <commit-ish>",
+	NULL
+};
 
-static int edit;
-static int replay;
+static int edit, no_replay, no_commit, mainline;
 static enum { REVERT, CHERRY_PICK } action;
-static int no_commit;
 static struct commit *commit;
-static int needed_deref;
 
 static const char *me;
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
-static void parse_options(int argc, const char **argv)
+static void parse_args(int argc, const char **argv)
 {
-	const char *usage_str = action == REVERT ?
-		revert_usage : cherry_pick_usage;
+	const char * const * usage_str =
+		action == REVERT ?  revert_usage : cherry_pick_usage;
 	unsigned char sha1[20];
 	const char *arg;
-	int i;
+	int noop;
+	struct option options[] = {
+		OPT_BOOLEAN('n', "no-commit", &no_commit, "don't automatically commit"),
+		OPT_BOOLEAN('e', "edit", &edit, "edit the commit message"),
+		OPT_BOOLEAN('x', NULL, &no_replay, "append commit name when cherry-picking"),
+		OPT_BOOLEAN('r', NULL, &noop, "no-op (backward compatibility)"),
+		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
+		OPT_END(),
+	};
 
-	if (argc < 2)
-		usage(usage_str);
+	if (parse_options(argc, argv, options, usage_str, 0) != 1)
+		usage_with_options(usage_str, options);
+	arg = argv[0];
 
-	for (i = 1; i < argc; i++) {
-		arg = argv[i];
-		if (arg[0] != '-')
-			break;
-		if (!strcmp(arg, "-n") || !strcmp(arg, "--no-commit"))
-			no_commit = 1;
-		else if (!strcmp(arg, "-e") || !strcmp(arg, "--edit"))
-			edit = 1;
-		else if (!strcmp(arg, "--no-edit"))
-			edit = 0;
-		else if (!strcmp(arg, "-x") || !strcmp(arg, "--i-really-want-"
-				"to-expose-my-private-commit-object-name"))
-			replay = 0;
-		else if (strcmp(arg, "-r"))
-			usage(usage_str);
-	}
-	if (i != argc - 1)
-		usage(usage_str);
-	arg = argv[argc - 1];
 	if (get_sha1(arg, sha1))
 		die ("Cannot find '%s'", arg);
 	commit = (struct commit *)parse_object(sha1);
@@ -72,7 +67,6 @@ static void parse_options(int argc, const char **argv)
 	if (commit->object.type == OBJ_TAG) {
 		commit = (struct commit *)
 			deref_tag((struct object *)commit, arg, strlen(arg));
-		needed_deref = 1;
 	}
 	if (commit->object.type != OBJ_COMMIT)
 		die ("'%s' does not point to a commit", arg);
@@ -231,10 +225,31 @@ static int merge_recursive(const char *base_sha1,
 	return run_command_v_opt(argv, RUN_COMMAND_NO_STDIN | RUN_GIT_CMD);
 }
 
+static char *help_msg(const unsigned char *sha1)
+{
+	static char helpbuf[1024];
+	char *msg = getenv("GIT_CHERRY_PICK_HELP");
+
+	if (msg)
+		return msg;
+
+	strcpy(helpbuf, "  After resolving the conflicts,\n"
+	       "mark the corrected paths with 'git add <paths>' "
+	       "or 'git rm <paths>' and commit the result.");
+
+	if (action == CHERRY_PICK) {
+		sprintf(helpbuf + strlen(helpbuf),
+			"\nWhen commiting, use the option "
+			"'-c %s' to retain authorship and message.",
+			find_unique_abbrev(sha1, DEFAULT_ABBREV));
+	}
+	return helpbuf;
+}
+
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
-	struct commit *base, *next;
+	struct commit *base, *next, *parent;
 	int i;
 	char *oneline, *reencoded_message = NULL;
 	const char *message, *encoding;
@@ -243,18 +258,20 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	git_config(git_default_config);
 	me = action == REVERT ? "revert" : "cherry-pick";
 	setenv(GIT_REFLOG_ACTION, me, 0);
-	parse_options(argc, argv);
+	parse_args(argc, argv);
 
 	/* this is copied from the shell script, but it's never triggered... */
-	if (action == REVERT && replay)
+	if (action == REVERT && !no_replay)
 		die("revert is incompatible with replay");
 
 	if (no_commit) {
 		/*
 		 * We do not intend to commit immediately.  We just want to
-		 * merge the differences in.
+		 * merge the differences in, so let's compute the tree
+		 * that represents the "current" state for merge-recursive
+		 * to work on.
 		 */
-		if (write_tree(head, 0, NULL))
+		if (write_cache_as_tree(head, 0, NULL))
 			die ("Your index file is unmerged.");
 	} else {
 		struct wt_status s;
@@ -262,15 +279,36 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		if (get_sha1("HEAD", head))
 			die ("You do not have a valid HEAD");
 		wt_status_prepare(&s);
-		if (s.commitable || s.workdir_dirty)
+		if (s.commitable)
 			die ("Dirty index: cannot %s", me);
 		discard_cache();
 	}
 
 	if (!commit->parents)
 		die ("Cannot %s a root commit", me);
-	if (commit->parents->next)
-		die ("Cannot %s a multi-parent commit.", me);
+	if (commit->parents->next) {
+		/* Reverting or cherry-picking a merge commit */
+		int cnt;
+		struct commit_list *p;
+
+		if (!mainline)
+			die("Commit %s is a merge but no -m option was given.",
+			    sha1_to_hex(commit->object.sha1));
+
+		for (cnt = 1, p = commit->parents;
+		     cnt != mainline && p;
+		     cnt++)
+			p = p->next;
+		if (cnt != mainline || !p)
+			die("Commit %s does not have parent %d",
+			    sha1_to_hex(commit->object.sha1), mainline);
+		parent = p->item;
+	} else if (0 < mainline)
+		die("Mainline was specified but commit %s is not a merge.",
+		    sha1_to_hex(commit->object.sha1));
+	else
+		parent = commit->parents->item;
+
 	if (!(message = commit->buffer))
 		die ("Cannot get commit message for %s",
 				sha1_to_hex(commit->object.sha1));
@@ -299,39 +337,28 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		char *oneline_body = strchr(oneline, ' ');
 
 		base = commit;
-		next = commit->parents->item;
+		next = parent;
 		add_to_msg("Revert \"");
 		add_to_msg(oneline_body + 1);
 		add_to_msg("\"\n\nThis reverts commit ");
 		add_to_msg(sha1_to_hex(commit->object.sha1));
 		add_to_msg(".\n");
 	} else {
-		base = commit->parents->item;
+		base = parent;
 		next = commit;
 		set_author_ident_env(message);
 		add_message_to_msg(message);
-		if (!replay) {
+		if (no_replay) {
 			add_to_msg("(cherry picked from commit ");
 			add_to_msg(sha1_to_hex(commit->object.sha1));
 			add_to_msg(")\n");
 		}
 	}
-	if (needed_deref) {
-		add_to_msg("(original 'git ");
-		add_to_msg(me);
-		add_to_msg("' arguments: ");
-		for (i = 0; i < argc; i++) {
-			if (i)
-				add_to_msg(" ");
-			add_to_msg(argv[i]);
-		}
-		add_to_msg(")\n");
-	}
 
 	if (merge_recursive(sha1_to_hex(base->object.sha1),
 				sha1_to_hex(head), "HEAD",
 				sha1_to_hex(next->object.sha1), oneline) ||
-			write_tree(head, 0, NULL)) {
+			write_cache_as_tree(head, 0, NULL)) {
 		add_to_msg("\nConflicts:\n\n");
 		read_cache();
 		for (i = 0; i < active_nr;) {
@@ -345,21 +372,13 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 					i++;
 			}
 		}
-		if (close(msg_fd) || commit_lock_file(&msg_file) < 0)
+		if (commit_lock_file(&msg_file) < 0)
 			die ("Error wrapping up %s", defmsg);
-		fprintf(stderr, "Automatic %s failed.  "
-			"After resolving the conflicts,\n"
-			"mark the corrected paths with 'git-add <paths>'\n"
-			"and commit the result.\n", me);
-		if (action == CHERRY_PICK) {
-			fprintf(stderr, "When commiting, use the option "
-				"'-c %s' to retain authorship and message.\n",
-				find_unique_abbrev(commit->object.sha1,
-					DEFAULT_ABBREV));
-		}
+		fprintf(stderr, "Automatic %s failed.%s\n",
+			me, help_msg(commit->object.sha1));
 		exit(1);
 	}
-	if (close(msg_fd) || commit_lock_file(&msg_file) < 0)
+	if (commit_lock_file(&msg_file) < 0)
 		die ("Error wrapping up %s", defmsg);
 	fprintf(stderr, "Finished one %s.\n", me);
 
@@ -388,13 +407,14 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 {
 	if (isatty(0))
 		edit = 1;
+	no_replay = 1;
 	action = REVERT;
 	return revert_or_cherry_pick(argc, argv);
 }
 
 int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
 {
-	replay = 1;
+	no_replay = 0;
 	action = CHERRY_PICK;
 	return revert_or_cherry_pick(argc, argv);
 }

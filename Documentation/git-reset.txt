@@ -8,8 +8,8 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [verse]
-'git-reset' [--mixed | --soft | --hard] [<commit>]
-'git-reset' [--mixed] <commit> [--] <paths>...
+'git reset' [--mixed | --soft | --hard] [-q] [<commit>]
+'git reset' [-q] [<commit>] [--] <paths>...
 
 DESCRIPTION
 -----------
@@ -21,7 +21,7 @@ commit (or set of commits) and want to redo that part without showing
 the undo in the history.
 
 If you want to undo a commit other than the latest on a branch,
-gitlink:git-revert[1] is your friend.
+linkgit:git-revert[1] is your friend.
 
 The second form with 'paths' is used to revert selected paths in
 the index from a given commit, without moving HEAD.
@@ -37,7 +37,7 @@ OPTIONS
 --soft::
 	Does not touch the index file nor the working tree at all, but
 	requires them to be in a good order. This leaves all your changed
-	files "Added but not yet committed", as gitlink:git-status[1] would
+	files "Changes to be committed", as linkgit:git-status[1] would
 	put it.
 
 --hard::
@@ -45,8 +45,11 @@ OPTIONS
 	switched to. Any changes to tracked files in the working tree
 	since <commit> are lost.
 
+-q::
+	Be quiet, only report errors.
+
 <commit>::
-	Commit to make the current HEAD.
+	Commit to make the current HEAD. If not given defaults to HEAD.
 
 Examples
 --------
@@ -68,7 +71,7 @@ message, or both.  Leaves working tree as it was before "reset".
 commit by starting with its log message.  If you do not need to
 edit the message further, you can give -C option instead.
 +
-See also the --amend option to gitlink:git-commit[1].
+See also the --amend option to linkgit:git-commit[1].
 
 Undo commits permanently::
 +
@@ -157,7 +160,7 @@ need to get to the other branch for a quick bugfix.
 ------------
 $ git checkout feature ;# you were working in "feature" branch and
 $ work work work       ;# got interrupted
-$ git commit -a -m 'snapshot WIP'                 <1>
+$ git commit -a -m "snapshot WIP"                 <1>
 $ git checkout master
 $ fix fix fix
 $ git commit ;# commit with real log
@@ -173,6 +176,23 @@ $ git reset                                       <3>
     committed as 'snapshot WIP'.  This updates the index to show your
     WIP files as uncommitted.
 
+Reset a single file in the index::
++
+Suppose you have added a file to your index, but later decide you do not
+want to add it to your commit. You can remove the file from the index
+while keeping your changes with git reset.
++
+------------
+$ git reset -- frotz.c                      <1>
+$ git commit -m "Commit files in index"     <2>
+$ git add frotz.c                           <3>
+------------
++
+<1> This removes the file from the index while keeping it in the working
+    directory.
+<2> This commits all other changes in the index.
+<3> Adds the file to the index again.
+
 Author
 ------
 Written by Junio C Hamano <junkio@cox.net> and Linus Torvalds <torvalds@osdl.org>
@@ -183,4 +203,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

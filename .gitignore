@@ -35,12 +35,12 @@ git-diff-files
 git-diff-index
 git-diff-tree
 git-describe
+git-fast-export
 git-fast-import
 git-fetch
 git-fetch--tool
 git-fetch-pack
 git-filter-branch
-git-findtags
 git-fmt-merge-msg
 git-for-each-ref
 git-format-patch
@@ -57,7 +57,6 @@ git-index-pack
 git-init
 git-init-db
 git-instaweb
-git-local-fetch
 git-log
 git-lost-found
 git-ls-files
@@ -109,7 +108,6 @@ git-rev-list
 git-rev-parse
 git-revert
 git-rm
-git-runstatus
 git-send-email
 git-send-pack
 git-sh-setup
@@ -119,16 +117,11 @@ git-show
 git-show-branch
 git-show-index
 git-show-ref
-git-ssh-fetch
-git-ssh-pull
-git-ssh-push
-git-ssh-upload
 git-stash
 git-status
 git-stripspace
 git-submodule
 git-svn
-git-svnimport
 git-symbolic-ref
 git-tag
 git-tar-tree
@@ -142,6 +135,7 @@ git-upload-pack
 git-var
 git-verify-pack
 git-verify-tag
+git-web--browse
 git-whatchanged
 git-write-tree
 git-core-*/?*
@@ -154,6 +148,7 @@ test-delta
 test-dump-cache-tree
 test-genrandom
 test-match-trees
+test-parse-options
 test-sha1
 common-cmds.h
 *.tar.gz

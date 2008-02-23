@@ -39,7 +39,7 @@ OPTIONS
 -x::
 	Don't use the ignore rules.  This allows removing all untracked
 	files, including build products.  This can be used (possibly in
-	conjunction with gitlink:git-reset[1]) to create a pristine
+	conjunction with linkgit:git-reset[1]) to create a pristine
 	working directory to test a clean build.
 
 -X::
@@ -54,4 +54,4 @@ Written by Pavel Roskin <proski@gnu.org>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

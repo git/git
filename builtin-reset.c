@@ -18,7 +18,7 @@
 #include "tree.h"
 
 static const char builtin_reset_usage[] =
-"git-reset [--mixed | --soft | --hard]  [<commit-ish>] [ [--] <paths>...]";
+"git-reset [--mixed | --soft | --hard] [-q] [<commit-ish>] [ [--] <paths>...]";
 
 static char *args_to_str(const char **argv)
 {
@@ -46,26 +46,14 @@ static inline int is_merge(void)
 
 static int unmerged_files(void)
 {
-	char b;
-	ssize_t len;
-	struct child_process cmd;
-	const char *argv_ls_files[] = {"ls-files", "--unmerged", NULL};
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.argv = argv_ls_files;
-	cmd.git_cmd = 1;
-	cmd.out = -1;
-
-	if (start_command(&cmd))
-		die("Could not run sub-command: git ls-files");
-
-	len = xread(cmd.out, &b, 1);
-	if (len < 0)
-		die("Could not read output from git ls-files: %s",
-						strerror(errno));
-	finish_command(&cmd);
-
-	return len;
+	int i;
+	read_cache();
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (ce_stage(ce))
+			return 1;
+	}
+	return 0;
 }
 
 static int reset_index_file(const unsigned char *sha1, int is_hard_reset)
@@ -107,19 +95,33 @@ static void print_new_head_line(struct commit *commit)
 		printf("\n");
 }
 
-static int update_index_refresh(void)
+static int update_index_refresh(int fd, struct lock_file *index_lock)
 {
-	const char *argv_update_index[] = {"update-index", "--refresh", NULL};
-	return run_command_v_opt(argv_update_index, RUN_GIT_CMD);
+	int result;
+
+	if (!index_lock) {
+		index_lock = xcalloc(1, sizeof(struct lock_file));
+		fd = hold_locked_index(index_lock, 1);
+	}
+
+	if (read_cache() < 0)
+		return error("Could not read index");
+	result = refresh_cache(0) ? 1 : 0;
+	if (write_cache(fd, active_cache, active_nr) ||
+			commit_locked_index(index_lock))
+		return error ("Could not refresh index");
+	return result;
 }
 
 static void update_index_from_diff(struct diff_queue_struct *q,
 		struct diff_options *opt, void *data)
 {
 	int i;
+	int *discard_flag = data;
 
 	/* do_diff_cache() mangled the index */
 	discard_cache();
+	*discard_flag = 1;
 	read_cache();
 
 	for (i = 0; i < q->nr; i++) {
@@ -138,24 +140,29 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 static int read_from_tree(const char *prefix, const char **argv,
 		unsigned char *tree_sha1)
 {
-        struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-	int index_fd;
+	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
+	int index_fd, index_was_discarded = 0;
 	struct diff_options opt;
 
 	memset(&opt, 0, sizeof(opt));
 	diff_tree_setup_paths(get_pathspec(prefix, (const char **)argv), &opt);
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
+	opt.format_callback_data = &index_was_discarded;
 
 	index_fd = hold_locked_index(lock, 1);
+	index_was_discarded = 0;
 	read_cache();
 	if (do_diff_cache(tree_sha1, &opt))
 		return 1;
 	diffcore_std(&opt);
 	diff_flush(&opt);
-	return write_cache(index_fd, active_cache, active_nr) ||
-		close(index_fd) ||
-		commit_locked_index(lock);
+	diff_tree_release_paths(&opt);
+
+	if (!index_was_discarded)
+		/* The index is still clobbered from do_diff_cache() */
+		discard_cache();
+	return update_index_refresh(index_fd, lock);
 }
 
 static void prepend_reflog_action(const char *action, char *buf, size_t size)
@@ -169,11 +176,11 @@ static void prepend_reflog_action(const char *action, char *buf, size_t size)
 }
 
 enum reset_type { MIXED, SOFT, HARD, NONE };
-static char *reset_type_names[] = { "mixed", "soft", "hard", NULL };
+static const char *reset_type_names[] = { "mixed", "soft", "hard", NULL };
 
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
-	int i = 1, reset_type = NONE, update_ref_status = 0;
+	int i = 1, reset_type = NONE, update_ref_status = 0, quiet = 0;
 	const char *rev = "HEAD";
 	unsigned char sha1[20], *orig = NULL, sha1_orig[20],
 				*old_orig = NULL, sha1_old_orig[20];
@@ -185,7 +192,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	reflog_action = args_to_str(argv);
 	setenv("GIT_REFLOG_ACTION", reflog_action, 0);
 
-	if (i < argc) {
+	while (i < argc) {
 		if (!strcmp(argv[i], "--mixed")) {
 			reset_type = MIXED;
 			i++;
@@ -198,6 +205,12 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			reset_type = HARD;
 			i++;
 		}
+		else if (!strcmp(argv[i], "-q")) {
+			quiet = 1;
+			i++;
+		}
+		else
+			break;
 	}
 
 	if (i < argc && argv[i][0] != '-')
@@ -225,12 +238,13 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		else if (reset_type != NONE)
 			die("Cannot do %s reset with paths.",
 					reset_type_names[reset_type]);
-		if (read_from_tree(prefix, argv + i, sha1))
-			return 1;
-		return update_index_refresh() ? 1 : 0;
+		return read_from_tree(prefix, argv + i, sha1);
 	}
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
+
+	if (reset_type == HARD && is_bare_repository())
+		die("hard reset makes no sense in a bare repository");
 
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset
@@ -258,13 +272,13 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	switch (reset_type) {
 	case HARD:
-		if (!update_ref_status)
+		if (!update_ref_status && !quiet)
 			print_new_head_line(commit);
 		break;
 	case SOFT: /* Nothing else to do. */
 		break;
 	case MIXED: /* Report what has not been updated. */
-		update_index_refresh();
+		update_index_refresh(0, NULL);
 		break;
 	}
 

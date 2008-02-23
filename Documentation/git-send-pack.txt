@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Usually you would want to use gitlink:git-push[1] which is a
+Usually you would want to use linkgit:git-push[1] which is a
 higher level wrapper of this command instead.
 
 Invokes 'git-receive-pack' on a possibly remote repository, and
@@ -85,7 +85,9 @@ Each pattern pair consists of the source side (before the colon)
 and the destination side (after the colon).  The ref to be
 pushed is determined by finding a match that matches the source
 side, and where it is pushed is determined by using the
-destination side.
+destination side. The rules used to match a ref are the same
+rules used by linkgit:git-rev-parse[1] to resolve a symbolic ref
+name.
 
  - It is an error if <src> does not match exactly one of the
    local refs.
@@ -123,4 +125,4 @@ Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -42,6 +42,8 @@ int main(int argc, char **argv)
 	int prefix_length = -1;
 	int no_more_flags = 0;
 
+	git_config(git_default_config);
+
 	for (i = 1 ; i < argc; i++) {
 		if (!no_more_flags && argv[i][0] == '-') {
 			if (!strcmp(argv[i], "-t")) {

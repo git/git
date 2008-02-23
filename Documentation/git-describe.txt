@@ -51,6 +51,10 @@ OPTIONS
 	being employed to standard error.  The tag name will still
 	be printed to standard out.
 
+--match <pattern>::
+	Only consider tags matching the given pattern (can be used to avoid
+	leaking private tags made from the repository).
+
 EXAMPLES
 --------
 
@@ -123,4 +127,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

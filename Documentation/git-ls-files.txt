@@ -15,6 +15,7 @@ SYNOPSIS
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>]
+		[--exclude-standard]
 		[--error-unmatch] [--with-tree=<tree-ish>]
 		[--full-name] [--abbrev] [--] [<file>]\*
 
@@ -77,6 +78,10 @@ OPTIONS
 	read additional exclude patterns that apply only to the
 	directory and its subdirectories in <file>.
 
+--exclude-standard::
+	Add the standard git exclusions: .git/info/exclude, .gitignore
+	in each directory, and the user's global exclusion file.
+
 --error-unmatch::
 	If any <file> does not appear in the index, treat this as an
 	error (return 1).
@@ -100,7 +105,8 @@ OPTIONS
 
 -v::
 	Similar to `-t`, but use lowercase letters for files
-	that are marked as 'always matching index'.
+	that are marked as 'assume unchanged' (see
+	linkgit:git-update-index[1]).
 
 --full-name::
 	When run from a subdirectory, the command usually
@@ -146,7 +152,7 @@ Exclude Patterns
 
 'git-ls-files' can use a list of "exclude patterns" when
 traversing the directory tree and finding files to show when the
-flags --others or --ignored are specified.  gitlink:gitignore[5]
+flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
 
 These exclude patterns come from these places, in order:
@@ -173,7 +179,7 @@ pattern file appears in.
 
 See Also
 --------
-gitlink:git-read-tree[1], gitlink:gitignore[5]
+linkgit:git-read-tree[1], linkgit:gitignore[5]
 
 
 Author
@@ -186,4 +192,4 @@ Documentation by David Greaves, Junio C Hamano, Josh Triplett, and the git-list 
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -119,14 +119,14 @@ test_expect_success \
     'compare_diff_raw expected current'
 
 test_expect_success \
-    'run diff with -B' \
+    'run diff with -B -M' \
     'git diff-index -B -M "$tree" >current'
 
-# This should not mistake file0 as the copy source of new file1
-# due to type differences.
+# file0 changed from regular to symlink.  file1 is very close to the preimage of file0.
+# because we break file0, file1 can become a rename of it.
 cat >expected <<\EOF
 :100644 120000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M100	file1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 R	file0	file1
 EOF
 
 test_expect_success \

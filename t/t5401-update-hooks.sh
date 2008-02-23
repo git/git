@@ -25,7 +25,7 @@ test_expect_success setup '
 
 cat >victim/.git/hooks/pre-receive <<'EOF'
 #!/bin/sh
-printf "$@" >>$GIT_DIR/pre-receive.args
+printf %s "$@" >>$GIT_DIR/pre-receive.args
 cat - >$GIT_DIR/pre-receive.stdin
 echo STDOUT pre-receive
 echo STDERR pre-receive >&2
@@ -35,7 +35,7 @@ chmod u+x victim/.git/hooks/pre-receive
 cat >victim/.git/hooks/update <<'EOF'
 #!/bin/sh
 echo "$@" >>$GIT_DIR/update.args
-read x; printf "$x" >$GIT_DIR/update.stdin
+read x; printf %s "$x" >$GIT_DIR/update.stdin
 echo STDOUT update $1
 echo STDERR update $1 >&2
 test "$1" = refs/heads/master || exit
@@ -44,7 +44,7 @@ chmod u+x victim/.git/hooks/update
 
 cat >victim/.git/hooks/post-receive <<'EOF'
 #!/bin/sh
-printf "$@" >>$GIT_DIR/post-receive.args
+printf %s "$@" >>$GIT_DIR/post-receive.args
 cat - >$GIT_DIR/post-receive.stdin
 echo STDOUT post-receive
 echo STDERR post-receive >&2
@@ -54,14 +54,14 @@ chmod u+x victim/.git/hooks/post-receive
 cat >victim/.git/hooks/post-update <<'EOF'
 #!/bin/sh
 echo "$@" >>$GIT_DIR/post-update.args
-read x; printf "$x" >$GIT_DIR/post-update.stdin
+read x; printf %s "$x" >$GIT_DIR/post-update.stdin
 echo STDOUT post-update
 echo STDERR post-update >&2
 EOF
 chmod u+x victim/.git/hooks/post-update
 
-test_expect_failure push '
-	git-send-pack --force ./victim/.git master tofail >send.out 2>send.err
+test_expect_success push '
+    ! git-send-pack --force ./victim/.git master tofail >send.out 2>send.err
 '
 
 test_expect_success 'updated as expected' '
@@ -112,8 +112,8 @@ test_expect_success 'all *-receive hook args are empty' '
 	! test -s victim/.git/post-receive.args
 '
 
-test_expect_failure 'send-pack produced no output' '
-	test -s send.out
+test_expect_success 'send-pack produced no output' '
+	! test -s send.out
 '
 
 cat <<EOF >expect
@@ -129,7 +129,7 @@ STDOUT post-update
 STDERR post-update
 EOF
 test_expect_success 'send-pack stderr contains hook messages' '
-	egrep ^STD send.err >actual &&
+	grep ^STD send.err >actual &&
 	git diff - actual <expect
 '
 

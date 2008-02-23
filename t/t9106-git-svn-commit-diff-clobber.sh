@@ -24,11 +24,11 @@ test_expect_success 'commit change from svn side' "
 	rm -rf t.svn
 	"
 
-test_expect_failure 'commit conflicting change from git' "
+test_expect_success 'commit conflicting change from git' "
 	echo second line from git >> file &&
 	git commit -a -m 'second line from git' &&
-	git-svn commit-diff -r1 HEAD~1 HEAD $svnrepo
-	" || true
+	! git-svn commit-diff -r1 HEAD~1 HEAD $svnrepo
+"
 
 test_expect_success 'commit complementing change from git' "
 	git reset --hard HEAD~1 &&
@@ -39,7 +39,7 @@ test_expect_success 'commit complementing change from git' "
 	git-svn commit-diff -r2 HEAD~1 HEAD $svnrepo
 	"
 
-test_expect_failure 'dcommit fails to commit because of conflict' "
+test_expect_success 'dcommit fails to commit because of conflict' "
 	git-svn init $svnrepo &&
 	git-svn fetch &&
 	git reset --hard refs/remotes/git-svn &&
@@ -52,8 +52,8 @@ test_expect_failure 'dcommit fails to commit because of conflict' "
 	rm -rf t.svn &&
 	echo 'fourth line from git' >> file &&
 	git commit -a -m 'fourth line from git' &&
-	git-svn dcommit
-	" || true
+	! git-svn dcommit
+	"
 
 test_expect_success 'dcommit does the svn equivalent of an index merge' "
 	git reset --hard refs/remotes/git-svn &&
@@ -76,15 +76,15 @@ test_expect_success 'commit another change from svn side' "
 	rm -rf t.svn
 	"
 
-test_expect_failure 'multiple dcommit from git-svn will not clobber svn' "
+test_expect_success 'multiple dcommit from git-svn will not clobber svn' "
 	git reset --hard refs/remotes/git-svn &&
 	echo new file >> new-file &&
 	git update-index --add new-file &&
 	git commit -a -m 'new file' &&
 	echo clobber > file &&
 	git commit -a -m 'clobber' &&
-	git svn dcommit
-	" || true
+	! git svn dcommit
+	"
 
 
 test_expect_success 'check that rebase really failed' 'test -d .dotest'

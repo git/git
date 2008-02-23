@@ -48,7 +48,7 @@ static int merge_entry(int pos, const char *path)
 			break;
 		found++;
 		strcpy(hexbuf[stage], sha1_to_hex(ce->sha1));
-		sprintf(ownbuf[stage], "%o", ntohl(ce->ce_mode));
+		sprintf(ownbuf[stage], "%o", ce->ce_mode);
 		arguments[stage] = hexbuf[stage];
 		arguments[stage + 4] = ownbuf[stage];
 	} while (++pos < active_nr);
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	signal(SIGCHLD, SIG_DFL);
 
 	if (argc < 3)
-		usage("git-merge-index [-o] [-q] <merge-program> (-a | <filename>*)");
+		usage("git-merge-index [-o] [-q] <merge-program> (-a | [--] <filename>*)");
 
 	setup_git_directory();
 	read_cache();

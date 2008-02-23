@@ -21,7 +21,7 @@ OPTIONS
 <object>::
 	The name of the object to show.
 	For a more complete list of ways to spell object names, see
-	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
 -t::
 	Instead of the content, show the object type identified by
@@ -70,4 +70,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -39,10 +39,10 @@ precedence, the last matching pattern decides the outcome):
    variable 'core.excludesfile'.
 
 The underlying git plumbing tools, such as
-gitlink:git-ls-files[1] and gitlink:git-read-tree[1], read
+linkgit:git-ls-files[1] and linkgit:git-read-tree[1], read
 `gitignore` patterns specified by command-line options, or from
 files specified by command-line options.  Higher-level git
-tools, such as gitlink:git-status[1] and gitlink:git-add[1],
+tools, such as linkgit:git-status[1] and linkgit:git-add[1],
 use patterns from the sources specified above.
 
 Patterns have the following format:
@@ -56,6 +56,13 @@ Patterns have the following format:
    matching file excluded by a previous pattern will become
    included again.  If a negated pattern matches, this will
    override lower precedence patterns sources.
+
+ - If the pattern ends with a slash, it is removed for the
+   purpose of the following description, but it would only find
+   a match with a directory.  In other words, `foo/` will match a
+   directory `foo` and paths underneath it, but will not match a
+   regular file or a symbolic link `foo` (this is consistent
+   with the way how pathspec works in general in git).
 
  - If the pattern does not contain a slash '/', git treats it as
    a shell glob pattern and checks for a match against the
@@ -119,4 +126,4 @@ Frank Lichtenheld, and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

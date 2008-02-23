@@ -82,3 +82,29 @@ stop_httpd () {
 	test -z "$SVN_HTTPD_PORT" && return
 	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k stop
 }
+
+convert_to_rev_db () {
+	perl -w -- - "$@" <<\EOF
+use strict;
+@ARGV == 2 or die "Usage: convert_to_rev_db <input> <output>";
+open my $wr, '+>', $ARGV[1] or die "$!: couldn't open: $ARGV[1]";
+open my $rd, '<', $ARGV[0] or die "$!: couldn't open: $ARGV[0]";
+my $size = (stat($rd))[7];
+($size % 24) == 0 or die "Inconsistent size: $size";
+while (sysread($rd, my $buf, 24) == 24) {
+	my ($r, $c) = unpack('NH40', $buf);
+	my $offset = $r * 41;
+	seek $wr, 0, 2 or die $!;
+	my $pos = tell $wr;
+	if ($pos < $offset) {
+		for (1 .. (($offset - $pos) / 41)) {
+			print $wr (('0' x 40),"\n") or die $!;
+		}
+	}
+	seek $wr, $offset, 0 or die $!;
+	print $wr $c,"\n" or die $!;
+}
+close $wr or die $!;
+close $rd or die $!;
+EOF
+}

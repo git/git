@@ -6,28 +6,6 @@
 const char git_usage_string[] =
 	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate|--no-pager] [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE] [--help] COMMAND [ARGS]";
 
-static void prepend_to_path(const char *dir, int len)
-{
-	const char *old_path = getenv("PATH");
-	char *path;
-	int path_len = len;
-
-	if (!old_path)
-		old_path = "/usr/local/bin:/usr/bin:/bin";
-
-	path_len = len + strlen(old_path) + 1;
-
-	path = xmalloc(path_len + 1);
-
-	memcpy(path, dir, len);
-	path[len] = ':';
-	memcpy(path + len + 1, old_path, path_len - len);
-
-	setenv("PATH", path, 1);
-
-	free(path);
-}
-
 static int handle_options(const char*** argv, int* argc, int* envchanged)
 {
 	int handled = 0;
@@ -51,7 +29,7 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 		if (!prefixcmp(cmd, "--exec-path")) {
 			cmd += 11;
 			if (*cmd == '=')
-				git_set_exec_path(cmd + 1);
+				git_set_argv_exec_path(cmd + 1);
 			else {
 				puts(git_exec_path());
 				exit(0);
@@ -115,6 +93,8 @@ static char *alias_string;
 static int git_alias_config(const char *var, const char *value)
 {
 	if (!prefixcmp(var, "alias.") && !strcmp(var + 6, alias_command)) {
+		if (!value)
+			return config_error_nonbool(var);
 		alias_string = xstrdup(value);
 	}
 	return 0;
@@ -191,7 +171,7 @@ static int handle_alias(int *argcp, const char ***argv)
 
 				strbuf_init(&buf, PATH_MAX);
 				strbuf_addstr(&buf, alias_string);
-				sq_quote_argv(&buf, (*argv) + 1, *argcp - 1, PATH_MAX);
+				sq_quote_argv(&buf, (*argv) + 1, PATH_MAX);
 				free(alias_string);
 				alias_string = buf.buf;
 			}
@@ -220,7 +200,7 @@ static int handle_alias(int *argcp, const char ***argv)
 		if (!strcmp(alias_command, new_argv[0]))
 			die("recursive alias: %s", alias_command);
 
-		trace_argv_printf(new_argv, count,
+		trace_argv_printf(new_argv,
 				  "trace: alias expansion: %s =>",
 				  alias_command);
 
@@ -271,19 +251,14 @@ static int run_command(struct cmd_struct *p, int argc, const char **argv)
 		prefix = setup_git_directory();
 	if (p->option & USE_PAGER)
 		setup_pager();
-	if (p->option & NEED_WORK_TREE) {
-		const char *work_tree = get_git_work_tree();
-		const char *git_dir = get_git_dir();
-		if (!is_absolute_path(git_dir))
-			set_git_dir(make_absolute_path(git_dir));
-		if (!work_tree || chdir(work_tree))
-			die("%s must be run in a work tree", p->cmd);
-	}
-	trace_argv_printf(argv, argc, "trace: built-in: git");
+	if (p->option & NEED_WORK_TREE)
+		setup_work_tree();
+
+	trace_argv_printf(argv, "trace: built-in: git");
 
 	status = p->fn(argc, argv, prefix);
 	if (status)
-		return status;
+		return status & 0xff;
 
 	/* Somebody closed stdout? */
 	if (fstat(fileno(stdout), &st))
@@ -320,6 +295,8 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "check-attr", cmd_check_attr, RUN_SETUP | NEED_WORK_TREE },
 		{ "cherry", cmd_cherry, RUN_SETUP },
 		{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NEED_WORK_TREE },
+		{ "clean", cmd_clean, RUN_SETUP | NEED_WORK_TREE },
+		{ "commit", cmd_commit, RUN_SETUP | NEED_WORK_TREE },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
 		{ "config", cmd_config },
 		{ "count-objects", cmd_count_objects, RUN_SETUP },
@@ -328,6 +305,9 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "diff-files", cmd_diff_files },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },
 		{ "diff-tree", cmd_diff_tree, RUN_SETUP },
+		{ "fast-export", cmd_fast_export, RUN_SETUP },
+		{ "fetch", cmd_fetch, RUN_SETUP },
+		{ "fetch-pack", cmd_fetch_pack, RUN_SETUP },
 		{ "fetch--tool", cmd_fetch__tool, RUN_SETUP },
 		{ "fmt-merge-msg", cmd_fmt_merge_msg, RUN_SETUP },
 		{ "for-each-ref", cmd_for_each_ref, RUN_SETUP },
@@ -338,18 +318,24 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "get-tar-commit-id", cmd_get_tar_commit_id },
 		{ "grep", cmd_grep, RUN_SETUP | USE_PAGER },
 		{ "help", cmd_help },
+#ifndef NO_CURL
+		{ "http-fetch", cmd_http_fetch, RUN_SETUP },
+#endif
 		{ "init", cmd_init_db },
 		{ "init-db", cmd_init_db },
 		{ "log", cmd_log, RUN_SETUP | USE_PAGER },
 		{ "ls-files", cmd_ls_files, RUN_SETUP },
 		{ "ls-tree", cmd_ls_tree, RUN_SETUP },
+		{ "ls-remote", cmd_ls_remote },
 		{ "mailinfo", cmd_mailinfo },
 		{ "mailsplit", cmd_mailsplit },
 		{ "merge-base", cmd_merge_base, RUN_SETUP },
 		{ "merge-file", cmd_merge_file },
+		{ "merge-ours", cmd_merge_ours, RUN_SETUP },
 		{ "mv", cmd_mv, RUN_SETUP | NEED_WORK_TREE },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
+		{ "peek-remote", cmd_ls_remote },
 		{ "pickaxe", cmd_blame, RUN_SETUP },
 		{ "prune", cmd_prune, RUN_SETUP },
 		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
@@ -360,13 +346,14 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "rerere", cmd_rerere, RUN_SETUP },
 		{ "reset", cmd_reset, RUN_SETUP },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },
-		{ "rev-parse", cmd_rev_parse, RUN_SETUP },
+		{ "rev-parse", cmd_rev_parse },
 		{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
-		{ "rm", cmd_rm, RUN_SETUP | NEED_WORK_TREE },
-		{ "runstatus", cmd_runstatus, RUN_SETUP | NEED_WORK_TREE },
+		{ "rm", cmd_rm, RUN_SETUP },
+		{ "send-pack", cmd_send_pack, RUN_SETUP },
 		{ "shortlog", cmd_shortlog, RUN_SETUP | USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP | USE_PAGER },
+		{ "status", cmd_status, RUN_SETUP | NEED_WORK_TREE },
 		{ "stripspace", cmd_stripspace },
 		{ "symbolic-ref", cmd_symbolic_ref, RUN_SETUP },
 		{ "tag", cmd_tag, RUN_SETUP },
@@ -403,19 +390,17 @@ int main(int argc, const char **argv)
 {
 	const char *cmd = argv[0] ? argv[0] : "git-help";
 	char *slash = strrchr(cmd, '/');
-	const char *exec_path = NULL;
+	const char *cmd_path = NULL;
 	int done_alias = 0;
 
 	/*
 	 * Take the basename of argv[0] as the command
 	 * name, and the dirname as the default exec_path
-	 * if it's an absolute path and we don't have
-	 * anything better.
+	 * if we don't have anything better.
 	 */
 	if (slash) {
 		*slash++ = 0;
-		if (*cmd == '/')
-			exec_path = cmd;
+		cmd_path = cmd;
 		cmd = slash;
 	}
 
@@ -444,23 +429,20 @@ int main(int argc, const char **argv)
 		if (!prefixcmp(argv[0], "--"))
 			argv[0] += 2;
 	} else {
-		/* Default command: "help" */
-		argv[0] = "help";
-		argc = 1;
+		/* The user didn't specify a command; give them help */
+		printf("usage: %s\n\n", git_usage_string);
+		list_common_cmds_help();
+		exit(1);
 	}
 	cmd = argv[0];
 
 	/*
-	 * We execute external git command via execv_git_cmd(),
-	 * which looks at "--exec-path" option, GIT_EXEC_PATH
-	 * environment, and $(gitexecdir) in Makefile while built,
-	 * in this order.  For scripted commands, we prepend
-	 * the value of the exec_path variable to the PATH.
+	 * We use PATH to find git commands, but we prepend some higher
+	 * precidence paths: the "--exec-path" option, the GIT_EXEC_PATH
+	 * environment, and the $(gitexecdir) from the Makefile at build
+	 * time.
 	 */
-	if (exec_path)
-		prepend_to_path(exec_path, strlen(exec_path));
-	exec_path = git_exec_path();
-	prepend_to_path(exec_path, strlen(exec_path));
+	setup_path(cmd_path);
 
 	while (1) {
 		/* See if it's an internal command */

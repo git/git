@@ -61,9 +61,9 @@ static int write_rr(struct path_list *rr, int out_fd)
 		    write_in_full(out_fd, path, length) != length)
 			die("unable to write rerere record");
 	}
-	if (close(out_fd) != 0)
+	if (commit_lock_file(&write_lock) != 0)
 		die("unable to write rerere record");
-	return commit_lock_file(&write_lock);
+	return 0;
 }
 
 static int handle_file(const char *path,
@@ -149,8 +149,8 @@ static int find_conflict(struct path_list *conflict)
 		if (ce_stage(e2) == 2 &&
 		    ce_stage(e3) == 3 &&
 		    ce_same_name(e2, e3) &&
-		    S_ISREG(ntohl(e2->ce_mode)) &&
-		    S_ISREG(ntohl(e3->ce_mode))) {
+		    S_ISREG(e2->ce_mode) &&
+		    S_ISREG(e3->ce_mode)) {
 			path_list_insert((const char *)e2->name, conflict);
 			i++; /* skip over both #2 and #3 */
 		}
@@ -260,7 +260,7 @@ static int diff_two(const char *file1, const char *label1,
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
 	ecb.outf = outf;
-	xdl_diff(&minus, &plus, &xpp, &xecfg, &ecb);
+	xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 
 	free(minus.ptr);
 	free(plus.ptr);
@@ -389,18 +389,39 @@ static int is_rerere_enabled(void)
 	return 1;
 }
 
-int cmd_rerere(int argc, const char **argv, const char *prefix)
+static int setup_rerere(struct path_list *merge_rr)
 {
-	struct path_list merge_rr = { NULL, 0, 0, 1 };
-	int i, fd = -1;
+	int fd;
 
 	git_config(git_rerere_config);
 	if (!is_rerere_enabled())
-		return 0;
+		return -1;
 
 	merge_rr_path = xstrdup(git_path("rr-cache/MERGE_RR"));
 	fd = hold_lock_file_for_update(&write_lock, merge_rr_path, 1);
-	read_rr(&merge_rr);
+	read_rr(merge_rr);
+	return fd;
+}
+
+int rerere(void)
+{
+	struct path_list merge_rr = { NULL, 0, 0, 1 };
+	int fd;
+
+	fd = setup_rerere(&merge_rr);
+	if (fd < 0)
+		return 0;
+	return do_plain_rerere(&merge_rr, fd);
+}
+
+int cmd_rerere(int argc, const char **argv, const char *prefix)
+{
+	struct path_list merge_rr = { NULL, 0, 0, 1 };
+	int i, fd;
+
+	fd = setup_rerere(&merge_rr);
+	if (fd < 0)
+		return 0;
 
 	if (argc < 2)
 		return do_plain_rerere(&merge_rr, fd);

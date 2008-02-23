@@ -294,7 +294,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 			if (opt->pre_context) {
 				push_arg("-B");
 				len += snprintf(argptr, sizeof(randarg)-len,
-						"%u", opt->pre_context);
+						"%u", opt->pre_context) + 1;
 				if (sizeof(randarg) <= len)
 					die("maximum length of args exceeded");
 				push_arg(argptr);
@@ -303,7 +303,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 			if (opt->post_context) {
 				push_arg("-A");
 				len += snprintf(argptr, sizeof(randarg)-len,
-						"%u", opt->post_context);
+						"%u", opt->post_context) + 1;
 				if (sizeof(randarg) <= len)
 					die("maximum length of args exceeded");
 				push_arg(argptr);
@@ -313,7 +313,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		else {
 			push_arg("-C");
 			len += snprintf(argptr, sizeof(randarg)-len,
-					"%u", opt->post_context);
+					"%u", opt->post_context) + 1;
 			if (sizeof(randarg) <= len)
 				die("maximum length of args exceeded");
 			push_arg(argptr);
@@ -331,7 +331,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		struct cache_entry *ce = active_cache[i];
 		char *name;
 		int kept;
-		if (!S_ISREG(ntohl(ce->ce_mode)))
+		if (!S_ISREG(ce->ce_mode))
 			continue;
 		if (!pathspec_matches(paths, ce->name))
 			continue;
@@ -343,12 +343,12 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 			memcpy(name + 2, ce->name, len + 1);
 		}
 		argv[argc++] = name;
-		if (argc < MAXARGS && !ce_stage(ce))
-			continue;
-		status = flush_grep(opt, argc, nr, argv, &kept);
-		if (0 < status)
-			hit = 1;
-		argc = nr + kept;
+		if (MAXARGS <= argc) {
+			status = flush_grep(opt, argc, nr, argv, &kept);
+			if (0 < status)
+				hit = 1;
+			argc = nr + kept;
+		}
 		if (ce_stage(ce)) {
 			do {
 				i++;
@@ -387,7 +387,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 
 	for (nr = 0; nr < active_nr; nr++) {
 		struct cache_entry *ce = active_cache[nr];
-		if (!S_ISREG(ntohl(ce->ce_mode)))
+		if (!S_ISREG(ce->ce_mode))
 			continue;
 		if (!pathspec_matches(paths, ce->name))
 			continue;
@@ -578,6 +578,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp("-l", arg) ||
+		    !strcmp("--name-only", arg) ||
 		    !strcmp("--files-with-matches", arg)) {
 			opt.name_only = 1;
 			continue;
@@ -644,7 +645,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 				die("'%s': %s", argv[1], strerror(errno));
 			while (fgets(buf, sizeof(buf), patterns)) {
 				int len = strlen(buf);
-				if (buf[len-1] == '\n')
+				if (len && buf[len-1] == '\n')
 					buf[len-1] = 0;
 				/* ignore empty line like grep does */
 				if (!buf[0])

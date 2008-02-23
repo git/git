@@ -165,8 +165,9 @@ static const char *update(struct command *cmd)
 	unsigned char *new_sha1 = cmd->new_sha1;
 	struct ref_lock *lock;
 
-	if (!prefixcmp(name, "refs/") && check_ref_format(name + 5)) {
-		error("refusing to create funny ref '%s' locally", name);
+	/* only refs/... are allowed */
+	if (prefixcmp(name, "refs/") || check_ref_format(name + 5)) {
+		error("refusing to create funny ref '%s' remotely", name);
 		return "funny refname";
 	}
 
@@ -178,11 +179,21 @@ static const char *update(struct command *cmd)
 	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
 	    !is_null_sha1(old_sha1) &&
 	    !prefixcmp(name, "refs/heads/")) {
+		struct object *old_object, *new_object;
 		struct commit *old_commit, *new_commit;
 		struct commit_list *bases, *ent;
 
-		old_commit = (struct commit *)parse_object(old_sha1);
-		new_commit = (struct commit *)parse_object(new_sha1);
+		old_object = parse_object(old_sha1);
+		new_object = parse_object(new_sha1);
+
+		if (!old_object || !new_object ||
+		    old_object->type != OBJ_COMMIT ||
+		    new_object->type != OBJ_COMMIT) {
+			error("bad sha1 objects for %s", name);
+			return "bad ref";
+		}
+		old_commit = (struct commit *)old_object;
+		new_commit = (struct commit *)new_object;
 		bases = get_merge_bases(old_commit, new_commit, 1);
 		for (ent = bases; ent; ent = ent->next)
 			if (!hashcmp(old_sha1, ent->item->object.sha1))
@@ -200,12 +211,14 @@ static const char *update(struct command *cmd)
 	}
 
 	if (is_null_sha1(new_sha1)) {
+		if (!parse_object(old_sha1)) {
+			warning ("Allowing deletion of corrupt ref.");
+			old_sha1 = NULL;
+		}
 		if (delete_ref(name, old_sha1)) {
 			error("failed to delete %s", name);
 			return "failed to delete";
 		}
-		fprintf(stderr, "%s: %s -> deleted\n", name,
-			sha1_to_hex(old_sha1));
 		return NULL; /* good */
 	}
 	else {
@@ -217,8 +230,6 @@ static const char *update(struct command *cmd)
 		if (write_ref_sha1(lock, new_sha1, "push")) {
 			return "failed to write"; /* error() already called */
 		}
-		fprintf(stderr, "%s: %s -> %s\n", name,
-			sha1_to_hex(old_sha1), sha1_to_hex(new_sha1));
 		return NULL; /* good */
 	}
 }
@@ -382,9 +393,8 @@ static const char *unpack(void)
 		}
 	} else {
 		const char *keeper[6];
-		int s, len, status;
+		int s, status;
 		char keep_arg[256];
-		char packname[46];
 		struct child_process ip;
 
 		s = sprintf(keep_arg, "--keep=receive-pack %i on ", getpid());
@@ -403,26 +413,7 @@ static const char *unpack(void)
 		ip.git_cmd = 1;
 		if (start_command(&ip))
 			return "index-pack fork failed";
-
-		/*
-		 * The first thing we expects from index-pack's output
-		 * is "pack\t%40s\n" or "keep\t%40s\n" (46 bytes) where
-		 * %40s is the newly created pack SHA1 name.  In the "keep"
-		 * case, we need it to remove the corresponding .keep file
-		 * later on.  If we don't get that then tough luck with it.
-		 */
-		for (len = 0;
-		     len < 46 && (s = xread(ip.out, packname+len, 46-len)) > 0;
-		     len += s);
-		if (len == 46 && packname[45] == '\n' &&
-		    memcmp(packname, "keep\t", 5) == 0) {
-			char path[PATH_MAX];
-			packname[45] = 0;
-			snprintf(path, sizeof(path), "%s/pack/pack-%s.keep",
-				 get_object_directory(), packname + 5);
-			pack_lockfile = xstrdup(path);
-		}
-
+		pack_lockfile = index_pack_lockfile(ip.out);
 		status = finish_command(&ip);
 		if (!status) {
 			reprepare_packed_git();

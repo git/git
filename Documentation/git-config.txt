@@ -20,6 +20,8 @@ SYNOPSIS
 'git-config' [<file-option>] --rename-section old_name new_name
 'git-config' [<file-option>] --remove-section name
 'git-config' [<file-option>] [-z|--null] -l | --list
+'git-config' [<file-option>] --get-color name [default]
+'git-config' [<file-option>] --get-colorbool name [stdout-is-tty]
 
 DESCRIPTION
 -----------
@@ -128,12 +130,27 @@ See also <<FILES>>.
 
 -z, --null::
 	For all options that output values and/or keys, always
-	end values with with the null character (instead of a
+	end values with the null character (instead of a
 	newline). Use newline instead as a delimiter between
 	key and value. This allows for secure parsing of the
 	output without getting confused e.g. by values that
 	contain line breaks.
 
+--get-colorbool name [stdout-is-tty]::
+
+	Find the color setting for `name` (e.g. `color.diff`) and output
+	"true" or "false".  `stdout-is-tty` should be either "true" or
+	"false", and is taken into account when configuration says
+	"auto".  If `stdout-is-tty` is missing, then checks the standard
+	output of the command itself, and exits with status 0 if color
+	is to be used, or exits with status 1 otherwise.
+
+--get-color name default::
+
+	Find the color configured for `name` (e.g. `color.diff.new`) and
+	output it as the ANSI color escape sequence to the standard
+	output.  The optional `default` parameter is used instead, if
+	there is no color configured for `name`.
 
 [[FILES]]
 FILES
@@ -292,6 +309,15 @@ To add a new proxy, without altering any of the existing ones, use
 % git config core.gitproxy '"proxy-command" for example.com'
 ------------
 
+An example to use customized color from the configuration in your
+script:
+
+------------
+#!/bin/sh
+WS=$(git config --get-color color.diff.whitespace "blue reverse")
+RESET=$(git config --get-color "" "reset")
+echo "${WS}your whitespace color or blue reverse${RESET}"
+------------
 
 include::config.txt[]
 
@@ -306,4 +332,4 @@ Documentation by Johannes Schindelin, Petr Baudis and the git-list <git@vger.ker
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -46,6 +46,6 @@ clean:
 	$(RM) -r blt boilerplates.made
 
 install: all
-	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(template_dir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_dir_SQ)'
 	(cd blt && $(TAR) cf - .) | \
 	(cd '$(DESTDIR_SQ)$(template_dir_SQ)' && $(TAR) xf -)

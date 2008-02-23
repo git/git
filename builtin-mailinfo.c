@@ -288,7 +288,7 @@ static void cleanup_space(char *buf)
 }
 
 static void decode_header(char *it, unsigned itsize);
-static char *header[MAX_HDR_PARSED] = {
+static const char *header[MAX_HDR_PARSED] = {
 	"From","Subject","Date",
 };
 
@@ -818,6 +818,7 @@ static void handle_body(void)
 
 		switch (transfer_encoding) {
 		case TE_BASE64:
+		case TE_QP:
 		{
 			char *op = line;
 
@@ -915,6 +916,7 @@ static void handle_info(void)
 static int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
 		    const char *msg, const char *patch)
 {
+	int peek;
 	keep_subject = ks;
 	metainfo_charset = encoding;
 	fin = in;
@@ -934,6 +936,11 @@ static int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
 
 	p_hdr_data = xcalloc(MAX_HDR_PARSED, sizeof(char *));
 	s_hdr_data = xcalloc(MAX_HDR_PARSED, sizeof(char *));
+
+	do {
+		peek = fgetc(in);
+	} while (isspace(peek));
+	ungetc(peek, in);
 
 	/* process the email header */
 	while (read_one_header_line(line, sizeof(line), fin))

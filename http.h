@@ -6,6 +6,16 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
+#include "strbuf.h"
+
+/*
+ * We detect based on the cURL version if multi-transfer is
+ * usable in this implementation and define this symbol accordingly.
+ * This is not something Makefile should set nor users should pass
+ * via CFLAGS.
+ */
+#undef USE_CURL_MULTI
+
 #if LIBCURL_VERSION_NUM >= 0x071000
 #define USE_CURL_MULTI
 #define DEFAULT_MAX_REQUESTS 5
@@ -48,18 +58,17 @@ struct active_request_slot
 
 struct buffer
 {
-        size_t posn;
-        size_t size;
-        void *buffer;
+	struct strbuf buf;
+	size_t posn;
 };
 
 /* Curl request read/write callbacks */
 extern size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
 			   struct buffer *buffer);
 extern size_t fwrite_buffer(const void *ptr, size_t eltsize,
-			    size_t nmemb, struct buffer *buffer);
+			    size_t nmemb, struct strbuf *buffer);
 extern size_t fwrite_null(const void *ptr, size_t eltsize,
-			  size_t nmemb, struct buffer *buffer);
+			  size_t nmemb, struct strbuf *buffer);
 
 /* Slot lifecycle functions */
 extern struct active_request_slot *get_active_slot(void);
@@ -70,6 +79,7 @@ extern void release_active_slot(struct active_request_slot *slot);
 
 #ifdef USE_CURL_MULTI
 extern void fill_active_slots(void);
+extern void add_fill_function(void *data, int (*fill)(void *));
 extern void step_active_slots(void);
 #endif
 
@@ -79,30 +89,21 @@ extern void http_cleanup(void);
 extern int data_received;
 extern int active_requests;
 
-#ifdef USE_CURL_MULTI
-extern int max_requests;
-extern CURLM *curlm;
-#endif
-#ifndef NO_CURL_EASY_DUPHANDLE
-extern CURL *curl_default;
-#endif
 extern char curl_errorstr[CURL_ERROR_SIZE];
 
-extern int curl_ssl_verify;
-extern char *ssl_cert;
-#if LIBCURL_VERSION_NUM >= 0x070902
-extern char *ssl_key;
-#endif
-#if LIBCURL_VERSION_NUM >= 0x070908
-extern char *ssl_capath;
-#endif
-extern char *ssl_cainfo;
-extern long curl_low_speed_limit;
-extern long curl_low_speed_time;
+static inline int missing__target(int code, int result)
+{
+	return	/* file:// URL -- do we ever use one??? */
+		(result == CURLE_FILE_COULDNT_READ_FILE) ||
+		/* http:// and https:// URL */
+		(code == 404 && result == CURLE_HTTP_RETURNED_ERROR) ||
+		/* ftp:// URL */
+		(code == 550 && result == CURLE_FTP_COULDNT_RETR_FILE)
+		;
+}
 
-extern struct curl_slist *pragma_header;
-extern struct curl_slist *no_range_header;
+#define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
-extern struct active_request_slot *active_queue_head;
+extern int http_fetch_ref(const char *base, const char *ref, unsigned char *sha1);
 
 #endif /* HTTP_H */

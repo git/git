@@ -8,8 +8,8 @@ git-shortlog - Summarize 'git log' output
 SYNOPSIS
 --------
 [verse]
-git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s]
-git-shortlog [-n|--numbered] [-s|--summary] [<committish>...]
+git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s] [-e]
+git-shortlog [-n|--numbered] [-s|--summary] [-e|--email] [<committish>...]
 
 DESCRIPTION
 -----------
@@ -32,18 +32,22 @@ OPTIONS
 -s, \--summary::
 	Suppress commit description and provide a commit count summary only.
 
+-e, \--email::
+	Show the email address of each author.
+
 FILES
 -----
 
-.mailmap::
-	If this file exists, it will be used for mapping author email
-	addresses to a real author name. One mapping per line, first
-	the author name followed by the email address enclosed by
-	'<' and '>'. Use hash '#' for comments. Example:
+If the file `.mailmap` exists, it will be used for mapping author
+email addresses to a real author name. One mapping per line, first
+the author name followed by the email address enclosed by
+'<' and '>'. Use hash '#' for comments. Example:
 
-		# Keep alphabetized
-		Adam Morrow <adam@localhost.localdomain>
-		Eve Jones <eve@laptop.(none)>
+------------
+# Keep alphabetized
+Adam Morrow <adam@localhost.localdomain>
+Eve Jones <eve@laptop.(none)>
+------------
 
 Author
 ------
@@ -55,4 +59,4 @@ Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

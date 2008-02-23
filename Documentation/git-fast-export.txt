@@ -1,0 +1,83 @@
+git-fast-export(1)
+==================
+
+NAME
+----
+git-fast-export - Git data exporter
+
+
+SYNOPSIS
+--------
+'git-fast-export [options]' | 'git-fast-import'
+
+DESCRIPTION
+-----------
+This program dumps the given revisions in a form suitable to be piped
+into linkgit:git-fast-import[1].
+
+You can use it as a human readable bundle replacement (see
+linkgit:git-bundle[1]), or as a kind of an interactive
+linkgit:git-filter-branch[1].
+
+
+OPTIONS
+-------
+--progress=<n>::
+	Insert 'progress' statements every <n> objects, to be shown by
+	linkgit:git-fast-import[1] during import.
+
+--signed-tags=(verbatim|warn|strip|abort)::
+	Specify how to handle signed tags.  Since any transformation
+	after the export can change the tag names (which can also happen
+	when excluding revisions) the signatures will not match.
++
+When asking to 'abort' (which is the default), this program will die
+when encountering a signed tag.  With 'strip', the tags will be made
+unsigned, with 'verbatim', they will be silently exported
+and with 'warn', they will be exported, but you will see a warning.
+
+
+EXAMPLES
+--------
+
+-------------------------------------------------------------------
+$ git fast-export --all | (cd /empty/repository && git fast-import)
+-------------------------------------------------------------------
+
+This will export the whole repository and import it into the existing
+empty repository.  Except for reencoding commits that are not in
+UTF-8, it would be a one-to-one mirror.
+
+-----------------------------------------------------
+$ git fast-export master~5..master |
+	sed "s|refs/heads/master|refs/heads/other|" |
+	git fast-import
+-----------------------------------------------------
+
+This makes a new branch called 'other' from 'master~5..master'
+(i.e. if 'master' has linear history, it will take the last 5 commits).
+
+Note that this assumes that none of the blobs and commit messages
+referenced by that revision range contains the string
+'refs/heads/master'.
+
+
+Limitations
+-----------
+
+Since linkgit:git-fast-import[1] cannot tag trees, you will not be
+able to export the linux-2.6.git repository completely, as it contains
+a tag referencing a tree instead of a commit.
+
+
+Author
+------
+Written by Johannes E. Schindelin <johannes.schindelin@gmx.de>.
+
+Documentation
+--------------
+Documentation by Johannes E. Schindelin <johannes.schindelin@gmx.de>.
+
+GIT
+---
+Part of the linkgit:git[7] suite

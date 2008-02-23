@@ -13,6 +13,7 @@
 USAGE='(--continue | --abort | --skip | [--preserve-merges] [--verbose]
 	[--onto <branch>] <upstream> [<branch>])'
 
+OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 
@@ -28,6 +29,11 @@ VERBOSE=
 test -d "$REWRITTEN" && PRESERVE_MERGES=t
 test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
 test -f "$DOTEST"/verbose && VERBOSE=t
+
+GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
+mark the corrected paths with 'git add <paths>', and
+run 'git rebase --continue'"
+export GIT_CHERRY_PICK_HELP
 
 warn () {
 	echo "$*" >&2
@@ -52,7 +58,7 @@ require_clean_work_tree () {
 	git rev-parse --verify HEAD > /dev/null &&
 	git update-index --refresh &&
 	git diff-files --quiet &&
-	git diff-index --cached --quiet HEAD ||
+	git diff-index --cached --quiet HEAD -- ||
 	die "Working tree is dirty"
 }
 
@@ -67,14 +73,19 @@ comment_for_reflog () {
 	esac
 }
 
+last_count=
 mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
 	count=$(($(grep -ve '^$' -e '^#' < "$DONE" | wc -l)))
 	total=$(($count+$(grep -ve '^$' -e '^#' < "$TODO" | wc -l)))
-	printf "Rebasing (%d/%d)\r" $count $total
-	test -z "$VERBOSE" || echo
+	if test "$last_count" != "$count"
+	then
+		last_count=$count
+		printf "Rebasing (%d/%d)\r" $count $total
+		test -z "$VERBOSE" || echo
+	fi
 }
 
 make_patch () {
@@ -89,6 +100,7 @@ make_patch () {
 
 die_with_patch () {
 	make_patch "$1"
+	git rerere
 	die "$2"
 }
 
@@ -116,7 +128,7 @@ pick_one () {
 		sha1=$(git rev-parse --short $sha1)
 		output warn Fast forward to $sha1
 	else
-		output git cherry-pick $STRATEGY "$@"
+		output git cherry-pick "$@"
 	fi
 }
 
@@ -172,19 +184,21 @@ pick_one_preserving_merges () {
 			author_script=$(get_author_ident_from_commit $sha1)
 			eval "$author_script"
 			msg="$(git cat-file commit $sha1 | sed -e '1,/^$/d')"
-			# NEEDSWORK: give rerere a chance
+			# No point in merging the first parent, that's HEAD
+			new_parents=${new_parents# $first_parent}
 			if ! GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
 				GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
 				GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
 				output git merge $STRATEGY -m "$msg" \
 					$new_parents
 			then
+				git rerere
 				printf "%s\n" "$msg" > "$GIT_DIR"/MERGE_MSG
 				die Error redoing merge $sha1
 			fi
 			;;
 		*)
-			output git cherry-pick $STRATEGY "$@" ||
+			output git cherry-pick "$@" ||
 				die_with_patch $sha1 "Could not pick $sha1"
 			;;
 		esac
@@ -206,15 +220,17 @@ make_squash_message () {
 		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([1-9][0-9]*\).*/\1/p" \
 			< "$SQUASH_MSG" | tail -n 1)+1))
 		echo "# This is a combination of $COUNT commits."
-		sed -n "2,\$p" < "$SQUASH_MSG"
+		sed -e 1d -e '2,/^./{
+			/^$/d
+		}' <"$SQUASH_MSG"
 	else
 		COUNT=2
 		echo "# This is a combination of two commits."
 		echo "# The first commit's message is:"
 		echo
 		git cat-file commit HEAD | sed -e '1,/^$/d'
-		echo
 	fi
+	echo
 	echo "# This is the $(nth_string $COUNT) commit message:"
 	echo
 	git cat-file commit $1 | sed -e '1,/^$/d'
@@ -280,22 +296,22 @@ do_next () {
 		output git reset --soft HEAD^
 		pick_one -n $sha1 || failed=t
 		echo "$author_script" > "$DOTEST"/author-script
-		case $failed in
-		f)
+		if test $failed = f
+		then
 			# This is like --amend, but with a different message
 			eval "$author_script"
 			GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
 			GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
 			GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-			$USE_OUTPUT git commit -F "$MSG" $EDIT_COMMIT
-			;;
-		t)
+			$USE_OUTPUT git commit --no-verify -F "$MSG" $EDIT_COMMIT || failed=t
+		fi
+		if test $failed = t
+		then
 			cp "$MSG" "$GIT_DIR"/MERGE_MSG
 			warn
 			warn "Could not apply $sha1... $rest"
 			die_with_patch $sha1 ""
-			;;
-		esac
+		fi
 		;;
 	*)
 		warn "Unknown command: $command $sha1 $rest"
@@ -313,7 +329,12 @@ do_next () {
 		test -f "$DOTEST"/current-commit &&
 			current_commit=$(cat "$DOTEST"/current-commit) &&
 			git rev-parse HEAD > "$REWRITTEN"/$current_commit
-		NEWHEAD=$(cat "$REWRITTEN"/$OLDHEAD)
+		if test -f "$REWRITTEN"/$OLDHEAD
+		then
+			NEWHEAD=$(cat "$REWRITTEN"/$OLDHEAD)
+		else
+			NEWHEAD=$OLDHEAD
+		fi
 	else
 		NEWHEAD=$(git rev-parse HEAD)
 	fi &&
@@ -349,16 +370,28 @@ do
 
 		test -d "$DOTEST" || die "No interactive rebase running"
 
-		# commit if necessary
-		git rev-parse --verify HEAD > /dev/null &&
-		git update-index --refresh &&
-		git diff-files --quiet &&
-		! git diff-index --cached --quiet HEAD &&
-		. "$DOTEST"/author-script && {
-			test ! -f "$DOTEST"/amend || git reset --soft HEAD^
-		} &&
-		export GIT_AUTHOR_NAME GIT_AUTHOR_NAME GIT_AUTHOR_DATE &&
-		git commit -F "$DOTEST"/message -e
+		# Sanity check
+		git rev-parse --verify HEAD >/dev/null ||
+			die "Cannot read HEAD"
+		git update-index --refresh && git diff-files --quiet ||
+			die "Working tree is dirty"
+
+		# do we have anything to commit?
+		if git diff-index --cached --quiet HEAD --
+		then
+			: Nothing to commit -- skip this
+		else
+			. "$DOTEST"/author-script ||
+				die "Cannot find the author identity"
+			if test -f "$DOTEST"/amend
+			then
+				git reset --soft HEAD^ ||
+				die "Cannot rewind the HEAD"
+			fi
+			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
+			git commit --no-verify -F "$DOTEST"/message -e ||
+			die "Could not commit staged changes."
+		fi
 
 		require_clean_work_tree
 		do_rest
@@ -366,6 +399,7 @@ do
 	--abort)
 		comment_for_reflog abort
 
+		git rerere clear
 		test -d "$DOTEST" || die "No interactive rebase running"
 
 		HEADNAME=$(cat "$DOTEST"/head-name)
@@ -382,15 +416,15 @@ do
 	--skip)
 		comment_for_reflog skip
 
+		git rerere clear
 		test -d "$DOTEST" || die "No interactive rebase running"
 
 		output git reset --hard && do_rest
 		;;
 	-s|--strategy)
-		shift
 		case "$#,$1" in
 		*,*=*)
-			STRATEGY="-s `expr "z$1" : 'z-[^=]*=\(.*\)'`" ;;
+			STRATEGY="-s "$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
 		1,*)
 			usage ;;
 		*)
@@ -398,7 +432,7 @@ do
 			shift ;;
 		esac
 		;;
-	--merge)
+	-m|--merge)
 		# we use merge anyway
 		;;
 	-C*)
@@ -483,8 +517,13 @@ do
 		SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
 		SHORTHEAD=$(git rev-parse --short $HEAD)
 		SHORTONTO=$(git rev-parse --short $ONTO)
-		cat > "$TODO" << EOF
-# Rebasing $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
+		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
+			--abbrev=7 --reverse --left-right --cherry-pick \
+			$UPSTREAM...$HEAD | \
+			sed -n "s/^>/pick /p" > "$TODO"
+		cat >> "$TODO" << EOF
+
+# Rebase $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
 #
 # Commands:
 #  pick = use commit
@@ -492,12 +531,9 @@ do
 #  squash = use commit, but meld into previous commit
 #
 # If you remove a line here THAT COMMIT WILL BE LOST.
+# However, if you remove everything, the rebase will be aborted.
 #
 EOF
-		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
-			--abbrev=7 --reverse --left-right --cherry-pick \
-			$UPSTREAM...$HEAD | \
-			sed -n "s/^>/pick /p" >> "$TODO"
 
 		has_action "$TODO" ||
 			die_abort "Nothing to do"

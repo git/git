@@ -257,8 +257,6 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 			return ec;
 		}
 	}
-
-	return -1;
 }
 
 

@@ -114,7 +114,7 @@ test_expect_success 'use index-filter to move into a subdirectory' '
 
 test_expect_success 'stops when msg filter fails' '
 	old=$(git rev-parse HEAD) &&
-	! git-filter-branch -f --msg-filter false &&
+	! git-filter-branch -f --msg-filter false HEAD &&
 	test $old = $(git rev-parse HEAD) &&
 	rm -rf .git-rewrite
 '
@@ -163,6 +163,20 @@ test_expect_success '"map" works in commit filter' '
 		test \$mapped = \$actual &&
 		git commit-tree \"\$@\";" master~2..master &&
 	git rev-parse --verify master
+'
+
+test_expect_success 'Name needing quotes' '
+
+	git checkout -b rerere A &&
+	mkdir foo &&
+	name="れれれ" &&
+	>foo/$name &&
+	git add foo &&
+	git commit -m "Adding a file" &&
+	git filter-branch --tree-filter "rm -fr foo" &&
+	! git ls-files --error-unmatch "foo/$name" &&
+	test $(git rev-parse --verify rerere) != $(git rev-parse --verify A)
+
 '
 
 test_done

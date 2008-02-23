@@ -39,7 +39,7 @@ include::urls-remotes.txt[]
 
 SEE ALSO
 --------
-gitlink:git-pull[1]
+linkgit:git-pull[1]
 
 
 Author
@@ -53,4 +53,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

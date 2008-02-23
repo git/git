@@ -1,8 +1,9 @@
 #include "builtin.h"
 #include "cache.h"
+#include "color.h"
 
 static const char git_config_set_usage[] =
-"git-config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list";
+"git-config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list | --get-color var [default] | --get-colorbool name [stdout-is-tty]";
 
 static char *key;
 static regex_t *key_regexp;
@@ -37,8 +38,7 @@ static int show_config(const char* key_, const char* value_)
 	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
 		return 0;
 	if (regexp != NULL &&
-			 (do_not_match ^
-			  regexec(regexp, (value_?value_:""), 0, NULL, 0)))
+	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
 		return 0;
 
 	if (show_keys) {
@@ -79,9 +79,10 @@ static int get_value(const char* key_, const char* regex_)
 		local = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!local)
 			local = repo_config = xstrdup(git_path("config"));
-		if (home)
+		if (git_config_global() && home)
 			global = xstrdup(mkpath("%s/.gitconfig", home));
-		system_wide = ETC_GITCONFIG;
+		if (git_config_system())
+			system_wide = git_etc_gitconfig();
 	}
 
 	key = xstrdup(key_);
@@ -161,6 +162,106 @@ char *normalize_value(const char *key, const char *value)
 	return normalized;
 }
 
+static int get_color_found;
+static const char *get_color_slot;
+static char parsed_color[COLOR_MAXLEN];
+
+static int git_get_color_config(const char *var, const char *value)
+{
+	if (!strcmp(var, get_color_slot)) {
+		if (!value)
+			config_error_nonbool(var);
+		color_parse(value, var, parsed_color);
+		get_color_found = 1;
+	}
+	return 0;
+}
+
+static int get_color(int argc, const char **argv)
+{
+	/*
+	 * grab the color setting for the given slot from the configuration,
+	 * or parse the default value if missing, and return ANSI color
+	 * escape sequence.
+	 *
+	 * e.g.
+	 * git config --get-color color.diff.whitespace "blue reverse"
+	 */
+	const char *def_color = NULL;
+
+	switch (argc) {
+	default:
+		usage(git_config_set_usage);
+	case 2:
+		def_color = argv[1];
+		/* fallthru */
+	case 1:
+		get_color_slot = argv[0];
+		break;
+	}
+
+	get_color_found = 0;
+	parsed_color[0] = '\0';
+	git_config(git_get_color_config);
+
+	if (!get_color_found && def_color)
+		color_parse(def_color, "command line", parsed_color);
+
+	fputs(parsed_color, stdout);
+	return 0;
+}
+
+static int stdout_is_tty;
+static int get_colorbool_found;
+static int get_diff_color_found;
+static int git_get_colorbool_config(const char *var, const char *value)
+{
+	if (!strcmp(var, get_color_slot)) {
+		get_colorbool_found =
+			git_config_colorbool(var, value, stdout_is_tty);
+	}
+	if (!strcmp(var, "diff.color")) {
+		get_diff_color_found =
+			git_config_colorbool(var, value, stdout_is_tty);
+	}
+	return 0;
+}
+
+static int get_colorbool(int argc, const char **argv)
+{
+	/*
+	 * git config --get-colorbool <slot> [<stdout-is-tty>]
+	 *
+	 * returns "true" or "false" depending on how <slot>
+	 * is configured.
+	 */
+
+	if (argc == 2)
+		stdout_is_tty = git_config_bool("command line", argv[1]);
+	else if (argc == 1)
+		stdout_is_tty = isatty(1);
+	else
+		usage(git_config_set_usage);
+	get_colorbool_found = -1;
+	get_diff_color_found = -1;
+	get_color_slot = argv[0];
+	git_config(git_get_colorbool_config);
+
+	if (get_colorbool_found < 0) {
+		if (!strcmp(get_color_slot, "color.diff"))
+			get_colorbool_found = get_diff_color_found;
+		if (get_colorbool_found < 0)
+			get_colorbool_found = 0;
+	}
+
+	if (argc == 1) {
+		return get_colorbool_found ? 0 : 1;
+	} else {
+		printf("%s\n", get_colorbool_found ? "true" : "false");
+		return 0;
+	}
+}
+
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = 0;
@@ -175,7 +276,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l")) {
 			if (argc != 2)
 				usage(git_config_set_usage);
-			return git_config(show_all_config);
+			if (git_config(show_all_config) < 0 && file && errno)
+				die("unable to read config file %s: %s", file,
+				    strerror(errno));
+			return 0;
 		}
 		else if (!strcmp(argv[1], "--global")) {
 			char *home = getenv("HOME");
@@ -188,7 +292,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			}
 		}
 		else if (!strcmp(argv[1], "--system"))
-			setenv(CONFIG_ENVIRONMENT, ETC_GITCONFIG, 1);
+			setenv(CONFIG_ENVIRONMENT, git_etc_gitconfig(), 1);
 		else if (!strcmp(argv[1], "--file") || !strcmp(argv[1], "-f")) {
 			if (argc < 3)
 				usage(git_config_set_usage);
@@ -231,8 +335,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 				return 1;
 			}
 			return 0;
-		}
-		else
+		} else if (!strcmp(argv[1], "--get-color")) {
+			return get_color(argc-2, argv+2);
+		} else if (!strcmp(argv[1], "--get-colorbool")) {
+			return get_colorbool(argc-2, argv+2);
+		} else
 			break;
 		argc--;
 		argv++;

@@ -26,7 +26,7 @@ void sq_quote_buf(struct strbuf *dst, const char *src)
 
 	strbuf_addch(dst, '\'');
 	while (*src) {
-		size_t len = strcspn(src, "'\\");
+		size_t len = strcspn(src, "'!");
 		strbuf_add(dst, src, len);
 		src += len;
 		while (need_bs_quote(*src)) {
@@ -56,20 +56,13 @@ void sq_quote_print(FILE *stream, const char *src)
 	fputc('\'', stream);
 }
 
-void sq_quote_argv(struct strbuf *dst, const char** argv, int count,
-                   size_t maxlen)
+void sq_quote_argv(struct strbuf *dst, const char** argv, size_t maxlen)
 {
 	int i;
 
-	/* Count argv if needed. */
-	if (count < 0) {
-		for (count = 0; argv[count]; count++)
-			; /* just counting */
-	}
-
 	/* Copy into destination buffer. */
-	strbuf_grow(dst, 32 * count);
-	for (i = 0; i < count; ++i) {
+	strbuf_grow(dst, 255);
+	for (i = 0; argv[i]; ++i) {
 		strbuf_addch(dst, ' ');
 		sq_quote_buf(dst, argv[i]);
 		if (maxlen && dst->len > maxlen)
@@ -131,7 +124,8 @@ static signed char const sq_lookup[256] = {
 	/* 0x80 */ /* set to 0 */
 };
 
-static inline int sq_must_quote(char c) {
+static inline int sq_must_quote(char c)
+{
 	return sq_lookup[(unsigned char)c] + quote_path_fully > 0;
 }
 
@@ -217,6 +211,22 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 size_t quote_c_style(const char *name, struct strbuf *sb, FILE *fp, int nodq)
 {
 	return quote_c_style_counted(name, -1, sb, fp, nodq);
+}
+
+void quote_two_c_style(struct strbuf *sb, const char *prefix, const char *path, int nodq)
+{
+	if (quote_c_style(prefix, NULL, NULL, 0) ||
+	    quote_c_style(path, NULL, NULL, 0)) {
+		if (!nodq)
+			strbuf_addch(sb, '"');
+		quote_c_style(prefix, sb, NULL, 1);
+		quote_c_style(path, sb, NULL, 1);
+		if (!nodq)
+			strbuf_addch(sb, '"');
+	} else {
+		strbuf_addstr(sb, prefix);
+		strbuf_addstr(sb, path);
+	}
 }
 
 void write_name_quoted(const char *name, FILE *fp, int terminator)

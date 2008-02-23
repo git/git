@@ -1,6 +1,16 @@
 #!/bin/sh
 
-USAGE='[-q] [-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]'
+OPTIONS_KEEPDASHDASH=t
+OPTIONS_SPEC="\
+git-checkout [options] [<branch>] [<paths>...]
+--
+b=          create a new branch started at <branch>
+l           create the new branch's reflog
+track       arrange that the new branch tracks the remote branch
+f           proceed even if the index or working tree is not HEAD
+m           merge local modifications into the new branch
+q,quiet     be quiet
+"
 SUBDIRECTORY_OK=Sometimes
 . git-sh-setup
 require_work_tree
@@ -20,13 +30,12 @@ quiet=
 v=-v
 LF='
 '
-while [ "$#" != "0" ]; do
-    arg="$1"
-    shift
-    case "$arg" in
-	"-b")
-		newbranch="$1"
+
+while test $# != 0; do
+	case "$1" in
+	-b)
 		shift
+		newbranch="$1"
 		[ -z "$newbranch" ] &&
 			die "git checkout: -b needs a branch name"
 		git show-ref --verify --quiet -- "refs/heads/$newbranch" &&
@@ -34,63 +43,54 @@ while [ "$#" != "0" ]; do
 		git check-ref-format "heads/$newbranch" ||
 			die "git checkout: we do not like '$newbranch' as a branch name."
 		;;
-	"-l")
+	-l)
 		newbranch_log=-l
 		;;
-	"--track"|"--no-track")
-		track="$arg"
+	--track|--no-track)
+		track="$1"
 		;;
-	"-f")
+	-f)
 		force=1
 		;;
 	-m)
 		merge=1
 		;;
-	"-q")
+	-q|--quiet)
 		quiet=1
 		v=
 		;;
 	--)
+		shift
 		break
-		;;
-	-*)
-		usage
 		;;
 	*)
-		if rev=$(git rev-parse --verify "$arg^0" 2>/dev/null)
-		then
-			if [ -z "$rev" ]; then
-				echo "unknown flag $arg"
-				exit 1
-			fi
-			new_name="$arg"
-			if git show-ref --verify --quiet -- "refs/heads/$arg"
-			then
-				rev=$(git rev-parse --verify "refs/heads/$arg^0")
-				branch="$arg"
-			fi
-			new="$rev"
-		elif rev=$(git rev-parse --verify "$arg^{tree}" 2>/dev/null)
-		then
-			# checking out selected paths from a tree-ish.
-			new="$rev"
-			new_name="$arg^{tree}"
-			branch=
-		else
-			new=
-			new_name=
-			branch=
-			set x "$arg" "$@"
-			shift
-		fi
-		case "$1" in
-		--)
-			shift ;;
-		esac
-		break
+		usage
 		;;
-    esac
+	esac
+	shift
 done
+
+arg="$1"
+rev=$(git rev-parse --verify "$arg" 2>/dev/null)
+if rev=$(git rev-parse --verify "$rev^0" 2>/dev/null)
+then
+	[ -z "$rev" ] && die "unknown flag $arg"
+	new_name="$arg"
+	if git show-ref --verify --quiet -- "refs/heads/$arg"
+	then
+		rev=$(git rev-parse --verify "refs/heads/$arg^0")
+		branch="$arg"
+	fi
+	new="$rev"
+	shift
+elif rev=$(git rev-parse --verify "$rev^{tree}" 2>/dev/null)
+then
+	# checking out selected paths from a tree-ish.
+	new="$rev"
+	new_name="$rev^{tree}"
+	shift
+fi
+[ "$1" = "--" ] && shift
 
 case "$newbranch,$track" in
 ,--*)
@@ -134,12 +134,12 @@ Did you intend to checkout '$@' which can not be resolved as commit?"
 	fi
 
 	# Make sure the request is about existing paths.
-	git ls-files --error-unmatch -- "$@" >/dev/null || exit
-	git ls-files -- "$@" |
-	git checkout-index -f -u --stdin
+	git ls-files --full-name --error-unmatch -- "$@" >/dev/null || exit
+	git ls-files --full-name -- "$@" |
+		(cd_to_toplevel && git checkout-index -f -u --stdin)
 
-        # Run a post-checkout hook -- the HEAD does not change so the
-        # current HEAD is passed in for both args
+	# Run a post-checkout hook -- the HEAD does not change so the
+	# current HEAD is passed in for both args
 	if test -x "$GIT_DIR"/hooks/post-checkout; then
 	    "$GIT_DIR"/hooks/post-checkout $old $old 0
 	fi
@@ -176,7 +176,7 @@ detach_warn=
 describe_detached_head () {
 	test -n "$quiet" || {
 		printf >&2 "$1 "
-		GIT_PAGER= git log >&2 -1 --pretty=oneline --abbrev-commit "$2"
+		GIT_PAGER= git log >&2 -1 --pretty=oneline --abbrev-commit "$2" --
 	}
 }
 
@@ -267,7 +267,7 @@ if [ "$?" -eq 0 ]; then
 	if test -n "$branch"
 	then
 		old_branch_name=`expr "z$oldbranch" : 'zrefs/heads/\(.*\)'`
-		GIT_DIR="$GIT_DIR" git symbolic-ref -m "checkout: moving from $old_branch_name to $branch" HEAD "refs/heads/$branch"
+		GIT_DIR="$GIT_DIR" git symbolic-ref -m "checkout: moving from ${old_branch_name:-$old} to $branch" HEAD "refs/heads/$branch"
 		if test -n "$quiet"
 		then
 			true	# nothing
@@ -279,7 +279,8 @@ if [ "$?" -eq 0 ]; then
 		fi
 	elif test -n "$detached"
 	then
-		git update-ref --no-deref -m "checkout: moving to $arg" HEAD "$detached" ||
+		old_branch_name=`expr "z$oldbranch" : 'zrefs/heads/\(.*\)'`
+		git update-ref --no-deref -m "checkout: moving from ${old_branch_name:-$old} to $arg" HEAD "$detached" ||
 			die "Cannot detach HEAD"
 		if test -n "$detach_warn"
 		then
@@ -294,5 +295,5 @@ fi
 
 # Run a post-checkout hook
 if test -x "$GIT_DIR"/hooks/post-checkout; then
-        "$GIT_DIR"/hooks/post-checkout $old $new 1
+	"$GIT_DIR"/hooks/post-checkout $old $new 1
 fi

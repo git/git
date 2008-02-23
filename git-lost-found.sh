@@ -2,7 +2,10 @@
 
 USAGE=''
 SUBDIRECTORY_OK='Yes'
+OPTIONS_SPEC=
 . git-sh-setup
+
+echo "WARNING: '$0' is deprecated in favor of 'git fsck --lost-found'" >&2
 
 if [ "$#" != "0" ]
 then

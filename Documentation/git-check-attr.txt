@@ -23,6 +23,11 @@ OPTIONS
 	be treated as an attribute.
 
 
+SEE ALSO
+--------
+linkgit:gitattributes[5].
+
+
 Author
 ------
 Written by Junio C Hamano <junkio@cox.net>
@@ -33,4 +38,4 @@ Documentation by James Bowes.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

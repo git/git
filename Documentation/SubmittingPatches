@@ -10,7 +10,7 @@ Checklist (and a short version for the impatient):
 	- the first line of the commit message should be a short
 	  description and should skip the full stop
 	- if you want your work included in git.git, add a
-	  "Signed-off-by: Your Name <your@email.com>" line to the
+	  "Signed-off-by: Your Name <you@example.com>" line to the
 	  commit message (or just use the option "-s" when
 	  committing) to confirm that you agree to the Developer's
 	  Certificate of Origin
@@ -20,9 +20,6 @@ Checklist (and a short version for the impatient):
 	Patch:
 
 	- use "git format-patch -M" to create the patch
-	- send your patch to <git@vger.kernel.org>. If you use
-	  git-send-email(1), please test it first by sending
-	  email to yourself.
 	- do not PGP sign your patch
 	- do not attach your patch, but read in the mail
 	  body, unless you cannot teach your mailer to
@@ -31,13 +28,15 @@ Checklist (and a short version for the impatient):
 	  corrupt whitespaces.
 	- provide additional information (which is unsuitable for
 	  the commit message) between the "---" and the diffstat
-	- send the patch to the list (git@vger.kernel.org) and the
-	  maintainer (gitster@pobox.com).
 	- if you change, add, or remove a command line option or
 	  make some other user interface change, the associated
 	  documentation should be updated as well.
 	- if your name is not writable in ASCII, make sure that
 	  you send off a message in the correct encoding.
+	- send the patch to the list (git@vger.kernel.org) and the
+	  maintainer (gitster@pobox.com) if (and only if) the patch
+	  is ready for inclusion. If you use git-send-email(1),
+	  please test it first by sending email to yourself.
 
 Long version:
 
@@ -113,7 +112,12 @@ lose tabs that way if you are not careful.
 
 It is a common convention to prefix your subject line with
 [PATCH].  This lets people easily distinguish patches from other
-e-mail discussions.
+e-mail discussions.  Use of additional markers after PATCH and
+the closing bracket to mark the nature of the patch is also
+encouraged.  E.g. [PATCH/RFC] is often used when the patch is
+not ready to be applied but it is for discussion, [PATCH v2],
+[PATCH v3] etc. are often seen when you are sending an update to
+what you have previously sent.
 
 "git format-patch" command follows the best current practice to
 format the body of an e-mail message.  At the beginning of the
@@ -158,7 +162,8 @@ Note that your maintainer does not necessarily read everything
 on the git mailing list.  If your patch is for discussion first,
 send it "To:" the mailing list, and optionally "cc:" him.  If it
 is trivially correct or after the list reached a consensus, send
-it "To:" the maintainer and optionally "cc:" the list.
+it "To:" the maintainer and optionally "cc:" the list for
+inclusion.
 
 Also note that your maintainer does not actively involve himself in
 maintaining what are in contrib/ hierarchy.  When you send fixes and
@@ -211,10 +216,53 @@ then you just add a line saying
 This line can be automatically added by git if you run the git-commit
 command with the -s option.
 
-Some people also put extra tags at the end.  They'll just be ignored for
-now, but you can do this to mark internal company procedures or just
-point out some special detail about the sign-off.
+Notice that you can place your own Signed-off-by: line when
+forwarding somebody else's patch with the above rules for
+D-C-O.  Indeed you are encouraged to do so.  Do not forget to
+place an in-body "From: " line at the beginning to properly attribute
+the change to its true author (see (2) above).
 
+Some people also put extra tags at the end.
+
+"Acked-by:" says that the patch was reviewed by the person who
+is more familiar with the issues and the area the patch attempts
+to modify.  "Tested-by:" says the patch was tested by the person
+and found to have the desired effect.
+
+------------------------------------------------
+An ideal patch flow
+
+Here is an ideal patch flow for this project the current maintainer
+suggests to the contributors:
+
+ (0) You come up with an itch.  You code it up.
+
+ (1) Send it to the list and cc people who may need to know about
+     the change.
+
+     The people who may need to know are the ones whose code you
+     are butchering.  These people happen to be the ones who are
+     most likely to be knowledgeable enough to help you, but
+     they have no obligation to help you (i.e. you ask for help,
+     don't demand).  "git log -p -- $area_you_are_modifying" would
+     help you find out who they are.
+
+ (2) You get comments and suggestions for improvements.  You may
+     even get them in a "on top of your change" patch form.
+
+ (3) Polish, refine, and re-send to the list and the people who
+     spend their time to improve your patch.  Go back to step (2).
+
+ (4) The list forms consensus that the last round of your patch is
+     good.  Send it to the list and cc the maintainer.
+
+ (5) A topic branch is created with the patch and is merged to 'next',
+     and cooked further and eventually graduates to 'master'.
+
+In any time between the (2)-(3) cycle, the maintainer may pick it up
+from the list and queue it to 'pu', in order to make it easier for
+people play with it without having to pick up and apply the patch to
+their trees themselves.
 
 ------------------------------------------------
 MUA specific hints

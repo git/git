@@ -17,8 +17,8 @@
 #define CRLF_INPUT	2
 
 struct text_stat {
-	/* CR, LF and CRLF counts */
-	unsigned cr, lf, crlf;
+	/* NUL, CR, LF and CRLF counts */
+	unsigned nul, cr, lf, crlf;
 
 	/* These are just approximations! */
 	unsigned printable, nonprintable;
@@ -51,6 +51,9 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 			case '\b': case '\t': case '\033': case '\014':
 				stats->printable++;
 				break;
+			case 0:
+				stats->nul++;
+				/* fall through */
 			default:
 				stats->nonprintable++;
 			}
@@ -66,6 +69,8 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 static int is_binary(unsigned long size, struct text_stat *stats)
 {
 
+	if (stats->nul)
+		return 1;
 	if ((stats->printable >> 7) < stats->nonprintable)
 		return 1;
 	/*
@@ -80,8 +85,39 @@ static int is_binary(unsigned long size, struct text_stat *stats)
 	return 0;
 }
 
+static void check_safe_crlf(const char *path, int action,
+                            struct text_stat *stats, enum safe_crlf checksafe)
+{
+	if (!checksafe)
+		return;
+
+	if (action == CRLF_INPUT || auto_crlf <= 0) {
+		/*
+		 * CRLFs would not be restored by checkout:
+		 * check if we'd remove CRLFs
+		 */
+		if (stats->crlf) {
+			if (checksafe == SAFE_CRLF_WARN)
+				warning("CRLF will be replaced by LF in %s.", path);
+			else /* i.e. SAFE_CRLF_FAIL */
+				die("CRLF would be replaced by LF in %s.", path);
+		}
+	} else if (auto_crlf > 0) {
+		/*
+		 * CRLFs would be added by checkout:
+		 * check if we have "naked" LFs
+		 */
+		if (stats->lf != stats->crlf) {
+			if (checksafe == SAFE_CRLF_WARN)
+				warning("LF will be replaced by CRLF in %s", path);
+			else /* i.e. SAFE_CRLF_FAIL */
+				die("LF would be replaced by CRLF in %s", path);
+		}
+	}
+}
+
 static int crlf_to_git(const char *path, const char *src, size_t len,
-                       struct strbuf *buf, int action)
+                       struct strbuf *buf, int action, enum safe_crlf checksafe)
 {
 	struct text_stat stats;
 	char *dst;
@@ -90,9 +126,6 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		return 0;
 
 	gather_stats(src, len, &stats);
-	/* No CR? Nothing to convert, regardless. */
-	if (!stats.cr)
-		return 0;
 
 	if (action == CRLF_GUESS) {
 		/*
@@ -109,6 +142,12 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		if (is_binary(len, &stats))
 			return 0;
 	}
+
+	check_safe_crlf(path, action, &stats, checksafe);
+
+	/* Optimization: No CR? Nothing to convert, regardless. */
+	if (!stats.cr)
+		return 0;
 
 	/* only grow if not in place */
 	if (strbuf_avail(buf) + buf->len < len)
@@ -192,48 +231,39 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 	return 1;
 }
 
-static int filter_buffer(const char *path, const char *src,
-			 unsigned long size, const char *cmd)
+struct filter_params {
+	const char *src;
+	unsigned long size;
+	const char *cmd;
+};
+
+static int filter_buffer(int fd, void *data)
 {
 	/*
 	 * Spawn cmd and feed the buffer contents through its stdin.
 	 */
 	struct child_process child_process;
-	int pipe_feed[2];
+	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
+	const char *argv[] = { "sh", "-c", params->cmd, NULL };
 
 	memset(&child_process, 0, sizeof(child_process));
+	child_process.argv = argv;
+	child_process.in = -1;
+	child_process.out = fd;
 
-	if (pipe(pipe_feed) < 0) {
-		error("cannot create pipe to run external filter %s", cmd);
-		return 1;
-	}
+	if (start_command(&child_process))
+		return error("cannot fork to run external filter %s", params->cmd);
 
-	child_process.pid = fork();
-	if (child_process.pid < 0) {
-		error("cannot fork to run external filter %s", cmd);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		return 1;
-	}
-	if (!child_process.pid) {
-		dup2(pipe_feed[0], 0);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		execlp("sh", "sh", "-c", cmd, NULL);
-		return 1;
-	}
-	close(pipe_feed[0]);
-
-	write_err = (write_in_full(pipe_feed[1], src, size) < 0);
-	if (close(pipe_feed[1]))
+	write_err = (write_in_full(child_process.in, params->src, params->size) < 0);
+	if (close(child_process.in))
 		write_err = 1;
 	if (write_err)
-		error("cannot feed the input to external filter %s", cmd);
+		error("cannot feed the input to external filter %s", params->cmd);
 
 	status = finish_command(&child_process);
 	if (status)
-		error("external filter %s failed %d", cmd, -status);
+		error("external filter %s failed %d", params->cmd, -status);
 	return (write_err || status);
 }
 
@@ -246,49 +276,36 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	 *
 	 * (child --> cmd) --> us
 	 */
-	int pipe_feed[2];
-	int status, ret = 1;
-	struct child_process child_process;
+	int ret = 1;
 	struct strbuf nbuf;
+	struct async async;
+	struct filter_params params;
 
 	if (!cmd)
 		return 0;
 
-	memset(&child_process, 0, sizeof(child_process));
-
-	if (pipe(pipe_feed) < 0) {
-		error("cannot create pipe to run external filter %s", cmd);
-		return 0;
-	}
+	memset(&async, 0, sizeof(async));
+	async.proc = filter_buffer;
+	async.data = &params;
+	params.src = src;
+	params.size = len;
+	params.cmd = cmd;
 
 	fflush(NULL);
-	child_process.pid = fork();
-	if (child_process.pid < 0) {
-		error("cannot fork to run external filter %s", cmd);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		return 0;
-	}
-	if (!child_process.pid) {
-		dup2(pipe_feed[1], 1);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		exit(filter_buffer(path, src, len, cmd));
-	}
-	close(pipe_feed[1]);
+	if (start_async(&async))
+		return 0;	/* error was already reported */
 
 	strbuf_init(&nbuf, 0);
-	if (strbuf_read(&nbuf, pipe_feed[0], len) < 0) {
+	if (strbuf_read(&nbuf, async.out, len) < 0) {
 		error("read from external filter %s failed", cmd);
 		ret = 0;
 	}
-	if (close(pipe_feed[0])) {
+	if (close(async.out)) {
 		error("read from external filter %s failed", cmd);
 		ret = 0;
 	}
-	status = finish_command(&child_process);
-	if (status) {
-		error("external filter %s failed %d", cmd, -status);
+	if (finish_async(&async)) {
+		error("external filter %s failed", cmd);
 		ret = 0;
 	}
 
@@ -343,14 +360,14 @@ static int read_convert_config(const char *var, const char *value)
 
 	if (!strcmp("smudge", ep)) {
 		if (!value)
-			return error("%s: lacks value", var);
+			return config_error_nonbool(var);
 		drv->smudge = strdup(value);
 		return 0;
 	}
 
 	if (!strcmp("clean", ep)) {
 		if (!value)
-			return error("%s: lacks value", var);
+			return config_error_nonbool(var);
 		drv->clean = strdup(value);
 		return 0;
 	}
@@ -553,7 +570,8 @@ static int git_path_check_ident(const char *path, struct git_attr_check *check)
 	return !!ATTR_TRUE(value);
 }
 
-int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst)
+int convert_to_git(const char *path, const char *src, size_t len,
+                   struct strbuf *dst, enum safe_crlf checksafe)
 {
 	struct git_attr_check check[3];
 	int crlf = CRLF_GUESS;
@@ -575,7 +593,7 @@ int convert_to_git(const char *path, const char *src, size_t len, struct strbuf 
 		src = dst->buf;
 		len = dst->len;
 	}
-	ret |= crlf_to_git(path, src, len, dst, crlf);
+	ret |= crlf_to_git(path, src, len, dst, crlf, checksafe);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;

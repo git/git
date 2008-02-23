@@ -4,60 +4,55 @@ int data_received;
 int active_requests = 0;
 
 #ifdef USE_CURL_MULTI
-int max_requests = -1;
-CURLM *curlm;
+static int max_requests = -1;
+static CURLM *curlm;
 #endif
 #ifndef NO_CURL_EASY_DUPHANDLE
-CURL *curl_default;
+static CURL *curl_default;
 #endif
 char curl_errorstr[CURL_ERROR_SIZE];
 
-int curl_ssl_verify = -1;
-char *ssl_cert = NULL;
+static int curl_ssl_verify = -1;
+static char *ssl_cert = NULL;
 #if LIBCURL_VERSION_NUM >= 0x070902
-char *ssl_key = NULL;
+static char *ssl_key = NULL;
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
-char *ssl_capath = NULL;
+static char *ssl_capath = NULL;
 #endif
-char *ssl_cainfo = NULL;
-long curl_low_speed_limit = -1;
-long curl_low_speed_time = -1;
-int curl_ftp_no_epsv = 0;
+static char *ssl_cainfo = NULL;
+static long curl_low_speed_limit = -1;
+static long curl_low_speed_time = -1;
+static int curl_ftp_no_epsv = 0;
+static char *curl_http_proxy = NULL;
 
-struct curl_slist *pragma_header;
+static struct curl_slist *pragma_header;
 
-struct active_request_slot *active_queue_head = NULL;
+static struct active_request_slot *active_queue_head = NULL;
 
 size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
 			   struct buffer *buffer)
 {
 	size_t size = eltsize * nmemb;
-	if (size > buffer->size - buffer->posn)
-		size = buffer->size - buffer->posn;
-	memcpy(ptr, (char *) buffer->buffer + buffer->posn, size);
+	if (size > buffer->buf.len - buffer->posn)
+		size = buffer->buf.len - buffer->posn;
+	memcpy(ptr, buffer->buf.buf + buffer->posn, size);
 	buffer->posn += size;
+
 	return size;
 }
 
 size_t fwrite_buffer(const void *ptr, size_t eltsize,
-			    size_t nmemb, struct buffer *buffer)
+			    size_t nmemb, struct strbuf *buffer)
 {
 	size_t size = eltsize * nmemb;
-	if (size > buffer->size - buffer->posn) {
-		buffer->size = buffer->size * 3 / 2;
-		if (buffer->size < buffer->posn + size)
-			buffer->size = buffer->posn + size;
-		buffer->buffer = xrealloc(buffer->buffer, buffer->size);
-	}
-	memcpy((char *) buffer->buffer + buffer->posn, ptr, size);
-	buffer->posn += size;
+	strbuf_add(buffer, ptr, size);
 	data_received++;
 	return size;
 }
 
 size_t fwrite_null(const void *ptr, size_t eltsize,
-			  size_t nmemb, struct buffer *buffer)
+			  size_t nmemb, struct strbuf *buffer)
 {
 	data_received++;
 	return eltsize * nmemb;
@@ -106,16 +101,18 @@ static int http_options(const char *var, const char *value)
 
 	if (!strcmp("http.sslcert", var)) {
 		if (ssl_cert == NULL) {
-			ssl_cert = xmalloc(strlen(value)+1);
-			strcpy(ssl_cert, value);
+			if (!value)
+				return config_error_nonbool(var);
+			ssl_cert = xstrdup(value);
 		}
 		return 0;
 	}
 #if LIBCURL_VERSION_NUM >= 0x070902
 	if (!strcmp("http.sslkey", var)) {
 		if (ssl_key == NULL) {
-			ssl_key = xmalloc(strlen(value)+1);
-			strcpy(ssl_key, value);
+			if (!value)
+				return config_error_nonbool(var);
+			ssl_key = xstrdup(value);
 		}
 		return 0;
 	}
@@ -123,16 +120,18 @@ static int http_options(const char *var, const char *value)
 #if LIBCURL_VERSION_NUM >= 0x070908
 	if (!strcmp("http.sslcapath", var)) {
 		if (ssl_capath == NULL) {
-			ssl_capath = xmalloc(strlen(value)+1);
-			strcpy(ssl_capath, value);
+			if (!value)
+				return config_error_nonbool(var);
+			ssl_capath = xstrdup(value);
 		}
 		return 0;
 	}
 #endif
 	if (!strcmp("http.sslcainfo", var)) {
 		if (ssl_cainfo == NULL) {
-			ssl_cainfo = xmalloc(strlen(value)+1);
-			strcpy(ssl_cainfo, value);
+			if (!value)
+				return config_error_nonbool(var);
+			ssl_cainfo = xstrdup(value);
 		}
 		return 0;
 	}
@@ -158,6 +157,14 @@ static int http_options(const char *var, const char *value)
 
 	if (!strcmp("http.noepsv", var)) {
 		curl_ftp_no_epsv = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp("http.proxy", var)) {
+		if (curl_http_proxy == NULL) {
+			if (!value)
+				return config_error_nonbool(var);
+			curl_http_proxy = xstrdup(value);
+		}
 		return 0;
 	}
 
@@ -204,6 +211,9 @@ static CURL* get_curl_handle(void)
 
 	if (curl_ftp_no_epsv)
 		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
+
+	if (curl_http_proxy)
+		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
 
 	return result;
 }
@@ -276,6 +286,7 @@ void http_cleanup(void)
 #endif
 
 	while (slot != NULL) {
+		struct active_request_slot *next = slot->next;
 #ifdef USE_CURL_MULTI
 		if (slot->in_use) {
 			curl_easy_getinfo(slot->curl,
@@ -287,8 +298,10 @@ void http_cleanup(void)
 #endif
 		if (slot->curl != NULL)
 			curl_easy_cleanup(slot->curl);
-		slot = slot->next;
+		free(slot);
+		slot = next;
 	}
+	active_queue_head = NULL;
 
 #ifndef NO_CURL_EASY_DUPHANDLE
 	curl_easy_cleanup(curl_default);
@@ -300,7 +313,7 @@ void http_cleanup(void)
 	curl_global_cleanup();
 
 	curl_slist_free_all(pragma_header);
-        pragma_header = NULL;
+	pragma_header = NULL;
 }
 
 struct active_request_slot *get_active_slot(void)
@@ -356,7 +369,6 @@ struct active_request_slot *get_active_slot(void)
 	slot->finished = NULL;
 	slot->callback_data = NULL;
 	slot->callback_func = NULL;
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, pragma_header);
 	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, NULL);
@@ -372,6 +384,7 @@ int start_active_slot(struct active_request_slot *slot)
 {
 #ifdef USE_CURL_MULTI
 	CURLMcode curlm_result = curl_multi_add_handle(curlm, slot->curl);
+	int num_transfers;
 
 	if (curlm_result != CURLM_OK &&
 	    curlm_result != CURLM_CALL_MULTI_PERFORM) {
@@ -379,11 +392,60 @@ int start_active_slot(struct active_request_slot *slot)
 		slot->in_use = 0;
 		return 0;
 	}
+
+	/*
+	 * We know there must be something to do, since we just added
+	 * something.
+	 */
+	curl_multi_perform(curlm, &num_transfers);
 #endif
 	return 1;
 }
 
 #ifdef USE_CURL_MULTI
+struct fill_chain {
+	void *data;
+	int (*fill)(void *);
+	struct fill_chain *next;
+};
+
+static struct fill_chain *fill_cfg = NULL;
+
+void add_fill_function(void *data, int (*fill)(void *))
+{
+	struct fill_chain *new = malloc(sizeof(*new));
+	struct fill_chain **linkp = &fill_cfg;
+	new->data = data;
+	new->fill = fill;
+	new->next = NULL;
+	while (*linkp)
+		linkp = &(*linkp)->next;
+	*linkp = new;
+}
+
+void fill_active_slots(void)
+{
+	struct active_request_slot *slot = active_queue_head;
+
+	while (active_requests < max_requests) {
+		struct fill_chain *fill;
+		for (fill = fill_cfg; fill; fill = fill->next)
+			if (fill->fill(fill->data))
+				break;
+
+		if (!fill)
+			break;
+	}
+
+	while (slot != NULL) {
+		if (!slot->in_use && slot->curl != NULL) {
+			curl_easy_cleanup(slot->curl);
+			slot->curl = NULL;
+		}
+		slot = slot->next;
+	}
+}
+
 void step_active_slots(void)
 {
 	int num_transfers;
@@ -444,8 +506,8 @@ void run_active_slot(struct active_request_slot *slot)
 
 static void closedown_active_slot(struct active_request_slot *slot)
 {
-        active_requests--;
-        slot->in_use = 0;
+	active_requests--;
+	slot->in_use = 0;
 }
 
 void release_active_slot(struct active_request_slot *slot)
@@ -466,7 +528,7 @@ void release_active_slot(struct active_request_slot *slot)
 static void finish_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
-        curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
+	curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
 
 	if (slot->finished != NULL)
 		(*slot->finished) = 1;
@@ -477,10 +539,10 @@ static void finish_active_slot(struct active_request_slot *slot)
 		slot->results->http_code = slot->http_code;
 	}
 
-        /* Run callback if appropriate */
-        if (slot->callback_func != NULL) {
-                slot->callback_func(slot->callback_data);
-        }
+	/* Run callback if appropriate */
+	if (slot->callback_func != NULL) {
+		slot->callback_func(slot->callback_data);
+	}
 }
 
 void finish_all_active_slots(void)
@@ -494,4 +556,86 @@ void finish_all_active_slots(void)
 		} else {
 			slot = slot->next;
 		}
+}
+
+static inline int needs_quote(int ch)
+{
+	if (((ch >= 'A') && (ch <= 'Z'))
+			|| ((ch >= 'a') && (ch <= 'z'))
+			|| ((ch >= '0') && (ch <= '9'))
+			|| (ch == '/')
+			|| (ch == '-')
+			|| (ch == '.'))
+		return 0;
+	return 1;
+}
+
+static inline int hex(int v)
+{
+	if (v < 10) return '0' + v;
+	else return 'A' + v - 10;
+}
+
+static char *quote_ref_url(const char *base, const char *ref)
+{
+	const char *cp;
+	char *dp, *qref;
+	int len, baselen, ch;
+
+	baselen = strlen(base);
+	len = baselen + 7; /* "/refs/" + NUL */
+	for (cp = ref; (ch = *cp) != 0; cp++, len++)
+		if (needs_quote(ch))
+			len += 2; /* extra two hex plus replacement % */
+	qref = xmalloc(len);
+	memcpy(qref, base, baselen);
+	memcpy(qref + baselen, "/refs/", 6);
+	for (cp = ref, dp = qref + baselen + 6; (ch = *cp) != 0; cp++) {
+		if (needs_quote(ch)) {
+			*dp++ = '%';
+			*dp++ = hex((ch >> 4) & 0xF);
+			*dp++ = hex(ch & 0xF);
+		}
+		else
+			*dp++ = ch;
+	}
+	*dp = 0;
+
+	return qref;
+}
+
+int http_fetch_ref(const char *base, const char *ref, unsigned char *sha1)
+{
+	char *url;
+	struct strbuf buffer = STRBUF_INIT;
+	struct active_request_slot *slot;
+	struct slot_results results;
+	int ret;
+
+	url = quote_ref_url(base, ref);
+	slot = get_active_slot();
+	slot->results = &results;
+	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
+	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
+	if (start_active_slot(slot)) {
+		run_active_slot(slot);
+		if (results.curl_result == CURLE_OK) {
+			strbuf_rtrim(&buffer);
+			if (buffer.len == 40)
+				ret = get_sha1_hex(buffer.buf, sha1);
+			else
+				ret = 1;
+		} else {
+			ret = error("Couldn't get %s for %s\n%s",
+				    url, ref, curl_errorstr);
+		}
+	} else {
+		ret = error("Unable to start request");
+	}
+
+	strbuf_release(&buffer);
+	free(url);
+	return ret;
 }

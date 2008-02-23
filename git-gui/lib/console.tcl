@@ -6,6 +6,7 @@ class console {
 field t_short
 field t_long
 field w
+field w_t
 field console_cr
 field is_toplevel    1; # are we our own window?
 
@@ -36,6 +37,7 @@ method _init {} {
 	}
 
 	set console_cr 1.0
+	set w_t $w.m.t
 
 	frame $w.m
 	label $w.m.l1 \
@@ -43,51 +45,47 @@ method _init {} {
 		-anchor w \
 		-justify left \
 		-font font_uibold
-	text $w.m.t \
+	text $w_t \
 		-background white -borderwidth 1 \
 		-relief sunken \
 		-width 80 -height 10 \
 		-wrap none \
 		-font font_diff \
 		-state disabled \
-		-xscrollcommand [list $w.m.sbx set] \
-		-yscrollcommand [list $w.m.sby set]
-	label $w.m.s -text {Working... please wait...} \
+		-xscrollcommand [cb _sb_set $w.m.sbx h] \
+		-yscrollcommand [cb _sb_set $w.m.sby v]
+	label $w.m.s -text [mc "Working... please wait..."] \
 		-anchor w \
 		-justify left \
 		-font font_uibold
-	scrollbar $w.m.sbx -command [list $w.m.t xview] -orient h
-	scrollbar $w.m.sby -command [list $w.m.t yview]
 	pack $w.m.l1 -side top -fill x
 	pack $w.m.s -side bottom -fill x
-	pack $w.m.sbx -side bottom -fill x
-	pack $w.m.sby -side right -fill y
-	pack $w.m.t -side left -fill both -expand 1
+	pack $w_t -side left -fill both -expand 1
 	pack $w.m -side top -fill both -expand 1 -padx 5 -pady 10
 
 	menu $w.ctxm -tearoff 0
-	$w.ctxm add command -label "Copy" \
-		-command "tk_textCopy $w.m.t"
-	$w.ctxm add command -label "Select All" \
-		-command "focus $w.m.t;$w.m.t tag add sel 0.0 end"
-	$w.ctxm add command -label "Copy All" \
+	$w.ctxm add command -label [mc "Copy"] \
+		-command "tk_textCopy $w_t"
+	$w.ctxm add command -label [mc "Select All"] \
+		-command "focus $w_t;$w_t tag add sel 0.0 end"
+	$w.ctxm add command -label [mc "Copy All"] \
 		-command "
-			$w.m.t tag add sel 0.0 end
-			tk_textCopy $w.m.t
-			$w.m.t tag remove sel 0.0 end
+			$w_t tag add sel 0.0 end
+			tk_textCopy $w_t
+			$w_t tag remove sel 0.0 end
 		"
 
 	if {$is_toplevel} {
-		button $w.ok -text {Close} \
+		button $w.ok -text [mc "Close"] \
 			-state disabled \
 			-command [list destroy $w]
 		pack $w.ok -side bottom -anchor e -pady 10 -padx 10
 		bind $w <Visibility> [list focus $w]
 	}
 
-	bind_button3 $w.m.t "tk_popup $w.ctxm %X %Y"
-	bind $w.m.t <$M1B-Key-a> "$w.m.t tag add sel 0.0 end;break"
-	bind $w.m.t <$M1B-Key-A> "$w.m.t tag add sel 0.0 end;break"
+	bind_button3 $w_t "tk_popup $w.ctxm %X %Y"
+	bind $w_t <$M1B-Key-a> "$w_t tag add sel 0.0 end;break"
+	bind $w_t <$M1B-Key-A> "$w_t tag add sel 0.0 end;break"
 }
 
 method exec {cmd {after {}}} {
@@ -104,8 +102,8 @@ method exec {cmd {after {}}} {
 method _read {fd after} {
 	set buf [read $fd]
 	if {$buf ne {}} {
-		if {![winfo exists $w.m.t]} {_init $this}
-		$w.m.t conf -state normal
+		if {![winfo exists $w_t]} {_init $this}
+		$w_t conf -state normal
 		set c 0
 		set n [string length $buf]
 		while {$c < $n} {
@@ -115,20 +113,20 @@ method _read {fd after} {
 			if {$lf < 0} {set lf [expr {$n + 1}]}
 
 			if {$lf < $cr} {
-				$w.m.t insert end [string range $buf $c $lf]
-				set console_cr [$w.m.t index {end -1c}]
+				$w_t insert end [string range $buf $c $lf]
+				set console_cr [$w_t index {end -1c}]
 				set c $lf
 				incr c
 			} else {
-				$w.m.t delete $console_cr end
-				$w.m.t insert end "\n"
-				$w.m.t insert end [string range $buf $c $cr]
+				$w_t delete $console_cr end
+				$w_t insert end "\n"
+				$w_t insert end [string range $buf $c [expr {$cr - 1}]]
 				set c $cr
 				incr c
 			}
 		}
-		$w.m.t conf -state disabled
-		$w.m.t see end
+		$w_t conf -state disabled
+		$w_t see end
 	}
 
 	fconfigure $fd -blocking 1
@@ -171,33 +169,50 @@ method chain {cmdlist {ok 1}} {
 }
 
 method insert {txt} {
-	if {![winfo exists $w.m.t]} {_init $this}
-	$w.m.t conf -state normal
-	$w.m.t insert end "$txt\n"
-	set console_cr [$w.m.t index {end -1c}]
-	$w.m.t conf -state disabled
+	if {![winfo exists $w_t]} {_init $this}
+	$w_t conf -state normal
+	$w_t insert end "$txt\n"
+	set console_cr [$w_t index {end -1c}]
+	$w_t conf -state disabled
 }
 
 method done {ok} {
 	if {$ok} {
 		if {[winfo exists $w.m.s]} {
-			$w.m.s conf -background green -text {Success}
+			bind $w.m.s <Destroy> [list delete_this $this]
+			$w.m.s conf -background green -text [mc "Success"]
 			if {$is_toplevel} {
 				$w.ok conf -state normal
 				focus $w.ok
 			}
+		} else {
+			delete_this
 		}
 	} else {
 		if {![winfo exists $w.m.s]} {
 			_init $this
 		}
-		$w.m.s conf -background red -text {Error: Command Failed}
+		bind $w.m.s <Destroy> [list delete_this $this]
+		$w.m.s conf -background red -text [mc "Error: Command Failed"]
 		if {$is_toplevel} {
 			$w.ok conf -state normal
 			focus $w.ok
 		}
 	}
-	delete_this
+}
+
+method _sb_set {sb orient first last} {
+	if {![winfo exists $sb]} {
+		if {$first == $last || ($first == 0 && $last == 1)} return
+		if {$orient eq {h}} {
+			scrollbar $sb -orient h -command [list $w_t xview]
+			pack $sb -fill x -side bottom -before $w_t
+		} else {
+			scrollbar $sb -orient v -command [list $w_t yview]
+			pack $sb -fill y -side right -before $w_t
+		}
+	}
+	$sb set $first $last
 }
 
 }

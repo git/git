@@ -73,7 +73,7 @@ fi \
 AC_ARG_WITH([lib],
  [AS_HELP_STRING([--with-lib=ARG],
                  [ARG specifies alternative name for lib directory])],
- [if test "$withval" = "no" -o "$withval" = "yes"; then \
+ [if test "$withval" = "no" || test "$withval" = "yes"; then \
 	AC_MSG_WARN([You should provide name for --with-lib=ARG]); \
 else \
 	GIT_CONF_APPEND_LINE(lib=$withval); \
@@ -122,6 +122,27 @@ if test -z "$NO_TCLTK"; then
     AC_SUBST(TCLTK_PATH)
   fi
 fi
+AC_CHECK_PROGS(ASCIIDOC, [asciidoc])
+if test -n "$ASCIIDOC"; then
+	AC_MSG_CHECKING([for asciidoc version])
+	asciidoc_version=`$ASCIIDOC --version 2>&1`
+	case "${asciidoc_version}" in
+	asciidoc' '8*)
+		ASCIIDOC8=YesPlease
+		AC_MSG_RESULT([${asciidoc_version} > 7])
+		;;
+	asciidoc' '7*)
+		ASCIIDOC8=
+		AC_MSG_RESULT([${asciidoc_version}])
+		;;
+	*)
+		ASCIIDOC8=
+		AC_MSG_RESULT([${asciidoc_version} (unknown)])
+		;;
+	esac
+fi
+AC_SUBST(ASCIIDOC8)
+
 
 ## Checks for libraries.
 AC_MSG_NOTICE([CHECKS for libraries])
@@ -182,6 +203,26 @@ AC_SUBST(NEEDS_LIBICONV)
 AC_SUBST(NO_ICONV)
 test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"
 #
+# Define NO_DEFLATE_BOUND if deflateBound is missing from zlib.
+AC_DEFUN([ZLIBTEST_SRC], [
+#include <zlib.h>
+
+int main(void)
+{
+	deflateBound(0, 0);
+	return 0;
+}
+])
+AC_MSG_CHECKING([for deflateBound in -lz])
+old_LIBS="$LIBS"
+LIBS="$LIBS -lz"
+AC_LINK_IFELSE(ZLIBTEST_SRC,
+	[AC_MSG_RESULT([yes])],
+	[AC_MSG_RESULT([no])
+	NO_DEFLATE_BOUND=yes])
+LIBS="$old_LIBS"
+AC_SUBST(NO_DEFLATE_BOUND)
+#
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 AC_CHECK_LIB([c], [socket],
@@ -192,6 +233,34 @@ test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 
 
 ## Checks for header files.
+AC_MSG_NOTICE([CHECKS for header files])
+#
+# Define NO_SYS_SELECT_H if you don't have sys/select.h.
+AC_CHECK_HEADER([sys/select.h],
+[NO_SYS_SELECT_H=],
+[NO_SYS_SELECT_H=UnfortunatelyYes])
+AC_SUBST(NO_SYS_SELECT_H)
+#
+# Define OLD_ICONV if your library has an old iconv(), where the second
+# (input buffer pointer) parameter is declared with type (const char **).
+AC_DEFUN([OLDICONVTEST_SRC], [[
+#include <iconv.h>
+
+extern size_t iconv(iconv_t cd,
+		    char **inbuf, size_t *inbytesleft,
+		    char **outbuf, size_t *outbytesleft);
+
+int main(void)
+{
+	return 0;
+}
+]])
+AC_MSG_CHECKING([for old iconv()])
+AC_COMPILE_IFELSE(OLDICONVTEST_SRC,
+	[AC_MSG_RESULT([no])],
+	[AC_MSG_RESULT([yes])
+	OLD_ICONV=UnfortunatelyYes])
+AC_SUBST(OLD_ICONV)
 
 
 ## Checks for typedefs, structures, and compiler characteristics.
@@ -245,9 +314,9 @@ AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
 		[[char buf[64];
 		if (sprintf(buf, "%lld%hhd%jd%zd%td", (long long int)1, (char)2, (intmax_t)3, (size_t)4, (ptrdiff_t)5) != 5)
-		  exit(1);
+		  return 1;
 		else if (strcmp(buf, "12345"))
-		  exit(2);]])],
+		  return 2;]])],
 	[ac_cv_c_c99_format=yes],
 	[ac_cv_c_c99_format=no])
 ])
@@ -269,17 +338,41 @@ AC_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=YesPlease])
 AC_SUBST(NO_STRCASESTR)
 #
+# Define NO_MEMMEM if you don't have memmem.
+AC_CHECK_FUNC(memmem,
+[NO_MEMMEM=],
+[NO_MEMMEM=YesPlease])
+AC_SUBST(NO_MEMMEM)
+#
 # Define NO_STRLCPY if you don't have strlcpy.
 AC_CHECK_FUNC(strlcpy,
 [NO_STRLCPY=],
 [NO_STRLCPY=YesPlease])
 AC_SUBST(NO_STRLCPY)
 #
+# Define NO_STRTOUMAX if you don't have strtoumax in the C library.
+AC_CHECK_FUNC(strtoumax,
+[NO_STRTOUMAX=],
+[NO_STRTOUMAX=YesPlease])
+AC_SUBST(NO_STRTOUMAX)
+#
 # Define NO_SETENV if you don't have setenv in the C library.
 AC_CHECK_FUNC(setenv,
 [NO_SETENV=],
 [NO_SETENV=YesPlease])
 AC_SUBST(NO_SETENV)
+#
+# Define NO_UNSETENV if you don't have unsetenv in the C library.
+AC_CHECK_FUNC(unsetenv,
+[NO_UNSETENV=],
+[NO_UNSETENV=YesPlease])
+AC_SUBST(NO_UNSETENV)
+#
+# Define NO_MKDTEMP if you don't have mkdtemp in the C library.
+AC_CHECK_FUNC(mkdtemp,
+[NO_MKDTEMP=],
+[NO_MKDTEMP=YesPlease])
+AC_SUBST(NO_MKDTEMP)
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
@@ -377,7 +470,7 @@ GIT_PARSE_WITH(iconv))
 # times (my ext3 doesn't).
 #
 # Define USE_STDEV below if you want git to care about the underlying device
-# change being considered an inode change from the update-cache perspective.
+# change being considered an inode change from the update-index perspective.
 
 
 ## Output files

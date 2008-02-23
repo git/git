@@ -40,19 +40,19 @@ OPTIONS
 -d::
 	After packing, if the newly created packs make some
 	existing packs redundant, remove the redundant packs.
-	Also runs gitlink:git-prune-packed[1].
+	Also runs linkgit:git-prune-packed[1].
 
 -l::
         Pass the `--local` option to `git pack-objects`, see
-        gitlink:git-pack-objects[1].
+	linkgit:git-pack-objects[1].
 
 -f::
         Pass the `--no-reuse-delta` option to `git pack-objects`, see
-        gitlink:git-pack-objects[1].
+	linkgit:git-pack-objects[1].
 
 -q::
         Pass the `-q` option to `git pack-objects`, see
-        gitlink:git-pack-objects[1].
+	linkgit:git-pack-objects[1].
 
 -n::
         Do not update the server information with
@@ -109,9 +109,9 @@ Documentation by Ryan Anderson <ryan@michonline.com>
 
 See Also
 --------
-gitlink:git-pack-objects[1]
-gitlink:git-prune-packed[1]
+linkgit:git-pack-objects[1]
+linkgit:git-prune-packed[1]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

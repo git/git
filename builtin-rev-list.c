@@ -9,6 +9,7 @@
 #include "revision.h"
 #include "list-objects.h"
 #include "builtin.h"
+#include "log-tree.h"
 
 /* bits #0-15 in revision.h */
 
@@ -25,6 +26,7 @@ static const char rev_list_usage[] =
 "    --remove-empty\n"
 "    --all\n"
 "    --stdin\n"
+"    --quiet\n"
 "  ordering output:\n"
 "    --topo-order\n"
 "    --date-order\n"
@@ -38,7 +40,8 @@ static const char rev_list_usage[] =
 "    --left-right\n"
 "  special purpose:\n"
 "    --bisect\n"
-"    --bisect-vars"
+"    --bisect-vars\n"
+"    --bisect-all"
 ;
 
 static struct rev_info revs;
@@ -48,6 +51,7 @@ static int show_timestamp;
 static int hdr_termination;
 static const char *header_prefix;
 
+static void finish_commit(struct commit *commit);
 static void show_commit(struct commit *commit)
 {
 	if (show_timestamp)
@@ -56,6 +60,8 @@ static void show_commit(struct commit *commit)
 		fputs(header_prefix, stdout);
 	if (commit->object.flags & BOUNDARY)
 		putchar('-');
+	else if (commit->object.flags & UNINTERESTING)
+		putchar('^');
 	else if (revs.left_right) {
 		if (commit->object.flags & SYMMETRIC_LEFT)
 			putchar('<');
@@ -74,27 +80,40 @@ static void show_commit(struct commit *commit)
 			parents = parents->next;
 		}
 	}
+	show_decorations(commit);
 	if (revs.commit_format == CMIT_FMT_ONELINE)
 		putchar(' ');
 	else
 		putchar('\n');
 
-	if (revs.verbose_header) {
+	if (revs.verbose_header && commit->buffer) {
 		struct strbuf buf;
 		strbuf_init(&buf, 0);
 		pretty_print_commit(revs.commit_format, commit,
-					&buf, revs.abbrev, NULL, NULL, revs.date_mode);
+				    &buf, revs.abbrev, NULL, NULL,
+				    revs.date_mode, 0);
 		if (buf.len)
 			printf("%s%c", buf.buf, hdr_termination);
 		strbuf_release(&buf);
 	}
 	maybe_flush_or_die(stdout, "stdout");
+	finish_commit(commit);
+}
+
+static void finish_commit(struct commit *commit)
+{
 	if (commit->parents) {
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
 	}
 	free(commit->buffer);
 	commit->buffer = NULL;
+}
+
+static void finish_object(struct object_array_entry *p)
+{
+	if (p->item->type == OBJ_BLOB && !has_sha1_file(p->item->sha1))
+		die("missing blob object '%s'", sha1_to_hex(p->item->sha1));
 }
 
 static void show_object(struct object_array_entry *p)
@@ -104,9 +123,7 @@ static void show_object(struct object_array_entry *p)
 	 */
 	const char *ep = strchr(p->name, '\n');
 
-	if (p->item->type == OBJ_BLOB && !has_sha1_file(p->item->sha1))
-		die("missing blob object '%s'", sha1_to_hex(p->item->sha1));
-
+	finish_object(p);
 	if (ep) {
 		printf("%s %.*s\n", sha1_to_hex(p->item->sha1),
 		       (int) (ep - p->name),
@@ -138,7 +155,7 @@ static int count_distance(struct commit_list *entry)
 
 		if (commit->object.flags & (UNINTERESTING | COUNTED))
 			break;
-		if (!revs.prune_fn || (commit->object.flags & TREECHANGE))
+		if (!(commit->object.flags & TREESAME))
 			nr++;
 		commit->object.flags |= COUNTED;
 		p = commit->parents;
@@ -194,7 +211,7 @@ static inline int halfway(struct commit_list *p, int nr)
 	/*
 	 * Don't short-cut something we are not going to return!
 	 */
-	if (revs.prune_fn && !(p->item->object.flags & TREECHANGE))
+	if (p->item->object.flags & TREESAME)
 		return 0;
 	if (DEBUG_BISECT)
 		return 0;
@@ -230,7 +247,7 @@ static void show_list(const char *debug, int counted, int nr,
 		char *ep, *sp;
 
 		fprintf(stderr, "%c%c%c ",
-			(flags & TREECHANGE) ? 'T' : ' ',
+			(flags & TREESAME) ? ' ' : 'T',
 			(flags & UNINTERESTING) ? 'U' : ' ',
 			(flags & COUNTED) ? 'C' : ' ');
 		if (commit->util)
@@ -264,7 +281,7 @@ static struct commit_list *best_bisection(struct commit_list *list, int nr)
 		int distance;
 		unsigned flags = p->item->object.flags;
 
-		if (revs.prune_fn && !(flags & TREECHANGE))
+		if (flags & TREESAME)
 			continue;
 		distance = weight(p);
 		if (nr - distance < distance)
@@ -276,6 +293,57 @@ static struct commit_list *best_bisection(struct commit_list *list, int nr)
 	}
 
 	return best;
+}
+
+struct commit_dist {
+	struct commit *commit;
+	int distance;
+};
+
+static int compare_commit_dist(const void *a_, const void *b_)
+{
+	struct commit_dist *a, *b;
+
+	a = (struct commit_dist *)a_;
+	b = (struct commit_dist *)b_;
+	if (a->distance != b->distance)
+		return b->distance - a->distance; /* desc sort */
+	return hashcmp(a->commit->object.sha1, b->commit->object.sha1);
+}
+
+static struct commit_list *best_bisection_sorted(struct commit_list *list, int nr)
+{
+	struct commit_list *p;
+	struct commit_dist *array = xcalloc(nr, sizeof(*array));
+	int cnt, i;
+
+	for (p = list, cnt = 0; p; p = p->next) {
+		int distance;
+		unsigned flags = p->item->object.flags;
+
+		if (flags & TREESAME)
+			continue;
+		distance = weight(p);
+		if (nr - distance < distance)
+			distance = nr - distance;
+		array[cnt].commit = p->item;
+		array[cnt].distance = distance;
+		cnt++;
+	}
+	qsort(array, cnt, sizeof(*array), compare_commit_dist);
+	for (p = list, i = 0; i < cnt; i++) {
+		struct name_decoration *r = xmalloc(sizeof(*r) + 100);
+		struct object *obj = &(array[i].commit->object);
+
+		sprintf(r->name, "dist=%d", array[i].distance);
+		r->next = add_decoration(&name_decoration, obj, r);
+		p->item = array[i].commit;
+		p = p->next;
+	}
+	if (p)
+		p->next = NULL;
+	free(array);
+	return list;
 }
 
 /*
@@ -292,7 +360,8 @@ static struct commit_list *best_bisection(struct commit_list *list, int nr)
  * or positive distance.
  */
 static struct commit_list *do_find_bisection(struct commit_list *list,
-					     int nr, int *weights)
+					     int nr, int *weights,
+					     int find_all)
 {
 	int n, counted;
 	struct commit_list *p;
@@ -306,7 +375,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		p->item->util = &weights[n++];
 		switch (count_interesting_parents(commit)) {
 		case 0:
-			if (!revs.prune_fn || (flags & TREECHANGE)) {
+			if (!(flags & TREESAME)) {
 				weight_set(p, 1);
 				counted++;
 				show_list("bisection 2 count one",
@@ -351,7 +420,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		clear_distance(list);
 
 		/* Does it happen to be at exactly half-way? */
-		if (halfway(p, nr))
+		if (!find_all && halfway(p, nr))
 			return p;
 		counted++;
 	}
@@ -379,7 +448,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			 * add one for p itself if p is to be counted,
 			 * otherwise inherit it from q directly.
 			 */
-			if (!revs.prune_fn || (flags & TREECHANGE)) {
+			if (!(flags & TREESAME)) {
 				weight_set(p, weight(q)+1);
 				counted++;
 				show_list("bisection 2 count one",
@@ -389,19 +458,22 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 				weight_set(p, weight(q));
 
 			/* Does it happen to be at exactly half-way? */
-			if (halfway(p, nr))
+			if (!find_all && halfway(p, nr))
 				return p;
 		}
 	}
 
 	show_list("bisection 2 counted all", counted, nr, list);
 
-	/* Then find the best one */
-	return best_bisection(list, nr);
+	if (!find_all)
+		return best_bisection(list, nr);
+	else
+		return best_bisection_sorted(list, nr);
 }
 
 static struct commit_list *find_bisection(struct commit_list *list,
-					  int *reaches, int *all)
+					  int *reaches, int *all,
+					  int find_all)
 {
 	int nr, on_list;
 	struct commit_list *p, *best, *next, *last;
@@ -423,7 +495,7 @@ static struct commit_list *find_bisection(struct commit_list *list,
 			continue;
 		p->next = last;
 		last = p;
-		if (!revs.prune_fn || (flags & TREECHANGE))
+		if (!(flags & TREESAME))
 			nr++;
 		on_list++;
 	}
@@ -434,14 +506,13 @@ static struct commit_list *find_bisection(struct commit_list *list,
 	weights = xcalloc(on_list, sizeof(*weights));
 
 	/* Do the real work of finding bisection commit. */
-	best = do_find_bisection(list, nr, weights);
-
+	best = do_find_bisection(list, nr, weights, find_all);
 	if (best) {
-		best->next = NULL;
+		if (!find_all)
+			best->next = NULL;
 		*reaches = weight(best);
 	}
 	free(weights);
-
 	return best;
 }
 
@@ -451,7 +522,7 @@ static void read_revisions_from_stdin(struct rev_info *revs)
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = strlen(line);
-		if (line[len - 1] == '\n')
+		if (len && line[len - 1] == '\n')
 			line[--len] = 0;
 		if (!len)
 			break;
@@ -468,6 +539,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int i;
 	int read_from_stdin = 0;
 	int bisect_show_vars = 0;
+	int bisect_find_all = 0;
+	int quiet = 0;
 
 	git_config(git_default_config);
 	init_revisions(&revs, prefix);
@@ -490,6 +563,11 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			bisect_list = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--bisect-all")) {
+			bisect_list = 1;
+			bisect_find_all = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--bisect-vars")) {
 			bisect_list = 1;
 			bisect_show_vars = 1;
@@ -499,6 +577,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			if (read_from_stdin++)
 				die("--stdin given twice?");
 			read_revisions_from_stdin(&revs);
+			continue;
+		}
+		if (!strcmp(arg, "--quiet")) {
+			quiet = 1;
 			continue;
 		}
 		usage(rev_list_usage);
@@ -529,16 +611,19 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (bisect_list)
 		revs.limited = 1;
 
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 	if (revs.tree_objects)
 		mark_edges_uninteresting(revs.commits, &revs, show_edge);
 
 	if (bisect_list) {
 		int reaches = reaches, all = all;
 
-		revs.commits = find_bisection(revs.commits, &reaches, &all);
+		revs.commits = find_bisection(revs.commits, &reaches, &all,
+					      bisect_find_all);
 		if (bisect_show_vars) {
 			int cnt;
+			char hex[41];
 			if (!revs.commits)
 				return 1;
 			/*
@@ -550,15 +635,22 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			 * A bisect set of size N has (N-1) commits further
 			 * to test, as we already know one bad one.
 			 */
-			cnt = all-reaches;
+			cnt = all - reaches;
 			if (cnt < reaches)
 				cnt = reaches;
+			strcpy(hex, sha1_to_hex(revs.commits->item->object.sha1));
+
+			if (bisect_find_all) {
+				traverse_commit_list(&revs, show_commit, show_object);
+				printf("------\n");
+			}
+
 			printf("bisect_rev=%s\n"
 			       "bisect_nr=%d\n"
 			       "bisect_good=%d\n"
 			       "bisect_bad=%d\n"
 			       "bisect_all=%d\n",
-			       sha1_to_hex(revs.commits->item->object.sha1),
+			       hex,
 			       cnt - 1,
 			       all - reaches - 1,
 			       reaches - 1,
@@ -567,7 +659,9 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	traverse_commit_list(&revs, show_commit, show_object);
+	traverse_commit_list(&revs,
+		quiet ? finish_commit : show_commit,
+		quiet ? finish_object : show_object);
 
 	return 0;
 }

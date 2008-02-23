@@ -103,7 +103,7 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 	int fd;
 	long wrote;
 
-	switch (ntohl(ce->ce_mode) & S_IFMT) {
+	switch (ce->ce_mode & S_IFMT) {
 		char *new;
 		struct strbuf buf;
 		unsigned long size;
@@ -119,15 +119,17 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		 */
 		strbuf_init(&buf, 0);
 		if (convert_to_working_tree(ce->name, new, size, &buf)) {
+			size_t newsize = 0;
 			free(new);
-			new = strbuf_detach(&buf, &size);
+			new = strbuf_detach(&buf, &newsize);
+			size = newsize;
 		}
 
 		if (to_tempfile) {
 			strcpy(path, ".merge_file_XXXXXX");
 			fd = mkstemp(path);
 		} else
-			fd = create_file(path, ntohl(ce->ce_mode));
+			fd = create_file(path, ce->ce_mode);
 		if (fd < 0) {
 			free(new);
 			return error("git-checkout-index: unable to create file %s (%s)",
@@ -201,7 +203,7 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *t
 	strcpy(path + len, ce->name);
 
 	if (!lstat(path, &st)) {
-		unsigned changed = ce_match_stat(ce, &st, 1);
+		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID);
 		if (!changed)
 			return 0;
 		if (!state->force) {
@@ -219,7 +221,7 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *t
 		unlink(path);
 		if (S_ISDIR(st.st_mode)) {
 			/* If it is a gitlink, leave it alone! */
-			if (S_ISGITLINK(ntohl(ce->ce_mode)))
+			if (S_ISGITLINK(ce->ce_mode))
 				return 0;
 			if (!state->force)
 				return error("%s is a directory", path);

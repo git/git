@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-remote'
-'git-remote' add [-t <branch>] [-m <branch>] [-f] [--mirror] <name> <url>
+'git-remote' add [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>
 'git-remote' rm <name>
 'git-remote' show <name>
 'git-remote' prune <name>
@@ -79,9 +79,9 @@ caution.
 Fetch updates for a named set of remotes in the repository as defined by
 remotes.<group>.  If a named group is not specified on the command line,
 the configuration parameter remotes.default will get used; if
-remotes.default is not defined, all remotes which do not the
+remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
-be updated.  (See gitlink:git-config[1]).
+be updated.  (See linkgit:git-config[1]).
 
 
 DISCUSSION
@@ -89,7 +89,7 @@ DISCUSSION
 
 The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
-gitlink:git-config[1]).
+linkgit:git-config[1]).
 
 Examples
 --------
@@ -101,7 +101,7 @@ $ git remote
 origin
 $ git branch -r
 origin/master
-$ git remote add linux-nfs git://linux-nfs.org/pub/nfs-2.6.git
+$ git remote add linux-nfs git://linux-nfs.org/pub/linux/nfs-2.6.git
 $ git remote
 linux-nfs
 origin
@@ -128,9 +128,9 @@ $ git merge origin
 
 See Also
 --------
-gitlink:git-fetch[1]
-gitlink:git-branch[1]
-gitlink:git-config[1]
+linkgit:git-fetch[1]
+linkgit:git-branch[1]
+linkgit:git-config[1]
 
 Author
 ------
@@ -144,4 +144,4 @@ Documentation by J. Bruce Fields and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

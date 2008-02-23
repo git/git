@@ -212,11 +212,24 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 		if (hash_count[i] <= HASH_LIMIT)
 			continue;
 
-		entries -= hash_count[i] - HASH_LIMIT;
 		/* We leave exactly HASH_LIMIT entries in the bucket */
+		entries -= hash_count[i] - HASH_LIMIT;
 
 		entry = hash[i];
 		acc = 0;
+
+		/*
+		 * Assume that this loop is gone through exactly
+		 * HASH_LIMIT times and is entered and left with
+		 * acc==0.  So the first statement in the loop
+		 * contributes (hash_count[i]-HASH_LIMIT)*HASH_LIMIT
+		 * to the accumulator, and the inner loop consequently
+		 * is run (hash_count[i]-HASH_LIMIT) times, removing
+		 * one element from the list each time.  Since acc
+		 * balances out to 0 at the final run, the inner loop
+		 * body can't be left with entry==NULL.  So we indeed
+		 * encounter entry==NULL in the outer loop only.
+		 */
 		do {
 			acc += hash_count[i] - HASH_LIMIT;
 			if (acc > 0) {
@@ -229,30 +242,17 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 			}
 			entry = entry->next;
 		} while (entry);
-
-		/* Assume that this loop is gone through exactly
-		 * HASH_LIMIT times and is entered and left with
-		 * acc==0.  So the first statement in the loop
-		 * contributes (hash_count[i]-HASH_LIMIT)*HASH_LIMIT
-		 * to the accumulator, and the inner loop consequently
-		 * is run (hash_count[i]-HASH_LIMIT) times, removing
-		 * one element from the list each time.  Since acc
-		 * balances out to 0 at the final run, the inner loop
-		 * body can't be left with entry==NULL.  So we indeed
-		 * encounter entry==NULL in the outer loop only.
-		 */
 	}
 	free(hash_count);
 
-	/* Now create the packed index in array form rather than
-	 * linked lists */
-
+	/*
+	 * Now create the packed index in array form
+	 * rather than linked lists.
+	 */
 	memsize = sizeof(*index)
 		+ sizeof(*packed_hash) * (hsize+1)
 		+ sizeof(*packed_entry) * entries;
-
 	mem = malloc(memsize);
-
 	if (!mem) {
 		free(hash);
 		return NULL;
@@ -264,24 +264,24 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	index->src_size = bufsize;
 	index->hash_mask = hmask;
 
-	mem = index + 1;
+	mem = index->hash;
 	packed_hash = mem;
 	mem = packed_hash + (hsize+1);
 	packed_entry = mem;
 
-	/* Coalesce all entries belonging to one linked list into
-	 * consecutive array entries */
-
 	for (i = 0; i < hsize; i++) {
+		/*
+		 * Coalesce all entries belonging to one linked list
+		 * into consecutive array entries.
+		 */
 		packed_hash[i] = packed_entry;
 		for (entry = hash[i]; entry; entry = entry->next)
 			*packed_entry++ = entry->entry;
 	}
 
-	/* Sentinel value to indicate the length of the last hash
-	 * bucket */
-
+	/* Sentinel value to indicate the length of the last hash bucket */
 	packed_hash[hsize] = packed_entry;
+
 	assert(packed_entry - (struct index_entry *)mem == entries);
 	free(hash);
 

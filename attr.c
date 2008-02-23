@@ -209,8 +209,11 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		num_attr = 0;
 		cp = name + namelen;
 		cp = cp + strspn(cp, blank);
-		while (*cp)
+		while (*cp) {
 			cp = parse_attr(src, lineno, cp, &num_attr, res);
+			if (!cp)
+				return NULL;
+		}
 		if (pass)
 			break;
 		res = xcalloc(1,
@@ -403,7 +406,7 @@ static void debug_info(const char *what, struct attr_stack *elem)
 {
 	fprintf(stderr, "%s: %s\n", what, elem->origin ? elem->origin : "()");
 }
-static void debug_set(const char *what, const char *match, struct git_attr *attr, void *v)
+static void debug_set(const char *what, const char *match, struct git_attr *attr, const void *v)
 {
 	const char *value = v;
 
@@ -540,10 +543,10 @@ static int path_matches(const char *pathname, int pathlen,
 	if (*pattern == '/')
 		pattern++;
 	if (pathlen < baselen ||
-	    (baselen && pathname[baselen - 1] != '/') ||
+	    (baselen && pathname[baselen] != '/') ||
 	    strncmp(pathname, base, baselen))
 		return 0;
-	return fnmatch(pattern, pathname + baselen, FNM_PATHNAME) == 0;
+	return fnmatch(pattern, pathname + baselen + 1, FNM_PATHNAME) == 0;
 }
 
 static int fill_one(const char *what, struct match_attr *a, int rem)

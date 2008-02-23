@@ -12,7 +12,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 git-svn is a simple conduit for changesets between Subversion and git.
-It is not to be confused with gitlink:git-svnimport[1], which is
+It is not to be confused with linkgit:git-svnimport[1], which is
 read-only.
 
 git-svn was originally designed for an individual developer who wants a
@@ -161,6 +161,13 @@ New features:
 +
 Any other arguments are passed directly to `git log'
 
+'blame'::
+       Show what revision and author last modified each line of a file. This is
+       identical to `git blame', but SVN revision numbers are shown instead of git
+       commit hashes.
++
+All arguments are passed directly to `git blame'.
+
 --
 'find-rev'::
 	When given an SVN revision number of the form 'rN', returns the
@@ -193,6 +200,12 @@ Any other arguments are passed directly to `git log'
 	repository (that has been init-ed with git-svn).
 	The -r<revision> option is required for this.
 
+'info'::
+	Shows information about a file or directory similar to what
+	`svn info' provides.  Does not currently support a -r/--revision
+	argument.  Use the --url option to output only the value of the
+	'URL:' field.
+
 --
 
 OPTIONS
@@ -202,7 +215,7 @@ OPTIONS
 --shared[={false|true|umask|group|all|world|everybody}]::
 --template=<template_directory>::
 	Only used with the 'init' command.
-	These are passed directly to gitlink:git-init[1].
+	These are passed directly to linkgit:git-init[1].
 
 -r <ARG>::
 --revision <ARG>::
@@ -255,7 +268,7 @@ config key: svn.edit
 Only used with the 'dcommit', 'set-tree' and 'commit-diff' commands.
 
 They are both passed directly to git-diff-tree see
-gitlink:git-diff-tree[1] for more information.
+linkgit:git-diff-tree[1] for more information.
 
 [verse]
 config key: svn.l
@@ -293,7 +306,7 @@ with many revisions.
 to fetch before repacking.  This defaults to repacking every
 1000 commits fetched if no argument is specified.
 
---repack-flags are passed directly to gitlink:git-repack[1].
+--repack-flags are passed directly to linkgit:git-repack[1].
 
 [verse]
 config key: svn.repack
@@ -450,10 +463,13 @@ have each person clone that repository with 'git clone':
 ------------------------------------------------------------------------
 # Do the initial import on a server
 	ssh server "cd /pub && git-svn clone http://svn.foo.org/project
-# Clone locally
-	git clone server:/pub/project
-# Tell git-svn which branch contains the Subversion commits
-	git update-ref refs/remotes/git-svn origin/master
+# Clone locally - make sure the refs/remotes/ space matches the server
+	mkdir project
+	cd project
+	git-init
+	git remote add origin server:/pub/project
+	git config --add remote.origin.fetch=+refs/remotes/*:refs/remotes/*
+	git fetch
 # Initialize git-svn locally (be sure to use the same URL and -T/-b/-t options as were used on server)
 	git-svn init http://svn.foo.org/project
 # Pull the latest changes from Subversion
@@ -555,11 +571,11 @@ however the remote wildcard may be anywhere as long as it's own
 independent path component (surrounded by '/' or EOL).   This
 type of configuration is not automatically created by 'init' and
 should be manually entered with a text-editor or using
-gitlink:git-config[1]
+linkgit:git-config[1]
 
 SEE ALSO
 --------
-gitlink:git-rebase[1]
+linkgit:git-rebase[1]
 
 Author
 ------

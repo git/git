@@ -26,7 +26,7 @@ a regular file whose contents is `ref: refs/heads/master`.
 OPTIONS
 -------
 
--q::
+-q, --quiet::
 	Do not issue an error message if the <name> is not a
 	symbolic ref but a detached HEAD; instead exit with
 	non-zero status silently.
@@ -58,4 +58,4 @@ Written by Junio C Hamano <junkio@cox.net>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

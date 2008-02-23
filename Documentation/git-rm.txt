@@ -30,7 +30,7 @@ OPTIONS
 -f::
 	Override the up-to-date check.
 
--n::
+-n, \--dry-run::
         Don't actually remove the file(s), just show if they exist in
         the index.
 
@@ -51,7 +51,7 @@ OPTIONS
 \--ignore-unmatch::
 	Exit with a zero status even if no files matched.
 
-\--quiet::
+-q, \--quiet::
 	git-rm normally outputs one line (in the form of an "rm" command)
 	for each file removed. This option suppresses that output.
 
@@ -83,7 +83,7 @@ git-rm -f git-*.sh::
 
 See Also
 --------
-gitlink:git-add[1]
+linkgit:git-add[1]
 
 Author
 ------
@@ -95,4 +95,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

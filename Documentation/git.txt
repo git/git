@@ -28,7 +28,7 @@ link:user-manual.html[Git User's Manual] for a more in-depth
 introduction.
 
 The COMMAND is either a name of a Git command (see below) or an alias
-as defined in the configuration file (see gitlink:git-config[1]).
+as defined in the configuration file (see linkgit:git-config[1]).
 
 Formatted and hyperlinked version of the latest git
 documentation can be viewed at
@@ -43,13 +43,25 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.5.3/git.html[documentation for release 1.5.3]
+* link:v1.5.4.2/git.html[documentation for release 1.5.4.2]
 
 * release notes for
+  link:RelNotes-1.5.4.2.txt[1.5.4.2],
+  link:RelNotes-1.5.4.1.txt[1.5.4.1],
+  link:RelNotes-1.5.4.txt[1.5.4].
+
+* link:v1.5.3.8/git.html[documentation for release 1.5.3.8]
+
+* release notes for
+  link:RelNotes-1.5.3.8.txt[1.5.3.8],
+  link:RelNotes-1.5.3.7.txt[1.5.3.7],
+  link:RelNotes-1.5.3.6.txt[1.5.3.6],
+  link:RelNotes-1.5.3.5.txt[1.5.3.5],
   link:RelNotes-1.5.3.4.txt[1.5.3.4],
   link:RelNotes-1.5.3.3.txt[1.5.3.3],
   link:RelNotes-1.5.3.2.txt[1.5.3.2],
-  link:RelNotes-1.5.3.1.txt[1.5.3.1].
+  link:RelNotes-1.5.3.1.txt[1.5.3.1],
+  link:RelNotes-1.5.3.txt[1.5.3].
 
 * release notes for
   link:RelNotes-1.5.2.5.txt[1.5.2.5],
@@ -97,9 +109,14 @@ OPTIONS
 
 --help::
 	Prints the synopsis and a list of the most commonly used
-	commands.  If a git command is named this option will bring up
-	the man-page for that command. If the option '--all' or '-a' is
-	given then all available commands are printed.
+	commands. If the option '--all' or '-a' is given then all
+	available commands are printed. If a git command is named this
+	option will bring up the manual page for that command.
++
+Other options are available to control how the manual page is
+displayed. See linkgit:git-help[1] for more information,
+because 'git --help ...' is converted internally into 'git
+help ...'.
 
 --exec-path::
 	Path to wherever your core git programs are installed.
@@ -144,6 +161,8 @@ introductions to the underlying git architecture.
 See also the link:howto-index.html[howto] documents for some useful
 examples.
 
+The internals are documented link:technical/api-index.html[here].
+
 GIT COMMANDS
 ------------
 
@@ -187,8 +206,8 @@ Low-level commands (plumbing)
 Although git includes its
 own porcelain layer, its low-level commands are sufficient to support
 development of alternative porcelains.  Developers of such porcelains
-might start by reading about gitlink:git-update-index[1] and
-gitlink:git-read-tree[1].
+might start by reading about linkgit:git-update-index[1] and
+linkgit:git-read-tree[1].
 
 The interface (input, output, set of options and the semantics)
 to these low-level commands are meant to be a lot more stable
@@ -320,7 +339,7 @@ HEAD::
 	(i.e. the contents of `$GIT_DIR/refs/heads/<head>`).
 
 For a more complete list of ways to spell object names, see
-"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
 
 File/Directory Structure
@@ -388,7 +407,7 @@ git Commits
 'GIT_COMMITTER_EMAIL'::
 'GIT_COMMITTER_DATE'::
 'EMAIL'::
-	see gitlink:git-commit-tree[1]
+	see linkgit:git-commit-tree[1]
 
 git Diffs
 ~~~~~~~~~
@@ -428,7 +447,7 @@ other
 'GIT_MERGE_VERBOSITY'::
 	A number controlling the amount of output shown by
 	the recursive merge strategy.  Overrides merge.verbosity.
-	See gitlink:git-merge[1]
+	See linkgit:git-merge[1]
 
 'GIT_PAGER'::
 	This environment variable overrides `$PAGER`. If it is set
@@ -436,8 +455,8 @@ other
 	a pager.
 
 'GIT_SSH'::
-	If this environment variable is set then gitlink:git-fetch[1]
-	and gitlink:git-push[1] will use this command instead
+	If this environment variable is set then linkgit:git-fetch[1]
+	and linkgit:git-push[1] will use this command instead
 	of `ssh` when they need to connect to a remote system.
 	The 'GIT_SSH' command will be given exactly two arguments:
 	the 'username@host' (or just 'host') from the URL and the
@@ -491,7 +510,7 @@ as tags and branch heads.
 
 The object database contains objects of three main types: blobs, which
 hold file data; trees, which point to blobs and other trees to build up
-directory heirarchies; and commits, which each reference a single tree
+directory hierarchies; and commits, which each reference a single tree
 and some number of parent commits.
 
 The commit, equivalent to what other systems call a "changeset" or
@@ -511,7 +530,7 @@ efficiency may later be compressed together into "pack files".
 Named pointers called refs mark interesting points in history.  A ref
 may contain the SHA1 name of an object or the name of another ref.  Refs
 with names beginning `ref/head/` contain the SHA1 name of the most
-recent commit (or "head") of a branch under developement.  SHA1 names of
+recent commit (or "head") of a branch under development.  SHA1 names of
 tags of interest are stored under `ref/tags/`.  A special ref named
 `HEAD` contains the name of the currently checked-out branch.
 
@@ -532,7 +551,7 @@ Authors
 -------
 * git's founding father is Linus Torvalds <torvalds@osdl.org>.
 * The current git nurse is Junio C Hamano <gitster@pobox.com>.
-* The git potty was written by Andres Ericsson <ae@op5.se>.
+* The git potty was written by Andreas Ericsson <ae@op5.se>.
 * General upbringing is handled by the git-list <git@vger.kernel.org>.
 
 Documentation
@@ -543,4 +562,4 @@ contributors on the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

@@ -58,7 +58,7 @@ base-name::
 --revs::
 	Read the revision arguments from the standard input, instead of
 	individual object names.  The revision arguments are processed
-	the same way as gitlink:git-rev-list[1] with `--objects` flag
+	the same way as linkgit:git-rev-list[1] with `--objects` flag
 	uses its `commit` arguments to build the list of objects it
 	outputs.  The objects on the resulting list are packed.
 
@@ -99,7 +99,8 @@ base-name::
 --max-pack-size=<n>::
 	Maximum size of each output packfile, expressed in MiB.
 	If specified,  multiple packfiles may be created.
-	The default is unlimited.
+	The default is unlimited, unless the config variable
+	`pack.packSizeLimit` is set.
 
 --incremental::
 	This flag causes an object already in a pack ignored
@@ -193,10 +194,10 @@ Documentation by Junio C Hamano
 
 See Also
 --------
-gitlink:git-rev-list[1]
-gitlink:git-repack[1]
-gitlink:git-prune-packed[1]
+linkgit:git-rev-list[1]
+linkgit:git-repack[1]
+linkgit:git-prune-packed[1]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

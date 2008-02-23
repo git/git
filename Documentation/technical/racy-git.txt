@@ -184,7 +184,7 @@ In a large project where raciness avoidance cost really matters,
 however, the initial computation of all object names in the
 index takes more than one second, and the index file is written
 out after all that happens.  Therefore the timestamp of the
-index file will be more than one seconds later than the the
+index file will be more than one seconds later than the
 youngest file in the working tree.  This means that in these
 cases there actually will not be any racily clean entry in
 the resulting index.

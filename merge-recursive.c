@@ -289,7 +289,7 @@ static int get_files_dirs(struct tree *tree)
 }
 
 /*
- * Returns a index_entry instance which doesn't have to correspond to
+ * Returns an index_entry instance which doesn't have to correspond to
  * a real cache entry in Git's index.
  */
 static struct stage_data *insert_stage_data(const char *path,
@@ -333,7 +333,7 @@ static struct path_list *get_unmerged(void)
 			item->util = xcalloc(1, sizeof(struct stage_data));
 		}
 		e = item->util;
-		e->stages[ce_stage(ce)].mode = ntohl(ce->ce_mode);
+		e->stages[ce_stage(ce)].mode = ce->ce_mode;
 		hashcpy(e->stages[ce_stage(ce)].sha, ce->sha1);
 	}
 
@@ -366,7 +366,7 @@ static struct path_list *get_renames(struct tree *tree,
 
 	renames = xcalloc(1, sizeof(struct path_list));
 	diff_setup(&opts);
-	opts.recursive = 1;
+	DIFF_OPT_SET(&opts, RECURSIVE);
 	opts.detect_rename = DIFF_DETECT_RENAME;
 	opts.rename_limit = rename_limit;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -548,6 +548,10 @@ static void update_file_flags(const unsigned char *sha,
 		enum object_type type;
 		void *buf;
 		unsigned long size;
+
+		if (S_ISGITLINK(mode))
+			die("cannot read object %s '%s': It is a submodule!",
+			    sha1_to_hex(sha), path);
 
 		buf = read_sha1_file(sha, &type, &size);
 		if (!buf)
@@ -840,8 +844,9 @@ static int read_merge_config(const char *var, const char *value)
 	int namelen;
 
 	if (!strcmp(var, "merge.default")) {
-		if (value)
-			default_ll_merge = strdup(value);
+		if (!value)
+			return config_error_nonbool(var);
+		default_ll_merge = strdup(value);
 		return 0;
 	}
 
@@ -874,14 +879,14 @@ static int read_merge_config(const char *var, const char *value)
 
 	if (!strcmp("name", ep)) {
 		if (!value)
-			return error("%s: lacks value", var);
+			return config_error_nonbool(var);
 		fn->description = strdup(value);
 		return 0;
 	}
 
 	if (!strcmp("driver", ep)) {
 		if (!value)
-			return error("%s: lacks value", var);
+			return config_error_nonbool(var);
 		/*
 		 * merge.<name>.driver specifies the command line:
 		 *
@@ -904,7 +909,7 @@ static int read_merge_config(const char *var, const char *value)
 
 	if (!strcmp("recursive", ep)) {
 		if (!value)
-			return error("%s: lacks value", var);
+			return config_error_nonbool(var);
 		fn->recursive = strdup(value);
 		return 0;
 	}
@@ -1046,14 +1051,16 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 
 			free(result_buf.ptr);
 			result.clean = (merge_status == 0);
-		} else {
-			if (!(S_ISLNK(a->mode) || S_ISLNK(b->mode)))
-				die("cannot merge modes?");
-
+		} else if (S_ISGITLINK(a->mode)) {
+			result.clean = 0;
+			hashcpy(result.sha, a->sha1);
+		} else if (S_ISLNK(a->mode)) {
 			hashcpy(result.sha, a->sha1);
 
 			if (!sha_eq(a->sha1, b->sha1))
 				result.clean = 0;
+		} else {
+			die("unsupported object type in the tree");
 		}
 	}
 
@@ -1461,10 +1468,13 @@ static int process_entry(const char *path, struct stage_data *entry,
 		mfi = merge_file(&o, &a, &b,
 				 branch1, branch2);
 
+		clean_merge = mfi.clean;
 		if (mfi.clean)
 			update_file(1, mfi.sha, mfi.mode, path);
+		else if (S_ISGITLINK(mfi.mode))
+			output(1, "CONFLICT (submodule): Merge conflict in %s "
+			       "- needs %s", path, sha1_to_hex(b.sha1));
 		else {
-			clean_merge = 0;
 			output(1, "CONFLICT (%s): Merge conflict in %s",
 					reason, path);
 
@@ -1572,7 +1582,7 @@ static int merge(struct commit *h1,
 {
 	struct commit_list *iter;
 	struct commit *merged_common_ancestors;
-	struct tree *mrtree;
+	struct tree *mrtree = mrtree;
 	int clean;
 
 	if (show(4)) {
@@ -1663,6 +1673,8 @@ static struct commit *get_ref(const char *ref)
 	if (get_sha1(ref, sha1))
 		die("Could not resolve ref '%s'", ref);
 	object = deref_tag(parse_object(sha1), ref, strlen(ref));
+	if (!object)
+		return NULL;
 	if (object->type == OBJ_TREE)
 		return make_virtual_commit((struct tree*)object,
 			better_branch_name(ref));
@@ -1744,7 +1756,7 @@ int main(int argc, char *argv[])
 
 	if (active_cache_changed &&
 	    (write_cache(index_fd, active_cache, active_nr) ||
-	     close(index_fd) || commit_locked_index(lock)))
+	     commit_locked_index(lock)))
 			die ("unable to write %s", get_index_file());
 
 	return clean ? 0: 1;

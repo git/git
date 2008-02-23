@@ -12,7 +12,7 @@ SYNOPSIS
 'git-clone' [--template=<template_directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--depth <depth>] <repository> [<directory>]
+	  [--depth <depth>] [--] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -62,6 +62,15 @@ OPTIONS
 	.git/objects/info/alternates to share the objects
 	with the source repository.  The resulting repository
 	starts out without any object of its own.
++
+*NOTE*: this is a possibly dangerous operation; do *not* use
+it unless you understand what it does. If you clone your
+repository using this option, then delete branches in the
+source repository and then run linkgit:git-gc[1] using the
+'--prune' option in the source repository, it may remove
+objects which are referenced by the cloned repository.
+
+
 
 --reference <repository>::
 	If the reference repository is on the local machine
@@ -111,11 +120,11 @@ OPTIONS
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
-	specified number of revs.  A shallow repository has
+	specified number of revisions.  A shallow repository has a
 	number of limitations (you cannot clone or fetch from
 	it, nor push from nor into it), but is adequate if you
-	want to only look at near the tip of a large project
-	with a long history, and would want to send in a fixes
+	are only interested in the recent history of a large project
+	with a long history, and would want to send in fixes
 	as patches.
 
 <repository>::
@@ -130,6 +139,7 @@ OPTIONS
 	for "host.xz:foo/.git").  Cloning into an existing directory
 	is not allowed.
 
+:git-clone: 1
 include::urls.txt[]
 
 Examples
@@ -190,4 +200,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

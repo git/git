@@ -553,13 +553,8 @@ can explore on your own.
 
 [NOTE]
 Most likely, you are not directly using the core
-git Plumbing commands, but using Porcelain like Cogito on top
-of it. Cogito works a bit differently and you usually do not
-have to run `git-update-index` yourself for changed files (you
-do tell underlying git about additions and removals via
-`cg-add` and `cg-rm` commands). Just before you make a commit
-with `cg-commit`, Cogito figures out which files you modified,
-and runs `git-update-index` on them for you.
+git Plumbing commands, but using Porcelain such as `git-add`, `git-rm'
+and `git-commit'.
 
 
 Tagging a version
@@ -583,7 +578,7 @@ particular state. You can, for example, do
 $ git diff my-first-tag
 ----------------
 
-to diff your current state against that tag (which at this point will
+to diff your current state against that tag which at this point will
 obviously be an empty diff, but if you continue to develop and commit
 stuff, you can use your tag as an "anchor-point" to see what has changed
 since you tagged it.
@@ -686,8 +681,8 @@ $ git reset
 
 and in fact a lot of the common git command combinations can be scripted
 with the `git xyz` interfaces.  You can learn things by just looking
-at what the various git scripts do.  For example, `git reset` is the
-above two lines implemented in `git-reset`, but some things like
+at what the various git scripts do.  For example, `git reset` used to be
+the above two lines implemented in `git-reset`, but some things like
 `git status` and `git commit` are slightly more complex scripts around
 the basic git commands.
 
@@ -805,8 +800,8 @@ you have, you can say
 $ git branch
 ------------
 
-which is nothing more than a simple script around `ls .git/refs/heads`.
-There will be asterisk in front of the branch you are currently on.
+which used to be nothing more than a simple script around `ls .git/refs/heads`.
+There will be an asterisk in front of the branch you are currently on.
 
 Sometimes you may wish to create a new branch _without_ actually
 checking it out and switching to it. If so, just use the command
@@ -833,7 +828,7 @@ that branch, and do some work there.
 ------------------------------------------------
 $ git checkout mybranch
 $ echo "Work, work, work" >>hello
-$ git commit -m 'Some work.' -i hello
+$ git commit -m "Some work." -i hello
 ------------------------------------------------
 
 Here, we just added another line to `hello`, and we used a shorthand for
@@ -858,7 +853,7 @@ hasn't happened in the `master` branch at all. Then do
 ------------
 $ echo "Play, play, play" >>hello
 $ echo "Lots of fun" >>example
-$ git commit -m 'Some fun.' -i hello example
+$ git commit -m "Some fun." -i hello example
 ------------
 
 since the master branch is obviously in a much better mood.
@@ -883,7 +878,7 @@ script called `git merge`, which wants to know which branches you want
 to resolve and what the merge is all about:
 
 ------------
-$ git merge "Merge work in mybranch" HEAD mybranch
+$ git merge -m "Merge work in mybranch" mybranch
 ------------
 
 where the first argument is going to be used as the commit message if
@@ -936,12 +931,13 @@ Another useful tool, especially if you do not always work in X-Window
 environment, is `git show-branch`.
 
 ------------------------------------------------
-$ git show-branch --topo-order master mybranch
+$ git-show-branch --topo-order --more=1 master mybranch
 * [master] Merge work in mybranch
  ! [mybranch] Some work.
 --
 -  [master] Merge work in mybranch
 *+ [mybranch] Some work.
+*  [master^] Some fun.
 ------------------------------------------------
 
 The first two lines indicate that it is showing the two branches
@@ -952,16 +948,28 @@ the later output lines is used to show commits contained in the
 `master` branch, and the second column for the `mybranch`
 branch. Three commits are shown along with their log messages.
 All of them have non blank characters in the first column (`*`
-shows an ordinary commit on the current branch, `.` is a merge commit), which
+shows an ordinary commit on the current branch, `-` is a merge commit), which
 means they are now part of the `master` branch. Only the "Some
 work" commit has the plus `+` character in the second column,
 because `mybranch` has not been merged to incorporate these
 commits from the master branch.  The string inside brackets
 before the commit log message is a short name you can use to
 name the commit.  In the above example, 'master' and 'mybranch'
-are branch heads.  'master~1' is the first parent of 'master'
+are branch heads.  'master^' is the first parent of 'master'
 branch head.  Please see 'git-rev-parse' documentation if you
 see more complex cases.
+
+[NOTE]
+Without the '--more=1' option, 'git-show-branch' would not output the
+'[master^]' commit, as '[mybranch]' commit is a common ancestor of
+both 'master' and 'mybranch' tips.  Please see 'git-show-branch'
+documentation for details.
+
+[NOTE]
+If there were more commits on the 'master' branch after the merge, the
+merge commit itself would not be shown by 'git-show-branch' by
+default.  You would need to provide '--sparse' option to make the
+merge commit visible in this case.
 
 Now, let's pretend you are the one who did all the work in
 `mybranch`, and the fruit of your hard work has finally been merged
@@ -970,7 +978,7 @@ to the `master` branch. Let's go back to `mybranch`, and run
 
 ------------
 $ git checkout mybranch
-$ git merge "Merge upstream changes." HEAD master
+$ git merge -m "Merge upstream changes." master
 ------------
 
 This outputs something like this (the actual commit object names
@@ -1082,11 +1090,6 @@ server like git Native transport does.  Any stock HTTP server
 that does not even support directory index would suffice.  But
 you must prepare your repository with `git-update-server-info`
 to help dumb transport downloaders.
-+
-There are (confusingly enough) `git-ssh-fetch` and `git-ssh-upload`
-programs, which are 'commit walkers'; they outlived their
-usefulness when git Native and SSH transports were introduced,
-and not used by `git pull` or `git push` scripts.
 
 Once you fetch from the remote repository, you `merge` that
 with your current branch.
@@ -1149,7 +1152,7 @@ back to the earlier repository with "hello" and "example" file,
 and bring ourselves back to the pre-merge state:
 
 ------------
-$ git show-branch --more=3 master mybranch
+$ git show-branch --more=2 master mybranch
 ! [master] Merge work in mybranch
  * [mybranch] Merge work in mybranch
 --
@@ -1193,7 +1196,7 @@ $ mb=$(git-merge-base HEAD mybranch)
 
 The command writes the commit object name of the common ancestor
 to the standard output, so we captured its output to a variable,
-because we will be using it in the next step.  BTW, the common
+because we will be using it in the next step.  By the way, the common
 ancestor commit is the "New day." commit in this case.  You can
 tell it by:
 
@@ -1212,7 +1215,7 @@ $ git-read-tree -m -u $mb HEAD mybranch
 This is the same `git-read-tree` command we have already seen,
 but it takes three trees, unlike previous examples.  This reads
 the contents of each tree into different 'stage' in the index
-file (the first tree goes to stage 1, the second stage 2,
+file (the first tree goes to stage 1, the second to stage 2,
 etc.).  After reading three trees into three stages, the paths
 that are the same in all three stages are 'collapsed' into stage
 0.  Also paths that are the same in two of three stages are
@@ -1459,8 +1462,7 @@ Although git is a truly distributed system, it is often
 convenient to organize your project with an informal hierarchy
 of developers. Linux kernel development is run this way. There
 is a nice illustration (page 17, "Merges to Mainline") in
-link:http://www.xenotime.net/linux/mentor/linux-mentoring-2006.pdf
-[Randy Dunlap's presentation].
+link:http://www.xenotime.net/linux/mentor/linux-mentoring-2006.pdf[Randy Dunlap's presentation].
 
 It should be stressed that this hierarchy is purely *informal*.
 There is nothing fundamental in git that enforces the "chain of
@@ -1613,8 +1615,8 @@ in both of them.  You could merge in 'diff-fix' first and then
 'commit-fix' next, like this:
 
 ------------
-$ git merge 'Merge fix in diff-fix' master diff-fix
-$ git merge 'Merge fix in commit-fix' master commit-fix
+$ git merge -m "Merge fix in diff-fix" diff-fix
+$ git merge -m "Merge fix in commit-fix" commit-fix
 ------------
 
 Which would result in:

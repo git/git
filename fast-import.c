@@ -153,13 +153,16 @@ Format of STDIN stream:
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
+#define DEPTH_BITS 13
+#define MAX_DEPTH ((1<<DEPTH_BITS)-1)
 
 struct object_entry
 {
 	struct object_entry *next;
 	uint32_t offset;
-	unsigned type : TYPE_BITS;
-	unsigned pack_id : PACK_ID_BITS;
+	uint32_t type : TYPE_BITS,
+		pack_id : PACK_ID_BITS,
+		depth : DEPTH_BITS;
 	unsigned char sha1[20];
 };
 
@@ -193,7 +196,7 @@ struct mem_pool
 	struct mem_pool *next_pool;
 	char *next_free;
 	char *end;
-	char space[FLEX_ARRAY]; /* more */
+	uintmax_t space[FLEX_ARRAY]; /* more */
 };
 
 struct atom_str
@@ -272,6 +275,8 @@ struct recent_command
 static unsigned long max_depth = 10;
 static off_t max_packsize = (1LL << 32) - 1;
 static int force_update;
+static int pack_compression_level = Z_DEFAULT_COMPRESSION;
+static int pack_compression_seen;
 
 /* Stats and misc. counters */
 static uintmax_t alloc_count;
@@ -367,6 +372,8 @@ static void write_branch_report(FILE *rpt, struct branch *b)
 	fputc('\n', rpt);
 }
 
+static void dump_marks_helper(FILE *, uintmax_t, struct mark_set *);
+
 static void write_crash_report(const char *err)
 {
 	char *loc = git_path("fast_import_crash_%d", getpid());
@@ -425,11 +432,36 @@ static void write_crash_report(const char *err)
 			write_branch_report(rpt, b);
 	}
 
+	if (first_tag) {
+		struct tag *tg;
+		fputc('\n', rpt);
+		fputs("Annotated Tags\n", rpt);
+		fputs("--------------\n", rpt);
+		for (tg = first_tag; tg; tg = tg->next_tag) {
+			fputs(sha1_to_hex(tg->sha1), rpt);
+			fputc(' ', rpt);
+			fputs(tg->name, rpt);
+			fputc('\n', rpt);
+		}
+	}
+
+	fputc('\n', rpt);
+	fputs("Marks\n", rpt);
+	fputs("-----\n", rpt);
+	if (mark_file)
+		fprintf(rpt, "  exported to %s\n", mark_file);
+	else
+		dump_marks_helper(rpt, 0, marks);
+
 	fputc('\n', rpt);
 	fputs("-------------------\n", rpt);
 	fputs("END OF CRASH REPORT\n", rpt);
 	fclose(rpt);
 }
+
+static void end_packfile(void);
+static void unkeep_all_packs(void);
+static void dump_marks(void);
 
 static NORETURN void die_nicely(const char *err, va_list params)
 {
@@ -444,6 +476,9 @@ static NORETURN void die_nicely(const char *err, va_list params)
 	if (!zombie) {
 		zombie = 1;
 		write_crash_report(message);
+		end_packfile();
+		unkeep_all_packs();
+		dump_marks();
 	}
 	exit(128);
 }
@@ -531,15 +566,15 @@ static void *pool_alloc(size_t len)
 		total_allocd += sizeof(struct mem_pool) + mem_pool_alloc;
 		p = xmalloc(sizeof(struct mem_pool) + mem_pool_alloc);
 		p->next_pool = mem_pool;
-		p->next_free = p->space;
+		p->next_free = (char *) p->space;
 		p->end = p->next_free + mem_pool_alloc;
 		mem_pool = p;
 	}
 
 	r = p->next_free;
-	/* round out to a pointer alignment */
-	if (len & (sizeof(void*) - 1))
-		len += sizeof(void*) - (len & (sizeof(void*) - 1));
+	/* round out to a 'uintmax_t' alignment */
+	if (len & (sizeof(uintmax_t) - 1))
+		len += sizeof(uintmax_t) - (len & (sizeof(uintmax_t) - 1));
 	p->next_free += len;
 	return r;
 }
@@ -639,8 +674,9 @@ static struct branch *new_branch(const char *name)
 	if (b)
 		die("Invalid attempt to create duplicate branch: %s", name);
 	switch (check_ref_format(name)) {
-	case  0: break; /* its valid */
-	case -2: break; /* valid, but too few '/', allow anyway */
+	case 0: break; /* its valid */
+	case CHECK_REF_FORMAT_ONELEVEL:
+		break; /* valid, but too few '/', allow anyway */
 	default:
 		die("Branch name doesn't conform to GIT standards: %s", name);
 	}
@@ -874,8 +910,9 @@ static char *keep_pack(char *curr_index_name)
 	keep_fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
 	if (keep_fd < 0)
 		die("cannot create keep file");
-	write(keep_fd, keep_msg, strlen(keep_msg));
-	close(keep_fd);
+	write_or_die(keep_fd, keep_msg, strlen(keep_msg));
+	if (close(keep_fd))
+		die("failed to write keep file");
 
 	snprintf(name, sizeof(name), "%s/pack/pack-%s.pack",
 		 get_object_directory(), sha1_to_hex(pack_data->sha1));
@@ -912,6 +949,7 @@ static void end_packfile(void)
 		struct branch *b;
 		struct tag *t;
 
+		close_pack_windows(pack_data);
 		fixup_pack_header_footer(pack_data->pack_fd, pack_data->sha1,
 				    pack_data->pack_name, object_count);
 		close(pack_data->pack_fd);
@@ -921,7 +959,6 @@ static void end_packfile(void)
 		new_p = add_packed_git(idx_name, strlen(idx_name), 1);
 		if (!new_p)
 			die("core git rejected index %s", idx_name);
-		new_p->windows = old_p->windows;
 		all_packs[pack_id] = new_p;
 		install_packed_git(new_p);
 
@@ -1033,7 +1070,7 @@ static int store_object(
 		delta = NULL;
 
 	memset(&s, 0, sizeof(s));
-	deflateInit(&s, zlib_compression_level);
+	deflateInit(&s, pack_compression_level);
 	if (delta) {
 		s.next_in = delta;
 		s.avail_in = deltalen;
@@ -1061,7 +1098,7 @@ static int store_object(
 			delta = NULL;
 
 			memset(&s, 0, sizeof(s));
-			deflateInit(&s, zlib_compression_level);
+			deflateInit(&s, pack_compression_level);
 			s.next_in = (void *)dat->buf;
 			s.avail_in = dat->len;
 			s.avail_out = deflateBound(&s, s.avail_in);
@@ -1083,7 +1120,7 @@ static int store_object(
 		unsigned pos = sizeof(hdr) - 1;
 
 		delta_count_by_type[type]++;
-		last->depth++;
+		e->depth = last->depth + 1;
 
 		hdrlen = encode_header(OBJ_OFS_DELTA, deltalen, hdr);
 		write_or_die(pack_data->pack_fd, hdr, hdrlen);
@@ -1095,8 +1132,7 @@ static int store_object(
 		write_or_die(pack_data->pack_fd, hdr + pos, sizeof(hdr) - pos);
 		pack_size += sizeof(hdr) - pos;
 	} else {
-		if (last)
-			last->depth = 0;
+		e->depth = 0;
 		hdrlen = encode_header(type, dat->len, hdr);
 		write_or_die(pack_data->pack_fd, hdr, hdrlen);
 		pack_size += hdrlen;
@@ -1114,18 +1150,54 @@ static int store_object(
 			strbuf_swap(&last->data, dat);
 		}
 		last->offset = e->offset;
+		last->depth = e->depth;
 	}
 	return 0;
 }
 
+/* All calls must be guarded by find_object() or find_mark() to
+ * ensure the 'struct object_entry' passed was written by this
+ * process instance.  We unpack the entry by the offset, avoiding
+ * the need for the corresponding .idx file.  This unpacking rule
+ * works because we only use OBJ_REF_DELTA within the packfiles
+ * created by fast-import.
+ *
+ * oe must not be NULL.  Such an oe usually comes from giving
+ * an unknown SHA-1 to find_object() or an undefined mark to
+ * find_mark().  Callers must test for this condition and use
+ * the standard read_sha1_file() when it happens.
+ *
+ * oe->pack_id must not be MAX_PACK_ID.  Such an oe is usually from
+ * find_mark(), where the mark was reloaded from an existing marks
+ * file and is referencing an object that this fast-import process
+ * instance did not write out to a packfile.  Callers must test for
+ * this condition and use read_sha1_file() instead.
+ */
 static void *gfi_unpack_entry(
 	struct object_entry *oe,
 	unsigned long *sizep)
 {
 	enum object_type type;
 	struct packed_git *p = all_packs[oe->pack_id];
-	if (p == pack_data)
+	if (p == pack_data && p->pack_size < (pack_size + 20)) {
+		/* The object is stored in the packfile we are writing to
+		 * and we have modified it since the last time we scanned
+		 * back to read a previously written object.  If an old
+		 * window covered [p->pack_size, p->pack_size + 20) its
+		 * data is stale and is not valid.  Closing all windows
+		 * and updating the packfile length ensures we can read
+		 * the newly written data.
+		 */
+		close_pack_windows(p);
+
+		/* We have to offer 20 bytes additional on the end of
+		 * the packfile as the core unpacker code assumes the
+		 * footer is present at the file end and must promise
+		 * at least 20 bytes within any window it maps.  But
+		 * we don't actually create the footer here.
+		 */
 		p->pack_size = pack_size + 20;
+	}
 	return unpack_entry(p, oe->offset, &type, sizep);
 }
 
@@ -1160,8 +1232,10 @@ static void load_tree(struct tree_entry *root)
 	if (myoe && myoe->pack_id != MAX_PACK_ID) {
 		if (myoe->type != OBJ_TREE)
 			die("Not a tree: %s", sha1_to_hex(sha1));
-		t->delta_depth = 0;
+		t->delta_depth = myoe->depth;
 		buf = gfi_unpack_entry(myoe, &size);
+		if (!buf)
+			die("Can't load tree %s", sha1_to_hex(sha1));
 	} else {
 		enum object_type type;
 		buf = read_sha1_file(sha1, &type, &size);
@@ -1534,17 +1608,36 @@ static void dump_marks(void)
 
 	f = fdopen(mark_fd, "w");
 	if (!f) {
+		int saved_errno = errno;
 		rollback_lock_file(&mark_lock);
 		failure |= error("Unable to write marks file %s: %s",
-			mark_file, strerror(errno));
+			mark_file, strerror(saved_errno));
 		return;
 	}
 
+	/*
+	 * Since the lock file was fdopen()'ed, it should not be close()'ed.
+	 * Assign -1 to the lock file descriptor so that commit_lock_file()
+	 * won't try to close() it.
+	 */
+	mark_lock.fd = -1;
+
 	dump_marks_helper(f, 0, marks);
-	fclose(f);
-	if (commit_lock_file(&mark_lock))
+	if (ferror(f) || fclose(f)) {
+		int saved_errno = errno;
+		rollback_lock_file(&mark_lock);
 		failure |= error("Unable to write marks file %s: %s",
-			mark_file, strerror(errno));
+			mark_file, strerror(saved_errno));
+		return;
+	}
+
+	if (commit_lock_file(&mark_lock)) {
+		int saved_errno = errno;
+		rollback_lock_file(&mark_lock);
+		failure |= error("Unable to commit marks file %s: %s",
+			mark_file, strerror(saved_errno));
+		return;
+	}
 }
 
 static int read_next_command(void)
@@ -1616,6 +1709,7 @@ static void cmd_data(struct strbuf *sb)
 		char *term = xstrdup(command_buf.buf + 5 + 2);
 		size_t term_len = command_buf.len - 5 - 2;
 
+		strbuf_detach(&command_buf, NULL);
 		for (;;) {
 			if (strbuf_getline(&command_buf, stdin, '\n') == EOF)
 				die("EOF in data (terminator '%s' not found)", term);
@@ -1817,7 +1911,7 @@ static void file_change_m(struct branch *b)
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
-				command_buf.buf, typename(oe->type));
+				typename(oe->type), command_buf.buf);
 	} else {
 		enum object_type type = sha1_object_info(sha1, NULL);
 		if (type < 0)
@@ -2255,6 +2349,27 @@ static void import_marks(const char *input_file)
 	fclose(f);
 }
 
+static int git_pack_config(const char *k, const char *v)
+{
+	if (!strcmp(k, "pack.depth")) {
+		max_depth = git_config_int(k, v);
+		if (max_depth > MAX_DEPTH)
+			max_depth = MAX_DEPTH;
+		return 0;
+	}
+	if (!strcmp(k, "pack.compression")) {
+		int level = git_config_int(k, v);
+		if (level == -1)
+			level = Z_DEFAULT_COMPRESSION;
+		else if (level < 0 || level > Z_BEST_COMPRESSION)
+			die("bad pack compression level %d", level);
+		pack_compression_level = level;
+		pack_compression_seen = 1;
+		return 0;
+	}
+	return git_default_config(k, v);
+}
+
 static const char fast_import_usage[] =
 "git-fast-import [--date-format=f] [--max-pack-size=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
 
@@ -2262,7 +2377,10 @@ int main(int argc, const char **argv)
 {
 	unsigned int i, show_stats = 1;
 
-	git_config(git_default_config);
+	git_config(git_pack_config);
+	if (!pack_compression_seen && core_compression_seen)
+		pack_compression_level = core_compression_level;
+
 	alloc_objects(object_entry_alloc);
 	strbuf_init(&command_buf, 0);
 	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
@@ -2288,8 +2406,11 @@ int main(int argc, const char **argv)
 		}
 		else if (!prefixcmp(a, "--max-pack-size="))
 			max_packsize = strtoumax(a + 16, NULL, 0) * 1024 * 1024;
-		else if (!prefixcmp(a, "--depth="))
+		else if (!prefixcmp(a, "--depth=")) {
 			max_depth = strtoul(a + 8, NULL, 0);
+			if (max_depth > MAX_DEPTH)
+				die("--depth cannot exceed %u", MAX_DEPTH);
+		}
 		else if (!prefixcmp(a, "--active-branches="))
 			max_active_branches = strtoul(a + 18, NULL, 0);
 		else if (!prefixcmp(a, "--import-marks="))

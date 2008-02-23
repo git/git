@@ -145,8 +145,18 @@ test_expect_success 'push with no ambiguity (1)' '
 test_expect_success 'push with no ambiguity (2)' '
 
 	mk_test remotes/origin/master &&
-	git push testrepo master:master &&
+	git push testrepo master:origin/master &&
 	check_push_result $the_commit remotes/origin/master
+
+'
+
+test_expect_success 'push with colon-less refspec, no ambiguity' '
+
+	mk_test heads/master heads/t/master &&
+	git branch -f t/master master &&
+	git push testrepo master &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_first_commit heads/t/master
 
 '
 
@@ -244,14 +254,70 @@ test_expect_success 'push with colon-less refspec (4)' '
 
 '
 
+test_expect_success 'push with HEAD' '
+
+	mk_test heads/master &&
+	git checkout master &&
+	git push testrepo HEAD &&
+	check_push_result $the_commit heads/master
+
+'
+
+test_expect_success 'push with HEAD nonexisting at remote' '
+
+	mk_test heads/master &&
+	git checkout -b local master &&
+	git push testrepo HEAD &&
+	check_push_result $the_commit heads/local
+'
+
 test_expect_success 'push with dry-run' '
 
 	mk_test heads/master &&
-	cd testrepo &&
-	old_commit=$(git show-ref -s --verify refs/heads/master) &&
-	cd .. &&
+	(cd testrepo &&
+	 old_commit=$(git show-ref -s --verify refs/heads/master)) &&
 	git push --dry-run testrepo &&
 	check_push_result $old_commit heads/master
+'
+
+test_expect_success 'push updates local refs' '
+
+	rm -rf parent child &&
+	mkdir parent &&
+	(cd parent && git init &&
+		echo one >foo && git add foo && git commit -m one) &&
+	git clone parent child &&
+	(cd child &&
+		echo two >foo && git commit -a -m two &&
+		git push &&
+	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
+
+'
+
+test_expect_success 'push does not update local refs on failure' '
+
+	rm -rf parent child &&
+	mkdir parent &&
+	(cd parent && git init &&
+		echo one >foo && git add foo && git commit -m one &&
+		echo exit 1 >.git/hooks/pre-receive &&
+		chmod +x .git/hooks/pre-receive) &&
+	git clone parent child &&
+	(cd child &&
+		echo two >foo && git commit -a -m two &&
+		! git push &&
+		test $(git rev-parse master) != \
+			$(git rev-parse remotes/origin/master))
+
+'
+
+test_expect_success 'allow deleting an invalid remote ref' '
+
+	pwd &&
+	rm -f testrepo/.git/objects/??/* &&
+	git push testrepo :refs/heads/master &&
+	(cd testrepo && ! git rev-parse --verify refs/heads/master)
+
 '
 
 test_done

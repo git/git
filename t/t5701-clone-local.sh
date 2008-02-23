@@ -63,4 +63,12 @@ test_expect_success 'Even without -l, local will make a hardlink' '
 	test 0 = $copied
 '
 
+test_expect_success 'local clone of repo with nonexistent ref in HEAD' '
+	cd "$D" &&
+	echo "ref: refs/heads/nonexistent" > a.git/HEAD &&
+	git clone a d &&
+	cd d &&
+	git fetch &&
+	test ! -e .git/refs/remotes/origin/HEAD'
+
 test_done

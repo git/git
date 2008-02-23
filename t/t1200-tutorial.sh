@@ -101,8 +101,8 @@ echo "Play, play, play" >>hello
 echo "Lots of fun" >>example
 git commit -m 'Some fun.' -i hello example
 
-test_expect_failure 'git resolve now fails' '
-	git merge -m "Merge work in mybranch" mybranch
+test_expect_success 'git resolve now fails' '
+	! git merge -m "Merge work in mybranch" mybranch
 '
 
 cat > hello << EOF
@@ -156,6 +156,8 @@ test_expect_success 'git show-branch' 'cmp show-branch2.expect show-branch2.outp
 
 test_expect_success 'git repack' 'git repack'
 test_expect_success 'git prune-packed' 'git prune-packed'
-test_expect_failure '-> only packed objects' 'find -type f .git/objects/[0-9a-f][0-9a-f]'
+test_expect_success '-> only packed objects' '
+	! find -type f .git/objects/[0-9a-f][0-9a-f]
+'
 
 test_done

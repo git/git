@@ -9,6 +9,10 @@
 #define HOST_NAME_MAX 256
 #endif
 
+#ifndef NI_MAXSERV
+#define NI_MAXSERV 32
+#endif
+
 static int log_syslog;
 static int verbose;
 static int reuseaddr;
@@ -402,7 +406,8 @@ static struct daemon_service daemon_service[] = {
 	{ "receive-pack", "receivepack", receive_pack, 0, 1 },
 };
 
-static void enable_service(const char *name, int ena) {
+static void enable_service(const char *name, int ena)
+{
 	int i;
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		if (!strcmp(daemon_service[i].name, name)) {
@@ -413,7 +418,8 @@ static void enable_service(const char *name, int ena) {
 	die("No such service %s", name);
 }
 
-static void make_service_overridable(const char *name, int ena) {
+static void make_service_overridable(const char *name, int ena)
+{
 	int i;
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		if (!strcmp(daemon_service[i].name, name)) {
@@ -536,7 +542,7 @@ static int execute(struct sockaddr *addr)
 		if (addr->sa_family == AF_INET) {
 			struct sockaddr_in *sin_addr = (void *) addr;
 			inet_ntop(addr->sa_family, &sin_addr->sin_addr, addrbuf, sizeof(addrbuf));
-			port = sin_addr->sin_port;
+			port = ntohs(sin_addr->sin_port);
 #ifndef NO_IPV6
 		} else if (addr && addr->sa_family == AF_INET6) {
 			struct sockaddr_in6 *sin6_addr = (void *) addr;
@@ -546,7 +552,7 @@ static int execute(struct sockaddr *addr)
 			inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(addrbuf) - 1);
 			strcat(buf, "]");
 
-			port = sin6_addr->sin6_port;
+			port = ntohs(sin6_addr->sin6_port);
 #endif
 		}
 		loginfo("Connection from %s:%d", addrbuf, port);

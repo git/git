@@ -133,6 +133,26 @@ When `core.autocrlf` is set to "input", line endings are
 converted to LF upon checkin, but there is no conversion done
 upon checkout.
 
+If `core.safecrlf` is set to "true" or "warn", git verifies if
+the conversion is reversible for the current setting of
+`core.autocrlf`.  For "true", git rejects irreversible
+conversions; for "warn", git only prints a warning but accepts
+an irreversible conversion.  The safety triggers to prevent such
+a conversion done to the files in the work tree, but there are a
+few exceptions.  Even though...
+
+- "git add" itself does not touch the files in the work tree, the
+  next checkout would, so the safety triggers;
+
+- "git apply" to update a text file with a patch does touch the files
+  in the work tree, but the operation is about text files and CRLF
+  conversion is about fixing the line ending inconsistencies, so the
+  safety does not trigger;
+
+- "git diff" itself does not touch the files in the work tree, it is
+  often run to inspect the changes you intend to next "git add".  To
+  catch potential problems early, safety triggers.
+
 
 `ident`
 ^^^^^^^
@@ -148,22 +168,23 @@ with `$Id$` upon check-in.
 `filter`
 ^^^^^^^^
 
-A `filter` attribute can be set to a string value.  This names
+A `filter` attribute can be set to a string value that names a
 filter driver specified in the configuration.
 
-A filter driver consists of `clean` command and `smudge`
+A filter driver consists of a `clean` command and a `smudge`
 command, either of which can be left unspecified.  Upon
-checkout, when `smudge` command is specified, the command is fed
-the blob object from its standard input, and its standard output
-is used to update the worktree file.  Similarly, `clean` command
-is used to convert the contents of worktree file upon checkin.
+checkout, when the `smudge` command is specified, the command is
+fed the blob object from its standard input, and its standard
+output is used to update the worktree file.  Similarly, the
+`clean` command is used to convert the contents of worktree file
+upon checkin.
 
-Missing filter driver definition in the config is not an error
+A missing filter driver definition in the config is not an error
 but makes the filter a no-op passthru.
 
 The content filtering is done to massage the content into a
 shape that is more convenient for the platform, filesystem, and
-the user to use.  The keyword here is "more convenient" and not
+the user to use.  The key phrase here is "more convenient" and not
 "turning something unusable into usable".  In other words, the
 intent is that if someone unsets the filter driver definition,
 or does not have the appropriate filter program, the project
@@ -237,7 +258,7 @@ When git needs to show you a diff for the path with `diff`
 attribute set to `jcdiff`, it calls the command you specified
 with the above configuration, i.e. `j-c-diff`, with 7
 parameters, just like `GIT_EXTERNAL_DIFF` program is called.
-See gitlink:git[7] for details.
+See linkgit:git[7] for details.
 
 
 Defining a custom hunk-header
@@ -321,12 +342,43 @@ String::
 	requested with "binary".
 
 
+Built-in merge drivers
+^^^^^^^^^^^^^^^^^^^^^^
+
+There are a few built-in low-level merge drivers defined that
+can be asked for via the `merge` attribute.
+
+text::
+
+	Usual 3-way file level merge for text files.  Conflicted
+	regions are marked with conflict markers `<<<<<<<`,
+	`=======` and `>>>>>>>`.  The version from your branch
+	appears before the `=======` marker, and the version
+	from the merged branch appears after the `=======`
+	marker.
+
+binary::
+
+	Keep the version from your branch in the work tree, but
+	leave the path in the conflicted state for the user to
+	sort out.
+
+union::
+
+	Run 3-way file level merge for text files, but take
+	lines from both versions, instead of leaving conflict
+	markers.  This tends to leave the added lines in the
+	resulting file in random order and the user should
+	verify the result. Do not use this if you do not
+	understand the implications.
+
+
 Defining a custom merge driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The definition of a merge driver is done in `gitconfig` not
-`gitattributes` file, so strictly speaking this manual page is a
-wrong place to talk about it.  However...
+The definition of a merge driver is done in the `.git/config`
+file, not in the `gitattributes` file, so strictly speaking this
+manual page is a wrong place to talk about it.  However...
 
 To define a custom merge driver `filfre`, add a section to your
 `$GIT_DIR/config` file (or `$HOME/.gitconfig` file) like this:
@@ -358,6 +410,37 @@ driver to use when the merge driver is called for an internal
 merge between common ancestors, when there are more than one.
 When left unspecified, the driver itself is used for both
 internal merge and the final merge.
+
+
+Checking whitespace errors
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`whitespace`
+^^^^^^^^^^^^
+
+The `core.whitespace` configuration variable allows you to define what
+`diff` and `apply` should consider whitespace errors for all paths in
+the project (See linkgit:git-config[1]).  This attribute gives you finer
+control per path.
+
+Set::
+
+	Notice all types of potential whitespace errors known to git.
+
+Unset::
+
+	Do not notice anything as error.
+
+Unspecified::
+
+	Use the value of `core.whitespace` configuration variable to
+	decide what to notice as error.
+
+String::
+
+	Specify a comma separate list of common whitespace problems to
+	notice in the same format as `core.whitespace` configuration
+	variable.
 
 
 EXAMPLE
@@ -418,9 +501,9 @@ Creating an archive
 If the attribute `export-subst` is set for a file then git will expand
 several placeholders when adding this file to an archive.  The
 expansion depends on the availability of a commit ID, i.e. if
-gitlink:git-archive[1] has been given a tree instead of a commit or a
+linkgit:git-archive[1] has been given a tree instead of a commit or a
 tag then no replacement will be done.  The placeholders are the same
-as those for the option `--pretty=format:` of gitlink:git-log[1],
+as those for the option `--pretty=format:` of linkgit:git-log[1],
 except that they need to be wrapped like this: `$Format:PLACEHOLDERS$`
 in the file.  E.g. the string `$Format:%H$` will be replaced by the
 commit hash.
@@ -428,4 +511,4 @@ commit hash.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

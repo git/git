@@ -19,28 +19,28 @@ constructor dialog {} {
 	global repo_config
 
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): Create Branch"
+	wm title $top [append "[appname] ([reponame]): " [mc "Create Branch"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	label $w.header -text {Create New Branch} -font font_uibold
+	label $w.header -text [mc "Create New Branch"] -font font_uibold
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
-	button $w.buttons.create -text Create \
+	button $w.buttons.create -text [mc Create] \
 		-default active \
 		-command [cb _create]
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text {Cancel} \
+	button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.desc -text {Branch Name}
+	labelframe $w.desc -text [mc "Branch Name"]
 	radiobutton $w.desc.name_r \
 		-anchor w \
-		-text {Name:} \
+		-text [mc "Name:"] \
 		-value user \
 		-variable @name_type
 	set w_name $w.desc.name_t
@@ -55,7 +55,7 @@ constructor dialog {} {
 
 	radiobutton $w.desc.match_r \
 		-anchor w \
-		-text {Match Tracking Branch Name} \
+		-text [mc "Match Tracking Branch Name"] \
 		-value match \
 		-variable @name_type
 	grid $w.desc.match_r -sticky we -padx {0 5} -columnspan 2
@@ -63,38 +63,38 @@ constructor dialog {} {
 	grid columnconfigure $w.desc 1 -weight 1
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
-	set w_rev [::choose_rev::new $w.rev {Starting Revision}]
+	set w_rev [::choose_rev::new $w.rev [mc "Starting Revision"]]
 	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 
-	labelframe $w.options -text {Options}
+	labelframe $w.options -text [mc Options]
 
 	frame $w.options.merge
-	label $w.options.merge.l -text {Update Existing Branch:}
+	label $w.options.merge.l -text [mc "Update Existing Branch:"]
 	pack $w.options.merge.l -side left
 	radiobutton $w.options.merge.no \
-		-text No \
+		-text [mc No] \
 		-value none \
 		-variable @opt_merge
 	pack $w.options.merge.no -side left
 	radiobutton $w.options.merge.ff \
-		-text {Fast Forward Only} \
+		-text [mc "Fast Forward Only"] \
 		-value ff \
 		-variable @opt_merge
 	pack $w.options.merge.ff -side left
 	radiobutton $w.options.merge.reset \
-		-text {Reset} \
+		-text [mc Reset] \
 		-value reset \
 		-variable @opt_merge
 	pack $w.options.merge.reset -side left
 	pack $w.options.merge -anchor nw
 
 	checkbutton $w.options.fetch \
-		-text {Fetch Tracking Branch} \
+		-text [mc "Fetch Tracking Branch"] \
 		-variable @opt_fetch
 	pack $w.options.fetch -anchor nw
 
 	checkbutton $w.options.checkout \
-		-text {Checkout After Creation} \
+		-text [mc "Checkout After Creation"] \
 		-variable @opt_checkout
 	pack $w.options.checkout -anchor nw
 	pack $w.options -anchor nw -fill x -pady 5 -padx 5
@@ -128,7 +128,7 @@ method _create {} {
 				-type ok \
 				-title [wm title $w] \
 				-parent $w \
-				-message "Please select a tracking branch."
+				-message [mc "Please select a tracking branch."]
 			return
 		}
 		if {![regsub ^refs/heads/ [lindex $spec 2] {} newbranch]} {
@@ -137,7 +137,7 @@ method _create {} {
 				-type ok \
 				-title [wm title $w] \
 				-parent $w \
-				-message "Tracking branch [$w get] is not a branch in the remote repository."
+				-message [mc "Tracking branch %s is not a branch in the remote repository." [$w get]]
 			return
 		}
 	}
@@ -150,7 +150,7 @@ method _create {} {
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message "Please supply a branch name."
+			-message [mc "Please supply a branch name."]
 		focus $w_name
 		return
 	}
@@ -161,7 +161,7 @@ method _create {} {
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message "'$newbranch' is not an acceptable branch name."
+			-message [mc "'%s' is not an acceptable branch name." $newbranch]
 		focus $w_name
 		return
 	}

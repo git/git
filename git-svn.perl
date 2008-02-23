@@ -35,6 +35,7 @@ push @Git::SVN::Ra::ISA, 'SVN::Ra';
 push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
 push @SVN::Git::Fetcher::ISA, 'SVN::Delta::Editor';
 use Carp qw/croak/;
+use Digest::MD5;
 use IO::File qw//;
 use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
@@ -64,7 +65,7 @@ my ($_stdin, $_help, $_edit,
 	$_template, $_shared,
 	$_version, $_fetch_all, $_no_rebase,
 	$_merge, $_strategy, $_dry_run, $_local,
-	$_prefix, $_no_checkout, $_verbose);
+	$_prefix, $_no_checkout, $_url, $_verbose);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -80,6 +81,7 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'quiet|q' => \$_q,
 		'repack-flags|repack-args|repack-opts=s' =>
 		   \$Git::SVN::_repack_flags,
+		'use-log-author' => \$Git::SVN::_use_log_author,
 		%remote_opts );
 
 my ($_trunk, $_tags, $_branches, $_stdlayout);
@@ -141,6 +143,9 @@ my %cmd = (
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision
 			} ],
+	'show-externals' => [ \&cmd_show_externals, "Show svn:externals listings",
+			{ 'revision|r=i' => \$_revision
+			} ],
 	'multi-fetch' => [ \&cmd_multi_fetch,
 	                   "Deprecated alias for $0 fetch --all",
 			   { 'revision|r=s' => \$_revision, %fc_opts } ],
@@ -177,6 +182,13 @@ my %cmd = (
 			  'file|F=s' => \$_file,
 			  'revision|r=s' => \$_revision,
 			%cmt_opts } ],
+	'info' => [ \&cmd_info,
+		    "Show info about the latest SVN revision
+		     on the current branch",
+		    { 'url' => \$_url, } ],
+	'blame' => [ \&Git::SVN::Log::cmd_blame,
+	            "Show what revision and author last modified each line of a file",
+	            {} ],
 );
 
 my $cmd;
@@ -188,25 +200,8 @@ for (my $i = 0; $i < @ARGV; $i++) {
 	}
 };
 
-my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
-
-read_repo_config(\%opts);
-Getopt::Long::Configure('pass_through') if ($cmd && $cmd eq 'log');
-my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
-                    'minimize-connections' => \$Git::SVN::Migration::_minimize,
-                    'id|i=s' => \$Git::SVN::default_ref_id,
-                    'svn-remote|remote|R=s' => sub {
-                       $Git::SVN::no_reuse_existing = 1;
-                       $Git::SVN::default_repo_id = $_[1] });
-exit 1 if (!$rv && $cmd && $cmd ne 'log');
-
-usage(0) if $_help;
-version() if $_version;
-usage(1) unless defined $cmd;
-load_authors() if $_authors;
-
-# make sure we're always running
-unless ($cmd =~ /(?:clone|init|multi-init)$/) {
+# make sure we're always running at the top-level working directory
+unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 	unless (-d $ENV{GIT_DIR}) {
 		if ($git_dir_user_set) {
 			die "GIT_DIR=$ENV{GIT_DIR} explicitly set, ",
@@ -226,6 +221,24 @@ unless ($cmd =~ /(?:clone|init|multi-init)$/) {
 		$ENV{GIT_DIR} = $git_dir;
 	}
 }
+
+my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
+
+read_repo_config(\%opts);
+Getopt::Long::Configure('pass_through') if ($cmd && $cmd eq 'log');
+my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
+                    'minimize-connections' => \$Git::SVN::Migration::_minimize,
+                    'id|i=s' => \$Git::SVN::default_ref_id,
+                    'svn-remote|remote|R=s' => sub {
+                       $Git::SVN::no_reuse_existing = 1;
+                       $Git::SVN::default_repo_id = $_[1] });
+exit 1 if (!$rv && $cmd && $cmd ne 'log');
+
+usage(0) if $_help;
+version() if $_version;
+usage(1) unless defined $cmd;
+load_authors() if $_authors;
+
 unless ($cmd =~ /^(?:clone|init|multi-init|commit-diff)$/) {
 	Git::SVN::Migration::migration_check();
 }
@@ -252,7 +265,7 @@ Usage: $0 <command> [options] [arguments]\n
 		next if $cmd && $cmd ne $_;
 		next if /^multi-/; # don't show deprecated commands
 		print $fd '  ',pack('A17',$_),$cmd{$_}->[1],"\n";
-		foreach (keys %{$cmd{$_}->[2]}) {
+		foreach (sort keys %{$cmd{$_}->[2]}) {
 			# mixed-case options are for .git/config only
 			next if /[A-Z]/ && /^[a-z]+$/i;
 			# prints out arguments as they should be passed:
@@ -386,10 +399,14 @@ sub cmd_set_tree {
 	}
 	$gs->set_tree($_) foreach @revs;
 	print "Done committing ",scalar @revs," revisions to SVN\n";
+	unlink $gs->{index};
 }
 
 sub cmd_dcommit {
 	my $head = shift;
+	git_cmd_try { command_oneline(qw/diff-index --quiet HEAD/) }
+		'Cannot dcommit with a dirty index.  Commit your changes first, '
+		. "or stash them with `git stash'.\n";
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
@@ -404,9 +421,10 @@ sub cmd_dcommit {
 		warn "Attempting to commit more than one change while ",
 		     "--no-rebase is enabled.\n",
 		     "If these changes depend on each other, re-running ",
-		     "without --no-rebase will be required."
+		     "without --no-rebase may be required."
 	}
-	foreach my $d (@$linear_refs) {
+	while (1) {
+		my $d = shift @$linear_refs or last;
 		unless (defined $last_rev) {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
 			unless (defined $last_rev) {
@@ -421,6 +439,9 @@ sub cmd_dcommit {
 			my %ed_opts = ( r => $last_rev,
 			                log => get_commit_entry($d)->{log},
 			                ra => Git::SVN::Ra->new($gs->full_url),
+			                config => SVN::Core::config_get_config(
+			                        $Git::SVN::Ra::config_dir
+			                ),
 			                tree_a => "$d~1",
 			                tree_b => $d,
 			                editor_cb => sub {
@@ -435,18 +456,19 @@ sub cmd_dcommit {
 				                               $parents->{$d};
 			}
 			$_fetch_all ? $gs->fetch_all : $gs->fetch;
+			$last_rev = $cmt_rev;
 			next if $_no_rebase;
 
 			# we always want to rebase against the current HEAD,
 			# not any head that was passed to us
-			my @diff = command('diff-tree', 'HEAD',
+			my @diff = command('diff-tree', $d,
 			                   $gs->refname, '--');
 			my @finish;
 			if (@diff) {
 				@finish = rebase_cmd();
-				print STDERR "W: HEAD and ", $gs->refname,
+				print STDERR "W: $d and ", $gs->refname,
 				             " differ, using @finish:\n",
-				             "@diff";
+				             join("\n", @diff), "\n";
 			} else {
 				print "No changes between current HEAD and ",
 				      $gs->refname,
@@ -455,9 +477,48 @@ sub cmd_dcommit {
 				@finish = qw/reset --mixed/;
 			}
 			command_noisy(@finish, $gs->refname);
-			$last_rev = $cmt_rev;
+			if (@diff) {
+				@refs = ();
+				my ($url_, $rev_, $uuid_, $gs_) =
+				              working_head_info($head, \@refs);
+				my ($linear_refs_, $parents_) =
+				              linearize_history($gs_, \@refs);
+				if (scalar(@$linear_refs) !=
+				    scalar(@$linear_refs_)) {
+					fatal "# of revisions changed ",
+					  "\nbefore:\n",
+					  join("\n", @$linear_refs),
+					  "\n\nafter:\n",
+					  join("\n", @$linear_refs_), "\n",
+					  'If you are attempting to commit ',
+					  "merges, try running:\n\t",
+					  'git rebase --interactive',
+					  '--preserve-merges ',
+					  $gs->refname,
+					  "\nBefore dcommitting";
+				}
+				if ($url_ ne $url) {
+					fatal "URL mismatch after rebase: ",
+					      "$url_ != $url";
+				}
+				if ($uuid_ ne $uuid) {
+					fatal "uuid mismatch after rebase: ",
+					      "$uuid_ != $uuid";
+				}
+				# remap parents
+				my (%p, @l, $i);
+				for ($i = 0; $i < scalar @$linear_refs; $i++) {
+					my $new = $linear_refs_->[$i] or next;
+					$p{$new} =
+						$parents->{$linear_refs->[$i]};
+					push @l, $new;
+				}
+				$parents = \%p;
+				$linear_refs = \@l;
+			}
 		}
 	}
+	unlink $gs->{index};
 }
 
 sub cmd_find_rev {
@@ -473,7 +534,7 @@ sub cmd_find_rev {
 			    "$head history\n";
 		}
 		my $desired_revision = substr($revision_or_hash, 1);
-		$result = $gs->rev_db_get($desired_revision);
+		$result = $gs->rev_map_get($desired_revision);
 	} else {
 		my (undef, $rev, undef) = cmt_metadata($revision_or_hash);
 		$result = $rev;
@@ -494,6 +555,8 @@ sub cmd_rebase {
 		exit 1;
 	}
 	unless ($_local) {
+		# rebase will checkout for us, so no need to do it explicitly
+		$_no_checkout = 'true';
 		$_fetch_all ? $gs->fetch_all : $gs->fetch;
 	}
 	command_noisy(rebase_cmd(), $gs->refname);
@@ -507,6 +570,21 @@ sub cmd_show_ignore {
 		my ($gs, $path, $props) = @_;
 		print STDOUT "\n# $path\n";
 		my $s = $props->{'svn:ignore'} or return;
+		$s =~ s/[\r\n]+/\n/g;
+		chomp $s;
+		$s =~ s#^#$path#gm;
+		print STDOUT "$s\n";
+	});
+}
+
+sub cmd_show_externals {
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	$gs ||= Git::SVN->new;
+	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
+	$gs->prop_walk($gs->{path}, $r, sub {
+		my ($gs, $path, $props) = @_;
+		print STDOUT "\n# $path\n";
+		my $s = $props->{'svn:externals'} or return;
 		$s =~ s/[\r\n]+/\n/g;
 		chomp $s;
 		$s =~ s#^#$path#gm;
@@ -537,6 +615,23 @@ sub cmd_create_ignore {
 	});
 }
 
+sub canonicalize_path {
+	my ($path) = @_;
+	my $dot_slash_added = 0;
+	if (substr($path, 0, 1) ne "/") {
+		$path = "./" . $path;
+		$dot_slash_added = 1;
+	}
+	# File::Spec->canonpath doesn't collapse x/../y into y (for a
+	# good reason), so let's do this manually.
+	$path =~ s#/+#/#g;
+	$path =~ s#/\.(?:/|$)#/#g;
+	$path =~ s#/[^/]+/\.\.##g;
+	$path =~ s#/$##g;
+	$path =~ s#^\./## if $dot_slash_added;
+	return $path;
+}
+
 # get_svnprops(PATH)
 # ------------------
 # Helper for cmd_propget and cmd_proplist below.
@@ -554,12 +649,7 @@ sub get_svnprops {
 
 	# canonicalize the path (otherwise libsvn will abort or fail to
 	# find the file)
-	# File::Spec->canonpath doesn't collapse x/../y into y (for a
-	# good reason), so let's do this manually.
-	$path =~ s#/+#/#g;
-	$path =~ s#/\.(?:/|$)#/#g;
-	$path =~ s#/[^/]+/\.\.##g;
-	$path =~ s#/$##g;
+	$path = canonicalize_path($path);
 
 	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
 	my $props;
@@ -688,6 +778,114 @@ sub cmd_commit_diff {
 	if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
 		print "No changes\n$ta == $tb\n";
 	}
+}
+
+sub cmd_info {
+	my $path = canonicalize_path(shift or ".");
+	unless (scalar(@_) == 0) {
+		die "Too many arguments specified\n";
+	}
+
+	my ($file_type, $diff_status) = find_file_type_and_diff_status($path);
+
+	if (!$file_type && !$diff_status) {
+		print STDERR "$path:  (Not a versioned resource)\n\n";
+		return;
+	}
+
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	unless ($gs) {
+		die "Unable to determine upstream SVN information from ",
+		    "working tree history\n";
+	}
+	my $full_url = $url . ($path eq "." ? "" : "/$path");
+
+	if ($_url) {
+		print $full_url, "\n";
+		return;
+	}
+
+	my $result = "Path: $path\n";
+	$result .= "Name: " . basename($path) . "\n" if $file_type ne "dir";
+	$result .= "URL: " . $full_url . "\n";
+
+	eval {
+		my $repos_root = $gs->repos_root;
+		Git::SVN::remove_username($repos_root);
+		$result .= "Repository Root: $repos_root\n";
+	};
+	if ($@) {
+		$result .= "Repository Root: (offline)\n";
+	}
+	$result .= "Repository UUID: $uuid\n" unless $diff_status eq "A";
+	$result .= "Revision: " . ($diff_status eq "A" ? 0 : $rev) . "\n";
+
+	$result .= "Node Kind: " .
+		   ($file_type eq "dir" ? "directory" : "file") . "\n";
+
+	my $schedule = $diff_status eq "A"
+		       ? "add"
+		       : ($diff_status eq "D" ? "delete" : "normal");
+	$result .= "Schedule: $schedule\n";
+
+	if ($diff_status eq "A") {
+		print $result, "\n";
+		return;
+	}
+
+	my ($lc_author, $lc_rev, $lc_date_utc);
+	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $path);
+	my $log = command_output_pipe(@args);
+	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
+	while (<$log>) {
+		if (/^${esc_color}author (.+) <[^>]+> (\d+) ([\-\+]?\d+)$/o) {
+			$lc_author = $1;
+			$lc_date_utc = Git::SVN::Log::parse_git_date($2, $3);
+		} elsif (/^${esc_color}    (git-svn-id:.+)$/o) {
+			(undef, $lc_rev, undef) = ::extract_metadata($1);
+		}
+	}
+	close $log;
+
+	Git::SVN::Log::set_local_timezone();
+
+	$result .= "Last Changed Author: $lc_author\n";
+	$result .= "Last Changed Rev: $lc_rev\n";
+	$result .= "Last Changed Date: " .
+		   Git::SVN::Log::format_svn_date($lc_date_utc) . "\n";
+
+	if ($file_type ne "dir") {
+		my $text_last_updated_date =
+		    ($diff_status eq "D" ? $lc_date_utc : (stat $path)[9]);
+		$result .=
+		    "Text Last Updated: " .
+		    Git::SVN::Log::format_svn_date($text_last_updated_date) .
+		    "\n";
+		my $checksum;
+		if ($diff_status eq "D") {
+			my ($fh, $ctx) =
+			    command_output_pipe(qw(cat-file blob), "HEAD:$path");
+			if ($file_type eq "link") {
+				my $file_name = <$fh>;
+				$checksum = md5sum("link $file_name");
+			} else {
+				$checksum = md5sum($fh);
+			}
+			command_close_pipe($fh, $ctx);
+		} elsif ($file_type eq "link") {
+			my $file_name =
+			    command(qw(cat-file blob), "HEAD:$path");
+			$checksum =
+			    md5sum("link " . $file_name);
+		} else {
+			open FILE, "<", $path or die $!;
+			$checksum = md5sum(\*FILE);
+			close FILE or die $!;
+		}
+		$result .= "Checksum: " . $checksum . "\n";
+	}
+
+	print $result, "\n";
 }
 
 ########################### utility functions #########################
@@ -935,12 +1133,12 @@ sub working_head_info {
 		if (defined $url && defined $rev) {
 			next if $max{$url} and $max{$url} < $rev;
 			if (my $gs = Git::SVN->find_by_url($url)) {
-				my $c = $gs->rev_db_get($rev);
+				my $c = $gs->rev_map_get($rev);
 				if ($c && $c eq $hash) {
 					close $fh; # break the pipe
 					return ($url, $rev, $uuid, $gs);
 				} else {
-					$max{$url} ||= $gs->rev_db_max;
+					$max{$url} ||= $gs->rev_map_max;
 				}
 			}
 		}
@@ -997,18 +1195,63 @@ sub linearize_history {
 	(\@linear_refs, \%parents);
 }
 
+sub find_file_type_and_diff_status {
+	my ($path) = @_;
+	return ('dir', '') if $path eq '.';
+
+	my $diff_output =
+	    command_oneline(qw(diff --cached --name-status --), $path) || "";
+	my $diff_status = (split(' ', $diff_output))[0] || "";
+
+	my $ls_tree = command_oneline(qw(ls-tree HEAD), $path) || "";
+
+	return (undef, undef) if !$diff_status && !$ls_tree;
+
+	if ($diff_status eq "A") {
+		return ("link", $diff_status) if -l $path;
+		return ("dir", $diff_status) if -d $path;
+		return ("file", $diff_status);
+	}
+
+	my $mode = (split(' ', $ls_tree))[0] || "";
+
+	return ("link", $diff_status) if $mode eq "120000";
+	return ("dir", $diff_status) if $mode eq "040000";
+	return ("file", $diff_status);
+}
+
+sub md5sum {
+	my $arg = shift;
+	my $ref = ref $arg;
+	my $md5 = Digest::MD5->new();
+        if ($ref eq 'GLOB' || $ref eq 'IO::File') {
+		$md5->addfile($arg) or croak $!;
+	} elsif ($ref eq 'SCALAR') {
+		$md5->add($$arg) or croak $!;
+	} elsif (!$ref) {
+		$md5->add($arg) or croak $!;
+	} else {
+		::fatal "Can't provide MD5 hash for unknown ref type: '", $ref, "'";
+	}
+	return $md5->hexdigest();
+}
+
 package Git::SVN;
 use strict;
 use warnings;
+use Fcntl qw/:DEFAULT :seek/;
+use constant rev_map_fmt => 'NH40';
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags $_use_svm_props $_head
-            $_use_svnsync_props $no_reuse_existing $_minimize_url/;
+            $_use_svnsync_props $no_reuse_existing $_minimize_url
+	    $_use_log_author/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
 use IPC::Open3;
 
-my $_repack_nr;
+my ($_gc_nr, $_gc_period);
+
 # properties that we do not log:
 my %SKIP_PROP;
 BEGIN {
@@ -1044,8 +1287,11 @@ BEGIN {
 	}
 }
 
-my %LOCKFILES;
-END { unlink keys %LOCKFILES if %LOCKFILES }
+my (%LOCKFILES, %INDEX_FILES);
+END {
+	unlink keys %LOCKFILES if %LOCKFILES;
+	unlink keys %INDEX_FILES if %INDEX_FILES;
+}
 
 sub resolve_local_globs {
 	my ($url, $fetch, $glob_spec) = @_;
@@ -1127,7 +1373,7 @@ sub fetch_all {
 	if ($fetch) {
 		foreach my $p (sort keys %$fetch) {
 			my $gs = Git::SVN->new($fetch->{$p}, $repo_id, $p);
-			my $lr = $gs->rev_db_max;
+			my $lr = $gs->rev_map_max;
 			if (defined $lr) {
 				$base = $lr if ($lr < $base);
 			}
@@ -1166,10 +1412,9 @@ sub read_all_remotes {
 }
 
 sub init_vars {
-	if (defined $_repack) {
-		$_repack = 1000 if ($_repack <= 0);
-		$_repack_nr = $_repack;
-		$_repack_flags ||= '-d';
+	$_gc_nr = $_gc_period = 1000;
+	if (defined $_repack || defined $_repack_flags) {
+	       warn "Repack options are obsolete; they have no effect.\n";
 	}
 }
 
@@ -1516,10 +1761,16 @@ sub svnsync {
 	# see if we have it in our config, first:
 	eval {
 		my $section = "svn-remote.$self->{repo_id}";
-		$svnsync = {
-		  url => tmp_config('--get', "$section.svnsync-url"),
-		  uuid => tmp_config('--get', "$section.svnsync-uuid"),
-		}
+
+		my $url = tmp_config('--get', "$section.svnsync-url");
+		($url) = ($url =~ m{^([a-z\+]+://\S+)$}) or
+		   die "doesn't look right - svn:sync-from-url is '$url'\n";
+
+		my $uuid = tmp_config('--get', "$section.svnsync-uuid");
+		($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}) or
+		   die "doesn't look right - svn:sync-from-uuid is '$uuid'\n";
+
+		$svnsync = { url => $url, uuid => $uuid }
 	};
 	if ($svnsync && $svnsync->{url} && $svnsync->{uuid}) {
 		return $self->{svnsync} = $svnsync;
@@ -1530,11 +1781,11 @@ sub svnsync {
 	my $rp = $self->ra->rev_proplist(0);
 
 	my $url = $rp->{'svn:sync-from-url'} or die $err . "url\n";
-	$url =~ m{^[a-z\+]+://} or
+	($url) = ($url =~ m{^([a-z\+]+://\S+)$}) or
 	           die "doesn't look right - svn:sync-from-url is '$url'\n";
 
 	my $uuid = $rp->{'svn:sync-from-uuid'} or die $err . "uuid\n";
-	$uuid =~ m{^[0-9a-f\-]{30,}$} or
+	($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}) or
 	           die "doesn't look right - svn:sync-from-uuid is '$uuid'\n";
 
 	my $section = "svn-remote.$self->{repo_id}";
@@ -1561,9 +1812,24 @@ sub ra_uuid {
 	$self->{ra_uuid};
 }
 
+sub _set_repos_root {
+	my ($self, $repos_root) = @_;
+	my $k = "svn-remote.$self->{repo_id}.reposRoot";
+	$repos_root ||= $self->ra->{repos_root};
+	tmp_config($k, $repos_root);
+	$repos_root;
+}
+
+sub repos_root {
+	my ($self) = @_;
+	my $k = "svn-remote.$self->{repo_id}.reposRoot";
+	eval { tmp_config('--get', $k) } || $self->_set_repos_root;
+}
+
 sub ra {
 	my ($self) = shift;
 	my $ra = Git::SVN::Ra->new($self->{url});
+	$self->_set_repos_root($ra->{repos_root});
 	if ($self->use_svm_props && !$self->{svm}) {
 		if ($self->no_metadata) {
 			die "Can't have both 'noMetadata' and ",
@@ -1601,6 +1867,7 @@ sub rel_path {
 sub prop_walk {
 	my ($self, $path, $rev, $sub) = @_;
 
+	$path =~ s#^/##;
 	my ($dirent, undef, $props) = $self->ra->get_dir($path, $rev);
 	$path =~ s#^/*#/#g;
 	my $p = $path;
@@ -1647,38 +1914,20 @@ sub last_rev_commit {
 			return ($rev, $c);
 		}
 	}
-	my $db_path = $self->db_path;
-	unless (-e $db_path) {
+	my $map_path = $self->map_path;
+	unless (-e $map_path) {
 		($self->{last_rev}, $self->{last_commit}) = (undef, undef);
 		return (undef, undef);
 	}
-	my $offset = -41; # from tail
-	my $rl;
-	open my $fh, '<', $db_path or croak "$db_path not readable: $!\n";
-	sysseek($fh, $offset, 2); # don't care for errors
-	sysread($fh, $rl, 41) == 41 or return (undef, undef);
-	chomp $rl;
-	while (('0' x40) eq $rl && sysseek($fh, 0, 1) != 0) {
-		$offset -= 41;
-		sysseek($fh, $offset, 2); # don't care for errors
-		sysread($fh, $rl, 41) == 41 or return (undef, undef);
-		chomp $rl;
-	}
-	if ($c && $c ne $rl) {
-		die "$db_path and ", $self->refname,
-		    " inconsistent!:\n$c != $rl\n";
-	}
-	my $rev = sysseek($fh, 0, 1) or croak $!;
-	$rev =  ($rev - 41) / 41;
-	close $fh or croak $!;
-	($self->{last_rev}, $self->{last_commit}) = ($rev, $c);
-	return ($rev, $c);
+	my ($rev, $commit) = $self->rev_map_max(1);
+	($self->{last_rev}, $self->{last_commit}) = ($rev, $commit);
+	return ($rev, $commit);
 }
 
 sub get_fetch_range {
 	my ($self, $min, $max) = @_;
 	$max ||= $self->ra->get_latest_revnum;
-	$min ||= $self->rev_db_max;
+	$min ||= $self->rev_map_max;
 	(++$min, $max);
 }
 
@@ -1815,6 +2064,47 @@ sub full_url {
 	$self->{url} . (length $self->{path} ? '/' . $self->{path} : '');
 }
 
+
+sub set_commit_header_env {
+	my ($log_entry) = @_;
+	my %env;
+	foreach my $ned (qw/NAME EMAIL DATE/) {
+		foreach my $ac (qw/AUTHOR COMMITTER/) {
+			$env{"GIT_${ac}_${ned}"} = $ENV{"GIT_${ac}_${ned}"};
+		}
+	}
+
+	$ENV{GIT_AUTHOR_NAME} = $log_entry->{name};
+	$ENV{GIT_AUTHOR_EMAIL} = $log_entry->{email};
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
+
+	$ENV{GIT_COMMITTER_NAME} = (defined $log_entry->{commit_name})
+						? $log_entry->{commit_name}
+						: $log_entry->{name};
+	$ENV{GIT_COMMITTER_EMAIL} = (defined $log_entry->{commit_email})
+						? $log_entry->{commit_email}
+						: $log_entry->{email};
+	\%env;
+}
+
+sub restore_commit_header_env {
+	my ($env) = @_;
+	foreach my $ned (qw/NAME EMAIL DATE/) {
+		foreach my $ac (qw/AUTHOR COMMITTER/) {
+			my $k = "GIT_${ac}_${ned}";
+			if (defined $env->{$k}) {
+				$ENV{$k} = $env->{$k};
+			} else {
+				delete $ENV{$k};
+			}
+		}
+	}
+}
+
+sub gc {
+	command_noisy('gc', '--auto');
+};
+
 sub do_git_commit {
 	my ($self, $log_entry) = @_;
 	my $lr = $self->last_rev;
@@ -1823,15 +2113,11 @@ sub do_git_commit {
 		    " was r$lr, but we are about to fetch: ",
 		    "r$log_entry->{revision}!\n";
 	}
-	if (my $c = $self->rev_db_get($log_entry->{revision})) {
+	if (my $c = $self->rev_map_get($log_entry->{revision})) {
 		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
 	}
-	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $log_entry->{name};
-	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} =
-	                                                  $log_entry->{email};
-	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
-
+	my $old_env = set_commit_header_env($log_entry);
 	my $tree = $log_entry->{tree};
 	if (!defined $tree) {
 		$tree = $self->tmp_index_do(sub {
@@ -1846,6 +2132,7 @@ sub do_git_commit {
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
 	print $msg_fh $log_entry->{log} or croak $!;
+	restore_commit_header_env($old_env);
 	unless ($self->no_metadata) {
 		print $msg_fh "\ngit-svn-id: $log_entry->{metadata}\n"
 		              or croak $!;
@@ -1860,23 +2147,20 @@ sub do_git_commit {
 		die "Failed to commit, invalid sha1: $commit\n";
 	}
 
-	$self->rev_db_set($log_entry->{revision}, $commit, 1);
+	$self->rev_map_set($log_entry->{revision}, $commit, 1);
 
 	$self->{last_rev} = $log_entry->{revision};
 	$self->{last_commit} = $commit;
 	print "r$log_entry->{revision}";
 	if (defined $log_entry->{svm_revision}) {
 		 print " (\@$log_entry->{svm_revision})";
-		 $self->rev_db_set($log_entry->{svm_revision}, $commit,
+		 $self->rev_map_set($log_entry->{svm_revision}, $commit,
 		                   0, $self->svm_uuid);
 	}
 	print " = $commit ($self->{ref_id})\n";
-	if (defined $_repack && (--$_repack_nr == 0)) {
-		$_repack_nr = $_repack;
-		# repack doesn't use any arguments with spaces in them, does it?
-		print "Running git repack $_repack_flags ...\n";
-		command_noisy('repack', split(/\s+/, $_repack_flags));
-		print "Done repacking\n";
+	if (--$_gc_nr == 0) {
+		$_gc_nr = $_gc_period;
+		gc();
 	}
 	return $commit;
 }
@@ -1948,7 +2232,12 @@ sub find_parent_branch {
 		# just grow a tail if we're not unique enough :x
 		$ref_id .= '-' while find_ref($ref_id);
 		print STDERR "Initializing parent: $ref_id\n";
-		$gs = Git::SVN->init($new_url, '', $ref_id, $ref_id, 1);
+		my ($u, $p) = ($new_url, '');
+		if ($u =~ s#^\Q$url\E(/|$)##) {
+			$p = $u;
+			$u = $url;
+		}
+		$gs = Git::SVN->init($u, $p, $self->{repo_id}, $ref_id, 1);
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	if (!defined $r0 || !defined $parent) {
@@ -2119,7 +2408,26 @@ sub make_log_entry {
 	$log_entry{log} .= "\n";
 	my $author = $log_entry{author} = check_author($log_entry{author});
 	my ($name, $email) = defined $::users{$author} ? @{$::users{$author}}
-	                                               : ($author, undef);
+						       : ($author, undef);
+
+	my ($commit_name, $commit_email) = ($name, $email);
+	if ($_use_log_author) {
+		my $name_field;
+		if ($log_entry{log} =~ /From:\s+(.*\S)\s*\n/i) {
+			$name_field = $1;
+		} elsif ($log_entry{log} =~ /Signed-off-by:\s+(.*\S)\s*\n/i) {
+			$name_field = $1;
+		}
+		if (!defined $name_field) {
+			#
+		} elsif ($name_field =~ /(.*?)\s+<(.*)>/) {
+			($name, $email) = ($1, $2);
+		} elsif ($name_field =~ /(.*)@/) {
+			($name, $email) = ($1, $name_field);
+		} else {
+			($name, $email) = ($name_field, 'unknown');
+		}
+	}
 	if (defined $headrev && $self->use_svm_props) {
 		if ($self->rewrite_root) {
 			die "Can't have both 'useSvmProps' and 'rewriteRoot' ",
@@ -2142,23 +2450,28 @@ sub make_log_entry {
 		remove_username($full_url);
 		$log_entry{metadata} = "$full_url\@$r $uuid";
 		$log_entry{svm_revision} = $r;
-		$email ||= "$author\@$uuid"
+		$email ||= "$author\@$uuid";
+		$commit_email ||= "$author\@$uuid";
 	} elsif ($self->use_svnsync_props) {
 		my $full_url = $self->svnsync->{url};
 		$full_url .= "/$self->{path}" if length $self->{path};
 		remove_username($full_url);
 		my $uuid = $self->svnsync->{uuid};
 		$log_entry{metadata} = "$full_url\@$rev $uuid";
-		$email ||= "$author\@$uuid"
+		$email ||= "$author\@$uuid";
+		$commit_email ||= "$author\@$uuid";
 	} else {
 		my $url = $self->metadata_url;
 		remove_username($url);
 		$log_entry{metadata} = "$url\@$rev " .
 		                       $self->ra->get_uuid;
 		$email ||= "$author\@" . $self->ra->get_uuid;
+		$commit_email ||= "$author\@" . $self->ra->get_uuid;
 	}
 	$log_entry{name} = $name;
 	$log_entry{email} = $email;
+	$log_entry{commit_name} = $commit_name;
+	$log_entry{commit_email} = $commit_email;
 	\%log_entry;
 }
 
@@ -2194,25 +2507,44 @@ sub set_tree {
 	}
 }
 
+sub rebuild_from_rev_db {
+	my ($self, $path) = @_;
+	my $r = -1;
+	open my $fh, '<', $path or croak "open: $!";
+	while (<$fh>) {
+		length($_) == 41 or croak "inconsistent size in ($_) != 41";
+		chomp($_);
+		++$r;
+		next if $_ eq ('0' x 40);
+		$self->rev_map_set($r, $_);
+		print "r$r = $_\n";
+	}
+	close $fh or croak "close: $!";
+	unlink $path or croak "unlink: $!";
+}
+
 sub rebuild {
 	my ($self) = @_;
-	my $db_path = $self->db_path;
-	return if (-e $db_path && ! -z $db_path);
+	my $map_path = $self->map_path;
+	return if (-e $map_path && ! -z $map_path);
 	return unless ::verify_ref($self->refname.'^0');
-	if (-f $self->{db_root}) {
-		rename $self->{db_root}, $db_path or die
-		     "rename $self->{db_root} => $db_path failed: $!\n";
-		my ($dir, $base) = ($db_path =~ m#^(.*?)/?([^/]+)$#);
-		symlink $base, $self->{db_root} or die
-		     "symlink $base => $self->{db_root} failed: $!\n";
+	if ($self->use_svm_props || $self->no_metadata) {
+		my $rev_db = $self->rev_db_path;
+		$self->rebuild_from_rev_db($rev_db);
+		if ($self->use_svm_props) {
+			my $svm_rev_db = $self->rev_db_path($self->svm_uuid);
+			$self->rebuild_from_rev_db($svm_rev_db);
+		}
+		$self->unlink_rev_db_symlink;
 		return;
 	}
-	print "Rebuilding $db_path ...\n";
-	my ($log, $ctx) = command_output_pipe("log", '--no-color', $self->refname);
-	my $latest;
+	print "Rebuilding $map_path ...\n";
+	my ($log, $ctx) =
+	    command_output_pipe(qw/rev-list --pretty=raw --no-color --reverse/,
+	                        $self->refname, '--');
 	my $full_url = $self->full_url;
 	remove_username($full_url);
-	my $svn_uuid;
+	my $svn_uuid = $self->ra_uuid;
 	my $c;
 	while (<$log>) {
 		if ( m{^commit ($::sha1)$} ) {
@@ -2228,46 +2560,85 @@ sub rebuild {
 
 		# if we merged or otherwise started elsewhere, this is
 		# how we break out of it
-		if ((defined $svn_uuid && ($uuid ne $svn_uuid)) ||
+		if (($uuid ne $svn_uuid) ||
 		    ($full_url && $url && ($url ne $full_url))) {
 			next;
 		}
-		$latest ||= $rev;
-		$svn_uuid ||= $uuid;
 
-		$self->rev_db_set($rev, $c);
+		$self->rev_map_set($rev, $c);
 		print "r$rev = $c\n";
 	}
 	command_close_pipe($log, $ctx);
-	print "Done rebuilding $db_path\n";
+	print "Done rebuilding $map_path\n";
+	my $rev_db_path = $self->rev_db_path;
+	if (-f $self->rev_db_path) {
+		unlink $self->rev_db_path or croak "unlink: $!";
+	}
+	$self->unlink_rev_db_symlink;
 }
 
-# rev_db:
+# rev_map:
 # Tie::File seems to be prone to offset errors if revisions get sparse,
 # it's not that fast, either.  Tie::File is also not in Perl 5.6.  So
 # one of my favorite modules is out :<  Next up would be one of the DBM
-# modules, but I'm not sure which is most portable...  So I'll just
-# go with something that's plain-text, but still capable of
-# being randomly accessed.  So here's my ultra-simple fixed-width
-# database.  All records are 40 characters + "\n", so it's easy to seek
-# to a revision: (41 * rev) is the byte offset.
-# A record of 40 0s denotes an empty revision.
-# And yes, it's still pretty fast (faster than Tie::File).
+# modules, but I'm not sure which is most portable...
+#
+# This is the replacement for the rev_db format, which was too big
+# and inefficient for large repositories with a lot of sparse history
+# (mainly tags)
+#
+# The format is this:
+#   - 24 bytes for every record,
+#     * 4 bytes for the integer representing an SVN revision number
+#     * 20 bytes representing the sha1 of a git commit
+#   - No empty padding records like the old format
+#     (except the last record, which can be overwritten)
+#   - new records are written append-only since SVN revision numbers
+#     increase monotonically
+#   - lookups on SVN revision number are done via a binary search
+#   - Piping the file to xxd -c24 is a good way of dumping it for
+#     viewing or editing (piped back through xxd -r), should the need
+#     ever arise.
+#   - The last record can be padding revision with an all-zero sha1
+#     This is used to optimize fetch performance when using multiple
+#     "fetch" directives in .git/config
+#
 # These files are disposable unless noMetadata or useSvmProps is set
 
-sub _rev_db_set {
+sub _rev_map_set {
 	my ($fh, $rev, $commit) = @_;
-	my $offset = $rev * 41;
-	# assume that append is the common case:
-	seek $fh, 0, 2 or croak $!;
-	my $pos = tell $fh;
-	if ($pos < $offset) {
-		for (1 .. (($offset - $pos) / 41)) {
-			print $fh (('0' x 40),"\n") or croak $!;
+
+	my $size = (stat($fh))[7];
+	($size % 24) == 0 or croak "inconsistent size: $size";
+
+	my $wr_offset = 0;
+	if ($size > 0) {
+		sysseek($fh, -24, SEEK_END) or croak "seek: $!";
+		my $read = sysread($fh, my $buf, 24) or croak "read: $!";
+		$read == 24 or croak "read only $read bytes (!= 24)";
+		my ($last_rev, $last_commit) = unpack(rev_map_fmt, $buf);
+		if ($last_commit eq ('0' x40)) {
+			if ($size >= 48) {
+				sysseek($fh, -48, SEEK_END) or croak "seek: $!";
+				$read = sysread($fh, $buf, 24) or
+				    croak "read: $!";
+				$read == 24 or
+				    croak "read only $read bytes (!= 24)";
+				($last_rev, $last_commit) =
+				    unpack(rev_map_fmt, $buf);
+				if ($last_commit eq ('0' x40)) {
+					croak "inconsistent .rev_map\n";
+				}
+			}
+			if ($last_rev >= $rev) {
+				croak "last_rev is higher!: $last_rev >= $rev";
+			}
+			$wr_offset = -24;
 		}
 	}
-	seek $fh, $offset, 0 or croak $!;
-	print $fh $commit,"\n" or croak $!;
+	sysseek($fh, $wr_offset, SEEK_END) or croak "seek: $!";
+	syswrite($fh, pack(rev_map_fmt, $rev, $commit), 24) == 24 or
+	  croak "write: $!";
 }
 
 sub mkfile {
@@ -2280,10 +2651,10 @@ sub mkfile {
 	}
 }
 
-sub rev_db_set {
+sub rev_map_set {
 	my ($self, $rev, $commit, $update_ref, $uuid) = @_;
 	length $commit == 40 or die "arg3 must be a full SHA1 hexsum\n";
-	my $db = $self->db_path($uuid);
+	my $db = $self->map_path($uuid);
 	my $db_lock = "$db.lock";
 	my $sig;
 	if ($update_ref) {
@@ -2298,16 +2669,18 @@ sub rev_db_set {
 	# and we can't afford to lose it because rebuild() won't work
 	if ($self->use_svm_props || $self->no_metadata) {
 		$sync = 1;
-		copy($db, $db_lock) or die "rev_db_set(@_): ",
+		copy($db, $db_lock) or die "rev_map_set(@_): ",
 					   "Failed to copy: ",
 					   "$db => $db_lock ($!)\n";
 	} else {
-		rename $db, $db_lock or die "rev_db_set(@_): ",
+		rename $db, $db_lock or die "rev_map_set(@_): ",
 					    "Failed to rename: ",
 					    "$db => $db_lock ($!)\n";
 	}
-	open my $fh, '+<', $db_lock or die "Couldn't open $db_lock: $!\n";
-	_rev_db_set($fh, $rev, $commit);
+
+	sysopen(my $fh, $db_lock, O_RDWR | O_CREAT)
+	     or croak "Couldn't open $db_lock: $!\n";
+	_rev_map_set($fh, $rev, $commit);
 	if ($sync) {
 		$fh->flush or die "Couldn't flush $db_lock: $!\n";
 		$fh->sync or die "Couldn't sync $db_lock: $!\n";
@@ -2318,7 +2691,7 @@ sub rev_db_set {
 		command_noisy('update-ref', '-m', "r$rev",
 		              $self->refname, $commit);
 	}
-	rename $db_lock, $db or die "rev_db_set(@_): ", "Failed to rename: ",
+	rename $db_lock, $db or die "rev_map_set(@_): ", "Failed to rename: ",
 	                            "$db_lock => $db ($!)\n";
 	delete $LOCKFILES{$db_lock};
 	if ($update_ref) {
@@ -2328,39 +2701,108 @@ sub rev_db_set {
 	}
 }
 
-sub rev_db_max {
-	my ($self) = @_;
+# If want_commit, this will return an array of (rev, commit) where
+# commit _must_ be a valid commit in the archive.
+# Otherwise, it'll return the max revision (whether or not the
+# commit is valid or just a 0x40 placeholder).
+sub rev_map_max {
+	my ($self, $want_commit) = @_;
 	$self->rebuild;
-	my $db_path = $self->db_path;
-	my @stat = stat $db_path or return 0;
-	($stat[7] % 41) == 0 or die "$db_path inconsistent size: $stat[7]\n";
-	my $max = $stat[7] / 41;
-	(($max > 0) ? $max - 1 : 0);
-}
+	my $map_path = $self->map_path;
+	stat $map_path or return $want_commit ? (0, undef) : 0;
+	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
+	my $size = (stat($fh))[7];
+	($size % 24) == 0 or croak "inconsistent size: $size";
 
-sub rev_db_get {
-	my ($self, $rev, $uuid) = @_;
-	my $ret;
-	my $offset = $rev * 41;
-	my $db_path = $self->db_path($uuid);
-	return undef unless -e $db_path;
-	open my $fh, '<', $db_path or croak $!;
-	if (sysseek($fh, $offset, 0) == $offset) {
-		my $read = sysread($fh, $ret, 40);
-		$ret = undef if ($read != 40 || $ret eq ('0'x40));
+	if ($size == 0) {
+		close $fh or croak "close: $!";
+		return $want_commit ? (0, undef) : 0;
 	}
-	close $fh or croak $!;
-	$ret;
+
+	sysseek($fh, -24, SEEK_END) or croak "seek: $!";
+	sysread($fh, my $buf, 24) == 24 or croak "read: $!";
+	my ($r, $c) = unpack(rev_map_fmt, $buf);
+	if ($want_commit && $c eq ('0' x40)) {
+		if ($size < 48) {
+			return $want_commit ? (0, undef) : 0;
+		}
+		sysseek($fh, -48, SEEK_END) or croak "seek: $!";
+		sysread($fh, $buf, 24) == 24 or croak "read: $!";
+		($r, $c) = unpack(rev_map_fmt, $buf);
+		if ($c eq ('0'x40)) {
+			croak "Penultimate record is all-zeroes in $map_path";
+		}
+	}
+	close $fh or croak "close: $!";
+	$want_commit ? ($r, $c) : $r;
 }
 
+sub rev_map_get {
+	my ($self, $rev, $uuid) = @_;
+	my $map_path = $self->map_path($uuid);
+	return undef unless -e $map_path;
+
+	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
+	my $size = (stat($fh))[7];
+	($size % 24) == 0 or croak "inconsistent size: $size";
+
+	if ($size == 0) {
+		close $fh or croak "close: $fh";
+		return undef;
+	}
+
+	my ($l, $u) = (0, $size - 24);
+	my ($r, $c, $buf);
+
+	while ($l <= $u) {
+		my $i = int(($l/24 + $u/24) / 2) * 24;
+		sysseek($fh, $i, SEEK_SET) or croak "seek: $!";
+		sysread($fh, my $buf, 24) == 24 or croak "read: $!";
+		my ($r, $c) = unpack('NH40', $buf);
+
+		if ($r < $rev) {
+			$l = $i + 24;
+		} elsif ($r > $rev) {
+			$u = $i - 24;
+		} else { # $r == $rev
+			close($fh) or croak "close: $!";
+			return $c eq ('0' x 40) ? undef : $c;
+		}
+	}
+	close($fh) or croak "close: $!";
+	undef;
+}
+
+# Finds the first svn revision that exists on (if $eq_ok is true) or
+# before $rev for the current branch.  It will not search any lower
+# than $min_rev.  Returns the git commit hash and svn revision number
+# if found, else (undef, undef).
 sub find_rev_before {
-	my ($self, $rev, $eq_ok) = @_;
+	my ($self, $rev, $eq_ok, $min_rev) = @_;
 	--$rev unless $eq_ok;
-	while ($rev > 0) {
-		if (my $c = $self->rev_db_get($rev)) {
+	$min_rev ||= 1;
+	while ($rev >= $min_rev) {
+		if (my $c = $self->rev_map_get($rev)) {
 			return ($rev, $c);
 		}
 		--$rev;
+	}
+	return (undef, undef);
+}
+
+# Finds the first svn revision that exists on (if $eq_ok is true) or
+# after $rev for the current branch.  It will not search any higher
+# than $max_rev.  Returns the git commit hash and svn revision number
+# if found, else (undef, undef).
+sub find_rev_after {
+	my ($self, $rev, $eq_ok, $max_rev) = @_;
+	++$rev unless $eq_ok;
+	$max_rev ||= $self->rev_map_max;
+	while ($rev <= $max_rev) {
+		if (my $c = $self->rev_map_get($rev)) {
+			return ($rev, $c);
+		}
+		++$rev;
 	}
 	return (undef, undef);
 }
@@ -2380,13 +2822,32 @@ sub _new {
 	bless {
 		ref_id => $ref_id, dir => $dir, index => "$dir/index",
 	        path => $path, config => "$ENV{GIT_DIR}/svn/config",
-	        db_root => "$dir/.rev_db", repo_id => $repo_id }, $class;
+	        map_root => "$dir/.rev_map", repo_id => $repo_id }, $class;
 }
 
-sub db_path {
+# for read-only access of old .rev_db formats
+sub unlink_rev_db_symlink {
+	my ($self) = @_;
+	my $link = $self->rev_db_path;
+	$link =~ s/\.[\w-]+$// or croak "missing UUID at the end of $link";
+	if (-l $link) {
+		unlink $link or croak "unlink: $link failed!";
+	}
+}
+
+sub rev_db_path {
+	my ($self, $uuid) = @_;
+	my $db_path = $self->map_path($uuid);
+	$db_path =~ s{/\.rev_map\.}{/\.rev_db\.}
+	    or croak "map_path: $db_path does not contain '/.rev_map.' !";
+	$db_path;
+}
+
+# the new replacement for .rev_db
+sub map_path {
 	my ($self, $uuid) = @_;
 	$uuid ||= $self->ra_uuid;
-	"$self->{db_root}.$uuid";
+	"$self->{map_root}.$uuid";
 }
 
 sub uri_encode {
@@ -2542,7 +3003,6 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use IO::File qw//;
-use Digest::MD5;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
@@ -2631,6 +3091,20 @@ sub add_file {
 
 sub add_directory {
 	my ($self, $path, $cp_path, $cp_rev) = @_;
+	my $gpath = $self->git_path($path);
+	if ($gpath eq '') {
+		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
+		                                     -r --name-only -z/,
+				                     $self->{c});
+		local $/ = "\0";
+		while (<$ls>) {
+			chomp;
+			$self->{gii}->remove($_);
+			print "\tD\t$_\n" unless $::_q;
+		}
+		command_close_pipe($ls, $ctx);
+		$self->{empty}->{$path} = 0;
+	}
 	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
 	delete $self->{empty}->{$dir};
 	$self->{empty}->{$path} = 1;
@@ -2694,9 +3168,7 @@ sub apply_textdelta {
 
 		if (defined $exp) {
 			seek $base, 0, 0 or croak $!;
-			my $md5 = Digest::MD5->new;
-			$md5->addfile($base);
-			my $got = $md5->hexdigest;
+			my $got = ::md5sum($base);
 			die "Checksum mismatch: $fb->{path} $fb->{blob}\n",
 			    "expected: $exp\n",
 			    "     got: $got\n" if ($got ne $exp);
@@ -2715,9 +3187,7 @@ sub close_file {
 	if (my $fh = $fb->{fh}) {
 		if (defined $exp) {
 			seek($fh, 0, 0) or croak $!;
-			my $md5 = Digest::MD5->new;
-			$md5->addfile($fh);
-			my $got = $md5->hexdigest;
+			my $got = ::md5sum($fh);
 			if ($got ne $exp) {
 				die "Checksum mismatch: $path\n",
 				    "expected: $exp\n    got: $got\n";
@@ -2725,9 +3195,15 @@ sub close_file {
 		}
 		sysseek($fh, 0, 0) or croak $!;
 		if ($fb->{mode_b} == 120000) {
-			sysread($fh, my $buf, 5) == 5 or croak $!;
-			$buf eq 'link ' or die "$path has mode 120000",
-			                       "but is not a link\n";
+			eval {
+				sysread($fh, my $buf, 5) == 5 or croak $!;
+				$buf eq 'link ' or die "$path has mode 120000",
+						       " but is not a link";
+			};
+			if ($@) {
+				warn "$@\n";
+				sysseek($fh, 0, 0) or croak $!;
+			}
 		}
 		defined(my $pid = open my $out,'-|') or die "Can't fork: $!\n";
 		if (!$pid) {
@@ -2769,7 +3245,6 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use IO::File;
-use Digest::MD5;
 
 sub new {
 	my ($class, $opts) = @_;
@@ -3073,11 +3548,9 @@ sub chg_file {
 	$fh->flush == 0 or croak $!;
 	seek $fh, 0, 0 or croak $!;
 
-	my $md5 = Digest::MD5->new;
-	$md5->addfile($fh) or croak $!;
+	my $exp = ::md5sum($fh);
 	seek $fh, 0, 0 or croak $!;
 
-	my $exp = $md5->hexdigest;
 	my $pool = SVN::Pool->new;
 	my $atd = $self->apply_textdelta($fbat, undef, $pool);
 	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
@@ -3180,6 +3653,25 @@ sub _auth_providers () {
 	]
 }
 
+sub escape_uri_only {
+	my ($uri) = @_;
+	my @tmp;
+	foreach (split m{/}, $uri) {
+		s/([^\w.-])/sprintf("%%%02X",ord($1))/eg;
+		push @tmp, $_;
+	}
+	join('/', @tmp);
+}
+
+sub escape_url {
+	my ($url) = @_;
+	if ($url =~ m#^(https?)://([^/]+)(.*)$#) {
+		my ($scheme, $domain, $uri) = ($1, $2, escape_uri_only($3));
+		$url = "$scheme://$domain$uri";
+	}
+	$url;
+}
+
 sub new {
 	my ($class, $url) = @_;
 	$url =~ s!/+$!!;
@@ -3212,10 +3704,11 @@ sub new {
 			$Git::SVN::Prompt::_no_auth_cache = 1;
 		}
 	} # no warnings 'once'
-	my $self = SVN::Ra->new(url => $url, auth => $baton,
+	my $self = SVN::Ra->new(url => escape_url($url), auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
 	                      auth_provider_callbacks => $callbacks);
+	$self->{url} = $url;
 	$self->{svn_path} = $url;
 	$self->{repos_root} = $self->get_repos_root;
 	$self->{svn_path} =~ s#^\Q$self->{repos_root}\E(/|$)##;
@@ -3341,7 +3834,7 @@ sub gs_do_switch {
 
 	my $full_url = $self->{url};
 	my $old_url = $full_url;
-	$full_url .= "/$path" if length $path;
+	$full_url .= '/' . escape_uri_only($path) if length $path;
 	my ($ra, $reparented);
 	if ($old_url ne $full_url) {
 		if ($old_url !~ m#^svn(\+ssh)?://#) {
@@ -3458,7 +3951,7 @@ sub gs_fetch_loop_common {
 
 			foreach my $gs ($self->match_globs(\%exists, $paths,
 			                                   $globs, $r)) {
-				if ($gs->rev_db_max >= $r) {
+				if ($gs->rev_map_max >= $r) {
 					next;
 				}
 				next unless $gs->match_paths($paths, $r);
@@ -3470,6 +3963,7 @@ sub gs_fetch_loop_common {
 				if ($log_entry) {
 					$gs->do_git_commit($log_entry);
 				}
+				$INDEX_FILES{$gs->{index}} = 1;
 			}
 			foreach my $g (@$globs) {
 				my $k = "svn-remote.$g->{remote}." .
@@ -3487,8 +3981,9 @@ sub gs_fetch_loop_common {
 		# pre-fill the .rev_db since it'll eventually get filled in
 		# with '0' x40 if something new gets committed
 		foreach my $gs (@$gsv) {
-			next if defined $gs->rev_db_get($max);
-			$gs->rev_db_set($max, 0 x40);
+			next if $gs->rev_map_max >= $max;
+			next if defined $gs->rev_map_get($max);
+			$gs->rev_map_set($max, 0 x40);
 		}
 		foreach my $g (@$globs) {
 			my $k = "svn-remote.$g->{remote}.$g->{t}-maxRev";
@@ -3499,6 +3994,7 @@ sub gs_fetch_loop_common {
 		$max += $inc;
 		$max = $head if ($max > $head);
 	}
+	Git::SVN::gc();
 }
 
 sub match_globs {
@@ -3606,6 +4102,10 @@ sub skip_unknown_revs {
 			warn "W: Ignoring error from SVN, path probably ",
 			     "does not exist: ($errno): ",
 			     $err->expanded_message,"\n";
+			warn "W: Do not be alarmed at the above message ",
+			     "git-svn is just searching aggressively for ",
+			     "old history.\n",
+			     "This may take a while on large repositories\n";
 			$ignored_err{$err_key} = 1;
 		}
 		return;
@@ -3635,6 +4135,7 @@ package Git::SVN::Log;
 use strict;
 use warnings;
 use POSIX qw/strftime/;
+use constant commit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
             %rusers $show_commit $incremental/;
 my $l_fmt;
@@ -3663,39 +4164,7 @@ sub cmt_showable {
 }
 
 sub log_use_color {
-	return 1 if $color;
-	my ($dc, $dcvar);
-	$dcvar = 'color.diff';
-	$dc = `git-config --get $dcvar`;
-	if ($dc eq '') {
-		# nothing at all; fallback to "diff.color"
-		$dcvar = 'diff.color';
-		$dc = `git-config --get $dcvar`;
-	}
-	chomp($dc);
-	if ($dc eq 'auto') {
-		my $pc;
-		$pc = `git-config --get color.pager`;
-		if ($pc eq '') {
-			# does not have it -- fallback to pager.color
-			$pc = `git-config --bool --get pager.color`;
-		}
-		else {
-			$pc = `git-config --bool --get color.pager`;
-			if ($?) {
-				$pc = 'false';
-			}
-		}
-		chomp($pc);
-		if (-t *STDOUT || (defined $pager && $pc eq 'true')) {
-			return ($ENV{TERM} && $ENV{TERM} ne 'dumb');
-		}
-		return 0;
-	}
-	return 0 if $dc eq 'never';
-	return 1 if $dc eq 'always';
-	chomp($dc = `git-config --bool --get $dcvar`);
-	return ($dc eq 'true');
+	return $color || Git->repository->get_colorbool('color.diff');
 }
 
 sub git_svn_log_cmd {
@@ -3724,23 +4193,23 @@ sub git_svn_log_cmd {
 	push @cmd, @log_opts;
 	if (defined $r_max && $r_max == $r_min) {
 		push @cmd, '--max-count=1';
-		if (my $c = $gs->rev_db_get($r_max)) {
+		if (my $c = $gs->rev_map_get($r_max)) {
 			push @cmd, $c;
 		}
 	} elsif (defined $r_max) {
-		my ($c_min, $c_max);
-		$c_max = $gs->rev_db_get($r_max);
-		$c_min = $gs->rev_db_get($r_min);
-		if (defined $c_min && defined $c_max) {
-			if ($r_max > $r_max) {
-				push @cmd, "$c_min..$c_max";
-			} else {
-				push @cmd, "$c_max..$c_min";
-			}
-		} elsif ($r_max > $r_min) {
-			push @cmd, $c_max;
+		if ($r_max < $r_min) {
+			($r_min, $r_max) = ($r_max, $r_min);
+		}
+		my (undef, $c_max) = $gs->find_rev_before($r_max, 1, $r_min);
+		my (undef, $c_min) = $gs->find_rev_after($r_min, 1, $r_max);
+		# If there are no commits in the range, both $c_max and $c_min
+		# will be undefined.  If there is at least 1 commit in the
+		# range, both will be defined.
+		return () if !defined $c_min || !defined $c_max;
+		if ($c_min eq $c_max) {
+			push @cmd, '--max-count=1', $c_min;
 		} else {
-			push @cmd, $c_min;
+			push @cmd, '--boundary', "$c_min..$c_max";
 		}
 	}
 	return (@cmd, @files);
@@ -3754,6 +4223,7 @@ sub config_pager {
 	} elsif (length $pager == 0 || $pager eq 'cat') {
 		$pager = undef;
 	}
+	$ENV{GIT_PAGER_IN_USE} = defined($pager);
 }
 
 sub run_pager {
@@ -3768,6 +4238,29 @@ sub run_pager {
 	open STDIN, '<&', $rfd or ::fatal "Can't redirect stdin: $!";
 	$ENV{LESS} ||= 'FRSX';
 	exec $pager or ::fatal "Can't run pager: $! ($pager)";
+}
+
+sub format_svn_date {
+	return strftime("%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)", localtime(shift));
+}
+
+sub parse_git_date {
+	my ($t, $tz) = @_;
+	# Date::Parse isn't in the standard Perl distro :(
+	if ($tz =~ s/^\+//) {
+		$t += tz_to_s_offset($tz);
+	} elsif ($tz =~ s/^\-//) {
+		$t -= tz_to_s_offset($tz);
+	}
+	return $t;
+}
+
+sub set_local_timezone {
+	if (defined $TZ) {
+		$ENV{TZ} = $TZ;
+	} else {
+		delete $ENV{TZ};
+	}
 }
 
 sub tz_to_s_offset {
@@ -3790,13 +4283,7 @@ sub get_author_info {
 	$dest->{t} = $t;
 	$dest->{tz} = $tz;
 	$dest->{a} = $au;
-	# Date::Parse isn't in the standard Perl distro :(
-	if ($tz =~ s/^\+//) {
-		$t += tz_to_s_offset($tz);
-	} elsif ($tz =~ s/^\-//) {
-		$t -= tz_to_s_offset($tz);
-	}
-	$dest->{t_utc} = $t;
+	$dest->{t_utc} = parse_git_date($t, $tz);
 }
 
 sub process_commit {
@@ -3848,10 +4335,9 @@ sub show_commit_changed_paths {
 
 sub show_commit_normal {
 	my ($c) = @_;
-	print '-' x72, "\nr$c->{r} | ";
+	print commit_log_separator, "r$c->{r} | ";
 	print "$c->{c} | " if $show_commit;
-	print "$c->{a} | ", strftime("%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)",
-				 localtime($c->{t_utc})), ' | ';
+	print "$c->{a} | ", format_svn_date($c->{t_utc}), ' | ';
 	my $nr_line = 0;
 
 	if (my $l = $c->{l}) {
@@ -3891,11 +4377,7 @@ sub cmd_show_log {
 	my (@args) = @_;
 	my ($r_min, $r_max);
 	my $r_last = -1; # prevent dupes
-	if (defined $TZ) {
-		$ENV{TZ} = $TZ;
-	} else {
-		delete $ENV{TZ};
-	}
+	set_local_timezone();
 	if (defined $::_revision) {
 		if ($::_revision =~ /^(\d+):(\d+)$/) {
 			($r_min, $r_max) = ($1, $2);
@@ -3909,12 +4391,16 @@ sub cmd_show_log {
 
 	config_pager();
 	@args = git_svn_log_cmd($r_min, $r_max, @args);
+	if (!@args) {
+		print commit_log_separator unless $incremental || $oneline;
+		return;
+	}
 	my $log = command_output_pipe(@args);
 	run_pager();
 	my (@k, $c, $d, $stat);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {
-		if (/^${esc_color}commit ($::sha1_short)/o) {
+		if (/^${esc_color}commit -?($::sha1_short)/o) {
 			my $cmt = $1;
 			if ($c && cmt_showable($c) && $c->{r} != $r_last) {
 				$r_last = $c->{r};
@@ -3957,14 +4443,30 @@ sub cmd_show_log {
 		process_commit($c, $r_min, $r_max, \@k);
 	}
 	if (@k) {
-		my $swap = $r_max;
-		$r_max = $r_min;
-		$r_min = $swap;
+		($r_min, $r_max) = ($r_max, $r_min);
 		process_commit($_, $r_min, $r_max) foreach reverse @k;
 	}
 out:
 	close $log;
-	print '-' x72,"\n" unless $incremental || $oneline;
+	print commit_log_separator unless $incremental || $oneline;
+}
+
+sub cmd_blame {
+	my $path = shift;
+
+	config_pager();
+	run_pager();
+
+	my ($fh, $ctx) = command_output_pipe('blame', @_, $path);
+	while (my $line = <$fh>) {
+		if ($line =~ /^\^?([[:xdigit:]]+)\s/) {
+			my (undef, $rev, undef) = ::cmt_metadata($1);
+			$rev = sprintf('%-10s', $rev);
+			$line =~ s/^\^?[[:xdigit:]]+(\s)/$rev$1/;
+		}
+		print $line;
+	}
+	command_close_pipe($fh, $ctx);
 }
 
 package Git::SVN::Migration;
@@ -3991,6 +4493,16 @@ package Git::SVN::Migration;
 #              --use-separate-remotes option in git-clone (now default)
 #            - we do not automatically migrate to this (following
 #              the example set by core git)
+#
+# v5 layout: .rev_db.$UUID => .rev_map.$UUID
+#            - newer, more-efficient format that uses 24-bytes per record
+#              with no filler space.
+#            - use xxd -c24 < .rev_map.$UUID to view and debug
+#            - This is a one-way migration, repositories updated to the
+#              new format will not be able to use old git-svn without
+#              rebuilding the .rev_db.  Rebuilding the rev_db is not
+#              possible if noMetadata or useSvmProps are set; but should
+#              be no problem for users that use the (sensible) defaults.
 use strict;
 use warnings;
 use Carp qw/croak/;

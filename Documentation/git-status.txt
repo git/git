@@ -12,33 +12,32 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Examines paths in the working tree that has changes unrecorded
-to the index file, and changes between the index file and the
-current HEAD commit.  The former paths are what you _could_
-commit by running 'git add' before running 'git
-commit', and the latter paths are what you _would_ commit by
-running 'git commit'.
-
-If there is no path that is different between the index file and
-the current HEAD commit, the command exits with non-zero
-status.
+Displays paths that have differences between the index file and the
+current HEAD commit, paths that have differences between the working
+tree and the index file, and paths in the working tree that are not
+tracked by git (and are not ignored by linkgit:gitignore[5]). The first
+are what you _would_ commit by running `git commit`; the second and
+third are what you _could_ commit by running `git add` before running
+`git commit`.
 
 The command takes the same set of options as `git-commit`; it
 shows what would be committed if the same options are given to
 `git-commit`.
 
-If any paths have been touched in the working tree (that is,
-their modification times have changed) but their contents and
-permissions are identical to those in the index file, the command
-updates the index file. Running `git-status` can thus speed up
-subsequent operations such as `git-diff` if the working tree
-contains many paths that have been touched but not modified.
+If there is no path that is different between the index file and
+the current HEAD commit (i.e., there is nothing to commit by running
+`git-commit`), the command exits with non-zero status.
 
 
 OUTPUT
 ------
 The output from this command is designed to be used as a commit
-template comments, and all the output lines are prefixed with '#'.
+template comment, and all the output lines are prefixed with '#'.
+
+The paths mentioned in the output, unlike many other git commands, are
+made relative to the current directory if you are working in a
+subdirectory (this is on purpose, to help cutting and pasting). See
+the status.relativePaths config option below.
 
 
 CONFIGURATION
@@ -49,9 +48,13 @@ mean the same thing and the latter is kept for backward
 compatibility) and `color.status.<slot>` configuration variables
 to colorize its output.
 
+If the config variable `status.relativePaths` is set to false, then all
+paths shown are relative to the repository root, not to the current
+directory.
+
 See Also
 --------
-gitlink:gitignore[5]
+linkgit:gitignore[5]
 
 Author
 ------
@@ -64,4 +67,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

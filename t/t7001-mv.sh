@@ -22,7 +22,7 @@ test_expect_success \
 test_expect_success \
     'checking the commit' \
     'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-    grep -E "^R100.+path0/COPYING.+path1/COPYING"'
+    grep "^R100..*path0/COPYING..*path1/COPYING"'
 
 test_expect_success \
     'moving the file back into subdirectory' \
@@ -36,7 +36,7 @@ test_expect_success \
 test_expect_success \
     'checking the commit' \
     'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-    grep -E "^R100.+path1/COPYING.+path0/COPYING"'
+    grep "^R100..*path1/COPYING..*path0/COPYING"'
 
 test_expect_success \
     'adding another file' \
@@ -55,9 +55,9 @@ test_expect_success \
 test_expect_success \
     'checking the commit' \
     'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep -E "^R100.+path0/COPYING.+path2/COPYING" &&
+     grep "^R100..*path0/COPYING..*path2/COPYING" &&
      git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep -E "^R100.+path0/README.+path2/README"'
+     grep "^R100..*path0/README..*path2/README"'
 
 test_expect_success \
     'succeed when source is a prefix of destination' \
@@ -74,13 +74,13 @@ test_expect_success \
 test_expect_success \
     'checking the commit' \
     'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep -E "^R100.+path2/COPYING.+path1/path2/COPYING" &&
+     grep "^R100..*path2/COPYING..*path1/path2/COPYING" &&
      git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep -E "^R100.+path2/README.+path1/path2/README"'
+     grep "^R100..*path2/README..*path1/path2/README"'
 
-test_expect_failure \
+test_expect_success \
     'do not move directory over existing directory' \
-    'mkdir path0 && mkdir path0/path2 && git mv path2 path0'
+    'mkdir path0 && mkdir path0/path2 && ! git mv path2 path0'
 
 test_expect_success \
     'move into "."' \
@@ -117,5 +117,43 @@ test_expect_success "Sergey Vlasov's test case" '
 	git commit -m 'initial' &&
 	git mv ab a
 '
+
+test_expect_success 'absolute pathname' '(
+
+	rm -fr mine &&
+	mkdir mine &&
+	cd mine &&
+	test_create_repo one &&
+	cd one &&
+	mkdir sub &&
+	>sub/file &&
+	git add sub/file &&
+
+	git mv sub "$(pwd)/in" &&
+	! test -d sub &&
+	test -d in &&
+	git ls-files --error-unmatch in/file
+
+
+)'
+
+test_expect_success 'absolute pathname outside should fail' '(
+
+	rm -fr mine &&
+	mkdir mine &&
+	cd mine &&
+	out=$(pwd) &&
+	test_create_repo one &&
+	cd one &&
+	mkdir sub &&
+	>sub/file &&
+	git add sub/file &&
+
+	! git mv sub "$out/out" &&
+	test -d sub &&
+	! test -d ../in &&
+	git ls-files --error-unmatch sub/file
+
+)'
 
 test_done

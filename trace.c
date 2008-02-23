@@ -37,7 +37,7 @@ static int get_trace_fd(int *need_close)
 		return STDERR_FILENO;
 	if (strlen(trace) == 1 && isdigit(*trace))
 		return atoi(trace);
-	if (*trace == '/') {
+	if (is_absolute_path(trace)) {
 		int fd = open(trace, O_WRONLY | O_APPEND | O_CREAT, 0666);
 		if (fd == -1) {
 			fprintf(stderr,
@@ -72,7 +72,7 @@ void trace_printf(const char *fmt, ...)
 	if (!fd)
 		return;
 
-	strbuf_init(&buf, 0);
+	strbuf_init(&buf, 64);
 	va_start(ap, fmt);
 	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
 	va_end(ap);
@@ -93,7 +93,7 @@ void trace_printf(const char *fmt, ...)
 		close(fd);
 }
 
-void trace_argv_printf(const char **argv, int count, const char *fmt, ...)
+void trace_argv_printf(const char **argv, const char *fmt, ...)
 {
 	struct strbuf buf;
 	va_list ap;
@@ -103,7 +103,7 @@ void trace_argv_printf(const char **argv, int count, const char *fmt, ...)
 	if (!fd)
 		return;
 
-	strbuf_init(&buf, 0);
+	strbuf_init(&buf, 64);
 	va_start(ap, fmt);
 	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
 	va_end(ap);
@@ -117,7 +117,7 @@ void trace_argv_printf(const char **argv, int count, const char *fmt, ...)
 	}
 	strbuf_setlen(&buf, len);
 
-	sq_quote_argv(&buf, argv, count, 0);
+	sq_quote_argv(&buf, argv, 0);
 	strbuf_addch(&buf, '\n');
 	write_or_whine_pipe(fd, buf.buf, buf.len, err_msg);
 	strbuf_release(&buf);

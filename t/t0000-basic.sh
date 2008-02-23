@@ -47,12 +47,24 @@ test_expect_success \
     'test $(wc -l < full-of-directories) = 3'
 
 ################################################################
+# Test harness
+test_expect_success 'success is reported like this' '
+    :
+'
+test_expect_failure 'pretend we have a known breakage' '
+    false
+'
+test_expect_failure 'pretend we have fixed a known breakage' '
+    :
+'
+
+################################################################
 # Basics of the basics
 
 # updating a new file without --add should fail.
-test_expect_failure \
-    'git update-index without --add should fail adding.' \
-    'git update-index should-be-empty'
+test_expect_success 'git update-index without --add should fail adding.' '
+    ! git update-index should-be-empty
+'
 
 # and with --add it should succeed, even if it is empty (it used to fail).
 test_expect_success \
@@ -70,9 +82,9 @@ test_expect_success \
 
 # Removing paths.
 rm -f should-be-empty full-of-directories
-test_expect_failure \
-    'git update-index without --remove should fail removing.' \
-    'git update-index should-be-empty'
+test_expect_success 'git update-index without --remove should fail removing.' '
+    ! git update-index should-be-empty
+'
 
 test_expect_success \
     'git update-index with --remove should be able to remove.' \
@@ -204,9 +216,9 @@ test_expect_success \
     'put invalid objects into the index.' \
     'git update-index --index-info < badobjects'
 
-test_expect_failure \
-    'writing this tree without --missing-ok.' \
-    'git write-tree'
+test_expect_success 'writing this tree without --missing-ok.' '
+    ! git write-tree
+'
 
 test_expect_success \
     'writing this tree with --missing-ok.' \
@@ -295,6 +307,26 @@ test_expect_success 'absolute path works as expected' '
 	ln -s ../first/file .git/syml &&
 	sym="$(cd first; pwd -P)"/file &&
 	test "$sym" = "$(test-absolute-path $dir2/syml)"
+'
+
+test_expect_success 'very long name in the index handled sanely' '
+
+	a=a && # 1
+	a=$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a && # 16
+	a=$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a && # 256
+	a=$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a && # 4096
+	a=${a}q &&
+
+	>path4 &&
+	git update-index --add path4 &&
+	(
+		git ls-files -s path4 |
+		sed -e "s/	.*/	/" |
+		tr -d "\012"
+		echo "$a"
+	) | git update-index --index-info &&
+	len=$(git ls-files "a*" | wc -c) &&
+	test $len = 4098
 '
 
 test_done

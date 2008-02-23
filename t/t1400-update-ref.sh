@@ -7,12 +7,19 @@ test_description='Test git update-ref and basic ref logging'
 . ./test-lib.sh
 
 Z=0000000000000000000000000000000000000000
-A=1111111111111111111111111111111111111111
-B=2222222222222222222222222222222222222222
-C=3333333333333333333333333333333333333333
-D=4444444444444444444444444444444444444444
-E=5555555555555555555555555555555555555555
-F=6666666666666666666666666666666666666666
+
+test_expect_success setup '
+
+	for name in A B C D E F
+	do
+		test_tick &&
+		T=$(git write-tree) &&
+		sha1=$(echo $name | git commit-tree $T) &&
+		eval $name=$sha1
+	done
+
+'
+
 m=refs/heads/master
 n_dir=refs/heads/gu
 n=$n_dir/fixes
@@ -44,23 +51,23 @@ test_expect_success \
 	 test $B"' = $(cat .git/'"$m"')'
 rm -f .git/$m
 
-test_expect_failure \
-	'(not) create HEAD with old sha1' \
-	"git update-ref HEAD $A $B"
-test_expect_failure \
-	"(not) prior created .git/$m" \
-	"test -f .git/$m"
+test_expect_success '(not) create HEAD with old sha1' "
+	! git update-ref HEAD $A $B
+"
+test_expect_success "(not) prior created .git/$m" "
+	! test -f .git/$m
+"
 rm -f .git/$m
 
 test_expect_success \
 	"create HEAD" \
 	"git update-ref HEAD $A"
-test_expect_failure \
-	'(not) change HEAD with wrong SHA1' \
-	"git update-ref HEAD $B $Z"
-test_expect_failure \
-	"(not) changed .git/$m" \
-	"test $B"' = $(cat .git/'"$m"')'
+test_expect_success '(not) change HEAD with wrong SHA1' "
+	! git update-ref HEAD $B $Z
+"
+test_expect_success "(not) changed .git/$m" "
+	! test $B"' = $(cat .git/'"$m"')
+'
 rm -f .git/$m
 
 : a repository with working tree always has reflog these days...
@@ -205,7 +212,7 @@ test_expect_success \
 	 echo $h_TEST >.git/MERGE_HEAD &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:45" \
 	 GIT_COMMITTER_DATE="2005-05-26 23:45" git-commit -F M &&
-	 h_MERGED=$(git rev-parse --verify HEAD)
+	 h_MERGED=$(git rev-parse --verify HEAD) &&
 	 rm -f M'
 
 cat >expect <<EOF

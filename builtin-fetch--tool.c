@@ -25,7 +25,7 @@ static int update_ref_env(const char *action,
 		      unsigned char *oldval)
 {
 	char msg[1024];
-	char *rla = getenv("GIT_REFLOG_ACTION");
+	const char *rla = getenv("GIT_REFLOG_ACTION");
 
 	if (!rla)
 		rla = "(reflog update)";
@@ -61,7 +61,7 @@ static int update_local_ref(const char *name,
 	}
 
 	if (get_sha1(name, sha1_old)) {
-		char *msg;
+		const char *msg;
 	just_store:
 		/* new ref */
 		if (!strncmp(name, "refs/tags/", 10))
@@ -131,7 +131,7 @@ static int append_fetch_head(FILE *fp,
 
 	if (get_sha1(head, sha1))
 		return error("Not a valid object name: %s", head);
-	commit = lookup_commit_reference(sha1);
+	commit = lookup_commit_reference_gently(sha1, 1);
 	if (!commit)
 		not_for_merge = 1;
 
@@ -435,9 +435,7 @@ static int pick_rref(int sha1_only, const char *rref, const char *ls_remote_resu
 				cp++;
 			if (!*cp)
 				break;
-			np = strchr(cp, '\n');
-			if (!np)
-				np = cp + strlen(cp);
+			np = strchrnul(cp, '\n');
 			if (pass) {
 				lrr_list[i].line = cp;
 				lrr_list[i].name = cp + 41;
@@ -461,9 +459,7 @@ static int pick_rref(int sha1_only, const char *rref, const char *ls_remote_resu
 			rref++;
 		if (!*rref)
 			break;
-		next = strchr(rref, '\n');
-		if (!next)
-			next = rref + strlen(rref);
+		next = strchrnul(rref, '\n');
 		rreflen = next - rref;
 
 		for (i = 0; i < lrr_count; i++) {
@@ -515,10 +511,14 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 	if (!strcmp("append-fetch-head", argv[1])) {
 		int result;
 		FILE *fp;
+		char *filename;
 
 		if (argc != 8)
 			return error("append-fetch-head takes 6 args");
-		fp = fopen(git_path("FETCH_HEAD"), "a");
+		filename = git_path("FETCH_HEAD");
+		fp = fopen(filename, "a");
+		if (!fp)
+			return error("cannot open %s: %s\n", filename, strerror(errno));
 		result = append_fetch_head(fp, argv[2], argv[3],
 					   argv[4], argv[5],
 					   argv[6], !!argv[7][0],
@@ -529,10 +529,14 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 	if (!strcmp("native-store", argv[1])) {
 		int result;
 		FILE *fp;
+		char *filename;
 
 		if (argc != 5)
 			return error("fetch-native-store takes 3 args");
-		fp = fopen(git_path("FETCH_HEAD"), "a");
+		filename = git_path("FETCH_HEAD");
+		fp = fopen(filename, "a");
+		if (!fp)
+			return error("cannot open %s: %s\n", filename, strerror(errno));
 		result = fetch_native_store(fp, argv[2], argv[3], argv[4],
 					    verbose, force);
 		fclose(fp);

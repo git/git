@@ -50,14 +50,14 @@ constructor _new {path unmerged_only title} {
 	if {$is_detached} {
 		radiobutton $w.detachedhead_r \
 			-anchor w \
-			-text {This Detached Checkout} \
+			-text [mc "This Detached Checkout"] \
 			-value HEAD \
 			-variable @revtype
 		grid $w.detachedhead_r -sticky we -padx {0 5} -columnspan 2
 	}
 
 	radiobutton $w.expr_r \
-		-text {Revision Expression:} \
+		-text [mc "Revision Expression:"] \
 		-value expr \
 		-variable @revtype
 	entry $w.expr_t \
@@ -71,17 +71,17 @@ constructor _new {path unmerged_only title} {
 
 	frame $w.types
 	radiobutton $w.types.head_r \
-		-text {Local Branch} \
+		-text [mc "Local Branch"] \
 		-value head \
 		-variable @revtype
 	pack $w.types.head_r -side left
 	radiobutton $w.types.trck_r \
-		-text {Tracking Branch} \
+		-text [mc "Tracking Branch"] \
 		-value trck \
 		-variable @revtype
 	pack $w.types.trck_r -side left
 	radiobutton $w.types.tag_r \
-		-text {Tag} \
+		-text [mc "Tag"] \
 		-value tag \
 		-variable @revtype
 	pack $w.types.tag_r -side left
@@ -133,13 +133,13 @@ constructor _new {path unmerged_only title} {
 	append fmt { %(objecttype)}
 	append fmt { %(objectname)}
 	append fmt { [concat %(taggername) %(authorname)]}
-	append fmt { [concat %(taggerdate) %(authordate)]}
+	append fmt { [reformat_date [concat %(taggerdate) %(authordate)]]}
 	append fmt { %(subject)}
 	append fmt {] [list}
 	append fmt { %(*objecttype)}
 	append fmt { %(*objectname)}
 	append fmt { %(*authorname)}
-	append fmt { %(*authordate)}
+	append fmt { [reformat_date %(*authordate)]}
 	append fmt { %(*subject)}
 	append fmt {]}
 	set all_refn [list]
@@ -314,7 +314,7 @@ method commit_or_die {} {
 		}
 
 		set top [winfo toplevel $w]
-		set msg "Invalid revision: [get $this]\n\n$err"
+		set msg [strcat [mc "Invalid revision: %s" [get $this]] "\n\n$err"]
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -335,7 +335,7 @@ method _expr {} {
 		if {$i ne {}} {
 			return [lindex $cur_specs $i 1]
 		} else {
-			error "No revision selected."
+			error [mc "No revision selected."]
 		}
 	}
 
@@ -343,7 +343,7 @@ method _expr {} {
 		if {$c_expr ne {}} {
 			return $c_expr
 		} else {
-			error "Revision expression is empty."
+			error [mc "Revision expression is empty."]
 		}
 	}
 	HEAD { return HEAD                     }
@@ -451,7 +451,8 @@ method _sb_set {sb orient first last} {
 			focus $old_focus
 		}
 	}
-	$sb set $first $last
+
+	catch {$sb set $first $last}
 }
 
 method _show_tooltip {pos} {
@@ -527,14 +528,14 @@ method _open_tooltip {} {
 	set last [_reflog_last $this [lindex $spec 1]]
 	if {$last ne {}} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "updated"
+		$tooltip_t insert end [mc "Updated"]
 		$tooltip_t insert end " $last"
 	}
 	$tooltip_t insert end "\n"
 
 	if {$tag ne {}} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "tag" section_header
+		$tooltip_t insert end [mc "Tag"] section_header
 		$tooltip_t insert end "  [lindex $tag 1]\n"
 		$tooltip_t insert end [lindex $tag 2]
 		$tooltip_t insert end " ([lindex $tag 3])\n"
@@ -544,7 +545,7 @@ method _open_tooltip {} {
 
 	if {$cmit ne {}} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "commit" section_header
+		$tooltip_t insert end [mc "Commit@@noun"] section_header
 		$tooltip_t insert end "  [lindex $cmit 1]\n"
 		$tooltip_t insert end [lindex $cmit 2]
 		$tooltip_t insert end " ([lindex $cmit 3])\n"
@@ -553,11 +554,11 @@ method _open_tooltip {} {
 
 	if {[llength $spec] > 2} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "remote" section_header
+		$tooltip_t insert end [mc "Remote"] section_header
 		$tooltip_t insert end "  [lindex $spec 2]\n"
-		$tooltip_t insert end "url"
+		$tooltip_t insert end [mc "URL"]
 		$tooltip_t insert end " $remote_url([lindex $spec 2])\n"
-		$tooltip_t insert end "branch"
+		$tooltip_t insert end [mc "Branch"]
 		$tooltip_t insert end " [lindex $spec 3]"
 	}
 
@@ -583,7 +584,7 @@ method _reflog_last {name} {
 	}
 
 	if {$last ne {}} {
-		set last [clock format $last -format {%a %b %e %H:%M:%S %Y}]
+		set last [format_date $last]
 	}
 	set reflog_last($name) $last
 	return $last

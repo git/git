@@ -43,26 +43,34 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 
 #define DIFF_FORMAT_CALLBACK	0x1000
 
+#define DIFF_OPT_RECURSIVE           (1 <<  0)
+#define DIFF_OPT_TREE_IN_RECURSIVE   (1 <<  1)
+#define DIFF_OPT_BINARY              (1 <<  2)
+#define DIFF_OPT_TEXT                (1 <<  3)
+#define DIFF_OPT_FULL_INDEX          (1 <<  4)
+#define DIFF_OPT_SILENT_ON_REMOVE    (1 <<  5)
+#define DIFF_OPT_FIND_COPIES_HARDER  (1 <<  6)
+#define DIFF_OPT_FOLLOW_RENAMES      (1 <<  7)
+#define DIFF_OPT_COLOR_DIFF          (1 <<  8)
+#define DIFF_OPT_COLOR_DIFF_WORDS    (1 <<  9)
+#define DIFF_OPT_HAS_CHANGES         (1 << 10)
+#define DIFF_OPT_QUIET               (1 << 11)
+#define DIFF_OPT_NO_INDEX            (1 << 12)
+#define DIFF_OPT_ALLOW_EXTERNAL      (1 << 13)
+#define DIFF_OPT_EXIT_WITH_STATUS    (1 << 14)
+#define DIFF_OPT_REVERSE_DIFF        (1 << 15)
+#define DIFF_OPT_CHECK_FAILED        (1 << 16)
+#define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
+#define DIFF_OPT_SET(opts, flag)    ((opts)->flags |= DIFF_OPT_##flag)
+#define DIFF_OPT_CLR(opts, flag)    ((opts)->flags &= ~DIFF_OPT_##flag)
+
 struct diff_options {
 	const char *filter;
 	const char *orderfile;
 	const char *pickaxe;
 	const char *single_follow;
-	unsigned recursive:1,
-		 tree_in_recursive:1,
-		 binary:1,
-		 text:1,
-		 full_index:1,
-		 silent_on_remove:1,
-		 find_copies_harder:1,
-		 follow_renames:1,
-		 color_diff:1,
-		 color_diff_words:1,
-		 has_changes:1,
-		 quiet:1,
-		 no_index:1,
-		 allow_external:1,
-		 exit_with_status:1;
+	const char *a_prefix, *b_prefix;
+	unsigned flags;
 	int context;
 	int break_opt;
 	int detect_rename;
@@ -71,7 +79,6 @@ struct diff_options {
 	int output_format;
 	int pickaxe_opts;
 	int rename_score;
-	int reverse_diff;
 	int rename_limit;
 	int setup;
 	int abbrev;
@@ -105,6 +112,9 @@ enum color_diff {
 	DIFF_WHITESPACE = 7,
 };
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
+#define diff_get_color_opt(o, ix) \
+	diff_get_color(DIFF_OPT_TST((o), COLOR_DIFF), ix)
+
 
 extern const char mime_boundary_leader[];
 
@@ -162,7 +172,9 @@ extern void diff_unmerge(struct diff_options *,
 #define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
+extern int git_diff_basic_config(const char *var, const char *value);
 extern int git_diff_ui_config(const char *var, const char *value);
+extern int diff_use_color_default;
 extern void diff_setup(struct diff_options *);
 extern int diff_opt_parse(struct diff_options *, const char **, int);
 extern int diff_setup_done(struct diff_options *);
@@ -224,7 +236,11 @@ extern void diff_flush(struct diff_options*);
 
 extern const char *diff_unique_abbrev(const unsigned char *, int);
 
-extern int run_diff_files(struct rev_info *revs, int silent_on_removed);
+/* do not report anything on removed paths */
+#define DIFF_SILENT_ON_REMOVED 01
+/* report racily-clean paths as modified */
+#define DIFF_RACY_IS_MODIFIED 02
+extern int run_diff_files(struct rev_info *revs, unsigned int option);
 extern int setup_diff_no_index(struct rev_info *revs,
 		int argc, const char ** argv, int nongit, const char *prefix);
 extern int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv);
@@ -233,5 +249,7 @@ extern int run_diff_index(struct rev_info *revs, int cached);
 
 extern int do_diff_cache(const unsigned char *, struct diff_options *);
 extern int diff_flush_patch_id(struct diff_options *, unsigned char *);
+
+extern int diff_result_code(struct diff_options *, int);
 
 #endif /* DIFF_H */

@@ -13,7 +13,7 @@ SYNOPSIS
 	  [--apply] [--no-add] [--build-fake-ancestor <file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-pNUM] [-CNUM] [--inaccurate-eof] [--cached]
-	  [--whitespace=<nowarn|warn|error|error-all|strip>]
+	  [--whitespace=<nowarn|warn|fix|error|error-all>]
 	  [--exclude=PATH] [--verbose] [<patch>...]
 
 DESCRIPTION
@@ -77,7 +77,7 @@ the information is read from the current index instead.
 	Apply the patch in reverse.
 
 --reject::
-	For atomicity, gitlink:git-apply[1] by default fails the whole patch and
+	For atomicity, linkgit:git-apply[1] by default fails the whole patch and
 	does not touch the working tree when some of the hunks
 	do not apply.  This option makes it apply
 	the parts of the patch that are applicable, and leave the
@@ -101,7 +101,7 @@ the information is read from the current index instead.
 	ever ignored.
 
 --unidiff-zero::
-	By default, gitlink:git-apply[1] expects that the patch being
+	By default, linkgit:git-apply[1] expects that the patch being
 	applied is a unified diff with at least one line of context.
 	This provides good safety measures, but breaks down when
 	applying a diff generated with --unified=0. To bypass these
@@ -112,14 +112,14 @@ discouraged.
 
 --apply::
 	If you use any of the options marked "Turns off
-	'apply'" above, gitlink:git-apply[1] reads and outputs the
+	'apply'" above, linkgit:git-apply[1] reads and outputs the
 	information you asked without actually applying the
 	patch.  Give this flag after those flags to also apply
 	the patch.
 
 --no-add::
 	When applying a patch, ignore additions made by the
-	patch.  This can be used to extract common part between
+	patch.  This can be used to extract the common part between
 	two files by first running `diff` on them and applying
 	the result with this option, which would apply the
 	deletion part but not addition part.
@@ -135,25 +135,32 @@ discouraged.
 	be useful when importing patchsets, where you want to exclude certain
 	files or directories.
 
---whitespace=<option>::
-	When applying a patch, detect a new or modified line
-	that ends with trailing whitespaces (this includes a
-	line that solely consists of whitespaces).  By default,
-	the command outputs warning messages and applies the
-	patch.
-	When gitlink:git-apply[1] is used for statistics and not applying a
-	patch, it defaults to `nowarn`.
-	You can use different `<option>` to control this
-	behavior:
+--whitespace=<action>::
+	When applying a patch, detect a new or modified line that has
+	whitespace errors.  What are considered whitespace errors is
+	controlled by `core.whitespace` configuration.  By default,
+	trailing whitespaces (including lines that solely consist of
+	whitespaces) and a space character that is immediately followed
+	by a tab character inside the initial indent of the line are
+	considered whitespace errors.
++
+By default, the command outputs warning messages but applies the patch.
+When linkgit:git-apply[1] is used for statistics and not applying a
+patch, it defaults to `nowarn`.
++
+You can use different `<action>` to control this
+behavior:
 +
 * `nowarn` turns off the trailing whitespace warning.
 * `warn` outputs warnings for a few such errors, but applies the
-  patch (default).
+  patch as-is (default).
+* `fix` outputs warnings for a few such errors, and applies the
+  patch after fixing them (`strip` is a synonym --- the tool
+  used to consider only trailing whitespaces as errors, and the
+  fix involved 'stripping' them, but modern gits do more).
 * `error` outputs warnings for a few such errors, and refuses
   to apply the patch.
 * `error-all` is similar to `error` but shows all errors.
-* `strip` outputs warnings for a few such errors, strips out the
-  trailing whitespaces and applies the patch.
 
 --inaccurate-eof::
 	Under certain circumstances, some versions of diff do not correctly
@@ -176,7 +183,7 @@ apply.whitespace::
 
 Submodules
 ----------
-If the patch contains any changes to submodules then gitlink:git-apply[1]
+If the patch contains any changes to submodules then linkgit:git-apply[1]
 treats these changes as follows.
 
 If --index is specified (explicitly or implicitly), then the submodule
@@ -199,4 +206,4 @@ Documentation by Junio C Hamano
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

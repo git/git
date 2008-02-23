@@ -13,7 +13,7 @@
 
 if git-rev-parse --verify HEAD 2>/dev/null
 then
-	git-diff-index -p -M --cached HEAD
+	git-diff-index -p -M --cached HEAD --
 else
 	# NEEDSWORK: we should produce a diff with an empty tree here
 	# if we want to do the same verification for the initial import.
@@ -58,10 +58,10 @@ perl -e '
 	    if (/\s$/) {
 		bad_line("trailing whitespace", $_);
 	    }
-	    if (/^\s* 	/) {
+	    if (/^\s* \t/) {
 		bad_line("indent SP followed by a TAB", $_);
 	    }
-	    if (/^(?:[<>=]){7}/) {
+	    if (/^([<>])\1{6} |^={7}$/) {
 		bad_line("unresolved merge conflict", $_);
 	    }
 	}

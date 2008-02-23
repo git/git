@@ -45,8 +45,7 @@ static int read_cache_unmerged(void)
 				continue;
 			cache_tree_invalidate_path(active_cache_tree, ce->name);
 			last = ce;
-			ce->ce_mode = 0;
-			ce->ce_flags &= ~htons(CE_STAGEMASK);
+			continue;
 		}
 		*dst++ = ce;
 	}
@@ -283,7 +282,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	}
 
 	if (write_cache(newfd, active_cache, active_nr) ||
-	    close(newfd) || commit_locked_index(&lock_file))
+	    commit_locked_index(&lock_file))
 		die("unable to write new index file");
 	return 0;
 }

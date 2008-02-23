@@ -21,7 +21,7 @@ git reflog expire [--dry-run] [--stale-fix] [--verbose]
 
 git reflog delete ref@\{specifier\}...
 
-git reflog [show] [log-options]
+git reflog [show] [log-options] [<ref>]
 
 Reflog is a mechanism to record when the tip of branches are
 updated.  This command is to manage the information recorded in it.
@@ -30,13 +30,20 @@ The subcommand "expire" is used to prune older reflog entries.
 Entries older than `expire` time, or entries older than
 `expire-unreachable` time and are not reachable from the current
 tip, are removed from the reflog.  This is typically not used
-directly by the end users -- instead, see gitlink:git-gc[1].
+directly by the end users -- instead, see linkgit:git-gc[1].
 
 The subcommand "show" (which is also the default, in the absence of any
 subcommands) will take all the normal log options, and show the log of
-`HEAD`, which will cover all recent actions, including branch switches.
-It is basically an alias for 'git log -g --abbrev-commit
---pretty=oneline', see gitlink:git-log[1].
+the reference provided in the command-line (or `HEAD`, by default).
+The reflog will cover all recent actions (HEAD reflog records branch switching
+as well).  It is an alias for 'git log -g --abbrev-commit --pretty=oneline';
+see linkgit:git-log[1].
+
+The reflog is useful in various git commands, to specify the old value
+of a reference. For example, `HEAD@\{2\}` means "where HEAD used to be
+two moves ago", `master@\{one.week.ago\}` means "where master used to
+point to one week ago", and so on. See linkgit:git-rev-parse[1] for
+more details.
 
 To delete single entries from the reflog, use the subcommand "delete"
 and specify the _exact_ entry (e.g. ``git reflog delete master@\{2\}'').
@@ -86,4 +93,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

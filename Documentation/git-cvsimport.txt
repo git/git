@@ -107,8 +107,8 @@ If you need to pass multiple options, separate them with a comma.
 
 -M <regex>::
 	Attempt to detect merges based on the commit message with a custom
-	regex. It can be used with '-m' to also see the default regexes.
-	You must escape forward slashes.
+	regex. It can be used with '-m' to enable the default regexes
+	as well. You must escape forward slashes.
 
 -S <regex>::
 	Skip paths matching the regex.
@@ -142,7 +142,7 @@ file each time git-cvsimport is run.
 +
 It is not recommended to use this feature if you intend to
 export changes back to CVS again later with
-gitlink:git-cvsexportcommit[1].
+linkgit:git-cvsexportcommit[1].
 
 -h::
 	Print a short usage message and exit.
@@ -166,4 +166,4 @@ Documentation by Matthias Urlichs <smurf@smurf.noris.de>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

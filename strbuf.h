@@ -23,12 +23,12 @@
  *    that way:
  *
  *    strbuf_grow(sb, SOME_SIZE);
- *    // ... here the memory areay starting at sb->buf, and of length
- *    // sb_avail(sb) is all yours, and you are sure that sb_avail(sb) is at
- *    // least SOME_SIZE
+ *       ... Here, the memory array starting at sb->buf, and of length
+ *       ... strbuf_avail(sb) is all yours, and you are sure that
+ *       ... strbuf_avail(sb) is at least SOME_SIZE.
  *    strbuf_setlen(sb, sb->len + SOME_OTHER_SIZE);
  *
- *    Of course, SOME_OTHER_SIZE must be smaller or equal to sb_avail(sb).
+ *    Of course, SOME_OTHER_SIZE must be smaller or equal to strbuf_avail(sb).
  *
  *    Doing so is safe, though if it has to be done in many places, adding the
  *    missing API to the strbuf module is the way to go.
@@ -101,6 +101,10 @@ static inline void strbuf_addstr(struct strbuf *sb, const char *s) {
 static inline void strbuf_addbuf(struct strbuf *sb, struct strbuf *sb2) {
 	strbuf_add(sb, sb2->buf, sb2->len);
 }
+extern void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len);
+
+typedef size_t (*expand_fn_t) (struct strbuf *sb, const char *placeholder, void *context);
+extern void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn, void *context);
 
 __attribute__((format(printf,2,3)))
 extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
@@ -113,5 +117,6 @@ extern int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint);
 extern int strbuf_getline(struct strbuf *, FILE *, int);
 
 extern void stripspace(struct strbuf *buf, int skip_comments);
+extern void launch_editor(const char *path, struct strbuf *buffer, const char *const *env);
 
 #endif /* STRBUF_H */

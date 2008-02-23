@@ -18,6 +18,8 @@ static void process_blob(struct rev_info *revs,
 
 	if (!revs->blob_objects)
 		return;
+	if (!obj)
+		die("bad blob object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	obj->flags |= SEEN;
@@ -69,6 +71,8 @@ static void process_tree(struct rev_info *revs,
 
 	if (!revs->tree_objects)
 		return;
+	if (!obj)
+		die("bad tree object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	if (parse_tree(tree) < 0)
@@ -170,4 +174,11 @@ void traverse_commit_list(struct rev_info *revs,
 	}
 	for (i = 0; i < objects.nr; i++)
 		show_object(&objects.objects[i]);
+	free(objects.objects);
+	if (revs->pending.nr) {
+		free(revs->pending.objects);
+		revs->pending.nr = 0;
+		revs->pending.alloc = 0;
+		revs->pending.objects = NULL;
+	}
 }

@@ -15,7 +15,7 @@ static void show_parents(struct commit *commit, int abbrev)
 	}
 }
 
-static void show_decorations(struct commit *commit)
+void show_decorations(struct commit *commit)
 {
 	const char *prefix;
 	struct name_decoration *decoration;
@@ -125,6 +125,18 @@ static unsigned int digits_in_number(unsigned int number)
 	return result;
 }
 
+static int has_non_ascii(const char *s)
+{
+	int ch;
+	if (!s)
+		return 0;
+	while ((ch = *s++) != '\0') {
+		if (non_ascii(ch))
+			return 1;
+	}
+	return 0;
+}
+
 void show_log(struct rev_info *opt, const char *sep)
 {
 	struct strbuf msgbuf;
@@ -137,10 +149,12 @@ void show_log(struct rev_info *opt, const char *sep)
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
-		if (opt->left_right) {
-			if (commit->object.flags & BOUNDARY)
-				putchar('-');
-			else if (commit->object.flags & SYMMETRIC_LEFT)
+		if (commit->object.flags & BOUNDARY)
+			putchar('-');
+		else if (commit->object.flags & UNINTERESTING)
+			putchar('^');
+		else if (opt->left_right) {
+			if (commit->object.flags & SYMMETRIC_LEFT)
 				putchar('<');
 			else
 				putchar('>');
@@ -233,12 +247,13 @@ void show_log(struct rev_info *opt, const char *sep)
 			opt->diffopt.stat_sep = buffer;
 		}
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
-		fputs(diff_get_color(opt->diffopt.color_diff, DIFF_COMMIT),
-		      stdout);
+		fputs(diff_get_color_opt(&opt->diffopt, DIFF_COMMIT), stdout);
 		if (opt->commit_format != CMIT_FMT_ONELINE)
 			fputs("commit ", stdout);
 		if (commit->object.flags & BOUNDARY)
 			putchar('-');
+		else if (commit->object.flags & UNINTERESTING)
+			putchar('^');
 		else if (opt->left_right) {
 			if (commit->object.flags & SYMMETRIC_LEFT)
 				putchar('<');
@@ -254,8 +269,7 @@ void show_log(struct rev_info *opt, const char *sep)
 			       diff_unique_abbrev(parent->object.sha1,
 						  abbrev_commit));
 		show_decorations(commit);
-		printf("%s",
-		       diff_get_color(opt->diffopt.color_diff, DIFF_RESET));
+		printf("%s", diff_get_color_opt(&opt->diffopt, DIFF_RESET));
 		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
 		if (opt->reflog_info) {
 			show_reflog_message(opt->reflog_info,
@@ -268,12 +282,16 @@ void show_log(struct rev_info *opt, const char *sep)
 		}
 	}
 
+	if (!commit->buffer)
+		return;
+
 	/*
 	 * And then the pretty-printed message itself
 	 */
 	strbuf_init(&msgbuf, 0);
 	pretty_print_commit(opt->commit_format, commit, &msgbuf,
-				  abbrev, subject, extra_headers, opt->date_mode);
+			    abbrev, subject, extra_headers, opt->date_mode,
+			    has_non_ascii(opt->add_signoff));
 
 	if (opt->add_signoff)
 		append_signoff(&msgbuf, opt->add_signoff);

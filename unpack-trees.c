@@ -71,11 +71,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 	int remove;
 	int baselen = strlen(base);
 	int src_size = len + 1;
-	int i_stk = i_stk;
 	int retval = 0;
-
-	if (o->dir)
-		i_stk = push_exclude_per_directory(o->dir, base, strlen(base));
 
 	do {
 		int i;
@@ -255,8 +251,6 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 	} while (1);
 
  leave_directory:
-	if (o->dir)
-		pop_exclude_per_directory(o->dir, i_stk);
 	return retval;
 }
 
@@ -295,20 +289,19 @@ static struct checkout state;
 static void check_updates(struct cache_entry **src, int nr,
 			struct unpack_trees_options *o)
 {
-	unsigned short mask = htons(CE_UPDATE);
 	unsigned cnt = 0, total = 0;
-	struct progress progress;
+	struct progress *progress = NULL;
 	char last_symlink[PATH_MAX];
 
 	if (o->update && o->verbose_update) {
 		for (total = cnt = 0; cnt < nr; cnt++) {
 			struct cache_entry *ce = src[cnt];
-			if (!ce->ce_mode || ce->ce_flags & mask)
+			if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
 				total++;
 		}
 
-		start_progress_delay(&progress, "Checking %u files out...",
-				     "", total, 50, 2);
+		progress = start_progress_delay("Checking out files",
+						total, 50, 2);
 		cnt = 0;
 	}
 
@@ -316,24 +309,22 @@ static void check_updates(struct cache_entry **src, int nr,
 	while (nr--) {
 		struct cache_entry *ce = *src++;
 
-		if (total)
-			if (!ce->ce_mode || ce->ce_flags & mask)
-				display_progress(&progress, ++cnt);
-		if (!ce->ce_mode) {
+		if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
+			display_progress(progress, ++cnt);
+		if (ce->ce_flags & CE_REMOVE) {
 			if (o->update)
 				unlink_entry(ce->name, last_symlink);
 			continue;
 		}
-		if (ce->ce_flags & mask) {
-			ce->ce_flags &= ~mask;
+		if (ce->ce_flags & CE_UPDATE) {
+			ce->ce_flags &= ~CE_UPDATE;
 			if (o->update) {
 				checkout_entry(ce, &state, NULL);
 				*last_symlink = '\0';
 			}
 		}
 	}
-	if (total)
-		stop_progress(&progress);;
+	stop_progress(&progress);
 }
 
 int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)
@@ -406,7 +397,7 @@ static void verify_uptodate(struct cache_entry *ce,
 		return;
 
 	if (!lstat(ce->name, &st)) {
-		unsigned changed = ce_match_stat(ce, &st, 1);
+		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID);
 		if (!changed)
 			return;
 		/*
@@ -416,7 +407,7 @@ static void verify_uptodate(struct cache_entry *ce,
 		 * submodules that are marked to be automatically
 		 * checked out.
 		 */
-		if (S_ISGITLINK(ntohl(ce->ce_mode)))
+		if (S_ISGITLINK(ce->ce_mode))
 			return;
 		errno = 0;
 	}
@@ -458,7 +449,7 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 	int cnt = 0;
 	unsigned char sha1[20];
 
-	if (S_ISGITLINK(ntohl(ce->ce_mode)) &&
+	if (S_ISGITLINK(ce->ce_mode) &&
 	    resolve_gitlink_ref(ce->name, "HEAD", sha1) == 0) {
 		/* If we are not going to update the submodule, then
 		 * we don't care.
@@ -489,7 +480,7 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 		 */
 		if (!ce_stage(ce)) {
 			verify_uptodate(ce, o);
-			ce->ce_mode = 0;
+			ce->ce_flags |= CE_REMOVE;
 		}
 		cnt++;
 	}
@@ -530,8 +521,9 @@ static void verify_absent(struct cache_entry *ce, const char *action,
 
 	if (!lstat(ce->name, &st)) {
 		int cnt;
+		int dtype = ce_to_dtype(ce);
 
-		if (o->dir && excluded(o->dir, ce->name))
+		if (o->dir && excluded(o->dir, ce->name, &dtype))
 			/*
 			 * ce->name is explicitly excluded, so it is Ok to
 			 * overwrite it.
@@ -576,7 +568,7 @@ static void verify_absent(struct cache_entry *ce, const char *action,
 		cnt = cache_name_pos(ce->name, strlen(ce->name));
 		if (0 <= cnt) {
 			struct cache_entry *ce = active_cache[cnt];
-			if (!ce_stage(ce) && !ce->ce_mode)
+			if (ce->ce_flags & CE_REMOVE)
 				return;
 		}
 
@@ -588,7 +580,7 @@ static void verify_absent(struct cache_entry *ce, const char *action,
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		struct unpack_trees_options *o)
 {
-	merge->ce_flags |= htons(CE_UPDATE);
+	merge->ce_flags |= CE_UPDATE;
 	if (old) {
 		/*
 		 * See if we can re-use the old CE directly?
@@ -598,7 +590,7 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		 * a match.
 		 */
 		if (same(old, merge)) {
-			*merge = *old;
+			memcpy(merge, old, offsetof(struct cache_entry, name));
 		} else {
 			verify_uptodate(old, o);
 			invalidate_ce_path(old);
@@ -609,7 +601,7 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		invalidate_ce_path(merge);
 	}
 
-	merge->ce_flags &= ~htons(CE_STAGEMASK);
+	merge->ce_flags &= ~CE_STAGEMASK;
 	add_cache_entry(merge, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 	return 1;
 }
@@ -621,7 +613,7 @@ static int deleted_entry(struct cache_entry *ce, struct cache_entry *old,
 		verify_uptodate(old, o);
 	else
 		verify_absent(ce, "removed", o);
-	ce->ce_mode = 0;
+	ce->ce_flags |= CE_REMOVE;
 	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 	invalidate_ce_path(ce);
 	return 1;
@@ -642,7 +634,7 @@ static void show_stage_entry(FILE *o,
 	else
 		fprintf(o, "%s%06o %s %d\t%s\n",
 			label,
-			ntohl(ce->ce_mode),
+			ce->ce_mode,
 			sha1_to_hex(ce->sha1),
 			ce_stage(ce),
 			ce->name);
@@ -927,8 +919,8 @@ int oneway_merge(struct cache_entry **src,
 		if (o->reset) {
 			struct stat st;
 			if (lstat(old->name, &st) ||
-			    ce_match_stat(old, &st, 1))
-				old->ce_flags |= htons(CE_UPDATE);
+			    ce_match_stat(old, &st, CE_MATCH_IGNORE_VALID))
+				old->ce_flags |= CE_UPDATE;
 		}
 		return keep_entry(old, o);
 	}

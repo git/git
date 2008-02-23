@@ -125,8 +125,15 @@ static void origin_decref(struct origin *o)
 	if (o && --o->refcnt <= 0) {
 		if (o->file.ptr)
 			free(o->file.ptr);
-		memset(o, 0, sizeof(*o));
 		free(o);
+	}
+}
+
+static void drop_origin_blob(struct origin *o)
+{
+	if (o->file.ptr) {
+		free(o->file.ptr);
+		o->file.ptr = NULL;
 	}
 }
 
@@ -335,7 +342,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 	 * same and diff-tree is fairly efficient about this.
 	 */
 	diff_setup(&diff_opts);
-	diff_opts.recursive = 1;
+	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	diff_opts.detect_rename = 0;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	paths[0] = origin->path;
@@ -380,6 +387,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
+	diff_tree_release_paths(&diff_opts);
 	if (porigin) {
 		/*
 		 * Create a freestanding copy that is not part of
@@ -409,7 +417,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 	const char *paths[2];
 
 	diff_setup(&diff_opts);
-	diff_opts.recursive = 1;
+	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	diff_opts.detect_rename = DIFF_DETECT_RENAME;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_opts.single_follow = origin->path;
@@ -436,6 +444,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
+	diff_tree_release_paths(&diff_opts);
 	return porigin;
 }
 
@@ -532,7 +541,7 @@ static struct patch *compare_buffer(mmfile_t *file_p, mmfile_t *file_o,
 	state.ret->chunks = NULL;
 	state.ret->num = 0;
 
-	xdl_diff(file_p, file_o, &xpp, &xecfg, &ecb);
+	xdi_diff(file_p, file_o, &xpp, &xecfg, &ecb);
 
 	if (state.ret->num) {
 		struct chunk *chunk;
@@ -597,7 +606,7 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
 
 /*
  * src typically is on-stack; we want to copy the information in it to
- * an malloced blame_entry that is already on the linked list of the
+ * a malloced blame_entry that is already on the linked list of the
  * scoreboard.  The origin of dst loses a refcnt while the origin of src
  * gains one.
  */
@@ -1075,7 +1084,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 		return 1; /* nothing remains for this target */
 
 	diff_setup(&diff_opts);
-	diff_opts.recursive = 1;
+	DIFF_OPT_SET(&diff_opts, RECURSIVE);
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 
 	paths[0] = NULL;
@@ -1093,7 +1102,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 	if ((opt & PICKAXE_BLAME_COPY_HARDEST)
 	    || ((opt & PICKAXE_BLAME_COPY_HARDER)
 		&& (!porigin || strcmp(target->path, porigin->path))))
-		diff_opts.find_copies_harder = 1;
+		DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
 
 	if (is_null_sha1(target->commit->object.sha1))
 		do_diff_cache(parent->tree->object.sha1, &diff_opts);
@@ -1102,7 +1111,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 			       target->commit->tree->object.sha1,
 			       "", &diff_opts);
 
-	if (!diff_opts.find_copies_harder)
+	if (!DIFF_OPT_TST(&diff_opts, FIND_COPIES_HARDER))
 		diffcore_std(&diff_opts);
 
 	retval = 0;
@@ -1157,7 +1166,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
-
+	diff_tree_release_paths(&diff_opts);
 	return retval;
 }
 
@@ -1274,8 +1283,13 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 		}
 
  finish:
-	for (i = 0; i < MAXPARENT; i++)
-		origin_decref(parent_origin[i]);
+	for (i = 0; i < MAXPARENT; i++) {
+		if (parent_origin[i]) {
+			drop_origin_blob(parent_origin[i]);
+			origin_decref(parent_origin[i]);
+		}
+	}
+	drop_origin_blob(origin);
 }
 
 /*
@@ -1880,9 +1894,7 @@ static unsigned parse_score(const char *arg)
 
 static const char *add_prefix(const char *prefix, const char *path)
 {
-	if (!prefix || !prefix[0])
-		return path;
-	return prefix_path(prefix, strlen(prefix), path);
+	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
 /*
@@ -2059,6 +2071,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 		if (strbuf_read(&buf, 0, 0) < 0)
 			die("read error %s from stdin", strerror(errno));
 	}
+	convert_to_git(path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
 	pretend_sha1_file(buf.buf, buf.len, OBJ_BLOB, origin->blob_sha1);
@@ -2077,7 +2090,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	if (!mode) {
 		int pos = cache_name_pos(path, len);
 		if (0 <= pos)
-			mode = ntohl(active_cache[pos]->ce_mode);
+			mode = active_cache[pos]->ce_mode;
 		else
 			/* Let's not bother reading from HEAD tree */
 			mode = S_IFREG | 0644;
@@ -2214,9 +2227,6 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			argv[unk++] = arg;
 	}
 
-	if (!incremental)
-		setup_pager();
-
 	if (!blame_move_score)
 		blame_move_score = BLAME_DEFAULT_MOVE_SCORE;
 	if (!blame_copy_score)
@@ -2297,6 +2307,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			else if (i != argc - 1)
 				usage(blame_usage); /* garbage at end */
 
+			setup_work_tree();
 			if (!has_path_in_work_tree(path))
 				die("cannot stat path %s: %s",
 				    path, strerror(errno));
@@ -2344,6 +2355,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		 * do not default to HEAD, but use the working tree
 		 * or "--contents".
 		 */
+		setup_work_tree();
 		sb.final = fake_working_tree_commit(path, contents_from);
 		add_pending_object(&revs, &(sb.final->object), ":");
 	}
@@ -2355,7 +2367,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	 * bottom commits we would reach while traversing as
 	 * uninteresting.
 	 */
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 
 	if (is_null_sha1(sb.final->object.sha1)) {
 		char *buf;
@@ -2409,6 +2422,9 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		    revs_file, strerror(errno));
 
 	read_mailmap(&mailmap, ".mailmap", NULL);
+
+	if (!incremental)
+		setup_pager();
 
 	assign_blame(&sb, &revs, opt);
 

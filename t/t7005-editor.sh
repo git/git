@@ -4,6 +4,8 @@ test_description='GIT_EDITOR, core.editor, and stuff'
 
 . ./test-lib.sh
 
+OLD_TERM="$TERM"
+
 for i in GIT_EDITOR core_editor EDITOR VISUAL vi
 do
 	cat >e-$i.sh <<-EOF
@@ -13,7 +15,6 @@ do
 done
 unset vi
 mv e-vi.sh vi
-PATH=".:$PATH"
 unset EDITOR VISUAL GIT_EDITOR
 
 test_expect_success setup '
@@ -36,7 +37,7 @@ test_expect_success 'dumb should error out when falling back on vi' '
 	if git commit --amend
 	then
 		echo "Oops?"
-		exit 1
+		false
 	else
 		: happy
 	fi
@@ -59,7 +60,7 @@ do
 		;;
 	esac
 	test_expect_success "Using $i" '
-		git commit --amend &&
+		git --exec-path=. commit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		diff actual expect
@@ -81,11 +82,13 @@ do
 		;;
 	esac
 	test_expect_success "Using $i (override)" '
-		git commit --amend &&
+		git --exec-path=. commit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		diff actual expect
 	'
 done
+
+TERM="$OLD_TERM"
 
 test_done

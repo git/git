@@ -20,6 +20,13 @@ LF='
 '
 DQ='"'
 
+echo foo > "Name and an${HT}HT"
+test -f "Name and an${HT}HT" || {
+	# since FAT/NTFS does not allow tabs in filenames, skip this test
+	say 'Your filesystem does not allow tabs in filenames, test skipped.'
+	test_done
+}
+
 for_each_name () {
 	for name in \
 	    Name "Name and a${LF}LF" "Name and an${HT}HT" "Name${DQ}" \

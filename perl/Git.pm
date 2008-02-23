@@ -549,6 +549,72 @@ sub config_bool {
 	};
 }
 
+=item config_int ( VARIABLE )
+
+Retrieve the integer configuration C<VARIABLE>. The return value
+is simple decimal number.  An optional value suffix of 'k', 'm',
+or 'g' in the config file will cause the value to be multiplied
+by 1024, 1048576 (1024^2), or 1073741824 (1024^3) prior to output.
+It would return C<undef> if configuration variable is not defined,
+
+Must be called on a repository instance.
+
+This currently wraps command('config') so it is not so fast.
+
+=cut
+
+sub config_int {
+	my ($self, $var) = @_;
+	$self->repo_path()
+		or throw Error::Simple("not a repository");
+
+	try {
+		return $self->command_oneline('config', '--int', '--get', $var);
+	} catch Git::Error::Command with {
+		my $E = shift;
+		if ($E->value() == 1) {
+			# Key not found.
+			return undef;
+		} else {
+			throw $E;
+		}
+	};
+}
+
+=item get_colorbool ( NAME )
+
+Finds if color should be used for NAMEd operation from the configuration,
+and returns boolean (true for "use color", false for "do not use color").
+
+=cut
+
+sub get_colorbool {
+	my ($self, $var) = @_;
+	my $stdout_to_tty = (-t STDOUT) ? "true" : "false";
+	my $use_color = $self->command_oneline('config', '--get-colorbool',
+					       $var, $stdout_to_tty);
+	return ($use_color eq 'true');
+}
+
+=item get_color ( SLOT, COLOR )
+
+Finds color for SLOT from the configuration, while defaulting to COLOR,
+and returns the ANSI color escape sequence:
+
+	print $repo->get_color("color.interactive.prompt", "underline blue white");
+	print "some text";
+	print $repo->get_color("", "normal");
+
+=cut
+
+sub get_color {
+	my ($self, $slot, $default) = @_;
+	my $color = $self->command_oneline('config', '--get-color', $slot, $default);
+	if (!defined $color) {
+		$color = "";
+	}
+	return $color;
+}
 
 =item ident ( TYPE | IDENTSTR )
 
@@ -812,7 +878,7 @@ sub _cmd_exec {
 		$self->wc_subdir() and chdir($self->wc_subdir());
 	}
 	_execv_git_cmd(@args);
-	die "exec failed: $!";
+	die qq[exec "@args" failed: $!];
 }
 
 # Execute the given Git command ($_[0]) with arguments ($_[1..])

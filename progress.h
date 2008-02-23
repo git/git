@@ -1,22 +1,14 @@
 #ifndef PROGRESS_H
 #define PROGRESS_H
 
-struct progress {
-	const char *prefix;
-	unsigned total;
-	unsigned last_percent;
-	unsigned delay;
-	unsigned delayed_percent_treshold;
-	const char *delayed_title;
-	int need_lf;
-};
+struct progress;
 
+void display_throughput(struct progress *progress, off_t total);
 int display_progress(struct progress *progress, unsigned n);
-void start_progress(struct progress *progress, const char *title,
-		    const char *prefix, unsigned total);
-void start_progress_delay(struct progress *progress, const char *title,
-			  const char *prefix, unsigned total,
-			  unsigned percent_treshold, unsigned delay);
-void stop_progress(struct progress *progress);
+struct progress *start_progress(const char *title, unsigned total);
+struct progress *start_progress_delay(const char *title, unsigned total,
+				       unsigned percent_treshold, unsigned delay);
+void stop_progress(struct progress **progress);
+void stop_progress_msg(struct progress **progress, const char *msg);
 
 #endif

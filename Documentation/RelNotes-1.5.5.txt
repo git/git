@@ -1,0 +1,78 @@
+GIT v1.5.5 Release Notes
+========================
+
+Updates since v1.5.4
+--------------------
+
+(performance)
+
+ * On platforms with suboptimal qsort(3) implementation, there
+   is an option to use more reasonable substitute we ship with
+   our software.
+
+ * New configuration variable "pack.packsizelimit" can be used
+   in place of command line option --max-pack-size.
+
+ * "git fetch" over the native git protocol used to make a
+   connection to find out the set of current remote refs and
+   another to actually download the pack data.  We now use only
+   one connection for these tasks.
+
+ * "git commit" does not run lstat(2) more than necessary
+   anymore.
+
+(usability, bells and whistles)
+
+ * You can be warned when core.autocrlf conversion is applied in
+   such a way that results in an irreversible conversion.
+
+ * A pattern "foo/" in .gitignore file now matches a directory
+   "foo".  Pattern "foo" also matches as before.
+
+ * "git describe" learned to limit the tags to be used for
+   naming with --match option.
+
+ * "git describe --contains" now barfs when the named commit
+   cannot be described.
+
+ * bash completion's prompt helper function can talk about
+   operation in-progress (e.g. merge, rebase, etc.).
+
+ * "git commit" learned a new hook "prepare-commit-msg" that can
+   inspect what is going to be committed and prepare the commit
+   log message template to be edited.
+
+ * "git gui" learned an auto-spell checking.
+
+ * "git send-email" learned to prompt for passwords
+   interactively.
+
+ * "git send-email" learned an easier way to suppress CC
+   recipients.
+
+ * Various "git cvsimport", "git cvsexportcommit", "git svn" and
+   "git p4" improvements.
+
+(internal)
+
+ * Duplicated code between git-help and git-instaweb that
+   launches user's preferred browser has been refactored.
+
+ * It is now easier to write test scripts that records known
+   breakages.
+
+
+Fixes since v1.5.4
+------------------
+
+All of the fixes in v1.5.4 maintenance series are included in
+this release, unless otherwise noted.
+
+
+---
+exec >/var/tmp/1
+O=v1.5.4
+O=v1.5.4.2-122-g7cb97da
+echo O=`git describe refs/heads/master`
+git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
+

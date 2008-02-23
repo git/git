@@ -26,9 +26,6 @@ extern int for_each_remote_ref(each_ref_fn, void *);
 
 extern int peel_ref(const char *, unsigned char *);
 
-/** Reads the refs file specified into sha1 **/
-extern int get_ref_sha1(const char *ref, unsigned char *sha1);
-
 /** Locks a "refs/" ref returning the lock on success and NULL on failure. **/
 extern struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1);
 
@@ -55,7 +52,10 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data);
  */
 extern int for_each_reflog(each_ref_fn, void *);
 
-/** Returns 0 if target has the right format for a ref. **/
+#define CHECK_REF_FORMAT_OK 0
+#define CHECK_REF_FORMAT_ERROR (-1)
+#define CHECK_REF_FORMAT_ONELEVEL (-2)
+#define CHECK_REF_FORMAT_WILDCARD (-3)
 extern int check_ref_format(const char *target);
 
 /** rename ref, return 0 on success **/

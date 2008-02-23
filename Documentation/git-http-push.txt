@@ -8,13 +8,16 @@ git-http-push - Push objects over HTTP/DAV to another repository
 
 SYNOPSIS
 --------
-'git-http-push' [--all] [--force] [--verbose] <url> <ref> [<ref>...]
+'git-http-push' [--all] [--dry-run] [--force] [--verbose] <url> <ref> [<ref>...]
 
 DESCRIPTION
 -----------
 Sends missing objects to remote repository, and updates the
 remote branch.
 
+*NOTE*: This command is temporarily disabled if your cURL
+library is older than 7.16, as the combination has been reported
+not to work and sometimes corrupts repository.
 
 OPTIONS
 -------
@@ -29,6 +32,9 @@ OPTIONS
 	This flag disables the check.  What this means is that
 	the remote repository can lose commits; use it with
 	care.
+
+--dry-run::
+	Do everything except actually send the updates.
 
 --verbose::
 	Report the list of objects being walked locally and the
@@ -95,4 +101,4 @@ Documentation by Nick Hengeveld
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[7] suite

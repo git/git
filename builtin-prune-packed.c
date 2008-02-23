@@ -1,11 +1,14 @@
 #include "builtin.h"
 #include "cache.h"
+#include "progress.h"
 
 static const char prune_packed_usage[] =
 "git-prune-packed [-n] [-q]";
 
 #define DRY_RUN 01
 #define VERBOSE 02
+
+static struct progress *progress;
 
 static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 {
@@ -27,6 +30,7 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 			printf("rm -f %s\n", pathname);
 		else if (unlink(pathname) < 0)
 			error("unable to unlink %s", pathname);
+		display_progress(progress, i + 1);
 	}
 	pathname[len] = 0;
 	rmdir(pathname);
@@ -39,6 +43,10 @@ void prune_packed_objects(int opts)
 	const char *dir = get_object_directory();
 	int len = strlen(dir);
 
+	if (opts == VERBOSE)
+		progress = start_progress_delay("Removing duplicate objects",
+			256, 95, 2);
+
 	if (len > PATH_MAX - 42)
 		die("impossible object directory");
 	memcpy(pathname, dir, len);
@@ -49,16 +57,12 @@ void prune_packed_objects(int opts)
 
 		sprintf(pathname + len, "%02x/", i);
 		d = opendir(pathname);
-		if (opts == VERBOSE && (d || i == 255))
-			fprintf(stderr, "Removing unused objects %d%%...\015",
-				((i+1) * 100) / 256);
 		if (!d)
 			continue;
 		prune_dir(i, d, pathname, len + 3, opts);
 		closedir(d);
 	}
-	if (opts == VERBOSE)
-		fprintf(stderr, "\nDone.\n");
+	stop_progress(&progress);
 }
 
 int cmd_prune_packed(int argc, const char **argv, const char *prefix)

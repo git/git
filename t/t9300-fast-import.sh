@@ -165,9 +165,9 @@ from refs/heads/master
 M 755 0000000000000000000000000000000000000001 zero1
 
 INPUT_END
-test_expect_failure \
-    'B: fail on invalid blob sha1' \
-    'git-fast-import <input'
+test_expect_success 'B: fail on invalid blob sha1' '
+    ! git-fast-import <input
+'
 rm -f .git/objects/pack_* .git/objects/index_*
 
 cat >input <<INPUT_END
@@ -180,9 +180,9 @@ COMMIT
 from refs/heads/master
 
 INPUT_END
-test_expect_failure \
-    'B: fail on invalid branch name ".badbranchname"' \
-    'git-fast-import <input'
+test_expect_success 'B: fail on invalid branch name ".badbranchname"' '
+    ! git-fast-import <input
+'
 rm -f .git/objects/pack_* .git/objects/index_*
 
 cat >input <<INPUT_END
@@ -195,9 +195,9 @@ COMMIT
 from refs/heads/master
 
 INPUT_END
-test_expect_failure \
-    'B: fail on invalid branch name "bad[branch]name"' \
-    'git-fast-import <input'
+test_expect_success 'B: fail on invalid branch name "bad[branch]name"' '
+    ! git-fast-import <input
+'
 rm -f .git/objects/pack_* .git/objects/index_*
 
 cat >input <<INPUT_END
@@ -339,9 +339,9 @@ COMMIT
 from refs/heads/branch^0
 
 INPUT_END
-test_expect_failure \
-    'E: rfc2822 date, --date-format=raw' \
-    'git-fast-import --date-format=raw <input'
+test_expect_success 'E: rfc2822 date, --date-format=raw' '
+    ! git-fast-import --date-format=raw <input
+'
 test_expect_success \
     'E: rfc2822 date, --date-format=rfc2822' \
     'git-fast-import --date-format=rfc2822 <input'

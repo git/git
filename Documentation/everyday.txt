@@ -25,16 +25,12 @@ Basic Repository[[Basic Repository]]
 
 Everybody uses these commands to maintain git repositories.
 
-  * gitlink:git-init[1] or gitlink:git-clone[1] to create a
+  * linkgit:git-init[1] or linkgit:git-clone[1] to create a
     new repository.
 
-  * gitlink:git-fsck[1] to check the repository for errors.
+  * linkgit:git-fsck[1] to check the repository for errors.
 
-  * gitlink:git-prune[1] to remove unused objects in the repository.
-
-  * gitlink:git-repack[1] to pack loose objects for efficiency.
-
-  * gitlink:git-gc[1] to do common housekeeping tasks such as
+  * linkgit:git-gc[1] to do common housekeeping tasks such as
     repack and prune.
 
 Examples
@@ -45,24 +41,21 @@ Check health and remove cruft.::
 ------------
 $ git fsck <1>
 $ git count-objects <2>
-$ git repack <3>
-$ git gc <4>
+$ git gc <3>
 ------------
 +
 <1> running without `\--full` is usually cheap and assures the
 repository health reasonably well.
 <2> check how many loose objects there are and how much
 disk space is wasted by not repacking.
-<3> without `-a` repacks incrementally.  repacking every 4-5MB
-of loose objects accumulation may be a good rule of thumb.
-<4> it is easier to use `git gc` than individual housekeeping commands
-such as `prune` and `repack`.  This runs `repack -a -d`.
+<3> repacks the local repository and performs other housekeeping tasks. Running
+without `--prune` is a safe operation even while other ones are in progress.
 
 Repack a small project into single pack.::
 +
 ------------
-$ git repack -a -d <1>
-$ git prune
+$ git gc <1>
+$ git gc --prune
 ------------
 +
 <1> pack all the objects reachable from the refs into one pack,
@@ -76,28 +69,28 @@ A standalone individual developer does not exchange patches with
 other people, and works alone in a single repository, using the
 following commands.
 
-  * gitlink:git-show-branch[1] to see where you are.
+  * linkgit:git-show-branch[1] to see where you are.
 
-  * gitlink:git-log[1] to see what happened.
+  * linkgit:git-log[1] to see what happened.
 
-  * gitlink:git-checkout[1] and gitlink:git-branch[1] to switch
+  * linkgit:git-checkout[1] and linkgit:git-branch[1] to switch
     branches.
 
-  * gitlink:git-add[1] to manage the index file.
+  * linkgit:git-add[1] to manage the index file.
 
-  * gitlink:git-diff[1] and gitlink:git-status[1] to see what
+  * linkgit:git-diff[1] and linkgit:git-status[1] to see what
     you are in the middle of doing.
 
-  * gitlink:git-commit[1] to advance the current branch.
+  * linkgit:git-commit[1] to advance the current branch.
 
-  * gitlink:git-reset[1] and gitlink:git-checkout[1] (with
+  * linkgit:git-reset[1] and linkgit:git-checkout[1] (with
     pathname parameters) to undo changes.
 
-  * gitlink:git-merge[1] to merge between local branches.
+  * linkgit:git-merge[1] to merge between local branches.
 
-  * gitlink:git-rebase[1] to maintain topic branches.
+  * linkgit:git-rebase[1] to maintain topic branches.
 
-  * gitlink:git-tag[1] to mark known point.
+  * linkgit:git-tag[1] to mark known point.
 
 Examples
 ~~~~~~~~
@@ -109,7 +102,7 @@ $ tar zxf frotz.tar.gz
 $ cd frotz
 $ git-init
 $ git add . <1>
-$ git commit -m 'import of frotz source tree.'
+$ git commit -m "import of frotz source tree."
 $ git tag v2.43 <2>
 ------------
 +
@@ -163,16 +156,16 @@ A developer working as a participant in a group project needs to
 learn how to communicate with others, and uses these commands in
 addition to the ones needed by a standalone developer.
 
-  * gitlink:git-clone[1] from the upstream to prime your local
+  * linkgit:git-clone[1] from the upstream to prime your local
     repository.
 
-  * gitlink:git-pull[1] and gitlink:git-fetch[1] from "origin"
+  * linkgit:git-pull[1] and linkgit:git-fetch[1] from "origin"
     to keep up-to-date with the upstream.
 
-  * gitlink:git-push[1] to shared repository, if you adopt CVS
+  * linkgit:git-push[1] to shared repository, if you adopt CVS
     style shared repository workflow.
 
-  * gitlink:git-format-patch[1] to prepare e-mail submission, if
+  * linkgit:git-format-patch[1] to prepare e-mail submission, if
     you adopt Linux kernel-style public forum workflow.
 
 Examples
@@ -189,7 +182,7 @@ $ git pull <3>
 $ git log -p ORIG_HEAD.. arch/i386 include/asm-i386 <4>
 $ git pull git://git.kernel.org/pub/.../jgarzik/libata-dev.git ALL <5>
 $ git reset --hard ORIG_HEAD <6>
-$ git prune <7>
+$ git gc --prune <7>
 $ git fetch --tags <8>
 ------------
 +
@@ -265,17 +258,17 @@ project receives changes made by others, reviews and integrates
 them and publishes the result for others to use, using these
 commands in addition to the ones needed by participants.
 
-  * gitlink:git-am[1] to apply patches e-mailed in from your
+  * linkgit:git-am[1] to apply patches e-mailed in from your
     contributors.
 
-  * gitlink:git-pull[1] to merge from your trusted lieutenants.
+  * linkgit:git-pull[1] to merge from your trusted lieutenants.
 
-  * gitlink:git-format-patch[1] to prepare and send suggested
+  * linkgit:git-format-patch[1] to prepare and send suggested
     alternative to contributors.
 
-  * gitlink:git-revert[1] to undo botched commits.
+  * linkgit:git-revert[1] to undo botched commits.
 
-  * gitlink:git-push[1] to publish the bleeding edge.
+  * linkgit:git-push[1] to publish the bleeding edge.
 
 
 Examples
@@ -300,7 +293,7 @@ $ git merge topic/one topic/two && git merge hold/linus <8>
 $ git checkout maint
 $ git cherry-pick master~4 <9>
 $ compile/test
-$ git tag -s -m 'GIT 0.99.9x' v0.99.9x <10>
+$ git tag -s -m "GIT 0.99.9x" v0.99.9x <10>
 $ git fetch ko && git show-branch master maint 'tags/ko-*' <11>
 $ git push ko <12>
 $ git push ko v0.99.9x <13>
@@ -350,10 +343,10 @@ Repository Administration[[Repository Administration]]
 A repository administrator uses the following tools to set up
 and maintain access to the repository by developers.
 
-  * gitlink:git-daemon[1] to allow anonymous download from
+  * linkgit:git-daemon[1] to allow anonymous download from
     repository.
 
-  * gitlink:git-shell[1] can be used as a 'restricted login shell'
+  * linkgit:git-shell[1] can be used as a 'restricted login shell'
     for shared central repository users.
 
 link:howto/update-hook-example.txt[update hook howto] has a good
