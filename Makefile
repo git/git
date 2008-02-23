@@ -261,16 +261,17 @@ PROGRAMS = \
 # Empty...
 EXTRA_PROGRAMS =
 
+# List built-in command $C whose implementation cmd_$C() is not in
+# builtin-$C.o but is linked in as part of some other command.
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
 	git-get-tar-commit-id$X git-init$X git-repo-config$X \
 	git-fsck-objects$X git-cherry-pick$X git-peek-remote$X git-status$X \
+	git-merge-subtree$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
-
-ALL_PROGRAMS += git-merge-subtree$X
 
 # what 'all' will build but not install in gitexecdir
 OTHER_PROGRAMS = git$X gitweb/gitweb.cgi
@@ -806,9 +807,6 @@ help.o: help.c common-cmds.h GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) \
 		'-DGIT_MAN_PATH="$(mandir_SQ)"' \
 		'-DGIT_INFO_PATH="$(infodir_SQ)"' $<
-
-git-merge-subtree$X: git-merge-recursive$X
-	$(QUIET_BUILT_IN)$(RM) $@ && ln git-merge-recursive$X $@
 
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)$(RM) $@ && ln git$X $@
