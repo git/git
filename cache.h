@@ -765,4 +765,6 @@ int pathspec_match(const char **spec, char *matched, const char *filename, int s
 int report_path_error(const char *ps_matched, const char **pathspec, int prefix_offset);
 void overlay_tree_on_cache(const char *tree_name, const char *prefix);
 
+char *alias_lookup(const char *alias);
+
 #endif /* CACHE_H */
