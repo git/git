@@ -133,7 +133,7 @@ proc start_rev_list {view} {
     if {$tclencoding != {}} {
 	fconfigure $fd -encoding $tclencoding
     }
-    filerun $fd [list getcommitlines $fd $i $view]
+    filerun $fd [list getcommitlines $fd $i $view 0]
     nowbusy $view [mc "Reading"]
     if {$view == $curview} {
 	set progressdirn 1
@@ -227,7 +227,7 @@ proc updatecommits {} {
     if {$tclencoding != {}} {
 	fconfigure $fd -encoding $tclencoding
     }
-    filerun $fd [list getcommitlines $fd $i $view]
+    filerun $fd [list getcommitlines $fd $i $view 1]
     incr viewactive($view)
     set viewcomplete($view) 0
     set pending_select $mainheadid
@@ -555,6 +555,9 @@ proc renumbervarc {a v} {
     #puts "renumbervarc did [llength $todo] of $ntot arcs in [expr {$t2-$t1}]ms"
 }
 
+# Fix up the graph after we have found out that in view $v,
+# $p (a commit that we have already seen) is actually the parent
+# of the last commit in arc $a.
 proc fix_reversal {p a v} {
     global varcid varcstart varctok vupptr
 
@@ -964,12 +967,40 @@ proc closevarcs {v} {
     }
 }
 
-proc getcommitlines {fd inst view}  {
+# Use $rwid as a substitute for $id, i.e. reparent $id's children to $rwid
+# Assumes we already have an arc for $rwid.
+proc rewrite_commit {v id rwid} {
+    global children parents varcid varctok vtokmod varccommits
+
+    foreach ch $children($v,$id) {
+	# make $rwid be $ch's parent in place of $id
+	set i [lsearch -exact $parents($v,$ch) $id]
+	if {$i < 0} {
+	    puts "oops rewrite_commit didn't find $id in parent list for $ch"
+	}
+	set parents($v,$ch) [lreplace $parents($v,$ch) $i $i $rwid]
+	# add $ch to $rwid's children and sort the list if necessary
+	if {[llength [lappend children($v,$rwid) $ch]] > 1} {
+	    set children($v,$rwid) [lsort -command [list vtokcmp $v] \
+					$children($v,$rwid)]
+	}
+	# fix the graph after joining $id to $rwid
+	set a $varcid($v,$ch)
+	fix_reversal $rwid $a $v
+	if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
+	    # parentlist is wrong for the last element of arc $a
+	    # even if displayorder is right, hence the 3rd arg here
+	    modify_arc $v $a [expr {[llength $varccommits($v,$a)] - 1}]
+	}
+    }
+}
+
+proc getcommitlines {fd inst view updating}  {
     global cmitlisted commitinterest leftover
     global commitidx commitdata datemode
     global parents children curview hlview
     global vnextroot idpending ordertok
-    global varccommits varcid varctok vtokmod
+    global varccommits varcid varctok vtokmod viewfiles
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
@@ -1070,6 +1101,26 @@ proc getcommitlines {fd inst view}  {
 	}
 	set id [lindex $ids 0]
 	set vid $view,$id
+
+	if {!$listed && $updating && ![info exists varcid($vid)] &&
+	    $viewfiles($view) ne {}} {
+	    # git log doesn't rewrite parents for unlisted commits
+	    # when doing path limiting, so work around that here
+	    # by working out the rewritten parent with git rev-list
+	    # and if we already know about it, using the rewritten
+	    # parent as a substitute parent for $id's children.
+	    if {![catch {
+		set rwid [exec git rev-list --first-parent --max-count=1 \
+			      $id -- $viewfiles($view)]
+	    }]} {
+		if {$rwid ne {} && [info exists varcid($view,$rwid)]} {
+		    # use $rwid in place of $id
+		    rewrite_commit $view $id $rwid
+		    continue
+		}
+	    }
+	}
+
 	set a 0
 	if {[info exists varcid($vid)]} {
 	    if {$cmitlisted($vid) || !$listed} continue
