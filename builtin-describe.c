@@ -174,6 +174,8 @@ static void describe(const char *arg, int last_one)
 		return;
 	}
 
+	if (!max_candidates)
+		die("no tag exactly matches '%s'", sha1_to_hex(cmit->object.sha1));
 	if (debug)
 		fprintf(stderr, "searching to describe %s\n", arg);
 
@@ -270,6 +272,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "all",        &all, "use any ref in .git/refs"),
 		OPT_BOOLEAN(0, "tags",       &tags, "use any tag in .git/refs/tags"),
 		OPT__ABBREV(&abbrev),
+		OPT_SET_INT(0, "exact-match", &max_candidates,
+			    "only output exact matches", 0),
 		OPT_INTEGER(0, "candidates", &max_candidates,
 			    "consider <n> most recent tags (default: 10)"),
 		OPT_STRING(0, "match",       &pattern, "pattern",
@@ -278,8 +282,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	};
 
 	argc = parse_options(argc, argv, options, describe_usage, 0);
-	if (max_candidates < 1)
-		max_candidates = 1;
+	if (max_candidates < 0)
+		max_candidates = 0;
 	else if (max_candidates > MAX_TAGS)
 		max_candidates = MAX_TAGS;
 
