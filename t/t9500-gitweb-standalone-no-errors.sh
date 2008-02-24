@@ -68,6 +68,9 @@ safe_chmod () {
 
 . ./test-lib.sh
 
+say 'gitweb not supported, skipping tests.'
+test_done
+
 perl -MEncode -e 'decode_utf8("", Encode::FB_CROAK)' >/dev/null 2>&1 || {
     test_expect_success 'skipping gitweb tests, perl version is too old' :
     test_done
