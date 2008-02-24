@@ -210,7 +210,7 @@ static unsigned int list_commands_in_dir(struct cmdnames *cmds,
 	return longest;
 }
 
-static void list_commands(void)
+static unsigned int load_command_list(void)
 {
 	unsigned int longest = 0;
 	unsigned int len;
@@ -250,6 +250,14 @@ static void list_commands(void)
 	uniq(&other_cmds);
 	exclude_cmds(&other_cmds, &main_cmds);
 
+	return longest;
+}
+
+static void list_commands(void)
+{
+	unsigned int longest = load_command_list();
+	const char *exec_path = git_exec_path();
+
 	if (main_cmds.cnt) {
 		printf("available git commands in '%s'\n", exec_path);
 		printf("----------------------------");
@@ -282,6 +290,22 @@ void list_common_cmds_help(void)
 		mput_char(' ', longest - strlen(common_cmds[i].name));
 		puts(common_cmds[i].help);
 	}
+}
+
+static int is_in_cmdlist(struct cmdnames *c, const char *s)
+{
+	int i;
+	for (i = 0; i < c->cnt; i++)
+		if (!strcmp(s, c->names[i]->name))
+			return 1;
+	return 0;
+}
+
+static int is_git_command(const char *s)
+{
+	load_command_list();
+	return is_in_cmdlist(&main_cmds, s) ||
+		is_in_cmdlist(&other_cmds, s);
 }
 
 static const char *cmd_to_page(const char *git_cmd)
@@ -372,6 +396,7 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 int cmd_help(int argc, const char **argv, const char *prefix)
 {
 	int nongit;
+	const char *alias;
 
 	setup_git_directory_gently(&nongit);
 	git_config(git_help_config);
@@ -388,6 +413,12 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	if (!argv[0]) {
 		printf("usage: %s\n\n", git_usage_string);
 		list_common_cmds_help();
+		return 0;
+	}
+
+	alias = alias_lookup(argv[0]);
+	if (alias && !is_git_command(argv[0])) {
+		printf("`git %s' is aliased to `%s'\n", argv[0], alias);
 		return 0;
 	}
 
