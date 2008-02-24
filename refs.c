@@ -506,7 +506,7 @@ int peel_ref(const char *ref, unsigned char *sha1)
 
 	/* fallback - callers should not call this for unpacked refs */
 	o = parse_object(base);
-	if (o->type == OBJ_TAG) {
+	if (o && o->type == OBJ_TAG) {
 		o = deref_tag(o, ref, 0);
 		if (o) {
 			hashcpy(sha1, o->sha1);
