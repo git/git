@@ -99,36 +99,62 @@ Assume two repositories exist as R1 on machine A, and R2 on machine B.
 For whatever reason, direct connection between A and B is not allowed,
 but we can move data from A to B via some mechanism (CD, email, etc).
 We want to update R2 with developments made on branch master in R1.
+
+To create the bundle you have to specify the basis. You have some options:
+
+- Without basis.
++
+This is useful when sending the whole history.
+
+------------
+$ git bundle create mybundle master
+------------
+
+- Using temporally tags.
++
 We set a tag in R1 (lastR2bundle) after the previous such transport,
 and move it afterwards to help build the bundle.
-
-in R1 on A:
 
 ------------
 $ git-bundle create mybundle master ^lastR2bundle
 $ git tag -f lastR2bundle master
 ------------
 
-(move mybundle from A to B by some mechanism)
+- Using a tag present in both repositories
 
-in R2 on B:
+------------
+$ git bundle create mybundle master ^v1.0.0
+------------
+
+- A basis based on time.
+
+------------
+$ git bundle create mybundle master --since=10.days.ago
+------------
+
+- With a limit on the number of commits
+
+------------
+$ git bundle create mybundle master -n 10
+------------
+
+Then you move mybundle from A to B, and in R2 on B:
 
 ------------
 $ git-bundle verify mybundle
-$ git-fetch mybundle  refspec
+$ git-fetch mybundle master:localRef
 ------------
 
-where refspec is refInBundle:localRef
+With something like this in the config in R2:
 
-
-Also, with something like this in your config:
-
+------------------------
 [remote "bundle"]
     url = /home/me/tmp/file.bdl
     fetch = refs/heads/*:refs/remotes/origin/*
+------------------------
 
 You can first sneakernet the bundle file to ~/tmp/file.bdl and
-then these commands:
+then these commands on machine B:
 
 ------------
 $ git ls-remote bundle
