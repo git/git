@@ -46,19 +46,30 @@ static void add_to_known_names(const char *path,
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
-	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
+	struct commit *commit;
 	struct object *object;
-	int prio;
+	unsigned char peeled[20];
+	int is_tag, prio;
 
-	if (!commit)
-		return 0;
-	object = parse_object(sha1);
+	if (!peel_ref(path, peeled) && !is_null_sha1(peeled)) {
+		commit = lookup_commit_reference_gently(peeled, 1);
+		if (!commit)
+			return 0;
+		is_tag = !!hashcmp(sha1, commit->object.sha1);
+	} else {
+		commit = lookup_commit_reference_gently(sha1, 1);
+		object = parse_object(sha1);
+		if (!commit || !object)
+			return 0;
+		is_tag = object->type == OBJ_TAG;
+	}
+
 	/* If --all, then any refs are used.
 	 * If --tags, then any tags are used.
 	 * Otherwise only annotated tags are used.
 	 */
 	if (!prefixcmp(path, "refs/tags/")) {
-		if (object->type == OBJ_TAG) {
+		if (is_tag) {
 			prio = 2;
 			if (pattern && fnmatch(pattern, path + 10, 0))
 				prio = 0;
