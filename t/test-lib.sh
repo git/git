@@ -359,6 +359,8 @@ if ! test -x ../test-chmtime; then
 	exit 1
 fi
 
+. ../GIT-BUILD-OPTIONS
+
 # Test repository
 test=trash
 rm -fr "$test"
