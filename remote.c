@@ -222,15 +222,18 @@ static int handle_config(const char *key, const char *value)
 		subkey = strrchr(name, '.');
 		if (!subkey)
 			return 0;
-		if (!value)
-			return 0;
 		branch = make_branch(name, subkey - name);
 		if (!strcmp(subkey, ".remote")) {
+			if (!value)
+				return config_error_nonbool(key);
 			branch->remote_name = xstrdup(value);
 			if (branch == current_branch)
 				default_remote_name = branch->remote_name;
-		} else if (!strcmp(subkey, ".merge"))
+		} else if (!strcmp(subkey, ".merge")) {
+			if (!value)
+				return config_error_nonbool(key);
 			add_merge(branch, xstrdup(value));
+		}
 		return 0;
 	}
 	if (prefixcmp(key,  "remote."))
@@ -340,6 +343,16 @@ struct refspec *parse_ref_spec(int nr_refspec, const char **refspec)
 	return rs;
 }
 
+static int valid_remote_nick(const char *name)
+{
+	if (!name[0] || /* not empty */
+	    (name[0] == '.' && /* not "." */
+	     (!name[1] || /* not ".." */
+	      (name[1] == '.' && !name[2]))))
+		return 0;
+	return !strchr(name, '/'); /* no slash */
+}
+
 struct remote *remote_get(const char *name)
 {
 	struct remote *ret;
@@ -348,7 +361,7 @@ struct remote *remote_get(const char *name)
 	if (!name)
 		name = default_remote_name;
 	ret = make_remote(name, 0);
-	if (name[0] != '/') {
+	if (valid_remote_nick(name)) {
 		if (!ret->url)
 			read_remotes_file(ret);
 		if (!ret->url)

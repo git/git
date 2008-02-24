@@ -280,7 +280,7 @@ The rescan will be automatically started now.
 	} elseif {[is_config_true gui.trustmtime]} {
 		_readtree $this
 	} else {
-		ui_status {Refreshing file status...}
+		ui_status [mc "Refreshing file status..."]
 		set fd [git_read update-index \
 			-q \
 			--unmerged \
@@ -320,7 +320,7 @@ method _readtree {} {
 	set readtree_d {}
 	$::main_status start \
 		[mc "Updating working directory to '%s'..." [_name $this]] \
-		{files checked out}
+		[mc "files checked out"]
 
 	set fd [git_read --stderr read-tree \
 		-m \
@@ -447,7 +447,7 @@ If you wanted to be on a branch, create one now starting from 'This Detached Che
 	} else {
 		repository_state commit_type HEAD MERGE_HEAD
 		set PARENT $HEAD
-		ui_status "Checked out '$name'."
+		ui_status [mc "Checked out '%s'." $name]
 	}
 	delete_this
 }

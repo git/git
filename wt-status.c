@@ -60,7 +60,7 @@ static void wt_status_print_cached_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER);
 	color_fprintf_ln(s->fp, c, "# Changes to be committed:");
-	if (s->reference) {
+	if (!s->is_initial) {
 		color_fprintf_ln(s->fp, c, "#   (use \"git reset %s <file>...\" to unstage)", s->reference);
 	} else {
 		color_fprintf_ln(s->fp, c, "#   (use \"git rm --cached <file>...\" to unstage)");
@@ -217,19 +217,12 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 		wt_status_print_trailer(s);
 }
 
-static void wt_read_cache(struct wt_status *s)
-{
-	discard_cache();
-	read_cache_from(s->index_file);
-}
-
 static void wt_status_print_initial(struct wt_status *s)
 {
 	int i;
 	struct strbuf buf;
 
 	strbuf_init(&buf, 0);
-	wt_read_cache(s);
 	if (active_nr) {
 		s->commitable = 1;
 		wt_status_print_cached_header(s);
@@ -256,7 +249,6 @@ static void wt_status_print_updated(struct wt_status *s)
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
 	rev.diffopt.break_opt = 0;
-	wt_read_cache(s);
 	run_diff_index(&rev, 1);
 }
 
@@ -268,7 +260,6 @@ static void wt_status_print_changed(struct wt_status *s)
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_print_changed_cb;
 	rev.diffopt.format_callback_data = s;
-	wt_read_cache(s);
 	run_diff_files(&rev, 0);
 }
 
@@ -337,7 +328,6 @@ static void wt_status_print_verbose(struct wt_status *s)
 	setup_revisions(0, NULL, &rev, s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
-	wt_read_cache(s);
 	run_diff_index(&rev, 1);
 
 	fflush(stdout);
@@ -404,6 +394,8 @@ int git_status_config(const char *k, const char *v)
 	}
 	if (!prefixcmp(k, "status.color.") || !prefixcmp(k, "color.status.")) {
 		int slot = parse_status_slot(k, 13);
+		if (!v)
+			return config_error_nonbool(k);
 		color_parse(v, k, wt_status_colors[slot]);
 		return 0;
 	}

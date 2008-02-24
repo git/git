@@ -695,7 +695,7 @@ int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
 				break;
 			if (ce_stage(ce) == stage) {
 				hashcpy(sha1, ce->sha1);
-				*mode = ntohl(ce->ce_mode);
+				*mode = ce->ce_mode;
 				return 0;
 			}
 			pos++;

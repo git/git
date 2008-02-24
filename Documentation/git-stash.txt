@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git-stash' (list | show [<stash>] | apply [<stash>] | clear)
-'git-stash' [save] [message...]
+'git-stash' [save [<message>]]
 
 DESCRIPTION
 -----------
@@ -36,11 +36,12 @@ is also possible).
 OPTIONS
 -------
 
-save::
+save [<message>]::
 
 	Save your local modifications to a new 'stash', and run `git-reset
 	--hard` to revert them.  This is the default action when no
-	subcommand is given.
+	subcommand is given. The <message> part is optional and gives
+	the description along with the stashed state.
 
 list::
 

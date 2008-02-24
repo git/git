@@ -140,8 +140,9 @@ all::
 # Define THREADED_DELTA_SEARCH if you have pthreads and wish to exploit
 # parallel delta searching when packing objects.
 #
-# Define NEEDS_QUICK_QSORT if your qsort() implementation has O(n^2)
-# worst case complexity.
+# Define INTERNAL_QSORT to use Git's implementation of qsort(), which
+# is a simplified version of the merge sort used in glibc. This is
+# recommended if Git triggers O(n^2) behavior in your platform's qsort().
 #
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
@@ -237,7 +238,7 @@ SCRIPT_SH = \
 	git-lost-found.sh git-quiltimport.sh git-submodule.sh \
 	git-filter-branch.sh \
 	git-stash.sh \
-	git-help--browse.sh
+	git-web--browse.sh
 
 SCRIPT_PERL = \
 	git-add--interactive.perl \
@@ -541,7 +542,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_SVN_TESTS = YesPlease
 	NO_PERL_MAKEMAKER = YesPlease
 	NO_R_TO_GCC_LINKER = YesPlease
-	NEEDS_QUICK_QSORT = YesPlease
+	INTERNAL_QSORT = YesPlease
 	NO_EXTRA_PROGRAMS = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
@@ -763,8 +764,8 @@ ifdef NO_MEMMEM
 	COMPAT_CFLAGS += -DNO_MEMMEM
 	COMPAT_OBJS += compat/memmem.o
 endif
-ifdef NEEDS_QUICK_QSORT
-	COMPAT_CFLAGS += -DNEEDS_QUICK_QSORT
+ifdef INTERNAL_QSORT
+	COMPAT_CFLAGS += -DINTERNAL_QSORT
 	COMPAT_OBJS += compat/qsort.o
 endif
 
@@ -869,6 +870,7 @@ git$X: git.o $(BUILTIN_OBJS) $(GITLIBS)
 
 help.o: help.c common-cmds.h GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) \
+		'-DGIT_HTML_PATH="$(htmldir_SQ)"' \
 		'-DGIT_MAN_PATH="$(mandir_SQ)"' \
 		'-DGIT_INFO_PATH="$(infodir_SQ)"' $<
 
@@ -889,7 +891,6 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
-	    -e 's|@@HTMLDIR@@|$(htmldir_SQ)|g' \
 	    -e 's/@@NO_HARDLINKS@@/$(NO_HARDLINKS)/g' \
 	    $@.sh >$@+ && \
 	chmod +x $@+ && \

@@ -78,9 +78,9 @@ test_expect_success \
      git diff-tree -r -M --name-status  HEAD^ HEAD | \
      grep "^R100..*path2/README..*path1/path2/README"'
 
-test_expect_failure \
+test_expect_success \
     'do not move directory over existing directory' \
-    'mkdir path0 && mkdir path0/path2 && git mv path2 path0'
+    'mkdir path0 && mkdir path0/path2 && ! git mv path2 path0'
 
 test_expect_success \
     'move into "."' \

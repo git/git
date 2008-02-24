@@ -96,11 +96,40 @@ The --cc option must be repeated for each user you want on the cc list.
 	servers typically listen to smtp port 25 and ssmtp port
 	465).
 
---smtp-user, --smtp-pass::
-	Username and password for SMTP-AUTH. Defaults are the values of
-	the configuration values 'sendemail.smtpuser' and
-	'sendemail.smtppass', but see also 'sendemail.identity'.
-	If not set, authentication is not attempted.
+--smtp-user::
+	Username for SMTP-AUTH. In place of this option, the following
+	configuration variables can be specified:
++
+--
+		* sendemail.smtpuser
+		* sendemail.<identity>.smtpuser (see sendemail.identity).
+--
++
+However, --smtp-user always overrides these variables.
++
+If a username is not specified (with --smtp-user or a
+configuration variable), then authentication is not attempted.
+
+--smtp-pass::
+	Password for SMTP-AUTH. The argument is optional: If no
+	argument is specified, then the empty string is used as
+	the password.
++
+In place of this option, the following configuration variables
+can be specified:
++
+--
+		* sendemail.smtppass
+		* sendemail.<identity>.smtppass (see sendemail.identity).
+--
++
+However, --smtp-pass always overrides these variables.
++
+Furthermore, passwords need not be specified in configuration files
+or on the command line. If a username has been specified (with
+--smtp-user or a configuration variable), but no password has been
+specified (with --smtp-pass or a configuration variable), then the
+user is prompted for a password while the input is masked for privacy.
 
 --smtp-ssl::
 	If set, connects to the SMTP server using SSL.
@@ -116,6 +145,17 @@ The --cc option must be repeated for each user you want on the cc list.
         If this is set, do not add the From: address to the cc: list.
         Default is the value of 'sendemail.suppressfrom' configuration value;
         if that is unspecified, default to --no-suppress-from.
+
+--suppress-cc::
+	Specify an additional category of recipients to suppress the
+	auto-cc of.  'self' will avoid including the sender, 'author' will
+	avoid including the patch author, 'cc' will avoid including anyone
+	mentioned in Cc lines in the patch, 'sob' will avoid including
+	anyone mentioned in Signed-off-by lines, and 'cccmd' will avoid
+	running the --cc-cmd.  'all' will suppress all auto cc values.
+	Default is the value of 'sendemail.suppresscc' configuration value;
+	if that is unspecified, default to 'self' if --suppress-from is
+	specified, as well as 'sob' if --no-signed-off-cc is specified.
 
 --thread, --no-thread::
 	If this is set, the In-Reply-To header will be set on each email sent.

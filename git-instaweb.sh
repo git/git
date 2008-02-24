@@ -24,8 +24,6 @@ restart        restart the web server
 fqgitdir="$GIT_DIR"
 local="`git config --bool --get instaweb.local`"
 httpd="`git config --get instaweb.httpd`"
-browser="`git config --get instaweb.browser`"
-test -z "$browser" && browser="`git config --get web.browser`"
 port=`git config --get instaweb.port`
 module_path="`git config --get instaweb.modulepath`"
 
@@ -35,9 +33,6 @@ conf="$GIT_DIR/gitweb/httpd.conf"
 
 # if installed, it doesn't need further configuration (module_path)
 test -z "$httpd" && httpd='lighttpd -f'
-
-# probably the most popular browser among gitweb users
-test -z "$browser" && browser='firefox'
 
 # any untaken local port will do...
 test -z "$port" && port=1234
@@ -274,14 +269,11 @@ webrick)
 	;;
 esac
 
-init_browser_path() {
-	browser_path="`git config browser.$1.path`"
-	test -z "$browser_path" && browser_path="$1"
-}
-
 start_httpd
 url=http://127.0.0.1:$port
-test -n "$browser" && {
-	init_browser_path "$browser"
-	"$browser_path" $url
-} || echo $url
+
+if test -n "$browser"; then
+	git web--browse -b "$browser" $url || echo $url
+else
+	git web--browse -c "instaweb.browser" $url || echo $url
+fi

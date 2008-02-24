@@ -17,6 +17,9 @@ test_expect_success 'setup' '
 	: > dir1/tracked &&
 	: > dir1/modified &&
 	git add . &&
+
+	git status >output &&
+
 	test_tick &&
 	git commit -m initial &&
 	: > untracked &&
@@ -26,6 +29,12 @@ test_expect_success 'setup' '
 	echo 2 > dir2/modified &&
 	echo 3 > dir2/added &&
 	git add dir2/added
+'
+
+test_expect_success 'status (1)' '
+
+	grep -e "use \"git rm --cached <file>\.\.\.\" to unstage" output
+
 '
 
 cat > expect << \EOF
@@ -51,7 +60,7 @@ cat > expect << \EOF
 #	untracked
 EOF
 
-test_expect_success 'status' '
+test_expect_success 'status (2)' '
 
 	git status > output &&
 	git diff expect output
@@ -117,6 +126,27 @@ test_expect_success 'status without relative paths' '
 	(cd dir1 && git status) > output &&
 	git diff expect output
 
+'
+
+cat <<EOF >expect
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	modified:   dir1/modified
+#
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	dir1/untracked
+#	dir2/
+#	expect
+#	output
+#	untracked
+EOF
+test_expect_success 'status of partial commit excluding new file in index' '
+	git status dir1/modified >output &&
+	diff -u expect output
 '
 
 test_done

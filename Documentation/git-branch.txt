@@ -34,11 +34,11 @@ Note that this will create the new branch, but it will not switch the
 working tree to it; use "git checkout <newbranch>" to switch to the
 new branch.
 
-When a local branch is started off a remote branch, git can setup the
+When a local branch is started off a remote branch, git sets up the
 branch so that linkgit:git-pull[1] will appropriately merge from that
-remote branch.  If this behavior is desired, it is possible to make it
-the default using the global `branch.autosetupmerge` configuration
-flag.  Otherwise, it can be chosen per-branch using the `--track`
+remote branch.  If this behavior is not desired, it is possible to
+disable it using the global `branch.autosetupmerge` configuration
+flag.  That setting can be overridden by using the `--track`
 and `--no-track` options.
 
 With a '-m' or '-M' option, <oldbranch> will be renamed to <newbranch>.
@@ -108,10 +108,11 @@ OPTIONS
 	Set up configuration so that git-pull will automatically
 	retrieve data from the remote branch.  Use this if you always
 	pull from the same remote branch into the new branch, or if you
-	don't want to use "git pull <repository> <refspec>" explicitly.  Set the
-	branch.autosetupmerge configuration variable to true if you
+	don't want to use "git pull <repository> <refspec>" explicitly.
+	This behavior is the default.  Set the
+	branch.autosetupmerge configuration variable to false if you
 	want git-checkout and git-branch to always behave as if
-	'--track' were given.
+	'--no-track' were given.
 
 --no-track::
 	When a branch is created off a remote branch,

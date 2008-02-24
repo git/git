@@ -160,14 +160,12 @@ library for your script to use.
 
  - test_expect_failure <message> <script>
 
-   This is the opposite of test_expect_success.  If <script>
-   yields success, test is considered a failure.
-
-   Example:
-
-	test_expect_failure \
-	    'git-update-index without --add should fail adding.' \
-	    'git-update-index should-be-empty'
+   This is NOT the opposite of test_expect_success, but is used
+   to mark a test that demonstrates a known breakage.  Unlike
+   the usual test_expect_success tests, which say "ok" on
+   success and "FAIL" on failure, this will say "FIXED" on
+   success and "still broken" on failure.  Failures from these
+   tests won't cause -i (immediate) to stop.
 
  - test_debug <script>
 

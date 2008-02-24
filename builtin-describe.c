@@ -19,6 +19,7 @@ static int all;	/* Default to annotated tags only */
 static int tags;	/* But allow any tags if --tags is specified */
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
+const char *pattern = NULL;
 
 struct commit_name {
 	int prio; /* annotated tag = 2, tag = 1, head = 0 */
@@ -57,9 +58,11 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	 * Otherwise only annotated tags are used.
 	 */
 	if (!prefixcmp(path, "refs/tags/")) {
-		if (object->type == OBJ_TAG)
+		if (object->type == OBJ_TAG) {
 			prio = 2;
-		else
+			if (pattern && fnmatch(pattern, path + 10, 0))
+				prio = 0;
+		} else
 			prio = 1;
 	}
 	else
@@ -253,7 +256,9 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "tags",       &tags, "use any tag in .git/refs/tags"),
 		OPT__ABBREV(&abbrev),
 		OPT_INTEGER(0, "candidates", &max_candidates,
-					"consider <n> most recent tags (default: 10)"),
+			    "consider <n> most recent tags (default: 10)"),
+		OPT_STRING(0, "match",       &pattern, "pattern",
+			   "only consider tags matching <pattern>"),
 		OPT_END(),
 	};
 
@@ -266,12 +271,19 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	save_commit_buffer = 0;
 
 	if (contains) {
-		const char **args = xmalloc((4 + argc) * sizeof(char*));
+		const char **args = xmalloc((6 + argc) * sizeof(char*));
 		int i = 0;
 		args[i++] = "name-rev";
 		args[i++] = "--name-only";
-		if (!all)
+		args[i++] = "--no-undefined";
+		if (!all) {
 			args[i++] = "--tags";
+			if (pattern) {
+				char *s = xmalloc(strlen("--refs=refs/tags/") + strlen(pattern) + 1);
+				sprintf(s, "--refs=refs/tags/%s", pattern);
+				args[i++] = s;
+			}
+		}
 		memcpy(args + i, argv, argc * sizeof(char*));
 		args[i + argc] = NULL;
 		return cmd_name_rev(i + argc, args, prefix);

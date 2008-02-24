@@ -57,7 +57,7 @@ static int parse_diff_color_slot(const char *var, int ofs)
 static struct ll_diff_driver {
 	const char *name;
 	struct ll_diff_driver *next;
-	char *cmd;
+	const char *cmd;
 } *user_diff, **user_diff_tail;
 
 /*
@@ -86,10 +86,7 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
 		user_diff_tail = &(drv->next);
 	}
 
-	if (!value)
-		return error("%s: lacks value", var);
-	drv->cmd = strdup(value);
-	return 0;
+	return git_config_string(&(drv->cmd), var, value);
 }
 
 /*
@@ -158,16 +155,16 @@ int git_diff_ui_config(const char *var, const char *value)
 		return 0;
 	}
 	if (!strcmp(var, "diff.external")) {
+		if (!value)
+			return config_error_nonbool(var);
 		external_diff_cmd_cfg = xstrdup(value);
 		return 0;
 	}
 	if (!prefixcmp(var, "diff.")) {
 		const char *ep = strrchr(var, '.');
 
-		if (ep != var + 4) {
-			if (!strcmp(ep, ".command"))
-				return parse_lldiff_command(var, ep, value);
-		}
+		if (ep != var + 4 && !strcmp(ep, ".command"))
+			return parse_lldiff_command(var, ep, value);
 	}
 
 	return git_diff_basic_config(var, value);
@@ -177,6 +174,8 @@ int git_diff_basic_config(const char *var, const char *value)
 {
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
+		if (!value)
+			return config_error_nonbool(var);
 		color_parse(value, var, diff_colors[slot]);
 		return 0;
 	}
@@ -184,8 +183,11 @@ int git_diff_basic_config(const char *var, const char *value)
 	if (!prefixcmp(var, "diff.")) {
 		const char *ep = strrchr(var, '.');
 		if (ep != var + 4) {
-			if (!strcmp(ep, ".funcname"))
+			if (!strcmp(ep, ".funcname")) {
+				if (!value)
+					return config_error_nonbool(var);
 				return parse_funcname_pattern(var, ep, value);
+			}
 		}
 	}
 
@@ -1011,6 +1013,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	char *err;
 
 	if (line[0] == '+') {
+		data->lineno++;
 		data->status = check_and_emit_line(line + 1, len - 1,
 		    data->ws_rule, NULL, NULL, NULL, NULL);
 		if (!data->status)
@@ -1021,13 +1024,12 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		emit_line(set, reset, line, 1);
 		(void)check_and_emit_line(line + 1, len - 1, data->ws_rule,
 		    stdout, set, reset, ws);
-		data->lineno++;
 	} else if (line[0] == ' ')
 		data->lineno++;
 	else if (line[0] == '@') {
 		char *plus = strchr(line, '+');
 		if (plus)
-			data->lineno = strtol(plus, NULL, 10);
+			data->lineno = strtol(plus, NULL, 10) - 1;
 		else
 			die("invalid diff");
 	}
@@ -1510,17 +1512,22 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	if (pos < 0)
 		return 0;
 	ce = active_cache[pos];
-	if ((lstat(name, &st) < 0) ||
-	    !S_ISREG(st.st_mode) || /* careful! */
-	    ce_match_stat(ce, &st, 0) ||
-	    hashcmp(sha1, ce->sha1))
-		return 0;
-	/* we return 1 only when we can stat, it is a regular file,
-	 * stat information matches, and sha1 recorded in the cache
-	 * matches.  I.e. we know the file in the work tree really is
-	 * the same as the <name, sha1> pair.
+
+	/*
+	 * This is not the sha1 we are looking for, or
+	 * unreusable because it is not a regular file.
 	 */
-	return 1;
+	if (hashcmp(sha1, ce->sha1) || !S_ISREG(ce->ce_mode))
+		return 0;
+
+	/*
+	 * If ce matches the file in the work tree, we can reuse it.
+	 */
+	if (ce_uptodate(ce) ||
+	    (!lstat(name, &st) && !ce_match_stat(ce, &st, 0)))
+		return 1;
+
+	return 0;
 }
 
 static int populate_from_stdin(struct diff_filespec *s)
@@ -1624,7 +1631,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		 * Convert from working tree format to canonical git format
 		 */
 		strbuf_init(&buf, 0);
-		if (convert_to_git(s->path, s->data, s->size, &buf)) {
+		if (convert_to_git(s->path, s->data, s->size, &buf, safe_crlf)) {
 			size_t size = 0;
 			munmap(s->data, s->size);
 			s->should_munmap = 0;

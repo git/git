@@ -176,7 +176,7 @@ static void add_cache_refs(struct rev_info *revs)
 		 * lookup_blob() on them, to avoid populating the hash table
 		 * with invalid information
 		 */
-		if (S_ISGITLINK(ntohl(active_cache[i]->ce_mode)))
+		if (S_ISGITLINK(active_cache[i]->ce_mode))
 			continue;
 
 		lookup_blob(active_cache[i]->sha1);

@@ -189,7 +189,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 		return;
 
 	if (tag && *tag && show_valid_bit &&
-	    (ce->ce_flags & htons(CE_VALID))) {
+	    (ce->ce_flags & CE_VALID)) {
 		static char alttag[4];
 		memcpy(alttag, tag, 3);
 		if (isalpha(tag[0]))
@@ -210,7 +210,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	} else {
 		printf("%s%06o %s %d\t",
 		       tag,
-		       ntohl(ce->ce_mode),
+		       ce->ce_mode,
 		       abbrev ? find_unique_abbrev(ce->sha1,abbrev)
 				: sha1_to_hex(ce->sha1),
 		       ce_stage(ce));
@@ -238,11 +238,12 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 	if (show_cached | show_stage) {
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
-			if (excluded(dir, ce->name) != dir->show_ignored)
+			int dtype = ce_to_dtype(ce);
+			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
 				continue;
 			if (show_unmerged && !ce_stage(ce))
 				continue;
-			if (ce->ce_flags & htons(CE_UPDATE))
+			if (ce->ce_flags & CE_UPDATE)
 				continue;
 			show_ce_entry(ce_stage(ce) ? tag_unmerged : tag_cached, ce);
 		}
@@ -252,7 +253,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 			struct cache_entry *ce = active_cache[i];
 			struct stat st;
 			int err;
-			if (excluded(dir, ce->name) != dir->show_ignored)
+			int dtype = ce_to_dtype(ce);
+			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
 				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
@@ -350,7 +352,7 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 		struct cache_entry *ce = active_cache[i];
 		if (!ce_stage(ce))
 			continue;
-		ce->ce_flags |= htons(CE_STAGEMASK);
+		ce->ce_flags |= CE_STAGEMASK;
 	}
 
 	if (prefix) {
@@ -379,7 +381,7 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 			 */
 			if (last_stage0 &&
 			    !strcmp(last_stage0->name, ce->name))
-				ce->ce_flags |= htons(CE_UPDATE);
+				ce->ce_flags |= CE_UPDATE;
 		}
 	}
 }

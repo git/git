@@ -3,6 +3,7 @@
 
 #include "git-compat-util.h"
 #include "strbuf.h"
+#include "hash.h"
 
 #include SHA1_HEADER
 #include <zlib.h>
@@ -94,66 +95,116 @@ struct cache_time {
  * We save the fields in big-endian order to allow using the
  * index file over NFS transparently.
  */
+struct ondisk_cache_entry {
+	struct cache_time ctime;
+	struct cache_time mtime;
+	unsigned int dev;
+	unsigned int ino;
+	unsigned int mode;
+	unsigned int uid;
+	unsigned int gid;
+	unsigned int size;
+	unsigned char sha1[20];
+	unsigned short flags;
+	char name[FLEX_ARRAY]; /* more */
+};
+
 struct cache_entry {
-	struct cache_time ce_ctime;
-	struct cache_time ce_mtime;
+	struct cache_entry *next;
+	unsigned int ce_ctime;
+	unsigned int ce_mtime;
 	unsigned int ce_dev;
 	unsigned int ce_ino;
 	unsigned int ce_mode;
 	unsigned int ce_uid;
 	unsigned int ce_gid;
 	unsigned int ce_size;
+	unsigned int ce_flags;
 	unsigned char sha1[20];
-	unsigned short ce_flags;
 	char name[FLEX_ARRAY]; /* more */
 };
 
 #define CE_NAMEMASK  (0x0fff)
 #define CE_STAGEMASK (0x3000)
-#define CE_UPDATE    (0x4000)
 #define CE_VALID     (0x8000)
 #define CE_STAGESHIFT 12
 
-#define create_ce_flags(len, stage) htons((len) | ((stage) << CE_STAGESHIFT))
-#define ce_namelen(ce) (CE_NAMEMASK & ntohs((ce)->ce_flags))
+/* In-memory only */
+#define CE_UPDATE    (0x10000)
+#define CE_REMOVE    (0x20000)
+#define CE_UPTODATE  (0x40000)
+#define CE_UNHASHED  (0x80000)
+
+static inline unsigned create_ce_flags(size_t len, unsigned stage)
+{
+	if (len >= CE_NAMEMASK)
+		len = CE_NAMEMASK;
+	return (len | (stage << CE_STAGESHIFT));
+}
+
+static inline size_t ce_namelen(const struct cache_entry *ce)
+{
+	size_t len = ce->ce_flags & CE_NAMEMASK;
+	if (len < CE_NAMEMASK)
+		return len;
+	return strlen(ce->name + CE_NAMEMASK) + CE_NAMEMASK;
+}
+
 #define ce_size(ce) cache_entry_size(ce_namelen(ce))
-#define ce_stage(ce) ((CE_STAGEMASK & ntohs((ce)->ce_flags)) >> CE_STAGESHIFT)
+#define ondisk_ce_size(ce) ondisk_cache_entry_size(ce_namelen(ce))
+#define ce_stage(ce) ((CE_STAGEMASK & (ce)->ce_flags) >> CE_STAGESHIFT)
+#define ce_uptodate(ce) ((ce)->ce_flags & CE_UPTODATE)
+#define ce_mark_uptodate(ce) ((ce)->ce_flags |= CE_UPTODATE)
 
 #define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
 static inline unsigned int create_ce_mode(unsigned int mode)
 {
 	if (S_ISLNK(mode))
-		return htonl(S_IFLNK);
+		return S_IFLNK;
 	if (S_ISDIR(mode) || S_ISGITLINK(mode))
-		return htonl(S_IFGITLINK);
-	return htonl(S_IFREG | ce_permissions(mode));
+		return S_IFGITLINK;
+	return S_IFREG | ce_permissions(mode);
 }
 static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
 {
 	extern int trust_executable_bit, has_symlinks;
 	if (!has_symlinks && S_ISREG(mode) &&
-	    ce && S_ISLNK(ntohl(ce->ce_mode)))
+	    ce && S_ISLNK(ce->ce_mode))
 		return ce->ce_mode;
 	if (!trust_executable_bit && S_ISREG(mode)) {
-		if (ce && S_ISREG(ntohl(ce->ce_mode)))
+		if (ce && S_ISREG(ce->ce_mode))
 			return ce->ce_mode;
 		return create_ce_mode(0666);
 	}
 	return create_ce_mode(mode);
+}
+static inline int ce_to_dtype(const struct cache_entry *ce)
+{
+	unsigned ce_mode = ntohl(ce->ce_mode);
+	if (S_ISREG(ce_mode))
+		return DT_REG;
+	else if (S_ISDIR(ce_mode) || S_ISGITLINK(ce_mode))
+		return DT_DIR;
+	else if (S_ISLNK(ce_mode))
+		return DT_LNK;
+	else
+		return DT_UNKNOWN;
 }
 #define canon_mode(mode) \
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
 	S_ISLNK(mode) ? S_IFLNK : S_ISDIR(mode) ? S_IFDIR : S_IFGITLINK)
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
+#define ondisk_cache_entry_size(len) ((offsetof(struct ondisk_cache_entry,name) + (len) + 8) & ~7)
 
 struct index_state {
 	struct cache_entry **cache;
 	unsigned int cache_nr, cache_alloc, cache_changed;
 	struct cache_tree *cache_tree;
 	time_t timestamp;
-	void *mmap;
-	size_t mmap_size;
+	void *alloc;
+	unsigned name_hash_initialized : 1;
+	struct hash_table name_hash;
 };
 
 extern struct index_state the_index;
@@ -177,6 +228,7 @@ extern struct index_state the_index;
 #define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL)
 #define ce_match_stat(ce, st, options) ie_match_stat(&the_index, (ce), (st), (options))
 #define ce_modified(ce, st, options) ie_modified(&the_index, (ce), (st), (options))
+#define cache_name_exists(name, namelen) index_name_exists(&the_index, (name), (namelen))
 #endif
 
 enum object_type {
@@ -263,6 +315,7 @@ extern int read_index_from(struct index_state *, const char *path);
 extern int write_index(struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
 extern int verify_path(const char *path);
+extern int index_name_exists(struct index_state *istate, const char *name, int namelen);
 extern int index_name_pos(struct index_state *, const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
@@ -329,6 +382,14 @@ extern size_t packed_git_window_size;
 extern size_t packed_git_limit;
 extern size_t delta_base_cache_limit;
 extern int auto_crlf;
+
+enum safe_crlf {
+	SAFE_CRLF_FALSE = 0,
+	SAFE_CRLF_FAIL = 1,
+	SAFE_CRLF_WARN = 2,
+};
+
+extern enum safe_crlf safe_crlf;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -599,11 +660,16 @@ extern int git_parse_ulong(const char *, unsigned long *);
 extern int git_config_int(const char *, const char *);
 extern unsigned long git_config_ulong(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
+extern int git_config_string(const char **, const char *, const char *);
 extern int git_config_set(const char *, const char *);
 extern int git_config_set_multivar(const char *, const char *, const char *, int);
 extern int git_config_rename_section(const char *, const char *);
 extern const char *git_etc_gitconfig(void);
 extern int check_repository_format_version(const char *var, const char *value);
+extern int git_env_bool(const char *, int);
+extern int git_config_system(void);
+extern int git_config_global(void);
+extern int config_error_nonbool(const char *);
 
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];
@@ -623,12 +689,12 @@ extern int write_or_whine_pipe(int fd, const void *buf, size_t count, const char
 
 /* pager.c */
 extern void setup_pager(void);
-extern char *pager_program;
+extern const char *pager_program;
 extern int pager_in_use(void);
 extern int pager_use_color;
 
-extern char *editor_program;
-extern char *excludes_file;
+extern const char *editor_program;
+extern const char *excludes_file;
 
 /* base85 */
 int decode_85(char *dst, const char *line, int linelen);
@@ -648,7 +714,8 @@ extern void trace_argv_printf(const char **argv, const char *format, ...);
 
 /* convert.c */
 /* returns 1 if *dst was used */
-extern int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst);
+extern int convert_to_git(const char *path, const char *src, size_t len,
+                          struct strbuf *dst, enum safe_crlf checksafe);
 extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 
 /* add */

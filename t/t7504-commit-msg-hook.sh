@@ -98,20 +98,20 @@ cat > "$HOOK" <<EOF
 exit 1
 EOF
 
-test_expect_failure 'with failing hook' '
+test_expect_success 'with failing hook' '
 
 	echo "another" >> file &&
 	git add file &&
-	git commit -m "another"
+	! git commit -m "another"
 
 '
 
-test_expect_failure 'with failing hook (editor)' '
+test_expect_success 'with failing hook (editor)' '
 
 	echo "more another" >> file &&
 	git add file &&
 	echo "more another" > FAKE_MSG &&
-	GIT_EDITOR="$FAKE_EDITOR" git commit
+	! (GIT_EDITOR="$FAKE_EDITOR" git commit)
 
 '
 

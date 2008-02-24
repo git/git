@@ -218,7 +218,7 @@ A good commit message has the following format:
 		return
 	}
 
-	ui_status {Calling pre-commit hook...}
+	ui_status [mc "Calling pre-commit hook..."]
 	set pch_error {}
 	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 	fileevent $fd_ph readable \
@@ -233,7 +233,7 @@ proc commit_prehook_wait {fd_ph curHEAD msg_p} {
 	if {[eof $fd_ph]} {
 		if {[catch {close $fd_ph}]} {
 			catch {file delete $msg_p}
-			ui_status {Commit declined by pre-commit hook.}
+			ui_status [mc "Commit declined by pre-commit hook."]
 			hook_failed_popup pre-commit $pch_error
 			unlock_index
 		} else {
@@ -256,7 +256,7 @@ proc commit_commitmsg {curHEAD msg_p} {
 		return
 	}
 
-	ui_status {Calling commit-msg hook...}
+	ui_status [mc "Calling commit-msg hook..."]
 	set pch_error {}
 	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 	fileevent $fd_ph readable \
@@ -271,7 +271,7 @@ proc commit_commitmsg_wait {fd_ph curHEAD msg_p} {
 	if {[eof $fd_ph]} {
 		if {[catch {close $fd_ph}]} {
 			catch {file delete $msg_p}
-			ui_status {Commit declined by commit-msg hook.}
+			ui_status [mc "Commit declined by commit-msg hook."]
 			hook_failed_popup commit-msg $pch_error
 			unlock_index
 		} else {
@@ -284,7 +284,7 @@ proc commit_commitmsg_wait {fd_ph curHEAD msg_p} {
 }
 
 proc commit_writetree {curHEAD msg_p} {
-	ui_status {Committing changes...}
+	ui_status [mc "Committing changes..."]
 	set fd_wt [git_read write-tree]
 	fileevent $fd_wt readable \
 		[list commit_committree $fd_wt $curHEAD $msg_p]
@@ -301,7 +301,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	if {[catch {close $fd_wt} err]} {
 		catch {file delete $msg_p}
 		error_popup [strcat [mc "write-tree failed:"] "\n\n$err"]
-		ui_status {Commit failed.}
+		ui_status [mc "Commit failed."]
 		unlock_index
 		return
 	}
@@ -345,7 +345,7 @@ A rescan will be automatically started now.
 	if {[catch {set cmt_id [eval git $cmd]} err]} {
 		catch {file delete $msg_p}
 		error_popup [strcat [mc "commit-tree failed:"] "\n\n$err"]
-		ui_status {Commit failed.}
+		ui_status [mc "Commit failed."]
 		unlock_index
 		return
 	}
@@ -365,7 +365,7 @@ A rescan will be automatically started now.
 		} err]} {
 		catch {file delete $msg_p}
 		error_popup [strcat [mc "update-ref failed:"] "\n\n$err"]
-		ui_status {Commit failed.}
+		ui_status [mc "Commit failed."]
 		unlock_index
 		return
 	}

@@ -59,15 +59,16 @@ test_expect_success \
      echo "other content" > foo
      git rm --cached foo'
 
-test_expect_failure \
-    'Test that git rm --cached foo fails if the index matches neither the file nor HEAD' \
-    'echo content > foo
+test_expect_success \
+    'Test that git rm --cached foo fails if the index matches neither the file nor HEAD' '
+     echo content > foo
      git add foo
      git commit -m foo
      echo "other content" > foo
      git add foo
      echo "yet another content" > foo
-     git rm --cached foo'
+     ! git rm --cached foo
+'
 
 test_expect_success \
     'Test that git rm --cached -f foo works in case where --cached only did not' \
@@ -106,9 +107,9 @@ embedded'"
 
 if test "$test_failed_remove" = y; then
 chmod a-w .
-test_expect_failure \
+test_expect_success \
     'Test that "git rm -f" fails if its rm fails' \
-    'git rm -f baz'
+    '! git rm -f baz'
 chmod 775 .
 else
     test_expect_success 'skipping removal failure (perhaps running as root?)' :
@@ -212,8 +213,8 @@ test_expect_success 'Recursive with -r -f' '
 	! test -d frotz
 '
 
-test_expect_failure 'Remove nonexistent file returns nonzero exit status' '
-	git rm nonexistent
+test_expect_success 'Remove nonexistent file returns nonzero exit status' '
+	! git rm nonexistent
 '
 
 test_done

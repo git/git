@@ -33,9 +33,9 @@ test_rev_parse() {
 test_rev_parse toplevel false false true ''
 
 cd .git || exit 1
-test_rev_parse .git/ true true false ''
+test_rev_parse .git/ false true false ''
 cd objects || exit 1
-test_rev_parse .git/objects/ true true false ''
+test_rev_parse .git/objects/ false true false ''
 cd ../.. || exit 1
 
 mkdir -p sub/dir || exit 1

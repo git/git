@@ -142,8 +142,8 @@ static int cmp_cache_name_compare(const void *a_, const void *b_)
 
 	ce1 = *((const struct cache_entry **)a_);
 	ce2 = *((const struct cache_entry **)b_);
-	return cache_name_compare(ce1->name, ntohs(ce1->ce_flags),
-				  ce2->name, ntohs(ce2->ce_flags));
+	return cache_name_compare(ce1->name, ce1->ce_flags,
+				  ce2->name, ce2->ce_flags);
 }
 
 int read_tree(struct tree *tree, int stage, const char **match)

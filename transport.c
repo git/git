@@ -441,10 +441,11 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	struct ref *ref = NULL;
 	struct ref *last_ref = NULL;
 
+	if (!transport->data)
+		transport->data = get_http_walker(transport->url);
+
 	refs_url = xmalloc(strlen(transport->url) + 11);
 	sprintf(refs_url, "%s/info/refs", transport->url);
-
-	http_init();
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -472,8 +473,6 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 		error("Unable to start request");
 		return NULL;
 	}
-
-	http_cleanup();
 
 	data = buffer.buf;
 	start = NULL;
@@ -563,6 +562,8 @@ struct git_transport_data {
 	unsigned thin : 1;
 	unsigned keep : 1;
 	int depth;
+	struct child_process *conn;
+	int fd[2];
 	const char *uploadpack;
 	const char *receivepack;
 };
@@ -593,20 +594,20 @@ static int set_git_option(struct transport *connection,
 	return 1;
 }
 
+static int connect_setup(struct transport *transport)
+{
+	struct git_transport_data *data = transport->data;
+	data->conn = git_connect(data->fd, transport->url, data->uploadpack, 0);
+	return 0;
+}
+
 static struct ref *get_refs_via_connect(struct transport *transport)
 {
 	struct git_transport_data *data = transport->data;
 	struct ref *refs;
-	int fd[2];
-	char *dest = xstrdup(transport->url);
-	struct child_process *conn = git_connect(fd, dest, data->uploadpack, 0);
 
-	get_remote_heads(fd[0], &refs, 0, NULL, 0);
-	packet_flush(fd[1]);
-
-	finish_connect(conn);
-
-	free(dest);
+	connect_setup(transport);
+	get_remote_heads(data->fd[0], &refs, 0, NULL, 0);
 
 	return refs;
 }
@@ -617,7 +618,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	struct git_transport_data *data = transport->data;
 	char **heads = xmalloc(nr_heads * sizeof(*heads));
 	char **origh = xmalloc(nr_heads * sizeof(*origh));
-	struct ref *refs;
+	const struct ref *refs;
 	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
 	int i;
@@ -632,13 +633,27 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	for (i = 0; i < nr_heads; i++)
 		origh[i] = heads[i] = xstrdup(to_fetch[i]->name);
-	refs = fetch_pack(&args, dest, nr_heads, heads, &transport->pack_lockfile);
+
+	refs = transport_get_remote_refs(transport);
+	if (!data->conn) {
+		struct ref *refs_tmp;
+		connect_setup(transport);
+		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL, 0);
+		free_refs(refs_tmp);
+	}
+
+	refs = fetch_pack(&args, data->fd, data->conn, transport->remote_refs,
+			  dest, nr_heads, heads, &transport->pack_lockfile);
+	close(data->fd[0]);
+	close(data->fd[1]);
+	if (finish_connect(data->conn))
+		refs = NULL;
+	data->conn = NULL;
 
 	for (i = 0; i < nr_heads; i++)
 		free(origh[i]);
 	free(origh);
 	free(heads);
-	free_refs(refs);
 	free(dest);
 	return (refs ? 0 : -1);
 }
@@ -661,7 +676,15 @@ static int git_transport_push(struct transport *transport, int refspec_nr, const
 
 static int disconnect_git(struct transport *transport)
 {
-	free(transport->data);
+	struct git_transport_data *data = transport->data;
+	if (data->conn) {
+		packet_flush(data->fd[1]);
+		close(data->fd[0]);
+		close(data->fd[1]);
+		finish_connect(data->conn);
+	}
+
+	free(data);
 	return 0;
 }
 
@@ -721,6 +744,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->disconnect = disconnect_git;
 
 		data->thin = 1;
+		data->conn = NULL;
 		data->uploadpack = "git-upload-pack";
 		if (remote && remote->uploadpack)
 			data->uploadpack = remote->uploadpack;

@@ -307,13 +307,19 @@ static int collect_reflog(const char *ref, const unsigned char *sha1, int unused
 
 static int reflog_expire_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "gc.reflogexpire"))
+	if (!strcmp(var, "gc.reflogexpire")) {
+		if (!value)
+			config_error_nonbool(var);
 		default_reflog_expire = approxidate(value);
-	else if (!strcmp(var, "gc.reflogexpireunreachable"))
+		return 0;
+	}
+	if (!strcmp(var, "gc.reflogexpireunreachable")) {
+		if (!value)
+			config_error_nonbool(var);
 		default_reflog_expire_unreachable = approxidate(value);
-	else
-		return git_default_config(var, value);
-	return 0;
+		return 0;
+	}
+	return git_default_config(var, value);
 }
 
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)

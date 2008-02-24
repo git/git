@@ -1,6 +1,10 @@
 #include "../git-compat-util.h"
 
-/* This merge sort implementation is simplified from glibc's. */
+/*
+ * A merge sort implementation, simplified from the qsort implementation
+ * by Mike Haertel, which is a part of the GNU C Library.
+ */
+
 static void msort_with_tmp(void *b, size_t n, size_t s,
 			   int (*cmp)(const void *, const void *),
 			   char *t)
@@ -44,12 +48,10 @@ void git_qsort(void *b, size_t n, size_t s,
 	       int (*cmp)(const void *, const void *))
 {
 	const size_t size = n * s;
+	char buf[1024];
 
-	if (size < 1024) {
-		char buf[size]; /* gcc-ism */
-
-		/* The temporary array is small, so put it on
-		   the stack.  */
+	if (size < sizeof(buf)) {
+		/* The temporary array fits on the small on-stack buffer. */
 		msort_with_tmp(b, n, s, cmp, buf);
 	} else {
 		/* It's somewhat large, so malloc it.  */

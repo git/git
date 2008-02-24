@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 
+use strict;
 use Git;
 my $git = Git->repository();
 
@@ -296,12 +297,13 @@ sub add_remote {
 
 sub update_remote {
 	my ($name) = @_;
+	my @remotes;
 
         my $conf = $git->config("remotes." . $name);
 	if (defined($conf)) {
 		@remotes = split(' ', $conf);
 	} elsif ($name eq 'default') {
-		undef @remotes;
+		@remotes = ();
 		for (sort keys %$remote) {
 			my $do_fetch = $git->config_bool("remote." . $_ .
 						    ".skipDefaultUpdate");
@@ -341,7 +343,7 @@ sub rm_remote {
 	my @refs = $git->command('for-each-ref',
 		'--format=%(refname) %(objectname)', "refs/remotes/$name");
 	for (@refs) {
-		($ref, $object) = split;
+		my ($ref, $object) = split;
 		$git->command(qw(update-ref -d), $ref, $object);
 	}
 	return 0;
@@ -352,7 +354,7 @@ sub add_usage {
 	exit(1);
 }
 
-local $VERBOSE = 0;
+my $VERBOSE = 0;
 @ARGV = grep {
 	if ($_ eq '-v' or $_ eq '--verbose') {
 		$VERBOSE=1;
@@ -395,7 +397,7 @@ elsif ($ARGV[0] eq 'update') {
 		update_remote("default");
 		exit(1);
 	}
-	for ($i = 1; $i < @ARGV; $i++) {
+	for (my $i = 1; $i < @ARGV; $i++) {
 		update_remote($ARGV[$i]);
 	}
 }

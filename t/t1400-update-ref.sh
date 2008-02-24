@@ -51,23 +51,23 @@ test_expect_success \
 	 test $B"' = $(cat .git/'"$m"')'
 rm -f .git/$m
 
-test_expect_failure \
-	'(not) create HEAD with old sha1' \
-	"git update-ref HEAD $A $B"
-test_expect_failure \
-	"(not) prior created .git/$m" \
-	"test -f .git/$m"
+test_expect_success '(not) create HEAD with old sha1' "
+	! git update-ref HEAD $A $B
+"
+test_expect_success "(not) prior created .git/$m" "
+	! test -f .git/$m
+"
 rm -f .git/$m
 
 test_expect_success \
 	"create HEAD" \
 	"git update-ref HEAD $A"
-test_expect_failure \
-	'(not) change HEAD with wrong SHA1' \
-	"git update-ref HEAD $B $Z"
-test_expect_failure \
-	"(not) changed .git/$m" \
-	"test $B"' = $(cat .git/'"$m"')'
+test_expect_success '(not) change HEAD with wrong SHA1' "
+	! git update-ref HEAD $B $Z
+"
+test_expect_success "(not) changed .git/$m" "
+	! test $B"' = $(cat .git/'"$m"')
+'
 rm -f .git/$m
 
 : a repository with working tree always has reflog these days...

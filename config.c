@@ -309,6 +309,14 @@ int git_config_bool(const char *name, const char *value)
 	return git_config_int(name, value) != 0;
 }
 
+int git_config_string(const char **dest, const char *var, const char *value)
+{
+	if (!value)
+		return config_error_nonbool(var);
+	*dest = xstrdup(value);
+	return 0;
+}
+
 int git_default_config(const char *var, const char *value)
 {
 	/* This needs a better name */
@@ -407,50 +415,52 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.safecrlf")) {
+		if (value && !strcasecmp(value, "warn")) {
+			safe_crlf = SAFE_CRLF_WARN;
+			return 0;
+		}
+		safe_crlf = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "user.name")) {
+		if (!value)
+			return config_error_nonbool(var);
 		strlcpy(git_default_name, value, sizeof(git_default_name));
 		return 0;
 	}
 
 	if (!strcmp(var, "user.email")) {
+		if (!value)
+			return config_error_nonbool(var);
 		strlcpy(git_default_email, value, sizeof(git_default_email));
 		return 0;
 	}
 
-	if (!strcmp(var, "i18n.commitencoding")) {
-		git_commit_encoding = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "i18n.commitencoding"))
+		return git_config_string(&git_commit_encoding, var, value);
 
-	if (!strcmp(var, "i18n.logoutputencoding")) {
-		git_log_output_encoding = xstrdup(value);
-		return 0;
-	}
-
+	if (!strcmp(var, "i18n.logoutputencoding"))
+		return git_config_string(&git_log_output_encoding, var, value);
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);
 		return 0;
 	}
 
-	if (!strcmp(var, "core.pager")) {
-		pager_program = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "core.pager"))
+		return git_config_string(&pager_program, var, value);
 
-	if (!strcmp(var, "core.editor")) {
-		editor_program = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "core.editor"))
+		return git_config_string(&editor_program, var, value);
 
-	if (!strcmp(var, "core.excludesfile")) {
-		if (!value)
-			die("core.excludesfile without value");
-		excludes_file = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "core.excludesfile"))
+		return git_config_string(&excludes_file, var, value);
 
 	if (!strcmp(var, "core.whitespace")) {
+		if (!value)
+			return config_error_nonbool(var);
 		whitespace_rule_cfg = parse_whitespace_rule(value);
 		return 0;
 	}
@@ -484,12 +494,28 @@ const char *git_etc_gitconfig(void)
 		system_wide = ETC_GITCONFIG;
 		if (!is_absolute_path(system_wide)) {
 			/* interpret path relative to exec-dir */
-			const char *exec_path = git_exec_path();
-			system_wide = prefix_path(exec_path, strlen(exec_path),
-						system_wide);
+			struct strbuf d = STRBUF_INIT;
+			strbuf_addf(&d, "%s/%s", git_exec_path(), system_wide);
+			system_wide = strbuf_detach(&d, NULL);
 		}
 	}
 	return system_wide;
+}
+
+int git_env_bool(const char *k, int def)
+{
+	const char *v = getenv(k);
+	return v ? git_config_bool(k, v) : def;
+}
+
+int git_config_system(void)
+{
+	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
+}
+
+int git_config_global(void)
+{
+	return !git_env_bool("GIT_CONFIG_NOGLOBAL", 0);
 }
 
 int git_config(config_fn_t fn)
@@ -504,7 +530,7 @@ int git_config(config_fn_t fn)
 	 * config file otherwise. */
 	filename = getenv(CONFIG_ENVIRONMENT);
 	if (!filename) {
-		if (!access(git_etc_gitconfig(), R_OK))
+		if (git_config_system() && !access(git_etc_gitconfig(), R_OK))
 			ret += git_config_from_file(fn, git_etc_gitconfig());
 		home = getenv("HOME");
 		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
@@ -512,7 +538,7 @@ int git_config(config_fn_t fn)
 			filename = repo_config = xstrdup(git_path("config"));
 	}
 
-	if (home) {
+	if (git_config_global() && home) {
 		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
 		if (!access(user_config, R_OK))
 			ret = git_config_from_file(fn, user_config);
@@ -701,12 +727,17 @@ static ssize_t find_beginning_of_line(const char* contents, size_t size,
 	size_t equal_offset = size, bracket_offset = size;
 	ssize_t offset;
 
+contline:
 	for (offset = offset_-2; offset > 0
 			&& contents[offset] != '\n'; offset--)
 		switch (contents[offset]) {
 			case '=': equal_offset = offset; break;
 			case ']': bracket_offset = offset; break;
 		}
+	if (offset > 0 && contents[offset-1] == '\\') {
+		offset_ = offset;
+		goto contline;
+	}
 	if (bracket_offset < equal_offset) {
 		*found_bracket = 1;
 		offset = bracket_offset+1;
@@ -1073,4 +1104,13 @@ int git_config_rename_section(const char *old_name, const char *new_name)
  out:
 	free(config_filename);
 	return ret;
+}
+
+/*
+ * Call this to report error for your variable that should not
+ * get a boolean value (i.e. "[my] var" means "true").
+ */
+int config_error_nonbool(const char *var)
+{
+	return error("Missing value for '%s'", var);
 }

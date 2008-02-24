@@ -42,9 +42,9 @@ test_expect_success \
 test_expect_success 'rebase against master' '
      git rebase master'
 
-test_expect_failure \
+test_expect_success \
     'the rebase operation should not have destroyed author information' \
-    'git log | grep "Author:" | grep "<>"'
+    '! git log | grep "Author:" | grep "<>"'
 
 test_expect_success 'rebase after merge master' '
      git reset --hard topic &&
