@@ -15,15 +15,21 @@ test_expect_success \
     'Setup helper tool' \
     '(echo "#!/bin/sh"
       echo shift
+      echo output=1
+      echo "while test -f commandline\$output; do output=\$((\$output+1)); done"
       echo for a
       echo do
       echo "  echo \"!\$a!\""
-      echo "done >commandline"
-      echo "cat > msgtxt"
+      echo "done >commandline\$output"
+      echo "cat > msgtxt\$output"
       ) >fake.sendmail &&
      chmod +x ./fake.sendmail &&
      git add fake.sendmail &&
      GIT_AUTHOR_NAME="A" git commit -a -m "Second."'
+
+clean_fake_sendmail() {
+	rm -f commandline* msgtxt*
+}
 
 test_expect_success 'Extract patches' '
     patches=`git format-patch -n HEAD^1`
@@ -39,7 +45,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'Verify commandline' \
-    'diff commandline expected'
+    'diff commandline1 expected'
 
 cat >expected-show-all-headers <<\EOF
 0001-Second.patch
@@ -82,7 +88,7 @@ z8=zzzzzzzz
 z64=$z8$z8$z8$z8$z8$z8$z8$z8
 z512=$z64$z64$z64$z64$z64$z64$z64$z64
 test_expect_success 'reject long lines' '
-	rm -f commandline &&
+	clean_fake_sendmail &&
 	cp $patches longline.patch &&
 	echo $z512$z512 >>longline.patch &&
 	! git send-email \
@@ -95,7 +101,7 @@ test_expect_success 'reject long lines' '
 '
 
 test_expect_success 'no patch was sent' '
-	! test -e commandline
+	! test -e commandline1
 '
 
 test_expect_success 'allow long lines with --no-validate' '
@@ -109,6 +115,7 @@ test_expect_success 'allow long lines with --no-validate' '
 '
 
 test_expect_success 'Invalid In-Reply-To' '
+	clean_fake_sendmail &&
 	git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
@@ -116,17 +123,18 @@ test_expect_success 'Invalid In-Reply-To' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches
 		2>errors
-	! grep "^In-Reply-To: < *>" msgtxt
+	! grep "^In-Reply-To: < *>" msgtxt1
 '
 
 test_expect_success 'Valid In-Reply-To when prompting' '
+	clean_fake_sendmail &&
 	(echo "From Example <from@example.com>"
 	 echo "To Example <to@example.com>"
 	 echo ""
 	) | env GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches 2>errors &&
-	! grep "^In-Reply-To: < *>" msgtxt
+	! grep "^In-Reply-To: < *>" msgtxt1
 '
 
 test_done
