@@ -91,7 +91,10 @@ __git_ps1 ()
 			fi
 			if ! b="$(git symbolic-ref HEAD 2>/dev/null)"
 			then
-				b="$(cut -c1-7 $g/HEAD)..."
+				if ! b="$(git describe --exact-match HEAD 2>/dev/null)"
+				then
+					b="$(cut -c1-7 $g/HEAD)..."
+				fi
 			fi
 		fi
 
