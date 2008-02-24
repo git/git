@@ -212,3 +212,107 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 	}
 	return result;
 }
+
+/* Copy the line to the buffer while fixing whitespaces */
+int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *error_count)
+{
+	/*
+	 * len is number of bytes to be copied from src, starting
+	 * at src.  Typically src[len-1] is '\n', unless this is
+	 * the incomplete last line.
+	 */
+	int i;
+	int add_nl_to_tail = 0;
+	int add_cr_to_tail = 0;
+	int fixed = 0;
+	int last_tab_in_indent = -1;
+	int last_space_in_indent = -1;
+	int need_fix_leading_space = 0;
+	char *buf;
+
+	/*
+	 * Strip trailing whitespace
+	 */
+	if ((ws_rule & WS_TRAILING_SPACE) &&
+	    (2 < len && isspace(src[len-2]))) {
+		if (src[len - 1] == '\n') {
+			add_nl_to_tail = 1;
+			len--;
+			if (1 < len && src[len - 1] == '\r') {
+				add_cr_to_tail = !!(ws_rule & WS_CR_AT_EOL);
+				len--;
+			}
+		}
+		if (0 < len && isspace(src[len - 1])) {
+			while (0 < len && isspace(src[len-1]))
+				len--;
+			fixed = 1;
+		}
+	}
+
+	/*
+	 * Check leading whitespaces (indent)
+	 */
+	for (i = 0; i < len; i++) {
+		char ch = src[i];
+		if (ch == '\t') {
+			last_tab_in_indent = i;
+			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
+			    0 <= last_space_in_indent)
+			    need_fix_leading_space = 1;
+		} else if (ch == ' ') {
+			last_space_in_indent = i;
+			if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
+			    8 <= i - last_tab_in_indent)
+				need_fix_leading_space = 1;
+		} else
+			break;
+	}
+
+	buf = dst;
+	if (need_fix_leading_space) {
+		/* Process indent ourselves */
+		int consecutive_spaces = 0;
+		int last = last_tab_in_indent + 1;
+
+		if (ws_rule & WS_INDENT_WITH_NON_TAB) {
+			/* have "last" point at one past the indent */
+			if (last_tab_in_indent < last_space_in_indent)
+				last = last_space_in_indent + 1;
+			else
+				last = last_tab_in_indent + 1;
+		}
+
+		/*
+		 * between src[0..last-1], strip the funny spaces,
+		 * updating them to tab as needed.
+		 */
+		for (i = 0; i < last; i++) {
+			char ch = src[i];
+			if (ch != ' ') {
+				consecutive_spaces = 0;
+				*dst++ = ch;
+			} else {
+				consecutive_spaces++;
+				if (consecutive_spaces == 8) {
+					*dst++ = '\t';
+					consecutive_spaces = 0;
+				}
+			}
+		}
+		while (0 < consecutive_spaces--)
+			*dst++ = ' ';
+		len -= last;
+		src += last;
+		fixed = 1;
+	}
+
+	memcpy(dst, src, len);
+	if (add_cr_to_tail)
+		dst[len++] = '\r';
+	if (add_nl_to_tail)
+		dst[len++] = '\n';
+	if (fixed && error_count)
+		(*error_count)++;
+	return dst + len - buf;
+}

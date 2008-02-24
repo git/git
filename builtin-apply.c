@@ -1515,110 +1515,6 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 	}
 }
 
-static int copy_wsfix(char *output, const char *patch, int plen,
-		      unsigned ws_rule, int count_error)
-{
-	/*
-	 * plen is number of bytes to be copied from patch, starting
-	 * at patch.  Typically patch[plen-1] is '\n', unless this is
-	 * the incomplete last line.
-	 */
-	int i;
-	int add_nl_to_tail = 0;
-	int add_cr_to_tail = 0;
-	int fixed = 0;
-	int last_tab_in_indent = -1;
-	int last_space_in_indent = -1;
-	int need_fix_leading_space = 0;
-	char *buf;
-
-	/*
-	 * Strip trailing whitespace
-	 */
-	if ((ws_rule & WS_TRAILING_SPACE) &&
-	    (2 < plen && isspace(patch[plen-2]))) {
-		if (patch[plen - 1] == '\n') {
-			add_nl_to_tail = 1;
-			plen--;
-			if (1 < plen && patch[plen - 1] == '\r') {
-				add_cr_to_tail = !!(ws_rule & WS_CR_AT_EOL);
-				plen--;
-			}
-		}
-		if (0 < plen && isspace(patch[plen - 1])) {
-			while (0 < plen && isspace(patch[plen-1]))
-				plen--;
-			fixed = 1;
-		}
-	}
-
-	/*
-	 * Check leading whitespaces (indent)
-	 */
-	for (i = 0; i < plen; i++) {
-		char ch = patch[i];
-		if (ch == '\t') {
-			last_tab_in_indent = i;
-			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
-			    0 <= last_space_in_indent)
-			    need_fix_leading_space = 1;
-		} else if (ch == ' ') {
-			last_space_in_indent = i;
-			if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
-			    8 <= i - last_tab_in_indent)
-				need_fix_leading_space = 1;
-		} else
-			break;
-	}
-
-	buf = output;
-	if (need_fix_leading_space) {
-		/* Process indent ourselves */
-		int consecutive_spaces = 0;
-		int last = last_tab_in_indent + 1;
-
-		if (ws_rule & WS_INDENT_WITH_NON_TAB) {
-			/* have "last" point at one past the indent */
-			if (last_tab_in_indent < last_space_in_indent)
-				last = last_space_in_indent + 1;
-			else
-				last = last_tab_in_indent + 1;
-		}
-
-		/*
-		 * between patch[0..last-1], strip the funny spaces,
-		 * updating them to tab as needed.
-		 */
-		for (i = 0; i < last; i++) {
-			char ch = patch[i];
-			if (ch != ' ') {
-				consecutive_spaces = 0;
-				*output++ = ch;
-			} else {
-				consecutive_spaces++;
-				if (consecutive_spaces == 8) {
-					*output++ = '\t';
-					consecutive_spaces = 0;
-				}
-			}
-		}
-		while (0 < consecutive_spaces--)
-			*output++ = ' ';
-		plen -= last;
-		patch += last;
-		fixed = 1;
-	}
-
-	memcpy(output, patch, plen);
-	if (add_cr_to_tail)
-		output[plen++] = '\r';
-	if (add_nl_to_tail)
-		output[plen++] = '\n';
-	if (fixed && count_error)
-		applied_after_fixing_ws++;
-	return output + plen - buf;
-}
-
 static void update_pre_post_images(struct image *preimage,
 				   struct image *postimage,
 				   char *buf,
@@ -1740,14 +1636,14 @@ static int match_fragment(struct image *img,
 		int match;
 
 		/* Try fixing the line in the preimage */
-		fixlen = copy_wsfix(buf, orig, oldlen, ws_rule, 0);
+		fixlen = ws_fix_copy(buf, orig, oldlen, ws_rule, NULL);
 
 		/* Try fixing the line in the target */
 		if (sizeof(tgtfixbuf) < tgtlen)
 			tgtfix = tgtfixbuf;
 		else
 			tgtfix = xmalloc(tgtlen);
-		tgtfixlen = copy_wsfix(tgtfix, target, tgtlen, ws_rule, 0);
+		tgtfixlen = ws_fix_copy(tgtfix, target, tgtlen, ws_rule, NULL);
 
 		/*
 		 * If they match, either the preimage was based on
@@ -2006,8 +1902,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				added = plen;
 			}
 			else {
-				added = copy_wsfix(new, patch + 1, plen,
-						   ws_rule, 1);
+				added = ws_fix_copy(new, patch + 1, plen, ws_rule, &applied_after_fixing_ws);
 			}
 			add_line_info(&postimage, new, added,
 				      (first == '+' ? 0 : LINE_COMMON));
