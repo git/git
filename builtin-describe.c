@@ -46,10 +46,14 @@ static void add_to_known_names(const char *path,
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
+	int might_be_tag = !prefixcmp(path, "refs/tags/");
 	struct commit *commit;
 	struct object *object;
 	unsigned char peeled[20];
 	int is_tag, prio;
+
+	if (!all && !might_be_tag)
+		return 0;
 
 	if (!peel_ref(path, peeled) && !is_null_sha1(peeled)) {
 		commit = lookup_commit_reference_gently(peeled, 1);
@@ -68,7 +72,7 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	 * If --tags, then any tags are used.
 	 * Otherwise only annotated tags are used.
 	 */
-	if (!prefixcmp(path, "refs/tags/")) {
+	if (might_be_tag) {
 		if (is_tag) {
 			prio = 2;
 			if (pattern && fnmatch(pattern, path + 10, 0))
