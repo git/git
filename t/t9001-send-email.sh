@@ -137,4 +137,33 @@ test_expect_success 'Valid In-Reply-To when prompting' '
 	! grep "^In-Reply-To: < *>" msgtxt1
 '
 
+test_expect_success 'setup fake editor' '
+	(echo "#!/bin/sh" &&
+	 echo "echo fake edit >>\$1"
+	) >fake-editor &&
+	chmod +x fake-editor
+'
+
+test_expect_success '--compose works' '
+	clean_fake_sendmail &&
+	echo y | \
+		GIT_EDITOR=$(pwd)/fake-editor \
+		GIT_SEND_EMAIL_NOTTY=1 \
+		git send-email \
+		--compose --subject foo \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches \
+		2>errors
+'
+
+test_expect_success 'first message is compose text' '
+	grep "^fake edit" msgtxt1
+'
+
+test_expect_success 'second message is patch' '
+	grep "Subject:.*Second" msgtxt2
+'
+
 test_done
