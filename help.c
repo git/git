@@ -7,40 +7,49 @@
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "common-cmds.h"
+#include "parse-options.h"
 
-static const char *help_default_format;
+enum help_format {
+	HELP_FORMAT_MAN,
+	HELP_FORMAT_INFO,
+	HELP_FORMAT_WEB,
+};
 
-static enum help_format {
-	man_format,
-	info_format,
-	web_format,
-} help_format = man_format;
+static int show_all = 0;
+static enum help_format help_format = HELP_FORMAT_MAN;
+static struct option builtin_help_options[] = {
+	OPT_BOOLEAN('a', "all", &show_all, "print all available commands"),
+	OPT_SET_INT('m', "man", &help_format, "show man page", HELP_FORMAT_MAN),
+	OPT_SET_INT('w', "web", &help_format, "show manual in web browser",
+			HELP_FORMAT_WEB),
+	OPT_SET_INT('i', "info", &help_format, "show info page",
+			HELP_FORMAT_INFO),
+};
 
-static void parse_help_format(const char *format)
+static const char * const builtin_help_usage[] = {
+	"git-help [--all] [--man|--web|--info] [command]",
+	NULL
+};
+
+static enum help_format parse_help_format(const char *format)
 {
-	if (!format) {
-		help_format = man_format;
-		return;
-	}
-	if (!strcmp(format, "man")) {
-		help_format = man_format;
-		return;
-	}
-	if (!strcmp(format, "info")) {
-		help_format = info_format;
-		return;
-	}
-	if (!strcmp(format, "web") || !strcmp(format, "html")) {
-		help_format = web_format;
-		return;
-	}
+	if (!strcmp(format, "man"))
+		return HELP_FORMAT_MAN;
+	if (!strcmp(format, "info"))
+		return HELP_FORMAT_INFO;
+	if (!strcmp(format, "web") || !strcmp(format, "html"))
+		return HELP_FORMAT_WEB;
 	die("unrecognized help format '%s'", format);
 }
 
 static int git_help_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "help.format"))
-		return git_config_string(&help_default_format, var, value);
+	if (!strcmp(var, "help.format")) {
+		if (!value)
+			return config_error_nonbool(var);
+		help_format = parse_help_format(value);
+		return 0;
+	}
 	return git_default_config(var, value);
 }
 
@@ -362,50 +371,36 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 
 int cmd_help(int argc, const char **argv, const char *prefix)
 {
-	const char *help_cmd = argv[1];
+	int nongit;
 
-	if (argc < 2) {
-		printf("usage: %s\n\n", git_usage_string);
-		list_common_cmds_help();
-		exit(0);
-	}
+	setup_git_directory_gently(&nongit);
+	git_config(git_help_config);
 
-	if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a")) {
+	argc = parse_options(argc, argv, builtin_help_options,
+			builtin_help_usage, 0);
+
+	if (show_all) {
 		printf("usage: %s\n\n", git_usage_string);
 		list_commands();
+		return 0;
 	}
 
-	else if (!strcmp(help_cmd, "--web") || !strcmp(help_cmd, "-w")) {
-		show_html_page(argc > 2 ? argv[2] : NULL);
+	if (!argv[0]) {
+		printf("usage: %s\n\n", git_usage_string);
+		list_common_cmds_help();
+		return 0;
 	}
 
-	else if (!strcmp(help_cmd, "--info") || !strcmp(help_cmd, "-i")) {
-		show_info_page(argc > 2 ? argv[2] : NULL);
-	}
-
-	else if (!strcmp(help_cmd, "--man") || !strcmp(help_cmd, "-m")) {
-		show_man_page(argc > 2 ? argv[2] : NULL);
-	}
-
-	else {
-		int nongit;
-
-		setup_git_directory_gently(&nongit);
-		git_config(git_help_config);
-		if (help_default_format)
-			parse_help_format(help_default_format);
-
-		switch (help_format) {
-		case man_format:
-			show_man_page(help_cmd);
-			break;
-		case info_format:
-			show_info_page(help_cmd);
-			break;
-		case web_format:
-			show_html_page(help_cmd);
-			break;
-		}
+	switch (help_format) {
+	case HELP_FORMAT_MAN:
+		show_man_page(argv[0]);
+		break;
+	case HELP_FORMAT_INFO:
+		show_info_page(argv[0]);
+		break;
+	case HELP_FORMAT_WEB:
+		show_html_page(argv[0]);
+		break;
 	}
 
 	return 0;
