@@ -1111,8 +1111,6 @@ install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(sysconfdir_SQ)'
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) git$X '$(DESTDIR_SQ)$(bindir_SQ)'
-	GIT_CONFIG='$(DESTDIR_SQ)$(sysconfdir_SQ)/gitconfig' \
-		$(DESTDIR_SQ)$(bindir_SQ)/git$X config core.symlinks false
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(MAKE) -C perl prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' install
 ifndef NO_TCLTK
