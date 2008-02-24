@@ -16,9 +16,9 @@ static int sanitary_path_copy(char *dst, const char *src)
 
 #ifdef __MINGW32__
 	if (isalpha(*src) && src[1] == ':') {
-		src += 2;
-		dst += 2;
-		dst0 += 2;
+		*dst++ = *src++;
+		*dst++ = *src++;
+		dst0 = dst;
 	}
 #endif
 	if (is_dir_sep(*src)) {
