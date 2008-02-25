@@ -272,8 +272,8 @@ static void print_line_count(int count)
 	}
 }
 
-static void copy_file(int prefix, const char *data, int size,
-		const char *set, const char *reset)
+static void copy_file_with_prefix(int prefix, const char *data, int size,
+				  const char *set, const char *reset)
 {
 	int ch, nl_just_seen = 1;
 	while (0 < size--) {
@@ -331,9 +331,9 @@ static void emit_rewrite_diff(const char *name_a,
 	print_line_count(lc_b);
 	printf(" @@%s\n", reset);
 	if (lc_a)
-		copy_file('-', one->data, one->size, old, reset);
+		copy_file_with_prefix('-', one->data, one->size, old, reset);
 	if (lc_b)
-		copy_file('+', two->data, two->size, new, reset);
+		copy_file_with_prefix('+', two->data, two->size, new, reset);
 }
 
 static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
