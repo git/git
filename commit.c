@@ -290,17 +290,6 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 	}
 	item->date = parse_commit_date(bufptr, tail);
 
-	if (track_object_refs) {
-		unsigned i = 0;
-		struct commit_list *p;
-		struct object_refs *refs = alloc_object_refs(n_refs);
-		if (item->tree)
-			refs->ref[i++] = &item->tree->object;
-		for (p = item->parents; p; p = p->next)
-			refs->ref[i++] = &p->item->object;
-		set_object_refs(&item->object, refs);
-	}
-
 	return 0;
 }
 
