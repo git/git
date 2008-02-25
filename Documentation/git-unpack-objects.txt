@@ -40,6 +40,9 @@ OPTIONS
 	and make the best effort to recover as many objects as
 	possible.
 
+--strict::
+	Don't write objects with broken content or links.
+
 
 Author
 ------
