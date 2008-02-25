@@ -17,6 +17,7 @@ static const char * const describe_usage[] = {
 static int debug;	/* Display lots of verbose info */
 static int all;	/* Default to annotated tags only */
 static int tags;	/* But allow any tags if --tags is specified */
+static int longformat;
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
 const char *pattern = NULL;
@@ -155,7 +156,11 @@ static void describe(const char *arg, int last_one)
 
 	n = cmit->util;
 	if (n) {
-		printf("%s\n", n->path);
+		if (!longformat)
+			printf("%s\n", n->path);
+		else
+			printf("%s-0-g%s\n", n->path,
+				find_unique_abbrev(cmit->object.sha1, abbrev));
 		return;
 	}
 
@@ -254,6 +259,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "debug",      &debug, "debug search strategy on stderr"),
 		OPT_BOOLEAN(0, "all",        &all, "use any ref in .git/refs"),
 		OPT_BOOLEAN(0, "tags",       &tags, "use any tag in .git/refs/tags"),
+		OPT_BOOLEAN(0, "long",       &longformat, "always use long format"),
 		OPT__ABBREV(&abbrev),
 		OPT_INTEGER(0, "candidates", &max_candidates,
 			    "consider <n> most recent tags (default: 10)"),
@@ -269,6 +275,9 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		max_candidates = MAX_TAGS;
 
 	save_commit_buffer = 0;
+
+	if (longformat && abbrev == 0)
+		die("--long is incompatible with --abbrev=0");
 
 	if (contains) {
 		const char **args = xmalloc((6 + argc) * sizeof(char*));

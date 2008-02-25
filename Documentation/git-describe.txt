@@ -51,6 +51,15 @@ OPTIONS
 	being employed to standard error.  The tag name will still
 	be printed to standard out.
 
+--long::
+	Always output the long format (the tag, the number of commits
+	and the abbreviated commit name) even when it matches a tag.
+	This is useful when you want to see parts of the commit object name
+	in "describe" output, even when the commit in question happens to be
+	a tagged version.  Instead of just emitting the tag name, it will
+	describe such a commit as v1.2-0-deadbeef (0th commit since tag v1.2
+	that points at object deadbeef....).
+
 --match <pattern>::
 	Only consider tags matching the given pattern (can be used to avoid
 	leaking private tags made from the repository).

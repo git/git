@@ -94,4 +94,6 @@ check_describe D-* --tags HEAD^^
 check_describe A-* --tags HEAD^^2
 check_describe B --tags HEAD^^2^
 
+check_describe B-0-* --long HEAD^^2^
+
 test_done
