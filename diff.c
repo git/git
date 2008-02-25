@@ -1016,7 +1016,10 @@ static long gather_dirstat(struct diffstat_dir *dir, unsigned long changed, cons
 			this = gather_dirstat(dir, changed, f->name, newbaselen);
 			sources++;
 		} else {
-			this = f->added + f->deleted;
+			if (f->is_unmerged || f->is_binary)
+				this = 0;
+			else
+				this = f->added + f->deleted;
 			dir->files++;
 			dir->nr--;
 			sources += 2;
@@ -1053,6 +1056,8 @@ static void show_dirstat(struct diffstat_t *data, struct diff_options *options)
 	/* Calculate total changes */
 	changed = 0;
 	for (i = 0; i < data->nr; i++) {
+		if (data->files[i]->is_binary || data->files[i]->is_unmerged)
+			continue;
 		changed += data->files[i]->added;
 		changed += data->files[i]->deleted;
 	}
