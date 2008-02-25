@@ -8,6 +8,7 @@
 #include "pack.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
+#include "fsck.h"
 #include "parse-options.h"
 
 #define REACHABLE 0x0001
@@ -63,13 +64,73 @@ static int objwarning(struct object *obj, const char *err, ...)
 	return -1;
 }
 
+static int mark_object(struct object *obj, int type, void *data)
+{
+	struct tree *tree = NULL;
+	struct object *parent = data;
+	int result;
+
+	if (!obj) {
+		printf("broken link from %7s %s\n",
+			   typename(parent->type), sha1_to_hex(parent->sha1));
+		printf("broken link from %7s %s\n",
+			   (type == OBJ_ANY ? "unknown" : typename(type)), "unknown");
+		errors_found |= ERROR_REACHABLE;
+		return 1;
+	}
+
+	if (type != OBJ_ANY && obj->type != type)
+		objerror(parent, "wrong object type in link");
+
+	if (obj->flags & REACHABLE)
+		return 0;
+	obj->flags |= REACHABLE;
+	if (!obj->parsed) {
+		if (parent && !has_sha1_file(obj->sha1)) {
+			printf("broken link from %7s %s\n",
+				 typename(parent->type), sha1_to_hex(parent->sha1));
+			printf("              to %7s %s\n",
+				 typename(obj->type), sha1_to_hex(obj->sha1));
+			errors_found |= ERROR_REACHABLE;
+		}
+		return 1;
+	}
+
+	if (obj->type == OBJ_TREE) {
+		obj->parsed = 0;
+		tree = (struct tree *)obj;
+		if (parse_tree(tree) < 0)
+			return 1; /* error already displayed */
+	}
+	result = fsck_walk(obj, mark_object, obj);
+	if (tree) {
+		free(tree->buffer);
+		tree->buffer = NULL;
+	}
+	if (result < 0)
+		result = 1;
+
+	return result;
+}
+
+static void mark_object_reachable(struct object *obj)
+{
+	mark_object(obj, OBJ_ANY, 0);
+}
+
+static int mark_used(struct object *obj, int type, void *data)
+{
+	if (!obj)
+		return 1;
+	obj->used = 1;
+	return 0;
+}
+
 /*
  * Check a single reachable object
  */
 static void check_reachable_object(struct object *obj)
 {
-	const struct object_refs *refs;
-
 	/*
 	 * We obviously want the object to be parsed,
 	 * except if it was in a pack-file and we didn't
@@ -81,25 +142,6 @@ static void check_reachable_object(struct object *obj)
 		printf("missing %s %s\n", typename(obj->type), sha1_to_hex(obj->sha1));
 		errors_found |= ERROR_REACHABLE;
 		return;
-	}
-
-	/*
-	 * Check that everything that we try to reference is also good.
-	 */
-	refs = lookup_object_refs(obj);
-	if (refs) {
-		unsigned j;
-		for (j = 0; j < refs->count; j++) {
-			struct object *ref = refs->ref[j];
-			if (ref->parsed ||
-			    (has_sha1_file(ref->sha1)))
-				continue;
-			printf("broken link from %7s %s\n",
-			       typename(obj->type), sha1_to_hex(obj->sha1));
-			printf("              to %7s %s\n",
-			       typename(ref->type), sha1_to_hex(ref->sha1));
-			errors_found |= ERROR_REACHABLE;
-		}
 	}
 }
 
@@ -414,6 +456,8 @@ static int fsck_sha1(const unsigned char *sha1)
 	if (obj->flags & SEEN)
 		return 0;
 	obj->flags |= SEEN;
+	if (fsck_walk(obj, mark_used, 0))
+		objerror(obj, "broken links");
 	if (obj->type == OBJ_BLOB)
 		return 0;
 	if (obj->type == OBJ_TREE)
@@ -538,13 +582,13 @@ static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		obj = lookup_object(osha1);
 		if (obj) {
 			obj->used = 1;
-			mark_reachable(obj, REACHABLE);
+			mark_object_reachable(obj);
 		}
 	}
 	obj = lookup_object(nsha1);
 	if (obj) {
 		obj->used = 1;
-		mark_reachable(obj, REACHABLE);
+		mark_object_reachable(obj);
 	}
 	return 0;
 }
@@ -574,7 +618,7 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int f
 		error("%s: not a commit", refname);
 	default_refs++;
 	obj->used = 1;
-	mark_reachable(obj, REACHABLE);
+	mark_object_reachable(obj);
 
 	return 0;
 }
@@ -660,7 +704,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 			      sha1_to_hex(it->sha1));
 			return 1;
 		}
-		mark_reachable(obj, REACHABLE);
+		mark_object_reachable(obj);
 		obj->used = 1;
 		if (obj->type != OBJ_TREE)
 			err |= objerror(obj, "non-tree in cache-tree");
@@ -693,7 +737,6 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 {
 	int i, heads;
 
-	track_object_refs = 1;
 	errors_found = 0;
 
 	argc = parse_options(argc, argv, fsck_opts, fsck_usage, 0);
@@ -741,7 +784,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 				continue;
 
 			obj->used = 1;
-			mark_reachable(obj, REACHABLE);
+			mark_object_reachable(obj);
 			heads++;
 			continue;
 		}
@@ -773,7 +816,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 				continue;
 			obj = &blob->object;
 			obj->used = 1;
-			mark_reachable(obj, REACHABLE);
+			mark_object_reachable(obj);
 		}
 		if (active_cache_tree)
 			fsck_cache_tree(active_cache_tree);
