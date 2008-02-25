@@ -193,7 +193,7 @@ static void prepare_commit_graft(void)
 	commit_graft_prepared = 1;
 }
 
-static struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
+struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
 {
 	int pos;
 	prepare_commit_graft();
