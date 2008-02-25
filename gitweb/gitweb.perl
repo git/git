@@ -848,32 +848,73 @@ sub project_in_list {
 ## ----------------------------------------------------------------------
 ## HTML aware string manipulation
 
+# Try to chop given string on a word boundary between position
+# $len and $len+$add_len. If there is no word boundary there,
+# chop at $len+$add_len. Do not chop if chopped part plus ellipsis
+# (marking chopped part) would be longer than given string.
 sub chop_str {
 	my $str = shift;
 	my $len = shift;
 	my $add_len = shift || 10;
+	my $where = shift || 'right'; # 'left' | 'center' | 'right'
 
 	# allow only $len chars, but don't cut a word if it would fit in $add_len
 	# if it doesn't fit, cut it if it's still longer than the dots we would add
-	$str =~ m/^(.{0,$len}[^ \/\-_:\.@]{0,$add_len})(.*)/;
-	my $body = $1;
-	my $tail = $2;
-	if (length($tail) > 4) {
-		$tail = " ...";
-		$body =~ s/&[^;]*$//; # remove chopped character entities
+	# remove chopped character entities entirely
+
+	# when chopping in the middle, distribute $len into left and right part
+	# return early if chopping wouldn't make string shorter
+	if ($where eq 'center') {
+		return $str if ($len + 5 >= length($str)); # filler is length 5
+		$len = int($len/2);
+	} else {
+		return $str if ($len + 4 >= length($str)); # filler is length 4
 	}
-	return "$body$tail";
+
+	# regexps: ending and beginning with word part up to $add_len
+	my $endre = qr/.{$len}\w{0,$add_len}/;
+	my $begre = qr/\w{0,$add_len}.{$len}/;
+
+	if ($where eq 'left') {
+		$str =~ m/^(.*?)($begre)$/;
+		my ($lead, $body) = ($1, $2);
+		if (length($lead) > 4) {
+			$body =~ s/^[^;]*;// if ($lead =~ m/&[^;]*$/);
+			$lead = " ...";
+		}
+		return "$lead$body";
+
+	} elsif ($where eq 'center') {
+		$str =~ m/^($endre)(.*)$/;
+		my ($left, $str)  = ($1, $2);
+		$str =~ m/^(.*?)($begre)$/;
+		my ($mid, $right) = ($1, $2);
+		if (length($mid) > 5) {
+			$left  =~ s/&[^;]*$//;
+			$right =~ s/^[^;]*;// if ($mid =~ m/&[^;]*$/);
+			$mid = " ... ";
+		}
+		return "$left$mid$right";
+
+	} else {
+		$str =~ m/^($endre)(.*)$/;
+		my $body = $1;
+		my $tail = $2;
+		if (length($tail) > 4) {
+			$body =~ s/&[^;]*$//;
+			$tail = "... ";
+		}
+		return "$body$tail";
+	}
 }
 
 # takes the same arguments as chop_str, but also wraps a <span> around the
 # result with a title attribute if it does get chopped. Additionally, the
 # string is HTML-escaped.
 sub chop_and_escape_str {
-	my $str = shift;
-	my $len = shift;
-	my $add_len = shift || 10;
+	my ($str) = @_;
 
-	my $chopped = chop_str($str, $len, $add_len);
+	my $chopped = chop_str(@_);
 	if ($chopped eq $str) {
 		return esc_html($chopped);
 	} else {
@@ -3791,11 +3832,11 @@ sub git_search_grep_body {
 		foreach my $line (@$comment) {
 			if ($line =~ m/^(.*)($search_regexp)(.*)$/i) {
 				my ($lead, $match, $trail) = ($1, $2, $3);
-				$match = chop_str($match, 70, 5);       # in case match is very long
-				my $contextlen = int((80 - length($match))/2); # for the remainder
-				$contextlen = 30 if ($contextlen > 30); # but not too much
-				$lead  = chop_str($lead,  $contextlen, 10);
-				$trail = chop_str($trail, $contextlen, 10);
+				$match = chop_str($match, 70, 5, 'center');
+				my $contextlen = int((80 - length($match))/2);
+				$contextlen = 30 if ($contextlen > 30);
+				$lead  = chop_str($lead,  $contextlen, 10, 'left');
+				$trail = chop_str($trail, $contextlen, 10, 'right');
 
 				$lead  = esc_html($lead);
 				$match = esc_html($match);
