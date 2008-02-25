@@ -982,6 +982,90 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 	}
 }
 
+struct diffstat_dir {
+	struct diffstat_file **files;
+	int nr, percent, cumulative;
+};
+
+static long gather_dirstat(struct diffstat_dir *dir, unsigned long changed, const char *base, int baselen)
+{
+	unsigned long this_dir = 0;
+	unsigned int sources = 0;
+
+	while (dir->nr) {
+		struct diffstat_file *f = *dir->files;
+		int namelen = strlen(f->name);
+		unsigned long this;
+		char *slash;
+
+		if (namelen < baselen)
+			break;
+		if (memcmp(f->name, base, baselen))
+			break;
+		slash = strchr(f->name + baselen, '/');
+		if (slash) {
+			int newbaselen = slash + 1 - f->name;
+			this = gather_dirstat(dir, changed, f->name, newbaselen);
+			sources++;
+		} else {
+			if (f->is_unmerged || f->is_binary)
+				this = 0;
+			else
+				this = f->added + f->deleted;
+			dir->files++;
+			dir->nr--;
+			sources += 2;
+		}
+		this_dir += this;
+	}
+
+	/*
+	 * We don't report dirstat's for
+	 *  - the top level
+	 *  - or cases where everything came from a single directory
+	 *    under this directory (sources == 1).
+	 */
+	if (baselen && sources != 1) {
+		int permille = this_dir * 1000 / changed;
+		if (permille) {
+			int percent = permille / 10;
+			if (percent >= dir->percent) {
+				printf("%4d.%01d%% %.*s\n", percent, permille % 10, baselen, base);
+				if (!dir->cumulative)
+					return 0;
+			}
+		}
+	}
+	return this_dir;
+}
+
+static void show_dirstat(struct diffstat_t *data, struct diff_options *options)
+{
+	int i;
+	unsigned long changed;
+	struct diffstat_dir dir;
+
+	/* Calculate total changes */
+	changed = 0;
+	for (i = 0; i < data->nr; i++) {
+		if (data->files[i]->is_binary || data->files[i]->is_unmerged)
+			continue;
+		changed += data->files[i]->added;
+		changed += data->files[i]->deleted;
+	}
+
+	/* This can happen even with many files, if everything was renames */
+	if (!changed)
+		return;
+
+	/* Show all directories with more than x% of the changes */
+	dir.files = data->files;
+	dir.nr = data->nr;
+	dir.percent = options->dirstat_percent;
+	dir.cumulative = options->output_format & DIFF_FORMAT_CUMULATIVE;
+	gather_dirstat(&dir, changed, "", 0);
+}
+
 static void free_diffstat_info(struct diffstat_t *diffstat)
 {
 	int i;
@@ -2050,6 +2134,7 @@ void diff_setup(struct diff_options *options)
 	options->line_termination = '\n';
 	options->break_opt = -1;
 	options->rename_limit = -1;
+	options->dirstat_percent = 3;
 	options->context = 3;
 	options->msg_sep = "";
 
@@ -2091,6 +2176,7 @@ int diff_setup_done(struct diff_options *options)
 					    DIFF_FORMAT_NUMSTAT |
 					    DIFF_FORMAT_DIFFSTAT |
 					    DIFF_FORMAT_SHORTSTAT |
+					    DIFF_FORMAT_DIRSTAT |
 					    DIFF_FORMAT_SUMMARY |
 					    DIFF_FORMAT_PATCH);
 
@@ -2102,6 +2188,7 @@ int diff_setup_done(struct diff_options *options)
 				      DIFF_FORMAT_NUMSTAT |
 				      DIFF_FORMAT_DIFFSTAT |
 				      DIFF_FORMAT_SHORTSTAT |
+				      DIFF_FORMAT_DIRSTAT |
 				      DIFF_FORMAT_SUMMARY |
 				      DIFF_FORMAT_CHECKDIFF))
 		DIFF_OPT_SET(options, RECURSIVE);
@@ -2212,6 +2299,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_NUMSTAT;
 	else if (!strcmp(arg, "--shortstat"))
 		options->output_format |= DIFF_FORMAT_SHORTSTAT;
+	else if (opt_arg(arg, 'X', "dirstat", &options->dirstat_percent))
+		options->output_format |= DIFF_FORMAT_DIRSTAT;
+	else if (!strcmp(arg, "--cumulative"))
+		options->output_format |= DIFF_FORMAT_CUMULATIVE;
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;
 	else if (!strcmp(arg, "--summary"))
@@ -2930,7 +3021,7 @@ void diff_flush(struct diff_options *options)
 		separator++;
 	}
 
-	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT)) {
+	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIRSTAT)) {
 		struct diffstat_t diffstat;
 
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
@@ -2940,6 +3031,8 @@ void diff_flush(struct diff_options *options)
 			if (check_pair_status(p))
 				diff_flush_stat(p, options, &diffstat);
 		}
+		if (output_format & DIFF_FORMAT_DIRSTAT)
+			show_dirstat(&diffstat, options);
 		if (output_format & DIFF_FORMAT_NUMSTAT)
 			show_numstat(&diffstat, options);
 		if (output_format & DIFF_FORMAT_DIFFSTAT)
