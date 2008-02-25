@@ -1,6 +1,9 @@
 #ifndef GIT_FSCK_H
 #define GIT_FSCK_H
 
+#define FSCK_ERROR 1
+#define FSCK_WARN 2
+
 /*
  * callback function for fsck_walk
  * type is the expected type of the object or OBJ_ANY
@@ -11,6 +14,9 @@
  */
 typedef int (*fsck_walk_func)(struct object *obj, int type, void *data);
 
+/* callback for fsck_object, type is FSCK_ERROR or FSCK_WARN */
+typedef int (*fsck_error)(struct object *obj, int type, const char *err, ...);
+
 /* descend in all linked child objects
  * the return value is:
  *    -1	error in processing the object
@@ -19,5 +25,6 @@ typedef int (*fsck_walk_func)(struct object *obj, int type, void *data);
  *    0		everything OK
  */
 int fsck_walk(struct object *obj, fsck_walk_func walk, void *data);
+int fsck_object(struct object *obj, int strict, fsck_error error_func);
 
 #endif
