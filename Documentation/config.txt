@@ -894,9 +894,8 @@ url.<base>.insteadOf::
 	methods, this feature allows people to specify any of the
 	equivalent URLs and have git automatically rewrite the URL to
 	the best alternative for the particular user, even for a
-	never-before-seen repository on the site. The effect of
-	having multiple `insteadOf` values from different
-	`<base>` match to an URL is undefined.
+	never-before-seen repository on the site.  When more than one
+	insteadOf strings match a given URL, the longest match is used.
 
 user.email::
 	Your email address to be recorded in any newly created commits.

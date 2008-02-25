@@ -2,9 +2,14 @@
 #include "remote.h"
 #include "refs.h"
 
+struct counted_string {
+	size_t len;
+	const char *s;
+};
 struct rewrite {
 	const char *base;
-	const char **instead_of;
+	size_t baselen;
+	struct counted_string *instead_of;
 	int instead_of_nr;
 	int instead_of_alloc;
 };
@@ -30,21 +35,32 @@ static char buffer[BUF_SIZE];
 static const char *alias_url(const char *url)
 {
 	int i, j;
+	char *ret;
+	struct counted_string *longest;
+	int longest_i;
+
+	longest = NULL;
+	longest_i = -1;
 	for (i = 0; i < rewrite_nr; i++) {
 		if (!rewrite[i])
 			continue;
 		for (j = 0; j < rewrite[i]->instead_of_nr; j++) {
-			if (!prefixcmp(url, rewrite[i]->instead_of[j])) {
-				char *ret = malloc(strlen(rewrite[i]->base) -
-						   strlen(rewrite[i]->instead_of[j]) +
-						   strlen(url) + 1);
-				strcpy(ret, rewrite[i]->base);
-				strcat(ret, url + strlen(rewrite[i]->instead_of[j]));
-				return ret;
+			if (!prefixcmp(url, rewrite[i]->instead_of[j].s) &&
+			    (!longest ||
+			     longest->len < rewrite[i]->instead_of[j].len)) {
+				longest = &(rewrite[i]->instead_of[j]);
+				longest_i = i;
 			}
 		}
 	}
-	return url;
+	if (!longest)
+		return url;
+
+	ret = malloc(rewrite[longest_i]->baselen +
+		     (strlen(url) - longest->len) + 1);
+	strcpy(ret, rewrite[longest_i]->base);
+	strcpy(ret + rewrite[longest_i]->baselen, url + longest->len);
+	return ret;
 }
 
 static void add_push_refspec(struct remote *remote, const char *ref)
@@ -137,27 +153,33 @@ static struct rewrite *make_rewrite(const char *base, int len)
 	int i;
 
 	for (i = 0; i < rewrite_nr; i++) {
-		if (len ? (!strncmp(base, rewrite[i]->base, len) &&
-			   !rewrite[i]->base[len]) :
-		    !strcmp(base, rewrite[i]->base))
+		if (len
+		    ? (len == rewrite[i]->baselen &&
+		       !strncmp(base, rewrite[i]->base, len))
+		    : !strcmp(base, rewrite[i]->base))
 			return rewrite[i];
 	}
 
 	ALLOC_GROW(rewrite, rewrite_nr + 1, rewrite_alloc);
 	ret = xcalloc(1, sizeof(struct rewrite));
 	rewrite[rewrite_nr++] = ret;
-	if (len)
+	if (len) {
 		ret->base = xstrndup(base, len);
-	else
+		ret->baselen = len;
+	}
+	else {
 		ret->base = xstrdup(base);
-
+		ret->baselen = strlen(base);
+	}
 	return ret;
 }
 
 static void add_instead_of(struct rewrite *rewrite, const char *instead_of)
 {
 	ALLOC_GROW(rewrite->instead_of, rewrite->instead_of_nr + 1, rewrite->instead_of_alloc);
-	rewrite->instead_of[rewrite->instead_of_nr++] = instead_of;
+	rewrite->instead_of[rewrite->instead_of_nr].s = instead_of;
+	rewrite->instead_of[rewrite->instead_of_nr].len = strlen(instead_of);
+	rewrite->instead_of_nr++;
 }
 
 static void read_remotes_file(struct remote *remote)
