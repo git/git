@@ -15,6 +15,7 @@
 #include "patch-ids.h"
 #include "refs.h"
 #include "run-command.h"
+#include "shortlog.h"
 
 static int default_show_root = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
@@ -621,9 +622,10 @@ static void gen_message_id(struct rev_info *info, char *base)
 	info->message_id = strbuf_detach(&buf, NULL);
 }
 
-static void make_cover_letter(struct rev_info *rev,
-		int use_stdout, int numbered, int numbered_files,
-			      struct commit *origin, struct commit *head)
+static void make_cover_letter(struct rev_info *rev, int use_stdout,
+			      int numbered, int numbered_files,
+			      struct commit *origin,
+			      int nr, struct commit **list, struct commit *head)
 {
 	const char *committer;
 	const char *origin_sha1, *head_sha1;
@@ -632,7 +634,9 @@ static void make_cover_letter(struct rev_info *rev,
 	const char *body = "*** SUBJECT HERE ***\n\n*** BLURB HERE ***\n";
 	const char *msg;
 	const char *extra_headers = rev->extra_headers;
+	struct shortlog log;
 	struct strbuf sb;
+	int i;
 	const char *encoding = "utf-8";
 
 	if (rev->commit_format != CMIT_FMT_EMAIL)
@@ -642,7 +646,6 @@ static void make_cover_letter(struct rev_info *rev,
 				NULL : "cover-letter", 0, rev->total))
 		return;
 
-	origin_sha1 = sha1_to_hex(origin ? origin->object.sha1 : null_sha1);
 	head_sha1 = sha1_to_hex(head->object.sha1);
 
 	log_write_email_headers(rev, head_sha1, &subject_start, &extra_headers);
@@ -660,21 +663,19 @@ static void make_cover_letter(struct rev_info *rev,
 
 	strbuf_release(&sb);
 
+	shortlog_init(&log);
+	for (i = 0; i < nr; i++)
+		shortlog_add_commit(&log, list[i]);
+
+	shortlog_output(&log);
+
 	/*
-	 * We can only do diffstat with a unique reference point, and
-	 * log is a bit tricky, so just skip it.
+	 * We can only do diffstat with a unique reference point
 	 */
 	if (!origin)
 		return;
 
-	argv[0] = "shortlog";
-	argv[1] = head_sha1;
-	argv[2] = "--not";
-	argv[3] = origin_sha1;
-	argv[4] = "--";
-	argv[5] = NULL;
-	fflush(stdout);
-	run_command_v_opt(argv, RUN_GIT_CMD);
+	origin_sha1 = sha1_to_hex(origin->object.sha1);
 
 	argv[0] = "diff";
 	argv[1] = "--stat";
@@ -727,6 +728,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int ignore_if_in_upstream = 0;
 	int thread = 0;
 	int cover_letter = 0;
+	int boundary_count = 0;
 	struct commit *origin = NULL, *head = NULL;
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
@@ -917,19 +919,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 	if (cover_letter) {
 		/* remember the range */
-		int negative_count = 0;
 		int i;
 		for (i = 0; i < rev.pending.nr; i++) {
 			struct object *o = rev.pending.objects[i].item;
-			if (o->flags & UNINTERESTING) {
-				origin = (struct commit *)o;
-				negative_count++;
-			} else
+			if (!(o->flags & UNINTERESTING))
 				head = (struct commit *)o;
 		}
-		/* Multiple origins don't work for diffstat. */
-		if (negative_count > 1)
-			origin = NULL;
 		/* We can't generate a cover letter without any patches */
 		if (!head)
 			return 0;
@@ -941,8 +936,17 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!use_stdout)
 		realstdout = xfdopen(xdup(1), "w");
 
-	prepare_revision_walk(&rev);
+	if (prepare_revision_walk(&rev))
+		die("revision walk setup failed");
+	rev.boundary = 1;
 	while ((commit = get_revision(&rev)) != NULL) {
+		if (commit->object.flags & BOUNDARY) {
+			fprintf(stderr, "Boundary %s\n", sha1_to_hex(commit->object.sha1));
+			boundary_count++;
+			origin = (boundary_count == 1) ? commit : NULL;
+			continue;
+		}
+
 		/* ignore merges */
 		if (commit->parents && commit->parents->next)
 			continue;
@@ -966,7 +970,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (thread)
 			gen_message_id(&rev, "cover");
 		make_cover_letter(&rev, use_stdout, numbered, numbered_files,
-				  origin, head);
+				  origin, nr, list, head);
 		total++;
 		start_number--;
 	}
