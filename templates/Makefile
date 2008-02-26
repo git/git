@@ -34,10 +34,10 @@ boilerplates.made : $(bpsrc)
 		mkdir -p blt/$$dir && \
 		case "$$boilerplate" in \
 		*--) ;; \
-		*) if head -1 $$boilerplate | grep -q '^#!/'; then \
-			cp $$boilerplate blt/$${dst}$(NOEXECTEMPL); \
+		*) if test -n "$$(sed -ne '/^#!\//p' -e '1q' < "$$boilerplate")"; then \
+			cp "$$boilerplate" "blt/$${dst}$(NOEXECTEMPL)"; \
 		   else \
-			cp $$boilerplate blt/$$dst; \
+			cp "$$boilerplate" "blt/$$dst"; \
 		   fi ;; \
 		esac || exit; \
 	done && \
