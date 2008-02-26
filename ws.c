@@ -234,7 +234,7 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 	 * Strip trailing whitespace
 	 */
 	if ((ws_rule & WS_TRAILING_SPACE) &&
-	    (2 < len && isspace(src[len-2]))) {
+	    (2 <= len && isspace(src[len-2]))) {
 		if (src[len - 1] == '\n') {
 			add_nl_to_tail = 1;
 			len--;
