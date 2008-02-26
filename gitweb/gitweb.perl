@@ -5254,14 +5254,16 @@ sub git_search {
 		} elsif ($searchtype eq 'committer') {
 			$greptype = "--committer=";
 		}
-		$greptype .= $search_regexp;
-		my @commitlist = parse_commits($hash, 101, (100 * $page), undef, $greptype);
+		$greptype .= $searchtext;
+		my @commitlist = parse_commits($hash, 101, (100 * $page), undef,
+		                               $greptype, '--fixed-strings');
 
 		my $paging_nav = '';
 		if ($page > 0) {
 			$paging_nav .=
 				$cgi->a({-href => href(action=>"search", hash=>$hash,
-				                       searchtext=>$searchtext, searchtype=>$searchtype)},
+				                       searchtext=>$searchtext,
+				                       searchtype=>$searchtype)},
 				        "first");
 			$paging_nav .= " &sdot; " .
 				$cgi->a({-href => href(-replay=>1, page=>$page-1),
