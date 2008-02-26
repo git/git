@@ -56,7 +56,9 @@ notable exception of the commit filter, for technical reasons).
 Prior to that, the $GIT_COMMIT environment variable will be set to contain
 the id of the commit being rewritten.  Also, GIT_AUTHOR_NAME,
 GIT_AUTHOR_EMAIL, GIT_AUTHOR_DATE, GIT_COMMITTER_NAME, GIT_COMMITTER_EMAIL,
-and GIT_COMMITTER_DATE are set according to the current commit.
+and GIT_COMMITTER_DATE are set according to the current commit. If any
+evaluation of <command> returns a non-zero exit status, the whole operation
+will be aborted.
 
 A 'map' function is available that takes an "original sha1 id" argument
 and outputs a "rewritten sha1 id" if the commit has been already
@@ -197,7 +199,7 @@ happened).  If this is not the case, use:
 
 --------------------------------------------------------------------------
 git filter-branch --parent-filter \
-	'cat; test $GIT_COMMIT = <commit-id> && echo "-p <graft-id>"' HEAD
+	'test $GIT_COMMIT = <commit-id> && echo "-p <graft-id>" || cat' HEAD
 --------------------------------------------------------------------------
 
 or even simpler:
@@ -240,6 +242,15 @@ committed a merge between P1 and P2, it will be propagated properly
 and all children of the merge will become merge commits with P1,P2
 as their parents instead of the merge commit.
 
+You can rewrite the commit log messages using `--message-filter`.  For
+example, `git-svn-id` strings in a repository created by `git-svn` can
+be removed this way:
+
+-------------------------------------------------------
+git filter-branch --message-filter '
+	sed -e "/^git-svn-id:/d"
+'
+-------------------------------------------------------
 
 To restrict rewriting to only part of the history, specify a revision
 range in addition to the new branch name.  The new branch name will
