@@ -2079,7 +2079,7 @@ sub parse_commit {
 }
 
 sub parse_commits {
-	my ($commit_id, $maxcount, $skip, $arg, $filename) = @_;
+	my ($commit_id, $maxcount, $skip, $filename, @args) = @_;
 	my @cos;
 
 	$maxcount ||= 1;
@@ -2089,7 +2089,7 @@ sub parse_commits {
 
 	open my $fd, "-|", git_cmd(), "rev-list",
 		"--header",
-		($arg ? ($arg) : ()),
+		@args,
 		("--max-count=" . $maxcount),
 		("--skip=" . $skip),
 		@extra_options,
@@ -5172,7 +5172,7 @@ sub git_history {
 		$ftype = git_get_type($hash);
 	}
 
-	my @commitlist = parse_commits($hash_base, 101, (100 * $page), "--full-history", $file_name);
+	my @commitlist = parse_commits($hash_base, 101, (100 * $page), $file_name, "--full-history");
 
 	my $paging_nav = '';
 	if ($page > 0) {
@@ -5255,7 +5255,7 @@ sub git_search {
 			$greptype = "--committer=";
 		}
 		$greptype .= $search_regexp;
-		my @commitlist = parse_commits($hash, 101, (100 * $page), $greptype);
+		my @commitlist = parse_commits($hash, 101, (100 * $page), undef, $greptype);
 
 		my $paging_nav = '';
 		if ($page > 0) {
@@ -5507,7 +5507,7 @@ sub git_feed {
 
 	# log/feed of current (HEAD) branch, log of given branch, history of file/directory
 	my $head = $hash || 'HEAD';
-	my @commitlist = parse_commits($head, 150, 0, undef, $file_name);
+	my @commitlist = parse_commits($head, 150, 0, $file_name);
 
 	my %latest_commit;
 	my %latest_date;
