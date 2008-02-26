@@ -315,7 +315,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		s = strchr(sb.buf, ' ');
 		if (!s || *sb.buf == ' ') {
 			o->type = OPTION_GROUP;
-			o->help = xstrdup(skipspaces(s));
+			o->help = xstrdup(skipspaces(sb.buf));
 			continue;
 		}
 
