@@ -315,12 +315,14 @@ repeat:
 
 struct tm *gmtime_r(const time_t *timep, struct tm *result)
 {
+	/* gmtime() in MSVCRT.DLL is thread-safe, but not reentrant */
 	memcpy(result, gmtime(timep), sizeof(struct tm));
 	return result;
 }
 
 struct tm *localtime_r(const time_t *timep, struct tm *result)
 {
+	/* localtime() in MSVCRT.DLL is thread-safe, but not reentrant */
 	memcpy(result, localtime(timep), sizeof(struct tm));
 	return result;
 }
@@ -778,7 +780,7 @@ char **env_setenv(char **env, const char *name)
 }
 
 /* this is the first function to call into WS_32; initialize it */
-#undef gethostbyname 
+#undef gethostbyname
 struct hostent *mingw_gethostbyname(const char *host)
 {
 	WSADATA wsa;
@@ -911,7 +913,7 @@ static sig_handler_t timer_fn = SIG_DFL;
  * wait state every now and then, namely exactly after timer's interval
  * length. At these opportunities it calls the signal handler.
  */
- 
+
 static __stdcall unsigned ticktack(void *dummy)
 {
 	while (WaitForSingleObject(timer_event, timer_interval) == WAIT_TIMEOUT) {
