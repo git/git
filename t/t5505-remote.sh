@@ -4,9 +4,6 @@ test_description='git remote porcelain-ish'
 
 . ./test-lib.sh
 
-GIT_CONFIG=.git/config
-export GIT_CONFIG
-
 setup_repository () {
 	mkdir "$1" && (
 	cd "$1" &&
