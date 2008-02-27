@@ -425,6 +425,15 @@ enum safe_crlf {
 
 extern enum safe_crlf safe_crlf;
 
+enum branch_track {
+	BRANCH_TRACK_NEVER = 0,
+	BRANCH_TRACK_REMOTE,
+	BRANCH_TRACK_ALWAYS,
+	BRANCH_TRACK_EXPLICIT,
+};
+
+extern enum branch_track git_branch_track;
+
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
 extern int check_repository_format(void);

@@ -48,21 +48,19 @@ OPTIONS
 	may restrict the characters allowed in a branch name.
 
 --track::
-	When -b is given and a branch is created off a remote branch,
-	set up configuration so that git-pull will automatically
-	retrieve data from the remote branch.  Use this if you always
-	pull from the same remote branch into the new branch, or if you
-	don't want to use "git pull <repository> <refspec>" explicitly.
-	This behavior is the default.  Set the
-	branch.autosetupmerge configuration variable to false if you
-	want git-checkout and git-branch to always behave as if
-	'--no-track' were given.
+	When creating a new branch, set up configuration so that git-pull
+	will automatically retrieve data from the start point, which must be
+	a branch. Use this if you always pull from the same upstream branch
+	into the new branch, and if you don't want to use "git pull
+	<repository> <refspec>" explicitly. This behavior is the default
+	when the start point is a remote branch. Set the
+	branch.autosetupmerge configuration variable to `false` if you want
+	git-checkout and git-branch to always behave as if '--no-track' were
+	given. Set it to `always` if you want this behavior when the
+	start-point is either a local or remote branch.
 
 --no-track::
-	When -b is given and a branch is created off a remote branch,
-	set up configuration so that git-pull will not retrieve data
-	from the remote branch, ignoring the branch.autosetupmerge
-	configuration variable.
+	Ignore the branch.autosetupmerge configuration variable.
 
 -l::
 	Create the new branch's reflog.  This activates recording of

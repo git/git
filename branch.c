@@ -37,7 +37,8 @@ static int find_tracked_branch(struct remote *remote, void *priv)
  * to infer the settings for branch.<new_ref>.{remote,merge} from the
  * config.
  */
-static int setup_tracking(const char *new_ref, const char *orig_ref)
+static int setup_tracking(const char *new_ref, const char *orig_ref,
+                          enum branch_track track)
 {
 	char key[1024];
 	struct tracking tracking;
@@ -48,30 +49,36 @@ static int setup_tracking(const char *new_ref, const char *orig_ref)
 
 	memset(&tracking, 0, sizeof(tracking));
 	tracking.spec.dst = (char *)orig_ref;
-	if (for_each_remote(find_tracked_branch, &tracking) ||
-			!tracking.matches)
+	if (for_each_remote(find_tracked_branch, &tracking))
 		return 1;
+
+	if (!tracking.matches)
+		switch (track) {
+		case BRANCH_TRACK_ALWAYS:
+		case BRANCH_TRACK_EXPLICIT:
+			break;
+		default:
+			return 1;
+		}
 
 	if (tracking.matches > 1)
 		return error("Not tracking: ambiguous information for ref %s",
 				orig_ref);
 
-	if (tracking.matches == 1) {
-		sprintf(key, "branch.%s.remote", new_ref);
-		git_config_set(key, tracking.remote ?  tracking.remote : ".");
-		sprintf(key, "branch.%s.merge", new_ref);
-		git_config_set(key, tracking.src);
-		free(tracking.src);
-		printf("Branch %s set up to track remote branch %s.\n",
-			       new_ref, orig_ref);
-	}
+	sprintf(key, "branch.%s.remote", new_ref);
+	git_config_set(key, tracking.remote ?  tracking.remote : ".");
+	sprintf(key, "branch.%s.merge", new_ref);
+	git_config_set(key, tracking.src ? tracking.src : orig_ref);
+	free(tracking.src);
+	printf("Branch %s set up to track %s branch %s.\n", new_ref,
+		tracking.remote ? "remote" : "local", orig_ref);
 
 	return 0;
 }
 
 void create_branch(const char *head,
 		   const char *name, const char *start_name,
-		   int force, int reflog, int track)
+		   int force, int reflog, enum branch_track track)
 {
 	struct ref_lock *lock;
 	struct commit *commit;
@@ -98,7 +105,8 @@ void create_branch(const char *head,
 	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
 	case 0:
 		/* Not branching from any existing branch */
-		real_ref = NULL;
+		if (track == BRANCH_TRACK_EXPLICIT)
+			die("Cannot setup tracking information; starting point is not a branch.");
 		break;
 	case 1:
 		/* Unique completion -- good */
@@ -126,17 +134,13 @@ void create_branch(const char *head,
 		snprintf(msg, sizeof msg, "branch: Created from %s",
 			 start_name);
 
-	/* When branching off a remote branch, set up so that git-pull
-	   automatically merges from there.  So far, this is only done for
-	   remotes registered via .git/config.  */
 	if (real_ref && track)
-		setup_tracking(name, real_ref);
+		setup_tracking(name, real_ref, track);
 
 	if (write_ref_sha1(lock, sha1, msg) < 0)
 		die("Failed to write ref: %s.", strerror(errno));
 
-	if (real_ref)
-		free(real_ref);
+	free(real_ref);
 }
 
 void remove_branch_state(void)
