@@ -159,6 +159,10 @@ New features:
 	our version of --pretty=oneline
 --
 +
+NOTE: SVN itself only stores times in UTC and nothing else. The regular svn
+client converts the UTC time to the local time (or based on the TZ=
+environment). This command has the same behaviour.
++
 Any other arguments are passed directly to `git log'
 
 --
