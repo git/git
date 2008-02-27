@@ -1429,8 +1429,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	 * accounting lock.  Compiler will optimize the strangeness
 	 * away when THREADED_DELTA_SEARCH is not defined.
 	 */
-	if (trg_entry->delta_data)
-		free(trg_entry->delta_data);
+	free(trg_entry->delta_data);
 	cache_lock();
 	if (trg_entry->delta_data) {
 		delta_cache_size -= trg_entry->delta_size;

@@ -593,8 +593,7 @@ void free_refs(struct ref *ref)
 	struct ref *next;
 	while (ref) {
 		next = ref->next;
-		if (ref->peer_ref)
-			free(ref->peer_ref);
+		free(ref->peer_ref);
 		free(ref);
 		ref = next;
 	}

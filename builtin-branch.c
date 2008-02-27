@@ -121,8 +121,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			continue;
 		}
 
-		if (name)
-			free(name);
+		free(name);
 
 		name = xstrdup(mkpath(fmt, argv[i]));
 		if (!resolve_ref(name, sha1, 1, NULL)) {
@@ -167,8 +166,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 		}
 	}
 
-	if (name)
-		free(name);
+	free(name);
 
 	return(ret);
 }

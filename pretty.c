@@ -30,8 +30,7 @@ enum cmit_fmt get_commit_format(const char *arg)
 	if (*arg == '=')
 		arg++;
 	if (!prefixcmp(arg, "format:")) {
-		if (user_format)
-			free(user_format);
+		free(user_format);
 		user_format = xstrdup(arg + 7);
 		return CMIT_FMT_USERFORMAT;
 	}

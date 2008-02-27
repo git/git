@@ -664,8 +664,7 @@ static void release_request(struct transfer_request *request)
 		close(request->local_fileno);
 	if (request->local_stream)
 		fclose(request->local_stream);
-	if (request->url != NULL)
-		free(request->url);
+	free(request->url);
 	free(request);
 }
 
@@ -1283,10 +1282,8 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	strbuf_release(&in_buffer);
 
 	if (lock->token == NULL || lock->timeout <= 0) {
-		if (lock->token != NULL)
-			free(lock->token);
-		if (lock->owner != NULL)
-			free(lock->owner);
+		free(lock->token);
+		free(lock->owner);
 		free(url);
 		free(lock);
 		lock = NULL;
@@ -1344,8 +1341,7 @@ static int unlock_remote(struct remote_lock *lock)
 			prev->next = prev->next->next;
 	}
 
-	if (lock->owner != NULL)
-		free(lock->owner);
+	free(lock->owner);
 	free(lock->url);
 	free(lock->token);
 	free(lock);
@@ -2035,8 +2031,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	}
 	free(url);
 
-	if (*symref != NULL)
-		free(*symref);
+	free(*symref);
 	*symref = NULL;
 	hashclr(sha1);
 
@@ -2435,8 +2430,7 @@ int main(int argc, char **argv)
 	}
 
  cleanup:
-	if (rewritten_url)
-		free(rewritten_url);
+	free(rewritten_url);
 	if (info_ref_lock)
 		unlock_remote(info_ref_lock);
 	free(remote);
