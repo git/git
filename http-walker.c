@@ -902,13 +902,13 @@ static void cleanup(struct walker *walker)
 	curl_slist_free_all(data->no_pragma_header);
 }
 
-struct walker *get_http_walker(const char *url)
+struct walker *get_http_walker(const char *url, struct remote *remote)
 {
 	char *s;
 	struct walker_data *data = xmalloc(sizeof(struct walker_data));
 	struct walker *walker = xmalloc(sizeof(struct walker));
 
-	http_init();
+	http_init(remote);
 
 	data->no_pragma_header = curl_slist_append(NULL, "Pragma:");
 

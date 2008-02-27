@@ -59,7 +59,7 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 		url = rewritten_url;
 	}
 
-	walker = get_http_walker(url);
+	walker = get_http_walker(url, NULL);
 	walker->get_tree = get_tree;
 	walker->get_history = get_history;
 	walker->get_all = get_all;
