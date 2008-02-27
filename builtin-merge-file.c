@@ -46,7 +46,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	}
 
 	ret = xdl_merge(mmfs + 1, mmfs + 0, names[0], mmfs + 2, names[2],
-			&xpp, XDL_MERGE_ZEALOUS, &result);
+			&xpp, XDL_MERGE_ZEALOUS_ALNUM, &result);
 
 	for (i = 0; i < 3; i++)
 		free(mmfs[i].ptr);
