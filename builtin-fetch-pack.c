@@ -538,8 +538,10 @@ static int get_pack(int xd[2], char **pack_lockfile)
 	cmd.git_cmd = 1;
 	if (start_command(&cmd))
 		die("fetch-pack: unable to fork off %s", argv[0]);
-	if (do_keep && pack_lockfile)
+	if (do_keep && pack_lockfile) {
 		*pack_lockfile = index_pack_lockfile(cmd.out);
+		close(cmd.out);
+	}
 
 	if (finish_command(&cmd))
 		die("%s failed", argv[0]);
