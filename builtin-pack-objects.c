@@ -16,6 +16,7 @@
 #include "progress.h"
 
 #ifdef THREADED_DELTA_SEARCH
+#include "thread-utils.h"
 #include <pthread.h>
 #endif
 
@@ -1852,11 +1853,11 @@ static int git_pack_config(const char *k, const char *v)
 	}
 	if (!strcmp(k, "pack.threads")) {
 		delta_search_threads = git_config_int(k, v);
-		if (delta_search_threads < 1)
+		if (delta_search_threads < 0)
 			die("invalid number of threads specified (%d)",
 			    delta_search_threads);
 #ifndef THREADED_DELTA_SEARCH
-		if (delta_search_threads > 1)
+		if (delta_search_threads != 1)
 			warning("no threads support, ignoring %s", k);
 #endif
 		return 0;
@@ -2122,10 +2123,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		if (!prefixcmp(arg, "--threads=")) {
 			char *end;
 			delta_search_threads = strtoul(arg+10, &end, 0);
-			if (!arg[10] || *end || delta_search_threads < 1)
+			if (!arg[10] || *end || delta_search_threads < 0)
 				usage(pack_usage);
 #ifndef THREADED_DELTA_SEARCH
-			if (delta_search_threads > 1)
+			if (delta_search_threads != 1)
 				warning("no threads support, "
 					"ignoring %s", arg);
 #endif
@@ -2234,6 +2235,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (!pack_to_stdout && thin)
 		die("--thin cannot be used to build an indexable pack.");
+
+#ifdef THREADED_DELTA_SEARCH
+	if (!delta_search_threads)	/* --threads=0 means autodetect */
+		delta_search_threads = online_cpus();
+#endif
 
 	prepare_packed_git();
 

@@ -177,6 +177,8 @@ base-name::
 	This is meant to reduce packing time on multiprocessor machines.
 	The required amount of memory for the delta search window is
 	however multiplied by the number of threads.
+	Specifying 0 will cause git to auto-detect the number of CPU's
+	and set the number of threads accordingly.
 
 --index-version=<version>[,<offset>]::
 	This is intended to be used by the test suite only. It allows

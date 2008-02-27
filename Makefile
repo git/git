@@ -741,6 +741,7 @@ endif
 ifdef THREADED_DELTA_SEARCH
 	BASIC_CFLAGS += -DTHREADED_DELTA_SEARCH
 	EXTLIBS += -lpthread
+	LIB_OBJS += thread-utils.o
 endif
 
 ifeq ($(TCLTK_PATH),)
