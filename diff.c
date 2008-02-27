@@ -1483,6 +1483,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 }
 
 static void builtin_checkdiff(const char *name_a, const char *name_b,
+			      const char *attr_path,
 			     struct diff_filespec *one,
 			     struct diff_filespec *two, struct diff_options *o)
 {
@@ -1497,7 +1498,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
 	data.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
-	data.ws_rule = whitespace_rule(data.filename);
+	data.ws_rule = whitespace_rule(attr_path);
 
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
@@ -1922,6 +1923,9 @@ static const char *external_diff_attr(const char *name)
 {
 	struct git_attr_check attr_diff_check;
 
+	if (!name)
+		return NULL;
+
 	setup_diff_attr_check(&attr_diff_check);
 	if (!git_checkattr(name, 1, &attr_diff_check)) {
 		const char *value = attr_diff_check.value;
@@ -1941,6 +1945,7 @@ static const char *external_diff_attr(const char *name)
 static void run_diff_cmd(const char *pgm,
 			 const char *name,
 			 const char *other,
+			 const char *attr_path,
 			 struct diff_filespec *one,
 			 struct diff_filespec *two,
 			 const char *xfrm_msg,
@@ -1950,7 +1955,7 @@ static void run_diff_cmd(const char *pgm,
 	if (!DIFF_OPT_TST(o, ALLOW_EXTERNAL))
 		pgm = NULL;
 	else {
-		const char *cmd = external_diff_attr(name);
+		const char *cmd = external_diff_attr(attr_path);
 		if (cmd)
 			pgm = cmd;
 	}
@@ -1991,6 +1996,15 @@ static int similarity_index(struct diff_filepair *p)
 	return p->score * 100 / MAX_SCORE;
 }
 
+static void strip_prefix(int prefix_length, const char **namep, const char **otherp)
+{
+	/* Strip the prefix but do not molest /dev/null and absolute paths */
+	if (*namep && **namep != '/')
+		*namep += prefix_length;
+	if (*otherp && **otherp != '/')
+		*otherp += prefix_length;
+}
+
 static void run_diff(struct diff_filepair *p, struct diff_options *o)
 {
 	const char *pgm = external_diff();
@@ -2000,16 +2014,21 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 	struct diff_filespec *two = p->two;
 	const char *name;
 	const char *other;
+	const char *attr_path;
 	int complete_rewrite = 0;
-
-
-	if (DIFF_PAIR_UNMERGED(p)) {
-		run_diff_cmd(pgm, p->one->path, NULL, NULL, NULL, NULL, o, 0);
-		return;
-	}
 
 	name  = p->one->path;
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+	attr_path = name;
+	if (o->prefix_length)
+		strip_prefix(o->prefix_length, &name, &other);
+
+	if (DIFF_PAIR_UNMERGED(p)) {
+		run_diff_cmd(pgm, name, NULL, attr_path,
+			     NULL, NULL, NULL, o, 0);
+		return;
+	}
+
 	diff_fill_sha1_info(one);
 	diff_fill_sha1_info(two);
 
@@ -2072,15 +2091,17 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		 * needs to be split into deletion and creation.
 		 */
 		struct diff_filespec *null = alloc_filespec(two->path);
-		run_diff_cmd(NULL, name, other, one, null, xfrm_msg, o, 0);
+		run_diff_cmd(NULL, name, other, attr_path,
+			     one, null, xfrm_msg, o, 0);
 		free(null);
 		null = alloc_filespec(one->path);
-		run_diff_cmd(NULL, name, other, null, two, xfrm_msg, o, 0);
+		run_diff_cmd(NULL, name, other, attr_path,
+			     null, two, xfrm_msg, o, 0);
 		free(null);
 	}
 	else
-		run_diff_cmd(pgm, name, other, one, two, xfrm_msg, o,
-			     complete_rewrite);
+		run_diff_cmd(pgm, name, other, attr_path,
+			     one, two, xfrm_msg, o, complete_rewrite);
 
 	strbuf_release(&msg);
 }
@@ -2101,6 +2122,9 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	name = p->one->path;
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
 
+	if (o->prefix_length)
+		strip_prefix(o->prefix_length, &name, &other);
+
 	diff_fill_sha1_info(p->one);
 	diff_fill_sha1_info(p->two);
 
@@ -2113,6 +2137,7 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 {
 	const char *name;
 	const char *other;
+	const char *attr_path;
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
@@ -2121,11 +2146,15 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 
 	name = p->one->path;
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+	attr_path = other ? other : name;
+
+	if (o->prefix_length)
+		strip_prefix(o->prefix_length, &name, &other);
 
 	diff_fill_sha1_info(p->one);
 	diff_fill_sha1_info(p->two);
 
-	builtin_checkdiff(name, other, p->one, p->two, o);
+	builtin_checkdiff(name, other, attr_path, p->one, p->two, o);
 }
 
 void diff_setup(struct diff_options *options)
@@ -2167,6 +2196,13 @@ int diff_setup_done(struct diff_options *options)
 
 	if (DIFF_OPT_TST(options, FIND_COPIES_HARDER))
 		options->detect_rename = DIFF_DETECT_COPY;
+
+	if (!DIFF_OPT_TST(options, RELATIVE_NAME))
+		options->prefix = NULL;
+	if (options->prefix)
+		options->prefix_length = strlen(options->prefix);
+	else
+		options->prefix_length = 0;
 
 	if (options->output_format & (DIFF_FORMAT_NAME |
 				      DIFF_FORMAT_NAME_STATUS |
@@ -2362,6 +2398,12 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--no-renames"))
 		options->detect_rename = 0;
+	else if (!strcmp(arg, "--relative"))
+		DIFF_OPT_SET(options, RELATIVE_NAME);
+	else if (!prefixcmp(arg, "--relative=")) {
+		DIFF_OPT_SET(options, RELATIVE_NAME);
+		options->prefix = arg + 11;
+	}
 
 	/* xdiff options */
 	else if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
@@ -2573,12 +2615,20 @@ static void diff_flush_raw(struct diff_filepair *p, struct diff_options *opt)
 		printf("%c%c", p->status, inter_name_termination);
 	}
 
-	if (p->status == DIFF_STATUS_COPIED || p->status == DIFF_STATUS_RENAMED) {
-		write_name_quoted(p->one->path, stdout, inter_name_termination);
-		write_name_quoted(p->two->path, stdout, line_termination);
+	if (p->status == DIFF_STATUS_COPIED ||
+	    p->status == DIFF_STATUS_RENAMED) {
+		const char *name_a, *name_b;
+		name_a = p->one->path;
+		name_b = p->two->path;
+		strip_prefix(opt->prefix_length, &name_a, &name_b);
+		write_name_quoted(name_a, stdout, inter_name_termination);
+		write_name_quoted(name_b, stdout, line_termination);
 	} else {
-		const char *path = p->one->mode ? p->one->path : p->two->path;
-		write_name_quoted(path, stdout, line_termination);
+		const char *name_a, *name_b;
+		name_a = p->one->mode ? p->one->path : p->two->path;
+		name_b = NULL;
+		strip_prefix(opt->prefix_length, &name_a, &name_b);
+		write_name_quoted(name_a, stdout, line_termination);
 	}
 }
 
@@ -2775,8 +2825,13 @@ static void flush_one_pair(struct diff_filepair *p, struct diff_options *opt)
 		diff_flush_checkdiff(p, opt);
 	else if (fmt & (DIFF_FORMAT_RAW | DIFF_FORMAT_NAME_STATUS))
 		diff_flush_raw(p, opt);
-	else if (fmt & DIFF_FORMAT_NAME)
-		write_name_quoted(p->two->path, stdout, opt->line_termination);
+	else if (fmt & DIFF_FORMAT_NAME) {
+		const char *name_a, *name_b;
+		name_a = p->two->path;
+		name_b = NULL;
+		strip_prefix(opt->prefix_length, &name_a, &name_b);
+		write_name_quoted(name_a, stdout, opt->line_termination);
+	}
 }
 
 static void show_file_mode_name(const char *newdelete, struct diff_filespec *fs)
@@ -3264,6 +3319,11 @@ void diff_addremove(struct diff_options *options,
 
 	if (!path) path = "";
 	sprintf(concatpath, "%s%s", base, path);
+
+	if (options->prefix &&
+	    strncmp(concatpath, options->prefix, options->prefix_length))
+		return;
+
 	one = alloc_filespec(concatpath);
 	two = alloc_filespec(concatpath);
 
@@ -3293,6 +3353,11 @@ void diff_change(struct diff_options *options,
 	}
 	if (!path) path = "";
 	sprintf(concatpath, "%s%s", base, path);
+
+	if (options->prefix &&
+	    strncmp(concatpath, options->prefix, options->prefix_length))
+		return;
+
 	one = alloc_filespec(concatpath);
 	two = alloc_filespec(concatpath);
 	fill_filespec(one, old_sha1, old_mode);
@@ -3307,6 +3372,11 @@ void diff_unmerge(struct diff_options *options,
 		  unsigned mode, const unsigned char *sha1)
 {
 	struct diff_filespec *one, *two;
+
+	if (options->prefix &&
+	    strncmp(path, options->prefix, options->prefix_length))
+		return;
+
 	one = alloc_filespec(path);
 	two = alloc_filespec(path);
 	fill_filespec(one, sha1, mode);
