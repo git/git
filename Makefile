@@ -226,7 +226,7 @@ BASIC_CFLAGS =
 BASIC_LDFLAGS =
 
 SCRIPT_SH = \
-	git-bisect.sh git-checkout.sh \
+	git-bisect.sh \
 	git-clone.sh \
 	git-merge-one-file.sh git-mergetool.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh git-rebase--interactive.sh \
@@ -265,22 +265,22 @@ PROGRAMS = \
 	git-upload-pack$X \
 	git-pack-redundant$X git-var$X \
 	git-merge-tree$X git-imap-send$X \
-	git-merge-recursive$X \
 	$(EXTRA_PROGRAMS)
 
 # Empty...
 EXTRA_PROGRAMS =
 
+# List built-in command $C whose implementation cmd_$C() is not in
+# builtin-$C.o but is linked in as part of some other command.
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
 	git-get-tar-commit-id$X git-init$X git-repo-config$X \
 	git-fsck-objects$X git-cherry-pick$X git-peek-remote$X git-status$X \
+	git-merge-subtree$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
-
-ALL_PROGRAMS += git-merge-subtree$X
 
 # what 'all' will build but not install in gitexecdir
 OTHER_PROGRAMS = git$X gitweb/gitweb.cgi
@@ -327,7 +327,7 @@ LIB_OBJS = \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
 	convert.o attr.o decorate.o progress.o mailmap.o symlinks.o remote.o \
-	transport.o bundle.o walker.o parse-options.o ws.o archive.o \
+	transport.o bundle.o walker.o parse-options.o ws.o archive.o branch.o \
 	alias.o
 
 BUILTIN_OBJS = \
@@ -340,6 +340,7 @@ BUILTIN_OBJS = \
 	builtin-bundle.o \
 	builtin-cat-file.o \
 	builtin-check-attr.o \
+	builtin-checkout.o \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \
 	builtin-clean.o \
@@ -370,6 +371,7 @@ BUILTIN_OBJS = \
 	builtin-merge-base.o \
 	builtin-merge-file.o \
 	builtin-merge-ours.o \
+	builtin-merge-recursive.o \
 	builtin-mv.o \
 	builtin-name-rev.o \
 	builtin-pack-objects.o \
@@ -839,9 +841,6 @@ help.o: help.c common-cmds.h GIT-CFLAGS
 		'-DGIT_HTML_PATH="$(htmldir_SQ)"' \
 		'-DGIT_MAN_PATH="$(mandir_SQ)"' \
 		'-DGIT_INFO_PATH="$(infodir_SQ)"' $<
-
-git-merge-subtree$X: git-merge-recursive$X
-	$(QUIET_BUILT_IN)$(RM) $@ && ln git-merge-recursive$X $@
 
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)$(RM) $@ && ln git$X $@

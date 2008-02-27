@@ -83,13 +83,13 @@ test_expect_success "checkout with unrelated dirty tree without -m" '
 	fill 0 1 2 3 4 5 6 7 8 >same &&
 	cp same kept
 	git checkout side >messages &&
-	git diff same kept
+	diff -u same kept
 	(cat > messages.expect <<EOF
 M	same
 EOF
 ) &&
 	touch messages.expect &&
-	git diff messages.expect messages
+	diff -u messages.expect messages
 '
 
 test_expect_success "checkout -m with dirty tree" '
@@ -103,29 +103,22 @@ test_expect_success "checkout -m with dirty tree" '
 	test "$(git symbolic-ref HEAD)" = "refs/heads/side" &&
 
 	(cat >expect.messages <<EOF
-Merging side with local
-Merging:
-ab76817 Side M one, D two, A three
-virtual local
-found 1 common ancestor(s):
-7329388 Initial A one, A two
-Auto-merged one
 M	one
 EOF
 ) &&
-	git diff expect.messages messages &&
+	diff -u expect.messages messages &&
 
 	fill "M	one" "A	three" "D	two" >expect.master &&
 	git diff --name-status master >current.master &&
-	diff expect.master current.master &&
+	diff -u expect.master current.master &&
 
 	fill "M	one" >expect.side &&
 	git diff --name-status side >current.side &&
-	diff expect.side current.side &&
+	diff -u expect.side current.side &&
 
 	: >expect.index &&
 	git diff --cached >current.index &&
-	diff expect.index current.index
+	diff -u expect.index current.index
 '
 
 test_expect_success "checkout -m with dirty tree, renamed" '
@@ -143,7 +136,7 @@ test_expect_success "checkout -m with dirty tree, renamed" '
 
 	git checkout -m renamer &&
 	fill 1 3 4 5 7 8 >expect &&
-	diff expect uno &&
+	diff -u expect uno &&
 	! test -f one &&
 	git diff --cached >current &&
 	! test -s current
@@ -168,7 +161,7 @@ test_expect_success 'checkout -m with merge conflict' '
 	git diff master:one :3:uno |
 	sed -e "1,/^@@/d" -e "/^ /d" -e "s/^-/d/" -e "s/^+/a/" >current &&
 	fill d2 aT d7 aS >expect &&
-	diff current expect &&
+	diff -u current expect &&
 	git diff --cached two >current &&
 	! test -s current
 '
@@ -185,7 +178,7 @@ If you want to create a new branch from this checkout, you may do so
 HEAD is now at 7329388... Initial A one, A two
 EOF
 ) &&
-	git diff messages.expect messages &&
+	diff -u messages.expect messages &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
@@ -283,6 +276,40 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 	else
 		: happy
 	fi
+
+'
+
+test_expect_success 'switch branches while in subdirectory' '
+
+	git reset --hard &&
+	git checkout master &&
+
+	mkdir subs &&
+	(
+		cd subs &&
+		git checkout side
+	) &&
+	! test -f subs/one &&
+	rm -fr subs
+
+'
+
+test_expect_success 'checkout specific path while in subdirectory' '
+
+	git reset --hard &&
+	git checkout side &&
+	mkdir subs &&
+	>subs/bero &&
+	git add subs/bero &&
+	git commit -m "add subs/bero" &&
+
+	git checkout master &&
+	mkdir -p subs &&
+	(
+		cd subs &&
+		git checkout side -- bero
+	) &&
+	test -f subs/bero
 
 '
 
