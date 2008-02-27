@@ -87,19 +87,6 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 	return handled;
 }
 
-static const char *alias_command;
-static char *alias_string;
-
-static int git_alias_config(const char *var, const char *value)
-{
-	if (!prefixcmp(var, "alias.") && !strcmp(var + 6, alias_command)) {
-		if (!value)
-			return config_error_nonbool(var);
-		alias_string = xstrdup(value);
-	}
-	return 0;
-}
-
 static int split_cmdline(char *cmdline, const char ***argv)
 {
 	int src, dst, count = 0, size = 16;
@@ -159,11 +146,13 @@ static int handle_alias(int *argcp, const char ***argv)
 	const char *subdir;
 	int count, option_count;
 	const char** new_argv;
+	const char *alias_command;
+	char *alias_string;
 
 	subdir = setup_git_directory_gently(&nongit);
 
 	alias_command = (*argv)[0];
-	git_config(git_alias_config);
+	alias_string = alias_lookup(alias_command);
 	if (alias_string) {
 		if (alias_string[0] == '!') {
 			if (*argcp > 1) {
