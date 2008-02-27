@@ -80,7 +80,7 @@ do
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t; shift ;;
 	--no-color)
-	    color=; shift ;;
+		color=; shift ;;
 	--no-python)
 		# noop now...
 		shift ;;
@@ -142,7 +142,12 @@ test_count=0
 test_fixed=0
 test_broken=0
 
-trap 'echo >&5 "FATAL: Unexpected exit with code $?"; exit 1' exit
+die () {
+	echo >&5 "FATAL: Unexpected exit with code $?"
+	exit 1
+}
+
+trap 'die' exit
 
 test_tick () {
 	if test -z "${test_tick+set}"
