@@ -6,12 +6,10 @@
 #include "revision.h"
 #include "utf8.h"
 #include "mailmap.h"
+#include "shortlog.h"
 
 static const char shortlog_usage[] =
 "git-shortlog [-n] [-s] [-e] [<commit-id>... ]";
-
-static char *common_repo_prefix;
-static int email;
 
 static int compare_by_number(const void *a1, const void *a2)
 {
@@ -26,13 +24,11 @@ static int compare_by_number(const void *a1, const void *a2)
 		return -1;
 }
 
-static struct path_list mailmap = {NULL, 0, 0, 0};
-
-static void insert_one_record(struct path_list *list,
+static void insert_one_record(struct shortlog *log,
 			      const char *author,
 			      const char *oneline)
 {
-	const char *dot3 = common_repo_prefix;
+	const char *dot3 = log->common_repo_prefix;
 	char *buffer, *p;
 	struct path_list_item *item;
 	struct path_list *onelines;
@@ -47,7 +43,7 @@ static void insert_one_record(struct path_list *list,
 	eoemail = strchr(boemail, '>');
 	if (!eoemail)
 		return;
-	if (!map_email(&mailmap, boemail+1, namebuf, sizeof(namebuf))) {
+	if (!map_email(&log->mailmap, boemail+1, namebuf, sizeof(namebuf))) {
 		while (author < boemail && isspace(*author))
 			author++;
 		for (len = 0;
@@ -61,14 +57,14 @@ static void insert_one_record(struct path_list *list,
 	else
 		len = strlen(namebuf);
 
-	if (email) {
+	if (log->email) {
 		size_t room = sizeof(namebuf) - len - 1;
 		int maillen = eoemail - boemail + 1;
 		snprintf(namebuf + len, room, " %.*s", maillen, boemail);
 	}
 
 	buffer = xstrdup(namebuf);
-	item = path_list_insert(buffer, list);
+	item = path_list_insert(buffer, &log->list);
 	if (item->util == NULL)
 		item->util = xcalloc(1, sizeof(struct path_list));
 	else
@@ -114,7 +110,7 @@ static void insert_one_record(struct path_list *list,
 	onelines->items[onelines->nr++].path = buffer;
 }
 
-static void read_from_stdin(struct path_list *list)
+static void read_from_stdin(struct shortlog *log)
 {
 	char author[1024], oneline[1024];
 
@@ -128,39 +124,43 @@ static void read_from_stdin(struct path_list *list)
 		while (fgets(oneline, sizeof(oneline), stdin) &&
 		       oneline[0] == '\n')
 			; /* discard blanks */
-		insert_one_record(list, author + 8, oneline);
+		insert_one_record(log, author + 8, oneline);
 	}
 }
 
-static void get_from_rev(struct rev_info *rev, struct path_list *list)
+void shortlog_add_commit(struct shortlog *log, struct commit *commit)
+{
+	const char *author = NULL, *buffer;
+
+	buffer = commit->buffer;
+	while (*buffer && *buffer != '\n') {
+		const char *eol = strchr(buffer, '\n');
+
+		if (eol == NULL)
+			eol = buffer + strlen(buffer);
+		else
+			eol++;
+
+		if (!prefixcmp(buffer, "author "))
+			author = buffer + 7;
+		buffer = eol;
+	}
+	if (!author)
+		die("Missing author: %s",
+		    sha1_to_hex(commit->object.sha1));
+	if (*buffer)
+		buffer++;
+	insert_one_record(log, author, !*buffer ? "<none>" : buffer);
+}
+
+static void get_from_rev(struct rev_info *rev, struct shortlog *log)
 {
 	struct commit *commit;
 
 	if (prepare_revision_walk(rev))
 		die("revision walk setup failed");
-	while ((commit = get_revision(rev)) != NULL) {
-		const char *author = NULL, *buffer;
-
-		buffer = commit->buffer;
-		while (*buffer && *buffer != '\n') {
-			const char *eol = strchr(buffer, '\n');
-
-			if (eol == NULL)
-				eol = buffer + strlen(buffer);
-			else
-				eol++;
-
-			if (!prefixcmp(buffer, "author "))
-				author = buffer + 7;
-			buffer = eol;
-		}
-		if (!author)
-			die("Missing author: %s",
-			    sha1_to_hex(commit->object.sha1));
-		if (*buffer)
-			buffer++;
-		insert_one_record(list, author, !*buffer ? "<none>" : buffer);
-	}
+	while ((commit = get_revision(rev)) != NULL)
+		shortlog_add_commit(log, commit);
 }
 
 static int parse_uint(char const **arg, int comma)
@@ -212,29 +212,38 @@ static void parse_wrap_args(const char *arg, int *in1, int *in2, int *wrap)
 		die(wrap_arg_usage);
 }
 
+void shortlog_init(struct shortlog *log)
+{
+	memset(log, 0, sizeof(*log));
+
+	read_mailmap(&log->mailmap, ".mailmap", &log->common_repo_prefix);
+
+	log->list.strdup_paths = 1;
+	log->wrap = DEFAULT_WRAPLEN;
+	log->in1 = DEFAULT_INDENT1;
+	log->in2 = DEFAULT_INDENT2;
+}
+
 int cmd_shortlog(int argc, const char **argv, const char *prefix)
 {
+	struct shortlog log;
 	struct rev_info rev;
-	struct path_list list = { NULL, 0, 0, 1 };
-	int i, j, sort_by_number = 0, summary = 0;
-	int wrap_lines = 0;
-	int wrap = DEFAULT_WRAPLEN;
-	int in1 = DEFAULT_INDENT1;
-	int in2 = DEFAULT_INDENT2;
+
+	shortlog_init(&log);
 
 	/* since -n is a shadowed rev argument, parse our args first */
 	while (argc > 1) {
 		if (!strcmp(argv[1], "-n") || !strcmp(argv[1], "--numbered"))
-			sort_by_number = 1;
+			log.sort_by_number = 1;
 		else if (!strcmp(argv[1], "-s") ||
 				!strcmp(argv[1], "--summary"))
-			summary = 1;
+			log.summary = 1;
 		else if (!strcmp(argv[1], "-e") ||
 			 !strcmp(argv[1], "--email"))
-			email = 1;
+			log.email = 1;
 		else if (!prefixcmp(argv[1], "-w")) {
-			wrap_lines = 1;
-			parse_wrap_args(argv[1], &in1, &in2, &wrap);
+			log.wrap_lines = 1;
+			parse_wrap_args(argv[1], &log.in1, &log.in2, &log.wrap);
 		}
 		else if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))
 			usage(shortlog_usage);
@@ -248,34 +257,38 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
 
-	read_mailmap(&mailmap, ".mailmap", &common_repo_prefix);
-
 	/* assume HEAD if from a tty */
 	if (!rev.pending.nr && isatty(0))
 		add_head_to_pending(&rev);
 	if (rev.pending.nr == 0) {
-		read_from_stdin(&list);
+		read_from_stdin(&log);
 	}
 	else
-		get_from_rev(&rev, &list);
+		get_from_rev(&rev, &log);
 
-	if (sort_by_number)
-		qsort(list.items, list.nr, sizeof(struct path_list_item),
+	shortlog_output(&log);
+	return 0;
+}
+
+void shortlog_output(struct shortlog *log)
+{
+	int i, j;
+	if (log->sort_by_number)
+		qsort(log->list.items, log->list.nr, sizeof(struct path_list_item),
 			compare_by_number);
+	for (i = 0; i < log->list.nr; i++) {
+		struct path_list *onelines = log->list.items[i].util;
 
-	for (i = 0; i < list.nr; i++) {
-		struct path_list *onelines = list.items[i].util;
-
-		if (summary) {
-			printf("%6d\t%s\n", onelines->nr, list.items[i].path);
+		if (log->summary) {
+			printf("%6d\t%s\n", onelines->nr, log->list.items[i].path);
 		} else {
-			printf("%s (%d):\n", list.items[i].path, onelines->nr);
+			printf("%s (%d):\n", log->list.items[i].path, onelines->nr);
 			for (j = onelines->nr - 1; j >= 0; j--) {
 				const char *msg = onelines->items[j].path;
 
-				if (wrap_lines) {
-					int col = print_wrapped_text(msg, in1, in2, wrap);
-					if (col != wrap)
+				if (log->wrap_lines) {
+					int col = print_wrapped_text(msg, log->in1, log->in2, log->wrap);
+					if (col != log->wrap)
 						putchar('\n');
 				}
 				else
@@ -287,13 +300,11 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 		onelines->strdup_paths = 1;
 		path_list_clear(onelines, 1);
 		free(onelines);
-		list.items[i].util = NULL;
+		log->list.items[i].util = NULL;
 	}
 
-	list.strdup_paths = 1;
-	path_list_clear(&list, 1);
-	mailmap.strdup_paths = 1;
-	path_list_clear(&mailmap, 1);
-
-	return 0;
+	log->list.strdup_paths = 1;
+	path_list_clear(&log->list, 1);
+	log->mailmap.strdup_paths = 1;
+	path_list_clear(&log->mailmap, 1);
 }
