@@ -157,6 +157,7 @@ static struct cached_refs {
 	struct ref_list *loose;
 	struct ref_list *packed;
 } cached_refs;
+static struct ref_list *current_ref;
 
 static void free_ref_list(struct ref_list *list)
 {
@@ -476,6 +477,7 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 		error("%s does not point to a valid object!", entry->name);
 		return 0;
 	}
+	current_ref = entry;
 	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
 }
 
@@ -484,6 +486,16 @@ int peel_ref(const char *ref, unsigned char *sha1)
 	int flag;
 	unsigned char base[20];
 	struct object *o;
+
+	if (current_ref && (current_ref->name == ref
+		|| !strcmp(current_ref->name, ref))) {
+		if (current_ref->flag & REF_KNOWS_PEELED) {
+			hashcpy(sha1, current_ref->peeled);
+			return 0;
+		}
+		hashcpy(base, current_ref->sha1);
+		goto fallback;
+	}
 
 	if (!resolve_ref(ref, base, 1, &flag))
 		return -1;
@@ -504,7 +516,7 @@ int peel_ref(const char *ref, unsigned char *sha1)
 		}
 	}
 
-	/* fallback - callers should not call this for unpacked refs */
+fallback:
 	o = parse_object(base);
 	if (o && o->type == OBJ_TAG) {
 		o = deref_tag(o, ref, 0);
@@ -519,7 +531,7 @@ int peel_ref(const char *ref, unsigned char *sha1)
 static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
 			   void *cb_data)
 {
-	int retval;
+	int retval = 0;
 	struct ref_list *packed = get_packed_refs();
 	struct ref_list *loose = get_loose_refs();
 
@@ -539,15 +551,18 @@ static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
 		}
 		retval = do_one_ref(base, fn, trim, cb_data, entry);
 		if (retval)
-			return retval;
+			goto end_each;
 	}
 
 	for (packed = packed ? packed : loose; packed; packed = packed->next) {
 		retval = do_one_ref(base, fn, trim, cb_data, packed);
 		if (retval)
-			return retval;
+			goto end_each;
 	}
-	return 0;
+
+end_each:
+	current_ref = NULL;
+	return retval;
 }
 
 int head_ref(each_ref_fn fn, void *cb_data)
