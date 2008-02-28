@@ -647,8 +647,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      int nr, struct commit **list, struct commit *head)
 {
 	const char *committer;
-	const char *origin_sha1, *head_sha1;
-	const char *argv[7];
+	char *head_sha1;
 	const char *subject_start = NULL;
 	const char *body = "*** SUBJECT HERE ***\n\n*** BLURB HERE ***\n";
 	const char *msg;
@@ -657,6 +656,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	struct strbuf sb;
 	int i;
 	const char *encoding = "utf-8";
+	struct diff_options opts;
 
 	if (rev->commit_format != CMIT_FMT_EMAIL)
 		die("Cover letter needs email format");
@@ -694,20 +694,17 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	if (!origin)
 		return;
 
-	origin_sha1 = sha1_to_hex(origin->object.sha1);
+	diff_setup(&opts);
+	opts.output_format |= DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
 
-	argv[0] = "diff";
-	argv[1] = "--stat";
-	argv[2] = "--summary";
-	argv[3] = head_sha1;
-	argv[4] = "--not";
-	argv[5] = origin_sha1;
-	argv[6] = "--";
-	argv[7] = NULL;
-	fflush(stdout);
-	run_command_v_opt(argv, RUN_GIT_CMD);
+	diff_setup_done(&opts);
 
-	fflush(stdout);
+	diff_tree_sha1(origin->tree->object.sha1,
+		       head->tree->object.sha1,
+		       "", &opts);
+	diffcore_std(&opts);
+	diff_flush(&opts);
+
 	printf("\n");
 }
 
