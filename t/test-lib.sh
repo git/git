@@ -270,6 +270,23 @@ test_expect_code () {
 	echo >&3 ""
 }
 
+# This is not among top-level (test_expect_success | test_expect_failure)
+# but is a prefix that can be used in the test script, like:
+#
+#	test_expect_success 'complain and die' '
+#           do something &&
+#           do something else &&
+#	    test_must_fail git checkout ../outerspace
+#	'
+#
+# Writing this as "! git checkout ../outerspace" is wrong, because
+# the failure could be due to a segv.  We want a controlled failure.
+
+test_must_fail () {
+	"$@"
+	test $? -gt 0 -a $? -le 128
+}
+
 # Most tests can use the created repository, but some may need to create more.
 # Usage: test_create_repo <directory>
 test_create_repo () {
