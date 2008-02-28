@@ -633,12 +633,13 @@ static int handle_one_ref(const char *path, const unsigned char *sha1, int flag,
 	return 0;
 }
 
-static void handle_all(struct rev_info *revs, unsigned flags)
+static void handle_refs(struct rev_info *revs, unsigned flags,
+		int (*for_each)(each_ref_fn, void *))
 {
 	struct all_refs_cb cb;
 	cb.all_revs = revs;
 	cb.all_flags = flags;
-	for_each_ref(handle_one_ref, &cb);
+	for_each(handle_one_ref, &cb);
 }
 
 static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
@@ -1015,7 +1016,19 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
-				handle_all(revs, flags);
+				handle_refs(revs, flags, for_each_ref);
+				continue;
+			}
+			if (!strcmp(arg, "--branches")) {
+				handle_refs(revs, flags, for_each_branch_ref);
+				continue;
+			}
+			if (!strcmp(arg, "--tags")) {
+				handle_refs(revs, flags, for_each_tag_ref);
+				continue;
+			}
+			if (!strcmp(arg, "--remotes")) {
+				handle_refs(revs, flags, for_each_remote_ref);
 				continue;
 			}
 			if (!strcmp(arg, "--first-parent")) {
