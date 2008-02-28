@@ -2377,6 +2377,7 @@ int main(int argc, const char **argv)
 {
 	unsigned int i, show_stats = 1;
 
+	setup_git_directory();
 	git_config(git_pack_config);
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;
