@@ -102,13 +102,17 @@ If you need to pass multiple options, separate them with a comma.
 
 -m::
 	Attempt to detect merges based on the commit message. This option
-	will enable default regexes that try to capture the name source
+	will enable default regexes that try to capture the source
 	branch name from the commit message.
 
 -M <regex>::
 	Attempt to detect merges based on the commit message with a custom
 	regex. It can be used with '-m' to enable the default regexes
 	as well. You must escape forward slashes.
++
+The regex must capture the source branch name in $1.
++
+This option can be used several times to provide several detection regexes.
 
 -S <regex>::
 	Skip paths matching the regex.
