@@ -47,7 +47,7 @@ proc info_popup {msg} {
 		append title " ([reponame])"
 	}
 	tk_messageBox \
-		-parent $parent \
+		-parent [_error_parent] \
 		-icon info \
 		-type ok \
 		-title $title \
