@@ -40,8 +40,8 @@ static int verify_one_pack(const char *path, int verbose)
 	if (!pack)
 		return error("packfile %s not found.", arg);
 
+	install_packed_git(pack);
 	err = verify_pack(pack, verbose);
-	free(pack);
 
 	return err;
 }
