@@ -15,7 +15,7 @@
 
 use strict;
 use warnings;
-use Getopt::Std;
+use Getopt::Long;
 use File::Spec;
 use File::Temp qw(tempfile tmpnam);
 use File::Path qw(mkpath);
@@ -29,7 +29,7 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r);
+our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,@opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r);
 my (%conv_author_name, %conv_author_email);
 
 sub usage(;$) {
@@ -112,7 +112,12 @@ sub read_repo_config {
 
 my $opts = "haivmkuo:d:p:r:C:z:s:M:P:A:S:L:";
 read_repo_config($opts);
-getopts($opts) or usage();
+Getopt::Long::Configure( 'no_ignore_case', 'bundling' );
+
+# turn the Getopt::Std specification in a Getopt::Long one,
+# with support for multiple -M options
+GetOptions( map { s/:/=s/; /M/ ? "$_\@" : $_ } split( /(?!:)/, $opts ) )
+    or usage();
 usage if $opt_h;
 
 if (@ARGV == 0) {
@@ -166,8 +171,8 @@ our @mergerx = ();
 if ($opt_m) {
 	@mergerx = ( qr/\b(?:from|of|merge|merging|merged) ([-\w]+)/i );
 }
-if ($opt_M) {
-	push (@mergerx, qr/$opt_M/);
+if (@opt_M) {
+	push (@mergerx, map { qr/$_/ } @opt_M);
 }
 
 # Remember UTC of our starting time
