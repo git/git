@@ -67,16 +67,7 @@ static int update_some(const unsigned char *sha1, const char *base, int baselen,
 
 static int read_tree_some(struct tree *tree, const char **pathspec)
 {
-	int newfd;
-	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
-	newfd = hold_locked_index(lock_file, 1);
-	read_cache();
-
 	read_tree_recursive(tree, "", 0, 0, pathspec, update_some);
-
-	if (write_cache(newfd, active_cache, active_nr) ||
-	    commit_locked_index(lock_file))
-		die("unable to write new index file");
 
 	/* update the index with the given tree's info
 	 * for all args, expanding wildcards, and exit
@@ -85,7 +76,7 @@ static int read_tree_some(struct tree *tree, const char **pathspec)
 	return 0;
 }
 
-static int checkout_paths(const char **pathspec)
+static int checkout_paths(struct tree *source_tree, const char **pathspec)
 {
 	int pos;
 	struct checkout state;
@@ -93,6 +84,15 @@ static int checkout_paths(const char **pathspec)
 	unsigned char rev[20];
 	int flag;
 	struct commit *head;
+
+	int newfd;
+	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
+
+	newfd = hold_locked_index(lock_file, 1);
+	read_cache();
+
+	if (source_tree)
+		read_tree_some(source_tree, pathspec);
 
 	for (pos = 0; pathspec[pos]; pos++)
 		;
@@ -115,6 +115,10 @@ static int checkout_paths(const char **pathspec)
 			checkout_entry(ce, &state, NULL);
 		}
 	}
+
+	if (write_cache(newfd, active_cache, active_nr) ||
+	    commit_locked_index(lock_file))
+		die("unable to write new index file");
 
 	resolve_ref("HEAD", rev, 0, &flag);
 	head = lookup_commit_reference_gently(rev, 1);
@@ -558,11 +562,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			}
 		}
 
-		if (source_tree)
-			read_tree_some(source_tree, pathspec);
-		else
-			read_cache();
-		return checkout_paths(pathspec);
+		return checkout_paths(source_tree, pathspec);
 	}
 
 	if (new.name && !new.commit) {
