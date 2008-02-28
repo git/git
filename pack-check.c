@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "pack.h"
+#include "pack-revindex.h"
 
 struct idx_entry
 {
@@ -101,8 +102,10 @@ static int verify_packfile(struct packed_git *p,
 static void show_pack_info(struct packed_git *p)
 {
 	uint32_t nr_objects, i, chain_histogram[MAX_CHAIN+1];
+
 	nr_objects = p->num_objects;
 	memset(chain_histogram, 0, sizeof(chain_histogram));
+	init_pack_revindex();
 
 	for (i = 0; i < nr_objects; i++) {
 		const unsigned char *sha1;
