@@ -8,7 +8,7 @@ git-gc - Cleanup unnecessary files and optimize the local repository
 
 SYNOPSIS
 --------
-'git-gc' [--prune] [--aggressive] [--auto]
+'git-gc' [--prune] [--aggressive] [--auto] [--quiet]
 
 DESCRIPTION
 -----------
@@ -62,6 +62,9 @@ then existing packs (except those marked with a `.keep` file)
 are consolidated into a single pack by using the `-A` option of
 `git-repack`. Setting `gc.autopacklimit` to 0 disables
 automatic consolidation of packs.
+
+--quiet::
+	Suppress all progress reports.
 
 Configuration
 -------------
