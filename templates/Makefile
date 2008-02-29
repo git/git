@@ -29,10 +29,10 @@ boilerplates.made : $(bpsrc)
 		case "$$boilerplate" in *~) continue ;; esac && \
 		dst=`echo "$$boilerplate" | sed -e 's|^this|.|;s|--|/|g'` && \
 		dir=`expr "$$dst" : '\(.*\)/'` && \
-		mkdir -p blt/$$dir && \
+		$(INSTALL) -d -m 755 blt/$$dir && \
 		case "$$boilerplate" in \
 		*--) ;; \
-		*) cp $$boilerplate blt/$$dst ;; \
+		*) cp -p $$boilerplate blt/$$dst ;; \
 		esac || exit; \
 	done && \
 	date >$@
@@ -48,4 +48,4 @@ clean:
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_dir_SQ)'
 	(cd blt && $(TAR) cf - .) | \
-	(cd '$(DESTDIR_SQ)$(template_dir_SQ)' && $(TAR) xf -)
+	(cd '$(DESTDIR_SQ)$(template_dir_SQ)' && umask 022 && $(TAR) xf -)
