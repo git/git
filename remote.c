@@ -357,7 +357,8 @@ static int handle_config(const char *key, const char *value)
 			remote->fetch_tags = -1;
 	} else if (!strcmp(subkey, ".proxy")) {
 		remote->http_proxy = xstrdup(value);
-	}
+	} else if (!strcmp(subkey, ".skipdefaultupdate"))
+		remote->skip_default_update = 1;
 	return 0;
 }
 

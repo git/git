@@ -97,9 +97,9 @@ test_expect_success 'remove remote' '
 cat > test/expect << EOF
 * remote origin
   URL: $(pwd)/one/.git
-  Remote branch(es) merged with 'git pull' while on branch master
+  Remote branch merged with 'git pull' while on branch master
     master
-  New remote branches (next fetch will store in remotes/origin)
+  New remote branch (next fetch will store in remotes/origin)
     master
   Tracked remote branches
     side master

@@ -25,6 +25,7 @@ struct remote {
 	 * 2 to always fetch tags
 	 */
 	int fetch_tags;
+	int skip_default_update;
 
 	const char *receivepack;
 	const char *uploadpack;
