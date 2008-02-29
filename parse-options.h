@@ -18,6 +18,7 @@ enum parse_opt_type {
 
 enum parse_opt_flags {
 	PARSE_OPT_KEEP_DASHDASH = 1,
+	PARSE_OPT_STOP_AT_NON_OPTION = 2,
 };
 
 enum parse_opt_option_flags {
