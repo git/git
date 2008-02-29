@@ -94,4 +94,38 @@ test_expect_success 'remove remote' '
 )
 '
 
+cat > test/expect << EOF
+* remote origin
+  URL: $(pwd)/one/.git
+  Remote branch(es) merged with 'git pull' while on branch master
+    master
+  New remote branches (next fetch will store in remotes/origin)
+    master
+  Tracked remote branches
+    side master
+EOF
+
+test_expect_success 'show' '
+	(cd test &&
+	 git config --add remote.origin.fetch \
+		refs/heads/master:refs/heads/upstream &&
+	 git fetch &&
+	 git branch -d -r origin/master &&
+	 (cd ../one &&
+	  echo 1 > file &&
+	  git commit -m update file) &&
+	 git remote show origin > output &&
+	 git diff expect output)
+'
+
+test_expect_success 'prune' '
+	(cd one &&
+	 git branch -m side side2) &&
+	(cd test &&
+	 git fetch origin &&
+	 git remote prune origin &&
+	 git rev-parse refs/remotes/origin/side2 &&
+	 ! git rev-parse refs/remotes/origin/side)
+'
+
 test_done
