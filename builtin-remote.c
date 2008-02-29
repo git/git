@@ -396,12 +396,22 @@ static int show_or_prune(int argc, const char **argv, int prune)
 
 		if (prune) {
 			struct strbuf buf;
+			int prefix_len;
 
 			strbuf_init(&buf, 0);
+			if (states.remote->fetch_refspec_nr == 1 &&
+					states.remote->fetch->pattern &&
+					!strcmp(states.remote->fetch->src,
+						states.remote->fetch->dst))
+				/* handle --mirror remote */
+				strbuf_addstr(&buf, "refs/heads/");
+			else
+				strbuf_addf(&buf, "refs/remotes/%s/", *argv);
+			prefix_len = buf.len;
+
 			for (i = 0; i < states.stale.nr; i++) {
-				strbuf_reset(&buf);
-				strbuf_addf(&buf, "refs/remotes/%s/%s", *argv,
-						states.stale.items[i].path);
+				strbuf_setlen(&buf, prefix_len);
+				strbuf_addstr(&buf, states.stale.items[i].path);
 				result |= delete_ref(buf.buf, NULL);
 			}
 

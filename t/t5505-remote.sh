@@ -128,4 +128,20 @@ test_expect_success 'prune' '
 	 ! git rev-parse refs/remotes/origin/side)
 '
 
+test_expect_success 'add --mirror && prune' '
+	(mkdir mirror &&
+	 cd mirror &&
+	 git init &&
+	 git remote add --mirror -f origin ../one) &&
+	(cd one &&
+	 git branch -m side2 side) &&
+	(cd mirror &&
+	 git rev-parse --verify refs/heads/side2 &&
+	 ! git rev-parse --verify refs/heads/side &&
+	 git fetch origin &&
+	 git remote prune origin &&
+	 ! git rev-parse --verify refs/heads/side2 &&
+	 git rev-parse --verify refs/heads/side)
+'
+
 test_done
