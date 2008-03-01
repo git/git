@@ -26,24 +26,21 @@ static int sanitary_path_copy(char *dst, const char *src)
 		 * (4) "../"          -- strip one, eat slash and continue.
 		 */
 		if (c == '.') {
-			switch (src[1]) {
-			case '\0':
+			if (!src[1]) {
 				/* (1) */
 				src++;
-				break;
-			case '/':
+			} else if (src[1] == '/') {
 				/* (2) */
 				src += 2;
 				while (*src == '/')
 					src++;
 				continue;
-			case '.':
-				switch (src[2]) {
-				case '\0':
+			} else if (src[1] == '.') {
+				if (!src[2]) {
 					/* (3) */
 					src += 2;
 					goto up_one;
-				case '/':
+				} else if (src[2] == '/') {
 					/* (4) */
 					src += 3;
 					while (*src == '/')
