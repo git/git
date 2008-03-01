@@ -29,7 +29,7 @@ test_expect_success 'rebase --abort' '
 	test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase)
 '
 
-test_expect_failure 'rebase --abort after --skip' '
+test_expect_success 'rebase --abort after --skip' '
 	# Clean up the state from the previous one
 	git reset --hard pre-rebase
 	rm -rf .dotest
