@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git-rebase' [-i | --interactive] [-v | --verbose] [-m | --merge]
+	[-s <strategy> | --strategy=<strategy>]
 	[-C<n>] [ --whitespace=<option>] [-p | --preserve-merges]
 	[--onto <newbase>] <upstream> [<branch>]
 'git-rebase' --continue | --skip | --abort
