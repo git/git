@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2005, 2006 Junio C Hamano
 
+SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
 git-am [options] <mbox>|<Maildir>...
@@ -25,6 +26,7 @@ skip            skip the current patch"
 . git-sh-setup
 set_reflog_action am
 require_work_tree
+cd_to_toplevel
 
 git var GIT_COMMITTER_IDENT >/dev/null || exit
 
