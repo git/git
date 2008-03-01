@@ -29,7 +29,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int show_only = 0, remove_directories = 0, quiet = 0, ignored = 0;
-	int ignored_only = 0, baselen = 0, config_set = 0;
+	int ignored_only = 0, baselen = 0, config_set = 0, errors = 0;
 	struct strbuf directory;
 	struct dir_struct dir;
 	const char *path, *base;
@@ -137,12 +137,15 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			if (show_only && (remove_directories || matches)) {
 				printf("Would remove %s\n",
 				       directory.buf + prefix_offset);
-			} else if (quiet && (remove_directories || matches)) {
-				remove_dir_recursively(&directory, 0);
 			} else if (remove_directories || matches) {
-				printf("Removing %s\n",
-				       directory.buf + prefix_offset);
-				remove_dir_recursively(&directory, 0);
+				if (!quiet)
+					printf("Removing %s\n",
+					       directory.buf + prefix_offset);
+				if (remove_dir_recursively(&directory, 0) != 0) {
+					warning("failed to remove '%s'",
+						directory.buf + prefix_offset);
+					errors++;
+				}
 			} else if (show_only) {
 				printf("Would not remove %s\n",
 				       directory.buf + prefix_offset);
@@ -162,11 +165,14 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				printf("Removing %s\n",
 				       ent->name + prefix_offset);
 			}
-			unlink(ent->name);
+			if (unlink(ent->name) != 0) {
+				warning("failed to remove '%s'", ent->name);
+				errors++;
+			}
 		}
 	}
 	free(seen);
 
 	strbuf_release(&directory);
-	return 0;
+	return (errors != 0);
 }

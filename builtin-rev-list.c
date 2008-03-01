@@ -60,6 +60,8 @@ static void show_commit(struct commit *commit)
 		fputs(header_prefix, stdout);
 	if (commit->object.flags & BOUNDARY)
 		putchar('-');
+	else if (commit->object.flags & UNINTERESTING)
+		putchar('^');
 	else if (revs.left_right) {
 		if (commit->object.flags & SYMMETRIC_LEFT)
 			putchar('<');
@@ -84,7 +86,7 @@ static void show_commit(struct commit *commit)
 	else
 		putchar('\n');
 
-	if (revs.verbose_header) {
+	if (revs.verbose_header && commit->buffer) {
 		struct strbuf buf;
 		strbuf_init(&buf, 0);
 		pretty_print_commit(revs.commit_format, commit,
@@ -609,7 +611,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (bisect_list)
 		revs.limited = 1;
 
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 	if (revs.tree_objects)
 		mark_edges_uninteresting(revs.commits, &revs, show_edge);
 

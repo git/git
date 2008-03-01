@@ -74,8 +74,8 @@ OPTIONS
 	Update only files that git already knows about. This is similar
 	to what "git commit -a" does in preparation for making a commit,
 	except that the update is limited to paths specified on the
-	command line. If no paths are specified, all tracked files are
-	updated.
+	command line. If no paths are specified, all tracked files in the
+	current directory and its subdirectories are updated.
 
 \--refresh::
 	Don't add the file(s), but only refresh their stat()

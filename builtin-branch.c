@@ -31,7 +31,7 @@ static unsigned char head_sha1[20];
 
 static int branch_track = 1;
 
-static int branch_use_color;
+static int branch_use_color = -1;
 static char branch_colors[][COLOR_MAXLEN] = {
 	"\033[m",	/* reset */
 	"",		/* PLAIN (normal) */
@@ -79,12 +79,12 @@ static int git_branch_config(const char *var, const char *value)
 		branch_track = git_config_bool(var, value);
 		return 0;
 	}
-	return git_default_config(var, value);
+	return git_color_default_config(var, value);
 }
 
 static const char *branch_get_color(enum color_branch ix)
 {
-	if (branch_use_color)
+	if (branch_use_color > 0)
 		return branch_colors[ix];
 	return "";
 }
@@ -588,6 +588,10 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	};
 
 	git_config(git_branch_config);
+
+	if (branch_use_color == -1)
+		branch_use_color = git_use_color_default;
+
 	track = branch_track;
 	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
 	if (!!delete + !!rename + !!force_create > 1)

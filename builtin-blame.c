@@ -1894,9 +1894,7 @@ static unsigned parse_score(const char *arg)
 
 static const char *add_prefix(const char *prefix, const char *path)
 {
-	if (!prefix || !prefix[0])
-		return path;
-	return prefix_path(prefix, strlen(prefix), path);
+	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
 /*
@@ -2369,7 +2367,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	 * bottom commits we would reach while traversing as
 	 * uninteresting.
 	 */
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 
 	if (is_null_sha1(sb.final->object.sha1)) {
 		char *buf;

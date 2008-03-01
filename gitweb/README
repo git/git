@@ -233,6 +233,10 @@ You can use the following files in repository:
    Displayed in the project summary page. You can use multiple-valued
    gitweb.url repository configuration variable for that, but the file
    takes precendence.
+ * gitweb.owner
+   You can use the gitweb.owner repository configuration variable to set
+   repository's owner. It is displayed in the project list and summary
+   page. If it's not set, filesystem directory's owner is used.
  * various gitweb.* config variables (in config)
    Read description of %feature hash for detailed list, and some
    descriptions.

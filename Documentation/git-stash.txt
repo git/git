@@ -43,7 +43,7 @@ save [<message>]::
 	subcommand is given. The <message> part is optional and gives
 	the description along with the stashed state.
 
-list::
+list [<options>]::
 
 	List the stashes that you currently have.  Each 'stash' is listed
 	with its name (e.g. `stash@\{0}` is the latest stash, `stash@\{1}` is
@@ -55,6 +55,9 @@ list::
 stash@{0}: WIP on submit: 6ebd0e2... Update git-stash documentation
 stash@{1}: On master: 9cc0589... Add git-stash
 ----------------------------------------------------------------
++
+The command takes options applicable to the linkgit:git-log[1]
+command to control what is shown and how.
 
 show [<stash>]::
 

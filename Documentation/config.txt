@@ -489,6 +489,13 @@ color.status.<slot>::
 commit.template::
 	Specify a file to use as the template for new commit messages.
 
+color.ui::
+	When set to `always`, always use colors in all git commands which
+	are capable of colored output. When false (or `never`), never. When
+	set to `true` or `auto`, use colors only when the output is to the
+	terminal. When more specific variables of color.* are set, they always
+	take precedence over this setting. Defaults to false.
+
 diff.autorefreshindex::
 	When using `git diff` to compare with work tree
 	files, do not consider stat-only change as changed.

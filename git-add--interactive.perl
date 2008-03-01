@@ -82,6 +82,19 @@ sub list_untracked {
 my $status_fmt = '%12s %12s %s';
 my $status_head = sprintf($status_fmt, 'staged', 'unstaged', 'path');
 
+{
+	my $initial;
+	sub is_initial_commit {
+		$initial = system('git rev-parse HEAD -- >/dev/null 2>&1') != 0
+			unless defined $initial;
+		return $initial;
+	}
+}
+
+sub get_empty_tree {
+	return '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+}
+
 # Returns list of hashes, contents of each of which are:
 # VALUE:	pathname
 # BINARY:	is a binary path
@@ -103,8 +116,10 @@ sub list_modified {
 		return if (!@tracked);
 	}
 
+	my $reference = is_initial_commit() ? get_empty_tree() : 'HEAD';
 	for (run_cmd_pipe(qw(git diff-index --cached
-			     --numstat --summary HEAD --), @tracked)) {
+			     --numstat --summary), $reference,
+			     '--', @tracked)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			my ($change, $bin);
@@ -476,21 +491,27 @@ sub revert_cmd {
 				       HEADER => $status_head, },
 				     list_modified());
 	if (@update) {
-		my @lines = run_cmd_pipe(qw(git ls-tree HEAD --),
-					 map { $_->{VALUE} } @update);
-		my $fh;
-		open $fh, '| git update-index --index-info'
-		    or die;
-		for (@lines) {
-			print $fh $_;
+		if (is_initial_commit()) {
+			system(qw(git rm --cached),
+				map { $_->{VALUE} } @update);
 		}
-		close($fh);
-		for (@update) {
-			if ($_->{INDEX_ADDDEL} &&
-			    $_->{INDEX_ADDDEL} eq 'create') {
-				system(qw(git update-index --force-remove --),
-				       $_->{VALUE});
-				print "note: $_->{VALUE} is untracked now.\n";
+		else {
+			my @lines = run_cmd_pipe(qw(git ls-tree HEAD --),
+						 map { $_->{VALUE} } @update);
+			my $fh;
+			open $fh, '| git update-index --index-info'
+			    or die;
+			for (@lines) {
+				print $fh $_;
+			}
+			close($fh);
+			for (@update) {
+				if ($_->{INDEX_ADDDEL} &&
+				    $_->{INDEX_ADDDEL} eq 'create') {
+					system(qw(git update-index --force-remove --),
+					       $_->{VALUE});
+					print "note: $_->{VALUE} is untracked now.\n";
+				}
 			}
 		}
 		refresh();
@@ -956,7 +977,9 @@ sub diff_cmd {
 				     HEADER => $status_head, },
 				   @mods);
 	return if (!@them);
-	system(qw(git diff -p --cached HEAD --), map { $_->{VALUE} } @them);
+	my $reference = is_initial_commit() ? get_empty_tree() : 'HEAD';
+	system(qw(git diff -p --cached), $reference, '--',
+		map { $_->{VALUE} } @them);
 }
 
 sub quit_cmd {

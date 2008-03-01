@@ -15,6 +15,7 @@ DESCRIPTION
 -----------
 Runs `git-fetch` with the given parameters, and calls `git-merge`
 to merge the retrieved head(s) into the current branch.
+With `--rebase`, calls `git-rebase` instead of `git-merge`.
 
 Note that you can use `.` (current directory) as the
 <repository> to pull from the local repository -- this is useful
@@ -26,19 +27,14 @@ OPTIONS
 include::merge-options.txt[]
 
 :git-pull: 1
-include::fetch-options.txt[]
-
-include::pull-fetch-param.txt[]
-
-include::urls-remotes.txt[]
-
-include::merge-strategies.txt[]
 
 \--rebase::
 	Instead of a merge, perform a rebase after fetching.  If
 	there is a remote ref for the upstream branch, and this branch
 	was rebased since last fetched, the rebase uses that information
-	to avoid rebasing non-local changes.
+	to avoid rebasing non-local changes. To make this the default
+	for branch `<name>`, set configuration `branch.<name>.rebase`
+	to `true`.
 +
 *NOTE:* This is a potentially _dangerous_ mode of operation.
 It rewrites history, which does not bode well when you
@@ -47,6 +43,14 @@ unless you have read linkgit:git-rebase[1] carefully.
 
 \--no-rebase::
 	Override earlier \--rebase.
+
+include::fetch-options.txt[]
+
+include::pull-fetch-param.txt[]
+
+include::urls-remotes.txt[]
+
+include::merge-strategies.txt[]
 
 DEFAULT BEHAVIOUR
 -----------------

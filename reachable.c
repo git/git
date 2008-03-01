@@ -15,6 +15,8 @@ static void process_blob(struct blob *blob,
 {
 	struct object *obj = &blob->object;
 
+	if (!blob)
+		die("bad blob object");
 	if (obj->flags & SEEN)
 		return;
 	obj->flags |= SEEN;
@@ -39,6 +41,8 @@ static void process_tree(struct tree *tree,
 	struct name_entry entry;
 	struct name_path me;
 
+	if (!tree)
+		die("bad tree object");
 	if (obj->flags & SEEN)
 		return;
 	obj->flags |= SEEN;
@@ -79,7 +83,8 @@ static void process_tag(struct tag *tag, struct object_array *p, const char *nam
 
 	if (parse_tag(tag) < 0)
 		die("bad tag object %s", sha1_to_hex(obj->sha1));
-	add_object(tag->tagged, p, NULL, name);
+	if (tag->tagged)
+		add_object(tag->tagged, p, NULL, name);
 }
 
 static void walk_commit_list(struct rev_info *revs)
@@ -150,7 +155,8 @@ static int add_one_reflog(const char *path, const unsigned char *sha1, int flag,
 static void add_one_tree(const unsigned char *sha1, struct rev_info *revs)
 {
 	struct tree *tree = lookup_tree(sha1);
-	add_pending_object(revs, &tree->object, "");
+	if (tree)
+		add_pending_object(revs, &tree->object, "");
 }
 
 static void add_cache_tree(struct cache_tree *it, struct rev_info *revs)
@@ -215,6 +221,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog)
 	 * Set up the revision walk - this will move all commits
 	 * from the pending list to the commit walking list.
 	 */
-	prepare_revision_walk(revs);
+	if (prepare_revision_walk(revs))
+		die("revision walk setup failed");
 	walk_commit_list(revs);
 }

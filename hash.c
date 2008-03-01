@@ -70,7 +70,7 @@ void *lookup_hash(unsigned int hash, struct hash_table *table)
 {
 	if (!table->array)
 		return NULL;
-	return &lookup_hash_entry(hash, table)->ptr;
+	return lookup_hash_entry(hash, table)->ptr;
 }
 
 void **insert_hash(unsigned int hash, void *ptr, struct hash_table *table)

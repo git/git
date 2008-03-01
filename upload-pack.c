@@ -129,7 +129,8 @@ static int do_rev_list(int fd, void *create_full_pack)
 		}
 		setup_revisions(0, NULL, &revs, NULL);
 	}
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
 	traverse_commit_list(&revs, show_commit, show_object);
 	fflush(pack_pipe);
@@ -535,7 +536,8 @@ static void receive_needs(void)
 				/* make sure the real parents are parsed */
 				unregister_shallow(object->sha1);
 				object->parsed = 0;
-				parse_commit((struct commit *)object);
+				if (parse_commit((struct commit *)object))
+					die("invalid commit");
 				parents = ((struct commit *)object)->parents;
 				while (parents) {
 					add_object_array(&parents->item->object,
@@ -577,7 +579,8 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	}
 	if (o->type == OBJ_TAG) {
 		o = deref_tag(o, refname, 0);
-		packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname);
+		if (o)
+			packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname);
 	}
 	return 0;
 }

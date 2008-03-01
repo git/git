@@ -136,7 +136,8 @@ static void get_from_rev(struct rev_info *rev, struct path_list *list)
 {
 	struct commit *commit;
 
-	prepare_revision_walk(rev);
+	if (prepare_revision_walk(rev))
+		die("revision walk setup failed");
 	while ((commit = get_revision(rev)) != NULL) {
 		const char *author = NULL, *buffer;
 

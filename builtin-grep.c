@@ -578,6 +578,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp("-l", arg) ||
+		    !strcmp("--name-only", arg) ||
 		    !strcmp("--files-with-matches", arg)) {
 			opt.name_only = 1;
 			continue;

@@ -34,7 +34,10 @@ static struct child_process pager_process = {
 static void wait_for_pager(void)
 {
 	fflush(stdout);
-	close(1);	/* signals EOF to pager */
+	fflush(stderr);
+	/* signal EOF to pager */
+	close(1);
+	close(2);
 	finish_command(&pager_process);
 }
 #endif
@@ -76,6 +79,7 @@ void setup_pager(void)
 	/* return in the child */
 	if (!pid) {
 		dup2(fd[1], 1);
+		dup2(fd[1], 2);
 		close(fd[0]);
 		close(fd[1]);
 		return;
@@ -98,6 +102,7 @@ void setup_pager(void)
 
 	/* original process continues, but writes to the pipe */
 	dup2(pager_process.in, 1);
+	dup2(pager_process.in, 2);
 	close(pager_process.in);
 
 	/* this makes sure that the parent terminates after the pager */
