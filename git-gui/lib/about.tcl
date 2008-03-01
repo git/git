@@ -41,7 +41,8 @@ proc do_about {} {
 		append v "Tcl version $tcl_patchLevel"
 		append v ", Tk version $tk_patchLevel"
 	}
-	if {[info exists ui_comm_spell]} {
+	if {[info exists ui_comm_spell]
+		&& [$ui_comm_spell version] ne {}} {
 		append v "\n"
 		append v [$ui_comm_spell version]
 	}
