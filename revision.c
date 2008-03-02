@@ -772,14 +772,9 @@ static void prepare_show_merge(struct rev_info *revs)
 	add_pending_object(revs, &head->object, "HEAD");
 	add_pending_object(revs, &other->object, "MERGE_HEAD");
 	bases = get_merge_bases(head, other, 1);
-	while (bases) {
-		struct commit *it = bases->item;
-		struct commit_list *n = bases->next;
-		free(bases);
-		bases = n;
-		it->object.flags |= UNINTERESTING;
-		add_pending_object(revs, &it->object, "(merge-base)");
-	}
+	add_pending_commit_list(revs, bases, UNINTERESTING);
+	free_commit_list(bases);
+	head->object.flags |= SYMMETRIC_LEFT;
 
 	if (!active_nr)
 		read_cache();
@@ -798,6 +793,7 @@ static void prepare_show_merge(struct rev_info *revs)
 			i++;
 	}
 	revs->prune_data = prune;
+	revs->limited = 1;
 }
 
 int handle_revision_arg(const char *arg, struct rev_info *revs,
