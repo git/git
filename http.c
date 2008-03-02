@@ -218,12 +218,15 @@ static CURL* get_curl_handle(void)
 	return result;
 }
 
-void http_init(void)
+void http_init(struct remote *remote)
 {
 	char *low_speed_limit;
 	char *low_speed_time;
 
 	curl_global_init(CURL_GLOBAL_ALL);
+
+	if (remote && remote->http_proxy)
+		curl_http_proxy = xstrdup(remote->http_proxy);
 
 	pragma_header = curl_slist_append(pragma_header, "Pragma: no-cache");
 
@@ -314,6 +317,11 @@ void http_cleanup(void)
 
 	curl_slist_free_all(pragma_header);
 	pragma_header = NULL;
+
+	if (curl_http_proxy) {
+		free(curl_http_proxy);
+		curl_http_proxy = NULL;
+	}
 }
 
 struct active_request_slot *get_active_slot(void)

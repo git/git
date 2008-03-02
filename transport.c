@@ -442,7 +442,8 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	struct ref *last_ref = NULL;
 
 	if (!transport->data)
-		transport->data = get_http_walker(transport->url);
+		transport->data = get_http_walker(transport->url,
+						transport->remote);
 
 	refs_url = xmalloc(strlen(transport->url) + 11);
 	sprintf(refs_url, "%s/info/refs", transport->url);
@@ -453,9 +454,6 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, refs_url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
-	if (transport->remote->http_proxy)
-		curl_easy_setopt(slot->curl, CURLOPT_PROXY,
-				 transport->remote->http_proxy);
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
@@ -509,7 +507,8 @@ static int fetch_objs_via_curl(struct transport *transport,
 				 int nr_objs, struct ref **to_fetch)
 {
 	if (!transport->data)
-		transport->data = get_http_walker(transport->url);
+		transport->data = get_http_walker(transport->url,
+						transport->remote);
 	return fetch_objs_via_walker(transport, nr_objs, to_fetch);
 }
 
