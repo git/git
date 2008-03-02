@@ -21,6 +21,9 @@ string options
     --st <st>             get another string (pervert ordering)
     -o <str>              get another string
 
+magic arguments
+    --quux                means --quux
+
 EOF
 
 test_expect_success 'test help' '
@@ -112,6 +115,19 @@ test_expect_success 'detect possible typos' '
 	! test-parse-options -boolean > output 2> output.err &&
 	test ! -s output &&
 	git diff expect.err output.err
+'
+
+cat > expect <<EOF
+boolean: 0
+integer: 0
+string: (not set)
+arg 00: --quux
+EOF
+
+test_expect_success 'keep some options as arguments' '
+	test-parse-options --quux > output 2> output.err &&
+        test ! -s output.err &&
+        git diff expect output
 '
 
 test_done
