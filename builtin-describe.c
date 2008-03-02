@@ -23,7 +23,9 @@ static int max_candidates = 10;
 const char *pattern = NULL;
 
 struct commit_name {
+	struct tag *tag;
 	int prio; /* annotated tag = 2, tag = 1, head = 0 */
+	unsigned char sha1[20];
 	char path[FLEX_ARRAY]; /* more */
 };
 static const char *prio_names[] = {
@@ -32,14 +34,17 @@ static const char *prio_names[] = {
 
 static void add_to_known_names(const char *path,
 			       struct commit *commit,
-			       int prio)
+			       int prio,
+			       const unsigned char *sha1)
 {
 	struct commit_name *e = commit->util;
 	if (!e || e->prio < prio) {
 		size_t len = strlen(path)+1;
 		free(e);
 		e = xmalloc(sizeof(struct commit_name) + len);
+		e->tag = NULL;
 		e->prio = prio;
+		hashcpy(e->sha1, sha1);
 		memcpy(e->path, path, len);
 		commit->util = e;
 	}
@@ -90,7 +95,7 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 		if (!tags && prio < 2)
 			return 0;
 	}
-	add_to_known_names(all ? path + 5 : path + 10, commit, prio);
+	add_to_known_names(all ? path + 5 : path + 10, commit, prio, sha1);
 	return 0;
 }
 
@@ -147,6 +152,25 @@ static unsigned long finish_depth_computation(
 	return seen_commits;
 }
 
+static void display_name(struct commit_name *n)
+{
+	if (n->prio == 2 && !n->tag) {
+		n->tag = lookup_tag(n->sha1);
+		if (!n->tag || !n->tag->tag)
+			die("annotated tag %s not available", n->path);
+		if (strcmp(n->tag->tag, n->path))
+			warning("tag '%s' is really '%s' here", n->tag->tag, n->path);
+	}
+
+	if (n->tag)
+		printf("%s", n->tag->tag);
+	else
+		printf("%s", n->path);
+	if (longformat)
+		printf("-0-g%s",
+		       find_unique_abbrev(n->tag->tagged->sha1, abbrev));
+}
+
 static void describe(const char *arg, int last_one)
 {
 	unsigned char sha1[20];
@@ -171,11 +195,8 @@ static void describe(const char *arg, int last_one)
 
 	n = cmit->util;
 	if (n) {
-		if (!longformat)
-			printf("%s\n", n->path);
-		else
-			printf("%s-0-g%s\n", n->path,
-				find_unique_abbrev(cmit->object.sha1, abbrev));
+		display_name(n);
+		printf("\n");
 		return;
 	}
 
@@ -257,12 +278,12 @@ static void describe(const char *arg, int last_one)
 				sha1_to_hex(gave_up_on->object.sha1));
 		}
 	}
-	if (abbrev == 0)
-		printf("%s\n", all_matches[0].name->path );
-	else
-		printf("%s-%d-g%s\n", all_matches[0].name->path,
-		       all_matches[0].depth,
+
+	display_name(all_matches[0].name);
+	if (abbrev)
+		printf("-%d-g%s", all_matches[0].depth,
 		       find_unique_abbrev(cmit->object.sha1, abbrev));
+	printf("\n");
 
 	if (!last_one)
 		clear_commit_marks(cmit, -1);
