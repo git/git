@@ -85,10 +85,8 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 
 static inline int offset_1st_component(const char *path)
 {
-#ifdef __MINGW32__
-	if (isalpha(path[0]) && path[1] == ':')
+	if (has_dos_drive_prefix(path))
 		return 2 + (path[2] == '/');
-#endif
 	return *path == '/';
 }
 

@@ -330,16 +330,13 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 #undef getcwd
 char *mingw_getcwd(char *pointer, int len)
 {
+	int i;
 	char *ret = getcwd(pointer, len);
 	if (!ret)
 		return ret;
-	if (pointer[0] != 0 && pointer[1] == ':') {
-		int i;
-		for (i = 2; pointer[i]; i++)
-			/* Thanks, Bill. You'll burn in hell for that. */
-			if (pointer[i] == '\\')
-				pointer[i] = '/';
-	}
+	for (i = 0; pointer[i]; i++)
+		if (pointer[i] == '\\')
+			pointer[i] = '/';
 	return ret;
 }
 

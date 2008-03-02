@@ -650,6 +650,18 @@ char **copy_environ(void);
 void free_environ(char **env);
 char **env_setenv(char **env, const char *name);
 
+static inline int has_dos_drive_prefix(const char *path)
+{
+	return isalpha(*path) && path[1] == ':';
+}
+
+#else /* __MINGW32__ */
+
+static inline int has_dos_drive_prefix(const char *path)
+{
+	return 0;
+}
+
 #endif /* __MINGW32__ */
 
 #endif

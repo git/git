@@ -397,10 +397,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 	if (!getcwd(cwd, sizeof(cwd)-1))
 		die("Unable to read current working directory");
-#ifdef __MINGW32__
-	if (cwd[1] == ':')
+	if (has_dos_drive_prefix(cwd))
 		minoffset = 2;
-#endif
 
 	/*
 	 * Test in the following order (relative to the cwd):
