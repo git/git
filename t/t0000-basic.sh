@@ -304,6 +304,8 @@ test_expect_success 'absolute path works as expected' '
 	test "$dir" = "$(test-absolute-path $dir2)" &&
 	file="$dir"/index &&
 	test "$file" = "$(test-absolute-path $dir2/index)" &&
+	basename=blub &&
+	test "$dir/$basename" = $(cd .git && test-absolute-path $basename) &&
 	ln -s ../first/file .git/syml &&
 	sym="$(cd first; pwd -P)"/file &&
 	test "$sym" = "$(test-absolute-path $dir2/syml)"

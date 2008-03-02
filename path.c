@@ -311,8 +311,10 @@ const char *make_absolute_path(const char *path)
 			if (last_slash) {
 				*last_slash = '\0';
 				last_elem = xstrdup(last_slash + 1);
-			} else
+			} else {
 				last_elem = xstrdup(buf);
+				*buf = '\0';
+			}
 		}
 
 		if (*buf) {
