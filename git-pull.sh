@@ -174,6 +174,7 @@ fi
 
 merge_name=$(git fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
 test true = "$rebase" &&
-	exec git-rebase --onto $merge_head ${oldremoteref:-$merge_head}
+	exec git-rebase $strategy_args --onto $merge_head \
+	${oldremoteref:-$merge_head}
 exec git-merge $no_summary $no_commit $squash $no_ff $strategy_args \
 	"$merge_name" HEAD $merge_head

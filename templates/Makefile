@@ -31,13 +31,13 @@ boilerplates.made : $(bpsrc)
 		case "$$boilerplate" in *~) continue ;; esac && \
 		dst=`echo "$$boilerplate" | sed -e 's|^this|.|;s|--|/|g'` && \
 		dir=`expr "$$dst" : '\(.*\)/'` && \
-		mkdir -p blt/$$dir && \
+		$(INSTALL) -d -m 755 blt/$$dir && \
 		case "$$boilerplate" in \
 		*--) ;; \
 		*) if test -n "$$(sed -ne '/^#!\//p' -e '1q' < "$$boilerplate")"; then \
-			cp "$$boilerplate" "blt/$${dst}$(NOEXECTEMPL)"; \
+			cp -p "$$boilerplate" "blt/$${dst}$(NOEXECTEMPL)"; \
 		   else \
-			cp "$$boilerplate" "blt/$$dst"; \
+			cp -p "$$boilerplate" "blt/$$dst"; \
 		   fi ;; \
 		esac || exit; \
 	done && \
@@ -54,4 +54,4 @@ clean:
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_instdir_SQ)'
 	(cd blt && $(TAR) cf - .) | \
-	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && $(TAR) xf -)
+	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && umask 022 && $(TAR) xf -)

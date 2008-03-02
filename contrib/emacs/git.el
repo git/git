@@ -728,7 +728,7 @@ Return the list of files that haven't been handled."
 (defun git-run-ls-files-with-excludes (status files default-state &rest options)
   "Run git-ls-files on FILES with appropriate --exclude-from options."
   (let ((exclude-files (git-get-exclude-files)))
-    (apply #'git-run-ls-files status files default-state "--directory"
+    (apply #'git-run-ls-files status files default-state "--directory" "--no-empty-directory"
            (concat "--exclude-per-directory=" git-per-dir-ignore-file)
            (append options (mapcar (lambda (f) (concat "--exclude-from=" f)) exclude-files)))))
 
@@ -1545,7 +1545,7 @@ Commands:
         (with-current-buffer buffer
           (when (and list-buffers-directory
                      (string-equal fulldir (expand-file-name list-buffers-directory))
-                     (string-match "\\*git-status\\*$" (buffer-name buffer)))
+		     (eq major-mode 'git-status-mode))
             (setq found buffer))))
       (setq list (cdr list)))
     found))

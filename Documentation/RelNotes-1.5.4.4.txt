@@ -1,0 +1,26 @@
+GIT v1.5.4.4 Release Notes
+==========================
+
+Fixes since v1.5.4.3
+--------------------
+
+ * "git cvsexportcommit -w $cvsdir" misbehaved when GIT_DIR is set to a
+   relative directory.
+
+ * "git http-push" had an invalid memory access that could lead it to
+   segfault.
+
+ * When "git rebase -i" gave control back to the user for a commit that is
+   marked to be edited, it just said "modify it with commit --amend",
+   without saying what to do to continue after modifying it.  Give an
+   explicit instruction to run "rebase --continue" to be more helpful.
+
+ * "git send-email" in 1.5.4.3 issued a bogus empty In-Reply-To: header.
+
+Also included are a handful documentation updates.
+
+---
+exec >/var/tmp/1
+echo O=$(git describe maint)
+O=v1.5.4.3
+git shortlog --no-merges $O..maint

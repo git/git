@@ -1,27 +1,31 @@
-# git-gui spellchecking support through aspell
+# git-gui spellchecking support through ispell/aspell
 # Copyright (C) 2008 Shawn Pearce
 
 class spellcheck {
 
-field s_fd     {} ; # pipe to aspell
-field s_version   ; # aspell version string
-field s_lang      ; # current language code
+field s_fd      {} ; # pipe to ispell/aspell
+field s_version {} ; # ispell/aspell version string
+field s_lang    {} ; # current language code
+field s_prog aspell; # are we actually old ispell?
+field s_failed   0 ; # is $s_prog bogus and not working?
 
 field w_text      ; # text widget we are spelling
 field w_menu      ; # context menu for the widget
 field s_menuidx 0 ; # last index of insertion into $w_menu
 
-field s_i              ; # timer registration for _run callbacks
+field s_i           {} ; # timer registration for _run callbacks
 field s_clear        0 ; # did we erase mispelled tags yet?
 field s_seen    [list] ; # lines last seen from $w_text in _run
 field s_checked [list] ; # lines already checked
-field s_pending [list] ; # [$line $data] sent to aspell
+field s_pending [list] ; # [$line $data] sent to ispell/aspell
 field s_suggest        ; # array, list of suggestions, keyed by misspelling
 
 constructor init {pipe_fd ui_text ui_menu} {
 	set w_text $ui_text
 	set w_menu $ui_menu
+	array unset s_suggest
 
+	bind_button3 $w_text [cb _popup_suggest %X %Y @%x,%y]
 	_connect $this $pipe_fd
 	return $this
 }
@@ -33,14 +37,53 @@ method _connect {pipe_fd} {
 		-translation lf
 
 	if {[gets $pipe_fd s_version] <= 0} {
-		close $pipe_fd
-		error [mc "Not connected to aspell"]
+		if {[catch {close $pipe_fd} err]} {
+
+			# Eh?  Is this actually ispell choking on aspell options?
+			#
+			if {$s_prog eq {aspell}
+				&& [regexp -nocase {^Usage: } $err]
+				&& ![catch {
+						set pipe_fd [open [list | $s_prog -v] r]
+						gets $pipe_fd s_version
+						close $pipe_fd
+				}]
+				&& $s_version ne {}} {
+				if {{@(#) } eq [string range $s_version 0 4]} {
+					set s_version [string range $s_version 5 end]
+				}
+				set s_failed 1
+				error_popup [strcat \
+					[mc "Unsupported spell checker"] \
+					":\n\n$s_version"]
+				set s_version {}
+				return
+			}
+
+			regsub -nocase {^Error: } $err {} err
+			if {$s_fd eq {}} {
+				error_popup [strcat [mc "Spell checking is unavailable"] ":\n\n$err"]
+			} else {
+				error_popup [strcat \
+					[mc "Invalid spell checking configuration"] \
+					":\n\n$err\n\n" \
+					[mc "Reverting dictionary to %s." $s_lang]]
+			}
+		} else {
+			error_popup [mc "Spell checker silently failed on startup"]
+		}
+		return
 	}
+
 	if {{@(#) } ne [string range $s_version 0 4]} {
-		close $pipe_fd
-		error [strcat [mc "Unrecognized aspell version"] ": $s_version"]
+		catch {close $pipe_fd}
+		error_popup [strcat [mc "Unrecognized spell checker"] ":\n\n$s_version"]
+		return
 	}
 	set s_version [string range $s_version 5 end]
+	regexp \
+		{International Ispell Version .* \(but really (Aspell .*?)\)$} \
+		$s_version _junk s_version
 
 	puts $pipe_fd !             ; # enable terse mode
 	puts $pipe_fd {$$cr master} ; # fetch the language
@@ -65,7 +108,6 @@ method _connect {pipe_fd} {
 	$w_text tag conf misspelled \
 		-foreground red \
 		-underline 1
-	bind_button3 $w_text [cb _popup_suggest %X %Y @%x,%y]
 
 	array unset s_suggest
 	set s_seen    [list]
@@ -75,7 +117,7 @@ method _connect {pipe_fd} {
 }
 
 method lang {{n {}}} {
-	if {$n ne {} && $s_lang ne $n} {
+	if {$n ne {} && $s_lang ne $n && !$s_failed} {
 		set spell_cmd [list |]
 		lappend spell_cmd aspell
 		lappend spell_cmd --master=$n
@@ -88,7 +130,10 @@ method lang {{n {}}} {
 }
 
 method version {} {
-	return "$s_version, $s_lang"
+	if {$s_version ne {}} {
+		return "$s_version, $s_lang"
+	}
+	return {}
 }
 
 method stop {} {
@@ -333,11 +378,11 @@ method _read {} {
 	fconfigure $s_fd -block 1
 	if {[eof $s_fd]} {
 		if {![catch {close $s_fd} err]} {
-			set err [mc "unexpected eof from aspell"]
+			set err [mc "Unexpected EOF from spell checker"]
 		}
 		catch {after cancel $s_i}
 		$w_text tag remove misspelled 1.0 end
-		error_popup [strcat "Spell Checker Failed" "\n\n" $err]
+		error_popup [strcat [mc "Spell Checker Failed"] "\n\n" $err]
 		return
 	}
 	fconfigure $s_fd -block 0

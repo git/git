@@ -67,16 +67,18 @@ bisect_start() {
 	die "Bad HEAD - I need a HEAD"
 	case "$head" in
 	refs/heads/bisect)
-		if [ -s "$GIT_DIR/head-name" ]; then
-		    branch=`cat "$GIT_DIR/head-name"`
+		if [ -s "$GIT_DIR/BISECT_START" ]; then
+		    branch=`cat "$GIT_DIR/BISECT_START"`
 		else
 		    branch=master
 		fi
 		git checkout $branch || exit
 		;;
 	refs/heads/*|$_x40)
+		# This error message should only be triggered by cogito usage,
+		# and cogito users should understand it relates to cg-seek.
 		[ -s "$GIT_DIR/head-name" ] && die "won't bisect on seeked tree"
-		echo "${head#refs/heads/}" >"$GIT_DIR/head-name"
+		echo "${head#refs/heads/}" >"$GIT_DIR/BISECT_START"
 		;;
 	*)
 		die "Bad HEAD - strange symbolic ref"
@@ -353,8 +355,8 @@ bisect_reset() {
 		return
 	}
 	case "$#" in
-	0) if [ -s "$GIT_DIR/head-name" ]; then
-	       branch=`cat "$GIT_DIR/head-name"`
+	0) if [ -s "$GIT_DIR/BISECT_START" ]; then
+	       branch=`cat "$GIT_DIR/BISECT_START"`
 	   else
 	       branch=master
 	   fi ;;
@@ -365,7 +367,9 @@ bisect_reset() {
 	    usage ;;
 	esac
 	if git checkout "$branch"; then
+		# Cleanup head-name if it got left by an old version of git-bisect
 		rm -f "$GIT_DIR/head-name"
+		rm -f "$GIT_DIR/BISECT_START"
 		bisect_clean_state
 	fi
 }

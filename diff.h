@@ -30,6 +30,8 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_FORMAT_SUMMARY	0x0008
 #define DIFF_FORMAT_PATCH	0x0010
 #define DIFF_FORMAT_SHORTSTAT	0x0020
+#define DIFF_FORMAT_DIRSTAT	0x0040
+#define DIFF_FORMAT_CUMULATIVE	0x0080
 
 /* These override all above */
 #define DIFF_FORMAT_NAME	0x0100
@@ -60,6 +62,7 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_EXIT_WITH_STATUS    (1 << 14)
 #define DIFF_OPT_REVERSE_DIFF        (1 << 15)
 #define DIFF_OPT_CHECK_FAILED        (1 << 16)
+#define DIFF_OPT_RELATIVE_NAME       (1 << 17)
 #define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
 #define DIFF_OPT_SET(opts, flag)    ((opts)->flags |= DIFF_OPT_##flag)
 #define DIFF_OPT_CLR(opts, flag)    ((opts)->flags &= ~DIFF_OPT_##flag)
@@ -80,8 +83,11 @@ struct diff_options {
 	int pickaxe_opts;
 	int rename_score;
 	int rename_limit;
+	int dirstat_percent;
 	int setup;
 	int abbrev;
+	const char *prefix;
+	int prefix_length;
 	const char *msg_sep;
 	const char *stat_sep;
 	long xdl_opts;

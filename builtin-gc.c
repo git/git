@@ -172,12 +172,14 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	int prune = 0;
 	int aggressive = 0;
 	int auto_gc = 0;
+	int quiet = 0;
 	char buf[80];
 
 	struct option builtin_gc_options[] = {
 		OPT_BOOLEAN(0, "prune", &prune, "prune unreferenced objects"),
 		OPT_BOOLEAN(0, "aggressive", &aggressive, "be more thorough (increased runtime)"),
 		OPT_BOOLEAN(0, "auto", &auto_gc, "enable auto-gc mode"),
+		OPT_BOOLEAN('q', "quiet", &quiet, "suppress progress reports"),
 		OPT_END()
 	};
 
@@ -197,6 +199,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			append_option(argv_repack, buf, MAX_ADD);
 		}
 	}
+	if (quiet)
+		append_option(argv_repack, "-q", MAX_ADD);
 
 	if (auto_gc) {
 		/*

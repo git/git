@@ -633,12 +633,13 @@ static int handle_one_ref(const char *path, const unsigned char *sha1, int flag,
 	return 0;
 }
 
-static void handle_all(struct rev_info *revs, unsigned flags)
+static void handle_refs(struct rev_info *revs, unsigned flags,
+		int (*for_each)(each_ref_fn, void *))
 {
 	struct all_refs_cb cb;
 	cb.all_revs = revs;
 	cb.all_flags = flags;
-	for_each_ref(handle_one_ref, &cb);
+	for_each(handle_one_ref, &cb);
 }
 
 static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
@@ -738,6 +739,10 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->commit_format = CMIT_FMT_DEFAULT;
 
 	diff_setup(&revs->diffopt);
+	if (prefix && !revs->diffopt.prefix) {
+		revs->diffopt.prefix = prefix;
+		revs->diffopt.prefix_length = strlen(prefix);
+	}
 }
 
 static void add_pending_commit_list(struct rev_info *revs,
@@ -942,6 +947,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	int left = 1;
 	int all_match = 0;
 	int regflags = 0;
+	int fixed = 0;
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
@@ -1010,7 +1016,19 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
-				handle_all(revs, flags);
+				handle_refs(revs, flags, for_each_ref);
+				continue;
+			}
+			if (!strcmp(arg, "--branches")) {
+				handle_refs(revs, flags, for_each_branch_ref);
+				continue;
+			}
+			if (!strcmp(arg, "--tags")) {
+				handle_refs(revs, flags, for_each_tag_ref);
+				continue;
+			}
+			if (!strcmp(arg, "--remotes")) {
+				handle_refs(revs, flags, for_each_remote_ref);
 				continue;
 			}
 			if (!strcmp(arg, "--first-parent")) {
@@ -1238,6 +1256,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				regflags |= REG_ICASE;
 				continue;
 			}
+			if (!strcmp(arg, "--fixed-strings") ||
+			    !strcmp(arg, "-F")) {
+				fixed = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--all-match")) {
 				all_match = 1;
 				continue;
@@ -1293,8 +1316,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		}
 	}
 
-	if (revs->grep_filter)
+	if (revs->grep_filter) {
 		revs->grep_filter->regflags |= regflags;
+		revs->grep_filter->fixed = fixed;
+	}
 
 	if (show_merge)
 		prepare_show_merge(revs);

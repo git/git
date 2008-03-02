@@ -471,6 +471,14 @@ int git_default_config(const char *var, const char *value)
 		whitespace_rule_cfg = parse_whitespace_rule(value);
 		return 0;
 	}
+	if (!strcmp(var, "branch.autosetupmerge")) {
+		if (value && !strcasecmp(value, "always")) {
+			git_branch_track = BRANCH_TRACK_ALWAYS;
+			return 0;
+		}
+		git_branch_track = git_config_bool(var, value);
+		return 0;
+	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;

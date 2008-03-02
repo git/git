@@ -138,7 +138,7 @@ aborts in the middle,.  You can recover from this in one of two ways:
 
 The command refuses to process new mailboxes while `.dotest`
 directory exists, so if you decide to start over from scratch,
-run `rm -f .dotest` before running the command with mailbox
+run `rm -f -r .dotest` before running the command with mailbox
 names.
 
 

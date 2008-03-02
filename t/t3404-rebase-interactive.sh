@@ -61,7 +61,7 @@ test_expect_success 'setup' '
 	git tag I
 '
 
-echo "#!$SHELL" >fake-editor
+echo "#!$SHELL_PATH" >fake-editor.sh
 cat >> fake-editor.sh <<\EOF
 case "$1" in
 */COMMIT_EDITMSG)

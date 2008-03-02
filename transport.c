@@ -622,6 +622,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
 	int i;
+	struct ref *refs_tmp = NULL;
 
 	memset(&args, 0, sizeof(args));
 	args.uploadpack = data->uploadpack;
@@ -634,21 +635,21 @@ static int fetch_refs_via_pack(struct transport *transport,
 	for (i = 0; i < nr_heads; i++)
 		origh[i] = heads[i] = xstrdup(to_fetch[i]->name);
 
-	refs = transport_get_remote_refs(transport);
 	if (!data->conn) {
-		struct ref *refs_tmp;
 		connect_setup(transport);
 		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL, 0);
-		free_refs(refs_tmp);
 	}
 
-	refs = fetch_pack(&args, data->fd, data->conn, transport->remote_refs,
+	refs = fetch_pack(&args, data->fd, data->conn,
+			  refs_tmp ? refs_tmp : transport->remote_refs,
 			  dest, nr_heads, heads, &transport->pack_lockfile);
 	close(data->fd[0]);
 	close(data->fd[1]);
 	if (finish_connect(data->conn))
 		refs = NULL;
 	data->conn = NULL;
+
+	free_refs(refs_tmp);
 
 	for (i = 0; i < nr_heads; i++)
 		free(origh[i]);

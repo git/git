@@ -213,9 +213,9 @@ static const struct {
 	{ "EAST", +10, 0, },	/* Eastern Australian Standard */
 	{ "EADT", +10, 1, },	/* Eastern Australian Daylight */
 	{ "GST",  +10, 0, },	/* Guam Standard, USSR Zone 9 */
-	{ "NZT",  +11, 0, },	/* New Zealand */
-	{ "NZST", +11, 0, },	/* New Zealand Standard */
-	{ "NZDT", +11, 1, },	/* New Zealand Daylight */
+	{ "NZT",  +12, 0, },	/* New Zealand */
+	{ "NZST", +12, 0, },	/* New Zealand Standard */
+	{ "NZDT", +12, 1, },	/* New Zealand Daylight */
 	{ "IDLE", +12, 0, },	/* International Date Line East */
 };
 

@@ -16,7 +16,8 @@ elif test -d .git &&
 	case "$VN" in
 	*$LF*) (exit 1) ;;
 	v[0-9]*)
-		git diff-index --quiet HEAD || VN="$VN-dirty" ;;
+		test -z "$(git diff-index --name-only HEAD)" ||
+		VN="$VN-dirty" ;;
 	esac
 then
 	VN=$(echo "$VN" | sed -e 's/-/./g');

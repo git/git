@@ -37,8 +37,13 @@ static unsigned int hash_name(const char *name, int namelen)
 static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 {
 	void **pos;
-	unsigned int hash = hash_name(ce->name, ce_namelen(ce));
+	unsigned int hash;
 
+	if (ce->ce_flags & CE_HASHED)
+		return;
+	ce->ce_flags |= CE_HASHED;
+	ce->next = NULL;
+	hash = hash_name(ce->name, ce_namelen(ce));
 	pos = insert_hash(hash, ce, &istate->name_hash);
 	if (pos) {
 		ce->next = *pos;
@@ -59,33 +64,18 @@ static void lazy_init_name_hash(struct index_state *istate)
 
 static void set_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {
+	ce->ce_flags &= ~CE_UNHASHED;
 	istate->cache[nr] = ce;
 	if (istate->name_hash_initialized)
 		hash_index_entry(istate, ce);
-}
-
-/*
- * We don't actually *remove* it, we can just mark it invalid so that
- * we won't find it in lookups.
- *
- * Not only would we have to search the lists (simple enough), but
- * we'd also have to rehash other hash buckets in case this makes the
- * hash bucket empty (common). So it's much better to just mark
- * it.
- */
-static void remove_hash_entry(struct index_state *istate, struct cache_entry *ce)
-{
-	ce->ce_flags |= CE_UNHASHED;
 }
 
 static void replace_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {
 	struct cache_entry *old = istate->cache[nr];
 
-	if (ce != old) {
-		remove_hash_entry(istate, old);
-		set_index_entry(istate, nr, ce);
-	}
+	remove_index_entry(old);
+	set_index_entry(istate, nr, ce);
 	istate->cache_changed = 1;
 }
 
@@ -413,7 +403,7 @@ int remove_index_entry_at(struct index_state *istate, int pos)
 {
 	struct cache_entry *ce = istate->cache[pos];
 
-	remove_hash_entry(istate, ce);
+	remove_index_entry(ce);
 	istate->cache_changed = 1;
 	istate->cache_nr--;
 	if (pos >= istate->cache_nr)
@@ -1173,6 +1163,16 @@ int discard_index(struct index_state *istate)
 	istate->alloc = NULL;
 
 	/* no need to throw away allocated active_cache */
+	return 0;
+}
+
+int unmerged_index(struct index_state *istate)
+{
+	int i;
+	for (i = 0; i < istate->cache_nr; i++) {
+		if (ce_stage(istate->cache[i]))
+			return 1;
+	}
 	return 0;
 }
 

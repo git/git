@@ -12,6 +12,7 @@
 #include "builtin.h"
 #include "remote.h"
 #include "parse-options.h"
+#include "branch.h"
 
 static const char * const builtin_branch_usage[] = {
 	"git-branch [options] [-r | -a]",
@@ -28,8 +29,6 @@ static const char * const builtin_branch_usage[] = {
 
 static const char *head;
 static unsigned char head_sha1[20];
-
-static int branch_track = 1;
 
 static int branch_use_color = -1;
 static char branch_colors[][COLOR_MAXLEN] = {
@@ -73,10 +72,6 @@ static int git_branch_config(const char *var, const char *value)
 		if (!value)
 			return config_error_nonbool(var);
 		color_parse(value, var, branch_colors[slot]);
-		return 0;
-	}
-	if (!strcmp(var, "branch.autosetupmerge")) {
-		branch_track = git_config_bool(var, value);
 		return 0;
 	}
 	return git_color_default_config(var, value);
@@ -126,8 +121,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			continue;
 		}
 
-		if (name)
-			free(name);
+		free(name);
 
 		name = xstrdup(mkpath(fmt, argv[i]));
 		if (!resolve_ref(name, sha1, 1, NULL)) {
@@ -172,8 +166,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 		}
 	}
 
-	if (name)
-		free(name);
+	free(name);
 
 	return(ret);
 }
@@ -359,141 +352,6 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 	free_ref_list(&ref_list);
 }
 
-struct tracking {
-	struct refspec spec;
-	char *src;
-	const char *remote;
-	int matches;
-};
-
-static int find_tracked_branch(struct remote *remote, void *priv)
-{
-	struct tracking *tracking = priv;
-
-	if (!remote_find_tracking(remote, &tracking->spec)) {
-		if (++tracking->matches == 1) {
-			tracking->src = tracking->spec.src;
-			tracking->remote = remote->name;
-		} else {
-			free(tracking->spec.src);
-			if (tracking->src) {
-				free(tracking->src);
-				tracking->src = NULL;
-			}
-		}
-		tracking->spec.src = NULL;
-	}
-
-	return 0;
-}
-
-
-/*
- * This is called when new_ref is branched off of orig_ref, and tries
- * to infer the settings for branch.<new_ref>.{remote,merge} from the
- * config.
- */
-static int setup_tracking(const char *new_ref, const char *orig_ref)
-{
-	char key[1024];
-	struct tracking tracking;
-
-	if (strlen(new_ref) > 1024 - 7 - 7 - 1)
-		return error("Tracking not set up: name too long: %s",
-				new_ref);
-
-	memset(&tracking, 0, sizeof(tracking));
-	tracking.spec.dst = (char *)orig_ref;
-	if (for_each_remote(find_tracked_branch, &tracking) ||
-			!tracking.matches)
-		return 1;
-
-	if (tracking.matches > 1)
-		return error("Not tracking: ambiguous information for ref %s",
-				orig_ref);
-
-	if (tracking.matches == 1) {
-		sprintf(key, "branch.%s.remote", new_ref);
-		git_config_set(key, tracking.remote ?  tracking.remote : ".");
-		sprintf(key, "branch.%s.merge", new_ref);
-		git_config_set(key, tracking.src);
-		free(tracking.src);
-		printf("Branch %s set up to track remote branch %s.\n",
-			       new_ref, orig_ref);
-	}
-
-	return 0;
-}
-
-static void create_branch(const char *name, const char *start_name,
-			  int force, int reflog, int track)
-{
-	struct ref_lock *lock;
-	struct commit *commit;
-	unsigned char sha1[20];
-	char *real_ref, ref[PATH_MAX], msg[PATH_MAX + 20];
-	int forcing = 0;
-
-	snprintf(ref, sizeof ref, "refs/heads/%s", name);
-	if (check_ref_format(ref))
-		die("'%s' is not a valid branch name.", name);
-
-	if (resolve_ref(ref, sha1, 1, NULL)) {
-		if (!force)
-			die("A branch named '%s' already exists.", name);
-		else if (!is_bare_repository() && !strcmp(head, name))
-			die("Cannot force update the current branch.");
-		forcing = 1;
-	}
-
-	real_ref = NULL;
-	if (get_sha1(start_name, sha1))
-		die("Not a valid object name: '%s'.", start_name);
-
-	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
-	case 0:
-		/* Not branching from any existing branch */
-		real_ref = NULL;
-		break;
-	case 1:
-		/* Unique completion -- good */
-		break;
-	default:
-		die("Ambiguous object name: '%s'.", start_name);
-		break;
-	}
-
-	if ((commit = lookup_commit_reference(sha1)) == NULL)
-		die("Not a valid branch point: '%s'.", start_name);
-	hashcpy(sha1, commit->object.sha1);
-
-	lock = lock_any_ref_for_update(ref, NULL, 0);
-	if (!lock)
-		die("Failed to lock ref for update: %s.", strerror(errno));
-
-	if (reflog)
-		log_all_ref_updates = 1;
-
-	if (forcing)
-		snprintf(msg, sizeof msg, "branch: Reset from %s",
-			 start_name);
-	else
-		snprintf(msg, sizeof msg, "branch: Created from %s",
-			 start_name);
-
-	/* When branching off a remote branch, set up so that git-pull
-	   automatically merges from there.  So far, this is only done for
-	   remotes registered via .git/config.  */
-	if (real_ref && track)
-		setup_tracking(name, real_ref);
-
-	if (write_ref_sha1(lock, sha1, msg) < 0)
-		die("Failed to write ref: %s.", strerror(errno));
-
-	if (real_ref)
-		free(real_ref);
-}
-
 static void rename_branch(const char *oldname, const char *newname, int force)
 {
 	char oldref[PATH_MAX], newref[PATH_MAX], logmsg[PATH_MAX*2 + 100];
@@ -554,14 +412,16 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, rename = 0, force_create = 0;
 	int verbose = 0, abbrev = DEFAULT_ABBREV, detached = 0;
-	int reflog = 0, track;
+	int reflog = 0;
+	enum branch_track track;
 	int kinds = REF_LOCAL_BRANCH;
 	struct commit_list *with_commit = NULL;
 
 	struct option options[] = {
 		OPT_GROUP("Generic options"),
 		OPT__VERBOSE(&verbose),
-		OPT_BOOLEAN( 0 , "track",  &track, "set up tracking mode (see git-pull(1))"),
+		OPT_SET_INT( 0 , "track",  &track, "set up tracking mode (see git-pull(1))",
+			BRANCH_TRACK_EXPLICIT),
 		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
 		OPT_SET_INT('r', NULL,     &kinds, "act on remote-tracking branches",
 			REF_REMOTE_BRANCH),
@@ -592,7 +452,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (branch_use_color == -1)
 		branch_use_color = git_use_color_default;
 
-	track = branch_track;
+	track = git_branch_track;
 	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
 	if (!!delete + !!rename + !!force_create > 1)
 		usage_with_options(builtin_branch_usage, options);
@@ -618,7 +478,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	else if (rename && (argc == 2))
 		rename_branch(argv[0], argv[1], rename > 1);
 	else if (argc <= 2)
-		create_branch(argv[0], (argc == 2) ? argv[1] : head,
+		create_branch(head, argv[0], (argc == 2) ? argv[1] : head,
 			      force_create, reflog, track);
 	else
 		usage_with_options(builtin_branch_usage, options);

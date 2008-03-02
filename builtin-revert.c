@@ -397,8 +397,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		else
 			return execl_git_cmd("commit", "-n", "-F", defmsg, NULL);
 	}
-	if (reencoded_message)
-		free(reencoded_message);
+	free(reencoded_message);
 
 	return 0;
 }

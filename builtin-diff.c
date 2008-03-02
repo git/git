@@ -44,12 +44,17 @@ static void stuff_change(struct diff_options *opt,
 		tmp_u = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_u;
 		tmp_c = old_name; old_name = new_name; new_name = tmp_c;
 	}
+
+	if (opt->prefix &&
+	    (strncmp(old_name, opt->prefix, opt->prefix_length) ||
+	     strncmp(new_name, opt->prefix, opt->prefix_length)))
+		return;
+
 	one = alloc_filespec(old_name);
 	two = alloc_filespec(new_name);
 	fill_filespec(one, old_sha1, old_mode);
 	fill_filespec(two, new_sha1, new_mode);
 
-	/* NEEDSWORK: shouldn't this part of diffopt??? */
 	diff_queue(&diff_queued_diff, one, two);
 }
 
@@ -245,6 +250,10 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 		if (diff_setup_done(&rev.diffopt) < 0)
 			die("diff_setup_done failed");
+	}
+	if (rev.diffopt.prefix && nongit) {
+		rev.diffopt.prefix = NULL;
+		rev.diffopt.prefix_length = 0;
 	}
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);

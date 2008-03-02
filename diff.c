@@ -118,8 +118,7 @@ static int parse_funcname_pattern(const char *var, const char *ep, const char *v
 		pp->next = funcname_pattern_list;
 		funcname_pattern_list = pp;
 	}
-	if (pp->pattern)
-		free(pp->pattern);
+	free(pp->pattern);
 	pp->pattern = xstrdup(value);
 	return 0;
 }
@@ -272,8 +271,8 @@ static void print_line_count(int count)
 	}
 }
 
-static void copy_file(int prefix, const char *data, int size,
-		const char *set, const char *reset)
+static void copy_file_with_prefix(int prefix, const char *data, int size,
+				  const char *set, const char *reset)
 {
 	int ch, nl_just_seen = 1;
 	while (0 < size--) {
@@ -331,9 +330,9 @@ static void emit_rewrite_diff(const char *name_a,
 	print_line_count(lc_b);
 	printf(" @@%s\n", reset);
 	if (lc_a)
-		copy_file('-', one->data, one->size, old, reset);
+		copy_file_with_prefix('-', one->data, one->size, old, reset);
 	if (lc_b)
-		copy_file('+', two->data, two->size, new, reset);
+		copy_file_with_prefix('+', two->data, two->size, new, reset);
 }
 
 static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
@@ -492,10 +491,8 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 				ecbdata->diff_words->plus.text.size)
 			diff_words_show(ecbdata->diff_words);
 
-		if (ecbdata->diff_words->minus.text.ptr)
-			free (ecbdata->diff_words->minus.text.ptr);
-		if (ecbdata->diff_words->plus.text.ptr)
-			free (ecbdata->diff_words->plus.text.ptr);
+		free (ecbdata->diff_words->minus.text.ptr);
+		free (ecbdata->diff_words->plus.text.ptr);
 		free(ecbdata->diff_words);
 		ecbdata->diff_words = NULL;
 	}
@@ -982,6 +979,90 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 	}
 }
 
+struct diffstat_dir {
+	struct diffstat_file **files;
+	int nr, percent, cumulative;
+};
+
+static long gather_dirstat(struct diffstat_dir *dir, unsigned long changed, const char *base, int baselen)
+{
+	unsigned long this_dir = 0;
+	unsigned int sources = 0;
+
+	while (dir->nr) {
+		struct diffstat_file *f = *dir->files;
+		int namelen = strlen(f->name);
+		unsigned long this;
+		char *slash;
+
+		if (namelen < baselen)
+			break;
+		if (memcmp(f->name, base, baselen))
+			break;
+		slash = strchr(f->name + baselen, '/');
+		if (slash) {
+			int newbaselen = slash + 1 - f->name;
+			this = gather_dirstat(dir, changed, f->name, newbaselen);
+			sources++;
+		} else {
+			if (f->is_unmerged || f->is_binary)
+				this = 0;
+			else
+				this = f->added + f->deleted;
+			dir->files++;
+			dir->nr--;
+			sources += 2;
+		}
+		this_dir += this;
+	}
+
+	/*
+	 * We don't report dirstat's for
+	 *  - the top level
+	 *  - or cases where everything came from a single directory
+	 *    under this directory (sources == 1).
+	 */
+	if (baselen && sources != 1) {
+		int permille = this_dir * 1000 / changed;
+		if (permille) {
+			int percent = permille / 10;
+			if (percent >= dir->percent) {
+				printf("%4d.%01d%% %.*s\n", percent, permille % 10, baselen, base);
+				if (!dir->cumulative)
+					return 0;
+			}
+		}
+	}
+	return this_dir;
+}
+
+static void show_dirstat(struct diffstat_t *data, struct diff_options *options)
+{
+	int i;
+	unsigned long changed;
+	struct diffstat_dir dir;
+
+	/* Calculate total changes */
+	changed = 0;
+	for (i = 0; i < data->nr; i++) {
+		if (data->files[i]->is_binary || data->files[i]->is_unmerged)
+			continue;
+		changed += data->files[i]->added;
+		changed += data->files[i]->deleted;
+	}
+
+	/* This can happen even with many files, if everything was renames */
+	if (!changed)
+		return;
+
+	/* Show all directories with more than x% of the changes */
+	dir.files = data->files;
+	dir.nr = data->nr;
+	dir.percent = options->dirstat_percent;
+	dir.cumulative = options->output_format & DIFF_FORMAT_CUMULATIVE;
+	gather_dirstat(&dir, changed, "", 0);
+}
+
 static void free_diffstat_info(struct diffstat_t *diffstat)
 {
 	int i;
@@ -1399,6 +1480,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 }
 
 static void builtin_checkdiff(const char *name_a, const char *name_b,
+			      const char *attr_path,
 			     struct diff_filespec *one,
 			     struct diff_filespec *two, struct diff_options *o)
 {
@@ -1413,7 +1495,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
 	data.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
-	data.ws_rule = whitespace_rule(data.filename);
+	data.ws_rule = whitespace_rule(attr_path);
 
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
@@ -1838,6 +1920,9 @@ static const char *external_diff_attr(const char *name)
 {
 	struct git_attr_check attr_diff_check;
 
+	if (!name)
+		return NULL;
+
 	setup_diff_attr_check(&attr_diff_check);
 	if (!git_checkattr(name, 1, &attr_diff_check)) {
 		const char *value = attr_diff_check.value;
@@ -1857,6 +1942,7 @@ static const char *external_diff_attr(const char *name)
 static void run_diff_cmd(const char *pgm,
 			 const char *name,
 			 const char *other,
+			 const char *attr_path,
 			 struct diff_filespec *one,
 			 struct diff_filespec *two,
 			 const char *xfrm_msg,
@@ -1866,7 +1952,7 @@ static void run_diff_cmd(const char *pgm,
 	if (!DIFF_OPT_TST(o, ALLOW_EXTERNAL))
 		pgm = NULL;
 	else {
-		const char *cmd = external_diff_attr(name);
+		const char *cmd = external_diff_attr(attr_path);
 		if (cmd)
 			pgm = cmd;
 	}
@@ -1907,6 +1993,15 @@ static int similarity_index(struct diff_filepair *p)
 	return p->score * 100 / MAX_SCORE;
 }
 
+static void strip_prefix(int prefix_length, const char **namep, const char **otherp)
+{
+	/* Strip the prefix but do not molest /dev/null and absolute paths */
+	if (*namep && **namep != '/')
+		*namep += prefix_length;
+	if (*otherp && **otherp != '/')
+		*otherp += prefix_length;
+}
+
 static void run_diff(struct diff_filepair *p, struct diff_options *o)
 {
 	const char *pgm = external_diff();
@@ -1916,16 +2011,21 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 	struct diff_filespec *two = p->two;
 	const char *name;
 	const char *other;
+	const char *attr_path;
 	int complete_rewrite = 0;
-
-
-	if (DIFF_PAIR_UNMERGED(p)) {
-		run_diff_cmd(pgm, p->one->path, NULL, NULL, NULL, NULL, o, 0);
-		return;
-	}
 
 	name  = p->one->path;
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+	attr_path = name;
+	if (o->prefix_length)
+		strip_prefix(o->prefix_length, &name, &other);
+
+	if (DIFF_PAIR_UNMERGED(p)) {
+		run_diff_cmd(pgm, name, NULL, attr_path,
+			     NULL, NULL, NULL, o, 0);
+		return;
+	}
+
 	diff_fill_sha1_info(one);
 	diff_fill_sha1_info(two);
 
@@ -1988,15 +2088,17 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		 * needs to be split into deletion and creation.
 		 */
 		struct diff_filespec *null = alloc_filespec(two->path);
-		run_diff_cmd(NULL, name, other, one, null, xfrm_msg, o, 0);
+		run_diff_cmd(NULL, name, other, attr_path,
+			     one, null, xfrm_msg, o, 0);
 		free(null);
 		null = alloc_filespec(one->path);
-		run_diff_cmd(NULL, name, other, null, two, xfrm_msg, o, 0);
+		run_diff_cmd(NULL, name, other, attr_path,
+			     null, two, xfrm_msg, o, 0);
 		free(null);
 	}
 	else
-		run_diff_cmd(pgm, name, other, one, two, xfrm_msg, o,
-			     complete_rewrite);
+		run_diff_cmd(pgm, name, other, attr_path,
+			     one, two, xfrm_msg, o, complete_rewrite);
 
 	strbuf_release(&msg);
 }
@@ -2017,6 +2119,9 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	name = p->one->path;
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
 
+	if (o->prefix_length)
+		strip_prefix(o->prefix_length, &name, &other);
+
 	diff_fill_sha1_info(p->one);
 	diff_fill_sha1_info(p->two);
 
@@ -2029,6 +2134,7 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 {
 	const char *name;
 	const char *other;
+	const char *attr_path;
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
@@ -2037,11 +2143,15 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 
 	name = p->one->path;
 	other = (strcmp(name, p->two->path) ? p->two->path : NULL);
+	attr_path = other ? other : name;
+
+	if (o->prefix_length)
+		strip_prefix(o->prefix_length, &name, &other);
 
 	diff_fill_sha1_info(p->one);
 	diff_fill_sha1_info(p->two);
 
-	builtin_checkdiff(name, other, p->one, p->two, o);
+	builtin_checkdiff(name, other, attr_path, p->one, p->two, o);
 }
 
 void diff_setup(struct diff_options *options)
@@ -2050,6 +2160,7 @@ void diff_setup(struct diff_options *options)
 	options->line_termination = '\n';
 	options->break_opt = -1;
 	options->rename_limit = -1;
+	options->dirstat_percent = 3;
 	options->context = 3;
 	options->msg_sep = "";
 
@@ -2083,6 +2194,13 @@ int diff_setup_done(struct diff_options *options)
 	if (DIFF_OPT_TST(options, FIND_COPIES_HARDER))
 		options->detect_rename = DIFF_DETECT_COPY;
 
+	if (!DIFF_OPT_TST(options, RELATIVE_NAME))
+		options->prefix = NULL;
+	if (options->prefix)
+		options->prefix_length = strlen(options->prefix);
+	else
+		options->prefix_length = 0;
+
 	if (options->output_format & (DIFF_FORMAT_NAME |
 				      DIFF_FORMAT_NAME_STATUS |
 				      DIFF_FORMAT_CHECKDIFF |
@@ -2091,6 +2209,7 @@ int diff_setup_done(struct diff_options *options)
 					    DIFF_FORMAT_NUMSTAT |
 					    DIFF_FORMAT_DIFFSTAT |
 					    DIFF_FORMAT_SHORTSTAT |
+					    DIFF_FORMAT_DIRSTAT |
 					    DIFF_FORMAT_SUMMARY |
 					    DIFF_FORMAT_PATCH);
 
@@ -2102,6 +2221,7 @@ int diff_setup_done(struct diff_options *options)
 				      DIFF_FORMAT_NUMSTAT |
 				      DIFF_FORMAT_DIFFSTAT |
 				      DIFF_FORMAT_SHORTSTAT |
+				      DIFF_FORMAT_DIRSTAT |
 				      DIFF_FORMAT_SUMMARY |
 				      DIFF_FORMAT_CHECKDIFF))
 		DIFF_OPT_SET(options, RECURSIVE);
@@ -2212,6 +2332,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_NUMSTAT;
 	else if (!strcmp(arg, "--shortstat"))
 		options->output_format |= DIFF_FORMAT_SHORTSTAT;
+	else if (opt_arg(arg, 'X', "dirstat", &options->dirstat_percent))
+		options->output_format |= DIFF_FORMAT_DIRSTAT;
+	else if (!strcmp(arg, "--cumulative"))
+		options->output_format |= DIFF_FORMAT_CUMULATIVE;
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;
 	else if (!strcmp(arg, "--summary"))
@@ -2271,6 +2395,12 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--no-renames"))
 		options->detect_rename = 0;
+	else if (!strcmp(arg, "--relative"))
+		DIFF_OPT_SET(options, RELATIVE_NAME);
+	else if (!prefixcmp(arg, "--relative=")) {
+		DIFF_OPT_SET(options, RELATIVE_NAME);
+		options->prefix = arg + 11;
+	}
 
 	/* xdiff options */
 	else if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
@@ -2482,12 +2612,20 @@ static void diff_flush_raw(struct diff_filepair *p, struct diff_options *opt)
 		printf("%c%c", p->status, inter_name_termination);
 	}
 
-	if (p->status == DIFF_STATUS_COPIED || p->status == DIFF_STATUS_RENAMED) {
-		write_name_quoted(p->one->path, stdout, inter_name_termination);
-		write_name_quoted(p->two->path, stdout, line_termination);
+	if (p->status == DIFF_STATUS_COPIED ||
+	    p->status == DIFF_STATUS_RENAMED) {
+		const char *name_a, *name_b;
+		name_a = p->one->path;
+		name_b = p->two->path;
+		strip_prefix(opt->prefix_length, &name_a, &name_b);
+		write_name_quoted(name_a, stdout, inter_name_termination);
+		write_name_quoted(name_b, stdout, line_termination);
 	} else {
-		const char *path = p->one->mode ? p->one->path : p->two->path;
-		write_name_quoted(path, stdout, line_termination);
+		const char *name_a, *name_b;
+		name_a = p->one->mode ? p->one->path : p->two->path;
+		name_b = NULL;
+		strip_prefix(opt->prefix_length, &name_a, &name_b);
+		write_name_quoted(name_a, stdout, line_termination);
 	}
 }
 
@@ -2684,8 +2822,13 @@ static void flush_one_pair(struct diff_filepair *p, struct diff_options *opt)
 		diff_flush_checkdiff(p, opt);
 	else if (fmt & (DIFF_FORMAT_RAW | DIFF_FORMAT_NAME_STATUS))
 		diff_flush_raw(p, opt);
-	else if (fmt & DIFF_FORMAT_NAME)
-		write_name_quoted(p->two->path, stdout, opt->line_termination);
+	else if (fmt & DIFF_FORMAT_NAME) {
+		const char *name_a, *name_b;
+		name_a = p->two->path;
+		name_b = NULL;
+		strip_prefix(opt->prefix_length, &name_a, &name_b);
+		write_name_quoted(name_a, stdout, opt->line_termination);
+	}
 }
 
 static void show_file_mode_name(const char *newdelete, struct diff_filespec *fs)
@@ -2930,7 +3073,7 @@ void diff_flush(struct diff_options *options)
 		separator++;
 	}
 
-	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT)) {
+	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIRSTAT)) {
 		struct diffstat_t diffstat;
 
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
@@ -2940,6 +3083,8 @@ void diff_flush(struct diff_options *options)
 			if (check_pair_status(p))
 				diff_flush_stat(p, options, &diffstat);
 		}
+		if (output_format & DIFF_FORMAT_DIRSTAT)
+			show_dirstat(&diffstat, options);
 		if (output_format & DIFF_FORMAT_NUMSTAT)
 			show_numstat(&diffstat, options);
 		if (output_format & DIFF_FORMAT_DIFFSTAT)
@@ -3171,6 +3316,11 @@ void diff_addremove(struct diff_options *options,
 
 	if (!path) path = "";
 	sprintf(concatpath, "%s%s", base, path);
+
+	if (options->prefix &&
+	    strncmp(concatpath, options->prefix, options->prefix_length))
+		return;
+
 	one = alloc_filespec(concatpath);
 	two = alloc_filespec(concatpath);
 
@@ -3200,6 +3350,11 @@ void diff_change(struct diff_options *options,
 	}
 	if (!path) path = "";
 	sprintf(concatpath, "%s%s", base, path);
+
+	if (options->prefix &&
+	    strncmp(concatpath, options->prefix, options->prefix_length))
+		return;
+
 	one = alloc_filespec(concatpath);
 	two = alloc_filespec(concatpath);
 	fill_filespec(one, old_sha1, old_mode);
@@ -3214,6 +3369,11 @@ void diff_unmerge(struct diff_options *options,
 		  unsigned mode, const unsigned char *sha1)
 {
 	struct diff_filespec *one, *two;
+
+	if (options->prefix &&
+	    strncmp(path, options->prefix, options->prefix_length))
+		return;
+
 	one = alloc_filespec(path);
 	two = alloc_filespec(path);
 	fill_filespec(one, sha1, mode);

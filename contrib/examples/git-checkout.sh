@@ -210,11 +210,14 @@ then
     git read-tree $v --reset -u $new
 else
     git update-index --refresh >/dev/null
-    merge_error=$(git read-tree -m -u --exclude-per-directory=.gitignore $old $new 2>&1) || (
-	case "$merge" in
-	'')
-		echo >&2 "$merge_error"
+    git read-tree $v -m -u --exclude-per-directory=.gitignore $old $new || (
+	case "$merge,$v" in
+	,*)
 		exit 1 ;;
+	1,)
+		;; # quiet
+	*)
+		echo >&2 "Falling back to 3-way merge..." ;;
 	esac
 
 	# Match the index to the working tree, and do a three-way.

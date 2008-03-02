@@ -100,6 +100,23 @@ test_expect_success 'fetch with wildcard' '
 	)
 '
 
+test_expect_success 'fetch with insteadOf' '
+	mk_empty &&
+	(
+		TRASH=$(pwd) &&
+		cd testrepo &&
+		git config url./$TRASH/.insteadOf trash/
+		git config remote.up.url trash/. &&
+		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
+		git fetch up &&
+
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
 test_expect_success 'push without wildcard' '
 	mk_empty &&
 
@@ -117,6 +134,20 @@ test_expect_success 'push with wildcard' '
 	mk_empty &&
 
 	git push testrepo "refs/heads/*:refs/remotes/origin/*" &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
+test_expect_success 'push with insteadOf' '
+	mk_empty &&
+	TRASH=$(pwd) &&
+	git config url./$TRASH/.insteadOf trash/ &&
+	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
 		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
@@ -270,6 +301,49 @@ test_expect_success 'push with HEAD nonexisting at remote' '
 	git push testrepo HEAD &&
 	check_push_result $the_commit heads/local
 '
+
+test_expect_success 'push with +HEAD' '
+
+	mk_test heads/master &&
+	git checkout master &&
+	git branch -D local &&
+	git checkout -b local &&
+	git push testrepo master local &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_commit heads/local &&
+
+	# Without force rewinding should fail
+	git reset --hard HEAD^ &&
+	! git push testrepo HEAD &&
+	check_push_result $the_commit heads/local &&
+
+	# With force rewinding should succeed
+	git push testrepo +HEAD &&
+	check_push_result $the_first_commit heads/local
+
+'
+
+test_expect_success 'push with config remote.*.push = HEAD' '
+
+	mk_test heads/local &&
+	git checkout master &&
+	git branch -f local $the_commit &&
+	(
+		cd testrepo &&
+		git checkout local &&
+		git reset --hard $the_first_commit
+	) &&
+	git config remote.there.url testrepo &&
+	git config remote.there.push HEAD &&
+	git config branch.master.remote there &&
+	git push &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_first_commit heads/local
+'
+
+# clean up the cruft left with the previous one
+git config --remove-section remote.there
+git config --remove-section branch.master
 
 test_expect_success 'push with dry-run' '
 

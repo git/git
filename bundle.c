@@ -333,10 +333,12 @@ int create_bundle(struct bundle_header *header, const char *path,
 		write_or_die(rls.in, sha1_to_hex(object->sha1), 40);
 		write_or_die(rls.in, "\n", 1);
 	}
+	close(rls.in);
 	if (finish_command(&rls))
 		return error ("pack-objects died");
-
-	return bundle_to_stdout ? close(bundle_fd) : commit_lock_file(&lock);
+	if (!bundle_to_stdout)
+		commit_lock_file(&lock);
+	return 0;
 }
 
 int unbundle(struct bundle_header *header, int bundle_fd)
