@@ -7,10 +7,10 @@ my $git = Git->repository();
 sub add_remote_config {
 	my ($hash, $name, $what, $value) = @_;
 	if ($what eq 'url') {
-		if (exists $hash->{$name}{'URL'}) {
-			print STDERR "Warning: more than one remote.$name.url\n";
+		# Having more than one is Ok -- it is used for push.
+		if (! exists $hash->{'URL'}) {
+			$hash->{$name}{'URL'} = $value;
 		}
-		$hash->{$name}{'URL'} = $value;
 	}
 	elsif ($what eq 'fetch') {
 		$hash->{$name}{'FETCH'} ||= [];
