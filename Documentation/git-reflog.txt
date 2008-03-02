@@ -80,6 +80,15 @@ them.
 --all::
 	Instead of listing <refs> explicitly, prune all refs.
 
+--updateref::
+	Update the ref with the sha1 of the top reflog entry (i.e.
+	<ref>@\{0\}) after expiring or deleting.
+
+--rewrite::
+	While expiring or deleting, adjust each reflog entry to ensure
+	that the `old` sha1 field points to the `new` sha1 field of the
+	previous entry.
+
 --verbose::
 	Print extra information on screen.
 
