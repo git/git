@@ -94,30 +94,21 @@ proc dorunq {} {
 proc start_rev_list {view} {
     global startmsecs
     global commfd leftover tclencoding datemode
-    global viewargs viewfiles commitidx viewcomplete vnextroot
+    global viewargs viewfiles commitidx viewcomplete
     global showlocalchanges commitinterest mainheadid
     global progressdirn progresscoords proglastnc curview
-    global viewincl viewactive loginstance viewinstances
+    global viewactive loginstance viewinstances
     global pending_select mainheadid
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
     set viewcomplete($view) 0
     set viewactive($view) 1
-    set vnextroot($view) 0
     varcinit $view
 
-    set commits [eval exec git rev-parse --default HEAD --revs-only \
-		     $viewargs($view)]
-    set viewincl($view) {}
-    foreach c $commits {
-	if {[regexp {^[0-9a-fA-F]{40}$} $c]} {
-	    lappend viewincl($view) $c
-	}
-    }
     if {[catch {
 	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			 --boundary $commits "--" $viewfiles($view)] r]
+			 --boundary $viewargs($view) "--" $viewfiles($view)] r]
     } err]} {
 	error_popup "[mc "Error executing git log:"] $err"
 	exit 1
@@ -170,9 +161,9 @@ proc getcommits {} {
 }
 
 proc updatecommits {} {
-    global curview viewargs viewfiles viewincl viewinstances
+    global curview viewargs viewfiles viewinstances
     global viewactive viewcomplete loginstance tclencoding mainheadid
-    global varcid startmsecs commfd showneartags showlocalchanges leftover
+    global startmsecs commfd showneartags showlocalchanges leftover
     global mainheadid pending_select
 
     set oldmainid $mainheadid
@@ -186,33 +177,10 @@ proc updatecommits {} {
 	}
     }
     set view $curview
-    set commits [exec git rev-parse --default HEAD --revs-only \
-		     $viewargs($view)]
-    set pos {}
-    set neg {}
-    set flags {}
-    foreach c $commits {
-	if {[string match "^*" $c]} {
-	    lappend neg $c
-	} elseif {[regexp {^[0-9a-fA-F]{40}$} $c]} {
-	    if {!([info exists varcid($view,$c)] ||
-		  [lsearch -exact $viewincl($view) $c] >= 0)} {
-		lappend pos $c
-	    }
-	} else {
-	    lappend flags $c
-	}
-    }
-    if {$pos eq {}} {
-	return
-    }
-    foreach id $viewincl($view) {
-	lappend neg "^$id"
-    }
-    set viewincl($view) [concat $viewincl($view) $pos]
     if {[catch {
 	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			 --boundary $pos $neg $flags "--" $viewfiles($view)] r]
+			  --boundary $viewargs($view) --not [seeds $view] \
+			  "--" $viewfiles($view)] r]
     } err]} {
 	error_popup "Error executing git log: $err"
 	exit 1
@@ -320,6 +288,19 @@ proc resetvarcs {view} {
 	unset vseedcount($vd)
     }
     catch {unset ordertok}
+}
+
+# returns a list of the commits with no children
+proc seeds {v} {
+    global vdownptr vleftptr varcstart
+
+    set ret {}
+    set a [lindex $vdownptr($v) 0]
+    while {$a != 0} {
+	lappend ret [lindex $varcstart($v) $a]
+	set a [lindex $vleftptr($v) $a]
+    }
+    return $ret
 }
 
 proc newvarc {view id} {
@@ -1000,7 +981,7 @@ proc getcommitlines {fd inst view updating}  {
     global cmitlisted commitinterest leftover
     global commitidx commitdata datemode
     global parents children curview hlview
-    global vnextroot idpending ordertok
+    global idpending ordertok
     global varccommits varcid varctok vtokmod viewfiles
 
     set stuff [read $fd 500000]
@@ -7103,7 +7084,7 @@ proc mkbrgo {top} {
 }
 
 proc cherrypick {} {
-    global rowmenuid curview viewincl
+    global rowmenuid curview
     global mainhead mainheadid
 
     set oldhead [exec git rev-parse HEAD]
@@ -7137,12 +7118,6 @@ proc cherrypick {} {
 	    movedhead $newhead $mainhead
 	    set mainheadid $newhead
 	}
-	# remove oldhead from viewincl and add newhead
-	set i [lsearch -exact $viewincl($curview) $oldhead]
-	if {$i >= 0} {
-	    set viewincl($curview) [lreplace $viewincl($curview) $i $i]
-	}
-	lappend viewincl($curview) $newhead
 	redrawtags $oldhead
 	redrawtags $newhead
 	selbyid $newhead
