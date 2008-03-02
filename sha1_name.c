@@ -192,26 +192,25 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 
 const char *find_unique_abbrev(const unsigned char *sha1, int len)
 {
-	int status, is_null;
+	int status, exists;
 	static char hex[41];
 
-	is_null = is_null_sha1(sha1);
+	exists = has_sha1_file(sha1);
 	memcpy(hex, sha1_to_hex(sha1), 40);
 	if (len == 40 || !len)
 		return hex;
 	while (len < 40) {
 		unsigned char sha1_ret[20];
 		status = get_short_sha1(hex, len, sha1_ret, 1);
-		if (!status ||
-		    (is_null && status != SHORT_NAME_AMBIGUOUS)) {
+		if (exists
+		    ? !status
+		    : status == SHORT_NAME_NOT_FOUND) {
 			hex[len] = 0;
 			return hex;
 		}
-		if (status != SHORT_NAME_AMBIGUOUS)
-			return NULL;
 		len++;
 	}
-	return NULL;
+	return hex;
 }
 
 static int ambiguous_path(const char *path, int len)
