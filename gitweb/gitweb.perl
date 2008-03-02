@@ -3837,7 +3837,7 @@ sub git_search_grep_body {
 		              chop_and_escape_str($co{'title'}, 50) . "<br/>");
 		my $comment = $co{'comment'};
 		foreach my $line (@$comment) {
-			if ($line =~ m/^(.*)($search_regexp)(.*)$/i) {
+			if ($line =~ m/^(.*?)($search_regexp)(.*)$/i) {
 				my ($lead, $match, $trail) = ($1, $2, $3);
 				$match = chop_str($match, 70, 5, 'center');
 				my $contextlen = int((80 - length($match))/2);
