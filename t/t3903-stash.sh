@@ -70,7 +70,51 @@ test_expect_success 'unstashing in a subdirectory' '
 	git reset --hard HEAD &&
 	mkdir subdir &&
 	cd subdir &&
-	git stash apply
+	git stash apply &&
+	cd ..
+'
+
+test_expect_success 'drop top stash' '
+	git reset --hard &&
+	git stash list > stashlist1 &&
+	echo 7 > file &&
+	git stash &&
+	git stash drop &&
+	git stash list > stashlist2 &&
+	diff stashlist1 stashlist2 &&
+	git stash apply &&
+	test 3 = $(cat file) &&
+	test 1 = $(git show :file) &&
+	test 1 = $(git show HEAD:file)
+'
+
+test_expect_success 'drop middle stash' '
+	git reset --hard &&
+	echo 8 > file &&
+	git stash &&
+	echo 9 > file &&
+	git stash &&
+	git stash drop stash@{1} &&
+	test 2 = $(git stash list | wc -l) &&
+	git stash apply &&
+	test 9 = $(cat file) &&
+	test 1 = $(git show :file) &&
+	test 1 = $(git show HEAD:file) &&
+	git reset --hard &&
+	git stash drop &&
+	git stash apply &&
+	test 3 = $(cat file) &&
+	test 1 = $(git show :file) &&
+	test 1 = $(git show HEAD:file)
+'
+
+test_expect_success 'stash pop' '
+	git reset --hard &&
+	git stash pop &&
+	test 3 = $(cat file) &&
+	test 1 = $(git show :file) &&
+	test 1 = $(git show HEAD:file) &&
+	test 0 = $(git stash list | wc -l)
 '
 
 test_done
