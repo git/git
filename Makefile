@@ -695,6 +695,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_R_TO_GCC_LINKER = YesPlease
 	INTERNAL_QSORT = YesPlease
 	NO_POSIX_ONLY_PROGRAMS = YesPlease
+	WIN_ANSI = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat
 	COMPAT_CFLAGS += -DSNPRINTF_SIZE_CORR=1
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
@@ -938,6 +939,11 @@ ifdef DIR_HAS_BSD_GROUP_SEMANTICS
 endif
 ifdef NO_EXTERNAL_GREP
 	BASIC_CFLAGS += -DNO_EXTERNAL_GREP
+endif
+
+ifdef WIN_ANSI
+	COMPAT_CFLAGS += -DWIN_ANSI
+	COMPAT_OBJS += compat/winansi.o
 endif
 
 ifeq ($(TCLTK_PATH),)

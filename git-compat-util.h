@@ -495,4 +495,11 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 # define FORCE_DIR_SET_GID 0
 #endif
 
+#ifdef WIN_ANSI
+extern int git_fputs(const char *str, FILE *stream);
+extern int git_printf(const char *format, ...) __attribute__((format (printf, 1, 2)));
+#define fputs git_fputs
+#define printf(...) git_printf(__VA_ARGS__)
+#endif
+
 #endif
