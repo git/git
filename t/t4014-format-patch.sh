@@ -147,7 +147,7 @@ test_expect_success 'thread' '
 	for i in patches/0002-* patches/0003-*
 	do
 	  grep "References: $FIRST_MID" $i &&
-	  grep "In-Reply-To: $FIRST_MID" $i
+	  grep "In-Reply-To: $FIRST_MID" $i || break
 	done
 '
 
@@ -160,7 +160,7 @@ test_expect_success 'thread in-reply-to' '
 	for i in patches/*
 	do
 	  grep "References: $FIRST_MID" $i &&
-	  grep "In-Reply-To: $FIRST_MID" $i
+	  grep "In-Reply-To: $FIRST_MID" $i || break
 	done
 '
 
@@ -173,7 +173,7 @@ test_expect_success 'thread cover-letter' '
 	for i in patches/0001-* patches/0002-* patches/0003-* 
 	do
 	  grep "References: $FIRST_MID" $i &&
-	  grep "In-Reply-To: $FIRST_MID" $i
+	  grep "In-Reply-To: $FIRST_MID" $i || break
 	done
 '
 
@@ -186,7 +186,7 @@ test_expect_success 'thread cover-letter in-reply-to' '
 	for i in patches/*
 	do
 	  grep "References: $FIRST_MID" $i &&
-	  grep "In-Reply-To: $FIRST_MID" $i
+	  grep "In-Reply-To: $FIRST_MID" $i || break
 	done
 '
 
@@ -201,4 +201,14 @@ test_expect_success 'excessive subject' '
 	ls patches/0004-This-is-an-excessively-long-subject-line-for-a-messa.patch
 '
 
+test_expect_success 'cover-letter inherits diff options' '
+
+	git mv file foo &&
+	git commit -m foo &&
+	git format-patch --cover-letter -1 &&
+	! grep "file => foo .* 0 *$" 0000-cover-letter.patch &&
+	git format-patch --cover-letter -1 -M &&
+	grep "file => foo .* 0 *$" 0000-cover-letter.patch
+
+'
 test_done
