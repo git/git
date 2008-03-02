@@ -322,18 +322,24 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		o->type = OPTION_CALLBACK;
 		o->help = xstrdup(skipspaces(s));
 		o->value = &parsed;
+		o->flags = PARSE_OPT_NOARG;
 		o->callback = &parseopt_dump;
-		switch (s[-1]) {
-		case '=':
-			s--;
-			break;
-		case '?':
-			o->flags = PARSE_OPT_OPTARG;
-			s--;
-			break;
-		default:
-			o->flags = PARSE_OPT_NOARG;
-			break;
+		while (s > sb.buf && strchr("*=?!", s[-1])) {
+			switch (*--s) {
+			case '=':
+				o->flags &= ~PARSE_OPT_NOARG;
+				break;
+			case '?':
+				o->flags &= ~PARSE_OPT_NOARG;
+				o->flags |= PARSE_OPT_OPTARG;
+				break;
+			case '!':
+				o->flags |= PARSE_OPT_NONEG;
+				break;
+			case '*':
+				o->flags |= PARSE_OPT_HIDDEN;
+				break;
+			}
 		}
 
 		if (s - sb.buf == 1) /* short option only */

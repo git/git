@@ -325,7 +325,7 @@ The lines after the separator describe the options.
 Each line of options has this format:
 
 ------------
-<opt_spec><arg_spec>? SP+ help LF
+<opt_spec><flags>* SP+ help LF
 ------------
 
 `<opt_spec>`::
@@ -334,10 +334,17 @@ Each line of options has this format:
 	is necessary. `h,help`, `dry-run` and `f` are all three correct
 	`<opt_spec>`.
 
-`<arg_spec>`::
-	an `<arg_spec>` tells the option parser if the option has an argument
-	(`=`), an optional one (`?` though its use is discouraged) or none
-	(no `<arg_spec>` in that case).
+`<flags>`::
+	`<flags>` are of `*`, `=`, `?` or `!`.
+	* Use `=` if the option takes an argument.
+
+	* Use `?` to mean that the option is optional (though its use is discouraged).
+
+	* Use `*` to mean that this option should not be listed in the usage
+	  generated for the `-h` argument. It's shown for `--help-all` as
+	  documented in linkgit:gitcli[5].
+
+	* Use `!` to not make the corresponding negated long option available.
 
 The remainder of the line, after stripping the spaces, is used
 as the help associated to the option.
