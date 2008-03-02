@@ -264,9 +264,7 @@ static void print_ref_status(char flag, const char *summary, struct ref *to, str
 
 static const char *status_abbrev(unsigned char sha1[20])
 {
-	const char *abbrev;
-	abbrev = find_unique_abbrev(sha1, DEFAULT_ABBREV);
-	return abbrev ? abbrev : sha1_to_hex(sha1);
+	return find_unique_abbrev(sha1, DEFAULT_ABBREV);
 }
 
 static void print_ok_ref_status(struct ref *ref)
