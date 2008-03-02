@@ -35,14 +35,11 @@ struct object {
 	unsigned char sha1[20];
 };
 
-extern int track_object_refs;
-
 extern const char *typename(unsigned int type);
 extern int type_from_string(const char *str);
 
 extern unsigned int get_max_object_index(void);
 extern struct object *get_indexed_object(unsigned int);
-extern struct object_refs *lookup_object_refs(struct object *);
 
 /** Internal only **/
 struct object *lookup_object(const unsigned char *sha1);
@@ -60,11 +57,6 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 
 /** Returns the object, with potentially excess memory allocated. **/
 struct object *lookup_unknown_object(const unsigned  char *sha1);
-
-struct object_refs *alloc_object_refs(unsigned count);
-void set_object_refs(struct object *obj, struct object_refs *refs);
-
-void mark_reachable(struct object *obj, unsigned int mask);
 
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);

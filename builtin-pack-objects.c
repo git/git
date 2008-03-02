@@ -2013,7 +2013,6 @@ static void get_object_list(int ac, const char **av)
 
 	init_revisions(&revs, NULL);
 	save_commit_buffer = 0;
-	track_object_refs = 0;
 	setup_revisions(ac, av, &revs, NULL);
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {

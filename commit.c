@@ -193,7 +193,7 @@ static void prepare_commit_graft(void)
 	commit_graft_prepared = 1;
 }
 
-static struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
+struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
 {
 	int pos;
 	prepare_commit_graft();
@@ -289,17 +289,6 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 		}
 	}
 	item->date = parse_commit_date(bufptr, tail);
-
-	if (track_object_refs) {
-		unsigned i = 0;
-		struct commit_list *p;
-		struct object_refs *refs = alloc_object_refs(n_refs);
-		if (item->tree)
-			refs->ref[i++] = &item->tree->object;
-		for (p = item->parents; p; p = p->next)
-			refs->ref[i++] = &p->item->object;
-		set_object_refs(&item->object, refs);
-	}
 
 	return 0;
 }

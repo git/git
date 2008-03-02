@@ -393,7 +393,6 @@ static int get_common_commits(void)
 	char hex[41], last_hex[41];
 	int len;
 
-	track_object_refs = 0;
 	save_commit_buffer = 0;
 
 	for(;;) {
