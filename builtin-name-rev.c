@@ -125,7 +125,7 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 }
 
 /* returns a static buffer */
-static const char *get_rev_name(struct object *o)
+static const char *get_rev_name(const struct object *o)
 {
 	static char buffer[1024];
 	struct rev_name *n;
@@ -151,6 +151,26 @@ static const char *get_rev_name(struct object *o)
 	}
 }
 
+static void show_name(const struct object *obj,
+		      const char *caller_name,
+		      int always, int allow_undefined, int name_only)
+{
+	const char *name;
+	const unsigned char *sha1 = obj->sha1;
+
+	if (!name_only)
+		printf("%s ", caller_name ? caller_name : sha1_to_hex(sha1));
+	name = get_rev_name(obj);
+	if (name)
+		printf("%s\n", name);
+	else if (allow_undefined)
+		printf("undefined\n");
+	else if (always)
+		printf("%s\n", find_unique_abbrev(sha1, DEFAULT_ABBREV));
+	else
+		die("cannot describe '%s'", sha1_to_hex(sha1));
+}
+
 static char const * const name_rev_usage[] = {
 	"git-name-rev [options] ( --all | --stdin | <commit>... )",
 	NULL
@@ -159,7 +179,7 @@ static char const * const name_rev_usage[] = {
 int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
 	struct object_array revs = { 0, 0, NULL };
-	int all = 0, transform_stdin = 0, allow_undefined = 1;
+	int all = 0, transform_stdin = 0, allow_undefined = 1, always = 0;
 	struct name_ref_data data = { 0, 0, NULL };
 	struct option opts[] = {
 		OPT_BOOLEAN(0, "name-only", &data.name_only, "print only names (no SHA-1)"),
@@ -170,6 +190,8 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "all", &all, "list all commits reachable from all refs"),
 		OPT_BOOLEAN(0, "stdin", &transform_stdin, "read from stdin"),
 		OPT_BOOLEAN(0, "undefined", &allow_undefined, "allow to print `undefined` names"),
+		OPT_BOOLEAN(0, "always",     &always,
+			   "show abbreviated commit object as fallback"),
 		OPT_END(),
 	};
 
@@ -258,35 +280,14 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		int i, max;
 
 		max = get_max_object_index();
-		for (i = 0; i < max; i++) {
-			struct object * obj = get_indexed_object(i);
-			const char *name;
-			if (!obj)
-				continue;
-			if (!data.name_only)
-				printf("%s ", sha1_to_hex(obj->sha1));
-			name = get_rev_name(obj);
-			if (name)
-				printf("%s\n", name);
-			else if (allow_undefined)
-				printf("undefined\n");
-			else
-				die("cannot describe '%s'", sha1_to_hex(obj->sha1));
-		}
+		for (i = 0; i < max; i++)
+			show_name(get_indexed_object(i), NULL,
+				  always, allow_undefined, data.name_only);
 	} else {
 		int i;
-		for (i = 0; i < revs.nr; i++) {
-			const char *name;
-			if (!data.name_only)
-				printf("%s ", revs.objects[i].name);
-			name = get_rev_name(revs.objects[i].item);
-			if (name)
-				printf("%s\n", name);
-			else if (allow_undefined)
-				printf("undefined\n");
-			else
-				die("cannot describe '%s'", sha1_to_hex(revs.objects[i].item->sha1));
-		}
+		for (i = 0; i < revs.nr; i++)
+			show_name(revs.objects[i].item, revs.objects[i].name,
+				  always, allow_undefined, data.name_only);
 	}
 
 	return 0;
