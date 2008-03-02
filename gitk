@@ -161,11 +161,12 @@ proc stop_rev_list {view} {
 }
 
 proc getcommits {} {
-    global canv curview
+    global canv curview need_redisplay
 
     initlayout
     start_rev_list $curview
     show_status [mc "Reading commits..."]
+    set need_redisplay 1
 }
 
 proc updatecommits {} {
@@ -1048,7 +1049,7 @@ proc getcommitlines {fd inst view updating}  {
 	    adjustprogress
 	}
 	if {$view == $curview} {
-	    run chewcommits $view
+	    run chewcommits
 	}
 	return 0
     }
@@ -1183,7 +1184,16 @@ proc getcommitlines {fd inst view updating}  {
 	set gotsome 1
     }
     if {$gotsome} {
-	run chewcommits $view
+	global numcommits hlview
+
+	if {$view == $curview} {
+	    set numcommits $commitidx($view)
+	    run chewcommits
+	}
+	if {[info exists hlview] && $view == $hlview} {
+	    # we never actually get here...
+	    run vhighlightmore
+	}
 	foreach s $scripts {
 	    eval $s
 	}
@@ -1218,33 +1228,28 @@ proc getcommitlines {fd inst view updating}  {
     return 2
 }
 
-proc chewcommits {view} {
+proc chewcommits {} {
     global curview hlview viewcomplete
     global pending_select
 
-    if {$view == $curview} {
-	layoutmore
-	if {$viewcomplete($view)} {
-	    global commitidx varctok
-	    global numcommits startmsecs
-	    global mainheadid commitinfo nullid
+    layoutmore
+    if {$viewcomplete($curview)} {
+	global commitidx varctok
+	global numcommits startmsecs
+	global mainheadid commitinfo nullid
 
-	    if {[info exists pending_select]} {
-		set row [first_real_row]
-		selectline $row 1
-	    }
-	    if {$commitidx($curview) > 0} {
-		#set ms [expr {[clock clicks -milliseconds] - $startmsecs}]
-		#puts "overall $ms ms for $numcommits commits"
-		#puts "[llength $varctok($view)] arcs, $commitidx($view) commits"
-	    } else {
-		show_status [mc "No commits selected"]
-	    }
-	    notbusy layout
+	if {[info exists pending_select]} {
+	    set row [first_real_row]
+	    selectline $row 1
 	}
-    }
-    if {[info exists hlview] && $view == $hlview} {
-	vhighlightmore
+	if {$commitidx($curview) > 0} {
+	    #set ms [expr {[clock clicks -milliseconds] - $startmsecs}]
+	    #puts "overall $ms ms for $numcommits commits"
+	    #puts "[llength $varctok($view)] arcs, $commitidx($view) commits"
+	} else {
+	    show_status [mc "No commits selected"]
+	}
+	notbusy layout
     }
     return 0
 }
@@ -3064,6 +3069,7 @@ proc vhighlightmore {} {
 	}
     }
     set vhl_done $max
+    return 0
 }
 
 proc askvhighlight {row id} {
@@ -3562,15 +3568,19 @@ proc initlayout {} {
     set canvxmax [$canv cget -width]
     catch {unset colormap}
     catch {unset rowtextx}
+    setcanvscroll
 }
 
 proc setcanvscroll {} {
     global canv canv2 canv3 numcommits linespc canvxmax canvy0
+    global lastscrollset lastscrollrows
 
     set ymax [expr {$canvy0 + ($numcommits - 0.5) * $linespc + 2}]
     $canv conf -scrollregion [list 0 0 $canvxmax $ymax]
     $canv2 conf -scrollregion [list 0 0 0 $ymax]
     $canv3 conf -scrollregion [list 0 0 0 $ymax]
+    set lastscrollset [clock clicks -milliseconds]
+    set lastscrollrows $numcommits
 }
 
 proc visiblerows {} {
@@ -3595,33 +3605,17 @@ proc visiblerows {} {
 proc layoutmore {} {
     global commitidx viewcomplete curview
     global numcommits pending_select selectedline curview
-    global lastscrollset commitinterest
+    global lastscrollset lastscrollrows commitinterest
 
-    set canshow $commitidx($curview)
-    if {$canshow <= $numcommits && !$viewcomplete($curview)} return
-    if {$numcommits == 0} {
-	allcanvs delete all
-    }
-    set r0 $numcommits
-    set prev $numcommits
-    set numcommits $canshow
-    set t [clock clicks -milliseconds]
-    if {$prev < 100 || $viewcomplete($curview) || $t - $lastscrollset > 500} {
-	set lastscrollset $t
+    if {$lastscrollrows < 100 || $viewcomplete($curview) ||
+	[clock clicks -milliseconds] - $lastscrollset > 500} {
 	setcanvscroll
-    }
-    set rows [visiblerows]
-    set r1 [lindex $rows 1]
-    if {$r1 >= $canshow} {
-	set r1 [expr {$canshow - 1}]
-    }
-    if {$r0 <= $r1} {
-	drawcommits $r0 $r1
     }
     if {[info exists pending_select] &&
 	[commitinview $pending_select $curview]} {
 	selectline [rowofcommit $pending_select] 1
     }
+    drawvisible
 }
 
 proc doshowlocalchanges {} {
@@ -4714,13 +4708,15 @@ proc drawvisible {} {
     if {[info exists selectedline] &&
 	$row <= $selectedline && $selectedline <= $endrow} {
 	set targetrow $selectedline
-    } else {
+    } elseif {[info exists targetid]} {
 	set targetrow [expr {int(($row + $endrow) / 2)}]
     }
-    if {$targetrow >= $numcommits} {
-	set targetrow [expr {$numcommits - 1}]
+    if {[info exists targetrow]} {
+	if {$targetrow >= $numcommits} {
+	    set targetrow [expr {$numcommits - 1}]
+	}
+	set targetid [commitonrow $targetrow]
     }
-    set targetid [commitonrow $targetrow]
     drawcommits $row $endrow
 }
 
@@ -5459,6 +5455,10 @@ proc selectline {l isnew} {
     unsel_reflist
     stopfinding
     if {$l < 0 || $l >= $numcommits} return
+    set id [commitonrow $l]
+    set targetid $id
+    set targetrow $l
+
     set y [expr {$canvy0 + $l * $linespc}]
     set ymax [lindex [$canv cget -scrollregion] 3]
     set ytop [expr {$y - $linespc - 1}]
@@ -5497,15 +5497,12 @@ proc selectline {l isnew} {
 
     make_secsel $l
 
-    set id [commitonrow $l]
     if {$isnew} {
 	addtohistory [list selbyid $id]
     }
 
     set selectedline $l
     set currentid $id
-    set targetid $id
-    set targetrow $l
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
     $sha1entry selection from 0
