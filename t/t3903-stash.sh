@@ -40,8 +40,8 @@ test_expect_success 'parents of stash' '
 test_expect_success 'apply needs clean working directory' '
 	echo 4 > other-file &&
 	git add other-file &&
-	echo 5 > other-file
-	! git stash apply
+	echo 5 > other-file &&
+ 	test_must_fail git stash apply
 '
 
 test_expect_success 'apply stashed changes' '
