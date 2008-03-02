@@ -20,6 +20,7 @@
 
 static int default_show_root = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
+static const char *fmt_pretty;
 
 static void add_name_decoration(const char *prefix, const char *name, struct object *obj)
 {
@@ -54,6 +55,8 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
+	if (fmt_pretty)
+		rev->commit_format = get_commit_format(fmt_pretty);
 	rev->verbose_header = 1;
 	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
 	rev->show_root_diff = default_show_root;
@@ -221,6 +224,8 @@ static int cmd_log_walk(struct rev_info *rev)
 
 static int git_log_config(const char *var, const char *value)
 {
+	if (!strcmp(var, "format.pretty"))
+		return git_config_string(&fmt_pretty, var, value);
 	if (!strcmp(var, "format.subjectprefix")) {
 		if (!value)
 			config_error_nonbool(var);
