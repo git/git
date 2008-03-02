@@ -387,6 +387,7 @@ static int show_or_prune(int argc, const char **argv, int prune)
 		transport = transport_get(NULL, states.remote->url_nr > 0 ?
 			states.remote->url[0] : NULL);
 		ref = transport_get_remote_refs(transport);
+		transport_disconnect(transport);
 
 		read_branches();
 		got_states = get_ref_states(ref, &states);
