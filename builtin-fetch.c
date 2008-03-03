@@ -509,7 +509,7 @@ static struct ref *find_non_local_tags(struct transport *transport)
 static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
-	struct ref *ref_map, *fetch_map;
+	struct ref *ref_map;
 	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
 	if (transport->remote->fetch_tags == 2 && tags != TAGS_UNSET)
@@ -540,8 +540,7 @@ static int do_fetch(struct transport *transport,
 		free_refs(ref_map);
 		return 1;
 	}
-
-	fetch_map = ref_map;
+	free_refs(ref_map);
 
 	/* if neither --no-tags nor --tags was specified, do automated tag
 	 * following ... */
@@ -553,8 +552,6 @@ static int do_fetch(struct transport *transport,
 		}
 		free_refs(ref_map);
 	}
-
-	free_refs(fetch_map);
 
 	transport_disconnect(transport);
 
