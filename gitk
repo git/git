@@ -1876,7 +1876,7 @@ proc newview {ishighlight} {
 	raise $top
 	return
     }
-    set newviewname($nextviewnum) "View $nextviewnum"
+    set newviewname($nextviewnum) "[mc "View"] $nextviewnum"
     set newviewperm($nextviewnum) 0
     set newviewargs($nextviewnum) [shellarglist $revtreeargs]
     set newviewargscmd($nextviewnum) $viewargscmd($curview)
