@@ -101,6 +101,10 @@ static void add_merge_config(struct ref **head,
 	}
 }
 
+static void find_non_local_tags(struct transport *transport,
+			struct ref **head,
+			struct ref ***tail);
+
 static struct ref *get_ref_map(struct transport *transport,
 			       struct refspec *refs, int ref_count, int tags,
 			       int *autotags)
@@ -160,6 +164,8 @@ static struct ref *get_ref_map(struct transport *transport,
 			tail = &ref_map->next;
 		}
 	}
+	if (tags == TAGS_DEFAULT && *autotags)
+		find_non_local_tags(transport, &ref_map, &tail);
 	ref_remove_duplicates(ref_map);
 
 	return ref_map;
