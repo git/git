@@ -8,6 +8,8 @@
 #include "exec_cmd.h"
 #include "utf8.h"
 #include "parse-options.h"
+#include "diff.h"
+#include "revision.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -245,6 +247,17 @@ static char *help_msg(const unsigned char *sha1)
 	return helpbuf;
 }
 
+static int index_is_dirty(void)
+{
+	struct rev_info rev;
+	init_revisions(&rev, NULL);
+	setup_revisions(0, NULL, &rev, "HEAD");
+	DIFF_OPT_SET(&rev.diffopt, QUIET);
+	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
+	run_diff_index(&rev, 1);
+	return !!DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES);
+}
+
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
@@ -273,12 +286,11 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		if (write_tree(head, 0, NULL))
 			die ("Your index file is unmerged.");
 	} else {
-		struct wt_status s;
-
 		if (get_sha1("HEAD", head))
 			die ("You do not have a valid HEAD");
-		wt_status_prepare(&s);
-		if (s.commitable)
+		if (read_cache() < 0)
+			die("could not read the index");
+		if (index_is_dirty())
 			die ("Dirty index: cannot %s", me);
 		discard_cache();
 	}
