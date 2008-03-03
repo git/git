@@ -882,20 +882,20 @@ class P4Sync(Command):
         while j < len(filedata):
             stat = filedata[j]
             j += 1
-            text = ''
+            text = [];
             while j < len(filedata) and filedata[j]['code'] in ('text', 'unicode', 'binary'):
-                tmp = filedata[j]['data']
-                if stat['type'] in ('text+ko', 'unicode+ko', 'binary+ko'):
-                    tmp = re.sub(r'(?i)\$(Id|Header):[^$]*\$',r'$\1$', tmp)
-                elif stat['type'] in ('text+k', 'ktext', 'kxtext', 'unicode+k', 'binary+k'):
-                    tmp = re.sub(r'(?i)\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$]*\$',r'$\1$', tmp)
-                text += tmp
+                text.append(filedata[j]['data'])
                 j += 1
-
+            text = ''.join(text)
 
             if not stat.has_key('depotFile'):
                 sys.stderr.write("p4 print fails with: %s\n" % repr(stat))
                 continue
+
+            if stat['type'] in ('text+ko', 'unicode+ko', 'binary+ko'):
+                text = re.sub(r'(?i)\$(Id|Header):[^$]*\$',r'$\1$', text)
+            elif stat['type'] in ('text+k', 'ktext', 'kxtext', 'unicode+k', 'binary+k'):
+                text = re.sub(r'(?i)\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$]*\$',r'$\1$', text)
 
             contents[stat['depotFile']] = text
 
