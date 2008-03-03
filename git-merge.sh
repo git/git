@@ -37,6 +37,7 @@ use_strategies=
 
 allow_fast_forward=t
 allow_trivial_merge=t
+squash= no_commit=
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
@@ -152,17 +153,21 @@ parse_config () {
 		--summary)
 			show_diffstat=t ;;
 		--squash)
-			allow_fast_forward=t squash=t no_commit=t ;;
+			test "$allow_fast_forward" = t ||
+				die "You cannot combine --squash with --no-ff."
+			squash=t no_commit=t ;;
 		--no-squash)
-			allow_fast_forward=t squash= no_commit= ;;
+			squash= no_commit= ;;
 		--commit)
-			allow_fast_forward=t squash= no_commit= ;;
+			no_commit= ;;
 		--no-commit)
-			allow_fast_forward=t squash= no_commit=t ;;
+			no_commit=t ;;
 		--ff)
-			allow_fast_forward=t squash= no_commit= ;;
+			allow_fast_forward=t ;;
 		--no-ff)
-			allow_fast_forward=false squash= no_commit= ;;
+			test "$squash" != t ||
+				die "You cannot combine --squash with --no-ff."
+			allow_fast_forward=f ;;
 		-s|--strategy)
 			shift
 			case " $all_strategies " in
