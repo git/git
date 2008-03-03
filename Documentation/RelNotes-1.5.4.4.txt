@@ -4,6 +4,10 @@ GIT v1.5.4.4 Release Notes
 Fixes since v1.5.4.3
 --------------------
 
+ * Building and installing with an overtight umask such as 077 made
+   installed templates unreadable by others, while the rest of the install
+   are done in a way that is friendly to umask 022.
+
  * "git cvsexportcommit -w $cvsdir" misbehaved when GIT_DIR is set to a
    relative directory.
 
@@ -17,10 +21,26 @@ Fixes since v1.5.4.3
 
  * "git send-email" in 1.5.4.3 issued a bogus empty In-Reply-To: header.
 
+ * "git bisect" showed mysterious "won't bisect on seeked tree" error message.
+   This was leftover from Cogito days to prevent "bisect" starting from a
+   cg-seeked state.  We still keep the Cogito safety, but running "git bisect
+   start" when another bisect was in effect will clean up and start over.
+
+ * "git push" with an explicit PATH to receive-pack did not quite work if
+   receive-pack was not on usual PATH.  We earlier fixed the same issue
+   with "git fetch" and upload-pack, but somehow forgot to do so in the
+   other direction.
+
+ * git-gui's info dialog was not displayed correctly when the user tries
+   to commit nothing (i.e. without staging anything).
+
+ * "git revert" did not properly fail when attempting to run with a
+   dirty index.
+
 Also included are a handful documentation updates.
 
 ---
 exec >/var/tmp/1
 echo O=$(git describe maint)
-O=v1.5.4.3
+O=v1.5.4.3-32-g0f2d447
 git shortlog --no-merges $O..maint
