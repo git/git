@@ -625,8 +625,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
 		if (!parse_object(commit->object.sha1))
 			continue;
-		if (temp_commit_buffer)
-			free(temp_commit_buffer);
+		free(temp_commit_buffer);
 		if (commit->buffer)
 			p = commit->buffer;
 		else {
@@ -643,8 +642,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 			break;
 		}
 	}
-	if (temp_commit_buffer)
-		free(temp_commit_buffer);
+	free(temp_commit_buffer);
 	free_commit_list(list);
 	for (l = backup; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);

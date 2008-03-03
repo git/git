@@ -15,6 +15,9 @@ test_expect_success \
     'echo Hello > A &&
      git update-index --add A &&
      git-commit -m "Initial commit." &&
+     echo World >> A &&
+     git update-index --add A &&
+     git-commit -m "Second commit." &&
      HEAD=$(git rev-parse --verify HEAD)'
 
 test_expect_success \
@@ -171,7 +174,9 @@ test_expect_success 'test overriding tracking setup via --no-track' \
      ! test "$(git config branch.my2.merge)" = refs/heads/master'
 
 test_expect_success 'no tracking without .fetch entries' \
-    'git branch --track my6 s &&
+    'git config branch.autosetupmerge true &&
+     git branch my6 s &&
+     git config branch.automsetupmerge false &&
      test -z "$(git config branch.my6.remote)" &&
      test -z "$(git config branch.my6.merge)"'
 
@@ -191,6 +196,21 @@ test_expect_success 'test deleting branch deletes branch config' \
 test_expect_success 'test deleting branch without config' \
     'git branch my7 s &&
      test "$(git branch -d my7 2>&1)" = "Deleted branch my7."'
+
+test_expect_success 'test --track without .fetch entries' \
+    'git branch --track my8 &&
+     test "$(git config branch.my8.remote)" &&
+     test "$(git config branch.my8.merge)"'
+
+test_expect_success \
+    'branch from non-branch HEAD w/autosetupmerge=always' \
+    'git config branch.autosetupmerge always &&
+     git branch my9 HEAD^ &&
+     git config branch.autosetupmerge false'
+
+test_expect_success \
+    'branch from non-branch HEAD w/--track causes failure' \
+    '!(git branch --track my10 HEAD^)'
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF

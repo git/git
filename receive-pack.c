@@ -132,6 +132,7 @@ static int run_hook(const char *hook_name)
 				break;
 		}
 	}
+	close(proc.in);
 	return hook_status(finish_command(&proc), hook_name);
 }
 
@@ -414,6 +415,7 @@ static const char *unpack(void)
 		if (start_command(&ip))
 			return "index-pack fork failed";
 		pack_lockfile = index_pack_lockfile(ip.out);
+		close(ip.out);
 		status = finish_command(&ip);
 		if (!status) {
 			reprepare_packed_git();

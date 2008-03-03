@@ -110,7 +110,6 @@ struct ondisk_cache_entry {
 };
 
 struct cache_entry {
-	struct cache_entry *next;
 	unsigned int ce_ctime;
 	unsigned int ce_mtime;
 	unsigned int ce_dev;
@@ -121,6 +120,7 @@ struct cache_entry {
 	unsigned int ce_size;
 	unsigned int ce_flags;
 	unsigned char sha1[20];
+	struct cache_entry *next;
 	char name[FLEX_ARRAY]; /* more */
 };
 
@@ -133,7 +133,39 @@ struct cache_entry {
 #define CE_UPDATE    (0x10000)
 #define CE_REMOVE    (0x20000)
 #define CE_UPTODATE  (0x40000)
-#define CE_UNHASHED  (0x80000)
+
+#define CE_HASHED    (0x100000)
+#define CE_UNHASHED  (0x200000)
+
+/*
+ * Copy the sha1 and stat state of a cache entry from one to
+ * another. But we never change the name, or the hash state!
+ */
+#define CE_STATE_MASK (CE_HASHED | CE_UNHASHED)
+static inline void copy_cache_entry(struct cache_entry *dst, struct cache_entry *src)
+{
+	unsigned int state = dst->ce_flags & CE_STATE_MASK;
+
+	/* Don't copy hash chain and name */
+	memcpy(dst, src, offsetof(struct cache_entry, next));
+
+	/* Restore the hash state */
+	dst->ce_flags = (dst->ce_flags & ~CE_STATE_MASK) | state;
+}
+
+/*
+ * We don't actually *remove* it, we can just mark it invalid so that
+ * we won't find it in lookups.
+ *
+ * Not only would we have to search the lists (simple enough), but
+ * we'd also have to rehash other hash buckets in case this makes the
+ * hash bucket empty (common). So it's much better to just mark
+ * it.
+ */
+static inline void remove_index_entry(struct cache_entry *ce)
+{
+	ce->ce_flags |= CE_UNHASHED;
+}
 
 static inline unsigned create_ce_flags(size_t len, unsigned stage)
 {
@@ -220,6 +252,7 @@ extern struct index_state the_index;
 #define read_cache_from(path) read_index_from(&the_index, (path))
 #define write_cache(newfd, cache, entries) write_index(&the_index, (newfd))
 #define discard_cache() discard_index(&the_index)
+#define unmerged_cache() unmerged_index(&the_index)
 #define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
 #define add_cache_entry(ce, option) add_index_entry(&the_index, (ce), (option))
 #define remove_cache_entry_at(pos) remove_index_entry_at(&the_index, (pos))
@@ -314,6 +347,7 @@ extern int read_index(struct index_state *);
 extern int read_index_from(struct index_state *, const char *path);
 extern int write_index(struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
+extern int unmerged_index(struct index_state *);
 extern int verify_path(const char *path);
 extern int index_name_exists(struct index_state *istate, const char *name, int namelen);
 extern int index_name_pos(struct index_state *, const char *name, int namelen);
@@ -390,6 +424,15 @@ enum safe_crlf {
 };
 
 extern enum safe_crlf safe_crlf;
+
+enum branch_track {
+	BRANCH_TRACK_NEVER = 0,
+	BRANCH_TRACK_REMOTE,
+	BRANCH_TRACK_ALWAYS,
+	BRANCH_TRACK_EXPLICIT,
+};
+
+extern enum branch_track git_branch_track;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -666,6 +709,7 @@ extern const char *git_log_output_encoding;
 /* IO helper functions */
 extern void maybe_flush_or_die(FILE *, const char *);
 extern int copy_fd(int ifd, int ofd);
+extern int copy_file(const char *dst, const char *src, int mode);
 extern int read_in_full(int fd, void *buf, size_t count);
 extern int write_in_full(int fd, const void *buf, size_t count);
 extern void write_or_die(int fd, const void *buf, size_t count);
@@ -719,6 +763,7 @@ void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, i
 #define WS_TRAILING_SPACE	01
 #define WS_SPACE_BEFORE_TAB	02
 #define WS_INDENT_WITH_NON_TAB	04
+#define WS_CR_AT_EOL           010
 #define WS_DEFAULT_RULE (WS_TRAILING_SPACE|WS_SPACE_BEFORE_TAB)
 extern unsigned whitespace_rule_cfg;
 extern unsigned whitespace_rule(const char *);
@@ -727,10 +772,13 @@ extern unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
     FILE *stream, const char *set,
     const char *reset, const char *ws);
 extern char *whitespace_error_string(unsigned ws);
+extern int ws_fix_copy(char *, const char *, int, unsigned, int *);
 
 /* ls-files */
 int pathspec_match(const char **spec, char *matched, const char *filename, int skiplen);
 int report_path_error(const char *ps_matched, const char **pathspec, int prefix_offset);
 void overlay_tree_on_cache(const char *tree_name, const char *prefix);
+
+char *alias_lookup(const char *alias);
 
 #endif /* CACHE_H */

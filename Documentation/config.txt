@@ -353,6 +353,10 @@ core.whitespace::
   error (enabled by default).
 * `indent-with-non-tab` treats a line that is indented with 8 or more
   space characters as an error (not enabled by default).
+* `cr-at-eol` treats a carriage-return at the end of line as
+  part of the line terminator, i.e. with it, `trailing-space`
+  does not trigger if the character before such a carriage-return
+  is not a whitespace (not enabled by default).
 
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
@@ -375,10 +379,14 @@ apply.whitespace::
 
 branch.autosetupmerge::
 	Tells `git-branch` and `git-checkout` to setup new branches
-	so that linkgit:git-pull[1] will appropriately merge from that
-	remote branch.  Note that even if this option is not set,
+	so that linkgit:git-pull[1] will appropriately merge from the
+	starting point branch. Note that even if this option is not set,
 	this behavior can be chosen per-branch using the `--track`
-	and `--no-track` options.  This option defaults to true.
+	and `--no-track` options. The valid settings are: `false` -- no
+	automatic setup is done; `true` -- automatic setup is done when the
+	starting point is a remote branch; `always` -- automatic setup is
+	done when the starting point is either a local branch or remote
+	branch. This option defaults to true.
 
 branch.<name>.remote::
 	When in branch <name>, it tells `git fetch` which remote to fetch.
@@ -808,6 +816,8 @@ pack.threads::
 	warning. This is meant to reduce packing time on multiprocessor
 	machines. The required amount of memory for the delta search window
 	is however multiplied by the number of threads.
+	Specifying 0 will cause git to auto-detect the number of CPU's
+	and set the number of threads accordingly.
 
 pack.indexVersion::
 	Specify the default pack index version.  Valid values are 1 for
@@ -892,6 +902,17 @@ tar.umask::
 	world write bit.  The special value "user" indicates that the
 	archiving user's umask will be used instead.  See umask(2) and
 	linkgit:git-archive[1].
+
+url.<base>.insteadOf::
+	Any URL that starts with this value will be rewritten to
+	start, instead, with <base>. In cases where some site serves a
+	large number of repositories, and serves them with multiple
+	access methods, and some users need to use different access
+	methods, this feature allows people to specify any of the
+	equivalent URLs and have git automatically rewrite the URL to
+	the best alternative for the particular user, even for a
+	never-before-seen repository on the site.  When more than one
+	insteadOf strings match a given URL, the longest match is used.
 
 user.email::
 	Your email address to be recorded in any newly created commits.

@@ -464,71 +464,47 @@ class P4Submit(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [
-                optparse.make_option("--continue", action="store_false", dest="firstTime"),
                 optparse.make_option("--verbose", dest="verbose", action="store_true"),
                 optparse.make_option("--origin", dest="origin"),
-                optparse.make_option("--reset", action="store_true", dest="reset"),
-                optparse.make_option("--log-substitutions", dest="substFile"),
-                optparse.make_option("--direct", dest="directSubmit", action="store_true"),
                 optparse.make_option("-M", dest="detectRename", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
-        self.firstTime = True
-        self.reset = False
         self.interactive = True
-        self.substFile = ""
-        self.firstTime = True
         self.origin = ""
-        self.directSubmit = False
         self.detectRename = False
         self.verbose = False
         self.isWindows = (platform.system() == "Windows")
-
-        self.logSubstitutions = {}
-        self.logSubstitutions["<enter description here>"] = "%log%"
-        self.logSubstitutions["\tDetails:"] = "\tDetails:  %log%"
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
             die("You have files opened with perforce! Close them before starting the sync.")
 
-    def start(self):
-        if len(self.config) > 0 and not self.reset:
-            die("Cannot start sync. Previous sync config found at %s\n"
-                "If you want to start submitting again from scratch "
-                "maybe you want to call git-p4 submit --reset" % self.configFile)
-
-        commits = []
-        if self.directSubmit:
-            commits.append("0")
-        else:
-            for line in read_pipe_lines("git rev-list --no-merges %s..%s" % (self.origin, self.master)):
-                commits.append(line.strip())
-            commits.reverse()
-
-        self.config["commits"] = commits
-
+    # replaces everything between 'Description:' and the next P4 submit template field with the
+    # commit message
     def prepareLogMessage(self, template, message):
         result = ""
+
+        inDescriptionSection = False
 
         for line in template.split("\n"):
             if line.startswith("#"):
                 result += line + "\n"
                 continue
 
-            substituted = False
-            for key in self.logSubstitutions.keys():
-                if line.find(key) != -1:
-                    value = self.logSubstitutions[key]
-                    value = value.replace("%log%", message)
-                    if value != "@remove@":
-                        result += line.replace(key, value) + "\n"
-                    substituted = True
-                    break
+            if inDescriptionSection:
+                if line.startswith("Files:"):
+                    inDescriptionSection = False
+                else:
+                    continue
+            else:
+                if line.startswith("Description:"):
+                    inDescriptionSection = True
+                    line += "\n"
+                    for messageLine in message.split("\n"):
+                        line += "\t" + messageLine + "\n"
 
-            if not substituted:
-                result += line + "\n"
+            result += line + "\n"
 
         return result
 
@@ -557,13 +533,9 @@ class P4Submit(Command):
         return template
 
     def applyCommit(self, id):
-        if self.directSubmit:
-            print "Applying local change in working directory/index"
-            diff = self.diffStatus
-        else:
-            print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
-            diffOpts = ("", "-M")[self.detectRename]
-            diff = read_pipe_lines("git diff-tree -r %s \"%s^\" \"%s\"" % (diffOpts, id, id))
+        print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
+        diffOpts = ("", "-M")[self.detectRename]
+        diff = read_pipe_lines("git diff-tree -r %s \"%s^\" \"%s\"" % (diffOpts, id, id))
         filesToAdd = set()
         filesToDelete = set()
         editedFiles = set()
@@ -598,10 +570,7 @@ class P4Submit(Command):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        if self.directSubmit:
-            diffcmd = "cat \"%s\"" % self.diffFile
-        else:
-            diffcmd = "git format-patch -k --stdout \"%s^\"..\"%s\"" % (id, id)
+        diffcmd = "git format-patch -k --stdout \"%s^\"..\"%s\"" % (id, id)
         patchcmd = diffcmd + " | git apply "
         tryPatchCmd = patchcmd + "--check -"
         applyPatchCmd = patchcmd + "--check --apply -"
@@ -649,13 +618,10 @@ class P4Submit(Command):
             mode = filesToChangeExecBit[f]
             setP4ExecBit(f, mode)
 
-        logMessage = ""
-        if not self.directSubmit:
-            logMessage = extractLogMessageFromGitCommit(id)
-            logMessage = logMessage.replace("\n", "\n\t")
-            if self.isWindows:
-                logMessage = logMessage.replace("\n", "\r\n")
-            logMessage = logMessage.strip()
+        logMessage = extractLogMessageFromGitCommit(id)
+        if self.isWindows:
+            logMessage = logMessage.replace("\n", "\r\n")
+        logMessage = logMessage.strip()
 
         template = self.prepareSubmitTemplate()
 
@@ -693,12 +659,6 @@ class P4Submit(Command):
             submitTemplate = message[:message.index(separatorLine)]
             if self.isWindows:
                 submitTemplate = submitTemplate.replace("\r\n", "\n")
-
-            if self.directSubmit:
-                print "Submitting to git first"
-                os.chdir(self.oldWorkingDirectory)
-                write_pipe("git commit -a -F -", submitTemplate)
-                os.chdir(self.clientPath)
 
             write_pipe("p4 submit -i", submitTemplate)
         else:
@@ -741,65 +701,33 @@ class P4Submit(Command):
         print "Perforce checkout for depot path %s located at %s" % (self.depotPath, self.clientPath)
         self.oldWorkingDirectory = os.getcwd()
 
-        if self.directSubmit:
-            self.diffStatus = read_pipe_lines("git diff -r --name-status HEAD")
-            if len(self.diffStatus) == 0:
-                print "No changes in working directory to submit."
-                return True
-            patch = read_pipe("git diff -p --binary --diff-filter=ACMRTUXB HEAD")
-            self.diffFile = self.gitdir + "/p4-git-diff"
-            f = open(self.diffFile, "wb")
-            f.write(patch)
-            f.close();
-
         os.chdir(self.clientPath)
         print "Syncronizing p4 checkout..."
         system("p4 sync ...")
 
-        if self.reset:
-            self.firstTime = True
-
-        if len(self.substFile) > 0:
-            for line in open(self.substFile, "r").readlines():
-                tokens = line.strip().split("=")
-                self.logSubstitutions[tokens[0]] = tokens[1]
-
         self.check()
-        self.configFile = self.gitdir + "/p4-git-sync.cfg"
-        self.config = shelve.open(self.configFile, writeback=True)
 
-        if self.firstTime:
-            self.start()
-
-        commits = self.config.get("commits", [])
+        commits = []
+        for line in read_pipe_lines("git rev-list --no-merges %s..%s" % (self.origin, self.master)):
+            commits.append(line.strip())
+        commits.reverse()
 
         while len(commits) > 0:
-            self.firstTime = False
             commit = commits[0]
             commits = commits[1:]
-            self.config["commits"] = commits
             self.applyCommit(commit)
             if not self.interactive:
                 break
 
-        self.config.close()
-
-        if self.directSubmit:
-            os.remove(self.diffFile)
-
         if len(commits) == 0:
-            if self.firstTime:
-                print "No changes found to apply between %s and current HEAD" % self.origin
-            else:
-                print "All changes applied!"
-                os.chdir(self.oldWorkingDirectory)
+            print "All changes applied!"
+            os.chdir(self.oldWorkingDirectory)
 
-                sync = P4Sync()
-                sync.run([])
+            sync = P4Sync()
+            sync.run([])
 
-                rebase = P4Rebase()
-                rebase.rebase()
-            os.remove(self.configFile)
+            rebase = P4Rebase()
+            rebase.rebase()
 
         return True
 
@@ -817,7 +745,9 @@ class P4Sync(Command):
                                      help="Import into refs/heads/ , not refs/remotes"),
                 optparse.make_option("--max-changes", dest="maxChanges"),
                 optparse.make_option("--keep-path", dest="keepRepoPath", action='store_true',
-                                     help="Keep entire BRANCH/DIR/SUBDIR prefix during import")
+                                     help="Keep entire BRANCH/DIR/SUBDIR prefix during import"),
+                optparse.make_option("--use-client-spec", dest="useClientSpec", action='store_true',
+                                     help="Only sync files that are included in the Perforce Client Spec")
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -843,18 +773,27 @@ class P4Sync(Command):
         self.keepRepoPath = False
         self.depotPaths = None
         self.p4BranchesInGit = []
+        self.cloneExclude = []
+        self.useClientSpec = False
+        self.clientSpecDirs = []
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
 
     def extractFilesFromCommit(self, commit):
+        self.cloneExclude = [re.sub(r"\.\.\.$", "", path)
+                             for path in self.cloneExclude]
         files = []
         fnum = 0
         while commit.has_key("depotFile%s" % fnum):
             path =  commit["depotFile%s" % fnum]
 
-            found = [p for p in self.depotPaths
-                     if path.startswith (p)]
+            if [p for p in self.cloneExclude
+                if path.startswith (p)]:
+                found = False
+            else:
+                found = [p for p in self.depotPaths
+                         if path.startswith (p)]
             if not found:
                 fnum = fnum + 1
                 continue
@@ -911,11 +850,21 @@ class P4Sync(Command):
 
     ## Should move this out, doesn't use SELF.
     def readP4Files(self, files):
+        for f in files:
+            for val in self.clientSpecDirs:
+                if f['path'].startswith(val[0]):
+                    if val[1] > 0:
+                        f['include'] = True
+                    else:
+                        f['include'] = False
+                    break
+
         files = [f for f in files
-                 if f['action'] != 'delete']
+                 if f['action'] != 'delete' and
+                 (f.has_key('include') == False or f['include'] == True)]
 
         if not files:
-            return
+            return []
 
         filedata = p4CmdList('-x - print',
                              stdin='\n'.join(['%s#%s' % (f['path'], f['rev'])
@@ -950,6 +899,7 @@ class P4Sync(Command):
         for f in files:
             assert not f.has_key('data')
             f['data'] = contents[f['path']]
+        return files
 
     def commit(self, details, files, branch, branchPrefixes, parent = ""):
         epoch = details["time"]
@@ -966,11 +916,7 @@ class P4Sync(Command):
                 new_files.append (f)
             else:
                 sys.stderr.write("Ignoring file outside of prefix: %s\n" % path)
-        files = new_files
-        self.readP4Files(files)
-
-
-
+        files = self.readP4Files(new_files)
 
         self.gitStream.write("commit %s\n" % branch)
 #        gitStream.write("mark :%s\n" % details["change"])
@@ -1385,6 +1331,26 @@ class P4Sync(Command):
             print self.gitError.read()
 
 
+    def getClientSpec(self):
+        specList = p4CmdList( "client -o" )
+        temp = {}
+        for entry in specList:
+            for k,v in entry.iteritems():
+                if k.startswith("View"):
+                    if v.startswith('"'):
+                        start = 1
+                    else:
+                        start = 0
+                    index = v.find("...")
+                    v = v[start:index]
+                    if v.startswith("-"):
+                        v = v[1:]
+                        temp[v] = -len(v)
+                    else:
+                        temp[v] = len(v)
+        self.clientSpecDirs = temp.items()
+        self.clientSpecDirs.sort( lambda x, y: abs( y[1] ) - abs( x[1] ) )
+
     def run(self, args):
         self.depotPaths = []
         self.changeRange = ""
@@ -1416,6 +1382,9 @@ class P4Sync(Command):
             # create it /after/ importing, when master exists
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
+
+        if self.useClientSpec or gitConfig("p4.useclientspec") == "true":
+            self.getClientSpec()
 
         # TODO: should always look at previous commits,
         # merge with previous imports, if possible.
@@ -1634,12 +1603,22 @@ class P4Clone(P4Sync):
         P4Sync.__init__(self)
         self.description = "Creates a new git repository and imports from Perforce into it"
         self.usage = "usage: %prog [options] //depot/path[@revRange]"
-        self.options.append(
+        self.options += [
             optparse.make_option("--destination", dest="cloneDestination",
                                  action='store', default=None,
-                                 help="where to leave result of the clone"))
+                                 help="where to leave result of the clone"),
+            optparse.make_option("-/", dest="cloneExclude",
+                                 action="append", type="string",
+                                 help="exclude depot path")
+        ]
         self.cloneDestination = None
         self.needsGit = False
+
+    # This is required for the "append" cloneExclude action
+    def ensure_value(self, attr, value):
+        if not hasattr(self, attr) or getattr(self, attr) is None:
+            setattr(self, attr, value)
+        return getattr(self, attr)
 
     def defaultDestination(self, args):
         ## TODO: use common prefix of args?
@@ -1664,6 +1643,7 @@ class P4Clone(P4Sync):
             self.cloneDestination = depotPaths[-1]
             depotPaths = depotPaths[:-1]
 
+        self.cloneExclude = ["/"+p for p in self.cloneExclude]
         for p in depotPaths:
             if not p.startswith("//"):
                 return False

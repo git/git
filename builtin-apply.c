@@ -161,6 +161,84 @@ struct patch {
 	struct patch *next;
 };
 
+/*
+ * A line in a file, len-bytes long (includes the terminating LF,
+ * except for an incomplete line at the end if the file ends with
+ * one), and its contents hashes to 'hash'.
+ */
+struct line {
+	size_t len;
+	unsigned hash : 24;
+	unsigned flag : 8;
+#define LINE_COMMON     1
+};
+
+/*
+ * This represents a "file", which is an array of "lines".
+ */
+struct image {
+	char *buf;
+	size_t len;
+	size_t nr;
+	size_t alloc;
+	struct line *line_allocated;
+	struct line *line;
+};
+
+static uint32_t hash_line(const char *cp, size_t len)
+{
+	size_t i;
+	uint32_t h;
+	for (i = 0, h = 0; i < len; i++) {
+		if (!isspace(cp[i])) {
+			h = h * 3 + (cp[i] & 0xff);
+		}
+	}
+	return h;
+}
+
+static void add_line_info(struct image *img, const char *bol, size_t len, unsigned flag)
+{
+	ALLOC_GROW(img->line_allocated, img->nr + 1, img->alloc);
+	img->line_allocated[img->nr].len = len;
+	img->line_allocated[img->nr].hash = hash_line(bol, len);
+	img->line_allocated[img->nr].flag = flag;
+	img->nr++;
+}
+
+static void prepare_image(struct image *image, char *buf, size_t len,
+			  int prepare_linetable)
+{
+	const char *cp, *ep;
+
+	memset(image, 0, sizeof(*image));
+	image->buf = buf;
+	image->len = len;
+
+	if (!prepare_linetable)
+		return;
+
+	ep = image->buf + image->len;
+	cp = image->buf;
+	while (cp < ep) {
+		const char *next;
+		for (next = cp; next < ep && *next != '\n'; next++)
+			;
+		if (next < ep)
+			next++;
+		add_line_info(image, cp, next - cp, 0);
+		cp = next;
+	}
+	image->line = image->line_allocated;
+}
+
+static void clear_image(struct image *image)
+{
+	free(image->buf);
+	image->buf = NULL;
+	image->len = 0;
+}
+
 static void say_patch_name(FILE *output, const char *pre,
 			   struct patch *patch, const char *post)
 {
@@ -1437,227 +1515,338 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 	}
 }
 
-static int find_offset(const char *buf, unsigned long size,
-		       const char *fragment, unsigned long fragsize,
-		       int line, int *lines)
+static void update_pre_post_images(struct image *preimage,
+				   struct image *postimage,
+				   char *buf,
+				   size_t len)
 {
-	int i;
-	unsigned long start, backwards, forwards;
+	int i, ctx;
+	char *new, *old, *fixed;
+	struct image fixed_preimage;
 
-	if (fragsize > size)
-		return -1;
+	/*
+	 * Update the preimage with whitespace fixes.  Note that we
+	 * are not losing preimage->buf -- apply_one_fragment() will
+	 * free "oldlines".
+	 */
+	prepare_image(&fixed_preimage, buf, len, 1);
+	assert(fixed_preimage.nr == preimage->nr);
+	for (i = 0; i < preimage->nr; i++)
+		fixed_preimage.line[i].flag = preimage->line[i].flag;
+	free(preimage->line_allocated);
+	*preimage = fixed_preimage;
 
-	start = 0;
-	if (line > 1) {
-		unsigned long offset = 0;
-		i = line-1;
-		while (offset + fragsize <= size) {
-			if (buf[offset++] == '\n') {
-				start = offset;
-				if (!--i)
-					break;
-			}
+	/*
+	 * Adjust the common context lines in postimage, in place.
+	 * This is possible because whitespace fixing does not make
+	 * the string grow.
+	 */
+	new = old = postimage->buf;
+	fixed = preimage->buf;
+	for (i = ctx = 0; i < postimage->nr; i++) {
+		size_t len = postimage->line[i].len;
+		if (!(postimage->line[i].flag & LINE_COMMON)) {
+			/* an added line -- no counterparts in preimage */
+			memmove(new, old, len);
+			old += len;
+			new += len;
+			continue;
 		}
+
+		/* a common context -- skip it in the original postimage */
+		old += len;
+
+		/* and find the corresponding one in the fixed preimage */
+		while (ctx < preimage->nr &&
+		       !(preimage->line[ctx].flag & LINE_COMMON)) {
+			fixed += preimage->line[ctx].len;
+			ctx++;
+		}
+		if (preimage->nr <= ctx)
+			die("oops");
+
+		/* and copy it in, while fixing the line length */
+		len = preimage->line[ctx].len;
+		memcpy(new, fixed, len);
+		new += len;
+		fixed += len;
+		postimage->line[i].len = len;
+		ctx++;
 	}
 
-	/* Exact line number? */
-	if ((start + fragsize <= size) &&
-	    !memcmp(buf + start, fragment, fragsize))
-		return start;
+	/* Fix the length of the whole thing */
+	postimage->len = new - postimage->buf;
+}
+
+static int match_fragment(struct image *img,
+			  struct image *preimage,
+			  struct image *postimage,
+			  unsigned long try,
+			  int try_lno,
+			  unsigned ws_rule,
+			  int match_beginning, int match_end)
+{
+	int i;
+	char *fixed_buf, *buf, *orig, *target;
+
+	if (preimage->nr + try_lno > img->nr)
+		return 0;
+
+	if (match_beginning && try_lno)
+		return 0;
+
+	if (match_end && preimage->nr + try_lno != img->nr)
+		return 0;
+
+	/* Quick hash check */
+	for (i = 0; i < preimage->nr; i++)
+		if (preimage->line[i].hash != img->line[try_lno + i].hash)
+			return 0;
+
+	/*
+	 * Do we have an exact match?  If we were told to match
+	 * at the end, size must be exactly at try+fragsize,
+	 * otherwise try+fragsize must be still within the preimage,
+	 * and either case, the old piece should match the preimage
+	 * exactly.
+	 */
+	if ((match_end
+	     ? (try + preimage->len == img->len)
+	     : (try + preimage->len <= img->len)) &&
+	    !memcmp(img->buf + try, preimage->buf, preimage->len))
+		return 1;
+
+	if (ws_error_action != correct_ws_error)
+		return 0;
+
+	/*
+	 * The hunk does not apply byte-by-byte, but the hash says
+	 * it might with whitespace fuzz.
+	 */
+	fixed_buf = xmalloc(preimage->len + 1);
+	buf = fixed_buf;
+	orig = preimage->buf;
+	target = img->buf + try;
+	for (i = 0; i < preimage->nr; i++) {
+		size_t fixlen; /* length after fixing the preimage */
+		size_t oldlen = preimage->line[i].len;
+		size_t tgtlen = img->line[try_lno + i].len;
+		size_t tgtfixlen; /* length after fixing the target line */
+		char tgtfixbuf[1024], *tgtfix;
+		int match;
+
+		/* Try fixing the line in the preimage */
+		fixlen = ws_fix_copy(buf, orig, oldlen, ws_rule, NULL);
+
+		/* Try fixing the line in the target */
+		if (sizeof(tgtfixbuf) < tgtlen)
+			tgtfix = tgtfixbuf;
+		else
+			tgtfix = xmalloc(tgtlen);
+		tgtfixlen = ws_fix_copy(tgtfix, target, tgtlen, ws_rule, NULL);
+
+		/*
+		 * If they match, either the preimage was based on
+		 * a version before our tree fixed whitespace breakage,
+		 * or we are lacking a whitespace-fix patch the tree
+		 * the preimage was based on already had (i.e. target
+		 * has whitespace breakage, the preimage doesn't).
+		 * In either case, we are fixing the whitespace breakages
+		 * so we might as well take the fix together with their
+		 * real change.
+		 */
+		match = (tgtfixlen == fixlen && !memcmp(tgtfix, buf, fixlen));
+
+		if (tgtfix != tgtfixbuf)
+			free(tgtfix);
+		if (!match)
+			goto unmatch_exit;
+
+		orig += oldlen;
+		buf += fixlen;
+		target += tgtlen;
+	}
+
+	/*
+	 * Yes, the preimage is based on an older version that still
+	 * has whitespace breakages unfixed, and fixing them makes the
+	 * hunk match.  Update the context lines in the postimage.
+	 */
+	update_pre_post_images(preimage, postimage,
+			       fixed_buf, buf - fixed_buf);
+	return 1;
+
+ unmatch_exit:
+	free(fixed_buf);
+	return 0;
+}
+
+static int find_pos(struct image *img,
+		    struct image *preimage,
+		    struct image *postimage,
+		    int line,
+		    unsigned ws_rule,
+		    int match_beginning, int match_end)
+{
+	int i;
+	unsigned long backwards, forwards, try;
+	int backwards_lno, forwards_lno, try_lno;
+
+	if (preimage->nr > img->nr)
+		return -1;
+
+	/*
+	 * If match_begining or match_end is specified, there is no
+	 * point starting from a wrong line that will never match and
+	 * wander around and wait for a match at the specified end.
+	 */
+	if (match_beginning)
+		line = 0;
+	else if (match_end)
+		line = img->nr - preimage->nr;
+
+	if (line > img->nr)
+		line = img->nr;
+
+	try = 0;
+	for (i = 0; i < line; i++)
+		try += img->line[i].len;
 
 	/*
 	 * There's probably some smart way to do this, but I'll leave
 	 * that to the smart and beautiful people. I'm simple and stupid.
 	 */
-	backwards = start;
-	forwards = start;
-	for (i = 0; ; i++) {
-		unsigned long try;
-		int n;
+	backwards = try;
+	backwards_lno = line;
+	forwards = try;
+	forwards_lno = line;
+	try_lno = line;
 
-		/* "backward" */
+	for (i = 0; ; i++) {
+		if (match_fragment(img, preimage, postimage,
+				   try, try_lno, ws_rule,
+				   match_beginning, match_end))
+			return try_lno;
+
+	again:
+		if (backwards_lno == 0 && forwards_lno == img->nr)
+			break;
+
 		if (i & 1) {
-			if (!backwards) {
-				if (forwards + fragsize > size)
-					break;
-				continue;
+			if (backwards_lno == 0) {
+				i++;
+				goto again;
 			}
-			do {
-				--backwards;
-			} while (backwards && buf[backwards-1] != '\n');
+			backwards_lno--;
+			backwards -= img->line[backwards_lno].len;
 			try = backwards;
+			try_lno = backwards_lno;
 		} else {
-			while (forwards + fragsize <= size) {
-				if (buf[forwards++] == '\n')
-					break;
+			if (forwards_lno == img->nr) {
+				i++;
+				goto again;
 			}
+			forwards += img->line[forwards_lno].len;
+			forwards_lno++;
 			try = forwards;
+			try_lno = forwards_lno;
 		}
 
-		if (try + fragsize > size)
-			continue;
-		if (memcmp(buf + try, fragment, fragsize))
-			continue;
-		n = (i >> 1)+1;
-		if (i & 1)
-			n = -n;
-		*lines = n;
-		return try;
 	}
-
-	/*
-	 * We should start searching forward and backward.
-	 */
 	return -1;
 }
 
-static void remove_first_line(const char **rbuf, int *rsize)
+static void remove_first_line(struct image *img)
 {
-	const char *buf = *rbuf;
-	int size = *rsize;
-	unsigned long offset;
-	offset = 0;
-	while (offset <= size) {
-		if (buf[offset++] == '\n')
-			break;
-	}
-	*rsize = size - offset;
-	*rbuf = buf + offset;
+	img->buf += img->line[0].len;
+	img->len -= img->line[0].len;
+	img->line++;
+	img->nr--;
 }
 
-static void remove_last_line(const char **rbuf, int *rsize)
+static void remove_last_line(struct image *img)
 {
-	const char *buf = *rbuf;
-	int size = *rsize;
-	unsigned long offset;
-	offset = size - 1;
-	while (offset > 0) {
-		if (buf[--offset] == '\n')
-			break;
-	}
-	*rsize = offset + 1;
+	img->len -= img->line[--img->nr].len;
 }
 
-static int apply_line(char *output, const char *patch, int plen,
-		      unsigned ws_rule)
+static void update_image(struct image *img,
+			 int applied_pos,
+			 struct image *preimage,
+			 struct image *postimage)
 {
 	/*
-	 * plen is number of bytes to be copied from patch,
-	 * starting at patch+1 (patch[0] is '+').  Typically
-	 * patch[plen] is '\n', unless this is the incomplete
-	 * last line.
+	 * remove the copy of preimage at offset in img
+	 * and replace it with postimage
 	 */
-	int i;
-	int add_nl_to_tail = 0;
-	int fixed = 0;
-	int last_tab_in_indent = 0;
-	int last_space_in_indent = 0;
-	int need_fix_leading_space = 0;
-	char *buf;
+	int i, nr;
+	size_t remove_count, insert_count, applied_at = 0;
+	char *result;
 
-	if ((ws_error_action != correct_ws_error) || !whitespace_error ||
-	    *patch != '+') {
-		memcpy(output, patch + 1, plen);
-		return plen;
-	}
+	for (i = 0; i < applied_pos; i++)
+		applied_at += img->line[i].len;
 
-	/*
-	 * Strip trailing whitespace
-	 */
-	if ((ws_rule & WS_TRAILING_SPACE) &&
-	    (1 < plen && isspace(patch[plen-1]))) {
-		if (patch[plen] == '\n')
-			add_nl_to_tail = 1;
-		plen--;
-		while (0 < plen && isspace(patch[plen]))
-			plen--;
-		fixed = 1;
-	}
+	remove_count = 0;
+	for (i = 0; i < preimage->nr; i++)
+		remove_count += img->line[applied_pos + i].len;
+	insert_count = postimage->len;
 
-	/*
-	 * Check leading whitespaces (indent)
-	 */
-	for (i = 1; i < plen; i++) {
-		char ch = patch[i];
-		if (ch == '\t') {
-			last_tab_in_indent = i;
-			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
-			    0 < last_space_in_indent)
-			    need_fix_leading_space = 1;
-		} else if (ch == ' ') {
-			last_space_in_indent = i;
-			if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
-			    8 <= i - last_tab_in_indent)
-				need_fix_leading_space = 1;
-		}
-		else
-			break;
-	}
+	/* Adjust the contents */
+	result = xmalloc(img->len + insert_count - remove_count + 1);
+	memcpy(result, img->buf, applied_at);
+	memcpy(result + applied_at, postimage->buf, postimage->len);
+	memcpy(result + applied_at + postimage->len,
+	       img->buf + (applied_at + remove_count),
+	       img->len - (applied_at + remove_count));
+	free(img->buf);
+	img->buf = result;
+	img->len += insert_count - remove_count;
+	result[img->len] = '\0';
 
-	buf = output;
-	if (need_fix_leading_space) {
-		int consecutive_spaces = 0;
-		int last = last_tab_in_indent + 1;
-
-		if (ws_rule & WS_INDENT_WITH_NON_TAB) {
-			/* have "last" point at one past the indent */
-			if (last_tab_in_indent < last_space_in_indent)
-				last = last_space_in_indent + 1;
-			else
-				last = last_tab_in_indent + 1;
-		}
-
+	/* Adjust the line table */
+	nr = img->nr + postimage->nr - preimage->nr;
+	if (preimage->nr < postimage->nr) {
 		/*
-		 * between patch[1..last], strip the funny spaces,
-		 * updating them to tab as needed.
+		 * NOTE: this knows that we never call remove_first_line()
+		 * on anything other than pre/post image.
 		 */
-		for (i = 1; i < last; i++, plen--) {
-			char ch = patch[i];
-			if (ch != ' ') {
-				consecutive_spaces = 0;
-				*output++ = ch;
-			} else {
-				consecutive_spaces++;
-				if (consecutive_spaces == 8) {
-					*output++ = '\t';
-					consecutive_spaces = 0;
-				}
-			}
-		}
-		while (0 < consecutive_spaces--)
-			*output++ = ' ';
-		fixed = 1;
-		i = last;
+		img->line = xrealloc(img->line, nr * sizeof(*img->line));
+		img->line_allocated = img->line;
 	}
-	else
-		i = 1;
-
-	memcpy(output, patch + i, plen);
-	if (add_nl_to_tail)
-		output[plen++] = '\n';
-	if (fixed)
-		applied_after_fixing_ws++;
-	return output + plen - buf;
+	if (preimage->nr != postimage->nr)
+		memmove(img->line + applied_pos + postimage->nr,
+			img->line + applied_pos + preimage->nr,
+			(img->nr - (applied_pos + preimage->nr)) *
+			sizeof(*img->line));
+	memcpy(img->line + applied_pos,
+	       postimage->line,
+	       postimage->nr * sizeof(*img->line));
+	img->nr = nr;
 }
 
-static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
+static int apply_one_fragment(struct image *img, struct fragment *frag,
 			      int inaccurate_eof, unsigned ws_rule)
 {
 	int match_beginning, match_end;
 	const char *patch = frag->patch;
-	int offset, size = frag->size;
-	char *old = xmalloc(size);
-	char *new = xmalloc(size);
-	const char *oldlines, *newlines;
-	int oldsize = 0, newsize = 0;
+	int size = frag->size;
+	char *old, *new, *oldlines, *newlines;
 	int new_blank_lines_at_end = 0;
 	unsigned long leading, trailing;
-	int pos, lines;
+	int pos, applied_pos;
+	struct image preimage;
+	struct image postimage;
 
+	memset(&preimage, 0, sizeof(preimage));
+	memset(&postimage, 0, sizeof(postimage));
+	oldlines = xmalloc(size);
+	newlines = xmalloc(size);
+
+	old = oldlines;
+	new = newlines;
 	while (size > 0) {
 		char first;
 		int len = linelen(patch, size);
-		int plen;
+		int plen, added;
 		int added_blank_line = 0;
 
 		if (!len)
@@ -1670,7 +1859,7 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
 		 * followed by "\ No newline", then we also remove the
 		 * last one (which is the newline, of course).
 		 */
-		plen = len-1;
+		plen = len - 1;
 		if (len < size && patch[len] == '\\')
 			plen--;
 		first = *patch;
@@ -1687,25 +1876,40 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
 			if (plen < 0)
 				/* ... followed by '\No newline'; nothing */
 				break;
-			old[oldsize++] = '\n';
-			new[newsize++] = '\n';
+			*old++ = '\n';
+			*new++ = '\n';
+			add_line_info(&preimage, "\n", 1, LINE_COMMON);
+			add_line_info(&postimage, "\n", 1, LINE_COMMON);
 			break;
 		case ' ':
 		case '-':
-			memcpy(old + oldsize, patch + 1, plen);
-			oldsize += plen;
+			memcpy(old, patch + 1, plen);
+			add_line_info(&preimage, old, plen,
+				      (first == ' ' ? LINE_COMMON : 0));
+			old += plen;
 			if (first == '-')
 				break;
 		/* Fall-through for ' ' */
 		case '+':
-			if (first != '+' || !no_add) {
-				int added = apply_line(new + newsize, patch,
-						       plen, ws_rule);
-				newsize += added;
-				if (first == '+' &&
-				    added == 1 && new[newsize-1] == '\n')
-					added_blank_line = 1;
+			/* --no-add does not add new lines */
+			if (first == '+' && no_add)
+				break;
+
+			if (first != '+' ||
+			    !whitespace_error ||
+			    ws_error_action != correct_ws_error) {
+				memcpy(new, patch + 1, plen);
+				added = plen;
 			}
+			else {
+				added = ws_fix_copy(new, patch + 1, plen, ws_rule, &applied_after_fixing_ws);
+			}
+			add_line_info(&postimage, new, added,
+				      (first == '+' ? 0 : LINE_COMMON));
+			new += added;
+			if (first == '+' &&
+			    added == 1 && new[-1] == '\n')
+				added_blank_line = 1;
 			break;
 		case '@': case '\\':
 			/* Ignore it, we already handled it */
@@ -1722,16 +1926,13 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
 		patch += len;
 		size -= len;
 	}
-
 	if (inaccurate_eof &&
-	    oldsize > 0 && old[oldsize - 1] == '\n' &&
-	    newsize > 0 && new[newsize - 1] == '\n') {
-		oldsize--;
-		newsize--;
+	    old > oldlines && old[-1] == '\n' &&
+	    new > newlines && new[-1] == '\n') {
+		old--;
+		new--;
 	}
 
-	oldlines = old;
-	newlines = new;
 	leading = frag->leading;
 	trailing = frag->trailing;
 
@@ -1752,33 +1953,21 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
 		match_end = !trailing;
 	}
 
-	lines = 0;
-	pos = frag->newpos;
+	pos = frag->newpos ? (frag->newpos - 1) : 0;
+	preimage.buf = oldlines;
+	preimage.len = old - oldlines;
+	postimage.buf = newlines;
+	postimage.len = new - newlines;
+	preimage.line = preimage.line_allocated;
+	postimage.line = postimage.line_allocated;
+
 	for (;;) {
-		offset = find_offset(buf->buf, buf->len,
-				     oldlines, oldsize, pos, &lines);
-		if (match_end && offset + oldsize != buf->len)
-			offset = -1;
-		if (match_beginning && offset)
-			offset = -1;
-		if (offset >= 0) {
-			if (ws_error_action == correct_ws_error &&
-			    (buf->len - oldsize - offset == 0)) /* end of file? */
-				newsize -= new_blank_lines_at_end;
 
-			/* Warn if it was necessary to reduce the number
-			 * of context lines.
-			 */
-			if ((leading != frag->leading) ||
-			    (trailing != frag->trailing))
-				fprintf(stderr, "Context reduced to (%ld/%ld)"
-					" to apply fragment at %d\n",
-					leading, trailing, pos + lines);
+		applied_pos = find_pos(img, &preimage, &postimage, pos,
+				       ws_rule, match_beginning, match_end);
 
-			strbuf_splice(buf, offset, oldsize, newlines, newsize);
-			offset = 0;
+		if (applied_pos >= 0)
 			break;
-		}
 
 		/* Am I at my context limits? */
 		if ((leading <= p_context) && (trailing <= p_context))
@@ -1787,33 +1976,64 @@ static int apply_one_fragment(struct strbuf *buf, struct fragment *frag,
 			match_beginning = match_end = 0;
 			continue;
 		}
+
 		/*
 		 * Reduce the number of context lines; reduce both
 		 * leading and trailing if they are equal otherwise
 		 * just reduce the larger context.
 		 */
 		if (leading >= trailing) {
-			remove_first_line(&oldlines, &oldsize);
-			remove_first_line(&newlines, &newsize);
+			remove_first_line(&preimage);
+			remove_first_line(&postimage);
 			pos--;
 			leading--;
 		}
 		if (trailing > leading) {
-			remove_last_line(&oldlines, &oldsize);
-			remove_last_line(&newlines, &newsize);
+			remove_last_line(&preimage);
+			remove_last_line(&postimage);
 			trailing--;
 		}
 	}
 
-	if (offset && apply_verbosely)
-		error("while searching for:\n%.*s", oldsize, oldlines);
+	if (applied_pos >= 0) {
+		if (ws_error_action == correct_ws_error &&
+		    new_blank_lines_at_end &&
+		    postimage.nr + applied_pos == img->nr) {
+			/*
+			 * If the patch application adds blank lines
+			 * at the end, and if the patch applies at the
+			 * end of the image, remove those added blank
+			 * lines.
+			 */
+			while (new_blank_lines_at_end--)
+				remove_last_line(&postimage);
+		}
 
-	free(old);
-	free(new);
-	return offset;
+		/*
+		 * Warn if it was necessary to reduce the number
+		 * of context lines.
+		 */
+		if ((leading != frag->leading) ||
+		    (trailing != frag->trailing))
+			fprintf(stderr, "Context reduced to (%ld/%ld)"
+				" to apply fragment at %d\n",
+				leading, trailing, applied_pos+1);
+		update_image(img, applied_pos, &preimage, &postimage);
+	} else {
+		if (apply_verbosely)
+			error("while searching for:\n%.*s",
+			      (int)(old - oldlines), oldlines);
+	}
+
+	free(oldlines);
+	free(newlines);
+	free(preimage.line_allocated);
+	free(postimage.line_allocated);
+
+	return (applied_pos < 0);
 }
 
-static int apply_binary_fragment(struct strbuf *buf, struct patch *patch)
+static int apply_binary_fragment(struct image *img, struct patch *patch)
 {
 	struct fragment *fragment = patch->fragments;
 	unsigned long len;
@@ -1830,22 +2050,26 @@ static int apply_binary_fragment(struct strbuf *buf, struct patch *patch)
 	}
 	switch (fragment->binary_patch_method) {
 	case BINARY_DELTA_DEFLATED:
-		dst = patch_delta(buf->buf, buf->len, fragment->patch,
+		dst = patch_delta(img->buf, img->len, fragment->patch,
 				  fragment->size, &len);
 		if (!dst)
 			return -1;
-		/* XXX patch_delta NUL-terminates */
-		strbuf_attach(buf, dst, len, len + 1);
+		clear_image(img);
+		img->buf = dst;
+		img->len = len;
 		return 0;
 	case BINARY_LITERAL_DEFLATED:
-		strbuf_reset(buf);
-		strbuf_add(buf, fragment->patch, fragment->size);
+		clear_image(img);
+		img->len = fragment->size;
+		img->buf = xmalloc(img->len+1);
+		memcpy(img->buf, fragment->patch, img->len);
+		img->buf[img->len] = '\0';
 		return 0;
 	}
 	return -1;
 }
 
-static int apply_binary(struct strbuf *buf, struct patch *patch)
+static int apply_binary(struct image *img, struct patch *patch)
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	unsigned char sha1[20];
@@ -1866,7 +2090,7 @@ static int apply_binary(struct strbuf *buf, struct patch *patch)
 		 * See if the old one matches what the patch
 		 * applies to.
 		 */
-		hash_sha1_file(buf->buf, buf->len, blob_type, sha1);
+		hash_sha1_file(img->buf, img->len, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
 			return error("the patch applies to '%s' (%s), "
 				     "which does not match the "
@@ -1875,14 +2099,14 @@ static int apply_binary(struct strbuf *buf, struct patch *patch)
 	}
 	else {
 		/* Otherwise, the old one must be empty. */
-		if (buf->len)
+		if (img->len)
 			return error("the patch applies to an empty "
 				     "'%s' but it is not empty", name);
 	}
 
 	get_sha1_hex(patch->new_sha1_prefix, sha1);
 	if (is_null_sha1(sha1)) {
-		strbuf_release(buf);
+		clear_image(img);
 		return 0; /* deletion patch */
 	}
 
@@ -1897,20 +2121,21 @@ static int apply_binary(struct strbuf *buf, struct patch *patch)
 			return error("the necessary postimage %s for "
 				     "'%s' cannot be read",
 				     patch->new_sha1_prefix, name);
-		/* XXX read_sha1_file NUL-terminates */
-		strbuf_attach(buf, result, size, size + 1);
+		clear_image(img);
+		img->buf = result;
+		img->len = size;
 	} else {
 		/*
 		 * We have verified buf matches the preimage;
 		 * apply the patch data to it, which is stored
 		 * in the patch->fragments->{patch,size}.
 		 */
-		if (apply_binary_fragment(buf, patch))
+		if (apply_binary_fragment(img, patch))
 			return error("binary patch does not apply to '%s'",
 				     name);
 
 		/* verify that the result matches */
-		hash_sha1_file(buf->buf, buf->len, blob_type, sha1);
+		hash_sha1_file(img->buf, img->len, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->new_sha1_prefix))
 			return error("binary patch to '%s' creates incorrect result (expecting %s, got %s)",
 				name, patch->new_sha1_prefix, sha1_to_hex(sha1));
@@ -1919,7 +2144,7 @@ static int apply_binary(struct strbuf *buf, struct patch *patch)
 	return 0;
 }
 
-static int apply_fragments(struct strbuf *buf, struct patch *patch)
+static int apply_fragments(struct image *img, struct patch *patch)
 {
 	struct fragment *frag = patch->fragments;
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
@@ -1927,10 +2152,10 @@ static int apply_fragments(struct strbuf *buf, struct patch *patch)
 	unsigned inaccurate_eof = patch->inaccurate_eof;
 
 	if (patch->is_binary)
-		return apply_binary(buf, patch);
+		return apply_binary(img, patch);
 
 	while (frag) {
-		if (apply_one_fragment(buf, frag, inaccurate_eof, ws_rule)) {
+		if (apply_one_fragment(img, frag, inaccurate_eof, ws_rule)) {
 			error("patch failed: %s:%ld", name, frag->oldpos);
 			if (!apply_with_reject)
 				return -1;
@@ -1966,6 +2191,9 @@ static int read_file_or_gitlink(struct cache_entry *ce, struct strbuf *buf)
 static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
 	struct strbuf buf;
+	struct image image;
+	size_t len;
+	char *img;
 
 	strbuf_init(&buf, 0);
 	if (cached) {
@@ -1988,9 +2216,14 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 		}
 	}
 
-	if (apply_fragments(&buf, patch) < 0)
+	img = strbuf_detach(&buf, &len);
+	prepare_image(&image, img, len, !patch->is_binary);
+
+	if (apply_fragments(&image, patch) < 0)
 		return -1; /* note with --reject this succeeds. */
-	patch->result = strbuf_detach(&buf, &patch->resultsize);
+	patch->result = image.buf;
+	patch->resultsize = image.len;
+	free(image.line_allocated);
 
 	if (0 < patch->is_delete && patch->resultsize)
 		return error("removal patch leaves file contents");

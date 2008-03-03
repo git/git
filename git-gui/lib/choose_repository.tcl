@@ -11,6 +11,7 @@ field w_quit      ; # Quit button
 field o_cons      ; # Console object (if active)
 field w_types     ; # List of type buttons in clone
 field w_recentlist ; # Listbox containing recent repositories
+field w_localpath  ; # Entry widget bound to local_path
 
 field done              0 ; # Finished picking the repository?
 field local_path       {} ; # Where this repository is locally
@@ -385,6 +386,7 @@ method _do_new {} {
 	button $w_body.where.b \
 		-text [mc "Browse"] \
 		-command [cb _new_local_path]
+	set w_localpath $w_body.where.t
 
 	pack $w_body.where.b -side right
 	pack $w_body.where.l -side left
@@ -416,6 +418,7 @@ method _new_local_path {} {
 		return
 	}
 	set local_path $p
+	$w_localpath icursor end
 }
 
 method _do_new2 {} {
@@ -481,6 +484,7 @@ method _do_clone {} {
 		-text [mc "Browse"] \
 		-command [cb _new_local_path]
 	grid $args.where_l $args.where_t $args.where_b -sticky ew
+	set w_localpath $args.where_t
 
 	label $args.type_l -text [mc "Clone Type:"]
 	frame $args.type_f

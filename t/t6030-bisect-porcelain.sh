@@ -260,7 +260,7 @@ test_expect_success 'bisect starting with a detached HEAD' '
 	git checkout master^ &&
 	HEAD=$(git rev-parse --verify HEAD) &&
 	git bisect start &&
-	test $HEAD = $(cat .git/head-name) &&
+	test $HEAD = $(cat .git/BISECT_START) &&
 	git bisect reset &&
 	test $HEAD = $(git rev-parse --verify HEAD)
 

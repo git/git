@@ -45,6 +45,11 @@ OPTIONS
 	candidates to describe the input committish consider
 	up to <n> candidates.  Increasing <n> above 10 will take
 	slightly longer but may produce a more accurate result.
+	An <n> of 0 will cause only exact matches to be output.
+
+--exact-match::
+	Only output exact matches (a tag directly references the
+	supplied commit).  This is a synonym for --candidates=0.
 
 --debug::
 	Verbosely display information about the searching strategy

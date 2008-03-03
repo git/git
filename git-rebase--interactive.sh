@@ -268,6 +268,10 @@ do_next () {
 		warn
 		warn "	git commit --amend"
 		warn
+		warn "Once you are satisfied with your changes, run"
+		warn
+		warn "	git rebase --continue"
+		warn
 		exit 0
 		;;
 	squash|s)

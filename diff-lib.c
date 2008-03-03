@@ -737,7 +737,8 @@ int run_diff_index(struct rev_info *revs, int cached)
 	opts.unpack_data = revs;
 
 	init_tree_desc(&t, tree->buffer, tree->size);
-	unpack_trees(1, &t, &opts);
+	if (unpack_trees(1, &t, &opts))
+		exit(128);
 
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
@@ -789,6 +790,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	opts.unpack_data = &revs;
 
 	init_tree_desc(&t, tree->buffer, tree->size);
-	unpack_trees(1, &t, &opts);
+	if (unpack_trees(1, &t, &opts))
+		exit(128);
 	return 0;
 }

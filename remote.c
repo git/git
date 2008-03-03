@@ -2,123 +2,184 @@
 #include "remote.h"
 #include "refs.h"
 
+struct counted_string {
+	size_t len;
+	const char *s;
+};
+struct rewrite {
+	const char *base;
+	size_t baselen;
+	struct counted_string *instead_of;
+	int instead_of_nr;
+	int instead_of_alloc;
+};
+
 static struct remote **remotes;
-static int allocated_remotes;
+static int remotes_alloc;
+static int remotes_nr;
 
 static struct branch **branches;
-static int allocated_branches;
+static int branches_alloc;
+static int branches_nr;
 
 static struct branch *current_branch;
 static const char *default_remote_name;
 
+static struct rewrite **rewrite;
+static int rewrite_alloc;
+static int rewrite_nr;
+
 #define BUF_SIZE (2048)
 static char buffer[BUF_SIZE];
 
+static const char *alias_url(const char *url)
+{
+	int i, j;
+	char *ret;
+	struct counted_string *longest;
+	int longest_i;
+
+	longest = NULL;
+	longest_i = -1;
+	for (i = 0; i < rewrite_nr; i++) {
+		if (!rewrite[i])
+			continue;
+		for (j = 0; j < rewrite[i]->instead_of_nr; j++) {
+			if (!prefixcmp(url, rewrite[i]->instead_of[j].s) &&
+			    (!longest ||
+			     longest->len < rewrite[i]->instead_of[j].len)) {
+				longest = &(rewrite[i]->instead_of[j]);
+				longest_i = i;
+			}
+		}
+	}
+	if (!longest)
+		return url;
+
+	ret = malloc(rewrite[longest_i]->baselen +
+		     (strlen(url) - longest->len) + 1);
+	strcpy(ret, rewrite[longest_i]->base);
+	strcpy(ret + rewrite[longest_i]->baselen, url + longest->len);
+	return ret;
+}
+
 static void add_push_refspec(struct remote *remote, const char *ref)
 {
-	int nr = remote->push_refspec_nr + 1;
-	remote->push_refspec =
-		xrealloc(remote->push_refspec, nr * sizeof(char *));
-	remote->push_refspec[nr-1] = ref;
-	remote->push_refspec_nr = nr;
+	ALLOC_GROW(remote->push_refspec,
+		   remote->push_refspec_nr + 1,
+		   remote->push_refspec_alloc);
+	remote->push_refspec[remote->push_refspec_nr++] = ref;
 }
 
 static void add_fetch_refspec(struct remote *remote, const char *ref)
 {
-	int nr = remote->fetch_refspec_nr + 1;
-	remote->fetch_refspec =
-		xrealloc(remote->fetch_refspec, nr * sizeof(char *));
-	remote->fetch_refspec[nr-1] = ref;
-	remote->fetch_refspec_nr = nr;
+	ALLOC_GROW(remote->fetch_refspec,
+		   remote->fetch_refspec_nr + 1,
+		   remote->fetch_refspec_alloc);
+	remote->fetch_refspec[remote->fetch_refspec_nr++] = ref;
 }
 
 static void add_url(struct remote *remote, const char *url)
 {
-	int nr = remote->url_nr + 1;
-	remote->url =
-		xrealloc(remote->url, nr * sizeof(char *));
-	remote->url[nr-1] = url;
-	remote->url_nr = nr;
+	ALLOC_GROW(remote->url, remote->url_nr + 1, remote->url_alloc);
+	remote->url[remote->url_nr++] = url;
+}
+
+static void add_url_alias(struct remote *remote, const char *url)
+{
+	add_url(remote, alias_url(url));
 }
 
 static struct remote *make_remote(const char *name, int len)
 {
-	int i, empty = -1;
+	struct remote *ret;
+	int i;
 
-	for (i = 0; i < allocated_remotes; i++) {
-		if (!remotes[i]) {
-			if (empty < 0)
-				empty = i;
-		} else {
-			if (len ? (!strncmp(name, remotes[i]->name, len) &&
-				   !remotes[i]->name[len]) :
-			    !strcmp(name, remotes[i]->name))
-				return remotes[i];
-		}
+	for (i = 0; i < remotes_nr; i++) {
+		if (len ? (!strncmp(name, remotes[i]->name, len) &&
+			   !remotes[i]->name[len]) :
+		    !strcmp(name, remotes[i]->name))
+			return remotes[i];
 	}
 
-	if (empty < 0) {
-		empty = allocated_remotes;
-		allocated_remotes += allocated_remotes ? allocated_remotes : 1;
-		remotes = xrealloc(remotes,
-				   sizeof(*remotes) * allocated_remotes);
-		memset(remotes + empty, 0,
-		       (allocated_remotes - empty) * sizeof(*remotes));
-	}
-	remotes[empty] = xcalloc(1, sizeof(struct remote));
+	ret = xcalloc(1, sizeof(struct remote));
+	ALLOC_GROW(remotes, remotes_nr + 1, remotes_alloc);
+	remotes[remotes_nr++] = ret;
 	if (len)
-		remotes[empty]->name = xstrndup(name, len);
+		ret->name = xstrndup(name, len);
 	else
-		remotes[empty]->name = xstrdup(name);
-	return remotes[empty];
+		ret->name = xstrdup(name);
+	return ret;
 }
 
 static void add_merge(struct branch *branch, const char *name)
 {
-	int nr = branch->merge_nr + 1;
-	branch->merge_name =
-		xrealloc(branch->merge_name, nr * sizeof(char *));
-	branch->merge_name[nr-1] = name;
-	branch->merge_nr = nr;
+	ALLOC_GROW(branch->merge_name, branch->merge_nr + 1,
+		   branch->merge_alloc);
+	branch->merge_name[branch->merge_nr++] = name;
 }
 
 static struct branch *make_branch(const char *name, int len)
 {
-	int i, empty = -1;
+	struct branch *ret;
+	int i;
 	char *refname;
 
-	for (i = 0; i < allocated_branches; i++) {
-		if (!branches[i]) {
-			if (empty < 0)
-				empty = i;
-		} else {
-			if (len ? (!strncmp(name, branches[i]->name, len) &&
-				   !branches[i]->name[len]) :
-			    !strcmp(name, branches[i]->name))
-				return branches[i];
-		}
+	for (i = 0; i < branches_nr; i++) {
+		if (len ? (!strncmp(name, branches[i]->name, len) &&
+			   !branches[i]->name[len]) :
+		    !strcmp(name, branches[i]->name))
+			return branches[i];
 	}
 
-	if (empty < 0) {
-		empty = allocated_branches;
-		allocated_branches += allocated_branches ? allocated_branches : 1;
-		branches = xrealloc(branches,
-				   sizeof(*branches) * allocated_branches);
-		memset(branches + empty, 0,
-		       (allocated_branches - empty) * sizeof(*branches));
-	}
-	branches[empty] = xcalloc(1, sizeof(struct branch));
+	ALLOC_GROW(branches, branches_nr + 1, branches_alloc);
+	ret = xcalloc(1, sizeof(struct branch));
+	branches[branches_nr++] = ret;
 	if (len)
-		branches[empty]->name = xstrndup(name, len);
+		ret->name = xstrndup(name, len);
 	else
-		branches[empty]->name = xstrdup(name);
+		ret->name = xstrdup(name);
 	refname = malloc(strlen(name) + strlen("refs/heads/") + 1);
 	strcpy(refname, "refs/heads/");
-	strcpy(refname + strlen("refs/heads/"),
-	       branches[empty]->name);
-	branches[empty]->refname = refname;
+	strcpy(refname + strlen("refs/heads/"), ret->name);
+	ret->refname = refname;
 
-	return branches[empty];
+	return ret;
+}
+
+static struct rewrite *make_rewrite(const char *base, int len)
+{
+	struct rewrite *ret;
+	int i;
+
+	for (i = 0; i < rewrite_nr; i++) {
+		if (len
+		    ? (len == rewrite[i]->baselen &&
+		       !strncmp(base, rewrite[i]->base, len))
+		    : !strcmp(base, rewrite[i]->base))
+			return rewrite[i];
+	}
+
+	ALLOC_GROW(rewrite, rewrite_nr + 1, rewrite_alloc);
+	ret = xcalloc(1, sizeof(struct rewrite));
+	rewrite[rewrite_nr++] = ret;
+	if (len) {
+		ret->base = xstrndup(base, len);
+		ret->baselen = len;
+	}
+	else {
+		ret->base = xstrdup(base);
+		ret->baselen = strlen(base);
+	}
+	return ret;
+}
+
+static void add_instead_of(struct rewrite *rewrite, const char *instead_of)
+{
+	ALLOC_GROW(rewrite->instead_of, rewrite->instead_of_nr + 1, rewrite->instead_of_alloc);
+	rewrite->instead_of[rewrite->instead_of_nr].s = instead_of;
+	rewrite->instead_of[rewrite->instead_of_nr].len = strlen(instead_of);
+	rewrite->instead_of_nr++;
 }
 
 static void read_remotes_file(struct remote *remote)
@@ -154,7 +215,7 @@ static void read_remotes_file(struct remote *remote)
 
 		switch (value_list) {
 		case 0:
-			add_url(remote, xstrdup(s));
+			add_url_alias(remote, xstrdup(s));
 			break;
 		case 1:
 			add_push_refspec(remote, xstrdup(s));
@@ -206,7 +267,7 @@ static void read_branches_file(struct remote *remote)
 	} else {
 		branch = "refs/heads/master";
 	}
-	add_url(remote, p);
+	add_url_alias(remote, p);
 	add_fetch_refspec(remote, branch);
 	remote->fetch_tags = 1; /* always auto-follow */
 }
@@ -235,6 +296,19 @@ static int handle_config(const char *key, const char *value)
 			add_merge(branch, xstrdup(value));
 		}
 		return 0;
+	}
+	if (!prefixcmp(key, "url.")) {
+		struct rewrite *rewrite;
+		name = key + 5;
+		subkey = strrchr(name, '.');
+		if (!subkey)
+			return 0;
+		rewrite = make_rewrite(name, subkey - name);
+		if (!strcmp(subkey, ".insteadof")) {
+			if (!value)
+				return config_error_nonbool(key);
+			add_instead_of(rewrite, xstrdup(value));
+		}
 	}
 	if (prefixcmp(key,  "remote."))
 		return 0;
@@ -287,6 +361,18 @@ static int handle_config(const char *key, const char *value)
 	return 0;
 }
 
+static void alias_all_urls(void)
+{
+	int i, j;
+	for (i = 0; i < remotes_nr; i++) {
+		if (!remotes[i])
+			continue;
+		for (j = 0; j < remotes[i]->url_nr; j++) {
+			remotes[i]->url[j] = alias_url(remotes[i]->url[j]);
+		}
+	}
+}
+
 static void read_config(void)
 {
 	unsigned char sha1[20];
@@ -303,6 +389,7 @@ static void read_config(void)
 			make_branch(head_ref + strlen("refs/heads/"), 0);
 	}
 	git_config(handle_config);
+	alias_all_urls();
 }
 
 struct refspec *parse_ref_spec(int nr_refspec, const char **refspec)
@@ -368,7 +455,7 @@ struct remote *remote_get(const char *name)
 			read_branches_file(ret);
 	}
 	if (!ret->url)
-		add_url(ret, name);
+		add_url_alias(ret, name);
 	if (!ret->url)
 		return NULL;
 	ret->fetch = parse_ref_spec(ret->fetch_refspec_nr, ret->fetch_refspec);
@@ -380,7 +467,7 @@ int for_each_remote(each_remote_fn fn, void *priv)
 {
 	int i, result = 0;
 	read_config();
-	for (i = 0; i < allocated_remotes && !result; i++) {
+	for (i = 0; i < remotes_nr && !result; i++) {
 		struct remote *r = remotes[i];
 		if (!r)
 			continue;
@@ -506,8 +593,7 @@ void free_refs(struct ref *ref)
 	struct ref *next;
 	while (ref) {
 		next = ref->next;
-		if (ref->peer_ref)
-			free(ref->peer_ref);
+		free(ref->peer_ref);
 		free(ref);
 		ref = next;
 	}
@@ -643,9 +729,17 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		errs = 1;
 
 	if (!dst_value) {
+		unsigned char sha1[20];
+		int flag;
+
 		if (!matched_src)
 			return errs;
-		dst_value = matched_src->name;
+		dst_value = resolve_ref(matched_src->name, sha1, 1, &flag);
+		if (!dst_value ||
+		    ((flag & REF_ISSYMREF) &&
+		     prefixcmp(dst_value, "refs/heads/")))
+			die("%s cannot be resolved to branch.",
+			    matched_src->name);
 	}
 
 	switch (count_refspec_match(dst_value, dst, &matched_dst)) {

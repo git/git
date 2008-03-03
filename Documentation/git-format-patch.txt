@@ -10,13 +10,15 @@ SYNOPSIS
 --------
 [verse]
 'git-format-patch' [-k] [-o <dir> | --stdout] [--thread]
-                   [--attach[=<boundary>] | --inline[=<boundary>]]
-                   [-s | --signoff] [<common diff options>]
-                   [-n | --numbered | -N | --no-numbered]
-                   [--start-number <n>] [--numbered-files]
-                   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
-                   [--ignore-if-in-upstream]
-                   [--subject-prefix=Subject-Prefix]
+		   [--attach[=<boundary>] | --inline[=<boundary>]]
+		   [-s | --signoff] [<common diff options>]
+		   [-n | --numbered | -N | --no-numbered]
+		   [--start-number <n>] [--numbered-files]
+		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
+		   [--ignore-if-in-upstream]
+		   [--subject-prefix=Subject-Prefix]
+		   [--cc=<email>]
+		   [--cover-letter]
 		   [ <since> | <revision range> ]
 
 DESCRIPTION
@@ -134,6 +136,15 @@ include::diff-options.txt[]
 	line, instead use '[<Subject-Prefix>]'. This
 	allows for useful naming of a patch series, and can be
 	combined with the --numbered option.
+
+--cc=<email>::
+	Add a "Cc:" header to the email headers. This is in addition
+	to any configured headers, and may be used multiple times.
+
+--cover-letter::
+	Generate a cover letter template.  You still have to fill in
+	a description, but the shortlog and the diffstat will be
+	generated for you.
 
 --suffix=.<sfx>::
 	Instead of using `.patch` as the suffix for generated

@@ -80,8 +80,7 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 
 	walker_free(walker);
 
-	if (rewritten_url)
-		free(rewritten_url);
+	free(rewritten_url);
 
 	return rc;
 }

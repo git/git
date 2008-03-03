@@ -153,6 +153,11 @@ limiting may be applied.
 	Consider the limiting patterns to be extended regular expressions
 	instead of the default basic regular expressions.
 
+-F, --fixed-strings::
+
+	Consider the limiting patterns to be fixed strings (don't interpret
+	pattern as a regular expression).
+
 --remove-empty::
 
 	Stop when a given path disappears from the tree.
