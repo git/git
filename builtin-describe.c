@@ -156,7 +156,7 @@ static void display_name(struct commit_name *n)
 {
 	if (n->prio == 2 && !n->tag) {
 		n->tag = lookup_tag(n->sha1);
-		if (parse_tag(n->tag) || !n->tag || !n->tag->tag)
+		if (!n->tag || parse_tag(n->tag) || !n->tag->tag)
 			die("annotated tag %s not available", n->path);
 		if (strcmp(n->tag->tag, n->path))
 			warning("tag '%s' is really '%s' here", n->tag->tag, n->path);
