@@ -362,7 +362,7 @@ cmd_status()
 	do
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
-		if test -z "url" || ! test -d "$path"/.git
+		if test -z "$url" || ! test -d "$path"/.git
 		then
 			say "-$sha1 $path"
 			continue;
