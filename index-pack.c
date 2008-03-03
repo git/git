@@ -7,9 +7,10 @@
 #include "tag.h"
 #include "tree.h"
 #include "progress.h"
+#include "fsck.h"
 
 static const char index_pack_usage[] =
-"git-index-pack [-v] [-o <index-file>] [{ ---keep | --keep=<msg> }] { <pack-file> | --stdin [--fix-thin] [<pack-file>] }";
+"git-index-pack [-v] [-o <index-file>] [{ ---keep | --keep=<msg> }] [--strict] { <pack-file> | --stdin [--fix-thin] [<pack-file>] }";
 
 struct object_entry
 {
@@ -31,6 +32,9 @@ union delta_base {
  */
 #define UNION_BASE_SZ	20
 
+#define FLAG_LINK (1u<<20)
+#define FLAG_CHECKED (1u<<21)
+
 struct delta_entry
 {
 	union delta_base base;
@@ -44,6 +48,7 @@ static int nr_deltas;
 static int nr_resolved_deltas;
 
 static int from_stdin;
+static int strict;
 static int verbose;
 
 static struct progress *progress;
@@ -55,6 +60,48 @@ static off_t consumed_bytes;
 static SHA_CTX input_ctx;
 static uint32_t input_crc32;
 static int input_fd, output_fd, pack_fd;
+
+static int mark_link(struct object *obj, int type, void *data)
+{
+	if (!obj)
+		return -1;
+
+	if (type != OBJ_ANY && obj->type != type)
+		die("object type mismatch at %s", sha1_to_hex(obj->sha1));
+
+	obj->flags |= FLAG_LINK;
+	return 0;
+}
+
+/* The content of each linked object must have been checked
+   or it must be already present in the object database */
+static void check_object(struct object *obj)
+{
+	if (!obj)
+		return;
+
+	if (!(obj->flags & FLAG_LINK))
+		return;
+
+	if (!(obj->flags & FLAG_CHECKED)) {
+		unsigned long size;
+		int type = sha1_object_info(obj->sha1, &size);
+		if (type != obj->type || type <= 0)
+			die("object of unexpected type");
+		obj->flags |= FLAG_CHECKED;
+		return;
+	}
+}
+
+static void check_objects(void)
+{
+	unsigned i, max;
+
+	max = get_max_object_index();
+	for (i = 0; i < max; i++)
+		check_object(get_indexed_object(i));
+}
+
 
 /* Discard current buffer used content. */
 static void flush(void)
@@ -340,6 +387,41 @@ static void sha1_object(const void *data, unsigned long size,
 		    memcmp(data, has_data, size) != 0)
 			die("SHA1 COLLISION FOUND WITH %s !", sha1_to_hex(sha1));
 		free(has_data);
+	}
+	if (strict) {
+		if (type == OBJ_BLOB) {
+			struct blob *blob = lookup_blob(sha1);
+			if (blob)
+				blob->object.flags |= FLAG_CHECKED;
+			else
+				die("invalid blob object %s", sha1_to_hex(sha1));
+		} else {
+			struct object *obj;
+			int eaten;
+			void *buf = (void *) data;
+
+			/*
+			 * we do not need to free the memory here, as the
+			 * buf is deleted by the caller.
+			 */
+			obj = parse_object_buffer(sha1, type, size, buf, &eaten);
+			if (!obj)
+				die("invalid %s", typename(type));
+			if (fsck_object(obj, 1, fsck_error_function))
+				die("Error in object");
+			if (fsck_walk(obj, mark_link, 0))
+				die("Not all child objects of %s are reachable", sha1_to_hex(obj->sha1));
+
+			if (obj->type == OBJ_TREE) {
+				struct tree *item = (struct tree *) obj;
+				item->buffer = NULL;
+			}
+			if (obj->type == OBJ_COMMIT) {
+				struct commit *commit = (struct commit *) obj;
+				commit->buffer = NULL;
+			}
+			obj->flags |= FLAG_CHECKED;
+		}
 	}
 }
 
@@ -714,6 +796,8 @@ int main(int argc, char **argv)
 				from_stdin = 1;
 			} else if (!strcmp(arg, "--fix-thin")) {
 				fix_thin_pack = 1;
+			} else if (!strcmp(arg, "--strict")) {
+				strict = 1;
 			} else if (!strcmp(arg, "--keep")) {
 				keep_msg = "";
 			} else if (!prefixcmp(arg, "--keep=")) {
@@ -812,6 +896,8 @@ int main(int argc, char **argv)
 			    nr_deltas - nr_resolved_deltas);
 	}
 	free(deltas);
+	if (strict)
+		check_objects();
 
 	idx_objects = xmalloc((nr_objects) * sizeof(struct pack_idx_entry *));
 	for (i = 0; i < nr_objects; i++)

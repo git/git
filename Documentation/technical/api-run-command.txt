@@ -49,7 +49,7 @@ Functions
 
 `finish_async`::
 
-	Wait for the completeion of an asynchronous function that was
+	Wait for the completion of an asynchronous function that was
 	started with start_async().
 
 
@@ -121,8 +121,8 @@ string pointers (NULL terminated) in .env:
 . If the string is of the form "VAR=value", i.e. it contains '='
   the variable is added to the child process's environment.
 
-. If the string does not contain '=', it names an environement
-  variable that will be removed from the child process's envionment.
+. If the string does not contain '=', it names an environment
+  variable that will be removed from the child process's environment.
 
 To specify a new initial working directory for the sub-process,
 specify it in the .dir member.

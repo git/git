@@ -87,12 +87,6 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 		item->tagged = NULL;
 	}
 
-	if (item->tagged && track_object_refs) {
-		struct object_refs *refs = alloc_object_refs(1);
-		refs->ref[0] = item->tagged;
-		set_object_refs(&item->object, refs);
-	}
-
 	return 0;
 }
 

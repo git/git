@@ -256,7 +256,6 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 	int i;
 
 	save_commit_buffer = 0;
-	track_object_refs = 0;
 
 	for (i = 0; i < targets; i++) {
 		if (!write_ref || !write_ref[i])

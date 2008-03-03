@@ -2581,8 +2581,6 @@ const char *diff_unique_abbrev(const unsigned char *sha1, int len)
 		return sha1_to_hex(sha1);
 
 	abbrev = find_unique_abbrev(sha1, len);
-	if (!abbrev)
-		return sha1_to_hex(sha1);
 	abblen = strlen(abbrev);
 	if (abblen < 37) {
 		static char hex[41];
@@ -3189,11 +3187,8 @@ static void diffcore_apply_filter(const char *filter)
 static int diff_filespec_is_identical(struct diff_filespec *one,
 				      struct diff_filespec *two)
 {
-	if (S_ISGITLINK(one->mode)) {
-		diff_fill_sha1_info(one);
-		diff_fill_sha1_info(two);
-		return !hashcmp(one->sha1, two->sha1);
-	}
+	if (S_ISGITLINK(one->mode))
+		return 0;
 	if (diff_populate_filespec(one, 0))
 		return 0;
 	if (diff_populate_filespec(two, 0))

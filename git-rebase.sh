@@ -208,16 +208,15 @@ do
 		if test -d "$dotest"
 		then
 			move_to_original_branch
-			rm -r "$dotest"
 		elif test -d .dotest
 		then
 			dotest=.dotest
 			move_to_original_branch
-			rm -r .dotest
 		else
 			die "No rebase in progress?"
 		fi
-		git reset --hard ORIG_HEAD
+		git reset --hard $(cat $dotest/orig-head)
+		rm -r "$dotest"
 		exit
 		;;
 	--onto)

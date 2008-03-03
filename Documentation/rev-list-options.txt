@@ -130,9 +130,11 @@ limiting may be applied.
 
 	Show commits older than a specific date.
 
+ifdef::git-rev-list[]
 --max-age='timestamp', --min-age='timestamp'::
 
 	Limit the commits output to specified time range.
+endif::git-rev-list[]
 
 --author='pattern', --committer='pattern'::
 

@@ -683,6 +683,10 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	strbuf_release(&sb);
 
 	shortlog_init(&log);
+	log.wrap_lines = 1;
+	log.wrap = 72;
+	log.in1 = 2;
+	log.in2 = 4;
 	for (i = 0; i < nr; i++)
 		shortlog_add_commit(&log, list[i]);
 
@@ -694,8 +698,8 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	if (!origin)
 		return;
 
-	diff_setup(&opts);
-	opts.output_format |= DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
+	memcpy(&opts, &rev->diffopt, sizeof(opts));
+	opts.output_format = DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
 
 	diff_setup_done(&opts);
 

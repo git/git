@@ -472,22 +472,21 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 static void diff_index_show_file(struct rev_info *revs,
 				 const char *prefix,
 				 struct cache_entry *ce,
-				 unsigned char *sha1, unsigned int mode)
+				 const unsigned char *sha1, unsigned int mode)
 {
 	diff_addremove(&revs->diffopt, prefix[0], mode,
 		       sha1, ce->name, NULL);
 }
 
 static int get_stat_data(struct cache_entry *ce,
-			 unsigned char **sha1p,
+			 const unsigned char **sha1p,
 			 unsigned int *modep,
 			 int cached, int match_missing)
 {
-	unsigned char *sha1 = ce->sha1;
+	const unsigned char *sha1 = ce->sha1;
 	unsigned int mode = ce->ce_mode;
 
 	if (!cached) {
-		static unsigned char no_sha1[20];
 		int changed;
 		struct stat st;
 		if (lstat(ce->name, &st) < 0) {
@@ -501,7 +500,7 @@ static int get_stat_data(struct cache_entry *ce,
 		changed = ce_match_stat(ce, &st, 0);
 		if (changed) {
 			mode = ce_mode_from_stat(ce, st.st_mode);
-			sha1 = no_sha1;
+			sha1 = null_sha1;
 		}
 	}
 
@@ -514,7 +513,7 @@ static void show_new_file(struct rev_info *revs,
 			  struct cache_entry *new,
 			  int cached, int match_missing)
 {
-	unsigned char *sha1;
+	const unsigned char *sha1;
 	unsigned int mode;
 
 	/* New file in the index: it might actually be different in
@@ -533,7 +532,7 @@ static int show_modified(struct rev_info *revs,
 			 int cached, int match_missing)
 {
 	unsigned int mode, oldmode;
-	unsigned char *sha1;
+	const unsigned char *sha1;
 
 	if (get_stat_data(new, &sha1, &mode, cached, match_missing) < 0) {
 		if (report_missing)

@@ -7,8 +7,8 @@ Subject: [DIFFERENT_PREFIX 0/2] *** SUBJECT HERE ***
 *** BLURB HERE ***
 
 A U Thor (2):
-      Second
-      Third
+  Second
+  Third
 
  dir/sub |    4 ++++
  file0   |    3 +++

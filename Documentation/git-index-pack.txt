@@ -75,6 +75,9 @@ OPTIONS
 	to force the version for the generated pack index, and to force
 	64-bit index entries on objects located above the given offset.
 
+--strict::
+	Die, if the pack contains broken objects or links.
+
 
 Note
 ----

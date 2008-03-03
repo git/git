@@ -41,7 +41,8 @@ static void rev_list_push(struct commit *commit, int mark)
 		commit->object.flags |= mark;
 
 		if (!(commit->object.parsed))
-			parse_commit(commit);
+			if (parse_commit(commit))
+				return;
 
 		insert_by_date(commit, &rev_list);
 
@@ -83,7 +84,8 @@ static void mark_common(struct commit *commit,
 			if (!ancestors_only && !(o->flags & POPPED))
 				non_common_revs--;
 			if (!o->parsed && !dont_parse)
-				parse_commit(commit);
+				if (parse_commit(commit))
+					return;
 
 			for (parents = commit->parents;
 					parents;
@@ -103,19 +105,19 @@ static const unsigned char* get_rev(void)
 
 	while (commit == NULL) {
 		unsigned int mark;
-		struct commit_list* parents;
+		struct commit_list *parents = NULL;
 
 		if (rev_list == NULL || non_common_revs == 0)
 			return NULL;
 
 		commit = rev_list->item;
 		if (!(commit->object.parsed))
-			parse_commit(commit);
+			if (!parse_commit(commit))
+				parents = commit->parents;
+
 		commit->object.flags |= POPPED;
 		if (!(commit->object.flags & COMMON))
 			non_common_revs--;
-
-		parents = commit->parents;
 
 		if (commit->object.flags & COMMON) {
 			/* do not send "have", and ignore ancestors */
@@ -212,7 +214,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 				if (!lookup_object(sha1))
 					die("object not found: %s", line);
 				/* make sure that it is parsed as shallow */
-				parse_object(sha1);
+				if (!parse_object(sha1))
+					die("error in object: %s", line);
 				if (unregister_shallow(sha1))
 					die("no shallow found: %s", line);
 				continue;
@@ -386,7 +389,6 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 	int retval;
 	unsigned long cutoff = 0;
 
-	track_object_refs = 0;
 	save_commit_buffer = 0;
 
 	for (ref = *refs; ref; ref = ref->next) {

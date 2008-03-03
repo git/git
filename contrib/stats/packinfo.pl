@@ -93,7 +93,7 @@ my %depths;
 my @depths;
 
 while (<STDIN>) {
-    my ($sha1, $type, $size, $offset, $depth, $parent) = split(/\s+/, $_);
+    my ($sha1, $type, $size, $space, $offset, $depth, $parent) = split(/\s+/, $_);
     next unless ($sha1 =~ /^[0-9a-f]{40}$/);
     $depths{$sha1} = $depth || 0;
     push(@depths, $depth || 0);
