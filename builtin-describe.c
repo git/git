@@ -166,9 +166,11 @@ static void display_name(struct commit_name *n)
 		printf("%s", n->tag->tag);
 	else
 		printf("%s", n->path);
-	if (longformat)
-		printf("-0-g%s",
-		       find_unique_abbrev(n->tag->tagged->sha1, abbrev));
+}
+
+static void show_suffix(int depth, const unsigned char *sha1)
+{
+	printf("-%d-g%s", depth, find_unique_abbrev(sha1, abbrev));
 }
 
 static void describe(const char *arg, int last_one)
@@ -195,7 +197,12 @@ static void describe(const char *arg, int last_one)
 
 	n = cmit->util;
 	if (n) {
+		/*
+		 * Exact match to an existing ref.
+		 */
 		display_name(n);
+		if (longformat)
+			show_suffix(0, n->tag->tagged->sha1);
 		printf("\n");
 		return;
 	}
@@ -281,8 +288,7 @@ static void describe(const char *arg, int last_one)
 
 	display_name(all_matches[0].name);
 	if (abbrev)
-		printf("-%d-g%s", all_matches[0].depth,
-		       find_unique_abbrev(cmit->object.sha1, abbrev));
+		show_suffix(all_matches[0].depth, cmit->object.sha1);
 	printf("\n");
 
 	if (!last_one)
