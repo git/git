@@ -157,6 +157,7 @@ static struct ref *get_ref_map(struct transport *transport,
 			if (!ref_map)
 				die("Couldn't find remote ref HEAD");
 			ref_map->merge = 1;
+			tail = &ref_map->next;
 		}
 	}
 	ref_remove_duplicates(ref_map);
