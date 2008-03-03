@@ -35,6 +35,7 @@ static unsigned int timeout;
  * otherwise maximum packet size (up to 65520 bytes).
  */
 static int use_sideband;
+static int debug_fd;
 
 static void reset_timeout(void)
 {
@@ -444,6 +445,8 @@ static void receive_needs(void)
 	static char line[1000];
 	int len, depth = 0;
 
+	if (debug_fd)
+		write_in_full(debug_fd, "#S\n", 3);
 	for (;;) {
 		struct object *o;
 		unsigned char sha1_buf[20];
@@ -451,6 +454,8 @@ static void receive_needs(void)
 		reset_timeout();
 		if (!len)
 			break;
+		if (debug_fd)
+			write_in_full(debug_fd, line, len);
 
 		if (!prefixcmp(line, "shallow ")) {
 			unsigned char sha1[20];
@@ -506,6 +511,8 @@ static void receive_needs(void)
 			add_object_array(o, NULL, &want_obj);
 		}
 	}
+	if (debug_fd)
+		write_in_full(debug_fd, "#E\n", 3);
 	if (depth == 0 && shallows.nr == 0)
 		return;
 	if (depth > 0) {
@@ -631,6 +638,8 @@ int main(int argc, char **argv)
 		die("'%s': unable to chdir or not a git archive", dir);
 	if (is_repository_shallow())
 		die("attempt to fetch/clone from a shallow repository");
+	if (getenv("GIT_DEBUG_SEND_PACK"))
+		debug_fd = atoi(getenv("GIT_DEBUG_SEND_PACK"));
 	upload_pack();
 	return 0;
 }
