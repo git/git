@@ -457,7 +457,7 @@ static void find_non_local_tags(struct transport *transport,
 			struct ref **head,
 			struct ref ***tail)
 {
-	static struct path_list existing_refs = { NULL, 0, 0, 0 };
+	struct path_list existing_refs = { NULL, 0, 0, 0 };
 	struct path_list new_refs = { NULL, 0, 0, 1 };
 	char *ref_name;
 	int ref_name_len;
@@ -503,6 +503,8 @@ static void find_non_local_tags(struct transport *transport,
 		}
 		free(ref_name);
 	}
+	path_list_clear(&existing_refs, 0);
+	path_list_clear(&new_refs, 0);
 }
 
 static int do_fetch(struct transport *transport,
