@@ -98,6 +98,7 @@ check_describe A-* --tags HEAD^^2
 check_describe B --tags HEAD^^2^
 
 check_describe B-0-* --long HEAD^^2^
+check_describe A-3-* --long HEAD^^2
 
 test_expect_success 'rename tag A to Q locally' '
 	mv .git/refs/tags/A .git/refs/tags/Q
