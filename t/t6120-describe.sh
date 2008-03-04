@@ -98,4 +98,7 @@ check_describe B --tags HEAD^^2^
 
 check_describe B-0-* --long HEAD^^2^
 
+test_expect_success 'pack tag refs' 'git pack-refs'
+check_describe A-* HEAD
+
 test_done
