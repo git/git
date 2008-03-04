@@ -15,8 +15,9 @@ test_description='test describe
 check_describe () {
 	expect="$1"
 	shift
-	R=$(git describe "$@")
+	R=$(git describe "$@" 2>err.actual)
 	S=$?
+	cat err.actual >&3
 	test_expect_success "describe $*" '
 	test $S = 0 &&
 	case "$R" in
@@ -97,6 +98,20 @@ check_describe A-* --tags HEAD^^2
 check_describe B --tags HEAD^^2^
 
 check_describe B-0-* --long HEAD^^2^
+
+test_expect_success 'rename tag A to Q locally' '
+	mv .git/refs/tags/A .git/refs/tags/Q
+'
+cat - >err.expect <<EOF
+warning: tag 'A' is really 'Q' here
+EOF
+check_describe A-* HEAD
+test_expect_success 'warning was displayed for Q' '
+	git diff err.expect err.actual
+'
+test_expect_success 'rename tag Q back to A' '
+	mv .git/refs/tags/Q .git/refs/tags/A
+'
 
 test_expect_success 'pack tag refs' 'git pack-refs'
 check_describe A-* HEAD
