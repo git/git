@@ -27,7 +27,8 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 static unsigned long oldest_have;
 
 static int multi_ack, nr_our_refs;
-static int use_thin_pack, use_ofs_delta, no_progress;
+static int use_thin_pack, use_ofs_delta, use_include_tag;
+static int no_progress;
 static struct object_array have_obj;
 static struct object_array want_obj;
 static unsigned int timeout;
@@ -162,6 +163,8 @@ static void create_pack_file(void)
 		argv[arg++] = "--progress";
 	if (use_ofs_delta)
 		argv[arg++] = "--delta-base-offset";
+	if (use_include_tag)
+		argv[arg++] = "--include-tag";
 	argv[arg++] = NULL;
 
 	memset(&pack_objects, 0, sizeof(pack_objects));
@@ -494,6 +497,8 @@ static void receive_needs(void)
 			use_sideband = DEFAULT_PACKET_MAX;
 		if (strstr(line+45, "no-progress"))
 			no_progress = 1;
+		if (strstr(line+45, "include-tag"))
+			use_include_tag = 1;
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
@@ -565,7 +570,8 @@ static void receive_needs(void)
 static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
-		" side-band-64k ofs-delta shallow no-progress";
+		" side-band-64k ofs-delta shallow no-progress"
+		" include-tag";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
