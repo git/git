@@ -506,6 +506,17 @@ _git_bisect ()
 
 _git_branch ()
 {
+	local i c=1 only_local_ref="n" has_r="n"
+
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		-d|-m)	only_local_ref="y" ;;
+		-r)	has_r="y" ;;
+		esac
+		c=$((++c))
+	done
+
 	case "${COMP_WORDS[COMP_CWORD]}" in
 	--*=*)	COMPREPLY=() ;;
 	--*)
@@ -514,7 +525,13 @@ _git_branch ()
 			--track --no-track
 			"
 		;;
-	*)	__gitcomp "$(__git_refs)" ;;
+	*)
+		if [ $only_local_ref = "y" -a $has_r = "n" ]; then
+			__gitcomp "$(__git_heads)"
+		else
+			__gitcomp "$(__git_refs)"
+		fi
+		;;
 	esac
 }
 
