@@ -506,7 +506,16 @@ _git_bisect ()
 
 _git_branch ()
 {
-	__gitcomp "$(__git_refs)"
+	case "${COMP_WORDS[COMP_CWORD]}" in
+	--*=*)	COMPREPLY=() ;;
+	--*)
+		__gitcomp "
+			--color --no-color --verbose --abbrev= --no-abbrev
+			--track --no-track
+			"
+		;;
+	*)	__gitcomp "$(__git_refs)" ;;
+	esac
 }
 
 _git_bundle ()
