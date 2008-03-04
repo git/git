@@ -609,9 +609,7 @@ proc insertfakerow {id p} {
     set numcommits [incr commitidx($v)]
     # note we deliberately don't update varcstart($v) even if $i == 0
     set varccommits($v,$a) [linsert $varccommits($v,$a) $i $id]
-    if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
-	modify_arc $v $a $i
-    }
+    modify_arc $v $a $i
     if {[info exists targetid]} {
 	if {![comes_before $targetid $p]} {
 	    incr targetrow
@@ -648,9 +646,7 @@ proc removefakerow {id} {
     if {$j >= 0} {
 	set children($v,$p) [lreplace $children($v,$p) $j $j]
     }
-    if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
-	modify_arc $v $a $i
-    }
+    modify_arc $v $a $i
     if {[info exist currentid] && $id eq $currentid} {
 	unset currentid
 	unset selectedline
@@ -693,9 +689,19 @@ proc vtokcmp {v a b} {
 		[lindex $varctok($v) $varcid($v,$b)]]
 }
 
+# This assumes that if lim is not given, the caller has checked that
+# arc a's token is less than $vtokmod($v)
 proc modify_arc {v a {lim {}}} {
     global varctok vtokmod varcmod varcrow vupptr curview vrowmod varccommits
 
+    if {$lim ne {}} {
+	set c [string compare [lindex $varctok($v) $a] $vtokmod($v)]
+	if {$c > 0} return
+	if {$c == 0} {
+	    set r [lindex $varcrow($v) $a]
+	    if {$r ne {} && $vrowmod($v) <= $r + $lim} return
+	}
+    }
     set vtokmod($v) [lindex $varctok($v) $a]
     set varcmod($v) $a
     if {$v == $curview} {
@@ -721,6 +727,14 @@ proc update_arcrows {v} {
     global vupptr vdownptr vleftptr varctok
     global displayorder parentlist curview cached_commitrow
 
+    if {$vrowmod($v) == $commitidx($v)} return
+    if {$v == $curview} {
+	if {[llength $displayorder] > $vrowmod($v)} {
+	    set displayorder [lrange $displayorder 0 [expr {$vrowmod($v) - 1}]]
+	    set parentlist [lrange $parentlist 0 [expr {$vrowmod($v) - 1}]]
+	}
+	catch {unset cached_commitrow}
+    }
     set narctot [expr {[llength $varctok($v)] - 1}]
     set a $varcmod($v)
     while {$a != 0 && [lindex $varcix($v) $a] eq {}} {
@@ -739,22 +753,11 @@ proc update_arcrows {v} {
 	set row 0
     } else {
 	set arcn [lindex $varcix($v) $a]
-	# see if a is the last arc; if so, nothing to do
-	if {$arcn == $narctot - 1} {
-	    return
-	}
 	if {[llength $vrownum($v)] > $arcn + 1} {
 	    set vrownum($v) [lrange $vrownum($v) 0 $arcn]
 	    set varcorder($v) [lrange $varcorder($v) 0 $arcn]
 	}
 	set row [lindex $varcrow($v) $a]
-    }
-    if {$v == $curview} {
-	if {[llength $displayorder] > $vrowmod($v)} {
-	    set displayorder [lrange $displayorder 0 [expr {$vrowmod($v) - 1}]]
-	    set parentlist [lrange $parentlist 0 [expr {$vrowmod($v) - 1}]]
-	}
-	catch {unset cached_commitrow}
     }
     while {1} {
 	set p $a
@@ -969,11 +972,9 @@ proc rewrite_commit {v id rwid} {
 	# fix the graph after joining $id to $rwid
 	set a $varcid($v,$ch)
 	fix_reversal $rwid $a $v
-	if {[string compare [lindex $varctok($v) $a] $vtokmod($v)] < 0} {
-	    # parentlist is wrong for the last element of arc $a
-	    # even if displayorder is right, hence the 3rd arg here
-	    modify_arc $v $a [expr {[llength $varccommits($v,$a)] - 1}]
-	}
+	# parentlist is wrong for the last element of arc $a
+	# even if displayorder is right, hence the 3rd arg here
+	modify_arc $v $a [expr {[llength $varccommits($v,$a)] - 1}]
     }
 }
 
