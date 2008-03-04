@@ -21,7 +21,8 @@ C=              pass it through git-apply
 p=              pass it through git-apply
 resolvemsg=     override error message when patch failure occurs
 r,resolved      to be used after a patch failure
-skip            skip the current patch"
+skip            skip the current patch
+rebasing        (internal use for git-rebase)"
 
 . git-sh-setup
 prefix=$(git rev-parse --show-prefix)
@@ -122,7 +123,7 @@ reread_subject () {
 
 prec=4
 dotest=".dotest"
-sign= utf8=t keep= skip= interactive= resolved= binary=
+sign= utf8=t keep= skip= interactive= resolved= binary= rebasing=
 resolvemsg= resume=
 git_apply_opt=
 
@@ -147,6 +148,8 @@ do
 		resolved=t ;;
 	--skip)
 		skip=t ;;
+	--rebasing)
+		rebasing=t threeway=t keep=t binary=t ;;
 	-d|--dotest)
 		die "-d option is no longer supported.  Do not use."
 		;;
@@ -237,6 +240,12 @@ else
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
 	echo 1 >"$dotest/next"
+	if test -n "$rebasing"
+	then
+		: >"$dotest/rebasing"
+	else
+		: >"$dotest/applying"
+	fi
 fi
 
 case "$resolved" in
