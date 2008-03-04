@@ -15,8 +15,10 @@ test_description='test describe
 check_describe () {
 	expect="$1"
 	shift
-	R=$(git describe "$@") &&
+	R=$(git describe "$@")
+	S=$?
 	test_expect_success "describe $*" '
+	test $S = 0 &&
 	case "$R" in
 	$expect)	echo happy ;;
 	*)	echo "Oops - $R is not $expect";
