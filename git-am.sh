@@ -24,6 +24,7 @@ r,resolved      to be used after a patch failure
 skip            skip the current patch"
 
 . git-sh-setup
+prefix=$(git rev-parse --show-prefix)
 set_reflog_action am
 require_work_tree
 cd_to_toplevel
@@ -124,7 +125,8 @@ reread_subject () {
 }
 
 prec=4
-dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary=
+dotest="${prefix}.dotest"
+sign= utf8=t keep= skip= interactive= resolved= binary=
 resolvemsg= resume=
 git_apply_opt=
 
@@ -150,7 +152,8 @@ do
 	--skip)
 		skip=t ;;
 	-d|--dotest)
-		shift; dotest=$1;;
+		shift
+		case "$1" in /*) dotest=$1;; *) dotest="$prefix$1" ;; esac ;;
 	--resolvemsg)
 		shift; resolvemsg=$1 ;;
 	--whitespace)
@@ -206,6 +209,24 @@ else
 	# Start afresh.
 	mkdir -p "$dotest" || exit
 
+	if test -n "$prefix" && test $# != 0
+	then
+		first=t
+		for arg
+		do
+			test -n "$first" && {
+				set x
+				first=
+			}
+			case "$arg" in
+			/*)
+				set "$@" "$arg" ;;
+			*)
+				set "$@" "$prefix$arg" ;;
+			esac
+		done
+		shift
+	fi
 	git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
 		rm -fr "$dotest"
 		exit 1
