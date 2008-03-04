@@ -90,7 +90,7 @@ proc dorunq {} {
     }
 }
 
-# Start off a git rev-list process and arrange to read its output
+# Start off a git log process and arrange to read its output
 proc start_rev_list {view} {
     global startmsecs
     global commfd leftover tclencoding datemode
@@ -1009,10 +1009,10 @@ proc getcommitlines {fd inst view updating}  {
 	    }
 	    if {[string range $err 0 4] == "usage"} {
 		set err "Gitk: error reading commits$fv:\
-			bad arguments to git rev-list."
+			bad arguments to git log."
 		if {$viewname($view) eq "Command line"} {
 		    append err \
-			"  (Note: arguments to gitk are passed to git rev-list\
+			"  (Note: arguments to gitk are passed to git log\
 			 to allow selection of commits to be displayed.)"
 		}
 	    } else {
@@ -1280,7 +1280,7 @@ proc parsecommit {id contents listed} {
 	set headline [string trimright [string range $headline 0 $i]]
     }
     if {!$listed} {
-	# git rev-list indents the comment by 4 spaces;
+	# git log indents the comment by 4 spaces;
 	# if we got this via git cat-file, add the indentation
 	set newcomment {}
 	foreach line [split $comment "\n"] {
@@ -2714,7 +2714,7 @@ proc vieweditor {top n title} {
 	-variable newviewperm($n)
     grid $top.perm - -pady 5 -sticky w
     message $top.al -aspect 1000 \
-	-text [mc "Commits to include (arguments to git rev-list):"]
+	-text [mc "Commits to include (arguments to git log):"]
     grid $top.al - -sticky w -pady 5
     entry $top.args -width 50 -textvariable newviewargs($n) \
 	-background $bgcolor
