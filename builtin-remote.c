@@ -474,24 +474,65 @@ cleanup_states:
 	return result;
 }
 
-static int update_one(struct remote *remote, void *priv)
+static int get_one_remote_for_update(struct remote *remote, void *priv)
 {
+	struct path_list *list = priv;
 	if (!remote->skip_default_update)
-		return fetch_remote(remote->name);
+		path_list_append(xstrdup(remote->name), list);
+	return 0;
+}
+
+struct remote_group {
+	const char *name;
+	struct path_list *list;
+} remote_group;
+
+static int get_remote_group(const char *key, const char *value)
+{
+	if (!prefixcmp(key, "remotes.") &&
+			!strcmp(key + 8, remote_group.name)) {
+		/* split list by white space */
+		int space = strcspn(value, " \t\n");
+		while (*value) {
+			if (space > 1)
+				path_list_append(xstrndup(value, space),
+						remote_group.list);
+			value += space + (value[space] != '\0');
+			space = strcspn(value, " \t\n");
+		}
+	}
+
 	return 0;
 }
 
 static int update(int argc, const char **argv)
 {
-	int i;
+	int i, result = 0;
+	struct path_list list = { NULL, 0, 0, 0 };
+	static const char *default_argv[] = { NULL, "default", NULL };
 
-	if (argc < 2)
-		return for_each_remote(update_one, NULL);
+	if (argc < 2) {
+		argc = 2;
+		argv = default_argv;
+	}
 
-	for (i = 1; i < argc; i++)
-		if (fetch_remote(argv[i]))
-			return 1;
-	return 0;
+	remote_group.list = &list;
+	for (i = 1; i < argc; i++) {
+		remote_group.name = argv[i];
+		result = git_config(get_remote_group);
+	}
+
+	if (!result && !list.nr  && argc == 2 && !strcmp(argv[1], "default"))
+		result = for_each_remote(get_one_remote_for_update, &list);
+
+	for (i = 0; i < list.nr; i++)
+		result |= fetch_remote(list.items[i].path);
+
+	/* all names were strdup()ed or strndup()ed */
+	list.strdup_paths = 1;
+	path_list_clear(&list, 0);
+
+	return result;
 }
 
 static int get_one_entry(struct remote *remote, void *priv)
