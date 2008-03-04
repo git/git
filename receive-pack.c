@@ -10,7 +10,6 @@
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
 static int deny_non_fast_forwards = 0;
-static int receive_fsck_objects = 1;
 static int receive_unpack_limit = -1;
 static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
@@ -33,11 +32,6 @@ static int receive_pack_config(const char *var, const char *value)
 
 	if (strcmp(var, "transfer.unpacklimit") == 0) {
 		transfer_unpack_limit = git_config_int(var, value);
-		return 0;
-	}
-
-	if (strcmp(var, "receive.fsckobjects") == 0) {
-		receive_fsck_objects = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -374,13 +368,11 @@ static const char *unpack(void)
 			ntohl(hdr.hdr_version), ntohl(hdr.hdr_entries));
 
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
-		int code, i = 0;
-		const char *unpacker[4];
-		unpacker[i++] = "unpack-objects";
-		if (receive_fsck_objects)
-			unpacker[i++] = "--strict";
-		unpacker[i++] = hdr_arg;
-		unpacker[i++] = NULL;
+		int code;
+		const char *unpacker[3];
+		unpacker[0] = "unpack-objects";
+		unpacker[1] = hdr_arg;
+		unpacker[2] = NULL;
 		code = run_command_v_opt(unpacker, RUN_GIT_CMD);
 		switch (code) {
 		case 0:
@@ -401,8 +393,8 @@ static const char *unpack(void)
 			return "unpacker exited with error code";
 		}
 	} else {
-		const char *keeper[7];
-		int s, status, i = 0;
+		const char *keeper[6];
+		int s, status;
 		char keep_arg[256];
 		struct child_process ip;
 
@@ -410,14 +402,12 @@ static const char *unpack(void)
 		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
 			strcpy(keep_arg + s, "localhost");
 
-		keeper[i++] = "index-pack";
-		keeper[i++] = "--stdin";
-		if (receive_fsck_objects)
-			keeper[i++] = "--strict";
-		keeper[i++] = "--fix-thin";
-		keeper[i++] = hdr_arg;
-		keeper[i++] = keep_arg;
-		keeper[i++] = NULL;
+		keeper[0] = "index-pack";
+		keeper[1] = "--stdin";
+		keeper[2] = "--fix-thin";
+		keeper[3] = hdr_arg;
+		keeper[4] = keep_arg;
+		keeper[5] = NULL;
 		memset(&ip, 0, sizeof(ip));
 		ip.argv = keeper;
 		ip.out = -1;
