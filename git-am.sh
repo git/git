@@ -9,7 +9,7 @@ git-am [options] <mbox>|<Maildir>...
 git-am [options] --resolved
 git-am [options] --skip
 --
-d,dotest=       use <dir> and not .dotest
+d,dotest=       (removed -- do not use)
 i,interactive   run interactively
 b,binary        pass --allo-binary-replacement to git-apply
 3,3way          allow fall back on 3way merging if needed
@@ -49,10 +49,6 @@ stop_here_user_resolve () {
     if test '' != "$threeway"
     then
         cmdline="$cmdline -3"
-    fi
-    if test '.dotest' != "$dotest"
-    then
-        cmdline="$cmdline -d=$dotest"
     fi
     echo "When you have resolved this problem run \"$cmdline --resolved\"."
     echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
@@ -125,7 +121,7 @@ reread_subject () {
 }
 
 prec=4
-dotest="${prefix}.dotest"
+dotest=".dotest"
 sign= utf8=t keep= skip= interactive= resolved= binary=
 resolvemsg= resume=
 git_apply_opt=
@@ -152,8 +148,8 @@ do
 	--skip)
 		skip=t ;;
 	-d|--dotest)
-		shift
-		case "$1" in /*) dotest=$1;; *) dotest="$prefix$1" ;; esac ;;
+		die "-d option is no longer supported.  Do not use."
+		;;
 	--resolvemsg)
 		shift; resolvemsg=$1 ;;
 	--whitespace)
@@ -189,7 +185,7 @@ then
 	0,)
 		# No file input but without resume parameters; catch
 		# user error to feed us a patch from standard input
-		# when there is already .dotest.  This is somewhat
+		# when there is already $dotest.  This is somewhat
 		# unreliable -- stdin could be /dev/null for example
 		# and the caller did not intend to feed us a patch but
 		# wanted to continue unattended.

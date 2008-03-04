@@ -9,7 +9,7 @@ git-am - Apply a series of patches from a mailbox
 SYNOPSIS
 --------
 [verse]
-'git-am' [--signoff] [--dotest=<dir>] [--keep] [--utf8 | --no-utf8]
+'git-am' [--signoff] [--keep] [--utf8 | --no-utf8]
          [--3way] [--interactive] [--binary]
          [--whitespace=<option>] [-C<n>] [-p<n>]
          <mbox>|<Maildir>...
@@ -31,10 +31,6 @@ OPTIONS
 -s, --signoff::
 	Add `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
-
--d=<dir>, --dotest=<dir>::
-	Instead of `.dotest` directory, use <dir> as a working
-	area to store extracted patches.
 
 -k, --keep::
 	Pass `-k` flag to `git-mailinfo` (see linkgit:git-mailinfo[1]).
