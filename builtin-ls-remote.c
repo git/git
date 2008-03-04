@@ -94,10 +94,6 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		transport_set_option(transport, TRANS_OPT_UPLOADPACK, uploadpack);
 
 	ref = transport_get_remote_refs(transport);
-
-	if (!ref)
-		return 1;
-
 	for ( ; ref; ref = ref->next) {
 		if (!check_ref_type(ref, flags))
 			continue;
