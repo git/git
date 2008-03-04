@@ -555,6 +555,8 @@ static int do_fetch(struct transport *transport,
 			read_ref(rm->peer_ref->name, rm->peer_ref->old_sha1);
 	}
 
+	if (tags == TAGS_DEFAULT && autotags)
+		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
 	if (fetch_refs(transport, ref_map)) {
 		free_refs(ref_map);
 		return 1;
@@ -568,6 +570,7 @@ static int do_fetch(struct transport *transport,
 		ref_map = NULL;
 		find_non_local_tags(transport, &ref_map, &tail);
 		if (ref_map) {
+			transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 			transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 			fetch_refs(transport, ref_map);
 		}

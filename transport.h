@@ -53,6 +53,9 @@ struct transport *transport_get(struct remote *, const char *);
 /* Limit the depth of the fetch if not null */
 #define TRANS_OPT_DEPTH "depth"
 
+/* Aggressively fetch annotated tags if possible */
+#define TRANS_OPT_FOLLOWTAGS "followtags"
+
 /**
  * Returns 0 if the option was used, non-zero otherwise. Prints a
  * message to stderr if the option is not used.

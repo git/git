@@ -121,4 +121,30 @@ test_expect_success 'fetch B, S (commit and tag : 1 connection)' '
 	git diff expect actual
 '
 
+cat - <<EOF >expect
+#S
+want $B
+want $S
+#E
+EOF
+test_expect_success 'new clone fetch master and tags' '
+	git branch -D cat
+	rm -f $U
+	(
+		mkdir clone2 &&
+		cd clone2 &&
+		git init &&
+		git remote add origin .. &&
+		GIT_DEBUG_SEND_PACK=3 git fetch 3>../$U &&
+		test $B = $(git rev-parse --verify origin/master) &&
+		test $S = $(git rev-parse --verify tag2) &&
+		test $B = $(git rev-parse --verify tag2^0) &&
+		test $T = $(git rev-parse --verify tag1) &&
+		test $A = $(git rev-parse --verify tag1^0)
+	) &&
+	test -s $U &&
+	cut -d" " -f1,2 $U >actual &&
+	git diff expect actual
+'
+
 test_done
