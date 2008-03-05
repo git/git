@@ -121,13 +121,21 @@ __gitcomp ()
 	if [ $# -gt 2 ]; then
 		cur="$3"
 	fi
-	for c in $1; do
-		case "$c$4" in
-		--*=*) all="$all$c$4$s" ;;
-		*.)    all="$all$c$4$s" ;;
-		*)     all="$all$c$4 $s" ;;
-		esac
-	done
+	case "$cur" in
+	--*=)
+		COMPREPLY=()
+		return
+		;;
+	*)
+		for c in $1; do
+			case "$c$4" in
+			--*=*) all="$all$c$4$s" ;;
+			*.)    all="$all$c$4$s" ;;
+			*)     all="$all$c$4 $s" ;;
+			esac
+		done
+		;;
+	esac
 	IFS=$s
 	COMPREPLY=($(compgen -P "$2" -W "$all" -- "$cur"))
 	return
