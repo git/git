@@ -134,7 +134,16 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 
 /*
+ * replacements of existing functions
+ */
+
+char *mingw_getcwd(char *pointer, int len);
+#define getcwd mingw_getcwd
+
+/*
  * git specific compatibility
  */
 
+#define has_dos_drive_prefix(path) (isalpha(*(path)) && (path)[1] == ':')
+#define is_dir_sep(c) ((c) == '/' || (c) == '\\')
 #define PATH_SEP ';'

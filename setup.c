@@ -6,11 +6,17 @@ static int inside_work_tree = -1;
 
 static int sanitary_path_copy(char *dst, const char *src)
 {
-	char *dst0 = dst;
+	char *dst0;
 
-	if (*src == '/') {
+	if (has_dos_drive_prefix(src)) {
+		*dst++ = *src++;
+		*dst++ = *src++;
+	}
+	dst0 = dst;
+
+	if (is_dir_sep(*src)) {
 		*dst++ = '/';
-		while (*src == '/')
+		while (is_dir_sep(*src))
 			src++;
 	}
 
@@ -29,10 +35,10 @@ static int sanitary_path_copy(char *dst, const char *src)
 			if (!src[1]) {
 				/* (1) */
 				src++;
-			} else if (src[1] == '/') {
+			} else if (is_dir_sep(src[1])) {
 				/* (2) */
 				src += 2;
-				while (*src == '/')
+				while (is_dir_sep(*src))
 					src++;
 				continue;
 			} else if (src[1] == '.') {
@@ -40,10 +46,10 @@ static int sanitary_path_copy(char *dst, const char *src)
 					/* (3) */
 					src += 2;
 					goto up_one;
-				} else if (src[2] == '/') {
+				} else if (is_dir_sep(src[2])) {
 					/* (4) */
 					src += 3;
-					while (*src == '/')
+					while (is_dir_sep(*src))
 						src++;
 					goto up_one;
 				}
@@ -51,11 +57,11 @@ static int sanitary_path_copy(char *dst, const char *src)
 		}
 
 		/* copy up to the next '/', and eat all '/' */
-		while ((c = *src++) != '\0' && c != '/')
+		while ((c = *src++) != '\0' && !is_dir_sep(c))
 			*dst++ = c;
-		if (c == '/') {
-			*dst++ = c;
-			while (c == '/')
+		if (is_dir_sep(c)) {
+			*dst++ = '/';
+			while (is_dir_sep(c))
 				c = *src++;
 			src--;
 		} else if (!c)
@@ -74,7 +80,7 @@ static int sanitary_path_copy(char *dst, const char *src)
 			if (dst <= dst0)
 				break;
 			c = *dst--;
-			if (c == '/') {
+			if (c == '/') {	/* MinGW: cannot be '\\' anymore */
 				dst += 2;
 				break;
 			}
@@ -123,10 +129,23 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 {
 	static char path[PATH_MAX];
+#ifndef __MINGW32__
 	if (!pfx || !*pfx || is_absolute_path(arg))
 		return arg;
 	memcpy(path, pfx, pfx_len);
 	strcpy(path + pfx_len, arg);
+#else
+	char *p;
+	/* don't add prefix to absolute paths, but still replace '\' by '/' */
+	if (is_absolute_path(arg))
+		pfx_len = 0;
+	else
+		memcpy(path, pfx, pfx_len);
+	strcpy(path + pfx_len, arg);
+	for (p = path + pfx_len; *p; p++)
+		if (*p == '\\')
+			*p = '/';
+#endif
 	return path;
 }
 
@@ -360,6 +379,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	const char *gitdirenv;
 	const char *gitfile_dir;
 	int len, offset;
+	int minoffset = 0;
 
 	/*
 	 * Let's assume that we are in a git repository.
@@ -410,6 +430,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 	if (!getcwd(cwd, sizeof(cwd)-1))
 		die("Unable to read current working directory");
+	if (has_dos_drive_prefix(cwd))
+		minoffset = 2;
 
 	/*
 	 * Test in the following order (relative to the cwd):
@@ -442,7 +464,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		}
 		chdir("..");
 		do {
-			if (!offset) {
+			if (offset <= minoffset) {
 				if (nongit_ok) {
 					if (chdir(cwd))
 						die("Cannot come back to cwd");
@@ -451,7 +473,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				}
 				die("Not a git repository");
 			}
-		} while (cwd[--offset] != '/');
+		} while (offset > minoffset && cwd[--offset] != '/');
 	}
 
 	inside_git_dir = 0;
