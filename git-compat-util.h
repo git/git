@@ -209,6 +209,15 @@ void *gitmemmem(const void *haystack, size_t haystacklen,
 extern FILE *git_fopen(const char*, const char*);
 #endif
 
+#ifdef SNPRINTF_RETURNS_BOGUS
+#define snprintf git_snprintf
+extern int git_snprintf(char *str, size_t maxsize,
+			const char *format, ...);
+#define vsnprintf git_vsnprintf
+extern int git_vsnprintf(char *str, size_t maxsize,
+			 const char *format, va_list ap);
+#endif
+
 #ifdef __GLIBC_PREREQ
 #if __GLIBC_PREREQ(2, 1)
 #define HAVE_STRCHRNUL

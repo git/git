@@ -326,6 +326,40 @@ else
 	NO_C99_FORMAT=
 fi
 AC_SUBST(NO_C99_FORMAT)
+#
+# Define SNPRINTF_RETURNS_BOGUS if your are on a system which snprintf()
+# or vsnprintf() return -1 instead of number of characters which would
+# have been written to the final string if enough space had been available.
+AC_CACHE_CHECK([whether snprintf() and/or vsnprintf() return bogus value],
+ [ac_cv_snprintf_returns_bogus],
+[
+AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
+		#include "stdarg.h"
+
+		int test_vsnprintf(char *str, size_t maxsize, const char *format, ...)
+		{
+		  int ret;
+		  va_list ap;
+		  va_start(ap, format);
+		  ret = vsnprintf(str, maxsize, format, ap);
+		  va_end(ap);
+		  return ret;
+		}],
+		[[char buf[6];
+		  if (test_vsnprintf(buf, 3, "%s", "12345") != 5
+		      || strcmp(buf, "12")) return 1;
+		  if (snprintf(buf, 3, "%s", "12345") != 5
+		      || strcmp(buf, "12")) return 1]])],
+	[ac_cv_snprintf_returns_bogus=no],
+	[ac_cv_snprintf_returns_bogus=yes])
+])
+if test $ac_cv_snprintf_returns_bogus = yes; then
+	SNPRINTF_RETURNS_BOGUS=UnfortunatelyYes
+else
+	SNPRINTF_RETURNS_BOGUS=
+fi
+AC_SUBST(SNPRINTF_RETURNS_BOGUS)
 
 
 ## Checks for library functions.
