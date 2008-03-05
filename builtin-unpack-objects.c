@@ -21,6 +21,11 @@ static unsigned int offset, len;
 static off_t consumed_bytes;
 static SHA_CTX ctx;
 
+/*
+ * When running under --strict mode, objects whose reachability are
+ * suspect are kept in core without getting written in the object
+ * store.
+ */
 struct obj_buffer {
 	char *buffer;
 	unsigned long size;
@@ -155,6 +160,10 @@ struct obj_info {
 static struct obj_info *obj_list;
 unsigned nr_objects;
 
+/*
+ * Called only from check_object() after it verified this object
+ * is Ok.
+ */
 static void write_cached_object(struct object *obj)
 {
 	unsigned char sha1[20];
@@ -164,6 +173,11 @@ static void write_cached_object(struct object *obj)
 	obj->flags |= FLAG_WRITTEN;
 }
 
+/*
+ * At the very end of the processing, write_rest() scans the objects
+ * that have reachability requirements and calls this function.
+ * Verify its reachability and validity recursively and write it out.
+ */
 static int check_object(struct object *obj, int type, void *data)
 {
 	if (!obj)
@@ -202,19 +216,25 @@ static void write_rest(void)
 static void added_object(unsigned nr, enum object_type type,
 			 void *data, unsigned long size);
 
+/*
+ * Write out nr-th object from the list, now we know the contents
+ * of it.  Under --strict, this buffers structured objects in-core,
+ * to be checked at the end.
+ */
 static void write_object(unsigned nr, enum object_type type,
 			 void *buf, unsigned long size)
 {
-	added_object(nr, type, buf, size);
 	if (!strict) {
 		if (write_sha1_file(buf, size, typename(type), obj_list[nr].sha1) < 0)
 			die("failed to write object");
+		added_object(nr, type, buf, size);
 		free(buf);
-		obj_list[nr].obj = 0;
+		obj_list[nr].obj = NULL;
 	} else if (type == OBJ_BLOB) {
 		struct blob *blob;
 		if (write_sha1_file(buf, size, typename(type), obj_list[nr].sha1) < 0)
 			die("failed to write object");
+		added_object(nr, type, buf, size);
 		free(buf);
 
 		blob = lookup_blob(obj_list[nr].sha1);
@@ -222,15 +242,15 @@ static void write_object(unsigned nr, enum object_type type,
 			blob->object.flags |= FLAG_WRITTEN;
 		else
 			die("invalid blob object");
-		obj_list[nr].obj = 0;
+		obj_list[nr].obj = NULL;
 	} else {
 		struct object *obj;
 		int eaten;
 		hash_sha1_file(buf, size, typename(type), obj_list[nr].sha1);
+		added_object(nr, type, buf, size);
 		obj = parse_object_buffer(obj_list[nr].sha1, type, size, buf, &eaten);
 		if (!obj)
 			die("invalid %s", typename(type));
-		/* buf is stored via add_object_buffer and in obj, if its a tree or commit */
 		add_object_buffer(obj, buf, size);
 		obj->flags |= FLAG_OPEN;
 		obj_list[nr].obj = obj;
@@ -253,6 +273,10 @@ static void resolve_delta(unsigned nr, enum object_type type,
 	write_object(nr, type, result, result_size);
 }
 
+/*
+ * We now know the contents of an object (which is nr-th in the pack);
+ * resolve all the deltified objects that are based on it.
+ */
 static void added_object(unsigned nr, enum object_type type,
 			 void *data, unsigned long size)
 {
@@ -284,13 +308,28 @@ static void unpack_non_delta_entry(enum object_type type, unsigned long size,
 		free(buf);
 }
 
+static int resolve_against_held(unsigned nr, const unsigned char *base,
+				void *delta_data, unsigned long delta_size)
+{
+	struct object *obj;
+	struct obj_buffer *obj_buffer;
+	obj = lookup_object(base);
+	if (!obj)
+		return 0;
+	obj_buffer = lookup_object_buffer(obj);
+	if (!obj_buffer)
+		return 0;
+	resolve_delta(nr, obj->type, obj_buffer->buffer,
+		      obj_buffer->size, delta_data, delta_size);
+	return 1;
+}
+
 static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			       unsigned nr)
 {
 	void *delta_data, *base;
 	unsigned long base_size;
 	unsigned char base_sha1[20];
-	struct object *obj;
 
 	if (type == OBJ_REF_DELTA) {
 		hashcpy(base_sha1, fill(20));
@@ -300,7 +339,13 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			free(delta_data);
 			return;
 		}
-		if (!has_sha1_file(base_sha1)) {
+		if (has_sha1_file(base_sha1))
+			; /* Ok we have this one */
+		else if (resolve_against_held(nr, base_sha1,
+					      delta_data, delta_size))
+			return; /* we are done */
+		else {
+			/* cannot resolve yet --- queue it */
 			hashcpy(obj_list[nr].sha1, null_sha1);
 			add_delta_to_list(nr, base_sha1, 0, delta_data, delta_size);
 			return;
@@ -346,22 +391,18 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			}
 		}
 		if (!base_found) {
-			/* The delta base object is itself a delta that
-			   has not been	resolved yet. */
+			/*
+			 * The delta base object is itself a delta that
+			 * has not been resolved yet.
+			 */
 			hashcpy(obj_list[nr].sha1, null_sha1);
 			add_delta_to_list(nr, null_sha1, base_offset, delta_data, delta_size);
 			return;
 		}
 	}
 
-	obj = lookup_object(base_sha1);
-	if (obj) {
-		struct obj_buffer *obj_buf = lookup_object_buffer(obj);
-		if (obj_buf) {
-			resolve_delta(nr, obj->type, obj_buf->buffer, obj_buf->size, delta_data, delta_size);
-			return;
-		}
-	}
+	if (resolve_against_held(nr, base_sha1, delta_data, delta_size))
+		return;
 
 	base = read_sha1_file(base_sha1, &type, &base_size);
 	if (!base) {

@@ -274,7 +274,7 @@ test_expect_success \
      packname_4=$(git pack-objects test-4 <obj-list) &&
      test 3 = $(ls test-4-*.pack | wc -l)'
 
-test_expect_failure 'unpacking with --strict' '
+test_expect_success 'unpacking with --strict' '
 
 	git config --unset pack.packsizelimit &&
 	for j in a b c d e f g
