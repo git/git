@@ -80,6 +80,7 @@ constructor new {i_commit i_path} {
 	label $w.header.commit_l \
 		-text [mc "Commit:"] \
 		-background gold \
+		-foreground black \
 		-anchor w \
 		-justify left
 	set w_back $w.header.commit_b
@@ -89,6 +90,7 @@ constructor new {i_commit i_path} {
 		-relief flat \
 		-state disabled \
 		-background gold \
+		-foreground black \
 		-activebackground gold
 	bind $w_back <Button-1> "
 		if {\[$w_back cget -state\] eq {normal}} {
@@ -98,16 +100,19 @@ constructor new {i_commit i_path} {
 	label $w.header.commit \
 		-textvariable @commit \
 		-background gold \
+		-foreground black \
 		-anchor w \
 		-justify left
 	label $w.header.path_l \
 		-text [mc "File:"] \
 		-background gold \
+		-foreground black \
 		-anchor w \
 		-justify left
 	set w_path $w.header.path
 	label $w_path \
 		-background gold \
+		-foreground black \
 		-anchor w \
 		-justify left
 	pack $w.header.commit_l -side left
@@ -135,7 +140,9 @@ constructor new {i_commit i_path} {
 		-takefocus 0 \
 		-highlightthickness 0 \
 		-padx 0 -pady 0 \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
@@ -148,7 +155,9 @@ constructor new {i_commit i_path} {
 		-takefocus 0 \
 		-highlightthickness 0 \
 		-padx 0 -pady 0 \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
@@ -166,7 +175,9 @@ constructor new {i_commit i_path} {
 		-takefocus 0 \
 		-highlightthickness 0 \
 		-padx 0 -pady 0 \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
@@ -184,7 +195,9 @@ constructor new {i_commit i_path} {
 		-takefocus 0 \
 		-highlightthickness 0 \
 		-padx 0 -pady 0 \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
@@ -213,7 +226,9 @@ constructor new {i_commit i_path} {
 
 	set w_cviewer $w.file_pane.cm.t
 	text $w_cviewer \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 10 \

@@ -55,6 +55,7 @@ constructor pick {path title a_family a_size} {
 	set w_family $w.inner.family.v
 	text $w_family \
 		-background white \
+		-foreground black \
 		-borderwidth 1 \
 		-relief sunken \
 		-cursor $::cursor_ptr \
@@ -92,6 +93,7 @@ constructor pick {path title a_family a_size} {
 	set w_example $w.example.t
 	text $w_example \
 		-background white \
+		-foreground black \
 		-borderwidth 1 \
 		-relief sunken \
 		-height 3 \
