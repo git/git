@@ -91,6 +91,13 @@ int start_command(struct child_process *cmd)
 			close(cmd->in);
 		}
 
+		if (cmd->no_stderr)
+			dup_devnull(2);
+		else if (need_err) {
+			dup2(fderr[1], 2);
+			close_pair(fderr);
+		}
+
 		if (cmd->no_stdout)
 			dup_devnull(1);
 		else if (cmd->stdout_to_stderr)
@@ -101,13 +108,6 @@ int start_command(struct child_process *cmd)
 		} else if (cmd->out > 1) {
 			dup2(cmd->out, 1);
 			close(cmd->out);
-		}
-
-		if (cmd->no_stderr)
-			dup_devnull(2);
-		else if (need_err) {
-			dup2(fderr[1], 2);
-			close_pair(fderr);
 		}
 
 		if (cmd->dir && chdir(cmd->dir))
