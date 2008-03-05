@@ -153,20 +153,6 @@ cmd_add()
 		usage
 	fi
 
-	case "$repo" in
-	./*|../*)
-		# dereference source url relative to parent's url
-		realrepo="$(resolve_relative_url $repo)" ;;
-	*)
-		# Turn the source into an absolute path if
-		# it is local
-		if base=$(get_repo_base "$repo"); then
-			repo="$base"
-		fi
-		realrepo=$repo
-		;;
-	esac
-
 	# Guess path from repo if not specified or strip trailing slashes
 	if test -z "$path"; then
 		path=$(echo "$repo" | sed -e 's|/*$||' -e 's|:*/*\.git$||' -e 's|.*[/:]||g')
@@ -174,15 +160,39 @@ cmd_add()
 		path=$(echo "$path" | sed -e 's|/*$||')
 	fi
 
-	test -e "$path" &&
-	die "'$path' already exists"
-
 	git ls-files --error-unmatch "$path" > /dev/null 2>&1 &&
 	die "'$path' already exists in the index"
 
-	module_clone "$path" "$realrepo" || exit
-	(unset GIT_DIR; cd "$path" && git checkout -q ${branch:+-b "$branch" "origin/$branch"}) ||
-	die "Unable to checkout submodule '$path'"
+	# perhaps the path exists and is already a git repo, else clone it
+	if test -e "$path"
+	then
+		if test -d "$path/.git" &&
+		test "$(unset GIT_DIR; cd $path; git rev-parse --git-dir)" = ".git"
+		then
+			echo "Adding existing repo at '$path' to the index"
+		else
+			die "'$path' already exists and is not a valid git repo"
+		fi
+	else
+		case "$repo" in
+		./*|../*)
+			# dereference source url relative to parent's url
+			realrepo="$(resolve_relative_url $repo)" ;;
+		*)
+			# Turn the source into an absolute path if
+			# it is local
+			if base=$(get_repo_base "$repo"); then
+				repo="$base"
+			fi
+			realrepo=$repo
+			;;
+		esac
+
+		module_clone "$path" "$realrepo" || exit
+		(unset GIT_DIR; cd "$path" && git checkout -q ${branch:+-b "$branch" "origin/$branch"}) ||
+		die "Unable to checkout submodule '$path'"
+	fi
+
 	git add "$path" ||
 	die "Failed to add submodule '$path'"
 
