@@ -62,7 +62,7 @@ void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1)
 
 static int entry_compare(struct name_entry *a, struct name_entry *b)
 {
-	return base_name_compare(
+	return df_name_compare(
 			a->path, tree_entry_len(a->path, a->sha1), a->mode,
 			b->path, tree_entry_len(b->path, b->sha1), b->mode);
 }
@@ -142,6 +142,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 
 	for (;;) {
 		unsigned long mask = 0;
+		unsigned long dirmask = 0;
 		int i, last;
 
 		last = -1;
@@ -166,10 +167,13 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 					mask = 0;
 			}
 			mask |= 1ul << i;
+			if (S_ISDIR(entry[i].mode))
+				dirmask |= 1ul << i;
 			last = i;
 		}
 		if (!mask)
 			break;
+		dirmask &= mask;
 
 		/*
 		 * Clear all the unused name-entries.
@@ -179,7 +183,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 				continue;
 			entry_clear(entry + i);
 		}
-		ret = info->fn(n, mask, entry, info);
+		ret = info->fn(n, mask, dirmask, entry, info);
 		if (ret < 0)
 			break;
 		if (ret)

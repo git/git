@@ -34,7 +34,7 @@ int tree_entry(struct tree_desc *, struct name_entry *);
 void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1);
 
 struct traverse_info;
-typedef int (*traverse_callback_t)(int n, unsigned long mask, struct name_entry *entry, struct traverse_info *);
+typedef int (*traverse_callback_t)(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *);
 int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info);
 
 struct traverse_info {
@@ -42,6 +42,7 @@ struct traverse_info {
 	struct name_entry name;
 	int pathlen;
 
+	unsigned long conflicts;
 	traverse_callback_t fn;
 	void *data;
 };
