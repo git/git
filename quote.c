@@ -288,7 +288,7 @@ int unquote_c_style(struct strbuf *sb, const char *quoted, const char **endp)
 		switch (*quoted++) {
 		  case '"':
 			if (endp)
-				*endp = quoted + 1;
+				*endp = quoted;
 			return 0;
 		  case '\\':
 			break;
