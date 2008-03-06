@@ -102,6 +102,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = -1;
+	opts.index = &the_index;
 
 	git_config(git_default_config);
 

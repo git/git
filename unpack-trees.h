@@ -28,6 +28,7 @@ struct unpack_trees_options {
 
 	struct cache_entry *df_conflict_entry;
 	void *unpack_data;
+	struct index_state *index;
 };
 
 extern int unpack_trees(unsigned n, struct tree_desc *t,

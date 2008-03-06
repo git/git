@@ -1,3 +1,4 @@
+#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "dir.h"
 #include "tree.h"
@@ -7,10 +8,10 @@
 #include "progress.h"
 #include "refs.h"
 
-static inline void remove_entry(int remove)
+static inline void remove_entry(int remove, struct unpack_trees_options *o)
 {
 	if (remove >= 0)
-		remove_cache_entry_at(remove);
+		remove_index_entry_at(o->index, remove);
 }
 
 /* Unlink the last component and attempt to remove leading
@@ -53,8 +54,8 @@ static void check_updates(struct unpack_trees_options *o)
 	int i;
 
 	if (o->update && o->verbose_update) {
-		for (total = cnt = 0; cnt < active_nr; cnt++) {
-			struct cache_entry *ce = active_cache[cnt];
+		for (total = cnt = 0; cnt < o->index->cache_nr; cnt++) {
+			struct cache_entry *ce = o->index->cache[cnt];
 			if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
 				total++;
 		}
@@ -65,15 +66,15 @@ static void check_updates(struct unpack_trees_options *o)
 	}
 
 	*last_symlink = '\0';
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+	for (i = 0; i < o->index->cache_nr; i++) {
+		struct cache_entry *ce = o->index->cache[i];
 
 		if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
 			display_progress(progress, ++cnt);
 		if (ce->ce_flags & CE_REMOVE) {
 			if (o->update)
 				unlink_entry(ce->name, last_symlink);
-			remove_cache_entry_at(i);
+			remove_index_entry_at(o->index, i);
 			i--;
 			continue;
 		}
@@ -105,7 +106,7 @@ static int unpack_index_entry(struct cache_entry *ce, struct unpack_trees_option
 		if (o->skip_unmerged) {
 			o->pos++;
 		} else {
-			remove_entry(o->pos);
+			remove_entry(o->pos, o);
 		}
 		return 0;
 	}
@@ -242,9 +243,9 @@ static int unpack_nondirectories(int n, unsigned long mask, unsigned long dirmas
 		return call_unpack_fn(src, o, remove);
 
 	n += o->merge;
-	remove_entry(remove);
+	remove_entry(remove, o);
 	for (i = 0; i < n; i++)
-		add_cache_entry(src[i], ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
+		add_index_entry(o->index, src[i], ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
 	return 0;
 }
 
@@ -261,8 +262,8 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 
 	/* Are we supposed to look at the index too? */
 	if (o->merge) {
-		while (o->pos < active_nr) {
-			struct cache_entry *ce = active_cache[o->pos];
+		while (o->pos < o->index->cache_nr) {
+			struct cache_entry *ce = o->index->cache[o->pos];
 			int cmp = compare_entry(ce, info, p);
 			if (cmp < 0) {
 				if (unpack_index_entry(ce, o) < 0)
@@ -277,7 +278,7 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 					 */
 					if (o->skip_unmerged)
 						return mask;
-					remove_entry(o->pos);
+					remove_entry(o->pos, o);
 					continue;
 				}
 				src[0] = ce;
@@ -312,8 +313,8 @@ static int unpack_failed(struct unpack_trees_options *o, const char *message)
 			return error(message);
 		return -1;
 	}
-	discard_cache();
-	read_cache();
+	discard_index(o->index);
+	read_index(o->index);
 	return -1;
 }
 
@@ -349,8 +350,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	/* Any left-over entries in the index? */
 	if (o->merge) {
-		while (o->pos < active_nr) {
-			struct cache_entry *ce = active_cache[o->pos];
+		while (o->pos < o->index->cache_nr) {
+			struct cache_entry *ce = o->index->cache[o->pos];
 			if (unpack_index_entry(ce, o) < 0)
 				return unpack_failed(o, NULL);
 		}
@@ -395,7 +396,7 @@ static int verify_uptodate(struct cache_entry *ce,
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
-		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID);
+		unsigned changed = ie_match_stat(o->index, ce, &st, CE_MATCH_IGNORE_VALID);
 		if (!changed)
 			return 0;
 		/*
@@ -415,10 +416,10 @@ static int verify_uptodate(struct cache_entry *ce,
 		error("Entry '%s' not uptodate. Cannot merge.", ce->name);
 }
 
-static void invalidate_ce_path(struct cache_entry *ce)
+static void invalidate_ce_path(struct cache_entry *ce, struct unpack_trees_options *o)
 {
 	if (ce)
-		cache_tree_invalidate_path(active_cache_tree, ce->name);
+		cache_tree_invalidate_path(o->index->cache_tree, ce->name);
 }
 
 /*
@@ -463,12 +464,12 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 	 * in that directory.
 	 */
 	namelen = strlen(ce->name);
-	pos = cache_name_pos(ce->name, namelen);
+	pos = index_name_pos(o->index, ce->name, namelen);
 	if (0 <= pos)
 		return cnt; /* we have it as nondirectory */
 	pos = -pos - 1;
-	for (i = pos; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+	for (i = pos; i < o->index->cache_nr; i++) {
+		struct cache_entry *ce = o->index->cache[i];
 		int len = ce_namelen(ce);
 		if (len < namelen ||
 		    strncmp(ce->name, ce->name, namelen) ||
@@ -566,9 +567,9 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 		 * delete this path, which is in a subdirectory that
 		 * is being replaced with a blob.
 		 */
-		cnt = cache_name_pos(ce->name, strlen(ce->name));
+		cnt = index_name_pos(o->index, ce->name, strlen(ce->name));
 		if (0 <= cnt) {
-			struct cache_entry *ce = active_cache[cnt];
+			struct cache_entry *ce = o->index->cache[cnt];
 			if (ce->ce_flags & CE_REMOVE)
 				return 0;
 		}
@@ -597,17 +598,17 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		} else {
 			if (verify_uptodate(old, o))
 				return -1;
-			invalidate_ce_path(old);
+			invalidate_ce_path(old, o);
 		}
 	}
 	else {
 		if (verify_absent(merge, "overwritten", o))
 			return -1;
-		invalidate_ce_path(merge);
+		invalidate_ce_path(merge, o);
 	}
 
 	merge->ce_flags &= ~CE_STAGEMASK;
-	add_cache_entry(merge, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
+	add_index_entry(o->index, merge, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 	return 1;
 }
 
@@ -621,14 +622,14 @@ static int deleted_entry(struct cache_entry *ce, struct cache_entry *old,
 		if (verify_absent(ce, "removed", o))
 			return -1;
 	ce->ce_flags |= CE_REMOVE;
-	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
-	invalidate_ce_path(ce);
+	add_index_entry(o->index, ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
+	invalidate_ce_path(ce, o);
 	return 1;
 }
 
 static int keep_entry(struct cache_entry *ce, struct unpack_trees_options *o)
 {
-	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD);
+	add_index_entry(o->index, ce, ADD_CACHE_OK_TO_ADD);
 	return 1;
 }
 
@@ -728,7 +729,7 @@ int threeway_merge(struct cache_entry **stages,
 
 	/* #1 */
 	if (!head && !remote && any_anc_missing) {
-		remove_entry(remove);
+		remove_entry(remove, o);
 		return 0;
 	}
 
@@ -762,7 +763,7 @@ int threeway_merge(struct cache_entry **stages,
 		if ((head_deleted && remote_deleted) ||
 		    (head_deleted && remote && remote_match) ||
 		    (remote_deleted && head && head_match)) {
-			remove_entry(remove);
+			remove_entry(remove, o);
 			if (index)
 				return deleted_entry(index, index, o);
 			else if (ce && !head_deleted) {
@@ -788,7 +789,7 @@ int threeway_merge(struct cache_entry **stages,
 			return -1;
 	}
 
-	remove_entry(remove);
+	remove_entry(remove, o);
 	o->nontrivial_merge = 1;
 
 	/* #2, #3, #4, #6, #7, #9, #10, #11. */
@@ -853,7 +854,7 @@ int twoway_merge(struct cache_entry **src,
 		}
 		else if (oldtree && !newtree && same(current, oldtree)) {
 			/* 10 or 11 */
-			remove_entry(remove);
+			remove_entry(remove, o);
 			return deleted_entry(oldtree, current, o);
 		}
 		else if (oldtree && newtree &&
@@ -863,7 +864,7 @@ int twoway_merge(struct cache_entry **src,
 		}
 		else {
 			/* all other failures */
-			remove_entry(remove);
+			remove_entry(remove, o);
 			if (oldtree)
 				return o->gently ? -1 : reject_merge(oldtree);
 			if (current)
@@ -875,7 +876,7 @@ int twoway_merge(struct cache_entry **src,
 	}
 	else if (newtree)
 		return merged_entry(newtree, current, o);
-	remove_entry(remove);
+	remove_entry(remove, o);
 	return deleted_entry(oldtree, current, o);
 }
 
@@ -922,14 +923,14 @@ int oneway_merge(struct cache_entry **src,
 			     o->merge_size);
 
 	if (!a) {
-		remove_entry(remove);
+		remove_entry(remove, o);
 		return deleted_entry(old, old, o);
 	}
 	if (old && same(old, a)) {
 		if (o->reset) {
 			struct stat st;
 			if (lstat(old->name, &st) ||
-			    ce_match_stat(old, &st, CE_MATCH_IGNORE_VALID))
+			    ie_match_stat(o->index, old, &st, CE_MATCH_IGNORE_VALID))
 				old->ce_flags |= CE_UPDATE;
 		}
 		return keep_entry(old, o);
