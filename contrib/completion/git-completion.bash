@@ -1271,11 +1271,14 @@ _git ()
 		case "${COMP_WORDS[COMP_CWORD]}" in
 		--*=*) COMPREPLY=() ;;
 		--*)   __gitcomp "
+			--paginate
 			--no-pager
 			--git-dir=
 			--bare
 			--version
 			--exec-path
+			--work-tree=
+			--help
 			"
 			;;
 		*)     __gitcomp "$(__git_commands) $(__git_aliases)" ;;
