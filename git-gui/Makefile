@@ -224,6 +224,11 @@ else
 	ifeq ($(shell $(MSGFMT) >/dev/null 2>&1 || echo $$?),127)
 		MSGFMT := $(TCL_PATH) po/po2msg.sh
 	endif
+	ifeq (msgfmt,$(MSGFMT))
+	ifeq ($(shell $(MSGFMT) --tcl -l C -d . /dev/null 2>/dev/null || echo $?),1)
+		MSGFMT := $(TCL_PATH) po/po2msg.sh
+	endif
+	endif
 endif
 
 msgsdir     = $(gg_libdir)/msgs
