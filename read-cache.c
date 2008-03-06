@@ -255,13 +255,13 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
-static int is_racy_timestamp(struct index_state *istate, struct cache_entry *ce)
+static int is_racy_timestamp(const struct index_state *istate, struct cache_entry *ce)
 {
 	return (istate->timestamp &&
 		((unsigned int)istate->timestamp) <= ce->ce_mtime);
 }
 
-int ie_match_stat(struct index_state *istate,
+int ie_match_stat(const struct index_state *istate,
 		  struct cache_entry *ce, struct stat *st,
 		  unsigned int options)
 {
@@ -304,7 +304,7 @@ int ie_match_stat(struct index_state *istate,
 	return changed;
 }
 
-int ie_modified(struct index_state *istate,
+int ie_modified(const struct index_state *istate,
 		struct cache_entry *ce, struct stat *st, unsigned int options)
 {
 	int changed, changed_fs;
@@ -412,7 +412,7 @@ int cache_name_compare(const char *name1, int flags1, const char *name2, int fla
 	return 0;
 }
 
-int index_name_pos(struct index_state *istate, const char *name, int namelen)
+int index_name_pos(const struct index_state *istate, const char *name, int namelen)
 {
 	int first, last;
 
@@ -1201,7 +1201,7 @@ int discard_index(struct index_state *istate)
 	return 0;
 }
 
-int unmerged_index(struct index_state *istate)
+int unmerged_index(const struct index_state *istate)
 {
 	int i;
 	for (i = 0; i < istate->cache_nr; i++) {
@@ -1346,7 +1346,7 @@ static int ce_write_entry(SHA_CTX *c, int fd, struct cache_entry *ce)
 	return ce_write(c, fd, ondisk, size);
 }
 
-int write_index(struct index_state *istate, int newfd)
+int write_index(const struct index_state *istate, int newfd)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
