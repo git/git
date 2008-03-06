@@ -104,7 +104,38 @@ int tree_entry(struct tree_desc *desc, struct name_entry *entry)
 	return 1;
 }
 
-void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callback_t callback)
+void setup_traverse_info(struct traverse_info *info, const char *base)
+{
+	int pathlen = strlen(base);
+
+	memset(info, 0, sizeof(*info));
+	if (pathlen && base[pathlen-1] == '/')
+		pathlen--;
+	info->pathlen = pathlen ? pathlen + 1 : 0;
+	info->name.path = base;
+	info->name.sha1 = (void *)(base + pathlen + 1);
+}
+
+char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n)
+{
+	int len = tree_entry_len(n->path, n->sha1);
+	int pathlen = info->pathlen;
+
+	path[pathlen + len] = 0;
+	for (;;) {
+		memcpy(path + pathlen, n->path, len);
+		if (!pathlen)
+			break;
+		path[--pathlen] = '/';
+		n = &info->name;
+		len = tree_entry_len(n->path, n->sha1);
+		info = info->prev;
+		pathlen -= len;
+	}
+	return path;
+}
+
+void traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 {
 	struct name_entry *entry = xmalloc(n*sizeof(*entry));
 
@@ -150,7 +181,7 @@ void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callb
 			}
 			entry_clear(entry + i);
 		}
-		callback(n, mask, entry, base);
+		info->fn(n, mask, entry, info);
 	}
 	free(entry);
 }
