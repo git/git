@@ -1181,6 +1181,7 @@ proc savestuff {w} {
     global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
+    global autoselect
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -1195,6 +1196,7 @@ proc savestuff {w} {
 	puts $f [list set maxwidth $maxwidth]
 	puts $f [list set cmitmode $cmitmode]
 	puts $f [list set wrapcomment $wrapcomment]
+	puts $f [list set autoselect $autoselect]
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
@@ -4681,6 +4683,7 @@ proc selectline {l isnew} {
     global commentend idtags linknum
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
+    global autoselect
 
     catch {unset pending_select}
     $canv delete hover
@@ -4736,8 +4739,10 @@ proc selectline {l isnew} {
     set currentid $id
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
-    $sha1entry selection from 0
-    $sha1entry selection to end
+    if {$autoselect} {
+	$sha1entry selection from 0
+	$sha1entry selection to end
+    }
     rhighlight_sel $id
 
     $ctext conf -state normal
@@ -7974,7 +7979,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor
-    global tabstop limitdiffs
+    global tabstop limitdiffs autoselect
 
     set top .gitkprefs
     set prefstop $top
@@ -8004,6 +8009,11 @@ proc doprefs {} {
     checkbutton $top.showlocal.b -variable showlocalchanges
     pack $top.showlocal.b $top.showlocal.l -side left
     grid x $top.showlocal -sticky w
+    frame $top.autoselect
+    label $top.autoselect.l -text [mc "Auto-select SHA1"] -font optionfont
+    checkbutton $top.autoselect.b -variable autoselect
+    pack $top.autoselect.b $top.autoselect.l -side left
+    grid x $top.autoselect -sticky w
 
     label $top.ddisp -text [mc "Diff display options"]
     grid $top.ddisp - -sticky w -pady 10
@@ -8494,6 +8504,7 @@ set maxlinelen 200
 set showlocalchanges 1
 set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
+set autoselect 1
 
 set colors {green red blue magenta darkgrey brown orange}
 set bgcolor white
