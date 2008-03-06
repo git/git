@@ -287,31 +287,32 @@ static void unresolved(const struct traverse_info *info, struct name_entry n[3])
  * The successful merge rules are the same as for the three-way merge
  * in git-read-tree.
  */
-static void threeway_callback(int n, unsigned long mask, struct name_entry *entry, struct traverse_info *info)
+static int threeway_callback(int n, unsigned long mask, struct name_entry *entry, struct traverse_info *info)
 {
 	/* Same in both? */
 	if (same_entry(entry+1, entry+2)) {
 		if (entry[0].sha1) {
 			resolve(info, NULL, entry+1);
-			return;
+			return mask;
 		}
 	}
 
 	if (same_entry(entry+0, entry+1)) {
 		if (entry[2].sha1 && !S_ISDIR(entry[2].mode)) {
 			resolve(info, entry+1, entry+2);
-			return;
+			return mask;
 		}
 	}
 
 	if (same_entry(entry+0, entry+2)) {
 		if (entry[1].sha1 && !S_ISDIR(entry[1].mode)) {
 			resolve(info, NULL, entry+1);
-			return;
+			return mask;
 		}
 	}
 
 	unresolved(info, entry);
+	return mask;
 }
 
 static void merge_trees(struct tree_desc t[3], const char *base)

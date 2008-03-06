@@ -135,8 +135,9 @@ char *make_traverse_path(char *path, const struct traverse_info *info, const str
 	return path;
 }
 
-void traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
+int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 {
+	int ret = 0;
 	struct name_entry *entry = xmalloc(n*sizeof(*entry));
 
 	for (;;) {
@@ -171,19 +172,26 @@ void traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 			break;
 
 		/*
-		 * Update the tree entries we've walked, and clear
-		 * all the unused name-entries.
+		 * Clear all the unused name-entries.
 		 */
 		for (i = 0; i < n; i++) {
-			if (mask & (1ul << i)) {
-				update_tree_entry(t+i);
+			if (mask & (1ul << i))
 				continue;
-			}
 			entry_clear(entry + i);
 		}
-		info->fn(n, mask, entry, info);
+		ret = info->fn(n, mask, entry, info);
+		if (ret < 0)
+			break;
+		if (ret)
+			mask &= ret;
+		ret = 0;
+		for (i = 0; i < n; i++) {
+			if (mask & (1ul << i))
+				update_tree_entry(t + i);
+		}
 	}
 	free(entry);
+	return ret;
 }
 
 static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char *result, unsigned *mode)
