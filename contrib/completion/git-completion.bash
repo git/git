@@ -841,8 +841,8 @@ _git_push ()
 
 _git_rebase ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	if [ -d .dotest ] || [ -d .git/.dotest-merge ]; then
+	local cur="${COMP_WORDS[COMP_CWORD]}" dir="$(__gitdir)"
+	if [ -d .dotest ] || [ -d "$dir"/.dotest-merge ]; then
 		__gitcomp "--continue --skip --abort"
 		return
 	fi
