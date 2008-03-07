@@ -574,17 +574,8 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 	pathspec = get_pathspec(prefix, argv + i);
 
 	/* Verify that the pathspec matches the prefix */
-	if (pathspec) {
-		if (argc != i) {
-			int cnt;
-			for (cnt = 0; pathspec[cnt]; cnt++)
-				;
-			if (cnt != (argc - i))
-				exit(1); /* error message already given */
-		}
+	if (pathspec)
 		prefix = verify_pathspec(prefix);
-	} else if (argc != i)
-		exit(1); /* error message already given */
 
 	/* Treat unmatching pathspec elements as errors */
 	if (pathspec && error_unmatch) {
