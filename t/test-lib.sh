@@ -3,12 +3,16 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
+# Keep the original TERM for say_color
+ORIGINAL_TERM=$TERM
+
 # For repeatability, reset the environment to known value.
 LANG=C
 LC_ALL=C
 PAGER=cat
 TZ=UTC
-export LANG LC_ALL PAGER TZ
+TERM=dumb
+export LANG LC_ALL PAGER TERM TZ
 EDITOR=:
 VISUAL=:
 unset GIT_EDITOR
@@ -58,12 +62,14 @@ esac
 # This test checks if command xyzzy does the right thing...
 # '
 # . ./test-lib.sh
-
-[ "x$TERM" != "xdumb" ] &&
-	[ -t 1 ] &&
-	tput bold >/dev/null 2>&1 &&
-	tput setaf 1 >/dev/null 2>&1 &&
-	tput sgr0 >/dev/null 2>&1 &&
+[ "x$ORIGINAL_TERM" != "xdumb" ] && (
+		TERM=$ORIGINAL_TERM &&
+		export TERM &&
+		[ -t 1 ] &&
+		tput bold >/dev/null 2>&1 &&
+		tput setaf 1 >/dev/null 2>&1 &&
+		tput sgr0 >/dev/null 2>&1
+	) &&
 	color=t
 
 while test "$#" -ne 0
@@ -91,6 +97,9 @@ done
 
 if test -n "$color"; then
 	say_color () {
+		(
+		TERM=$ORIGINAL_TERM
+		export TERM
 		case "$1" in
 			error) tput bold; tput setaf 1;; # bold red
 			skip)  tput bold; tput setaf 2;; # bold green
@@ -101,6 +110,7 @@ if test -n "$color"; then
 		shift
 		echo "* $*"
 		tput sgr0
+		)
 	}
 else
 	say_color() {
