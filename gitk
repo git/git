@@ -5429,7 +5429,7 @@ proc selectline {l isnew} {
     global commentend idtags linknum
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
-    global targetrow targetid
+    global targetrow targetid lastscrollrows
 
     catch {unset pending_select}
     $canv delete hover
@@ -5440,6 +5440,11 @@ proc selectline {l isnew} {
     set id [commitonrow $l]
     set targetid $id
     set targetrow $l
+    set selectedline $l
+    set currentid $id
+    if {$lastscrollrows < $numcommits} {
+	setcanvscroll
+    }
 
     set y [expr {$canvy0 + $l * $linespc}]
     set ymax [lindex [$canv cget -scrollregion] 3]
@@ -5483,8 +5488,6 @@ proc selectline {l isnew} {
 	addtohistory [list selbyid $id]
     }
 
-    set selectedline $l
-    set currentid $id
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
     $sha1entry selection from 0
