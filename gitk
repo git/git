@@ -1218,7 +1218,7 @@ proc chewcommits {} {
     if {$viewcomplete($curview)} {
 	global commitidx varctok
 	global numcommits startmsecs
-	global mainheadid commitinfo nullid
+	global mainheadid nullid
 
 	if {[info exists pending_select]} {
 	    set row [first_real_row]
@@ -5494,6 +5494,9 @@ proc selectline {l isnew} {
     $ctext conf -state normal
     clear_ctext
     set linknum 0
+    if {![info exists commitinfo($id)]} {
+	getcommit $id
+    }
     set info $commitinfo($id)
     set date [formatdate [lindex $info 2]]
     $ctext insert end "[mc "Author"]: [lindex $info 1]  $date\n"
