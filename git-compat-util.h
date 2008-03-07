@@ -437,4 +437,10 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #define qsort git_qsort
 #endif
 
+#ifndef DIR_HAS_BSD_GROUP_SEMANTICS
+# define FORCE_DIR_SET_GID S_ISGID
+#else
+# define FORCE_DIR_SET_GID 0
+#endif
+
 #endif
