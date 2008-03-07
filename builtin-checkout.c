@@ -160,7 +160,8 @@ static int reset_to_new(struct tree *tree, int quiet)
 	opts.merge = 1;
 	opts.fn = oneway_merge;
 	opts.verbose_update = !quiet;
-	opts.index = &the_index;
+	opts.src_index = &the_index;
+	opts.dst_index = &the_index;
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
 	if (unpack_trees(1, &tree_desc, &opts))
@@ -180,7 +181,8 @@ static void reset_clean_to_new(struct tree *tree, int quiet)
 	opts.merge = 1;
 	opts.fn = oneway_merge;
 	opts.verbose_update = !quiet;
-	opts.index = &the_index;
+	opts.src_index = &the_index;
+	opts.dst_index = &the_index;
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
 	if (unpack_trees(1, &tree_desc, &opts))
@@ -231,7 +233,8 @@ static int merge_working_tree(struct checkout_opts *opts,
 
 		memset(&topts, 0, sizeof(topts));
 		topts.head_idx = -1;
-		topts.index = &the_index;
+		topts.src_index = &the_index;
+		topts.dst_index = &the_index;
 
 		refresh_cache(REFRESH_QUIET);
 
