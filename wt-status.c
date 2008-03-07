@@ -7,6 +7,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "diffcore.h"
+#include "quote.h"
 
 int wt_status_relative_paths = 1;
 int wt_status_use_color = -1;
@@ -82,51 +83,7 @@ static void wt_status_print_trailer(struct wt_status *s)
 	color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
 }
 
-static char *quote_path(const char *in, int len,
-			struct strbuf *out, const char *prefix)
-{
-	if (len < 0)
-		len = strlen(in);
-
-	strbuf_grow(out, len);
-	strbuf_setlen(out, 0);
-	if (prefix) {
-		int off = 0;
-		while (prefix[off] && off < len && prefix[off] == in[off])
-			if (prefix[off] == '/') {
-				prefix += off + 1;
-				in += off + 1;
-				len -= off + 1;
-				off = 0;
-			} else
-				off++;
-
-		for (; *prefix; prefix++)
-			if (*prefix == '/')
-				strbuf_addstr(out, "../");
-	}
-
-	for ( ; len > 0; in++, len--) {
-		int ch = *in;
-
-		switch (ch) {
-		case '\n':
-			strbuf_addstr(out, "\\n");
-			break;
-		case '\r':
-			strbuf_addstr(out, "\\r");
-			break;
-		default:
-			strbuf_addch(out, ch);
-			continue;
-		}
-	}
-
-	if (!out->len)
-		strbuf_addstr(out, "./");
-
-	return out->buf;
-}
+#define quote_path quote_path_relative
 
 static void wt_status_print_filepair(struct wt_status *s,
 				     int t, struct diff_filepair *p)
