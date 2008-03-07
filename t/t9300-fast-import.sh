@@ -869,6 +869,8 @@ zcommits
 COMMIT
 reset refs/tags/O3-2nd
 from :5
+reset refs/tags/O3-3rd
+from :5
 INPUT_END
 
 cat >expect <<INPUT_END
