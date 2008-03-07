@@ -315,6 +315,7 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 
 static int unpack_failed(struct unpack_trees_options *o, const char *message)
 {
+	discard_index(&o->result);
 	if (!o->gently) {
 		if (message)
 			return error(message);
