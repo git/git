@@ -111,9 +111,10 @@ stderr as follows:
 	.no_stdin, .no_stdout, .no_stderr: The respective channel is
 		redirected to /dev/null.
 
-	.stdout_to_stderr: stdout of the child is redirected to the
-		parent's stderr (i.e. *not* to what .err or
-		.no_stderr specify).
+	.stdout_to_stderr: stdout of the child is redirected to its
+		stderr. This happens after stderr is itself redirected.
+		So stdout will follow stderr to wherever it is
+		redirected.
 
 To modify the environment of the sub-process, specify an array of
 string pointers (NULL terminated) in .env:
