@@ -33,17 +33,21 @@ OPTIONS
 	option supersedes any other option.
 
 -i|--info::
-	Use the 'info' program to display the manual page, instead of
-	the 'man' program that is used by default.
+	Display manual page for the command in the 'info' format. The
+	'info' program will be used for that purpose.
 
 -m|--man::
-	Use the 'man' program to display the manual page. This may be
-	used to override a value set in the 'help.format'
-	configuration variable.
+	Display manual page for the command in the 'man' format. This
+	option may be used to override a value set in the
+	'help.format' configuration variable.
++
+By default the 'man' program will be used to display the manual page,
+but the 'man.viewer' configuration variable may be used to choose
+another display program (see below).
 
 -w|--web::
-	Use a web browser to display the HTML manual page, instead of
-	the 'man' program that is used by default.
+	Display manual page for the command in the 'web' (HTML)
+	format. A web browser will be used for that purpose.
 +
 The web browser can be specified using the configuration variable
 'help.browser', or 'web.browser' if the former is not set. If none of
@@ -61,15 +65,23 @@ line option:
 
 * "man" corresponds to '-m|--man',
 * "info" corresponds to '-i|--info',
-* "web" or "html" correspond to '-w|--web',
+* "web" or "html" correspond to '-w|--web'.
 
 The 'help.browser', 'web.browser' and 'browser.<tool>.path' will also
 be checked if the 'web' format is chosen (either by command line
 option or configuration variable). See '-w|--web' in the OPTIONS
 section above and linkgit:git-web--browse[1].
 
-Note that these configuration variables should probably be set using
-the '--global' flag, for example like this:
+The 'man.viewer' config variable will be checked if the 'man' format
+is chosen. Only the following values are currently supported:
+
+* "man": use the 'man' program as usual,
+* "woman": use 'emacsclient' to launch the "woman" mode in emacs
+(this only works starting with emacsclient versions 22),
+* "konqueror": use a man KIO slave in konqueror.
+
+Note that all these configuration variables should probably be set
+using the '--global' flag, for example like this:
 
 ------------------------------------------------
 $ git config --global help.format web
