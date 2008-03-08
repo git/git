@@ -837,6 +837,7 @@ proc makewindow {} {
     }
     frame .bleft.top
     frame .bleft.mid
+    frame .bleft.bottom
 
     button .bleft.top.search -text [mc "Search"] -command dosearch
     pack .bleft.top.search -side left -padx 5
@@ -864,18 +865,25 @@ proc makewindow {} {
     checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
 	-command changeignorespace -variable ignorespace
     pack .bleft.mid.ignspace -side left -padx 5
-    set ctext .bleft.ctext
+    set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
 	-state disabled -font textfont \
-	-yscrollcommand scrolltext -wrap none
+	-yscrollcommand scrolltext -wrap none \
+	-xscrollcommand ".bleft.bottom.sbhorizontal set"
     if {$have_tk85} {
 	$ctext conf -tabstyle wordprocessor
     }
-    scrollbar .bleft.sb -command "$ctext yview"
+    scrollbar .bleft.bottom.sb -command "$ctext yview"
+    scrollbar .bleft.bottom.sbhorizontal -command "$ctext xview" -orient h \
+	-width 10
     pack .bleft.top -side top -fill x
     pack .bleft.mid -side top -fill x
-    pack .bleft.sb -side right -fill y
-    pack $ctext -side left -fill both -expand 1
+    grid $ctext .bleft.bottom.sb -sticky nsew
+    grid .bleft.bottom.sbhorizontal -sticky ew
+    grid columnconfigure .bleft.bottom 0 -weight 1
+    grid rowconfigure .bleft.bottom 0 -weight 1
+    grid rowconfigure .bleft.bottom 1 -weight 0
+    pack .bleft.bottom -side top -fill both -expand 1
     lappend bglist $ctext
     lappend fglist $ctext
 
@@ -5640,7 +5648,7 @@ proc searchmarkvisible {doall} {
 proc scrolltext {f0 f1} {
     global searchstring
 
-    .bleft.sb set $f0 $f1
+    .bleft.bottom.sb set $f0 $f1
     if {$searchstring ne {}} {
 	searchmarkvisible 0
     }
