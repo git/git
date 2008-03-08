@@ -320,8 +320,9 @@ test_expect_success 'removal failure' '
 
 	mkdir foo &&
 	touch foo/bar &&
+	exec <foo/bar &&
 	chmod 0 foo &&
-	! git clean -f -d
+	test_must_fail git clean -f -d
 
 '
 chmod 755 foo

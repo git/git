@@ -33,6 +33,12 @@ extern struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_
 #define REF_NODEREF	0x01
 extern struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int flags);
 
+/** Close the file descriptor owned by a lock and return the status */
+extern int close_ref(struct ref_lock *lock);
+
+/** Close and commit the ref locked by the lock */
+extern int commit_ref(struct ref_lock *lock);
+
 /** Release any lock taken but not written. **/
 extern void unlock_ref(struct ref_lock *lock);
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2007, Nanako Shiraishi
 
-USAGE='[  | save | list | show | apply | clear | create ]'
+USAGE='[  | save | list | show | apply | clear | drop | pop | create ]'
 
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
@@ -196,6 +196,28 @@ apply_stash () {
 	fi
 }
 
+drop_stash () {
+	have_stash || die 'No stash entries to drop'
+
+	if test $# = 0
+	then
+		set x "$ref_stash@{0}"
+		shift
+	fi
+	# Verify supplied argument looks like a stash entry
+	s=$(git rev-parse --revs-only --no-flags "$@") &&
+	git rev-parse --verify "$s:"   > /dev/null 2>&1 &&
+	git rev-parse --verify "$s^1:" > /dev/null 2>&1 &&
+	git rev-parse --verify "$s^2:" > /dev/null 2>&1 ||
+		die "$*: not a valid stashed state"
+
+	git reflog delete --updateref --rewrite "$@" &&
+		echo "Dropped $* ($s)" || die "$*: Could not drop stash entry"
+
+	# clear_stash if we just dropped the last stash entry
+	git rev-parse --verify "$ref_stash@{0}" > /dev/null 2>&1 || clear_stash
+}
+
 # Main command set
 case "$1" in
 list)
@@ -229,6 +251,18 @@ create)
 		shift
 	fi
 	create_stash "$*" && echo "$w_commit"
+	;;
+drop)
+	shift
+	drop_stash "$@"
+	;;
+pop)
+	shift
+	if apply_stash "$@"
+	then
+		test -z "$unstash_index" || shift
+		drop_stash "$@"
+	fi
 	;;
 *)
 	if test $# -eq 0

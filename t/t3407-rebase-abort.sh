@@ -23,37 +23,49 @@ test_expect_success setup '
 	git branch pre-rebase
 '
 
-test_expect_success 'rebase --abort' '
-	test_must_fail git rebase master &&
-	git rebase --abort &&
-	test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase)
-'
+testrebase() {
+	type=$1
+	dotest=$2
 
-test_expect_success 'rebase --abort after --skip' '
-	# Clean up the state from the previous one
-	git reset --hard pre-rebase
-	rm -rf .dotest
+	test_expect_success "rebase$type --abort" '
+		# Clean up the state from the previous one
+		git reset --hard pre-rebase
+		test_must_fail git rebase'"$type"' master &&
+		test -d '$dotest' &&
+		git rebase --abort &&
+		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
+		test ! -d '$dotest'
+	'
 
-	test_must_fail git rebase master &&
-	test_must_fail git rebase --skip &&
-	test $(git rev-parse HEAD) = $(git rev-parse master) &&
-	git rebase --abort &&
-	test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase)
-'
+	test_expect_success "rebase$type --abort after --skip" '
+		# Clean up the state from the previous one
+		git reset --hard pre-rebase
+		test_must_fail git rebase'"$type"' master &&
+		test -d '$dotest' &&
+		test_must_fail git rebase --skip &&
+		test $(git rev-parse HEAD) = $(git rev-parse master) &&
+		git-rebase --abort &&
+		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
+		test ! -d '$dotest'
+	'
 
-test_expect_success 'rebase --abort after --continue' '
-	# Clean up the state from the previous one
-	git reset --hard pre-rebase
-	rm -rf .dotest
+	test_expect_success "rebase$type --abort after --continue" '
+		# Clean up the state from the previous one
+		git reset --hard pre-rebase
+		test_must_fail git rebase'"$type"' master &&
+		test -d '$dotest' &&
+		echo c > a &&
+		echo d >> a &&
+		git add a &&
+		test_must_fail git rebase --continue &&
+		test $(git rev-parse HEAD) != $(git rev-parse master) &&
+		git rebase --abort &&
+		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
+		test ! -d '$dotest'
+	'
+}
 
-	test_must_fail git rebase master &&
-	echo c > a &&
-	echo d >> a &&
-	git add a &&
-	test_must_fail git rebase --continue &&
-	test $(git rev-parse HEAD) != $(git rev-parse master) &&
-	git rebase --abort &&
-	test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase)
-'
+testrebase "" .dotest
+testrebase " --merge" .git/.dotest-merge
 
 test_done

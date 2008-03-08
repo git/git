@@ -477,6 +477,7 @@ ifeq ($(uname_S),FreeBSD)
 	NO_MEMMEM = YesPlease
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
+	DIR_HAS_BSD_GROUP_SEMANTICS = YesPlease
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
@@ -779,6 +780,9 @@ ifdef THREADED_DELTA_SEARCH
 	BASIC_CFLAGS += -DTHREADED_DELTA_SEARCH
 	EXTLIBS += -lpthread
 	LIB_OBJS += thread-utils.o
+endif
+ifdef DIR_HAS_BSD_GROUP_SEMANTICS
+	COMPAT_CFLAGS += -DDIR_HAS_BSD_GROUP_SEMANTICS
 endif
 
 ifeq ($(TCLTK_PATH),)

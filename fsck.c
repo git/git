@@ -155,8 +155,6 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 	o_mode = 0;
 	o_name = NULL;
 	o_sha1 = NULL;
-	if (!desc.size)
-		return error_func(&item->object, FSCK_ERROR, "empty tree");
 
 	while (desc.size) {
 		unsigned mode;

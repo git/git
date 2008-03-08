@@ -419,6 +419,7 @@ test_debug 'gitk --all'
 
 test_expect_success 'merge c0 with c1 (no-ff)' '
 	git reset --hard c0 &&
+	git config branch.master.mergeoptions "" &&
 	test_tick &&
 	git merge --no-ff c1 &&
 	verify_merge file result.1 &&
@@ -426,6 +427,11 @@ test_expect_success 'merge c0 with c1 (no-ff)' '
 '
 
 test_debug 'gitk --all'
+
+test_expect_success 'combining --squash and --no-ff is refused' '
+	test_must_fail git merge --squash --no-ff c1 &&
+	test_must_fail git merge --no-ff --squash c1
+'
 
 test_expect_success 'merge c0 with c1 (ff overrides no-ff)' '
 	git reset --hard c0 &&
