@@ -37,6 +37,28 @@ configuration variable `mergetool.<tool>.path`. For example, you
 can configure the absolute path to kdiff3 by setting
 `mergetool.kdiff3.path`. Otherwise, `git mergetool` assumes the
 tool is available in PATH.
++
+Instead of running one of the known merge tool programs
+`git mergetool` can be customized to run an alternative program
+by specifying the command line to invoke in a configration
+variable `mergetool.<tool>.cmd`.
++
+When `git mergetool` is invoked with this tool (either through the
+`-t` or `--tool` option or the `merge.tool` configuration
+variable) the configured command line will be invoked with `$BASE`
+set to the name of a temporary file containing the common base for
+the merge, if available; `$LOCAL` set to the name of a temporary
+file containing the contents of the file on the current branch;
+`$REMOTE` set to the name of a temporary file containing the
+contents of the file to be merged, and `$MERGED` set to the name
+of the file to which the merge tool should write the result of the
+merge resolution.
++
+If the custom merge tool correctly indicates the success of a
+merge resolution with its exit code then the configuration
+variable `mergetool.<tool>.trustExitCode` can be set to `true`.
+Otherwise, `git mergetool` will prompt the user to indicate the
+success of the resolution after the custom tool has exited.
 
 Author
 ------
