@@ -1033,7 +1033,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	return 1;
 }
 
-static int close_ref(struct ref_lock *lock)
+int close_ref(struct ref_lock *lock)
 {
 	if (close_lock_file(lock->lk))
 		return -1;
@@ -1041,7 +1041,7 @@ static int close_ref(struct ref_lock *lock)
 	return 0;
 }
 
-static int commit_ref(struct ref_lock *lock)
+int commit_ref(struct ref_lock *lock)
 {
 	if (commit_lock_file(lock->lk))
 		return -1;

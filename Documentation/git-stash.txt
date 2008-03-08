@@ -8,7 +8,7 @@ git-stash - Stash the changes in a dirty working directory away
 SYNOPSIS
 --------
 [verse]
-'git-stash' (list | show [<stash>] | apply [<stash>] | clear)
+'git-stash' (list | show [<stash>] | apply [<stash>] | clear | drop [<stash>] | pop [<stash>])
 'git-stash' [save [<message>]]
 
 DESCRIPTION
@@ -84,6 +84,17 @@ longer apply the changes as they were originally).
 clear::
 	Remove all the stashed states. Note that those states will then
 	be subject to pruning, and may be difficult or impossible to recover.
+
+drop [<stash>]::
+
+	Remove a single stashed state from the stash list. When no `<stash>`
+	is given, it removes the latest one. i.e. `stash@\{0}`
+
+pop [<stash>]::
+
+	Remove a single stashed state from the stash list and apply on top
+	of the current working tree state. When no `<stash>` is given,
+	`stash@\{0}` is assumed. See also `apply`.
 
 
 DISCUSSION

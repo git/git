@@ -14,6 +14,8 @@
 
 static const char reflog_expire_usage[] =
 "git-reflog (show|expire) [--verbose] [--dry-run] [--stale-fix] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
+static const char reflog_delete_usage[] =
+"git-reflog delete [--verbose] [--dry-run] [--rewrite] [--updateref] <refs>...";
 
 static unsigned long default_reflog_expire;
 static unsigned long default_reflog_expire_unreachable;
@@ -22,9 +24,12 @@ struct cmd_reflog_expire_cb {
 	struct rev_info revs;
 	int dry_run;
 	int stalefix;
+	int rewrite;
+	int updateref;
 	int verbose;
 	unsigned long expire_total;
 	unsigned long expire_unreachable;
+	int recno;
 };
 
 struct expire_reflog_cb {
@@ -32,6 +37,7 @@ struct expire_reflog_cb {
 	const char *ref;
 	struct commit *ref_commit;
 	struct cmd_reflog_expire_cb *cmd;
+	unsigned char last_kept_sha1[20];
 };
 
 struct collected_reflog {
@@ -213,6 +219,9 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	if (timestamp < cb->cmd->expire_total)
 		goto prune;
 
+	if (cb->cmd->rewrite)
+		osha1 = cb->last_kept_sha1;
+
 	old = new = NULL;
 	if (cb->cmd->stalefix &&
 	    (!keep_entry(&old, osha1) || !keep_entry(&new, nsha1)))
@@ -230,6 +239,9 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 			goto prune;
 	}
 
+	if (cb->cmd->recno && --(cb->cmd->recno) == 0)
+		goto prune;
+
 	if (cb->newlog) {
 		char sign = (tz < 0) ? '-' : '+';
 		int zone = (tz < 0) ? (-tz) : tz;
@@ -237,6 +249,7 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 			sha1_to_hex(osha1), sha1_to_hex(nsha1),
 			email, timestamp, sign, zone,
 			message);
+		hashcpy(cb->last_kept_sha1, nsha1);
 	}
 	if (cb->cmd->verbose)
 		printf("keep %s", message);
@@ -280,10 +293,20 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 			status |= error("%s: %s", strerror(errno),
 					newlog_path);
 			unlink(newlog_path);
+		} else if (cmd->updateref &&
+			(write_in_full(lock->lock_fd,
+				sha1_to_hex(cb.last_kept_sha1), 40) != 40 ||
+			 write_in_full(lock->lock_fd, "\n", 1) != 1 ||
+			 close_ref(lock) < 0)) {
+			status |= error("Couldn't write %s",
+				lock->lk->filename);
+			unlink(newlog_path);
 		} else if (rename(newlog_path, log_file)) {
 			status |= error("cannot rename %s to %s",
 					newlog_path, log_file);
 			unlink(newlog_path);
+		} else if (cmd->updateref && commit_ref(lock)) {
+			status |= error("Couldn't set %s", lock->ref_name);
 		}
 	}
 	free(newlog_path);
@@ -358,6 +381,10 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			cb.expire_unreachable = approxidate(arg + 21);
 		else if (!strcmp(arg, "--stale-fix"))
 			cb.stalefix = 1;
+		else if (!strcmp(arg, "--rewrite"))
+			cb.rewrite = 1;
+		else if (!strcmp(arg, "--updateref"))
+			cb.updateref = 1;
 		else if (!strcmp(arg, "--all"))
 			do_all = 1;
 		else if (!strcmp(arg, "--verbose"))
@@ -406,6 +433,78 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	return status;
 }
 
+static int count_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+		const char *email, unsigned long timestamp, int tz,
+		const char *message, void *cb_data)
+{
+	struct cmd_reflog_expire_cb *cb = cb_data;
+	if (!cb->expire_total || timestamp < cb->expire_total)
+		cb->recno++;
+	return 0;
+}
+
+static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
+{
+	struct cmd_reflog_expire_cb cb;
+	int i, status = 0;
+
+	memset(&cb, 0, sizeof(cb));
+
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
+			cb.dry_run = 1;
+		else if (!strcmp(arg, "--rewrite"))
+			cb.rewrite = 1;
+		else if (!strcmp(arg, "--updateref"))
+			cb.updateref = 1;
+		else if (!strcmp(arg, "--verbose"))
+			cb.verbose = 1;
+		else if (!strcmp(arg, "--")) {
+			i++;
+			break;
+		}
+		else if (arg[0] == '-')
+			usage(reflog_delete_usage);
+		else
+			break;
+	}
+
+	if (argc - i < 1)
+		return error("Nothing to delete?");
+
+	for ( ; i < argc; i++) {
+		const char *spec = strstr(argv[i], "@{");
+		unsigned char sha1[20];
+		char *ep, *ref;
+		int recno;
+
+		if (!spec) {
+			status |= error("Not a reflog: %s", argv[i]);
+			continue;
+		}
+
+		if (!dwim_ref(argv[i], spec - argv[i], sha1, &ref)) {
+			status |= error("%s points nowhere!", argv[i]);
+			continue;
+		}
+
+		recno = strtoul(spec + 2, &ep, 10);
+		if (*ep == '}') {
+			cb.recno = -recno;
+			for_each_reflog_ent(ref, count_reflog_ent, &cb);
+		} else {
+			cb.expire_total = approxidate(spec + 2);
+			for_each_reflog_ent(ref, count_reflog_ent, &cb);
+			cb.expire_total = 0;
+		}
+
+		status |= expire_reflog(ref, sha1, 0, &cb);
+		free(ref);
+	}
+	return status;
+}
+
 /*
  * main "reflog"
  */
@@ -424,6 +523,9 @@ int cmd_reflog(int argc, const char **argv, const char *prefix)
 
 	if (!strcmp(argv[1], "expire"))
 		return cmd_reflog_expire(argc - 1, argv + 1, prefix);
+
+	if (!strcmp(argv[1], "delete"))
+		return cmd_reflog_delete(argc - 1, argv + 1, prefix);
 
 	/* Not a recognized reflog command..*/
 	usage(reflog_usage);
