@@ -896,15 +896,15 @@ remote.<name>.skipDefaultUpdate::
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See
-	option \--exec of linkgit:git-push[1].
+	option \--receive-pack of linkgit:git-push[1].
 
 remote.<name>.uploadpack::
 	The default program to execute on the remote side when fetching.  See
-	option \--exec of linkgit:git-fetch-pack[1].
+	option \--upload-pack of linkgit:git-fetch-pack[1].
 
 remote.<name>.tagopt::
-	Setting this value to --no-tags disables automatic tag following when fetching
-	from remote <name>
+	Setting this value to \--no-tags disables automatic tag following when
+	fetching from remote <name>
 
 remotes.<group>::
 	The list of remotes which are fetched by "git remote update
