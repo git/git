@@ -2240,7 +2240,7 @@ int main(int argc, char **argv)
 
 	memset(remote_dir_exists, -1, 256);
 
-	http_init();
+	http_init(NULL);
 
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
