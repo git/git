@@ -63,7 +63,23 @@ tmp_info="$tmp_dir/info"
 commit=$(git rev-parse HEAD)
 
 mkdir $tmp_dir || exit 2
-for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
+while read patch_name level garbage
+do
+	case "$patch_name" in ''|'#'*) continue;; esac
+	case "$level" in
+	-p*);;
+	''|'#'*)
+		level=;;
+	*)
+		echo "unable to parse patch level, ignoring it."
+		level=;;
+	esac
+	case "$garbage" in
+	''|'#'*);;
+	*)
+		echo "trailing garbage found in series file: $garbage"
+		exit 1;;
+	esac
 	if ! [ -f "$QUILT_PATCHES/$patch_name" ] ; then
 		echo "$patch_name doesn't exist. Skipping."
 		continue
@@ -113,10 +129,10 @@ for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
 	fi
 
 	if [ -z "$dry_run" ] ; then
-		git apply --index -C1 "$tmp_patch" &&
+		git apply --index -C1 $level "$tmp_patch" &&
 		tree=$(git write-tree) &&
 		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git commit-tree $tree -p $commit) &&
 		git update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
 	fi
-done
+done <"$QUILT_PATCHES/series"
 rm -rf $tmp_dir || exit 5
