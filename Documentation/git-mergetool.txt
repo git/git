@@ -12,12 +12,12 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Use 'git mergetool' to run one of several merge utilities to resolve
+Use `git mergetool` to run one of several merge utilities to resolve
 merge conflicts.  It is typically run after linkgit:git-merge[1].
 
 If one or more <file> parameters are given, the merge tool program will
 be run to resolve differences on each file.  If no <file> names are
-specified, 'git mergetool' will run the merge tool program on every file
+specified, `git mergetool` will run the merge tool program on every file
 with merge conflicts.
 
 OPTIONS
@@ -27,16 +27,16 @@ OPTIONS
 	Valid merge tools are:
 	kdiff3, tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff, ecmerge, and opendiff
 +
-If a merge resolution program is not specified, 'git mergetool'
-will use the configuration variable merge.tool.  If the
-configuration variable merge.tool is not set, 'git mergetool'
+If a merge resolution program is not specified, `git mergetool`
+will use the configuration variable `merge.tool`.  If the
+configuration variable `merge.tool` is not set, `git mergetool`
 will pick a suitable default.
 +
 You can explicitly provide a full path to the tool by setting the
-configuration variable mergetool.<tool>.path. For example, you
+configuration variable `mergetool.<tool>.path`. For example, you
 can configure the absolute path to kdiff3 by setting
-mergetool.kdiff3.path. Otherwise, 'git mergetool' assumes the tool
-is available in PATH.
+`mergetool.kdiff3.path`. Otherwise, `git mergetool` assumes the
+tool is available in PATH.
 
 Author
 ------
