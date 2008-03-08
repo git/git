@@ -3632,6 +3632,7 @@ sub _auth_providers () {
 	  SVN::Client::get_ssl_client_cert_file_provider(),
 	  SVN::Client::get_ssl_client_cert_prompt_provider(
 	    \&Git::SVN::Prompt::ssl_client_cert, 2),
+	  SVN::Client::get_ssl_client_cert_pw_file_provider(),
 	  SVN::Client::get_ssl_client_cert_pw_prompt_provider(
 	    \&Git::SVN::Prompt::ssl_client_cert_pw, 2),
 	  SVN::Client::get_username_provider(),
