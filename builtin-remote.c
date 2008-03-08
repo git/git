@@ -264,6 +264,11 @@ static int add_branch_for_removal(const char *refname,
 
 	if (!prefixcmp(refname, branches->prefix)) {
 		struct path_list_item *item;
+
+		/* make sure that symrefs are deleted */
+		if (flags & REF_ISSYMREF)
+			return unlink(git_path(refname));
+
 		item = path_list_append(refname, branches->branches);
 		item->util = xmalloc(20);
 		hashcpy(item->util, sha1);

@@ -80,6 +80,7 @@ test_expect_success 'add another remote' '
 test_expect_success 'remove remote' '
 (
 	cd test &&
+	git symbolic-ref refs/remotes/second/HEAD refs/remotes/second/master &&
 	git remote rm second
 )
 '
