@@ -317,7 +317,7 @@ if ($suppress_cc{'all'}) {
 
 # If explicit old-style ones are specified, they trump --suppress-cc.
 $suppress_cc{'self'} = $suppress_from if defined $suppress_from;
-$suppress_cc{'sob'} = $signed_off_cc if defined $signed_off_cc;
+$suppress_cc{'sob'} = !$signed_off_cc if defined $signed_off_cc;
 
 # Debugging, print out the suppressions.
 if (0) {
@@ -855,6 +855,7 @@ foreach my $t (@files) {
 			$message .=  $_;
 			if (/^(Signed-off-by|Cc): (.*)$/i) {
 				next if ($suppress_cc{'sob'});
+				chomp;
 				my $c = $2;
 				chomp $c;
 				next if ($c eq $sender and $suppress_cc{'self'});
