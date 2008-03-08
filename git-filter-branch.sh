@@ -252,7 +252,16 @@ while read commit parents; do
 		git read-tree -i -m $commit
 		;;
 	*)
-		git read-tree -i -m $commit:"$filter_subdir"
+		# The commit may not have the subdirectory at all
+		err=$(git read-tree -i -m $commit:"$filter_subdir" 2>&1) || {
+			if ! git rev-parse --verify $commit:"$filter_subdir" 2>/dev/null
+			then
+				rm -f "$GIT_INDEX_FILE"
+			else
+				echo >&2 "$err"
+				false
+			fi
+		}
 	esac || die "Could not initialize the index"
 
 	GIT_COMMIT=$commit
