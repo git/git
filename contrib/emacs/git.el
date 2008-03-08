@@ -1299,7 +1299,7 @@ Return the list of files that haven't been handled."
   (let (author-name author-email subject date msg)
     (with-temp-buffer
       (let ((coding-system (git-get-logoutput-coding-system)))
-        (git-call-process-env t nil "log" "-1" commit)
+        (git-call-process-env t nil "log" "-1" "--pretty=medium" commit)
         (goto-char (point-min))
         (when (re-search-forward "^Author: *\\(.*\\) <\\(.*\\)>$" nil t)
           (setq author-name (match-string 1))
