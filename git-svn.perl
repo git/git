@@ -1535,9 +1535,14 @@ sub find_by_url { # repos_root and, path are optional
 			                    $remotes->{$repo_id}->{$_});
 		}
 		my $p = $path;
+		my $rwr = rewrite_root({repo_id => $repo_id});
 		unless (defined $p) {
 			$p = $full_url;
-			$p =~ s#^\Q$u\E(?:/|$)## or next;
+			my $z = $u;
+			if ($rwr) {
+				$z = $rwr;
+			}
+			$p =~ s#^\Q$z\E(?:/|$)## or next;
 		}
 		foreach my $f (keys %$fetch) {
 			next if $f ne $p;
