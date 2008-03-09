@@ -83,17 +83,17 @@ __git_ps1 ()
 		elif [ -f "$g/.dotest-merge/interactive" ]
 		then
 			r="|REBASE-i"
-			b="$(cat $g/.dotest-merge/head-name)"
+			b="$(cat "$g/.dotest-merge/head-name")"
 		elif [ -d "$g/.dotest-merge" ]
 		then
 			r="|REBASE-m"
-			b="$(cat $g/.dotest-merge/head-name)"
+			b="$(cat "$g/.dotest-merge/head-name")"
 		elif [ -f "$g/MERGE_HEAD" ]
 		then
 			r="|MERGING"
 			b="$(git symbolic-ref HEAD 2>/dev/null)"
 		else
-			if [ -f $g/BISECT_LOG ]
+			if [ -f "$g/BISECT_LOG" ]
 			then
 				r="|BISECTING"
 			fi
@@ -101,7 +101,7 @@ __git_ps1 ()
 			then
 				if ! b="$(git describe --exact-match HEAD 2>/dev/null)"
 				then
-					b="$(cut -c1-7 $g/HEAD)..."
+					b="$(cut -c1-7 "$g/HEAD")..."
 				fi
 			fi
 		fi
