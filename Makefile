@@ -3,6 +3,10 @@ all::
 
 # Define V=1 to have a more verbose compile.
 #
+# Define SNPRINTF_RETURNS_BOGUS if your are on a system which snprintf()
+# or vsnprintf() return -1 instead of number of characters which would
+# have been written to the final string if enough space had been available.
+#
 # Define FREAD_READS_DIRECTORIES if your are on a system which succeeds
 # when attempting to read from an fopen'ed directory.
 #
@@ -629,6 +633,10 @@ ifdef NO_D_INO_IN_DIRENT
 endif
 ifdef NO_C99_FORMAT
 	BASIC_CFLAGS += -DNO_C99_FORMAT
+endif
+ifdef SNPRINTF_RETURNS_BOGUS
+	COMPAT_CFLAGS += -DSNPRINTF_RETURNS_BOGUS
+	COMPAT_OBJS += compat/snprintf.o
 endif
 ifdef FREAD_READS_DIRECTORIES
 	COMPAT_CFLAGS += -DFREAD_READS_DIRECTORIES
