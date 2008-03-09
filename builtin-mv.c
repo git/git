@@ -19,7 +19,6 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 				  int count, int base_name)
 {
 	int i;
-	int len = prefix ? strlen(prefix) : 0;
 	const char **result = xmalloc((count + 1) * sizeof(const char *));
 	memcpy(result, pathspec, count * sizeof(const char *));
 	result[count] = NULL;
@@ -33,11 +32,8 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 			if (last_slash)
 				result[i] = last_slash + 1;
 		}
-		result[i] = prefix_path(prefix, len, result[i]);
-		if (!result[i])
-			exit(1); /* error already given */
 	}
-	return result;
+	return get_pathspec(prefix, result);
 }
 
 static void show_list(const char *label, struct path_list *list)

@@ -179,4 +179,28 @@ test_expect_success 'Name needing quotes' '
 
 '
 
+test_expect_success 'Subdirectory filter with disappearing trees' '
+	git reset --hard &&
+	git checkout master &&
+
+	mkdir foo &&
+	touch foo/bar &&
+	git add foo &&
+	test_tick &&
+	git commit -m "Adding foo" &&
+
+	git rm -r foo &&
+	test_tick &&
+	git commit -m "Removing foo" &&
+
+	mkdir foo &&
+	touch foo/bar &&
+	git add foo &&
+	test_tick &&
+	git commit -m "Re-adding foo" &&
+
+	git filter-branch -f --subdirectory-filter foo &&
+	test $(git rev-list master | wc -l) = 3
+'
+
 test_done

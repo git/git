@@ -70,7 +70,15 @@ __git_ps1 ()
 		local b
 		if [ -d "$g/../.dotest" ]
 		then
-			r="|AM/REBASE"
+			if test -f "$g/../.dotest/rebasing"
+			then
+				r="|REBASE"
+			elif test -f "$g/../.dotest/applying"
+			then
+				r="|AM"
+			else
+				r="|AM/REBASE"
+			fi
 			b="$(git symbolic-ref HEAD 2>/dev/null)"
 		elif [ -f "$g/.dotest-merge/interactive" ]
 		then

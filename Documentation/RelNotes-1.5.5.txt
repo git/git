@@ -160,12 +160,8 @@ Fixes since v1.5.4
 All of the fixes in v1.5.4 maintenance series are included in
 this release, unless otherwise noted.
 
- * "git-daemon" did not send early errors to syslog.
-
  * "git-http-push" did not allow deletion of remote ref with the usual
    "push <remote> :<branch>" syntax.
-
- * "git-log --merge" did not well work with --left-right option.
 
  * "git-rebase --abort" did not go back to the right location if
    "git-reset" was run during the "git-rebase" session.

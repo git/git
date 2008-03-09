@@ -12,7 +12,8 @@ struct fetch_pack_args
 		use_thin_pack:1,
 		fetch_all:1,
 		verbose:1,
-		no_progress:1;
+		no_progress:1,
+		include_tag:1;
 };
 
 struct ref *fetch_pack(struct fetch_pack_args *args,

@@ -8,7 +8,7 @@ git-fetch-pack - Receive missing objects from another repository
 
 SYNOPSIS
 --------
-'git-fetch-pack' [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]
+'git-fetch-pack' [--all] [--quiet|-q] [--keep|-k] [--thin] [--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]
 
 DESCRIPTION
 -----------
@@ -44,6 +44,12 @@ OPTIONS
 \--thin::
 	Spend extra cycles to minimize the number of objects to be sent.
 	Use it on slower connection.
+
+\--include-tag::
+	If the remote side supports it, annotated tags objects will
+	be downloaded on the same connection as the other objects if
+	the object the tag references is downloaded.  The caller must
+	otherwise determine the tags this option made available.
 
 \--upload-pack=<git-upload-pack>::
 	Use this to specify the path to 'git-upload-pack' on the

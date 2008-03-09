@@ -228,18 +228,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		goto finish;
 	}
 
-	if (*argv) {
-		/* Was there an invalid path? */
-		if (pathspec) {
-			int num;
-			for (num = 0; pathspec[num]; num++)
-				; /* just counting */
-			if (argc != num)
-				exit(1); /* error message already given */
-		} else
-			exit(1); /* error message already given */
-	}
-
 	fill_directory(&dir, pathspec, ignored_too);
 
 	if (show_only) {

@@ -15,6 +15,7 @@
 #include "revision.h"
 #include "list-objects.h"
 #include "progress.h"
+#include "refs.h"
 
 #ifdef THREADED_DELTA_SEARCH
 #include "thread-utils.h"
@@ -27,7 +28,8 @@ git-pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--window=N] [--window-memory=N] [--depth=N] \n\
 	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
 	[--threads=N] [--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
-	[--stdout | base-name] [--keep-unreachable] [<ref-list | <object-list]";
+	[--stdout | base-name] [--include-tag] [--keep-unreachable] \n\
+	[<ref-list | <object-list]";
 
 struct object_entry {
 	struct pack_idx_entry idx;
@@ -63,7 +65,7 @@ static struct pack_idx_entry **written_list;
 static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
 
 static int non_empty;
-static int no_reuse_delta, no_reuse_object, keep_unreachable;
+static int no_reuse_delta, no_reuse_object, keep_unreachable, include_tag;
 static int local;
 static int incremental;
 static int allow_ofs_delta;
@@ -1630,6 +1632,18 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 #define ll_find_deltas(l, s, w, d, p)	find_deltas(l, &s, w, d, p)
 #endif
 
+static int add_ref_tag(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	unsigned char peeled[20];
+
+	if (!prefixcmp(path, "refs/tags/") && /* is a tag? */
+	    !peel_ref(path, peeled)        && /* peelable? */
+	    !is_null_sha1(peeled)          && /* annotated tag? */
+	    locate_object_entry(peeled))      /* object packed? */
+		add_object_entry(sha1, OBJ_TAG, NULL, 0);
+	return 0;
+}
+
 static void prepare_pack(int window, int depth)
 {
 	struct object_entry **delta_list;
@@ -2033,6 +2047,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			keep_unreachable = 1;
 			continue;
 		}
+		if (!strcmp("--include-tag", arg)) {
+			include_tag = 1;
+			continue;
+		}
 		if (!strcmp("--unpacked", arg) ||
 		    !prefixcmp(arg, "--unpacked=") ||
 		    !strcmp("--reflog", arg) ||
@@ -2109,6 +2127,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		rp_av[rp_ac] = NULL;
 		get_object_list(rp_ac, rp_av);
 	}
+	if (include_tag && nr_result)
+		for_each_ref(add_ref_tag, NULL);
 	stop_progress(&progress_state);
 
 	if (non_empty && !nr_result)

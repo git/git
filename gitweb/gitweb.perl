@@ -5305,51 +5305,19 @@ sub git_search {
 		print "<table class=\"pickaxe search\">\n";
 		my $alternate = 1;
 		$/ = "\n";
-		my $git_command = git_cmd_str();
-		my $searchqtext = $searchtext;
-		$searchqtext =~ s/'/'\\''/;
-		my $pickaxe_flags = $search_use_regexp ? '--pickaxe-regex' : '';
-		open my $fd, "-|", "$git_command rev-list $hash | " .
-			"$git_command diff-tree -r --stdin -S\'$searchqtext\' $pickaxe_flags";
+		open my $fd, '-|', git_cmd(), '--no-pager', 'log', @diff_opts,
+			'--pretty=format:%H', '--no-abbrev', '--raw', "-S$searchtext",
+			($search_use_regexp ? '--pickaxe-regex' : ());
 		undef %co;
 		my @files;
 		while (my $line = <$fd>) {
-			if (%co && $line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/) {
-				my %set;
-				$set{'file'} = $6;
-				$set{'from_id'} = $3;
-				$set{'to_id'} = $4;
-				$set{'id'} = $set{'to_id'};
-				if ($set{'id'} =~ m/0{40}/) {
-					$set{'id'} = $set{'from_id'};
-				}
-				if ($set{'id'} =~ m/0{40}/) {
-					next;
-				}
-				push @files, \%set;
-			} elsif ($line =~ m/^([0-9a-fA-F]{40})$/){
+			chomp $line;
+			next unless $line;
+
+			my %set = parse_difftree_raw_line($line);
+			if (defined $set{'commit'}) {
+				# finish previous commit
 				if (%co) {
-					if ($alternate) {
-						print "<tr class=\"dark\">\n";
-					} else {
-						print "<tr class=\"light\">\n";
-					}
-					$alternate ^= 1;
-					my $author = chop_and_escape_str($co{'author_name'}, 15, 5);
-					print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
-					      "<td><i>" . $author . "</i></td>\n" .
-					      "<td>" .
-					      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}),
-					              -class => "list subject"},
-					              chop_and_escape_str($co{'title'}, 50) . "<br/>");
-					while (my $setref = shift @files) {
-						my %set = %$setref;
-						print $cgi->a({-href => href(action=>"blob", hash_base=>$co{'id'},
-						                             hash=>$set{'id'}, file_name=>$set{'file'}),
-						              -class => "list"},
-						              "<span class=\"match\">" . esc_path($set{'file'}) . "</span>") .
-						      "<br/>\n";
-					}
 					print "</td>\n" .
 					      "<td class=\"link\">" .
 					      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})}, "commit") .
@@ -5358,10 +5326,43 @@ sub git_search {
 					print "</td>\n" .
 					      "</tr>\n";
 				}
-				%co = parse_commit($1);
+
+				if ($alternate) {
+					print "<tr class=\"dark\">\n";
+				} else {
+					print "<tr class=\"light\">\n";
+				}
+				$alternate ^= 1;
+				%co = parse_commit($set{'commit'});
+				my $author = chop_and_escape_str($co{'author_name'}, 15, 5);
+				print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
+				      "<td><i>$author</i></td>\n" .
+				      "<td>" .
+				      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}),
+				              -class => "list subject"},
+				              chop_and_escape_str($co{'title'}, 50) . "<br/>");
+			} elsif (defined $set{'to_id'}) {
+				next if ($set{'to_id'} =~ m/^0{40}$/);
+
+				print $cgi->a({-href => href(action=>"blob", hash_base=>$co{'id'},
+				                             hash=>$set{'to_id'}, file_name=>$set{'to_file'}),
+				              -class => "list"},
+				              "<span class=\"match\">" . esc_path($set{'file'}) . "</span>") .
+				      "<br/>\n";
 			}
 		}
 		close $fd;
+
+		# finish last commit (warning: repetition!)
+		if (%co) {
+			print "</td>\n" .
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})}, "commit") .
+			      " | " .
+			      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$co{'id'})}, "tree");
+			print "</td>\n" .
+			      "</tr>\n";
+		}
 
 		print "</table>\n";
 	}

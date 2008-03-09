@@ -70,11 +70,12 @@ static void insert_one_record(struct shortlog *log,
 	else
 		free(buffer);
 
+	/* Skip any leading whitespace, including any blank lines. */
+	while (*oneline && isspace(*oneline))
+		oneline++;
 	eol = strchr(oneline, '\n');
 	if (!eol)
 		eol = oneline + strlen(oneline);
-	while (*oneline && isspace(*oneline) && *oneline != '\n')
-		oneline++;
 	if (!prefixcmp(oneline, "[PATCH")) {
 		char *eob = strchr(oneline, ']');
 		if (eob && (!eol || eob < eol))

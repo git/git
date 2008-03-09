@@ -17,9 +17,13 @@
 #include "diffcore.h"
 #include "tree.h"
 #include "branch.h"
+#include "parse-options.h"
 
-static const char builtin_reset_usage[] =
-"git-reset [--mixed | --soft | --hard] [-q] [<commit-ish>] [ [--] <paths>...]";
+static const char * const git_reset_usage[] = {
+	"git-reset [--mixed | --soft | --hard] [-q] [<commit>]",
+	"git-reset [--mixed] <commit> [--] <paths>...",
+	NULL
+};
 
 static char *args_to_str(const char **argv)
 {
@@ -165,40 +169,31 @@ static const char *reset_type_names[] = { "mixed", "soft", "hard", NULL };
 
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
-	int i = 1, reset_type = NONE, update_ref_status = 0, quiet = 0;
+	int i = 0, reset_type = NONE, update_ref_status = 0, quiet = 0;
 	const char *rev = "HEAD";
 	unsigned char sha1[20], *orig = NULL, sha1_orig[20],
 				*old_orig = NULL, sha1_old_orig[20];
 	struct commit *commit;
 	char *reflog_action, msg[1024];
+	const struct option options[] = {
+		OPT_SET_INT(0, "mixed", &reset_type,
+						"reset HEAD and index", MIXED),
+		OPT_SET_INT(0, "soft", &reset_type, "reset only HEAD", SOFT),
+		OPT_SET_INT(0, "hard", &reset_type,
+				"reset HEAD, index and working tree", HARD),
+		OPT_BOOLEAN('q', NULL, &quiet,
+				"disable showing new HEAD in hard reset"),
+		OPT_END()
+	};
 
 	git_config(git_default_config);
 
+	argc = parse_options(argc, argv, options, git_reset_usage,
+						PARSE_OPT_KEEP_DASHDASH);
 	reflog_action = args_to_str(argv);
 	setenv("GIT_REFLOG_ACTION", reflog_action, 0);
 
-	while (i < argc) {
-		if (!strcmp(argv[i], "--mixed")) {
-			reset_type = MIXED;
-			i++;
-		}
-		else if (!strcmp(argv[i], "--soft")) {
-			reset_type = SOFT;
-			i++;
-		}
-		else if (!strcmp(argv[i], "--hard")) {
-			reset_type = HARD;
-			i++;
-		}
-		else if (!strcmp(argv[i], "-q")) {
-			quiet = 1;
-			i++;
-		}
-		else
-			break;
-	}
-
-	if (i < argc && argv[i][0] != '-')
+	if (i < argc && strcmp(argv[i], "--"))
 		rev = argv[i++];
 
 	if (get_sha1(rev, sha1))
@@ -211,8 +206,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	if (i < argc && !strcmp(argv[i], "--"))
 		i++;
-	else if (i < argc && argv[i][0] == '-')
-		usage(builtin_reset_usage);
 
 	/* git reset tree [--] paths... can be used to
 	 * load chosen paths from the tree into the index without
