@@ -142,15 +142,16 @@ test_expect_success 'setup deeper work tree' '
 test_expect_success 'add a directory outside the work tree' '(
 	cd tester &&
 	d1="$(cd .. ; pwd)" &&
-	git add "$d1"
+	test_must_fail git add "$d1"
 )'
+
 
 test_expect_success 'add a file outside the work tree, nasty case 1' '(
 	cd tester &&
 	f="$(pwd)x" &&
 	echo "$f" &&
 	touch "$f" &&
-	git add "$f"
+	test_must_fail git add "$f"
 )'
 
 test_expect_success 'add a file outside the work tree, nasty case 2' '(
@@ -158,7 +159,7 @@ test_expect_success 'add a file outside the work tree, nasty case 2' '(
 	f="$(pwd | sed "s/.$//")x" &&
 	echo "$f" &&
 	touch "$f" &&
-	git add "$f"
+	test_must_fail git add "$f"
 )'
 
 test_done

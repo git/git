@@ -202,6 +202,8 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 		const char *p = prefix_path(prefix, prefixlen, *src);
 		if (p)
 			*(dst++) = p;
+		else
+			exit(128); /* error message already given */
 		src++;
 	}
 	*dst = NULL;
