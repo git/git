@@ -73,6 +73,11 @@ base-name::
 	as if all refs under `$GIT_DIR/refs` are specified to be
 	included.
 
+--include-tag::
+	Include unasked-for annotated tags if the object they
+	reference was included in the resulting packfile.  This
+	can be useful to send new tags to native git clients.
+
 --window=[N], --depth=[N]::
 	These two options affect how the objects contained in
 	the pack are stored using delta compression.  The

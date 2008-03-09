@@ -560,6 +560,7 @@ static int close_bundle(struct transport *transport)
 struct git_transport_data {
 	unsigned thin : 1;
 	unsigned keep : 1;
+	unsigned followtags : 1;
 	int depth;
 	struct child_process *conn;
 	int fd[2];
@@ -579,6 +580,9 @@ static int set_git_option(struct transport *connection,
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_THIN)) {
 		data->thin = !!value;
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_FOLLOWTAGS)) {
+		data->followtags = !!value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_KEEP)) {
 		data->keep = !!value;
@@ -628,6 +632,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.keep_pack = data->keep;
 	args.lock_pack = 1;
 	args.use_thin_pack = data->thin;
+	args.include_tag = data->followtags;
 	args.verbose = transport->verbose > 0;
 	args.depth = data->depth;
 
