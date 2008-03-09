@@ -21,6 +21,7 @@ static int longformat;
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
 const char *pattern = NULL;
+static int always;
 
 struct commit_name {
 	struct tag *tag;
@@ -257,8 +258,14 @@ static void describe(const char *arg, int last_one)
 		}
 	}
 
-	if (!match_cnt)
-		die("cannot describe '%s'", sha1_to_hex(cmit->object.sha1));
+	if (!match_cnt) {
+		const unsigned char *sha1 = cmit->object.sha1;
+		if (always) {
+			printf("%s\n", find_unique_abbrev(sha1, abbrev));
+			return;
+		}
+		die("cannot describe '%s'", sha1_to_hex(sha1));
+	}
 
 	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
 
@@ -311,6 +318,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			    "consider <n> most recent tags (default: 10)"),
 		OPT_STRING(0, "match",       &pattern, "pattern",
 			   "only consider tags matching <pattern>"),
+		OPT_BOOLEAN(0, "always",     &always,
+			   "show abbreviated commit object as fallback"),
 		OPT_END(),
 	};
 
@@ -326,11 +335,13 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		die("--long is incompatible with --abbrev=0");
 
 	if (contains) {
-		const char **args = xmalloc((6 + argc) * sizeof(char*));
+		const char **args = xmalloc((7 + argc) * sizeof(char*));
 		int i = 0;
 		args[i++] = "name-rev";
 		args[i++] = "--name-only";
 		args[i++] = "--no-undefined";
+		if (always)
+			args[i++] = "--always";
 		if (!all) {
 			args[i++] = "--tags";
 			if (pattern) {
