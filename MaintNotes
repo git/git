@@ -101,7 +101,7 @@ from "master" at that point.  Obvious, safe and urgent fixes
 after a feature release are applied to this branch and
 maintenance releases are cut from it.  The maintenance releases
 are named with four dotted decimal, named after the feature
-release they are updates to; the last such release was 1.5.4.2.
+release they are updates to; the last such release was 1.5.4.4.
 New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
