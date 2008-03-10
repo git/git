@@ -1119,7 +1119,7 @@ _git_show ()
 
 _git_stash ()
 {
-	local subcommands='list show apply clear'
+	local subcommands='save list show apply clear drop pop create'
 	if [ -z "$(__git_find_subcommand "$subcommands")" ]; then
 		__gitcomp "$subcommands"
 	fi
