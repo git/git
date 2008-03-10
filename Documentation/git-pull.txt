@@ -20,6 +20,8 @@ Note that you can use `.` (current directory) as the
 <repository> to pull from the local repository -- this is useful
 when merging local branches into the current branch.
 
+Also note that options meant for `git-pull` itself and underlying
+`git-merge` must be given before the options meant for `git-fetch`.
 
 OPTIONS
 -------
