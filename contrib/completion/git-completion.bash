@@ -961,7 +961,6 @@ _git_config ()
 		core.sharedRepository
 		core.warnAmbiguousRefs
 		core.compression
-		core.legacyHeaders
 		core.packedGitWindowSize
 		core.packedGitLimit
 		clean.requireForce
