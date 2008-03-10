@@ -18,8 +18,7 @@ original <branch> and remove the .dotest working files, use the command
 git rebase --abort instead.
 
 Note that if <branch> is not specified on the command line, the
-currently checked out branch is used.  You must be in the top
-directory of your project to start (or continue) a rebase.
+currently checked out branch is used.
 
 Example:       git-rebase master~1 topic
 
