@@ -403,6 +403,9 @@ proc readcommit {id} {
 proc updatecommits {} {
     global viewdata curview phase displayorder ordertok idpending
     global children commitrow selectedline thickerline showneartags
+    global isworktree
+
+    set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
 
     if {$phase ne {}} {
 	stop_rev_list
@@ -2885,8 +2888,9 @@ proc dohidelocalchanges {} {
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
     global localirow localfrow lserial showlocalchanges
+    global isworktree
 
-    if {!$showlocalchanges} return
+    if {!$showlocalchanges || !$isworktree} return
     incr lserial
     set localfrow -1
     set localirow -1
@@ -8698,6 +8702,7 @@ set patchnum 0
 set localirow -1
 set localfrow -1
 set lserial 0
+set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
 setcoords
 makewindow
 # wait for the window to become visible
