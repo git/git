@@ -428,6 +428,22 @@ __git_aliased_command ()
 	done
 }
 
+__git_find_subcommand ()
+{
+	local word subcommand c=1
+
+	while [ $c -lt $COMP_CWORD ]; do
+		word="${COMP_WORDS[c]}"
+		for subcommand in $1; do
+			if [ "$subcommand" = "$word" ]; then
+				echo "$subcommand"
+				return
+			fi
+		done
+		c=$((++c))
+	done
+}
+
 __git_whitespacelist="nowarn warn error error-all strip"
 
 _git_am ()
@@ -485,24 +501,14 @@ _git_add ()
 
 _git_bisect ()
 {
-	local i c=1 command
-	while [ $c -lt $COMP_CWORD ]; do
-		i="${COMP_WORDS[c]}"
-		case "$i" in
-		start|bad|good|reset|visualize|replay|log)
-			command="$i"
-			break
-			;;
-		esac
-		c=$((++c))
-	done
-
-	if [ -z "$command" ]; then
-		__gitcomp "start bad good reset visualize replay log"
+	local subcommands="start bad good reset visualize replay log"
+	local subcommand="$(__git_find_subcommand "$subcommands")"
+	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
 		return
 	fi
 
-	case "$command" in
+	case "$subcommand" in
 	bad|good|reset)
 		__gitcomp "$(__git_refs)"
 		;;
@@ -1033,21 +1039,13 @@ _git_config ()
 
 _git_remote ()
 {
-	local i c=1 command
-	while [ $c -lt $COMP_CWORD ]; do
-		i="${COMP_WORDS[c]}"
-		case "$i" in
-		add|rm|show|prune|update) command="$i"; break ;;
-		esac
-		c=$((++c))
-	done
-
-	if [ -z "$command" ]; then
-		__gitcomp "add rm show prune update"
+	local subcommands="add rm show prune update"
+	local subcommand="$(__git_find_subcommand "$subcommands")"
+	if [ -z "$subcommand" ]; then
 		return
 	fi
 
-	case "$command" in
+	case "$subcommand" in
 	rm|show|prune)
 		__gitcomp "$(__git_remotes)"
 		;;
@@ -1121,28 +1119,23 @@ _git_show ()
 
 _git_stash ()
 {
-	__gitcomp 'list show apply clear'
+	local subcommands='list show apply clear'
+	if [ -z "$(__git_find_subcommand "$subcommands")" ]; then
+		__gitcomp "$subcommands"
+	fi
 }
 
 _git_submodule ()
 {
-	local i c=1 command
-	while [ $c -lt $COMP_CWORD ]; do
-		i="${COMP_WORDS[c]}"
-		case "$i" in
-		add|status|init|update) command="$i"; break ;;
-		esac
-		c=$((++c))
-	done
-
-	if [ -z "$command" ]; then
+	local subcommands="add status init update"
+	if [ -z "$(__git_find_subcommand "$subcommands")" ]; then
 		local cur="${COMP_WORDS[COMP_CWORD]}"
 		case "$cur" in
 		--*)
 			__gitcomp "--quiet --cached"
 			;;
 		*)
-			__gitcomp "add status init update"
+			__gitcomp "$subcommands"
 			;;
 		esac
 		return
