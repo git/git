@@ -497,7 +497,7 @@ _git_bisect ()
 		c=$((++c))
 	done
 
-	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+	if [ -z "$command" ]; then
 		__gitcomp "start bad good reset visualize replay log"
 		return
 	fi
@@ -1042,7 +1042,7 @@ _git_remote ()
 		c=$((++c))
 	done
 
-	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+	if [ -z "$command" ]; then
 		__gitcomp "add rm show prune update"
 		return
 	fi
@@ -1135,7 +1135,7 @@ _git_submodule ()
 		c=$((++c))
 	done
 
-	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+	if [ -z "$command" ]; then
 		local cur="${COMP_WORDS[COMP_CWORD]}"
 		case "$cur" in
 		--*)
@@ -1198,7 +1198,7 @@ _git ()
 		c=$((++c))
 	done
 
-	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+	if [ -z "$command" ]; then
 		case "${COMP_WORDS[COMP_CWORD]}" in
 		--*=*) COMPREPLY=() ;;
 		--*)   __gitcomp "
