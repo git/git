@@ -144,8 +144,7 @@ int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conf
 			sha1 = names[i].sha1;
 		fill_tree_descriptor(t+i, sha1);
 	}
-	traverse_trees(n, t, &newinfo);
-	return 0;
+	return traverse_trees(n, t, &newinfo);
 }
 
 /*
@@ -306,7 +305,9 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 			if (src[0])
 				conflicts |= 1;
 		}
-		traverse_trees_recursive(n, dirmask, conflicts, names, info);
+		if (traverse_trees_recursive(n, dirmask, conflicts,
+					     names, info) < 0)
+			return -1;
 		return mask;
 	}
 
