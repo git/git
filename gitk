@@ -930,9 +930,17 @@ proc makewindow {} {
     .pwbottom add .bright
     .ctop add .pwbottom
 
-    # restore window position if known
+    # restore window width & height if known
     if {[info exists geometry(main)]} {
-        wm geometry . "$geometry(main)"
+	if {[scan $geometry(main) "%dx%d" w h] >= 2} {
+	    if {$w > [winfo screenwidth .]} {
+		set w [winfo screenwidth .]
+	    }
+	    if {$h > [winfo screenheight .]} {
+		set h [winfo screenheight .]
+	    }
+	    wm geometry . "${w}x$h"
+	}
     }
 
     if {[tk windowingsystem] eq {aqua}} {
