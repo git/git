@@ -384,7 +384,6 @@ __git_commands ()
 		show-index)       : plumbing;;
 		ssh-*)            : transport;;
 		stripspace)       : plumbing;;
-		svn)              : import export;;
 		symbolic-ref)     : plumbing;;
 		tar-tree)         : deprecated;;
 		unpack-file)      : plumbing;;
@@ -1142,6 +1141,84 @@ _git_submodule ()
 	fi
 }
 
+_git_svn ()
+{
+	local subcommands="
+		init fetch clone rebase dcommit log find-rev
+		set-tree commit-diff info create-ignore propget
+		proplist show-ignore show-externals
+		"
+	local subcommand="$(__git_find_subcommand "$subcommands")"
+	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
+	else
+		local remote_opts="--username= --config-dir= --no-auth-cache"
+		local fc_opts="
+			--follow-parent --authors-file= --repack=
+			--no-metadata --use-svm-props --use-svnsync-props
+			--log-window-size= --no-checkout --quiet
+			--repack-flags --user-log-author $remote_opts
+			"
+		local init_opts="
+			--template= --shared= --trunk= --tags=
+			--branches= --stdlayout --minimize-url
+			--no-metadata --use-svm-props --use-svnsync-props
+			--rewrite-root= $remote_opts
+			"
+		local cmt_opts="
+			--edit --rmdir --find-copies-harder --copy-similarity=
+			"
+
+		local cur="${COMP_WORDS[COMP_CWORD]}"
+		case "$subcommand,$cur" in
+		fetch,--*)
+			__gitcomp "--revision= --fetch-all $fc_opts"
+			;;
+		clone,--*)
+			__gitcomp "--revision= $fc_opts $init_opts"
+			;;
+		init,--*)
+			__gitcomp "$init_opts"
+			;;
+		dcommit,--*)
+			__gitcomp "
+				--merge --strategy= --verbose --dry-run
+				--fetch-all --no-rebase $cmt_opts $fc_opts
+				"
+			;;
+		set-tree,--*)
+			__gitcomp "--stdin $cmt_opts $fc_opts"
+			;;
+		create-ignore,--*|propget,--*|proplist,--*|show-ignore,--*|\
+		show-externals,--*)
+			__gitcomp "--revision="
+			;;
+		log,--*)
+			__gitcomp "
+				--limit= --revision= --verbose --incremental
+				--oneline --show-commit --non-recursive
+				--authors-file=
+				"
+			;;
+		rebase,--*)
+			__gitcomp "
+				--merge --verbose --strategy= --local
+				--fetch-all $fc_opts
+				"
+			;;
+		commit-diff,--*)
+			__gitcomp "--message= --file= --revision= $cmt_opts"
+			;;
+		info,--*)
+			__gitcomp "--url"
+			;;
+		*)
+			COMPREPLY=()
+			;;
+		esac
+	fi
+}
+
 _git_tag ()
 {
 	local i c=1 f=0
@@ -1243,6 +1320,7 @@ _git ()
 	show-branch) _git_log ;;
 	stash)       _git_stash ;;
 	submodule)   _git_submodule ;;
+	svn)         _git_svn ;;
 	tag)         _git_tag ;;
 	whatchanged) _git_log ;;
 	*)           COMPREPLY=() ;;
@@ -1293,6 +1371,7 @@ complete -o default -o nospace -F _git_shortlog git-shortlog
 complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_stash git-stash
 complete -o default -o nospace -F _git_submodule git-submodule
+complete -o default -o nospace -F _git_svn git-svn
 complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_tag git-tag
 complete -o default -o nospace -F _git_log git-whatchanged
