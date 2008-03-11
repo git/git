@@ -2102,8 +2102,6 @@ proc showview {n} {
 	set ybot [expr {[lindex $span 1] * $ymax}]
 	if {$ytop < $y && $y < $ybot} {
 	    set yscreen [expr {$y - $ytop}]
-	} else {
-	    set yscreen [expr {($ybot - $ytop) / 2}]
 	}
     } elseif {[info exists pending_select]} {
 	set selid $pending_select
@@ -2164,7 +2162,7 @@ proc showview {n} {
     set yf 0
     set row {}
     set selectfirst 0
-    if {$selid ne {} && [info exists commitrow($n,$selid)]} {
+    if {[info exists yscreen] && [info exists commitrow($n,$selid)]} {
 	set row $commitrow($n,$selid)
 	# try to get the selected row in the same position on the screen
 	set ymax [lindex [$canv cget -scrollregion] 3]
