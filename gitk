@@ -94,7 +94,7 @@ proc dorunq {} {
 proc start_rev_list {view} {
     global startmsecs
     global commfd leftover tclencoding datemode
-    global viewargs viewfiles commitidx viewcomplete
+    global viewargs viewargscmd viewfiles commitidx viewcomplete
     global showlocalchanges commitinterest mainheadid
     global progressdirn progresscoords proglastnc curview
     global viewactive loginstance viewinstances
@@ -106,9 +106,19 @@ proc start_rev_list {view} {
     set viewactive($view) 1
     varcinit $view
 
+    set args $viewargs($view)
+    if {$viewargscmd($view) ne {}} {
+	if {[catch {
+	    set str [exec sh -c $viewargscmd($view)]
+	} err]} {
+	    error_popup "Error executing --argscmd command: $err"
+	    exit 1
+	}
+	set args [concat $args [split $str "\n"]]
+    }
     if {[catch {
 	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			 --boundary $viewargs($view) "--" $viewfiles($view)] r]
+			 --boundary $args "--" $viewfiles($view)] r]
     } err]} {
 	error_popup "[mc "Error executing git log:"] $err"
 	exit 1
@@ -165,7 +175,9 @@ proc updatecommits {} {
     global viewactive viewcomplete loginstance tclencoding mainheadid
     global startmsecs commfd showneartags showlocalchanges leftover
     global mainheadid pending_select
+    global isworktree
 
+    set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
     set oldmainid $mainheadid
     rereadrefs
     if {$showlocalchanges} {
@@ -1650,6 +1662,7 @@ proc makewindow {} {
     }
     frame .bleft.top
     frame .bleft.mid
+    frame .bleft.bottom
 
     button .bleft.top.search -text [mc "Search"] -command dosearch
     pack .bleft.top.search -side left -padx 5
@@ -1677,18 +1690,25 @@ proc makewindow {} {
     checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
 	-command changeignorespace -variable ignorespace
     pack .bleft.mid.ignspace -side left -padx 5
-    set ctext .bleft.ctext
+    set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
 	-state disabled -font textfont \
-	-yscrollcommand scrolltext -wrap none
+	-yscrollcommand scrolltext -wrap none \
+	-xscrollcommand ".bleft.bottom.sbhorizontal set"
     if {$have_tk85} {
 	$ctext conf -tabstyle wordprocessor
     }
-    scrollbar .bleft.sb -command "$ctext yview"
+    scrollbar .bleft.bottom.sb -command "$ctext yview"
+    scrollbar .bleft.bottom.sbhorizontal -command "$ctext xview" -orient h \
+	-width 10
     pack .bleft.top -side top -fill x
     pack .bleft.mid -side top -fill x
-    pack .bleft.sb -side right -fill y
-    pack $ctext -side left -fill both -expand 1
+    grid $ctext .bleft.bottom.sb -sticky nsew
+    grid .bleft.bottom.sbhorizontal -sticky ew
+    grid columnconfigure .bleft.bottom 0 -weight 1
+    grid rowconfigure .bleft.bottom 0 -weight 1
+    grid rowconfigure .bleft.bottom 1 -weight 0
+    pack .bleft.bottom -side top -fill both -expand 1
     lappend bglist $ctext
     lappend fglist $ctext
 
@@ -1753,9 +1773,17 @@ proc makewindow {} {
     .pwbottom add .bright
     .ctop add .pwbottom
 
-    # restore window position if known
+    # restore window width & height if known
     if {[info exists geometry(main)]} {
-        wm geometry . "$geometry(main)"
+	if {[scan $geometry(main) "%dx%d" w h] >= 2} {
+	    if {$w > [winfo screenwidth .]} {
+		set w [winfo screenwidth .]
+	    }
+	    if {$h > [winfo screenheight .]} {
+		set h [winfo screenheight .]
+	    }
+	    wm geometry . "${w}x$h"
+	}
     }
 
     if {[tk windowingsystem] eq {aqua}} {
@@ -1983,9 +2011,10 @@ proc savestuff {w} {
     global canv canv2 canv3 mainfont textfont uifont tabstop
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth showneartags showlocalchanges
-    global viewname viewfiles viewargs viewperm nextviewnum
+    global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
+    global autoselect
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -2000,6 +2029,7 @@ proc savestuff {w} {
 	puts $f [list set maxwidth $maxwidth]
 	puts $f [list set cmitmode $cmitmode]
 	puts $f [list set wrapcomment $wrapcomment]
+	puts $f [list set autoselect $autoselect]
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
@@ -2022,7 +2052,7 @@ proc savestuff {w} {
 	puts -nonewline $f "set permviews {"
 	for {set v 0} {$v < $nextviewnum} {incr v} {
 	    if {$viewperm($v)} {
-		puts $f "{[list $viewname($v) $viewfiles($v) $viewargs($v)]}"
+		puts $f "{[list $viewname($v) $viewfiles($v) $viewargs($v) $viewargscmd($v)]}"
 	    }
 	}
 	puts $f "}"
@@ -2673,7 +2703,7 @@ proc shellsplit {str} {
 
 proc newview {ishighlight} {
     global nextviewnum newviewname newviewperm newishighlight
-    global newviewargs revtreeargs
+    global newviewargs revtreeargs viewargscmd newviewargscmd curview
 
     set newishighlight $ishighlight
     set top .gitkview
@@ -2681,16 +2711,17 @@ proc newview {ishighlight} {
 	raise $top
 	return
     }
-    set newviewname($nextviewnum) "View $nextviewnum"
+    set newviewname($nextviewnum) "[mc "View"] $nextviewnum"
     set newviewperm($nextviewnum) 0
     set newviewargs($nextviewnum) [shellarglist $revtreeargs]
+    set newviewargscmd($nextviewnum) $viewargscmd($curview)
     vieweditor $top $nextviewnum [mc "Gitk view definition"]
 }
 
 proc editview {} {
     global curview
     global viewname viewperm newviewname newviewperm
-    global viewargs newviewargs
+    global viewargs newviewargs viewargscmd newviewargscmd
 
     set top .gitkvedit-$curview
     if {[winfo exists $top]} {
@@ -2700,6 +2731,7 @@ proc editview {} {
     set newviewname($curview) $viewname($curview)
     set newviewperm($curview) $viewperm($curview)
     set newviewargs($curview) [shellarglist $viewargs($curview)]
+    set newviewargscmd($curview) $viewargscmd($curview)
     vieweditor $top $curview "Gitk: edit view $viewname($curview)"
 }
 
@@ -2720,6 +2752,14 @@ proc vieweditor {top n title} {
     entry $top.args -width 50 -textvariable newviewargs($n) \
 	-background $bgcolor
     grid $top.args - -sticky ew -padx 5
+
+    message $top.ac -aspect 1000 \
+	-text [mc "Command to generate more commits to include:"]
+    grid $top.ac - -sticky w -pady 5
+    entry $top.argscmd -width 50 -textvariable newviewargscmd($n) \
+	-background white
+    grid $top.argscmd - -sticky ew -padx 5
+
     message $top.l -aspect 1000 \
 	-text [mc "Enter files and directories to include, one per line:"]
     grid $top.l - -sticky w
@@ -2763,7 +2803,7 @@ proc allviewmenus {n op args} {
 proc newviewok {top n} {
     global nextviewnum newviewperm newviewname newishighlight
     global viewname viewfiles viewperm selectedview curview
-    global viewargs newviewargs viewhlmenu
+    global viewargs newviewargs viewargscmd newviewargscmd viewhlmenu
 
     if {[catch {
 	set newargs [shellsplit $newviewargs($n)]
@@ -2787,6 +2827,7 @@ proc newviewok {top n} {
 	set viewperm($n) $newviewperm($n)
 	set viewfiles($n) $files
 	set viewargs($n) $newargs
+	set viewargscmd($n) $newviewargscmd($n)
 	addviewmenu $n
 	if {!$newishighlight} {
 	    run showview $n
@@ -2803,9 +2844,11 @@ proc newviewok {top n} {
 	    # doviewmenu $viewhlmenu 1 [list addvhighlight $n] \
 		# entryconf [list -label $viewname($n) -value $viewname($n)]
 	}
-	if {$files ne $viewfiles($n) || $newargs ne $viewargs($n)} {
+	if {$files ne $viewfiles($n) || $newargs ne $viewargs($n) || \
+		$newviewargscmd($n) ne $viewargscmd($n)} {
 	    set viewfiles($n) $files
 	    set viewargs($n) $newargs
+	    set viewargscmd($n) $newviewargscmd($n)
 	    if {$curview == $n} {
 		run reloadcommits
 	    }
@@ -3625,8 +3668,9 @@ proc dohidelocalchanges {} {
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
     global lserial showlocalchanges
+    global isworktree
 
-    if {!$showlocalchanges} return
+    if {!$showlocalchanges || !$isworktree} return
     incr lserial
     set fd [open "|git diff-index --cached HEAD" r]
     fconfigure $fd -blocking 0
@@ -5430,6 +5474,7 @@ proc selectline {l isnew} {
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
     global targetrow targetid lastscrollrows
+    global autoselect
 
     catch {unset pending_select}
     $canv delete hover
@@ -5490,8 +5535,10 @@ proc selectline {l isnew} {
 
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
-    $sha1entry selection from 0
-    $sha1entry selection to end
+    if {$autoselect} {
+	$sha1entry selection from 0
+	$sha1entry selection to end
+    }
     rhighlight_sel $id
 
     $ctext conf -state normal
@@ -6392,7 +6439,7 @@ proc searchmarkvisible {doall} {
 proc scrolltext {f0 f1} {
     global searchstring
 
-    .bleft.sb set $f0 $f1
+    .bleft.bottom.sb set $f0 $f1
     if {$searchstring ne {}} {
 	searchmarkvisible 0
     }
@@ -8729,7 +8776,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor
-    global tabstop limitdiffs
+    global tabstop limitdiffs autoselect
 
     set top .gitkprefs
     set prefstop $top
@@ -8759,6 +8806,11 @@ proc doprefs {} {
     checkbutton $top.showlocal.b -variable showlocalchanges
     pack $top.showlocal.b $top.showlocal.l -side left
     grid x $top.showlocal -sticky w
+    frame $top.autoselect
+    label $top.autoselect.l -text [mc "Auto-select SHA1"] -font optionfont
+    checkbutton $top.autoselect.b -variable autoselect
+    pack $top.autoselect.b $top.autoselect.l -side left
+    grid x $top.autoselect -sticky w
 
     label $top.ddisp -text [mc "Diff display options"]
     grid $top.ddisp - -sticky w -pady 10
@@ -9249,6 +9301,7 @@ set maxlinelen 200
 set showlocalchanges 1
 set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
+set autoselect 1
 
 set colors {green red blue magenta darkgrey brown orange}
 set bgcolor white
@@ -9308,8 +9361,9 @@ set mergeonly 0
 set revtreeargs {}
 set cmdline_files {}
 set i 0
+set revtreeargscmd {}
 foreach arg $argv {
-    switch -- $arg {
+    switch -glob -- $arg {
 	"" { }
 	"-d" { set datemode 1 }
 	"--merge" {
@@ -9319,6 +9373,9 @@ foreach arg $argv {
 	"--" {
 	    set cmdline_files [lrange $argv [expr {$i + 1}] end]
 	    break
+	}
+	"--argscmd=*" {
+	    set revtreeargscmd [string range $arg 10 end]
 	}
 	default {
 	    lappend revtreeargs $arg
@@ -9421,6 +9478,7 @@ set highlight_files {}
 set viewfiles(0) {}
 set viewperm(0) 0
 set viewargs(0) {}
+set viewargscmd(0) {}
 
 set loginstance 0
 set cmdlineok 0
@@ -9428,6 +9486,7 @@ set stopped 0
 set stuffsaved 0
 set patchnum 0
 set lserial 0
+set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
 setcoords
 makewindow
 # wait for the window to become visible
@@ -9435,7 +9494,7 @@ tkwait visibility .
 wm title . "[file tail $argv0]: [file tail [pwd]]"
 readrefs
 
-if {$cmdline_files ne {} || $revtreeargs ne {}} {
+if {$cmdline_files ne {} || $revtreeargs ne {} || $revtreeargscmd ne {}} {
     # create a view for the files/dirs specified on the command line
     set curview 1
     set selectedview 1
@@ -9443,6 +9502,7 @@ if {$cmdline_files ne {} || $revtreeargs ne {}} {
     set viewname(1) [mc "Command line"]
     set viewfiles(1) $cmdline_files
     set viewargs(1) $revtreeargs
+    set viewargscmd(1) $revtreeargscmd
     set viewperm(1) 0
     addviewmenu 1
     .bar.view entryconf [mc "Edit view..."] -state normal
@@ -9456,6 +9516,7 @@ if {[info exists permviews]} {
 	set viewname($n) [lindex $v 0]
 	set viewfiles($n) [lindex $v 1]
 	set viewargs($n) [lindex $v 2]
+	set viewargscmd($n) [lindex $v 3]
 	set viewperm($n) 1
 	addviewmenu $n
     }
