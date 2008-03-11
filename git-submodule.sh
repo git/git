@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2007 Lars Hjemli
 
-USAGE='[--quiet] [--cached] [add <repo> [-b branch]|status|init|update] [--] [<path>...]'
+USAGE='[--quiet] [--cached] [add <repo> [-b branch]|status|init|update|summary [<commit>]] [--] [<path>...]'
 OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
@@ -320,7 +320,58 @@ set_name_rev () {
 	) )
 	test -z "$revname" || revname=" ($revname)"
 }
+#
+# Show commit summary for submodules in index or working tree
+#
+# If '--cached' is given, show summary between index and given commit,
+# or between working tree and given commit
+#
+# $@ = [commit (default 'HEAD'),] requested paths (default all)
+#
+cmd_summary() {
+	# parse $args after "submodule ... summary".
+	while test $# -ne 0
+	do
+		case "$1" in
+		--cached)
+			cached="$1"
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
 
+	if rev=$(git rev-parse --verify "$1^0" 2>/dev/null)
+	then
+		head=$rev
+		shift
+	else
+		head=HEAD
+	fi
+
+	cd_to_toplevel
+	# Get modified modules cared by user
+	modules=$(git diff-index $cached --raw $head -- "$@" |
+		grep -e '^:160000' -e '^:[0-7]* 160000' |
+		while read mod_src mod_dst sha1_src sha1_dst status name
+		do
+			# Always show modules deleted or type-changed (blob<->module)
+			test $status = D -o $status = T && echo "$name" && continue
+			# Also show added or modified modules which are checked out
+			GIT_DIR="$name/.git" git-rev-parse --git-dir >/dev/null 2>&1 &&
+			echo "$name"
+		done
+	)
+}
 #
 # List all submodules, prefixed with:
 #  - submodule not initialized
@@ -391,7 +442,7 @@ cmd_status()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | init | update | status)
+	add | init | update | status | summary)
 		command=$1
 		;;
 	-q|--quiet)
@@ -406,7 +457,7 @@ do
 		branch="$2"; shift
 		;;
 	--cached)
-		cached=1
+		cached="$1"
 		;;
 	--)
 		break
@@ -430,8 +481,8 @@ then
 	usage
 fi
 
-# "--cached" is accepted only by "status"
-if test -n "$cached" && test "$command" != status
+# "--cached" is accepted only by "status" and "summary"
+if test -n "$cached" && test "$command" != status -a "$command" != summary
 then
 	usage
 fi
