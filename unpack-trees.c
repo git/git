@@ -116,7 +116,6 @@ static int unpack_index_entry(struct cache_entry *ce, struct unpack_trees_option
 			add_entry(o, ce, 0, 0);
 			return 0;
 		}
-		return 0;
 	}
 	return call_unpack_fn(src, o);
 }
@@ -286,7 +285,6 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 						add_entry(o, ce, 0, 0);
 						return mask;
 					}
-					continue;
 				}
 				src[0] = ce;
 			}
