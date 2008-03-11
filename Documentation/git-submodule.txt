@@ -12,6 +12,7 @@ SYNOPSIS
 'git-submodule' [--quiet] add [-b branch] [--] <repository> [<path>]
 'git-submodule' [--quiet] status [--cached] [--] [<path>...]
 'git-submodule' [--quiet] [init|update] [--] [<path>...]
+'git-submodule' [--quiet] summary [--summary-limit <n>] [commit] [--] [<path>...]
 
 
 COMMANDS
@@ -46,6 +47,11 @@ update::
 	checkout the commit specified in the index of the containing repository.
 	This will make the submodules HEAD be detached.
 
+summary::
+	Show commit summary between the given commit (defaults to HEAD) and
+	working tree/index. For a submodule in question, a series of commits
+	in the submodule between the given super project commit and the
+	index or working tree (switched by --cached) are shown.
 
 OPTIONS
 -------
@@ -56,9 +62,16 @@ OPTIONS
 	Branch of repository to add as submodule.
 
 --cached::
-	Display the SHA-1 stored in the index, not the SHA-1 of the currently
-	checked out submodule commit. This option is only valid for the
-	status command.
+	This option is only valid for status and summary commands.  These
+	commands typically use the commit found in the submodule HEAD, but
+	with this option, the commit stored in the index is used instead.
+
+-n, --summary-limit::
+	This option is only valid for the summary command.
+	Limit the summary size (number of commits shown in total).
+	Giving 0 will disable the summary; a negative number means unlimted
+	(the default). This limit only applies to modified submodules. The
+	size is always limited to 1 for added/deleted/typechanged submodules.
 
 <path>::
 	Path to submodule(s). When specified this will restrict the command
