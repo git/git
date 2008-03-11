@@ -371,6 +371,108 @@ cmd_summary() {
 			echo "$name"
 		done
 	)
+
+	test -n "$modules" &&
+	git diff-index $cached --raw $head -- $modules |
+	grep -e '^:160000' -e '^:[0-7]* 160000' |
+	cut -c2- |
+	while read mod_src mod_dst sha1_src sha1_dst status name
+	do
+		if test -z "$cached" &&
+			test $sha1_dst = 0000000000000000000000000000000000000000
+		then
+			case "$mod_dst" in
+			160000)
+				sha1_dst=$(GIT_DIR="$name/.git" git rev-parse HEAD)
+				;;
+			100644 | 100755 | 120000)
+				sha1_dst=$(git hash-object $name)
+				;;
+			000000)
+				;; # removed
+			*)
+				# unexpected type
+				echo >&2 "unexpected mode $mod_dst"
+				continue ;;
+			esac
+		fi
+		missing_src=
+		missing_dst=
+
+		test $mod_src = 160000 &&
+		! GIT_DIR="$name/.git" git-rev-parse --verify $sha1_src^0 >/dev/null 2>&1 &&
+		missing_src=t
+
+		test $mod_dst = 160000 &&
+		! GIT_DIR="$name/.git" git-rev-parse --verify $sha1_dst^0 >/dev/null 2>&1 &&
+		missing_dst=t
+
+		total_commits=
+		case "$missing_src,$missing_dst" in
+		t,)
+			errmsg="  Warn: $name doesn't contain commit $sha1_src"
+			;;
+		,t)
+			errmsg="  Warn: $name doesn't contain commit $sha1_dst"
+			;;
+		t,t)
+			errmsg="  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
+			;;
+		*)
+			errmsg=
+			total_commits=$(
+			if test $mod_src = 160000 -a $mod_dst = 160000
+			then
+				range="$sha1_src...$sha1_dst"
+			elif test $mod_src = 160000
+			then
+				range=$sha1_src
+			else
+				range=$sha1_dst
+			fi
+			GIT_DIR="$name/.git" \
+			git log --pretty=oneline --first-parent $range | wc -l
+			)
+			total_commits=" ($total_commits)"
+			;;
+		esac
+
+		sha1_abbr_src=$(echo $sha1_src | cut -c1-7)
+		sha1_abbr_dst=$(echo $sha1_dst | cut -c1-7)
+		if test $status = T
+		then
+			if test $mod_dst = 160000
+			then
+				echo "* $name $sha1_abbr_src(blob)->$sha1_abbr_dst(submodule)$total_commits:"
+			else
+				echo "* $name $sha1_abbr_src(submodule)->$sha1_abbr_dst(blob)$total_commits:"
+			fi
+		else
+			echo "* $name $sha1_abbr_src...$sha1_abbr_dst$total_commits:"
+		fi
+		if test -n "$errmsg"
+		then
+			# Don't give error msg for modification whose dst is not submodule
+			# i.e. deleted or changed to blob
+			test $mod_dst = 160000 && echo "$errmsg"
+		else
+			if test $mod_src = 160000 -a $mod_dst = 160000
+			then
+				GIT_DIR="$name/.git" \
+				git log --pretty='format:  %m %s' \
+				--first-parent $sha1_src...$sha1_dst
+			elif test $mod_dst = 160000
+			then
+				GIT_DIR="$name/.git" \
+				git log --pretty='format:  > %s' -1 $sha1_dst
+			else
+				GIT_DIR="$name/.git" \
+				git log --pretty='format:  < %s' -1 $sha1_src
+			fi
+			echo
+		fi
+		echo
+	done
 }
 #
 # List all submodules, prefixed with:
