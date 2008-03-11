@@ -4,7 +4,9 @@
 #
 # Copyright (c) 2007 Lars Hjemli
 
-USAGE='[--quiet] [--cached] [add <repo> [-b branch]|status|init|update|summary [<commit>]] [--] [<path>...]'
+USAGE="[--quiet] [--cached] \
+[add <repo> [-b branch]|status|init|update|summary [-n|--summary-limit <n>] [<commit>]] \
+[--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
@@ -329,12 +331,23 @@ set_name_rev () {
 # $@ = [commit (default 'HEAD'),] requested paths (default all)
 #
 cmd_summary() {
+	summary_limit=-1
+
 	# parse $args after "submodule ... summary".
 	while test $# -ne 0
 	do
 		case "$1" in
 		--cached)
 			cached="$1"
+			;;
+		-n|--summary-limit)
+			if summary_limit=$(($2 + 0)) 2>/dev/null && test "$summary_limit" = "$2"
+			then
+				:
+			else
+				usage
+			fi
+			shift
 			;;
 		--)
 			shift
@@ -349,6 +362,8 @@ cmd_summary() {
 		esac
 		shift
 	done
+
+	test $summary_limit = 0 && return
 
 	if rev=$(git rev-parse --verify "$1^0" 2>/dev/null)
 	then
@@ -458,8 +473,10 @@ cmd_summary() {
 		else
 			if test $mod_src = 160000 -a $mod_dst = 160000
 			then
+				limit=
+				test $summary_limit -gt 0 && limit="-$summary_limit"
 				GIT_DIR="$name/.git" \
-				git log --pretty='format:  %m %s' \
+				git log $limit --pretty='format:  %m %s' \
 				--first-parent $sha1_src...$sha1_dst
 			elif test $mod_dst = 160000
 			then
