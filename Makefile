@@ -311,11 +311,6 @@ LIB_H = \
 	mailmap.h remote.h parse-options.h transport.h diffcore.h hash.h ll-merge.h fsck.h \
 	pack-revindex.h
 
-DIFF_OBJS = \
-	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
-	diffcore-pickaxe.o diffcore-rename.o tree-diff.o combine-diff.o \
-	diffcore-delta.o log-tree.o
-
 LIB_OBJS = \
 	blob.o commit.o connect.o csum-file.o cache-tree.o base85.o \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o \
@@ -329,11 +324,14 @@ LIB_OBJS = \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	revision.o pager.o tree-walk.o xdiff-interface.o \
 	write_or_die.o trace.o list-objects.o grep.o match-trees.o \
-	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
+	alloc.o merge-file.o path-list.o help.o unpack-trees.o \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
 	convert.o attr.o decorate.o progress.o mailmap.o symlinks.o remote.o \
 	transport.o bundle.o walker.o parse-options.o ws.o archive.o branch.o \
-	ll-merge.o alias.o fsck.o pack-revindex.o
+	ll-merge.o alias.o fsck.o pack-revindex.o \
+	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
+	diffcore-pickaxe.o diffcore-rename.o tree-diff.o combine-diff.o \
+	diffcore-delta.o log-tree.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
