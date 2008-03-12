@@ -198,6 +198,8 @@ static void create_base_index(void)
 	opts.head_idx = 1;
 	opts.index_only = 1;
 	opts.merge = 1;
+	opts.src_index = &the_index;
+	opts.dst_index = &the_index;
 
 	opts.fn = oneway_merge;
 	tree = parse_tree_indirect(head_sha1);

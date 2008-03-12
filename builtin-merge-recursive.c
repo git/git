@@ -213,6 +213,8 @@ static int git_merge_trees(int index_only,
 	opts.merge = 1;
 	opts.head_idx = 2;
 	opts.fn = threeway_merge;
+	opts.src_index = &the_index;
+	opts.dst_index = &the_index;
 
 	init_tree_desc_from_tree(t+0, common);
 	init_tree_desc_from_tree(t+1, head);
