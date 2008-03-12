@@ -103,7 +103,7 @@ test_expect_success \
 test_expect_success \
     '[index v1] 2) create a stealth corruption in a delta base reference' \
     '# this test assumes a delta smaller than 16 bytes at the end of the pack
-     git show-index <1.idx | sort -n | tail -n 1 | (
+     git show-index <1.idx | sort -n | sed -ne \$p | (
        read delta_offs delta_sha1 &&
        git cat-file blob "$delta_sha1" > blob_1 &&
        chmod +w ".git/objects/pack/pack-${pack1}.pack" &&
@@ -141,7 +141,7 @@ test_expect_success \
 test_expect_success \
     '[index v2] 2) create a stealth corruption in a delta base reference' \
     '# this test assumes a delta smaller than 16 bytes at the end of the pack
-     git show-index <1.idx | sort -n | tail -n 1 | (
+     git show-index <1.idx | sort -n | sed -ne \$p | (
        read delta_offs delta_sha1 delta_crc &&
        git cat-file blob "$delta_sha1" > blob_3 &&
        chmod +w ".git/objects/pack/pack-${pack1}.pack" &&

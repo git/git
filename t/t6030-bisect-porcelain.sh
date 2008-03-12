@@ -219,7 +219,7 @@ test_expect_success 'bisect run & skip: cannot tell between 2' '
 	add_line_into_file "6: Yet a line." hello &&
 	HASH6=$(git rev-parse --verify HEAD) &&
 	echo "#"\!"/bin/sh" > test_script.sh &&
-	echo "tail -1 hello | grep Ciao > /dev/null && exit 125" >> test_script.sh &&
+	echo "sed -ne \\\$p hello | grep Ciao > /dev/null && exit 125" >> test_script.sh &&
 	echo "grep line hello > /dev/null" >> test_script.sh &&
 	echo "test \$? -ne 0" >> test_script.sh &&
 	chmod +x test_script.sh &&
@@ -244,8 +244,8 @@ test_expect_success 'bisect run & skip: find first bad' '
 	add_line_into_file "7: Should be the last line." hello &&
 	HASH7=$(git rev-parse --verify HEAD) &&
 	echo "#"\!"/bin/sh" > test_script.sh &&
-	echo "tail -1 hello | grep Ciao > /dev/null && exit 125" >> test_script.sh &&
-	echo "tail -1 hello | grep day > /dev/null && exit 125" >> test_script.sh &&
+	echo "sed -ne \\\$p hello | grep Ciao > /dev/null && exit 125" >> test_script.sh &&
+	echo "sed -ne \\\$p hello | grep day > /dev/null && exit 125" >> test_script.sh &&
 	echo "grep Yet hello > /dev/null" >> test_script.sh &&
 	echo "test \$? -ne 0" >> test_script.sh &&
 	chmod +x test_script.sh &&

@@ -165,7 +165,7 @@ verify_mergeheads() {
 	fi &&
 	while test $# -gt 0
 	do
-		head=$(head -n $i .git/MERGE_HEAD | tail -n 1)
+		head=$(head -n $i .git/MERGE_HEAD | sed -ne \$p)
 		if test "$1" != "$head"
 		then
 			echo "[OOPS] MERGE_HEAD $i != $1"

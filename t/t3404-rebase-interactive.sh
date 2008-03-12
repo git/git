@@ -122,8 +122,8 @@ test_expect_success 'reflog for the branch shows state before rebase' '
 
 test_expect_success 'exchange two commits' '
 	FAKE_LINES="2 1" git rebase -i HEAD~2 &&
-	test H = $(git cat-file commit HEAD^ | tail -n 1) &&
-	test G = $(git cat-file commit HEAD | tail -n 1)
+	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
+	test G = $(git cat-file commit HEAD | sed -ne \$p)
 '
 
 cat > expect << EOF
