@@ -18,7 +18,7 @@ test_expect_success 'git add (absolute)' '
 	git add "$D/a/b/c/d" &&
 	git ls-files >current &&
 	echo a/b/c/d >expect &&
-	diff -u expect current
+	test_cmp expect current
 
 '
 
@@ -32,7 +32,7 @@ test_expect_success 'git add (funny relative)' '
 	) &&
 	git ls-files >current &&
 	echo a/e/f >expect &&
-	diff -u expect current
+	test_cmp expect current
 
 '
 
@@ -43,7 +43,7 @@ test_expect_success 'git rm (absolute)' '
 	git rm -f --cached "$D/a/b/c/d" &&
 	git ls-files >current &&
 	echo a/e/f >expect &&
-	diff -u expect current
+	test_cmp expect current
 
 '
 
@@ -57,7 +57,7 @@ test_expect_success 'git rm (funny relative)' '
 	) &&
 	git ls-files >current &&
 	echo a/b/c/d >expect &&
-	diff -u expect current
+	test_cmp expect current
 
 '
 
@@ -67,7 +67,7 @@ test_expect_success 'git ls-files (absolute)' '
 	git add a &&
 	git ls-files "$D/a/e/../b" >current &&
 	echo a/b/c/d >expect &&
-	diff -u expect current
+	test_cmp expect current
 
 '
 
@@ -80,7 +80,7 @@ test_expect_success 'git ls-files (relative #1)' '
 		git ls-files "../b/c"
 	)  >current &&
 	echo c/d >expect &&
-	diff -u expect current
+	test_cmp expect current
 
 '
 
@@ -93,7 +93,7 @@ test_expect_success 'git ls-files (relative #2)' '
 		git ls-files --full-name "../e/f"
 	)  >current &&
 	echo a/e/f >expect &&
-	diff -u expect current
+	test_cmp expect current
 
 '
 
@@ -126,13 +126,13 @@ test_expect_success 'log using absolute path names' '
 
 	git log a/b/c/d >f1.txt &&
 	git log "$(pwd)/a/b/c/d" >f2.txt &&
-	diff -u f1.txt f2.txt
+	test_cmp f1.txt f2.txt
 '
 
 test_expect_success 'blame using absolute path names' '
 	git blame a/b/c/d >f1.txt &&
 	git blame "$(pwd)/a/b/c/d" >f2.txt &&
-	diff -u f1.txt f2.txt
+	test_cmp f1.txt f2.txt
 '
 
 test_expect_success 'setup deeper work tree' '

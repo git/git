@@ -24,7 +24,7 @@ EOF
 test_expect_success 'diff works (initial)' '
 	(echo d; echo 1) | git add -i >output &&
 	sed -ne "/new file/,/content/p" <output >diff &&
-	diff -u expected diff
+	test_cmp expected diff
 '
 test_expect_success 'revert works (initial)' '
 	git add file &&
@@ -57,7 +57,7 @@ EOF
 test_expect_success 'diff works (commit)' '
 	(echo d; echo 1) | git add -i >output &&
 	sed -ne "/^index/,/content/p" <output >diff &&
-	diff -u expected diff
+	test_cmp expected diff
 '
 test_expect_success 'revert works (commit)' '
 	git add file &&

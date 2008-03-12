@@ -31,7 +31,7 @@ test_expect_success 'branch --contains=master' '
 	{
 		echo "  master" && echo "* side"
 	} >expect &&
-	diff -u expect actual
+	test_cmp expect actual
 
 '
 
@@ -41,7 +41,7 @@ test_expect_success 'branch --contains master' '
 	{
 		echo "  master" && echo "* side"
 	} >expect &&
-	diff -u expect actual
+	test_cmp expect actual
 
 '
 
@@ -51,7 +51,7 @@ test_expect_success 'branch --contains=side' '
 	{
 		echo "* side"
 	} >expect &&
-	diff -u expect actual
+	test_cmp expect actual
 
 '
 

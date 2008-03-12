@@ -34,7 +34,7 @@ EOF
 test_expect_success 'parents of stash' '
 	test $(git rev-parse stash^) = $(git rev-parse HEAD) &&
 	git diff stash^2..stash > output &&
-	diff -u output expect
+	test_cmp output expect
 '
 
 test_expect_success 'apply needs clean working directory' '

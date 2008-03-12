@@ -37,17 +37,17 @@ test_expect_success setup '
 
 test_expect_success 'git diff --raw HEAD' '
 	git diff --raw --abbrev=40 HEAD >actual &&
-	diff -u expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'git diff-index --raw HEAD' '
 	git diff-index --raw HEAD >actual.index &&
-	diff -u expect actual.index
+	test_cmp expect actual.index
 '
 
 test_expect_success 'git diff-files --raw' '
 	git diff-files --raw >actual.files &&
-	diff -u expect actual.files
+	test_cmp expect actual.files
 '
 
 test_done

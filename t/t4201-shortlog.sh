@@ -45,6 +45,6 @@ A U Thor (5):
 
 EOF
 
-test_expect_success 'shortlog wrapping' 'diff -u expect out'
+test_expect_success 'shortlog wrapping' 'test_cmp expect out'
 
 test_done

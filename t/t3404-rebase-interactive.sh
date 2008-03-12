@@ -146,8 +146,8 @@ EOF
 test_expect_success 'stop on conflicting pick' '
 	git tag new-branch1 &&
 	! git rebase -i master &&
-	diff -u expect .git/.dotest-merge/patch &&
-	diff -u expect2 file1 &&
+	test_cmp expect .git/.dotest-merge/patch &&
+	test_cmp expect2 file1 &&
 	test 4 = $(grep -v "^#" < .git/.dotest-merge/done | wc -l) &&
 	test 0 = $(grep -c "^[^#]" < .git/.dotest-merge/git-rebase-todo)
 '

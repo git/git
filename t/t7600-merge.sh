@@ -108,7 +108,7 @@ create_merge_msgs() {
 }
 
 verify_diff() {
-	if ! diff -u "$1" "$2"
+	if ! test_cmp "$1" "$2"
 	then
 		echo "$3"
 		false

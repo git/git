@@ -24,7 +24,7 @@ test_expect_success 'setup' '
 test_expect_success 'reset should work' '
   git read-tree -u --reset HEAD^ &&
   git ls-files >actual &&
-  diff -u expect actual
+  test_cmp expect actual
 '
 
 test_done

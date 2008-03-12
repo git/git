@@ -97,7 +97,7 @@ cat > expect << EOF
 EOF
 
 test_expect_success 'git-status honours core.excludesfile' \
-	'diff -u expect output'
+	'test_cmp expect output'
 
 test_expect_success 'trailing slash in exclude allows directory match(1)' '
 
