@@ -46,7 +46,9 @@ method _init {} {
 		-justify left \
 		-font font_uibold
 	text $w_t \
-		-background white -borderwidth 1 \
+		-background white \
+		-foreground black \
+		-borderwidth 1 \
 		-relief sunken \
 		-width 80 -height 10 \
 		-wrap none \
@@ -180,7 +182,8 @@ method done {ok} {
 	if {$ok} {
 		if {[winfo exists $w.m.s]} {
 			bind $w.m.s <Destroy> [list delete_this $this]
-			$w.m.s conf -background green -text [mc "Success"]
+			$w.m.s conf -background green -foreground black \
+				-text [mc "Success"]
 			if {$is_toplevel} {
 				$w.ok conf -state normal
 				focus $w.ok
@@ -193,7 +196,8 @@ method done {ok} {
 			_init $this
 		}
 		bind $w.m.s <Destroy> [list delete_this $this]
-		$w.m.s conf -background red -text [mc "Error: Command Failed"]
+		$w.m.s conf -background red -foreground black \
+			-text [mc "Error: Command Failed"]
 		if {$is_toplevel} {
 			$w.ok conf -state normal
 			focus $w.ok

@@ -168,7 +168,13 @@ static struct merge_list *create_entry(unsigned stage, unsigned mode, const unsi
 	return res;
 }
 
-static void resolve(const char *base, struct name_entry *branch1, struct name_entry *result)
+static char *traverse_path(const struct traverse_info *info, const struct name_entry *n)
+{
+	char *path = xmalloc(traverse_path_len(info, n) + 1);
+	return make_traverse_path(path, info, n);
+}
+
+static void resolve(const struct traverse_info *info, struct name_entry *branch1, struct name_entry *result)
 {
 	struct merge_list *orig, *final;
 	const char *path;
@@ -177,7 +183,7 @@ static void resolve(const char *base, struct name_entry *branch1, struct name_en
 	if (!branch1)
 		return;
 
-	path = xstrdup(mkpath("%s%s", base, result->path));
+	path = traverse_path(info, result);
 	orig = create_entry(2, branch1->mode, branch1->sha1, path);
 	final = create_entry(0, result->mode, result->sha1, path);
 
@@ -186,9 +192,8 @@ static void resolve(const char *base, struct name_entry *branch1, struct name_en
 	add_merge_entry(final);
 }
 
-static int unresolved_directory(const char *base, struct name_entry n[3])
+static int unresolved_directory(const struct traverse_info *info, struct name_entry n[3])
 {
-	int baselen, pathlen;
 	char *newbase;
 	struct name_entry *p;
 	struct tree_desc t[3];
@@ -204,13 +209,7 @@ static int unresolved_directory(const char *base, struct name_entry n[3])
 	}
 	if (!S_ISDIR(p->mode))
 		return 0;
-	baselen = strlen(base);
-	pathlen = tree_entry_len(p->path, p->sha1);
-	newbase = xmalloc(baselen + pathlen + 2);
-	memcpy(newbase, base, baselen);
-	memcpy(newbase + baselen, p->path, pathlen);
-	memcpy(newbase + baselen + pathlen, "/", 2);
-
+	newbase = traverse_path(info, p);
 	buf0 = fill_tree_descriptor(t+0, n[0].sha1);
 	buf1 = fill_tree_descriptor(t+1, n[1].sha1);
 	buf2 = fill_tree_descriptor(t+2, n[2].sha1);
@@ -224,7 +223,7 @@ static int unresolved_directory(const char *base, struct name_entry n[3])
 }
 
 
-static struct merge_list *link_entry(unsigned stage, const char *base, struct name_entry *n, struct merge_list *entry)
+static struct merge_list *link_entry(unsigned stage, const struct traverse_info *info, struct name_entry *n, struct merge_list *entry)
 {
 	const char *path;
 	struct merge_list *link;
@@ -234,17 +233,17 @@ static struct merge_list *link_entry(unsigned stage, const char *base, struct na
 	if (entry)
 		path = entry->path;
 	else
-		path = xstrdup(mkpath("%s%s", base, n->path));
+		path = traverse_path(info, n);
 	link = create_entry(stage, n->mode, n->sha1, path);
 	link->link = entry;
 	return link;
 }
 
-static void unresolved(const char *base, struct name_entry n[3])
+static void unresolved(const struct traverse_info *info, struct name_entry n[3])
 {
 	struct merge_list *entry = NULL;
 
-	if (unresolved_directory(base, n))
+	if (unresolved_directory(info, n))
 		return;
 
 	/*
@@ -252,9 +251,9 @@ static void unresolved(const char *base, struct name_entry n[3])
 	 * list has the stages in order - link_entry adds new
 	 * links at the front.
 	 */
-	entry = link_entry(3, base, n + 2, entry);
-	entry = link_entry(2, base, n + 1, entry);
-	entry = link_entry(1, base, n + 0, entry);
+	entry = link_entry(3, info, n + 2, entry);
+	entry = link_entry(2, info, n + 1, entry);
+	entry = link_entry(1, info, n + 0, entry);
 
 	add_merge_entry(entry);
 }
@@ -288,36 +287,41 @@ static void unresolved(const char *base, struct name_entry n[3])
  * The successful merge rules are the same as for the three-way merge
  * in git-read-tree.
  */
-static void threeway_callback(int n, unsigned long mask, struct name_entry *entry, const char *base)
+static int threeway_callback(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *info)
 {
 	/* Same in both? */
 	if (same_entry(entry+1, entry+2)) {
 		if (entry[0].sha1) {
-			resolve(base, NULL, entry+1);
-			return;
+			resolve(info, NULL, entry+1);
+			return mask;
 		}
 	}
 
 	if (same_entry(entry+0, entry+1)) {
 		if (entry[2].sha1 && !S_ISDIR(entry[2].mode)) {
-			resolve(base, entry+1, entry+2);
-			return;
+			resolve(info, entry+1, entry+2);
+			return mask;
 		}
 	}
 
 	if (same_entry(entry+0, entry+2)) {
 		if (entry[1].sha1 && !S_ISDIR(entry[1].mode)) {
-			resolve(base, NULL, entry+1);
-			return;
+			resolve(info, NULL, entry+1);
+			return mask;
 		}
 	}
 
-	unresolved(base, entry);
+	unresolved(info, entry);
+	return mask;
 }
 
 static void merge_trees(struct tree_desc t[3], const char *base)
 {
-	traverse_trees(3, t, base, threeway_callback);
+	struct traverse_info info;
+
+	setup_traverse_info(&info, base);
+	info.fn = threeway_callback;
+	traverse_trees(3, t, &info);
 }
 
 static void *get_tree_descriptor(struct tree_desc *desc, const char *rev)

@@ -346,12 +346,12 @@ extern void verify_non_filename(const char *prefix, const char *name);
 /* Initialize and use the cache information */
 extern int read_index(struct index_state *);
 extern int read_index_from(struct index_state *, const char *path);
-extern int write_index(struct index_state *, int newfd);
+extern int write_index(const struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
-extern int unmerged_index(struct index_state *);
+extern int unmerged_index(const struct index_state *);
 extern int verify_path(const char *path);
 extern int index_name_exists(struct index_state *istate, const char *name, int namelen);
-extern int index_name_pos(struct index_state *, const char *name, int namelen);
+extern int index_name_pos(const struct index_state *, const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
@@ -368,8 +368,8 @@ extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 #define CE_MATCH_IGNORE_VALID		01
 /* do not check the contents but report dirty on racily-clean entries */
 #define CE_MATCH_RACY_IS_DIRTY	02
-extern int ie_match_stat(struct index_state *, struct cache_entry *, struct stat *, unsigned int);
-extern int ie_modified(struct index_state *, struct cache_entry *, struct stat *, unsigned int);
+extern int ie_match_stat(const struct index_state *, struct cache_entry *, struct stat *, unsigned int);
+extern int ie_modified(const struct index_state *, struct cache_entry *, struct stat *, unsigned int);
 
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
@@ -536,12 +536,16 @@ extern int create_symref(const char *ref, const char *refs_heads_master, const c
 extern int validate_headref(const char *ref);
 
 extern int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
+extern int df_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
 extern int cache_name_compare(const char *name1, int len1, const char *name2, int len2);
 
 extern void *read_object_with_reference(const unsigned char *sha1,
 					const char *required_type,
 					unsigned long *size,
 					unsigned char *sha1_ret);
+
+extern struct object *peel_to_type(const char *name, int namelen,
+				   struct object *o, enum object_type);
 
 enum date_mode {
 	DATE_NORMAL = 0,

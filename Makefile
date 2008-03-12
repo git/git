@@ -247,7 +247,7 @@ SCRIPT_SH = \
 SCRIPT_PERL = \
 	git-add--interactive.perl \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-cvsserver.perl git-remote.perl git-cvsexportcommit.perl \
+	git-cvsserver.perl git-cvsexportcommit.perl \
 	git-send-email.perl git-svn.perl
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
@@ -307,7 +307,7 @@ LIB_H = \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h \
 	utf8.h reflog-walk.h patch-ids.h attr.h decorate.h progress.h \
-	mailmap.h remote.h parse-options.h transport.h diffcore.h hash.h fsck.h \
+	mailmap.h remote.h parse-options.h transport.h diffcore.h hash.h ll-merge.h fsck.h \
 	pack-revindex.h
 
 DIFF_OBJS = \
@@ -332,7 +332,7 @@ LIB_OBJS = \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
 	convert.o attr.o decorate.o progress.o mailmap.o symlinks.o remote.o \
 	transport.o bundle.o walker.o parse-options.o ws.o archive.o branch.o \
-	alias.o fsck.o pack-revindex.o
+	ll-merge.o alias.o fsck.o pack-revindex.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
@@ -384,6 +384,7 @@ BUILTIN_OBJS = \
 	builtin-push.o \
 	builtin-read-tree.o \
 	builtin-reflog.o \
+	builtin-remote.o \
 	builtin-send-pack.o \
 	builtin-config.o \
 	builtin-rerere.o \

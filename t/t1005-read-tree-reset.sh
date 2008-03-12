@@ -21,7 +21,7 @@ test_expect_success 'setup' '
   git commit -m two
 '
 
-test_expect_failure 'reset should work' '
+test_expect_success 'reset should work' '
   git read-tree -u --reset HEAD^ &&
   git ls-files >actual &&
   diff -u expect actual

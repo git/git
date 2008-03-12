@@ -89,6 +89,33 @@ do
 	'
 done
 
+test_expect_success 'editor with a space' '
+
+	if echo "echo space > \"\$1\"" > "e space.sh"
+	then
+		chmod a+x "e space.sh" &&
+		GIT_EDITOR="./e\ space.sh" git commit --amend &&
+		test space = "$(git show -s --pretty=format:%s)"
+	else
+		say "Skipping; FS does not support spaces in filenames"
+	fi
+
+'
+
+unset GIT_EDITOR
+test_expect_success 'core.editor with a space' '
+
+	if test -f "e space.sh"
+	then
+		git config core.editor \"./e\ space.sh\" &&
+		git commit --amend &&
+		test space = "$(git show -s --pretty=format:%s)"
+	else
+		say "Skipping; FS does not support spaces in filenames"
+	fi
+
+'
+
 TERM="$OLD_TERM"
 
 test_done

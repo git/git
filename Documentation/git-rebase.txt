@@ -262,8 +262,7 @@ hook if one exists.  You can use this hook to do sanity checks and
 reject the rebase if it isn't appropriate.  Please see the template
 pre-rebase hook script for an example.
 
-You must be in the top directory of your project to start (or continue)
-a rebase.  Upon completion, <branch> will be the current branch.
+Upon completion, <branch> will be the current branch.
 
 INTERACTIVE MODE
 ----------------

@@ -255,13 +255,13 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
-static int is_racy_timestamp(struct index_state *istate, struct cache_entry *ce)
+static int is_racy_timestamp(const struct index_state *istate, struct cache_entry *ce)
 {
 	return (istate->timestamp &&
 		((unsigned int)istate->timestamp) <= ce->ce_mtime);
 }
 
-int ie_match_stat(struct index_state *istate,
+int ie_match_stat(const struct index_state *istate,
 		  struct cache_entry *ce, struct stat *st,
 		  unsigned int options)
 {
@@ -304,7 +304,7 @@ int ie_match_stat(struct index_state *istate,
 	return changed;
 }
 
-int ie_modified(struct index_state *istate,
+int ie_modified(const struct index_state *istate,
 		struct cache_entry *ce, struct stat *st, unsigned int options)
 {
 	int changed, changed_fs;
@@ -351,6 +351,41 @@ int base_name_compare(const char *name1, int len1, int mode1,
 	return (c1 < c2) ? -1 : (c1 > c2) ? 1 : 0;
 }
 
+/*
+ * df_name_compare() is identical to base_name_compare(), except it
+ * compares conflicting directory/file entries as equal. Note that
+ * while a directory name compares as equal to a regular file, they
+ * then individually compare _differently_ to a filename that has
+ * a dot after the basename (because '\0' < '.' < '/').
+ *
+ * This is used by routines that want to traverse the git namespace
+ * but then handle conflicting entries together when possible.
+ */
+int df_name_compare(const char *name1, int len1, int mode1,
+		    const char *name2, int len2, int mode2)
+{
+	int len = len1 < len2 ? len1 : len2, cmp;
+	unsigned char c1, c2;
+
+	cmp = memcmp(name1, name2, len);
+	if (cmp)
+		return cmp;
+	/* Directories and files compare equal (same length, same name) */
+	if (len1 == len2)
+		return 0;
+	c1 = name1[len];
+	if (!c1 && S_ISDIR(mode1))
+		c1 = '/';
+	c2 = name2[len];
+	if (!c2 && S_ISDIR(mode2))
+		c2 = '/';
+	if (c1 == '/' && !c2)
+		return 0;
+	if (c2 == '/' && !c1)
+		return 0;
+	return c1 - c2;
+}
+
 int cache_name_compare(const char *name1, int flags1, const char *name2, int flags2)
 {
 	int len1 = flags1 & CE_NAMEMASK;
@@ -377,7 +412,7 @@ int cache_name_compare(const char *name1, int flags1, const char *name2, int fla
 	return 0;
 }
 
-int index_name_pos(struct index_state *istate, const char *name, int namelen)
+int index_name_pos(const struct index_state *istate, const char *name, int namelen)
 {
 	int first, last;
 
@@ -1166,7 +1201,7 @@ int discard_index(struct index_state *istate)
 	return 0;
 }
 
-int unmerged_index(struct index_state *istate)
+int unmerged_index(const struct index_state *istate)
 {
 	int i;
 	for (i = 0; i < istate->cache_nr; i++) {
@@ -1311,7 +1346,7 @@ static int ce_write_entry(SHA_CTX *c, int fd, struct cache_entry *ce)
 	return ce_write(c, fd, ondisk, size);
 }
 
-int write_index(struct index_state *istate, int newfd)
+int write_index(const struct index_state *istate, int newfd)
 {
 	SHA_CTX c;
 	struct cache_header hdr;

@@ -259,6 +259,8 @@ int parse_options(int argc, const char **argv, const struct option *options,
 		const char *arg = args.argv[0];
 
 		if (*arg != '-' || !arg[1]) {
+			if (flags & PARSE_OPT_STOP_AT_NON_OPTION)
+				break;
 			args.out[args.cpidx++] = args.argv[0];
 			continue;
 		}

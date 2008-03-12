@@ -5,7 +5,9 @@ test_description='blob conversion via gitattributes'
 . ./test-lib.sh
 
 cat <<\EOF >rot13.sh
-tr '[a-zA-Z]' '[n-za-mN-ZA-M]'
+tr \
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' \
+  'nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM'
 EOF
 chmod +x rot13.sh
 
