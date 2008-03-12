@@ -80,7 +80,9 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 		-justify left \
 		-font font_uibold
 	text $w.m.t \
-		-background white -borderwidth 1 \
+		-background white \
+		-foreground black \
+		-borderwidth 1 \
 		-relief sunken \
 		-width 80 -height 10 \
 		-font font_diff \

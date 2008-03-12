@@ -124,6 +124,7 @@ proc do_options {} {
 		{b gui.pruneduringfetch {mc "Prune Tracking Branches During Fetch"}}
 		{b gui.matchtrackingbranch {mc "Match Tracking Branches"}}
 		{i-0..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
+		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}
 		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
 		} {
 		set type [lindex $option 0]

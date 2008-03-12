@@ -611,6 +611,7 @@ set default_config(gui.matchtrackingbranch) false
 set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
 set default_config(gui.diffcontext) 5
+set default_config(gui.commitmsgwidth) 75
 set default_config(gui.newbranchtemplate) {}
 set default_config(gui.spellingdictionary) {}
 set default_config(gui.fontui) [font configure font_ui]
@@ -2289,8 +2290,9 @@ pack .vpane -anchor n -side top -fill both -expand 1
 #
 frame .vpane.files.index -height 100 -width 200
 label .vpane.files.index.title -text [mc "Staged Changes (Will Commit)"] \
-	-background lightgreen
-text $ui_index -background white -borderwidth 0 \
+	-background lightgreen -foreground black
+text $ui_index -background white -foreground black \
+	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
 	-cursor $cursor_ptr \
@@ -2308,8 +2310,9 @@ pack $ui_index -side left -fill both -expand 1
 #
 frame .vpane.files.workdir -height 100 -width 200
 label .vpane.files.workdir.title -text [mc "Unstaged Changes"] \
-	-background lightsalmon
-text $ui_workdir -background white -borderwidth 0 \
+	-background lightsalmon -foreground black
+text $ui_workdir -background white -foreground black \
+	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
 	-cursor $cursor_ptr \
@@ -2416,12 +2419,13 @@ pack $ui_coml -side left -fill x
 pack .vpane.lower.commarea.buffer.header.amend -side right
 pack .vpane.lower.commarea.buffer.header.new -side right
 
-text $ui_comm -background white -borderwidth 1 \
+text $ui_comm -background white -foreground black \
+	-borderwidth 1 \
 	-undo true \
 	-maxundo 20 \
 	-autoseparators true \
 	-relief sunken \
-	-width 75 -height 9 -wrap none \
+	-width $repo_config(gui.commitmsgwidth) -height 9 -wrap none \
 	-font font_diff \
 	-yscrollcommand {.vpane.lower.commarea.buffer.sby set}
 scrollbar .vpane.lower.commarea.buffer.sby \
@@ -2493,15 +2497,18 @@ trace add variable current_diff_path write trace_current_diff_path
 frame .vpane.lower.diff.header -background gold
 label .vpane.lower.diff.header.status \
 	-background gold \
+	-foreground black \
 	-width $max_status_desc \
 	-anchor w \
 	-justify left
 label .vpane.lower.diff.header.file \
 	-background gold \
+	-foreground black \
 	-anchor w \
 	-justify left
 label .vpane.lower.diff.header.path \
 	-background gold \
+	-foreground black \
 	-anchor w \
 	-justify left
 pack .vpane.lower.diff.header.status -side left
@@ -2525,7 +2532,8 @@ bind_button3 .vpane.lower.diff.header.path "tk_popup $ctxm %X %Y"
 #
 frame .vpane.lower.diff.body
 set ui_diff .vpane.lower.diff.body.t
-text $ui_diff -background white -borderwidth 0 \
+text $ui_diff -background white -foreground black \
+	-borderwidth 0 \
 	-width 80 -height 15 -wrap none \
 	-font font_diff \
 	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
