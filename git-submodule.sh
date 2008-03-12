@@ -230,7 +230,7 @@ cmd_init()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep -e '^160000 ' |
+	git ls-files --stage -- "$@" | grep '^160000 ' |
 	while read mode sha1 stage path
 	do
 		# Skip already registered paths
@@ -284,7 +284,7 @@ cmd_update()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep -e '^160000 ' |
+	git ls-files --stage -- "$@" | grep '^160000 ' |
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit
@@ -367,7 +367,7 @@ cmd_status()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep -e '^160000 ' |
+	git ls-files --stage -- "$@" | grep '^160000 ' |
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit

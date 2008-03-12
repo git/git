@@ -78,8 +78,8 @@ mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
-	count=$(($(grep -ve '^$' -e '^#' < "$DONE" | wc -l)))
-	total=$(($count+$(grep -ve '^$' -e '^#' < "$TODO" | wc -l)))
+	count=$(grep -c '^[^#]' < "$DONE")
+	total=$(($count+$(grep -c '^[^#]' < "$TODO")))
 	if test "$last_count" != "$count"
 	then
 		last_count=$count
@@ -110,7 +110,7 @@ die_abort () {
 }
 
 has_action () {
-	grep -vqe '^$' -e '^#' "$1"
+	grep '^[^#]' "$1" >/dev/null
 }
 
 pick_one () {

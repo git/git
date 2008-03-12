@@ -15,7 +15,7 @@ check_verify_failure () {
 	expect="$2"
 	test_expect_success "$1" '
 		( ! git-mktag <tag.sig 2>message ) &&
-		grep -q "$expect" message
+		grep "$expect" message
 	'
 }
 
