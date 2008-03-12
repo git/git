@@ -4,7 +4,7 @@ test_description='git-filter-branch'
 . ./test-lib.sh
 
 make_commit () {
-	lower=$(echo $1 | tr A-Z a-z)
+	lower=$(echo $1 | tr '[A-Z]' '[a-z]')
 	echo $lower > $lower
 	git add $lower
 	test_tick

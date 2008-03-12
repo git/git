@@ -58,8 +58,8 @@ eval "$functions"
 # "author" or "committer
 
 set_ident () {
-	lid="$(echo "$1" | tr "A-Z" "a-z")"
-	uid="$(echo "$1" | tr "a-z" "A-Z")"
+	lid="$(echo "$1" | tr "[A-Z]" "[a-z]")"
+	uid="$(echo "$1" | tr "[a-z]" "[A-Z]")"
 	pick_id_script='
 		/^'$lid' /{
 			s/'\''/'\''\\'\'\''/g
