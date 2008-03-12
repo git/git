@@ -12,6 +12,14 @@
 #include "builtin.h"
 #include "grep.h"
 
+#ifndef NO_EXTERNAL_GREP
+#ifdef __unix__
+#define NO_EXTERNAL_GREP 0
+#else
+#define NO_EXTERNAL_GREP 1
+#endif
+#endif
+
 /*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;
  * pathname wildcards are allowed.
@@ -153,7 +161,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	return i;
 }
 
-#ifdef __unix__
+#if !NO_EXTERNAL_GREP
 static int exec_grep(int argc, const char **argv)
 {
 	pid_t pid;
@@ -372,7 +380,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 	int nr;
 	read_cache();
 
-#ifdef __unix__
+#if !NO_EXTERNAL_GREP
 	/*
 	 * Use the external "grep" command for the case where
 	 * we grep through the checked-out files. It tends to
