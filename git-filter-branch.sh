@@ -309,7 +309,7 @@ while read commit parents; do
 	sed -e '1,/^$/d' <../commit | \
 		eval "$filter_msg" > ../message ||
 			die "msg filter failed: $filter_msg"
-	sh -c "$filter_commit" "git commit-tree" \
+	@SHELL_PATH@ -c "$filter_commit" "git commit-tree" \
 		$(git write-tree) $parentstr < ../message > ../map/$commit
 done <../revs
 
