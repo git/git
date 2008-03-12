@@ -29,4 +29,53 @@ test_expect_success 'prune stale packs' '
 
 '
 
+test_expect_success 'prune --expire' '
+
+	before=$(git count-objects | sed "s/ .*//") &&
+	BLOB=$(echo aleph | git hash-object -w --stdin) &&
+	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test -f $BLOB_FILE &&
+	git prune --expire=1.hour.ago &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test -f $BLOB_FILE &&
+	test-chmtime -86500 $BLOB_FILE &&
+	git prune --expire 1.day &&
+	test $before = $(git count-objects | sed "s/ .*//") &&
+	! test -f $BLOB_FILE
+
+'
+
+test_expect_success 'gc: implicit prune --expire' '
+
+	before=$(git count-objects | sed "s/ .*//") &&
+	BLOB=$(echo aleph_0 | git hash-object -w --stdin) &&
+	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test -f $BLOB_FILE &&
+	test-chmtime -$((86400*14-30)) $BLOB_FILE &&
+	git gc &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test -f $BLOB_FILE &&
+	test-chmtime -$((86400*14+1)) $BLOB_FILE &&
+	git gc &&
+	test $before = $(git count-objects | sed "s/ .*//") &&
+	! test -f $BLOB_FILE
+
+'
+
+test_expect_success 'gc: refuse to start with invalid gc.pruneExpire' '
+
+	git config gc.pruneExpire invalid &&
+	test_must_fail git gc
+
+'
+
+test_expect_success 'gc: start with ok gc.pruneExpire' '
+
+	git config gc.pruneExpire 2.days.ago &&
+	git gc
+
+'
+
 test_done

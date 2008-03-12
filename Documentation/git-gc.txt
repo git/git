@@ -8,7 +8,7 @@ git-gc - Cleanup unnecessary files and optimize the local repository
 
 SYNOPSIS
 --------
-'git-gc' [--prune] [--aggressive] [--auto] [--quiet]
+'git-gc' [--aggressive] [--auto] [--quiet]
 
 DESCRIPTION
 -----------
@@ -24,17 +24,6 @@ operating performance. Some git commands may automatically run
 
 OPTIONS
 -------
-
---prune::
-	Usually `git-gc` packs refs, expires old reflog entries,
-	packs loose objects,
-	and removes old 'rerere' records.  Removal
-	of unreferenced loose objects is an unsafe operation
-	while other git operations are in progress, so it is not
-	done by default.  Pass this option if you want it, and only
-	when you know nobody else is creating new objects in the
-	repository at the same time (e.g. never use this option
-	in a cron script).
 
 --aggressive::
 	Usually 'git-gc' runs very quickly while providing good disk
@@ -103,6 +92,10 @@ the repository when the --aggressive option is specified.  The larger
 the value, the more time is spent optimizing the delta compression.  See
 the documentation for the --window' option in linkgit:git-repack[1] for
 more details.  This defaults to 10.
+
+The optional configuration variable 'gc.pruneExpire' controls how old
+the unreferenced loose objects have to be before they are pruned.  The
+default is "2 weeks ago".
 
 See Also
 --------

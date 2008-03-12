@@ -590,6 +590,10 @@ gc.packrefs::
 	at some stage, and setting this to `false` will continue to
 	prevent `git pack-refs` from being run from `git gc`.
 
+gc.pruneexpire::
+	When `git gc` is run, it will call `prune --expire 2.weeks.ago`.
+	Override the grace period with this config variable.
+
 gc.reflogexpire::
 	`git reflog expire` removes reflog entries older than
 	this time; defaults to 90 days.
