@@ -129,7 +129,7 @@ test_expect_success 'rerere kicked in' "! grep ======= a1"
 test_expect_success 'rerere prefers first change' 'git diff a1 expect'
 
 rm $rr/postimage
-echo "$sha1	a1" | tr '\012' '\000' > .git/rr-cache/MERGE_RR
+echo "$sha1	a1" | perl -pe 'y/\012/\000/' > .git/rr-cache/MERGE_RR
 
 test_expect_success 'rerere clear' 'git rerere clear'
 
