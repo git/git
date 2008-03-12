@@ -448,7 +448,7 @@ cmd_summary() {
 			GIT_DIR="$name/.git" \
 			git log --pretty=oneline --first-parent $range | wc -l
 			)
-			total_commits=" ($total_commits)"
+			total_commits=" ($(($total_commits + 0)))"
 			;;
 		esac
 
