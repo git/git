@@ -1028,9 +1028,20 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 		if (!sha_eq(a->sha1, o->sha1) && !sha_eq(b->sha1, o->sha1))
 			result.merge = 1;
 
-		result.mode = a->mode == o->mode ? b->mode: a->mode;
+		/*
+		 * Merge modes
+		 */
+		if (a->mode == b->mode || a->mode == o->mode)
+			result.mode = b->mode;
+		else {
+			result.mode = a->mode;
+			if (b->mode != o->mode) {
+				result.clean = 0;
+				result.merge = 1;
+			}
+		}
 
-		if (sha_eq(a->sha1, o->sha1))
+		if (sha_eq(a->sha1, b->sha1) || sha_eq(a->sha1, o->sha1))
 			hashcpy(result.sha, b->sha1);
 		else if (sha_eq(b->sha1, o->sha1))
 			hashcpy(result.sha, a->sha1);
