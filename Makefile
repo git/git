@@ -308,7 +308,7 @@ LIB_H = \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h \
 	utf8.h reflog-walk.h patch-ids.h attr.h decorate.h progress.h \
 	mailmap.h remote.h parse-options.h transport.h diffcore.h hash.h ll-merge.h fsck.h \
-	pack-revindex.h
+	pack-revindex.h compat/mingw.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
