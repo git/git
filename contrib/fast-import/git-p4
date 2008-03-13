@@ -652,7 +652,10 @@ class P4Submit(Command):
             defaultEditor = "vi"
             if platform.system() == "Windows":
                 defaultEditor = "notepad"
-            editor = os.environ.get("EDITOR", defaultEditor);
+            if os.environ.has_key("P4EDITOR"):
+                editor = os.environ.get("P4EDITOR")
+            else:
+                editor = os.environ.get("EDITOR", defaultEditor);
             system(editor + " " + fileName)
             tmpFile = open(fileName, "rb")
             message = tmpFile.read()
