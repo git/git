@@ -89,7 +89,10 @@
 #include <grp.h>
 #define _ALL_SOURCE 1
 #endif
-#endif	/* !__MINGW32__ */
+#else 	/* __MINGW32__ */
+/* pull in Windows compatibility stuff */
+#include "compat/mingw.h"
+#endif	/* __MINGW32__ */
 
 #ifndef NO_ICONV
 #include <iconv.h>
@@ -467,8 +470,6 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #endif
 
 #ifdef __MINGW32__
-
-#include "compat/mingw.h"
 
 static inline int has_dos_drive_prefix(const char *path)
 {
