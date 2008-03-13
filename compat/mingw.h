@@ -123,6 +123,7 @@ static inline int waitpid(pid_t pid, unsigned *status, unsigned options)
 
 int pipe(int filedes[2]);
 unsigned int sleep (unsigned int seconds);
+int mkstemp(char *template);
 int gettimeofday(struct timeval *tv, void *tz);
 int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
 struct tm *gmtime_r(const time_t *timep, struct tm *result);
@@ -186,6 +187,12 @@ static inline unsigned int git_ntohl(unsigned int x)
 
 sig_handler_t mingw_signal(int sig, sig_handler_t handler);
 #define signal mingw_signal
+
+/*
+ * git specific compatibility
+ */
+
+#define PRIuMAX "I64u"
 
 /*
  * helpers
