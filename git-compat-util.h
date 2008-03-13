@@ -117,6 +117,10 @@
 #define has_dos_drive_prefix(path) 0
 #endif
 
+#ifndef is_dir_sep
+#define is_dir_sep(c) ((c) == '/')
+#endif
+
 #ifdef __GNUC__
 #define NORETURN __attribute__((__noreturn__))
 #else
