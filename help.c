@@ -240,11 +240,6 @@ static unsigned int load_command_list(void)
 	const char *env_path = getenv("PATH");
 	char *paths, *path, *colon;
 	const char *exec_path = git_exec_path();
-#ifdef __MINGW32__
-	char sep = ';';
-#else
-	char sep = ':';
-#endif
 
 	if (exec_path)
 		longest = list_commands_in_dir(&main_cmds, exec_path);
@@ -256,7 +251,7 @@ static unsigned int load_command_list(void)
 
 	path = paths = xstrdup(env_path);
 	while (1) {
-		if ((colon = strchr(path, sep)))
+		if ((colon = strchr(path, PATH_SEP)))
 			*colon = 0;
 
 		len = list_commands_in_dir(&other_cmds, path);

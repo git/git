@@ -192,6 +192,7 @@ sig_handler_t mingw_signal(int sig, sig_handler_t handler);
  * git specific compatibility
  */
 
+#define PATH_SEP ';'
 #define PRIuMAX "I64u"
 
 /*

@@ -70,11 +70,7 @@ static void add_path(struct strbuf *out, const char *path)
 		else
 			strbuf_addstr(out, make_absolute_path(path));
 
-#ifdef __MINGW32__
-		strbuf_addch(out, ';');
-#else
-		strbuf_addch(out, ':');
-#endif
+		strbuf_addch(out, PATH_SEP);
 	}
 }
 
