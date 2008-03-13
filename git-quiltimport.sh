@@ -67,7 +67,7 @@ while read patch_name level garbage
 do
 	case "$patch_name" in ''|'#'*) continue;; esac
 	case "$level" in
-	-p*);;
+	-p*)	;;
 	''|'#'*)
 		level=;;
 	*)
@@ -129,7 +129,7 @@ do
 	fi
 
 	if [ -z "$dry_run" ] ; then
-		git apply --index -C1 $level "$tmp_patch" &&
+		git apply --index -C1 ${level:+"$level"} "$tmp_patch" &&
 		tree=$(git write-tree) &&
 		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git commit-tree $tree -p $commit) &&
 		git update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
