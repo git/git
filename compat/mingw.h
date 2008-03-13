@@ -174,9 +174,6 @@ int mingw_fstat(int fd, struct mingw_stat *buf);
 static inline int mingw_stat(const char *file_name, struct mingw_stat *buf)
 { return mingw_lstat(file_name, buf); }
 
-int mingw_vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
-#define vsnprintf mingw_vsnprintf
-
 pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env);
 void mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp
