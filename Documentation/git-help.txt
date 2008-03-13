@@ -43,7 +43,7 @@ OPTIONS
 +
 By default the 'man' program will be used to display the manual page,
 but the 'man.viewer' configuration variable may be used to choose
-another display program (see below).
+other display programs (see below).
 
 -w|--web::
 	Display manual page for the command in the 'web' (HTML)
@@ -58,6 +58,9 @@ linkgit:git-web--browse[1] for more information about this.
 CONFIGURATION VARIABLES
 -----------------------
 
+help.format
+~~~~~~~~~~~
+
 If no command line option is passed, the 'help.format' configuration
 variable will be checked. The following values are supported for this
 variable; they make 'git-help' behave as their corresponding command
@@ -67,10 +70,16 @@ line option:
 * "info" corresponds to '-i|--info',
 * "web" or "html" correspond to '-w|--web'.
 
+help.browser, web.browser and browser.<tool>.path
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The 'help.browser', 'web.browser' and 'browser.<tool>.path' will also
 be checked if the 'web' format is chosen (either by command line
 option or configuration variable). See '-w|--web' in the OPTIONS
 section above and linkgit:git-web--browse[1].
+
+man.viewer
+~~~~~~~~~~
 
 The 'man.viewer' config variable will be checked if the 'man' format
 is chosen. Only the following values are currently supported:
@@ -79,6 +88,24 @@ is chosen. Only the following values are currently supported:
 * "woman": use 'emacsclient' to launch the "woman" mode in emacs
 (this only works starting with emacsclient versions 22),
 * "konqueror": use a man KIO slave in konqueror.
+
+Multiple values may be given to this configuration variable. Their
+corresponding programs will be tried in the order listed in the
+configuration file.
+
+For example, this configuration:
+
+	[man]
+		viewer = konqueror
+		viewer = woman
+
+will try to use konqueror first. But this may fail (for example if
+DISPLAY is not set) and in that case emacs' woman mode will be tried.
+
+If everythings fails the 'man' program will be tried anyway.
+
+Note about git config --global
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that all these configuration variables should probably be set
 using the '--global' flag, for example like this:

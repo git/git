@@ -749,7 +749,7 @@ log.showroot::
 	normally hide the root commit will now show it. True by default.
 
 man.viewer::
-	Specify the program that will be used to display help in the
+	Specify the programs that may be used to display help in the
 	'man' format. See linkgit:git-help[1].
 
 merge.summary::
