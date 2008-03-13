@@ -113,6 +113,10 @@
 #define PATH_SEP ':'
 #endif
 
+#ifndef has_dos_drive_prefix
+#define has_dos_drive_prefix(path) 0
+#endif
+
 #ifdef __GNUC__
 #define NORETURN __attribute__((__noreturn__))
 #else
@@ -466,21 +470,5 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #else
 # define FORCE_DIR_SET_GID 0
 #endif
-
-#ifdef __MINGW32__
-
-static inline int has_dos_drive_prefix(const char *path)
-{
-	return isalpha(*path) && path[1] == ':';
-}
-
-#else /* __MINGW32__ */
-
-static inline int has_dos_drive_prefix(const char *path)
-{
-	return 0;
-}
-
-#endif /* __MINGW32__ */
 
 #endif
