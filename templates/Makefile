@@ -34,11 +34,8 @@ boilerplates.made : $(bpsrc)
 		$(INSTALL) -d -m 755 blt/$$dir && \
 		case "$$boilerplate" in \
 		*--) ;; \
-		*) if test -n "$$(sed -ne '/^#!\//p' -e '1q' < "$$boilerplate")"; then \
-			cp -p "$$boilerplate" "blt/$${dst}$(NOEXECTEMPL)"; \
-		   else \
-			cp -p "$$boilerplate" "blt/$$dst"; \
-		   fi ;; \
+		hooks--*) cp -p $$boilerplate blt/$${dst}$(NOEXECTEMPL) ;; \
+		*) cp -p $$boilerplate blt/$$dst ;; \
 		esac || exit; \
 	done && \
 	date >$@
