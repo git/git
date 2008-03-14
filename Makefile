@@ -8,6 +8,7 @@ gitk_libdir   ?= $(sharedir)/gitk/lib
 msgsdir    ?= $(gitk_libdir)/msgs
 msgsdir_SQ  = $(subst ','\'',$(msgsdir))
 
+TCL_PATH ?= tclsh
 TCLTK_PATH ?= wish
 INSTALL ?= install
 RM ?= rm -f
@@ -22,6 +23,9 @@ ifdef NO_MSGFMT
 	MSGFMT ?= $(TCL_PATH) po/po2msg.sh
 else
 	MSGFMT ?= msgfmt
+	ifneq ($(shell $(MSGFMT) --tcl -l C -d . /dev/null 2>/dev/null; echo $$?),0)
+		MSGFMT := $(TCL_PATH) po/po2msg.sh
+	endif
 endif
 
 PO_TEMPLATE = po/gitk.pot
