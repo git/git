@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-12 22:09+0100\n"
+"POT-Creation-Date: 2008-03-14 07:18+0100\n"
 "PO-Revision-Date: 2008-03-12 22:12+0100\n"
 "Last-Translator: Michele Ballabio <barra_cuda@katamail.com>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
@@ -1784,18 +1784,6 @@ msgstr "Preferenze"
 msgid "Failed to completely save options:"
 msgstr "Impossibile salvare completamente le opzioni:"
 
-#: lib/remote.tcl:165
-msgid "Prune from"
-msgstr "Effettua potatura da"
-
-#: lib/remote.tcl:170
-msgid "Fetch from"
-msgstr "Recupera da"
-
-#: lib/remote.tcl:213
-msgid "Push to"
-msgstr "Propaga verso"
-
 #: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
 msgid "Delete Remote Branch"
 msgstr "Cancella ramo remoto"
@@ -1880,6 +1868,18 @@ msgstr "Nessun archivio selezionato."
 msgid "Scanning %s..."
 msgstr "Analisi in corso %s..."
 
+#: lib/remote.tcl:165
+msgid "Prune from"
+msgstr "Effettua potatura da"
+
+#: lib/remote.tcl:170
+msgid "Fetch from"
+msgstr "Recupera da"
+
+#: lib/remote.tcl:213
+msgid "Push to"
+msgstr "Propaga verso"
+
 #: lib/shortcut.tcl:20 lib/shortcut.tcl:61
 msgid "Cannot write shortcut:"
 msgstr "Impossibile scrivere shortcut:"
@@ -1910,6 +1910,7 @@ msgid "Spell checker silently failed on startup"
 msgstr "Il correttore ortografico ha riportato un errore all'avvio"
 
 #: lib/spellcheck.tcl:80
+#, fuzzy
 msgid "Unrecognized spell checker"
 msgstr "Correttore ortografico sconosciuto"
 
@@ -1918,6 +1919,7 @@ msgid "No Suggestions"
 msgstr "Nessun suggerimento"
 
 #: lib/spellcheck.tcl:381
+#, fuzzy
 msgid "Unexpected EOF from spell checker"
 msgstr "Il correttore ortografico ha mandato un EOF inaspettato"
 
