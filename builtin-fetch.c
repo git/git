@@ -40,6 +40,8 @@ static struct option builtin_fetch_options[] = {
 		    "force overwrite of local branch"),
 	OPT_SET_INT('t', "tags", &tags,
 		    "fetch all tags and associated objects", TAGS_SET),
+	OPT_SET_INT('n', NULL, &tags,
+		    "do not fetch all tags (--no-tags)", TAGS_UNSET),
 	OPT_BOOLEAN('k', "keep", &keep, "keep downloaded pack"),
 	OPT_BOOLEAN('u', "update-head-ok", &update_head_ok,
 		    "allow updating of HEAD ref"),
