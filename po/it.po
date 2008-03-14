@@ -1910,7 +1910,6 @@ msgid "Spell checker silently failed on startup"
 msgstr "Il correttore ortografico ha riportato un errore all'avvio"
 
 #: lib/spellcheck.tcl:80
-#, fuzzy
 msgid "Unrecognized spell checker"
 msgstr "Correttore ortografico sconosciuto"
 
@@ -1919,7 +1918,6 @@ msgid "No Suggestions"
 msgstr "Nessun suggerimento"
 
 #: lib/spellcheck.tcl:381
-#, fuzzy
 msgid "Unexpected EOF from spell checker"
 msgstr "Il correttore ortografico ha mandato un EOF inaspettato"
 
