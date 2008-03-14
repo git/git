@@ -420,6 +420,11 @@ branch.<name>.rebase::
 	it unless you understand the implications (see linkgit:git-rebase[1]
 	for details).
 
+browser.<tool>.cmd::
+	Specify the command to invoke the specified browser. The
+	specified command is evaluated in shell with the URLs passed
+	as arguments. (See linkgit:git-web--browse[1].)
+
 browser.<tool>.path::
 	Override the path for the given tool that may be used to
 	browse HTML help (see '-w' option in linkgit:git-help[1]) or a
