@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: git-gui-i 18n\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-03-14 07:18+0100\n"
-"PO-Revision-Date: 2008-03-13 13:30+0100\n"
+"PO-Revision-Date: 2008-03-14 17:24+0100\n"
 "Last-Translator: Miklos Vajna <vmiklos@frugalware.org>\n"
 "Language-Team: Hungarian\n"
 "MIME-Version: 1.0\n"
@@ -1739,9 +1739,8 @@ msgid "Number of Diff Context Lines"
 msgstr "A diff környezeti sorok száma"
 
 #: lib/option.tcl:127
-#, fuzzy
 msgid "Commit Message Text Width"
-msgstr "Commit üzenet:"
+msgstr "Commit üzenet szövegének szélessége"
 
 #: lib/option.tcl:128
 msgid "New Branch Name Template"
@@ -1878,40 +1877,36 @@ msgstr "Nem sikerült írni az ikont:"
 
 #: lib/spellcheck.tcl:57
 msgid "Unsupported spell checker"
-msgstr ""
+msgstr "Nem támogatott helyesírás-ellenőrző"
 
 #: lib/spellcheck.tcl:65
-#, fuzzy
 msgid "Spell checking is unavailable"
-msgstr "A helyesírás-ellenőrzés sikertelen"
+msgstr "A helyesírás-ellenőrzés nem elérhető"
 
 #: lib/spellcheck.tcl:68
 msgid "Invalid spell checking configuration"
-msgstr ""
+msgstr "Érvénytelen a helyesírás-ellenőrző beállítása"
 
 #: lib/spellcheck.tcl:70
 #, tcl-format
 msgid "Reverting dictionary to %s."
-msgstr ""
+msgstr "Szótár visszaállítása a következőre: %s."
 
 #: lib/spellcheck.tcl:73
-#, fuzzy
 msgid "Spell checker silently failed on startup"
-msgstr "A helyesírás-ellenőrzés sikertelen"
+msgstr "A helyesírás-ellenőrő indítása sikertelen"
 
 #: lib/spellcheck.tcl:80
-#, fuzzy
 msgid "Unrecognized spell checker"
-msgstr "Ismeretlen aspell verzió"
+msgstr "Ismeretlen helyesírás-ellenőrző"
 
 #: lib/spellcheck.tcl:180
 msgid "No Suggestions"
 msgstr "Nincs javaslat"
 
 #: lib/spellcheck.tcl:381
-#, fuzzy
 msgid "Unexpected EOF from spell checker"
-msgstr "Nem várt EOF az aspelltől"
+msgstr "Nem várt EOF a helyesírás-ellenőrzőtől"
 
 #: lib/spellcheck.tcl:385
 msgid "Spell Checker Failed"
