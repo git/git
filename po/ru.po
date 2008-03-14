@@ -806,7 +806,7 @@ msgstr "Обновление рабочего каталога из '%s'..."
 
 #: lib/checkout_op.tcl:323
 msgid "files checked out"
-msgstr ""
+msgstr "файлы извлечены"
 
 #: lib/checkout_op.tcl:353
 #, tcl-format
@@ -1250,7 +1250,6 @@ msgstr ""
 "Подготовьте хотя бы один файл до создания сохраненного состояния.\n"
 
 #: lib/commit.tcl:183
-#, fuzzy
 msgid ""
 "Please supply a commit message.\n"
 "\n"
@@ -1275,32 +1274,31 @@ msgstr "предупреждение: Tcl не поддерживает коди
 
 #: lib/commit.tcl:221
 msgid "Calling pre-commit hook..."
-msgstr ""
+msgstr "Вызов программы поддержки репозитория pre-commit..."
 
 #: lib/commit.tcl:236
 msgid "Commit declined by pre-commit hook."
-msgstr ""
+msgstr "Сохранение прервано программой поддержки репозитория pre-commit"
 
 #: lib/commit.tcl:259
 msgid "Calling commit-msg hook..."
-msgstr ""
+msgstr "Вызов программы поддержки репозитория commit-msg..."
 
 #: lib/commit.tcl:274
 msgid "Commit declined by commit-msg hook."
-msgstr ""
+msgstr "Сохранение прервано программой поддержки репозитория commit-msg"
 
 #: lib/commit.tcl:287
 msgid "Committing changes..."
-msgstr ""
+msgstr "Сохранение изменений..."
 
 #: lib/commit.tcl:303
 msgid "write-tree failed:"
 msgstr "Программа write-tree завершилась с ошибкой:"
 
 #: lib/commit.tcl:304 lib/commit.tcl:348 lib/commit.tcl:368
-#, fuzzy
 msgid "Commit failed."
-msgstr "Клонирование не удалось."
+msgstr "Сохранить состояние не удалось."
 
 #: lib/commit.tcl:321
 #, tcl-format
@@ -1506,7 +1504,6 @@ msgid "Unstaging %s from commit"
 msgstr "Удаление %s из подготовленного"
 
 #: lib/index.tcl:313
-#, fuzzy
 msgid "Ready to commit."
 msgstr "Подготовлено для сохранения"
 
@@ -1602,9 +1599,8 @@ msgid "%s of %s"
 msgstr "%s из %s"
 
 #: lib/merge.tcl:119
-#, fuzzy, tcl-format
 msgid "Merging %s and %s..."
-msgstr "Объединение %s и %s"
+msgstr "Объединение %s и %s..."
 
 #: lib/merge.tcl:130
 msgid "Merge completed successfully."
@@ -1666,9 +1662,8 @@ msgid "Aborting"
 msgstr "Прерываю"
 
 #: lib/merge.tcl:238
-#, fuzzy
 msgid "files reset"
-msgstr "файлов"
+msgstr "изменения в файлах отменены"
 
 #: lib/merge.tcl:265
 msgid "Abort failed."
@@ -1701,7 +1696,7 @@ msgstr "Имя пользователя"
 
 #: lib/option.tcl:117
 msgid "Email Address"
-msgstr "Адес электронной почты"
+msgstr "Адрес электронной почты"
 
 #: lib/option.tcl:119
 msgid "Summarize Merge Commits"
@@ -1732,9 +1727,8 @@ msgid "Number of Diff Context Lines"
 msgstr "Число строк в контексте diff"
 
 #: lib/option.tcl:127
-#, fuzzy
 msgid "Commit Message Text Width"
-msgstr "Комментарий к состоянию:"
+msgstr "Ширина комментария к состоянию:"
 
 #: lib/option.tcl:128
 msgid "New Branch Name Template"
@@ -1742,7 +1736,7 @@ msgstr "Шаблон для имени новой ветви"
 
 #: lib/option.tcl:192
 msgid "Spelling Dictionary:"
-msgstr ""
+msgstr "Словарь для проверки правописания:"
 
 #: lib/option.tcl:216
 msgid "Change Font"
@@ -1871,40 +1865,40 @@ msgstr "Невозможно записать значок:"
 
 #: lib/spellcheck.tcl:57
 msgid "Unsupported spell checker"
-msgstr ""
+msgstr "Неподдерживаемая программа проверки правописания"
 
 #: lib/spellcheck.tcl:65
 msgid "Spell checking is unavailable"
-msgstr ""
+msgstr "Проверка правописания не доступна"
 
 #: lib/spellcheck.tcl:68
 msgid "Invalid spell checking configuration"
-msgstr ""
+msgstr "Неправильная конфигурация программы проверки правописания"
 
 #: lib/spellcheck.tcl:70
 #, tcl-format
 msgid "Reverting dictionary to %s."
-msgstr ""
+msgstr "Словарь вернут к %s."
 
 #: lib/spellcheck.tcl:73
 msgid "Spell checker silently failed on startup"
-msgstr ""
+msgstr "Программа проверки правописания не смогла запустится"
 
 #: lib/spellcheck.tcl:80
 msgid "Unrecognized spell checker"
-msgstr ""
+msgstr "Нераспознаная программа проверки правописания"
 
 #: lib/spellcheck.tcl:180
 msgid "No Suggestions"
-msgstr ""
+msgstr "Исправлений не найдено"
 
 #: lib/spellcheck.tcl:381
 msgid "Unexpected EOF from spell checker"
-msgstr ""
+msgstr "Программа проверки правописания прервала передачу данных"
 
 #: lib/spellcheck.tcl:385
 msgid "Spell Checker Failed"
-msgstr ""
+msgstr "Ошибка проверки правописания"
 
 #: lib/status_bar.tcl:83
 #, tcl-format
