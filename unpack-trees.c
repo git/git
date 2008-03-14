@@ -123,7 +123,7 @@ static int unpack_index_entry(struct cache_entry *ce, struct unpack_trees_option
 int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
 {
 	int i;
-	struct tree_desc t[3];
+	struct tree_desc t[MAX_UNPACK_TREES];
 	struct traverse_info newinfo;
 	struct name_entry *p;
 
@@ -327,8 +327,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 {
 	static struct cache_entry *dfc;
 
-	if (len > 4)
-		die("unpack_trees takes at most four trees");
+	if (len > MAX_UNPACK_TREES)
+		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
 	memset(&state, 0, sizeof(state));
 	state.base_dir = "";
 	state.force = 1;

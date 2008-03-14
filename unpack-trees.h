@@ -1,6 +1,8 @@
 #ifndef UNPACK_TREES_H
 #define UNPACK_TREES_H
 
+#define MAX_UNPACK_TREES 8
+
 struct unpack_trees_options;
 
 typedef int (*merge_fn_t)(struct cache_entry **src,
