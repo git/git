@@ -632,15 +632,15 @@ The synopsis is like:
 	"$name <$email>" eq ident_person($name);
 	$time_tz =~ /^\d+ [+-]\d{4}$/;
 
-Both methods must be called on a repository instance.
-
 =cut
 
 sub ident {
-	my ($self, $type) = @_;
+	my ($self, $type) = _maybe_self(@_);
 	my $identstr;
 	if (lc $type eq lc 'committer' or lc $type eq lc 'author') {
-		$identstr = $self->command_oneline('var', 'GIT_'.uc($type).'_IDENT');
+		my @cmd = ('var', 'GIT_'.uc($type).'_IDENT');
+		unshift @cmd, $self if $self;
+		$identstr = command_oneline(@cmd);
 	} else {
 		$identstr = $type;
 	}
@@ -652,8 +652,8 @@ sub ident {
 }
 
 sub ident_person {
-	my ($self, @ident) = @_;
-	$#ident == 0 and @ident = $self->ident($ident[0]);
+	my ($self, @ident) = _maybe_self(@_);
+	$#ident == 0 and @ident = $self ? $self->ident($ident[0]) : ident($ident[0]);
 	return "$ident[0] <$ident[1]>";
 }
 
