@@ -102,7 +102,7 @@ For example, this configuration:
 will try to use konqueror first. But this may fail (for example if
 DISPLAY is not set) and in that case emacs' woman mode will be tried.
 
-If everythings fails the 'man' program will be tried anyway.
+If everything fails the 'man' program will be tried anyway.
 
 Note about git config --global
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
