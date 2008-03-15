@@ -78,8 +78,8 @@ mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
-	count=$(($(grep -ve '^$' -e '^#' < "$DONE" | wc -l)))
-	total=$(($count+$(grep -ve '^$' -e '^#' < "$TODO" | wc -l)))
+	count=$(grep -c '^[^#]' < "$DONE")
+	total=$(($count+$(grep -c '^[^#]' < "$TODO")))
 	if test "$last_count" != "$count"
 	then
 		last_count=$count
@@ -110,7 +110,7 @@ die_abort () {
 }
 
 has_action () {
-	grep -vqe '^$' -e '^#' "$1"
+	grep '^[^#]' "$1" >/dev/null
 }
 
 pick_one () {
@@ -218,7 +218,7 @@ nth_string () {
 make_squash_message () {
 	if test -f "$SQUASH_MSG"; then
 		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([1-9][0-9]*\).*/\1/p" \
-			< "$SQUASH_MSG" | tail -n 1)+1))
+			< "$SQUASH_MSG" | sed -ne '$p')+1))
 		echo "# This is a combination of $COUNT commits."
 		sed -e 1d -e '2,/^./{
 			/^$/d

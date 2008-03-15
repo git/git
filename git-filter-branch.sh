@@ -58,8 +58,8 @@ eval "$functions"
 # "author" or "committer
 
 set_ident () {
-	lid="$(echo "$1" | tr "A-Z" "a-z")"
-	uid="$(echo "$1" | tr "a-z" "A-Z")"
+	lid="$(echo "$1" | tr "[A-Z]" "[a-z]")"
+	uid="$(echo "$1" | tr "[a-z]" "[A-Z]")"
 	pick_id_script='
 		/^'$lid' /{
 			s/'\''/'\''\\'\'\''/g
@@ -281,7 +281,7 @@ while read commit parents; do
 			die "Could not checkout the index"
 		# files that $commit removed are now still in the working tree;
 		# remove them, else they would be added again
-		git ls-files -z --others | xargs -0 rm -f
+		git clean -q -f -x
 		eval "$filter_tree" < /dev/null ||
 			die "tree filter failed: $filter_tree"
 
@@ -309,7 +309,7 @@ while read commit parents; do
 	sed -e '1,/^$/d' <../commit | \
 		eval "$filter_msg" > ../message ||
 			die "msg filter failed: $filter_msg"
-	sh -c "$filter_commit" "git commit-tree" \
+	@SHELL_PATH@ -c "$filter_commit" "git commit-tree" \
 		$(git write-tree) $parentstr < ../message > ../map/$commit
 done <../revs
 

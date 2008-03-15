@@ -97,7 +97,13 @@ check_output()
 # from front and back.
 name_from_description()
 {
-        tr "'" '-' | tr '~`!@#$%^&*()_+={}[]|\;:"<>,/? ' '-' | tr -s '-' | tr '[A-Z]' '[a-z]' | sed "s/^-*//;s/-*\$//"
+	perl -pe '
+		s/[^A-Za-z0-9.]/-/g;
+		s/-+/-/g;
+		s/-$//;
+		s/^-//;
+		y/A-Z/a-z/;
+	'
 }
 
 

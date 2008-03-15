@@ -148,6 +148,9 @@ all::
 # is a simplified version of the merge sort used in glibc. This is
 # recommended if Git triggers O(n^2) behavior in your platform's qsort().
 #
+# Define NO_EXTERNAL_GREP if you don't want "git grep" to ever call
+# your external grep (e.g., if your system lacks grep, if its grep is
+# broken, or spawning external process is slower than built-in grep git has).
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -760,6 +763,9 @@ endif
 ifdef DIR_HAS_BSD_GROUP_SEMANTICS
 	COMPAT_CFLAGS += -DDIR_HAS_BSD_GROUP_SEMANTICS
 endif
+ifdef NO_EXTERNAL_GREP
+	BASIC_CFLAGS += -DNO_EXTERNAL_GREP
+endif
 
 ifeq ($(TCLTK_PATH),)
 NO_TCLTK=NoThanks
@@ -867,6 +873,7 @@ common-cmds.h: $(wildcard Documentation/git-*.txt)
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+	    -e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
 	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \

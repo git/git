@@ -33,7 +33,7 @@ test_expect_success 'setup' '
 
 test_expect_success 'status (1)' '
 
-	grep -e "use \"git rm --cached <file>\.\.\.\" to unstage" output
+	grep "use \"git rm --cached <file>\.\.\.\" to unstage" output
 
 '
 
@@ -146,7 +146,7 @@ cat <<EOF >expect
 EOF
 test_expect_success 'status of partial commit excluding new file in index' '
 	git status dir1/modified >output &&
-	diff -u expect output
+	test_cmp expect output
 '
 
 test_done

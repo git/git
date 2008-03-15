@@ -293,14 +293,14 @@ bisect_next() {
 	bisect_next_check good
 
 	skip=$(git for-each-ref --format='%(objectname)' \
-		"refs/bisect/skip-*" | tr '[\012]' ' ') || exit
+		"refs/bisect/skip-*" | tr '\012' ' ') || exit
 
 	BISECT_OPT=''
 	test -n "$skip" && BISECT_OPT='--bisect-all'
 
 	bad=$(git rev-parse --verify refs/bisect/bad) &&
 	good=$(git for-each-ref --format='^%(objectname)' \
-		"refs/bisect/good-*" | tr '[\012]' ' ') &&
+		"refs/bisect/good-*" | tr '\012' ' ') &&
 	eval="git rev-list --bisect-vars $BISECT_OPT $good $bad --" &&
 	eval="$eval $(cat "$GIT_DIR/BISECT_NAMES")" &&
 	eval=$(filter_skipped "$eval" "$skip") &&

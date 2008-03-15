@@ -42,6 +42,7 @@ export GIT_MERGE_VERBOSITY
 export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 export EDITOR VISUAL
+GIT_TEST_CMP=${GIT_TEST_CMP:-diff -u}
 
 # Protect ourselves from common misconfiguration to export
 # CDPATH into the environment
@@ -300,6 +301,23 @@ test_expect_code () {
 test_must_fail () {
 	"$@"
 	test $? -gt 0 -a $? -le 128
+}
+
+# test_cmp is a helper function to compare actual and expected output.
+# You can use it like:
+#
+#	test_expect_success 'foo works' '
+#		echo expected >expected &&
+#		foo >actual &&
+#		test_cmp expected actual
+#	'
+#
+# This could be written as either "cmp" or "diff -u", but:
+# - cmp's output is not nearly as easy to read as diff -u
+# - not all diff versions understand "-u"
+
+test_cmp() {
+	$GIT_TEST_CMP "$@"
 }
 
 # Most tests can use the created repository, but some may need to create more.

@@ -5,7 +5,7 @@ test_description='CRLF conversion'
 . ./test-lib.sh
 
 q_to_nul () {
-	tr Q '\000'
+	perl -pe 'y/Q/\000/'
 }
 
 q_to_cr () {

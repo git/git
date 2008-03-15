@@ -83,13 +83,13 @@ test_expect_success "checkout with unrelated dirty tree without -m" '
 	fill 0 1 2 3 4 5 6 7 8 >same &&
 	cp same kept
 	git checkout side >messages &&
-	diff -u same kept
+	test_cmp same kept
 	(cat > messages.expect <<EOF
 M	same
 EOF
 ) &&
 	touch messages.expect &&
-	diff -u messages.expect messages
+	test_cmp messages.expect messages
 '
 
 test_expect_success "checkout -m with dirty tree" '
@@ -106,19 +106,19 @@ test_expect_success "checkout -m with dirty tree" '
 M	one
 EOF
 ) &&
-	diff -u expect.messages messages &&
+	test_cmp expect.messages messages &&
 
 	fill "M	one" "A	three" "D	two" >expect.master &&
 	git diff --name-status master >current.master &&
-	diff -u expect.master current.master &&
+	test_cmp expect.master current.master &&
 
 	fill "M	one" >expect.side &&
 	git diff --name-status side >current.side &&
-	diff -u expect.side current.side &&
+	test_cmp expect.side current.side &&
 
 	: >expect.index &&
 	git diff --cached >current.index &&
-	diff -u expect.index current.index
+	test_cmp expect.index current.index
 '
 
 test_expect_success "checkout -m with dirty tree, renamed" '
@@ -136,7 +136,7 @@ test_expect_success "checkout -m with dirty tree, renamed" '
 
 	git checkout -m renamer &&
 	fill 1 3 4 5 7 8 >expect &&
-	diff -u expect uno &&
+	test_cmp expect uno &&
 	! test -f one &&
 	git diff --cached >current &&
 	! test -s current
@@ -161,7 +161,7 @@ test_expect_success 'checkout -m with merge conflict' '
 	git diff master:one :3:uno |
 	sed -e "1,/^@@/d" -e "/^ /d" -e "s/^-/d/" -e "s/^+/a/" >current &&
 	fill d2 aT d7 aS >expect &&
-	diff -u current expect &&
+	test_cmp current expect &&
 	git diff --cached two >current &&
 	! test -s current
 '
@@ -178,7 +178,7 @@ If you want to create a new branch from this checkout, you may do so
 HEAD is now at 7329388... Initial A one, A two
 EOF
 ) &&
-	diff -u messages.expect messages &&
+	test_cmp messages.expect messages &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
