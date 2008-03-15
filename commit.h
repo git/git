@@ -70,7 +70,7 @@ extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit*,
                                 struct strbuf *,
                                 int abbrev, const char *subject,
                                 const char *after_subject, enum date_mode,
-				int non_ascii_present);
+				int need_8bit_cte);
 void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 		   const char *line, enum date_mode dmode,
 		   const char *encoding);
@@ -80,7 +80,7 @@ void pp_title_line(enum cmit_fmt fmt,
 		   const char *subject,
 		   const char *after_subject,
 		   const char *encoding,
-		   int plain_non_ascii);
+		   int need_8bit_cte);
 void pp_remainder(enum cmit_fmt fmt,
 		  const char **msg_p,
 		  struct strbuf *sb,
