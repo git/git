@@ -336,6 +336,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	state.refresh_cache = 1;
 
 	memset(&o->result, 0, sizeof(o->result));
+	if (o->src_index)
+		o->result.timestamp = o->src_index->timestamp;
 	o->merge_size = len;
 
 	if (!dfc)
