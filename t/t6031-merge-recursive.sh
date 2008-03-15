@@ -42,7 +42,7 @@ test_expect_success 'mode change in both branches: expect conflict' '
 		echo "100755 $H 2	file2"
 		echo "100644 $H 3	file2"
 	) >expect &&
-	diff -u actual expect &&
+	test_cmp actual expect &&
 	test -x file2
 '
 

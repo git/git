@@ -50,6 +50,6 @@ test_expect_success 'shortlog wrapping' 'test_cmp expect out'
 git log HEAD > log
 GIT_DIR=non-existing git shortlog -w < log > out
 
-test_expect_success 'shortlog from non-git directory' 'diff -u expect out'
+test_expect_success 'shortlog from non-git directory' 'test_cmp expect out'
 
 test_done
