@@ -757,6 +757,10 @@ log.showroot::
 	Tools like linkgit:git-log[1] or linkgit:git-whatchanged[1], which
 	normally hide the root commit will now show it. True by default.
 
+man.viewer::
+	Specify the programs that may be used to display help in the
+	'man' format. See linkgit:git-help[1].
+
 merge.summary::
 	Whether to include summaries of merged commits in newly created
 	merge commit messages. False by default.
