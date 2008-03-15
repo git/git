@@ -70,7 +70,7 @@ extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit*,
                                 struct strbuf *,
                                 int abbrev, const char *subject,
                                 const char *after_subject, enum date_mode,
-				int non_ascii_present);
+				int need_8bit_cte);
 
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
