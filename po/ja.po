@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-03-14 07:18+0100\n"
-"PO-Revision-Date: 2008-03-14 20:32+0900\n"
+"PO-Revision-Date: 2008-03-15 20:12+0900\n"
 "Last-Translator: しらいし ななこ <nanako3@bluebottle.com>\n"
 "Language-Team: Japanese\n"
 "MIME-Version: 1.0\n"
@@ -1724,9 +1724,8 @@ msgid "Number of Diff Context Lines"
 msgstr "diff の文脈行数"
 
 #: lib/option.tcl:127
-#, fuzzy
 msgid "Commit Message Text Width"
-msgstr "コミットメッセージ:"
+msgstr "コミットメッセージのテキスト幅"
 
 #: lib/option.tcl:128
 msgid "New Branch Name Template"
@@ -1863,39 +1862,36 @@ msgstr "アイコンが書けません:"
 
 #: lib/spellcheck.tcl:57
 msgid "Unsupported spell checker"
-msgstr ""
+msgstr "サポートされていないスペルチェッカーです"
 
 #: lib/spellcheck.tcl:65
-#, fuzzy
 msgid "Spell checking is unavailable"
-msgstr "スペルチェック失敗"
+msgstr "スペルチェック機能は使えません"
 
 #: lib/spellcheck.tcl:68
 msgid "Invalid spell checking configuration"
-msgstr ""
+msgstr "スペルチェックの設定が不正です"
 
 #: lib/spellcheck.tcl:70
 #, tcl-format
 msgid "Reverting dictionary to %s."
-msgstr ""
+msgstr "辞書を %s に巻き戻します"
 
 #: lib/spellcheck.tcl:73
 msgid "Spell checker silently failed on startup"
-msgstr ""
+msgstr "スペルチェッカーの起動に失敗しました"
 
 #: lib/spellcheck.tcl:80
-#, fuzzy
 msgid "Unrecognized spell checker"
-msgstr "aspell バージョンが判別できません"
+msgstr "スペルチェッカーが判別できません"
 
 #: lib/spellcheck.tcl:180
 msgid "No Suggestions"
 msgstr "提案なし"
 
 #: lib/spellcheck.tcl:381
-#, fuzzy
 msgid "Unexpected EOF from spell checker"
-msgstr "aspell が予想外の EOF を返しました"
+msgstr "スペルチェッカーが予想外の EOF を返しました"
 
 #: lib/spellcheck.tcl:385
 msgid "Spell Checker Failed"
