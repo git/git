@@ -63,7 +63,7 @@ mkdir -p "$new_workdir/.git" || die "unable to create \"$new_workdir\"!"
 # create the links to the original repo.  explictly exclude index, HEAD and
 # logs/HEAD from the list since they are purely related to the current working
 # directory, and should not be shared.
-for x in config refs logs/refs objects info hooks packed-refs remotes rr-cache
+for x in config refs logs/refs objects info hooks packed-refs remotes rr-cache svn
 do
 	case $x in
 	*/*)
