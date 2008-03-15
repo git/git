@@ -38,7 +38,7 @@ constructor pick {} {
 		menu $m_repo
 
 		if {[is_MacOSX]} {
-			$w.mbar add cascade -label [mc Apple] -menu .mbar.apple
+			$w.mbar add cascade -label Apple -menu .mbar.apple
 			menu $w.mbar.apple
 			$w.mbar.apple add command \
 				-label [mc "About %s" [appname]] \
