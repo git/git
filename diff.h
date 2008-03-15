@@ -98,6 +98,9 @@ struct diff_options {
 	/* this is set by diffcore for DIFF_FORMAT_PATCH */
 	int found_changes;
 
+	FILE *file;
+	int close_file;
+
 	int nr_paths;
 	const char **paths;
 	int *pathlens;
