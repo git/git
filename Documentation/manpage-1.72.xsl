@@ -1,5 +1,9 @@
-<!-- callout.xsl: converts asciidoc callouts to man page format -->
+<!-- Based on callouts.xsl. Fixes man page callouts for DocBook 1.72 XSL -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+
+<xsl:param name="man.output.quietly" select="1"/>
+<xsl:param name="refentry.meta.get.quietly" select="1"/>
+
 <xsl:template match="co">
 	<xsl:value-of select="concat('&#x2593;fB(',substring-after(@id,'-'),')&#x2593;fR')"/>
 </xsl:template>
