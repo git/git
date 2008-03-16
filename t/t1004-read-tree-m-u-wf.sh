@@ -116,4 +116,45 @@ test_expect_success 'three-way not complaining on an untracked file' '
 	git read-tree -m -u --exclude-per-directory=.gitignore branch-point master side
 '
 
+test_expect_success '3-way not overwriting local changes (setup)' '
+
+	git reset --hard &&
+	git checkout -b side-a branch-point &&
+	echo >>file1 "new line to be kept in the merge result" &&
+	git commit -a -m "side-a changes file1" &&
+	git checkout -b side-b branch-point &&
+	echo >>file2 "new line to be kept in the merge result" &&
+	git commit -a -m "side-b changes file2" &&
+	git checkout side-a
+
+'
+
+test_expect_success '3-way not overwriting local changes (our side)' '
+
+	# At this point, file1 from side-a should be kept as side-b
+	# did not touch it.
+
+	git reset --hard &&
+
+	echo >>file1 "local changes" &&
+	git read-tree -m -u branch-point side-a side-b &&
+	grep "new line to be kept" file1 &&
+	grep "local changes" file1
+
+'
+
+test_expect_success '3-way not overwriting local changes (their side)' '
+
+	# At this point, file2 from side-b should be taken as side-a
+	# did not touch it.
+
+	git reset --hard &&
+
+	echo >>file2 "local changes" &&
+	test_must_fail git read-tree -m -u branch-point side-a side-b &&
+	! grep "new line to be kept" file2 &&
+	grep "local changes" file2
+
+'
+
 test_done
