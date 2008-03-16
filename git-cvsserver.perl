@@ -2633,7 +2633,7 @@ sub update
                     };
                     $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
-                elsif ( $change eq "M" )
+                elsif ( $change eq "M" || $change eq "T" )
                 {
                     #$log->debug("MODIFIED $name");
                     $head->{$name} = {
