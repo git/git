@@ -37,7 +37,7 @@ test_expect_success 'hunk header truncation with an overly long line' '
 		echo " A $N$N$N$N$N$N$N$N$N2"
 		echo " L  $N$N$N$N$N$N$N$N$N1"
 	) >expected &&
-	diff -u actual expected
+	test_cmp actual expected
 
 '
 

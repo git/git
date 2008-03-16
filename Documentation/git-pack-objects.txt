@@ -73,6 +73,11 @@ base-name::
 	as if all refs under `$GIT_DIR/refs` are specified to be
 	included.
 
+--include-tag::
+	Include unasked-for annotated tags if the object they
+	reference was included in the resulting packfile.  This
+	can be useful to send new tags to native git clients.
+
 --window=[N], --depth=[N]::
 	These two options affect how the objects contained in
 	the pack are stored using delta compression.  The
@@ -177,6 +182,8 @@ base-name::
 	This is meant to reduce packing time on multiprocessor machines.
 	The required amount of memory for the delta search window is
 	however multiplied by the number of threads.
+	Specifying 0 will cause git to auto-detect the number of CPU's
+	and set the number of threads accordingly.
 
 --index-version=<version>[,<offset>]::
 	This is intended to be used by the test suite only. It allows

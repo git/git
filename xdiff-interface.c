@@ -152,8 +152,8 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 	if ((f = fopen(filename, "rb")) == NULL)
 		return error("Could not open %s", filename);
 	sz = xsize_t(st.st_size);
-	ptr->ptr = xmalloc(sz);
-	if (fread(ptr->ptr, sz, 1, f) != 1)
+	ptr->ptr = xmalloc(sz ? sz : 1);
+	if (sz && fread(ptr->ptr, sz, 1, f) != 1)
 		return error("Could not read %s", filename);
 	fclose(f);
 	ptr->size = sz;
@@ -233,8 +233,7 @@ void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value)
 			expression = value;
 		if (regcomp(&reg->re, expression, 0))
 			die("Invalid regexp to look for hunk header: %s", expression);
-		if (buffer)
-			free(buffer);
+		free(buffer);
 		value = ep + 1;
 	}
 }

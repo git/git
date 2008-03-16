@@ -45,14 +45,12 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 	memset(&gpg, 0, sizeof(gpg));
 	gpg.argv = args_gpg;
 	gpg.in = -1;
-	gpg.out = 1;
 	args_gpg[2] = path;
 	if (start_command(&gpg))
 		return error("could not run gpg.");
 
 	write_in_full(gpg.in, buf, len);
 	close(gpg.in);
-	gpg.close_in = 0;
 	ret = finish_command(&gpg);
 
 	unlink(path);

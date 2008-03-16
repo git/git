@@ -17,12 +17,16 @@ static const char * const describe_usage[] = {
 static int debug;	/* Display lots of verbose info */
 static int all;	/* Default to annotated tags only */
 static int tags;	/* But allow any tags if --tags is specified */
+static int longformat;
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
 const char *pattern = NULL;
+static int always;
 
 struct commit_name {
+	struct tag *tag;
 	int prio; /* annotated tag = 2, tag = 1, head = 0 */
+	unsigned char sha1[20];
 	char path[FLEX_ARRAY]; /* more */
 };
 static const char *prio_names[] = {
@@ -31,14 +35,17 @@ static const char *prio_names[] = {
 
 static void add_to_known_names(const char *path,
 			       struct commit *commit,
-			       int prio)
+			       int prio,
+			       const unsigned char *sha1)
 {
 	struct commit_name *e = commit->util;
 	if (!e || e->prio < prio) {
 		size_t len = strlen(path)+1;
 		free(e);
 		e = xmalloc(sizeof(struct commit_name) + len);
+		e->tag = NULL;
 		e->prio = prio;
+		hashcpy(e->sha1, sha1);
 		memcpy(e->path, path, len);
 		commit->util = e;
 	}
@@ -46,19 +53,34 @@ static void add_to_known_names(const char *path,
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
-	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
+	int might_be_tag = !prefixcmp(path, "refs/tags/");
+	struct commit *commit;
 	struct object *object;
-	int prio;
+	unsigned char peeled[20];
+	int is_tag, prio;
 
-	if (!commit)
+	if (!all && !might_be_tag)
 		return 0;
-	object = parse_object(sha1);
+
+	if (!peel_ref(path, peeled) && !is_null_sha1(peeled)) {
+		commit = lookup_commit_reference_gently(peeled, 1);
+		if (!commit)
+			return 0;
+		is_tag = !!hashcmp(sha1, commit->object.sha1);
+	} else {
+		commit = lookup_commit_reference_gently(sha1, 1);
+		object = parse_object(sha1);
+		if (!commit || !object)
+			return 0;
+		is_tag = object->type == OBJ_TAG;
+	}
+
 	/* If --all, then any refs are used.
 	 * If --tags, then any tags are used.
 	 * Otherwise only annotated tags are used.
 	 */
-	if (!prefixcmp(path, "refs/tags/")) {
-		if (object->type == OBJ_TAG) {
+	if (might_be_tag) {
+		if (is_tag) {
 			prio = 2;
 			if (pattern && fnmatch(pattern, path + 10, 0))
 				prio = 0;
@@ -74,7 +96,7 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 		if (!tags && prio < 2)
 			return 0;
 	}
-	add_to_known_names(all ? path + 5 : path + 10, commit, prio);
+	add_to_known_names(all ? path + 5 : path + 10, commit, prio, sha1);
 	return 0;
 }
 
@@ -131,6 +153,27 @@ static unsigned long finish_depth_computation(
 	return seen_commits;
 }
 
+static void display_name(struct commit_name *n)
+{
+	if (n->prio == 2 && !n->tag) {
+		n->tag = lookup_tag(n->sha1);
+		if (!n->tag || parse_tag(n->tag) || !n->tag->tag)
+			die("annotated tag %s not available", n->path);
+		if (strcmp(n->tag->tag, n->path))
+			warning("tag '%s' is really '%s' here", n->tag->tag, n->path);
+	}
+
+	if (n->tag)
+		printf("%s", n->tag->tag);
+	else
+		printf("%s", n->path);
+}
+
+static void show_suffix(int depth, const unsigned char *sha1)
+{
+	printf("-%d-g%s", depth, find_unique_abbrev(sha1, abbrev));
+}
+
 static void describe(const char *arg, int last_one)
 {
 	unsigned char sha1[20];
@@ -155,10 +198,18 @@ static void describe(const char *arg, int last_one)
 
 	n = cmit->util;
 	if (n) {
-		printf("%s\n", n->path);
+		/*
+		 * Exact match to an existing ref.
+		 */
+		display_name(n);
+		if (longformat)
+			show_suffix(0, n->tag->tagged->sha1);
+		printf("\n");
 		return;
 	}
 
+	if (!max_candidates)
+		die("no tag exactly matches '%s'", sha1_to_hex(cmit->object.sha1));
 	if (debug)
 		fprintf(stderr, "searching to describe %s\n", arg);
 
@@ -207,8 +258,14 @@ static void describe(const char *arg, int last_one)
 		}
 	}
 
-	if (!match_cnt)
-		die("cannot describe '%s'", sha1_to_hex(cmit->object.sha1));
+	if (!match_cnt) {
+		const unsigned char *sha1 = cmit->object.sha1;
+		if (always) {
+			printf("%s\n", find_unique_abbrev(sha1, abbrev));
+			return;
+		}
+		die("cannot describe '%s'", sha1_to_hex(sha1));
+	}
 
 	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
 
@@ -235,12 +292,11 @@ static void describe(const char *arg, int last_one)
 				sha1_to_hex(gave_up_on->object.sha1));
 		}
 	}
-	if (abbrev == 0)
-		printf("%s\n", all_matches[0].name->path );
-	else
-		printf("%s-%d-g%s\n", all_matches[0].name->path,
-		       all_matches[0].depth,
-		       find_unique_abbrev(cmit->object.sha1, abbrev));
+
+	display_name(all_matches[0].name);
+	if (abbrev)
+		show_suffix(all_matches[0].depth, cmit->object.sha1);
+	printf("\n");
 
 	if (!last_one)
 		clear_commit_marks(cmit, -1);
@@ -254,28 +310,38 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "debug",      &debug, "debug search strategy on stderr"),
 		OPT_BOOLEAN(0, "all",        &all, "use any ref in .git/refs"),
 		OPT_BOOLEAN(0, "tags",       &tags, "use any tag in .git/refs/tags"),
+		OPT_BOOLEAN(0, "long",       &longformat, "always use long format"),
 		OPT__ABBREV(&abbrev),
+		OPT_SET_INT(0, "exact-match", &max_candidates,
+			    "only output exact matches", 0),
 		OPT_INTEGER(0, "candidates", &max_candidates,
 			    "consider <n> most recent tags (default: 10)"),
 		OPT_STRING(0, "match",       &pattern, "pattern",
 			   "only consider tags matching <pattern>"),
+		OPT_BOOLEAN(0, "always",     &always,
+			   "show abbreviated commit object as fallback"),
 		OPT_END(),
 	};
 
 	argc = parse_options(argc, argv, options, describe_usage, 0);
-	if (max_candidates < 1)
-		max_candidates = 1;
+	if (max_candidates < 0)
+		max_candidates = 0;
 	else if (max_candidates > MAX_TAGS)
 		max_candidates = MAX_TAGS;
 
 	save_commit_buffer = 0;
 
+	if (longformat && abbrev == 0)
+		die("--long is incompatible with --abbrev=0");
+
 	if (contains) {
-		const char **args = xmalloc((6 + argc) * sizeof(char*));
+		const char **args = xmalloc((7 + argc) * sizeof(char*));
 		int i = 0;
 		args[i++] = "name-rev";
 		args[i++] = "--name-only";
 		args[i++] = "--no-undefined";
+		if (always)
+			args[i++] = "--always";
 		if (!all) {
 			args[i++] = "--tags";
 			if (pattern) {

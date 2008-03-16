@@ -6,7 +6,8 @@
 
 struct optparse_t {
 	const char **argv;
-	int argc;
+	const char **out;
+	int argc, cpidx;
 	const char *opt;
 };
 
@@ -159,6 +160,16 @@ static int parse_long_opt(struct optparse_t *p, const char *arg,
 			continue;
 
 		rest = skip_prefix(arg, options->long_name);
+		if (options->type == OPTION_ARGUMENT) {
+			if (!rest)
+				continue;
+			if (*rest == '=')
+				return opterror(options, "takes no value", flags);
+			if (*rest)
+				continue;
+			p->out[p->cpidx++] = arg - 2;
+			return 0;
+		}
 		if (!rest) {
 			/* abbreviated? */
 			if (!strncmp(options->long_name, arg, arg_end - arg)) {
@@ -242,14 +253,15 @@ static NORETURN void usage_with_options_internal(const char * const *,
 int parse_options(int argc, const char **argv, const struct option *options,
                   const char * const usagestr[], int flags)
 {
-	struct optparse_t args = { argv + 1, argc - 1, NULL };
-	int j = 0;
+	struct optparse_t args = { argv + 1, argv, argc - 1, 0, NULL };
 
 	for (; args.argc; args.argc--, args.argv++) {
 		const char *arg = args.argv[0];
 
 		if (*arg != '-' || !arg[1]) {
-			argv[j++] = args.argv[0];
+			if (flags & PARSE_OPT_STOP_AT_NON_OPTION)
+				break;
+			args.out[args.cpidx++] = args.argv[0];
 			continue;
 		}
 
@@ -286,9 +298,9 @@ int parse_options(int argc, const char **argv, const struct option *options,
 			usage_with_options(usagestr, options);
 	}
 
-	memmove(argv + j, args.argv, args.argc * sizeof(*argv));
-	argv[j + args.argc] = NULL;
-	return j + args.argc;
+	memmove(args.out + args.cpidx, args.argv, args.argc * sizeof(*args.out));
+	args.out[args.cpidx + args.argc] = NULL;
+	return args.cpidx + args.argc;
 }
 
 #define USAGE_OPTS_WIDTH 24
@@ -328,6 +340,8 @@ void usage_with_options_internal(const char * const *usagestr,
 			pos += fprintf(stderr, "--%s", opts->long_name);
 
 		switch (opts->type) {
+		case OPTION_ARGUMENT:
+			break;
 		case OPTION_INTEGER:
 			if (opts->flags & PARSE_OPT_OPTARG)
 				pos += fprintf(stderr, " [<n>]");

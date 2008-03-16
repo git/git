@@ -41,8 +41,8 @@ test_expect_success rebase '
 	git rebase master side &&
 	git cat-file commit HEAD | sed -e "1,/^\$/d" >F1 &&
 
-	diff -u F0 F1 &&
-	diff -u F F0
+	test_cmp F0 F1 &&
+	test_cmp F F0
 '
 
 test_done

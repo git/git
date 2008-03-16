@@ -39,7 +39,8 @@ constructor new {commit {path {}}} {
 
 	frame $w.list
 	set w_list $w.list.l
-	text $w_list -background white -borderwidth 0 \
+	text $w_list -background white -foreground black \
+		-borderwidth 0 \
 		-cursor $cursor_ptr \
 		-state disabled \
 		-wrap none \

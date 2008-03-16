@@ -1,6 +1,8 @@
 #ifndef WALKER_H
 #define WALKER_H
 
+#include "remote.h"
+
 struct walker {
 	void *data;
 	int (*fetch_ref)(struct walker *, char *ref, unsigned char *sha1);
@@ -32,6 +34,6 @@ int walker_fetch(struct walker *impl, int targets, char **target,
 
 void walker_free(struct walker *walker);
 
-struct walker *get_http_walker(const char *url);
+struct walker *get_http_walker(const char *url, struct remote *remote);
 
 #endif /* WALKER_H */

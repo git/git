@@ -8,6 +8,7 @@
 #include "tag.h"
 #include "tree.h"
 #include "progress.h"
+#include "decorate.h"
 
 static int dry_run, quiet, recover, has_errors;
 static const char unpack_usage[] = "git-unpack-objects [-n] [-q] [-r] < pack-file";
@@ -17,6 +18,18 @@ static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
 static SHA_CTX ctx;
+
+struct obj_buffer {
+	char *buffer;
+	unsigned long size;
+};
+
+static struct decoration obj_decorate;
+
+static struct obj_buffer *lookup_object_buffer(struct object *base)
+{
+	return lookup_decoration(&obj_decorate, base);
+}
 
 /*
  * Make sure at least "min" bytes are available in the buffer, and
@@ -189,6 +202,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	void *delta_data, *base;
 	unsigned long base_size;
 	unsigned char base_sha1[20];
+	struct object *obj;
 
 	if (type == OBJ_REF_DELTA) {
 		hashcpy(base_sha1, fill(20));
@@ -248,6 +262,15 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			   has not been	resolved yet. */
 			hashcpy(obj_list[nr].sha1, null_sha1);
 			add_delta_to_list(nr, null_sha1, base_offset, delta_data, delta_size);
+			return;
+		}
+	}
+
+	obj = lookup_object(base_sha1);
+	if (obj) {
+		struct obj_buffer *obj_buf = lookup_object_buffer(obj);
+		if (obj_buf) {
+			resolve_delta(nr, obj->type, obj_buf->buffer, obj_buf->size, delta_data, delta_size);
 			return;
 		}
 	}

@@ -7,6 +7,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "diffcore.h"
+#include "quote.h"
 
 int wt_status_relative_paths = 1;
 int wt_status_use_color = -1;
@@ -82,51 +83,7 @@ static void wt_status_print_trailer(struct wt_status *s)
 	color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
 }
 
-static char *quote_path(const char *in, int len,
-			struct strbuf *out, const char *prefix)
-{
-	if (len < 0)
-		len = strlen(in);
-
-	strbuf_grow(out, len);
-	strbuf_setlen(out, 0);
-	if (prefix) {
-		int off = 0;
-		while (prefix[off] && off < len && prefix[off] == in[off])
-			if (prefix[off] == '/') {
-				prefix += off + 1;
-				in += off + 1;
-				len -= off + 1;
-				off = 0;
-			} else
-				off++;
-
-		for (; *prefix; prefix++)
-			if (*prefix == '/')
-				strbuf_addstr(out, "../");
-	}
-
-	for ( ; len > 0; in++, len--) {
-		int ch = *in;
-
-		switch (ch) {
-		case '\n':
-			strbuf_addstr(out, "\\n");
-			break;
-		case '\r':
-			strbuf_addstr(out, "\\r");
-			break;
-		default:
-			strbuf_addch(out, ch);
-			continue;
-		}
-	}
-
-	if (!out->len)
-		strbuf_addstr(out, "./");
-
-	return out->buf;
-}
+#define quote_path quote_path_relative
 
 static void wt_status_print_filepair(struct wt_status *s,
 				     int t, struct diff_filepair *p)
@@ -312,29 +269,14 @@ static void wt_status_print_untracked(struct wt_status *s)
 static void wt_status_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
-	int saved_stdout = -1;
-
-	fflush(s->fp);
-
-	/* Sigh, the entire diff machinery is hardcoded to output to
-	 * stdout.  Do the dup-dance...*/
-	if (fileno(s->fp) != STDOUT_FILENO) {
-		saved_stdout = dup(STDOUT_FILENO);
-		if (saved_stdout < 0 ||dup2(fileno(s->fp), STDOUT_FILENO) < 0)
-			die("couldn't redirect stdout\n");
-	}
 
 	init_revisions(&rev, NULL);
 	setup_revisions(0, NULL, &rev, s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
+	rev.diffopt.file = s->fp;
+	rev.diffopt.close_file = 0;
 	run_diff_index(&rev, 1);
-
-	fflush(stdout);
-
-	if (saved_stdout >= 0 && dup2(saved_stdout, STDOUT_FILENO) < 0)
-		die("couldn't restore stdout\n");
-	close(saved_stdout);
 }
 
 void wt_status_print(struct wt_status *s)

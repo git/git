@@ -18,7 +18,7 @@ static struct fetch_pack_args args = {
 };
 
 static const char fetch_pack_usage[] =
-"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]";
+"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]";
 
 #define COMPLETE	(1U << 0)
 #define COMMON		(1U << 1)
@@ -41,7 +41,8 @@ static void rev_list_push(struct commit *commit, int mark)
 		commit->object.flags |= mark;
 
 		if (!(commit->object.parsed))
-			parse_commit(commit);
+			if (parse_commit(commit))
+				return;
 
 		insert_by_date(commit, &rev_list);
 
@@ -83,7 +84,8 @@ static void mark_common(struct commit *commit,
 			if (!ancestors_only && !(o->flags & POPPED))
 				non_common_revs--;
 			if (!o->parsed && !dont_parse)
-				parse_commit(commit);
+				if (parse_commit(commit))
+					return;
 
 			for (parents = commit->parents;
 					parents;
@@ -103,19 +105,19 @@ static const unsigned char* get_rev(void)
 
 	while (commit == NULL) {
 		unsigned int mark;
-		struct commit_list* parents;
+		struct commit_list *parents = NULL;
 
 		if (rev_list == NULL || non_common_revs == 0)
 			return NULL;
 
 		commit = rev_list->item;
 		if (!(commit->object.parsed))
-			parse_commit(commit);
+			if (!parse_commit(commit))
+				parents = commit->parents;
+
 		commit->object.flags |= POPPED;
 		if (!(commit->object.flags & COMMON))
 			non_common_revs--;
-
-		parents = commit->parents;
 
 		if (commit->object.flags & COMMON) {
 			/* do not send "have", and ignore ancestors */
@@ -174,13 +176,14 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		}
 
 		if (!fetching)
-			packet_write(fd[1], "want %s%s%s%s%s%s%s\n",
+			packet_write(fd[1], "want %s%s%s%s%s%s%s%s\n",
 				     sha1_to_hex(remote),
 				     (multi_ack ? " multi_ack" : ""),
 				     (use_sideband == 2 ? " side-band-64k" : ""),
 				     (use_sideband == 1 ? " side-band" : ""),
 				     (args.use_thin_pack ? " thin-pack" : ""),
 				     (args.no_progress ? " no-progress" : ""),
+				     (args.include_tag ? " include-tag" : ""),
 				     " ofs-delta");
 		else
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
@@ -212,7 +215,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 				if (!lookup_object(sha1))
 					die("object not found: %s", line);
 				/* make sure that it is parsed as shallow */
-				parse_object(sha1);
+				if (!parse_object(sha1))
+					die("error in object: %s", line);
 				if (unregister_shallow(sha1))
 					die("no shallow found: %s", line);
 				continue;
@@ -387,7 +391,6 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 	int retval;
 	unsigned long cutoff = 0;
 
-	track_object_refs = 0;
 	save_commit_buffer = 0;
 
 	for (ref = *refs; ref; ref = ref->next) {
@@ -539,8 +542,10 @@ static int get_pack(int xd[2], char **pack_lockfile)
 	cmd.git_cmd = 1;
 	if (start_command(&cmd))
 		die("fetch-pack: unable to fork off %s", argv[0]);
-	if (do_keep && pack_lockfile)
+	if (do_keep && pack_lockfile) {
 		*pack_lockfile = index_pack_lockfile(cmd.out);
+		close(cmd.out);
+	}
 
 	if (finish_command(&cmd))
 		die("%s failed", argv[0]);
@@ -678,6 +683,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp("--thin", arg)) {
 				args.use_thin_pack = 1;
+				continue;
+			}
+			if (!strcmp("--include-tag", arg)) {
+				args.include_tag = 1;
 				continue;
 			}
 			if (!strcmp("--all", arg)) {

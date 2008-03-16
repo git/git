@@ -218,12 +218,15 @@ static CURL* get_curl_handle(void)
 	return result;
 }
 
-void http_init(void)
+void http_init(struct remote *remote)
 {
 	char *low_speed_limit;
 	char *low_speed_time;
 
 	curl_global_init(CURL_GLOBAL_ALL);
+
+	if (remote && remote->http_proxy)
+		curl_http_proxy = xstrdup(remote->http_proxy);
 
 	pragma_header = curl_slist_append(pragma_header, "Pragma: no-cache");
 
@@ -281,23 +284,15 @@ void http_init(void)
 void http_cleanup(void)
 {
 	struct active_request_slot *slot = active_queue_head;
-#ifdef USE_CURL_MULTI
-	char *wait_url;
-#endif
 
 	while (slot != NULL) {
 		struct active_request_slot *next = slot->next;
+		if (slot->curl != NULL) {
 #ifdef USE_CURL_MULTI
-		if (slot->in_use) {
-			curl_easy_getinfo(slot->curl,
-					  CURLINFO_EFFECTIVE_URL,
-					  &wait_url);
-			fprintf(stderr, "Waiting for %s\n", wait_url);
-			run_active_slot(slot);
-		}
+			curl_multi_remove_handle(curlm, slot->curl);
 #endif
-		if (slot->curl != NULL)
 			curl_easy_cleanup(slot->curl);
+		}
 		free(slot);
 		slot = next;
 	}
@@ -314,6 +309,11 @@ void http_cleanup(void)
 
 	curl_slist_free_all(pragma_header);
 	pragma_header = NULL;
+
+	if (curl_http_proxy) {
+		free(curl_http_proxy);
+		curl_http_proxy = NULL;
+	}
 }
 
 struct active_request_slot *get_active_slot(void)

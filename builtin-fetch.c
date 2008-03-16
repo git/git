@@ -40,6 +40,8 @@ static struct option builtin_fetch_options[] = {
 		    "force overwrite of local branch"),
 	OPT_SET_INT('t', "tags", &tags,
 		    "fetch all tags and associated objects", TAGS_SET),
+	OPT_SET_INT('n', NULL, &tags,
+		    "do not fetch all tags (--no-tags)", TAGS_UNSET),
 	OPT_BOOLEAN('k', "keep", &keep, "keep downloaded pack"),
 	OPT_BOOLEAN('u', "update-head-ok", &update_head_ok,
 		    "allow updating of HEAD ref"),
@@ -101,6 +103,10 @@ static void add_merge_config(struct ref **head,
 	}
 }
 
+static void find_non_local_tags(struct transport *transport,
+			struct ref **head,
+			struct ref ***tail);
+
 static struct ref *get_ref_map(struct transport *transport,
 			       struct refspec *refs, int ref_count, int tags,
 			       int *autotags)
@@ -157,8 +163,11 @@ static struct ref *get_ref_map(struct transport *transport,
 			if (!ref_map)
 				die("Couldn't find remote ref HEAD");
 			ref_map->merge = 1;
+			tail = &ref_map->next;
 		}
 	}
+	if (tags == TAGS_DEFAULT && *autotags)
+		find_non_local_tags(transport, &ref_map, &tail);
 	ref_remove_duplicates(ref_map);
 
 	return ref_map;
@@ -452,18 +461,28 @@ static int add_existing(const char *refname, const unsigned char *sha1,
 	return 0;
 }
 
-static struct ref *find_non_local_tags(struct transport *transport,
-				       struct ref *fetch_map)
+static int will_fetch(struct ref **head, const unsigned char *sha1)
 {
-	static struct path_list existing_refs = { NULL, 0, 0, 0 };
+	struct ref *rm = *head;
+	while (rm) {
+		if (!hashcmp(rm->old_sha1, sha1))
+			return 1;
+		rm = rm->next;
+	}
+	return 0;
+}
+
+static void find_non_local_tags(struct transport *transport,
+			struct ref **head,
+			struct ref ***tail)
+{
+	struct path_list existing_refs = { NULL, 0, 0, 0 };
 	struct path_list new_refs = { NULL, 0, 0, 1 };
 	char *ref_name;
 	int ref_name_len;
 	const unsigned char *ref_sha1;
 	const struct ref *tag_ref;
 	struct ref *rm = NULL;
-	struct ref *ref_map = NULL;
-	struct ref **tail = &ref_map;
 	const struct ref *ref;
 
 	for_each_ref(add_existing, &existing_refs);
@@ -489,7 +508,8 @@ static struct ref *find_non_local_tags(struct transport *transport,
 
 		if (!path_list_has_path(&existing_refs, ref_name) &&
 		    !path_list_has_path(&new_refs, ref_name) &&
-		    has_sha1_file(ref->old_sha1)) {
+		    (has_sha1_file(ref->old_sha1) ||
+		     will_fetch(head, ref->old_sha1))) {
 			path_list_insert(ref_name, &new_refs);
 
 			rm = alloc_ref(strlen(ref_name) + 1);
@@ -498,19 +518,19 @@ static struct ref *find_non_local_tags(struct transport *transport,
 			strcpy(rm->peer_ref->name, ref_name);
 			hashcpy(rm->old_sha1, ref_sha1);
 
-			*tail = rm;
-			tail = &rm->next;
+			**tail = rm;
+			*tail = &rm->next;
 		}
 		free(ref_name);
 	}
-
-	return ref_map;
+	path_list_clear(&existing_refs, 0);
+	path_list_clear(&new_refs, 0);
 }
 
 static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
-	struct ref *ref_map, *fetch_map;
+	struct ref *ref_map;
 	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
 	if (transport->remote->fetch_tags == 2 && tags != TAGS_UNSET)
@@ -537,25 +557,27 @@ static int do_fetch(struct transport *transport,
 			read_ref(rm->peer_ref->name, rm->peer_ref->old_sha1);
 	}
 
+	if (tags == TAGS_DEFAULT && autotags)
+		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
 	if (fetch_refs(transport, ref_map)) {
 		free_refs(ref_map);
 		return 1;
 	}
-
-	fetch_map = ref_map;
+	free_refs(ref_map);
 
 	/* if neither --no-tags nor --tags was specified, do automated tag
 	 * following ... */
 	if (tags == TAGS_DEFAULT && autotags) {
-		ref_map = find_non_local_tags(transport, fetch_map);
+		struct ref **tail = &ref_map;
+		ref_map = NULL;
+		find_non_local_tags(transport, &ref_map, &tail);
 		if (ref_map) {
+			transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 			transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 			fetch_refs(transport, ref_map);
 		}
 		free_refs(ref_map);
 	}
-
-	free_refs(fetch_map);
 
 	transport_disconnect(transport);
 

@@ -207,16 +207,14 @@ patch::
   and the working tree file and asks you if you want to stage
   the change of each hunk.  You can say:
 
-       y - add the change from that hunk to index
-       n - do not add the change from that hunk to index
-       a - add the change from that hunk and all the rest to index
-       d - do not the change from that hunk nor any of the rest to index
-       j - do not decide on this hunk now, and view the next
-           undecided hunk
-       J - do not decide on this hunk now, and view the next hunk
-       k - do not decide on this hunk now, and view the previous
-           undecided hunk
-       K - do not decide on this hunk now, and view the previous hunk
+       y - stage this hunk
+       n - do not stage this hunk
+       a - stage this and all the remaining hunks in the file
+       d - do not stage this hunk nor any of the remaining hunks in the file
+       j - leave this hunk undecided, see next undecided hunk
+       J - leave this hunk undecided, see next hunk
+       k - leave this hunk undecided, see previous undecided hunk
+       K - leave this hunk undecided, see previous hunk
        s - split the current hunk into smaller hunks
        ? - print help
 +

@@ -50,12 +50,15 @@ void launch_editor(const char *path, struct strbuf *buffer, const char *const *e
 		size_t len = strlen(editor);
 		int i = 0;
 		const char *args[6];
+		struct strbuf arg0;
 
+		strbuf_init(&arg0, 0);
 		if (strcspn(editor, "$ \t'") != len) {
 			/* there are specials */
+			strbuf_addf(&arg0, "%s \"$@\"", editor);
 			args[i++] = "sh";
 			args[i++] = "-c";
-			args[i++] = "$0 \"$@\"";
+			args[i++] = arg0.buf;
 		}
 		args[i++] = editor;
 		args[i++] = path;
@@ -63,6 +66,7 @@ void launch_editor(const char *path, struct strbuf *buffer, const char *const *e
 
 		if (run_command_v_opt_cd_env(args, 0, NULL, env))
 			die("There was a problem with the editor %s.", editor);
+		strbuf_release(&arg0);
 	}
 
 	if (!buffer)
@@ -226,12 +230,13 @@ static int do_sign(struct strbuf *buffer)
 
 	if (write_in_full(gpg.in, buffer->buf, buffer->len) != buffer->len) {
 		close(gpg.in);
+		close(gpg.out);
 		finish_command(&gpg);
 		return error("gpg did not accept the tag data");
 	}
 	close(gpg.in);
-	gpg.close_in = 0;
 	len = strbuf_read(buffer, gpg.out, 1024);
+	close(gpg.out);
 
 	if (finish_command(&gpg) || !len || len < 0)
 		return error("gpg failed to sign the tag");

@@ -68,7 +68,8 @@ HOW MERGE WORKS
 ---------------
 
 A merge is always between the current `HEAD` and one or more
-remote branch heads, and the index file must exactly match the
+commits (usually, branch head or tag), and the index file must
+exactly match the
 tree of `HEAD` commit (i.e. the contents of the last commit) when
 it happens.  In other words, `git-diff --cached HEAD` must
 report no changes.

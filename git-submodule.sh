@@ -4,7 +4,9 @@
 #
 # Copyright (c) 2007 Lars Hjemli
 
-USAGE='[--quiet] [--cached] [add <repo> [-b branch]|status|init|update] [--] [<path>...]'
+USAGE="[--quiet] [--cached] \
+[add <repo> [-b branch]|status|init|update|summary [-n|--summary-limit <n>] [<commit>]] \
+[--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
@@ -153,20 +155,6 @@ cmd_add()
 		usage
 	fi
 
-	case "$repo" in
-	./*|../*)
-		# dereference source url relative to parent's url
-		realrepo="$(resolve_relative_url $repo)" ;;
-	*)
-		# Turn the source into an absolute path if
-		# it is local
-		if base=$(get_repo_base "$repo"); then
-			repo="$base"
-		fi
-		realrepo=$repo
-		;;
-	esac
-
 	# Guess path from repo if not specified or strip trailing slashes
 	if test -z "$path"; then
 		path=$(echo "$repo" | sed -e 's|/*$||' -e 's|:*/*\.git$||' -e 's|.*[/:]||g')
@@ -174,15 +162,39 @@ cmd_add()
 		path=$(echo "$path" | sed -e 's|/*$||')
 	fi
 
-	test -e "$path" &&
-	die "'$path' already exists"
-
 	git ls-files --error-unmatch "$path" > /dev/null 2>&1 &&
 	die "'$path' already exists in the index"
 
-	module_clone "$path" "$realrepo" || exit
-	(unset GIT_DIR; cd "$path" && git checkout -q ${branch:+-b "$branch" "origin/$branch"}) ||
-	die "Unable to checkout submodule '$path'"
+	# perhaps the path exists and is already a git repo, else clone it
+	if test -e "$path"
+	then
+		if test -d "$path/.git" &&
+		test "$(unset GIT_DIR; cd $path; git rev-parse --git-dir)" = ".git"
+		then
+			echo "Adding existing repo at '$path' to the index"
+		else
+			die "'$path' already exists and is not a valid git repo"
+		fi
+	else
+		case "$repo" in
+		./*|../*)
+			# dereference source url relative to parent's url
+			realrepo="$(resolve_relative_url $repo)" ;;
+		*)
+			# Turn the source into an absolute path if
+			# it is local
+			if base=$(get_repo_base "$repo"); then
+				repo="$base"
+			fi
+			realrepo=$repo
+			;;
+		esac
+
+		module_clone "$path" "$realrepo" || exit
+		(unset GIT_DIR; cd "$path" && git checkout -q ${branch:+-b "$branch" "origin/$branch"}) ||
+		die "Unable to checkout submodule '$path'"
+	fi
+
 	git add "$path" ||
 	die "Failed to add submodule '$path'"
 
@@ -220,7 +232,7 @@ cmd_init()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep -e '^160000 ' |
+	git ls-files --stage -- "$@" | grep '^160000 ' |
 	while read mode sha1 stage path
 	do
 		# Skip already registered paths
@@ -274,7 +286,7 @@ cmd_update()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep -e '^160000 ' |
+	git ls-files --stage -- "$@" | grep '^160000 ' |
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit
@@ -320,7 +332,175 @@ set_name_rev () {
 	) )
 	test -z "$revname" || revname=" ($revname)"
 }
+#
+# Show commit summary for submodules in index or working tree
+#
+# If '--cached' is given, show summary between index and given commit,
+# or between working tree and given commit
+#
+# $@ = [commit (default 'HEAD'),] requested paths (default all)
+#
+cmd_summary() {
+	summary_limit=-1
 
+	# parse $args after "submodule ... summary".
+	while test $# -ne 0
+	do
+		case "$1" in
+		--cached)
+			cached="$1"
+			;;
+		-n|--summary-limit)
+			if summary_limit=$(($2 + 0)) 2>/dev/null && test "$summary_limit" = "$2"
+			then
+				:
+			else
+				usage
+			fi
+			shift
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
+	test $summary_limit = 0 && return
+
+	if rev=$(git rev-parse --verify "$1^0" 2>/dev/null)
+	then
+		head=$rev
+		shift
+	else
+		head=HEAD
+	fi
+
+	cd_to_toplevel
+	# Get modified modules cared by user
+	modules=$(git diff-index $cached --raw $head -- "$@" |
+		grep -e '^:160000' -e '^:[0-7]* 160000' |
+		while read mod_src mod_dst sha1_src sha1_dst status name
+		do
+			# Always show modules deleted or type-changed (blob<->module)
+			test $status = D -o $status = T && echo "$name" && continue
+			# Also show added or modified modules which are checked out
+			GIT_DIR="$name/.git" git-rev-parse --git-dir >/dev/null 2>&1 &&
+			echo "$name"
+		done
+	)
+
+	test -n "$modules" &&
+	git diff-index $cached --raw $head -- $modules |
+	grep -e '^:160000' -e '^:[0-7]* 160000' |
+	cut -c2- |
+	while read mod_src mod_dst sha1_src sha1_dst status name
+	do
+		if test -z "$cached" &&
+			test $sha1_dst = 0000000000000000000000000000000000000000
+		then
+			case "$mod_dst" in
+			160000)
+				sha1_dst=$(GIT_DIR="$name/.git" git rev-parse HEAD)
+				;;
+			100644 | 100755 | 120000)
+				sha1_dst=$(git hash-object $name)
+				;;
+			000000)
+				;; # removed
+			*)
+				# unexpected type
+				echo >&2 "unexpected mode $mod_dst"
+				continue ;;
+			esac
+		fi
+		missing_src=
+		missing_dst=
+
+		test $mod_src = 160000 &&
+		! GIT_DIR="$name/.git" git-rev-parse --verify $sha1_src^0 >/dev/null 2>&1 &&
+		missing_src=t
+
+		test $mod_dst = 160000 &&
+		! GIT_DIR="$name/.git" git-rev-parse --verify $sha1_dst^0 >/dev/null 2>&1 &&
+		missing_dst=t
+
+		total_commits=
+		case "$missing_src,$missing_dst" in
+		t,)
+			errmsg="  Warn: $name doesn't contain commit $sha1_src"
+			;;
+		,t)
+			errmsg="  Warn: $name doesn't contain commit $sha1_dst"
+			;;
+		t,t)
+			errmsg="  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
+			;;
+		*)
+			errmsg=
+			total_commits=$(
+			if test $mod_src = 160000 -a $mod_dst = 160000
+			then
+				range="$sha1_src...$sha1_dst"
+			elif test $mod_src = 160000
+			then
+				range=$sha1_src
+			else
+				range=$sha1_dst
+			fi
+			GIT_DIR="$name/.git" \
+			git log --pretty=oneline --first-parent $range | wc -l
+			)
+			total_commits=" ($(($total_commits + 0)))"
+			;;
+		esac
+
+		sha1_abbr_src=$(echo $sha1_src | cut -c1-7)
+		sha1_abbr_dst=$(echo $sha1_dst | cut -c1-7)
+		if test $status = T
+		then
+			if test $mod_dst = 160000
+			then
+				echo "* $name $sha1_abbr_src(blob)->$sha1_abbr_dst(submodule)$total_commits:"
+			else
+				echo "* $name $sha1_abbr_src(submodule)->$sha1_abbr_dst(blob)$total_commits:"
+			fi
+		else
+			echo "* $name $sha1_abbr_src...$sha1_abbr_dst$total_commits:"
+		fi
+		if test -n "$errmsg"
+		then
+			# Don't give error msg for modification whose dst is not submodule
+			# i.e. deleted or changed to blob
+			test $mod_dst = 160000 && echo "$errmsg"
+		else
+			if test $mod_src = 160000 -a $mod_dst = 160000
+			then
+				limit=
+				test $summary_limit -gt 0 && limit="-$summary_limit"
+				GIT_DIR="$name/.git" \
+				git log $limit --pretty='format:  %m %s' \
+				--first-parent $sha1_src...$sha1_dst
+			elif test $mod_dst = 160000
+			then
+				GIT_DIR="$name/.git" \
+				git log --pretty='format:  > %s' -1 $sha1_dst
+			else
+				GIT_DIR="$name/.git" \
+				git log --pretty='format:  < %s' -1 $sha1_src
+			fi
+			echo
+		fi
+		echo
+	done
+}
 #
 # List all submodules, prefixed with:
 #  - submodule not initialized
@@ -357,12 +537,12 @@ cmd_status()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep -e '^160000 ' |
+	git ls-files --stage -- "$@" | grep '^160000 ' |
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
-		if test -z "url" || ! test -d "$path"/.git
+		if test -z "$url" || ! test -d "$path"/.git
 		then
 			say "-$sha1 $path"
 			continue;
@@ -391,7 +571,7 @@ cmd_status()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | init | update | status)
+	add | init | update | status | summary)
 		command=$1
 		;;
 	-q|--quiet)
@@ -406,7 +586,7 @@ do
 		branch="$2"; shift
 		;;
 	--cached)
-		cached=1
+		cached="$1"
 		;;
 	--)
 		break
@@ -430,8 +610,8 @@ then
 	usage
 fi
 
-# "--cached" is accepted only by "status"
-if test -n "$cached" && test "$command" != status
+# "--cached" is accepted only by "status" and "summary"
+if test -n "$cached" && test "$command" != status -a "$command" != summary
 then
 	usage
 fi

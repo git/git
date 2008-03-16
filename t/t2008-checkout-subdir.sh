@@ -68,15 +68,15 @@ test_expect_success 'checkout with simple prefix' '
 '
 
 test_expect_success 'relative path outside tree should fail' \
-	'! git checkout HEAD -- ../../Makefile'
+	'test_must_fail git checkout HEAD -- ../../Makefile'
 
 test_expect_success 'incorrect relative path to file should fail (1)' \
-	'! git checkout HEAD -- ../file0'
+	'test_must_fail git checkout HEAD -- ../file0'
 
 test_expect_success 'incorrect relative path should fail (2)' \
-	'( cd dir1 && ! git checkout HEAD -- ./file0 )'
+	'( cd dir1 && test_must_fail git checkout HEAD -- ./file0 )'
 
 test_expect_success 'incorrect relative path should fail (3)' \
-	'( cd dir1 && ! git checkout HEAD -- ../../file0 )'
+	'( cd dir1 && test_must_fail git checkout HEAD -- ../../file0 )'
 
 test_done

@@ -99,11 +99,12 @@ test_expect_success 'no diff with -diff' '
 	git diff | grep Binary
 '
 
-echo NULZbetweenZwords | tr Z '\000' > file
+echo NULZbetweenZwords | perl -pe 'y/Z/\000/' > file
 
 test_expect_success 'force diff with "diff"' '
 	echo >.gitattributes "file diff" &&
-	git diff | grep -a second
+	git diff >actual &&
+	test_cmp ../t4020/diff.NUL actual
 '
 
 test_done

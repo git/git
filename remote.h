@@ -6,14 +6,17 @@ struct remote {
 
 	const char **url;
 	int url_nr;
+	int url_alloc;
 
 	const char **push_refspec;
 	struct refspec *push;
 	int push_refspec_nr;
+	int push_refspec_alloc;
 
 	const char **fetch_refspec;
 	struct refspec *fetch;
 	int fetch_refspec_nr;
+	int fetch_refspec_alloc;
 
 	/*
 	 * -1 to never fetch tags
@@ -22,6 +25,7 @@ struct remote {
 	 * 2 to always fetch tags
 	 */
 	int fetch_tags;
+	int skip_default_update;
 
 	const char *receivepack;
 	const char *uploadpack;
@@ -100,6 +104,7 @@ struct branch {
 	const char **merge_name;
 	struct refspec **merge;
 	int merge_nr;
+	int merge_alloc;
 };
 
 struct branch *branch_get(const char *name);

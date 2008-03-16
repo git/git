@@ -71,6 +71,7 @@ static int pack_objects(int fd, struct ref *refs)
 		refs = refs->next;
 	}
 
+	close(po.in);
 	if (finish_command(&po))
 		return error("pack-objects died with strange error");
 	return 0;
@@ -263,9 +264,7 @@ static void print_ref_status(char flag, const char *summary, struct ref *to, str
 
 static const char *status_abbrev(unsigned char sha1[20])
 {
-	const char *abbrev;
-	abbrev = find_unique_abbrev(sha1, DEFAULT_ABBREV);
-	return abbrev ? abbrev : sha1_to_hex(sha1);
+	return find_unique_abbrev(sha1, DEFAULT_ABBREV);
 }
 
 static void print_ok_ref_status(struct ref *ref)
@@ -403,12 +402,15 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 	if (!remote_tail)
 		remote_tail = &remote_refs;
 	if (match_refs(local_refs, remote_refs, &remote_tail,
-					       nr_refspec, refspec, flags))
+		       nr_refspec, refspec, flags)) {
+		close(out);
 		return -1;
+	}
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
 			"Perhaps you should specify a branch such as 'master'.\n");
+		close(out);
 		return 0;
 	}
 
@@ -495,12 +497,11 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 
 	packet_flush(out);
 	if (new_refs && !args.dry_run) {
-		if (pack_objects(out, remote_refs) < 0) {
-			close(out);
+		if (pack_objects(out, remote_refs) < 0)
 			return -1;
-		}
 	}
-	close(out);
+	else
+		close(out);
 
 	if (expect_status_report)
 		ret = receive_status(in, remote_refs);
@@ -648,7 +649,7 @@ int send_pack(struct send_pack_args *my_args,
 	conn = git_connect(fd, dest, args.receivepack, args.verbose ? CONNECT_VERBOSE : 0);
 	ret = do_send_pack(fd[0], fd[1], remote, dest, nr_heads, heads);
 	close(fd[0]);
-	close(fd[1]);
+	/* do_send_pack always closes fd[1] */
 	ret |= finish_connect(conn);
 	return !!ret;
 }

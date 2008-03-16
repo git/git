@@ -14,6 +14,7 @@
 #include "tag.h"
 #include "tree.h"
 #include "refs.h"
+#include "pack-revindex.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -85,10 +86,8 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 
 static inline int offset_1st_component(const char *path)
 {
-#ifdef __MINGW32__
-	if (isalpha(path[0]) && path[1] == ':')
+	if (has_dos_drive_prefix(path))
 		return 2 + (path[2] == '/');
-#endif
 	return *path == '/';
 }
 
@@ -395,11 +394,7 @@ void prepare_alt_odb(void)
 	if (!alt) alt = "";
 
 	alt_odb_tail = &alt_odb_list;
-#ifdef __MINGW32__
-	link_alt_odb_entries(alt, alt + strlen(alt), ';', NULL, 0);
-#else
-	link_alt_odb_entries(alt, alt + strlen(alt), ':', NULL, 0);
-#endif
+	link_alt_odb_entries(alt, alt + strlen(alt), PATH_SEP, NULL, 0);
 
 	read_info_alternates(get_object_directory(), 0);
 }
@@ -1377,10 +1372,14 @@ const char *packed_object_info_detail(struct packed_git *p,
 	unsigned long dummy;
 	unsigned char *next_sha1;
 	enum object_type type;
+	struct revindex_entry *revidx;
 
 	*delta_chain_length = 0;
 	curpos = obj_offset;
 	type = unpack_object_header(p, &w_curs, &curpos, size);
+
+	revidx = find_pack_revindex(p, obj_offset);
+	*store_size = revidx[1].offset - obj_offset;
 
 	for (;;) {
 		switch (type) {
@@ -1391,14 +1390,13 @@ const char *packed_object_info_detail(struct packed_git *p,
 		case OBJ_TREE:
 		case OBJ_BLOB:
 		case OBJ_TAG:
-			*store_size = 0; /* notyet */
 			unuse_pack(&w_curs);
 			return typename(type);
 		case OBJ_OFS_DELTA:
 			obj_offset = get_delta_base(p, &w_curs, &curpos, type, obj_offset);
 			if (*delta_chain_length == 0) {
-				/* TODO: find base_sha1 as pointed by curpos */
-				hashclr(base_sha1);
+				revidx = find_pack_revindex(p, obj_offset);
+				hashcpy(base_sha1, nth_packed_object_sha1(p, revidx->nr));
 			}
 			break;
 		case OBJ_REF_DELTA:

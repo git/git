@@ -102,3 +102,33 @@ void print_path_list(const char *text, const struct path_list *p)
 	for (i = 0; i < p->nr; i++)
 		printf("%s:%p\n", p->items[i].path, p->items[i].util);
 }
+
+struct path_list_item *path_list_append(const char *path, struct path_list *list)
+{
+	ALLOC_GROW(list->items, list->nr + 1, list->alloc);
+	list->items[list->nr].path =
+		list->strdup_paths ? xstrdup(path) : (char *)path;
+	return list->items + list->nr++;
+}
+
+static int cmp_items(const void *a, const void *b)
+{
+	const struct path_list_item *one = a;
+	const struct path_list_item *two = b;
+	return strcmp(one->path, two->path);
+}
+
+void sort_path_list(struct path_list *list)
+{
+	qsort(list->items, list->nr, sizeof(*list->items), cmp_items);
+}
+
+int unsorted_path_list_has_path(struct path_list *list, const char *path)
+{
+	int i;
+	for (i = 0; i < list->nr; i++)
+		if (!strcmp(path, list->items[i].path))
+			return 1;
+	return 0;
+}
+

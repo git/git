@@ -290,7 +290,7 @@ int adjust_shared_perm(const char *path)
 			    ? (S_IXGRP|S_IXOTH)
 			    : 0));
 	if (S_ISDIR(mode))
-		mode |= S_ISGID;
+		mode |= FORCE_DIR_SET_GID;
 	if ((mode & st.st_mode) != mode && chmod(path, mode) < 0)
 		return -2;
 	return 0;
@@ -318,8 +318,10 @@ const char *make_absolute_path(const char *path)
 			if (last_slash) {
 				*last_slash = '\0';
 				last_elem = xstrdup(last_slash + 1);
-			} else
+			} else {
 				last_elem = xstrdup(buf);
+				*buf = '\0';
+			}
 		}
 
 		if (*buf) {

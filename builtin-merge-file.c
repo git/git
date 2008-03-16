@@ -46,7 +46,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	}
 
 	ret = xdl_merge(mmfs + 1, mmfs + 0, names[0], mmfs + 2, names[2],
-			&xpp, XDL_MERGE_ZEALOUS, &result);
+			&xpp, XDL_MERGE_ZEALOUS_ALNUM, &result);
 
 	for (i = 0; i < 3; i++)
 		free(mmfs[i].ptr);
@@ -57,7 +57,8 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 
 		if (!f)
 			ret = error("Could not open %s for writing", filename);
-		else if (fwrite(result.ptr, result.size, 1, f) != 1)
+		else if (result.size &&
+			 fwrite(result.ptr, result.size, 1, f) != 1)
 			ret = error("Could not write to %s", filename);
 		else if (fclose(f))
 			ret = error("Could not close %s", filename);

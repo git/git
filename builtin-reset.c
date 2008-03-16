@@ -16,9 +16,14 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "tree.h"
+#include "branch.h"
+#include "parse-options.h"
 
-static const char builtin_reset_usage[] =
-"git-reset [--mixed | --soft | --hard] [-q] [<commit-ish>] [ [--] <paths>...]";
+static const char * const git_reset_usage[] = {
+	"git-reset [--mixed | --soft | --hard] [-q] [<commit>]",
+	"git-reset [--mixed] <commit> [--] <paths>...",
+	NULL
+};
 
 static char *args_to_str(const char **argv)
 {
@@ -44,18 +49,6 @@ static inline int is_merge(void)
 	return !access(git_path("MERGE_HEAD"), F_OK);
 }
 
-static int unmerged_files(void)
-{
-	int i;
-	read_cache();
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		if (ce_stage(ce))
-			return 1;
-	}
-	return 0;
-}
-
 static int reset_index_file(const unsigned char *sha1, int is_hard_reset)
 {
 	int i = 0;
@@ -74,14 +67,10 @@ static int reset_index_file(const unsigned char *sha1, int is_hard_reset)
 
 static void print_new_head_line(struct commit *commit)
 {
-	const char *hex, *dots = "...", *body;
+	const char *hex, *body;
 
 	hex = find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV);
-	if (!hex) {
-		hex = sha1_to_hex(commit->object.sha1);
-		dots = "";
-	}
-	printf("HEAD is now at %s%s", hex, dots);
+	printf("HEAD is now at %s", hex);
 	body = strstr(commit->buffer, "\n\n");
 	if (body) {
 		const char *eol;
@@ -180,40 +169,31 @@ static const char *reset_type_names[] = { "mixed", "soft", "hard", NULL };
 
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
-	int i = 1, reset_type = NONE, update_ref_status = 0, quiet = 0;
+	int i = 0, reset_type = NONE, update_ref_status = 0, quiet = 0;
 	const char *rev = "HEAD";
 	unsigned char sha1[20], *orig = NULL, sha1_orig[20],
 				*old_orig = NULL, sha1_old_orig[20];
 	struct commit *commit;
 	char *reflog_action, msg[1024];
+	const struct option options[] = {
+		OPT_SET_INT(0, "mixed", &reset_type,
+						"reset HEAD and index", MIXED),
+		OPT_SET_INT(0, "soft", &reset_type, "reset only HEAD", SOFT),
+		OPT_SET_INT(0, "hard", &reset_type,
+				"reset HEAD, index and working tree", HARD),
+		OPT_BOOLEAN('q', NULL, &quiet,
+				"disable showing new HEAD in hard reset"),
+		OPT_END()
+	};
 
 	git_config(git_default_config);
 
+	argc = parse_options(argc, argv, options, git_reset_usage,
+						PARSE_OPT_KEEP_DASHDASH);
 	reflog_action = args_to_str(argv);
 	setenv("GIT_REFLOG_ACTION", reflog_action, 0);
 
-	while (i < argc) {
-		if (!strcmp(argv[i], "--mixed")) {
-			reset_type = MIXED;
-			i++;
-		}
-		else if (!strcmp(argv[i], "--soft")) {
-			reset_type = SOFT;
-			i++;
-		}
-		else if (!strcmp(argv[i], "--hard")) {
-			reset_type = HARD;
-			i++;
-		}
-		else if (!strcmp(argv[i], "-q")) {
-			quiet = 1;
-			i++;
-		}
-		else
-			break;
-	}
-
-	if (i < argc && argv[i][0] != '-')
+	if (i < argc && strcmp(argv[i], "--"))
 		rev = argv[i++];
 
 	if (get_sha1(rev, sha1))
@@ -226,8 +206,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	if (i < argc && !strcmp(argv[i], "--"))
 		i++;
-	else if (i < argc && argv[i][0] == '-')
-		usage(builtin_reset_usage);
 
 	/* git reset tree [--] paths... can be used to
 	 * load chosen paths from the tree into the index without
@@ -250,7 +228,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	 * at all, but requires them in a good order.  Other resets reset
 	 * the index file to the tree object we are switching to. */
 	if (reset_type == SOFT) {
-		if (is_merge() || unmerged_files())
+		if (is_merge() || read_cache() < 0 || unmerged_cache())
 			die("Cannot do a soft reset in the middle of a merge.");
 	}
 	else if (reset_index_file(sha1, (reset_type == HARD)))
@@ -282,10 +260,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
-	unlink(git_path("MERGE_HEAD"));
-	unlink(git_path("rr-cache/MERGE_RR"));
-	unlink(git_path("MERGE_MSG"));
-	unlink(git_path("SQUASH_MSG"));
+	remove_branch_state();
 
 	free(reflog_action);
 

@@ -8,14 +8,17 @@
 #include "tree.h"
 #include "delta.h"
 #include "pack.h"
+#include "pack-revindex.h"
 #include "csum-file.h"
 #include "tree-walk.h"
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
 #include "progress.h"
+#include "refs.h"
 
 #ifdef THREADED_DELTA_SEARCH
+#include "thread-utils.h"
 #include <pthread.h>
 #endif
 
@@ -25,7 +28,8 @@ git-pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--window=N] [--window-memory=N] [--depth=N] \n\
 	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
 	[--threads=N] [--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
-	[--stdout | base-name] [--keep-unreachable] [<ref-list | <object-list]";
+	[--stdout | base-name] [--include-tag] [--keep-unreachable] \n\
+	[<ref-list | <object-list]";
 
 struct object_entry {
 	struct pack_idx_entry idx;
@@ -61,7 +65,7 @@ static struct pack_idx_entry **written_list;
 static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
 
 static int non_empty;
-static int no_reuse_delta, no_reuse_object, keep_unreachable;
+static int no_reuse_delta, no_reuse_object, keep_unreachable, include_tag;
 static int local;
 static int incremental;
 static int allow_ofs_delta;
@@ -92,157 +96,11 @@ static int *object_ix;
 static int object_ix_hashsz;
 
 /*
- * Pack index for existing packs give us easy access to the offsets into
- * corresponding pack file where each object's data starts, but the entries
- * do not store the size of the compressed representation (uncompressed
- * size is easily available by examining the pack entry header).  It is
- * also rather expensive to find the sha1 for an object given its offset.
- *
- * We build a hashtable of existing packs (pack_revindex), and keep reverse
- * index here -- pack index file is sorted by object name mapping to offset;
- * this pack_revindex[].revindex array is a list of offset/index_nr pairs
- * ordered by offset, so if you know the offset of an object, next offset
- * is where its packed representation ends and the index_nr can be used to
- * get the object sha1 from the main index.
- */
-struct revindex_entry {
-	off_t offset;
-	unsigned int nr;
-};
-struct pack_revindex {
-	struct packed_git *p;
-	struct revindex_entry *revindex;
-};
-static struct  pack_revindex *pack_revindex;
-static int pack_revindex_hashsz;
-
-/*
  * stats
  */
 static uint32_t written, written_delta;
 static uint32_t reused, reused_delta;
 
-static int pack_revindex_ix(struct packed_git *p)
-{
-	unsigned long ui = (unsigned long)p;
-	int i;
-
-	ui = ui ^ (ui >> 16); /* defeat structure alignment */
-	i = (int)(ui % pack_revindex_hashsz);
-	while (pack_revindex[i].p) {
-		if (pack_revindex[i].p == p)
-			return i;
-		if (++i == pack_revindex_hashsz)
-			i = 0;
-	}
-	return -1 - i;
-}
-
-static void prepare_pack_ix(void)
-{
-	int num;
-	struct packed_git *p;
-	for (num = 0, p = packed_git; p; p = p->next)
-		num++;
-	if (!num)
-		return;
-	pack_revindex_hashsz = num * 11;
-	pack_revindex = xcalloc(sizeof(*pack_revindex), pack_revindex_hashsz);
-	for (p = packed_git; p; p = p->next) {
-		num = pack_revindex_ix(p);
-		num = - 1 - num;
-		pack_revindex[num].p = p;
-	}
-	/* revindex elements are lazily initialized */
-}
-
-static int cmp_offset(const void *a_, const void *b_)
-{
-	const struct revindex_entry *a = a_;
-	const struct revindex_entry *b = b_;
-	return (a->offset < b->offset) ? -1 : (a->offset > b->offset) ? 1 : 0;
-}
-
-/*
- * Ordered list of offsets of objects in the pack.
- */
-static void prepare_pack_revindex(struct pack_revindex *rix)
-{
-	struct packed_git *p = rix->p;
-	int num_ent = p->num_objects;
-	int i;
-	const char *index = p->index_data;
-
-	rix->revindex = xmalloc(sizeof(*rix->revindex) * (num_ent + 1));
-	index += 4 * 256;
-
-	if (p->index_version > 1) {
-		const uint32_t *off_32 =
-			(uint32_t *)(index + 8 + p->num_objects * (20 + 4));
-		const uint32_t *off_64 = off_32 + p->num_objects;
-		for (i = 0; i < num_ent; i++) {
-			uint32_t off = ntohl(*off_32++);
-			if (!(off & 0x80000000)) {
-				rix->revindex[i].offset = off;
-			} else {
-				rix->revindex[i].offset =
-					((uint64_t)ntohl(*off_64++)) << 32;
-				rix->revindex[i].offset |=
-					ntohl(*off_64++);
-			}
-			rix->revindex[i].nr = i;
-		}
-	} else {
-		for (i = 0; i < num_ent; i++) {
-			uint32_t hl = *((uint32_t *)(index + 24 * i));
-			rix->revindex[i].offset = ntohl(hl);
-			rix->revindex[i].nr = i;
-		}
-	}
-
-	/* This knows the pack format -- the 20-byte trailer
-	 * follows immediately after the last object data.
-	 */
-	rix->revindex[num_ent].offset = p->pack_size - 20;
-	rix->revindex[num_ent].nr = -1;
-	qsort(rix->revindex, num_ent, sizeof(*rix->revindex), cmp_offset);
-}
-
-static struct revindex_entry * find_packed_object(struct packed_git *p,
-						  off_t ofs)
-{
-	int num;
-	int lo, hi;
-	struct pack_revindex *rix;
-	struct revindex_entry *revindex;
-	num = pack_revindex_ix(p);
-	if (num < 0)
-		die("internal error: pack revindex uninitialized");
-	rix = &pack_revindex[num];
-	if (!rix->revindex)
-		prepare_pack_revindex(rix);
-	revindex = rix->revindex;
-	lo = 0;
-	hi = p->num_objects + 1;
-	do {
-		int mi = (lo + hi) / 2;
-		if (revindex[mi].offset == ofs) {
-			return revindex + mi;
-		}
-		else if (ofs < revindex[mi].offset)
-			hi = mi;
-		else
-			lo = mi + 1;
-	} while (lo < hi);
-	die("internal error: pack revindex corrupt");
-}
-
-static const unsigned char *find_packed_object_name(struct packed_git *p,
-						    off_t ofs)
-{
-	struct revindex_entry *entry = find_packed_object(p, ofs);
-	return nth_packed_object_sha1(p, entry->nr);
-}
 
 static void *delta_against(void *buf, unsigned long size, struct object_entry *entry)
 {
@@ -509,7 +367,7 @@ static unsigned long write_object(struct sha1file *f,
 		}
 		hdrlen = encode_header(obj_type, entry->size, header);
 		offset = entry->in_pack_offset;
-		revidx = find_packed_object(p, offset);
+		revidx = find_pack_revindex(p, offset);
 		datalen = revidx[1].offset - offset;
 		if (!pack_to_stdout && p->index_version > 1 &&
 		    check_pack_crc(p, &w_curs, offset, datalen, revidx->nr))
@@ -596,6 +454,7 @@ static void write_pack_file(void)
 	struct pack_header hdr;
 	int do_progress = progress >> pack_to_stdout;
 	uint32_t nr_remaining = nr_result;
+	time_t last_mtime = 0;
 
 	if (do_progress)
 		progress_state = start_progress("Writing objects", nr_result);
@@ -646,6 +505,7 @@ static void write_pack_file(void)
 
 		if (!pack_to_stdout) {
 			mode_t mode = umask(0);
+			struct stat st;
 			char *idx_tmp_name, tmpname[PATH_MAX];
 
 			umask(mode);
@@ -653,6 +513,7 @@ static void write_pack_file(void)
 
 			idx_tmp_name = write_idx_file(NULL, written_list,
 						      nr_written, sha1);
+
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
 				 base_name, sha1_to_hex(sha1));
 			if (adjust_perm(pack_tmp_name, mode))
@@ -661,6 +522,28 @@ static void write_pack_file(void)
 			if (rename(pack_tmp_name, tmpname))
 				die("unable to rename temporary pack file: %s",
 				    strerror(errno));
+
+			/*
+			 * Packs are runtime accessed in their mtime
+			 * order since newer packs are more likely to contain
+			 * younger objects.  So if we are creating multiple
+			 * packs then we should modify the mtime of later ones
+			 * to preserve this property.
+			 */
+			if (stat(tmpname, &st) < 0) {
+				warning("failed to stat %s: %s",
+					tmpname, strerror(errno));
+			} else if (!last_mtime) {
+				last_mtime = st.st_mtime;
+			} else {
+				struct utimbuf utb;
+				utb.actime = st.st_atime;
+				utb.modtime = --last_mtime;
+				if (utime(tmpname, &utb) < 0)
+					warning("failed utime() on %s: %s",
+						tmpname, strerror(errno));
+			}
+
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.idx",
 				 base_name, sha1_to_hex(sha1));
 			if (adjust_perm(idx_tmp_name, mode))
@@ -669,6 +552,7 @@ static void write_pack_file(void)
 			if (rename(idx_tmp_name, tmpname))
 				die("unable to rename temporary index file: %s",
 				    strerror(errno));
+
 			free(idx_tmp_name);
 			free(pack_tmp_name);
 			puts(sha1_to_hex(sha1));
@@ -1161,8 +1045,11 @@ static void check_object(struct object_entry *entry)
 				die("delta base offset out of bound for %s",
 				    sha1_to_hex(entry->idx.sha1));
 			ofs = entry->in_pack_offset - ofs;
-			if (!no_reuse_delta && !entry->preferred_base)
-				base_ref = find_packed_object_name(p, ofs);
+			if (!no_reuse_delta && !entry->preferred_base) {
+				struct revindex_entry *revidx;
+				revidx = find_pack_revindex(p, ofs);
+				base_ref = nth_packed_object_sha1(p, revidx->nr);
+			}
 			entry->in_pack_header_size = used + used_0;
 			break;
 		}
@@ -1239,9 +1126,11 @@ static void get_object_details(void)
 		sorted_by_offset[i] = objects + i;
 	qsort(sorted_by_offset, nr_objects, sizeof(*sorted_by_offset), pack_offset_sort);
 
-	prepare_pack_ix();
+	init_pack_revindex();
+
 	for (i = 0; i < nr_objects; i++)
 		check_object(sorted_by_offset[i]);
+
 	free(sorted_by_offset);
 }
 
@@ -1428,8 +1317,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	 * accounting lock.  Compiler will optimize the strangeness
 	 * away when THREADED_DELTA_SEARCH is not defined.
 	 */
-	if (trg_entry->delta_data)
-		free(trg_entry->delta_data);
+	free(trg_entry->delta_data);
 	cache_lock();
 	if (trg_entry->delta_data) {
 		delta_cache_size -= trg_entry->delta_size;
@@ -1770,6 +1658,18 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 #define ll_find_deltas(l, s, w, d, p)	find_deltas(l, &s, w, d, p)
 #endif
 
+static int add_ref_tag(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	unsigned char peeled[20];
+
+	if (!prefixcmp(path, "refs/tags/") && /* is a tag? */
+	    !peel_ref(path, peeled)        && /* peelable? */
+	    !is_null_sha1(peeled)          && /* annotated tag? */
+	    locate_object_entry(peeled))      /* object packed? */
+		add_object_entry(sha1, OBJ_TAG, NULL, 0);
+	return 0;
+}
+
 static void prepare_pack(int window, int depth)
 {
 	struct object_entry **delta_list;
@@ -1852,11 +1752,11 @@ static int git_pack_config(const char *k, const char *v)
 	}
 	if (!strcmp(k, "pack.threads")) {
 		delta_search_threads = git_config_int(k, v);
-		if (delta_search_threads < 1)
+		if (delta_search_threads < 0)
 			die("invalid number of threads specified (%d)",
 			    delta_search_threads);
 #ifndef THREADED_DELTA_SEARCH
-		if (delta_search_threads > 1)
+		if (delta_search_threads != 1)
 			warning("no threads support, ignoring %s", k);
 #endif
 		return 0;
@@ -2013,7 +1913,6 @@ static void get_object_list(int ac, const char **av)
 
 	init_revisions(&revs, NULL);
 	save_commit_buffer = 0;
-	track_object_refs = 0;
 	setup_revisions(ac, av, &revs, NULL);
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
@@ -2122,10 +2021,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		if (!prefixcmp(arg, "--threads=")) {
 			char *end;
 			delta_search_threads = strtoul(arg+10, &end, 0);
-			if (!arg[10] || *end || delta_search_threads < 1)
+			if (!arg[10] || *end || delta_search_threads < 0)
 				usage(pack_usage);
 #ifndef THREADED_DELTA_SEARCH
-			if (delta_search_threads > 1)
+			if (delta_search_threads != 1)
 				warning("no threads support, "
 					"ignoring %s", arg);
 #endif
@@ -2172,6 +2071,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--keep-unreachable", arg)) {
 			keep_unreachable = 1;
+			continue;
+		}
+		if (!strcmp("--include-tag", arg)) {
+			include_tag = 1;
 			continue;
 		}
 		if (!strcmp("--unpacked", arg) ||
@@ -2235,6 +2138,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!pack_to_stdout && thin)
 		die("--thin cannot be used to build an indexable pack.");
 
+#ifdef THREADED_DELTA_SEARCH
+	if (!delta_search_threads)	/* --threads=0 means autodetect */
+		delta_search_threads = online_cpus();
+#endif
+
 	prepare_packed_git();
 
 	if (progress)
@@ -2245,6 +2153,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		rp_av[rp_ac] = NULL;
 		get_object_list(rp_ac, rp_av);
 	}
+	if (include_tag && nr_result)
+		for_each_ref(add_ref_tag, NULL);
 	stop_progress(&progress_state);
 
 	if (non_empty && !nr_result)

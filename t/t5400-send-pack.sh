@@ -120,7 +120,7 @@ test_expect_success \
 	cd .. &&
 	git-clone parent child && cd child && git-push --all &&
 	cd ../parent &&
-	git-branch -a >branches && ! grep -q origin/master branches
+	git-branch -a >branches && ! grep origin/master branches
 '
 
 rewound_push_setup() {

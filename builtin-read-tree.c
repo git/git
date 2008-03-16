@@ -13,16 +13,15 @@
 #include "dir.h"
 #include "builtin.h"
 
-#define MAX_TREES 8
 static int nr_trees;
-static struct tree *trees[MAX_TREES];
+static struct tree *trees[MAX_UNPACK_TREES];
 
 static int list_tree(unsigned char *sha1)
 {
 	struct tree *tree;
 
-	if (nr_trees >= MAX_TREES)
-		die("I cannot read more than %d trees", MAX_TREES);
+	if (nr_trees >= MAX_UNPACK_TREES)
+		die("I cannot read more than %d trees", MAX_UNPACK_TREES);
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		return -1;
@@ -41,6 +40,7 @@ static int read_cache_unmerged(void)
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce)) {
+			remove_index_entry(ce);
 			if (last && !strcmp(ce->name, last->name))
 				continue;
 			cache_tree_invalidate_path(active_cache_tree, ce->name);
@@ -96,11 +96,13 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int i, newfd, stage = 0;
 	unsigned char sha1[20];
-	struct tree_desc t[MAX_TREES];
+	struct tree_desc t[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = -1;
+	opts.src_index = &the_index;
+	opts.dst_index = &the_index;
 
 	git_config(git_default_config);
 
@@ -219,27 +221,6 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	if ((opts.dir && !opts.update))
 		die("--exclude-per-directory is meaningless unless -u");
 
-	if (opts.prefix) {
-		int pfxlen = strlen(opts.prefix);
-		int pos;
-		if (opts.prefix[pfxlen-1] != '/')
-			die("prefix must end with /");
-		if (stage != 2)
-			die("binding merge takes only one tree");
-		pos = cache_name_pos(opts.prefix, pfxlen);
-		if (0 <= pos)
-			die("corrupt index file");
-		pos = -pos-1;
-		if (pos < active_nr &&
-		    !strncmp(active_cache[pos]->name, opts.prefix, pfxlen))
-			die("subdirectory '%s' already exists.", opts.prefix);
-		pos = cache_name_pos(opts.prefix, pfxlen-1);
-		if (0 <= pos)
-			die("file '%.*s' already exists.",
-					pfxlen-1, opts.prefix);
-		opts.pos = -1 - pos;
-	}
-
 	if (opts.merge) {
 		if (stage < 2)
 			die("just how do you expect me to merge %d trees?", stage-1);
@@ -268,7 +249,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		parse_tree(tree);
 		init_tree_desc(t+i, tree->buffer, tree->size);
 	}
-	unpack_trees(nr_trees, t, &opts);
+	if (unpack_trees(nr_trees, t, &opts))
+		return 128;
 
 	/*
 	 * When reading only one tree (either the most basic form,

@@ -11,7 +11,7 @@ attr_check () {
 
 	git check-attr test -- "$path" >actual &&
 	echo "$path: test: $2" >expect &&
-	diff -u expect actual
+	test_cmp expect actual
 
 }
 

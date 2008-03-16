@@ -7,45 +7,161 @@
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "common-cmds.h"
+#include "parse-options.h"
+#include "run-command.h"
 #include "dir.h"
 
-static const char *help_default_format;
+static struct man_viewer_list {
+	void (*exec)(const char *);
+	struct man_viewer_list *next;
+} *man_viewer_list;
 
-static enum help_format {
-	man_format,
-	info_format,
-	web_format,
+enum help_format {
+	HELP_FORMAT_MAN,
+	HELP_FORMAT_INFO,
+	HELP_FORMAT_WEB,
+};
+
+static int show_all = 0;
 #ifdef __MINGW32__
-} help_format = web_format;
+static enum help_format help_format = HELP_FORMAT_WEB;
 #else
-} help_format = man_format;
+static enum help_format help_format = HELP_FORMAT_MAN;
 #endif
+static struct option builtin_help_options[] = {
+	OPT_BOOLEAN('a', "all", &show_all, "print all available commands"),
+	OPT_SET_INT('m', "man", &help_format, "show man page", HELP_FORMAT_MAN),
+	OPT_SET_INT('w', "web", &help_format, "show manual in web browser",
+			HELP_FORMAT_WEB),
+	OPT_SET_INT('i', "info", &help_format, "show info page",
+			HELP_FORMAT_INFO),
+};
 
-static void parse_help_format(const char *format)
+static const char * const builtin_help_usage[] = {
+	"git-help [--all] [--man|--web|--info] [command]",
+	NULL
+};
+
+static enum help_format parse_help_format(const char *format)
 {
-	if (!format) {
-		help_format = man_format;
-		return;
-	}
-	if (!strcmp(format, "man")) {
-		help_format = man_format;
-		return;
-	}
-	if (!strcmp(format, "info")) {
-		help_format = info_format;
-		return;
-	}
-	if (!strcmp(format, "web") || !strcmp(format, "html")) {
-		help_format = web_format;
-		return;
-	}
+	if (!strcmp(format, "man"))
+		return HELP_FORMAT_MAN;
+	if (!strcmp(format, "info"))
+		return HELP_FORMAT_INFO;
+	if (!strcmp(format, "web") || !strcmp(format, "html"))
+		return HELP_FORMAT_WEB;
 	die("unrecognized help format '%s'", format);
+}
+
+static int check_emacsclient_version(void)
+{
+	struct strbuf buffer = STRBUF_INIT;
+	struct child_process ec_process;
+	const char *argv_ec[] = { "emacsclient", "--version", NULL };
+	int version;
+
+	/* emacsclient prints its version number on stderr */
+	memset(&ec_process, 0, sizeof(ec_process));
+	ec_process.argv = argv_ec;
+	ec_process.err = -1;
+	ec_process.stdout_to_stderr = 1;
+	if (start_command(&ec_process)) {
+		fprintf(stderr, "Failed to start emacsclient.\n");
+		return -1;
+	}
+	strbuf_read(&buffer, ec_process.err, 20);
+	close(ec_process.err);
+
+	/*
+	 * Don't bother checking return value, because "emacsclient --version"
+	 * seems to always exits with code 1.
+	 */
+	finish_command(&ec_process);
+
+	if (prefixcmp(buffer.buf, "emacsclient")) {
+		fprintf(stderr, "Failed to parse emacsclient version.\n");
+		strbuf_release(&buffer);
+		return -1;
+	}
+
+	strbuf_remove(&buffer, 0, strlen("emacsclient"));
+	version = atoi(buffer.buf);
+
+	if (version < 22) {
+		fprintf(stderr,
+			"emacsclient version '%d' too old (< 22).\n",
+			version);
+		strbuf_release(&buffer);
+		return -1;
+	}
+
+	strbuf_release(&buffer);
+	return 0;
+}
+
+static void exec_woman_emacs(const char *page)
+{
+	if (!check_emacsclient_version()) {
+		/* This works only with emacsclient version >= 22. */
+		struct strbuf man_page = STRBUF_INIT;
+		strbuf_addf(&man_page, "(woman \"%s\")", page);
+		execlp("emacsclient", "emacsclient", "-e", man_page.buf, NULL);
+	}
+}
+
+static void exec_man_konqueror(const char *page)
+{
+	const char *display = getenv("DISPLAY");
+	if (display && *display) {
+		struct strbuf man_page = STRBUF_INIT;
+		strbuf_addf(&man_page, "man:%s(1)", page);
+		execlp("kfmclient", "kfmclient", "newTab", man_page.buf, NULL);
+	}
+}
+
+static void exec_man_man(const char *page)
+{
+	execlp("man", "man", page, NULL);
+}
+
+static void do_add_man_viewer(void (*exec)(const char *))
+{
+	struct man_viewer_list **p = &man_viewer_list;
+
+	while (*p)
+		p = &((*p)->next);
+	*p = xmalloc(sizeof(**p));
+	(*p)->next = NULL;
+	(*p)->exec = exec;
+}
+
+static int add_man_viewer(const char *value)
+{
+	if (!strcasecmp(value, "man"))
+		do_add_man_viewer(exec_man_man);
+	else if (!strcasecmp(value, "woman"))
+		do_add_man_viewer(exec_woman_emacs);
+	else if (!strcasecmp(value, "konqueror"))
+		do_add_man_viewer(exec_man_konqueror);
+	else
+		warning("'%s': unsupported man viewer.", value);
+
+	return 0;
 }
 
 static int git_help_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "help.format"))
-		return git_config_string(&help_default_format, var, value);
+	if (!strcmp(var, "help.format")) {
+		if (!value)
+			return config_error_nonbool(var);
+		help_format = parse_help_format(value);
+		return 0;
+	}
+	if (!strcmp(var, "man.viewer")) {
+		if (!value)
+			return config_error_nonbool(var);
+		return add_man_viewer(value);
+	}
 	return git_default_config(var, value);
 }
 
@@ -229,18 +345,13 @@ static unsigned int list_commands_in_dir(struct cmdnames *cmds,
 	return longest;
 }
 
-static void list_commands(void)
+static unsigned int load_command_list(void)
 {
 	unsigned int longest = 0;
 	unsigned int len;
 	const char *env_path = getenv("PATH");
 	char *paths, *path, *colon;
 	const char *exec_path = git_exec_path();
-#ifdef __MINGW32__
-	char sep = ';';
-#else
-	char sep = ':';
-#endif
 
 	if (exec_path)
 		longest = list_commands_in_dir(&main_cmds, exec_path);
@@ -252,7 +363,7 @@ static void list_commands(void)
 
 	path = paths = xstrdup(env_path);
 	while (1) {
-		if ((colon = strchr(path, sep)))
+		if ((colon = strchr(path, PATH_SEP)))
 			*colon = 0;
 
 		len = list_commands_in_dir(&other_cmds, path);
@@ -273,6 +384,14 @@ static void list_commands(void)
 	      sizeof(*other_cmds.names), cmdname_compare);
 	uniq(&other_cmds);
 	exclude_cmds(&other_cmds, &main_cmds);
+
+	return longest;
+}
+
+static void list_commands(void)
+{
+	unsigned int longest = load_command_list();
+	const char *exec_path = git_exec_path();
 
 	if (main_cmds.cnt) {
 		printf("available git commands in '%s'\n", exec_path);
@@ -306,6 +425,22 @@ void list_common_cmds_help(void)
 		mput_char(' ', longest - strlen(common_cmds[i].name));
 		puts(common_cmds[i].help);
 	}
+}
+
+static int is_in_cmdlist(struct cmdnames *c, const char *s)
+{
+	int i;
+	for (i = 0; i < c->cnt; i++)
+		if (!strcmp(s, c->names[i]->name))
+			return 1;
+	return 0;
+}
+
+static int is_git_command(const char *s)
+{
+	load_command_list();
+	return is_in_cmdlist(&main_cmds, s) ||
+		is_in_cmdlist(&other_cmds, s);
 }
 
 static const char *cmd_to_page(const char *git_cmd)
@@ -347,9 +482,16 @@ static void setup_man_path(void)
 
 static void show_man_page(const char *git_cmd)
 {
+	struct man_viewer_list *viewer;
 	const char *page = cmd_to_page(git_cmd);
+
 	setup_man_path();
-	execlp("man", "man", page, NULL);
+	for (viewer = man_viewer_list; viewer; viewer = viewer->next)
+	{
+		viewer->exec(page); /* will return when unable */
+	}
+	exec_man_man(page);
+	die("no man viewer handled the request");
 }
 
 static void show_info_page(const char *git_cmd)
@@ -418,50 +560,43 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 
 int cmd_help(int argc, const char **argv, const char *prefix)
 {
-	const char *help_cmd = argv[1];
+	int nongit;
+	const char *alias;
 
-	if (argc < 2) {
-		printf("usage: %s\n\n", git_usage_string);
-		list_common_cmds_help();
-		exit(0);
-	}
+	setup_git_directory_gently(&nongit);
+	git_config(git_help_config);
 
-	if (!strcmp(help_cmd, "--all") || !strcmp(help_cmd, "-a")) {
+	argc = parse_options(argc, argv, builtin_help_options,
+			builtin_help_usage, 0);
+
+	if (show_all) {
 		printf("usage: %s\n\n", git_usage_string);
 		list_commands();
+		return 0;
 	}
 
-	else if (!strcmp(help_cmd, "--web") || !strcmp(help_cmd, "-w")) {
-		show_html_page(argc > 2 ? argv[2] : NULL);
+	if (!argv[0]) {
+		printf("usage: %s\n\n", git_usage_string);
+		list_common_cmds_help();
+		return 0;
 	}
 
-	else if (!strcmp(help_cmd, "--info") || !strcmp(help_cmd, "-i")) {
-		show_info_page(argc > 2 ? argv[2] : NULL);
+	alias = alias_lookup(argv[0]);
+	if (alias && !is_git_command(argv[0])) {
+		printf("`git %s' is aliased to `%s'\n", argv[0], alias);
+		return 0;
 	}
 
-	else if (!strcmp(help_cmd, "--man") || !strcmp(help_cmd, "-m")) {
-		show_man_page(argc > 2 ? argv[2] : NULL);
-	}
-
-	else {
-		int nongit;
-
-		setup_git_directory_gently(&nongit);
-		git_config(git_help_config);
-		if (help_default_format)
-			parse_help_format(help_default_format);
-
-		switch (help_format) {
-		case man_format:
-			show_man_page(help_cmd);
-			break;
-		case info_format:
-			show_info_page(help_cmd);
-			break;
-		case web_format:
-			show_html_page(help_cmd);
-			break;
-		}
+	switch (help_format) {
+	case HELP_FORMAT_MAN:
+		show_man_page(argv[0]);
+		break;
+	case HELP_FORMAT_INFO:
+		show_info_page(argv[0]);
+		break;
+	case HELP_FORMAT_WEB:
+		show_html_page(argv[0]);
+		break;
 	}
 
 	return 0;

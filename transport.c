@@ -442,7 +442,8 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	struct ref *last_ref = NULL;
 
 	if (!transport->data)
-		transport->data = get_http_walker(transport->url);
+		transport->data = get_http_walker(transport->url,
+						transport->remote);
 
 	refs_url = xmalloc(strlen(transport->url) + 11);
 	sprintf(refs_url, "%s/info/refs", transport->url);
@@ -453,9 +454,6 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, refs_url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
-	if (transport->remote->http_proxy)
-		curl_easy_setopt(slot->curl, CURLOPT_PROXY,
-				 transport->remote->http_proxy);
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
@@ -509,7 +507,8 @@ static int fetch_objs_via_curl(struct transport *transport,
 				 int nr_objs, struct ref **to_fetch)
 {
 	if (!transport->data)
-		transport->data = get_http_walker(transport->url);
+		transport->data = get_http_walker(transport->url,
+						transport->remote);
 	return fetch_objs_via_walker(transport, nr_objs, to_fetch);
 }
 
@@ -561,6 +560,7 @@ static int close_bundle(struct transport *transport)
 struct git_transport_data {
 	unsigned thin : 1;
 	unsigned keep : 1;
+	unsigned followtags : 1;
 	int depth;
 	struct child_process *conn;
 	int fd[2];
@@ -580,6 +580,9 @@ static int set_git_option(struct transport *connection,
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_THIN)) {
 		data->thin = !!value;
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_FOLLOWTAGS)) {
+		data->followtags = !!value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_KEEP)) {
 		data->keep = !!value;
@@ -622,33 +625,35 @@ static int fetch_refs_via_pack(struct transport *transport,
 	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
 	int i;
+	struct ref *refs_tmp = NULL;
 
 	memset(&args, 0, sizeof(args));
 	args.uploadpack = data->uploadpack;
 	args.keep_pack = data->keep;
 	args.lock_pack = 1;
 	args.use_thin_pack = data->thin;
+	args.include_tag = data->followtags;
 	args.verbose = transport->verbose > 0;
 	args.depth = data->depth;
 
 	for (i = 0; i < nr_heads; i++)
 		origh[i] = heads[i] = xstrdup(to_fetch[i]->name);
 
-	refs = transport_get_remote_refs(transport);
 	if (!data->conn) {
-		struct ref *refs_tmp;
 		connect_setup(transport);
 		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL, 0);
-		free_refs(refs_tmp);
 	}
 
-	refs = fetch_pack(&args, data->fd, data->conn, transport->remote_refs,
+	refs = fetch_pack(&args, data->fd, data->conn,
+			  refs_tmp ? refs_tmp : transport->remote_refs,
 			  dest, nr_heads, heads, &transport->pack_lockfile);
 	close(data->fd[0]);
 	close(data->fd[1]);
 	if (finish_connect(data->conn))
 		refs = NULL;
 	data->conn = NULL;
+
+	free_refs(refs_tmp);
 
 	for (i = 0; i < nr_heads; i++)
 		free(origh[i]);
@@ -692,7 +697,8 @@ static int is_local(const char *url)
 {
 	const char *colon = strchr(url, ':');
 	const char *slash = strchr(url, '/');
-	return !colon || (slash && slash < colon);
+	return !colon || (slash && slash < colon) ||
+		has_dos_drive_prefix(url);
 }
 
 static int is_file(const char *url)

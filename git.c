@@ -87,19 +87,6 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 	return handled;
 }
 
-static const char *alias_command;
-static char *alias_string;
-
-static int git_alias_config(const char *var, const char *value)
-{
-	if (!prefixcmp(var, "alias.") && !strcmp(var + 6, alias_command)) {
-		if (!value)
-			return config_error_nonbool(var);
-		alias_string = xstrdup(value);
-	}
-	return 0;
-}
-
 static int split_cmdline(char *cmdline, const char ***argv)
 {
 	int src, dst, count = 0, size = 16;
@@ -159,11 +146,13 @@ static int handle_alias(int *argcp, const char ***argv)
 	const char *subdir;
 	int count, option_count;
 	const char** new_argv;
+	const char *alias_command;
+	char *alias_string;
 
 	subdir = setup_git_directory_gently(&nongit);
 
 	alias_command = (*argv)[0];
-	git_config(git_alias_config);
+	alias_string = alias_lookup(alias_command);
 	if (alias_string) {
 		if (alias_string[0] == '!') {
 			if (*argcp > 1) {
@@ -289,6 +278,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "branch", cmd_branch, RUN_SETUP },
 		{ "bundle", cmd_bundle },
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
+		{ "checkout", cmd_checkout, RUN_SETUP | NEED_WORK_TREE },
 		{ "checkout-index", cmd_checkout_index,
 			RUN_SETUP | NEED_WORK_TREE},
 		{ "check-ref-format", cmd_check_ref_format },
@@ -332,6 +322,8 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "merge-base", cmd_merge_base, RUN_SETUP },
 		{ "merge-file", cmd_merge_file },
 		{ "merge-ours", cmd_merge_ours, RUN_SETUP },
+		{ "merge-recursive", cmd_merge_recursive, RUN_SETUP | NEED_WORK_TREE },
+		{ "merge-subtree", cmd_merge_recursive, RUN_SETUP | NEED_WORK_TREE },
 		{ "mv", cmd_mv, RUN_SETUP | NEED_WORK_TREE },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
@@ -342,6 +334,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "push", cmd_push, RUN_SETUP },
 		{ "read-tree", cmd_read_tree, RUN_SETUP },
 		{ "reflog", cmd_reflog, RUN_SETUP },
+		{ "remote", cmd_remote, RUN_SETUP },
 		{ "repo-config", cmd_config },
 		{ "rerere", cmd_rerere, RUN_SETUP },
 		{ "reset", cmd_reset, RUN_SETUP },
@@ -350,7 +343,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
 		{ "rm", cmd_rm, RUN_SETUP },
 		{ "send-pack", cmd_send_pack, RUN_SETUP },
-		{ "shortlog", cmd_shortlog, RUN_SETUP | USE_PAGER },
+		{ "shortlog", cmd_shortlog, USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP | USE_PAGER },
 		{ "status", cmd_status, RUN_SETUP | NEED_WORK_TREE },

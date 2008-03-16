@@ -34,7 +34,7 @@ base_present () {
 
 cleanup_temp_files () {
     if test "$1" = --save-backup ; then
-	mv -- "$BACKUP" "$path.orig"
+	mv -- "$BACKUP" "$MERGED.orig"
 	rm -f -- "$LOCAL" "$REMOTE" "$BASE"
     else
 	rm -f -- "$LOCAL" "$REMOTE" "$BASE" "$BACKUP"
@@ -67,14 +67,14 @@ resolve_symlink_merge () {
 	read ans
 	case "$ans" in
 	    [lL]*)
-		git checkout-index -f --stage=2 -- "$path"
-		git add -- "$path"
+		git checkout-index -f --stage=2 -- "$MERGED"
+		git add -- "$MERGED"
 		cleanup_temp_files --save-backup
 		return
 		;;
 	    [rR]*)
-		git checkout-index -f --stage=3 -- "$path"
-		git add -- "$path"
+		git checkout-index -f --stage=3 -- "$MERGED"
+		git add -- "$MERGED"
 		cleanup_temp_files --save-backup
 		return
 		;;
@@ -95,12 +95,12 @@ resolve_deleted_merge () {
 	read ans
 	case "$ans" in
 	    [mMcC]*)
-		git add -- "$path"
+		git add -- "$MERGED"
 		cleanup_temp_files --save-backup
 		return
 		;;
 	    [dD]*)
-		git rm -- "$path" > /dev/null
+		git rm -- "$MERGED" > /dev/null
 		cleanup_temp_files
 		return
 		;;
@@ -112,11 +112,11 @@ resolve_deleted_merge () {
 }
 
 check_unchanged () {
-    if test "$path" -nt "$BACKUP" ; then
+    if test "$MERGED" -nt "$BACKUP" ; then
 	status=0;
     else
 	while true; do
-	    echo "$path seems unchanged."
+	    echo "$MERGED seems unchanged."
 	    printf "Was the merge successful? [y/n] "
 	    read answer < /dev/tty
 	    case "$answer" in
@@ -127,50 +127,38 @@ check_unchanged () {
     fi
 }
 
-save_backup () {
-    if test "$status" -eq 0; then
-	mv -- "$BACKUP" "$path.orig"
-    fi
-}
-
-remove_backup () {
-    if test "$status" -eq 0; then
-	rm "$BACKUP"
-    fi
-}
-
 merge_file () {
-    path="$1"
+    MERGED="$1"
 
-    f=`git ls-files -u -- "$path"`
+    f=`git ls-files -u -- "$MERGED"`
     if test -z "$f" ; then
-	if test ! -f "$path" ; then
-	    echo "$path: file not found"
+	if test ! -f "$MERGED" ; then
+	    echo "$MERGED: file not found"
 	else
-	    echo "$path: file does not need merging"
+	    echo "$MERGED: file does not need merging"
 	fi
 	exit 1
     fi
 
-    ext="$$$(expr "$path" : '.*\(\.[^/]*\)$')"
-    BACKUP="$path.BACKUP.$ext"
-    LOCAL="$path.LOCAL.$ext"
-    REMOTE="$path.REMOTE.$ext"
-    BASE="$path.BASE.$ext"
+    ext="$$$(expr "$MERGED" : '.*\(\.[^/]*\)$')"
+    BACKUP="$MERGED.BACKUP.$ext"
+    LOCAL="$MERGED.LOCAL.$ext"
+    REMOTE="$MERGED.REMOTE.$ext"
+    BASE="$MERGED.BASE.$ext"
 
-    mv -- "$path" "$BACKUP"
-    cp -- "$BACKUP" "$path"
+    mv -- "$MERGED" "$BACKUP"
+    cp -- "$BACKUP" "$MERGED"
 
-    base_mode=`git ls-files -u -- "$path" | awk '{if ($3==1) print $1;}'`
-    local_mode=`git ls-files -u -- "$path" | awk '{if ($3==2) print $1;}'`
-    remote_mode=`git ls-files -u -- "$path" | awk '{if ($3==3) print $1;}'`
+    base_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==1) print $1;}'`
+    local_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $1;}'`
+    remote_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $1;}'`
 
-    base_present   && git cat-file blob ":1:$prefix$path" >"$BASE" 2>/dev/null
-    local_present  && git cat-file blob ":2:$prefix$path" >"$LOCAL" 2>/dev/null
-    remote_present && git cat-file blob ":3:$prefix$path" >"$REMOTE" 2>/dev/null
+    base_present   && git cat-file blob ":1:$prefix$MERGED" >"$BASE" 2>/dev/null
+    local_present  && git cat-file blob ":2:$prefix$MERGED" >"$LOCAL" 2>/dev/null
+    remote_present && git cat-file blob ":3:$prefix$MERGED" >"$REMOTE" 2>/dev/null
 
     if test -z "$local_mode" -o -z "$remote_mode"; then
-	echo "Deleted merge conflict for '$path':"
+	echo "Deleted merge conflict for '$MERGED':"
 	describe_file "$local_mode" "local" "$LOCAL"
 	describe_file "$remote_mode" "remote" "$REMOTE"
 	resolve_deleted_merge
@@ -178,14 +166,14 @@ merge_file () {
     fi
 
     if is_symlink "$local_mode" || is_symlink "$remote_mode"; then
-	echo "Symbolic link merge conflict for '$path':"
+	echo "Symbolic link merge conflict for '$MERGED':"
 	describe_file "$local_mode" "local" "$LOCAL"
 	describe_file "$remote_mode" "remote" "$REMOTE"
 	resolve_symlink_merge
 	return
     fi
 
-    echo "Normal merge conflict for '$path':"
+    echo "Normal merge conflict for '$MERGED':"
     describe_file "$local_mode" "local" "$LOCAL"
     describe_file "$remote_mode" "remote" "$REMOTE"
     printf "Hit return to start merge resolution tool (%s): " "$merge_tool"
@@ -194,36 +182,32 @@ merge_file () {
     case "$merge_tool" in
 	kdiff3)
 	    if base_present ; then
-		("$merge_tool_path" --auto --L1 "$path (Base)" --L2 "$path (Local)" --L3 "$path (Remote)" \
-		    -o "$path" -- "$BASE" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
+		("$merge_tool_path" --auto --L1 "$MERGED (Base)" --L2 "$MERGED (Local)" --L3 "$MERGED (Remote)" \
+		    -o "$MERGED" -- "$BASE" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    else
-		("$merge_tool_path" --auto --L1 "$path (Local)" --L2 "$path (Remote)" \
-		    -o "$path" -- "$LOCAL" "$REMOTE" > /dev/null 2>&1)
+		("$merge_tool_path" --auto --L1 "$MERGED (Local)" --L2 "$MERGED (Remote)" \
+		    -o "$MERGED" -- "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    fi
 	    status=$?
-	    remove_backup
 	    ;;
 	tkdiff)
 	    if base_present ; then
-		"$merge_tool_path" -a "$BASE" -o "$path" -- "$LOCAL" "$REMOTE"
+		"$merge_tool_path" -a "$BASE" -o "$MERGED" -- "$LOCAL" "$REMOTE"
 	    else
-		"$merge_tool_path" -o "$path" -- "$LOCAL" "$REMOTE"
+		"$merge_tool_path" -o "$MERGED" -- "$LOCAL" "$REMOTE"
 	    fi
 	    status=$?
-	    save_backup
 	    ;;
 	meld|vimdiff)
 	    touch "$BACKUP"
-	    "$merge_tool_path" -- "$LOCAL" "$path" "$REMOTE"
+	    "$merge_tool_path" -- "$LOCAL" "$MERGED" "$REMOTE"
 	    check_unchanged
-	    save_backup
 	    ;;
 	gvimdiff)
-		touch "$BACKUP"
-		"$merge_tool_path" -f -- "$LOCAL" "$path" "$REMOTE"
-		check_unchanged
-		save_backup
-		;;
+	    touch "$BACKUP"
+	    "$merge_tool_path" -f -- "$LOCAL" "$MERGED" "$REMOTE"
+	    check_unchanged
+	    ;;
 	xxdiff)
 	    touch "$BACKUP"
 	    if base_present ; then
@@ -231,53 +215,68 @@ merge_file () {
 		    -R 'Accel.SaveAsMerged: "Ctrl-S"' \
 		    -R 'Accel.Search: "Ctrl+F"' \
 		    -R 'Accel.SearchForward: "Ctrl-G"' \
-		    --merged-file "$path" -- "$LOCAL" "$BASE" "$REMOTE"
+		    --merged-file "$MERGED" -- "$LOCAL" "$BASE" "$REMOTE"
 	    else
 		"$merge_tool_path" -X --show-merged-pane \
 		    -R 'Accel.SaveAsMerged: "Ctrl-S"' \
 		    -R 'Accel.Search: "Ctrl+F"' \
 		    -R 'Accel.SearchForward: "Ctrl-G"' \
-		    --merged-file "$path" -- "$LOCAL" "$REMOTE"
+		    --merged-file "$MERGED" -- "$LOCAL" "$REMOTE"
 	    fi
 	    check_unchanged
-	    save_backup
 	    ;;
 	opendiff)
 	    touch "$BACKUP"
 	    if base_present; then
-		"$merge_tool_path" "$LOCAL" "$REMOTE" -ancestor "$BASE" -merge "$path" | cat
+		"$merge_tool_path" "$LOCAL" "$REMOTE" -ancestor "$BASE" -merge "$MERGED" | cat
 	    else
-		"$merge_tool_path" "$LOCAL" "$REMOTE" -merge "$path" | cat
+		"$merge_tool_path" "$LOCAL" "$REMOTE" -merge "$MERGED" | cat
 	    fi
 	    check_unchanged
-	    save_backup
 	    ;;
 	ecmerge)
 	    touch "$BACKUP"
 	    if base_present; then
-		"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" --mode=merge3 --to="$path"
+		"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" --mode=merge3 --to="$MERGED"
 	    else
-		"$merge_tool_path" "$LOCAL" "$REMOTE" --mode=merge2 --to="$path"
+		"$merge_tool_path" "$LOCAL" "$REMOTE" --mode=merge2 --to="$MERGED"
 	    fi
 	    check_unchanged
-	    save_backup
 	    ;;
 	emerge)
 	    if base_present ; then
-		"$merge_tool_path" -f emerge-files-with-ancestor-command "$LOCAL" "$REMOTE" "$BASE" "$(basename "$path")"
+		"$merge_tool_path" -f emerge-files-with-ancestor-command "$LOCAL" "$REMOTE" "$BASE" "$(basename "$MERGED")"
 	    else
-		"$merge_tool_path" -f emerge-files-command "$LOCAL" "$REMOTE" "$(basename "$path")"
+		"$merge_tool_path" -f emerge-files-command "$LOCAL" "$REMOTE" "$(basename "$MERGED")"
 	    fi
 	    status=$?
-	    save_backup
+	    ;;
+	*)
+	    if test -n "$merge_tool_cmd"; then
+		if test "$merge_tool_trust_exit_code" = "false"; then
+		    touch "$BACKUP"
+		    ( eval $merge_tool_cmd )
+		    check_unchanged
+		else
+		    ( eval $merge_tool_cmd )
+		    status=$?
+		fi
+	    fi
 	    ;;
     esac
     if test "$status" -ne 0; then
-	echo "merge of $path failed" 1>&2
-	mv -- "$BACKUP" "$path"
+	echo "merge of $MERGED failed" 1>&2
+	mv -- "$BACKUP" "$MERGED"
 	exit 1
     fi
-    git add -- "$path"
+
+    if test "$merge_keep_backup" = "true"; then
+	mv -- "$BACKUP" "$MERGED.orig"
+    else
+	rm -- "$BACKUP"
+    fi
+
+    git add -- "$MERGED"
     cleanup_temp_files
 }
 
@@ -309,12 +308,20 @@ do
     shift
 done
 
+valid_custom_tool()
+{
+    merge_tool_cmd="$(git config mergetool.$1.cmd)"
+    test -n "$merge_tool_cmd"
+}
+
 valid_tool() {
 	case "$1" in
 		kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge)
 			;; # happy
 		*)
-			return 1
+			if ! valid_custom_tool "$1"; then
+				return 1
+			fi
 			;;
 	esac
 }
@@ -380,9 +387,15 @@ else
 
     init_merge_tool_path "$merge_tool"
 
-    if ! type "$merge_tool_path" > /dev/null 2>&1; then
+    merge_keep_backup="$(git config --bool merge.keepBackup || echo true)"
+
+    if test -z "$merge_tool_cmd" && ! type "$merge_tool_path" > /dev/null 2>&1; then
         echo "The merge tool $merge_tool is not available as '$merge_tool_path'"
         exit 1
+    fi
+
+    if ! test -z "$merge_tool_cmd"; then
+        merge_tool_trust_exit_code="$(git config --bool mergetool.$merge_tool.trustExitCode || echo false)"
     fi
 fi
 

@@ -704,8 +704,7 @@ static struct path_simplify *create_simplify(const char **pathspec)
 
 static void free_simplify(struct path_simplify *simplify)
 {
-	if (simplify)
-		free(simplify);
+	free(simplify);
 }
 
 int read_directory(struct dir_struct *dir, const char *path, const char *base, int baselen, const char **pathspec)

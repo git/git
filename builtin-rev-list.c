@@ -25,6 +25,9 @@ static const char rev_list_usage[] =
 "    --no-merges\n"
 "    --remove-empty\n"
 "    --all\n"
+"    --branches\n"
+"    --tags\n"
+"    --remotes\n"
 "    --stdin\n"
 "    --quiet\n"
 "  ordering output:\n"
@@ -607,7 +610,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		usage(rev_list_usage);
 
 	save_commit_buffer = revs.verbose_header || revs.grep_filter;
-	track_object_refs = 0;
 	if (bisect_list)
 		revs.limited = 1;
 

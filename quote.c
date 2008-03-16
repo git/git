@@ -260,6 +260,48 @@ extern void write_name_quotedpfx(const char *pfx, size_t pfxlen,
 	fputc(terminator, fp);
 }
 
+/* quote path as relative to the given prefix */
+char *quote_path_relative(const char *in, int len,
+			  struct strbuf *out, const char *prefix)
+{
+	int needquote;
+
+	if (len < 0)
+		len = strlen(in);
+
+	/* "../" prefix itself does not need quoting, but "in" might. */
+	needquote = next_quote_pos(in, len) < len;
+	strbuf_setlen(out, 0);
+	strbuf_grow(out, len);
+
+	if (needquote)
+		strbuf_addch(out, '"');
+	if (prefix) {
+		int off = 0;
+		while (prefix[off] && off < len && prefix[off] == in[off])
+			if (prefix[off] == '/') {
+				prefix += off + 1;
+				in += off + 1;
+				len -= off + 1;
+				off = 0;
+			} else
+				off++;
+
+		for (; *prefix; prefix++)
+			if (*prefix == '/')
+				strbuf_addstr(out, "../");
+	}
+
+	quote_c_style_counted (in, len, out, NULL, 1);
+
+	if (needquote)
+		strbuf_addch(out, '"');
+	if (!out->len)
+		strbuf_addstr(out, "./");
+
+	return out->buf;
+}
+
 /*
  * C-style name unquoting.
  *
@@ -288,7 +330,7 @@ int unquote_c_style(struct strbuf *sb, const char *quoted, const char **endp)
 		switch (*quoted++) {
 		  case '"':
 			if (endp)
-				*endp = quoted + 1;
+				*endp = quoted;
 			return 0;
 		  case '\\':
 			break;

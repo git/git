@@ -476,22 +476,21 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 static void diff_index_show_file(struct rev_info *revs,
 				 const char *prefix,
 				 struct cache_entry *ce,
-				 unsigned char *sha1, unsigned int mode)
+				 const unsigned char *sha1, unsigned int mode)
 {
 	diff_addremove(&revs->diffopt, prefix[0], mode,
 		       sha1, ce->name, NULL);
 }
 
 static int get_stat_data(struct cache_entry *ce,
-			 unsigned char **sha1p,
+			 const unsigned char **sha1p,
 			 unsigned int *modep,
 			 int cached, int match_missing)
 {
-	unsigned char *sha1 = ce->sha1;
+	const unsigned char *sha1 = ce->sha1;
 	unsigned int mode = ce->ce_mode;
 
 	if (!cached) {
-		static unsigned char no_sha1[20];
 		int changed;
 		struct stat st;
 		if (lstat(ce->name, &st) < 0) {
@@ -505,7 +504,7 @@ static int get_stat_data(struct cache_entry *ce,
 		changed = ce_match_stat(ce, &st, 0);
 		if (changed) {
 			mode = ce_mode_from_stat(ce, st.st_mode);
-			sha1 = no_sha1;
+			sha1 = null_sha1;
 		}
 	}
 
@@ -518,7 +517,7 @@ static void show_new_file(struct rev_info *revs,
 			  struct cache_entry *new,
 			  int cached, int match_missing)
 {
-	unsigned char *sha1;
+	const unsigned char *sha1;
 	unsigned int mode;
 
 	/* New file in the index: it might actually be different in
@@ -537,7 +536,7 @@ static int show_modified(struct rev_info *revs,
 			 int cached, int match_missing)
 {
 	unsigned int mode, oldmode;
-	unsigned char *sha1;
+	const unsigned char *sha1;
 
 	if (get_stat_data(new, &sha1, &mode, cached, match_missing) < 0) {
 		if (report_missing)
@@ -605,8 +604,7 @@ static void mark_merge_entries(void)
  */
 static void do_oneway_diff(struct unpack_trees_options *o,
 	struct cache_entry *idx,
-	struct cache_entry *tree,
-	int idx_pos, int idx_nr)
+	struct cache_entry *tree)
 {
 	struct rev_info *revs = o->unpack_data;
 	int match_missing, cached;
@@ -647,32 +645,19 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	show_modified(revs, tree, idx, 1, cached, match_missing);
 }
 
-/*
- * Count how many index entries go with the first one
- */
-static inline int count_skip(const struct cache_entry *src, int pos)
+static inline void skip_same_name(struct cache_entry *ce, struct unpack_trees_options *o)
 {
-	int skip = 1;
+	int len = ce_namelen(ce);
+	const struct index_state *index = o->src_index;
 
-	/* We can only have multiple entries if the first one is not stage-0 */
-	if (ce_stage(src)) {
-		struct cache_entry **p = active_cache + pos;
-		int namelen = ce_namelen(src);
-
-		for (;;) {
-			const struct cache_entry *ce;
-			pos++;
-			if (pos >= active_nr)
-				break;
-			ce = *++p;
-			if (ce_namelen(ce) != namelen)
-				break;
-			if (memcmp(ce->name, src->name, namelen))
-				break;
-			skip++;
-		}
+	while (o->pos < index->cache_nr) {
+		struct cache_entry *next = index->cache[o->pos];
+		if (len != ce_namelen(next))
+			break;
+		if (memcmp(ce->name, next->name, len))
+			break;
+		o->pos++;
 	}
-	return skip;
 }
 
 /*
@@ -690,17 +675,14 @@ static inline int count_skip(const struct cache_entry *src, int pos)
  * the fairly complex unpack_trees() semantic requirements, including
  * the skipping, the path matching, the type conflict cases etc.
  */
-static int oneway_diff(struct cache_entry **src,
-	struct unpack_trees_options *o,
-	int index_pos)
+static int oneway_diff(struct cache_entry **src, struct unpack_trees_options *o)
 {
-	int skip = 0;
 	struct cache_entry *idx = src[0];
 	struct cache_entry *tree = src[1];
 	struct rev_info *revs = o->unpack_data;
 
-	if (index_pos >= 0)
-		skip = count_skip(idx, index_pos);
+	if (idx && ce_stage(idx))
+		skip_same_name(idx, o);
 
 	/*
 	 * Unpack-trees generates a DF/conflict entry if
@@ -712,9 +694,9 @@ static int oneway_diff(struct cache_entry **src,
 		tree = NULL;
 
 	if (ce_path_match(idx ? idx : tree, revs->prune_data))
-		do_oneway_diff(o, idx, tree, index_pos, skip);
+		do_oneway_diff(o, idx, tree);
 
-	return skip;
+	return 0;
 }
 
 int run_diff_index(struct rev_info *revs, int cached)
@@ -739,9 +721,12 @@ int run_diff_index(struct rev_info *revs, int cached)
 	opts.merge = 1;
 	opts.fn = oneway_diff;
 	opts.unpack_data = revs;
+	opts.src_index = &the_index;
+	opts.dst_index = NULL;
 
 	init_tree_desc(&t, tree->buffer, tree->size);
-	unpack_trees(1, &t, &opts);
+	if (unpack_trees(1, &t, &opts))
+		exit(128);
 
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
@@ -791,8 +776,11 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	opts.merge = 1;
 	opts.fn = oneway_diff;
 	opts.unpack_data = &revs;
+	opts.src_index = &the_index;
+	opts.dst_index = &the_index;
 
 	init_tree_desc(&t, tree->buffer, tree->size);
-	unpack_trees(1, &t, &opts);
+	if (unpack_trees(1, &t, &opts))
+		exit(128);
 	return 0;
 }

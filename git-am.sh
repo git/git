@@ -2,13 +2,14 @@
 #
 # Copyright (c) 2005, 2006 Junio C Hamano
 
+SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
 git-am [options] <mbox>|<Maildir>...
 git-am [options] --resolved
 git-am [options] --skip
 --
-d,dotest=       use <dir> and not .dotest
+d,dotest=       (removed -- do not use)
 i,interactive   run interactively
 b,binary        pass --allo-binary-replacement to git-apply
 3,3way          allow fall back on 3way merging if needed
@@ -20,11 +21,14 @@ C=              pass it through git-apply
 p=              pass it through git-apply
 resolvemsg=     override error message when patch failure occurs
 r,resolved      to be used after a patch failure
-skip            skip the current patch"
+skip            skip the current patch
+rebasing        (internal use for git-rebase)"
 
 . git-sh-setup
+prefix=$(git rev-parse --show-prefix)
 set_reflog_action am
 require_work_tree
+cd_to_toplevel
 
 git var GIT_COMMITTER_IDENT >/dev/null || exit
 
@@ -46,10 +50,6 @@ stop_here_user_resolve () {
     if test '' != "$threeway"
     then
         cmdline="$cmdline -3"
-    fi
-    if test '.dotest' != "$dotest"
-    then
-        cmdline="$cmdline -d=$dotest"
     fi
     echo "When you have resolved this problem run \"$cmdline --resolved\"."
     echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
@@ -122,7 +122,8 @@ reread_subject () {
 }
 
 prec=4
-dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary=
+dotest=".dotest"
+sign= utf8=t keep= skip= interactive= resolved= binary= rebasing=
 resolvemsg= resume=
 git_apply_opt=
 
@@ -147,8 +148,11 @@ do
 		resolved=t ;;
 	--skip)
 		skip=t ;;
+	--rebasing)
+		rebasing=t threeway=t keep=t binary=t ;;
 	-d|--dotest)
-		shift; dotest=$1;;
+		die "-d option is no longer supported.  Do not use."
+		;;
 	--resolvemsg)
 		shift; resolvemsg=$1 ;;
 	--whitespace)
@@ -184,7 +188,7 @@ then
 	0,)
 		# No file input but without resume parameters; catch
 		# user error to feed us a patch from standard input
-		# when there is already .dotest.  This is somewhat
+		# when there is already $dotest.  This is somewhat
 		# unreliable -- stdin could be /dev/null for example
 		# and the caller did not intend to feed us a patch but
 		# wanted to continue unattended.
@@ -204,6 +208,24 @@ else
 	# Start afresh.
 	mkdir -p "$dotest" || exit
 
+	if test -n "$prefix" && test $# != 0
+	then
+		first=t
+		for arg
+		do
+			test -n "$first" && {
+				set x
+				first=
+			}
+			case "$arg" in
+			/*)
+				set "$@" "$arg" ;;
+			*)
+				set "$@" "$prefix$arg" ;;
+			esac
+		done
+		shift
+	fi
 	git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
 		rm -fr "$dotest"
 		exit 1
@@ -218,6 +240,12 @@ else
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
 	echo 1 >"$dotest/next"
+	if test -n "$rebasing"
+	then
+		: >"$dotest/rebasing"
+	else
+		: >"$dotest/applying"
+	fi
 fi
 
 case "$resolved" in
@@ -329,7 +357,7 @@ do
 		LAST_SIGNED_OFF_BY=`
 		    sed -ne '/^Signed-off-by: /p' \
 		    "$dotest/msg-clean" |
-		    tail -n 1
+		    sed -ne '$p'
 		`
 		ADD_SIGNOFF=`
 		    test "$LAST_SIGNED_OFF_BY" = "$SIGNOFF" || {

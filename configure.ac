@@ -326,6 +326,60 @@ else
 	NO_C99_FORMAT=
 fi
 AC_SUBST(NO_C99_FORMAT)
+#
+# Define FREAD_READS_DIRECTORIES if your are on a system which succeeds
+# when attempting to read from an fopen'ed directory.
+AC_CACHE_CHECK([whether system succeeds to read fopen'ed directory],
+ [ac_cv_fread_reads_directories],
+[
+AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
+		[[char c;
+		FILE *f = fopen(".", "r");
+		return f && fread(&c, 1, 1, f)]])],
+	[ac_cv_fread_reads_directories=no],
+	[ac_cv_fread_reads_directories=yes])
+])
+if test $ac_cv_fread_reads_directories = yes; then
+	FREAD_READS_DIRECTORIES=UnfortunatelyYes
+else
+	FREAD_READS_DIRECTORIES=
+fi
+AC_SUBST(FREAD_READS_DIRECTORIES)
+#
+# Define SNPRINTF_RETURNS_BOGUS if your are on a system which snprintf()
+# or vsnprintf() return -1 instead of number of characters which would
+# have been written to the final string if enough space had been available.
+AC_CACHE_CHECK([whether snprintf() and/or vsnprintf() return bogus value],
+ [ac_cv_snprintf_returns_bogus],
+[
+AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
+		#include "stdarg.h"
+
+		int test_vsnprintf(char *str, size_t maxsize, const char *format, ...)
+		{
+		  int ret;
+		  va_list ap;
+		  va_start(ap, format);
+		  ret = vsnprintf(str, maxsize, format, ap);
+		  va_end(ap);
+		  return ret;
+		}],
+		[[char buf[6];
+		  if (test_vsnprintf(buf, 3, "%s", "12345") != 5
+		      || strcmp(buf, "12")) return 1;
+		  if (snprintf(buf, 3, "%s", "12345") != 5
+		      || strcmp(buf, "12")) return 1]])],
+	[ac_cv_snprintf_returns_bogus=no],
+	[ac_cv_snprintf_returns_bogus=yes])
+])
+if test $ac_cv_snprintf_returns_bogus = yes; then
+	SNPRINTF_RETURNS_BOGUS=UnfortunatelyYes
+else
+	SNPRINTF_RETURNS_BOGUS=
+fi
+AC_SUBST(SNPRINTF_RETURNS_BOGUS)
 
 
 ## Checks for library functions.

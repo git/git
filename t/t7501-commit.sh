@@ -204,7 +204,7 @@ test_expect_success 'sign off (1)' '
 		git var GIT_COMMITTER_IDENT |
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
 	) >expected &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -224,7 +224,7 @@ $existing" &&
 		git var GIT_COMMITTER_IDENT |
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
 	) >expected &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -241,7 +241,7 @@ test_expect_success 'multiple -m' '
 		echo
 		echo three
 	) >expected &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -302,12 +302,12 @@ test_expect_success 'same tree (merge and amend merge)' '
 	git merge -s ours side -m "empty ok" &&
 	git diff HEAD^ HEAD >actual &&
 	: >expected &&
-	diff -u expected actual &&
+	test_cmp expected actual &&
 
 	git commit --amend -m "empty really ok" &&
 	git diff HEAD^ HEAD >actual &&
 	: >expected &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -324,7 +324,7 @@ test_expect_success 'amend using the message from another commit' '
 	git commit --allow-empty --amend -C "$old" &&
 	git show --pretty="format:%ad %s" "$old" >expected &&
 	git show --pretty="format:%ad %s" HEAD >actual &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -342,7 +342,7 @@ test_expect_success 'amend using the message from a commit named with tag' '
 	git commit --allow-empty --amend -C tagged-old &&
 	git show --pretty="format:%ad %s" "$old" >expected &&
 	git show --pretty="format:%ad %s" HEAD >actual &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 

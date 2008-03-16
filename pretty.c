@@ -30,8 +30,7 @@ enum cmit_fmt get_commit_format(const char *arg)
 	if (*arg == '=')
 		arg++;
 	if (!prefixcmp(arg, "format:")) {
-		if (user_format)
-			free(user_format);
+		free(user_format);
 		user_format = xstrdup(arg + 7);
 		return CMIT_FMT_USERFORMAT;
 	}
@@ -110,9 +109,9 @@ needquote:
 	strbuf_addstr(sb, "?=");
 }
 
-static void add_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
-			 const char *line, enum date_mode dmode,
-			 const char *encoding)
+void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
+		  const char *line, enum date_mode dmode,
+		  const char *encoding)
 {
 	char *date;
 	int namelen;
@@ -621,23 +620,23 @@ static void pp_header(enum cmit_fmt fmt,
 		 */
 		if (!memcmp(line, "author ", 7)) {
 			strbuf_grow(sb, linelen + 80);
-			add_user_info("Author", fmt, sb, line + 7, dmode, encoding);
+			pp_user_info("Author", fmt, sb, line + 7, dmode, encoding);
 		}
 		if (!memcmp(line, "committer ", 10) &&
 		    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER)) {
 			strbuf_grow(sb, linelen + 80);
-			add_user_info("Commit", fmt, sb, line + 10, dmode, encoding);
+			pp_user_info("Commit", fmt, sb, line + 10, dmode, encoding);
 		}
 	}
 }
 
-static void pp_title_line(enum cmit_fmt fmt,
-			  const char **msg_p,
-			  struct strbuf *sb,
-			  const char *subject,
-			  const char *after_subject,
-			  const char *encoding,
-			  int plain_non_ascii)
+void pp_title_line(enum cmit_fmt fmt,
+		   const char **msg_p,
+		   struct strbuf *sb,
+		   const char *subject,
+		   const char *after_subject,
+		   const char *encoding,
+		   int need_8bit_cte)
 {
 	struct strbuf title;
 
@@ -670,7 +669,7 @@ static void pp_title_line(enum cmit_fmt fmt,
 	}
 	strbuf_addch(sb, '\n');
 
-	if (plain_non_ascii) {
+	if (need_8bit_cte > 0) {
 		const char *header_fmt =
 			"MIME-Version: 1.0\n"
 			"Content-Type: text/plain; charset=%s\n"
@@ -686,10 +685,10 @@ static void pp_title_line(enum cmit_fmt fmt,
 	strbuf_release(&title);
 }
 
-static void pp_remainder(enum cmit_fmt fmt,
-			 const char **msg_p,
-			 struct strbuf *sb,
-			 int indent)
+void pp_remainder(enum cmit_fmt fmt,
+		  const char **msg_p,
+		  struct strbuf *sb,
+		  int indent)
 {
 	int first = 1;
 	for (;;) {
@@ -719,9 +718,9 @@ static void pp_remainder(enum cmit_fmt fmt,
 }
 
 void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
-				  struct strbuf *sb, int abbrev,
-				  const char *subject, const char *after_subject,
-				  enum date_mode dmode, int plain_non_ascii)
+			 struct strbuf *sb, int abbrev,
+			 const char *subject, const char *after_subject,
+			 enum date_mode dmode, int need_8bit_cte)
 {
 	unsigned long beginning_of_body;
 	int indent = 4;
@@ -747,13 +746,11 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
 		indent = 0;
 
-	/* After-subject is used to pass in Content-Type: multipart
-	 * MIME header; in that case we do not have to do the
-	 * plaintext content type even if the commit message has
-	 * non 7-bit ASCII character.  Otherwise, check if we need
-	 * to say this is not a 7-bit ASCII.
+	/*
+	 * We need to check and emit Content-type: to mark it
+	 * as 8-bit if we haven't done so.
 	 */
-	if (fmt == CMIT_FMT_EMAIL && !after_subject) {
+	if (fmt == CMIT_FMT_EMAIL && need_8bit_cte == 0) {
 		int i, ch, in_body;
 
 		for (in_body = i = 0; (ch = msg[i]); i++) {
@@ -766,7 +763,7 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 					in_body = 1;
 			}
 			else if (non_ascii(ch)) {
-				plain_non_ascii = 1;
+				need_8bit_cte = 1;
 				break;
 			}
 		}
@@ -791,7 +788,7 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 	/* These formats treat the title line specially. */
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
 		pp_title_line(fmt, &msg, sb, subject,
-			      after_subject, encoding, plain_non_ascii);
+			      after_subject, encoding, need_8bit_cte);
 
 	beginning_of_body = sb->len;
 	if (fmt != CMIT_FMT_ONELINE)

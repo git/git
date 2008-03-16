@@ -249,7 +249,7 @@ test_expect_success 'bundle should record HEAD correctly' '
 	do
 		echo "$(git rev-parse --verify $h) $h"
 	done >expect &&
-	diff -u expect actual
+	test_cmp expect actual
 
 '
 

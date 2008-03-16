@@ -49,7 +49,7 @@ Functions
 
 `finish_async`::
 
-	Wait for the completeion of an asynchronous function that was
+	Wait for the completion of an asynchronous function that was
 	started with start_async().
 
 
@@ -111,9 +111,10 @@ stderr as follows:
 	.no_stdin, .no_stdout, .no_stderr: The respective channel is
 		redirected to /dev/null.
 
-	.stdout_to_stderr: stdout of the child is redirected to the
-		parent's stderr (i.e. *not* to what .err or
-		.no_stderr specify).
+	.stdout_to_stderr: stdout of the child is redirected to its
+		stderr. This happens after stderr is itself redirected.
+		So stdout will follow stderr to wherever it is
+		redirected.
 
 To modify the environment of the sub-process, specify an array of
 string pointers (NULL terminated) in .env:
@@ -121,8 +122,8 @@ string pointers (NULL terminated) in .env:
 . If the string is of the form "VAR=value", i.e. it contains '='
   the variable is added to the child process's environment.
 
-. If the string does not contain '=', it names an environement
-  variable that will be removed from the child process's envionment.
+. If the string does not contain '=', it names an environment
+  variable that will be removed from the child process's environment.
 
 To specify a new initial working directory for the sub-process,
 specify it in the .dir member.

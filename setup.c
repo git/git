@@ -4,23 +4,16 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 
-#ifdef __MINGW32__
-static inline int is_dir_sep(char c) { return c == '/' || c == '\\'; }
-#else
-static inline int is_dir_sep(char c) { return c == '/'; }
-#endif
-
 static int sanitary_path_copy(char *dst, const char *src)
 {
-	char *dst0 = dst;
+	char *dst0;
 
-#ifdef __MINGW32__
-	if (isalpha(*src) && src[1] == ':') {
+	if (has_dos_drive_prefix(src)) {
 		*dst++ = *src++;
 		*dst++ = *src++;
-		dst0 = dst;
 	}
-#endif
+	dst0 = dst;
+
 	if (is_dir_sep(*src)) {
 		*dst++ = '/';
 		while (is_dir_sep(*src))
@@ -39,30 +32,22 @@ static int sanitary_path_copy(char *dst, const char *src)
 		 * (4) "../"          -- strip one, eat slash and continue.
 		 */
 		if (c == '.') {
-			switch (src[1]) {
-			case '\0':
+			if (!src[1]) {
 				/* (1) */
 				src++;
 				break;
-			case '/':
-#ifdef __MINGW32__
-			case '\\':
-#endif
+			} else if (is_dir_sep(src[1])) {
 				/* (2) */
 				src += 2;
 				while (is_dir_sep(*src))
 					src++;
 				continue;
-			case '.':
-				switch (src[2]) {
-				case '\0':
+			} else if (src[1] == '.') {
+				if (!src[2]) {
 					/* (3) */
 					src += 2;
 					goto up_one;
-				case '/':
-#ifdef __MINGW32__
-				case '\\':
-#endif
+				} else if (is_dir_sep(src[2])) {
 					/* (4) */
 					src += 3;
 					while (is_dir_sep(*src))
@@ -234,6 +219,8 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 		const char *p = prefix_path(prefix, prefixlen, *src);
 		if (p)
 			*(dst++) = p;
+		else
+			exit(128); /* error message already given */
 		src++;
 	}
 	*dst = NULL;
@@ -397,10 +384,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 	if (!getcwd(cwd, sizeof(cwd)-1))
 		die("Unable to read current working directory");
-#ifdef __MINGW32__
-	if (cwd[1] == ':')
+	if (has_dos_drive_prefix(cwd))
 		minoffset = 2;
-#endif
 
 	/*
 	 * Test in the following order (relative to the cwd):
@@ -485,8 +470,7 @@ int check_repository_format_version(const char *var, const char *value)
 	} else if (strcmp(var, "core.worktree") == 0) {
 		if (!value)
 			return config_error_nonbool(var);
-		if (git_work_tree_cfg)
-			free(git_work_tree_cfg);
+		free(git_work_tree_cfg);
 		git_work_tree_cfg = xstrdup(value);
 		inside_work_tree = -1;
 	}

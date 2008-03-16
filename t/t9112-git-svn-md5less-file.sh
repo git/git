@@ -1,3 +1,5 @@
+#!/bin/sh
+
 test_description='test that git handles an svn repository with missing md5sums'
 
 . ./lib-git-svn.sh

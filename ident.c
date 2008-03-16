@@ -171,7 +171,7 @@ static const char au_env[] = "GIT_AUTHOR_NAME";
 static const char co_env[] = "GIT_COMMITTER_NAME";
 static const char *env_hint =
 "\n"
-"*** Your name cannot be determined from your system services (gecos).\n"
+"*** Please tell me who you are.\n"
 "\n"
 "Run\n"
 "\n"

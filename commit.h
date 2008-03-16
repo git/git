@@ -70,7 +70,22 @@ extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit*,
                                 struct strbuf *,
                                 int abbrev, const char *subject,
                                 const char *after_subject, enum date_mode,
-				int non_ascii_present);
+				int need_8bit_cte);
+void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
+		   const char *line, enum date_mode dmode,
+		   const char *encoding);
+void pp_title_line(enum cmit_fmt fmt,
+		   const char **msg_p,
+		   struct strbuf *sb,
+		   const char *subject,
+		   const char *after_subject,
+		   const char *encoding,
+		   int need_8bit_cte);
+void pp_remainder(enum cmit_fmt fmt,
+		  const char **msg_p,
+		  struct strbuf *sb,
+		  int indent);
+
 
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
@@ -101,6 +116,7 @@ struct commit_graft {
 struct commit_graft *read_graft_line(char *buf, int len);
 int register_commit_graft(struct commit_graft *, int);
 int read_graft_file(const char *graft_file);
+struct commit_graft *lookup_commit_graft(const unsigned char *sha1);
 
 extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2, int cleanup);
 

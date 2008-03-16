@@ -19,6 +19,8 @@ depending on the subcommand:
 git reflog expire [--dry-run] [--stale-fix] [--verbose]
 	[--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...
 
+git reflog delete ref@\{specifier\}...
+
 git reflog [show] [log-options] [<ref>]
 
 Reflog is a mechanism to record when the tip of branches are
@@ -42,6 +44,9 @@ of a reference. For example, `HEAD@\{2\}` means "where HEAD used to be
 two moves ago", `master@\{one.week.ago\}` means "where master used to
 point to one week ago", and so on. See linkgit:git-rev-parse[1] for
 more details.
+
+To delete single entries from the reflog, use the subcommand "delete"
+and specify the _exact_ entry (e.g. ``git reflog delete master@\{2\}'').
 
 
 OPTIONS
@@ -74,6 +79,15 @@ them.
 
 --all::
 	Instead of listing <refs> explicitly, prune all refs.
+
+--updateref::
+	Update the ref with the sha1 of the top reflog entry (i.e.
+	<ref>@\{0\}) after expiring or deleting.
+
+--rewrite::
+	While expiring or deleting, adjust each reflog entry to ensure
+	that the `old` sha1 field points to the `new` sha1 field of the
+	previous entry.
 
 --verbose::
 	Print extra information on screen.

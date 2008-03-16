@@ -2293,7 +2293,8 @@ static void cmd_reset_branch(void)
 	else
 		b = new_branch(sp);
 	read_next_command();
-	if (!cmd_from(b) && command_buf.len > 0)
+	cmd_from(b);
+	if (command_buf.len > 0)
 		unread_command_buf = 1;
 }
 
@@ -2379,6 +2380,7 @@ int main(int argc, const char **argv)
 {
 	unsigned int i, show_stats = 1;
 
+	setup_git_directory();
 	git_config(git_pack_config);
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;

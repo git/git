@@ -68,8 +68,7 @@ struct ref **get_remote_heads(int in, struct ref **list,
 
 		name_len = strlen(name);
 		if (len != name_len + 41) {
-			if (server_capabilities)
-				free(server_capabilities);
+			free(server_capabilities);
 			server_capabilities = xstrdup(name + name_len + 1);
 		}
 
@@ -529,13 +528,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		end = host;
 
 	path = strchr(end, c);
-#ifdef __MINGW32__
-	/* host must have at least 2 chars to catch DOS C:/path */
-	if (path && path - end > 1)
-#else
-	if (path)
-#endif
-	{
+	if (path && !has_dos_drive_prefix(end)) {
 		if (c == ':') {
 			protocol = PROTO_SSH;
 			*path++ = '\0';

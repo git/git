@@ -175,21 +175,30 @@ test_expect_success 'recover and check' '
 
 '
 
-test_expect_success 'prune --expire' '
+test_expect_success 'delete' '
+	echo 1 > C &&
+	test_tick &&
+	git commit -m rat C &&
 
-	before=$(git count-objects | sed "s/ .*//") &&
-	BLOB=$(echo aleph | git hash-object -w --stdin) &&
-	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
-	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
-	test -f $BLOB_FILE &&
-	git reset --hard &&
-	git prune --expire=1.hour.ago &&
-	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
-	test -f $BLOB_FILE &&
-	test-chmtime -86500 $BLOB_FILE &&
-	git prune --expire 1.day &&
-	test $before = $(git count-objects | sed "s/ .*//") &&
-	! test -f $BLOB_FILE
+	echo 2 > C &&
+	test_tick &&
+	git commit -m ox C &&
+
+	echo 3 > C &&
+	test_tick &&
+	git commit -m tiger C &&
+
+	test 5 = $(git reflog | wc -l) &&
+
+	git reflog delete master@{1} &&
+	git reflog show master > output &&
+	test 4 = $(wc -l < output) &&
+	! grep ox < output &&
+
+	git reflog delete master@{07.04.2005.15:15:00.-0700} &&
+	git reflog show master > output &&
+	test 3 = $(wc -l < output) &&
+	! grep dragon < output
 
 '
 
