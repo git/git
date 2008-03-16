@@ -108,7 +108,7 @@ create_merge_msgs() {
 }
 
 verify_diff() {
-	if ! diff -u "$1" "$2"
+	if ! test_cmp "$1" "$2"
 	then
 		echo "$3"
 		false
@@ -165,7 +165,7 @@ verify_mergeheads() {
 	fi &&
 	while test $# -gt 0
 	do
-		head=$(head -n $i .git/MERGE_HEAD | tail -n 1)
+		head=$(head -n $i .git/MERGE_HEAD | sed -ne \$p)
 		if test "$1" != "$head"
 		then
 			echo "[OOPS] MERGE_HEAD $i != $1"
@@ -371,7 +371,7 @@ test_expect_success 'override config option -n' '
 	git merge --summary c2 >diffstat.txt &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2 &&
-	if ! grep -e "^ file |  *2 +-$" diffstat.txt
+	if ! grep "^ file |  *2 +-$" diffstat.txt
 	then
 		echo "[OOPS] diffstat was not generated"
 	fi
@@ -386,7 +386,7 @@ test_expect_success 'override config option --summary' '
 	git merge -n c2 >diffstat.txt &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2 &&
-	if grep -e "^ file |  *2 +-$" diffstat.txt
+	if grep "^ file |  *2 +-$" diffstat.txt
 	then
 		echo "[OOPS] diffstat was generated"
 		false

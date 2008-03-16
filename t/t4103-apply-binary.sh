@@ -24,10 +24,10 @@ git update-index --add --remove file1 file2 file4
 git-commit -m 'Initial Version' 2>/dev/null
 
 git-checkout -b binary
-tr 'x' '\000' <file1 >file3
+perl -pe 'y/x/\000/' <file1 >file3
 cat file3 >file4
 git add file2
-tr '\000' 'v' <file3 >file1
+perl -pe 'y/\000/v/' <file3 >file1
 rm -f file2
 git update-index --add --remove file1 file2 file3 file4
 git-commit -m 'Second Version'

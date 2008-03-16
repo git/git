@@ -245,12 +245,12 @@ test_expect_success \
 
 test_expect_success \
     'text plus spaces without newline at end should not show spaces' '
-    ! (printf "$ttt$sss" | git stripspace | grep -q "  ") &&
-    ! (printf "$ttt$ttt$sss" | git stripspace | grep -q "  ") &&
-    ! (printf "$ttt$ttt$ttt$sss" | git stripspace | grep -q "  ") &&
-    ! (printf "$ttt$sss$sss" | git stripspace | grep -q "  ") &&
-    ! (printf "$ttt$ttt$sss$sss" | git stripspace | grep -q "  ") &&
-    ! (printf "$ttt$sss$sss$sss" | git stripspace | grep -q "  ")
+    ! (printf "$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (printf "$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (printf "$ttt$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (printf "$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (printf "$ttt$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (printf "$ttt$sss$sss$sss" | git stripspace | grep "  " >/dev/null)
 '
 
 test_expect_success \
@@ -282,12 +282,12 @@ test_expect_success \
 
 test_expect_success \
     'text plus spaces at end should not show spaces' '
-    ! (echo "$ttt$sss" | git stripspace | grep -q "  ") &&
-    ! (echo "$ttt$ttt$sss" | git stripspace | grep -q "  ") &&
-    ! (echo "$ttt$ttt$ttt$sss" | git stripspace | grep -q "  ") &&
-    ! (echo "$ttt$sss$sss" | git stripspace | grep -q "  ") &&
-    ! (echo "$ttt$ttt$sss$sss" | git stripspace | grep -q "  ") &&
-    ! (echo "$ttt$sss$sss$sss" | git stripspace | grep -q "  ")
+    ! (echo "$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (echo "$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (echo "$ttt$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (echo "$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (echo "$ttt$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
+    ! (echo "$ttt$sss$sss$sss" | git stripspace | grep "  " >/dev/null)
 '
 
 test_expect_success \
@@ -341,11 +341,11 @@ test_expect_success \
 
 test_expect_success \
     'spaces without newline at end should not show spaces' '
-    ! (printf "" | git stripspace | grep -q " ") &&
-    ! (printf "$sss" | git stripspace | grep -q " ") &&
-    ! (printf "$sss$sss" | git stripspace | grep -q " ") &&
-    ! (printf "$sss$sss$sss" | git stripspace | grep -q " ") &&
-    ! (printf "$sss$sss$sss$sss" | git stripspace | grep -q " ")
+    ! (printf "" | git stripspace | grep " " >/dev/null) &&
+    ! (printf "$sss" | git stripspace | grep " " >/dev/null) &&
+    ! (printf "$sss$sss" | git stripspace | grep " " >/dev/null) &&
+    ! (printf "$sss$sss$sss" | git stripspace | grep " " >/dev/null) &&
+    ! (printf "$sss$sss$sss$sss" | git stripspace | grep " " >/dev/null)
 '
 
 test_expect_success \

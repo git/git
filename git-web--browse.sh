@@ -23,12 +23,18 @@ USAGE='[--browser=browser|--tool=browser] [--config=conf.var] url/file ...'
 NONGIT_OK=Yes
 . git-sh-setup
 
+valid_custom_tool()
+{
+	browser_cmd="$(git config "browser.$1.cmd")"
+	test -n "$browser_cmd"
+}
+
 valid_tool() {
 	case "$1" in
 		firefox | iceweasel | konqueror | w3m | links | lynx | dillo | open)
 			;; # happy
 		*)
-			return 1
+			valid_custom_tool "$1" || return 1
 			;;
 	esac
 }
@@ -122,7 +128,7 @@ else
 
     init_browser_path "$browser"
 
-    if ! type "$browser_path" > /dev/null 2>&1; then
+    if test -z "$browser_cmd" && ! type "$browser_path" > /dev/null 2>&1; then
 	die "The browser $browser is not available as '$browser_path'."
     fi
 fi
@@ -156,5 +162,10 @@ case "$browser" in
 	;;
     dillo)
 	"$browser_path" "$@" &
+	;;
+    *)
+	if test -n "$browser_cmd"; then
+	    ( eval $browser_cmd "$@" )
+	fi
 	;;
 esac

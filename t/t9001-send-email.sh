@@ -81,7 +81,7 @@ test_expect_success 'Show all headers' '
 		-e "s/^\(Message-Id:\).*/\1 MESSAGE-ID-STRING/" \
 		-e "s/^\(X-Mailer:\).*/\1 X-MAILER-STRING/" \
 		>actual-show-all-headers &&
-	diff -u expected-show-all-headers actual-show-all-headers
+	test_cmp expected-show-all-headers actual-show-all-headers
 '
 
 z8=zzzzzzzz

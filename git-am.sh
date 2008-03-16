@@ -357,7 +357,7 @@ do
 		LAST_SIGNED_OFF_BY=`
 		    sed -ne '/^Signed-off-by: /p' \
 		    "$dotest/msg-clean" |
-		    tail -n 1
+		    sed -ne '$p'
 		`
 		ADD_SIGNOFF=`
 		    test "$LAST_SIGNED_OFF_BY" = "$SIGNOFF" || {

@@ -25,8 +25,9 @@ export FAKE_EDITOR
 HOOKDIR="$(git rev-parse --git-dir)/hooks"
 HOOK="$HOOKDIR/prepare-commit-msg"
 mkdir -p "$HOOKDIR"
-cat > "$HOOK" <<'EOF'
-#!/bin/sh
+echo "#!$SHELL_PATH" > "$HOOK"
+cat >> "$HOOK" <<'EOF'
+
 if test "$2" = commit; then
   source=$(git-rev-parse "$3")
 else

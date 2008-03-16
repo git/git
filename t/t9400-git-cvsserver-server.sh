@@ -54,7 +54,7 @@ test_expect_success 'setup' '
 test_expect_success 'basic checkout' \
   'GIT_CONFIG="$git_config" cvs -Q co -d cvswork master &&
    test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5 | head -n 1))" = "empty/1.1/"
-   test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5 | tail -n 1))" = "secondrootfile/1.1/"'
+   test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5 | sed -ne \$p))" = "secondrootfile/1.1/"'
 
 #------------------------
 # PSERVER AUTHENTICATION
@@ -94,7 +94,7 @@ EOF
 
 test_expect_success 'pserver authentication' \
   'cat request-anonymous | git-cvsserver pserver >log 2>&1 &&
-   tail -n1 log | grep -q "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU$"'
 
 test_expect_success 'pserver authentication failure (non-anonymous user)' \
   'if cat request-git | git-cvsserver pserver >log 2>&1
@@ -103,11 +103,11 @@ test_expect_success 'pserver authentication failure (non-anonymous user)' \
    else
        true
    fi &&
-   tail -n1 log | grep -q "^I HATE YOU$"'
+   sed -ne \$p log | grep "^I HATE YOU$"'
 
 test_expect_success 'pserver authentication (login)' \
   'cat login-anonymous | git-cvsserver pserver >log 2>&1 &&
-   tail -n1 log | grep -q "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU$"'
 
 test_expect_success 'pserver authentication failure (login/non-anonymous user)' \
   'if cat login-git | git-cvsserver pserver >log 2>&1
@@ -116,7 +116,7 @@ test_expect_success 'pserver authentication failure (login/non-anonymous user)' 
    else
        true
    fi &&
-   tail -n1 log | grep -q "^I HATE YOU$"'
+   sed -ne \$p log | grep "^I HATE YOU$"'
 
 
 # misuse pserver authentication for testing of req_Root
@@ -146,15 +146,15 @@ test_expect_success 'req_Root failure (relative pathname)' \
    else
        true
    fi &&
-   tail log | grep -q "^error 1 Root must be an absolute pathname$"'
+   tail log | grep "^error 1 Root must be an absolute pathname$"'
 
 test_expect_success 'req_Root failure (conflicting roots)' \
   'cat request-conflict | git-cvsserver pserver >log 2>&1 &&
-   tail log | grep -q "^error 1 Conflicting roots specified$"'
+   tail log | grep "^error 1 Conflicting roots specified$"'
 
 test_expect_success 'req_Root (strict paths)' \
   'cat request-anonymous | git-cvsserver --strict-paths pserver $SERVERDIR >log 2>&1 &&
-   tail -n1 log | grep -q "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU$"'
 
 test_expect_success 'req_Root failure (strict-paths)' '
     ! cat request-anonymous |
@@ -163,7 +163,7 @@ test_expect_success 'req_Root failure (strict-paths)' '
 
 test_expect_success 'req_Root (w/o strict-paths)' \
   'cat request-anonymous | git-cvsserver pserver $WORKDIR/ >log 2>&1 &&
-   tail -n1 log | grep -q "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU$"'
 
 test_expect_success 'req_Root failure (w/o strict-paths)' '
     ! cat request-anonymous |
@@ -181,7 +181,7 @@ EOF
 
 test_expect_success 'req_Root (base-path)' \
   'cat request-base | git-cvsserver --strict-paths --base-path $WORKDIR/ pserver $SERVERDIR >log 2>&1 &&
-   tail -n1 log | grep -q "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU$"'
 
 test_expect_success 'req_Root failure (base-path)' '
     ! cat request-anonymous |
@@ -192,14 +192,14 @@ GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false || exit 1
 
 test_expect_success 'req_Root (export-all)' \
   'cat request-anonymous | git-cvsserver --export-all pserver $WORKDIR >log 2>&1 &&
-   tail -n1 log | grep -q "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU$"'
 
 test_expect_success 'req_Root failure (export-all w/o whitelist)' \
   '! (cat request-anonymous | git-cvsserver --export-all pserver >log 2>&1 || false)'
 
 test_expect_success 'req_Root (everything together)' \
   'cat request-base | git-cvsserver --export-all --strict-paths --base-path $WORKDIR/ pserver $SERVERDIR >log 2>&1 &&
-   tail -n1 log | grep -q "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU$"'
 
 GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true || exit 1
 
@@ -216,7 +216,7 @@ test_expect_success 'gitcvs.enabled = false' \
    else
      true
    fi &&
-   cat cvs.log | grep -q "GITCVS emulation disabled" &&
+   grep "GITCVS emulation disabled" cvs.log &&
    test ! -d cvswork2'
 
 rm -fr cvswork2
@@ -237,7 +237,7 @@ test_expect_success 'gitcvs.ext.enabled = false' \
    else
      true
    fi &&
-   cat cvs.log | grep -q "GITCVS emulation disabled" &&
+   grep "GITCVS emulation disabled" cvs.log &&
    test ! -d cvswork2'
 
 rm -fr cvswork2

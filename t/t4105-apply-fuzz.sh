@@ -9,7 +9,7 @@ dotest () {
 	test_expect_success "$name" "
 		git checkout-index -f -q -u file &&
 		git apply $* &&
-		diff -u expect file
+		test_cmp expect file
 	"
 }
 

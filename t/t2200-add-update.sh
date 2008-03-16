@@ -62,7 +62,7 @@ test_expect_success 'cache tree has not been corrupted' '
 	sed -e "s/ 0	/	/" >expect &&
 	git ls-tree -r $(git write-tree) |
 	sed -e "s/ blob / /" >current &&
-	diff -u expect current
+	test_cmp expect current
 
 '
 

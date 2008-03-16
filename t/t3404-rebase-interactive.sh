@@ -122,8 +122,8 @@ test_expect_success 'reflog for the branch shows state before rebase' '
 
 test_expect_success 'exchange two commits' '
 	FAKE_LINES="2 1" git rebase -i HEAD~2 &&
-	test H = $(git cat-file commit HEAD^ | tail -n 1) &&
-	test G = $(git cat-file commit HEAD | tail -n 1)
+	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
+	test G = $(git cat-file commit HEAD | sed -ne \$p)
 '
 
 cat > expect << EOF
@@ -146,11 +146,10 @@ EOF
 test_expect_success 'stop on conflicting pick' '
 	git tag new-branch1 &&
 	! git rebase -i master &&
-	diff -u expect .git/.dotest-merge/patch &&
-	diff -u expect2 file1 &&
+	test_cmp expect .git/.dotest-merge/patch &&
+	test_cmp expect2 file1 &&
 	test 4 = $(grep -v "^#" < .git/.dotest-merge/done | wc -l) &&
-	test 0 = $(grep -ve "^#" -e "^$" < .git/.dotest-merge/git-rebase-todo |
-		wc -l)
+	test 0 = $(grep -c "^[^#]" < .git/.dotest-merge/git-rebase-todo)
 '
 
 test_expect_success 'abort' '

@@ -31,7 +31,7 @@ test_expect_failure 'one is ancestor of others and should not be shown' '
 
 	git rev-list one --not four >result &&
 	>expect &&
-	diff -u expect result
+	test_cmp expect result
 
 '
 

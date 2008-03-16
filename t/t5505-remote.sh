@@ -24,7 +24,7 @@ setup_repository () {
 tokens_match () {
 	echo "$1" | tr ' ' '\012' | sort | sed -e '/^$/d' >expect &&
 	echo "$2" | tr ' ' '\012' | sort | sed -e '/^$/d' >actual &&
-	diff -u expect actual
+	test_cmp expect actual
 }
 
 check_remote_track () {
@@ -73,7 +73,7 @@ test_expect_success 'add another remote' '
 	sed -e "/^refs\/remotes\/origin\//d" \
 	    -e "/^refs\/remotes\/second\//d" >actual &&
 	>expect &&
-	diff -u expect actual
+	test_cmp expect actual
 )
 '
 
@@ -93,7 +93,7 @@ test_expect_success 'remove remote' '
 	git for-each-ref "--format=%(refname)" refs/remotes |
 	sed -e "/^refs\/remotes\/origin\//d" >actual &&
 	>expect &&
-	diff -u expect actual
+	test_cmp expect actual
 )
 '
 

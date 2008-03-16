@@ -10,7 +10,7 @@ do
 		{
 			test -z "$pfx" || echo "$pfx"
 			dd if=/dev/zero bs=1048576 count=$cnt 2>/dev/null |
-			tr '\000' 'g'
+			perl -pe 'y/\000/g/'
 		} | ./test-sha1 $cnt
 	`
 	if test "$expect" = "$actual"
@@ -55,7 +55,7 @@ do
 		{
 			test -z "$pfx" || echo "$pfx"
 			dd if=/dev/zero bs=1048576 count=$cnt 2>/dev/null |
-			tr '\000' 'g'
+			perl -pe 'y/\000/g/'
 		} | sha1sum |
 		sed -e 's/ .*//'
 	`

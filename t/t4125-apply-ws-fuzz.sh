@@ -56,7 +56,7 @@ test_expect_success nofix '
 	git apply --whitespace=nowarn patch-1 &&
 
 	# The result should obviously match.
-	diff -u file-1 file
+	test_cmp file-1 file
 '
 
 test_expect_success 'withfix (forward)' '
@@ -70,7 +70,7 @@ test_expect_success 'withfix (forward)' '
 	git apply --whitespace=fix patch-0 &&
 	git apply --whitespace=fix patch-1 &&
 
-	diff -u file-fixed file
+	test_cmp file-fixed file
 '
 
 test_expect_success 'withfix (backward)' '
@@ -91,12 +91,12 @@ test_expect_success 'withfix (backward)' '
 
 	sed -e /h/d file-fixed >fixed-head &&
 	sed -e /h/d file >file-head &&
-	diff -u fixed-head file-head &&
+	test_cmp fixed-head file-head &&
 
 	sed -n -e /h/p file-fixed >fixed-tail &&
 	sed -n -e /h/p file >file-tail &&
 
-	! diff -u fixed-tail file-tail
+	! test_cmp fixed-tail file-tail
 
 '
 

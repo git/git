@@ -13,16 +13,15 @@
 #include "dir.h"
 #include "builtin.h"
 
-#define MAX_TREES 8
 static int nr_trees;
-static struct tree *trees[MAX_TREES];
+static struct tree *trees[MAX_UNPACK_TREES];
 
 static int list_tree(unsigned char *sha1)
 {
 	struct tree *tree;
 
-	if (nr_trees >= MAX_TREES)
-		die("I cannot read more than %d trees", MAX_TREES);
+	if (nr_trees >= MAX_UNPACK_TREES)
+		die("I cannot read more than %d trees", MAX_UNPACK_TREES);
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		return -1;
@@ -97,7 +96,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int i, newfd, stage = 0;
 	unsigned char sha1[20];
-	struct tree_desc t[MAX_TREES];
+	struct tree_desc t[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
 
 	memset(&opts, 0, sizeof(opts));

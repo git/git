@@ -27,6 +27,8 @@ The following browsers (or commands) are currently supported:
 * dillo
 * open (this is the default under Mac OS X GUI)
 
+Custom commands may also be specified.
+
 OPTIONS
 -------
 -b BROWSER|--browser=BROWSER::
@@ -43,15 +45,34 @@ OPTIONS
 CONFIGURATION VARIABLES
 -----------------------
 
+CONF.VAR (from -c option) and web.browser
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The web browser can be specified using a configuration variable passed
 with the -c (or --config) command line option, or the 'web.browser'
 configuration variable if the former is not used.
+
+browser.<tool>.path
+~~~~~~~~~~~~~~~~~~~
 
 You can explicitly provide a full path to your preferred browser by
 setting the configuration variable 'browser.<tool>.path'. For example,
 you can configure the absolute path to firefox by setting
 'browser.firefox.path'. Otherwise, 'git-web--browse' assumes the tool
 is available in PATH.
+
+browser.<tool>.cmd
+~~~~~~~~~~~~~~~~~~
+
+When the browser, specified by options or configuration variables, is
+not among the supported ones, then the corresponding
+'browser.<tool>.cmd' configuration variable will be looked up. If this
+variable exists then "git web--browse" will treat the specified tool
+as a custom command and will use a shell eval to run the command with
+the URLs passed as arguments.
+
+Note about git config --global
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that these configuration variables should probably be set using
 the '--global' flag, for example like this:

@@ -32,9 +32,17 @@ test_expect_success 'format with signoff without funny signer name' '
 
 test_expect_success 'format with non ASCII signer name' '
 
-	GIT_COMMITTER_NAME="$B$O$^$N(B $B$U$K$*$&(B" \
+	GIT_COMMITTER_NAME="はまの ふにおう" \
 	git format-patch -s --stdout -1 >output &&
 	grep Content-Type output
+
+'
+
+test_expect_success 'attach and signoff do not duplicate mime headers' '
+
+	GIT_COMMITTER_NAME="はまの ふにおう" \
+	git format-patch -s --stdout -1 --attach >output &&
+	test `grep -ci ^MIME-Version: output` = 1
 
 '
 

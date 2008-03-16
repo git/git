@@ -2089,7 +2089,7 @@ if {[is_enabled transport]} {
 if {[is_MacOSX]} {
 	# -- Apple Menu (Mac OS X only)
 	#
-	.mbar add cascade -label [mc Apple] -menu .mbar.apple
+	.mbar add cascade -label Apple -menu .mbar.apple
 	menu .mbar.apple
 
 	.mbar.apple add command -label [mc "About %s" [appname]] \

@@ -22,14 +22,14 @@ test_expect_success 'am regularly from stdin' '
 	git checkout initial &&
 	git am <patchfile &&
 	git diff master >actual &&
-	diff -u expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'am regularly from file' '
 	git checkout initial &&
 	git am patchfile &&
 	git diff master >actual &&
-	diff -u expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'am regularly from stdin in subdirectory' '
@@ -41,7 +41,7 @@ test_expect_success 'am regularly from stdin in subdirectory' '
 		git am <../patchfile
 	) &&
 	git diff master>actual &&
-	diff -u expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'am regularly from file in subdirectory' '
@@ -53,7 +53,7 @@ test_expect_success 'am regularly from file in subdirectory' '
 		git am ../patchfile
 	) &&
 	git diff master >actual &&
-	diff -u expect actual
+	test_cmp expect actual
 '
 
 test_expect_success 'am regularly from file in subdirectory with full path' '
@@ -66,7 +66,7 @@ test_expect_success 'am regularly from file in subdirectory with full path' '
 		git am "$P/patchfile"
 	) &&
 	git diff master >actual &&
-	diff -u expect actual
+	test_cmp expect actual
 '
 
 test_done

@@ -57,7 +57,8 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 
 		if (!f)
 			ret = error("Could not open %s for writing", filename);
-		else if (fwrite(result.ptr, result.size, 1, f) != 1)
+		else if (result.size &&
+			 fwrite(result.ptr, result.size, 1, f) != 1)
 			ret = error("Could not write to %s", filename);
 		else if (fclose(f))
 			ret = error("Could not close %s", filename);

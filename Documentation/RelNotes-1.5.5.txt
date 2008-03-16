@@ -6,7 +6,16 @@ Updates since v1.5.4
 
 (subsystems)
 
- * Comes with git-gui 0.9.3
+ * Comes with git-gui 0.9.3.
+
+(portability)
+
+ * We shouldn't ask for BSD group ownership semantics by setting g+s bit
+   on directories on older BSD systems that refuses chmod() by non root
+   users.  BSD semantics is the default there anyway.
+
+ * Bunch of portability improvement patches coming from an effort to port
+   to Solaris has been applied.
 
 (performance)
 
@@ -26,6 +35,9 @@ Updates since v1.5.4
    anymore.
 
 (usability, bells and whistles)
+
+ * Bash completion script (in contrib) are aware of more commands and
+   options.
 
  * You can be warned when core.autocrlf conversion is applied in
    such a way that results in an irreversible conversion.
@@ -53,11 +65,6 @@ Updates since v1.5.4
  * Configuration variables "url.<usethis>.insteadof = <otherurl>" can be
    used to tell "git-fetch" and "git-push" to use different URL than what
    is given from the command line.
-
- * "git push <somewhere> HEAD" and "git push <somewhere> +HEAD" works as
-   expected; they push the current branch (and only the current branch).
-   In addition, HEAD can be written as the value of "remote.<there>.push"
-   configuration variable.
 
  * "git add -i" behaves better even before you make an initial commit.
 
@@ -114,15 +121,32 @@ Updates since v1.5.4
 
  * "git gc" learned --quiet option.
 
+ * "git gc" now automatically prunes unreachable objects that are two
+   weeks old or older.
+
  * "git grep" now knows "--name-only" is a synonym for the "-l" option.
 
  * "git help <alias>" now reports "'git <alias>' is alias to <what>",
    instead of saying "No manual entry for git-<alias>".
 
+ * "git help" can use different backends to show manual pages and this can
+   be configured using "man.viewer" configuration.
+
+ * "gitk" does not restore window position from $HOME/.gitk anymore (it
+   still restores the size).
+
  * "git log --grep=<what>" learned "--fixed-strings" option to look for
    <what> without treating it as a regular expression.
 
  * "git gui" learned an auto-spell checking.
+
+ * "git push <somewhere> HEAD" and "git push <somewhere> +HEAD" works as
+   expected; they push the current branch (and only the current branch).
+   In addition, HEAD can be written as the value of "remote.<there>.push"
+   configuration variable.
+
+ * When the configuration variable "pack.threads" is set to 0, "git
+   repack" auto detects the number of CPUs and uses that many threads.
 
  * "git send-email" learned to prompt for passwords
    interactively.
@@ -130,8 +154,13 @@ Updates since v1.5.4
  * "git send-email" learned an easier way to suppress CC
    recipients.
 
- * When the configuration variable "pack.threads" is set to 0, "git
-   repack" auto detects the number of CPUs and uses that many threads.
+ * "git stash" learned "pop" command, that applies the latest stash and
+   removes it from the stash, and "drop" command to discard the named
+   stash entry.
+
+ * "git submodule" learned a new subcommand "summary" to show the
+   symmetric difference between the HEAD version and the work tree version
+   of the submodule commits.
 
  * Various "git cvsimport", "git cvsexportcommit", "git svn" and
    "git p4" improvements.
@@ -146,6 +175,8 @@ Updates since v1.5.4
 
  * "git checkout" is rewritten in C.
 
+ * "git remote" is rewritten in C.
+
  * Two conflict hunks that are separated by a very short span of common
    lines are now coalesced into one larger hunk, to make the result easier
    to read.
@@ -153,6 +184,8 @@ Updates since v1.5.4
  * Run-command API's use of file descriptors is documented clearer and
    is more consistent now.
 
+ * diff output can be sent to FILE * that is different from stdout.  This
+   will help reimplementing more things in C.
 
 Fixes since v1.5.4
 ------------------
@@ -168,6 +201,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.5.4.3-428-g6b48990
+O=v1.5.4.4-620-gc817faa
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

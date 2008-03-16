@@ -138,10 +138,14 @@ static int has_non_ascii(const char *s)
 }
 
 void log_write_email_headers(struct rev_info *opt, const char *name,
-			     const char **subject_p, const char **extra_headers_p)
+			     const char **subject_p,
+			     const char **extra_headers_p,
+			     int *need_8bit_cte_p)
 {
 	const char *subject = NULL;
 	const char *extra_headers = opt->extra_headers;
+
+	*need_8bit_cte_p = 0; /* unknown */
 	if (opt->total > 0) {
 		static char buffer[64];
 		snprintf(buffer, sizeof(buffer),
@@ -169,6 +173,7 @@ void log_write_email_headers(struct rev_info *opt, const char *name,
 	if (opt->mime_boundary) {
 		static char subject_buffer[1024];
 		static char buffer[1024];
+		*need_8bit_cte_p = -1; /* NEVER */
 		snprintf(subject_buffer, sizeof(subject_buffer) - 1,
 			 "%s"
 			 "MIME-Version: 1.0\n"
@@ -212,6 +217,7 @@ void show_log(struct rev_info *opt, const char *sep)
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
 	const char *extra;
 	const char *subject = NULL, *extra_headers = opt->extra_headers;
+	int need_8bit_cte = 0;
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
@@ -255,7 +261,8 @@ void show_log(struct rev_info *opt, const char *sep)
 
 	if (opt->commit_format == CMIT_FMT_EMAIL) {
 		log_write_email_headers(opt, sha1_to_hex(commit->object.sha1),
-					&subject, &extra_headers);
+					&subject, &extra_headers,
+					&need_8bit_cte);
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_COMMIT), stdout);
 		if (opt->commit_format != CMIT_FMT_ONELINE)
@@ -299,9 +306,11 @@ void show_log(struct rev_info *opt, const char *sep)
 	 * And then the pretty-printed message itself
 	 */
 	strbuf_init(&msgbuf, 0);
+	if (need_8bit_cte >= 0)
+		need_8bit_cte = has_non_ascii(opt->add_signoff);
 	pretty_print_commit(opt->commit_format, commit, &msgbuf,
 			    abbrev, subject, extra_headers, opt->date_mode,
-			    has_non_ascii(opt->add_signoff));
+			    need_8bit_cte);
 
 	if (opt->add_signoff)
 		append_signoff(&msgbuf, opt->add_signoff);

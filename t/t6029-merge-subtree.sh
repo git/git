@@ -25,7 +25,7 @@ test_expect_success 'subtree available and works like recursive' '
 
 	git merge -s subtree side &&
 	for i in mundo $s world; do echo $i; done >expect &&
-	diff -u expect hello
+	test_cmp expect hello
 
 '
 

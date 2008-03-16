@@ -4,8 +4,8 @@ test_description='Various filesystem issues'
 
 . ./test-lib.sh
 
-auml=`perl -CO -e 'print pack("U",0x00E4)'`
-aumlcdiar=`perl -CO -e 'print pack("U",0x0061).pack("U",0x0308)'`
+auml=`printf '\xc3\xa4'`
+aumlcdiar=`printf '\x61\xcc\x88'`
 
 test_expect_success 'see if we expect ' '
 

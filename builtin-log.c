@@ -662,6 +662,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	int i;
 	const char *encoding = "utf-8";
 	struct diff_options opts;
+	int need_8bit_cte = 0;
 
 	if (rev->commit_format != CMIT_FMT_EMAIL)
 		die("Cover letter needs email format");
@@ -672,7 +673,8 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	head_sha1 = sha1_to_hex(head->object.sha1);
 
-	log_write_email_headers(rev, head_sha1, &subject_start, &extra_headers);
+	log_write_email_headers(rev, head_sha1, &subject_start, &extra_headers,
+				&need_8bit_cte);
 
 	committer = git_committer_info(0);
 
@@ -681,7 +683,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	pp_user_info(NULL, CMIT_FMT_EMAIL, &sb, committer, DATE_RFC2822,
 		     encoding);
 	pp_title_line(CMIT_FMT_EMAIL, &msg, &sb, subject_start, extra_headers,
-		      encoding, 0);
+		      encoding, need_8bit_cte);
 	pp_remainder(CMIT_FMT_EMAIL, &msg, &sb, 0);
 	printf("%s\n", sb.buf);
 

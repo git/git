@@ -37,7 +37,7 @@ check_entries () {
 	else
 		printf '%s\n' "$2" | tr '|' '\012' >expected
 	fi
-	diff -u expected actual
+	test_cmp expected actual
 }
 
 test_expect_success \
@@ -257,8 +257,8 @@ test_expect_success '-w option should work with relative GIT_DIR' '
       (cd "$GIT_DIR" &&
       GIT_DIR=. git cvsexportcommit -w "$CVSWORK" -c $id &&
       check_entries "$CVSWORK/W" "file1.txt/1.1/|file2.txt/1.1/" &&
-      diff -u "$CVSWORK/W/file1.txt" ../W/file1.txt &&
-      diff -u "$CVSWORK/W/file2.txt" ../W/file2.txt
+      test_cmp "$CVSWORK/W/file1.txt" ../W/file1.txt &&
+      test_cmp "$CVSWORK/W/file2.txt" ../W/file2.txt
       )
 '
 
@@ -279,9 +279,9 @@ test_expect_success 'check files before directories' '
 	git cvsexportcommit -w "$CVSWORK" -c $id &&
 	check_entries "$CVSWORK/E" "DS/1.1/|newfile5.txt/1.1/" &&
 	check_entries "$CVSWORK" "DS/1.1/|release-notes/1.2/" &&
-	diff -u "$CVSWORK/DS" DS &&
-	diff -u "$CVSWORK/E/DS" E/DS &&
-	diff -u "$CVSWORK/release-notes" release-notes
+	test_cmp "$CVSWORK/DS" DS &&
+	test_cmp "$CVSWORK/E/DS" E/DS &&
+	test_cmp "$CVSWORK/release-notes" release-notes
 
 '
 
@@ -293,7 +293,7 @@ test_expect_success 'commit a file with leading spaces in the name' '
 	id=$(git rev-parse HEAD) &&
 	git cvsexportcommit -w "$CVSWORK" -c $id &&
 	check_entries "$CVSWORK" " space/1.1/|DS/1.1/|release-notes/1.2/" &&
-	diff -u "$CVSWORK/ space" " space"
+	test_cmp "$CVSWORK/ space" " space"
 
 '
 
