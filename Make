@@ -74,5 +74,6 @@ make $d \
      ETC_GITCONFIG=$d/etc/gitconfig \
      CFLAGS="$O -Wall -Wdeclaration-after-statement -g" \
      "$@"
-
+status=$?
 rm -f version
+exit $status
