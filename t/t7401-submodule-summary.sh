@@ -37,7 +37,7 @@ head1=$(add_file sm1 foo1 foo2)
 test_expect_success 'added submodule' "
 	git add sm1 &&
 	git submodule summary >actual &&
-	diff actual - <<-EOF
+	test_cmp actual - <<-EOF
 * sm1 0000000...$head1 (2):
   > Add foo2
 
@@ -49,7 +49,7 @@ head2=$(add_file sm1 foo3)
 
 test_expect_success 'modified submodule(forward)' "
 	git submodule summary >actual &&
-	diff actual - <<-EOF
+	test_cmp actual - <<-EOF
 * sm1 $head1...$head2 (1):
   > Add foo3
 
@@ -64,7 +64,7 @@ cd ..
 
 test_expect_success 'modified submodule(backward)' "
     git submodule summary >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head2...$head3 (2):
   < Add foo3
   < Add foo2
@@ -76,7 +76,7 @@ head4=$(add_file sm1 foo4 foo5) &&
 head4_full=$(GIT_DIR=sm1/.git git rev-parse --verify HEAD)
 test_expect_success 'modified submodule(backward and forward)' "
     git submodule summary >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head2...$head4 (4):
   > Add foo5
   > Add foo4
@@ -88,7 +88,7 @@ EOF
 
 test_expect_success '--summary-limit' "
     git submodule summary -n 3 >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head2...$head4 (4):
   > Add foo5
   > Add foo4
@@ -107,7 +107,7 @@ mv sm1-bak sm1
 
 test_expect_success 'typechanged submodule(submodule->blob), --cached' "
     git submodule summary --cached >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head4(submodule)->$head5(blob) (3):
   < Add foo5
 
@@ -118,7 +118,7 @@ rm -rf sm1 &&
 git checkout-index sm1
 test_expect_success 'typechanged submodule(submodule->blob)' "
     git submodule summary >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head4(submodule)->$head5(blob):
 
 EOF
@@ -129,7 +129,7 @@ test_create_repo sm1 &&
 head6=$(add_file sm1 foo6 foo7)
 test_expect_success 'nonexistent commit' "
     git submodule summary >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head4...$head6:
   Warn: sm1 doesn't contain commit $head4_full
 
@@ -139,7 +139,7 @@ EOF
 commit_file
 test_expect_success 'typechanged submodule(blob->submodule)' "
     git submodule summary >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head5(blob)->$head6(submodule) (2):
   > Add foo7
 
@@ -150,7 +150,7 @@ commit_file sm1 &&
 rm -rf sm1
 test_expect_success 'deleted submodule' "
     git submodule summary >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head6...0000000:
 
 EOF
@@ -162,7 +162,7 @@ git add sm2
 
 test_expect_success 'multiple submodules' "
     git submodule summary >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head6...0000000:
 
 * sm2 0000000...$head7 (2):
@@ -173,7 +173,7 @@ EOF
 
 test_expect_success 'path filter' "
     git submodule summary sm2 >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm2 0000000...$head7 (2):
   > Add foo9
 
@@ -183,7 +183,7 @@ EOF
 commit_file sm2
 test_expect_success 'given commit' "
     git submodule summary HEAD^ >actual &&
-    diff actual - <<-EOF
+    test_cmp actual - <<-EOF
 * sm1 $head6...0000000:
 
 * sm2 0000000...$head7 (2):
