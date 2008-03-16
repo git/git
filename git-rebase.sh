@@ -62,7 +62,7 @@ continue_merge () {
 	cmt=`cat "$dotest/current"`
 	if ! git diff-index --quiet HEAD --
 	then
-		if ! git-commit -C "$cmt"
+		if ! git commit --no-verify -C "$cmt"
 		then
 			echo "Commit failed, please do not call \"git commit\""
 			echo "directly, but instead do one of the following: "
