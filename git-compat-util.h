@@ -66,12 +66,12 @@
 #include <fnmatch.h>
 #include <assert.h>
 #include <regex.h>
+#include <utime.h>
 #ifndef __MINGW32__
 #include <sys/wait.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <utime.h>
 #ifndef NO_SYS_SELECT_H
 #include <sys/select.h>
 #endif
