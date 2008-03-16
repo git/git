@@ -8,11 +8,7 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
-Issues that I have looked at, but unprocessed, unconcluded
-and/or lack enough discussions to proceed.
-
-* pretty.c optimization (Marco)
-  $gmane/72260
+Issues that are unconcluded and/or lack enough discussions to proceed.
 
 * zlib abstraction (Marco)
   $gmane/72262
@@ -24,10 +20,12 @@ and/or lack enough discussions to proceed.
 * synopsys: use {} instead of () for grouping alternatives (Jari Aalto)
   $gmane/72243
 
-* A symref file for ".git/" (Lars Hjemli)
-  $gmane/72244
-
 * "[alias] st = status" and "cd .git && git st" (Jeff King)
   $gmane/72327
 
+* git --index-file=<foo> <cmd> (Linus)
+  $gmane/77332
+
+* fetch with "refs/*:refs/*" errors out erroneously
+  $gmane/77335
 
