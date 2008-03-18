@@ -536,7 +536,7 @@ static void verify_remote_names(int nr_heads, const char **heads)
 	int i;
 
 	for (i = 0; i < nr_heads; i++) {
-		const char *remote = strchr(heads[i], ':');
+		const char *remote = strrchr(heads[i], ':');
 
 		remote = remote ? (remote + 1) : heads[i];
 		switch (check_ref_format(remote)) {
