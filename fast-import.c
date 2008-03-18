@@ -1516,6 +1516,8 @@ static int update_branch(struct branch *b)
 	struct ref_lock *lock;
 	unsigned char old_sha1[20];
 
+	if (is_null_sha1(b->sha1))
+		return 0;
 	if (read_ref(b->name, old_sha1))
 		hashclr(old_sha1);
 	lock = lock_any_ref_for_update(b->name, old_sha1, 0);

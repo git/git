@@ -595,16 +595,19 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		struct unpack_trees_options *o)
 {
+	int update = CE_UPDATE;
+
 	if (old) {
 		/*
 		 * See if we can re-use the old CE directly?
 		 * That way we get the uptodate stat info.
 		 *
-		 * This also removes the UPDATE flag on
-		 * a match.
+		 * This also removes the UPDATE flag on a match; otherwise
+		 * we will end up overwriting local changes in the work tree.
 		 */
 		if (same(old, merge)) {
 			copy_cache_entry(merge, old);
+			update = 0;
 		} else {
 			if (verify_uptodate(old, o))
 				return -1;
@@ -617,7 +620,7 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		invalidate_ce_path(merge, o);
 	}
 
-	add_entry(o, merge, CE_UPDATE, CE_STAGEMASK);
+	add_entry(o, merge, update, CE_STAGEMASK);
 	return 1;
 }
 
