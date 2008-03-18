@@ -153,16 +153,6 @@ test_expect_success 'test tracking setup via config' \
      test $(git config branch.my3.remote) = local &&
      test $(git config branch.my3.merge) = refs/heads/master'
 
-test_expect_success 'avoid ambiguous track' '
-	git config branch.autosetupmerge true &&
-	git config remote.ambi1.url = lalala &&
-	git config remote.ambi1.fetch = refs/heads/lalala:refs/heads/master &&
-	git config remote.ambi2.url = lilili &&
-	git config remote.ambi2.fetch = refs/heads/lilili:refs/heads/master &&
-	git branch all1 master &&
-	test -z "$(git config branch.all1.merge)"
-'
-
 test_expect_success 'test overriding tracking setup via --no-track' \
     'git config branch.autosetupmerge true &&
      git config remote.local.url . &&
@@ -223,5 +213,15 @@ test_expect_success \
 	 test -f .git/refs/heads/g/h/i &&
 	 test -f .git/logs/refs/heads/g/h/i &&
 	 diff expect .git/logs/refs/heads/g/h/i'
+
+test_expect_success 'avoid ambiguous track' '
+	git config branch.autosetupmerge true &&
+	git config remote.ambi1.url lalala &&
+	git config remote.ambi1.fetch refs/heads/lalala:refs/heads/master &&
+	git config remote.ambi2.url lilili &&
+	git config remote.ambi2.fetch refs/heads/lilili:refs/heads/master &&
+	git branch all1 master &&
+	test -z "$(git config branch.all1.merge)"
+'
 
 test_done
