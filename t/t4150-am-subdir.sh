@@ -56,7 +56,11 @@ test_expect_success 'am regularly from file in subdirectory' '
 	test_cmp expect actual
 '
 
-test_expect_success 'am regularly from file in subdirectory with full path' '
+case $(uname -s) in
+*MINGW*) test_expect=test_expect_failure;;
+*)       test_expect=test_expect_success;;
+esac
+$test_expect 'am regularly from file in subdirectory with full path' '
 	rm -fr subdir &&
 	git checkout initial &&
 	P=$(pwd) &&
