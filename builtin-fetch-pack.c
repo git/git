@@ -26,6 +26,8 @@ static const char fetch_pack_usage[] =
 #define SEEN		(1U << 3)
 #define POPPED		(1U << 4)
 
+static int marked;
+
 /*
  * After sending this many "have"s if we do not get any new ACK , we
  * give up traversing our history.
@@ -58,6 +60,16 @@ static int rev_list_insert_ref(const char *path, const unsigned char *sha1, int 
 	if (o && o->type == OBJ_COMMIT)
 		rev_list_push((struct commit *)o, SEEN);
 
+	return 0;
+}
+
+static int clear_marks(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	struct object *o = deref_tag(parse_object(sha1), path, 0);
+
+	if (o && o->type == OBJ_COMMIT)
+		clear_commit_marks((struct commit *)o,
+				   COMMON | COMMON_REF | SEEN | POPPED);
 	return 0;
 }
 
@@ -152,6 +164,10 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	const unsigned char *sha1;
 	unsigned in_vain = 0;
 	int got_continue = 0;
+
+	if (marked)
+		for_each_ref(clear_marks, NULL);
+	marked = 1;
 
 	for_each_ref(rev_list_insert_ref, NULL);
 
