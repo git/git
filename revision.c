@@ -564,14 +564,39 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 	free_patch_ids(&ids);
 }
 
-static void add_to_list(struct commit_list **p, struct commit *commit, struct commit_list *n)
+/* How many extra uninteresting commits we want to see.. */
+#define SLOP 5
+
+static int still_interesting(struct commit_list *src, unsigned long date, int slop)
 {
-	p = &commit_list_insert(commit, p)->next;
-	*p = n;
+	/*
+	 * No source list at all? We're definitely done..
+	 */
+	if (!src)
+		return 0;
+
+	/*
+	 * Does the destination list contain entries with a date
+	 * before the source list? Definitely _not_ done.
+	 */
+	if (date < src->item->date)
+		return SLOP;
+
+	/*
+	 * Does the source list still have interesting commits in
+	 * it? Definitely not done..
+	 */
+	if (!everybody_uninteresting(src))
+		return SLOP;
+
+	/* Ok, we're closing in.. */
+	return slop-1;
 }
 
 static int limit_list(struct rev_info *revs)
 {
+	int slop = SLOP;
+	unsigned long date = ~0ul;
 	struct commit_list *list = revs->commits;
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
@@ -591,16 +616,19 @@ static int limit_list(struct rev_info *revs)
 			return -1;
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
-			if (everybody_uninteresting(list)) {
-				if (revs->show_all)
-					add_to_list(p, commit, list);
-				break;
-			}
-			if (!revs->show_all)
+			if (revs->show_all)
+				p = &commit_list_insert(commit, p)->next;
+			slop = still_interesting(list, date, slop);
+			if (slop)
 				continue;
+			/* If showing all, add the whole pending list to the end */
+			if (revs->show_all)
+				*p = list;
+			break;
 		}
 		if (revs->min_age != -1 && (commit->date > revs->min_age))
 			continue;
+		date = commit->date;
 		p = &commit_list_insert(commit, p)->next;
 
 		show = show_early_output;
