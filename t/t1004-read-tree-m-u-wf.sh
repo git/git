@@ -157,4 +157,85 @@ test_expect_success '3-way not overwriting local changes (their side)' '
 
 '
 
+test_expect_success 'funny symlink in work tree' '
+
+	git reset --hard &&
+	git checkout -b sym-b side-b &&
+	mkdir -p a &&
+	>a/b &&
+	git add a/b &&
+	git commit -m "side adds a/b" &&
+
+	rm -fr a &&
+	git checkout -b sym-a side-a &&
+	mkdir -p a &&
+	ln -s ../b a/b &&
+	git add a/b &&
+	git commit -m "we add a/b" &&
+
+	git read-tree -m -u sym-a sym-a sym-b
+
+'
+
+test_expect_success 'funny symlink in work tree, un-unlink-able' '
+
+	rm -fr a b &&
+	git reset --hard &&
+
+	git checkout sym-a &&
+	chmod a-w a &&
+	test_must_fail git read-tree -m -u sym-a sym-a sym-b
+
+'
+
+# clean-up from the above test
+chmod a+w a
+rm -fr a b
+
+test_expect_success 'D/F setup' '
+
+	git reset --hard &&
+
+	git checkout side-a &&
+	rm -f subdir/file2 &&
+	mkdir subdir/file2 &&
+	echo qfwfq >subdir/file2/another &&
+	git add subdir/file2/another &&
+	test_tick &&
+	git commit -m "side-a changes file2 to directory"
+
+'
+
+test_expect_success 'D/F' '
+
+	git checkout side-b &&
+	git read-tree -m -u branch-point side-b side-a &&
+	git ls-files -u >actual &&
+	(
+		a=$(git rev-parse branch-point:subdir/file2)
+		b=$(git rev-parse side-a:subdir/file2/another)
+		echo "100644 $a 1	subdir/file2"
+		echo "100644 $a 2	subdir/file2"
+		echo "100644 $b 3	subdir/file2/another"
+	) >expect &&
+	test_cmp actual expect
+
+'
+
+test_expect_success 'D/F resolve' '
+
+	git reset --hard &&
+	git checkout side-b &&
+	git merge-resolve branch-point -- side-b side-a
+
+'
+
+test_expect_success 'D/F recursive' '
+
+	git reset --hard &&
+	git checkout side-b &&
+	git merge-recursive branch-point -- side-b side-a
+
+'
+
 test_done
