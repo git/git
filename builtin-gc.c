@@ -160,10 +160,10 @@ static int too_many_packs(void)
 static int need_to_gc(void)
 {
 	/*
-	 * Setting gc.auto and gc.autopacklimit to 0 or negative can
-	 * disable the automatic gc.
+	 * Setting gc.auto to 0 or negative can disable the
+	 * automatic gc.
 	 */
-	if (gc_auto_threshold <= 0 && gc_auto_pack_limit <= 0)
+	if (gc_auto_threshold <= 0)
 		return 0;
 
 	/*
