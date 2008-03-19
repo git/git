@@ -396,7 +396,12 @@ fi
 
 # Test repository
 test=trash
-rm -fr "$test"
+rm -fr "$test" || {
+	trap - exit
+	echo >&5 "FATAL: Cannot prepare test area"
+	exit 1
+}
+
 test_create_repo $test
 cd "$test"
 
