@@ -157,6 +157,41 @@ test_expect_success '3-way not overwriting local changes (their side)' '
 
 '
 
+test_expect_success 'funny symlink in work tree' '
+
+	git reset --hard &&
+	git checkout -b sym-b side-b &&
+	mkdir -p a &&
+	>a/b &&
+	git add a/b &&
+	git commit -m "side adds a/b" &&
+
+	rm -fr a &&
+	git checkout -b sym-a side-a &&
+	mkdir -p a &&
+	ln -s ../b a/b &&
+	git add a/b &&
+	git commit -m "we add a/b" &&
+
+	git read-tree -m -u sym-a sym-a sym-b
+
+'
+
+test_expect_failure 'funny symlink in work tree, un-unlink-able' '
+
+	rm -fr a b &&
+	git reset --hard &&
+
+	git checkout sym-a &&
+	chmod a-w a &&
+	test_must_fail git read-tree -m -u sym-a sym-a sym-b
+
+'
+
+# clean-up from the above test
+chmod a+w a
+rm -fr a b
+
 test_expect_success 'D/F setup' '
 
 	git reset --hard &&
