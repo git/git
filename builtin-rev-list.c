@@ -33,6 +33,7 @@ static const char rev_list_usage[] =
 "  ordering output:\n"
 "    --topo-order\n"
 "    --date-order\n"
+"    --reverse\n"
 "  formatting output:\n"
 "    --parents\n"
 "    --objects | --objects-edge\n"
