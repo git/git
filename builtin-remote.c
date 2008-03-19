@@ -207,7 +207,10 @@ static int handle_one_branch(const char *refname,
 	if (!remote_find_tracking(states->remote, &refspec)) {
 		struct path_list_item *item;
 		const char *name = skip_prefix(refspec.src, "refs/heads/");
-		if (unsorted_path_list_has_path(&states->tracked, name) ||
+		/* symbolic refs pointing nowhere were handled already */
+		if ((flags & REF_ISSYMREF) ||
+				unsorted_path_list_has_path(&states->tracked,
+					name) ||
 				unsorted_path_list_has_path(&states->new,
 					name))
 			return 0;
