@@ -157,6 +157,7 @@ test_expect_success '3-way not overwriting local changes (their side)' '
 
 '
 
+test "$no_symlinks" || {
 test_expect_success 'funny symlink in work tree' '
 
 	git reset --hard &&
@@ -191,6 +192,7 @@ test_expect_success 'funny symlink in work tree, un-unlink-able' '
 # clean-up from the above test
 chmod a+w a
 rm -fr a b
+} # $no_symlinks
 
 test_expect_success 'D/F setup' '
 
