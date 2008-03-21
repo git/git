@@ -407,6 +407,7 @@ extern int delete_ref(const char *, const unsigned char *sha1);
 extern int trust_executable_bit;
 extern int quote_path_fully;
 extern int has_symlinks;
+extern int ignore_case;
 extern int assume_unchanged;
 extern int prefer_symlink_refs;
 extern int log_all_ref_updates;
