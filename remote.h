@@ -67,7 +67,8 @@ void free_refs(struct ref *ref);
  */
 void ref_remove_duplicates(struct ref *ref_map);
 
-struct refspec *parse_ref_spec(int nr_refspec, const char **refspec);
+struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
+struct refspec *parse_push_refspec(int nr_refspec, const char **refspec);
 
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	       int nr_refspec, const char **refspec, int all);

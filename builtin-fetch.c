@@ -652,5 +652,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	signal(SIGINT, unlock_pack_on_signal);
 	atexit(unlock_pack);
-	return do_fetch(transport, parse_ref_spec(ref_nr, refs), ref_nr);
+	return do_fetch(transport,
+			parse_fetch_refspec(ref_nr, refs), ref_nr);
 }
