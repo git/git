@@ -582,7 +582,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 		 * delete this path, which is in a subdirectory that
 		 * is being replaced with a blob.
 		 */
-		result = index_name_exists(&o->result, ce->name, ce_namelen(ce));
+		result = index_name_exists(&o->result, ce->name, ce_namelen(ce), 0);
 		if (result) {
 			if (result->ce_flags & CE_REMOVE)
 				return 0;
