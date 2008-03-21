@@ -54,7 +54,7 @@ void add_name_hash(struct index_state *istate, struct cache_entry *ce)
 		hash_index_entry(istate, ce);
 }
 
-int index_name_exists(struct index_state *istate, const char *name, int namelen)
+struct cache_entry *index_name_exists(struct index_state *istate, const char *name, int namelen)
 {
 	unsigned int hash = hash_name(name, namelen);
 	struct cache_entry *ce;
@@ -65,9 +65,9 @@ int index_name_exists(struct index_state *istate, const char *name, int namelen)
 	while (ce) {
 		if (!(ce->ce_flags & CE_UNHASHED)) {
 			if (!cache_name_compare(name, namelen, ce->name, ce->ce_flags))
-				return 1;
+				return ce;
 		}
 		ce = ce->next;
 	}
-	return 0;
+	return NULL;
 }

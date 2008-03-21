@@ -538,6 +538,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 	if (!lstat(ce->name, &st)) {
 		int cnt;
 		int dtype = ce_to_dtype(ce);
+		struct cache_entry *result;
 
 		if (o->dir && excluded(o->dir, ce->name, &dtype))
 			/*
@@ -581,10 +582,9 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 		 * delete this path, which is in a subdirectory that
 		 * is being replaced with a blob.
 		 */
-		cnt = index_name_pos(&o->result, ce->name, strlen(ce->name));
-		if (0 <= cnt) {
-			struct cache_entry *ce = o->result.cache[cnt];
-			if (ce->ce_flags & CE_REMOVE)
+		result = index_name_exists(&o->result, ce->name, ce_namelen(ce));
+		if (result) {
+			if (result->ce_flags & CE_REMOVE)
 				return 0;
 		}
 
