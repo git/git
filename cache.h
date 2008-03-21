@@ -153,20 +153,6 @@ static inline void copy_cache_entry(struct cache_entry *dst, struct cache_entry 
 	dst->ce_flags = (dst->ce_flags & ~CE_STATE_MASK) | state;
 }
 
-/*
- * We don't actually *remove* it, we can just mark it invalid so that
- * we won't find it in lookups.
- *
- * Not only would we have to search the lists (simple enough), but
- * we'd also have to rehash other hash buckets in case this makes the
- * hash bucket empty (common). So it's much better to just mark
- * it.
- */
-static inline void remove_index_entry(struct cache_entry *ce)
-{
-	ce->ce_flags |= CE_UNHASHED;
-}
-
 static inline unsigned create_ce_flags(size_t len, unsigned stage)
 {
 	if (len >= CE_NAMEMASK)
@@ -240,6 +226,23 @@ struct index_state {
 };
 
 extern struct index_state the_index;
+
+/* Name hashing */
+extern void add_name_hash(struct index_state *istate, struct cache_entry *ce);
+/*
+ * We don't actually *remove* it, we can just mark it invalid so that
+ * we won't find it in lookups.
+ *
+ * Not only would we have to search the lists (simple enough), but
+ * we'd also have to rehash other hash buckets in case this makes the
+ * hash bucket empty (common). So it's much better to just mark
+ * it.
+ */
+static inline void remove_name_hash(struct cache_entry *ce)
+{
+	ce->ce_flags |= CE_UNHASHED;
+}
+
 
 #ifndef NO_THE_INDEX_COMPATIBILITY_MACROS
 #define active_cache (the_index.cache)

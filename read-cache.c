@@ -23,78 +23,19 @@
 
 struct index_state the_index;
 
-static unsigned int hash_name(const char *name, int namelen)
-{
-	unsigned int hash = 0x123;
-
-	do {
-		unsigned char c = *name++;
-		hash = hash*101 + c;
-	} while (--namelen);
-	return hash;
-}
-
-static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
-{
-	void **pos;
-	unsigned int hash;
-
-	if (ce->ce_flags & CE_HASHED)
-		return;
-	ce->ce_flags |= CE_HASHED;
-	ce->next = NULL;
-	hash = hash_name(ce->name, ce_namelen(ce));
-	pos = insert_hash(hash, ce, &istate->name_hash);
-	if (pos) {
-		ce->next = *pos;
-		*pos = ce;
-	}
-}
-
-static void lazy_init_name_hash(struct index_state *istate)
-{
-	int nr;
-
-	if (istate->name_hash_initialized)
-		return;
-	for (nr = 0; nr < istate->cache_nr; nr++)
-		hash_index_entry(istate, istate->cache[nr]);
-	istate->name_hash_initialized = 1;
-}
-
 static void set_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {
-	ce->ce_flags &= ~CE_UNHASHED;
 	istate->cache[nr] = ce;
-	if (istate->name_hash_initialized)
-		hash_index_entry(istate, ce);
+	add_name_hash(istate, ce);
 }
 
 static void replace_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {
 	struct cache_entry *old = istate->cache[nr];
 
-	remove_index_entry(old);
+	remove_name_hash(old);
 	set_index_entry(istate, nr, ce);
 	istate->cache_changed = 1;
-}
-
-int index_name_exists(struct index_state *istate, const char *name, int namelen)
-{
-	unsigned int hash = hash_name(name, namelen);
-	struct cache_entry *ce;
-
-	lazy_init_name_hash(istate);
-	ce = lookup_hash(hash, &istate->name_hash);
-
-	while (ce) {
-		if (!(ce->ce_flags & CE_UNHASHED)) {
-			if (!cache_name_compare(name, namelen, ce->name, ce->ce_flags))
-				return 1;
-		}
-		ce = ce->next;
-	}
-	return 0;
 }
 
 /*
@@ -438,7 +379,7 @@ int remove_index_entry_at(struct index_state *istate, int pos)
 {
 	struct cache_entry *ce = istate->cache[pos];
 
-	remove_index_entry(ce);
+	remove_name_hash(ce);
 	istate->cache_changed = 1;
 	istate->cache_nr--;
 	if (pos >= istate->cache_nr)

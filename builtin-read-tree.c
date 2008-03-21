@@ -40,7 +40,7 @@ static int read_cache_unmerged(void)
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 		if (ce_stage(ce)) {
-			remove_index_entry(ce);
+			remove_name_hash(ce);
 			if (last && !strcmp(ce->name, last->name))
 				continue;
 			cache_tree_invalidate_path(active_cache_tree, ce->name);
