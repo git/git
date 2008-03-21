@@ -123,3 +123,4 @@ The placeholders are:
 - '%Creset': reset color
 - '%m': left, right or boundary mark
 - '%n': newline
+- '%x00': print a byte from a hex code

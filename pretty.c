@@ -457,6 +457,7 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	const struct commit *commit = c->commit;
 	const char *msg = commit->buffer;
 	struct commit_list *p;
+	int h1, h2;
 
 	/* these are independent of the commit */
 	switch (placeholder[0]) {
@@ -478,6 +479,16 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	case 'n':		/* newline */
 		strbuf_addch(sb, '\n');
 		return 1;
+	case 'x':
+		/* %x00 == NUL, %x0a == LF, etc. */
+		if (0 <= (h1 = hexval_table[0xff & placeholder[1]]) &&
+		    h1 <= 16 &&
+		    0 <= (h2 = hexval_table[0xff & placeholder[2]]) &&
+		    h2 <= 16) {
+			strbuf_addch(sb, (h1<<4)|h2);
+			return 3;
+		} else
+			return 0;
 	}
 
 	/* these depend on the commit */
