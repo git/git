@@ -431,9 +431,9 @@ static int index_name_pos_also_unmerged(struct index_state *istate,
 
 int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 {
-	int size, namelen, pos;
+	int size, namelen;
 	struct stat st;
-	struct cache_entry *ce;
+	struct cache_entry *ce, *alias;
 	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_RACY_IS_DIRTY;
 
 	if (lstat(path, &st))
@@ -466,13 +466,11 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 		ce->ce_mode = ce_mode_from_stat(ent, st.st_mode);
 	}
 
-	pos = index_name_pos(istate, ce->name, namelen);
-	if (0 <= pos &&
-	    !ce_stage(istate->cache[pos]) &&
-	    !ie_match_stat(istate, istate->cache[pos], &st, ce_option)) {
+	alias = index_name_exists(istate, ce->name, ce_namelen(ce), ignore_case);
+	if (alias && !ce_stage(alias) && !ie_match_stat(istate, alias, &st, ce_option)) {
 		/* Nothing changed, really */
 		free(ce);
-		ce_mark_uptodate(istate->cache[pos]);
+		ce_mark_uptodate(alias);
 		return 0;
 	}
 
