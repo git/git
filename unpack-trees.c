@@ -79,16 +79,21 @@ static int check_updates(struct unpack_trees_options *o)
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 
-		if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
-			display_progress(progress, ++cnt);
 		if (ce->ce_flags & CE_REMOVE) {
+			display_progress(progress, ++cnt);
 			if (o->update)
 				unlink_entry(ce->name, last_symlink);
 			remove_index_entry_at(&o->result, i);
 			i--;
 			continue;
 		}
+	}
+
+	for (i = 0; i < index->cache_nr; i++) {
+		struct cache_entry *ce = index->cache[i];
+
 		if (ce->ce_flags & CE_UPDATE) {
+			display_progress(progress, ++cnt);
 			ce->ce_flags &= ~CE_UPDATE;
 			if (o->update) {
 				errs |= checkout_entry(ce, &state, NULL);
