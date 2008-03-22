@@ -31,7 +31,7 @@ struct unpack_trees_options {
 	void *unpack_data;
 
 	struct index_state *dst_index;
-	const struct index_state *src_index;
+	struct index_state *src_index;
 	struct index_state result;
 };
 
