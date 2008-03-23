@@ -79,8 +79,9 @@ Updates since v1.5.4
  * "git branch" (and "git checkout -b") to branch from a local branch can
    optionally set "branch.<name>.merge" to mark the new branch to build on
    the other local branch, when "branch.autosetupmerge" is set to
-   "always".  By default, this does not happen when branching from a local
-   branch.
+   "always", or when passing the command line option "--track" (this option
+   was ignored when branching from local branches).  By default, this does
+   not happen when branching from a local branch.
 
  * "git checkout" to switch to a branch that has "branch.<name>.merge" set
    (i.e. marked to build on another branch) reports how much the branch
