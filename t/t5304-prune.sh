@@ -78,4 +78,38 @@ test_expect_success 'gc: start with ok gc.pruneExpire' '
 
 '
 
+test_expect_success 'prune: prune nonsense parameters' '
+
+	test_must_fail git prune garbage &&
+	test_must_fail git prune --- &&
+	test_must_fail git prune --no-such-option
+
+'
+
+test_expect_success 'prune: prune unreachable heads' '
+
+	git config core.logAllRefUpdates false &&
+	mv .git/logs .git/logs.old &&
+	: > file2 &&
+	git add file2 &&
+	git commit -m temporary &&
+	tmp_head=$(git rev-list -1 HEAD) &&
+	git reset HEAD^ &&
+	git prune &&
+	test_must_fail git reset $tmp_head --
+
+'
+
+test_expect_failure 'prune: do not prune heads listed as an argument' '
+
+	: > file2 &&
+	git add file2 &&
+	git commit -m temporary &&
+	tmp_head=$(git rev-list -1 HEAD) &&
+	git reset HEAD^ &&
+	git prune -- $tmp_head &&
+	git reset $tmp_head --
+
+'
+
 test_done
