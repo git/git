@@ -25,7 +25,7 @@ static const char * const builtin_gc_usage[] = {
 static int pack_refs = 1;
 static int aggressive_window = -1;
 static int gc_auto_threshold = 6700;
-static int gc_auto_pack_limit = 20;
+static int gc_auto_pack_limit = 50;
 static char *prune_expire = "2.weeks.ago";
 
 #define MAX_ADD 10
