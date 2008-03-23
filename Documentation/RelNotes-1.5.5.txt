@@ -124,6 +124,9 @@ Updates since v1.5.4
  * "git gc" now automatically prunes unreachable objects that are two
    weeks old or older.
 
+ * "git gc --auto" can be disabled more easily by just setting gc.auto
+   to zero.  It also tolerates more packfiles by default.
+
  * "git grep" now knows "--name-only" is a synonym for the "-l" option.
 
  * "git help <alias>" now reports "'git <alias>' is alias to <what>",
@@ -201,6 +204,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.5.4.4-620-gc817faa
+O=v1.5.5-rc1
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
