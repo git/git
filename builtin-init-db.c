@@ -167,9 +167,9 @@ static int create_default_files(const char *git_dir, const char *template_path)
 {
 	unsigned len = strlen(git_dir);
 	static char path[PATH_MAX];
-	unsigned char sha1[20];
 	struct stat st1;
 	char repo_version_string[10];
+	char junk[2];
 	int reinit;
 	int filemode;
 
@@ -219,7 +219,8 @@ static int create_default_files(const char *git_dir, const char *template_path)
 	 * branch, if it does not exist yet.
 	 */
 	strcpy(path + len, "HEAD");
-	reinit = !read_ref("HEAD", sha1);
+	reinit = (!access(path, R_OK)
+		  || readlink(path, junk, sizeof(junk)-1) != -1);
 	if (!reinit) {
 		if (create_symref("HEAD", "refs/heads/master", NULL) < 0)
 			exit(1);
