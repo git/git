@@ -385,6 +385,9 @@ new commit.
 Omitting the `from` command in the first commit of a new branch
 will cause fast-import to create that commit with no ancestor. This
 tends to be desired only for the initial commit of a project.
+If the frontend creates all files from scratch when making a new
+branch, a `merge` command may be used instead of `from` to start
+the commit with an empty tree.
 Omitting the `from` command on existing branches is usually desired,
 as the current commit on that branch is automatically assumed to
 be the first ancestor of the new commit.
@@ -427,13 +430,15 @@ existing value of the branch.
 
 `merge`
 ^^^^^^^
-Includes one additional ancestor commit, and makes the current
-commit a merge commit.  An unlimited number of `merge` commands per
+Includes one additional ancestor commit.  If the `from` command is
+omitted when creating a new branch, the first `merge` commit will be
+the first ancestor of the current commit, and the branch will start
+out with no files.  An unlimited number of `merge` commands per
 commit are permitted by fast-import, thereby establishing an n-way merge.
 However Git's other tools never create commits with more than 15
 additional ancestors (forming a 16-way merge).  For this reason
 it is suggested that frontends do not use more than 15 `merge`
-commands per commit.
+commands per commit; 16, if starting a new, empty branch.
 
 Here `<committish>` is any of the commit specification expressions
 also accepted by `from` (see above).

@@ -25,7 +25,7 @@ static const char * const builtin_gc_usage[] = {
 static int pack_refs = 1;
 static int aggressive_window = -1;
 static int gc_auto_threshold = 6700;
-static int gc_auto_pack_limit = 20;
+static int gc_auto_pack_limit = 50;
 static char *prune_expire = "2.weeks.ago";
 
 #define MAX_ADD 10
@@ -160,10 +160,10 @@ static int too_many_packs(void)
 static int need_to_gc(void)
 {
 	/*
-	 * Setting gc.auto and gc.autopacklimit to 0 or negative can
-	 * disable the automatic gc.
+	 * Setting gc.auto to 0 or negative can disable the
+	 * automatic gc.
 	 */
-	if (gc_auto_threshold <= 0 && gc_auto_pack_limit <= 0)
+	if (gc_auto_threshold <= 0)
 		return 0;
 
 	/*

@@ -49,8 +49,28 @@ poke() {
 	test-chmtime +1 "$1"
 }
 
-SVN_HTTPD_MODULE_PATH=${SVN_HTTPD_MODULE_PATH-'/usr/lib/apache2/modules'}
-SVN_HTTPD_PATH=${SVN_HTTPD_PATH-'/usr/sbin/apache2'}
+for d in \
+	"$SVN_HTTPD_PATH" \
+	/usr/sbin/apache2 \
+	/usr/sbin/httpd \
+; do
+	if test -f "$d"
+	then
+		SVN_HTTPD_PATH="$d"
+		break
+	fi
+done
+for d in \
+	"$SVN_HTTPD_MODULE_PATH" \
+	/usr/lib/apache2/modules \
+	/usr/libexec/apache2 \
+; do
+	if test -d "$d"
+	then
+		SVN_HTTPD_MODULE_PATH="$d"
+		break
+	fi
+done
 
 start_httpd () {
 	if test -z "$SVN_HTTPD_PORT"
@@ -66,6 +86,7 @@ ServerName "git-svn test"
 ServerRoot "$GIT_DIR"
 DocumentRoot "$GIT_DIR"
 PidFile "$GIT_DIR/httpd.pid"
+LockFile logs/accept.lock
 Listen 127.0.0.1:$SVN_HTTPD_PORT
 LoadModule dav_module $SVN_HTTPD_MODULE_PATH/mod_dav.so
 LoadModule dav_svn_module $SVN_HTTPD_MODULE_PATH/mod_dav_svn.so
