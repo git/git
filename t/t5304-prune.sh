@@ -100,7 +100,7 @@ test_expect_success 'prune: prune unreachable heads' '
 
 '
 
-test_expect_failure 'prune: do not prune heads listed as an argument' '
+test_expect_success 'prune: do not prune heads listed as an argument' '
 
 	: > file2 &&
 	git add file2 &&
