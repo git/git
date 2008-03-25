@@ -300,7 +300,7 @@ test_expect_code () {
 
 test_must_fail () {
 	"$@"
-	test $? -gt 0 -a $? -le 128
+	test $? -gt 0 -a $? -le 129
 }
 
 # test_cmp is a helper function to compare actual and expected output.
