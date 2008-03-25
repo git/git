@@ -14,7 +14,7 @@ static const char *bundle_usage="git-bundle (create <bundle> <git-rev-list args>
 int cmd_bundle(int argc, const char **argv, const char *prefix)
 {
 	struct bundle_header header;
-	int nongit = 0;
+	int nongit;
 	const char *cmd, *bundle_file;
 	int bundle_fd = -1;
 	char buffer[PATH_MAX];

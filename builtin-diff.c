@@ -210,7 +210,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	int ents = 0, blobs = 0, paths = 0;
 	const char *path = NULL;
 	struct blobinfo blob[2];
-	int nongit = 0;
+	int nongit;
 	int result = 0;
 
 	/*

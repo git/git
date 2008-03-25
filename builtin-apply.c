@@ -2994,7 +2994,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 	int read_stdin = 1;
 	int inaccurate_eof = 0;
 	int errs = 0;
-	int is_not_gitdir = 0;
+	int is_not_gitdir;
 
 	const char *whitespace_option = NULL;
 

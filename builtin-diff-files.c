@@ -16,7 +16,7 @@ COMMON_DIFF_OPTIONS_HELP;
 int cmd_diff_files(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
-	int nongit = 0;
+	int nongit;
 	int result;
 
 	prefix = setup_git_directory_gently(&nongit);

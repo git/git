@@ -31,7 +31,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	const char *dest = NULL;
-	int nongit = 0;
+	int nongit;
 	unsigned flags = 0;
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
