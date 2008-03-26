@@ -14,8 +14,8 @@ test_description='git-mktag: tag object verify test'
 check_verify_failure () {
 	expect="$2"
 	test_expect_success "$1" '
-		( ! git-mktag <tag.sig 2>message ) &&
-		grep -q "$expect" message
+		( test_must_fail git-mktag <tag.sig 2>message ) &&
+		grep "$expect" message
 	'
 }
 
