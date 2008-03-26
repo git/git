@@ -189,6 +189,7 @@ ETC_GITCONFIG = $(sysconfdir)/gitconfig
 
 # default configuration for gitweb
 GITWEB_CONFIG = gitweb_config.perl
+GITWEB_CONFIG_SYSTEM = /etc/gitweb.conf
 GITWEB_HOME_LINK_STR = projects
 GITWEB_SITENAME =
 GITWEB_PROJECTROOT = /pub/git
