@@ -131,8 +131,10 @@ do
 	test=`echo "$cmd" | sed -e 's|[/ ][/ ]*|_|g'`
 	cnt=`expr $test_count + 1`
 	pfx=`printf "%04d" $cnt`
-	expect="../../t5515/fetch.$test"
-	actual="$pfx-fetch.$test"
+	expect_f="../../t5515/fetch.$test"
+	actual_f="$pfx-fetch.$test"
+	expect_r="../../t5515/refs.$test"
+	actual_r="$pfx-refs.$test"
 
 	test_expect_success "$cmd" '
 		{
@@ -145,14 +147,24 @@ do
 			rm -f .git/refs/tags/*
 			git fetch "$@" >/dev/null
 			cat .git/FETCH_HEAD
-		} >"$actual" &&
-		if test -f "$expect"
+		} >"$actual_f" &&
+		git show-ref >"$actual_r" &&
+		if test -f "$expect_f"
 		then
-			git diff -u "$expect" "$actual" &&
-			rm -f "$actual"
+			git diff -u "$expect_f" "$actual_f" &&
+			rm -f "$actual_f"
 		else
 			# this is to help developing new tests.
-			cp "$actual" "$expect"
+			cp "$actual_f" "$expect_f"
+			false
+		fi &&
+		if test -f "$expect_r"
+		then
+			git diff -u "$expect_r" "$actual_r" &&
+			rm -f "$actual_r"
+		else
+			# this is to help developing new tests.
+			cp "$actual_r" "$expect_r"
 			false
 		fi
 	'
