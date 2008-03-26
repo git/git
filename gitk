@@ -8045,11 +8045,11 @@ proc doprefs {} {
     grid $top.cdisp - -sticky w -pady 10
     label $top.bg -padx 40 -relief sunk -background $bgcolor
     button $top.bgbut -text [mc "Background"] -font optionfont \
-	-command [list choosecolor bgcolor 0 $top.bg background setbg]
+	-command [list choosecolor bgcolor {} $top.bg background setbg]
     grid x $top.bgbut $top.bg -sticky w
     label $top.fg -padx 40 -relief sunk -background $fgcolor
     button $top.fgbut -text [mc "Foreground"] -font optionfont \
-	-command [list choosecolor fgcolor 0 $top.fg foreground setfg]
+	-command [list choosecolor fgcolor {} $top.fg foreground setfg]
     grid x $top.fgbut $top.fg -sticky w
     label $top.diffold -padx 40 -relief sunk -background [lindex $diffcolors 0]
     button $top.diffoldbut -text [mc "Diff: old lines"] -font optionfont \
@@ -8069,7 +8069,7 @@ proc doprefs {} {
     grid x $top.hunksepbut $top.hunksep -sticky w
     label $top.selbgsep -padx 40 -relief sunk -background $selectbgcolor
     button $top.selbgbut -text [mc "Select bg"] -font optionfont \
-	-command [list choosecolor selectbgcolor 0 $top.selbgsep background setselbg]
+	-command [list choosecolor selectbgcolor {} $top.selbgsep background setselbg]
     grid x $top.selbgbut $top.selbgsep -sticky w
 
     label $top.cfont -text [mc "Fonts: press to choose"]
