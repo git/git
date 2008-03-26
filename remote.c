@@ -417,17 +417,21 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			rhs++;
 			rlen = strlen(rhs);
 			is_glob = (2 <= rlen && !strcmp(rhs + rlen - 2, "/*"));
-			rs[i].dst = xstrndup(rhs, rlen - is_glob * 2);
+			if (is_glob)
+				rlen -= 2;
+			rs[i].dst = xstrndup(rhs, rlen);
 		}
 
 		llen = (rhs ? (rhs - lhs - 1) : strlen(lhs));
-		if (is_glob != (2 <= llen && !memcmp(lhs + llen - 2, "/*", 2)))
-			goto invalid;
-
-		if (is_glob) {
+		if (2 <= llen && !memcmp(lhs + llen - 2, "/*", 2)) {
+			if ((rhs && !is_glob) || (!rhs && fetch))
+				goto invalid;
+			is_glob = 1;
 			llen -= 2;
-			rlen -= 2;
+		} else if (rhs && is_glob) {
+			goto invalid;
 		}
+
 		rs[i].pattern = is_glob;
 		rs[i].src = xstrndup(lhs, llen);
 
@@ -446,7 +450,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			}
 			/*
 			 * RHS
-			 * - missing is allowed.
+			 * - missing is ok, and is same as empty.
 			 * - empty is ok; it means not to store.
 			 * - otherwise it must be a valid looking ref.
 			 */
