@@ -4,6 +4,13 @@ GIT v1.5.4.5 Release Notes
 Fixes since v1.5.4.4
 --------------------
 
+ * "git fetch there" when the URL information came from the Cogito style
+   branches/there file did not update refs/heads/there (regression in
+   1.5.4).
+
+ * Bogus refspec configuration such as "remote.there.fetch = =" were not
+   detected as errors (regressionin 1.5.4).
+
  * You couldn't specify a custom editor whose path contains a whitespace
    via GIT_EDITOR (and core.editor).
 
@@ -46,8 +53,10 @@ Fixes since v1.5.4.4
  * "git rebase -m" triggered pre-commit verification, which made
    "rebase --continue" impossible.
 
+As usual, it also comes with many documentation fixes and clarifications.
+
 --
 exec >/var/tmp/1
 echo O=$(git describe maint)
-O=v1.5.4.4-25-ga6f7728
+O=v1.5.4.4-32-gb88605f
 git shortlog --no-merges $O..maint
