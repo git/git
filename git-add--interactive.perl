@@ -550,6 +550,21 @@ sub parse_diff {
 	return @hunk;
 }
 
+sub parse_diff_header {
+	my $src = shift;
+
+	my $head = { TEXT => [], DISPLAY => [] };
+	my $mode = { TEXT => [], DISPLAY => [] };
+
+	for (my $i = 0; $i < @{$src->{TEXT}}; $i++) {
+		my $dest = $src->{TEXT}->[$i] =~ /^(old|new) mode (\d+)$/ ?
+			$mode : $head;
+		push @{$dest->{TEXT}}, $src->{TEXT}->[$i];
+		push @{$dest->{DISPLAY}}, $src->{DISPLAY}->[$i];
+	}
+	return ($head, $mode);
+}
+
 sub hunk_splittable {
 	my ($text) = @_;
 
@@ -795,6 +810,7 @@ sub patch_update_file {
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
+	($head, my $mode) = parse_diff_header($head);
 	for (@{$head->{DISPLAY}}) {
 		print;
 	}

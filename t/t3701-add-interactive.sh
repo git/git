@@ -66,4 +66,13 @@ test_expect_success 'revert works (commit)' '
 	grep "unchanged *+3/-0 file" output
 '
 
+test_expect_success 'patch does not affect mode' '
+	git reset --hard &&
+	echo content >>file &&
+	chmod +x file &&
+	printf "y\\n" | git add -p &&
+	git show :file | grep content &&
+	git diff file | grep "new mode"
+'
+
 test_done
