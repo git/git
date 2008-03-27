@@ -203,8 +203,11 @@ this release, unless otherwise noted.
  * "git-rebase --abort" did not go back to the right location if
    "git-reset" was run during the "git-rebase" session.
 
+ * "git imap-send" without setting imap.host did not error out but
+   segfaulted.
+
 ---
 exec >/var/tmp/1
-O=v1.5.5-rc1
+O=v1.5.5-rc1-21-g319a36a
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
