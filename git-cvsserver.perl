@@ -73,8 +73,8 @@ my $methods = {
     'status'          => \&req_status,
     'admin'           => \&req_CATCHALL,
     'history'         => \&req_CATCHALL,
-    'watchers'        => \&req_CATCHALL,
-    'editors'         => \&req_CATCHALL,
+    'watchers'        => \&req_EMPTY,
+    'editors'         => \&req_EMPTY,
     'annotate'        => \&req_annotate,
     'Global_option'   => \&req_Globaloption,
     #'annotate'        => \&req_CATCHALL,
@@ -199,6 +199,11 @@ sub req_CATCHALL
     $log->warn("Unhandled command : req_$cmd : $data");
 }
 
+# This method invariably succeeds with an empty response.
+sub req_EMPTY
+{
+    print "ok\n";
+}
 
 # Root pathname \n
 #     Response expected: no. Tell the server which CVSROOT to use. Note that
