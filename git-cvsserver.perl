@@ -963,6 +963,17 @@ sub req_update
             $meta = $updater->getmeta($filename);
         }
 
+        # If -p was given, "print" the contents of the requested revision.
+        if ( exists ( $state->{opt}{p} ) ) {
+            if ( defined ( $meta->{revision} ) ) {
+                $log->info("Printing '$filename' revision " . $meta->{revision});
+
+                transmitfile($meta->{filehash}, { print => 1 });
+            }
+
+            next;
+        }
+
 	if ( ! defined $meta )
 	{
 	    $meta = {
@@ -1096,9 +1107,9 @@ sub req_update
             my $file_local = $filepart . ".mine";
             system("ln","-s",$state->{entries}{$filename}{modified_filename}, $file_local);
             my $file_old = $filepart . "." . $oldmeta->{revision};
-            transmitfile($oldmeta->{filehash}, $file_old);
+            transmitfile($oldmeta->{filehash}, { targetfile => $file_old });
             my $file_new = $filepart . "." . $meta->{revision};
-            transmitfile($meta->{filehash}, $file_new);
+            transmitfile($meta->{filehash}, { targetfile => $file_new });
 
             # we need to merge with the local changes ( M=successful merge, C=conflict merge )
             $log->info("Merging $file_local, $file_old, $file_new");
@@ -1550,14 +1561,14 @@ sub req_diff
                 print "E File $filename at revision 1.$revision1 doesn't exist\n";
                 next;
             }
-            transmitfile($meta1->{filehash}, $file1);
+            transmitfile($meta1->{filehash}, { targetfile => $file1 });
         }
         # otherwise we just use the working copy revision
         else
         {
             ( undef, $file1 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
             $meta1 = $updater->getmeta($filename, $wrev);
-            transmitfile($meta1->{filehash}, $file1);
+            transmitfile($meta1->{filehash}, { targetfile => $file1 });
         }
 
         # if we have a second -r switch, use it too
@@ -1572,7 +1583,7 @@ sub req_diff
                 next;
             }
 
-            transmitfile($meta2->{filehash}, $file2);
+            transmitfile($meta2->{filehash}, { targetfile => $file2 });
         }
         # otherwise we just use the working copy
         else
@@ -1585,7 +1596,7 @@ sub req_diff
         {
             ( undef, $file2 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
             $meta2 = $updater->getmeta($filename, $wrev);
-            transmitfile($meta2->{filehash}, $file2);
+            transmitfile($meta2->{filehash}, { targetfile => $file2 });
         }
 
         # We need to have retrieved something useful
@@ -2014,14 +2025,17 @@ sub revparse
     return undef;
 }
 
-# This method takes a file hash and does a CVS "file transfer" which transmits the
-# size of the file, and then the file contents.
-# If a second argument $targetfile is given, the file is instead written out to
-# a file by the name of $targetfile
+# This method takes a file hash and does a CVS "file transfer".  Its
+# exact behaviour depends on a second, optional hash table argument:
+# - If $options->{targetfile}, dump the contents to that file;
+# - If $options->{print}, use M/MT to transmit the contents one line
+#   at a time;
+# - Otherwise, transmit the size of the file, followed by the file
+#   contents.
 sub transmitfile
 {
     my $filehash = shift;
-    my $targetfile = shift;
+    my $options = shift;
 
     if ( defined ( $filehash ) and $filehash eq "deleted" )
     {
@@ -2043,11 +2057,20 @@ sub transmitfile
 
     if ( open my $fh, '-|', "git-cat-file", "blob", $filehash )
     {
-        if ( defined ( $targetfile ) )
+        if ( defined ( $options->{targetfile} ) )
         {
+            my $targetfile = $options->{targetfile};
             open NEWFILE, ">", $targetfile or die("Couldn't open '$targetfile' for writing : $!");
             print NEWFILE $_ while ( <$fh> );
             close NEWFILE or die("Failed to write '$targetfile': $!");
+        } elsif ( defined ( $options->{print} ) && $options->{print} ) {
+            while ( <$fh> ) {
+                if( /\n\z/ ) {
+                    print 'M ', $_;
+                } else {
+                    print 'MT text ', $_, "\n";
+                }
+            }
         } else {
             print "$size\n";
             print while ( <$fh> );
