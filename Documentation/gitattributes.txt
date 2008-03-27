@@ -63,6 +63,13 @@ path in question, and its parent directories (the further the
 directory that contains `.gitattributes` is from the path in
 question, the lower its precedence).
 
+If you wish to affect only a single repository (i.e., to assign
+attributes to files that are particular to one user's workflow), then
+attributes should be placed in the `$GIT_DIR/info/attributes` file.
+Attributes which should be version-controlled and distributed to other
+repositories (i.e., attributes of interest to all users) should go into
+`.gitattributes` files.
+
 Sometimes you would need to override an setting of an attribute
 for a path to `unspecified` state.  This can be done by listing
 the name of the attribute prefixed with an exclamation point `!`.
