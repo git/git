@@ -1428,6 +1428,8 @@ sub req_status
     {
         $filename = filecleanup($filename);
 
+        next if exists($state->{opt}{l}) && index($filename, '/', length($state->{prependdir})) >= 0;
+
         my $meta = $updater->getmeta($filename);
         my $oldmeta = $meta;
 
