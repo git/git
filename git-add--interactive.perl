@@ -814,6 +814,36 @@ sub patch_update_file {
 	for (@{$head->{DISPLAY}}) {
 		print;
 	}
+
+	if (@{$mode->{TEXT}}) {
+		while (1) {
+			print @{$mode->{DISPLAY}};
+			print colored $prompt_color,
+				"Stage mode change [y/n/a/d/?]? ";
+			my $line = <STDIN>;
+			if ($line =~ /^y/i) {
+				$mode->{USE} = 1;
+				last;
+			}
+			elsif ($line =~ /^n/i) {
+				$mode->{USE} = 0;
+				last;
+			}
+			elsif ($line =~ /^a/i) {
+				$_->{USE} = 1 foreach ($mode, @hunk);
+				last;
+			}
+			elsif ($line =~ /^d/i) {
+				$_->{USE} = 0 foreach ($mode, @hunk);
+				last;
+			}
+			else {
+				help_patch_cmd('');
+				next;
+			}
+		}
+	}
+
 	$num = scalar @hunk;
 	$ix = 0;
 
@@ -936,6 +966,9 @@ sub patch_update_file {
 
 	my $n_lofs = 0;
 	my @result = ();
+	if ($mode->{USE}) {
+		push @result, @{$mode->{TEXT}};
+	}
 	for (@hunk) {
 		my $text = $_->{TEXT};
 		my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
