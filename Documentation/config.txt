@@ -661,6 +661,13 @@ gitcvs.dbuser, gitcvs.dbpass::
 	'gitcvs.dbuser' supports variable substitution (see
 	linkgit:git-cvsserver[1] for details).
 
+gitcvs.dbTableNamePrefix::
+	Database table name prefix.  Prepended to the names of any
+	database tables used, allowing a single database to be used
+	for several repositories.  Supports variable substitution (see
+	linkgit:git-cvsserver[1] for details).  Any non-alphabetic
+	characters will be replaced with underscores.
+
 All gitcvs variables except for 'gitcvs.allbinary' can also be
 specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given

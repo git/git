@@ -2311,6 +2311,14 @@ sub new
 
     bless $self, $class;
 
+    $self->{valid_tables} = {'revision' => 1,
+                             'revision_ix1' => 1,
+                             'revision_ix2' => 1,
+                             'head' => 1,
+                             'head_ix1' => 1,
+                             'properties' => 1,
+                             'commitmsgs' => 1};
+
     $self->{module} = $module;
     $self->{git_path} = $config . "/";
 
@@ -2326,6 +2334,8 @@ sub new
         $cfg->{gitcvs}{dbuser} || "";
     $self->{dbpass} = $cfg->{gitcvs}{$state->{method}}{dbpass} ||
         $cfg->{gitcvs}{dbpass} || "";
+    $self->{dbtablenameprefix} = $cfg->{gitcvs}{$state->{method}}{dbtablenameprefix} ||
+        $cfg->{gitcvs}{dbtablenameprefix} || "";
     my %mapping = ( m => $module,
                     a => $state->{method},
                     u => getlogin || getpwuid($<) || $<,
@@ -2334,6 +2344,8 @@ sub new
                     );
     $self->{dbname} =~ s/%([mauGg])/$mapping{$1}/eg;
     $self->{dbuser} =~ s/%([mauGg])/$mapping{$1}/eg;
+    $self->{dbtablenameprefix} =~ s/%([mauGg])/$mapping{$1}/eg;
+    $self->{dbtablenameprefix} = mangle_tablename($self->{dbtablenameprefix});
 
     die "Invalid char ':' in dbdriver" if $self->{dbdriver} =~ /:/;
     die "Invalid char ';' in dbname" if $self->{dbname} =~ /;/;
@@ -2349,10 +2361,13 @@ sub new
     }
 
     # Construct the revision table if required
-    unless ( $self->{tables}{revision} )
+    unless ( $self->{tables}{$self->tablename("revision")} )
     {
+        my $tablename = $self->tablename("revision");
+        my $ix1name = $self->tablename("revision_ix1");
+        my $ix2name = $self->tablename("revision_ix2");
         $self->{dbh}->do("
-            CREATE TABLE revision (
+            CREATE TABLE $tablename (
                 name       TEXT NOT NULL,
                 revision   INTEGER NOT NULL,
                 filehash   TEXT NOT NULL,
@@ -2363,20 +2378,22 @@ sub new
             )
         ");
         $self->{dbh}->do("
-            CREATE INDEX revision_ix1
-            ON revision (name,revision)
+            CREATE INDEX $ix1name
+            ON $tablename (name,revision)
         ");
         $self->{dbh}->do("
-            CREATE INDEX revision_ix2
-            ON revision (name,commithash)
+            CREATE INDEX $ix2name
+            ON $tablename (name,commithash)
         ");
     }
 
     # Construct the head table if required
-    unless ( $self->{tables}{head} )
+    unless ( $self->{tables}{$self->tablename("head")} )
     {
+        my $tablename = $self->tablename("head");
+        my $ix1name = $self->tablename("head_ix1");
         $self->{dbh}->do("
-            CREATE TABLE head (
+            CREATE TABLE $tablename (
                 name       TEXT NOT NULL,
                 revision   INTEGER NOT NULL,
                 filehash   TEXT NOT NULL,
@@ -2387,16 +2404,17 @@ sub new
             )
         ");
         $self->{dbh}->do("
-            CREATE INDEX head_ix1
-            ON head (name)
+            CREATE INDEX $ix1name
+            ON $tablename (name)
         ");
     }
 
     # Construct the properties table if required
-    unless ( $self->{tables}{properties} )
+    unless ( $self->{tables}{$self->tablename("properties")} )
     {
+        my $tablename = $self->tablename("properties");
         $self->{dbh}->do("
-            CREATE TABLE properties (
+            CREATE TABLE $tablename (
                 key        TEXT NOT NULL PRIMARY KEY,
                 value      TEXT
             )
@@ -2404,10 +2422,11 @@ sub new
     }
 
     # Construct the commitmsgs table if required
-    unless ( $self->{tables}{commitmsgs} )
+    unless ( $self->{tables}{$self->tablename("commitmsgs")} )
     {
+        my $tablename = $self->tablename("commitmsgs");
         $self->{dbh}->do("
-            CREATE TABLE commitmsgs (
+            CREATE TABLE $tablename (
                 key        TEXT NOT NULL PRIMARY KEY,
                 value      TEXT
             )
@@ -2415,6 +2434,21 @@ sub new
     }
 
     return $self;
+}
+
+=head2 tablename
+
+=cut
+sub tablename
+{
+    my $self = shift;
+    my $name = shift;
+
+    if (exists $self->{valid_tables}{$name}) {
+        return $self->{dbtablenameprefix} . $name;
+    } else {
+        return undef;
+    }
 }
 
 =head2 update
@@ -2782,8 +2816,9 @@ sub insert_rev
     my $modified = shift;
     my $author = shift;
     my $mode = shift;
+    my $tablename = $self->tablename("revision");
 
-    my $insert_rev = $self->{dbh}->prepare_cached("INSERT INTO revision (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
+    my $insert_rev = $self->{dbh}->prepare_cached("INSERT INTO $tablename (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
     $insert_rev->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
 }
 
@@ -2792,16 +2827,18 @@ sub insert_mergelog
     my $self = shift;
     my $key = shift;
     my $value = shift;
+    my $tablename = $self->tablename("commitmsgs");
 
-    my $insert_mergelog = $self->{dbh}->prepare_cached("INSERT INTO commitmsgs (key, value) VALUES (?,?)",{},1);
+    my $insert_mergelog = $self->{dbh}->prepare_cached("INSERT INTO $tablename (key, value) VALUES (?,?)",{},1);
     $insert_mergelog->execute($key, $value);
 }
 
 sub delete_head
 {
     my $self = shift;
+    my $tablename = $self->tablename("head");
 
-    my $delete_head = $self->{dbh}->prepare_cached("DELETE FROM head",{},1);
+    my $delete_head = $self->{dbh}->prepare_cached("DELETE FROM $tablename",{},1);
     $delete_head->execute();
 }
 
@@ -2815,8 +2852,9 @@ sub insert_head
     my $modified = shift;
     my $author = shift;
     my $mode = shift;
+    my $tablename = $self->tablename("head");
 
-    my $insert_head = $self->{dbh}->prepare_cached("INSERT INTO head (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
+    my $insert_head = $self->{dbh}->prepare_cached("INSERT INTO $tablename (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
     $insert_head->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
 }
 
@@ -2824,8 +2862,9 @@ sub _headrev
 {
     my $self = shift;
     my $filename = shift;
+    my $tablename = $self->tablename("head");
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT filehash, revision, mode FROM head WHERE name=?",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT filehash, revision, mode FROM $tablename WHERE name=?",{},1);
     $db_query->execute($filename);
     my ( $hash, $revision, $mode ) = $db_query->fetchrow_array;
 
@@ -2836,8 +2875,9 @@ sub _get_prop
 {
     my $self = shift;
     my $key = shift;
+    my $tablename = $self->tablename("properties");
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT value FROM properties WHERE key=?",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT value FROM $tablename WHERE key=?",{},1);
     $db_query->execute($key);
     my ( $value ) = $db_query->fetchrow_array;
 
@@ -2849,13 +2889,14 @@ sub _set_prop
     my $self = shift;
     my $key = shift;
     my $value = shift;
+    my $tablename = $self->tablename("properties");
 
-    my $db_query = $self->{dbh}->prepare_cached("UPDATE properties SET value=? WHERE key=?",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("UPDATE $tablename SET value=? WHERE key=?",{},1);
     $db_query->execute($value, $key);
 
     unless ( $db_query->rows )
     {
-        $db_query = $self->{dbh}->prepare_cached("INSERT INTO properties (key, value) VALUES (?,?)",{},1);
+        $db_query = $self->{dbh}->prepare_cached("INSERT INTO $tablename (key, value) VALUES (?,?)",{},1);
         $db_query->execute($key, $value);
     }
 
@@ -2869,10 +2910,11 @@ sub _set_prop
 sub gethead
 {
     my $self = shift;
+    my $tablename = $self->tablename("head");
 
     return $self->{gethead_cache} if ( defined ( $self->{gethead_cache} ) );
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, mode, revision, modified, commithash, author FROM head ORDER BY name ASC",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, mode, revision, modified, commithash, author FROM $tablename ORDER BY name ASC",{},1);
     $db_query->execute();
 
     my $tree = [];
@@ -2894,8 +2936,9 @@ sub getlog
 {
     my $self = shift;
     my $filename = shift;
+    my $tablename = $self->tablename("revision");
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, author, mode, revision, modified, commithash FROM revision WHERE name=? ORDER BY revision DESC",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, author, mode, revision, modified, commithash FROM $tablename WHERE name=? ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
     my $tree = [];
@@ -2919,19 +2962,21 @@ sub getmeta
     my $self = shift;
     my $filename = shift;
     my $revision = shift;
+    my $tablename_rev = $self->tablename("revision");
+    my $tablename_head = $self->tablename("head");
 
     my $db_query;
     if ( defined($revision) and $revision =~ /^\d+$/ )
     {
-        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM revision WHERE name=? AND revision=?",{},1);
+        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_rev WHERE name=? AND revision=?",{},1);
         $db_query->execute($filename, $revision);
     }
     elsif ( defined($revision) and $revision =~ /^[a-zA-Z0-9]{40}$/ )
     {
-        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM revision WHERE name=? AND commithash=?",{},1);
+        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_rev WHERE name=? AND commithash=?",{},1);
         $db_query->execute($filename, $revision);
     } else {
-        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM head WHERE name=?",{},1);
+        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_head WHERE name=?",{},1);
         $db_query->execute($filename);
     }
 
@@ -2947,11 +2992,12 @@ sub commitmessage
 {
     my $self = shift;
     my $commithash = shift;
+    my $tablename = $self->tablename("commitmsgs");
 
     die("Need commithash") unless ( defined($commithash) and $commithash =~ /^[a-zA-Z0-9]{40}$/ );
 
     my $db_query;
-    $db_query = $self->{dbh}->prepare_cached("SELECT value FROM commitmsgs WHERE key=?",{},1);
+    $db_query = $self->{dbh}->prepare_cached("SELECT value FROM $tablename WHERE key=?",{},1);
     $db_query->execute($commithash);
 
     my ( $message ) = $db_query->fetchrow_array;
@@ -2979,9 +3025,10 @@ sub gethistory
 {
     my $self = shift;
     my $filename = shift;
+    my $tablename = $self->tablename("revision");
 
     my $db_query;
-    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM revision WHERE name=? ORDER BY revision DESC",{},1);
+    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM $tablename WHERE name=? ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
     return $db_query->fetchall_arrayref;
@@ -3001,9 +3048,10 @@ sub gethistorydense
 {
     my $self = shift;
     my $filename = shift;
+    my $tablename = $self->tablename("revision");
 
     my $db_query;
-    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM revision WHERE name=? AND filehash!='deleted' ORDER BY revision DESC",{},1);
+    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM $tablename WHERE name=? AND filehash!='deleted' ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
     return $db_query->fetchall_arrayref;
@@ -3059,6 +3107,21 @@ sub mangle_dirname {
     $dirname =~ s/[^\w.-]/_/g;
 
     return $dirname;
+}
+
+=head2 mangle_tablename
+
+create a string from a that is suitable to use as part of an SQL table
+name, mainly by converting all chars except \w to _
+
+=cut
+sub mangle_tablename {
+    my $tablename = shift;
+    return unless defined $tablename;
+
+    $tablename =~ s/[^\w_]/_/g;
+
+    return $tablename;
 }
 
 1;
