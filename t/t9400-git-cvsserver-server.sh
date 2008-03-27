@@ -420,6 +420,24 @@ test_expect_success 'cvs update (merge no-op)' \
     GIT_CONFIG="$git_config" cvs -Q update &&
     diff -q merge ../merge'
 
+cd "$WORKDIR"
+test_expect_success 'cvs update (-p)' '
+    touch really-empty &&
+    echo Line 1 > no-lf &&
+    echo -n Line 2 >> no-lf &&
+    git add really-empty no-lf &&
+    git commit -q -m "Update -p test" &&
+    git push gitcvs.git >/dev/null &&
+    cd cvswork &&
+    GIT_CONFIG="$git_config" cvs update &&
+    rm -f failures &&
+    for i in merge no-lf empty really-empty; do
+        GIT_CONFIG="$git_config" cvs update -p "$i" >$i.out
+        diff $i.out ../$i >>failures 2>&1
+    done &&
+    test -z "$(cat failures)"
+'
+
 #------------
 # CVS STATUS
 #------------
