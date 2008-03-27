@@ -1728,8 +1728,7 @@ sub req_log
             print "M revision 1.$revision->{revision}\n";
             # reformat the date for log output
             $revision->{modified} = sprintf('%04d/%02d/%02d %s', $3, $DATE_LIST->{$2}, $1, $4 ) if ( $revision->{modified} =~ /(\d+)\s+(\w+)\s+(\d+)\s+(\S+)/ and defined($DATE_LIST->{$2}) );
-            $revision->{author} =~ s/\s+.*//;
-            $revision->{author} =~ s/^(.{8}).*/$1/;
+            $revision->{author} = cvs_author($revision->{author});
             print "M date: $revision->{modified};  author: $revision->{author};  state: " . ( $revision->{filehash} eq "deleted" ? "dead" : "Exp" ) . ";  lines: +2 -3\n";
             my $commitmessage = $updater->commitmessage($revision->{commithash});
             $commitmessage =~ s/^/M /mg;
@@ -1844,8 +1843,7 @@ sub req_annotate
                 unless ( defined ( $metadata->{$commithash} ) )
                 {
                     $metadata->{$commithash} = $updater->getmeta($filename, $commithash);
-                    $metadata->{$commithash}{author} =~ s/\s+.*//;
-                    $metadata->{$commithash}{author} =~ s/^(.{8}).*/$1/;
+                    $metadata->{$commithash}{author} = cvs_author($metadata->{$commithash}{author});
                     $metadata->{$commithash}{modified} = sprintf("%02d-%s-%02d", $1, $2, $3) if ( $metadata->{$commithash}{modified} =~ /^(\d+)\s(\w+)\s\d\d(\d\d)/ );
                 }
                 printf("M 1.%-5d      (%-8s %10s): %s\n",
@@ -2137,6 +2135,16 @@ sub kopts_from_path
 		# is more like git itself), always return the "-kb" option
 		return "-kb";
     }
+}
+
+# Generate a CVS author name from Git author information, by taking
+# the first eight characters of the user part of the email address.
+sub cvs_author
+{
+    my $author_line = shift;
+    (my $author) = $author_line =~ /<([^>@]{1,8})/;
+
+    $author;
 }
 
 package GITCVS::log;
