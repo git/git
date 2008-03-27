@@ -1471,8 +1471,10 @@ sub req_status
 
         $status ||= "Unknown";
 
+        my ($filepart) = filenamesplit($filename);
+
         print "M ===================================================================\n";
-        print "M File: $filename\tStatus: $status\n";
+        print "M File: $filepart\tStatus: $status\n";
         if ( defined($state->{entries}{$filename}{revision}) )
         {
             print "M Working revision:\t" . $state->{entries}{$filename}{revision} . "\n";
