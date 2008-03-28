@@ -26,6 +26,9 @@ creates a 'tag' object, and requires the tag message.  Unless
 `-m <msg>` or `-F <file>` is given, an editor is started for the user to type
 in the tag message.
 
+If `-m <msg>` or `-F <file>` is given and `-a`, `-s`, and `-u <key-id>`
+are absent, `-a` is implied.
+
 Otherwise just the SHA1 object name of the commit object is
 written (i.e. a lightweight tag).
 
@@ -68,10 +71,14 @@ OPTIONS
 	Use the given tag message (instead of prompting).
 	If multiple `-m` options are given, there values are
 	concatenated as separate paragraphs.
+	Implies `-a` if none of `-a`, `-s`, or `-u <key-id>`
+	is given.
 
 -F <file>::
 	Take the tag message from the given file.  Use '-' to
 	read the message from the standard input.
+	Implies `-a` if none of `-a`, `-s`, or `-u <key-id>`
+	is given.
 
 CONFIGURATION
 -------------

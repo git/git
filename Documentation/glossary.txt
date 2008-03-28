@@ -45,9 +45,12 @@ GIT Glossary
 	"changesets" with git.
 
 [[def_checkout]]checkout::
-	The action of updating the <<def_working_tree,working tree>> to a
-	<<def_revision,revision>> which was stored in the
-	<<def_object_database,object database>>.
+	The action of updating all or part of the
+	<<def_working_tree,working tree>> with a <<def_tree_object,tree object>>
+	or <<def_blob_object,blob>> from the
+	<<def_object_database,object database>>, and updating the
+	<<def_index,index>> and <<def_HEAD,HEAD>> if the whole working tree has
+	been pointed at a new <<def_branch,branch>>.
 
 [[def_cherry-picking]]cherry-picking::
 	In <<def_SCM,SCM>> jargon, "cherry pick" means to choose a subset of

@@ -3,6 +3,12 @@
 test_description='git-cvsimport basic tests'
 . ./test-lib.sh
 
+CVSROOT=$(pwd)/cvsroot
+export CVSROOT
+# for clean cvsps cache
+HOME=$(pwd)
+export HOME
+
 if ! type cvs >/dev/null 2>&1
 then
 	say 'skipping cvsimport tests, cvs not found'
@@ -25,12 +31,6 @@ case "$cvsps_version" in
 	exit
 	;;
 esac
-
-CVSROOT=$(pwd)/cvsroot
-export CVSROOT
-# for clean cvsps cache
-HOME=$(pwd)
-export HOME
 
 test_expect_success 'setup cvsroot' 'cvs init'
 

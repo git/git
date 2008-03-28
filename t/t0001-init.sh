@@ -113,4 +113,21 @@ test_expect_success 'GIT_DIR & GIT_WORK_TREE (2)' '
 	fi
 '
 
+test_expect_success 'reinit' '
+
+	(
+		unset GIT_CONFIG GIT_WORK_TREE GIT_CONFIG
+
+		mkdir again &&
+		cd again &&
+		git init >out1 2>err1 &&
+		git init >out2 2>err2
+	) &&
+	grep "Initialized empty" again/out1 &&
+	grep "Reinitialized existing" again/out2 &&
+	>again/empty &&
+	test_cmp again/empty again/err1 &&
+	test_cmp again/empty again/err2
+'
+
 test_done
