@@ -16,8 +16,11 @@ int git_vsnprintf(char *str, size_t maxsize, const char *format, va_list ap)
 	int ret;
 
 	ret = vsnprintf(str, maxsize-SNPRINTF_SIZE_CORR, format, ap);
-	if (ret != -1)
+	if (ret != -1) {
+		/* Windows does not NUL-terminate if result fits exactly */
+		str[ret] = 0;
 		return ret;
+	}
 
 	s = NULL;
 	if (maxsize < 128)
