@@ -210,4 +210,19 @@ test_expect_success '--compose respects user mime type' '
 	! grep "^Content-Type: text/plain; charset=utf-8" msgtxt1
 '
 
+test_expect_success '--compose adds MIME for utf8 subject' '
+	clean_fake_sendmail &&
+	echo y | \
+	  GIT_EDITOR=$(pwd)/fake-editor \
+	  GIT_SEND_EMAIL_NOTTY=1 \
+	  git send-email \
+	  --compose --subject utf8-sübjëct \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  $patches &&
+	grep "^fake edit" msgtxt1 &&
+	grep "^Subject: =?utf-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
+'
+
 test_done

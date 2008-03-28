@@ -534,6 +534,14 @@ EOT
 		if (!$in_body && /^MIME-Version:/i) {
 			$need_8bit_cte = 0;
 		}
+		if (!$in_body && /^Subject: ?(.*)/i) {
+			my $subject = $1;
+			$_ = "Subject: " .
+				($subject =~ /[^[:ascii:]]/ ?
+				 quote_rfc2047($subject) :
+				 $subject) .
+				"\n";
+		}
 		print C2 $_;
 	}
 	close(C);
@@ -624,6 +632,14 @@ sub unquote_rfc2047 {
 	return wantarray ? ($_, $encoding) : $_;
 }
 
+sub quote_rfc2047 {
+	local $_ = shift;
+	my $encoding = shift || 'utf-8';
+	s/([^-a-zA-Z0-9!*+\/])/sprintf("=%02X", ord($1))/eg;
+	s/(.*)/=\?$encoding\?q\?$1\?=/;
+	return $_;
+}
+
 # use the simplest quoting being able to handle the recipient
 sub sanitize_address
 {
@@ -641,8 +657,7 @@ sub sanitize_address
 
 	# rfc2047 is needed if a non-ascii char is included
 	if ($recipient_name =~ /[^[:ascii:]]/) {
-		$recipient_name =~ s/([^-a-zA-Z0-9!*+\/])/sprintf("=%02X", ord($1))/eg;
-		$recipient_name =~ s/(.*)/=\?utf-8\?q\?$1\?=/;
+		$recipient_name = quote_rfc2047($recipient_name);
 	}
 
 	# double quotes are needed if specials or CTLs are included
