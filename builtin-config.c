@@ -264,7 +264,7 @@ static int get_colorbool(int argc, const char **argv)
 
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
-	int nongit = 0;
+	int nongit;
 	char* value;
 	const char *file = setup_git_directory_gently(&nongit);
 

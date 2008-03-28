@@ -4144,7 +4144,7 @@ commits one by one with the function `get_revision()`.
 
 If you are interested in more details of the revision walking process,
 just have a look at the first implementation of `cmd_log()`; call
-`git-show v1.3.0~155^2~4` and scroll down to that function (note that you
+`git-show v1.3.0{tilde}155^2{tilde}4` and scroll down to that function (note that you
 no longer need to call `setup_pager()` directly).
 
 Nowadays, `git log` is a builtin, which means that it is _contained_ in the

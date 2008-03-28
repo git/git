@@ -232,7 +232,7 @@ static void read_branches_file(struct remote *remote)
 {
 	const char *slash = strchr(remote->name, '/');
 	char *frag;
-	char *branch;
+	struct strbuf branch;
 	int n = slash ? slash - remote->name : 1000;
 	FILE *f = fopen(git_path("branches/%.*s", n, remote->name), "r");
 	char *s, *p;
@@ -258,17 +258,33 @@ static void read_branches_file(struct remote *remote)
 	strcpy(p, s);
 	if (slash)
 		strcat(p, slash);
+
+	/*
+	 * With "slash", e.g. "git fetch jgarzik/netdev-2.6" when
+	 * reading from $GIT_DIR/branches/jgarzik fetches "HEAD" from
+	 * the partial URL obtained from the branches file plus
+	 * "/netdev-2.6" and does not store it in any tracking ref.
+	 * #branch specifier in the file is ignored.
+	 *
+	 * Otherwise, the branches file would have URL and optionally
+	 * #branch specified.  The "master" (or specified) branch is
+	 * fetched and stored in the local branch of the same name.
+	 */
+	strbuf_init(&branch, 0);
 	frag = strchr(p, '#');
 	if (frag) {
 		*(frag++) = '\0';
-		branch = xmalloc(strlen(frag) + 12);
-		strcpy(branch, "refs/heads/");
-		strcat(branch, frag);
+		strbuf_addf(&branch, "refs/heads/%s", frag);
+	} else
+		strbuf_addstr(&branch, "refs/heads/master");
+	if (!slash) {
+		strbuf_addf(&branch, ":refs/heads/%s", remote->name);
 	} else {
-		branch = "refs/heads/master";
+		strbuf_reset(&branch);
+		strbuf_addstr(&branch, "HEAD:");
 	}
 	add_url_alias(remote, p);
-	add_fetch_refspec(remote, branch);
+	add_fetch_refspec(remote, strbuf_detach(&branch, 0));
 	remote->fetch_tags = 1; /* always auto-follow */
 }
 
@@ -417,17 +433,21 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			rhs++;
 			rlen = strlen(rhs);
 			is_glob = (2 <= rlen && !strcmp(rhs + rlen - 2, "/*"));
-			rs[i].dst = xstrndup(rhs, rlen - is_glob * 2);
+			if (is_glob)
+				rlen -= 2;
+			rs[i].dst = xstrndup(rhs, rlen);
 		}
 
 		llen = (rhs ? (rhs - lhs - 1) : strlen(lhs));
-		if (is_glob != (2 <= llen && !memcmp(lhs + llen - 2, "/*", 2)))
-			goto invalid;
-
-		if (is_glob) {
+		if (2 <= llen && !memcmp(lhs + llen - 2, "/*", 2)) {
+			if ((rhs && !is_glob) || (!rhs && fetch))
+				goto invalid;
+			is_glob = 1;
 			llen -= 2;
-			rlen -= 2;
+		} else if (rhs && is_glob) {
+			goto invalid;
 		}
+
 		rs[i].pattern = is_glob;
 		rs[i].src = xstrndup(lhs, llen);
 
@@ -446,7 +466,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			}
 			/*
 			 * RHS
-			 * - missing is allowed.
+			 * - missing is ok, and is same as empty.
 			 * - empty is ok; it means not to store.
 			 * - otherwise it must be a valid looking ref.
 			 */

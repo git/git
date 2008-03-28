@@ -3,7 +3,7 @@ git-checkout(1)
 
 NAME
 ----
-git-checkout - Checkout and switch to a branch
+git-checkout - Checkout a branch or paths to the working tree
 
 SYNOPSIS
 --------

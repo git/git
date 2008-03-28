@@ -106,6 +106,8 @@ cat > test/expect << EOF
     master
   Tracked remote branches
     side master
+  Local branches pushed with 'git push'
+    master:upstream +refs/tags/lastbackup
 EOF
 
 test_expect_success 'show' '
@@ -118,6 +120,10 @@ test_expect_success 'show' '
 	  echo 1 > file &&
 	  test_tick &&
 	  git commit -m update file) &&
+	 git config remote.origin.push \
+		refs/heads/master:refs/heads/upstream &&
+	 git config --add remote.origin.push \
+		+refs/tags/lastbackup &&
 	 git remote show origin > output &&
 	 git diff expect output)
 '
