@@ -633,7 +633,7 @@ sub sanitize_address
 
 	# double quotes are needed if specials or CTLs are included
 	elsif ($recipient_name =~ /[][()<>@,;:\\".\000-\037\177]/) {
-		$recipient_name =~ s/(["\\\r])/\\$1/;
+		$recipient_name =~ s/(["\\\r])/\\$1/g;
 		$recipient_name = "\"$recipient_name\"";
 	}
 
