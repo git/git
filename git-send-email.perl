@@ -518,8 +518,22 @@ EOT
 	open(C,"<",$compose_filename)
 		or die "Failed to open $compose_filename : " . $!;
 
+	my $need_8bit_cte = file_has_nonascii($compose_filename);
+	my $in_body = 0;
 	while(<C>) {
 		next if m/^GIT: /;
+		if (!$in_body && /^\n$/) {
+			$in_body = 1;
+			if ($need_8bit_cte) {
+				print C2 "MIME-Version: 1.0\n",
+					 "Content-Type: text/plain; ",
+					   "charset=utf-8\n",
+					 "Content-Transfer-Encoding: 8bit\n";
+			}
+		}
+		if (!$in_body && /^MIME-Version:/i) {
+			$need_8bit_cte = 0;
+		}
 		print C2 $_;
 	}
 	close(C);
@@ -955,4 +969,14 @@ sub validate_patch {
 		}
 	}
 	return undef;
+}
+
+sub file_has_nonascii {
+	my $fn = shift;
+	open(my $fh, '<', $fn)
+		or die "unable to open $fn: $!\n";
+	while (my $line = <$fh>) {
+		return 1 if $line =~ /[^[:ascii:]]/;
+	}
+	return 0;
 }
