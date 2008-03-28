@@ -8,14 +8,41 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
-Issues that are unconcluded and/or lack enough discussions to proceed.
+Issues that are unconcluded, lack enough discussions to proceed, and/or
+placed on hold during rc freeze.
 
-* zlib abstraction (Marco)
-  $gmane/72262
+* ff=only (Sverre Hvammen Johansen)
+  $gmane/78250
 
-* revision.c::limit_list() breakage (Jeff King)
-  $gmane/72324
-  t/t6009
+* more help backends (Christian Couder)
+  $gmane/78150
+
+* cvsserver updates (Damien Diederen with help by Frank Lichtenheld)
+  $gmane/78188
+
+* rewriting annotated tags in filter-branch (Brandon Casey)
+  $gmane/78286
+
+* fsck --lost-found (me)
+  $gmane/78267
+
+* core.inithook (Dscho)
+  $gmane/78123
+
+* receive.localBranches = { refuse | allow } (Dscho)
+  $gmane/78065
+
+* autosetting core.ignorecase (Dmitry Potapov)
+  $gmane/78176
+
+* mailinfo extention to extract Message-ID and others (Anton Gladkov)
+  $gmane/78006
+
+* add -p with mode change (Jeff King)
+  $gmane/78340
+
+* rebase -p
+  $gmane/78074
 
 * synopsys: use {} instead of () for grouping alternatives (Jari Aalto)
   $gmane/72243
@@ -23,9 +50,29 @@ Issues that are unconcluded and/or lack enough discussions to proceed.
 * "[alias] st = status" and "cd .git && git st" (Jeff King)
   $gmane/72327
 
+* fetch with "refs/*:refs/*" errors out erroneously (Daniel)
+  $gmane/77335
+
+* D/F conflict to merge a tree with D into a tree with F
+
+* "git fetch" does not exit with non-zero status when it failed to update
+  some refs due to non-ffness (Daniel)
+  $gmane/77178
+
+* "git fetch" shows error when dangling symref exists at the remote
+  but does not really error out (Samuel Tardieu)
+  $gmane/76658
+
+* use "assume unchanged" bit to implement narrow checkout
+  $gmane/77046
+
+* send-pack vs receive-pack history exchange
+
+* zlib abstraction (Marco)
+  $gmane/72262
+
 * git --index-file=<foo> <cmd> (Linus)
   $gmane/77332
 
-* fetch with "refs/*:refs/*" errors out erroneously
-  $gmane/77335
-
+* git lost-found vs git fsck --lost-found
+  $gmane/78267
