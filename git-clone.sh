@@ -310,6 +310,9 @@ yes)
 		mkdir -p "$GIT_DIR/objects/info"
 		echo "$repo/objects" >>"$GIT_DIR/objects/info/alternates"
 	else
+		cpio_quiet_flag=""
+		cpio --help 2>&1 | grep -- --quiet >/dev/null && \
+			cpio_quiet_flag=--quiet
 		l= &&
 		if test "$use_local_hardlink" = yes
 		then
@@ -330,7 +333,8 @@ yes)
 			fi
 		fi &&
 		cd "$repo" &&
-		find objects -depth -print | cpio -pumd$l "$GIT_DIR/" || exit 1
+		find objects -depth -print | cpio $cpio_quiet_flag -pumd$l "$GIT_DIR/" || \
+			exit 1
 	fi
 	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
 	;;
