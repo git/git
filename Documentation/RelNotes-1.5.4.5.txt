@@ -54,9 +54,3 @@ Fixes since v1.5.4.4
    "rebase --continue" impossible.
 
 As usual, it also comes with many documentation fixes and clarifications.
-
---
-exec >/var/tmp/1
-echo O=$(git describe maint)
-O=v1.5.4.4-32-gb88605f
-git shortlog --no-merges $O..maint
