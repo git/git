@@ -48,10 +48,11 @@ case "${1:-.}${2:-.}${3:-.}" in
 	;;
 "..$3")
 	echo "Adding $4"
-	test -f "$4" || {
+	if test -f "$4"
+	then
 		echo "ERROR: untracked $4 is overwritten by the merge."
 		exit 1
-	}
+	fi
 	git update-index --add --cacheinfo "$7" "$3" "$4" &&
 		exec git checkout-index -u -f -- "$4"
 	;;

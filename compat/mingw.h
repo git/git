@@ -174,6 +174,9 @@ int mingw_fstat(int fd, struct mingw_stat *buf);
 static inline int mingw_stat(const char *file_name, struct mingw_stat *buf)
 { return mingw_lstat(file_name, buf); }
 
+int mingw_utime(const char *file_name, const struct utimbuf *times);
+#define utime mingw_utime
+
 pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env);
 void mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp

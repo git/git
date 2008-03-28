@@ -27,7 +27,7 @@ test_expect_success setup '
 	git log --pretty=oneline --abbrev-commit
 '
 
-test_expect_failure 'one is ancestor of others and should not be shown' '
+test_expect_success 'one is ancestor of others and should not be shown' '
 
 	git rev-list one --not four >result &&
 	>expect &&

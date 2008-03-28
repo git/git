@@ -19,8 +19,15 @@ created from prior invocations of linkgit:git-add[1].
 
 Users are encouraged to run this task on a regular basis within
 each repository to maintain good disk space utilization and good
-operating performance. Some git commands may automatically run
-`git-gc`; see the `--auto` flag below for details.
+operating performance.
+
+Some git commands may automatically run `git-gc`; see the `--auto` flag
+below for details. If you know what you're doing and all you want is to
+disable this behavior permanently without further considerations, just do:
+
+----------------------
+$ git config --global gc.auto 0
+----------------------
 
 OPTIONS
 -------

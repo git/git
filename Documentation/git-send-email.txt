@@ -216,6 +216,9 @@ sendemail.chainreplyto::
 sendemail.smtpserver::
 	Default SMTP server to use.
 
+sendemail.smtpserverport::
+	Default SMTP server port to use.
+
 sendemail.smtpuser::
 	Default SMTP-AUTH username.
 

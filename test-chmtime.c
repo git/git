@@ -3,38 +3,6 @@
 
 static const char usage_str[] = "(+|=|=+|=-|-)<seconds> <file>...";
 
-#ifdef __MINGW32__
-static inline void time_t_to_filetime(time_t t, FILETIME *ft)
-{
-	long long winTime = t * 10000000LL + 116444736000000000LL;
-	ft->dwLowDateTime = winTime;
-	ft->dwHighDateTime = winTime >> 32;
-}
-
-int git_utime (const char *file_name, const struct utimbuf *times)
-{
-	FILETIME mft, aft;
-	int fh, rc;
-
-	/* must have write permission */
-	if ((fh = open(file_name, O_RDWR | O_BINARY)) < 0)
-	        return -1;
-
-	time_t_to_filetime(times->modtime, &mft);
-	time_t_to_filetime(times->actime, &aft);
-	if (!SetFileTime((HANDLE)_get_osfhandle(fh), NULL, &aft, &mft)) {
-		errno = EINVAL;
-		rc = -1;
-	} else
-		rc = 0;
-	close(fh);
-	return rc;
-}
-
-int git_utime(const char *file_name, const struct utimbuf *times);
-#define utime git_utime
-#endif /* __MINGW32__ */
-
 int main(int argc, const char *argv[])
 {
 	int i;

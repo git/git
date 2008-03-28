@@ -393,42 +393,123 @@ static void read_config(void)
 	alias_all_urls();
 }
 
-struct refspec *parse_ref_spec(int nr_refspec, const char **refspec)
+static struct refspec *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch)
 {
 	int i;
+	int st;
 	struct refspec *rs = xcalloc(sizeof(*rs), nr_refspec);
+
 	for (i = 0; i < nr_refspec; i++) {
-		const char *sp, *ep, *gp;
-		sp = refspec[i];
-		if (*sp == '+') {
+		size_t llen, rlen;
+		int is_glob;
+		const char *lhs, *rhs;
+
+		llen = rlen = is_glob = 0;
+
+		lhs = refspec[i];
+		if (*lhs == '+') {
 			rs[i].force = 1;
-			sp++;
+			lhs++;
 		}
-		gp = strchr(sp, '*');
-		ep = strchr(sp, ':');
-		if (gp && ep && gp > ep)
-			gp = NULL;
-		if (ep) {
-			if (ep[1]) {
-				const char *glob = strchr(ep + 1, '*');
-				if (!glob)
-					gp = NULL;
-				if (gp)
-					rs[i].dst = xstrndup(ep + 1,
-							     glob - ep - 1);
-				else
-					rs[i].dst = xstrdup(ep + 1);
+
+		rhs = strrchr(lhs, ':');
+		if (rhs) {
+			rhs++;
+			rlen = strlen(rhs);
+			is_glob = (2 <= rlen && !strcmp(rhs + rlen - 2, "/*"));
+			rs[i].dst = xstrndup(rhs, rlen - is_glob * 2);
+		}
+
+		llen = (rhs ? (rhs - lhs - 1) : strlen(lhs));
+		if (is_glob != (2 <= llen && !memcmp(lhs + llen - 2, "/*", 2)))
+			goto invalid;
+
+		if (is_glob) {
+			llen -= 2;
+			rlen -= 2;
+		}
+		rs[i].pattern = is_glob;
+		rs[i].src = xstrndup(lhs, llen);
+
+		if (fetch) {
+			/*
+			 * LHS
+			 * - empty is allowed; it means HEAD.
+			 * - otherwise it must be a valid looking ref.
+			 */
+			if (!*rs[i].src)
+				; /* empty is ok */
+			else {
+				st = check_ref_format(rs[i].src);
+				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
+					goto invalid;
+			}
+			/*
+			 * RHS
+			 * - missing is allowed.
+			 * - empty is ok; it means not to store.
+			 * - otherwise it must be a valid looking ref.
+			 */
+			if (!rs[i].dst) {
+				; /* ok */
+			} else if (!*rs[i].dst) {
+				; /* ok */
+			} else {
+				st = check_ref_format(rs[i].dst);
+				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
+					goto invalid;
 			}
 		} else {
-			ep = sp + strlen(sp);
+			/*
+			 * LHS
+			 * - empty is allowed; it means delete.
+			 * - when wildcarded, it must be a valid looking ref.
+			 * - otherwise, it must be an extended SHA-1, but
+			 *   there is no existing way to validate this.
+			 */
+			if (!*rs[i].src)
+				; /* empty is ok */
+			else if (is_glob) {
+				st = check_ref_format(rs[i].src);
+				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
+					goto invalid;
+			}
+			else
+				; /* anything goes, for now */
+			/*
+			 * RHS
+			 * - missing is allowed, but LHS then must be a
+			 *   valid looking ref.
+			 * - empty is not allowed.
+			 * - otherwise it must be a valid looking ref.
+			 */
+			if (!rs[i].dst) {
+				st = check_ref_format(rs[i].src);
+				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
+					goto invalid;
+			} else if (!*rs[i].dst) {
+				goto invalid;
+			} else {
+				st = check_ref_format(rs[i].dst);
+				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
+					goto invalid;
+			}
 		}
-		if (gp) {
-			rs[i].pattern = 1;
-			ep = gp;
-		}
-		rs[i].src = xstrndup(sp, ep - sp);
 	}
 	return rs;
+
+ invalid:
+	die("Invalid refspec '%s'", refspec[i]);
+}
+
+struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec)
+{
+	return parse_refspec_internal(nr_refspec, refspec, 1);
+}
+
+struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
+{
+	return parse_refspec_internal(nr_refspec, refspec, 0);
 }
 
 static int valid_remote_nick(const char *name)
@@ -459,8 +540,8 @@ struct remote *remote_get(const char *name)
 		add_url_alias(ret, name);
 	if (!ret->url)
 		return NULL;
-	ret->fetch = parse_ref_spec(ret->fetch_refspec_nr, ret->fetch_refspec);
-	ret->push = parse_ref_spec(ret->push_refspec_nr, ret->push_refspec);
+	ret->fetch = parse_fetch_refspec(ret->fetch_refspec_nr, ret->fetch_refspec);
+	ret->push = parse_push_refspec(ret->push_refspec_nr, ret->push_refspec);
 	return ret;
 }
 
@@ -473,11 +554,11 @@ int for_each_remote(each_remote_fn fn, void *priv)
 		if (!r)
 			continue;
 		if (!r->fetch)
-			r->fetch = parse_ref_spec(r->fetch_refspec_nr,
-					r->fetch_refspec);
+			r->fetch = parse_fetch_refspec(r->fetch_refspec_nr,
+						       r->fetch_refspec);
 		if (!r->push)
-			r->push = parse_ref_spec(r->push_refspec_nr,
-					r->push_refspec);
+			r->push = parse_push_refspec(r->push_refspec_nr,
+						     r->push_refspec);
 		result = fn(r, priv);
 	}
 	return result;
@@ -543,7 +624,8 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 		if (!fetch->dst)
 			continue;
 		if (fetch->pattern) {
-			if (!prefixcmp(needle, key)) {
+			if (!prefixcmp(needle, key) &&
+			    needle[strlen(key)] == '/') {
 				*result = xmalloc(strlen(value) +
 						  strlen(needle) -
 						  strlen(key) + 1);
@@ -790,7 +872,9 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
 {
 	int i;
 	for (i = 0; i < rs_nr; i++) {
-		if (rs[i].pattern && !prefixcmp(src->name, rs[i].src))
+		if (rs[i].pattern &&
+		    !prefixcmp(src->name, rs[i].src) &&
+		    src->name[strlen(rs[i].src)] == '/')
 			return rs + i;
 	}
 	return NULL;
@@ -805,7 +889,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	       int nr_refspec, const char **refspec, int flags)
 {
 	struct refspec *rs =
-		parse_ref_spec(nr_refspec, (const char **) refspec);
+		parse_push_refspec(nr_refspec, (const char **) refspec);
 	int send_all = flags & MATCH_REFS_ALL;
 	int send_mirror = flags & MATCH_REFS_MIRROR;
 
@@ -989,7 +1073,7 @@ int get_fetch_map(const struct ref *remote_refs,
 		  struct ref ***tail,
 		  int missing_ok)
 {
-	struct ref *ref_map, *rm;
+	struct ref *ref_map, **rmp;
 
 	if (refspec->pattern) {
 		ref_map = get_expanded_map(remote_refs, refspec);
@@ -1006,10 +1090,20 @@ int get_fetch_map(const struct ref *remote_refs,
 		}
 	}
 
-	for (rm = ref_map; rm; rm = rm->next) {
-		if (rm->peer_ref && check_ref_format(rm->peer_ref->name + 5))
-			die("* refusing to create funny ref '%s' locally",
-			    rm->peer_ref->name);
+	for (rmp = &ref_map; *rmp; ) {
+		if ((*rmp)->peer_ref) {
+			int st = check_ref_format((*rmp)->peer_ref->name + 5);
+			if (st && st != CHECK_REF_FORMAT_ONELEVEL) {
+				struct ref *ignore = *rmp;
+				error("* Ignoring funny ref '%s' locally",
+				      (*rmp)->peer_ref->name);
+				*rmp = (*rmp)->next;
+				free(ignore->peer_ref);
+				free(ignore);
+				continue;
+			}
+		}
+		rmp = &((*rmp)->next);
 	}
 
 	if (ref_map)

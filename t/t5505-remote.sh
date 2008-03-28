@@ -237,4 +237,14 @@ test_expect_success 'update default (overridden, with funny whitespace)' '
 
 '
 
+test_expect_success '"remote show" does not show symbolic refs' '
+
+	git clone one three &&
+	(cd three &&
+	 git remote show origin > output &&
+	 ! grep HEAD < output &&
+	 ! grep -i stale < output)
+
+'
+
 test_done

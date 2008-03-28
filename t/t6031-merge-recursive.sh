@@ -3,6 +3,11 @@
 test_description='merge-recursive: handle file mode'
 . ./test-lib.sh
 
+if test "$(git config --bool core.filemode)" = false; then
+	say "executable bit not honored - skipping tests"
+	test_done
+fi
+
 test_expect_success 'mode change in one branch: keep changed version' '
 	: >file1 &&
 	git add file1 &&

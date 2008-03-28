@@ -33,3 +33,10 @@ ours::
 	merge is always the current branch head.  It is meant to
 	be used to supersede old development history of side
 	branches.
+
+subtree::
+	This is a modified recursive strategy. When merging trees A and
+	B, if B corresponds to a subtree of A, B is first adjusted to
+	match the tree structure of A, instead of reading the trees at
+	the same level. This adjustment is also done to the common
+	ancestor tree.

@@ -54,13 +54,14 @@ static void unlink_entry(char *name, char *last_symlink)
 }
 
 static struct checkout state;
-static void check_updates(struct unpack_trees_options *o)
+static int check_updates(struct unpack_trees_options *o)
 {
 	unsigned cnt = 0, total = 0;
 	struct progress *progress = NULL;
 	char last_symlink[PATH_MAX];
 	struct index_state *index = &o->result;
 	int i;
+	int errs = 0;
 
 	if (o->update && o->verbose_update) {
 		for (total = cnt = 0; cnt < index->cache_nr; cnt++) {
@@ -90,12 +91,13 @@ static void check_updates(struct unpack_trees_options *o)
 		if (ce->ce_flags & CE_UPDATE) {
 			ce->ce_flags &= ~CE_UPDATE;
 			if (o->update) {
-				checkout_entry(ce, &state, NULL);
+				errs |= checkout_entry(ce, &state, NULL);
 				*last_symlink = '\0';
 			}
 		}
 	}
 	stop_progress(&progress);
+	return errs != 0;
 }
 
 static inline int call_unpack_fn(struct cache_entry **src, struct unpack_trees_options *o)
@@ -369,7 +371,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		return unpack_failed(o, "Merge requires file-level merging");
 
 	o->src_index = NULL;
-	check_updates(o);
+	if (check_updates(o))
+		return -1;
 	if (o->dst_index)
 		*o->dst_index = o->result;
 	return 0;
@@ -595,16 +598,19 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		struct unpack_trees_options *o)
 {
+	int update = CE_UPDATE;
+
 	if (old) {
 		/*
 		 * See if we can re-use the old CE directly?
 		 * That way we get the uptodate stat info.
 		 *
-		 * This also removes the UPDATE flag on
-		 * a match.
+		 * This also removes the UPDATE flag on a match; otherwise
+		 * we will end up overwriting local changes in the work tree.
 		 */
 		if (same(old, merge)) {
 			copy_cache_entry(merge, old);
+			update = 0;
 		} else {
 			if (verify_uptodate(old, o))
 				return -1;
@@ -617,7 +623,7 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		invalidate_ce_path(merge, o);
 	}
 
-	add_entry(o, merge, CE_UPDATE, CE_STAGEMASK);
+	add_entry(o, merge, update, CE_STAGEMASK);
 	return 1;
 }
 
