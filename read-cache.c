@@ -1370,7 +1370,7 @@ int write_index(const struct index_state *istate, int newfd)
 		struct cache_entry *ce = cache[i];
 		if (ce->ce_flags & CE_REMOVE)
 			continue;
-		if (is_racy_timestamp(istate, ce))
+		if (!ce_uptodate(ce) && is_racy_timestamp(istate, ce))
 			ce_smudge_racily_clean_entry(ce);
 		if (ce_write_entry(&c, newfd, ce) < 0)
 			return -1;
