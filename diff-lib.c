@@ -476,8 +476,11 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			continue;
 		}
 		changed = ce_match_stat(ce, &st, ce_option);
-		if (!changed && !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
-			continue;
+		if (!changed) {
+			ce_mark_uptodate(ce);
+			if (!DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
+				continue;
+		}
 		oldmode = ce->ce_mode;
 		newmode = ce_mode_from_stat(ce, st.st_mode);
 		diff_change(&revs->diffopt, oldmode, newmode,
