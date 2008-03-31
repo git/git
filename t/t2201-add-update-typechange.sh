@@ -104,7 +104,7 @@ test_expect_success modify '
 	} >expect-final
 '
 
-test_expect_failure diff-files '
+test_expect_success diff-files '
 	git diff-files --raw >actual &&
 	diff -u expect-files actual
 '
@@ -114,7 +114,7 @@ test_expect_success diff-index '
 	diff -u expect-index actual
 '
 
-test_expect_failure 'add -u' '
+test_expect_success 'add -u' '
 	rm -f ".git/saved-index" &&
 	cp -p ".git/index" ".git/saved-index" &&
 	git add -u &&
@@ -122,7 +122,7 @@ test_expect_failure 'add -u' '
 	diff -u expect-final actual
 '
 
-test_expect_failure 'commit -a' '
+test_expect_success 'commit -a' '
 	if test -f ".git/saved-index"
 	then
 		rm -f ".git/index" &&

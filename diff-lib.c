@@ -362,10 +362,12 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 	int silent_on_removed = option & DIFF_SILENT_ON_REMOVED;
 	unsigned ce_option = ((option & DIFF_RACY_IS_MODIFIED)
 			      ? CE_MATCH_RACY_IS_DIRTY : 0);
+	char symcache[PATH_MAX];
 
 	if (diff_unmerged_stage < 0)
 		diff_unmerged_stage = 2;
 	entries = active_nr;
+	symcache[0] = '\0';
 	for (i = 0; i < entries; i++) {
 		struct stat st;
 		unsigned int oldmode, newmode;
@@ -397,16 +399,17 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			memset(&(dpath->parent[0]), 0,
 			       sizeof(struct combine_diff_parent)*5);
 
-			if (lstat(ce->name, &st) < 0) {
-				if (errno != ENOENT && errno != ENOTDIR) {
+			changed = check_work_tree_entity(ce, &st, symcache);
+			if (!changed)
+				dpath->mode = ce_mode_from_stat(ce, st.st_mode);
+			else {
+				if (changed < 0) {
 					perror(ce->name);
 					continue;
 				}
 				if (silent_on_removed)
 					continue;
 			}
-			else
-				dpath->mode = ce_mode_from_stat(ce, st.st_mode);
 
 			while (i < entries) {
 				struct cache_entry *nce = active_cache[i];
@@ -459,8 +462,10 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 
 		if (ce_uptodate(ce))
 			continue;
-		if (lstat(ce->name, &st) < 0) {
-			if (errno != ENOENT && errno != ENOTDIR) {
+
+		changed = check_work_tree_entity(ce, &st, symcache);
+		if (changed) {
+			if (changed < 0) {
 				perror(ce->name);
 				continue;
 			}
