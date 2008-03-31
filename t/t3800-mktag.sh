@@ -180,7 +180,7 @@ check_verify_failure '"tagger" line label check #2' \
 	'^error: char70: could not find "tagger "$'
 
 ############################################################
-# 13. detect missing tag author name
+# 13. disallow missing tag author name
 
 cat >tag.sig <<EOF
 object $head
@@ -191,11 +191,11 @@ tagger  <> 0 +0000
 This is filler
 EOF
 
-check_verify_failure 'detect missing tag author name' \
+check_verify_failure 'disallow missing tag author name' \
 	'^error: char77: missing tagger name$'
 
 ############################################################
-# 14. detect missing tag author name
+# 14. disallow missing tag author name
 
 cat >tag.sig <<EOF
 object $head
@@ -206,8 +206,8 @@ tagger T A Gger <
 
 EOF
 
-check_verify_failure 'detect malformed tagger' \
-	'^error: char77: malformed tagger$'
+check_verify_failure 'disallow malformed tagger' \
+	'^error: char77: malformed tagger field$'
 
 ############################################################
 # 15. allow empty tag email
@@ -225,7 +225,21 @@ test_expect_success \
     'git-mktag <tag.sig >.git/refs/tags/mytag 2>message'
 
 ############################################################
-# 16. detect missing tag timestamp
+# 16. disallow spaces in tag email
+
+cat >tag.sig <<EOF
+object $head
+type commit
+tag mytag
+tagger T A Gger <tag ger@example.com> 0 +0000
+
+EOF
+
+check_verify_failure 'disallow spaces in tag email' \
+	'^error: char77: malformed tagger field$'
+
+############################################################
+# 17. disallow missing tag timestamp
 
 cat >tag.sig <<EOF
 object $head
@@ -235,11 +249,11 @@ tagger T A Gger <tagger@example.com>
 
 EOF
 
-check_verify_failure 'detect missing tag timestamp' \
-	'^error: char107: malformed tag timestamp$'
+check_verify_failure 'disallow missing tag timestamp' \
+	'^error: char107: missing tag timestamp$'
 
 ############################################################
-# 17. detect invalid tag timestamp
+# 18. detect invalid tag timestamp1
 
 cat >tag.sig <<EOF
 object $head
@@ -249,11 +263,25 @@ tagger T A Gger <tagger@example.com> Tue Mar 25 15:47:44 2008
 
 EOF
 
-check_verify_failure 'detect invalid tag timestamp' \
-	'^error: char108: malformed tag timestamp$'
+check_verify_failure 'detect invalid tag timestamp1' \
+	'^error: char107: missing tag timestamp$'
 
 ############################################################
-# 18. detect invalid tag timezone
+# 19. detect invalid tag timestamp2
+
+cat >tag.sig <<EOF
+object $head
+type commit
+tag mytag
+tagger T A Gger <tagger@example.com> 2008-03-31T12:20:15-0500
+
+EOF
+
+check_verify_failure 'detect invalid tag timestamp2' \
+	'^error: char111: malformed tag timestamp$'
+
+############################################################
+# 20. detect invalid tag timezone1
 
 cat >tag.sig <<EOF
 object $head
@@ -263,11 +291,39 @@ tagger T A Gger <tagger@example.com> 1206478233 GMT
 
 EOF
 
-check_verify_failure 'detect invalid tag timezone' \
+check_verify_failure 'detect invalid tag timezone1' \
 	'^error: char118: malformed tag timezone$'
 
 ############################################################
-# 19. detect invalid header entry
+# 21. detect invalid tag timezone2
+
+cat >tag.sig <<EOF
+object $head
+type commit
+tag mytag
+tagger T A Gger <tagger@example.com> 1206478233 +  30
+
+EOF
+
+check_verify_failure 'detect invalid tag timezone2' \
+	'^error: char118: malformed tag timezone$'
+
+############################################################
+# 22. detect invalid tag timezone3
+
+cat >tag.sig <<EOF
+object $head
+type commit
+tag mytag
+tagger T A Gger <tagger@example.com> 1206478233 -1430
+
+EOF
+
+check_verify_failure 'detect invalid tag timezone3' \
+	'^error: char118: malformed tag timezone$'
+
+############################################################
+# 23. detect invalid header entry
 
 cat >tag.sig <<EOF
 object $head
@@ -282,7 +338,7 @@ check_verify_failure 'detect invalid header entry' \
 	'^error: char124: trailing garbage in tag header$'
 
 ############################################################
-# 20. create valid tag
+# 24. create valid tag
 
 cat >tag.sig <<EOF
 object $head
@@ -297,7 +353,7 @@ test_expect_success \
     'git-mktag <tag.sig >.git/refs/tags/mytag 2>message'
 
 ############################################################
-# 21. check mytag
+# 25. check mytag
 
 test_expect_success \
     'check mytag' \
