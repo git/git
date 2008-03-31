@@ -109,7 +109,7 @@ test_expect_failure diff-files '
 	diff -u expect-files actual
 '
 
-test_expect_failure diff-index '
+test_expect_success diff-index '
 	git diff-index --raw HEAD -- >actual &&
 	diff -u expect-index actual
 '

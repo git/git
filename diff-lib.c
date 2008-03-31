@@ -10,6 +10,7 @@
 #include "cache-tree.h"
 #include "path-list.h"
 #include "unpack-trees.h"
+#include "refs.h"
 
 /*
  * diff-files
@@ -333,6 +334,26 @@ int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv)
 	}
 	return run_diff_files(revs, options);
 }
+/*
+ * See if work tree has an entity that can be staged.  Return 0 if so,
+ * return 1 if not and return -1 if error.
+ */
+static int check_work_tree_entity(const struct cache_entry *ce, struct stat *st, char *symcache)
+{
+	if (lstat(ce->name, st) < 0) {
+		if (errno != ENOENT && errno != ENOTDIR)
+			return -1;
+		return 1;
+	}
+	if (has_symlink_leading_path(ce->name, symcache))
+		return 1;
+	if (S_ISDIR(st->st_mode)) {
+		unsigned char sub[20];
+		if (resolve_gitlink_ref(ce->name, "HEAD", sub))
+			return 1;
+	}
+	return 0;
+}
 
 int run_diff_files(struct rev_info *revs, unsigned int option)
 {
@@ -468,6 +489,11 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
  * diff-index
  */
 
+struct oneway_unpack_data {
+	struct rev_info *revs;
+	char symcache[PATH_MAX];
+};
+
 /* A file entry went away or appeared */
 static void diff_index_show_file(struct rev_info *revs,
 				 const char *prefix,
@@ -481,7 +507,8 @@ static void diff_index_show_file(struct rev_info *revs,
 static int get_stat_data(struct cache_entry *ce,
 			 const unsigned char **sha1p,
 			 unsigned int *modep,
-			 int cached, int match_missing)
+			 int cached, int match_missing,
+			 struct oneway_unpack_data *cbdata)
 {
 	const unsigned char *sha1 = ce->sha1;
 	unsigned int mode = ce->ce_mode;
@@ -489,8 +516,11 @@ static int get_stat_data(struct cache_entry *ce,
 	if (!cached) {
 		int changed;
 		struct stat st;
-		if (lstat(ce->name, &st) < 0) {
-			if (errno == ENOENT && match_missing) {
+		changed = check_work_tree_entity(ce, &st, cbdata->symcache);
+		if (changed < 0)
+			return -1;
+		else if (changed) {
+			if (match_missing) {
 				*sha1p = sha1;
 				*modep = mode;
 				return 0;
@@ -509,23 +539,25 @@ static int get_stat_data(struct cache_entry *ce,
 	return 0;
 }
 
-static void show_new_file(struct rev_info *revs,
+static void show_new_file(struct oneway_unpack_data *cbdata,
 			  struct cache_entry *new,
 			  int cached, int match_missing)
 {
 	const unsigned char *sha1;
 	unsigned int mode;
+	struct rev_info *revs = cbdata->revs;
 
-	/* New file in the index: it might actually be different in
+	/*
+	 * New file in the index: it might actually be different in
 	 * the working copy.
 	 */
-	if (get_stat_data(new, &sha1, &mode, cached, match_missing) < 0)
+	if (get_stat_data(new, &sha1, &mode, cached, match_missing, cbdata) < 0)
 		return;
 
 	diff_index_show_file(revs, "+", new, sha1, mode);
 }
 
-static int show_modified(struct rev_info *revs,
+static int show_modified(struct oneway_unpack_data *cbdata,
 			 struct cache_entry *old,
 			 struct cache_entry *new,
 			 int report_missing,
@@ -533,8 +565,9 @@ static int show_modified(struct rev_info *revs,
 {
 	unsigned int mode, oldmode;
 	const unsigned char *sha1;
+	struct rev_info *revs = cbdata->revs;
 
-	if (get_stat_data(new, &sha1, &mode, cached, match_missing) < 0) {
+	if (get_stat_data(new, &sha1, &mode, cached, match_missing, cbdata) < 0) {
 		if (report_missing)
 			diff_index_show_file(revs, "-", old,
 					     old->sha1, old->ce_mode);
@@ -602,7 +635,8 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	struct cache_entry *idx,
 	struct cache_entry *tree)
 {
-	struct rev_info *revs = o->unpack_data;
+	struct oneway_unpack_data *cbdata = o->unpack_data;
+	struct rev_info *revs = cbdata->revs;
 	int match_missing, cached;
 
 	/*
@@ -625,7 +659,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	 * Something added to the tree?
 	 */
 	if (!tree) {
-		show_new_file(revs, idx, cached, match_missing);
+		show_new_file(cbdata, idx, cached, match_missing);
 		return;
 	}
 
@@ -638,7 +672,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	}
 
 	/* Show difference between old and new */
-	show_modified(revs, tree, idx, 1, cached, match_missing);
+	show_modified(cbdata, tree, idx, 1, cached, match_missing);
 }
 
 static inline void skip_same_name(struct cache_entry *ce, struct unpack_trees_options *o)
@@ -675,7 +709,8 @@ static int oneway_diff(struct cache_entry **src, struct unpack_trees_options *o)
 {
 	struct cache_entry *idx = src[0];
 	struct cache_entry *tree = src[1];
-	struct rev_info *revs = o->unpack_data;
+	struct oneway_unpack_data *cbdata = o->unpack_data;
+	struct rev_info *revs = cbdata->revs;
 
 	if (idx && ce_stage(idx))
 		skip_same_name(idx, o);
@@ -702,6 +737,7 @@ int run_diff_index(struct rev_info *revs, int cached)
 	const char *tree_name;
 	struct unpack_trees_options opts;
 	struct tree_desc t;
+	struct oneway_unpack_data unpack_cb;
 
 	mark_merge_entries();
 
@@ -711,12 +747,14 @@ int run_diff_index(struct rev_info *revs, int cached)
 	if (!tree)
 		return error("bad tree object %s", tree_name);
 
+	unpack_cb.revs = revs;
+	unpack_cb.symcache[0] = '\0';
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
 	opts.index_only = cached;
 	opts.merge = 1;
 	opts.fn = oneway_diff;
-	opts.unpack_data = revs;
+	opts.unpack_data = &unpack_cb;
 	opts.src_index = &the_index;
 	opts.dst_index = NULL;
 
@@ -738,6 +776,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	struct cache_entry *last = NULL;
 	struct unpack_trees_options opts;
 	struct tree_desc t;
+	struct oneway_unpack_data unpack_cb;
 
 	/*
 	 * This is used by git-blame to run diff-cache internally;
@@ -766,12 +805,14 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	if (!tree)
 		die("bad tree object %s", sha1_to_hex(tree_sha1));
 
+	unpack_cb.revs = &revs;
+	unpack_cb.symcache[0] = '\0';
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
 	opts.index_only = 1;
 	opts.merge = 1;
 	opts.fn = oneway_diff;
-	opts.unpack_data = &revs;
+	opts.unpack_data = &unpack_cb;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
 
