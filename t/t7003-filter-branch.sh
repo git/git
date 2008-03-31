@@ -17,6 +17,8 @@ test_expect_success 'setup' '
 	make_commit B
 	git checkout -b branch B
 	make_commit D
+	mkdir dir
+	make_commit dir/D
 	make_commit E
 	git checkout master
 	make_commit C
@@ -41,9 +43,23 @@ test_expect_success 'rewrite, renaming a specific file' '
 '
 
 test_expect_success 'test that the file was renamed' '
-	test d = $(git show HEAD:doh) &&
+	test d = "$(git show HEAD:doh --)" &&
+	! test -f d &&
 	test -f doh &&
-	test d = $(cat doh)
+	test d = "$(cat doh)"
+'
+
+test_expect_success 'rewrite, renaming a specific directory' '
+	git-filter-branch -f --tree-filter "mv dir diroh || :" HEAD
+'
+
+test_expect_failure 'test that the directory was renamed' '
+	test dir/d = "$(git show HEAD:diroh/d --)" &&
+	! test -d dir &&
+	test -d diroh &&
+	! test -d diroh/dir &&
+	test -f diroh/d &&
+	test dir/d = "$(cat diroh/d)"
 '
 
 git tag oldD HEAD~4
