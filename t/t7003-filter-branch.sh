@@ -53,7 +53,7 @@ test_expect_success 'rewrite, renaming a specific directory' '
 	git-filter-branch -f --tree-filter "mv dir diroh || :" HEAD
 '
 
-test_expect_failure 'test that the directory was renamed' '
+test_expect_success 'test that the directory was renamed' '
 	test dir/d = "$(git show HEAD:diroh/d --)" &&
 	! test -d dir &&
 	test -d diroh &&
