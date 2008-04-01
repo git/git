@@ -1846,6 +1846,22 @@ proc add_range_to_selection {w x y} {
 	$w tag add in_sel $begin.0 [expr {$end + 1}].0
 }
 
+proc show_more_context {} {
+	global repo_config
+	if {$repo_config(gui.diffcontext) < 99} {
+		incr repo_config(gui.diffcontext)
+		reshow_diff
+	}
+}
+
+proc show_less_context {} {
+	global repo_config
+	if {$repo_config(gui.diffcontext) >= 1} {
+		incr repo_config(gui.diffcontext) -1
+		reshow_diff
+	}
+}
+
 ######################################################################
 ##
 ## ui construction
@@ -2043,6 +2059,16 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 		-command do_revert_selection
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
+	.mbar.commit add separator
+
+	.mbar.commit add command -label [mc "Show Less Context"] \
+		-command show_less_context \
+		-accelerator $M1T-\[
+
+	.mbar.commit add command -label [mc "Show More Context"] \
+		-command show_more_context \
+		-accelerator $M1T-\]
 
 	.mbar.commit add separator
 
@@ -2593,17 +2619,11 @@ lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
 $ctxm add separator
 $ctxm add command \
 	-label [mc "Show Less Context"] \
-	-command {if {$repo_config(gui.diffcontext) >= 1} {
-		incr repo_config(gui.diffcontext) -1
-		reshow_diff
-	}}
+	-command show_less_context
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label [mc "Show More Context"] \
-	-command {if {$repo_config(gui.diffcontext) < 99} {
-		incr repo_config(gui.diffcontext)
-		reshow_diff
-	}}
+	-command show_more_context
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command \
@@ -2695,6 +2715,8 @@ bind $ui_comm <$M1B-Key-v> {tk_textPaste %W; %W see insert; break}
 bind $ui_comm <$M1B-Key-V> {tk_textPaste %W; %W see insert; break}
 bind $ui_comm <$M1B-Key-a> {%W tag add sel 0.0 end;break}
 bind $ui_comm <$M1B-Key-A> {%W tag add sel 0.0 end;break}
+bind $ui_comm <$M1B-Key-\[> {show_less_context;break}
+bind $ui_comm <$M1B-Key-\]> {show_more_context;break}
 
 bind $ui_diff <$M1B-Key-x> {tk_textCopy %W;break}
 bind $ui_diff <$M1B-Key-X> {tk_textCopy %W;break}
@@ -2738,6 +2760,8 @@ bind .   <$M1B-Key-t> do_add_selection
 bind .   <$M1B-Key-T> do_add_selection
 bind .   <$M1B-Key-i> do_add_all
 bind .   <$M1B-Key-I> do_add_all
+bind .   <$M1B-Key-\[> {show_less_context;break}
+bind .   <$M1B-Key-\]> {show_more_context;break}
 bind .   <$M1B-Key-Return> do_commit
 foreach i [list $ui_index $ui_workdir] {
 	bind $i <Button-1>       "toggle_or_diff         $i %x %y; break"
