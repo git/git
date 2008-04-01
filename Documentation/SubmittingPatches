@@ -71,7 +71,7 @@ run git diff --check on your changes before you commit.
 
 (1a) Try to be nice to older C compilers
 
-We try to support wide range of C compilers to compile
+We try to support a wide range of C compilers to compile
 git with. That means that you should not use C99 initializers, even
 if a lot of compilers grok it.
 
