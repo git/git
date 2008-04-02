@@ -46,8 +46,10 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 	gpg.argv = args_gpg;
 	gpg.in = -1;
 	args_gpg[2] = path;
-	if (start_command(&gpg))
+	if (start_command(&gpg)) {
+		unlink(path);
 		return error("could not run gpg.");
+	}
 
 	write_in_full(gpg.in, buf, len);
 	close(gpg.in);
