@@ -578,6 +578,14 @@ test_expect_success \
 	git diff expect actual
 '
 
+# subsequent tests require gpg; check if it is available
+gpg --version >/dev/null
+if [ $? -eq 127 ]; then
+	echo "gpg not found - skipping tag signing and verification tests"
+	test_done
+	exit
+fi
+
 # trying to verify annotated non-signed tags:
 
 test_expect_success \
@@ -599,13 +607,6 @@ test_expect_success \
 '
 
 # creating and verifying signed tags:
-
-gpg --version >/dev/null
-if [ $? -eq 127 ]; then
-	echo "Skipping signed tags tests, because gpg was not found"
-	test_done
-	exit
-fi
 
 # As said here: http://www.gnupg.org/documentation/faqs.html#q6.19
 # the gpg version 1.0.6 didn't parse trust packets correctly, so for
