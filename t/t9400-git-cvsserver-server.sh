@@ -420,4 +420,54 @@ test_expect_success 'cvs update (merge no-op)' \
     GIT_CONFIG="$git_config" cvs -Q update &&
     diff -q merge ../merge'
 
+cd "$WORKDIR"
+test_expect_success 'cvs update (-p)' '
+    touch really-empty &&
+    echo Line 1 > no-lf &&
+    echo -n Line 2 >> no-lf &&
+    git add really-empty no-lf &&
+    git commit -q -m "Update -p test" &&
+    git push gitcvs.git >/dev/null &&
+    cd cvswork &&
+    GIT_CONFIG="$git_config" cvs update &&
+    rm -f failures &&
+    for i in merge no-lf empty really-empty; do
+        GIT_CONFIG="$git_config" cvs update -p "$i" >$i.out
+        diff $i.out ../$i >>failures 2>&1
+    done &&
+    test -z "$(cat failures)"
+'
+
+#------------
+# CVS STATUS
+#------------
+
+cd "$WORKDIR"
+test_expect_success 'cvs status' '
+    mkdir status.dir &&
+    echo Line > status.dir/status.file &&
+    echo Line > status.file &&
+    git add status.dir status.file &&
+    git commit -q -m "Status test" &&
+    git push gitcvs.git >/dev/null &&
+    cd cvswork &&
+    GIT_CONFIG="$git_config" cvs update &&
+    GIT_CONFIG="$git_config" cvs status | grep "^File: status.file" >../out &&
+    test $(wc -l <../out) = 2
+'
+
+cd "$WORKDIR"
+test_expect_success 'cvs status (nonrecursive)' '
+    cd cvswork &&
+    GIT_CONFIG="$git_config" cvs status -l | grep "^File: status.file" >../out &&
+    test $(wc -l <../out) = 1
+'
+
+cd "$WORKDIR"
+test_expect_success 'cvs status (no subdirs in header)' '
+    cd cvswork &&
+    GIT_CONFIG="$git_config" cvs status | grep ^File: >../out &&
+    ! grep / <../out
+'
+
 test_done
