@@ -6,7 +6,7 @@ Updates since v1.5.4
 
 (subsystems)
 
- * Comes with git-gui 0.9.3.
+ * Comes with git-gui 0.10.0
 
 (portability)
 
@@ -166,8 +166,8 @@ Updates since v1.5.4
    symmetric difference between the HEAD version and the work tree version
    of the submodule commits.
 
- * Various "git cvsimport", "git cvsexportcommit", "git svn" and
-   "git p4" improvements.
+ * Various "git cvsimport", "git cvsexportcommit", "git cvsserver",
+   "git svn" and "git p4" improvements.
 
 (internal)
 
@@ -208,6 +208,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.5.5-rc1-21-g319a36a
+O=v1.5.5-rc3
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
