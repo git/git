@@ -227,6 +227,11 @@ gitcvs.dbpass::
 	Database password.  Only useful if setting `dbdriver`, since
 	SQLite has no concept of database passwords.
 
+gitcvs.dbTableNamePrefix::
+	Database table name prefix.  Supports variable substitution
+	(see below).  Any non-alphabetic characters will be replaced
+	with underscores.
+
 All variables can also be set per access method, see <<configaccessmethod,above>>.
 
 Variable substitution
