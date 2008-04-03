@@ -9,6 +9,7 @@
 #include "grep.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
+#include "decorate.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -1310,6 +1311,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->no_walk = 0;
 				continue;
 			}
+			if (!strcmp(arg, "--children")) {
+				revs->children.name = "children";
+				revs->limited = 1;
+				continue;
+			}
 
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
@@ -1395,8 +1401,29 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 
 	if (revs->reverse && revs->reflog_info)
 		die("cannot combine --reverse with --walk-reflogs");
-
+	if (revs->parents && revs->children.name)
+		die("cannot combine --parents and --children");
 	return left;
+}
+
+static void add_child(struct rev_info *revs, struct commit *parent, struct commit *child)
+{
+	struct commit_list *l = xcalloc(1, sizeof(*l));
+
+	l->item = child;
+	l->next = add_decoration(&revs->children, &parent->object, l);
+}
+
+static void set_children(struct rev_info *revs)
+{
+	struct commit_list *l;
+	for (l = revs->commits; l; l = l->next) {
+		struct commit *commit = l->item;
+		struct commit_list *p;
+
+		for (p = commit->parents; p; p = p->next)
+			add_child(revs, p->item, commit);
+	}
 }
 
 int prepare_revision_walk(struct rev_info *revs)
@@ -1427,6 +1454,8 @@ int prepare_revision_walk(struct rev_info *revs)
 			return -1;
 	if (revs->topo_order)
 		sort_in_topological_order(&revs->commits, revs->lifo);
+	if (revs->children.name)
+		set_children(revs);
 	return 0;
 }
 
@@ -1504,6 +1533,11 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 			   commit->buffer, strlen(commit->buffer));
 }
 
+static inline int want_ancestry(struct rev_info *revs)
+{
+	return (revs->parents || revs->children.name);
+}
+
 enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
@@ -1524,13 +1558,13 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 		/* Commit without changes? */
 		if (commit->object.flags & TREESAME) {
 			/* drop merges unless we want parenthood */
-			if (!revs->parents)
+			if (!want_ancestry(revs))
 				return commit_ignore;
 			/* non-merge - always ignore it */
 			if (!commit->parents || !commit->parents->next)
 				return commit_ignore;
 		}
-		if (revs->parents && rewrite_parents(revs, commit) < 0)
+		if (want_ancestry(revs) && rewrite_parents(revs, commit) < 0)
 			return commit_error;
 	}
 	return commit_show;
