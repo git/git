@@ -43,6 +43,7 @@ static int max_orig_digits;
 static int max_digits;
 static int max_score_digits;
 static int show_root;
+static int reverse;
 static int blank_boundary;
 static int incremental;
 static int cmd_is_annotate;
@@ -177,7 +178,7 @@ struct blame_entry {
 struct scoreboard {
 	/* the final commit (i.e. where we started digging from) */
 	struct commit *final;
-
+	struct rev_info *revs;
 	const char *path;
 
 	/*
@@ -1196,15 +1197,17 @@ static void pass_whole_blame(struct scoreboard *sb,
  * "parent" (and "porigin"), but what we mean is to find scapegoat to
  * exonerate ourselves.
  */
-static struct commit_list *first_scapegoat(struct commit *commit)
+static struct commit_list *first_scapegoat(struct rev_info *revs, struct commit *commit)
 {
-	return commit->parents;
+	if (!reverse)
+		return commit->parents;
+	return lookup_decoration(&revs->children, &commit->object);
 }
 
-static int num_scapegoats(struct commit *commit)
+static int num_scapegoats(struct rev_info *revs, struct commit *commit)
 {
 	int cnt;
-	struct commit_list *l = first_scapegoat(commit);
+	struct commit_list *l = first_scapegoat(revs, commit);
 	for (cnt = 0; l; l = l->next)
 		cnt++;
 	return cnt;
@@ -1214,13 +1217,14 @@ static int num_scapegoats(struct commit *commit)
 
 static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 {
+	struct rev_info *revs = sb->revs;
 	int i, pass, num_sg;
 	struct commit *commit = origin->commit;
 	struct commit_list *sg;
 	struct origin *sg_buf[MAXSG];
 	struct origin *porigin, **sg_origin = sg_buf;
 
-	num_sg = num_scapegoats(commit);
+	num_sg = num_scapegoats(revs, commit);
 	if (!num_sg)
 		goto finish;
 	else if (num_sg < ARRAY_SIZE(sg_buf))
@@ -1237,7 +1241,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 				       struct commit *, struct origin *);
 		find = pass ? find_rename : find_origin;
 
-		for (i = 0, sg = first_scapegoat(commit);
+		for (i = 0, sg = first_scapegoat(revs, commit);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
 			struct commit *p = sg->item;
@@ -1270,7 +1274,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 	}
 
 	num_commits++;
-	for (i = 0, sg = first_scapegoat(commit);
+	for (i = 0, sg = first_scapegoat(revs, commit);
 	     i < num_sg && sg;
 	     sg = sg->next, i++) {
 		struct origin *porigin = sg_origin[i];
@@ -1284,7 +1288,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 	 * Optionally find moves in parents' files.
 	 */
 	if (opt & PICKAXE_BLAME_MOVE)
-		for (i = 0, sg = first_scapegoat(commit);
+		for (i = 0, sg = first_scapegoat(revs, commit);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
 			struct origin *porigin = sg_origin[i];
@@ -1298,7 +1302,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 	 * Optionally find copies from parents' files.
 	 */
 	if (opt & PICKAXE_BLAME_COPY)
-		for (i = 0, sg = first_scapegoat(commit);
+		for (i = 0, sg = first_scapegoat(revs, commit);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
 			struct origin *porigin = sg_origin[i];
@@ -1515,8 +1519,10 @@ static void found_guilty_entry(struct blame_entry *ent)
  * is still unknown, pick one blame_entry, and allow its current
  * suspect to pass blames to its parents.
  */
-static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
+static void assign_blame(struct scoreboard *sb, int opt)
 {
+	struct rev_info *revs = sb->revs;
+
 	while (1) {
 		struct blame_entry *ent;
 		struct commit *commit;
@@ -1537,8 +1543,9 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 		commit = suspect->commit;
 		if (!commit->object.parsed)
 			parse_commit(commit);
-		if (!(commit->object.flags & UNINTERESTING) &&
-		    !(revs->max_age != -1 && commit->date < revs->max_age))
+		if (reverse ||
+		    (!(commit->object.flags & UNINTERESTING) &&
+		     !(revs->max_age != -1 && commit->date < revs->max_age)))
 			pass_blame(sb, suspect, opt);
 		else {
 			commit->object.flags |= UNINTERESTING;
@@ -2154,10 +2161,11 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	return commit;
 }
 
-static const char *prepare_final(struct scoreboard *sb, struct rev_info *revs)
+static const char *prepare_final(struct scoreboard *sb)
 {
 	int i;
 	const char *final_commit_name = NULL;
+	struct rev_info *revs = sb->revs;
 
 	/*
 	 * There must be one and only one positive commit in the
@@ -2178,6 +2186,36 @@ static const char *prepare_final(struct scoreboard *sb, struct rev_info *revs)
 		sb->final = (struct commit *) obj;
 		final_commit_name = revs->pending.objects[i].name;
 	}
+	return final_commit_name;
+}
+
+static const char *prepare_initial(struct scoreboard *sb)
+{
+	int i;
+	const char *final_commit_name = NULL;
+	struct rev_info *revs = sb->revs;
+
+	/*
+	 * There must be one and only one negative commit, and it must be
+	 * the boundary.
+	 */
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object *obj = revs->pending.objects[i].item;
+		if (!(obj->flags & UNINTERESTING))
+			continue;
+		while (obj->type == OBJ_TAG)
+			obj = deref_tag(obj, NULL, 0);
+		if (obj->type != OBJ_COMMIT)
+			die("Non commit %s?", revs->pending.objects[i].name);
+		if (sb->final)
+			die("More than one commit to dig down to %s and %s?",
+			    revs->pending.objects[i].name,
+			    final_commit_name);
+		sb->final = (struct commit *) obj;
+		final_commit_name = revs->pending.objects[i].name;
+	}
+	if (!final_commit_name)
+		die("No commit to dig down to?");
 	return final_commit_name;
 }
 
@@ -2213,6 +2251,10 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			blank_boundary = 1;
 		else if (!strcmp("--root", arg))
 			show_root = 1;
+		else if (!strcmp("--reverse", arg)) {
+			argv[unk++] = "--children";
+			reverse = 1;
+		}
 		else if (!strcmp(arg, "--show-stats"))
 			show_stats = 1;
 		else if (!strcmp("-c", arg))
@@ -2386,7 +2428,14 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	setup_revisions(unk, argv, &revs, NULL);
 	memset(&sb, 0, sizeof(sb));
 
-	final_commit_name = prepare_final(&sb, &revs);
+	sb.revs = &revs;
+	if (!reverse)
+		final_commit_name = prepare_final(&sb);
+	else if (contents_from)
+		die("--contents and --children do not blend well.");
+	else
+		final_commit_name = prepare_initial(&sb);
+
 	if (!sb.final) {
 		/*
 		 * "--not A B -- path" without anything positive;
@@ -2464,7 +2513,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	if (!incremental)
 		setup_pager();
 
-	assign_blame(&sb, &revs, opt);
+	assign_blame(&sb, opt);
 
 	if (incremental)
 		return 0;
