@@ -65,10 +65,13 @@ OPTIONS
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
 it unless you understand what it does. If you clone your
-repository using this option, then delete branches in the
-source repository and then run linkgit:git-gc[1] using the
-'--prune' option in the source repository, it may remove
-objects which are referenced by the cloned repository.
+repository using this option and then delete branches (or use any
+other git command that makes any existing commit unreferenced) in the
+source repository, some objects may become unreferenced (or dangling).
+These objects may be removed by normal git operations (such as git-commit[1])
+which automatically call git-gc[1]. If these objects are removed and
+were referenced by the cloned repository, then the cloned repository
+will become corrupt.
 
 
 
@@ -79,6 +82,8 @@ objects which are referenced by the cloned repository.
 	an already existing repository as an alternate will
 	require fewer objects to be copied from the repository
 	being cloned, reducing network and local storage costs.
++
+*NOTE*: see NOTE to --shared option.
 
 --quiet::
 -q::
