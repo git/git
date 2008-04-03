@@ -2715,8 +2715,8 @@ bind $ui_comm <$M1B-Key-v> {tk_textPaste %W; %W see insert; break}
 bind $ui_comm <$M1B-Key-V> {tk_textPaste %W; %W see insert; break}
 bind $ui_comm <$M1B-Key-a> {%W tag add sel 0.0 end;break}
 bind $ui_comm <$M1B-Key-A> {%W tag add sel 0.0 end;break}
-bind $ui_comm <$M1B-Key-\[> {show_less_context;break}
-bind $ui_comm <$M1B-Key-\]> {show_more_context;break}
+bind $ui_comm <$M1B-Key-bracketleft> {show_less_context;break}
+bind $ui_comm <$M1B-Key-bracketright> {show_more_context;break}
 
 bind $ui_diff <$M1B-Key-x> {tk_textCopy %W;break}
 bind $ui_diff <$M1B-Key-X> {tk_textCopy %W;break}
@@ -2760,8 +2760,8 @@ bind .   <$M1B-Key-t> do_add_selection
 bind .   <$M1B-Key-T> do_add_selection
 bind .   <$M1B-Key-i> do_add_all
 bind .   <$M1B-Key-I> do_add_all
-bind .   <$M1B-Key-\[> {show_less_context;break}
-bind .   <$M1B-Key-\]> {show_more_context;break}
+bind .   <$M1B-Key-bracketleft> {show_less_context;break}
+bind .   <$M1B-Key-bracketright> {show_more_context;break}
 bind .   <$M1B-Key-Return> do_commit
 foreach i [list $ui_index $ui_workdir] {
 	bind $i <Button-1>       "toggle_or_diff         $i %x %y; break"
