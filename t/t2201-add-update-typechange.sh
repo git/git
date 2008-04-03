@@ -4,6 +4,15 @@ test_description='more git add -u'
 
 . ./test-lib.sh
 
+symlink_change=T
+if test "$no_symlinks"
+then
+	ln () {
+		echo -n "$2" > "$3"
+	}
+	symlink_change=M
+fi
+
 _z40=0000000000000000000000000000000000000000
 
 test_expect_success setup '
@@ -71,7 +80,7 @@ test_expect_success modify '
 				s/blob/000000/
 			}
 			/	nitfol/{
-				s/	nitfol/ $_z40 T&/
+				s/	nitfol/ $_z40 $symlink_change&/
 				s/blob/100644/
 			}
 			/	rezrov.bozbar/{
