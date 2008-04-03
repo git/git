@@ -91,7 +91,7 @@ struct origin {
  * Given an origin, prepare mmfile_t structure to be used by the
  * diff machinery
  */
-static char *fill_origin_blob(struct origin *o, mmfile_t *file)
+static void fill_origin_blob(struct origin *o, mmfile_t *file)
 {
 	if (!o->file.ptr) {
 		enum object_type type;
@@ -106,7 +106,6 @@ static char *fill_origin_blob(struct origin *o, mmfile_t *file)
 	}
 	else
 		*file = o->file;
-	return file->ptr;
 }
 
 /*
@@ -2006,6 +2005,10 @@ static int git_blame_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
+/*
+ * Prepare a dummy commit that represents the work tree (or staged) item.
+ * Note that annotating work tree item never works in the reverse.
+ */
 static struct commit *fake_working_tree_commit(const char *path, const char *contents_from)
 {
 	struct commit *commit;
@@ -2120,6 +2123,33 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 		sha1_to_hex(head_sha1),
 		ident, ident, path, contents_from ? contents_from : path);
 	return commit;
+}
+
+static const char *prepare_final(struct scoreboard *sb, struct rev_info *revs)
+{
+	int i;
+	const char *final_commit_name = NULL;
+
+	/*
+	 * There must be one and only one positive commit in the
+	 * revs->pending array.
+	 */
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object *obj = revs->pending.objects[i].item;
+		if (obj->flags & UNINTERESTING)
+			continue;
+		while (obj->type == OBJ_TAG)
+			obj = deref_tag(obj, NULL, 0);
+		if (obj->type != OBJ_COMMIT)
+			die("Non commit %s?", revs->pending.objects[i].name);
+		if (sb->final)
+			die("More than one commit to dig from %s and %s?",
+			    revs->pending.objects[i].name,
+			    final_commit_name);
+		sb->final = (struct commit *) obj;
+		final_commit_name = revs->pending.objects[i].name;
+	}
+	return final_commit_name;
 }
 
 int cmd_blame(int argc, const char **argv, const char *prefix)
@@ -2327,27 +2357,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	setup_revisions(unk, argv, &revs, NULL);
 	memset(&sb, 0, sizeof(sb));
 
-	/*
-	 * There must be one and only one positive commit in the
-	 * revs->pending array.
-	 */
-	for (i = 0; i < revs.pending.nr; i++) {
-		struct object *obj = revs.pending.objects[i].item;
-		if (obj->flags & UNINTERESTING)
-			continue;
-		while (obj->type == OBJ_TAG)
-			obj = deref_tag(obj, NULL, 0);
-		if (obj->type != OBJ_COMMIT)
-			die("Non commit %s?",
-			    revs.pending.objects[i].name);
-		if (sb.final)
-			die("More than one commit to dig from %s and %s?",
-			    revs.pending.objects[i].name,
-			    final_commit_name);
-		sb.final = (struct commit *) obj;
-		final_commit_name = revs.pending.objects[i].name;
-	}
-
+	final_commit_name = prepare_final(&sb, &revs);
 	if (!sb.final) {
 		/*
 		 * "--not A B -- path" without anything positive;
