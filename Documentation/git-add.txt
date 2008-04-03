@@ -226,6 +226,12 @@ diff::
   This lets you review what will be committed (i.e. between
   HEAD and index).
 
+Bugs
+----
+The interactive mode does not work with files whose names contain
+characters that need C-quoting.  `core.quotepath` configuration can be
+used to work this limitation around to some degree, but backslash,
+double-quote and control characters will still have problems.
 
 See Also
 --------

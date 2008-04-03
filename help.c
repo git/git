@@ -30,6 +30,7 @@ static struct option builtin_help_options[] = {
 			HELP_FORMAT_WEB),
 	OPT_SET_INT('i', "info", &help_format, "show info page",
 			HELP_FORMAT_INFO),
+	OPT_END(),
 };
 
 static const char * const builtin_help_usage[] = {

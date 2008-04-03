@@ -281,7 +281,7 @@ while read commit parents; do
 			die "Could not checkout the index"
 		# files that $commit removed are now still in the working tree;
 		# remove them, else they would be added again
-		git clean -q -f -x
+		git clean -d -q -f -x
 		eval "$filter_tree" < /dev/null ||
 			die "tree filter failed: $filter_tree"
 

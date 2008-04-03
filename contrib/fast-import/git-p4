@@ -90,11 +90,11 @@ def getP4OpenedType(file):
     # Returns the perforce file type for the given file.
 
     result = read_pipe("p4 opened %s" % file)
-    match = re.match(".*\((.+)\)$", result)
+    match = re.match(".*\((.+)\)\r?$", result)
     if match:
         return match.group(1)
     else:
-        die("Could not determine file type for %s" % file)
+        die("Could not determine file type for %s (result: '%s')" % (file, result))
 
 def diffTreePattern():
     # This is a simple generator for the diff tree regex pattern. This could be
@@ -513,6 +513,8 @@ class P4Submit(Command):
         template = ""
         inFilesSection = False
         for line in read_pipe_lines("p4 change -o"):
+            if line.endswith("\r\n"):
+                line = line[:-2] + "\n"
             if inFilesSection:
                 if line.startswith("\t"):
                     # path starts and ends with a tab
@@ -619,8 +621,6 @@ class P4Submit(Command):
             setP4ExecBit(f, mode)
 
         logMessage = extractLogMessageFromGitCommit(id)
-        if self.isWindows:
-            logMessage = logMessage.replace("\n", "\r\n")
         logMessage = logMessage.strip()
 
         template = self.prepareSubmitTemplate()
@@ -631,23 +631,25 @@ class P4Submit(Command):
                 del(os.environ["P4DIFF"])
             diff = read_pipe("p4 diff -du ...")
 
+            newdiff = ""
             for newFile in filesToAdd:
-                diff += "==== new file ====\n"
-                diff += "--- /dev/null\n"
-                diff += "+++ %s\n" % newFile
+                newdiff += "==== new file ====\n"
+                newdiff += "--- /dev/null\n"
+                newdiff += "+++ %s\n" % newFile
                 f = open(newFile, "r")
                 for line in f.readlines():
-                    diff += "+" + line
+                    newdiff += "+" + line
                 f.close()
 
-            separatorLine = "######## everything below this line is just the diff #######"
-            if platform.system() == "Windows":
-                separatorLine += "\r"
-            separatorLine += "\n"
+            separatorLine = "######## everything below this line is just the diff #######\n"
 
             [handle, fileName] = tempfile.mkstemp()
             tmpFile = os.fdopen(handle, "w+")
-            tmpFile.write(submitTemplate + separatorLine + diff)
+            if self.isWindows:
+                submitTemplate = submitTemplate.replace("\n", "\r\n")
+                separatorLine = separatorLine.replace("\n", "\r\n")
+                newdiff = newdiff.replace("\n", "\r\n")
+            tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
             tmpFile.close()
             defaultEditor = "vi"
             if platform.system() == "Windows":
