@@ -42,6 +42,10 @@ format, often found in E-mail messages.
 
 	Print the parents of the commit.
 
+--children::
+
+	Print the children of the commit.
+
 --timestamp::
 	Print the raw commit timestamp.
 
