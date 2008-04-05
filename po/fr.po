@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-03-14 07:18+0100\n"
-"PO-Revision-Date: 2008-01-14 21:08+0100\n"
+"PO-Revision-Date: 2008-04-04 22:05+0200\n"
 "Last-Translator: Christian Couder <chriscool@tuxfamily.org>\n"
 "Language-Team: French\n"
 "MIME-Version: 1.0\n"
@@ -344,8 +344,7 @@ msgstr "Documentation en ligne"
 #: git-gui.sh:2238
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
-msgstr ""
-"fatale : pas d'infos sur le chemin %s : Fichier ou répertoire inexistant"
+msgstr "erreur fatale : pas d'infos sur le chemin %s : Fichier ou répertoire inexistant"
 
 #: git-gui.sh:2271
 msgid "Current Branch:"
@@ -630,8 +629,7 @@ msgstr "Merci de choisir une branche de suivi"
 #: lib/branch_create.tcl:140
 #, tcl-format
 msgid "Tracking branch %s is not a branch in the remote repository."
-msgstr ""
-"La branche de suivi %s n'est pas une branche dans le référentiel distant."
+msgstr "La branche de suivi %s n'est pas une branche dans le référentiel distant."
 
 #: lib/branch_create.tcl:153 lib/branch_rename.tcl:86
 msgid "Please supply a branch name."
@@ -751,7 +749,7 @@ msgstr "Récupération de %s à partir de %s"
 #: lib/checkout_op.tcl:127
 #, tcl-format
 msgid "fatal: Cannot resolve %s"
-msgstr "Erreur fatale : Impossible de résoudre %s"
+msgstr "erreur fatale : Impossible de résoudre %s"
 
 #: lib/checkout_op.tcl:140 lib/console.tcl:81 lib/database.tcl:31
 msgid "Close"
@@ -798,12 +796,9 @@ msgid ""
 "\n"
 "The rescan will be automatically started now.\n"
 msgstr ""
-"L'état lors de la dernière synchronisation ne correspond plus à l'état du "
-"référentiel.\n"
+"L'état lors de la dernière synchronisation ne correspond plus à l'état du référentiel.\n"
 "\n"
-"Un autre programme Git a modifié ce référentiel depuis la dernière "
-"synchronisation. Une resynchronisation doit être effectuée avant de pouvoir "
-"modifier la branche courante.\n"
+"Un autre programme Git a modifié ce référentiel depuis la dernière synchronisation. Une resynchronisation doit être effectuée avant de pouvoir modifier la branche courante.\n"
 "\n"
 "Cela va être fait tout de suite automatiquement.\n"
 
@@ -814,13 +809,12 @@ msgstr "Mise à jour du répertoire courant avec '%s'..."
 
 #: lib/checkout_op.tcl:323
 msgid "files checked out"
-msgstr ""
+msgstr "fichiers empruntés"
 
 #: lib/checkout_op.tcl:353
 #, tcl-format
 msgid "Aborted checkout of '%s' (file level merging is required)."
-msgstr ""
-"Emprunt de '%s' abandonné. (Il est nécessaire de fusionner des fichiers.)"
+msgstr "Emprunt de '%s' abandonné. (Il est nécessaire de fusionner des fichiers.)"
 
 #: lib/checkout_op.tcl:354
 msgid "File level merge required."
@@ -1089,8 +1083,7 @@ msgstr ""
 
 #: lib/choose_repository.tcl:880
 msgid "Cannot determine HEAD.  See console output for details."
-msgstr ""
-"Impossible de déterminer HEAD. Voir la sortie console pour plus de détails."
+msgstr "Impossible de déterminer HEAD. Voir la sortie console pour plus de détails."
 
 #: lib/choose_repository.tcl:889
 #, tcl-format
@@ -1292,32 +1285,31 @@ msgstr "attention : Tcl ne supporte pas l'encodage '%s'."
 
 #: lib/commit.tcl:221
 msgid "Calling pre-commit hook..."
-msgstr ""
+msgstr "Appel du programme externe d'avant commit..."
 
 #: lib/commit.tcl:236
 msgid "Commit declined by pre-commit hook."
-msgstr ""
+msgstr "Commit refusé par le programme externe d'avant commit."
 
 #: lib/commit.tcl:259
 msgid "Calling commit-msg hook..."
-msgstr ""
+msgstr "Appel du programme externe de message de commit..."
 
 #: lib/commit.tcl:274
 msgid "Commit declined by commit-msg hook."
-msgstr ""
+msgstr "Commit refusé par le programme externe de message de commit."
 
 #: lib/commit.tcl:287
 msgid "Committing changes..."
-msgstr ""
+msgstr "Commit des modifications..."
 
 #: lib/commit.tcl:303
 msgid "write-tree failed:"
 msgstr "write-tree a échoué :"
 
 #: lib/commit.tcl:304 lib/commit.tcl:348 lib/commit.tcl:368
-#, fuzzy
 msgid "Commit failed."
-msgstr "Le clonage a échoué."
+msgstr "Le commit a échoué."
 
 #: lib/commit.tcl:321
 #, tcl-format
@@ -1479,8 +1471,7 @@ msgstr "Erreur lors du chargement des différences :"
 
 #: lib/diff.tcl:303
 msgid "Failed to unstage selected hunk."
-msgstr ""
-"La suppression dans le pré-commit de la section sélectionnée a échouée."
+msgstr "La suppression dans le pré-commit de la section sélectionnée a échouée."
 
 #: lib/diff.tcl:310
 msgid "Failed to stage selected hunk."
@@ -1510,8 +1501,7 @@ msgstr "Erreur de pré-commit"
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
 "resynchronize git-gui."
-msgstr ""
-"Le pré-commit a échoué. Une resynchronisation va être lancée automatiquement."
+msgstr "Le pré-commit a échoué. Une resynchronisation va être lancée automatiquement."
 
 #: lib/index.tcl:27
 msgid "Continue"
@@ -1527,9 +1517,8 @@ msgid "Unstaging %s from commit"
 msgstr "Supprimer %s du commit"
 
 #: lib/index.tcl:313
-#, fuzzy
 msgid "Ready to commit."
-msgstr "Pré-commité"
+msgstr "Prêt à être commité."
 
 #: lib/index.tcl:326
 #, tcl-format
@@ -1627,9 +1616,9 @@ msgid "%s of %s"
 msgstr "%s de %s"
 
 #: lib/merge.tcl:119
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Merging %s and %s..."
-msgstr "Fusion de %s et %s"
+msgstr "Fusion de %s et %s..."
 
 #: lib/merge.tcl:130
 msgid "Merge completed successfully."
@@ -1693,9 +1682,8 @@ msgid "Aborting"
 msgstr "Abandon"
 
 #: lib/merge.tcl:238
-#, fuzzy
 msgid "files reset"
-msgstr "fichiers"
+msgstr "fichiers réinitialisés"
 
 #: lib/merge.tcl:265
 msgid "Abort failed."
@@ -1759,9 +1747,8 @@ msgid "Number of Diff Context Lines"
 msgstr "Nombre de lignes de contexte dans les diffs"
 
 #: lib/option.tcl:127
-#, fuzzy
 msgid "Commit Message Text Width"
-msgstr "Message de commit :"
+msgstr "Largeur du texte de message de commit"
 
 #: lib/option.tcl:128
 msgid "New Branch Name Template"
@@ -1769,7 +1756,7 @@ msgstr "Nouveau modèle de nom de branche"
 
 #: lib/option.tcl:192
 msgid "Spelling Dictionary:"
-msgstr ""
+msgstr "Dictionnaire d'orthographe :"
 
 #: lib/option.tcl:216
 msgid "Change Font"
@@ -1898,40 +1885,40 @@ msgstr "Impossible d'écrire l'icône :"
 
 #: lib/spellcheck.tcl:57
 msgid "Unsupported spell checker"
-msgstr ""
+msgstr "Vérificateur d'orthographe non supporté"
 
 #: lib/spellcheck.tcl:65
 msgid "Spell checking is unavailable"
-msgstr ""
+msgstr "La vérification d'orthographe n'est pas disponible"
 
 #: lib/spellcheck.tcl:68
 msgid "Invalid spell checking configuration"
-msgstr ""
+msgstr "Configuration de vérification d'orthographe invalide"
 
 #: lib/spellcheck.tcl:70
 #, tcl-format
 msgid "Reverting dictionary to %s."
-msgstr ""
+msgstr "Réinitialisation du dictionnaire à %s."
 
 #: lib/spellcheck.tcl:73
 msgid "Spell checker silently failed on startup"
-msgstr ""
+msgstr "La vérification d'orthographe a échouée silentieusement au démarrage"
 
 #: lib/spellcheck.tcl:80
 msgid "Unrecognized spell checker"
-msgstr ""
+msgstr "Vérificateur d'orthographe non reconnu"
 
 #: lib/spellcheck.tcl:180
 msgid "No Suggestions"
-msgstr ""
+msgstr "Aucune suggestion"
 
 #: lib/spellcheck.tcl:381
 msgid "Unexpected EOF from spell checker"
-msgstr ""
+msgstr "Fin de fichier innatendue envoyée par le vérificateur d'orthographe"
 
 #: lib/spellcheck.tcl:385
 msgid "Spell Checker Failed"
-msgstr ""
+msgstr "Le vérificateur d'orthographe a échoué"
 
 #: lib/status_bar.tcl:83
 #, tcl-format
@@ -2002,3 +1989,4 @@ msgstr "Utiliser des petits paquets (pour les connexions lentes)"
 #: lib/transport.tcl:168
 msgid "Include tags"
 msgstr "Inclure les marques"
+
