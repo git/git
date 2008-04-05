@@ -22,8 +22,9 @@ archive with specified base-name, or to the standard output.
 A packed archive is an efficient way to transfer set of objects
 between two repositories, and also is an archival format which
 is efficient to access.  The packed archive format (.pack) is
-designed to be unpackable without having anything else, but for
-random access, accompanied with the pack index file (.idx).
+designed to be self contained so that it can be unpacked without
+any further information, but for fast, random access to the objects
+in the pack, a pack index file (.idx) will be generated.
 
 Placing both in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
 any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
