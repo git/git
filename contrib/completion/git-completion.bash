@@ -865,7 +865,7 @@ _git_rebase ()
 		return
 		;;
 	--*)
-		__gitcomp "--onto --merge --strategy"
+		__gitcomp "--onto --merge --strategy --interactive"
 		return
 	esac
 	__gitcomp "$(__git_refs)"
