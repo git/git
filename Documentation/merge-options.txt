@@ -1,6 +1,6 @@
 --stat::
 	Show a diffstat at the end of the merge. The diffstat is also
-	controlled by the configuration option merge.diffstat.
+	controlled by the configuration option merge.stat.
 
 -n, \--no-stat::
 	Do not show diffstat at the end of the merge.

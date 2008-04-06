@@ -212,6 +212,7 @@ while test $args_left -lt $#; do shift; done
 
 if test -z "$show_diffstat"; then
     test "$(git config --bool merge.diffstat)" = false && show_diffstat=false
+    test "$(git config --bool merge.stat)" = false && show_diffstat=false
     test -z "$show_diffstat" && show_diffstat=t
 fi
 
