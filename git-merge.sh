@@ -12,6 +12,8 @@ stat                 show a diffstat at the end of the merge
 n,no-stat            don't show a diffstat at the end of the merge
 summary              (synonym to --stat)
 no-summary           (synonym to --no-stat)
+log                  add list of one-line log to merge commit message
+no-log               don't add list of one-line log to merge commit message
 squash               create a single commit instead of doing a merge
 commit               perform a commit if the merge sucesses (default)
 ff                   allow fast forward (default)
@@ -39,7 +41,7 @@ use_strategies=
 
 allow_fast_forward=t
 allow_trivial_merge=t
-squash= no_commit=
+squash= no_commit= log_arg=
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
@@ -154,6 +156,8 @@ parse_config () {
 			show_diffstat=false ;;
 		--stat|--summary)
 			show_diffstat=t ;;
+		--log|--no-log)
+			log_arg=$1 ;;
 		--squash)
 			test "$allow_fast_forward" = t ||
 				die "You cannot combine --squash with --no-ff."
@@ -261,7 +265,7 @@ else
 	merge_name=$(for remote
 		do
 			merge_name "$remote"
-		done | git fmt-merge-msg
+		done | git fmt-merge-msg $log_arg
 	)
 	merge_msg="${merge_msg:+$merge_msg$LF$LF}$merge_name"
 fi

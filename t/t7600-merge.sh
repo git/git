@@ -104,7 +104,11 @@ create_merge_msgs() {
 	git log --no-merges ^HEAD c2 >>squash.1-5 &&
 	echo "Squashed commit of the following:" >squash.1-5-9 &&
 	echo >>squash.1-5-9 &&
-	git log --no-merges ^HEAD c2 c3 >>squash.1-5-9
+	git log --no-merges ^HEAD c2 c3 >>squash.1-5-9 &&
+	echo > msg.nolog &&
+	echo "* commit 'c3':" >msg.log &&
+	echo "  commit 3" >>msg.log &&
+	echo >>msg.log
 }
 
 verify_diff() {
@@ -454,6 +458,16 @@ test_expect_success 'merge c0 with c1 (ff overrides no-ff)' '
 	git merge --ff c1 &&
 	verify_merge file result.1 &&
 	verify_head $c1
+'
+
+test_expect_success 'merge log message' '
+	git reset --hard c0 &&
+	git merge --no-log c2 &&
+	git show -s --pretty=format:%b HEAD >msg.act &&
+	verify_diff msg.nolog msg.act "[OOPS] bad merge log message" &&
+	git merge --log c3 &&
+	git show -s --pretty=format:%b HEAD >msg.act &&
+	verify_diff msg.log msg.act "[OOPS] bad merge log message"
 '
 
 test_debug 'gitk --all'
