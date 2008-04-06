@@ -148,8 +148,9 @@ static int handle_alias(int *argcp, const char ***argv)
 	const char** new_argv;
 	const char *alias_command;
 	char *alias_string;
+	int unused_nongit;
 
-	subdir = setup_git_directory_gently(NULL);
+	subdir = setup_git_directory_gently(&unused_nongit);
 
 	alias_command = (*argv)[0];
 	alias_string = alias_lookup(alias_command);

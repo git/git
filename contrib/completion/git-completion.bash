@@ -999,7 +999,8 @@ _git_config ()
 		gitcvs.enabled
 		gitcvs.logfile
 		gitcvs.allbinary
-		gitcvs.dbname gitcvs.dbdriver gitcvs.dbuser gitcvs.dvpass
+		gitcvs.dbname gitcvs.dbdriver gitcvs.dbuser gitcvs.dbpass
+		gitcvs.dbtablenameprefix
 		gc.packrefs
 		gc.reflogexpire
 		gc.reflogexpireunreachable
