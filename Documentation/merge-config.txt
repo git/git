@@ -2,7 +2,7 @@ merge.stat::
 	Whether to print the diffstat berween ORIG_HEAD and merge result
 	at the end of the merge.  True by default.
 
-merge.summary::
+merge.log::
 	Whether to include summaries of merged commits in newly created
 	merge commit messages. False by default.
 
