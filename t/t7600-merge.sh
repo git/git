@@ -364,7 +364,7 @@ test_expect_success 'merge c1 with c2 (squash in config)' '
 
 test_debug 'gitk --all'
 
-test_expect_success 'override config option -n' '
+test_expect_success 'override config option -n with --summary' '
 	git reset --hard c1 &&
 	git config branch.master.mergeoptions "-n" &&
 	test_tick &&
@@ -373,15 +373,30 @@ test_expect_success 'override config option -n' '
 	verify_parents $c1 $c2 &&
 	if ! grep "^ file |  *2 +-$" diffstat.txt
 	then
-		echo "[OOPS] diffstat was not generated"
+		echo "[OOPS] diffstat was not generated with --summary"
+		false
+	fi
+'
+
+test_expect_success 'override config option -n with --stat' '
+	git reset --hard c1 &&
+	git config branch.master.mergeoptions "-n" &&
+	test_tick &&
+	git merge --stat c2 >diffstat.txt &&
+	verify_merge file result.1-5 msg.1-5 &&
+	verify_parents $c1 $c2 &&
+	if ! grep "^ file |  *2 +-$" diffstat.txt
+	then
+		echo "[OOPS] diffstat was not generated with --stat"
+		false
 	fi
 '
 
 test_debug 'gitk --all'
 
-test_expect_success 'override config option --summary' '
+test_expect_success 'override config option --stat' '
 	git reset --hard c1 &&
-	git config branch.master.mergeoptions "--summary" &&
+	git config branch.master.mergeoptions "--stat" &&
 	test_tick &&
 	git merge -n c2 >diffstat.txt &&
 	verify_merge file result.1-5 msg.1-5 &&

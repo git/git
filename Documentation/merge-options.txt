@@ -1,9 +1,13 @@
---summary::
+--stat::
 	Show a diffstat at the end of the merge. The diffstat is also
 	controlled by the configuration option merge.diffstat.
 
--n, \--no-summary::
+-n, \--no-stat::
 	Do not show diffstat at the end of the merge.
+
+--summary, \--no-summary::
+	Synonyms to --stat and --no-stat; these are deprecated and will be
+	removed in the future.
 
 --no-commit::
 	Perform the merge but pretend the merge failed and do

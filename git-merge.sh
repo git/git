@@ -8,8 +8,10 @@ OPTIONS_SPEC="\
 git-merge [options] <remote>...
 git-merge [options] <msg> HEAD <remote>
 --
-summary              show a diffstat at the end of the merge
-n,no-summary         don't show a diffstat at the end of the merge
+stat                 show a diffstat at the end of the merge
+n,no-stat            don't show a diffstat at the end of the merge
+summary              (synonym to --stat)
+no-summary           (synonym to --no-stat)
 squash               create a single commit instead of doing a merge
 commit               perform a commit if the merge sucesses (default)
 ff                   allow fast forward (default)
@@ -148,9 +150,9 @@ merge_name () {
 parse_config () {
 	while test $# != 0; do
 		case "$1" in
-		-n|--no-summary)
+		-n|--no-stat|--no-summary)
 			show_diffstat=false ;;
-		--summary)
+		--stat|--summary)
 			show_diffstat=t ;;
 		--squash)
 			test "$allow_fast_forward" = t ||
