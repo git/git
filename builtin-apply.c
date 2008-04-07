@@ -1937,21 +1937,24 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	trailing = frag->trailing;
 
 	/*
-	 * If we don't have any leading/trailing data in the patch,
-	 * we want it to match at the beginning/end of the file.
+	 * A hunk to change lines at the beginning would begin with
+	 * @@ -1,L +N,M @@
 	 *
-	 * But that would break if the patch is generated with
-	 * --unified=0; sane people wouldn't do that to cause us
-	 * trouble, but we try to please not so sane ones as well.
+	 * And a hunk to add to an empty file would begin with
+	 * @@ -0,0 +N,M @@
+	 *
+	 * In other words, a hunk that is (frag->oldpos <= 1) with or
+	 * without leading context must match at the beginning.
 	 */
-	if (unidiff_zero) {
-		match_beginning = (!leading && !frag->oldpos);
-		match_end = 0;
-	}
-	else {
-		match_beginning = !leading && (frag->oldpos == 1);
-		match_end = !trailing;
-	}
+	match_beginning = frag->oldpos <= 1;
+
+	/*
+	 * A hunk without trailing lines must match at the end.
+	 * However, we simply cannot tell if a hunk must match end
+	 * from the lack of trailing lines if the patch was generated
+	 * with unidiff without any context.
+	 */
+	match_end = !unidiff_zero && !trailing;
 
 	pos = frag->newpos ? (frag->newpos - 1) : 0;
 	preimage.buf = oldlines;
