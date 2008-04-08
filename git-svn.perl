@@ -2239,12 +2239,13 @@ sub find_parent_branch {
 		# just grow a tail if we're not unique enough :x
 		$ref_id .= '-' while find_ref($ref_id);
 		print STDERR "Initializing parent: $ref_id\n";
-		my ($u, $p) = ($new_url, '');
+		my ($u, $p, $repo_id) = ($new_url, '', $ref_id);
 		if ($u =~ s#^\Q$url\E(/|$)##) {
 			$p = $u;
 			$u = $url;
+			$repo_id = $self->{repo_id};
 		}
-		$gs = Git::SVN->init($u, $p, $self->{repo_id}, $ref_id, 1);
+		$gs = Git::SVN->init($u, $p, $repo_id, $ref_id, 1);
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	if (!defined $r0 || !defined $parent) {

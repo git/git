@@ -112,4 +112,17 @@ do
 	'
 done
 
+test_expect_success 'two lines' '
+
+	>file &&
+	git add file &&
+	echo aaa >file &&
+	git diff >patch &&
+	git add file &&
+	echo bbb >file &&
+	git add file &&
+	test_must_fail git apply --check patch
+
+'
+
 test_done

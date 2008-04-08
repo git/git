@@ -6,7 +6,7 @@ Updates since v1.5.4
 
 (subsystems)
 
- * Comes with git-gui 0.10.0
+ * Comes with git-gui 0.10.1
 
 (portability)
 
@@ -205,9 +205,3 @@ this release, unless otherwise noted.
 
  * "git imap-send" without setting imap.host did not error out but
    segfaulted.
-
----
-exec >/var/tmp/1
-O=v1.5.5-rc3
-echo O=`git describe refs/heads/master`
-git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
