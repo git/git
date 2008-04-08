@@ -2064,11 +2064,11 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 
 	.mbar.commit add command -label [mc "Show Less Context"] \
 		-command show_less_context \
-		-accelerator $M1T-\[
+		-accelerator $M1T-\-
 
 	.mbar.commit add command -label [mc "Show More Context"] \
 		-command show_more_context \
-		-accelerator $M1T-\]
+		-accelerator $M1T-=
 
 	.mbar.commit add separator
 
@@ -2715,8 +2715,11 @@ bind $ui_comm <$M1B-Key-v> {tk_textPaste %W; %W see insert; break}
 bind $ui_comm <$M1B-Key-V> {tk_textPaste %W; %W see insert; break}
 bind $ui_comm <$M1B-Key-a> {%W tag add sel 0.0 end;break}
 bind $ui_comm <$M1B-Key-A> {%W tag add sel 0.0 end;break}
-bind $ui_comm <$M1B-Key-\[> {show_less_context;break}
-bind $ui_comm <$M1B-Key-\]> {show_more_context;break}
+bind $ui_comm <$M1B-Key-minus> {show_less_context;break}
+bind $ui_comm <$M1B-Key-KP_Subtract> {show_less_context;break}
+bind $ui_comm <$M1B-Key-equal> {show_more_context;break}
+bind $ui_comm <$M1B-Key-plus> {show_more_context;break}
+bind $ui_comm <$M1B-Key-KP_Add> {show_more_context;break}
 
 bind $ui_diff <$M1B-Key-x> {tk_textCopy %W;break}
 bind $ui_diff <$M1B-Key-X> {tk_textCopy %W;break}
@@ -2760,8 +2763,11 @@ bind .   <$M1B-Key-t> do_add_selection
 bind .   <$M1B-Key-T> do_add_selection
 bind .   <$M1B-Key-i> do_add_all
 bind .   <$M1B-Key-I> do_add_all
-bind .   <$M1B-Key-\[> {show_less_context;break}
-bind .   <$M1B-Key-\]> {show_more_context;break}
+bind .   <$M1B-Key-minus> {show_less_context;break}
+bind .   <$M1B-Key-KP_Subtract> {show_less_context;break}
+bind .   <$M1B-Key-equal> {show_more_context;break}
+bind .   <$M1B-Key-plus> {show_more_context;break}
+bind .   <$M1B-Key-KP_Add> {show_more_context;break}
 bind .   <$M1B-Key-Return> do_commit
 foreach i [list $ui_index $ui_workdir] {
 	bind $i <Button-1>       "toggle_or_diff         $i %x %y; break"
