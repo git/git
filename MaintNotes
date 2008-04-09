@@ -8,7 +8,7 @@ with it.
 Many active members of development community hang around on #git
 IRC channel on Freenode.  Its log is available at:
 
-        http://colabti.de/irclogger/irclogger_log/git
+        http://colabti.org/irclogger/irclogger_log/git
 
 The development however is primarily done on the git mailing list
 (git@vger.kernel.org).  If you have patches, please send them to the
@@ -80,7 +80,7 @@ a task.
 
 There are four branches in git.git repository that track the
 source tree of git: "master", "maint", "next", and "pu".  I may
-add more maintenance branches (e.g. "maint-1.5.3") if we have
+add more maintenance branches (e.g. "maint-1.5.4") if we have
 hugely backward incompatible feature updates in the future to keep
 an older release alive; I may not, but the distributed nature of
 git means any volunteer can run a stable-tree like that herself.
@@ -92,7 +92,7 @@ but they are not expected to be anything major, and more
 importantly quickly and trivially fixable.  Every now and
 then, a "feature release" is cut from the tip of this branch and
 they typically are named with three dotted decimal digits.  The
-last such release was 1.5.4 done on Feb 2nd this year.  You
+last such release was 1.5.5 done on Apr 7th this year.  You
 can expect that the tip of the "master" branch is always more
 stable than any of the released versions.
 
@@ -101,7 +101,7 @@ from "master" at that point.  Obvious, safe and urgent fixes
 after a feature release are applied to this branch and
 maintenance releases are cut from it.  The maintenance releases
 are named with four dotted decimal, named after the feature
-release they are updates to; the last such release was 1.5.4.4.
+release they are updates to; the last such release was 1.5.4.5.
 New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
