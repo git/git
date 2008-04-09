@@ -51,11 +51,12 @@ static int show_config(const char *var, const char *value)
 int main(int argc, char **argv)
 {
 	const char *val;
+	int nongit;
 	if (argc != 2) {
 		usage(var_usage);
 	}
 
-	setup_git_directory();
+	setup_git_directory_gently(&nongit);
 	val = NULL;
 
 	if (strcmp(argv[1], "-l") == 0) {
