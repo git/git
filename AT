@@ -1,0 +1,196 @@
+#!/bin/sh
+
+log=Meta/AT.log
+>>"$log"
+buildlog=Meta/AT.build-logs
+mkdir -p "$buildlog"
+t="/tmp/AT.$$"
+
+trap 'rm -f "$t.*"; exit' 0 1 2 3 15
+
+_x40="[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]"
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+
+log_prune () {
+	cp "$log" "$log.bak"
+
+	git for-each-ref --format='%(objectname)' 'refs/heads/*/*' |
+	git rev-list --not ko/maint --not --stdin |
+	while read commit
+	do
+		git rev-parse --verify "$commit^{tree}"
+	done | sort -u >"$t.tree0"
+	sed -ne "s/A \($_x40\)	.*/\1/p" "$log" | sort -u >"$t.tree1"
+	comm -13 "$t.tree0" "$t.tree1" | sed -e 's|.*|/^A &/d|' >"$t.prune"
+
+	next=$(git rev-parse --verify "refs/heads/next^0")
+	ko_next=$(git rev-parse --verify "refs/remotes/ko/next^0")
+	echo "/^N /{
+		s/^N $next /&/
+		t ok
+		s/^N $ko_next /&/
+		t ok
+		d
+		: ok
+}" >>"$t.prune"
+
+	sed -f "$t.prune" "$log" >"$t.pruned"
+	cat "$t.pruned" >"$log"
+}
+
+check_skip_test () {
+	GIT_SKIP_TESTS=
+	git diff --name-only ko/master "$1" >"$t.d"
+	if ! grep -q -e git-svn "$t.d"
+	then
+		GIT_SKIP_TESTS="$GIT_SKIP_TESTS t91??"
+	fi
+	if ! grep -q -e git-cvsexportcommit "$t.d"
+	then
+		GIT_SKIP_TESTS="$GIT_SKIP_TESTS t9200"
+	fi
+	if ! grep -q -e git-cvsimport "$t.d"
+	then
+		GIT_SKIP_TESTS="$GIT_SKIP_TESTS t9600"
+	fi
+	if test -n "$GIT_SKIP_TESTS"
+	then
+		export GIT_SKIP_TESTS
+	else
+		unset GIT_SKIP_TESTS
+	fi
+}
+
+autotest () {
+	commit=$(git rev-parse --verify "$1^0") &&
+	tree=$(git rev-parse --verify "$commit^{tree}") || return 1
+	grep -s "^A $tree	" "$log" >/dev/null && return 0
+	o="$buildlog/$tree"
+
+	git reset -q --hard HEAD^0 &&
+	git checkout -q "$commit^0" || return 1
+
+	check_skip_test "$tree"
+
+	PAGER= git show -s --pretty='format:* %h %s%n' "$commit" --
+	if ! Meta/Make -pedantic >"$o" 2>&1
+	then
+		status="build error"
+	elif ! Meta/Make -pedantic test >>"$o" 2>&1
+	then
+		status="test error"
+	else
+		status=ok
+		rm -f "$o"
+	fi
+	: Meta/Make clean >/dev/null 2>&1
+	echo "A $tree	$status" >>"$log"
+	echo "$status"
+}
+
+append_to_status () {
+	if test -z "$status"
+	then
+		status="$1"
+	else
+		status="$status; $1"
+	fi
+}
+
+nexttest () {
+	mb=$(git merge-base "$commit" "$next") || return 1
+	test "$mb" = "$commit" && return 0
+	grep -s "^N $next $commit	" "$log" >/dev/null && return 0
+
+	branch="${refname#refs/heads/}"
+	git reset -q --hard next^0
+
+	echo "* $branch"
+
+	status= skip_build=
+	if ! git merge "$commit" >/dev/null 2>&1
+	then
+		conflict_count=$(git ls-files -u |
+				sed -e 's/.*	//' |
+				sort -u |
+				xargs grep -e '^<<<<<<< ' |
+				wc -l)
+		if test $conflict_count = 0
+		then
+			append_to_status "rerere ok"
+		else
+			skip_build=t
+			append_to_status "conflict $conflict_count"
+		fi
+	fi
+	if test -z "$skip_build"
+	then
+		o="$buildlog/$commit"
+		check_skip_test "$commit"
+		if ! Meta/Make -pedantic >"$o" 2>&1
+		then
+			append_to_status "build error"
+		elif ! Meta/Make -pedantic test >>"$o" 2>&1
+		then
+			append_to_status "test error"
+		else
+			append_to_status "test ok"
+			rm -f "$o"
+		fi
+	fi
+	: Meta/Make clean >/dev/null 2>&1
+	echo "N $next $commit	$status" >>"$log"
+	echo "$status"
+}
+
+loop () {
+	Meta/Make clean >/dev/null 2>&1
+	git reset --hard -q
+	git checkout -q HEAD^0
+	next=$(git rev-parse --verify "refs/remotes/ko/next^0")
+
+	while :
+	do
+		log_prune
+
+		date
+
+		l0=$(ls -l "$log")
+
+		git for-each-ref --format='%(objectname)' 'refs/heads/*/*' |
+		git rev-list --not ko/maint ko/master --not --stdin |
+		while read commit
+		do
+			autotest "$commit" || echo "oops?"
+		done
+
+		l1=$(ls -l "$log")
+		test "$l0" = "$l1" || continue
+
+		git for-each-ref --format='%(objectname) %(refname)' \
+						'refs/heads/*/*' |
+		while read commit refname
+		do
+			nexttest "$commit" "$refname" || echo "oops?"
+		done
+
+		l1=$(ls -l "$log")
+		test "$l0" = "$l1" || continue
+
+		sleep 600 || exit
+	done
+}
+
+case "$#" in
+0)
+	loop
+	exit ;;
+esac
+
+(
+	git rev-list --no-walk "$@" 2>/dev/null || git rev-list "$@"
+) |
+while read commit
+do
+	autotest "$commit"
+done
