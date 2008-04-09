@@ -95,7 +95,11 @@ for gitweb (in gitweb/README).
   by default it is file named gitweb_config.perl in the same place as
   gitweb.cgi script. You can control default place for config file
   using GITWEB_CONFIG build configuration variable, and you can set it
-  using GITWEB_CONFIG environmental variable.
+  using GITWEB_CONFIG environmental variable. If this file does not
+  exist, gitweb looks for a system-wide configuration file, normally
+  /etc/gitweb.conf. You can change the default using the
+  GITWEB_CONFIG_SYSTEM build configuration variable, and override it
+  through GITWEB_CONFIG_SYSTEM environmental variable.
 
 - Gitweb config file is [fragment] of perl code. You can set variables
   using "our $variable = value"; text from "#" character until the end

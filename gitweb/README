@@ -100,13 +100,20 @@ You can specify the following configuration variables when building GIT:
    is set when gitweb.cgi is executed, then the file specified in the
    environment variable will be loaded instead of the file specified
    when gitweb.cgi was created.  [Default: gitweb_config.perl]
+ * GITWEB_CONFIG_SYSTEM
+   This Perl file will be loaded using 'do' as a fallback if GITWEB_CONFIG
+   does not exist.  If the environment variable GITWEB_CONFIG_SYSTEM is set
+   when gitweb.cgi is executed, then the file specified in the environment
+   variable will be loaded instead of the file specified when gitweb.cgi was
+   created.  [Default: /etc/gitweb.conf]
 
 
 Runtime gitweb configuration
 ----------------------------
 
 You can adjust gitweb behaviour using the file specified in `GITWEB_CONFIG`
-(defaults to 'gitweb_config.perl' in the same directory as the CGI).
+(defaults to 'gitweb_config.perl' in the same directory as the CGI), and
+as a fallback `GITWEB_CONFIG_SYSTEM` (defaults to /etc/gitweb.conf).
 The most notable thing that is not configurable at compile time are the
 optional features, stored in the '%features' variable.
 
