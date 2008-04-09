@@ -309,22 +309,42 @@ then
 	}
 fi
 
-# If the branch to rebase is given, first switch to it.
+# If the branch to rebase is given, that is the branch we will rebase
+# $branch_name -- branch being rebased, or HEAD (already detached)
+# $orig_head -- commit object name of tip of the branch before rebasing
+# $head_name -- refs/heads/<that-branch> or "detached HEAD"
+switch_to=
 case "$#" in
 2)
+	# Is it "rebase other $branchname" or "rebase other $commit"?
 	branch_name="$2"
-	git-checkout "$2" || usage
-	;;
-*)
-	if branch_name=`git symbolic-ref -q HEAD`
+	switch_to="$2"
+
+	if git show-ref --verify --quiet -- "refs/heads/$2" &&
+	   branch=$(git rev-parse --verify "refs/heads/$2" 2>/dev/null)
 	then
-		branch_name=`expr "z$branch_name" : 'zrefs/heads/\(.*\)'`
+		head_name="refs/heads/$2"
+	elif branch=$(git rev-parse --verify "$2" 2>/dev/null)
+	then
+		head_name="detached HEAD"
 	else
-		branch_name=HEAD ;# detached
+		usage
 	fi
 	;;
+*)
+	# Do not need to switch branches, we are already on it.
+	if branch_name=`git symbolic-ref -q HEAD`
+	then
+		head_name=$branch_name
+		branch_name=`expr "z$branch_name" : 'zrefs/heads/\(.*\)'`
+	else
+		head_name="detached HEAD"
+		branch_name=HEAD ;# detached
+	fi
+	branch=$(git rev-parse --verify "${branch_name}^0") || exit
+	;;
 esac
-branch=$(git rev-parse --verify "${branch_name}^0") || exit
+orig_head=$branch
 
 # Now we are rebasing commits $upstream..$branch on top of $onto
 
@@ -335,6 +355,8 @@ if test "$upstream" = "$onto" && test "$mb" = "$onto" &&
 	# linear history?
 	! git rev-list --parents "$onto".."$branch" | grep " .* " > /dev/null
 then
+	# Lazily switch to the target branch if needed...
+	test -z "$switch_to" || git checkout "$switch_to"
 	echo >&2 "Current branch $branch_name is up to date."
 	exit 0
 fi
@@ -346,22 +368,11 @@ then
 	GIT_PAGER='' git diff --stat --summary "$mb" "$onto"
 fi
 
-# move to a detached HEAD
-orig_head=$(git rev-parse HEAD^0)
-head_name=$(git symbolic-ref HEAD 2> /dev/null)
-case "$head_name" in
-'')
-	head_name="detached HEAD"
-	;;
-*)
-	git checkout "$orig_head" > /dev/null 2>&1 ||
-		die "could not detach HEAD"
-	;;
-esac
-
-# Rewind the head to "$onto"; this saves our current head in ORIG_HEAD.
+# Detach HEAD and reset the tree
 echo "First, rewinding head to replay your work on top of it..."
-git-reset --hard "$onto"
+git checkout "$onto^0" >/dev/null 2>&1 ||
+	die "could not detach HEAD"
+# git reset --hard "$onto^0"
 
 # If the $onto is a proper descendant of the tip of the branch, then
 # we just fast forwarded.
@@ -374,7 +385,8 @@ fi
 
 if test -z "$do_merge"
 then
-	git format-patch -k --stdout --full-index --ignore-if-in-upstream "$upstream"..ORIG_HEAD |
+	git format-patch -k --stdout --full-index --ignore-if-in-upstream \
+		"$upstream..$orig_head" |
 	git am $git_am_opt --rebasing --resolvemsg="$RESOLVEMSG" &&
 	move_to_original_branch
 	ret=$?
@@ -397,7 +409,7 @@ echo "$orig_head" > "$dotest/orig-head"
 echo "$head_name" > "$dotest/head-name"
 
 msgnum=0
-for cmt in `git rev-list --reverse --no-merges "$upstream"..ORIG_HEAD`
+for cmt in `git rev-list --reverse --no-merges "$upstream..$orig_head"`
 do
 	msgnum=$(($msgnum + 1))
 	echo "$cmt" > "$dotest/cmt.$msgnum"
