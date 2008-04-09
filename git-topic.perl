@@ -12,6 +12,7 @@ my @stage = qw(next pu);
 my @mark = ('.', '?', '-', '+');
 my $all = 0;
 my $merges = 0;
+my $tests = 0;
 
 my @custom_stage;
 my @custom_mark;
@@ -20,6 +21,7 @@ GetOptions("topic=s" => \$topic_pattern,
 	   "stage=s" => \@custom_stage,
 	   "mark=s" => \@custom_mark,
 	   "merges!" => \$merges,
+	   "tests!" => \$tests,
 	   "all!" => \$all)
     or die;
 
@@ -75,6 +77,46 @@ sub rebase_marker {
 	return '*';
 }
 
+my %atlog_next = ();
+my %atlog_test = ();
+
+sub next_marker {
+	my ($topic) = @_;
+	return '' if (!$tests);
+	return '??' if (!exists $atlog_next{$topic});
+	for ($atlog_next{$topic}) {
+		my ($merge, $test) = ('*', '*');
+		if (/rerere ok/) {
+			$merge = 'R';
+		} elsif (/conflict (\d+)/) {
+			if ($1 < 10) {
+				$merge = $1;
+			} else {
+				$merge = 'X';
+			}
+		}
+		$test = 'X' if (/test error/);
+		return "$merge$test";
+	}
+}
+
+sub test_marker {
+	my ($commit) = @_;
+	return '' if (!$tests);
+	my $tree = `git rev-parse "$commit^{tree}"`;
+	chomp($tree);
+	return "?" if (!exists $atlog_test{$tree});
+	for ($atlog_test{$tree}) {
+		if (/build error/) {
+			return 'B';
+		} elsif (/test error/) {
+			return 'X';
+		} else {
+			return ' ';
+		}
+	}
+}
+
 sub describe_topic {
 	my ($topic) = @_;
 
@@ -90,19 +132,38 @@ sub describe_topic {
 }
 
 my @in_next = read_revs_short('^master', $stage[0]);
+my @topic = ();
+
+my @topic_pattern = map { "refs/heads/$_" } (@ARGV ? @ARGV : $topic_pattern);
 
 open(TOPIC, '-|', qw(git for-each-ref),
     '--sort=-authordate',
     '--format=%(objectname) %(authordate) %(refname)',
-    "refs/heads/$topic_pattern")
+    @topic_pattern)
     or die;
 
-my @topic = ();
 while (<TOPIC>) {
 	chomp;
 	my ($sha1, $date, $topic) = m|^([0-9a-f]{40})\s(.*?)\srefs/heads/(.+)$|
 	    or next;
 	push @topic, [$sha1, $date, $topic];
+}
+close(TOPIC);
+
+if (open(AT, "Meta/AT.log")) {
+	my $next = `git rev-parse --verify refs/heads/next`;
+	chomp $next;
+	while (<AT>) {
+		if (/^N (.{40}) (.{40})	(.*)$/ && $1 eq $next) {
+			$atlog_next{$2} = $3;
+			next;
+		}
+		if (/^A (.{40})	(.*)/) {
+			$atlog_test{$1} = $2;
+			next;
+		}
+	}
+	close(AT);
 }
 
 my @last_merge_to_next = ();
@@ -121,7 +182,9 @@ for (@topic) {
 		}
 	}
 
-	print '*' . rebase_marker($sha1, $stage[0], \@in_next);
+	print '*' .
+	    next_marker($sha1) .
+	    rebase_marker($sha1, $stage[0], \@in_next);
 	my $count = "";
 	if (1 < @revs) {
 		$count = " " . (scalar @revs) . " commits";
@@ -135,6 +198,9 @@ for (@topic) {
 		my $mark = $item->[2];
 		if ($mark < @mark) {
 			$mark = $mark[$mark];
+		}
+		if ($tests) {
+			$mark = test_marker($item->[0]) . $mark;
 		}
 		wrap_print("$mark $item->[1]");
 	}
