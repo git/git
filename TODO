@@ -20,6 +20,9 @@ placed on hold during rc freeze.
 * cvsserver updates (Damien Diederen with help by Frank Lichtenheld)
   $gmane/78188
 
+* use single database to serve more than one cvsserver instances (Josh Elsasser)
+  $gmane/78366
+
 * rewriting annotated tags in filter-branch (Brandon Casey)
   $gmane/78286
 
