@@ -139,6 +139,17 @@ but can be used to amend a merge commit.
 	as well.  This is usually not what you want unless you
 	are concluding a conflicted merge.
 
+-o|--only::
+	Make a commit only from the paths specified on the
+	command line, disregarding any contents that have been
+	staged so far. This is the default mode of operation of
+	'git commit' if any paths are given on the command line,
+	in which case this option can be omitted.
+	If this option is specified together with '--amend', then
+	no paths need be specified, which can be used to amend
+	the last commit without committing changes that have
+	already been staged.
+
 -u|--untracked-files::
 	Show all untracked files, also those in uninteresting
 	directories, in the "Untracked files:" section of commit
