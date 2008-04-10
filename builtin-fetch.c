@@ -215,13 +215,6 @@ static int update_local_ref(struct ref *ref,
 	if (type < 0)
 		die("object %s not found", sha1_to_hex(ref->new_sha1));
 
-	if (!*ref->name) {
-		/* Not storing */
-		if (verbose)
-			sprintf(display, "* branch %s -> FETCH_HEAD", remote);
-		return 0;
-	}
-
 	if (!hashcmp(ref->old_sha1, ref->new_sha1)) {
 		if (verbose)
 			sprintf(display, "= %-*s %-*s -> %s", SUMMARY_WIDTH,
@@ -365,16 +358,21 @@ static int store_updated_refs(const char *url, struct ref *ref_map)
 			rm->merge ? "" : "not-for-merge",
 			note);
 
-		if (ref) {
+		if (ref)
 			update_local_ref(ref, what, verbose, note);
-			if (*note) {
-				if (!shown_url) {
-					fprintf(stderr, "From %.*s\n",
-							url_len, url);
-					shown_url = 1;
-				}
-				fprintf(stderr, " %s\n", note);
+		else if (verbose)
+			sprintf(note, "* %-*s %-*s -> FETCH_HEAD",
+				SUMMARY_WIDTH, *kind ? kind : "branch",
+				 REFCOL_WIDTH, *what ? what : "HEAD");
+		else
+			*note = '\0';
+		if (*note) {
+			if (!shown_url) {
+				fprintf(stderr, "From %.*s\n",
+						url_len, url);
+				shown_url = 1;
 			}
+			fprintf(stderr, " %s\n", note);
 		}
 	}
 	fclose(fp);
