@@ -745,10 +745,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		die("No paths with --include/--only does not make sense.");
 	if (argc == 0 && only && amend)
 		only_include_assumed = "Clever... amending the last one with dirty index.";
-	if (argc > 0 && !also && !only) {
+	if (argc > 0 && !also && !only)
 		only_include_assumed = "Explicit paths specified without -i nor -o; assuming --only paths...";
-		also = 0;
-	}
 	if (!cleanup_arg || !strcmp(cleanup_arg, "default"))
 		cleanup_mode = use_editor ? CLEANUP_ALL : CLEANUP_SPACE;
 	else if (!strcmp(cleanup_arg, "verbatim"))
