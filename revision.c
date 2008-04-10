@@ -1019,6 +1019,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				continue;
 			}
 			if (!strcmp(arg, "--topo-order")) {
+				revs->lifo = 1;
 				revs->topo_order = 1;
 				continue;
 			}
