@@ -109,9 +109,10 @@ test_expect_success \
     'diff -r a c/prefix/a'
 
 test_expect_success \
-    'create an archive with a substfiles' \
+    'create archives with substfiles' \
     'echo "substfile?" export-subst >a/.gitattributes &&
      git archive HEAD >f.tar &&
+     git archive --prefix=prefix/ HEAD >g.tar &&
      rm a/.gitattributes'
 
 test_expect_success \
@@ -124,6 +125,18 @@ test_expect_success \
       >f/a/substfile1.expected &&
       diff f/a/substfile1.expected f/a/substfile1 &&
       diff a/substfile2 f/a/substfile2
+'
+
+test_expect_success \
+    'extract substfiles from archive with prefix' \
+    '(mkdir g && cd g && $TAR xf -) <g.tar'
+
+test_expect_success \
+     'validate substfile contents from archive with prefix' \
+     'git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
+      >g/prefix/a/substfile1.expected &&
+      diff g/prefix/a/substfile1.expected g/prefix/a/substfile1 &&
+      diff a/substfile2 g/prefix/a/substfile2
 '
 
 test_expect_success \
