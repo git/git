@@ -327,7 +327,7 @@ set_name_rev () {
 		cd "$1" && {
 			git describe "$2" 2>/dev/null ||
 			git describe --tags "$2" 2>/dev/null ||
-			git describe --contains --tags "$2"
+			git describe --contains --tags --always "$2"
 		}
 	) )
 	test -z "$revname" || revname=" ($revname)"
