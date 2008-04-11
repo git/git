@@ -1,7 +1,9 @@
 #!/bin/sh
 
-USAGE='[start|bad|good|skip|next|reset|visualize|replay|log|run]'
-LONG_USAGE='git bisect start [<bad> [<good>...]] [--] [<pathspec>...]
+USAGE='[help|start|bad|good|skip|next|reset|visualize|replay|log|run]'
+LONG_USAGE='git bisect help
+        print this long help message.
+git bisect start [<bad> [<good>...]] [--] [<pathspec>...]
         reset bisect state and start bisection.
 git bisect bad [<rev>]
         mark <rev> a known-bad revision.
@@ -20,7 +22,9 @@ git bisect replay <logfile>
 git bisect log
         show bisect log.
 git bisect run <cmd>...
-        use <cmd>... to automatically bisect.'
+        use <cmd>... to automatically bisect.
+
+Please use "git help bisect" to get the full man page.'
 
 OPTIONS_SPEC=
 . git-sh-setup
@@ -465,6 +469,8 @@ case "$#" in
     cmd="$1"
     shift
     case "$cmd" in
+    help)
+        git bisect -h ;;
     start)
         bisect_start "$@" ;;
     bad|good|skip)
