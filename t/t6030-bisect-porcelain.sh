@@ -71,6 +71,19 @@ test_expect_success 'bisect start with one bad and good' '
 	git bisect next
 '
 
+test_expect_success 'bisect good and bad fails if not given only revs' '
+	git bisect reset &&
+	git bisect start &&
+	test_must_fail git bisect good foo $HASH1 &&
+	test_must_fail git bisect good $HASH1 bar &&
+	test_must_fail git bisect bad frotz &&
+	test_must_fail git bisect bad $HASH3 $HASH4 &&
+	test_must_fail git bisect skip bar $HASH3 &&
+	test_must_fail git bisect skip $HASH1 foo &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4
+'
+
 test_expect_success 'bisect reset: back in the master branch' '
 	git bisect reset &&
 	echo "* master" > branch.expect &&
