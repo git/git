@@ -342,6 +342,7 @@ set_name_rev () {
 #
 cmd_summary() {
 	summary_limit=-1
+	for_status=
 
 	# parse $args after "submodule ... summary".
 	while test $# -ne 0
@@ -349,6 +350,9 @@ cmd_summary() {
 		case "$1" in
 		--cached)
 			cached="$1"
+			;;
+		--for-status)
+			for_status="$1"
 			;;
 		-n|--summary-limit)
 			if summary_limit=$(($2 + 0)) 2>/dev/null && test "$summary_limit" = "$2"
@@ -397,7 +401,8 @@ cmd_summary() {
 		done
 	)
 
-	test -n "$modules" &&
+	test -z "$modules" && return
+
 	git diff-index $cached --raw $head -- $modules |
 	grep -e '^:160000' -e '^:[0-7]* 160000' |
 	cut -c2- |
@@ -499,7 +504,14 @@ cmd_summary() {
 			echo
 		fi
 		echo
-	done
+	done |
+	if test -n "$for_status"; then
+		echo "# Modified submodules:"
+		echo "#"
+		sed -e 's|^|# |' -e 's|^# $|#|'
+	else
+		cat
+	fi
 }
 #
 # List all submodules, prefixed with:
