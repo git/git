@@ -155,20 +155,16 @@ bisect_state() {
 		rev=$(git rev-parse --verify HEAD) ||
 			die "Bad rev input: HEAD"
 		bisect_write "$state" "$rev" ;;
-	2,bad)
-		rev=$(git rev-parse --verify "$2^{commit}") ||
-			die "Bad rev input: $2"
-		bisect_write "$state" "$rev" ;;
-	*,good|*,skip)
+	2,bad|*,good|*,skip)
 		shift
-		revs=$(git rev-parse --revs-only --no-flags "$@") &&
-			test '' != "$revs" || die "Bad rev input: $@"
-		for rev in $revs
+		for rev in "$@"
 		do
 			rev=$(git rev-parse --verify "$rev^{commit}") ||
-				die "Bad rev commit: $rev^{commit}"
+				die "Bad rev input: $rev"
 			bisect_write "$state" "$rev"
 		done ;;
+	*,bad)
+		die "'git bisect bad' can take only one argument." ;;
 	*)
 		usage ;;
 	esac
