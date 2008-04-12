@@ -74,6 +74,11 @@ gitk --max-count=100 --all \-- Makefile::
 	Show at most 100 changes made to the file 'Makefile'. Instead of only
 	looking for changes in the current branch look in all branches.
 
+Files
+-----
+Gitk creates the .gitk file in your $HOME directory to store preferences
+such as display options, font, and colors.
+
 See Also
 --------
 'qgit(1)'::
