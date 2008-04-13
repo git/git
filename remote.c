@@ -315,7 +315,7 @@ static int handle_config(const char *key, const char *value)
 	}
 	if (!prefixcmp(key, "url.")) {
 		struct rewrite *rewrite;
-		name = key + 5;
+		name = key + 4;
 		subkey = strrchr(name, '.');
 		if (!subkey)
 			return 0;

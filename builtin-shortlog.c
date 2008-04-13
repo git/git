@@ -9,7 +9,7 @@
 #include "shortlog.h"
 
 static const char shortlog_usage[] =
-"git-shortlog [-n] [-s] [-e] [<commit-id>... ]";
+"git-shortlog [-n] [-s] [-e] [-w] [<commit-id>... ]";
 
 static int compare_by_number(const void *a1, const void *a2)
 {

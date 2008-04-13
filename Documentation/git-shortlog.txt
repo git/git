@@ -8,8 +8,8 @@ git-shortlog - Summarize 'git log' output
 SYNOPSIS
 --------
 [verse]
-git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s] [-e]
-git-shortlog [-n|--numbered] [-s|--summary] [-e|--email] [<committish>...]
+git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s] [-e] [-w]
+git-shortlog [-n|--numbered] [-s|--summary] [-e|--email] [-w[<width>[,<indent1>[,<indent2>]]]] [<committish>...]
 
 DESCRIPTION
 -----------
@@ -34,6 +34,12 @@ OPTIONS
 
 -e, \--email::
 	Show the email address of each author.
+
+-w[<width>[,<indent1>[,<indent2>]]]::
+	Linewrap the output by wrapping each line at `width`.  The first
+	line of each entry is indented by `indent1` spaces, and the second
+	and subsequent lines are indented by `indent2` spaces. `width`,
+	`indent1`, and `indent2` default to 76, 6 and 9 respectively.
 
 FILES
 -----

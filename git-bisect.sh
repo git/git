@@ -159,9 +159,9 @@ bisect_state() {
 		shift
 		for rev in "$@"
 		do
-			rev=$(git rev-parse --verify "$rev^{commit}") ||
+			sha=$(git rev-parse --verify "$rev^{commit}") ||
 				die "Bad rev input: $rev"
-			bisect_write "$state" "$rev"
+			bisect_write "$state" "$sha"
 		done ;;
 	*,bad)
 		die "'git bisect bad' can take only one argument." ;;

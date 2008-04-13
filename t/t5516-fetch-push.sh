@@ -103,9 +103,9 @@ test_expect_success 'fetch with wildcard' '
 test_expect_success 'fetch with insteadOf' '
 	mk_empty &&
 	(
-		TRASH=$(pwd) &&
+		TRASH=$(pwd)/ &&
 		cd testrepo &&
-		git config url./$TRASH/.insteadOf trash/
+		git config url.$TRASH.insteadOf trash/
 		git config remote.up.url trash/. &&
 		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
 		git fetch up &&
@@ -145,8 +145,8 @@ test_expect_success 'push with wildcard' '
 
 test_expect_success 'push with insteadOf' '
 	mk_empty &&
-	TRASH=$(pwd) &&
-	git config url./$TRASH/.insteadOf trash/ &&
+	TRASH=$(pwd)/ &&
+	git config url.$TRASH.insteadOf trash/ &&
 	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
