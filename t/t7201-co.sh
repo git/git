@@ -207,7 +207,11 @@ test_expect_success 'checkout to detach HEAD with branchname^' '
 	fi
 '
 
-test_expect_success 'checkout to detach HEAD with :/message' '
+case $(uname -s) in
+*MINGW*) test_expect=test_expect_failure;;
+*)       test_expect=test_expect_success;;
+esac
+$test_expect 'checkout to detach HEAD with :/message' '
 
 	git checkout -f master && git clean -f &&
 	git checkout ":/Initial" &&
