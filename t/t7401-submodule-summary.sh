@@ -30,7 +30,7 @@ commit_file () {
 }
 
 test_create_repo sm1 &&
-add_file . foo
+add_file . foo >/dev/null
 
 head1=$(add_file sm1 foo1 foo2)
 
