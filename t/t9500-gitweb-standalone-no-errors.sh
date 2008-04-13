@@ -483,6 +483,22 @@ test_expect_success \
 	'gitweb_run "p=.git;a=history;f=file"'
 test_debug 'cat gitweb.log'
 
+test_expect_success \
+	'logs: history (implicit HEAD, non-existent file)' \
+	'gitweb_run "p=.git;a=history;f=non-existent"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'logs: history (implicit HEAD, deleted file)' \
+	'git checkout master &&
+	 echo "to be deleted" > deleted_file &&
+	 git add deleted_file &&
+	 git commit -m "Add file to be deleted" &&
+	 git rm deleted_file &&
+	 git commit -m "Delete file" &&
+	 gitweb_run "p=.git;a=history;f=deleted_file"'
+test_debug 'cat gitweb.log'
+
 # ----------------------------------------------------------------------
 # feed generation
 

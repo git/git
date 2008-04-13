@@ -5171,14 +5171,26 @@ sub git_history {
 	my $refs = git_get_references();
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
 
+	my @commitlist = parse_commits($hash_base, 101, (100 * $page),
+	                               $file_name, "--full-history");
+	if (!@commitlist) {
+		die_error('404 Not Found', "No such file or directory on given branch");
+	}
+
 	if (!defined $hash && defined $file_name) {
-		$hash = git_get_hash_by_path($hash_base, $file_name);
+		# some commits could have deleted file in question,
+		# and not have it in tree, but one of them has to have it
+		for (my $i = 0; $i <= @commitlist; $i++) {
+			$hash = git_get_hash_by_path($commitlist[$i]{'id'}, $file_name);
+			last if defined $hash;
+		}
 	}
 	if (defined $hash) {
 		$ftype = git_get_type($hash);
 	}
-
-	my @commitlist = parse_commits($hash_base, 101, (100 * $page), $file_name, "--full-history");
+	if (!defined $ftype) {
+		die_error(undef, "Unknown type of object");
+	}
 
 	my $paging_nav = '';
 	if ($page > 0) {
