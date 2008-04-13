@@ -46,6 +46,7 @@ test_refspec fetch 'refs/heads/*:refs/remotes/frotz/*'
 test_refspec fetch 'refs/heads/*:refs/remotes/frotz'		invalid
 test_refspec fetch 'refs/heads:refs/remotes/frotz/*'		invalid
 test_refspec fetch 'refs/heads/master:refs/remotes/frotz/xyzzy'
+test "$is_mingw" ||
 test_refspec fetch 'refs/heads/master::refs/remotes/frotz/xyzzy'	invalid
 test_refspec fetch 'refs/heads/maste :refs/remotes/frotz/xyzzy'	invalid
 
