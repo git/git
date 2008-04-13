@@ -41,6 +41,7 @@ cat - <<EOF >expect
 want $A
 #E
 EOF
+test "$is_mingw" ||
 test_expect_success 'fetch A (new commit : 1 connection)' '
 	rm -f $U
 	(
@@ -71,6 +72,7 @@ want $C
 want $T
 #E
 EOF
+test "$is_mingw" ||
 test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
 	rm -f $U
 	(
@@ -107,6 +109,7 @@ want $B
 want $S
 #E
 EOF
+test "$is_mingw" ||
 test_expect_success 'fetch B, S (commit and tag : 1 connection)' '
 	rm -f $U
 	(
@@ -127,6 +130,7 @@ want $B
 want $S
 #E
 EOF
+test "$is_mingw" ||
 test_expect_success 'new clone fetch master and tags' '
 	git branch -D cat
 	rm -f $U

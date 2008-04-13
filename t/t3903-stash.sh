@@ -88,7 +88,11 @@ test_expect_success 'drop top stash' '
 	test 1 = $(git show HEAD:file)
 '
 
-test_expect_success 'drop middle stash' '
+case $(uname -s) in
+*MINGW*) test_expect=test_expect_failure;;
+*)       test_expect=test_expect_success;;
+esac
+$test_expect 'drop middle stash' '
 	git reset --hard &&
 	echo 8 > file &&
 	git stash &&
@@ -108,7 +112,7 @@ test_expect_success 'drop middle stash' '
 	test 1 = $(git show HEAD:file)
 '
 
-test_expect_success 'stash pop' '
+$test_expect 'stash pop' '
 	git reset --hard &&
 	git stash pop &&
 	test 3 = $(cat file) &&
