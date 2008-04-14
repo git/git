@@ -102,8 +102,8 @@ proc hint_gc {} {
 		*]]
 
 	if {$objects_current >= $object_limit} {
-		set objects_current [expr {$objects_current * 256}]
-		set object_limit    [expr {$object_limit    * 256}]
+		set objects_current [expr {$objects_current * 250}]
+		set object_limit    [expr {$object_limit    * 250}]
 		if {[ask_popup \
 			[mc "This repository currently has approximately %i loose objects.
 
