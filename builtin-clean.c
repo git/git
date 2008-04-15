@@ -95,7 +95,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
-		int len, pos, matches;
+		int len, pos;
+		int matches = 0;
 		struct cache_entry *ce;
 		struct stat st;
 
@@ -127,18 +128,18 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 		if (pathspec) {
 			memset(seen, 0, argc > 0 ? argc : 1);
-			matches = match_pathspec(pathspec, ent->name, ent->len,
+			matches = match_pathspec(pathspec, ent->name, len,
 						 baselen, seen);
-		} else {
-			matches = 0;
 		}
 
 		if (S_ISDIR(st.st_mode)) {
 			strbuf_addstr(&directory, ent->name);
 			qname = quote_path_relative(directory.buf, directory.len, &buf, prefix);
-			if (show_only && (remove_directories || matches)) {
+			if (show_only && (remove_directories ||
+			    (matches == MATCHED_EXACTLY))) {
 				printf("Would remove %s\n", qname);
-			} else if (remove_directories || matches) {
+			} else if (remove_directories ||
+				   (matches == MATCHED_EXACTLY)) {
 				if (!quiet)
 					printf("Removing %s\n", qname);
 				if (remove_dir_recursively(&directory, 0) != 0) {

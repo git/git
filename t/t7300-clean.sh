@@ -75,8 +75,8 @@ test_expect_success 'git-clean src/ src/' '
 
 test_expect_success 'git-clean with prefix' '
 
-	mkdir -p build docs &&
-	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	mkdir -p build docs src/test &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so src/test/1.c &&
 	(cd src/ && git-clean) &&
 	test -f Makefile &&
 	test -f README &&
@@ -84,6 +84,7 @@ test_expect_success 'git-clean with prefix' '
 	test -f src/part2.c &&
 	test -f a.out &&
 	test ! -f src/part3.c &&
+	test -f src/test/1.c &&
 	test -f docs/manual.txt &&
 	test -f obj.o &&
 	test -f build/lib.so
