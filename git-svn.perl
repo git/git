@@ -82,6 +82,7 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'repack-flags|repack-args|repack-opts=s' =>
 		   \$Git::SVN::_repack_flags,
 		'use-log-author' => \$Git::SVN::_use_log_author,
+		'add-author-from' => \$Git::SVN::_add_author_from,
 		%remote_opts );
 
 my ($_trunk, $_tags, $_branches, $_stdlayout);
@@ -1011,16 +1012,27 @@ sub get_commit_entry {
 		my ($msg_fh, $ctx) = command_output_pipe('cat-file',
 		                                         $type, $treeish);
 		my $in_msg = 0;
+		my $author;
+		my $saw_from = 0;
 		while (<$msg_fh>) {
 			if (!$in_msg) {
 				$in_msg = 1 if (/^\s*$/);
+				$author = $1 if (/^author (.*>)/);
 			} elsif (/^git-svn-id: /) {
 				# skip this for now, we regenerate the
 				# correct one on re-fetch anyways
 				# TODO: set *:merge properties or like...
 			} else {
+				if (/^From:/ || /^Signed-off-by:/) {
+					$saw_from = 1;
+				}
 				print $log_fh $_ or croak $!;
 			}
+		}
+		if ($Git::SVN::_add_author_from && defined($author)
+		    && !$saw_from) {
+			print $log_fh "\nFrom: $author\n"
+			      or croak $!;
 		}
 		command_close_pipe($msg_fh, $ctx);
 	}
@@ -1248,7 +1260,7 @@ use constant rev_map_fmt => 'NH40';
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags $_use_svm_props $_head
             $_use_svnsync_props $no_reuse_existing $_minimize_url
-	    $_use_log_author/;
+	    $_use_log_author $_add_author_from/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
