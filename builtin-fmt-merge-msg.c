@@ -201,6 +201,15 @@ static void shortlog(const char *name, unsigned char *sha1,
 			continue;
 
 		bol = strstr(commit->buffer, "\n\n");
+		if (bol) {
+			unsigned char c;
+			do {
+				c = *++bol;
+			} while (isspace(c));
+			if (!c)
+				bol = NULL;
+		}
+
 		if (!bol) {
 			append_to_list(&subjects, xstrdup(sha1_to_hex(
 							commit->object.sha1)),
@@ -208,7 +217,6 @@ static void shortlog(const char *name, unsigned char *sha1,
 			continue;
 		}
 
-		bol += 2;
 		eol = strchr(bol, '\n');
 		if (eol) {
 			oneline = xmemdupz(bol, eol - bol);

@@ -62,9 +62,10 @@ bisect_start() {
 	# Verify HEAD. If we were bisecting before this, reset to the
 	# top-of-line master first!
 	#
-	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref HEAD) ||
+	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref -q HEAD) ||
 	head=$(GIT_DIR="$GIT_DIR" git rev-parse --verify HEAD) ||
 	die "Bad HEAD - I need a HEAD"
+	start_head=''
 	case "$head" in
 	refs/heads/bisect)
 		if [ -s "$GIT_DIR/BISECT_START" ]; then
@@ -78,7 +79,7 @@ bisect_start() {
 		# This error message should only be triggered by cogito usage,
 		# and cogito users should understand it relates to cg-seek.
 		[ -s "$GIT_DIR/head-name" ] && die "won't bisect on seeked tree"
-		echo "${head#refs/heads/}" >"$GIT_DIR/BISECT_START"
+		start_head="${head#refs/heads/}"
 		;;
 	*)
 		die "Bad HEAD - strange symbolic ref"
@@ -99,6 +100,7 @@ bisect_start() {
 	done
 	orig_args=$(sq "$@")
 	bad_seen=0
+	eval=''
 	while [ $# -gt 0 ]; do
 	    arg="$1"
 	    case "$arg" in
@@ -116,13 +118,15 @@ bisect_start() {
 		0) state='bad' ; bad_seen=1 ;;
 		*) state='good' ;;
 		esac
-		bisect_write "$state" "$rev" 'nolog'
+		eval="$eval bisect_write '$state' '$rev' 'nolog'; "
 		shift
 		;;
 	    esac
 	done
 
 	sq "$@" >"$GIT_DIR/BISECT_NAMES"
+	test -n "$start_head" && echo "$start_head" >"$GIT_DIR/BISECT_START"
+	eval "$eval"
 	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG"
 	bisect_auto_next
 }
@@ -153,12 +157,14 @@ bisect_state() {
 		bisect_write "$state" "$rev" ;;
 	2,bad|*,good|*,skip)
 		shift
+		eval=''
 		for rev in "$@"
 		do
 			sha=$(git rev-parse --verify "$rev^{commit}") ||
 				die "Bad rev input: $rev"
-			bisect_write "$state" "$sha"
-		done ;;
+			eval="$eval bisect_write '$state' '$sha'; "
+		done
+		eval "$eval" ;;
 	*,bad)
 		die "'git bisect bad' can take only one argument." ;;
 	*)
