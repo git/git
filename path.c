@@ -266,24 +266,25 @@ int adjust_shared_perm(const char *path)
 	if (lstat(path, &st) < 0)
 		return -1;
 	mode = st.st_mode;
-	if (mode & S_IRUSR)
-		mode |= (shared_repository == PERM_GROUP
-			 ? S_IRGRP
-			 : (shared_repository == PERM_EVERYBODY
-			    ? (S_IRGRP|S_IROTH)
-			    : 0));
 
-	if (mode & S_IWUSR)
-		mode |= S_IWGRP;
+	if (shared_repository) {
+		int tweak = shared_repository;
+		if (!(mode & S_IWUSR))
+			tweak &= ~0222;
+		mode = (mode & ~0777) | tweak;
+	} else {
+		/* Preserve old PERM_UMASK behaviour */
+		if (mode & S_IWUSR)
+			mode |= S_IWGRP;
+	}
 
-	if (mode & S_IXUSR)
-		mode |= (shared_repository == PERM_GROUP
-			 ? S_IXGRP
-			 : (shared_repository == PERM_EVERYBODY
-			    ? (S_IXGRP|S_IXOTH)
-			    : 0));
-	if (S_ISDIR(mode))
+	if (S_ISDIR(mode)) {
 		mode |= FORCE_DIR_SET_GID;
+
+		/* Copy read bits to execute bits */
+		mode |= (shared_repository & 0444) >> 2;
+	}
+
 	if ((mode & st.st_mode) != mode && chmod(path, mode) < 0)
 		return -2;
 	return 0;
