@@ -62,7 +62,7 @@ bisect_start() {
 	# Verify HEAD. If we were bisecting before this, reset to the
 	# top-of-line master first!
 	#
-	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref HEAD) ||
+	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref -q HEAD) ||
 	head=$(GIT_DIR="$GIT_DIR" git rev-parse --verify HEAD) ||
 	die "Bad HEAD - I need a HEAD"
 	case "$head" in
