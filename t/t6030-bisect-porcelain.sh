@@ -71,8 +71,12 @@ test_expect_success 'bisect start with one bad and good' '
 	git bisect next
 '
 
-test_expect_success 'bisect good and bad fails if not given only revs' '
+test_expect_success 'bisect fails if given any junk instead of revs' '
 	git bisect reset &&
+	test_must_fail git bisect start foo $HASH1 -- &&
+	test_must_fail git bisect start $HASH4 $HASH1 bar -- &&
+	test -z "$(git for-each-ref "refs/bisect/*")" &&
+	test_must_fail ls .git/BISECT_* &&
 	git bisect start &&
 	test_must_fail git bisect good foo $HASH1 &&
 	test_must_fail git bisect good $HASH1 bar &&
@@ -80,6 +84,7 @@ test_expect_success 'bisect good and bad fails if not given only revs' '
 	test_must_fail git bisect bad $HASH3 $HASH4 &&
 	test_must_fail git bisect skip bar $HASH3 &&
 	test_must_fail git bisect skip $HASH1 foo &&
+	test -z "$(git for-each-ref "refs/bisect/*")" &&
 	git bisect good $HASH1 &&
 	git bisect bad $HASH4
 '
