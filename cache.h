@@ -599,6 +599,7 @@ extern struct alternate_object_database {
 	char base[FLEX_ARRAY]; /* more */
 } *alt_odb_list;
 extern void prepare_alt_odb(void);
+extern void add_to_alternates_file(const char *reference);
 
 struct pack_window {
 	struct pack_window *next;
