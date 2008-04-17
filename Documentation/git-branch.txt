@@ -8,7 +8,7 @@ git-branch - List, create, or delete branches
 SYNOPSIS
 --------
 [verse]
-'git-branch' [--color | --no-color] [-r | -a]
+'git-branch' [--color | --no-color] [-r | -a] [--merged | --no-merged]
 	   [-v [--abbrev=<length> | --no-abbrev]]
 	   [--contains <commit>]
 'git-branch' [--track | --no-track] [-l] [-f] <branchname> [<start-point>]
@@ -24,6 +24,8 @@ and option `-a` shows both.
 With `--contains <commit>`, shows only the branches that
 contains the named commit (in other words, the branches whose
 tip commits are descendant of the named commit).
+With `--merged`, only branches merged into HEAD will be listed, and
+with `--no-merged` only branches not merged into HEAD will be listed.
 
 In its second form, a new branch named <branchname> will be created.
 It will start out with a head equal to the one given as <start-point>.
