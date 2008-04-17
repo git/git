@@ -69,7 +69,9 @@ the remote repository.
 	be mirrored to the remote repository.  Newly created local
 	refs will be pushed to the remote end, locally updated refs
 	will be force updated on the remote end, and deleted refs
-	will be removed from the remote end.
+	will be removed from the remote end.  This is the default
+	if the configuration option `remote.<remote>.mirror` is
+	set.
 
 \--dry-run::
 	Do everything except actually send the updates.

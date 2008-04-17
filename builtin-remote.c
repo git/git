@@ -117,6 +117,13 @@ static int add(int argc, const char **argv)
 			return 1;
 	}
 
+	if (mirror) {
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "remote.%s.mirror", name);
+		if (git_config_set(buf.buf, "yes"))
+			return 1;
+	}
+
 	if (fetch && fetch_remote(name))
 		return 1;
 

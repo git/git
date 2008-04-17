@@ -26,6 +26,7 @@ struct remote {
 	 */
 	int fetch_tags;
 	int skip_default_update;
+	int mirror;
 
 	const char *receivepack;
 	const char *uploadpack;
