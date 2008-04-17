@@ -51,6 +51,8 @@ struct refspec {
 	char *dst;
 };
 
+extern const struct refspec *tag_refspec;
+
 struct ref *alloc_ref(unsigned namelen);
 
 struct ref *copy_ref_list(const struct ref *ref);

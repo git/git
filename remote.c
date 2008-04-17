@@ -2,6 +2,15 @@
 #include "remote.h"
 #include "refs.h"
 
+static struct refspec s_tag_refspec = {
+	0,
+	1,
+	"refs/tags/",
+	"refs/tags/"
+};
+
+const struct refspec *tag_refspec = &s_tag_refspec;
+
 struct counted_string {
 	size_t len;
 	const char *s;
