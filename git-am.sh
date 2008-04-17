@@ -383,7 +383,6 @@ do
 			;;
 		esac
 	esac
-	FIRSTLINE=$(head -1 "$dotest/final-commit")
 
 	resume=
 	if test "$interactive" = t
@@ -404,7 +403,6 @@ do
 		[aA]*) action=yes interactive= ;;
 		[nN]*) action=skip ;;
 		[eE]*) git_editor "$dotest/final-commit"
-		       FIRSTLINE=$(head -1 "$dotest/final-commit")
 		       action=again ;;
 		[vV]*) action=again
 		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;
@@ -414,6 +412,7 @@ do
 	else
 	    action=yes
 	fi
+	FIRSTLINE=$(head -1 "$dotest/final-commit")
 
 	if test $action = skip
 	then
