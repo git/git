@@ -2506,6 +2506,7 @@ sub rebuild_from_rev_db {
 	my ($self, $path) = @_;
 	my $r = -1;
 	open my $fh, '<', $path or croak "open: $!";
+	binmode $fh or croak "binmode: $!";
 	while (<$fh>) {
 		length($_) == 41 or croak "inconsistent size in ($_) != 41";
 		chomp($_);
@@ -2603,6 +2604,7 @@ sub rebuild {
 sub _rev_map_set {
 	my ($fh, $rev, $commit) = @_;
 
+	binmode $fh or croak "binmode: $!";
 	my $size = (stat($fh))[7];
 	($size % 24) == 0 or croak "inconsistent size: $size";
 
@@ -2706,6 +2708,7 @@ sub rev_map_max {
 	my $map_path = $self->map_path;
 	stat $map_path or return $want_commit ? (0, undef) : 0;
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
+	binmode $fh or croak "binmode: $!";
 	my $size = (stat($fh))[7];
 	($size % 24) == 0 or croak "inconsistent size: $size";
 
@@ -2738,6 +2741,7 @@ sub rev_map_get {
 	return undef unless -e $map_path;
 
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
+	binmode $fh or croak "binmode: $!";
 	my $size = (stat($fh))[7];
 	($size % 24) == 0 or croak "inconsistent size: $size";
 
