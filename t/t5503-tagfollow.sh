@@ -41,8 +41,12 @@ cat - <<EOF >expect
 want $A
 #E
 EOF
-test "$is_mingw" ||
-test_expect_success 'fetch A (new commit : 1 connection)' '
+
+case $(uname -s) in
+*MINGW*) test_expect=test_expect_failure;;
+*)       test_expect=test_expect_success;;
+esac
+$test_expect 'fetch A (new commit : 1 connection)' '
 	rm -f $U
 	(
 		cd cloned &&
@@ -72,8 +76,11 @@ want $C
 want $T
 #E
 EOF
-test "$is_mingw" ||
-test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
+case $(uname -s) in
+*MINGW*) test_expect=test_expect_failure;;
+*)       test_expect=test_expect_success;;
+esac
+$test_expect 'fetch C, T (new branch, tag : 1 connection)' '
 	rm -f $U
 	(
 		cd cloned &&
@@ -109,8 +116,11 @@ want $B
 want $S
 #E
 EOF
-test "$is_mingw" ||
-test_expect_success 'fetch B, S (commit and tag : 1 connection)' '
+case $(uname -s) in
+*MINGW*) test_expect=test_expect_failure;;
+*)       test_expect=test_expect_success;;
+esac
+$test_expect 'fetch B, S (commit and tag : 1 connection)' '
 	rm -f $U
 	(
 		cd cloned &&
@@ -130,8 +140,11 @@ want $B
 want $S
 #E
 EOF
-test "$is_mingw" ||
-test_expect_success 'new clone fetch master and tags' '
+case $(uname -s) in
+*MINGW*) test_expect=test_expect_failure;;
+*)       test_expect=test_expect_success;;
+esac
+$test_expect 'new clone fetch master and tags' '
 	git branch -D cat
 	rm -f $U
 	(
