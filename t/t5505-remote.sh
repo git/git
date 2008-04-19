@@ -253,4 +253,10 @@ test_expect_success '"remote show" does not show symbolic refs' '
 
 '
 
+test_expect_success 'reject adding remote with an invalid name' '
+
+	! git remote add some:url desired-name
+
+'
+
 test_done
