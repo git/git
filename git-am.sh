@@ -330,7 +330,7 @@ do
 		SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
 		case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
 
-		(echo "$SUBJECT" ; echo ; cat "$dotest/msg") |
+		(printf '%s\n\n' "$SUBJECT"; cat "$dotest/msg") |
 			git stripspace > "$dotest/msg-clean"
 		;;
 	esac
