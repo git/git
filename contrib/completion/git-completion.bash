@@ -152,7 +152,7 @@ __git_heads ()
 		done
 		return
 	fi
-	for i in $(git-ls-remote "$1" 2>/dev/null); do
+	for i in $(git ls-remote "$1" 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
@@ -173,7 +173,7 @@ __git_tags ()
 		done
 		return
 	fi
-	for i in $(git-ls-remote "$1" 2>/dev/null); do
+	for i in $(git ls-remote "$1" 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
@@ -200,7 +200,7 @@ __git_refs ()
 		done
 		return
 	fi
-	for i in $(git-ls-remote "$dir" 2>/dev/null); do
+	for i in $(git ls-remote "$dir" 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
@@ -223,7 +223,7 @@ __git_refs2 ()
 __git_refs_remotes ()
 {
 	local cmd i is_hash=y
-	for i in $(git-ls-remote "$1" 2>/dev/null); do
+	for i in $(git ls-remote "$1" 2>/dev/null); do
 		case "$is_hash,$i" in
 		n,refs/heads/*)
 			is_hash=y
