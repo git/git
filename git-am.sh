@@ -327,11 +327,20 @@ do
 			echo "Patch is empty.  Was it split wrong?"
 			stop_here $this
 		}
-		SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
-		case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
+		if test -f "$dotest/rebasing" &&
+			commit=$(sed -e 's/^From \([0-9a-f]*\) .*/\1/' \
+				-e q "$dotest/$msgnum") &&
+			test "$(git cat-file -t "$commit")" = commit
+		then
+			git cat-file commit "$commit" |
+			sed -e '1,/^$/d' >"$dotest/msg-clean"
+		else
+			SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
+			case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
 
-		(printf '%s\n\n' "$SUBJECT"; cat "$dotest/msg") |
-			git stripspace > "$dotest/msg-clean"
+			(printf '%s\n\n' "$SUBJECT"; cat "$dotest/msg") |
+				git stripspace > "$dotest/msg-clean"
+		fi
 		;;
 	esac
 
