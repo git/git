@@ -19,6 +19,8 @@ static const char * const builtin_remote_usage[] = {
 
 static int verbose;
 
+static int show_all(void);
+
 static inline int postfixcmp(const char *string, const char *postfix)
 {
 	int len1 = strlen(string), len2 = strlen(postfix);
@@ -384,8 +386,11 @@ static int show_or_prune(int argc, const char **argv, int prune)
 
 	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
 
-	if (argc < 1)
+	if (argc < 1) {
+		if (!prune)
+			return show_all();
 		usage_with_options(builtin_remote_usage, options);
+	}
 
 	memset(&states, 0, sizeof(states));
 	for (; argc; argc--, argv++) {
