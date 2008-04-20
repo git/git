@@ -991,18 +991,23 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 	}
 }
 
-struct diffstat_dir {
-	struct diffstat_file **files;
-	int nr, percent, cumulative;
+struct dirstat_file {
+	const char *name;
+	unsigned long changed;
 };
 
-static long gather_dirstat(FILE *file, struct diffstat_dir *dir, unsigned long changed, const char *base, int baselen)
+struct dirstat_dir {
+	struct dirstat_file *files;
+	int alloc, nr, percent, cumulative;
+};
+
+static long gather_dirstat(FILE *file, struct dirstat_dir *dir, unsigned long changed, const char *base, int baselen)
 {
 	unsigned long this_dir = 0;
 	unsigned int sources = 0;
 
 	while (dir->nr) {
-		struct diffstat_file *f = *dir->files;
+		struct dirstat_file *f = dir->files;
 		int namelen = strlen(f->name);
 		unsigned long this;
 		char *slash;
@@ -1017,10 +1022,7 @@ static long gather_dirstat(FILE *file, struct diffstat_dir *dir, unsigned long c
 			this = gather_dirstat(file, dir, changed, f->name, newbaselen);
 			sources++;
 		} else {
-			if (f->is_unmerged || f->is_binary)
-				this = 0;
-			else
-				this = f->added + f->deleted;
+			this = f->changed;
 			dir->files++;
 			dir->nr--;
 			sources += 2;
@@ -1048,19 +1050,58 @@ static long gather_dirstat(FILE *file, struct diffstat_dir *dir, unsigned long c
 	return this_dir;
 }
 
-static void show_dirstat(struct diffstat_t *data, struct diff_options *options)
+static void show_dirstat(struct diff_options *options)
 {
 	int i;
 	unsigned long changed;
-	struct diffstat_dir dir;
+	struct dirstat_dir dir;
+	struct diff_queue_struct *q = &diff_queued_diff;
 
-	/* Calculate total changes */
+	dir.files = NULL;
+	dir.alloc = 0;
+	dir.nr = 0;
+	dir.percent = options->dirstat_percent;
+	dir.cumulative = options->output_format & DIFF_FORMAT_CUMULATIVE;
+
 	changed = 0;
-	for (i = 0; i < data->nr; i++) {
-		if (data->files[i]->is_binary || data->files[i]->is_unmerged)
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		const char *name;
+		unsigned long copied, added, damage;
+
+		name = p->one->path ? p->one->path : p->two->path;
+
+		if (DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
+			diff_populate_filespec(p->one, 0);
+			diff_populate_filespec(p->two, 0);
+			diffcore_count_changes(p->one, p->two, NULL, NULL, 0,
+					       &copied, &added);
+			diff_free_filespec_data(p->one);
+			diff_free_filespec_data(p->two);
+		} else if (DIFF_FILE_VALID(p->one)) {
+			diff_populate_filespec(p->one, 1);
+			copied = added = 0;
+			diff_free_filespec_data(p->one);
+		} else if (DIFF_FILE_VALID(p->two)) {
+			diff_populate_filespec(p->two, 1);
+			copied = 0;
+			added = p->two->size;
+			diff_free_filespec_data(p->two);
+		} else
 			continue;
-		changed += data->files[i]->added;
-		changed += data->files[i]->deleted;
+
+		/*
+		 * Original minus copied is the removed material,
+		 * added is the new material.  They are both damages
+		 * made to the preimage.
+		 */
+		damage = (p->one->size - copied) + added;
+
+		ALLOC_GROW(dir.files, dir.nr + 1, dir.alloc);
+		dir.files[dir.nr].name = name;
+		dir.files[dir.nr].changed = damage;
+		changed += damage;
+		dir.nr++;
 	}
 
 	/* This can happen even with many files, if everything was renames */
@@ -1068,10 +1109,6 @@ static void show_dirstat(struct diffstat_t *data, struct diff_options *options)
 		return;
 
 	/* Show all directories with more than x% of the changes */
-	dir.files = data->files;
-	dir.nr = data->nr;
-	dir.percent = options->dirstat_percent;
-	dir.cumulative = options->output_format & DIFF_FORMAT_CUMULATIVE;
 	gather_dirstat(options->file, &dir, changed, "", 0);
 }
 
@@ -3095,7 +3132,7 @@ void diff_flush(struct diff_options *options)
 		separator++;
 	}
 
-	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIRSTAT)) {
+	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT)) {
 		struct diffstat_t diffstat;
 
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
@@ -3105,8 +3142,6 @@ void diff_flush(struct diff_options *options)
 			if (check_pair_status(p))
 				diff_flush_stat(p, options, &diffstat);
 		}
-		if (output_format & DIFF_FORMAT_DIRSTAT)
-			show_dirstat(&diffstat, options);
 		if (output_format & DIFF_FORMAT_NUMSTAT)
 			show_numstat(&diffstat, options);
 		if (output_format & DIFF_FORMAT_DIFFSTAT)
@@ -3116,6 +3151,8 @@ void diff_flush(struct diff_options *options)
 		free_diffstat_info(&diffstat);
 		separator++;
 	}
+	if (output_format & DIFF_FORMAT_DIRSTAT)
+		show_dirstat(options);
 
 	if (output_format & DIFF_FORMAT_SUMMARY && !is_summary_empty(q)) {
 		for (i = 0; i < q->nr; i++)
