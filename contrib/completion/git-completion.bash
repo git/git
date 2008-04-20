@@ -1052,6 +1052,7 @@ _git_remote ()
 	local subcommands="add rm show prune update"
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
 		return
 	fi
 
