@@ -192,4 +192,17 @@ test_expect_success 'given commit' "
 EOF
 "
 
+test_expect_success '--for-status' "
+    git submodule summary --for-status HEAD^ >actual &&
+    test_cmp actual - <<EOF
+# Modified submodules:
+#
+# * sm1 $head6...0000000:
+#
+# * sm2 0000000...$head7 (2):
+#   > Add foo9
+#
+EOF
+"
+
 test_done
