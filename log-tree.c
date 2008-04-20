@@ -249,9 +249,9 @@ void show_log(struct rev_info *opt, const char *sep)
 	 *    not have an empty line between entries.
 	 */
 	extra = "";
-	if (*sep != '\n' && opt->commit_format == CMIT_FMT_ONELINE)
+	if (*sep != '\n' && opt->use_terminator)
 		extra = "\n";
-	if (opt->shown_one && opt->commit_format != CMIT_FMT_ONELINE)
+	if (opt->shown_one && !opt->use_terminator)
 		putchar(opt->diffopt.line_termination);
 	opt->shown_one = 1;
 

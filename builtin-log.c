@@ -56,7 +56,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
 	if (fmt_pretty)
-		rev->commit_format = get_commit_format(fmt_pretty);
+		get_commit_format(fmt_pretty, rev);
 	rev->verbose_header = 1;
 	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
 	rev->show_root_diff = default_show_root;
@@ -400,6 +400,7 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	 * allow us to set a different default.
 	 */
 	rev.commit_format = CMIT_FMT_ONELINE;
+	rev.use_terminator = 1;
 	rev.always_show_header = 1;
 
 	/*
