@@ -1,0 +1,59 @@
+GIT v1.5.6 Release Notes
+========================
+
+Updates since v1.5.5
+--------------------
+
+(subsystems)
+
+
+(portability)
+
+
+(performance)
+
+* "git rebase --onto $there $from $branch" used to switch to the tip of
+  $branch only to immediately reset back to $from, smudging work tree
+  files unnecessarily.  This has been optimized.
+
+(usability, bells and whistles)
+
+* "git add -p" (and the "patch" subcommand of "git add -i") can choose to
+  apply (or not apply) mode changes independently from contents changes.
+
+* "git bisect help" gives longer and more helpful usage information.
+
+* "git diff/log --dirstat" output is consistent between binary and textual
+  changes.
+
+* "git gc --auto" honors a new pre-aut-gc hook to temporarily disable it.
+
+* "git log --pretty=tformat:<custom format>" gives a LF after each entry,
+  instead of giving a LF between each pair of entries which is how
+  "git log --pretty=format:<custom format>" works.
+
+* "git send-email" now can send out messages outside a git repository.
+
+* "git status" can optionally include output from "git submodule
+  summary".
+
+* "gitweb" can read from a system-wide configuration file.
+
+(internal)
+
+* "git unpack-objects" and "git receive-pack" is now more strict about
+  detecting breakage in the objects they receive over the wire.
+
+
+Fixes since v1.5.5
+------------------
+
+All of the fixes in v1.5.5 maintenance series are included in
+this release, unless otherwise noted.
+
+
+--
+exec >/var/tmp/1
+O=v1.5.5-56-g5f0734f
+echo O=`git describe refs/heads/master`
+git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
