@@ -240,6 +240,10 @@ static int git_get_colorbool_config(const char *var, const char *value)
 		get_diff_color_found =
 			git_config_colorbool(var, value, stdout_is_tty);
 	}
+	if (!strcmp(var, "color.ui")) {
+		git_use_color_default = git_config_colorbool(var, value, stdout_is_tty);
+		return 0;
+	}
 	return 0;
 }
 
@@ -267,7 +271,7 @@ static int get_colorbool(int argc, const char **argv)
 		if (!strcmp(get_color_slot, "color.diff"))
 			get_colorbool_found = get_diff_color_found;
 		if (get_colorbool_found < 0)
-			get_colorbool_found = 0;
+			get_colorbool_found = git_use_color_default;
 	}
 
 	if (argc == 1) {
