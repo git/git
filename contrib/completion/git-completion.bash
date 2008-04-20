@@ -641,6 +641,7 @@ _git_diff ()
 			--ignore-all-space --exit-code --quiet --ext-diff
 			--no-ext-diff
 			--no-prefix --src-prefix= --dst-prefix=
+			--base --ours --theirs
 			"
 		return
 		;;
