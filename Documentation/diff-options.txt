@@ -58,6 +58,14 @@ endif::git-format-patch[]
 	number of modified files, as well as number of added and deleted
 	lines.
 
+--dirstat[=limit]::
+	Output only the sub-directories that are impacted by a diff,
+	and to what degree they are impacted.  You can override the
+	default cut-off in percent (3) by "--dirstat=limit".  If you
+	want to enable "cumulative" directory statistics, you can use
+	the "--cumulative" flag, which adds up percentages recursively
+	even when they have been already reported for a sub-directory.
+
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
