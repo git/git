@@ -5,6 +5,10 @@
 
 test_description='git-status'
 
+case $(uname -s) in
+*MINGW*) GIT_TEST_CMP="diff -uw";;
+esac
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
