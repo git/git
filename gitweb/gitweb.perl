@@ -511,7 +511,7 @@ sub evaluate_path_info {
 	}
 	# do not change any parameters if an action is given using the query string
 	return if $action;
-	$path_info =~ s,^$project/*,,;
+	$path_info =~ s,^\Q$project\E/*,,;
 	my ($refname, $pathname) = split(/:/, $path_info, 2);
 	if (defined $pathname) {
 		# we got "project.git/branch:filename" or "project.git/branch:dir/"
@@ -633,7 +633,7 @@ sub href(%) {
 	my ($use_pathinfo) = gitweb_check_feature('pathinfo');
 	if ($use_pathinfo) {
 		# use PATH_INFO for project name
-		$href .= "/$params{'project'}" if defined $params{'project'};
+		$href .= "/".esc_url($params{'project'}) if defined $params{'project'};
 		delete $params{'project'};
 
 		# Summary just uses the project path URL
@@ -2575,7 +2575,7 @@ EOF
 		my $action = $my_uri;
 		my ($use_pathinfo) = gitweb_check_feature('pathinfo');
 		if ($use_pathinfo) {
-			$action .= "/$project";
+			$action .= "/".esc_url($project);
 		} else {
 			$cgi->param("p", $project);
 		}
