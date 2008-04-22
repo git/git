@@ -546,7 +546,9 @@ static int path_matches(const char *pathname, int pathlen,
 	    (baselen && pathname[baselen] != '/') ||
 	    strncmp(pathname, base, baselen))
 		return 0;
-	return fnmatch(pattern, pathname + baselen + 1, FNM_PATHNAME) == 0;
+	if (baselen != 0)
+		baselen++;
+	return fnmatch(pattern, pathname + baselen, FNM_PATHNAME) == 0;
 }
 
 static int fill_one(const char *what, struct match_attr *a, int rem)
