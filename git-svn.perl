@@ -2363,8 +2363,7 @@ sub check_author {
 	my ($author) = @_;
 	if (!defined $author || length $author == 0) {
 		$author = '(no author)';
-	}
-	if (defined $::_authors && ! defined $::users{$author}) {
+	} elsif (defined $::_authors && ! defined $::users{$author}) {
 		die "Author: $author not defined in $::_authors file\n";
 	}
 	$author;
