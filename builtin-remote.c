@@ -105,6 +105,7 @@ static int add(int argc, const char **argv)
 		struct path_list_item *item = track.items + i;
 
 		strbuf_reset(&buf2);
+		strbuf_addch(&buf2, '+');
 		if (mirror)
 			strbuf_addf(&buf2, "refs/%s:refs/%s",
 					item->path, item->path);
