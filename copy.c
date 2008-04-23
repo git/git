@@ -9,8 +9,7 @@ int copy_fd(int ifd, int ofd)
 		if (!len)
 			break;
 		if (len < 0) {
-			int read_error;
-			read_error = errno;
+			int read_error = errno;
 			close(ifd);
 			return error("copy-fd: read returned %s",
 				     strerror(read_error));
@@ -25,9 +24,10 @@ int copy_fd(int ifd, int ofd)
 				close(ifd);
 				return error("copy-fd: write returned 0");
 			} else {
+				int write_error = errno;
 				close(ifd);
 				return error("copy-fd: write returned %s",
-					     strerror(errno));
+					     strerror(write_error));
 			}
 		}
 	}
@@ -48,7 +48,7 @@ int copy_file(const char *dst, const char *src, int mode)
 	}
 	status = copy_fd(fdi, fdo);
 	if (close(fdo) != 0)
-		return error("%s: write error: %s", dst, strerror(errno));
+		return error("%s: close error: %s", dst, strerror(errno));
 
 	if (!status && adjust_shared_perm(dst))
 		return -1;

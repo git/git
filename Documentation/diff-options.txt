@@ -83,7 +83,8 @@ endif::git-format-patch[]
 	Show only names of changed files.
 
 --name-status::
-	Show only names and status of changed files.
+	Show only names and status of changed files. See the description
+	of the `--diff-filter` option on what the status letters mean.
 
 --color::
 	Show colored diff.
