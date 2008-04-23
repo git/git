@@ -67,6 +67,19 @@ run_tests () {
 		false
         fi
     '
+
+    test_expect_success "--batch-check output of $type is correct" '
+	expect="$sha1 $type $size"
+	actual="$(echo_without_newline $sha1 | git cat-file --batch-check)"
+        if test "z$expect" = "z$actual"
+	then
+		: happy
+	else
+		echo "Oops: expected $expect"
+		echo "but got $actual"
+		false
+        fi
+    '
 }
 
 hello_content="Hello World"
@@ -117,5 +130,57 @@ run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_pretty_content" 1
 test_expect_success \
     "Reach a blob from a tag pointing to it" \
     "test '$hello_content' = \"\$(git cat-file blob $tag_sha1)\""
+
+for opt in t s e p
+do
+    test_expect_success "Passing -$opt with --batch-check fails" '
+	test_must_fail git cat-file --batch-check -$opt $hello_sha1
+    '
+
+    test_expect_success "Passing --batch-check with -$opt fails" '
+	test_must_fail git cat-file -$opt --batch-check $hello_sha1
+    '
+done
+
+test_expect_success "Passing <type> with --batch-check fails" '
+    test_must_fail git cat-file --batch-check blob $hello_sha1
+'
+
+test_expect_success "Passing --batch-check with <type> fails" '
+    test_must_fail git cat-file blob --batch-check $hello_sha1
+'
+
+test_expect_success "Passing sha1 with --batch-check fails" '
+    test_must_fail git cat-file --batch-check $hello_sha1
+'
+
+test_expect_success "--batch-check for a non-existent object" '
+    test "deadbeef missing" = \
+    "$(echo_without_newline deadbeef | git cat-file --batch-check)"
+'
+
+test_expect_success "--batch-check for an emtpy line" '
+    test " missing" = "$(echo | git cat-file --batch-check)"
+'
+
+batch_check_input="$hello_sha1
+$tree_sha1
+$commit_sha1
+$tag_sha1
+deadbeef
+
+"
+
+batch_check_output="$hello_sha1 blob $hello_size
+$tree_sha1 tree $tree_size
+$commit_sha1 commit $commit_size
+$tag_sha1 tag $tag_size
+deadbeef missing
+ missing"
+
+test_expect_success "--batch-check with multiple sha1s gives correct format" '
+    test "$batch_check_output" = \
+    "$(echo_without_newline "$batch_check_input" | git cat-file --batch-check)"
+'
 
 test_done
