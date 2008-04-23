@@ -341,8 +341,11 @@ static int update_one(struct cache_tree *it,
 
 	if (dryrun)
 		hash_sha1_file(buffer.buf, buffer.len, tree_type, it->sha1);
-	else
-		write_sha1_file(buffer.buf, buffer.len, tree_type, it->sha1);
+	else if (write_sha1_file(buffer.buf, buffer.len, tree_type, it->sha1)) {
+		strbuf_release(&buffer);
+		return -1;
+	}
+
 	strbuf_release(&buffer);
 	it->entry_count = i;
 #if DEBUG
