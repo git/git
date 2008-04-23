@@ -28,6 +28,9 @@ run_tests () {
     pretty_content=$5
     no_ts=$6
 
+    batch_output="$sha1 $type $size
+$content"
+
     test_expect_success "$type exists" '
 	git cat-file -e $sha1
     '
@@ -58,6 +61,20 @@ run_tests () {
     test_expect_success "Pretty content of $type is correct" '
 	expect="$(maybe_remove_timestamp "$pretty_content" $no_ts)"
 	actual="$(maybe_remove_timestamp "$(git cat-file -p $sha1)" $no_ts)"
+        if test "z$expect" = "z$actual"
+	then
+		: happy
+	else
+		echo "Oops: expected $expect"
+		echo "but got $actual"
+		false
+        fi
+    '
+
+    test -z "$content" ||
+    test_expect_success "--batch output of $type is correct" '
+	expect="$(maybe_remove_timestamp "$batch_output" $no_ts)"
+	actual="$(maybe_remove_timestamp "$(echo $sha1 | git cat-file --batch)" no_ts)"
         if test "z$expect" = "z$actual"
 	then
 		: happy
@@ -131,28 +148,31 @@ test_expect_success \
     "Reach a blob from a tag pointing to it" \
     "test '$hello_content' = \"\$(git cat-file blob $tag_sha1)\""
 
-for opt in t s e p
+for batch in batch batch-check
 do
-    test_expect_success "Passing -$opt with --batch-check fails" '
-	test_must_fail git cat-file --batch-check -$opt $hello_sha1
+    for opt in t s e p
+    do
+	test_expect_success "Passing -$opt with --$batch fails" '
+	    test_must_fail git cat-file --$batch -$opt $hello_sha1
+	'
+
+	test_expect_success "Passing --$batch with -$opt fails" '
+	    test_must_fail git cat-file -$opt --$batch $hello_sha1
+	'
+    done
+
+    test_expect_success "Passing <type> with --$batch fails" '
+	test_must_fail git cat-file --$batch blob $hello_sha1
     '
 
-    test_expect_success "Passing --batch-check with -$opt fails" '
-	test_must_fail git cat-file -$opt --batch-check $hello_sha1
+    test_expect_success "Passing --$batch with <type> fails" '
+	test_must_fail git cat-file blob --$batch $hello_sha1
+    '
+
+    test_expect_success "Passing sha1 with --$batch fails" '
+	test_must_fail git cat-file --$batch $hello_sha1
     '
 done
-
-test_expect_success "Passing <type> with --batch-check fails" '
-    test_must_fail git cat-file --batch-check blob $hello_sha1
-'
-
-test_expect_success "Passing --batch-check with <type> fails" '
-    test_must_fail git cat-file blob --batch-check $hello_sha1
-'
-
-test_expect_success "Passing sha1 with --batch-check fails" '
-    test_must_fail git cat-file --batch-check $hello_sha1
-'
 
 test_expect_success "--batch-check for a non-existent object" '
     test "deadbeef missing" = \
@@ -162,6 +182,26 @@ test_expect_success "--batch-check for a non-existent object" '
 test_expect_success "--batch-check for an emtpy line" '
     test " missing" = "$(echo | git cat-file --batch-check)"
 '
+
+batch_input="$hello_sha1
+$commit_sha1
+$tag_sha1
+deadbeef
+
+"
+
+batch_output="$hello_sha1 blob $hello_size
+$hello_content
+$commit_sha1 commit $commit_size
+$commit_content
+$tag_sha1 tag $tag_size
+$tag_content
+deadbeef missing
+ missing"
+
+test_expect_success \
+    "--batch with multiple sha1s gives correct format" \
+    "test \"\$(maybe_remove_timestamp \"$batch_output\" 1)\" = \"\$(maybe_remove_timestamp \"\$(echo_without_newline \"$batch_input\" | git cat-file --batch)\" 1)\""
 
 batch_check_input="$hello_sha1
 $tree_sha1
