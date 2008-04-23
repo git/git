@@ -16,9 +16,9 @@ static void format_subst(const struct commit *commit,
 		const char *b, *c;
 
 		b = memmem(src, len, "$Format:", 8);
-		if (!b || src + len < b + 9)
+		if (!b)
 			break;
-		c = memchr(b + 8, '$', len - 8);
+		c = memchr(b + 8, '$', (src + len) - b - 8);
 		if (!c)
 			break;
 
