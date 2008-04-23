@@ -76,30 +76,15 @@ static void pprint_tag(const unsigned char *sha1, const char *buf, unsigned long
 		write_or_die(1, cp, endp - cp);
 }
 
-int cmd_cat_file(int argc, const char **argv, const char *prefix)
+static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 {
 	unsigned char sha1[20];
 	enum object_type type;
 	void *buf;
 	unsigned long size;
-	int opt;
-	const char *exp_type, *obj_name;
-
-	git_config(git_default_config);
-	if (argc != 3)
-		usage("git-cat-file [-t|-s|-e|-p|<type>] <sha1>");
-	exp_type = argv[1];
-	obj_name = argv[2];
 
 	if (get_sha1(obj_name, sha1))
 		die("Not a valid object name %s", obj_name);
-
-	opt = 0;
-	if ( exp_type[0] == '-' ) {
-		opt = exp_type[1];
-		if ( !opt || exp_type[2] )
-			opt = -1; /* Not a single character option */
-	}
 
 	buf = NULL;
 	switch (opt) {
@@ -156,4 +141,25 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 
 	write_or_die(1, buf, size);
 	return 0;
+}
+
+int cmd_cat_file(int argc, const char **argv, const char *prefix)
+{
+	int opt;
+	const char *exp_type, *obj_name;
+
+	git_config(git_default_config);
+	if (argc != 3)
+		usage("git-cat-file [-t|-s|-e|-p|<type>] <sha1>");
+	exp_type = argv[1];
+	obj_name = argv[2];
+
+	opt = 0;
+	if ( exp_type[0] == '-' ) {
+		opt = exp_type[1];
+		if ( !opt || exp_type[2] )
+			opt = -1; /* Not a single character option */
+	}
+
+	return cat_one_file(opt, exp_type, obj_name);
 }
