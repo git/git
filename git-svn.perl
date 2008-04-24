@@ -410,10 +410,12 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
-	print "Committing to $url ...\n";
+	if ($url) {
+		print "Committing to $url ...\n";
+	}
 	unless ($gs) {
 		die "Unable to determine upstream SVN information from ",
-		    "$head history\n";
+		    "$head history.\nPerhaps the repository is empty.";
 	}
 	my $last_rev;
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
