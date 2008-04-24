@@ -84,13 +84,19 @@ method _connect {pipe_fd} {
 	regexp \
 		{International Ispell Version .* \(but really (Aspell .*?)\)$} \
 		$s_version _junk s_version
+	regexp {^Aspell (\d)+\.(\d+)} $s_version _junk major minor
 
 	puts $pipe_fd !             ; # enable terse mode
-	puts $pipe_fd {$$cr master} ; # fetch the language
-	flush $pipe_fd
 
-	gets $pipe_fd s_lang
-	regexp {[/\\]([^/\\]+)\.[^\.]+$} $s_lang _ s_lang
+	# fetch the language
+	if {$major > 0 || ($major == 0 && $minor >= 60)} {
+		puts $pipe_fd {$$cr master}
+		flush $pipe_fd
+		gets $pipe_fd s_lang
+		regexp {[/\\]([^/\\]+)\.[^\.]+$} $s_lang _ s_lang
+	} else {
+		set s_lang {}
+	}
 
 	if {$::default_config(gui.spellingdictionary) eq {}
 	 && [get_config gui.spellingdictionary] eq {}} {
