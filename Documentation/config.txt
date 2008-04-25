@@ -805,6 +805,10 @@ merge.<driver>.recursive::
 	performing an internal merge between common ancestors.
 	See linkgit:gitattributes[5] for details.
 
+man.<tool>.path::
+	Override the path for the given tool that may be used to
+	display help in the 'man' format. See linkgit:git-help[1].
+
 mergetool.<tool>.path::
 	Override the path for the given tool.  This is useful in case
 	your tool is not in the PATH.
