@@ -77,6 +77,16 @@ test_expect_success 'add another remote' '
 )
 '
 
+test_expect_success 'remote forces tracking branches' '
+(
+	cd test &&
+	case `git config remote.second.fetch` in
+	+*) true ;;
+	 *) false ;;
+	esac
+)
+'
+
 test_expect_success 'remove remote' '
 (
 	cd test &&

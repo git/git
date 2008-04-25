@@ -209,19 +209,7 @@ test_expect_success 'push with weak ambiguity (2)' '
 
 '
 
-test_expect_success 'push with ambiguity (1)' '
-
-	mk_test remotes/origin/master remotes/frotz/master &&
-	if git push testrepo master:master
-	then
-		echo "Oops, should have failed"
-		false
-	else
-		check_push_result $the_first_commit remotes/origin/master remotes/frotz/master
-	fi
-'
-
-test_expect_success 'push with ambiguity (2)' '
+test_expect_success 'push with ambiguity' '
 
 	mk_test heads/frotz tags/frotz &&
 	if git push testrepo master:frotz
@@ -285,6 +273,37 @@ test_expect_success 'push with colon-less refspec (4)' '
 
 '
 
+test_expect_success 'push head with non-existant, incomplete dest' '
+
+	mk_test &&
+	git push testrepo master:branch &&
+	check_push_result $the_commit heads/branch
+
+'
+
+test_expect_success 'push tag with non-existant, incomplete dest' '
+
+	mk_test &&
+	git tag -f v1.0 &&
+	git push testrepo v1.0:tag &&
+	check_push_result $the_commit tags/tag
+
+'
+
+test_expect_success 'push sha1 with non-existant, incomplete dest' '
+
+	mk_test &&
+	test_must_fail git push testrepo `git rev-parse master`:foo
+
+'
+
+test_expect_success 'push ref expression with non-existant, incomplete dest' '
+
+	mk_test &&
+	test_must_fail git push testrepo master^:branch
+
+'
+
 test_expect_success 'push with HEAD' '
 
 	mk_test heads/master &&
@@ -320,6 +339,15 @@ test_expect_success 'push with +HEAD' '
 	# With force rewinding should succeed
 	git push testrepo +HEAD &&
 	check_push_result $the_first_commit heads/local
+
+'
+
+test_expect_success 'push HEAD with non-existant, incomplete dest' '
+
+	mk_test &&
+	git checkout master &&
+	git push testrepo HEAD:branch &&
+	check_push_result $the_commit heads/branch
 
 '
 
