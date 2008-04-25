@@ -163,7 +163,15 @@ static void exec_man_man(const char* path, const char *page)
 	warning("failed to exec '%s': %s", path, strerror(errno));
 }
 
-static void do_add_man_viewer(const char *name)
+static void exec_man_cmd(const char *cmd, const char *page)
+{
+	struct strbuf shell_cmd = STRBUF_INIT;
+	strbuf_addf(&shell_cmd, "%s %s", cmd, page);
+	execl("/bin/sh", "sh", "-c", shell_cmd.buf, NULL);
+	warning("failed to exec '%s': %s", cmd, strerror(errno));
+}
+
+static void add_man_viewer(const char *name)
 {
 	struct man_viewer_list **p = &man_viewer_list;
 	size_t len = strlen(name);
@@ -179,16 +187,6 @@ static int supported_man_viewer(const char *name, size_t len)
 	return (!strncasecmp("man", name, len) ||
 		!strncasecmp("woman", name, len) ||
 		!strncasecmp("konqueror", name, len));
-}
-
-static int add_man_viewer(const char *value)
-{
-	if (supported_man_viewer(value, strlen(value)))
-		do_add_man_viewer(value);
-	else
-		warning("'%s': unsupported man viewer.", value);
-
-	return 0;
 }
 
 static void do_add_man_viewer_info(const char *name,
@@ -210,7 +208,23 @@ static int add_man_viewer_path(const char *name,
 	if (supported_man_viewer(name, len))
 		do_add_man_viewer_info(name, len, value);
 	else
-		warning("'%s': path for unsupported man viewer.", name);
+		warning("'%s': path for unsupported man viewer.\n"
+			"Please consider using 'man.<tool>.cmd' instead.",
+			name);
+
+	return 0;
+}
+
+static int add_man_viewer_cmd(const char *name,
+			      size_t len,
+			      const char *value)
+{
+	if (supported_man_viewer(name, len))
+		warning("'%s': cmd for supported man viewer.\n"
+			"Please consider using 'man.<tool>.path' instead.",
+			name);
+	else
+		do_add_man_viewer_info(name, len, value);
 
 	return 0;
 }
@@ -228,6 +242,11 @@ static int add_man_viewer_info(const char *var, const char *value)
 			return config_error_nonbool(var);
 		return add_man_viewer_path(name, subkey - name, value);
 	}
+	if (!strcmp(subkey, ".cmd")) {
+		if (!value)
+			return config_error_nonbool(var);
+		return add_man_viewer_cmd(name, subkey - name, value);
+	}
 
 	warning("'%s': unsupported man viewer sub key.", subkey);
 	return 0;
@@ -244,7 +263,8 @@ static int git_help_config(const char *var, const char *value)
 	if (!strcmp(var, "man.viewer")) {
 		if (!value)
 			return config_error_nonbool(var);
-		return add_man_viewer(value);
+		add_man_viewer(value);
+		return 0;
 	}
 	if (!prefixcmp(var, "man."))
 		return add_man_viewer_info(var, value);
@@ -546,16 +566,18 @@ static void setup_man_path(void)
 
 static void exec_viewer(const char *name, const char *page)
 {
-	const char *path = get_man_viewer_info(name);
+	const char *info = get_man_viewer_info(name);
 
 	if (!strcasecmp(name, "man"))
-		exec_man_man(path, page);
+		exec_man_man(info, page);
 	else if (!strcasecmp(name, "woman"))
-		exec_woman_emacs(path, page);
+		exec_woman_emacs(info, page);
 	else if (!strcasecmp(name, "konqueror"))
-		exec_man_konqueror(path, page);
+		exec_man_konqueror(info, page);
+	else if (info)
+		exec_man_cmd(info, page);
 	else
-		warning("'%s': unsupported man viewer.", name);
+		warning("'%s': unknown man viewer.", name);
 }
 
 static void show_man_page(const char *git_cmd)
