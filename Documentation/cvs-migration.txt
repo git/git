@@ -8,7 +8,8 @@ designating a single shared repository which people can synchronize with;
 this document explains how to do that.
 
 Some basic familiarity with git is required.  This
-link:tutorial.html[tutorial introduction to git] should be sufficient.
+link:tutorial.html[tutorial introduction to git] and the
+link:glossary.html[git glossary] should be sufficient.
 
 Developing against a shared repository
 --------------------------------------

@@ -209,19 +209,7 @@ test_expect_success 'push with weak ambiguity (2)' '
 
 '
 
-test_expect_success 'push with ambiguity (1)' '
-
-	mk_test remotes/origin/master remotes/frotz/master &&
-	if git push testrepo master:master
-	then
-		echo "Oops, should have failed"
-		false
-	else
-		check_push_result $the_first_commit remotes/origin/master remotes/frotz/master
-	fi
-'
-
-test_expect_success 'push with ambiguity (2)' '
+test_expect_success 'push with ambiguity' '
 
 	mk_test heads/frotz tags/frotz &&
 	if git push testrepo master:frotz
