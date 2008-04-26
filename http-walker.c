@@ -888,10 +888,10 @@ static int fetch(struct walker *walker, unsigned char *sha1)
 		     data->alt->base);
 }
 
-static int fetch_ref(struct walker *walker, char *ref, unsigned char *sha1)
+static int fetch_ref(struct walker *walker, struct ref *ref)
 {
 	struct walker_data *data = walker->data;
-	return http_fetch_ref(data->alt->base, ref, sha1);
+	return http_fetch_ref(data->alt->base, ref);
 }
 
 static void cleanup(struct walker *walker)
