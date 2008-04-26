@@ -485,6 +485,13 @@ static int git_format_config(const char *var, const char *value)
 		fmt_patch_suffix = xstrdup(value);
 		return 0;
 	}
+	if (!strcmp(var, "format.cc")) {
+		if (!value)
+			return config_error_nonbool(var);
+		ALLOC_GROW(extra_cc, extra_cc_nr + 1, extra_cc_alloc);
+		extra_cc[extra_cc_nr++] = xstrdup(value);
+		return 0;
+	}
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
 		return 0;
 	}
