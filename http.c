@@ -626,7 +626,10 @@ int http_fetch_ref(const char *base, struct ref *ref)
 			strbuf_rtrim(&buffer);
 			if (buffer.len == 40)
 				ret = get_sha1_hex(buffer.buf, ref->old_sha1);
-			else
+			else if (!prefixcmp(buffer.buf, "ref: ")) {
+				ref->symref = xstrdup(buffer.buf + 5);
+				ret = 0;
+			} else
 				ret = 1;
 		} else {
 			ret = error("Couldn't get %s for %s\n%s",

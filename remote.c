@@ -706,13 +706,22 @@ struct ref *copy_ref_list(const struct ref *ref)
 	return ret;
 }
 
+void free_ref(struct ref *ref)
+{
+	if (!ref)
+		return;
+	free(ref->remote_status);
+	free(ref->symref);
+	free(ref);
+}
+
 void free_refs(struct ref *ref)
 {
 	struct ref *next;
 	while (ref) {
 		next = ref->next;
 		free(ref->peer_ref);
-		free(ref);
+		free_ref(ref);
 		ref = next;
 	}
 }
@@ -1171,4 +1180,16 @@ int get_fetch_map(const struct ref *remote_refs,
 		tail_link_ref(ref_map, tail);
 
 	return 0;
+}
+
+int resolve_remote_symref(struct ref *ref, struct ref *list)
+{
+	if (!ref->symref)
+		return 0;
+	for (; list; list = list->next)
+		if (!strcmp(ref->symref, list->name)) {
+			hashcpy(ref->old_sha1, list->old_sha1);
+			return 0;
+		}
+	return 1;
 }

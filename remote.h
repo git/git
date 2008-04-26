@@ -62,6 +62,8 @@ int check_ref_type(const struct ref *ref, int flags);
  */
 void free_refs(struct ref *ref);
 
+int resolve_remote_symref(struct ref *ref, struct ref *list);
+
 /*
  * Removes and frees any duplicate refs in the map.
  */
