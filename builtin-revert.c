@@ -33,7 +33,7 @@ static const char * const cherry_pick_usage[] = {
 	NULL
 };
 
-static int edit, no_replay, no_commit, mainline;
+static int edit, no_replay, no_commit, mainline, signoff;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
 
@@ -53,6 +53,7 @@ static void parse_args(int argc, const char **argv)
 		OPT_BOOLEAN('e', "edit", &edit, "edit the commit message"),
 		OPT_BOOLEAN('x', NULL, &no_replay, "append commit name when cherry-picking"),
 		OPT_BOOLEAN('r', NULL, &noop, "no-op (backward compatibility)"),
+		OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
 		OPT_END(),
 	};
@@ -404,10 +405,19 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	 */
 
 	if (!no_commit) {
-		if (edit)
-			return execl_git_cmd("commit", "-n", NULL);
-		else
-			return execl_git_cmd("commit", "-n", "-F", defmsg, NULL);
+		/* 6 is max possible length of our args array including NULL */
+		const char *args[6];
+		int i = 0;
+		args[i++] = "commit";
+		args[i++] = "-n";
+		if (signoff)
+			args[i++] = "-s";
+		if (!edit) {
+			args[i++] = "-F";
+			args[i++] = defmsg;
+		}
+		args[i] = NULL;
+		return execv_git_cmd(args);
 	}
 	free(reencoded_message);
 
