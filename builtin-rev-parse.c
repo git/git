@@ -576,11 +576,11 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			show_rev(REVERSED, sha1, arg+1);
 			continue;
 		}
+		if (verify)
+			die_no_single_rev(quiet);
 		as_is = 1;
 		if (!show_file(arg))
 			continue;
-		if (verify)
-			die_no_single_rev(quiet);
 		verify_filename(prefix, arg);
 	}
 	show_default();
