@@ -365,9 +365,17 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static void die_no_single_rev(int quiet)
+{
+	if (quiet)
+		exit(1);
+	else
+		die("Needed a single revision");
+}
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
-	int i, as_is = 0, verify = 0;
+	int i, as_is = 0, verify = 0, quiet = 0;
 	unsigned char sha1[20];
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
@@ -430,6 +438,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--verify")) {
 				filter &= ~(DO_FLAGS|DO_NOREV);
 				verify = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--quiet") || !strcmp(arg, "-q")) {
+				quiet = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--short") ||
@@ -549,7 +561,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (show_flag(arg) && verify)
-				die("Needed a single revision");
+				die_no_single_rev(quiet);
 			continue;
 		}
 
@@ -568,11 +580,11 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		if (!show_file(arg))
 			continue;
 		if (verify)
-			die("Needed a single revision");
+			die_no_single_rev(quiet);
 		verify_filename(prefix, arg);
 	}
 	show_default();
 	if (verify && revs_count != 1)
-		die("Needed a single revision");
+		die_no_single_rev(quiet);
 	return 0;
 }
