@@ -90,20 +90,71 @@ proc dorunq {} {
     }
 }
 
+proc unmerged_files {files} {
+    global nr_unmerged
+
+    # find the list of unmerged files
+    set mlist {}
+    set nr_unmerged 0
+    if {[catch {
+	set fd [open "| git ls-files -u" r]
+    } err]} {
+	show_error {} . "[mc "Couldn't get list of unmerged files:"] $err"
+	exit 1
+    }
+    while {[gets $fd line] >= 0} {
+	set i [string first "\t" $line]
+	if {$i < 0} continue
+	set fname [string range $line [expr {$i+1}] end]
+	if {[lsearch -exact $mlist $fname] >= 0} continue
+	incr nr_unmerged
+	if {$files eq {} || [path_filter $files $fname]} {
+	    lappend mlist $fname
+	}
+    }
+    catch {close $fd}
+    return $mlist
+}
+
+proc parseviewargs {n arglist} {
+    global viewargs vdatemode vmergeonly
+
+    set vdatemode($n) 0
+    set vmergeonly($n) 0
+    set glargs {}
+    foreach arg $viewargs($n) {
+	switch -glob -- $arg {
+	    "-d" -
+	    "--date-order" {
+		set vdatemode($n) 1
+	    }
+	    "--merge" {
+		set vmergeonly($n) 1
+		lappend glargs $arg
+	    }
+	    default {
+		lappend glargs $arg
+	    }
+	}
+    }
+    return $glargs
+}
+
 # Start off a git log process and arrange to read its output
 proc start_rev_list {view} {
-    global startmsecs
-    global commfd leftover tclencoding datemode
-    global viewargs viewargscmd viewfiles commitidx viewcomplete
+    global startmsecs commitidx viewcomplete
+    global commfd leftover tclencoding
+    global viewargs viewargscmd vactualargs viewfiles vfilelimit
     global showlocalchanges commitinterest mainheadid
     global progressdirn progresscoords proglastnc curview
-    global viewactive loginstance viewinstances
+    global viewactive loginstance viewinstances vmergeonly
     global pending_select mainheadid
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
-    set viewcomplete($view) 0
-    set viewactive($view) 1
+    # these are set this way for the error exits
+    set viewcomplete($view) 1
+    set viewactive($view) 0
     varcinit $view
 
     set args $viewargs($view)
@@ -112,16 +163,36 @@ proc start_rev_list {view} {
 	    set str [exec sh -c $viewargscmd($view)]
 	} err]} {
 	    error_popup "Error executing --argscmd command: $err"
-	    exit 1
+	    return 0
 	}
 	set args [concat $args [split $str "\n"]]
     }
+    set args [parseviewargs $view $args]
+    set vactualargs($view) $args
+
+    set files $viewfiles($view)
+    if {$vmergeonly($view)} {
+	set files [unmerged_files $files]
+	if {$files eq {}} {
+	    global nr_unmerged
+	    if {$nr_unmerged == 0} {
+		error_popup [mc "No files selected: --merge specified but\
+			     no files are unmerged."]
+	    } else {
+		error_popup [mc "No files selected: --merge specified but\
+			     no unmerged files are within file limit."]
+	    }
+	    return 0
+	}
+    }
+    set vfilelimit($view) $files
+
     if {[catch {
 	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			 --boundary $args "--" $viewfiles($view)] r]
+			 --boundary $args "--" $files] r]
     } err]} {
 	error_popup "[mc "Error executing git log:"] $err"
-	exit 1
+	return 0
     }
     set i [incr loginstance]
     set viewinstances($view) [list $i]
@@ -142,6 +213,9 @@ proc start_rev_list {view} {
 	set proglastnc 0
 	set pending_select $mainheadid
     }
+    set viewcomplete($view) 0
+    set viewactive($view) 1
+    return 1
 }
 
 proc stop_rev_list {view} {
@@ -162,16 +236,19 @@ proc stop_rev_list {view} {
 }
 
 proc getcommits {} {
-    global canv curview need_redisplay
+    global canv curview need_redisplay viewactive
 
     initlayout
-    start_rev_list $curview
-    show_status [mc "Reading commits..."]
-    set need_redisplay 1
+    if {[start_rev_list $curview]} {
+	show_status [mc "Reading commits..."]
+	set need_redisplay 1
+    } else {
+	show_status [mc "No commits selected"]
+    }
 }
 
 proc updatecommits {} {
-    global curview viewargs viewfiles viewinstances
+    global curview vactualargs vfilelimit viewinstances
     global viewactive viewcomplete loginstance tclencoding mainheadid
     global startmsecs commfd showneartags showlocalchanges leftover
     global mainheadid pending_select
@@ -191,8 +268,8 @@ proc updatecommits {} {
     set view $curview
     if {[catch {
 	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			  --boundary $viewargs($view) --not [seeds $view] \
-			  "--" $viewfiles($view)] r]
+			  --boundary $vactualargs($view) --not [seeds $view] \
+			  "--" $vfilelimit($view)] r]
     } err]} {
 	error_popup "Error executing git log: $err"
 	exit 1
@@ -316,13 +393,13 @@ proc seeds {v} {
 }
 
 proc newvarc {view id} {
-    global varcid varctok parents children datemode
+    global varcid varctok parents children vdatemode
     global vupptr vdownptr vleftptr vbackptr varcrow varcix varcstart
     global commitdata commitinfo vseedcount varccommits vlastins
 
     set a [llength $varctok($view)]
     set vid $view,$id
-    if {[llength $children($vid)] == 0 || $datemode} {
+    if {[llength $children($vid)] == 0 || $vdatemode($view)} {
 	if {![info exists commitinfo($id)]} {
 	    parsecommit $id $commitdata($id) 1
 	}
@@ -422,7 +499,7 @@ proc splitvarc {p v} {
 
 proc renumbervarc {a v} {
     global parents children varctok varcstart varccommits
-    global vupptr vdownptr vleftptr vbackptr vlastins varcid vtokmod datemode
+    global vupptr vdownptr vleftptr vbackptr vlastins varcid vtokmod vdatemode
 
     set t1 [clock clicks -milliseconds]
     set todo {}
@@ -458,7 +535,7 @@ proc renumbervarc {a v} {
 				      $children($v,$id)]
 	}
 	set oldtok [lindex $varctok($v) $a]
-	if {!$datemode} {
+	if {!$vdatemode($v)} {
 	    set tok {}
 	} else {
 	    set tok $oldtok
@@ -992,10 +1069,10 @@ proc rewrite_commit {v id rwid} {
 
 proc getcommitlines {fd inst view updating}  {
     global cmitlisted commitinterest leftover
-    global commitidx commitdata datemode
+    global commitidx commitdata vdatemode
     global parents children curview hlview
     global idpending ordertok
-    global varccommits varcid varctok vtokmod viewfiles
+    global varccommits varcid varctok vtokmod vfilelimit
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
@@ -1098,7 +1175,7 @@ proc getcommitlines {fd inst view updating}  {
 	set vid $view,$id
 
 	if {!$listed && $updating && ![info exists varcid($vid)] &&
-	    $viewfiles($view) ne {}} {
+	    $vfilelimit($view) ne {}} {
 	    # git log doesn't rewrite parents for unlisted commits
 	    # when doing path limiting, so work around that here
 	    # by working out the rewritten parent with git rev-list
@@ -1106,7 +1183,7 @@ proc getcommitlines {fd inst view updating}  {
 	    # parent as a substitute parent for $id's children.
 	    if {![catch {
 		set rwid [exec git rev-list --first-parent --max-count=1 \
-			      $id -- $viewfiles($view)]
+			      $id -- $vfilelimit($view)]
 	    }]} {
 		if {$rwid ne {} && [info exists varcid($view,$rwid)]} {
 		    # use $rwid in place of $id
@@ -1134,7 +1211,7 @@ proc getcommitlines {fd inst view updating}  {
 	} elseif {$a == 0 && [llength $children($vid)] == 1} {
 	    set k [lindex $children($vid) 0]
 	    if {[llength $parents($view,$k)] == 1 &&
-		(!$datemode ||
+		(!$vdatemode($view) ||
 		 $varcid($view,$k) == [llength $varctok($view)] - 1)} {
 		set a $varcid($view,$k)
 	    }
@@ -2880,7 +2957,7 @@ proc addviewmenu {n} {
 }
 
 proc showview {n} {
-    global curview viewfiles cached_commitrow ordertok
+    global curview cached_commitrow ordertok
     global displayorder parentlist rowidlist rowisopt rowfinal
     global colormap rowtextx nextcolor canvxmax
     global numcommits viewcomplete
@@ -5869,14 +5946,14 @@ proc mergediff {id} {
     global diffids
     global parents
     global diffcontext
-    global limitdiffs viewfiles curview
+    global limitdiffs vfilelimit curview
 
     set diffmergeid $id
     set diffids $id
     # this doesn't seem to actually affect anything...
     set cmd [concat | git diff-tree --no-commit-id --cc -U$diffcontext $id]
-    if {$limitdiffs && $viewfiles($curview) ne {}} {
-	set cmd [concat $cmd -- $viewfiles($curview)]
+    if {$limitdiffs && $vfilelimit($curview) ne {}} {
+	set cmd [concat $cmd -- $vfilelimit($curview)]
     }
     if {[catch {set mdf [open $cmd r]} err]} {
 	error_popup "[mc "Error getting merge diffs:"] $err"
@@ -6054,7 +6131,7 @@ proc gettreediffs {ids} {
 
 proc gettreediffline {gdtf ids} {
     global treediff treediffs treepending diffids diffmergeid
-    global cmitmode viewfiles curview limitdiffs
+    global cmitmode vfilelimit curview limitdiffs
 
     set nr 0
     while {[incr nr] <= 1000 && [gets $gdtf line] >= 0} {
@@ -6071,10 +6148,10 @@ proc gettreediffline {gdtf ids} {
 	return [expr {$nr >= 1000? 2: 1}]
     }
     close $gdtf
-    if {$limitdiffs && $viewfiles($curview) ne {}} {
+    if {$limitdiffs && $vfilelimit($curview) ne {}} {
 	set flist {}
 	foreach f $treediff {
-	    if {[path_filter $viewfiles($curview) $f]} {
+	    if {[path_filter $vfilelimit($curview) $f]} {
 		lappend flist $f
 	    }
 	}
@@ -6120,14 +6197,14 @@ proc getblobdiffs {ids} {
     global diffinhdr treediffs
     global diffcontext
     global ignorespace
-    global limitdiffs viewfiles curview
+    global limitdiffs vfilelimit curview
 
     set cmd [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
 	append cmd " -w"
     }
-    if {$limitdiffs && $viewfiles($curview) ne {}} {
-	set cmd [concat $cmd -- $viewfiles($curview)]
+    if {$limitdiffs && $vfilelimit($curview) ne {}} {
+	set cmd [concat $cmd -- $vfilelimit($curview)]
     }
     if {[catch {set bdf [open $cmd r]} err]} {
 	puts "error getting diffs: $err"
@@ -9266,7 +9343,6 @@ if {[catch {package require Tk 8.4} err]} {
 }
 
 # defaults...
-set datemode 0
 set wrcomcmd "git diff-tree --stdin -p --pretty"
 
 set gitencoding {}
@@ -9357,7 +9433,6 @@ if {![file isdirectory $gitdir]} {
     exit 1
 }
 
-set mergeonly 0
 set revtreeargs {}
 set cmdline_files {}
 set i 0
@@ -9365,11 +9440,6 @@ set revtreeargscmd {}
 foreach arg $argv {
     switch -glob -- $arg {
 	"" { }
-	"-d" { set datemode 1 }
-	"--merge" {
-	    set mergeonly 1
-	    lappend revtreeargs $arg
-	}
 	"--" {
 	    set cmdline_files [lrange $argv [expr {$i + 1}] end]
 	    break
@@ -9385,7 +9455,7 @@ foreach arg $argv {
 }
 
 if {$i >= [llength $argv] && $revtreeargs ne {}} {
-    # no -- on command line, but some arguments (other than -d)
+    # no -- on command line, but some arguments (other than --argscmd)
     if {[catch {
 	set f [eval exec git rev-parse --no-revs --no-flags $revtreeargs]
 	set cmdline_files [split $f "\n"]
@@ -9411,40 +9481,6 @@ if {$i >= [llength $argv] && $revtreeargs ne {}} {
 	show_error {} . "[mc "Bad arguments to gitk:"]\n$err"
 	exit 1
     }
-}
-
-if {$mergeonly} {
-    # find the list of unmerged files
-    set mlist {}
-    set nr_unmerged 0
-    if {[catch {
-	set fd [open "| git ls-files -u" r]
-    } err]} {
-	show_error {} . "[mc "Couldn't get list of unmerged files:"] $err"
-	exit 1
-    }
-    while {[gets $fd line] >= 0} {
-	set i [string first "\t" $line]
-	if {$i < 0} continue
-	set fname [string range $line [expr {$i+1}] end]
-	if {[lsearch -exact $mlist $fname] >= 0} continue
-	incr nr_unmerged
-	if {$cmdline_files eq {} || [path_filter $cmdline_files $fname]} {
-	    lappend mlist $fname
-	}
-    }
-    catch {close $fd}
-    if {$mlist eq {}} {
-	if {$nr_unmerged == 0} {
-	    show_error {} . [mc "No files selected: --merge specified but\
-			     no files are unmerged."]
-	} else {
-	    show_error {} . [mc "No files selected: --merge specified but\
-			     no unmerged files are within file limit."]
-	}
-	exit 1
-    }
-    set cmdline_files $mlist
 }
 
 set nullid "0000000000000000000000000000000000000000"
@@ -9504,6 +9540,7 @@ if {$cmdline_files ne {} || $revtreeargs ne {} || $revtreeargscmd ne {}} {
     set viewargs(1) $revtreeargs
     set viewargscmd(1) $revtreeargscmd
     set viewperm(1) 0
+    set vdatemode(1) 0
     addviewmenu 1
     .bar.view entryconf [mc "Edit view..."] -state normal
     .bar.view entryconf [mc "Delete view"] -state normal
