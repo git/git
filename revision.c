@@ -415,7 +415,6 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 {
 	struct commit_list *parent = commit->parents;
 	unsigned left_flag;
-	int add, rest;
 
 	if (commit->object.flags & ADDED)
 		return 0;
@@ -462,19 +461,18 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 
 	left_flag = (commit->object.flags & SYMMETRIC_LEFT);
 
-	rest = !revs->first_parent_only;
-	for (parent = commit->parents, add = 1; parent; add = rest) {
+	for (parent = commit->parents; parent; parent = parent->next) {
 		struct commit *p = parent->item;
 
-		parent = parent->next;
 		if (parse_commit(p) < 0)
 			return -1;
 		p->object.flags |= left_flag;
 		if (p->object.flags & SEEN)
 			continue;
 		p->object.flags |= SEEN;
-		if (add)
-			insert_by_date(p, list);
+		insert_by_date(p, list);
+		if(revs->first_parent_only)
+			break;
 	}
 	return 0;
 }
