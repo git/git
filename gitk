@@ -4992,11 +4992,12 @@ proc gettreeline {gtf id} {
 	if {$diffids eq $nullid} {
 	    set fname $line
 	} else {
-	    if {$diffids ne $nullid2 && [lindex $line 1] ne "blob"} continue
 	    set i [string first "\t" $line]
 	    if {$i < 0} continue
-	    set sha1 [lindex $line 2]
 	    set fname [string range $line [expr {$i+1}] end]
+	    set line [string range $line 0 [expr {$i-1}]]
+	    if {$diffids ne $nullid2 && [lindex $line 1] ne "blob"} continue
+	    set sha1 [lindex $line 2]
 	    if {[string index $fname 0] eq "\""} {
 		set fname [lindex $fname 0]
 	    }
