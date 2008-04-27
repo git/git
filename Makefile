@@ -235,7 +235,6 @@ BASIC_LDFLAGS =
 
 SCRIPT_SH += git-am.sh
 SCRIPT_SH += git-bisect.sh
-SCRIPT_SH += git-clone.sh
 SCRIPT_SH += git-filter-branch.sh
 SCRIPT_SH += git-lost-found.sh
 SCRIPT_SH += git-merge-octopus.sh
@@ -481,6 +480,7 @@ BUILTIN_OBJS += builtin-check-ref-format.o
 BUILTIN_OBJS += builtin-checkout-index.o
 BUILTIN_OBJS += builtin-checkout.o
 BUILTIN_OBJS += builtin-clean.o
+BUILTIN_OBJS += builtin-clone.o
 BUILTIN_OBJS += builtin-commit-tree.o
 BUILTIN_OBJS += builtin-commit.o
 BUILTIN_OBJS += builtin-config.o
