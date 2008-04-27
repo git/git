@@ -89,7 +89,7 @@ static struct option builtin_commit_options[] = {
 	OPT_CALLBACK('m', "message", &message, "MESSAGE", "specify commit message", opt_parse_m),
 	OPT_STRING('c', "reedit-message", &edit_message, "COMMIT", "reuse and edit message from specified commit "),
 	OPT_STRING('C', "reuse-message", &use_message, "COMMIT", "reuse message from specified commit"),
-	OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by: header"),
+	OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 	OPT_STRING('t', "template", &template_file, "FILE", "use specified template file"),
 	OPT_BOOLEAN('e', "edit", &edit_flag, "force edit of commit"),
 
