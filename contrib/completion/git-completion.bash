@@ -1346,9 +1346,14 @@ _git ()
 _gitk ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local g="$(git rev-parse --git-dir 2>/dev/null)"
+	local merge=""
+	if [ -f $g/MERGE_HEAD ]; then
+		merge="--merge"
+	fi
 	case "$cur" in
 	--*)
-		__gitcomp "--not --all"
+		__gitcomp "--not --all $merge"
 		return
 		;;
 	esac
