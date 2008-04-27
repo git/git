@@ -40,7 +40,7 @@ void maybe_flush_or_die(FILE *f, const char *desc)
 	}
 }
 
-int read_in_full(int fd, void *buf, size_t count)
+ssize_t read_in_full(int fd, void *buf, size_t count)
 {
 	char *p = buf;
 	ssize_t total = 0;
@@ -57,7 +57,7 @@ int read_in_full(int fd, void *buf, size_t count)
 	return total;
 }
 
-int write_in_full(int fd, const void *buf, size_t count)
+ssize_t write_in_full(int fd, const void *buf, size_t count)
 {
 	const char *p = buf;
 	ssize_t total = 0;
