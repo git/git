@@ -23,10 +23,13 @@ test_refspec () {
 }
 
 test_refspec push ''						invalid
-test_refspec push ':'						invalid
+test_refspec push ':'
+test_refspec push '::'						invalid
+test_refspec push '+:'
 
 test_refspec fetch ''
 test_refspec fetch ':'
+test_refspec fetch '::'						invalid
 
 test_refspec push 'refs/heads/*:refs/remotes/frotz/*'
 test_refspec push 'refs/heads/*:refs/remotes/frotz'		invalid

@@ -429,6 +429,16 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 		}
 
 		rhs = strrchr(lhs, ':');
+
+		/*
+		 * Before going on, special case ":" (or "+:") as a refspec
+		 * for matching refs.
+		 */
+		if (!fetch && rhs == lhs && rhs[1] == '\0') {
+			rs[i].matching = 1;
+			continue;
+		}
+
 		if (rhs) {
 			rhs++;
 			rlen = strlen(rhs);
@@ -842,7 +852,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	const char *dst_value = rs->dst;
 	char *dst_guess;
 
-	if (rs->pattern)
+	if (rs->pattern || rs->matching)
 		return errs;
 
 	matched_src = matched_dst = NULL;
@@ -932,13 +942,23 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
 						 const struct ref *src)
 {
 	int i;
+	int matching_refs = -1;
 	for (i = 0; i < rs_nr; i++) {
+		if (rs[i].matching &&
+		    (matching_refs == -1 || rs[i].force)) {
+			matching_refs = i;
+			continue;
+		}
+
 		if (rs[i].pattern &&
 		    !prefixcmp(src->name, rs[i].src) &&
 		    src->name[strlen(rs[i].src)] == '/')
 			return rs + i;
 	}
-	return NULL;
+	if (matching_refs != -1)
+		return rs + matching_refs;
+	else
+		return NULL;
 }
 
 /*
@@ -949,11 +969,16 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	       int nr_refspec, const char **refspec, int flags)
 {
-	struct refspec *rs =
-		parse_push_refspec(nr_refspec, (const char **) refspec);
+	struct refspec *rs;
 	int send_all = flags & MATCH_REFS_ALL;
 	int send_mirror = flags & MATCH_REFS_MIRROR;
+	static const char *default_refspec[] = { ":", 0 };
 
+	if (!nr_refspec) {
+		nr_refspec = 1;
+		refspec = default_refspec;
+	}
+	rs = parse_push_refspec(nr_refspec, (const char **) refspec);
 	if (match_explicit_refs(src, dst, dst_tail, rs, nr_refspec))
 		return -1;
 
@@ -964,48 +989,50 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		char *dst_name;
 		if (src->peer_ref)
 			continue;
-		if (nr_refspec) {
-			pat = check_pattern_match(rs, nr_refspec, src);
-			if (!pat)
-				continue;
-		}
-		else if (!send_mirror && prefixcmp(src->name, "refs/heads/"))
+
+		pat = check_pattern_match(rs, nr_refspec, src);
+		if (!pat)
+			continue;
+
+		if (pat->matching) {
 			/*
 			 * "matching refs"; traditionally we pushed everything
 			 * including refs outside refs/heads/ hierarchy, but
 			 * that does not make much sense these days.
 			 */
-			continue;
+			if (!send_mirror && prefixcmp(src->name, "refs/heads/"))
+				continue;
+			dst_name = xstrdup(src->name);
 
-		if (pat) {
+		} else {
 			const char *dst_side = pat->dst ? pat->dst : pat->src;
 			dst_name = xmalloc(strlen(dst_side) +
 					   strlen(src->name) -
 					   strlen(pat->src) + 2);
 			strcpy(dst_name, dst_side);
 			strcat(dst_name, src->name + strlen(pat->src));
-		} else
-			dst_name = xstrdup(src->name);
+		}
 		dst_peer = find_ref_by_name(dst, dst_name);
-		if (dst_peer && dst_peer->peer_ref)
-			/* We're already sending something to this ref. */
-			goto free_name;
+		if (dst_peer) {
+			if (dst_peer->peer_ref)
+				/* We're already sending something to this ref. */
+				goto free_name;
 
-		if (!dst_peer && !nr_refspec && !(send_all || send_mirror))
-			/*
-			 * Remote doesn't have it, and we have no
-			 * explicit pattern, and we don't have
-			 * --all nor --mirror.
-			 */
-			goto free_name;
-		if (!dst_peer) {
+		} else {
+			if (pat->matching && !(send_all || send_mirror))
+				/*
+				 * Remote doesn't have it, and we have no
+				 * explicit pattern, and we don't have
+				 * --all nor --mirror.
+				 */
+				goto free_name;
+
 			/* Create a new one and link it */
 			dst_peer = make_linked_ref(dst_name, dst_tail);
 			hashcpy(dst_peer->new_sha1, src->new_sha1);
 		}
 		dst_peer->peer_ref = src;
-		if (pat)
-			dst_peer->force = pat->force;
+		dst_peer->force = pat->force;
 	free_name:
 		free(dst_name);
 	}
