@@ -41,6 +41,12 @@ frequently used options.
 
 	Show all branches.
 
+--merge::
+
+	After an attempt to merge stops with conflicts, show the commits on
+	the history between two branches (i.e. the HEAD and the MERGE_HEAD)
+	that modify the conflicted files.
+
 <revs>::
 
 	Limit the revisions to show. This can be either a single revision
