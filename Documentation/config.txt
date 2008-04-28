@@ -234,7 +234,13 @@ core.worktree::
 	used in combination with repositories found automatically in
 	a .git directory (i.e. $GIT_DIR is not set).
 	This can be overridden by the GIT_WORK_TREE environment
-	variable and the '--work-tree' command line option.
+	variable and the '--work-tree' command line option. It can be
+	a absolute path or relative path to the directory specified by
+	--git-dir or GIT_DIR.
+	Note: If --git-dir or GIT_DIR are specified but none of
+	--work-tree, GIT_WORK_TREE and core.worktree is specified,
+	the current working directory is regarded as the top directory
+	of your working tree.
 
 core.logAllRefUpdates::
 	Enable the reflog. Updates to a ref <ref> is logged to the file

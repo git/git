@@ -143,7 +143,8 @@ help ...'.
 
 --git-dir=<path>::
 	Set the path to the repository. This can also be controlled by
-	setting the GIT_DIR environment variable.
+	setting the GIT_DIR environment variable. It can be an absolute
+	path or relative path to current working directory.
 
 --work-tree=<path>::
 	Set the path to the working tree.  The value will not be
@@ -151,7 +152,12 @@ help ...'.
 	a .git directory (i.e. $GIT_DIR is not set).
 	This can also be controlled by setting the GIT_WORK_TREE
 	environment variable and the core.worktree configuration
-	variable.
+	variable. It can be an absolute path or relative path to
+	the directory specified by --git-dir or GIT_DIR.
+	Note: If --git-dir or GIT_DIR are specified but none of
+	--work-tree, GIT_WORK_TREE and core.worktree is specified,
+	the current working directory is regarded as the top directory
+	of your working tree.
 
 --bare::
 	Treat the repository as a bare repository.  If GIT_DIR
