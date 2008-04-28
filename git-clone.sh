@@ -219,7 +219,7 @@ fi
 if test -n "$2"
 then
 	dir="$2"
-	test $# == 2 || die "excess parameter to git-clone"
+	test $# = 2 || die "excess parameter to git-clone"
 else
 	# Derive one from the repository name
 	# Try using "humanish" part of source repo if user didn't specify one
