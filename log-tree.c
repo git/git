@@ -307,11 +307,10 @@ void show_log(struct rev_info *opt)
 	if (opt->show_log_size)
 		printf("log size %i\n", (int)msgbuf.len);
 
-	if (msgbuf.len) {
+	if (msgbuf.len)
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
-		if (opt->use_terminator)
-			putchar('\n');
-	}
+	if (opt->use_terminator)
+		putchar('\n');
 	strbuf_release(&msgbuf);
 }
 
