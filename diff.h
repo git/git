@@ -88,7 +88,6 @@ struct diff_options {
 	int abbrev;
 	const char *prefix;
 	int prefix_length;
-	const char *msg_sep;
 	const char *stat_sep;
 	long xdl_opts;
 

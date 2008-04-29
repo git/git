@@ -208,14 +208,13 @@ void log_write_email_headers(struct rev_info *opt, const char *name,
 	*extra_headers_p = extra_headers;
 }
 
-void show_log(struct rev_info *opt, const char *sep)
+void show_log(struct rev_info *opt)
 {
 	struct strbuf msgbuf;
 	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
 	int abbrev = opt->diffopt.abbrev;
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
-	const char *extra;
 	const char *subject = NULL, *extra_headers = opt->extra_headers;
 	int need_8bit_cte = 0;
 
@@ -240,17 +239,10 @@ void show_log(struct rev_info *opt, const char *sep)
 	}
 
 	/*
-	 * The "oneline" format has several special cases:
-	 *  - The pretty-printed commit lacks a newline at the end
-	 *    of the buffer, but we do want to make sure that we
-	 *    have a newline there. If the separator isn't already
-	 *    a newline, add an extra one.
-	 *  - unlike other log messages, the one-line format does
-	 *    not have an empty line between entries.
+	 * If use_terminator is set, add a newline at the end of the entry.
+	 * Otherwise, add a diffopt.line_termination character before all
+	 * entries but the first.  (IOW, as a separator between entries)
 	 */
-	extra = "";
-	if (*sep != '\n' && opt->use_terminator)
-		extra = "\n";
 	if (opt->shown_one && !opt->use_terminator)
 		putchar(opt->diffopt.line_termination);
 	opt->shown_one = 1;
@@ -292,10 +284,8 @@ void show_log(struct rev_info *opt, const char *sep)
 			show_reflog_message(opt->reflog_info,
 				    opt->commit_format == CMIT_FMT_ONELINE,
 				    opt->date_mode);
-			if (opt->commit_format == CMIT_FMT_ONELINE) {
-				printf("%s", sep);
+			if (opt->commit_format == CMIT_FMT_ONELINE)
 				return;
-			}
 		}
 	}
 
@@ -319,7 +309,8 @@ void show_log(struct rev_info *opt, const char *sep)
 
 	if (msgbuf.len) {
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
-		printf("%s%s", extra, sep);
+		if (opt->use_terminator)
+			putchar('\n');
 	}
 	strbuf_release(&msgbuf);
 }
@@ -342,7 +333,7 @@ int log_tree_diff_flush(struct rev_info *opt)
 		 * an extra newline between the end of log and the
 		 * output for readability.
 		 */
-		show_log(opt, opt->diffopt.msg_sep);
+		show_log(opt);
 		if ((opt->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT) &&
 		    opt->verbose_header &&
 		    opt->commit_format != CMIT_FMT_ONELINE) {
@@ -430,7 +421,7 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	shown = log_tree_diff(opt, commit, &log);
 	if (!shown && opt->loginfo && opt->always_show_header) {
 		log.parent = NULL;
-		show_log(opt, "");
+		show_log(opt);
 		shown = 1;
 	}
 	opt->loginfo = NULL;

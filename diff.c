@@ -2220,7 +2220,6 @@ void diff_setup(struct diff_options *options)
 	options->rename_limit = -1;
 	options->dirstat_percent = 3;
 	options->context = 3;
-	options->msg_sep = "";
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
