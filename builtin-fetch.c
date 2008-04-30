@@ -577,8 +577,6 @@ static int do_fetch(struct transport *transport,
 		free_refs(ref_map);
 	}
 
-	transport_disconnect(transport);
-
 	return 0;
 }
 
@@ -599,6 +597,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	int i;
 	static const char **refs = NULL;
 	int ref_nr = 0;
+	int exit_code;
 
 	/* Record the command line for the reflog */
 	strbuf_addstr(&default_rla, "fetch");
@@ -652,6 +651,9 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	signal(SIGINT, unlock_pack_on_signal);
 	atexit(unlock_pack);
-	return do_fetch(transport,
+	exit_code = do_fetch(transport,
 			parse_fetch_refspec(ref_nr, refs), ref_nr);
+	transport_disconnect(transport);
+	transport = NULL;
+	return exit_code;
 }
