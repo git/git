@@ -123,7 +123,7 @@ static const unsigned char* get_rev(void)
 			return NULL;
 
 		commit = rev_list->item;
-		if (commit->object.parsed)
+		if (!commit->object.parsed)
 			parse_commit(commit);
 		parents = commit->parents;
 
