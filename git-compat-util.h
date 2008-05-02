@@ -185,7 +185,7 @@ extern ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
  * This function is used in compat/pread.c.  But we can't include
  * cache.h there.
  */
-extern int read_in_full(int fd, void *buf, size_t count);
+extern ssize_t read_in_full(int fd, void *buf, size_t count);
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
