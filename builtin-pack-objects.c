@@ -43,6 +43,7 @@ struct object_entry {
 					     */
 	void *delta_data;	/* cached delta (uncompressed) */
 	unsigned long delta_size;	/* delta data size (uncompressed) */
+	unsigned long z_delta_size;	/* delta data size (compressed) */
 	unsigned int hash;	/* name hint hash */
 	enum object_type type;
 	enum object_type in_pack_type;	/* could be delta */
@@ -301,6 +302,13 @@ static unsigned long write_object(struct sha1file *f,
 			buf = read_sha1_file(entry->idx.sha1, &type, &size);
 			if (!buf)
 				die("unable to read %s", sha1_to_hex(entry->idx.sha1));
+			/*
+			 * make sure no cached delta data remains from a
+			 * previous attempt before a pack split occured.
+			 */
+			free(entry->delta_data);
+			entry->delta_data = NULL;
+			entry->z_delta_size = 0;
 		} else if (entry->delta_data) {
 			size = entry->delta_size;
 			buf = entry->delta_data;
@@ -313,7 +321,11 @@ static unsigned long write_object(struct sha1file *f,
 			type = (allow_ofs_delta && entry->delta->idx.offset) ?
 				OBJ_OFS_DELTA : OBJ_REF_DELTA;
 		}
-		datalen = do_compress(&buf, size);
+
+		if (entry->z_delta_size)
+			datalen = entry->z_delta_size;
+		else
+			datalen = do_compress(&buf, size);
 
 		/*
 		 * The object header is a byte of 'type' followed by zero or
@@ -1445,6 +1457,29 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 				break;
 			else if (ret > 0)
 				best_base = other_idx;
+		}
+
+		/*
+		 * If we decided to cache the delta data, then it is best
+		 * to compress it right away.  First because we have to do
+		 * it anyway, and doing it here while we're threaded will
+		 * save a lot of time in the non threaded write phase,
+		 * as well as allow for caching more deltas within
+		 * the same cache size limit.
+		 * ...
+		 * But only if not writing to stdout, since in that case
+		 * the network is most likely throttling writes anyway,
+		 * and therefore it is best to go to the write phase ASAP
+		 * instead, as we can afford spending more time compressing
+		 * between writes at that moment.
+		 */
+		if (entry->delta_data && !pack_to_stdout) {
+			entry->z_delta_size = do_compress(&entry->delta_data,
+							  entry->delta_size);
+			cache_lock();
+			delta_cache_size -= entry->delta_size;
+			delta_cache_size += entry->z_delta_size;
+			cache_unlock();
 		}
 
 		/* if we made n a delta, and if n is already at max
