@@ -452,11 +452,10 @@ static void write_pack_file(void)
 	struct sha1file *f;
 	off_t offset, offset_one, last_obj_offset = 0;
 	struct pack_header hdr;
-	int do_progress = progress >> pack_to_stdout;
 	uint32_t nr_remaining = nr_result;
 	time_t last_mtime = 0;
 
-	if (do_progress)
+	if (progress > pack_to_stdout)
 		progress_state = start_progress("Writing objects", nr_result);
 	written_list = xmalloc(nr_objects * sizeof(*written_list));
 
