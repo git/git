@@ -124,6 +124,32 @@ static void *get_delta(struct object_entry *entry)
 	return delta_buf;
 }
 
+static unsigned long do_compress(void **pptr, unsigned long size)
+{
+	z_stream stream;
+	void *in, *out;
+	unsigned long maxsize;
+
+	memset(&stream, 0, sizeof(stream));
+	deflateInit(&stream, pack_compression_level);
+	maxsize = deflateBound(&stream, size);
+
+	in = *pptr;
+	out = xmalloc(maxsize);
+	*pptr = out;
+
+	stream.next_in = in;
+	stream.avail_in = size;
+	stream.next_out = out;
+	stream.avail_out = maxsize;
+	while (deflate(&stream, Z_FINISH) == Z_OK)
+		; /* nothing */
+	deflateEnd(&stream);
+
+	free(in);
+	return stream.total_out;
+}
+
 /*
  * The per-object header is a pretty dense thing, which is
  *  - first byte: low four bits are "size", then three bits of "type",
@@ -226,11 +252,10 @@ static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry,
 				  off_t write_offset)
 {
-	unsigned long size, limit;
+	unsigned long size, limit, datalen;
 	void *buf;
 	unsigned char header[10], dheader[10];
 	unsigned hdrlen;
-	off_t datalen;
 	enum object_type type;
 	int usable_delta, to_reuse;
 
@@ -272,9 +297,6 @@ static unsigned long write_object(struct sha1file *f,
 				 */
 
 	if (!to_reuse) {
-		z_stream stream;
-		unsigned long maxsize;
-		void *out;
 		if (!usable_delta) {
 			buf = read_sha1_file(entry->idx.sha1, &type, &size);
 			if (!buf)
@@ -291,20 +313,7 @@ static unsigned long write_object(struct sha1file *f,
 			type = (allow_ofs_delta && entry->delta->idx.offset) ?
 				OBJ_OFS_DELTA : OBJ_REF_DELTA;
 		}
-		/* compress the data to store and put compressed length in datalen */
-		memset(&stream, 0, sizeof(stream));
-		deflateInit(&stream, pack_compression_level);
-		maxsize = deflateBound(&stream, size);
-		out = xmalloc(maxsize);
-		/* Compress it */
-		stream.next_in = buf;
-		stream.avail_in = size;
-		stream.next_out = out;
-		stream.avail_out = maxsize;
-		while (deflate(&stream, Z_FINISH) == Z_OK)
-			/* nothing */;
-		deflateEnd(&stream);
-		datalen = stream.total_out;
+		datalen = do_compress(&buf, size);
 
 		/*
 		 * The object header is a byte of 'type' followed by zero or
@@ -324,7 +333,6 @@ static unsigned long write_object(struct sha1file *f,
 			while (ofs >>= 7)
 				dheader[--pos] = 128 | (--ofs & 127);
 			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
-				free(out);
 				free(buf);
 				return 0;
 			}
@@ -337,7 +345,6 @@ static unsigned long write_object(struct sha1file *f,
 			 * an additional 20 bytes for the base sha1.
 			 */
 			if (limit && hdrlen + 20 + datalen + 20 >= limit) {
-				free(out);
 				free(buf);
 				return 0;
 			}
@@ -346,14 +353,12 @@ static unsigned long write_object(struct sha1file *f,
 			hdrlen += 20;
 		} else {
 			if (limit && hdrlen + datalen + 20 >= limit) {
-				free(out);
 				free(buf);
 				return 0;
 			}
 			sha1write(f, header, hdrlen);
 		}
-		sha1write(f, out, datalen);
-		free(out);
+		sha1write(f, buf, datalen);
 		free(buf);
 	}
 	else {
