@@ -112,6 +112,10 @@ $test_expect 'drop middle stash' '
 	test 1 = $(git show HEAD:file)
 '
 
+case $(uname -s) in
+*MINGW*) test_expect=test_expect_failure;;
+*)       test_expect=test_expect_success;;
+esac
 $test_expect 'stash pop' '
 	git reset --hard &&
 	git stash pop &&

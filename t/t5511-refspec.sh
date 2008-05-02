@@ -4,6 +4,8 @@ test_description='refspec parsing'
 
 . ./test-lib.sh
 
+test_expect=test_expect_success
+
 test_refspec () {
 
 	kind=$1 refspec=$2 expect=$3
@@ -19,7 +21,7 @@ test_refspec () {
 		title="$kind $refspec (invalid)"
 		test='test_must_fail git ls-remote frotz'
 	fi
-	test_expect_success "$title" "$test"
+	$test_expect "$title" "$test"
 }
 
 test_refspec push ''						invalid
@@ -46,8 +48,14 @@ test_refspec fetch 'refs/heads/*:refs/remotes/frotz/*'
 test_refspec fetch 'refs/heads/*:refs/remotes/frotz'		invalid
 test_refspec fetch 'refs/heads:refs/remotes/frotz/*'		invalid
 test_refspec fetch 'refs/heads/master:refs/remotes/frotz/xyzzy'
-test "$is_mingw" ||
+
+case $(uname -s) in
+*MINGW*) test_expect=test_expect_failure;;
+*)       test_expect=test_expect_success;;
+esac
 test_refspec fetch 'refs/heads/master::refs/remotes/frotz/xyzzy'	invalid
+test_expect=test_expect_success
+
 test_refspec fetch 'refs/heads/maste :refs/remotes/frotz/xyzzy'	invalid
 
 test_refspec push 'master~1:refs/remotes/frotz/backup'
