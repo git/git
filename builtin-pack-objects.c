@@ -65,7 +65,8 @@ static struct pack_idx_entry **written_list;
 static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
 
 static int non_empty;
-static int no_reuse_delta, no_reuse_object, keep_unreachable, include_tag;
+static int reuse_delta = 1, reuse_object = 1;
+static int keep_unreachable, include_tag;
 static int local;
 static int incremental;
 static int allow_ofs_delta;
@@ -251,7 +252,7 @@ static unsigned long write_object(struct sha1file *f,
 		crc32_begin(f);
 
 	obj_type = entry->type;
-	if (no_reuse_object)
+	if (!reuse_object)
 		to_reuse = 0;	/* explicit */
 	else if (!entry->in_pack)
 		to_reuse = 0;	/* can't reuse what we don't have */
@@ -1021,7 +1022,7 @@ static void check_object(struct object_entry *entry)
 			unuse_pack(&w_curs);
 			return;
 		case OBJ_REF_DELTA:
-			if (!no_reuse_delta && !entry->preferred_base)
+			if (reuse_delta && !entry->preferred_base)
 				base_ref = use_pack(p, &w_curs,
 						entry->in_pack_offset + used, NULL);
 			entry->in_pack_header_size = used + 20;
@@ -1044,7 +1045,7 @@ static void check_object(struct object_entry *entry)
 				die("delta base offset out of bound for %s",
 				    sha1_to_hex(entry->idx.sha1));
 			ofs = entry->in_pack_offset - ofs;
-			if (!no_reuse_delta && !entry->preferred_base) {
+			if (reuse_delta && !entry->preferred_base) {
 				struct revindex_entry *revidx;
 				revidx = find_pack_revindex(p, ofs);
 				base_ref = nth_packed_object_sha1(p, revidx->nr);
@@ -1232,7 +1233,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	 * We do not bother to try a delta that we discarded
 	 * on an earlier try, but only when reusing delta data.
 	 */
-	if (!no_reuse_delta && trg_entry->in_pack &&
+	if (reuse_delta && trg_entry->in_pack &&
 	    trg_entry->in_pack == src_entry->in_pack &&
 	    trg_entry->in_pack_type != OBJ_REF_DELTA &&
 	    trg_entry->in_pack_type != OBJ_OFS_DELTA)
@@ -1687,7 +1688,7 @@ static void prepare_pack(int window, int depth)
 
 		if (entry->delta)
 			/* This happens if we decided to reuse existing
-			 * delta from a pack.  "!no_reuse_delta &&" is implied.
+			 * delta from a pack.  "reuse_delta &&" is implied.
 			 */
 			continue;
 
@@ -2049,11 +2050,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp("--no-reuse-delta", arg)) {
-			no_reuse_delta = 1;
+			reuse_delta = 0;
 			continue;
 		}
 		if (!strcmp("--no-reuse-object", arg)) {
-			no_reuse_object = no_reuse_delta = 1;
+			reuse_object = reuse_delta = 0;
 			continue;
 		}
 		if (!strcmp("--delta-base-offset", arg)) {
