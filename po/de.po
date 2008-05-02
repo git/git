@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-05-01 11:54+0200\n"
-"PO-Revision-Date: 2008-05-01 21:32+0200\n"
+"PO-Revision-Date: 2008-05-02 21:12+0200\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -29,7 +29,7 @@ msgstr "Versionen lesen..."
 
 #: gitk:275
 msgid "Can't parse git log output:"
-msgstr "Git log Ausgabe kann nicht erkannt werden:"
+msgstr "Ausgabe von git-log kann nicht erkannt werden:"
 
 #: gitk:386 gitk:2195
 msgid "No commits selected"
@@ -62,7 +62,7 @@ msgstr "Zweige neu laden"
 
 #: gitk:665
 msgid "List references"
-msgstr "Zweige auflisten"
+msgstr "Zweige/Markierungen auflisten"
 
 #: gitk:666
 msgid "Quit"
@@ -138,7 +138,7 @@ msgstr "Pfad betreffend:"
 
 #: gitk:801 gitk:2436
 msgid "adding/removing string:"
-msgstr "String dazu/löschen:"
+msgstr "Zeichenkette ändernd:"
 
 #: gitk:810 gitk:812
 msgid "Exact"
@@ -306,11 +306,11 @@ msgstr "<Runter>, n, k\tNächste ältere Version"
 
 #: gitk:1354
 msgid "<Left>, z, j\tGo back in history list"
-msgstr "<Links>, z, j\tEine Version zurück gehen"
+msgstr "<Links>, z, j\tEine Version zurückgehen"
 
 #: gitk:1355
 msgid "<Right>, x, l\tGo forward in history list"
-msgstr "<Rechts>, x, l\tEine Version nach vorne gehen"
+msgstr "<Rechts>, x, l\tEine Version weitergehen"
 
 #: gitk:1356
 msgid "<PageUp>\tMove up one page in commit list"
@@ -540,17 +540,17 @@ msgstr "Gehe zu:"
 
 #: gitk:5781
 msgid "SHA1 ID:"
-msgstr "SHA1 Kennung:"
+msgstr "SHA1-Hashwert:"
 
 #: gitk:5806
 #, tcl-format
 msgid "Short SHA1 id %s is ambiguous"
-msgstr "Kurze SHA1-Kennung »%s« ist mehrdeutig"
+msgstr "Kurzer SHA1-Hashwert »%s« ist mehrdeutig"
 
 #: gitk:5818
 #, tcl-format
 msgid "SHA1 id %s is not known"
-msgstr "SHA1-Kennung »%s« unbekannt"
+msgstr "SHA1-Hashwert »%s« unbekannt"
 
 #: gitk:5820
 #, tcl-format
@@ -641,7 +641,7 @@ msgstr "Schreiben"
 
 #: gitk:6291
 msgid "Error writing commit:"
-msgstr "Fehler beim Version eintragen:"
+msgstr "Fehler beim Schreiben der Version:"
 
 #: gitk:6317
 msgid "Name:"
@@ -780,7 +780,7 @@ msgstr "Lokale Änderungen anzeigen"
 
 #: gitk:8024
 msgid "Auto-select SHA1"
-msgstr "SHA1 Hashwert automatisch markieren"
+msgstr "SHA1-Hashwert automatisch markieren"
 
 #: gitk:8029
 msgid "Diff display options"
@@ -804,11 +804,11 @@ msgstr "Farben: Klicken zum Wählen"
 
 #: gitk:8048
 msgid "Background"
-msgstr "Vordergrund"
+msgstr "Hintergrund"
 
 #: gitk:8052
 msgid "Foreground"
-msgstr "Hintergrund"
+msgstr "Vordergrund"
 
 #: gitk:8056
 msgid "Diff: old lines"
@@ -879,9 +879,7 @@ msgstr "Liste der nicht-zusammengeführten Dateien nicht gefunden:"
 
 #: gitk:8653
 msgid "No files selected: --merge specified but no files are unmerged."
-msgstr ""
-"Keine Dateien ausgewähle: --merge angegeben, es existieren aber keine nicht-"
-"zusammengeführten Dateien."
+msgstr "Keine Dateien ausgewählt: --merge angegeben, es existieren aber keine nicht-zusammengeführten Dateien."
 
 #: gitk:8656
 msgid ""
