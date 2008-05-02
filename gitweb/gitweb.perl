@@ -369,7 +369,12 @@ sub filter_snapshot_fmts {
 }
 
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
-do $GITWEB_CONFIG if -e $GITWEB_CONFIG;
+if (-e $GITWEB_CONFIG) {
+	do $GITWEB_CONFIG;
+} else {
+	our $GITWEB_CONFIG_SYSTEM = $ENV{'GITWEB_CONFIG_SYSTEM'} || "++GITWEB_CONFIG_SYSTEM++";
+	do $GITWEB_CONFIG_SYSTEM if -e $GITWEB_CONFIG_SYSTEM;
+}
 
 # version of the core git binary
 our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
@@ -506,7 +511,7 @@ sub evaluate_path_info {
 	}
 	# do not change any parameters if an action is given using the query string
 	return if $action;
-	$path_info =~ s,^$project/*,,;
+	$path_info =~ s,^\Q$project\E/*,,;
 	my ($refname, $pathname) = split(/:/, $path_info, 2);
 	if (defined $pathname) {
 		# we got "project.git/branch:filename" or "project.git/branch:dir/"
@@ -628,7 +633,7 @@ sub href(%) {
 	my ($use_pathinfo) = gitweb_check_feature('pathinfo');
 	if ($use_pathinfo) {
 		# use PATH_INFO for project name
-		$href .= "/$params{'project'}" if defined $params{'project'};
+		$href .= "/".esc_url($params{'project'}) if defined $params{'project'};
 		delete $params{'project'};
 
 		# Summary just uses the project path URL
@@ -2570,7 +2575,7 @@ EOF
 		my $action = $my_uri;
 		my ($use_pathinfo) = gitweb_check_feature('pathinfo');
 		if ($use_pathinfo) {
-			$action .= "/$project";
+			$action .= "/".esc_url($project);
 		} else {
 			$cgi->param("p", $project);
 		}
@@ -5171,14 +5176,26 @@ sub git_history {
 	my $refs = git_get_references();
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
 
+	my @commitlist = parse_commits($hash_base, 101, (100 * $page),
+	                               $file_name, "--full-history");
+	if (!@commitlist) {
+		die_error('404 Not Found', "No such file or directory on given branch");
+	}
+
 	if (!defined $hash && defined $file_name) {
-		$hash = git_get_hash_by_path($hash_base, $file_name);
+		# some commits could have deleted file in question,
+		# and not have it in tree, but one of them has to have it
+		for (my $i = 0; $i <= @commitlist; $i++) {
+			$hash = git_get_hash_by_path($commitlist[$i]{'id'}, $file_name);
+			last if defined $hash;
+		}
 	}
 	if (defined $hash) {
 		$ftype = git_get_type($hash);
 	}
-
-	my @commitlist = parse_commits($hash_base, 101, (100 * $page), $file_name, "--full-history");
+	if (!defined $ftype) {
+		die_error(undef, "Unknown type of object");
+	}
 
 	my $paging_nav = '';
 	if ($page > 0) {

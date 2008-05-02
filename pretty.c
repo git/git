@@ -4,40 +4,49 @@
 #include "diff.h"
 #include "revision.h"
 
-static struct cmt_fmt_map {
-	const char *n;
-	size_t cmp_len;
-	enum cmit_fmt v;
-} cmt_fmts[] = {
-	{ "raw",	1,	CMIT_FMT_RAW },
-	{ "medium",	1,	CMIT_FMT_MEDIUM },
-	{ "short",	1,	CMIT_FMT_SHORT },
-	{ "email",	1,	CMIT_FMT_EMAIL },
-	{ "full",	5,	CMIT_FMT_FULL },
-	{ "fuller",	5,	CMIT_FMT_FULLER },
-	{ "oneline",	1,	CMIT_FMT_ONELINE },
-	{ "format:",	7,	CMIT_FMT_USERFORMAT},
-};
-
 static char *user_format;
 
-enum cmit_fmt get_commit_format(const char *arg)
+void get_commit_format(const char *arg, struct rev_info *rev)
 {
 	int i;
+	static struct cmt_fmt_map {
+		const char *n;
+		size_t cmp_len;
+		enum cmit_fmt v;
+	} cmt_fmts[] = {
+		{ "raw",	1,	CMIT_FMT_RAW },
+		{ "medium",	1,	CMIT_FMT_MEDIUM },
+		{ "short",	1,	CMIT_FMT_SHORT },
+		{ "email",	1,	CMIT_FMT_EMAIL },
+		{ "full",	5,	CMIT_FMT_FULL },
+		{ "fuller",	5,	CMIT_FMT_FULLER },
+		{ "oneline",	1,	CMIT_FMT_ONELINE },
+	};
 
-	if (!arg || !*arg)
-		return CMIT_FMT_DEFAULT;
+	rev->use_terminator = 0;
+	if (!arg || !*arg) {
+		rev->commit_format = CMIT_FMT_DEFAULT;
+		return;
+	}
 	if (*arg == '=')
 		arg++;
-	if (!prefixcmp(arg, "format:")) {
+	if (!prefixcmp(arg, "format:") || !prefixcmp(arg, "tformat:")) {
+		const char *cp = strchr(arg, ':') + 1;
 		free(user_format);
-		user_format = xstrdup(arg + 7);
-		return CMIT_FMT_USERFORMAT;
+		user_format = xstrdup(cp);
+		if (arg[0] == 't')
+			rev->use_terminator = 1;
+		rev->commit_format = CMIT_FMT_USERFORMAT;
+		return;
 	}
 	for (i = 0; i < ARRAY_SIZE(cmt_fmts); i++) {
 		if (!strncmp(arg, cmt_fmts[i].n, cmt_fmts[i].cmp_len) &&
-		    !strncmp(arg, cmt_fmts[i].n, strlen(arg)))
-			return cmt_fmts[i].v;
+		    !strncmp(arg, cmt_fmts[i].n, strlen(arg))) {
+			if (cmt_fmts[i].v == CMIT_FMT_ONELINE)
+				rev->use_terminator = 1;
+			rev->commit_format = cmt_fmts[i].v;
+			return;
+		}
 	}
 
 	die("invalid --pretty format: %s", arg);
@@ -457,6 +466,7 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	const struct commit *commit = c->commit;
 	const char *msg = commit->buffer;
 	struct commit_list *p;
+	int h1, h2;
 
 	/* these are independent of the commit */
 	switch (placeholder[0]) {
@@ -478,6 +488,16 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	case 'n':		/* newline */
 		strbuf_addch(sb, '\n');
 		return 1;
+	case 'x':
+		/* %x00 == NUL, %x0a == LF, etc. */
+		if (0 <= (h1 = hexval_table[0xff & placeholder[1]]) &&
+		    h1 <= 16 &&
+		    0 <= (h2 = hexval_table[0xff & placeholder[2]]) &&
+		    h2 <= 16) {
+			strbuf_addch(sb, (h1<<4)|h2);
+			return 3;
+		} else
+			return 0;
 	}
 
 	/* these depend on the commit */

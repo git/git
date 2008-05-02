@@ -31,7 +31,7 @@ structure, some suggested "exclude patterns", and copies of non-executing
 "hook" files.  The suggested patterns and hook files are all modifiable and
 extensible.
 
---shared[={false|true|umask|group|all|world|everybody}]::
+--shared[={false|true|umask|group|all|world|everybody|0xxx}]::
 
 Specify that the git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that
@@ -51,6 +51,12 @@ is given:
 
  - 'all' (or 'world' or 'everybody'): Same as 'group', but make the repository
    readable by all users.
+
+ - '0xxx': '0xxx' is an octal number and each file will have mode '0xxx'
+   Any option except 'umask' can be set using this option. '0xxx' will
+   override users umask(2) value, and thus, users with a safe umask (0077)
+   can use this option. '0640' will create a repository which is group-readable
+   but not writable. '0660' is equivalent to 'group'.
 
 By default, the configuration flag receive.denyNonFastForwards is enabled
 in shared repositories, so that you cannot force a non fast-forwarding push

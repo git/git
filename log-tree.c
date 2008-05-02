@@ -249,9 +249,9 @@ void show_log(struct rev_info *opt, const char *sep)
 	 *    not have an empty line between entries.
 	 */
 	extra = "";
-	if (*sep != '\n' && opt->commit_format == CMIT_FMT_ONELINE)
+	if (*sep != '\n' && opt->use_terminator)
 		extra = "\n";
-	if (opt->shown_one && opt->commit_format != CMIT_FMT_ONELINE)
+	if (opt->shown_one && !opt->use_terminator)
 		putchar(opt->diffopt.line_termination);
 	opt->shown_one = 1;
 
@@ -317,8 +317,10 @@ void show_log(struct rev_info *opt, const char *sep)
 	if (opt->show_log_size)
 		printf("log size %i\n", (int)msgbuf.len);
 
-	if (msgbuf.len)
-		printf("%s%s%s", msgbuf.buf, extra, sep);
+	if (msgbuf.len) {
+		fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
+		printf("%s%s", extra, sep);
+	}
 	strbuf_release(&msgbuf);
 }
 

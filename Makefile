@@ -189,6 +189,7 @@ ETC_GITCONFIG = $(sysconfdir)/gitconfig
 
 # default configuration for gitweb
 GITWEB_CONFIG = gitweb_config.perl
+GITWEB_CONFIG_SYSTEM = /etc/gitweb.conf
 GITWEB_HOME_LINK_STR = projects
 GITWEB_SITENAME =
 GITWEB_PROJECTROOT = /pub/git
@@ -364,6 +365,7 @@ LIB_H += refs.h
 LIB_H += remote.h
 LIB_H += revision.h
 LIB_H += run-command.h
+LIB_H += sha1-lookup.h
 LIB_H += sideband.h
 LIB_H += strbuf.h
 LIB_H += tag.h
@@ -444,6 +446,7 @@ LIB_OBJS += run-command.o
 LIB_OBJS += server-info.o
 LIB_OBJS += setup.o
 LIB_OBJS += sha1_file.o
+LIB_OBJS += sha1-lookup.o
 LIB_OBJS += sha1_name.o
 LIB_OBJS += shallow.o
 LIB_OBJS += sideband.o
@@ -1068,6 +1071,7 @@ gitweb/gitweb.cgi: gitweb/gitweb.perl
 	    -e 's|++GIT_VERSION++|$(GIT_VERSION)|g' \
 	    -e 's|++GIT_BINDIR++|$(bindir)|g' \
 	    -e 's|++GITWEB_CONFIG++|$(GITWEB_CONFIG)|g' \
+	    -e 's|++GITWEB_CONFIG_SYSTEM++|$(GITWEB_CONFIG_SYSTEM)|g' \
 	    -e 's|++GITWEB_HOME_LINK_STR++|$(GITWEB_HOME_LINK_STR)|g' \
 	    -e 's|++GITWEB_SITENAME++|$(GITWEB_SITENAME)|g' \
 	    -e 's|++GITWEB_PROJECTROOT++|$(GITWEB_PROJECTROOT)|g' \

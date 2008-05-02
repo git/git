@@ -77,6 +77,16 @@ test_expect_success 'add another remote' '
 )
 '
 
+test_expect_success 'remote forces tracking branches' '
+(
+	cd test &&
+	case `git config remote.second.fetch` in
+	+*) true ;;
+	 *) false ;;
+	esac
+)
+'
+
 test_expect_success 'remove remote' '
 (
 	cd test &&
@@ -254,6 +264,12 @@ test_expect_success '"remote show" does not show symbolic refs' '
 	 git remote show origin > output &&
 	 ! grep HEAD < output &&
 	 ! grep -i stale < output)
+
+'
+
+test_expect_success 'reject adding remote with an invalid name' '
+
+	! git remote add some:url desired-name
 
 '
 

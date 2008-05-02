@@ -24,7 +24,7 @@ OPTIONS
 	URL to include in the summary.
 
 <end>::
-	Commit to send at; defaults to HEAD.
+	Commit to end at; defaults to HEAD.
 
 Author
 ------

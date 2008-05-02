@@ -168,7 +168,8 @@ my $envelope_sender;
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
 
-my $repo = Git->repository();
+my $repo = eval { Git->repository() };
+my @repo = $repo ? ($repo) : ();
 my $term = eval {
 	$ENV{"GIT_SEND_EMAIL_NOTTY"}
 		? new Term::ReadLine 'git-send-email', \*STDIN, \*STDOUT
@@ -271,25 +272,25 @@ sub read_config {
 
 	foreach my $setting (keys %config_bool_settings) {
 		my $target = $config_bool_settings{$setting}->[0];
-		$$target = $repo->config_bool("$prefix.$setting") unless (defined $$target);
+		$$target = Git::config_bool(@repo, "$prefix.$setting") unless (defined $$target);
 	}
 
 	foreach my $setting (keys %config_settings) {
 		my $target = $config_settings{$setting};
 		if (ref($target) eq "ARRAY") {
 			unless (@$target) {
-				my @values = $repo->config("$prefix.$setting");
+				my @values = Git::config(@repo, "$prefix.$setting");
 				@$target = @values if (@values && defined $values[0]);
 			}
 		}
 		else {
-			$$target = $repo->config("$prefix.$setting") unless (defined $$target);
+			$$target = Git::config(@repo, "$prefix.$setting") unless (defined $$target);
 		}
 	}
 }
 
 # read configuration from [sendemail "$identity"], fall back on [sendemail]
-$identity = $repo->config("sendemail.identity") unless (defined $identity);
+$identity = Git::config(@repo, "sendemail.identity") unless (defined $identity);
 read_config("sendemail.$identity") if (defined $identity);
 read_config("sendemail");
 
@@ -327,8 +328,9 @@ if (0) {
 	}
 }
 
-my ($repoauthor) = $repo->ident_person('author');
-my ($repocommitter) = $repo->ident_person('committer');
+my ($repoauthor, $repocommitter);
+($repoauthor) = Git::ident_person(@repo, 'author');
+($repocommitter) = Git::ident_person(@repo, 'committer');
 
 # Verify the user input
 
@@ -415,7 +417,7 @@ if (@files) {
 
 my $prompting = 0;
 if (!defined $sender) {
-	$sender = $repoauthor || $repocommitter;
+	$sender = $repoauthor || $repocommitter || '';
 
 	while (1) {
 		$_ = $term->readline("Who should the emails appear to be from? [$sender] ");
@@ -509,7 +511,7 @@ GIT: for the patch you are writing.
 EOT
 	close(C);
 
-	my $editor = $ENV{GIT_EDITOR} || $repo->config("core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
+	my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
 	system('sh', '-c', '$0 $@', $editor, $compose_filename);
 
 	open(C2,">",$compose_filename . ".final")

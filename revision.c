@@ -1083,6 +1083,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				continue;
 			}
 			if (!strcmp(arg, "--topo-order")) {
+				revs->lifo = 1;
 				revs->topo_order = 1;
 				continue;
 			}
@@ -1198,7 +1199,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!prefixcmp(arg, "--pretty")) {
 				revs->verbose_header = 1;
-				revs->commit_format = get_commit_format(arg+8);
+				get_commit_format(arg+8, revs);
 				continue;
 			}
 			if (!strcmp(arg, "--root")) {

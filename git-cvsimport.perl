@@ -772,7 +772,7 @@ sub commit {
 	waitpid($pid,0);
 	die "Error running git-commit-tree: $?\n" if $?;
 
-	system("git-update-ref $remote/$branch $cid") == 0
+	system('git-update-ref', "$remote/$branch", $cid) == 0
 		or die "Cannot write branch $branch for update: $!\n";
 
 	if ($tag) {

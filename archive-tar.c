@@ -17,6 +17,7 @@ static time_t archive_time;
 static int tar_umask = 002;
 static int verbose;
 static const struct commit *commit;
+static size_t base_len;
 
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
@@ -251,8 +252,8 @@ static int write_tar_entry(const unsigned char *sha1,
 		buffer = NULL;
 		size = 0;
 	} else {
-		buffer = sha1_file_to_archive(path.buf, sha1, mode, &type,
-		                              &size, commit);
+		buffer = sha1_file_to_archive(path.buf + base_len, sha1, mode,
+				&type, &size, commit);
 		if (!buffer)
 			die("cannot read %s", sha1_to_hex(sha1));
 	}
@@ -272,6 +273,7 @@ int write_tar_archive(struct archiver_args *args)
 	archive_time = args->time;
 	verbose = args->verbose;
 	commit = args->commit;
+	base_len = args->base ? strlen(args->base) : 0;
 
 	if (args->commit_sha1)
 		write_global_extended_header(args->commit_sha1);

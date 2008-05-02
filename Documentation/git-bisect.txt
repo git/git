@@ -15,6 +15,7 @@ DESCRIPTION
 The command takes various subcommands, and different options depending
 on the subcommand:
 
+ git bisect help
  git bisect start [<bad> [<good>...]] [--] [<paths>...]
  git bisect bad [<rev>]
  git bisect good [<rev>...]
@@ -28,6 +29,12 @@ on the subcommand:
 This command uses 'git-rev-list --bisect' option to help drive the
 binary search process to find which change introduced a bug, given an
 old "good" commit object name and a later "bad" commit object name.
+
+Getting help
+~~~~~~~~~~~~
+
+Use "git bisect" to get a short usage description, and "git bisect
+help" or "git bisect -h" to get a long usage description.
 
 Basic bisect commands: start, bad, good
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

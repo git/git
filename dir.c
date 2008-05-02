@@ -80,7 +80,7 @@ static int match_one(const char *match, const char *name, int namelen)
 	if (strncmp(match, name, matchlen))
 		return !fnmatch(match, name, 0) ? MATCHED_FNMATCH : 0;
 
-	if (!name[matchlen])
+	if (namelen == matchlen)
 		return MATCHED_EXACTLY;
 	if (match[matchlen-1] == '/' || name[matchlen] == '/')
 		return MATCHED_RECURSIVELY;
