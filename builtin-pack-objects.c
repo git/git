@@ -1486,7 +1486,7 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 		 * depth, leaving it in the window is pointless.  we
 		 * should evict it first.
 		 */
-		if (entry->delta && depth <= n->depth)
+		if (entry->delta && max_depth <= n->depth)
 			continue;
 
 		/*
