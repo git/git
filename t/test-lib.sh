@@ -438,6 +438,5 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
-	is_mingw=t
 	;;
 esac
