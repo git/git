@@ -4,6 +4,13 @@ test_description='detect unwritable repository and fail correctly'
 
 . ./test-lib.sh
 
+case "$(uname -s)" in
+*MINGW*)
+	say "chmod a-w .git/objects does not make directory unwritable - skipping tests"
+	test_done
+	;;
+esac
+
 test_expect_success setup '
 
 	>file &&
