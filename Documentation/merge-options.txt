@@ -1,9 +1,22 @@
---summary::
+--stat::
 	Show a diffstat at the end of the merge. The diffstat is also
-	controlled by the configuration option merge.diffstat.
+	controlled by the configuration option merge.stat.
 
--n, \--no-summary::
+-n, \--no-stat::
 	Do not show diffstat at the end of the merge.
+
+--summary, \--no-summary::
+	Synonyms to --stat and --no-stat; these are deprecated and will be
+	removed in the future.
+
+--log::
+	In addition to branch names, populate the log message with
+	one-line descriptions from the actual commits that are being
+	merged.
+
+--no-log::
+	Do not list one-line descriptions from the actual commits being
+	merged.
 
 --no-commit::
 	Perform the merge but pretend the merge failed and do
