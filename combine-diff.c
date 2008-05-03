@@ -701,7 +701,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		else if (0 <= (fd = open(elem->path, O_RDONLY)) &&
 			 !fstat(fd, &st)) {
 			size_t len = xsize_t(st.st_size);
-			size_t sz = 0;
+			ssize_t done;
 			int is_file, i;
 
 			elem->mode = canon_mode(st.st_mode);
@@ -716,14 +716,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 			result_size = len;
 			result = xmalloc(len + 1);
-			while (sz < len) {
-				ssize_t done = xread(fd, result+sz, len-sz);
-				if (done == 0 && sz != len)
-					die("early EOF '%s'", elem->path);
-				else if (done < 0)
-					die("read error '%s'", elem->path);
-				sz += done;
-			}
+
+			done = read_in_full(fd, result, len);
+			if (done < 0)
+				die("read error '%s'", elem->path);
+			else if (done < len)
+				die("early EOF '%s'", elem->path);
+
 			result[len] = 0;
 		}
 		else {
