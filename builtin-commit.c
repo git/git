@@ -446,6 +446,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 	FILE *fp;
 	const char *hook_arg1 = NULL;
 	const char *hook_arg2 = NULL;
+	int ident_shown = 0;
 
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		return 0;
@@ -527,6 +528,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 
 	determine_author_info();
 
+	/* This checks if committer ident is explicitly given */
+	git_committer_info(0);
 	if (use_editor) {
 		char *author_ident;
 		const char *committer_ident;
@@ -558,11 +561,21 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 					   getenv("GIT_COMMITTER_EMAIL"));
 		if (strcmp(author_ident, committer_ident))
 			fprintf(fp,
-				"#\n"
-				"# Author:    %s\n"
-				"#\n",
+				"%s"
+				"# Author:    %s\n",
+				ident_shown++ ? "" : "#\n",
 				author_ident);
 		free(author_ident);
+
+		if (!user_ident_explicitly_given)
+			fprintf(fp,
+				"%s"
+				"# Committer: %s\n",
+				ident_shown++ ? "" : "#\n",
+				committer_ident);
+
+		if (ident_shown)
+			fprintf(fp, "#\n");
 
 		saved_color_setting = wt_status_use_color;
 		wt_status_use_color = 0;

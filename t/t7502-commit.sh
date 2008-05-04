@@ -166,6 +166,21 @@ test_expect_success 'author different from committer' '
 	test_cmp expect actual
 '
 
+sed -i '$d' expect
+echo "# Committer:
+#" >> expect
+unset GIT_COMMITTER_EMAIL
+unset GIT_COMMITTER_NAME
+
+test_expect_success 'committer is automatic' '
+
+	echo >>negative &&
+	git commit -e -m "sample"
+	head -n 8 .git/COMMIT_EDITMSG |	\
+	sed "s/^# Committer: .*/# Committer:/" >actual &&
+	test_cmp expect actual
+'
+
 pwd=`pwd`
 cat >> .git/FAKE_EDITOR << EOF
 #! /bin/sh
