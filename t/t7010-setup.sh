@@ -122,7 +122,7 @@ test_expect_success 'commit using absolute path names' '
 
 test_expect_success 'log using absolute path names' '
 	echo bb >>a/b/c/d &&
-	git commit -m "bb" $(pwd)/a/b/c/d &&
+	git commit -m "bb" "$(pwd)/a/b/c/d" &&
 
 	git log a/b/c/d >f1.txt &&
 	git log "$(pwd)/a/b/c/d" >f2.txt &&

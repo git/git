@@ -81,9 +81,9 @@ test_valid_repo'
 cd "$base_dir"
 
 test_expect_success 'breaking of loops' \
-"echo '$base_dir/B/.git/objects' >> '$base_dir'/A/.git/objects/info/alternates&&
+'echo "$base_dir"/B/.git/objects >> "$base_dir"/A/.git/objects/info/alternates&&
 cd C &&
-test_valid_repo"
+test_valid_repo'
 
 cd "$base_dir"
 

@@ -10,6 +10,7 @@ commandline, and checks that it would not write any errors
 or warnings to log.'
 
 gitweb_init () {
+	safe_pwd="$(perl -MPOSIX=getcwd -e 'print quotemeta(getcwd)')"
 	cat >gitweb_config.perl <<EOF
 #!/usr/bin/perl
 
@@ -17,16 +18,16 @@ gitweb_init () {
 
 our \$version = "current";
 our \$GIT = "git";
-our \$projectroot = "$(pwd)";
+our \$projectroot = "$safe_pwd";
 our \$project_maxdepth = 8;
 our \$home_link_str = "projects";
 our \$site_name = "[localhost]";
 our \$site_header = "";
 our \$site_footer = "";
 our \$home_text = "indextext.html";
-our @stylesheets = ("file:///$(pwd)/../../gitweb/gitweb.css");
-our \$logo = "file:///$(pwd)/../../gitweb/git-logo.png";
-our \$favicon = "file:///$(pwd)/../../gitweb/git-favicon.png";
+our @stylesheets = ("file:///$safe_pwd/../../gitweb/gitweb.css");
+our \$logo = "file:///$safe_pwd/../../gitweb/git-logo.png";
+our \$favicon = "file:///$safe_pwd/../../gitweb/git-favicon.png";
 our \$projects_list = "";
 our \$export_ok = "";
 our \$strict_export = "";
@@ -53,7 +54,7 @@ gitweb_run () {
 	# written to web server logs, so we are not interested in that:
 	# we are interested only in properly formatted errors/warnings
 	rm -f gitweb.log &&
-	perl -- $(pwd)/../../gitweb/gitweb.perl \
+	perl -- "$(pwd)/../../gitweb/gitweb.perl" \
 		>/dev/null 2>gitweb.log &&
 	if grep -q -s "^[[]" gitweb.log >/dev/null; then false; else true; fi
 

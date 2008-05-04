@@ -20,7 +20,7 @@ test_expect_success setup '
 '
 
 test_expect_success clone '
-	git clone file://`pwd`/.git cloned &&
+	git clone "file://$(pwd)/.git" cloned &&
 	(git rev-parse HEAD; git ls-files -s) >expected &&
 	(
 		cd cloned &&

@@ -7,16 +7,16 @@ test_description='git-svn dcommit can commit renames of files with ugly names'
 
 . ./lib-git-svn.sh
 
-test_expect_success 'load repository with strange names' "
-	svnadmin load -q $rawsvnrepo < ../t9115/funky-names.dump &&
+test_expect_success 'load repository with strange names' '
+	svnadmin load -q "$rawsvnrepo" < ../t9115/funky-names.dump &&
 	start_httpd
-	"
+	'
 
-test_expect_success 'init and fetch repository' "
-	git svn init $svnrepo &&
+test_expect_success 'init and fetch repository' '
+	git svn init "$svnrepo" &&
 	git svn fetch &&
 	git reset --hard git-svn
-	"
+	'
 
 test_expect_success 'create file in existing ugly and empty dir' '
 	mkdir "#{bad_directory_name}" &&
