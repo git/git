@@ -347,7 +347,7 @@ int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv)
  * exists for ce that is a submodule -- it is a submodule that is not
  * checked out).  Return negative for an error.
  */
-static int check_work_tree_entity(const struct cache_entry *ce, struct stat *st, char *symcache)
+static int check_removed(const struct cache_entry *ce, struct stat *st, char *symcache)
 {
 	if (lstat(ce->name, st) < 0) {
 		if (errno != ENOENT && errno != ENOTDIR)
@@ -421,7 +421,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			memset(&(dpath->parent[0]), 0,
 			       sizeof(struct combine_diff_parent)*5);
 
-			changed = check_work_tree_entity(ce, &st, symcache);
+			changed = check_removed(ce, &st, symcache);
 			if (!changed)
 				dpath->mode = ce_mode_from_stat(ce, st.st_mode);
 			else {
@@ -485,7 +485,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		if (ce_uptodate(ce))
 			continue;
 
-		changed = check_work_tree_entity(ce, &st, symcache);
+		changed = check_removed(ce, &st, symcache);
 		if (changed) {
 			if (changed < 0) {
 				perror(ce->name);
@@ -543,7 +543,7 @@ static int get_stat_data(struct cache_entry *ce,
 	if (!cached) {
 		int changed;
 		struct stat st;
-		changed = check_work_tree_entity(ce, &st, cbdata->symcache);
+		changed = check_removed(ce, &st, cbdata->symcache);
 		if (changed < 0)
 			return -1;
 		else if (changed) {
