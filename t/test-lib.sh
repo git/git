@@ -411,14 +411,14 @@ fi
 . ../GIT-BUILD-OPTIONS
 
 # Test repository
-test=trash
+test="trash directory"
 rm -fr "$test" || {
 	trap - exit
 	echo >&5 "FATAL: Cannot prepare test area"
 	exit 1
 }
 
-test_create_repo $test
+test_create_repo "$test"
 cd "$test"
 
 this_test=$(expr "./$0" : '.*/\(t[0-9]*\)-[^/]*$')
