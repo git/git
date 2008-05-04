@@ -6,6 +6,7 @@
 #include "diff.h"
 #include "refs.h"
 #include "revision.h"
+#include "graph.h"
 #include "grep.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
@@ -1203,6 +1204,12 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				get_commit_format(arg+8, revs);
 				continue;
 			}
+			if (!prefixcmp(arg, "--graph")) {
+				revs->topo_order = 1;
+				revs->rewrite_parents = 1;
+				revs->graph = graph_init();
+				continue;
+			}
 			if (!strcmp(arg, "--root")) {
 				revs->show_root_diff = 1;
 				continue;
@@ -1396,6 +1403,15 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 
 	if (revs->reverse && revs->reflog_info)
 		die("cannot combine --reverse with --walk-reflogs");
+
+	/*
+	 * Limitations on the graph functionality
+	 */
+	if (revs->reverse && revs->graph)
+		die("cannot combine --reverse with --graph");
+
+	if (revs->reflog_info && revs->graph)
+		die("cannot combine --walk-reflogs with --graph");
 
 	return left;
 }
@@ -1598,7 +1614,7 @@ static void gc_boundary(struct object_array *array)
 	}
 }
 
-struct commit *get_revision(struct rev_info *revs)
+static struct commit *get_revision_internal(struct rev_info *revs)
 {
 	struct commit *c = NULL;
 	struct commit_list *l;
@@ -1703,5 +1719,13 @@ struct commit *get_revision(struct rev_info *revs)
 		add_object_array(p, NULL, &revs->boundary_commits);
 	}
 
+	return c;
+}
+
+struct commit *get_revision(struct rev_info *revs)
+{
+	struct commit *c = get_revision_internal(revs);
+	if (c && revs->graph)
+		graph_update(revs->graph, c);
 	return c;
 }

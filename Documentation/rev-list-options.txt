@@ -75,6 +75,16 @@ you would get an output line this:
 	-xxxxxxx... 1st on a
 -----------------------------------------------------------------------
 
+--graph::
+
+	Draw a text-based graphical representation of the commit history
+	on the left hand side of the output.  This may cause extra lines
+	to be printed in between commits, in order for the graph history
+	to be drawn properly.
++
+This implies the '--topo-order' option by default, but the
+'--date-order' option may also be specified.
+
 Diff Formatting
 ~~~~~~~~~~~~~~~
 
