@@ -243,12 +243,12 @@ committed a merge between P1 and P2, it will be propagated properly
 and all children of the merge will become merge commits with P1,P2
 as their parents instead of the merge commit.
 
-You can rewrite the commit log messages using `--message-filter`.  For
+You can rewrite the commit log messages using `--msg-filter`.  For
 example, `git-svn-id` strings in a repository created by `git-svn` can
 be removed this way:
 
 -------------------------------------------------------
-git filter-branch --message-filter '
+git filter-branch --msg-filter '
 	sed -e "/^git-svn-id:/d"
 '
 -------------------------------------------------------
