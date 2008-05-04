@@ -30,7 +30,7 @@ test_expect_success 'status clean (empty submodule dir)' '
 	git status |
 	grep "nothing to commit"
 '
-test_expect_failure 'status -a clean (empty submodule dir)' '
+test_expect_success 'status -a clean (empty submodule dir)' '
 	git status -a |
 	grep "nothing to commit"
 '
