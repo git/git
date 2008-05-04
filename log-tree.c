@@ -231,7 +231,7 @@ void show_log(struct rev_info *opt)
 				putchar('>');
 		}
 		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
-		if (opt->parents)
+		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
 		show_decorations(commit);
 		putchar(opt->diffopt.line_termination);
@@ -271,7 +271,7 @@ void show_log(struct rev_info *opt)
 		}
 		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit),
 		      stdout);
-		if (opt->parents)
+		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
 		if (parent)
 			printf(" (from %s)",

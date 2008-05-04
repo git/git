@@ -1105,7 +1105,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				}
 			}
 			if (!strcmp(arg, "--parents")) {
-				revs->parents = 1;
+				revs->rewrite_parents = 1;
+				revs->print_parents = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--dense")) {
@@ -1524,13 +1525,13 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 		/* Commit without changes? */
 		if (commit->object.flags & TREESAME) {
 			/* drop merges unless we want parenthood */
-			if (!revs->parents)
+			if (!revs->rewrite_parents)
 				return commit_ignore;
 			/* non-merge - always ignore it */
 			if (!commit->parents || !commit->parents->next)
 				return commit_ignore;
 		}
-		if (revs->parents && rewrite_parents(revs, commit) < 0)
+		if (revs->rewrite_parents && rewrite_parents(revs, commit) < 0)
 			return commit_error;
 	}
 	return commit_show;

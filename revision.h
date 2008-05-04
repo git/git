@@ -46,7 +46,8 @@ struct rev_info {
 			unpacked:1, /* see also ignore_packed below */
 			boundary:2,
 			left_right:1,
-			parents:1,
+			rewrite_parents:1,
+			print_parents:1,
 			reverse:1,
 			cherry_pick:1,
 			first_parent_only:1;
