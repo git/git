@@ -680,7 +680,7 @@ static int store_write_section(int fd, const char* key)
 	if (dot) {
 		strbuf_addf(&sb, "[%.*s \"", (int)(dot - key), key);
 		for (i = dot - key + 1; i < store.baselen; i++) {
-			if (key[i] == '"')
+			if (key[i] == '"' || key[i] == '\\')
 				strbuf_addch(&sb, '\\');
 			strbuf_addch(&sb, key[i]);
 		}
