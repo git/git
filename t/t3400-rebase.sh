@@ -9,7 +9,8 @@ This test runs git rebase and checks that the author information is not lost.
 '
 . ./test-lib.sh
 
-export GIT_AUTHOR_EMAIL=bogus_email_address
+GIT_AUTHOR_EMAIL=bogus_email_address
+export GIT_AUTHOR_EMAIL
 
 test_expect_success \
     'prepare repository with topic branches' \

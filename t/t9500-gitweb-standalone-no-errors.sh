@@ -39,13 +39,15 @@ EOF
 }
 
 gitweb_run () {
-	export GATEWAY_INTERFACE="CGI/1.1"
-	export HTTP_ACCEPT="*/*"
-	export REQUEST_METHOD="GET"
-	export QUERY_STRING=""$1""
-	export PATH_INFO=""$2""
+	GATEWAY_INTERFACE="CGI/1.1"
+	HTTP_ACCEPT="*/*"
+	REQUEST_METHOD="GET"
+	QUERY_STRING=""$1""
+	PATH_INFO=""$2""
+	export GATEWAY_INTERFACE HTTP_ACCEPT REQUEST_METHOD QUERY_STRING PATH_INFO
 
-	export GITWEB_CONFIG=$(pwd)/gitweb_config.perl
+	GITWEB_CONFIG=$(pwd)/gitweb_config.perl
+	export GITWEB_CONFIG
 
 	# some of git commands write to STDERR on error, but this is not
 	# written to web server logs, so we are not interested in that:

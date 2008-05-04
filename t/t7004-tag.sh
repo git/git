@@ -626,7 +626,8 @@ esac
 
 cp -R ../t7004 ./gpghome
 chmod 0700 gpghome
-export GNUPGHOME="$(pwd)/gpghome"
+GNUPGHOME="$(pwd)/gpghome"
+export GNUPGHOME
 
 get_tag_header signed-tag $commit commit $time >expect
 echo 'A signed tag message' >>expect
