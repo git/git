@@ -47,6 +47,7 @@ static enum {
 
 static char *logfile, *force_author, *template_file;
 static char *edit_message, *use_message;
+static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, untracked_files, no_verify, allow_empty;
 /*
@@ -395,7 +396,7 @@ static int is_a_merge(const unsigned char *sha1)
 
 static const char sign_off_header[] = "Signed-off-by: ";
 
-static void determine_author_info(struct strbuf *sb)
+static void determine_author_info(void)
 {
 	char *name, *email, *date;
 
@@ -431,7 +432,9 @@ static void determine_author_info(struct strbuf *sb)
 		email = xstrndup(lb + 2, rb - (lb + 2));
 	}
 
-	strbuf_addf(sb, "author %s\n", fmt_ident(name, email, date, IDENT_ERROR_ON_NO_NAME));
+	author_name = name;
+	author_email = email;
+	author_date = date;
 }
 
 static int prepare_to_commit(const char *index_file, const char *prefix)
@@ -522,7 +525,12 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 
 	strbuf_release(&sb);
 
+	determine_author_info();
+
 	if (use_editor) {
+		char *author_ident;
+		const char *committer_ident;
+
 		if (in_merge)
 			fprintf(fp,
 				"#\n"
@@ -544,6 +552,17 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 				"# You can remove them yourself if you want to)\n");
 		if (only_include_assumed)
 			fprintf(fp, "# %s\n", only_include_assumed);
+
+		author_ident = xstrdup(fmt_name(author_name, author_email));
+		committer_ident = fmt_name(getenv("GIT_COMMITTER_NAME"),
+					   getenv("GIT_COMMITTER_EMAIL"));
+		if (strcmp(author_ident, committer_ident))
+			fprintf(fp,
+				"#\n"
+				"# Author:    %s\n"
+				"#\n",
+				author_ident);
+		free(author_ident);
 
 		saved_color_setting = wt_status_use_color;
 		wt_status_use_color = 0;
@@ -920,7 +939,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&sb, "parent %s\n", sha1_to_hex(head_sha1));
 	}
 
-	determine_author_info(&sb);
+	strbuf_addf(&sb, "author %s\n",
+		    fmt_ident(author_name, author_email, author_date, IDENT_ERROR_ON_NO_NAME));
 	strbuf_addf(&sb, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
 	if (!is_encoding_utf8(git_commit_encoding))
 		strbuf_addf(&sb, "encoding %s\n", git_commit_encoding);
