@@ -144,10 +144,7 @@ test_expect_success 'setup fake editor' '
 	chmod +x fake-editor
 '
 
-FAKE_EDITOR="$(pwd)/fake-editor"
-export FAKE_EDITOR
-GIT_EDITOR='"$FAKE_EDITOR"'
-export GIT_EDITOR
+test_set_editor "$(pwd)/fake-editor"
 
 test_expect_success '--compose works' '
 	clean_fake_sendmail &&
