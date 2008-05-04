@@ -160,6 +160,22 @@ die () {
 
 trap 'die' exit
 
+# The semantics of the editor variables are that of invoking
+# sh -c "$EDITOR \"$@\"" files ...
+#
+# If our trash directory contains shell metacharacters, they will be
+# interpreted if we just set $EDITOR directly, so do a little dance with
+# environment variables to work around this.
+#
+# In particular, quoting isn't enough, as the path may contain the same quote
+# that we're using. 
+test_set_editor () {
+	FAKE_EDITOR="$1"
+	export FAKE_EDITOR
+	VISUAL='"$FAKE_EDITOR"'
+	export VISUAL
+}
+
 test_tick () {
 	if test -z "${test_tick+set}"
 	then
