@@ -614,7 +614,7 @@ sub cmd_create_ignore {
 		print GITIGNORE "$s\n";
 		close(GITIGNORE)
 		  or fatal("Failed to close `$ignore': $!");
-		command_noisy('add', $ignore);
+		command_noisy('add', '-f', $ignore);
 	});
 }
 
