@@ -337,9 +337,15 @@ int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv)
 	}
 	return run_diff_files(revs, options);
 }
+
 /*
- * See if work tree has an entity that can be staged.  Return 0 if so,
- * return 1 if not and return -1 if error.
+ * Has the work tree entity been removed?
+ *
+ * Return 1 if it was removed from the work tree, 0 if an entity to be
+ * compared with the cache entry ce still exists (the latter includes
+ * the case where a directory that is not a submodule repository
+ * exists for ce that is a submodule -- it is a submodule that is not
+ * checked out).  Return negative for an error.
  */
 static int check_work_tree_entity(const struct cache_entry *ce, struct stat *st, char *symcache)
 {
@@ -352,7 +358,20 @@ static int check_work_tree_entity(const struct cache_entry *ce, struct stat *st,
 		return 1;
 	if (S_ISDIR(st->st_mode)) {
 		unsigned char sub[20];
-		if (resolve_gitlink_ref(ce->name, "HEAD", sub))
+
+		/*
+		 * If ce is already a gitlink, we can have a plain
+		 * directory (i.e. the submodule is not checked out),
+		 * or a checked out submodule.  Either case this is not
+		 * a case where something was removed from the work tree,
+		 * so we will return 0.
+		 *
+		 * Otherwise, if the directory is not a submodule
+		 * repository, that means ce which was a blob turned into
+		 * a directory --- the blob was removed!
+		 */
+		if (!S_ISGITLINK(ce->ce_mode) &&
+		    resolve_gitlink_ref(ce->name, "HEAD", sub))
 			return 1;
 	}
 	return 0;
