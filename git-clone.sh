@@ -334,7 +334,10 @@ yes)
 			fi
 		fi &&
 		cd "$repo" &&
-		find objects -depth -print | cpio $cpio_quiet_flag -pumd$l "$GIT_DIR/" || \
+		# Create dirs using umask and permissions and destination
+		find objects -type d -print | (cd "$GIT_DIR" && xargs mkdir -p) &&
+		# Copy existing 0444 permissions on content
+		find objects ! -type d -print | cpio $cpio_quiet_flag -pumd$l "$GIT_DIR/" || \
 			exit 1
 	fi
 	git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
