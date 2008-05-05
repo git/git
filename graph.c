@@ -61,6 +61,12 @@ struct git_graph {
 	 */
 	int num_parents;
 	/*
+	 * The width of the graph output for this commit.
+	 * All rows for this commit are padded to this width, so that
+	 * messages printed after the graph output are aligned.
+	 */
+	int width;
+	/*
 	 * The next expansion row to print
 	 * when state is GRAPH_PRE_COMMIT
 	 */
@@ -207,13 +213,48 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 	graph->num_new_columns++;
 }
 
+static void graph_update_width(struct git_graph *graph,
+			       int is_commit_in_existing_columns)
+{
+	/*
+	 * Compute the width needed to display the graph for this commit.
+	 * This is the maximum width needed for any row.  All other rows
+	 * will be padded to this width.
+	 *
+	 * Compute the number of columns in the widest row:
+	 * Count each existing column (graph->num_columns), and each new
+	 * column added by this commit.
+	 */
+	int max_cols = graph->num_columns + graph->num_parents;
+
+	/*
+	 * Even if the current commit has no parents, it still takes up a
+	 * column for itself.
+	 */
+	if (graph->num_parents < 1)
+		max_cols++;
+
+	/*
+	 * We added a column for the the current commit as part of
+	 * graph->num_parents.  If the current commit was already in
+	 * graph->columns, then we have double counted it.
+	 */
+	if (is_commit_in_existing_columns)
+		max_cols--;
+
+	/*
+	 * Each column takes up 2 spaces
+	 */
+	graph->width = max_cols * 2;
+}
+
 static void graph_update_columns(struct git_graph *graph)
 {
 	struct commit_list *parent;
 	struct column *tmp_columns;
 	int max_new_columns;
 	int mapping_idx;
-	int i, seen_this;
+	int i, seen_this, is_commit_in_columns;
 
 	/*
 	 * Swap graph->columns with graph->new_columns
@@ -259,11 +300,13 @@ static void graph_update_columns(struct git_graph *graph)
 	 */
 	seen_this = 0;
 	mapping_idx = 0;
+	is_commit_in_columns = 1;
 	for (i = 0; i <= graph->num_columns; i++) {
 		struct commit *col_commit;
 		if (i == graph->num_columns) {
 			if (seen_this)
 				break;
+			is_commit_in_columns = 0;
 			col_commit = graph->commit;
 		} else {
 			col_commit = graph->columns[i].commit;
@@ -290,6 +333,11 @@ static void graph_update_columns(struct git_graph *graph)
 	while (graph->mapping_size > 1 &&
 	       graph->mapping[graph->mapping_size - 1] < 0)
 		graph->mapping_size--;
+
+	/*
+	 * Compute graph->width for this commit
+	 */
+	graph_update_width(graph, is_commit_in_columns);
 }
 
 void graph_update(struct git_graph *graph, struct commit *commit)
@@ -368,22 +416,12 @@ static void graph_pad_horizontally(struct git_graph *graph, struct strbuf *sb)
 	 *
 	 * This way, fields printed to the right of the graph will remain
 	 * aligned for the entire commit.
-	 *
-	 * This computation results in 3 extra space to the right in most
-	 * cases, but only 1 extra space if the commit doesn't have any
-	 * children that have already been displayed in the graph (i.e.,
-	 * if the current commit isn't in graph->columns).
 	 */
-	size_t extra;
-	size_t final_width = graph->num_columns + graph->num_parents;
-	if (graph->num_parents < 1)
-		final_width++;
-	final_width *= 2;
-
-	if (sb->len >= final_width)
+	int extra;
+	if (sb->len >= graph->width)
 		return;
 
-	extra = final_width - sb->len;
+	extra = graph->width - sb->len;
 	strbuf_addf(sb, "%*s", (int) extra, "");
 }
 
