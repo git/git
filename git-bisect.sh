@@ -65,14 +65,19 @@ bisect_start() {
 	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref -q HEAD) ||
 	head=$(GIT_DIR="$GIT_DIR" git rev-parse --verify HEAD) ||
 	die "Bad HEAD - I need a HEAD"
+	#
+	# Check that we either already have BISECT_START, or that the
+	# branches bisect, new-bisect don't exist, to not override them.
+	#
+	test -s "$GIT_DIR/BISECT_START" ||
+		if git show-ref --verify -q refs/heads/bisect ||
+		    git show-ref --verify -q refs/heads/new-bisect; then
+			die 'The branches "bisect" and "new-bisect" must not exist.'
+		fi
 	start_head=''
 	case "$head" in
 	refs/heads/bisect)
-		if [ -s "$GIT_DIR/BISECT_START" ]; then
-		    branch=`cat "$GIT_DIR/BISECT_START"`
-		else
-		    branch=master
-		fi
+		branch=`cat "$GIT_DIR/BISECT_START"`
 		git checkout $branch || exit
 		;;
 	refs/heads/*|$_x40)
@@ -324,8 +329,8 @@ bisect_next() {
 	exit_if_skipped_commits "$bisect_rev"
 
 	echo "Bisecting: $bisect_nr revisions left to test after this"
-	git branch -f new-bisect "$bisect_rev"
-	git checkout -q new-bisect || exit
+	git branch -D new-bisect 2> /dev/null
+	git checkout -q -b new-bisect "$bisect_rev" || exit
 	git branch -M new-bisect bisect
 	git show-branch "$bisect_rev"
 }

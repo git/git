@@ -284,6 +284,24 @@ test_expect_success 'bisect starting with a detached HEAD' '
 
 '
 
+test_expect_success 'bisect refuses to start if branch bisect exists' '
+	git bisect reset &&
+	git branch bisect &&
+	test_must_fail git bisect start &&
+	git branch -d bisect &&
+	git checkout -b bisect &&
+	test_must_fail git bisect start &&
+	git checkout master &&
+	git branch -d bisect
+'
+
+test_expect_success 'bisect refuses to start if branch new-bisect exists' '
+	git bisect reset &&
+	git branch new-bisect &&
+	test_must_fail git bisect start &&
+	git branch -d new-bisect
+'
+
 #
 #
 test_done
