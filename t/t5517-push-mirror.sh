@@ -25,7 +25,7 @@ mk_repo_pair () {
 	(
 		cd master &&
 		git init &&
-		git config remote.up.url ../mirror
+		git remote add $1 up ../mirror
 	)
 }
 
@@ -221,6 +221,45 @@ test_expect_success 'push mirror adds, updates and removes tags together' '
 	(
 		cd mirror &&
 		invert git show-ref -s --verify refs/tags/tremove
+	)
+
+'
+
+test_expect_success 'remote.foo.mirror adds and removes branches' '
+
+	mk_repo_pair --mirror &&
+	(
+		cd master &&
+		echo one >foo && git add foo && git commit -m one &&
+		git branch keep master &&
+		git branch remove master &&
+		git push up &&
+		git branch -D remove
+		git push up
+	) &&
+	(
+		cd mirror &&
+		git show-ref -s --verify refs/heads/keep &&
+		invert git show-ref -s --verify refs/heads/remove
+	)
+
+'
+
+test_expect_success 'remote.foo.mirror=no has no effect' '
+
+	mk_repo_pair &&
+	(
+		cd master &&
+		echo one >foo && git add foo && git commit -m one &&
+		git config --add remote.up.mirror no &&
+		git branch keep master &&
+		git push --mirror up &&
+		git branch -D keep &&
+		git push up
+	) &&
+	(
+		cd mirror &&
+		git show-ref -s --verify refs/heads/keep
 	)
 
 '

@@ -921,6 +921,10 @@ remote.<name>.push::
 	The default set of "refspec" for linkgit:git-push[1]. See
 	linkgit:git-push[1].
 
+remote.<name>.mirror::
+	If true, pushing to this remote will automatically behave
+	as if the `\--mirror` option was given on the command line.
+
 remote.<name>.skipDefaultUpdate::
 	If true, this remote will be skipped by default when updating
 	using the update subcommand of linkgit:git-remote[1].
