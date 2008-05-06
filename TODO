@@ -8,23 +8,33 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
-Issues that are unconcluded, lack enough discussions to proceed, and/or
-placed on hold during rc freeze.
+Possible bug not diagnosed yet
+
+* "git commit --interactive" allows same tree as parent to be recorded
+
+Message-ID: <slrng059n3.nd8.joerg@alea.gnuu.de>
+
+* "git daemon" and log rotation (Dscho)
+
+Message-ID: <alpine.DEB.1.00.0804281523040.5399@eeepc-johanness>
+
+Issues that are unconcluded or need a fresh infusion of kerosene to
+firestart them again.
+
+* cvsserver improvements (Fredrik Noring)
+
+Needs third-party confirmation and then properly applicable patches.
+
+* Prepare cvsimport for fixed cvsps (David Mansfield)
+
+Message-Id: <1207100091.10532.64.camel@gandalf.cobite.com>
 
 * ff=only (Sverre Hvammen Johansen)
-  $gmane/78250
+
+An updated series posted; author refuses to respond to comments;
 
 * more help backends (Christian Couder)
   $gmane/78150
-
-* cvsserver updates (Damien Diederen with help by Frank Lichtenheld)
-  $gmane/78188
-
-* use single database to serve more than one cvsserver instances (Josh Elsasser)
-  $gmane/78366
-
-* rewriting annotated tags in filter-branch (Brandon Casey)
-  $gmane/78286
 
 * fsck --lost-found (me)
   $gmane/78267
@@ -41,22 +51,11 @@ placed on hold during rc freeze.
 * mailinfo extention to extract Message-ID and others (Anton Gladkov)
   $gmane/78006
 
-* add -p with mode change (Jeff King)
-  $gmane/78340
-
-* rebase -p
-  $gmane/78074
-
 * synopsys: use {} instead of () for grouping alternatives (Jari Aalto)
   $gmane/72243
 
 * "[alias] st = status" and "cd .git && git st" (Jeff King)
   $gmane/72327
-
-* fetch with "refs/*:refs/*" errors out erroneously (Daniel)
-  $gmane/77335
-
-* D/F conflict to merge a tree with D into a tree with F
 
 * "git fetch" does not exit with non-zero status when it failed to update
   some refs due to non-ffness (Daniel)
@@ -69,7 +68,7 @@ placed on hold during rc freeze.
 * use "assume unchanged" bit to implement narrow checkout
   $gmane/77046
 
-* send-pack vs receive-pack history exchange
+* send-pack vs receive-pack history exchange (me)
 
 * zlib abstraction (Marco)
   $gmane/72262
