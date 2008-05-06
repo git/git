@@ -360,12 +360,10 @@ static int store_updated_refs(const char *url, struct ref *ref_map)
 
 		if (ref)
 			update_local_ref(ref, what, verbose, note);
-		else if (verbose)
+		else
 			sprintf(note, "* %-*s %-*s -> FETCH_HEAD",
 				SUMMARY_WIDTH, *kind ? kind : "branch",
 				 REFCOL_WIDTH, *what ? what : "HEAD");
-		else
-			*note = '\0';
 		if (*note) {
 			if (!shown_url) {
 				fprintf(stderr, "From %.*s\n",
