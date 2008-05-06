@@ -237,9 +237,9 @@ merge_file () {
 	ecmerge)
 	    touch "$BACKUP"
 	    if base_present; then
-		"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" --mode=merge3 --to="$MERGED"
+		"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" --default --mode=merge3 --to="$MERGED"
 	    else
-		"$merge_tool_path" "$LOCAL" "$REMOTE" --mode=merge2 --to="$MERGED"
+		"$merge_tool_path" "$LOCAL" "$REMOTE" --default --mode=merge2 --to="$MERGED"
 	    fi
 	    check_unchanged
 	    ;;
