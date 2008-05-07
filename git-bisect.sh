@@ -220,18 +220,33 @@ bisect_auto_next() {
 	bisect_next_check && bisect_next || :
 }
 
+eval_rev_list() {
+	_eval="$1"
+
+	eval $_eval
+	res=$?
+
+	if [ $res -ne 0 ]; then
+		echo >&2 "'git rev-list --bisect-vars' failed:"
+		echo >&2 "maybe you mistake good and bad revs?"
+		exit $res
+	fi
+
+	return $res
+}
+
 filter_skipped() {
 	_eval="$1"
 	_skip="$2"
 
 	if [ -z "$_skip" ]; then
-		eval $_eval
+		eval_rev_list "$_eval"
 		return
 	fi
 
 	# Let's parse the output of:
 	# "git rev-list --bisect-vars --bisect-all ..."
-	eval $_eval | while read hash line
+	eval_rev_list "$_eval" | while read hash line
 	do
 		case "$VARS,$FOUND,$TRIED,$hash" in
 			# We display some vars.
