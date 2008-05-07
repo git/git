@@ -98,21 +98,27 @@ those in info/exclude.  See link:repository-layout.html[repository layout].
 
 EXAMPLES
 --------
-git-add Documentation/\\*.txt::
 
-	Adds content from all `\*.txt` files under `Documentation`
-	directory and its subdirectories.
+* Adds content from all `\*.txt` files under `Documentation` directory
+and its subdirectories:
++
+------------
+$ git add Documentation/\\*.txt
+------------
 +
 Note that the asterisk `\*` is quoted from the shell in this
 example; this lets the command to include the files from
 subdirectories of `Documentation/` directory.
 
-git-add git-*.sh::
-
-	Considers adding content from all git-*.sh scripts.
-	Because this example lets shell expand the asterisk
-	(i.e. you are listing the files explicitly), it does not
-	consider `subdir/git-foo.sh`.
+* Considers adding content from all git-*.sh scripts:
++
+------------
+$ git add git-*.sh
+------------
++
+Because this example lets shell expand the asterisk (i.e. you are
+listing the files explicitly), it does not consider
+`subdir/git-foo.sh`.
 
 Interactive mode
 ----------------
