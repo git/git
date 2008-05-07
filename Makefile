@@ -636,8 +636,12 @@ endif
 ifeq ($(uname_S),AIX)
 	NO_STRCASESTR=YesPlease
 	NO_MEMMEM = YesPlease
+	NO_MKDTEMP = YesPlease
 	NO_STRLCPY = YesPlease
+	FREAD_READS_DIRECTORIES = UnfortunatelyYes
+	INTERNAL_QSORT = UnfortunatelyYes
 	NEEDS_LIBICONV=YesPlease
+	BASIC_CFLAGS += -D_LARGE_FILES
 endif
 ifeq ($(uname_S),GNU)
 	# GNU/Hurd
