@@ -206,6 +206,9 @@ void *gitmemmem(const void *haystack, size_t haystacklen,
 #endif
 
 #ifdef FREAD_READS_DIRECTORIES
+#ifdef fopen
+#undef fopen
+#endif
 #define fopen(a,b) git_fopen(a,b)
 extern FILE *git_fopen(const char*, const char*);
 #endif
