@@ -65,10 +65,16 @@ OPTIONS
 -w::
 	Specify the location of the CVS checkout to use for the export. This
 	option does not require GIT_DIR to be set before execution if the
-	current directory is within a git repository.
+	current directory is within a git repository.  The default is the
+	value of 'cvsexportcommit.cvsdir'.
 
 -v::
 	Verbose.
+
+CONFIGURATION
+-------------
+cvsexportcommit.cvsdir::
+	The default location of the CVS checkout to use for the export.
 
 EXAMPLES
 --------
