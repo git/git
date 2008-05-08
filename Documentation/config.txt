@@ -684,6 +684,36 @@ specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
 
+gui.commitmsgwidth::
+	Defines how wide the commit message window is in the
+	linkgit:git-gui[1]. "75" is the default.
+
+gui.diffcontext::
+	Specifies how many context lines should be used in calls to diff
+	made by the linkgit:git-gui[1]. The default is "5".
+
+gui.matchtrackingbranch::
+	Determines if new branches created with linkgit:git-gui[1] should
+	default to tracking remote branches with matching names or
+	not. Default: "false".
+
+gui.newbranchtemplate::
+	Is used as suggested name when creating new branches using the
+	linkgit:git-gui[1].
+
+gui.pruneduringfetch::
+	"true" if linkgit:git-gui[1] should prune tracking branches when
+	performing a fetch. The default value is "false".
+
+gui.trustmtime::
+	Determines if linkgit:git-gui[1] should trust the file modification
+	timestamp or not. By default the timestamps are not trusted.
+
+gui.spellingdictionary::
+	Specifies the dictionary used for spell checking commit messages in
+	the linkgit:git-gui[1]. When set to "none" spell checking is turned
+	off.
+
 help.browser::
 	Specify the browser that will be used to display help in the
 	'web' format. See linkgit:git-help[1].
