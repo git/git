@@ -11,9 +11,15 @@
 #include "run-command.h"
 
 static struct man_viewer_list {
-	void (*exec)(const char *);
 	struct man_viewer_list *next;
+	char name[FLEX_ARRAY];
 } *man_viewer_list;
+
+static struct man_viewer_info_list {
+	struct man_viewer_info_list *next;
+	const char *info;
+	char name[FLEX_ARRAY];
+} *man_viewer_info_list;
 
 enum help_format {
 	HELP_FORMAT_MAN,
@@ -47,6 +53,18 @@ static enum help_format parse_help_format(const char *format)
 	if (!strcmp(format, "web") || !strcmp(format, "html"))
 		return HELP_FORMAT_WEB;
 	die("unrecognized help format '%s'", format);
+}
+
+static const char *get_man_viewer_info(const char *name)
+{
+	struct man_viewer_info_list *viewer;
+
+	for (viewer = man_viewer_info_list; viewer; viewer = viewer->next)
+	{
+		if (!strcasecmp(name, viewer->name))
+			return viewer->info;
+	}
+	return NULL;
 }
 
 static int check_emacsclient_version(void)
@@ -95,53 +113,142 @@ static int check_emacsclient_version(void)
 	return 0;
 }
 
-static void exec_woman_emacs(const char *page)
+static void exec_woman_emacs(const char* path, const char *page)
 {
 	if (!check_emacsclient_version()) {
 		/* This works only with emacsclient version >= 22. */
 		struct strbuf man_page = STRBUF_INIT;
+
+		if (!path)
+			path = "emacsclient";
 		strbuf_addf(&man_page, "(woman \"%s\")", page);
-		execlp("emacsclient", "emacsclient", "-e", man_page.buf, NULL);
+		execlp(path, "emacsclient", "-e", man_page.buf, NULL);
+		warning("failed to exec '%s': %s", path, strerror(errno));
 	}
 }
 
-static void exec_man_konqueror(const char *page)
+static void exec_man_konqueror(const char* path, const char *page)
 {
 	const char *display = getenv("DISPLAY");
 	if (display && *display) {
 		struct strbuf man_page = STRBUF_INIT;
+		const char *filename = "kfmclient";
+
+		/* It's simpler to launch konqueror using kfmclient. */
+		if (path) {
+			const char *file = strrchr(path, '/');
+			if (file && !strcmp(file + 1, "konqueror")) {
+				char *new = xstrdup(path);
+				char *dest = strrchr(new, '/');
+
+				/* strlen("konqueror") == strlen("kfmclient") */
+				strcpy(dest + 1, "kfmclient");
+				path = new;
+			}
+			if (file)
+				filename = file;
+		} else
+			path = "kfmclient";
 		strbuf_addf(&man_page, "man:%s(1)", page);
-		execlp("kfmclient", "kfmclient", "newTab", man_page.buf, NULL);
+		execlp(path, filename, "newTab", man_page.buf, NULL);
+		warning("failed to exec '%s': %s", path, strerror(errno));
 	}
 }
 
-static void exec_man_man(const char *page)
+static void exec_man_man(const char* path, const char *page)
 {
-	execlp("man", "man", page, NULL);
+	if (!path)
+		path = "man";
+	execlp(path, "man", page, NULL);
+	warning("failed to exec '%s': %s", path, strerror(errno));
 }
 
-static void do_add_man_viewer(void (*exec)(const char *))
+static void exec_man_cmd(const char *cmd, const char *page)
+{
+	struct strbuf shell_cmd = STRBUF_INIT;
+	strbuf_addf(&shell_cmd, "%s %s", cmd, page);
+	execl("/bin/sh", "sh", "-c", shell_cmd.buf, NULL);
+	warning("failed to exec '%s': %s", cmd, strerror(errno));
+}
+
+static void add_man_viewer(const char *name)
 {
 	struct man_viewer_list **p = &man_viewer_list;
+	size_t len = strlen(name);
 
 	while (*p)
 		p = &((*p)->next);
-	*p = xmalloc(sizeof(**p));
-	(*p)->next = NULL;
-	(*p)->exec = exec;
+	*p = xcalloc(1, (sizeof(**p) + len + 1));
+	strncpy((*p)->name, name, len);
 }
 
-static int add_man_viewer(const char *value)
+static int supported_man_viewer(const char *name, size_t len)
 {
-	if (!strcasecmp(value, "man"))
-		do_add_man_viewer(exec_man_man);
-	else if (!strcasecmp(value, "woman"))
-		do_add_man_viewer(exec_woman_emacs);
-	else if (!strcasecmp(value, "konqueror"))
-		do_add_man_viewer(exec_man_konqueror);
-	else
-		warning("'%s': unsupported man viewer.", value);
+	return (!strncasecmp("man", name, len) ||
+		!strncasecmp("woman", name, len) ||
+		!strncasecmp("konqueror", name, len));
+}
 
+static void do_add_man_viewer_info(const char *name,
+				   size_t len,
+				   const char *value)
+{
+	struct man_viewer_info_list *new = xcalloc(1, sizeof(*new) + len + 1);
+
+	strncpy(new->name, name, len);
+	new->info = xstrdup(value);
+	new->next = man_viewer_info_list;
+	man_viewer_info_list = new;
+}
+
+static int add_man_viewer_path(const char *name,
+			       size_t len,
+			       const char *value)
+{
+	if (supported_man_viewer(name, len))
+		do_add_man_viewer_info(name, len, value);
+	else
+		warning("'%s': path for unsupported man viewer.\n"
+			"Please consider using 'man.<tool>.cmd' instead.",
+			name);
+
+	return 0;
+}
+
+static int add_man_viewer_cmd(const char *name,
+			      size_t len,
+			      const char *value)
+{
+	if (supported_man_viewer(name, len))
+		warning("'%s': cmd for supported man viewer.\n"
+			"Please consider using 'man.<tool>.path' instead.",
+			name);
+	else
+		do_add_man_viewer_info(name, len, value);
+
+	return 0;
+}
+
+static int add_man_viewer_info(const char *var, const char *value)
+{
+	const char *name = var + 4;
+	const char *subkey = strrchr(name, '.');
+
+	if (!subkey)
+		return error("Config with no key for man viewer: %s", name);
+
+	if (!strcmp(subkey, ".path")) {
+		if (!value)
+			return config_error_nonbool(var);
+		return add_man_viewer_path(name, subkey - name, value);
+	}
+	if (!strcmp(subkey, ".cmd")) {
+		if (!value)
+			return config_error_nonbool(var);
+		return add_man_viewer_cmd(name, subkey - name, value);
+	}
+
+	warning("'%s': unsupported man viewer sub key.", subkey);
 	return 0;
 }
 
@@ -156,8 +263,12 @@ static int git_help_config(const char *var, const char *value)
 	if (!strcmp(var, "man.viewer")) {
 		if (!value)
 			return config_error_nonbool(var);
-		return add_man_viewer(value);
+		add_man_viewer(value);
+		return 0;
 	}
+	if (!prefixcmp(var, "man."))
+		return add_man_viewer_info(var, value);
+
 	return git_default_config(var, value);
 }
 
@@ -453,6 +564,22 @@ static void setup_man_path(void)
 	strbuf_release(&new_path);
 }
 
+static void exec_viewer(const char *name, const char *page)
+{
+	const char *info = get_man_viewer_info(name);
+
+	if (!strcasecmp(name, "man"))
+		exec_man_man(info, page);
+	else if (!strcasecmp(name, "woman"))
+		exec_woman_emacs(info, page);
+	else if (!strcasecmp(name, "konqueror"))
+		exec_man_konqueror(info, page);
+	else if (info)
+		exec_man_cmd(info, page);
+	else
+		warning("'%s': unknown man viewer.", name);
+}
+
 static void show_man_page(const char *git_cmd)
 {
 	struct man_viewer_list *viewer;
@@ -461,9 +588,9 @@ static void show_man_page(const char *git_cmd)
 	setup_man_path();
 	for (viewer = man_viewer_list; viewer; viewer = viewer->next)
 	{
-		viewer->exec(page); /* will return when unable */
+		exec_viewer(viewer->name, page); /* will return when unable */
 	}
-	exec_man_man(page);
+	exec_viewer("man", page);
 	die("no man viewer handled the request");
 }
 

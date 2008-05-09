@@ -82,27 +82,74 @@ man.viewer
 ~~~~~~~~~~
 
 The 'man.viewer' config variable will be checked if the 'man' format
-is chosen. Only the following values are currently supported:
+is chosen. The following values are currently supported:
 
 * "man": use the 'man' program as usual,
 * "woman": use 'emacsclient' to launch the "woman" mode in emacs
 (this only works starting with emacsclient versions 22),
-* "konqueror": use a man KIO slave in konqueror.
+* "konqueror": use 'kfmclient' to open the man page in a new konqueror
+tab (see 'Note about konqueror' below).
 
-Multiple values may be given to this configuration variable. Their
-corresponding programs will be tried in the order listed in the
-configuration file.
+Values for other tools can be used if there is a corresponding
+'man.<tool>.cmd' configuration entry (see below).
+
+Multiple values may be given to the 'man.viewer' configuration
+variable. Their corresponding programs will be tried in the order
+listed in the configuration file.
 
 For example, this configuration:
 
+------------------------------------------------
 	[man]
 		viewer = konqueror
 		viewer = woman
+------------------------------------------------
 
 will try to use konqueror first. But this may fail (for example if
 DISPLAY is not set) and in that case emacs' woman mode will be tried.
 
 If everything fails the 'man' program will be tried anyway.
+
+man.<tool>.path
+~~~~~~~~~~~~~~~
+
+You can explicitly provide a full path to your preferred man viewer by
+setting the configuration variable 'man.<tool>.path'. For example, you
+can configure the absolute path to konqueror by setting
+'man.konqueror.path'. Otherwise, 'git help' assumes the tool is
+available in PATH.
+
+man.<tool>.cmd
+~~~~~~~~~~~~~~
+
+When the man viewer, specified by the 'man.viewer' configuration
+variables, is not among the supported ones, then the corresponding
+'man.<tool>.cmd' configuration variable will be looked up. If this
+variable exists then the specified tool will be treated as a custom
+command and a shell eval will be used to run the command with the man
+page passed as arguments.
+
+Note about konqueror
+~~~~~~~~~~~~~~~~~~~~
+
+When 'konqueror' is specified in the 'man.viewer' configuration
+variable, we launch 'kfmclient' to try to open the man page on an
+already opened konqueror in a new tab if possible.
+
+For consistency, we also try such a trick if 'man.konqueror.path' is
+set to something like 'A_PATH_TO/konqueror'. That means we will try to
+launch 'A_PATH_TO/kfmclient' instead.
+
+If you really want to use 'konqueror', then you can use something like
+the following:
+
+------------------------------------------------
+	[man]
+		viewer = konq
+
+	[man "konq"]
+		cmd = A_PATH_TO/konqueror
+------------------------------------------------
 
 Note about git config --global
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
