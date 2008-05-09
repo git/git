@@ -26,11 +26,12 @@ static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
  * directories, in case this unlink is the removal of the
  * last entry in the directory -- empty directories are removed.
  */
-static void unlink_entry(char *name, char *last_symlink)
+static void unlink_entry(struct cache_entry *ce)
 {
 	char *cp, *prev;
+	char *name = ce->name;
 
-	if (has_symlink_leading_path(name, last_symlink))
+	if (has_symlink_leading_path(ce_namelen(ce), ce->name))
 		return;
 	if (unlink(name))
 		return;
@@ -58,7 +59,6 @@ static int check_updates(struct unpack_trees_options *o)
 {
 	unsigned cnt = 0, total = 0;
 	struct progress *progress = NULL;
-	char last_symlink[PATH_MAX];
 	struct index_state *index = &o->result;
 	int i;
 	int errs = 0;
@@ -75,14 +75,13 @@ static int check_updates(struct unpack_trees_options *o)
 		cnt = 0;
 	}
 
-	*last_symlink = '\0';
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 
 		if (ce->ce_flags & CE_REMOVE) {
 			display_progress(progress, ++cnt);
 			if (o->update)
-				unlink_entry(ce->name, last_symlink);
+				unlink_entry(ce);
 			remove_index_entry_at(&o->result, i);
 			i--;
 			continue;
@@ -97,7 +96,6 @@ static int check_updates(struct unpack_trees_options *o)
 			ce->ce_flags &= ~CE_UPDATE;
 			if (o->update) {
 				errs |= checkout_entry(ce, &state, NULL);
-				*last_symlink = '\0';
 			}
 		}
 	}
@@ -553,7 +551,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 	if (o->index_only || o->reset || !o->update)
 		return 0;
 
-	if (has_symlink_leading_path(ce->name, NULL))
+	if (has_symlink_leading_path(ce_namelen(ce), ce->name))
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
