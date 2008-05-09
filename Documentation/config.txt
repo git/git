@@ -415,7 +415,8 @@ branch.<name>.mergeoptions::
 
 branch.<name>.rebase::
 	When true, rebase the branch <name> on top of the fetched branch,
-	instead of merging the default branch from the default remote.
+	instead of merging the default branch from the default remote when
+	"git pull" is run.
 	*NOTE*: this is a possibly dangerous operation; do *not* use
 	it unless you understand the implications (see linkgit:git-rebase[1]
 	for details).
