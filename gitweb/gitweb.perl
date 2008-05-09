@@ -592,7 +592,7 @@ exit;
 ## ======================================================================
 ## action links
 
-sub href(%) {
+sub href (%) {
 	my %params = @_;
 	# default is to use -absolute url() i.e. $my_uri
 	my $href = $params{-full} ? $my_url : $my_uri;
@@ -1446,6 +1446,46 @@ sub format_snapshot_links {
 	} else { # $num_fmts == 0
 		return undef;
 	}
+}
+
+## ......................................................................
+## functions returning values to be passed, perhaps after some
+## transformation, to other functions; e.g. returning arguments to href()
+
+# returns hash to be passed to href to generate gitweb URL
+# in -title key it returns description of link
+sub get_feed_info {
+	my $format = shift || 'Atom';
+	my %res = (action => lc($format));
+
+	# feed links are possible only for project views
+	return unless (defined $project);
+	# some views should link to OPML, or to generic project feed,
+	# or don't have specific feed yet (so they should use generic)
+	return if ($action =~ /^(?:tags|heads|forks|tag|search)$/x);
+
+	my $branch;
+	# branches refs uses 'refs/heads/' prefix (fullname) to differentiate
+	# from tag links; this also makes possible to detect branch links
+	if ((defined $hash_base && $hash_base =~ m!^refs/heads/(.*)$!) ||
+	    (defined $hash      && $hash      =~ m!^refs/heads/(.*)$!)) {
+		$branch = $1;
+	}
+	# find log type for feed description (title)
+	my $type = 'log';
+	if (defined $file_name) {
+		$type  = "history of $file_name";
+		$type .= "/" if ($action eq 'tree');
+		$type .= " on '$branch'" if (defined $branch);
+	} else {
+		$type = "log of $branch" if (defined $branch);
+	}
+
+	$res{-title} = $type;
+	$res{'hash'} = (defined $branch ? "refs/heads/$branch" : undef);
+	$res{'file_name'} = $file_name;
+
+	return %res;
 }
 
 ## ----------------------------------------------------------------------
@@ -2510,30 +2550,49 @@ EOF
 		}
 	}
 	if (defined $project) {
-		printf('<link rel="alternate" title="%s log RSS feed" '.
-		       'href="%s" type="application/rss+xml" />'."\n",
-		       esc_param($project), href(action=>"rss"));
-		printf('<link rel="alternate" title="%s log RSS feed (no merges)" '.
-		       'href="%s" type="application/rss+xml" />'."\n",
-		       esc_param($project), href(action=>"rss",
-		                                 extra_options=>"--no-merges"));
-		printf('<link rel="alternate" title="%s log Atom feed" '.
-		       'href="%s" type="application/atom+xml" />'."\n",
-		       esc_param($project), href(action=>"atom"));
-		printf('<link rel="alternate" title="%s log Atom feed (no merges)" '.
-		       'href="%s" type="application/atom+xml" />'."\n",
-		       esc_param($project), href(action=>"atom",
-		                                 extra_options=>"--no-merges"));
+		my %href_params = get_feed_info();
+		if (!exists $href_params{'-title'}) {
+			$href_params{'-title'} = 'log';
+		}
+
+		foreach my $format qw(RSS Atom) {
+			my $type = lc($format);
+			my %link_attr = (
+				'-rel' => 'alternate',
+				'-title' => "$project - $href_params{'-title'} - $format feed",
+				'-type' => "application/$type+xml"
+			);
+
+			$href_params{'action'} = $type;
+			$link_attr{'-href'} = href(%href_params);
+			print "<link ".
+			      "rel=\"$link_attr{'-rel'}\" ".
+			      "title=\"$link_attr{'-title'}\" ".
+			      "href=\"$link_attr{'-href'}\" ".
+			      "type=\"$link_attr{'-type'}\" ".
+			      "/>\n";
+
+			$href_params{'extra_options'} = '--no-merges';
+			$link_attr{'-href'} = href(%href_params);
+			$link_attr{'-title'} .= ' (no merges)';
+			print "<link ".
+			      "rel=\"$link_attr{'-rel'}\" ".
+			      "title=\"$link_attr{'-title'}\" ".
+			      "href=\"$link_attr{'-href'}\" ".
+			      "type=\"$link_attr{'-type'}\" ".
+			      "/>\n";
+		}
+
 	} else {
 		printf('<link rel="alternate" title="%s projects list" '.
-		       'href="%s" type="text/plain; charset=utf-8"/>'."\n",
+		       'href="%s" type="text/plain; charset=utf-8" />'."\n",
 		       $site_name, href(project=>undef, action=>"project_index"));
 		printf('<link rel="alternate" title="%s projects feeds" '.
-		       'href="%s" type="text/x-opml"/>'."\n",
+		       'href="%s" type="text/x-opml" />'."\n",
 		       $site_name, href(project=>undef, action=>"opml"));
 	}
 	if (defined $favicon) {
-		print qq(<link rel="shortcut icon" href="$favicon" type="image/png"/>\n);
+		print qq(<link rel="shortcut icon" href="$favicon" type="image/png" />\n);
 	}
 
 	print "</head>\n" .
@@ -2601,23 +2660,35 @@ EOF
 }
 
 sub git_footer_html {
+	my $feed_class = 'rss_logo';
+
 	print "<div class=\"page_footer\">\n";
 	if (defined $project) {
 		my $descr = git_get_project_description($project);
 		if (defined $descr) {
 			print "<div class=\"page_footer_text\">" . esc_html($descr) . "</div>\n";
 		}
-		print $cgi->a({-href => href(action=>"rss"),
-		              -class => "rss_logo"}, "RSS") . " ";
-		print $cgi->a({-href => href(action=>"atom"),
-		              -class => "rss_logo"}, "Atom") . "\n";
+
+		my %href_params = get_feed_info();
+		if (!%href_params) {
+			$feed_class .= ' generic';
+		}
+		$href_params{'-title'} ||= 'log';
+
+		foreach my $format qw(RSS Atom) {
+			$href_params{'action'} = lc($format);
+			print $cgi->a({-href => href(%href_params),
+			              -title => "$href_params{'-title'} $format feed",
+			              -class => $feed_class}, $format)."\n";
+		}
+
 	} else {
 		print $cgi->a({-href => href(project=>undef, action=>"opml"),
-		              -class => "rss_logo"}, "OPML") . " ";
+		              -class => $feed_class}, "OPML") . " ";
 		print $cgi->a({-href => href(project=>undef, action=>"project_index"),
-		              -class => "rss_logo"}, "TXT") . "\n";
+		              -class => $feed_class}, "TXT") . "\n";
 	}
-	print "</div>\n" ;
+	print "</div>\n"; # class="page_footer"
 
 	if (-f $site_footer) {
 		open (my $fd, $site_footer);
