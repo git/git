@@ -8,8 +8,12 @@ OPTIONS_SPEC="\
 git-merge [options] <remote>...
 git-merge [options] <msg> HEAD <remote>
 --
-summary              show a diffstat at the end of the merge
-n,no-summary         don't show a diffstat at the end of the merge
+stat                 show a diffstat at the end of the merge
+n,no-stat            don't show a diffstat at the end of the merge
+summary              (synonym to --stat)
+no-summary           (synonym to --no-stat)
+log                  add list of one-line log to merge commit message
+no-log               don't add list of one-line log to merge commit message
 squash               create a single commit instead of doing a merge
 commit               perform a commit if the merge sucesses (default)
 ff                   allow fast forward (default)
@@ -37,7 +41,7 @@ use_strategies=
 
 allow_fast_forward=t
 allow_trivial_merge=t
-squash= no_commit=
+squash= no_commit= log_arg=
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
@@ -148,10 +152,12 @@ merge_name () {
 parse_config () {
 	while test $# != 0; do
 		case "$1" in
-		-n|--no-summary)
+		-n|--no-stat|--no-summary)
 			show_diffstat=false ;;
-		--summary)
+		--stat|--summary)
 			show_diffstat=t ;;
+		--log|--no-log)
+			log_arg=$1 ;;
 		--squash)
 			test "$allow_fast_forward" = t ||
 				die "You cannot combine --squash with --no-ff."
@@ -210,6 +216,7 @@ while test $args_left -lt $#; do shift; done
 
 if test -z "$show_diffstat"; then
     test "$(git config --bool merge.diffstat)" = false && show_diffstat=false
+    test "$(git config --bool merge.stat)" = false && show_diffstat=false
     test -z "$show_diffstat" && show_diffstat=t
 fi
 
@@ -258,7 +265,7 @@ else
 	merge_name=$(for remote
 		do
 			merge_name "$remote"
-		done | git fmt-merge-msg
+		done | git fmt-merge-msg $log_arg
 	)
 	merge_msg="${merge_msg:+$merge_msg$LF$LF}$merge_name"
 fi
