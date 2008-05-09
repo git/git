@@ -462,21 +462,18 @@ static struct cache_entry *create_alias_ce(struct cache_entry *ce, struct cache_
 	return new;
 }
 
-int add_file_to_index(struct index_state *istate, const char *path, int verbose)
+int add_to_index(struct index_state *istate, const char *path, struct stat *st, int verbose)
 {
 	int size, namelen;
-	struct stat st;
+	mode_t st_mode = st->st_mode;
 	struct cache_entry *ce, *alias;
 	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_RACY_IS_DIRTY;
 
-	if (lstat(path, &st))
-		die("%s: unable to stat (%s)", path, strerror(errno));
-
-	if (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))
+	if (!S_ISREG(st_mode) && !S_ISLNK(st_mode) && !S_ISDIR(st_mode))
 		die("%s: can only add regular files, symbolic links or git-directories", path);
 
 	namelen = strlen(path);
-	if (S_ISDIR(st.st_mode)) {
+	if (S_ISDIR(st_mode)) {
 		while (namelen && path[namelen-1] == '/')
 			namelen--;
 	}
@@ -484,10 +481,10 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 	ce = xcalloc(1, size);
 	memcpy(ce->name, path, namelen);
 	ce->ce_flags = namelen;
-	fill_stat_cache_info(ce, &st);
+	fill_stat_cache_info(ce, st);
 
 	if (trust_executable_bit && has_symlinks)
-		ce->ce_mode = create_ce_mode(st.st_mode);
+		ce->ce_mode = create_ce_mode(st_mode);
 	else {
 		/* If there is an existing entry, pick the mode bits and type
 		 * from it, otherwise assume unexecutable regular file.
@@ -496,18 +493,18 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 		int pos = index_name_pos_also_unmerged(istate, path, namelen);
 
 		ent = (0 <= pos) ? istate->cache[pos] : NULL;
-		ce->ce_mode = ce_mode_from_stat(ent, st.st_mode);
+		ce->ce_mode = ce_mode_from_stat(ent, st_mode);
 	}
 
 	alias = index_name_exists(istate, ce->name, ce_namelen(ce), ignore_case);
-	if (alias && !ce_stage(alias) && !ie_match_stat(istate, alias, &st, ce_option)) {
+	if (alias && !ce_stage(alias) && !ie_match_stat(istate, alias, st, ce_option)) {
 		/* Nothing changed, really */
 		free(ce);
 		ce_mark_uptodate(alias);
 		alias->ce_flags |= CE_ADDED;
 		return 0;
 	}
-	if (index_path(ce->sha1, path, &st, 1))
+	if (index_path(ce->sha1, path, st, 1))
 		die("unable to index file %s", path);
 	if (ignore_case && alias && different_name(ce, alias))
 		ce = create_alias_ce(ce, alias);
@@ -517,6 +514,14 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 	if (verbose)
 		printf("add '%s'\n", path);
 	return 0;
+}
+
+int add_file_to_index(struct index_state *istate, const char *path, int verbose)
+{
+	struct stat st;
+	if (lstat(path, &st))
+		die("%s: unable to stat (%s)", path, strerror(errno));
+	return add_to_index(istate, path, &st, verbose);
 }
 
 struct cache_entry *make_cache_entry(unsigned int mode,
