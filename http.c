@@ -589,8 +589,9 @@ static char *quote_ref_url(const char *base, const char *ref)
 			len += 2; /* extra two hex plus replacement % */
 	qref = xmalloc(len);
 	memcpy(qref, base, baselen);
-	memcpy(qref + baselen, "/refs/", 6);
-	for (cp = ref, dp = qref + baselen + 6; (ch = *cp) != 0; cp++) {
+	dp = qref + baselen;
+	*(dp++) = '/';
+	for (cp = ref; (ch = *cp) != 0; cp++) {
 		if (needs_quote(ch)) {
 			*dp++ = '%';
 			*dp++ = hex((ch >> 4) & 0xF);
@@ -604,7 +605,7 @@ static char *quote_ref_url(const char *base, const char *ref)
 	return qref;
 }
 
-int http_fetch_ref(const char *base, const char *ref, unsigned char *sha1)
+int http_fetch_ref(const char *base, struct ref *ref)
 {
 	char *url;
 	struct strbuf buffer = STRBUF_INIT;
@@ -612,7 +613,7 @@ int http_fetch_ref(const char *base, const char *ref, unsigned char *sha1)
 	struct slot_results results;
 	int ret;
 
-	url = quote_ref_url(base, ref);
+	url = quote_ref_url(base, ref->name);
 	slot = get_active_slot();
 	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
@@ -624,12 +625,15 @@ int http_fetch_ref(const char *base, const char *ref, unsigned char *sha1)
 		if (results.curl_result == CURLE_OK) {
 			strbuf_rtrim(&buffer);
 			if (buffer.len == 40)
-				ret = get_sha1_hex(buffer.buf, sha1);
-			else
+				ret = get_sha1_hex(buffer.buf, ref->old_sha1);
+			else if (!prefixcmp(buffer.buf, "ref: ")) {
+				ref->symref = xstrdup(buffer.buf + 5);
+				ret = 0;
+			} else
 				ret = 1;
 		} else {
 			ret = error("Couldn't get %s for %s\n%s",
-				    url, ref, curl_errorstr);
+				    url, ref->name, curl_errorstr);
 		}
 	} else {
 		ret = error("Unable to start request");

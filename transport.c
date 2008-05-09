@@ -441,9 +441,13 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	struct ref *ref = NULL;
 	struct ref *last_ref = NULL;
 
+	struct walker *walker;
+
 	if (!transport->data)
 		transport->data = get_http_walker(transport->url,
 						transport->remote);
+
+	walker = transport->data;
 
 	refs_url = xmalloc(strlen(transport->url) + 11);
 	sprintf(refs_url, "%s/info/refs", transport->url);
@@ -499,6 +503,16 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	}
 
 	strbuf_release(&buffer);
+
+	ref = alloc_ref(strlen("HEAD") + 1);
+	strcpy(ref->name, "HEAD");
+	if (!walker->fetch_ref(walker, ref) &&
+	    !resolve_remote_symref(ref, refs)) {
+		ref->next = refs;
+		refs = ref;
+	} else {
+		free(ref);
+	}
 
 	return refs;
 }
