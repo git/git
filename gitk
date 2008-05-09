@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright (C) 2005-2006 Paul Mackerras.  All rights reserved.
+# Copyright © 2005-2008 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
@@ -117,38 +117,190 @@ proc unmerged_files {files} {
 }
 
 proc parseviewargs {n arglist} {
-    global viewargs vdatemode vmergeonly
+    global vdatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs
 
     set vdatemode($n) 0
     set vmergeonly($n) 0
-    set glargs {}
-    foreach arg $viewargs($n) {
+    set glflags {}
+    set diffargs {}
+    set nextisval 0
+    set revargs {}
+    set origargs $arglist
+    set allknown 1
+    set filtered 0
+    set i -1
+    foreach arg $arglist {
+	incr i
+	if {$nextisval} {
+	    lappend glflags $arg
+	    set nextisval 0
+	    continue
+	}
 	switch -glob -- $arg {
 	    "-d" -
 	    "--date-order" {
 		set vdatemode($n) 1
+		# remove from origargs in case we hit an unknown option
+		set origargs [lreplace $origargs $i $i]
+		incr i -1
+	    }
+	    # These request or affect diff output, which we don't want.
+	    # Some could be used to set our defaults for diff display.
+	    "-[puabwcrRBMC]" -
+	    "--no-renames" - "--full-index" - "--binary" - "--abbrev=*" -
+	    "--find-copies-harder" - "-l*" - "--ext-diff" - "--no-ext-diff" -
+	    "--src-prefix=*" - "--dst-prefix=*" - "--no-prefix" -
+	    "-O*" - "--text" - "--full-diff" - "--ignore-space-at-eol" -
+	    "--ignore-space-change" - "-U*" - "--unified=*" {
+		lappend diffargs $arg
+	    }
+	    # These cause our parsing of git log's output to fail, or else
+	    # they're options we want to set ourselves, so ignore them.
+	    "--raw" - "--patch-with-raw" - "--patch-with-stat" -
+	    "--name-only" - "--name-status" - "--color" - "--color-words" -
+	    "--log-size" - "--pretty=*" - "--decorate" - "--abbrev-commit" -
+	    "--cc" - "-z" - "--header" - "--parents" - "--boundary" -
+	    "--no-color" - "-g" - "--walk-reflogs" - "--no-walk" -
+	    "--timestamp" - "relative-date" - "--date=*" - "--stdin" -
+	    "--objects" - "--objects-edge" - "--reverse" {
+	    }
+	    # These are harmless, and some are even useful
+	    "--stat=*" - "--numstat" - "--shortstat" - "--summary" -
+	    "--check" - "--exit-code" - "--quiet" - "--topo-order" -
+	    "--full-history" - "--dense" - "--sparse" -
+	    "--follow" - "--left-right" - "--encoding=*" {
+		lappend glflags $arg
+	    }
+	    # These mean that we get a subset of the commits
+	    "--diff-filter=*" - "--no-merges" - "--unpacked" -
+	    "--max-count=*" - "--skip=*" - "--since=*" - "--after=*" -
+	    "--until=*" - "--before=*" - "--max-age=*" - "--min-age=*" -
+	    "--author=*" - "--committer=*" - "--grep=*" - "-[iE]" -
+	    "--remove-empty" - "--first-parent" - "--cherry-pick" -
+	    "-S*" - "--pickaxe-all" - "--pickaxe-regex" - {
+		set filtered 1
+		lappend glflags $arg
+	    }
+	    # This appears to be the only one that has a value as a
+	    # separate word following it
+	    "-n" {
+		set filtered 1
+		set nextisval 1
+		lappend glflags $arg
+	    }
+	    "--not" {
+		set notflag [expr {!$notflag}]
+		lappend revargs $arg
+	    }
+	    "--all" {
+		lappend revargs $arg
 	    }
 	    "--merge" {
 		set vmergeonly($n) 1
-		lappend glargs $arg
+		# git rev-parse doesn't understand --merge
+		lappend revargs --gitk-symmetric-diff-marker MERGE_HEAD...HEAD
 	    }
+	    # Other flag arguments including -<n>
+	    "-*" {
+		if {[string is digit -strict [string range $arg 1 end]]} {
+		    set filtered 1
+		} else {
+		    # a flag argument that we don't recognize;
+		    # that means we can't optimize
+		    set allknown 0
+		}
+		lappend glflags $arg
+	    }
+	    # Non-flag arguments specify commits or ranges of commits
 	    default {
-		lappend glargs $arg
+		if {[string match "*...*" $arg]} {
+		    lappend revargs --gitk-symmetric-diff-marker
+		}
+		lappend revargs $arg
 	    }
 	}
     }
-    return $glargs
+    set vdflags($n) $diffargs
+    set vflags($n) $glflags
+    set vrevs($n) $revargs
+    set vfiltered($n) $filtered
+    set vorigargs($n) $origargs
+    return $allknown
+}
+
+proc parseviewrevs {view revs} {
+    global vposids vnegids
+
+    if {$revs eq {}} {
+	set revs HEAD
+    }
+    if {[catch {set ids [eval exec git rev-parse $revs]} err]} {
+	# we get stdout followed by stderr in $err
+	# for an unknown rev, git rev-parse echoes it and then errors out
+	set errlines [split $err "\n"]
+	set badrev {}
+	for {set l 0} {$l < [llength $errlines]} {incr l} {
+	    set line [lindex $errlines $l]
+	    if {!([string length $line] == 40 && [string is xdigit $line])} {
+		if {[string match "fatal:*" $line]} {
+		    if {[string match "fatal: ambiguous argument*" $line]
+			&& $badrev ne {}} {
+			if {[llength $badrev] == 1} {
+			    set err "unknown revision $badrev"
+			} else {
+			    set err "unknown revisions: [join $badrev ", "]"
+			}
+		    } else {
+			set err [join [lrange $errlines $l end] "\n"]
+		    }
+		    break
+		}
+		lappend badrev $line
+	    }
+	}		    
+	error_popup "Error parsing revisions: $err"
+	return {}
+    }
+    set ret {}
+    set pos {}
+    set neg {}
+    set sdm 0
+    foreach id [split $ids "\n"] {
+	if {$id eq "--gitk-symmetric-diff-marker"} {
+	    set sdm 4
+	} elseif {[string match "^*" $id]} {
+	    if {$sdm != 1} {
+		lappend ret $id
+		if {$sdm == 3} {
+		    set sdm 0
+		}
+	    }
+	    lappend neg [string range $id 1 end]
+	} else {
+	    if {$sdm != 2} {
+		lappend ret $id
+	    } else {
+		lset ret end [lindex $ret end]...$id
+	    }
+	    lappend pos $id
+	}
+	incr sdm -1
+    }
+    set vposids($view) $pos
+    set vnegids($view) $neg
+    return $ret
 }
 
 # Start off a git log process and arrange to read its output
 proc start_rev_list {view} {
     global startmsecs commitidx viewcomplete
     global commfd leftover tclencoding
-    global viewargs viewargscmd vactualargs viewfiles vfilelimit
+    global viewargs viewargscmd viewfiles vfilelimit
     global showlocalchanges commitinterest mainheadid
     global progressdirn progresscoords proglastnc curview
     global viewactive loginstance viewinstances vmergeonly
     global pending_select mainheadid
+    global vcanopt vflags vrevs vorigargs
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
@@ -167,8 +319,7 @@ proc start_rev_list {view} {
 	}
 	set args [concat $args [split $str "\n"]]
     }
-    set args [parseviewargs $view $args]
-    set vactualargs($view) $args
+    set vcanopt($view) [parseviewargs $view $args]
 
     set files $viewfiles($view)
     if {$vmergeonly($view)} {
@@ -186,6 +337,16 @@ proc start_rev_list {view} {
 	}
     }
     set vfilelimit($view) $files
+
+    if {$vcanopt($view)} {
+	set revs [parseviewrevs $view $vrevs($view)]
+	if {$revs eq {}} {
+	    return 0
+	}
+	set args [concat $vflags($view) $revs]
+    } else {
+	set args $vorigargs($view)
+    }
 
     if {[catch {
 	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
@@ -248,11 +409,12 @@ proc getcommits {} {
 }
 
 proc updatecommits {} {
-    global curview vactualargs vfilelimit viewinstances
+    global curview vcanopt vorigargs vfilelimit viewinstances
     global viewactive viewcomplete loginstance tclencoding mainheadid
     global startmsecs commfd showneartags showlocalchanges leftover
     global mainheadid pending_select
     global isworktree
+    global varcid vposids vnegids vflags vrevs
 
     set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
     set oldmainid $mainheadid
@@ -266,13 +428,46 @@ proc updatecommits {} {
 	}
     }
     set view $curview
+    if {$vcanopt($view)} {
+	set oldpos $vposids($view)
+	set oldneg $vnegids($view)
+	set revs [parseviewrevs $view $vrevs($view)]
+	if {$revs eq {}} {
+	    return
+	}
+	# note: getting the delta when negative refs change is hard,
+	# and could require multiple git log invocations, so in that
+	# case we ask git log for all the commits (not just the delta)
+	if {$oldneg eq $vnegids($view)} {
+	    set newrevs {}
+	    set npos 0
+	    # take out positive refs that we asked for before or
+	    # that we have already seen
+	    foreach rev $revs {
+		if {[string length $rev] == 40} {
+		    if {[lsearch -exact $oldpos $rev] < 0
+			&& ![info exists varcid($view,$rev)]} {
+			lappend newrevs $rev
+			incr npos
+		    }
+		} else {
+		    lappend $newrevs $rev
+		}
+	    }
+	    if {$npos == 0} return
+	    set revs $newrevs
+	    set vposids($view) [lsort -unique [concat $oldpos $vposids($view)]]
+	}
+	set args [concat $vflags($view) $revs --not $oldpos]
+    } else {
+	set args $vorigargs($view)
+    }
     if {[catch {
 	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			  --boundary $vactualargs($view) --not [seeds $view] \
-			  "--" $vfilelimit($view)] r]
+			  --boundary $args "--" $vfilelimit($view)] r]
     } err]} {
 	error_popup "Error executing git log: $err"
-	exit 1
+	return
     }
     if {$viewactive($view) == 0} {
 	set startmsecs [clock clicks -milliseconds]
@@ -2217,7 +2412,7 @@ proc about {} {
     message $w.m -text [mc "
 Gitk - a commit viewer for git
 
-Copyright © 2005-2006 Paul Mackerras
+Copyright © 2005-2008 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License"] \
 	    -justify center -aspect 400 -border 2 -bg white -relief groove
