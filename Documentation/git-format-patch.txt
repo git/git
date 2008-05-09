@@ -156,6 +156,12 @@ want a filename like `0001-description-of-my-change.patch`, and
 the first letter does not have to be a dot.  Leaving it empty would
 not add any suffix.
 
+--no-binary::
+	Don't output contents of changes in binary files, just take note
+	that they differ.  Note that this disable the patch to be properly
+	applied.  By default the contents of changes in those files are
+	encoded in the patch.
+
 CONFIGURATION
 -------------
 You can specify extra mail header lines to be added to each message

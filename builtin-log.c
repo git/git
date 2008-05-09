@@ -757,6 +757,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int thread = 0;
 	int cover_letter = 0;
 	int boundary_count = 0;
+	int no_binary_diff = 0;
 	struct commit *origin = NULL, *head = NULL;
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
@@ -862,6 +863,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			fmt_patch_suffix = argv[i] + 9;
 		else if (!strcmp(argv[i], "--cover-letter"))
 			cover_letter = 1;
+		else if (!strcmp(argv[i], "--no-binary"))
+			no_binary_diff = 1;
 		else
 			argv[j++] = argv[i];
 	}
@@ -914,7 +917,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
 
-	if (!DIFF_OPT_TST(&rev.diffopt, TEXT))
+	if (!DIFF_OPT_TST(&rev.diffopt, TEXT) && !no_binary_diff)
 		DIFF_OPT_SET(&rev.diffopt, BINARY);
 
 	if (!output_directory && !use_stdout)
