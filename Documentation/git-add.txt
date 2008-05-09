@@ -71,7 +71,9 @@ OPTIONS
 	the specified filepatterns before exiting.
 
 -u::
-	Update only files that git already knows about. This is similar
+	Update only files that git already knows about, staging modified
+	content for commit and marking deleted files for removal. This
+	is similar
 	to what "git commit -a" does in preparation for making a commit,
 	except that the update is limited to paths specified on the
 	command line. If no paths are specified, all tracked files in the
