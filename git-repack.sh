@@ -30,7 +30,7 @@ do
 	-n)	no_update_info=t ;;
 	-a)	all_into_one=t ;;
 	-A)	all_into_one=t
-		keep_unreachable=--keep-unreachable ;;
+		keep_unreachable=t ;;
 	-d)	remove_redundant=t ;;
 	-q)	quiet=-q ;;
 	-f)	no_reuse=--no-reuse-object ;;
@@ -78,9 +78,6 @@ case ",$all_into_one," in
 	if test -z "$args"
 	then
 		args='--unpacked --incremental'
-	elif test -n "$keep_unreachable"
-	then
-		args="$args $keep_unreachable"
 	fi
 	;;
 esac
@@ -130,7 +127,18 @@ then
 		  do
 			case " $fullbases " in
 			*" $e "*) ;;
-			*)	rm -f "$e.pack" "$e.idx" "$e.keep" ;;
+			*)
+				rm -f "$e.idx" "$e.keep"
+				if test -n "$keep_unreachable" &&
+				   test -f "$e.pack"
+				then
+					git unpack-objects < "$e.pack" || {
+						echo >&2 "Failed unpacking unreachable objects from redundant pack file $e.pack"
+						exit 1
+					}
+				fi
+				rm -f "$e.pack"
+			;;
 			esac
 		  done
 		)
