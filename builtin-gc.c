@@ -219,7 +219,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	char buf[80];
 
 	struct option builtin_gc_options[] = {
-		OPT_BOOLEAN(0, "prune", &prune, "prune unreferenced objects"),
+		OPT_BOOLEAN(0, "prune", &prune, "prune unreferenced objects (deprecated)"),
 		OPT_BOOLEAN(0, "aggressive", &aggressive, "be more thorough (increased runtime)"),
 		OPT_BOOLEAN(0, "auto", &auto_gc, "enable auto-gc mode"),
 		OPT_BOOLEAN('q', "quiet", &quiet, "suppress progress reports"),
@@ -249,7 +249,6 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		/*
 		 * Auto-gc should be least intrusive as possible.
 		 */
-		prune = 0;
 		if (!need_to_gc())
 			return 0;
 		fprintf(stderr, "Auto packing your repository for optimum "
