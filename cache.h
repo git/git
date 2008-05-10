@@ -434,7 +434,15 @@ enum branch_track {
 	BRANCH_TRACK_EXPLICIT,
 };
 
+enum rebase_setup_type {
+	AUTOREBASE_NEVER = 0,
+	AUTOREBASE_LOCAL,
+	AUTOREBASE_REMOTE,
+	AUTOREBASE_ALWAYS,
+};
+
 extern enum branch_track git_branch_track;
+extern enum rebase_setup_type autorebase;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;

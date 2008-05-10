@@ -399,6 +399,21 @@ branch.autosetupmerge::
 	done when the starting point is either a local branch or remote
 	branch. This option defaults to true.
 
+branch.autosetuprebase::
+	When a new branch is created with `git-branch` or `git-checkout`
+	that tracks another branch, this variable tells git to set
+	up pull to rebase instead of merge (see "branch.<name>.rebase").
+	When `never`, rebase is never automatically set to true.
+	When `local`, rebase is set to true for tracked branches of
+	other local branches.
+	When `remote`, rebase is set to true for tracked branches of
+	remote branches.
+	When `always`, rebase will be set to true for all tracking
+	branches.
+	See "branch.autosetupmerge" for details on how to set up a
+	branch to track another branch.
+	This option defaults to never.
+
 branch.<name>.remote::
 	When in branch <name>, it tells `git fetch` which remote to fetch.
 	If this option is not given, `git fetch` defaults to remote "origin".
