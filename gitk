@@ -1016,7 +1016,7 @@ proc makewindow {} {
     bindkey k "selnextline 1"
     bindkey j "goback"
     bindkey l "goforw"
-    bindkey b "$ctext yview scroll -1 pages"
+    bindkey b prevfile
     bindkey d "$ctext yview scroll 18 units"
     bindkey u "$ctext yview scroll -18 units"
     bindkey / {dofind 1 1}
@@ -5479,26 +5479,44 @@ proc changediffdisp {} {
     $ctext tag conf d1 -elide [lindex $diffelide 1]
 }
 
+proc highlightfile {loc cline} {
+    global ctext cflist cflist_top
+
+    $ctext yview $loc
+    $cflist tag remove highlight $cflist_top.0 "$cflist_top.0 lineend"
+    $cflist tag add highlight $cline.0 "$cline.0 lineend"
+    $cflist see $cline.0
+    set cflist_top $cline
+}
+
 proc prevfile {} {
-    global difffilestart ctext
-    set prev [lindex $difffilestart 0]
+    global difffilestart ctext cmitmode
+
+    if {$cmitmode eq "tree"} return
+    set prev 0.0
+    set prevline 1
     set here [$ctext index @0,0]
     foreach loc $difffilestart {
 	if {[$ctext compare $loc >= $here]} {
-	    $ctext yview $prev
+	    highlightfile $prev $prevline
 	    return
 	}
 	set prev $loc
+	incr prevline
     }
-    $ctext yview $prev
+    highlightfile $prev $prevline
 }
 
 proc nextfile {} {
-    global difffilestart ctext
+    global difffilestart ctext cmitmode
+
+    if {$cmitmode eq "tree"} return
     set here [$ctext index @0,0]
+    set line 1
     foreach loc $difffilestart {
+	incr line
 	if {[$ctext compare $loc > $here]} {
-	    $ctext yview $loc
+	    highlightfile $loc $line
 	    return
 	}
     }
