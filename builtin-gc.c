@@ -256,17 +256,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			"performance. You may also\n"
 			"run \"git gc\" manually. See "
 			"\"git help gc\" for more information.\n");
-	} else {
-		/*
-		 * Use safer (for shared repos) "-A" option to
-		 * repack when not pruning. Auto-gc makes its
-		 * own decision.
-		 */
-		if (prune)
-			append_option(argv_repack, "-a", MAX_ADD);
-		else
-			append_option(argv_repack, "-A", MAX_ADD);
-	}
+	} else
+		append_option(argv_repack, "-A", MAX_ADD);
 
 	if (pack_refs && run_command_v_opt(argv_pack_refs, RUN_GIT_CMD))
 		return error(FAILED_RUN, argv_pack_refs[0]);
