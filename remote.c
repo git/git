@@ -691,6 +691,13 @@ struct ref *alloc_ref(unsigned namelen)
 	return ret;
 }
 
+struct ref *alloc_ref_from_str(const char* str)
+{
+	struct ref *ret = alloc_ref(strlen(str) + 1);
+	strcpy(ret->name, str);
+	return ret;
+}
+
 static struct ref *copy_ref(const struct ref *ref)
 {
 	struct ref *ret = xmalloc(sizeof(struct ref) + strlen(ref->name) + 1);
@@ -797,7 +804,6 @@ static struct ref *try_explicit_object_name(const char *name)
 {
 	unsigned char sha1[20];
 	struct ref *ref;
-	int len;
 
 	if (!*name) {
 		ref = alloc_ref(20);
@@ -807,21 +813,14 @@ static struct ref *try_explicit_object_name(const char *name)
 	}
 	if (get_sha1(name, sha1))
 		return NULL;
-	len = strlen(name) + 1;
-	ref = alloc_ref(len);
-	memcpy(ref->name, name, len);
+	ref = alloc_ref_from_str(name);
 	hashcpy(ref->new_sha1, sha1);
 	return ref;
 }
 
 static struct ref *make_linked_ref(const char *name, struct ref ***tail)
 {
-	struct ref *ret;
-	size_t len;
-
-	len = strlen(name) + 1;
-	ret = alloc_ref(len);
-	memcpy(ret->name, name, len);
+	struct ref *ret = alloc_ref_from_str(name);
 	tail_link_ref(ret, tail);
 	return ret;
 }
@@ -1125,9 +1124,7 @@ static struct ref *get_local_ref(const char *name)
 		return NULL;
 
 	if (!prefixcmp(name, "refs/")) {
-		ret = alloc_ref(strlen(name) + 1);
-		strcpy(ret->name, name);
-		return ret;
+		return alloc_ref_from_str(name);
 	}
 
 	if (!prefixcmp(name, "heads/") ||

@@ -54,6 +54,8 @@ struct refspec {
 
 struct ref *alloc_ref(unsigned namelen);
 
+struct ref *alloc_ref_from_str(const char* str);
+
 struct ref *copy_ref_list(const struct ref *ref);
 
 int check_ref_type(const struct ref *ref, int flags);

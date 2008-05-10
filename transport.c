@@ -504,8 +504,7 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 
 	strbuf_release(&buffer);
 
-	ref = alloc_ref(strlen("HEAD") + 1);
-	strcpy(ref->name, "HEAD");
+	ref = alloc_ref_from_str("HEAD");
 	if (!walker->fetch_ref(walker, ref) &&
 	    !resolve_remote_symref(ref, refs)) {
 		ref->next = refs;
@@ -546,9 +545,8 @@ static struct ref *get_refs_from_bundle(struct transport *transport)
 		die ("Could not read bundle '%s'.", transport->url);
 	for (i = 0; i < data->header.references.nr; i++) {
 		struct ref_list_entry *e = data->header.references.list + i;
-		struct ref *ref = alloc_ref(strlen(e->name) + 1);
+		struct ref *ref = alloc_ref_from_str(e->name);
 		hashcpy(ref->old_sha1, e->sha1);
-		strcpy(ref->name, e->name);
 		ref->next = result;
 		result = ref;
 	}
