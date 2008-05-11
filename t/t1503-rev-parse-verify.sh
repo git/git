@@ -97,18 +97,17 @@ test_expect_failure '3 no stdout output on error' '
 	test -z "$(git rev-parse --verify $HASH2 HEAD)"
 '
 
-test_expect_success '1 with --default' '
+test_expect_success 'use --default' '
 	git rev-parse --verify --default master &&
 	git rev-parse --verify --default master HEAD &&
 	git rev-parse --default master --verify &&
 	git rev-parse --default master --verify HEAD &&
+	git rev-parse --verify HEAD --default master &&
 	test_must_fail git rev-parse --verify foo --default master &&
 	test_must_fail git rev-parse --default HEAD --verify bar &&
-	test_must_fail git rev-parse --verify --default HEAD baz
-'
-
-test_expect_failure '2 with --default' '
-	git rev-parse --verify HEAD --default master
+	test_must_fail git rev-parse --verify --default HEAD baz &&
+	test_must_fail git rev-parse --default foo --verify &&
+	test_must_fail git rev-parse --verify --default bar
 '
 
 test_done

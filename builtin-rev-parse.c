@@ -583,6 +583,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			continue;
 		verify_filename(prefix, arg);
 	}
+	if (verify && revs_count == 1)
+		return 0;
 	show_default();
 	if (verify && revs_count != 1)
 		die_no_single_rev(quiet);
