@@ -7,6 +7,7 @@ test_description='Various filesystem issues'
 auml=`printf '\xc3\xa4'`
 aumlcdiar=`printf '\x61\xcc\x88'`
 
+case_insensitive=
 test_expect_success 'see if we expect ' '
 
 	test_case=test_expect_success
@@ -17,6 +18,7 @@ test_expect_success 'see if we expect ' '
 	if test "$(cat junk/CamelCase)" != good
 	then
 		test_case=test_expect_failure
+		case_insensitive=t
 		say "will test on a case insensitive filesystem"
 	fi &&
 	rm -fr junk &&
@@ -31,6 +33,20 @@ test_expect_success 'see if we expect ' '
 	esac &&
 	rm -fr junk
 '
+
+if test "$case_insensitive"
+then
+test_expect_success "detection of case insensitive filesystem during repo init" '
+
+	test $(git config --bool core.ignorecase) = true
+'
+else
+test_expect_success "detection of case insensitive filesystem during repo init" '
+
+	! git config --bool core.ignorecase >/dev/null ||
+	test $(git config --bool core.ignorecase) = false
+'
+fi
 
 test_expect_success "setup case tests" '
 
