@@ -28,8 +28,6 @@ static int symbolic;
 static int abbrev;
 static int output_sq;
 
-static int revs_count;
-
 /*
  * Some arguments are relevant "revision" arguments,
  * others are about output format or other details.
@@ -102,7 +100,6 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 	if (!(filter & DO_REVS))
 		return;
 	def = NULL;
-	revs_count++;
 
 	if (type != show_type)
 		putchar('^');
@@ -150,7 +147,7 @@ static int show_flag(const char *arg)
 	return 0;
 }
 
-static void show_default(void)
+static int show_default(void)
 {
 	const char *s = def;
 
@@ -160,9 +157,10 @@ static void show_default(void)
 		def = NULL;
 		if (!get_sha1(s, sha1)) {
 			show_rev(NORMAL, sha1, s);
-			return;
+			return 1;
 		}
 	}
+	return 0;
 }
 
 static int show_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
@@ -375,8 +373,9 @@ static void die_no_single_rev(int quiet)
 
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
-	int i, as_is = 0, verify = 0, quiet = 0;
+	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
 	unsigned char sha1[20];
+	const char *name = NULL;
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
@@ -568,12 +567,17 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		/* Not a flag argument */
 		if (try_difference(arg))
 			continue;
-		if (!get_sha1(arg, sha1)) {
-			show_rev(NORMAL, sha1, arg);
-			continue;
+		name = arg;
+		type = NORMAL;
+		if (*arg == '^') {
+			name++;
+			type = REVERSED;
 		}
-		if (*arg == '^' && !get_sha1(arg+1, sha1)) {
-			show_rev(REVERSED, sha1, arg+1);
+		if (!get_sha1(name, sha1)) {
+			if (verify)
+				revs_count++;
+			else
+				show_rev(type, sha1, name);
 			continue;
 		}
 		if (verify)
@@ -583,10 +587,14 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			continue;
 		verify_filename(prefix, arg);
 	}
-	if (verify && revs_count == 1)
-		return 0;
-	show_default();
-	if (verify && revs_count != 1)
+	if (verify) {
+		if (revs_count == 1) {
+			show_rev(type, sha1, name);
+			return 0;
+		} else if (revs_count == 0 && show_default())
+			return 0;
 		die_no_single_rev(quiet);
+	} else
+		show_default();
 	return 0;
 }

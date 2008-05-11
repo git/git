@@ -83,17 +83,11 @@ test_expect_success 'fails silently when using -q' '
 	test -z "$(cat error)"
 '
 
-test_expect_success '1 no stdout output on error' '
+test_expect_success 'no stdout output on error' '
 	test -z "$(git rev-parse --verify)" &&
 	test -z "$(git rev-parse --verify foo)" &&
-	test -z "$(git rev-parse --verify baz HEAD)"
-'
-
-test_expect_failure '2 no stdout output on error' '
-	test -z "$(git rev-parse --verify HEAD bar)"
-'
-
-test_expect_failure '3 no stdout output on error' '
+	test -z "$(git rev-parse --verify baz HEAD)" &&
+	test -z "$(git rev-parse --verify HEAD bar)" &&
 	test -z "$(git rev-parse --verify $HASH2 HEAD)"
 '
 
