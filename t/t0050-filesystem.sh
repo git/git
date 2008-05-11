@@ -50,6 +50,7 @@ fi
 
 test_expect_success "setup case tests" '
 
+	git config core.ignorecase true &&
 	touch camelcase &&
 	git add camelcase &&
 	git commit -m "initial" &&
