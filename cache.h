@@ -133,6 +133,7 @@ struct cache_entry {
 #define CE_UPDATE    (0x10000)
 #define CE_REMOVE    (0x20000)
 #define CE_UPTODATE  (0x40000)
+#define CE_ADDED     (0x80000)
 
 #define CE_HASHED    (0x100000)
 #define CE_UNHASHED  (0x200000)
@@ -151,20 +152,6 @@ static inline void copy_cache_entry(struct cache_entry *dst, struct cache_entry 
 
 	/* Restore the hash state */
 	dst->ce_flags = (dst->ce_flags & ~CE_STATE_MASK) | state;
-}
-
-/*
- * We don't actually *remove* it, we can just mark it invalid so that
- * we won't find it in lookups.
- *
- * Not only would we have to search the lists (simple enough), but
- * we'd also have to rehash other hash buckets in case this makes the
- * hash bucket empty (common). So it's much better to just mark
- * it.
- */
-static inline void remove_index_entry(struct cache_entry *ce)
-{
-	ce->ce_flags |= CE_UNHASHED;
 }
 
 static inline unsigned create_ce_flags(size_t len, unsigned stage)
@@ -241,6 +228,23 @@ struct index_state {
 
 extern struct index_state the_index;
 
+/* Name hashing */
+extern void add_name_hash(struct index_state *istate, struct cache_entry *ce);
+/*
+ * We don't actually *remove* it, we can just mark it invalid so that
+ * we won't find it in lookups.
+ *
+ * Not only would we have to search the lists (simple enough), but
+ * we'd also have to rehash other hash buckets in case this makes the
+ * hash bucket empty (common). So it's much better to just mark
+ * it.
+ */
+static inline void remove_name_hash(struct cache_entry *ce)
+{
+	ce->ce_flags |= CE_UNHASHED;
+}
+
+
 #ifndef NO_THE_INDEX_COMPATIBILITY_MACROS
 #define active_cache (the_index.cache)
 #define active_nr (the_index.cache_nr)
@@ -257,11 +261,12 @@ extern struct index_state the_index;
 #define add_cache_entry(ce, option) add_index_entry(&the_index, (ce), (option))
 #define remove_cache_entry_at(pos) remove_index_entry_at(&the_index, (pos))
 #define remove_file_from_cache(path) remove_file_from_index(&the_index, (path))
+#define add_to_cache(path, st, verbose) add_to_index(&the_index, (path), (st), (verbose))
 #define add_file_to_cache(path, verbose) add_file_to_index(&the_index, (path), (verbose))
 #define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL)
 #define ce_match_stat(ce, st, options) ie_match_stat(&the_index, (ce), (st), (options))
 #define ce_modified(ce, st, options) ie_modified(&the_index, (ce), (st), (options))
-#define cache_name_exists(name, namelen) index_name_exists(&the_index, (name), (namelen))
+#define cache_name_exists(name, namelen, igncase) index_name_exists(&the_index, (name), (namelen), (igncase))
 #endif
 
 enum object_type {
@@ -351,7 +356,7 @@ extern int write_index(const struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
 extern int unmerged_index(const struct index_state *);
 extern int verify_path(const char *path);
-extern int index_name_exists(struct index_state *istate, const char *name, int namelen);
+extern struct cache_entry *index_name_exists(struct index_state *istate, const char *name, int namelen, int igncase);
 extern int index_name_pos(const struct index_state *, const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
@@ -361,6 +366,7 @@ extern int add_index_entry(struct index_state *, struct cache_entry *ce, int opt
 extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern int remove_index_entry_at(struct index_state *, int pos);
 extern int remove_file_from_index(struct index_state *, const char *path);
+extern int add_to_index(struct index_state *, const char *path, struct stat *, int verbose);
 extern int add_file_to_index(struct index_state *, const char *path, int verbose);
 extern struct cache_entry *make_cache_entry(unsigned int mode, const unsigned char *sha1, const char *path, int stage, int refresh);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
@@ -405,6 +411,7 @@ extern int delete_ref(const char *, const unsigned char *sha1);
 extern int trust_executable_bit;
 extern int quote_path_fully;
 extern int has_symlinks;
+extern int ignore_case;
 extern int assume_unchanged;
 extern int prefer_symlink_refs;
 extern int log_all_ref_updates;
@@ -599,7 +606,7 @@ struct checkout {
 };
 
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
-extern int has_symlink_leading_path(const char *name, char *last_symlink);
+extern int has_symlink_leading_path(int len, const char *name);
 
 extern struct alternate_object_database {
 	struct alternate_object_database *next;

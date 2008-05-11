@@ -23,78 +23,19 @@
 
 struct index_state the_index;
 
-static unsigned int hash_name(const char *name, int namelen)
-{
-	unsigned int hash = 0x123;
-
-	do {
-		unsigned char c = *name++;
-		hash = hash*101 + c;
-	} while (--namelen);
-	return hash;
-}
-
-static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
-{
-	void **pos;
-	unsigned int hash;
-
-	if (ce->ce_flags & CE_HASHED)
-		return;
-	ce->ce_flags |= CE_HASHED;
-	ce->next = NULL;
-	hash = hash_name(ce->name, ce_namelen(ce));
-	pos = insert_hash(hash, ce, &istate->name_hash);
-	if (pos) {
-		ce->next = *pos;
-		*pos = ce;
-	}
-}
-
-static void lazy_init_name_hash(struct index_state *istate)
-{
-	int nr;
-
-	if (istate->name_hash_initialized)
-		return;
-	for (nr = 0; nr < istate->cache_nr; nr++)
-		hash_index_entry(istate, istate->cache[nr]);
-	istate->name_hash_initialized = 1;
-}
-
 static void set_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {
-	ce->ce_flags &= ~CE_UNHASHED;
 	istate->cache[nr] = ce;
-	if (istate->name_hash_initialized)
-		hash_index_entry(istate, ce);
+	add_name_hash(istate, ce);
 }
 
 static void replace_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {
 	struct cache_entry *old = istate->cache[nr];
 
-	remove_index_entry(old);
+	remove_name_hash(old);
 	set_index_entry(istate, nr, ce);
 	istate->cache_changed = 1;
-}
-
-int index_name_exists(struct index_state *istate, const char *name, int namelen)
-{
-	unsigned int hash = hash_name(name, namelen);
-	struct cache_entry *ce;
-
-	lazy_init_name_hash(istate);
-	ce = lookup_hash(hash, &istate->name_hash);
-
-	while (ce) {
-		if (!(ce->ce_flags & CE_UNHASHED)) {
-			if (!cache_name_compare(name, namelen, ce->name, ce->ce_flags))
-				return 1;
-		}
-		ce = ce->next;
-	}
-	return 0;
 }
 
 /*
@@ -257,7 +198,8 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 
 static int is_racy_timestamp(const struct index_state *istate, struct cache_entry *ce)
 {
-	return (istate->timestamp &&
+	return (!S_ISGITLINK(ce->ce_mode) &&
+		istate->timestamp &&
 		((unsigned int)istate->timestamp) <= ce->ce_mtime);
 }
 
@@ -438,7 +380,7 @@ int remove_index_entry_at(struct index_state *istate, int pos)
 {
 	struct cache_entry *ce = istate->cache[pos];
 
-	remove_index_entry(ce);
+	remove_name_hash(ce);
 	istate->cache_changed = 1;
 	istate->cache_nr--;
 	if (pos >= istate->cache_nr)
@@ -488,21 +430,50 @@ static int index_name_pos_also_unmerged(struct index_state *istate,
 	return pos;
 }
 
-int add_file_to_index(struct index_state *istate, const char *path, int verbose)
+static int different_name(struct cache_entry *ce, struct cache_entry *alias)
 {
-	int size, namelen, pos;
-	struct stat st;
-	struct cache_entry *ce;
+	int len = ce_namelen(ce);
+	return ce_namelen(alias) != len || memcmp(ce->name, alias->name, len);
+}
+
+/*
+ * If we add a filename that aliases in the cache, we will use the
+ * name that we already have - but we don't want to update the same
+ * alias twice, because that implies that there were actually two
+ * different files with aliasing names!
+ *
+ * So we use the CE_ADDED flag to verify that the alias was an old
+ * one before we accept it as
+ */
+static struct cache_entry *create_alias_ce(struct cache_entry *ce, struct cache_entry *alias)
+{
+	int len;
+	struct cache_entry *new;
+
+	if (alias->ce_flags & CE_ADDED)
+		die("Will not add file alias '%s' ('%s' already exists in index)", ce->name, alias->name);
+
+	/* Ok, create the new entry using the name of the existing alias */
+	len = ce_namelen(alias);
+	new = xcalloc(1, cache_entry_size(len));
+	memcpy(new->name, alias->name, len);
+	copy_cache_entry(new, ce);
+	free(ce);
+	return new;
+}
+
+int add_to_index(struct index_state *istate, const char *path, struct stat *st, int verbose)
+{
+	int size, namelen;
+	mode_t st_mode = st->st_mode;
+	struct cache_entry *ce, *alias;
 	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_RACY_IS_DIRTY;
 
-	if (lstat(path, &st))
-		die("%s: unable to stat (%s)", path, strerror(errno));
-
-	if (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))
+	if (!S_ISREG(st_mode) && !S_ISLNK(st_mode) && !S_ISDIR(st_mode))
 		die("%s: can only add regular files, symbolic links or git-directories", path);
 
 	namelen = strlen(path);
-	if (S_ISDIR(st.st_mode)) {
+	if (S_ISDIR(st_mode)) {
 		while (namelen && path[namelen-1] == '/')
 			namelen--;
 	}
@@ -510,10 +481,10 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 	ce = xcalloc(1, size);
 	memcpy(ce->name, path, namelen);
 	ce->ce_flags = namelen;
-	fill_stat_cache_info(ce, &st);
+	fill_stat_cache_info(ce, st);
 
 	if (trust_executable_bit && has_symlinks)
-		ce->ce_mode = create_ce_mode(st.st_mode);
+		ce->ce_mode = create_ce_mode(st_mode);
 	else {
 		/* If there is an existing entry, pick the mode bits and type
 		 * from it, otherwise assume unexecutable regular file.
@@ -522,26 +493,35 @@ int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 		int pos = index_name_pos_also_unmerged(istate, path, namelen);
 
 		ent = (0 <= pos) ? istate->cache[pos] : NULL;
-		ce->ce_mode = ce_mode_from_stat(ent, st.st_mode);
+		ce->ce_mode = ce_mode_from_stat(ent, st_mode);
 	}
 
-	pos = index_name_pos(istate, ce->name, namelen);
-	if (0 <= pos &&
-	    !ce_stage(istate->cache[pos]) &&
-	    !ie_match_stat(istate, istate->cache[pos], &st, ce_option)) {
+	alias = index_name_exists(istate, ce->name, ce_namelen(ce), ignore_case);
+	if (alias && !ce_stage(alias) && !ie_match_stat(istate, alias, st, ce_option)) {
 		/* Nothing changed, really */
 		free(ce);
-		ce_mark_uptodate(istate->cache[pos]);
+		ce_mark_uptodate(alias);
+		alias->ce_flags |= CE_ADDED;
 		return 0;
 	}
-
-	if (index_path(ce->sha1, path, &st, 1))
+	if (index_path(ce->sha1, path, st, 1))
 		die("unable to index file %s", path);
+	if (ignore_case && alias && different_name(ce, alias))
+		ce = create_alias_ce(ce, alias);
+	ce->ce_flags |= CE_ADDED;
 	if (add_index_entry(istate, ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
 		die("unable to add %s to index",path);
 	if (verbose)
 		printf("add '%s'\n", path);
 	return 0;
+}
+
+int add_file_to_index(struct index_state *istate, const char *path, int verbose)
+{
+	struct stat st;
+	if (lstat(path, &st))
+		die("%s: unable to stat (%s)", path, strerror(errno));
+	return add_to_index(istate, path, &st, verbose);
 }
 
 struct cache_entry *make_cache_entry(unsigned int mode,

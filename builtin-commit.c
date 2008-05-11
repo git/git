@@ -175,9 +175,11 @@ static void add_remove_files(struct path_list *list)
 {
 	int i;
 	for (i = 0; i < list->nr; i++) {
+		struct stat st;
 		struct path_list_item *p = &(list->items[i]);
-		if (file_exists(p->path))
-			add_file_to_cache(p->path, 0);
+
+		if (!lstat(p->path, &st))
+			add_to_cache(p->path, &st, 0);
 		else
 			remove_file_from_cache(p->path);
 	}
