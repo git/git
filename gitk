@@ -2110,7 +2110,7 @@ proc makewindow {} {
     bindkey k "selnextline 1"
     bindkey j "goback"
     bindkey l "goforw"
-    bindkey b "$ctext yview scroll -1 pages"
+    bindkey b prevfile
     bindkey d "$ctext yview scroll 18 units"
     bindkey u "$ctext yview scroll -18 units"
     bindkey / {dofind 1 1}
@@ -2182,6 +2182,8 @@ proc makewindow {} {
 	-command {flist_hl 0}
     $flist_menu add command -label [mc "Highlight this only"] \
 	-command {flist_hl 1}
+    $flist_menu add command -label [mc "External diff"] \
+        -command {external_diff}
 }
 
 # Windows sends all mouse wheel events to the current focused window, not
@@ -2286,7 +2288,7 @@ proc savestuff {w} {
     global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
-    global autoselect
+    global autoselect extdifftool
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -2312,6 +2314,7 @@ proc savestuff {w} {
 	puts $f [list set diffcolors $diffcolors]
 	puts $f [list set diffcontext $diffcontext]
 	puts $f [list set selectbgcolor $selectbgcolor]
+	puts $f [list set extdifftool $extdifftool]
 
 	puts $f "set geometry(main) [wm geometry .]"
 	puts $f "set geometry(topwidth) [winfo width .tf]"
@@ -2862,6 +2865,12 @@ proc pop_flist_menu {w X Y x y} {
 	set e [lindex $treediffs($diffids) [expr {$l-2}]]
     }
     set flist_menu_file $e
+    set xdiffstate "normal"
+    if {$cmitmode eq "tree"} {
+	set xdiffstate "disabled"
+    }
+    # Disable "External diff" item in tree mode
+    $flist_menu entryconf 2 -state $xdiffstate
     tk_popup $flist_menu $X $Y
 }
 
@@ -2875,6 +2884,113 @@ proc flist_hl {only} {
 	append findstring " " $x
     }
     set gdttype [mc "touching paths:"]
+}
+
+proc save_file_from_commit {filename output what} {
+    global nullfile
+
+    if {[catch {exec git show $filename -- > $output} err]} {
+	if {[string match "fatal: bad revision *" $err]} {
+	    return $nullfile
+	}
+	error_popup "Error getting \"$filename\" from $what: $err"
+	return {}
+    }
+    return $output
+}
+
+proc external_diff_get_one_file {diffid filename diffdir} {
+    global nullid nullid2 nullfile
+    global gitdir
+
+    if {$diffid == $nullid} {
+        set difffile [file join [file dirname $gitdir] $filename]
+	if {[file exists $difffile]} {
+	    return $difffile
+	}
+	return $nullfile
+    }
+    if {$diffid == $nullid2} {
+        set difffile [file join $diffdir "\[index\] [file tail $filename]"]
+        return [save_file_from_commit :$filename $difffile index]
+    }
+    set difffile [file join $diffdir "\[$diffid\] [file tail $filename]"]
+    return [save_file_from_commit $diffid:$filename $difffile \
+	       "revision $diffid"]
+}
+
+proc external_diff {} {
+    global gitktmpdir nullid nullid2
+    global flist_menu_file
+    global diffids
+    global diffnum
+    global gitdir extdifftool
+
+    if {[llength $diffids] == 1} {
+        # no reference commit given
+        set diffidto [lindex $diffids 0]
+        if {$diffidto eq $nullid} {
+            # diffing working copy with index
+            set diffidfrom $nullid2
+        } elseif {$diffidto eq $nullid2} {
+            # diffing index with HEAD
+            set diffidfrom "HEAD"
+        } else {
+            # use first parent commit
+            global parentlist selectedline
+            set diffidfrom [lindex $parentlist $selectedline 0]
+        }
+    } else {
+        set diffidfrom [lindex $diffids 0]
+        set diffidto [lindex $diffids 1]
+    }
+
+    # make sure that several diffs wont collide
+    if {![info exists gitktmpdir]} {
+	set gitktmpdir [file join [file dirname $gitdir] \
+			    [format ".gitk-tmp.%s" [pid]]]
+	if {[catch {file mkdir $gitktmpdir} err]} {
+	    error_popup "Error creating temporary directory $gitktmpdir: $err"
+	    unset gitktmpdir
+	    return
+	}
+	set diffnum 0
+    }
+    incr diffnum
+    set diffdir [file join $gitktmpdir $diffnum]
+    if {[catch {file mkdir $diffdir} err]} {
+	error_popup "Error creating temporary directory $diffdir: $err"
+	return
+    }
+
+    # gather files to diff
+    set difffromfile [external_diff_get_one_file $diffidfrom $flist_menu_file $diffdir]
+    set difftofile [external_diff_get_one_file $diffidto $flist_menu_file $diffdir]
+
+    if {$difffromfile ne {} && $difftofile ne {}} {
+        set cmd [concat | [shellsplit $extdifftool] \
+		     [list $difffromfile $difftofile]]
+        if {[catch {set fl [open $cmd r]} err]} {
+            file delete -force $diffdir
+            error_popup [mc "$extdifftool: command failed: $err"]
+        } else {
+            fconfigure $fl -blocking 0
+            filerun $fl [list delete_at_eof $fl $diffdir]
+        }
+    }
+}
+
+# delete $dir when we see eof on $f (presumably because the child has exited)
+proc delete_at_eof {f dir} {
+    while {[gets $f line] >= 0} {}
+    if {[eof $f]} {
+	if {[catch {close $f} err]} {
+	    error_popup "External diff viewer failed: $err"
+	}
+	file delete -force $dir
+	return 0
+    }
+    return 1
 }
 
 # Functions for adding and removing shell-type quoting
@@ -6053,11 +6169,12 @@ proc gettreeline {gtf id} {
 	if {$diffids eq $nullid} {
 	    set fname $line
 	} else {
-	    if {$diffids ne $nullid2 && [lindex $line 1] ne "blob"} continue
 	    set i [string first "\t" $line]
 	    if {$i < 0} continue
-	    set sha1 [lindex $line 2]
 	    set fname [string range $line [expr {$i+1}] end]
+	    set line [string range $line 0 [expr {$i-1}]]
+	    if {$diffids ne $nullid2 && [lindex $line 1] ne "blob"} continue
+	    set sha1 [lindex $line 2]
 	    if {[string index $fname 0] eq "\""} {
 		set fname [lindex $fname 0]
 	    }
@@ -6539,26 +6656,44 @@ proc changediffdisp {} {
     $ctext tag conf d1 -elide [lindex $diffelide 1]
 }
 
+proc highlightfile {loc cline} {
+    global ctext cflist cflist_top
+
+    $ctext yview $loc
+    $cflist tag remove highlight $cflist_top.0 "$cflist_top.0 lineend"
+    $cflist tag add highlight $cline.0 "$cline.0 lineend"
+    $cflist see $cline.0
+    set cflist_top $cline
+}
+
 proc prevfile {} {
-    global difffilestart ctext
-    set prev [lindex $difffilestart 0]
+    global difffilestart ctext cmitmode
+
+    if {$cmitmode eq "tree"} return
+    set prev 0.0
+    set prevline 1
     set here [$ctext index @0,0]
     foreach loc $difffilestart {
 	if {[$ctext compare $loc >= $here]} {
-	    $ctext yview $prev
+	    highlightfile $prev $prevline
 	    return
 	}
 	set prev $loc
+	incr prevline
     }
-    $ctext yview $prev
+    highlightfile $prev $prevline
 }
 
 proc nextfile {} {
-    global difffilestart ctext
+    global difffilestart ctext cmitmode
+
+    if {$cmitmode eq "tree"} return
     set here [$ctext index @0,0]
+    set line 1
     foreach loc $difffilestart {
+	incr line
 	if {[$ctext compare $loc > $here]} {
-	    $ctext yview $loc
+	    highlightfile $loc $line
 	    return
 	}
     }
@@ -7070,7 +7205,11 @@ proc rowmenu {x y id} {
     }
     if {$id ne $nullid && $id ne $nullid2} {
 	set menu $rowctxmenu
-	$menu entryconfigure 7 -label [mc "Reset %s branch to here" $mainhead]
+	if {$mainhead ne {}} {
+	    $menu entryconfigure 7 -label [mc "Reset %s branch to here" $mainhead]
+	} else {
+	    $menu entryconfigure 7 -label [mc "Detached head: can't reset" $mainhead] -state disabled
+	}
     } else {
 	set menu $fakerowmenu
     }
@@ -8917,9 +9056,15 @@ proc showtag {tag isnew} {
 
 proc doquit {} {
     global stopped
+    global gitktmpdir
+
     set stopped 100
     savestuff .
     destroy .
+
+    if {[info exists gitktmpdir]} {
+	catch {file delete -force $gitktmpdir}
+    }
 }
 
 proc mkfontdisp {font top which} {
@@ -9048,7 +9193,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor
-    global tabstop limitdiffs autoselect
+    global tabstop limitdiffs autoselect extdifftool
 
     set top .gitkprefs
     set prefstop $top
@@ -9100,15 +9245,24 @@ proc doprefs {} {
     pack $top.ldiff.b $top.ldiff.l -side left
     grid x $top.ldiff -sticky w
 
+    entry $top.extdifft -textvariable extdifftool
+    frame $top.extdifff
+    label $top.extdifff.l -text [mc "External diff tool" ] -font optionfont \
+	-padx 10
+    button $top.extdifff.b -text [mc "Choose..."] -font optionfont \
+	-command choose_extdiff
+    pack $top.extdifff.l $top.extdifff.b -side left
+    grid x $top.extdifff $top.extdifft -sticky w
+
     label $top.cdisp -text [mc "Colors: press to choose"]
     grid $top.cdisp - -sticky w -pady 10
     label $top.bg -padx 40 -relief sunk -background $bgcolor
     button $top.bgbut -text [mc "Background"] -font optionfont \
-	-command [list choosecolor bgcolor 0 $top.bg background setbg]
+	-command [list choosecolor bgcolor {} $top.bg background setbg]
     grid x $top.bgbut $top.bg -sticky w
     label $top.fg -padx 40 -relief sunk -background $fgcolor
     button $top.fgbut -text [mc "Foreground"] -font optionfont \
-	-command [list choosecolor fgcolor 0 $top.fg foreground setfg]
+	-command [list choosecolor fgcolor {} $top.fg foreground setfg]
     grid x $top.fgbut $top.fg -sticky w
     label $top.diffold -padx 40 -relief sunk -background [lindex $diffcolors 0]
     button $top.diffoldbut -text [mc "Diff: old lines"] -font optionfont \
@@ -9128,7 +9282,7 @@ proc doprefs {} {
     grid x $top.hunksepbut $top.hunksep -sticky w
     label $top.selbgsep -padx 40 -relief sunk -background $selectbgcolor
     button $top.selbgbut -text [mc "Select bg"] -font optionfont \
-	-command [list choosecolor selectbgcolor 0 $top.selbgsep background setselbg]
+	-command [list choosecolor selectbgcolor {} $top.selbgsep background setselbg]
     grid x $top.selbgbut $top.selbgsep -sticky w
 
     label $top.cfont -text [mc "Fonts: press to choose"]
@@ -9145,6 +9299,15 @@ proc doprefs {} {
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
     grid $top.buts - - -pady 10 -sticky ew
     bind $top <Visibility> "focus $top.buts.ok"
+}
+
+proc choose_extdiff {} {
+    global extdifftool
+
+    set prog [tk_getOpenFile -title "External diff tool" -multiple false]
+    if {$prog ne {}} {
+	set extdifftool $prog
+    }
 }
 
 proc choosecolor {v vi w x cmd} {
@@ -9574,6 +9737,8 @@ set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autoselect 1
 
+set extdifftool "meld"
+
 set colors {green red blue magenta darkgrey brown orange}
 set bgcolor white
 set fgcolor black
@@ -9680,6 +9845,7 @@ if {$i >= [llength $argv] && $revtreeargs ne {}} {
 
 set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
+set nullfile "/dev/null"
 
 set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
 
