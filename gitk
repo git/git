@@ -293,11 +293,10 @@ proc parseviewrevs {view revs} {
 
 # Start off a git log process and arrange to read its output
 proc start_rev_list {view} {
-    global startmsecs commitidx viewcomplete
+    global startmsecs commitidx viewcomplete curview
     global commfd leftover tclencoding
     global viewargs viewargscmd viewfiles vfilelimit
     global showlocalchanges commitinterest mainheadid
-    global progressdirn progresscoords proglastnc curview
     global viewactive loginstance viewinstances vmergeonly
     global pending_select mainheadid
     global vcanopt vflags vrevs vorigargs
@@ -369,9 +368,6 @@ proc start_rev_list {view} {
     filerun $fd [list getcommitlines $fd $i $view 0]
     nowbusy $view [mc "Reading"]
     if {$view == $curview} {
-	set progressdirn 1
-	set progresscoords {0 0}
-	set proglastnc 0
 	set pending_select $mainheadid
     }
     set viewcomplete($view) 0
@@ -493,12 +489,10 @@ proc updatecommits {} {
 proc reloadcommits {} {
     global curview viewcomplete selectedline currentid thickerline
     global showneartags treediffs commitinterest cached_commitrow
-    global progresscoords targetid
+    global targetid
 
     if {!$viewcomplete($curview)} {
 	stop_rev_list $curview
-	set progresscoords {0 0}
-	adjustprogress
     }
     resetvarcs $curview
     catch {unset selectedline}
@@ -1278,7 +1272,7 @@ proc getcommitlines {fd inst view updating}  {
 	if {![eof $fd]} {
 	    return 1
 	}
-	global commfd viewcomplete viewactive viewname progresscoords
+	global commfd viewcomplete viewactive viewname
 	global viewinstances
 	unset commfd($inst)
 	set i [lsearch -exact $viewinstances($view) $inst]
@@ -1311,8 +1305,6 @@ proc getcommitlines {fd inst view updating}  {
 	    # appeared in the list
 	    closevarcs $view
 	    notbusy $view
-	    set progresscoords {0 0}
-	    adjustprogress
 	}
 	if {$view == $curview} {
 	    run chewcommits
@@ -1462,33 +1454,6 @@ proc getcommitlines {fd inst view updating}  {
 	}
 	foreach s $scripts {
 	    eval $s
-	}
-	if {$view == $curview} {
-	    # update progress bar
-	    global progressdirn progresscoords proglastnc
-	    set inc [expr {($commitidx($view) - $proglastnc) * 0.0002}]
-	    set proglastnc $commitidx($view)
-	    set l [lindex $progresscoords 0]
-	    set r [lindex $progresscoords 1]
-	    if {$progressdirn} {
-		set r [expr {$r + $inc}]
-		if {$r >= 1.0} {
-		    set r 1.0
-		    set progressdirn 0
-		}
-		if {$r > 0.2} {
-		    set l [expr {$r - 0.2}]
-		}
-	    } else {
-		set l [expr {$l - $inc}]
-		if {$l <= 0.0} {
-		    set l 0.0
-		    set progressdirn 1
-		}
-		set r [expr {$l + 0.2}]
-	    }
-	    set progresscoords [list $l $r]
-	    adjustprogress
 	}
     }
     return 2
@@ -1747,7 +1712,7 @@ proc makewindow {} {
     global bgcolor fgcolor bglist fglist diffcolors selectbgcolor
     global headctxmenu progresscanv progressitem progresscoords statusw
     global fprogitem fprogcoord lastprogupdate progupdatepending
-    global rprogitem rprogcoord
+    global rprogitem rprogcoord rownumsel numcommits
     global have_tk85
 
     menu .bar
@@ -1862,6 +1827,18 @@ proc makewindow {} {
     button .tf.bar.rightbut -image bm-right -command goforw \
 	-state disabled -width 26
     pack .tf.bar.rightbut -side left -fill y
+
+    label .tf.bar.rowlabel -text [mc "Row"]
+    set rownumsel {}
+    label .tf.bar.rownum -width 7 -font textfont -textvariable rownumsel \
+	-relief sunken -anchor e
+    label .tf.bar.rowlabel2 -text "/"
+    label .tf.bar.numcommits -width 7 -font textfont -textvariable numcommits \
+	-relief sunken -anchor e
+    pack .tf.bar.rowlabel .tf.bar.rownum .tf.bar.rowlabel2 .tf.bar.numcommits \
+	-side left
+    global selectedline
+    trace add variable selectedline {write unset} selectedline_change
 
     # Status label and progress bar
     set statusw .tf.bar.status
@@ -2201,6 +2178,17 @@ proc windows_mousewheel_redirector {W X Y D} {
 		$w yview scroll $u units
 	    }
 	}
+    }
+}
+
+# Update row number label when selectedline changes
+proc selectedline_change {n1 n2 op} {
+    global selectedline rownumsel
+
+    if {$op eq "unset"} {
+	set rownumsel {}
+    } else {
+	set rownumsel [expr {$selectedline + 1}]
     }
 }
 
@@ -9877,6 +9865,7 @@ set viewperm(0) 0
 set viewargs(0) {}
 set viewargscmd(0) {}
 
+set numcommits 0
 set loginstance 0
 set cmdlineok 0
 set stopped 0
