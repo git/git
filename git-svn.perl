@@ -65,7 +65,8 @@ my ($_stdin, $_help, $_edit,
 	$_template, $_shared,
 	$_version, $_fetch_all, $_no_rebase,
 	$_merge, $_strategy, $_dry_run, $_local,
-	$_prefix, $_no_checkout, $_url, $_verbose);
+	$_prefix, $_no_checkout, $_url, $_verbose,
+	$_git_format);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -188,7 +189,7 @@ my %cmd = (
 		    { 'url' => \$_url, } ],
 	'blame' => [ \&Git::SVN::Log::cmd_blame,
 	            "Show what revision and author last modified each line of a file",
-	            {} ],
+		    { 'git-format' => \$_git_format } ],
 );
 
 my $cmd;
@@ -225,7 +226,7 @@ unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
 read_repo_config(\%opts);
-Getopt::Long::Configure('pass_through') if ($cmd && $cmd eq 'log');
+Getopt::Long::Configure('pass_through') if ($cmd && ($cmd eq 'log' || $cmd eq 'blame'));
 my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
                     'minimize-connections' => \$Git::SVN::Migration::_minimize,
                     'id|i=s' => \$Git::SVN::default_ref_id,
@@ -4468,19 +4469,51 @@ out:
 }
 
 sub cmd_blame {
-	my $path = shift;
+	my $path = pop;
 
 	config_pager();
 	run_pager();
 
-	my ($fh, $ctx) = command_output_pipe('blame', @_, $path);
-	while (my $line = <$fh>) {
-		if ($line =~ /^\^?([[:xdigit:]]+)\s/) {
-			my (undef, $rev, undef) = ::cmt_metadata($1);
-			$rev = sprintf('%-10s', $rev);
-			$line =~ s/^\^?[[:xdigit:]]+(\s)/$rev$1/;
+	my ($fh, $ctx, $rev);
+
+	if ($_git_format) {
+		($fh, $ctx) = command_output_pipe('blame', @_, $path);
+		while (my $line = <$fh>) {
+			if ($line =~ /^\^?([[:xdigit:]]+)\s/) {
+				# Uncommitted edits show up as a rev ID of
+				# all zeros, which we can't look up with
+				# cmt_metadata
+				if ($1 !~ /^0+$/) {
+					(undef, $rev, undef) =
+						::cmt_metadata($1);
+					$rev = '0' if (!$rev);
+				} else {
+					$rev = '0';
+				}
+				$rev = sprintf('%-10s', $rev);
+				$line =~ s/^\^?[[:xdigit:]]+(\s)/$rev$1/;
+			}
+			print $line;
 		}
-		print $line;
+	} else {
+		($fh, $ctx) = command_output_pipe('blame', '-p', @_, 'HEAD',
+						  '--', $path);
+		my ($sha1);
+		my %authors;
+		while (my $line = <$fh>) {
+			if ($line =~ /^([[:xdigit:]]{40})\s\d+\s\d+/) {
+				$sha1 = $1;
+				(undef, $rev, undef) = ::cmt_metadata($1);
+				$rev = '0' if (!$rev);
+			}
+			elsif ($line =~ /^author (.*)/) {
+				$authors{$rev} = $1;
+				$authors{$rev} =~ s/\s/_/g;
+			}
+			elsif ($line =~ /^\t(.*)$/) {
+				printf("%6s %10s %s\n", $rev, $authors{$rev}, $1);
+			}
+		}
 	}
 	command_close_pipe($fh, $ctx);
 }

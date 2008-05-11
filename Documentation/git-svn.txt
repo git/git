@@ -166,11 +166,18 @@ environment). This command has the same behaviour.
 Any other arguments are passed directly to `git log'
 
 'blame'::
-       Show what revision and author last modified each line of a file. This is
-       identical to `git blame', but SVN revision numbers are shown instead of git
-       commit hashes.
+       Show what revision and author last modified each line of a file. The
+       output of this mode is format-compatible with the output of
+       `svn blame' by default. Like the SVN blame command,
+       local uncommitted changes in the working copy are ignored;
+       the version of the file in the HEAD revision is annotated. Unknown
+       arguments are passed directly to git-blame.
 +
-All arguments are passed directly to `git blame'.
+--git-format;;
+	Produce output in the same format as `git blame', but with
+	SVN revision numbers instead of git commit hashes. In this mode,
+	changes that haven't been committed to SVN (including local
+	working-copy edits) are shown as revision 0.
 
 --
 'find-rev'::
