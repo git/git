@@ -73,10 +73,15 @@ for d in \
 done
 
 start_httpd () {
+	repo_base_path="$1"
 	if test -z "$SVN_HTTPD_PORT"
 	then
 		echo >&2 'SVN_HTTPD_PORT is not defined!'
 		return
+	fi
+	if test -z "$repo_base_path"
+	then
+		repo_base_path=svn
 	fi
 
 	mkdir "$GIT_DIR"/logs
@@ -90,13 +95,13 @@ LockFile logs/accept.lock
 Listen 127.0.0.1:$SVN_HTTPD_PORT
 LoadModule dav_module $SVN_HTTPD_MODULE_PATH/mod_dav.so
 LoadModule dav_svn_module $SVN_HTTPD_MODULE_PATH/mod_dav_svn.so
-<Location /svn>
+<Location /$repo_base_path>
 	DAV svn
 	SVNPath $rawsvnrepo
 </Location>
 EOF
 	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k start
-	svnrepo=http://127.0.0.1:$SVN_HTTPD_PORT/svn
+	svnrepo="http://127.0.0.1:$SVN_HTTPD_PORT/$repo_base_path"
 }
 
 stop_httpd () {
