@@ -77,6 +77,16 @@ $test_case 'merge (case change)' '
 
 '
 
+$test_case 'add (with different case)' '
+
+	git reset --hard initial &&
+	rm camelcase &&
+	echo 1 >CamelCase &&
+	git add CamelCase &&
+	test $(git-ls-files | grep -i camelcase | wc -l) = 1
+
+'
+
 test_expect_success "setup unicode normalization tests" '
 
   test_create_repo unicode &&
