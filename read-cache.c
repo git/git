@@ -198,7 +198,8 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 
 static int is_racy_timestamp(const struct index_state *istate, struct cache_entry *ce)
 {
-	return (istate->timestamp &&
+	return (!S_ISGITLINK(ce->ce_mode) &&
+		istate->timestamp &&
 		((unsigned int)istate->timestamp) <= ce->ce_mtime);
 }
 

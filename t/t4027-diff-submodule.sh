@@ -50,4 +50,11 @@ test_expect_success 'git diff-files --raw' '
 	test_cmp expect actual.files
 '
 
+test_expect_success 'git diff (empty submodule dir)' '
+	: >empty &&
+	rm -rf sub/* sub/.git &&
+	git diff > actual.empty &&
+	test_cmp empty actual.empty
+'
+
 test_done
