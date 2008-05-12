@@ -627,11 +627,9 @@ static int store_aux(const char* key, const char* value)
 	case KEY_SEEN:
 		if (matches(key, value)) {
 			if (store.seen == 1 && store.multi_replace == 0) {
-				fprintf(stderr,
-					"Warning: %s has multiple values\n",
-					key);
+				warning("%s has multiple values", key);
 			} else if (store.seen >= MAX_MATCHES) {
-				fprintf(stderr, "Too many matches\n");
+				error("too many matches for %s", key);
 				return 1;
 			}
 
@@ -681,9 +679,9 @@ static int store_aux(const char* key, const char* value)
 	return 0;
 }
 
-static int write_error(void)
+static int write_error(const char *filename)
 {
-	fprintf(stderr, "Failed to write new configuration file\n");
+	error("failed to write new configuration file %s", filename);
 
 	/* Same error code as "failed to rename". */
 	return 4;
@@ -842,7 +840,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	 */
 
 	if (last_dot == NULL) {
-		fprintf(stderr, "key does not contain a section: %s\n", key);
+		error("key does not contain a section: %s", key);
 		ret = 2;
 		goto out_free;
 	}
@@ -862,14 +860,14 @@ int git_config_set_multivar(const char* key, const char* value,
 		/* Leave the extended basename untouched.. */
 		if (!dot || i > store.baselen) {
 			if (!iskeychar(c) || (i == store.baselen+1 && !isalpha(c))) {
-				fprintf(stderr, "invalid key: %s\n", key);
+				error("invalid key: %s", key);
 				free(store.key);
 				ret = 1;
 				goto out_free;
 			}
 			c = tolower(c);
 		} else if (c == '\n') {
-			fprintf(stderr, "invalid key (newline): %s\n", key);
+			error("invalid key (newline): %s", key);
 			free(store.key);
 			ret = 1;
 			goto out_free;
@@ -885,7 +883,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	lock = xcalloc(sizeof(struct lock_file), 1);
 	fd = hold_lock_file_for_update(lock, config_filename, 0);
 	if (fd < 0) {
-		fprintf(stderr, "could not lock config file\n");
+		error("could not lock config file %s", config_filename);
 		free(store.key);
 		ret = -1;
 		goto out_free;
@@ -932,8 +930,7 @@ int git_config_set_multivar(const char* key, const char* value,
 			store.value_regex = (regex_t*)xmalloc(sizeof(regex_t));
 			if (regcomp(store.value_regex, value_regex,
 					REG_EXTENDED)) {
-				fprintf(stderr, "Invalid pattern: %s\n",
-					value_regex);
+				error("invalid pattern: %s", value_regex);
 				free(store.value_regex);
 				ret = 6;
 				goto out_free;
@@ -951,7 +948,7 @@ int git_config_set_multivar(const char* key, const char* value,
 		 * existing config file.
 		 */
 		if (git_config_from_file(store_aux, config_filename)) {
-			fprintf(stderr, "invalid config file\n");
+			error("invalid config file %s", config_filename);
 			free(store.key);
 			if (store.value_regex != NULL) {
 				regfree(store.value_regex);
@@ -1030,7 +1027,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	}
 
 	if (commit_lock_file(lock) < 0) {
-		fprintf(stderr, "Cannot commit config file!\n");
+		error("could not commit config file %s", config_filename);
 		ret = 4;
 		goto out_free;
 	}
@@ -1051,7 +1048,7 @@ out_free:
 	return ret;
 
 write_err_out:
-	ret = write_error();
+	ret = write_error(lock->filename);
 	goto out_free;
 
 }
@@ -1101,7 +1098,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	config_filename = xstrdup(config_filename);
 	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
 	if (out_fd < 0) {
-		ret = error("Could not lock config file!");
+		ret = error("could not lock config file %s", config_filename);
 		goto out;
 	}
 
@@ -1125,7 +1122,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 				}
 				store.baselen = strlen(new_name);
 				if (!store_write_section(out_fd, new_name)) {
-					ret = write_error();
+					ret = write_error(lock->filename);
 					goto out;
 				}
 				continue;
@@ -1136,14 +1133,14 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 			continue;
 		length = strlen(buf);
 		if (write_in_full(out_fd, buf, length) != length) {
-			ret = write_error();
+			ret = write_error(lock->filename);
 			goto out;
 		}
 	}
 	fclose(config_file);
  unlock_and_out:
 	if (commit_lock_file(lock) < 0)
-			ret = error("Cannot commit config file!");
+		ret = error("could not commit config file %s", config_filename);
  out:
 	free(config_filename);
 	return ret;
