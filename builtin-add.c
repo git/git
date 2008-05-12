@@ -206,6 +206,15 @@ static struct option builtin_add_options[] = {
 	OPT_END(),
 };
 
+static int add_config(const char *var, const char *value)
+{
+	if (!strcasecmp(var, "add.ignore-errors")) {
+		ignore_add_errors = git_config_bool(var, value);
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int exit_status = 0;
@@ -220,7 +229,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (add_interactive)
 		exit(interactive_add(argc, argv, prefix));
 
-	git_config(git_default_config);
+	git_config(add_config);
 
 	newfd = hold_locked_index(&lock_file, 1);
 

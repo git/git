@@ -201,4 +201,25 @@ test_expect_success 'git add --ignore-errors' '
 
 rm -f foo2
 
+test_expect_success 'git add (add.ignore-errors)' '
+	git config add.ignore-errors 1 &&
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose . &&
+	git ls-files foo1 | grep foo1
+'
+rm -f foo2
+
+test_expect_success 'git add (add.ignore-errors = false)' '
+	git config add.ignore-errors 0 &&
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose . &&
+	! ( git ls-files foo1 | grep foo1 )
+'
+
 test_done
