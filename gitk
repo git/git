@@ -7612,7 +7612,7 @@ proc resethead {} {
     tkwait window $w
     if {!$confirm_ok} return
     if {[catch {set fd [open \
-	    [list | sh -c "git reset --$resettype $rowmenuid 2>&1"] r]} err]} {
+	    [list | git reset --$resettype $rowmenuid 2>@1] r]} err]} {
 	error_popup $err
     } else {
 	dohidelocalchanges
@@ -7674,25 +7674,46 @@ proc cobranch {} {
     global showlocalchanges mainheadid
 
     # check the tree is clean first??
-    set oldmainhead $mainhead
     nowbusy checkout [mc "Checking out"]
     update
     dohidelocalchanges
     if {[catch {
-	exec git checkout -q $headmenuhead
+	set fd [open [list | git checkout $headmenuhead 2>@1] r]
     } err]} {
 	notbusy checkout
 	error_popup $err
-    } else {
-	notbusy checkout
-	set mainhead $headmenuhead
-	set mainheadid $headmenuid
-	if {[info exists headids($oldmainhead)]} {
-	    redrawtags $headids($oldmainhead)
+	if {$showlocalchanges} {
+	    dodiffindex
 	}
-	redrawtags $headmenuid
-	selbyid $headmenuid
+    } else {
+	filerun $fd [list readcheckoutstat $fd $headmenuhead $headmenuid]
     }
+}
+
+proc readcheckoutstat {fd newhead newheadid} {
+    global mainhead mainheadid headids showlocalchanges progresscoords
+
+    if {[gets $fd line] >= 0} {
+	if {[regexp {([0-9]+)% \(([0-9]+)/([0-9]+)\)} $line match p m n]} {
+	    set progresscoords [list 0 [expr {1.0 * $m / $n}]]
+	    adjustprogress
+	}
+	return 1
+    }
+    set progresscoords {0 0}
+    adjustprogress
+    notbusy checkout
+    if {[catch {close $fd} err]} {
+	error_popup $err
+    }
+    set oldmainhead $mainhead
+    set mainhead $newhead
+    set mainheadid $newheadid
+    if {[info exists headids($oldmainhead)]} {
+	redrawtags $headids($oldmainhead)
+    }
+    redrawtags $newheadid
+    selbyid $newheadid
     if {$showlocalchanges} {
 	dodiffindex
     }
