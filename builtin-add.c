@@ -191,6 +191,7 @@ static const char ignore_error[] =
 "The following paths are ignored by one of your .gitignore files:\n";
 
 static int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
+static int ignore_add_errors;
 
 static struct option builtin_add_options[] = {
 	OPT__DRY_RUN(&show_only),
@@ -201,6 +202,7 @@ static struct option builtin_add_options[] = {
 	OPT_BOOLEAN('f', NULL, &ignored_too, "allow adding otherwise ignored files"),
 	OPT_BOOLEAN('u', NULL, &take_worktree_changes, "update tracked files"),
 	OPT_BOOLEAN( 0 , "refresh", &refresh_only, "don't add, only refresh the index"),
+	OPT_BOOLEAN( 0 , "ignore-errors", &ignore_add_errors, "just skip files which cannot be added because of errors"),
 	OPT_END(),
 };
 
@@ -231,6 +233,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 		if (verbose)
 			flags |= ADD_FILES_VERBOSE;
+		if (ignore_add_errors)
+			flags |= ADD_FILES_IGNORE_ERRORS;
 
 		exit_status = add_files_to_cache(prefix, pathspec, flags);
 		goto finish;
@@ -274,8 +278,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	for (i = 0; i < dir.nr; i++)
-		if (add_file_to_cache(dir.entries[i]->name, verbose))
-			die("adding files failed");
+		if (add_file_to_cache(dir.entries[i]->name, verbose)) {
+			if (!ignore_add_errors)
+				die("adding files failed");
+			exit_status = 1;
+		}
 
  finish:
 	if (active_cache_changed) {
