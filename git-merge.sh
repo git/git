@@ -9,11 +9,9 @@ git-merge [options] <remote>...
 git-merge [options] <msg> HEAD <remote>
 --
 stat                 show a diffstat at the end of the merge
-n,no-stat            don't show a diffstat at the end of the merge
+n                    don't show a diffstat at the end of the merge
 summary              (synonym to --stat)
-no-summary           (synonym to --no-stat)
 log                  add list of one-line log to merge commit message
-no-log               don't add list of one-line log to merge commit message
 squash               create a single commit instead of doing a merge
 commit               perform a commit if the merge sucesses (default)
 ff                   allow fast forward (default)
