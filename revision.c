@@ -467,10 +467,10 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 		if (parse_commit(p) < 0)
 			return -1;
 		p->object.flags |= left_flag;
-		if (p->object.flags & SEEN)
-			continue;
-		p->object.flags |= SEEN;
-		insert_by_date(p, list);
+		if (!(p->object.flags & SEEN)) {
+			p->object.flags |= SEEN;
+			insert_by_date(p, list);
+		}
 		if(revs->first_parent_only)
 			break;
 	}
