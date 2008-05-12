@@ -94,7 +94,8 @@ static void update_callback(struct diff_queue_struct *q,
 		case DIFF_STATUS_UNMERGED:
 		case DIFF_STATUS_MODIFIED:
 		case DIFF_STATUS_TYPE_CHANGED:
-			add_file_to_cache(path, verbose);
+			if (add_file_to_cache(path, verbose))
+				die("updating files failed");
 			break;
 		case DIFF_STATUS_DELETED:
 			remove_file_from_cache(path);
@@ -254,7 +255,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	for (i = 0; i < dir.nr; i++)
-		add_file_to_cache(dir.entries[i]->name, verbose);
+		if (add_file_to_cache(dir.entries[i]->name, verbose))
+			die("adding files failed");
 
  finish:
 	if (active_cache_changed) {
