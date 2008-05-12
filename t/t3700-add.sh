@@ -179,4 +179,26 @@ test_expect_success 'git add --refresh' '
 	test -z "`git diff-index HEAD -- foo`"
 '
 
+test_expect_success 'git add should fail atomically upon an unreadable file' '
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose . &&
+	! ( git ls-files foo1 | grep foo1 )
+'
+
+rm -f foo2
+
+test_expect_success 'git add --ignore-errors' '
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose --ignore-errors . &&
+	git ls-files foo1 | grep foo1
+'
+
+rm -f foo2
+
 test_done
