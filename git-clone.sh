@@ -240,7 +240,6 @@ die "working tree '$GIT_WORK_TREE' already exists."
 D=
 W=
 cleanup() {
-	err=$?
 	test -z "$D" && rm -rf "$dir"
 	test -z "$W" && test -n "$GIT_WORK_TREE" && rm -rf "$GIT_WORK_TREE"
 	cd ..
@@ -248,7 +247,7 @@ cleanup() {
 	test -n "$W" && rm -rf "$W"
 	exit $err
 }
-trap cleanup 0
+trap 'err=$?; cleanup' 0
 mkdir -p "$dir" && D=$(cd "$dir" && pwd) || usage
 test -n "$GIT_WORK_TREE" && mkdir -p "$GIT_WORK_TREE" &&
 W=$(cd "$GIT_WORK_TREE" && pwd) && GIT_WORK_TREE="$W" && export GIT_WORK_TREE
