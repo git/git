@@ -67,10 +67,10 @@ test_expect_success \
 
 test_expect_success \
     'validate file modification time' \
-    'TZ=GMT $TAR tvf b.tar a/a |
-     awk \{print\ \$4,\ \(length\(\$5\)\<7\)\ ?\ \$5\":00\"\ :\ \$5\} \
-     >b.mtime &&
-     echo "2005-05-27 22:00:00" >expected.mtime &&
+    'mkdir extract &&
+     $TAR xf b.tar -C extract a/a &&
+     perl -e '\''print((stat("extract/a/a"))[9], "\n")'\'' >b.mtime &&
+     echo "1117231200" >expected.mtime &&
      diff expected.mtime b.mtime'
 
 test_expect_success \
