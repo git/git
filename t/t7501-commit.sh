@@ -41,7 +41,7 @@ test_expect_success \
 test_expect_success \
 	"using paths with --interactive" \
 	"echo bong-o-bong >file &&
-	! echo 7 | git-commit -m foo --interactive file"
+	! (echo 7 | git-commit -m foo --interactive file)"
 
 test_expect_success \
 	"using invalid commit with -C" \

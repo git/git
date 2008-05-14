@@ -81,17 +81,17 @@ test_expect_success '.gitignore test setup' '
 
 test_expect_success '.gitignore is honored' '
 	git add . &&
-	! git ls-files | grep "\\.ig"
+	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
 	! git add a.?? &&
-	! git ls-files | grep "\\.ig"
+	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
 	! git add d.?? &&
-	! git ls-files | grep "\\.ig"
+	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'add ignored ones with -f' '
