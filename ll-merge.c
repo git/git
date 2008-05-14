@@ -225,7 +225,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 static struct ll_merge_driver *ll_user_merge, **ll_user_merge_tail;
 static const char *default_ll_merge;
 
-static int read_merge_config(const char *var, const char *value)
+static int read_merge_config(const char *var, const char *value, void *cb)
 {
 	struct ll_merge_driver *fn;
 	const char *ep, *name;
@@ -309,7 +309,7 @@ static void initialize_ll_merge(void)
 	if (ll_user_merge_tail)
 		return;
 	ll_user_merge_tail = &ll_user_merge;
-	git_config(read_merge_config);
+	git_config(read_merge_config, NULL);
 }
 
 static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr)

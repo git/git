@@ -514,7 +514,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	memset(&opts, 0, sizeof(opts));
 	memset(&new, 0, sizeof(new));
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	opts.track = git_branch_track;
 

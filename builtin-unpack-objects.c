@@ -493,7 +493,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	int i;
 	unsigned char sha1[20];
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	quiet = !isatty(2);
 

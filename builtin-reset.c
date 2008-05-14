@@ -186,7 +186,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);

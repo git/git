@@ -166,7 +166,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	int read_from_stdin = 0;
 	int prefix_length;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	state.base_dir = "";
 	prefix_length = prefix ? strlen(prefix) : 0;
 

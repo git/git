@@ -60,7 +60,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	struct strbuf buffer;
 	int encoding_is_utf8;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	if (argc < 2)
 		usage(commit_tree_usage);

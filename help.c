@@ -252,7 +252,7 @@ static int add_man_viewer_info(const char *var, const char *value)
 	return 0;
 }
 
-static int git_help_config(const char *var, const char *value)
+static int git_help_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "help.format")) {
 		if (!value)
@@ -269,7 +269,7 @@ static int git_help_config(const char *var, const char *value)
 	if (!prefixcmp(var, "man."))
 		return add_man_viewer_info(var, value);
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 /* most GUI terminals set COLUMNS (although some don't export it) */
@@ -641,7 +641,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	const char *alias;
 
 	setup_git_directory_gently(&nongit);
-	git_config(git_help_config);
+	git_config(git_help_config, NULL);
 
 	argc = parse_options(argc, argv, builtin_help_options,
 			builtin_help_usage, 0);

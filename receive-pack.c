@@ -19,7 +19,7 @@ static int report_status;
 static char capabilities[] = " report-status delete-refs ";
 static int capabilities_sent;
 
-static int receive_pack_config(const char *var, const char *value)
+static int receive_pack_config(const char *var, const char *value, void *cb)
 {
 	if (strcmp(var, "receive.denynonfastforwards") == 0) {
 		deny_non_fast_forwards = git_config_bool(var, value);
@@ -41,7 +41,7 @@ static int receive_pack_config(const char *var, const char *value)
 		return 0;
 	}
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
@@ -489,7 +489,7 @@ int main(int argc, char **argv)
 	if (is_repository_shallow())
 		die("attempt to push into a shallow repository");
 
-	git_config(receive_pack_config);
+	git_config(receive_pack_config, NULL);
 
 	if (0 <= transfer_unpack_limit)
 		unpack_limit = transfer_unpack_limit;

@@ -153,7 +153,7 @@ struct branch_info {
 
 static struct path_list branch_list;
 
-static int config_read_branches(const char *key, const char *value)
+static int config_read_branches(const char *key, const char *value, void *cb)
 {
 	if (!prefixcmp(key, "branch.")) {
 		char *name;
@@ -200,7 +200,7 @@ static void read_branches(void)
 {
 	if (branch_list.nr)
 		return;
-	git_config(config_read_branches);
+	git_config(config_read_branches, NULL);
 	sort_path_list(&branch_list);
 }
 
@@ -514,7 +514,7 @@ struct remote_group {
 	struct path_list *list;
 } remote_group;
 
-static int get_remote_group(const char *key, const char *value)
+static int get_remote_group(const char *key, const char *value, void *cb)
 {
 	if (!prefixcmp(key, "remotes.") &&
 			!strcmp(key + 8, remote_group.name)) {
@@ -546,7 +546,7 @@ static int update(int argc, const char **argv)
 	remote_group.list = &list;
 	for (i = 1; i < argc; i++) {
 		remote_group.name = argv[i];
-		result = git_config(get_remote_group);
+		result = git_config(get_remote_group, NULL);
 	}
 
 	if (!result && !list.nr  && argc == 2 && !strcmp(argv[1], "default"))

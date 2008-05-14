@@ -1718,7 +1718,7 @@ static void prepare_pack(int window, int depth)
 	free(delta_list);
 }
 
-static int git_pack_config(const char *k, const char *v)
+static int git_pack_config(const char *k, const char *v, void *cb)
 {
 	if(!strcmp(k, "pack.window")) {
 		window = git_config_int(k, v);
@@ -1771,7 +1771,7 @@ static int git_pack_config(const char *k, const char *v)
 		pack_size_limit_cfg = git_config_ulong(k, v);
 		return 0;
 	}
-	return git_default_config(k, v);
+	return git_default_config(k, v, cb);
 }
 
 static void read_object_list_from_stdin(void)
@@ -1963,7 +1963,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	rp_av[1] = "--objects"; /* --thin will make it --objects-edge */
 	rp_ac = 2;
 
-	git_config(git_pack_config);
+	git_config(git_pack_config, NULL);
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;
 

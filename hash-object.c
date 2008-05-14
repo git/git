@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 	int no_more_flags = 0;
 	int hashstdin = 0;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	for (i = 1 ; i < argc; i++) {
 		if (!no_more_flags && argv[i][0] == '-') {

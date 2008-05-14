@@ -222,7 +222,7 @@ static int cmd_log_walk(struct rev_info *rev)
 	return 0;
 }
 
-static int git_log_config(const char *var, const char *value)
+static int git_log_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "format.pretty"))
 		return git_config_string(&fmt_pretty, var, value);
@@ -236,14 +236,14 @@ static int git_log_config(const char *var, const char *value)
 		default_show_root = git_config_bool(var, value);
 		return 0;
 	}
-	return git_diff_ui_config(var, value);
+	return git_diff_ui_config(var, value, cb);
 }
 
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	git_config(git_log_config);
+	git_config(git_log_config, NULL);
 
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
@@ -319,7 +319,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	struct object_array_entry *objects;
 	int i, count, ret = 0;
 
-	git_config(git_log_config);
+	git_config(git_log_config, NULL);
 
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
@@ -383,7 +383,7 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	git_config(git_log_config);
+	git_config(git_log_config, NULL);
 
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
@@ -416,7 +416,7 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	git_config(git_log_config);
+	git_config(git_log_config, NULL);
 
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
@@ -471,7 +471,7 @@ static void add_header(const char *value)
 	extra_hdr[extra_hdr_nr++] = xstrndup(value, len);
 }
 
-static int git_format_config(const char *var, const char *value)
+static int git_format_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "format.headers")) {
 		if (!value)
@@ -497,7 +497,7 @@ static int git_format_config(const char *var, const char *value)
 		return 0;
 	}
 
-	return git_log_config(var, value);
+	return git_log_config(var, value, cb);
 }
 
 
@@ -764,7 +764,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char *add_signoff = NULL;
 	struct strbuf buf;
 
-	git_config(git_format_config);
+	git_config(git_format_config, NULL);
 	init_revisions(&rev, prefix);
 	rev.commit_format = CMIT_FMT_EMAIL;
 	rev.verbose_header = 1;

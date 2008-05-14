@@ -2979,11 +2979,11 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 	return 0;
 }
 
-static int git_apply_config(const char *var, const char *value)
+static int git_apply_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "apply.whitespace"))
 		return git_config_string(&apply_default_whitespace, var, value);
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 
@@ -2999,7 +2999,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 
 	prefix = setup_git_directory_gently(&is_not_gitdir);
 	prefix_length = prefix ? strlen(prefix) : 0;
-	git_config(git_apply_config);
+	git_config(git_apply_config, NULL);
 	if (apply_default_whitespace)
 		parse_whitespace_option(apply_default_whitespace);
 

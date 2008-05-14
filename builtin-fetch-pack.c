@@ -635,7 +635,7 @@ static int remove_duplicates(int nr_heads, char **heads)
 	return dst;
 }
 
-static int fetch_pack_config(const char *var, const char *value)
+static int fetch_pack_config(const char *var, const char *value, void *cb)
 {
 	if (strcmp(var, "fetch.unpacklimit") == 0) {
 		fetch_unpack_limit = git_config_int(var, value);
@@ -647,7 +647,7 @@ static int fetch_pack_config(const char *var, const char *value)
 		return 0;
 	}
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static struct lock_file lock;
@@ -657,7 +657,7 @@ static void fetch_pack_setup(void)
 	static int did_setup;
 	if (did_setup)
 		return;
-	git_config(fetch_pack_config);
+	git_config(fetch_pack_config, NULL);
 	if (0 <= transfer_unpack_limit)
 		unpack_limit = transfer_unpack_limit;
 	else if (0 <= fetch_unpack_limit)

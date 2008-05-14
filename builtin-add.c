@@ -203,7 +203,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (add_interactive)
 		exit(interactive_add(argc, argv, prefix));
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	newfd = hold_locked_index(&lock_file, 1);
 

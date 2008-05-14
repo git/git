@@ -35,7 +35,7 @@ static const char *argv_repack[MAX_ADD] = {"repack", "-d", "-l", NULL};
 static const char *argv_prune[] = {"prune", "--expire", NULL, NULL};
 static const char *argv_rerere[] = {"rerere", "gc", NULL};
 
-static int gc_config(const char *var, const char *value)
+static int gc_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "gc.packrefs")) {
 		if (value && !strcmp(value, "notbare"))
@@ -67,7 +67,7 @@ static int gc_config(const char *var, const char *value)
 		prune_expire = xstrdup(value);
 		return 0;
 	}
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static void append_option(const char **cmd, const char *opt, int max_length)
@@ -226,7 +226,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(gc_config);
+	git_config(gc_config, NULL);
 
 	if (pack_refs < 0)
 		pack_refs = !is_bare_repository();

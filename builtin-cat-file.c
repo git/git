@@ -85,7 +85,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	int opt;
 	const char *exp_type, *obj_name;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	if (argc != 3)
 		usage("git-cat-file [-t|-s|-e|-p|<type>] <sha1>");
 	exp_type = argv[1];

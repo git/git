@@ -1336,7 +1336,7 @@ static struct commit *get_ref(const char *ref)
 	return (struct commit *)object;
 }
 
-static int merge_config(const char *var, const char *value)
+static int merge_config(const char *var, const char *value, void *cb)
 {
 	if (!strcasecmp(var, "merge.verbosity")) {
 		verbosity = git_config_int(var, value);
@@ -1346,7 +1346,7 @@ static int merge_config(const char *var, const char *value)
 		rename_limit = git_config_int(var, value);
 		return 0;
 	}
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
@@ -1367,7 +1367,7 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 			subtree_merge = 1;
 	}
 
-	git_config(merge_config);
+	git_config(merge_config, NULL);
 	if (getenv("GIT_MERGE_VERBOSITY"))
 		verbosity = strtol(getenv("GIT_MERGE_VERBOSITY"), NULL, 10);
 

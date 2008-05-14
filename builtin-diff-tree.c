@@ -68,7 +68,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	int read_stdin = 0;
 
 	init_revisions(opt, prefix);
-	git_config(git_diff_basic_config); /* no "diff" UI options */
+	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	nr_sha1 = 0;
 	opt->abbrev = 0;
 	opt->diff = 1;
