@@ -2496,6 +2496,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_SET(options, ALLOW_EXTERNAL);
 	else if (!strcmp(arg, "--no-ext-diff"))
 		DIFF_OPT_CLR(options, ALLOW_EXTERNAL);
+	else if (!strcmp(arg, "--ignore-submodules"))
+		DIFF_OPT_SET(options, IGNORE_SUBMODULES);
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))
@@ -3355,6 +3357,9 @@ void diff_addremove(struct diff_options *options,
 	char concatpath[PATH_MAX];
 	struct diff_filespec *one, *two;
 
+	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES) && S_ISGITLINK(mode))
+		return;
+
 	/* This may look odd, but it is a preparation for
 	 * feeding "there are unchanged files which should
 	 * not produce diffs, but when you are doing copy
@@ -3398,6 +3403,10 @@ void diff_change(struct diff_options *options,
 {
 	char concatpath[PATH_MAX];
 	struct diff_filespec *one, *two;
+
+	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES) && S_ISGITLINK(old_mode)
+			&& S_ISGITLINK(new_mode))
+		return;
 
 	if (DIFF_OPT_TST(options, REVERSE_DIFF)) {
 		unsigned tmp;
