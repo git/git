@@ -1,5 +1,17 @@
-Hooks used by git
-=================
+githooks(5)
+===========
+
+NAME
+----
+githooks - Hooks used by git
+
+SYNOPSIS
+--------
+$GIT_DIR/hooks/*
+
+
+DESCRIPTION
+-----------
 
 Hooks are little scripts you can place in `$GIT_DIR/hooks`
 directory to trigger action at certain points.  When
@@ -285,3 +297,7 @@ pre-auto-gc
 This hook is invoked by `git-gc --auto`. It takes no parameter, and
 exiting with non-zero status from this script causes the `git-gc --auto`
 to abort.
+
+GIT
+---
+Part of the linkgit:git[7] suite

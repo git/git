@@ -347,7 +347,7 @@ Each line of options has this format:
 
 	* Use `*` to mean that this option should not be listed in the usage
 	  generated for the `-h` argument. It's shown for `--help-all` as
-	  documented in linkgit:gitcli[5].
+	  documented in linkgit:gitcli[7].
 
 	* Use `!` to not make the corresponding negated long option available.
 

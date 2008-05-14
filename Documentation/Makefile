@@ -2,8 +2,8 @@ MAN1_TXT= \
 	$(filter-out $(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
 		$(wildcard git-*.txt)) \
 	gitk.txt
-MAN5_TXT=gitattributes.txt gitignore.txt gitcli.txt gitmodules.txt
-MAN7_TXT=git.txt
+MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt
+MAN7_TXT=git.txt gitcli.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
@@ -18,7 +18,6 @@ ARTICLES += cvs-migration
 ARTICLES += diffcore
 ARTICLES += howto-index
 ARTICLES += repository-layout
-ARTICLES += hooks
 ARTICLES += everyday
 ARTICLES += git-tools
 ARTICLES += glossary
