@@ -139,15 +139,16 @@ test_expect_success 'Valid In-Reply-To when prompting' '
 
 test_expect_success 'setup fake editor' '
 	(echo "#!/bin/sh" &&
-	 echo "echo fake edit >>\$1"
+	 echo "echo fake edit >>\"\$1\""
 	) >fake-editor &&
 	chmod +x fake-editor
 '
 
+test_set_editor "$(pwd)/fake-editor"
+
 test_expect_success '--compose works' '
 	clean_fake_sendmail &&
 	echo y | \
-		GIT_EDITOR=$(pwd)/fake-editor \
 		GIT_SEND_EMAIL_NOTTY=1 \
 		git send-email \
 		--compose --subject foo \

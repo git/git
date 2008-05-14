@@ -49,13 +49,15 @@ as_author()
 	shift 1
         _save=$GIT_AUTHOR_EMAIL
 
-	export GIT_AUTHOR_EMAIL="$_author"
+	GIT_AUTHOR_EMAIL="$_author"
+	export GIT_AUTHOR_EMAIL
 	"$@"
 	if test -z "$_save"
 	then
 		unset GIT_AUTHOR_EMAIL
 	else
-		export GIT_AUTHOR_EMAIL="$_save"
+		GIT_AUTHOR_EMAIL="$_save"
+		export GIT_AUTHOR_EMAIL
 	fi
 }
 
@@ -69,7 +71,8 @@ on_committer_date()
 {
     _date=$1
     shift 1
-    export GIT_COMMITTER_DATE="$_date"
+    GIT_COMMITTER_DATE="$_date"
+    export GIT_COMMITTER_DATE
     "$@"
     unset GIT_COMMITTER_DATE
 }

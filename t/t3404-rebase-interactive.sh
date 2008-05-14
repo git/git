@@ -91,9 +91,8 @@ for line in $FAKE_LINES; do
 done
 EOF
 
+test_set_editor "$(pwd)/fake-editor.sh"
 chmod a+x fake-editor.sh
-VISUAL="$(pwd)/fake-editor.sh"
-export VISUAL
 
 test_expect_success 'no changes are a nop' '
 	git rebase -i F &&

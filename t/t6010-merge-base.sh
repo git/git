@@ -13,10 +13,11 @@ T=$(git write-tree)
 M=1130000000
 Z=+0000
 
-export GIT_COMMITTER_EMAIL=git@comm.iter.xz
-export GIT_COMMITTER_NAME='C O Mmiter'
-export GIT_AUTHOR_NAME='A U Thor'
-export GIT_AUTHOR_EMAIL=git@au.thor.xz
+GIT_COMMITTER_EMAIL=git@comm.iter.xz
+GIT_COMMITTER_NAME='C O Mmiter'
+GIT_AUTHOR_NAME='A U Thor'
+GIT_AUTHOR_EMAIL=git@au.thor.xz
+export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 
 doit() {
 	OFFSET=$1; shift

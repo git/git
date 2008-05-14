@@ -10,7 +10,8 @@ checks that git cherry only returns the second patch in the local branch
 '
 . ./test-lib.sh
 
-export GIT_AUTHOR_EMAIL=bogus_email_address
+GIT_AUTHOR_EMAIL=bogus_email_address
+export GIT_AUTHOR_EMAIL
 
 test_expect_success \
     'prepare repository with topic branch, and check cherry finds the 2 patches from there' \

@@ -61,7 +61,8 @@ prepare_httpd() {
 			-new -x509 -nodes \
 			-out $HTTPD_ROOT_PATH/httpd.pem \
 			-keyout $HTTPD_ROOT_PATH/httpd.pem
-		export GIT_SSL_NO_VERIFY=t
+		GIT_SSL_NO_VERIFY=t
+		export GIT_SSL_NO_VERIFY
 		HTTPD_PARA="$HTTPD_PARA -DSSL"
 	else
 		HTTPD_URL=http://127.0.0.1:$LIB_HTTPD_PORT

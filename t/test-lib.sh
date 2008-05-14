@@ -160,6 +160,22 @@ die () {
 
 trap 'die' exit
 
+# The semantics of the editor variables are that of invoking
+# sh -c "$EDITOR \"$@\"" files ...
+#
+# If our trash directory contains shell metacharacters, they will be
+# interpreted if we just set $EDITOR directly, so do a little dance with
+# environment variables to work around this.
+#
+# In particular, quoting isn't enough, as the path may contain the same quote
+# that we're using. 
+test_set_editor () {
+	FAKE_EDITOR="$1"
+	export FAKE_EDITOR
+	VISUAL='"$FAKE_EDITOR"'
+	export VISUAL
+}
+
 test_tick () {
 	if test -z "${test_tick+set}"
 	then
@@ -329,7 +345,7 @@ test_create_repo () {
 	repo="$1"
 	mkdir "$repo"
 	cd "$repo" || error "Cannot setup test environment"
-	"$GIT_EXEC_PATH/git" init --template=$GIT_EXEC_PATH/templates/blt/ >/dev/null 2>&1 ||
+	"$GIT_EXEC_PATH/git" init "--template=$GIT_EXEC_PATH/templates/blt/" >/dev/null 2>&1 ||
 	error "cannot run git init -- have you built things yet?"
 	mv .git/hooks .git/hooks-disabled
 	cd "$owd"
@@ -395,14 +411,14 @@ fi
 . ../GIT-BUILD-OPTIONS
 
 # Test repository
-test=trash
+test="trash directory"
 rm -fr "$test" || {
 	trap - exit
 	echo >&5 "FATAL: Cannot prepare test area"
 	exit 1
 }
 
-test_create_repo $test
+test_create_repo "$test"
 cd "$test"
 
 this_test=$(expr "./$0" : '.*/\(t[0-9]*\)-[^/]*$')

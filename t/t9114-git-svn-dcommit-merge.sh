@@ -34,35 +34,35 @@ cat << EOF
 EOF
 }
 
-test_expect_success 'setup svn repository' "
-	svn co $svnrepo mysvnwork &&
+test_expect_success 'setup svn repository' '
+	svn co "$svnrepo" mysvnwork &&
 	mkdir -p mysvnwork/trunk &&
 	cd mysvnwork &&
 		big_text_block >> trunk/README &&
 		svn add trunk &&
-		svn ci -m 'first commit' trunk &&
+		svn ci -m "first commit" trunk &&
 		cd ..
-	"
+	'
 
-test_expect_success 'setup git mirror and merge' "
-	git svn init $svnrepo -t tags -T trunk -b branches &&
+test_expect_success 'setup git mirror and merge' '
+	git svn init "$svnrepo" -t tags -T trunk -b branches &&
 	git svn fetch &&
 	git checkout --track -b svn remotes/trunk &&
 	git checkout -b merge &&
 	echo new file > new_file &&
 	git add new_file &&
-	git commit -a -m 'New file' &&
+	git commit -a -m "New file" &&
 	echo hello >> README &&
-	git commit -a -m 'hello' &&
+	git commit -a -m "hello" &&
 	echo add some stuff >> new_file &&
-	git commit -a -m 'add some stuff' &&
+	git commit -a -m "add some stuff" &&
 	git checkout svn &&
 	mv -f README tmp &&
 	echo friend > README &&
 	cat tmp >> README &&
-	git commit -a -m 'friend' &&
+	git commit -a -m "friend" &&
 	git pull . merge
-	"
+	'
 
 test_debug 'gitk --all & sleep 1'
 

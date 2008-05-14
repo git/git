@@ -82,14 +82,14 @@ test_expect_success 'merge-msg test #1' '
 	git diff actual expected
 '
 
-cat >expected <<\EOF
-Merge branch 'left' of ../trash
+cat >expected <<EOF
+Merge branch 'left' of ../$test
 EOF
 
 test_expect_success 'merge-msg test #2' '
 
 	git checkout master &&
-	git fetch ../trash left &&
+	git fetch ../"$test" left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	git diff actual expected

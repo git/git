@@ -112,7 +112,7 @@ test_expect_success 'git-clean with absolute path' '
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	would_clean=$(
 		cd docs &&
-		git clean -n $(pwd)/../src |
+		git clean -n "$(pwd)/../src" |
 		sed -n -e "s|^Would remove ||p"
 	) &&
 	test "$would_clean" = ../src/part3.c || {

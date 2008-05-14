@@ -52,7 +52,7 @@ EOF
 cd ..
 
 rm -rf import
-test_expect_success 'checkout working copy from svn' "svn co $svnrepo test_wc"
+test_expect_success 'checkout working copy from svn' 'svn co "$svnrepo" test_wc'
 test_expect_success 'setup some commits to svn' \
 	'cd test_wc &&
 		echo Greetings >> kw.c &&
@@ -66,7 +66,7 @@ test_expect_success 'setup some commits to svn' \
 		svn commit -m "Propset Id" &&
 	cd ..'
 
-test_expect_success 'initialize git-svn' "git-svn init $svnrepo"
+test_expect_success 'initialize git-svn' 'git-svn init "$svnrepo"'
 test_expect_success 'fetch revisions from svn' 'git-svn fetch'
 
 name='test svn:keywords ignoring'
@@ -90,9 +90,9 @@ test_expect_success "propset CR on crlf files" \
 	 cd ..'
 
 test_expect_success 'fetch and pull latest from svn and checkout a new wc' \
-	"git-svn fetch &&
+	'git-svn fetch &&
 	 git pull . remotes/git-svn &&
-	 svn co $svnrepo new_wc"
+	 svn co "$svnrepo" new_wc'
 
 for i in crlf ne_crlf lf ne_lf cr ne_cr empty_cr empty_lf empty empty_crlf
 do

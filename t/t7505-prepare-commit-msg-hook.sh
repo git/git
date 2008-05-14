@@ -18,6 +18,9 @@ cat > fake-editor <<'EOF'
 exit 0
 EOF
 chmod +x fake-editor
+
+## Not using test_set_editor here so we can easily ensure the editor variable
+## is only set for the editor tests
 FAKE_EDITOR="$(pwd)/fake-editor"
 export FAKE_EDITOR
 
@@ -58,7 +61,7 @@ test_expect_success 'with hook (-m editor)' '
 
 	echo "more" >> file &&
 	git add file &&
-	GIT_EDITOR="$FAKE_EDITOR" git commit -e -m "more more" &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" git commit -e -m "more more" &&
 	test "`git log -1 --pretty=format:%s`" = message
 
 '
@@ -85,7 +88,7 @@ test_expect_success 'with hook (-F editor)' '
 
 	echo "more" >> file &&
 	git add file &&
-	(echo more more | GIT_EDITOR="$FAKE_EDITOR" git commit -e -F -) &&
+	(echo more more | GIT_EDITOR="\"\$FAKE_EDITOR\"" git commit -e -F -) &&
 	test "`git log -1 --pretty=format:%s`" = message
 
 '
@@ -104,7 +107,7 @@ test_expect_success 'with hook (editor)' '
 
 	echo "more more" >> file &&
 	git add file &&
-	GIT_EDITOR="$FAKE_EDITOR" git commit &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" git commit &&
 	test "`git log -1 --pretty=format:%s`" = default
 
 '
@@ -114,7 +117,7 @@ test_expect_success 'with hook (--amend)' '
 	head=`git rev-parse HEAD` &&
 	echo "more" >> file &&
 	git add file &&
-	GIT_EDITOR="$FAKE_EDITOR" git commit --amend &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" git commit --amend &&
 	test "`git log -1 --pretty=format:%s`" = "$head"
 
 '
@@ -124,7 +127,7 @@ test_expect_success 'with hook (-c)' '
 	head=`git rev-parse HEAD` &&
 	echo "more" >> file &&
 	git add file &&
-	GIT_EDITOR="$FAKE_EDITOR" git commit -c $head &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" git commit -c $head &&
 	test "`git log -1 --pretty=format:%s`" = "$head"
 
 '
@@ -139,7 +142,7 @@ test_expect_success 'with failing hook' '
 	head=`git rev-parse HEAD` &&
 	echo "more" >> file &&
 	git add file &&
-	! GIT_EDITOR="$FAKE_EDITOR" git commit -c $head
+	! GIT_EDITOR="\"\$FAKE_EDITOR\"" git commit -c $head
 
 '
 
@@ -148,7 +151,7 @@ test_expect_success 'with failing hook (--no-verify)' '
 	head=`git rev-parse HEAD` &&
 	echo "more" >> file &&
 	git add file &&
-	! GIT_EDITOR="$FAKE_EDITOR" git commit --no-verify -c $head
+	! GIT_EDITOR="\"\$FAKE_EDITOR\"" git commit --no-verify -c $head
 
 '
 
