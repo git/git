@@ -8,7 +8,7 @@ OPTIONS_SPEC="\
 git-repack [options]
 --
 a               pack everything in a single pack
-A               same as -a, and keep unreachable objects too
+A               same as -a, and turn unreachable objects loose
 d               remove redundant packs, and run git-prune-packed
 f               pass --no-reuse-delta to git-pack-objects
 q,quiet         be quiet
@@ -22,7 +22,7 @@ max-pack-size=  maximum size of each packfile
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
-no_update_info= all_into_one= remove_redundant= keep_unreachable=
+no_update_info= all_into_one= remove_redundant= unpack_unreachable=
 local= quiet= no_reuse= extra=
 while test $# != 0
 do
@@ -30,7 +30,7 @@ do
 	-n)	no_update_info=t ;;
 	-a)	all_into_one=t ;;
 	-A)	all_into_one=t
-		keep_unreachable=t ;;
+		unpack_unreachable=--unpack-unreachable ;;
 	-d)	remove_redundant=t ;;
 	-q)	quiet=-q ;;
 	-f)	no_reuse=--no-reuse-object ;;
@@ -78,6 +78,9 @@ case ",$all_into_one," in
 	if test -z "$args"
 	then
 		args='--unpacked --incremental'
+	elif test -n "$unpack_unreachable"
+	then
+		args="$args $unpack_unreachable"
 	fi
 	;;
 esac
@@ -127,18 +130,7 @@ then
 		  do
 			case " $fullbases " in
 			*" $e "*) ;;
-			*)
-				rm -f "$e.idx" "$e.keep"
-				if test -n "$keep_unreachable" &&
-				   test -f "$e.pack"
-				then
-					git unpack-objects < "$e.pack" || {
-						echo >&2 "Failed unpacking unreachable objects from redundant pack file $e.pack"
-						exit 1
-					}
-				fi
-				rm -f "$e.pack"
-			;;
+			*)	rm -f "$e.pack" "$e.idx" "$e.keep" ;;
 			esac
 		  done
 		)

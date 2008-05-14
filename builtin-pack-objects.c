@@ -28,7 +28,8 @@ git-pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--window=N] [--window-memory=N] [--depth=N] \n\
 	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
 	[--threads=N] [--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
-	[--stdout | base-name] [--include-tag] [--keep-unreachable] \n\
+	[--stdout | base-name] [--include-tag] \n\
+	[--keep-unreachable | --unpack-unreachable] \n\
 	[<ref-list | <object-list]";
 
 struct object_entry {
@@ -65,7 +66,7 @@ static struct pack_idx_entry **written_list;
 static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
 
 static int non_empty;
-static int no_reuse_delta, no_reuse_object, keep_unreachable, include_tag;
+static int no_reuse_delta, no_reuse_object, keep_unreachable, unpack_unreachable, include_tag;
 static int local;
 static int incremental;
 static int allow_ofs_delta;
@@ -1905,6 +1906,32 @@ static void add_objects_in_unpacked_packs(struct rev_info *revs)
 	free(in_pack.array);
 }
 
+static void loosen_unused_packed_objects(struct rev_info *revs)
+{
+	struct packed_git *p;
+	uint32_t i;
+	const unsigned char *sha1;
+
+	for (p = packed_git; p; p = p->next) {
+		for (i = 0; i < revs->num_ignore_packed; i++) {
+			if (matches_pack_name(p, revs->ignore_packed[i]))
+				break;
+		}
+		if (revs->num_ignore_packed <= i)
+			continue;
+
+		if (open_pack_index(p))
+			die("cannot open pack index");
+
+		for (i = 0; i < p->num_objects; i++) {
+			sha1 = nth_packed_object_sha1(p, i);
+			if (!locate_object_entry(sha1))
+				if (force_object_loose(sha1, p->mtime))
+					die("unable to force loose object");
+		}
+	}
+}
+
 static void get_object_list(int ac, const char **av)
 {
 	struct rev_info revs;
@@ -1939,6 +1966,8 @@ static void get_object_list(int ac, const char **av)
 
 	if (keep_unreachable)
 		add_objects_in_unpacked_packs(&revs);
+	if (unpack_unreachable)
+		loosen_unused_packed_objects(&revs);
 }
 
 static int adjust_perm(const char *path, mode_t mode)
@@ -2073,6 +2102,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			keep_unreachable = 1;
 			continue;
 		}
+		if (!strcmp("--unpack-unreachable", arg)) {
+			unpack_unreachable = 1;
+			continue;
+		}
 		if (!strcmp("--include-tag", arg)) {
 			include_tag = 1;
 			continue;
@@ -2137,6 +2170,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (!pack_to_stdout && thin)
 		die("--thin cannot be used to build an indexable pack.");
+
+	if (keep_unreachable && unpack_unreachable)
+		die("--keep-unreachable and --unpack-unreachable are incompatible.");
 
 #ifdef THREADED_DELTA_SEARCH
 	if (!delta_search_threads)	/* --threads=0 means autodetect */
