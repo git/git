@@ -6,6 +6,11 @@ merge.log::
 	Whether to include summaries of merged commits in newly created
 	merge commit messages. False by default.
 
+merge.renameLimit::
+	The number of files to consider when performing rename detection
+	during a merge; if not specified, defaults to the value of
+	diff.renameLimit.
+
 merge.tool::
 	Controls which merge resolution program is used by
 	linkgit:git-mergetool[1].  Valid built-in values are: "kdiff3",
