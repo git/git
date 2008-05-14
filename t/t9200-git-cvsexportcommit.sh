@@ -297,4 +297,21 @@ test_expect_success 'commit a file with leading spaces in the name' '
 
 '
 
+test_expect_success 'use the same checkout for Git and CVS' '
+
+	(mkdir shared &&
+	 cd shared &&
+	 unset GIT_DIR &&
+	 cvs co . &&
+	 git init &&
+	 git add " space" &&
+	 git commit -m "fake initial commit" &&
+	 echo Hello >> " space" &&
+	 git commit -m "Another change" " space" &&
+	 git cvsexportcommit -W -p -u -c HEAD &&
+	 grep Hello " space" &&
+	 git diff-files)
+
+'
+
 test_done
