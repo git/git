@@ -13,9 +13,10 @@ SYNOPSIS
 DESCRIPTION
 -----------
 The command finds the most recent tag that is reachable from a
-commit, and if the commit itself is pointed at by the tag, shows
-the tag.  Otherwise, it suffixes the tag name with the number of
-additional commits and the abbreviated object name of the commit.
+commit.  If the tag points to the commit, then only the tag is
+shown.  Otherwise, it suffixes the tag name with the number of
+additional commits on top of the tagged object and the
+abbreviated object name of the most recent commit.
 
 
 OPTIONS
