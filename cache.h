@@ -506,6 +506,7 @@ extern void * read_sha1_file(const unsigned char *sha1, enum object_type *type, 
 extern int hash_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
 extern int pretend_sha1_file(void *, unsigned long, enum object_type, unsigned char *);
+extern int force_object_loose(const unsigned char *sha1, time_t mtime);
 
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 

@@ -2102,26 +2102,16 @@ int hash_sha1_file(const void *buf, unsigned long len, const char *type,
 	return 0;
 }
 
-int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
+static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
+			      void *buf, unsigned long len, time_t mtime)
 {
-	int size, ret;
+	int fd, size, ret;
 	unsigned char *compressed;
 	z_stream stream;
-	unsigned char sha1[20];
 	char *filename;
 	static char tmpfile[PATH_MAX];
-	char hdr[32];
-	int fd, hdrlen;
 
-	/* Normally if we have it in the pack then we do not bother writing
-	 * it out into .git/objects/??/?{38} file.
-	 */
-	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	filename = sha1_file_name(sha1);
-	if (returnsha1)
-		hashcpy(returnsha1, sha1);
-	if (has_sha1_file(sha1))
-		return 0;
 	fd = open(filename, O_RDONLY);
 	if (fd >= 0) {
 		/*
@@ -2182,7 +2172,51 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 		die("unable to write sha1 file");
 	free(compressed);
 
+	if (mtime) {
+		struct utimbuf utb;
+		utb.actime = mtime;
+		utb.modtime = mtime;
+		if (utime(tmpfile, &utb) < 0)
+			warning("failed utime() on %s: %s",
+				tmpfile, strerror(errno));
+	}
+
 	return move_temp_to_file(tmpfile, filename);
+}
+
+int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
+{
+	unsigned char sha1[20];
+	char hdr[32];
+	int hdrlen;
+
+	/* Normally if we have it in the pack then we do not bother writing
+	 * it out into .git/objects/??/?{38} file.
+	 */
+	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	if (returnsha1)
+		hashcpy(returnsha1, sha1);
+	if (has_sha1_file(sha1))
+		return 0;
+	return write_loose_object(sha1, hdr, hdrlen, buf, len, 0);
+}
+
+int force_object_loose(const unsigned char *sha1, time_t mtime)
+{
+	struct stat st;
+	void *buf;
+	unsigned long len;
+	enum object_type type;
+	char hdr[32];
+	int hdrlen;
+
+	if (find_sha1_file(sha1, &st))
+		return 0;
+	buf = read_packed_sha1(sha1, &type, &len);
+	if (!buf)
+		return error("cannot read sha1_file for %s", sha1_to_hex(sha1));
+	hdrlen = sprintf(hdr, "%s %lu", typename(type), len) + 1;
+	return write_loose_object(sha1, hdr, hdrlen, buf, len, mtime);
 }
 
 /*
