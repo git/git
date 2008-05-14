@@ -210,7 +210,8 @@ if (@canstatusfiles) {
 	my $basename = basename($name);
 
 	$basename = "no file " . $basename if (exists($added{$basename}));
-	chomp($basename);
+	$basename =~ s/^\s+//;
+	$basename =~ s/\s+$//;
 
 	if (!exists($fullname{$basename})) {
 	  $fullname{$basename} = $name;
