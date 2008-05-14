@@ -448,6 +448,8 @@ int git_default_config(const char *var, const char *value)
 		if (!value)
 			return config_error_nonbool(var);
 		strlcpy(git_default_name, value, sizeof(git_default_name));
+		if (git_default_email[0])
+			user_ident_explicitly_given = 1;
 		return 0;
 	}
 
@@ -455,6 +457,8 @@ int git_default_config(const char *var, const char *value)
 		if (!value)
 			return config_error_nonbool(var);
 		strlcpy(git_default_email, value, sizeof(git_default_email));
+		if (git_default_name[0])
+			user_ident_explicitly_given = 1;
 		return 0;
 	}
 
