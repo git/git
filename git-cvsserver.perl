@@ -21,6 +21,7 @@ use bytes;
 
 use Fcntl;
 use File::Temp qw/tempdir tempfile/;
+use File::Path qw/rmtree/;
 use File::Basename;
 use Getopt::Long qw(:config require_order no_ignore_case);
 
@@ -86,6 +87,17 @@ my $methods = {
 # $state holds all the bits of information the clients sends us that could
 # potentially be useful when it comes to actually _doing_ something.
 my $state = { prependdir => '' };
+
+# Work is for managing temporary working directory
+my $work =
+    {
+        state => undef,  # undef, 1 (empty), 2 (with stuff)
+        workDir => undef,
+        index => undef,
+        emptyDir => undef,
+        tmpDir => undef
+    };
+
 $log->info("--------------- STARTING -----------------");
 
 my $usage =
@@ -188,6 +200,9 @@ while (<STDIN>)
 
 $log->debug("Processing time : user=" . (times)[0] . " system=" . (times)[1]);
 $log->info("--------------- FINISH -----------------");
+
+chdir '/';
+exit 0;
 
 # Magic catchall method.
 #    This is the method that will handle all commands we haven't yet
@@ -1101,10 +1116,10 @@ sub req_update
             $log->info("Updating '$filename'");
             my ( $filepart, $dirpart ) = filenamesplit($meta->{name},1);
 
-            my $dir = tempdir( DIR => $TEMP_DIR, CLEANUP => 1 ) . "/";
+            my $mergeDir = setupTmpDir();
 
-            chdir $dir;
             my $file_local = $filepart . ".mine";
+            my $mergedFile = "$mergeDir/$file_local";
             system("ln","-s",$state->{entries}{$filename}{modified_filename}, $file_local);
             my $file_old = $filepart . "." . $oldmeta->{revision};
             transmitfile($oldmeta->{filehash}, { targetfile => $file_old });
@@ -1115,10 +1130,12 @@ sub req_update
             $log->info("Merging $file_local, $file_old, $file_new");
             print "M Merging differences between 1.$oldmeta->{revision} and 1.$meta->{revision} into $filename\n";
 
-            $log->debug("Temporary directory for merge is $dir");
+            $log->debug("Temporary directory for merge is $mergeDir");
 
             my $return = system("git", "merge-file", $file_local, $file_old, $file_new);
             $return >>= 8;
+
+            cleanupTmpDir();
 
             if ( $return == 0 )
             {
@@ -1168,13 +1185,11 @@ sub req_update
                 # transmit file, format is single integer on a line by itself (file
                 # size) followed by the file contents
                 # TODO : we should copy files in blocks
-                my $data = `cat $file_local`;
+                my $data = `cat $mergedFile`;
                 $log->debug("File size : " . length($data));
                 print length($data) . "\n";
                 print $data;
             }
-
-            chdir "/";
         }
 
     }
@@ -1195,6 +1210,7 @@ sub req_ci
     if ( $state->{method} eq 'pserver')
     {
         print "error 1 pserver access cannot commit\n";
+        cleanupWorkTree();
         exit;
     }
 
@@ -1202,6 +1218,7 @@ sub req_ci
     {
         $log->warn("file 'index' already exists in the git repository");
         print "error 1 Index already exists in git repo\n";
+        cleanupWorkTree();
         exit;
     }
 
@@ -1209,31 +1226,20 @@ sub req_ci
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
-    my $tmpdir = tempdir ( DIR => $TEMP_DIR );
-    my ( undef, $file_index ) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
-    $log->info("Lockless commit start, basing commit on '$tmpdir', index file is '$file_index'");
-
-    $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
-    $ENV{GIT_WORK_TREE} = ".";
-    $ENV{GIT_INDEX_FILE} = $file_index;
-
     # Remember where the head was at the beginning.
     my $parenthash = `git show-ref -s refs/heads/$state->{module}`;
     chomp $parenthash;
     if ($parenthash !~ /^[0-9a-f]{40}$/) {
 	    print "error 1 pserver cannot find the current HEAD of module";
+	    cleanupWorkTree();
 	    exit;
     }
 
-    chdir $tmpdir;
+    setupWorkTree($parenthash);
 
-    # populate the temporary index
-    system("git-read-tree", $parenthash);
-    unless ($? == 0)
-    {
-	die "Error running git-read-tree $state->{module} $file_index $!";
-    }
-    $log->info("Created index '$file_index' for head $state->{module} - exit status $?");
+    $log->info("Lockless commit start, basing commit on '$work->{workDir}', index file is '$work->{index}'");
+
+    $log->info("Created index '$work->{index}' for head $state->{module} - exit status $?");
 
     my @committedfiles = ();
     my %oldmeta;
@@ -1271,7 +1277,7 @@ sub req_ci
         {
             # fail everything if an up to date check fails
             print "error 1 Up to date check failed for $filename\n";
-            chdir "/";
+            cleanupWorkTree();
             exit;
         }
 
@@ -1313,7 +1319,7 @@ sub req_ci
     {
         print "E No files to commit\n";
         print "ok\n";
-        chdir "/";
+        cleanupWorkTree();
         return;
     }
 
@@ -1336,7 +1342,7 @@ sub req_ci
     {
         $log->warn("Commit failed (Invalid commit hash)");
         print "error 1 Commit failed (unknown reason)\n";
-        chdir "/";
+        cleanupWorkTree();
         exit;
     }
 
@@ -1348,7 +1354,7 @@ sub req_ci
 		{
 			$log->warn("Commit failed (update hook declined to update ref)");
 			print "error 1 Commit failed (update hook declined)\n";
-			chdir "/";
+			cleanupWorkTree();
 			exit;
 		}
 	}
@@ -1358,6 +1364,7 @@ sub req_ci
 			"refs/heads/$state->{module}", $commithash, $parenthash)) {
 		$log->warn("update-ref for $state->{module} failed.");
 		print "error 1 Cannot commit -- update first\n";
+		cleanupWorkTree();
 		exit;
 	}
 
@@ -1414,7 +1421,7 @@ sub req_ci
         }
     }
 
-    chdir "/";
+    cleanupWorkTree();
     print "ok\n";
 }
 
@@ -1757,15 +1764,9 @@ sub req_annotate
     argsfromdir($updater);
 
     # we'll need a temporary checkout dir
-    my $tmpdir = tempdir ( DIR => $TEMP_DIR );
-    my ( undef, $file_index ) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
-    $log->info("Temp checkoutdir creation successful, basing annotate session work on '$tmpdir', index file is '$file_index'");
+    setupWorkTree();
 
-    $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
-    $ENV{GIT_WORK_TREE} = ".";
-    $ENV{GIT_INDEX_FILE} = $file_index;
-
-    chdir $tmpdir;
+    $log->info("Temp checkoutdir creation successful, basing annotate session work on '$work->{workDir}', index file is '$ENV{GIT_INDEX_FILE}'");
 
     # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
@@ -1789,10 +1790,10 @@ sub req_annotate
 	system("git-read-tree", $lastseenin);
 	unless ($? == 0)
 	{
-	    print "E error running git-read-tree $lastseenin $file_index $!\n";
+	    print "E error running git-read-tree $lastseenin $ENV{GIT_INDEX_FILE} $!\n";
 	    return;
 	}
-	$log->info("Created index '$file_index' with commit $lastseenin - exit status $?");
+	$log->info("Created index '$ENV{GIT_INDEX_FILE}' with commit $lastseenin - exit status $?");
 
         # do a checkout of the file
         system('git-checkout-index', '-f', '-u', $filename);
@@ -1808,7 +1809,7 @@ sub req_annotate
         # git-jsannotate telling us about commits we are hiding
         # from the client.
 
-        my $a_hints = "$tmpdir/.annotate_hints";
+        my $a_hints = "$work->{workDir}/.annotate_hints";
         if (!open(ANNOTATEHINTS, '>', $a_hints)) {
             print "E failed to open '$a_hints' for writing: $!\n";
             return;
@@ -1862,7 +1863,7 @@ sub req_annotate
     }
 
     # done; get out of the tempdir
-    chdir "/";
+    cleanupWorkDir();
 
     print "ok\n";
 
@@ -2113,6 +2114,179 @@ sub filecleanup
     $filename =~ s/^\.\///g;
     $filename = $state->{prependdir} . $filename;
     return $filename;
+}
+
+sub validateGitDir
+{
+    if( !defined($state->{CVSROOT}) )
+    {
+        print "error 1 CVSROOT not specified\n";
+        cleanupWorkTree();
+        exit;
+    }
+    if( $ENV{GIT_DIR} ne ($state->{CVSROOT} . '/') )
+    {
+        print "error 1 Internally inconsistent CVSROOT\n";
+        cleanupWorkTree();
+        exit;
+    }
+}
+
+# Setup working directory in a work tree with the requested version
+# loaded in the index.
+sub setupWorkTree
+{
+    my ($ver) = @_;
+
+    validateGitDir();
+
+    if( ( defined($work->{state}) && $work->{state} != 1 ) ||
+        defined($work->{tmpDir}) )
+    {
+        $log->warn("Bad work tree state management");
+        print "error 1 Internal setup multiple work trees without cleanup\n";
+        cleanupWorkTree();
+        exit;
+    }
+
+    $work->{workDir} = tempdir ( DIR => $TEMP_DIR );
+
+    if( !defined($work->{index}) )
+    {
+        (undef, $work->{index}) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
+    }
+
+    chdir $work->{workDir} or
+        die "Unable to chdir to $work->{workDir}\n";
+
+    $log->info("Setting up GIT_WORK_TREE as '.' in '$work->{workDir}', index file is '$work->{index}'");
+
+    $ENV{GIT_WORK_TREE} = ".";
+    $ENV{GIT_INDEX_FILE} = $work->{index};
+    $work->{state} = 2;
+
+    if($ver)
+    {
+        system("git","read-tree",$ver);
+        unless ($? == 0)
+        {
+            $log->warn("Error running git-read-tree");
+            die "Error running git-read-tree $ver in $work->{workDir} $!\n";
+        }
+    }
+    # else # req_annotate reads tree for each file
+}
+
+# Ensure current directory is in some kind of working directory,
+# with a recent version loaded in the index.
+sub ensureWorkTree
+{
+    if( defined($work->{tmpDir}) )
+    {
+        $log->warn("Bad work tree state management [ensureWorkTree()]");
+        print "error 1 Internal setup multiple dirs without cleanup\n";
+        cleanupWorkTree();
+        exit;
+    }
+    if( $work->{state} )
+    {
+        return;
+    }
+
+    validateGitDir();
+
+    if( !defined($work->{emptyDir}) )
+    {
+        $work->{emptyDir} = tempdir ( DIR => $TEMP_DIR, OPEN => 0);
+    }
+    chdir $work->{emptyDir} or
+        die "Unable to chdir to $work->{emptyDir}\n";
+
+    my $ver = `git show-ref -s refs/heads/$state->{module}`;
+    chomp $ver;
+    if ($ver !~ /^[0-9a-f]{40}$/)
+    {
+        $log->warn("Error from git show-ref -s refs/head$state->{module}");
+        print "error 1 cannot find the current HEAD of module";
+        cleanupWorkTree();
+        exit;
+    }
+
+    if( !defined($work->{index}) )
+    {
+        (undef, $work->{index}) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
+    }
+
+    $ENV{GIT_WORK_TREE} = ".";
+    $ENV{GIT_INDEX_FILE} = $work->{index};
+    $work->{state} = 1;
+
+    system("git","read-tree",$ver);
+    unless ($? == 0)
+    {
+        die "Error running git-read-tree $ver $!\n";
+    }
+}
+
+# Cleanup working directory that is not needed any longer.
+sub cleanupWorkTree
+{
+    if( ! $work->{state} )
+    {
+        return;
+    }
+
+    chdir "/" or die "Unable to chdir '/'\n";
+
+    if( defined($work->{workDir}) )
+    {
+        rmtree( $work->{workDir} );
+        undef $work->{workDir};
+    }
+    undef $work->{state};
+}
+
+# Setup a temporary directory (not a working tree), typically for
+# merging dirty state as in req_update.
+sub setupTmpDir
+{
+    $work->{tmpDir} = tempdir ( DIR => $TEMP_DIR );
+    chdir $work->{tmpDir} or die "Unable to chdir $work->{tmpDir}\n";
+
+    return $work->{tmpDir};
+}
+
+# Clean up a previously setupTmpDir.  Restore previous work tree if
+# appropriate.
+sub cleanupTmpDir
+{
+    if ( !defined($work->{tmpDir}) )
+    {
+        $log->warn("cleanup tmpdir that has not been setup");
+        die "Cleanup tmpDir that has not been setup\n";
+    }
+    if( defined($work->{state}) )
+    {
+        if( $work->{state} == 1 )
+        {
+            chdir $work->{emptyDir} or
+                die "Unable to chdir to $work->{emptyDir}\n";
+        }
+        elsif( $work->{state} == 2 )
+        {
+            chdir $work->{workDir} or
+                die "Unable to chdir to $work->{emptyDir}\n";
+        }
+        else
+        {
+            $log->warn("Inconsistent work dir state");
+            die "Inconsistent work dir state\n";
+        }
+    }
+    else
+    {
+        chdir "/" or die "Unable to chdir '/'\n";
+    }
 }
 
 # Given a path, this function returns a string containing the kopts
