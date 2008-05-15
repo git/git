@@ -525,7 +525,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 		memset(&opts, 0, sizeof opts);
 		opts.update = 1;
+		opts.merge = 1;
+		opts.fn = oneway_merge;
 		opts.verbose_update = !option_quiet;
+		opts.src_index = &the_index;
 		opts.dst_index = &the_index;
 
 		tree = parse_tree_indirect(remote_head->old_sha1);
