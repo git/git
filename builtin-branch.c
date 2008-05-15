@@ -15,7 +15,7 @@
 #include "branch.h"
 
 static const char * const builtin_branch_usage[] = {
-	"git-branch [options] [-r | -a]",
+	"git-branch [options] [-r | -a] [--merged | --no-merged]",
 	"git-branch [options] [-l] [-f] <branchname> [<start-point>]",
 	"git-branch [options] [-r] (-d | -D) <branchname>",
 	"git-branch [options] (-m | -M) [<oldbranch>] <newbranch>",
@@ -45,6 +45,8 @@ enum color_branch {
 	COLOR_BRANCH_LOCAL = 3,
 	COLOR_BRANCH_CURRENT = 4,
 };
+
+static int mergefilter = -1;
 
 static int parse_branch_color_slot(const char *var, int ofs)
 {
@@ -210,6 +212,7 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	struct ref_item *newitem;
 	int kind = REF_UNKNOWN_TYPE;
 	int len;
+	static struct commit_list branch;
 
 	/* Detect kind */
 	if (!prefixcmp(refname, "refs/heads/")) {
@@ -230,6 +233,16 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	/* Don't add types the caller doesn't want */
 	if ((kind & ref_list->kinds) == 0)
 		return 0;
+
+	if (mergefilter > -1) {
+		branch.item = lookup_commit_reference_gently(sha1, 1);
+		if (!branch.item)
+			die("Unable to lookup tip of branch %s", refname);
+		if (mergefilter == 0 && has_commit(head_sha1, &branch))
+			return 0;
+		if (mergefilter == 1 && !has_commit(head_sha1, &branch))
+			return 0;
+	}
 
 	/* Resize buffer */
 	if (ref_list->index >= ref_list->alloc) {
@@ -444,6 +457,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BIT('M', NULL, &rename, "move/rename a branch, even if target exists", 2),
 		OPT_BOOLEAN('l', NULL, &reflog, "create the branch's reflog"),
 		OPT_BOOLEAN('f', NULL, &force_create, "force creation (when already exists)"),
+		OPT_SET_INT(0, "merged", &mergefilter, "list only merged branches", 1),
 		OPT_END(),
 	};
 

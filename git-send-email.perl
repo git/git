@@ -203,6 +203,7 @@ my %config_settings = (
     "smtpuser" => \$smtp_authuser,
     "smtppass" => \$smtp_authpass,
     "to" => \@to,
+    "cc" => \@initial_cc,
     "cccmd" => \$cc_cmd,
     "aliasfiletype" => \$aliasfiletype,
     "bcc" => \@bcclist,
@@ -512,7 +513,7 @@ EOT
 	close(C);
 
 	my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
-	system('sh', '-c', '$0 $@', $editor, $compose_filename);
+	system('sh', '-c', $editor.' "$@"', $editor, $compose_filename);
 
 	open(C2,">",$compose_filename . ".final")
 		or die "Failed to open $compose_filename.final : " . $!;

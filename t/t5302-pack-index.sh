@@ -65,7 +65,7 @@ test_expect_success \
 
 have_64bits=
 if msg=$(git verify-pack -v "test-3-${pack3}.pack" 2>&1) ||
-	! echo "$msg" | grep "pack too large .* off_t"
+	! (echo "$msg" | grep "pack too large .* off_t")
 then
 	have_64bits=t
 else

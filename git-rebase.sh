@@ -214,7 +214,7 @@ do
 		else
 			die "No rebase in progress?"
 		fi
-		git reset --hard $(cat $dotest/orig-head)
+		git reset --hard $(cat "$dotest/orig-head")
 		rm -r "$dotest"
 		exit
 		;;
@@ -353,7 +353,7 @@ orig_head=$branch
 mb=$(git merge-base "$onto" "$branch")
 if test "$upstream" = "$onto" && test "$mb" = "$onto" &&
 	# linear history?
-	! git rev-list --parents "$onto".."$branch" | grep " .* " > /dev/null
+	! (git rev-list --parents "$onto".."$branch" | grep " .* ") > /dev/null
 then
 	# Lazily switch to the target branch if needed...
 	test -z "$switch_to" || git checkout "$switch_to"

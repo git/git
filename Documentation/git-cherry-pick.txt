@@ -7,7 +7,7 @@ git-cherry-pick - Apply the change introduced by an existing commit
 
 SYNOPSIS
 --------
-'git-cherry-pick' [--edit] [-n] [-m parent-number] [-x] <commit>
+'git-cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] <commit>
 
 DESCRIPTION
 -----------
@@ -63,6 +63,9 @@ OPTIONS
 +
 This is useful when cherry-picking more than one commits'
 effect to your working tree in a row.
+
+-s|--signoff::
+	Add Signed-off-by line at the end of the commit message.
 
 
 Author

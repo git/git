@@ -56,6 +56,17 @@ static int do_push(const char *repo, int flags)
 	if (!remote)
 		die("bad repository '%s'", repo);
 
+	if (remote->mirror)
+		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
+
+	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) && refspec)
+		return -1;
+
+	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) ==
+				(TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) {
+		return error("--all and --mirror are incompatible");
+	}
+
 	if (!refspec
 		&& !(flags & TRANSPORT_PUSH_ALL)
 		&& remote->push_refspec_nr) {
@@ -95,6 +106,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	int dry_run = 0;
 	int force = 0;
 	int tags = 0;
+	int rc;
 	const char *repo = NULL;	/* default repository */
 
 	struct option options[] = {
@@ -130,14 +142,10 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		repo = argv[0];
 		set_refspecs(argv + 1, argc - 1);
 	}
-	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) && refspec)
-		usage_with_options(push_usage, options);
 
-	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) ==
-				(TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) {
-		error("--all and --mirror are incompatible");
+	rc = do_push(repo, flags);
+	if (rc == -1)
 		usage_with_options(push_usage, options);
-	}
-
-	return do_push(repo, flags);
+	else
+		return rc;
 }

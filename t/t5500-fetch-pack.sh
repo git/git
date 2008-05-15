@@ -31,7 +31,7 @@ add () {
 	sec=$(($sec+1))
 	commit=$(echo "$text" | GIT_AUTHOR_DATE=$sec \
 		git commit-tree $tree $parents 2>>log2.txt)
-	export $name=$commit
+	eval "$name=$commit; export $name"
 	echo $commit > .git/refs/heads/$branch
 	eval ${branch}TIP=$commit
 }
@@ -129,7 +129,7 @@ pull_to_client 2nd "B" $((64*3))
 
 pull_to_client 3rd "A" $((1*3)) # old fails
 
-test_expect_success "clone shallow" "git-clone --depth 2 file://`pwd`/. shallow"
+test_expect_success "clone shallow" 'git-clone --depth 2 "file://$(pwd)/." shallow'
 
 (cd shallow; git count-objects -v) > count.shallow
 

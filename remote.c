@@ -337,44 +337,49 @@ static int handle_config(const char *key, const char *value)
 		return 0;
 	}
 	remote = make_remote(name, subkey - name);
-	if (!value) {
-		/* if we ever have a boolean variable, e.g. "remote.*.disabled"
-		 * [remote "frotz"]
-		 *      disabled
-		 * is a valid way to set it to true; we get NULL in value so
-		 * we need to handle it here.
-		 *
-		 * if (!strcmp(subkey, ".disabled")) {
-		 *      val = git_config_bool(key, value);
-		 *      return 0;
-		 * } else
-		 *
-		 */
-		return 0; /* ignore unknown booleans */
-	}
-	if (!strcmp(subkey, ".url")) {
-		add_url(remote, xstrdup(value));
+	if (!strcmp(subkey, ".mirror"))
+		remote->mirror = git_config_bool(key, value);
+	else if (!strcmp(subkey, ".skipdefaultupdate"))
+		remote->skip_default_update = git_config_bool(key, value);
+
+	else if (!strcmp(subkey, ".url")) {
+		const char *v;
+		if (git_config_string(&v, key, value))
+			return -1;
+		add_url(remote, v);
 	} else if (!strcmp(subkey, ".push")) {
-		add_push_refspec(remote, xstrdup(value));
+		const char *v;
+		if (git_config_string(&v, key, value))
+			return -1;
+		add_push_refspec(remote, v);
 	} else if (!strcmp(subkey, ".fetch")) {
-		add_fetch_refspec(remote, xstrdup(value));
+		const char *v;
+		if (git_config_string(&v, key, value))
+			return -1;
+		add_fetch_refspec(remote, v);
 	} else if (!strcmp(subkey, ".receivepack")) {
+		const char *v;
+		if (git_config_string(&v, key, value))
+			return -1;
 		if (!remote->receivepack)
-			remote->receivepack = xstrdup(value);
+			remote->receivepack = v;
 		else
 			error("more than one receivepack given, using the first");
 	} else if (!strcmp(subkey, ".uploadpack")) {
+		const char *v;
+		if (git_config_string(&v, key, value))
+			return -1;
 		if (!remote->uploadpack)
-			remote->uploadpack = xstrdup(value);
+			remote->uploadpack = v;
 		else
 			error("more than one uploadpack given, using the first");
 	} else if (!strcmp(subkey, ".tagopt")) {
 		if (!strcmp(value, "--no-tags"))
 			remote->fetch_tags = -1;
 	} else if (!strcmp(subkey, ".proxy")) {
-		remote->http_proxy = xstrdup(value);
-	} else if (!strcmp(subkey, ".skipdefaultupdate"))
-		remote->skip_default_update = 1;
+		return git_config_string((const char **)&remote->http_proxy,
+					 key, value);
+	}
 	return 0;
 }
 
@@ -686,6 +691,13 @@ struct ref *alloc_ref(unsigned namelen)
 	return ret;
 }
 
+struct ref *alloc_ref_from_str(const char* str)
+{
+	struct ref *ret = alloc_ref(strlen(str) + 1);
+	strcpy(ret->name, str);
+	return ret;
+}
+
 static struct ref *copy_ref(const struct ref *ref)
 {
 	struct ref *ret = xmalloc(sizeof(struct ref) + strlen(ref->name) + 1);
@@ -706,13 +718,22 @@ struct ref *copy_ref_list(const struct ref *ref)
 	return ret;
 }
 
+void free_ref(struct ref *ref)
+{
+	if (!ref)
+		return;
+	free(ref->remote_status);
+	free(ref->symref);
+	free(ref);
+}
+
 void free_refs(struct ref *ref)
 {
 	struct ref *next;
 	while (ref) {
 		next = ref->next;
 		free(ref->peer_ref);
-		free(ref);
+		free_ref(ref);
 		ref = next;
 	}
 }
@@ -783,7 +804,6 @@ static struct ref *try_explicit_object_name(const char *name)
 {
 	unsigned char sha1[20];
 	struct ref *ref;
-	int len;
 
 	if (!*name) {
 		ref = alloc_ref(20);
@@ -793,21 +813,14 @@ static struct ref *try_explicit_object_name(const char *name)
 	}
 	if (get_sha1(name, sha1))
 		return NULL;
-	len = strlen(name) + 1;
-	ref = alloc_ref(len);
-	memcpy(ref->name, name, len);
+	ref = alloc_ref_from_str(name);
 	hashcpy(ref->new_sha1, sha1);
 	return ref;
 }
 
 static struct ref *make_linked_ref(const char *name, struct ref ***tail)
 {
-	struct ref *ret;
-	size_t len;
-
-	len = strlen(name) + 1;
-	ret = alloc_ref(len);
-	memcpy(ret->name, name, len);
+	struct ref *ret = alloc_ref_from_str(name);
 	tail_link_ref(ret, tail);
 	return ret;
 }
@@ -1111,9 +1124,7 @@ static struct ref *get_local_ref(const char *name)
 		return NULL;
 
 	if (!prefixcmp(name, "refs/")) {
-		ret = alloc_ref(strlen(name) + 1);
-		strcpy(ret->name, name);
-		return ret;
+		return alloc_ref_from_str(name);
 	}
 
 	if (!prefixcmp(name, "heads/") ||
@@ -1171,4 +1182,16 @@ int get_fetch_map(const struct ref *remote_refs,
 		tail_link_ref(ref_map, tail);
 
 	return 0;
+}
+
+int resolve_remote_symref(struct ref *ref, struct ref *list)
+{
+	if (!ref->symref)
+		return 0;
+	for (; list; list = list->next)
+		if (!strcmp(ref->symref, list->name)) {
+			hashcpy(ref->old_sha1, list->old_sha1);
+			return 0;
+		}
+	return 1;
 }

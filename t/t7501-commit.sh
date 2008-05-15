@@ -41,7 +41,7 @@ test_expect_success \
 test_expect_success \
 	"using paths with --interactive" \
 	"echo bong-o-bong >file &&
-	! echo 7 | git-commit -m foo --interactive file"
+	! (echo 7 | git-commit -m foo --interactive file)"
 
 test_expect_success \
 	"using invalid commit with -C" \
@@ -79,8 +79,8 @@ test_expect_success \
 
 cat >editor <<\EOF
 #!/bin/sh
-sed -e "s/a file/an amend commit/g" < $1 > $1-
-mv $1- $1
+sed -e "s/a file/an amend commit/g" < "$1" > "$1-"
+mv "$1-" "$1"
 EOF
 chmod 755 editor
 
@@ -99,8 +99,8 @@ test_expect_success \
 
 cat >editor <<\EOF
 #!/bin/sh
-sed -e "s/amend/older/g"  < $1 > $1-
-mv $1- $1
+sed -e "s/amend/older/g"  < "$1" > "$1-"
+mv "$1-" "$1"
 EOF
 chmod 755 editor
 

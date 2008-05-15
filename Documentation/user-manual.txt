@@ -1881,7 +1881,7 @@ $ chmod a+x hooks/post-update
 
 (For an explanation of the last two lines, see
 linkgit:git-update-server-info[1], and the documentation
-link:hooks.html[Hooks used by git].)
+linkgit:githooks[5][Hooks used by git].)
 
 Advertise the URL of proj.git.  Anybody else should then be able to
 clone or pull from that URL, for example with a command line like:

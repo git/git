@@ -7,7 +7,7 @@ git-revert - Revert an existing commit
 
 SYNOPSIS
 --------
-'git-revert' [--edit | --no-edit] [-n] [-m parent-number] <commit>
+'git-revert' [--edit | --no-edit] [-n] [-m parent-number] [-s] <commit>
 
 DESCRIPTION
 -----------
@@ -50,6 +50,9 @@ OPTIONS
 +
 This is useful when reverting more than one commits'
 effect to your working tree in a row.
+
+-s|--signoff::
+	Add Signed-off-by line at the end of the commit message.
 
 
 Author

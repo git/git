@@ -125,7 +125,7 @@ test_expect_success 'use index-filter to move into a subdirectory' '
 		 "git ls-files -s | sed \"s-\\t-&newsubdir/-\" |
 	          GIT_INDEX_FILE=\$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
-		  mv \$GIT_INDEX_FILE.new \$GIT_INDEX_FILE" directorymoved &&
+		  mv \"\$GIT_INDEX_FILE.new\" \"\$GIT_INDEX_FILE\"" directorymoved &&
 	test -z "$(git diff HEAD directorymoved:newsubdir)"'
 
 test_expect_success 'stops when msg filter fails' '
@@ -217,6 +217,38 @@ test_expect_success 'Subdirectory filter with disappearing trees' '
 
 	git filter-branch -f --subdirectory-filter foo &&
 	test $(git rev-list master | wc -l) = 3
+'
+
+test_expect_success 'Tag name filtering retains tag message' '
+	git tag -m atag T &&
+	git cat-file tag T > expect &&
+	git filter-branch -f --tag-name-filter cat &&
+	git cat-file tag T > actual &&
+	git diff expect actual
+'
+
+faux_gpg_tag='object XXXXXX
+type commit
+tag S
+tagger T A Gger <tagger@example.com> 1206026339 -0500
+
+This is a faux gpg signed tag.
+-----BEGIN PGP SIGNATURE-----
+Version: FauxGPG v0.0.0 (FAUX/Linux)
+
+gdsfoewhxu/6l06f1kxyxhKdZkrcbaiOMtkJUA9ITAc1mlamh0ooasxkH1XwMbYQ
+acmwXaWET20H0GeAGP+7vow=
+=agpO
+-----END PGP SIGNATURE-----
+'
+test_expect_success 'Tag name filtering strips gpg signature' '
+	sha1=$(git rev-parse HEAD) &&
+	sha1t=$(echo "$faux_gpg_tag" | sed -e s/XXXXXX/$sha1/ | git mktag) &&
+	git update-ref "refs/tags/S" "$sha1t" &&
+	echo "$faux_gpg_tag" | sed -e s/XXXXXX/$sha1/ | head -n 6 > expect &&
+	git filter-branch -f --tag-name-filter cat &&
+	git cat-file tag S > actual &&
+	git diff expect actual
 '
 
 test_done

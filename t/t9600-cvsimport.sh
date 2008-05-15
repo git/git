@@ -36,7 +36,7 @@ test_expect_success 'setup cvsroot' 'cvs init'
 
 test_expect_success 'setup a cvs module' '
 
-	mkdir $CVSROOT/module &&
+	mkdir "$CVSROOT/module" &&
 	cvs co -d module-cvs module &&
 	cd module-cvs &&
 	cat <<EOF >o_fortuna &&

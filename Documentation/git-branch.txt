@@ -8,7 +8,7 @@ git-branch - List, create, or delete branches
 SYNOPSIS
 --------
 [verse]
-'git-branch' [--color | --no-color] [-r | -a]
+'git-branch' [--color | --no-color] [-r | -a] [--merged | --no-merged]
 	   [-v [--abbrev=<length> | --no-abbrev]]
 	   [--contains <commit>]
 'git-branch' [--track | --no-track] [-l] [-f] <branchname> [<start-point>]
@@ -24,6 +24,8 @@ and option `-a` shows both.
 With `--contains <commit>`, shows only the branches that
 contains the named commit (in other words, the branches whose
 tip commits are descendant of the named commit).
+With `--merged`, only branches merged into HEAD will be listed, and
+with `--no-merged` only branches not merged into HEAD will be listed.
 
 In its second form, a new branch named <branchname> will be created.
 It will start out with a head equal to the one given as <start-point>.
@@ -118,6 +120,15 @@ OPTIONS
 --no-track::
 	Ignore the branch.autosetupmerge configuration variable.
 
+--contains <commit>::
+	Only list branches which contain the specified commit.
+
+--merged::
+	Only list branches which are fully contained by HEAD.
+
+--no-merged::
+	Do not list branches which are fully contained by HEAD.
+
 <branchname>::
 	The name of the branch to create or delete.
 	The new branch name must pass all checks defined by
@@ -175,6 +186,18 @@ If you are creating a branch that you want to immediately checkout, it's
 easier to use the git checkout command with its `-b` option to create
 a branch and check it out with a single command.
 
+The options `--contains`, `--merged` and `--no-merged` serves three related
+but different purposes:
+
+- `--contains <commit>` is used to find all branches which will need
+  special attention if <commit> were to be rebased or amended, since those
+  branches contain the specified <commit>.
+
+- `--merged` is used to find all branches which can be safely deleted,
+  since those branches are fully contained by HEAD.
+
+- `--no-merged` is used to find branches which are candidates for merging
+  into HEAD, since those branches are not fully contained by HEAD.
 
 Author
 ------

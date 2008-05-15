@@ -9,7 +9,8 @@ This test runs git rebase and checks that the author information is not lost.
 '
 . ./test-lib.sh
 
-export GIT_AUTHOR_EMAIL=bogus_email_address
+GIT_AUTHOR_EMAIL=bogus_email_address
+export GIT_AUTHOR_EMAIL
 
 test_expect_success \
     'prepare repository with topic branches' \
@@ -44,13 +45,13 @@ test_expect_success 'rebase against master' '
 
 test_expect_success \
     'the rebase operation should not have destroyed author information' \
-    '! git log | grep "Author:" | grep "<>"'
+    '! (git log | grep "Author:" | grep "<>")'
 
 test_expect_success 'rebase after merge master' '
      git reset --hard topic &&
      git merge master &&
      git rebase master &&
-     ! git show | grep "^Merge:"
+     ! (git show | grep "^Merge:")
 '
 
 test_expect_success 'rebase of history with merges is linearized' '

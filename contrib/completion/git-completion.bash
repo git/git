@@ -780,7 +780,7 @@ _git_merge ()
 		;;
 	--*)
 		__gitcomp "
-			--no-commit --no-summary --squash --strategy
+			--no-commit --no-stat --log --no-log --squash --strategy
 			"
 		return
 	esac

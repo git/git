@@ -15,18 +15,18 @@ test_description='git-svn dcommit new files over svn:// test'
 
 start_svnserve () {
 	svnserve --listen-port $SVNSERVE_PORT \
-	         --root $rawsvnrepo \
+	         --root "$rawsvnrepo" \
 	         --listen-once \
 	         --listen-host 127.0.0.1 &
 }
 
-test_expect_success 'start tracking an empty repo' "
-	svn mkdir -m 'empty dir' $svnrepo/empty-dir &&
-	echo anon-access = write >> $rawsvnrepo/conf/svnserve.conf &&
+test_expect_success 'start tracking an empty repo' '
+	svn mkdir -m "empty dir" "$svnrepo"/empty-dir &&
+	echo anon-access = write >> "$rawsvnrepo"/conf/svnserve.conf &&
 	start_svnserve &&
 	git svn init svn://127.0.0.1:$SVNSERVE_PORT &&
 	git svn fetch
-	"
+	'
 
 test_expect_success 'create files in new directory with dcommit' "
 	mkdir git-new-dir &&

@@ -19,7 +19,7 @@
 #endif
 
 static int diff_detect_rename_default;
-static int diff_rename_limit_default = 100;
+static int diff_rename_limit_default = 200;
 int diff_use_color_default = -1;
 static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
@@ -2220,7 +2220,6 @@ void diff_setup(struct diff_options *options)
 	options->rename_limit = -1;
 	options->dirstat_percent = 3;
 	options->context = 3;
-	options->msg_sep = "";
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;

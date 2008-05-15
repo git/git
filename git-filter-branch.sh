@@ -406,8 +406,22 @@ if [ "$filter_tag_name" ]; then
 		echo "$ref -> $new_ref ($sha1 -> $new_sha1)"
 
 		if [ "$type" = "tag" ]; then
-			# Warn that we are not rewriting the tag object itself.
-			warn "unreferencing tag object $sha1t"
+			new_sha1=$(git cat-file tag "$ref" |
+				sed -n \
+				    -e "1,/^$/{
+					  s/^object .*/object $new_sha1/
+					  s/^type .*/type commit/
+					  s/^tag .*/tag $new_ref/
+					}" \
+				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
+				    -e 'p' |
+				git mktag) ||
+				die "Could not create new tag object for $ref"
+			if git cat-file tag "$ref" | \
+			   grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
+			then
+				warn "gpg signature stripped from tag object $sha1t"
+			fi
 		fi
 
 		git update-ref "refs/tags/$new_ref" "$new_sha1" ||
@@ -421,11 +435,17 @@ rm -rf "$tempdir"
 trap - 0
 
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
-test -z "$ORIG_GIT_DIR" || GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
-test -z "$ORIG_GIT_WORK_TREE" || GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
+test -z "$ORIG_GIT_DIR" || {
+	GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
+}
+test -z "$ORIG_GIT_WORK_TREE" || {
+	GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
 	export GIT_WORK_TREE
-test -z "$ORIG_GIT_INDEX_FILE" || GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
+}
+test -z "$ORIG_GIT_INDEX_FILE" || {
+	GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
 	export GIT_INDEX_FILE
+}
 git read-tree -u -m HEAD
 
 exit $ret

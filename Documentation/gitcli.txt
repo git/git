@@ -1,4 +1,4 @@
-gitcli(5)
+gitcli(7)
 =========
 
 NAME

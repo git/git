@@ -1,5 +1,17 @@
-Hooks used by git
-=================
+githooks(5)
+===========
+
+NAME
+----
+githooks - Hooks used by git
+
+SYNOPSIS
+--------
+$GIT_DIR/hooks/*
+
+
+DESCRIPTION
+-----------
 
 Hooks are little scripts you can place in `$GIT_DIR/hooks`
 directory to trigger action at certain points.  When
@@ -28,10 +40,11 @@ The default 'applypatch-msg' hook, when enabled, runs the
 pre-applypatch
 --------------
 
-This hook is invoked by `git-am`.  It takes no parameter,
-and is invoked after the patch is applied, but before a commit
-is made.  Exiting with non-zero status causes the working tree
-after application of the patch not committed.
+This hook is invoked by `git-am`.  It takes no parameter, and is
+invoked after the patch is applied, but before a commit is made.
+
+If it exits with non-zero status, then the working tree will not be
+committed after applying the patch.
 
 It can be used to inspect the current working tree and refuse to
 make a commit if it does not pass certain test.
@@ -136,7 +149,8 @@ post-merge
 This hook is invoked by `git-merge`, which happens when a `git pull`
 is done on a local repository.  The hook takes a single parameter, a status
 flag specifying whether or not the merge being done was a squash merge.
-This hook cannot affect the outcome of `git-merge`.
+This hook cannot affect the outcome of `git-merge` and is not executed,
+if the merge failed due to conflicts.
 
 This hook can be used in conjunction with a corresponding pre-commit hook to
 save and restore any form of metadata associated with the working tree
@@ -283,3 +297,7 @@ pre-auto-gc
 This hook is invoked by `git-gc --auto`. It takes no parameter, and
 exiting with non-zero status from this script causes the `git-gc --auto`
 to abort.
+
+GIT
+---
+Part of the linkgit:git[7] suite

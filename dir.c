@@ -52,6 +52,11 @@ int common_prefix(const char **pathspec)
 	return prefix;
 }
 
+static inline int special_char(unsigned char c1)
+{
+	return !c1 || c1 == '*' || c1 == '[' || c1 == '?';
+}
+
 /*
  * Does 'match' matches the given name?
  * A match is found if
@@ -69,14 +74,27 @@ static int match_one(const char *match, const char *name, int namelen)
 	int matchlen;
 
 	/* If the match was just the prefix, we matched */
-	matchlen = strlen(match);
-	if (!matchlen)
+	if (!*match)
 		return MATCHED_RECURSIVELY;
+
+	for (;;) {
+		unsigned char c1 = *match;
+		unsigned char c2 = *name;
+		if (special_char(c1))
+			break;
+		if (c1 != c2)
+			return 0;
+		match++;
+		name++;
+		namelen--;
+	}
+
 
 	/*
 	 * If we don't match the matchstring exactly,
 	 * we need to match by fnmatch
 	 */
+	matchlen = strlen(match);
 	if (strncmp(match, name, matchlen))
 		return !fnmatch(match, name, 0) ? MATCHED_FNMATCH : 0;
 
@@ -371,7 +389,7 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 
 struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
-	if (cache_name_exists(pathname, len))
+	if (cache_name_exists(pathname, len, ignore_case))
 		return NULL;
 
 	ALLOC_GROW(dir->entries, dir->nr+1, dir->alloc);

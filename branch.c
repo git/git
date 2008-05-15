@@ -32,6 +32,21 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 	return 0;
 }
 
+static int should_setup_rebase(const struct tracking *tracking)
+{
+	switch (autorebase) {
+	case AUTOREBASE_NEVER:
+		return 0;
+	case AUTOREBASE_LOCAL:
+		return tracking->remote == NULL;
+	case AUTOREBASE_REMOTE:
+		return tracking->remote != NULL;
+	case AUTOREBASE_ALWAYS:
+		return 1;
+	}
+	return 0;
+}
+
 /*
  * This is called when new_ref is branched off of orig_ref, and tries
  * to infer the settings for branch.<new_ref>.{remote,merge} from the
@@ -69,9 +84,14 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 	git_config_set(key, tracking.remote ?  tracking.remote : ".");
 	sprintf(key, "branch.%s.merge", new_ref);
 	git_config_set(key, tracking.src ? tracking.src : orig_ref);
-	free(tracking.src);
 	printf("Branch %s set up to track %s branch %s.\n", new_ref,
 		tracking.remote ? "remote" : "local", orig_ref);
+	if (should_setup_rebase(&tracking)) {
+		sprintf(key, "branch.%s.rebase", new_ref);
+		git_config_set(key, "true");
+		printf("This branch will rebase on pull.\n");
+	}
+	free(tracking.src);
 
 	return 0;
 }

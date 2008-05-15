@@ -5,7 +5,7 @@
 
 struct walker {
 	void *data;
-	int (*fetch_ref)(struct walker *, char *ref, unsigned char *sha1);
+	int (*fetch_ref)(struct walker *, struct ref *ref);
 	void (*prefetch)(struct walker *, unsigned char *sha1);
 	int (*fetch)(struct walker *, unsigned char *sha1);
 	void (*cleanup)(struct walker *);

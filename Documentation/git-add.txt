@@ -71,7 +71,9 @@ OPTIONS
 	the specified filepatterns before exiting.
 
 -u::
-	Update only files that git already knows about. This is similar
+	Update only files that git already knows about, staging modified
+	content for commit and marking deleted files for removal. This
+	is similar
 	to what "git commit -a" does in preparation for making a commit,
 	except that the update is limited to paths specified on the
 	command line. If no paths are specified, all tracked files in the
@@ -98,21 +100,27 @@ those in info/exclude.  See link:repository-layout.html[repository layout].
 
 EXAMPLES
 --------
-git-add Documentation/\\*.txt::
 
-	Adds content from all `\*.txt` files under `Documentation`
-	directory and its subdirectories.
+* Adds content from all `\*.txt` files under `Documentation` directory
+and its subdirectories:
++
+------------
+$ git add Documentation/\\*.txt
+------------
 +
 Note that the asterisk `\*` is quoted from the shell in this
 example; this lets the command to include the files from
 subdirectories of `Documentation/` directory.
 
-git-add git-*.sh::
-
-	Considers adding content from all git-*.sh scripts.
-	Because this example lets shell expand the asterisk
-	(i.e. you are listing the files explicitly), it does not
-	consider `subdir/git-foo.sh`.
+* Considers adding content from all git-*.sh scripts:
++
+------------
+$ git add git-*.sh
+------------
++
+Because this example lets shell expand the asterisk (i.e. you are
+listing the files explicitly), it does not consider
+`subdir/git-foo.sh`.
 
 Interactive mode
 ----------------
