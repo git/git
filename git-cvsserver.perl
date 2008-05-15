@@ -502,7 +502,7 @@ sub req_add
                 print $state->{CVSROOT} . "/$state->{module}/$filename\n";
 
                 # this is an "entries" line
-                my $kopts = kopts_from_path($filepart);
+                my $kopts = kopts_from_path($filename);
                 $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
                 print "/$filepart/1.$meta->{revision}//$kopts/\n";
                 # permissions
@@ -533,8 +533,24 @@ sub req_add
 
         print "Checked-in $dirpart\n";
         print "$filename\n";
-        my $kopts = kopts_from_path($filepart);
+        my $kopts = kopts_from_path($filename);
         print "/$filepart/0//$kopts/\n";
+
+        my $requestedKopts = $state->{opt}{k};
+        if(defined($requestedKopts))
+        {
+            $requestedKopts = "-k$requestedKopts";
+        }
+        else
+        {
+            $requestedKopts = "";
+        }
+        if( $kopts ne $requestedKopts )
+        {
+            $log->warn("Ignoring requested -k='$requestedKopts'"
+                        . " for '$filename'; detected -k='$kopts' instead");
+            #TODO: Also have option to send warning to user?
+        }
 
         $addcount++;
     }
@@ -615,7 +631,7 @@ sub req_remove
 
         print "Checked-in $dirpart\n";
         print "$filename\n";
-        my $kopts = kopts_from_path($filepart);
+        my $kopts = kopts_from_path($filename);
         print "/$filepart/-1.$wrev//$kopts/\n";
 
         $rmcount++;
@@ -785,6 +801,7 @@ sub req_co
     argsplit("co");
 
     my $module = $state->{args}[0];
+    $state->{module} = $module;
     my $checkout_path = $module;
 
     # use the user specified directory if we're given it
@@ -862,6 +879,7 @@ sub req_co
         # Don't want to check out deleted files
         next if ( $git->{filehash} eq "deleted" );
 
+        my $fullName = $git->{name};
         ( $git->{name}, $git->{dir} ) = filenamesplit($git->{name});
 
        if (length($git->{dir}) && $git->{dir} ne './'
@@ -892,7 +910,7 @@ sub req_co
        print $state->{CVSROOT} . "/$module/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "$git->{name}\n";
 
         # this is an "entries" line
-        my $kopts = kopts_from_path($git->{name});
+        my $kopts = kopts_from_path($fullName);
         print "/$git->{name}/1.$git->{revision}//$kopts/\n";
         # permissions
         print "u=$git->{mode},g=$git->{mode},o=$git->{mode}\n";
@@ -1101,7 +1119,7 @@ sub req_update
 		print $state->{CVSROOT} . "/$state->{module}/$filename\n";
 
 		# this is an "entries" line
-		my $kopts = kopts_from_path($filepart);
+		my $kopts = kopts_from_path($filename);
 		$log->debug("/$filepart/1.$meta->{revision}//$kopts/");
 		print "/$filepart/1.$meta->{revision}//$kopts/\n";
 
@@ -1149,7 +1167,7 @@ sub req_update
                     print "Merged $dirpart\n";
                     $log->debug($state->{CVSROOT} . "/$state->{module}/$filename");
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                    my $kopts = kopts_from_path($filepart);
+                    my $kopts = kopts_from_path("$dirpart/$filepart");
                     $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
                     print "/$filepart/1.$meta->{revision}//$kopts/\n";
                 }
@@ -1165,7 +1183,7 @@ sub req_update
                 {
                     print "Merged $dirpart\n";
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                    my $kopts = kopts_from_path($filepart);
+                    my $kopts = kopts_from_path("$dirpart/$filepart");
                     print "/$filepart/1.$meta->{revision}/+/$kopts/\n";
                 }
             }
@@ -1416,7 +1434,7 @@ sub req_ci
             }
             print "Checked-in $dirpart\n";
             print "$filename\n";
-            my $kopts = kopts_from_path($filepart);
+            my $kopts = kopts_from_path($filename);
             print "/$filepart/1.$meta->{revision}//$kopts/\n";
         }
     }
@@ -2296,10 +2314,24 @@ sub kopts_from_path
 {
 	my ($path) = @_;
 
-	# Once it exists, the git attributes system should be used to look up
-	# what attributes apply to this path.
+    if ( defined ( $cfg->{gitcvs}{usecrlfattr} ) and
+         $cfg->{gitcvs}{usecrlfattr} =~ /\s*(1|true|yes)\s*$/i )
+    {
+        my ($val) = check_attr( "crlf", $path );
+        if ( $val eq "set" )
+        {
+            return "";
+        }
+        elsif ( $val eq "unset" )
+        {
+            return "-kb"
+        }
+        else
+        {
+            $log->info("Unrecognized check_attr crlf $path : $val");
+        }
+    }
 
-	# Until then, take the setting from the config file
     unless ( defined ( $cfg->{gitcvs}{allbinary} ) and $cfg->{gitcvs}{allbinary} =~ /^\s*(1|true|yes)\s*$/i )
     {
 		# Return "" to give no special treatment to any path
@@ -2308,6 +2340,23 @@ sub kopts_from_path
 		# Alternatively, to have all files treated as if they are binary (which
 		# is more like git itself), always return the "-kb" option
 		return "-kb";
+    }
+}
+
+sub check_attr
+{
+    my ($attr,$path) = @_;
+    ensureWorkTree();
+    if ( open my $fh, '-|', "git", "check-attr", $attr, "--", $path )
+    {
+        my $val = <$fh>;
+        close $fh;
+        $val =~ s/.*: ([^:\r\n]*)\s*$/$1/;
+        return $val;
+    }
+    else
+    {
+        return undef;
     }
 }
 

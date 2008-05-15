@@ -660,11 +660,21 @@ gitcvs.logfile::
 	Path to a log file where the CVS server interface well... logs
 	various stuff. See linkgit:git-cvsserver[1].
 
+gitcvs.usecrlfattr
+	If true, the server will look up the `crlf` attribute for
+	files to determine the '-k' modes to use. If `crlf` is set,
+	the '-k' mode will be left blank, so cvs clients will
+	treat it as text. If `crlf` is explicitly unset, the file
+	will be set with '-kb' mode, which supresses any newline munging
+	the client might otherwise do. If `crlf` is not specified,
+	then 'gitcvs.allbinary' is used. See linkgit:gitattribute[5].
+
 gitcvs.allbinary::
-	If true, all files are sent to the client in mode '-kb'. This
-	causes the client to treat all files as binary files which suppresses
-	any newline munging it otherwise might do. A work-around for the
-	fact that there is no way yet to set single files to mode '-kb'.
+	If true, all files not otherwise specified using
+	'gitcvs.usecrlfattr' and an explicitly set or unset `crlf`
+	attribute are sent to the client in mode '-kb'. This
+	causes the client to treat them as binary files which
+	suppresses any newline munging it otherwise might do.
 
 gitcvs.dbname::
 	Database used by git-cvsserver to cache revision information
@@ -695,8 +705,9 @@ gitcvs.dbTableNamePrefix::
 	linkgit:git-cvsserver[1] for details).  Any non-alphabetic
 	characters will be replaced with underscores.
 
-All gitcvs variables except for 'gitcvs.allbinary' can also be
-specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
+All gitcvs variables except for 'gitcvs.usecrlfattr' and
+'gitcvs.allbinary' can also be specified as
+'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
 
