@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-03-14 07:18+0100\n"
-"PO-Revision-Date: 2008-02-16 21:52+0100\n"
+"PO-Revision-Date: 2008-05-01 11:51+0200\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -1754,9 +1754,8 @@ msgid "Number of Diff Context Lines"
 msgstr "Anzahl der Kontextzeilen beim Vergleich"
 
 #: lib/option.tcl:127
-#, fuzzy
 msgid "Commit Message Text Width"
-msgstr "Versionsbeschreibung:"
+msgstr "Textbreite der Versionsbeschreibung"
 
 #: lib/option.tcl:128
 msgid "New Branch Name Template"
@@ -1895,40 +1894,36 @@ msgstr "Fehler beim Erstellen des Icons:"
 
 #: lib/spellcheck.tcl:57
 msgid "Unsupported spell checker"
-msgstr ""
+msgstr "Rechtschreibprüfungsprogramm nicht unterstützt"
 
 #: lib/spellcheck.tcl:65
-#, fuzzy
 msgid "Spell checking is unavailable"
-msgstr "Rechtschreibprüfung fehlgeschlagen"
+msgstr "Rechtschreibprüfung nicht verfügbar"
 
 #: lib/spellcheck.tcl:68
 msgid "Invalid spell checking configuration"
-msgstr ""
+msgstr "Unbenutzbare Konfiguration der Rechtschreibprüfung"
 
 #: lib/spellcheck.tcl:70
 #, tcl-format
 msgid "Reverting dictionary to %s."
-msgstr ""
+msgstr "Wörterbuch auf %s zurückgesetzt."
 
 #: lib/spellcheck.tcl:73
-#, fuzzy
 msgid "Spell checker silently failed on startup"
-msgstr "Rechtschreibprüfung fehlgeschlagen"
+msgstr "Rechtschreibprüfungsprogramm mit Fehler abgebrochen"
 
 #: lib/spellcheck.tcl:80
-#, fuzzy
 msgid "Unrecognized spell checker"
-msgstr "Unbekannte Version von »aspell«"
+msgstr "Unbekanntes Rechtschreibprüfungsprogramm"
 
 #: lib/spellcheck.tcl:180
 msgid "No Suggestions"
 msgstr "Keine Vorschläge"
 
 #: lib/spellcheck.tcl:381
-#, fuzzy
 msgid "Unexpected EOF from spell checker"
-msgstr "Unerwartetes EOF von »aspell«"
+msgstr "Unerwartetes EOF vom Rechtschreibprüfungsprogramm"
 
 #: lib/spellcheck.tcl:385
 msgid "Spell Checker Failed"
@@ -2002,6 +1997,3 @@ msgstr "Kompaktes Datenformat benutzen (für langsame Netzverbindungen)"
 #: lib/transport.tcl:168
 msgid "Include tags"
 msgstr "Mit Markierungen übertragen"
-
-#~ msgid "Not connected to aspell"
-#~ msgstr "Keine Verbindung zu »aspell«"
