@@ -72,6 +72,8 @@ $test_case 'rename (case change)' '
 
 $test_case 'merge (case change)' '
 
+	rm -f CamelCase &&
+	rm -f camelcase &&
 	git reset --hard initial &&
 	git merge topic
 
