@@ -670,11 +670,14 @@ gitcvs.usecrlfattr
 	then 'gitcvs.allbinary' is used. See linkgit:gitattribute[5].
 
 gitcvs.allbinary::
-	If true, all files not otherwise specified using
-	'gitcvs.usecrlfattr' and an explicitly set or unset `crlf`
-	attribute are sent to the client in mode '-kb'. This
-	causes the client to treat them as binary files which
-	suppresses any newline munging it otherwise might do.
+	This is used if 'gitcvs.usecrlfattr' does not resolve
+	the correct '-kb' mode to use. If true, all
+	unresolved files are sent to the client in
+	mode '-kb'. This causes the client to treat them
+	as binary files, which suppresses any newline munging it
+	otherwise might do. Alternatively, if it is set to "guess",
+	then the contents of the file are examined to decide if
+	it is binary, similar to 'core.autocrlf'.
 
 gitcvs.dbname::
 	Database used by git-cvsserver to cache revision information
