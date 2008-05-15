@@ -78,7 +78,7 @@ When 'konqueror' is specified by the a command line option or a
 configuration variable, we launch 'kfmclient' to try to open the HTML
 man page on an already opened konqueror in a new tab if possible.
 
-For consistency, we also try such a trick if 'brower.konqueror.path' is
+For consistency, we also try such a trick if 'browser.konqueror.path' is
 set to something like 'A_PATH_TO/konqueror'. That means we will try to
 launch 'A_PATH_TO/kfmclient' instead.
 
