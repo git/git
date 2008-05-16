@@ -344,7 +344,7 @@ void usage_with_options_internal(const char * const *usagestr,
 			break;
 		case OPTION_INTEGER:
 			if (opts->flags & PARSE_OPT_OPTARG)
-				pos += fprintf(stderr, " [<n>]");
+				pos += fprintf(stderr, "[<n>]");
 			else
 				pos += fprintf(stderr, " <n>");
 			break;

@@ -400,9 +400,16 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		char buf[10];
 		/* We do not spell "group" and such, so that
 		 * the configuration can be read by older version
-		 * of git.
+		 * of git. Note, we use octal numbers for new share modes,
+		 * and compatibility values for PERM_GROUP and
+		 * PERM_EVERYBODY.
 		 */
-		sprintf(buf, "%d", shared_repository);
+		if (shared_repository == PERM_GROUP)
+			sprintf(buf, "%d", OLD_PERM_GROUP);
+		else if (shared_repository == PERM_EVERYBODY)
+			sprintf(buf, "%d", OLD_PERM_EVERYBODY);
+		else
+			sprintf(buf, "0%o", shared_repository);
 		git_config_set("core.sharedrepository", buf);
 		git_config_set("receive.denyNonFastforwards", "true");
 	}

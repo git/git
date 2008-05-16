@@ -21,13 +21,13 @@ test_expect_success \
 rm -f path0 &&
 git read-tree $t &&
 git checkout-index -f -a &&
-! git diff-files | diff - /dev/null'
+test_must_fail git diff-files --exit-code'
 
 test_expect_success \
 'with -u, git checkout-index picks up stat information from new files.' '
 rm -f path0 &&
 git read-tree $t &&
 git checkout-index -u -f -a &&
-git diff-files | diff - /dev/null'
+git diff-files --exit-code'
 
 test_done

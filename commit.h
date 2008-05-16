@@ -63,7 +63,8 @@ enum cmit_fmt {
 };
 
 extern int non_ascii(int);
-extern enum cmit_fmt get_commit_format(const char *arg);
+struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
+extern void get_commit_format(const char *arg, struct rev_info *);
 extern void format_commit_message(const struct commit *commit,
                                   const void *format, struct strbuf *sb);
 extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit*,

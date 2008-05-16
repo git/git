@@ -144,6 +144,8 @@ See also <<FILES>>.
 	"auto".  If `stdout-is-tty` is missing, then checks the standard
 	output of the command itself, and exits with status 0 if color
 	is to be used, or exits with status 1 otherwise.
+	When the color setting for `name` is undefined, the command uses
+	`color.ui` as fallback.
 
 --get-color name default::
 

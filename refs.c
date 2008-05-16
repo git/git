@@ -368,7 +368,8 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *re
 
 const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *flag)
 {
-	int depth = MAXDEPTH, len;
+	int depth = MAXDEPTH;
+	ssize_t len;
 	char buffer[256];
 	static char ref_buffer[256];
 

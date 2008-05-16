@@ -21,6 +21,7 @@ test_expect_success 'setup' '
 	mkdir -p a/b/d a/c &&
 	(
 		echo "f	test=f"
+		echo "a/i test=a/i"
 	) >.gitattributes &&
 	(
 		echo "g test=a/g" &&
@@ -43,6 +44,13 @@ test_expect_success 'attribute test' '
 	attr_check b/g unspecified &&
 	attr_check a/b/h a/b/h &&
 	attr_check a/b/d/g "a/b/d/*"
+
+'
+
+test_expect_success 'root subdir attribute test' '
+
+	attr_check a/i a/i &&
+	attr_check subdir/a/i unspecified
 
 '
 

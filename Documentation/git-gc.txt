@@ -104,6 +104,21 @@ The optional configuration variable 'gc.pruneExpire' controls how old
 the unreferenced loose objects have to be before they are pruned.  The
 default is "2 weeks ago".
 
+
+Notes
+-----
+
+git-gc tries very hard to be safe about the garbage it collects. In
+particular, it will keep not only objects referenced by your current set
+of branches and tags, but also objects referenced by the index, remote
+tracking branches, refs saved by linkgit:git-filter-branch[1] in
+refs/original/, or reflogs (which may references commits in branches
+that were later amended or rewound).
+
+If you are expecting some objects to be collected and they aren't, check
+all of those locations and decide whether it makes sense in your case to
+remove those references.
+
 See Also
 --------
 linkgit:git-prune[1]

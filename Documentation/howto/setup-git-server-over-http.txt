@@ -1,5 +1,5 @@
 From: Rutger Nijlunsing <rutger@nospam.com>
-Subject: Setting up a git repository which can be pushed into and pulled from over HTTP.
+Subject: Setting up a git repository which can be pushed into and pulled from over HTTP(S).
 Date: Thu, 10 Aug 2006 22:00:26 +0200
 
 Since Apache is one of those packages people like to compile
@@ -40,9 +40,13 @@ What's needed:
 
 - have permissions to chown a directory
 
-- have git installed at the server _and_ client
+- have git installed on the client, and
 
-In effect, this probably means you're going to be root.
+- either have git installed on the server or have a webdav client on
+  the client.
+
+In effect, this means you're going to be root, or that you're using a
+preconfigured WebDAV server.
 
 
 Step 1: setup a bare GIT repository
@@ -50,9 +54,9 @@ Step 1: setup a bare GIT repository
 
 At the time of writing, git-http-push cannot remotely create a GIT
 repository. So we have to do that at the server side with git. Another
-option would be to generate an empty repository at the client and copy
-it to the server with WebDAV. But then you're probably the first to
-try that out :)
+option is to generate an empty bare repository at the client and copy
+it to the server with a WebDAV client (which is the only option if Git
+is not installed on the server).
 
 Create the directory under the DocumentRoot of the directories served
 by Apache. As an example we take /usr/local/apache2, but try "grep
@@ -169,7 +173,9 @@ On Debian:
 
    Most tests should pass.
 
-A command line tool to test WebDAV is cadaver.
+A command line tool to test WebDAV is cadaver. If you prefer GUIs, for
+example, konqueror can open WebDAV URLs as "webdav://..." or
+"webdavs://...".
 
 If you're into Windows, from XP onwards Internet Explorer supports
 WebDAV. For this, do Internet Explorer -> Open Location ->
@@ -179,8 +185,9 @@ http://<servername>/my-new-repo.git [x] Open as webfolder -> login .
 Step 3: setup the client
 ------------------------
 
-Make sure that you have HTTP support, i.e. your git was built with curl.
-The easiest way to check is to look for the executable 'git-http-push'.
+Make sure that you have HTTP support, i.e. your git was built with
+curl (version more recent than 7.10). The command 'git http-push' with
+no argument should display a usage message.
 
 Then, add the following to your $HOME/.netrc (you can do without, but will be
 asked to input your password a _lot_ of times):
@@ -197,10 +204,10 @@ instead of the server name.
 
 To check whether all is OK, do:
 
-   curl --netrc --location -v http://<username>@<servername>/my-new-repo.git/
+   curl --netrc --location -v http://<username>@<servername>/my-new-repo.git/HEAD
 
-...this should give a directory listing in HTML of /var/www/my-new-repo.git .
-
+...this should give something like 'ref: refs/heads/master', which is
+the content of the file HEAD on the server.
 
 Now, add the remote in your existing repository which contains the project
 you want to export:
@@ -223,6 +230,15 @@ From your client repository, do
 This pushes branch 'master' (which is assumed to be the branch you
 want to export) to repository called 'upload', which we previously
 defined with git-config.
+
+
+Using a proxy:
+--------------
+
+If you have to access the WebDAV server from behind an HTTP(S) proxy,
+set the variable 'all_proxy' to 'http://proxy-host.com:port', or
+'http://login-on-proxy:passwd-on-proxy@proxy-host.com:port'. See 'man
+curl' for details.
 
 
 Troubleshooting:
@@ -248,9 +264,14 @@ Reading /usr/local/apache2/logs/error_log is often helpful.
 
   On Debian: Read /var/log/apache2/error.log instead.
 
+If you access HTTPS locations, git may fail verifying the SSL
+certificate (this is return code 60). Setting http.sslVerify=false can
+help diagnosing the problem, but removes security checks.
+
 
 Debian References: http://www.debian-administration.org/articles/285
 
 Authors
   Johannes Schindelin <Johannes.Schindelin@gmx.de>
   Rutger Nijlunsing <git@wingding.demon.nl>
+  Matthieu Moy <Matthieu.Moy@imag.fr>

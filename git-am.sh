@@ -107,7 +107,7 @@ It does not apply to blobs recorded in its index."
     # patch did not touch, so recursive ends up canceling them,
     # saying that we reverted all those changes.
 
-    eval GITHEAD_$his_tree='"$SUBJECT"'
+    eval GITHEAD_$his_tree='"$FIRSTLINE"'
     export GITHEAD_$his_tree
     git-merge-recursive $orig_tree -- HEAD $his_tree || {
 	    git rerere
@@ -115,10 +115,6 @@ It does not apply to blobs recorded in its index."
 	    exit 1
     }
     unset GITHEAD_$his_tree
-}
-
-reread_subject () {
-	git stripspace <"$1" | sed -e 1q
 }
 
 prec=4
@@ -331,7 +327,20 @@ do
 			echo "Patch is empty.  Was it split wrong?"
 			stop_here $this
 		}
-		git stripspace < "$dotest/msg" > "$dotest/msg-clean"
+		if test -f "$dotest/rebasing" &&
+			commit=$(sed -e 's/^From \([0-9a-f]*\) .*/\1/' \
+				-e q "$dotest/$msgnum") &&
+			test "$(git cat-file -t "$commit")" = commit
+		then
+			git cat-file commit "$commit" |
+			sed -e '1,/^$/d' >"$dotest/msg-clean"
+		else
+			SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
+			case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
+
+			(printf '%s\n\n' "$SUBJECT"; cat "$dotest/msg") |
+				git stripspace > "$dotest/msg-clean"
+		fi
 		;;
 	esac
 
@@ -346,9 +355,6 @@ do
 	fi
 
 	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
-
-	SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
-	case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
 
 	case "$resume" in
 	'')
@@ -368,10 +374,8 @@ do
 		ADD_SIGNOFF=
 	    fi
 	    {
-		printf '%s\n' "$SUBJECT"
 		if test -s "$dotest/msg-clean"
 		then
-			echo
 			cat "$dotest/msg-clean"
 		fi
 		if test '' != "$ADD_SIGNOFF"
@@ -408,7 +412,6 @@ do
 		[aA]*) action=yes interactive= ;;
 		[nN]*) action=skip ;;
 		[eE]*) git_editor "$dotest/final-commit"
-		       SUBJECT=$(reread_subject "$dotest/final-commit")
 		       action=again ;;
 		[vV]*) action=again
 		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;
@@ -418,6 +421,7 @@ do
 	else
 	    action=yes
 	fi
+	FIRSTLINE=$(head -1 "$dotest/final-commit")
 
 	if test $action = skip
 	then
@@ -431,7 +435,7 @@ do
 		stop_here $this
 	fi
 
-	printf 'Applying %s\n' "$SUBJECT"
+	printf 'Applying %s\n' "$FIRSTLINE"
 
 	case "$resolved" in
 	'')
@@ -489,7 +493,7 @@ do
 	tree=$(git write-tree) &&
 	parent=$(git rev-parse --verify HEAD) &&
 	commit=$(git commit-tree $tree -p $parent <"$dotest/final-commit") &&
-	git update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
+	git update-ref -m "$GIT_REFLOG_ACTION: $FIRSTLINE" HEAD $commit $parent ||
 	stop_here $this
 
 	if test -x "$GIT_DIR"/hooks/post-applypatch

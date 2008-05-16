@@ -487,22 +487,20 @@ does. In scalar context requires the variable to be set only one time
 (exception is thrown otherwise), in array context returns allows the
 variable to be set multiple times and returns all the values.
 
-Must be called on a repository instance.
-
 This currently wraps command('config') so it is not so fast.
 
 =cut
 
 sub config {
-	my ($self, $var) = @_;
-	$self->repo_path()
-		or throw Error::Simple("not a repository");
+	my ($self, $var) = _maybe_self(@_);
 
 	try {
+		my @cmd = ('config');
+		unshift @cmd, $self if $self;
 		if (wantarray) {
-			return $self->command('config', '--get-all', $var);
+			return command(@cmd, '--get-all', $var);
 		} else {
-			return $self->command_oneline('config', '--get', $var);
+			return command_oneline(@cmd, '--get', $var);
 		}
 	} catch Git::Error::Command with {
 		my $E = shift;
@@ -522,20 +520,17 @@ Retrieve the bool configuration C<VARIABLE>. The return value
 is usable as a boolean in perl (and C<undef> if it's not defined,
 of course).
 
-Must be called on a repository instance.
-
 This currently wraps command('config') so it is not so fast.
 
 =cut
 
 sub config_bool {
-	my ($self, $var) = @_;
-	$self->repo_path()
-		or throw Error::Simple("not a repository");
+	my ($self, $var) = _maybe_self(@_);
 
 	try {
-		my $val = $self->command_oneline('config', '--bool', '--get',
-					      $var);
+		my @cmd = ('config', '--bool', '--get', $var);
+		unshift @cmd, $self if $self;
+		my $val = command_oneline(@cmd);
 		return undef unless defined $val;
 		return $val eq 'true';
 	} catch Git::Error::Command with {
@@ -557,19 +552,17 @@ or 'g' in the config file will cause the value to be multiplied
 by 1024, 1048576 (1024^2), or 1073741824 (1024^3) prior to output.
 It would return C<undef> if configuration variable is not defined,
 
-Must be called on a repository instance.
-
 This currently wraps command('config') so it is not so fast.
 
 =cut
 
 sub config_int {
-	my ($self, $var) = @_;
-	$self->repo_path()
-		or throw Error::Simple("not a repository");
+	my ($self, $var) = _maybe_self(@_);
 
 	try {
-		return $self->command_oneline('config', '--int', '--get', $var);
+		my @cmd = ('config', '--int', '--get', $var);
+		unshift @cmd, $self if $self;
+		return command_oneline(@cmd);
 	} catch Git::Error::Command with {
 		my $E = shift;
 		if ($E->value() == 1) {
@@ -639,15 +632,15 @@ The synopsis is like:
 	"$name <$email>" eq ident_person($name);
 	$time_tz =~ /^\d+ [+-]\d{4}$/;
 
-Both methods must be called on a repository instance.
-
 =cut
 
 sub ident {
-	my ($self, $type) = @_;
+	my ($self, $type) = _maybe_self(@_);
 	my $identstr;
 	if (lc $type eq lc 'committer' or lc $type eq lc 'author') {
-		$identstr = $self->command_oneline('var', 'GIT_'.uc($type).'_IDENT');
+		my @cmd = ('var', 'GIT_'.uc($type).'_IDENT');
+		unshift @cmd, $self if $self;
+		$identstr = command_oneline(@cmd);
 	} else {
 		$identstr = $type;
 	}
@@ -659,8 +652,8 @@ sub ident {
 }
 
 sub ident_person {
-	my ($self, @ident) = @_;
-	$#ident == 0 and @ident = $self->ident($ident[0]);
+	my ($self, @ident) = _maybe_self(@_);
+	$#ident == 0 and @ident = $self ? $self->ident($ident[0]) : ident($ident[0]);
 	return "$ident[0] <$ident[1]>";
 }
 

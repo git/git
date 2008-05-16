@@ -19,6 +19,8 @@ static const char * const builtin_remote_usage[] = {
 
 static int verbose;
 
+static int show_all(void);
+
 static inline int postfixcmp(const char *string, const char *postfix)
 {
 	int len1 = strlen(string), len2 = strlen(postfix);
@@ -88,19 +90,24 @@ static int add(int argc, const char **argv)
 	strbuf_init(&buf, 0);
 	strbuf_init(&buf2, 0);
 
+	strbuf_addf(&buf2, "refs/heads/test:refs/remotes/%s/test", name);
+	if (!valid_fetch_refspec(buf2.buf))
+		die("'%s' is not a valid remote name", name);
+
 	strbuf_addf(&buf, "remote.%s.url", name);
 	if (git_config_set(buf.buf, url))
 		return 1;
+
+	strbuf_reset(&buf);
+	strbuf_addf(&buf, "remote.%s.fetch", name);
 
 	if (track.nr == 0)
 		path_list_append("*", &track);
 	for (i = 0; i < track.nr; i++) {
 		struct path_list_item *item = track.items + i;
 
-		strbuf_reset(&buf);
-		strbuf_addf(&buf, "remote.%s.fetch", name);
-
 		strbuf_reset(&buf2);
+		strbuf_addch(&buf2, '+');
 		if (mirror)
 			strbuf_addf(&buf2, "refs/%s:refs/%s",
 					item->path, item->path);
@@ -380,8 +387,11 @@ static int show_or_prune(int argc, const char **argv, int prune)
 
 	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
 
-	if (argc < 1)
+	if (argc < 1) {
+		if (!prune)
+			return show_all();
 		usage_with_options(builtin_remote_usage, options);
+	}
 
 	memset(&states, 0, sizeof(states));
 	for (; argc; argc--, argv++) {

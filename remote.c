@@ -315,7 +315,7 @@ static int handle_config(const char *key, const char *value)
 	}
 	if (!prefixcmp(key, "url.")) {
 		struct rewrite *rewrite;
-		name = key + 5;
+		name = key + 4;
 		subkey = strrchr(name, '.');
 		if (!subkey)
 			return 0;
@@ -409,7 +409,7 @@ static void read_config(void)
 	alias_all_urls();
 }
 
-static struct refspec *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch)
+static struct refspec *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch, int verify)
 {
 	int i;
 	int st;
@@ -519,17 +519,32 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 	return rs;
 
  invalid:
+	if (verify) {
+		free(rs);
+		return NULL;
+	}
 	die("Invalid refspec '%s'", refspec[i]);
+}
+
+int valid_fetch_refspec(const char *fetch_refspec_str)
+{
+	const char *fetch_refspec[] = { fetch_refspec_str };
+	struct refspec *refspec;
+
+	refspec = parse_refspec_internal(1, fetch_refspec, 1, 1);
+	if (refspec)
+		free(refspec);
+	return !!refspec;
 }
 
 struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec)
 {
-	return parse_refspec_internal(nr_refspec, refspec, 1);
+	return parse_refspec_internal(nr_refspec, refspec, 1, 0);
 }
 
 struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
 {
-	return parse_refspec_internal(nr_refspec, refspec, 0);
+	return parse_refspec_internal(nr_refspec, refspec, 0, 0);
 }
 
 static int valid_remote_nick(const char *name)
@@ -797,6 +812,26 @@ static struct ref *make_linked_ref(const char *name, struct ref ***tail)
 	return ret;
 }
 
+static char *guess_ref(const char *name, struct ref *peer)
+{
+	struct strbuf buf = STRBUF_INIT;
+	unsigned char sha1[20];
+
+	const char *r = resolve_ref(peer->name, sha1, 1, NULL);
+	if (!r)
+		return NULL;
+
+	if (!prefixcmp(r, "refs/heads/"))
+		strbuf_addstr(&buf, "refs/heads/");
+	else if (!prefixcmp(r, "refs/tags/"))
+		strbuf_addstr(&buf, "refs/tags/");
+	else
+		return NULL;
+
+	strbuf_addstr(&buf, name);
+	return strbuf_detach(&buf, NULL);
+}
+
 static int match_explicit(struct ref *src, struct ref *dst,
 			  struct ref ***dst_tail,
 			  struct refspec *rs,
@@ -805,6 +840,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	struct ref *matched_src, *matched_dst;
 
 	const char *dst_value = rs->dst;
+	char *dst_guess;
 
 	if (rs->pattern)
 		return errs;
@@ -851,10 +887,15 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	case 0:
 		if (!memcmp(dst_value, "refs/", 5))
 			matched_dst = make_linked_ref(dst_value, dst_tail);
+		else if((dst_guess = guess_ref(dst_value, matched_src)))
+			matched_dst = make_linked_ref(dst_guess, dst_tail);
 		else
-			error("dst refspec %s does not match any "
-			      "existing ref on the remote and does "
-			      "not start with refs/.", dst_value);
+			error("unable to push to unqualified destination: %s\n"
+			      "The destination refspec neither matches an "
+			      "existing ref on the remote nor\n"
+			      "begins with refs/, and we are unable to "
+			      "guess a prefix based on the source ref.",
+			      dst_value);
 		break;
 	default:
 		matched_dst = NULL;

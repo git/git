@@ -16,7 +16,7 @@
 static const char * const git_tag_usage[] = {
 	"git-tag [-a|-s|-u <key-id>] [-f] [-m <msg>|-F <file>] <tagname> [<head>]",
 	"git-tag -d <tagname>...",
-	"git-tag -l [-n [<num>]] [<pattern>]",
+	"git-tag -l [-n[<num>]] [<pattern>]",
 	"git-tag -v <tagname>...",
 	NULL
 };

@@ -410,10 +410,12 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
-	print "Committing to $url ...\n";
+	if ($url) {
+		print "Committing to $url ...\n";
+	}
 	unless ($gs) {
 		die "Unable to determine upstream SVN information from ",
-		    "$head history\n";
+		    "$head history.\nPerhaps the repository is empty.";
 	}
 	my $last_rev;
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
@@ -1120,7 +1122,7 @@ sub cmt_metadata {
 
 sub working_head_info {
 	my ($head, $refs) = @_;
-	my @args = ('log', '--no-color', '--first-parent');
+	my @args = ('log', '--no-color', '--first-parent', '--pretty=medium');
 	my ($fh, $ctx) = command_output_pipe(@args, $head);
 	my $hash;
 	my %max;
@@ -2375,8 +2377,7 @@ sub check_author {
 	my ($author) = @_;
 	if (!defined $author || length $author == 0) {
 		$author = '(no author)';
-	}
-	if (defined $::_authors && ! defined $::users{$author}) {
+	} elsif (defined $::_authors && ! defined $::users{$author}) {
 		die "Author: $author not defined in $::_authors file\n";
 	}
 	$author;
@@ -2519,6 +2520,7 @@ sub rebuild_from_rev_db {
 	my ($self, $path) = @_;
 	my $r = -1;
 	open my $fh, '<', $path or croak "open: $!";
+	binmode $fh or croak "binmode: $!";
 	while (<$fh>) {
 		length($_) == 41 or croak "inconsistent size in ($_) != 41";
 		chomp($_);
@@ -2616,6 +2618,7 @@ sub rebuild {
 sub _rev_map_set {
 	my ($fh, $rev, $commit) = @_;
 
+	binmode $fh or croak "binmode: $!";
 	my $size = (stat($fh))[7];
 	($size % 24) == 0 or croak "inconsistent size: $size";
 
@@ -2719,6 +2722,7 @@ sub rev_map_max {
 	my $map_path = $self->map_path;
 	stat $map_path or return $want_commit ? (0, undef) : 0;
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
+	binmode $fh or croak "binmode: $!";
 	my $size = (stat($fh))[7];
 	($size % 24) == 0 or croak "inconsistent size: $size";
 
@@ -2751,6 +2755,7 @@ sub rev_map_get {
 	return undef unless -e $map_path;
 
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
+	binmode $fh or croak "binmode: $!";
 	my $size = (stat($fh))[7];
 	($size % 24) == 0 or croak "inconsistent size: $size";
 

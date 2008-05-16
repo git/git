@@ -117,15 +117,15 @@ static const unsigned char* get_rev(void)
 
 	while (commit == NULL) {
 		unsigned int mark;
-		struct commit_list *parents = NULL;
+		struct commit_list *parents;
 
 		if (rev_list == NULL || non_common_revs == 0)
 			return NULL;
 
 		commit = rev_list->item;
-		if (!(commit->object.parsed))
-			if (!parse_commit(commit))
-				parents = commit->parents;
+		if (!commit->object.parsed)
+			parse_commit(commit);
+		parents = commit->parents;
 
 		commit->object.flags |= POPPED;
 		if (!(commit->object.flags & COMMON))

@@ -276,3 +276,10 @@ probably enable this hook.
 Both standard output and standard error output are forwarded to
 `git-send-pack` on the other end, so you can simply `echo` messages
 for the user.
+
+pre-auto-gc
+-----------
+
+This hook is invoked by `git-gc --auto`. It takes no parameter, and
+exiting with non-zero status from this script causes the `git-gc --auto`
+to abort.

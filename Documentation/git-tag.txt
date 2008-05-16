@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]  <name> [<head>]
 'git-tag' -d <name>...
-'git-tag' [-n [<num>]] -l [<pattern>]
+'git-tag' [-n[<num>]] -l [<pattern>]
 'git-tag' -v <name>...
 
 DESCRIPTION
@@ -57,7 +57,7 @@ OPTIONS
 -v::
 	Verify the gpg signature of the given tag names.
 
--n <num>::
+-n<num>::
 	<num> specifies how many lines from the annotation, if any,
 	are printed when using -l.
 	The default is not to print any annotation lines.
@@ -233,14 +233,14 @@ the tag object affects, for example, the ordering of tags in the
 gitweb interface.
 
 To set the date used in future tag objects, set the environment
-variable GIT_AUTHOR_DATE to one or more of the date and time.  The
+variable GIT_COMMITTER_DATE to one or more of the date and time.  The
 date and time can be specified in a number of ways; the most common
 is "YYYY-MM-DD HH:MM".
 
 An example follows.
 
 ------------
-$ GIT_AUTHOR_DATE="2006-10-02 10:31" git tag -s v1.0.1
+$ GIT_COMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 ------------
 
 

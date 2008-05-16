@@ -535,18 +535,18 @@ with the associated patches use the more complex (and much more
 powerful)
 
 ----------------
-$ git-whatchanged -p --root
+$ git-whatchanged -p
 ----------------
 
 and you will see exactly what has changed in the repository over its
 short history.
 
 [NOTE]
-The `\--root` flag is a flag to `git-diff-tree` to tell it to
-show the initial aka 'root' commit too. Normally you'd probably not
-want to see the initial import diff, but since the tutorial project
-was started from scratch and is so small, we use it to make the result
-a bit more interesting.
+When using the above two commands, the initial commit will be shown.
+If this is a problem because it is huge, you can hide it by setting
+the log.showroot configuration variable to false. Having this, you
+can still show it for each command just adding the `\--root` option,
+which is a flag for `git-diff-tree` accepted by both commands.
 
 With that, you should now be having some inkling of what git does, and
 can explore on your own.

@@ -90,7 +90,7 @@ static struct option builtin_commit_options[] = {
 	OPT_CALLBACK('m', "message", &message, "MESSAGE", "specify commit message", opt_parse_m),
 	OPT_STRING('c', "reedit-message", &edit_message, "COMMIT", "reuse and edit message from specified commit "),
 	OPT_STRING('C', "reuse-message", &use_message, "COMMIT", "reuse message from specified commit"),
-	OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by: header"),
+	OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 	OPT_STRING('t', "template", &template_file, "FILE", "use specified template file"),
 	OPT_BOOLEAN('e', "edit", &edit_flag, "force edit of commit"),
 
@@ -98,7 +98,7 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN('a', "all", &all, "commit all changed files"),
 	OPT_BOOLEAN('i', "include", &also, "add specified files to index for commit"),
 	OPT_BOOLEAN(0, "interactive", &interactive, "interactively add files"),
-	OPT_BOOLEAN('o', "only", &only, ""),
+	OPT_BOOLEAN('o', "only", &only, "commit only specified files"),
 	OPT_BOOLEAN('n', "no-verify", &no_verify, "bypass pre-commit hook"),
 	OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
 	OPT_BOOLEAN(0, "untracked-files", &untracked_files, "show all untracked files"),
@@ -745,10 +745,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		die("No paths with --include/--only does not make sense.");
 	if (argc == 0 && only && amend)
 		only_include_assumed = "Clever... amending the last one with dirty index.";
-	if (argc > 0 && !also && !only) {
+	if (argc > 0 && !also && !only)
 		only_include_assumed = "Explicit paths specified without -i nor -o; assuming --only paths...";
-		also = 0;
-	}
 	if (!cleanup_arg || !strcmp(cleanup_arg, "default"))
 		cleanup_mode = use_editor ? CLEANUP_ALL : CLEANUP_SPACE;
 	else if (!strcmp(cleanup_arg, "verbatim"))
@@ -810,7 +808,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 	rev.verbose_header = 1;
 	rev.show_root_diff = 1;
-	rev.commit_format = get_commit_format("format:%h: %s");
+	get_commit_format("format:%h: %s", &rev);
 	rev.always_show_header = 0;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
