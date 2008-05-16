@@ -196,4 +196,17 @@ test_expect_success 'apply submodule diff' '
 	test -z "$D"
 '
 
+test_expect_success 'update --init' '
+
+	mv init init2 &&
+	git config -f .gitmodules submodule.example.url "$(pwd)/init2" &&
+	git config --remove-section submodule.example
+	git submodule update init > update.out &&
+	grep "not initialized" update.out &&
+	test ! -d init/.git &&
+	git submodule update --init init &&
+	test -d init/.git
+
+'
+
 test_done

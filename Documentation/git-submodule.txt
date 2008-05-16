@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git-submodule' [--quiet] add [-b branch] [--] <repository> [<path>]
 'git-submodule' [--quiet] status [--cached] [--] [<path>...]
-'git-submodule' [--quiet] [init|update] [--] [<path>...]
+'git-submodule' [--quiet] init [--] [<path>...]
+'git-submodule' [--quiet] update [--init] [--] [<path>...]
 'git-submodule' [--quiet] summary [--summary-limit <n>] [commit] [--] [<path>...]
 
 
@@ -47,6 +48,10 @@ update::
 	Update the registered submodules, i.e. clone missing submodules and
 	checkout the commit specified in the index of the containing repository.
 	This will make the submodules HEAD be detached.
++
+If the submodule is not yet initialized, and you just want to use the
+setting as stored in .gitmodules, you can automatically initialize the
+submodule with the --init option.
 
 summary::
 	Show commit summary between the given commit (defaults to HEAD) and

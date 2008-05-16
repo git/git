@@ -5,7 +5,7 @@
 # Copyright (c) 2007 Lars Hjemli
 
 USAGE="[--quiet] [--cached] \
-[add <repo> [-b branch]|status|init|update|summary [-n|--summary-limit <n>] [<commit>]] \
+[add <repo> [-b branch]|status|init|update [-i|--init]|summary [-n|--summary-limit <n>] [<commit>]] \
 [--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
@@ -271,6 +271,10 @@ cmd_update()
 		-q|--quiet)
 			quiet=1
 			;;
+		-i|--init)
+			shift
+			cmd_init "$@" || return
+			;;
 		--)
 			shift
 			break
@@ -296,6 +300,7 @@ cmd_update()
 			# path have been specified
 			test "$#" != "0" &&
 			say "Submodule path '$path' not initialized"
+			say "Maybe you want to use 'update --init'?"
 			continue
 		fi
 
