@@ -166,7 +166,9 @@ test_expect_success 'author different from committer' '
 	test_cmp expect actual
 '
 
-sed -i '$d' expect
+mv expect expect.tmp
+sed '$d' < expect.tmp > expect
+rm -f expect.tmp
 echo "# Committer:
 #" >> expect
 unset GIT_COMMITTER_EMAIL
