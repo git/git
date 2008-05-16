@@ -8,7 +8,7 @@ git-repack - Pack unpacked objects in a repository
 
 SYNOPSIS
 --------
-'git-repack' [-a] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
+'git-repack' [-a] [-A] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
 
 DESCRIPTION
 -----------
@@ -36,6 +36,18 @@ OPTIONS
 	with '-d'.  This will clean up the objects that `git prune`
 	leaves behind, but `git fsck --full` shows as
 	dangling.
+
+-A::
+	Same as `-a`, but any unreachable objects in a previous
+	pack become loose, unpacked objects, instead of being
+	left in the old pack.  Unreachable objects are never
+	intentionally added to a pack, even when repacking.
+	When used with '-d', this option
+	prevents unreachable objects from being immediately
+	deleted by way of being left in the old pack and then
+	removed.  Instead, the loose unreachable objects
+	will be pruned according to normal expiry rules
+	with the next linkgit:git-gc[1].
 
 -d::
 	After packing, if the newly created packs make some
