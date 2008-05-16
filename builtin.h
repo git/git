@@ -9,6 +9,7 @@ extern const char git_usage_string[];
 extern void list_common_cmds_help(void);
 extern void help_unknown_cmd(const char *cmd);
 extern void prune_packed_objects(int);
+extern int read_line_with_nul(char *buf, int size, FILE *file);
 
 extern int cmd_add(int argc, const char **argv, const char *prefix);
 extern int cmd_annotate(int argc, const char **argv, const char *prefix);

@@ -25,4 +25,13 @@ do
 		diff ../t5100/info$mail info$mail"
 done
 
+test_expect_success 'respect NULs' '
+
+	git mailsplit -d3 -o. ../t5100/nul &&
+	cmp ../t5100/nul 001 &&
+	(cat 001 | git mailinfo msg patch) &&
+	test 4 = $(wc -l < patch)
+
+'
+
 test_done

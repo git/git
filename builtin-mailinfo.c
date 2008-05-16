@@ -641,7 +641,7 @@ static void decode_transfer_encoding(char *line, unsigned linesize)
 	}
 }
 
-static int handle_filter(char *line, unsigned linesize);
+static int handle_filter(char *line, unsigned linesize, int linelen);
 
 static int find_boundary(void)
 {
@@ -669,7 +669,7 @@ again:
 					"can't recover\n");
 			exit(1);
 		}
-		handle_filter(newline, sizeof(newline));
+		handle_filter(newline, sizeof(newline), strlen(newline));
 
 		/* skip to the next boundary */
 		if (!find_boundary())
@@ -759,14 +759,14 @@ static int handle_commit_msg(char *line, unsigned linesize)
 	return 0;
 }
 
-static int handle_patch(char *line)
+static int handle_patch(char *line, int len)
 {
-	fputs(line, patchfile);
+	fwrite(line, 1, len, patchfile);
 	patch_lines++;
 	return 0;
 }
 
-static int handle_filter(char *line, unsigned linesize)
+static int handle_filter(char *line, unsigned linesize, int linelen)
 {
 	static int filter = 0;
 
@@ -779,7 +779,7 @@ static int handle_filter(char *line, unsigned linesize)
 			break;
 		filter++;
 	case 1:
-		if (!handle_patch(line))
+		if (!handle_patch(line, linelen))
 			break;
 		filter++;
 	default:
@@ -794,6 +794,7 @@ static void handle_body(void)
 	int rc = 0;
 	static char newline[2000];
 	static char *np = newline;
+	int len = strlen(line);
 
 	/* Skip up to the first boundary */
 	if (content_top->boundary) {
@@ -807,7 +808,8 @@ static void handle_body(void)
 			/* flush any leftover */
 			if ((transfer_encoding == TE_BASE64)  &&
 			    (np != newline)) {
-				handle_filter(newline, sizeof(newline));
+				handle_filter(newline, sizeof(newline),
+						strlen(newline));
 			}
 			if (!handle_boundary())
 				return;
@@ -824,7 +826,7 @@ static void handle_body(void)
 
 			/* binary data most likely doesn't have newlines */
 			if (message_type != TYPE_TEXT) {
-				rc = handle_filter(line, sizeof(newline));
+				rc = handle_filter(line, sizeof(line), len);
 				break;
 			}
 
@@ -841,7 +843,7 @@ static void handle_body(void)
 					/* should be sitting on a new line */
 					*(++np) = 0;
 					op++;
-					rc = handle_filter(newline, sizeof(newline));
+					rc = handle_filter(newline, sizeof(newline), np - newline);
 					np = newline;
 				}
 			} while (*op != 0);
@@ -851,12 +853,12 @@ static void handle_body(void)
 			break;
 		}
 		default:
-			rc = handle_filter(line, sizeof(newline));
+			rc = handle_filter(line, sizeof(line), len);
 		}
 		if (rc)
 			/* nothing left to filter */
 			break;
-	} while (fgets(line, sizeof(line), fin));
+	} while ((len = read_line_with_nul(line, sizeof(line), fin)));
 
 	return;
 }
