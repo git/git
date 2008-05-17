@@ -1143,21 +1143,6 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 	if (patch->is_delete < 0 &&
 	    (newlines || (patch->fragments && patch->fragments->next)))
 		patch->is_delete = 0;
-	if (!unidiff_zero || context) {
-		/* If the user says the patch is not generated with
-		 * --unified=0, or if we have seen context lines,
-		 * then not having oldlines means the patch is creation,
-		 * and not having newlines means the patch is deletion.
-		 */
-		if (patch->is_new < 0 && !oldlines) {
-			patch->is_new = 1;
-			patch->old_name = NULL;
-		}
-		if (patch->is_delete < 0 && !newlines) {
-			patch->is_delete = 1;
-			patch->new_name = NULL;
-		}
-	}
 
 	if (0 < patch->is_new && oldlines)
 		die("new file %s depends on old contents", patch->new_name);
