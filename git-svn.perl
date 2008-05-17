@@ -745,7 +745,7 @@ sub cmd_commit_diff {
 	my $usage = "Usage: $0 commit-diff -r<revision> ".
 	            "<tree-ish> <tree-ish> [<URL>]";
 	fatal($usage) if (!defined $ta || !defined $tb);
-	my $svn_path;
+	my $svn_path = '';
 	if (!defined $url) {
 		my $gs = eval { Git::SVN->new };
 		if (!$gs) {
@@ -769,7 +769,6 @@ sub cmd_commit_diff {
 		$_message ||= get_commit_entry($tb)->{log};
 	}
 	my $ra ||= Git::SVN::Ra->new($url);
-	$svn_path ||= $ra->{svn_path};
 	my $r = $_revision;
 	if ($r eq 'HEAD') {
 		$r = $ra->get_latest_revnum;
