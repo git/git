@@ -418,7 +418,7 @@ static int guess_p_value(const char *nameline)
 }
 
 /*
- * Get the name etc info from the --/+++ lines of a traditional patch header
+ * Get the name etc info from the ---/+++ lines of a traditional patch header
  *
  * FIXME! The end-of-filename heuristics are kind of screwy. For existing
  * files, we can happily check the index for a match, but for creating a
