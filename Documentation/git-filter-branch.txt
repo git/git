@@ -183,6 +183,10 @@ or copyright violation) from all commits:
 git filter-branch --tree-filter 'rm filename' HEAD
 -------------------------------------------------------
 
+However, if the file is absent from the tree of some commit,
+a simple `rm filename` will fail for that tree and commit.
+Thus you may instead want to use `rm -f filename` as the script.
+
 A significantly faster version:
 
 --------------------------------------------------------------------------
