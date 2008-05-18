@@ -215,6 +215,7 @@ static void copy_or_link_directory(char *src, char *dest)
 				die("failed to create link %s\n", dest);
 		}
 	}
+	closedir(dir);
 }
 
 static const struct ref *clone_local(const char *src_repo,
