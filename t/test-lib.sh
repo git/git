@@ -419,7 +419,7 @@ rm -fr "$test" || {
 }
 
 test_create_repo "$test"
-cd "$test"
+cd "$test" || exit 1
 
 this_test=$(expr "./$0" : '.*/\(t[0-9]*\)-[^/]*$')
 for skp in $GIT_SKIP_TESTS
