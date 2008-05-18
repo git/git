@@ -123,7 +123,7 @@ This test harness library does the following things:
    (or -h), it shows the test_description and exits.
 
  - Creates an empty test directory with an empty .git/objects
-   database and chdir(2) into it.  This directory is 't/trash'
+   database and chdir(2) into it.  This directory is 't/trash directory'
    if you must know, but I do not think you care.
 
  - Defines standard test helper functions for your scripts to

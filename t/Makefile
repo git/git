@@ -20,7 +20,7 @@ $(T):
 	@echo "*** $@ ***"; GIT_CONFIG=.git/config '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
 
 clean:
-	$(RM) -r trash
+	$(RM) -r 'trash directory'
 
 # we can test NO_OPTIMIZE_COMMITS independently of LC_ALL
 full-svn-test:
