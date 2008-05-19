@@ -10,7 +10,7 @@ git-am [options] --skip
 --
 d,dotest=       use <dir> and not .dotest
 i,interactive   run interactively
-b,binary        pass --allo-binary-replacement to git-apply
+b,binary        pass --allow-binary-replacement to git-apply
 3,3way          allow fall back on 3way merging if needed
 s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
