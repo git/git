@@ -196,10 +196,10 @@ Any other arguments are passed directly to `git log'
 	independently of git-svn functions.
 
 'create-ignore'::
-
 	Recursively finds the svn:ignore property on directories and
 	creates matching .gitignore files. The resulting files are staged to
-	be committed, but are not committed.
+	be committed, but are not committed. Use -r/--revision to refer to a
+	specfic revision.
 
 'show-ignore'::
 	Recursively finds and lists the svn:ignore property on
@@ -222,6 +222,19 @@ Any other arguments are passed directly to `git log'
 	`svn info' provides.  Does not currently support a -r/--revision
 	argument.  Use the --url option to output only the value of the
 	'URL:' field.
+
+'proplist'::
+	Lists the properties stored in the Subversion repository about a
+	given file or directory.  Use -r/--revision to refer to a specific
+	Subversion revision.
+
+'propget'::
+	Gets the Subversion property given as the first argument, for a
+	file.  A specific revision can be specified with -r/--revision.
+
+'show-externals'::
+	Shows the Subversion externals.  Use -r/--revision to specify a
+	specific revision.
 
 --
 
