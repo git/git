@@ -150,6 +150,7 @@ test-dump-cache-tree
 test-genrandom
 test-match-trees
 test-parse-options
+test-path-utils
 test-sha1
 common-cmds.h
 *.tar.gz

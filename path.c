@@ -357,3 +357,56 @@ const char *make_absolute_path(const char *path)
 
 	return buf;
 }
+
+/*
+ * path = absolute path
+ * buf = buffer of at least max(2, strlen(path)+1) bytes
+ * It is okay if buf == path, but they should not overlap otherwise.
+ *
+ * Performs the following normalizations on path, storing the result in buf:
+ * - Removes trailing slashes.
+ * - Removes empty components.
+ * - Removes "." components.
+ * - Removes ".." components, and the components the precede them.
+ * "" and paths that contain only slashes are normalized to "/".
+ * Returns the length of the output.
+ *
+ * Note that this function is purely textual.  It does not follow symlinks,
+ * verify the existence of the path, or make any system calls.
+ */
+int normalize_absolute_path(char *buf, const char *path)
+{
+	const char *comp_start = path, *comp_end = path;
+	char *dst = buf;
+	int comp_len;
+	assert(buf);
+	assert(path);
+
+	while (*comp_start) {
+		assert(*comp_start == '/');
+		while (*++comp_end && *comp_end != '/')
+			; /* nothing */
+		comp_len = comp_end - comp_start;
+
+		if (!strncmp("/",  comp_start, comp_len) ||
+		    !strncmp("/.", comp_start, comp_len))
+			goto next;
+
+		if (!strncmp("/..", comp_start, comp_len)) {
+			while (dst > buf && *--dst != '/')
+				; /* nothing */
+			goto next;
+		}
+
+		memcpy(dst, comp_start, comp_len);
+		dst += comp_len;
+	next:
+		comp_start = comp_end;
+	}
+
+	if (dst == buf)
+		*dst++ = '/';
+
+	*dst = '\0';
+	return dst - buf;
+}
