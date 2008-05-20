@@ -177,6 +177,7 @@ my %cmd = (
 			  'strategy|s=s' => \$_strategy,
 			  'local|l' => \$_local,
 			  'fetch-all|all' => \$_fetch_all,
+			  'dry-run|n' => \$_dry_run,
 			  %fc_opts } ],
 	'commit-diff' => [ \&cmd_commit_diff,
 	                   'Commit a diff between two trees',
@@ -556,6 +557,11 @@ sub cmd_rebase {
 	unless ($gs) {
 		die "Unable to determine upstream SVN information from ",
 		    "working tree history\n";
+	}
+	if ($_dry_run) {
+		print "Remote Branch: " . $gs->refname . "\n";
+		print "SVN URL: " . $url . "\n";
+		return;
 	}
 	if (command(qw/diff-index HEAD --/)) {
 		print STDERR "Cannot rebase with uncommited changes:\n";
