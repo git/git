@@ -1,0 +1,887 @@
+# Swedish translation for gitk
+# Copyright (C) 2005-2008 Paul Mackerras
+# This file is distributed under the same license as the gitk package.
+#
+# Peter Karlsson <peter@softwolves.pp.se>, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: sv\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-03-14 15:03+0100\n"
+"PO-Revision-Date: 2008-03-14 16:06CET-1\n"
+"Last-Translator: Peter Karlsson <peter@softwolves.pp.se>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit"
+
+#: gitk:111
+msgid "Error executing git rev-list:"
+msgstr "Fel vid körning av git rev-list:"
+
+#: gitk:124
+msgid "Reading"
+msgstr "Läser"
+
+#: gitk:151 gitk:2191
+msgid "Reading commits..."
+msgstr "Läser incheckningar..."
+
+#: gitk:275
+msgid "Can't parse git log output:"
+msgstr "Kan inte tolka utdata från git log:"
+
+#: gitk:386 gitk:2195
+msgid "No commits selected"
+msgstr "Inga incheckningar markerade"
+
+#: gitk:500
+msgid "No commit information available"
+msgstr "Ingen incheckningsinformation är tillgänglig"
+
+#: gitk:599 gitk:621 gitk:1955 gitk:6423 gitk:7923 gitk:8082
+msgid "OK"
+msgstr "OK"
+
+#: gitk:623 gitk:1956 gitk:6107 gitk:6178 gitk:6275 gitk:6321 gitk:6425
+#: gitk:7924 gitk:8083
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: gitk:661
+msgid "File"
+msgstr "Arkiv"
+
+#: gitk:663
+msgid "Update"
+msgstr "Uppdatera"
+
+#: gitk:664
+msgid "Reread references"
+msgstr "Läs om referenser"
+
+#: gitk:665
+msgid "List references"
+msgstr "Visa referenser"
+
+#: gitk:666
+msgid "Quit"
+msgstr "Avsluta"
+
+#: gitk:668
+msgid "Edit"
+msgstr "Redigera"
+
+#: gitk:669
+msgid "Preferences"
+msgstr "Inställningar"
+
+#: gitk:672 gitk:1892
+msgid "View"
+msgstr "Visa"
+
+#: gitk:673
+msgid "New view..."
+msgstr "Ny vy..."
+
+#: gitk:674 gitk:2133 gitk:8722
+msgid "Edit view..."
+msgstr "Ändra vy..."
+
+#: gitk:676 gitk:2134 gitk:8723
+msgid "Delete view"
+msgstr "Ta bort vy"
+
+#: gitk:678
+msgid "All files"
+msgstr "Alla filer"
+
+#: gitk:682
+msgid "Help"
+msgstr "Hjälp"
+
+#: gitk:683 gitk:1317
+msgid "About gitk"
+msgstr "Om gitk"
+
+#: gitk:684
+msgid "Key bindings"
+msgstr "Tangentbordsbindningar"
+
+#: gitk:741
+msgid "SHA1 ID: "
+msgstr "SHA1-id: "
+
+#: gitk:791
+msgid "Find"
+msgstr "Sök"
+
+#: gitk:792
+msgid "next"
+msgstr "nästa"
+
+#: gitk:793
+msgid "prev"
+msgstr "föreg"
+
+#: gitk:794
+msgid "commit"
+msgstr "incheckning"
+
+#: gitk:797 gitk:799 gitk:2356 gitk:2379 gitk:2403 gitk:4306 gitk:4369
+msgid "containing:"
+msgstr "som innehåller:"
+
+#: gitk:800 gitk:1778 gitk:1783 gitk:2431
+msgid "touching paths:"
+msgstr "som rör sökväg:"
+
+#: gitk:801 gitk:2436
+msgid "adding/removing string:"
+msgstr "som lägger/till tar bort sträng:"
+
+#: gitk:810 gitk:812
+msgid "Exact"
+msgstr "Exakt"
+
+#: gitk:812 gitk:2514 gitk:4274
+msgid "IgnCase"
+msgstr "IgnVersaler"
+
+#: gitk:812 gitk:2405 gitk:2512 gitk:4270
+msgid "Regexp"
+msgstr "Reg.uttr."
+
+#: gitk:814 gitk:815 gitk:2533 gitk:2563 gitk:2570 gitk:4380 gitk:4436
+msgid "All fields"
+msgstr "Alla fält"
+
+#: gitk:815 gitk:2531 gitk:2563 gitk:4336
+msgid "Headline"
+msgstr "Rubrik"
+
+#: gitk:816 gitk:2531 gitk:4336 gitk:4436 gitk:4827
+msgid "Comments"
+msgstr "Kommentarer"
+
+#: gitk:816 gitk:2531 gitk:2535 gitk:2570 gitk:4336 gitk:4763 gitk:5956
+#: gitk:5971
+msgid "Author"
+msgstr "Författare"
+
+#: gitk:816 gitk:2531 gitk:4336 gitk:4765
+msgid "Committer"
+msgstr "Incheckare"
+
+#: gitk:845
+msgid "Search"
+msgstr "Sök"
+
+#: gitk:852
+msgid "Diff"
+msgstr "Diff"
+
+#: gitk:854
+msgid "Old version"
+msgstr "Gammal version"
+
+#: gitk:856
+msgid "New version"
+msgstr "Ny version"
+
+#: gitk:858
+msgid "Lines of context"
+msgstr "Rader sammanhang"
+
+#: gitk:868
+msgid "Ignore space change"
+msgstr "Ignorera ändringar i blanksteg"
+
+#: gitk:926
+msgid "Patch"
+msgstr "Patch"
+
+#: gitk:928
+msgid "Tree"
+msgstr "Träd"
+
+#: gitk:1053 gitk:1068 gitk:6022
+msgid "Diff this -> selected"
+msgstr "Diff denna -> markerad"
+
+#: gitk:1055 gitk:1070 gitk:6023
+msgid "Diff selected -> this"
+msgstr "Diff markerad -> denna"
+
+#: gitk:1057 gitk:1072 gitk:6024
+msgid "Make patch"
+msgstr "Skapa patch"
+
+#: gitk:1058 gitk:6162
+msgid "Create tag"
+msgstr "Skapa tagg"
+
+#: gitk:1059 gitk:6255
+msgid "Write commit to file"
+msgstr "Skriv incheckning till fil"
+
+#: gitk:1060 gitk:6309
+msgid "Create new branch"
+msgstr "Skapa ny gren"
+
+#: gitk:1061
+msgid "Cherry-pick this commit"
+msgstr "Plocka denna incheckning"
+
+#: gitk:1063
+msgid "Reset HEAD branch to here"
+msgstr "Återställ HEAD-grenen hit"
+
+#: gitk:1079
+msgid "Check out this branch"
+msgstr "Checka ut denna gren"
+
+#: gitk:1081
+msgid "Remove this branch"
+msgstr "Ta bort denna gren"
+
+#: gitk:1087
+msgid "Highlight this too"
+msgstr "Markera även detta"
+
+#: gitk:1089
+msgid "Highlight this only"
+msgstr "Markera bara detta"
+
+#: gitk:1318
+msgid ""
+"\n"
+"Gitk - a commit viewer for git\n"
+"\n"
+"Copyright © 2005-2006 Paul Mackerras\n"
+"\n"
+"Use and redistribute under the terms of the GNU General Public License"
+msgstr ""
+"\n"
+"Gitk - en incheckningsvisare för git\n"
+"\n"
+"Copyright © 2005-2006 Paul Mackerras\n"
+"\n"
+"Använd och vidareförmedla enligt villkoren i GNU General Public License"
+
+#: gitk:1326 gitk:1387 gitk:6581
+msgid "Close"
+msgstr "Stäng"
+
+#: gitk:1345
+msgid "Gitk key bindings"
+msgstr "Tangentbordsbindningar för Gitk"
+
+#: gitk:1347
+msgid "Gitk key bindings:"
+msgstr "Tangentbordsbindningar för Gitk:"
+
+#: gitk:1349
+#, tcl-format
+msgid "<%s-Q>\t\tQuit"
+msgstr "<%s-Q>\t\tAvsluta"
+
+#: gitk:1350
+msgid "<Home>\t\tMove to first commit"
+msgstr "<Home>\t\tGå till första incheckning"
+
+#: gitk:1351
+msgid "<End>\t\tMove to last commit"
+msgstr "<End>\t\tGå till sista incheckning"
+
+#: gitk:1352
+msgid "<Up>, p, i\tMove up one commit"
+msgstr "<Upp>, p, i\tGå en incheckning upp"
+
+#: gitk:1353
+msgid "<Down>, n, k\tMove down one commit"
+msgstr "<Ned>, n, k\tGå en incheckning ned"
+
+#: gitk:1354
+msgid "<Left>, z, j\tGo back in history list"
+msgstr "<Vänster>, z, j\tGå bakåt i historiken"
+
+#: gitk:1355
+msgid "<Right>, x, l\tGo forward in history list"
+msgstr "<Höger>, x, l\tGå framåt i historiken"
+
+#: gitk:1356
+msgid "<PageUp>\tMove up one page in commit list"
+msgstr "<PageUp>\tGå upp en sida i incheckningslistan"
+
+#: gitk:1357
+msgid "<PageDown>\tMove down one page in commit list"
+msgstr "<PageDown>\tGå ned en sida i incheckningslistan"
+
+#: gitk:1358
+#, tcl-format
+msgid "<%s-Home>\tScroll to top of commit list"
+msgstr "<%s-Home>\tRulla till början av incheckningslistan"
+
+#: gitk:1359
+#, tcl-format
+msgid "<%s-End>\tScroll to bottom of commit list"
+msgstr "<%s-End>\tRulla till slutet av incheckningslistan"
+
+#: gitk:1360
+#, tcl-format
+msgid "<%s-Up>\tScroll commit list up one line"
+msgstr "<%s-Upp>\tRulla incheckningslistan upp ett steg"
+
+#: gitk:1361
+#, tcl-format
+msgid "<%s-Down>\tScroll commit list down one line"
+msgstr "<%s-Ned>\tRulla incheckningslistan ned ett steg"
+
+#: gitk:1362
+#, tcl-format
+msgid "<%s-PageUp>\tScroll commit list up one page"
+msgstr "<%s-PageUp>\tRulla incheckningslistan upp en sida"
+
+#: gitk:1363
+#, tcl-format
+msgid "<%s-PageDown>\tScroll commit list down one page"
+msgstr "<%s-PageDown>\tRulla incheckningslistan ned en sida"
+
+#: gitk:1364
+msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgstr "<Skift-Upp>\tSök bakåt (uppåt, senare incheckningar)"
+
+#: gitk:1365
+msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgstr "<Skift-Ned>\tSök framåt (nedåt, tidigare incheckningar)"
+
+#: gitk:1366
+msgid "<Delete>, b\tScroll diff view up one page"
+msgstr "<Delete>, b\tRulla diffvisningen upp en sida"
+
+#: gitk:1367
+msgid "<Backspace>\tScroll diff view up one page"
+msgstr "<Baksteg>\tRulla diffvisningen upp en sida"
+
+#: gitk:1368
+msgid "<Space>\t\tScroll diff view down one page"
+msgstr "<Blanksteg>\tRulla diffvisningen ned en sida"
+
+#: gitk:1369
+msgid "u\t\tScroll diff view up 18 lines"
+msgstr "u\t\tRulla diffvisningen upp 18 rader"
+
+#: gitk:1370
+msgid "d\t\tScroll diff view down 18 lines"
+msgstr "d\t\tRulla diffvisningen ned 18 rader"
+
+#: gitk:1371
+#, tcl-format
+msgid "<%s-F>\t\tFind"
+msgstr "<%s-F>\t\tSök"
+
+#: gitk:1372
+#, tcl-format
+msgid "<%s-G>\t\tMove to next find hit"
+msgstr "<%s-G>\t\tGå till nästa sökträff"
+
+#: gitk:1373
+msgid "<Return>\tMove to next find hit"
+msgstr "<Return>\t\tGå till nästa sökträff"
+
+#: gitk:1374
+msgid "/\t\tMove to next find hit, or redo find"
+msgstr "/\t\tGå till nästa sökträff, eller sök på nytt"
+
+#: gitk:1375
+msgid "?\t\tMove to previous find hit"
+msgstr "?\t\tGå till föregående sökträff"
+
+#: gitk:1376
+msgid "f\t\tScroll diff view to next file"
+msgstr "f\t\tRulla diffvisningen till nästa fil"
+
+#: gitk:1377
+#, tcl-format
+msgid "<%s-S>\t\tSearch for next hit in diff view"
+msgstr "<%s-S>\t\tGå till nästa sökträff i diffvisningen"
+
+#: gitk:1378
+#, tcl-format
+msgid "<%s-R>\t\tSearch for previous hit in diff view"
+msgstr "<%s-R>\t\tGå till föregående sökträff i diffvisningen"
+
+#: gitk:1379
+#, tcl-format
+msgid "<%s-KP+>\tIncrease font size"
+msgstr "<%s-Num+>\tÖka teckenstorlek"
+
+#: gitk:1380
+#, tcl-format
+msgid "<%s-plus>\tIncrease font size"
+msgstr "<%s-plus>\tÖka teckenstorlek"
+
+#: gitk:1381
+#, tcl-format
+msgid "<%s-KP->\tDecrease font size"
+msgstr "<%s-Num->\tMinska teckenstorlek"
+
+#: gitk:1382
+#, tcl-format
+msgid "<%s-minus>\tDecrease font size"
+msgstr "<%s-minus>\tMinska teckenstorlek"
+
+#: gitk:1383
+msgid "<F5>\t\tUpdate"
+msgstr "<F5>\t\tUppdatera"
+
+#: gitk:1896
+msgid "Gitk view definition"
+msgstr "Definition av Gitk-vy"
+
+#: gitk:1921
+msgid "Name"
+msgstr "Namn"
+
+#: gitk:1924
+msgid "Remember this view"
+msgstr "Spara denna vy"
+
+#: gitk:1928
+msgid "Commits to include (arguments to git rev-list):"
+msgstr "Incheckningar att ta med (argument till git rev-list):"
+
+#: gitk:1935
+msgid "Command to generate more commits to include:"
+msgstr "Kommando för att generera fler incheckningar att ta med:"
+
+#: gitk:1942
+msgid "Enter files and directories to include, one per line:"
+msgstr "Ange filer och kataloger att ta med, en per rad:"
+
+#: gitk:1989
+msgid "Error in commit selection arguments:"
+msgstr "Fel i argument för val av incheckningar:"
+
+#: gitk:2043 gitk:2127 gitk:2583 gitk:2597 gitk:3781 gitk:8688 gitk:8689
+msgid "None"
+msgstr "Inget"
+
+#: gitk:2531 gitk:4336 gitk:5958 gitk:5973
+msgid "Date"
+msgstr "Datum"
+
+#: gitk:2531 gitk:4336
+msgid "CDate"
+msgstr "Skapat datum"
+
+#: gitk:2680 gitk:2685
+msgid "Descendant"
+msgstr "Avkomling"
+
+#: gitk:2681
+msgid "Not descendant"
+msgstr "Inte avkomling"
+
+#: gitk:2688 gitk:2693
+msgid "Ancestor"
+msgstr "Förfader"
+
+#: gitk:2689
+msgid "Not ancestor"
+msgstr "Inte förfader"
+
+#: gitk:2924
+msgid "Local changes checked in to index but not committed"
+msgstr "Lokala ändringar sparade i indexet men inte incheckade"
+
+#: gitk:2954
+msgid "Local uncommitted changes, not checked in to index"
+msgstr "Lokala ändringar, ej sparade i indexet"
+
+#: gitk:4305
+msgid "Searching"
+msgstr "Söker"
+
+#: gitk:4767
+msgid "Tags:"
+msgstr "Taggar:"
+
+#: gitk:4784 gitk:4790 gitk:5951
+msgid "Parent"
+msgstr "Förälder"
+
+#: gitk:4795
+msgid "Child"
+msgstr "Barn"
+
+#: gitk:4804
+msgid "Branch"
+msgstr "Gren"
+
+#: gitk:4807
+msgid "Follows"
+msgstr "Följer"
+
+#: gitk:4810
+msgid "Precedes"
+msgstr "Föregår"
+
+#: gitk:5093
+msgid "Error getting merge diffs:"
+msgstr "Fel vid hämtning av sammanslagningsdiff:"
+
+#: gitk:5778
+msgid "Goto:"
+msgstr "Gå till:"
+
+#: gitk:5780
+msgid "SHA1 ID:"
+msgstr "SHA1-id:"
+
+#: gitk:5805
+#, tcl-format
+msgid "Short SHA1 id %s is ambiguous"
+msgstr "Förkortat SHA1-id %s är tvetydigt"
+
+#: gitk:5817
+#, tcl-format
+msgid "SHA1 id %s is not known"
+msgstr "SHA-id:t %s är inte känt"
+
+#: gitk:5819
+#, tcl-format
+msgid "Tag/Head %s is not known"
+msgstr "Tagg/huvud %s är okänt"
+
+#: gitk:5961
+msgid "Children"
+msgstr "Barn"
+
+#: gitk:6018
+#, tcl-format
+msgid "Reset %s branch to here"
+msgstr "Återställ grenen %s hit"
+
+#: gitk:6049
+msgid "Top"
+msgstr "Topp"
+
+#: gitk:6050
+msgid "From"
+msgstr "Från"
+
+#: gitk:6055
+msgid "To"
+msgstr "Till"
+
+#: gitk:6078
+msgid "Generate patch"
+msgstr "Generera patch"
+
+#: gitk:6080
+msgid "From:"
+msgstr "Från:"
+
+#: gitk:6089
+msgid "To:"
+msgstr "Till:"
+
+#: gitk:6098
+msgid "Reverse"
+msgstr "Vänd"
+
+#: gitk:6100 gitk:6269
+msgid "Output file:"
+msgstr "Utdatafil:"
+
+#: gitk:6106
+msgid "Generate"
+msgstr "Generera"
+
+#: gitk:6142
+msgid "Error creating patch:"
+msgstr "Fel vid generering av patch:"
+
+#: gitk:6164 gitk:6257 gitk:6311
+msgid "ID:"
+msgstr "Id:"
+
+#: gitk:6173
+msgid "Tag name:"
+msgstr "Taggnamn:"
+
+#: gitk:6177 gitk:6320
+msgid "Create"
+msgstr "Skapa"
+
+#: gitk:6192
+msgid "No tag name specified"
+msgstr "Inget taggnamn angavs"
+
+#: gitk:6196
+#, tcl-format
+msgid "Tag \"%s\" already exists"
+msgstr "Taggen \"%s\" finns redan"
+
+#: gitk:6202
+msgid "Error creating tag:"
+msgstr "Fel vid skapande av tagg:"
+
+#: gitk:6266
+msgid "Command:"
+msgstr "Kommando:"
+
+#: gitk:6274
+msgid "Write"
+msgstr "Skriv"
+
+#: gitk:6290
+msgid "Error writing commit:"
+msgstr "Fel vid skrivning av incheckning:"
+
+#: gitk:6316
+msgid "Name:"
+msgstr "Namn:"
+
+#: gitk:6335
+msgid "Please specify a name for the new branch"
+msgstr "Ange ett namn för den nya grenen"
+
+#: gitk:6364
+#, tcl-format
+msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgstr "Incheckningen %s finns redan på grenen %s -- skall den verkligen appliceras på nytt?"
+
+#: gitk:6369
+msgid "Cherry-picking"
+msgstr "Plockar"
+
+#: gitk:6381
+msgid "No changes committed"
+msgstr "Inga ändringar incheckade"
+
+#: gitk:6404
+msgid "Confirm reset"
+msgstr "Bekräfta återställning"
+
+#: gitk:6406
+#, tcl-format
+msgid "Reset branch %s to %s?"
+msgstr "Återställa grenen %s till %s?"
+
+#: gitk:6410
+msgid "Reset type:"
+msgstr "Typ av återställning:"
+
+#: gitk:6414
+msgid "Soft: Leave working tree and index untouched"
+msgstr "Mjuk: Rör inte utcheckning och index"
+
+#: gitk:6417
+msgid "Mixed: Leave working tree untouched, reset index"
+msgstr "Blandad: Rör inte utcheckning, återställ index"
+
+#: gitk:6420
+msgid ""
+"Hard: Reset working tree and index\n"
+"(discard ALL local changes)"
+msgstr ""
+"Hård: Återställ utcheckning och index\n"
+"(förkastar ALLA lokala ändringar)"
+
+#: gitk:6436
+msgid "Resetting"
+msgstr "Återställer"
+
+#: gitk:6493
+msgid "Checking out"
+msgstr "Checkar ut"
+
+#: gitk:6523
+msgid "Cannot delete the currently checked-out branch"
+msgstr "Kan inte ta bort den just nu utcheckade grenen"
+
+#: gitk:6529
+#, tcl-format
+msgid ""
+"The commits on branch %s aren't on any other branch.\n"
+"Really delete branch %s?"
+msgstr ""
+"Incheckningarna på grenen %s existerar inte på någon annan gren.\n"
+"Vill du verkligen ta bort grenen %s?"
+
+#: gitk:6560
+#, tcl-format
+msgid "Tags and heads: %s"
+msgstr "Taggar och huvuden: %s"
+
+#: gitk:6574
+msgid "Filter"
+msgstr "Filter"
+
+#: gitk:6868
+msgid ""
+"Error reading commit topology information; branch and preceding/following "
+"tag information will be incomplete."
+msgstr ""
+"Fel vid läsning av information om incheckningstopologi; information om "
+"grenar och föregående/senare taggar kommer inte vara komplett."
+
+#: gitk:7852
+msgid "Tag"
+msgstr "Tagg"
+
+#: gitk:7852
+msgid "Id"
+msgstr "Id"
+
+#: gitk:7892
+msgid "Gitk font chooser"
+msgstr "Teckensnittsväljare för Gitk"
+
+#: gitk:7909
+msgid "B"
+msgstr "F"
+
+#: gitk:7912
+msgid "I"
+msgstr "K"
+
+#: gitk:8005
+msgid "Gitk preferences"
+msgstr "Inställningar för Gitk"
+
+#: gitk:8006
+msgid "Commit list display options"
+msgstr "Alternativ för incheckningslistvy"
+
+#: gitk:8009
+msgid "Maximum graph width (lines)"
+msgstr "Maximal grafbredd (rader)"
+
+#: gitk:8013
+#, tcl-format
+msgid "Maximum graph width (% of pane)"
+msgstr "Maximal grafbredd (% av ruta)"
+
+#: gitk:8018
+msgid "Show local changes"
+msgstr "Visa lokala ändringar"
+
+#: gitk:8023
+msgid "Auto-select SHA1"
+msgstr "Välj SHA1 automatiskt"
+
+#: gitk:8028
+msgid "Diff display options"
+msgstr "Alternativ för diffvy"
+
+#: gitk:8030
+msgid "Tab spacing"
+msgstr "Blanksteg för tabulatortecken"
+
+#: gitk:8034
+msgid "Display nearby tags"
+msgstr "Visa närliggande taggar"
+
+#: gitk:8039
+msgid "Limit diffs to listed paths"
+msgstr "Begränsa diff till listade sökvägar"
+
+#: gitk:8044
+msgid "Colors: press to choose"
+msgstr "Färger: tryck för att välja"
+
+#: gitk:8047
+msgid "Background"
+msgstr "Bakgrund"
+
+#: gitk:8051
+msgid "Foreground"
+msgstr "Förgrund"
+
+#: gitk:8055
+msgid "Diff: old lines"
+msgstr "Diff: gamla rader"
+
+#: gitk:8060
+msgid "Diff: new lines"
+msgstr "Diff: nya rader"
+
+#: gitk:8065
+msgid "Diff: hunk header"
+msgstr "Diff: delhuvud"
+
+#: gitk:8071
+msgid "Select bg"
+msgstr "Markerad bakgrund"
+
+#: gitk:8075
+msgid "Fonts: press to choose"
+msgstr "Teckensnitt: tryck för att välja"
+
+#: gitk:8077
+msgid "Main font"
+msgstr "Huvudteckensnitt"
+
+#: gitk:8078
+msgid "Diff display font"
+msgstr "Teckensnitt för diffvisning"
+
+#: gitk:8079
+msgid "User interface font"
+msgstr "Teckensnitt för användargränssnitt"
+
+#: gitk:8095
+#, tcl-format
+msgid "Gitk: choose color for %s"
+msgstr "Gitk: välj färg för %s"
+
+#: gitk:8476
+msgid ""
+"Sorry, gitk cannot run with this version of Tcl/Tk.\n"
+" Gitk requires at least Tcl/Tk 8.4."
+msgstr ""
+"Gitk kan tyvärr inte köra med denna version av Tcl/Tk.\n"
+" Gitk kräver åtminstone Tcl/Tk 8.4."
+
+#: gitk:8565
+msgid "Cannot find a git repository here."
+msgstr "Hittar inget gitk-arkiv här."
+
+#: gitk:8569
+#, tcl-format
+msgid "Cannot find the git directory \"%s\"."
+msgstr "Hittar inte git-katalogen \"%s\"."
+
+#: gitk:8612
+#, tcl-format
+msgid "Ambiguous argument '%s': both revision and filename"
+msgstr "Tvetydigt argument \"%s\": både revision och filnamn"
+
+#: gitk:8624
+msgid "Bad arguments to gitk:"
+msgstr "Felaktiga argument till gitk:"
+
+#: gitk:8636
+msgid "Couldn't get list of unmerged files:"
+msgstr "Kunde inta hämta lista över ej sammanslagna filer:"
+
+#: gitk:8652
+msgid "No files selected: --merge specified but no files are unmerged."
+msgstr "Inga filer valdes: --merge angavs men det finns inga filer som inte har slagits samman."
+
+#: gitk:8655
+msgid ""
+"No files selected: --merge specified but no unmerged files are within file "
+"limit."
+msgstr ""
+"Inga filer valdes: --merge angavs men det finns inga filer inom "
+"filbegränsningen."
+
+#: gitk:8716
+msgid "Command line"
+msgstr "Kommandorad"
+
