@@ -446,7 +446,6 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			check_repository_format_gently(nongit_ok);
 			return NULL;
 		}
-		chdir("..");
 		while (--offset > ceil_offset && cwd[offset] != '/');
 		if (offset <= ceil_offset) {
 			if (nongit_ok) {
@@ -457,6 +456,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			}
 			die("Not a git repository");
 		}
+		chdir("..");
 	}
 
 	inside_git_dir = 0;
