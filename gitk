@@ -495,7 +495,7 @@ proc reloadcommits {} {
 	stop_rev_list $curview
     }
     resetvarcs $curview
-    catch {unset selectedline}
+    set selectedline {}
     catch {unset currentid}
     catch {unset thickerline}
     catch {unset treediffs}
@@ -927,7 +927,7 @@ proc removefakerow {id} {
     modify_arc $v $a $i
     if {[info exist currentid] && $id eq $currentid} {
 	unset currentid
-	unset selectedline
+	set selectedline {}
     }
     if {[info exists targetid] && $targetid eq $id} {
 	set targetid $p
@@ -1838,7 +1838,7 @@ proc makewindow {} {
     pack .tf.bar.rowlabel .tf.bar.rownum .tf.bar.rowlabel2 .tf.bar.numcommits \
 	-side left
     global selectedline
-    trace add variable selectedline {write unset} selectedline_change
+    trace add variable selectedline write selectedline_change
 
     # Status label and progress bar
     set statusw .tf.bar.status
@@ -2185,7 +2185,7 @@ proc windows_mousewheel_redirector {W X Y D} {
 proc selectedline_change {n1 n2 op} {
     global selectedline rownumsel
 
-    if {$op eq "unset"} {
+    if {$selectedline eq {}} {
 	set rownumsel {}
     } else {
 	set rownumsel [expr {$selectedline + 1}]
@@ -3274,7 +3274,7 @@ proc showview {n} {
     set ytop [expr {[lindex $span 0] * $ymax}]
     set ybot [expr {[lindex $span 1] * $ymax}]
     set yscreen [expr {($ybot - $ytop) / 2}]
-    if {[info exists selectedline]} {
+    if {$selectedline ne {}} {
 	set selid $currentid
 	set y [yc $selectedline]
 	if {$ytop < $y && $y < $ybot} {
@@ -3388,7 +3388,7 @@ proc bolden {row font} {
 
     lappend boldrows $row
     $canv itemconf $linehtag($row) -font $font
-    if {[info exists selectedline] && $row == $selectedline} {
+    if {$row == $selectedline} {
 	$canv delete secsel
 	set t [eval $canv create rect [$canv bbox $linehtag($row)] \
 		   -outline {{}} -tags secsel \
@@ -3402,7 +3402,7 @@ proc bolden_name {row font} {
 
     lappend boldnamerows $row
     $canv2 itemconf $linentag($row) -font $font
-    if {[info exists selectedline] && $row == $selectedline} {
+    if {$row == $selectedline} {
 	$canv2 delete secsel
 	set t [eval $canv2 create rect [$canv2 bbox $linentag($row)] \
 		   -outline {{}} -tags secsel \
@@ -3831,7 +3831,7 @@ proc askrelhighlight {row id} {
     global descendent highlight_related iddrawn rhighlights
     global selectedline ancestor
 
-    if {![info exists selectedline]} return
+    if {$selectedline eq {}} return
     set isbold 0
     if {$highlight_related eq [mc "Descendant"] ||
 	$highlight_related eq [mc "Not descendant"]} {
@@ -4005,7 +4005,7 @@ proc visiblerows {} {
 
 proc layoutmore {} {
     global commitidx viewcomplete curview
-    global numcommits pending_select selectedline curview
+    global numcommits pending_select curview
     global lastscrollset lastscrollrows commitinterest
 
     if {$lastscrollrows < 100 || $viewcomplete($curview) ||
@@ -4916,7 +4916,7 @@ proc drawcmittext {id row col} {
 			    -text $name -font $nfont -tags text]
     set linedtag($row) [$canv3 create text 3 $y -anchor w -fill $fgcolor \
 			    -text $date -font mainfont -tags text]
-    if {[info exists selectedline] && $selectedline == $row} {
+    if {$selectedline == $row} {
 	make_secsel $row
     }
     set xr [expr {$xt + [font measure $font $headline]}]
@@ -5107,7 +5107,7 @@ proc drawvisible {} {
     if {$endrow >= $vrowmod($curview)} {
 	update_arcrows $curview
     }
-    if {[info exists selectedline] &&
+    if {$selectedline ne {} &&
 	$row <= $selectedline && $selectedline <= $endrow} {
 	set targetrow $selectedline
     } elseif {[info exists targetid]} {
@@ -5427,7 +5427,7 @@ proc dofind {{dirn 1} {wrap 1}} {
     }
     focus .
     if {$findstring eq {} || $numcommits == 0} return
-    if {![info exists selectedline]} {
+    if {$selectedline eq {}} {
 	set findstartline [lindex [visiblerows] [expr {$dirn < 0}]]
     } else {
 	set findstartline $selectedline
@@ -5623,7 +5623,7 @@ proc markmatches {canv l str tag matches font row} {
 		   [expr {$x0+$xlen+2}] $y1 \
 		   -outline {} -tags [list match$l matches] -fill yellow]
 	$canv lower $t
-	if {[info exists selectedline] && $row == $selectedline} {
+	if {$row == $selectedline} {
 	    $canv raise $t secsel
 	}
     }
@@ -5782,7 +5782,7 @@ proc appendrefs {pos ids var} {
 proc dispneartags {delay} {
     global selectedline currentid showneartags tagphase
 
-    if {![info exists selectedline] || !$showneartags} return
+    if {$selectedline eq {} || !$showneartags} return
     after cancel dispnexttag
     if {$delay} {
 	after 200 dispnexttag
@@ -5796,7 +5796,7 @@ proc dispneartags {delay} {
 proc dispnexttag {} {
     global selectedline currentid showneartags tagphase ctext
 
-    if {![info exists selectedline] || !$showneartags} return
+    if {$selectedline eq {} || !$showneartags} return
     switch -- $tagphase {
 	0 {
 	    set dtags [desctags $currentid]
@@ -6018,7 +6018,7 @@ proc sellastline {} {
 proc selnextline {dir} {
     global selectedline
     focus .
-    if {![info exists selectedline]} return
+    if {$selectedline eq {}} return
     set l [expr {$selectedline + $dir}]
     unmarkmatches
     selectline $l 1
@@ -6033,7 +6033,7 @@ proc selnextpage {dir} {
     }
     allcanvs yview scroll [expr {$dir * $lpp}] units
     drawvisible
-    if {![info exists selectedline]} return
+    if {$selectedline eq {}} return
     set l [expr {$selectedline + $dir * $lpp}]
     if {$l < 0} {
 	set l 0
@@ -6047,7 +6047,7 @@ proc selnextpage {dir} {
 proc unselectline {} {
     global selectedline currentid
 
-    catch {unset selectedline}
+    set selectedline {}
     catch {unset currentid}
     allcanvs delete secsel
     rhighlight_none
@@ -6056,7 +6056,7 @@ proc unselectline {} {
 proc reselectline {} {
     global selectedline
 
-    if {[info exists selectedline]} {
+    if {$selectedline ne {}} {
 	selectline $selectedline 0
     }
 }
@@ -6868,7 +6868,7 @@ proc redisplay {} {
     setcanvscroll
     allcanvs yview moveto [lindex $span 0]
     drawvisible
-    if {[info exists selectedline]} {
+    if {$selectedline ne {}} {
 	selectline $selectedline 0
 	allcanvs yview moveto [lindex $span 0]
     }
@@ -7189,8 +7189,7 @@ proc rowmenu {x y id} {
 
     stopfinding
     set rowmenuid $id
-    if {![info exists selectedline]
-	|| [rowofcommit $id] eq $selectedline} {
+    if {$selectedline eq {} || [rowofcommit $id] eq $selectedline} {
 	set state disabled
     } else {
 	set state normal
@@ -7214,7 +7213,7 @@ proc rowmenu {x y id} {
 proc diffvssel {dirn} {
     global rowmenuid selectedline
 
-    if {![info exists selectedline]} return
+    if {$selectedline eq {}} return
     if {$dirn} {
 	set oldid [commitonrow $selectedline]
 	set newid $rowmenuid
@@ -9890,6 +9889,7 @@ set viewperm(0) 0
 set viewargs(0) {}
 set viewargscmd(0) {}
 
+set selectedline {}
 set numcommits 0
 set loginstance 0
 set cmdlineok 0
