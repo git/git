@@ -415,6 +415,14 @@ git so take care if using Cogito etc.
 	This can also be controlled by the '--work-tree' command line
 	option and the core.worktree configuration variable.
 
+'GIT_CEILING_DIRECTORIES'::
+	This should be a colon-separated list of absolute paths.
+	If set, it is a list of directories that git should not chdir
+	up into while looking for a repository directory.
+	It will not exclude the current working directory or
+	a GIT_DIR set on the command line or in the environment.
+	(Useful for excluding slow-loading network directories.)
+
 git Commits
 ~~~~~~~~~~~
 'GIT_AUTHOR_NAME'::

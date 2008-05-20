@@ -410,3 +410,46 @@ int normalize_absolute_path(char *buf, const char *path)
 	*dst = '\0';
 	return dst - buf;
 }
+
+/*
+ * path = Canonical absolute path
+ * prefix_list = Colon-separated list of absolute paths
+ *
+ * Determines, for each path in parent_list, whether the "prefix" really
+ * is an ancestor directory of path.  Returns the length of the longest
+ * ancestor directory, excluding any trailing slashes, or -1 if no prefix
+ * is an ancestor.  (Note that this means 0 is returned if prefix_list is
+ * "/".) "/foo" is not considered an ancestor of "/foobar".  Directories
+ * are not considered to be their own ancestors.  path must be in a
+ * canonical form: empty components, or "." or ".." components are not
+ * allowed.  prefix_list may be null, which is like "".
+ */
+int longest_ancestor_length(const char *path, const char *prefix_list)
+{
+	char buf[PATH_MAX+1];
+	const char *ceil, *colon;
+	int len, max_len = -1;
+
+	if (prefix_list == NULL || !strcmp(path, "/"))
+		return -1;
+
+	for (colon = ceil = prefix_list; *colon; ceil = colon+1) {
+		for (colon = ceil; *colon && *colon != ':'; colon++);
+		len = colon - ceil;
+		if (len == 0 || len > PATH_MAX || !is_absolute_path(ceil))
+			continue;
+		strlcpy(buf, ceil, len+1);
+		len = normalize_absolute_path(buf, buf);
+		/* Strip "trailing slashes" from "/". */
+		if (len == 1)
+			len = 0;
+
+		if (!strncmp(path, buf, len) &&
+		    path[len] == '/' &&
+		    len > max_len) {
+			max_len = len;
+		}
+	}
+
+	return max_len;
+}

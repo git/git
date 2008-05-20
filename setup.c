@@ -359,10 +359,11 @@ const char *read_gitfile_gently(const char *path)
 const char *setup_git_directory_gently(int *nongit_ok)
 {
 	const char *work_tree_env = getenv(GIT_WORK_TREE_ENVIRONMENT);
+	const char *env_ceiling_dirs = getenv(CEILING_DIRECTORIES_ENVIRONMENT);
 	static char cwd[PATH_MAX+1];
 	const char *gitdirenv;
 	const char *gitfile_dir;
-	int len, offset;
+	int len, offset, ceil_offset;
 
 	/*
 	 * Let's assume that we are in a git repository.
@@ -414,6 +415,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	if (!getcwd(cwd, sizeof(cwd)-1))
 		die("Unable to read current working directory");
 
+	ceil_offset = longest_ancestor_length(cwd, env_ceiling_dirs);
+
 	/*
 	 * Test in the following order (relative to the cwd):
 	 * - .git (file containing "gitdir: <path>")
@@ -444,17 +447,16 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			return NULL;
 		}
 		chdir("..");
-		do {
-			if (!offset) {
-				if (nongit_ok) {
-					if (chdir(cwd))
-						die("Cannot come back to cwd");
-					*nongit_ok = 1;
-					return NULL;
-				}
-				die("Not a git repository");
+		while (--offset > ceil_offset && cwd[offset] != '/');
+		if (offset <= ceil_offset) {
+			if (nongit_ok) {
+				if (chdir(cwd))
+					die("Cannot come back to cwd");
+				*nongit_ok = 1;
+				return NULL;
 			}
-		} while (cwd[--offset] != '/');
+			die("Not a git repository");
+		}
 	}
 
 	inside_git_dir = 0;
