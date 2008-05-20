@@ -9,5 +9,13 @@ int main(int argc, char **argv)
 		puts(buf);
 	}
 
+	if (argc >= 2 && !strcmp(argv[1], "make_absolute_path")) {
+		while (argc > 2) {
+			puts(make_absolute_path(argv[2]));
+			argc--;
+			argv++;
+		}
+	}
+
 	return 0;
 }

@@ -301,14 +301,14 @@ test_expect_success 'absolute path works as expected' '
 	mkdir third &&
 	dir="$(cd .git; pwd -P)" &&
 	dir2=third/../second/other/.git &&
-	test "$dir" = "$(test-absolute-path $dir2)" &&
+	test "$dir" = "$(test-path-utils make_absolute_path $dir2)" &&
 	file="$dir"/index &&
-	test "$file" = "$(test-absolute-path $dir2/index)" &&
+	test "$file" = "$(test-path-utils make_absolute_path $dir2/index)" &&
 	basename=blub &&
-	test "$dir/$basename" = "$(cd .git && test-absolute-path "$basename")" &&
+	test "$dir/$basename" = "$(cd .git && test-path-utils make_absolute_path "$basename")" &&
 	ln -s ../first/file .git/syml &&
 	sym="$(cd first; pwd -P)"/file &&
-	test "$sym" = "$(test-absolute-path "$dir2/syml")"
+	test "$sym" = "$(test-path-utils make_absolute_path "$dir2/syml")"
 '
 
 test_expect_success 'very long name in the index handled sanely' '
