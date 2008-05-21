@@ -282,7 +282,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 			 * entries in the index.
 			 */
 
-			add_files_to_cache(0, NULL, NULL);
+			add_files_to_cache(NULL, NULL, 0);
 			work = write_tree_from_memory();
 
 			ret = reset_to_new(new->commit->tree, opts->quiet);

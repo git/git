@@ -82,9 +82,9 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec,
 static void update_callback(struct diff_queue_struct *q,
 			    struct diff_options *opt, void *cbdata)
 {
-	int i, verbose;
+	int i, flags;
 
-	verbose = *((int *)cbdata);
+	flags = *((int *)cbdata);
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		const char *path = p->one->path;
@@ -94,18 +94,19 @@ static void update_callback(struct diff_queue_struct *q,
 		case DIFF_STATUS_UNMERGED:
 		case DIFF_STATUS_MODIFIED:
 		case DIFF_STATUS_TYPE_CHANGED:
-			add_file_to_cache(path, verbose);
+			add_file_to_cache(path, flags);
 			break;
 		case DIFF_STATUS_DELETED:
-			remove_file_from_cache(path);
-			if (verbose)
+			if (!(flags & ADD_CACHE_PRETEND))
+				remove_file_from_cache(path);
+			if (flags)
 				printf("remove '%s'\n", path);
 			break;
 		}
 	}
 }
 
-void add_files_to_cache(int verbose, const char *prefix, const char **pathspec)
+void add_files_to_cache(const char *prefix, const char **pathspec, int flags)
 {
 	struct rev_info rev;
 	init_revisions(&rev, prefix);
@@ -113,7 +114,7 @@ void add_files_to_cache(int verbose, const char *prefix, const char **pathspec)
 	rev.prune_data = pathspec;
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
-	rev.diffopt.format_callback_data = &verbose;
+	rev.diffopt.format_callback_data = &flags;
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 }
 
@@ -209,10 +210,13 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (take_worktree_changes) {
 		const char **pathspec;
+		int flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
+			     (show_only ? ADD_CACHE_PRETEND : 0));
+
 		if (read_cache() < 0)
 			die("index file corrupt");
 		pathspec = get_pathspec(prefix, argv);
-		add_files_to_cache(verbose, prefix, pathspec);
+		add_files_to_cache(prefix, pathspec, flags);
 		goto finish;
 	}
 
@@ -254,7 +258,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	for (i = 0; i < dir.nr; i++)
-		add_file_to_cache(dir.entries[i]->name, verbose);
+		add_file_to_cache(dir.entries[i]->name, verbose ? ADD_CACHE_VERBOSE : 0);
 
  finish:
 	if (active_cache_changed) {
