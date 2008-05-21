@@ -521,8 +521,30 @@ EOT
 	open(C,"<",$compose_filename)
 		or die "Failed to open $compose_filename : " . $!;
 
+	my $need_8bit_cte = file_has_nonascii($compose_filename);
+	my $in_body = 0;
 	while(<C>) {
 		next if m/^GIT: /;
+		if (!$in_body && /^\n$/) {
+			$in_body = 1;
+			if ($need_8bit_cte) {
+				print C2 "MIME-Version: 1.0\n",
+					 "Content-Type: text/plain; ",
+					   "charset=utf-8\n",
+					 "Content-Transfer-Encoding: 8bit\n";
+			}
+		}
+		if (!$in_body && /^MIME-Version:/i) {
+			$need_8bit_cte = 0;
+		}
+		if (!$in_body && /^Subject: ?(.*)/i) {
+			my $subject = $1;
+			$_ = "Subject: " .
+				($subject =~ /[^[:ascii:]]/ ?
+				 quote_rfc2047($subject) :
+				 $subject) .
+				"\n";
+		}
 		print C2 $_;
 	}
 	close(C);
@@ -613,6 +635,14 @@ sub unquote_rfc2047 {
 	return wantarray ? ($_, $encoding) : $_;
 }
 
+sub quote_rfc2047 {
+	local $_ = shift;
+	my $encoding = shift || 'utf-8';
+	s/([^-a-zA-Z0-9!*+\/])/sprintf("=%02X", ord($1))/eg;
+	s/(.*)/=\?$encoding\?q\?$1\?=/;
+	return $_;
+}
+
 # use the simplest quoting being able to handle the recipient
 sub sanitize_address
 {
@@ -630,8 +660,7 @@ sub sanitize_address
 
 	# rfc2047 is needed if a non-ascii char is included
 	if ($recipient_name =~ /[^[:ascii:]]/) {
-		$recipient_name =~ s/([^-a-zA-Z0-9!*+\/])/sprintf("=%02X", ord($1))/eg;
-		$recipient_name =~ s/(.*)/=\?utf-8\?q\?$1\?=/;
+		$recipient_name = quote_rfc2047($recipient_name);
 	}
 
 	# double quotes are needed if specials or CTLs are included
@@ -958,4 +987,14 @@ sub validate_patch {
 		}
 	}
 	return undef;
+}
+
+sub file_has_nonascii {
+	my $fn = shift;
+	open(my $fh, '<', $fn)
+		or die "unable to open $fn: $!\n";
+	while (my $line = <$fh>) {
+		return 1 if $line =~ /[^[:ascii:]]/;
+	}
+	return 0;
 }
