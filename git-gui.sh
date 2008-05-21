@@ -1127,27 +1127,18 @@ proc rescan {after {honor_trustmtime 1}} {
 }
 
 if {[is_Cygwin]} {
-	set is_git_info_link {}
 	set is_git_info_exclude {}
 	proc have_info_exclude {} {
-		global is_git_info_link is_git_info_exclude
+		global is_git_info_exclude
 
-		if {$is_git_info_link eq {}} {
-			set is_git_info_link [file isfile [gitdir info.lnk]]
-		}
-
-		if {$is_git_info_link} {
-			if {$is_git_info_exclude eq {}} {
-				if {[catch {exec test -f [gitdir info exclude]}]} {
-					set is_git_info_exclude 0
-				} else {
-					set is_git_info_exclude 1
-				}
+		if {$is_git_info_exclude eq {}} {
+			if {[catch {exec test -f [gitdir info exclude]}]} {
+				set is_git_info_exclude 0
+			} else {
+				set is_git_info_exclude 1
 			}
-			return $is_git_info_exclude
-		} else {
-			return [file readable [gitdir info exclude]]
 		}
+		return $is_git_info_exclude
 	}
 } else {
 	proc have_info_exclude {} {
