@@ -20,11 +20,11 @@
 # The third example adds a Signed-off-by line to the message, that can
 # still be edited.  This is rarely a good idea.
 
-case "$2 $3" in
-  merge)
-    sed -i '/^Conflicts:/,/#/!b;s/^/# &/;s/^# #/#/' "$1" ;;
+case "$2,$3" in
+  merge,)
+    perl -i -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
 
-# ""|template)
+# ,|template,)
 #   perl -i -pe '
 #      print "\n" . `git diff --cached --name-status -r`
 #	 if /^#/ && $first++ == 0' "$1" ;;
