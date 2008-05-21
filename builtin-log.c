@@ -485,6 +485,13 @@ static int git_format_config(const char *var, const char *value)
 		fmt_patch_suffix = xstrdup(value);
 		return 0;
 	}
+	if (!strcmp(var, "format.cc")) {
+		if (!value)
+			return config_error_nonbool(var);
+		ALLOC_GROW(extra_cc, extra_cc_nr + 1, extra_cc_alloc);
+		extra_cc[extra_cc_nr++] = xstrdup(value);
+		return 0;
+	}
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
 		return 0;
 	}
@@ -757,6 +764,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int thread = 0;
 	int cover_letter = 0;
 	int boundary_count = 0;
+	int no_binary_diff = 0;
 	struct commit *origin = NULL, *head = NULL;
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
@@ -770,7 +778,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.diff = 1;
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
-	rev.diffopt.msg_sep = "";
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
 
 	rev.subject_prefix = fmt_patch_subject_prefix;
@@ -863,6 +870,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			fmt_patch_suffix = argv[i] + 9;
 		else if (!strcmp(argv[i], "--cover-letter"))
 			cover_letter = 1;
+		else if (!strcmp(argv[i], "--no-binary"))
+			no_binary_diff = 1;
 		else
 			argv[j++] = argv[i];
 	}
@@ -915,7 +924,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
 
-	if (!DIFF_OPT_TST(&rev.diffopt, TEXT))
+	if (!DIFF_OPT_TST(&rev.diffopt, TEXT) && !no_binary_diff)
 		DIFF_OPT_SET(&rev.diffopt, BINARY);
 
 	if (!output_directory && !use_stdout)

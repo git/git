@@ -26,11 +26,12 @@ static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
  * directories, in case this unlink is the removal of the
  * last entry in the directory -- empty directories are removed.
  */
-static void unlink_entry(char *name, char *last_symlink)
+static void unlink_entry(struct cache_entry *ce)
 {
 	char *cp, *prev;
+	char *name = ce->name;
 
-	if (has_symlink_leading_path(name, last_symlink))
+	if (has_symlink_leading_path(ce_namelen(ce), ce->name))
 		return;
 	if (unlink(name))
 		return;
@@ -58,7 +59,6 @@ static int check_updates(struct unpack_trees_options *o)
 {
 	unsigned cnt = 0, total = 0;
 	struct progress *progress = NULL;
-	char last_symlink[PATH_MAX];
 	struct index_state *index = &o->result;
 	int i;
 	int errs = 0;
@@ -75,24 +75,27 @@ static int check_updates(struct unpack_trees_options *o)
 		cnt = 0;
 	}
 
-	*last_symlink = '\0';
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 
-		if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
-			display_progress(progress, ++cnt);
 		if (ce->ce_flags & CE_REMOVE) {
+			display_progress(progress, ++cnt);
 			if (o->update)
-				unlink_entry(ce->name, last_symlink);
+				unlink_entry(ce);
 			remove_index_entry_at(&o->result, i);
 			i--;
 			continue;
 		}
+	}
+
+	for (i = 0; i < index->cache_nr; i++) {
+		struct cache_entry *ce = index->cache[i];
+
 		if (ce->ce_flags & CE_UPDATE) {
+			display_progress(progress, ++cnt);
 			ce->ce_flags &= ~CE_UPDATE;
 			if (o->update) {
 				errs |= checkout_entry(ce, &state, NULL);
-				*last_symlink = '\0';
 			}
 		}
 	}
@@ -521,6 +524,22 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 }
 
 /*
+ * This gets called when there was no index entry for the tree entry 'dst',
+ * but we found a file in the working tree that 'lstat()' said was fine,
+ * and we're on a case-insensitive filesystem.
+ *
+ * See if we can find a case-insensitive match in the index that also
+ * matches the stat information, and assume it's that other file!
+ */
+static int icase_exists(struct unpack_trees_options *o, struct cache_entry *dst, struct stat *st)
+{
+	struct cache_entry *src;
+
+	src = index_name_exists(o->src_index, dst->name, ce_namelen(dst), 1);
+	return src && !ie_match_stat(o->src_index, src, st, CE_MATCH_IGNORE_VALID);
+}
+
+/*
  * We do not want to remove or overwrite a working tree file that
  * is not tracked, unless it is ignored.
  */
@@ -532,12 +551,23 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 	if (o->index_only || o->reset || !o->update)
 		return 0;
 
-	if (has_symlink_leading_path(ce->name, NULL))
+	if (has_symlink_leading_path(ce_namelen(ce), ce->name))
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
 		int cnt;
 		int dtype = ce_to_dtype(ce);
+		struct cache_entry *result;
+
+		/*
+		 * It may be that the 'lstat()' succeeded even though
+		 * target 'ce' was absent, because there is an old
+		 * entry that is different only in case..
+		 *
+		 * Ignore that lstat() if it matches.
+		 */
+		if (ignore_case && icase_exists(o, ce, &st))
+			return 0;
 
 		if (o->dir && excluded(o->dir, ce->name, &dtype))
 			/*
@@ -581,10 +611,9 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 		 * delete this path, which is in a subdirectory that
 		 * is being replaced with a blob.
 		 */
-		cnt = index_name_pos(&o->result, ce->name, strlen(ce->name));
-		if (0 <= cnt) {
-			struct cache_entry *ce = o->result.cache[cnt];
-			if (ce->ce_flags & CE_REMOVE)
+		result = index_name_exists(&o->result, ce->name, ce_namelen(ce), 0);
+		if (result) {
+			if (result->ce_flags & CE_REMOVE)
 				return 0;
 		}
 

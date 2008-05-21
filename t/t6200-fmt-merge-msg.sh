@@ -82,14 +82,14 @@ test_expect_success 'merge-msg test #1' '
 	git diff actual expected
 '
 
-cat >expected <<\EOF
-Merge branch 'left' of ../trash
+cat >expected <<EOF
+Merge branch 'left' of ../$test
 EOF
 
 test_expect_success 'merge-msg test #2' '
 
 	git checkout master &&
-	git fetch ../trash left &&
+	git fetch ../"$test" left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	git diff actual expected
@@ -106,8 +106,24 @@ Merge branch 'left'
   Common #1
 EOF
 
-test_expect_success 'merge-msg test #3' '
+test_expect_success 'merge-msg test #3-1' '
 
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.log true &&
+
+	git checkout master &&
+	setdate &&
+	git fetch . left &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	git diff actual expected
+'
+
+test_expect_success 'merge-msg test #3-2' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
 	git config merge.summary true &&
 
 	git checkout master &&
@@ -136,8 +152,24 @@ Merge branches 'left' and 'right'
   Common #1
 EOF
 
-test_expect_success 'merge-msg test #4' '
+test_expect_success 'merge-msg test #4-1' '
 
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.log true &&
+
+	git checkout master &&
+	setdate &&
+	git fetch . left right &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	git diff actual expected
+'
+
+test_expect_success 'merge-msg test #4-2' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
 	git config merge.summary true &&
 
 	git checkout master &&
@@ -148,8 +180,24 @@ test_expect_success 'merge-msg test #4' '
 	git diff actual expected
 '
 
-test_expect_success 'merge-msg test #5' '
+test_expect_success 'merge-msg test #5-1' '
 
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.log yes &&
+
+	git checkout master &&
+	setdate &&
+	git fetch . left right &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	git diff actual expected
+'
+
+test_expect_success 'merge-msg test #5-2' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
 	git config merge.summary yes &&
 
 	git checkout master &&

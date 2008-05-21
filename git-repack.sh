@@ -11,6 +11,7 @@ a               pack everything in a single pack
 A               same as -a, and keep unreachable objects too
 d               remove redundant packs, and run git-prune-packed
 f               pass --no-reuse-delta to git-pack-objects
+n               do not run git-update-server-info
 q,quiet         be quiet
 l               pass --local to git-pack-objects
  Packing constraints

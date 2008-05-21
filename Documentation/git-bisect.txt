@@ -85,7 +85,7 @@ Oh, and then after you want to reset to the original head, do a
 $ git bisect reset
 ------------------------------------------------
 
-to get back to the master branch, instead of being in one of the
+to get back to the original branch, instead of being in one of the
 bisection branches ("git bisect start" will do that for you too,
 actually: it will reset the bisection state, and before it does that
 it checks that you're not using some old bisection branch).
@@ -223,6 +223,55 @@ revision (possibly with the needed tweaks) passed the test, rewind the
 tree to the pristine state.  Finally the "run" script can exit with
 the status of the real test to let "git bisect run" command loop to
 know the outcome.
+
+EXAMPLES
+--------
+
+* Automatically bisect a broken build between v1.2 and HEAD:
++
+------------
+$ git bisect start HEAD v1.2 --      # HEAD is bad, v1.2 is good
+$ git bisect run make                # "make" builds the app
+------------
+
+* Automatically bisect a broken test suite:
++
+------------
+$ cat ~/test.sh
+#!/bin/sh
+make || exit 125                   # this "skip"s broken builds
+make test                          # "make test" runs the test suite
+$ git bisect start v1.3 v1.1 --    # v1.3 is bad, v1.1 is good
+$ git bisect run ~/test.sh
+------------
++
+Here we use a "test.sh" custom script. In this script, if "make"
+fails, we "skip" the current commit.
++
+It's safer to use a custom script outside the repo to prevent
+interactions between the bisect, make and test processes and the
+script.
++
+And "make test" should "exit 0", if the test suite passes, and
+"exit 1" (for example) otherwise.
+
+* Automatically bisect a broken test case:
++
+------------
+$ cat ~/test.sh
+#!/bin/sh
+make || exit 125                     # this "skip"s broken builds
+~/check_test_case.sh                 # does the test case passes ?
+$ git bisect start HEAD HEAD~10 --   # culprit is among the last 10
+$ git bisect run ~/test.sh
+------------
++
+Here "check_test_case.sh" should "exit 0", if the test case passes,
+and "exit 1" (for example) otherwise.
++
+It's safer if both "test.sh" and "check_test_case.sh" scripts are
+outside the repo to prevent interactions between the bisect, make and
+test processes and the scripts.
 
 Author
 ------

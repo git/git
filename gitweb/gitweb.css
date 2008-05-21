@@ -464,6 +464,14 @@ a.rss_logo:hover {
 	background-color: #ee5500;
 }
 
+a.rss_logo.generic {
+	background-color: #ff8800;
+}
+
+a.rss_logo.generic:hover {
+	background-color: #ee7700;
+}
+
 span.refs span {
 	padding: 0px 4px;
 	font-size: 70%;

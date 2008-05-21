@@ -364,7 +364,7 @@ File/Directory Structure
 
 Please see the link:repository-layout.html[repository layout] document.
 
-Read link:hooks.html[hooks] for more details about each hook.
+Read linkgit:githooks[5][hooks] for more details about each hook.
 
 Higher level SCMs may provide and manage additional information in the
 `$GIT_DIR`.

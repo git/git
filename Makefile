@@ -422,6 +422,7 @@ LIB_OBJS += log-tree.o
 LIB_OBJS += mailmap.o
 LIB_OBJS += match-trees.o
 LIB_OBJS += merge-file.o
+LIB_OBJS += name-hash.o
 LIB_OBJS += object.o
 LIB_OBJS += pack-check.o
 LIB_OBJS += pack-revindex.o
@@ -634,8 +635,12 @@ endif
 ifeq ($(uname_S),AIX)
 	NO_STRCASESTR=YesPlease
 	NO_MEMMEM = YesPlease
+	NO_MKDTEMP = YesPlease
 	NO_STRLCPY = YesPlease
+	FREAD_READS_DIRECTORIES = UnfortunatelyYes
+	INTERNAL_QSORT = UnfortunatelyYes
 	NEEDS_LIBICONV=YesPlease
+	BASIC_CFLAGS += -D_LARGE_FILES
 endif
 ifeq ($(uname_S),GNU)
 	# GNU/Hurd

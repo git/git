@@ -104,7 +104,11 @@ create_merge_msgs() {
 	git log --no-merges ^HEAD c2 >>squash.1-5 &&
 	echo "Squashed commit of the following:" >squash.1-5-9 &&
 	echo >>squash.1-5-9 &&
-	git log --no-merges ^HEAD c2 c3 >>squash.1-5-9
+	git log --no-merges ^HEAD c2 c3 >>squash.1-5-9 &&
+	echo > msg.nolog &&
+	echo "* commit 'c3':" >msg.log &&
+	echo "  commit 3" >>msg.log &&
+	echo >>msg.log
 }
 
 verify_diff() {
@@ -364,7 +368,7 @@ test_expect_success 'merge c1 with c2 (squash in config)' '
 
 test_debug 'gitk --all'
 
-test_expect_success 'override config option -n' '
+test_expect_success 'override config option -n with --summary' '
 	git reset --hard c1 &&
 	git config branch.master.mergeoptions "-n" &&
 	test_tick &&
@@ -373,15 +377,30 @@ test_expect_success 'override config option -n' '
 	verify_parents $c1 $c2 &&
 	if ! grep "^ file |  *2 +-$" diffstat.txt
 	then
-		echo "[OOPS] diffstat was not generated"
+		echo "[OOPS] diffstat was not generated with --summary"
+		false
+	fi
+'
+
+test_expect_success 'override config option -n with --stat' '
+	git reset --hard c1 &&
+	git config branch.master.mergeoptions "-n" &&
+	test_tick &&
+	git merge --stat c2 >diffstat.txt &&
+	verify_merge file result.1-5 msg.1-5 &&
+	verify_parents $c1 $c2 &&
+	if ! grep "^ file |  *2 +-$" diffstat.txt
+	then
+		echo "[OOPS] diffstat was not generated with --stat"
+		false
 	fi
 '
 
 test_debug 'gitk --all'
 
-test_expect_success 'override config option --summary' '
+test_expect_success 'override config option --stat' '
 	git reset --hard c1 &&
-	git config branch.master.mergeoptions "--summary" &&
+	git config branch.master.mergeoptions "--stat" &&
 	test_tick &&
 	git merge -n c2 >diffstat.txt &&
 	verify_merge file result.1-5 msg.1-5 &&
@@ -439,6 +458,16 @@ test_expect_success 'merge c0 with c1 (ff overrides no-ff)' '
 	git merge --ff c1 &&
 	verify_merge file result.1 &&
 	verify_head $c1
+'
+
+test_expect_success 'merge log message' '
+	git reset --hard c0 &&
+	git merge --no-log c2 &&
+	git show -s --pretty=format:%b HEAD >msg.act &&
+	verify_diff msg.nolog msg.act "[OOPS] bad merge log message" &&
+	git merge --log c3 &&
+	git show -s --pretty=format:%b HEAD >msg.act &&
+	verify_diff msg.log msg.act "[OOPS] bad merge log message"
 '
 
 test_debug 'gitk --all'

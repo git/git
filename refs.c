@@ -352,6 +352,7 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *re
 {
 	int len = strlen(path), retval;
 	char *gitdir;
+	const char *tmp;
 
 	while (len && path[len-1] == '/')
 		len--;
@@ -359,9 +360,19 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *re
 		return -1;
 	gitdir = xmalloc(len + MAXREFLEN + 8);
 	memcpy(gitdir, path, len);
-	memcpy(gitdir + len, "/.git/", 7);
+	memcpy(gitdir + len, "/.git", 6);
+	len += 5;
 
-	retval = resolve_gitlink_ref_recursive(gitdir, len+6, refname, result, 0);
+	tmp = read_gitfile_gently(gitdir);
+	if (tmp) {
+		free(gitdir);
+		len = strlen(tmp);
+		gitdir = xmalloc(len + MAXREFLEN + 3);
+		memcpy(gitdir, tmp, len);
+	}
+	gitdir[len] = '/';
+	gitdir[++len] = '\0';
+	retval = resolve_gitlink_ref_recursive(gitdir, len, refname, result, 0);
 	free(gitdir);
 	return retval;
 }

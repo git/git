@@ -83,12 +83,12 @@ struct diff_options {
 	int pickaxe_opts;
 	int rename_score;
 	int rename_limit;
+	int warn_on_too_large_rename;
 	int dirstat_percent;
 	int setup;
 	int abbrev;
 	const char *prefix;
 	int prefix_length;
-	const char *msg_sep;
 	const char *stat_sep;
 	long xdl_opts;
 

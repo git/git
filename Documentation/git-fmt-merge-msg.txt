@@ -9,8 +9,8 @@ git-fmt-merge-msg - Produce a merge commit message
 SYNOPSIS
 --------
 [verse]
-git-fmt-merge-msg [--summary | --no-summary] <$GIT_DIR/FETCH_HEAD
-git-fmt-merge-msg [--summary | --no-summary] -F <file>
+git-fmt-merge-msg [--log | --no-log] <$GIT_DIR/FETCH_HEAD
+git-fmt-merge-msg [--log | --no-log] -F <file>
 
 DESCRIPTION
 -----------
@@ -24,14 +24,18 @@ automatically invoking `git-merge`.
 OPTIONS
 -------
 
---summary::
+--log::
 	In addition to branch names, populate the log message with
 	one-line descriptions from the actual commits that are being
 	merged.
 
---no-summary::
+--no-log::
 	Do not list one-line descriptions from the actual commits being
 	merged.
+
+--summary,--no-summary::
+	Synonyms to --log and --no-log; these are deprecated and will be
+	removed in the future.
 
 --file <file>, -F <file>::
 	Take the list of merged objects from <file> instead of
@@ -40,9 +44,13 @@ OPTIONS
 CONFIGURATION
 -------------
 
-merge.summary::
+merge.log::
 	Whether to include summaries of merged commits in newly
 	merge commit messages. False by default.
+
+merge.summary::
+	Synonym to `merge.log`; this is deprecated and will be removed in
+	the future.
 
 SEE ALSO
 --------

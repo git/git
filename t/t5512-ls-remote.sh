@@ -20,7 +20,7 @@ test_expect_success setup '
 		git show-ref -d	| sed -e "s/ /	/"
 	) >expected.all &&
 
-	git remote add self $(pwd)/.git
+	git remote add self "$(pwd)/.git"
 
 '
 

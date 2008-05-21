@@ -133,10 +133,16 @@ use "--tag-name-filter cat" to simply update the tags.  In this
 case, be very careful and make sure you have the old tags
 backed up in case the conversion has run afoul.
 +
-Note that there is currently no support for proper rewriting of
-tag objects; in layman terms, if the tag has a message or signature
-attached, the rewritten tag won't have it.  Sorry.  (It is by
-definition impossible to preserve signatures at any rate.)
+Nearly proper rewriting of tag objects is supported. If the tag has
+a message attached, a new tag object will be created with the same message,
+author, and timestamp. If the tag has a signature attached, the
+signature will be stripped. It is by definition impossible to preserve
+signatures. The reason this is "nearly" proper, is because ideally if
+the tag did not change (points to the same object, has the same name, etc.)
+it should retain any signature. That is not the case, signatures will always
+be removed, buyer beware. There is also no support for changing the
+author or timestamp (or the tag message for that matter). Tags which point
+to other tags will be rewritten to point to the underlying commit.
 
 --subdirectory-filter <directory>::
 	Only look at the history which touches the given subdirectory.
@@ -176,6 +182,10 @@ or copyright violation) from all commits:
 -------------------------------------------------------
 git filter-branch --tree-filter 'rm filename' HEAD
 -------------------------------------------------------
+
+However, if the file is absent from the tree of some commit,
+a simple `rm filename` will fail for that tree and commit.
+Thus you may instead want to use `rm -f filename` as the script.
 
 A significantly faster version:
 
@@ -243,12 +253,12 @@ committed a merge between P1 and P2, it will be propagated properly
 and all children of the merge will become merge commits with P1,P2
 as their parents instead of the merge commit.
 
-You can rewrite the commit log messages using `--message-filter`.  For
+You can rewrite the commit log messages using `--msg-filter`.  For
 example, `git-svn-id` strings in a repository created by `git-svn` can
 be removed this way:
 
 -------------------------------------------------------
-git filter-branch --message-filter '
+git filter-branch --msg-filter '
 	sed -e "/^git-svn-id:/d"
 '
 -------------------------------------------------------

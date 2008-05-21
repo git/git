@@ -92,7 +92,8 @@ static struct path_list current_directory_set = {NULL, 0, 0, 1};
 
 static int call_depth = 0;
 static int verbosity = 2;
-static int rename_limit = -1;
+static int diff_rename_limit = -1;
+static int merge_rename_limit = -1;
 static int buffer_output = 1;
 static struct strbuf obuf = STRBUF_INIT;
 
@@ -361,7 +362,10 @@ static struct path_list *get_renames(struct tree *tree,
 	diff_setup(&opts);
 	DIFF_OPT_SET(&opts, RECURSIVE);
 	opts.detect_rename = DIFF_DETECT_RENAME;
-	opts.rename_limit = rename_limit;
+	opts.rename_limit = merge_rename_limit >= 0 ? merge_rename_limit :
+			    diff_rename_limit >= 0 ? diff_rename_limit :
+			    500;
+	opts.warn_on_too_large_rename = 1;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	if (diff_setup_done(&opts) < 0)
 		die("diff setup failed");
@@ -1343,7 +1347,11 @@ static int merge_config(const char *var, const char *value)
 		return 0;
 	}
 	if (!strcasecmp(var, "diff.renamelimit")) {
-		rename_limit = git_config_int(var, value);
+		diff_rename_limit = git_config_int(var, value);
+		return 0;
+	}
+	if (!strcasecmp(var, "merge.renamelimit")) {
+		merge_rename_limit = git_config_int(var, value);
 		return 0;
 	}
 	return git_default_config(var, value);

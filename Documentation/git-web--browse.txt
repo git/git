@@ -20,7 +20,7 @@ The following browsers (or commands) are currently supported:
 
 * firefox (this is the default under X Window when not using KDE)
 * iceweasel
-* konqueror (this is the default under KDE)
+* konqueror (this is the default under KDE, see 'Note about konqueror' below)
 * w3m (this is the default outside graphical environments)
 * links
 * lynx
@@ -70,6 +70,28 @@ not among the supported ones, then the corresponding
 variable exists then "git web--browse" will treat the specified tool
 as a custom command and will use a shell eval to run the command with
 the URLs passed as arguments.
+
+Note about konqueror
+--------------------
+
+When 'konqueror' is specified by the a command line option or a
+configuration variable, we launch 'kfmclient' to try to open the HTML
+man page on an already opened konqueror in a new tab if possible.
+
+For consistency, we also try such a trick if 'browser.konqueror.path' is
+set to something like 'A_PATH_TO/konqueror'. That means we will try to
+launch 'A_PATH_TO/kfmclient' instead.
+
+If you really want to use 'konqueror', then you can use something like
+the following:
+
+------------------------------------------------
+	[web]
+		browser = konq
+
+	[browser "konq"]
+		cmd = A_PATH_TO/konqueror
+------------------------------------------------
 
 Note about git config --global
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

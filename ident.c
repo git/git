@@ -250,6 +250,9 @@ const char *git_author_info(int flag)
 
 const char *git_committer_info(int flag)
 {
+	if (getenv("GIT_COMMITTER_NAME") &&
+	    getenv("GIT_COMMITTER_EMAIL"))
+		user_ident_explicitly_given = 1;
 	return fmt_ident(getenv("GIT_COMMITTER_NAME"),
 			 getenv("GIT_COMMITTER_EMAIL"),
 			 getenv("GIT_COMMITTER_DATE"),

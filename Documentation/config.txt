@@ -399,6 +399,21 @@ branch.autosetupmerge::
 	done when the starting point is either a local branch or remote
 	branch. This option defaults to true.
 
+branch.autosetuprebase::
+	When a new branch is created with `git-branch` or `git-checkout`
+	that tracks another branch, this variable tells git to set
+	up pull to rebase instead of merge (see "branch.<name>.rebase").
+	When `never`, rebase is never automatically set to true.
+	When `local`, rebase is set to true for tracked branches of
+	other local branches.
+	When `remote`, rebase is set to true for tracked branches of
+	remote branches.
+	When `always`, rebase will be set to true for all tracking
+	branches.
+	See "branch.autosetupmerge" for details on how to set up a
+	branch to track another branch.
+	This option defaults to never.
+
 branch.<name>.remote::
 	When in branch <name>, it tells `git fetch` which remote to fetch.
 	If this option is not given, `git fetch` defaults to remote "origin".
@@ -426,7 +441,8 @@ branch.<name>.mergeoptions::
 
 branch.<name>.rebase::
 	When true, rebase the branch <name> on top of the fetched branch,
-	instead of merging the default branch from the default remote.
+	instead of merging the default branch from the default remote when
+	"git pull" is run.
 	*NOTE*: this is a possibly dangerous operation; do *not* use
 	it unless you understand the implications (see linkgit:git-rebase[1]
 	for details).
@@ -684,6 +700,36 @@ specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
 
+gui.commitmsgwidth::
+	Defines how wide the commit message window is in the
+	linkgit:git-gui[1]. "75" is the default.
+
+gui.diffcontext::
+	Specifies how many context lines should be used in calls to diff
+	made by the linkgit:git-gui[1]. The default is "5".
+
+gui.matchtrackingbranch::
+	Determines if new branches created with linkgit:git-gui[1] should
+	default to tracking remote branches with matching names or
+	not. Default: "false".
+
+gui.newbranchtemplate::
+	Is used as suggested name when creating new branches using the
+	linkgit:git-gui[1].
+
+gui.pruneduringfetch::
+	"true" if linkgit:git-gui[1] should prune tracking branches when
+	performing a fetch. The default value is "false".
+
+gui.trustmtime::
+	Determines if linkgit:git-gui[1] should trust the file modification
+	timestamp or not. By default the timestamps are not trusted.
+
+gui.spellingdictionary::
+	Specifies the dictionary used for spell checking commit messages in
+	the linkgit:git-gui[1]. When set to "none" spell checking is turned
+	off.
+
 help.browser::
 	Specify the browser that will be used to display help in the
 	'web' format. See linkgit:git-help[1].
@@ -779,37 +825,16 @@ man.viewer::
 	Specify the programs that may be used to display help in the
 	'man' format. See linkgit:git-help[1].
 
-merge.summary::
-	Whether to include summaries of merged commits in newly created
-	merge commit messages. False by default.
+include::merge-config.txt[]
 
-merge.tool::
-	Controls which merge resolution program is used by
-	linkgit:git-mergetool[1].  Valid built-in values are: "kdiff3",
-	"tkdiff", "meld", "xxdiff", "emerge", "vimdiff", "gvimdiff", and
-	"opendiff".  Any other value is treated is custom merge tool
-	and there must be a corresponing mergetool.<tool>.cmd option.
+man.<tool>.cmd::
+	Specify the command to invoke the specified man viewer. The
+	specified command is evaluated in shell with the man page
+	passed as argument. (See linkgit:git-help[1].)
 
-merge.verbosity::
-	Controls the amount of output shown by the recursive merge
-	strategy.  Level 0 outputs nothing except a final error
-	message if conflicts were detected. Level 1 outputs only
-	conflicts, 2 outputs conflicts and file changes.  Level 5 and
-	above outputs debugging information.  The default is level 2.
-	Can be overridden by 'GIT_MERGE_VERBOSITY' environment variable.
-
-merge.<driver>.name::
-	Defines a human readable name for a custom low-level
-	merge driver.  See linkgit:gitattributes[5] for details.
-
-merge.<driver>.driver::
-	Defines the command that implements a custom low-level
-	merge driver.  See linkgit:gitattributes[5] for details.
-
-merge.<driver>.recursive::
-	Names a low-level merge driver to be used when
-	performing an internal merge between common ancestors.
-	See linkgit:gitattributes[5] for details.
+man.<tool>.path::
+	Override the path for the given tool that may be used to
+	display help in the 'man' format. See linkgit:git-help[1].
 
 mergetool.<tool>.path::
 	Override the path for the given tool.  This is useful in case
@@ -920,6 +945,10 @@ remote.<name>.fetch::
 remote.<name>.push::
 	The default set of "refspec" for linkgit:git-push[1]. See
 	linkgit:git-push[1].
+
+remote.<name>.mirror::
+	If true, pushing to this remote will automatically behave
+	as if the `\--mirror` option was given on the command line.
 
 remote.<name>.skipDefaultUpdate::
 	If true, this remote will be skipped by default when updating

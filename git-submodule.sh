@@ -5,7 +5,7 @@
 # Copyright (c) 2007 Lars Hjemli
 
 USAGE="[--quiet] [--cached] \
-[add <repo> [-b branch]|status|init|update|summary [-n|--summary-limit <n>] [<commit>]] \
+[add <repo> [-b branch]|status|init|update [-i|--init]|summary [-n|--summary-limit <n>] [<commit>]] \
 [--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
@@ -74,8 +74,7 @@ module_name()
 {
 	# Do we have "submodule.<something>.path = $1" defined in .gitmodules file?
 	re=$(printf '%s' "$1" | sed -e 's/[].[^$\\*]/\\&/g')
-	name=$( GIT_CONFIG=.gitmodules \
-		git config --get-regexp '^submodule\..*\.path$' |
+	name=$( git config -f .gitmodules --get-regexp '^submodule\..*\.path$' |
 		sed -n -e 's|^submodule\.\(.*\)\.path '"$re"'$|\1|p' )
        test -z "$name" &&
        die "No submodule mapping found in .gitmodules for path '$path'"
@@ -198,8 +197,8 @@ cmd_add()
 	git add "$path" ||
 	die "Failed to add submodule '$path'"
 
-	GIT_CONFIG=.gitmodules git config submodule."$path".path "$path" &&
-	GIT_CONFIG=.gitmodules git config submodule."$path".url "$repo" &&
+	git config -f .gitmodules submodule."$path".path "$path" &&
+	git config -f .gitmodules submodule."$path".url "$repo" &&
 	git add .gitmodules ||
 	die "Failed to register submodule '$path'"
 }
@@ -240,7 +239,7 @@ cmd_init()
 		url=$(git config submodule."$name".url)
 		test -z "$url" || continue
 
-		url=$(GIT_CONFIG=.gitmodules git config submodule."$name".url)
+		url=$(git config -f .gitmodules submodule."$name".url)
 		test -z "$url" &&
 		die "No url found for submodule path '$path' in .gitmodules"
 
@@ -272,6 +271,10 @@ cmd_update()
 		-q|--quiet)
 			quiet=1
 			;;
+		-i|--init)
+			shift
+			cmd_init "$@" || return
+			;;
 		--)
 			shift
 			break
@@ -297,10 +300,11 @@ cmd_update()
 			# path have been specified
 			test "$#" != "0" &&
 			say "Submodule path '$path' not initialized"
+			say "Maybe you want to use 'update --init'?"
 			continue
 		fi
 
-		if ! test -d "$path"/.git
+		if ! test -d "$path"/.git -o -f "$path"/.git
 		then
 			module_clone "$path" "$url" || exit
 			subsha1=
@@ -555,7 +559,7 @@ cmd_status()
 	do
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
-		if test -z "$url" || ! test -d "$path"/.git
+		if test -z "$url" || ! test -d "$path"/.git -o -f "$path"/.git
 		then
 			say "-$sha1 $path"
 			continue;

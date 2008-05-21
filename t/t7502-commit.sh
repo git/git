@@ -154,6 +154,35 @@ test_expect_success 'cleanup commit messages (strip,-F,-e)' '
 
 '
 
+echo "#
+# Author:    $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+#" >> expect
+
+test_expect_success 'author different from committer' '
+
+	echo >>negative &&
+	git commit -e -m "sample"
+	head -n 7 .git/COMMIT_EDITMSG >actual &&
+	test_cmp expect actual
+'
+
+mv expect expect.tmp
+sed '$d' < expect.tmp > expect
+rm -f expect.tmp
+echo "# Committer:
+#" >> expect
+unset GIT_COMMITTER_EMAIL
+unset GIT_COMMITTER_NAME
+
+test_expect_success 'committer is automatic' '
+
+	echo >>negative &&
+	git commit -e -m "sample"
+	head -n 8 .git/COMMIT_EDITMSG |	\
+	sed "s/^# Committer: .*/# Committer:/" >actual &&
+	test_cmp expect actual
+'
+
 pwd=`pwd`
 cat >> .git/FAKE_EDITOR << EOF
 #! /bin/sh
