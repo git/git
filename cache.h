@@ -782,7 +782,13 @@ extern int convert_to_git(const char *path, const char *src, size_t len,
 extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 
 /* add */
-void add_files_to_cache(int verbose, const char *prefix, const char **pathspec);
+#define ADD_FILES_VERBOSE	01
+#define ADD_FILES_IGNORE_ERRORS	02
+/*
+ * return 0 if success, 1 - if addition of a file failed and
+ * ADD_FILES_IGNORE_ERRORS was specified in flags
+ */
+int add_files_to_cache(const char *prefix, const char **pathspec, int flags);
 
 /* diff.c */
 extern int diff_auto_refresh_index;
