@@ -18,6 +18,9 @@
 #include "run-command.h"
 #include "shortlog.h"
 
+/* Set a default date-time format for git log ("log.date" config variable) */
+static const char *default_date_mode = NULL;
+
 static int default_show_root = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
@@ -61,7 +64,12 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
+
+	if (default_date_mode)
+		rev->date_mode = parse_date_format(default_date_mode);
+
 	argc = setup_revisions(argc, argv, rev, "HEAD");
+
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
 	if (DIFF_OPT_TST(&rev->diffopt, FOLLOW_RENAMES)) {
@@ -232,6 +240,8 @@ static int git_log_config(const char *var, const char *value)
 		fmt_patch_subject_prefix = xstrdup(value);
 		return 0;
 	}
+	if (!strcmp(var, "log.date"))
+		return git_config_string(&default_date_mode, var, value);
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;

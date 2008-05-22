@@ -817,6 +817,12 @@ instaweb.port::
 	The port number to bind the gitweb httpd to. See
 	linkgit:git-instaweb[1].
 
+log.date::
+	Set default date-time mode for the log command. Setting log.date
+	value is similar to using git log's --date option. The value is one of
+	following alternatives: {relative,local,default,iso,rfc,short}.
+	See linkgit:git-log[1].
+
 log.showroot::
 	If true, the initial commit will be shown as a big creation event.
 	This is equivalent to a diff against an empty tree.
