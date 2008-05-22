@@ -141,4 +141,9 @@ test_expect_success 'cloning alternate repo #1, using #2 as reference' \
 
 cd "$base_dir"
 
+test_expect_success 'cloning with reference being subset of source (-l -s)' \
+'git clone -l -s --reference A B E'
+
+cd "$base_dir"
+
 test_done
