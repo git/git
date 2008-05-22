@@ -126,6 +126,49 @@ test_expect_success 'bisect reset removes packed refs' '
 	test -z "$(git for-each-ref "refs/heads/bisect")"
 '
 
+test_expect_success 'bisect start: back in good branch' '
+	git branch > branch.output &&
+	grep "* other" branch.output > /dev/null &&
+	git bisect start $HASH4 $HASH1 -- &&
+	git bisect good &&
+	git bisect start $HASH4 $HASH1 -- &&
+	git bisect bad &&
+	git bisect reset &&
+	git branch > branch.output &&
+	grep "* other" branch.output > /dev/null
+'
+
+test_expect_failure 'bisect start: no ".git/BISECT_START" if junk rev' '
+	git bisect start $HASH4 $HASH1 -- &&
+	git bisect good &&
+	test_must_fail git bisect start $HASH4 foo -- &&
+	git branch > branch.output &&
+	grep "* other" branch.output > /dev/null &&
+	test_must_fail test -e .git/BISECT_START
+'
+
+test_expect_failure 'bisect start: no ".git/BISECT_START" if mistaken rev' '
+	git bisect start $HASH4 $HASH1 -- &&
+	git bisect good &&
+	test_must_fail git bisect start $HASH1 $HASH4 -- &&
+	git branch > branch.output &&
+	grep "* other" branch.output > /dev/null &&
+	test_must_fail test -e .git/BISECT_START
+'
+
+test_expect_failure 'bisect start: no ".git/BISECT_START" if checkout error' '
+	echo "temp stuff" > hello &&
+	test_must_fail git bisect start $HASH4 $HASH1 -- &&
+	git branch &&
+	git branch > branch.output &&
+	grep "* other" branch.output > /dev/null &&
+	test_must_fail test -e .git/BISECT_START &&
+	test -z "$(git for-each-ref "refs/bisect/*")"
+'
+
+# This cleanup is needed whatever the result of the above test.
+git checkout HEAD hello
+
 # $HASH1 is good, $HASH4 is bad, we skip $HASH3
 # but $HASH2 is bad,
 # so we should find $HASH2 as the first bad commit
