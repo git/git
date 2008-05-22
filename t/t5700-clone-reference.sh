@@ -120,4 +120,25 @@ diff expected current'
 
 cd "$base_dir"
 
+test_expect_success 'preparing alternate repository #1' \
+'test_create_repo F && cd F &&
+echo first > file1 &&
+git add file1 &&
+git commit -m initial'
+
+cd "$base_dir"
+
+test_expect_success 'cloning alternate repo #2 and adding changes to repo #1' \
+'git clone F G && cd F &&
+echo second > file2 &&
+git add file2 &&
+git commit -m addition'
+
+cd "$base_dir"
+
+test_expect_success 'cloning alternate repo #1, using #2 as reference' \
+'git clone --reference G F H'
+
+cd "$base_dir"
+
 test_done
