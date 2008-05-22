@@ -138,7 +138,7 @@ test_expect_success 'bisect start: back in good branch' '
 	grep "* other" branch.output > /dev/null
 '
 
-test_expect_failure 'bisect start: no ".git/BISECT_START" if junk rev' '
+test_expect_success 'bisect start: no ".git/BISECT_START" if junk rev' '
 	git bisect start $HASH4 $HASH1 -- &&
 	git bisect good &&
 	test_must_fail git bisect start $HASH4 foo -- &&

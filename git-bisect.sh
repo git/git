@@ -81,8 +81,8 @@ bisect_start() {
 	start_head=''
 	case "$head" in
 	refs/heads/bisect)
-		branch=`cat "$GIT_DIR/BISECT_START"`
-		git checkout $branch || exit
+		start_head=$(cat "$GIT_DIR/BISECT_START")
+		git checkout "$start_head" || exit
 		;;
 	refs/heads/*|$_x40)
 		# This error message should only be triggered by cogito usage,
@@ -134,7 +134,7 @@ bisect_start() {
 	done
 
 	sq "$@" >"$GIT_DIR/BISECT_NAMES"
-	test -n "$start_head" && echo "$start_head" >"$GIT_DIR/BISECT_START"
+	echo "$start_head" >"$GIT_DIR/BISECT_START"
 	eval "$eval"
 	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG"
 	bisect_auto_next
@@ -392,12 +392,7 @@ bisect_reset() {
 	*)
 	    usage ;;
 	esac
-	if git checkout "$branch"; then
-		# Cleanup head-name if it got left by an old version of git-bisect
-		rm -f "$GIT_DIR/head-name"
-		rm -f "$GIT_DIR/BISECT_START"
-		bisect_clean_state
-	fi
+	git checkout "$branch" && bisect_clean_state
 }
 
 bisect_clean_state() {
@@ -407,9 +402,12 @@ bisect_clean_state() {
 	do
 		git update-ref -d $ref $hash
 	done
+	rm -f "$GIT_DIR/BISECT_START"
 	rm -f "$GIT_DIR/BISECT_LOG"
 	rm -f "$GIT_DIR/BISECT_NAMES"
 	rm -f "$GIT_DIR/BISECT_RUN"
+	# Cleanup head-name if it got left by an old version of git-bisect
+	rm -f "$GIT_DIR/head-name"
 }
 
 bisect_replay () {
