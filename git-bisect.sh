@@ -133,11 +133,29 @@ bisect_start() {
 	    esac
 	done
 
-	sq "$@" >"$GIT_DIR/BISECT_NAMES"
-	echo "$start_head" >"$GIT_DIR/BISECT_START"
-	eval "$eval"
-	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG"
+	#
+	# Change state.
+	# In case of mistaken revs or checkout error, or signals received,
+	# "bisect_auto_next" below may exit or misbehave.
+	# We have to trap this to be able to clean up using
+	# "bisect_clean_state".
+	#
+	trap 'bisect_clean_state' 0
+	trap 'exit 255' 1 2 3 15
+
+	#
+	# Write new start state.
+	#
+	sq "$@" >"$GIT_DIR/BISECT_NAMES" &&
+	echo "$start_head" >"$GIT_DIR/BISECT_START" &&
+	eval "$eval" &&
+	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG" || exit
+	#
+	# Check if we can proceed to the next bisect state.
+	#
 	bisect_auto_next
+
+	trap '-' 0
 }
 
 bisect_write() {
@@ -149,9 +167,9 @@ bisect_write() {
 		good|skip)	tag="$state"-"$rev" ;;
 		*)		die "Bad bisect_write argument: $state" ;;
 	esac
-	git update-ref "refs/bisect/$tag" "$rev"
+	git update-ref "refs/bisect/$tag" "$rev" || exit
 	echo "# $state: $(git show-branch $rev)" >>"$GIT_DIR/BISECT_LOG"
-	test -z "$nolog" && echo "git-bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
+	test -n "$nolog" || echo "git-bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_state() {

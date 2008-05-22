@@ -147,7 +147,7 @@ test_expect_success 'bisect start: no ".git/BISECT_START" if junk rev' '
 	test_must_fail test -e .git/BISECT_START
 '
 
-test_expect_failure 'bisect start: no ".git/BISECT_START" if mistaken rev' '
+test_expect_success 'bisect start: no ".git/BISECT_START" if mistaken rev' '
 	git bisect start $HASH4 $HASH1 -- &&
 	git bisect good &&
 	test_must_fail git bisect start $HASH1 $HASH4 -- &&
@@ -156,18 +156,16 @@ test_expect_failure 'bisect start: no ".git/BISECT_START" if mistaken rev' '
 	test_must_fail test -e .git/BISECT_START
 '
 
-test_expect_failure 'bisect start: no ".git/BISECT_START" if checkout error' '
+test_expect_success 'bisect start: no ".git/BISECT_START" if checkout error' '
 	echo "temp stuff" > hello &&
 	test_must_fail git bisect start $HASH4 $HASH1 -- &&
 	git branch &&
 	git branch > branch.output &&
 	grep "* other" branch.output > /dev/null &&
 	test_must_fail test -e .git/BISECT_START &&
-	test -z "$(git for-each-ref "refs/bisect/*")"
+	test -z "$(git for-each-ref "refs/bisect/*")" &&
+	git checkout HEAD hello
 '
-
-# This cleanup is needed whatever the result of the above test.
-git checkout HEAD hello
 
 # $HASH1 is good, $HASH4 is bad, we skip $HASH3
 # but $HASH2 is bad,
