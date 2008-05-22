@@ -8,6 +8,8 @@ test_description='test clone --reference'
 
 base_dir=`pwd`
 
+U=$base_dir/UPLOAD_LOG
+
 test_expect_success 'preparing first repository' \
 'test_create_repo A && cd A &&
 echo first > file1 &&
@@ -50,8 +52,13 @@ diff expected current'
 
 cd "$base_dir"
 
+rm -f $U
+
 test_expect_success 'cloning with reference (no -l -s)' \
-'git clone --reference B file://`pwd`/A D'
+'GIT_DEBUG_SEND_PACK=3 git clone --reference B file://`pwd`/A D 3>$U'
+
+test_expect_success 'fetched no objects' \
+'! grep "^want" $U'
 
 cd "$base_dir"
 
