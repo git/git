@@ -18,6 +18,7 @@ static char wt_status_colors[][COLOR_MAXLEN] = {
 	"\033[32m", /* WT_STATUS_UPDATED: green */
 	"\033[31m", /* WT_STATUS_CHANGED: red */
 	"\033[31m", /* WT_STATUS_UNTRACKED: red */
+	"\033[31m", /* WT_STATUS_NOBRANCH: red */
 };
 
 static const char use_add_msg[] =
@@ -38,6 +39,8 @@ static int parse_status_slot(const char *var, int offset)
 		return WT_STATUS_CHANGED;
 	if (!strcasecmp(var+offset, "untracked"))
 		return WT_STATUS_UNTRACKED;
+	if (!strcasecmp(var+offset, "nobranch"))
+		return WT_STATUS_NOBRANCH;
 	die("bad config variable '%s'", var);
 }
 
@@ -314,8 +317,9 @@ static void wt_status_print_verbose(struct wt_status *s)
 void wt_status_print(struct wt_status *s)
 {
 	unsigned char sha1[20];
-	s->is_initial = get_sha1(s->reference, sha1) ? 1 : 0;
+	const char *branch_color = color(WT_STATUS_HEADER);
 
+	s->is_initial = get_sha1(s->reference, sha1) ? 1 : 0;
 	if (s->branch) {
 		const char *on_what = "On branch ";
 		const char *branch_name = s->branch;
@@ -323,10 +327,11 @@ void wt_status_print(struct wt_status *s)
 			branch_name += 11;
 		else if (!strcmp(branch_name, "HEAD")) {
 			branch_name = "";
+			branch_color = color(WT_STATUS_NOBRANCH);
 			on_what = "Not currently on any branch.";
 		}
-		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER),
-			"# %s%s", on_what, branch_name);
+		color_fprintf(s->fp, color(WT_STATUS_HEADER), "# ");
+		color_fprintf_ln(s->fp, branch_color, "%s%s", on_what, branch_name);
 	}
 
 	if (s->is_initial) {

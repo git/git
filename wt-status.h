@@ -8,6 +8,7 @@ enum color_wt_status {
 	WT_STATUS_UPDATED,
 	WT_STATUS_CHANGED,
 	WT_STATUS_UNTRACKED,
+	WT_STATUS_NOBRANCH,
 };
 
 struct wt_status {

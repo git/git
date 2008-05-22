@@ -523,8 +523,10 @@ color.status.<slot>::
 	one of `header` (the header text of the status message),
 	`added` or `updated` (files which are added but not committed),
 	`changed` (files which are changed but not added in the index),
-	or `untracked` (files which are not tracked by git). The values of
-	these variables may be specified as in color.branch.<slot>.
+	`untracked` (files which are not tracked by git), or
+	`nobranch` (the color the 'no branch' warning is shown in, defaulting
+	to red). The values of these variables may be specified as in
+	color.branch.<slot>.
 
 commit.template::
 	Specify a file to use as the template for new commit messages.
