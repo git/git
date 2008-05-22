@@ -79,8 +79,6 @@ Documentation
 -------------
 Documentation by David Greaves, Petr Baudis and the git-list <git@vger.kernel.org>.
 
-This manual page is a stub. You can help the git documentation by expanding it.
-
 GIT
 ---
 Part of the linkgit:git[7] suite
