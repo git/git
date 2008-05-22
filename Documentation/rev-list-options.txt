@@ -13,7 +13,7 @@ include::pretty-options.txt[]
 
 	Synonym for `--date=relative`.
 
---date={relative,local,default,iso,rfc}::
+--date={relative,local,default,iso,rfc,short}::
 
 	Only takes effect for dates shown in human-readable format, such
 	as when using "--pretty".
