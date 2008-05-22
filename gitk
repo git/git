@@ -5125,7 +5125,7 @@ proc drawvisible {} {
 proc clear_display {} {
     global iddrawn linesegs need_redisplay nrows_drawn
     global vhighlights fhighlights nhighlights rhighlights
-    global linehtag linentag linedtag
+    global linehtag linentag linedtag boldrows boldnamerows
 
     allcanvs delete all
     catch {unset iddrawn}
@@ -5133,6 +5133,8 @@ proc clear_display {} {
     catch {unset linehtag}
     catch {unset linentag}
     catch {unset linedtag}
+    set boldrows {}
+    set boldnamerows {}
     catch {unset vhighlights}
     catch {unset fhighlights}
     catch {unset nhighlights}
