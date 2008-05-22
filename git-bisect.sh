@@ -63,40 +63,40 @@ bisect_autostart() {
 
 bisect_start() {
 	#
-	# Verify HEAD. If we were bisecting before this, reset to the
-	# top-of-line master first!
+	# Verify HEAD.
 	#
 	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref -q HEAD) ||
 	head=$(GIT_DIR="$GIT_DIR" git rev-parse --verify HEAD) ||
 	die "Bad HEAD - I need a HEAD"
-	#
-	# Check that we either already have BISECT_START, or that the
-	# branches bisect, new-bisect don't exist, to not override them.
-	#
-	test -s "$GIT_DIR/BISECT_START" ||
-		if git show-ref --verify -q refs/heads/bisect ||
-		    git show-ref --verify -q refs/heads/new-bisect; then
-			die 'The branches "bisect" and "new-bisect" must not exist.'
-		fi
-	start_head=''
-	case "$head" in
-	refs/heads/bisect)
-		start_head=$(cat "$GIT_DIR/BISECT_START")
-		git checkout "$start_head" || exit
-		;;
-	refs/heads/*|$_x40)
-		# This error message should only be triggered by cogito usage,
-		# and cogito users should understand it relates to cg-seek.
-		[ -s "$GIT_DIR/head-name" ] && die "won't bisect on seeked tree"
-		start_head="${head#refs/heads/}"
-		;;
-	*)
-		die "Bad HEAD - strange symbolic ref"
-		;;
-	esac
 
 	#
-	# Get rid of any old bisect state
+	# Check if we are bisecting.
+	#
+	start_head=''
+	if test -s "$GIT_DIR/BISECT_START"
+	then
+		# Reset to the rev from where we started.
+		start_head=$(cat "$GIT_DIR/BISECT_START")
+		git checkout "$start_head" || exit
+	else
+		# Get rev from where we start.
+		case "$head" in
+		refs/heads/*|$_x40)
+			# This error message should only be triggered by
+			# cogito usage, and cogito users should understand
+			# it relates to cg-seek.
+			[ -s "$GIT_DIR/head-name" ] &&
+				die "won't bisect on seeked tree"
+			start_head="${head#refs/heads/}"
+			;;
+		*)
+			die "Bad HEAD - strange symbolic ref"
+			;;
+		esac
+	fi
+
+	#
+	# Get rid of any old bisect state.
 	#
 	bisect_clean_state
 
@@ -118,7 +118,7 @@ bisect_start() {
 		break
 		;;
 	    *)
-		rev=$(git rev-parse --verify "$arg^{commit}" 2>/dev/null) || {
+		rev=$(git rev-parse -q --verify "$arg^{commit}") || {
 		    test $has_double_dash -eq 1 &&
 		        die "'$arg' does not appear to be a valid revision"
 		    break
@@ -366,9 +366,7 @@ bisect_next() {
 	exit_if_skipped_commits "$bisect_rev"
 
 	echo "Bisecting: $bisect_nr revisions left to test after this"
-	git branch -D new-bisect 2> /dev/null
-	git checkout -q -b new-bisect "$bisect_rev" || exit
-	git branch -M new-bisect bisect
+	git checkout -q "$bisect_rev" || exit
 	git show-branch "$bisect_rev"
 }
 
@@ -415,7 +413,7 @@ bisect_reset() {
 
 bisect_clean_state() {
 	# There may be some refs packed during bisection.
-	git for-each-ref --format='%(refname) %(objectname)' refs/bisect/\* refs/heads/bisect |
+	git for-each-ref --format='%(refname) %(objectname)' refs/bisect/\* |
 	while read ref hash
 	do
 		git update-ref -d $ref $hash
