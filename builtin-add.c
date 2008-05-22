@@ -196,6 +196,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int i, newfd;
 	const char **pathspec;
 	struct dir_struct dir;
+	int flags;
 
 	argc = parse_options(argc, argv, builtin_add_options,
 			  builtin_add_usage, 0);
@@ -208,11 +209,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	newfd = hold_locked_index(&lock_file, 1);
 
+	flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
+		 (show_only ? ADD_CACHE_PRETEND : 0));
+
 	if (take_worktree_changes) {
 		const char **pathspec;
-		int flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
-			     (show_only ? ADD_CACHE_PRETEND : 0));
-
 		if (read_cache() < 0)
 			die("index file corrupt");
 		pathspec = get_pathspec(prefix, argv);
@@ -234,17 +235,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	fill_directory(&dir, pathspec, ignored_too);
 
-	if (show_only) {
-		const char *sep = "", *eof = "";
-		for (i = 0; i < dir.nr; i++) {
-			printf("%s%s", sep, dir.entries[i]->name);
-			sep = " ";
-			eof = "\n";
-		}
-		fputs(eof, stdout);
-		return 0;
-	}
-
 	if (read_cache() < 0)
 		die("index file corrupt");
 
@@ -258,7 +248,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	for (i = 0; i < dir.nr; i++)
-		add_file_to_cache(dir.entries[i]->name, verbose ? ADD_CACHE_VERBOSE : 0);
+		add_file_to_cache(dir.entries[i]->name, flags);
 
  finish:
 	if (active_cache_changed) {
