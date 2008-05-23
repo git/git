@@ -199,9 +199,9 @@ $tag_content
 deadbeef missing
  missing"
 
-test_expect_success \
-    "--batch with multiple sha1s gives correct format" \
-    "test \"\$(maybe_remove_timestamp \"$batch_output\" 1)\" = \"\$(maybe_remove_timestamp \"\$(echo_without_newline \"$batch_input\" | git cat-file --batch)\" 1)\""
+test_expect_success '--batch with multiple sha1s gives correct format' '
+	test "$(maybe_remove_timestamp "$batch_output" 1)" = "$(maybe_remove_timestamp "$(echo_without_newline "$batch_input" | git cat-file --batch)" 1)"
+'
 
 batch_check_input="$hello_sha1
 $tree_sha1
