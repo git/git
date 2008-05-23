@@ -8,7 +8,7 @@ OPTIONS_SPEC="\
 git-repack [options]
 --
 a               pack everything in a single pack
-A               same as -a, and keep unreachable objects too
+A               same as -a, and turn unreachable objects loose
 d               remove redundant packs, and run git-prune-packed
 f               pass --no-reuse-delta to git-pack-objects
 n               do not run git-update-server-info
@@ -23,7 +23,7 @@ max-pack-size=  maximum size of each packfile
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
-no_update_info= all_into_one= remove_redundant= keep_unreachable=
+no_update_info= all_into_one= remove_redundant= unpack_unreachable=
 local= quiet= no_reuse= extra=
 while test $# != 0
 do
@@ -31,7 +31,7 @@ do
 	-n)	no_update_info=t ;;
 	-a)	all_into_one=t ;;
 	-A)	all_into_one=t
-		keep_unreachable=--keep-unreachable ;;
+		unpack_unreachable=--unpack-unreachable ;;
 	-d)	remove_redundant=t ;;
 	-q)	quiet=-q ;;
 	-f)	no_reuse=--no-reuse-object ;;
@@ -79,9 +79,9 @@ case ",$all_into_one," in
 	if test -z "$args"
 	then
 		args='--unpacked --incremental'
-	elif test -n "$keep_unreachable"
+	elif test -n "$unpack_unreachable"
 	then
-		args="$args $keep_unreachable"
+		args="$args $unpack_unreachable"
 	fi
 	;;
 esac
