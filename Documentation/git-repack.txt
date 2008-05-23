@@ -55,8 +55,11 @@ OPTIONS
 	linkgit:git-pack-objects[1].
 
 -n::
-        Do not update the server information with
-        `git update-server-info`.
+	Do not update the server information with
+	`git update-server-info`.  This option skips
+	updating local catalog files needed to publish
+	this repository (or a direct copy of it)
+	over HTTP or FTP.  See gitlink:git-update-server-info[1].
 
 --window=[N], --depth=[N]::
 	These two options affect how the objects contained in the pack are
