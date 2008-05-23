@@ -51,6 +51,7 @@ require Exporter;
 # Methods which can be called as standalone functions as well:
 @EXPORT_OK = qw(command command_oneline command_noisy
                 command_output_pipe command_input_pipe command_close_pipe
+                command_bidi_pipe command_close_bidi_pipe
                 version exec_path hash_object git_cmd_try);
 
 
@@ -92,6 +93,7 @@ increate nonwithstanding).
 use Carp qw(carp croak); # but croak is bad - throw instead
 use Error qw(:try);
 use Cwd qw(abs_path);
+use IPC::Open2 qw(open2);
 
 }
 
@@ -373,6 +375,60 @@ sub command_close_pipe {
 	my ($self, $fh, $ctx) = _maybe_self(@_);
 	$ctx ||= '<unknown>';
 	_cmd_close($fh, $ctx);
+}
+
+=item command_bidi_pipe ( COMMAND [, ARGUMENTS... ] )
+
+Execute the given C<COMMAND> in the same way as command_output_pipe()
+does but return both an input pipe filehandle and an output pipe filehandle.
+
+The function will return return C<($pid, $pipe_in, $pipe_out, $ctx)>.
+See C<command_close_bidi_pipe()> for details.
+
+=cut
+
+sub command_bidi_pipe {
+	my ($pid, $in, $out);
+	$pid = open2($in, $out, 'git', @_);
+	return ($pid, $in, $out, join(' ', @_));
+}
+
+=item command_close_bidi_pipe ( PID, PIPE_IN, PIPE_OUT [, CTX] )
+
+Close the C<PIPE_IN> and C<PIPE_OUT> as returned from C<command_bidi_pipe()>,
+checking whether the command finished successfully. The optional C<CTX>
+argument is required if you want to see the command name in the error message,
+and it is the fourth value returned by C<command_bidi_pipe()>.  The call idiom
+is:
+
+	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe('cat-file --batch-check');
+	print "000000000\n" $out;
+	while (<$in>) { ... }
+	$r->command_close_bidi_pipe($pid, $in, $out, $ctx);
+
+Note that you should not rely on whatever actually is in C<CTX>;
+currently it is simply the command name but in future the context might
+have more complicated structure.
+
+=cut
+
+sub command_close_bidi_pipe {
+	my ($pid, $in, $out, $ctx) = @_;
+	foreach my $fh ($in, $out) {
+		unless (close $fh) {
+			if ($!) {
+				carp "error closing pipe: $!";
+			} elsif ($? >> 8) {
+				throw Git::Error::Command($ctx, $? >>8);
+			}
+		}
+	}
+
+	waitpid $pid, 0;
+
+	if ($? >> 8) {
+		throw Git::Error::Command($ctx, $? >>8);
+	}
 }
 
 
