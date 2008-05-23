@@ -96,6 +96,14 @@ static void show(const char *arg)
 		puts(arg);
 }
 
+/* Like show(), but with a negation prefix according to type */
+static void show_with_type(int type, const char *arg)
+{
+	if (type != show_type)
+		putchar('^');
+	show(arg);
+}
+
 /* Output a revision, only if filter allows it */
 static void show_rev(int type, const unsigned char *sha1, const char *name)
 {
@@ -104,8 +112,6 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 	def = NULL;
 	revs_count++;
 
-	if (type != show_type)
-		putchar('^');
 	if (symbolic && name) {
 		if (symbolic == SHOW_SYMBOLIC_FULL) {
 			unsigned char discard[20];
@@ -122,20 +128,20 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 				 */
 				break;
 			case 1: /* happy */
-				show(full);
+				show_with_type(type, full);
 				break;
 			default: /* ambiguous */
 				error("refname '%s' is ambiguous", name);
 				break;
 			}
 		} else {
-			show(name);
+			show_with_type(type, name);
 		}
 	}
 	else if (abbrev)
-		show(find_unique_abbrev(sha1, abbrev));
+		show_with_type(type, find_unique_abbrev(sha1, abbrev));
 	else
-		show(sha1_to_hex(sha1));
+		show_with_type(type, sha1_to_hex(sha1));
 }
 
 /* Output a flag, only if filter allows it. */
