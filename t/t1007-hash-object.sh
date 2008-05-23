@@ -4,32 +4,98 @@ test_description=git-hash-object
 
 . ./test-lib.sh
 
-test_expect_success \
-    'git hash-object -w --stdin saves the object' \
-    'obname=$(echo foo | git hash-object -w --stdin) &&
-    obpath=$(echo $obname | sed -e "s/\(..\)/\1\//") &&
-    test -r .git/objects/"$obpath" &&
-    rm -f .git/objects/"$obpath"'
-    
-test_expect_success \
-    'git hash-object --stdin -w saves the object' \
-    'obname=$(echo foo | git hash-object --stdin -w) &&
-    obpath=$(echo $obname | sed -e "s/\(..\)/\1\//") &&
-    test -r .git/objects/"$obpath" &&
-    rm -f .git/objects/"$obpath"'    
+echo_without_newline() {
+	printf '%s' "$*"
+}
 
-test_expect_success \
-    'git hash-object --stdin file1 <file0 first operates on file0, then file1' \
-    'echo foo > file1 &&
-    obname0=$(echo bar | git hash-object --stdin) &&
-    obname1=$(git hash-object file1) &&
-    obname0new=$(echo bar | git hash-object --stdin file1 | sed -n -e 1p) &&
-    obname1new=$(echo bar | git hash-object --stdin file1 | sed -n -e 2p) &&
-    test "$obname0" = "$obname0new" &&
-    test "$obname1" = "$obname1new"'
+test_blob_does_not_exist() {
+	test_expect_success 'blob does not exist in database' "
+		test_must_fail git cat-file blob $1
+	"
+}
 
-test_expect_success \
-    'git hash-object refuses multiple --stdin arguments' \
-    '! git hash-object --stdin --stdin < file1'
+test_blob_exists() {
+	test_expect_success 'blob exists in database' "
+		git cat-file blob $1
+	"
+}
+
+hello_content="Hello World"
+hello_sha1=5e1c309dae7f45e0f39b1bf3ac3cd9db12e7d689
+
+example_content="This is an example"
+example_sha1=ddd3f836d3e3fbb7ae289aa9ae83536f76956399
+
+setup_repo() {
+	echo_without_newline "$hello_content" > hello
+	echo_without_newline "$example_content" > example
+}
+
+test_repo=test
+push_repo() {
+	test_create_repo $test_repo
+	cd $test_repo
+
+	setup_repo
+}
+
+pop_repo() {
+	cd ..
+	rm -rf $test_repo
+}
+
+setup_repo
+
+# Argument checking
+
+test_expect_success "multiple '--stdin's are rejected" '
+	test_must_fail git hash-object --stdin --stdin < example
+'
+
+# Behavior
+
+push_repo
+
+test_expect_success 'hash a file' '
+	test $hello_sha1 = $(git hash-object hello)
+'
+
+test_blob_does_not_exist $hello_sha1
+
+test_expect_success 'hash from stdin' '
+	test $example_sha1 = $(git hash-object --stdin < example)
+'
+
+test_blob_does_not_exist $example_sha1
+
+test_expect_success 'hash a file and write to database' '
+	test $hello_sha1 = $(git hash-object -w hello)
+'
+
+test_blob_exists $hello_sha1
+
+test_expect_success 'git hash-object --stdin file1 <file0 first operates on file0, then file1' '
+	echo foo > file1 &&
+	obname0=$(echo bar | git hash-object --stdin) &&
+	obname1=$(git hash-object file1) &&
+	obname0new=$(echo bar | git hash-object --stdin file1 | sed -n -e 1p) &&
+	obname1new=$(echo bar | git hash-object --stdin file1 | sed -n -e 2p) &&
+	test "$obname0" = "$obname0new" &&
+	test "$obname1" = "$obname1new"
+'
+
+pop_repo
+
+for args in "-w --stdin" "--stdin -w"; do
+	push_repo
+
+	test_expect_success "hash from stdin and write to database ($args)" '
+		test $example_sha1 = $(git hash-object $args < example)
+	'
+
+	test_blob_exists $example_sha1
+
+	pop_repo
+done
 
 test_done
