@@ -52,6 +52,15 @@ test_expect_success "multiple '--stdin's are rejected" '
 	test_must_fail git hash-object --stdin --stdin < example
 '
 
+test_expect_success "Can't use --stdin and --stdin-paths together" '
+	test_must_fail git hash-object --stdin --stdin-paths &&
+	test_must_fail git hash-object --stdin-paths --stdin
+'
+
+test_expect_success "Can't pass filenames as arguments with --stdin-paths" '
+	test_must_fail git hash-object --stdin-paths hello < example
+'
+
 # Behavior
 
 push_repo
@@ -93,6 +102,29 @@ for args in "-w --stdin" "--stdin -w"; do
 		test $example_sha1 = $(git hash-object $args < example)
 	'
 
+	test_blob_exists $example_sha1
+
+	pop_repo
+done
+
+filenames="hello
+example"
+
+sha1s="$hello_sha1
+$example_sha1"
+
+test_expect_success "hash two files with names on stdin" '
+	test "$sha1s" = "$(echo_without_newline "$filenames" | git hash-object --stdin-paths)"
+'
+
+for args in "-w --stdin-paths" "--stdin-paths -w"; do
+	push_repo
+
+	test_expect_success "hash two files with names on stdin and write to database ($args)" '
+		test "$sha1s" = "$(echo_without_newline "$filenames" | git hash-object $args)"
+	'
+
+	test_blob_exists $hello_sha1
 	test_blob_exists $example_sha1
 
 	pop_repo

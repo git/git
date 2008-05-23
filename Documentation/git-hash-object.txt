@@ -8,7 +8,7 @@ git-hash-object - Compute object ID and optionally creates a blob from a file
 
 SYNOPSIS
 --------
-'git-hash-object' [-t <type>] [-w] [--stdin] [--] <file>...
+'git-hash-object' [-t <type>] [-w] [--stdin | --stdin-paths] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -31,6 +31,9 @@ OPTIONS
 
 --stdin::
 	Read the object from standard input instead of from a file.
+
+--stdin-paths::
+	Read file names from stdin instead of from the command-line.
 
 Author
 ------
