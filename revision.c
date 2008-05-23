@@ -6,6 +6,7 @@
 #include "diff.h"
 #include "refs.h"
 #include "revision.h"
+#include "graph.h"
 #include "grep.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
@@ -415,7 +416,6 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 {
 	struct commit_list *parent = commit->parents;
 	unsigned left_flag;
-	int add, rest;
 
 	if (commit->object.flags & ADDED)
 		return 0;
@@ -462,19 +462,18 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 
 	left_flag = (commit->object.flags & SYMMETRIC_LEFT);
 
-	rest = !revs->first_parent_only;
-	for (parent = commit->parents, add = 1; parent; add = rest) {
+	for (parent = commit->parents; parent; parent = parent->next) {
 		struct commit *p = parent->item;
 
-		parent = parent->next;
 		if (parse_commit(p) < 0)
 			return -1;
 		p->object.flags |= left_flag;
-		if (p->object.flags & SEEN)
-			continue;
-		p->object.flags |= SEEN;
-		if (add)
+		if (!(p->object.flags & SEEN)) {
+			p->object.flags |= SEEN;
 			insert_by_date(p, list);
+		}
+		if(revs->first_parent_only)
+			break;
 	}
 	return 0;
 }
@@ -1105,7 +1104,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				}
 			}
 			if (!strcmp(arg, "--parents")) {
-				revs->parents = 1;
+				revs->rewrite_parents = 1;
+				revs->print_parents = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--dense")) {
@@ -1200,6 +1200,12 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			if (!prefixcmp(arg, "--pretty")) {
 				revs->verbose_header = 1;
 				get_commit_format(arg+8, revs);
+				continue;
+			}
+			if (!prefixcmp(arg, "--graph")) {
+				revs->topo_order = 1;
+				revs->rewrite_parents = 1;
+				revs->graph = graph_init();
 				continue;
 			}
 			if (!strcmp(arg, "--root")) {
@@ -1396,6 +1402,15 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (revs->reverse && revs->reflog_info)
 		die("cannot combine --reverse with --walk-reflogs");
 
+	/*
+	 * Limitations on the graph functionality
+	 */
+	if (revs->reverse && revs->graph)
+		die("cannot combine --reverse with --graph");
+
+	if (revs->reflog_info && revs->graph)
+		die("cannot combine --walk-reflogs with --graph");
+
 	return left;
 }
 
@@ -1524,13 +1539,13 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 		/* Commit without changes? */
 		if (commit->object.flags & TREESAME) {
 			/* drop merges unless we want parenthood */
-			if (!revs->parents)
+			if (!revs->rewrite_parents)
 				return commit_ignore;
 			/* non-merge - always ignore it */
 			if (!commit->parents || !commit->parents->next)
 				return commit_ignore;
 		}
-		if (revs->parents && rewrite_parents(revs, commit) < 0)
+		if (revs->rewrite_parents && rewrite_parents(revs, commit) < 0)
 			return commit_error;
 	}
 	return commit_show;
@@ -1597,7 +1612,7 @@ static void gc_boundary(struct object_array *array)
 	}
 }
 
-struct commit *get_revision(struct rev_info *revs)
+static struct commit *get_revision_internal(struct rev_info *revs)
 {
 	struct commit *c = NULL;
 	struct commit_list *l;
@@ -1702,5 +1717,13 @@ struct commit *get_revision(struct rev_info *revs)
 		add_object_array(p, NULL, &revs->boundary_commits);
 	}
 
+	return c;
+}
+
+struct commit *get_revision(struct rev_info *revs)
+{
+	struct commit *c = get_revision_internal(revs);
+	if (c && revs->graph)
+		graph_update(revs->graph, c);
 	return c;
 }

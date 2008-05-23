@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "diff.h"
 #include "commit.h"
+#include "graph.h"
 #include "log-tree.h"
 #include "reflog-walk.h"
 
@@ -165,11 +166,16 @@ void log_write_email_headers(struct rev_info *opt, const char *name,
 	}
 
 	printf("From %s Mon Sep 17 00:00:00 2001\n", name);
-	if (opt->message_id)
+	graph_show_oneline(opt->graph);
+	if (opt->message_id) {
 		printf("Message-Id: <%s>\n", opt->message_id);
-	if (opt->ref_message_id)
+		graph_show_oneline(opt->graph);
+	}
+	if (opt->ref_message_id) {
 		printf("In-Reply-To: <%s>\nReferences: <%s>\n",
 		       opt->ref_message_id, opt->ref_message_id);
+		graph_show_oneline(opt->graph);
+	}
 	if (opt->mime_boundary) {
 		static char subject_buffer[1024];
 		static char buffer[1024];
@@ -220,6 +226,8 @@ void show_log(struct rev_info *opt)
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
+		graph_show_commit(opt->graph);
+
 		if (commit->object.flags & BOUNDARY)
 			putchar('-');
 		else if (commit->object.flags & UNINTERESTING)
@@ -231,9 +239,13 @@ void show_log(struct rev_info *opt)
 				putchar('>');
 		}
 		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
-		if (opt->parents)
+		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
 		show_decorations(commit);
+		if (opt->graph && !graph_is_commit_finished(opt->graph)) {
+			putchar('\n');
+			graph_show_remainder(opt->graph);
+		}
 		putchar(opt->diffopt.line_termination);
 		return;
 	}
@@ -243,9 +255,31 @@ void show_log(struct rev_info *opt)
 	 * Otherwise, add a diffopt.line_termination character before all
 	 * entries but the first.  (IOW, as a separator between entries)
 	 */
-	if (opt->shown_one && !opt->use_terminator)
+	if (opt->shown_one && !opt->use_terminator) {
+		/*
+		 * If entries are separated by a newline, the output
+		 * should look human-readable.  If the last entry ended
+		 * with a newline, print the graph output before this
+		 * newline.  Otherwise it will end up as a completely blank
+		 * line and will look like a gap in the graph.
+		 *
+		 * If the entry separator is not a newline, the output is
+		 * primarily intended for programmatic consumption, and we
+		 * never want the extra graph output before the entry
+		 * separator.
+		 */
+		if (opt->diffopt.line_termination == '\n' &&
+		    !opt->missing_newline)
+			graph_show_padding(opt->graph);
 		putchar(opt->diffopt.line_termination);
+	}
 	opt->shown_one = 1;
+
+	/*
+	 * If the history graph was requested,
+	 * print the graph, up to this commit's line
+	 */
+	graph_show_commit(opt->graph);
 
 	/*
 	 * Print header line of header..
@@ -271,7 +305,7 @@ void show_log(struct rev_info *opt)
 		}
 		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit),
 		      stdout);
-		if (opt->parents)
+		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
 		if (parent)
 			printf(" (from %s)",
@@ -279,8 +313,19 @@ void show_log(struct rev_info *opt)
 						  abbrev_commit));
 		show_decorations(commit);
 		printf("%s", diff_get_color_opt(&opt->diffopt, DIFF_RESET));
-		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
+		if (opt->commit_format == CMIT_FMT_ONELINE) {
+			putchar(' ');
+		} else {
+			putchar('\n');
+			graph_show_oneline(opt->graph);
+		}
 		if (opt->reflog_info) {
+			/*
+			 * setup_revisions() ensures that opt->reflog_info
+			 * and opt->graph cannot both be set,
+			 * so we don't need to worry about printing the
+			 * graph info here.
+			 */
 			show_reflog_message(opt->reflog_info,
 				    opt->commit_format == CMIT_FMT_ONELINE,
 				    opt->date_mode);
@@ -304,13 +349,30 @@ void show_log(struct rev_info *opt)
 
 	if (opt->add_signoff)
 		append_signoff(&msgbuf, opt->add_signoff);
-	if (opt->show_log_size)
+	if (opt->show_log_size) {
 		printf("log size %i\n", (int)msgbuf.len);
+		graph_show_oneline(opt->graph);
+	}
 
-	if (msgbuf.len)
+	/*
+	 * Set opt->missing_newline if msgbuf doesn't
+	 * end in a newline (including if it is empty)
+	 */
+	if (!msgbuf.len || msgbuf.buf[msgbuf.len - 1] != '\n')
+		opt->missing_newline = 1;
+	else
+		opt->missing_newline = 0;
+
+	if (opt->graph)
+		graph_show_commit_msg(opt->graph, &msgbuf);
+	else
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
-	if (opt->use_terminator)
+	if (opt->use_terminator) {
+		if (!opt->missing_newline)
+			graph_show_padding(opt->graph);
 		putchar('\n');
+	}
+
 	strbuf_release(&msgbuf);
 }
 

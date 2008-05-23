@@ -6,6 +6,7 @@ use File::Temp qw(tempdir);
 use Data::Dumper;
 use File::Basename qw(basename dirname);
 use File::Spec;
+use Git;
 
 our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u, $opt_w);
 
@@ -14,6 +15,10 @@ getopts('uhPpvcfam:d:w:');
 $opt_h && usage();
 
 die "Need at least one commit identifier!" unless @ARGV;
+
+# Get git-config settings
+my $repo = Git->repository();
+$opt_w = $repo->config('cvsexportcommit.cvsdir') unless defined $opt_w;
 
 if ($opt_w) {
 	# Remember where GIT_DIR is before changing to CVS checkout

@@ -378,6 +378,31 @@ C?        option C with an optional argument"
 eval `echo "$OPTS_SPEC" | git-rev-parse --parseopt -- "$@" || echo exit $?`
 ------------
 
+EXAMPLES
+--------
+
+* Print the object name of the current commit:
++
+------------
+$ git rev-parse --verify HEAD
+------------
+
+* Print the commit object name from the revision in the $REV shell variable:
++
+------------
+$ git rev-parse --verify $REV
+------------
++
+This will error out if $REV is empty or not a valid revision.
+
+* Same as above:
++
+------------
+$ git rev-parse --default master --verify $REV
+------------
++
+but if $REV is empty, the commit object name from master will be printed.
+
 
 Author
 ------

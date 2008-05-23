@@ -368,7 +368,7 @@ test_done () {
 	case "$test_failure" in
 	0)
 		# We could:
-		# cd .. && rm -fr trash
+		# cd .. && rm -fr 'trash directory'
 		# but that means we forbid any tests that use their own
 		# subdirectory from calling test_done without coming back
 		# to where they started from.
@@ -419,7 +419,7 @@ rm -fr "$test" || {
 }
 
 test_create_repo "$test"
-cd "$test"
+cd "$test" || exit 1
 
 # test for symbolic link capability
 ln -s x y 2> /dev/null && test -l y 2> /dev/null || no_symlinks=1
