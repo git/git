@@ -63,7 +63,7 @@ test_expect_success "merge without conflict (missing LF at EOF)" \
 	"git merge-file test2.txt orig.txt new2.txt"
 
 test_expect_success "merge result added missing LF" \
-	"git diff test.txt test2.txt"
+	"test_cmp test.txt test2.txt"
 
 cp test.txt backup.txt
 test_expect_success "merge with conflicts" \
@@ -86,7 +86,7 @@ non timebo mala, quoniam tu mecum es:
 virga tua et baculus tuus ipsa me consolata sunt.
 EOF
 
-test_expect_success "expected conflict markers" "git diff test.txt expect.txt"
+test_expect_success "expected conflict markers" "test_cmp test.txt expect.txt"
 
 cp backup.txt test.txt
 test_expect_success "merge with conflicts, using -L" \
@@ -110,7 +110,7 @@ virga tua et baculus tuus ipsa me consolata sunt.
 EOF
 
 test_expect_success "expected conflict markers, with -L" \
-	"git diff test.txt expect.txt"
+	"test_cmp test.txt expect.txt"
 
 sed "s/ tu / TU /" < new1.txt > new5.txt
 test_expect_success "conflict in removed tail" \
@@ -132,7 +132,7 @@ virga tua et baculus tuus ipsa me consolata sunt.
 >>>>>>> new5.txt
 EOF
 
-test_expect_success "expected conflict markers" "git diff expect out"
+test_expect_success "expected conflict markers" "test_cmp expect out"
 
 test_expect_success 'binary files cannot be merged' '
 	! git merge-file -p orig.txt ../test4012.png new1.txt 2> merge.err &&

@@ -11,7 +11,7 @@ setup() {
 check() {
 	echo "$2" >expected
 	git config --get "$1" >actual
-	git diff actual expected
+	test_cmp actual expected
 }
 
 test_expect_success 'modify same key' '

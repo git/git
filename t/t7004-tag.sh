@@ -116,9 +116,9 @@ mytag
 EOF
 test_expect_success \
 	'trying to delete tags without params should succeed and do nothing' '
-	git tag -l > actual && git diff expect actual &&
+	git tag -l > actual && test_cmp expect actual &&
 	git-tag -d &&
-	git tag -l > actual && git diff expect actual
+	git tag -l > actual && test_cmp expect actual
 '
 
 test_expect_success \
@@ -173,9 +173,9 @@ test_expect_success 'listing all tags should print them ordered' '
 	git tag v1.0 &&
 	git tag t210 &&
 	git tag -l > actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git tag > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -186,7 +186,7 @@ EOF
 test_expect_success \
 	'listing tags with substring as pattern must print those matching' '
 	git-tag -l "*a*" > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -196,7 +196,7 @@ EOF
 test_expect_success \
 	'listing tags with a suffix as pattern must print those matching' '
 	git-tag -l "*.1" > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -206,7 +206,7 @@ EOF
 test_expect_success \
 	'listing tags with a prefix as pattern must print those matching' '
 	git-tag -l "t21*" > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -215,7 +215,7 @@ EOF
 test_expect_success \
 	'listing tags using a name as pattern must print that one matching' '
 	git-tag -l a1 > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -224,7 +224,7 @@ EOF
 test_expect_success \
 	'listing tags using a name as pattern must print that one matching' '
 	git-tag -l v1.0 > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -234,14 +234,14 @@ EOF
 test_expect_success \
 	'listing tags with ? in the pattern should print those matching' '
 	git-tag -l "v1.?.?" > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 >expect
 test_expect_success \
 	'listing tags using v.* should print nothing because none have v.' '
 	git-tag -l "v.*" > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -253,7 +253,7 @@ EOF
 test_expect_success \
 	'listing tags using v* should print only those having v' '
 	git-tag -l "v*" > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 # creating and verifying lightweight tags:
@@ -302,7 +302,7 @@ test_expect_success \
 	'creating an annotated tag with -m message should succeed' '
 	git-tag -m "A message" annotated-tag &&
 	get_tag_msg annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >msgfile <<EOF
@@ -315,7 +315,7 @@ test_expect_success \
 	'creating an annotated tag with -F messagefile should succeed' '
 	git-tag -F msgfile file-annotated-tag &&
 	get_tag_msg file-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >inputmsg <<EOF
@@ -327,7 +327,7 @@ cat inputmsg >>expect
 test_expect_success 'creating an annotated tag with -F - should succeed' '
 	git-tag -F - stdin-annotated-tag <inputmsg &&
 	get_tag_msg stdin-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 test_expect_success \
@@ -358,7 +358,7 @@ test_expect_success \
 	'creating a tag with an empty -m message should succeed' '
 	git-tag -m "" empty-annotated-tag &&
 	get_tag_msg empty-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 >emptyfile
@@ -367,7 +367,7 @@ test_expect_success \
 	'creating a tag with an empty -F messagefile should succeed' '
 	git-tag -F emptyfile emptyfile-annotated-tag &&
 	get_tag_msg emptyfile-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 printf '\n\n  \n\t\nLeading blank lines\n' >blanksfile
@@ -388,7 +388,7 @@ test_expect_success \
 	'extra blanks in the message for an annotated tag should be removed' '
 	git-tag -F blanksfile blanks-annotated-tag &&
 	get_tag_msg blanks-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 get_tag_header blank-annotated-tag $commit commit $time >expect
@@ -396,7 +396,7 @@ test_expect_success \
 	'creating a tag with blank -m message with spaces should succeed' '
 	git-tag -m "     " blank-annotated-tag &&
 	get_tag_msg blank-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 echo '     ' >blankfile
@@ -407,7 +407,7 @@ test_expect_success \
 	'creating a tag with blank -F messagefile with spaces should succeed' '
 	git-tag -F blankfile blankfile-annotated-tag &&
 	get_tag_msg blankfile-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 printf '      ' >blanknonlfile
@@ -416,7 +416,7 @@ test_expect_success \
 	'creating a tag with -F file of spaces and no newline should succeed' '
 	git-tag -F blanknonlfile blanknonlfile-annotated-tag &&
 	get_tag_msg blanknonlfile-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 # messages with commented lines:
@@ -451,7 +451,7 @@ test_expect_success \
 	'creating a tag using a -F messagefile with #comments should succeed' '
 	git-tag -F commentsfile comments-annotated-tag &&
 	get_tag_msg comments-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 get_tag_header comment-annotated-tag $commit commit $time >expect
@@ -459,7 +459,7 @@ test_expect_success \
 	'creating a tag with a #comment in the -m message should succeed' '
 	git-tag -m "#comment" comment-annotated-tag &&
 	get_tag_msg comment-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 echo '#comment' >commentfile
@@ -470,7 +470,7 @@ test_expect_success \
 	'creating a tag with #comments in the -F messagefile should succeed' '
 	git-tag -F commentfile commentfile-annotated-tag &&
 	get_tag_msg commentfile-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 printf '#comment' >commentnonlfile
@@ -479,7 +479,7 @@ test_expect_success \
 	'creating a tag with a file of #comment and no newline should succeed' '
 	git-tag -F commentnonlfile commentnonlfile-annotated-tag &&
 	get_tag_msg commentnonlfile-annotated-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 # listing messages for annotated non-signed tags:
@@ -490,23 +490,23 @@ test_expect_success \
 
 	echo "tag-one-line" >expect &&
 	git-tag -l | grep "^tag-one-line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l | grep "^tag-one-line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l tag-one-line >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "tag-one-line    A msg" >expect &&
 	git-tag -n1 -l | grep "^tag-one-line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n -l | grep "^tag-one-line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n1 -l tag-one-line >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n2 -l tag-one-line >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n999 -l tag-one-line >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 test_expect_success \
@@ -515,23 +515,23 @@ test_expect_success \
 
 	echo "tag-zero-lines" >expect &&
 	git-tag -l | grep "^tag-zero-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l | grep "^tag-zero-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l tag-zero-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "tag-zero-lines  " >expect &&
 	git-tag -n1 -l | grep "^tag-zero-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n -l | grep "^tag-zero-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n1 -l tag-zero-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n2 -l tag-zero-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n999 -l tag-zero-lines >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 echo 'tag line one' >annotagmsg
@@ -543,39 +543,39 @@ test_expect_success \
 
 	echo "tag-lines" >expect &&
 	git-tag -l | grep "^tag-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l | grep "^tag-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l tag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "tag-lines       tag line one" >expect &&
 	git-tag -n1 -l | grep "^tag-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n -l | grep "^tag-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n1 -l tag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "    tag line two" >>expect &&
 	git-tag -n2 -l | grep "^ *tag.line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n2 -l tag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "    tag line three" >>expect &&
 	git-tag -n3 -l | grep "^ *tag.line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n3 -l tag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n4 -l | grep "^ *tag.line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n4 -l tag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n99 -l | grep "^ *tag.line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n99 -l tag-lines >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 # subsequent tests require gpg; check if it is available
@@ -635,7 +635,7 @@ echo '-----BEGIN PGP SIGNATURE-----' >>expect
 test_expect_success 'creating a signed tag with -m message should succeed' '
 	git-tag -s -m "A signed tag message" signed-tag &&
 	get_tag_msg signed-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 get_tag_header u-signed-tag $commit commit $time >expect
@@ -645,7 +645,7 @@ test_expect_success 'sign with a given key id' '
 
 	git tag -u committer@example.com -m "Another message" u-signed-tag &&
 	get_tag_msg u-signed-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 
 '
 
@@ -675,7 +675,7 @@ echo '-----BEGIN PGP SIGNATURE-----' >>expect
 test_expect_success '-u implies signed tag' '
 	GIT_EDITOR=./fakeeditor git-tag -u CDDE430D implied-sign &&
 	get_tag_msg implied-sign >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >sigmsgfile <<EOF
@@ -689,7 +689,7 @@ test_expect_success \
 	'creating a signed tag with -F messagefile should succeed' '
 	git-tag -s -F sigmsgfile file-signed-tag &&
 	get_tag_msg file-signed-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat >siginputmsg <<EOF
@@ -702,7 +702,7 @@ echo '-----BEGIN PGP SIGNATURE-----' >>expect
 test_expect_success 'creating a signed tag with -F - should succeed' '
 	git-tag -s -F - stdin-signed-tag <siginputmsg &&
 	get_tag_msg stdin-signed-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 get_tag_header implied-annotate $commit commit $time >expect
@@ -711,7 +711,7 @@ echo '-----BEGIN PGP SIGNATURE-----' >>expect
 test_expect_success '-s implies annotated tag' '
 	GIT_EDITOR=./fakeeditor git-tag -s implied-annotate &&
 	get_tag_msg implied-annotate >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 test_expect_success \
@@ -752,7 +752,7 @@ test_expect_success \
 	'creating a signed tag with an empty -m message should succeed' '
 	git-tag -s -m "" empty-signed-tag &&
 	get_tag_msg empty-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v empty-signed-tag
 '
 
@@ -763,7 +763,7 @@ test_expect_success \
 	'creating a signed tag with an empty -F messagefile should succeed' '
 	git-tag -s -F sigemptyfile emptyfile-signed-tag &&
 	get_tag_msg emptyfile-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v emptyfile-signed-tag
 '
 
@@ -786,7 +786,7 @@ test_expect_success \
 	'extra blanks in the message for a signed tag should be removed' '
 	git-tag -s -F sigblanksfile blanks-signed-tag &&
 	get_tag_msg blanks-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v blanks-signed-tag
 '
 
@@ -796,7 +796,7 @@ test_expect_success \
 	'creating a signed tag with a blank -m message should succeed' '
 	git-tag -s -m "     " blank-signed-tag &&
 	get_tag_msg blank-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v blank-signed-tag
 '
 
@@ -809,7 +809,7 @@ test_expect_success \
 	'creating a signed tag with blank -F file with spaces should succeed' '
 	git-tag -s -F sigblankfile blankfile-signed-tag &&
 	get_tag_msg blankfile-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v blankfile-signed-tag
 '
 
@@ -820,7 +820,7 @@ test_expect_success \
 	'creating a signed tag with spaces and no newline should succeed' '
 	git-tag -s -F sigblanknonlfile blanknonlfile-signed-tag &&
 	get_tag_msg blanknonlfile-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v signed-tag
 '
 
@@ -857,7 +857,7 @@ test_expect_success \
 	'creating a signed tag with a -F file with #comments should succeed' '
 	git-tag -s -F sigcommentsfile comments-signed-tag &&
 	get_tag_msg comments-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v comments-signed-tag
 '
 
@@ -867,7 +867,7 @@ test_expect_success \
 	'creating a signed tag with #commented -m message should succeed' '
 	git-tag -s -m "#comment" comment-signed-tag &&
 	get_tag_msg comment-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v comment-signed-tag
 '
 
@@ -880,7 +880,7 @@ test_expect_success \
 	'creating a signed tag with #commented -F messagefile should succeed' '
 	git-tag -s -F sigcommentfile commentfile-signed-tag &&
 	get_tag_msg commentfile-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v commentfile-signed-tag
 '
 
@@ -891,7 +891,7 @@ test_expect_success \
 	'creating a signed tag with a #comment and no newline should succeed' '
 	git-tag -s -F sigcommentnonlfile commentnonlfile-signed-tag &&
 	get_tag_msg commentnonlfile-signed-tag >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -v commentnonlfile-signed-tag
 '
 
@@ -903,23 +903,23 @@ test_expect_success \
 
 	echo "stag-one-line" >expect &&
 	git-tag -l | grep "^stag-one-line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l | grep "^stag-one-line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l stag-one-line >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "stag-one-line   A message line signed" >expect &&
 	git-tag -n1 -l | grep "^stag-one-line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n -l | grep "^stag-one-line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n1 -l stag-one-line >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n2 -l stag-one-line >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n999 -l stag-one-line >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 test_expect_success \
@@ -928,23 +928,23 @@ test_expect_success \
 
 	echo "stag-zero-lines" >expect &&
 	git-tag -l | grep "^stag-zero-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l | grep "^stag-zero-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l stag-zero-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "stag-zero-lines " >expect &&
 	git-tag -n1 -l | grep "^stag-zero-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n -l | grep "^stag-zero-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n1 -l stag-zero-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n2 -l stag-zero-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n999 -l stag-zero-lines >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 echo 'stag line one' >sigtagmsg
@@ -956,39 +956,39 @@ test_expect_success \
 
 	echo "stag-lines" >expect &&
 	git-tag -l | grep "^stag-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l | grep "^stag-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n0 -l stag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "stag-lines      stag line one" >expect &&
 	git-tag -n1 -l | grep "^stag-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n -l | grep "^stag-lines" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n1 -l stag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "    stag line two" >>expect &&
 	git-tag -n2 -l | grep "^ *stag.line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n2 -l stag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 
 	echo "    stag line three" >>expect &&
 	git-tag -n3 -l | grep "^ *stag.line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n3 -l stag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n4 -l | grep "^ *stag.line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n4 -l stag-lines >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n99 -l | grep "^ *stag.line" >actual &&
-	git diff expect actual &&
+	test_cmp expect actual &&
 	git-tag -n99 -l stag-lines >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 # tags pointing to objects different from commits:
@@ -1004,7 +1004,7 @@ test_expect_success \
 	'creating a signed tag pointing to a tree should succeed' '
 	git-tag -s -m "A message for a tree" tree-signed-tag HEAD^{tree} &&
 	get_tag_msg tree-signed-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 get_tag_header blob-signed-tag $blob blob $time >expect
@@ -1014,7 +1014,7 @@ test_expect_success \
 	'creating a signed tag pointing to a blob should succeed' '
 	git-tag -s -m "A message for a blob" blob-signed-tag HEAD:foo &&
 	get_tag_msg blob-signed-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 get_tag_header tag-signed-tag $tag tag $time >expect
@@ -1024,7 +1024,7 @@ test_expect_success \
 	'creating a signed tag pointing to another tag should succeed' '
 	git-tag -s -m "A message for another tag" tag-signed-tag signed-tag &&
 	get_tag_msg tag-signed-tag >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 # try to sign with bad user.signingkey
@@ -1064,7 +1064,7 @@ test_expect_success \
 	git tag -a -m "An annotation to be reused" reuse &&
 	GIT_EDITOR=true git tag -f -a reuse &&
 	get_tag_msg reuse >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 test_done

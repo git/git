@@ -112,7 +112,7 @@ do
 		} >"$actual" &&
 		if test -f "$expect"
 		then
-			git diff "$expect" "$actual" &&
+			test_cmp "$expect" "$actual" &&
 			rm -f "$actual"
 		else
 			# this is to help developing new tests.

@@ -110,7 +110,7 @@ test_expect_success \
 	cd .. &&
 	git update-ref refs/heads/master master^ || return 1
 	git-send-pack --force ./victim/.git/ master && return 1
-	! git diff .git/refs/heads/master victim/.git/refs/heads/master
+	! test_cmp .git/refs/heads/master victim/.git/refs/heads/master
 '
 
 test_expect_success \

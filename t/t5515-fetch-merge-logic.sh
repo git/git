@@ -151,7 +151,7 @@ do
 		git show-ref >"$actual_r" &&
 		if test -f "$expect_f"
 		then
-			git diff -u "$expect_f" "$actual_f" &&
+			test_cmp "$expect_f" "$actual_f" &&
 			rm -f "$actual_f"
 		else
 			# this is to help developing new tests.
@@ -160,7 +160,7 @@ do
 		fi &&
 		if test -f "$expect_r"
 		then
-			git diff -u "$expect_r" "$actual_r" &&
+			test_cmp "$expect_r" "$actual_r" &&
 			rm -f "$actual_r"
 		else
 			# this is to help developing new tests.
