@@ -202,6 +202,37 @@ static void refresh_index_quietly(void)
 	rollback_lock_file(lock_file);
 }
 
+static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv)
+{
+	int result;
+	unsigned int options = 0;
+
+	while (1 < argc && argv[1][0] == '-') {
+		if (!strcmp(argv[1], "--base"))
+			revs->max_count = 1;
+		else if (!strcmp(argv[1], "--ours"))
+			revs->max_count = 2;
+		else if (!strcmp(argv[1], "--theirs"))
+			revs->max_count = 3;
+		else if (!strcmp(argv[1], "-q"))
+			options |= DIFF_SILENT_ON_REMOVED;
+		else
+			return error("invalid option: %s", argv[1]);
+		argv++; argc--;
+	}
+
+	if (revs->max_count == -1 &&
+	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
+		revs->combine_merges = revs->dense_combined_merges = 1;
+
+	if (read_cache() < 0) {
+		perror("read_cache");
+		return -1;
+	}
+	result = run_diff_files(revs, options);
+	return diff_result_code(&revs->diffopt, result);
+}
+
 int cmd_diff(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -230,6 +261,9 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	 * N=2, M=0:
 	 *      tree vs tree (diff-tree)
 	 *
+	 * N=0, M=0, P=2:
+	 *      compare two filesystem entities (aka --no-index).
+	 *
 	 * Other cases are errors.
 	 */
 
@@ -240,20 +274,20 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		diff_use_color_default = git_use_color_default;
 
 	init_revisions(&rev, prefix);
+
+	/* If this is a no-index diff, just run it and exit there. */
+	diff_no_index(&rev, argc, argv, nongit, prefix);
+
+	/* Otherwise, we are doing the usual "git" diff */
 	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
 
-	if (!setup_diff_no_index(&rev, argc, argv, nongit, prefix))
-		argc = 0;
-	else
-		argc = setup_revisions(argc, argv, &rev, NULL);
+	if (nongit)
+		die("Not a git repository");
+	argc = setup_revisions(argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format) {
 		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 		if (diff_setup_done(&rev.diffopt) < 0)
 			die("diff_setup_done failed");
-	}
-	if (rev.diffopt.prefix && nongit) {
-		rev.diffopt.prefix = NULL;
-		rev.diffopt.prefix_length = 0;
 	}
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
@@ -265,7 +299,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	if (!DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS))
 		setup_pager();
 
-	/* Do we have --cached and not have a pending object, then
+	/*
+	 * Do we have --cached and not have a pending object, then
 	 * default to HEAD by hand.  Eek.
 	 */
 	if (!rev.pending.nr) {
@@ -333,7 +368,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	if (!ents) {
 		switch (blobs) {
 		case 0:
-			result = run_diff_files_cmd(&rev, argc, argv);
+			result = builtin_diff_files(&rev, argc, argv);
 			break;
 		case 1:
 			if (paths != 1)
