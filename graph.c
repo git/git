@@ -55,9 +55,11 @@ struct git_graph {
 	 */
 	struct commit *commit;
 	/*
-	 * The number of parents this commit has.
-	 * (Stored so we don't have to walk over them each time we need
-	 * this number)
+	 * The number of interesting parents that this commit has.
+	 *
+	 * Note that this is not the same as the actual number of parents.
+	 * This count excludes parents that won't be printed in the graph
+	 * output, as determined by graph_is_interesting().
 	 */
 	int num_parents;
 	/*
@@ -180,6 +182,18 @@ static void graph_ensure_capacity(struct git_graph *graph, int num_columns)
 				      sizeof(int) * 2 * graph->column_capacity);
 }
 
+/*
+ * Returns 1 if the commit will be printed in the graph output,
+ * and 0 otherwise.
+ */
+static int graph_is_interesting(struct commit *commit)
+{
+	/*
+	 * Uninteresting and pruned commits won't be printed
+	 */
+	return (commit->object.flags & (UNINTERESTING | TREESAME)) ? 0 : 1;
+}
+
 static void graph_insert_into_new_columns(struct git_graph *graph,
 					  struct commit *commit,
 					  int *mapping_index)
@@ -187,13 +201,10 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 	int i;
 
 	/*
-	 * Ignore uinteresting and pruned commits
+	 * Ignore uinteresting commits
 	 */
-	if (commit->object.flags & (UNINTERESTING | TREESAME))
-	{
-		*mapping_index += 2;
+	if (!graph_is_interesting(commit))
 		return;
-	}
 
 	/*
 	 * If the commit is already in the new_columns list, we don't need to
@@ -231,8 +242,8 @@ static void graph_update_width(struct git_graph *graph,
 	int max_cols = graph->num_columns + graph->num_parents;
 
 	/*
-	 * Even if the current commit has no parents, it still takes up a
-	 * column for itself.
+	 * Even if the current commit has no parents to be printed, it
+	 * still takes up a column for itself.
 	 */
 	if (graph->num_parents < 1)
 		max_cols++;
@@ -316,6 +327,7 @@ static void graph_update_columns(struct git_graph *graph)
 		}
 
 		if (col_commit == graph->commit) {
+			int old_mapping_idx = mapping_idx;
 			seen_this = 1;
 			for (parent = graph->commit->parents;
 			     parent;
@@ -324,6 +336,14 @@ static void graph_update_columns(struct git_graph *graph)
 							      parent->item,
 							      &mapping_idx);
 			}
+			/*
+			 * We always need to increment mapping_idx by at
+			 * least 2, even if it has no interesting parents.
+			 * The current commit always takes up at least 2
+			 * spaces.
+			 */
+			if (mapping_idx == old_mapping_idx)
+				mapping_idx += 2;
 		} else {
 			graph_insert_into_new_columns(graph, col_commit,
 						      &mapping_idx);
@@ -353,11 +373,13 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	graph->commit = commit;
 
 	/*
-	 * Count how many parents this commit has
+	 * Count how many interesting parents this commit has
 	 */
 	graph->num_parents = 0;
-	for (parent = commit->parents; parent; parent = parent->next)
-		graph->num_parents++;
+	for (parent = commit->parents; parent; parent = parent->next) {
+		if (graph_is_interesting(parent->item))
+			graph->num_parents++;
+	}
 
 	/*
 	 * Call graph_update_columns() to update
@@ -543,6 +565,15 @@ void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 
 		if (col_commit == graph->commit) {
 			seen_this = 1;
+			/*
+			 * If the commit has more than 1 interesting
+			 * parent, print 'M' to indicate that it is a
+			 * merge.  Otherwise, print '*'.
+			 *
+			 * Note that even if this is actually a merge
+			 * commit, we still print '*' if less than 2 of its
+			 * parents are interesting.
+			 */
 			if (graph->num_parents > 1)
 				strbuf_addch(sb, 'M');
 			else
