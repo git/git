@@ -1697,7 +1697,7 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 		 * switch to boundary commits output mode.
 		 */
 		revs->boundary = 2;
-		return get_revision(revs);
+		return get_revision_internal(revs);
 	}
 
 	/*

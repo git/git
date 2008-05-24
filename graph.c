@@ -189,8 +189,25 @@ static void graph_ensure_capacity(struct git_graph *graph, int num_columns)
  * Returns 1 if the commit will be printed in the graph output,
  * and 0 otherwise.
  */
-static int graph_is_interesting(struct commit *commit)
+static int graph_is_interesting(struct git_graph *graph, struct commit *commit)
 {
+	/*
+	 * If revs->boundary is set, commits whose children have
+	 * been shown are always interesting, even if they have the
+	 * UNINTERESTING or TREESAME flags set.
+	 *
+	 * However, ignore the commit if SHOWN is set.  If SHOWN is set,
+	 * the commit is interesting, but it has already been printed.
+	 * This can happen because get_revision() doesn't return the
+	 * boundary commits in topological order, even when
+	 * revs->topo_order is set.
+	 */
+	if (graph->revs && graph->revs->boundary) {
+		if ((commit->object.flags & (SHOWN | CHILD_SHOWN)) ==
+		    CHILD_SHOWN)
+			return 1;
+	}
+
 	/*
 	 * Uninteresting and pruned commits won't be printed
 	 */
@@ -206,7 +223,7 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 	/*
 	 * Ignore uinteresting commits
 	 */
-	if (!graph_is_interesting(commit))
+	if (!graph_is_interesting(graph, commit))
 		return;
 
 	/*
@@ -380,7 +397,7 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	 */
 	graph->num_parents = 0;
 	for (parent = commit->parents; parent; parent = parent->next) {
-		if (graph_is_interesting(parent->item))
+		if (graph_is_interesting(graph, parent->item))
 			graph->num_parents++;
 	}
 
@@ -543,6 +560,51 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 		graph->state = GRAPH_COMMIT;
 }
 
+static void graph_output_commit_char(struct git_graph *graph, struct strbuf *sb)
+{
+	/*
+	 * For boundary commits, print 'o'
+	 * (We should only see boundary commits when revs->boundary is set.)
+	 */
+	if (graph->commit->object.flags & BOUNDARY) {
+		assert(graph->revs->boundary);
+		strbuf_addch(sb, 'o');
+		return;
+	}
+
+	/*
+	 * If revs->left_right is set, print '<' for commits that
+	 * come from the left side, and '>' for commits from the right
+	 * side.
+	 */
+	if (graph->revs && graph->revs->left_right) {
+		if (graph->commit->object.flags & SYMMETRIC_LEFT)
+			strbuf_addch(sb, '<');
+		else
+			strbuf_addch(sb, '>');
+		return;
+	}
+
+	/*
+	 * Print 'M' for merge commits
+	 *
+	 * Note that we don't check graph->num_parents to determine if the
+	 * commit is a merge, since that only tracks the number of
+	 * "interesting" parents.  We want to print 'M' for merge commits
+	 * even if they have less than 2 interesting parents.
+	 */
+	if (graph->commit->parents != NULL &&
+	    graph->commit->parents->next != NULL) {
+		strbuf_addch(sb, 'M');
+		return;
+	}
+
+	/*
+	 * Print '*' in all other cases
+	 */
+	strbuf_addch(sb, '*');
+}
+
 void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 {
 	int seen_this = 0;
@@ -568,16 +630,7 @@ void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 
 		if (col_commit == graph->commit) {
 			seen_this = 1;
-
-			if (graph->revs && graph->revs->left_right) {
-				if (graph->commit->object.flags & SYMMETRIC_LEFT)
-					strbuf_addch(sb, '<');
-				else
-					strbuf_addch(sb, '>');
-			} else if (graph->num_parents > 1)
-				strbuf_addch(sb, 'M');
-			else
-				strbuf_addch(sb, '*');
+			graph_output_commit_char(graph, sb);
 
 			if (graph->num_parents < 2)
 				strbuf_addch(sb, ' ');
