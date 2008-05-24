@@ -190,7 +190,10 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 	 * Ignore uinteresting and pruned commits
 	 */
 	if (commit->object.flags & (UNINTERESTING | TREESAME))
+	{
+		*mapping_index += 2;
 		return;
+	}
 
 	/*
 	 * If the commit is already in the new_columns list, we don't need to
