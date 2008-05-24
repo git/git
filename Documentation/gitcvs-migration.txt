@@ -1,5 +1,16 @@
-git for CVS users
-=================
+gitcvs-migration(7)
+===================
+
+NAME
+----
+gitcvs-migration - git for CVS users
+
+SYNOPSIS
+--------
+git cvsimport *
+
+DESCRIPTION
+-----------
 
 Git differs from CVS in that every working tree contains a repository with
 a full copy of the project history, and no repository is inherently more
@@ -8,7 +19,7 @@ designating a single shared repository which people can synchronize with;
 this document explains how to do that.
 
 Some basic familiarity with git is required.  This
-link:tutorial.html[tutorial introduction to git] and the
+linkgit:gittutorial[7][tutorial introduction to git] and the
 link:glossary.html[git glossary] should be sufficient.
 
 Developing against a shared repository
@@ -71,7 +82,7 @@ Setting Up a Shared Repository
 
 We assume you have already created a git repository for your project,
 possibly created from scratch or from a tarball (see the
-link:tutorial.html[tutorial]), or imported from an already existing CVS
+linkgit:gittutorial[7][tutorial]), or imported from an already existing CVS
 repository (see the next section).
 
 Assume your existing repo is at /home/alice/myproject.  Create a new "bare"
@@ -170,3 +181,13 @@ variants of this model.
 
 With a small group, developers may just pull changes from each other's
 repositories without the need for a central maintainer.
+
+SEE ALSO
+--------
+linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+link:everyday.html[Everyday Git],
+link:user-manual.html[The Git User's Manual]
+
+GIT
+---
+Part of the linkgit:git[7] suite.

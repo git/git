@@ -20,10 +20,10 @@ Git is a fast, scalable, distributed revision control system with an
 unusually rich command set that provides both high-level operations
 and full access to internals.
 
-See this link:tutorial.html[tutorial] to get started, then see
+See this linkgit:gittutorial[7][tutorial] to get started, then see
 link:everyday.html[Everyday Git] for a useful minimum set of commands, and
 "man git-commandname" for documentation of each command.  CVS users may
-also want to read link:cvs-migration.html[CVS migration].  See
+also want to read linkgit:gitcvs-migration[7][CVS migration].  See
 link:user-manual.html[Git User's Manual] for a more in-depth
 introduction.
 

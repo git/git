@@ -1,7 +1,18 @@
-A tutorial introduction to git: part two
-========================================
+gittutorial-2(7)
+================
 
-You should work through link:tutorial.html[A tutorial introduction to
+NAME
+----
+gittutorial-2 - A tutorial introduction to git: part two
+
+SYNOPSIS
+--------
+git *
+
+DESCRIPTION
+-----------
+
+You should work through linkgit:gittutorial[7][A tutorial introduction to
 git] before reading this tutorial.
 
 The goal of this tutorial is to introduce two fundamental pieces of
@@ -394,7 +405,7 @@ link:glossary.html[Glossary].
 The link:user-manual.html[Git User's Manual] provides a more
 comprehensive introduction to git.
 
-The link:cvs-migration.html[CVS migration] document explains how to
+The linkgit:gitcvs-migration[7][CVS migration] document explains how to
 import a CVS repository into git, and shows how to use git in a
 CVS-like way.
 
@@ -404,3 +415,14 @@ link:howto-index.html[howtos].
 For git developers, the link:core-tutorial.html[Core tutorial] goes
 into detail on the lower-level git mechanisms involved in, for
 example, creating a new commit.
+
+SEE ALSO
+--------
+linkgit:gittutorial[7],
+linkgit:gitcvs-migration[7],
+link:everyday.html[Everyday git],
+link:user-manual.html[The Git User's Manual]
+
+GIT
+---
+Part of the linkgit:git[7] suite.

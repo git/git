@@ -1993,7 +1993,7 @@ the right to push to the same repository.  In that case, the correct
 solution is to retry the push after first updating your work by either a
 pull or a fetch followed by a rebase; see the
 <<setting-up-a-shared-repository,next section>> and
-link:cvs-migration.html[git for CVS users] for more.
+linkgit:gitcvs-migration[7][git for CVS users] for more.
 
 [[setting-up-a-shared-repository]]
 Setting up a shared repository
@@ -2002,7 +2002,7 @@ Setting up a shared repository
 Another way to collaborate is by using a model similar to that
 commonly used in CVS, where several developers with special rights
 all push to and pull from a single shared repository.  See
-link:cvs-migration.html[git for CVS users] for instructions on how to
+linkgit:gitcvs-migration[7][git for CVS users] for instructions on how to
 set this up.
 
 However, while there is nothing wrong with git's support for shared
