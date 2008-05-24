@@ -1612,28 +1612,62 @@ static void gc_boundary(struct object_array *array)
 	}
 }
 
+static void create_boundary_commit_list(struct rev_info *revs)
+{
+	unsigned i;
+	struct commit *c;
+	struct object_array *array = &revs->boundary_commits;
+	struct object_array_entry *objects = array->objects;
+
+	/*
+	 * If revs->commits is non-NULL at this point, an error occurred in
+	 * get_revision_1().  Ignore the error and continue printing the
+	 * boundary commits anyway.  (This is what the code has always
+	 * done.)
+	 */
+	if (revs->commits) {
+		free_commit_list(revs->commits);
+		revs->commits = NULL;
+	}
+
+	/*
+	 * Put all of the actual boundary commits from revs->boundary_commits
+	 * into revs->commits
+	 */
+	for (i = 0; i < array->nr; i++) {
+		c = (struct commit *)(objects[i].item);
+		if (!c)
+			continue;
+		if (!(c->object.flags & CHILD_SHOWN))
+			continue;
+		if (c->object.flags & (SHOWN | BOUNDARY))
+			continue;
+		c->object.flags |= BOUNDARY;
+		commit_list_insert(c, &revs->commits);
+	}
+
+	/*
+	 * If revs->topo_order is set, sort the boundary commits
+	 * in topological order
+	 */
+	sort_in_topological_order(&revs->commits, revs->lifo);
+}
+
 static struct commit *get_revision_internal(struct rev_info *revs)
 {
 	struct commit *c = NULL;
 	struct commit_list *l;
 
 	if (revs->boundary == 2) {
-		unsigned i;
-		struct object_array *array = &revs->boundary_commits;
-		struct object_array_entry *objects = array->objects;
-		for (i = 0; i < array->nr; i++) {
-			c = (struct commit *)(objects[i].item);
-			if (!c)
-				continue;
-			if (!(c->object.flags & CHILD_SHOWN))
-				continue;
-			if (!(c->object.flags & SHOWN))
-				break;
-		}
-		if (array->nr <= i)
-			return NULL;
-
-		c->object.flags |= SHOWN | BOUNDARY;
+		/*
+		 * All of the normal commits have already been returned,
+		 * and we are now returning boundary commits.
+		 * create_boundary_commit_list() has populated
+		 * revs->commits with the remaining commits to return.
+		 */
+		c = pop_commit(&revs->commits);
+		if (c)
+			c->object.flags |= SHOWN;
 		return c;
 	}
 
@@ -1697,6 +1731,13 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 		 * switch to boundary commits output mode.
 		 */
 		revs->boundary = 2;
+
+		/*
+		 * Update revs->commits to contain the list of
+		 * boundary commits.
+		 */
+		create_boundary_commit_list(revs);
+
 		return get_revision_internal(revs);
 	}
 

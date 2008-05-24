@@ -195,16 +195,9 @@ static int graph_is_interesting(struct git_graph *graph, struct commit *commit)
 	 * If revs->boundary is set, commits whose children have
 	 * been shown are always interesting, even if they have the
 	 * UNINTERESTING or TREESAME flags set.
-	 *
-	 * However, ignore the commit if SHOWN is set.  If SHOWN is set,
-	 * the commit is interesting, but it has already been printed.
-	 * This can happen because get_revision() doesn't return the
-	 * boundary commits in topological order, even when
-	 * revs->topo_order is set.
 	 */
 	if (graph->revs && graph->revs->boundary) {
-		if ((commit->object.flags & (SHOWN | CHILD_SHOWN)) ==
-		    CHILD_SHOWN)
+		if (commit->object.flags & CHILD_SHOWN)
 			return 1;
 	}
 
