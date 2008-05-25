@@ -34,4 +34,13 @@ test_expect_success 'respect NULs' '
 
 '
 
+test_expect_success 'Preserve NULs out of MIME encoded message' '
+
+	git mailsplit -d5 -o. ../t5100/nul-b64.in &&
+	cmp ../t5100/nul-b64.in 00001 &&
+	git mailinfo msg patch <00001 &&
+	cmp ../t5100/nul-b64.expect patch
+
+'
+
 test_done
