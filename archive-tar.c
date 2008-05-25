@@ -220,7 +220,7 @@ static void write_global_extended_header(const unsigned char *sha1)
 	strbuf_release(&ext_header);
 }
 
-static int git_tar_config(const char *var, const char *value)
+static int git_tar_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "tar.umask")) {
 		if (value && !strcmp(value, "user")) {
@@ -231,7 +231,7 @@ static int git_tar_config(const char *var, const char *value)
 		}
 		return 0;
 	}
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static int write_tar_entry(const unsigned char *sha1,
@@ -268,7 +268,7 @@ int write_tar_archive(struct archiver_args *args)
 {
 	int plen = args->base ? strlen(args->base) : 0;
 
-	git_config(git_tar_config);
+	git_config(git_tar_config, NULL);
 
 	archive_time = args->time;
 	verbose = args->verbose;

@@ -28,7 +28,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	unsigned char rev1key[20], rev2key[20];
 	int show_all = 0;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	while (1 < argc && argv[1][0] == '-') {
 		const char *arg = argv[1];

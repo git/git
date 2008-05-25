@@ -222,7 +222,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	if (argc != 3 && argc != 2)
 		usage_with_options(cat_file_usage, options);

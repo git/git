@@ -1247,7 +1247,7 @@ static imap_server_conf_t server =
 static char *imap_folder;
 
 static int
-git_imap_config(const char *key, const char *val)
+git_imap_config(const char *key, const char *val, void *cb)
 {
 	char imap_key[] = "imap.";
 
@@ -1296,7 +1296,7 @@ main(int argc, char **argv)
 	/* init the random number generator */
 	arc4_init();
 
-	git_config( git_imap_config );
+	git_config(git_imap_config, NULL);
 
 	if (!imap_folder) {
 		fprintf( stderr, "no imap store specified\n" );

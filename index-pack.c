@@ -765,7 +765,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	}
 }
 
-static int git_index_pack_config(const char *k, const char *v)
+static int git_index_pack_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "pack.indexversion")) {
 		pack_idx_default_version = git_config_int(k, v);
@@ -773,7 +773,7 @@ static int git_index_pack_config(const char *k, const char *v)
 			die("bad pack.indexversion=%d", pack_idx_default_version);
 		return 0;
 	}
-	return git_default_config(k, v);
+	return git_default_config(k, v, cb);
 }
 
 int main(int argc, char **argv)
@@ -786,7 +786,7 @@ int main(int argc, char **argv)
 	struct pack_idx_entry **idx_objects;
 	unsigned char sha1[20];
 
-	git_config(git_index_pack_config);
+	git_config(git_index_pack_config, NULL);
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];

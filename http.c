@@ -90,7 +90,7 @@ static void process_curl_messages(void)
 }
 #endif
 
-static int http_options(const char *var, const char *value)
+static int http_options(const char *var, const char *value, void *cb)
 {
 	if (!strcmp("http.sslverify", var)) {
 		if (curl_ssl_verify == -1) {
@@ -169,7 +169,7 @@ static int http_options(const char *var, const char *value)
 	}
 
 	/* Fall back on the default ones */
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static CURL* get_curl_handle(void)
@@ -263,7 +263,7 @@ void http_init(struct remote *remote)
 	if (low_speed_time != NULL)
 		curl_low_speed_time = strtol(low_speed_time, NULL, 10);
 
-	git_config(http_options);
+	git_config(http_options, NULL);
 
 	if (curl_ssl_verify == -1)
 		curl_ssl_verify = 1;

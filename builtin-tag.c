@@ -256,7 +256,7 @@ static void set_signingkey(const char *value)
 		die("signing key value too long (%.10s...)", value);
 }
 
-static int git_tag_config(const char *var, const char *value)
+static int git_tag_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "user.signingkey")) {
 		if (!value)
@@ -265,7 +265,7 @@ static int git_tag_config(const char *var, const char *value)
 		return 0;
 	}
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static void write_tag_body(int fd, const unsigned char *sha1)
@@ -408,7 +408,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_tag_config);
+	git_config(git_tag_config, NULL);
 
 	argc = parse_options(argc, argv, options, git_tag_usage, 0);
 

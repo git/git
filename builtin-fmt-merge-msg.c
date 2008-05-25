@@ -10,7 +10,7 @@ static const char *fmt_merge_msg_usage =
 
 static int merge_summary;
 
-static int fmt_merge_msg_config(const char *key, const char *value)
+static int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 {
 	static int found_merge_log = 0;
 	if (!strcmp("merge.log", key)) {
@@ -260,7 +260,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	unsigned char head_sha1[20];
 	const char *current_branch;
 
-	git_config(fmt_merge_msg_config);
+	git_config(fmt_merge_msg_config, NULL);
 
 	while (argc > 1) {
 		if (!strcmp(argv[1], "--log") || !strcmp(argv[1], "--summary"))

@@ -298,7 +298,7 @@ static void read_branches_file(struct remote *remote)
 	remote->fetch_tags = 1; /* always auto-follow */
 }
 
-static int handle_config(const char *key, const char *value)
+static int handle_config(const char *key, const char *value, void *cb)
 {
 	const char *name;
 	const char *subkey;
@@ -420,7 +420,7 @@ static void read_config(void)
 		current_branch =
 			make_branch(head_ref + strlen("refs/heads/"), 0);
 	}
-	git_config(handle_config);
+	git_config(handle_config, NULL);
 	alias_all_urls();
 }
 

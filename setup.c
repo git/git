@@ -300,7 +300,7 @@ void setup_work_tree(void)
 
 static int check_repository_format_gently(int *nongit_ok)
 {
-	git_config(check_repository_format_version);
+	git_config(check_repository_format_version, NULL);
 	if (GIT_REPO_VERSION < repository_format_version) {
 		if (!nongit_ok)
 			die ("Expected git repo version <= %d, found %d",
@@ -524,7 +524,7 @@ int git_config_perm(const char *var, const char *value)
 	return i & 0666;
 }
 
-int check_repository_format_version(const char *var, const char *value)
+int check_repository_format_version(const char *var, const char *value, void *cb)
 {
 	if (strcmp(var, "core.repositoryformatversion") == 0)
 		repository_format_version = git_config_int(var, value);

@@ -387,7 +387,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
 
 	prefix = setup_git_directory();
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 

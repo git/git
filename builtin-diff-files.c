@@ -21,7 +21,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 
 	prefix = setup_git_directory_gently(&nongit);
 	init_revisions(&rev, prefix);
-	git_config(git_diff_basic_config); /* no "diff" UI options */
+	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	rev.abbrev = 0;
 
 	if (!setup_diff_no_index(&rev, argc, argv, nongit, prefix))

@@ -129,7 +129,7 @@ static int parse_funcname_pattern(const char *var, const char *ep, const char *v
  * never be affected by the setting of diff.renames
  * the user happens to have in the configuration file.
  */
-int git_diff_ui_config(const char *var, const char *value)
+int git_diff_ui_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "diff.renamelimit")) {
 		diff_rename_limit_default = git_config_int(var, value);
@@ -166,10 +166,10 @@ int git_diff_ui_config(const char *var, const char *value)
 			return parse_lldiff_command(var, ep, value);
 	}
 
-	return git_diff_basic_config(var, value);
+	return git_diff_basic_config(var, value, cb);
 }
 
-int git_diff_basic_config(const char *var, const char *value)
+int git_diff_basic_config(const char *var, const char *value, void *cb)
 {
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
@@ -190,7 +190,7 @@ int git_diff_basic_config(const char *var, const char *value)
 		}
 	}
 
-	return git_color_default_config(var, value);
+	return git_color_default_config(var, value, cb);
 }
 
 static char *quote_two(const char *one, const char *two)

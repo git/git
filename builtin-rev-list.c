@@ -591,7 +591,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_find_all = 0;
 	int quiet = 0;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	init_revisions(&revs, prefix);
 	revs.abbrev = 0;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;

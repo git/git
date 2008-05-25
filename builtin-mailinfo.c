@@ -968,7 +968,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery
 	 */
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	def_charset = (git_commit_encoding ? git_commit_encoding : "utf-8");
 	metainfo_charset = def_charset;

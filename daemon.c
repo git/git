@@ -306,7 +306,7 @@ struct daemon_service {
 static struct daemon_service *service_looking_at;
 static int service_enabled;
 
-static int git_daemon_config(const char *var, const char *value)
+static int git_daemon_config(const char *var, const char *value, void *cb)
 {
 	if (!prefixcmp(var, "daemon.") &&
 	    !strcmp(var + 7, service_looking_at->config_name)) {
@@ -356,7 +356,7 @@ static int run_service(struct interp *itable, struct daemon_service *service)
 	if (service->overridable) {
 		service_looking_at = service;
 		service_enabled = -1;
-		git_config(git_daemon_config);
+		git_config(git_daemon_config, NULL);
 		if (0 <= service_enabled)
 			enabled = service_enabled;
 	}

@@ -144,7 +144,7 @@ static void copy_templates(const char *template_dir)
 	strcpy(template_path + template_len, "config");
 	repository_format_version = 0;
 	git_config_from_file(check_repository_format_version,
-			     template_path);
+			     template_path, NULL);
 	template_path[template_len] = 0;
 
 	if (repository_format_version &&
@@ -198,7 +198,7 @@ static int create_default_files(const char *template_path)
 	 */
 	copy_templates(template_path);
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	/*
 	 * We would have created the above under user's umask -- under

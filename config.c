@@ -111,7 +111,7 @@ static inline int iskeychar(int c)
 	return isalnum(c) || c == '-';
 }
 
-static int get_value(config_fn_t fn, char *name, unsigned int len)
+static int get_value(config_fn_t fn, void *data, char *name, unsigned int len)
 {
 	int c;
 	char *value;
@@ -139,7 +139,7 @@ static int get_value(config_fn_t fn, char *name, unsigned int len)
 		if (!value)
 			return -1;
 	}
-	return fn(name, value);
+	return fn(name, value, data);
 }
 
 static int get_extended_base_var(char *name, int baselen, int c)
@@ -197,7 +197,7 @@ static int get_base_var(char *name)
 	}
 }
 
-static int git_parse_file(config_fn_t fn)
+static int git_parse_file(config_fn_t fn, void *data)
 {
 	int comment = 0;
 	int baselen = 0;
@@ -228,7 +228,7 @@ static int git_parse_file(config_fn_t fn)
 		if (!isalpha(c))
 			break;
 		var[baselen] = tolower(c);
-		if (get_value(fn, var, baselen+1) < 0)
+		if (get_value(fn, data, var, baselen+1) < 0)
 			break;
 	}
 	die("bad config file line %d in %s", config_linenr, config_file_name);
@@ -332,7 +332,7 @@ int git_config_string(const char **dest, const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value)
+int git_default_config(const char *var, const char *value, void *dummy)
 {
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
@@ -516,7 +516,7 @@ int git_default_config(const char *var, const char *value)
 	return 0;
 }
 
-int git_config_from_file(config_fn_t fn, const char *filename)
+int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 {
 	int ret;
 	FILE *f = fopen(filename, "r");
@@ -527,7 +527,7 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 		config_file_name = filename;
 		config_linenr = 1;
 		config_file_eof = 0;
-		ret = git_parse_file(fn);
+		ret = git_parse_file(fn, data);
 		fclose(f);
 		config_file_name = NULL;
 	}
@@ -565,7 +565,7 @@ int git_config_global(void)
 	return !git_env_bool("GIT_CONFIG_NOGLOBAL", 0);
 }
 
-int git_config(config_fn_t fn)
+int git_config(config_fn_t fn, void *data)
 {
 	int ret = 0;
 	char *repo_config = NULL;
@@ -578,7 +578,8 @@ int git_config(config_fn_t fn)
 	filename = getenv(CONFIG_ENVIRONMENT);
 	if (!filename) {
 		if (git_config_system() && !access(git_etc_gitconfig(), R_OK))
-			ret += git_config_from_file(fn, git_etc_gitconfig());
+			ret += git_config_from_file(fn, git_etc_gitconfig(),
+				data);
 		home = getenv("HOME");
 		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!filename)
@@ -588,11 +589,11 @@ int git_config(config_fn_t fn)
 	if (git_config_global() && home) {
 		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
 		if (!access(user_config, R_OK))
-			ret = git_config_from_file(fn, user_config);
+			ret = git_config_from_file(fn, user_config, data);
 		free(user_config);
 	}
 
-	ret += git_config_from_file(fn, filename);
+	ret += git_config_from_file(fn, filename, data);
 	free(repo_config);
 	return ret;
 }
@@ -622,7 +623,7 @@ static int matches(const char* key, const char* value)
 		  !regexec(store.value_regex, value, 0, NULL, 0)));
 }
 
-static int store_aux(const char* key, const char* value)
+static int store_aux(const char* key, const char* value, void *cb)
 {
 	const char *ep;
 	size_t section_len;
@@ -951,7 +952,7 @@ int git_config_set_multivar(const char* key, const char* value,
 		 * As a side effect, we make sure to transform only a valid
 		 * existing config file.
 		 */
-		if (git_config_from_file(store_aux, config_filename)) {
+		if (git_config_from_file(store_aux, config_filename, NULL)) {
 			error("invalid config file %s", config_filename);
 			free(store.key);
 			if (store.value_regex != NULL) {

@@ -806,7 +806,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	const char *index_file;
 	int commitable;
 
-	git_config(git_status_config);
+	git_config(git_status_config, NULL);
 
 	if (wt_status_use_color == -1)
 		wt_status_use_color = git_use_color_default;
@@ -860,7 +860,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	}
 }
 
-int git_commit_config(const char *k, const char *v)
+int git_commit_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "commit.template")) {
 		if (!v)
@@ -869,7 +869,7 @@ int git_commit_config(const char *k, const char *v)
 		return 0;
 	}
 
-	return git_status_config(k, v);
+	return git_status_config(k, v, cb);
 }
 
 static const char commit_utf8_warn[] =
@@ -897,7 +897,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	unsigned char commit_sha1[20];
 	struct ref_lock *ref_lock;
 
-	git_config(git_commit_config);
+	git_config(git_commit_config, NULL);
 
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage);
 

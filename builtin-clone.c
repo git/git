@@ -418,7 +418,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_reference)
 		setup_reference(git_dir);
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	if (option_bare) {
 		strcpy(branch_top, "refs/heads/");

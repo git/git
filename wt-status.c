@@ -367,7 +367,7 @@ void wt_status_print(struct wt_status *s)
 	}
 }
 
-int git_status_config(const char *k, const char *v)
+int git_status_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "status.submodulesummary")) {
 		int is_bool;
@@ -391,5 +391,5 @@ int git_status_config(const char *k, const char *v)
 		wt_status_relative_paths = git_config_bool(k, v);
 		return 0;
 	}
-	return git_color_default_config(k, v);
+	return git_color_default_config(k, v, cb);
 }

@@ -81,7 +81,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	struct path_list deleted = {NULL, 0, 0, 0};
 	struct path_list changed = {NULL, 0, 0, 0};
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	newfd = hold_locked_index(&lock_file, 1);
 	if (read_cache() < 0)
