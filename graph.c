@@ -54,10 +54,14 @@ struct git_graph {
 	 * The commit currently being processed
 	 */
 	struct commit *commit;
+	/* The rev-info used for the current traversal */
+	struct rev_info *revs;
 	/*
-	 * The number of parents this commit has.
-	 * (Stored so we don't have to walk over them each time we need
-	 * this number)
+	 * The number of interesting parents that this commit has.
+	 *
+	 * Note that this is not the same as the actual number of parents.
+	 * This count excludes parents that won't be printed in the graph
+	 * output, as determined by graph_is_interesting().
 	 */
 	int num_parents;
 	/*
@@ -125,10 +129,11 @@ struct git_graph {
 	int *new_mapping;
 };
 
-struct git_graph *graph_init(void)
+struct git_graph *graph_init(struct rev_info *opt)
 {
 	struct git_graph *graph = xmalloc(sizeof(struct git_graph));
 	graph->commit = NULL;
+	graph->revs = opt;
 	graph->num_parents = 0;
 	graph->expansion_row = 0;
 	graph->state = GRAPH_PADDING;
@@ -180,6 +185,28 @@ static void graph_ensure_capacity(struct git_graph *graph, int num_columns)
 				      sizeof(int) * 2 * graph->column_capacity);
 }
 
+/*
+ * Returns 1 if the commit will be printed in the graph output,
+ * and 0 otherwise.
+ */
+static int graph_is_interesting(struct git_graph *graph, struct commit *commit)
+{
+	/*
+	 * If revs->boundary is set, commits whose children have
+	 * been shown are always interesting, even if they have the
+	 * UNINTERESTING or TREESAME flags set.
+	 */
+	if (graph->revs && graph->revs->boundary) {
+		if (commit->object.flags & CHILD_SHOWN)
+			return 1;
+	}
+
+	/*
+	 * Uninteresting and pruned commits won't be printed
+	 */
+	return (commit->object.flags & (UNINTERESTING | TREESAME)) ? 0 : 1;
+}
+
 static void graph_insert_into_new_columns(struct git_graph *graph,
 					  struct commit *commit,
 					  int *mapping_index)
@@ -187,9 +214,9 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 	int i;
 
 	/*
-	 * Ignore uinteresting and pruned commits
+	 * Ignore uinteresting commits
 	 */
-	if (commit->object.flags & (UNINTERESTING | TREESAME))
+	if (!graph_is_interesting(graph, commit))
 		return;
 
 	/*
@@ -228,8 +255,8 @@ static void graph_update_width(struct git_graph *graph,
 	int max_cols = graph->num_columns + graph->num_parents;
 
 	/*
-	 * Even if the current commit has no parents, it still takes up a
-	 * column for itself.
+	 * Even if the current commit has no parents to be printed, it
+	 * still takes up a column for itself.
 	 */
 	if (graph->num_parents < 1)
 		max_cols++;
@@ -313,6 +340,7 @@ static void graph_update_columns(struct git_graph *graph)
 		}
 
 		if (col_commit == graph->commit) {
+			int old_mapping_idx = mapping_idx;
 			seen_this = 1;
 			for (parent = graph->commit->parents;
 			     parent;
@@ -321,6 +349,14 @@ static void graph_update_columns(struct git_graph *graph)
 							      parent->item,
 							      &mapping_idx);
 			}
+			/*
+			 * We always need to increment mapping_idx by at
+			 * least 2, even if it has no interesting parents.
+			 * The current commit always takes up at least 2
+			 * spaces.
+			 */
+			if (mapping_idx == old_mapping_idx)
+				mapping_idx += 2;
 		} else {
 			graph_insert_into_new_columns(graph, col_commit,
 						      &mapping_idx);
@@ -350,11 +386,13 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	graph->commit = commit;
 
 	/*
-	 * Count how many parents this commit has
+	 * Count how many interesting parents this commit has
 	 */
 	graph->num_parents = 0;
-	for (parent = commit->parents; parent; parent = parent->next)
-		graph->num_parents++;
+	for (parent = commit->parents; parent; parent = parent->next) {
+		if (graph_is_interesting(graph, parent->item))
+			graph->num_parents++;
+	}
 
 	/*
 	 * Call graph_update_columns() to update
@@ -515,6 +553,51 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 		graph->state = GRAPH_COMMIT;
 }
 
+static void graph_output_commit_char(struct git_graph *graph, struct strbuf *sb)
+{
+	/*
+	 * For boundary commits, print 'o'
+	 * (We should only see boundary commits when revs->boundary is set.)
+	 */
+	if (graph->commit->object.flags & BOUNDARY) {
+		assert(graph->revs->boundary);
+		strbuf_addch(sb, 'o');
+		return;
+	}
+
+	/*
+	 * If revs->left_right is set, print '<' for commits that
+	 * come from the left side, and '>' for commits from the right
+	 * side.
+	 */
+	if (graph->revs && graph->revs->left_right) {
+		if (graph->commit->object.flags & SYMMETRIC_LEFT)
+			strbuf_addch(sb, '<');
+		else
+			strbuf_addch(sb, '>');
+		return;
+	}
+
+	/*
+	 * Print 'M' for merge commits
+	 *
+	 * Note that we don't check graph->num_parents to determine if the
+	 * commit is a merge, since that only tracks the number of
+	 * "interesting" parents.  We want to print 'M' for merge commits
+	 * even if they have less than 2 interesting parents.
+	 */
+	if (graph->commit->parents != NULL &&
+	    graph->commit->parents->next != NULL) {
+		strbuf_addch(sb, 'M');
+		return;
+	}
+
+	/*
+	 * Print '*' in all other cases
+	 */
+	strbuf_addch(sb, '*');
+}
+
 void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 {
 	int seen_this = 0;
@@ -540,10 +623,7 @@ void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 
 		if (col_commit == graph->commit) {
 			seen_this = 1;
-			if (graph->num_parents > 1)
-				strbuf_addch(sb, 'M');
-			else
-				strbuf_addch(sb, '*');
+			graph_output_commit_char(graph, sb);
 
 			if (graph->num_parents < 2)
 				strbuf_addch(sb, ' ');
