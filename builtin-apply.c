@@ -418,7 +418,7 @@ static int guess_p_value(const char *nameline)
 }
 
 /*
- * Get the name etc info from the --/+++ lines of a traditional patch header
+ * Get the name etc info from the ---/+++ lines of a traditional patch header
  *
  * FIXME! The end-of-filename heuristics are kind of screwy. For existing
  * files, we can happily check the index for a match, but for creating a
@@ -1143,21 +1143,6 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 	if (patch->is_delete < 0 &&
 	    (newlines || (patch->fragments && patch->fragments->next)))
 		patch->is_delete = 0;
-	if (!unidiff_zero || context) {
-		/* If the user says the patch is not generated with
-		 * --unified=0, or if we have seen context lines,
-		 * then not having oldlines means the patch is creation,
-		 * and not having newlines means the patch is deletion.
-		 */
-		if (patch->is_new < 0 && !oldlines) {
-			patch->is_new = 1;
-			patch->old_name = NULL;
-		}
-		if (patch->is_delete < 0 && !newlines) {
-			patch->is_delete = 1;
-			patch->new_name = NULL;
-		}
-	}
 
 	if (0 < patch->is_new && oldlines)
 		die("new file %s depends on old contents", patch->new_name);
@@ -2267,6 +2252,79 @@ static int verify_index_match(struct cache_entry *ce, struct stat *st)
 	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID);
 }
 
+static int check_preimage(struct patch *patch, struct cache_entry **ce, struct stat *st)
+{
+	const char *old_name = patch->old_name;
+	int stat_ret = 0;
+	unsigned st_mode = 0;
+
+	/*
+	 * Make sure that we do not have local modifications from the
+	 * index when we are looking at the index.  Also make sure
+	 * we have the preimage file to be patched in the work tree,
+	 * unless --cached, which tells git to apply only in the index.
+	 */
+	if (!old_name)
+		return 0;
+
+	assert(patch->is_new <= 0);
+	if (!cached) {
+		stat_ret = lstat(old_name, st);
+		if (stat_ret && errno != ENOENT)
+			return error("%s: %s", old_name, strerror(errno));
+	}
+	if (check_index) {
+		int pos = cache_name_pos(old_name, strlen(old_name));
+		if (pos < 0) {
+			if (patch->is_new < 0)
+				goto is_new;
+			return error("%s: does not exist in index", old_name);
+		}
+		*ce = active_cache[pos];
+		if (stat_ret < 0) {
+			struct checkout costate;
+			/* checkout */
+			costate.base_dir = "";
+			costate.base_dir_len = 0;
+			costate.force = 0;
+			costate.quiet = 0;
+			costate.not_new = 0;
+			costate.refresh_cache = 1;
+			if (checkout_entry(*ce, &costate, NULL) ||
+			    lstat(old_name, st))
+				return -1;
+		}
+		if (!cached && verify_index_match(*ce, st))
+			return error("%s: does not match index", old_name);
+		if (cached)
+			st_mode = (*ce)->ce_mode;
+	} else if (stat_ret < 0) {
+		if (patch->is_new < 0)
+			goto is_new;
+		return error("%s: %s", old_name, strerror(errno));
+	}
+
+	if (!cached)
+		st_mode = ce_mode_from_stat(*ce, st->st_mode);
+
+	if (patch->is_new < 0)
+		patch->is_new = 0;
+	if (!patch->old_mode)
+		patch->old_mode = st_mode;
+	if ((st_mode ^ patch->old_mode) & S_IFMT)
+		return error("%s: wrong type", old_name);
+	if (st_mode != patch->old_mode)
+		fprintf(stderr, "warning: %s has type %o, expected %o\n",
+			old_name, st_mode, patch->old_mode);
+	return 0;
+
+ is_new:
+	patch->is_new = 1;
+	patch->is_delete = 0;
+	patch->old_name = NULL;
+	return 0;
+}
+
 static int check_patch(struct patch *patch, struct patch *prev_patch)
 {
 	struct stat st;
@@ -2275,66 +2333,14 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 	const char *name = old_name ? old_name : new_name;
 	struct cache_entry *ce = NULL;
 	int ok_if_exists;
+	int status;
 
 	patch->rejected = 1; /* we will drop this after we succeed */
 
-	/*
-	 * Make sure that we do not have local modifications from the
-	 * index when we are looking at the index.  Also make sure
-	 * we have the preimage file to be patched in the work tree,
-	 * unless --cached, which tells git to apply only in the index.
-	 */
-	if (old_name) {
-		int stat_ret = 0;
-		unsigned st_mode = 0;
-
-		if (!cached)
-			stat_ret = lstat(old_name, &st);
-		if (check_index) {
-			int pos = cache_name_pos(old_name, strlen(old_name));
-			if (pos < 0)
-				return error("%s: does not exist in index",
-					     old_name);
-			ce = active_cache[pos];
-			if (stat_ret < 0) {
-				struct checkout costate;
-				if (errno != ENOENT)
-					return error("%s: %s", old_name,
-						     strerror(errno));
-				/* checkout */
-				costate.base_dir = "";
-				costate.base_dir_len = 0;
-				costate.force = 0;
-				costate.quiet = 0;
-				costate.not_new = 0;
-				costate.refresh_cache = 1;
-				if (checkout_entry(ce,
-						   &costate,
-						   NULL) ||
-				    lstat(old_name, &st))
-					return -1;
-			}
-			if (!cached && verify_index_match(ce, &st))
-				return error("%s: does not match index",
-					     old_name);
-			if (cached)
-				st_mode = ce->ce_mode;
-		} else if (stat_ret < 0)
-			return error("%s: %s", old_name, strerror(errno));
-
-		if (!cached)
-			st_mode = ce_mode_from_stat(ce, st.st_mode);
-
-		if (patch->is_new < 0)
-			patch->is_new = 0;
-		if (!patch->old_mode)
-			patch->old_mode = st_mode;
-		if ((st_mode ^ patch->old_mode) & S_IFMT)
-			return error("%s: wrong type", old_name);
-		if (st_mode != patch->old_mode)
-			fprintf(stderr, "warning: %s has type %o, expected %o\n",
-				old_name, st_mode, patch->old_mode);
-	}
+	status = check_preimage(patch, &ce, &st);
+	if (status)
+		return status;
+	old_name = patch->old_name;
 
 	if (new_name && prev_patch && 0 < prev_patch->is_delete &&
 	    !strcmp(prev_patch->old_name, new_name))
