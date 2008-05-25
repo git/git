@@ -54,6 +54,8 @@ struct git_graph {
 	 * The commit currently being processed
 	 */
 	struct commit *commit;
+	/* The rev-info used for the current traversal */
+	struct rev_info *revs;
 	/*
 	 * The number of interesting parents that this commit has.
 	 *
@@ -127,10 +129,11 @@ struct git_graph {
 	int *new_mapping;
 };
 
-struct git_graph *graph_init(void)
+struct git_graph *graph_init(struct rev_info *opt)
 {
 	struct git_graph *graph = xmalloc(sizeof(struct git_graph));
 	graph->commit = NULL;
+	graph->revs = opt;
 	graph->num_parents = 0;
 	graph->expansion_row = 0;
 	graph->state = GRAPH_PADDING;
@@ -565,16 +568,13 @@ void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 
 		if (col_commit == graph->commit) {
 			seen_this = 1;
-			/*
-			 * If the commit has more than 1 interesting
-			 * parent, print 'M' to indicate that it is a
-			 * merge.  Otherwise, print '*'.
-			 *
-			 * Note that even if this is actually a merge
-			 * commit, we still print '*' if less than 2 of its
-			 * parents are interesting.
-			 */
-			if (graph->num_parents > 1)
+
+			if (graph->revs && graph->revs->left_right) {
+				if (graph->commit->object.flags & SYMMETRIC_LEFT)
+					strbuf_addch(sb, '<');
+				else
+					strbuf_addch(sb, '>');
+			} else if (graph->num_parents > 1)
 				strbuf_addch(sb, 'M');
 			else
 				strbuf_addch(sb, '*');

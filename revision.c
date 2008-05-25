@@ -1205,7 +1205,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			if (!prefixcmp(arg, "--graph")) {
 				revs->topo_order = 1;
 				revs->rewrite_parents = 1;
-				revs->graph = graph_init();
+				revs->graph = graph_init(revs);
 				continue;
 			}
 			if (!strcmp(arg, "--root")) {
