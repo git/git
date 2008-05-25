@@ -127,14 +127,8 @@ static struct ref *get_ref_map(struct transport *transport,
 		/* Merge everything on the command line, but not --tags */
 		for (rm = ref_map; rm; rm = rm->next)
 			rm->merge = 1;
-		if (tags == TAGS_SET) {
-			struct refspec refspec;
-			refspec.src = "refs/tags/";
-			refspec.dst = "refs/tags/";
-			refspec.pattern = 1;
-			refspec.force = 0;
-			get_fetch_map(remote_refs, &refspec, &tail, 0);
-		}
+		if (tags == TAGS_SET)
+			get_fetch_map(remote_refs, tag_refspec, &tail, 0);
 	} else {
 		/* Use the defaults */
 		struct remote *remote = transport->remote;

@@ -23,4 +23,11 @@ test_expect_success 'clone with excess parameters' '
 
 '
 
+test_expect_success 'clone checks out files' '
+
+	git clone src dst &&
+	test -f dst/file
+
+'
+
 test_done
