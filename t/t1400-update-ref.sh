@@ -32,6 +32,14 @@ test_expect_success \
 	"create $m" \
 	"git update-ref $m $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
+test_expect_success "fail to delete $m with stale ref" '
+	test_must_fail git update-ref -d $m $A &&
+	test $B = "$(cat .git/$m)"
+'
+test_expect_success "delete $m" '
+	git update-ref -d $m $B &&
+	! test -f .git/$m
+'
 rm -f .git/$m
 
 test_expect_success \
@@ -49,6 +57,14 @@ test_expect_success \
 	"create $m (by HEAD)" \
 	"git update-ref HEAD $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
+test_expect_success "fail to delete $m (by HEAD) with stale ref" '
+	test_must_fail git update-ref -d HEAD $A &&
+	test $B = $(cat .git/$m)
+'
+test_expect_success "delete $m (by HEAD)" '
+	git update-ref -d HEAD $B &&
+	! test -f .git/$m
+'
 rm -f .git/$m
 
 test_expect_success '(not) create HEAD with old sha1' "
