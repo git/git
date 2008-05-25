@@ -24,7 +24,7 @@ static void remove_lock_file(void)
 static void remove_lock_file_on_signal(int signo)
 {
 	remove_lock_file();
-	signal(SIGINT, SIG_DFL);
+	signal(signo, SIG_DFL);
 	raise(signo);
 }
 
