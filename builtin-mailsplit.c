@@ -52,13 +52,12 @@ int read_line_with_nul(char *buf, int size, FILE *in)
 
 	for (;;) {
 		c = getc(in);
+		if (c == EOF)
+			break;
 		buf[len++] = c;
-		if (c == EOF || c == '\n' || len + 1 >= size)
+		if (c == '\n' || len + 1 >= size)
 			break;
 	}
-
-	if (c == EOF)
-		len--;
 	buf[len] = '\0';
 
 	return len;
