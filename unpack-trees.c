@@ -8,6 +8,36 @@
 #include "progress.h"
 #include "refs.h"
 
+/*
+ * Error messages expected by scripts out of plumbing commands such as
+ * read-tree.  Non-scripted Porcelain is not required to use these messages
+ * and in fact are encouraged to reword them to better suit their particular
+ * situation better.  See how "git checkout" replaces not_uptodate_file to
+ * explain why it does not allow switching between branches when you have
+ * local changes, for example.
+ */
+static struct unpack_trees_error_msgs unpack_plumbing_errors = {
+	/* would_overwrite */
+	"Entry '%s' would be overwritten by merge. Cannot merge.",
+
+	/* not_uptodate_file */
+	"Entry '%s' not uptodate. Cannot merge.",
+
+	/* not_uptodate_dir */
+	"Updating '%s' would lose untracked files in it",
+
+	/* would_lose_untracked */
+	"Untracked working tree file '%s' would be %s by merge.",
+
+	/* bind_overlap */
+	"Entry '%s' overlaps with '%s'.  Cannot bind.",
+};
+
+#define ERRORMSG(o,fld) \
+	( ((o) && (o)->msgs.fld) \
+	? ((o)->msgs.fld) \
+	: (unpack_plumbing_errors.fld) )
+
 static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 	unsigned int set, unsigned int clear)
 {
@@ -383,10 +413,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 /* Here come the merge functions */
 
-static int reject_merge(struct cache_entry *ce)
+static int reject_merge(struct cache_entry *ce, struct unpack_trees_options *o)
 {
-	return error("Entry '%s' would be overwritten by merge. Cannot merge.",
-		     ce->name);
+	return error(ERRORMSG(o, would_overwrite), ce->name);
 }
 
 static int same(struct cache_entry *a, struct cache_entry *b)
@@ -430,7 +459,7 @@ static int verify_uptodate(struct cache_entry *ce,
 	if (errno == ENOENT)
 		return 0;
 	return o->gently ? -1 :
-		error("Entry '%s' not uptodate. Cannot merge.", ce->name);
+		error(ERRORMSG(o, not_uptodate_file), ce->name);
 }
 
 static void invalidate_ce_path(struct cache_entry *ce, struct unpack_trees_options *o)
@@ -517,8 +546,7 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 	i = read_directory(&d, ce->name, pathbuf, namelen+1, NULL);
 	if (i)
 		return o->gently ? -1 :
-			error("Updating '%s' would lose untracked files in it",
-			      ce->name);
+			error(ERRORMSG(o, not_uptodate_dir), ce->name);
 	free(pathbuf);
 	return cnt;
 }
@@ -618,8 +646,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 		}
 
 		return o->gently ? -1 :
-			error("Untracked working tree file '%s' "
-			      "would be %s by merge.", ce->name, action);
+			error(ERRORMSG(o, would_lose_untracked), ce->name, action);
 	}
 	return 0;
 }
@@ -751,7 +778,7 @@ int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o)
 	/* #14, #14ALT, #2ALT */
 	if (remote && !df_conflict_head && head_match && !remote_match) {
 		if (index && !same(index, remote) && !same(index, head))
-			return o->gently ? -1 : reject_merge(index);
+			return o->gently ? -1 : reject_merge(index, o);
 		return merged_entry(remote, index, o);
 	}
 	/*
@@ -759,7 +786,7 @@ int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o)
 	 * make sure that it matches head.
 	 */
 	if (index && !same(index, head))
-		return o->gently ? -1 : reject_merge(index);
+		return o->gently ? -1 : reject_merge(index, o);
 
 	if (head) {
 		/* #5ALT, #15 */
@@ -901,11 +928,11 @@ int twoway_merge(struct cache_entry **src, struct unpack_trees_options *o)
 		else {
 			/* all other failures */
 			if (oldtree)
-				return o->gently ? -1 : reject_merge(oldtree);
+				return o->gently ? -1 : reject_merge(oldtree, o);
 			if (current)
-				return o->gently ? -1 : reject_merge(current);
+				return o->gently ? -1 : reject_merge(current, o);
 			if (newtree)
-				return o->gently ? -1 : reject_merge(newtree);
+				return o->gently ? -1 : reject_merge(newtree, o);
 			return -1;
 		}
 	}
@@ -931,7 +958,7 @@ int bind_merge(struct cache_entry **src,
 			     o->merge_size);
 	if (a && old)
 		return o->gently ? -1 :
-			error("Entry '%s' overlaps with '%s'.  Cannot bind.", a->name, old->name);
+			error(ERRORMSG(o, bind_overlap), a->name, old->name);
 	if (!a)
 		return keep_entry(old, o);
 	else
