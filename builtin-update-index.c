@@ -593,6 +593,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				refresh_flags |= REFRESH_QUIET;
 				continue;
 			}
+			if (!strcmp(path, "--ignore-submodules")) {
+				refresh_flags |= REFRESH_IGNORE_SUBMODULES;
+				continue;
+			}
 			if (!strcmp(path, "--add")) {
 				allow_add = 1;
 				continue;

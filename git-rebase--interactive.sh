@@ -56,9 +56,9 @@ output () {
 require_clean_work_tree () {
 	# test if working tree is dirty
 	git rev-parse --verify HEAD > /dev/null &&
-	git update-index --refresh &&
-	git diff-files --quiet &&
-	git diff-index --cached --quiet HEAD -- ||
+	git update-index --ignore-submodules --refresh &&
+	git diff-files --quiet --ignore-submodules &&
+	git diff-index --cached --quiet HEAD --ignore-submodules -- ||
 	die "Working tree is dirty"
 }
 
@@ -377,11 +377,12 @@ do
 		# Sanity check
 		git rev-parse --verify HEAD >/dev/null ||
 			die "Cannot read HEAD"
-		git update-index --refresh && git diff-files --quiet ||
+		git update-index --ignore-submodules --refresh &&
+			git diff-files --quiet --ignore-submodules ||
 			die "Working tree is dirty"
 
 		# do we have anything to commit?
-		if git diff-index --cached --quiet HEAD --
+		if git diff-index --cached --quiet --ignore-submodules HEAD --
 		then
 			: Nothing to commit -- skip this
 		else

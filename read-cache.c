@@ -942,6 +942,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	int allow_unmerged = (flags & REFRESH_UNMERGED) != 0;
 	int quiet = (flags & REFRESH_QUIET) != 0;
 	int not_new = (flags & REFRESH_IGNORE_MISSING) != 0;
+	int ignore_submodules = (flags & REFRESH_IGNORE_SUBMODULES) != 0;
 	unsigned int options = really ? CE_MATCH_IGNORE_VALID : 0;
 
 	for (i = 0; i < istate->cache_nr; i++) {
@@ -949,6 +950,9 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 		int cache_errno = 0;
 
 		ce = istate->cache[i];
+		if (ignore_submodules && S_ISGITLINK(ce->ce_mode))
+			continue;
+
 		if (ce_stage(ce)) {
 			while ((i < istate->cache_nr) &&
 			       ! strcmp(istate->cache[i]->name, ce->name))
