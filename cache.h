@@ -261,8 +261,8 @@ static inline void remove_name_hash(struct cache_entry *ce)
 #define add_cache_entry(ce, option) add_index_entry(&the_index, (ce), (option))
 #define remove_cache_entry_at(pos) remove_index_entry_at(&the_index, (pos))
 #define remove_file_from_cache(path) remove_file_from_index(&the_index, (path))
-#define add_to_cache(path, st, verbose) add_to_index(&the_index, (path), (st), (verbose))
-#define add_file_to_cache(path, verbose) add_file_to_index(&the_index, (path), (verbose))
+#define add_to_cache(path, st, flags) add_to_index(&the_index, (path), (st), (flags))
+#define add_file_to_cache(path, flags) add_file_to_index(&the_index, (path), (flags))
 #define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL)
 #define ce_match_stat(ce, st, options) ie_match_stat(&the_index, (ce), (st), (options))
 #define ce_modified(ce, st, options) ie_modified(&the_index, (ce), (st), (options))
@@ -371,8 +371,11 @@ extern int add_index_entry(struct index_state *, struct cache_entry *ce, int opt
 extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern int remove_index_entry_at(struct index_state *, int pos);
 extern int remove_file_from_index(struct index_state *, const char *path);
-extern int add_to_index(struct index_state *, const char *path, struct stat *, int verbose);
-extern int add_file_to_index(struct index_state *, const char *path, int verbose);
+#define ADD_CACHE_VERBOSE 1
+#define ADD_CACHE_PRETEND 2
+#define ADD_CACHE_IGNORE_ERRORS	4
+extern int add_to_index(struct index_state *, const char *path, struct stat *, int flags);
+extern int add_file_to_index(struct index_state *, const char *path, int flags);
 extern struct cache_entry *make_cache_entry(unsigned int mode, const unsigned char *sha1, const char *path, int stage, int refresh);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 
@@ -791,8 +794,6 @@ extern int convert_to_git(const char *path, const char *src, size_t len,
 extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 
 /* add */
-#define ADD_FILES_VERBOSE	01
-#define ADD_FILES_IGNORE_ERRORS	02
 /*
  * return 0 if success, 1 - if addition of a file failed and
  * ADD_FILES_IGNORE_ERRORS was specified in flags

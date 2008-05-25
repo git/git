@@ -256,7 +256,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 		for (i = 0; i < added.nr; i++) {
 			const char *path = added.items[i].path;
-			if (add_file_to_cache(path, verbose))
+			if (add_file_to_cache(path, verbose ? ADD_CACHE_VERBOSE : 0))
 				die("updating index entries failed");
 		}
 
