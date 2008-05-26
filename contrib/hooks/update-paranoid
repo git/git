@@ -259,6 +259,7 @@ deny "Refusing funny ref $ref" unless $ref =~ s,^refs/,,;
 deny "Bad old value $old" unless $old =~ /^[a-z0-9]{40}$/;
 deny "Bad new value $new" unless $new =~ /^[a-z0-9]{40}$/;
 deny "Cannot determine who you are." unless $this_user;
+grant "No change requested." if $old eq $new;
 
 $repository_name = File::Spec->rel2abs($git_dir);
 $repository_name =~ m,/([^/]+)(?:\.git|/\.git)$,;
