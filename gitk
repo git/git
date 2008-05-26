@@ -296,7 +296,7 @@ proc start_rev_list {view} {
     global startmsecs commitidx viewcomplete curview
     global commfd leftover tclencoding
     global viewargs viewargscmd viewfiles vfilelimit
-    global showlocalchanges commitinterest mainheadid
+    global showlocalchanges commitinterest
     global viewactive loginstance viewinstances vmergeonly
     global pending_select mainheadid
     global vcanopt vflags vrevs vorigargs
@@ -358,7 +358,7 @@ proc start_rev_list {view} {
     set viewinstances($view) [list $i]
     set commfd($i) $fd
     set leftover($i) {}
-    if {$showlocalchanges} {
+    if {$showlocalchanges && $mainheadid ne {}} {
 	lappend commitinterest($mainheadid) {dodiffindex}
     }
     fconfigure $fd -blocking 0 -translation lf -eofchar {}
@@ -406,7 +406,7 @@ proc getcommits {} {
 
 proc updatecommits {} {
     global curview vcanopt vorigargs vfilelimit viewinstances
-    global viewactive viewcomplete loginstance tclencoding mainheadid
+    global viewactive viewcomplete loginstance tclencoding
     global startmsecs commfd showneartags showlocalchanges leftover
     global mainheadid pending_select
     global isworktree
@@ -1467,7 +1467,6 @@ proc chewcommits {} {
     if {$viewcomplete($curview)} {
 	global commitidx varctok
 	global numcommits startmsecs
-	global mainheadid nullid
 
 	if {[info exists pending_select]} {
 	    set row [first_real_row]
@@ -1604,12 +1603,10 @@ proc readrefs {} {
     set mainhead {}
     set mainheadid {}
     catch {
+	set mainheadid [exec git rev-parse HEAD]
 	set thehead [exec git symbolic-ref HEAD]
 	if {[string match "refs/heads/*" $thehead]} {
 	    set mainhead [string range $thehead 11 end]
-	    if {[info exists headids($mainhead)]} {
-		set mainheadid $headids($mainhead)
-	    }
 	}
     }
 }
@@ -4022,6 +4019,7 @@ proc layoutmore {} {
 proc doshowlocalchanges {} {
     global curview mainheadid
 
+    if {$mainheadid eq {}} return
     if {[commitinview $mainheadid $curview]} {
 	dodiffindex
     } else {
@@ -4841,7 +4839,8 @@ proc drawcmittext {id row col} {
     global cmitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag selectedline
-    global canvxmax boldrows boldnamerows fgcolor nullid nullid2
+    global canvxmax boldrows boldnamerows fgcolor
+    global mainheadid nullid nullid2 circleitem circlecolors
 
     # listed is 0 for boundary, 1 for normal, 2 for negative, 3 for left, 4 for right
     set listed $cmitlisted($curview,$id)
@@ -4849,8 +4848,10 @@ proc drawcmittext {id row col} {
 	set ofill red
     } elseif {$id eq $nullid2} {
 	set ofill green
+    } elseif {$id eq $mainheadid} {
+	set ofill yellow
     } else {
-	set ofill [expr {$listed != 0 ? $listed == 2 ? "gray" : "blue" : "white"}]
+	set ofill [lindex $circlecolors $listed]
     }
     set x [xc $row $col]
     set y [yc $row]
@@ -4874,6 +4875,7 @@ proc drawcmittext {id row col} {
 		   [expr {$x - $orad}] [expr {$y + $orad - 1}] \
 		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
     }
+    set circleitem($row) $t
     $canv raise $t
     $canv bind $t <1> {selcanvline {} %x %y}
     set rmx [llength [lindex $rowidlist $row]]
@@ -7399,12 +7401,18 @@ proc domktag {} {
 }
 
 proc redrawtags {id} {
-    global canv linehtag idpos currentid curview
-    global canvxmax iddrawn
+    global canv linehtag idpos currentid curview cmitlisted
+    global canvxmax iddrawn circleitem mainheadid circlecolors
 
     if {![commitinview $id $curview]} return
     if {![info exists iddrawn($id)]} return
     set row [rowofcommit $id]
+    if {$id eq $mainheadid} {
+	set ofill yellow
+    } else {
+	set ofill [lindex $circlecolors $cmitlisted($curview,$id)]
+    }
+    $canv itemconf $circleitem($row) -fill $ofill
     $canv delete tag.$id
     set xt [eval drawtags $id $idpos($id)]
     $canv coords $linehtag($row) $xt [lindex $idpos($id) 2]
@@ -7574,8 +7582,8 @@ proc cherrypick {} {
 	if {$mainhead ne {}} {
 	    movehead $newhead $mainhead
 	    movedhead $newhead $mainhead
-	    set mainheadid $newhead
 	}
+	set mainheadid $newhead
 	redrawtags $oldhead
 	redrawtags $newhead
 	selbyid $newhead
@@ -7675,7 +7683,7 @@ proc headmenu {x y id head} {
 }
 
 proc cobranch {} {
-    global headmenuid headmenuhead mainhead headids
+    global headmenuid headmenuhead headids
     global showlocalchanges mainheadid
 
     # check the tree is clean first??
@@ -7711,12 +7719,10 @@ proc readcheckoutstat {fd newhead newheadid} {
     if {[catch {close $fd} err]} {
 	error_popup $err
     }
-    set oldmainhead $mainhead
+    set oldmainid $mainheadid
     set mainhead $newhead
     set mainheadid $newheadid
-    if {[info exists headids($oldmainhead)]} {
-	redrawtags $headids($oldmainhead)
-    }
+    redrawtags $oldmainid
     redrawtags $newheadid
     selbyid $newheadid
     if {$showlocalchanges} {
@@ -9016,11 +9022,13 @@ proc rereadrefs {} {
 			[array names idheads] [array names idotherrefs]]]
     foreach id $refids {
 	set v [listrefs $id]
-	if {![info exists ref($id)] || $ref($id) != $v ||
-	    ($id eq $oldmainhead && $id ne $mainheadid) ||
-	    ($id eq $mainheadid && $id ne $oldmainhead)} {
+	if {![info exists ref($id)] || $ref($id) != $v} {
 	    redrawtags $id
 	}
+    }
+    if {$oldmainhead ne $mainheadid} {
+	redrawtags $oldmainhead
+	redrawtags $mainheadid
     }
     run refill_reflist
 }
@@ -9760,6 +9768,8 @@ set diffcolors {red "#00a000" blue}
 set diffcontext 3
 set ignorespace 0
 set selectbgcolor gray85
+
+set circlecolors {white blue gray blue blue}
 
 ## For msgcat loading, first locate the installation location.
 if { [info exists ::env(GITK_MSGSDIR)] } {
