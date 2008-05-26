@@ -225,14 +225,12 @@ sub load_diff ($) {
 		local $/ = "\0";
 		my %this_diff;
 		if ($base =~ /^0{40}$/) {
-			open(T,'-|','git','ls-tree',
-				'-r','--name-only','-z',
-				$new) or return undef;
-			while (<T>) {
-				chop;
-				$this_diff{$_} = 'A';
-			}
-			close T or return undef;
+			# Don't load the diff at all; we are making the
+			# branch and have no base to compare to in this
+			# case.  A file level ACL makes no sense in this
+			# context.  Having an empty diff will allow the
+			# branch creation.
+			#
 		} else {
 			open(T,'-|','git','diff-tree',
 				'-r','--name-status','-z',
