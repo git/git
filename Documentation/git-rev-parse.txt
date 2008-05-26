@@ -238,16 +238,18 @@ Here is an illustration, by Jon Loeliger.  Both commit nodes B
 and C are parents of commit node A.  Parent commits are ordered
 left-to-right.
 
-    G   H   I   J
-     \ /     \ /
-      D   E   F
-       \  |  / \ 
-        \ | /   |
-         \|/    |
-          B     C
-           \   /
-            \ /
-             A
+........................................
+G   H   I   J
+ \ /     \ /
+  D   E   F
+   \  |  / \
+    \ | /   |
+     \|/    |
+      B     C
+       \   /
+        \ /
+         A
+........................................
 
     A =      = A^0
     B = A^   = A^1     = A~1
