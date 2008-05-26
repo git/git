@@ -97,7 +97,7 @@ test_expect_success 'subdirectory filter result looks okay' '
 	test_must_fail git show sub:subdir
 '
 
-test_expect_success 'setup and filter history that requires --full-history' '
+test_expect_success 'more setup' '
 	git checkout master &&
 	mkdir subdir &&
 	echo A > subdir/new &&
@@ -107,16 +107,7 @@ test_expect_success 'setup and filter history that requires --full-history' '
 	git rm a &&
 	test_tick &&
 	git commit -m "again subdir on master" &&
-	git merge branch &&
-	git branch sub-master &&
-	git-filter-branch -f --subdirectory-filter subdir sub-master
-'
-
-test_expect_success 'subdirectory filter result looks okay' '
-	test 3 = $(git rev-list -1 --parents sub-master | wc -w) &&
-	git show sub-master^:new &&
-	git show sub-master^2:new &&
-	test_must_fail git show sub:subdir
+	git merge branch
 '
 
 test_expect_success 'use index-filter to move into a subdirectory' '
