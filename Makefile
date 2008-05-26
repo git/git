@@ -375,6 +375,7 @@ LIB_H += tree.h
 LIB_H += tree-walk.h
 LIB_H += unpack-trees.h
 LIB_H += utf8.h
+LIB_H += wt-status.h
 
 LIB_OBJS += alias.o
 LIB_OBJS += alloc.o
