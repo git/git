@@ -1202,7 +1202,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				get_commit_format(arg+8, revs);
 				continue;
 			}
-			if (!prefixcmp(arg, "--graph")) {
+			if (!strcmp(arg, "--graph")) {
 				revs->topo_order = 1;
 				revs->rewrite_parents = 1;
 				revs->graph = graph_init(revs);
