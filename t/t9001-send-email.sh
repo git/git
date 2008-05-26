@@ -166,4 +166,63 @@ test_expect_success 'second message is patch' '
 	grep "Subject:.*Second" msgtxt2
 '
 
+test_expect_success '--compose adds MIME for utf8 body' '
+	clean_fake_sendmail &&
+	(echo "#!/bin/sh" &&
+	 echo "echo utf8 body: àéìöú >>\$1"
+	) >fake-editor-utf8 &&
+	chmod +x fake-editor-utf8 &&
+	echo y | \
+	  GIT_EDITOR=$(pwd)/fake-editor-utf8 \
+	  GIT_SEND_EMAIL_NOTTY=1 \
+	  git send-email \
+	  --compose --subject foo \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  $patches &&
+	grep "^utf8 body" msgtxt1 &&
+	grep "^Content-Type: text/plain; charset=utf-8" msgtxt1
+'
+
+test_expect_success '--compose respects user mime type' '
+	clean_fake_sendmail &&
+	(echo "#!/bin/sh" &&
+	 echo "(echo MIME-Version: 1.0"
+	 echo " echo Content-Type: text/plain\\; charset=iso-8859-1"
+	 echo " echo Content-Transfer-Encoding: 8bit"
+	 echo " echo Subject: foo"
+	 echo " echo "
+	 echo " echo utf8 body: àéìöú) >\$1"
+	) >fake-editor-utf8-mime &&
+	chmod +x fake-editor-utf8-mime &&
+	echo y | \
+	  GIT_EDITOR=$(pwd)/fake-editor-utf8-mime \
+	  GIT_SEND_EMAIL_NOTTY=1 \
+	  git send-email \
+	  --compose --subject foo \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  $patches &&
+	grep "^utf8 body" msgtxt1 &&
+	grep "^Content-Type: text/plain; charset=iso-8859-1" msgtxt1 &&
+	! grep "^Content-Type: text/plain; charset=utf-8" msgtxt1
+'
+
+test_expect_success '--compose adds MIME for utf8 subject' '
+	clean_fake_sendmail &&
+	echo y | \
+	  GIT_EDITOR=$(pwd)/fake-editor \
+	  GIT_SEND_EMAIL_NOTTY=1 \
+	  git send-email \
+	  --compose --subject utf8-sübjëct \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  $patches &&
+	grep "^fake edit" msgtxt1 &&
+	grep "^Subject: =?utf-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
+'
+
 test_done
