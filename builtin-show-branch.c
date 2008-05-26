@@ -782,8 +782,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 				has_head++;
 		}
 		if (!has_head) {
-			int pfxlen = strlen("refs/heads/");
-			append_one_rev(head + pfxlen);
+			int offset = !prefixcmp(head, "refs/heads/") ? 11 : 0;
+			append_one_rev(head + offset);
 		}
 	}
 
