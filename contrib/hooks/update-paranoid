@@ -136,6 +136,7 @@ sub parse_config ($$$$) {
 	local $ENV{GIT_DIR} = shift;
 	my $br = shift;
 	my $fn = shift;
+	return unless git_value('rev-list','--max-count=1',$br,'--',$fn);
 	info "Loading $br:$fn";
 	open(I,'-|','git','cat-file','blob',"$br:$fn");
 	my $section = '';
