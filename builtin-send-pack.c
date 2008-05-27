@@ -537,9 +537,17 @@ static void verify_remote_names(int nr_heads, const char **heads)
 	int i;
 
 	for (i = 0; i < nr_heads; i++) {
+		const char *local = heads[i];
 		const char *remote = strrchr(heads[i], ':');
 
-		remote = remote ? (remote + 1) : heads[i];
+		if (*local == '+')
+			local++;
+
+		/* A matching refspec is okay.  */
+		if (remote == local && remote[1] == '\0')
+			continue;
+
+		remote = remote ? (remote + 1) : local;
 		switch (check_ref_format(remote)) {
 		case 0: /* ok */
 		case CHECK_REF_FORMAT_ONELEVEL:

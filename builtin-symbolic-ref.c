@@ -35,7 +35,7 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, options, git_symbolic_ref_usage, 0);
 	if (msg &&!*msg)
 		die("Refusing to perform update with empty message");

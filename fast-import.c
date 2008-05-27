@@ -2352,7 +2352,7 @@ static void import_marks(const char *input_file)
 	fclose(f);
 }
 
-static int git_pack_config(const char *k, const char *v)
+static int git_pack_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "pack.depth")) {
 		max_depth = git_config_int(k, v);
@@ -2370,7 +2370,7 @@ static int git_pack_config(const char *k, const char *v)
 		pack_compression_seen = 1;
 		return 0;
 	}
-	return git_default_config(k, v);
+	return git_default_config(k, v, cb);
 }
 
 static const char fast_import_usage[] =
@@ -2381,7 +2381,7 @@ int main(int argc, const char **argv)
 	unsigned int i, show_stats = 1;
 
 	setup_git_directory();
-	git_config(git_pack_config);
+	git_config(git_pack_config, NULL);
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;
 

@@ -65,15 +65,18 @@ static void show_commit(struct commit *commit)
 		printf("%lu ", commit->date);
 	if (header_prefix)
 		fputs(header_prefix, stdout);
-	if (commit->object.flags & BOUNDARY)
-		putchar('-');
-	else if (commit->object.flags & UNINTERESTING)
-		putchar('^');
-	else if (revs.left_right) {
-		if (commit->object.flags & SYMMETRIC_LEFT)
-			putchar('<');
-		else
-			putchar('>');
+
+	if (!revs.graph) {
+		if (commit->object.flags & BOUNDARY)
+			putchar('-');
+		else if (commit->object.flags & UNINTERESTING)
+			putchar('^');
+		else if (revs.left_right) {
+			if (commit->object.flags & SYMMETRIC_LEFT)
+				putchar('<');
+			else
+				putchar('>');
+		}
 	}
 	if (revs.abbrev_commit && revs.abbrev)
 		fputs(find_unique_abbrev(commit->object.sha1, revs.abbrev),
@@ -588,7 +591,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_find_all = 0;
 	int quiet = 0;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	init_revisions(&revs, prefix);
 	revs.abbrev = 0;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;

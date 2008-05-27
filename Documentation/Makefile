@@ -3,7 +3,8 @@ MAN1_TXT= \
 		$(wildcard git-*.txt)) \
 	gitk.txt
 MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt
-MAN7_TXT=git.txt gitcli.txt
+MAN7_TXT=git.txt gitcli.txt gittutorial.txt gittutorial-2.txt \
+	gitcvs-migration.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
@@ -11,10 +12,7 @@ MAN_HTML=$(patsubst %.txt,%.html,$(MAN_TXT))
 
 DOC_HTML=$(MAN_HTML)
 
-ARTICLES = tutorial
-ARTICLES += tutorial-2
-ARTICLES += core-tutorial
-ARTICLES += cvs-migration
+ARTICLES = core-tutorial
 ARTICLES += diffcore
 ARTICLES += howto-index
 ARTICLES += repository-layout

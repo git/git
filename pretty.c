@@ -28,8 +28,6 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 		rev->commit_format = CMIT_FMT_DEFAULT;
 		return;
 	}
-	if (*arg == '=')
-		arg++;
 	if (!prefixcmp(arg, "format:") || !prefixcmp(arg, "tformat:")) {
 		const char *cp = strchr(arg, ':') + 1;
 		free(user_format);

@@ -228,6 +228,9 @@ endif::git-format-patch[]
 --no-ext-diff::
 	Disallow external diff drivers.
 
+--ignore-submodules::
+	Ignore changes to submodules in the diff generation.
+
 --src-prefix=<prefix>::
 	Show the given source prefix instead of "a/".
 

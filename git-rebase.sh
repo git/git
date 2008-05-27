@@ -60,7 +60,7 @@ continue_merge () {
 	fi
 
 	cmt=`cat "$dotest/current"`
-	if ! git diff-index --quiet HEAD --
+	if ! git diff-index --quiet --ignore-submodules HEAD --
 	then
 		if ! git commit --no-verify -C "$cmt"
 		then
@@ -150,7 +150,7 @@ while test $# != 0
 do
 	case "$1" in
 	--continue)
-		git diff-files --quiet || {
+		git diff-files --quiet --ignore-submodules || {
 			echo "You must edit all merge conflicts and then"
 			echo "mark them as resolved using git add"
 			exit 1
@@ -282,8 +282,8 @@ else
 fi
 
 # The tree must be really really clean.
-git update-index --refresh || exit
-diff=$(git diff-index --cached --name-status -r HEAD --)
+git update-index --ignore-submodules --refresh || exit
+diff=$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)
 case "$diff" in
 ?*)	echo "cannot rebase: your index is not up-to-date"
 	echo "$diff"

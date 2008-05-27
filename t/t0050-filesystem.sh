@@ -7,6 +7,7 @@ test_description='Various filesystem issues'
 auml=`printf '\xc3\xa4'`
 aumlcdiar=`printf '\x61\xcc\x88'`
 
+case_insensitive=
 test_expect_success 'see if we expect ' '
 
 	test_case=test_expect_success
@@ -17,6 +18,7 @@ test_expect_success 'see if we expect ' '
 	if test "$(cat junk/CamelCase)" != good
 	then
 		test_case=test_expect_failure
+		case_insensitive=t
 		say "will test on a case insensitive filesystem"
 	fi &&
 	rm -fr junk &&
@@ -32,8 +34,23 @@ test_expect_success 'see if we expect ' '
 	rm -fr junk
 '
 
+if test "$case_insensitive"
+then
+test_expect_success "detection of case insensitive filesystem during repo init" '
+
+	test $(git config --bool core.ignorecase) = true
+'
+else
+test_expect_success "detection of case insensitive filesystem during repo init" '
+
+	! git config --bool core.ignorecase >/dev/null ||
+	test $(git config --bool core.ignorecase) = false
+'
+fi
+
 test_expect_success "setup case tests" '
 
+	git config core.ignorecase true &&
 	touch camelcase &&
 	git add camelcase &&
 	git commit -m "initial" &&
@@ -55,8 +72,20 @@ $test_case 'rename (case change)' '
 
 $test_case 'merge (case change)' '
 
+	rm -f CamelCase &&
+	rm -f camelcase &&
 	git reset --hard initial &&
 	git merge topic
+
+'
+
+$test_case 'add (with different case)' '
+
+	git reset --hard initial &&
+	rm camelcase &&
+	echo 1 >CamelCase &&
+	git add CamelCase &&
+	test $(git-ls-files | grep -i camelcase | wc -l) = 1
 
 '
 

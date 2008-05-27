@@ -24,6 +24,15 @@ extern int for_each_tag_ref(each_ref_fn, void *);
 extern int for_each_branch_ref(each_ref_fn, void *);
 extern int for_each_remote_ref(each_ref_fn, void *);
 
+/*
+ * Extra refs will be listed by for_each_ref() before any actual refs
+ * for the duration of this process or until clear_extra_refs() is
+ * called. Only extra refs added before for_each_ref() is called will
+ * be listed on a given call of for_each_ref().
+ */
+extern void add_extra_ref(const char *refname, const unsigned char *sha1, int flags);
+extern void clear_extra_refs(void);
+
 extern int peel_ref(const char *, unsigned char *);
 
 /** Locks a "refs/" ref returning the lock on success and NULL on failure. **/

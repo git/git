@@ -180,21 +180,22 @@ char *sha1_file_name(const unsigned char *sha1)
 	return base;
 }
 
-char *sha1_pack_name(const unsigned char *sha1)
+static char *sha1_get_pack_name(const unsigned char *sha1,
+				char **name, char **base)
 {
 	static const char hex[] = "0123456789abcdef";
-	static char *name, *base, *buf;
+	char *buf;
 	int i;
 
-	if (!base) {
+	if (!*base) {
 		const char *sha1_file_directory = get_object_directory();
 		int len = strlen(sha1_file_directory);
-		base = xmalloc(len + 60);
-		sprintf(base, "%s/pack/pack-1234567890123456789012345678901234567890.pack", sha1_file_directory);
-		name = base + len + 11;
+		*base = xmalloc(len + 60);
+		sprintf(*base, "%s/pack/pack-1234567890123456789012345678901234567890.pack", sha1_file_directory);
+		*name = *base + len + 11;
 	}
 
-	buf = name;
+	buf = *name;
 
 	for (i = 0; i < 20; i++) {
 		unsigned int val = *sha1++;
@@ -202,32 +203,21 @@ char *sha1_pack_name(const unsigned char *sha1)
 		*buf++ = hex[val & 0xf];
 	}
 
-	return base;
+	return *base;
+}
+
+char *sha1_pack_name(const unsigned char *sha1)
+{
+	static char *name, *base;
+
+	return sha1_get_pack_name(sha1, &name, &base);
 }
 
 char *sha1_pack_index_name(const unsigned char *sha1)
 {
-	static const char hex[] = "0123456789abcdef";
-	static char *name, *base, *buf;
-	int i;
+	static char *name, *base;
 
-	if (!base) {
-		const char *sha1_file_directory = get_object_directory();
-		int len = strlen(sha1_file_directory);
-		base = xmalloc(len + 60);
-		sprintf(base, "%s/pack/pack-1234567890123456789012345678901234567890.idx", sha1_file_directory);
-		name = base + len + 11;
-	}
-
-	buf = name;
-
-	for (i = 0; i < 20; i++) {
-		unsigned int val = *sha1++;
-		*buf++ = hex[val >> 4];
-		*buf++ = hex[val & 0xf];
-	}
-
-	return base;
+	return sha1_get_pack_name(sha1, &name, &base);
 }
 
 struct alternate_object_database *alt_odb_list;
@@ -382,6 +372,18 @@ static void read_info_alternates(const char * relative_base, int depth)
 	link_alt_odb_entries(map, map + mapsz, '\n', relative_base, depth);
 
 	munmap(map, mapsz);
+}
+
+void add_to_alternates_file(const char *reference)
+{
+	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
+	int fd = hold_lock_file_for_append(lock, git_path("objects/info/alternates"), 1);
+	char *alt = mkpath("%s/objects\n", reference);
+	write_or_die(fd, alt, strlen(alt));
+	if (commit_lock_file(lock))
+		die("could not close alternates file");
+	if (alt_odb_tail)
+		link_alt_odb_entries(alt, alt + strlen(alt), '\n', NULL, 0);
 }
 
 void prepare_alt_odb(void)
@@ -2106,26 +2108,16 @@ int hash_sha1_file(const void *buf, unsigned long len, const char *type,
 	return 0;
 }
 
-int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
+static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
+			      void *buf, unsigned long len, time_t mtime)
 {
-	int size, ret;
+	int fd, size, ret;
 	unsigned char *compressed;
 	z_stream stream;
-	unsigned char sha1[20];
 	char *filename;
 	static char tmpfile[PATH_MAX];
-	char hdr[32];
-	int fd, hdrlen;
 
-	/* Normally if we have it in the pack then we do not bother writing
-	 * it out into .git/objects/??/?{38} file.
-	 */
-	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	filename = sha1_file_name(sha1);
-	if (returnsha1)
-		hashcpy(returnsha1, sha1);
-	if (has_sha1_file(sha1))
-		return 0;
 	fd = open(filename, O_RDONLY);
 	if (fd >= 0) {
 		/*
@@ -2186,7 +2178,51 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 		die("unable to write sha1 file");
 	free(compressed);
 
+	if (mtime) {
+		struct utimbuf utb;
+		utb.actime = mtime;
+		utb.modtime = mtime;
+		if (utime(tmpfile, &utb) < 0)
+			warning("failed utime() on %s: %s",
+				tmpfile, strerror(errno));
+	}
+
 	return move_temp_to_file(tmpfile, filename);
+}
+
+int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
+{
+	unsigned char sha1[20];
+	char hdr[32];
+	int hdrlen;
+
+	/* Normally if we have it in the pack then we do not bother writing
+	 * it out into .git/objects/??/?{38} file.
+	 */
+	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	if (returnsha1)
+		hashcpy(returnsha1, sha1);
+	if (has_sha1_file(sha1))
+		return 0;
+	return write_loose_object(sha1, hdr, hdrlen, buf, len, 0);
+}
+
+int force_object_loose(const unsigned char *sha1, time_t mtime)
+{
+	struct stat st;
+	void *buf;
+	unsigned long len;
+	enum object_type type;
+	char hdr[32];
+	int hdrlen;
+
+	if (find_sha1_file(sha1, &st))
+		return 0;
+	buf = read_packed_sha1(sha1, &type, &len);
+	if (!buf)
+		return error("cannot read sha1_file for %s", sha1_to_hex(sha1));
+	hdrlen = sprintf(hdr, "%s %lu", typename(type), len) + 1;
+	return write_loose_object(sha1, hdr, hdrlen, buf, len, mtime);
 }
 
 /*

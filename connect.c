@@ -360,7 +360,8 @@ static char *git_proxy_command;
 static const char *rhost_name;
 static int rhost_len;
 
-static int git_proxy_command_options(const char *var, const char *value)
+static int git_proxy_command_options(const char *var, const char *value,
+		void *cb)
 {
 	if (!strcmp(var, "core.gitproxy")) {
 		const char *for_pos;
@@ -404,7 +405,7 @@ static int git_proxy_command_options(const char *var, const char *value)
 		return 0;
 	}
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static int git_use_proxy(const char *host)
@@ -412,7 +413,7 @@ static int git_use_proxy(const char *host)
 	rhost_name = host;
 	rhost_len = strlen(host);
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options);
+	git_config(git_proxy_command_options, NULL);
 	rhost_name = NULL;
 	return (git_proxy_command && *git_proxy_command);
 }

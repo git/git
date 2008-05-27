@@ -13,10 +13,11 @@ include::pretty-options.txt[]
 
 	Synonym for `--date=relative`.
 
---date={relative,local,default,iso,rfc}::
+--date={relative,local,default,iso,rfc,short}::
 
 	Only takes effect for dates shown in human-readable format, such
-	as when using "--pretty".
+	as when using "--pretty". `log.date` config variable sets a default
+	value for log command's --date option.
 +
 `--date=relative` shows dates relative to the current time,
 e.g. "2 hours ago".

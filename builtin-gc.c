@@ -35,7 +35,7 @@ static const char *argv_repack[MAX_ADD] = {"repack", "-d", "-l", NULL};
 static const char *argv_prune[] = {"prune", "--expire", NULL, NULL};
 static const char *argv_rerere[] = {"rerere", "gc", NULL};
 
-static int gc_config(const char *var, const char *value)
+static int gc_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "gc.packrefs")) {
 		if (value && !strcmp(value, "notbare"))
@@ -67,7 +67,7 @@ static int gc_config(const char *var, const char *value)
 		prune_expire = xstrdup(value);
 		return 0;
 	}
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static void append_option(const char **cmd, const char *opt, int max_length)
@@ -219,14 +219,14 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	char buf[80];
 
 	struct option builtin_gc_options[] = {
-		OPT_BOOLEAN(0, "prune", &prune, "prune unreferenced objects"),
+		OPT_BOOLEAN(0, "prune", &prune, "prune unreferenced objects (deprecated)"),
 		OPT_BOOLEAN(0, "aggressive", &aggressive, "be more thorough (increased runtime)"),
 		OPT_BOOLEAN(0, "auto", &auto_gc, "enable auto-gc mode"),
 		OPT_BOOLEAN('q', "quiet", &quiet, "suppress progress reports"),
 		OPT_END()
 	};
 
-	git_config(gc_config);
+	git_config(gc_config, NULL);
 
 	if (pack_refs < 0)
 		pack_refs = !is_bare_repository();
@@ -249,24 +249,14 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		/*
 		 * Auto-gc should be least intrusive as possible.
 		 */
-		prune = 0;
 		if (!need_to_gc())
 			return 0;
 		fprintf(stderr, "Auto packing your repository for optimum "
 			"performance. You may also\n"
 			"run \"git gc\" manually. See "
 			"\"git help gc\" for more information.\n");
-	} else {
-		/*
-		 * Use safer (for shared repos) "-A" option to
-		 * repack when not pruning. Auto-gc makes its
-		 * own decision.
-		 */
-		if (prune)
-			append_option(argv_repack, "-a", MAX_ADD);
-		else
-			append_option(argv_repack, "-A", MAX_ADD);
-	}
+	} else
+		append_option(argv_repack, "-A", MAX_ADD);
 
 	if (pack_refs && run_command_v_opt(argv_pack_refs, RUN_GIT_CMD))
 		return error(FAILED_RUN, argv_pack_refs[0]);

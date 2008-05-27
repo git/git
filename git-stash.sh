@@ -15,8 +15,8 @@ trap 'rm -f "$TMP-*"' 0
 ref_stash=refs/stash
 
 no_changes () {
-	git diff-index --quiet --cached HEAD -- &&
-	git diff-files --quiet
+	git diff-index --quiet --cached HEAD --ignore-submodules -- &&
+	git diff-files --quiet --ignore-submodules
 }
 
 clear_stash () {
@@ -130,7 +130,7 @@ show_stash () {
 }
 
 apply_stash () {
-	git diff-files --quiet ||
+	git diff-files --quiet --ignore-submodules ||
 		die 'Cannot restore on top of a dirty state'
 
 	unstash_index=

@@ -339,7 +339,7 @@ tail_optimization:
 	return write_rr(rr, fd);
 }
 
-static int git_rerere_config(const char *var, const char *value)
+static int git_rerere_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "gc.rerereresolved"))
 		cutoff_resolve = git_config_int(var, value);
@@ -348,7 +348,7 @@ static int git_rerere_config(const char *var, const char *value)
 	else if (!strcmp(var, "rerere.enabled"))
 		rerere_enabled = git_config_bool(var, value);
 	else
-		return git_default_config(var, value);
+		return git_default_config(var, value, cb);
 	return 0;
 }
 
@@ -376,7 +376,7 @@ static int setup_rerere(struct path_list *merge_rr)
 {
 	int fd;
 
-	git_config(git_rerere_config);
+	git_config(git_rerere_config, NULL);
 	if (!is_rerere_enabled())
 		return -1;
 

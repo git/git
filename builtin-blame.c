@@ -1993,7 +1993,7 @@ static void prepare_blame_range(struct scoreboard *sb,
 		usage(blame_usage);
 }
 
-static int git_blame_config(const char *var, const char *value)
+static int git_blame_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "blame.showroot")) {
 		show_root = git_config_bool(var, value);
@@ -2003,7 +2003,7 @@ static int git_blame_config(const char *var, const char *value)
 		blank_boundary = git_config_bool(var, value);
 		return 0;
 	}
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static struct commit *fake_working_tree_commit(const char *path, const char *contents_from)
@@ -2141,7 +2141,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 
 	cmd_is_annotate = !strcmp(argv[0], "annotate");
 
-	git_config(git_blame_config);
+	git_config(git_blame_config, NULL);
 	save_commit_buffer = 0;
 
 	opt = 0;

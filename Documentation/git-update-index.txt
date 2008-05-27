@@ -15,6 +15,7 @@ SYNOPSIS
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]
+	     [--ignore-submodules]
 	     [--really-refresh] [--unresolve] [--again | -g]
 	     [--info-only] [--index-info]
 	     [-z] [--stdin]
@@ -53,6 +54,10 @@ OPTIONS
         Quiet.  If --refresh finds that the index needs an update, the
         default behavior is to error out.  This option makes
         git-update-index continue anyway.
+
+--ignore-submodules:
+	Do not try to update submodules.  This option is only respected
+	when passed before --refresh.
 
 --unmerged::
         If --refresh finds unmerged changes in the index, the default

@@ -19,11 +19,11 @@ static const char *const builtin_clean_usage[] = {
 	NULL
 };
 
-static int git_clean_config(const char *var, const char *value)
+static int git_clean_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "clean.requireforce"))
 		force = !git_config_bool(var, value);
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 int cmd_clean(int argc, const char **argv, const char *prefix)
@@ -50,7 +50,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_clean_config);
+	git_config(git_clean_config, NULL);
 	if (force < 0)
 		force = 0;
 	else

@@ -63,6 +63,7 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_REVERSE_DIFF        (1 << 15)
 #define DIFF_OPT_CHECK_FAILED        (1 << 16)
 #define DIFF_OPT_RELATIVE_NAME       (1 << 17)
+#define DIFF_OPT_IGNORE_SUBMODULES   (1 << 18)
 #define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
 #define DIFF_OPT_SET(opts, flag)    ((opts)->flags |= DIFF_OPT_##flag)
 #define DIFF_OPT_CLR(opts, flag)    ((opts)->flags &= ~DIFF_OPT_##flag)
@@ -181,8 +182,8 @@ extern void diff_unmerge(struct diff_options *,
 #define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
-extern int git_diff_basic_config(const char *var, const char *value);
-extern int git_diff_ui_config(const char *var, const char *value);
+extern int git_diff_basic_config(const char *var, const char *value, void *cb);
+extern int git_diff_ui_config(const char *var, const char *value, void *cb);
 extern int diff_use_color_default;
 extern void diff_setup(struct diff_options *);
 extern int diff_opt_parse(struct diff_options *, const char **, int);

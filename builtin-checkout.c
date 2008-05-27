@@ -236,6 +236,8 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.src_index = &the_index;
 		topts.dst_index = &the_index;
 
+		topts.msgs.not_uptodate_file = "You have local changes to '%s'; cannot switch branches.";
+
 		refresh_cache(REFRESH_QUIET);
 
 		if (unmerged_cache()) {
@@ -514,7 +516,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	memset(&opts, 0, sizeof(opts));
 	memset(&new, 0, sizeof(new));
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	opts.track = git_branch_track;
 

@@ -523,8 +523,10 @@ color.status.<slot>::
 	one of `header` (the header text of the status message),
 	`added` or `updated` (files which are added but not committed),
 	`changed` (files which are changed but not added in the index),
-	or `untracked` (files which are not tracked by git). The values of
-	these variables may be specified as in color.branch.<slot>.
+	`untracked` (files which are not tracked by git), or
+	`nobranch` (the color the 'no branch' warning is shown in, defaulting
+	to red). The values of these variables may be specified as in
+	color.branch.<slot>.
 
 commit.template::
 	Specify a file to use as the template for new commit messages.
@@ -660,11 +662,24 @@ gitcvs.logfile::
 	Path to a log file where the CVS server interface well... logs
 	various stuff. See linkgit:git-cvsserver[1].
 
+gitcvs.usecrlfattr
+	If true, the server will look up the `crlf` attribute for
+	files to determine the '-k' modes to use. If `crlf` is set,
+	the '-k' mode will be left blank, so cvs clients will
+	treat it as text. If `crlf` is explicitly unset, the file
+	will be set with '-kb' mode, which supresses any newline munging
+	the client might otherwise do. If `crlf` is not specified,
+	then 'gitcvs.allbinary' is used. See linkgit:gitattribute[5].
+
 gitcvs.allbinary::
-	If true, all files are sent to the client in mode '-kb'. This
-	causes the client to treat all files as binary files which suppresses
-	any newline munging it otherwise might do. A work-around for the
-	fact that there is no way yet to set single files to mode '-kb'.
+	This is used if 'gitcvs.usecrlfattr' does not resolve
+	the correct '-kb' mode to use. If true, all
+	unresolved files are sent to the client in
+	mode '-kb'. This causes the client to treat them
+	as binary files, which suppresses any newline munging it
+	otherwise might do. Alternatively, if it is set to "guess",
+	then the contents of the file are examined to decide if
+	it is binary, similar to 'core.autocrlf'.
 
 gitcvs.dbname::
 	Database used by git-cvsserver to cache revision information
@@ -695,8 +710,9 @@ gitcvs.dbTableNamePrefix::
 	linkgit:git-cvsserver[1] for details).  Any non-alphabetic
 	characters will be replaced with underscores.
 
-All gitcvs variables except for 'gitcvs.allbinary' can also be
-specified as 'gitcvs.<access_method>.<varname>' (where 'access_method'
+All gitcvs variables except for 'gitcvs.usecrlfattr' and
+'gitcvs.allbinary' can also be specified as
+'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
 
@@ -814,6 +830,12 @@ instaweb.modulepath::
 instaweb.port::
 	The port number to bind the gitweb httpd to. See
 	linkgit:git-instaweb[1].
+
+log.date::
+	Set default date-time mode for the log command. Setting log.date
+	value is similar to using git log's --date option. The value is one of
+	following alternatives: {relative,local,default,iso,rfc,short}.
+	See linkgit:git-log[1].
 
 log.showroot::
 	If true, the initial commit will be shown as a big creation event.

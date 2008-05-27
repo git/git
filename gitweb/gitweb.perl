@@ -866,6 +866,10 @@ sub chop_str {
 	my $add_len = shift || 10;
 	my $where = shift || 'right'; # 'left' | 'center' | 'right'
 
+	# Make sure perl knows it is utf8 encoded so we don't
+	# cut in the middle of a utf8 multibyte char.
+	$str = to_utf8($str);
+
 	# allow only $len chars, but don't cut a word if it would fit in $add_len
 	# if it doesn't fit, cut it if it's still longer than the dots we would add
 	# remove chopped character entities entirely

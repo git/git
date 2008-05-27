@@ -47,10 +47,13 @@ int remote_has_url(struct remote *remote, const char *url);
 struct refspec {
 	unsigned force : 1;
 	unsigned pattern : 1;
+	unsigned matching : 1;
 
 	char *src;
 	char *dst;
 };
+
+extern const struct refspec *tag_refspec;
 
 struct ref *alloc_ref(unsigned namelen);
 

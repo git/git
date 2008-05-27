@@ -323,7 +323,7 @@ static struct convert_driver {
 	char *clean;
 } *user_convert, **user_convert_tail;
 
-static int read_convert_config(const char *var, const char *value)
+static int read_convert_config(const char *var, const char *value, void *cb)
 {
 	const char *ep, *name;
 	int namelen;
@@ -385,7 +385,7 @@ static void setup_convert_check(struct git_attr_check *check)
 		attr_ident = git_attr("ident", 5);
 		attr_filter = git_attr("filter", 6);
 		user_convert_tail = &user_convert;
-		git_config(read_convert_config);
+		git_config(read_convert_config, NULL);
 	}
 	check[0].attr = attr_crlf;
 	check[1].attr = attr_ident;
