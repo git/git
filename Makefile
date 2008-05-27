@@ -1260,7 +1260,7 @@ remove-dashes:
 ifeq ($(firstword $(subst /, ,$(template_dir))),..)
 template_instdir = $(gitexecdir)/$(template_dir)
 else
-template_instdir = $template_dir
+template_instdir = $(template_dir)
 endif
 export template_instdir
 
