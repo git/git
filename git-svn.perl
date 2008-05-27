@@ -1923,7 +1923,7 @@ sub prop_walk {
 
 	foreach (sort keys %$dirent) {
 		next if $dirent->{$_}->{kind} != $SVN::Node::dir;
-		$self->prop_walk($p . $_, $rev, $sub);
+		$self->prop_walk($self->{path} . $p . $_, $rev, $sub);
 	}
 }
 
