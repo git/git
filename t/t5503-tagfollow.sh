@@ -50,7 +50,7 @@ test_expect_success 'fetch A (new commit : 1 connection)' '
 	) &&
 	test -s $U &&
 	cut -d" " -f1,2 $U >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 test_expect_success "create tag T on A, create C on branch cat" '
@@ -82,7 +82,7 @@ test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
 	) &&
 	test -s $U &&
 	cut -d" " -f1,2 $U >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 test_expect_success "create commits O, B, tag S on B" '
@@ -118,7 +118,7 @@ test_expect_success 'fetch B, S (commit and tag : 1 connection)' '
 	) &&
 	test -s $U &&
 	cut -d" " -f1,2 $U >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 cat - <<EOF >expect
@@ -144,7 +144,7 @@ test_expect_success 'new clone fetch master and tags' '
 	) &&
 	test -s $U &&
 	cut -d" " -f1,2 $U >actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 test_done

@@ -83,23 +83,23 @@ test_expect_success 'hooks ran' '
 test_expect_success 'pre-receive hook input' '
 	(echo $commit0 $commit1 refs/heads/master;
 	 echo $commit1 $commit0 refs/heads/tofail
-	) | git diff - victim/.git/pre-receive.stdin
+	) | test_cmp - victim/.git/pre-receive.stdin
 '
 
 test_expect_success 'update hook arguments' '
 	(echo refs/heads/master $commit0 $commit1;
 	 echo refs/heads/tofail $commit1 $commit0
-	) | git diff - victim/.git/update.args
+	) | test_cmp - victim/.git/update.args
 '
 
 test_expect_success 'post-receive hook input' '
 	echo $commit0 $commit1 refs/heads/master |
-	git diff - victim/.git/post-receive.stdin
+	test_cmp - victim/.git/post-receive.stdin
 '
 
 test_expect_success 'post-update hook arguments' '
 	echo refs/heads/master |
-	git diff - victim/.git/post-update.args
+	test_cmp - victim/.git/post-update.args
 '
 
 test_expect_success 'all hook stdin is /dev/null' '
@@ -130,7 +130,7 @@ STDERR post-update
 EOF
 test_expect_success 'send-pack stderr contains hook messages' '
 	grep ^STD send.err >actual &&
-	git diff - actual <expect
+	test_cmp - actual <expect
 '
 
 test_done

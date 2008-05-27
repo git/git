@@ -69,7 +69,7 @@ EOF
 test_expect_success 'import a trivial module' '
 
 	git cvsimport -a -z 0 -C module-git module &&
-	git diff module-cvs/o_fortuna module-git/o_fortuna
+	test_cmp module-cvs/o_fortuna module-git/o_fortuna
 
 '
 
@@ -110,7 +110,7 @@ test_expect_success 'update git module' '
 	git cvsimport -a -z 0 module &&
 	git merge origin &&
 	cd .. &&
-	git diff module-cvs/o_fortuna module-git/o_fortuna
+	test_cmp module-cvs/o_fortuna module-git/o_fortuna
 
 '
 
@@ -131,7 +131,7 @@ test_expect_success 'cvsimport.module config works' '
 		git cvsimport -a -z0 &&
 		git merge origin &&
 	cd .. &&
-	git diff module-cvs/tick module-git/tick
+	test_cmp module-cvs/tick module-git/tick
 
 '
 
@@ -142,7 +142,7 @@ test_expect_success 'import from a CVS working tree' '
 		git cvsimport -a -z0 &&
 		echo 1 >expect &&
 		git log -1 --pretty=format:%s%n >actual &&
-		git diff actual expect &&
+		test_cmp actual expect &&
 	cd ..
 
 '

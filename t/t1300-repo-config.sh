@@ -427,13 +427,13 @@ cat > expect << EOF
 weird
 EOF
 
-test_expect_success "rename succeeded" "git diff expect .git/config"
+test_expect_success "rename succeeded" "test_cmp expect .git/config"
 
 test_expect_success "rename non-existing section" '
 	! git config --rename-section branch."world domination" branch.drei
 '
 
-test_expect_success "rename succeeded" "git diff expect .git/config"
+test_expect_success "rename succeeded" "test_cmp expect .git/config"
 
 test_expect_success "rename another section" \
 	'git config --rename-section branch."1 234 blabl/a" branch.drei'
@@ -449,7 +449,7 @@ cat > expect << EOF
 weird
 EOF
 
-test_expect_success "rename succeeded" "git diff expect .git/config"
+test_expect_success "rename succeeded" "test_cmp expect .git/config"
 
 cat >> .git/config << EOF
   [branch "zwei"] a = 1 [branch "vier"]
@@ -465,7 +465,7 @@ weird
 EOF
 
 test_expect_success "section was removed properly" \
-	"git diff -u expect .git/config"
+	"test_cmp expect .git/config"
 
 rm .git/config
 

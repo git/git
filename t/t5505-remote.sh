@@ -135,7 +135,7 @@ test_expect_success 'show' '
 	 git config --add remote.origin.push \
 		+refs/tags/lastbackup &&
 	 git remote show origin > output &&
-	 git diff expect output)
+	 test_cmp expect output)
 '
 
 test_expect_success 'prune' '
@@ -179,7 +179,7 @@ test_expect_success 'update' '
 	 git remote add apis ../mirror &&
 	 git remote update &&
 	 git branch -r > output &&
-	 git diff expect output)
+	 test_cmp expect output)
 
 '
 
@@ -206,7 +206,7 @@ test_expect_success 'update with arguments' '
 	 git config remotes.titanus manduca &&
 	 git remote update phobaeticus titanus &&
 	 git branch -r > output &&
-	 git diff expect output)
+	 test_cmp expect output)
 
 '
 
@@ -229,7 +229,7 @@ test_expect_success 'update default' '
 	 git config remote.drosophila.skipDefaultUpdate true &&
 	 git remote update default &&
 	 git branch -r > output &&
-	 git diff expect output)
+	 test_cmp expect output)
 
 '
 
@@ -249,7 +249,7 @@ test_expect_success 'update default (overridden, with funny whitespace)' '
 	 git config remotes.default "$(printf "\t drosophila  \n")" &&
 	 git remote update default &&
 	 git branch -r > output &&
-	 git diff expect output)
+	 test_cmp expect output)
 
 '
 

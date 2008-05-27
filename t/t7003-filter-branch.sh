@@ -224,7 +224,7 @@ test_expect_success 'Tag name filtering retains tag message' '
 	git cat-file tag T > expect &&
 	git filter-branch -f --tag-name-filter cat &&
 	git cat-file tag T > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 faux_gpg_tag='object XXXXXX
@@ -248,7 +248,7 @@ test_expect_success 'Tag name filtering strips gpg signature' '
 	echo "$faux_gpg_tag" | sed -e s/XXXXXX/$sha1/ | head -n 6 > expect &&
 	git filter-branch -f --tag-name-filter cat &&
 	git cat-file tag S > actual &&
-	git diff expect actual
+	test_cmp expect actual
 '
 
 test_done

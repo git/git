@@ -34,13 +34,13 @@ test_expect_success 'creating initial files and commits' '
 
 check_changes () {
 	test "$(git rev-parse HEAD)" = "$1" &&
-	git diff | git diff .diff_expect - &&
-	git diff --cached | git diff .cached_expect - &&
+	git diff | test_cmp .diff_expect - &&
+	git diff --cached | test_cmp .cached_expect - &&
 	for FILE in *
 	do
 		echo $FILE':'
 		cat $FILE || return
-	done | git diff .cat_expect -
+	done | test_cmp .cat_expect -
 }
 
 >.diff_expect
@@ -390,9 +390,9 @@ test_expect_success 'test --mixed <paths>' '
 	git add file1 file3 file4 &&
 	! git reset HEAD -- file1 file2 file3 &&
 	git diff > output &&
-	git diff output expect &&
+	test_cmp output expect &&
 	git diff --cached > output &&
-	git diff output cached_expect
+	test_cmp output cached_expect
 '
 
 test_expect_success 'test resetting the index at give paths' '
@@ -425,7 +425,7 @@ EOF
 test_expect_success '--mixed refreshes the index' '
 	echo 123 >> file2 &&
 	git reset --mixed HEAD > output &&
-	git diff --exit-code expect output
+	test_cmp expect output
 '
 
 test_done
