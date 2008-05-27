@@ -388,9 +388,7 @@ method _do_new {} {
 		-command [cb _new_local_path]
 	set w_localpath $w_body.where.t
 
-	pack $w_body.where.b -side right
-	pack $w_body.where.l -side left
-	pack $w_body.where.t -fill x
+	grid $w_body.where.l $w_body.where.t $w_body.where.b -sticky ew
 	pack $w_body.where -fill x
 
 	trace add variable @local_path write [cb _write_local_path]
@@ -987,9 +985,7 @@ method _do_open {} {
 		-text [mc "Browse"] \
 		-command [cb _open_local_path]
 
-	pack $w_body.where.b -side right
-	pack $w_body.where.l -side left
-	pack $w_body.where.t -fill x
+	grid $w_body.where.l $w_body.where.t $w_body.where.b -sticky ew
 	pack $w_body.where -fill x
 
 	trace add variable @local_path write [cb _write_local_path]
