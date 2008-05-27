@@ -144,6 +144,25 @@ static int queue_diff(struct diff_options *o,
 	}
 }
 
+static int path_outside_repo(const char *path)
+{
+	/*
+	 * We have already done setup_git_directory_gently() so we
+	 * know we are inside a git work tree already.
+	 */
+	const char *work_tree;
+	size_t len;
+
+	if (!is_absolute_path(path))
+		return 0;
+	work_tree = get_git_work_tree();
+	len = strlen(work_tree);
+	if (strncmp(path, work_tree, len) ||
+	    (path[len] != '\0' && path[len] != '/'))
+		return 1;
+	return 0;
+}
+
 void diff_no_index(struct rev_info *revs,
 		   int argc, const char **argv,
 		   int nongit, const char *prefix)
@@ -162,13 +181,19 @@ void diff_no_index(struct rev_info *revs,
 			break;
 	}
 
-	/*
-	 * No explicit --no-index, but "git diff --opts A B" outside
-	 * a git repository is a cute hack to support.
-	 */
-	if (!no_index && !nongit)
-		return;
-
+	if (!no_index && !nongit) {
+		/*
+		 * Inside a git repository, without --no-index.  Only
+		 * when a path outside the repository is given,
+		 * e.g. "git diff /var/tmp/[12]", or "git diff
+		 * Makefile /var/tmp/Makefile", allow it to be used as
+		 * a colourful "diff" replacement.
+		 */
+		if ((argc != i + 2) ||
+		    (!path_outside_repo(argv[i]) &&
+		     !path_outside_repo(argv[i+1])))
+			return;
+	}
 	if (argc != i + 2)
 		die("git diff %s takes two paths",
 		    no_index ? "--no-index" : "[--no-index]");
