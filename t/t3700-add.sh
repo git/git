@@ -183,6 +183,10 @@ test_expect_success 'git add --refresh' '
 	test -z "`git diff-index HEAD -- foo`"
 '
 
+if case $(uname -s) in *MINGW*) :;; *) false;; esac then
+	say "chmod 0 does not make files unreadable - skipping tests"
+else
+
 test_expect_success 'git add should fail atomically upon an unreadable file' '
 	git reset --hard &&
 	date >foo1 &&
@@ -225,5 +229,7 @@ test_expect_success 'git add (add.ignore-errors = false)' '
 	test_must_fail git add --verbose . &&
 	! ( git ls-files foo1 | grep foo1 )
 '
+
+fi	# skip chmod 0 tests
 
 test_done
