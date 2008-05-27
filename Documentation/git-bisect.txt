@@ -78,7 +78,7 @@ Oh, and then after you want to reset to the original head, do a
 $ git bisect reset
 ------------------------------------------------
 
-to get back to the master branch, instead of being in one of the
+to get back to the original branch, instead of being in one of the
 bisection branches ("git bisect start" will do that for you too,
 actually: it will reset the bisection state, and before it does that
 it checks that you're not using some old bisection branch).
