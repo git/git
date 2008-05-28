@@ -128,7 +128,7 @@ $ git merge origin
 ------------
 
 
-See Also
+SEE ALSO
 --------
 linkgit:git-fetch[1]
 linkgit:git-branch[1]

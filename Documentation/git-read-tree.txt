@@ -345,7 +345,7 @@ middle of doing, and when your working tree is ready (i.e. you
 have finished your work-in-progress), attempt the merge again.
 
 
-See Also
+SEE ALSO
 --------
 linkgit:git-write-tree[1]; linkgit:git-ls-files[1];
 linkgit:gitignore[5]

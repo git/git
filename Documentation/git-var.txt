@@ -45,7 +45,7 @@ Your parents must have hated you!::
 Your sysadmin must hate you!::
     The password(5) name field is longer than a giant static buffer.
 
-See Also
+SEE ALSO
 --------
 linkgit:git-commit-tree[1]
 linkgit:git-tag[1]
