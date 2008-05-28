@@ -177,7 +177,7 @@ char *sha1_file_name(const unsigned char *sha1)
 }
 
 static char *sha1_get_pack_name(const unsigned char *sha1,
-				char **name, char **base)
+				char **name, char **base, const char *which)
 {
 	static const char hex[] = "0123456789abcdef";
 	char *buf;
@@ -187,7 +187,8 @@ static char *sha1_get_pack_name(const unsigned char *sha1,
 		const char *sha1_file_directory = get_object_directory();
 		int len = strlen(sha1_file_directory);
 		*base = xmalloc(len + 60);
-		sprintf(*base, "%s/pack/pack-1234567890123456789012345678901234567890.pack", sha1_file_directory);
+		sprintf(*base, "%s/pack/pack-1234567890123456789012345678901234567890.%s",
+			sha1_file_directory, which);
 		*name = *base + len + 11;
 	}
 
@@ -206,14 +207,14 @@ char *sha1_pack_name(const unsigned char *sha1)
 {
 	static char *name, *base;
 
-	return sha1_get_pack_name(sha1, &name, &base);
+	return sha1_get_pack_name(sha1, &name, &base, "pack");
 }
 
 char *sha1_pack_index_name(const unsigned char *sha1)
 {
 	static char *name, *base;
 
-	return sha1_get_pack_name(sha1, &name, &base);
+	return sha1_get_pack_name(sha1, &name, &base, "idx");
 }
 
 struct alternate_object_database *alt_odb_list;
