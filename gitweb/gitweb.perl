@@ -2756,7 +2756,7 @@ sub git_print_page_nav {
 }
 
 sub format_paging_nav {
-	my ($action, $hash, $head, $page, $nrevs) = @_;
+	my ($action, $hash, $head, $page, $has_next_link) = @_;
 	my $paging_nav;
 
 
@@ -2774,7 +2774,7 @@ sub format_paging_nav {
 		$paging_nav .= " &sdot; prev";
 	}
 
-	if ($nrevs >= (100 * ($page+1)-1)) {
+	if ($has_next_link) {
 		$paging_nav .= " &sdot; " .
 			$cgi->a({-href => href(-replay=>1, page=>$page+1),
 			         -accesskey => "n", -title => "Alt-n"}, "next");
@@ -4665,7 +4665,7 @@ sub git_log {
 
 	my @commitlist = parse_commits($hash, 101, (100 * $page));
 
-	my $paging_nav = format_paging_nav('log', $hash, $head, $page, (100 * ($page+1)));
+	my $paging_nav = format_paging_nav('log', $hash, $head, $page, $#commitlist >= 100);
 
 	git_header_html();
 	git_print_page_nav('log','', $hash,undef,undef, $paging_nav);
@@ -5585,7 +5585,7 @@ sub git_shortlog {
 
 	my @commitlist = parse_commits($hash, 101, (100 * $page));
 
-	my $paging_nav = format_paging_nav('shortlog', $hash, $head, $page, (100 * ($page+1)));
+	my $paging_nav = format_paging_nav('shortlog', $hash, $head, $page, $#commitlist >= 100);
 	my $next_link = '';
 	if ($#commitlist >= 100) {
 		$next_link =
