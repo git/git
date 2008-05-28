@@ -172,7 +172,7 @@ static int reset_to_new(struct tree *tree, int quiet)
 	return 0;
 }
 
-static void reset_clean_to_new(struct tree *tree, int quiet)
+static int reset_clean_to_new(struct tree *tree, int quiet)
 {
 	struct unpack_trees_options opts;
 	struct tree_desc tree_desc;
@@ -189,7 +189,8 @@ static void reset_clean_to_new(struct tree *tree, int quiet)
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
 	if (unpack_trees(1, &tree_desc, &opts))
-		exit(128);
+		return 128;
+	return 0;
 }
 
 struct checkout_opts {
@@ -295,7 +296,9 @@ static int merge_working_tree(struct checkout_opts *opts,
 				return ret;
 			merge_trees(new->commit->tree, work, old->commit->tree,
 				    new->name, "local", &result);
-			reset_clean_to_new(new->commit->tree, opts->quiet);
+			ret = reset_clean_to_new(new->commit->tree, opts->quiet);
+			if (ret)
+				return ret;
 		}
 	}
 
