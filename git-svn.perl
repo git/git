@@ -3191,7 +3191,7 @@ sub apply_textdelta {
 	if ($fb->{blob}) {
 		print $base 'link ' if ($fb->{mode_a} == 120000);
 		my $size = $::_repository->cat_blob($fb->{blob}, $base);
-		die "Failed to read object $fb->{blob}" unless $size;
+		die "Failed to read object $fb->{blob}" if ($size < 0);
 
 		if (defined $exp) {
 			seek $base, 0, 0 or croak $!;
@@ -3570,7 +3570,7 @@ sub chg_file {
 		$self->change_file_prop($fbat,'svn:special',undef);
 	}
 	my $size = $::_repository->cat_blob($m->{sha1_b}, $fh);
-	croak "Failed to read object $m->{sha1_b}" unless $size;
+	croak "Failed to read object $m->{sha1_b}" if ($size < 0);
 	$fh->flush == 0 or croak $!;
 	seek $fh, 0, 0 or croak $!;
 

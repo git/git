@@ -811,12 +811,12 @@ sub cat_blob {
 	my $description = <$in>;
 	if ($description =~ / missing$/) {
 		carp "$sha1 doesn't exist in the repository";
-		return 0;
+		return -1;
 	}
 
 	if ($description !~ /^[0-9a-fA-F]{40} \S+ (\d+)$/) {
 		carp "Unexpected result returned from git cat-file";
-		return 0;
+		return -1;
 	}
 
 	my $size = $1;
