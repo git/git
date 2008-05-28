@@ -155,6 +155,7 @@ struct checkout_opts {
 	int quiet;
 	int merge;
 	int force;
+	int writeout_error;
 
 	char *new_branch;
 	int new_branch_log;
@@ -178,9 +179,20 @@ static int reset_tree(struct tree *tree, struct checkout_opts *o, int worktree)
 	opts.dst_index = &the_index;
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
-	if (unpack_trees(1, &tree_desc, &opts))
+	switch (unpack_trees(1, &tree_desc, &opts)) {
+	case -2:
+		o->writeout_error = 1;
+		/*
+		 * We return 0 nevertheless, as the index is all right
+		 * and more importantly we have made best efforts to
+		 * update paths in the work tree, and we cannot revert
+		 * them.
+		 */
+	case 0:
+		return 0;
+	default:
 		return 128;
-	return 0;
+	}
 }
 
 struct branch_info {
@@ -243,7 +255,8 @@ static int merge_working_tree(struct checkout_opts *opts,
 		tree = parse_tree_indirect(new->commit->object.sha1);
 		init_tree_desc(&trees[1], tree->buffer, tree->size);
 
-		if (unpack_trees(2, trees, &topts)) {
+		ret = unpack_trees(2, trees, &topts);
+		if (ret == -1) {
 			/*
 			 * Unpack couldn't do a trivial merge; either
 			 * give up or do a real merge, depending on
@@ -478,7 +491,8 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 
 	update_refs_for_switch(opts, &old, new);
 
-	return post_checkout_hook(old.commit, new->commit, 1);
+	ret = post_checkout_hook(old.commit, new->commit, 1);
+	return ret || opts->writeout_error;
 }
 
 int cmd_checkout(int argc, const char **argv, const char *prefix)
