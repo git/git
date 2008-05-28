@@ -44,7 +44,7 @@ sq() {
 }
 
 bisect_autostart() {
-	test -f "$GIT_DIR/BISECT_NAMES" || {
+	test -s "$GIT_DIR/BISECT_START" || {
 		echo >&2 'You need to start by "git bisect start"'
 		if test -t 0
 		then
@@ -98,7 +98,7 @@ bisect_start() {
 	#
 	# Get rid of any old bisect state.
 	#
-	bisect_clean_state
+	bisect_clean_state || exit
 
 	#
 	# Check for one bad and then some good revisions.
@@ -146,8 +146,8 @@ bisect_start() {
 	#
 	# Write new start state.
 	#
-	sq "$@" >"$GIT_DIR/BISECT_NAMES" &&
 	echo "$start_head" >"$GIT_DIR/BISECT_START" &&
+	sq "$@" >"$GIT_DIR/BISECT_NAMES" &&
 	eval "$eval" &&
 	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG" || exit
 	#
@@ -226,7 +226,7 @@ bisect_next_check() {
 		;;
 	*)
 		THEN=''
-		test -f "$GIT_DIR/BISECT_NAMES" || {
+		test -s "$GIT_DIR/BISECT_START" || {
 			echo >&2 'You need to start by "git bisect start".'
 			THEN='then '
 		}
@@ -392,16 +392,12 @@ bisect_visualize() {
 }
 
 bisect_reset() {
-	test -f "$GIT_DIR/BISECT_NAMES" || {
+	test -s "$GIT_DIR/BISECT_START" || {
 		echo "We are not bisecting."
 		return
 	}
 	case "$#" in
-	0) if [ -s "$GIT_DIR/BISECT_START" ]; then
-	       branch=`cat "$GIT_DIR/BISECT_START"`
-	   else
-	       branch=master
-	   fi ;;
+	0) branch=$(cat "$GIT_DIR/BISECT_START") ;;
 	1) git show-ref --verify --quiet -- "refs/heads/$1" ||
 	       die "$1 does not seem to be a valid branch"
 	   branch="$1" ;;
@@ -416,14 +412,15 @@ bisect_clean_state() {
 	git for-each-ref --format='%(refname) %(objectname)' refs/bisect/\* |
 	while read ref hash
 	do
-		git update-ref -d $ref $hash
+		git update-ref -d $ref $hash || exit
 	done
-	rm -f "$GIT_DIR/BISECT_START"
-	rm -f "$GIT_DIR/BISECT_LOG"
-	rm -f "$GIT_DIR/BISECT_NAMES"
-	rm -f "$GIT_DIR/BISECT_RUN"
+	rm -f "$GIT_DIR/BISECT_LOG" &&
+	rm -f "$GIT_DIR/BISECT_NAMES" &&
+	rm -f "$GIT_DIR/BISECT_RUN" &&
 	# Cleanup head-name if it got left by an old version of git-bisect
-	rm -f "$GIT_DIR/head-name"
+	rm -f "$GIT_DIR/head-name" &&
+
+	rm -f "$GIT_DIR/BISECT_START"
 }
 
 bisect_replay () {
