@@ -212,4 +212,18 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 	test "`cat .git/result`" = "editor not started"
 '
 
+pwd=`pwd`
+cat > .git/FAKE_EDITOR << EOF
+#! /bin/sh
+# kill -TERM command added below.
+EOF
+
+test_expect_success 'a SIGTERM should break locks' '
+	echo >>negative &&
+	sh -c '\''
+	  echo kill -TERM $$ >> .git/FAKE_EDITOR
+	  GIT_EDITOR=.git/FAKE_EDITOR exec git commit -a'\'' && exit 1  # should fail
+	! test -f .git/index.lock
+'
+
 test_done
