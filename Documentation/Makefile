@@ -4,7 +4,7 @@ MAN1_TXT= \
 	gitk.txt
 MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt
 MAN7_TXT=git.txt gitcli.txt gittutorial.txt gittutorial-2.txt \
-	gitcvs-migration.txt
+	gitcvs-migration.txt gitcore-tutorial.txt gitglossary.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
@@ -12,13 +12,11 @@ MAN_HTML=$(patsubst %.txt,%.html,$(MAN_TXT))
 
 DOC_HTML=$(MAN_HTML)
 
-ARTICLES = core-tutorial
-ARTICLES += diffcore
+ARTICLES = diffcore
 ARTICLES += howto-index
 ARTICLES += repository-layout
 ARTICLES += everyday
 ARTICLES += git-tools
-ARTICLES += glossary
 # with their own formatting rules.
 SP_ARTICLES = howto/revert-branch-rebase howto/using-merge-subtree user-manual
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))

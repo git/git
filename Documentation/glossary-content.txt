@@ -1,6 +1,3 @@
-GIT Glossary
-============
-
 [[def_alternate_object_database]]alternate object database::
 	Via the alternates mechanism, a <<def_repository,repository>>
 	can inherit part of its <<def_object_database,object database>>

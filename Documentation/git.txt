@@ -174,7 +174,7 @@ See the references above to get started using git.  The following is
 probably more detail than necessary for a first-time user.
 
 The link:user-manual.html#git-concepts[git concepts chapter of the
-user-manual] and the link:core-tutorial.html[Core tutorial] both provide
+user-manual] and the linkgit:gitcore-tutorial[7][Core tutorial] both provide
 introductions to the underlying git architecture.
 
 See also the link:howto-index.html[howto] documents for some useful
@@ -374,7 +374,7 @@ Higher level SCMs may provide and manage additional information in the
 
 Terminology
 -----------
-Please see the link:glossary.html[glossary] document.
+Please see the linkgit:gitglossary[7][glossary] document.
 
 
 Environment Variables
@@ -518,7 +518,7 @@ Discussion[[Discussion]]
 
 More detail on the following is available from the
 link:user-manual.html#git-concepts[git concepts chapter of the
-user-manual] and the link:core-tutorial.html[Core tutorial].
+user-manual] and the linkgit:gitcore-tutorial[7][Core tutorial].
 
 A git project normally consists of a working directory with a ".git"
 subdirectory at the top level.  The .git directory contains, among other
@@ -578,6 +578,13 @@ Documentation
 The documentation for git suite was started by David Greaves
 <david@dgreaves.com>, and later enhanced greatly by the
 contributors on the git-list <git@vger.kernel.org>.
+
+SEE ALSO
+--------
+linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+linkgit:giteveryday[7], linkgit:gitcvs-migration[7],
+linkgit:gitglossary[7], linkgit:gitcore-tutorial[7],
+link:user-manual.html[The Git User's Manual]
 
 GIT
 ---

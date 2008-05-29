@@ -20,7 +20,7 @@ this document explains how to do that.
 
 Some basic familiarity with git is required.  This
 linkgit:gittutorial[7][tutorial introduction to git] and the
-link:glossary.html[git glossary] should be sufficient.
+linkgit:gitglossary[7][git glossary] should be sufficient.
 
 Developing against a shared repository
 --------------------------------------
@@ -184,7 +184,10 @@ repositories without the need for a central maintainer.
 
 SEE ALSO
 --------
-linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+linkgit:gittutorial[7],
+linkgit:gittutorial-2[7],
+linkgit:gitcore-tutorial[7],
+linkgit:gitglossary[7],
 link:everyday.html[Everyday Git],
 link:user-manual.html[The Git User's Manual]
 
