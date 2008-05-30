@@ -515,10 +515,12 @@ static void write_pack_file(void)
 		 * If so, rewrite it like in fast-import
 		 */
 		if (pack_to_stdout || nr_written == nr_remaining) {
-			sha1close(f, sha1, 1);
+			unsigned flags = pack_to_stdout ? CSUM_CLOSE : CSUM_FSYNC;
+			sha1close(f, sha1, flags);
 		} else {
 			int fd = sha1close(f, NULL, 0);
 			fixup_pack_header_footer(fd, sha1, pack_tmp_name, nr_written);
+			fsync_or_die(fd, pack_tmp_name);
 			close(fd);
 		}
 
