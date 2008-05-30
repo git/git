@@ -125,7 +125,6 @@ then
 	# We know $existing are all redundant.
 	if [ -n "$existing" ]
 	then
-		sync
 		( cd "$PACKDIR" &&
 		  for e in $existing
 		  do

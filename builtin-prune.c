@@ -156,7 +156,6 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	mark_reachable_objects(&revs, 1);
 	prune_object_dir(get_object_directory());
 
-	sync();
 	prune_packed_objects(show_only);
 	remove_temporary_files();
 	return 0;
