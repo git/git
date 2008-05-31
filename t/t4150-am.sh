@@ -223,4 +223,38 @@ test_expect_success 'am fails on empty patch' '
 	! test -d .dotest
 '
 
+test_expect_success 'am works from stdin in subdirectory' '
+	rm -fr subdir &&
+	git checkout first &&
+	(
+		mkdir -p subdir &&
+		cd subdir &&
+		git am <../patch1
+	) &&
+	test -z "$(git diff second)"
+'
+
+test_expect_success 'am works from file (relative path given) in subdirectory' '
+	rm -fr subdir &&
+	git checkout first &&
+	(
+		mkdir -p subdir &&
+		cd subdir &&
+		git am ../patch1
+	) &&
+	test -z "$(git diff second)"
+'
+
+test_expect_success 'am works from file (absolute path given) in subdirectory' '
+	rm -fr subdir &&
+	git checkout first &&
+	P=$(pwd) &&
+	(
+		mkdir -p subdir &&
+		cd subdir &&
+		git am "$P/patch1"
+	) &&
+	test -z "$(git diff second)"
+'
+
 test_done
