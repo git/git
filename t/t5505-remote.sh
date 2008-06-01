@@ -164,6 +164,24 @@ test_expect_success 'add --mirror && prune' '
 	 git rev-parse --verify refs/heads/side)
 '
 
+test_expect_success 'add alt && prune' '
+	(mkdir alttst &&
+	 cd alttst &&
+	 git init &&
+	 git remote add -f origin ../one &&
+	 git config remote.alt.url ../one &&
+	 git config remote.alt.fetch "+refs/heads/*:refs/remotes/origin/*") &&
+	(cd one &&
+	 git branch -m side side2) &&
+	(cd alttst &&
+	 git rev-parse --verify refs/remotes/origin/side &&
+	 ! git rev-parse --verify refs/remotes/origin/side2 &&
+	 git fetch alt &&
+	 git remote prune alt &&
+	 ! git rev-parse --verify refs/remotes/origin/side &&
+	 git rev-parse --verify refs/remotes/origin/side2)
+'
+
 cat > one/expect << EOF
   apis/master
   apis/side
