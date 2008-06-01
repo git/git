@@ -206,7 +206,6 @@ static void read_branches(void)
 
 struct ref_states {
 	struct remote *remote;
-	struct strbuf remote_prefix;
 	struct path_list new, stale, tracked;
 };
 
@@ -262,8 +261,6 @@ static int get_ref_states(const struct ref *ref, struct ref_states *states)
 	}
 	free_refs(fetch_map);
 
-	strbuf_addf(&states->remote_prefix,
-		"refs/remotes/%s/", states->remote->name);
 	for_each_ref(handle_one_branch, states);
 	sort_path_list(&states->stale);
 
