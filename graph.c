@@ -450,16 +450,18 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	 * it never finished its output.  Goto GRAPH_SKIP, to print out
 	 * a line to indicate that portion of the graph is missing.
 	 *
-	 * Otherwise, if there are 3 or more parents, we need to print
-	 * extra rows before the commit, to expand the branch lines around
-	 * it and make room for it.
+	 * If there are 3 or more parents, we may need to print extra rows
+	 * before the commit, to expand the branch lines around it and make
+	 * room for it.  We need to do this only if there is a branch row
+	 * (or more) to the right of this commit.
 	 *
 	 * If there are less than 3 parents, we can immediately print the
 	 * commit line.
 	 */
 	if (graph->state != GRAPH_PADDING)
 		graph->state = GRAPH_SKIP;
-	else if (graph->num_parents >= 3)
+	else if (graph->num_parents >= 3 &&
+		 graph->commit_index < (graph->num_columns - 1))
 		graph->state = GRAPH_PRE_COMMIT;
 	else
 		graph->state = GRAPH_COMMIT;
@@ -538,7 +540,8 @@ static void graph_output_skip_line(struct git_graph *graph, struct strbuf *sb)
 	strbuf_addstr(sb, "...");
 	graph_pad_horizontally(graph, sb);
 
-	if (graph->num_parents >= 3)
+	if (graph->num_parents >= 3 &&
+	    graph->commit_index < (graph->num_columns - 1))
 		graph_update_state(graph, GRAPH_PRE_COMMIT);
 	else
 		graph_update_state(graph, GRAPH_COMMIT);
