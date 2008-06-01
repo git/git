@@ -719,9 +719,8 @@ sub ident_person {
 
 =item hash_object ( TYPE, FILENAME )
 
-Compute the SHA1 object id of the given C<FILENAME> (or data waiting in
-C<FILEHANDLE>) considering it is of the C<TYPE> object type (C<blob>,
-C<commit>, C<tree>).
+Compute the SHA1 object id of the given C<FILENAME> considering it is
+of the C<TYPE> object type (C<blob>, C<commit>, C<tree>).
 
 The method can be called without any instance or on a specified Git repository,
 it makes zero difference.
