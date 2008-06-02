@@ -364,7 +364,7 @@ static int guess_repository_type(const char *git_dir)
 }
 
 static const char init_db_usage[] =
-"git-init [-q | --quiet] [--template=<template-directory>] [--shared]";
+"git-init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]]";
 
 /*
  * If you want to, you can share the DB area with any number of branches.
@@ -383,7 +383,12 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[1];
 		if (!prefixcmp(arg, "--template="))
 			template_dir = arg+11;
-		else if (!strcmp(arg, "--shared"))
+		else if (!strcmp(arg, "--bare")) {
+			static char git_dir[PATH_MAX+1];
+			is_bare_repository_cfg = 1;
+			setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir,
+						sizeof(git_dir)), 0);
+		} else if (!strcmp(arg, "--shared"))
 			shared_repository = PERM_GROUP;
 		else if (!prefixcmp(arg, "--shared="))
 			shared_repository = git_config_perm("arg", arg+9);

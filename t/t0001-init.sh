@@ -79,6 +79,17 @@ test_expect_success 'GIT_DIR bare' '
 	check_config git-dir-bare.git true unset
 '
 
+test_expect_success 'init --bare' '
+
+	(
+		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG
+		mkdir git-init-bare.git &&
+		cd git-init-bare.git &&
+		git init --bare
+	) &&
+	check_config git-init-bare.git true unset
+'
+
 test_expect_success 'GIT_DIR non-bare' '
 
 	(
