@@ -475,6 +475,9 @@ do
 
 		require_clean_work_tree
 
+		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
+		test -z "$ONTO" && ONTO=$UPSTREAM
+
 		if test ! -z "$2"
 		then
 			output git show-ref --verify --quiet "refs/heads/$2" ||
@@ -484,11 +487,7 @@ do
 		fi
 
 		HEAD=$(git rev-parse --verify HEAD) || die "No HEAD?"
-		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
-
 		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
-
-		test -z "$ONTO" && ONTO=$UPSTREAM
 
 		: > "$DOTEST"/interactive || die "Could not mark as interactive"
 		git symbolic-ref HEAD > "$DOTEST"/head-name 2> /dev/null ||
