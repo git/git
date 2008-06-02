@@ -358,8 +358,13 @@ static int unpack_failed(struct unpack_trees_options *o, const char *message)
 	return -1;
 }
 
+/*
+ * N-way merge "len" trees.  Returns 0 on success, -1 on failure to manipulate the
+ * resulting index, -2 on failure to reflect the changes to the work tree.
+ */
 int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)
 {
+	int ret;
 	static struct cache_entry *dfc;
 
 	if (len > MAX_UNPACK_TREES)
@@ -404,11 +409,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		return unpack_failed(o, "Merge requires file-level merging");
 
 	o->src_index = NULL;
-	if (check_updates(o))
-		return -1;
+	ret = check_updates(o) ? (-2) : 0;
 	if (o->dst_index)
 		*o->dst_index = o->result;
-	return 0;
+	return ret;
 }
 
 /* Here come the merge functions */
