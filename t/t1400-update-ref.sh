@@ -42,6 +42,14 @@ test_expect_success "delete $m" '
 '
 rm -f .git/$m
 
+test_expect_success "delete $m without oldvalue verification" "
+	git update-ref $m $A &&
+	test $A = \$(cat .git/$m) &&
+	git update-ref -d $m &&
+	! test -f .git/$m
+"
+rm -f .git/$m
+
 test_expect_success \
 	"fail to create $n" \
 	"touch .git/$n_dir

@@ -4,7 +4,7 @@
 #include "parse-options.h"
 
 static const char * const git_update_ref_usage[] = {
-	"git-update-ref [options] -d <refname> <oldval>",
+	"git-update-ref [options] -d <refname> [<oldval>]",
 	"git-update-ref [options]    <refname> <newval> [<oldval>]",
 	NULL
 };
@@ -28,7 +28,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		die("Refusing to perform update with empty message.");
 
 	if (delete) {
-		if (argc != 2)
+		if (argc < 1 || argc > 2)
 			usage_with_options(git_update_ref_usage, options);
 		refname = argv[0];
 		oldval = argv[1];
@@ -48,7 +48,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		die("%s: not a valid old SHA1", oldval);
 
 	if (delete)
-		return delete_ref(refname, oldsha1);
+		return delete_ref(refname, oldval ? oldsha1 : NULL);
 	else
 		return update_ref(msg, refname, sha1, oldval ? oldsha1 : NULL,
 				  no_deref ? REF_NODEREF : 0, DIE_ON_ERR);
