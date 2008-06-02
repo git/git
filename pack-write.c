@@ -139,7 +139,7 @@ char *write_idx_file(char *index_name, struct pack_idx_entry **objects,
 	}
 
 	sha1write(f, sha1, 20);
-	sha1close(f, NULL, 1);
+	sha1close(f, NULL, CSUM_FSYNC);
 	SHA1_Final(sha1, &ctx);
 	return index_name;
 }

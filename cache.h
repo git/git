@@ -761,6 +761,7 @@ extern ssize_t write_in_full(int fd, const void *buf, size_t count);
 extern void write_or_die(int fd, const void *buf, size_t count);
 extern int write_or_whine(int fd, const void *buf, size_t count, const char *msg);
 extern int write_or_whine_pipe(int fd, const void *buf, size_t count, const char *msg);
+extern void fsync_or_die(int fd, const char *);
 
 /* pager.c */
 extern void setup_pager(void);
