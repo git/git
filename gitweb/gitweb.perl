@@ -2623,7 +2623,7 @@ EOF
 	print "</div>\n";
 
 	my ($have_search) = gitweb_check_feature('search');
-	if ((defined $project) && ($have_search)) {
+	if (defined $project && $have_search) {
 		if (!defined $searchtext) {
 			$searchtext = "";
 		}
@@ -2639,16 +2639,13 @@ EOF
 		my ($use_pathinfo) = gitweb_check_feature('pathinfo');
 		if ($use_pathinfo) {
 			$action .= "/".esc_url($project);
-		} else {
-			$cgi->param("p", $project);
 		}
-		$cgi->param("a", "search");
-		$cgi->param("h", $search_hash);
 		print $cgi->startform(-method => "get", -action => $action) .
 		      "<div class=\"search\">\n" .
-		      (!$use_pathinfo && $cgi->hidden(-name => "p") . "\n") .
-		      $cgi->hidden(-name => "a") . "\n" .
-		      $cgi->hidden(-name => "h") . "\n" .
+		      (!$use_pathinfo &&
+		      $cgi->input({-name=>"p", -value=>$project, -type=>"hidden"}) . "\n") .
+		      $cgi->input({-name=>"a", -value=>"search", -type=>"hidden"}) . "\n" .
+		      $cgi->input({-name=>"h", -value=>$search_hash, -type=>"hidden"}) . "\n" .
 		      $cgi->popup_menu(-name => 'st', -default => 'commit',
 		                       -values => ['commit', 'grep', 'author', 'committer', 'pickaxe']) .
 		      $cgi->sup($cgi->a({-href => href(action=>"search_help")}, "?")) .
