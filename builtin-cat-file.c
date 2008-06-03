@@ -159,6 +159,7 @@ static int batch_one_object(const char *obj_name, int print_contents)
 
 	if (get_sha1(obj_name, sha1)) {
 		printf("%s missing\n", obj_name);
+		fflush(stdout);
 		return 0;
 	}
 
