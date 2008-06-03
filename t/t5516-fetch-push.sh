@@ -146,7 +146,7 @@ test_expect_success 'push with wildcard' '
 test_expect_success 'push with insteadOf' '
 	mk_empty &&
 	TRASH="$(pwd)/" &&
-	git config "url./$TRASH/.insteadOf" trash/ &&
+	git config "url.$TRASH.insteadOf" trash/ &&
 	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
