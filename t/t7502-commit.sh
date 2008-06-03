@@ -226,4 +226,18 @@ test_expect_success 'a SIGTERM should break locks' '
 	! test -f .git/index.lock
 '
 
+rm -f .git/MERGE_MSG .git/COMMIT_EDITMSG
+git reset -q --hard
+
+test_expect_success 'Hand committing of a redundant merge removes dups' '
+
+	git rev-parse second master >expect &&
+	test_must_fail git merge second master &&
+	git checkout master g &&
+	EDITOR=: git commit -a &&
+	git cat-file commit HEAD | sed -n -e "s/^parent //p" -e "/^$/q" >actual &&
+	test_cmp expect actual
+
+'
+
 test_done
