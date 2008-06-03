@@ -62,6 +62,8 @@ Updates since v1.5.5
   changes (i.e. cannot be used to propagate the whole changes) meant only
   for reviewing.
 
+* "git init --bare" is a synonym for "git --bare init" now.
+
 * "git gc --auto" honors a new pre-aut-gc hook to temporarily disable it.
 
 * "git log --pretty=tformat:<custom format>" gives a LF after each entry,
@@ -84,6 +86,8 @@ Updates since v1.5.5
 * "git svn" learned --add-author-from option to propagate the authorship
   by munging the commit log message.
 
+* new object creation and looking up in "git svn" has been optimized.
+
 * "gitweb" can read from a system-wide configuration file.
 
 (internal)
@@ -101,6 +105,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.6-rc0
+O=v1.5.6-rc1
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
