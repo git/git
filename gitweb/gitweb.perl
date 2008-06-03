@@ -2481,8 +2481,7 @@ sub blob_mimetype {
 	return $default_blob_plain_mimetype unless $fd;
 
 	if (-T $fd) {
-		return 'text/plain' .
-		       ($default_text_plain_charset ? '; charset='.$default_text_plain_charset : '');
+		return 'text/plain';
 	} elsif (! $filename) {
 		return 'application/octet-stream';
 	} elsif ($filename =~ m/\.png$/i) {
@@ -2494,6 +2493,17 @@ sub blob_mimetype {
 	} else {
 		return 'application/octet-stream';
 	}
+}
+
+sub blob_contenttype {
+	my ($fd, $file_name, $type) = @_;
+
+	$type ||= blob_mimetype($fd, $file_name);
+	if ($type eq 'text/plain' && defined $default_text_plain_charset) {
+		$type .= "; charset=$default_text_plain_charset";
+	}
+
+	return $type;
 }
 
 ## ======================================================================
@@ -4374,6 +4384,7 @@ sub git_heads {
 }
 
 sub git_blob_plain {
+	my $type = shift;
 	my $expires;
 
 	if (!defined $hash) {
@@ -4389,13 +4400,13 @@ sub git_blob_plain {
 		$expires = "+1d";
 	}
 
-	my $type = shift;
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
-		or die_error(undef, "Couldn't cat $file_name, $hash");
+		or die_error(undef, "Open git-cat-file blob '$hash' failed");
 
-	$type ||= blob_mimetype($fd, $file_name);
+	# content-type (can include charset)
+	$type = blob_contenttype($fd, $file_name, $type);
 
-	# save as filename, even when no $file_name is given
+	# "save as" filename, even when no $file_name is given
 	my $save_as = "$hash";
 	if (defined $file_name) {
 		$save_as = $file_name;
@@ -4404,9 +4415,9 @@ sub git_blob_plain {
 	}
 
 	print $cgi->header(
-		-type => "$type",
-		-expires=>$expires,
-		-content_disposition => 'inline; filename="' . "$save_as" . '"');
+		-type => $type,
+		-expires => $expires,
+		-content_disposition => 'inline; filename="' . $save_as . '"');
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;
