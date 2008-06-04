@@ -27,7 +27,7 @@ OPTIONS
 	Root of the Maildir to split. This directory should contain the cur, tmp
 	and new subdirectories.
 
-<directory>::
+-o<directory>::
 	Directory in which to place the individual messages.
 
 -b::
