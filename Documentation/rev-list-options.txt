@@ -34,17 +34,21 @@ format, often found in E-mail messages.
 `--date=default` shows timestamps in the original timezone
 (either committer's or author's).
 
+ifdef::git-rev-list[]
 --header::
 
 	Print the contents of the commit in raw-format; each record is
 	separated with a NUL character.
+endif::git-rev-list[]
 
 --parents::
 
 	Print the parents of the commit.
 
+ifdef::git-rev-list[]
 --timestamp::
 	Print the raw commit timestamp.
+endif::git-rev-list[]
 
 --left-right::
 
@@ -206,6 +210,7 @@ endif::git-rev-list[]
 	Pretend as if all the refs in `$GIT_DIR/refs/` are listed on the
 	command line as '<commit>'.
 
+ifdef::git-rev-list[]
 --stdin::
 
 	In addition to the '<commit>' listed on the command
@@ -218,6 +223,7 @@ endif::git-rev-list[]
 	test the exit status to see if a range of objects is fully
 	connected (or not).  It is faster than redirecting stdout
 	to /dev/null as the output does not have to be formatted.
+endif::git-rev-list[]
 
 --cherry-pick::
 
