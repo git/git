@@ -196,23 +196,24 @@ chmod +x .git/FAKE_EDITOR
 
 test_expect_success 'do not fire editor in the presence of conflicts' '
 
-	git clean
-	echo f>g
-	git add g
-	git commit -myes
-	git branch second
-	echo master>g
-	echo g>h
-	git add g h
-	git commit -mmaster
-	git checkout second
-	echo second>g
-	git add g
-	git commit -msecond
-	git cherry-pick -n master
-	echo "editor not started" > .git/result
-	GIT_EDITOR=`pwd`/.git/FAKE_EDITOR git commit && exit 1  # should fail
-	test "`cat .git/result`" = "editor not started"
+	git clean -f &&
+	echo f >g &&
+	git add g &&
+	git commit -m "add g" &&
+	git branch second &&
+	echo master >g &&
+	echo g >h &&
+	git add g h &&
+	git commit -m "modify g and add h" &&
+	git checkout second &&
+	echo second >g &&
+	git add g &&
+	git commit -m second &&
+	# Must fail due to conflict
+	test_must_fail git cherry-pick -n master &&
+	echo "editor not started" >.git/result &&
+	test_must_fail GIT_EDITOR="$(pwd)/.git/FAKE_EDITOR" git commit &&
+	test "$(cat .git/result)" = "editor not started"
 '
 
 pwd=`pwd`
