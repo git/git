@@ -217,14 +217,14 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 '
 
 pwd=`pwd`
-cat > .git/FAKE_EDITOR << EOF
-#! /bin/sh
+cat >.git/FAKE_EDITOR <<EOF
+#! $SHELL_PATH
 # kill -TERM command added below.
 EOF
 
 test_expect_success 'a SIGTERM should break locks' '
 	echo >>negative &&
-	sh -c '\''
+	"$SHELL_PATH" -c '\''
 	  echo kill -TERM $$ >> .git/FAKE_EDITOR
 	  GIT_EDITOR=.git/FAKE_EDITOR exec git commit -a'\'' && exit 1  # should fail
 	! test -f .git/index.lock
