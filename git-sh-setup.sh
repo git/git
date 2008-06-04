@@ -153,9 +153,5 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
-	# sync is missing
-	sync () {
-		:	# no implementation
-	}
 	;;
 esac
