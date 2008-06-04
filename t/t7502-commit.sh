@@ -171,13 +171,16 @@ sed '$d' < expect.tmp > expect
 rm -f expect.tmp
 echo "# Committer:
 #" >> expect
-unset GIT_COMMITTER_EMAIL
-unset GIT_COMMITTER_NAME
 
 test_expect_success 'committer is automatic' '
 
 	echo >>negative &&
-	git commit -e -m "sample"
+	(
+		unset GIT_COMMITTER_EMAIL
+		unset GIT_COMMITTER_NAME
+		# must fail because there is no change
+		test_must_fail git commit -e -m "sample"
+	) &&
 	head -n 8 .git/COMMIT_EDITMSG |	\
 	sed "s/^# Committer: .*/# Committer:/" >actual &&
 	test_cmp expect actual
