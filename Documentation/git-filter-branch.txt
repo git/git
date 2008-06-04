@@ -113,7 +113,7 @@ OPTIONS
 	stdin.  The commit id is expected on stdout.
 +
 As a special extension, the commit filter may emit multiple
-commit ids; in that case, ancestors of the original commit will
+commit ids; in that case, the rewritten children of the original commit will
 have all of them as parents.
 +
 You can use the 'map' convenience function in this filter, and other

@@ -565,7 +565,7 @@ sub config {
 		my $E = shift;
 		if ($E->value() == 1) {
 			# Key not found.
-			return undef;
+			return;
 		} else {
 			throw $E;
 		}
@@ -719,9 +719,8 @@ sub ident_person {
 
 =item hash_object ( TYPE, FILENAME )
 
-Compute the SHA1 object id of the given C<FILENAME> (or data waiting in
-C<FILEHANDLE>) considering it is of the C<TYPE> object type (C<blob>,
-C<commit>, C<tree>).
+Compute the SHA1 object id of the given C<FILENAME> considering it is
+of the C<TYPE> object type (C<blob>, C<commit>, C<tree>).
 
 The method can be called without any instance or on a specified Git repository,
 it makes zero difference.
@@ -811,12 +810,12 @@ sub cat_blob {
 	my $description = <$in>;
 	if ($description =~ / missing$/) {
 		carp "$sha1 doesn't exist in the repository";
-		return 0;
+		return -1;
 	}
 
 	if ($description !~ /^[0-9a-fA-F]{40} \S+ (\d+)$/) {
 		carp "Unexpected result returned from git cat-file";
-		return 0;
+		return -1;
 	}
 
 	my $size = $1;

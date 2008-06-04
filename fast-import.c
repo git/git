@@ -890,7 +890,7 @@ static char *create_index(void)
 		SHA1_Update(&ctx, (*c)->sha1, 20);
 	}
 	sha1write(f, pack_data->sha1, sizeof(pack_data->sha1));
-	sha1close(f, NULL, 1);
+	sha1close(f, NULL, CSUM_FSYNC);
 	free(idx);
 	SHA1_Final(pack_data->sha1, &ctx);
 	return tmpfile;

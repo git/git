@@ -52,13 +52,13 @@ diff expected current'
 
 cd "$base_dir"
 
-rm -f $U
+rm -f "$U"
 
 test_expect_success 'cloning with reference (no -l -s)' \
-'GIT_DEBUG_SEND_PACK=3 git clone --reference B "file://$(pwd)/A" D 3>$U'
+'GIT_DEBUG_SEND_PACK=3 git clone --reference B "file://$(pwd)/A" D 3>"$U"'
 
 test_expect_success 'fetched no objects' \
-'! grep "^want" $U'
+'! grep "^want" "$U"'
 
 cd "$base_dir"
 

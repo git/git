@@ -81,6 +81,27 @@ struct git_graph {
 	 */
 	enum graph_state state;
 	/*
+	 * The output state for the previous line of output.
+	 * This is primarily used to determine how the first merge line
+	 * should appear, based on the last line of the previous commit.
+	 */
+	enum graph_state prev_state;
+	/*
+	 * The index of the column that refers to this commit.
+	 *
+	 * If none of the incoming columns refer to this commit,
+	 * this will be equal to num_columns.
+	 */
+	int commit_index;
+	/*
+	 * The commit_index for the previously displayed commit.
+	 *
+	 * This is used to determine how the first line of a merge
+	 * graph output should appear, based on the last line of the
+	 * previous commit.
+	 */
+	int prev_commit_index;
+	/*
 	 * The maximum number of columns that can be stored in the columns
 	 * and new_columns arrays.  This is also half the number of entries
 	 * that can be stored in the mapping and new_mapping arrays.
@@ -137,6 +158,9 @@ struct git_graph *graph_init(struct rev_info *opt)
 	graph->num_parents = 0;
 	graph->expansion_row = 0;
 	graph->state = GRAPH_PADDING;
+	graph->prev_state = GRAPH_PADDING;
+	graph->commit_index = 0;
+	graph->prev_commit_index = 0;
 	graph->num_columns = 0;
 	graph->num_new_columns = 0;
 	graph->mapping_size = 0;
@@ -162,6 +186,12 @@ void graph_release(struct git_graph *graph)
 	free(graph->new_columns);
 	free(graph->mapping);
 	free(graph);
+}
+
+static void graph_update_state(struct git_graph *graph, enum graph_state s)
+{
+	graph->prev_state = graph->state;
+	graph->state = s;
 }
 
 static void graph_ensure_capacity(struct git_graph *graph, int num_columns)
@@ -342,6 +372,7 @@ static void graph_update_columns(struct git_graph *graph)
 		if (col_commit == graph->commit) {
 			int old_mapping_idx = mapping_idx;
 			seen_this = 1;
+			graph->commit_index = i;
 			for (parent = graph->commit->parents;
 			     parent;
 			     parent = parent->next) {
@@ -395,6 +426,13 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	}
 
 	/*
+	 * Store the old commit_index in prev_commit_index.
+	 * graph_update_columns() will update graph->commit_index for this
+	 * commit.
+	 */
+	graph->prev_commit_index = graph->commit_index;
+
+	/*
 	 * Call graph_update_columns() to update
 	 * columns, new_columns, and mapping.
 	 */
@@ -404,21 +442,26 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 
 	/*
 	 * Update graph->state.
+	 * Note that we don't call graph_update_state() here, since
+	 * we don't want to update graph->prev_state.  No line for
+	 * graph->state was ever printed.
 	 *
 	 * If the previous commit didn't get to the GRAPH_PADDING state,
 	 * it never finished its output.  Goto GRAPH_SKIP, to print out
 	 * a line to indicate that portion of the graph is missing.
 	 *
-	 * Otherwise, if there are 3 or more parents, we need to print
-	 * extra rows before the commit, to expand the branch lines around
-	 * it and make room for it.
+	 * If there are 3 or more parents, we may need to print extra rows
+	 * before the commit, to expand the branch lines around it and make
+	 * room for it.  We need to do this only if there is a branch row
+	 * (or more) to the right of this commit.
 	 *
 	 * If there are less than 3 parents, we can immediately print the
 	 * commit line.
 	 */
 	if (graph->state != GRAPH_PADDING)
 		graph->state = GRAPH_SKIP;
-	else if (graph->num_parents >= 3)
+	else if (graph->num_parents >= 3 &&
+		 graph->commit_index < (graph->num_columns - 1))
 		graph->state = GRAPH_PRE_COMMIT;
 	else
 		graph->state = GRAPH_COMMIT;
@@ -497,10 +540,11 @@ static void graph_output_skip_line(struct git_graph *graph, struct strbuf *sb)
 	strbuf_addstr(sb, "...");
 	graph_pad_horizontally(graph, sb);
 
-	if (graph->num_parents >= 3)
-		graph->state = GRAPH_PRE_COMMIT;
+	if (graph->num_parents >= 3 &&
+	    graph->commit_index < (graph->num_columns - 1))
+		graph_update_state(graph, GRAPH_PRE_COMMIT);
 	else
-		graph->state = GRAPH_COMMIT;
+		graph_update_state(graph, GRAPH_COMMIT);
 }
 
 static void graph_output_pre_commit_line(struct git_graph *graph,
@@ -535,7 +579,22 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 		if (col->commit == graph->commit) {
 			seen_this = 1;
 			strbuf_addf(sb, "| %*s", graph->expansion_row, "");
-		} else if (seen_this) {
+		} else if (seen_this && (graph->expansion_row == 0)) {
+			/*
+			 * This is the first line of the pre-commit output.
+			 * If the previous commit was a merge commit and
+			 * ended in the GRAPH_POST_MERGE state, all branch
+			 * lines after graph->prev_commit_index were
+			 * printed as "\" on the previous line.  Continue
+			 * to print them as "\" on this line.  Otherwise,
+			 * print the branch lines as "|".
+			 */
+			if (graph->prev_state == GRAPH_POST_MERGE &&
+			    graph->prev_commit_index < i)
+				strbuf_addstr(sb, "\\ ");
+			else
+				strbuf_addstr(sb, "| ");
+		} else if (seen_this && (graph->expansion_row > 0)) {
 			strbuf_addstr(sb, "\\ ");
 		} else {
 			strbuf_addstr(sb, "| ");
@@ -550,7 +609,7 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 	 */
 	graph->expansion_row++;
 	if (graph->expansion_row >= num_expansion_rows)
-		graph->state = GRAPH_COMMIT;
+		graph_update_state(graph, GRAPH_COMMIT);
 }
 
 static void graph_output_commit_char(struct git_graph *graph, struct strbuf *sb)
@@ -625,10 +684,8 @@ void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 			seen_this = 1;
 			graph_output_commit_char(graph, sb);
 
-			if (graph->num_parents < 2)
+			if (graph->num_parents < 3)
 				strbuf_addch(sb, ' ');
-			else if (graph->num_parents == 2)
-				strbuf_addstr(sb, "  ");
 			else {
 				int num_dashes =
 					((graph->num_parents - 2) * 2) - 1;
@@ -636,8 +693,27 @@ void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 					strbuf_addch(sb, '-');
 				strbuf_addstr(sb, ". ");
 			}
-		} else if (seen_this && (graph->num_parents > 1)) {
+		} else if (seen_this && (graph->num_parents > 2)) {
 			strbuf_addstr(sb, "\\ ");
+		} else if (seen_this && (graph->num_parents == 2)) {
+			/*
+			 * This is a 2-way merge commit.
+			 * There is no GRAPH_PRE_COMMIT stage for 2-way
+			 * merges, so this is the first line of output
+			 * for this commit.  Check to see what the previous
+			 * line of output was.
+			 *
+			 * If it was GRAPH_POST_MERGE, the branch line
+			 * coming into this commit may have been '\',
+			 * and not '|' or '/'.  If so, output the branch
+			 * line as '\' on this line, instead of '|'.  This
+			 * makes the output look nicer.
+			 */
+			if (graph->prev_state == GRAPH_POST_MERGE &&
+			    graph->prev_commit_index < i)
+				strbuf_addstr(sb, "\\ ");
+			else
+				strbuf_addstr(sb, "| ");
 		} else {
 			strbuf_addstr(sb, "| ");
 		}
@@ -649,11 +725,11 @@ void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 	 * Update graph->state
 	 */
 	if (graph->num_parents > 1)
-		graph->state = GRAPH_POST_MERGE;
+		graph_update_state(graph, GRAPH_POST_MERGE);
 	else if (graph_is_mapping_correct(graph))
-		graph->state = GRAPH_PADDING;
+		graph_update_state(graph, GRAPH_PADDING);
 	else
-		graph->state = GRAPH_COLLAPSING;
+		graph_update_state(graph, GRAPH_COLLAPSING);
 }
 
 void graph_output_post_merge_line(struct git_graph *graph, struct strbuf *sb)
@@ -679,9 +755,7 @@ void graph_output_post_merge_line(struct git_graph *graph, struct strbuf *sb)
 			strbuf_addch(sb, '|');
 			for (j = 0; j < graph->num_parents - 1; j++)
 				strbuf_addstr(sb, "\\ ");
-			if (graph->num_parents == 2)
-				strbuf_addch(sb, ' ');
-		} else if (seen_this && (graph->num_parents > 2)) {
+		} else if (seen_this) {
 			strbuf_addstr(sb, "\\ ");
 		} else {
 			strbuf_addstr(sb, "| ");
@@ -694,9 +768,9 @@ void graph_output_post_merge_line(struct git_graph *graph, struct strbuf *sb)
 	 * Update graph->state
 	 */
 	if (graph_is_mapping_correct(graph))
-		graph->state = GRAPH_PADDING;
+		graph_update_state(graph, GRAPH_PADDING);
 	else
-		graph->state = GRAPH_COLLAPSING;
+		graph_update_state(graph, GRAPH_COLLAPSING);
 }
 
 void graph_output_collapsing_line(struct git_graph *graph, struct strbuf *sb)
@@ -801,7 +875,7 @@ void graph_output_collapsing_line(struct git_graph *graph, struct strbuf *sb)
 	 * Otherwise, we need to collapse some branch lines together.
 	 */
 	if (graph_is_mapping_correct(graph))
-		graph->state = GRAPH_PADDING;
+		graph_update_state(graph, GRAPH_PADDING);
 }
 
 int graph_next_line(struct git_graph *graph, struct strbuf *sb)
@@ -865,6 +939,11 @@ void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
 	}
 
 	graph_pad_horizontally(graph, sb);
+
+	/*
+	 * Update graph->prev_state since we have output a padding line
+	 */
+	graph->prev_state = GRAPH_PADDING;
 }
 
 int graph_is_commit_finished(struct git_graph const *graph)

@@ -1,6 +1,8 @@
 <repository>::
 	The "remote" repository that is the source of a fetch
-	or pull operation.  See the section <<URLS,GIT URLS>> below.
+	or pull operation.  This parameter can be either a URL
+	(see the section <<URLS,GIT URLS>> below) or the name
+	of a remote (see the section <<REMOTES,REMOTES>> below).
 
 <refspec>::
 	The canonical format of a <refspec> parameter is

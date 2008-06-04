@@ -177,6 +177,7 @@ my %cmd = (
 			  'strategy|s=s' => \$_strategy,
 			  'local|l' => \$_local,
 			  'fetch-all|all' => \$_fetch_all,
+			  'dry-run|n' => \$_dry_run,
 			  %fc_opts } ],
 	'commit-diff' => [ \&cmd_commit_diff,
 	                   'Commit a diff between two trees',
@@ -557,6 +558,11 @@ sub cmd_rebase {
 		die "Unable to determine upstream SVN information from ",
 		    "working tree history\n";
 	}
+	if ($_dry_run) {
+		print "Remote Branch: " . $gs->refname . "\n";
+		print "SVN URL: " . $url . "\n";
+		return;
+	}
 	if (command(qw/diff-index HEAD --/)) {
 		print STDERR "Cannot rebase with uncommited changes:\n";
 		command_noisy('status');
@@ -745,7 +751,7 @@ sub cmd_commit_diff {
 	my $usage = "Usage: $0 commit-diff -r<revision> ".
 	            "<tree-ish> <tree-ish> [<URL>]";
 	fatal($usage) if (!defined $ta || !defined $tb);
-	my $svn_path;
+	my $svn_path = '';
 	if (!defined $url) {
 		my $gs = eval { Git::SVN->new };
 		if (!$gs) {
@@ -769,7 +775,6 @@ sub cmd_commit_diff {
 		$_message ||= get_commit_entry($tb)->{log};
 	}
 	my $ra ||= Git::SVN::Ra->new($url);
-	$svn_path ||= $ra->{svn_path};
 	my $r = $_revision;
 	if ($r eq 'HEAD') {
 		$r = $ra->get_latest_revnum;
@@ -1918,7 +1923,7 @@ sub prop_walk {
 
 	foreach (sort keys %$dirent) {
 		next if $dirent->{$_}->{kind} != $SVN::Node::dir;
-		$self->prop_walk($p . $_, $rev, $sub);
+		$self->prop_walk($self->{path} . $p . $_, $rev, $sub);
 	}
 }
 
@@ -3191,7 +3196,7 @@ sub apply_textdelta {
 	if ($fb->{blob}) {
 		print $base 'link ' if ($fb->{mode_a} == 120000);
 		my $size = $::_repository->cat_blob($fb->{blob}, $base);
-		die "Failed to read object $fb->{blob}" unless $size;
+		die "Failed to read object $fb->{blob}" if ($size < 0);
 
 		if (defined $exp) {
 			seek $base, 0, 0 or croak $!;
@@ -3570,7 +3575,7 @@ sub chg_file {
 		$self->change_file_prop($fbat,'svn:special',undef);
 	}
 	my $size = $::_repository->cat_blob($m->{sha1_b}, $fh);
-	croak "Failed to read object $m->{sha1_b}" unless $size;
+	croak "Failed to read object $m->{sha1_b}" if ($size < 0);
 	$fh->flush == 0 or croak $!;
 	seek $fh, 0, 0 or croak $!;
 

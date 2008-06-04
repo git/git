@@ -79,9 +79,9 @@ git gui browser maint::
 	selected in the browser can be viewed with the internal
 	blame viewer.
 
-See Also
+SEE ALSO
 --------
-'gitk(1)'::
+linkgit:gitk[1]::
 	The git repository browser.  Shows branches, commit history
 	and file differences.  gitk is the utility started by
 	git-gui's Repository Visualize actions.

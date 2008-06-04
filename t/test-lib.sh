@@ -419,7 +419,9 @@ rm -fr "$test" || {
 }
 
 test_create_repo "$test"
-cd "$test" || exit 1
+# Use -P to resolve symlinks in our working directory so that the cwd
+# in subprocesses like git equals our $PWD (for pathname comparisons).
+cd -P "$test" || exit 1
 
 # test for symbolic link capability
 ln -s x y 2> /dev/null && test -l y 2> /dev/null || no_symlinks=1

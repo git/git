@@ -67,7 +67,7 @@ EOF
 test_expect_success 'status (2)' '
 
 	git status > output &&
-	git diff expect output
+	test_cmp expect output
 
 '
 
@@ -97,7 +97,7 @@ EOF
 test_expect_success 'status with relative paths' '
 
 	(cd dir1 && git status) > output &&
-	git diff expect output
+	test_cmp expect output
 
 '
 
@@ -128,7 +128,7 @@ test_expect_success 'status without relative paths' '
 
 	git config status.relativePaths false
 	(cd dir1 && git status) > output &&
-	git diff expect output
+	test_cmp expect output
 
 '
 

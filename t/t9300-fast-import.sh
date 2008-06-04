@@ -74,7 +74,7 @@ EOF
 test_expect_success \
 	'A: verify commit' \
 	'git cat-file commit master | sed 1d >actual &&
-	git diff expect actual'
+	test_cmp expect actual'
 
 cat >expect <<EOF
 100644 blob file2
@@ -84,22 +84,22 @@ EOF
 test_expect_success \
 	'A: verify tree' \
 	'git cat-file -p master^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 echo "$file2_data" >expect
 test_expect_success \
 	'A: verify file2' \
-	'git cat-file blob master:file2 >actual && git diff expect actual'
+	'git cat-file blob master:file2 >actual && test_cmp expect actual'
 
 echo "$file3_data" >expect
 test_expect_success \
 	'A: verify file3' \
-	'git cat-file blob master:file3 >actual && git diff expect actual'
+	'git cat-file blob master:file3 >actual && test_cmp expect actual'
 
 printf "$file4_data" >expect
 test_expect_success \
 	'A: verify file4' \
-	'git cat-file blob master:file4 >actual && git diff expect actual'
+	'git cat-file blob master:file4 >actual && test_cmp expect actual'
 
 cat >expect <<EOF
 :2 `git rev-parse --verify master:file2`
@@ -109,7 +109,7 @@ cat >expect <<EOF
 EOF
 test_expect_success \
 	'A: verify marks output' \
-	'git diff expect marks.out'
+	'test_cmp expect marks.out'
 
 test_expect_success \
 	'A: verify marks import' \
@@ -117,7 +117,7 @@ test_expect_success \
 		--import-marks=marks.out \
 		--export-marks=marks.new \
 		</dev/null &&
-	git diff -u expect marks.new'
+	test_cmp expect marks.new'
 
 test_tick
 cat >input <<INPUT_END
@@ -259,7 +259,7 @@ EOF
 test_expect_success \
 	'C: verify commit' \
 	'git cat-file commit branch | sed 1d >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 cat >expect <<EOF
 :000000 100755 0000000000000000000000000000000000000000 f1fb5da718392694d0076d677d6d0e364c79b0bc A	file2/newf
@@ -316,13 +316,13 @@ echo "$file5_data" >expect
 test_expect_success \
 	'D: verify file5' \
 	'git cat-file blob branch:newdir/interesting >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 echo "$file6_data" >expect
 test_expect_success \
 	'D: verify file6' \
 	'git cat-file blob branch:newdir/exec.sh >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 ###
 ### series E
@@ -358,7 +358,7 @@ EOF
 test_expect_success \
 	'E: verify commit' \
 	'git cat-file commit branch | sed 1,2d >actual &&
-	git diff expect actual'
+	test_cmp expect actual'
 
 ###
 ### series F
@@ -411,7 +411,7 @@ EOF
 test_expect_success \
 	'F: verify other commit' \
 	'git cat-file commit other >actual &&
-	git diff expect actual'
+	test_cmp expect actual'
 
 ###
 ### series G
@@ -489,7 +489,7 @@ echo "$file5_data" >expect
 test_expect_success \
 	'H: verify file' \
 	'git cat-file blob H:h/e/l/lo >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 ###
 ### series I
@@ -515,7 +515,7 @@ EOF
 test_expect_success \
 	'I: verify edge list' \
 	'sed -e s/pack-.*pack/pack-.pack/ edges.list >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 ###
 ### series J
@@ -625,7 +625,7 @@ test_expect_success \
     'L: verify internal tree sorting' \
 	'git-fast-import <input &&
 	 git diff-tree --abbrev --raw L^ L >output &&
-	 git diff expect output'
+	 test_cmp expect output'
 
 ###
 ### series M
@@ -885,7 +885,7 @@ test_expect_success \
 	 test 8 = `find .git/objects/pack -type f | wc -l` &&
 	 test `git rev-parse refs/tags/O3-2nd` = `git rev-parse O3^` &&
 	 git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 cat >input <<INPUT_END
 commit refs/heads/O4
@@ -916,6 +916,6 @@ test_expect_success \
 	'O: progress outputs as requested by input' \
 	'git-fast-import <input >actual &&
 	 grep "progress " <input >expect &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 test_done

@@ -42,7 +42,7 @@ Documentation
 --------------
 Documentation by Ryan Anderson <ryan@michonline.com>
 
-See Also
+SEE ALSO
 --------
 linkgit:git-pack-objects[1]
 linkgit:git-repack[1]

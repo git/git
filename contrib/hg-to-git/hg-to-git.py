@@ -46,6 +46,7 @@ options:
                          for incrementals
     -n, --nrepack=INT:   number of changesets that will trigger
                          a repack (default=0, -1 to deactivate)
+    -v, --verbose:       be verbose
 
 required:
     hgprj:  name of the HG project to import (directory)
@@ -75,15 +76,18 @@ def getgitenv(user, date):
 
 state = ''
 opt_nrepack = 0
+verbose = False
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], 's:t:n:', ['gitstate=', 'tempdir=', 'nrepack='])
+    opts, args = getopt.getopt(sys.argv[1:], 's:t:n:v', ['gitstate=', 'tempdir=', 'nrepack=', 'verbose'])
     for o, a in opts:
         if o in ('-s', '--gitstate'):
             state = a
             state = os.path.abspath(state)
         if o in ('-n', '--nrepack'):
             opt_nrepack = int(a)
+        if o in ('-v', '--verbose'):
+            verbose = True
     if len(args) != 1:
         raise('params')
 except:
@@ -95,17 +99,20 @@ os.chdir(hgprj)
 
 if state:
     if os.path.exists(state):
-        print 'State does exist, reading'
+        if verbose:
+            print 'State does exist, reading'
         f = open(state, 'r')
         hgvers = pickle.load(f)
     else:
         print 'State does not exist, first run'
 
 tip = os.popen('hg tip --template "{rev}"').read()
-print 'tip is', tip
+if verbose:
+    print 'tip is', tip
 
 # Calculate the branches
-print 'analysing the branches...'
+if verbose:
+    print 'analysing the branches...'
 hgchildren["0"] = ()
 hgparents["0"] = (None, None)
 hgbranch["0"] = "master"
@@ -232,7 +239,8 @@ if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
 
 # write the state for incrementals
 if state:
-    print 'Writing state'
+    if verbose:
+        print 'Writing state'
     f = open(state, 'w')
     pickle.dump(hgvers, f)
 

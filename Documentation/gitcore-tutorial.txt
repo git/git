@@ -1,8 +1,16 @@
-A git core tutorial for developers
-==================================
+gitcore-tutorial(7)
+===================
 
-Introduction
-------------
+NAME
+----
+gitcore-tutorial - A git core tutorial for developers
+
+SYNOPSIS
+--------
+git *
+
+DESCRIPTION
+-----------
 
 This tutorial explains how to use the "core" git programs to set up and
 work with a git repository.
@@ -1679,3 +1687,13 @@ merge two at a time, documenting how you resolved the conflicts,
 and the reason why you preferred changes made in one side over
 the other.  Otherwise it would make the project history harder
 to follow, not easier.
+
+SEE ALSO
+--------
+linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+linkgit:giteveryday[7], linkgit:gitcvs-migration[7],
+link:user-manual.html[The Git User's Manual]
+
+GIT
+---
+Part of the linkgit:git[7] suite.

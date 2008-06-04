@@ -232,8 +232,10 @@ and returns the process output as a string, or nil if the git failed."
 
 (defun git-run-command-region (buffer start end env &rest args)
   "Run a git command with specified buffer region as input."
-  (unless (eq 0 (let ((process-environment (append (git-get-env-strings env)
-                                                   process-environment)))
+  (unless (eq 0 (if env
+                    (git-run-process-region
+                     buffer start end "env"
+                     (append (git-get-env-strings env) (list "git") args))
                   (git-run-process-region
                    buffer start end "git" args)))
     (error "Failed to run \"git %s\":\n%s" (mapconcat (lambda (x) x) args " ") (buffer-string))))
@@ -248,8 +250,9 @@ and returns the process output as a string, or nil if the git failed."
             (erase-buffer)
             (cd dir)
             (setq status
-                  (let ((process-environment (append (git-get-env-strings env)
-                                                     process-environment)))
+                  (if env
+                      (apply #'call-process "env" nil (list buffer t) nil
+                             (append (git-get-env-strings env) (list hook-name) args))
                     (apply #'call-process hook-name nil (list buffer t) nil args))))
           (display-message-or-buffer buffer)
           (eq 0 status)))))

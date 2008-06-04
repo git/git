@@ -312,7 +312,7 @@ The command looks at `core.ignorestat` configuration variable.  See
 'Using "assume unchanged" bit' section above.
 
 
-See Also
+SEE ALSO
 --------
 linkgit:git-config[1],
 linkgit:git-add[1]

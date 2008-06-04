@@ -246,7 +246,7 @@ characters that need C-quoting.  `core.quotepath` configuration can be
 used to work this limitation around to some degree, but backslash,
 double-quote and control characters will still have problems.
 
-See Also
+SEE ALSO
 --------
 linkgit:git-status[1]
 linkgit:git-rm[1]

@@ -46,7 +46,7 @@ Documentation
 --------------
 Documentation by Lukas Sandström <lukass@etek.chalmers.se>
 
-See Also
+SEE ALSO
 --------
 linkgit:git-pack-objects[1]
 linkgit:git-repack[1]

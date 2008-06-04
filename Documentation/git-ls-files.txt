@@ -177,7 +177,7 @@ top of the directory tree.  A pattern read from a file specified
 by --exclude-per-directory is relative to the directory that the
 pattern file appears in.
 
-See Also
+SEE ALSO
 --------
 linkgit:git-read-tree[1], linkgit:gitignore[5]
 

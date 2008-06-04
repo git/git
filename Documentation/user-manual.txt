@@ -4252,7 +4252,10 @@ You see, Git is actually the best tool to find out about the source of Git
 itself!
 
 [[glossary]]
-include::glossary.txt[]
+GIT Glossary
+============
+
+include::glossary-content.txt[]
 
 [[git-quick-start]]
 Appendix A: Git Quick Reference

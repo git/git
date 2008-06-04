@@ -49,13 +49,14 @@ static inline int is_merge(void)
 	return !access(git_path("MERGE_HEAD"), F_OK);
 }
 
-static int reset_index_file(const unsigned char *sha1, int is_hard_reset)
+static int reset_index_file(const unsigned char *sha1, int is_hard_reset, int quiet)
 {
 	int i = 0;
 	const char *args[6];
 
 	args[i++] = "read-tree";
-	args[i++] = "-v";
+	if (!quiet)
+		args[i++] = "-v";
 	args[i++] = "--reset";
 	if (is_hard_reset)
 		args[i++] = "-u";
@@ -182,7 +183,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT(0, "hard", &reset_type,
 				"reset HEAD, index and working tree", HARD),
 		OPT_BOOLEAN('q', NULL, &quiet,
-				"disable showing new HEAD in hard reset"),
+				"disable showing new HEAD in hard reset and progress message"),
 		OPT_END()
 	};
 
@@ -231,7 +232,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		if (is_merge() || read_cache() < 0 || unmerged_cache())
 			die("Cannot do a soft reset in the middle of a merge.");
 	}
-	else if (reset_index_file(sha1, (reset_type == HARD)))
+	else if (reset_index_file(sha1, (reset_type == HARD), quiet))
 		die("Could not reset index file to revision '%s'.", rev);
 
 	/* Any resets update HEAD to the head being switched to,

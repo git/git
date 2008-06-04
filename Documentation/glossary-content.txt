@@ -1,6 +1,3 @@
-GIT Glossary
-============
-
 [[def_alternate_object_database]]alternate object database::
 	Via the alternates mechanism, a <<def_repository,repository>>
 	can inherit part of its <<def_object_database,object database>>
@@ -90,11 +87,10 @@ to point at the new commit.
 	source code management tools.
 
 [[def_DAG]]DAG::
-	Directed acyclic graph. The <<def_commit,commit>> objects form a
+	Directed acyclic graph. The <<def_commit_object,commit objects>> form a
 	directed acyclic graph, because they have parents (directed), and the
-	graph of commit objects is acyclic (there is no
-	<<def_chain,chain>> which begins and ends with the same
-	<<def_object,object>>).
+	graph of commit objects is acyclic (there is no <<def_chain,chain>>
+	which begins and ends with the same <<def_object,object>>).
 
 [[def_dangling_object]]dangling object::
 	An <<def_unreachable_object,unreachable object>> which is not
@@ -250,9 +246,10 @@ This commit is referred to as a "merge commit", or sometimes just a
 	the <<def_hash,hash>> of the object.
 
 [[def_object_type]]object type::
-	One of the identifiers
-	"<<def_commit,commit>>","<<def_tree,tree>>","<<def_tag,tag>>" or "<<def_blob_object,blob>>"
-	describing the type of an <<def_object,object>>.
+	One of the identifiers "<<def_commit_object,commit>>",
+	"<<def_tree_object,tree>>", "<<def_tag_object,tag>>" or
+	"<<def_blob_object,blob>>" describing the type of an
+	<<def_object,object>>.
 
 [[def_octopus]]octopus::
 	To <<def_merge,merge>> more than two <<def_branch,branches>>. Also denotes an

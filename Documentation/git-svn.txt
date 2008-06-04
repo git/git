@@ -365,10 +365,14 @@ Passed directly to git-rebase when using 'dcommit' if a
 -n::
 --dry-run::
 
-This is only used with the 'dcommit' command.
+This can be used with the 'dcommit' and 'rebase' commands.
 
-Print out the series of git arguments that would show
+For 'dcommit', print out the series of git arguments that would show
 which diffs would be committed to SVN.
+
+For 'rebase', display the local branch associated with the upstream svn
+repository associated with the current branch and the URL of svn
+repository that will be fetched from.
 
 --
 

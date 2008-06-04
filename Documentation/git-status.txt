@@ -57,7 +57,7 @@ to -1 or an unlimited number), the submodule summary will be enabled and a
 summary of commits for modified submodules will be shown (see --summary-limit
 option of linkgit:git-submodule[1]).
 
-See Also
+SEE ALSO
 --------
 linkgit:gitignore[5]
 

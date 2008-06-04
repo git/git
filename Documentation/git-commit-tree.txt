@@ -88,7 +88,7 @@ Discussion
 
 include::i18n.txt[]
 
-See Also
+SEE ALSO
 --------
 linkgit:git-write-tree[1]
 

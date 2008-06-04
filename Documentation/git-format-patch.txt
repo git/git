@@ -223,7 +223,7 @@ as e-mailable patches:
 $ git format-patch -3
 ------------
 
-See Also
+SEE ALSO
 --------
 linkgit:git-am[1], linkgit:git-send-email[1]
 

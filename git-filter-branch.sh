@@ -234,7 +234,7 @@ case "$filter_subdir" in
 	;;
 *)
 	git rev-list --reverse --topo-order --default HEAD \
-		--parents --full-history "$@" -- "$filter_subdir"
+		--parents "$@" -- "$filter_subdir"
 esac > ../revs || die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 

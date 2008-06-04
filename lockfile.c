@@ -135,6 +135,9 @@ static int lock_file(struct lock_file *lk, const char *path)
 	if (0 <= lk->fd) {
 		if (!lock_file_list) {
 			signal(SIGINT, remove_lock_file_on_signal);
+			signal(SIGHUP, remove_lock_file_on_signal);
+			signal(SIGTERM, remove_lock_file_on_signal);
+			signal(SIGQUIT, remove_lock_file_on_signal);
 			atexit(remove_lock_file);
 		}
 		lk->owner = getpid();

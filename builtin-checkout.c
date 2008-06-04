@@ -84,6 +84,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	unsigned char rev[20];
 	int flag;
 	struct commit *head;
+	int errs = 0;
 
 	int newfd;
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
@@ -106,13 +107,14 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	if (report_path_error(ps_matched, pathspec, 0))
 		return 1;
 
+	/* Now we are committed to check them out */
 	memset(&state, 0, sizeof(state));
 	state.force = 1;
 	state.refresh_cache = 1;
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
 		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
-			checkout_entry(ce, &state, NULL);
+			errs |= checkout_entry(ce, &state, NULL);
 		}
 	}
 
@@ -123,7 +125,8 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	resolve_ref("HEAD", rev, 0, &flag);
 	head = lookup_commit_reference_gently(rev, 1);
 
-	return post_checkout_hook(head, head, 0);
+	errs |= post_checkout_hook(head, head, 0);
+	return errs;
 }
 
 static void show_local_changes(struct object *head)
@@ -148,56 +151,49 @@ static void describe_detached_head(char *msg, struct commit *commit)
 	strbuf_release(&sb);
 }
 
-static int reset_to_new(struct tree *tree, int quiet)
-{
-	struct unpack_trees_options opts;
-	struct tree_desc tree_desc;
-
-	memset(&opts, 0, sizeof(opts));
-	opts.head_idx = -1;
-	opts.update = 1;
-	opts.reset = 1;
-	opts.merge = 1;
-	opts.fn = oneway_merge;
-	opts.verbose_update = !quiet;
-	opts.src_index = &the_index;
-	opts.dst_index = &the_index;
-	parse_tree(tree);
-	init_tree_desc(&tree_desc, tree->buffer, tree->size);
-	if (unpack_trees(1, &tree_desc, &opts))
-		return 128;
-	return 0;
-}
-
-static void reset_clean_to_new(struct tree *tree, int quiet)
-{
-	struct unpack_trees_options opts;
-	struct tree_desc tree_desc;
-
-	memset(&opts, 0, sizeof(opts));
-	opts.head_idx = -1;
-	opts.skip_unmerged = 1;
-	opts.reset = 1;
-	opts.merge = 1;
-	opts.fn = oneway_merge;
-	opts.verbose_update = !quiet;
-	opts.src_index = &the_index;
-	opts.dst_index = &the_index;
-	parse_tree(tree);
-	init_tree_desc(&tree_desc, tree->buffer, tree->size);
-	if (unpack_trees(1, &tree_desc, &opts))
-		exit(128);
-}
-
 struct checkout_opts {
 	int quiet;
 	int merge;
 	int force;
+	int writeout_error;
 
 	char *new_branch;
 	int new_branch_log;
 	enum branch_track track;
 };
+
+static int reset_tree(struct tree *tree, struct checkout_opts *o, int worktree)
+{
+	struct unpack_trees_options opts;
+	struct tree_desc tree_desc;
+
+	memset(&opts, 0, sizeof(opts));
+	opts.head_idx = -1;
+	opts.update = worktree;
+	opts.skip_unmerged = !worktree;
+	opts.reset = 1;
+	opts.merge = 1;
+	opts.fn = oneway_merge;
+	opts.verbose_update = !o->quiet;
+	opts.src_index = &the_index;
+	opts.dst_index = &the_index;
+	parse_tree(tree);
+	init_tree_desc(&tree_desc, tree->buffer, tree->size);
+	switch (unpack_trees(1, &tree_desc, &opts)) {
+	case -2:
+		o->writeout_error = 1;
+		/*
+		 * We return 0 nevertheless, as the index is all right
+		 * and more importantly we have made best efforts to
+		 * update paths in the work tree, and we cannot revert
+		 * them.
+		 */
+	case 0:
+		return 0;
+	default:
+		return 128;
+	}
+}
 
 struct branch_info {
 	const char *name; /* The short name used */
@@ -223,7 +219,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 	read_cache();
 
 	if (opts->force) {
-		ret = reset_to_new(new->commit->tree, opts->quiet);
+		ret = reset_tree(new->commit->tree, opts, 1);
 		if (ret)
 			return ret;
 	} else {
@@ -259,7 +255,8 @@ static int merge_working_tree(struct checkout_opts *opts,
 		tree = parse_tree_indirect(new->commit->object.sha1);
 		init_tree_desc(&trees[1], tree->buffer, tree->size);
 
-		if (unpack_trees(2, trees, &topts)) {
+		ret = unpack_trees(2, trees, &topts);
+		if (ret == -1) {
 			/*
 			 * Unpack couldn't do a trivial merge; either
 			 * give up or do a real merge, depending on
@@ -287,12 +284,14 @@ static int merge_working_tree(struct checkout_opts *opts,
 			add_files_to_cache(NULL, NULL, 0);
 			work = write_tree_from_memory();
 
-			ret = reset_to_new(new->commit->tree, opts->quiet);
+			ret = reset_tree(new->commit->tree, opts, 1);
 			if (ret)
 				return ret;
 			merge_trees(new->commit->tree, work, old->commit->tree,
 				    new->name, "local", &result);
-			reset_clean_to_new(new->commit->tree, opts->quiet);
+			ret = reset_tree(new->commit->tree, opts, 0);
+			if (ret)
+				return ret;
 		}
 	}
 
@@ -492,7 +491,8 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 
 	update_refs_for_switch(opts, &old, new);
 
-	return post_checkout_hook(old.commit, new->commit, 1);
+	ret = post_checkout_hook(old.commit, new->commit, 1);
+	return ret || opts->writeout_error;
 }
 
 int cmd_checkout(int argc, const char **argv, const char *prefix)

@@ -122,6 +122,14 @@ set _reponame {}
 set _iscygwin {}
 set _search_path {}
 
+set _trace [lsearch -exact $argv --trace]
+if {$_trace >= 0} {
+	set argv [lreplace $argv $_trace $_trace]
+	set _trace 1
+} else {
+	set _trace 0
+}
+
 proc appname {} {
 	global _appname
 	return $_appname
@@ -245,6 +253,21 @@ proc get_config {name} {
 ##
 ## handy utils
 
+proc _trace_exec {cmd} {
+	if {!$::_trace} return
+	set d {}
+	foreach v $cmd {
+		if {$d ne {}} {
+			append d { }
+		}
+		if {[regexp {[ \t\r\n'"$?*]} $v]} {
+			set v [sq $v]
+		}
+		append d $v
+	}
+	puts stderr $d
+}
+
 proc _git_cmd {name} {
 	global _git_cmd_path
 
@@ -339,7 +362,7 @@ proc _lappend_nice {cmd_var} {
 }
 
 proc git {args} {
-	set opt [list exec]
+	set opt [list]
 
 	while {1} {
 		switch -- [lindex $args 0] {
@@ -359,12 +382,18 @@ proc git {args} {
 	set cmdp [_git_cmd [lindex $args 0]]
 	set args [lrange $args 1 end]
 
-	return [eval $opt $cmdp $args]
+	_trace_exec [concat $opt $cmdp $args]
+	set result [eval exec $opt $cmdp $args]
+	if {$::_trace} {
+		puts stderr "< $result"
+	}
+	return $result
 }
 
 proc _open_stdout_stderr {cmd} {
+	_trace_exec $cmd
 	if {[catch {
-			set fd [open $cmd r]
+			set fd [open [concat [list | ] $cmd] r]
 		} err]} {
 		if {   [lindex $cmd end] eq {2>@1}
 		    && $err eq {can not find channel named "1"}
@@ -375,6 +404,7 @@ proc _open_stdout_stderr {cmd} {
 			# to try to start it a second time.
 			#
 			set fd [open [concat \
+				[list | ] \
 				[lrange $cmd 0 end-1] \
 				[list |& cat] \
 				] r]
@@ -387,7 +417,7 @@ proc _open_stdout_stderr {cmd} {
 }
 
 proc git_read {args} {
-	set opt [list |]
+	set opt [list]
 
 	while {1} {
 		switch -- [lindex $args 0] {
@@ -415,7 +445,7 @@ proc git_read {args} {
 }
 
 proc git_write {args} {
-	set opt [list |]
+	set opt [list]
 
 	while {1} {
 		switch -- [lindex $args 0] {
@@ -435,7 +465,8 @@ proc git_write {args} {
 	set cmdp [_git_cmd [lindex $args 0]]
 	set args [lrange $args 1 end]
 
-	return [open [concat $opt $cmdp $args] w]
+	_trace_exec [concat $opt $cmdp $args]
+	return [open [concat [list | ] $opt $cmdp $args] w]
 }
 
 proc githook_read {hook_name args} {
@@ -455,12 +486,12 @@ proc githook_read {hook_name args} {
 		}
 
 		set scr {if test -x "$1";then exec "$@";fi}
-		set sh_c [list | $interp -c $scr $interp $pchook]
+		set sh_c [list $interp -c $scr $interp $pchook]
 		return [_open_stdout_stderr [concat $sh_c $args]]
 	}
 
 	if {[file executable $pchook]} {
-		return [_open_stdout_stderr [concat [list | $pchook] $args]]
+		return [_open_stdout_stderr [concat [list $pchook] $args]]
 	}
 
 	return {}
@@ -1096,27 +1127,18 @@ proc rescan {after {honor_trustmtime 1}} {
 }
 
 if {[is_Cygwin]} {
-	set is_git_info_link {}
 	set is_git_info_exclude {}
 	proc have_info_exclude {} {
-		global is_git_info_link is_git_info_exclude
+		global is_git_info_exclude
 
-		if {$is_git_info_link eq {}} {
-			set is_git_info_link [file isfile [gitdir info.lnk]]
-		}
-
-		if {$is_git_info_link} {
-			if {$is_git_info_exclude eq {}} {
-				if {[catch {exec test -f [gitdir info exclude]}]} {
-					set is_git_info_exclude 0
-				} else {
-					set is_git_info_exclude 1
-				}
+		if {$is_git_info_exclude eq {}} {
+			if {[catch {exec test -f [gitdir info exclude]}]} {
+				set is_git_info_exclude 0
+			} else {
+				set is_git_info_exclude 1
 			}
-			return $is_git_info_exclude
-		} else {
-			return [file readable [gitdir info exclude]]
 		}
+		return $is_git_info_exclude
 	}
 } else {
 	proc have_info_exclude {} {
