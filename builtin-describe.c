@@ -80,12 +80,13 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	 * Otherwise only annotated tags are used.
 	 */
 	if (might_be_tag) {
-		if (is_tag) {
+		if (is_tag)
 			prio = 2;
-			if (pattern && fnmatch(pattern, path + 10, 0))
-				prio = 0;
-		} else
+		else
 			prio = 1;
+
+		if (pattern && fnmatch(pattern, path + 10, 0))
+			prio = 0;
 	}
 	else
 		prio = 0;
