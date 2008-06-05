@@ -89,6 +89,12 @@ test_expect_success 'status -uno' '
 	test_cmp expect output
 '
 
+test_expect_success 'status (status.showUntrackedFiles no)' '
+	git config status.showuntrackedfiles no
+	git status >output &&
+	test_cmp expect output
+'
+
 cat >expect <<EOF
 # On branch master
 # Changes to be committed:
@@ -114,6 +120,12 @@ cat >expect <<EOF
 EOF
 test_expect_success 'status -unormal' '
 	git status -unormal >output &&
+	test_cmp expect output
+'
+
+test_expect_success 'status (status.showUntrackedFiles normal)' '
+	git config status.showuntrackedfiles normal
+	git status >output &&
 	test_cmp expect output
 '
 
@@ -143,7 +155,13 @@ cat >expect <<EOF
 EOF
 test_expect_success 'status -uall' '
 	git status -uall >output &&
+	test_cmp expect output
+'
+test_expect_success 'status (status.showUntrackedFiles all)' '
+	git config status.showuntrackedfiles all
+	git status >output &&
 	rm -rf dir3 &&
+	git config --unset status.showuntrackedfiles &&
 	test_cmp expect output
 '
 

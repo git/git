@@ -161,6 +161,10 @@ the handling of untracked files. The possible options are:
 	- 'normal' - Shows untracked files and directories
 	- 'all'    - Also shows individual files in untracked directories.
 --
++
+See linkgit:git-config[1] for configuration variable
+used to change the default for when the option is not
+specified.
 
 -v|--verbose::
 	Show unified diff between the HEAD commit and what
