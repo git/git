@@ -27,6 +27,7 @@ static const char use_add_rm_msg[] =
 "use \"git add/rm <file>...\" to update what will be committed";
 static const char use_add_to_include_msg[] =
 "use \"git add <file>...\" to include in what will be committed";
+enum untracked_status_type show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 
 static int parse_status_slot(const char *var, int offset)
 {
