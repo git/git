@@ -73,6 +73,7 @@ static unsigned blame_copy_score;
  */
 struct origin {
 	int refcnt;
+	struct origin *previous;
 	struct commit *commit;
 	mmfile_t file;
 	unsigned char blob_sha1[20];
@@ -114,6 +115,8 @@ static inline struct origin *origin_incref(struct origin *o)
 static void origin_decref(struct origin *o)
 {
 	if (o && --o->refcnt <= 0) {
+		if (o->previous)
+			origin_decref(o->previous);
 		free(o->file.ptr);
 		free(o);
 	}
@@ -1292,6 +1295,10 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 		struct origin *porigin = sg_origin[i];
 		if (!porigin)
 			continue;
+		if (!origin->previous) {
+			origin_incref(porigin);
+			origin->previous = porigin;
+		}
 		if (pass_blame_to_parent(sb, origin, porigin))
 			goto finish;
 	}
@@ -1515,6 +1522,11 @@ static int emit_one_suspect_detail(struct origin *suspect)
 	printf("summary %s\n", ci.summary);
 	if (suspect->commit->object.flags & UNINTERESTING)
 		printf("boundary\n");
+	if (suspect->previous) {
+		struct origin *prev = suspect->previous;
+		printf("previous %s ", sha1_to_hex(prev->commit->object.sha1));
+		write_name_quoted(prev->path, stdout, '\n');
+	}
 	return 1;
 }
 
@@ -1876,36 +1888,6 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 				sha1_to_hex(ent->suspect->commit->object.sha1),
 				ent->suspect->refcnt);
 			baa = 1;
-		}
-	}
-	for (ent = sb->ent; ent; ent = ent->next) {
-		/* Mark the ones that haven't been checked */
-		if (0 < ent->suspect->refcnt)
-			ent->suspect->refcnt = -ent->suspect->refcnt;
-	}
-	for (ent = sb->ent; ent; ent = ent->next) {
-		/*
-		 * ... then pick each and see if they have the the
-		 * correct refcnt.
-		 */
-		int found;
-		struct blame_entry *e;
-		struct origin *suspect = ent->suspect;
-
-		if (0 < suspect->refcnt)
-			continue;
-		suspect->refcnt = -suspect->refcnt; /* Unmark */
-		for (found = 0, e = sb->ent; e; e = e->next) {
-			if (e->suspect != suspect)
-				continue;
-			found++;
-		}
-		if (suspect->refcnt != found) {
-			fprintf(stderr, "%s in %s has refcnt %d, not %d\n",
-				ent->suspect->path,
-				sha1_to_hex(ent->suspect->commit->object.sha1),
-				ent->suspect->refcnt, found);
-			baa = 2;
 		}
 	}
 	if (baa) {
