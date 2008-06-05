@@ -680,20 +680,6 @@ static void graph_output_commit_char(struct git_graph *graph, struct strbuf *sb)
 	}
 
 	/*
-	 * Print 'M' for merge commits
-	 *
-	 * Note that we don't check graph->num_parents to determine if the
-	 * commit is a merge, since that only tracks the number of
-	 * "interesting" parents.  We want to print 'M' for merge commits
-	 * even if they have less than 2 interesting parents.
-	 */
-	if (graph->commit->parents != NULL &&
-	    graph->commit->parents->next != NULL) {
-		strbuf_addch(sb, 'M');
-		return;
-	}
-
-	/*
 	 * Print '*' in all other cases
 	 */
 	strbuf_addch(sb, '*');
