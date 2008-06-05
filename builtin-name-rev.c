@@ -280,9 +280,13 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		int i, max;
 
 		max = get_max_object_index();
-		for (i = 0; i < max; i++)
-			show_name(get_indexed_object(i), NULL,
+		for (i = 0; i < max; i++) {
+			struct object *obj = get_indexed_object(i);
+			if (!obj)
+				continue;
+			show_name(obj, NULL,
 				  always, allow_undefined, data.name_only);
+		}
 	} else {
 		int i;
 		for (i = 0; i < revs.nr; i++)
