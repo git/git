@@ -157,6 +157,7 @@ The mode parameter is optional, and is used to specify
 the handling of untracked files. The possible options are:
 +
 --
+	- 'no'     - Show no untracked files
 	- 'normal' - Shows untracked files and directories
 	- 'all'    - Also shows individual files in untracked directories.
 --

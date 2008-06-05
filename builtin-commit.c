@@ -103,7 +103,7 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN('o', "only", &only, "commit only specified files"),
 	OPT_BOOLEAN('n', "no-verify", &no_verify, "bypass pre-commit hook"),
 	OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
-	{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, "mode", "show untracked files, optional modes: all, normal. (Default: all)", PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
+	{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, "mode", "show untracked files, optional modes: all, normal, no. (Default: all)", PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 	OPT_BOOLEAN(0, "allow-empty", &allow_empty, "ok to record an empty change"),
 	OPT_STRING(0, "cleanup", &cleanup_arg, "default", "how to strip spaces and #comments from message"),
 
@@ -798,6 +798,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	if (!untracked_files_arg)
 		; /* default already initialized */
+	else if (!strcmp(untracked_files_arg, "no"))
+		show_untracked_files = SHOW_NO_UNTRACKED_FILES;
 	else if (!strcmp(untracked_files_arg, "normal"))
 		show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 	else if (!strcmp(untracked_files_arg, "all"))

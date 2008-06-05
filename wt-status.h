@@ -12,7 +12,8 @@ enum color_wt_status {
 };
 
 enum untracked_status_type {
-	SHOW_NORMAL_UNTRACKED_FILES = 1,
+	SHOW_NO_UNTRACKED_FILES,
+	SHOW_NORMAL_UNTRACKED_FILES,
 	SHOW_ALL_UNTRACKED_FILES
 };
 extern enum untracked_status_type show_untracked_files;
