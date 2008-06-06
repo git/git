@@ -76,7 +76,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 		path = mkpath("%s%s", repo, suffix[i]);
 		if (!stat(path, &st) && S_ISDIR(st.st_mode)) {
 			*is_bundle = 0;
-			return xstrdup(make_absolute_path(path));
+			return xstrdup(make_nonrelative_path(path));
 		}
 	}
 
@@ -85,7 +85,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 		path = mkpath("%s%s", repo, bundle_suffix[i]);
 		if (!stat(path, &st) && S_ISREG(st.st_mode)) {
 			*is_bundle = 1;
-			return xstrdup(make_absolute_path(path));
+			return xstrdup(make_nonrelative_path(path));
 		}
 	}
 
