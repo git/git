@@ -52,4 +52,4 @@ refname expressions (see linkgit:git-rev-parse[1]).  Namely:
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -1,4 +1,4 @@
-git(7)
+git(1)
 ======
 
 NAME
@@ -589,4 +589,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

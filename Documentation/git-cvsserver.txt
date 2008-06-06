@@ -352,4 +352,4 @@ Documentation by Martyn Smith <martyn@catalyst.net.nz>, Martin Langhoff <martin@
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

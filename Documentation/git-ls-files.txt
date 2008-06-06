@@ -192,4 +192,4 @@ Documentation by David Greaves, Junio C Hamano, Josh Triplett, and the git-list 
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

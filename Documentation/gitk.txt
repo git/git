@@ -109,4 +109,4 @@ Documentation by Junio C Hamano, Jonas Fonseca, and the git-list
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -169,4 +169,4 @@ Man page by Jonas Fonseca <fonseca@diku.dk>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite
