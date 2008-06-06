@@ -30,8 +30,8 @@ OUTPUT
 ------
 
 Currently the command updates the following files.  Please see
-link:repository-layout.html[repository-layout] for description
-of what they are for:
+linkgit:gitrepository-layout[5][repository-layout] for description of
+what they are for:
 
 * objects/info/packs
 

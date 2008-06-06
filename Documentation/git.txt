@@ -364,7 +364,8 @@ For a more complete list of ways to spell object names, see
 File/Directory Structure
 ------------------------
 
-Please see the link:repository-layout.html[repository layout] document.
+Please see the linkgit:gitrepository-layout[5][repository layout]
+document.
 
 Read linkgit:githooks[5][hooks] for more details about each hook.
 

@@ -2,9 +2,11 @@ MAN1_TXT= \
 	$(filter-out $(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
 		$(wildcard git-*.txt)) \
 	gitk.txt
-MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt
+MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt \
+	gitrepository-layout.txt
 MAN7_TXT=git.txt gitcli.txt gittutorial.txt gittutorial-2.txt \
-	gitcvs-migration.txt gitcore-tutorial.txt gitglossary.txt
+	gitcvs-migration.txt gitcore-tutorial.txt gitglossary.txt \
+	gitdiffcore.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
@@ -12,9 +14,7 @@ MAN_HTML=$(patsubst %.txt,%.html,$(MAN_TXT))
 
 DOC_HTML=$(MAN_HTML)
 
-ARTICLES = diffcore
-ARTICLES += howto-index
-ARTICLES += repository-layout
+ARTICLES = howto-index
 ARTICLES += everyday
 ARTICLES += git-tools
 # with their own formatting rules.
