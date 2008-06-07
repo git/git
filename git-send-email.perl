@@ -209,6 +209,7 @@ my %config_settings = (
     "bcc" => \@bcclist,
     "aliasesfile" => \@alias_files,
     "suppresscc" => \@suppress_cc,
+    "envelopesender" => \$envelope_sender,
 );
 
 # Handle Uncouth Termination
