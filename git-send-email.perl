@@ -442,7 +442,7 @@ if (!@to) {
 	}
 
 	my $to = $_;
-	push @to, split /,/, $to;
+	push @to, split /,\s*/, $to;
 	$prompting++;
 }
 
