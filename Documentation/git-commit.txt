@@ -8,9 +8,9 @@ git-commit - Record changes to the repository
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a | --interactive] [-s] [-v] [-u]
-	   [(-c | -C) <commit> | -F <file> | -m <msg> | --amend]
-	   [--allow-empty] [--no-verify] [-e] [--author <author>]
+'git-commit' [-a | --interactive] [-s] [-v] [-u] [--amend]
+	   [(-c | -C) <commit>] [-F <file> | -m <msg>]
+	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
 	   [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
@@ -68,7 +68,7 @@ OPTIONS
 	Take the commit message from the given file.  Use '-' to
 	read the message from the standard input.
 
---author <author>::
+--author=<author>::
 	Override the author name used in the commit.  Use
 	`A U Thor <author@example.com>` format.
 
