@@ -18,6 +18,12 @@ Updates since v1.5.5
 * "git init" now autodetects the case sensitivity of the filesystem and
   sets core.ignorecase accordingly.
 
+(documentation)
+
+* Many freestanding documentation pages have been converted and made
+  available to "git help" (aka "man git-<command>") as section 7 of the
+  manual pages.
+
 (performance)
 
 * "git clone" was rewritten in C.  This will hopefully help cloning a
