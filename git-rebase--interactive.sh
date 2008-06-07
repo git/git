@@ -530,9 +530,9 @@ do
 # Rebase $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
 #
 # Commands:
-#  pick = use commit
-#  edit = use commit, but stop for amending
-#  squash = use commit, but meld into previous commit
+#  p, pick = use commit
+#  e, edit = use commit, but stop for amending
+#  s, squash = use commit, but meld into previous commit
 #
 # If you remove a line here THAT COMMIT WILL BE LOST.
 # However, if you remove everything, the rebase will be aborted.
