@@ -70,6 +70,9 @@ OPTIONS
 	Only consider tags matching the given pattern (can be used to avoid
 	leaking private tags made from the repository).
 
+--always::
+	Show uniquely abbreviated commit object as fallback.
+
 EXAMPLES
 --------
 
