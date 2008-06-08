@@ -70,7 +70,7 @@ G
 >>>>>>> G:a1
 EOF
 
-test_expect_success "result contains a conflict" "git diff expect a1"
+test_expect_success "result contains a conflict" "test_cmp expect a1"
 
 git ls-files --stage > out
 cat > expect << EOF
@@ -79,7 +79,7 @@ cat > expect << EOF
 100644 fd7923529855d0b274795ae3349c5e0438333979 3	a1
 EOF
 
-test_expect_success "virtual trees were processed" "git diff expect out"
+test_expect_success "virtual trees were processed" "test_cmp expect out"
 
 test_expect_success 'refuse to merge binary files' '
 	git reset --hard &&

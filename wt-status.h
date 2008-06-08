@@ -8,6 +8,7 @@ enum color_wt_status {
 	WT_STATUS_UPDATED,
 	WT_STATUS_CHANGED,
 	WT_STATUS_UNTRACKED,
+	WT_STATUS_NOBRANCH,
 };
 
 struct wt_status {
@@ -27,7 +28,7 @@ struct wt_status {
 	const char *prefix;
 };
 
-int git_status_config(const char *var, const char *value);
+int git_status_config(const char *var, const char *value, void *cb);
 extern int wt_status_use_color;
 extern int wt_status_relative_paths;
 void wt_status_prepare(struct wt_status *s);

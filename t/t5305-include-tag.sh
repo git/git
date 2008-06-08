@@ -50,7 +50,7 @@ test_expect_success 'check unpacked result (have commit, no tag)' '
 		test_must_fail git cat-file -e $tag &&
 		git rev-list --objects $commit
 	) >list.actual &&
-	git diff list.expect list.actual
+	test_cmp list.expect list.actual
 '
 
 rm -rf clone.git
@@ -78,7 +78,7 @@ test_expect_success 'check unpacked result (have commit, have tag)' '
 		export GIT_DIR &&
 		git rev-list --objects $tag
 	) >list.actual &&
-	git diff list.expect list.actual
+	test_cmp list.expect list.actual
 '
 
 test_done

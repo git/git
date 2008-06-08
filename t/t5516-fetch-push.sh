@@ -165,6 +165,47 @@ test_expect_success 'push with matching heads' '
 
 '
 
+test_expect_success 'push with matching heads on the command line' '
+
+	mk_test heads/master &&
+	git push testrepo : &&
+	check_push_result $the_commit heads/master
+
+'
+
+test_expect_success 'failed (non-fast-forward) push with matching heads' '
+
+	mk_test heads/master &&
+	git push testrepo : &&
+	git commit --amend -massaged &&
+	! git push testrepo &&
+	check_push_result $the_commit heads/master &&
+	git reset --hard $the_commit
+
+'
+
+test_expect_success 'push --force with matching heads' '
+
+	mk_test heads/master &&
+	git push testrepo : &&
+	git commit --amend -massaged &&
+	git push --force testrepo &&
+	! check_push_result $the_commit heads/master &&
+	git reset --hard $the_commit
+
+'
+
+test_expect_success 'push with matching heads and forced update' '
+
+	mk_test heads/master &&
+	git push testrepo : &&
+	git commit --amend -massaged &&
+	git push testrepo +: &&
+	! check_push_result $the_commit heads/master &&
+	git reset --hard $the_commit
+
+'
+
 test_expect_success 'push with no ambiguity (1)' '
 
 	mk_test heads/master &&

@@ -85,7 +85,6 @@ int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 		/* Handle arguments here .. */
 		usage(prune_packed_usage);
 	}
-	sync();
 	prune_packed_objects(opts);
 	return 0;
 }

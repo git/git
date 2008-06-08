@@ -434,6 +434,7 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 
 static int decode_q_segment(char *in, char *ot, unsigned otsize, char *ep, int rfc2047)
 {
+	char *otbegin = ot;
 	char *otend = ot + otsize;
 	int c;
 	while ((c = *in++) != 0 && (in <= ep)) {
@@ -453,13 +454,14 @@ static int decode_q_segment(char *in, char *ot, unsigned otsize, char *ep, int r
 		*ot++ = c;
 	}
 	*ot = 0;
-	return 0;
+	return (ot - otbegin);
 }
 
 static int decode_b_segment(char *in, char *ot, unsigned otsize, char *ep)
 {
 	/* Decode in..ep, possibly in-place to ot */
 	int c, pos = 0, acc = 0;
+	char *otbegin = ot;
 	char *otend = ot + otsize;
 
 	while ((c = *in++) != 0 && (in <= ep)) {
@@ -505,7 +507,7 @@ static int decode_b_segment(char *in, char *ot, unsigned otsize, char *ep)
 		}
 	}
 	*ot = 0;
-	return 0;
+	return (ot - otbegin);
 }
 
 /*
@@ -623,25 +625,24 @@ static void decode_header(char *it, unsigned itsize)
 		convert_to_utf8(it, itsize, "");
 }
 
-static void decode_transfer_encoding(char *line, unsigned linesize)
+static int decode_transfer_encoding(char *line, unsigned linesize, int inputlen)
 {
 	char *ep;
 
 	switch (transfer_encoding) {
 	case TE_QP:
-		ep = line + strlen(line);
-		decode_q_segment(line, line, linesize, ep, 0);
-		break;
+		ep = line + inputlen;
+		return decode_q_segment(line, line, linesize, ep, 0);
 	case TE_BASE64:
-		ep = line + strlen(line);
-		decode_b_segment(line, line, linesize, ep);
-		break;
+		ep = line + inputlen;
+		return decode_b_segment(line, line, linesize, ep);
 	case TE_DONTCARE:
-		break;
+	default:
+		return inputlen;
 	}
 }
 
-static int handle_filter(char *line, unsigned linesize);
+static int handle_filter(char *line, unsigned linesize, int linelen);
 
 static int find_boundary(void)
 {
@@ -669,7 +670,7 @@ again:
 					"can't recover\n");
 			exit(1);
 		}
-		handle_filter(newline, sizeof(newline));
+		handle_filter(newline, sizeof(newline), strlen(newline));
 
 		/* skip to the next boundary */
 		if (!find_boundary())
@@ -759,14 +760,14 @@ static int handle_commit_msg(char *line, unsigned linesize)
 	return 0;
 }
 
-static int handle_patch(char *line)
+static int handle_patch(char *line, int len)
 {
-	fputs(line, patchfile);
+	fwrite(line, 1, len, patchfile);
 	patch_lines++;
 	return 0;
 }
 
-static int handle_filter(char *line, unsigned linesize)
+static int handle_filter(char *line, unsigned linesize, int linelen)
 {
 	static int filter = 0;
 
@@ -779,7 +780,7 @@ static int handle_filter(char *line, unsigned linesize)
 			break;
 		filter++;
 	case 1:
-		if (!handle_patch(line))
+		if (!handle_patch(line, linelen))
 			break;
 		filter++;
 	default:
@@ -794,6 +795,7 @@ static void handle_body(void)
 	int rc = 0;
 	static char newline[2000];
 	static char *np = newline;
+	int len = strlen(line);
 
 	/* Skip up to the first boundary */
 	if (content_top->boundary) {
@@ -805,16 +807,19 @@ static void handle_body(void)
 		/* process any boundary lines */
 		if (content_top->boundary && is_multipart_boundary(line)) {
 			/* flush any leftover */
-			if ((transfer_encoding == TE_BASE64)  &&
-			    (np != newline)) {
-				handle_filter(newline, sizeof(newline));
-			}
+			if (np != newline)
+				handle_filter(newline, sizeof(newline),
+					      np - newline);
 			if (!handle_boundary())
 				return;
 		}
 
 		/* Unwrap transfer encoding */
-		decode_transfer_encoding(line, sizeof(line));
+		len = decode_transfer_encoding(line, sizeof(line), len);
+		if (len < 0) {
+			error("Malformed input line");
+			return;
+		}
 
 		switch (transfer_encoding) {
 		case TE_BASE64:
@@ -824,39 +829,40 @@ static void handle_body(void)
 
 			/* binary data most likely doesn't have newlines */
 			if (message_type != TYPE_TEXT) {
-				rc = handle_filter(line, sizeof(newline));
+				rc = handle_filter(line, sizeof(line), len);
 				break;
 			}
 
-			/* this is a decoded line that may contain
+			/*
+			 * This is a decoded line that may contain
 			 * multiple new lines.  Pass only one chunk
 			 * at a time to handle_filter()
 			 */
-
 			do {
-				while (*op != '\n' && *op != 0)
+				while (op < line + len && *op != '\n')
 					*np++ = *op++;
 				*np = *op;
 				if (*np != 0) {
 					/* should be sitting on a new line */
 					*(++np) = 0;
 					op++;
-					rc = handle_filter(newline, sizeof(newline));
+					rc = handle_filter(newline, sizeof(newline), np - newline);
 					np = newline;
 				}
-			} while (*op != 0);
-			/* the partial chunk is saved in newline and
-			 * will be appended by the next iteration of fgets
+			} while (op < line + len);
+			/*
+			 * The partial chunk is saved in newline and will be
+			 * appended by the next iteration of read_line_with_nul().
 			 */
 			break;
 		}
 		default:
-			rc = handle_filter(line, sizeof(newline));
+			rc = handle_filter(line, sizeof(line), len);
 		}
 		if (rc)
 			/* nothing left to filter */
 			break;
-	} while (fgets(line, sizeof(line), fin));
+	} while ((len = read_line_with_nul(line, sizeof(line), fin)));
 
 	return;
 }
@@ -962,7 +968,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery
 	 */
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	def_charset = (git_commit_encoding ? git_commit_encoding : "utf-8");
 	metainfo_charset = def_charset;

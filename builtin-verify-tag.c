@@ -90,7 +90,7 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 {
 	int i = 1, verbose = 0, had_error = 0;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	if (argc == 1)
 		usage(builtin_verify_tag_usage);

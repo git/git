@@ -66,6 +66,11 @@ test_expect_success 'revert works (commit)' '
 	grep "unchanged *+3/-0 file" output
 '
 
+if test "$(git config --bool core.filemode)" = false
+then
+    say 'skipping filemode tests (filesystem does not properly support modes)'
+else
+
 test_expect_success 'patch does not affect mode' '
 	git reset --hard &&
 	echo content >>file &&
@@ -84,5 +89,7 @@ test_expect_success 'stage mode but not hunk' '
 	git diff          file | grep "+content"
 '
 
+fi
+# end of tests disabled when filemode is not usable
 
 test_done

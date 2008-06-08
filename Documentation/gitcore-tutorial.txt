@@ -1,14 +1,22 @@
-A git core tutorial for developers
-==================================
+gitcore-tutorial(7)
+===================
 
-Introduction
-------------
+NAME
+----
+gitcore-tutorial - A git core tutorial for developers
+
+SYNOPSIS
+--------
+git *
+
+DESCRIPTION
+-----------
 
 This tutorial explains how to use the "core" git programs to set up and
 work with a git repository.
 
 If you just need to use git as a revision control system you may prefer
-to start with link:tutorial.html[a tutorial introduction to git] or
+to start with linkgit:gittutorial[7][a tutorial introduction to git] or
 link:user-manual.html[the git user manual].
 
 However, an understanding of these low-level tools can be helpful if
@@ -1581,7 +1589,7 @@ suggested in the previous section may be new to you. You do not
 have to worry. git supports "shared public repository" style of
 cooperation you are probably more familiar with as well.
 
-See link:cvs-migration.html[git for CVS users] for the details.
+See linkgit:gitcvs-migration[7][git for CVS users] for the details.
 
 Bundling your work together
 ---------------------------
@@ -1679,3 +1687,13 @@ merge two at a time, documenting how you resolved the conflicts,
 and the reason why you preferred changes made in one side over
 the other.  Otherwise it would make the project history harder
 to follow, not easier.
+
+SEE ALSO
+--------
+linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+linkgit:giteveryday[7], linkgit:gitcvs-migration[7],
+link:user-manual.html[The Git User's Manual]
+
+GIT
+---
+Part of the linkgit:git[7] suite.

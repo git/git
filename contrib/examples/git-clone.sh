@@ -32,56 +32,6 @@ die() {
 	exit 1
 }
 
-# Fix some commands on Windows
-case $(uname -s) in
-*MINGW*)
-	# Windows has its own (incompatible) find
-	find () {
-		/usr/bin/find "$@"
-	}
-	# need an emulation of cpio
-	cpio() {
-		case "$1" in
-		-pumd)	cp_arg=-pr;;
-		-pumdl)	cp_arg=-lr;;
-		*)	die "cpio $1 unexpected";;
-		esac
-		# copy only files and empty directories
-		prev=
-		while read f; do
-			if test -d "$f"; then
-				# here we assume that directories are listed after
-				# its files (aka 'find -depth'), hence, a directory
-				# that is not empty will be a leading sub-string
-				# of the preceding entry
-				case "$prev" in
-				"$f"/* ) ;;
-				*)	echo "$f";;
-				esac
-			else
-				echo "$f"
-			fi
-			prev="$f"
-		done |
-		xargs --no-run-if-empty \
-			cp $cp_arg --target-directory="$2" --parents
-	}
-	# pwd must return a path with a drive letter
-	bin_pwd() {
-		# there are no symlinks to resolve: /bin/pwd is not needed
-		builtin pwd -W
-	}
-	pwd() {
-		builtin pwd -W
-	}
-	;;
-*)
-	bin_pwd() {
-		/bin/pwd
-	}
-	;;
-esac
-
 usage() {
 	exec "$0" -h
 }
@@ -90,7 +40,7 @@ eval "$(echo "$OPTIONS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
 
 get_repo_base() {
 	(
-		cd "$(bin_pwd)" &&
+		cd "`/bin/pwd`" &&
 		cd "$1" || cd "$1.git" &&
 		{
 			cd .git

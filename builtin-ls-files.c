@@ -437,7 +437,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 	memset(&dir, 0, sizeof(dir));
 	if (prefix)
 		prefix_offset = strlen(prefix);
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];

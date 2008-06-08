@@ -54,7 +54,7 @@ void setup_pager(void)
 		return;
 	if (!pager) {
 		if (!pager_program)
-			git_config(git_default_config);
+			git_config(git_default_config, NULL);
 		pager = pager_program;
 	}
 	if (!pager)

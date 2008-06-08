@@ -127,14 +127,8 @@ static struct ref *get_ref_map(struct transport *transport,
 		/* Merge everything on the command line, but not --tags */
 		for (rm = ref_map; rm; rm = rm->next)
 			rm->merge = 1;
-		if (tags == TAGS_SET) {
-			struct refspec refspec;
-			refspec.src = "refs/tags/";
-			refspec.dst = "refs/tags/";
-			refspec.pattern = 1;
-			refspec.force = 0;
-			get_fetch_map(remote_refs, &refspec, &tail, 0);
-		}
+		if (tags == TAGS_SET)
+			get_fetch_map(remote_refs, tag_refspec, &tail, 0);
 	} else {
 		/* Use the defaults */
 		struct remote *remote = transport->remote;
@@ -292,7 +286,7 @@ static int store_updated_refs(const char *url, struct ref *ref_map)
 {
 	FILE *fp;
 	struct commit *commit;
-	int url_len, i, note_len, shown_url = 0;
+	int url_len, i, note_len, shown_url = 0, rc = 0;
 	char note[1024];
 	const char *what, *kind;
 	struct ref *rm;
@@ -359,7 +353,7 @@ static int store_updated_refs(const char *url, struct ref *ref_map)
 			note);
 
 		if (ref)
-			update_local_ref(ref, what, verbose, note);
+			rc |= update_local_ref(ref, what, verbose, note);
 		else
 			sprintf(note, "* %-*s %-*s -> FETCH_HEAD",
 				SUMMARY_WIDTH, *kind ? kind : "branch",
@@ -374,7 +368,7 @@ static int store_updated_refs(const char *url, struct ref *ref_map)
 		}
 	}
 	fclose(fp);
-	return 0;
+	return rc;
 }
 
 /*

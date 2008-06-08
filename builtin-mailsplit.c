@@ -45,6 +45,24 @@ static int is_from_line(const char *line, int len)
 /* Could be as small as 64, enough to hold a Unix "From " line. */
 static char buf[4096];
 
+/* We cannot use fgets() because our lines can contain NULs */
+int read_line_with_nul(char *buf, int size, FILE *in)
+{
+	int len = 0, c;
+
+	for (;;) {
+		c = getc(in);
+		if (c == EOF)
+			break;
+		buf[len++] = c;
+		if (c == '\n' || len + 1 >= size)
+			break;
+	}
+	buf[len] = '\0';
+
+	return len;
+}
+
 /* Called with the first line (potentially partial)
  * already in buf[] -- normally that should begin with
  * the Unix "From " line.  Write it into the specified
@@ -70,19 +88,19 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	 * "From " and having something that looks like a date format.
 	 */
 	for (;;) {
-		int is_partial = (buf[len-1] != '\n');
+		int is_partial = len && buf[len-1] != '\n';
 
-		if (fputs(buf, output) == EOF)
+		if (fwrite(buf, 1, len, output) != len)
 			die("cannot write output");
 
-		if (fgets(buf, sizeof(buf), mbox) == NULL) {
+		len = read_line_with_nul(buf, sizeof(buf), mbox);
+		if (len == 0) {
 			if (feof(mbox)) {
 				status = 1;
 				break;
 			}
 			die("cannot read mbox");
 		}
-		len = strlen(buf);
 		if (!is_partial && !is_bare && is_from_line(buf, len))
 			break; /* done with one message */
 	}

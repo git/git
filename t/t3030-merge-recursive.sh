@@ -43,7 +43,7 @@ test_expect_success 'setup 1' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o1 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'setup 2' '
@@ -61,7 +61,7 @@ test_expect_success 'setup 2' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o0 0	d/e"
 	) >expected &&
-	git diff -u expected actual &&
+	test_cmp expected actual &&
 
 	echo goodbye >>a &&
 	o2=$(git hash-object a) &&
@@ -82,7 +82,7 @@ test_expect_success 'setup 2' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o0 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'setup 3' '
@@ -100,7 +100,7 @@ test_expect_success 'setup 3' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o0 0	d/e"
 	) >expected &&
-	git diff -u expected actual &&
+	test_cmp expected actual &&
 
 	rm -f b && mkdir b && echo df-1 >b/c && git add b/c &&
 	o3=$(git hash-object b/c) &&
@@ -119,7 +119,7 @@ test_expect_success 'setup 3' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o0 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'setup 4' '
@@ -137,7 +137,7 @@ test_expect_success 'setup 4' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o0 0	d/e"
 	) >expected &&
-	git diff -u expected actual &&
+	test_cmp expected actual &&
 
 	rm -f a && mkdir a && echo df-2 >a/c && git add a/c &&
 	o4=$(git hash-object a/c) &&
@@ -156,7 +156,7 @@ test_expect_success 'setup 4' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o0 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'setup 5' '
@@ -174,7 +174,7 @@ test_expect_success 'setup 5' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o0 0	d/e"
 	) >expected &&
-	git diff -u expected actual &&
+	test_cmp expected actual &&
 
 	rm -f b &&
 	echo remove-conflict >a &&
@@ -195,7 +195,7 @@ test_expect_success 'setup 5' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o0 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -214,7 +214,7 @@ test_expect_success 'setup 6' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o0 0	d/e"
 	) >expected &&
-	git diff -u expected actual &&
+	test_cmp expected actual &&
 
 	rm -fr d && echo df-3 >d && git add d &&
 	o6=$(git hash-object d) &&
@@ -233,7 +233,7 @@ test_expect_success 'setup 6' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o6 0	d"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'merge-recursive simple' '
@@ -265,7 +265,7 @@ test_expect_success 'merge-recursive result' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o1 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -297,7 +297,7 @@ test_expect_success 'merge-recursive remove conflict' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o1 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -318,7 +318,7 @@ test_expect_success 'merge-recursive result' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o1 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -352,7 +352,7 @@ test_expect_success 'merge-recursive d/f conflict result' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o1 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -386,7 +386,7 @@ test_expect_success 'merge-recursive d/f conflict result the other way' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o1 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -420,7 +420,7 @@ test_expect_success 'merge-recursive d/f conflict result' '
 		echo "100644 $o0 1	d/e"
 		echo "100644 $o1 2	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -454,7 +454,7 @@ test_expect_success 'merge-recursive d/f conflict result' '
 		echo "100644 $o0 1	d/e"
 		echo "100644 $o1 3	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -480,7 +480,7 @@ test_expect_success 'reset and bind merge' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o1 0	d/e"
 	) >expected &&
-	git diff -u expected actual &&
+	test_cmp expected actual &&
 
 	git read-tree --prefix=a1/ master &&
 	git ls-files -s >actual &&
@@ -498,7 +498,7 @@ test_expect_success 'reset and bind merge' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o1 0	d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 	git read-tree --prefix=z/ master &&
 	git ls-files -s >actual &&
@@ -520,7 +520,7 @@ test_expect_success 'reset and bind merge' '
 		echo "100644 $o0 0	z/c"
 		echo "100644 $o1 0	z/d/e"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 
 '
 

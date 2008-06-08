@@ -119,7 +119,7 @@ If you are expecting some objects to be collected and they aren't, check
 all of those locations and decide whether it makes sense in your case to
 remove those references.
 
-See Also
+SEE ALSO
 --------
 linkgit:git-prune[1]
 linkgit:git-reflog[1]

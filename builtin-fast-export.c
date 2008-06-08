@@ -204,14 +204,10 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 			continue;
 		if (i == 0)
 			printf("from :%d\n", mark);
-		else if (i == 1)
-			printf("merge :%d", mark);
 		else
-			printf(" :%d", mark);
+			printf("merge :%d\n", mark);
 		i++;
 	}
-	if (i > 1)
-		printf("\n");
 
 	log_tree_diff_flush(rev);
 	rev->diffopt.output_format = saved_output_format;
@@ -372,7 +368,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	};
 
 	/* we handle encodings */
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	init_revisions(&revs, prefix);
 	argc = setup_revisions(argc, argv, &revs, NULL);

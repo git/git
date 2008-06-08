@@ -43,7 +43,7 @@ test_expect_success 'apply in reverse' '
 	git apply --reverse --binary --index patch &&
 	git diff >diff &&
 	: > empty &&
-	git diff empty diff
+	test_cmp empty diff
 
 '
 

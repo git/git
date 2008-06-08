@@ -129,7 +129,7 @@ static int parse_funcname_pattern(const char *var, const char *ep, const char *v
  * never be affected by the setting of diff.renames
  * the user happens to have in the configuration file.
  */
-int git_diff_ui_config(const char *var, const char *value)
+int git_diff_ui_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "diff.renamelimit")) {
 		diff_rename_limit_default = git_config_int(var, value);
@@ -166,10 +166,10 @@ int git_diff_ui_config(const char *var, const char *value)
 			return parse_lldiff_command(var, ep, value);
 	}
 
-	return git_diff_basic_config(var, value);
+	return git_diff_basic_config(var, value, cb);
 }
 
-int git_diff_basic_config(const char *var, const char *value)
+int git_diff_basic_config(const char *var, const char *value, void *cb)
 {
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
@@ -190,7 +190,7 @@ int git_diff_basic_config(const char *var, const char *value)
 		}
 	}
 
-	return git_color_default_config(var, value);
+	return git_color_default_config(var, value, cb);
 }
 
 static char *quote_two(const char *one, const char *two)
@@ -2496,6 +2496,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_SET(options, ALLOW_EXTERNAL);
 	else if (!strcmp(arg, "--no-ext-diff"))
 		DIFF_OPT_CLR(options, ALLOW_EXTERNAL);
+	else if (!strcmp(arg, "--ignore-submodules"))
+		DIFF_OPT_SET(options, IGNORE_SUBMODULES);
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))
@@ -3355,6 +3357,9 @@ void diff_addremove(struct diff_options *options,
 	char concatpath[PATH_MAX];
 	struct diff_filespec *one, *two;
 
+	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES) && S_ISGITLINK(mode))
+		return;
+
 	/* This may look odd, but it is a preparation for
 	 * feeding "there are unchanged files which should
 	 * not produce diffs, but when you are doing copy
@@ -3398,6 +3403,10 @@ void diff_change(struct diff_options *options,
 {
 	char concatpath[PATH_MAX];
 	struct diff_filespec *one, *two;
+
+	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES) && S_ISGITLINK(old_mode)
+			&& S_ISGITLINK(new_mode))
+		return;
 
 	if (DIFF_OPT_TST(options, REVERSE_DIFF)) {
 		unsigned tmp;

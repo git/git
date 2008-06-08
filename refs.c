@@ -159,6 +159,8 @@ static struct cached_refs {
 } cached_refs;
 static struct ref_list *current_ref;
 
+static struct ref_list *extra_refs;
+
 static void free_ref_list(struct ref_list *list)
 {
 	struct ref_list *next;
@@ -213,6 +215,17 @@ static void read_packed_refs(FILE *f, struct cached_refs *cached_refs)
 			hashcpy(last->peeled, sha1);
 	}
 	cached_refs->packed = sort_ref_list(list);
+}
+
+void add_extra_ref(const char *name, const unsigned char *sha1, int flag)
+{
+	extra_refs = add_ref(name, sha1, flag, extra_refs, NULL);
+}
+
+void clear_extra_refs(void)
+{
+	free_ref_list(extra_refs);
+	extra_refs = NULL;
 }
 
 static struct ref_list *get_packed_refs(void)
@@ -546,6 +559,11 @@ static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
 	int retval = 0;
 	struct ref_list *packed = get_packed_refs();
 	struct ref_list *loose = get_loose_refs();
+
+	struct ref_list *extra;
+
+	for (extra = extra_refs; extra; extra = extra->next)
+		retval = do_one_ref(base, fn, trim, cb_data, extra);
 
 	while (packed && loose) {
 		struct ref_list *entry;

@@ -286,7 +286,7 @@ test_expect_success \
      packname_4=$(git pack-objects test-4 <obj-list) &&
      test 3 = $(ls test-4-*.pack | wc -l)'
 
-test_expect_success 'unpacking with --strict' '
+test_expect_success 'setup --strict tests' '
 
 	git config --unset pack.packsizelimit &&
 	for j in a b c d e f g
@@ -312,7 +312,11 @@ test_expect_success 'unpacking with --strict' '
 			echo "$LIST"
 			echo "$LI"
 			echo "$ST"
-		 ) | git pack-objects test-6 ) &&
+		 ) | git pack-objects test-6 )
+'
+
+test_expect_success 'unpacking with --strict' '
+
 	test_create_repo test-5 &&
 	(
 		cd test-5 &&
@@ -336,30 +340,6 @@ test_expect_success 'unpacking with --strict' '
 
 test_expect_success 'index-pack with --strict' '
 
-	for j in a b c d e f g
-	do
-		for i in 0 1 2 3 4 5 6 7 8 9
-		do
-			o=$(echo $j$i | git hash-object -w --stdin) &&
-			echo "100644 $o	0 $j$i"
-		done
-	done >LIST &&
-	rm -f .git/index &&
-	git update-index --index-info <LIST &&
-	LIST=$(git write-tree) &&
-	rm -f .git/index &&
-	head -n 10 LIST | git update-index --index-info &&
-	LI=$(git write-tree) &&
-	rm -f .git/index &&
-	tail -n 10 LIST | git update-index --index-info &&
-	ST=$(git write-tree) &&
-	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" | \
-		git pack-objects test-5 ) &&
-	PACK6=$( (
-			echo "$LIST"
-			echo "$LI"
-			echo "$ST"
-		 ) | git pack-objects test-6 ) &&
 	test_create_repo test-7 &&
 	(
 		cd test-7 &&

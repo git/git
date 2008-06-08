@@ -57,7 +57,7 @@ test_expect_success 'initial merge' '
 		echo "100644 $o1 0	git-gui/git-gui.sh"
 		echo "100644 $o2 0	git.c"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'merge update' '
@@ -73,7 +73,7 @@ test_expect_success 'merge update' '
 		echo "100644 $o3 0	git-gui/git-gui.sh"
 		echo "100644 $o2 0	git.c"
 	) >expected &&
-	git diff -u expected actual
+	test_cmp expected actual
 '
 
 test_done

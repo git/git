@@ -462,15 +462,17 @@ static struct cache_entry *create_alias_ce(struct cache_entry *ce, struct cache_
 	return new;
 }
 
-int add_to_index(struct index_state *istate, const char *path, struct stat *st, int verbose)
+int add_to_index(struct index_state *istate, const char *path, struct stat *st, int flags)
 {
-	int size, namelen;
+	int size, namelen, was_same;
 	mode_t st_mode = st->st_mode;
 	struct cache_entry *ce, *alias;
 	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_RACY_IS_DIRTY;
+	int verbose = flags & (ADD_CACHE_VERBOSE | ADD_CACHE_PRETEND);
+	int pretend = flags & ADD_CACHE_PRETEND;
 
 	if (!S_ISREG(st_mode) && !S_ISLNK(st_mode) && !S_ISDIR(st_mode))
-		die("%s: can only add regular files, symbolic links or git-directories", path);
+		return error("%s: can only add regular files, symbolic links or git-directories", path);
 
 	namelen = strlen(path);
 	if (S_ISDIR(st_mode)) {
@@ -505,23 +507,32 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		return 0;
 	}
 	if (index_path(ce->sha1, path, st, 1))
-		die("unable to index file %s", path);
+		return error("unable to index file %s", path);
 	if (ignore_case && alias && different_name(ce, alias))
 		ce = create_alias_ce(ce, alias);
 	ce->ce_flags |= CE_ADDED;
-	if (add_index_entry(istate, ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
-		die("unable to add %s to index",path);
-	if (verbose)
+
+	/* It was suspected to be recily clean, but it turns out to be Ok */
+	was_same = (alias &&
+		    !ce_stage(alias) &&
+		    !hashcmp(alias->sha1, ce->sha1) &&
+		    ce->ce_mode == alias->ce_mode);
+
+	if (pretend)
+		;
+	else if (add_index_entry(istate, ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
+		return error("unable to add %s to index",path);
+	if (verbose && !was_same)
 		printf("add '%s'\n", path);
 	return 0;
 }
 
-int add_file_to_index(struct index_state *istate, const char *path, int verbose)
+int add_file_to_index(struct index_state *istate, const char *path, int flags)
 {
 	struct stat st;
 	if (lstat(path, &st))
 		die("%s: unable to stat (%s)", path, strerror(errno));
-	return add_to_index(istate, path, &st, verbose);
+	return add_to_index(istate, path, &st, flags);
 }
 
 struct cache_entry *make_cache_entry(unsigned int mode,
@@ -887,6 +898,15 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	if (ce_uptodate(ce))
 		return ce;
 
+	/*
+	 * CE_VALID means the user promised us that the change to
+	 * the work tree does not matter and told us not to worry.
+	 */
+	if (!ignore_valid && (ce->ce_flags & CE_VALID)) {
+		ce_mark_uptodate(ce);
+		return ce;
+	}
+
 	if (lstat(ce->name, &st) < 0) {
 		if (err)
 			*err = errno;
@@ -947,6 +967,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	int allow_unmerged = (flags & REFRESH_UNMERGED) != 0;
 	int quiet = (flags & REFRESH_QUIET) != 0;
 	int not_new = (flags & REFRESH_IGNORE_MISSING) != 0;
+	int ignore_submodules = (flags & REFRESH_IGNORE_SUBMODULES) != 0;
 	unsigned int options = really ? CE_MATCH_IGNORE_VALID : 0;
 
 	for (i = 0; i < istate->cache_nr; i++) {
@@ -954,6 +975,9 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 		int cache_errno = 0;
 
 		ce = istate->cache[i];
+		if (ignore_submodules && S_ISGITLINK(ce->ce_mode))
+			continue;
+
 		if (ce_stage(ce)) {
 			while ((i < istate->cache_nr) &&
 			       ! strcmp(istate->cache[i]->name, ce->name))

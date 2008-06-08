@@ -13,10 +13,11 @@ include::pretty-options.txt[]
 
 	Synonym for `--date=relative`.
 
---date={relative,local,default,iso,rfc}::
+--date={relative,local,default,iso,rfc,short}::
 
 	Only takes effect for dates shown in human-readable format, such
-	as when using "--pretty".
+	as when using "--pretty". `log.date` config variable sets a default
+	value for log command's --date option.
 +
 `--date=relative` shows dates relative to the current time,
 e.g. "2 hours ago".
@@ -74,6 +75,16 @@ you would get an output line this:
 	-yyyyyyy... 1st on b
 	-xxxxxxx... 1st on a
 -----------------------------------------------------------------------
+
+--graph::
+
+	Draw a text-based graphical representation of the commit history
+	on the left hand side of the output.  This may cause extra lines
+	to be printed in between commits, in order for the graph history
+	to be drawn properly.
++
+This implies the '--topo-order' option by default, but the
+'--date-order' option may also be specified.
 
 Diff Formatting
 ~~~~~~~~~~~~~~~

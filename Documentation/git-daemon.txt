@@ -174,7 +174,7 @@ upload-pack::
 upload-archive::
 	This serves `git-archive --remote`.  It is disabled by
 	default, but a repository can enable it by setting
-	`daemon.uploadarchive` configuration item to `true`.
+	`daemon.uploadarch` configuration item to `true`.
 
 receive-pack::
 	This serves `git-send-pack` clients, allowing anonymous
@@ -257,7 +257,7 @@ selectively enable/disable services per repository::
 ----------------------------------------------------------------
 	[daemon]
 		uploadpack = false
-		uploadarchive = true
+		uploadarch = true
 ----------------------------------------------------------------
 
 

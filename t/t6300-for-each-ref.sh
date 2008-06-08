@@ -75,14 +75,14 @@ EOF
 test_expect_success 'Check unformatted date fields output' '
 	(git for-each-ref --shell --format="%(refname) %(committerdate) %(authordate)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate)" refs/tags) >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'Check format "default" formatted date fields output' '
 	f=default &&
 	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 # Don't know how to do relative check because I can't know when this script
@@ -109,7 +109,7 @@ test_expect_success 'Check format "short" date fields output' '
 	f=short &&
 	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -121,7 +121,7 @@ test_expect_success 'Check format "local" date fields output' '
 	f=local &&
 	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -133,7 +133,7 @@ test_expect_success 'Check format "iso8601" date fields output' '
 	f=iso8601 &&
 	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -145,7 +145,7 @@ test_expect_success 'Check format "rfc2822" date fields output' '
 	f=rfc2822 &&
 	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -155,7 +155,7 @@ EOF
 
 test_expect_success 'Verify ascending sort' '
 	git-for-each-ref --format="%(refname)" --sort=refname >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 
@@ -166,7 +166,7 @@ EOF
 
 test_expect_success 'Verify descending sort' '
 	git-for-each-ref --format="%(refname)" --sort=-refname >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -176,17 +176,17 @@ EOF
 
 test_expect_success 'Quoting style: shell' '
 	git for-each-ref --shell --format="%(refname)" >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'Quoting style: perl' '
 	git for-each-ref --perl --format="%(refname)" >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'Quoting style: python' '
 	git for-each-ref --python --format="%(refname)" >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -196,7 +196,7 @@ EOF
 
 test_expect_success 'Quoting style: tcl' '
 	git for-each-ref --tcl --format="%(refname)" >actual &&
-	git diff expected actual
+	test_cmp expected actual
 '
 
 for i in "--perl --shell" "-s --python" "--python --tcl" "--tcl --perl"; do

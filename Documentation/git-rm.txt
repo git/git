@@ -93,7 +93,7 @@ git-rm -f git-*.sh::
 	(i.e. you are listing the files explicitly), it
 	does not remove `subdir/git-foo.sh`.
 
-See Also
+SEE ALSO
 --------
 linkgit:git-add[1]
 

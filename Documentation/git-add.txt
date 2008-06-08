@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git-add' [-n] [-v] [-f] [--interactive | -i] [--patch | -p] [-u] [--refresh]
-          [--] <filepattern>...
+	  [--ignore-errors] [--] <filepattern>...
 
 DESCRIPTION
 -----------
@@ -82,6 +82,11 @@ OPTIONS
 \--refresh::
 	Don't add the file(s), but only refresh their stat()
 	information in the index.
+
+\--ignore-errors::
+	If some files could not be added because of errors indexing
+	them, do not abort the operation, but continue adding the
+	others. The command shall still exit with non-zero status.
 
 \--::
 	This option can be used to separate command-line options from
@@ -241,7 +246,7 @@ characters that need C-quoting.  `core.quotepath` configuration can be
 used to work this limitation around to some degree, but backslash,
 double-quote and control characters will still have problems.
 
-See Also
+SEE ALSO
 --------
 linkgit:git-status[1]
 linkgit:git-rm[1]

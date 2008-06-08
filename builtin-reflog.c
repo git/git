@@ -329,7 +329,7 @@ static int collect_reflog(const char *ref, const unsigned char *sha1, int unused
 	return 0;
 }
 
-static int reflog_expire_config(const char *var, const char *value)
+static int reflog_expire_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "gc.reflogexpire")) {
 		if (!value)
@@ -343,7 +343,7 @@ static int reflog_expire_config(const char *var, const char *value)
 		default_reflog_expire_unreachable = approxidate(value);
 		return 0;
 	}
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
@@ -352,7 +352,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	unsigned long now = time(NULL);
 	int i, status, do_all;
 
-	git_config(reflog_expire_config);
+	git_config(reflog_expire_config, NULL);
 
 	save_commit_buffer = 0;
 	do_all = status = 0;

@@ -23,9 +23,9 @@ test "$no_symlinks" && {
 		test "$1" = -s && shift
 		date > "$2"
 	}
-	function diff () {
+	test_cmp () {
 		sed s/^120000/100644/ < "$1" > "$1".doof
-		git diff "$1".doof "$2"
+		diff "$1".doof "$2"
 	}
 }
 
@@ -47,7 +47,7 @@ _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 test_output () {
     sed -e "s/ $_x40	/ X	/" <current >check
-    diff expected check
+    test_cmp expected check
 }
 
 test_expect_success \

@@ -235,7 +235,6 @@ BASIC_LDFLAGS =
 
 SCRIPT_SH += git-am.sh
 SCRIPT_SH += git-bisect.sh
-SCRIPT_SH += git-clone.sh
 SCRIPT_SH += git-filter-branch.sh
 SCRIPT_SH += git-lost-found.sh
 SCRIPT_SH += git-merge-octopus.sh
@@ -345,6 +344,7 @@ LIB_H += diff.h
 LIB_H += dir.h
 LIB_H += fsck.h
 LIB_H += git-compat-util.h
+LIB_H += graph.h
 LIB_H += grep.h
 LIB_H += hash.h
 LIB_H += list-objects.h
@@ -374,6 +374,7 @@ LIB_H += tree.h
 LIB_H += tree-walk.h
 LIB_H += unpack-trees.h
 LIB_H += utf8.h
+LIB_H += wt-status.h
 
 LIB_OBJS += alias.o
 LIB_OBJS += alloc.o
@@ -403,6 +404,7 @@ LIB_OBJS += diffcore-order.o
 LIB_OBJS += diffcore-pickaxe.o
 LIB_OBJS += diffcore-rename.o
 LIB_OBJS += diff-delta.o
+LIB_OBJS += diff-no-index.o
 LIB_OBJS += diff-lib.o
 LIB_OBJS += diff.o
 LIB_OBJS += dir.o
@@ -410,6 +412,7 @@ LIB_OBJS += entry.o
 LIB_OBJS += environment.o
 LIB_OBJS += exec_cmd.o
 LIB_OBJS += fsck.o
+LIB_OBJS += graph.o
 LIB_OBJS += grep.o
 LIB_OBJS += hash.o
 LIB_OBJS += help.o
@@ -481,6 +484,7 @@ BUILTIN_OBJS += builtin-check-ref-format.o
 BUILTIN_OBJS += builtin-checkout-index.o
 BUILTIN_OBJS += builtin-checkout.o
 BUILTIN_OBJS += builtin-clean.o
+BUILTIN_OBJS += builtin-clone.o
 BUILTIN_OBJS += builtin-commit-tree.o
 BUILTIN_OBJS += builtin-commit.o
 BUILTIN_OBJS += builtin-config.o
@@ -1261,7 +1265,7 @@ remove-dashes:
 ifeq ($(firstword $(subst /, ,$(template_dir))),..)
 template_instdir = $(gitexecdir)/$(template_dir)
 else
-template_instdir = $template_dir
+template_instdir = $(template_dir)
 endif
 export template_instdir
 

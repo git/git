@@ -40,7 +40,7 @@ test_expect_success 'apply symlink patch' '
 	git checkout side &&
 	git apply patch &&
 	git diff-files -p >patched &&
-	git diff patch patched
+	test_cmp patch patched
 
 '
 
@@ -49,7 +49,7 @@ test_expect_success 'apply --index symlink patch' '
 	git checkout -f side &&
 	git apply --index patch &&
 	git diff-index --cached -p HEAD >patched &&
-	git diff patch patched
+	test_cmp patch patched
 
 '
 

@@ -65,7 +65,7 @@ test_expect_success \
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
        >output &&
-     git diff expect output'
+     test_cmp expect output'
 
 # Test \r\n (MSDOS-like systems)
 printf '*.1\r\n/*.3\r\n!*.6\r\n' >.gitignore
@@ -77,7 +77,7 @@ test_expect_success \
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
        >output &&
-     git diff expect output'
+     test_cmp expect output'
 
 cat > excludes-file << EOF
 *.[1-8]

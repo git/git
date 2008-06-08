@@ -29,7 +29,7 @@ EOF
 test_expect_success 'test help' '
 	! test-parse-options -h > output 2> output.err &&
 	test ! -s output &&
-	git diff expect.err output.err
+	test_cmp expect.err output.err
 '
 
 cat > expect << EOF
@@ -40,7 +40,7 @@ EOF
 
 test_expect_success 'short options' '
 	test-parse-options -s123 -b -i 1729 -b > output 2> output.err &&
-	git diff expect output &&
+	test_cmp expect output &&
 	test ! -s output.err
 '
 cat > expect << EOF
@@ -53,7 +53,7 @@ test_expect_success 'long options' '
 	test-parse-options --boolean --integer 1729 --boolean --string2=321 \
 		> output 2> output.err &&
 	test ! -s output.err &&
-	git diff expect output
+	test_cmp expect output
 '
 
 cat > expect << EOF
@@ -69,7 +69,7 @@ test_expect_success 'intermingled arguments' '
 	test-parse-options a1 --string 123 b1 --boolean -j 13 -- --boolean \
 		> output 2> output.err &&
 	test ! -s output.err &&
-	git diff expect output
+	test_cmp expect output
 '
 
 cat > expect << EOF
@@ -81,13 +81,13 @@ EOF
 test_expect_success 'unambiguously abbreviated option' '
 	test-parse-options --int 2 --boolean --no-bo > output 2> output.err &&
 	test ! -s output.err &&
-	git diff expect output
+	test_cmp expect output
 '
 
 test_expect_success 'unambiguously abbreviated option with "="' '
 	test-parse-options --int=2 > output 2> output.err &&
 	test ! -s output.err &&
-	git diff expect output
+	test_cmp expect output
 '
 
 test_expect_success 'ambiguously abbreviated option' '
@@ -104,7 +104,7 @@ EOF
 test_expect_success 'non ambiguous option (after two options it abbreviates)' '
 	test-parse-options --st 123 > output 2> output.err &&
 	test ! -s output.err &&
-	git diff expect output
+	test_cmp expect output
 '
 
 cat > expect.err << EOF
@@ -114,7 +114,7 @@ EOF
 test_expect_success 'detect possible typos' '
 	! test-parse-options -boolean > output 2> output.err &&
 	test ! -s output &&
-	git diff expect.err output.err
+	test_cmp expect.err output.err
 '
 
 cat > expect <<EOF
@@ -127,7 +127,7 @@ EOF
 test_expect_success 'keep some options as arguments' '
 	test-parse-options --quux > output 2> output.err &&
         test ! -s output.err &&
-        git diff expect output
+        test_cmp expect output
 '
 
 test_done

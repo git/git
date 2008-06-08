@@ -8,7 +8,7 @@ git-cvsexportcommit - Export a single commit to a CVS checkout
 
 SYNOPSIS
 --------
-'git-cvsexportcommit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d cvsroot] [-w cvsworkdir] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
+'git-cvsexportcommit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d cvsroot] [-w cvsworkdir] [-W] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
 
 
 DESCRIPTION
@@ -65,10 +65,21 @@ OPTIONS
 -w::
 	Specify the location of the CVS checkout to use for the export. This
 	option does not require GIT_DIR to be set before execution if the
-	current directory is within a git repository.
+	current directory is within a git repository.  The default is the
+	value of 'cvsexportcommit.cvsdir'.
+
+-W::
+	Tell cvsexportcommit that the current working directory is not only
+	a Git checkout, but also the CVS checkout.  Therefore, Git will
+	reset the working directory to the parent commit before proceeding.
 
 -v::
 	Verbose.
+
+CONFIGURATION
+-------------
+cvsexportcommit.cvsdir::
+	The default location of the CVS checkout to use for the export.
 
 EXAMPLES
 --------

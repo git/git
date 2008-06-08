@@ -1,5 +1,16 @@
-A tutorial introduction to git (for version 1.5.1 or newer)
-===========================================================
+gittutorial(7)
+==============
+
+NAME
+----
+gittutorial - A tutorial introduction to git (for version 1.5.1 or newer)
+
+SYNOPSIS
+--------
+git *
+
+DESCRIPTION
+-----------
 
 This tutorial explains how to import a new project into git, make
 changes to it, and share changes with other developers.
@@ -381,7 +392,7 @@ see linkgit:git-pull[1] for details.
 
 Git can also be used in a CVS-like mode, with a central repository
 that various users push changes to; see linkgit:git-push[1] and
-link:cvs-migration.html[git for CVS users].
+linkgit:gitcvs-migration[7][git for CVS users].
 
 Exploring history
 -----------------
@@ -560,7 +571,7 @@ is based:
     used to create commits, check out working directories, and
     hold the various trees involved in a merge.
 
-link:tutorial-2.html[Part two of this tutorial] explains the object
+linkgit:gittutorial-2[7][Part two of this tutorial] explains the object
 database, the index file, and a few other odds and ends that you'll
 need to make the most of git.
 
@@ -581,4 +592,17 @@ digressions that may be interesting at this point are:
 
   * link:everyday.html[Everyday GIT with 20 Commands Or So]
 
-  * link:cvs-migration.html[git for CVS users].
+  * linkgit:gitcvs-migration[7][git for CVS users].
+
+SEE ALSO
+--------
+linkgit:gittutorial-2[7],
+linkgit:gitcvs-migration[7],
+linkgit:gitcore-tutorial[7],
+linkgit:gitglossary[7],
+link:everyday.html[Everyday git],
+link:user-manual.html[The Git User's Manual]
+
+GIT
+---
+Part of the linkgit:git[7] suite.

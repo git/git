@@ -46,7 +46,8 @@ struct rev_info {
 			unpacked:1, /* see also ignore_packed below */
 			boundary:2,
 			left_right:1,
-			parents:1,
+			rewrite_parents:1,
+			print_parents:1,
 			reverse:1,
 			cherry_pick:1,
 			first_parent_only:1;
@@ -65,7 +66,8 @@ struct rev_info {
 	/* Format info */
 	unsigned int	shown_one:1,
 			abbrev_commit:1,
-			use_terminator:1;
+			use_terminator:1,
+			missing_newline:1;
 	enum date_mode date_mode;
 
 	const char **ignore_packed; /* pretend objects in these are unpacked */
@@ -87,6 +89,9 @@ struct rev_info {
 
 	/* Filter by commit log message */
 	struct grep_opt	*grep_filter;
+
+	/* Display history graph */
+	struct git_graph *graph;
 
 	/* special limits */
 	int skip_count;

@@ -136,6 +136,7 @@ sub parse_config ($$$$) {
 	local $ENV{GIT_DIR} = shift;
 	my $br = shift;
 	my $fn = shift;
+	return unless git_value('rev-list','--max-count=1',$br,'--',$fn);
 	info "Loading $br:$fn";
 	open(I,'-|','git','cat-file','blob',"$br:$fn");
 	my $section = '';
@@ -225,14 +226,12 @@ sub load_diff ($) {
 		local $/ = "\0";
 		my %this_diff;
 		if ($base =~ /^0{40}$/) {
-			open(T,'-|','git','ls-tree',
-				'-r','--name-only','-z',
-				$new) or return undef;
-			while (<T>) {
-				chop;
-				$this_diff{$_} = 'A';
-			}
-			close T or return undef;
+			# Don't load the diff at all; we are making the
+			# branch and have no base to compare to in this
+			# case.  A file level ACL makes no sense in this
+			# context.  Having an empty diff will allow the
+			# branch creation.
+			#
 		} else {
 			open(T,'-|','git','diff-tree',
 				'-r','--name-status','-z',
@@ -260,6 +259,7 @@ deny "Refusing funny ref $ref" unless $ref =~ s,^refs/,,;
 deny "Bad old value $old" unless $old =~ /^[a-z0-9]{40}$/;
 deny "Bad new value $new" unless $new =~ /^[a-z0-9]{40}$/;
 deny "Cannot determine who you are." unless $this_user;
+grant "No change requested." if $old eq $new;
 
 $repository_name = File::Spec->rel2abs($git_dir);
 $repository_name =~ m,/([^/]+)(?:\.git|/\.git)$,;

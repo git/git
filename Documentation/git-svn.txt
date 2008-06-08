@@ -61,6 +61,16 @@ COMMANDS
 	Set the 'useSvnsyncProps' option in the [svn-remote] config.
 --rewrite-root=<URL>;;
 	Set the 'rewriteRoot' option in the [svn-remote] config.
+--use-log-author;;
+	When retrieving svn commits into git (as part of fetch, rebase, or
+	dcommit operations), look for the first From: or Signed-off-by: line
+	in the log message and use that as the author string.
+--add-author-from;;
+	When committing to svn from git (as part of commit or dcommit
+	operations), if the existing log message doesn't already have a
+	From: or Signed-off-by: line, append a From: line based on the
+	git commit's author string.  If you use this, then --use-log-author
+	will retrieve a valid author string for all commits.
 --username=<USER>;;
 	For transports that SVN handles authentication for (http,
 	https, and plain svn), specify the username.  For other
@@ -196,10 +206,10 @@ Any other arguments are passed directly to `git log'
 	independently of git-svn functions.
 
 'create-ignore'::
-
 	Recursively finds the svn:ignore property on directories and
 	creates matching .gitignore files. The resulting files are staged to
-	be committed, but are not committed.
+	be committed, but are not committed. Use -r/--revision to refer to a
+	specfic revision.
 
 'show-ignore'::
 	Recursively finds and lists the svn:ignore property on
@@ -222,6 +232,19 @@ Any other arguments are passed directly to `git log'
 	`svn info' provides.  Does not currently support a -r/--revision
 	argument.  Use the --url option to output only the value of the
 	'URL:' field.
+
+'proplist'::
+	Lists the properties stored in the Subversion repository about a
+	given file or directory.  Use -r/--revision to refer to a specific
+	Subversion revision.
+
+'propget'::
+	Gets the Subversion property given as the first argument, for a
+	file.  A specific revision can be specified with -r/--revision.
+
+'show-externals'::
+	Shows the Subversion externals.  Use -r/--revision to specify a
+	specific revision.
 
 --
 
@@ -342,10 +365,14 @@ Passed directly to git-rebase when using 'dcommit' if a
 -n::
 --dry-run::
 
-This is only used with the 'dcommit' command.
+This can be used with the 'dcommit' and 'rebase' commands.
 
-Print out the series of git arguments that would show
+For 'dcommit', print out the series of git arguments that would show
 which diffs would be committed to SVN.
+
+For 'rebase', display the local branch associated with the upstream svn
+repository associated with the current branch and the URL of svn
+repository that will be fetched from.
 
 --
 

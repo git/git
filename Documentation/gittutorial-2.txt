@@ -1,7 +1,18 @@
-A tutorial introduction to git: part two
-========================================
+gittutorial-2(7)
+================
 
-You should work through link:tutorial.html[A tutorial introduction to
+NAME
+----
+gittutorial-2 - A tutorial introduction to git: part two
+
+SYNOPSIS
+--------
+git *
+
+DESCRIPTION
+-----------
+
+You should work through linkgit:gittutorial[7][A tutorial introduction to
 git] before reading this tutorial.
 
 The goal of this tutorial is to introduce two fundamental pieces of
@@ -379,7 +390,7 @@ in the index file is identical to the one in the working directory.
 In addition to being the staging area for new commits, the index file
 is also populated from the object database when checking out a
 branch, and is used to hold the trees involved in a merge operation.
-See the link:core-tutorial.html[core tutorial] and the relevant man
+See the linkgit:gitcore-tutorial[7][core tutorial] and the relevant man
 pages for details.
 
 What next?
@@ -389,18 +400,31 @@ At this point you should know everything necessary to read the man
 pages for any of the git commands; one good place to start would be
 with the commands mentioned in link:everyday.html[Everyday git].  You
 should be able to find any unknown jargon in the
-link:glossary.html[Glossary].
+linkgit:gitglossary[7][Glossary].
 
 The link:user-manual.html[Git User's Manual] provides a more
 comprehensive introduction to git.
 
-The link:cvs-migration.html[CVS migration] document explains how to
+The linkgit:gitcvs-migration[7][CVS migration] document explains how to
 import a CVS repository into git, and shows how to use git in a
 CVS-like way.
 
 For some interesting examples of git use, see the
 link:howto-index.html[howtos].
 
-For git developers, the link:core-tutorial.html[Core tutorial] goes
+For git developers, the linkgit:gitcore-tutorial[7][Core tutorial] goes
 into detail on the lower-level git mechanisms involved in, for
 example, creating a new commit.
+
+SEE ALSO
+--------
+linkgit:gittutorial[7],
+linkgit:gitcvs-migration[7],
+linkgit:gitcore-tutorial[7],
+linkgit:gitglossary[7],
+link:everyday.html[Everyday git],
+link:user-manual.html[The Git User's Manual]
+
+GIT
+---
+Part of the linkgit:git[7] suite.

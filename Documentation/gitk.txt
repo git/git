@@ -85,7 +85,7 @@ Files
 Gitk creates the .gitk file in your $HOME directory to store preferences
 such as display options, font, and colors.
 
-See Also
+SEE ALSO
 --------
 'qgit(1)'::
 	A repository browser written in C++ using Qt.

@@ -6,6 +6,7 @@
 #include "diff.h"
 #include "refs.h"
 #include "revision.h"
+#include "graph.h"
 #include "grep.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
@@ -415,7 +416,6 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 {
 	struct commit_list *parent = commit->parents;
 	unsigned left_flag;
-	int add, rest;
 
 	if (commit->object.flags & ADDED)
 		return 0;
@@ -462,19 +462,18 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 
 	left_flag = (commit->object.flags & SYMMETRIC_LEFT);
 
-	rest = !revs->first_parent_only;
-	for (parent = commit->parents, add = 1; parent; add = rest) {
+	for (parent = commit->parents; parent; parent = parent->next) {
 		struct commit *p = parent->item;
 
-		parent = parent->next;
 		if (parse_commit(p) < 0)
 			return -1;
 		p->object.flags |= left_flag;
-		if (p->object.flags & SEEN)
-			continue;
-		p->object.flags |= SEEN;
-		if (add)
+		if (!(p->object.flags & SEEN)) {
+			p->object.flags |= SEEN;
 			insert_by_date(p, list);
+		}
+		if(revs->first_parent_only)
+			break;
 	}
 	return 0;
 }
@@ -1105,7 +1104,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				}
 			}
 			if (!strcmp(arg, "--parents")) {
-				revs->parents = 1;
+				revs->rewrite_parents = 1;
+				revs->print_parents = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--dense")) {
@@ -1197,9 +1197,20 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->verbose_header = 1;
 				continue;
 			}
-			if (!prefixcmp(arg, "--pretty")) {
+			if (!strcmp(arg, "--pretty")) {
 				revs->verbose_header = 1;
 				get_commit_format(arg+8, revs);
+				continue;
+			}
+			if (!prefixcmp(arg, "--pretty=")) {
+				revs->verbose_header = 1;
+				get_commit_format(arg+9, revs);
+				continue;
+			}
+			if (!strcmp(arg, "--graph")) {
+				revs->topo_order = 1;
+				revs->rewrite_parents = 1;
+				revs->graph = graph_init(revs);
 				continue;
 			}
 			if (!strcmp(arg, "--root")) {
@@ -1396,6 +1407,15 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (revs->reverse && revs->reflog_info)
 		die("cannot combine --reverse with --walk-reflogs");
 
+	/*
+	 * Limitations on the graph functionality
+	 */
+	if (revs->reverse && revs->graph)
+		die("cannot combine --reverse with --graph");
+
+	if (revs->reflog_info && revs->graph)
+		die("cannot combine --walk-reflogs with --graph");
+
 	return left;
 }
 
@@ -1524,13 +1544,13 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 		/* Commit without changes? */
 		if (commit->object.flags & TREESAME) {
 			/* drop merges unless we want parenthood */
-			if (!revs->parents)
+			if (!revs->rewrite_parents)
 				return commit_ignore;
 			/* non-merge - always ignore it */
 			if (!commit->parents || !commit->parents->next)
 				return commit_ignore;
 		}
-		if (revs->parents && rewrite_parents(revs, commit) < 0)
+		if (revs->rewrite_parents && rewrite_parents(revs, commit) < 0)
 			return commit_error;
 	}
 	return commit_show;
@@ -1597,28 +1617,62 @@ static void gc_boundary(struct object_array *array)
 	}
 }
 
-struct commit *get_revision(struct rev_info *revs)
+static void create_boundary_commit_list(struct rev_info *revs)
+{
+	unsigned i;
+	struct commit *c;
+	struct object_array *array = &revs->boundary_commits;
+	struct object_array_entry *objects = array->objects;
+
+	/*
+	 * If revs->commits is non-NULL at this point, an error occurred in
+	 * get_revision_1().  Ignore the error and continue printing the
+	 * boundary commits anyway.  (This is what the code has always
+	 * done.)
+	 */
+	if (revs->commits) {
+		free_commit_list(revs->commits);
+		revs->commits = NULL;
+	}
+
+	/*
+	 * Put all of the actual boundary commits from revs->boundary_commits
+	 * into revs->commits
+	 */
+	for (i = 0; i < array->nr; i++) {
+		c = (struct commit *)(objects[i].item);
+		if (!c)
+			continue;
+		if (!(c->object.flags & CHILD_SHOWN))
+			continue;
+		if (c->object.flags & (SHOWN | BOUNDARY))
+			continue;
+		c->object.flags |= BOUNDARY;
+		commit_list_insert(c, &revs->commits);
+	}
+
+	/*
+	 * If revs->topo_order is set, sort the boundary commits
+	 * in topological order
+	 */
+	sort_in_topological_order(&revs->commits, revs->lifo);
+}
+
+static struct commit *get_revision_internal(struct rev_info *revs)
 {
 	struct commit *c = NULL;
 	struct commit_list *l;
 
 	if (revs->boundary == 2) {
-		unsigned i;
-		struct object_array *array = &revs->boundary_commits;
-		struct object_array_entry *objects = array->objects;
-		for (i = 0; i < array->nr; i++) {
-			c = (struct commit *)(objects[i].item);
-			if (!c)
-				continue;
-			if (!(c->object.flags & CHILD_SHOWN))
-				continue;
-			if (!(c->object.flags & SHOWN))
-				break;
-		}
-		if (array->nr <= i)
-			return NULL;
-
-		c->object.flags |= SHOWN | BOUNDARY;
+		/*
+		 * All of the normal commits have already been returned,
+		 * and we are now returning boundary commits.
+		 * create_boundary_commit_list() has populated
+		 * revs->commits with the remaining commits to return.
+		 */
+		c = pop_commit(&revs->commits);
+		if (c)
+			c->object.flags |= SHOWN;
 		return c;
 	}
 
@@ -1682,7 +1736,14 @@ struct commit *get_revision(struct rev_info *revs)
 		 * switch to boundary commits output mode.
 		 */
 		revs->boundary = 2;
-		return get_revision(revs);
+
+		/*
+		 * Update revs->commits to contain the list of
+		 * boundary commits.
+		 */
+		create_boundary_commit_list(revs);
+
+		return get_revision_internal(revs);
 	}
 
 	/*
@@ -1702,5 +1763,13 @@ struct commit *get_revision(struct rev_info *revs)
 		add_object_array(p, NULL, &revs->boundary_commits);
 	}
 
+	return c;
+}
+
+struct commit *get_revision(struct rev_info *revs)
+{
+	struct commit *c = get_revision_internal(revs);
+	if (c && revs->graph)
+		graph_update(revs->graph, c);
 	return c;
 }

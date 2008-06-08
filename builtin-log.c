@@ -18,6 +18,9 @@
 #include "run-command.h"
 #include "shortlog.h"
 
+/* Set a default date-time format for git log ("log.date" config variable) */
+static const char *default_date_mode = NULL;
+
 static int default_show_root = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
@@ -61,7 +64,12 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
+
+	if (default_date_mode)
+		rev->date_mode = parse_date_format(default_date_mode);
+
 	argc = setup_revisions(argc, argv, rev, "HEAD");
+
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
 	if (DIFF_OPT_TST(&rev->diffopt, FOLLOW_RENAMES)) {
@@ -222,7 +230,7 @@ static int cmd_log_walk(struct rev_info *rev)
 	return 0;
 }
 
-static int git_log_config(const char *var, const char *value)
+static int git_log_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "format.pretty"))
 		return git_config_string(&fmt_pretty, var, value);
@@ -232,18 +240,20 @@ static int git_log_config(const char *var, const char *value)
 		fmt_patch_subject_prefix = xstrdup(value);
 		return 0;
 	}
+	if (!strcmp(var, "log.date"))
+		return git_config_string(&default_date_mode, var, value);
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;
 	}
-	return git_diff_ui_config(var, value);
+	return git_diff_ui_config(var, value, cb);
 }
 
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	git_config(git_log_config);
+	git_config(git_log_config, NULL);
 
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
@@ -319,7 +329,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	struct object_array_entry *objects;
 	int i, count, ret = 0;
 
-	git_config(git_log_config);
+	git_config(git_log_config, NULL);
 
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
@@ -383,7 +393,7 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	git_config(git_log_config);
+	git_config(git_log_config, NULL);
 
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
@@ -416,7 +426,7 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	git_config(git_log_config);
+	git_config(git_log_config, NULL);
 
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
@@ -471,7 +481,7 @@ static void add_header(const char *value)
 	extra_hdr[extra_hdr_nr++] = xstrndup(value, len);
 }
 
-static int git_format_config(const char *var, const char *value)
+static int git_format_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "format.headers")) {
 		if (!value)
@@ -504,7 +514,7 @@ static int git_format_config(const char *var, const char *value)
 		return 0;
 	}
 
-	return git_log_config(var, value);
+	return git_log_config(var, value, cb);
 }
 
 
@@ -771,7 +781,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char *add_signoff = NULL;
 	struct strbuf buf;
 
-	git_config(git_format_config);
+	git_config(git_format_config, NULL);
 	init_revisions(&rev, prefix);
 	rev.commit_format = CMIT_FMT_EMAIL;
 	rev.verbose_header = 1;

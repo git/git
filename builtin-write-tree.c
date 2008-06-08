@@ -18,7 +18,7 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 	unsigned char sha1[20];
 	const char *me = "git-write-tree";
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	while (1 < argc) {
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--missing-ok"))

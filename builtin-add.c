@@ -79,12 +79,18 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec,
 		prune_directory(dir, pathspec, baselen);
 }
 
+struct update_callback_data
+{
+	int flags;
+	int add_errors;
+};
+
 static void update_callback(struct diff_queue_struct *q,
 			    struct diff_options *opt, void *cbdata)
 {
-	int i, verbose;
+	int i;
+	struct update_callback_data *data = cbdata;
 
-	verbose = *((int *)cbdata);
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		const char *path = p->one->path;
@@ -94,27 +100,36 @@ static void update_callback(struct diff_queue_struct *q,
 		case DIFF_STATUS_UNMERGED:
 		case DIFF_STATUS_MODIFIED:
 		case DIFF_STATUS_TYPE_CHANGED:
-			add_file_to_cache(path, verbose);
+			if (add_file_to_cache(path, data->flags)) {
+				if (!(data->flags & ADD_CACHE_IGNORE_ERRORS))
+					die("updating files failed");
+				data->add_errors++;
+			}
 			break;
 		case DIFF_STATUS_DELETED:
-			remove_file_from_cache(path);
-			if (verbose)
+			if (!(data->flags & ADD_CACHE_PRETEND))
+				remove_file_from_cache(path);
+			if (data->flags & (ADD_CACHE_PRETEND|ADD_CACHE_VERBOSE))
 				printf("remove '%s'\n", path);
 			break;
 		}
 	}
 }
 
-void add_files_to_cache(int verbose, const char *prefix, const char **pathspec)
+int add_files_to_cache(const char *prefix, const char **pathspec, int flags)
 {
+	struct update_callback_data data;
 	struct rev_info rev;
 	init_revisions(&rev, prefix);
 	setup_revisions(0, NULL, &rev, NULL);
 	rev.prune_data = pathspec;
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
-	rev.diffopt.format_callback_data = &verbose;
+	data.flags = flags;
+	data.add_errors = 0;
+	rev.diffopt.format_callback_data = &data;
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
+	return !!data.add_errors;
 }
 
 static void refresh(int verbose, const char **pathspec)
@@ -177,6 +192,7 @@ static const char ignore_error[] =
 "The following paths are ignored by one of your .gitignore files:\n";
 
 static int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
+static int ignore_add_errors;
 
 static struct option builtin_add_options[] = {
 	OPT__DRY_RUN(&show_only),
@@ -187,14 +203,26 @@ static struct option builtin_add_options[] = {
 	OPT_BOOLEAN('f', NULL, &ignored_too, "allow adding otherwise ignored files"),
 	OPT_BOOLEAN('u', NULL, &take_worktree_changes, "update tracked files"),
 	OPT_BOOLEAN( 0 , "refresh", &refresh_only, "don't add, only refresh the index"),
+	OPT_BOOLEAN( 0 , "ignore-errors", &ignore_add_errors, "just skip files which cannot be added because of errors"),
 	OPT_END(),
 };
 
+static int add_config(const char *var, const char *value, void *cb)
+{
+	if (!strcasecmp(var, "add.ignore-errors")) {
+		ignore_add_errors = git_config_bool(var, value);
+		return 0;
+	}
+	return git_default_config(var, value, cb);
+}
+
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
+	int exit_status = 0;
 	int i, newfd;
 	const char **pathspec;
 	struct dir_struct dir;
+	int flags;
 
 	argc = parse_options(argc, argv, builtin_add_options,
 			  builtin_add_usage, 0);
@@ -203,16 +231,20 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (add_interactive)
 		exit(interactive_add(argc, argv, prefix));
 
-	git_config(git_default_config);
+	git_config(add_config, NULL);
 
 	newfd = hold_locked_index(&lock_file, 1);
+
+	flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
+		 (show_only ? ADD_CACHE_PRETEND : 0) |
+		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0));
 
 	if (take_worktree_changes) {
 		const char **pathspec;
 		if (read_cache() < 0)
 			die("index file corrupt");
 		pathspec = get_pathspec(prefix, argv);
-		add_files_to_cache(verbose, prefix, pathspec);
+		exit_status = add_files_to_cache(prefix, pathspec, flags);
 		goto finish;
 	}
 
@@ -230,17 +262,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	fill_directory(&dir, pathspec, ignored_too);
 
-	if (show_only) {
-		const char *sep = "", *eof = "";
-		for (i = 0; i < dir.nr; i++) {
-			printf("%s%s", sep, dir.entries[i]->name);
-			sep = " ";
-			eof = "\n";
-		}
-		fputs(eof, stdout);
-		return 0;
-	}
-
 	if (read_cache() < 0)
 		die("index file corrupt");
 
@@ -254,7 +275,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	for (i = 0; i < dir.nr; i++)
-		add_file_to_cache(dir.entries[i]->name, verbose);
+		if (add_file_to_cache(dir.entries[i]->name, flags)) {
+			if (!ignore_add_errors)
+				die("adding files failed");
+			exit_status = 1;
+		}
 
  finish:
 	if (active_cache_changed) {
@@ -263,5 +288,5 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			die("Unable to write new index file");
 	}
 
-	return 0;
+	return exit_status;
 }

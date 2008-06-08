@@ -24,7 +24,7 @@ test_expect_success 'create subprojects' \
     git add sub2 &&
     git commit -q -m "subprojects added" &&
     git diff-tree --abbrev=5 HEAD^ HEAD |cut -d" " -f-3,5- >current &&
-    git diff expected current'
+    test_cmp expected current'
 
 git branch save HEAD
 
@@ -62,7 +62,7 @@ test_expect_success 'check if clone works' \
     'git ls-files -s >expected &&
     git clone -l -s . cloned &&
     ( cd cloned && git ls-files -s ) >current &&
-    git diff expected current'
+    test_cmp expected current'
 
 test_expect_success 'removing and adding subproject' \
     'git update-index --force-remove -- sub2 &&

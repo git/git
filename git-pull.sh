@@ -107,6 +107,11 @@ error_on_no_merge_candidates () {
 }
 
 test true = "$rebase" && {
+	git update-index --refresh &&
+	git diff-files --quiet &&
+	git diff-index --cached --quiet HEAD -- ||
+	die "refusing to pull with rebase: your working tree is not up-to-date"
+
 	. git-parse-remote &&
 	origin="$1"
 	test -z "$origin" && origin=$(get_default_remote)

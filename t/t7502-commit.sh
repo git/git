@@ -212,4 +212,32 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 	test "`cat .git/result`" = "editor not started"
 '
 
+pwd=`pwd`
+cat > .git/FAKE_EDITOR << EOF
+#! /bin/sh
+# kill -TERM command added below.
+EOF
+
+test_expect_success 'a SIGTERM should break locks' '
+	echo >>negative &&
+	sh -c '\''
+	  echo kill -TERM $$ >> .git/FAKE_EDITOR
+	  GIT_EDITOR=.git/FAKE_EDITOR exec git commit -a'\'' && exit 1  # should fail
+	! test -f .git/index.lock
+'
+
+rm -f .git/MERGE_MSG .git/COMMIT_EDITMSG
+git reset -q --hard
+
+test_expect_success 'Hand committing of a redundant merge removes dups' '
+
+	git rev-parse second master >expect &&
+	test_must_fail git merge second master &&
+	git checkout master g &&
+	EDITOR=: git commit -a &&
+	git cat-file commit HEAD | sed -n -e "s/^parent //p" -e "/^$/q" >actual &&
+	test_cmp expect actual
+
+'
+
 test_done

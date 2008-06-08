@@ -533,7 +533,7 @@ static void append_one_rev(const char *av)
 	die("bad sha1 reference %s", av);
 }
 
-static int git_show_branch_config(const char *var, const char *value)
+static int git_show_branch_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "showbranch.default")) {
 		if (!value)
@@ -547,7 +547,7 @@ static int git_show_branch_config(const char *var, const char *value)
 		return 0;
 	}
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
@@ -611,7 +611,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int reflog = 0;
 	const char *reflog_base = NULL;
 
-	git_config(git_show_branch_config);
+	git_config(git_show_branch_config, NULL);
 
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_num) {
@@ -782,8 +782,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 				has_head++;
 		}
 		if (!has_head) {
-			int pfxlen = strlen("refs/heads/");
-			append_one_rev(head + pfxlen);
+			int offset = !prefixcmp(head, "refs/heads/") ? 11 : 0;
+			append_one_rev(head + offset);
 		}
 	}
 

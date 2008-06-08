@@ -104,11 +104,9 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	newfd = hold_locked_index(&lock_file, 1);
-
-	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];

@@ -63,6 +63,7 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_REVERSE_DIFF        (1 << 15)
 #define DIFF_OPT_CHECK_FAILED        (1 << 16)
 #define DIFF_OPT_RELATIVE_NAME       (1 << 17)
+#define DIFF_OPT_IGNORE_SUBMODULES   (1 << 18)
 #define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
 #define DIFF_OPT_SET(opts, flag)    ((opts)->flags |= DIFF_OPT_##flag)
 #define DIFF_OPT_CLR(opts, flag)    ((opts)->flags &= ~DIFF_OPT_##flag)
@@ -181,8 +182,8 @@ extern void diff_unmerge(struct diff_options *,
 #define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
-extern int git_diff_basic_config(const char *var, const char *value);
-extern int git_diff_ui_config(const char *var, const char *value);
+extern int git_diff_basic_config(const char *var, const char *value, void *cb);
+extern int git_diff_ui_config(const char *var, const char *value, void *cb);
 extern int diff_use_color_default;
 extern void diff_setup(struct diff_options *);
 extern int diff_opt_parse(struct diff_options *, const char **, int);
@@ -250,15 +251,13 @@ extern const char *diff_unique_abbrev(const unsigned char *, int);
 /* report racily-clean paths as modified */
 #define DIFF_RACY_IS_MODIFIED 02
 extern int run_diff_files(struct rev_info *revs, unsigned int option);
-extern int setup_diff_no_index(struct rev_info *revs,
-		int argc, const char ** argv, int nongit, const char *prefix);
-extern int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv);
-
 extern int run_diff_index(struct rev_info *revs, int cached);
 
 extern int do_diff_cache(const unsigned char *, struct diff_options *);
 extern int diff_flush_patch_id(struct diff_options *, unsigned char *);
 
 extern int diff_result_code(struct diff_options *, int);
+
+extern void diff_no_index(struct rev_info *, int, const char **, int, const char *);
 
 #endif /* DIFF_H */

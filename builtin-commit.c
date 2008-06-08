@@ -179,9 +179,10 @@ static void add_remove_files(struct path_list *list)
 		struct stat st;
 		struct path_list_item *p = &(list->items[i]);
 
-		if (!lstat(p->path, &st))
-			add_to_cache(p->path, &st, 0);
-		else
+		if (!lstat(p->path, &st)) {
+			if (add_to_cache(p->path, &st, 0))
+				die("updating files failed");
+		} else
 			remove_file_from_cache(p->path);
 	}
 }
@@ -222,6 +223,8 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 
 	if (interactive) {
 		interactive_add(argc, argv, prefix);
+		if (read_cache() < 0)
+			die("index file corrupt");
 		commit_style = COMMIT_AS_IS;
 		return get_index_file();
 	}
@@ -246,7 +249,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 	 */
 	if (all || (also && pathspec && *pathspec)) {
 		int fd = hold_locked_index(&index_lock, 1);
-		add_files_to_cache(0, also ? prefix : NULL, pathspec);
+		add_files_to_cache(also ? prefix : NULL, pathspec, 0);
 		refresh_cache(REFRESH_QUIET);
 		if (write_cache(fd, active_cache, active_nr) ||
 		    close_lock_file(&index_lock))
@@ -805,7 +808,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	const char *index_file;
 	int commitable;
 
-	git_config(git_status_config);
+	git_config(git_status_config, NULL);
 
 	if (wt_status_use_color == -1)
 		wt_status_use_color = git_use_color_default;
@@ -859,7 +862,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	}
 }
 
-int git_commit_config(const char *k, const char *v)
+int git_commit_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "commit.template")) {
 		if (!v)
@@ -868,7 +871,7 @@ int git_commit_config(const char *k, const char *v)
 		return 0;
 	}
 
-	return git_status_config(k, v);
+	return git_status_config(k, v, cb);
 }
 
 static const char commit_utf8_warn[] =
@@ -880,10 +883,19 @@ static void add_parent(struct strbuf *sb, const unsigned char *sha1)
 {
 	struct object *obj = parse_object(sha1);
 	const char *parent = sha1_to_hex(sha1);
+	const char *cp;
+
 	if (!obj)
 		die("Unable to find commit parent %s", parent);
 	if (obj->type != OBJ_COMMIT)
 		die("Parent %s isn't a proper commit", parent);
+
+	for (cp = sb->buf; cp && (cp = strstr(cp, "\nparent ")); cp += 8) {
+		if (!memcmp(cp + 8, parent, 40) && cp[48] == '\n') {
+			error("duplicate parent %s ignored", parent);
+			return;
+		}
+	}
 	strbuf_addf(sb, "parent %s\n", parent);
 }
 
@@ -896,7 +908,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	unsigned char commit_sha1[20];
 	struct ref_lock *ref_lock;
 
-	git_config(git_commit_config);
+	git_config(git_commit_config, NULL);
 
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage);
 

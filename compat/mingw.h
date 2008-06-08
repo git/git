@@ -24,6 +24,8 @@ typedef int pid_t;
 #define SIGKILL 0
 #define SIGCHLD 0
 #define SIGPIPE 0
+#define SIGHUP 0
+#define SIGQUIT 0
 #define SIGALRM 100
 
 #define F_GETFD 1

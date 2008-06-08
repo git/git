@@ -4,7 +4,7 @@
 use warnings;
 use strict;
 use vars qw/	$AUTHOR $VERSION
-		$sha1 $sha1_short $_revision
+		$sha1 $sha1_short $_revision $_repository
 		$_q $_authors %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
@@ -83,6 +83,7 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'repack-flags|repack-args|repack-opts=s' =>
 		   \$Git::SVN::_repack_flags,
 		'use-log-author' => \$Git::SVN::_use_log_author,
+		'add-author-from' => \$Git::SVN::_add_author_from,
 		%remote_opts );
 
 my ($_trunk, $_tags, $_branches, $_stdlayout);
@@ -176,6 +177,7 @@ my %cmd = (
 			  'strategy|s=s' => \$_strategy,
 			  'local|l' => \$_local,
 			  'fetch-all|all' => \$_fetch_all,
+			  'dry-run|n' => \$_dry_run,
 			  %fc_opts } ],
 	'commit-diff' => [ \&cmd_commit_diff,
 	                   'Commit a diff between two trees',
@@ -221,6 +223,7 @@ unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 		}
 		$ENV{GIT_DIR} = $git_dir;
 	}
+	$_repository = Git->repository(Repository => $ENV{GIT_DIR});
 }
 
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
@@ -302,6 +305,7 @@ sub do_git_init_db {
 			}
 		}
 		command_noisy(@init_db);
+		$_repository = Git->repository(Repository => ".git");
 	}
 	my $set;
 	my $pfx = "svn-remote.$Git::SVN::default_repo_id";
@@ -318,6 +322,7 @@ sub init_subdir {
 	mkpath([$repo_path]) unless -d $repo_path;
 	chdir $repo_path or die "Couldn't chdir to $repo_path: $!\n";
 	$ENV{GIT_DIR} = '.git';
+	$_repository = Git->repository(Repository => $ENV{GIT_DIR});
 }
 
 sub cmd_clone {
@@ -553,6 +558,11 @@ sub cmd_rebase {
 		die "Unable to determine upstream SVN information from ",
 		    "working tree history\n";
 	}
+	if ($_dry_run) {
+		print "Remote Branch: " . $gs->refname . "\n";
+		print "SVN URL: " . $url . "\n";
+		return;
+	}
 	if (command(qw/diff-index HEAD --/)) {
 		print STDERR "Cannot rebase with uncommited changes:\n";
 		command_noisy('status');
@@ -741,7 +751,7 @@ sub cmd_commit_diff {
 	my $usage = "Usage: $0 commit-diff -r<revision> ".
 	            "<tree-ish> <tree-ish> [<URL>]";
 	fatal($usage) if (!defined $ta || !defined $tb);
-	my $svn_path;
+	my $svn_path = '';
 	if (!defined $url) {
 		my $gs = eval { Git::SVN->new };
 		if (!$gs) {
@@ -765,7 +775,6 @@ sub cmd_commit_diff {
 		$_message ||= get_commit_entry($tb)->{log};
 	}
 	my $ra ||= Git::SVN::Ra->new($url);
-	$svn_path ||= $ra->{svn_path};
 	my $r = $_revision;
 	if ($r eq 'HEAD') {
 		$r = $ra->get_latest_revnum;
@@ -1012,16 +1021,27 @@ sub get_commit_entry {
 		my ($msg_fh, $ctx) = command_output_pipe('cat-file',
 		                                         $type, $treeish);
 		my $in_msg = 0;
+		my $author;
+		my $saw_from = 0;
 		while (<$msg_fh>) {
 			if (!$in_msg) {
 				$in_msg = 1 if (/^\s*$/);
+				$author = $1 if (/^author (.*>)/);
 			} elsif (/^git-svn-id: /) {
 				# skip this for now, we regenerate the
 				# correct one on re-fetch anyways
 				# TODO: set *:merge properties or like...
 			} else {
+				if (/^From:/ || /^Signed-off-by:/) {
+					$saw_from = 1;
+				}
 				print $log_fh $_ or croak $!;
 			}
+		}
+		if ($Git::SVN::_add_author_from && defined($author)
+		    && !$saw_from) {
+			print $log_fh "\nFrom: $author\n"
+			      or croak $!;
 		}
 		command_close_pipe($msg_fh, $ctx);
 	}
@@ -1249,7 +1269,7 @@ use constant rev_map_fmt => 'NH40';
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags $_use_svm_props $_head
             $_use_svnsync_props $no_reuse_existing $_minimize_url
-	    $_use_log_author/;
+	    $_use_log_author $_add_author_from/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
@@ -1903,7 +1923,7 @@ sub prop_walk {
 
 	foreach (sort keys %$dirent) {
 		next if $dirent->{$_}->{kind} != $SVN::Node::dir;
-		$self->prop_walk($p . $_, $rev, $sub);
+		$self->prop_walk($self->{path} . $p . $_, $rev, $sub);
 	}
 }
 
@@ -3018,6 +3038,7 @@ use vars qw/@ISA/;
 use strict;
 use warnings;
 use Carp qw/croak/;
+use File::Temp qw/tempfile/;
 use IO::File qw//;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
@@ -3173,14 +3194,9 @@ sub apply_textdelta {
 	my $base = IO::File->new_tmpfile;
 	$base->autoflush(1);
 	if ($fb->{blob}) {
-		defined (my $pid = fork) or croak $!;
-		if (!$pid) {
-			open STDOUT, '>&', $base or croak $!;
-			print STDOUT 'link ' if ($fb->{mode_a} == 120000);
-			exec qw/git-cat-file blob/, $fb->{blob} or croak $!;
-		}
-		waitpid $pid, 0;
-		croak $? if $?;
+		print $base 'link ' if ($fb->{mode_a} == 120000);
+		my $size = $::_repository->cat_blob($fb->{blob}, $base);
+		die "Failed to read object $fb->{blob}" if ($size < 0);
 
 		if (defined $exp) {
 			seek $base, 0, 0 or croak $!;
@@ -3221,14 +3237,18 @@ sub close_file {
 				sysseek($fh, 0, 0) or croak $!;
 			}
 		}
-		defined(my $pid = open my $out,'-|') or die "Can't fork: $!\n";
-		if (!$pid) {
-			open STDIN, '<&', $fh or croak $!;
-			exec qw/git-hash-object -w --stdin/ or croak $!;
+
+		my ($tmp_fh, $tmp_filename) = File::Temp::tempfile(UNLINK => 1);
+		my $result;
+		while ($result = sysread($fh, my $string, 1024)) {
+			syswrite($tmp_fh, $string, $result);
 		}
-		chomp($hash = do { local $/; <$out> });
-		close $out or croak $!;
+		defined $result or croak $!;
+		close $tmp_fh or croak $!;
+
 		close $fh or croak $!;
+
+		$hash = $::_repository->hash_and_insert_object($tmp_filename);
 		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
 		close $fb->{base} or croak $!;
 	} else {
@@ -3554,13 +3574,8 @@ sub chg_file {
 	} elsif ($m->{mode_a} =~ /^120/ && $m->{mode_b} !~ /^120/) {
 		$self->change_file_prop($fbat,'svn:special',undef);
 	}
-	defined(my $pid = fork) or croak $!;
-	if (!$pid) {
-		open STDOUT, '>&', $fh or croak $!;
-		exec qw/git-cat-file blob/, $m->{sha1_b} or croak $!;
-	}
-	waitpid $pid, 0;
-	croak $? if $?;
+	my $size = $::_repository->cat_blob($m->{sha1_b}, $fh);
+	croak "Failed to read object $m->{sha1_b}" if ($size < 0);
 	$fh->flush == 0 or croak $!;
 	seek $fh, 0, 0 or croak $!;
 
