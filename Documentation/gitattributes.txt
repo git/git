@@ -502,6 +502,12 @@ frotz	unspecified
 Creating an archive
 ~~~~~~~~~~~~~~~~~~~
 
+`export-ignore`
+^^^^^^^^^^^^^^^
+
+Files and directories with the attribute `export-ignore` won't be added to
+archive files.
+
 `export-subst`
 ^^^^^^^^^^^^^^
 
