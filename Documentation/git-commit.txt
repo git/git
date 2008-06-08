@@ -57,14 +57,16 @@ OPTIONS
 	been modified and deleted, but new files you have not
 	told git about are not affected.
 
--c or -C <commit>::
-	Take existing commit object, and reuse the log message
+-C <commit>|--reuse-message=<commit>::
+	Take an existing commit object, and reuse the log message
 	and the authorship information (including the timestamp)
-	when creating the commit.  With '-C', the editor is not
-	invoked; with '-c' the user can further edit the commit
-	message.
+	when creating the commit.
 
--F <file>::
+-c <commit>|--reedit-message=<commit>::
+	Like '-C', but with '-c' the editor is invoked, so that
+	the user can further edit the commit message.
+
+-F <file>|--file=<file>::
 	Take the commit message from the given file.  Use '-' to
 	read the message from the standard input.
 
@@ -85,7 +87,7 @@ OPTIONS
 -s|--signoff::
 	Add Signed-off-by line at the end of the commit message.
 
---no-verify::
+-n|--no-verify::
 	This option bypasses the pre-commit and commit-msg hooks.
 	See also linkgit:githooks[5][hooks].
 
@@ -112,7 +114,6 @@ OPTIONS
 	further edit the message taken from these sources.
 
 --amend::
-
 	Used to amend the tip of the current branch. Prepare the tree
 	object you would want to replace the latest commit as usual
 	(this includes the usual -i/-o and explicit paths), and the
