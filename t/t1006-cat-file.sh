@@ -74,7 +74,7 @@ $content"
     test -z "$content" ||
     test_expect_success "--batch output of $type is correct" '
 	expect="$(maybe_remove_timestamp "$batch_output" $no_ts)"
-	actual="$(maybe_remove_timestamp "$(echo $sha1 | git cat-file --batch)" no_ts)"
+	actual="$(maybe_remove_timestamp "$(echo $sha1 | git cat-file --batch)" $no_ts)"
         if test "z$expect" = "z$actual"
 	then
 		: happy
