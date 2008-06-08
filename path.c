@@ -314,7 +314,7 @@ const char *make_nonrelative_path(const char *path)
 {
 	static char buf[PATH_MAX + 1];
 
-	if (path[0] == '/') {
+	if (is_absolute_path(path)) {
 		if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
 			die ("Too long path: %.*s", 60, path);
 	} else {
