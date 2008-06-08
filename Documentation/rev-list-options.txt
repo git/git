@@ -129,7 +129,8 @@ limiting may be applied.
 
 --
 
--n 'number', --max-count='number'::
+-n 'number'::
+--max-count='number'::
 
 	Limit the number of commits output.
 
@@ -137,21 +138,25 @@ limiting may be applied.
 
 	Skip 'number' commits before starting to show the commit output.
 
---since='date', --after='date'::
+--since='date'::
+--after='date'::
 
 	Show commits more recent than a specific date.
 
---until='date', --before='date'::
+--until='date'::
+--before='date'::
 
 	Show commits older than a specific date.
 
 ifdef::git-rev-list[]
---max-age='timestamp', --min-age='timestamp'::
+--max-age='timestamp'::
+--min-age='timestamp'::
 
 	Limit the commits output to specified time range.
 endif::git-rev-list[]
 
---author='pattern', --committer='pattern'::
+--author='pattern'::
+--committer='pattern'::
 
 	Limit the commits output to ones with author/committer
 	header lines that match the specified pattern (regular expression).
@@ -161,16 +166,19 @@ endif::git-rev-list[]
 	Limit the commits output to ones with log message that
 	matches the specified pattern (regular expression).
 
--i, --regexp-ignore-case::
+-i::
+--regexp-ignore-case::
 
 	Match the regexp limiting patterns without regard to letters case.
 
--E, --extended-regexp::
+-E::
+--extended-regexp::
 
 	Consider the limiting patterns to be extended regular expressions
 	instead of the default basic regular expressions.
 
--F, --fixed-strings::
+-F::
+--fixed-strings::
 
 	Consider the limiting patterns to be fixed strings (don't interpret
 	pattern as a regular expression).
@@ -239,7 +247,8 @@ from the other branch (for example, "3rd on b" may be cherry-picked
 from branch A).  With this option, such pairs of commits are
 excluded from the output.
 
--g, --walk-reflogs::
+-g::
+--walk-reflogs::
 
 	Instead of walking the commit ancestry chain, walk
 	reflog entries from the most recent one to older ones.
@@ -268,7 +277,8 @@ See also linkgit:git-reflog[1].
 	Output uninteresting commits at the boundary, which are usually
 	not shown.
 
---dense, --sparse::
+--dense::
+--sparse::
 
 When optional paths are given, the default behaviour ('--dense') is to
 only output commits that changes at least one of them, and also ignore

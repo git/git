@@ -38,10 +38,12 @@ OPTIONS
 	branches under $GIT_DIR/refs/heads/topic, giving
 	`topic/*` would show all of them.
 
--r|--remotes::
+-r::
+--remotes::
 	Show the remote-tracking branches.
 
--a|--all::
+-a::
+--all::
 	Show both remote-tracking branches and local branches.
 
 --current::

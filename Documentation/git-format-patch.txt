@@ -74,14 +74,17 @@ include::diff-options.txt[]
 -<n>::
 	Limits the number of patches to prepare.
 
--o|--output-directory <dir>::
+-o <dir>::
+--output-directory <dir>::
 	Use <dir> to store the resulting files, instead of the
 	current working directory.
 
--n|--numbered::
+-n::
+--numbered::
 	Name output in '[PATCH n/m]' format.
 
--N|--no-numbered::
+-N::
+--no-numbered::
 	Name output in '[PATCH]' format.
 
 --start-number <n>::
@@ -92,11 +95,13 @@ include::diff-options.txt[]
 	without the default first line of the commit appended.
 	Mutually exclusive with the --stdout option.
 
--k|--keep-subject::
+-k::
+--keep-subject::
 	Do not strip/add '[PATCH]' from the first line of the
 	commit log message.
 
--s|--signoff::
+-s::
+--signoff::
 	Add `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
 

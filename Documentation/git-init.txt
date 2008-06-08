@@ -16,7 +16,8 @@ OPTIONS
 
 --
 
--q, \--quiet::
+-q::
+--quiet::
 
 Only print error and warning messages, all other output will be suppressed.
 

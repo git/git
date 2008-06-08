@@ -47,7 +47,8 @@ OPTIONS
 	by linkgit:git-check-ref-format[1].  Some of these checks
 	may restrict the characters allowed in a branch name.
 
--t, --track::
+-t::
+--track::
 	When creating a new branch, set up configuration so that git-pull
 	will automatically retrieve data from the start point, which must be
 	a branch. Use this if you always pull from the same upstream branch

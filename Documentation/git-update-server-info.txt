@@ -22,7 +22,8 @@ generates such auxiliary files.
 OPTIONS
 -------
 
--f|--force::
+-f::
+--force::
 	Update the info files from scratch.
 
 

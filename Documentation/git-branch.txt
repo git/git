@@ -95,7 +95,8 @@ OPTIONS
 -a::
 	List both remote-tracking branches and local branches.
 
--v, --verbose::
+-v::
+--verbose::
 	Show sha1 and commit subject line for each head.
 
 --abbrev=<length>::

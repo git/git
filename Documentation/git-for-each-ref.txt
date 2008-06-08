@@ -53,7 +53,10 @@ OPTIONS
 	literally, in the latter case matching completely or from the
 	beginning up to a slash.
 
---shell, --perl, --python, --tcl::
+--shell::
+--perl::
+--python::
+--tcl::
 	If given, strings that substitute `%(fieldname)`
 	placeholders are quoted as string literals suitable for
 	the specified host language.  This is meant to produce

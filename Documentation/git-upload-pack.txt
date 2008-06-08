@@ -24,10 +24,10 @@ repository.  For push operations, see 'git-send-pack'.
 OPTIONS
 -------
 
-\--strict::
+--strict::
 	Do not try <directory>/.git/ if <directory> is no git directory.
 
-\--timeout=<n>::
+--timeout=<n>::
 	Interrupt transfer after <n> seconds of inactivity.
 
 <directory>::

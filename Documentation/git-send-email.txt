@@ -40,7 +40,8 @@ The --cc option must be repeated for each user you want on the cc list.
 	Output of this command must be single email address per line.
 	Default is the value of 'sendemail.cccmd' configuration value.
 
---chain-reply-to, --no-chain-reply-to::
+--chain-reply-to::
+--no-chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
 	the first will be sent as replies to the first email sent.  When using
@@ -65,7 +66,8 @@ The --cc option must be repeated for each user you want on the cc list.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
---signed-off-by-cc, --no-signed-off-by-cc::
+--signed-off-by-cc::
+--no-signed-off-by-cc::
         If this is set, add emails found in Signed-off-by: or Cc: lines to the
         cc list.
         Default is the value of 'sendemail.signedoffcc' configuration value;
@@ -141,7 +143,8 @@ user is prompted for a password while the input is masked for privacy.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
---suppress-from, --no-suppress-from::
+--suppress-from::
+--no-suppress-from::
         If this is set, do not add the From: address to the cc: list.
         Default is the value of 'sendemail.suppressfrom' configuration value;
         if that is unspecified, default to --no-suppress-from.
@@ -157,7 +160,8 @@ user is prompted for a password while the input is masked for privacy.
 	if that is unspecified, default to 'self' if --suppress-from is
 	specified, as well as 'sob' if --no-signed-off-cc is specified.
 
---thread, --no-thread::
+--thread::
+--no-thread::
 	If this is set, the In-Reply-To header will be set on each email sent.
 	If disabled with "--no-thread", no emails will have the In-Reply-To
 	header set.

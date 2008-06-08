@@ -138,7 +138,8 @@ help ...'.
 	environment variable. If no path is given 'git' will print
 	the current setting and then exit.
 
--p|--paginate::
+-p::
+--paginate::
 	Pipe all output into 'less' (or if set, $PAGER).
 
 --no-pager::

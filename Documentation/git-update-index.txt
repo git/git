@@ -76,7 +76,8 @@ OPTIONS
 --chmod=(+|-)x::
         Set the execute permissions on the updated files.
 
---assume-unchanged, --no-assume-unchanged::
+--assume-unchanged::
+--no-assume-unchanged::
 	When these flags are specified, the object name recorded
 	for the paths are not updated.  Instead, these options
 	sets and unsets the "assume unchanged" bit for the
@@ -88,7 +89,8 @@ OPTIONS
 	filesystem that has very slow lstat(2) system call
 	(e.g. cifs).
 
---again, -g::
+-g::
+--again::
 	Runs `git-update-index` itself on the paths whose index
 	entries are different from those from the `HEAD` commit.
 

@@ -50,22 +50,26 @@ OPTIONS
 	and `dir/file2`) can be given to add all files in the
 	directory, recursively.
 
--n, \--dry-run::
+-n::
+--dry-run::
         Don't actually add the file(s), just show if they exist.
 
--v, \--verbose::
+-v::
+--verbose::
         Be verbose.
 
 -f::
 	Allow adding otherwise ignored files.
 
--i, \--interactive::
+-i::
+--interactive::
 	Add modified contents in the working tree interactively to
 	the index. Optional path arguments may be supplied to limit
 	operation to a subset of the working tree. See ``Interactive
 	mode'' for details.
 
--p, \--patch::
+-p::
+--patch::
 	Similar to Interactive mode but the initial command loop is
 	bypassed and the 'patch' subcommand is invoked using each of
 	the specified filepatterns before exiting.
@@ -79,11 +83,11 @@ OPTIONS
 	command line. If no paths are specified, all tracked files in the
 	current directory and its subdirectories are updated.
 
-\--refresh::
+--refresh::
 	Don't add the file(s), but only refresh their stat()
 	information in the index.
 
-\--ignore-errors::
+--ignore-errors::
 	If some files could not be added because of errors indexing
 	them, do not abort the operation, but continue adding the
 	others. The command shall still exit with non-zero status.

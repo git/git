@@ -213,19 +213,22 @@ OPTIONS
 --skip::
 	Restart the rebasing process by skipping the current patch.
 
--m, \--merge::
+-m::
+--merge::
 	Use merging strategies to rebase.  When the recursive (default) merge
 	strategy is used, this allows rebase to be aware of renames on the
 	upstream side.
 
--s <strategy>, \--strategy=<strategy>::
+-s <strategy>::
+--strategy=<strategy>::
 	Use the given merge strategy; can be supplied more than
 	once to specify them in the order they should be tried.
 	If there is no `-s` option, a built-in list of strategies
 	is used instead (`git-merge-recursive` when merging a single
 	head, `git-merge-octopus` otherwise).  This implies --merge.
 
--v, \--verbose::
+-v::
+--verbose::
 	Display a diffstat of what changed upstream since the last rebase.
 
 -C<n>::
@@ -238,12 +241,14 @@ OPTIONS
 	This flag is passed to the `git-apply` program
 	(see linkgit:git-apply[1]) that applies the patch.
 
--i, \--interactive::
+-i::
+--interactive::
 	Make a list of the commits which are about to be rebased.  Let the
 	user edit that list before rebasing.  This mode can also be used to
 	split commits (see SPLITTING COMMITS below).
 
--p, \--preserve-merges::
+-p::
+--preserve-merges::
 	Instead of ignoring merges, try to recreate them.  This option
 	only works in interactive mode.
 

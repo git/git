@@ -22,17 +22,21 @@ Additionally, "[PATCH]" will be stripped from the commit description.
 OPTIONS
 -------
 
--h, \--help::
+-h::
+--help::
 	Print a short usage message and exit.
 
--n, \--numbered::
+-n::
+--numbered::
 	Sort output according to the number of commits per author instead
 	of author alphabetic order.
 
--s, \--summary::
+-s::
+--summary::
 	Suppress commit description and provide a commit count summary only.
 
--e, \--email::
+-e::
+--email::
 	Show the email address of each author.
 
 -w[<width>[,<indent1>[,<indent2>]]]::

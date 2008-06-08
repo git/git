@@ -33,11 +33,13 @@ OPTIONS
 	Do not list one-line descriptions from the actual commits being
 	merged.
 
---summary,--no-summary::
+--summary::
+--no-summary::
 	Synonyms to --log and --no-log; these are deprecated and will be
 	removed in the future.
 
---file <file>, -F <file>::
+-F <file>::
+--file <file>::
 	Take the list of merged objects from <file> instead of
 	stdin.
 

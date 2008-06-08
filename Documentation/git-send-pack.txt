@@ -21,33 +21,33 @@ updates it from the current repository, sending named refs.
 
 OPTIONS
 -------
-\--receive-pack=<git-receive-pack>::
+--receive-pack=<git-receive-pack>::
 	Path to the 'git-receive-pack' program on the remote
 	end.  Sometimes useful when pushing to a remote
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.
 
-\--exec=<git-receive-pack>::
+--exec=<git-receive-pack>::
 	Same as \--receive-pack=<git-receive-pack>.
 
-\--all::
+--all::
 	Instead of explicitly specifying which refs to update,
 	update all heads that locally exist.
 
-\--dry-run::
+--dry-run::
 	Do everything except actually send the updates.
 
-\--force::
+--force::
 	Usually, the command refuses to update a remote ref that
 	is not an ancestor of the local ref used to overwrite it.
 	This flag disables the check.  What this means is that
 	the remote repository can lose commits; use it with
 	care.
 
-\--verbose::
+--verbose::
 	Run verbosely.
 
-\--thin::
+--thin::
 	Spend extra cycles to minimize the number of objects to be sent.
 	Use it on slower connection.
 
