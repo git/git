@@ -42,7 +42,7 @@ test_expect_success 'Check "ours" is CRLF' '
 	test_cmp file file.temp
 '
 
-test_expect_failure 'Check that conflict file is CRLF' '
+test_expect_success 'Check that conflict file is CRLF' '
 	git reset --hard a &&
 	test_must_fail git merge side &&
 	cat file | remove_cr | append_cr >file.temp &&
