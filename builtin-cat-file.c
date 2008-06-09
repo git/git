@@ -150,7 +150,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 static int batch_one_object(const char *obj_name, int print_contents)
 {
 	unsigned char sha1[20];
-	enum object_type type;
+	enum object_type type = 0;
 	unsigned long size;
 	void *contents = contents;
 
@@ -168,8 +168,11 @@ static int batch_one_object(const char *obj_name, int print_contents)
 	else
 		type = sha1_object_info(sha1, &size);
 
-	if (type <= 0)
-		return 1;
+	if (type <= 0) {
+		printf("%s missing\n", obj_name);
+		fflush(stdout);
+		return 0;
+	}
 
 	printf("%s %s %lu\n", sha1_to_hex(sha1), typename(type), size);
 	fflush(stdout);
