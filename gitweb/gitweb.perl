@@ -3559,21 +3559,24 @@ sub git_patchset_body {
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-sub git_project_list_body {
-	my ($projlist, $order, $from, $to, $extra, $no_header) = @_;
-
-	my ($check_forks) = gitweb_check_feature('forks');
-
+# fills project list info (age, description, owner, forks) for each
+# project in the list, removing invalid projects from returned list
+# NOTE: modifies $projlist, but does not remove entries from it
+sub fill_project_list_info {
+	my ($projlist, $check_forks) = @_;
 	my @projects;
+
+ PROJECT:
 	foreach my $pr (@$projlist) {
-		my (@aa) = git_get_last_activity($pr->{'path'});
-		unless (@aa) {
-			next;
+		my (@activity) = git_get_last_activity($pr->{'path'});
+		unless (@activity) {
+			next PROJECT;
 		}
-		($pr->{'age'}, $pr->{'age_string'}) = @aa;
+		($pr->{'age'}, $pr->{'age_string'}) = @activity;
 		if (!defined $pr->{'descr'}) {
 			my $descr = git_get_project_description($pr->{'path'}) || "";
-			$pr->{'descr_long'} = to_utf8($descr);
+			$descr = to_utf8($descr);
+			$pr->{'descr_long'} = $descr;
 			$pr->{'descr'} = chop_str($descr, $projects_list_description_width, 5);
 		}
 		if (!defined $pr->{'owner'}) {
@@ -3585,13 +3588,21 @@ sub git_project_list_body {
 			    ($pname !~ /\/$/) &&
 			    (-d "$projectroot/$pname")) {
 				$pr->{'forks'} = "-d $projectroot/$pname";
-			}
-			else {
+			}	else {
 				$pr->{'forks'} = 0;
 			}
 		}
 		push @projects, $pr;
 	}
+
+	return @projects;
+}
+
+sub git_project_list_body {
+	my ($projlist, $order, $from, $to, $extra, $no_header) = @_;
+
+	my ($check_forks) = gitweb_check_feature('forks');
+	my @projects = fill_project_list_info($projlist, $check_forks);
 
 	$order ||= $default_projects_order;
 	$from = 0 unless defined $from;
