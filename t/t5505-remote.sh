@@ -138,6 +138,23 @@ test_expect_success 'show' '
 	 test_cmp expect output)
 '
 
+cat > test/expect << EOF
+* remote origin
+  URL: $(pwd)/one/.git
+  Remote branch merged with 'git pull' while on branch master
+    master
+  Local branches pushed with 'git push'
+    master:upstream +refs/tags/lastbackup
+EOF
+
+test_expect_success 'show -n' '
+	(mv one one.unreachable &&
+	 cd test &&
+	 git remote show -n origin > output &&
+	 mv ../one.unreachable ../one &&
+	 test_cmp expect output)
+'
+
 test_expect_success 'prune' '
 	(cd one &&
 	 git branch -m side side2) &&

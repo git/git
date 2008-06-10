@@ -12,7 +12,7 @@ SYNOPSIS
 'git-remote' [-v | --verbose]
 'git-remote' add [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>
 'git-remote' rm <name>
-'git-remote' show <name>
+'git-remote' show [-n] <name>
 'git-remote' prune <name>
 'git-remote' update [group]
 

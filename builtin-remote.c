@@ -421,10 +421,10 @@ static void show_list(const char *title, struct path_list *list)
 
 static int show_or_prune(int argc, const char **argv, int prune)
 {
-	int dry_run = 0, result = 0;
+	int no_query = 0, result = 0;
 	struct option options[] = {
 		OPT_GROUP("show specific options"),
-		OPT__DRY_RUN(&dry_run),
+		OPT_BOOLEAN('n', NULL, &no_query, "do not query remotes"),
 		OPT_END()
 	};
 	struct ref_states states;
@@ -442,21 +442,23 @@ static int show_or_prune(int argc, const char **argv, int prune)
 		struct transport *transport;
 		const struct ref *ref;
 		struct strbuf buf;
-		int i, got_states;
+		int i;
 
 		states.remote = remote_get(*argv);
 		if (!states.remote)
 			return error("No such remote: %s", *argv);
-		transport = transport_get(NULL, states.remote->url_nr > 0 ?
-			states.remote->url[0] : NULL);
-		ref = transport_get_remote_refs(transport);
-		transport_disconnect(transport);
 
 		read_branches();
-		got_states = get_ref_states(ref, &states);
-		if (got_states)
-			result = error("Error getting local info for '%s'",
-					states.remote->name);
+
+		if (!no_query) {
+			transport = transport_get(NULL,
+				states.remote->url_nr > 0 ?
+				states.remote->url[0] : NULL);
+			ref = transport_get_remote_refs(transport);
+			transport_disconnect(transport);
+
+			get_ref_states(ref, &states);
+		}
 
 		if (prune) {
 			for (i = 0; i < states.stale.nr; i++) {
@@ -486,17 +488,17 @@ static int show_or_prune(int argc, const char **argv, int prune)
 			printf("\n");
 		}
 
-		if (got_states)
-			continue;
-		strbuf_init(&buf, 0);
-		strbuf_addf(&buf, "  New remote branch%%s (next fetch will "
-			"store in remotes/%s)", states.remote->name);
-		show_list(buf.buf, &states.new);
-		strbuf_release(&buf);
-		show_list("  Stale tracking branch%s (use 'git remote prune')",
-				&states.stale);
-		show_list("  Tracked remote branch%s",
+		if (!no_query) {
+			strbuf_init(&buf, 0);
+			strbuf_addf(&buf, "  New remote branch%%s (next fetch "
+				"will store in remotes/%s)", states.remote->name);
+			show_list(buf.buf, &states.new);
+			strbuf_release(&buf);
+			show_list("  Stale tracking branch%s (use 'git remote "
+				"prune')", &states.stale);
+			show_list("  Tracked remote branch%s",
 				&states.tracked);
+		}
 
 		if (states.remote->push_refspec_nr) {
 			printf("  Local branch%s pushed with 'git push'\n   ",
