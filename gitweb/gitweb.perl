@@ -3598,6 +3598,36 @@ sub fill_project_list_info {
 	return @projects;
 }
 
+# print 'sort by' <th> element, either sorting by $key if $name eq $order
+# (changing $list), or generating 'sort by $name' replay link otherwise
+sub print_sort_th {
+	my ($str_sort, $name, $order, $key, $header, $list) = @_;
+	$key    ||= $name;
+	$header ||= ucfirst($name);
+
+	if ($order eq $name) {
+		if ($str_sort) {
+			@$list = sort {$a->{$key} cmp $b->{$key}} @$list;
+		} else {
+			@$list = sort {$a->{$key} <=> $b->{$key}} @$list;
+		}
+		print "<th>$header</th>\n";
+	} else {
+		print "<th>" .
+		      $cgi->a({-href => href(-replay=>1, order=>$name),
+		               -class => "header"}, $header) .
+		      "</th>\n";
+	}
+}
+
+sub print_sort_th_str {
+	print_sort_th(1, @_);
+}
+
+sub print_sort_th_num {
+	print_sort_th(0, @_);
+}
+
 sub git_project_list_body {
 	my ($projlist, $order, $from, $to, $extra, $no_header) = @_;
 
@@ -3614,43 +3644,15 @@ sub git_project_list_body {
 		if ($check_forks) {
 			print "<th></th>\n";
 		}
-		if ($order eq "project") {
-			@projects = sort {$a->{'path'} cmp $b->{'path'}} @projects;
-			print "<th>Project</th>\n";
-		} else {
-			print "<th>" .
-			      $cgi->a({-href => href(project=>undef, order=>'project'),
-			               -class => "header"}, "Project") .
-			      "</th>\n";
-		}
-		if ($order eq "descr") {
-			@projects = sort {$a->{'descr'} cmp $b->{'descr'}} @projects;
-			print "<th>Description</th>\n";
-		} else {
-			print "<th>" .
-			      $cgi->a({-href => href(project=>undef, order=>'descr'),
-			               -class => "header"}, "Description") .
-			      "</th>\n";
-		}
-		if ($order eq "owner") {
-			@projects = sort {$a->{'owner'} cmp $b->{'owner'}} @projects;
-			print "<th>Owner</th>\n";
-		} else {
-			print "<th>" .
-			      $cgi->a({-href => href(project=>undef, order=>'owner'),
-			               -class => "header"}, "Owner") .
-			      "</th>\n";
-		}
-		if ($order eq "age") {
-			@projects = sort {$a->{'age'} <=> $b->{'age'}} @projects;
-			print "<th>Last Change</th>\n";
-		} else {
-			print "<th>" .
-			      $cgi->a({-href => href(project=>undef, order=>'age'),
-			               -class => "header"}, "Last Change") .
-			      "</th>\n";
-		}
-		print "<th></th>\n" .
+		print_sort_th_str('project', $order, 'path',
+		                  'Project', \@projects);
+		print_sort_th_str('descr', $order, 'descr_long',
+		                  'Description', \@projects);
+		print_sort_th_str('owner', $order, 'owner',
+		                  'Owner', \@projects);
+		print_sort_th_num('age', $order, 'age',
+		                  'Last Change', \@projects);
+		print "<th></th>\n" . # for links
 		      "</tr>\n";
 	}
 	my $alternate = 1;
