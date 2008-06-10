@@ -143,6 +143,8 @@ cat > test/expect << EOF
   URL: $(pwd)/one/.git
   Remote branch merged with 'git pull' while on branch master
     master
+  Tracked remote branches
+    master side
   Local branches pushed with 'git push'
     master:upstream +refs/tags/lastbackup
 EOF

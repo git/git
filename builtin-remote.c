@@ -444,6 +444,22 @@ static int get_remote_ref_states(const char *name,
 	return 0;
 }
 
+static int append_ref_to_tracked_list(const char *refname,
+	const unsigned char *sha1, int flags, void *cb_data)
+{
+	struct ref_states *states = cb_data;
+	struct refspec refspec;
+
+	memset(&refspec, 0, sizeof(refspec));
+	refspec.dst = (char *)refname;
+	if (!remote_find_tracking(states->remote, &refspec)) {
+		path_list_append(skip_prefix(refspec.src, "refs/heads/"),
+			&states->tracked);
+	}
+
+	return 0;
+}
+
 static int show(int argc, const char **argv)
 {
 	int no_query = 0, result = 0;
@@ -494,9 +510,11 @@ static int show(int argc, const char **argv)
 			strbuf_release(&buf);
 			show_list("  Stale tracking branch%s (use 'git remote "
 				"prune')", &states.stale);
-			show_list("  Tracked remote branch%s",
-				&states.tracked);
 		}
+
+		if (no_query)
+			for_each_ref(append_ref_to_tracked_list, &states);
+		show_list("  Tracked remote branch%s", &states.tracked);
 
 		if (states.remote->push_refspec_nr) {
 			printf("  Local branch%s pushed with 'git push'\n   ",
