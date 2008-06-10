@@ -165,6 +165,24 @@ test_expect_success 'prune' '
 	 ! git rev-parse refs/remotes/origin/side)
 '
 
+cat > test/expect << EOF
+Pruning origin
+URL: $(pwd)/one/.git
+ * [would prune] origin/side2
+EOF
+
+test_expect_success 'prune --dry-run' '
+	(cd one &&
+	 git branch -m side2 side) &&
+	(cd test &&
+	 git remote prune --dry-run origin > output &&
+	 git rev-parse refs/remotes/origin/side2 &&
+	 ! git rev-parse refs/remotes/origin/side &&
+	(cd ../one &&
+	 git branch -m side side2) &&
+	 test_cmp expect output)
+'
+
 test_expect_success 'add --mirror && prune' '
 	(mkdir mirror &&
 	 cd mirror &&

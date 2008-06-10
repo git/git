@@ -523,10 +523,10 @@ static int show(int argc, const char **argv)
 
 static int prune(int argc, const char **argv)
 {
-	int no_query = 0, result = 0;
+	int dry_run = 0, result = 0;
 	struct option options[] = {
 		OPT_GROUP("prune specific options"),
-		OPT_BOOLEAN('n', NULL, &no_query, "do not query remotes"),
+		OPT__DRY_RUN(&dry_run),
 		OPT_END()
 	};
 	struct ref_states states;
@@ -540,11 +540,23 @@ static int prune(int argc, const char **argv)
 	for (; argc; argc--, argv++) {
 		int i;
 
-		get_remote_ref_states(*argv, &states, !no_query);
+		get_remote_ref_states(*argv, &states, 1);
+
+		printf("Pruning %s\n", *argv);
+		if (states.stale.nr)
+			printf("URL: %s\n",
+			       states.remote->url_nr
+			       ? states.remote->url[0]
+			       : "(no URL)");
 
 		for (i = 0; i < states.stale.nr; i++) {
 			const char *refname = states.stale.items[i].util;
-			result |= delete_ref(refname, NULL);
+
+			if (!dry_run)
+				result |= delete_ref(refname, NULL);
+
+			printf(" * [%s] %s\n", dry_run ? "would prune" : "pruned",
+			       skip_prefix(refname, "refs/remotes/"));
 		}
 
 		/* NEEDSWORK: free remote */
