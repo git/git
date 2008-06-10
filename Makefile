@@ -1290,6 +1290,9 @@ endif
 install-doc:
 	$(MAKE) -C Documentation install
 
+install-html:
+	$(MAKE) -C Documentation install-html
+
 install-info:
 	$(MAKE) -C Documentation install-info
 
