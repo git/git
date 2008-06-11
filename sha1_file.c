@@ -2105,6 +2105,15 @@ int hash_sha1_file(const void *buf, unsigned long len, const char *type,
 	return 0;
 }
 
+/* Finalize a file on disk, and close it. */
+static void close_sha1_file(int fd)
+{
+	/* For safe-mode, we could fsync_or_die(fd, "sha1 file") here */
+	fchmod(fd, 0444);
+	if (close(fd) != 0)
+		die("unable to write sha1 file");
+}
+
 static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 			      void *buf, unsigned long len, time_t mtime)
 {
@@ -2170,9 +2179,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 
 	if (write_buffer(fd, compressed, size) < 0)
 		die("unable to write sha1 file");
-	fchmod(fd, 0444);
-	if (close(fd))
-		die("unable to write sha1 file");
+	close_sha1_file(fd);
 	free(compressed);
 
 	if (mtime) {
@@ -2350,9 +2357,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	} while (1);
 	inflateEnd(&stream);
 
-	fchmod(local, 0444);
-	if (close(local) != 0)
-		die("unable to write sha1 file");
+	close_sha1_file(local);
 	SHA1_Final(real_sha1, &c);
 	if (ret != Z_STREAM_END) {
 		unlink(tmpfile);
