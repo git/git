@@ -64,7 +64,21 @@ test_expect_success 'interact with it via git-svn' '
 
 	# Make sure --add-author-from with --use-log-author affected
 	# the authorship information
-	grep "^Author: A U Thor " actual.4
+	grep "^Author: A U Thor " actual.4 &&
+
+	# Make sure there are no commit messages with excess blank lines
+	test $(grep "^ " actual.2 | wc -l) = 3 &&
+	test $(grep "^ " actual.3 | wc -l) = 5 &&
+	test $(grep "^ " actual.4 | wc -l) = 5 &&
+
+	# Make sure there are no svn commit messages with excess blank lines
+	(
+		cd work.svn &&
+		svn up &&
+		
+		test $(svn log -r2:2 | wc -l) = 5 &&
+		test $(svn log -r4:4 | wc -l) = 7
+	)
 '
 
 test_done
