@@ -1774,6 +1774,11 @@ proc do_commit {} {
 	commit_tree
 }
 
+proc next_diff {} {
+	global next_diff_p next_diff_w next_diff_i
+	show_diff $next_diff_p $next_diff_w $next_diff_i
+}
+
 proc toggle_or_diff {w x y} {
 	global file_states file_lists current_diff_path ui_index ui_workdir
 	global last_clicked selected_paths
@@ -1793,11 +1798,31 @@ proc toggle_or_diff {w x y} {
 	$ui_workdir tag remove in_sel 0.0 end
 
 	if {$col == 0} {
-		if {$current_diff_path eq $path} {
+		set i [expr {$lno-1}]
+		set ll [expr {[llength $file_lists($w)]-1}]
+
+		if {$i == $ll && $i == 0} {
 			set after {reshow_diff;}
 		} else {
-			set after {}
+			global next_diff_p next_diff_w next_diff_i
+
+			if {$i < $ll} {
+				set i [expr {$i + 1}]
+			} else {
+				set i [expr {$i - 1}]
+			}
+
+			set next_diff_i $i
+			set next_diff_w $w
+			set next_diff_p [lindex $file_lists($w) $i]
+
+			if {$next_diff_p ne {} && $current_diff_path ne {}} {
+				set after {next_diff;}
+			} else {
+				set after {}
+			}
 		}
+
 		if {$w eq $ui_index} {
 			update_indexinfo \
 				"Unstaging [short_path $path] from commit" \
