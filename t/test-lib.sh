@@ -168,7 +168,7 @@ trap 'die' exit
 # environment variables to work around this.
 #
 # In particular, quoting isn't enough, as the path may contain the same quote
-# that we're using. 
+# that we're using.
 test_set_editor () {
 	FAKE_EDITOR="$1"
 	export FAKE_EDITOR
