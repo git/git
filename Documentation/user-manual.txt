@@ -1254,16 +1254,15 @@ these three "file stages" represents a different version of the file:
 
 -------------------------------------------------
 $ git show :1:file.txt	# the file in a common ancestor of both branches
-$ git show :2:file.txt	# the version from HEAD, but including any
-			# nonconflicting changes from MERGE_HEAD
-$ git show :3:file.txt	# the version from MERGE_HEAD, but including any
-			# nonconflicting changes from HEAD.
+$ git show :2:file.txt	# the version from HEAD.
+$ git show :3:file.txt	# the version from MERGE_HEAD.
 -------------------------------------------------
 
-Since the stage 2 and stage 3 versions have already been updated with
-nonconflicting changes, the only remaining differences between them are
-the important ones; thus linkgit:git-diff[1] can use the information in
-the index to show only those conflicts.
+When you ask linkgit:git-diff[1] to show the conflicts, it runs a
+three-way diff between the conflicted merge results in the work tree with
+stages 2 and 3 to show only hunks whose contents come from both sides,
+mixed (in other words, when a hunk's merge results come only from stage 2,
+that part is not conflicting and is not shown.  Same for stage 3).
 
 The diff above shows the differences between the working-tree version of
 file.txt and the stage 2 and stage 3 versions.  So instead of preceding
