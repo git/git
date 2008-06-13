@@ -12,8 +12,8 @@ SYNOPSIS
 'git-remote' [-v | --verbose]
 'git-remote' add [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>
 'git-remote' rm <name>
-'git-remote' show <name>
-'git-remote' prune <name>
+'git-remote' show [-n] <name>
+'git-remote' prune [-n | --dry-run] <name>
 'git-remote' update [group]
 
 DESCRIPTION
@@ -80,9 +80,8 @@ These stale branches have already been removed from the remote repository
 referenced by <name>, but are still locally available in
 "remotes/<name>".
 +
-With `-n` option, the remote heads are not confirmed first with `git
-ls-remote <name>`; cached information is used instead.  Use with
-caution.
+With `--dry-run` option, report what branches will be pruned, but do no
+actually prune them.
 
 'update'::
 
