@@ -8,8 +8,9 @@ git-add - Add file contents to the index
 SYNOPSIS
 --------
 [verse]
-'git-add' [-n] [-v] [-f] [--interactive | -i] [--patch | -p] [-u] [--refresh]
-	  [--ignore-errors] [--] <filepattern>...
+'git-add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
+	  [--update | -u] [--refresh] [--ignore-errors] [--]
+	  <filepattern>...
 
 DESCRIPTION
 -----------
@@ -59,6 +60,7 @@ OPTIONS
         Be verbose.
 
 -f::
+--force::
 	Allow adding otherwise ignored files.
 
 -i::
@@ -75,6 +77,7 @@ OPTIONS
 	the specified filepatterns before exiting.
 
 -u::
+--update::
 	Update only files that git already knows about, staging modified
 	content for commit and marking deleted files for removal. This
 	is similar
