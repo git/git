@@ -438,11 +438,13 @@ static void bootstrap_attr_stack(void)
 		elem->prev = attr_stack;
 		attr_stack = elem;
 
-		elem = read_attr(GITATTRIBUTES_FILE, 1);
-		elem->origin = strdup("");
-		elem->prev = attr_stack;
-		attr_stack = elem;
-		debug_push(elem);
+		if (!is_bare_repository()) {
+			elem = read_attr(GITATTRIBUTES_FILE, 1);
+			elem->origin = strdup("");
+			elem->prev = attr_stack;
+			attr_stack = elem;
+			debug_push(elem);
+		}
 
 		elem = read_attr_from_file(git_path(INFOATTRIBUTES_FILE), 1);
 		if (!elem)
@@ -501,22 +503,24 @@ static void prepare_attr_stack(const char *path, int dirlen)
 	/*
 	 * Read from parent directories and push them down
 	 */
-	while (1) {
-		char *cp;
+	if (!is_bare_repository()) {
+		while (1) {
+			char *cp;
 
-		len = strlen(attr_stack->origin);
-		if (dirlen <= len)
-			break;
-		memcpy(pathbuf, path, dirlen);
-		memcpy(pathbuf + dirlen, "/", 2);
-		cp = strchr(pathbuf + len + 1, '/');
-		strcpy(cp + 1, GITATTRIBUTES_FILE);
-		elem = read_attr(pathbuf, 0);
-		*cp = '\0';
-		elem->origin = strdup(pathbuf);
-		elem->prev = attr_stack;
-		attr_stack = elem;
-		debug_push(elem);
+			len = strlen(attr_stack->origin);
+			if (dirlen <= len)
+				break;
+			memcpy(pathbuf, path, dirlen);
+			memcpy(pathbuf + dirlen, "/", 2);
+			cp = strchr(pathbuf + len + 1, '/');
+			strcpy(cp + 1, GITATTRIBUTES_FILE);
+			elem = read_attr(pathbuf, 0);
+			*cp = '\0';
+			elem->origin = strdup(pathbuf);
+			elem->prev = attr_stack;
+			attr_stack = elem;
+			debug_push(elem);
+		}
 	}
 
 	/*
