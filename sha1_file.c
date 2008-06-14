@@ -35,8 +35,6 @@ static size_t sz_fmt(size_t s) { return s; }
 
 const unsigned char null_sha1[20];
 
-static unsigned int sha1_file_open_flag = O_NOATIME;
-
 const signed char hexval_table[256] = {
 	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 00-07 */
 	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 08-0f */
@@ -997,38 +995,58 @@ int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long siz
 	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
+static int git_open_noatime(const char *name)
+{
+	static int sha1_file_open_flag = O_NOATIME;
+	int fd = open(name, O_RDONLY | sha1_file_open_flag);
+
+	/* Might the failure be due to O_NOATIME? */
+	if (fd < 0 && errno != ENOENT && sha1_file_open_flag) {
+		fd = open(name, O_RDONLY);
+		if (fd >= 0)
+			sha1_file_open_flag = 0;
+	}
+	return fd;
+}
+
+static int open_sha1_file(const unsigned char *sha1)
+{
+	int fd;
+	char *name = sha1_file_name(sha1);
+	struct alternate_object_database *alt;
+
+	fd = git_open_noatime(name);
+	if (fd >= 0)
+		return fd;
+
+	prepare_alt_odb();
+	errno = ENOENT;
+	for (alt = alt_odb_list; alt; alt = alt->next) {
+		name = alt->name;
+		fill_sha1_path(name, sha1);
+		fd = git_open_noatime(alt->base);
+		if (fd >= 0)
+			return fd;
+	}
+	return -1;
+}
+
 static void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 {
-	struct stat st;
 	void *map;
 	int fd;
-	char *filename = find_sha1_file(sha1, &st);
 
-	if (!filename) {
-		return NULL;
-	}
+	fd = open_sha1_file(sha1);
+	map = NULL;
+	if (fd >= 0) {
+		struct stat st;
 
-	fd = open(filename, O_RDONLY | sha1_file_open_flag);
-	if (fd < 0) {
-		/* See if it works without O_NOATIME */
-		switch (sha1_file_open_flag) {
-		default:
-			fd = open(filename, O_RDONLY);
-			if (fd >= 0)
-				break;
-		/* Fallthrough */
-		case 0:
-			return NULL;
+		if (!fstat(fd, &st)) {
+			*size = xsize_t(st.st_size);
+			map = xmmap(NULL, *size, PROT_READ, MAP_PRIVATE, fd, 0);
 		}
-
-		/* If it failed once, it will probably fail again.
-		 * Stop using O_NOATIME
-		 */
-		sha1_file_open_flag = 0;
+		close(fd);
 	}
-	*size = xsize_t(st.st_size);
-	map = xmmap(NULL, *size, PROT_READ, MAP_PRIVATE, fd, 0);
-	close(fd);
 	return map;
 }
 
