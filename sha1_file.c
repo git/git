@@ -2019,48 +2019,11 @@ static void write_sha1_file_prepare(const void *buf, unsigned long len,
 }
 
 /*
- * Link the tempfile to the final place, possibly creating the
- * last directory level as you do so.
- *
- * Returns the errno on failure, 0 on success.
- */
-static int link_temp_to_file(const char *tmpfile, const char *filename)
-{
-	int ret;
-	char *dir;
-
-	if (!link(tmpfile, filename))
-		return 0;
-
-	/*
-	 * Try to mkdir the last path component if that failed.
-	 *
-	 * Re-try the "link()" regardless of whether the mkdir
-	 * succeeds, since a race might mean that somebody
-	 * else succeeded.
-	 */
-	ret = errno;
-	dir = strrchr(filename, '/');
-	if (dir) {
-		*dir = 0;
-		if (!mkdir(filename, 0777) && adjust_shared_perm(filename)) {
-			*dir = '/';
-			return -2;
-		}
-		*dir = '/';
-		if (!link(tmpfile, filename))
-			return 0;
-		ret = errno;
-	}
-	return ret;
-}
-
-/*
  * Move the just written object into its final resting place
  */
 int move_temp_to_file(const char *tmpfile, const char *filename)
 {
-	int ret = link_temp_to_file(tmpfile, filename);
+	int ret = link(tmpfile, filename);
 
 	/*
 	 * Coda hack - coda doesn't like cross-directory links,
@@ -2114,6 +2077,46 @@ static void close_sha1_file(int fd)
 		die("unable to write sha1 file");
 }
 
+/* Size of directory component, including the ending '/' */
+static inline int directory_size(const char *filename)
+{
+	const char *s = strrchr(filename, '/');
+	if (!s)
+		return 0;
+	return s - filename + 1;
+}
+
+/*
+ * This creates a temporary file in the same directory as the final
+ * 'filename'
+ *
+ * We want to avoid cross-directory filename renames, because those
+ * can have problems on various filesystems (FAT, NFS, Coda).
+ */
+static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
+{
+	int fd, dirlen = directory_size(filename);
+
+	if (dirlen + 20 > bufsiz) {
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+	memcpy(buffer, filename, dirlen);
+	strcpy(buffer + dirlen, "tmp_obj_XXXXXX");
+	fd = mkstemp(buffer);
+	if (fd < 0 && dirlen) {
+		/* Make sure the directory exists */
+		buffer[dirlen-1] = 0;
+		if (mkdir(buffer, 0777) && adjust_shared_perm(buffer))
+			return -1;
+
+		/* Try again */
+		strcpy(buffer + dirlen - 1, "/tmp_obj_XXXXXX");
+		fd = mkstemp(buffer);
+	}
+	return fd;
+}
+
 static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 			      void *buf, unsigned long len, time_t mtime)
 {
@@ -2138,9 +2141,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 		return error("sha1 file %s: %s\n", filename, strerror(errno));
 	}
 
-	snprintf(tmpfile, sizeof(tmpfile), "%s/tmp_obj_XXXXXX", get_object_directory());
-
-	fd = mkstemp(tmpfile);
+	fd = create_tmpfile(tmpfile, sizeof(tmpfile), filename);
 	if (fd < 0) {
 		if (errno == EPERM)
 			return error("insufficient permission for adding an object to repository database %s\n", get_object_directory());
