@@ -500,7 +500,10 @@ _git_add ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--interactive --refresh"
+		__gitcomp "
+			--interactive --refresh --patch --update --dry-run
+			--ignore-errors
+			"
 		return
 	esac
 	COMPREPLY=()
