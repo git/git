@@ -397,21 +397,21 @@ void prepare_alt_odb(void)
 	read_info_alternates(get_object_directory(), 0);
 }
 
-static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
+static int has_loose_object(const unsigned char *sha1)
 {
 	char *name = sha1_file_name(sha1);
 	struct alternate_object_database *alt;
 
-	if (!stat(name, st))
-		return name;
+	if (!access(name, F_OK))
+		return 1;
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
 		name = alt->name;
 		fill_sha1_path(name, sha1);
-		if (!stat(alt->base, st))
-			return alt->base;
+		if (!access(alt->base, F_OK))
+			return 1;
 	}
-	return NULL;
+	return 0;
 }
 
 static unsigned int pack_used_ctr;
@@ -2232,14 +2232,13 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 
 int force_object_loose(const unsigned char *sha1, time_t mtime)
 {
-	struct stat st;
 	void *buf;
 	unsigned long len;
 	enum object_type type;
 	char hdr[32];
 	int hdrlen;
 
-	if (find_sha1_file(sha1, &st))
+	if (has_loose_object(sha1))
 		return 0;
 	buf = read_packed_sha1(sha1, &type, &len);
 	if (!buf)
@@ -2272,12 +2271,11 @@ int has_sha1_pack(const unsigned char *sha1, const char **ignore_packed)
 
 int has_sha1_file(const unsigned char *sha1)
 {
-	struct stat st;
 	struct pack_entry e;
 
 	if (find_pack_entry(sha1, &e, NULL))
 		return 1;
-	return find_sha1_file(sha1, &st) ? 1 : 0;
+	return has_loose_object(sha1);
 }
 
 int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
