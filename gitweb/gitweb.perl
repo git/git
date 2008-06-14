@@ -377,7 +377,7 @@ if (-e $GITWEB_CONFIG) {
 }
 
 # version of the core git binary
-our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
+our $git_version = qx("$GIT" --version) =~ m/git version (.*)$/ ? $1 : "unknown";
 
 $projects_list ||= $projectroot;
 
