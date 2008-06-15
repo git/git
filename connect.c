@@ -597,20 +597,13 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 
 	conn->in = conn->out = -1;
 	/* be sure to increase this size if you add more args */
-	conn->argv = arg = xcalloc(8, sizeof(*arg));
+	conn->argv = arg = xcalloc(6, sizeof(*arg));
 	if (protocol == PROTO_SSH) {
 		const char *ssh = getenv("GIT_SSH");
 		int putty = ssh && strstr(ssh, "plink");
 		if (!ssh) ssh = "ssh";
 
 		*arg++ = ssh;
-		if (putty) {
-			/* stdin forwarding doesn't work, so give informative error messages
-			 * (-v) and don't hang (-batch).
-			 */
-			*arg++ = "-batch";
-			*arg++ = "-v";
-		}
 		if (port) {
 			/* P is for PuTTY, p is for OpenSSH */
 			*arg++ = putty ? "-P" : "-p";
