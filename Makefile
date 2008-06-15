@@ -1412,6 +1412,14 @@ check-docs::
 		documented,gitmodules | \
 		documented,gitcli | \
 		documented,git-tools | \
+		documented,gitcore-tutorial | \
+		documented,gitcvs-migration | \
+		documented,gitdiffcore | \
+		documented,gitglossary | \
+		documented,githooks | \
+		documented,gitrepository-layout | \
+		documented,gittutorial | \
+		documented,gittutorial-2 | \
 		sentinel,not,matching,is,ok ) continue ;; \
 		esac; \
 		case " $(ALL_PROGRAMS) $(BUILT_INS) git gitk " in \
