@@ -83,4 +83,19 @@ do
 
 done
 
+test_expect_success 'git reflog expire honors core.sharedRepository' '
+	git config core.sharedRepository group &&
+	git reflog expire --all &&
+	actual="$(ls -l .git/logs/refs/heads/master)" &&
+	case "$actual" in
+	-rw-rw-*)
+		: happy
+		;;
+	*)
+		echo Ooops, .git/logs/refs/heads/master is not 0662 [$actual]
+		false
+		;;
+	esac
+'
+
 test_done
