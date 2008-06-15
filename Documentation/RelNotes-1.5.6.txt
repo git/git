@@ -21,8 +21,10 @@ Updates since v1.5.5
 (documentation)
 
 * Many freestanding documentation pages have been converted and made
-  available to "git help" (aka "man git-<command>") as section 7 of the
-  manual pages.
+  available to "git help" (aka "man git<something>") as section 7 of
+  the manual pages. This means bookmarks to some HTML documentation
+  files may need to be updated (eg "tutorial.html" became
+  "gittutorial.html").
 
 (performance)
 
