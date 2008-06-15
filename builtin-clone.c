@@ -18,6 +18,7 @@
 #include "transport.h"
 #include "strbuf.h"
 #include "dir.h"
+#include "pack-refs.h"
 
 /*
  * Overall FIXMEs:
@@ -321,8 +322,11 @@ static struct ref *write_remote_refs(const struct ref *refs,
 	get_fetch_map(refs, tag_refspec, &tail, 0);
 
 	for (r = local_refs; r; r = r->next)
-		update_ref(reflog,
-			   r->peer_ref->name, r->old_sha1, NULL, 0, DIE_ON_ERR);
+		add_extra_ref(r->peer_ref->name, r->old_sha1, 0);
+
+	pack_refs(PACK_REFS_ALL);
+	clear_extra_refs();
+
 	return local_refs;
 }
 
