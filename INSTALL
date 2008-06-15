@@ -83,9 +83,6 @@ Issues of note:
 	- "perl" and POSIX-compliant shells are needed to use most of
 	  the barebone Porcelainish scripts.
 
-	- "cpio" is used by git-clone when doing a local (possibly
-	  hardlinked) clone.
-
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not
    have all the libraries/tools needed, or you may have
