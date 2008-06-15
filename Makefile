@@ -13,7 +13,7 @@ all::
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # This also implies MOZILLA_SHA1.
 #
-# Define NO_CURL if you do not have curl installed.  git-http-pull and
+# Define NO_CURL if you do not have libcurl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.
 #

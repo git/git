@@ -186,7 +186,7 @@ Step 3: setup the client
 ------------------------
 
 Make sure that you have HTTP support, i.e. your git was built with
-curl (version more recent than 7.10). The command 'git http-push' with
+libcurl (version more recent than 7.10). The command 'git http-push' with
 no argument should display a usage message.
 
 Then, add the following to your $HOME/.netrc (you can do without, but will be

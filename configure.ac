@@ -158,7 +158,7 @@ AC_CHECK_LIB([crypto], [SHA1_Init],
 AC_SUBST(NEEDS_SSL_WITH_CRYPTO)
 AC_SUBST(NO_OPENSSL)
 #
-# Define NO_CURL if you do not have curl installed.  git-http-pull and
+# Define NO_CURL if you do not have libcurl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.
 AC_CHECK_LIB([curl], [curl_global_init],
