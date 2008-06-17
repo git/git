@@ -108,12 +108,11 @@ test_expect_success 'remove remote' '
 '
 
 case $(uname -s) in
-*MINGW*) PWD="pwd -W";;
-*)       PWD=pwd;;
+*MINGW*) pwd() { builtin pwd -W; } ;;
 esac
 cat > test/expect << EOF
 * remote origin
-  URL: $($PWD)/one/.git
+  URL: $(pwd)/one/.git
   Remote branch merged with 'git pull' while on branch master
     master
   New remote branch (next fetch will store in remotes/origin)
