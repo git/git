@@ -54,6 +54,10 @@ You can pass --verbose (or -v), --debug (or -d), and --immediate
 	This causes the test to immediately exit upon the first
 	failed test.
 
+--long-tests::
+	This causes additional long-running tests to be run (where
+	available), for more exhaustive testing.
+
 
 Naming Tests
 ------------
