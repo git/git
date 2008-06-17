@@ -8,8 +8,9 @@ git-add - Add file contents to the index
 SYNOPSIS
 --------
 [verse]
-'git-add' [-n] [-v] [-f] [--interactive | -i] [--patch | -p] [-u] [--refresh]
-	  [--ignore-errors] [--] <filepattern>...
+'git-add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
+	  [--update | -u] [--refresh] [--ignore-errors] [--]
+	  <filepattern>...
 
 DESCRIPTION
 -----------
@@ -50,27 +51,33 @@ OPTIONS
 	and `dir/file2`) can be given to add all files in the
 	directory, recursively.
 
--n, \--dry-run::
+-n::
+--dry-run::
         Don't actually add the file(s), just show if they exist.
 
--v, \--verbose::
+-v::
+--verbose::
         Be verbose.
 
 -f::
+--force::
 	Allow adding otherwise ignored files.
 
--i, \--interactive::
+-i::
+--interactive::
 	Add modified contents in the working tree interactively to
 	the index. Optional path arguments may be supplied to limit
 	operation to a subset of the working tree. See ``Interactive
 	mode'' for details.
 
--p, \--patch::
+-p::
+--patch::
 	Similar to Interactive mode but the initial command loop is
 	bypassed and the 'patch' subcommand is invoked using each of
 	the specified filepatterns before exiting.
 
 -u::
+--update::
 	Update only files that git already knows about, staging modified
 	content for commit and marking deleted files for removal. This
 	is similar
@@ -79,11 +86,11 @@ OPTIONS
 	command line. If no paths are specified, all tracked files in the
 	current directory and its subdirectories are updated.
 
-\--refresh::
+--refresh::
 	Don't add the file(s), but only refresh their stat()
 	information in the index.
 
-\--ignore-errors::
+--ignore-errors::
 	If some files could not be added because of errors indexing
 	them, do not abort the operation, but continue adding the
 	others. The command shall still exit with non-zero status.
@@ -100,7 +107,7 @@ Configuration
 The optional configuration variable 'core.excludesfile' indicates a path to a
 file containing patterns of file names to exclude from git-add, similar to
 $GIT_DIR/info/exclude.  Patterns in the exclude file are used in addition to
-those in info/exclude.  See link:repository-layout.html[repository layout].
+those in info/exclude.  See linkgit:gitrepository-layout[5][repository layout].
 
 
 EXAMPLES
@@ -265,4 +272,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

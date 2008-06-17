@@ -22,10 +22,10 @@ restart        restart the web server
 . git-sh-setup
 
 fqgitdir="$GIT_DIR"
-local="`git config --bool --get instaweb.local`"
-httpd="`git config --get instaweb.httpd`"
-port=`git config --get instaweb.port`
-module_path="`git config --get instaweb.modulepath`"
+local="$(git config --bool --get instaweb.local)"
+httpd="$(git config --get instaweb.httpd)"
+port=$(git config --get instaweb.port)
+module_path="$(git config --get instaweb.modulepath)"
 
 conf="$GIT_DIR/gitweb/httpd.conf"
 
@@ -37,11 +37,21 @@ test -z "$httpd" && httpd='lighttpd -f'
 # any untaken local port will do...
 test -z "$port" && port=1234
 
-start_httpd () {
-	httpd_only="`echo $httpd | cut -f1 -d' '`"
+resolve_full_httpd () {
+	case "$httpd" in
+	*apache2*|*lighttpd*)
+		# ensure that the apache2/lighttpd command ends with "-f"
+		if ! echo "$httpd" | grep -- '-f *$' >/dev/null 2>&1
+		then
+			httpd="$httpd -f"
+		fi
+		;;
+	esac
+
+	httpd_only="$(echo $httpd | cut -f1 -d' ')"
 	if case "$httpd_only" in /*) : ;; *) which $httpd_only >/dev/null;; esac
 	then
-		$httpd "$fqgitdir/gitweb/httpd.conf"
+		full_httpd=$httpd
 	else
 		# many httpds are installed in /usr/sbin or /usr/local/sbin
 		# these days and those are not in most users $PATHs
@@ -51,16 +61,23 @@ start_httpd () {
 		do
 			if test -x "$i/$httpd_only"
 			then
-				# don't quote $httpd, there can be
-				# arguments to it (-f)
-				$i/$httpd "$fqgitdir/gitweb/httpd.conf"
+				full_httpd=$i/$httpd
 				return
 			fi
 		done
-		echo "$httpd_only not found. Install $httpd_only or use" \
-		     "--httpd to specify another http daemon."
+
+		echo >&2 "$httpd_only not found. Install $httpd_only or use" \
+		     "--httpd to specify another httpd daemon."
 		exit 1
 	fi
+}
+
+start_httpd () {
+	# here $httpd should have a meaningful value
+	resolve_full_httpd
+
+	# don't quote $full_httpd, there can be arguments to it (-f)
+	$full_httpd "$fqgitdir/gitweb/httpd.conf"
 	if test $? != 0; then
 		echo "Could not execute http daemon $httpd."
 		exit 1
@@ -68,7 +85,7 @@ start_httpd () {
 }
 
 stop_httpd () {
-	test -f "$fqgitdir/pid" && kill `cat "$fqgitdir/pid"`
+	test -f "$fqgitdir/pid" && kill $(cat "$fqgitdir/pid")
 }
 
 while test $# != 0
@@ -116,7 +133,7 @@ do
 done
 
 mkdir -p "$GIT_DIR/gitweb/tmp"
-GIT_EXEC_PATH="`git --exec-path`"
+GIT_EXEC_PATH="$(git --exec-path)"
 GIT_DIR="$fqgitdir"
 export GIT_EXEC_PATH GIT_DIR
 
@@ -215,7 +232,8 @@ PerlPassEnv GIT_EXEC_DIR
 EOF
 	else
 		# plain-old CGI
-		list_mods=`echo "$httpd" | sed "s/-f$/-l/"`
+		resolve_full_httpd
+		list_mods=$(echo "$full_httpd" | sed "s/-f$/-l/")
 		$list_mods | grep 'mod_cgi\.c' >/dev/null 2>&1 || \
 		echo "LoadModule cgi_module $module_path/mod_cgi.so" >> "$conf"
 		cat >> "$conf" <<EOF

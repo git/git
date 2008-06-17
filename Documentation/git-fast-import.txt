@@ -1119,4 +1119,4 @@ Documentation by Shawn O. Pearce <spearce@spearce.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -237,17 +237,57 @@ static int graph_is_interesting(struct git_graph *graph, struct commit *commit)
 	return (commit->object.flags & (UNINTERESTING | TREESAME)) ? 0 : 1;
 }
 
+static struct commit_list *next_interesting_parent(struct git_graph *graph,
+						   struct commit_list *orig)
+{
+	struct commit_list *list;
+
+	/*
+	 * If revs->first_parent_only is set, only the first
+	 * parent is interesting.  None of the others are.
+	 */
+	if (graph->revs->first_parent_only)
+		return NULL;
+
+	/*
+	 * Return the next interesting commit after orig
+	 */
+	for (list = orig->next; list; list = list->next) {
+		if (graph_is_interesting(graph, list->item))
+			return list;
+	}
+
+	return NULL;
+}
+
+static struct commit_list *first_interesting_parent(struct git_graph *graph)
+{
+	struct commit_list *parents = graph->commit->parents;
+
+	/*
+	 * If this commit has no parents, ignore it
+	 */
+	if (!parents)
+		return NULL;
+
+	/*
+	 * If the first parent is interesting, return it
+	 */
+	if (graph_is_interesting(graph, parents->item))
+		return parents;
+
+	/*
+	 * Otherwise, call next_interesting_parent() to get
+	 * the next interesting parent
+	 */
+	return next_interesting_parent(graph, parents);
+}
+
 static void graph_insert_into_new_columns(struct git_graph *graph,
 					  struct commit *commit,
 					  int *mapping_index)
 {
 	int i;
-
-	/*
-	 * Ignore uinteresting commits
-	 */
-	if (!graph_is_interesting(graph, commit))
-		return;
 
 	/*
 	 * If the commit is already in the new_columns list, we don't need to
@@ -373,9 +413,9 @@ static void graph_update_columns(struct git_graph *graph)
 			int old_mapping_idx = mapping_idx;
 			seen_this = 1;
 			graph->commit_index = i;
-			for (parent = graph->commit->parents;
+			for (parent = first_interesting_parent(graph);
 			     parent;
-			     parent = parent->next) {
+			     parent = next_interesting_parent(graph, parent)) {
 				graph_insert_into_new_columns(graph,
 							      parent->item,
 							      &mapping_idx);
@@ -420,9 +460,11 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	 * Count how many interesting parents this commit has
 	 */
 	graph->num_parents = 0;
-	for (parent = commit->parents; parent; parent = parent->next) {
-		if (graph_is_interesting(graph, parent->item))
-			graph->num_parents++;
+	for (parent = first_interesting_parent(graph);
+	     parent;
+	     parent = next_interesting_parent(graph, parent))
+	{
+		graph->num_parents++;
 	}
 
 	/*
@@ -634,20 +676,6 @@ static void graph_output_commit_char(struct git_graph *graph, struct strbuf *sb)
 			strbuf_addch(sb, '<');
 		else
 			strbuf_addch(sb, '>');
-		return;
-	}
-
-	/*
-	 * Print 'M' for merge commits
-	 *
-	 * Note that we don't check graph->num_parents to determine if the
-	 * commit is a merge, since that only tracks the number of
-	 * "interesting" parents.  We want to print 'M' for merge commits
-	 * even if they have less than 2 interesting parents.
-	 */
-	if (graph->commit->parents != NULL &&
-	    graph->commit->parents->next != NULL) {
-		strbuf_addch(sb, 'M');
 		return;
 	}
 

@@ -12,7 +12,7 @@ BuildRequires:	zlib-devel >= 1.2, openssl-devel, curl-devel, expat-devel, gettex
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:	perl-Git = %{version}-%{release}
-Requires:	zlib >= 1.2, rsync, curl, less, openssh-clients, expat
+Requires:	zlib >= 1.2, rsync, less, openssh-clients, expat
 Provides:	git-core = %{version}-%{release}
 Obsoletes:	git-core <= 1.5.4.2
 Obsoletes:	git-p4
@@ -187,6 +187,9 @@ rm -rf $RPM_BUILD_ROOT
 # No files for you!
 
 %changelog
+* Sun Jun 15 2008 Junio C Hamano <gitster@pobox.com>
+- Remove curl from Requires list.
+
 * Fri Feb 15 2008 Kristian Høgsberg <krh@redhat.com>
 - Rename git-core to just git and rename meta package from git to git-all.
 

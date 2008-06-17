@@ -109,7 +109,7 @@ populating your tree.
 
 [NOTE]
 An advanced user may want to take a look at the
-link:repository-layout.html[repository layout] document
+linkgit:gitrepository-layout[5][repository layout] document
 after finishing this tutorial.
 
 You have now created your first git repository. Of course, since it's
@@ -1696,4 +1696,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[7] suite.
+Part of the linkgit:git[1] suite.

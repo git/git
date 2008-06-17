@@ -25,7 +25,8 @@ To control which revisions to shown, the command takes options applicable to
 the linkgit:git-rev-list[1] command. This manual page describes only the most
 frequently used options.
 
--n <number>, --max-count=<number>::
+-n <number>::
+--max-count=<number>::
 
 	Limits the number of commits to show.
 
@@ -109,4 +110,4 @@ Documentation by Junio C Hamano, Jonas Fonseca, and the git-list
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

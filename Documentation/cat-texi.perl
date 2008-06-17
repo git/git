@@ -11,7 +11,7 @@ while (<STDIN>) {
 	if (s/^\@top (.*)/\@node $1,,,Top/) {
 		push @menu, $1;
 	}
-	s/\(\@pxref{\[URLS\]}\)//;
+	s/\(\@pxref{\[(URLS|REMOTES)\]}\)//;
 	print TMP;
 }
 close TMP;

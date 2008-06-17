@@ -1,9 +1,20 @@
-git repository layout
-=====================
+gitrepository-layout(5)
+=======================
+
+NAME
+----
+gitrepository-layout - Git Repository Layout
+
+SYNOPSIS
+--------
+$GIT_DIR/*
+
+DESCRIPTION
+-----------
 
 You may find these things in your git repository (`.git`
 directory for a repository associated with your working tree, or
-`'project'.git` directory for a public 'bare' repository. It is
+`<project>.git` directory for a public 'bare' repository. It is
 also possible to have a working tree where `.git` is a plain
 ascii file containing `gitdir: <path>`, i.e. the path to the
 real git repository).
@@ -115,7 +126,7 @@ details.
 branches::
 	A slightly deprecated way to store shorthands to be used
 	to specify URL to `git fetch`, `git pull` and `git push`
-	commands is to store a file in `branches/'name'` and
+	commands is to store a file in `branches/<name>` and
 	give 'name' to these commands in place of 'repository'
 	argument.
 
@@ -180,3 +191,18 @@ shallow::
 	This is similar to `info/grafts` but is internally used
 	and maintained by shallow clone mechanism.  See `--depth`
 	option to linkgit:git-clone[1] and linkgit:git-fetch[1].
+
+SEE ALSO
+--------
+linkgit:git-init[1],
+linkgit:git-clone[1],
+linkgit:git-fetch[1],
+linkgit:git-pack-refs[1],
+linkgit:git-gc[1],
+linkgit:git-checkout[1],
+linkgit:gitglossary[7],
+link:user-manual.html[The Git User's Manual]
+
+GIT
+---
+Part of the linkgit:git[1] suite.

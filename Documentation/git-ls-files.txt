@@ -30,23 +30,29 @@ shown:
 
 OPTIONS
 -------
--c|--cached::
+-c::
+--cached::
 	Show cached files in the output (default)
 
--d|--deleted::
+-d::
+--deleted::
 	Show deleted files in the output
 
--m|--modified::
+-m::
+--modified::
 	Show modified files in the output
 
--o|--others::
+-o::
+--others::
 	Show other files in the output
 
--i|--ignored::
+-i::
+--ignored::
 	Show ignored files in the output.
 	Note that this also reverses any exclude list present.
 
--s|--stage::
+-s::
+--stage::
 	Show stage files in the output
 
 --directory::
@@ -56,10 +62,12 @@ OPTIONS
 --no-empty-directory::
 	Do not list empty directories. Has no effect without --directory.
 
--u|--unmerged::
+-u::
+--unmerged::
 	Show unmerged files in the output (forces --stage)
 
--k|--killed::
+-k::
+--killed::
 	Show files on the filesystem that need to be removed due
 	to file/directory conflicts for checkout-index to
 	succeed.
@@ -67,11 +75,13 @@ OPTIONS
 -z::
 	\0 line termination on output.
 
--x|--exclude=<pattern>::
+-x <pattern>::
+--exclude=<pattern>::
 	Skips files matching pattern.
 	Note that pattern is a shell wildcard pattern.
 
--X|--exclude-from=<file>::
+-X <file>::
+--exclude-from=<file>::
 	exclude patterns are read from <file>; 1 per line.
 
 --exclude-per-directory=<file>::
@@ -192,4 +202,4 @@ Documentation by David Greaves, Junio C Hamano, Josh Triplett, and the git-list 
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

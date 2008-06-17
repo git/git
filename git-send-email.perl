@@ -209,6 +209,7 @@ my %config_settings = (
     "bcc" => \@bcclist,
     "aliasesfile" => \@alias_files,
     "suppresscc" => \@suppress_cc,
+    "envelopesender" => \$envelope_sender,
 );
 
 # Handle Uncouth Termination
@@ -441,7 +442,7 @@ if (!@to) {
 	}
 
 	my $to = $_;
-	push @to, split /,/, $to;
+	push @to, split /,\s*/, $to;
 	$prompting++;
 }
 

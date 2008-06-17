@@ -73,7 +73,8 @@ OPTIONS
 When a pure mode change is encountered (which has no index information),
 the information is read from the current index instead.
 
--R, --reverse::
+-R::
+--reverse::
 	Apply the patch in reverse.
 
 --reject::
@@ -124,7 +125,8 @@ discouraged.
 	the result with this option, which would apply the
 	deletion part but not addition part.
 
---allow-binary-replacement, --binary::
+--allow-binary-replacement::
+--binary::
 	Historically we did not allow binary patch applied
 	without an explicit permission from the user, and this
 	flag was the way to do so.  Currently we always allow binary
@@ -169,7 +171,8 @@ behavior:
 	correctly. This option adds support for applying such patches by
 	working around this bug.
 
--v, --verbose::
+-v::
+--verbose::
 	Report progress to stderr. By default, only a message about the
 	current patch being applied will be printed. This option will cause
 	additional information to be reported.
@@ -206,4 +209,4 @@ Documentation by Junio C Hamano
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

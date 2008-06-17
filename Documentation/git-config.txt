@@ -101,7 +101,8 @@ rather than from all available files.
 +
 See also <<FILES>>.
 
--f config-file, --file config-file::
+-f config-file::
+--file config-file::
 	Use the given config file instead of the one specified by GIT_CONFIG.
 
 --remove-section::
@@ -116,7 +117,8 @@ See also <<FILES>>.
 --unset-all::
 	Remove all lines matching the key from config file.
 
--l, --list::
+-l::
+--list::
 	List all variables set in config file.
 
 --bool::
@@ -128,7 +130,8 @@ See also <<FILES>>.
 	in the config file will cause the value to be multiplied
 	by 1024, 1048576, or 1073741824 prior to output.
 
--z, --null::
+-z::
+--null::
 	For all options that output values and/or keys, always
 	end values with the null character (instead of a
 	newline). Use newline instead as a delimiter between
@@ -334,4 +337,4 @@ Documentation by Johannes Schindelin, Petr Baudis and the git-list <git@vger.ker
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

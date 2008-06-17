@@ -31,14 +31,17 @@ Custom commands may also be specified.
 
 OPTIONS
 -------
--b BROWSER|--browser=BROWSER::
+-b BROWSER::
+--browser=BROWSER::
 	Use the specified BROWSER. It must be in the list of supported
 	browsers.
 
--t BROWSER|--tool=BROWSER::
+-t BROWSER::
+--tool=BROWSER::
 	Same as above.
 
--c CONF.VAR|--config=CONF.VAR::
+-c CONF.VAR::
+--config=CONF.VAR::
 	CONF.VAR is looked up in the git config files. If it's set,
 	then its value specify the browser that should be used.
 
@@ -118,4 +121,4 @@ git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -1023,6 +1023,7 @@ sub get_commit_entry {
 		my $in_msg = 0;
 		my $author;
 		my $saw_from = 0;
+		my $msgbuf = "";
 		while (<$msg_fh>) {
 			if (!$in_msg) {
 				$in_msg = 1 if (/^\s*$/);
@@ -1035,14 +1036,15 @@ sub get_commit_entry {
 				if (/^From:/ || /^Signed-off-by:/) {
 					$saw_from = 1;
 				}
-				print $log_fh $_ or croak $!;
+				$msgbuf .= $_;
 			}
 		}
+		$msgbuf =~ s/\s+$//s;
 		if ($Git::SVN::_add_author_from && defined($author)
 		    && !$saw_from) {
-			print $log_fh "\nFrom: $author\n"
-			      or croak $!;
+			$msgbuf .= "\n\nFrom: $author";
 		}
+		print $log_fh $msgbuf or croak $!;
 		command_close_pipe($msg_fh, $ctx);
 	}
 	close $log_fh or croak $!;

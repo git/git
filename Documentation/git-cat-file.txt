@@ -8,6 +8,7 @@ git-cat-file - Provide content or type/size information for repository objects
 
 SYNOPSIS
 --------
+[verse]
 'git-cat-file' [-t | -s | -e | -p | <type>] <object>
 'git-cat-file' [--batch | --batch-check] < <list-of-objects>
 
@@ -103,4 +104,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

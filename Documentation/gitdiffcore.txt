@@ -1,10 +1,16 @@
-Tweaking diff output
-====================
-June 2005
+gitdiffcore(7)
+==============
 
+NAME
+----
+gitdiffcore - Tweaking diff output (June 2005)
 
-Introduction
-------------
+SYNOPSIS
+--------
+git diff *
+
+DESCRIPTION
+-----------
 
 The diff commands git-diff-index, git-diff-files, and git-diff-tree
 can be told to manipulate differences they find in
@@ -269,3 +275,18 @@ Documentation
 *.c
 t
 ------------------------------------------------
+
+SEE ALSO
+--------
+linkgit:git-diff[1],
+linkgit:git-diff-files[1],
+linkgit:git-diff-index[1],
+linkgit:git-diff-tree[1],
+linkgit:git-format-patch[1],
+linkgit:git-log[1],
+linkgit:gitglossary[7],
+link:user-manual.html[The Git User's Manual]
+
+GIT
+---
+Part of the linkgit:git[1] suite.

@@ -45,8 +45,8 @@ resolve_relative_url ()
 	branch="$(git symbolic-ref HEAD 2>/dev/null)"
 	remote="$(git config branch.${branch#refs/heads/}.remote)"
 	remote="${remote:-origin}"
-	remoteurl="$(git config remote.$remote.url)" ||
-		die "remote ($remote) does not have a url in .git/config"
+	remoteurl=$(git config "remote.$remote.url") ||
+		die "remote ($remote) does not have a url defined in .git/config"
 	url="$1"
 	while test -n "$url"
 	do
@@ -73,7 +73,7 @@ resolve_relative_url ()
 module_name()
 {
 	# Do we have "submodule.<something>.path = $1" defined in .gitmodules file?
-	re=$(printf '%s' "$1" | sed -e 's/[].[^$\\*]/\\&/g')
+	re=$(printf '%s\n' "$1" | sed -e 's/[].[^$\\*]/\\&/g')
 	name=$( git config -f .gitmodules --get-regexp '^submodule\..*\.path$' |
 		sed -n -e 's|^submodule\.\(.*\)\.path '"$re"'$|\1|p' )
        test -z "$name" &&
@@ -178,7 +178,8 @@ cmd_add()
 		case "$repo" in
 		./*|../*)
 			# dereference source url relative to parent's url
-			realrepo="$(resolve_relative_url $repo)" ;;
+			realrepo=$(resolve_relative_url "$repo") || exit
+			;;
 		*)
 			# Turn the source into an absolute path if
 			# it is local
@@ -246,7 +247,7 @@ cmd_init()
 		# Possibly a url relative to parent
 		case "$url" in
 		./*|../*)
-			url="$(resolve_relative_url "$url")"
+			url=$(resolve_relative_url "$url") || exit
 			;;
 		esac
 

@@ -22,7 +22,8 @@ generates such auxiliary files.
 OPTIONS
 -------
 
--f|--force::
+-f::
+--force::
 	Update the info files from scratch.
 
 
@@ -30,8 +31,8 @@ OUTPUT
 ------
 
 Currently the command updates the following files.  Please see
-link:repository-layout.html[repository-layout] for description
-of what they are for:
+linkgit:gitrepository-layout[5][repository-layout] for description of
+what they are for:
 
 * objects/info/packs
 
@@ -54,4 +55,4 @@ Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -1,4 +1,4 @@
-git(7)
+git(1)
 ======
 
 NAME
@@ -46,12 +46,13 @@ Documentation for older releases are available here:
 * link:v1.5.5/git.html[documentation for release 1.5.5]
 
 * release notes for
+  link:RelNotes-1.5.5.4.txt[1.5.5.4],
   link:RelNotes-1.5.5.3.txt[1.5.5.3],
   link:RelNotes-1.5.5.2.txt[1.5.5.2],
   link:RelNotes-1.5.5.1.txt[1.5.5.1],
   link:RelNotes-1.5.5.txt[1.5.5].
 
-* link:v1.5.5.3/git.html[documentation for release 1.5.5.3]
+* link:v1.5.5.4/git.html[documentation for release 1.5.5.4]
 
 * link:v1.5.4.5/git.html[documentation for release 1.5.4.5]
 
@@ -137,7 +138,8 @@ help ...'.
 	environment variable. If no path is given 'git' will print
 	the current setting and then exit.
 
--p|--paginate::
+-p::
+--paginate::
 	Pipe all output into 'less' (or if set, $PAGER).
 
 --no-pager::
@@ -364,7 +366,8 @@ For a more complete list of ways to spell object names, see
 File/Directory Structure
 ------------------------
 
-Please see the link:repository-layout.html[repository layout] document.
+Please see the linkgit:gitrepository-layout[5][repository layout]
+document.
 
 Read linkgit:githooks[5][hooks] for more details about each hook.
 
@@ -588,4 +591,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite
