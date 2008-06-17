@@ -421,7 +421,7 @@ do
 	else
 	    action=yes
 	fi
-	FIRSTLINE=$(head -1 "$dotest/final-commit")
+	FIRSTLINE=$(sed 1q "$dotest/final-commit")
 
 	if test $action = skip
 	then
