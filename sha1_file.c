@@ -831,13 +831,7 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 
 struct packed_git *parse_pack_index(unsigned char *sha1)
 {
-	char *path = sha1_pack_index_name(sha1);
-	return parse_pack_index_file(sha1, path);
-}
-
-struct packed_git *parse_pack_index_file(const unsigned char *sha1,
-					 const char *idx_path)
-{
+	const char *idx_path = sha1_pack_index_name(sha1);
 	const char *path = sha1_pack_name(sha1);
 	struct packed_git *p = xmalloc(sizeof(*p) + strlen(path) + 2);
 
