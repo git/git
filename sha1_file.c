@@ -116,7 +116,7 @@ int safe_create_leading_directories(char *path)
 	return 0;
 }
 
-char * sha1_to_hex(const unsigned char *sha1)
+char *sha1_to_hex(const unsigned char *sha1)
 {
 	static int bufno;
 	static char hexbuffer[4][50];
@@ -2125,7 +2125,7 @@ static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
 	if (fd < 0 && dirlen) {
 		/* Make sure the directory exists */
 		buffer[dirlen-1] = 0;
-		if (mkdir(buffer, 0777) && adjust_shared_perm(buffer))
+		if (mkdir(buffer, 0777) || adjust_shared_perm(buffer))
 			return -1;
 
 		/* Try again */
