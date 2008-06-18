@@ -2083,7 +2083,8 @@ int hash_sha1_file(const void *buf, unsigned long len, const char *type,
 /* Finalize a file on disk, and close it. */
 static void close_sha1_file(int fd)
 {
-	/* For safe-mode, we could fsync_or_die(fd, "sha1 file") here */
+	if (fsync_object_files)
+		fsync_or_die(fd, "sha1 file");
 	fchmod(fd, 0444);
 	if (close(fd) != 0)
 		die("unable to write sha1 file");
