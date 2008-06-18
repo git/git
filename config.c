@@ -488,25 +488,20 @@ static int git_default_user_config(const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *dummy)
+static int git_default_i18n_config(const char *var, const char *value)
 {
-	if (!prefixcmp(var, "core."))
-		return git_default_core_config(var, value);
-
-	if (!prefixcmp(var, "user."))
-		return git_default_user_config(var, value);
-
 	if (!strcmp(var, "i18n.commitencoding"))
 		return git_config_string(&git_commit_encoding, var, value);
 
 	if (!strcmp(var, "i18n.logoutputencoding"))
 		return git_config_string(&git_log_output_encoding, var, value);
 
-	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
-		pager_use_color = git_config_bool(var,value);
-		return 0;
-	}
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
 
+static int git_default_branch_config(const char *var, const char *value)
+{
 	if (!strcmp(var, "branch.autosetupmerge")) {
 		if (value && !strcasecmp(value, "always")) {
 			git_branch_track = BRANCH_TRACK_ALWAYS;
@@ -528,6 +523,29 @@ int git_default_config(const char *var, const char *value, void *dummy)
 			autorebase = AUTOREBASE_ALWAYS;
 		else
 			return error("Malformed value for %s", var);
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
+
+int git_default_config(const char *var, const char *value, void *dummy)
+{
+	if (!prefixcmp(var, "core."))
+		return git_default_core_config(var, value);
+
+	if (!prefixcmp(var, "user."))
+		return git_default_user_config(var, value);
+
+	if (!prefixcmp(var, "i18n."))
+		return git_default_i18n_config(var, value);
+
+	if (!prefixcmp(var, "branch."))
+		return git_default_branch_config(var, value);
+
+	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
+		pager_use_color = git_config_bool(var,value);
 		return 0;
 	}
 
