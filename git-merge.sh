@@ -13,7 +13,7 @@ n                    don't show a diffstat at the end of the merge
 summary              (synonym to --stat)
 log                  add list of one-line log to merge commit message
 squash               create a single commit instead of doing a merge
-commit               perform a commit if the merge sucesses (default)
+commit               perform a commit if the merge succeeds (default)
 ff                   allow fast forward (default)
 s,strategy=          merge strategy to use
 m,message=           message to be used for the merge commit (if any)
