@@ -464,11 +464,8 @@ static int git_default_core_config(const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *dummy)
+static int git_default_user_config(const char *var, const char *value)
 {
-	if (!prefixcmp(var, "core."))
-		return git_default_core_config(var, value);
-
 	if (!strcmp(var, "user.name")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -486,6 +483,18 @@ int git_default_config(const char *var, const char *value, void *dummy)
 			user_ident_explicitly_given = 1;
 		return 0;
 	}
+
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
+
+int git_default_config(const char *var, const char *value, void *dummy)
+{
+	if (!prefixcmp(var, "core."))
+		return git_default_core_config(var, value);
+
+	if (!prefixcmp(var, "user."))
+		return git_default_user_config(var, value);
 
 	if (!strcmp(var, "i18n.commitencoding"))
 		return git_config_string(&git_commit_encoding, var, value);
