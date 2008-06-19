@@ -761,6 +761,7 @@ _git_log ()
 			--pretty= --name-status --name-only --raw
 			--not --all
 			--left-right --cherry-pick
+			--graph
 			"
 		return
 		;;
