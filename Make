@@ -7,8 +7,8 @@ G=/opt/packrat/playpen/public/in-place/git/index/gitweb_config.perl
 GIT=$HOME/git-master/bin/git
 PATH=/usr/bin:/bin
 LANG=C
-LC_CTYPE=C
-export PATH LANG LC_CTYPE
+LC_ALL=C
+export PATH LANG LC_ALL
 
 # for now...
 #GIT_SVN_NO_LIB=1
