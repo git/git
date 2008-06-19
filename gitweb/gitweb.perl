@@ -1500,9 +1500,13 @@ sub git_cmd {
 	return $GIT, '--git-dir='.$git_dir;
 }
 
-# returns path to the core git executable and the --git-dir parameter as string
-sub git_cmd_str {
-	return join(' ', git_cmd());
+# quote the given arguments for passing them to the shell
+# quote_command("command", "arg 1", "arg with ' and ! characters")
+# => "'command' 'arg 1' 'arg with '\'' and '\!' characters'"
+# Try to avoid using this function wherever possible.
+sub quote_command {
+	return join(' ',
+		    map( { my $a = $_; $a =~ s/(['!])/'\\$1'/g; "'$a'" } @_ ));
 }
 
 # get HEAD ref of given project as hash
@@ -2156,49 +2160,6 @@ sub parse_commits {
 	close $fd;
 
 	return wantarray ? @cos : \@cos;
-}
-
-# parse ref from ref_file, given by ref_id, with given type
-sub parse_ref {
-	my $ref_file = shift;
-	my $ref_id = shift;
-	my $type = shift || git_get_type($ref_id);
-	my %ref_item;
-
-	$ref_item{'type'} = $type;
-	$ref_item{'id'} = $ref_id;
-	$ref_item{'epoch'} = 0;
-	$ref_item{'age'} = "unknown";
-	if ($type eq "tag") {
-		my %tag = parse_tag($ref_id);
-		$ref_item{'comment'} = $tag{'comment'};
-		if ($tag{'type'} eq "commit") {
-			my %co = parse_commit($tag{'object'});
-			$ref_item{'epoch'} = $co{'committer_epoch'};
-			$ref_item{'age'} = $co{'age_string'};
-		} elsif (defined($tag{'epoch'})) {
-			my $age = time - $tag{'epoch'};
-			$ref_item{'epoch'} = $tag{'epoch'};
-			$ref_item{'age'} = age_string($age);
-		}
-		$ref_item{'reftype'} = $tag{'type'};
-		$ref_item{'name'} = $tag{'name'};
-		$ref_item{'refid'} = $tag{'object'};
-	} elsif ($type eq "commit"){
-		my %co = parse_commit($ref_id);
-		$ref_item{'reftype'} = "commit";
-		$ref_item{'name'} = $ref_file;
-		$ref_item{'title'} = $co{'title'};
-		$ref_item{'refid'} = $ref_id;
-		$ref_item{'epoch'} = $co{'committer_epoch'};
-		$ref_item{'age'} = $co{'age_string'};
-	} else {
-		$ref_item{'reftype'} = $type;
-		$ref_item{'name'} = $ref_file;
-		$ref_item{'refid'} = $ref_id;
-	}
-
-	return %ref_item;
 }
 
 # parse line of git-diff-tree "raw" output
@@ -4633,7 +4594,6 @@ sub git_snapshot {
 		$hash = git_get_head_hash($project);
 	}
 
-	my $git_command = git_cmd_str();
 	my $name = $project;
 	$name =~ s,([^/])/*\.git$,$1,;
 	$name = basename($name);
@@ -4641,11 +4601,12 @@ sub git_snapshot {
 	$name =~ s/\047/\047\\\047\047/g;
 	my $cmd;
 	$filename .= "-$hash$known_snapshot_formats{$format}{'suffix'}";
-	$cmd = "$git_command archive " .
-		"--format=$known_snapshot_formats{$format}{'format'} " .
-		"--prefix=\'$name\'/ $hash";
+	$cmd = quote_command(
+		git_cmd(), 'archive',
+		"--format=$known_snapshot_formats{$format}{'format'}",
+		"--prefix=$name/", $hash);
 	if (exists $known_snapshot_formats{$format}{'compressor'}) {
-		$cmd .= ' | ' . join ' ', @{$known_snapshot_formats{$format}{'compressor'}};
+		$cmd .= ' | ' . quote_command(@{$known_snapshot_formats{$format}{'compressor'}});
 	}
 
 	print $cgi->header(
@@ -4858,8 +4819,8 @@ sub git_object {
 	if ($hash || ($hash_base && !defined $file_name)) {
 		my $object_id = $hash || $hash_base;
 
-		my $git_command = git_cmd_str();
-		open my $fd, "-|", "$git_command cat-file -t $object_id 2>/dev/null"
+		open my $fd, "-|", quote_command(
+			git_cmd(), 'cat-file', '-t', $object_id) . ' 2> /dev/null'
 			or die_error('404 Not Found', "Object does not exist");
 		$type = <$fd>;
 		chomp $type;
