@@ -41,10 +41,13 @@ Don't allow recursing into subdirectories
 Don't check for `gitcvs.enabled` in config. You also have to specify a list
 of allowed directories (see below) if you want to use this option.
 
---version, -V::
+-V::
+--version::
 Print version information and exit
 
---help, -h, -H::
+-h::
+-H::
+--help::
 Print usage information and exit
 
 <directory>::
@@ -352,4 +355,4 @@ Documentation by Martyn Smith <martyn@catalyst.net.nz>, Martin Langhoff <martin@
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

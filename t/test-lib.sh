@@ -168,7 +168,7 @@ trap 'die' exit
 # environment variables to work around this.
 #
 # In particular, quoting isn't enough, as the path may contain the same quote
-# that we're using. 
+# that we're using.
 test_set_editor () {
 	FAKE_EDITOR="$1"
 	export FAKE_EDITOR
@@ -386,7 +386,7 @@ test_done () {
 }
 
 # Test the binaries we have just built.  The tests are kept in
-# t/ subdirectory and are run in trash subdirectory.
+# t/ subdirectory and are run in 'trash directory' subdirectory.
 PATH=$(pwd)/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
 GIT_TEMPLATE_DIR=$(pwd)/../templates/blt

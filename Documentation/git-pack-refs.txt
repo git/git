@@ -42,7 +42,7 @@ unpacked.
 OPTIONS
 -------
 
-\--all::
+--all::
 
 The command by default packs all tags and refs that are already
 packed, and leaves other refs
@@ -51,7 +51,7 @@ developed and packing their tips does not help performance.
 This option causes branch tips to be packed as well.  Useful for
 a repository with many branches of historical interests.
 
-\--no-prune::
+--no-prune::
 
 The command usually removes loose refs under `$GIT_DIR/refs`
 hierarchy after packing them.  This option tells it not to.
@@ -63,4 +63,4 @@ Written by Linus Torvalds <torvalds@osdl.org>
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

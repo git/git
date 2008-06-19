@@ -38,7 +38,8 @@ OPTIONS
 -f::
 	Override the up-to-date check.
 
--n, \--dry-run::
+-n::
+--dry-run::
 	Don't actually remove any file(s).  Instead, just show
 	if they exist in the index and would otherwise be removed
 	by the command.
@@ -52,15 +53,16 @@ OPTIONS
 	the list of files, (useful when filenames might be mistaken
 	for command-line options).
 
-\--cached::
+--cached::
 	Use this option to unstage and remove paths only from the index.
 	Working tree files, whether modified or not, will be
 	left alone.
 
-\--ignore-unmatch::
+--ignore-unmatch::
 	Exit with a zero status even if no files matched.
 
--q, \--quiet::
+-q::
+--quiet::
 	git-rm normally outputs one line (in the form of an "rm" command)
 	for each file removed. This option suppresses that output.
 
@@ -107,4 +109,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -73,7 +73,8 @@ OPTIONS
 	this repository (or a direct copy of it)
 	over HTTP or FTP.  See gitlink:git-update-server-info[1].
 
---window=[N], --depth=[N]::
+--window=[N]::
+--depth=[N]::
 	These two options affect how the objects contained in the pack are
 	stored using delta compression. The objects are first internally
 	sorted by type, size and optionally names and compared against the
@@ -129,4 +130,4 @@ linkgit:git-prune-packed[1]
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

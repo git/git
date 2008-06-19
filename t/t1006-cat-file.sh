@@ -74,7 +74,7 @@ $content"
     test -z "$content" ||
     test_expect_success "--batch output of $type is correct" '
 	expect="$(maybe_remove_timestamp "$batch_output" $no_ts)"
-	actual="$(maybe_remove_timestamp "$(echo $sha1 | git cat-file --batch)" no_ts)"
+	actual="$(maybe_remove_timestamp "$(echo $sha1 | git cat-file --batch)" $no_ts)"
         if test "z$expect" = "z$actual"
 	then
 		: happy
@@ -174,9 +174,27 @@ do
     '
 done
 
-test_expect_success "--batch-check for a non-existent object" '
-    test "deadbeef missing" = \
-    "$(echo_without_newline deadbeef | git cat-file --batch-check)"
+test_expect_success "--batch-check for a non-existent named object" '
+    test "foobar42 missing
+foobar84 missing" = \
+    "$( ( echo foobar42; echo_without_newline foobar84; ) | git cat-file --batch-check)"
+'
+
+test_expect_success "--batch-check for a non-existent hash" '
+    test "0000000000000000000000000000000000000042 missing
+0000000000000000000000000000000000000084 missing" = \
+    "$( ( echo 0000000000000000000000000000000000000042;
+         echo_without_newline 0000000000000000000000000000000000000084; ) \
+       | git cat-file --batch-check)"
+'
+
+test_expect_success "--batch for an existent and a non-existent hash" '
+    test "$tag_sha1 tag $tag_size
+$tag_content
+0000000000000000000000000000000000000000 missing" = \
+    "$( ( echo $tag_sha1;
+         echo_without_newline 0000000000000000000000000000000000000000; ) \
+       | git cat-file --batch)"
 '
 
 test_expect_success "--batch-check for an emtpy line" '

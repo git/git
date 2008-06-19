@@ -52,7 +52,8 @@ OPTIONS
 	The parameter given must be usable as a single, valid
 	object name.  Otherwise barf and abort.
 
--q, --quiet::
+-q::
+--quiet::
 	Only meaningful in `--verify` mode. Do not output an error
 	message if the first argument is not a valid object name;
 	instead exit with non-zero status silently.
@@ -119,16 +120,19 @@ OPTIONS
 --is-bare-repository::
 	When the repository is bare print "true", otherwise "false".
 
---short, --short=number::
+--short::
+--short=number::
 	Instead of outputting the full SHA1 values of object names try to
 	abbreviate them to a shorter unique name. When no length is specified
 	7 is used. The minimum length is 4.
 
---since=datestring, --after=datestring::
+--since=datestring::
+--after=datestring::
 	Parses the date string, and outputs corresponding
 	--max-age= parameter for git-rev-list command.
 
---until=datestring, --before=datestring::
+--until=datestring::
+--before=datestring::
 	Parses the date string, and outputs corresponding
 	--min-age= parameter for git-rev-list command.
 
@@ -417,4 +421,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

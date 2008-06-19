@@ -171,13 +171,16 @@ sed '$d' < expect.tmp > expect
 rm -f expect.tmp
 echo "# Committer:
 #" >> expect
-unset GIT_COMMITTER_EMAIL
-unset GIT_COMMITTER_NAME
 
 test_expect_success 'committer is automatic' '
 
 	echo >>negative &&
-	git commit -e -m "sample"
+	(
+		unset GIT_COMMITTER_EMAIL
+		unset GIT_COMMITTER_NAME
+		# must fail because there is no change
+		test_must_fail git commit -e -m "sample"
+	) &&
 	head -n 8 .git/COMMIT_EDITMSG |	\
 	sed "s/^# Committer: .*/# Committer:/" >actual &&
 	test_cmp expect actual
@@ -193,34 +196,35 @@ chmod +x .git/FAKE_EDITOR
 
 test_expect_success 'do not fire editor in the presence of conflicts' '
 
-	git clean
-	echo f>g
-	git add g
-	git commit -myes
-	git branch second
-	echo master>g
-	echo g>h
-	git add g h
-	git commit -mmaster
-	git checkout second
-	echo second>g
-	git add g
-	git commit -msecond
-	git cherry-pick -n master
-	echo "editor not started" > .git/result
-	GIT_EDITOR=`pwd`/.git/FAKE_EDITOR git commit && exit 1  # should fail
-	test "`cat .git/result`" = "editor not started"
+	git clean -f &&
+	echo f >g &&
+	git add g &&
+	git commit -m "add g" &&
+	git branch second &&
+	echo master >g &&
+	echo g >h &&
+	git add g h &&
+	git commit -m "modify g and add h" &&
+	git checkout second &&
+	echo second >g &&
+	git add g &&
+	git commit -m second &&
+	# Must fail due to conflict
+	test_must_fail git cherry-pick -n master &&
+	echo "editor not started" >.git/result &&
+	test_must_fail GIT_EDITOR="$(pwd)/.git/FAKE_EDITOR" git commit &&
+	test "$(cat .git/result)" = "editor not started"
 '
 
 pwd=`pwd`
-cat > .git/FAKE_EDITOR << EOF
-#! /bin/sh
+cat >.git/FAKE_EDITOR <<EOF
+#! $SHELL_PATH
 # kill -TERM command added below.
 EOF
 
 test_expect_success 'a SIGTERM should break locks' '
 	echo >>negative &&
-	sh -c '\''
+	"$SHELL_PATH" -c '\''
 	  echo kill -TERM $$ >> .git/FAKE_EDITOR
 	  GIT_EDITOR=.git/FAKE_EDITOR exec git commit -a'\'' && exit 1  # should fail
 	! test -f .git/index.lock

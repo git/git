@@ -50,6 +50,9 @@ OPTIONS
 	trees that are not directly related to the current
 	working tree status into a temporary index file.
 
+-v::
+	Show the progress of checking files out.
+
 --trivial::
 	Restrict three-way merge by `git-read-tree` to happen
 	only if there is no file-level merging required, instead
@@ -361,4 +364,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

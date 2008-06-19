@@ -41,7 +41,8 @@ of lines before or after the line given by <start>.
 -S <revs-file>::
 	Use revs from revs-file instead of calling linkgit:git-rev-list[1].
 
--p, --porcelain::
+-p::
+--porcelain::
 	Show in a format designed for machine consumption.
 
 --incremental::
@@ -83,5 +84,6 @@ alphanumeric characters that git must detect as moving
 between files for it to associate those lines with the parent
 commit.
 
--h, --help::
+-h::
+--help::
 	Show help message.

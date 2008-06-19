@@ -18,6 +18,14 @@ Updates since v1.5.5
 * "git init" now autodetects the case sensitivity of the filesystem and
   sets core.ignorecase accordingly.
 
+(documentation)
+
+* Many freestanding documentation pages have been converted and made
+  available to "git help" (aka "man git<something>") as section 7 of
+  the manual pages. This means bookmarks to some HTML documentation
+  files may need to be updated (eg "tutorial.html" became
+  "gittutorial.html").
+
 (performance)
 
 * "git clone" was rewritten in C.  This will hopefully help cloning a
@@ -64,7 +72,7 @@ Updates since v1.5.5
 
 * "git init --bare" is a synonym for "git --bare init" now.
 
-* "git gc --auto" honors a new pre-aut-gc hook to temporarily disable it.
+* "git gc --auto" honors a new pre-auto-gc hook to temporarily disable it.
 
 * "git log --pretty=tformat:<custom format>" gives a LF after each entry,
   instead of giving a LF between each pair of entries which is how
@@ -105,6 +113,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.6-rc1
+O=v1.5.6-rc3
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

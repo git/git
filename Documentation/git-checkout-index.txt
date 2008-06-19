@@ -22,21 +22,26 @@ Will copy all files listed from the index to the working directory
 
 OPTIONS
 -------
--u|--index::
+-u::
+--index::
 	update stat information for the checked out entries in
 	the index file.
 
--q|--quiet::
+-q::
+--quiet::
 	be quiet if files exist or are not in the index
 
--f|--force::
+-f::
+--force::
 	forces overwrite of existing files
 
--a|--all::
+-a::
+--all::
 	checks out all files in the index.  Cannot be used
 	together with explicit filenames.
 
--n|--no-create::
+-n::
+--no-create::
 	Don't checkout new files, only refresh files already checked
 	out.
 
@@ -181,4 +186,4 @@ Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

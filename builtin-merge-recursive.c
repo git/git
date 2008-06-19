@@ -555,9 +555,19 @@ static void update_file_flags(const unsigned char *sha,
 			die("cannot read object %s '%s'", sha1_to_hex(sha), path);
 		if (type != OBJ_BLOB)
 			die("blob expected for %s '%s'", sha1_to_hex(sha), path);
+		if (S_ISREG(mode)) {
+			struct strbuf strbuf;
+			strbuf_init(&strbuf, 0);
+			if (convert_to_working_tree(path, buf, size, &strbuf)) {
+				free(buf);
+				size = strbuf.len;
+				buf = strbuf_detach(&strbuf, NULL);
+			}
+		}
 
 		if (make_room_for_path(path) < 0) {
 			update_wd = 0;
+			free(buf);
 			goto update_index;
 		}
 		if (S_ISREG(mode) || (!has_symlinks && S_ISLNK(mode))) {
@@ -580,6 +590,7 @@ static void update_file_flags(const unsigned char *sha,
 		} else
 			die("do not know what to do with %06o %s '%s'",
 			    mode, sha1_to_hex(sha), path);
+		free(buf);
 	}
  update_index:
 	if (update_cache)

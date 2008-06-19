@@ -61,10 +61,12 @@ summary::
 
 OPTIONS
 -------
--q, --quiet::
+-q::
+--quiet::
 	Only print error messages.
 
--b, --branch::
+-b::
+--branch::
 	Branch of repository to add as submodule.
 
 --cached::
@@ -72,7 +74,8 @@ OPTIONS
 	commands typically use the commit found in the submodule HEAD, but
 	with this option, the commit stored in the index is used instead.
 
--n, --summary-limit::
+-n::
+--summary-limit::
 	This option is only valid for the summary command.
 	Limit the summary size (number of commits shown in total).
 	Giving 0 will disable the summary; a negative number means unlimited
@@ -98,4 +101,4 @@ Written by Lars Hjemli <hjemli@gmail.com>
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

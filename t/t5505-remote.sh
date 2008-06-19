@@ -108,12 +108,11 @@ test_expect_success 'remove remote' '
 '
 
 case $(uname -s) in
-*MINGW*) PWD="pwd -W";;
-*)       PWD=pwd;;
+*MINGW*) pwd() { builtin pwd -W; } ;;
 esac
 cat > test/expect << EOF
 * remote origin
-  URL: $($PWD)/one/.git
+  URL: $(pwd)/one/.git
   Remote branch merged with 'git pull' while on branch master
     master
   New remote branch (next fetch will store in remotes/origin)
@@ -142,6 +141,25 @@ test_expect_success 'show' '
 	 test_cmp expect output)
 '
 
+cat > test/expect << EOF
+* remote origin
+  URL: $(pwd)/one/.git
+  Remote branch merged with 'git pull' while on branch master
+    master
+  Tracked remote branches
+    master side
+  Local branches pushed with 'git push'
+    master:upstream +refs/tags/lastbackup
+EOF
+
+test_expect_success 'show -n' '
+	(mv one one.unreachable &&
+	 cd test &&
+	 git remote show -n origin > output &&
+	 mv ../one.unreachable ../one &&
+	 test_cmp expect output)
+'
+
 test_expect_success 'prune' '
 	(cd one &&
 	 git branch -m side side2) &&
@@ -150,6 +168,24 @@ test_expect_success 'prune' '
 	 git remote prune origin &&
 	 git rev-parse refs/remotes/origin/side2 &&
 	 ! git rev-parse refs/remotes/origin/side)
+'
+
+cat > test/expect << EOF
+Pruning origin
+URL: $(pwd)/one/.git
+ * [would prune] origin/side2
+EOF
+
+test_expect_success 'prune --dry-run' '
+	(cd one &&
+	 git branch -m side2 side) &&
+	(cd test &&
+	 git remote prune --dry-run origin > output &&
+	 git rev-parse refs/remotes/origin/side2 &&
+	 ! git rev-parse refs/remotes/origin/side &&
+	(cd ../one &&
+	 git branch -m side side2) &&
+	 test_cmp expect output)
 '
 
 test_expect_success 'add --mirror && prune' '

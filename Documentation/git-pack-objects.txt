@@ -79,7 +79,8 @@ base-name::
 	reference was included in the resulting packfile.  This
 	can be useful to send new tags to native git clients.
 
---window=[N], --depth=[N]::
+--window=[N]::
+--depth=[N]::
 	These two options affect how the objects contained in
 	the pack are stored using delta compression.  The
 	objects are first internally sorted by type, size and
@@ -208,4 +209,4 @@ linkgit:git-prune-packed[1]
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

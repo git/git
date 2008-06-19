@@ -117,4 +117,4 @@ Documentation by Martin Langhoff <martin@catalyst.net.nz> and others.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

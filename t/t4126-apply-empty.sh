@@ -26,7 +26,6 @@ test_expect_success setup '
 
 test_expect_success 'apply empty' '
 	git reset --hard &&
-	>empty &&
 	rm -f missing &&
 	git apply patch0 &&
 	test_cmp expect empty
@@ -34,7 +33,6 @@ test_expect_success 'apply empty' '
 
 test_expect_success 'apply --index empty' '
 	git reset --hard &&
-	>empty &&
 	rm -f missing &&
 	git apply --index patch0 &&
 	test_cmp expect empty &&
@@ -43,7 +41,6 @@ test_expect_success 'apply --index empty' '
 
 test_expect_success 'apply create' '
 	git reset --hard &&
-	>empty &&
 	rm -f missing &&
 	git apply patch1 &&
 	test_cmp expect missing
@@ -51,7 +48,6 @@ test_expect_success 'apply create' '
 
 test_expect_success 'apply --index create' '
 	git reset --hard &&
-	>empty &&
 	rm -f missing &&
 	git apply --index patch1 &&
 	test_cmp expect missing &&

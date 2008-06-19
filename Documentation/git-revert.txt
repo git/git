@@ -22,12 +22,14 @@ OPTIONS
 	For a more complete list of ways to spell commit names, see
 	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
--e|--edit::
+-e::
+--edit::
 	With this option, `git-revert` will let you edit the commit
 	message prior to committing the revert. This is the default if
 	you run the command from a terminal.
 
--m parent-number|--mainline parent-number::
+-m parent-number::
+--mainline parent-number::
 	Usually you cannot revert a merge because you do not know which
 	side of the merge should be considered the mainline.  This
 	option specifies the parent number (starting from 1) of
@@ -38,7 +40,8 @@ OPTIONS
 	With this option, `git-revert` will not start the commit
 	message editor.
 
--n|--no-commit::
+-n::
+--no-commit::
 	Usually the command automatically creates a commit with
 	a commit log message stating which commit was reverted.
 	This flag applies the change necessary to revert the
@@ -51,7 +54,8 @@ OPTIONS
 This is useful when reverting more than one commits'
 effect to your working tree in a row.
 
--s|--signoff::
+-s::
+--signoff::
 	Add Signed-off-by line at the end of the commit message.
 
 
@@ -65,4 +69,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

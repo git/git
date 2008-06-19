@@ -20,24 +20,29 @@ repository.
 OPTIONS
 -------
 
--l|--local::
+-l::
+--local::
 	Only bind the web server to the local IP (127.0.0.1).
 
--d|--httpd::
+-d::
+--httpd::
 	The HTTP daemon command-line that will be executed.
 	Command-line options may be specified here, and the
 	configuration file will be added at the end of the command-line.
 	Currently lighttpd, apache2 and webrick are supported.
 	(Default: lighttpd)
 
--m|--module-path::
+-m::
+--module-path::
 	The module path (only needed if httpd is Apache).
 	(Default: /usr/lib/apache2/modules)
 
--p|--port::
+-p::
+--port::
 	The port number to bind the httpd to.  (Default: 1234)
 
--b|--browser::
+-b::
+--browser::
 	The web browser that should be used to view the gitweb
 	page. This will be passed to the 'git-web--browse' helper
 	script along with the URL of the gitweb instance. See
@@ -86,4 +91,4 @@ Documentation by Eric Wong <normalperson@yhbt.net>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

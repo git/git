@@ -41,6 +41,13 @@ OPTIONS
 	of linkgit:git-describe[1] more closely.  This option
 	cannot be combined with --stdin.
 
+--no-undefined::
+	Die with error code != 0 when a reference is undefined,
+	instead of printing `undefined`.
+
+--always::
+	Show uniquely abbreviated commit object as fallback.
+
 EXAMPLE
 -------
 
@@ -75,4 +82,4 @@ Documentation by Johannes Schindelin.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

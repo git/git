@@ -30,9 +30,11 @@ OPTIONS
 	git-clean will refuse to run unless given -f or -n.
 
 -n::
+--dry-run::
 	Don't actually remove anything, just show what would be done.
 
 -q::
+--quiet::
 	Be quiet, only report errors, but not the files that are
 	successfully removed.
 
@@ -54,4 +56,4 @@ Written by Pavel Roskin <proski@gnu.org>
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

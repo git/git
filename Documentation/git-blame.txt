@@ -52,12 +52,14 @@ include::blame-options.txt[]
 	a certain threshold for git-blame to consider those lines
 	of code to have been moved.
 
--f, --show-name::
+-f::
+--show-name::
 	Show filename in the original commit.  By default
 	filename is shown if there is any line that came from a
 	file with different name, due to rename detection.
 
--n, --show-number::
+-n::
+--show-number::
 	Show line number in the original commit (Default: off).
 
 -s::
@@ -192,4 +194,4 @@ Written by Junio C Hamano <junkio@cox.net>
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

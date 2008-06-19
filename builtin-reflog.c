@@ -307,6 +307,8 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 			unlink(newlog_path);
 		} else if (cmd->updateref && commit_ref(lock)) {
 			status |= error("Couldn't set %s", lock->ref_name);
+		} else {
+			adjust_shared_perm(log_file);
 		}
 	}
 	free(newlog_path);

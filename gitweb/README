@@ -255,12 +255,15 @@ Webserver configuration
 If you want to have one URL for both gitweb and your http://
 repositories, you can configure apache like this:
 
-<VirtualHost www:80>
-    ServerName git.domain.org
+<VirtualHost *:80>
+    ServerName git.example.org
     DocumentRoot /pub/git
-    RewriteEngine on
-    RewriteRule ^/(.*\.git/(?!/?(info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
     SetEnv	GITWEB_CONFIG	/etc/gitweb.conf
+    RewriteEngine on
+    # make the front page an internal rewrite to the gitweb script
+    RewriteRule ^/$  /cgi-bin/gitweb.cgi
+    # make access for "dumb clients" work
+    RewriteRule ^/(.*\.git/(?!/?(HEAD|info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
 </VirtualHost>
 
 The above configuration expects your public repositories to live under
@@ -275,6 +278,13 @@ configuration for gitweb.  Perl variables defined in here will
 override the defaults given at the head of the gitweb.perl (or
 gitweb.cgi).  Look at the comments in that file for information on
 which variables and what they mean.
+
+If you use the rewrite rules from the example you'll likely also need
+something like the following in your gitweb.conf (or gitweb_config.perl) file:
+
+  @stylesheets = ("/some/absolute/path/gitweb.css");
+  $my_uri = "/";
+  $home_link = "/";
 
 
 Originally written by:

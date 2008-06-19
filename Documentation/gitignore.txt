@@ -138,4 +138,4 @@ Frank Lichtenheld, and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -67,10 +67,10 @@ Issues of note:
 	  that come with git (git includes the one from Mozilla, and has
 	  its own PowerPC and ARM optimized ones too - see the Makefile).
 
-	- "libcurl" and "curl" executable.  git-http-fetch and
-	  git-fetch use them.  If you do not use http
-	  transfer, you are probably OK if you do not have
-	  them.
+	- libcurl library; git-http-fetch and git-fetch use them.  You
+	  might also want the "curl" executable for debugging purposes.
+	  If you do not use http transfer, you are probably OK if you
+	  do not have them.
 
 	- expat library; git-http-push uses it for remote lock
 	  management over DAV.  Similar to "curl" above, this is optional.
@@ -82,9 +82,6 @@ Issues of note:
 
 	- "perl" and POSIX-compliant shells are needed to use most of
 	  the barebone Porcelainish scripts.
-
-	- "cpio" is used by git-clone when doing a local (possibly
-	  hardlinked) clone.
 
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not

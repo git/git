@@ -8,9 +8,9 @@ git-commit - Record changes to the repository
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a | --interactive] [-s] [-v] [-u]
-	   [(-c | -C) <commit> | -F <file> | -m <msg> | --amend]
-	   [--allow-empty] [--no-verify] [-e] [--author <author>]
+'git-commit' [-a | --interactive] [-s] [-v] [-u] [--amend]
+	   [(-c | -C) <commit>] [-F <file> | -m <msg>]
+	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
 	   [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
@@ -52,39 +52,49 @@ that, you can recover from it with linkgit:git-reset[1].
 
 OPTIONS
 -------
--a|--all::
+-a::
+--all::
 	Tell the command to automatically stage files that have
 	been modified and deleted, but new files you have not
 	told git about are not affected.
 
--c or -C <commit>::
-	Take existing commit object, and reuse the log message
+-C <commit>::
+--reuse-message=<commit>::
+	Take an existing commit object, and reuse the log message
 	and the authorship information (including the timestamp)
-	when creating the commit.  With '-C', the editor is not
-	invoked; with '-c' the user can further edit the commit
-	message.
+	when creating the commit.
+
+-c <commit>::
+--reedit-message=<commit>::
+	Like '-C', but with '-c' the editor is invoked, so that
+	the user can further edit the commit message.
 
 -F <file>::
+--file=<file>::
 	Take the commit message from the given file.  Use '-' to
 	read the message from the standard input.
 
---author <author>::
+--author=<author>::
 	Override the author name used in the commit.  Use
 	`A U Thor <author@example.com>` format.
 
--m <msg>|--message=<msg>::
+-m <msg>::
+--message=<msg>::
 	Use the given <msg> as the commit message.
 
--t <file>|--template=<file>::
+-t <file>::
+--template=<file>::
 	Use the contents of the given file as the initial version
 	of the commit message. The editor is invoked and you can
 	make subsequent changes. If a message is specified using
 	the `-m` or `-F` options, this option has no effect. This
 	overrides the `commit.template` configuration variable.
 
--s|--signoff::
+-s::
+--signoff::
 	Add Signed-off-by line at the end of the commit message.
 
+-n::
 --no-verify::
 	This option bypasses the pre-commit and commit-msg hooks.
 	See also linkgit:githooks[5][hooks].
@@ -105,14 +115,14 @@ OPTIONS
 	'whitespace' removes just leading/trailing whitespace lines
 	and 'strip' removes both whitespace and commentary.
 
--e|--edit::
+-e::
+--edit::
 	The message taken from file with `-F`, command line with
 	`-m`, and from file with `-C` are usually used as the
 	commit log message unmodified.  This option lets you
 	further edit the message taken from these sources.
 
 --amend::
-
 	Used to amend the tip of the current branch. Prepare the tree
 	object you would want to replace the latest commit as usual
 	(this includes the usual -i/-o and explicit paths), and the
@@ -133,13 +143,15 @@ It is a rough equivalent for:
 but can be used to amend a merge commit.
 --
 
--i|--include::
+-i::
+--include::
 	Before making a commit out of staged contents so far,
 	stage the contents of paths given on the command line
 	as well.  This is usually not what you want unless you
 	are concluding a conflicted merge.
 
--o|--only::
+-o::
+--only::
 	Make a commit only from the paths specified on the
 	command line, disregarding any contents that have been
 	staged so far. This is the default mode of operation of
@@ -150,20 +162,23 @@ but can be used to amend a merge commit.
 	the last commit without committing changes that have
 	already been staged.
 
--u|--untracked-files::
+-u::
+--untracked-files::
 	Show all untracked files, also those in uninteresting
 	directories, in the "Untracked files:" section of commit
 	message template.  Without this option only its name and
 	a trailing slash are displayed for each untracked
 	directory.
 
--v|--verbose::
+-v::
+--verbose::
 	Show unified diff between the HEAD commit and what
 	would be committed at the bottom of the commit message
 	template.  Note that this diff output doesn't have its
 	lines prefixed with '#'.
 
--q|--quiet::
+-q::
+--quiet::
 	Suppress commit summary message.
 
 \--::
@@ -312,4 +327,4 @@ Junio C Hamano <junkio@cox.net>
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

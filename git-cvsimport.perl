@@ -227,6 +227,7 @@ sub conn {
 				$proxyport = $1;
 			}
 		}
+		$repo ||= '/';
 
 		# if username is not explicit in CVSROOT, then use current user, as cvs would
 		$user=(getlogin() || $ENV{'LOGNAME'} || $ENV{'USER'} || "anonymous") unless $user;

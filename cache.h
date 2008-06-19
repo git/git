@@ -524,6 +524,7 @@ static inline int is_absolute_path(const char *path)
 	return path[0] == '/' || has_dos_drive_prefix(path);
 }
 const char *make_absolute_path(const char *path);
+const char *make_nonrelative_path(const char *path);
 /* Convert slashes in place. On Windows to backslashes. */
 char *make_native_separator(char *path);
 
@@ -537,9 +538,6 @@ extern int force_object_loose(const unsigned char *sha1, time_t mtime);
 
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
-extern int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
-			      size_t bufsize, size_t *bufposn);
-extern int write_sha1_to_fd(int fd, const unsigned char *sha1);
 extern int move_temp_to_file(const char *tmpfile, const char *filename);
 
 extern int has_sha1_pack(const unsigned char *sha1, const char **ignore);
