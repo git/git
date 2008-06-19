@@ -867,8 +867,7 @@ static char *guess_ref(const char *name, struct ref *peer)
 
 static int match_explicit(struct ref *src, struct ref *dst,
 			  struct ref ***dst_tail,
-			  struct refspec *rs,
-			  int errs)
+			  struct refspec *rs)
 {
 	struct ref *matched_src, *matched_dst;
 
@@ -876,7 +875,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	char *dst_guess;
 
 	if (rs->pattern || rs->matching)
-		return errs;
+		return 0;
 
 	matched_src = matched_dst = NULL;
 	switch (count_refspec_match(rs->src, src, &matched_src)) {
@@ -889,23 +888,16 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		 */
 		matched_src = try_explicit_object_name(rs->src);
 		if (!matched_src)
-			error("src refspec %s does not match any.", rs->src);
+			return error("src refspec %s does not match any.", rs->src);
 		break;
 	default:
-		matched_src = NULL;
-		error("src refspec %s matches more than one.", rs->src);
-		break;
+		return error("src refspec %s matches more than one.", rs->src);
 	}
-
-	if (!matched_src)
-		errs = 1;
 
 	if (!dst_value) {
 		unsigned char sha1[20];
 		int flag;
 
-		if (!matched_src)
-			return errs;
 		dst_value = resolve_ref(matched_src->name, sha1, 1, &flag);
 		if (!dst_value ||
 		    ((flag & REF_ISSYMREF) &&
@@ -936,18 +928,16 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		      dst_value);
 		break;
 	}
-	if (errs || !matched_dst)
-		return 1;
-	if (matched_dst->peer_ref) {
-		errs = 1;
-		error("dst ref %s receives from more than one src.",
+	if (!matched_dst)
+		return -1;
+	if (matched_dst->peer_ref)
+		return error("dst ref %s receives from more than one src.",
 		      matched_dst->name);
-	}
 	else {
 		matched_dst->peer_ref = matched_src;
 		matched_dst->force = rs->force;
 	}
-	return errs;
+	return 0;
 }
 
 static int match_explicit_refs(struct ref *src, struct ref *dst,
@@ -956,8 +946,8 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 {
 	int i, errs;
 	for (i = errs = 0; i < rs_nr; i++)
-		errs |= match_explicit(src, dst, dst_tail, &rs[i], errs);
-	return -errs;
+		errs += match_explicit(src, dst, dst_tail, &rs[i]);
+	return errs;
 }
 
 static const struct refspec *check_pattern_match(const struct refspec *rs,

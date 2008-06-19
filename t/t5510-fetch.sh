@@ -37,7 +37,8 @@ test_expect_success "clone and setup child repos" '
 		echo "Pull: refs/heads/one:refs/heads/one"
 	} >.git/remotes/two &&
 	cd .. &&
-	git clone . bundle
+	git clone . bundle &&
+	git clone . seven
 '
 
 test_expect_success "fetch test" '
@@ -293,6 +294,13 @@ test_expect_success 'configured fetch updates tracking' '
 		test "$o" != "$n" &&
 		git rev-parse --verify refs/remotes/origin/side
 	)
+'
+
+test_expect_success 'pushing nonexistent branch by mistake should not segv' '
+
+	cd "$D" &&
+	test_must_fail git push seven no:no
+
 '
 
 test_done

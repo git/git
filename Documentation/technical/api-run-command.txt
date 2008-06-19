@@ -63,7 +63,7 @@ command to run in a sub-process.
 
 The caller:
 
-1. allocates and clears (memset(&chld, '0', sizeof(chld));) a
+1. allocates and clears (memset(&chld, 0, sizeof(chld));) a
    struct child_process variable;
 2. initializes the members;
 3. calls start_command();
@@ -136,7 +136,7 @@ to produce output that the caller reads.
 
 The caller:
 
-1. allocates and clears (memset(&asy, '0', sizeof(asy));) a
+1. allocates and clears (memset(&asy, 0, sizeof(asy));) a
    struct async variable;
 2. initializes .proc and .data;
 3. calls start_async();

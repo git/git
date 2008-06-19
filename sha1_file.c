@@ -120,7 +120,7 @@ int safe_create_leading_directories(char *path)
 	return 0;
 }
 
-char * sha1_to_hex(const unsigned char *sha1)
+char *sha1_to_hex(const unsigned char *sha1)
 {
 	static int bufno;
 	static char hexbuffer[4][50];
@@ -835,13 +835,7 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 
 struct packed_git *parse_pack_index(unsigned char *sha1)
 {
-	char *path = sha1_pack_index_name(sha1);
-	return parse_pack_index_file(sha1, path);
-}
-
-struct packed_git *parse_pack_index_file(const unsigned char *sha1,
-					 const char *idx_path)
-{
+	const char *idx_path = sha1_pack_index_name(sha1);
 	const char *path = sha1_pack_name(sha1);
 	struct packed_git *p = xmalloc(sizeof(*p) + strlen(path) + 2);
 
@@ -2129,7 +2123,7 @@ static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
 	if (fd < 0 && dirlen) {
 		/* Make sure the directory exists */
 		buffer[dirlen-1] = 0;
-		if (mkdir(buffer, 0777) && adjust_shared_perm(buffer))
+		if (mkdir(buffer, 0777) || adjust_shared_perm(buffer))
 			return -1;
 
 		/* Try again */
@@ -2149,20 +2143,6 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	static char tmpfile[PATH_MAX];
 
 	filename = sha1_file_name(sha1);
-	fd = open(filename, O_RDONLY);
-	if (fd >= 0) {
-		/*
-		 * FIXME!!! We might do collision checking here, but we'd
-		 * need to uncompress the old file and check it. Later.
-		 */
-		close(fd);
-		return 0;
-	}
-
-	if (errno != ENOENT) {
-		return error("sha1 file %s: %s\n", filename, strerror(errno));
-	}
-
 	fd = create_tmpfile(tmpfile, sizeof(tmpfile), filename);
 	if (fd < 0) {
 		if (errno == EPERM)

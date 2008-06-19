@@ -43,7 +43,7 @@ static void read_rr(struct path_list *rr)
 			; /* do nothing */
 		if (i == sizeof(buf))
 			die("filename too long");
-		path_list_insert(buf, rr)->util = xstrdup(name);
+		path_list_insert(buf, rr)->util = name;
 	}
 	fclose(in);
 }
