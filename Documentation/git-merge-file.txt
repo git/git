@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
-	[-p|--stdout] [-q|--quiet] <current-file> <base-file> <other-file>
+	[--ours|--theirs] [-p|--stdout] [-q|--quiet]
+	<current-file> <base-file> <other-file>
 
 
 DESCRIPTION
@@ -34,7 +35,9 @@ normally outputs a warning and brackets the conflict with lines containing
 	>>>>>>> B
 
 If there are conflicts, the user should edit the result and delete one of
-the alternatives.
+the alternatives.  When `--ours` or `--theirs` option is in effect, however,
+these conflicts are resolved favouring lines from `<current-file>` or
+lines from `<other-file>` respectively.
 
 The exit value of this program is negative on error, and the number of
 conflicts otherwise. If the merge was clean, the exit value is 0.
@@ -61,6 +64,11 @@ OPTIONS
 
 -q::
 	Quiet; do not warn about conflicts.
+
+--ours::
+--theirs::
+	Instead of leaving conflicts in the file, resolve conflicts
+	favouring our (or their) side of the lines.
 
 
 EXAMPLES
