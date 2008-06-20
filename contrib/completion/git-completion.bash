@@ -762,6 +762,9 @@ _git_log ()
 			--not --all
 			--left-right --cherry-pick
 			--graph
+			--stat --numstat --shortstat
+			--decorate --diff-filter=
+			--color-words --walk-reflogs
 			"
 		return
 		;;
