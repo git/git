@@ -59,6 +59,34 @@ You can pass --verbose (or -v), --debug (or -d), and --immediate
 	available), for more exhaustive testing.
 
 
+Skipping Tests
+--------------
+
+In some environments, certain tests have no way of succeeding
+due to platform limitation, such as lack of 'unzip' program, or
+filesystem that do not allow arbitrary sequence of non-NUL bytes
+as pathnames.
+
+You should be able to say something like
+
+    $ GIT_SKIP_TESTS=t9200.8 sh ./t9200-git-cvsexport-commit.sh
+
+and even:
+
+    $ GIT_SKIP_TESTS='t[0-4]??? t91?? t9200.8' make
+
+to omit such tests.  The value of the environment variable is a
+SP separated list of patterns that tells which tests to skip,
+and either can match the "t[0-9]{4}" part to skip the whole
+test, or t[0-9]{4} followed by ".$number" to say which
+particular test to skip.
+
+Note that some tests in the existing test suite rely on previous
+test item, so you cannot arbitrarily disable one and expect the
+remainder of test to check what the test originally was intended
+to check.
+
+
 Naming Tests
 ------------
 
