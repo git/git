@@ -330,6 +330,23 @@ const char *make_nonrelative_path(const char *path)
 /* We allow "recursive" symbolic links. Only within reason, though. */
 #define MAXDEPTH 5
 
+const char *make_relative_path(const char *abs, const char *base)
+{
+	static char buf[PATH_MAX + 1];
+	int baselen;
+	if (!base)
+		return abs;
+	baselen = strlen(base);
+	if (prefixcmp(abs, base))
+		return abs;
+	if (abs[baselen] == '/')
+		baselen++;
+	else if (base[baselen - 1] != '/')
+		return abs;
+	strcpy(buf, abs + baselen);
+	return buf;
+}
+
 const char *make_absolute_path(const char *path)
 {
 	static char bufs[2][PATH_MAX + 1], *buf = bufs[0], *next_buf = bufs[1];
