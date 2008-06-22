@@ -16,6 +16,9 @@ static int cutoff_resolve = 60;
 /* if rerere_enabled == -1, fall back to detection of .git/rr-cache */
 static int rerere_enabled = -1;
 
+/* automatically update cleanly resolved paths to the index */
+static int rerere_autoupdate;
+
 static char *merge_rr_path;
 
 static const char *rr_path(const char *name, const char *file)
@@ -276,9 +279,36 @@ static int diff_two(const char *file1, const char *label1,
 	return 0;
 }
 
+static struct lock_file index_lock;
+
+static int update_paths(struct path_list *update)
+{
+	int i;
+	int fd = hold_locked_index(&index_lock, 0);
+	int status = 0;
+
+	if (fd < 0)
+		return -1;
+
+	for (i = 0; i < update->nr; i++) {
+		struct path_list_item *item = &update->items[i];
+		if (add_file_to_cache(item->path, ADD_CACHE_IGNORE_ERRORS))
+			status = -1;
+	}
+
+	if (!status && active_cache_changed) {
+		if (write_cache(fd, active_cache, active_nr) ||
+		    commit_locked_index(&index_lock))
+			die("Unable to write new index file");
+	} else if (fd >= 0)
+		rollback_lock_file(&index_lock);
+	return status;
+}
+
 static int do_plain_rerere(struct path_list *rr, int fd)
 {
 	struct path_list conflict = { NULL, 0, 0, 1 };
+	struct path_list update = { NULL, 0, 0, 1 };
 	int i;
 
 	find_conflict(&conflict);
@@ -323,6 +353,8 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 			if (!merge(name, path)) {
 				fprintf(stderr, "Resolved '%s' using "
 						"previous resolution.\n", path);
+				if (rerere_autoupdate)
+					path_list_insert(path, &update);
 				goto mark_resolved;
 			}
 		}
@@ -338,6 +370,9 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 		rr->items[i].util = NULL;
 	}
 
+	if (update.nr)
+		update_paths(&update);
+
 	return write_rr(rr, fd);
 }
 
@@ -349,6 +384,8 @@ static int git_rerere_config(const char *var, const char *value, void *cb)
 		cutoff_noresolve = git_config_int(var, value);
 	else if (!strcmp(var, "rerere.enabled"))
 		rerere_enabled = git_config_bool(var, value);
+	else if (!strcmp(var, "rerere.autoupdate"))
+		rerere_autoupdate = git_config_bool(var, value);
 	else
 		return git_default_config(var, value, cb);
 	return 0;
