@@ -23,6 +23,18 @@ static const char *rr_path(const char *name, const char *file)
 	return git_path("rr-cache/%s/%s", name, file);
 }
 
+static time_t rerere_created_at(const char *name)
+{
+	struct stat st;
+	return stat(rr_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
+}
+
+static int has_resolution(const char *name)
+{
+	struct stat st;
+	return !stat(rr_path(name, "postimage"), &st);
+}
+
 static void read_rr(struct path_list *rr)
 {
 	unsigned char sha1[20];
@@ -98,13 +110,10 @@ static int handle_file(const char *path,
 		else if (!prefixcmp(buf, "======="))
 			hunk = 2;
 		else if (!prefixcmp(buf, ">>>>>>> ")) {
-			int cmp = strbuf_cmp(&one, &two);
-
+			if (strbuf_cmp(&one, &two) > 0)
+				strbuf_swap(&one, &two);
 			hunk_no++;
 			hunk = 0;
-			if (cmp > 0) {
-				strbuf_swap(&one, &two);
-			}
 			if (out) {
 				fputs("<<<<<<<\n", out);
 				fwrite(one.buf, one.len, 1, out);
@@ -201,33 +210,24 @@ static void unlink_rr_item(const char *name)
 static void garbage_collect(struct path_list *rr)
 {
 	struct path_list to_remove = { NULL, 0, 0, 1 };
-	char buf[1024];
 	DIR *dir;
 	struct dirent *e;
-	int len, i, cutoff;
+	int i, cutoff;
 	time_t now = time(NULL), then;
 
-	strlcpy(buf, git_path("rr-cache"), sizeof(buf));
-	len = strlen(buf);
-	dir = opendir(buf);
-	strcpy(buf + len++, "/");
+	dir = opendir(git_path("rr-cache"));
 	while ((e = readdir(dir))) {
 		const char *name = e->d_name;
-		struct stat st;
-		if (name[0] == '.' && (name[1] == '\0' ||
-					(name[1] == '.' && name[2] == '\0')))
+		if (name[0] == '.' &&
+		    (name[1] == '\0' || (name[1] == '.' && name[2] == '\0')))
 			continue;
-		i = snprintf(buf + len, sizeof(buf) - len, "%s", name);
-		strlcpy(buf + len + i, "/preimage", sizeof(buf) - len - i);
-		if (stat(buf, &st))
+		then = rerere_created_at(name);
+		if (!then)
 			continue;
-		then = st.st_mtime;
-		strlcpy(buf + len + i, "/postimage", sizeof(buf) - len - i);
-		cutoff = stat(buf, &st) ? cutoff_noresolve : cutoff_resolve;
-		if (then < now - cutoff * 86400) {
-			buf[len + i] = '\0';
-			path_list_insert(xstrdup(name), &to_remove);
-		}
+		cutoff = (has_resolution(name)
+			  ? cutoff_resolve : cutoff_noresolve);
+		if (then < now - cutoff * 86400)
+			path_list_append(name, &to_remove);
 	}
 	for (i = 0; i < to_remove.nr; i++)
 		unlink_rr_item(to_remove.items[i].path);
@@ -306,13 +306,11 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 	 */
 
 	for (i = 0; i < rr->nr; i++) {
-		struct stat st;
 		int ret;
 		const char *path = rr->items[i].path;
 		const char *name = (const char *)rr->items[i].util;
 
-		if (!stat(rr_path(name, "preimage"), &st) &&
-				!stat(rr_path(name, "postimage"), &st)) {
+		if (has_resolution(name)) {
 			if (!merge(name, path)) {
 				fprintf(stderr, "Resolved '%s' using "
 						"previous resolution.\n", path);
@@ -410,11 +408,8 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 		return do_plain_rerere(&merge_rr, fd);
 	else if (!strcmp(argv[1], "clear")) {
 		for (i = 0; i < merge_rr.nr; i++) {
-			struct stat st;
 			const char *name = (const char *)merge_rr.items[i].util;
-			if (!stat(git_path("rr-cache/%s", name), &st) &&
-					S_ISDIR(st.st_mode) &&
-					stat(rr_path(name, "postimage"), &st))
+			if (!has_resolution(name))
 				unlink_rr_item(name);
 		}
 		unlink(merge_rr_path);
