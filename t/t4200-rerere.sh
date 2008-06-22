@@ -193,9 +193,9 @@ test_expect_success 'resolution was recorded properly' '
 	echo Bello > file3 &&
 	git add file3 &&
 	git commit -m version2 &&
-	! git merge fifth &&
-	git diff-files -q &&
-	test Cello = "$(cat file3)"
+	test_must_fail git merge fifth &&
+	test Cello = "$(cat file3)" &&
+	test 0 != $(git ls-files -u | wc -l)
 '
 
 test_done
