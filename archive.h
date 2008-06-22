@@ -44,5 +44,6 @@ extern int write_zip_archive(struct archiver_args *);
 extern void *parse_extra_zip_args(int argc, const char **argv);
 
 extern void *sha1_file_to_archive(const char *path, const unsigned char *sha1, unsigned int mode, enum object_type *type, unsigned long *size, const struct commit *commit);
+extern int is_archive_path_ignored(const char *path);
 
 #endif	/* ARCHIVE_H */
