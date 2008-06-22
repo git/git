@@ -129,13 +129,6 @@ char *get_object_directory(void)
 	return git_object_dir;
 }
 
-char *get_refs_directory(void)
-{
-	if (!git_refs_dir)
-		setup_git_env();
-	return git_refs_dir;
-}
-
 char *get_index_file(void)
 {
 	if (!git_index_file)
