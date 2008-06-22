@@ -66,8 +66,12 @@ static int write_rr(struct path_list *rr, int out_fd)
 {
 	int i;
 	for (i = 0; i < rr->nr; i++) {
-		const char *path = rr->items[i].path;
-		int length = strlen(path) + 1;
+		const char *path;
+		int length;
+		if (!rr->items[i].util)
+			continue;
+		path = rr->items[i].path;
+		length = strlen(path) + 1;
 		if (write_in_full(out_fd, rr->items[i].util, 40) != 40 ||
 		    write_in_full(out_fd, "\t", 1) != 1 ||
 		    write_in_full(out_fd, path, length) != length)
@@ -319,7 +323,7 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 			if (!merge(name, path)) {
 				fprintf(stderr, "Resolved '%s' using "
 						"previous resolution.\n", path);
-				goto tail_optimization;
+				goto mark_resolved;
 			}
 		}
 
@@ -330,13 +334,8 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 
 		fprintf(stderr, "Recorded resolution for '%s'.\n", path);
 		copy_file(rr_path(name, "postimage"), path, 0666);
-tail_optimization:
-		if (i < rr->nr - 1)
-			memmove(rr->items + i,
-				rr->items + i + 1,
-				sizeof(rr->items[0]) * (rr->nr - i - 1));
-		rr->nr--;
-		i--;
+	mark_resolved:
+		rr->items[i].util = NULL;
 	}
 
 	return write_rr(rr, fd);
