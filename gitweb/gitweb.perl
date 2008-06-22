@@ -539,7 +539,7 @@ $git_dir = "$projectroot/$project" if $project;
 
 # dispatch
 my %actions = (
-	"blame" => \&git_blame2,
+	"blame" => \&git_blame,
 	"blobdiff" => \&git_blobdiff,
 	"blobdiff_plain" => \&git_blobdiff_plain,
 	"blob" => \&git_blob,
@@ -4113,7 +4113,7 @@ sub git_tag {
 	git_footer_html();
 }
 
-sub git_blame2 {
+sub git_blame {
 	my $fd;
 	my $ftype;
 
@@ -4218,103 +4218,6 @@ HTML
 	print "</div>";
 	close $fd
 		or print "Reading blob failed\n";
-	git_footer_html();
-}
-
-sub git_blame {
-	my $fd;
-
-	my ($have_blame) = gitweb_check_feature('blame');
-	if (!$have_blame) {
-		die_error('403 Permission denied', "Permission denied");
-	}
-	die_error('404 Not Found', "File name not defined") if (!$file_name);
-	$hash_base ||= git_get_head_hash($project);
-	die_error(undef, "Couldn't find base commit") unless ($hash_base);
-	my %co = parse_commit($hash_base)
-		or die_error(undef, "Reading commit failed");
-	if (!defined $hash) {
-		$hash = git_get_hash_by_path($hash_base, $file_name, "blob")
-			or die_error(undef, "Error lookup file");
-	}
-	open ($fd, "-|", git_cmd(), "annotate", '-l', '-t', '-r', $file_name, $hash_base)
-		or die_error(undef, "Open git-annotate failed");
-	git_header_html();
-	my $formats_nav =
-		$cgi->a({-href => href(action=>"blob", hash=>$hash, hash_base=>$hash_base, file_name=>$file_name)},
-		        "blob") .
-		" | " .
-		$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base, file_name=>$file_name)},
-			"history") .
-		" | " .
-		$cgi->a({-href => href(action=>"blame", file_name=>$file_name)},
-		        "HEAD");
-	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
-	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
-	git_print_page_path($file_name, 'blob', $hash_base);
-	print "<div class=\"page_body\">\n";
-	print <<HTML;
-<table class="blame">
-  <tr>
-    <th>Commit</th>
-    <th>Age</th>
-    <th>Author</th>
-    <th>Line</th>
-    <th>Data</th>
-  </tr>
-HTML
-	my @line_class = (qw(light dark));
-	my $line_class_len = scalar (@line_class);
-	my $line_class_num = $#line_class;
-	while (my $line = <$fd>) {
-		my $long_rev;
-		my $short_rev;
-		my $author;
-		my $time;
-		my $lineno;
-		my $data;
-		my $age;
-		my $age_str;
-		my $age_class;
-
-		chomp $line;
-		$line_class_num = ($line_class_num + 1) % $line_class_len;
-
-		if ($line =~ m/^([0-9a-fA-F]{40})\t\(\s*([^\t]+)\t(\d+) [+-]\d\d\d\d\t(\d+)\)(.*)$/) {
-			$long_rev = $1;
-			$author   = $2;
-			$time     = $3;
-			$lineno   = $4;
-			$data     = $5;
-		} else {
-			print qq(  <tr><td colspan="5" class="error">Unable to parse: $line</td></tr>\n);
-			next;
-		}
-		$short_rev  = substr ($long_rev, 0, 8);
-		$age        = time () - $time;
-		$age_str    = age_string ($age);
-		$age_str    =~ s/ /&nbsp;/g;
-		$age_class  = age_class($age);
-		$author     = esc_html ($author);
-		$author     =~ s/ /&nbsp;/g;
-
-		$data = untabify($data);
-		$data = esc_html ($data);
-
-		print <<HTML;
-  <tr class="$line_class[$line_class_num]">
-    <td class="sha1"><a href="${\href (action=>"commit", hash=>$long_rev)}" class="text">$short_rev..</a></td>
-    <td class="$age_class">$age_str</td>
-    <td>$author</td>
-    <td class="linenr"><a id="$lineno" href="#$lineno" class="linenr">$lineno</a></td>
-    <td class="pre">$data</td>
-  </tr>
-HTML
-	} # while (my $line = <$fd>)
-	print "</table>\n\n";
-	close $fd
-		or print "Reading blob failed.\n";
-	print "</div>";
 	git_footer_html();
 }
 
