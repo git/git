@@ -98,7 +98,7 @@ test_expect_success 'extra headers' '
 	sed -e "/^$/q" patch2 > hdrs2 &&
 	grep "^To: R. E. Cipient <rcipient@example.com>$" hdrs2 &&
 	grep "^Cc: S. E. Cipient <scipient@example.com>$" hdrs2
-	
+
 '
 
 test_expect_success 'extra headers without newlines' '
@@ -109,7 +109,7 @@ test_expect_success 'extra headers without newlines' '
 	sed -e "/^$/q" patch3 > hdrs3 &&
 	grep "^To: R. E. Cipient <rcipient@example.com>$" hdrs3 &&
 	grep "^Cc: S. E. Cipient <scipient@example.com>$" hdrs3
-	
+
 '
 
 test_expect_success 'extra headers with multiple To:s' '
@@ -170,7 +170,7 @@ test_expect_success 'thread cover-letter' '
 	git checkout side &&
 	git format-patch --cover-letter --thread -o patches/ master &&
 	FIRST_MID=$(grep "Message-Id:" patches/0000-* | sed "s/^[^<]*\(<[^>]*>\).*$/\1/") &&
-	for i in patches/0001-* patches/0002-* patches/0003-* 
+	for i in patches/0001-* patches/0002-* patches/0003-*
 	do
 	  grep "References: $FIRST_MID" $i &&
 	  grep "In-Reply-To: $FIRST_MID" $i || break

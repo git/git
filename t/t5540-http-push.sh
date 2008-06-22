@@ -38,7 +38,7 @@ test_expect_success 'setup remote repository' '
 	cd - &&
 	mv test_repo.git $HTTPD_DOCUMENT_ROOT_PATH
 '
-	
+
 test_expect_success 'clone remote repository' '
 	cd "$ROOT_PATH" &&
 	git clone $HTTPD_URL/test_repo.git test_repo_clone
