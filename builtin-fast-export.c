@@ -56,10 +56,24 @@ static int has_unshown_parent(struct commit *commit)
 }
 
 /* Since intptr_t is C99, we do not use it here */
-static void mark_object(struct object *object)
+static inline uint32_t *mark_to_ptr(uint32_t mark)
 {
-	last_idnum++;
-	add_decoration(&idnums, object, ((uint32_t *)NULL) + last_idnum);
+	return ((uint32_t *)NULL) + mark;
+}
+
+static inline uint32_t ptr_to_mark(void * mark)
+{
+	return (uint32_t *)mark - (uint32_t *)NULL;
+}
+
+static inline void mark_object(struct object *object, uint32_t mark)
+{
+	add_decoration(&idnums, object, mark_to_ptr(mark));
+}
+
+static inline void mark_next_object(struct object *object)
+{
+	mark_object(object, ++last_idnum);
 }
 
 static int get_object_mark(struct object *object)
@@ -67,7 +81,7 @@ static int get_object_mark(struct object *object)
 	void *decoration = lookup_decoration(&idnums, object);
 	if (!decoration)
 		return 0;
-	return (uint32_t *)decoration - (uint32_t *)NULL;
+	return ptr_to_mark(decoration);
 }
 
 static void show_progress(void)
@@ -100,7 +114,7 @@ static void handle_object(const unsigned char *sha1)
 	if (!buf)
 		die ("Could not read blob %s", sha1_to_hex(sha1));
 
-	mark_object(object);
+	mark_next_object(object);
 
 	printf("blob\nmark :%d\ndata %lu\n", last_idnum, size);
 	if (size && fwrite(buf, size, 1, stdout) != 1)
@@ -185,7 +199,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	for (i = 0; i < diff_queued_diff.nr; i++)
 		handle_object(diff_queued_diff.queue[i]->two->sha1);
 
-	mark_object(&commit->object);
+	mark_next_object(&commit->object);
 	if (!is_encoding_utf8(encoding))
 		reencoded = reencode_string(message, "UTF-8", encoding);
 	if (!commit->parents)
@@ -354,18 +368,85 @@ static void handle_tags_and_duplicates(struct path_list *extra_refs)
 	}
 }
 
+static void export_marks(char *file)
+{
+	unsigned int i;
+	uint32_t mark;
+	struct object_decoration *deco = idnums.hash;
+	FILE *f;
+
+	f = fopen(file, "w");
+	if (!f)
+		error("Unable to open marks file %s for writing", file);
+
+	for (i = 0; i < idnums.size; ++i) {
+		deco++;
+		if (deco && deco->base && deco->base->type == 1) {
+			mark = ptr_to_mark(deco->decoration);
+			fprintf(f, ":%u %s\n", mark, sha1_to_hex(deco->base->sha1));
+		}
+	}
+
+	if (ferror(f) || fclose(f))
+		error("Unable to write marks file %s.", file);
+}
+
+static void import_marks(char * input_file)
+{
+	char line[512];
+	FILE *f = fopen(input_file, "r");
+	if (!f)
+		die("cannot read %s: %s", input_file, strerror(errno));
+
+	while (fgets(line, sizeof(line), f)) {
+		uint32_t mark;
+		char *line_end, *mark_end;
+		unsigned char sha1[20];
+		struct object *object;
+
+		line_end = strchr(line, '\n');
+		if (line[0] != ':' || !line_end)
+			die("corrupt mark line: %s", line);
+		*line_end = 0;
+
+		mark = strtoumax(line + 1, &mark_end, 10);
+		if (!mark || mark_end == line + 1
+			|| *mark_end != ' ' || get_sha1(mark_end + 1, sha1))
+			die("corrupt mark line: %s", line);
+
+		object = parse_object(sha1);
+		if (!object)
+			die ("Could not read blob %s", sha1_to_hex(sha1));
+
+		if (object->flags & SHOWN)
+			error("Object %s already has a mark", sha1);
+
+		mark_object(object, mark);
+		if (last_idnum < mark)
+			last_idnum = mark;
+
+		object->flags |= SHOWN;
+	}
+	fclose(f);
+}
+
 int cmd_fast_export(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	struct object_array commits = { 0, 0, NULL };
 	struct path_list extra_refs = { NULL, 0, 0, 0 };
 	struct commit *commit;
+	char *export_filename = NULL, *import_filename = NULL;
 	struct option options[] = {
 		OPT_INTEGER(0, "progress", &progress,
 			    "show progress after <n> objects"),
 		OPT_CALLBACK(0, "signed-tags", &signed_tag_mode, "mode",
 			     "select handling of signed tags",
 			     parse_opt_signed_tag_mode),
+		OPT_STRING(0, "export-marks", &export_filename, "FILE",
+			     "Dump marks to this file"),
+		OPT_STRING(0, "import-marks", &import_filename, "FILE",
+			     "Import marks from this file"),
 		OPT_END()
 	};
 
@@ -377,6 +458,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, options, fast_export_usage, 0);
 	if (argc > 1)
 		usage_with_options (fast_export_usage, options);
+
+	if (import_filename)
+		import_marks(import_filename);
 
 	get_tags_and_duplicates(&revs.pending, &extra_refs);
 
@@ -399,6 +483,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	}
 
 	handle_tags_and_duplicates(&extra_refs);
+
+	if (export_filename)
+		export_marks(export_filename);
 
 	return 0;
 }
