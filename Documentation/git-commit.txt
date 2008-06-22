@@ -8,7 +8,7 @@ git-commit - Record changes to the repository
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a | --interactive] [-s] [-v] [-u] [--amend]
+'git-commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend]
 	   [(-c | -C) <commit>] [-F <file> | -m <msg>]
 	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
 	   [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
@@ -162,13 +162,22 @@ but can be used to amend a merge commit.
 	the last commit without committing changes that have
 	already been staged.
 
--u::
---untracked-files::
-	Show all untracked files, also those in uninteresting
-	directories, in the "Untracked files:" section of commit
-	message template.  Without this option only its name and
-	a trailing slash are displayed for each untracked
-	directory.
+-u[<mode>]::
+--untracked-files[=<mode>]::
+	Show untracked files (Default: 'all').
++
+The mode parameter is optional, and is used to specify
+the handling of untracked files. The possible options are:
++
+--
+	- 'no'     - Show no untracked files
+	- 'normal' - Shows untracked files and directories
+	- 'all'    - Also shows individual files in untracked directories.
+--
++
+See linkgit:git-config[1] for configuration variable
+used to change the default for when the option is not
+specified.
 
 -v::
 --verbose::
