@@ -145,6 +145,9 @@ int mingw_open (const char *filename, int oflags, ...);
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
+char *mingw_getenv(const char *name);
+#define getenv mingw_getenv
+
 struct hostent *mingw_gethostbyname(const char *host);
 #define gethostbyname mingw_gethostbyname
 
