@@ -119,6 +119,11 @@ enum {
 	PARSE_OPT_UNKNOWN,
 };
 
+/*
+ * It's okay for the caller to consume argv/argc in the usual way.
+ * Other fields of that structure are private to parse-options and should not
+ * be modified in any way.
+ */
 struct parse_opt_ctx_t {
 	const char **argv;
 	const char **out;

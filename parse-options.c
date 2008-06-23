@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
+#include "cache.h"
 
 #define OPT_SHORT 1
 #define OPT_UNSET 2
@@ -257,6 +258,9 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		       const struct option *options,
 		       const char * const usagestr[])
 {
+	/* we must reset ->opt, unknown short option leave it dangling */
+	ctx->opt = NULL;
+
 	for (; ctx->argc; ctx->argc--, ctx->argv++) {
 		const char *arg = ctx->argv[0];
 
@@ -286,6 +290,13 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 				case -1:
 					return parse_options_usage(usagestr, options);
 				case -2:
+					/* fake a short option thing to hide the fact that we may have
+					 * started to parse aggregated stuff
+					 *
+					 * This is leaky, too bad.
+					 */
+					ctx->argv[0] = xstrdup(ctx->opt - 1);
+					*(char *)ctx->argv[0] = '-';
 					return PARSE_OPT_UNKNOWN;
 				}
 			}
