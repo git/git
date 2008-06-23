@@ -257,8 +257,8 @@ int parse_options_end(struct parse_opt_ctx_t *ctx)
 	return ctx->cpidx + ctx->argc;
 }
 
-static NORETURN void usage_with_options_internal(const char * const *,
-                                                 const struct option *, int);
+static int usage_with_options_internal(const char * const *,
+				       const struct option *, int, int);
 
 int parse_options(int argc, const char **argv, const struct option *options,
                   const char * const usagestr[], int flags)
@@ -302,7 +302,7 @@ int parse_options(int argc, const char **argv, const struct option *options,
 		}
 
 		if (!strcmp(arg + 2, "help-all"))
-			usage_with_options_internal(usagestr, options, 1);
+			usage_with_options_internal(usagestr, options, 1, 1);
 		if (!strcmp(arg + 2, "help"))
 			usage_with_options(usagestr, options);
 		if (parse_long_opt(&ctx, arg + 2, options))
@@ -315,8 +315,8 @@ int parse_options(int argc, const char **argv, const struct option *options,
 #define USAGE_OPTS_WIDTH 24
 #define USAGE_GAP         2
 
-void usage_with_options_internal(const char * const *usagestr,
-                                 const struct option *opts, int full)
+int usage_with_options_internal(const char * const *usagestr,
+				const struct option *opts, int full, int do_exit)
 {
 	fprintf(stderr, "usage: %s\n", *usagestr++);
 	while (*usagestr && **usagestr)
@@ -401,14 +401,24 @@ void usage_with_options_internal(const char * const *usagestr,
 	}
 	fputc('\n', stderr);
 
-	exit(129);
+	if (do_exit)
+		exit(129);
+	return PARSE_OPT_HELP;
 }
 
 void usage_with_options(const char * const *usagestr,
                         const struct option *opts)
 {
-	usage_with_options_internal(usagestr, opts, 0);
+	usage_with_options_internal(usagestr, opts, 0, 1);
+	exit(129); /* make gcc happy */
 }
+
+int parse_options_usage(const char * const *usagestr,
+			const struct option *opts)
+{
+	return usage_with_options_internal(usagestr, opts, 0, 0);
+}
+
 
 /*----- some often used options -----*/
 #include "cache.h"

@@ -113,6 +113,12 @@ extern NORETURN void usage_with_options(const char * const *usagestr,
 
 /*----- incremantal advanced APIs -----*/
 
+enum {
+	PARSE_OPT_HELP = -1,
+	PARSE_OPT_DONE,
+	PARSE_OPT_UNKNOWN,
+};
+
 struct parse_opt_ctx_t {
 	const char **argv;
 	const char **out;
@@ -120,6 +126,9 @@ struct parse_opt_ctx_t {
 	const char *opt;
 	int flags;
 };
+
+extern int parse_options_usage(const char * const *usagestr,
+			       const struct option *opts);
 
 extern void parse_options_start(struct parse_opt_ctx_t *ctx,
 				int argc, const char **argv, int flags);
