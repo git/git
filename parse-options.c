@@ -94,14 +94,14 @@ static int get_value(struct parse_opt_ctx_t *p,
 
 	case OPTION_CALLBACK:
 		if (unset)
-			return (*opt->callback)(opt, NULL, 1);
+			return (*opt->callback)(opt, NULL, 1) ? (-1) : 0;
 		if (opt->flags & PARSE_OPT_NOARG)
-			return (*opt->callback)(opt, NULL, 0);
+			return (*opt->callback)(opt, NULL, 0) ? (-1) : 0;
 		if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
-			return (*opt->callback)(opt, NULL, 0);
+			return (*opt->callback)(opt, NULL, 0) ? (-1) : 0;
 		if (!arg)
 			return opterror(opt, "requires a value", flags);
-		return (*opt->callback)(opt, get_arg(p), 0);
+		return (*opt->callback)(opt, get_arg(p), 0) ? (-1) : 0;
 
 	case OPTION_INTEGER:
 		if (unset) {
@@ -132,7 +132,7 @@ static int parse_short_opt(struct parse_opt_ctx_t *p, const struct option *optio
 			return get_value(p, options, OPT_SHORT);
 		}
 	}
-	return error("unknown switch `%c'", *p->opt);
+	return -2;
 }
 
 static int parse_long_opt(struct parse_opt_ctx_t *p, const char *arg,
@@ -217,7 +217,7 @@ is_abbreviated:
 			abbrev_option->long_name);
 	if (abbrev_option)
 		return get_value(p, abbrev_option, abbrev_flags);
-	return error("unknown option `%s'", arg);
+	return -2;
 }
 
 void check_typos(const char *arg, const struct option *options)
@@ -271,15 +271,23 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			ctx->opt = arg + 1;
 			if (*ctx->opt == 'h')
 				return parse_options_usage(usagestr, options);
-			if (parse_short_opt(ctx, options) < 0)
-				usage_with_options(usagestr, options);
+			switch (parse_short_opt(ctx, options)) {
+			case -1:
+				return parse_options_usage(usagestr, options);
+			case -2:
+				return PARSE_OPT_UNKNOWN;
+			}
 			if (ctx->opt)
 				check_typos(arg + 1, options);
 			while (ctx->opt) {
 				if (*ctx->opt == 'h')
 					return parse_options_usage(usagestr, options);
-				if (parse_short_opt(ctx, options) < 0)
-					usage_with_options(usagestr, options);
+				switch (parse_short_opt(ctx, options)) {
+				case -1:
+					return parse_options_usage(usagestr, options);
+				case -2:
+					return PARSE_OPT_UNKNOWN;
+				}
 			}
 			continue;
 		}
@@ -296,8 +304,12 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			return usage_with_options_internal(usagestr, options, 1);
 		if (!strcmp(arg + 2, "help"))
 			return parse_options_usage(usagestr, options);
-		if (parse_long_opt(ctx, arg + 2, options))
-			usage_with_options(usagestr, options);
+		switch (parse_long_opt(ctx, arg + 2, options)) {
+		case -1:
+			return parse_options_usage(usagestr, options);
+		case -2:
+			return PARSE_OPT_UNKNOWN;
+		}
 	}
 	return PARSE_OPT_DONE;
 }
@@ -321,7 +333,12 @@ int parse_options(int argc, const char **argv, const struct option *options,
 	case PARSE_OPT_DONE:
 		break;
 	default: /* PARSE_OPT_UNKNOWN */
-		abort(); /* unreached yet */
+		if (ctx.argv[0][1] == '-') {
+			error("unknown option `%s'", ctx.argv[0] + 2);
+		} else {
+			error("unknown switch `%c'", *ctx.opt);
+		}
+		usage_with_options(usagestr, options);
 	}
 
 	return parse_options_end(&ctx);
