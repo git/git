@@ -248,6 +248,7 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	ctx->argc = argc - 1;
 	ctx->argv = argv + 1;
 	ctx->out  = argv;
+	ctx->cpidx = ((flags & PARSE_OPT_KEEP_ARGV0) != 0);
 	ctx->flags = flags;
 }
 
