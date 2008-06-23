@@ -366,6 +366,19 @@ char *mingw_getcwd(char *pointer, int len)
 	return ret;
 }
 
+#undef getenv
+char *mingw_getenv(const char *name)
+{
+	char *result = getenv(name);
+	if (!result && !strcmp(name, "TMPDIR")) {
+		/* on Windows it is TMP and TEMP */
+		result = getenv("TMP");
+		if (!result)
+			result = getenv("TEMP");
+	}
+	return result;
+}
+
 /*
  * See http://msdn2.microsoft.com/en-us/library/17w5ykft(vs.71).aspx
  * (Parsing C++ Command-Line Arguments)
