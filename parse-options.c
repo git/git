@@ -4,14 +4,7 @@
 #define OPT_SHORT 1
 #define OPT_UNSET 2
 
-struct optparse_t {
-	const char **argv;
-	const char **out;
-	int argc, cpidx;
-	const char *opt;
-};
-
-static inline const char *get_arg(struct optparse_t *p)
+static inline const char *get_arg(struct parse_opt_ctx_t *p)
 {
 	if (p->opt) {
 		const char *res = p->opt;
@@ -37,7 +30,7 @@ static int opterror(const struct option *opt, const char *reason, int flags)
 	return error("option `%s' %s", opt->long_name, reason);
 }
 
-static int get_value(struct optparse_t *p,
+static int get_value(struct parse_opt_ctx_t *p,
                      const struct option *opt, int flags)
 {
 	const char *s, *arg;
@@ -131,7 +124,7 @@ static int get_value(struct optparse_t *p,
 	}
 }
 
-static int parse_short_opt(struct optparse_t *p, const struct option *options)
+static int parse_short_opt(struct parse_opt_ctx_t *p, const struct option *options)
 {
 	for (; options->type != OPTION_END; options++) {
 		if (options->short_name == *p->opt) {
@@ -142,7 +135,7 @@ static int parse_short_opt(struct optparse_t *p, const struct option *options)
 	return error("unknown switch `%c'", *p->opt);
 }
 
-static int parse_long_opt(struct optparse_t *p, const char *arg,
+static int parse_long_opt(struct parse_opt_ctx_t *p, const char *arg,
                           const struct option *options)
 {
 	const char *arg_end = strchr(arg, '=');
@@ -247,45 +240,63 @@ void check_typos(const char *arg, const struct option *options)
 	}
 }
 
+void parse_options_start(struct parse_opt_ctx_t *ctx,
+			 int argc, const char **argv, int flags)
+{
+	memset(ctx, 0, sizeof(*ctx));
+	ctx->argc = argc - 1;
+	ctx->argv = argv + 1;
+	ctx->out  = argv;
+	ctx->flags = flags;
+}
+
+int parse_options_end(struct parse_opt_ctx_t *ctx)
+{
+	memmove(ctx->out + ctx->cpidx, ctx->argv, ctx->argc * sizeof(*ctx->out));
+	ctx->out[ctx->cpidx + ctx->argc] = NULL;
+	return ctx->cpidx + ctx->argc;
+}
+
 static NORETURN void usage_with_options_internal(const char * const *,
                                                  const struct option *, int);
 
 int parse_options(int argc, const char **argv, const struct option *options,
                   const char * const usagestr[], int flags)
 {
-	struct optparse_t args = { argv + 1, argv, argc - 1, 0, NULL };
+	struct parse_opt_ctx_t ctx;
 
-	for (; args.argc; args.argc--, args.argv++) {
-		const char *arg = args.argv[0];
+	parse_options_start(&ctx, argc, argv, flags);
+	for (; ctx.argc; ctx.argc--, ctx.argv++) {
+		const char *arg = ctx.argv[0];
 
 		if (*arg != '-' || !arg[1]) {
-			if (flags & PARSE_OPT_STOP_AT_NON_OPTION)
+			if (ctx.flags & PARSE_OPT_STOP_AT_NON_OPTION)
 				break;
-			args.out[args.cpidx++] = args.argv[0];
+			ctx.out[ctx.cpidx++] = ctx.argv[0];
 			continue;
 		}
 
 		if (arg[1] != '-') {
-			args.opt = arg + 1;
-			if (*args.opt == 'h')
+			ctx.opt = arg + 1;
+			if (*ctx.opt == 'h')
 				usage_with_options(usagestr, options);
-			if (parse_short_opt(&args, options) < 0)
+			if (parse_short_opt(&ctx, options) < 0)
 				usage_with_options(usagestr, options);
-			if (args.opt)
+			if (ctx.opt)
 				check_typos(arg + 1, options);
-			while (args.opt) {
-				if (*args.opt == 'h')
+			while (ctx.opt) {
+				if (*ctx.opt == 'h')
 					usage_with_options(usagestr, options);
-				if (parse_short_opt(&args, options) < 0)
+				if (parse_short_opt(&ctx, options) < 0)
 					usage_with_options(usagestr, options);
 			}
 			continue;
 		}
 
 		if (!arg[2]) { /* "--" */
-			if (!(flags & PARSE_OPT_KEEP_DASHDASH)) {
-				args.argc--;
-				args.argv++;
+			if (!(ctx.flags & PARSE_OPT_KEEP_DASHDASH)) {
+				ctx.argc--;
+				ctx.argv++;
 			}
 			break;
 		}
@@ -294,13 +305,11 @@ int parse_options(int argc, const char **argv, const struct option *options,
 			usage_with_options_internal(usagestr, options, 1);
 		if (!strcmp(arg + 2, "help"))
 			usage_with_options(usagestr, options);
-		if (parse_long_opt(&args, arg + 2, options))
+		if (parse_long_opt(&ctx, arg + 2, options))
 			usage_with_options(usagestr, options);
 	}
 
-	memmove(args.out + args.cpidx, args.argv, args.argc * sizeof(*args.out));
-	args.out[args.cpidx + args.argc] = NULL;
-	return args.cpidx + args.argc;
+	return parse_options_end(&ctx);
 }
 
 #define USAGE_OPTS_WIDTH 24

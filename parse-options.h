@@ -111,6 +111,22 @@ extern int parse_options(int argc, const char **argv,
 extern NORETURN void usage_with_options(const char * const *usagestr,
                                         const struct option *options);
 
+/*----- incremantal advanced APIs -----*/
+
+struct parse_opt_ctx_t {
+	const char **argv;
+	const char **out;
+	int argc, cpidx;
+	const char *opt;
+	int flags;
+};
+
+extern void parse_options_start(struct parse_opt_ctx_t *ctx,
+				int argc, const char **argv, int flags);
+
+extern int parse_options_end(struct parse_opt_ctx_t *ctx);
+
+
 /*----- some often used options -----*/
 extern int parse_opt_abbrev_cb(const struct option *, const char *, int);
 extern int parse_opt_approxidate_cb(const struct option *, const char *, int);
