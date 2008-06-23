@@ -6,7 +6,10 @@
 
 #include "cache.h"
 
-static time_t my_mktime(struct tm *tm)
+/*
+ * This is like mktime, but without normalization of tm_wday and tm_yday.
+ */
+time_t tm_to_time_t(const struct tm *tm)
 {
 	static const int mdays[] = {
 	    0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
@@ -67,7 +70,7 @@ static int local_tzoffset(unsigned long time)
 
 	t = time;
 	localtime_r(&t, &tm);
-	t_local = my_mktime(&tm);
+	t_local = tm_to_time_t(&tm);
 
 	if (t_local < t) {
 		eastwest = -1;
@@ -322,7 +325,7 @@ static int is_date(int year, int month, int day, struct tm *now_tm, time_t now, 
 		if (!now_tm)
 			return 1;
 
-		specified = my_mktime(r);
+		specified = tm_to_time_t(r);
 
 		/* Be it commit time or author time, it does not make
 		 * sense to specify timestamp way into the future.  Make
@@ -572,7 +575,7 @@ int parse_date(const char *date, char *result, int maxlen)
 	}
 
 	/* mktime uses local timezone */
-	then = my_mktime(&tm);
+	then = tm_to_time_t(&tm);
 	if (offset == -1)
 		offset = (then - mktime(&tm)) / 60;
 
@@ -611,7 +614,7 @@ void datestamp(char *buf, int bufsize)
 
 	time(&now);
 
-	offset = my_mktime(localtime(&now)) - now;
+	offset = tm_to_time_t(localtime(&now)) - now;
 	offset /= 60;
 
 	date_string(now, offset, buf, bufsize);

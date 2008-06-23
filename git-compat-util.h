@@ -147,6 +147,7 @@ extern void set_error_routine(void (*routine)(const char *err, va_list params));
 extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 
 extern int prefixcmp(const char *str, const char *prefix);
+extern time_t tm_to_time_t(const struct tm *tm);
 
 #ifdef NO_MMAP
 
