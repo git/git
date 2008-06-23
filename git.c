@@ -369,15 +369,16 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 	};
 	int i;
+	static const char ext[] = STRIP_EXTENSION;
 
-#ifdef STRIP_EXTENSION
-	i = strlen(argv[0]) - strlen(STRIP_EXTENSION);
-	if (i > 0 && !strcmp(argv[0] + i, STRIP_EXTENSION)) {
-		char *argv0 = strdup(argv[0]);
-		argv[0] = cmd = argv0;
-		argv0[i] = '\0';
+	if (sizeof(ext) > 1) {
+		i = strlen(argv[0]) - strlen(ext);
+		if (i > 0 && !strcmp(argv[0] + i, ext)) {
+			char *argv0 = strdup(argv[0]);
+			argv[0] = cmd = argv0;
+			argv0[i] = '\0';
+		}
 	}
-#endif
 
 	/* Turn "git cmd --help" into "git help cmd" */
 	if (argc > 1 && !strcmp(argv[1], "--help")) {
