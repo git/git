@@ -83,7 +83,6 @@ test_expect_success 'import/export-marks' '
 	git checkout -b marks master &&
 	git fast-export --export-marks=tmp-marks HEAD &&
 	test -s tmp-marks &&
-	cp tmp-marks ~ &&
 	test $(wc -l < tmp-marks) -eq 3 &&
 	test $(
 		git fast-export --import-marks=tmp-marks\
