@@ -218,7 +218,6 @@ int mkstemp(char *template)
 
 int gettimeofday(struct timeval *tv, void *tz)
 {
-	extern time_t my_mktime(struct tm *tm);
 	SYSTEMTIME st;
 	struct tm tm;
 	GetSystemTime(&st);
@@ -228,7 +227,7 @@ int gettimeofday(struct timeval *tv, void *tz)
 	tm.tm_hour = st.wHour;
 	tm.tm_min = st.wMinute;
 	tm.tm_sec = st.wSecond;
-	tv->tv_sec = my_mktime(&tm);
+	tv->tv_sec = tm_to_time_t(&tm);
 	if (tv->tv_sec < 0)
 		return -1;
 	tv->tv_usec = st.wMilliseconds*1000;
