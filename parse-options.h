@@ -133,6 +133,10 @@ extern int parse_options_usage(const char * const *usagestr,
 extern void parse_options_start(struct parse_opt_ctx_t *ctx,
 				int argc, const char **argv, int flags);
 
+extern int parse_options_step(struct parse_opt_ctx_t *ctx,
+			      const struct option *options,
+			      const char * const usagestr[]);
+
 extern int parse_options_end(struct parse_opt_ctx_t *ctx);
 
 
