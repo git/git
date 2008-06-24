@@ -818,6 +818,8 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 	p->index_data = NULL;
 	p->index_size = 0;
 	p->num_objects = 0;
+	p->num_bad_objects = 0;
+	p->bad_object_sha1 = NULL;
 	p->pack_size = st.st_size;
 	p->next = NULL;
 	p->windows = NULL;
@@ -980,6 +982,18 @@ void reprepare_packed_git(void)
 {
 	prepare_packed_git_run_once = 0;
 	prepare_packed_git();
+}
+
+static void mark_bad_packed_object(struct packed_git *p,
+				   const unsigned char *sha1)
+{
+	unsigned i;
+	for (i = 0; i < p->num_bad_objects; i++)
+		if (!hashcmp(sha1, p->bad_object_sha1 + 20 * i))
+			return;
+	p->bad_object_sha1 = xrealloc(p->bad_object_sha1, 20 * (p->num_bad_objects + 1));
+	hashcpy(p->bad_object_sha1 + 20 * p->num_bad_objects, sha1);
+	p->num_bad_objects++;
 }
 
 int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)
@@ -1300,20 +1314,17 @@ static off_t get_delta_base(struct packed_git *p,
 		while (c & 128) {
 			base_offset += 1;
 			if (!base_offset || MSB(base_offset, 7))
-				die("offset value overflow for delta base object");
+				return 0;  /* overflow */
 			c = base_info[used++];
 			base_offset = (base_offset << 7) + (c & 127);
 		}
 		base_offset = delta_obj_offset - base_offset;
 		if (base_offset >= delta_obj_offset)
-			die("delta base offset out of bound");
+			return 0;  /* out of bound */
 		*curpos += used;
 	} else if (type == OBJ_REF_DELTA) {
 		/* The base entry _must_ be in the same pack */
 		base_offset = find_pack_entry_one(base_info, p);
-		if (!base_offset)
-			die("failed to find delta-pack base object %s",
-				sha1_to_hex(base_info));
 		*curpos += 20;
 	} else
 		die("I am totally screwed");
@@ -1406,6 +1417,9 @@ const char *packed_object_info_detail(struct packed_git *p,
 			return typename(type);
 		case OBJ_OFS_DELTA:
 			obj_offset = get_delta_base(p, &w_curs, &curpos, type, obj_offset);
+			if (!obj_offset)
+				die("pack %s contains bad delta base reference of type %s",
+				    p->pack_name, typename(type));
 			if (*delta_chain_length == 0) {
 				revidx = find_pack_revindex(p, obj_offset);
 				hashcpy(base_sha1, nth_packed_object_sha1(p, revidx->nr));
@@ -1600,17 +1614,41 @@ static void *unpack_delta_entry(struct packed_git *p,
 	off_t base_offset;
 
 	base_offset = get_delta_base(p, w_curs, &curpos, *type, obj_offset);
+	if (!base_offset) {
+		error("failed to validate delta base reference "
+		      "at offset %"PRIuMAX" from %s",
+		      (uintmax_t)curpos, p->pack_name);
+		return NULL;
+	}
 	base = cache_or_unpack_entry(p, base_offset, &base_size, type, 0);
-	if (!base)
-		die("failed to read delta base object"
-		    " at %"PRIuMAX" from %s",
-		    (uintmax_t)base_offset, p->pack_name);
+	if (!base) {
+		/*
+		 * We're probably in deep shit, but let's try to fetch
+		 * the required base anyway from another pack or loose.
+		 * This is costly but should happen only in the presence
+		 * of a corrupted pack, and is better than failing outright.
+		 */
+		struct revindex_entry *revidx = find_pack_revindex(p, base_offset);
+		const unsigned char *base_sha1 =
+					nth_packed_object_sha1(p, revidx->nr);
+		error("failed to read delta base object %s"
+		      " at offset %"PRIuMAX" from %s",
+		      sha1_to_hex(base_sha1), (uintmax_t)base_offset,
+		      p->pack_name);
+		mark_bad_packed_object(p, base_sha1);
+		base = read_sha1_file(base_sha1, type, &base_size);
+		if (!base)
+			return NULL;
+	}
 
 	delta_data = unpack_compressed_entry(p, w_curs, curpos, delta_size);
-	if (!delta_data)
-		die("failed to unpack compressed delta"
-		    " at %"PRIuMAX" from %s",
-		    (uintmax_t)curpos, p->pack_name);
+	if (!delta_data) {
+		error("failed to unpack compressed delta "
+		      "at offset %"PRIuMAX" from %s",
+		      (uintmax_t)curpos, p->pack_name);
+		free(base);
+		return NULL;
+	}
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
 			     sizep);
@@ -1642,7 +1680,9 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		data = unpack_compressed_entry(p, &w_curs, curpos, *sizep);
 		break;
 	default:
-		die("unknown object type %i in %s", *type, p->pack_name);
+		data = NULL;
+		error("unknown object type %i at offset %"PRIuMAX" in %s",
+		      *type, (uintmax_t)obj_offset, p->pack_name);
 	}
 	unuse_pack(&w_curs);
 	return data;
@@ -1788,6 +1828,13 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, cons
 				goto next;
 		}
 
+		if (p->num_bad_objects) {
+			unsigned i;
+			for (i = 0; i < p->num_bad_objects; i++)
+				if (!hashcmp(sha1, p->bad_object_sha1 + 20 * i))
+					goto next;
+		}
+
 		offset = find_pack_entry_one(sha1, p);
 		if (offset) {
 			/*
@@ -1872,11 +1919,24 @@ static void *read_packed_sha1(const unsigned char *sha1,
 			      enum object_type *type, unsigned long *size)
 {
 	struct pack_entry e;
+	void *data;
 
 	if (!find_pack_entry(sha1, &e, NULL))
 		return NULL;
-	else
-		return cache_or_unpack_entry(e.p, e.offset, size, type, 1);
+	data = cache_or_unpack_entry(e.p, e.offset, size, type, 1);
+	if (!data) {
+		/*
+		 * We're probably in deep shit, but let's try to fetch
+		 * the required object anyway from another pack or loose.
+		 * This should happen only in the presence of a corrupted
+		 * pack, and is better than failing outright.
+		 */
+		error("failed to read object %s at offset %"PRIuMAX" from %s",
+		      sha1_to_hex(sha1), (uintmax_t)e.offset, e.p->pack_name);
+		mark_bad_packed_object(e.p, sha1);
+		data = read_sha1_file(sha1, type, size);
+	}
+	return data;
 }
 
 /*

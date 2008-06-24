@@ -641,6 +641,8 @@ extern struct packed_git {
 	const void *index_data;
 	size_t index_size;
 	uint32_t num_objects;
+	uint32_t num_bad_objects;
+	unsigned char *bad_object_sha1;
 	int index_version;
 	time_t mtime;
 	int pack_fd;
