@@ -1148,8 +1148,6 @@ static void get_object_details(void)
 		sorted_by_offset[i] = objects + i;
 	qsort(sorted_by_offset, nr_objects, sizeof(*sorted_by_offset), pack_offset_sort);
 
-	init_pack_revindex();
-
 	for (i = 0; i < nr_objects; i++)
 		check_object(sorted_by_offset[i]);
 

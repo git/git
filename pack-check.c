@@ -107,7 +107,6 @@ static void show_pack_info(struct packed_git *p)
 
 	nr_objects = p->num_objects;
 	memset(chain_histogram, 0, sizeof(chain_histogram));
-	init_pack_revindex();
 
 	for (i = 0; i < nr_objects; i++) {
 		const unsigned char *sha1;
