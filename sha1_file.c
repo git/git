@@ -2118,6 +2118,7 @@ static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
 	fd = mkstemp(buffer);
 	if (fd < 0 && dirlen) {
 		/* Make sure the directory exists */
+		memcpy(buffer, filename, dirlen);
 		buffer[dirlen-1] = 0;
 		if (mkdir(buffer, 0777) || adjust_shared_perm(buffer))
 			return -1;
