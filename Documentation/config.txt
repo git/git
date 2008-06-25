@@ -996,8 +996,12 @@ remotes.<group>::
 	<group>".  See linkgit:git-remote[1].
 
 repack.usedeltabaseoffset::
-	Allow linkgit:git-repack[1] to create packs that uses
-	delta-base offset.  Defaults to false.
+	By default, linkgit:git-repack[1] creates packs that use
+	delta-base offset. If you need to share your repository with
+	git older than version 1.4.4, either directly or via a dumb
+	protocol such as http, then you need to set this option to
+	"false" and repack. Access from old git versions over the
+	native protocol are unaffected by this option.
 
 show.difftree::
 	The default linkgit:git-diff-tree[1] arguments to be used
