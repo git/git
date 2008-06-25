@@ -937,9 +937,17 @@ pack.indexVersion::
 	legacy pack index used by Git versions prior to 1.5.2, and 2 for
 	the new pack index with capabilities for packs larger than 4 GB
 	as well as proper protection against the repacking of corrupted
-	packs.  Version 2 is selected and this config option ignored
-	whenever the corresponding pack is larger than 2 GB.  Otherwise
-	the default is 1.
+	packs.  Version 2 is the default.  Note that version 2 is enforced
+	and this config option ignored whenever the corresponding pack is
+	larger than 2 GB.
++
+If you have an old git that does not understand the version 2 `{asterisk}.idx` file,
+cloning or fetching over a non native protocol (e.g. "http" and "rsync")
+that will copy both `{asterisk}.pack` file and corresponding `{asterisk}.idx` file from the
+other side may give you a repository that cannot be accessed with your
+older version of git. If the `{asterisk}.pack` file is smaller than 2 GB, however,
+you can use linkgit:git-index-pack[1] on the *.pack file to regenerate
+the `{asterisk}.idx` file.
 
 pack.packSizeLimit::
 	The default maximum size of a pack.  This setting only affects
