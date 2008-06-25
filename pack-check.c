@@ -4,8 +4,9 @@
 
 struct idx_entry
 {
-	const unsigned char *sha1;
 	off_t                offset;
+	const unsigned char *sha1;
+	unsigned int nr;
 };
 
 static int compare_entries(const void *e1, const void *e2)
@@ -17,6 +18,28 @@ static int compare_entries(const void *e1, const void *e2)
 	if (entry1->offset > entry2->offset)
 		return 1;
 	return 0;
+}
+
+int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
+		   off_t offset, off_t len, unsigned int nr)
+{
+	const uint32_t *index_crc;
+	uint32_t data_crc = crc32(0, Z_NULL, 0);
+
+	do {
+		unsigned int avail;
+		void *data = use_pack(p, w_curs, offset, &avail);
+		if (avail > len)
+			avail = len;
+		data_crc = crc32(data_crc, data, avail);
+		offset += avail;
+		len -= avail;
+	} while (len);
+
+	index_crc = p->index_data;
+	index_crc += 2 + 256 + p->num_objects * (20/4) + nr;
+
+	return data_crc != ntohl(*index_crc);
 }
 
 static int verify_packfile(struct packed_git *p,
@@ -61,13 +84,15 @@ static int verify_packfile(struct packed_git *p,
 	 * we do not do scan-streaming check on the pack file.
 	 */
 	nr_objects = p->num_objects;
-	entries = xmalloc(nr_objects * sizeof(*entries));
+	entries = xmalloc((nr_objects + 1) * sizeof(*entries));
+	entries[nr_objects].offset = pack_sig_ofs;
 	/* first sort entries by pack offset, since unpacking them is more efficient that way */
 	for (i = 0; i < nr_objects; i++) {
 		entries[i].sha1 = nth_packed_object_sha1(p, i);
 		if (!entries[i].sha1)
 			die("internal error pack-check nth-packed-object");
 		entries[i].offset = nth_packed_object_offset(p, i);
+		entries[i].nr = i;
 	}
 	qsort(entries, nr_objects, sizeof(*entries), compare_entries);
 
@@ -76,6 +101,16 @@ static int verify_packfile(struct packed_git *p,
 		enum object_type type;
 		unsigned long size;
 
+		if (p->index_version > 1) {
+			off_t offset = entries[i].offset;
+			off_t len = entries[i+1].offset - offset;
+			unsigned int nr = entries[i].nr;
+			if (check_pack_crc(p, w_curs, offset, len, nr))
+				err = error("index CRC mismatch for object %s "
+					    "from %s at offset %"PRIuMAX"",
+					    sha1_to_hex(entries[i].sha1),
+					    p->pack_name, (uintmax_t)offset);
+		}
 		data = unpack_entry(p, entries[i].offset, &type, &size);
 		if (!data) {
 			err = error("cannot unpack %s from %s at offset %"PRIuMAX"",
