@@ -481,15 +481,6 @@ static char *unique_path(const char *path, const char *branch)
 	return newpath;
 }
 
-static int mkdir_p(const char *path, unsigned long mode)
-{
-	/* path points to cache entries, so xstrdup before messing with it */
-	char *buf = xstrdup(path);
-	int result = safe_create_leading_directories(buf);
-	free(buf);
-	return result;
-}
-
 static void flush_buffer(int fd, const char *buf, unsigned long size)
 {
 	while (size > 0) {
@@ -512,7 +503,7 @@ static int make_room_for_path(const char *path)
 	int status;
 	const char *msg = "failed to create path '%s'%s";
 
-	status = mkdir_p(path, 0777);
+	status = safe_create_leading_directories_const(path);
 	if (status) {
 		if (status == -3) {
 			/* something else exists */
@@ -583,7 +574,7 @@ static void update_file_flags(const unsigned char *sha,
 			close(fd);
 		} else if (S_ISLNK(mode)) {
 			char *lnk = xmemdupz(buf, size);
-			mkdir_p(path, 0777);
+			safe_create_leading_directories_const(path);
 			unlink(path);
 			symlink(lnk, path);
 			free(lnk);

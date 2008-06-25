@@ -116,6 +116,15 @@ int safe_create_leading_directories(char *path)
 	return 0;
 }
 
+int safe_create_leading_directories_const(const char *path)
+{
+	/* path points to cache entries, so xstrdup before messing with it */
+	char *buf = xstrdup(path);
+	int result = safe_create_leading_directories(buf);
+	free(buf);
+	return result;
+}
+
 char *sha1_to_hex(const unsigned char *sha1)
 {
 	static int bufno;
