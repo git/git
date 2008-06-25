@@ -84,7 +84,10 @@ Options:
 
    --smtp-pass    The password for SMTP-AUTH.
 
-   --smtp-ssl     If set, connects to the SMTP server using SSL.
+   --smtp-encryption Specify 'tls' for STARTTLS encryption, or 'ssl' for SSL.
+                  Any other value disables the feature.
+
+   --smtp-ssl     Synonym for '--smtp-encryption=ssl'.  Deprecated.
 
    --suppress-cc  Suppress the specified category of auto-CC.  The category
 		  can be one of 'author' for the patch author, 'self' to
@@ -184,7 +187,7 @@ my ($quiet, $dry_run) = (0, 0);
 
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
-my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_ssl);
+my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_encryption);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
 my ($no_validate);
 my (@suppress_cc);
@@ -194,7 +197,6 @@ my %config_bool_settings = (
     "chainreplyto" => [\$chain_reply_to, 1],
     "suppressfrom" => [\$suppress_from, undef],
     "signedoffcc" => [\$signed_off_cc, undef],
-    "smtpssl" => [\$smtp_ssl, 0],
 );
 
 my %config_settings = (
@@ -249,7 +251,8 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-server-port=s" => \$smtp_server_port,
 		    "smtp-user=s" => \$smtp_authuser,
 		    "smtp-pass:s" => \$smtp_authpass,
-		    "smtp-ssl!" => \$smtp_ssl,
+		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
+		    "smtp-encryption=s" => \$smtp_encryption,
 		    "identity=s" => \$identity,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
@@ -287,6 +290,15 @@ sub read_config {
 		}
 		else {
 			$$target = Git::config(@repo, "$prefix.$setting") unless (defined $$target);
+		}
+	}
+
+	if (!defined $smtp_encryption) {
+		my $enc = Git::config(@repo, "$prefix.smtpencryption");
+		if (defined $enc) {
+			$smtp_encryption = $enc;
+		} elsif (Git::config_bool(@repo, "$prefix.smtpssl")) {
+			$smtp_encryption = 'ssl';
 		}
 	}
 }
@@ -738,7 +750,7 @@ X-Mailer: git-send-email $gitversion
 			die "The required SMTP server is not properly defined."
 		}
 
-		if ($smtp_ssl) {
+		if ($smtp_encryption eq 'ssl') {
 			$smtp_server_port ||= 465; # ssmtp
 			require Net::SMTP::SSL;
 			$smtp ||= Net::SMTP::SSL->new($smtp_server, Port => $smtp_server_port);
@@ -748,6 +760,17 @@ X-Mailer: git-send-email $gitversion
 			$smtp ||= Net::SMTP->new((defined $smtp_server_port)
 						 ? "$smtp_server:$smtp_server_port"
 						 : $smtp_server);
+			if ($smtp_encryption eq 'tls') {
+				require Net::SMTP::SSL;
+				$smtp->command('STARTTLS');
+				$smtp->response();
+				if ($smtp->code == 220) {
+					$smtp = Net::SMTP::SSL->start_SSL($smtp)
+						or die "STARTTLS failed! ".$smtp->message;
+				} else {
+					die "Server does not support STARTTLS! ".$smtp->message;
+				}
+			}
 		}
 
 		if (!$smtp) {

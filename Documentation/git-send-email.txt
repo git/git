@@ -133,10 +133,13 @@ or on the command line. If a username has been specified (with
 specified (with --smtp-pass or a configuration variable), then the
 user is prompted for a password while the input is masked for privacy.
 
+--smtp-encryption::
+	Specify the encryption to use, either 'ssl' or 'tls'.  Any other
+	value reverts to plain SMTP.  Default is the value of
+	'sendemail.smtpencryption'.
+
 --smtp-ssl::
-	If set, connects to the SMTP server using SSL.
-	Default is the value of the 'sendemail.smtpssl' configuration value;
-	if that is unspecified, does not use SSL.
+	Legacy alias for '--smtp-encryption=ssl'.
 
 --subject::
 	Specify the initial subject of the email thread.
@@ -229,8 +232,13 @@ sendemail.smtpuser::
 sendemail.smtppass::
 	Default SMTP-AUTH password.
 
+sendemail.smtpencryption::
+	Default encryption method.  Use 'ssl' for SSL (and specify an
+	appropriate port), or 'tls' for TLS.  Takes precedence over
+	'smtpssl' if both are specified.
+
 sendemail.smtpssl::
-	Boolean value specifying the default to the '--smtp-ssl' parameter.
+	Legacy boolean that sets 'smtpencryption=ssl' if enabled.
 
 Author
 ------
