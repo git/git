@@ -68,7 +68,7 @@ function info {
 # - Branches should only be fast-forwarded.
 case "$1" in
   refs/tags/*)
-    [ -f "$GIT_DIR/$1" ] &&
+    git rev-parse --verify -q "$1" &&
     deny >/dev/null "You can't overwrite an existing tag"
     ;;
   refs/heads/*)
