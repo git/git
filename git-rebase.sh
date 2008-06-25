@@ -150,6 +150,9 @@ while test $# != 0
 do
 	case "$1" in
 	--continue)
+		test -d "$dotest" -o -d .dotest ||
+			die "No rebase in progress?"
+
 		git diff-files --quiet --ignore-submodules || {
 			echo "You must edit all merge conflicts and then"
 			echo "mark them as resolved using git add"
@@ -178,6 +181,9 @@ do
 		exit
 		;;
 	--skip)
+		test -d "$dotest" -o -d .dotest ||
+			die "No rebase in progress?"
+
 		git reset --hard HEAD || exit $?
 		if test -d "$dotest"
 		then
@@ -203,16 +209,16 @@ do
 		exit
 		;;
 	--abort)
+		test -d "$dotest" -o -d .dotest ||
+			die "No rebase in progress?"
+
 		git rerere clear
 		if test -d "$dotest"
 		then
 			move_to_original_branch
-		elif test -d .dotest
-		then
+		else
 			dotest=.dotest
 			move_to_original_branch
-		else
-			die "No rebase in progress?"
 		fi
 		git reset --hard $(cat "$dotest/orig-head")
 		rm -r "$dotest"
