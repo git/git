@@ -57,7 +57,7 @@ struct pack_idx_entry {
 
 extern char *write_idx_file(char *index_name, struct pack_idx_entry **objects, int nr_objects, unsigned char *sha1);
 
-extern int verify_pack(struct packed_git *, int);
+extern int verify_pack(struct packed_git *);
 extern void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t);
 extern char *index_pack_lockfile(int fd);
 
