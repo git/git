@@ -1806,14 +1806,16 @@ proc toggle_or_diff {w x y} {
 		} else {
 			global next_diff_p next_diff_w next_diff_i
 
+			set next_diff_w $w
+
 			if {$i < $ll} {
 				set i [expr {$i + 1}]
+				set next_diff_i $i
 			} else {
+				set next_diff_i $i
 				set i [expr {$i - 1}]
 			}
 
-			set next_diff_i $i
-			set next_diff_w $w
 			set next_diff_p [lindex $file_lists($w) $i]
 
 			if {$next_diff_p ne {} && $current_diff_path ne {}} {
