@@ -372,6 +372,14 @@ core.whitespace::
   does not trigger if the character before such a carriage-return
   is not a whitespace (not enabled by default).
 
+core.fsyncobjectfiles::
+	This boolean will enable 'fsync()' when writing object files.
++
+This is a total waste of time and effort on a filesystem that orders
+data writes properly, but can be useful for filesystems that do not use
+journalling (traditional UNIX filesystems) or that only journal metadata
+and not file contents (OS X's HFS+, or Linux ext3 with "data=writeback").
+
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
