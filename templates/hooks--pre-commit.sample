@@ -5,7 +5,7 @@
 # exit with non-zero status after issuing an appropriate message if
 # it wants to stop the commit.
 #
-# To enable this hook, make this file executable.
+# To enable this hook, rename this file to "pre-commit".
 
 # This is slightly modified from Andrew Morton's Perfect Patch.
 # Lines you introduce should not have trailing whitespace.

@@ -7,7 +7,7 @@
 # message file.  If the hook fails with a non-zero status,
 # the commit is aborted.
 #
-# To enable this hook, make this file executable.
+# To enable this hook, rename this file to "prepare-commit-msg".
 
 # This hook includes three examples.  The first comments out the
 # "Conflicts:" part of a merge commit.
