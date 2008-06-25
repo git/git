@@ -393,7 +393,7 @@ for my $f (@ARGV) {
 		push @files, grep { -f $_ } map { +$f . "/" . $_ }
 				sort readdir(DH);
 
-	} elsif (-f $f) {
+	} elsif (-f $f or -p $f) {
 		push @files, $f;
 
 	} else {
@@ -403,8 +403,10 @@ for my $f (@ARGV) {
 
 if (!$no_validate) {
 	foreach my $f (@files) {
-		my $error = validate_patch($f);
-		$error and die "fatal: $f: $error\nwarning: no patches were sent\n";
+		unless (-p $f) {
+			my $error = validate_patch($f);
+			$error and die "fatal: $f: $error\nwarning: no patches were sent\n";
+		}
 	}
 }
 
