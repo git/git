@@ -154,6 +154,7 @@ test_failure=0
 test_count=0
 test_fixed=0
 test_broken=0
+test_success=0
 
 die () {
 	echo >&5 "FATAL: Unexpected exit with code $?"
@@ -195,6 +196,7 @@ test_tick () {
 
 test_ok_ () {
 	test_count=$(expr "$test_count" + 1)
+	test_success=$(expr "$test_success" + 1)
 	say_color "" "  ok $test_count: $@"
 }
 
@@ -413,6 +415,16 @@ test_create_repo () {
 
 test_done () {
 	trap - exit
+	test_results_dir="$TEST_DIRECTORY/test-results"
+	mkdir -p "$test_results_dir"
+	test_results_path="$test_results_dir/${0%-*}-$$"
+
+	echo "total $test_count" >> $test_results_path
+	echo "success $test_success" >> $test_results_path
+	echo "fixed $test_fixed" >> $test_results_path
+	echo "broken $test_broken" >> $test_results_path
+	echo "failed $test_failure" >> $test_results_path
+	echo "" >> $test_results_path
 
 	if test "$test_fixed" != 0
 	then
@@ -447,7 +459,8 @@ test_done () {
 
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
-PATH=$(pwd)/..:$PATH
+TEST_DIRECTORY=$(pwd)
+PATH=$TEST_DIRECTORY/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
 GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 unset GIT_CONFIG
