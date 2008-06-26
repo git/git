@@ -535,9 +535,9 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 	else {
 		/* Emit just the prefix, then the rest. */
 		emit_line(ecbdata->file, set, reset, line, ecbdata->nparents);
-		(void)check_and_emit_line(line + ecbdata->nparents,
-		    len - ecbdata->nparents, ecbdata->ws_rule,
-		    ecbdata->file, set, reset, ws);
+		ws_check_emit(line + ecbdata->nparents,
+			      len - ecbdata->nparents, ecbdata->ws_rule,
+			      ecbdata->file, set, reset, ws);
 	}
 }
 
@@ -1153,8 +1153,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		unsigned bad;
 		data->lineno++;
-		bad = check_and_emit_line(line + 1, len - 1,
-		    data->ws_rule, NULL, NULL, NULL, NULL);
+		bad = ws_check(line + 1, len - 1, data->ws_rule);
 		if (!bad)
 			return;
 		data->status |= bad;
@@ -1162,8 +1161,8 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		fprintf(data->file, "%s:%d: %s.\n", data->filename, data->lineno, err);
 		free(err);
 		emit_line(data->file, set, reset, line, 1);
-		(void)check_and_emit_line(line + 1, len - 1, data->ws_rule,
-		    data->file, set, reset, ws);
+		ws_check_emit(line + 1, len - 1, data->ws_rule,
+			      data->file, set, reset, ws);
 	} else if (line[0] == ' ')
 		data->lineno++;
 	else if (line[0] == '@') {
