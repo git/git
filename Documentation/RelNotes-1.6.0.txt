@@ -1,0 +1,105 @@
+GIT v1.6.0 Release Notes
+========================
+
+User visible changes
+--------------------
+
+[[Note that none of these are not merged to 'master' as of this writing
+but they will be before 1.6.0 happens]]
+
+With default Makefile settings, most of the programs are now installed
+outside your $PATH, except for "git", "gitk", "git-gui" and some server
+side programs that needs to be accessible when connecting over ssh.
+
+When talking to remote repository over ssh, necessary server side programs
+are now invoked with "git $program" notation, not with "git-$program"
+notation.  This should work with both servers running older git where you
+had all of these programs installed on $PATH, or newer git where you have
+only "git" on $PATH.  However, if the remote side is running a custom
+software that restricts programs you can run over ssh, it might cause
+problems.  Use --upload-pack="git-upload-pack" (when using ls-remote,
+fetch and pull on the client side), --receive-pack="git-receive-pack"
+(when using push on the client side), or --exec="git-upload-archive" (when
+using git-archive) as appropriate when talking to such a remote.
+
+Source changes needed for porting to MinGW environment are now all in the
+main git.git codebase.
+
+
+Updates since v1.5.6
+--------------------
+
+(subsystems)
+
+(portability)
+
+* Sample hook scripts shipped in templates/ are now suffixed with
+  *.sample.  We used to prevent them from triggering by default by
+  relying on the fact that we install them as unexecutable, but on
+  some filesystems this approach does not work.  Instead of running
+  "chmod +x" on them, the users who want to activate these samples
+  as-is can now rename them dropping *.sample suffix.
+
+* perl's in-place edit (-i) does not work well without backup files on Windows;
+  some tests are rewritten to cope with this.
+
+(documentation)
+
+* Updated howto/update-hook-example
+
+(performance, robustness etc.)
+
+* reduced excessive inlining to shrink size of the "git" binary.
+
+* verify-pack checks the object CRC when using version 2 idx files.
+
+* When an object is corrupt in a pack, the object became unusable even
+  when the same object is available in a loose form,  We now try harder to
+  fall back to these redundant objects when able.  In particular, "git
+  repack -a -f" can be used to fix such a corruption as long as necessary
+  objects are available.
+
+* git-clone does not create refs in loose form anymore (it behaves as
+  if you immediately ran git-pack-refs after cloning).  This will help
+  repositories with insanely large number of refs.
+
+* core.fsyncobjectfiles configuration can be used to ensure that the loose
+  objects created will be fsync'ed (this is only useful on filesystems
+  that does not order data writes properly).
+
+(usability, bells and whistles)
+
+* git-archive can be told to omit certain paths from its output using
+  export-ignore attributes.
+
+* fast-export learned to export and import marks file; this can be used to
+  interface with fast-import incrementally.
+
+* Original SHA-1 value for "update-ref -d" is optional now.
+
+* You can tell "git status -u" to even more aggressively omit checking
+  untracked files with --untracked-files=no.
+
+* Error codes from gitweb are made more descriptive where possible, rather
+  than "403 forbidden" as we used to issue everywhere.
+
+(internal)
+
+
+Fixes since v1.5.6
+------------------
+
+All of the fixes in v1.5.6 maintenance series are included in
+this release, unless otherwise noted.
+
+ * diff -c/--cc showed unnecessary "deletion" lines at the context
+   boundary (needs backmerge to maint).
+
+ * "git-clone <src> <dst>" did not create leading directories for <dst>
+   like the scripted version used to do (needs backport to maint).
+
+---
+exec >/var/tmp/1
+O=v1.5.6.1-77-gf9a08f6
+echo O=$(git describe refs/heads/master)
+git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
