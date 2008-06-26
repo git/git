@@ -1136,18 +1136,19 @@ static void free_diffstat_info(struct diffstat_t *diffstat)
 struct checkdiff_t {
 	struct xdiff_emit_state xm;
 	const char *filename;
-	int lineno, color_diff;
+	int lineno;
+	struct diff_options *o;
 	unsigned ws_rule;
 	unsigned status;
-	FILE *file;
 };
 
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
 {
 	struct checkdiff_t *data = priv;
-	const char *ws = diff_get_color(data->color_diff, DIFF_WHITESPACE);
-	const char *reset = diff_get_color(data->color_diff, DIFF_RESET);
-	const char *set = diff_get_color(data->color_diff, DIFF_FILE_NEW);
+	int color_diff = DIFF_OPT_TST(data->o, COLOR_DIFF);
+	const char *ws = diff_get_color(color_diff, DIFF_WHITESPACE);
+	const char *reset = diff_get_color(color_diff, DIFF_RESET);
+	const char *set = diff_get_color(color_diff, DIFF_FILE_NEW);
 	char *err;
 
 	if (line[0] == '+') {
@@ -1158,11 +1159,12 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 			return;
 		data->status |= bad;
 		err = whitespace_error_string(bad);
-		fprintf(data->file, "%s:%d: %s.\n", data->filename, data->lineno, err);
+		fprintf(data->o->file, "%s:%d: %s.\n",
+			data->filename, data->lineno, err);
 		free(err);
-		emit_line(data->file, set, reset, line, 1);
+		emit_line(data->o->file, set, reset, line, 1);
 		ws_check_emit(line + 1, len - 1, data->ws_rule,
-			      data->file, set, reset, ws);
+			      data->o->file, set, reset, ws);
 	} else if (line[0] == ' ')
 		data->lineno++;
 	else if (line[0] == '@') {
@@ -1557,9 +1559,8 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.xm.consume = checkdiff_consume;
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
-	data.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
+	data.o = o;
 	data.ws_rule = whitespace_rule(attr_path);
-	data.file = o->file;
 
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
