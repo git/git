@@ -1143,6 +1143,35 @@ struct checkdiff_t {
 	int trailing_blanks_start;
 };
 
+static int is_conflict_marker(const char *line, unsigned long len)
+{
+	char firstchar;
+	int cnt;
+
+	if (len < 8)
+		return 0;
+	firstchar = line[0];
+	switch (firstchar) {
+	case '=': case '>': case '<':
+		break;
+	default:
+		return 0;
+	}
+	for (cnt = 1; cnt < 7; cnt++)
+		if (line[cnt] != firstchar)
+			return 0;
+	/* line[0] thru line[6] are same as firstchar */
+	if (firstchar == '=') {
+		/* divider between ours and theirs? */
+		if (len != 8 || line[7] != '\n')
+			return 0;
+	} else if (len < 8 || !isspace(line[7])) {
+		/* not divider before ours nor after theirs */
+		return 0;
+	}
+	return 1;
+}
+
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
 {
 	struct checkdiff_t *data = priv;
@@ -1159,6 +1188,12 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 			data->trailing_blanks_start = 0;
 		else if (!data->trailing_blanks_start)
 			data->trailing_blanks_start = data->lineno;
+		if (is_conflict_marker(line + 1, len - 1)) {
+			data->status |= 1;
+			fprintf(data->o->file,
+				"%s:%d: leftover conflict marker\n",
+				data->filename, data->lineno);
+		}
 		bad = ws_check(line + 1, len - 1, data->ws_rule);
 		if (!bad)
 			return;
