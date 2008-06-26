@@ -313,6 +313,9 @@ foreach my $setting (values %config_bool_settings) {
 	${$setting->[0]} = $setting->[1] unless (defined (${$setting->[0]}));
 }
 
+# 'default' encryption is none -- this only prevents a warning
+$smtp_encryption = '' unless (defined $smtp_encryption);
+
 # Set CC suppressions
 my(%suppress_cc);
 if (@suppress_cc) {
