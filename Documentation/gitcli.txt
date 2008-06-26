@@ -13,8 +13,37 @@ gitcli
 DESCRIPTION
 -----------
 
-This manual describes best practice in how to use git CLI.  Here are
-the rules that you should follow when you are scripting git:
+This manual describes the convention used throughout git CLI.
+
+Many commands take revisions (most often "commits", but sometimes
+"tree-ish", depending on the context and command) and paths as their
+arguments.  Here are the rules:
+
+ * Revisions come first and then paths.
+   E.g. in `git diff v1.0 v2.0 arch/x86 include/asm-x86`,
+   `v1.0` and `v2.0` are revisions and `arch/x86` and `include/asm-x86`
+   are paths.
+
+ * When an argument can be misunderstood as either a revision or a path,
+   they can be disambiguated by placing `\--` between them.
+   E.g. `git diff \-- HEAD` is, "I have a file called HEAD in my work
+   tree.  Please show changes between the version I staged in the index
+   and what I have in the work tree for that file". not "show difference
+   between the HEAD commit and the work tree as a whole".  You can say
+   `git diff HEAD \--` to ask for the latter.
+
+ * Without disambiguating `\--`, git makes a reasonable guess, but errors
+   out and asking you to disambiguate when ambiguous.  E.g. if you have a
+   file called HEAD in your work tree, `git diff HEAD` is ambiguous, and
+   you have to say either `git diff HEAD \--` or `git diff \-- HEAD` to
+   disambiguate.
+
+When writing a script that is expected to handle random user-input, it is
+a good practice to make it explicit which arguments are which by placing
+disambiguating `\--` at appropriate places.
+
+Here are the rules regarding the "flags" that you should follow when you are
+scripting git:
 
  * it's preferred to use the non dashed form of git commands, which means that
    you should prefer `"git foo"` to `"git-foo"`.
@@ -34,8 +63,8 @@ the rules that you should follow when you are scripting git:
    if you happen to have a file called `HEAD` in the work tree.
 
 
-ENHANCED CLI
-------------
+ENHANCED OPTION PARSER
+----------------------
 From the git 1.5.4 series and further, many git commands (not all of them at the
 time of the writing though) come with an enhanced option parser.
 
