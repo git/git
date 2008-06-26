@@ -225,6 +225,21 @@ unsigned ws_check(const char *line, int len, unsigned ws_rule)
 	return ws_check_emit_1(line, len, ws_rule, NULL, NULL, NULL, NULL);
 }
 
+int ws_blank_line(const char *line, int len, unsigned ws_rule)
+{
+	/*
+	 * We _might_ want to treat CR differently from other
+	 * whitespace characters when ws_rule has WS_CR_AT_EOL, but
+	 * for now we just use this stupid definition.
+	 */
+	while (len-- > 0) {
+		if (!isspace(*line))
+			return 0;
+		line++;
+	}
+	return 1;
+}
+
 /* Copy the line to the buffer while fixing whitespaces */
 int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *error_count)
 {

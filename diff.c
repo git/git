@@ -1140,6 +1140,7 @@ struct checkdiff_t {
 	struct diff_options *o;
 	unsigned ws_rule;
 	unsigned status;
+	int trailing_blanks_start;
 };
 
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
@@ -1154,6 +1155,10 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		unsigned bad;
 		data->lineno++;
+		if (!ws_blank_line(line + 1, len - 1, data->ws_rule))
+			data->trailing_blanks_start = 0;
+		else if (!data->trailing_blanks_start)
+			data->trailing_blanks_start = data->lineno;
 		bad = ws_check(line + 1, len - 1, data->ws_rule);
 		if (!bad)
 			return;
@@ -1165,14 +1170,16 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		emit_line(data->o->file, set, reset, line, 1);
 		ws_check_emit(line + 1, len - 1, data->ws_rule,
 			      data->o->file, set, reset, ws);
-	} else if (line[0] == ' ')
+	} else if (line[0] == ' ') {
 		data->lineno++;
-	else if (line[0] == '@') {
+		data->trailing_blanks_start = 0;
+	} else if (line[0] == '@') {
 		char *plus = strchr(line, '+');
 		if (plus)
 			data->lineno = strtol(plus, NULL, 10) - 1;
 		else
 			die("invalid diff");
+		data->trailing_blanks_start = 0;
 	}
 }
 
@@ -1584,6 +1591,12 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		ecb.outf = xdiff_outf;
 		ecb.priv = &data;
 		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+
+		if (data.trailing_blanks_start) {
+			fprintf(o->file, "%s:%d: ends with blank lines.\n",
+				data.filename, data.trailing_blanks_start);
+			data.status = 1; /* report errors */
+		}
 	}
  free_and_return:
 	diff_free_filespec_data(one);
