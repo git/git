@@ -61,9 +61,9 @@ from your own version. Note that you can shorten it to only a few
 characters to save yourself typing all 40 hex digits:
 
 ------------------------------------------------
-$ git-cat-file -t 54196cc2
+$ git cat-file -t 54196cc2
 commit
-$ git-cat-file commit 54196cc2
+$ git cat-file commit 54196cc2
 tree 92b8b694ffb1675e5975148e1121810081dbdffe
 author J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
 committer J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
@@ -166,7 +166,7 @@ hello world!
 and the "parent" object refers to the previous commit:
 
 ------------------------------------------------
-$ git-cat-file commit 54196cc2
+$ git cat-file commit 54196cc2
 tree 92b8b694ffb1675e5975148e1121810081dbdffe
 author J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
 committer J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
@@ -246,7 +246,7 @@ The last diff is empty, but no new commits have been made, and the
 head still doesn't contain the new line:
 
 ------------------------------------------------
-$ git-diff HEAD
+$ git diff HEAD
 diff --git a/file.txt b/file.txt
 index a042389..513feba 100644
 --- a/file.txt
@@ -273,7 +273,7 @@ hello world, again
 
 So what our "git add" did was store a new blob and then put
 a reference to it in the index file.  If we modify the file again,
-we'll see that the new modifications are reflected in the "git-diff"
+we'll see that the new modifications are reflected in the "git diff"
 output:
 
 ------------------------------------------------
