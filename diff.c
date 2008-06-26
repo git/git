@@ -1150,12 +1150,14 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	char *err;
 
 	if (line[0] == '+') {
+		unsigned bad;
 		data->lineno++;
-		data->status = check_and_emit_line(line + 1, len - 1,
+		bad = check_and_emit_line(line + 1, len - 1,
 		    data->ws_rule, NULL, NULL, NULL, NULL);
-		if (!data->status)
+		if (!bad)
 			return;
-		err = whitespace_error_string(data->status);
+		data->status |= bad;
+		err = whitespace_error_string(bad);
 		fprintf(data->file, "%s:%d: %s.\n", data->filename, data->lineno, err);
 		free(err);
 		emit_line(data->file, set, reset, line, 1);
