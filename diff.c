@@ -1544,8 +1544,9 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 
 static void builtin_checkdiff(const char *name_a, const char *name_b,
 			      const char *attr_path,
-			     struct diff_filespec *one,
-			     struct diff_filespec *two, struct diff_options *o)
+			      struct diff_filespec *one,
+			      struct diff_filespec *two,
+			      struct diff_options *o)
 {
 	mmfile_t mf1, mf2;
 	struct checkdiff_t data;
@@ -1564,6 +1565,12 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
+	/*
+	 * All the other codepaths check both sides, but not checking
+	 * the "old" side here is deliberate.  We are checking the newly
+	 * introduced changes, and as long as the "new" side is text, we
+	 * can and should check what it introduces.
+	 */
 	if (diff_filespec_is_binary(two))
 		goto free_and_return;
 	else {
