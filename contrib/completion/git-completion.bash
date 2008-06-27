@@ -1041,7 +1041,6 @@ _git_config ()
 		pull.octopus
 		pull.twohead
 		repack.useDeltaBaseOffset
-		show.difftree
 		showbranch.default
 		tar.umask
 		transfer.unpackLimit
@@ -1050,7 +1049,6 @@ _git_config ()
 		user.name
 		user.email
 		user.signingkey
-		whatchanged.difftree
 		branch. remote.
 	"
 }
