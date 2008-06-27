@@ -181,9 +181,9 @@ static int s_update_ref(const char *action,
 	lock = lock_any_ref_for_update(ref->name,
 				       check_old ? ref->old_sha1 : NULL, 0);
 	if (!lock)
-		return 1;
+		return 2;
 	if (write_ref_sha1(lock, ref->new_sha1, msg) < 0)
-		return 1;
+		return 2;
 	return 0;
 }
 
@@ -294,7 +294,8 @@ static int update_local_ref(struct ref *ref,
 	}
 }
 
-static int store_updated_refs(const char *url, struct ref *ref_map)
+static int store_updated_refs(const char *url, const char *remote_name,
+		struct ref *ref_map)
 {
 	FILE *fp;
 	struct commit *commit;
@@ -380,6 +381,10 @@ static int store_updated_refs(const char *url, struct ref *ref_map)
 		}
 	}
 	fclose(fp);
+	if (rc & 2)
+		error("some local refs could not be updated; try running\n"
+		      " 'git remote prune %s' to remove any old, conflicting "
+		      "branches", remote_name);
 	return rc;
 }
 
@@ -450,7 +455,9 @@ static int fetch_refs(struct transport *transport, struct ref *ref_map)
 	if (ret)
 		ret = transport_fetch_refs(transport, ref_map);
 	if (!ret)
-		ret |= store_updated_refs(transport->url, ref_map);
+		ret |= store_updated_refs(transport->url,
+				transport->remote->name,
+				ref_map);
 	transport_unlock_pack(transport);
 	return ret;
 }
