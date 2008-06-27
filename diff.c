@@ -830,12 +830,12 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 	/* Sanity: give at least 5 columns to the graph,
 	 * but leave at least 10 columns for the name.
 	 */
-	if (width < name_width + 15) {
-		if (name_width <= 25)
-			width = name_width + 15;
-		else
-			name_width = width - 15;
-	}
+	if (width < 25)
+		width = 25;
+	if (name_width < 10)
+		name_width = 10;
+	else if (width < name_width + 15)
+		name_width = width - 15;
 
 	/* Find the longest filename and max number of changes */
 	reset = diff_get_color_opt(options, DIFF_RESET);
