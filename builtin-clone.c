@@ -420,6 +420,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	fprintf(stderr, "Initialize %s\n", git_dir);
 	init_db(option_template, option_quiet ? INIT_DB_QUIET : 0);
 
+	/*
+	 * At this point, the config exists, so we do not need the
+	 * environment variable.  We actually need to unset it, too, to
+	 * re-enable parsing of the global configs.
+	 */
+	unsetenv(CONFIG_ENVIRONMENT);
+
 	if (option_reference)
 		setup_reference(git_dir);
 
