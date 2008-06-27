@@ -533,26 +533,34 @@ static struct commit *interesting(struct commit_list *list)
 	return NULL;
 }
 
-static struct commit_list *merge_bases(struct commit *one, struct commit *two)
+static struct commit_list *merge_bases_many(struct commit *one, int n, struct commit **twos)
 {
 	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
+	int i;
 
-	if (one == two)
-		/* We do not mark this even with RESULT so we do not
-		 * have to clean it up.
-		 */
-		return commit_list_insert(one, &result);
+	for (i = 0; i < n; i++) {
+		if (one == twos[i])
+			/*
+			 * We do not mark this even with RESULT so we do not
+			 * have to clean it up.
+			 */
+			return commit_list_insert(one, &result);
+	}
 
 	if (parse_commit(one))
 		return NULL;
-	if (parse_commit(two))
-		return NULL;
+	for (i = 0; i < n; i++) {
+		if (parse_commit(twos[i]))
+			return NULL;
+	}
 
 	one->object.flags |= PARENT1;
-	two->object.flags |= PARENT2;
 	insert_by_date(one, &list);
-	insert_by_date(two, &list);
+	for (i = 0; i < n; i++) {
+		twos[i]->object.flags |= PARENT2;
+		insert_by_date(twos[i], &list);
+	}
 
 	while (interesting(list)) {
 		struct commit *commit;
@@ -627,21 +635,26 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 	return ret;
 }
 
-struct commit_list *get_merge_bases(struct commit *one,
-					struct commit *two, int cleanup)
+struct commit_list *get_merge_bases_many(struct commit *one,
+					 int n,
+					 struct commit **twos,
+					 int cleanup)
 {
 	struct commit_list *list;
 	struct commit **rslt;
 	struct commit_list *result;
 	int cnt, i, j;
 
-	result = merge_bases(one, two);
-	if (one == two)
-		return result;
+	result = merge_bases_many(one, n, twos);
+	for (i = 0; i < n; i++) {
+		if (one == twos[i])
+			return result;
+	}
 	if (!result || !result->next) {
 		if (cleanup) {
 			clear_commit_marks(one, all_flags);
-			clear_commit_marks(two, all_flags);
+			for (i = 0; i < n; i++)
+				clear_commit_marks(twos[i], all_flags);
 		}
 		return result;
 	}
@@ -659,12 +672,13 @@ struct commit_list *get_merge_bases(struct commit *one,
 	free_commit_list(result);
 
 	clear_commit_marks(one, all_flags);
-	clear_commit_marks(two, all_flags);
+	for (i = 0; i < n; i++)
+		clear_commit_marks(twos[i], all_flags);
 	for (i = 0; i < cnt - 1; i++) {
 		for (j = i+1; j < cnt; j++) {
 			if (!rslt[i] || !rslt[j])
 				continue;
-			result = merge_bases(rslt[i], rslt[j]);
+			result = merge_bases_many(rslt[i], 1, &rslt[j]);
 			clear_commit_marks(rslt[i], all_flags);
 			clear_commit_marks(rslt[j], all_flags);
 			for (list = result; list; list = list->next) {
@@ -684,6 +698,12 @@ struct commit_list *get_merge_bases(struct commit *one,
 	}
 	free(rslt);
 	return result;
+}
+
+struct commit_list *get_merge_bases(struct commit *one, struct commit *two,
+				    int cleanup)
+{
+	return get_merge_bases_many(one, 1, &two, cleanup);
 }
 
 int in_merge_bases(struct commit *commit, struct commit **reference, int num)
