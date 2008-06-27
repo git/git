@@ -3,6 +3,14 @@
 #include "exec_cmd.h"
 #include "strbuf.h"
 
+/* Stubs for functions that make no sense for git-shell. These stubs
+ * are provided here to avoid linking in external redundant modules.
+ */
+void release_pack_memory(size_t need, int fd){}
+void trace_argv_printf(const char **argv, const char *fmt, ...){}
+void trace_printf(const char *fmt, ...){}
+
+
 static int do_generic_cmd(const char *me, char *arg)
 {
 	const char *my_argv[4];
