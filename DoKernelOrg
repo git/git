@@ -15,7 +15,6 @@ make clean >/dev/null 2>&1 &&
 git reset --hard &&
 make clean >/dev/null 2>&1 &&
 git checkout master &&
-git pull . origin &&
 make clean >/dev/null 2>&1 &&
 
 case "$1" in
@@ -42,6 +41,7 @@ case "$1" in
 	;;
 
 maint | maint-* | master)
+	rm -f version
 	case `hostname` in
 	hera.kernel.org)
 		narch='x86_64 i386'

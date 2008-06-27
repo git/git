@@ -49,7 +49,7 @@ do
 			o=-Wold-style-definition ;;
 		esac
 		O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast"
-		O="$O -fwrapv -fno-strict-overflow"
+		# O="$O -fwrapv -fno-strict-overflow"
 		;;
 	--)
 		shift
