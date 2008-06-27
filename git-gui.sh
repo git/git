@@ -2666,6 +2666,11 @@ $ctxm add command \
 	-command {apply_hunk $cursorX $cursorY}
 set ui_diff_applyhunk [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
+$ctxm add command \
+	-label [mc "Apply/Reverse Line"] \
+	-command {apply_line $cursorX $cursorY; do_rescan}
+set ui_diff_applyline [$ctxm index last]
+lappend diff_actions [list $ctxm entryconf $ui_diff_applyline -state]
 $ctxm add separator
 $ctxm add command \
 	-label [mc "Show Less Context"] \
@@ -2714,8 +2719,10 @@ proc popup_diff_menu {ctxm x y X Y} {
 	set ::cursorY $y
 	if {$::ui_index eq $::current_diff_side} {
 		set l [mc "Unstage Hunk From Commit"]
+		set t [mc "Unstage Line From Commit"]
 	} else {
 		set l [mc "Stage Hunk For Commit"]
+		set t [mc "Stage Line For Commit"]
 	}
 	if {$::is_3way_diff
 		|| $current_diff_path eq {}
@@ -2726,6 +2733,7 @@ proc popup_diff_menu {ctxm x y X Y} {
 		set s normal
 	}
 	$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
+	$ctxm entryconf $::ui_diff_applyline -state $s -label $t
 	tk_popup $ctxm $X $Y
 }
 bind_button3 $ui_diff [list popup_diff_menu $ctxm %x %y %X %Y]
