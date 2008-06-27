@@ -140,4 +140,6 @@ static inline int single_parent(struct commit *commit)
 	return commit->parents && !commit->parents->next;
 }
 
+struct commit_list *reduce_heads(struct commit_list *heads);
+
 #endif /* COMMIT_H */
