@@ -1,0 +1,11 @@
+GIT v1.5.5.5 Release Notes
+==========================
+
+I personally do not think there is any reason anybody should want to
+run v1.5.5.X series these days, because 'master' version is always
+more stable than any tagged released version of git.
+
+This is primarily to futureproof "git-shell" to accept requests
+without a dash between "git" and subcommand name (e.g. "git
+upload-pack") which the newer client will start to make sometime in
+the future.

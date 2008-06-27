@@ -105,4 +105,12 @@ test_expect_success '--check with --no-pager returns 2 for dirty difference' '
 
 '
 
+
+test_expect_success 'check should test not just the last line' '
+	echo "" >>a &&
+	git --no-pager diff --check
+	test $? = 2
+
+'
+
 test_done
