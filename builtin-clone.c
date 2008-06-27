@@ -452,7 +452,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		refs = clone_local(path, git_dir);
 	else {
 		struct remote *remote = remote_get(argv[0]);
-		struct transport *transport = transport_get(remote, argv[0]);
+		struct transport *transport =
+			transport_get(remote, remote->url[0]);
 
 		if (!transport->get_refs_list || !transport->fetch)
 			die("Don't know how to clone %s", transport->url);
