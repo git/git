@@ -233,10 +233,12 @@ static int update_local_ref(struct ref *ref,
 
 	if (!is_null_sha1(ref->old_sha1) &&
 	    !prefixcmp(ref->name, "refs/tags/")) {
-		sprintf(display, "- %-*s %-*s -> %s",
+		int r;
+		r = s_update_ref("updating tag", ref, 0);
+		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : '-',
 			SUMMARY_WIDTH, "[tag update]", REFCOL_WIDTH, remote,
-			pretty_ref);
-		return s_update_ref("updating tag", ref, 0);
+			pretty_ref, r ? "  (unable to update local ref)" : "");
+		return r;
 	}
 
 	current = lookup_commit_reference_gently(ref->old_sha1, 1);
@@ -244,6 +246,7 @@ static int update_local_ref(struct ref *ref,
 	if (!current || !updated) {
 		const char *msg;
 		const char *what;
+		int r;
 		if (!strncmp(ref->name, "refs/tags/", 10)) {
 			msg = "storing tag";
 			what = "[new tag]";
@@ -253,27 +256,36 @@ static int update_local_ref(struct ref *ref,
 			what = "[new branch]";
 		}
 
-		sprintf(display, "* %-*s %-*s -> %s", SUMMARY_WIDTH, what,
-			REFCOL_WIDTH, remote, pretty_ref);
-		return s_update_ref(msg, ref, 0);
+		r = s_update_ref(msg, ref, 0);
+		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : '*',
+			SUMMARY_WIDTH, what, REFCOL_WIDTH, remote, pretty_ref,
+			r ? "  (unable to update local ref)" : "");
+		return r;
 	}
 
 	if (in_merge_bases(current, &updated, 1)) {
 		char quickref[83];
+		int r;
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "..");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
-		sprintf(display, "  %-*s %-*s -> %s", SUMMARY_WIDTH, quickref,
-			REFCOL_WIDTH, remote, pretty_ref);
-		return s_update_ref("fast forward", ref, 1);
+		r = s_update_ref("fast forward", ref, 1);
+		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : ' ',
+			SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote,
+			pretty_ref, r ? "  (unable to update local ref)" : "");
+		return r;
 	} else if (force || ref->force) {
 		char quickref[84];
+		int r;
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "...");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
-		sprintf(display, "+ %-*s %-*s -> %s  (forced update)",
-			SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote, pretty_ref);
-		return s_update_ref("forced-update", ref, 1);
+		r = s_update_ref("forced-update", ref, 1);
+		sprintf(display, "%c %-*s %-*s -> %s  (%s)", r ? '!' : '+',
+			SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote,
+			pretty_ref,
+			r ? "unable to update local ref" : "forced update");
+		return r;
 	} else {
 		sprintf(display, "! %-*s %-*s -> %s  (non fast forward)",
 			SUMMARY_WIDTH, "[rejected]", REFCOL_WIDTH, remote,
