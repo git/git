@@ -36,12 +36,15 @@ is also possible).
 OPTIONS
 -------
 
-save [<message>]::
+save [--keep-index] [<message>]::
 
 	Save your local modifications to a new 'stash', and run `git reset
 	--hard` to revert them.  This is the default action when no
 	subcommand is given. The <message> part is optional and gives
 	the description along with the stashed state.
++
+If the `--keep-index` option is used, all changes already added to the
+index are left intact.
 
 list [<options>]::
 
@@ -167,6 +170,23 @@ $ edit emergency fix
 $ git commit -a -m "Fix in a hurry"
 $ git stash apply
 ... continue hacking ...
+----------------------------------------------------------------
+
+Testing partial commits::
+
+You can use `git stash save --keep-index` when you want to make two or
+more commits out of the changes in the work tree, and you want to test
+each change before committing:
++
+----------------------------------------------------------------
+... hack hack hack ...
+$ git add --patch foo
+$ git stash save --keep-index
+$ build && run tests
+$ git commit -m 'First part'
+$ git stash apply
+$ build && run tests
+$ git commit -a -m 'Second part'
 ----------------------------------------------------------------
 
 SEE ALSO
