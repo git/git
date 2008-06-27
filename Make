@@ -21,18 +21,20 @@ branch=`expr "$head" : 'refs/heads/\(.*\)'` || branch=detached
 
 case "$branch" in
 next | maint | master | pu)
-	d="prefix=$HOME/git-$branch" ;;
+	prefix="$HOME/git-$branch"
+	;;
 snap)
 	v=`$GIT describe HEAD`
 	expr "$v" : '.*-g[0-9a-f]*$' >/dev/null && {
 	    echo >&2 "You are on 'snap' but $v is not an official version."
 	    exit 1
 	}
-	d="prefix=$HOME/git-snap-$v"
+	prefix="$HOME/git-snap-$v"
 	;;
 *)
-	d="prefix=$HOME/git-test gitexecdir=\$(prefix)/libexec/git-core" ;;
+	prefix="$HOME/git-test" ;;
 esac
+d="prefix=$prefix"
 
 : ${O=-O2}
 
@@ -71,7 +73,7 @@ sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 make $d \
      GITWEB_CONFIG=$G \
      PYTHON_PATH=/usr/bin/python2.4 \
-     ETC_GITCONFIG=$d/etc/gitconfig \
+     ETC_GITCONFIG=$prefix/etc/gitconfig \
      CFLAGS="$O -Wall -Wdeclaration-after-statement -g" \
      "$@"
 status=$?
