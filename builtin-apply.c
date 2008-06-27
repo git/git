@@ -153,6 +153,7 @@ struct patch {
 	unsigned int is_binary:1;
 	unsigned int is_copy:1;
 	unsigned int is_rename:1;
+	unsigned int recount:1;
 	struct fragment *fragments;
 	char *result;
 	size_t resultsize;
@@ -882,6 +883,56 @@ static int parse_range(const char *line, int len, int offset, const char *expect
 	return offset + ex;
 }
 
+static void recount_diff(char *line, int size, struct fragment *fragment)
+{
+	int oldlines = 0, newlines = 0, ret = 0;
+
+	if (size < 1) {
+		warning("recount: ignore empty hunk");
+		return;
+	}
+
+	for (;;) {
+		int len = linelen(line, size);
+		size -= len;
+		line += len;
+
+		if (size < 1)
+			break;
+
+		switch (*line) {
+		case ' ': case '\n':
+			newlines++;
+			/* fall through */
+		case '-':
+			oldlines++;
+			continue;
+		case '+':
+			newlines++;
+			continue;
+		case '\\':
+			break;
+		case '@':
+			ret = size < 3 || prefixcmp(line, "@@ ");
+			break;
+		case 'd':
+			ret = size < 5 || prefixcmp(line, "diff ");
+			break;
+		default:
+			ret = -1;
+			break;
+		}
+		if (ret) {
+			warning("recount: unexpected line: %.*s",
+				(int)linelen(line, size), line);
+			return;
+		}
+		break;
+	}
+	fragment->oldlines = oldlines;
+	fragment->newlines = newlines;
+}
+
 /*
  * Parse a unified diff fragment header of the
  * form "@@ -a,b +c,d @@"
@@ -1013,6 +1064,8 @@ static int parse_fragment(char *line, unsigned long size,
 	offset = parse_fragment_header(line, len, fragment);
 	if (offset < 0)
 		return -1;
+	if (offset > 0 && patch->recount)
+		recount_diff(line + offset, size - offset, fragment);
 	oldlines = fragment->oldlines;
 	newlines = fragment->newlines;
 	leading = 0;
@@ -2912,7 +2965,10 @@ static void prefix_patches(struct patch *p)
 	}
 }
 
-static int apply_patch(int fd, const char *filename, int inaccurate_eof)
+#define INACCURATE_EOF	(1<<0)
+#define RECOUNT		(1<<1)
+
+static int apply_patch(int fd, const char *filename, int options)
 {
 	size_t offset;
 	struct strbuf buf;
@@ -2928,7 +2984,8 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 		int nr;
 
 		patch = xcalloc(1, sizeof(*patch));
-		patch->inaccurate_eof = inaccurate_eof;
+		patch->inaccurate_eof = !!(options & INACCURATE_EOF);
+		patch->recount =  !!(options & RECOUNT);
 		nr = parse_chunk(buf.buf + offset, buf.len - offset, patch);
 		if (nr < 0)
 			break;
@@ -2997,7 +3054,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 {
 	int i;
 	int read_stdin = 1;
-	int inaccurate_eof = 0;
+	int options = 0;
 	int errs = 0;
 	int is_not_gitdir;
 
@@ -3015,7 +3072,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			errs |= apply_patch(0, "<stdin>", inaccurate_eof);
+			errs |= apply_patch(0, "<stdin>", options);
 			read_stdin = 0;
 			continue;
 		}
@@ -3115,7 +3172,11 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			continue;
 		}
 		if (!strcmp(arg, "--inaccurate-eof")) {
-			inaccurate_eof = 1;
+			options |= INACCURATE_EOF;
+			continue;
+		}
+		if (!strcmp(arg, "--recount")) {
+			options |= RECOUNT;
 			continue;
 		}
 		if (0 < prefix_length)
@@ -3126,12 +3187,12 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			die("can't open patch '%s': %s", arg, strerror(errno));
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
-		errs |= apply_patch(fd, arg, inaccurate_eof);
+		errs |= apply_patch(fd, arg, options);
 		close(fd);
 	}
 	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		errs |= apply_patch(0, "<stdin>", inaccurate_eof);
+		errs |= apply_patch(0, "<stdin>", options);
 	if (whitespace_error) {
 		if (squelch_whitespace_errors &&
 		    squelch_whitespace_errors < whitespace_error) {
