@@ -41,7 +41,7 @@ case "$1" in
 	done >:all.log 2>&1
 	;;
 
-maint | master)
+maint | maint-* | master)
 	case `hostname` in
 	hera.kernel.org)
 		narch='x86_64 i386'
