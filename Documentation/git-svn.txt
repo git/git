@@ -513,7 +513,7 @@ have each person clone that repository with 'git clone':
 	cd project
 	git-init
 	git remote add origin server:/pub/project
-	git config --add remote.origin.fetch=+refs/remotes/*:refs/remotes/*
+	git config --add remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
 	git fetch
 # Initialize git-svn locally (be sure to use the same URL and -T/-b/-t options as were used on server)
 	git-svn init http://svn.foo.org/project
