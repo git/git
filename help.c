@@ -527,20 +527,26 @@ static int is_git_command(const char *s)
 		is_in_cmdlist(&other_cmds, s);
 }
 
+static const char *prepend(const char *prefix, const char *cmd)
+{
+	size_t pre_len = strlen(prefix);
+	size_t cmd_len = strlen(cmd);
+	char *p = xmalloc(pre_len + cmd_len + 1);
+	memcpy(p, prefix, pre_len);
+	strcpy(p + pre_len, cmd);
+	return p;
+}
+
 static const char *cmd_to_page(const char *git_cmd)
 {
 	if (!git_cmd)
 		return "git";
 	else if (!prefixcmp(git_cmd, "git"))
 		return git_cmd;
-	else {
-		int page_len = strlen(git_cmd) + 4;
-		char *p = xmalloc(page_len + 1);
-		strcpy(p, "git-");
-		strcpy(p + 4, git_cmd);
-		p[page_len] = 0;
-		return p;
-	}
+	else if (is_git_command(git_cmd))
+		return prepend("git-", git_cmd);
+	else
+		return prepend("git", git_cmd);
 }
 
 static void setup_man_path(void)
