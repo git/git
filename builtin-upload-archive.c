@@ -30,7 +30,7 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 	if (argc != 2)
 		usage(upload_archive_usage);
 
-	if (strlen(argv[1]) > sizeof(buf))
+	if (strlen(argv[1]) + 1 > sizeof(buf))
 		die("insanely long repository name");
 
 	strcpy(buf, argv[1]); /* enter-repo smudges its argument */
