@@ -3243,7 +3243,9 @@ sub close_file {
 		my ($tmp_fh, $tmp_filename) = File::Temp::tempfile(UNLINK => 1);
 		my $result;
 		while ($result = sysread($fh, my $string, 1024)) {
-			syswrite($tmp_fh, $string, $result);
+			my $wrote = syswrite($tmp_fh, $string, $result);
+			defined($wrote) && $wrote == $result
+				or croak("write $tmp_filename: $!\n");
 		}
 		defined $result or croak $!;
 		close $tmp_fh or croak $!;
@@ -3251,6 +3253,7 @@ sub close_file {
 		close $fh or croak $!;
 
 		$hash = $::_repository->hash_and_insert_object($tmp_filename);
+		unlink($tmp_filename);
 		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
 		close $fb->{base} or croak $!;
 	} else {
