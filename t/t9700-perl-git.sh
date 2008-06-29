@@ -6,6 +6,11 @@
 test_description='perl interface (Git.pm)'
 . ./test-lib.sh
 
+perl -MTest::More -e 0 2>/dev/null || {
+	say_color skip "Perl Test::More unavailable, skipping test"
+	test_done
+}
+
 # set up test repository
 
 test_expect_success \
