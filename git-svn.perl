@@ -1462,13 +1462,6 @@ sub verify_remotes_sanity {
 	}
 }
 
-# we allow more chars than remotes2config.sh...
-sub sanitize_remote_name {
-	my ($name) = @_;
-	$name =~ tr{A-Za-z0-9:,/+-}{.}c;
-	$name;
-}
-
 sub find_existing_remote {
 	my ($url, $remotes) = @_;
 	return undef if $no_reuse_existing;
@@ -2853,7 +2846,7 @@ sub _new {
 	unless (defined $ref_id && length $ref_id) {
 		$_[2] = $ref_id = $Git::SVN::default_ref_id;
 	}
-	$_[1] = $repo_id = sanitize_remote_name($repo_id);
+	$_[1] = $repo_id;
 	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
 	$_[3] = $path = '' unless (defined $path);
 	mkpath(["$ENV{GIT_DIR}/svn"]);
@@ -3243,7 +3236,9 @@ sub close_file {
 		my ($tmp_fh, $tmp_filename) = File::Temp::tempfile(UNLINK => 1);
 		my $result;
 		while ($result = sysread($fh, my $string, 1024)) {
-			syswrite($tmp_fh, $string, $result);
+			my $wrote = syswrite($tmp_fh, $string, $result);
+			defined($wrote) && $wrote == $result
+				or croak("write $tmp_filename: $!\n");
 		}
 		defined $result or croak $!;
 		close $tmp_fh or croak $!;
@@ -3251,6 +3246,7 @@ sub close_file {
 		close $fh or croak $!;
 
 		$hash = $::_repository->hash_and_insert_object($tmp_filename);
+		unlink($tmp_filename);
 		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
 		close $fb->{base} or croak $!;
 	} else {
@@ -4704,8 +4700,7 @@ sub minimize_connections {
 
 		# skip existing cases where we already connect to the root
 		if (($ra->{url} eq $ra->{repos_root}) ||
-		    (Git::SVN::sanitize_remote_name($ra->{repos_root}) eq
-		     $repo_id)) {
+		    ($ra->{repos_root} eq $repo_id)) {
 			$root_repos->{$ra->{url}} = $repo_id;
 			next;
 		}
@@ -4744,8 +4739,7 @@ sub minimize_connections {
 	foreach my $url (keys %$new_urls) {
 		# see if we can re-use an existing [svn-remote "repo_id"]
 		# instead of creating a(n ugly) new section:
-		my $repo_id = $root_repos->{$url} ||
-		              Git::SVN::sanitize_remote_name($url);
+		my $repo_id = $root_repos->{$url} || $url;
 
 		my $fetch = $new_urls->{$url};
 		foreach my $path (keys %$fetch) {
