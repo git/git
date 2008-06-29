@@ -441,6 +441,17 @@ static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, int slot, c
 		}
 	}
 
+	/*
+	 * If unconfigured, make stash never expire
+	 */
+	if (!strcmp(ref, "refs/stash")) {
+		if (!(slot & EXPIRE_TOTAL))
+			cb->expire_total = 0;
+		if (!(slot & EXPIRE_UNREACH))
+			cb->expire_unreachable = 0;
+		return;
+	}
+
 	/* Nothing matched -- use the default value */
 	if (!(slot & EXPIRE_TOTAL))
 		cb->expire_total = default_reflog_expire;
