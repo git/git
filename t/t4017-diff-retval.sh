@@ -123,7 +123,7 @@ test_expect_success 'check detects leftover conflict markers' '
 		git --no-pager diff --cached --check >test.out
 		test $? = 2
 	) &&
-	test "$(grep "conflict marker" test.out | wc -l)" = 3 &&
+	test 3 = $(grep "conflict marker" test.out | wc -l) &&
 	git reset --hard
 '
 
