@@ -7,20 +7,16 @@ User visible changes
 [[Note that none of these are not merged to 'master' as of this writing
 but they will be before 1.6.0 happens]]
 
-With default Makefile settings, most of the programs are now installed
-outside your $PATH, except for "git", "gitk", "git-gui" and some server
-side programs that needs to be accessible when connecting over ssh.
-
-When talking to remote repository over ssh, necessary server side programs
-are now invoked with "git $program" notation, not with "git-$program"
-notation.  This should work with both servers running older git where you
-had all of these programs installed on $PATH, or newer git where you have
-only "git" on $PATH.  However, if the remote side is running a custom
-software that restricts programs you can run over ssh, it might cause
-problems.  Use --upload-pack="git-upload-pack" (when using ls-remote,
-fetch and pull on the client side), --receive-pack="git-receive-pack"
-(when using push on the client side), or --exec="git-upload-archive" (when
-using git-archive) as appropriate when talking to such a remote.
+With the default Makefile settings, most of the programs are now
+installed outside your $PATH, except for "git", "gitk", "git-gui" and
+some server side programs that need to be accessible for technical
+reasons.  Invoking a git subcommand as "git-xyzzy" from the command
+line has been deprecated since early 2006 (and officially announced in
+1.5.4 release notes); use of them from your scripts after adding
+output from "git --exec-path" to the $PATH is still supported in this
+release, but users are again strongly encouraged to adjust their
+scripts to use "git xyzzy" form, as we will stop installing
+"git-xyzzy" hardlinks for built-in commands in later releases.
 
 Source changes needed for porting to MinGW environment are now all in the
 main git.git codebase.
@@ -30,6 +26,9 @@ Updates since v1.5.6
 --------------------
 
 (subsystems)
+
+* git-p4 in contrib learned "allowSubmit" configuration to control on
+  which branch to allow "submit" subcommand.
 
 (portability)
 
@@ -47,7 +46,13 @@ Updates since v1.5.6
 
 * Updated howto/update-hook-example
 
-(performance, robustness etc.)
+* Got rid of usage of "git-foo" from the tutorial.
+
+* Disambiguating "--" between revs and paths is finally documented.
+
+(performance, robustness, sanity etc.)
+
+* even more documentation pages are now accessible via "man" and "git help".
 
 * reduced excessive inlining to shrink size of the "git" binary.
 
@@ -66,6 +71,9 @@ Updates since v1.5.6
 * core.fsyncobjectfiles configuration can be used to ensure that the loose
   objects created will be fsync'ed (this is only useful on filesystems
   that does not order data writes properly).
+
+* "git commit-tree" plumbing can make Octopus with more than 16 parents.
+  "git commit" has been capable of this for quite some time.
 
 (usability, bells and whistles)
 
@@ -100,6 +108,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.5.6.1-77-gf9a08f6
+O=v1.5.6.1-104-ga08b868
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
