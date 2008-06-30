@@ -20,10 +20,10 @@ for example, to test the latest version, you may prefer to start with
 the first two chapters of link:user-manual.html[The Git User's Manual].
 
 First, note that you can get documentation for a command such as "git
-diff" with:
+log --graph" with:
 
 ------------------------------------------------
-$ man git-diff
+$ man git-log
 ------------------------------------------------
 
 It is a good idea to introduce yourself to git with your name and

@@ -18,7 +18,7 @@ People needing to do actual development will also want to read
 Further chapters cover more specialized topics.
 
 Comprehensive reference documentation is available through the man
-pages.  For a command such as "git clone", just use
+pages.  For a command such as "git clone <repo>", just use
 
 ------------------------------------------------
 $ man git-clone
