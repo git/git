@@ -19,7 +19,7 @@ OPTIONS
 -------
 <commit>::
 	Commit to cherry-pick.
-	For a more complete list of ways to spell commits, see
+	For a more complete list of ways to spell commits, see the
 	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
 -e::

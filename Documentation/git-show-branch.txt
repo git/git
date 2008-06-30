@@ -29,7 +29,7 @@ no <rev> nor <glob> is given on the command line.
 OPTIONS
 -------
 <rev>::
-	Arbitrary extended SHA1 expression (see `git-rev-parse`)
+	Arbitrary extended SHA1 expression (see linkgit:git-rev-parse[1])
 	that typically names a branch HEAD or a tag.
 
 <glob>::
@@ -75,7 +75,7 @@ OPTIONS
 
 --merge-base::
 	Instead of showing the commit list, just act like the
-	'git-merge-base -a' command, except that it can accept
+	`git-merge-base -a` command, except that it can accept
 	more than two heads.
 
 --independent::

@@ -9,11 +9,11 @@ SYNOPSIS
 --------
 [verse]
 'git daemon' [--verbose] [--syslog] [--export-all]
-             [--timeout=n] [--init-timeout=n] [--strict-paths]
-             [--base-path=path] [--user-path | --user-path=path]
-             [--interpolated-path=pathtemplate]
-             [--reuseaddr] [--detach] [--pid-file=file]
-             [--enable=service] [--disable=service]
+	     [--timeout=n] [--init-timeout=n] [--strict-paths]
+	     [--base-path=path] [--user-path | --user-path=path]
+	     [--interpolated-path=pathtemplate]
+	     [--reuseaddr] [--detach] [--pid-file=file]
+	     [--enable=service] [--disable=service]
 	     [--allow-override=service] [--forbid-override=service]
 	     [--inetd | [--listen=host_or_ipaddr] [--port=n] [--user=user [--group=group]]
 	     [directory...]
@@ -27,7 +27,7 @@ that service if it is enabled.
 It verifies that the directory has the magic file "git-daemon-export-ok", and
 it will refuse to export any git directory that hasn't explicitly been marked
 for export this way (unless the '--export-all' parameter is specified). If you
-pass some directory paths as 'git-daemon' arguments, you can further restrict
+pass some directory paths as `git-daemon` arguments, you can further restrict
 the offers to a whitelist comprising of those.
 
 By default, only `upload-pack` service is enabled, which serves
@@ -44,12 +44,12 @@ OPTIONS
 --strict-paths::
 	Match paths exactly (i.e. don't allow "/foo/repo" when the real path is
 	"/foo/repo.git" or "/foo/repo/.git") and don't do user-relative paths.
-	git-daemon will refuse to start when this option is enabled and no
+	`git-daemon` will refuse to start when this option is enabled and no
 	whitelist is specified.
 
 --base-path::
 	Remap all the path requests as relative to the given path.
-	This is sort of "GIT root" - if you run git-daemon with
+	This is sort of "GIT root" - if you run `git-daemon` with
 	'--base-path=/srv/git' on example.com, then if you later try to pull
 	'git://example.com/hello.git', `git-daemon` will interpret the path
 	as '/srv/git/hello.git'.
@@ -199,7 +199,7 @@ $ grep 9418 /etc/services
 git		9418/tcp		# Git Version Control System
 ------------
 
-git-daemon as inetd server::
+`git-daemon` as inetd server::
 	To set up `git-daemon` as an inetd service that handles any
 	repository under the whitelisted set of directories, /pub/foo
 	and /pub/bar, place an entry like the following into
@@ -212,7 +212,7 @@ git-daemon as inetd server::
 ------------------------------------------------
 
 
-git-daemon as inetd server for virtual hosts::
+`git-daemon` as inetd server for virtual hosts::
 	To set up `git-daemon` as an inetd service that handles
 	repositories for different virtual hosts, `www.example.com`
 	and `www.example.org`, place an entry like the following into
@@ -235,7 +235,7 @@ clients, a symlink from `/software` into the appropriate
 default repository could be made as well.
 
 
-git-daemon as regular daemon for virtual hosts::
+`git-daemon` as regular daemon for virtual hosts::
 	To set up `git-daemon` as a regular, non-inetd service that
 	handles repositories for multiple virtual hosts based on
 	their IP addresses, start the daemon like this:

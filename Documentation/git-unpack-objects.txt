@@ -21,7 +21,7 @@ Objects that already exist in the repository will *not* be unpacked
 from the pack-file.  Therefore, nothing will be unpacked if you use
 this command on a pack-file that exists within the target repository.
 
-Please see the `git-repack` documentation for options to generate
+See linkgit:git-repack[1] for options to generate
 new packs and replace existing ones.
 
 OPTIONS

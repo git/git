@@ -53,7 +53,7 @@ page for details.
 ================================
 
 You can update the shared repository with your changes by first committing
-your changes, and then using the linkgit:git-push[1] command:
+your changes, and then using the `git-push` command:
 
 ------------------------------------------------
 $ git push origin master
@@ -118,7 +118,7 @@ Importing a CVS archive
 First, install version 2.1 or higher of cvsps from
 link:http://www.cobite.com/cvsps/[http://www.cobite.com/cvsps/] and make
 sure it is in your path.  Then cd to a checked out CVS working directory
-of the project you are interested in and run linkgit:git-cvsimport[1]:
+of the project you are interested in and run `git-cvsimport`:
 
 -------------------------------------------
 $ git cvsimport -C <destination> <module>

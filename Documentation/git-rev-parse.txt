@@ -15,8 +15,8 @@ DESCRIPTION
 
 Many git porcelainish commands take mixture of flags
 (i.e. parameters that begin with a dash '-') and parameters
-meant for underlying `git-rev-list` command they use internally
-and flags and parameters for other commands they use as the
+meant for the underlying `git-rev-list` command they use internally
+and flags and parameters for the other commands they use
 downstream of `git-rev-list`.  This command is used to
 distinguish between them.
 
@@ -128,13 +128,13 @@ OPTIONS
 
 --since=datestring::
 --after=datestring::
-	Parses the date string, and outputs corresponding
-	--max-age= parameter for git-rev-list command.
+	Parse the date string, and output the corresponding
+	--max-age= parameter for `git-rev-list`.
 
 --until=datestring::
 --before=datestring::
-	Parses the date string, and outputs corresponding
-	--min-age= parameter for git-rev-list command.
+	Parse the date string, and output the corresponding
+	--min-age= parameter for `git-rev-list`.
 
 <args>...::
 	Flags and parameters to be parsed.

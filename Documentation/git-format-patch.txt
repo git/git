@@ -27,7 +27,7 @@ DESCRIPTION
 Prepare each commit with its patch in
 one file per commit, formatted to resemble UNIX mailbox format.
 The output of this command is convenient for e-mail submission or
-for use with linkgit:git-am[1].
+for use with `git-am`.
 
 There are two ways to specify which commits to operate on.
 
@@ -61,7 +61,7 @@ they are created in the current working directory.
 If -n is specified, instead of "[PATCH] Subject", the first line
 is formatted as "[PATCH n/m] Subject".
 
-If given --thread, git-format-patch will generate In-Reply-To and
+If given --thread, `git-format-patch` will generate In-Reply-To and
 References headers to make the second and subsequent patch mails appear
 as replies to the first mail; this also generates a Message-Id header to
 reference.

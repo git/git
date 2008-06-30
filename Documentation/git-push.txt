@@ -85,7 +85,7 @@ nor in any Push line of the corresponding remotes file---see below).
 	line.
 
 --receive-pack=<git-receive-pack>::
-	Path to the 'git-receive-pack' program on the remote
+	Path to the `git-receive-pack` program on the remote
 	end.  Sometimes useful when pushing to a remote
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.

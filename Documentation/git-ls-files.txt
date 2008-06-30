@@ -143,14 +143,14 @@ which case it outputs:
 
         [<tag> ]<mode> <object> <stage> <file>
 
-"git-ls-files --unmerged" and "git-ls-files --stage" can be used to examine
+`git-ls-files --unmerged` and `git-ls-files --stage` can be used to examine
 detailed information on unmerged paths.
 
 For an unmerged path, instead of recording a single mode/SHA1 pair,
 the index records up to three such pairs; one from tree O in stage
 1, A in stage 2, and B in stage 3.  This information can be used by
 the user (or the porcelain) to see what should eventually be recorded at the
-path. (see git-read-tree for more information on state)
+path. (see linkgit:git-read-tree[1] for more information on state)
 
 When `-z` option is not used, TAB, LF, and backslash characters
 in pathnames are represented as `\t`, `\n`, and `\\`,
@@ -160,7 +160,7 @@ respectively.
 Exclude Patterns
 ----------------
 
-'git-ls-files' can use a list of "exclude patterns" when
+`git-ls-files` can use a list of "exclude patterns" when
 traversing the directory tree and finding files to show when the
 flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
@@ -176,7 +176,7 @@ These exclude patterns come from these places, in order:
      in the same order they appear in the file.
 
   3. command line flag --exclude-per-directory=<name> specifies
-     a name of the file in each directory 'git-ls-files'
+     a name of the file in each directory `git-ls-files`
      examines, normally `.gitignore`.  Files in deeper
      directories take precedence.  Patterns are ordered in the
      same order they appear in the files.

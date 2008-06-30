@@ -20,10 +20,10 @@ working directory.  The command saves your local modifications away
 and reverts the working directory to match the `HEAD` commit.
 
 The modifications stashed away by this command can be listed with
-`git-stash list`, inspected with `git-stash show`, and restored
-(potentially on top of a different commit) with `git-stash apply`.
-Calling git stash without any arguments is equivalent to `git stash
-save`.  A stash is by default listed as "WIP on 'branchname' ...", but
+`git stash list`, inspected with `git stash show`, and restored
+(potentially on top of a different commit) with `git stash apply`.
+Calling `git stash` without any arguments is equivalent to `git stash save`.
+A stash is by default listed as "WIP on 'branchname' ...", but
 you can give a more descriptive message on the command line when
 you create one.
 
@@ -56,8 +56,8 @@ stash@{0}: WIP on submit: 6ebd0e2... Update git-stash documentation
 stash@{1}: On master: 9cc0589... Add git-stash
 ----------------------------------------------------------------
 +
-The command takes options applicable to the linkgit:git-log[1]
-command to control what is shown and how.
+The command takes options applicable to the `git-log`
+command to control what is shown and how. See linkgit:git-log[1].
 
 show [<stash>]::
 

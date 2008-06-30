@@ -14,7 +14,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-A simple script to setup gitweb and a web server for browsing the local
+A simple script to set up `gitweb` and a web server for browsing the local
 repository.
 
 OPTIONS
@@ -44,7 +44,7 @@ OPTIONS
 -b::
 --browser::
 	The web browser that should be used to view the gitweb
-	page. This will be passed to the 'git-web--browse' helper
+	page. This will be passed to the `git-web--browse` helper
 	script along with the URL of the gitweb instance. See
 	linkgit:git-web--browse[1] for more information about this. If
 	the script fails, the URL will be printed to stdout.

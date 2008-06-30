@@ -13,8 +13,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-NOTE: In most cases, users should run linkgit:git-gc[1], which calls
-git-prune. See the section "NOTES", below.
+NOTE: In most cases, users should run `git-gc`, which calls
+`git-prune`. See the section "NOTES", below.
 
 This runs `git-fsck --unreachable` using all the refs
 available in `$GIT_DIR/refs`, optionally with additional set of
@@ -59,12 +59,12 @@ $ git prune $(cd ../another && $(git rev-parse --all))
 Notes
 -----
 
-In most cases, users will not need to call git-prune directly, but
-should instead call linkgit:git-gc[1], which handles pruning along with
+In most cases, users will not need to call `git-prune` directly, but
+should instead call `git-gc`, which handles pruning along with
 many other housekeeping tasks.
 
 For a description of which objects are considered for pruning, see
-git-fsck's --unreachable option.
+`git-fsck`'s --unreachable option.
 
 SEE ALSO
 --------

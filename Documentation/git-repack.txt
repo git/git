@@ -47,23 +47,24 @@ OPTIONS
 	deleted by way of being left in the old pack and then
 	removed.  Instead, the loose unreachable objects
 	will be pruned according to normal expiry rules
-	with the next linkgit:git-gc[1].
+	with the next `git-gc` invocation. See linkgit:git-gc[1].
 
 -d::
 	After packing, if the newly created packs make some
 	existing packs redundant, remove the redundant packs.
-	Also runs linkgit:git-prune-packed[1].
+	Also run  `git-prune-packed` to remove redundant
+	loose object files.
 
 -l::
-	Pass the `--local` option to `git-pack-objects`, see
+	Pass the `--local` option to `git-pack-objects`. See
 	linkgit:git-pack-objects[1].
 
 -f::
-	Pass the `--no-reuse-delta` option to `git-pack-objects`, see
+	Pass the `--no-reuse-delta` option to `git-pack-objects`. See
 	linkgit:git-pack-objects[1].
 
 -q::
-	Pass the `-q` option to `git-pack-objects`, see
+	Pass the `-q` option to `git-pack-objects`. See
 	linkgit:git-pack-objects[1].
 
 -n::

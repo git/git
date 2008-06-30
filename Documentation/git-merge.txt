@@ -41,8 +41,7 @@ include::merge-strategies.txt[]
 
 
 If you tried a merge which resulted in a complex conflicts and
-would want to start over, you can recover with
-linkgit:git-reset[1].
+would want to start over, you can recover with `git-reset`.
 
 CONFIGURATION
 -------------
@@ -50,7 +49,7 @@ include::merge-config.txt[]
 
 branch.<name>.mergeoptions::
 	Sets default options for merging into branch <name>. The syntax and
-	supported options are equal to that of git-merge, but option values
+	supported options are equal to that of `git-merge`, but option values
 	containing whitespace characters are currently not supported.
 
 HOW MERGE WORKS
@@ -145,7 +144,7 @@ After seeing a conflict, you can do two things:
    be used for this.
 
  * Resolve the conflicts.  `git diff` would report only the
-   conflicting paths because of the above 2. and 3..  Edit the
+   conflicting paths because of the above 2. and 3.  Edit the
    working tree files into a desirable shape, `git-add` or `git-rm`
    them, to make the index file contain what the merge result
    should be, and run `git-commit` to commit the result.
@@ -154,8 +153,11 @@ After seeing a conflict, you can do two things:
 SEE ALSO
 --------
 linkgit:git-fmt-merge-msg[1], linkgit:git-pull[1],
-linkgit:gitattributes[5]
-
+linkgit:gitattributes[5],
+linkgit:git-reset[1],
+linkgit:git-diff[1], linkgit:git-ls-files[1],
+linkgit:git-add[1], linkgit:git-rm[1],
+linkgit:git-mergetool[1]
 
 Author
 ------

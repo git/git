@@ -178,7 +178,7 @@ remotes::
 
 logs::
 	Records of changes made to refs are stored in this
-	directory.  See the documentation on git-update-ref
+	directory.  See linkgit:git-update-ref[1]
 	for more information.
 
 logs/refs/heads/`name`::

@@ -239,7 +239,7 @@ version of a `diff`, but that internal version really just tells you
 that it has noticed that "hello" has been modified, and that the old object
 contents it had have been replaced with something else.
 
-To make it readable, we can tell git-diff-files to output the
+To make it readable, we can tell `git-diff-files` to output the
 differences as a patch, using the `-p` flag:
 
 ------------
@@ -284,7 +284,7 @@ object as a 'commit' object together with an explanation of what the
 tree was all about, along with information of how we came to that state.
 
 Creating a tree object is trivial, and is done with `git-write-tree`.
-There are no options or other input: git write-tree will take the
+There are no options or other input: `git write-tree` will take the
 current index state, and write an object that describes that whole
 index. In other words, we're now tying together all the different
 filenames with their contents (and their permissions), and we're
@@ -729,7 +729,7 @@ where the `-u` flag means that you want the checkout to keep the index
 up-to-date (so that you don't have to refresh it afterward), and the
 `-a` flag means "check out all files" (if you have a stale copy or an
 older version of a checked out tree you may also need to add the `-f`
-flag first, to tell git-checkout-index to *force* overwriting of any old
+flag first, to tell `git-checkout-index` to *force* overwriting of any old
 files).
 
 Again, this can all be simplified with
@@ -925,7 +925,7 @@ $ git commit -i hello
 
 which will very loudly warn you that you're now committing a merge
 (which is correct, so never mind), and you can write a small merge
-message about your adventures in git-merge-land.
+message about your adventures in `git-merge`-land.
 
 After you're done, start up `gitk \--all` to see graphically what the
 history looks like. Notice that `mybranch` still exists, and you can
@@ -963,18 +963,18 @@ commits from the master branch.  The string inside brackets
 before the commit log message is a short name you can use to
 name the commit.  In the above example, 'master' and 'mybranch'
 are branch heads.  'master^' is the first parent of 'master'
-branch head.  Please see 'git-rev-parse' documentation if you
+branch head.  Please see linkgit:git-rev-parse[1] if you want to
 see more complex cases.
 
 [NOTE]
-Without the '--more=1' option, 'git-show-branch' would not output the
+Without the '--more=1' option, `git-show-branch` would not output the
 '[master^]' commit, as '[mybranch]' commit is a common ancestor of
-both 'master' and 'mybranch' tips.  Please see 'git-show-branch'
-documentation for details.
+both 'master' and 'mybranch' tips.  Please see linkgit:git-show-branch[1]
+for details.
 
 [NOTE]
 If there were more commits on the 'master' branch after the merge, the
-merge commit itself would not be shown by 'git-show-branch' by
+merge commit itself would not be shown by `git-show-branch` by
 default.  You would need to provide '--sparse' option to make the
 merge commit visible in this case.
 

@@ -17,7 +17,7 @@ This command is deprecated; use `git-ls-remote` instead.
 OPTIONS
 -------
 --upload-pack=<git-upload-pack>::
-	Use this to specify the path to 'git-upload-pack' on the
+	Use this to specify the path to `git-upload-pack` on the
 	remote side, if it is not found on your $PATH. Some
 	installations of sshd ignores the user's environment
 	setup scripts for login shells (e.g. .bash_profile) and
@@ -30,7 +30,7 @@ OPTIONS
 
 <host>::
 	A remote host that houses the repository.  When this
-	part is specified, 'git-upload-pack' is invoked via
+	part is specified, `git-upload-pack` is invoked via
 	ssh.
 
 <directory>::

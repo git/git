@@ -148,16 +148,16 @@ an irreversible conversion.  The safety triggers to prevent such
 a conversion done to the files in the work tree, but there are a
 few exceptions.  Even though...
 
-- "git-add" itself does not touch the files in the work tree, the
+- `git-add` itself does not touch the files in the work tree, the
   next checkout would, so the safety triggers;
 
-- "git-apply" to update a text file with a patch does touch the files
+- `git-apply` to update a text file with a patch does touch the files
   in the work tree, but the operation is about text files and CRLF
   conversion is about fixing the line ending inconsistencies, so the
   safety does not trigger;
 
-- "git-diff" itself does not touch the files in the work tree, it is
-  often run to inspect the changes you intend to next "git-add".  To
+- `git-diff` itself does not touch the files in the work tree, it is
+  often run to inspect the changes you intend to next `git-add`.  To
   catch potential problems early, safety triggers.
 
 
@@ -513,8 +513,8 @@ archive files.
 
 If the attribute `export-subst` is set for a file then git will expand
 several placeholders when adding this file to an archive.  The
-expansion depends on the availability of a commit ID, i.e. if
-linkgit:git-archive[1] has been given a tree instead of a commit or a
+expansion depends on the availability of a commit ID, i.e., if
+`git-archive` has been given a tree instead of a commit or a
 tag then no replacement will be done.  The placeholders are the same
 as those for the option `--pretty=format:` of linkgit:git-log[1],
 except that they need to be wrapped like this: `$Format:PLACEHOLDERS$`
