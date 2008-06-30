@@ -191,11 +191,6 @@ variables. The '--global' and the '--system' options will limit the file used
 to the global or system-wide file respectively. The GIT_CONFIG environment
 variable has a similar effect, but you can specify any filename you want.
 
-The GIT_CONFIG_LOCAL environment variable on the other hand only changes
-the name used instead of the repository configuration file. The global and
-the system-wide configuration files will still be read. (For writing options
-this will obviously result in the same behavior as using GIT_CONFIG.)
-
 
 ENVIRONMENT
 -----------
@@ -204,10 +199,6 @@ GIT_CONFIG::
 	Take the configuration from the given file instead of .git/config.
 	Using the "--global" option forces this to ~/.gitconfig. Using the
 	"--system" option forces this to $(prefix)/etc/gitconfig.
-
-GIT_CONFIG_LOCAL::
-	Take the configuration from the given file instead if .git/config.
-	Still read the global and the system-wide configuration files, though.
 
 See also <<FILES>>.
 

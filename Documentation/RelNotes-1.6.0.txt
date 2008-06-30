@@ -21,6 +21,11 @@ scripts to use "git xyzzy" form, as we will stop installing
 Source changes needed for porting to MinGW environment are now all in the
 main git.git codebase.
 
+GIT_CONFIG, which was only documented as affecting "git config", but
+actually affected all git commands, now only affects "git config".
+GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
+not different from GIT_CONFIG in a useful way, is removed.
+
 
 Updates since v1.5.6
 --------------------
