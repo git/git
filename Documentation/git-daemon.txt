@@ -206,8 +206,8 @@ git-daemon as inetd server::
 	/etc/inetd all on one line:
 +
 ------------------------------------------------
-	git stream tcp nowait nobody  /usr/bin/git-daemon
-		git-daemon --inetd --verbose --export-all
+	git stream tcp nowait nobody  /usr/bin/git
+		git daemon --inetd --verbose --export-all
 		/pub/foo /pub/bar
 ------------------------------------------------
 
@@ -219,8 +219,8 @@ git-daemon as inetd server for virtual hosts::
 	`/etc/inetd` all on one line:
 +
 ------------------------------------------------
-	git stream tcp nowait nobody /usr/bin/git-daemon
-		git-daemon --inetd --verbose --export-all
+	git stream tcp nowait nobody /usr/bin/git
+		git daemon --inetd --verbose --export-all
 		--interpolated-path=/pub/%H%D
 		/pub/www.example.org/software
 		/pub/www.example.com/software
@@ -241,7 +241,7 @@ git-daemon as regular daemon for virtual hosts::
 	their IP addresses, start the daemon like this:
 +
 ------------------------------------------------
-	git-daemon --verbose --export-all
+	git daemon --verbose --export-all
 		--interpolated-path=/pub/%IP/%D
 		/pub/192.168.1.200/software
 		/pub/10.10.220.23/software
