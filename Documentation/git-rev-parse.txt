@@ -184,7 +184,10 @@ blobs contained in a commit.
   second ago\}' or '\{1979-02-26 18:30:00\}') to specify the value
   of the ref at a prior point in time.  This suffix may only be
   used immediately following a ref name and the ref must have an
-  existing log ($GIT_DIR/logs/<ref>).
+  existing log ($GIT_DIR/logs/<ref>). Note that this looks up the state
+  of your *local* ref at a given time; e.g., what was in your local
+  `master` branch last week. If you want to look at commits made during
+  certain times, see `--since` and `--until`.
 
 * A ref followed by the suffix '@' with an ordinal specification
   enclosed in a brace pair (e.g. '\{1\}', '\{15\}') to specify
