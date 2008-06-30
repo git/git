@@ -19,8 +19,8 @@ If you are instead primarily interested in using git to fetch a project,
 for example, to test the latest version, you may prefer to start with
 the first two chapters of link:user-manual.html[The Git User's Manual].
 
-First, note that you can get documentation for a command such as "git
-log --graph" with:
+First, note that you can get documentation for a command such as
+"git log --graph" with:
 
 ------------------------------------------------
 $ man git-log

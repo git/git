@@ -167,14 +167,14 @@ info/grafts::
 info/exclude::
 	This file, by convention among Porcelains, stores the
 	exclude pattern list. `.gitignore` is the per-directory
-	ignore file.  `git status`, `git add`, `git rm` and `git
-	clean` look at it but the core git commands do not look
+	ignore file.  `git status`, `git add`, `git rm` and
+	`git clean` look at it but the core git commands do not look
 	at it.  See also: linkgit:gitignore[5].
 
 remotes::
 	Stores shorthands to be used to give URL and default
-	refnames to interact with remote repository to `git
-	fetch`, `git pull` and `git push` commands.
+	refnames to interact with remote repository to
+	`git fetch`, `git pull` and `git push` commands.
 
 logs::
 	Records of changes made to refs are stored in this
