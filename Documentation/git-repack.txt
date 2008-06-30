@@ -55,15 +55,15 @@ OPTIONS
 	Also runs linkgit:git-prune-packed[1].
 
 -l::
-        Pass the `--local` option to `git pack-objects`, see
+	Pass the `--local` option to `git pack-objects`, see
 	linkgit:git-pack-objects[1].
 
 -f::
-        Pass the `--no-reuse-delta` option to `git pack-objects`, see
+	Pass the `--no-reuse-delta` option to `git pack-objects`, see
 	linkgit:git-pack-objects[1].
 
 -q::
-        Pass the `-q` option to `git pack-objects`, see
+	Pass the `-q` option to `git pack-objects`, see
 	linkgit:git-pack-objects[1].
 
 -n::
