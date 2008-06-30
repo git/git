@@ -18,9 +18,9 @@ important than any other.  However, you can emulate the CVS model by
 designating a single shared repository which people can synchronize with;
 this document explains how to do that.
 
-Some basic familiarity with git is required.  This
-linkgit:gittutorial[7][tutorial introduction to git] and the
-linkgit:gitglossary[7][git glossary] should be sufficient.
+Some basic familiarity with git is required. Having gone through
+linkgit:gittutorial[7] and
+linkgit:gitglossary[7] should be sufficient.
 
 Developing against a shared repository
 --------------------------------------
@@ -81,8 +81,8 @@ Setting Up a Shared Repository
 ------------------------------
 
 We assume you have already created a git repository for your project,
-possibly created from scratch or from a tarball (see the
-linkgit:gittutorial[7][tutorial]), or imported from an already existing CVS
+possibly created from scratch or from a tarball (see
+linkgit:gittutorial[7]), or imported from an already existing CVS
 repository (see the next section).
 
 Assume your existing repo is at /home/alice/myproject.  Create a new "bare"
@@ -148,7 +148,7 @@ Advanced Shared Repository Management
 
 Git allows you to specify scripts called "hooks" to be run at certain
 points.  You can use these, for example, to send all commits to the shared
-repository to a mailing list.  See linkgit:githooks[5][Hooks used by git].
+repository to a mailing list.  See linkgit:githooks[5].
 
 You can enforce finer grained permissions using update hooks.  See
 link:howto/update-hook-example.txt[Controlling access to branches using

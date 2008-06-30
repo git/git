@@ -16,8 +16,8 @@ This tutorial explains how to use the "core" git programs to set up and
 work with a git repository.
 
 If you just need to use git as a revision control system you may prefer
-to start with linkgit:gittutorial[7][a tutorial introduction to git] or
-link:user-manual.html[the git user manual].
+to start with "A Tutorial Introduction to GIT" (linkgit:gittutorial[7]) or
+link:user-manual.html[the GIT User Manual].
 
 However, an understanding of these low-level tools can be helpful if
 you want to understand git's internals.
@@ -108,8 +108,7 @@ references in these `refs` subdirectories when you actually start
 populating your tree.
 
 [NOTE]
-An advanced user may want to take a look at the
-linkgit:gitrepository-layout[5][repository layout] document
+An advanced user may want to take a look at linkgit:gitrepository-layout[5]
 after finishing this tutorial.
 
 You have now created your first git repository. Of course, since it's
@@ -1589,7 +1588,7 @@ suggested in the previous section may be new to you. You do not
 have to worry. git supports "shared public repository" style of
 cooperation you are probably more familiar with as well.
 
-See linkgit:gitcvs-migration[7][git for CVS users] for the details.
+See linkgit:gitcvs-migration[7] for the details.
 
 Bundling your work together
 ---------------------------

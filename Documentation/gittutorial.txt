@@ -392,7 +392,7 @@ see linkgit:git-pull[1] for details.
 
 Git can also be used in a CVS-like mode, with a central repository
 that various users push changes to; see linkgit:git-push[1] and
-linkgit:gitcvs-migration[7][git for CVS users].
+linkgit:gitcvs-migration[7].
 
 Exploring history
 -----------------
@@ -571,9 +571,9 @@ is based:
     used to create commits, check out working directories, and
     hold the various trees involved in a merge.
 
-linkgit:gittutorial-2[7][Part two of this tutorial] explains the object
+Part two of this tutorial explains the object
 database, the index file, and a few other odds and ends that you'll
-need to make the most of git.
+need to make the most of git. You can find it at linkgit:gittutorial-2[7].
 
 If you don't want to continue with that right away, a few other
 digressions that may be interesting at this point are:
@@ -592,7 +592,7 @@ digressions that may be interesting at this point are:
 
   * link:everyday.html[Everyday GIT with 20 Commands Or So]
 
-  * linkgit:gitcvs-migration[7][git for CVS users].
+  * linkgit:gitcvs-migration[7]: Git for CVS users.
 
 SEE ALSO
 --------

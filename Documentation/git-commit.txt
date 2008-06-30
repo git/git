@@ -97,7 +97,7 @@ OPTIONS
 -n::
 --no-verify::
 	This option bypasses the pre-commit and commit-msg hooks.
-	See also linkgit:githooks[5][hooks].
+	See also linkgit:githooks[5].
 
 --allow-empty::
 	Usually recording a commit that has the exact same tree as its
@@ -316,7 +316,7 @@ order).
 HOOKS
 -----
 This command can run `commit-msg`, `prepare-commit-msg`, `pre-commit`,
-and `post-commit` hooks.  See linkgit:githooks[5][hooks] for more
+and `post-commit` hooks.  See linkgit:githooks[5] for more
 information.
 
 
