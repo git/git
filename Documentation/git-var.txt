@@ -8,7 +8,7 @@ git-var - Show a git logical variable
 
 SYNOPSIS
 --------
-'git-var' [ -l | <variable> ]
+'git var' [ -l | <variable> ]
 
 DESCRIPTION
 -----------
@@ -24,7 +24,7 @@ OPTIONS
 
 EXAMPLE
 --------
-	$ git-var GIT_AUTHOR_IDENT
+	$ git var GIT_AUTHOR_IDENT
 	Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
 
 

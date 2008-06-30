@@ -147,7 +147,7 @@ properties.
 post-merge
 -----------
 
-This hook is invoked by `git-merge`, which happens when a `git pull`
+This hook is invoked by `git-merge`, which happens when a `git-pull`
 is done on a local repository.  The hook takes a single parameter, a status
 flag specifying whether or not the merge being done was a squash merge.
 This hook cannot affect the outcome of `git-merge` and is not executed,
@@ -163,7 +163,7 @@ pre-receive
 -----------
 
 This hook is invoked by `git-receive-pack` on the remote repository,
-which happens when a `git push` is done on a local repository.
+which happens when a `git-push` is done on a local repository.
 Just before starting to update refs on the remote repository, the
 pre-receive hook is invoked.  Its exit status determines the success
 or failure of the update.
@@ -192,7 +192,7 @@ update
 ------
 
 This hook is invoked by `git-receive-pack` on the remote repository,
-which happens when a `git push` is done on a local repository.
+which happens when a `git-push` is done on a local repository.
 Just before updating the ref on the remote repository, the update hook
 is invoked.  Its exit status determines the success or failure of
 the ref update.
@@ -235,7 +235,7 @@ post-receive
 ------------
 
 This hook is invoked by `git-receive-pack` on the remote repository,
-which happens when a `git push` is done on a local repository.
+which happens when a `git-push` is done on a local repository.
 It executes on the remote repository once after all the refs have
 been updated.
 
@@ -265,7 +265,7 @@ post-update
 -----------
 
 This hook is invoked by `git-receive-pack` on the remote repository,
-which happens when a `git push` is done on a local repository.
+which happens when a `git-push` is done on a local repository.
 It executes on the remote repository once after all the refs have
 been updated.
 

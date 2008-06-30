@@ -8,7 +8,7 @@ git-fast-export - Git data exporter
 
 SYNOPSIS
 --------
-'git-fast-export [options]' | 'git-fast-import'
+'git fast-export [options]' | 'git fast-import'
 
 DESCRIPTION
 -----------

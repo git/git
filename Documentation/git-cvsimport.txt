@@ -9,7 +9,7 @@ git-cvsimport - Salvage your data out of another SCM people love to hate
 SYNOPSIS
 --------
 [verse]
-'git-cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>]
+'git cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>]
 	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
 	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
 	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
@@ -27,7 +27,7 @@ At least version 2.1 is required.
 You should *never* do any work of your own on the branches that are
 created by git-cvsimport.  By default initial import will create and populate a
 "master" branch from the CVS repository's main branch which you're free
-to work with; after that, you need to 'git merge' incremental imports, or
+to work with; after that, you need to 'git-merge' incremental imports, or
 any CVS branches, yourself.  It is advisable to specify a named remote via
 -r to separate and protect the incoming branches.
 

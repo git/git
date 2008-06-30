@@ -9,7 +9,7 @@ git-fsck - Verifies the connectivity and validity of the objects in the database
 SYNOPSIS
 --------
 [verse]
-'git-fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
+'git fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
 	 [--full] [--strict] [--verbose] [--lost-found] [<object>*]
 
 DESCRIPTION
@@ -79,7 +79,7 @@ that aren't readable from any of the specified head nodes.
 
 So for example
 
-	git-fsck --unreachable HEAD $(cat .git/refs/heads/*)
+	git fsck --unreachable HEAD $(cat .git/refs/heads/*)
 
 will do quite a _lot_ of verification on the tree. There are a few
 extra validity tests to be added (make sure that tree objects are

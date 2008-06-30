@@ -8,7 +8,7 @@ git-gc - Cleanup unnecessary files and optimize the local repository
 
 SYNOPSIS
 --------
-'git-gc' [--aggressive] [--auto] [--quiet]
+'git gc' [--aggressive] [--auto] [--quiet]
 
 DESCRIPTION
 -----------
@@ -41,7 +41,7 @@ OPTIONS
 	few hundred changesets or so.
 
 --auto::
-	With this option, `git gc` checks whether any housekeeping is
+	With this option, `git-gc` checks whether any housekeeping is
 	required; if not, it exits without performing any work.
 	Some git commands run `git gc --auto` after performing
 	operations that could create many loose objects.
@@ -89,7 +89,7 @@ how long records of conflicted merge you have not resolved are
 kept.  This defaults to 15 days.
 
 The optional configuration variable 'gc.packrefs' determines if
-`git gc` runs `git-pack-refs`. This can be set to "nobare" to enable
+`git-gc` runs `git-pack-refs`. This can be set to "nobare" to enable
 it within all non-bare repos or it can be set to a boolean value.
 This defaults to true.
 

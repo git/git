@@ -8,13 +8,13 @@ git-stash - Stash the changes in a dirty working directory away
 SYNOPSIS
 --------
 [verse]
-'git-stash' (list | show [<stash>] | apply [<stash>] | clear | drop [<stash>] | pop [<stash>])
-'git-stash' [save [<message>]]
+'git stash' (list | show [<stash>] | apply [<stash>] | clear | drop [<stash>] | pop [<stash>])
+'git stash' [save [<message>]]
 
 DESCRIPTION
 -----------
 
-Use 'git-stash' when you want to record the current state of the
+Use 'git stash' when you want to record the current state of the
 working directory and the index, but want to go back to a clean
 working directory.  The command saves your local modifications away
 and reverts the working directory to match the `HEAD` commit.
@@ -22,7 +22,7 @@ and reverts the working directory to match the `HEAD` commit.
 The modifications stashed away by this command can be listed with
 `git-stash list`, inspected with `git-stash show`, and restored
 (potentially on top of a different commit) with `git-stash apply`.
-Calling git-stash without any arguments is equivalent to `git-stash
+Calling git stash without any arguments is equivalent to `git stash
 save`.  A stash is by default listed as "WIP on 'branchname' ...", but
 you can give a more descriptive message on the command line when
 you create one.
@@ -38,7 +38,7 @@ OPTIONS
 
 save [<message>]::
 
-	Save your local modifications to a new 'stash', and run `git-reset
+	Save your local modifications to a new 'stash', and run `git reset
 	--hard` to revert them.  This is the default action when no
 	subcommand is given. The <message> part is optional and gives
 	the description along with the stashed state.
@@ -64,7 +64,7 @@ show [<stash>]::
 	Show the changes recorded in the stash as a diff between the
 	stashed state and its original parent. When no `<stash>` is given,
 	shows the latest one. By default, the command shows the diffstat, but
-	it will accept any format known to `git-diff` (e.g., `git-stash show
+	it will accept any format known to `git-diff` (e.g., `git stash show
 	-p stash@\{1}` to view the second most recent stash in patch form).
 
 apply [--index] [<stash>]::

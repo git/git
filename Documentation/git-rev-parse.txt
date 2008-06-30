@@ -8,7 +8,7 @@ git-rev-parse - Pick out and massage parameters
 
 SYNOPSIS
 --------
-'git-rev-parse' [ --option ] <args>...
+'git rev-parse' [ --option ] <args>...
 
 DESCRIPTION
 -----------
@@ -296,7 +296,7 @@ reachable from `r1` from the set of commits reachable from
 
 A similar notation "`r1\...r2`" is called symmetric difference
 of `r1` and `r2` and is defined as
-"`r1 r2 --not $(git-merge-base --all r1 r2)`".
+"`r1 r2 --not $(git merge-base --all r1 r2)`".
 It is the set of commits that are reachable from either one of
 `r1` or `r2` but not from both.
 
@@ -384,7 +384,7 @@ bar=      some cool option --bar with an argument
   An option group Header
 C?        option C with an optional argument"
 
-eval `echo "$OPTS_SPEC" | git-rev-parse --parseopt -- "$@" || echo exit $?`
+eval `echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?`
 ------------
 
 EXAMPLES

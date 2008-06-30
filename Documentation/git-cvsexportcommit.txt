@@ -8,7 +8,7 @@ git-cvsexportcommit - Export a single commit to a CVS checkout
 
 SYNOPSIS
 --------
-'git-cvsexportcommit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d cvsroot] [-w cvsworkdir] [-W] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
+'git cvsexportcommit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d cvsroot] [-w cvsworkdir] [-W] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
 
 
 DESCRIPTION
@@ -89,14 +89,14 @@ Merge one patch into CVS::
 ------------
 $ export GIT_DIR=~/project/.git
 $ cd ~/project_cvs_checkout
-$ git-cvsexportcommit -v <commit-sha1>
+$ git cvsexportcommit -v <commit-sha1>
 $ cvs commit -F .msg <files>
 ------------
 
 Merge one patch into CVS (-c and -w options). The working directory is within the Git Repo::
 +
 ------------
-	$ git-cvsexportcommit -v -c -w ~/project_cvs_checkout <commit-sha1>
+	$ git cvsexportcommit -v -c -w ~/project_cvs_checkout <commit-sha1>
 ------------
 
 Merge pending patches into CVS automatically -- only if you really know what you are doing::
@@ -104,7 +104,7 @@ Merge pending patches into CVS automatically -- only if you really know what you
 ------------
 $ export GIT_DIR=~/project/.git
 $ cd ~/project_cvs_checkout
-$ git-cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 git-cvsexportcommit -c -p -v
+$ git cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 git cvsexportcommit -c -p -v
 ------------
 
 Author

@@ -9,7 +9,7 @@ git-archive - Create an archive of files from a named tree
 SYNOPSIS
 --------
 [verse]
-'git-archive' --format=<fmt> [--list] [--prefix=<prefix>/] [<extra>]
+'git archive' --format=<fmt> [--list] [--prefix=<prefix>/] [<extra>]
 	      [--remote=<repo> [--exec=<git-upload-archive>]] <tree-ish>
 	      [path...]
 

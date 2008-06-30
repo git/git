@@ -7,7 +7,7 @@ git-svn - Bidirectional operation between a single Subversion branch and git
 
 SYNOPSIS
 --------
-'git-svn' <command> [options] [arguments]
+'git svn' <command> [options] [arguments]
 
 DESCRIPTION
 -----------
@@ -173,7 +173,7 @@ NOTE: SVN itself only stores times in UTC and nothing else. The regular svn
 client converts the UTC time to the local time (or based on the TZ=
 environment). This command has the same behaviour.
 +
-Any other arguments are passed directly to `git log'
+Any other arguments are passed directly to `git-log'
 
 'blame'::
        Show what revision and author last modified each line of a file. The
@@ -184,7 +184,7 @@ Any other arguments are passed directly to `git log'
        arguments are passed directly to git-blame.
 +
 --git-format;;
-	Produce output in the same format as `git blame', but with
+	Produce output in the same format as `git-blame', but with
 	SVN revision numbers instead of git commit hashes. In this mode,
 	changes that haven't been committed to SVN (including local
 	working-copy edits) are shown as revision 0.
@@ -466,7 +466,7 @@ Tracking and contributing to the trunk of a Subversion-managed project:
 
 ------------------------------------------------------------------------
 # Clone a repo (like git clone):
-	git-svn clone http://svn.foo.org/project/trunk
+	git svn clone http://svn.foo.org/project/trunk
 # Enter the newly cloned directory:
 	cd trunk
 # You should be on master branch, double-check with git-branch
@@ -475,12 +475,12 @@ Tracking and contributing to the trunk of a Subversion-managed project:
 	git commit ...
 # Something is committed to SVN, rebase your local changes against the
 # latest changes in SVN:
-	git-svn rebase
+	git svn rebase
 # Now commit your changes (that were committed previously using git) to SVN,
 # as well as automatically updating your working HEAD:
-	git-svn dcommit
+	git svn dcommit
 # Append svn:ignore settings to the default git exclude file:
-	git-svn show-ignore >> .git/info/exclude
+	git svn show-ignore >> .git/info/exclude
 ------------------------------------------------------------------------
 
 Tracking and contributing to an entire Subversion-managed project
@@ -488,7 +488,7 @@ Tracking and contributing to an entire Subversion-managed project
 
 ------------------------------------------------------------------------
 # Clone a repo (like git clone):
-	git-svn clone http://svn.foo.org/project -T trunk -b branches -t tags
+	git svn clone http://svn.foo.org/project -T trunk -b branches -t tags
 # View all branches and tags you have cloned:
 	git branch -r
 # Reset your master to trunk (or any other branch, replacing 'trunk'
@@ -503,22 +503,22 @@ The initial 'git-svn clone' can be quite time-consuming
 people (or one person with multiple machines) want to use
 git-svn to interact with the same Subversion repository, you can
 do the initial 'git-svn clone' to a repository on a server and
-have each person clone that repository with 'git clone':
+have each person clone that repository with 'git-clone':
 
 ------------------------------------------------------------------------
 # Do the initial import on a server
-	ssh server "cd /pub && git-svn clone http://svn.foo.org/project
+	ssh server "cd /pub && git svn clone http://svn.foo.org/project
 # Clone locally - make sure the refs/remotes/ space matches the server
 	mkdir project
 	cd project
-	git-init
+	git init
 	git remote add origin server:/pub/project
 	git config --add remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
 	git fetch
 # Initialize git-svn locally (be sure to use the same URL and -T/-b/-t options as were used on server)
-	git-svn init http://svn.foo.org/project
+	git svn init http://svn.foo.org/project
 # Pull the latest changes from Subversion
-	git-svn rebase
+	git svn rebase
 ------------------------------------------------------------------------
 
 REBASE VS. PULL/MERGE
@@ -526,12 +526,12 @@ REBASE VS. PULL/MERGE
 
 Originally, git-svn recommended that the remotes/git-svn branch be
 pulled or merged from.  This is because the author favored
-'git-svn set-tree B' to commit a single head rather than the
-'git-svn set-tree A..B' notation to commit multiple commits.
+'git svn set-tree B' to commit a single head rather than the
+'git svn set-tree A..B' notation to commit multiple commits.
 
-If you use 'git-svn set-tree A..B' to commit several diffs and you do
+If you use 'git svn set-tree A..B' to commit several diffs and you do
 not have the latest remotes/git-svn merged into my-branch, you should
-use 'git-svn rebase' to update your work branch instead of 'git pull' or
+use 'git svn rebase' to update your work branch instead of 'git pull' or
 'git merge'.  'pull/merge' can cause non-linear history to be flattened
 when committing into SVN, which can lead to merge commits reversing
 previous commits in SVN.

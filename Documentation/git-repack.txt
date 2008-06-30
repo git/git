@@ -8,7 +8,7 @@ git-repack - Pack unpacked objects in a repository
 
 SYNOPSIS
 --------
-'git-repack' [-a] [-A] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
+'git repack' [-a] [-A] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
 
 DESCRIPTION
 -----------
@@ -55,20 +55,20 @@ OPTIONS
 	Also runs linkgit:git-prune-packed[1].
 
 -l::
-	Pass the `--local` option to `git pack-objects`, see
+	Pass the `--local` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
 -f::
-	Pass the `--no-reuse-delta` option to `git pack-objects`, see
+	Pass the `--no-reuse-delta` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
 -q::
-	Pass the `-q` option to `git pack-objects`, see
+	Pass the `-q` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
 -n::
 	Do not update the server information with
-	`git update-server-info`.  This option skips
+	`git-update-server-info`.  This option skips
 	updating local catalog files needed to publish
 	this repository (or a direct copy of it)
 	over HTTP or FTP.  See gitlink:git-update-server-info[1].

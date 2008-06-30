@@ -9,7 +9,7 @@ git-merge-file - Run a three-way file merge
 SYNOPSIS
 --------
 [verse]
-'git-merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
+'git merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
 	[-p|--stdout] [-q|--quiet] <current-file> <base-file> <other-file>
 
 
@@ -51,7 +51,7 @@ OPTIONS
 	This option may be given up to three times, and
 	specifies labels to be used in place of the
 	corresponding file names in conflict reports. That is,
-	`git-merge-file -L x -L y -L z a b c` generates output that
+	`git merge-file -L x -L y -L z a b c` generates output that
 	looks like it came from files x, y and z instead of
 	from files a, b and c.
 

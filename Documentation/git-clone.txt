@@ -9,7 +9,7 @@ git-clone - Clone a repository into a new directory
 SYNOPSIS
 --------
 [verse]
-'git-clone' [--template=<template_directory>]
+'git clone' [--template=<template_directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--depth <depth>] [--] <repository> [<directory>]

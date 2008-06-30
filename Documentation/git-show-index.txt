@@ -8,7 +8,7 @@ git-show-index - Show packed archive index
 
 SYNOPSIS
 --------
-'git-show-index' < idx-file
+'git show-index' < idx-file
 
 
 DESCRIPTION

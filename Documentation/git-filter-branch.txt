@@ -8,7 +8,7 @@ git-filter-branch - Rewrite branches
 SYNOPSIS
 --------
 [verse]
-'git-filter-branch' [--env-filter <command>] [--tree-filter <command>]
+'git filter-branch' [--env-filter <command>] [--tree-filter <command>]
 	[--index-filter <command>] [--parent-filter <command>]
 	[--msg-filter <command>] [--commit-filter <command>]
 	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
@@ -266,7 +266,7 @@ git filter-branch --msg-filter '
 
 To restrict rewriting to only part of the history, specify a revision
 range in addition to the new branch name.  The new branch name will
-point to the top-most revision that a 'git rev-list' of this range
+point to the top-most revision that a 'git-rev-list' of this range
 will print.
 
 *NOTE* the changes introduced by the commits, and which are not reverted

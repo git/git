@@ -8,7 +8,7 @@ git-send-email - Send a collection of patches as emails
 
 SYNOPSIS
 --------
-'git-send-email' [options] <file|directory> [... file|directory]
+'git send-email' [options] <file|directory> [... file|directory]
 
 
 

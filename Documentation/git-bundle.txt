@@ -9,10 +9,10 @@ git-bundle - Move objects and refs by archive
 SYNOPSIS
 --------
 [verse]
-'git-bundle' create <file> <git-rev-list args>
-'git-bundle' verify <file>
-'git-bundle' list-heads <file> [refname...]
-'git-bundle' unbundle <file> [refname...]
+'git bundle' create <file> <git-rev-list args>
+'git bundle' verify <file>
+'git bundle' list-heads <file> [refname...]
+'git bundle' unbundle <file> [refname...]
 
 DESCRIPTION
 -----------
@@ -116,7 +116,7 @@ We set a tag in R1 (lastR2bundle) after the previous such transport,
 and move it afterwards to help build the bundle.
 
 ------------
-$ git-bundle create mybundle master ^lastR2bundle
+$ git bundle create mybundle master ^lastR2bundle
 $ git tag -f lastR2bundle master
 ------------
 
@@ -141,8 +141,8 @@ $ git bundle create mybundle master -n 10
 Then you move mybundle from A to B, and in R2 on B:
 
 ------------
-$ git-bundle verify mybundle
-$ git-fetch mybundle master:localRef
+$ git bundle verify mybundle
+$ git fetch mybundle master:localRef
 ------------
 
 With something like this in the config in R2:

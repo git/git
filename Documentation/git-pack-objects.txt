@@ -9,7 +9,7 @@ git-pack-objects - Create a packed archive of objects
 SYNOPSIS
 --------
 [verse]
-'git-pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
+'git pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=N] [--depth=N] [--all-progress]
 	[--revs [--unpacked | --all]*] [--stdout | base-name] < object-list
 

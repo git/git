@@ -8,13 +8,13 @@ git-merge-base - Find as good common ancestors as possible for a merge
 
 SYNOPSIS
 --------
-'git-merge-base' [--all] <commit> <commit>
+'git merge-base' [--all] <commit> <commit>
 
 DESCRIPTION
 -----------
 
 "git-merge-base" finds as good a common ancestor as possible between
-the two commits. That is, given two commits A and B 'git-merge-base A
+the two commits. That is, given two commits A and B 'git merge-base A
 B' will output a commit which is reachable from both A and B through
 the parent relationship.
 

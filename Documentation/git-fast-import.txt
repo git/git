@@ -8,7 +8,7 @@ git-fast-import - Backend for fast Git data importers
 
 SYNOPSIS
 --------
-frontend | 'git-fast-import' [options]
+frontend | 'git fast-import' [options]
 
 DESCRIPTION
 -----------
@@ -126,7 +126,7 @@ Parallel Operation
 ------------------
 Like `git-push` or `git-fetch`, imports handled by fast-import are safe to
 run alongside parallel `git repack -a -d` or `git gc` invocations,
-or any other Git operation (including `git prune`, as loose objects
+or any other Git operation (including `git-prune`, as loose objects
 are never used by fast-import).
 
 fast-import does not lock the branch or tag refs it is actively importing.
@@ -803,7 +803,7 @@ Callers may wish to process the output through a tool such as sed to
 remove the leading part of the line, for example:
 
 ====
-	frontend | git-fast-import | sed 's/^progress //'
+	frontend | git fast-import | sed 's/^progress //'
 ====
 
 Placing a `progress` command immediately after a `checkpoint` will
@@ -851,7 +851,7 @@ An example crash:
 	M 777 inline bob
 	END_OF_INPUT
 
-	$ git-fast-import <in
+	$ git fast-import <in
 	fatal: Corrupt mode: M 777 inline bob
 	fast-import: dumping crash report to .git/fast_import_crash_8434
 

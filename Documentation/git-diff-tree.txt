@@ -9,7 +9,7 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 SYNOPSIS
 --------
 [verse]
-'git-diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
+'git diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
 	      [-t] [-r] [-c | --cc] [--root] [<common diff options>]
 	      <tree-ish> [<tree-ish>] [<path>...]
 
@@ -112,13 +112,13 @@ Limiting Output
 If you're only interested in differences in a subset of files, for
 example some architecture-specific files, you might do:
 
-	git-diff-tree -r <tree-ish> <tree-ish> arch/ia64 include/asm-ia64
+	git diff-tree -r <tree-ish> <tree-ish> arch/ia64 include/asm-ia64
 
 and it will only show you what changed in those two directories.
 
 Or if you are searching for what changed in just `kernel/sched.c`, just do
 
-	git-diff-tree -r <tree-ish> <tree-ish> kernel/sched.c
+	git diff-tree -r <tree-ish> <tree-ish> kernel/sched.c
 
 and it will ignore all differences to other files.
 
@@ -129,7 +129,7 @@ so it can be used to name subdirectories.
 
 An example of normal usage is:
 
-  torvalds@ppc970:~/git> git-diff-tree 5319e4......
+  torvalds@ppc970:~/git> git diff-tree 5319e4......
   *100664->100664 blob    ac348b.......->a01513.......      git-fsck-objects.c
 
 which tells you that the last commit changed just one file (it's from

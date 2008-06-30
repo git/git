@@ -8,9 +8,9 @@ git-show-ref - List references in a local repository
 SYNOPSIS
 --------
 [verse]
-'git-show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
+'git show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
 	     [-s|--hash] [--abbrev] [--tags] [--heads] [--] <pattern>...
-'git-show-ref' --exclude-existing[=pattern]
+'git show-ref' --exclude-existing[=pattern]
 
 DESCRIPTION
 -----------
@@ -144,7 +144,7 @@ For scripting, you can ask it to be quiet with the "--quiet" flag, which
 allows you to do things like
 
 -----------------------------------------------------------------------------
-	git-show-ref --quiet --verify -- "refs/heads/$headname" ||
+	git show-ref --quiet --verify -- "refs/heads/$headname" ||
 		echo "$headname is not a valid branch"
 -----------------------------------------------------------------------------
 

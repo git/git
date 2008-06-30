@@ -9,7 +9,7 @@ git-ls-remote - List references in a remote repository
 SYNOPSIS
 --------
 [verse]
-'git-ls-remote' [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]
+'git ls-remote' [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]
 	      <repository> <refs>...
 
 DESCRIPTION

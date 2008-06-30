@@ -22,7 +22,7 @@ objects specified on the command line, and prunes all unpacked
 objects unreachable from any of these head objects from the object database.
 In addition, it
 prunes the unpacked objects that are also found in packs by
-running `git prune-packed`.
+running `git-prune-packed`.
 
 Note that unreachable, packed objects will remain.  If this is
 not desired, see linkgit:git-repack[1].
@@ -53,7 +53,7 @@ borrows from your repository via its
 `.git/objects/info/alternates`:
 
 ------------
-$ git prune $(cd ../another && $(git-rev-parse --all))
+$ git prune $(cd ../another && $(git rev-parse --all))
 ------------
 
 Notes

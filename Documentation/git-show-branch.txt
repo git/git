@@ -8,10 +8,10 @@ git-show-branch - Show branches and their commits
 SYNOPSIS
 --------
 [verse]
-'git-show-branch' [--all] [--remotes] [--topo-order] [--current]
+'git show-branch' [--all] [--remotes] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
-'git-show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
+'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
 DESCRIPTION
 -----------

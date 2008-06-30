@@ -8,11 +8,11 @@ git-rebase - Forward-port local commits to the updated upstream head
 SYNOPSIS
 --------
 [verse]
-'git-rebase' [-i | --interactive] [-v | --verbose] [-m | --merge]
+'git rebase' [-i | --interactive] [-v | --verbose] [-m | --merge]
 	[-s <strategy> | --strategy=<strategy>]
 	[-C<n>] [ --whitespace=<option>] [-p | --preserve-merges]
 	[--onto <newbase>] <upstream> [<branch>]
-'git-rebase' --continue | --skip | --abort
+'git rebase' --continue | --skip | --abort
 
 DESCRIPTION
 -----------
@@ -52,8 +52,8 @@ Assume the following history exists and the current branch is "topic":
 From this point, the result of either of the following commands:
 
 
-    git-rebase master
-    git-rebase master topic
+    git rebase master
+    git rebase master topic
 
 would be:
 
@@ -68,7 +68,7 @@ followed by `git rebase master`.
 
 If the upstream branch already contains a change you have made (e.g.,
 because you mailed a patch which was applied upstream), then that commit
-will be skipped. For example, running `git-rebase master` on the
+will be skipped. For example, running `git rebase master` on the
 following history (in which A' and A introduce the same set of changes,
 but have different committer information):
 
@@ -116,7 +116,7 @@ got merged into more stable 'master' branch, like this:
 
 We can get this using the following command:
 
-    git-rebase --onto master next topic
+    git rebase --onto master next topic
 
 
 Another example of --onto option is to rebase part of a
@@ -132,7 +132,7 @@ branch.  If we have the following situation:
 
 then the command
 
-    git-rebase --onto master topicA topicB
+    git rebase --onto master topicA topicB
 
 would result in:
 
@@ -155,7 +155,7 @@ the following situation:
 
 then the command
 
-    git-rebase --onto topicA~5 topicA~3 topicA
+    git rebase --onto topicA~5 topicA~3 topicA
 
 would result in the removal of commits F and G:
 
@@ -168,7 +168,7 @@ part of topicA.  Note that the argument to --onto and the <upstream>
 parameter can be any valid commit-ish.
 
 In case of conflict, git-rebase will stop at the first problematic commit
-and leave conflict markers in the tree.  You can use git diff to locate
+and leave conflict markers in the tree.  You can use git-diff to locate
 the markers (<<<<<<) and make edits to resolve the conflict.  For each
 file you edit, you need to tell git that the conflict has been resolved,
 typically this would be done with
@@ -364,7 +364,7 @@ SPLITTING COMMITS
 -----------------
 
 In interactive mode, you can mark commits with the action "edit".  However,
-this does not necessarily mean that 'git rebase' expects the result of this
+this does not necessarily mean that 'git-rebase' expects the result of this
 edit to be exactly one commit.  Indeed, you can undo the commit, or you can
 add other commits.  This can be used to split a commit into two:
 

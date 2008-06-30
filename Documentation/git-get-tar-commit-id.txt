@@ -8,7 +8,7 @@ git-get-tar-commit-id - Extract commit ID from an archive created using git-arch
 
 SYNOPSIS
 --------
-'git-get-tar-commit-id' < <tarfile>
+'git get-tar-commit-id' < <tarfile>
 
 
 DESCRIPTION

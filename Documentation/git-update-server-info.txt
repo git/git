@@ -8,7 +8,7 @@ git-update-server-info - Update auxiliary info file to help dumb servers
 
 SYNOPSIS
 --------
-'git-update-server-info' [--force]
+'git update-server-info' [--force]
 
 DESCRIPTION
 -----------

@@ -8,8 +8,8 @@ git-checkout - Checkout a branch or paths to the working tree
 SYNOPSIS
 --------
 [verse]
-'git-checkout' [-q] [-f] [[--track | --no-track] -b <new_branch> [-l]] [-m] [<branch>]
-'git-checkout' [<tree-ish>] <paths>...
+'git checkout' [-q] [-f] [[--track | --no-track] -b <new_branch> [-l]] [-m] [<branch>]
+'git checkout' [<tree-ish>] <paths>...
 
 DESCRIPTION
 -----------
@@ -23,7 +23,7 @@ options, which will be passed to `git branch`.
 
 When <paths> are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
-the index file (i.e. it runs `git-checkout-index -f -u`), or
+the index file (i.e. it runs `git checkout-index -f -u`), or
 from a named commit.  In
 this case, the `-f` and `-b` options are meaningless and giving
 either of them results in an error.  <tree-ish> argument can be
@@ -112,7 +112,7 @@ current branch and directly point at the commit named by the tag
 (`v2.6.18` in the above example).
 
 You can use usual git commands while in this state.  You can use
-`git-reset --hard $othercommit` to further move around, for
+`git reset --hard $othercommit` to further move around, for
 example.  You can make changes and create a new commit on top of
 a detached HEAD.  You can even create a merge by using `git
 merge $othercommit`.

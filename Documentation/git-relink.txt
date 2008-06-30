@@ -7,7 +7,7 @@ git-relink - Hardlink common objects in local repositories
 
 SYNOPSIS
 --------
-'git-relink' [--safe] <dir> [<dir>]\* <master_dir>
+'git relink' [--safe] <dir> [<dir>]\* <master_dir>
 
 DESCRIPTION
 -----------

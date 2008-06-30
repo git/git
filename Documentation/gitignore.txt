@@ -92,7 +92,7 @@ Patterns have the following format:
 An example:
 
 --------------------------------------------------------------
-    $ git-status
+    $ git status
     [...]
     # Untracked files:
     [...]
@@ -110,7 +110,7 @@ An example:
     *.html
     # except foo.html which is maintained by hand
     !foo.html
-    $ git-status
+    $ git status
     [...]
     # Untracked files:
     [...]

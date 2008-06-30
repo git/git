@@ -8,7 +8,7 @@ git-merge-index - Run a merge for files needing merging
 
 SYNOPSIS
 --------
-'git-merge-index' [-o] [-q] <merge-program> (-a | [--] <file>\*)
+'git merge-index' [-o] [-q] <merge-program> (-a | [--] <file>\*)
 
 DESCRIPTION
 -----------
@@ -53,7 +53,7 @@ original is first. But the argument order to the 3-way merge program
 
 Examples:
 
-  torvalds@ppc970:~/merge-test> git-merge-index cat MM
+  torvalds@ppc970:~/merge-test> git merge-index cat MM
   This is MM from the original tree.			# original
   This is modified MM in the branch A.			# merge1
   This is modified MM in the branch B.			# merge2
@@ -61,7 +61,7 @@ Examples:
 
 or
 
-  torvalds@ppc970:~/merge-test> git-merge-index cat AA MM
+  torvalds@ppc970:~/merge-test> git merge-index cat AA MM
   cat: : No such file or directory
   This is added AA in the branch A.
   This is added AA in the branch B.

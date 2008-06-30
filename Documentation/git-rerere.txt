@@ -7,7 +7,7 @@ git-rerere - Reuse recorded resolution of conflicted merges
 
 SYNOPSIS
 --------
-'git-rerere' [clear|diff|status|gc]
+'git rerere' [clear|diff|status|gc]
 
 DESCRIPTION
 -----------
@@ -198,7 +198,7 @@ you could run `git rebase master topic`, to keep yourself
 up-to-date even before your topic is ready to be sent upstream.
 This would result in falling back to three-way merge, and it
 would conflict the same way the test merge you resolved earlier.
-`git-rerere` is run by `git rebase` to help you resolve this
+`git-rerere` is run by `git-rebase` to help you resolve this
 conflict.
 
 

@@ -7,7 +7,7 @@ git-cherry - Find commits not merged upstream
 
 SYNOPSIS
 --------
-'git-cherry' [-v] <upstream> [<head>] [<limit>]
+'git cherry' [-v] <upstream> [<head>] [<limit>]
 
 DESCRIPTION
 -----------

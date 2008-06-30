@@ -26,7 +26,7 @@ on the subcommand:
  git bisect log
  git bisect run <cmd>...
 
-This command uses 'git-rev-list --bisect' option to help drive the
+This command uses 'git rev-list --bisect' option to help drive the
 binary search process to find which change introduced a bug, given an
 old "good" commit object name and a later "bad" commit object name.
 

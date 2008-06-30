@@ -9,7 +9,7 @@ git-update-index - Register file contents in the working tree to the index
 SYNOPSIS
 --------
 [verse]
-'git-update-index'
+'git update-index'
 	     [--add] [--remove | --force-remove] [--replace]
 	     [--refresh] [-q] [--unmerged] [--ignore-missing]
 	     [--cacheinfo <mode> <object> <file>]\*
@@ -157,7 +157,7 @@ merging.
 To pretend you have a file with mode and sha1 at path, say:
 
 ----------------
-$ git-update-index --cacheinfo mode sha1 path
+$ git update-index --cacheinfo mode sha1 path
 ----------------
 
 '--info-only' is used to register files without placing them in the object
@@ -247,13 +247,13 @@ In order to set "assume unchanged" bit, use `--assume-unchanged`
 option.  To unset, use `--no-assume-unchanged`.
 
 The command looks at `core.ignorestat` configuration variable.  When
-this is true, paths updated with `git-update-index paths...` and
+this is true, paths updated with `git update-index paths...` and
 paths updated with other git commands that update both index and
 working tree (e.g. `git-apply --index`, `git-checkout-index -u`,
 and `git-read-tree -u`) are automatically marked as "assume
 unchanged".  Note that "assume unchanged" bit is *not* set if
-`git-update-index --refresh` finds the working tree file matches
-the index (use `git-update-index --really-refresh` if you want
+`git update-index --refresh` finds the working tree file matches
+the index (use `git update-index --really-refresh` if you want
 to mark them as "assume unchanged").
 
 
@@ -262,7 +262,7 @@ Examples
 To update and refresh only the files already checked out:
 
 ----------------
-$ git-checkout-index -n -f -a && git-update-index --ignore-missing --refresh
+$ git checkout-index -n -f -a && git update-index --ignore-missing --refresh
 ----------------
 
 On an inefficient filesystem with `core.ignorestat` set::

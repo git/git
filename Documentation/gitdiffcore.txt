@@ -84,7 +84,7 @@ of filepairs included:
 :100644 100644 bcd1234... 0123456... M junkfile
 ------------------------------------------------
 
-but the command invocation was "git-diff-files myfile", then the
+but the command invocation was "git diff-files myfile", then the
 junkfile entry would be removed from the list because only "myfile"
 is under consideration.
 

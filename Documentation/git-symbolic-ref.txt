@@ -7,7 +7,7 @@ git-symbolic-ref - Read and modify symbolic refs
 
 SYNOPSIS
 --------
-'git-symbolic-ref' [-q] [-m <reason>] <name> [<ref>]
+'git symbolic-ref' [-q] [-m <reason>] <name> [<ref>]
 
 DESCRIPTION
 -----------

@@ -8,12 +8,12 @@ git-branch - List, create, or delete branches
 SYNOPSIS
 --------
 [verse]
-'git-branch' [--color | --no-color] [-r | -a] [--merged | --no-merged]
+'git branch' [--color | --no-color] [-r | -a] [--merged | --no-merged]
 	   [-v [--abbrev=<length> | --no-abbrev]]
 	   [--contains <commit>]
-'git-branch' [--track | --no-track] [-l] [-f] <branchname> [<start-point>]
-'git-branch' (-m | -M) [<oldbranch>] <newbranch>
-'git-branch' (-d | -D) [-r] <branchname>...
+'git branch' [--track | --no-track] [-l] [-f] <branchname> [<start-point>]
+'git branch' (-m | -M) [<oldbranch>] <newbranch>
+'git branch' (-d | -D) [-r] <branchname>...
 
 DESCRIPTION
 -----------

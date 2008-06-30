@@ -9,9 +9,9 @@ git-merge - Join two or more development histories together
 SYNOPSIS
 --------
 [verse]
-'git-merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
+'git merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
 	[-m <msg>] <remote> <remote>...
-'git-merge' <msg> HEAD <remote>...
+'git merge' <msg> HEAD <remote>...
 
 DESCRIPTION
 -----------
@@ -60,7 +60,7 @@ A merge is always between the current `HEAD` and one or more
 commits (usually, branch head or tag), and the index file must
 exactly match the
 tree of `HEAD` commit (i.e. the contents of the last commit) when
-it happens.  In other words, `git-diff --cached HEAD` must
+it happens.  In other words, `git diff --cached HEAD` must
 report no changes.
 
 [NOTE]
@@ -128,7 +128,7 @@ When there are conflicts, these things happen:
 3. For conflicting paths, the index file records up to three
    versions; stage1 stores the version from the common ancestor,
    stage2 from `HEAD`, and stage3 from the remote branch (you
-   can inspect the stages with `git-ls-files -u`).  The working
+   can inspect the stages with `git ls-files -u`).  The working
    tree files have the result of "merge" program; i.e. 3-way
    merge result with familiar conflict markers `<<< === >>>`.
 
@@ -144,7 +144,7 @@ After seeing a conflict, you can do two things:
    up working tree changes made by 2. and 3.; `git-reset` can
    be used for this.
 
- * Resolve the conflicts.  `git-diff` would report only the
+ * Resolve the conflicts.  `git diff` would report only the
    conflicting paths because of the above 2. and 3..  Edit the
    working tree files into a desirable shape, `git-add` or `git-rm`
    them, to make the index file contain what the merge result
