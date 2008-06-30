@@ -35,7 +35,6 @@ static int sanitary_path_copy(char *dst, const char *src)
 			if (!src[1]) {
 				/* (1) */
 				src++;
-				break;
 			} else if (is_dir_sep(src[1])) {
 				/* (2) */
 				src += 2;

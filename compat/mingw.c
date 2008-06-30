@@ -189,7 +189,7 @@ int mingw_utime (const char *file_name, const struct utimbuf *times)
 
 	/* must have write permission */
 	if ((fh = open(file_name, O_RDWR | O_BINARY)) < 0)
-	        return -1;
+		return -1;
 
 	time_t_to_filetime(times->modtime, &mft);
 	time_t_to_filetime(times->actime, &aft);
@@ -218,7 +218,6 @@ int mkstemp(char *template)
 
 int gettimeofday(struct timeval *tv, void *tz)
 {
-	extern time_t my_mktime(struct tm *tm);
 	SYSTEMTIME st;
 	struct tm tm;
 	GetSystemTime(&st);
@@ -228,7 +227,7 @@ int gettimeofday(struct timeval *tv, void *tz)
 	tm.tm_hour = st.wHour;
 	tm.tm_min = st.wMinute;
 	tm.tm_sec = st.wSecond;
-	tv->tv_sec = my_mktime(&tm);
+	tv->tv_sec = tm_to_time_t(&tm);
 	if (tv->tv_sec < 0)
 		return -1;
 	tv->tv_usec = st.wMilliseconds*1000;
@@ -365,6 +364,19 @@ char *mingw_getcwd(char *pointer, int len)
 		if (pointer[i] == '\\')
 			pointer[i] = '/';
 	return ret;
+}
+
+#undef getenv
+char *mingw_getenv(const char *name)
+{
+	char *result = getenv(name);
+	if (!result && !strcmp(name, "TMPDIR")) {
+		/* on Windows it is TMP and TEMP */
+		result = getenv("TMP");
+		if (!result)
+			result = getenv("TEMP");
+	}
+	return result;
 }
 
 /*
@@ -895,13 +907,12 @@ static int one_shot;
 static sig_handler_t timer_fn = SIG_DFL;
 
 /* The timer works like this:
- * The thread, ticktack(), is basically a trivial routine that most of the
- * time only waits to receive the signal to terminate. The main thread
- * tells the thread to terminate by setting the timer_event to the signalled
+ * The thread, ticktack(), is a trivial routine that most of the time
+ * only waits to receive the signal to terminate. The main thread tells
+ * the thread to terminate by setting the timer_event to the signalled
  * state.
- * But ticktack() does not wait indefinitely; instead, it interrupts the
- * wait state every now and then, namely exactly after timer's interval
- * length. At these opportunities it calls the signal handler.
+ * But ticktack() interrupts the wait state after the timer's interval
+ * length to call the signal handler.
  */
 
 static __stdcall unsigned ticktack(void *dummy)
@@ -927,7 +938,7 @@ static int start_timer_thread(void)
 				error("cannot start timer thread");
 	} else
 		return errno = ENOMEM,
-			error("cannot allocate resources timer");
+			error("cannot allocate resources for timer");
 	return 0;
 }
 
@@ -962,11 +973,11 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out)
 
 	if (out != NULL)
 		return errno = EINVAL,
-			error("setitmer param 3 != NULL not implemented");
+			error("setitimer param 3 != NULL not implemented");
 	if (!is_timeval_eq(&in->it_interval, &zero) &&
 	    !is_timeval_eq(&in->it_interval, &in->it_value))
 		return errno = EINVAL,
-			error("setitmer: it_interval must be zero or eq it_value");
+			error("setitimer: it_interval must be zero or eq it_value");
 
 	if (timer_thread)
 		stop_timer_thread();

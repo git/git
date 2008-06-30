@@ -75,13 +75,6 @@ int git_mkstemp(char *path, size_t len, const char *template)
 	size_t n;
 
 	tmp = getenv("TMPDIR");
-#ifdef __MINGW32__
-	/* on Windows it is TMP and TEMP */
-	if (!tmp)
-	    tmp = getenv("TMP");
-	if (!tmp)
-	    tmp = getenv("TEMP");
-#endif
 	if (!tmp)
 		tmp = "/tmp";
 	n = snprintf(path, len, "%s/%s", tmp, template);

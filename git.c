@@ -369,15 +369,16 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 	};
 	int i;
+	static const char ext[] = STRIP_EXTENSION;
 
-#ifdef STRIP_EXTENSION
-	i = strlen(argv[0]) - strlen(STRIP_EXTENSION);
-	if (i > 0 && !strcmp(argv[0] + i, STRIP_EXTENSION)) {
-		char *argv0 = strdup(argv[0]);
-		argv[0] = cmd = argv0;
-		argv0[i] = '\0';
+	if (sizeof(ext) > 1) {
+		i = strlen(argv[0]) - strlen(ext);
+		if (i > 0 && !strcmp(argv[0] + i, ext)) {
+			char *argv0 = strdup(argv[0]);
+			argv[0] = cmd = argv0;
+			argv0[i] = '\0';
+		}
 	}
-#endif
 
 	/* Turn "git cmd --help" into "git help cmd" */
 	if (argc > 1 && !strcmp(argv[1], "--help")) {
@@ -395,8 +396,8 @@ static void handle_internal_command(int argc, const char **argv)
 
 int main(int argc, const char **argv)
 {
-	const char *cmd = argv[0] ? argv[0] : "git-help";
-	char *slash = strrchr(cmd, '/');
+	const char *cmd = argv[0] && *argv[0] ? argv[0] : "git-help";
+	char *slash = (char *)cmd + strlen(cmd);
 	const char *cmd_path = NULL;
 	int done_alias = 0;
 
@@ -405,12 +406,10 @@ int main(int argc, const char **argv)
 	 * name, and the dirname as the default exec_path
 	 * if we don't have anything better.
 	 */
-#ifdef __MINGW32__
-	char *bslash = strrchr(cmd, '\\');
-	if (!slash || (bslash && bslash > slash))
-		slash = bslash;
-#endif
-	if (slash) {
+	do
+		--slash;
+	while (cmd <= slash && !is_dir_sep(*slash));
+	if (cmd <= slash) {
 		*slash++ = 0;
 		cmd_path = cmd;
 		cmd = slash;
