@@ -7,64 +7,12 @@
 #
 # To enable this hook, rename this file to "pre-commit".
 
-# This is slightly modified from Andrew Morton's Perfect Patch.
-# Lines you introduce should not have trailing whitespace.
-# Also check for an indentation that has SP before a TAB.
-
 if git-rev-parse --verify HEAD 2>/dev/null
 then
-	git-diff-index -p -M --cached HEAD --
+	against=HEAD
 else
-	# NEEDSWORK: we should produce a diff with an empty tree here
-	# if we want to do the same verification for the initial import.
-	:
-fi |
-perl -e '
-    my $found_bad = 0;
-    my $filename;
-    my $reported_filename = "";
-    my $lineno;
-    sub bad_line {
-	my ($why, $line) = @_;
-	if (!$found_bad) {
-	    print STDERR "*\n";
-	    print STDERR "* You have some suspicious patch lines:\n";
-	    print STDERR "*\n";
-	    $found_bad = 1;
-	}
-	if ($reported_filename ne $filename) {
-	    print STDERR "* In $filename\n";
-	    $reported_filename = $filename;
-	}
-	print STDERR "* $why (line $lineno)\n";
-	print STDERR "$filename:$lineno:$line\n";
-    }
-    while (<>) {
-	if (m|^diff --git a/(.*) b/\1$|) {
-	    $filename = $1;
-	    next;
-	}
-	if (/^@@ -\S+ \+(\d+)/) {
-	    $lineno = $1 - 1;
-	    next;
-	}
-	if (/^ /) {
-	    $lineno++;
-	    next;
-	}
-	if (s/^\+//) {
-	    $lineno++;
-	    chomp;
-	    if (/\s$/) {
-		bad_line("trailing whitespace", $_);
-	    }
-	    if (/^\s* \t/) {
-		bad_line("indent SP followed by a TAB", $_);
-	    }
-	    if (/^([<>])\1{6} |^={7}$/) {
-		bad_line("unresolved merge conflict", $_);
-	    }
-	}
-    }
-    exit($found_bad);
-'
+	# Initial commit: diff against an empty tree object
+	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+
+exec git diff-index --check --cached $against --

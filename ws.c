@@ -117,9 +117,9 @@ char *whitespace_error_string(unsigned ws)
 }
 
 /* If stream is non-NULL, emits the line after checking. */
-unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
-			     FILE *stream, const char *set,
-			     const char *reset, const char *ws)
+static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
+				FILE *stream, const char *set,
+				const char *reset, const char *ws)
 {
 	unsigned result = 0;
 	int written = 0;
@@ -211,6 +211,33 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 			fputc('\n', stream);
 	}
 	return result;
+}
+
+void ws_check_emit(const char *line, int len, unsigned ws_rule,
+		   FILE *stream, const char *set,
+		   const char *reset, const char *ws)
+{
+	(void)ws_check_emit_1(line, len, ws_rule, stream, set, reset, ws);
+}
+
+unsigned ws_check(const char *line, int len, unsigned ws_rule)
+{
+	return ws_check_emit_1(line, len, ws_rule, NULL, NULL, NULL, NULL);
+}
+
+int ws_blank_line(const char *line, int len, unsigned ws_rule)
+{
+	/*
+	 * We _might_ want to treat CR differently from other
+	 * whitespace characters when ws_rule has WS_CR_AT_EOL, but
+	 * for now we just use this stupid definition.
+	 */
+	while (len-- > 0) {
+		if (!isspace(*line))
+			return 0;
+		line++;
+	}
+	return 1;
 }
 
 /* Copy the line to the buffer while fixing whitespaces */

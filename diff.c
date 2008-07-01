@@ -535,9 +535,9 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 	else {
 		/* Emit just the prefix, then the rest. */
 		emit_line(ecbdata->file, set, reset, line, ecbdata->nparents);
-		(void)check_and_emit_line(line + ecbdata->nparents,
-		    len - ecbdata->nparents, ecbdata->ws_rule,
-		    ecbdata->file, set, reset, ws);
+		ws_check_emit(line + ecbdata->nparents,
+			      len - ecbdata->nparents, ecbdata->ws_rule,
+			      ecbdata->file, set, reset, ws);
 	}
 }
 
@@ -1136,42 +1136,85 @@ static void free_diffstat_info(struct diffstat_t *diffstat)
 struct checkdiff_t {
 	struct xdiff_emit_state xm;
 	const char *filename;
-	int lineno, color_diff;
+	int lineno;
+	struct diff_options *o;
 	unsigned ws_rule;
 	unsigned status;
-	FILE *file;
+	int trailing_blanks_start;
 };
+
+static int is_conflict_marker(const char *line, unsigned long len)
+{
+	char firstchar;
+	int cnt;
+
+	if (len < 8)
+		return 0;
+	firstchar = line[0];
+	switch (firstchar) {
+	case '=': case '>': case '<':
+		break;
+	default:
+		return 0;
+	}
+	for (cnt = 1; cnt < 7; cnt++)
+		if (line[cnt] != firstchar)
+			return 0;
+	/* line[0] thru line[6] are same as firstchar */
+	if (firstchar == '=') {
+		/* divider between ours and theirs? */
+		if (len != 8 || line[7] != '\n')
+			return 0;
+	} else if (len < 8 || !isspace(line[7])) {
+		/* not divider before ours nor after theirs */
+		return 0;
+	}
+	return 1;
+}
 
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
 {
 	struct checkdiff_t *data = priv;
-	const char *ws = diff_get_color(data->color_diff, DIFF_WHITESPACE);
-	const char *reset = diff_get_color(data->color_diff, DIFF_RESET);
-	const char *set = diff_get_color(data->color_diff, DIFF_FILE_NEW);
+	int color_diff = DIFF_OPT_TST(data->o, COLOR_DIFF);
+	const char *ws = diff_get_color(color_diff, DIFF_WHITESPACE);
+	const char *reset = diff_get_color(color_diff, DIFF_RESET);
+	const char *set = diff_get_color(color_diff, DIFF_FILE_NEW);
 	char *err;
 
 	if (line[0] == '+') {
 		unsigned bad;
 		data->lineno++;
-		bad = check_and_emit_line(line + 1, len - 1,
-		    data->ws_rule, NULL, NULL, NULL, NULL);
+		if (!ws_blank_line(line + 1, len - 1, data->ws_rule))
+			data->trailing_blanks_start = 0;
+		else if (!data->trailing_blanks_start)
+			data->trailing_blanks_start = data->lineno;
+		if (is_conflict_marker(line + 1, len - 1)) {
+			data->status |= 1;
+			fprintf(data->o->file,
+				"%s:%d: leftover conflict marker\n",
+				data->filename, data->lineno);
+		}
+		bad = ws_check(line + 1, len - 1, data->ws_rule);
 		if (!bad)
 			return;
 		data->status |= bad;
 		err = whitespace_error_string(bad);
-		fprintf(data->file, "%s:%d: %s.\n", data->filename, data->lineno, err);
+		fprintf(data->o->file, "%s:%d: %s.\n",
+			data->filename, data->lineno, err);
 		free(err);
-		emit_line(data->file, set, reset, line, 1);
-		(void)check_and_emit_line(line + 1, len - 1, data->ws_rule,
-		    data->file, set, reset, ws);
-	} else if (line[0] == ' ')
+		emit_line(data->o->file, set, reset, line, 1);
+		ws_check_emit(line + 1, len - 1, data->ws_rule,
+			      data->o->file, set, reset, ws);
+	} else if (line[0] == ' ') {
 		data->lineno++;
-	else if (line[0] == '@') {
+		data->trailing_blanks_start = 0;
+	} else if (line[0] == '@') {
 		char *plus = strchr(line, '+');
 		if (plus)
 			data->lineno = strtol(plus, NULL, 10) - 1;
 		else
 			die("invalid diff");
+		data->trailing_blanks_start = 0;
 	}
 }
 
@@ -1544,8 +1587,9 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 
 static void builtin_checkdiff(const char *name_a, const char *name_b,
 			      const char *attr_path,
-			     struct diff_filespec *one,
-			     struct diff_filespec *two, struct diff_options *o)
+			      struct diff_filespec *one,
+			      struct diff_filespec *two,
+			      struct diff_options *o)
 {
 	mmfile_t mf1, mf2;
 	struct checkdiff_t data;
@@ -1557,13 +1601,18 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.xm.consume = checkdiff_consume;
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
-	data.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
+	data.o = o;
 	data.ws_rule = whitespace_rule(attr_path);
-	data.file = o->file;
 
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
+	/*
+	 * All the other codepaths check both sides, but not checking
+	 * the "old" side here is deliberate.  We are checking the newly
+	 * introduced changes, and as long as the "new" side is text, we
+	 * can and should check what it introduces.
+	 */
 	if (diff_filespec_is_binary(two))
 		goto free_and_return;
 	else {
@@ -1577,6 +1626,12 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		ecb.outf = xdiff_outf;
 		ecb.priv = &data;
 		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+
+		if (data.trailing_blanks_start) {
+			fprintf(o->file, "%s:%d: ends with blank lines.\n",
+				data.filename, data.trailing_blanks_start);
+			data.status = 1; /* report errors */
+		}
 	}
  free_and_return:
 	diff_free_filespec_data(one);

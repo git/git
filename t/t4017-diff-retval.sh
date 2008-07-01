@@ -113,4 +113,18 @@ test_expect_success 'check should test not just the last line' '
 
 '
 
+test_expect_success 'check detects leftover conflict markers' '
+	git reset --hard &&
+	git checkout HEAD^ &&
+	echo binary >>b &&
+	git commit -m "side" b &&
+	test_must_fail git merge master &&
+	git add b && (
+		git --no-pager diff --cached --check >test.out
+		test $? = 2
+	) &&
+	test 3 = $(grep "conflict marker" test.out | wc -l) &&
+	git reset --hard
+'
+
 test_done

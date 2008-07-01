@@ -335,4 +335,10 @@ test_expect_success 'line numbers in --check output are correct' '
 
 '
 
+test_expect_success 'checkdiff detects trailing blank lines' '
+	echo "foo();" >x &&
+	echo "" >>x &&
+	git diff --check | grep "ends with blank"
+'
+
 test_done

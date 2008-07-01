@@ -819,11 +819,11 @@ void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, i
 extern unsigned whitespace_rule_cfg;
 extern unsigned whitespace_rule(const char *);
 extern unsigned parse_whitespace_rule(const char *);
-extern unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
-    FILE *stream, const char *set,
-    const char *reset, const char *ws);
+extern unsigned ws_check(const char *line, int len, unsigned ws_rule);
+extern void ws_check_emit(const char *line, int len, unsigned ws_rule, FILE *stream, const char *set, const char *reset, const char *ws);
 extern char *whitespace_error_string(unsigned ws);
 extern int ws_fix_copy(char *, const char *, int, unsigned, int *);
+extern int ws_blank_line(const char *line, int len, unsigned ws_rule);
 
 /* ls-files */
 int pathspec_match(const char **spec, char *matched, const char *filename, int skiplen);
