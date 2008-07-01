@@ -133,9 +133,45 @@ $ git describe --abbrev 10 HEAD  # NOT WHAT YOU MEANT
 ----------------------------
 
 
+NOTES ON FREQUENTLY CONFUSED OPTIONS
+------------------------------------
+
+Many commands that can work on files in the working tree
+and/or in the index can take `--cached` and/or `--index`
+options.  Sometimes people incorrectly think that, because
+the index was originally called cache, these two are
+synonyms.  They are *not* -- these two options mean very
+different things.
+
+ * The `--cached` option is used to ask a command that
+   usually works on files in the working tree to *only* work
+   with the index.  For example, `git grep`, when used
+   without a commit to specify from which commit to look for
+   strings in, usually works on files in the working tree,
+   but with the `--cached` option, it looks for strings in
+   the index.
+
+ * The `--index` option is used to ask a command that
+   usually works on files in the working tree to *also*
+   affect the index.  For example, `git stash apply` usually
+   merges changes recorded in a stash to the working tree,
+   but with the `--index` option, it also merges changes to
+   the index as well.
+
+`git apply` command can be used with `--cached` and
+`--index` (but not at the same time).  Usually the command
+only affects the files in the working tree, but with
+`--index`, it patches both the files and their index
+entries, and with `--cached`, it modifies only the index
+entries.
+
+See also http://marc.info/?l=git&m=116563135620359 and
+http://marc.info/?l=git&m=119150393620273 for further
+information.
+
 Documentation
 -------------
-Documentation by Pierre Habouzit.
+Documentation by Pierre Habouzit and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
