@@ -11,7 +11,7 @@ TCLTK_PATH = @TCLTK_PATH@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
-#gitexecdir = @libexecdir@/git-core/
+gitexecdir = @libexecdir@/git-core/
 datarootdir = @datarootdir@
 template_dir = @datadir@/git-core/templates/
 
