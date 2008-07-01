@@ -12,6 +12,7 @@
 #include "blob.h"
 #include "delta.h"
 #include "builtin.h"
+#include "path-list.h"
 
 /*
  *  --check turns on checking that the working tree matches the
@@ -184,6 +185,13 @@ struct image {
 	struct line *line_allocated;
 	struct line *line;
 };
+
+/*
+ * Records filenames that have been touched, in order to handle
+ * the case where more than one patches touch the same file.
+ */
+
+static struct path_list fn_table;
 
 static uint32_t hash_line(const char *cp, size_t len)
 {
@@ -2176,15 +2184,62 @@ static int read_file_or_gitlink(struct cache_entry *ce, struct strbuf *buf)
 	return 0;
 }
 
+static struct patch *in_fn_table(const char *name)
+{
+	struct path_list_item *item;
+
+	if (name == NULL)
+		return NULL;
+
+	item = path_list_lookup(name, &fn_table);
+	if (item != NULL)
+		return (struct patch *)item->util;
+
+	return NULL;
+}
+
+static void add_to_fn_table(struct patch *patch)
+{
+	struct path_list_item *item;
+
+	/*
+	 * Always add new_name unless patch is a deletion
+	 * This should cover the cases for normal diffs,
+	 * file creations and copies
+	 */
+	if (patch->new_name != NULL) {
+		item = path_list_insert(patch->new_name, &fn_table);
+		item->util = patch;
+	}
+
+	/*
+	 * store a failure on rename/deletion cases because
+	 * later chunks shouldn't patch old names
+	 */
+	if ((patch->new_name == NULL) || (patch->is_rename)) {
+		item = path_list_insert(patch->old_name, &fn_table);
+		item->util = (struct patch *) -1;
+	}
+}
+
 static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
 	struct strbuf buf;
 	struct image image;
 	size_t len;
 	char *img;
+	struct patch *tpatch;
 
 	strbuf_init(&buf, 0);
-	if (cached) {
+
+	if ((tpatch = in_fn_table(patch->old_name)) != NULL) {
+		if (tpatch == (struct patch *) -1) {
+			return error("patch %s has been renamed/deleted",
+				patch->old_name);
+		}
+		/* We have a patched copy in memory use that */
+		strbuf_add(&buf, tpatch->result, tpatch->resultsize);
+	} else if (cached) {
 		if (read_file_or_gitlink(ce, &buf))
 			return error("read of %s failed", patch->old_name);
 	} else if (patch->old_name) {
@@ -2211,6 +2266,7 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 		return -1; /* note with --reject this succeeds. */
 	patch->result = image.buf;
 	patch->resultsize = image.len;
+	add_to_fn_table(patch);
 	free(image.line_allocated);
 
 	if (0 < patch->is_delete && patch->resultsize)
@@ -2255,6 +2311,7 @@ static int verify_index_match(struct cache_entry *ce, struct stat *st)
 static int check_preimage(struct patch *patch, struct cache_entry **ce, struct stat *st)
 {
 	const char *old_name = patch->old_name;
+	struct patch *tpatch;
 	int stat_ret = 0;
 	unsigned st_mode = 0;
 
@@ -2268,12 +2325,17 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		return 0;
 
 	assert(patch->is_new <= 0);
-	if (!cached) {
+	if ((tpatch = in_fn_table(old_name)) != NULL) {
+		if (tpatch == (struct patch *) -1) {
+			return error("%s: has been deleted/renamed", old_name);
+		}
+		st_mode = tpatch->new_mode;
+	} else if (!cached) {
 		stat_ret = lstat(old_name, st);
 		if (stat_ret && errno != ENOENT)
 			return error("%s: %s", old_name, strerror(errno));
 	}
-	if (check_index) {
+	if (check_index && !tpatch) {
 		int pos = cache_name_pos(old_name, strlen(old_name));
 		if (pos < 0) {
 			if (patch->is_new < 0)
@@ -2325,7 +2387,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	return 0;
 }
 
-static int check_patch(struct patch *patch, struct patch *prev_patch)
+static int check_patch(struct patch *patch)
 {
 	struct stat st;
 	const char *old_name = patch->old_name;
@@ -2342,8 +2404,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 		return status;
 	old_name = patch->old_name;
 
-	if (new_name && prev_patch && 0 < prev_patch->is_delete &&
-	    !strcmp(prev_patch->old_name, new_name))
+	if (in_fn_table(new_name) == (struct patch *) -1)
 		/*
 		 * A type-change diff is always split into a patch to
 		 * delete old, immediately followed by a patch to
@@ -2393,15 +2454,14 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 
 static int check_patch_list(struct patch *patch)
 {
-	struct patch *prev_patch = NULL;
 	int err = 0;
 
-	for (prev_patch = NULL; patch ; patch = patch->next) {
+	while (patch) {
 		if (apply_verbosely)
 			say_patch_name(stderr,
 				       "Checking patch ", patch, "...\n");
-		err |= check_patch(patch, prev_patch);
-		prev_patch = patch;
+		err |= check_patch(patch);
+		patch = patch->next;
 	}
 	return err;
 }
@@ -2919,6 +2979,8 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
+	/* FIXME - memory leak when using multiple patch files as inputs */
+	memset(&fn_table, 0, sizeof(struct path_list));
 	strbuf_init(&buf, 0);
 	patch_input_file = filename;
 	read_patch_file(&buf, fd);
