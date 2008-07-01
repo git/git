@@ -120,6 +120,15 @@ int safe_create_leading_directories(char *path)
 	return 0;
 }
 
+int safe_create_leading_directories_const(const char *path)
+{
+	/* path points to cache entries, so xstrdup before messing with it */
+	char *buf = xstrdup(path);
+	int result = safe_create_leading_directories(buf);
+	free(buf);
+	return result;
+}
+
 char *sha1_to_hex(const unsigned char *sha1)
 {
 	static int bufno;
@@ -2122,6 +2131,7 @@ static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
 	fd = mkstemp(buffer);
 	if (fd < 0 && dirlen) {
 		/* Make sure the directory exists */
+		memcpy(buffer, filename, dirlen);
 		buffer[dirlen-1] = 0;
 		if (mkdir(buffer, 0777) || adjust_shared_perm(buffer))
 			return -1;

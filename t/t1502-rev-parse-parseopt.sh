@@ -13,7 +13,7 @@ usage: some-command [options] <args>...
     --bar ...             some cool option --bar with an argument
 
 An option group Header
-    -C [...]              option C with an optional argument
+    -C[...]               option C with an optional argument
 
 Extras
     --extra1              line above used to cause a segfault but no longer does

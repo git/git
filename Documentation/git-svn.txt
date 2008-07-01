@@ -448,6 +448,8 @@ svn-remote.<name>.rewriteRoot::
 	the repository with a public http:// or svn:// URL in the
 	metadata so users of it will see the public URL.
 
+--
+
 Since the noMetadata, rewriteRoot, useSvnsyncProps and useSvmProps
 options all affect the metadata generated and used by git-svn; they
 *must* be set in the configuration file before any history is imported
@@ -456,7 +458,6 @@ and these settings should never be changed once they are set.
 Additionally, only one of these four options can be used per-svn-remote
 section because they affect the 'git-svn-id:' metadata line.
 
---
 
 BASIC EXAMPLES
 --------------

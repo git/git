@@ -4,7 +4,7 @@ builtin API
 Adding a new built-in
 ---------------------
 
-There are 4 things to do to add a bulit-in command implementation to
+There are 4 things to do to add a built-in command implementation to
 git:
 
 . Define the implementation of the built-in command `foo` with
@@ -18,8 +18,8 @@ git:
   defined in `git.c`.  The entry should look like:
 
 	{ "foo", cmd_foo, <options> },
-
-  where options is the bitwise-or of:
++
+where options is the bitwise-or of:
 
 `RUN_SETUP`::
 
@@ -33,6 +33,12 @@ git:
 	If the standard output is connected to a tty, spawn a pager and
 	feed our output to it.
 
+`NEED_WORK_TREE`::
+
+	Make sure there is a work tree, i.e. the command cannot act
+	on bare repositories.
+	This makes only sense when `RUN_SETUP` is also set.
+
 . Add `builtin-foo.o` to `BUILTIN_OBJS` in `Makefile`.
 
 Additionally, if `foo` is a new command, there are 3 more things to do:
@@ -41,8 +47,7 @@ Additionally, if `foo` is a new command, there are 3 more things to do:
 
 . Write documentation in `Documentation/git-foo.txt`.
 
-. Add an entry for `git-foo` to the list at the end of
-  `Documentation/cmd-list.perl`.
+. Add an entry for `git-foo` to `command-list.txt`.
 
 
 How a built-in is called

@@ -2577,8 +2577,8 @@ sub rebuild {
 	my ($log, $ctx) =
 	    command_output_pipe(qw/rev-list --pretty=raw --no-color --reverse/,
 	                        $self->refname, '--');
-	my $full_url = $self->full_url;
-	remove_username($full_url);
+	my $metadata_url = $self->metadata_url;
+	remove_username($metadata_url);
 	my $svn_uuid = $self->ra_uuid;
 	my $c;
 	while (<$log>) {
@@ -2596,7 +2596,7 @@ sub rebuild {
 		# if we merged or otherwise started elsewhere, this is
 		# how we break out of it
 		if (($uuid ne $svn_uuid) ||
-		    ($full_url && $url && ($url ne $full_url))) {
+		    ($metadata_url && $url && ($url ne $metadata_url))) {
 			next;
 		}
 
