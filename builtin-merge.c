@@ -578,7 +578,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 
 		init_merge_options(&o);
 		if (!strcmp(strategy, "subtree"))
-			o.recursive_variant = MERGE_RECURSIVE_SUBTREE;
+			o.subtree_shift = "";
 
 		for (x = 0; x < xopts_nr; x++) {
 			if (!strcmp(xopts[x], "ours"))
@@ -586,7 +586,9 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 			else if (!strcmp(xopts[x], "theirs"))
 				o.recursive_variant = MERGE_RECURSIVE_THEIRS;
 			else if (!strcmp(xopts[x], "subtree"))
-				o.recursive_variant = MERGE_RECURSIVE_SUBTREE;
+				o.subtree_shift = "";
+			else if (!prefixcmp(xopts[x], "subtree="))
+				o.subtree_shift = xopts[x]+8;
 			else
 				die("Unknown option for merge-recursive: -X%s", xopts[x]);
 		}

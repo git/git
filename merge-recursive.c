@@ -21,15 +21,17 @@
 #include "merge-recursive.h"
 #include "dir.h"
 
-static struct tree *shift_tree_object(struct tree *one, struct tree *two)
+static struct tree *shift_tree_object(struct tree *one, struct tree *two,
+				      const char *subtree_shift)
 {
 	unsigned char shifted[20];
 
-	/*
-	 * NEEDSWORK: this limits the recursion depth to hardcoded
-	 * value '2' to avoid excessive overhead.
-	 */
-	shift_tree(one->object.sha1, two->object.sha1, shifted, 2);
+	if (!*subtree_shift) {
+		shift_tree(one->object.sha1, two->object.sha1, shifted, 0);
+	} else {
+		shift_tree_by(one->object.sha1, two->object.sha1, shifted,
+			      subtree_shift);
+	}
 	if (!hashcmp(two->object.sha1, shifted))
 		return two;
 	return lookup_tree(shifted);
@@ -1213,9 +1215,9 @@ int merge_trees(struct merge_options *o,
 {
 	int code, clean;
 
-	if (o->recursive_variant == MERGE_RECURSIVE_SUBTREE) {
-		merge = shift_tree_object(head, merge);
-		common = shift_tree_object(head, common);
+	if (o->subtree_shift) {
+		merge = shift_tree_object(head, merge, o->subtree_shift);
+		common = shift_tree_object(head, common, o->subtree_shift);
 	}
 
 	if (sha_eq(common->object.sha1, merge->object.sha1)) {

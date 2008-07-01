@@ -25,10 +25,8 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 	struct commit *result;
 
 	init_merge_options(&o);
-	if (argv[0]) {
-		if (!suffixcmp(argv[0], "-subtree"))
-			o.recursive_variant = MERGE_RECURSIVE_SUBTREE;
-	}
+	if (argv[0] && !suffixcmp(argv[0], "-subtree"))
+		o.subtree_shift = "";
 
 	if (argc < 4)
 		usagef("%s <base>... -- <head> <remote> ...", argv[0]);
@@ -44,7 +42,9 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 			else if (!strcmp(arg+2, "theirs"))
 				o.recursive_variant = MERGE_RECURSIVE_THEIRS;
 			else if (!strcmp(arg+2, "subtree"))
-				o.recursive_variant = MERGE_RECURSIVE_SUBTREE;
+				o.subtree_shift = "";
+			else if (!prefixcmp(arg+2, "subtree="))
+				o.subtree_shift = arg + 10;
 			else
 				die("Unknown option %s", arg);
 			continue;
