@@ -391,9 +391,7 @@ static void write_crash_report(const char *err)
 
 	fprintf(rpt, "fast-import crash report:\n");
 	fprintf(rpt, "    fast-import process: %d\n", getpid());
-#ifndef __MINGW32__
 	fprintf(rpt, "    parent process     : %d\n", getppid());
-#endif
 	fprintf(rpt, "    at %s\n", show_date(time(NULL), 0, DATE_LOCAL));
 	fputc('\n', rpt);
 
