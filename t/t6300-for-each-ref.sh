@@ -26,25 +26,78 @@ test_expect_success 'Create sample commit with known timestamp' '
 	git tag -a -m "Tagging at $datestamp" testtag
 '
 
-test_expect_success 'Check atom names are valid' '
-	bad=
-	for token in \
-		refname objecttype objectsize objectname tree parent \
-		numparent object type author authorname authoremail \
-		authordate committer committername committeremail \
-		committerdate tag tagger taggername taggeremail \
-		taggerdate creator creatordate subject body contents
-	do
-		git for-each-ref --format="$token=%($token)" refs/heads || {
-			bad=$token
-			break
-		}
-	done
-	test -z "$bad"
+test_atom() {
+	case "$1" in
+		head) ref=refs/heads/master ;;
+		 tag) ref=refs/tags/testtag ;;
+	esac
+	printf '%s\n' "$3" >expected
+	test_expect_${4:-success} "basic atom: $1 $2" "
+		git for-each-ref --format='%($2)' $ref >actual &&
+		test_cmp expected actual
+	"
+}
+
+test_atom head refname refs/heads/master
+test_atom head objecttype commit
+test_atom head objectsize 171
+test_atom head objectname 67a36f10722846e891fbada1ba48ed035de75581
+test_atom head tree 0e51c00fcb93dffc755546f27593d511e1bdb46f
+test_atom head parent ''
+test_atom head numparent 0
+test_atom head object ''
+test_atom head type ''
+test_atom head author 'A U Thor <author@example.com> 1151939924 +0200'
+test_atom head authorname 'A U Thor'
+test_atom head authoremail '<author@example.com>'
+test_atom head authordate 'Mon Jul 3 17:18:44 2006 +0200'
+test_atom head committer 'C O Mitter <committer@example.com> 1151939923 +0200'
+test_atom head committername 'C O Mitter'
+test_atom head committeremail '<committer@example.com>'
+test_atom head committerdate 'Mon Jul 3 17:18:43 2006 +0200'
+test_atom head tag ''
+test_atom head tagger ''
+test_atom head taggername ''
+test_atom head taggeremail ''
+test_atom head taggerdate ''
+test_atom head creator 'C O Mitter <committer@example.com> 1151939923 +0200'
+test_atom head creatordate 'Mon Jul 3 17:18:43 2006 +0200'
+test_atom head subject 'Initial'
+test_atom head body ''
+test_atom head contents 'Initial
+'
+
+test_atom tag refname refs/tags/testtag
+test_atom tag objecttype tag
+test_atom tag objectsize 154
+test_atom tag objectname 98b46b1d36e5b07909de1b3886224e3e81e87322
+test_atom tag tree ''
+test_atom tag parent ''
+test_atom tag numparent ''
+test_atom tag object '67a36f10722846e891fbada1ba48ed035de75581'
+test_atom tag type 'commit'
+test_atom tag author ''
+test_atom tag authorname ''
+test_atom tag authoremail ''
+test_atom tag authordate ''
+test_atom tag committer ''
+test_atom tag committername ''
+test_atom tag committeremail ''
+test_atom tag committerdate ''
+test_atom tag tag 'testtag'
+test_atom tag tagger 'C O Mitter <committer@example.com> 1151939925 +0200'
+test_atom tag taggername 'C O Mitter'
+test_atom tag taggeremail '<committer@example.com>'
+test_atom tag taggerdate 'Mon Jul 3 17:18:45 2006 +0200'
+test_atom tag creator 'C O Mitter <committer@example.com> 1151939925 +0200'
+test_atom tag creatordate 'Mon Jul 3 17:18:45 2006 +0200'
+test_atom tag subject 'Tagging at 1151939927'
+test_atom tag body ''
+test_atom tag contents 'Tagging at 1151939927
 '
 
 test_expect_success 'Check invalid atoms names are errors' '
-	! git-for-each-ref --format="%(INVALID)" refs/heads
+	test_must_fail git-for-each-ref --format="%(INVALID)" refs/heads
 '
 
 test_expect_success 'Check format specifiers are ignored in naming date atoms' '
@@ -64,7 +117,7 @@ test_expect_success 'Check valid format specifiers for date fields' '
 '
 
 test_expect_success 'Check invalid format specifiers are errors' '
-	! git-for-each-ref --format="%(authordate:INVALID)" refs/heads
+	test_must_fail git-for-each-ref --format="%(authordate:INVALID)" refs/heads
 '
 
 cat >expected <<\EOF

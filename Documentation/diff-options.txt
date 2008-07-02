@@ -241,4 +241,4 @@ endif::git-format-patch[]
 	Do not show any source or destination prefix.
 
 For more detailed explanation on these common options, see also
-linkgit:gitdiffcore[7][diffcore documentation].
+linkgit:gitdiffcore[7].

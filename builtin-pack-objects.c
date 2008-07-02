@@ -209,28 +209,6 @@ static int check_pack_inflate(struct packed_git *p,
 		stream.total_in == len) ? 0 : -1;
 }
 
-static int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
-			  off_t offset, off_t len, unsigned int nr)
-{
-	const uint32_t *index_crc;
-	uint32_t data_crc = crc32(0, Z_NULL, 0);
-
-	do {
-		unsigned int avail;
-		void *data = use_pack(p, w_curs, offset, &avail);
-		if (avail > len)
-			avail = len;
-		data_crc = crc32(data_crc, data, avail);
-		offset += avail;
-		len -= avail;
-	} while (len);
-
-	index_crc = p->index_data;
-	index_crc += 2 + 256 + p->num_objects * (20/4) + nr;
-
-	return data_crc != ntohl(*index_crc);
-}
-
 static void copy_pack_data(struct sha1file *f,
 		struct packed_git *p,
 		struct pack_window **w_curs,
@@ -1147,8 +1125,6 @@ static void get_object_details(void)
 	for (i = 0; i < nr_objects; i++)
 		sorted_by_offset[i] = objects + i;
 	qsort(sorted_by_offset, nr_objects, sizeof(*sorted_by_offset), pack_offset_sort);
-
-	init_pack_revindex();
 
 	for (i = 0; i < nr_objects; i++)
 		check_object(sorted_by_offset[i]);

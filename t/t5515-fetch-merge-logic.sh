@@ -142,9 +142,12 @@ do
 			set x $cmd; shift
 			git symbolic-ref HEAD refs/heads/$1 ; shift
 			rm -f .git/FETCH_HEAD
-			rm -f .git/refs/heads/*
-			rm -f .git/refs/remotes/rem/*
-			rm -f .git/refs/tags/*
+			git for-each-ref \
+				refs/heads refs/remotes/rem refs/tags |
+			while read val type refname
+			do
+				git update-ref -d "$refname" "$val"
+			done
 			git fetch "$@" >/dev/null
 			cat .git/FETCH_HEAD
 		} >"$actual_f" &&

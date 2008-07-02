@@ -49,7 +49,8 @@ static char *logfile, *force_author, *template_file;
 static char *edit_message, *use_message;
 static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
-static int quiet, verbose, untracked_files, no_verify, allow_empty;
+static int quiet, verbose, no_verify, allow_empty;
+static char *untracked_files_arg;
 /*
  * The default commit message cleanup mode will remove the lines
  * beginning with # (shell comments) and leading and trailing
@@ -102,7 +103,7 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN('o', "only", &only, "commit only specified files"),
 	OPT_BOOLEAN('n', "no-verify", &no_verify, "bypass pre-commit hook"),
 	OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
-	OPT_BOOLEAN('u', "untracked-files", &untracked_files, "show all untracked files"),
+	{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, "mode", "show untracked files, optional modes: all, normal, no. (Default: all)", PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 	OPT_BOOLEAN(0, "allow-empty", &allow_empty, "ok to record an empty change"),
 	OPT_STRING(0, "cleanup", &cleanup_arg, "default", "how to strip spaces and #comments from message"),
 
@@ -347,7 +348,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 		s.reference = "HEAD^1";
 	}
 	s.verbose = verbose;
-	s.untracked = untracked_files;
+	s.untracked = (show_untracked_files == SHOW_ALL_UNTRACKED_FILES);
 	s.index_file = index_file;
 	s.fp = fp;
 	s.nowarn = nowarn;
@@ -502,7 +503,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 
 	fp = fopen(git_path(commit_editmsg), "w");
 	if (fp == NULL)
-		die("could not open %s", git_path(commit_editmsg));
+		die("could not open %s: %s",
+		    git_path(commit_editmsg), strerror(errno));
 
 	if (cleanup_mode != CLEANUP_NONE)
 		stripspace(&sb, 0);
@@ -794,6 +796,17 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		cleanup_mode = CLEANUP_ALL;
 	else
 		die("Invalid cleanup mode %s", cleanup_arg);
+
+	if (!untracked_files_arg)
+		; /* default already initialized */
+	else if (!strcmp(untracked_files_arg, "no"))
+		show_untracked_files = SHOW_NO_UNTRACKED_FILES;
+	else if (!strcmp(untracked_files_arg, "normal"))
+		show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
+	else if (!strcmp(untracked_files_arg, "all"))
+		show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
+	else
+		die("Invalid untracked files mode '%s'", untracked_files_arg);
 
 	if (all && argc > 0)
 		die("Paths with -a does not make sense.");

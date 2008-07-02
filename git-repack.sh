@@ -44,11 +44,7 @@ do
 	shift
 done
 
-# Later we will default repack.UseDeltaBaseOffset to true
-default_dbo=false
-
-case "`git config --bool repack.usedeltabaseoffset ||
-       echo $default_dbo`" in
+case "`git config --bool repack.usedeltabaseoffset || echo true`" in
 true)
 	extra="$extra --delta-base-offset" ;;
 esac

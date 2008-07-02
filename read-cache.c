@@ -138,6 +138,16 @@ static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
 	return 0;
 }
 
+static int is_empty_blob_sha1(const unsigned char *sha1)
+{
+	static const unsigned char empty_blob_sha1[20] = {
+		0xe6,0x9d,0xe2,0x9b,0xb2,0xd1,0xd6,0x43,0x4b,0x8b,
+		0x29,0xae,0x77,0x5a,0xd8,0xc2,0xe4,0x8c,0x53,0x91
+	};
+
+	return !hashcmp(sha1, empty_blob_sha1);
+}
+
 static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 {
 	unsigned int changed = 0;
@@ -192,6 +202,12 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 
 	if (ce->ce_size != (unsigned int) st->st_size)
 		changed |= DATA_CHANGED;
+
+	/* Racily smudged entry? */
+	if (!ce->ce_size) {
+		if (!is_empty_blob_sha1(ce->sha1))
+			changed |= DATA_CHANGED;
+	}
 
 	return changed;
 }

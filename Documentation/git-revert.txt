@@ -7,7 +7,7 @@ git-revert - Revert an existing commit
 
 SYNOPSIS
 --------
-'git-revert' [--edit | --no-edit] [-n] [-m parent-number] [-s] <commit>
+'git revert' [--edit | --no-edit] [-n] [-m parent-number] [-s] <commit>
 
 DESCRIPTION
 -----------

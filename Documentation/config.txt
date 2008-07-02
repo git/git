@@ -372,6 +372,14 @@ core.whitespace::
   does not trigger if the character before such a carriage-return
   is not a whitespace (not enabled by default).
 
+core.fsyncobjectfiles::
+	This boolean will enable 'fsync()' when writing object files.
++
+This is a total waste of time and effort on a filesystem that orders
+data writes properly, but can be useful for filesystems that do not use
+journalling (traditional UNIX filesystems) or that only journal metadata
+and not file contents (OS X's HFS+, or Linux ext3 with "data=writeback").
+
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
@@ -937,9 +945,17 @@ pack.indexVersion::
 	legacy pack index used by Git versions prior to 1.5.2, and 2 for
 	the new pack index with capabilities for packs larger than 4 GB
 	as well as proper protection against the repacking of corrupted
-	packs.  Version 2 is selected and this config option ignored
-	whenever the corresponding pack is larger than 2 GB.  Otherwise
-	the default is 1.
+	packs.  Version 2 is the default.  Note that version 2 is enforced
+	and this config option ignored whenever the corresponding pack is
+	larger than 2 GB.
++
+If you have an old git that does not understand the version 2 `{asterisk}.idx` file,
+cloning or fetching over a non native protocol (e.g. "http" and "rsync")
+that will copy both `{asterisk}.pack` file and corresponding `{asterisk}.idx` file from the
+other side may give you a repository that cannot be accessed with your
+older version of git. If the `{asterisk}.pack` file is smaller than 2 GB, however,
+you can use linkgit:git-index-pack[1] on the *.pack file to regenerate
+the `{asterisk}.idx` file.
 
 pack.packSizeLimit::
 	The default maximum size of a pack.  This setting only affects
@@ -996,12 +1012,12 @@ remotes.<group>::
 	<group>".  See linkgit:git-remote[1].
 
 repack.usedeltabaseoffset::
-	Allow linkgit:git-repack[1] to create packs that uses
-	delta-base offset.  Defaults to false.
-
-show.difftree::
-	The default linkgit:git-diff-tree[1] arguments to be used
-	for linkgit:git-show[1].
+	By default, linkgit:git-repack[1] creates packs that use
+	delta-base offset. If you need to share your repository with
+	git older than version 1.4.4, either directly or via a dumb
+	protocol such as http, then you need to set this option to
+	"false" and repack. Access from old git versions over the
+	native protocol are unaffected by this option.
 
 showbranch.default::
 	The default set of branches for linkgit:git-show-branch[1].
@@ -1012,6 +1028,25 @@ status.relativePaths::
 	current directory. Setting this variable to `false` shows paths
 	relative to the repository root (this was the default for git
 	prior to v1.5.4).
+
+status.showUntrackedFiles::
+	By default, linkgit:git-status[1] and linkgit:git-commit[1] show
+	files which are not currently tracked by Git. Directories which
+	contain only untracked files, are shown with the directory name
+	only. Showing untracked files means that Git needs to lstat() all
+	all the files in the whole repository, which might be slow on some
+	systems. So, this variable controls how the commands displays
+	the untracked files. Possible values are:
++
+--
+	- 'no'     - Show no untracked files
+	- 'normal' - Shows untracked files and directories
+	- 'all'    - Shows also individual files in untracked directories.
+--
++
+If this variable is not specified, it defaults to 'normal'.
+This variable can be overridden with the -u|--untracked-files option
+of linkgit:git-status[1] and linkgit:git-commit[1].
 
 tar.umask::
 	This variable can be used to restrict the permission bits of
@@ -1047,10 +1082,6 @@ user.signingkey::
 	default selection with this variable.  This option is passed
 	unchanged to gpg's --local-user parameter, so you may specify a key
 	using any method that gpg supports.
-
-whatchanged.difftree::
-	The default linkgit:git-diff-tree[1] arguments to be used
-	for linkgit:git-whatchanged[1].
 
 imap::
 	The configuration variables in the 'imap' section are described

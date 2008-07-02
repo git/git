@@ -8,15 +8,15 @@ git-rev-parse - Pick out and massage parameters
 
 SYNOPSIS
 --------
-'git-rev-parse' [ --option ] <args>...
+'git rev-parse' [ --option ] <args>...
 
 DESCRIPTION
 -----------
 
 Many git porcelainish commands take mixture of flags
 (i.e. parameters that begin with a dash '-') and parameters
-meant for underlying `git-rev-list` command they use internally
-and flags and parameters for other commands they use as the
+meant for the underlying `git-rev-list` command they use internally
+and flags and parameters for the other commands they use
 downstream of `git-rev-list`.  This command is used to
 distinguish between them.
 
@@ -128,13 +128,13 @@ OPTIONS
 
 --since=datestring::
 --after=datestring::
-	Parses the date string, and outputs corresponding
-	--max-age= parameter for git-rev-list command.
+	Parse the date string, and output the corresponding
+	--max-age= parameter for `git-rev-list`.
 
 --until=datestring::
 --before=datestring::
-	Parses the date string, and outputs corresponding
-	--min-age= parameter for git-rev-list command.
+	Parse the date string, and output the corresponding
+	--min-age= parameter for `git-rev-list`.
 
 <args>...::
 	Flags and parameters to be parsed.
@@ -184,7 +184,10 @@ blobs contained in a commit.
   second ago\}' or '\{1979-02-26 18:30:00\}') to specify the value
   of the ref at a prior point in time.  This suffix may only be
   used immediately following a ref name and the ref must have an
-  existing log ($GIT_DIR/logs/<ref>).
+  existing log ($GIT_DIR/logs/<ref>). Note that this looks up the state
+  of your *local* ref at a given time; e.g., what was in your local
+  `master` branch last week. If you want to look at commits made during
+  certain times, see `--since` and `--until`.
 
 * A ref followed by the suffix '@' with an ordinal specification
   enclosed in a brace pair (e.g. '\{1\}', '\{15\}') to specify
@@ -293,7 +296,7 @@ reachable from `r1` from the set of commits reachable from
 
 A similar notation "`r1\...r2`" is called symmetric difference
 of `r1` and `r2` and is defined as
-"`r1 r2 --not $(git-merge-base --all r1 r2)`".
+"`r1 r2 --not $(git merge-base --all r1 r2)`".
 It is the set of commits that are reachable from either one of
 `r1` or `r2` but not from both.
 
@@ -381,7 +384,7 @@ bar=      some cool option --bar with an argument
   An option group Header
 C?        option C with an optional argument"
 
-eval `echo "$OPTS_SPEC" | git-rev-parse --parseopt -- "$@" || echo exit $?`
+eval `echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?`
 ------------
 
 EXAMPLES

@@ -7,7 +7,7 @@
 # message file.  If the hook fails with a non-zero status,
 # the commit is aborted.
 #
-# To enable this hook, make this file executable.
+# To enable this hook, rename this file to "prepare-commit-msg".
 
 # This hook includes three examples.  The first comments out the
 # "Conflicts:" part of a merge commit.
@@ -22,10 +22,10 @@
 
 case "$2,$3" in
   merge,)
-    perl -i -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
+    perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
 
 # ,|template,)
-#   perl -i -pe '
+#   perl -i.bak -pe '
 #      print "\n" . `git diff --cached --name-status -r`
 #	 if /^#/ && $first++ == 0' "$1" ;;
 

@@ -24,26 +24,20 @@ static void check_valid(unsigned char *sha1, enum object_type expect)
 		    typename(expect));
 }
 
-/*
- * Having more than two parents is not strange at all, and this is
- * how multi-way merges are represented.
- */
-#define MAXPARENT (16)
-static unsigned char parent_sha1[MAXPARENT][20];
-
 static const char commit_tree_usage[] = "git-commit-tree <sha1> [-p <sha1>]* < changelog";
 
-static int new_parent(int idx)
+static void new_parent(struct commit *parent, struct commit_list **parents_p)
 {
-	int i;
-	unsigned char *sha1 = parent_sha1[idx];
-	for (i = 0; i < idx; i++) {
-		if (!hashcmp(parent_sha1[i], sha1)) {
+	unsigned char *sha1 = parent->object.sha1;
+	struct commit_list *parents;
+	for (parents = *parents_p; parents; parents = parents->next) {
+		if (parents->item == parent) {
 			error("duplicate parent %s ignored", sha1_to_hex(sha1));
-			return 0;
+			return;
 		}
+		parents_p = &parents->next;
 	}
-	return 1;
+	commit_list_insert(parent, parents_p);
 }
 
 static const char commit_utf8_warn[] =
@@ -54,7 +48,7 @@ static const char commit_utf8_warn[] =
 int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	int parents = 0;
+	struct commit_list *parents = NULL;
 	unsigned char tree_sha1[20];
 	unsigned char commit_sha1[20];
 	struct strbuf buffer;
@@ -69,18 +63,16 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 
 	check_valid(tree_sha1, OBJ_TREE);
 	for (i = 2; i < argc; i += 2) {
+		unsigned char sha1[20];
 		const char *a, *b;
 		a = argv[i]; b = argv[i+1];
 		if (!b || strcmp(a, "-p"))
 			usage(commit_tree_usage);
 
-		if (parents >= MAXPARENT)
-			die("Too many parents (%d max)", MAXPARENT);
-		if (get_sha1(b, parent_sha1[parents]))
+		if (get_sha1(b, sha1))
 			die("Not a valid object name %s", b);
-		check_valid(parent_sha1[parents], OBJ_COMMIT);
-		if (new_parent(parents))
-			parents++;
+		check_valid(sha1, OBJ_COMMIT);
+		new_parent(lookup_commit(sha1), &parents);
 	}
 
 	/* Not having i18n.commitencoding is the same as having utf-8 */
@@ -94,8 +86,13 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	 * different order of parents will be a _different_ changeset even
 	 * if everything else stays the same.
 	 */
-	for (i = 0; i < parents; i++)
-		strbuf_addf(&buffer, "parent %s\n", sha1_to_hex(parent_sha1[i]));
+	while (parents) {
+		struct commit_list *next = parents->next;
+		strbuf_addf(&buffer, "parent %s\n",
+			sha1_to_hex(parents->item->object.sha1));
+		free(parents);
+		parents = next;
+	}
 
 	/* Person/date information */
 	strbuf_addf(&buffer, "author %s\n", git_author_info(IDENT_ERROR_ON_NO_NAME));

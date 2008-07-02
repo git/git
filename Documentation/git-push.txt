@@ -9,7 +9,7 @@ git-push - Update remote refs along with associated objects
 SYNOPSIS
 --------
 [verse]
-'git-push' [--all] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>]
+'git push' [--all] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>]
            [--repo=all] [-f | --force] [-v | --verbose] [<repository> <refspec>...]
 
 DESCRIPTION
@@ -67,7 +67,8 @@ nor in any Push line of the corresponding remotes file---see below).
 
 --mirror::
 	Instead of naming each ref to push, specifies that all
-	refs under `$GIT_DIR/refs/heads/` and `$GIT_DIR/refs/tags/`
+	refs under `$GIT_DIR/refs/` (which includes but is not
+	limited to `refs/heads/`, `refs/remotes/`, and `refs/tags/`)
 	be mirrored to the remote repository.  Newly created local
 	refs will be pushed to the remote end, locally updated refs
 	will be force updated on the remote end, and deleted refs
@@ -84,7 +85,7 @@ nor in any Push line of the corresponding remotes file---see below).
 	line.
 
 --receive-pack=<git-receive-pack>::
-	Path to the 'git-receive-pack' program on the remote
+	Path to the `git-receive-pack` program on the remote
 	end.  Sometimes useful when pushing to a remote
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.

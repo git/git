@@ -162,4 +162,18 @@ test_expect_success \
     '[index v2] 5) pack-objects refuses to reuse corrupted data' \
     '! git pack-objects test-5 <obj-list'
 
+test_expect_success \
+    '[index v2] 6) verify-pack detects CRC mismatch' \
+    'rm -f .git/objects/pack/* &&
+     git-index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
+     git verify-pack ".git/objects/pack/pack-${pack1}.pack" &&
+     chmod +w ".git/objects/pack/pack-${pack1}.idx" &&
+     dd if=/dev/zero of=".git/objects/pack/pack-${pack1}.idx" conv=notrunc \
+        bs=1 count=4 seek=$((8 + 256 * 4 + `wc -l <obj-list` * 20 + 0)) &&
+     ( while read obj
+       do git cat-file -p $obj >/dev/null || exit 1
+       done <obj-list ) &&
+     err=$(! git verify-pack ".git/objects/pack/pack-${pack1}.pack" 2>&1) &&
+     echo "$err" | grep "CRC mismatch"'
+
 test_done

@@ -7,7 +7,7 @@
 # appropriate message if it wants to stop the commit.  The hook is
 # allowed to edit the commit message file.
 #
-# To enable this hook, make this file executable.
+# To enable this hook, rename this file to "applypatch-msg".
 
 . git-sh-setup
 test -x "$GIT_DIR/hooks/commit-msg" &&

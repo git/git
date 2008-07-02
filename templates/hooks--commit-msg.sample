@@ -6,7 +6,7 @@
 # status after issuing an appropriate message if it wants to stop the
 # commit.  The hook is allowed to edit the commit message file.
 #
-# To enable this hook, make this file executable.
+# To enable this hook, rename this file to "commit-msg".
 
 # Uncomment the below to add a Signed-off-by line to the message.
 # Doing this in a hook is a bad idea in general, but the prepare-commit-msg

@@ -181,6 +181,7 @@ static int batch_one_object(const char *obj_name, int print_contents)
 		write_or_die(1, contents, size);
 		printf("\n");
 		fflush(stdout);
+		free(contents);
 	}
 
 	return 0;

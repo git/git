@@ -9,7 +9,7 @@ git-ls-tree - List the contents of a tree object
 SYNOPSIS
 --------
 [verse]
-'git-ls-tree' [-d] [-r] [-t] [-l] [-z]
+'git ls-tree' [-d] [-r] [-t] [-l] [-z]
 	    [--name-only] [--name-status] [--full-name] [--abbrev=[<n>]]
 	    <tree-ish> [paths...]
 

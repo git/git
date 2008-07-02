@@ -8,7 +8,7 @@ git-shell - Restricted login shell for GIT-only SSH access
 
 SYNOPSIS
 --------
-'git-shell' -c <command> <argument>
+'$(git --exec-path)/git-shell' -c <command> <argument>
 
 DESCRIPTION
 -----------

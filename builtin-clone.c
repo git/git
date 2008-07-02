@@ -18,6 +18,7 @@
 #include "transport.h"
 #include "strbuf.h"
 #include "dir.h"
+#include "pack-refs.h"
 
 /*
  * Overall FIXMEs:
@@ -321,8 +322,11 @@ static struct ref *write_remote_refs(const struct ref *refs,
 	get_fetch_map(refs, tag_refspec, &tail, 0);
 
 	for (r = local_refs; r; r = r->next)
-		update_ref(reflog,
-			   r->peer_ref->name, r->old_sha1, NULL, 0, DIE_ON_ERR);
+		add_extra_ref(r->peer_ref->name, r->old_sha1, 0);
+
+	pack_refs(PACK_REFS_ALL);
+	clear_extra_refs();
+
 	return local_refs;
 }
 
@@ -400,6 +404,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (!option_bare) {
 		junk_work_tree = work_tree;
+		if (safe_create_leading_directories_const(work_tree) < 0)
+			die("could not create leading directories of '%s'",
+					work_tree);
 		if (mkdir(work_tree, 0755))
 			die("could not create work tree dir '%s'.", work_tree);
 		set_git_work_tree(work_tree);
@@ -410,10 +417,19 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	setenv(CONFIG_ENVIRONMENT, xstrdup(mkpath("%s/config", git_dir)), 1);
 
+	if (safe_create_leading_directories_const(git_dir) < 0)
+		die("could not create leading directories of '%s'", git_dir);
 	set_git_dir(make_absolute_path(git_dir));
 
 	fprintf(stderr, "Initialize %s\n", git_dir);
 	init_db(option_template, option_quiet ? INIT_DB_QUIET : 0);
+
+	/*
+	 * At this point, the config exists, so we do not need the
+	 * environment variable.  We actually need to unset it, too, to
+	 * re-enable parsing of the global configs.
+	 */
+	unsetenv(CONFIG_ENVIRONMENT);
 
 	if (option_reference)
 		setup_reference(git_dir);
@@ -447,7 +463,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		refs = clone_local(path, git_dir);
 	else {
 		struct remote *remote = remote_get(argv[0]);
-		struct transport *transport = transport_get(remote, argv[0]);
+		struct transport *transport =
+			transport_get(remote, remote->url[0]);
 
 		if (!transport->get_refs_list || !transport->fetch)
 			die("Don't know how to clone %s", transport->url);

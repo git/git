@@ -80,6 +80,8 @@ do
 		debug=t; shift ;;
 	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
 		immediate=t; shift ;;
+	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
+		export GIT_TEST_LONG=t; shift ;;
 	-h|--h|--he|--hel|--help)
 		help=t; shift ;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
@@ -152,6 +154,7 @@ test_failure=0
 test_count=0
 test_fixed=0
 test_broken=0
+test_success=0
 
 die () {
 	echo >&5 "FATAL: Unexpected exit with code $?"
@@ -193,6 +196,7 @@ test_tick () {
 
 test_ok_ () {
 	test_count=$(expr "$test_count" + 1)
+	test_success=$(expr "$test_success" + 1)
 	say_color "" "  ok $test_count: $@"
 }
 
@@ -302,6 +306,64 @@ test_expect_code () {
 	echo >&3 ""
 }
 
+# test_external runs external test scripts that provide continuous
+# test output about their progress, and succeeds/fails on
+# zero/non-zero exit code.  It outputs the test output on stdout even
+# in non-verbose mode, and announces the external script with "* run
+# <n>: ..." before running it.  When providing relative paths, keep in
+# mind that all scripts run in "trash directory".
+# Usage: test_external description command arguments...
+# Example: test_external 'Perl API' perl ../path/to/test.pl
+test_external () {
+	test "$#" -eq 3 ||
+	error >&5 "bug in the test script: not 3 parameters to test_external"
+	descr="$1"
+	shift
+	if ! test_skip "$descr" "$@"
+	then
+		# Announce the script to reduce confusion about the
+		# test output that follows.
+		say_color "" " run $(expr "$test_count" + 1): $descr ($*)"
+		# Run command; redirect its stderr to &4 as in
+		# test_run_, but keep its stdout on our stdout even in
+		# non-verbose mode.
+		"$@" 2>&4
+		if [ "$?" = 0 ]
+		then
+			test_ok_ "$descr"
+		else
+			test_failure_ "$descr" "$@"
+		fi
+	fi
+}
+
+# Like test_external, but in addition tests that the command generated
+# no output on stderr.
+test_external_without_stderr () {
+	# The temporary file has no (and must have no) security
+	# implications.
+	tmp="$TMPDIR"; if [ -z "$tmp" ]; then tmp=/tmp; fi
+	stderr="$tmp/git-external-stderr.$$.tmp"
+	test_external "$@" 4> "$stderr"
+	[ -f "$stderr" ] || error "Internal error: $stderr disappeared."
+	descr="no stderr: $1"
+	shift
+	say >&3 "expecting no stderr from previous command"
+	if [ ! -s "$stderr" ]; then
+		rm "$stderr"
+		test_ok_ "$descr"
+	else
+		if [ "$verbose" = t ]; then
+			output=`echo; echo Stderr is:; cat "$stderr"`
+		else
+			output=
+		fi
+		# rm first in case test_failure exits.
+		rm "$stderr"
+		test_failure_ "$descr" "$@" "$output"
+	fi
+}
+
 # This is not among top-level (test_expect_success | test_expect_failure)
 # but is a prefix that can be used in the test script, like:
 #
@@ -345,7 +407,7 @@ test_create_repo () {
 	repo="$1"
 	mkdir "$repo"
 	cd "$repo" || error "Cannot setup test environment"
-	"$GIT_EXEC_PATH/git" init "--template=$GIT_EXEC_PATH/templates/blt/" >/dev/null 2>&1 ||
+	"$GIT_EXEC_PATH/git" init "--template=$GIT_EXEC_PATH/templates/blt/" >&3 2>&4 ||
 	error "cannot run git init -- have you built things yet?"
 	mv .git/hooks .git/hooks-disabled
 	cd "$owd"
@@ -353,6 +415,16 @@ test_create_repo () {
 
 test_done () {
 	trap - exit
+	test_results_dir="$TEST_DIRECTORY/test-results"
+	mkdir -p "$test_results_dir"
+	test_results_path="$test_results_dir/${0%-*}-$$"
+
+	echo "total $test_count" >> $test_results_path
+	echo "success $test_success" >> $test_results_path
+	echo "fixed $test_fixed" >> $test_results_path
+	echo "broken $test_broken" >> $test_results_path
+	echo "failed $test_failure" >> $test_results_path
+	echo "" >> $test_results_path
 
 	if test "$test_fixed" != 0
 	then
@@ -387,7 +459,8 @@ test_done () {
 
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
-PATH=$(pwd)/..:$PATH
+TEST_DIRECTORY=$(pwd)
+PATH=$TEST_DIRECTORY/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
 GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 unset GIT_CONFIG

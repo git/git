@@ -761,6 +761,10 @@ _git_log ()
 			--pretty= --name-status --name-only --raw
 			--not --all
 			--left-right --cherry-pick
+			--graph
+			--stat --numstat --shortstat
+			--decorate --diff-filter=
+			--color-words --walk-reflogs
 			"
 		return
 		;;
@@ -1037,7 +1041,6 @@ _git_config ()
 		pull.octopus
 		pull.twohead
 		repack.useDeltaBaseOffset
-		show.difftree
 		showbranch.default
 		tar.umask
 		transfer.unpackLimit
@@ -1046,7 +1049,6 @@ _git_config ()
 		user.name
 		user.email
 		user.signingkey
-		whatchanged.difftree
 		branch. remote.
 	"
 }

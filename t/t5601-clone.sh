@@ -30,4 +30,26 @@ test_expect_success 'clone checks out files' '
 
 '
 
+test_expect_success 'clone respects GIT_WORK_TREE' '
+
+	GIT_WORK_TREE=worktree git clone src bare &&
+	test -f bare/config &&
+	test -f worktree/file
+
+'
+
+test_expect_success 'clone creates intermediate directories' '
+
+	git clone src long/path/to/dst &&
+	test -f long/path/to/dst/file
+
+'
+
+test_expect_success 'clone creates intermediate directories for bare repo' '
+
+	git clone --bare src long/path/to/bare/dst &&
+	test -f long/path/to/bare/dst/config
+
+'
+
 test_done

@@ -9,10 +9,10 @@ git-apply - Apply a patch on a git index file and a working tree
 SYNOPSIS
 --------
 [verse]
-'git-apply' [--stat] [--numstat] [--summary] [--check] [--index]
+'git apply' [--stat] [--numstat] [--summary] [--check] [--index]
 	  [--apply] [--no-add] [--build-fake-ancestor <file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
-	  [-pNUM] [-CNUM] [--inaccurate-eof] [--cached]
+	  [-pNUM] [-CNUM] [--inaccurate-eof] [--recount] [--cached]
 	  [--whitespace=<nowarn|warn|fix|error|error-all>]
 	  [--exclude=PATH] [--verbose] [<patch>...]
 
@@ -64,7 +64,7 @@ OPTIONS
 	without using the working tree. This implies '--index'.
 
 --build-fake-ancestor <file>::
-	Newer git-diff output has embedded 'index information'
+	Newer `git-diff` output has embedded 'index information'
 	for each blob to help identify the original version that
 	the patch applies to.  When this flag is given, and if
 	the original versions of the blobs is available locally,
@@ -78,7 +78,7 @@ the information is read from the current index instead.
 	Apply the patch in reverse.
 
 --reject::
-	For atomicity, linkgit:git-apply[1] by default fails the whole patch and
+	For atomicity, `git-apply` by default fails the whole patch and
 	does not touch the working tree when some of the hunks
 	do not apply.  This option makes it apply
 	the parts of the patch that are applicable, and leave the
@@ -102,7 +102,7 @@ the information is read from the current index instead.
 	ever ignored.
 
 --unidiff-zero::
-	By default, linkgit:git-apply[1] expects that the patch being
+	By default, `git-apply` expects that the patch being
 	applied is a unified diff with at least one line of context.
 	This provides good safety measures, but breaks down when
 	applying a diff generated with --unified=0. To bypass these
@@ -113,7 +113,7 @@ discouraged.
 
 --apply::
 	If you use any of the options marked "Turns off
-	'apply'" above, linkgit:git-apply[1] reads and outputs the
+	'apply'" above, `git-apply` reads and outputs the
 	information you asked without actually applying the
 	patch.  Give this flag after those flags to also apply
 	the patch.
@@ -147,7 +147,7 @@ discouraged.
 	considered whitespace errors.
 +
 By default, the command outputs warning messages but applies the patch.
-When linkgit:git-apply[1] is used for statistics and not applying a
+When `git-apply is used for statistics and not applying a
 patch, it defaults to `nowarn`.
 +
 You can use different `<action>` to control this
@@ -177,6 +177,11 @@ behavior:
 	current patch being applied will be printed. This option will cause
 	additional information to be reported.
 
+--recount::
+	Do not trust the line counts in the hunk headers, but infer them
+	by inspecting the patch (e.g. after editing the patch without
+	adjusting the hunk headers appropriately).
+
 Configuration
 -------------
 
@@ -186,7 +191,7 @@ apply.whitespace::
 
 Submodules
 ----------
-If the patch contains any changes to submodules then linkgit:git-apply[1]
+If the patch contains any changes to submodules then `git-apply`
 treats these changes as follows.
 
 If --index is specified (explicitly or implicitly), then the submodule

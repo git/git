@@ -8,7 +8,7 @@ git-http-fetch - Download from a remote git repository via HTTP
 
 SYNOPSIS
 --------
-'git-http-fetch' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [--stdin] <commit> <url>
+'git http-fetch' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [--stdin] <commit> <url>
 
 DESCRIPTION
 -----------
@@ -35,7 +35,7 @@ commit-id::
 
 --stdin::
 	Instead of a commit id on the command line (which is not expected in this
-	case), 'git-http-fetch' expects lines on stdin in the format
+	case), `git-http-fetch` expects lines on stdin in the format
 
 		<commit-id>['\t'<filename-as-in--w>]
 
