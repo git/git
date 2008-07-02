@@ -511,7 +511,7 @@ _git_add ()
 
 _git_bisect ()
 {
-	local subcommands="start bad good reset visualize replay log"
+	local subcommands="start bad good skip reset visualize replay log run"
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
@@ -519,7 +519,7 @@ _git_bisect ()
 	fi
 
 	case "$subcommand" in
-	bad|good|reset)
+	bad|good|reset|skip)
 		__gitcomp "$(__git_refs)"
 		;;
 	*)
