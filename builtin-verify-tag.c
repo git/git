@@ -100,11 +100,9 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 		i++;
 	}
 
-#ifndef __MINGW32__
 	/* sometimes the program was terminated because this signal
 	 * was received in the process of writing the gpg input: */
 	signal(SIGPIPE, SIG_IGN);
-#endif	
 	while (i < argc)
 		if (verify_tag(argv[i++], verbose))
 			had_error = 1;
