@@ -970,39 +970,15 @@ sub patch_update_file {
 		push @result, @{$mode->{TEXT}};
 	}
 	for (@hunk) {
-		my $text = $_->{TEXT};
-		my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
-		    parse_hunk_header($text->[0]);
-
-		if (!$_->{USE}) {
-			# We would have added ($n_cnt - $o_cnt) lines
-			# to the postimage if we were to use this hunk,
-			# but we didn't.  So the line number that the next
-			# hunk starts at would be shifted by that much.
-			$n_lofs -= ($n_cnt - $o_cnt);
-			next;
-		}
-		else {
-			if ($n_lofs) {
-				$n_ofs += $n_lofs;
-				$text->[0] = ("@@ -$o_ofs" .
-					      (($o_cnt != 1)
-					       ? ",$o_cnt" : '') .
-					      " +$n_ofs" .
-					      (($n_cnt != 1)
-					       ? ",$n_cnt" : '') .
-					      " @@\n");
-			}
-			for (@$text) {
-				push @result, $_;
-			}
+		if ($_->{USE}) {
+			push @result, @{$_->{TEXT}};
 		}
 	}
 
 	if (@result) {
 		my $fh;
 
-		open $fh, '| git apply --cached';
+		open $fh, '| git apply --cached --recount';
 		for (@{$head->{TEXT}}, @result) {
 			print $fh $_;
 		}
