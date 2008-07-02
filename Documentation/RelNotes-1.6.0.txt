@@ -4,9 +4,6 @@ GIT v1.6.0 Release Notes
 User visible changes
 --------------------
 
-[[Note that none of these are not merged to 'master' as of this writing
-but they will be before 1.6.0 happens]]
-
 With the default Makefile settings, most of the programs are now
 installed outside your $PATH, except for "git", "gitk", "git-gui" and
 some server side programs that need to be accessible for technical
@@ -20,6 +17,11 @@ scripts to use "git xyzzy" form, as we will stop installing
 
 Source changes needed for porting to MinGW environment are now all in the
 main git.git codebase.
+
+By default, packfiles created with this version uses delta-base-offset
+encoding introduced in v1.4.4.  Pack idx files are using version 2 that
+allows larger packs and added robustness thanks to its CRC checking,
+introduced in v1.5.2.
 
 
 Updates since v1.5.6
@@ -77,13 +79,32 @@ Updates since v1.5.6
 
 (usability, bells and whistles)
 
+* git-apply can handle a patch that touches the same path more than once
+  much better than before.
+
+* git-apply can be told not to trust the line counts recorded in the input
+  patch but recount, with the new --recount option.
+
 * git-archive can be told to omit certain paths from its output using
   export-ignore attributes.
+
+* git-clone can clone from a remote whose URL would be rewritten by
+  configuration stored in $HOME/.gitconfig now.
+
+* git-diff --check now checks leftover merge conflict markers.
+
+* When remote side used to have branch 'foo' and git-fetch finds that now
+  it has branch 'foo/bar', it refuses to lose the existing remote tracking
+  branch and its reflog.  The error message has been improved to suggest
+  pruning the remote if the user wants to proceed and get the latest set
+  of branches from the remote, including such 'foo/bar'.
 
 * fast-export learned to export and import marks file; this can be used to
   interface with fast-import incrementally.
 
 * Original SHA-1 value for "update-ref -d" is optional now.
+
+* git-send-mail can talk not just over SSL but over TLS now.
 
 * You can tell "git status -u" to even more aggressively omit checking
   untracked files with --untracked-files=no.
@@ -108,6 +129,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.5.6.1-104-ga08b868
+O=v1.5.6.1-155-gaa0c1f2
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
