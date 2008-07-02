@@ -282,6 +282,23 @@ static int ref_cmp(const void *r1, const void *r2)
 	return strcmp(c1->name, c2->name);
 }
 
+static void fill_tracking_info(char *stat, const char *branch_name)
+{
+	int ours, theirs;
+	struct branch *branch = branch_get(branch_name);
+
+	if (!stat_tracking_info(branch, &ours, &theirs) || (!ours && !theirs)) {
+		stat[0] = '\0';
+		return;
+	}
+	if (!ours)
+		sprintf(stat, "[behind %d] ", theirs);
+	else if (!theirs)
+		sprintf(stat, "[ahead %d] ", ours);
+	else
+		sprintf(stat, "[ahead %d, behind %d] ", ours, theirs);
+}
+
 static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 			   int abbrev, int current)
 {
@@ -310,6 +327,7 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	if (verbose) {
 		struct strbuf subject;
 		const char *sub = " **** invalid ref ****";
+		char stat[128];
 
 		strbuf_init(&subject, 0);
 
@@ -319,10 +337,15 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 					    &subject, 0, NULL, NULL, 0, 0);
 			sub = subject.buf;
 		}
-		printf("%c %s%-*s%s %s %s\n", c, branch_get_color(color),
+
+		if (item->kind == REF_LOCAL_BRANCH)
+			fill_tracking_info(stat, item->name);
+
+		printf("%c %s%-*s%s %s %s%s\n", c, branch_get_color(color),
 		       maxwidth, item->name,
 		       branch_get_color(COLOR_BRANCH_RESET),
-		       find_unique_abbrev(item->sha1, abbrev), sub);
+		       find_unique_abbrev(item->sha1, abbrev),
+		       stat, sub);
 		strbuf_release(&subject);
 	} else {
 		printf("%c %s%s%s\n", c, branch_get_color(color), item->name,
