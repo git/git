@@ -41,11 +41,17 @@ create_new_pack() {
     git verify-pack -v ${pack}.pack
 }
 
+zeros () {
+	while :; do
+		echo -n xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	done | tr x '\0'
+}
+
 do_corrupt_object() {
     ofs=`git show-index < ${pack}.idx | grep $1 | cut -f1 -d" "` &&
     ofs=$(($ofs + $2)) &&
     chmod +w ${pack}.pack &&
-    dd if=/dev/zero of=${pack}.pack count=1 bs=1 conv=notrunc seek=$ofs &&
+    zeros | dd of=${pack}.pack count=1 bs=1 conv=notrunc seek=$ofs &&
     test_must_fail git verify-pack ${pack}.pack
 }
 
