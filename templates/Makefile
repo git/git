@@ -10,8 +10,6 @@ RM ?= rm -f
 prefix ?= $(HOME)
 template_instdir ?= $(prefix)/share/git-core/templates
 # DESTDIR=
-# set NOEXECTEMPL to non-empty to change the names of hook scripts
-# so that the tools will not find them
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
@@ -34,7 +32,6 @@ boilerplates.made : $(bpsrc)
 		$(INSTALL) -d -m 755 blt/$$dir && \
 		case "$$boilerplate" in \
 		*--) ;; \
-		hooks--*) cp -p $$boilerplate blt/$${dst}$(NOEXECTEMPL) ;; \
 		*) cp -p $$boilerplate blt/$$dst ;; \
 		esac || exit; \
 	done && \

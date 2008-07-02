@@ -743,7 +743,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
 	EXTLIBS += -lws2_32
 	X = .exe
-	NOEXECTEMPL = .noexec
 	template_dir = ../share/git-core/templates/
 	ETC_GITCONFIG = ../etc/gitconfig
 endif
@@ -1058,7 +1057,7 @@ ifndef NO_TCLTK
 	$(QUIET_SUBDIR0)gitk-git $(QUIET_SUBDIR1) all
 endif
 	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
-	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1) NOEXECTEMPL='$(NOEXECTEMPL)'
+	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1)
 
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
