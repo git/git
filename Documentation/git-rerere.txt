@@ -7,7 +7,7 @@ git-rerere - Reuse recorded resolution of conflicted merges
 
 SYNOPSIS
 --------
-'git rerere' [clear|diff|status|gc]
+'git rerere' ['clear'|'diff'|'status'|'gc']
 
 DESCRIPTION
 -----------
@@ -49,7 +49,7 @@ conflicts.  Additional arguments are passed directly to the system
 
 'status'::
 
-Like diff, but this only prints the filenames that will be tracked
+Like 'diff', but this only prints the filenames that will be tracked
 for resolutions.
 
 'gc'::

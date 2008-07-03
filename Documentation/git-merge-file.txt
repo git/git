@@ -85,7 +85,7 @@ Written by Johannes Schindelin <johannes.schindelin@gmx.de>
 Documentation
 --------------
 Documentation by Johannes Schindelin and the git-list <git@vger.kernel.org>,
-with parts copied from the original documentation of RCS merge.
+with parts copied from the original documentation of RCS 'merge'.
 
 GIT
 ---
