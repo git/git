@@ -175,10 +175,10 @@ and file suffix, and number patches when outputting more than one.
 
 ------------
 [format]
-        headers = "Organization: git-foo\n"
-        subjectprefix = CHANGE
-        suffix = .txt
-        numbered = auto
+	headers = "Organization: git-foo\n"
+	subjectprefix = CHANGE
+	suffix = .txt
+	numbered = auto
 	cc = <email>
 ------------
 

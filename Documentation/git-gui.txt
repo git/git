@@ -34,7 +34,7 @@ blame::
 
 browser::
 	Start a tree browser showing all files in the specified
-	commit (or 'HEAD' by default).	Files selected through the
+	commit (or 'HEAD' by default).  Files selected through the
 	browser are opened in the blame viewer.
 
 citool::
@@ -61,7 +61,7 @@ git gui blame Makefile::
 git gui blame v0.99.8 Makefile::
 
 	Show the contents of 'Makefile' in revision 'v0.99.8'
-	and provide annotations for each line.	Unlike the above
+	and provide annotations for each line.  Unlike the above
 	example the file is read from the object database and not
 	the working directory.
 

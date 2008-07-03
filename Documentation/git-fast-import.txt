@@ -86,7 +86,7 @@ OPTIONS
 
 --quiet::
 	Disable all non-fatal output, making fast-import silent when it
-	is successful.	This option disables the output shown by
+	is successful.  This option disables the output shown by
 	\--stats.
 
 --stats::
