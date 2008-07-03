@@ -388,11 +388,4 @@ char *reencode_string(const char *in, const char *out_encoding, const char *in_e
 	iconv_close(conv);
 	return out;
 }
-#else
-char *reencode_string(const char *in, const char *out_encoding, const char *in_encoding)
-{
-	if (!in_encoding)
-		return NULL;
-	return xstrdup(in);
-}
 #endif
