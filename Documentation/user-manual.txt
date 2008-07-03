@@ -1303,7 +1303,7 @@ $ git diff -3 file.txt		# diff against stage 3
 $ git diff --theirs file.txt	# same as the above.
 -------------------------------------------------
 
-The linkgit:git-log[1] and gitk[1] commands also provide special help
+The linkgit:git-log[1] and linkgit:gitk[1] commands also provide special help
 for merges:
 
 -------------------------------------------------

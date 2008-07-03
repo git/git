@@ -72,7 +72,7 @@ OPTIONS
 	`git-update-server-info`.  This option skips
 	updating local catalog files needed to publish
 	this repository (or a direct copy of it)
-	over HTTP or FTP.  See gitlink:git-update-server-info[1].
+	over HTTP or FTP.  See linkgit:git-update-server-info[1].
 
 --window=[N]::
 --depth=[N]::
