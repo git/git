@@ -709,7 +709,8 @@ static int is_local(const char *url)
 {
 	const char *colon = strchr(url, ':');
 	const char *slash = strchr(url, '/');
-	return !colon || (slash && slash < colon);
+	return !colon || (slash && slash < colon) ||
+		has_dos_drive_prefix(url);
 }
 
 static int is_file(const char *url)

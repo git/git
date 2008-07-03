@@ -205,7 +205,7 @@ GITWEB_FAVICON = git-favicon.png
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 
-export prefix bindir gitexecdir sharedir template_dir htmldir sysconfdir
+export prefix bindir gitexecdir sharedir htmldir sysconfdir
 
 CC = gcc
 AR = ar
@@ -273,11 +273,9 @@ EXTRA_PROGRAMS =
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS += $(EXTRA_PROGRAMS)
-PROGRAMS += git-daemon$X
 PROGRAMS += git-fast-import$X
 PROGRAMS += git-fetch-pack$X
 PROGRAMS += git-hash-object$X
-PROGRAMS += git-imap-send$X
 PROGRAMS += git-index-pack$X
 PROGRAMS += git-merge-index$X
 PROGRAMS += git-merge-tree$X
@@ -337,6 +335,7 @@ LIB_H += builtin.h
 LIB_H += cache.h
 LIB_H += cache-tree.h
 LIB_H += commit.h
+LIB_H += compat/mingw.h
 LIB_H += csum-file.h
 LIB_H += decorate.h
 LIB_H += delta.h
@@ -717,6 +716,36 @@ ifeq ($(uname_S),HP-UX)
 	NO_HSTRERROR = YesPlease
 	NO_SYS_SELECT_H = YesPlease
 endif
+ifneq (,$(findstring MINGW,$(uname_S)))
+	NO_MMAP = YesPlease
+	NO_PREAD = YesPlease
+	NO_OPENSSL = YesPlease
+	NO_CURL = YesPlease
+	NO_SYMLINK_HEAD = YesPlease
+	NO_IPV6 = YesPlease
+	NO_SETENV = YesPlease
+	NO_UNSETENV = YesPlease
+	NO_STRCASESTR = YesPlease
+	NO_STRLCPY = YesPlease
+	NO_MEMMEM = YesPlease
+	NEEDS_LIBICONV = YesPlease
+	OLD_ICONV = YesPlease
+	NO_C99_FORMAT = YesPlease
+	NO_STRTOUMAX = YesPlease
+	NO_MKDTEMP = YesPlease
+	SNPRINTF_RETURNS_BOGUS = YesPlease
+	NO_SVN_TESTS = YesPlease
+	NO_PERL_MAKEMAKER = YesPlease
+	NO_POSIX_ONLY_PROGRAMS = YesPlease
+	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat
+	COMPAT_CFLAGS += -DSNPRINTF_SIZE_CORR=1
+	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
+	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
+	EXTLIBS += -lws2_32
+	X = .exe
+	template_dir = ../share/git-core/templates/
+	ETC_GITCONFIG = ../etc/gitconfig
+endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
@@ -777,6 +806,10 @@ ifdef ZLIB_PATH
 endif
 EXTLIBS += -lz
 
+ifndef NO_POSIX_ONLY_PROGRAMS
+	PROGRAMS += git-daemon$X
+	PROGRAMS += git-imap-send$X
+endif
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
@@ -1267,6 +1300,13 @@ remove-dashes:
 	./fixup-builtins $(BUILT_INS)
 
 ### Installation rules
+
+ifeq ($(firstword $(subst /, ,$(template_dir))),..)
+template_instdir = $(gitexecdir)/$(template_dir)
+else
+template_instdir = $(template_dir)
+endif
+export template_instdir
 
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'

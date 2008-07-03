@@ -529,7 +529,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		end = host;
 
 	path = strchr(end, c);
-	if (path) {
+	if (path && !has_dos_drive_prefix(end)) {
 		if (c == ':') {
 			protocol = PROTO_SSH;
 			*path++ = '\0';

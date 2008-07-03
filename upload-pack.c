@@ -135,6 +135,8 @@ static int do_rev_list(int fd, void *create_full_pack)
 		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
 	traverse_commit_list(&revs, show_commit, show_object);
+	fflush(pack_pipe);
+	fclose(pack_pipe);
 	return 0;
 }
 

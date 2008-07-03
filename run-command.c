@@ -65,21 +65,8 @@ int start_command(struct child_process *cmd)
 		cmd->err = fderr[0];
 	}
 
+#ifndef __MINGW32__
 	cmd->pid = fork();
-	if (cmd->pid < 0) {
-		if (need_in)
-			close_pair(fdin);
-		else if (cmd->in)
-			close(cmd->in);
-		if (need_out)
-			close_pair(fdout);
-		else if (cmd->out)
-			close(cmd->out);
-		if (need_err)
-			close_pair(fderr);
-		return -ERR_RUN_COMMAND_FORK;
-	}
-
 	if (!cmd->pid) {
 		if (cmd->no_stdin)
 			dup_devnull(0);
@@ -127,6 +114,88 @@ int start_command(struct child_process *cmd)
 			execvp(cmd->argv[0], (char *const*) cmd->argv);
 		}
 		die("exec %s failed.", cmd->argv[0]);
+	}
+#else
+	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
+	const char *sargv0 = cmd->argv[0];
+	char **env = environ;
+	struct strbuf git_cmd;
+
+	if (cmd->no_stdin) {
+		s0 = dup(0);
+		dup_devnull(0);
+	} else if (need_in) {
+		s0 = dup(0);
+		dup2(fdin[0], 0);
+	} else if (cmd->in) {
+		s0 = dup(0);
+		dup2(cmd->in, 0);
+	}
+
+	if (cmd->no_stderr) {
+		s2 = dup(2);
+		dup_devnull(2);
+	} else if (need_err) {
+		s2 = dup(2);
+		dup2(fderr[1], 2);
+	}
+
+	if (cmd->no_stdout) {
+		s1 = dup(1);
+		dup_devnull(1);
+	} else if (cmd->stdout_to_stderr) {
+		s1 = dup(1);
+		dup2(2, 1);
+	} else if (need_out) {
+		s1 = dup(1);
+		dup2(fdout[1], 1);
+	} else if (cmd->out > 1) {
+		s1 = dup(1);
+		dup2(cmd->out, 1);
+	}
+
+	if (cmd->dir)
+		die("chdir in start_command() not implemented");
+	if (cmd->env) {
+		env = copy_environ();
+		for (; *cmd->env; cmd->env++)
+			env = env_setenv(env, *cmd->env);
+	}
+
+	if (cmd->git_cmd) {
+		strbuf_init(&git_cmd, 0);
+		strbuf_addf(&git_cmd, "git-%s", cmd->argv[0]);
+		cmd->argv[0] = git_cmd.buf;
+	}
+
+	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
+
+	if (cmd->env)
+		free_environ(env);
+	if (cmd->git_cmd)
+		strbuf_release(&git_cmd);
+
+	cmd->argv[0] = sargv0;
+	if (s0 >= 0)
+		dup2(s0, 0), close(s0);
+	if (s1 >= 0)
+		dup2(s1, 1), close(s1);
+	if (s2 >= 0)
+		dup2(s2, 2), close(s2);
+#endif
+
+	if (cmd->pid < 0) {
+		if (need_in)
+			close_pair(fdin);
+		else if (cmd->in)
+			close(cmd->in);
+		if (need_out)
+			close_pair(fdout);
+		else if (cmd->out)
+			close(cmd->out);
+		if (need_err)
+			close_pair(fderr);
+		return -ERR_RUN_COMMAND_FORK;
 	}
 
 	if (need_in)
@@ -219,13 +288,23 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 	return run_command(&cmd);
 }
 
+#ifdef __MINGW32__
+static __stdcall unsigned run_thread(void *data)
+{
+	struct async *async = data;
+	return async->proc(async->fd_for_proc, async->data);
+}
+#endif
+
 int start_async(struct async *async)
 {
 	int pipe_out[2];
 
 	if (pipe(pipe_out) < 0)
 		return error("cannot create pipe: %s", strerror(errno));
+	async->out = pipe_out[0];
 
+#ifndef __MINGW32__
 	async->pid = fork();
 	if (async->pid < 0) {
 		error("fork (async) failed: %s", strerror(errno));
@@ -236,16 +315,33 @@ int start_async(struct async *async)
 		close(pipe_out[0]);
 		exit(!!async->proc(pipe_out[1], async->data));
 	}
-	async->out = pipe_out[0];
 	close(pipe_out[1]);
+#else
+	async->fd_for_proc = pipe_out[1];
+	async->tid = (HANDLE) _beginthreadex(NULL, 0, run_thread, async, 0, NULL);
+	if (!async->tid) {
+		error("cannot create thread: %s", strerror(errno));
+		close_pair(pipe_out);
+		return -1;
+	}
+#endif
 	return 0;
 }
 
 int finish_async(struct async *async)
 {
+#ifndef __MINGW32__
 	int ret = 0;
 
 	if (wait_or_whine(async->pid))
 		ret = error("waitpid (async) failed");
+#else
+	DWORD ret = 0;
+	if (WaitForSingleObject(async->tid, INFINITE) != WAIT_OBJECT_0)
+		ret = error("waiting for thread failed: %lu", GetLastError());
+	else if (!GetExitCodeThread(async->tid, &ret))
+		ret = error("cannot get thread exit code: %lu", GetLastError());
+	CloseHandle(async->tid);
+#endif
 	return ret;
 }

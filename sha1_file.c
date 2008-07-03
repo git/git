@@ -83,13 +83,17 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
+static inline int offset_1st_component(const char *path)
+{
+	if (has_dos_drive_prefix(path))
+		return 2 + (path[2] == '/');
+	return *path == '/';
+}
+
 int safe_create_leading_directories(char *path)
 {
-	char *pos = path;
+	char *pos = path + offset_1st_component(path);
 	struct stat st;
-
-	if (is_absolute_path(path))
-		pos++;
 
 	while (pos) {
 		pos = strchr(pos, '/');
@@ -401,7 +405,7 @@ void prepare_alt_odb(void)
 	if (!alt) alt = "";
 
 	alt_odb_tail = &alt_odb_list;
-	link_alt_odb_entries(alt, alt + strlen(alt), ':', NULL, 0);
+	link_alt_odb_entries(alt, alt + strlen(alt), PATH_SEP, NULL, 0);
 
 	read_info_alternates(get_object_directory(), 0);
 }

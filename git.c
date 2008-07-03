@@ -369,6 +369,16 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 	};
 	int i;
+	static const char ext[] = STRIP_EXTENSION;
+
+	if (sizeof(ext) > 1) {
+		i = strlen(argv[0]) - strlen(ext);
+		if (i > 0 && !strcmp(argv[0] + i, ext)) {
+			char *argv0 = strdup(argv[0]);
+			argv[0] = cmd = argv0;
+			argv0[i] = '\0';
+		}
+	}
 
 	/* Turn "git cmd --help" into "git help cmd" */
 	if (argc > 1 && !strcmp(argv[1], "--help")) {
@@ -416,8 +426,8 @@ static void execv_dashed_external(const char **argv)
 
 int main(int argc, const char **argv)
 {
-	const char *cmd = argv[0] ? argv[0] : "git-help";
-	char *slash = strrchr(cmd, '/');
+	const char *cmd = argv[0] && *argv[0] ? argv[0] : "git-help";
+	char *slash = (char *)cmd + strlen(cmd);
 	const char *cmd_path = NULL;
 	int done_alias = 0;
 
@@ -426,7 +436,10 @@ int main(int argc, const char **argv)
 	 * name, and the dirname as the default exec_path
 	 * if we don't have anything better.
 	 */
-	if (slash) {
+	do
+		--slash;
+	while (cmd <= slash && !is_dir_sep(*slash));
+	if (cmd <= slash) {
 		*slash++ = 0;
 		cmd_path = cmd;
 		cmd = slash;

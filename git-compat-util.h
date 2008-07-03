@@ -63,17 +63,18 @@
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
-#include <sys/wait.h>
 #include <fnmatch.h>
+#include <assert.h>
+#include <regex.h>
+#include <utime.h>
+#ifndef __MINGW32__
+#include <sys/wait.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <utime.h>
 #ifndef NO_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#include <assert.h>
-#include <regex.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -89,6 +90,10 @@
 #include <grp.h>
 #define _ALL_SOURCE 1
 #endif
+#else 	/* __MINGW32__ */
+/* pull in Windows compatibility stuff */
+#include "compat/mingw.h"
+#endif	/* __MINGW32__ */
 
 #ifndef NO_ICONV
 #include <iconv.h>
@@ -103,6 +108,22 @@
 
 #ifndef PRIuMAX
 #define PRIuMAX "llu"
+#endif
+
+#ifndef PATH_SEP
+#define PATH_SEP ':'
+#endif
+
+#ifndef STRIP_EXTENSION
+#define STRIP_EXTENSION ""
+#endif
+
+#ifndef has_dos_drive_prefix
+#define has_dos_drive_prefix(path) 0
+#endif
+
+#ifndef is_dir_sep
+#define is_dir_sep(c) ((c) == '/')
 #endif
 
 #ifdef __GNUC__
@@ -126,6 +147,7 @@ extern void set_error_routine(void (*routine)(const char *err, va_list params));
 extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 
 extern int prefixcmp(const char *str, const char *prefix);
+extern time_t tm_to_time_t(const struct tm *tm);
 
 #ifdef NO_MMAP
 
@@ -163,6 +185,12 @@ extern int git_munmap(void *start, size_t length);
 #define pread git_pread
 extern ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 #endif
+/*
+ * Forward decl that will remind us if its twin in cache.h changes.
+ * This function is used in compat/pread.c.  But we can't include
+ * cache.h there.
+ */
+extern ssize_t read_in_full(int fd, void *buf, size_t count);
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
