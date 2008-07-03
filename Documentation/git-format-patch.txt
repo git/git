@@ -190,7 +190,7 @@ EXAMPLES
 the current branch using `git-am` to cherry-pick them:
 +
 ------------
-$ git format-patch -k --stdout R1..R2 | git-am -3 -k
+$ git format-patch -k --stdout R1..R2 | git am -3 -k
 ------------
 
 * Extract all commits which are in the current branch but not in the

@@ -259,10 +259,10 @@ NOTES
 When you rebase a branch, you are changing its history in a way that
 will cause problems for anyone who already has a copy of the branch
 in their repository and tries to pull updates from you.  You should
-understand the implications of using 'git rebase' on a repository that
+understand the implications of using 'git-rebase' on a repository that
 you share.
 
-When the git rebase command is run, it will first execute a "pre-rebase"
+When the git-rebase command is run, it will first execute a "pre-rebase"
 hook if one exists.  You can use this hook to do sanity checks and
 reject the rebase if it isn't appropriate.  Please see the template
 pre-rebase hook script for an example.

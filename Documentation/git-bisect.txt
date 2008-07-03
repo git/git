@@ -26,7 +26,7 @@ on the subcommand:
  git bisect log
  git bisect run <cmd>...
 
-This command uses `git rev-list --bisect` to help drive the
+This command uses `git-rev-list --bisect` to help drive the
 binary search process to find which change introduced a bug, given an
 old "good" commit object name and a later "bad" commit object name.
 
@@ -101,7 +101,7 @@ $ git bisect visualize
 to see the currently remaining suspects in `gitk`.  `visualize` is a bit
 too long to type and `view` is provided as a synonym.
 
-If `DISPLAY` environment variable is not set, `git log` is used
+If 'DISPLAY' environment variable is not set, `git-log` is used
 instead.  You can even give command line options such as `-p` and
 `--stat`.
 
