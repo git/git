@@ -204,7 +204,7 @@ static void describe(const char *arg, int last_one)
 		 */
 		display_name(n);
 		if (longformat)
-			show_suffix(0, n->tag->tagged->sha1);
+			show_suffix(0, n->tag ? n->tag->tagged->sha1 : sha1);
 		printf("\n");
 		return;
 	}
