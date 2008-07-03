@@ -11,6 +11,7 @@
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
 #define TOPOSORT	(1u<<9)	/* In the active toposort list.. */
+#define ALL_REV_FLAGS	((1u<<10)-1)
 
 struct rev_info;
 struct log_info;

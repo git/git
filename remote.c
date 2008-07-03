@@ -1295,6 +1295,10 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 		else
 			(*num_theirs)++;
 	}
+
+	/* clear object flags smudged by the above traversal */
+	clear_commit_marks(ours, ALL_REV_FLAGS);
+	clear_commit_marks(theirs, ALL_REV_FLAGS);
 	return 1;
 }
 
