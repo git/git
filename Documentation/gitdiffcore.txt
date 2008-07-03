@@ -16,8 +16,8 @@ The diff commands `git-diff-index`, `git-diff-files`, and `git-diff-tree`
 can be told to manipulate differences they find in
 unconventional ways before showing `diff` output.  The manipulation
 is collectively called "diffcore transformation".  This short note
-describes what they are and how to use them to produce diff outputs
-that are easier to understand than the conventional kind.
+describes what they are and how to use them to produce diff output
+that is easier to understand than the conventional kind.
 
 
 The chain of operation
