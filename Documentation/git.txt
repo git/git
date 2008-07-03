@@ -142,7 +142,7 @@ help ...'.
 --exec-path::
 	Path to wherever your core git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
-	environment variable. If no path is given 'git' will print
+	environment variable. If no path is given, 'git' will print
 	the current setting and then exit.
 
 -p::
