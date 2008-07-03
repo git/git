@@ -1655,7 +1655,7 @@ branch before these two merges by resetting it to 'master~2':
 $ git reset --hard master~2
 ------------
 
-You can make sure 'git show-branch' matches the state before
+You can make sure `git show-branch` matches the state before
 those two 'git-merge' you just did.  Then, instead of running
 two 'git-merge' commands in a row, you would merge these two
 branch heads (this is known as 'making an Octopus'):

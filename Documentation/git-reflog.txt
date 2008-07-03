@@ -36,7 +36,7 @@ The subcommand "show" (which is also the default, in the absence of any
 subcommands) will take all the normal log options, and show the log of
 the reference provided in the command-line (or `HEAD`, by default).
 The reflog will cover all recent actions (HEAD reflog records branch switching
-as well).  It is an alias for 'git log -g --abbrev-commit --pretty=oneline';
+as well).  It is an alias for `git log -g --abbrev-commit --pretty=oneline`;
 see linkgit:git-log[1].
 
 The reflog is useful in various git commands, to specify the old value
@@ -46,7 +46,7 @@ point to one week ago", and so on. See linkgit:git-rev-parse[1] for
 more details.
 
 To delete single entries from the reflog, use the subcommand "delete"
-and specify the _exact_ entry (e.g. ``git reflog delete master@\{2\}'').
+and specify the _exact_ entry (e.g. "`git reflog delete master@\{2\}`").
 
 
 OPTIONS

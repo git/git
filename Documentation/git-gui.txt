@@ -71,7 +71,7 @@ git gui citool::
 
 git citool::
 
-	Same as 'git gui citool' (above).
+	Same as `git gui citool` (above).
 
 git gui browser maint::
 

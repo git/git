@@ -136,8 +136,8 @@ OPTIONS
 +
 Other options are available to control how the manual page is
 displayed. See linkgit:git-help[1] for more information,
-because 'git --help ...' is converted internally into 'git
-help ...'.
+because `git --help ...` is converted internally into `git
+help ...`.
 
 --exec-path::
 	Path to wherever your core git programs are installed.
