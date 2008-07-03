@@ -15,8 +15,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Use 'git commit' to store the current contents of the index in a new
-commit along with a log message describing the changes you have made.
+Stores the current contents of the index in a new commit along
+with a log message from the user describing the changes.
 
 The content to be added can be specified in several ways:
 
