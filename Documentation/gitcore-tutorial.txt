@@ -61,7 +61,7 @@ Initialized empty Git repository in .git/
 which is just git's way of saying that you haven't been doing anything
 strange, and that it will have created a local `.git` directory setup for
 your new project. You will now have a `.git` directory, and you can
-inspect that with `ls`. For your new empty project, it should show you
+inspect that with 'ls'. For your new empty project, it should show you
 three entries, among other things:
 
  - a file called `HEAD`, that has `ref: refs/heads/master` in it.
@@ -660,7 +660,7 @@ in the new repository to make sure that the index file is up-to-date.
 
 Note that the second point is true even across machines. You can
 duplicate a remote git repository with *any* regular copy mechanism, be it
-`scp`, `rsync` or `wget`.
+'scp', 'rsync' or 'wget'.
 
 When copying a remote repository, you'll want to at a minimum update the
 index cache when you do this, and especially with other peoples'
@@ -1066,9 +1066,9 @@ most efficient way to exchange git objects between repositories.
 Local directory::
 	`/path/to/repo.git/`
 +
-This transport is the same as SSH transport but uses `sh` to run
+This transport is the same as SSH transport but uses 'sh' to run
 both ends on the local machine instead of running other end on
-the remote machine via `ssh`.
+the remote machine via 'ssh'.
 
 git Native::
 	`git://remote.machine/path/to/repo.git/`
@@ -1275,8 +1275,8 @@ fatal: merge program failed
 describe those three versions, and is responsible to leave the
 merge results in the working tree.
 It is a fairly straightforward shell script, and
-eventually calls `merge` program from RCS suite to perform a
-file-level 3-way merge.  In this case, `merge` detects
+eventually calls 'merge' program from RCS suite to perform a
+file-level 3-way merge.  In this case, 'merge' detects
 conflicts, and the merge result with conflict marks is left in
 the working tree..  This can be seen if you run `ls-files
 --stage` again at this point:
@@ -1360,7 +1360,7 @@ program on the `$PATH`.
 [NOTE]
 Many installations of sshd do not invoke your shell as the login
 shell when you directly run programs; what this means is that if
-your login shell is `bash`, only `.bashrc` is read and not
+your login shell is 'bash', only `.bashrc` is read and not
 `.bash_profile`. As a workaround, make sure `.bashrc` sets up
 `$PATH` so that you can run 'git-receive-pack' program.
 

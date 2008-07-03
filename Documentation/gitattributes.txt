@@ -278,7 +278,7 @@ is prefixed with a line of the form:
 
 The text is called 'hunk header', and by default a line that
 begins with an alphabet, an underscore or a dollar sign is used,
-which matches what GNU `diff -p` output uses.  This default
+which matches what GNU 'diff -p' output uses.  This default
 selection however is not suited for some contents, and you can
 use customized pattern to make a selection.
 
@@ -322,7 +322,7 @@ and other programs such as `git revert` and `git cherry-pick`.
 Set::
 
 	Built-in 3-way merge driver is used to merge the
-	contents in a way similar to `merge` command of `RCS`
+	contents in a way similar to 'merge' command of `RCS`
 	suite.  This is suitable for ordinary text files.
 
 Unset::
@@ -426,7 +426,7 @@ Checking whitespace errors
 ^^^^^^^^^^^^
 
 The `core.whitespace` configuration variable allows you to define what
-`diff` and `apply` should consider whitespace errors for all paths in
+'diff' and 'apply' should consider whitespace errors for all paths in
 the project (See linkgit:git-config[1]).  This attribute gives you finer
 control per path.
 

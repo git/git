@@ -45,7 +45,7 @@ will automatically invoke this command.
 This displays diffs for the current state of the resolution.  It is
 useful for tracking what has changed while the user is resolving
 conflicts.  Additional arguments are passed directly to the system
-`diff` command installed in PATH.
+'diff' command installed in PATH.
 
 'status'::
 

@@ -486,7 +486,7 @@ other
 'GIT_SSH'::
 	If this environment variable is set then 'git-fetch'
 	and 'git-push' will use this command instead
-	of `ssh` when they need to connect to a remote system.
+	of 'ssh' when they need to connect to a remote system.
 	The '$GIT_SSH' command will be given exactly two arguments:
 	the 'username@host' (or just 'host') from the URL and the
 	shell command to execute on that remote system.

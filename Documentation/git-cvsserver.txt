@@ -115,7 +115,7 @@ This has the advantage that it will be saved in your 'CVS/Root' files and
 you don't need to worry about always setting the correct environment
 variable.  SSH users restricted to 'git-shell' don't need to override the default
 with CVS_SERVER (and shouldn't) as 'git-shell' understands `cvs` to mean
-'git-cvsserver' and pretends that the other end runs the real `cvs` better.
+'git-cvsserver' and pretends that the other end runs the real 'cvs' better.
 --
 2. For each repo that you want accessible from CVS you need to edit config in
    the repo and add the following section.
@@ -328,7 +328,7 @@ is left blank. But if `gitcvs.allbinary` is set to "guess", then
 the correct '-k' mode will be guessed based on the contents of
 the file.
 
-For best consistency with `cvs`, it is probably best to override the
+For best consistency with 'cvs', it is probably best to override the
 defaults by setting `gitcvs.usecrlfattr` to true,
 and `gitcvs.allbinary` to "guess".
 

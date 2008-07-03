@@ -565,7 +565,7 @@ branch.
 
 'git-clone' does not clone branches under the refs/remotes/ hierarchy or
 any 'git-svn' metadata, or config.  So repositories created and managed with
-using 'git-svn' should use `rsync` for cloning, if cloning is to be done
+using 'git-svn' should use 'rsync' for cloning, if cloning is to be done
 at all.
 
 Since 'dcommit' uses rebase internally, any git branches you 'git-push' to

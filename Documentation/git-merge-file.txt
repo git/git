@@ -39,8 +39,8 @@ the alternatives.
 The exit value of this program is negative on error, and the number of
 conflicts otherwise. If the merge was clean, the exit value is 0.
 
-'git-merge-file' is designed to be a minimal clone of RCS `merge`; that is, it
-implements all of RCS merge's functionality which is needed by
+'git-merge-file' is designed to be a minimal clone of RCS 'merge'; that is, it
+implements all of RCS 'merge''s functionality which is needed by
 linkgit:git[1].
 
 

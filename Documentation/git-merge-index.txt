@@ -47,9 +47,9 @@ A sample script called 'git-merge-one-file' is included in the
 distribution.
 
 ALERT ALERT ALERT! The git "merge object order" is different from the
-RCS `merge` program merge object order. In the above ordering, the
+RCS 'merge' program merge object order. In the above ordering, the
 original is first. But the argument order to the 3-way merge program
-`merge` is to have the original in the middle. Don't ask me why.
+'merge' is to have the original in the middle. Don't ask me why.
 
 Examples:
 

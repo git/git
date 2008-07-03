@@ -34,7 +34,7 @@ $ git clone foo.com:/pub/repo.git/ my-project
 $ cd my-project
 ------------------------------------------------
 
-and hack away.  The equivalent of `cvs update` is
+and hack away.  The equivalent of 'cvs update' is
 
 ------------------------------------------------
 $ git pull origin
@@ -60,7 +60,7 @@ $ git push origin master
 ------------------------------------------------
 
 to "push" those commits to the shared repository.  If someone else has
-updated the repository more recently, 'git-push', like `cvs commit`, will
+updated the repository more recently, 'git-push', like 'cvs commit', will
 complain, in which case you must pull any changes before attempting the
 push again.
 
