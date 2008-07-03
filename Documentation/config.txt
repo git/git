@@ -627,8 +627,8 @@ gc.autopacklimit::
 gc.packrefs::
 	`git gc` does not run `git pack-refs` in a bare repository by
 	default so that older dumb-transport clients can still fetch
-	from the repository.  Setting this to `true` lets `git
-	gc` to run `git pack-refs`.  Setting this to `false` tells
+	from the repository.  Setting this to `true` lets `git gc`
+	to run `git pack-refs`.  Setting this to `false` tells
 	`git gc` never to run `git pack-refs`. The default setting is
 	`notbare`. Enable it only when you know you do not have to
 	support such clients.  The default setting will change to `true`

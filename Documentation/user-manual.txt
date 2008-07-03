@@ -2443,8 +2443,8 @@ patches to the new mywork.  The result will look like:
 ................................................
 
 In the process, it may discover conflicts.  In that case it will stop
-and allow you to fix the conflicts; after fixing conflicts, use "git
-add" to update the index with those contents, and then, instead of
+and allow you to fix the conflicts; after fixing conflicts, use "git add"
+to update the index with those contents, and then, instead of
 running git-commit, just run
 
 -------------------------------------------------
@@ -2700,8 +2700,8 @@ master branch.  In more detail:
 git fetch and fast-forwards
 ---------------------------
 
-In the previous example, when updating an existing branch, "git
-fetch" checks to make sure that the most recent commit on the remote
+In the previous example, when updating an existing branch, "git fetch"
+checks to make sure that the most recent commit on the remote
 branch is a descendant of the most recent commit on your copy of the
 branch before updating your copy of the branch to point at the new
 commit.  Git calls this process a <<fast-forwards,fast forward>>.
