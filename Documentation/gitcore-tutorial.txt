@@ -878,7 +878,7 @@ means: normally it will just show you your current `HEAD`) and their
 histories. You can also see exactly how they came to be from a common
 source.
 
-Anyway, let's exit `gitk` (`^Q` or the File menu), and decide that we want
+Anyway, let's exit 'gitk' (`^Q` or the File menu), and decide that we want
 to merge the work we did on the `mybranch` branch into the `master`
 branch (which is currently our `HEAD` too). To do that, there's a nice
 script called 'git-merge', which wants to know which branches you want

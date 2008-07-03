@@ -529,7 +529,7 @@ then merged back together, the order in which 'git-log' presents
 those commits is meaningless.
 
 Most projects with multiple contributors (such as the linux kernel,
-or git itself) have frequent merges, and `gitk` does a better job of
+or git itself) have frequent merges, and 'gitk' does a better job of
 visualizing their history.  For example,
 
 -------------------------------------

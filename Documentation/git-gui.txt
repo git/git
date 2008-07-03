@@ -16,9 +16,9 @@ on allowing users to make changes to their repository by making
 new commits, amending existing ones, creating branches, performing
 local merges, and fetching/pushing to remote repositories.
 
-Unlike `gitk`, 'git-gui' focuses on commit generation
+Unlike 'gitk', 'git-gui' focuses on commit generation
 and single file annotation and does not show project history.
-It does however supply menu actions to start a `gitk` session from
+It does however supply menu actions to start a 'gitk' session from
 within 'git-gui'.
 
 'git-gui' is known to work on all popular UNIX systems, Mac OS X,
