@@ -596,7 +596,6 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		die("command line too long");
 
 	conn->in = conn->out = -1;
-	/* be sure to increase this size if you add more args */
 	conn->argv = arg = xcalloc(6, sizeof(*arg));
 	if (protocol == PROTO_SSH) {
 		const char *ssh = getenv("GIT_SSH");
