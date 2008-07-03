@@ -194,8 +194,40 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	reflog_action = args_to_str(argv);
 	setenv("GIT_REFLOG_ACTION", reflog_action, 0);
 
-	if (i < argc && strcmp(argv[i], "--"))
-		rev = argv[i++];
+	/*
+	 * Possible arguments are:
+	 *
+	 * git reset [-opts] <rev> <paths>...
+	 * git reset [-opts] <rev> -- <paths>...
+	 * git reset [-opts] -- <paths>...
+	 * git reset [-opts] <paths>...
+	 *
+	 * At this point, argv[i] points immediately after [-opts].
+	 */
+
+	if (i < argc) {
+		if (!strcmp(argv[i], "--")) {
+			i++; /* reset to HEAD, possibly with paths */
+		} else if (i + 1 < argc && !strcmp(argv[i+1], "--")) {
+			rev = argv[i];
+			i += 2;
+		}
+		/*
+		 * Otherwise, argv[i] could be either <rev> or <paths> and
+		 * has to be unambigous.
+		 */
+		else if (!get_sha1(argv[i], sha1)) {
+			/*
+			 * Ok, argv[i] looks like a rev; it should not
+			 * be a filename.
+			 */
+			verify_non_filename(prefix, argv[i]);
+			rev = argv[i++];
+		} else {
+			/* Otherwise we treat this as a filename */
+			verify_filename(prefix, argv[i]);
+		}
+	}
 
 	if (get_sha1(rev, sha1))
 		die("Failed to resolve '%s' as a valid ref.", rev);
@@ -204,9 +236,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (!commit)
 		die("Could not parse object '%s'.", rev);
 	hashcpy(sha1, commit->object.sha1);
-
-	if (i < argc && !strcmp(argv[i], "--"))
-		i++;
 
 	/* git reset tree [--] paths... can be used to
 	 * load chosen paths from the tree into the index without

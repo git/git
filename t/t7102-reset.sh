@@ -428,4 +428,51 @@ test_expect_success '--mixed refreshes the index' '
 	test_cmp expect output
 '
 
+test_expect_success 'disambiguation (1)' '
+
+	git reset --hard &&
+	>secondfile &&
+	git add secondfile &&
+	test_must_fail git reset secondfile &&
+	test -z "$(git diff --cached --name-only)" &&
+	test -f secondfile &&
+	test ! -s secondfile
+
+'
+
+test_expect_success 'disambiguation (2)' '
+
+	git reset --hard &&
+	>secondfile &&
+	git add secondfile &&
+	rm -f secondfile &&
+	test_must_fail git reset secondfile &&
+	test -n "$(git diff --cached --name-only -- secondfile)" &&
+	test ! -f secondfile
+
+'
+
+test_expect_success 'disambiguation (3)' '
+
+	git reset --hard &&
+	>secondfile &&
+	git add secondfile &&
+	rm -f secondfile &&
+	test_must_fail git reset HEAD secondfile &&
+	test -z "$(git diff --cached --name-only)" &&
+	test ! -f secondfile
+
+'
+
+test_expect_success 'disambiguation (4)' '
+
+	git reset --hard &&
+	>secondfile &&
+	git add secondfile &&
+	rm -f secondfile &&
+	test_must_fail git reset -- secondfile &&
+	test -z "$(git diff --cached --name-only)" &&
+	test ! -f secondfile
+'
+
 test_done
