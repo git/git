@@ -551,7 +551,7 @@ CAVEATS
 
 For the sake of simplicity and interoperating with a less-capable system
 (SVN), it is recommended that all 'git-svn' users clone, fetch and dcommit
-directly from the SVN server, and avoid all 'git-clone'/`pull`/`merge`/`push`
+directly from the SVN server, and avoid all 'git-clone'/'pull'/'merge'/'push'
 operations between git repositories and branches.  The recommended
 method of exchanging code between git branches and users is
 'git-format-patch' and 'git-am', or just 'dcommit'ing to the SVN repository.

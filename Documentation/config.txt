@@ -118,8 +118,8 @@ core.fileMode::
 	See linkgit:git-update-index[1]. True by default.
 
 core.quotepath::
-	The commands that output paths (e.g. `ls-files`,
-	`diff`), when not given the `-z` option, will quote
+	The commands that output paths (e.g. 'ls-files',
+	'diff'), when not given the `-z` option, will quote
 	"unusual" characters in the pathname by enclosing the
 	pathname in a double-quote pair and with backslashes the
 	same way strings in C source code are quoted.  If this
@@ -557,7 +557,7 @@ diff.autorefreshindex::
 	contents in the work tree match the contents in the
 	index.  This option defaults to true.  Note that this
 	affects only 'git-diff' Porcelain, and not lower level
-	`diff` commands, such as 'git-diff-files'.
+	'diff' commands, such as 'git-diff-files'.
 
 diff.external::
 	If this config variable is set, diff generation is not
@@ -636,7 +636,7 @@ gc.packrefs::
 	prevent `git pack-refs` from being run from 'git-gc'.
 
 gc.pruneexpire::
-	When 'git-gc' is run, it will call `prune --expire 2.weeks.ago`.
+	When 'git-gc' is run, it will call 'prune --expire 2.weeks.ago'.
 	Override the grace period with this config variable.
 
 gc.reflogexpire::

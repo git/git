@@ -235,7 +235,7 @@ $ git diff-files
 ------------
 
 Oops. That wasn't very readable. It just spit out its own internal
-version of a `diff`, but that internal version really just tells you
+version of a 'diff', but that internal version really just tells you
 that it has noticed that "hello" has been modified, and that the old object
 contents it had have been replaced with something else.
 
@@ -468,7 +468,7 @@ Inspecting Changes
 
 While creating changes is useful, it's even more useful if you can tell
 later what changed. The most useful command for this is another of the
-`diff` family, namely 'git-diff-tree'.
+'diff' family, namely 'git-diff-tree'.
 
 'git-diff-tree' can be given two arbitrary trees, and it will tell you the
 differences between them. Perhaps even more commonly, though, you can
@@ -1006,7 +1006,7 @@ the tree of your branch to that of the `master` branch. This is
 often called 'fast forward' merge.
 
 You can run `gitk \--all` again to see how the commit ancestry
-looks like, or run `show-branch`, which tells you this.
+looks like, or run 'show-branch', which tells you this.
 
 ------------------------------------------------
 $ git show-branch master mybranch
