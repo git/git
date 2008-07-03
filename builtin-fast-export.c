@@ -116,7 +116,7 @@ static void handle_object(const unsigned char *sha1)
 
 	mark_next_object(object);
 
-	printf("blob\nmark :%d\ndata %lu\n", last_idnum, size);
+	printf("blob\nmark :%"PRIu32"\ndata %lu\n", last_idnum, size);
 	if (size && fwrite(buf, size, 1, stdout) != 1)
 		die ("Could not write blob %s", sha1_to_hex(sha1));
 	printf("\n");
@@ -204,7 +204,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 		reencoded = reencode_string(message, "UTF-8", encoding);
 	if (!commit->parents)
 		printf("reset %s\n", (const char*)commit->util);
-	printf("commit %s\nmark :%d\n%.*s\n%.*s\ndata %u\n%s",
+	printf("commit %s\nmark :%"PRIu32"\n%.*s\n%.*s\ndata %u\n%s",
 	       (const char *)commit->util, last_idnum,
 	       (int)(author_end - author), author,
 	       (int)(committer_end - committer), committer,

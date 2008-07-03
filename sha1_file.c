@@ -484,7 +484,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 		version = ntohl(hdr->idx_version);
 		if (version < 2 || version > 2) {
 			munmap(idx_map, idx_size);
-			return error("index file %s is version %d"
+			return error("index file %s is version %"PRIu32
 				     " and is not supported by this binary"
 				     " (try upgrading GIT to a newer version)",
 				     path, version);
@@ -695,14 +695,14 @@ static int open_packed_git_1(struct packed_git *p)
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
 		return error("file %s is not a GIT packfile", p->pack_name);
 	if (!pack_version_ok(hdr.hdr_version))
-		return error("packfile %s is version %u and not supported"
-			" (try upgrading GIT to a newer version)",
+		return error("packfile %s is version %"PRIu32" and not"
+			" supported (try upgrading GIT to a newer version)",
 			p->pack_name, ntohl(hdr.hdr_version));
 
 	/* Verify the pack matches its index. */
 	if (p->num_objects != ntohl(hdr.hdr_entries))
-		return error("packfile %s claims to have %u objects"
-			     " while index indicates %u objects",
+		return error("packfile %s claims to have %"PRIu32" objects"
+			     " while index indicates %"PRIu32" objects",
 			     p->pack_name, ntohl(hdr.hdr_entries),
 			     p->num_objects);
 	if (lseek(p->pack_fd, p->pack_size - sizeof(sha1), SEEK_SET) == -1)
@@ -1769,7 +1769,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	}
 
 	if (debug_lookup)
-		printf("%02x%02x%02x... lo %u hi %u nr %u\n",
+		printf("%02x%02x%02x... lo %u hi %u nr %"PRIu32"\n",
 		       sha1[0], sha1[1], sha1[2], lo, hi, p->num_objects);
 
 	if (use_lookup < 0)

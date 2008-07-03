@@ -568,7 +568,8 @@ static void write_pack_file(void)
 	free(written_list);
 	stop_progress(&progress_state);
 	if (written != nr_result)
-		die("wrote %u objects while expecting %u", written, nr_result);
+		die("wrote %"PRIu32" objects while expecting %"PRIu32,
+			written, nr_result);
 	/*
 	 * We have scanned through [0 ... i).  Since we have written
 	 * the correct number of objects,  the remaining [i ... nr_objects)
@@ -580,7 +581,8 @@ static void write_pack_file(void)
 		j += !e->idx.offset && !e->preferred_base;
 	}
 	if (j)
-		die("wrote %u objects as expected but %u unwritten", written, j);
+		die("wrote %"PRIu32" objects as expected but %"PRIu32
+			" unwritten", written, j);
 }
 
 static int locate_object_entry_hash(const unsigned char *sha1)
@@ -1694,7 +1696,8 @@ static int add_ref_tag(const char *path, const unsigned char *sha1, int flag, vo
 static void prepare_pack(int window, int depth)
 {
 	struct object_entry **delta_list;
-	uint32_t i, n, nr_deltas;
+	uint32_t i, nr_deltas;
+	unsigned n;
 
 	get_object_details();
 
@@ -1785,7 +1788,8 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "pack.indexversion")) {
 		pack_idx_default_version = git_config_int(k, v);
 		if (pack_idx_default_version > 2)
-			die("bad pack.indexversion=%d", pack_idx_default_version);
+			die("bad pack.indexversion=%"PRIu32,
+				pack_idx_default_version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.packsizelimit")) {
@@ -2219,7 +2223,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		prepare_pack(window, depth);
 	write_pack_file();
 	if (progress)
-		fprintf(stderr, "Total %u (delta %u), reused %u (delta %u)\n",
+		fprintf(stderr, "Total %"PRIu32" (delta %"PRIu32"),"
+			" reused %"PRIu32" (delta %"PRIu32")\n",
 			written, written_delta, reused, reused_delta);
 	return 0;
 }

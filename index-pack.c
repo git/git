@@ -190,7 +190,8 @@ static void parse_pack_header(void)
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
 		die("pack signature mismatch");
 	if (!pack_version_ok(hdr->hdr_version))
-		die("pack version %d unsupported", ntohl(hdr->hdr_version));
+		die("pack version %"PRIu32" unsupported",
+			ntohl(hdr->hdr_version));
 
 	nr_objects = ntohl(hdr->hdr_entries);
 	use(sizeof(struct pack_header));
@@ -771,7 +772,8 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "pack.indexversion")) {
 		pack_idx_default_version = git_config_int(k, v);
 		if (pack_idx_default_version > 2)
-			die("bad pack.indexversion=%d", pack_idx_default_version);
+			die("bad pack.indexversion=%"PRIu32,
+				pack_idx_default_version);
 		return 0;
 	}
 	return git_default_config(k, v, cb);
