@@ -206,7 +206,7 @@ For each commit a separate file is created in the current directory.
 project:
 +
 ------------
-$ git format-patch \--root origin
+$ git format-patch --root origin
 ------------
 
 * The same as the previous one:
