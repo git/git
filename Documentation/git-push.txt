@@ -85,7 +85,7 @@ nor in any Push line of the corresponding remotes file---see below).
 	line.
 
 --receive-pack=<git-receive-pack>::
-	Path to the `git-receive-pack` program on the remote
+	Path to the 'git-receive-pack' program on the remote
 	end.  Sometimes useful when pushing to a remote
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.
@@ -106,7 +106,7 @@ nor in any Push line of the corresponding remotes file---see below).
 
 --thin::
 --no-thin::
-	These options are passed to `git-send-pack`.  Thin
+	These options are passed to 'git-send-pack'.  Thin
 	transfer spends extra cycles to minimize the number of
 	objects to be sent and meant to be used on slower connection.
 

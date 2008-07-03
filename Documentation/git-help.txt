@@ -55,8 +55,8 @@ other display programs (see below).
 +
 The web browser can be specified using the configuration variable
 'help.browser', or 'web.browser' if the former is not set. If none of
-these config variables is set, the `git-web--browse` helper script
-(called by `git-help`) will pick a suitable default. See
+these config variables is set, the 'git-web--browse' helper script
+(called by 'git-help') will pick a suitable default. See
 linkgit:git-web--browse[1] for more information about this.
 
 CONFIGURATION VARIABLES
@@ -67,7 +67,7 @@ help.format
 
 If no command line option is passed, the 'help.format' configuration
 variable will be checked. The following values are supported for this
-variable; they make `git-help` behave as their corresponding command
+variable; they make 'git-help' behave as their corresponding command
 line option:
 
 * "man" corresponds to '-m|--man',

@@ -16,7 +16,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-If <branch> is specified, `git-rebase` will perform an automatic
+If <branch> is specified, 'git-rebase' will perform an automatic
 `git checkout <branch>` before doing anything else.  Otherwise
 it remains on the current branch.
 
@@ -167,8 +167,8 @@ This is useful if F and G were flawed in some way, or should not be
 part of topicA.  Note that the argument to --onto and the <upstream>
 parameter can be any valid commit-ish.
 
-In case of conflict, `git-rebase` will stop at the first problematic commit
-and leave conflict markers in the tree.  You can use `git-diff` to locate
+In case of conflict, 'git-rebase' will stop at the first problematic commit
+and leave conflict markers in the tree.  You can use 'git-diff' to locate
 the markers (<<<<<<) and make edits to resolve the conflict.  For each
 file you edit, you need to tell git that the conflict has been resolved,
 typically this would be done with
@@ -184,7 +184,7 @@ desired resolution, you can continue the rebasing process with
     git rebase --continue
 
 
-Alternatively, you can undo the `git-rebase` with
+Alternatively, you can undo the 'git-rebase' with
 
 
     git rebase --abort
@@ -224,8 +224,8 @@ OPTIONS
 	Use the given merge strategy; can be supplied more than
 	once to specify them in the order they should be tried.
 	If there is no `-s` option, a built-in list of strategies
-	is used instead (`git-merge-recursive` when merging a single
-	head, `git-merge-octopus` otherwise).  This implies --merge.
+	is used instead ('git-merge-recursive' when merging a single
+	head, 'git-merge-octopus' otherwise).  This implies --merge.
 
 -v::
 --verbose::
@@ -238,7 +238,7 @@ OPTIONS
 	ever ignored.
 
 --whitespace=<nowarn|warn|error|error-all|strip>::
-	This flag is passed to the `git-apply` program
+	This flag is passed to the 'git-apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
 
 -i::
@@ -314,12 +314,12 @@ pick fa1afe1 The oneline of the next commit
 ...
 -------------------------------------------
 
-The oneline descriptions are purely for your pleasure; `git-rebase` will
+The oneline descriptions are purely for your pleasure; 'git-rebase' will
 not look at them but at the commit names ("deadbee" and "fa1afe1" in this
 example), so do not delete or edit the names.
 
 By replacing the command "pick" with the command "edit", you can tell
-`git-rebase` to stop after applying that commit, so that you can edit
+'git-rebase' to stop after applying that commit, so that you can edit
 the files and/or the commit message, amend the commit, and continue
 rebasing.
 
@@ -334,7 +334,7 @@ the loop with `git rebase --continue`.
 
 For example, if you want to reorder the last 5 commits, such that what
 was HEAD~4 becomes the new HEAD. To achieve that, you would call
-`git-rebase` like this:
+'git-rebase' like this:
 
 ----------------------
 $ git rebase -i HEAD~5
@@ -364,7 +364,7 @@ SPLITTING COMMITS
 -----------------
 
 In interactive mode, you can mark commits with the action "edit".  However,
-this does not necessarily mean that `git-rebase` expects the result of this
+this does not necessarily mean that 'git-rebase' expects the result of this
 edit to be exactly one commit.  Indeed, you can undo the commit, or you can
 add other commits.  This can be used to split a commit into two:
 
@@ -380,7 +380,7 @@ add other commits.  This can be used to split a commit into two:
 
 - Now add the changes to the index that you want to have in the first
   commit.  You can use `git add` (possibly interactively) or
-  `git-gui` (or both) to do that.
+  'git-gui' (or both) to do that.
 
 - Commit the now-current index with whatever commit message is appropriate
   now.
@@ -391,7 +391,7 @@ add other commits.  This can be used to split a commit into two:
 
 If you are not absolutely sure that the intermediate revisions are
 consistent (they compile, pass the testsuite, etc.) you should use
-`git-stash` to stash away the not-yet-committed changes
+'git-stash' to stash away the not-yet-committed changes
 after each commit, test, and amend the commit if fixes are necessary.
 
 

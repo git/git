@@ -49,14 +49,14 @@ OPTIONS
 
 -t::
 --track::
-	When creating a new branch, set up configuration so that `git-pull`
+	When creating a new branch, set up configuration so that 'git-pull'
 	will automatically retrieve data from the start point, which must be
 	a branch. Use this if you always pull from the same upstream branch
 	into the new branch, and if you don't want to use "git pull
 	<repository> <refspec>" explicitly. This behavior is the default
 	when the start point is a remote branch. Set the
 	branch.autosetupmerge configuration variable to `false` if you want
-	`git-checkout` and `git-branch` to always behave as if '--no-track' were
+	'git-checkout' and 'git-branch' to always behave as if '--no-track' were
 	given. Set it to `always` if you want this behavior when the
 	start-point is either a local or remote branch.
 

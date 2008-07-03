@@ -11,17 +11,17 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-`git-svn` is a simple conduit for changesets between Subversion and git.
+'git-svn' is a simple conduit for changesets between Subversion and git.
 It is not to be confused with linkgit:git-svnimport[1], which is
 read-only.
 
-`git-svn` was originally designed for an individual developer who wants a
+'git-svn' was originally designed for an individual developer who wants a
 bidirectional flow of changesets between a single branch in Subversion
 and an arbitrary number of branches in git.  Since its inception,
-`git-svn` has gained the ability to track multiple branches in a manner
-similar to `git-svnimport`.
+'git-svn' has gained the ability to track multiple branches in a manner
+similar to 'git-svnimport'.
 
-`git-svn` is especially useful when it comes to tracking repositories
+'git-svn' is especially useful when it comes to tracking repositories
 not organized in the way Subversion developers recommend (trunk,
 branches, tags directories).
 
@@ -31,7 +31,7 @@ COMMANDS
 
 'init'::
 	Initializes an empty git repository with additional
-	metadata directories for `git-svn`.  The Subversion URL
+	metadata directories for 'git-svn'.  The Subversion URL
 	may be specified as a command-line argument, or as full
 	URL arguments to -T/-t/-b.  Optionally, the target
 	directory to operate on can be specified as a second
@@ -107,20 +107,20 @@ COMMANDS
 	This fetches revisions from the SVN parent of the current HEAD
 	and rebases the current (uncommitted to SVN) work against it.
 
-This works similarly to `svn update` or `git-pull` except that
-it preserves linear history with `git-rebase` instead of
-`git-merge` for ease of dcommiting with `git-svn`.
+This works similarly to `svn update` or 'git-pull' except that
+it preserves linear history with 'git-rebase' instead of
+'git-merge' for ease of dcommiting with 'git-svn'.
 
-This accepts all options that `git-svn fetch` and `git-rebase`
+This accepts all options that 'git-svn fetch' and 'git-rebase'
 accept.  However, '--fetch-all' only fetches from the current
 [svn-remote], and not all [svn-remote] definitions.
 
-Like `git-rebase`; this requires that the working tree be clean
+Like 'git-rebase'; this requires that the working tree be clean
 and have no uncommitted changes.
 
 -l;;
 --local;;
-	Do not fetch remotely; only run `git-rebase` against the
+	Do not fetch remotely; only run 'git-rebase' against the
 	last fetched commit from the upstream SVN.
 
 'dcommit'::
@@ -128,7 +128,7 @@ and have no uncommitted changes.
 	repository, and then rebase or reset (depending on whether or
 	not there is a diff between SVN and head).  This will create
 	a revision in SVN for each commit in git.
-	It is recommended that you run `git-svn` fetch and rebase (not
+	It is recommended that you run 'git-svn' fetch and rebase (not
 	pull or merge) your commits against the latest changes in the
 	SVN repository.
 	An optional command-line argument may be specified as an
@@ -173,7 +173,7 @@ NOTE: SVN itself only stores times in UTC and nothing else. The regular svn
 client converts the UTC time to the local time (or based on the TZ=
 environment). This command has the same behaviour.
 +
-Any other arguments are passed directly to `git-log`
+Any other arguments are passed directly to 'git-log'
 
 'blame'::
        Show what revision and author last modified each line of a file. The
@@ -181,10 +181,10 @@ Any other arguments are passed directly to `git-log`
        `svn blame' by default. Like the SVN blame command,
        local uncommitted changes in the working copy are ignored;
        the version of the file in the HEAD revision is annotated. Unknown
-       arguments are passed directly to `git-blame`.
+       arguments are passed directly to 'git-blame'.
 +
 --git-format;;
-	Produce output in the same format as `git-blame`, but with
+	Produce output in the same format as 'git-blame', but with
 	SVN revision numbers instead of git commit hashes. In this mode,
 	changes that haven't been committed to SVN (including local
 	working-copy edits) are shown as revision 0.
@@ -203,7 +203,7 @@ Any other arguments are passed directly to `git-log`
 	absolutely no attempts to do patching when committing to SVN, it
 	simply overwrites files with those specified in the tree or
 	commit.  All merging is assumed to have taken place
-	independently of `git-svn` functions.
+	independently of 'git-svn' functions.
 
 'create-ignore'::
 	Recursively finds the svn:ignore property on directories and
@@ -219,12 +219,12 @@ Any other arguments are passed directly to `git-log`
 'commit-diff'::
 	Commits the diff of two tree-ish arguments from the
 	command-line.  This command is intended for interoperability with
-	`git-svnimport` and does not rely on being inside an `git-svn
+	'git-svnimport' and does not rely on being inside an `git-svn
 	init`-ed repository.  This command takes three arguments, (a) the
 	original tree to diff against, (b) the new tree result, (c) the
 	URL of the target Subversion repository.  The final argument
-	(URL) may be omitted if you are working from a `git-svn`-aware
-	repository (that has been `init`-ed with `git-svn`).
+	(URL) may be omitted if you are working from a 'git-svn'-aware
+	repository (that has been `init`-ed with 'git-svn').
 	The -r<revision> option is required for this.
 
 'info'::
@@ -255,7 +255,7 @@ OPTIONS
 --shared[={false|true|umask|group|all|world|everybody}]::
 --template=<template_directory>::
 	Only used with the 'init' command.
-	These are passed directly to `git-init`.
+	These are passed directly to 'git-init'.
 
 -r <ARG>::
 --revision <ARG>::
@@ -277,7 +277,7 @@ Only used with the 'set-tree' command.
 
 Read a list of commits from stdin and commit them in reverse
 order.  Only the leading sha1 is read from each line, so
-`git-rev-list --pretty=oneline` output can be used.
+'git-rev-list --pretty=oneline' output can be used.
 
 --rmdir::
 
@@ -307,7 +307,7 @@ config key: svn.edit
 
 Only used with the 'dcommit', 'set-tree' and 'commit-diff' commands.
 
-They are both passed directly to `git-diff-tree`; see
+They are both passed directly to 'git-diff-tree'; see
 linkgit:git-diff-tree[1] for more information.
 
 [verse]
@@ -317,24 +317,24 @@ config key: svn.findcopiesharder
 -A<filename>::
 --authors-file=<filename>::
 
-Syntax is compatible with the files used by `git-svnimport` and
-`git-cvsimport`:
+Syntax is compatible with the files used by 'git-svnimport' and
+'git-cvsimport':
 
 ------------------------------------------------------------------------
 	loginname = Joe User <user@example.com>
 ------------------------------------------------------------------------
 
-If this option is specified and `git-svn` encounters an SVN
-committer name that does not exist in the authors-file, `git-svn`
+If this option is specified and 'git-svn' encounters an SVN
+committer name that does not exist in the authors-file, 'git-svn'
 will abort operation. The user will then have to add the
-appropriate entry.  Re-running the previous `git-svn` command
+appropriate entry.  Re-running the previous 'git-svn' command
 after the authors-file is modified should continue operation.
 
 config key: svn.authorsfile
 
 -q::
 --quiet::
-	Make `git-svn` less verbose.
+	Make 'git-svn' less verbose.
 
 --repack[=<n>]::
 --repack-flags=<flags>::
@@ -346,7 +346,7 @@ with many revisions.
 to fetch before repacking.  This defaults to repacking every
 1000 commits fetched if no argument is specified.
 
---repack-flags are passed directly to `git-repack`.
+--repack-flags are passed directly to 'git-repack'.
 
 [verse]
 config key: svn.repack
@@ -359,8 +359,8 @@ config key: svn.repackflags
 
 These are only used with the 'dcommit' and 'rebase' commands.
 
-Passed directly to `git-rebase` when using 'dcommit' if a
-`git-reset` cannot be used (see 'dcommit').
+Passed directly to 'git-rebase' when using 'dcommit' if a
+'git-reset' cannot be used (see 'dcommit').
 
 -n::
 --dry-run::
@@ -413,18 +413,18 @@ svn-remote.<name>.noMetadata::
 
 This gets rid of the 'git-svn-id:' lines at the end of every commit.
 
-If you lose your .git/svn/git-svn/.rev_db file, `git-svn` will not
+If you lose your .git/svn/git-svn/.rev_db file, 'git-svn' will not
 be able to rebuild it and you won't be able to fetch again,
 either.  This is fine for one-shot imports.
 
-The `git-svn log` command will not work on repositories using
+The 'git-svn log' command will not work on repositories using
 this, either.  Using this conflicts with the 'useSvmProps'
 option for (hopefully) obvious reasons.
 
 svn.useSvmProps::
 svn-remote.<name>.useSvmProps::
 
-This allows `git-svn` to re-map repository URLs and UUIDs from
+This allows 'git-svn' to re-map repository URLs and UUIDs from
 mirrors created using SVN::Mirror (or svk) for metadata.
 
 If an SVN revision has a property, "svm:headrev", it is likely
@@ -443,7 +443,7 @@ svn-remote.<name>.useSvnsyncprops::
 
 svn-remote.<name>.rewriteRoot::
 	This allows users to create repositories from alternate
-	URLs.  For example, an administrator could run `git-svn` on the
+	URLs.  For example, an administrator could run 'git-svn' on the
 	server locally (accessing via file://) but wish to distribute
 	the repository with a public http:// or svn:// URL in the
 	metadata so users of it will see the public URL.
@@ -451,7 +451,7 @@ svn-remote.<name>.rewriteRoot::
 --
 
 Since the noMetadata, rewriteRoot, useSvnsyncProps and useSvmProps
-options all affect the metadata generated and used by `git-svn`; they
+options all affect the metadata generated and used by 'git-svn'; they
 *must* be set in the configuration file before any history is imported
 and these settings should never be changed once they are set.
 
@@ -498,12 +498,12 @@ Tracking and contributing to an entire Subversion-managed project
 # of dcommit/rebase/show-ignore should be the same as above.
 ------------------------------------------------------------------------
 
-The initial `git-svn clone` can be quite time-consuming
+The initial 'git-svn clone' can be quite time-consuming
 (especially for large Subversion repositories). If multiple
 people (or one person with multiple machines) want to use
-`git-svn` to interact with the same Subversion repository, you can
-do the initial `git-svn clone` to a repository on a server and
-have each person clone that repository with `git-clone`:
+'git-svn' to interact with the same Subversion repository, you can
+do the initial 'git-svn clone' to a repository on a server and
+have each person clone that repository with 'git-clone':
 
 ------------------------------------------------------------------------
 # Do the initial import on a server
@@ -524,7 +524,7 @@ have each person clone that repository with `git-clone`:
 REBASE VS. PULL/MERGE
 ---------------------
 
-Originally, `git-svn` recommended that the 'remotes/git-svn' branch be
+Originally, 'git-svn' recommended that the 'remotes/git-svn' branch be
 pulled or merged from.  This is because the author favored
 `git svn set-tree B` to commit a single head rather than the
 `git svn set-tree A..B` notation to commit multiple commits.
@@ -539,7 +539,7 @@ previous commits in SVN.
 DESIGN PHILOSOPHY
 -----------------
 Merge tracking in Subversion is lacking and doing branched development
-with Subversion can be cumbersome as a result.  While `git-svn` can track
+with Subversion can be cumbersome as a result.  While 'git-svn' can track
 copy history (including branches and tags) for repositories adopting a
 standard layout, it cannot yet represent merge history that happened
 inside git back upstream to SVN users.  Therefore it is advised that
@@ -550,25 +550,25 @@ CAVEATS
 -------
 
 For the sake of simplicity and interoperating with a less-capable system
-(SVN), it is recommended that all `git-svn` users clone, fetch and dcommit
-directly from the SVN server, and avoid all `git-clone`/`pull`/`merge`/`push`
+(SVN), it is recommended that all 'git-svn' users clone, fetch and dcommit
+directly from the SVN server, and avoid all 'git-clone'/`pull`/`merge`/`push`
 operations between git repositories and branches.  The recommended
 method of exchanging code between git branches and users is
-`git-format-patch` and `git-am`, or just 'dcommit'ing to the SVN repository.
+'git-format-patch' and 'git-am', or just 'dcommit'ing to the SVN repository.
 
-Running `git-merge` or `git-pull` is NOT recommended on a branch you
+Running 'git-merge' or 'git-pull' is NOT recommended on a branch you
 plan to 'dcommit' from.  Subversion does not represent merges in any
 reasonable or useful fashion; so users using Subversion cannot see any
 merges you've made.  Furthermore, if you merge or pull from a git branch
 that is a mirror of an SVN branch, 'dcommit' may commit to the wrong
 branch.
 
-`git-clone` does not clone branches under the refs/remotes/ hierarchy or
-any `git-svn` metadata, or config.  So repositories created and managed with
-using `git-svn` should use `rsync` for cloning, if cloning is to be done
+'git-clone' does not clone branches under the refs/remotes/ hierarchy or
+any 'git-svn' metadata, or config.  So repositories created and managed with
+using 'git-svn' should use `rsync` for cloning, if cloning is to be done
 at all.
 
-Since 'dcommit' uses rebase internally, any git branches you `git-push` to
+Since 'dcommit' uses rebase internally, any git branches you 'git-push' to
 before 'dcommit' on will require forcing an overwrite of the existing ref
 on the remote repository.  This is generally considered bad practice,
 see the linkgit:git-push[1] documentation for details.
@@ -594,7 +594,7 @@ for git to detect them.
 CONFIGURATION
 -------------
 
-`git-svn` stores [svn-remote] configuration information in the
+'git-svn' stores [svn-remote] configuration information in the
 repository .git/config file.  It is similar the core git
 [remote] sections except 'fetch' keys do not accept glob
 arguments; but they are instead handled by the 'branches'
@@ -615,7 +615,7 @@ Keep in mind that the '*' (asterisk) wildcard of the local ref
 however the remote wildcard may be anywhere as long as it's own
 independent path component (surrounded by '/' or EOL).   This
 type of configuration is not automatically created by 'init' and
-should be manually entered with a text-editor or using `git-config`.
+should be manually entered with a text-editor or using 'git-config'.
 
 SEE ALSO
 --------
