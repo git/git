@@ -919,7 +919,7 @@ static void recount_diff(char *line, int size, struct fragment *fragment)
 			newlines++;
 			continue;
 		case '\\':
-			break;
+			continue;
 		case '@':
 			ret = size < 3 || prefixcmp(line, "@@ ");
 			break;

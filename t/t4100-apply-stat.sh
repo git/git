@@ -33,6 +33,8 @@ mode
 non git (1)
 non git (2)
 non git (3)
+incomplete (1)
+incomplete (2)
 EOF
 
 test_done
