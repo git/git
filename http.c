@@ -30,10 +30,11 @@ static struct curl_slist *pragma_header;
 
 static struct active_request_slot *active_queue_head = NULL;
 
-size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
-			   struct buffer *buffer)
+size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
 	size_t size = eltsize * nmemb;
+	struct buffer *buffer = buffer_;
+
 	if (size > buffer->buf.len - buffer->posn)
 		size = buffer->buf.len - buffer->posn;
 	memcpy(ptr, buffer->buf.buf + buffer->posn, size);
@@ -42,17 +43,17 @@ size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
 	return size;
 }
 
-size_t fwrite_buffer(const void *ptr, size_t eltsize,
-			    size_t nmemb, struct strbuf *buffer)
+size_t fwrite_buffer(const void *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
 	size_t size = eltsize * nmemb;
+	struct strbuf *buffer = buffer_;
+
 	strbuf_add(buffer, ptr, size);
 	data_received++;
 	return size;
 }
 
-size_t fwrite_null(const void *ptr, size_t eltsize,
-			  size_t nmemb, struct strbuf *buffer)
+size_t fwrite_null(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf)
 {
 	data_received++;
 	return eltsize * nmemb;
