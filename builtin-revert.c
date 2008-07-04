@@ -206,6 +206,7 @@ static int merge_recursive(const char *base_sha1,
 {
 	char buffer[256];
 	const char *argv[6];
+	int i = 0;
 
 	sprintf(buffer, "GITHEAD_%s", head_sha1);
 	setenv(buffer, head_name, 1);
@@ -218,12 +219,13 @@ static int merge_recursive(const char *base_sha1,
 	 * and $prev on top of us (when reverting), or the change between
 	 * $prev and $commit on top of us (when cherry-picking or replaying).
 	 */
-	argv[0] = "merge-recursive";
-	argv[1] = base_sha1;
-	argv[2] = "--";
-	argv[3] = head_sha1;
-	argv[4] = next_sha1;
-	argv[5] = NULL;
+	argv[i++] = "merge-recursive";
+	if (base_sha1)
+		argv[i++] = base_sha1;
+	argv[i++] = "--";
+	argv[i++] = head_sha1;
+	argv[i++] = next_sha1;
+	argv[i++] = NULL;
 
 	return run_command_v_opt(argv, RUN_COMMAND_NO_STDIN | RUN_GIT_CMD);
 }
@@ -297,9 +299,12 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		discard_cache();
 	}
 
-	if (!commit->parents)
-		die ("Cannot %s a root commit", me);
-	if (commit->parents->next) {
+	if (!commit->parents) {
+		if (action == REVERT)
+			die ("Cannot revert a root commit");
+		parent = NULL;
+	}
+	else if (commit->parents->next) {
 		/* Reverting or cherry-picking a merge commit */
 		int cnt;
 		struct commit_list *p;
@@ -368,7 +373,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		}
 	}
 
-	if (merge_recursive(sha1_to_hex(base->object.sha1),
+	if (merge_recursive(base == NULL ?
+				NULL : sha1_to_hex(base->object.sha1),
 				sha1_to_hex(head), "HEAD",
 				sha1_to_hex(next->object.sha1), oneline) ||
 			write_cache_as_tree(head, 0, NULL)) {
