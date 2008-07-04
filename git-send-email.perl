@@ -772,6 +772,7 @@ X-Mailer: git-send-email $gitversion
 				if ($smtp->code == 220) {
 					$smtp = Net::SMTP::SSL->start_SSL($smtp)
 						or die "STARTTLS failed! ".$smtp->message;
+					$smtp_encryption = '';
 				} else {
 					die "Server does not support STARTTLS! ".$smtp->message;
 				}

@@ -309,7 +309,8 @@ done:
 		}
 		flushes--;
 	}
-	return retval;
+	/* it is no error to fetch into a completely empty repo */
+	return count ? retval : 0;
 }
 
 static struct commit_list *complete;
