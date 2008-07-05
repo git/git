@@ -75,7 +75,6 @@ git-merge-one-file
 git-merge-ours
 git-merge-recursive
 git-merge-resolve
-git-merge-stupid
 git-merge-subtree
 git-mergetool
 git-mktag
