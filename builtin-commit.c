@@ -45,7 +45,8 @@ static enum {
 	COMMIT_PARTIAL,
 } commit_style;
 
-static char *logfile, *force_author, *template_file;
+static char *logfile, *force_author;
+static const char *template_file;
 static char *edit_message, *use_message;
 static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
@@ -864,12 +865,8 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 int git_commit_config(const char *k, const char *v, void *cb)
 {
-	if (!strcmp(k, "commit.template")) {
-		if (!v)
-			return config_error_nonbool(v);
-		template_file = xstrdup(v);
-		return 0;
-	}
+	if (!strcmp(k, "commit.template"))
+		return git_config_string(&template_file, k, v);
 
 	return git_status_config(k, v, cb);
 }
