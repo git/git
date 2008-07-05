@@ -70,10 +70,10 @@ test_expect_success 'merge c1 with c2 and c3 (recursive and octopus in pull.octo
 
 conflict_count()
 {
-	eval $1=`{
+	{
 		git diff-files --name-only
 		git ls-files --unmerged
-	} | wc -l`
+	} | wc -l
 }
 
 # c4 - c5
@@ -115,15 +115,15 @@ test_expect_success 'merge picks up the best result' '
 	git config pull.twohead "recursive resolve" &&
 	git reset --hard c5 &&
 	git merge -s resolve c6
-	conflict_count resolve_count &&
+	resolve_count=$(conflict_count) &&
 	git reset --hard c5 &&
 	git merge -s recursive c6
-	conflict_count recursive_count &&
+	recursive_count=$(conflict_count) &&
 	git reset --hard c5 &&
 	git merge c6
-	conflict_count auto_count &&
-	test "$auto_count" = "$recursive_count" &&
-	test "$auto_count" != "$resolve_count"
+	auto_count=$(conflict_count) &&
+	test $auto_count = $recursive_count &&
+	test $auto_count != $resolve_count
 '
 
 test_done
