@@ -153,12 +153,8 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		diff_auto_refresh_index = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "diff.external")) {
-		if (!value)
-			return config_error_nonbool(var);
-		external_diff_cmd_cfg = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "diff.external"))
+		return git_config_string(&external_diff_cmd_cfg, var, value);
 	if (!prefixcmp(var, "diff.")) {
 		const char *ep = strrchr(var, '.');
 
