@@ -106,7 +106,10 @@ if state:
     else:
         print 'State does not exist, first run'
 
-tip = os.popen('hg tip --template "{rev}"').read()
+sock = os.popen('hg tip --template "{rev}"')
+tip = sock.read()
+if sock.close():
+    sys.exit(1)
 if verbose:
     print 'tip is', tip
 
