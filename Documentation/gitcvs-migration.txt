@@ -143,6 +143,11 @@ work, you must not modify the imported branches; instead, create new
 branches for your own changes, and merge in the imported branches as
 necessary.
 
+If you want a shared repository, you will need to make a bare clone
+of the imported directory, as described above. Then treat the imported
+directory as another development clone for purposes of merging
+incremental imports.
+
 Advanced Shared Repository Management
 -------------------------------------
 

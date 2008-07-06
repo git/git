@@ -13,14 +13,14 @@ static CURL *curl_default;
 char curl_errorstr[CURL_ERROR_SIZE];
 
 static int curl_ssl_verify = -1;
-static char *ssl_cert = NULL;
+static const char *ssl_cert = NULL;
 #if LIBCURL_VERSION_NUM >= 0x070902
-static char *ssl_key = NULL;
+static const char *ssl_key = NULL;
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
-static char *ssl_capath = NULL;
+static const char *ssl_capath = NULL;
 #endif
-static char *ssl_cainfo = NULL;
+static const char *ssl_cainfo = NULL;
 static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv = 0;
@@ -101,39 +101,27 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp("http.sslcert", var)) {
-		if (ssl_cert == NULL) {
-			if (!value)
-				return config_error_nonbool(var);
-			ssl_cert = xstrdup(value);
-		}
+		if (ssl_cert == NULL)
+			return git_config_string(&ssl_cert, var, value);
 		return 0;
 	}
 #if LIBCURL_VERSION_NUM >= 0x070902
 	if (!strcmp("http.sslkey", var)) {
-		if (ssl_key == NULL) {
-			if (!value)
-				return config_error_nonbool(var);
-			ssl_key = xstrdup(value);
-		}
+		if (ssl_key == NULL)
+			return git_config_string(&ssl_key, var, value);
 		return 0;
 	}
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
 	if (!strcmp("http.sslcapath", var)) {
-		if (ssl_capath == NULL) {
-			if (!value)
-				return config_error_nonbool(var);
-			ssl_capath = xstrdup(value);
-		}
+		if (ssl_capath == NULL)
+			return git_config_string(&ssl_capath, var, value);
 		return 0;
 	}
 #endif
 	if (!strcmp("http.sslcainfo", var)) {
-		if (ssl_cainfo == NULL) {
-			if (!value)
-				return config_error_nonbool(var);
-			ssl_cainfo = xstrdup(value);
-		}
+		if (ssl_cainfo == NULL)
+			return git_config_string(&ssl_cainfo, var, value);
 		return 0;
 	}
 

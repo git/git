@@ -133,6 +133,9 @@ write access to the log file and to the database (see
 <<dbbackend,Database Backend>>. If you want to offer write access over
 SSH, the users of course also need write access to the git repository itself.
 
+You also need to ensure that each repository is "bare" (without a git index
+file) for `cvs commit` to work. See linkgit:gitcvs-migration[7].
+
 [[configaccessmethod]]
 All configuration variables can also be overridden for a specific method of
 access. Valid method names are "ext" (for SSH access) and "pserver". The

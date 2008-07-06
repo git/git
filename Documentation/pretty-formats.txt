@@ -30,7 +30,7 @@ This is designed to be as compact as possible.
 
 	  commit <sha1>
 	  Author: <author>
-	  Date: <date>
+	  Date: <author date>
 
 	      <title line>
 
@@ -50,9 +50,9 @@ This is designed to be as compact as possible.
 
 	  commit <sha1>
 	  Author: <author>
-	  AuthorDate: <date & time>
+	  AuthorDate: <author date>
 	  Commit: <committer>
-	  CommitDate: <date & time>
+	  CommitDate: <committer date>
 
 	       <title line>
 
@@ -62,7 +62,7 @@ This is designed to be as compact as possible.
 
 	  From <sha1> <date>
 	  From: <author>
-	  Date: <date & time>
+	  Date: <author date>
 	  Subject: [PATCH] <title line>
 
 	  <full commit message>
