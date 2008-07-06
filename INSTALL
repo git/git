@@ -27,20 +27,14 @@ Issues of note:
  - git normally installs a helper script wrapper called "git", which
    conflicts with a similarly named "GNU interactive tools" program.
 
-   Tough.  Either don't use the wrapper script, or delete the old GNU
-   interactive tools.  None of the core git stuff needs the wrapper,
-   it's just a convenient shorthand and while it is documented in some
-   places, you can always replace "git commit" with "git-commit"
-   instead.
-
-   But let's face it, most of us don't have GNU interactive tools, and
-   even if we had it, we wouldn't know what it does.  I don't think it
-   has been actively developed since 1997, and people have moved over to
+   Let's face it, most of us don't have GNU interactive tools, and even
+   if we had it, we wouldn't know what it does.  I don't think it has
+   been actively developed since 1997, and people have moved over to
    graphical file managers.
 
-   NOTE: As of gnuit-4.9.2, the GNU interactive tools package has been
-         renamed. You can compile gnuit with the --disable-transition
-         option and then it will not conflict with git.
+   In addition, as of gnuit-4.9.2, the GNU interactive tools package has
+   been renamed. You can compile gnuit with the --disable-transition
+   option and then it will not conflict with git.
 
  - You can use git after building but without installing if you
    wanted to.  Various git commands need to find other git
