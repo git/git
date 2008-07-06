@@ -301,9 +301,9 @@ It is the set of commits that are reachable from either one of
 `r1` or `r2` but not from both.
 
 Two other shorthands for naming a set that is formed by a commit
-and its parent commits exists.  `r1{caret}@` notation means all
+and its parent commits exist.  The `r1{caret}@` notation means all
 parents of `r1`.  `r1{caret}!` includes commit `r1` but excludes
-its all parents.
+all of its parents.
 
 Here are a handful of examples:
 
