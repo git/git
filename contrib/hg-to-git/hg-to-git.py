@@ -152,7 +152,7 @@ for cset in range(1, int(tip) + 1):
 
 if not hgvers.has_key("0"):
     print 'creating repository'
-    os.system('git init-db')
+    os.system('git init')
 
 # loop through every hg changeset
 for cset in range(int(tip) + 1):
