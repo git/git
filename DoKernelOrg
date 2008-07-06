@@ -78,8 +78,8 @@ maint | maint-* | master)
 		esac
 		exit $status ;;
 	*)
-		ln -f git-$V.tar.gz $G/. &&
 		make dist-doc >>./:all.log 2>&1 &&
+		ln -f git-$V.tar.gz $G/. &&
 		ln -f git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/.
 		;;
 	esac >>./:all.log 2>&1 &&
