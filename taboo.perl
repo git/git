@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: taboo.perl,v 1.4 2007-04-01 00:24:31 junio Exp $
 
 my $tmpl = '	if (%%PATTERN%%) {
 		print "$lineno ${_}matches %%QPATTERN%%\n";
@@ -66,9 +65,6 @@ $global_taboo_headers = <<'END';
 m/From:.*MAILER-DAEMON/i
 m/^Mailing-List:/i
 m/^list-/i
-/Friend\@public\.com/i
-/\@sexyfun\.net/i
-/\@safestory\.com/
 /^subject: ndn: /i
 /^subject:\s*RCPT:/i
 /^subject:\s*Delivery Confirmation\b/i
@@ -77,56 +73,27 @@ m/^list-/i
 /^subject:.*Receipt Confirmation\b/i
 /^subject:.*Failed mail\b/i
 /^subject:.*Returned mail\b/i
-/^subject:.*Linus Bus Factor\b/i
 /^subject:\s*unable to deliver mail\b/i
 /^subject:\s.*\baway from my mail\b/i
 /^subject:\s*Autoreply/i
 /#field0#/
-/\@5Business.cc/i
-/subject:.*ADV:/i
-/subject:.*=?ISO-2022-JP?/i
-/subject:.*Snowhite and the Seven Dwarfs/i
 m%content-type:.*text/html%i
 /x-mailing-list:.*\@vger\.kernel\.org/i
 # DATE:   25 Jun 01 3:08:39 AM
 m/DATE:\s*..\s...\s..\s.*:..:..\s..\s*$/i
-m/date:.*=\?.*\?=/i
-#/charset=.*windows-/i
-#/charset=.*utf-/i
-/Bill s\.1618 TITLE III/i
-/Advanced Mass Sender/i
-/Jamail /
-m/subject:.*China-diesel/i
-m!diesel fuel injection!
-m/Diffondi/i
+m/nntp-server.caltech.edu/
 m/Mail Bomber/
 m/X-Mailman-Version:/
-m/business letter from Beijing/i
-m/camelot.co.jp/
 m/X-EM-Registration:/
 m/x-esmtp:/
 m/Local time zone must be set/
-m/tangfeng/i
 m/X-Mailer:.*eMerge/i
 m/X-Mailer:.Trade-Navigator/i
-m/=?ISO-8859-1?Q?INFORMA=C7=C3O?=/i
 m/From:.*MAILER-DAEMON/i
-m/Subject:.*Antigen /
-m/From:.*grumph.pakistanmail.com/
-m/CLASSIFIED/i
-m/OTCBB:/
-m/Content-Type:.*charset=.*gb2312/
-m/Subject:.*=\?big5\?/
-m/Subject:.*=\?gb2312\?/
-m/X-Mailer:\s+eGroups/
-m/netatlantic.com/
-m/instrument.com.cn/
 m/X-Mailer:.*Group Mail/
 m/^Status:/
 m/^X-Status:/
 m/X-Set:/
-m/<>/
-m/^Subject:.*=?GB2312?/
 m/^X-Mailer:.*JiXing/
 m/^X-Mailer:.*MailXSender/
 m!Message-Id:.*<.*\@vger.kernel.org>!
@@ -137,35 +104,12 @@ m/Subject:.*[Vv]irus [Ff]ound/
 m/Subject:.*[Vv]irus [Aa]lert/
 m/^Subject:\s*Report to Sender/
 m/^Subject:.*AntiVir ALARM/
-m/^Subject:.*BEST FILESYSTEM/
-m/^Subject:.*REISER4 FOR INCLUSION/
-m/^Content-Transfer-Encoding:\s*base64/i
-m/CONFIDENTIAL/
-m/CONFIDENCE/
-m/PAYCHECK/
 m!^X-Library:\s*Indy!
 m!Content-Type:\s*application/x-msdownload!
 m!Conetnt-Type:\s*application/msword!
 m!MiME-!
 m!netdev-bounce\@oss\.sgi\.com!
-m!polyglot.com.cn!i
 m!Undeliverable:!
-m!Bullet Proof!
-m!qzsoft_directmail!
-m!list of ingredients!
-m!Power Diet!
-m!big\@boss\.com!
-m!from mail pickup service by smtp32.wxs.nl!
-m!argentina.com!i
-m!argentina.net!i
-m!Employment Opportunity!i
-m!Fudah Sanko!i
-m!erotik!i
-m!erotic!i
-m!kamasutra!i
-m!URGENT!
-m!Panda Antivirus ha realizado!i
-m!movieglobe!i
 m!Syntax error in!
 m!^Illegal-Object:!
 m!Subject:.*paycheck!i
@@ -179,51 +123,22 @@ m!Subject:.*Norton AntiVirus detected!
 m!X-Spam-Flag:.*YES!
 m!Subject:.*\sSARS\s!i
 m!Subject:.*MMS Notification!
-m!Subject:.*Bitkeeper!
-m!Subject:.*Switching to the OSL License.*!
-m!Subject:.*RMS and reactions to him!
-m!Subject:.*GNU server.*Gimme a break.*!
-m!Subject:.*MIMEDefang Notification!
-m!Subject:.*Thank you.*!
-m!Subject:.*That movie.*!
-m!Subject:.*Your details.*!
-m!Subject:.*My details.*!
-m!Subject:.*\svirus\s!i
-m!Subject:.* viruses !
-m!Subject:.*\sContent.violation!
-m!Subject:.*Symantec!
 m!Subject:.*Rejected Mail!
 m!Subject:.*Report to Recipient!
 m!Subject:.*You sent potentially!
-m!Subject:.*Content filtering!
 m!Subject:.*penis.*!i
 m!WAVA Postmaster!
 m!^SUBJECT:!
 m!Delivered-To:!
 m!Subject:.*Footprints!
-m!^From:.*matthewdenton\.com>!i
-m!Klein Becker!
-m!kleinbecker!
-m!MOTSCO!
-m!paypal!
-m!\@tcob1.net!
 m!^From:\s*Majordomo!
-m!Cheap V.AGRA!
-m!Subject:\s+fake\s*$!
-m!lyris.net!
 m!Subject:\s+Out of Office AutoReply!
 m!Content-Type: multipart/alternative!
-m!barrow_dj\@yahoo.com!
-m!biowiks.com!
 m!From:.*amavisd-new!
 m!Subject:.*found.*virus!i
 m!Subject:.*As Seen on CNN!i
-m!Subject:.*Winningest!i
 m!Subject:.*Mail Delivery!
-m!qiaoxiaol\@126.com!i
 m!Subject:.*Essential.*Software.*On.*CD!i
-m!computeradmin.org!i
-m!dfjndfv.com/!
 m!LIPITOR!
 m!VIOXX!
 m!XANAX!
@@ -231,39 +146,25 @@ m!CELEBREX!
 m!PROZAC!
 m!VALIUM!
 m!seen it on TV!
-m!olympic\@!
-m!test\@216\.!
 m!Valium!
 m!Prozac!
-m!40free.net.ph!
 m!ScanMail for Lotus Notes!
 m!InternetBank Agreement!
 m!X-WEBC-Mail-From-Script:!
 m!X-Mailer: RLSP Mailer!
 m!Subject: Rediff\'s Auto Response!
-m!Subject:.*Linux Kernel Subversion Howto!
 m!Email account utilization warning!
 m!From:.*Lyris.List!
 m!Listar command results!
 m!EHLO vger.kernel.org!
 m!HELO vger.kernel.org!
 m!Subject:\s*BOUNCE !
-m!Uncle Den <UncleDan\@!
 m!Subject:.*Rolex!i
-m!reverendmm.com!i
 m!CeBIT!
 m!Message Blocked!i
-m!0-134.rdm.ru!
 m!Subject:.*Diploma!i
 m!stk-sub!
-m!mailman.opengroup.org!
-m!smtp.opengroup.org!
-m!from openbsd.org!
 m!owner-majordomo\@!
-m!savagelandz!
-m!Online Journaled File System!
-m!OJFS!
-m!joeordnung\@yahoo.de!
 END
 
 # TABOO BODY
@@ -279,6 +180,7 @@ END
 #
 $global_taboo_body = <<'END';
 m!^X-Mailing-List: !o
+m!^List-ID: !o
 m%Content-Type:.*text/html%io
 m%Content-Type:.*multipart/alternative%io
 m/adult site/io
@@ -500,9 +402,6 @@ m!This extraordinary offer!io
 m!offer ends!io
 m!to be removed from our email list!io
 m!EMAIL EXTRACTION!io
-m!Do not respond by email!io
-m!prospect!io
-m!\sopt-in\s!io
 m!KATHMANDU!io
 m!/remove-all/!io
 m!Marijuana Alter!io
@@ -966,7 +865,7 @@ m!123ratezz.com!io
 m!7913658094!o
 m!lendez.com!o
 m!RusDeluxe!io
-m!Ba\(d!io
+#m!Ba\(d!io
 m!alivelybaby.com!o
 m!warmlighthouse.com!o
 m!try-logos-!o
@@ -1093,7 +992,6 @@ m!watch3znowbymai15l!io
 m!STRONG BUY!io
 m!verimer-australia!io
 m!Bulk BP Host!io
-m!BulletProof!io
 m! Adult Dating !io
 m!We very sorry If you receive our email !io
 m!greenones.com!io
@@ -1159,7 +1057,6 @@ m!Khordokovsky!io
 m!Cute Babe!io
 m!Bl[o0]wj[o0]b!io
 m!doetave.com!io
-m!geocities\.com/!io
 m!\.mfek\.com!io
 m!\.ppeq\.com!io
 m!What IS 0EM software!io
@@ -1347,7 +1244,6 @@ m!erection!io
 m!l-f-union.net!io
 m!support-tolliscatalogue.com!io
 m!funfundating.com!io
-m!not know each other!io
 m!like a pornstar!io
 m!male enlargement!io
 m!www.dir.mn/!io
@@ -1438,7 +1334,6 @@ m!Human Growth Hormone!io
 m!retilfo.com!o
 m!DVD-TV-ONLINE!io
 m!kiladeramirezako!o
-m! 36 hour!o
 m!cmnap.com!o
 m!coshp.com!o
 m!matenis.com!o
@@ -1449,6 +1344,10 @@ m!turtlkecrazediet.com!o
 #m!Online Journaled File System!o
 #m!OJFS!o
 m!Thank you for your inquiry on IEEE Standards!o
+m!Proof-Reading-Service!o
+m!TSmtpRelayServer!o
+m!bloggoo.com!o
+m!No Message Collected!o
 END
 
 #TABOO-END
