@@ -287,10 +287,8 @@ static void fill_tracking_info(char *stat, const char *branch_name)
 	int ours, theirs;
 	struct branch *branch = branch_get(branch_name);
 
-	if (!stat_tracking_info(branch, &ours, &theirs) || (!ours && !theirs)) {
-		stat[0] = '\0';
+	if (!stat_tracking_info(branch, &ours, &theirs) || (!ours && !theirs))
 		return;
-	}
 	if (!ours)
 		sprintf(stat, "[behind %d] ", theirs);
 	else if (!theirs)
@@ -330,6 +328,7 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		char stat[128];
 
 		strbuf_init(&subject, 0);
+		stat[0] = '\0';
 
 		commit = lookup_commit(item->sha1);
 		if (commit && !parse_commit(commit)) {
