@@ -89,7 +89,7 @@ try:
         if o in ('-v', '--verbose'):
             verbose = True
     if len(args) != 1:
-        raise('params')
+        raise Exception('params')
 except:
     usage()
     sys.exit(1)
