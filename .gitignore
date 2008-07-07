@@ -141,7 +141,6 @@ git-write-tree
 git-core-*/?*
 gitk-wish
 gitweb/gitweb.cgi
-test-absolute-path
 test-chmtime
 test-date
 test-delta
@@ -149,6 +148,7 @@ test-dump-cache-tree
 test-genrandom
 test-match-trees
 test-parse-options
+test-path-utils
 test-sha1
 common-cmds.h
 *.tar.gz
