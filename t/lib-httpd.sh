@@ -45,22 +45,22 @@ else
 	error "Could not identify web server at '$LIB_HTTPD_PATH'"
 fi
 
-HTTPD_PARA="-d $HTTPD_ROOT_PATH -f $TEST_PATH/apache.conf"
+HTTPD_PARA=""
 
 prepare_httpd() {
-	mkdir -p $HTTPD_DOCUMENT_ROOT_PATH
+	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH"
 
-	ln -s $LIB_HTTPD_MODULE_PATH $HTTPD_ROOT_PATH/modules
+	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
 
 	if test -n "$LIB_HTTPD_SSL"
 	then
 		HTTPD_URL=https://127.0.0.1:$LIB_HTTPD_PORT
 
 		RANDFILE_PATH="$HTTPD_ROOT_PATH"/.rnd openssl req \
-			-config $TEST_PATH/ssl.cnf \
+			-config "$TEST_PATH/ssl.cnf" \
 			-new -x509 -nodes \
-			-out $HTTPD_ROOT_PATH/httpd.pem \
-			-keyout $HTTPD_ROOT_PATH/httpd.pem
+			-out "$HTTPD_ROOT_PATH/httpd.pem" \
+			-keyout "$HTTPD_ROOT_PATH/httpd.pem"
 		GIT_SSL_NO_VERIFY=t
 		export GIT_SSL_NO_VERIFY
 		HTTPD_PARA="$HTTPD_PARA -DSSL"
@@ -86,12 +86,14 @@ start_httpd() {
 
 	trap 'stop_httpd; die' exit
 
-	"$LIB_HTTPD_PATH" $HTTPD_PARA \
+	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
+		-f "$TEST_PATH/apache.conf" $HTTPD_PARA \
 		-c "Listen 127.0.0.1:$LIB_HTTPD_PORT" -k start
 }
 
 stop_httpd() {
 	trap 'die' exit
 
-	"$LIB_HTTPD_PATH" $HTTPD_PARA -k stop
+	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
+		-f "$TEST_PATH/apache.conf" -k stop
 }

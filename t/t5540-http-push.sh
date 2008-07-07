@@ -36,7 +36,7 @@ test_expect_success 'setup remote repository' '
 	git --bare update-server-info &&
 	chmod +x hooks/post-update &&
 	cd - &&
-	mv test_repo.git $HTTPD_DOCUMENT_ROOT_PATH
+	mv test_repo.git "$HTTPD_DOCUMENT_ROOT_PATH"
 '
 
 test_expect_success 'clone remote repository' '
