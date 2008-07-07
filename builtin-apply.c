@@ -3130,8 +3130,8 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			inaccurate_eof = 1;
 			continue;
 		}
-		if (!prefixcmp(arg, "--root=")) {
-			arg += strlen("--root=");
+		if (!prefixcmp(arg, "--directory=")) {
+			arg += strlen("--directory=");
 			root_len = strlen(arg);
 			if (root_len && arg[root_len - 1] != '/') {
 				char *new_root;

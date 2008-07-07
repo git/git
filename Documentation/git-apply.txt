@@ -14,7 +14,7 @@ SYNOPSIS
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-pNUM] [-CNUM] [--inaccurate-eof] [--cached]
 	  [--whitespace=<nowarn|warn|fix|error|error-all>]
-	  [--exclude=PATH] [--root=<root>] [--verbose] [<patch>...]
+	  [--exclude=PATH] [--directory=<root>] [--verbose] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -177,9 +177,13 @@ behavior:
 	current patch being applied will be printed. This option will cause
 	additional information to be reported.
 
---root=<root>::
+--directory=<root>::
 	Prepend <root> to all filenames.  If a "-p" argument was passed, too,
 	it is applied before prepending the new root.
++
+For example, a patch that talks about updating `a/git-gui.sh` to `b/git-gui.sh`
+can be applied to the file in the working tree `modules/git-gui/git-gui.sh` by
+running `git apply --directory=modules/git-gui`.
 
 Configuration
 -------------

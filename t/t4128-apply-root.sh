@@ -23,18 +23,18 @@ diff a/bla/blub/dir/file b/bla/blub/dir/file
 +Bello
 EOF
 
-test_expect_success 'apply --root -p (1)' '
+test_expect_success 'apply --directory -p (1)' '
 
-	git apply --root=some/sub -p3 --index patch &&
+	git apply --directory=some/sub -p3 --index patch &&
 	test Bello = $(git show :some/sub/dir/file) &&
 	test Bello = $(cat some/sub/dir/file)
 
 '
 
-test_expect_success 'apply --root -p (2) ' '
+test_expect_success 'apply --directory -p (2) ' '
 
 	git reset --hard initial &&
-	git apply --root=some/sub/ -p3 --index patch &&
+	git apply --directory=some/sub/ -p3 --index patch &&
 	test Bello = $(git show :some/sub/dir/file) &&
 	test Bello = $(cat some/sub/dir/file)
 
