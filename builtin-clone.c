@@ -115,7 +115,7 @@ static char *guess_dir_name(const char *repo, int is_bundle)
 			if (!after_slash_or_colon)
 				end = p;
 			p += 7;
-		} else if (*p == '/' || *p == ':') {
+		} else if (is_dir_sep(*p) || *p == ':') {
 			if (end == limit)
 				end = p;
 			after_slash_or_colon = 1;
