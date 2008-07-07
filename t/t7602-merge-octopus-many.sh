@@ -23,7 +23,7 @@ test_expect_success 'setup' '
 	done
 '
 
-test_expect_failure 'merge c1 with c2, c3, c4, ... c29' '
+test_expect_success 'merge c1 with c2, c3, c4, ... c29' '
 	git reset --hard c1 &&
 	i=2 &&
 	refs="" &&
