@@ -16,11 +16,26 @@ static int cutoff_resolve = 60;
 /* if rerere_enabled == -1, fall back to detection of .git/rr-cache */
 static int rerere_enabled = -1;
 
+/* automatically update cleanly resolved paths to the index */
+static int rerere_autoupdate;
+
 static char *merge_rr_path;
 
 static const char *rr_path(const char *name, const char *file)
 {
 	return git_path("rr-cache/%s/%s", name, file);
+}
+
+static time_t rerere_created_at(const char *name)
+{
+	struct stat st;
+	return stat(rr_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
+}
+
+static int has_resolution(const char *name)
+{
+	struct stat st;
+	return !stat(rr_path(name, "postimage"), &st);
 }
 
 static void read_rr(struct path_list *rr)
@@ -54,8 +69,12 @@ static int write_rr(struct path_list *rr, int out_fd)
 {
 	int i;
 	for (i = 0; i < rr->nr; i++) {
-		const char *path = rr->items[i].path;
-		int length = strlen(path) + 1;
+		const char *path;
+		int length;
+		if (!rr->items[i].util)
+			continue;
+		path = rr->items[i].path;
+		length = strlen(path) + 1;
 		if (write_in_full(out_fd, rr->items[i].util, 40) != 40 ||
 		    write_in_full(out_fd, "\t", 1) != 1 ||
 		    write_in_full(out_fd, path, length) != length)
@@ -98,13 +117,10 @@ static int handle_file(const char *path,
 		else if (!prefixcmp(buf, "======="))
 			hunk = 2;
 		else if (!prefixcmp(buf, ">>>>>>> ")) {
-			int cmp = strbuf_cmp(&one, &two);
-
+			if (strbuf_cmp(&one, &two) > 0)
+				strbuf_swap(&one, &two);
 			hunk_no++;
 			hunk = 0;
-			if (cmp > 0) {
-				strbuf_swap(&one, &two);
-			}
 			if (out) {
 				fputs("<<<<<<<\n", out);
 				fwrite(one.buf, one.len, 1, out);
@@ -135,6 +151,11 @@ static int handle_file(const char *path,
 		fclose(out);
 	if (sha1)
 		SHA1_Final(sha1, &ctx);
+	if (hunk) {
+		if (output)
+			unlink(output);
+		return error("Could not parse conflict hunks in %s", path);
+	}
 	return hunk_no;
 }
 
@@ -201,33 +222,24 @@ static void unlink_rr_item(const char *name)
 static void garbage_collect(struct path_list *rr)
 {
 	struct path_list to_remove = { NULL, 0, 0, 1 };
-	char buf[1024];
 	DIR *dir;
 	struct dirent *e;
-	int len, i, cutoff;
+	int i, cutoff;
 	time_t now = time(NULL), then;
 
-	strlcpy(buf, git_path("rr-cache"), sizeof(buf));
-	len = strlen(buf);
-	dir = opendir(buf);
-	strcpy(buf + len++, "/");
+	dir = opendir(git_path("rr-cache"));
 	while ((e = readdir(dir))) {
 		const char *name = e->d_name;
-		struct stat st;
-		if (name[0] == '.' && (name[1] == '\0' ||
-					(name[1] == '.' && name[2] == '\0')))
+		if (name[0] == '.' &&
+		    (name[1] == '\0' || (name[1] == '.' && name[2] == '\0')))
 			continue;
-		i = snprintf(buf + len, sizeof(buf) - len, "%s", name);
-		strlcpy(buf + len + i, "/preimage", sizeof(buf) - len - i);
-		if (stat(buf, &st))
+		then = rerere_created_at(name);
+		if (!then)
 			continue;
-		then = st.st_mtime;
-		strlcpy(buf + len + i, "/postimage", sizeof(buf) - len - i);
-		cutoff = stat(buf, &st) ? cutoff_noresolve : cutoff_resolve;
-		if (then < now - cutoff * 86400) {
-			buf[len + i] = '\0';
-			path_list_insert(xstrdup(name), &to_remove);
-		}
+		cutoff = (has_resolution(name)
+			  ? cutoff_resolve : cutoff_noresolve);
+		if (then < now - cutoff * 86400)
+			path_list_append(name, &to_remove);
 	}
 	for (i = 0; i < to_remove.nr; i++)
 		unlink_rr_item(to_remove.items[i].path);
@@ -267,9 +279,36 @@ static int diff_two(const char *file1, const char *label1,
 	return 0;
 }
 
+static struct lock_file index_lock;
+
+static int update_paths(struct path_list *update)
+{
+	int i;
+	int fd = hold_locked_index(&index_lock, 0);
+	int status = 0;
+
+	if (fd < 0)
+		return -1;
+
+	for (i = 0; i < update->nr; i++) {
+		struct path_list_item *item = &update->items[i];
+		if (add_file_to_cache(item->path, ADD_CACHE_IGNORE_ERRORS))
+			status = -1;
+	}
+
+	if (!status && active_cache_changed) {
+		if (write_cache(fd, active_cache, active_nr) ||
+		    commit_locked_index(&index_lock))
+			die("Unable to write new index file");
+	} else if (fd >= 0)
+		rollback_lock_file(&index_lock);
+	return status;
+}
+
 static int do_plain_rerere(struct path_list *rr, int fd)
 {
 	struct path_list conflict = { NULL, 0, 0, 1 };
+	struct path_list update = { NULL, 0, 0, 1 };
 	int i;
 
 	find_conflict(&conflict);
@@ -306,17 +345,17 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 	 */
 
 	for (i = 0; i < rr->nr; i++) {
-		struct stat st;
 		int ret;
 		const char *path = rr->items[i].path;
 		const char *name = (const char *)rr->items[i].util;
 
-		if (!stat(rr_path(name, "preimage"), &st) &&
-				!stat(rr_path(name, "postimage"), &st)) {
+		if (has_resolution(name)) {
 			if (!merge(name, path)) {
 				fprintf(stderr, "Resolved '%s' using "
 						"previous resolution.\n", path);
-				goto tail_optimization;
+				if (rerere_autoupdate)
+					path_list_insert(path, &update);
+				goto mark_resolved;
 			}
 		}
 
@@ -327,14 +366,12 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 
 		fprintf(stderr, "Recorded resolution for '%s'.\n", path);
 		copy_file(rr_path(name, "postimage"), path, 0666);
-tail_optimization:
-		if (i < rr->nr - 1)
-			memmove(rr->items + i,
-				rr->items + i + 1,
-				sizeof(rr->items[0]) * (rr->nr - i - 1));
-		rr->nr--;
-		i--;
+	mark_resolved:
+		rr->items[i].util = NULL;
 	}
+
+	if (update.nr)
+		update_paths(&update);
 
 	return write_rr(rr, fd);
 }
@@ -347,6 +384,8 @@ static int git_rerere_config(const char *var, const char *value, void *cb)
 		cutoff_noresolve = git_config_int(var, value);
 	else if (!strcmp(var, "rerere.enabled"))
 		rerere_enabled = git_config_bool(var, value);
+	else if (!strcmp(var, "rerere.autoupdate"))
+		rerere_autoupdate = git_config_bool(var, value);
 	else
 		return git_default_config(var, value, cb);
 	return 0;
@@ -410,11 +449,8 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 		return do_plain_rerere(&merge_rr, fd);
 	else if (!strcmp(argv[1], "clear")) {
 		for (i = 0; i < merge_rr.nr; i++) {
-			struct stat st;
 			const char *name = (const char *)merge_rr.items[i].util;
-			if (!stat(git_path("rr-cache/%s", name), &st) &&
-					S_ISDIR(st.st_mode) &&
-					stat(rr_path(name, "postimage"), &st))
+			if (!has_resolution(name))
 				unlink_rr_item(name);
 		}
 		unlink(merge_rr_path);
