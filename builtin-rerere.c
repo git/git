@@ -112,11 +112,17 @@ static int handle_file(const char *path,
 	strbuf_init(&one, 0);
 	strbuf_init(&two,  0);
 	while (fgets(buf, sizeof(buf), f)) {
-		if (!prefixcmp(buf, "<<<<<<< "))
+		if (!prefixcmp(buf, "<<<<<<< ")) {
+			if (hunk)
+				goto bad;
 			hunk = 1;
-		else if (!prefixcmp(buf, "======="))
+		} else if (!prefixcmp(buf, "=======") && isspace(buf[7])) {
+			if (hunk != 1)
+				goto bad;
 			hunk = 2;
-		else if (!prefixcmp(buf, ">>>>>>> ")) {
+		} else if (!prefixcmp(buf, ">>>>>>> ")) {
+			if (hunk != 2)
+				goto bad;
 			if (strbuf_cmp(&one, &two) > 0)
 				strbuf_swap(&one, &two);
 			hunk_no++;
@@ -142,6 +148,10 @@ static int handle_file(const char *path,
 			strbuf_addstr(&two, buf);
 		else if (out)
 			fputs(buf, out);
+		continue;
+	bad:
+		hunk = 99; /* force error exit */
+		break;
 	}
 	strbuf_release(&one);
 	strbuf_release(&two);
