@@ -23,6 +23,11 @@ encoding introduced in v1.4.4.  Pack idx files are using version 2 that
 allows larger packs and added robustness thanks to its CRC checking,
 introduced in v1.5.2.
 
+GIT_CONFIG, which was only documented as affecting "git config", but
+actually affected all git commands, now only affects "git config".
+GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
+not different from GIT_CONFIG in a useful way, is removed.
+
 
 Updates since v1.5.6
 --------------------
