@@ -31,6 +31,12 @@ to work with; after that, you need to 'git merge' incremental imports, or
 any CVS branches, yourself.  It is advisable to specify a named remote via
 -r to separate and protect the incoming branches.
 
+If you intend to set up a shared public repository that all developers can
+read/write, or if you want to use linkgit:git-cvsserver[1], then you
+probably want to make a bare clone of the imported repository,
+and use the clone as the shared repository.
+See linkgit:gitcvs-migration[7].
+
 
 OPTIONS
 -------

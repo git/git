@@ -643,6 +643,8 @@ sub canonicalize_path {
 	$path =~ s#/[^/]+/\.\.##g;
 	$path =~ s#/$##g;
 	$path =~ s#^\./## if $dot_slash_added;
+	$path =~ s#^/##;
+	$path =~ s#^\.$##;
 	return $path;
 }
 

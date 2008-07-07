@@ -260,7 +260,7 @@ static int git_tag_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "user.signingkey")) {
 		if (!value)
-			return config_error_nonbool(value);
+			return config_error_nonbool(var);
 		set_signingkey(value);
 		return 0;
 	}
