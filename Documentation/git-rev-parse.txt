@@ -166,7 +166,7 @@ blobs contained in a commit.
   first match in the following rules:
 
   . if `$GIT_DIR/<name>` exists, that is what you mean (this is usually
-    useful only for `HEAD`, `FETCH_HEAD` and `MERGE_HEAD`);
+    useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD` and `MERGE_HEAD`);
 
   . otherwise, `$GIT_DIR/refs/<name>` if exists;
 
@@ -177,6 +177,16 @@ blobs contained in a commit.
   . otherwise, `$GIT_DIR/refs/remotes/<name>` if exists;
 
   . otherwise, `$GIT_DIR/refs/remotes/<name>/HEAD` if exists.
++
+HEAD names the commit your changes in the working tree is based on.
+FETCH_HEAD records the branch you fetched from a remote repository
+with your last 'git-fetch' invocation.
+ORIG_HEAD is created by commands that moves your HEAD in a drastic
+way, to record the position of the HEAD before their operation, so that
+you can change the tip of the branch back to the state before you ran
+them easily.
+MERGE_HEAD records the commit(s) you are merging into your branch
+when you run 'git-merge'.
 
 * A ref followed by the suffix '@' with a date specification
   enclosed in a brace
@@ -289,10 +299,10 @@ notation is used.  E.g. "`{caret}r1 r2`" means commits reachable
 from `r2` but exclude the ones reachable from `r1`.
 
 This set operation appears so often that there is a shorthand
-for it.  "`r1..r2`" is equivalent to "`{caret}r1 r2`".  It is
-the difference of two sets (subtract the set of commits
-reachable from `r1` from the set of commits reachable from
-`r2`).
+for it.  When you have two commits `r1` and `r2` (named according
+to the syntax explained in SPECIFYING REVISIONS above), you can ask
+for commits that are reachable from r2 excluding those that are reachable
+from r1 by "`{caret}r1 r2`" and it can be written as "`r1..r2`".
 
 A similar notation "`r1\...r2`" is called symmetric difference
 of `r1` and `r2` and is defined as
