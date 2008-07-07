@@ -12,6 +12,13 @@ This test runs various sanity checks on http-push.'
 ROOT_PATH="$PWD"
 LIB_HTTPD_DAV=t
 
+if git http-push > /dev/null 2>&1 || [ $? -eq 128 ]
+then
+	say "skipping test, USE_CURL_MULTI is not defined"
+	test_done
+	exit
+fi
+
 . ../lib-httpd.sh
 
 if ! start_httpd >&3 2>&4
