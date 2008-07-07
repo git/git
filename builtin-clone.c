@@ -421,7 +421,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		die("could not create leading directories of '%s'", git_dir);
 	set_git_dir(make_absolute_path(git_dir));
 
-	fprintf(stderr, "Initialize %s\n", git_dir);
 	init_db(option_template, option_quiet ? INIT_DB_QUIET : 0);
 
 	/*
