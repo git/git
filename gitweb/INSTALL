@@ -144,6 +144,12 @@ Gitweb repositories
   Spaces in both project path and project owner have to be encoded as either
   '%20' or '+'.
 
+  Other characters that have to be url-encoded, i.e. replaced by '%'
+  followed by two-digit character number in octal, are: other whitespace
+  characters (because they are field separator in a record), plus sign '+'
+  (because it can be used as replacement for spaces), and percent sign '%'
+  (which is used for encoding / escaping).
+
   You can generate the projects list index file using the project_index
   action (the 'TXT' link on projects list page) directly from gitweb.
 
