@@ -28,6 +28,8 @@ actually affected all git commands, now only affects "git config".
 GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
 not different from GIT_CONFIG in a useful way, is removed.
 
+An ancient merge strategy "stupid" has been removed.
+
 
 Updates since v1.5.6
 --------------------
@@ -37,7 +39,12 @@ Updates since v1.5.6
 * git-p4 in contrib learned "allowSubmit" configuration to control on
   which branch to allow "submit" subcommand.
 
+* git-gui learned to stage changes per-line.
+
 (portability)
+
+* Changes for MinGW port have been merged, thanks to Johannes Sixt and
+  gangs.
 
 * Sample hook scripts shipped in templates/ are now suffixed with
   *.sample.  We used to prevent them from triggering by default by
@@ -53,7 +60,8 @@ Updates since v1.5.6
 
 * Updated howto/update-hook-example
 
-* Got rid of usage of "git-foo" from the tutorial.
+* Got rid of usage of "git-foo" from the tutorial and made typography
+  more consistent.
 
 * Disambiguating "--" between revs and paths is finally documented.
 
@@ -84,6 +92,11 @@ Updates since v1.5.6
 
 (usability, bells and whistles)
 
+* A new environment variable GIT_CEILING_DIRECTORIES can be used to stop
+  the discovery process of the toplevel of working tree; this may be useful
+  when you are working in a slow network disk and are outside any working tree,
+  as bash-completion and "git help" may still need to run in these places.
+
 * git-apply can handle a patch that touches the same path more than once
   much better than before.
 
@@ -107,12 +120,15 @@ Updates since v1.5.6
 * fast-export learned to export and import marks file; this can be used to
   interface with fast-import incrementally.
 
-* Original SHA-1 value for "update-ref -d" is optional now.
+* "git rerere" can be told to update the index with auto-reused resolution
+  with rerere.autoupdate configuration variable.
 
 * git-send-mail can talk not just over SSL but over TLS now.
 
 * You can tell "git status -u" to even more aggressively omit checking
   untracked files with --untracked-files=no.
+
+* Original SHA-1 value for "update-ref -d" is optional now.
 
 * Error codes from gitweb are made more descriptive where possible, rather
   than "403 forbidden" as we used to issue everywhere.
@@ -126,14 +142,12 @@ Fixes since v1.5.6
 All of the fixes in v1.5.6 maintenance series are included in
 this release, unless otherwise noted.
 
- * diff -c/--cc showed unnecessary "deletion" lines at the context
-   boundary (needs backmerge to maint).
-
- * "git-clone <src> <dst>" did not create leading directories for <dst>
-   like the scripted version used to do (needs backport to maint).
+ * "git fetch" into an empty repository used to remind the fetch will
+   be huge by saying "no common commits", but it is already known by
+   the user anyway (need to backport 8cb560f to 'maint').
 
 ---
 exec >/var/tmp/1
-O=v1.5.6.1-155-gaa0c1f2
+O=v1.5.6.2-246-g86d7244
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
