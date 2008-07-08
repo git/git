@@ -56,7 +56,8 @@ require Exporter;
 @EXPORT_OK = qw(command command_oneline command_noisy
                 command_output_pipe command_input_pipe command_close_pipe
                 command_bidi_pipe command_close_bidi_pipe
-                version exec_path hash_object git_cmd_try);
+                version exec_path hash_object git_cmd_try
+                remote_refs);
 
 
 =head1 DESCRIPTION
@@ -667,6 +668,59 @@ sub get_color {
 	}
 	return $color;
 }
+
+=item remote_refs ( REPOSITORY [, GROUPS [, REFGLOBS ] ] )
+
+This function returns a hashref of refs stored in a given remote repository.
+The hash is in the format C<refname =\> hash>. For tags, the C<refname> entry
+contains the tag object while a C<refname^{}> entry gives the tagged objects.
+
+C<REPOSITORY> has the same meaning as the appropriate C<git-ls-remote>
+argument; either an URL or a remote name (if called on a repository instance).
+C<GROUPS> is an optional arrayref that can contain 'tags' to return all the
+tags and/or 'heads' to return all the heads. C<REFGLOB> is an optional array
+of strings containing a shell-like glob to further limit the refs returned in
+the hash; the meaning is again the same as the appropriate C<git-ls-remote>
+argument.
+
+This function may or may not be called on a repository instance. In the former
+case, remote names as defined in the repository are recognized as repository
+specifiers.
+
+=cut
+
+sub remote_refs {
+	my ($self, $repo, $groups, $refglobs) = _maybe_self(@_);
+	my @args;
+	if (ref $groups eq 'ARRAY') {
+		foreach (@$groups) {
+			if ($_ eq 'heads') {
+				push (@args, '--heads');
+			} elsif ($_ eq 'tags') {
+				push (@args, '--tags');
+			} else {
+				# Ignore unknown groups for future
+				# compatibility
+			}
+		}
+	}
+	push (@args, $repo);
+	if (ref $refglobs eq 'ARRAY') {
+		push (@args, @$refglobs);
+	}
+
+	my @self = $self ? ($self) : (); # Ultra trickery
+	my ($fh, $ctx) = Git::command_output_pipe(@self, 'ls-remote', @args);
+	my %refs;
+	while (<$fh>) {
+		chomp;
+		my ($hash, $ref) = split(/\t/, $_, 2);
+		$refs{$ref} = $hash;
+	}
+	Git::command_close_pipe(@self, $fh, $ctx);
+	return \%refs;
+}
+
 
 =item ident ( TYPE | IDENTSTR )
 
