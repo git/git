@@ -104,6 +104,7 @@ struct rev_info {
 	struct diff_options pruning;
 
 	struct reflog_walk_info *reflog_info;
+	struct decoration children;
 };
 
 #define REV_TREE_SAME		0
