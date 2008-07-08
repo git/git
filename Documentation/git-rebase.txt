@@ -26,7 +26,8 @@ of commits that would be shown by `git log <upstream>..HEAD`.
 
 The current branch is reset to <upstream>, or <newbase> if the
 --onto option was supplied.  This has the exact same effect as
-`git reset --hard <upstream>` (or <newbase>).
+`git reset --hard <upstream>` (or <newbase>).  ORIG_HEAD is set
+to point at the tip of the branch before the reset.
 
 The commits that were previously saved into the temporary area are
 then reapplied to the current branch, one by one, in order. Note that
