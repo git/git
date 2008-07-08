@@ -518,7 +518,7 @@ $ git bisect visualize
 -------------------------------------------------
 
 which will run gitk and label the commit it chose with a marker that
-says "bisect".  Chose a safe-looking commit nearby, note its commit
+says "bisect".  Choose a safe-looking commit nearby, note its commit
 id, and check it out with:
 
 -------------------------------------------------
@@ -1988,8 +1988,8 @@ intend to manage the branch.
 
 It's also possible for a push to fail in this way when other people have
 the right to push to the same repository.  In that case, the correct
-solution is to retry the push after first updating your work by either a
-pull or a fetch followed by a rebase; see the
+solution is to retry the push after first updating your work: either by a
+pull, or by a fetch followed by a rebase; see the
 <<setting-up-a-shared-repository,next section>> and
 linkgit:gitcvs-migration[7] for more.
 
@@ -2861,7 +2861,7 @@ There are four different types of objects: "blob", "tree", "commit", and
 "tag".
 
 - A <<def_blob_object,"blob" object>> is used to store file data.
-- A <<def_tree_object,"tree" object>> is an object that ties one or more
+- A <<def_tree_object,"tree" object>> ties one or more
   "blob" objects into a directory structure. In addition, a tree object
   can refer to other tree objects, thus creating a directory hierarchy.
 - A <<def_commit_object,"commit" object>> ties such directory hierarchies
@@ -3036,7 +3036,7 @@ Tag Object
 
 A tag object contains an object, object type, tag name, the name of the
 person ("tagger") who created the tag, and a message, which may contain
-a signature, as can be seen using the linkgit:git-cat-file[1]:
+a signature, as can be seen using linkgit:git-cat-file[1]:
 
 ------------------------------------------------
 $ git cat-file tag v1.5.0
@@ -3986,13 +3986,13 @@ $ mv -f hello.c~2 hello.c
 $ git update-index hello.c
 -------------------------------------------------
 
-When a path is in unmerged state, running `git-update-index` for
+When a path is in the "unmerged" state, running `git-update-index` for
 that path tells git to mark the path resolved.
 
 The above is the description of a git merge at the lowest level,
 to help you understand what conceptually happens under the hood.
-In practice, nobody, not even git itself, uses three `git-cat-file`
-for this.  There is `git-merge-index` program that extracts the
+In practice, nobody, not even git itself, runs `git-cat-file` three times
+for this.  There is a `git-merge-index` program that extracts the
 stages to temporary files and calls a "merge" script on it:
 
 -------------------------------------------------
@@ -4061,7 +4061,7 @@ Note that terminology has changed since that revision.  For example, the
 README in that revision uses the word "changeset" to describe what we
 now call a <<def_commit_object,commit>>.
 
-Also, we do not call it "cache" any more, but "index", however, the
+Also, we do not call it "cache" any more, but rather "index"; however, the
 file is still called `cache.h`.  Remark: Not much reason to change it now,
 especially since there is no good single name for it anyway, because it is
 basically _the_ header file which is included by _all_ of Git's C sources.
