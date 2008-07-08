@@ -1690,7 +1690,7 @@ to follow, not easier.
 SEE ALSO
 --------
 linkgit:gittutorial[7], linkgit:gittutorial-2[7],
-linkgit:giteveryday[7], linkgit:gitcvs-migration[7],
+linkgit:everyday[7], linkgit:gitcvs-migration[7],
 link:user-manual.html[The Git User's Manual]
 
 GIT

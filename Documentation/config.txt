@@ -685,7 +685,7 @@ gitcvs.usecrlfattr
 	treat it as text. If `crlf` is explicitly unset, the file
 	will be set with '-kb' mode, which supresses any newline munging
 	the client might otherwise do. If `crlf` is not specified,
-	then 'gitcvs.allbinary' is used. See linkgit:gitattribute[5].
+	then 'gitcvs.allbinary' is used. See linkgit:gitattributes[5].
 
 gitcvs.allbinary::
 	This is used if 'gitcvs.usecrlfattr' does not resolve
