@@ -4,9 +4,9 @@
 #
 
 test_description='git-svn basic tests'
-GIT_SVN_LC_ALL=$LC_ALL
+GIT_SVN_LC_ALL=${LC_ALL:-$LANG}
 
-case "$LC_ALL" in
+case "$GIT_SVN_LC_ALL" in
 *.UTF-8)
 	have_utf8=t
 	;;
@@ -17,7 +17,7 @@ esac
 
 . ./lib-git-svn.sh
 
-echo 'define NO_SVN_TESTS to skip git-svn tests'
+say 'define NO_SVN_TESTS to skip git-svn tests'
 
 test_expect_success \
     'initialize git-svn' '
@@ -183,7 +183,7 @@ then
 		git-svn set-tree HEAD"
 	unset LC_ALL
 else
-	echo "UTF-8 locale not set, test skipped ($GIT_SVN_LC_ALL)"
+	say "UTF-8 locale not set, test skipped ($GIT_SVN_LC_ALL)"
 fi
 
 name='test fetch functionality (svn => git) with alternate GIT_SVN_ID'
