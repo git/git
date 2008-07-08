@@ -65,6 +65,8 @@ int start_command(struct child_process *cmd)
 		cmd->err = fderr[0];
 	}
 
+	trace_argv_printf(cmd->argv, "trace: run_command:");
+
 	cmd->pid = fork();
 	if (cmd->pid < 0) {
 		if (need_in)
