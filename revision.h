@@ -25,6 +25,7 @@ struct rev_info {
 
 	/* Basic information */
 	const char *prefix;
+	const char *def;
 	void *prune_data;
 	unsigned int early_output;
 
@@ -65,6 +66,7 @@ struct rev_info {
 
 	/* Format info */
 	unsigned int	shown_one:1,
+			show_merge:1,
 			abbrev_commit:1,
 			use_terminator:1,
 			missing_newline:1;
@@ -117,6 +119,8 @@ volatile show_early_output_fn_t show_early_output;
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
+extern int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
+			       int *unkc, const char **unkv);
 extern int handle_revision_arg(const char *arg, struct rev_info *revs,int flags,int cant_be_filename);
 
 extern int prepare_revision_walk(struct rev_info *revs);
