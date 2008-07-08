@@ -17,14 +17,32 @@ test_expect_success setup '
 
 '
 
-test_expect_success 'clone with excess parameters' '
+test_expect_success 'clone with excess parameters (1)' '
 
+	rm -fr dst &&
+	test_must_fail git clone -n src dst junk
+
+'
+
+test_expect_success 'clone with excess parameters (2)' '
+
+	rm -fr dst &&
 	test_must_fail git clone -n "file://$(pwd)/src" dst junk
+
+'
+
+test_expect_success 'clone does not keep pack' '
+
+	rm -fr dst &&
+	git clone -n "file://$(pwd)/src" dst &&
+	! test -f dst/file &&
+	! (echo dst/.git/objects/pack/pack-* | grep "\.keep")
 
 '
 
 test_expect_success 'clone checks out files' '
 
+	rm -fr dst &&
 	git clone src dst &&
 	test -f dst/file
 

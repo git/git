@@ -337,6 +337,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	const struct ref *refs, *head_points_at, *remote_head, *mapped_refs;
 	char branch_top[256], key[256], value[256];
 	struct strbuf reflog_msg;
+	struct transport *transport = NULL;
 
 	struct refspec refspec;
 
@@ -458,8 +459,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		refs = clone_local(path, git_dir);
 	else {
 		struct remote *remote = remote_get(argv[0]);
-		struct transport *transport =
-			transport_get(remote, remote->url[0]);
+		transport = transport_get(remote, remote->url[0]);
 
 		if (!transport->get_refs_list || !transport->fetch)
 			die("Don't know how to clone %s", transport->url);
@@ -528,6 +528,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				"unable to checkout.\n");
 		option_no_checkout = 1;
 	}
+
+	if (transport)
+		transport_unlock_pack(transport);
 
 	if (!option_no_checkout) {
 		struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
