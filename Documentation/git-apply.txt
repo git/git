@@ -14,7 +14,7 @@ SYNOPSIS
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-pNUM] [-CNUM] [--inaccurate-eof] [--recount] [--cached]
 	  [--whitespace=<nowarn|warn|fix|error|error-all>]
-	  [--exclude=PATH] [--verbose] [<patch>...]
+	  [--exclude=PATH] [--directory=<root>] [--verbose] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -181,6 +181,14 @@ behavior:
 	Do not trust the line counts in the hunk headers, but infer them
 	by inspecting the patch (e.g. after editing the patch without
 	adjusting the hunk headers appropriately).
+
+--directory=<root>::
+	Prepend <root> to all filenames.  If a "-p" argument was passed, too,
+	it is applied before prepending the new root.
++
+For example, a patch that talks about updating `a/git-gui.sh` to `b/git-gui.sh`
+can be applied to the file in the working tree `modules/git-gui/git-gui.sh` by
+running `git apply --directory=modules/git-gui`.
 
 Configuration
 -------------

@@ -58,6 +58,8 @@ static int whitespace_error;
 static int squelch_whitespace_errors = 5;
 static int applied_after_fixing_ws;
 static const char *patch_input_file;
+static const char *root;
+static int root_len;
 
 static void parse_whitespace_option(const char *option)
 {
@@ -340,6 +342,8 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 				 */
 				strbuf_remove(&name, 0, cp - name.buf);
 				free(def);
+				if (root)
+					strbuf_insert(&name, 0, root, root_len);
 				return strbuf_detach(&name, NULL);
 			}
 		}
@@ -376,6 +380,14 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 		if (deflen < len && !strncmp(start, def, deflen))
 			return def;
 		free(def);
+	}
+
+	if (root) {
+		char *ret = xmalloc(root_len + len + 1);
+		strcpy(ret, root);
+		memcpy(ret + root_len, start, len);
+		ret[root_len + len] = '\0';
+		return ret;
 	}
 
 	return xmemdupz(start, len);
@@ -3238,6 +3250,18 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 		}
 		if (!strcmp(arg, "--recount")) {
 			options |= RECOUNT;
+			continue;
+		}
+		if (!prefixcmp(arg, "--directory=")) {
+			arg += strlen("--directory=");
+			root_len = strlen(arg);
+			if (root_len && arg[root_len - 1] != '/') {
+				char *new_root;
+				root = new_root = xmalloc(root_len + 2);
+				strcpy(new_root, arg);
+				strcpy(new_root + root_len++, "/");
+			} else
+				root = arg;
 			continue;
 		}
 		if (0 < prefix_length)
