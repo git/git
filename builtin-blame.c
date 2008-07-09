@@ -25,7 +25,7 @@ static char blame_usage[] = "git-blame [options] [rev-opts] [rev] [--] file";
 static const char *blame_opt_usage[] = {
 	blame_usage,
 	"",
-	"[rev-opts] are documented in git-rev-parse(1)",
+	"[rev-opts] are documented in git-rev-list(1)",
 	NULL
 };
 
