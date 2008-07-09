@@ -37,10 +37,11 @@ configuration file (shown with examples):
     Tunnel = "ssh -q user@server.com /usr/bin/imapd ./Maildir 2> /dev/null"
 
 [imap]
-    Host = imap.server.com
+    Host = imap://imap.example.com
     User = bob
     Pass = pwd
     Port = 143
+    sslverify = false
 ..........................
 
 

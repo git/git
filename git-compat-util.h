@@ -99,6 +99,11 @@
 #include <iconv.h>
 #endif
 
+#ifndef NO_OPENSSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
+
 /* On most systems <limits.h> would have given us this, but
  * not on some systems (e.g. GNU/Hurd).
  */
