@@ -451,6 +451,18 @@ __git_find_subcommand ()
 	done
 }
 
+__git_has_doubledash ()
+{
+	local c=1
+	while [ $c -lt $COMP_CWORD ]; do
+		if [ "--" = "${COMP_WORDS[c]}" ]; then
+			return 0
+		fi
+		c=$((++c))
+	done
+	return 1
+}
+
 __git_whitespacelist="nowarn warn error error-all strip"
 
 _git_am ()
@@ -497,6 +509,8 @@ _git_apply ()
 
 _git_add ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -511,6 +525,8 @@ _git_add ()
 
 _git_bisect ()
 {
+	__git_has_doubledash && return
+
 	local subcommands="start bad good skip reset visualize replay log run"
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
@@ -613,6 +629,8 @@ _git_cherry_pick ()
 
 _git_commit ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -632,6 +650,8 @@ _git_describe ()
 
 _git_diff ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -734,6 +754,8 @@ _git_ls_tree ()
 
 _git_log ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
@@ -1086,6 +1108,8 @@ _git_remote ()
 
 _git_reset ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -1098,6 +1122,8 @@ _git_reset ()
 
 _git_shortlog ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -1144,6 +1170,8 @@ _git_stash ()
 
 _git_submodule ()
 {
+	__git_has_doubledash && return
+
 	local subcommands="add status init update"
 	if [ -z "$(__git_find_subcommand "$subcommands")" ]; then
 		local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -1350,6 +1378,8 @@ _git ()
 
 _gitk ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local g="$(git rev-parse --git-dir 2>/dev/null)"
 	local merge=""

@@ -10,6 +10,7 @@ test_expect_success 'setup' '
 	git commit -m 1 &&
 	git branch b1 &&
 	git branch b2 &&
+	git branch b3 &&
 	git clone . aa &&
 	git checkout b1 &&
 	echo b1 >>file &&
@@ -48,6 +49,12 @@ test_expect_success 'check tracking branches not updated for failed refs' '
 test_expect_success 'deleted branches have their tracking branches removed' '
 	git push origin :b1 &&
 	test "$(git rev-parse origin/b1)" = "origin/b1"
+'
+
+test_expect_success 'already deleted tracking branches ignored' '
+	git branch -d -r origin/b3 &&
+	git push origin :b3 >output 2>&1 &&
+	! grep error output
 '
 
 test_done
