@@ -1292,10 +1292,12 @@ main(int argc, char **argv)
 	int ofs = 0;
 	int r;
 	int total, n = 0;
+	int nongit_ok;
 
 	/* init the random number generator */
 	arc4_init();
 
+	setup_git_directory_gently(&nongit_ok);
 	git_config(git_imap_config, NULL);
 
 	if (!imap_folder) {
