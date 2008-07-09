@@ -1630,6 +1630,7 @@ static void *unpack_delta_entry(struct packed_git *p,
 		      (uintmax_t)curpos, p->pack_name);
 		return NULL;
 	}
+	unuse_pack(w_curs);
 	base = cache_or_unpack_entry(p, base_offset, &base_size, type, 0);
 	if (!base) {
 		/*
