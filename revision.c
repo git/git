@@ -957,8 +957,8 @@ static void add_ignore_packed(struct rev_info *revs, const char *name)
 	revs->ignore_packed[num] = NULL;
 }
 
-int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
-			int *unkc, const char **unkv)
+static int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
+			       int *unkc, const char **unkv)
 {
 	const char *arg = argv[0];
 
@@ -1161,6 +1161,20 @@ int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
 	}
 
 	return 1;
+}
+
+void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
+			const struct option *options,
+			const char * const usagestr[])
+{
+	int n = handle_revision_opt(revs, ctx->argc, ctx->argv,
+				    &ctx->cpidx, ctx->out);
+	if (n <= 0) {
+		error("unknown option `%s'", ctx->argv[0]);
+		usage_with_options(usagestr, options);
+	}
+	ctx->argv += n;
+	ctx->argc -= n;
 }
 
 /*

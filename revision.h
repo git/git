@@ -1,6 +1,8 @@
 #ifndef REVISION_H
 #define REVISION_H
 
+#include "parse-options.h"
+
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
 #define TREESAME	(1u<<2)
@@ -119,8 +121,9 @@ volatile show_early_output_fn_t show_early_output;
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
-extern int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
-			       int *unkc, const char **unkv);
+extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
+				 const struct option *options,
+				 const char * const usagestr[]);
 extern int handle_revision_arg(const char *arg, struct rev_info *revs,int flags,int cant_be_filename);
 
 extern int prepare_revision_walk(struct rev_info *revs);
