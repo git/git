@@ -438,13 +438,17 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
 		OPT_SET_INT('r', NULL,     &kinds, "act on remote-tracking branches",
 			REF_REMOTE_BRANCH),
-		OPT_CALLBACK(0, "contains", &with_commit, "commit",
-			     "print only branches that contain the commit",
-			     opt_parse_with_commit),
+		{
+			OPTION_CALLBACK, 0, "contains", &with_commit, "commit",
+			"print only branches that contain the commit",
+			PARSE_OPT_LASTARG_DEFAULT,
+			opt_parse_with_commit, (intptr_t)"HEAD",
+		},
 		{
 			OPTION_CALLBACK, 0, "with", &with_commit, "commit",
 			"print only branches that contain the commit",
-			PARSE_OPT_HIDDEN, opt_parse_with_commit,
+			PARSE_OPT_HIDDEN | PARSE_OPT_LASTARG_DEFAULT,
+			opt_parse_with_commit, (intptr_t) "HEAD",
 		},
 		OPT__ABBREV(&abbrev),
 
