@@ -306,6 +306,32 @@ is the default.)
 The "pull" command thus performs two operations: it fetches changes
 from a remote branch, then merges them into the current branch.
 
+Note that in general, Alice would want her local changes committed before
+initiating this "pull".  If Bob's work conflicts with what Alice did since
+their histories forked, Alice will use her working tree and the index to
+resolve conflicts, and existing local changes will interfere with the
+conflict resolution process (git will still perform the fetch but will
+refuse to merge --- Alice will have to get rid of her local changes in
+some way and pull again when this happens).
+
+Alice can peek at what Bob did without merging first, using the "fetch"
+command; this allows Alice to inspect what Bob did, using a special
+symbol "FETCH_HEAD", in order to determine if he has anything worth
+pulling, like this:
+
+------------------------------------------------
+alice$ git fetch /home/bob/myrepo master
+alice$ git log -p ..FETCH_HEAD
+------------------------------------------------
+
+This operation is safe even if Alice has uncommitted local changes.
+
+After inspecting what Bob did, if there is nothing urgent, Alice may
+decide to continue working without pulling from Bob.  If Bob's history
+does have something Alice would immediately need, Alice may choose to
+stash her work-in-progress first, do a "pull", and then finally unstash
+her work-in-progress on top of the resulting history.
+
 When you are working in a small closely knit group, it is not
 unusual to interact with the same repository over and over
 again.  By defining 'remote' repository shorthand, you can make
@@ -315,7 +341,7 @@ it easier:
 alice$ git remote add bob /home/bob/myrepo
 ------------------------------------------------
 
-With this, Alice can perform the first operation alone using the
+With this, Alice can perform the first part of the "pull" operation alone using the
 'git-fetch' command without merging them with her own branch,
 using:
 
