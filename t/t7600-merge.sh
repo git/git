@@ -465,7 +465,14 @@ test_expect_success 'merge log message' '
 	git merge --no-log c2 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
 	verify_diff msg.nolog msg.act "[OOPS] bad merge log message" &&
+
 	git merge --log c3 &&
+	git show -s --pretty=format:%b HEAD >msg.act &&
+	verify_diff msg.log msg.act "[OOPS] bad merge log message" &&
+
+	git reset --hard HEAD^ &&
+	git config merge.log yes &&
+	git merge c3 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
 	verify_diff msg.log msg.act "[OOPS] bad merge log message"
 '

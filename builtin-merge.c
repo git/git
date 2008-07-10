@@ -464,6 +464,8 @@ int git_merge_config(const char *k, const char *v, void *cb)
 		return git_config_string(&pull_twohead, k, v);
 	else if (!strcmp(k, "pull.octopus"))
 		return git_config_string(&pull_octopus, k, v);
+	else if (!strcmp(k, "merge.log") || !strcmp(k, "merge.summary"))
+		option_log = git_config_bool(k, v);
 	return git_diff_ui_config(k, v, cb);
 }
 
