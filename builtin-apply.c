@@ -2296,7 +2296,8 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 
 	strbuf_init(&buf, 0);
 
-	if ((tpatch = in_fn_table(patch->old_name)) != NULL) {
+	if (!(patch->is_copy || patch->is_rename) &&
+	    ((tpatch = in_fn_table(patch->old_name)) != NULL)) {
 		if (tpatch == (struct patch *) -1) {
 			return error("patch %s has been renamed/deleted",
 				patch->old_name);
@@ -2375,7 +2376,7 @@ static int verify_index_match(struct cache_entry *ce, struct stat *st)
 static int check_preimage(struct patch *patch, struct cache_entry **ce, struct stat *st)
 {
 	const char *old_name = patch->old_name;
-	struct patch *tpatch;
+	struct patch *tpatch = NULL;
 	int stat_ret = 0;
 	unsigned st_mode = 0;
 
@@ -2389,7 +2390,9 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		return 0;
 
 	assert(patch->is_new <= 0);
-	if ((tpatch = in_fn_table(old_name)) != NULL) {
+
+	if (!(patch->is_copy || patch->is_rename) &&
+	    (tpatch = in_fn_table(old_name)) != NULL) {
 		if (tpatch == (struct patch *) -1) {
 			return error("%s: has been deleted/renamed", old_name);
 		}
@@ -2399,6 +2402,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		if (stat_ret && errno != ENOENT)
 			return error("%s: %s", old_name, strerror(errno));
 	}
+
 	if (check_index && !tpatch) {
 		int pos = cache_name_pos(old_name, strlen(old_name));
 		if (pos < 0) {
