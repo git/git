@@ -274,7 +274,7 @@ same machine, wants to contribute.
 Bob begins with:
 
 ------------------------------------------------
-$ git clone /home/alice/project myrepo
+bob$ git clone /home/alice/project myrepo
 ------------------------------------------------
 
 This creates a new directory "myrepo" containing a clone of Alice's
@@ -285,7 +285,7 @@ Bob then makes some changes and commits them:
 
 ------------------------------------------------
 (edit files)
-$ git commit -a
+bob$ git commit -a
 (repeat as necessary)
 ------------------------------------------------
 
@@ -293,8 +293,8 @@ When he's ready, he tells Alice to pull changes from the repository
 at /home/bob/myrepo.  She does this with:
 
 ------------------------------------------------
-$ cd /home/alice/project
-$ git pull /home/bob/myrepo master
+alice$ cd /home/alice/project
+alice$ git pull /home/bob/myrepo master
 ------------------------------------------------
 
 This merges the changes from Bob's "master" branch into Alice's
@@ -312,7 +312,7 @@ again.  By defining 'remote' repository shorthand, you can make
 it easier:
 
 ------------------------------------------------
-$ git remote add bob /home/bob/myrepo
+alice$ git remote add bob /home/bob/myrepo
 ------------------------------------------------
 
 With this, Alice can perform the first operation alone using the
@@ -320,7 +320,7 @@ With this, Alice can perform the first operation alone using the
 using:
 
 -------------------------------------
-$ git fetch bob
+alice$ git fetch bob
 -------------------------------------
 
 Unlike the longhand form, when Alice fetches from Bob using a
@@ -329,7 +329,7 @@ fetched is stored in a remote tracking branch, in this case
 `bob/master`.  So after this:
 
 -------------------------------------
-$ git log -p master..bob/master
+alice$ git log -p master..bob/master
 -------------------------------------
 
 shows a list of all the changes that Bob made since he branched from
@@ -339,14 +339,14 @@ After examining those changes, Alice
 could merge the changes into her master branch:
 
 -------------------------------------
-$ git merge bob/master
+alice$ git merge bob/master
 -------------------------------------
 
 This `merge` can also be done by 'pulling from her own remote
 tracking branch', like this:
 
 -------------------------------------
-$ git pull . remotes/bob/master
+alice$ git pull . remotes/bob/master
 -------------------------------------
 
 Note that git pull always merges into the current branch,
@@ -355,7 +355,7 @@ regardless of what else is given on the command line.
 Later, Bob can update his repo with Alice's latest changes using
 
 -------------------------------------
-$ git pull
+bob$ git pull
 -------------------------------------
 
 Note that he doesn't need to give the path to Alice's repository;
@@ -364,7 +364,7 @@ repository in the repository configuration, and that location is
 used for pulls:
 
 -------------------------------------
-$ git config --get remote.origin.url
+bob$ git config --get remote.origin.url
 /home/alice/project
 -------------------------------------
 
@@ -376,7 +376,7 @@ Git also keeps a pristine copy of Alice's master branch under the
 name "origin/master":
 
 -------------------------------------
-$ git branch -r
+bob$ git branch -r
   origin/master
 -------------------------------------
 
@@ -384,7 +384,7 @@ If Bob later decides to work from a different host, he can still
 perform clones and pulls using the ssh protocol:
 
 -------------------------------------
-$ git clone alice.org:/home/alice/project myrepo
+bob$ git clone alice.org:/home/alice/project myrepo
 -------------------------------------
 
 Alternatively, git has a native protocol, or can use rsync or http;
