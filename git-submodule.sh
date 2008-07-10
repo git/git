@@ -172,6 +172,16 @@ cmd_add()
 		else
 			die "'$path' already exists and is not a valid git repo"
 		fi
+
+		case "$repo" in
+		./*|../*)
+			url=$(resolve_relative_url "$repo") || exit
+		    ;;
+		*)
+			url="$repo"
+			;;
+		esac
+		git config submodule."$path".url "$url"
 	else
 
 		module_clone "$path" "$realrepo" || exit
