@@ -58,6 +58,8 @@ static int whitespace_error;
 static int squelch_whitespace_errors = 5;
 static int applied_after_fixing_ws;
 static const char *patch_input_file;
+static const char *root;
+static int root_len;
 
 static void parse_whitespace_option(const char *option)
 {
@@ -340,6 +342,8 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 				 */
 				strbuf_remove(&name, 0, cp - name.buf);
 				free(def);
+				if (root)
+					strbuf_insert(&name, 0, root, root_len);
 				return strbuf_detach(&name, NULL);
 			}
 		}
@@ -376,6 +380,14 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 		if (deflen < len && !strncmp(start, def, deflen))
 			return def;
 		free(def);
+	}
+
+	if (root) {
+		char *ret = xmalloc(root_len + len + 1);
+		strcpy(ret, root);
+		memcpy(ret + root_len, start, len);
+		ret[root_len + len] = '\0';
+		return ret;
 	}
 
 	return xmemdupz(start, len);
@@ -919,7 +931,7 @@ static void recount_diff(char *line, int size, struct fragment *fragment)
 			newlines++;
 			continue;
 		case '\\':
-			break;
+			continue;
 		case '@':
 			ret = size < 3 || prefixcmp(line, "@@ ");
 			break;
@@ -2284,7 +2296,8 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 
 	strbuf_init(&buf, 0);
 
-	if ((tpatch = in_fn_table(patch->old_name)) != NULL) {
+	if (!(patch->is_copy || patch->is_rename) &&
+	    ((tpatch = in_fn_table(patch->old_name)) != NULL)) {
 		if (tpatch == (struct patch *) -1) {
 			return error("patch %s has been renamed/deleted",
 				patch->old_name);
@@ -2363,7 +2376,7 @@ static int verify_index_match(struct cache_entry *ce, struct stat *st)
 static int check_preimage(struct patch *patch, struct cache_entry **ce, struct stat *st)
 {
 	const char *old_name = patch->old_name;
-	struct patch *tpatch;
+	struct patch *tpatch = NULL;
 	int stat_ret = 0;
 	unsigned st_mode = 0;
 
@@ -2377,7 +2390,9 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		return 0;
 
 	assert(patch->is_new <= 0);
-	if ((tpatch = in_fn_table(old_name)) != NULL) {
+
+	if (!(patch->is_copy || patch->is_rename) &&
+	    (tpatch = in_fn_table(old_name)) != NULL) {
 		if (tpatch == (struct patch *) -1) {
 			return error("%s: has been deleted/renamed", old_name);
 		}
@@ -2387,6 +2402,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		if (stat_ret && errno != ENOENT)
 			return error("%s: %s", old_name, strerror(errno));
 	}
+
 	if (check_index && !tpatch) {
 		int pos = cache_name_pos(old_name, strlen(old_name));
 		if (pos < 0) {
@@ -3238,6 +3254,18 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 		}
 		if (!strcmp(arg, "--recount")) {
 			options |= RECOUNT;
+			continue;
+		}
+		if (!prefixcmp(arg, "--directory=")) {
+			arg += strlen("--directory=");
+			root_len = strlen(arg);
+			if (root_len && arg[root_len - 1] != '/') {
+				char *new_root;
+				root = new_root = xmalloc(root_len + 2);
+				strcpy(new_root, arg);
+				strcpy(new_root + root_len++, "/");
+			} else
+				root = arg;
 			continue;
 		}
 		if (0 < prefix_length)

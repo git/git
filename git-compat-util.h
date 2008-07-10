@@ -110,6 +110,14 @@
 #define PRIuMAX "llu"
 #endif
 
+#ifndef PRIu32
+#define PRIu32 "u"
+#endif
+
+#ifndef PRIx32
+#define PRIx32 "x"
+#endif
+
 #ifndef PATH_SEP
 #define PATH_SEP ':'
 #endif

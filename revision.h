@@ -111,6 +111,8 @@ struct rev_info {
 #define REV_TREE_DIFFERENT	2
 
 /* revision.c */
+void read_revisions_from_stdin(struct rev_info *revs);
+
 typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
 volatile show_early_output_fn_t show_early_output;
 

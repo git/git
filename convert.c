@@ -319,8 +319,8 @@ static int apply_filter(const char *path, const char *src, size_t len,
 static struct convert_driver {
 	const char *name;
 	struct convert_driver *next;
-	char *smudge;
-	char *clean;
+	const char *smudge;
+	const char *clean;
 } *user_convert, **user_convert_tail;
 
 static int read_convert_config(const char *var, const char *value, void *cb)
@@ -358,19 +358,12 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 	 * The command-line will not be interpolated in any way.
 	 */
 
-	if (!strcmp("smudge", ep)) {
-		if (!value)
-			return config_error_nonbool(var);
-		drv->smudge = strdup(value);
-		return 0;
-	}
+	if (!strcmp("smudge", ep))
+		return git_config_string(&drv->smudge, var, value);
 
-	if (!strcmp("clean", ep)) {
-		if (!value)
-			return config_error_nonbool(var);
-		drv->clean = strdup(value);
-		return 0;
-	}
+	if (!strcmp("clean", ep))
+		return git_config_string(&drv->clean, var, value);
+
 	return 0;
 }
 
@@ -576,7 +569,7 @@ int convert_to_git(const char *path, const char *src, size_t len,
 	struct git_attr_check check[3];
 	int crlf = CRLF_GUESS;
 	int ident = 0, ret = 0;
-	char *filter = NULL;
+	const char *filter = NULL;
 
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
@@ -606,7 +599,7 @@ int convert_to_working_tree(const char *path, const char *src, size_t len, struc
 	struct git_attr_check check[3];
 	int crlf = CRLF_GUESS;
 	int ident = 0, ret = 0;
-	char *filter = NULL;
+	const char *filter = NULL;
 
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {

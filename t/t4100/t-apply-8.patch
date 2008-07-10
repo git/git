@@ -1,0 +1,11 @@
+diff --git a/t/t4100-apply-stat.sh b/t/t4100-apply-stat.sh
+index be837bb..0798c64 100755
+--- a/t/t4100-apply-stat.sh
++++ b/t/t4100-apply-stat.sh
+@@ -35,4 +35,4 @@ non git (2)
+ non git (3)
+ EOF
+ 
+-test_done
++test_done
+\ No newline at end of file

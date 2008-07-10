@@ -12,14 +12,14 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Usually you would want to use `git-fetch`, which is a
+Usually you would want to use 'git-fetch', which is a
 higher level wrapper of this command, instead.
 
-Invokes `git-upload-pack` on a possibly remote repository
+Invokes 'git-upload-pack' on a possibly remote repository
 and asks it to send objects missing from this repository, to
 update the named heads.  The list of commits available locally
 is found out by scanning local $GIT_DIR/refs/ and sent to
-`git-upload-pack` running on the other end.
+'git-upload-pack' running on the other end.
 
 This command degenerates to download everything to complete the
 asked refs from the remote side when the local side does not
@@ -33,12 +33,12 @@ OPTIONS
 
 -q::
 --quiet::
-	Pass '-q' flag to `git-unpack-objects`; this makes the
+	Pass '-q' flag to 'git-unpack-objects'; this makes the
 	cloning process less verbose.
 
 -k::
 --keep::
-	Do not invoke `git-unpack-objects` on received data, but
+	Do not invoke 'git-unpack-objects' on received data, but
 	create a single packfile out of it instead, and store it
 	in the object database. If provided twice then the pack is
 	locked against repacking.
@@ -54,7 +54,7 @@ OPTIONS
 	otherwise determine the tags this option made available.
 
 --upload-pack=<git-upload-pack>::
-	Use this to specify the path to `git-upload-pack` on the
+	Use this to specify the path to 'git-upload-pack' on the
 	remote side, if is not found on your $PATH.
 	Installations of sshd ignores the user's environment
 	setup scripts for login shells (e.g. .bash_profile) and
@@ -79,7 +79,7 @@ OPTIONS
 
 <host>::
 	A remote host that houses the repository.  When this
-	part is specified, `git-upload-pack` is invoked via
+	part is specified, 'git-upload-pack' is invoked via
 	ssh.
 
 <directory>::

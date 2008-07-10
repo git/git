@@ -24,23 +24,15 @@ set up install paths (via config.mak.autogen), so you can write instead
 
 Issues of note:
 
- - git normally installs a helper script wrapper called "git", which
-   conflicts with a similarly named "GNU interactive tools" program.
+ - Ancient versions of GNU Interactive Tools (pre-4.9.2) installed a
+   program "git", whose name conflicts with this program.  But with
+   version 4.9.2, after long hiatus without active maintenance (since
+   around 1997), it changed its name to gnuit and the name conflict is no
+   longer a problem.
 
-   Tough.  Either don't use the wrapper script, or delete the old GNU
-   interactive tools.  None of the core git stuff needs the wrapper,
-   it's just a convenient shorthand and while it is documented in some
-   places, you can always replace "git commit" with "git-commit"
-   instead.
-
-   But let's face it, most of us don't have GNU interactive tools, and
-   even if we had it, we wouldn't know what it does.  I don't think it
-   has been actively developed since 1997, and people have moved over to
-   graphical file managers.
-
-   NOTE: As of gnuit-4.9.2, the GNU interactive tools package has been
-         renamed. You can compile gnuit with the --disable-transition
-         option and then it will not conflict with git.
+   NOTE: When compiled with backward compatiblity option, the GNU
+   Interactive Tools package still can install "git", but you can build it
+   with --disable-transition option to avoid this.
 
  - You can use git after building but without installing if you
    wanted to.  Various git commands need to find other git

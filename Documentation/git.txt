@@ -43,9 +43,10 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.5.6.1/git.html[documentation for release 1.5.6.1]
+* link:v1.5.6.2/git.html[documentation for release 1.5.6.2]
 
 * release notes for
+  link:RelNotes-1.5.6.2.txt[1.5.6.2].
   link:RelNotes-1.5.6.1.txt[1.5.6.1].
   link:RelNotes-1.5.6.txt[1.5.6].
 
@@ -135,13 +136,13 @@ OPTIONS
 +
 Other options are available to control how the manual page is
 displayed. See linkgit:git-help[1] for more information,
-because 'git --help ...' is converted internally into 'git
-help ...'.
+because `git --help ...` is converted internally into `git
+help ...`.
 
 --exec-path::
 	Path to wherever your core git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
-	environment variable. If no path is given 'git' will print
+	environment variable. If no path is given, 'git' will print
 	the current setting and then exit.
 
 -p::
@@ -426,6 +427,14 @@ git so take care if using Cogito etc.
 	This can also be controlled by the '--work-tree' command line
 	option and the core.worktree configuration variable.
 
+'GIT_CEILING_DIRECTORIES'::
+	This should be a colon-separated list of absolute paths.
+	If set, it is a list of directories that git should not chdir
+	up into while looking for a repository directory.
+	It will not exclude the current working directory or
+	a GIT_DIR set on the command line or in the environment.
+	(Useful for excluding slow-loading network directories.)
+
 git Commits
 ~~~~~~~~~~~
 'GIT_AUTHOR_NAME'::
@@ -483,9 +492,9 @@ other
 	a pager.
 
 'GIT_SSH'::
-	If this environment variable is set then `git-fetch`
-	and `git-push` will use this command instead
-	of `ssh` when they need to connect to a remote system.
+	If this environment variable is set then 'git-fetch'
+	and 'git-push' will use this command instead
+	of 'ssh' when they need to connect to a remote system.
 	The '$GIT_SSH' command will be given exactly two arguments:
 	the 'username@host' (or just 'host') from the URL and the
 	shell command to execute on that remote system.
@@ -500,8 +509,8 @@ for further details.
 
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
-	as `git-blame` (in incremental mode), `git-rev-list`, `git-log`,
-	and `git-whatchanged` will force a flush of the output stream
+	as 'git-blame' (in incremental mode), 'git-rev-list', 'git-log',
+	and 'git-whatchanged' will force a flush of the output stream
 	after each commit-oriented record have been flushed.   If this
 	variable is set to "0", the output of these commands will be done
 	using completely buffered I/O.   If this environment variable is
@@ -591,7 +600,7 @@ contributors on the git-list <git@vger.kernel.org>.
 SEE ALSO
 --------
 linkgit:gittutorial[7], linkgit:gittutorial-2[7],
-linkgit:giteveryday[7], linkgit:gitcvs-migration[7],
+linkgit:everyday[7], linkgit:gitcvs-migration[7],
 linkgit:gitglossary[7], linkgit:gitcore-tutorial[7],
 linkgit:gitcli[7], link:user-manual.html[The Git User's Manual]
 

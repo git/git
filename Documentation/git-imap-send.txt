@@ -26,7 +26,7 @@ git format-patch --signoff --stdout --attach origin | git imap-send
 CONFIGURATION
 -------------
 
-`git-imap-send` requires the following values in the repository
+'git-imap-send' requires the following values in the repository
 configuration file (shown with examples):
 
 ..........................

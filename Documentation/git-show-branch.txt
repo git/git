@@ -75,7 +75,7 @@ OPTIONS
 
 --merge-base::
 	Instead of showing the commit list, just act like the
-	`git-merge-base -a` command, except that it can accept
+	'git-merge-base -a' command, except that it can accept
 	more than two heads.
 
 --independent::

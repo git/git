@@ -520,7 +520,8 @@ static int get_pack(int xd[2], char **pack_lockfile)
 
 		if (read_pack_header(demux.out, &header))
 			die("protocol error: bad pack header");
-		snprintf(hdr_arg, sizeof(hdr_arg), "--pack_header=%u,%u",
+		snprintf(hdr_arg, sizeof(hdr_arg),
+			 "--pack_header=%"PRIu32",%"PRIu32,
 			 ntohl(header.hdr_version), ntohl(header.hdr_entries));
 		if (ntohl(header.hdr_entries) < unpack_limit)
 			do_keep = 0;

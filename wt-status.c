@@ -399,7 +399,7 @@ int git_status_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "status.showuntrackedfiles")) {
 		if (!v)
-			return config_error_nonbool(v);
+			return config_error_nonbool(k);
 		else if (!strcmp(v, "no"))
 			show_untracked_files = SHOW_NO_UNTRACKED_FILES;
 		else if (!strcmp(v, "normal"))

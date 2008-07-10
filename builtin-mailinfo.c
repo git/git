@@ -812,6 +812,7 @@ static void handle_body(void)
 					      np - newline);
 			if (!handle_boundary())
 				return;
+			len = strlen(line);
 		}
 
 		/* Unwrap transfer encoding */

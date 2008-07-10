@@ -167,8 +167,7 @@ cmd_add()
 	# perhaps the path exists and is already a git repo, else clone it
 	if test -e "$path"
 	then
-		if test -d "$path/.git" &&
-		test "$(unset GIT_DIR; cd $path; git rev-parse --git-dir)" = ".git"
+		if test -d "$path"/.git -o -f "$path"/.git
 		then
 			echo "Adding existing repo at '$path' to the index"
 		else

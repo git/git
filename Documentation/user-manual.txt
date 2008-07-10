@@ -518,7 +518,7 @@ $ git bisect visualize
 -------------------------------------------------
 
 which will run gitk and label the commit it chose with a marker that
-says "bisect".  Chose a safe-looking commit nearby, note its commit
+says "bisect".  Choose a safe-looking commit nearby, note its commit
 id, and check it out with:
 
 -------------------------------------------------
@@ -1303,7 +1303,7 @@ $ git diff -3 file.txt		# diff against stage 3
 $ git diff --theirs file.txt	# same as the above.
 -------------------------------------------------
 
-The linkgit:git-log[1] and gitk[1] commands also provide special help
+The linkgit:git-log[1] and linkgit:gitk[1] commands also provide special help
 for merges:
 
 -------------------------------------------------
@@ -1963,10 +1963,10 @@ error: failed to push to 'ssh://yourserver.com/~you/proj.git'
 
 This can happen, for example, if you:
 
-	- use `git reset --hard` to remove already-published commits, or
-	- use `git commit --amend` to replace already-published commits
+	- use `git-reset --hard` to remove already-published commits, or
+	- use `git-commit --amend` to replace already-published commits
 	  (as in <<fixing-a-mistake-by-rewriting-history>>), or
-	- use `git rebase` to rebase any already-published commits (as
+	- use `git-rebase` to rebase any already-published commits (as
 	  in <<using-git-rebase>>).
 
 You may force git-push to perform the update anyway by preceding the
@@ -1988,8 +1988,8 @@ intend to manage the branch.
 
 It's also possible for a push to fail in this way when other people have
 the right to push to the same repository.  In that case, the correct
-solution is to retry the push after first updating your work by either a
-pull or a fetch followed by a rebase; see the
+solution is to retry the push after first updating your work: either by a
+pull, or by a fetch followed by a rebase; see the
 <<setting-up-a-shared-repository,next section>> and
 linkgit:gitcvs-migration[7] for more.
 
@@ -2170,7 +2170,7 @@ they are for, or what status they are in.  To get a reminder of what
 changes are in a specific branch, use:
 
 -------------------------------------------------
-$ git log linux..branchname | git-shortlog
+$ git log linux..branchname | git shortlog
 -------------------------------------------------
 
 To see whether it has already been merged into the test or release branches,
@@ -2443,8 +2443,8 @@ patches to the new mywork.  The result will look like:
 ................................................
 
 In the process, it may discover conflicts.  In that case it will stop
-and allow you to fix the conflicts; after fixing conflicts, use "git
-add" to update the index with those contents, and then, instead of
+and allow you to fix the conflicts; after fixing conflicts, use "git-add"
+to update the index with those contents, and then, instead of
 running git-commit, just run
 
 -------------------------------------------------
@@ -2700,8 +2700,8 @@ master branch.  In more detail:
 git fetch and fast-forwards
 ---------------------------
 
-In the previous example, when updating an existing branch, "git
-fetch" checks to make sure that the most recent commit on the remote
+In the previous example, when updating an existing branch, "git-fetch"
+checks to make sure that the most recent commit on the remote
 branch is a descendant of the most recent commit on your copy of the
 branch before updating your copy of the branch to point at the new
 commit.  Git calls this process a <<fast-forwards,fast forward>>.
@@ -2726,7 +2726,7 @@ resulting in a situation like:
             o--o--o <-- new head of the branch
 ................................................
 
-In this case, "git fetch" will fail, and print out a warning.
+In this case, "git-fetch" will fail, and print out a warning.
 
 In that case, you can still force git to update to the new head, as
 described in the following section.  However, note that in the
@@ -2861,7 +2861,7 @@ There are four different types of objects: "blob", "tree", "commit", and
 "tag".
 
 - A <<def_blob_object,"blob" object>> is used to store file data.
-- A <<def_tree_object,"tree" object>> is an object that ties one or more
+- A <<def_tree_object,"tree" object>> ties one or more
   "blob" objects into a directory structure. In addition, a tree object
   can refer to other tree objects, thus creating a directory hierarchy.
 - A <<def_commit_object,"commit" object>> ties such directory hierarchies
@@ -3036,7 +3036,7 @@ Tag Object
 
 A tag object contains an object, object type, tag name, the name of the
 person ("tagger") who created the tag, and a message, which may contain
-a signature, as can be seen using the linkgit:git-cat-file[1]:
+a signature, as can be seen using linkgit:git-cat-file[1]:
 
 ------------------------------------------------
 $ git cat-file tag v1.5.0
@@ -3106,7 +3106,7 @@ $ git prune
 
 to remove any of the "loose" objects that are now contained in the
 pack.  This will also remove any unreferenced objects (which may be
-created when, for example, you use "git reset" to remove a commit).
+created when, for example, you use "git-reset" to remove a commit).
 You can verify that the loose objects are gone by looking at the
 .git/objects directory or by running
 
@@ -3135,7 +3135,7 @@ branch still exists, as does everything it pointed to. The branch
 pointer itself just doesn't, since you replaced it with another one.
 
 There are also other situations that cause dangling objects. For
-example, a "dangling blob" may arise because you did a "git add" of a
+example, a "dangling blob" may arise because you did a "git-add" of a
 file, but then, before you actually committed it and made it part of the
 bigger picture, you changed something else in that file and committed
 that *updated* thing--the old state that you added originally ends up
@@ -3185,7 +3185,7 @@ Usually, dangling blobs and trees aren't very interesting. They're
 almost always the result of either being a half-way mergebase (the blob
 will often even have the conflict markers from a merge in it, if you
 have had conflicting merges that you fixed up by hand), or simply
-because you interrupted a "git fetch" with ^C or something like that,
+because you interrupted a "git-fetch" with ^C or something like that,
 leaving _some_ of the new objects in the object database, but just
 dangling and useless.
 
@@ -3694,7 +3694,7 @@ removed. The only thing `--remove` means is that update-index will be
 considering a removed file to be a valid thing, and if the file really
 does not exist any more, it will update the index accordingly.
 
-As a special case, you can also do `git-update-index --refresh`, which
+As a special case, you can also do `git update-index --refresh`, which
 will refresh the "stat" information of each index to match the current
 stat information. It will 'not' update the object status itself, and
 it will only update the fields that are used to quickly test whether
@@ -3770,7 +3770,7 @@ from one representation to the other:
 Tying it all together
 ~~~~~~~~~~~~~~~~~~~~~
 
-To commit a tree you have instantiated with "git-write-tree", you'd
+To commit a tree you have instantiated with "git write-tree", you'd
 create a "commit" object that refers to that tree and the history
 behind it--most notably the "parent" commits that preceded it in
 history.
@@ -3927,7 +3927,7 @@ $ git read-tree -m -u <origtree> <yourtree> <targettree>
 
 which will do all trivial merge operations for you directly in the
 index file, and you can just write the result out with
-`git-write-tree`.
+`git write-tree`.
 
 
 [[merging-multiple-trees-2]]
@@ -3986,13 +3986,13 @@ $ mv -f hello.c~2 hello.c
 $ git update-index hello.c
 -------------------------------------------------
 
-When a path is in unmerged state, running `git-update-index` for
+When a path is in the "unmerged" state, running `git-update-index` for
 that path tells git to mark the path resolved.
 
 The above is the description of a git merge at the lowest level,
 to help you understand what conceptually happens under the hood.
-In practice, nobody, not even git itself, uses three `git-cat-file`
-for this.  There is `git-merge-index` program that extracts the
+In practice, nobody, not even git itself, runs `git-cat-file` three times
+for this.  There is a `git-merge-index` program that extracts the
 stages to temporary files and calls a "merge" script on it:
 
 -------------------------------------------------
@@ -4061,7 +4061,7 @@ Note that terminology has changed since that revision.  For example, the
 README in that revision uses the word "changeset" to describe what we
 now call a <<def_commit_object,commit>>.
 
-Also, we do not call it "cache" any more, but "index", however, the
+Also, we do not call it "cache" any more, but rather "index"; however, the
 file is still called `cache.h`.  Remark: Not much reason to change it now,
 especially since there is no good single name for it anyway, because it is
 basically _the_ header file which is included by _all_ of Git's C sources.
@@ -4095,7 +4095,7 @@ functions like `get_sha1_basic()` or the likes.
 This is just to get you into the groove for the most libified part of Git:
 the revision walker.
 
-Basically, the initial version of `git log` was a shell script:
+Basically, the initial version of `git-log` was a shell script:
 
 ----------------------------------------------------------------
 $ git-rev-list --pretty $(git-rev-parse --default HEAD "$@") | \
@@ -4130,7 +4130,7 @@ just have a look at the first implementation of `cmd_log()`; call
 `git show v1.3.0{tilde}155^2{tilde}4` and scroll down to that function (note that you
 no longer need to call `setup_pager()` directly).
 
-Nowadays, `git log` is a builtin, which means that it is _contained_ in the
+Nowadays, `git-log` is a builtin, which means that it is _contained_ in the
 command `git`.  The source side of a builtin is
 
 - a function called `cmd_<bla>`, typically defined in `builtin-<bla>.c`,
@@ -4146,7 +4146,7 @@ since they share quite a bit of code.  In that case, the commands which are
 _not_ named like the `.c` file in which they live have to be listed in
 `BUILT_INS` in the `Makefile`.
 
-`git log` looks more complicated in C than it does in the original script,
+`git-log` looks more complicated in C than it does in the original script,
 but that allows for a much greater flexibility and performance.
 
 Here again it is a good point to take a pause.
@@ -4157,9 +4157,9 @@ the organization of Git (after you know the basic concepts).
 So, think about something which you are interested in, say, "how can I
 access a blob just knowing the object name of it?".  The first step is to
 find a Git command with which you can do it.  In this example, it is either
-`git show` or `git cat-file`.
+`git-show` or `git-cat-file`.
 
-For the sake of clarity, let's stay with `git cat-file`, because it
+For the sake of clarity, let's stay with `git-cat-file`, because it
 
 - is plumbing, and
 

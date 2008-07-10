@@ -12,6 +12,13 @@ This test runs various sanity checks on http-push.'
 ROOT_PATH="$PWD"
 LIB_HTTPD_DAV=t
 
+if git http-push > /dev/null 2>&1 || [ $? -eq 128 ]
+then
+	say "skipping test, USE_CURL_MULTI is not defined"
+	test_done
+	exit
+fi
+
 . ../lib-httpd.sh
 
 if ! start_httpd >&3 2>&4
@@ -36,7 +43,7 @@ test_expect_success 'setup remote repository' '
 	git --bare update-server-info &&
 	chmod +x hooks/post-update &&
 	cd - &&
-	mv test_repo.git $HTTPD_DOCUMENT_ROOT_PATH
+	mv test_repo.git "$HTTPD_DOCUMENT_ROOT_PATH"
 '
 
 test_expect_success 'clone remote repository' '
@@ -44,16 +51,17 @@ test_expect_success 'clone remote repository' '
 	git clone $HTTPD_URL/test_repo.git test_repo_clone
 '
 
-test_expect_success 'push to remote repository' '
+test_expect_failure 'push to remote repository' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	: >path2 &&
 	git add path2 &&
 	test_tick &&
 	git commit -m path2 &&
-	git push
+	git push &&
+	[ -f "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git/refs/heads/master" ]
 '
 
-test_expect_success 'create and delete remote branch' '
+test_expect_failure 'create and delete remote branch' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	git checkout -b dev &&
 	: >path3 &&

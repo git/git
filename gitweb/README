@@ -156,10 +156,11 @@ not include variables usually directly set during build):
    set correctly for gitweb to find repositories.
  * $projects_list
    Source of projects list, either directory to scan, or text file
-   with list of repositories (in the "<URI-encoded repository path> SPC
-   <URI-encoded repository owner>" format).  Set to $GITWEB_LIST
-   during installation.  If empty, $projectroot is used to scan for
-   repositories.
+   with list of repositories (in the "<URI-encoded repository path> SP
+   <URI-encoded repository owner>" line format; actually there can be
+   any sequence of whitespace in place of space (SP)).  Set to
+   $GITWEB_LIST during installation.  If empty, $projectroot is used
+   to scan for repositories.
  * $my_url, $my_uri
    URL and absolute URL of gitweb script; you might need to set those
    variables if you are using 'pathinfo' feature: see also below.
@@ -214,6 +215,39 @@ not include variables usually directly set during build):
    ('-M'); set it to ('-C') or ('-C', '-C') to also detect copies, or
    set it to () if you don't want to have renames detection.
 
+
+Projects list file format
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of having gitweb find repositories by scanning filesystem starting
+from $projectroot (or $projects_list, if it points to directory), you can
+provide list of projects by setting $projects_list to a text file with list
+of projects (and some additional info).  This file uses the following
+format:
+
+One record (for project / repository) per line, whitespace separated fields;
+does not support (at least for now) lines continuation (newline escaping).
+Leading and trailing whitespace are ignored, any run of whitespace can be
+used as field separator (rules for Perl's "split(' ', $line)").  Keyed by
+the first field, which is project name, i.e. path to repository GIT_DIR
+relative to $projectroot.  Fields use modified URI encoding, defined in
+RFC 3986, section 2.1 (Percent-Encoding), or rather "Query string encoding"
+(see http://en.wikipedia.org/wiki/Query_string#URL_encoding), the difference
+being that SP (' ') can be encoded as '+' (and therefore '+' has to be also
+percent-encoded).  Reserved characters are: '%' (used for encoding), '+'
+(can be used to encode SPACE), all whitespace characters as defined in Perl,
+including SP, TAB and LF, (used to separate fields in a record).
+
+Currently list of fields is
+ * <repository path>  - path to repository GIT_DIR, relative to $projectroot
+ * <repository owner> - displayed as repository owner, preferably full name,
+                        or email, or both
+
+You can additionally use $projects_list file to limit which repositories
+are visible, and together with $strict_export to limit access to
+repositories (see "Gitweb repositories" section in gitweb/INSTALL).
+
+
 Per-repository gitweb configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -225,8 +259,8 @@ You can use the following files in repository:
  * README.html
    A .html file (HTML fragment) which is included on the gitweb project
    summary page inside <div> block element. You can use it for longer
-   description of a project, to provide links for example to projects
-   homepage, etc.
+   description of a project, to provide links (for example to project's
+   homepage), etc.
  * description (or gitweb.description)
    Short (shortened by default to 25 characters in the projects list page)
    single line description of a project (of a repository). Plain text file;
