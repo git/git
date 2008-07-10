@@ -5,7 +5,7 @@
 # Copyright (c) 2007 Lars Hjemli
 
 USAGE="[--quiet] [--cached] \
-[add <repo> [-b branch]|status|init|update [-i|--init]|summary [-n|--summary-limit <n>] [<commit>]] \
+[add <repo> [-b branch] <path>]|[status|init|update [-i|--init]|summary [-n|--summary-limit <n>] [<commit>]] \
 [--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
@@ -25,18 +25,6 @@ say()
 	then
 		echo "$@"
 	fi
-}
-
-# NEEDSWORK: identical function exists in get_repo_base in clone.sh
-get_repo_base() {
-	(
-		cd "`/bin/pwd`" &&
-		cd "$1" || cd "$1.git" &&
-		{
-			cd .git
-			pwd
-		}
-	) 2>/dev/null
 }
 
 # Resolve relative url by appending to parent's url
@@ -115,7 +103,7 @@ module_clone()
 #
 # Add a new submodule to the working tree, .gitmodules and the index
 #
-# $@ = repo [path]
+# $@ = repo path
 #
 # optional branch is stored in global branch variable
 #
@@ -150,16 +138,27 @@ cmd_add()
 	repo=$1
 	path=$2
 
-	if test -z "$repo"; then
+	if test -z "$repo" -o -z "$path"; then
 		usage
 	fi
 
-	# Guess path from repo if not specified or strip trailing slashes
-	if test -z "$path"; then
-		path=$(echo "$repo" | sed -e 's|/*$||' -e 's|:*/*\.git$||' -e 's|.*[/:]||g')
-	else
-		path=$(echo "$path" | sed -e 's|/*$||')
-	fi
+	# assure repo is absolute or relative to parent
+	case "$repo" in
+	./*|../*)
+		# dereference source url relative to parent's url
+		realrepo=$(resolve_relative_url "$repo") || exit
+		;;
+	*:*|/*)
+		# absolute url
+		realrepo=$repo
+		;;
+	*)
+		die "repo URL: '$repo' must be absolute or begin with ./|../"
+	;;
+	esac
+
+	# strip trailing slashes from path
+	path=$(echo "$path" | sed -e 's|/*$||')
 
 	git ls-files --error-unmatch "$path" > /dev/null 2>&1 &&
 	die "'$path' already exists in the index"
@@ -174,20 +173,6 @@ cmd_add()
 			die "'$path' already exists and is not a valid git repo"
 		fi
 	else
-		case "$repo" in
-		./*|../*)
-			# dereference source url relative to parent's url
-			realrepo=$(resolve_relative_url "$repo") || exit
-			;;
-		*)
-			# Turn the source into an absolute path if
-			# it is local
-			if base=$(get_repo_base "$repo"); then
-				repo="$base"
-			fi
-			realrepo=$repo
-			;;
-		esac
 
 		module_clone "$path" "$realrepo" || exit
 		(unset GIT_DIR; cd "$path" && git checkout -q ${branch:+-b "$branch" "origin/$branch"}) ||
