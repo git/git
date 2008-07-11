@@ -202,6 +202,7 @@ static int do_sign(struct strbuf *buffer)
 	const char *args[4];
 	char *bracket;
 	int len;
+	int i, j;
 
 	if (!*signingkey) {
 		if (strlcpy(signingkey, git_committer_info(IDENT_ERROR_ON_NO_NAME),
@@ -240,6 +241,15 @@ static int do_sign(struct strbuf *buffer)
 
 	if (finish_command(&gpg) || !len || len < 0)
 		return error("gpg failed to sign the tag");
+
+	/* Strip CR from the line endings, in case we are on Windows. */
+	for (i = j = 0; i < buffer->len; i++)
+		if (buffer->buf[i] != '\r') {
+			if (i != j)
+				buffer->buf[j] = buffer->buf[i];
+			j++;
+		}
+	strbuf_setlen(buffer, j);
 
 	return 0;
 }
