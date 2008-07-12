@@ -12,8 +12,8 @@ SYNOPSIS
 'git am' [--signoff] [--keep] [--utf8 | --no-utf8]
          [--3way] [--interactive] [--binary]
          [--whitespace=<option>] [-C<n>] [-p<n>]
-         <mbox>|<Maildir>...
-'git am' [--skip | --resolved]
+	 [<mbox> | <Maildir>...]
+'git am' (--skip | --resolved)
 
 DESCRIPTION
 -----------
