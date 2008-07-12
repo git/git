@@ -272,7 +272,7 @@ int adjust_shared_perm(const char *path)
 		int tweak = shared_repository;
 		if (!(mode & S_IWUSR))
 			tweak &= ~0222;
-		mode = (mode & ~0777) | tweak;
+		mode |= tweak;
 	} else {
 		/* Preserve old PERM_UMASK behaviour */
 		if (mode & S_IWUSR)
