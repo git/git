@@ -375,19 +375,33 @@ proc start_rev_list {view} {
     return 1
 }
 
+proc stop_instance {inst} {
+    global commfd leftover
+
+    set fd $commfd($inst)
+    catch {
+	set pid [pid $fd]
+	exec kill $pid
+    }
+    catch {close $fd}
+    nukefile $fd
+    unset commfd($inst)
+    unset leftover($inst)
+}
+
+proc stop_backends {} {
+    global commfd
+
+    foreach inst [array names commfd] {
+	stop_instance $inst
+    }
+}
+
 proc stop_rev_list {view} {
-    global commfd viewinstances leftover
+    global viewinstances
 
     foreach inst $viewinstances($view) {
-	set fd $commfd($inst)
-	catch {
-	    set pid [pid $fd]
-	    exec kill $pid
-	}
-	catch {close $fd}
-	nukefile $fd
-	unset commfd($inst)
-	unset leftover($inst)
+	stop_instance $inst
     }
     set viewinstances($view) {}
 }
@@ -2103,6 +2117,7 @@ proc makewindow {} {
     bind . <$M1B-minus> {incrfont -1}
     bind . <$M1B-KP_Subtract> {incrfont -1}
     wm protocol . WM_DELETE_WINDOW doquit
+    bind . <Destroy> {stop_backends}
     bind . <Button-1> "click %W"
     bind $fstring <Key-Return> {dofind 1 1}
     bind $sha1entry <Key-Return> gotocommit
