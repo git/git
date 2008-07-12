@@ -178,7 +178,7 @@ test_expect_success 'failed (non-fast-forward) push with matching heads' '
 	mk_test heads/master &&
 	git push testrepo : &&
 	git commit --amend -massaged &&
-	! git push testrepo &&
+	test_must_fail git push testrepo &&
 	check_push_result $the_commit heads/master &&
 	git reset --hard $the_commit
 
@@ -374,7 +374,7 @@ test_expect_success 'push with +HEAD' '
 
 	# Without force rewinding should fail
 	git reset --hard HEAD^ &&
-	! git push testrepo HEAD &&
+	test_must_fail git push testrepo HEAD &&
 	check_push_result $the_commit heads/local &&
 
 	# With force rewinding should succeed
@@ -448,7 +448,7 @@ test_expect_success 'push does not update local refs on failure' '
 	git clone parent child &&
 	(cd child &&
 		echo two >foo && git commit -a -m two &&
-		! git push &&
+		test_must_fail git push &&
 		test $(git rev-parse master) != \
 			$(git rev-parse remotes/origin/master))
 
@@ -459,7 +459,7 @@ test_expect_success 'allow deleting an invalid remote ref' '
 	pwd &&
 	rm -f testrepo/.git/objects/??/* &&
 	git push testrepo :refs/heads/master &&
-	(cd testrepo && ! git rev-parse --verify refs/heads/master)
+	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/master)
 
 '
 

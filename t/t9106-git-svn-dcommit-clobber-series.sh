@@ -57,7 +57,7 @@ test_expect_success 'change file but in unrelated area' "
 test_expect_success 'attempt to dcommit with a dirty index' '
 	echo foo >>file &&
 	git add file &&
-	! git svn dcommit
+	test_must_fail git svn dcommit
 '
 
 test_done

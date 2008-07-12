@@ -52,7 +52,7 @@ test_expect_success 'safecrlf: autocrlf=input, all CRLF' '
 	git config core.safecrlf true &&
 
 	for w in I am all CRLF; do echo $w; done | append_cr >allcrlf &&
-	! git add allcrlf
+	test_must_fail git add allcrlf
 '
 
 test_expect_success 'safecrlf: autocrlf=input, mixed LF/CRLF' '
@@ -61,7 +61,7 @@ test_expect_success 'safecrlf: autocrlf=input, mixed LF/CRLF' '
 	git config core.safecrlf true &&
 
 	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >mixed &&
-	! git add mixed
+	test_must_fail git add mixed
 '
 
 test_expect_success 'safecrlf: autocrlf=true, all LF' '
@@ -70,7 +70,7 @@ test_expect_success 'safecrlf: autocrlf=true, all LF' '
 	git config core.safecrlf true &&
 
 	for w in I am all LF; do echo $w; done >alllf &&
-	! git add alllf
+	test_must_fail git add alllf
 '
 
 test_expect_success 'safecrlf: autocrlf=true mixed LF/CRLF' '
@@ -79,7 +79,7 @@ test_expect_success 'safecrlf: autocrlf=true mixed LF/CRLF' '
 	git config core.safecrlf true &&
 
 	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >mixed &&
-	! git add mixed
+	test_must_fail git add mixed
 '
 
 test_expect_success 'safecrlf: print warning only once' '

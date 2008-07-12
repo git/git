@@ -100,7 +100,7 @@ test_expect_success \
      git commit -a -m "generation 2" &&
      id=$(git rev-list --max-count=1 HEAD) &&
      (cd "$CVSWORK" &&
-     ! git cvsexportcommit -c $id
+     test_must_fail git cvsexportcommit -c $id
      )'
 
 #test_expect_success \
@@ -112,7 +112,7 @@ test_expect_success \
 #     git commit -a -m "generation 3" &&
 #     id=$(git rev-list --max-count=1 HEAD) &&
 #     (cd "$CVSWORK" &&
-#     ! git cvsexportcommit -c $id
+#     test_must_fail git cvsexportcommit -c $id
 #     )'
 
 # We reuse the state from two tests back here
@@ -222,7 +222,7 @@ test_expect_success \
       git commit -a -m "Update two" &&
       id=$(git rev-list --max-count=1 HEAD) &&
       (cd "$CVSWORK" &&
-      ! git-cvsexportcommit -c $id
+      test_must_fail git-cvsexportcommit -c $id
       )'
 
 case "$(git config --bool core.filemode)" in

@@ -105,7 +105,7 @@ test_expect_success 'with failing hook' '
 
 	echo "another" >> file &&
 	git add file &&
-	! git commit -m "another"
+	test_must_fail git commit -m "another"
 
 '
 

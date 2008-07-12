@@ -201,7 +201,7 @@ test_expect_success 'non-match value' \
 	'test wow = $(git config --get nextsection.nonewline !for)'
 
 test_expect_success 'ambiguous get' '
-	! git config --get nextsection.nonewline
+	test_must_fail git config --get nextsection.nonewline
 '
 
 test_expect_success 'get multivar' \
@@ -223,15 +223,15 @@ EOF
 test_expect_success 'multivar replace' 'cmp .git/config expect'
 
 test_expect_success 'ambiguous value' '
-	! git config nextsection.nonewline
+	test_must_fail git config nextsection.nonewline
 '
 
 test_expect_success 'ambiguous unset' '
-	! git config --unset nextsection.nonewline
+	test_must_fail git config --unset nextsection.nonewline
 '
 
 test_expect_success 'invalid unset' '
-	! git config --unset somesection.nonewline
+	test_must_fail git config --unset somesection.nonewline
 '
 
 git config --unset nextsection.nonewline "wow3$"
@@ -248,7 +248,7 @@ EOF
 
 test_expect_success 'multivar unset' 'cmp .git/config expect'
 
-test_expect_success 'invalid key' '! git config inval.2key blabla'
+test_expect_success 'invalid key' 'test_must_fail git config inval.2key blabla'
 
 test_expect_success 'correct key' 'git config 123456.a123 987'
 
@@ -430,7 +430,8 @@ EOF
 test_expect_success "rename succeeded" "test_cmp expect .git/config"
 
 test_expect_success "rename non-existing section" '
-	! git config --rename-section branch."world domination" branch.drei
+	test_must_fail git config --rename-section \
+		branch."world domination" branch.drei
 '
 
 test_expect_success "rename succeeded" "test_cmp expect .git/config"
@@ -545,11 +546,11 @@ test_expect_success bool '
 test_expect_success 'invalid bool (--get)' '
 
 	git config bool.nobool foobar &&
-	! git config --bool --get bool.nobool'
+	test_must_fail git config --bool --get bool.nobool'
 
 test_expect_success 'invalid bool (set)' '
 
-	! git config --bool bool.nobool foobar'
+	test_must_fail git config --bool bool.nobool foobar'
 
 rm .git/config
 
@@ -669,7 +670,7 @@ EOF
 test_expect_success 'quoting' 'cmp .git/config expect'
 
 test_expect_success 'key with newline' '
-	! git config "key.with
+	test_must_fail git config "key.with
 newline" 123'
 
 test_expect_success 'value with newline' 'git config key.sub value.with\\\

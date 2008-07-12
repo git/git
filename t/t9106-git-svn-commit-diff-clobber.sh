@@ -27,7 +27,7 @@ test_expect_success 'commit change from svn side' '
 test_expect_success 'commit conflicting change from git' '
 	echo second line from git >> file &&
 	git commit -a -m "second line from git" &&
-	! git-svn commit-diff -r1 HEAD~1 HEAD "$svnrepo"
+	test_must_fail git-svn commit-diff -r1 HEAD~1 HEAD "$svnrepo"
 '
 
 test_expect_success 'commit complementing change from git' '
@@ -52,7 +52,7 @@ test_expect_success 'dcommit fails to commit because of conflict' '
 	rm -rf t.svn &&
 	echo "fourth line from git" >> file &&
 	git commit -a -m "fourth line from git" &&
-	! git-svn dcommit
+	test_must_fail git-svn dcommit
 	'
 
 test_expect_success 'dcommit does the svn equivalent of an index merge' "
@@ -83,7 +83,7 @@ test_expect_success 'multiple dcommit from git-svn will not clobber svn' "
 	git commit -a -m 'new file' &&
 	echo clobber > file &&
 	git commit -a -m 'clobber' &&
-	! git svn dcommit
+	test_must_fail git svn dcommit
 	"
 
 

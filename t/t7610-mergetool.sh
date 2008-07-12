@@ -35,7 +35,7 @@ test_expect_success 'custom mergetool' '
     git config mergetool.mytool.cmd "cat \"\$REMOTE\" >\"\$MERGED\"" &&
     git config mergetool.mytool.trustExitCode true &&
 	git checkout branch1 &&
-    ! git merge master >/dev/null 2>&1 &&
+    test_must_fail git merge master >/dev/null 2>&1 &&
     ( yes "" | git mergetool file1>/dev/null 2>&1 ) &&
     ( yes "" | git mergetool file2>/dev/null 2>&1 ) &&
     test "$(cat file1)" = "master updated" &&

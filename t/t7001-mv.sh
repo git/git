@@ -80,7 +80,7 @@ test_expect_success \
 
 test_expect_success \
     'do not move directory over existing directory' \
-    'mkdir path0 && mkdir path0/path2 && ! git mv path2 path0'
+    'mkdir path0 && mkdir path0/path2 && test_must_fail git mv path2 path0'
 
 test_expect_success \
     'move into "."' \
@@ -149,7 +149,7 @@ test_expect_success 'absolute pathname outside should fail' '(
 	>sub/file &&
 	git add sub/file &&
 
-	! git mv sub "$out/out" &&
+	test_must_fail git mv sub "$out/out" &&
 	test -d sub &&
 	! test -d ../in &&
 	git ls-files --error-unmatch sub/file

@@ -67,7 +67,7 @@ test_expect_success "merge result added missing LF" \
 
 cp test.txt backup.txt
 test_expect_success "merge with conflicts" \
-	"! git merge-file test.txt orig.txt new3.txt"
+	"test_must_fail git merge-file test.txt orig.txt new3.txt"
 
 cat > expect.txt << EOF
 <<<<<<< test.txt
@@ -90,7 +90,7 @@ test_expect_success "expected conflict markers" "test_cmp test.txt expect.txt"
 
 cp backup.txt test.txt
 test_expect_success "merge with conflicts, using -L" \
-	"! git merge-file -L 1 -L 2 test.txt orig.txt new3.txt"
+	"test_must_fail git merge-file -L 1 -L 2 test.txt orig.txt new3.txt"
 
 cat > expect.txt << EOF
 <<<<<<< 1
@@ -114,7 +114,7 @@ test_expect_success "expected conflict markers, with -L" \
 
 sed "s/ tu / TU /" < new1.txt > new5.txt
 test_expect_success "conflict in removed tail" \
-	"! git merge-file -p orig.txt new1.txt new5.txt > out"
+	"test_must_fail git merge-file -p orig.txt new1.txt new5.txt > out"
 
 cat > expect << EOF
 Dominus regit me,
@@ -135,7 +135,8 @@ EOF
 test_expect_success "expected conflict markers" "test_cmp expect out"
 
 test_expect_success 'binary files cannot be merged' '
-	! git merge-file -p orig.txt ../test4012.png new1.txt 2> merge.err &&
+	test_must_fail git merge-file -p \
+		orig.txt ../test4012.png new1.txt 2> merge.err &&
 	grep "Cannot merge binary files" merge.err
 '
 
@@ -144,7 +145,7 @@ sed -e "s/deerit.$/deerit,/" -e "s/me;$/me,/" < new5.txt > new7.txt
 
 test_expect_success 'MERGE_ZEALOUS simplifies non-conflicts' '
 
-	! git merge-file -p new6.txt new5.txt new7.txt > output &&
+	test_must_fail git merge-file -p new6.txt new5.txt new7.txt > output &&
 	test 1 = $(grep ======= < output | wc -l)
 
 '
@@ -154,7 +155,8 @@ sed -e 's/deerit./&\n\n\n\n/' -e "s/locavit,/locavit --/" < new7.txt > new9.txt
 
 test_expect_success 'ZEALOUS_ALNUM' '
 
-	! git merge-file -p new8.txt new5.txt new9.txt > merge.out &&
+	test_must_fail git merge-file -p \
+		new8.txt new5.txt new9.txt > merge.out &&
 	test 1 = $(grep ======= < merge.out | wc -l)
 
 '
