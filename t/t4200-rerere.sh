@@ -57,7 +57,7 @@ test_expect_success 'conflicting merge' '
 	! git merge first
 '
 
-sha1=$(sed -e 's/	.*//' .git/rr-cache/MERGE_RR)
+sha1=$(sed -e 's/	.*//' .git/MERGE_RR)
 rr=.git/rr-cache/$sha1
 test_expect_success 'recorded preimage' "grep ^=======$ $rr/preimage"
 
@@ -143,7 +143,7 @@ test_expect_success 'rerere kicked in' "! grep ^=======$ a1"
 test_expect_success 'rerere prefers first change' 'test_cmp a1 expect'
 
 rm $rr/postimage
-echo "$sha1	a1" | perl -pe 'y/\012/\000/' > .git/rr-cache/MERGE_RR
+echo "$sha1	a1" | perl -pe 'y/\012/\000/' > .git/MERGE_RR
 
 test_expect_success 'rerere clear' 'git rerere clear'
 
@@ -190,7 +190,7 @@ test_expect_success 'file2 added differently in two branches' '
 	git add file2 &&
 	git commit -m version2 &&
 	! git merge fourth &&
-	sha1=$(sed -e "s/	.*//" .git/rr-cache/MERGE_RR) &&
+	sha1=$(sed -e "s/	.*//" .git/MERGE_RR) &&
 	rr=.git/rr-cache/$sha1 &&
 	echo Cello > file2 &&
 	git add file2 &&
