@@ -228,10 +228,9 @@ relying on heavily:
  - J. Bruce Fields on documentaton issues.
 
  - Johannes Schindelin, Johannes Sixt and others for their effort
-   to move things forward on the Windows front.  Although my
-   repository does not have much from the effort of MinGW team,
-   I expect a merge into mainline will happen so that everybody
-   can work from the same codebase.
+   to move things forward on the Windows front.  Most of the fruits
+   from their porting efforts have been merged to the mainline git.git
+   repository in 1.6.0 release.
 
  - People on non-Linux platforms for keeping their eyes on
    portability; especially, Randal Schwartz, Theodore Ts'o,
