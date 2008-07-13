@@ -9,6 +9,7 @@
 #include "diffcore.h"
 #include "quote.h"
 #include "run-command.h"
+#include "remote.h"
 
 int wt_status_relative_paths = 1;
 int wt_status_use_color = -1;
@@ -315,6 +316,25 @@ static void wt_status_print_verbose(struct wt_status *s)
 	run_diff_index(&rev, 1);
 }
 
+static void wt_status_print_tracking(struct wt_status *s)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char *cp, *ep;
+	struct branch *branch;
+
+	assert(s->branch && !s->is_initial);
+	if (prefixcmp(s->branch, "refs/heads/"))
+		return;
+	branch = branch_get(s->branch + 11);
+	if (!format_tracking_info(branch, &sb))
+		return;
+
+	for (cp = sb.buf; (ep = strchr(cp, '\n')) != NULL; cp = ep + 1)
+		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER),
+				 "# %.*s", (int)(ep - cp), cp);
+	color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
+}
+
 void wt_status_print(struct wt_status *s)
 {
 	unsigned char sha1[20];
@@ -333,6 +353,8 @@ void wt_status_print(struct wt_status *s)
 		}
 		color_fprintf(s->fp, color(WT_STATUS_HEADER), "# ");
 		color_fprintf_ln(s->fp, branch_color, "%s%s", on_what, branch_name);
+		if (!s->is_initial)
+			wt_status_print_tracking(s);
 	}
 
 	if (s->is_initial) {
