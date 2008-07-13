@@ -114,9 +114,20 @@ __git_ps1 ()
 	fi
 }
 
+__gitcomp_1 ()
+{
+	local c IFS=' '$'\t'$'\n'
+	for c in $1; do
+		case "$c$2" in
+		--*=*) printf %s$'\n' "$c$2" ;;
+		*.)    printf %s$'\n' "$c$2" ;;
+		*)     printf %s$'\n' "$c$2 " ;;
+		esac
+	done
+}
+
 __gitcomp ()
 {
-	local all c s=$'\n' IFS=' '$'\t'$'\n'
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	if [ $# -gt 2 ]; then
 		cur="$3"
@@ -124,21 +135,14 @@ __gitcomp ()
 	case "$cur" in
 	--*=)
 		COMPREPLY=()
-		return
 		;;
 	*)
-		for c in $1; do
-			case "$c$4" in
-			--*=*) all="$all$c$4$s" ;;
-			*.)    all="$all$c$4$s" ;;
-			*)     all="$all$c$4 $s" ;;
-			esac
-		done
+		local IFS=$'\n'
+		COMPREPLY=($(compgen -P "$2" \
+			-W "$(__gitcomp_1 "$1" "$4")" \
+			-- "$cur"))
 		;;
 	esac
-	IFS=$s
-	COMPREPLY=($(compgen -P "$2" -W "$all" -- "$cur"))
-	return
 }
 
 __git_heads ()
@@ -319,9 +323,6 @@ __git_complete_revlist ()
 		pfx="${cur%..*}.."
 		cur="${cur#*..}"
 		__gitcomp "$(__git_refs)" "$pfx" "$cur"
-		;;
-	*.)
-		__gitcomp "$cur."
 		;;
 	*)
 		__gitcomp "$(__git_refs)"
