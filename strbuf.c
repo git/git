@@ -67,7 +67,7 @@ void strbuf_rtrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-int strbuf_cmp(struct strbuf *a, struct strbuf *b)
+int strbuf_cmp(const struct strbuf *a, const struct strbuf *b)
 {
 	int cmp;
 	if (a->len < b->len) {
