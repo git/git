@@ -90,6 +90,15 @@ proc dorunq {} {
     }
 }
 
+proc reg_instance {fd} {
+    global commfd leftover loginstance
+
+    set i [incr loginstance]
+    set commfd($i) $fd
+    set leftover($i) {}
+    return $i
+}
+
 proc unmerged_files {files} {
     global nr_unmerged
 
@@ -294,10 +303,10 @@ proc parseviewrevs {view revs} {
 # Start off a git log process and arrange to read its output
 proc start_rev_list {view} {
     global startmsecs commitidx viewcomplete curview
-    global commfd leftover tclencoding
+    global tclencoding
     global viewargs viewargscmd viewfiles vfilelimit
     global showlocalchanges commitinterest
-    global viewactive loginstance viewinstances vmergeonly
+    global viewactive viewinstances vmergeonly
     global pending_select mainheadid
     global vcanopt vflags vrevs vorigargs
 
@@ -354,10 +363,8 @@ proc start_rev_list {view} {
 	error_popup "[mc "Error executing git log:"] $err"
 	return 0
     }
-    set i [incr loginstance]
+    set i [reg_instance $fd]
     set viewinstances($view) [list $i]
-    set commfd($i) $fd
-    set leftover($i) {}
     if {$showlocalchanges && $mainheadid ne {}} {
 	lappend commitinterest($mainheadid) {dodiffindex}
     }
@@ -420,8 +427,8 @@ proc getcommits {} {
 
 proc updatecommits {} {
     global curview vcanopt vorigargs vfilelimit viewinstances
-    global viewactive viewcomplete loginstance tclencoding
-    global startmsecs commfd showneartags showlocalchanges leftover
+    global viewactive viewcomplete tclencoding
+    global startmsecs showneartags showlocalchanges
     global mainheadid pending_select
     global isworktree
     global varcid vposids vnegids vflags vrevs
@@ -482,10 +489,8 @@ proc updatecommits {} {
     if {$viewactive($view) == 0} {
 	set startmsecs [clock clicks -milliseconds]
     }
-    set i [incr loginstance]
+    set i [reg_instance $fd]
     lappend viewinstances($view) $i
-    set commfd($i) $fd
-    set leftover($i) {}
     fconfigure $fd -blocking 0 -translation lf -eofchar {}
     if {$tclencoding != {}} {
 	fconfigure $fd -encoding $tclencoding
@@ -4063,10 +4068,11 @@ proc dodiffindex {} {
     incr lserial
     set fd [open "|git diff-index --cached HEAD" r]
     fconfigure $fd -blocking 0
-    filerun $fd [list readdiffindex $fd $lserial]
+    set i [reg_instance $fd]
+    filerun $fd [list readdiffindex $fd $lserial $i]
 }
 
-proc readdiffindex {fd serial} {
+proc readdiffindex {fd serial inst} {
     global mainheadid nullid nullid2 curview commitinfo commitdata lserial
 
     set isdiff 1
@@ -4077,7 +4083,7 @@ proc readdiffindex {fd serial} {
 	set isdiff 0
     }
     # we only need to see one line and we don't really care what it says...
-    close $fd
+    stop_instance $inst
 
     if {$serial != $lserial} {
 	return 0
@@ -4086,7 +4092,8 @@ proc readdiffindex {fd serial} {
     # now see if there are any local changes not checked in to the index
     set fd [open "|git diff-files" r]
     fconfigure $fd -blocking 0
-    filerun $fd [list readdifffiles $fd $serial]
+    set i [reg_instance $fd]
+    filerun $fd [list readdifffiles $fd $serial $i]
 
     if {$isdiff && ![commitinview $nullid2 $curview]} {
 	# add the line for the changes in the index to the graph
@@ -4103,7 +4110,7 @@ proc readdiffindex {fd serial} {
     return 0
 }
 
-proc readdifffiles {fd serial} {
+proc readdifffiles {fd serial inst} {
     global mainheadid nullid nullid2 curview
     global commitinfo commitdata lserial
 
@@ -4115,7 +4122,7 @@ proc readdifffiles {fd serial} {
 	set isdiff 0
     }
     # we only need to see one line and we don't really care what it says...
-    close $fd
+    stop_instance $inst
 
     if {$serial != $lserial} {
 	return 0
