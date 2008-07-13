@@ -324,9 +324,6 @@ __git_complete_revlist ()
 		cur="${cur#*..}"
 		__gitcomp "$(__git_refs)" "$pfx" "$cur"
 		;;
-	*.)
-		__gitcomp "$cur."
-		;;
 	*)
 		__gitcomp "$(__git_refs)"
 		;;
