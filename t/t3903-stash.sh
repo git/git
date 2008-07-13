@@ -117,4 +117,64 @@ test_expect_success 'stash pop' '
 	test 0 = $(git stash list | wc -l)
 '
 
+cat > expect << EOF
+diff --git a/file2 b/file2
+new file mode 100644
+index 0000000..1fe912c
+--- /dev/null
++++ b/file2
+@@ -0,0 +1 @@
++bar2
+EOF
+
+cat > expect1 << EOF
+diff --git a/file b/file
+index 257cc56..5716ca5 100644
+--- a/file
++++ b/file
+@@ -1 +1 @@
+-foo
++bar
+EOF
+
+cat > expect2 << EOF
+diff --git a/file b/file
+index 7601807..5716ca5 100644
+--- a/file
++++ b/file
+@@ -1 +1 @@
+-baz
++bar
+diff --git a/file2 b/file2
+new file mode 100644
+index 0000000..1fe912c
+--- /dev/null
++++ b/file2
+@@ -0,0 +1 @@
++bar2
+EOF
+
+test_expect_success 'stash branch' '
+	echo foo > file &&
+	git commit file -m first
+	echo bar > file &&
+	echo bar2 > file2 &&
+	git add file2 &&
+	git stash &&
+	echo baz > file &&
+	git commit file -m second &&
+	git stash branch stashbranch &&
+	test refs/heads/stashbranch = $(git symbolic-ref HEAD) &&
+	test $(git rev-parse HEAD) = $(git rev-parse master^) &&
+	git diff --cached > output &&
+	test_cmp output expect &&
+	git diff > output &&
+	test_cmp output expect1 &&
+	git add file &&
+	git commit -m alternate\ second &&
+	git diff master..stashbranch > output &&
+	test_cmp output expect2 &&
+	test 0 = $(git stash list | wc -l)
+'
+
 test_done

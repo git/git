@@ -233,6 +233,23 @@ drop_stash () {
 	git rev-parse --verify "$ref_stash@{0}" > /dev/null 2>&1 || clear_stash
 }
 
+apply_to_branch () {
+	have_stash || die 'Nothing to apply'
+
+	test -n "$1" || die 'No branch name specified'
+	branch=$1
+
+	if test -z "$2"
+	then
+		set x "$ref_stash@{0}"
+	fi
+	stash=$2
+
+	git-checkout -b $branch $stash^ &&
+	apply_stash --index $stash &&
+	drop_stash $stash
+}
+
 # Main command set
 case "$1" in
 list)
@@ -278,6 +295,10 @@ pop)
 		test -z "$unstash_index" || shift
 		drop_stash "$@"
 	fi
+	;;
+branch)
+	shift
+	apply_to_branch "$@"
 	;;
 *)
 	if test $# -eq 0
