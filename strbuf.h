@@ -77,8 +77,14 @@ static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
 #define strbuf_reset(sb)  strbuf_setlen(sb, 0)
 
 /*----- content related -----*/
+extern void strbuf_trim(struct strbuf *);
 extern void strbuf_rtrim(struct strbuf *);
+extern void strbuf_ltrim(struct strbuf *);
 extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
+extern void strbuf_tolower(struct strbuf *);
+
+extern struct strbuf **strbuf_split(const struct strbuf *, int delim);
+extern void strbuf_list_free(struct strbuf **);
 
 /*----- add data in your buffer -----*/
 static inline void strbuf_addch(struct strbuf *sb, int c) {
