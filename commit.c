@@ -747,7 +747,7 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 
 		num_other = 0;
 		for (q = heads; q; q = q->next) {
-			if (p == q)
+			if (p->item == q->item)
 				continue;
 			other[num_other++] = q->item;
 		}
