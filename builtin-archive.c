@@ -13,7 +13,7 @@
 #include "attr.h"
 
 static const char archive_usage[] = \
-"git-archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";
+"git archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";
 
 static struct archiver_desc
 {

@@ -15,7 +15,7 @@
 static int force = -1; /* unset */
 
 static const char *const builtin_clean_usage[] = {
-	"git-clean [-d] [-f] [-n] [-q] [-x | -X] [--] <paths>...",
+	"git clean [-d] [-f] [-n] [-q] [-x | -X] [--] <paths>...",
 	NULL
 };
 

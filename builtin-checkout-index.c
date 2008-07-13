@@ -154,7 +154,7 @@ static void checkout_all(const char *prefix, int prefix_length)
 }
 
 static const char checkout_cache_usage[] =
-"git-checkout-index [-u] [-q] [-a] [-f] [-n] [--stage=[123]|all] [--prefix=<string>] [--temp] [--] <file>...";
+"git checkout-index [-u] [-q] [-a] [-f] [-n] [--stage=[123]|all] [--prefix=<string>] [--temp] [--] <file>...";
 
 static struct lock_file lock_file;
 

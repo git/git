@@ -17,7 +17,7 @@
 #define COUNTED		(1u<<16)
 
 static const char rev_list_usage[] =
-"git-rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
+"git rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
 "  limiting output:\n"
 "    --max-count=nr\n"
 "    --max-age=epoch\n"

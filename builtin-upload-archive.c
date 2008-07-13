@@ -8,13 +8,13 @@
 #include "sideband.h"
 
 static const char upload_archive_usage[] =
-	"git-upload-archive <repo>";
+	"git upload-archive <repo>";
 
 static const char deadchild[] =
-"git-upload-archive: archiver died with error";
+"git upload-archive: archiver died with error";
 
 static const char lostchild[] =
-"git-upload-archive: archiver process was lost";
+"git upload-archive: archiver process was lost";
 
 
 static int run_upload_archive(int argc, const char **argv, const char *prefix)

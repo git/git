@@ -6,7 +6,7 @@
 PERL='@@PERL@@'
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
-git-instaweb [options] (--start | --stop | --restart)
+git instaweb [options] (--start | --stop | --restart)
 --
 l,local        only bind on 127.0.0.1
 p,port=        the port to bind to

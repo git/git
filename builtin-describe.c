@@ -10,7 +10,7 @@
 #define MAX_TAGS	(FLAG_BITS - 1)
 
 static const char * const describe_usage[] = {
-	"git-describe [options] <committish>*",
+	"git describe [options] <committish>*",
 	NULL
 };
 

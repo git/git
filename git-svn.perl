@@ -261,7 +261,7 @@ sub usage {
 	my $fd = $exit ? \*STDERR : \*STDOUT;
 	print $fd <<"";
 git-svn - bidirectional operations between a single Subversion tree and git
-Usage: $0 <command> [options] [arguments]\n
+Usage: git svn <command> [options] [arguments]\n
 
 	print $fd "Available commands:\n" unless $cmd;
 

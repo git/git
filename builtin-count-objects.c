@@ -67,7 +67,7 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 }
 
 static char const * const count_objects_usage[] = {
-	"git-count-objects [-v]",
+	"git count-objects [-v]",
 	NULL
 };
 

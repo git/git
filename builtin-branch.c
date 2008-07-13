@@ -15,10 +15,10 @@
 #include "branch.h"
 
 static const char * const builtin_branch_usage[] = {
-	"git-branch [options] [-r | -a] [--merged | --no-merged]",
-	"git-branch [options] [-l] [-f] <branchname> [<start-point>]",
-	"git-branch [options] [-r] (-d | -D) <branchname>",
-	"git-branch [options] (-m | -M) [<oldbranch>] <newbranch>",
+	"git branch [options] [-r | -a] [--merged | --no-merged]",
+	"git branch [options] [-l] [-f] <branchname> [<start-point>]",
+	"git branch [options] [-r] (-d | -D) <branchname>",
+	"git branch [options] (-m | -M) [<oldbranch>] <newbranch>",
 	NULL
 };
 

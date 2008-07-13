@@ -3,7 +3,7 @@
 #include "progress.h"
 
 static const char prune_packed_usage[] =
-"git-prune-packed [-n] [-q]";
+"git prune-packed [-n] [-q]";
 
 #define DRY_RUN 01
 #define VERBOSE 02

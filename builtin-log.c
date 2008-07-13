@@ -1082,7 +1082,7 @@ static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
 }
 
 static const char cherry_usage[] =
-"git-cherry [-v] <upstream> [<head>] [<limit>]";
+"git cherry [-v] <upstream> [<head>] [<limit>]";
 int cmd_cherry(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;

@@ -12,7 +12,7 @@
 #include <signal.h>
 
 static const char builtin_verify_tag_usage[] =
-		"git-verify-tag [-v|--verbose] <tag>...";
+		"git verify-tag [-v|--verbose] <tag>...";
 
 #define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
 

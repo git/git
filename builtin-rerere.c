@@ -7,7 +7,7 @@
 #include <time.h>
 
 static const char git_rerere_usage[] =
-"git-rerere [clear | status | diff | gc]";
+"git rerere [clear | status | diff | gc]";
 
 /* these values are days */
 static int cutoff_noresolve = 15;

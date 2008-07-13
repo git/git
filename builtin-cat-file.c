@@ -202,8 +202,8 @@ static int batch_objects(int print_contents)
 }
 
 static const char * const cat_file_usage[] = {
-	"git-cat-file [-t|-s|-e|-p|<type>] <sha1>",
-	"git-cat-file [--batch|--batch-check] < <list_of_sha1s>",
+	"git cat-file [-t|-s|-e|-p|<type>] <sha1>",
+	"git cat-file [--batch|--batch-check] < <list_of_sha1s>",
 	NULL
 };
 

@@ -101,7 +101,7 @@ my $work =
 $log->info("--------------- STARTING -----------------");
 
 my $usage =
-    "Usage: git-cvsserver [options] [pserver|server] [<directory> ...]\n".
+    "Usage: git cvsserver [options] [pserver|server] [<directory> ...]\n".
     "    --base-path <path>  : Prepend to requested CVSROOT\n".
     "    --strict-paths      : Don't allow recursing into subdirectories\n".
     "    --export-all        : Don't check for gitcvs.enabled in config\n".

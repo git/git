@@ -24,12 +24,12 @@
  */
 
 static const char * const revert_usage[] = {
-	"git-revert [options] <commit-ish>",
+	"git revert [options] <commit-ish>",
 	NULL
 };
 
 static const char * const cherry_pick_usage[] = {
-	"git-cherry-pick [options] <commit-ish>",
+	"git cherry-pick [options] <commit-ish>",
 	NULL
 };
 
