@@ -20,6 +20,7 @@ enum parse_opt_type {
 enum parse_opt_flags {
 	PARSE_OPT_KEEP_DASHDASH = 1,
 	PARSE_OPT_STOP_AT_NON_OPTION = 2,
+	PARSE_OPT_KEEP_ARGV0 = 4,
 };
 
 enum parse_opt_option_flags {
@@ -110,6 +111,40 @@ extern int parse_options(int argc, const char **argv,
 
 extern NORETURN void usage_with_options(const char * const *usagestr,
                                         const struct option *options);
+
+/*----- incremantal advanced APIs -----*/
+
+enum {
+	PARSE_OPT_HELP = -1,
+	PARSE_OPT_DONE,
+	PARSE_OPT_UNKNOWN,
+};
+
+/*
+ * It's okay for the caller to consume argv/argc in the usual way.
+ * Other fields of that structure are private to parse-options and should not
+ * be modified in any way.
+ */
+struct parse_opt_ctx_t {
+	const char **argv;
+	const char **out;
+	int argc, cpidx;
+	const char *opt;
+	int flags;
+};
+
+extern int parse_options_usage(const char * const *usagestr,
+			       const struct option *opts);
+
+extern void parse_options_start(struct parse_opt_ctx_t *ctx,
+				int argc, const char **argv, int flags);
+
+extern int parse_options_step(struct parse_opt_ctx_t *ctx,
+			      const struct option *options,
+			      const char * const usagestr[]);
+
+extern int parse_options_end(struct parse_opt_ctx_t *ctx);
+
 
 /*----- some often used options -----*/
 extern int parse_opt_abbrev_cb(const struct option *, const char *, int);
