@@ -15,9 +15,11 @@
 static const char archive_usage[] = \
 "git-archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";
 
+#define USES_ZLIB_COMPRESSION 1
+
 const struct archiver archivers[] = {
-	{ "tar", write_tar_archive, NULL },
-	{ "zip", write_zip_archive, parse_extra_zip_args },
+	{ "tar", write_tar_archive },
+	{ "zip", write_zip_archive, USES_ZLIB_COMPRESSION },
 };
 
 static int run_remote_archiver(const char *remote, int argc,
@@ -137,10 +139,9 @@ void parse_treeish_arg(const char **argv, struct archiver_args *ar_args,
 int parse_archive_args(int argc, const char **argv, const struct archiver **ar,
 		struct archiver_args *args)
 {
-	const char *extra_argv[MAX_EXTRA_ARGS];
-	int extra_argc = 0;
 	const char *format = "tar";
 	const char *base = "";
+	int compression_level = -1;
 	int verbose = 0;
 	int i;
 
@@ -168,12 +169,12 @@ int parse_archive_args(int argc, const char **argv, const struct archiver **ar,
 			i++;
 			break;
 		}
-		if (arg[0] == '-') {
-			if (extra_argc > MAX_EXTRA_ARGS - 1)
-				die("Too many extra options");
-			extra_argv[extra_argc++] = arg;
+		if (arg[0] == '-' && isdigit(arg[1]) && arg[2] == '\0') {
+			compression_level = arg[1] - '0';
 			continue;
 		}
+		if (arg[0] == '-')
+			die("Unknown argument: %s", arg);
 		break;
 	}
 
@@ -184,11 +185,13 @@ int parse_archive_args(int argc, const char **argv, const struct archiver **ar,
 	if (!*ar)
 		die("Unknown archive format '%s'", format);
 
-	if (extra_argc) {
-		if (!(*ar)->parse_extra)
-			die("'%s' format does not handle %s",
-			    (*ar)->name, extra_argv[0]);
-		args->extra = (*ar)->parse_extra(extra_argc, extra_argv);
+	if (compression_level != -1) {
+		if ((*ar)->flags & USES_ZLIB_COMPRESSION)
+			zlib_compression_level = compression_level;
+		else {
+			die("Argument not supported for format '%s': -%d",
+					format, compression_level);
+		}
 	}
 	args->verbose = verbose;
 	args->base = base;
