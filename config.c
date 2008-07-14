@@ -581,15 +581,8 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 const char *git_etc_gitconfig(void)
 {
 	static const char *system_wide;
-	if (!system_wide) {
-		system_wide = ETC_GITCONFIG;
-		if (!is_absolute_path(system_wide)) {
-			/* interpret path relative to exec-dir */
-			struct strbuf d = STRBUF_INIT;
-			strbuf_addf(&d, "%s/%s", git_exec_path(), system_wide);
-			system_wide = strbuf_detach(&d, NULL);
-		}
-	}
+	if (!system_wide)
+		system_wide = system_path(ETC_GITCONFIG);
 	return system_wide;
 }
 
