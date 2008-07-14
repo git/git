@@ -8,7 +8,7 @@ git-add - Add file contents to the index
 SYNOPSIS
 --------
 [verse]
-'git-add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
+'git add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
 	  [--update | -u] [--refresh] [--ignore-errors] [--]
 	  <filepattern>...
 
@@ -107,7 +107,7 @@ Configuration
 The optional configuration variable 'core.excludesfile' indicates a path to a
 file containing patterns of file names to exclude from git-add, similar to
 $GIT_DIR/info/exclude.  Patterns in the exclude file are used in addition to
-those in info/exclude.  See linkgit:gitrepository-layout[5][repository layout].
+those in info/exclude.  See linkgit:gitrepository-layout[5].
 
 
 EXAMPLES
@@ -236,6 +236,7 @@ patch::
        k - leave this hunk undecided, see previous undecided hunk
        K - leave this hunk undecided, see previous hunk
        s - split the current hunk into smaller hunks
+       e - manually edit the current hunk
        ? - print help
 +
 After deciding the fate for all hunks, if there is any hunk

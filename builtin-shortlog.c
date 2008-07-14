@@ -7,9 +7,14 @@
 #include "utf8.h"
 #include "mailmap.h"
 #include "shortlog.h"
+#include "parse-options.h"
 
-static const char shortlog_usage[] =
-"git-shortlog [-n] [-s] [-e] [-w] [<commit-id>... ]";
+static char const * const shortlog_usage[] = {
+	"git-shortlog [-n] [-s] [-e] [-w] [rev-opts] [--] [<commit-id>... ]",
+	"",
+	"[rev-opts] are documented in git-rev-list(1)",
+	NULL
+};
 
 static int compare_by_number(const void *a1, const void *a2)
 {
@@ -164,21 +169,19 @@ static void get_from_rev(struct rev_info *rev, struct shortlog *log)
 		shortlog_add_commit(log, commit);
 }
 
-static int parse_uint(char const **arg, int comma)
+static int parse_uint(char const **arg, int comma, int defval)
 {
 	unsigned long ul;
 	int ret;
 	char *endp;
 
 	ul = strtoul(*arg, &endp, 10);
-	if (endp != *arg && *endp && *endp != comma)
+	if (*endp && *endp != comma)
 		return -1;
-	ret = (int) ul;
-	if (ret != ul)
+	if (ul > INT_MAX)
 		return -1;
-	*arg = endp;
-	if (**arg)
-		(*arg)++;
+	ret = *arg == endp ? defval : (int)ul;
+	*arg = *endp ? endp + 1 : endp;
 	return ret;
 }
 
@@ -187,30 +190,30 @@ static const char wrap_arg_usage[] = "-w[<width>[,<indent1>[,<indent2>]]]";
 #define DEFAULT_INDENT1 6
 #define DEFAULT_INDENT2 9
 
-static void parse_wrap_args(const char *arg, int *in1, int *in2, int *wrap)
+static int parse_wrap_args(const struct option *opt, const char *arg, int unset)
 {
-	arg += 2; /* skip -w */
+	struct shortlog *log = opt->value;
 
-	*wrap = parse_uint(&arg, ',');
-	if (*wrap < 0)
-		die(wrap_arg_usage);
-	*in1 = parse_uint(&arg, ',');
-	if (*in1 < 0)
-		die(wrap_arg_usage);
-	*in2 = parse_uint(&arg, '\0');
-	if (*in2 < 0)
-		die(wrap_arg_usage);
+	log->wrap_lines = !unset;
+	if (unset)
+		return 0;
+	if (!arg) {
+		log->wrap = DEFAULT_WRAPLEN;
+		log->in1 = DEFAULT_INDENT1;
+		log->in2 = DEFAULT_INDENT2;
+		return 0;
+	}
 
-	if (!*wrap)
-		*wrap = DEFAULT_WRAPLEN;
-	if (!*in1)
-		*in1 = DEFAULT_INDENT1;
-	if (!*in2)
-		*in2 = DEFAULT_INDENT2;
-	if (*wrap &&
-	    ((*in1 && *wrap <= *in1) ||
-	     (*in2 && *wrap <= *in2)))
-		die(wrap_arg_usage);
+	log->wrap = parse_uint(&arg, ',', DEFAULT_WRAPLEN);
+	log->in1 = parse_uint(&arg, ',', DEFAULT_INDENT1);
+	log->in2 = parse_uint(&arg, '\0', DEFAULT_INDENT2);
+	if (log->wrap < 0 || log->in1 < 0 || log->in2 < 0)
+		return error(wrap_arg_usage);
+	if (log->wrap &&
+	    ((log->in1 && log->wrap <= log->in1) ||
+	     (log->in2 && log->wrap <= log->in2)))
+		return error(wrap_arg_usage);
+	return 0;
 }
 
 void shortlog_init(struct shortlog *log)
@@ -227,38 +230,46 @@ void shortlog_init(struct shortlog *log)
 
 int cmd_shortlog(int argc, const char **argv, const char *prefix)
 {
-	struct shortlog log;
-	struct rev_info rev;
+	static struct shortlog log;
+	static struct rev_info rev;
 	int nongit;
+
+	static const struct option options[] = {
+		OPT_BOOLEAN('n', "numbered", &log.sort_by_number,
+			    "sort output according to the number of commits per author"),
+		OPT_BOOLEAN('s', "summary", &log.summary,
+			    "Suppress commit descriptions, only provides commit count"),
+		OPT_BOOLEAN('e', "email", &log.email,
+			    "Show the email address of each author"),
+		{ OPTION_CALLBACK, 'w', NULL, &log, "w[,i1[,i2]]",
+			"Linewrap output", PARSE_OPT_OPTARG, &parse_wrap_args },
+		OPT_END(),
+	};
+
+	struct parse_opt_ctx_t ctx;
 
 	prefix = setup_git_directory_gently(&nongit);
 	shortlog_init(&log);
-
-	/* since -n is a shadowed rev argument, parse our args first */
-	while (argc > 1) {
-		if (!strcmp(argv[1], "-n") || !strcmp(argv[1], "--numbered"))
-			log.sort_by_number = 1;
-		else if (!strcmp(argv[1], "-s") ||
-				!strcmp(argv[1], "--summary"))
-			log.summary = 1;
-		else if (!strcmp(argv[1], "-e") ||
-			 !strcmp(argv[1], "--email"))
-			log.email = 1;
-		else if (!prefixcmp(argv[1], "-w")) {
-			log.wrap_lines = 1;
-			parse_wrap_args(argv[1], &log.in1, &log.in2, &log.wrap);
-		}
-		else if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))
-			usage(shortlog_usage);
-		else
-			break;
-		argv++;
-		argc--;
-	}
 	init_revisions(&rev, prefix);
-	argc = setup_revisions(argc, argv, &rev, NULL);
-	if (argc > 1)
-		die ("unrecognized argument: %s", argv[1]);
+	parse_options_start(&ctx, argc, argv, PARSE_OPT_KEEP_DASHDASH |
+			    PARSE_OPT_KEEP_ARGV0);
+
+	for (;;) {
+		switch (parse_options_step(&ctx, options, shortlog_usage)) {
+		case PARSE_OPT_HELP:
+			exit(129);
+		case PARSE_OPT_DONE:
+			goto parse_done;
+		}
+		parse_revision_opt(&rev, &ctx, options, shortlog_usage);
+	}
+parse_done:
+	argc = parse_options_end(&ctx);
+
+	if (setup_revisions(argc, argv, &rev, NULL) != 1) {
+		error("unrecognized argument: %s", argv[1]);
+		usage_with_options(shortlog_usage, options);
+	}
 
 	/* assume HEAD if from a tty */
 	if (!nongit && !rev.pending.nr && isatty(0))

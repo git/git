@@ -795,7 +795,7 @@ static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned cha
 		lst = &((*lst)->next);
 	*lst = (*lst)->next;
 
-	if (verify_pack(target, 0))
+	if (verify_pack(target))
 		return -1;
 	install_packed_git(target);
 

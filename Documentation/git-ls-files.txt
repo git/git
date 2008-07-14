@@ -9,7 +9,7 @@ git-ls-files - Show information about files in the index and the working tree
 SYNOPSIS
 --------
 [verse]
-'git-ls-files' [-z] [-t] [-v]
+'git ls-files' [-z] [-t] [-v]
 		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])\*
 		(-[c|d|o|i|s|u|k|m])\*
 		[-x <pattern>|--exclude=<pattern>]
@@ -143,14 +143,14 @@ which case it outputs:
 
         [<tag> ]<mode> <object> <stage> <file>
 
-"git-ls-files --unmerged" and "git-ls-files --stage" can be used to examine
+'git-ls-files --unmerged' and 'git-ls-files --stage' can be used to examine
 detailed information on unmerged paths.
 
 For an unmerged path, instead of recording a single mode/SHA1 pair,
 the index records up to three such pairs; one from tree O in stage
 1, A in stage 2, and B in stage 3.  This information can be used by
 the user (or the porcelain) to see what should eventually be recorded at the
-path. (see git-read-tree for more information on state)
+path. (see linkgit:git-read-tree[1] for more information on state)
 
 When `-z` option is not used, TAB, LF, and backslash characters
 in pathnames are represented as `\t`, `\n`, and `\\`,

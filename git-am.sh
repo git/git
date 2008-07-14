@@ -5,7 +5,7 @@
 SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
-git-am [options] <mbox>|<Maildir>...
+git-am [options] [<mbox>|<Maildir>...]
 git-am [options] --resolved
 git-am [options] --skip
 --
@@ -30,7 +30,8 @@ set_reflog_action am
 require_work_tree
 cd_to_toplevel
 
-git var GIT_COMMITTER_IDENT >/dev/null || exit
+git var GIT_COMMITTER_IDENT >/dev/null ||
+	die "You need to set your committer info first"
 
 stop_here () {
     echo "$1" >"$dotest/next"

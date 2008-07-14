@@ -36,6 +36,9 @@ typedef struct __jmp_buf jmp_buf[1];
 
 #endif /* _SETJMP_H */
 EOF
+cat >klibc/README <<\EOF
+This is a simple readme file.
+EOF
 
 cat >patch <<\EOF
 diff --git a/klibc/arch/x86_64/include/klibc/archsetjmp.h b/include/arch/cris/klibc/archsetjmp.h
@@ -113,6 +116,23 @@ rename to include/arch/m32r/klibc/archsetjmp.h
 
 -#endif /* _SETJMP_H */
 +#endif /* _KLIBC_ARCHSETJMP_H */
+diff --git a/klibc/README b/klibc/README
+--- a/klibc/README
++++ b/klibc/README
+@@ -1,1 +1,4 @@
+ This is a simple readme file.
++And we add a few
++lines at the
++end of it.
+diff --git a/klibc/README b/klibc/arch/README
+copy from klibc/README
+copy to klibc/arch/README
+--- a/klibc/README
++++ b/klibc/arch/README
+@@ -1,1 +1,3 @@
+ This is a simple readme file.
++And we copy it to one level down, and
++add a few lines at the end of it.
 EOF
 
 find klibc -type f -print | xargs git update-index --add --

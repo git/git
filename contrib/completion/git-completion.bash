@@ -114,9 +114,20 @@ __git_ps1 ()
 	fi
 }
 
+__gitcomp_1 ()
+{
+	local c IFS=' '$'\t'$'\n'
+	for c in $1; do
+		case "$c$2" in
+		--*=*) printf %s$'\n' "$c$2" ;;
+		*.)    printf %s$'\n' "$c$2" ;;
+		*)     printf %s$'\n' "$c$2 " ;;
+		esac
+	done
+}
+
 __gitcomp ()
 {
-	local all c s=$'\n' IFS=' '$'\t'$'\n'
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	if [ $# -gt 2 ]; then
 		cur="$3"
@@ -124,21 +135,14 @@ __gitcomp ()
 	case "$cur" in
 	--*=)
 		COMPREPLY=()
-		return
 		;;
 	*)
-		for c in $1; do
-			case "$c$4" in
-			--*=*) all="$all$c$4$s" ;;
-			*.)    all="$all$c$4$s" ;;
-			*)     all="$all$c$4 $s" ;;
-			esac
-		done
+		local IFS=$'\n'
+		COMPREPLY=($(compgen -P "$2" \
+			-W "$(__gitcomp_1 "$1" "$4")" \
+			-- "$cur"))
 		;;
 	esac
-	IFS=$s
-	COMPREPLY=($(compgen -P "$2" -W "$all" -- "$cur"))
-	return
 }
 
 __git_heads ()
@@ -320,9 +324,6 @@ __git_complete_revlist ()
 		cur="${cur#*..}"
 		__gitcomp "$(__git_refs)" "$pfx" "$cur"
 		;;
-	*.)
-		__gitcomp "$cur."
-		;;
 	*)
 		__gitcomp "$(__git_refs)"
 		;;
@@ -451,6 +452,18 @@ __git_find_subcommand ()
 	done
 }
 
+__git_has_doubledash ()
+{
+	local c=1
+	while [ $c -lt $COMP_CWORD ]; do
+		if [ "--" = "${COMP_WORDS[c]}" ]; then
+			return 0
+		fi
+		c=$((++c))
+	done
+	return 1
+}
+
 __git_whitespacelist="nowarn warn error error-all strip"
 
 _git_am ()
@@ -497,6 +510,8 @@ _git_apply ()
 
 _git_add ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -511,7 +526,9 @@ _git_add ()
 
 _git_bisect ()
 {
-	local subcommands="start bad good reset visualize replay log"
+	__git_has_doubledash && return
+
+	local subcommands="start bad good skip reset visualize replay log run"
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
@@ -519,7 +536,7 @@ _git_bisect ()
 	fi
 
 	case "$subcommand" in
-	bad|good|reset)
+	bad|good|reset|skip)
 		__gitcomp "$(__git_refs)"
 		;;
 	*)
@@ -546,7 +563,7 @@ _git_branch ()
 	--*)
 		__gitcomp "
 			--color --no-color --verbose --abbrev= --no-abbrev
-			--track --no-track
+			--track --no-track --contains --merged --no-merged
 			"
 		;;
 	*)
@@ -613,6 +630,8 @@ _git_cherry_pick ()
 
 _git_commit ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -632,6 +651,8 @@ _git_describe ()
 
 _git_diff ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -734,6 +755,8 @@ _git_ls_tree ()
 
 _git_log ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
@@ -762,6 +785,9 @@ _git_log ()
 			--not --all
 			--left-right --cherry-pick
 			--graph
+			--stat --numstat --shortstat
+			--decorate --diff-filter=
+			--color-words --walk-reflogs
 			"
 		return
 		;;
@@ -1038,7 +1064,6 @@ _git_config ()
 		pull.octopus
 		pull.twohead
 		repack.useDeltaBaseOffset
-		show.difftree
 		showbranch.default
 		tar.umask
 		transfer.unpackLimit
@@ -1047,7 +1072,6 @@ _git_config ()
 		user.name
 		user.email
 		user.signingkey
-		whatchanged.difftree
 		branch. remote.
 	"
 }
@@ -1085,6 +1109,8 @@ _git_remote ()
 
 _git_reset ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -1097,6 +1123,8 @@ _git_reset ()
 
 _git_shortlog ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
@@ -1136,13 +1164,26 @@ _git_show ()
 _git_stash ()
 {
 	local subcommands='save list show apply clear drop pop create'
-	if [ -z "$(__git_find_subcommand "$subcommands")" ]; then
+	local subcommand="$(__git_find_subcommand "$subcommands")"
+	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
+	else
+		local cur="${COMP_WORDS[COMP_CWORD]}"
+		case "$subcommand,$cur" in
+		save,--*)
+			__gitcomp "--keep-index"
+			;;
+		*)
+			COMPREPLY=()
+			;;
+		esac
 	fi
 }
 
 _git_submodule ()
 {
+	__git_has_doubledash && return
+
 	local subcommands="add status init update"
 	if [ -z "$(__git_find_subcommand "$subcommands")" ]; then
 		local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -1349,6 +1390,8 @@ _git ()
 
 _gitk ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local g="$(git rev-parse --git-dir 2>/dev/null)"
 	local merge=""

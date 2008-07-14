@@ -9,6 +9,7 @@
 #include "diffcore.h"
 #include "quote.h"
 #include "run-command.h"
+#include "remote.h"
 
 int wt_status_relative_paths = 1;
 int wt_status_use_color = -1;
@@ -27,6 +28,7 @@ static const char use_add_rm_msg[] =
 "use \"git add/rm <file>...\" to update what will be committed";
 static const char use_add_to_include_msg[] =
 "use \"git add <file>...\" to include in what will be committed";
+enum untracked_status_type show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 
 static int parse_status_slot(const char *var, int offset)
 {
@@ -314,6 +316,25 @@ static void wt_status_print_verbose(struct wt_status *s)
 	run_diff_index(&rev, 1);
 }
 
+static void wt_status_print_tracking(struct wt_status *s)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char *cp, *ep;
+	struct branch *branch;
+
+	assert(s->branch && !s->is_initial);
+	if (prefixcmp(s->branch, "refs/heads/"))
+		return;
+	branch = branch_get(s->branch + 11);
+	if (!format_tracking_info(branch, &sb))
+		return;
+
+	for (cp = sb.buf; (ep = strchr(cp, '\n')) != NULL; cp = ep + 1)
+		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER),
+				 "# %.*s", (int)(ep - cp), cp);
+	color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
+}
+
 void wt_status_print(struct wt_status *s)
 {
 	unsigned char sha1[20];
@@ -332,6 +353,8 @@ void wt_status_print(struct wt_status *s)
 		}
 		color_fprintf(s->fp, color(WT_STATUS_HEADER), "# ");
 		color_fprintf_ln(s->fp, branch_color, "%s%s", on_what, branch_name);
+		if (!s->is_initial)
+			wt_status_print_tracking(s);
 	}
 
 	if (s->is_initial) {
@@ -347,7 +370,10 @@ void wt_status_print(struct wt_status *s)
 	wt_status_print_changed(s);
 	if (wt_status_submodule_summary)
 		wt_status_print_submodule_summary(s);
-	wt_status_print_untracked(s);
+	if (show_untracked_files)
+		wt_status_print_untracked(s);
+	else if (s->commitable)
+		 fprintf(s->fp, "# Untracked files not listed (use -u option to show untracked files)\n");
 
 	if (s->verbose && !s->is_initial)
 		wt_status_print_verbose(s);
@@ -362,6 +388,8 @@ void wt_status_print(struct wt_status *s)
 			printf("nothing added to commit but untracked files present (use \"git add\" to track)\n");
 		else if (s->is_initial)
 			printf("nothing to commit (create/copy files and use \"git add\" to track)\n");
+		else if (!show_untracked_files)
+			printf("nothing to commit (use -u to show untracked files)\n");
 		else
 			printf("nothing to commit (working directory clean)\n");
 	}
@@ -389,6 +417,19 @@ int git_status_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "status.relativepaths")) {
 		wt_status_relative_paths = git_config_bool(k, v);
+		return 0;
+	}
+	if (!strcmp(k, "status.showuntrackedfiles")) {
+		if (!v)
+			return config_error_nonbool(k);
+		else if (!strcmp(v, "no"))
+			show_untracked_files = SHOW_NO_UNTRACKED_FILES;
+		else if (!strcmp(v, "normal"))
+			show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
+		else if (!strcmp(v, "all"))
+			show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
+		else
+			return error("Invalid untracked files mode '%s'", v);
 		return 0;
 	}
 	return git_color_default_config(k, v, cb);

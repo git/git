@@ -176,6 +176,8 @@ static int write_zip_entry(const unsigned char *sha1,
 	crc = crc32(0, NULL, 0);
 
 	path = construct_path(base, baselen, filename, S_ISDIR(mode), &pathlen);
+	if (is_archive_path_ignored(path + base_len))
+		return 0;
 	if (verbose)
 		fprintf(stderr, "%s\n", path);
 	if (pathlen > 0xffff) {

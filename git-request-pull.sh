@@ -26,7 +26,7 @@ merge_base=`git merge-base $baserev $headrev` ||
 die "fatal: No commits in common between $base and $head"
 
 url=$(get_remote_url "$url")
-branch=$(git peek-remote "$url" \
+branch=$(git ls-remote "$url" \
 	| sed -n -e "/^$headrev	refs.heads./{
 		s/^.*	refs.heads.//
 		p

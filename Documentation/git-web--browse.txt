@@ -7,7 +7,7 @@ git-web--browse - git helper script to launch a web browser
 
 SYNOPSIS
 --------
-'git-web--browse' [OPTIONS] URL/FILE ...
+'git web--browse' [OPTIONS] URL/FILE ...
 
 DESCRIPTION
 -----------
@@ -70,7 +70,7 @@ browser.<tool>.cmd
 When the browser, specified by options or configuration variables, is
 not among the supported ones, then the corresponding
 'browser.<tool>.cmd' configuration variable will be looked up. If this
-variable exists then "git web--browse" will treat the specified tool
+variable exists then 'git-web--browse' will treat the specified tool
 as a custom command and will use a shell eval to run the command with
 the URLs passed as arguments.
 
@@ -96,7 +96,7 @@ the following:
 		cmd = A_PATH_TO/konqueror
 ------------------------------------------------
 
-Note about git config --global
+Note about git-config --global
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that these configuration variables should probably be set using
@@ -112,7 +112,7 @@ See linkgit:git-config[1] for more information about this.
 Author
 ------
 Written by Christian Couder <chriscool@tuxfamily.org> and the git-list
-<git@vger.kernel.org>, based on git-mergetool by Theodore Y. Ts'o.
+<git@vger.kernel.org>, based on 'git-mergetool' by Theodore Y. Ts'o.
 
 Documentation
 -------------

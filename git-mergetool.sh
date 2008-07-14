@@ -141,10 +141,10 @@ merge_file () {
     fi
 
     ext="$$$(expr "$MERGED" : '.*\(\.[^/]*\)$')"
-    BACKUP="$MERGED.BACKUP.$ext"
-    LOCAL="$MERGED.LOCAL.$ext"
-    REMOTE="$MERGED.REMOTE.$ext"
-    BASE="$MERGED.BASE.$ext"
+    BACKUP="./$MERGED.BACKUP.$ext"
+    LOCAL="./$MERGED.LOCAL.$ext"
+    REMOTE="./$MERGED.REMOTE.$ext"
+    BASE="./$MERGED.BASE.$ext"
 
     mv -- "$MERGED" "$BACKUP"
     cp -- "$BACKUP" "$MERGED"
@@ -183,29 +183,29 @@ merge_file () {
 	kdiff3)
 	    if base_present ; then
 		("$merge_tool_path" --auto --L1 "$MERGED (Base)" --L2 "$MERGED (Local)" --L3 "$MERGED (Remote)" \
-		    -o "$MERGED" -- "$BASE" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
+		    -o "$MERGED" "$BASE" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    else
 		("$merge_tool_path" --auto --L1 "$MERGED (Local)" --L2 "$MERGED (Remote)" \
-		    -o "$MERGED" -- "$LOCAL" "$REMOTE" > /dev/null 2>&1)
+		    -o "$MERGED" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    fi
 	    status=$?
 	    ;;
 	tkdiff)
 	    if base_present ; then
-		"$merge_tool_path" -a "$BASE" -o "$MERGED" -- "$LOCAL" "$REMOTE"
+		"$merge_tool_path" -a "$BASE" -o "$MERGED" "$LOCAL" "$REMOTE"
 	    else
-		"$merge_tool_path" -o "$MERGED" -- "$LOCAL" "$REMOTE"
+		"$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"
 	    fi
 	    status=$?
 	    ;;
 	meld|vimdiff)
 	    touch "$BACKUP"
-	    "$merge_tool_path" -- "$LOCAL" "$MERGED" "$REMOTE"
+	    "$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"
 	    check_unchanged
 	    ;;
 	gvimdiff)
 	    touch "$BACKUP"
-	    "$merge_tool_path" -f -- "$LOCAL" "$MERGED" "$REMOTE"
+	    "$merge_tool_path" -f "$LOCAL" "$MERGED" "$REMOTE"
 	    check_unchanged
 	    ;;
 	xxdiff)
@@ -215,13 +215,13 @@ merge_file () {
 		    -R 'Accel.SaveAsMerged: "Ctrl-S"' \
 		    -R 'Accel.Search: "Ctrl+F"' \
 		    -R 'Accel.SearchForward: "Ctrl-G"' \
-		    --merged-file "$MERGED" -- "$LOCAL" "$BASE" "$REMOTE"
+		    --merged-file "$MERGED" "$LOCAL" "$BASE" "$REMOTE"
 	    else
 		"$merge_tool_path" -X --show-merged-pane \
 		    -R 'Accel.SaveAsMerged: "Ctrl-S"' \
 		    -R 'Accel.Search: "Ctrl+F"' \
 		    -R 'Accel.SearchForward: "Ctrl-G"' \
-		    --merged-file "$MERGED" -- "$LOCAL" "$REMOTE"
+		    --merged-file "$MERGED" "$LOCAL" "$REMOTE"
 	    fi
 	    check_unchanged
 	    ;;

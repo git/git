@@ -2,7 +2,7 @@
 #include "pack.h"
 #include "csum-file.h"
 
-uint32_t pack_idx_default_version = 1;
+uint32_t pack_idx_default_version = 2;
 uint32_t pack_idx_off32_limit = 0x7fffffff;
 
 static int sha1_compare(const void *_a, const void *_b)

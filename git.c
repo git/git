@@ -9,6 +9,43 @@ const char git_usage_string[] =
 const char git_more_info_string[] =
 	"See 'git help COMMAND' for more information on a specific command.";
 
+static int use_pager = -1;
+struct pager_config {
+	const char *cmd;
+	int val;
+};
+
+static int pager_command_config(const char *var, const char *value, void *data)
+{
+	struct pager_config *c = data;
+	if (!prefixcmp(var, "pager.") && !strcmp(var + 6, c->cmd))
+		c->val = git_config_bool(var, value);
+	return 0;
+}
+
+/* returns 0 for "no pager", 1 for "use pager", and -1 for "not specified" */
+int check_pager_config(const char *cmd)
+{
+	struct pager_config c;
+	c.cmd = cmd;
+	c.val = -1;
+	git_config(pager_command_config, &c);
+	return c.val;
+}
+
+static void commit_pager_choice(void) {
+	switch (use_pager) {
+	case 0:
+		setenv("GIT_PAGER", "cat", 1);
+		break;
+	case 1:
+		setup_pager();
+		break;
+	default:
+		break;
+	}
+}
+
 static int handle_options(const char*** argv, int* argc, int* envchanged)
 {
 	int handled = 0;
@@ -38,9 +75,9 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 				exit(0);
 			}
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
-			setup_pager();
+			use_pager = 1;
 		} else if (!strcmp(cmd, "--no-pager")) {
-			setenv("GIT_PAGER", "cat", 1);
+			use_pager = 0;
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--git-dir")) {
@@ -242,8 +279,13 @@ static int run_command(struct cmd_struct *p, int argc, const char **argv)
 	prefix = NULL;
 	if (p->option & RUN_SETUP)
 		prefix = setup_git_directory();
-	if (p->option & USE_PAGER)
-		setup_pager();
+
+	if (use_pager == -1 && p->option & RUN_SETUP)
+		use_pager = check_pager_config(p->cmd);
+	if (use_pager == -1 && p->option & USE_PAGER)
+		use_pager = 1;
+	commit_pager_choice();
+
 	if (p->option & NEED_WORK_TREE)
 		setup_work_tree();
 
@@ -394,6 +436,36 @@ static void handle_internal_command(int argc, const char **argv)
 	}
 }
 
+static void execv_dashed_external(const char **argv)
+{
+	struct strbuf cmd;
+	const char *tmp;
+
+	strbuf_init(&cmd, 0);
+	strbuf_addf(&cmd, "git-%s", argv[0]);
+
+	/*
+	 * argv[0] must be the git command, but the argv array
+	 * belongs to the caller, and may be reused in
+	 * subsequent loop iterations. Save argv[0] and
+	 * restore it on error.
+	 */
+	tmp = argv[0];
+	argv[0] = cmd.buf;
+
+	trace_argv_printf(argv, "trace: exec:");
+
+	/* execvp() can only ever return if it fails */
+	execvp(cmd.buf, (char **)argv);
+
+	trace_printf("trace: exec failed: %s\n", strerror(errno));
+
+	argv[0] = tmp;
+
+	strbuf_release(&cmd);
+}
+
+
 int main(int argc, const char **argv)
 {
 	const char *cmd = argv[0] && *argv[0] ? argv[0] : "git-help";
@@ -436,6 +508,7 @@ int main(int argc, const char **argv)
 	argv++;
 	argc--;
 	handle_options(&argv, &argc, NULL);
+	commit_pager_choice();
 	if (argc > 0) {
 		if (!prefixcmp(argv[0], "--"))
 			argv[0] += 2;
@@ -461,7 +534,7 @@ int main(int argc, const char **argv)
 		handle_internal_command(argc, argv);
 
 		/* .. then try the external ones */
-		execv_git_cmd(argv);
+		execv_dashed_external(argv);
 
 		/* It could be an alias -- this works around the insanity
 		 * of overriding "git log" with "git show" by having

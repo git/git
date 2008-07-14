@@ -9,7 +9,7 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 SYNOPSIS
 --------
 [verse]
-'git-diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
+'git diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
 	      [-t] [-r] [-c | --cc] [--root] [<common diff options>]
 	      <tree-ish> [<tree-ish>] [<path>...]
 
@@ -20,7 +20,7 @@ Compares the content and mode of the blobs found via two tree objects.
 If there is only one <tree-ish> given, the commit is compared with its parents
 (see --stdin below).
 
-Note that "git-diff-tree" can use the tree encapsulated in a commit object.
+Note that 'git-diff-tree' can use the tree encapsulated in a commit object.
 
 OPTIONS
 -------
@@ -58,25 +58,25 @@ behavior.  This does not apply to the case where two <tree-ish>
 separated with a single space are given.
 
 -m::
-	By default, "git-diff-tree --stdin" does not show
+	By default, 'git-diff-tree --stdin' does not show
 	differences for merge commits.  With this flag, it shows
 	differences to that commit from all of its parents. See
 	also '-c'.
 
 -s::
-	By default, "git-diff-tree --stdin" shows differences,
+	By default, 'git-diff-tree --stdin' shows differences,
 	either in machine-readable form (without '-p') or in patch
 	form (with '-p').  This output can be suppressed.  It is
 	only useful with '-v' flag.
 
 -v::
-	This flag causes "git-diff-tree --stdin" to also show
+	This flag causes 'git-diff-tree --stdin' to also show
 	the commit message before the differences.
 
 include::pretty-options.txt[]
 
 --no-commit-id::
-	git-diff-tree outputs a line with the commit ID when
+	'git-diff-tree' outputs a line with the commit ID when
 	applicable.  This flag suppressed the commit ID output.
 
 -c::
@@ -112,13 +112,13 @@ Limiting Output
 If you're only interested in differences in a subset of files, for
 example some architecture-specific files, you might do:
 
-	git-diff-tree -r <tree-ish> <tree-ish> arch/ia64 include/asm-ia64
+	git diff-tree -r <tree-ish> <tree-ish> arch/ia64 include/asm-ia64
 
 and it will only show you what changed in those two directories.
 
 Or if you are searching for what changed in just `kernel/sched.c`, just do
 
-	git-diff-tree -r <tree-ish> <tree-ish> kernel/sched.c
+	git diff-tree -r <tree-ish> <tree-ish> kernel/sched.c
 
 and it will ignore all differences to other files.
 
@@ -129,7 +129,7 @@ so it can be used to name subdirectories.
 
 An example of normal usage is:
 
-  torvalds@ppc970:~/git> git-diff-tree 5319e4......
+  torvalds@ppc970:~/git> git diff-tree 5319e4......
   *100664->100664 blob    ac348b.......->a01513.......      git-fsck-objects.c
 
 which tells you that the last commit changed just one file (it's from

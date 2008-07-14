@@ -8,7 +8,7 @@ git-mktag - Creates a tag object
 
 SYNOPSIS
 --------
-'git-mktag' < signature_file
+'git mktag' < signature_file
 
 DESCRIPTION
 -----------

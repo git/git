@@ -8,9 +8,9 @@ git-show-ref - List references in a local repository
 SYNOPSIS
 --------
 [verse]
-'git-show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
+'git show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
 	     [-s|--hash] [--abbrev] [--tags] [--heads] [--] <pattern>...
-'git-show-ref' --exclude-existing[=pattern]
+'git show-ref' --exclude-existing[=pattern]
 
 DESCRIPTION
 -----------
@@ -74,7 +74,7 @@ OPTIONS
 --exclude-existing::
 --exclude-existing=pattern::
 
-	Make git-show-ref act as a filter that reads refs from stdin of the
+	Make 'git-show-ref' act as a filter that reads refs from stdin of the
 	form "^(?:<anything>\s)?<refname>(?:\^\{\})?$" and performs the
 	following actions on each:
 	(1) strip "^{}" at the end of line if any;
@@ -137,14 +137,14 @@ When using the '--verify' flag, the command requires an exact path:
 
 will only match the exact branch called "master".
 
-If nothing matches, linkgit:git-show-ref[1] will return an error code of 1,
+If nothing matches, 'git-show-ref' will return an error code of 1,
 and in the case of verification, it will show an error message.
 
 For scripting, you can ask it to be quiet with the "--quiet" flag, which
 allows you to do things like
 
 -----------------------------------------------------------------------------
-	git-show-ref --quiet --verify -- "refs/heads/$headname" ||
+	git show-ref --quiet --verify -- "refs/heads/$headname" ||
 		echo "$headname is not a valid branch"
 -----------------------------------------------------------------------------
 

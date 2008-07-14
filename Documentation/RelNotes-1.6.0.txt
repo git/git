@@ -1,0 +1,153 @@
+GIT v1.6.0 Release Notes
+========================
+
+User visible changes
+--------------------
+
+With the default Makefile settings, most of the programs are now
+installed outside your $PATH, except for "git", "gitk", "git-gui" and
+some server side programs that need to be accessible for technical
+reasons.  Invoking a git subcommand as "git-xyzzy" from the command
+line has been deprecated since early 2006 (and officially announced in
+1.5.4 release notes); use of them from your scripts after adding
+output from "git --exec-path" to the $PATH is still supported in this
+release, but users are again strongly encouraged to adjust their
+scripts to use "git xyzzy" form, as we will stop installing
+"git-xyzzy" hardlinks for built-in commands in later releases.
+
+Source changes needed for porting to MinGW environment are now all in the
+main git.git codebase.
+
+By default, packfiles created with this version uses delta-base-offset
+encoding introduced in v1.4.4.  Pack idx files are using version 2 that
+allows larger packs and added robustness thanks to its CRC checking,
+introduced in v1.5.2.
+
+GIT_CONFIG, which was only documented as affecting "git config", but
+actually affected all git commands, now only affects "git config".
+GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
+not different from GIT_CONFIG in a useful way, is removed.
+
+An ancient merge strategy "stupid" has been removed.
+
+
+Updates since v1.5.6
+--------------------
+
+(subsystems)
+
+* git-p4 in contrib learned "allowSubmit" configuration to control on
+  which branch to allow "submit" subcommand.
+
+* git-gui learned to stage changes per-line.
+
+(portability)
+
+* Changes for MinGW port have been merged, thanks to Johannes Sixt and
+  gangs.
+
+* Sample hook scripts shipped in templates/ are now suffixed with
+  *.sample.  We used to prevent them from triggering by default by
+  relying on the fact that we install them as unexecutable, but on
+  some filesystems this approach does not work.  Instead of running
+  "chmod +x" on them, the users who want to activate these samples
+  as-is can now rename them dropping *.sample suffix.
+
+* perl's in-place edit (-i) does not work well without backup files on Windows;
+  some tests are rewritten to cope with this.
+
+(documentation)
+
+* Updated howto/update-hook-example
+
+* Got rid of usage of "git-foo" from the tutorial and made typography
+  more consistent.
+
+* Disambiguating "--" between revs and paths is finally documented.
+
+(performance, robustness, sanity etc.)
+
+* even more documentation pages are now accessible via "man" and "git help".
+
+* reduced excessive inlining to shrink size of the "git" binary.
+
+* verify-pack checks the object CRC when using version 2 idx files.
+
+* When an object is corrupt in a pack, the object became unusable even
+  when the same object is available in a loose form,  We now try harder to
+  fall back to these redundant objects when able.  In particular, "git
+  repack -a -f" can be used to fix such a corruption as long as necessary
+  objects are available.
+
+* git-clone does not create refs in loose form anymore (it behaves as
+  if you immediately ran git-pack-refs after cloning).  This will help
+  repositories with insanely large number of refs.
+
+* core.fsyncobjectfiles configuration can be used to ensure that the loose
+  objects created will be fsync'ed (this is only useful on filesystems
+  that does not order data writes properly).
+
+* "git commit-tree" plumbing can make Octopus with more than 16 parents.
+  "git commit" has been capable of this for quite some time.
+
+(usability, bells and whistles)
+
+* A new environment variable GIT_CEILING_DIRECTORIES can be used to stop
+  the discovery process of the toplevel of working tree; this may be useful
+  when you are working in a slow network disk and are outside any working tree,
+  as bash-completion and "git help" may still need to run in these places.
+
+* git-apply can handle a patch that touches the same path more than once
+  much better than before.
+
+* git-apply can be told not to trust the line counts recorded in the input
+  patch but recount, with the new --recount option.
+
+* git-archive can be told to omit certain paths from its output using
+  export-ignore attributes.
+
+* git-clone can clone from a remote whose URL would be rewritten by
+  configuration stored in $HOME/.gitconfig now.
+
+* git-diff --check now checks leftover merge conflict markers.
+
+* When remote side used to have branch 'foo' and git-fetch finds that now
+  it has branch 'foo/bar', it refuses to lose the existing remote tracking
+  branch and its reflog.  The error message has been improved to suggest
+  pruning the remote if the user wants to proceed and get the latest set
+  of branches from the remote, including such 'foo/bar'.
+
+* fast-export learned to export and import marks file; this can be used to
+  interface with fast-import incrementally.
+
+* "git rerere" can be told to update the index with auto-reused resolution
+  with rerere.autoupdate configuration variable.
+
+* git-send-mail can talk not just over SSL but over TLS now.
+
+* You can tell "git status -u" to even more aggressively omit checking
+  untracked files with --untracked-files=no.
+
+* Original SHA-1 value for "update-ref -d" is optional now.
+
+* Error codes from gitweb are made more descriptive where possible, rather
+  than "403 forbidden" as we used to issue everywhere.
+
+(internal)
+
+
+Fixes since v1.5.6
+------------------
+
+All of the fixes in v1.5.6 maintenance series are included in
+this release, unless otherwise noted.
+
+ * "git fetch" into an empty repository used to remind the fetch will
+   be huge by saying "no common commits", but it is already known by
+   the user anyway (need to backport 8cb560f to 'maint').
+
+---
+exec >/var/tmp/1
+O=v1.5.6.2-246-g86d7244
+echo O=$(git describe refs/heads/master)
+git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

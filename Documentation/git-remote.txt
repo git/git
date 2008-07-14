@@ -9,12 +9,12 @@ git-remote - manage set of tracked repositories
 SYNOPSIS
 --------
 [verse]
-'git-remote' [-v | --verbose]
-'git-remote' add [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>
-'git-remote' rm <name>
-'git-remote' show [-n] <name>
-'git-remote' prune [-n | --dry-run] <name>
-'git-remote' update [group]
+'git remote' [-v | --verbose]
+'git remote add' [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>
+'git remote rm' <name>
+'git remote show' [-n] <name>
+'git remote prune' [-n | --dry-run] <name>
+'git remote update' [group]
 
 DESCRIPTION
 -----------
@@ -124,7 +124,7 @@ $ git checkout -b nfs linux-nfs/master
 ...
 ------------
 
-* Imitate 'git clone' but track only selected branches
+* Imitate 'git-clone' but track only selected branches
 +
 ------------
 $ mkdir project.git

@@ -8,7 +8,7 @@ git-filter-branch - Rewrite branches
 SYNOPSIS
 --------
 [verse]
-'git-filter-branch' [--env-filter <command>] [--tree-filter <command>]
+'git filter-branch' [--env-filter <command>] [--tree-filter <command>]
 	[--index-filter <command>] [--parent-filter <command>]
 	[--msg-filter <command>] [--commit-filter <command>]
 	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
@@ -95,7 +95,7 @@ OPTIONS
 	This is the filter for rewriting the commit's parent list.
 	It will receive the parent string on stdin and shall output
 	the new parent string on stdout.  The parent string is in
-	a format accepted by linkgit:git-commit-tree[1]: empty for
+	the format described in linkgit:git-commit-tree[1]: empty for
 	the initial commit, "-p parent" for a normal commit and
 	"-p parent1 -p parent2 -p parent3 ..." for a merge commit.
 
@@ -108,7 +108,7 @@ OPTIONS
 --commit-filter <command>::
 	This is the filter for performing the commit.
 	If this filter is specified, it will be called instead of the
-	linkgit:git-commit-tree[1] command, with arguments of the form
+	'git-commit-tree' command, with arguments of the form
 	"<TREE_ID> [-p <PARENT_COMMIT_ID>]..." and the log message on
 	stdin.  The commit id is expected on stdout.
 +
@@ -119,7 +119,7 @@ have all of them as parents.
 You can use the 'map' convenience function in this filter, and other
 convenience functions, too.  For example, calling 'skip_commit "$@"'
 will leave out the current commit (but not its changes! If you want
-that, use linkgit:git-rebase[1] instead).
+that, use 'git-rebase' instead).
 
 --tag-name-filter <command>::
 	This is the filter for rewriting tag names. When passed,
@@ -163,13 +163,13 @@ to other tags will be rewritten to point to the underlying commit.
 
 -f::
 --force::
-	`git filter-branch` refuses to start with an existing temporary
+	'git-filter-branch' refuses to start with an existing temporary
 	directory or when there are already refs starting with
 	'refs/original/', unless forced.
 
 <rev-list-options>::
 	When options are given after the new branch name, they will
-	be passed to linkgit:git-rev-list[1].  Only commits in the resulting
+	be passed to 'git-rev-list'.  Only commits in the resulting
 	output will be filtered, although the filtered commits can still
 	reference parents which are outside of that set.
 
@@ -255,7 +255,7 @@ and all children of the merge will become merge commits with P1,P2
 as their parents instead of the merge commit.
 
 You can rewrite the commit log messages using `--msg-filter`.  For
-example, `git-svn-id` strings in a repository created by `git-svn` can
+example, 'git-svn-id' strings in a repository created by 'git-svn' can
 be removed this way:
 
 -------------------------------------------------------
@@ -266,13 +266,13 @@ git filter-branch --msg-filter '
 
 To restrict rewriting to only part of the history, specify a revision
 range in addition to the new branch name.  The new branch name will
-point to the top-most revision that a 'git rev-list' of this range
+point to the top-most revision that a 'git-rev-list' of this range
 will print.
 
 *NOTE* the changes introduced by the commits, and which are not reverted
 by subsequent commits, will still be in the rewritten branch. If you want
 to throw out _changes_ together with the commits, you should use the
-interactive mode of linkgit:git-rebase[1].
+interactive mode of 'git-rebase'.
 
 
 Consider this history:

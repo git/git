@@ -37,6 +37,7 @@ static const char rev_list_usage[] =
 "    --reverse\n"
 "  formatting output:\n"
 "    --parents\n"
+"    --children\n"
 "    --objects | --objects-edge\n"
 "    --unpacked\n"
 "    --header | --pretty\n"
@@ -88,6 +89,15 @@ static void show_commit(struct commit *commit)
 		while (parents) {
 			printf(" %s", sha1_to_hex(parents->item->object.sha1));
 			parents = parents->next;
+		}
+	}
+	if (revs.children.name) {
+		struct commit_list *children;
+
+		children = lookup_decoration(&revs.children, &commit->object);
+		while (children) {
+			printf(" %s", sha1_to_hex(children->item->object.sha1));
+			children = children->next;
 		}
 	}
 	show_decorations(commit);
@@ -563,23 +573,6 @@ static struct commit_list *find_bisection(struct commit_list *list,
 	}
 	free(weights);
 	return best;
-}
-
-static void read_revisions_from_stdin(struct rev_info *revs)
-{
-	char line[1000];
-
-	while (fgets(line, sizeof(line), stdin) != NULL) {
-		int len = strlen(line);
-		if (len && line[len - 1] == '\n')
-			line[--len] = 0;
-		if (!len)
-			break;
-		if (line[0] == '-')
-			die("options not supported in --stdin mode");
-		if (handle_revision_arg(line, revs, 0, 1))
-			die("bad revision '%s'", line);
-	}
 }
 
 int cmd_rev_list(int argc, const char **argv, const char *prefix)

@@ -8,13 +8,13 @@ git-verify-pack - Validate packed git archive files
 
 SYNOPSIS
 --------
-'git-verify-pack' [-v] [--] <pack>.idx ...
+'git verify-pack' [-v] [--] <pack>.idx ...
 
 
 DESCRIPTION
 -----------
-Reads given idx file for packed git archive created with
-git-pack-objects command and verifies idx file and the
+Reads given idx file for packed git archive created with the
+'git-pack-objects' command and verifies idx file and the
 corresponding pack file.
 
 OPTIONS

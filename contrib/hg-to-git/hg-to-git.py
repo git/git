@@ -89,7 +89,7 @@ try:
         if o in ('-v', '--verbose'):
             verbose = True
     if len(args) != 1:
-        raise('params')
+        raise Exception('params')
 except:
     usage()
     sys.exit(1)
@@ -106,7 +106,10 @@ if state:
     else:
         print 'State does not exist, first run'
 
-tip = os.popen('hg tip --template "{rev}"').read()
+sock = os.popen('hg tip --template "{rev}"')
+tip = sock.read()
+if sock.close():
+    sys.exit(1)
 if verbose:
     print 'tip is', tip
 
@@ -149,7 +152,7 @@ for cset in range(1, int(tip) + 1):
 
 if not hgvers.has_key("0"):
     print 'creating repository'
-    os.system('git-init-db')
+    os.system('git init')
 
 # loop through every hg changeset
 for cset in range(int(tip) + 1):
@@ -191,10 +194,10 @@ for cset in range(int(tip) + 1):
     if cset != 0:
         if hgbranch[str(cset)] == "branch-" + str(cset):
             print 'creating new branch', hgbranch[str(cset)]
-            os.system('git-checkout -b %s %s' % (hgbranch[str(cset)], hgvers[parent]))
+            os.system('git checkout -b %s %s' % (hgbranch[str(cset)], hgvers[parent]))
         else:
             print 'checking out branch', hgbranch[str(cset)]
-            os.system('git-checkout %s' % hgbranch[str(cset)])
+            os.system('git checkout %s' % hgbranch[str(cset)])
 
     # merge
     if mparent:
@@ -203,7 +206,7 @@ for cset in range(int(tip) + 1):
         else:
             otherbranch = hgbranch[parent]
         print 'merging', otherbranch, 'into', hgbranch[str(cset)]
-        os.system(getgitenv(user, date) + 'git-merge --no-commit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
+        os.system(getgitenv(user, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
 
     # remove everything except .git and .hg directories
     os.system('find . \( -path "./.hg" -o -path "./.git" \) -prune -o ! -name "." -print | xargs rm -rf')
@@ -212,9 +215,9 @@ for cset in range(int(tip) + 1):
     os.system('hg update -C %d' % cset)
 
     # add new files
-    os.system('git-ls-files -x .hg --others | git-update-index --add --stdin')
+    os.system('git ls-files -x .hg --others | git update-index --add --stdin')
     # delete removed files
-    os.system('git-ls-files -x .hg --deleted | git-update-index --remove --stdin')
+    os.system('git ls-files -x .hg --deleted | git update-index --remove --stdin')
 
     # commit
     os.system(getgitenv(user, date) + 'git commit --allow-empty -a -F %s' % filecomment)
@@ -222,20 +225,20 @@ for cset in range(int(tip) + 1):
 
     # tag
     if tag and tag != 'tip':
-        os.system(getgitenv(user, date) + 'git-tag %s' % tag)
+        os.system(getgitenv(user, date) + 'git tag %s' % tag)
 
     # delete branch if not used anymore...
     if mparent and len(hgchildren[str(cset)]):
         print "Deleting unused branch:", otherbranch
-        os.system('git-branch -d %s' % otherbranch)
+        os.system('git branch -d %s' % otherbranch)
 
     # retrieve and record the version
-    vvv = os.popen('git-show --quiet --pretty=format:%H').read()
+    vvv = os.popen('git show --quiet --pretty=format:%H').read()
     print 'record', cset, '->', vvv
     hgvers[str(cset)] = vvv
 
 if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
-    os.system('git-repack -a -d')
+    os.system('git repack -a -d')
 
 # write the state for incrementals
 if state:

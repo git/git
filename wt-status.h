@@ -11,6 +11,13 @@ enum color_wt_status {
 	WT_STATUS_NOBRANCH,
 };
 
+enum untracked_status_type {
+	SHOW_NO_UNTRACKED_FILES,
+	SHOW_NORMAL_UNTRACKED_FILES,
+	SHOW_ALL_UNTRACKED_FILES
+};
+extern enum untracked_status_type show_untracked_files;
+
 struct wt_status {
 	int is_initial;
 	char *branch;

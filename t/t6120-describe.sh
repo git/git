@@ -139,4 +139,6 @@ check_describe "test1-lightweight-*" --tags --match="test1-*"
 
 check_describe "test2-lightweight-*" --tags --match="test2-*"
 
+check_describe "test2-lightweight-*" --long --tags --match="test2-*" HEAD^
+
 test_done

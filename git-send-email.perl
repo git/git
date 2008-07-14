@@ -84,7 +84,10 @@ Options:
 
    --smtp-pass    The password for SMTP-AUTH.
 
-   --smtp-ssl     If set, connects to the SMTP server using SSL.
+   --smtp-encryption Specify 'tls' for STARTTLS encryption, or 'ssl' for SSL.
+                  Any other value disables the feature.
+
+   --smtp-ssl     Synonym for '--smtp-encryption=ssl'.  Deprecated.
 
    --suppress-cc  Suppress the specified category of auto-CC.  The category
 		  can be one of 'author' for the patch author, 'self' to
@@ -184,7 +187,7 @@ my ($quiet, $dry_run) = (0, 0);
 
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
-my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_ssl);
+my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_encryption);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
 my ($no_validate);
 my (@suppress_cc);
@@ -194,7 +197,6 @@ my %config_bool_settings = (
     "chainreplyto" => [\$chain_reply_to, 1],
     "suppressfrom" => [\$suppress_from, undef],
     "signedoffcc" => [\$signed_off_cc, undef],
-    "smtpssl" => [\$smtp_ssl, 0],
 );
 
 my %config_settings = (
@@ -249,7 +251,8 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-server-port=s" => \$smtp_server_port,
 		    "smtp-user=s" => \$smtp_authuser,
 		    "smtp-pass:s" => \$smtp_authpass,
-		    "smtp-ssl!" => \$smtp_ssl,
+		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
+		    "smtp-encryption=s" => \$smtp_encryption,
 		    "identity=s" => \$identity,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
@@ -289,6 +292,15 @@ sub read_config {
 			$$target = Git::config(@repo, "$prefix.$setting") unless (defined $$target);
 		}
 	}
+
+	if (!defined $smtp_encryption) {
+		my $enc = Git::config(@repo, "$prefix.smtpencryption");
+		if (defined $enc) {
+			$smtp_encryption = $enc;
+		} elsif (Git::config_bool(@repo, "$prefix.smtpssl")) {
+			$smtp_encryption = 'ssl';
+		}
+	}
 }
 
 # read configuration from [sendemail "$identity"], fall back on [sendemail]
@@ -300,6 +312,9 @@ read_config("sendemail");
 foreach my $setting (values %config_bool_settings) {
 	${$setting->[0]} = $setting->[1] unless (defined (${$setting->[0]}));
 }
+
+# 'default' encryption is none -- this only prevents a warning
+$smtp_encryption = '' unless (defined $smtp_encryption);
 
 # Set CC suppressions
 my(%suppress_cc);
@@ -393,7 +408,7 @@ for my $f (@ARGV) {
 		push @files, grep { -f $_ } map { +$f . "/" . $_ }
 				sort readdir(DH);
 
-	} elsif (-f $f) {
+	} elsif (-f $f or -p $f) {
 		push @files, $f;
 
 	} else {
@@ -403,8 +418,10 @@ for my $f (@ARGV) {
 
 if (!$no_validate) {
 	foreach my $f (@files) {
-		my $error = validate_patch($f);
-		$error and die "fatal: $f: $error\nwarning: no patches were sent\n";
+		unless (-p $f) {
+			my $error = validate_patch($f);
+			$error and die "fatal: $f: $error\nwarning: no patches were sent\n";
+		}
 	}
 }
 
@@ -738,7 +755,7 @@ X-Mailer: git-send-email $gitversion
 			die "The required SMTP server is not properly defined."
 		}
 
-		if ($smtp_ssl) {
+		if ($smtp_encryption eq 'ssl') {
 			$smtp_server_port ||= 465; # ssmtp
 			require Net::SMTP::SSL;
 			$smtp ||= Net::SMTP::SSL->new($smtp_server, Port => $smtp_server_port);
@@ -748,6 +765,21 @@ X-Mailer: git-send-email $gitversion
 			$smtp ||= Net::SMTP->new((defined $smtp_server_port)
 						 ? "$smtp_server:$smtp_server_port"
 						 : $smtp_server);
+			if ($smtp_encryption eq 'tls') {
+				require Net::SMTP::SSL;
+				$smtp->command('STARTTLS');
+				$smtp->response();
+				if ($smtp->code == 220) {
+					$smtp = Net::SMTP::SSL->start_SSL($smtp)
+						or die "STARTTLS failed! ".$smtp->message;
+					$smtp_encryption = '';
+					# Send EHLO again to receive fresh
+					# supported commands
+					$smtp->hello();
+				} else {
+					die "Server does not support STARTTLS! ".$smtp->message;
+				}
+			}
 		}
 
 		if (!$smtp) {

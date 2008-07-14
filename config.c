@@ -16,6 +16,8 @@ static int config_linenr;
 static int config_file_eof;
 static int zlib_compression_seen;
 
+const char *config_exclusive_filename = NULL;
+
 static int get_next_char(void)
 {
 	int c;
@@ -332,7 +334,7 @@ int git_config_string(const char **dest, const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *dummy)
+static int git_default_core_config(const char *var, const char *value)
 {
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
@@ -444,6 +446,33 @@ int git_default_config(const char *var, const char *value, void *dummy)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.pager"))
+		return git_config_string(&pager_program, var, value);
+
+	if (!strcmp(var, "core.editor"))
+		return git_config_string(&editor_program, var, value);
+
+	if (!strcmp(var, "core.excludesfile"))
+		return git_config_string(&excludes_file, var, value);
+
+	if (!strcmp(var, "core.whitespace")) {
+		if (!value)
+			return config_error_nonbool(var);
+		whitespace_rule_cfg = parse_whitespace_rule(value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.fsyncobjectfiles")) {
+		fsync_object_files = git_config_bool(var, value);
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
+
+static int git_default_user_config(const char *var, const char *value)
+{
 	if (!strcmp(var, "user.name")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -462,32 +491,24 @@ int git_default_config(const char *var, const char *value, void *dummy)
 		return 0;
 	}
 
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
+
+static int git_default_i18n_config(const char *var, const char *value)
+{
 	if (!strcmp(var, "i18n.commitencoding"))
 		return git_config_string(&git_commit_encoding, var, value);
 
 	if (!strcmp(var, "i18n.logoutputencoding"))
 		return git_config_string(&git_log_output_encoding, var, value);
 
-	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
-		pager_use_color = git_config_bool(var,value);
-		return 0;
-	}
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
 
-	if (!strcmp(var, "core.pager"))
-		return git_config_string(&pager_program, var, value);
-
-	if (!strcmp(var, "core.editor"))
-		return git_config_string(&editor_program, var, value);
-
-	if (!strcmp(var, "core.excludesfile"))
-		return git_config_string(&excludes_file, var, value);
-
-	if (!strcmp(var, "core.whitespace")) {
-		if (!value)
-			return config_error_nonbool(var);
-		whitespace_rule_cfg = parse_whitespace_rule(value);
-		return 0;
-	}
+static int git_default_branch_config(const char *var, const char *value)
+{
 	if (!strcmp(var, "branch.autosetupmerge")) {
 		if (value && !strcasecmp(value, "always")) {
 			git_branch_track = BRANCH_TRACK_ALWAYS;
@@ -509,6 +530,29 @@ int git_default_config(const char *var, const char *value, void *dummy)
 			autorebase = AUTOREBASE_ALWAYS;
 		else
 			return error("Malformed value for %s", var);
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
+
+int git_default_config(const char *var, const char *value, void *dummy)
+{
+	if (!prefixcmp(var, "core."))
+		return git_default_core_config(var, value);
+
+	if (!prefixcmp(var, "user."))
+		return git_default_user_config(var, value);
+
+	if (!prefixcmp(var, "i18n."))
+		return git_default_i18n_config(var, value);
+
+	if (!prefixcmp(var, "branch."))
+		return git_default_branch_config(var, value);
+
+	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
+		pager_use_color = git_config_bool(var,value);
 		return 0;
 	}
 
@@ -549,7 +593,7 @@ const char *git_etc_gitconfig(void)
 	return system_wide;
 }
 
-int git_env_bool(const char *k, int def)
+static int git_env_bool(const char *k, int def)
 {
 	const char *v = getenv(k);
 	return v ? git_config_bool(k, v) : def;
@@ -569,31 +613,28 @@ int git_config(config_fn_t fn, void *data)
 {
 	int ret = 0;
 	char *repo_config = NULL;
-	const char *home = NULL, *filename;
+	const char *home = NULL;
 
 	/* $GIT_CONFIG makes git read _only_ the given config file,
 	 * $GIT_CONFIG_LOCAL will make it process it in addition to the
 	 * global config file, the same way it would the per-repository
 	 * config file otherwise. */
-	filename = getenv(CONFIG_ENVIRONMENT);
-	if (!filename) {
-		if (git_config_system() && !access(git_etc_gitconfig(), R_OK))
-			ret += git_config_from_file(fn, git_etc_gitconfig(),
-				data);
-		home = getenv("HOME");
-		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
-		if (!filename)
-			filename = repo_config = xstrdup(git_path("config"));
-	}
+	if (config_exclusive_filename)
+		return git_config_from_file(fn, config_exclusive_filename, data);
+	if (git_config_system() && !access(git_etc_gitconfig(), R_OK))
+		ret += git_config_from_file(fn, git_etc_gitconfig(),
+					    data);
 
+	home = getenv("HOME");
 	if (git_config_global() && home) {
 		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
 		if (!access(user_config, R_OK))
-			ret = git_config_from_file(fn, user_config, data);
+			ret += git_config_from_file(fn, user_config, data);
 		free(user_config);
 	}
 
-	ret += git_config_from_file(fn, filename, data);
+	repo_config = xstrdup(git_path("config"));
+	ret += git_config_from_file(fn, repo_config, data);
 	free(repo_config);
 	return ret;
 }
@@ -831,13 +872,10 @@ int git_config_set_multivar(const char* key, const char* value,
 	struct lock_file *lock = NULL;
 	const char* last_dot = strrchr(key, '.');
 
-	config_filename = getenv(CONFIG_ENVIRONMENT);
-	if (!config_filename) {
-		config_filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
-		if (!config_filename)
-			config_filename  = git_path("config");
-	}
-	config_filename = xstrdup(config_filename);
+	if (config_exclusive_filename)
+		config_filename = xstrdup(config_exclusive_filename);
+	else
+		config_filename = xstrdup(git_path("config"));
 
 	/*
 	 * Since "key" actually contains the section name and the real
@@ -1094,13 +1132,10 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	int out_fd;
 	char buf[1024];
 
-	config_filename = getenv(CONFIG_ENVIRONMENT);
-	if (!config_filename) {
-		config_filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
-		if (!config_filename)
-			config_filename  = git_path("config");
-	}
-	config_filename = xstrdup(config_filename);
+	if (config_exclusive_filename)
+		config_filename = xstrdup(config_exclusive_filename);
+	else
+		config_filename = xstrdup(git_path("config"));
 	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
 	if (out_fd < 0) {
 		ret = error("could not lock config file %s", config_filename);

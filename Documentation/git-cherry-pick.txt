@@ -7,7 +7,7 @@ git-cherry-pick - Apply the change introduced by an existing commit
 
 SYNOPSIS
 --------
-'git-cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] <commit>
+'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] <commit>
 
 DESCRIPTION
 -----------
@@ -19,12 +19,12 @@ OPTIONS
 -------
 <commit>::
 	Commit to cherry-pick.
-	For a more complete list of ways to spell commits, see
+	For a more complete list of ways to spell commits, see the
 	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
 -e::
 --edit::
-	With this option, `git-cherry-pick` will let you edit the commit
+	With this option, 'git-cherry-pick' will let you edit the commit
 	message prior to committing.
 
 -x::

@@ -9,9 +9,9 @@ git-merge - Join two or more development histories together
 SYNOPSIS
 --------
 [verse]
-'git-merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
+'git merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
 	[-m <msg>] <remote> <remote>...
-'git-merge' <msg> HEAD <remote>...
+'git merge' <msg> HEAD <remote>...
 
 DESCRIPTION
 -----------
@@ -29,8 +29,8 @@ include::merge-options.txt[]
 
 -m <msg>::
 	The commit message to be used for the merge commit (in case
-	it is created). The `git-fmt-merge-msg` script can be used
-	to give a good default for automated `git-merge` invocations.
+	it is created). The 'git-fmt-merge-msg' script can be used
+	to give a good default for automated 'git-merge' invocations.
 
 <remote>::
 	Other branch head merged into our branch.  You need at
@@ -41,8 +41,7 @@ include::merge-strategies.txt[]
 
 
 If you tried a merge which resulted in a complex conflicts and
-would want to start over, you can recover with
-linkgit:git-reset[1].
+would want to start over, you can recover with 'git-reset'.
 
 CONFIGURATION
 -------------
@@ -50,7 +49,7 @@ include::merge-config.txt[]
 
 branch.<name>.mergeoptions::
 	Sets default options for merging into branch <name>. The syntax and
-	supported options are equal to that of git-merge, but option values
+	supported options are equal to that of 'git-merge', but option values
 	containing whitespace characters are currently not supported.
 
 HOW MERGE WORKS
@@ -60,7 +59,7 @@ A merge is always between the current `HEAD` and one or more
 commits (usually, branch head or tag), and the index file must
 exactly match the
 tree of `HEAD` commit (i.e. the contents of the last commit) when
-it happens.  In other words, `git-diff --cached HEAD` must
+it happens.  In other words, `git diff --cached HEAD` must
 report no changes.
 
 [NOTE]
@@ -85,7 +84,7 @@ with `git pull remote rbranch:lbranch`, but your working tree,
 `.git/HEAD` pointer and index file are left intact).
 
 You may have local modifications in the working tree files.  In
-other words, `git-diff` is allowed to report changes.
+other words, 'git-diff' is allowed to report changes.
 However, the merge uses your working tree as the working area,
 and in order to prevent the merge operation from losing such
 changes, it makes sure that they do not interfere with the
@@ -128,7 +127,7 @@ When there are conflicts, these things happen:
 3. For conflicting paths, the index file records up to three
    versions; stage1 stores the version from the common ancestor,
    stage2 from `HEAD`, and stage3 from the remote branch (you
-   can inspect the stages with `git-ls-files -u`).  The working
+   can inspect the stages with `git ls-files -u`).  The working
    tree files have the result of "merge" program; i.e. 3-way
    merge result with familiar conflict markers `<<< === >>>`.
 
@@ -141,21 +140,24 @@ After seeing a conflict, you can do two things:
 
  * Decide not to merge.  The only clean-up you need are to reset
    the index file to the `HEAD` commit to reverse 2. and to clean
-   up working tree changes made by 2. and 3.; `git-reset` can
+   up working tree changes made by 2. and 3.; 'git-reset' can
    be used for this.
 
- * Resolve the conflicts.  `git-diff` would report only the
-   conflicting paths because of the above 2. and 3..  Edit the
-   working tree files into a desirable shape, `git-add` or `git-rm`
+ * Resolve the conflicts.  `git diff` would report only the
+   conflicting paths because of the above 2. and 3.  Edit the
+   working tree files into a desirable shape, 'git-add' or 'git-rm'
    them, to make the index file contain what the merge result
-   should be, and run `git-commit` to commit the result.
+   should be, and run 'git-commit' to commit the result.
 
 
 SEE ALSO
 --------
 linkgit:git-fmt-merge-msg[1], linkgit:git-pull[1],
-linkgit:gitattributes[5]
-
+linkgit:gitattributes[5],
+linkgit:git-reset[1],
+linkgit:git-diff[1], linkgit:git-ls-files[1],
+linkgit:git-add[1], linkgit:git-rm[1],
+linkgit:git-mergetool[1]
 
 Author
 ------

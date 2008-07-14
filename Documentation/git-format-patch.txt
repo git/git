@@ -9,7 +9,7 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [-k] [-o <dir> | --stdout] [--thread]
+'git format-patch' [-k] [-o <dir> | --stdout] [--thread]
 		   [--attach[=<boundary>] | --inline[=<boundary>]]
 		   [-s | --signoff] [<common diff options>]
 		   [-n | --numbered | -N | --no-numbered]
@@ -27,7 +27,7 @@ DESCRIPTION
 Prepare each commit with its patch in
 one file per commit, formatted to resemble UNIX mailbox format.
 The output of this command is convenient for e-mail submission or
-for use with linkgit:git-am[1].
+for use with 'git-am'.
 
 There are two ways to specify which commits to operate on.
 
@@ -61,7 +61,7 @@ they are created in the current working directory.
 If -n is specified, instead of "[PATCH] Subject", the first line
 is formatted as "[PATCH n/m] Subject".
 
-If given --thread, git-format-patch will generate In-Reply-To and
+If given --thread, 'git-format-patch' will generate In-Reply-To and
 References headers to make the second and subsequent patch mails appear
 as replies to the first mail; this also generates a Message-Id header to
 reference.
@@ -175,10 +175,10 @@ and file suffix, and number patches when outputting more than one.
 
 ------------
 [format]
-        headers = "Organization: git-foo\n"
-        subjectprefix = CHANGE
-        suffix = .txt
-        numbered = auto
+	headers = "Organization: git-foo\n"
+	subjectprefix = CHANGE
+	suffix = .txt
+	numbered = auto
 	cc = <email>
 ------------
 
@@ -187,10 +187,10 @@ EXAMPLES
 --------
 
 * Extract commits between revisions R1 and R2, and apply them on top of
-the current branch using `git-am` to cherry-pick them:
+the current branch using 'git-am' to cherry-pick them:
 +
 ------------
-$ git format-patch -k --stdout R1..R2 | git-am -3 -k
+$ git format-patch -k --stdout R1..R2 | git am -3 -k
 ------------
 
 * Extract all commits which are in the current branch but not in the
@@ -206,7 +206,7 @@ For each commit a separate file is created in the current directory.
 project:
 +
 ------------
-$ git format-patch \--root origin
+$ git format-patch --root origin
 ------------
 
 * The same as the previous one:

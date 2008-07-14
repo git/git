@@ -362,3 +362,90 @@ proc apply_hunk {x y} {
 		set current_diff_path $current_diff_path
 	}
 }
+
+proc apply_line {x y} {
+	global current_diff_path current_diff_header current_diff_side
+	global ui_diff ui_index file_states
+
+	if {$current_diff_path eq {} || $current_diff_header eq {}} return
+	if {![lock_index apply_hunk]} return
+
+	set apply_cmd {apply --cached --whitespace=nowarn}
+	set mi [lindex $file_states($current_diff_path) 0]
+	if {$current_diff_side eq $ui_index} {
+		set failed_msg [mc "Failed to unstage selected line."]
+		set to_context {+}
+		lappend apply_cmd --reverse
+		if {[string index $mi 0] ne {M}} {
+			unlock_index
+			return
+		}
+	} else {
+		set failed_msg [mc "Failed to stage selected line."]
+		set to_context {-}
+		if {[string index $mi 1] ne {M}} {
+			unlock_index
+			return
+		}
+	}
+
+	set the_l [$ui_diff index @$x,$y]
+
+	# operate only on change lines
+	set c1 [$ui_diff get "$the_l linestart"]
+	if {$c1 ne {+} && $c1 ne {-}} {
+		unlock_index
+		return
+	}
+	set sign $c1
+
+	set i_l [$ui_diff search -backwards -regexp ^@@ $the_l 0.0]
+	if {$i_l eq {}} {
+		unlock_index
+		return
+	}
+	# $i_l is now at the beginning of a line
+
+	# pick start line number from hunk header
+	set hh [$ui_diff get $i_l "$i_l + 1 lines"]
+	set hh [lindex [split $hh ,] 0]
+	set hln [lindex [split $hh -] 1]
+
+	set n 0
+	set i_l [$ui_diff index "$i_l + 1 lines"]
+	set patch {}
+	while {[$ui_diff compare $i_l < "end - 1 chars"] &&
+	       [$ui_diff get $i_l "$i_l + 2 chars"] ne {@@}} {
+		set next_l [$ui_diff index "$i_l + 1 lines"]
+		set c1 [$ui_diff get $i_l]
+		if {[$ui_diff compare $i_l <= $the_l] &&
+		    [$ui_diff compare $the_l < $next_l]} {
+			# the line to stage/unstage
+			set ln [$ui_diff get $i_l $next_l]
+			set patch "$patch$ln"
+		} elseif {$c1 ne {-} && $c1 ne {+}} {
+			# context line
+			set ln [$ui_diff get $i_l $next_l]
+			set patch "$patch$ln"
+			set n [expr $n+1]
+		} elseif {$c1 eq $to_context} {
+			# turn change line into context line
+			set ln [$ui_diff get "$i_l + 1 chars" $next_l]
+			set patch "$patch $ln"
+			set n [expr $n+1]
+		}
+		set i_l $next_l
+	}
+	set patch "@@ -$hln,$n +$hln,[eval expr $n $sign 1] @@\n$patch"
+
+	if {[catch {
+		set p [eval git_write $apply_cmd]
+		fconfigure $p -translation binary -encoding binary
+		puts -nonewline $p $current_diff_header
+		puts -nonewline $p $patch
+		close $p} err]} {
+		error_popup [append $failed_msg "\n\n$err"]
+	}
+
+	unlock_index
+}

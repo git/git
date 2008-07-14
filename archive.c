@@ -82,3 +82,16 @@ void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
 	return buffer;
 }
 
+int is_archive_path_ignored(const char *path)
+{
+	static struct git_attr *attr_export_ignore;
+	struct git_attr_check check[1];
+
+	if (!attr_export_ignore)
+		attr_export_ignore = git_attr("export-ignore", 13);
+
+	check[0].attr = attr_export_ignore;
+	if (git_checkattr(path, ARRAY_SIZE(check), check))
+		return 0;
+	return ATTR_TRUE(check[0].value);
+}

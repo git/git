@@ -209,28 +209,6 @@ static int check_pack_inflate(struct packed_git *p,
 		stream.total_in == len) ? 0 : -1;
 }
 
-static int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
-			  off_t offset, off_t len, unsigned int nr)
-{
-	const uint32_t *index_crc;
-	uint32_t data_crc = crc32(0, Z_NULL, 0);
-
-	do {
-		unsigned int avail;
-		void *data = use_pack(p, w_curs, offset, &avail);
-		if (avail > len)
-			avail = len;
-		data_crc = crc32(data_crc, data, avail);
-		offset += avail;
-		len -= avail;
-	} while (len);
-
-	index_crc = p->index_data;
-	index_crc += 2 + 256 + p->num_objects * (20/4) + nr;
-
-	return data_crc != ntohl(*index_crc);
-}
-
 static void copy_pack_data(struct sha1file *f,
 		struct packed_git *p,
 		struct pack_window **w_curs,
@@ -590,7 +568,8 @@ static void write_pack_file(void)
 	free(written_list);
 	stop_progress(&progress_state);
 	if (written != nr_result)
-		die("wrote %u objects while expecting %u", written, nr_result);
+		die("wrote %"PRIu32" objects while expecting %"PRIu32,
+			written, nr_result);
 	/*
 	 * We have scanned through [0 ... i).  Since we have written
 	 * the correct number of objects,  the remaining [i ... nr_objects)
@@ -602,7 +581,8 @@ static void write_pack_file(void)
 		j += !e->idx.offset && !e->preferred_base;
 	}
 	if (j)
-		die("wrote %u objects as expected but %u unwritten", written, j);
+		die("wrote %"PRIu32" objects as expected but %"PRIu32
+			" unwritten", written, j);
 }
 
 static int locate_object_entry_hash(const unsigned char *sha1)
@@ -1147,8 +1127,6 @@ static void get_object_details(void)
 	for (i = 0; i < nr_objects; i++)
 		sorted_by_offset[i] = objects + i;
 	qsort(sorted_by_offset, nr_objects, sizeof(*sorted_by_offset), pack_offset_sort);
-
-	init_pack_revindex();
 
 	for (i = 0; i < nr_objects; i++)
 		check_object(sorted_by_offset[i]);
@@ -1718,7 +1696,8 @@ static int add_ref_tag(const char *path, const unsigned char *sha1, int flag, vo
 static void prepare_pack(int window, int depth)
 {
 	struct object_entry **delta_list;
-	uint32_t i, n, nr_deltas;
+	uint32_t i, nr_deltas;
+	unsigned n;
 
 	get_object_details();
 
@@ -1809,7 +1788,8 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "pack.indexversion")) {
 		pack_idx_default_version = git_config_int(k, v);
 		if (pack_idx_default_version > 2)
-			die("bad pack.indexversion=%d", pack_idx_default_version);
+			die("bad pack.indexversion=%"PRIu32,
+				pack_idx_default_version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.packsizelimit")) {
@@ -2243,7 +2223,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		prepare_pack(window, depth);
 	write_pack_file();
 	if (progress)
-		fprintf(stderr, "Total %u (delta %u), reused %u (delta %u)\n",
+		fprintf(stderr, "Total %"PRIu32" (delta %"PRIu32"),"
+			" reused %"PRIu32" (delta %"PRIu32")\n",
 			written, written_delta, reused, reused_delta);
 	return 0;
 }

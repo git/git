@@ -247,6 +247,8 @@ static int write_tar_entry(const unsigned char *sha1,
 	strbuf_grow(&path, PATH_MAX);
 	strbuf_add(&path, base, baselen);
 	strbuf_addstr(&path, filename);
+	if (is_archive_path_ignored(path.buf + base_len))
+		return 0;
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		strbuf_addch(&path, '/');
 		buffer = NULL;

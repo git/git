@@ -181,9 +181,9 @@ static int s_update_ref(const char *action,
 	lock = lock_any_ref_for_update(ref->name,
 				       check_old ? ref->old_sha1 : NULL, 0);
 	if (!lock)
-		return 1;
+		return 2;
 	if (write_ref_sha1(lock, ref->new_sha1, msg) < 0)
-		return 1;
+		return 2;
 	return 0;
 }
 
@@ -233,10 +233,12 @@ static int update_local_ref(struct ref *ref,
 
 	if (!is_null_sha1(ref->old_sha1) &&
 	    !prefixcmp(ref->name, "refs/tags/")) {
-		sprintf(display, "- %-*s %-*s -> %s",
+		int r;
+		r = s_update_ref("updating tag", ref, 0);
+		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : '-',
 			SUMMARY_WIDTH, "[tag update]", REFCOL_WIDTH, remote,
-			pretty_ref);
-		return s_update_ref("updating tag", ref, 0);
+			pretty_ref, r ? "  (unable to update local ref)" : "");
+		return r;
 	}
 
 	current = lookup_commit_reference_gently(ref->old_sha1, 1);
@@ -244,6 +246,7 @@ static int update_local_ref(struct ref *ref,
 	if (!current || !updated) {
 		const char *msg;
 		const char *what;
+		int r;
 		if (!strncmp(ref->name, "refs/tags/", 10)) {
 			msg = "storing tag";
 			what = "[new tag]";
@@ -253,27 +256,36 @@ static int update_local_ref(struct ref *ref,
 			what = "[new branch]";
 		}
 
-		sprintf(display, "* %-*s %-*s -> %s", SUMMARY_WIDTH, what,
-			REFCOL_WIDTH, remote, pretty_ref);
-		return s_update_ref(msg, ref, 0);
+		r = s_update_ref(msg, ref, 0);
+		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : '*',
+			SUMMARY_WIDTH, what, REFCOL_WIDTH, remote, pretty_ref,
+			r ? "  (unable to update local ref)" : "");
+		return r;
 	}
 
 	if (in_merge_bases(current, &updated, 1)) {
 		char quickref[83];
+		int r;
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "..");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
-		sprintf(display, "  %-*s %-*s -> %s", SUMMARY_WIDTH, quickref,
-			REFCOL_WIDTH, remote, pretty_ref);
-		return s_update_ref("fast forward", ref, 1);
+		r = s_update_ref("fast forward", ref, 1);
+		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : ' ',
+			SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote,
+			pretty_ref, r ? "  (unable to update local ref)" : "");
+		return r;
 	} else if (force || ref->force) {
 		char quickref[84];
+		int r;
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "...");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
-		sprintf(display, "+ %-*s %-*s -> %s  (forced update)",
-			SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote, pretty_ref);
-		return s_update_ref("forced-update", ref, 1);
+		r = s_update_ref("forced-update", ref, 1);
+		sprintf(display, "%c %-*s %-*s -> %s  (%s)", r ? '!' : '+',
+			SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote,
+			pretty_ref,
+			r ? "unable to update local ref" : "forced update");
+		return r;
 	} else {
 		sprintf(display, "! %-*s %-*s -> %s  (non fast forward)",
 			SUMMARY_WIDTH, "[rejected]", REFCOL_WIDTH, remote,
@@ -282,7 +294,8 @@ static int update_local_ref(struct ref *ref,
 	}
 }
 
-static int store_updated_refs(const char *url, struct ref *ref_map)
+static int store_updated_refs(const char *url, const char *remote_name,
+		struct ref *ref_map)
 {
 	FILE *fp;
 	struct commit *commit;
@@ -368,6 +381,10 @@ static int store_updated_refs(const char *url, struct ref *ref_map)
 		}
 	}
 	fclose(fp);
+	if (rc & 2)
+		error("some local refs could not be updated; try running\n"
+		      " 'git remote prune %s' to remove any old, conflicting "
+		      "branches", remote_name);
 	return rc;
 }
 
@@ -438,7 +455,9 @@ static int fetch_refs(struct transport *transport, struct ref *ref_map)
 	if (ret)
 		ret = transport_fetch_refs(transport, ref_map);
 	if (!ret)
-		ret |= store_updated_refs(transport->url, ref_map);
+		ret |= store_updated_refs(transport->url,
+				transport->remote->name,
+				ref_map);
 	transport_unlock_pack(transport);
 	return ret;
 }

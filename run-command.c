@@ -65,6 +65,8 @@ int start_command(struct child_process *cmd)
 		cmd->err = fderr[0];
 	}
 
+	trace_argv_printf(cmd->argv, "trace: run_command:");
+
 #ifndef __MINGW32__
 	cmd->pid = fork();
 	if (!cmd->pid) {

@@ -7,11 +7,11 @@ git-verify-tag - Check the GPG signature of tags
 
 SYNOPSIS
 --------
-'git-verify-tag' <tag>...
+'git verify-tag' <tag>...
 
 DESCRIPTION
 -----------
-Validates the gpg signature created by git-tag.
+Validates the gpg signature created by 'git-tag'.
 
 OPTIONS
 -------

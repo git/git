@@ -234,12 +234,8 @@ static int git_log_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "format.pretty"))
 		return git_config_string(&fmt_pretty, var, value);
-	if (!strcmp(var, "format.subjectprefix")) {
-		if (!value)
-			config_error_nonbool(var);
-		fmt_patch_subject_prefix = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "format.subjectprefix"))
+		return git_config_string(&fmt_patch_subject_prefix, var, value);
 	if (!strcmp(var, "log.date"))
 		return git_config_string(&default_date_mode, var, value);
 	if (!strcmp(var, "log.showroot")) {
@@ -360,7 +356,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 					t->tag,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			ret = show_object(o->sha1, 1, &rev);
-			objects[i].item = (struct object *)t->tagged;
+			objects[i].item = parse_object(t->tagged->sha1);
 			i--;
 			break;
 		}
@@ -489,12 +485,8 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		add_header(value);
 		return 0;
 	}
-	if (!strcmp(var, "format.suffix")) {
-		if (!value)
-			return config_error_nonbool(var);
-		fmt_patch_suffix = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "format.suffix"))
+		return git_config_string(&fmt_patch_suffix, var, value);
 	if (!strcmp(var, "format.cc")) {
 		if (!value)
 			return config_error_nonbool(var);

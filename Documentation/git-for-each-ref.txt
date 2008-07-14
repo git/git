@@ -8,7 +8,7 @@ git-for-each-ref - Output information on each ref
 SYNOPSIS
 --------
 [verse]
-'git-for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
+'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [--sort=<key>]\* [--format=<format>] [<pattern>...]
 
 DESCRIPTION
@@ -79,7 +79,7 @@ objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
 
 objectsize::
-	The size of the object (the same as `git-cat-file -s` reports).
+	The size of the object (the same as 'git-cat-file -s' reports).
 
 objectname::
 	The object name (aka SHA-1).
@@ -119,7 +119,7 @@ An example directly producing formatted text.  Show the most recent
 ------------
 #!/bin/sh
 
-git-for-each-ref --count=3 --sort='-*authordate' \
+git for-each-ref --count=3 --sort='-*authordate' \
 --format='From: %(*authorname) %(*authoremail)
 Subject: %(*subject)
 Date: %(*authordate)
@@ -135,7 +135,7 @@ demonstrating the use of --shell.  List the prefixes of all heads::
 ------------
 #!/bin/sh
 
-git-for-each-ref --shell --format="ref=%(refname)" refs/heads | \
+git for-each-ref --shell --format="ref=%(refname)" refs/heads | \
 while read entry
 do
 	eval "$entry"
@@ -189,7 +189,7 @@ Its message reads as:
 	fi
 '
 
-eval=`git-for-each-ref --shell --format="$fmt" \
+eval=`git for-each-ref --shell --format="$fmt" \
 	--sort='*objecttype' \
 	--sort=-taggerdate \
 	refs/tags`

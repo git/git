@@ -5,7 +5,7 @@ test_description='test git rev-parse --parseopt'
 
 cat > expect.err <<EOF
 usage: some-command [options] <args>...
-    
+
     some-command does foo and bar!
 
     -h, --help            show the help

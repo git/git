@@ -86,6 +86,13 @@ create_stash () {
 }
 
 save_stash () {
+	keep_index=
+	case "$1" in
+	--keep-index)
+		keep_index=t
+		shift
+	esac
+
 	stash_msg="$1"
 
 	if no_changes
@@ -104,6 +111,13 @@ save_stash () {
 	git update-ref -m "$stash_msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
 	printf 'Saved working directory and index state "%s"\n' "$stash_msg"
+
+	git reset --hard
+
+	if test -n "$keep_index" && test -n $i_tree
+	then
+		git read-tree --reset -u $i_tree
+	fi
 }
 
 have_stash () {
@@ -153,7 +167,8 @@ apply_stash () {
 		die "$*: no valid stashed state found"
 
 	unstashed_index_tree=
-	if test -n "$unstash_index" && test "$b_tree" != "$i_tree"
+	if test -n "$unstash_index" && test "$b_tree" != "$i_tree" &&
+			test "$c_tree" != "$i_tree"
 	then
 		git diff-tree --binary $s^2^..$s^2 | git apply --cached
 		test $? -ne 0 &&
@@ -218,6 +233,23 @@ drop_stash () {
 	git rev-parse --verify "$ref_stash@{0}" > /dev/null 2>&1 || clear_stash
 }
 
+apply_to_branch () {
+	have_stash || die 'Nothing to apply'
+
+	test -n "$1" || die 'No branch name specified'
+	branch=$1
+
+	if test -z "$2"
+	then
+		set x "$ref_stash@{0}"
+	fi
+	stash=$2
+
+	git-checkout -b $branch $stash^ &&
+	apply_stash --index $stash &&
+	drop_stash $stash
+}
+
 # Main command set
 case "$1" in
 list)
@@ -235,7 +267,7 @@ show)
 	;;
 save)
 	shift
-	save_stash "$*" && git-reset --hard
+	save_stash "$*"
 	;;
 apply)
 	shift
@@ -264,12 +296,15 @@ pop)
 		drop_stash "$@"
 	fi
 	;;
+branch)
+	shift
+	apply_to_branch "$@"
+	;;
 *)
 	if test $# -eq 0
 	then
 		save_stash &&
-		echo '(To restore them type "git stash apply")' &&
-		git-reset --hard
+		echo '(To restore them type "git stash apply")'
 	else
 		usage
 	fi

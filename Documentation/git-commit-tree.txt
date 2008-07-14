@@ -8,7 +8,7 @@ git-commit-tree - Create a new commit object
 
 SYNOPSIS
 --------
-'git-commit-tree' <tree> [-p <parent commit>]\* < changelog
+'git commit-tree' <tree> [-p <parent commit>]\* < changelog
 
 DESCRIPTION
 -----------
@@ -70,7 +70,7 @@ is taken from the configuration items user.name and user.email, or, if not
 present, system user name and fully qualified hostname.
 
 A commit comment is read from stdin. If a changelog
-entry is not provided via "<" redirection, "git-commit-tree" will just wait
+entry is not provided via "<" redirection, 'git-commit-tree' will just wait
 for one to be entered and terminated with ^D.
 
 

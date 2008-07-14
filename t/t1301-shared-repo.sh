@@ -17,6 +17,29 @@ test_expect_success 'shared = 0400 (faulty permission u-w)' '
 	test $ret != "0"
 '
 
+for u in 002 022
+do
+	test_expect_success "shared=1 does not clear bits preset by umask $u" '
+		mkdir sub && (
+			cd sub &&
+			umask $u &&
+			git init --shared=1 &&
+			test 1 = "$(git config core.sharedrepository)"
+		) &&
+		actual=$(ls -l sub/.git/HEAD)
+		case "$actual" in
+		-rw-rw-r--*)
+			: happy
+			;;
+		*)
+			echo Oops, .git/HEAD is not 0664 but $actual
+			false
+			;;
+		esac
+	'
+	rm -rf sub
+done
+
 test_expect_success 'shared=all' '
 	mkdir sub &&
 	cd sub &&

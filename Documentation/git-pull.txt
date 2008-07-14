@@ -8,21 +8,21 @@ git-pull - Fetch from and merge with another repository or a local branch
 
 SYNOPSIS
 --------
-'git-pull' <options> <repository> <refspec>...
+'git pull' <options> <repository> <refspec>...
 
 
 DESCRIPTION
 -----------
-Runs `git-fetch` with the given parameters, and calls `git-merge`
+Runs 'git-fetch' with the given parameters, and calls 'git-merge'
 to merge the retrieved head(s) into the current branch.
-With `--rebase`, calls `git-rebase` instead of `git-merge`.
+With `--rebase`, calls 'git-rebase' instead of 'git-merge'.
 
 Note that you can use `.` (current directory) as the
 <repository> to pull from the local repository -- this is useful
 when merging local branches into the current branch.
 
-Also note that options meant for `git-pull` itself and underlying
-`git-merge` must be given before the options meant for `git-fetch`.
+Also note that options meant for 'git-pull' itself and underlying
+'git-merge' must be given before the options meant for 'git-fetch'.
 
 OPTIONS
 -------
@@ -182,8 +182,7 @@ The final command then merges the newly fetched `tmp` into master.
 
 
 If you tried a pull which resulted in a complex conflicts and
-would want to start over, you can recover with
-linkgit:git-reset[1].
+would want to start over, you can recover with 'git-reset'.
 
 
 SEE ALSO

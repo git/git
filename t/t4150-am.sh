@@ -110,7 +110,7 @@ test_expect_success 'am applies patch correctly' '
 
 GIT_AUTHOR_NAME="Another Thor"
 GIT_AUTHOR_EMAIL="a.thor@example.com"
-GIT_COMMITTER_NAME="Co M Miter" 
+GIT_COMMITTER_NAME="Co M Miter"
 GIT_COMMITTER_EMAIL="c.miter@example.com"
 export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL
 

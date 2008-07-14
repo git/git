@@ -1,6 +1,9 @@
 #include "cache.h"
 #include "remote.h"
 #include "refs.h"
+#include "commit.h"
+#include "diff.h"
+#include "revision.h"
 
 static struct refspec s_tag_refspec = {
 	0,
@@ -1220,5 +1223,119 @@ int resolve_remote_symref(struct ref *ref, struct ref *list)
 			hashcpy(ref->old_sha1, list->old_sha1);
 			return 0;
 		}
+	return 1;
+}
+
+/*
+ * Return true if there is anything to report, otherwise false.
+ */
+int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
+{
+	unsigned char sha1[20];
+	struct commit *ours, *theirs;
+	char symmetric[84];
+	struct rev_info revs;
+	const char *rev_argv[10], *base;
+	int rev_argc;
+
+	/*
+	 * Nothing to report unless we are marked to build on top of
+	 * somebody else.
+	 */
+	if (!branch ||
+	    !branch->merge || !branch->merge[0] || !branch->merge[0]->dst)
+		return 0;
+
+	/*
+	 * If what we used to build on no longer exists, there is
+	 * nothing to report.
+	 */
+	base = branch->merge[0]->dst;
+	if (!resolve_ref(base, sha1, 1, NULL))
+		return 0;
+	theirs = lookup_commit(sha1);
+	if (!theirs)
+		return 0;
+
+	if (!resolve_ref(branch->refname, sha1, 1, NULL))
+		return 0;
+	ours = lookup_commit(sha1);
+	if (!ours)
+		return 0;
+
+	/* are we the same? */
+	if (theirs == ours)
+		return 0;
+
+	/* Run "rev-list --left-right ours...theirs" internally... */
+	rev_argc = 0;
+	rev_argv[rev_argc++] = NULL;
+	rev_argv[rev_argc++] = "--left-right";
+	rev_argv[rev_argc++] = symmetric;
+	rev_argv[rev_argc++] = "--";
+	rev_argv[rev_argc] = NULL;
+
+	strcpy(symmetric, sha1_to_hex(ours->object.sha1));
+	strcpy(symmetric + 40, "...");
+	strcpy(symmetric + 43, sha1_to_hex(theirs->object.sha1));
+
+	init_revisions(&revs, NULL);
+	setup_revisions(rev_argc, rev_argv, &revs, NULL);
+	prepare_revision_walk(&revs);
+
+	/* ... and count the commits on each side. */
+	*num_ours = 0;
+	*num_theirs = 0;
+	while (1) {
+		struct commit *c = get_revision(&revs);
+		if (!c)
+			break;
+		if (c->object.flags & SYMMETRIC_LEFT)
+			(*num_ours)++;
+		else
+			(*num_theirs)++;
+	}
+
+	/* clear object flags smudged by the above traversal */
+	clear_commit_marks(ours, ALL_REV_FLAGS);
+	clear_commit_marks(theirs, ALL_REV_FLAGS);
+	return 1;
+}
+
+/*
+ * Return true when there is anything to report, otherwise false.
+ */
+int format_tracking_info(struct branch *branch, struct strbuf *sb)
+{
+	int num_ours, num_theirs;
+	const char *base, *remote_msg;
+
+	if (!stat_tracking_info(branch, &num_ours, &num_theirs))
+		return 0;
+
+	base = branch->merge[0]->dst;
+	if (!prefixcmp(base, "refs/remotes/")) {
+		remote_msg = " remote";
+		base += strlen("refs/remotes/");
+	} else {
+		remote_msg = "";
+	}
+	if (!num_theirs)
+		strbuf_addf(sb, "Your branch is ahead of the tracked%s branch '%s' "
+			    "by %d commit%s.\n",
+			    remote_msg, base,
+			    num_ours, (num_ours == 1) ? "" : "s");
+	else if (!num_ours)
+		strbuf_addf(sb, "Your branch is behind the tracked%s branch '%s' "
+			    "by %d commit%s,\n"
+			    "and can be fast-forwarded.\n",
+			    remote_msg, base,
+			    num_theirs, (num_theirs == 1) ? "" : "s");
+	else
+		strbuf_addf(sb, "Your branch and the tracked%s branch '%s' "
+			    "have diverged,\nand respectively "
+			    "have %d and %d different commit(s) each.\n",
+			    remote_msg, base,
+			    num_ours, num_theirs);
 	return 1;
 }

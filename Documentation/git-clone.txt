@@ -9,7 +9,7 @@ git-clone - Clone a repository into a new directory
 SYNOPSIS
 --------
 [verse]
-'git-clone' [--template=<template_directory>]
+'git clone' [--template=<template_directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--depth <depth>] [--] <repository> [<directory>]
@@ -68,10 +68,10 @@ it unless you understand what it does. If you clone your
 repository using this option and then delete branches (or use any
 other git command that makes any existing commit unreferenced) in the
 source repository, some objects may become unreferenced (or dangling).
-These objects may be removed by normal git operations (such as git-commit[1])
-which automatically call git-gc[1]. If these objects are removed and
-were referenced by the cloned repository, then the cloned repository
-will become corrupt.
+These objects may be removed by normal git operations (such as 'git-commit')
+which automatically call `git gc --auto`. (See linkgit:git-gc[1].)
+If these objects are removed and were referenced by the cloned repository,
+then the cloned repository will become corrupt.
 
 
 
@@ -88,7 +88,7 @@ will become corrupt.
 --quiet::
 -q::
 	Operate quietly.  This flag is passed to "rsync" and
-	"git-fetch-pack" commands when given.
+	'git-fetch-pack' commands when given.
 
 --no-checkout::
 -n::
@@ -114,7 +114,7 @@ will become corrupt.
 --upload-pack <upload-pack>::
 -u <upload-pack>::
 	When given, and the repository to clone from is handled
-	by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
+	by 'git-fetch-pack', `--exec=<upload-pack>` is passed to
 	the command to specify non-default path for the command
 	run on the other end.
 

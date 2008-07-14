@@ -78,6 +78,29 @@ test_expect_success 'iso-8859-1' '
 		 git cat-file commit i18n | grep "Áéí óú")
 
 '
+test_expect_success 'import/export-marks' '
+
+	git checkout -b marks master &&
+	git fast-export --export-marks=tmp-marks HEAD &&
+	test -s tmp-marks &&
+	test $(wc -l < tmp-marks) -eq 3 &&
+	test $(
+		git fast-export --import-marks=tmp-marks\
+		--export-marks=tmp-marks HEAD |
+		grep ^commit |
+		wc -l) \
+	-eq 0 &&
+	echo change > file &&
+	git commit -m "last commit" file &&
+	test $(
+		git fast-export --import-marks=tmp-marks \
+		--export-marks=tmp-marks HEAD |
+		grep ^commit\  |
+		wc -l) \
+	-eq 1 &&
+	test $(wc -l < tmp-marks) -eq 4
+
+'
 
 cat > signed-tag-import << EOF
 tag sign-your-name

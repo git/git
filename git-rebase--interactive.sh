@@ -10,10 +10,24 @@
 # The original idea comes from Eric W. Biederman, in
 # http://article.gmane.org/gmane.comp.version-control.git/22407
 
-USAGE='(--continue | --abort | --skip | [--preserve-merges] [--verbose]
-	[--onto <branch>] <upstream> [<branch>])'
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git-rebase [-i] [options] [--] <upstream> [<branch>]
+git-rebase [-i] (--continue | --abort | --skip)
+--
+ Available options are
+v,verbose          display a diffstat of what changed upstream
+onto=              rebase onto given branch instead of upstream
+p,preserve-merges  try to recreate merges instead of ignoring them
+s,strategy=        use the given merge strategy
+m,merge            always used (no-op)
+i,interactive      always used (no-op)
+ Actions:
+continue           continue rebasing process
+abort              abort rebasing process and restore original branch
+skip               skip current patch and continue rebasing process
+"
 
-OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 
@@ -25,10 +39,8 @@ SQUASH_MSG="$DOTEST"/message-squash
 REWRITTEN="$DOTEST"/rewritten
 PRESERVE_MERGES=
 STRATEGY=
+ONTO=
 VERBOSE=
-test -d "$REWRITTEN" && PRESERVE_MERGES=t
-test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
-test -f "$DOTEST"/verbose && VERBOSE=t
 
 GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
 mark the corrected paths with 'git add <paths>', and
@@ -366,10 +378,27 @@ do_rest () {
 	done
 }
 
+# check if no other options are set
+is_standalone () {
+	test $# -eq 2 -a "$2" = '--' &&
+	test -z "$ONTO" &&
+	test -z "$PRESERVE_MERGES" &&
+	test -z "$STRATEGY" &&
+	test -z "$VERBOSE"
+}
+
+get_saved_options () {
+	test -d "$REWRITTEN" && PRESERVE_MERGES=t
+	test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
+	test -f "$DOTEST"/verbose && VERBOSE=t
+}
+
 while test $# != 0
 do
 	case "$1" in
 	--continue)
+		is_standalone "$@" || usage
+		get_saved_options
 		comment_for_reflog continue
 
 		test -d "$DOTEST" || die "No interactive rebase running"
@@ -402,6 +431,8 @@ do
 		do_rest
 		;;
 	--abort)
+		is_standalone "$@" || usage
+		get_saved_options
 		comment_for_reflog abort
 
 		git rerere clear
@@ -419,6 +450,8 @@ do
 		exit
 		;;
 	--skip)
+		is_standalone "$@" || usage
+		get_saved_options
 		comment_for_reflog skip
 
 		git rerere clear
@@ -426,7 +459,7 @@ do
 
 		output git reset --hard && do_rest
 		;;
-	-s|--strategy)
+	-s)
 		case "$#,$1" in
 		*,*=*)
 			STRATEGY="-s "$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
@@ -437,25 +470,26 @@ do
 			shift ;;
 		esac
 		;;
-	-m|--merge)
+	-m)
 		# we use merge anyway
 		;;
-	-C*)
-		die "Interactive rebase uses merge, so $1 does not make sense"
-		;;
-	-v|--verbose)
+	-v)
 		VERBOSE=t
 		;;
-	-p|--preserve-merges)
+	-p)
 		PRESERVE_MERGES=t
 		;;
-	-i|--interactive)
+	-i)
 		# yeah, we know
 		;;
-	''|-h)
-		usage
+	--onto)
+		shift
+		ONTO=$(git rev-parse --verify "$1") ||
+			die "Does not point to a valid commit: $1"
 		;;
-	*)
+	--)
+		shift
+		test $# -eq 1 -o $# -eq 2 || usage
 		test -d "$DOTEST" &&
 			die "Interactive rebase already started"
 
@@ -463,15 +497,6 @@ do
 			die "You need to set your committer info first"
 
 		comment_for_reflog start
-
-		ONTO=
-		case "$1" in
-		--onto)
-			ONTO=$(git rev-parse --verify "$2") ||
-				die "Does not point to a valid commit: $2"
-			shift; shift
-			;;
-		esac
 
 		require_clean_work_tree
 

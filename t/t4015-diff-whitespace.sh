@@ -62,16 +62,16 @@ EOF
 
 git update-index x
 
-cat << EOF > x
+tr '_' ' ' << EOF > x
 	whitespace at beginning
 whitespace 	 change
 white space in the middle
-whitespace at end  
+whitespace at end__
 unchanged line
 CR at end
 EOF
 
-tr 'Q' '\015' << EOF > expect
+tr 'Q_' '\015 ' << EOF > expect
 diff --git a/x b/x
 index d99af23..8b32fb5 100644
 --- a/x
@@ -84,7 +84,7 @@ index d99af23..8b32fb5 100644
 +	whitespace at beginning
 +whitespace 	 change
 +white space in the middle
-+whitespace at end  
++whitespace at end__
  unchanged line
 -CR at endQ
 +CR at end
@@ -333,6 +333,12 @@ test_expect_success 'line numbers in --check output are correct' '
 	echo "foo(); " >> x &&
 	git diff --check | grep "x:2:"
 
+'
+
+test_expect_success 'checkdiff detects trailing blank lines' '
+	echo "foo();" >x &&
+	echo "" >>x &&
+	git diff --check | grep "ends with blank"
 '
 
 test_done

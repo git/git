@@ -471,7 +471,8 @@ static void unpack_all(void)
 	if (ntohl(hdr->hdr_signature) != PACK_SIGNATURE)
 		die("bad pack file");
 	if (!pack_version_ok(hdr->hdr_version))
-		die("unknown pack file version %d", ntohl(hdr->hdr_version));
+		die("unknown pack file version %"PRIu32,
+			ntohl(hdr->hdr_version));
 	use(sizeof(struct pack_header));
 
 	if (!quiet)

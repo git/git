@@ -1774,6 +1774,11 @@ proc do_commit {} {
 	commit_tree
 }
 
+proc next_diff {} {
+	global next_diff_p next_diff_w next_diff_i
+	show_diff $next_diff_p $next_diff_w $next_diff_i
+}
+
 proc toggle_or_diff {w x y} {
 	global file_states file_lists current_diff_path ui_index ui_workdir
 	global last_clicked selected_paths
@@ -1792,12 +1797,34 @@ proc toggle_or_diff {w x y} {
 	$ui_index tag remove in_sel 0.0 end
 	$ui_workdir tag remove in_sel 0.0 end
 
-	if {$col == 0} {
-		if {$current_diff_path eq $path} {
+	if {$col == 0 && $y > 1} {
+		set i [expr {$lno-1}]
+		set ll [expr {[llength $file_lists($w)]-1}]
+
+		if {$i == $ll && $i == 0} {
 			set after {reshow_diff;}
 		} else {
-			set after {}
+			global next_diff_p next_diff_w next_diff_i
+
+			set next_diff_w $w
+
+			if {$i < $ll} {
+				set i [expr {$i + 1}]
+				set next_diff_i $i
+			} else {
+				set next_diff_i $i
+				set i [expr {$i - 1}]
+			}
+
+			set next_diff_p [lindex $file_lists($w) $i]
+
+			if {$next_diff_p ne {} && $current_diff_path ne {}} {
+				set after {next_diff;}
+			} else {
+				set after {}
+			}
 		}
+
 		if {$w eq $ui_index} {
 			update_indexinfo \
 				"Unstaging [short_path $path] from commit" \
@@ -2639,6 +2666,11 @@ $ctxm add command \
 	-command {apply_hunk $cursorX $cursorY}
 set ui_diff_applyhunk [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
+$ctxm add command \
+	-label [mc "Apply/Reverse Line"] \
+	-command {apply_line $cursorX $cursorY; do_rescan}
+set ui_diff_applyline [$ctxm index last]
+lappend diff_actions [list $ctxm entryconf $ui_diff_applyline -state]
 $ctxm add separator
 $ctxm add command \
 	-label [mc "Show Less Context"] \
@@ -2687,8 +2719,10 @@ proc popup_diff_menu {ctxm x y X Y} {
 	set ::cursorY $y
 	if {$::ui_index eq $::current_diff_side} {
 		set l [mc "Unstage Hunk From Commit"]
+		set t [mc "Unstage Line From Commit"]
 	} else {
 		set l [mc "Stage Hunk For Commit"]
+		set t [mc "Stage Line For Commit"]
 	}
 	if {$::is_3way_diff
 		|| $current_diff_path eq {}
@@ -2699,6 +2733,7 @@ proc popup_diff_menu {ctxm x y X Y} {
 		set s normal
 	}
 	$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
+	$ctxm entryconf $::ui_diff_applyline -state $s -label $t
 	tk_popup $ctxm $X $Y
 }
 bind_button3 $ui_diff [list popup_diff_menu $ctxm %x %y %X %Y]

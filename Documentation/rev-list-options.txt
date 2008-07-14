@@ -45,6 +45,10 @@ endif::git-rev-list[]
 
 	Print the parents of the commit.
 
+--children::
+
+	Print the children of the commit.
+
 ifdef::git-rev-list[]
 --timestamp::
 	Print the raw commit timestamp.
