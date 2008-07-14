@@ -537,13 +537,13 @@ sub cmd_find_rev {
 		my $head = shift;
 		$head ||= 'HEAD';
 		my @refs;
-		my (undef, undef, undef, $gs) = working_head_info($head, \@refs);
+		my (undef, undef, $uuid, $gs) = working_head_info($head, \@refs);
 		unless ($gs) {
 			die "Unable to determine upstream SVN information from ",
 			    "$head history\n";
 		}
 		my $desired_revision = substr($revision_or_hash, 1);
-		$result = $gs->rev_map_get($desired_revision);
+		$result = $gs->rev_map_get($desired_revision, $uuid);
 	} else {
 		my (undef, $rev, undef) = cmt_metadata($revision_or_hash);
 		$result = $rev;
@@ -1162,7 +1162,7 @@ sub working_head_info {
 		if (defined $url && defined $rev) {
 			next if $max{$url} and $max{$url} < $rev;
 			if (my $gs = Git::SVN->find_by_url($url)) {
-				my $c = $gs->rev_map_get($rev);
+				my $c = $gs->rev_map_get($rev, $uuid);
 				if ($c && $c eq $hash) {
 					close $fh; # break the pipe
 					return ($url, $rev, $uuid, $gs);
@@ -1416,11 +1416,17 @@ sub fetch_all {
 
 sub read_all_remotes {
 	my $r = {};
+	my $use_svm_props = eval { command_oneline(qw/config --bool
+	    svn.useSvmProps/) };
+	$use_svm_props = $use_svm_props eq 'true' if $use_svm_props;
 	foreach (grep { s/^svn-remote\.// } command(qw/config -l/)) {
 		if (m!^(.+)\.fetch=\s*(.*)\s*:\s*refs/remotes/(.+)\s*$!) {
 			my ($remote, $local_ref, $remote_ref) = ($1, $2, $3);
 			$local_ref =~ s{^/}{};
 			$r->{$remote}->{fetch}->{$local_ref} = $remote_ref;
+			$r->{$remote}->{svm} = {} if $use_svm_props;
+		} elsif (m!^(.+)\.usesvmprops=\s*(.*)\s*$!) {
+			$r->{$1}->{svm} = {};
 		} elsif (m!^(.+)\.url=\s*(.*)\s*$!) {
 			$r->{$1}->{url} = $2;
 		} elsif (m!^(.+)\.(branches|tags)=
@@ -1437,6 +1443,23 @@ sub read_all_remotes {
 			}
 		}
 	}
+
+	map {
+		if (defined $r->{$_}->{svm}) {
+			my $svm;
+			eval {
+				my $section = "svn-remote.$_";
+				$svm = {
+					source => tmp_config('--get',
+					    "$section.svm-source"),
+					replace => tmp_config('--get',
+					    "$section.svm-replace"),
+				}
+			};
+			$r->{$_}->{svm} = $svm;
+		}
+	} keys %$r;
+
 	$r;
 }
 
@@ -1563,13 +1586,21 @@ sub find_by_url { # repos_root and, path are optional
 		}
 		my $p = $path;
 		my $rwr = rewrite_root({repo_id => $repo_id});
+		my $svm = $remotes->{$repo_id}->{svm}
+			if defined $remotes->{$repo_id}->{svm};
 		unless (defined $p) {
 			$p = $full_url;
 			my $z = $u;
+			my $prefix = '';
 			if ($rwr) {
 				$z = $rwr;
+			} elsif (defined $svm) {
+				$z = $svm->{source};
+				$prefix = $svm->{replace};
+				$prefix =~ s#^\Q$u\E(?:/|$)##;
+				$prefix =~ s#/$##;
 			}
-			$p =~ s#^\Q$z\E(?:/|$)## or next;
+			$p =~ s#^\Q$z\E(?:/|$)#$prefix# or next;
 		}
 		foreach my $f (keys %$fetch) {
 			next if $f ne $p;
