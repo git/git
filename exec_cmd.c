@@ -40,6 +40,16 @@ static const char *builtin_exec_path(void)
 #endif
 }
 
+const char *system_path(const char *path)
+{
+	if (!is_absolute_path(path)) {
+		struct strbuf d = STRBUF_INIT;
+		strbuf_addf(&d, "%s/%s", git_exec_path(), path);
+		path = strbuf_detach(&d, NULL);
+	}
+	return path;
+}
+
 void git_set_argv_exec_path(const char *exec_path)
 {
 	argv_exec_path = exec_path;
