@@ -234,9 +234,9 @@ static int git_tar_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-static int write_tar_entry(const unsigned char *sha1,
-                           const char *base, int baselen,
-                           const char *filename, unsigned mode, int stage)
+static int write_tar_entry(const unsigned char *sha1, const char *base,
+		int baselen, const char *filename, unsigned mode, int stage,
+		void *context)
 {
 	static struct strbuf path = STRBUF_INIT;
 	void *buffer;
@@ -286,11 +286,12 @@ int write_tar_archive(struct archiver_args *args)
 
 		while (baselen > 0 && base[baselen - 1] == '/')
 			base[--baselen] = '\0';
-		write_tar_entry(args->tree->object.sha1, "", 0, base, 040777, 0);
+		write_tar_entry(args->tree->object.sha1, "", 0, base, 040777,
+				0, NULL);
 		free(base);
 	}
 	read_tree_recursive(args->tree, args->base, plen, 0,
-			    args->pathspec, write_tar_entry);
+			    args->pathspec, write_tar_entry, NULL);
 	write_trailer();
 
 	return 0;

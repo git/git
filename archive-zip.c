@@ -152,9 +152,9 @@ static char *construct_path(const char *base, int baselen,
 	return path;
 }
 
-static int write_zip_entry(const unsigned char *sha1,
-                           const char *base, int baselen,
-                           const char *filename, unsigned mode, int stage)
+static int write_zip_entry(const unsigned char *sha1, const char *base,
+		int baselen, const char *filename, unsigned mode, int stage,
+		void *context)
 {
 	struct zip_local_header header;
 	struct zip_dir_header dirent;
@@ -332,11 +332,12 @@ int write_zip_archive(struct archiver_args *args)
 
 		while (baselen > 0 && base[baselen - 1] == '/')
 			base[--baselen] = '\0';
-		write_zip_entry(args->tree->object.sha1, "", 0, base, 040777, 0);
+		write_zip_entry(args->tree->object.sha1, "", 0, base, 040777,
+				0, NULL);
 		free(base);
 	}
 	read_tree_recursive(args->tree, args->base, plen, 0,
-			    args->pathspec, write_zip_entry);
+			    args->pathspec, write_zip_entry, NULL);
 	write_zip_trailer(args->commit_sha1);
 
 	free(zip_dir);

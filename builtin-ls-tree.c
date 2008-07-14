@@ -56,7 +56,7 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 }
 
 static int show_tree(const unsigned char *sha1, const char *base, int baselen,
-		     const char *pathname, unsigned mode, int stage)
+		const char *pathname, unsigned mode, int stage, void *context)
 {
 	int retval = 0;
 	const char *type = blob_type;
@@ -189,7 +189,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		die("not a tree object");
-	read_tree_recursive(tree, "", 0, 0, pathspec, show_tree);
+	read_tree_recursive(tree, "", 0, 0, pathspec, show_tree, NULL);
 
 	return 0;
 }

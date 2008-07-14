@@ -43,7 +43,7 @@ static int post_checkout_hook(struct commit *old, struct commit *new,
 }
 
 static int update_some(const unsigned char *sha1, const char *base, int baselen,
-		       const char *pathname, unsigned mode, int stage)
+		const char *pathname, unsigned mode, int stage, void *context)
 {
 	int len;
 	struct cache_entry *ce;
@@ -67,7 +67,7 @@ static int update_some(const unsigned char *sha1, const char *base, int baselen,
 
 static int read_tree_some(struct tree *tree, const char **pathspec)
 {
-	read_tree_recursive(tree, "", 0, 0, pathspec, update_some);
+	read_tree_recursive(tree, "", 0, 0, pathspec, update_some, NULL);
 
 	/* update the index with the given tree's info
 	 * for all args, expanding wildcards, and exit
