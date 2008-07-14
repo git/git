@@ -26,6 +26,11 @@ union delta_base {
 	off_t offset;
 };
 
+struct base_data {
+	void *data;
+	unsigned long size;
+};
+
 /*
  * Even if sizeof(union delta_base) == 24 on 64-bit archs, we really want
  * to memcmp() only the first 20 bytes.
@@ -425,25 +430,25 @@ static void sha1_object(const void *data, unsigned long size,
 	}
 }
 
-static void resolve_delta(struct object_entry *delta_obj, void *base_data,
-			  unsigned long base_size, enum object_type type)
+static void resolve_delta(struct object_entry *delta_obj,
+			  struct base_data *base_obj, enum object_type type)
 {
 	void *delta_data;
 	unsigned long delta_size;
-	void *result;
-	unsigned long result_size;
 	union delta_base delta_base;
 	int j, first, last;
+	struct base_data result;
 
 	delta_obj->real_type = type;
 	delta_data = get_data_from_pack(delta_obj);
 	delta_size = delta_obj->size;
-	result = patch_delta(base_data, base_size, delta_data, delta_size,
-			     &result_size);
+	result.data = patch_delta(base_obj->data, base_obj->size,
+			     delta_data, delta_size,
+			     &result.size);
 	free(delta_data);
-	if (!result)
+	if (!result.data)
 		bad_object(delta_obj->idx.offset, "failed to apply delta");
-	sha1_object(result, result_size, type, delta_obj->idx.sha1);
+	sha1_object(result.data, result.size, type, delta_obj->idx.sha1);
 	nr_resolved_deltas++;
 
 	hashcpy(delta_base.sha1, delta_obj->idx.sha1);
@@ -451,7 +456,7 @@ static void resolve_delta(struct object_entry *delta_obj, void *base_data,
 		for (j = first; j <= last; j++) {
 			struct object_entry *child = objects + deltas[j].obj_no;
 			if (child->real_type == OBJ_REF_DELTA)
-				resolve_delta(child, result, result_size, type);
+				resolve_delta(child, &result, type);
 		}
 	}
 
@@ -461,11 +466,11 @@ static void resolve_delta(struct object_entry *delta_obj, void *base_data,
 		for (j = first; j <= last; j++) {
 			struct object_entry *child = objects + deltas[j].obj_no;
 			if (child->real_type == OBJ_OFS_DELTA)
-				resolve_delta(child, result, result_size, type);
+				resolve_delta(child, &result, type);
 		}
 	}
 
-	free(result);
+	free(result.data);
 }
 
 static int compare_delta_entry(const void *a, const void *b)
@@ -480,7 +485,6 @@ static void parse_pack_objects(unsigned char *sha1)
 {
 	int i;
 	struct delta_entry *delta = deltas;
-	void *data;
 	struct stat st;
 
 	/*
@@ -495,7 +499,7 @@ static void parse_pack_objects(unsigned char *sha1)
 				nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
-		data = unpack_raw_entry(obj, &delta->base);
+		void *data = unpack_raw_entry(obj, &delta->base);
 		obj->real_type = obj->type;
 		if (obj->type == OBJ_REF_DELTA || obj->type == OBJ_OFS_DELTA) {
 			nr_deltas++;
@@ -544,6 +548,7 @@ static void parse_pack_objects(unsigned char *sha1)
 		struct object_entry *obj = &objects[i];
 		union delta_base base;
 		int j, ref, ref_first, ref_last, ofs, ofs_first, ofs_last;
+		struct base_data base_obj;
 
 		if (obj->type == OBJ_REF_DELTA || obj->type == OBJ_OFS_DELTA)
 			continue;
@@ -554,22 +559,22 @@ static void parse_pack_objects(unsigned char *sha1)
 		ofs = !find_delta_children(&base, &ofs_first, &ofs_last);
 		if (!ref && !ofs)
 			continue;
-		data = get_data_from_pack(obj);
+		base_obj.data = get_data_from_pack(obj);
+		base_obj.size = obj->size;
+
 		if (ref)
 			for (j = ref_first; j <= ref_last; j++) {
 				struct object_entry *child = objects + deltas[j].obj_no;
 				if (child->real_type == OBJ_REF_DELTA)
-					resolve_delta(child, data,
-						      obj->size, obj->type);
+					resolve_delta(child, &base_obj, obj->type);
 			}
 		if (ofs)
 			for (j = ofs_first; j <= ofs_last; j++) {
 				struct object_entry *child = objects + deltas[j].obj_no;
 				if (child->real_type == OBJ_OFS_DELTA)
-					resolve_delta(child, data,
-						      obj->size, obj->type);
+					resolve_delta(child, &base_obj, obj->type);
 			}
-		free(data);
+		free(base_obj.data);
 		display_progress(progress, nr_resolved_deltas);
 	}
 }
@@ -655,28 +660,29 @@ static void fix_unresolved_deltas(int nr_unresolved)
 
 	for (i = 0; i < n; i++) {
 		struct delta_entry *d = sorted_by_pos[i];
-		void *data;
-		unsigned long size;
 		enum object_type type;
 		int j, first, last;
+		struct base_data base_obj;
 
 		if (objects[d->obj_no].real_type != OBJ_REF_DELTA)
 			continue;
-		data = read_sha1_file(d->base.sha1, &type, &size);
-		if (!data)
+		base_obj.data = read_sha1_file(d->base.sha1, &type, &base_obj.size);
+		if (!base_obj.data)
 			continue;
 
 		find_delta_children(&d->base, &first, &last);
 		for (j = first; j <= last; j++) {
 			struct object_entry *child = objects + deltas[j].obj_no;
 			if (child->real_type == OBJ_REF_DELTA)
-				resolve_delta(child, data, size, type);
+				resolve_delta(child, &base_obj, type);
 		}
 
-		if (check_sha1_signature(d->base.sha1, data, size, typename(type)))
+		if (check_sha1_signature(d->base.sha1, base_obj.data,
+				base_obj.size, typename(type)))
 			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
-		append_obj_to_pack(d->base.sha1, data, size, type);
-		free(data);
+		append_obj_to_pack(d->base.sha1, base_obj.data,
+			base_obj.size, type);
+		free(base_obj.data);
 		display_progress(progress, nr_resolved_deltas);
 	}
 	free(sorted_by_pos);
