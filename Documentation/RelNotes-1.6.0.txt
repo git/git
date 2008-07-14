@@ -97,14 +97,38 @@ Updates since v1.5.6
   when you are working in a slow network disk and are outside any working tree,
   as bash-completion and "git help" may still need to run in these places.
 
+* By default, stash entries never expire.  Set reflogexpire in [gc
+  "refs/stash"] to a reasonable value to get traditional auto-expiration
+  behaviour back
+
+* Longstanding latency issue with bash completion script has been
+  addressed.  This will need to be backmerged to 'maint' later.
+
+* pager.<cmd> configuration variable can be used to enable/disable the
+  default paging behaviour per command.
+
+* "git-add -i" has a new action 'e/dit' to allow you edit the patch hunk
+  manually.
+
 * git-apply can handle a patch that touches the same path more than once
   much better than before.
 
 * git-apply can be told not to trust the line counts recorded in the input
   patch but recount, with the new --recount option.
 
+* git-apply can be told to apply a patch to a path deeper than what the
+  patch records with --directory option.
+
 * git-archive can be told to omit certain paths from its output using
   export-ignore attributes.
+
+* With -v option, git-branch describes the remote tracking statistics
+  similar to the way git-checkout reports by how many commits your branch
+  is ahead/behind.
+
+* git-bundle can read the revision arguments from the standard input.
+
+* git-cherry-pick can replay a root commit now.
 
 * git-clone can clone from a remote whose URL would be rewritten by
   configuration stored in $HOME/.gitconfig now.
@@ -123,7 +147,20 @@ Updates since v1.5.6
 * "git rerere" can be told to update the index with auto-reused resolution
   with rerere.autoupdate configuration variable.
 
+* git-rev-list learned --children option to show child commits it
+  encountered during the traversal, instead of shoing parent commits.
+
 * git-send-mail can talk not just over SSL but over TLS now.
+
+* "git-stash save" learned --keep-index option.  This lets you stash away the
+  local changes and bring the changes staged in the index to your working
+  tree for examination and testing.
+
+* git-stash also learned branch subcommand to create a new branch out of
+  stashed changes.
+
+* git-status gives the remote tracking statistics similar to the way
+  git-checkout reports by how many commits your branch is ahead/behind.
 
 * You can tell "git status -u" to even more aggressively omit checking
   untracked files with --untracked-files=no.
@@ -148,6 +185,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.5.6.2-246-g86d7244
+O=v1.5.6.3-315-g10ce020
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
