@@ -388,7 +388,12 @@ proc stop_instance {inst} {
     set fd $commfd($inst)
     catch {
 	set pid [pid $fd]
-	exec kill $pid
+
+	if {$::tcl_platform(platform) eq {windows}} {
+	    exec kill -f $pid
+	} else {
+	    exec kill $pid
+	}
     }
     catch {close $fd}
     nukefile $fd
