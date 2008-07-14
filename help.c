@@ -9,7 +9,6 @@
 #include "common-cmds.h"
 #include "parse-options.h"
 #include "run-command.h"
-#include "dir.h"
 
 static struct man_viewer_list {
 	struct man_viewer_list *next;
@@ -29,11 +28,7 @@ enum help_format {
 };
 
 static int show_all = 0;
-#ifdef __MINGW32__
-static enum help_format help_format = HELP_FORMAT_WEB;
-#else
 static enum help_format help_format = HELP_FORMAT_MAN;
-#endif
 static struct option builtin_help_options[] = {
 	OPT_BOOLEAN('a', "all", &show_all, "print all available commands"),
 	OPT_SET_INT('m', "man", &help_format, "show man page", HELP_FORMAT_MAN),
@@ -649,35 +644,12 @@ static void get_html_page_path(struct strbuf *page_path, const char *page)
 
 static void show_html_page(const char *git_cmd)
 {
-#ifdef __MINGW32__
-	const char* exec_path = git_exec_path();
-	char *htmlpath = make_native_separator(
-			   mkpath("%s/../doc/git/html/%s.html"
-				  , exec_path
-				  , git_cmd)
-			 );
-	if (!file_exists(htmlpath)) {
-		htmlpath = make_native_separator(
-			      mkpath("%s/../doc/git/html/git-%s.html"
-				     , exec_path
-				     , git_cmd)
-			   );
-		if (!file_exists(htmlpath)) {
-			fprintf(stderr, "Can't find HTML help for '%s'.\n"
-				, git_cmd);
-			exit(1);
-		}
-	}
-	printf("Launching default browser to display HTML help ...\n");
-	ShellExecute(NULL, "open", htmlpath, NULL, "\\", 0);
-#else
 	const char *page = cmd_to_page(git_cmd);
 	struct strbuf page_path; /* it leaks but we exec bellow */
 
 	get_html_page_path(&page_path, page);
 
 	execl_git_cmd("web--browse", "-c", "help.browser", page_path.buf, NULL);
-#endif
 }
 
 void help_unknown_cmd(const char *cmd)
