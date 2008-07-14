@@ -905,6 +905,24 @@ _git_rebase ()
 	__gitcomp "$(__git_refs)"
 }
 
+_git_send_email ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--bcc --cc --cc-cmd --chain-reply-to --compose
+			--dry-run --envelope-sender --from --identity
+			--in-reply-to --no-chain-reply-to --no-signed-off-by-cc
+			--no-suppress-from --no-thread --quiet
+			--signed-off-by-cc --smtp-pass --smtp-server
+			--smtp-server-port --smtp-ssl --smtp-user --subject
+			--suppress-cc --suppress-from --thread --to"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_config ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -1376,6 +1394,7 @@ _git ()
 	rebase)      _git_rebase ;;
 	remote)      _git_remote ;;
 	reset)       _git_reset ;;
+	send-email)  _git_send_email ;;
 	shortlog)    _git_shortlog ;;
 	show)        _git_show ;;
 	show-branch) _git_log ;;
@@ -1435,6 +1454,7 @@ complete -o default -o nospace -F _git_rebase git-rebase
 complete -o default -o nospace -F _git_config git-config
 complete -o default -o nospace -F _git_remote git-remote
 complete -o default -o nospace -F _git_reset git-reset
+complete -o default -o nospace -F _git_send_email git-send-email
 complete -o default -o nospace -F _git_shortlog git-shortlog
 complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_stash git-stash
