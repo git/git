@@ -27,6 +27,8 @@ union delta_base {
 };
 
 struct base_data {
+	struct base_data *base;
+	struct base_data *child;
 	void *data;
 	unsigned long size;
 };
@@ -48,6 +50,7 @@ struct delta_entry
 
 static struct object_entry *objects;
 static struct delta_entry *deltas;
+static struct base_data *base_cache;
 static int nr_objects;
 static int nr_deltas;
 static int nr_resolved_deltas;
@@ -213,6 +216,27 @@ static void bad_object(unsigned long offset, const char *format, ...)
 	vsnprintf(buf, sizeof(buf), format, params);
 	va_end(params);
 	die("pack has bad object at offset %lu: %s", offset, buf);
+}
+
+static void link_base_data(struct base_data *base, struct base_data *c)
+{
+	if (base)
+		base->child = c;
+	else
+		base_cache = c;
+
+	c->base = base;
+	c->child = NULL;
+}
+
+static void unlink_base_data(struct base_data *c)
+{
+	struct base_data *base = c->base;
+	if (base)
+		base->child = NULL;
+	else
+		base_cache = NULL;
+	free(c->data);
 }
 
 static void *unpack_entry_data(unsigned long offset, unsigned long size)
@@ -451,6 +475,8 @@ static void resolve_delta(struct object_entry *delta_obj,
 	sha1_object(result.data, result.size, type, delta_obj->idx.sha1);
 	nr_resolved_deltas++;
 
+	link_base_data(base_obj, &result);
+
 	hashcpy(delta_base.sha1, delta_obj->idx.sha1);
 	if (!find_delta_children(&delta_base, &first, &last)) {
 		for (j = first; j <= last; j++) {
@@ -470,7 +496,7 @@ static void resolve_delta(struct object_entry *delta_obj,
 		}
 	}
 
-	free(result.data);
+	unlink_base_data(&result);
 }
 
 static int compare_delta_entry(const void *a, const void *b)
@@ -561,6 +587,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			continue;
 		base_obj.data = get_data_from_pack(obj);
 		base_obj.size = obj->size;
+		link_base_data(NULL, &base_obj);
 
 		if (ref)
 			for (j = ref_first; j <= ref_last; j++) {
@@ -574,7 +601,7 @@ static void parse_pack_objects(unsigned char *sha1)
 				if (child->real_type == OBJ_OFS_DELTA)
 					resolve_delta(child, &base_obj, obj->type);
 			}
-		free(base_obj.data);
+		unlink_base_data(&base_obj);
 		display_progress(progress, nr_resolved_deltas);
 	}
 }
@@ -669,6 +696,7 @@ static void fix_unresolved_deltas(int nr_unresolved)
 		base_obj.data = read_sha1_file(d->base.sha1, &type, &base_obj.size);
 		if (!base_obj.data)
 			continue;
+		link_base_data(NULL, &base_obj);
 
 		find_delta_children(&d->base, &first, &last);
 		for (j = first; j <= last; j++) {
@@ -682,7 +710,7 @@ static void fix_unresolved_deltas(int nr_unresolved)
 			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
 		append_obj_to_pack(d->base.sha1, base_obj.data,
 			base_obj.size, type);
-		free(base_obj.data);
+		unlink_base_data(&base_obj);
 		display_progress(progress, nr_resolved_deltas);
 	}
 	free(sorted_by_pos);
