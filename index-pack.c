@@ -29,6 +29,7 @@ union delta_base {
 struct base_data {
 	struct base_data *base;
 	struct base_data *child;
+	struct object_entry *obj;
 	void *data;
 	unsigned long size;
 };
@@ -475,6 +476,7 @@ static void resolve_delta(struct object_entry *delta_obj,
 	sha1_object(result.data, result.size, type, delta_obj->idx.sha1);
 	nr_resolved_deltas++;
 
+	result.obj = delta_obj;
 	link_base_data(base_obj, &result);
 
 	hashcpy(delta_base.sha1, delta_obj->idx.sha1);
@@ -587,6 +589,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			continue;
 		base_obj.data = get_data_from_pack(obj);
 		base_obj.size = obj->size;
+		base_obj.obj = obj;
 		link_base_data(NULL, &base_obj);
 
 		if (ref)
@@ -632,7 +635,8 @@ static int write_compressed(int fd, void *in, unsigned int size, uint32_t *obj_c
 	return size;
 }
 
-static void append_obj_to_pack(const unsigned char *sha1, void *buf,
+static struct object_entry *append_obj_to_pack(
+			       const unsigned char *sha1, void *buf,
 			       unsigned long size, enum object_type type)
 {
 	struct object_entry *obj = &objects[nr_objects++];
@@ -653,6 +657,7 @@ static void append_obj_to_pack(const unsigned char *sha1, void *buf,
 	obj[1].idx.offset = obj[0].idx.offset + n;
 	obj[1].idx.offset += write_compressed(output_fd, buf, size, &obj[0].idx.crc32);
 	hashcpy(obj->idx.sha1, sha1);
+	return obj;
 }
 
 static int delta_pos_compare(const void *_a, const void *_b)
@@ -696,6 +701,12 @@ static void fix_unresolved_deltas(int nr_unresolved)
 		base_obj.data = read_sha1_file(d->base.sha1, &type, &base_obj.size);
 		if (!base_obj.data)
 			continue;
+
+		if (check_sha1_signature(d->base.sha1, base_obj.data,
+				base_obj.size, typename(type)))
+			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
+		base_obj.obj = append_obj_to_pack(d->base.sha1, base_obj.data,
+			base_obj.size, type);
 		link_base_data(NULL, &base_obj);
 
 		find_delta_children(&d->base, &first, &last);
@@ -705,11 +716,6 @@ static void fix_unresolved_deltas(int nr_unresolved)
 				resolve_delta(child, &base_obj, type);
 		}
 
-		if (check_sha1_signature(d->base.sha1, base_obj.data,
-				base_obj.size, typename(type)))
-			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
-		append_obj_to_pack(d->base.sha1, base_obj.data,
-			base_obj.size, type);
 		unlink_base_data(&base_obj);
 		display_progress(progress, nr_resolved_deltas);
 	}
