@@ -745,15 +745,22 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 	for (p = heads; p; p = p->next) {
 		struct commit_list *q, *base;
 
+		/* Do we already have this in the result? */
+		for (q = result; q; q = q->next)
+			if (p->item == q->item)
+				break;
+		if (q)
+			continue;
+
 		num_other = 0;
 		for (q = heads; q; q = q->next) {
 			if (p->item == q->item)
 				continue;
 			other[num_other++] = q->item;
 		}
-		if (num_other) {
+		if (num_other)
 			base = get_merge_bases_many(p->item, num_other, other, 1);
-		} else
+		else
 			base = NULL;
 		/*
 		 * If p->item does not have anything common with other
