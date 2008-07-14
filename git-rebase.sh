@@ -376,9 +376,7 @@ fi
 
 # Detach HEAD and reset the tree
 echo "First, rewinding head to replay your work on top of it..."
-git checkout "$onto^0" >/dev/null 2>&1 ||
-	die "could not detach HEAD"
-# git reset --hard "$onto^0"
+git checkout -q "$onto^0" || die "could not detach HEAD"
 
 # If the $onto is a proper descendant of the tip of the branch, then
 # we just fast forwarded.
