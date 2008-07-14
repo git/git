@@ -381,7 +381,6 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	const char *gitdirenv;
 	const char *gitfile_dir;
 	int len, offset, ceil_offset;
-	int minoffset = 0;
 
 	/*
 	 * Let's assume that we are in a git repository.
@@ -432,8 +431,6 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 	if (!getcwd(cwd, sizeof(cwd)-1))
 		die("Unable to read current working directory");
-	if (has_dos_drive_prefix(cwd))
-		minoffset = 2;
 
 	ceil_offset = longest_ancestor_length(cwd, env_ceiling_dirs);
 	if (ceil_offset < 0 && has_dos_drive_prefix(cwd))
@@ -464,11 +461,11 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			inside_git_dir = 1;
 			if (!work_tree_env)
 				inside_work_tree = 0;
-			set_git_dir(".");
+			setenv(GIT_DIR_ENVIRONMENT, ".", 1);
 			check_repository_format_gently(nongit_ok);
 			return NULL;
 		}
-		while (offset > minoffset && --offset > ceil_offset && cwd[offset] != '/');
+		while (--offset > ceil_offset && cwd[offset] != '/');
 		if (offset <= ceil_offset) {
 			if (nongit_ok) {
 				if (chdir(cwd))
