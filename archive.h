@@ -20,6 +20,8 @@ typedef int (*write_archive_fn_t)(struct archiver_args *);
 
 typedef void *(*parse_extra_args_fn_t)(int argc, const char **argv);
 
+typedef int (*write_archive_entry_fn_t)(struct archiver_args *args, const unsigned char *sha1, const char *path, size_t pathlen, unsigned int mode, void *buffer, unsigned long size);
+
 struct archiver {
 	const char *name;
 	write_archive_fn_t write_archive;
@@ -43,5 +45,7 @@ extern void *parse_extra_zip_args(int argc, const char **argv);
 
 extern void *sha1_file_to_archive(const char *path, const unsigned char *sha1, unsigned int mode, enum object_type *type, unsigned long *size, const struct commit *commit);
 extern int is_archive_path_ignored(const char *path);
+
+extern int write_archive_entries(struct archiver_args *args, write_archive_entry_fn_t write_entry);
 
 #endif	/* ARCHIVE_H */
