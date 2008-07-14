@@ -439,16 +439,3 @@ int longest_ancestor_length(const char *path, const char *prefix_list)
 
 	return max_len;
 }
-
-char *make_native_separator(char* path) {
-#ifdef __MINGW32__
-	char* c;
-	for (c = path; *c; c++) {
-		if (*c == '/')
-			*c = '\\';
-	}
-	return path;
-#else
-	return path;
-#endif
-}
