@@ -406,9 +406,9 @@ sub list_and_choose {
 			if ($choice =~ s/^-//) {
 				$choose = 0;
 			}
-			# A range can be specified like 5-7
-			if ($choice =~ /^(\d+)-(\d+)$/) {
-				($bottom, $top) = ($1, $2);
+			# A range can be specified like 5-7 or 5-.
+			if ($choice =~ /^(\d+)-(\d*)$/) {
+				($bottom, $top) = ($1, length($2) ? $2 : 1 + @stuff);
 			}
 			elsif ($choice =~ /^\d+$/) {
 				$bottom = $top = $choice;
