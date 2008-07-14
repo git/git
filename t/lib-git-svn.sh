@@ -98,7 +98,7 @@ LoadModule dav_module $SVN_HTTPD_MODULE_PATH/mod_dav.so
 LoadModule dav_svn_module $SVN_HTTPD_MODULE_PATH/mod_dav_svn.so
 <Location /$repo_base_path>
 	DAV svn
-	SVNPath $rawsvnrepo
+	SVNPath "$rawsvnrepo"
 </Location>
 EOF
 	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k start
