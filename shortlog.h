@@ -11,6 +11,7 @@ struct shortlog {
 	int wrap;
 	int in1;
 	int in2;
+	int user_format;
 
 	char *common_repo_prefix;
 	int email;
