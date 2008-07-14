@@ -294,9 +294,17 @@ __git_complete_file ()
 			ls="$ref"
 			;;
 	    esac
+		local IFS=$'\n'
 		COMPREPLY=($(compgen -P "$pfx" \
 			-W "$(git --git-dir="$(__gitdir)" ls-tree "$ls" \
-				| sed '/^100... blob /s,^.*	,,
+				| sed '/^100... blob /{
+				           s,^.*	,,
+				           s,$, ,
+				       }
+				       /^120000 blob /{
+				           s,^.*	,,
+				           s,$, ,
+				       }
 				       /^040000 tree /{
 				           s,^.*	,,
 				           s,$,/,
