@@ -4650,7 +4650,7 @@ sub migrate_from_v1 {
 	mkpath([$svn_dir]);
 	print STDERR "Data from a previous version of git-svn exists, but\n\t",
 	             "$svn_dir\n\t(required for this version ",
-	             "($::VERSION) of git-svn) does not. exist\n";
+	             "($::VERSION) of git-svn) does not exist.\n";
 	my ($fh, $ctx) = command_output_pipe(qw/rev-parse --symbolic --all/);
 	while (<$fh>) {
 		my $x = $_;
