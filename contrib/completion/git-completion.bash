@@ -1459,65 +1459,11 @@ _gitk ()
 
 complete -o default -o nospace -F _git git
 complete -o default -o nospace -F _gitk gitk
-complete -o default -o nospace -F _git_am git-am
-complete -o default -o nospace -F _git_apply git-apply
-complete -o default -o nospace -F _git_bisect git-bisect
-complete -o default -o nospace -F _git_branch git-branch
-complete -o default -o nospace -F _git_bundle git-bundle
-complete -o default -o nospace -F _git_checkout git-checkout
-complete -o default -o nospace -F _git_cherry git-cherry
-complete -o default -o nospace -F _git_cherry_pick git-cherry-pick
-complete -o default -o nospace -F _git_commit git-commit
-complete -o default -o nospace -F _git_describe git-describe
-complete -o default -o nospace -F _git_diff git-diff
-complete -o default -o nospace -F _git_fetch git-fetch
-complete -o default -o nospace -F _git_format_patch git-format-patch
-complete -o default -o nospace -F _git_gc git-gc
-complete -o default -o nospace -F _git_log git-log
-complete -o default -o nospace -F _git_ls_remote git-ls-remote
-complete -o default -o nospace -F _git_ls_tree git-ls-tree
-complete -o default -o nospace -F _git_merge git-merge
-complete -o default -o nospace -F _git_merge_base git-merge-base
-complete -o default -o nospace -F _git_name_rev git-name-rev
-complete -o default -o nospace -F _git_pull git-pull
-complete -o default -o nospace -F _git_push git-push
-complete -o default -o nospace -F _git_rebase git-rebase
-complete -o default -o nospace -F _git_config git-config
-complete -o default -o nospace -F _git_remote git-remote
-complete -o default -o nospace -F _git_reset git-reset
-complete -o default -o nospace -F _git_send_email git-send-email
-complete -o default -o nospace -F _git_shortlog git-shortlog
-complete -o default -o nospace -F _git_show git-show
-complete -o default -o nospace -F _git_stash git-stash
-complete -o default -o nospace -F _git_submodule git-submodule
-complete -o default -o nospace -F _git_svn git-svn
-complete -o default -o nospace -F _git_log git-show-branch
-complete -o default -o nospace -F _git_tag git-tag
-complete -o default -o nospace -F _git_log git-whatchanged
 
 # The following are necessary only for Cygwin, and only are needed
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 #
 if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
-complete -o default -o nospace -F _git_add git-add.exe
-complete -o default -o nospace -F _git_apply git-apply.exe
 complete -o default -o nospace -F _git git.exe
-complete -o default -o nospace -F _git_branch git-branch.exe
-complete -o default -o nospace -F _git_bundle git-bundle.exe
-complete -o default -o nospace -F _git_cherry git-cherry.exe
-complete -o default -o nospace -F _git_describe git-describe.exe
-complete -o default -o nospace -F _git_diff git-diff.exe
-complete -o default -o nospace -F _git_format_patch git-format-patch.exe
-complete -o default -o nospace -F _git_log git-log.exe
-complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
-complete -o default -o nospace -F _git_merge_base git-merge-base.exe
-complete -o default -o nospace -F _git_name_rev git-name-rev.exe
-complete -o default -o nospace -F _git_push git-push.exe
-complete -o default -o nospace -F _git_config git-config
-complete -o default -o nospace -F _git_shortlog git-shortlog.exe
-complete -o default -o nospace -F _git_show git-show.exe
-complete -o default -o nospace -F _git_log git-show-branch.exe
-complete -o default -o nospace -F _git_tag git-tag.exe
-complete -o default -o nospace -F _git_log git-whatchanged.exe
 fi
