@@ -52,6 +52,7 @@ struct delta_entry
 static struct object_entry *objects;
 static struct delta_entry *deltas;
 static struct base_data *base_cache;
+static size_t base_cache_used;
 static int nr_objects;
 static int nr_deltas;
 static int nr_resolved_deltas;
@@ -219,6 +220,20 @@ static void bad_object(unsigned long offset, const char *format, ...)
 	die("pack has bad object at offset %lu: %s", offset, buf);
 }
 
+static void prune_base_data(struct base_data *retain)
+{
+	struct base_data *b = base_cache;
+	for (b = base_cache;
+	     base_cache_used > delta_base_cache_limit && b;
+	     b = b->child) {
+		if (b->data && b != retain) {
+			free(b->data);
+			b->data = NULL;
+			base_cache_used -= b->size;
+		}
+	}
+}
+
 static void link_base_data(struct base_data *base, struct base_data *c)
 {
 	if (base)
@@ -228,6 +243,8 @@ static void link_base_data(struct base_data *base, struct base_data *c)
 
 	c->base = base;
 	c->child = NULL;
+	base_cache_used += c->size;
+	prune_base_data(c);
 }
 
 static void unlink_base_data(struct base_data *c)
@@ -237,7 +254,10 @@ static void unlink_base_data(struct base_data *c)
 		base->child = NULL;
 	else
 		base_cache = NULL;
-	free(c->data);
+	if (c->data) {
+		free(c->data);
+		base_cache_used -= c->size;
+	}
 }
 
 static void *unpack_entry_data(unsigned long offset, unsigned long size)
@@ -455,6 +475,30 @@ static void sha1_object(const void *data, unsigned long size,
 	}
 }
 
+static void *get_base_data(struct base_data *c)
+{
+	if (!c->data) {
+		struct object_entry *obj = c->obj;
+
+		if (obj->type == OBJ_REF_DELTA || obj->type == OBJ_OFS_DELTA) {
+			void *base = get_base_data(c->base);
+			void *raw = get_data_from_pack(obj);
+			c->data = patch_delta(
+				base, c->base->size,
+				raw, obj->size,
+				&c->size);
+			free(raw);
+			if (!c->data)
+				bad_object(obj->idx.offset, "failed to apply delta");
+		} else
+			c->data = get_data_from_pack(obj);
+
+		base_cache_used += c->size;
+		prune_base_data(c);
+	}
+	return c->data;
+}
+
 static void resolve_delta(struct object_entry *delta_obj,
 			  struct base_data *base_obj, enum object_type type)
 {
@@ -467,7 +511,7 @@ static void resolve_delta(struct object_entry *delta_obj,
 	delta_obj->real_type = type;
 	delta_data = get_data_from_pack(delta_obj);
 	delta_size = delta_obj->size;
-	result.data = patch_delta(base_obj->data, base_obj->size,
+	result.data = patch_delta(get_base_data(base_obj), base_obj->size,
 			     delta_data, delta_size,
 			     &result.size);
 	free(delta_data);
