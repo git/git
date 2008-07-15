@@ -110,6 +110,9 @@ Updates since v1.5.6
 * "git-add -i" has a new action 'e/dit' to allow you edit the patch hunk
   manually.
 
+* git-am records the original tip of the branch in ORIG_HEAD before it
+  starts applying patches.
+
 * git-apply can handle a patch that touches the same path more than once
   much better than before.
 
@@ -125,6 +128,14 @@ Updates since v1.5.6
 * With -v option, git-branch describes the remote tracking statistics
   similar to the way git-checkout reports by how many commits your branch
   is ahead/behind.
+
+* git-branch's --contains option used to always require a commit parameter
+  to limit the branches with; it now defaults to list branches that
+  contains HEAD if this parameter is omitted.
+
+* git-branch's --merged and --no-merged option used to always limit the
+  branches relative to the HEAD, but they can now take an optional commit
+  argument that is used in place of HEAD.
 
 * git-bundle can read the revision arguments from the standard input.
 
@@ -144,6 +155,9 @@ Updates since v1.5.6
 * fast-export learned to export and import marks file; this can be used to
   interface with fast-import incrementally.
 
+* git-rebase records the original tip of branch in ORIG_HEAD before it is
+  rewound.
+
 * "git rerere" can be told to update the index with auto-reused resolution
   with rerere.autoupdate configuration variable.
 
@@ -151,6 +165,8 @@ Updates since v1.5.6
   encountered during the traversal, instead of shoing parent commits.
 
 * git-send-mail can talk not just over SSL but over TLS now.
+
+* git-shortlog honors custom output format specified with "--pretty=format:".
 
 * "git-stash save" learned --keep-index option.  This lets you stash away the
   local changes and bring the changes staged in the index to your working
@@ -185,6 +201,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.5.6.3-315-g10ce020
+O=v1.5.6.3-350-g499027b
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
