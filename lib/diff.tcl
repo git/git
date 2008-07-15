@@ -423,6 +423,9 @@ proc apply_line {x y} {
 			# the line to stage/unstage
 			set ln [$ui_diff get $i_l $next_l]
 			set patch "$patch$ln"
+			if {$c1 eq {-}} {
+				set n [expr $n+1]
+			}
 		} elseif {$c1 ne {-} && $c1 ne {+}} {
 			# context line
 			set ln [$ui_diff get $i_l $next_l]
