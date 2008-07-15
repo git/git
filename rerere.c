@@ -342,7 +342,7 @@ int setup_rerere(struct path_list *merge_rr)
 	if (!is_rerere_enabled())
 		return -1;
 
-	merge_rr_path = xstrdup(git_path("rr-cache/MERGE_RR"));
+	merge_rr_path = xstrdup(git_path("MERGE_RR"));
 	fd = hold_lock_file_for_update(&write_lock, merge_rr_path, 1);
 	read_rr(merge_rr);
 	return fd;
