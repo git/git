@@ -45,6 +45,11 @@
 #       git@vger.kernel.org
 #
 
+case "$COMP_WORDBREAKS" in
+*:*) : great ;;
+*)   COMP_WORDBREAKS="$COMP_WORDBREAKS:"
+esac
+
 __gitdir ()
 {
 	if [ -z "$1" ]; then
@@ -294,9 +299,23 @@ __git_complete_file ()
 			ls="$ref"
 			;;
 	    esac
+
+		case "$COMP_WORDBREAKS" in
+		*:*) : great ;;
+		*)   pfx="$ref:$pfx" ;;
+		esac
+
+		local IFS=$'\n'
 		COMPREPLY=($(compgen -P "$pfx" \
 			-W "$(git --git-dir="$(__gitdir)" ls-tree "$ls" \
-				| sed '/^100... blob /s,^.*	,,
+				| sed '/^100... blob /{
+				           s,^.*	,,
+				           s,$, ,
+				       }
+				       /^120000 blob /{
+				           s,^.*	,,
+				           s,$, ,
+				       }
 				       /^040000 tree /{
 				           s,^.*	,,
 				           s,$,/,
@@ -692,7 +711,12 @@ _git_fetch ()
 	*)
 		case "$cur" in
 		*:*)
-			__gitcomp "$(__git_refs)" "" "${cur#*:}"
+			local pfx=""
+			case "$COMP_WORDBREAKS" in
+			*:*) : great ;;
+			*)   pfx="${cur%%:*}:" ;;
+			esac
+			__gitcomp "$(__git_refs)" "$pfx" "${cur#*:}"
 			;;
 		*)
 			local remote
@@ -868,7 +892,14 @@ _git_push ()
 			git-push)  remote="${COMP_WORDS[1]}" ;;
 			git)       remote="${COMP_WORDS[2]}" ;;
 			esac
-			__gitcomp "$(__git_refs "$remote")" "" "${cur#*:}"
+
+			local pfx=""
+			case "$COMP_WORDBREAKS" in
+			*:*) : great ;;
+			*)   pfx="${cur%%:*}:" ;;
+			esac
+
+			__gitcomp "$(__git_refs "$remote")" "$pfx" "${cur#*:}"
 			;;
 		+*)
 			__gitcomp "$(__git_refs)" + "${cur#+}"
