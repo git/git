@@ -21,14 +21,11 @@ typedef void *(*parse_extra_args_fn_t)(int argc, const char **argv);
 
 struct archiver {
 	const char *name;
-	struct archiver_args args;
 	write_archive_fn_t write_archive;
 	parse_extra_args_fn_t parse_extra;
 };
 
-extern int parse_archive_args(int argc,
-			      const char **argv,
-			      struct archiver *ar);
+extern int parse_archive_args(int argc, const char **argv, const struct archiver **ar, struct archiver_args *args);
 
 extern void parse_treeish_arg(const char **treeish,
 			      struct archiver_args *ar_args,
