@@ -192,6 +192,7 @@ int parse_archive_args(int argc, const char **argv, const struct archiver **ar,
 	}
 	args->verbose = verbose;
 	args->base = base;
+	args->baselen = strlen(base);
 
 	return i;
 }

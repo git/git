@@ -316,17 +316,15 @@ static void dos_time(time_t *time, int *dos_date, int *dos_time)
 
 int write_zip_archive(struct archiver_args *args)
 {
-	int plen = strlen(args->base);
-
 	dos_time(&args->time, &zip_date, &zip_time);
 
 	zip_dir = xmalloc(ZIP_DIRECTORY_MIN_SIZE);
 	zip_dir_size = ZIP_DIRECTORY_MIN_SIZE;
 	verbose = args->verbose;
 	commit = args->commit;
-	base_len = args->base ? strlen(args->base) : 0;
+	base_len = args->baselen;
 
-	if (args->base && plen > 0 && args->base[plen - 1] == '/') {
+	if (args->baselen > 0 && args->base[args->baselen - 1] == '/') {
 		char *base = xstrdup(args->base);
 		int baselen = strlen(base);
 
@@ -336,7 +334,7 @@ int write_zip_archive(struct archiver_args *args)
 				0, NULL);
 		free(base);
 	}
-	read_tree_recursive(args->tree, args->base, plen, 0,
+	read_tree_recursive(args->tree, args->base, args->baselen, 0,
 			    args->pathspec, write_zip_entry, NULL);
 	write_zip_trailer(args->commit_sha1);
 

@@ -6,6 +6,7 @@
 
 struct archiver_args {
 	const char *base;
+	size_t baselen;
 	struct tree *tree;
 	const unsigned char *commit_sha1;
 	const struct commit *commit;

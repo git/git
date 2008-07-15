@@ -268,19 +268,17 @@ static int write_tar_entry(const unsigned char *sha1, const char *base,
 
 int write_tar_archive(struct archiver_args *args)
 {
-	int plen = args->base ? strlen(args->base) : 0;
-
 	git_config(git_tar_config, NULL);
 
 	archive_time = args->time;
 	verbose = args->verbose;
 	commit = args->commit;
-	base_len = args->base ? strlen(args->base) : 0;
+	base_len = args->baselen;
 
 	if (args->commit_sha1)
 		write_global_extended_header(args->commit_sha1);
 
-	if (args->base && plen > 0 && args->base[plen - 1] == '/') {
+	if (args->baselen > 0 && args->base[args->baselen - 1] == '/') {
 		char *base = xstrdup(args->base);
 		int baselen = strlen(base);
 
@@ -290,7 +288,7 @@ int write_tar_archive(struct archiver_args *args)
 				0, NULL);
 		free(base);
 	}
-	read_tree_recursive(args->tree, args->base, plen, 0,
+	read_tree_recursive(args->tree, args->base, args->baselen, 0,
 			    args->pathspec, write_tar_entry, NULL);
 	write_trailer();
 
