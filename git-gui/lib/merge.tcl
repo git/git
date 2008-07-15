@@ -257,6 +257,7 @@ proc _reset_wait {fd} {
 
 		catch {file delete [gitdir MERGE_HEAD]}
 		catch {file delete [gitdir rr-cache MERGE_RR]}
+		catch {file delete [gitdir MERGE_RR]}
 		catch {file delete [gitdir SQUASH_MSG]}
 		catch {file delete [gitdir MERGE_MSG]}
 		catch {file delete [gitdir GITGUI_MSG]}
