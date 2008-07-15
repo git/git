@@ -5,17 +5,6 @@
 #define OPT_SHORT 1
 #define OPT_UNSET 2
 
-static inline const char *get_arg(struct parse_opt_ctx_t *p)
-{
-	if (p->opt) {
-		const char *res = p->opt;
-		p->opt = NULL;
-		return res;
-	}
-	p->argc--;
-	return *++p->argv;
-}
-
 static inline const char *skip_prefix(const char *str, const char *prefix)
 {
 	size_t len = strlen(prefix);
@@ -31,8 +20,24 @@ static int opterror(const struct option *opt, const char *reason, int flags)
 	return error("option `%s' %s", opt->long_name, reason);
 }
 
+static int get_arg(struct parse_opt_ctx_t *p, const struct option *opt,
+		   int flags, const char **arg)
+{
+	if (p->opt) {
+		*arg = p->opt;
+		p->opt = NULL;
+	} else if (p->argc == 1 && (opt->flags & PARSE_OPT_LASTARG_DEFAULT)) {
+		*arg = (const char *)opt->defval;
+	} else if (p->argc) {
+		p->argc--;
+		*arg = *++p->argv;
+	} else
+		return opterror(opt, "requires a value", flags);
+	return 0;
+}
+
 static int get_value(struct parse_opt_ctx_t *p,
-                     const struct option *opt, int flags)
+		     const struct option *opt, int flags)
 {
 	const char *s, *arg;
 	const int unset = flags & OPT_UNSET;
@@ -58,7 +63,6 @@ static int get_value(struct parse_opt_ctx_t *p,
 		}
 	}
 
-	arg = p->opt ? p->opt : (p->argc > 1 ? p->argv[1] : NULL);
 	switch (opt->type) {
 	case OPTION_BIT:
 		if (unset)
@@ -80,17 +84,12 @@ static int get_value(struct parse_opt_ctx_t *p,
 		return 0;
 
 	case OPTION_STRING:
-		if (unset) {
+		if (unset)
 			*(const char **)opt->value = NULL;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
+		else if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
 			*(const char **)opt->value = (const char *)opt->defval;
-			return 0;
-		}
-		if (!arg)
-			return opterror(opt, "requires a value", flags);
-		*(const char **)opt->value = get_arg(p);
+		else
+			return get_arg(p, opt, flags, (const char **)opt->value);
 		return 0;
 
 	case OPTION_CALLBACK:
@@ -100,9 +99,9 @@ static int get_value(struct parse_opt_ctx_t *p,
 			return (*opt->callback)(opt, NULL, 0) ? (-1) : 0;
 		if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
 			return (*opt->callback)(opt, NULL, 0) ? (-1) : 0;
-		if (!arg)
-			return opterror(opt, "requires a value", flags);
-		return (*opt->callback)(opt, get_arg(p), 0) ? (-1) : 0;
+		if (get_arg(p, opt, flags, &arg))
+			return -1;
+		return (*opt->callback)(opt, arg, 0) ? (-1) : 0;
 
 	case OPTION_INTEGER:
 		if (unset) {
@@ -113,9 +112,9 @@ static int get_value(struct parse_opt_ctx_t *p,
 			*(int *)opt->value = opt->defval;
 			return 0;
 		}
-		if (!arg)
-			return opterror(opt, "requires a value", flags);
-		*(int *)opt->value = strtol(get_arg(p), (char **)&s, 10);
+		if (get_arg(p, opt, flags, &arg))
+			return -1;
+		*(int *)opt->value = strtol(arg, (char **)&s, 10);
 		if (*s)
 			return opterror(opt, "expects a numerical value", flags);
 		return 0;
