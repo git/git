@@ -145,6 +145,12 @@ directory exists, so if you decide to start over from scratch,
 run `rm -f -r .dotest` before running the command with mailbox
 names.
 
+Before any patches are applied, ORIG_HEAD is set to the tip of the
+current branch.  This is useful if you have problems with multiple
+commits, like running 'git am' on the wrong branch or an error in the
+commits that is more easily fixed by changing the mailbox (e.g.
+errors in the "From:" lines).
+
 
 SEE ALSO
 --------

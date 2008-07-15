@@ -574,6 +574,7 @@ EOF
 		has_action "$TODO" ||
 			die_abort "Nothing to do"
 
+		git update-ref ORIG_HEAD $HEAD
 		output git checkout $ONTO && do_rest
 		;;
 	esac

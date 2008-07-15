@@ -242,6 +242,7 @@ else
 		: >"$dotest/rebasing"
 	else
 		: >"$dotest/applying"
+		git update-ref ORIG_HEAD HEAD
 	fi
 fi
 
