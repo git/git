@@ -129,4 +129,8 @@ enum match_refs_flags {
 	MATCH_REFS_MIRROR	= (1 << 1),
 };
 
+/* Reporting of tracking info */
+int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs);
+int format_tracking_info(struct branch *branch, struct strbuf *sb);
+
 #endif

@@ -81,7 +81,9 @@ Otherwise, merge will refuse to do any harm to your repository
 (that is, it may fetch the objects from remote, and it may even
 update the local branch used to keep track of the remote branch
 with `git pull remote rbranch:lbranch`, but your working tree,
-`.git/HEAD` pointer and index file are left intact).
+`.git/HEAD` pointer and index file are left intact).  In addition,
+merge always sets `.git/ORIG_HEAD` to the original state of HEAD so
+a problematic merge can be removed by using `git reset ORIG_HEAD`.
 
 You may have local modifications in the working tree files.  In
 other words, 'git-diff' is allowed to report changes.

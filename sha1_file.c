@@ -1006,6 +1006,18 @@ static void mark_bad_packed_object(struct packed_git *p,
 	p->num_bad_objects++;
 }
 
+static int has_packed_and_bad(const unsigned char *sha1)
+{
+	struct packed_git *p;
+	unsigned i;
+
+	for (p = packed_git; p; p = p->next)
+		for (i = 0; i < p->num_bad_objects; i++)
+			if (!hashcmp(sha1, p->bad_object_sha1 + 20 * i))
+				return 1;
+	return 0;
+}
+
 int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)
 {
 	unsigned char real_sha1[20];
@@ -1647,7 +1659,7 @@ static void *unpack_delta_entry(struct packed_git *p,
 		      sha1_to_hex(base_sha1), (uintmax_t)base_offset,
 		      p->pack_name);
 		mark_bad_packed_object(p, base_sha1);
-		base = read_sha1_file(base_sha1, type, &base_size);
+		base = read_object(base_sha1, type, &base_size);
 		if (!base)
 			return NULL;
 	}
@@ -1945,7 +1957,7 @@ static void *read_packed_sha1(const unsigned char *sha1,
 		error("failed to read object %s at offset %"PRIuMAX" from %s",
 		      sha1_to_hex(sha1), (uintmax_t)e.offset, e.p->pack_name);
 		mark_bad_packed_object(e.p, sha1);
-		data = read_sha1_file(sha1, type, size);
+		data = read_object(sha1, type, size);
 	}
 	return data;
 }
@@ -2010,8 +2022,8 @@ int pretend_sha1_file(void *buf, unsigned long len, enum object_type type,
 	return 0;
 }
 
-void *read_sha1_file(const unsigned char *sha1, enum object_type *type,
-		     unsigned long *size)
+void *read_object(const unsigned char *sha1, enum object_type *type,
+		  unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
@@ -2035,6 +2047,16 @@ void *read_sha1_file(const unsigned char *sha1, enum object_type *type,
 	}
 	reprepare_packed_git();
 	return read_packed_sha1(sha1, type, size);
+}
+
+void *read_sha1_file(const unsigned char *sha1, enum object_type *type,
+		     unsigned long *size)
+{
+	void *data = read_object(sha1, type, size);
+	/* legacy behavior is to die on corrupted objects */
+	if (!data && (has_loose_object(sha1) || has_packed_and_bad(sha1)))
+		die("object %s is corrupted", sha1_to_hex(sha1));
+	return data;
 }
 
 void *read_object_with_reference(const unsigned char *sha1,

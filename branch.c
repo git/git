@@ -166,7 +166,7 @@ void create_branch(const char *head,
 void remove_branch_state(void)
 {
 	unlink(git_path("MERGE_HEAD"));
-	unlink(git_path("rr-cache/MERGE_RR"));
+	unlink(git_path("MERGE_RR"));
 	unlink(git_path("MERGE_MSG"));
 	unlink(git_path("SQUASH_MSG"));
 }

@@ -49,4 +49,13 @@ test_expect_success 'verify metadata for /dir' "
 	   grep '^git-svn-id: $dir_url@1 $uuid$'
 	"
 
+test_expect_success 'find commit based on SVN revision number' "
+        git-svn find-rev r12 |
+	    grep `git rev-parse HEAD`
+        "
+
+test_expect_success 'empty rebase' "
+	git-svn rebase
+	"
+
 test_done

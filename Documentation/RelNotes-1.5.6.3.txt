@@ -4,7 +4,15 @@ GIT v1.5.6.3 Release Notes
 Fixes since v1.5.6.2
 --------------------
 
+* Setting core.sharerepository to traditional "true" value was supposed to make
+  the repository group writable but should not affect permission for others.
+  However, since 1.5.6, it was broken to drop permission for others when umask is
+  022, making the repository unreadable by others.
+
 * Setting GIT_TRACE will report spawning of external process via run_command().
+
+* Using an object with very deep delta chain pinned memory needed for extracting
+  intermediate base objects unnecessarily long, leading to excess memory usage.
 
 * Bash completion script did not notice '--' marker on the command
   line and tried the relatively slow "ref completion" even when
@@ -13,6 +21,12 @@ Fixes since v1.5.6.2
 * Registering a non-empty blob racily and then truncating the working
   tree file for it confused "racy-git avoidance" logic into thinking
   that the path is now unchanged.
+
+* The section that describes attributes related to git-archive were placed
+  in a wrong place in the gitattributes(5) manual page.
+
+* "git am" was not helpful to the users when it detected that the committer
+  information is not set up properly yet.
 
 * "git clone" had a leftover debugging fprintf().
 
@@ -23,8 +37,10 @@ Fixes since v1.5.6.2
   good thing if the remote side is well packed but otherwise not,
   especially for a project that is not really big.
 
-* The section that describes attributes related to git-archive were placed
-  in a wrong place in the gitattributes(5) manual page.
+* "git daemon" used to call syslog() from a signal handler, which
+  could raise signals of its own but generally is not reentrant.  This
+  was fixed by restructuring the code to report syslog() after the handler
+  returns.
 
 * When "git push" tries to remove a remote ref, and corresponding
   tracking ref is missing, we used to report error (i.e. failure to
@@ -34,9 +50,3 @@ Fixes since v1.5.6.2
   MIME multipart mail correctly.
 
 Contains other various documentation fixes.
-
---
-exec >/var/tmp/1
-O=v1.5.6.2-23-ge965647
-echo O=$(git describe maint)
-git shortlog --no-merges $O..maint

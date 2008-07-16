@@ -159,19 +159,19 @@ test_expect_success 'stop on conflicting pick' '
 	git tag new-branch1 &&
 	test_must_fail git rebase -i master &&
 	test "$(git rev-parse HEAD~3)" = "$(git rev-parse master)" &&
-	test_cmp expect .git/.dotest-merge/patch &&
+	test_cmp expect .git/rebase-merge/patch &&
 	test_cmp expect2 file1 &&
 	test "$(git-diff --name-status |
 		sed -n -e "/^U/s/^U[^a-z]*//p")" = file1 &&
-	test 4 = $(grep -v "^#" < .git/.dotest-merge/done | wc -l) &&
-	test 0 = $(grep -c "^[^#]" < .git/.dotest-merge/git-rebase-todo)
+	test 4 = $(grep -v "^#" < .git/rebase-merge/done | wc -l) &&
+	test 0 = $(grep -c "^[^#]" < .git/rebase-merge/git-rebase-todo)
 '
 
 test_expect_success 'abort' '
 	git rebase --abort &&
 	test $(git rev-parse new-branch1) = $(git rev-parse HEAD) &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
-	! test -d .git/.dotest-merge
+	! test -d .git/rebase-merge
 '
 
 test_expect_success 'retain authorship' '
@@ -211,7 +211,7 @@ test_expect_success 'preserve merges with -p' '
 	git add unrelated-file &&
 	test_tick &&
 	git commit -m "unrelated" &&
-	git checkout -b to-be-rebased master &&
+	git checkout -b another-branch master &&
 	echo B > file1 &&
 	test_tick &&
 	git commit -m J file1 &&
@@ -220,12 +220,28 @@ test_expect_success 'preserve merges with -p' '
 	echo C > file1 &&
 	test_tick &&
 	git commit -m K file1 &&
+	echo D > file1 &&
+	test_tick &&
+	git commit -m L1 file1 &&
+	git checkout HEAD^ &&
+	echo 1 > unrelated-file &&
+	test_tick &&
+	git commit -m L2 unrelated-file &&
+	test_tick &&
+	git merge another-branch &&
+	echo E > file1 &&
+	test_tick &&
+	git commit -m M file1 &&
+	git checkout -b to-be-rebased &&
 	test_tick &&
 	git rebase -i -p --onto branch1 master &&
-	test $(git rev-parse HEAD^^2) = $(git rev-parse to-be-preserved) &&
-	test $(git rev-parse HEAD~3) = $(git rev-parse branch1) &&
-	test $(git show HEAD:file1) = C &&
-	test $(git show HEAD~2:file1) = B
+	test $(git rev-parse HEAD~6) = $(git rev-parse branch1) &&
+	test $(git rev-parse HEAD~4^2) = $(git rev-parse to-be-preserved) &&
+	test $(git rev-parse HEAD^^2^) = $(git rev-parse HEAD^^^) &&
+	test $(git show HEAD~5:file1) = B &&
+	test $(git show HEAD~3:file1) = C &&
+	test $(git show HEAD:file1) = E &&
+	test $(git show HEAD:unrelated-file) = 1
 '
 
 test_expect_success '--continue tries to commit' '

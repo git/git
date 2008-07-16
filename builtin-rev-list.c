@@ -37,6 +37,7 @@ static const char rev_list_usage[] =
 "    --reverse\n"
 "  formatting output:\n"
 "    --parents\n"
+"    --children\n"
 "    --objects | --objects-edge\n"
 "    --unpacked\n"
 "    --header | --pretty\n"
@@ -88,6 +89,15 @@ static void show_commit(struct commit *commit)
 		while (parents) {
 			printf(" %s", sha1_to_hex(parents->item->object.sha1));
 			parents = parents->next;
+		}
+	}
+	if (revs.children.name) {
+		struct commit_list *children;
+
+		children = lookup_decoration(&revs.children, &commit->object);
+		while (children) {
+			printf(" %s", sha1_to_hex(children->item->object.sha1));
+			children = children->next;
 		}
 	}
 	show_decorations(commit);

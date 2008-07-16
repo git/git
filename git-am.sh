@@ -5,7 +5,7 @@
 SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
-git-am [options] <mbox>|<Maildir>...
+git-am [options] [<mbox>|<Maildir>...]
 git-am [options] --resolved
 git-am [options] --skip
 --
@@ -30,7 +30,8 @@ set_reflog_action am
 require_work_tree
 cd_to_toplevel
 
-git var GIT_COMMITTER_IDENT >/dev/null || exit
+git var GIT_COMMITTER_IDENT >/dev/null ||
+	die "You need to set your committer info first"
 
 stop_here () {
     echo "$1" >"$dotest/next"
@@ -118,7 +119,7 @@ It does not apply to blobs recorded in its index."
 }
 
 prec=4
-dotest=".dotest"
+dotest="$GIT_DIR/rebase"
 sign= utf8=t keep= skip= interactive= resolved= binary= rebasing=
 resolvemsg= resume=
 git_apply_opt=
@@ -194,7 +195,7 @@ then
 		false
 		;;
 	esac ||
-	die "previous dotest directory $dotest still exists but mbox given."
+	die "previous rebase directory $dotest still exists but mbox given."
 	resume=yes
 else
 	# Make sure we are not given --skip nor --resolved
@@ -241,6 +242,7 @@ else
 		: >"$dotest/rebasing"
 	else
 		: >"$dotest/applying"
+		git update-ref ORIG_HEAD HEAD
 	fi
 fi
 
@@ -323,7 +325,7 @@ do
 			<"$dotest"/info >/dev/null &&
 			go_next && continue
 
-		test -s $dotest/patch || {
+		test -s "$dotest/patch" || {
 			echo "Patch is empty.  Was it split wrong?"
 			stop_here $this
 		}

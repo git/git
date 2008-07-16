@@ -2431,7 +2431,7 @@ $ git rebase origin
 -------------------------------------------------
 
 This will remove each of your commits from mywork, temporarily saving
-them as patches (in a directory named ".dotest"), update mywork to
+them as patches (in a directory named ".git/rebase"), update mywork to
 point at the latest version of origin, then apply each of the saved
 patches to the new mywork.  The result will look like:
 

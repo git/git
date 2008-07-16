@@ -334,7 +334,9 @@ static int check_header(char *line, unsigned linesize, char **hdr_data, int over
 		return 1;
 	if (!memcmp("[PATCH]", line, 7) && isspace(line[7])) {
 		for (i = 0; header[i]; i++) {
-			if (!memcmp("Subject: ", header[i], 9)) {
+			if (!memcmp("Subject", header[i], 7)) {
+				if (!hdr_data[i])
+					hdr_data[i] = xmalloc(linesize + 20);
 				if (! handle_header(line, hdr_data[i], 0)) {
 					return 1;
 				}
@@ -960,7 +962,7 @@ static int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
 }
 
 static const char mailinfo_usage[] =
-	"git-mailinfo [-k] [-u | --encoding=<encoding>] msg patch <mail >info";
+	"git-mailinfo [-k] [-u | --encoding=<encoding> | -n] msg patch <mail >info";
 
 int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
