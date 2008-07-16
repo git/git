@@ -8,39 +8,13 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
-Possible bug not diagnosed yet
-
-* "git commit --interactive" allows same tree as parent to be recorded
-
-Message-ID: <slrng059n3.nd8.joerg@alea.gnuu.de>
-
-* "git daemon" and log rotation (Dscho)
-
-Message-ID: <alpine.DEB.1.00.0804281523040.5399@eeepc-johanness>
-
-Issues that are unconcluded or need a fresh infusion of kerosene to
-firestart them again.
-
-* cvsserver improvements (Fredrik Noring)
-
-Needs third-party confirmation and then properly applicable patches.
+* Safer handling of grafts (Linus, me)
+  $gmane/37744/focus=37866.  Partially in 'pu' but stalled due to breakage in
+  "shallow clone".
 
 * Prepare cvsimport for fixed cvsps (David Mansfield)
 
 Message-Id: <1207100091.10532.64.camel@gandalf.cobite.com>
-
-* ff=only (Sverre Hvammen Johansen)
-
-An updated series posted; author refuses to respond to comments;
-
-* more help backends (Christian Couder)
-  $gmane/78150
-
-* fsck --lost-found (me)
-  $gmane/78267
-
-* core.inithook (Dscho)
-  $gmane/78123
 
 * receive.localBranches = { refuse | allow } (Dscho)
   $gmane/78065
@@ -48,22 +22,11 @@ An updated series posted; author refuses to respond to comments;
 * autosetting core.ignorecase (Dmitry Potapov)
   $gmane/78176
 
-* mailinfo extention to extract Message-ID and others (Anton Gladkov)
-  $gmane/78006
-
 * synopsys: use {} instead of () for grouping alternatives (Jari Aalto)
   $gmane/72243
 
 * "[alias] st = status" and "cd .git && git st" (Jeff King)
   $gmane/72327
-
-* "git fetch" does not exit with non-zero status when it failed to update
-  some refs due to non-ffness (Daniel)
-  $gmane/77178
-
-* "git fetch" shows error when dangling symref exists at the remote
-  but does not really error out (Samuel Tardieu)
-  $gmane/76658
 
 * use "assume unchanged" bit to implement narrow checkout
   $gmane/77046
