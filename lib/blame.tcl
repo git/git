@@ -33,13 +33,6 @@ variable group_colors {
 	#ececec
 }
 
-# Switches for original location detection
-#
-variable original_options [list -C -C]
-if {[git-version >= 1.5.3]} {
-	lappend original_options -w ; # ignore indentation changes
-}
-
 # Current blame data; cleared/reset on each load
 #
 field commit               ; # input commit to blame
@@ -511,7 +504,6 @@ method _exec_blame {cur_w cur_d options cur_s} {
 method _read_blame {fd cur_w cur_d} {
 	upvar #0 $cur_d line_data
 	variable group_colors
-	variable original_options
 
 	if {$fd ne $current_fd} {
 		catch {close $fd}
@@ -684,6 +676,18 @@ method _read_blame {fd cur_w cur_d} {
 	if {[eof $fd]} {
 		close $fd
 		if {$cur_w eq $w_asim} {
+			# Switches for original location detection
+			set threshold [get_config gui.copyblamethreshold]
+			set original_options [list "-C$threshold"]
+
+			if {![is_config_true gui.fastcopyblame]} {
+				# thorough copy search; insert before the threshold
+				set original_options [linsert $original_options 0 -C]
+			}
+			if {[git-version >= 1.5.3]} {
+				lappend original_options -w ; # ignore indentation changes
+			}
+
 			_exec_blame $this $w_amov @amov_data \
 				$original_options \
 				[mc "Loading original location annotations..."]

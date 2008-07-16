@@ -642,6 +642,8 @@ set default_config(user.email) {}
 set default_config(gui.matchtrackingbranch) false
 set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
+set default_config(gui.fastcopyblame) false
+set default_config(gui.copyblamethreshold) 40
 set default_config(gui.diffcontext) 5
 set default_config(gui.commitmsgwidth) 75
 set default_config(gui.newbranchtemplate) {}
