@@ -31,7 +31,7 @@ skip               skip current patch and continue rebasing process
 . git-sh-setup
 require_work_tree
 
-DOTEST="$GIT_DIR/.dotest-merge"
+DOTEST="$GIT_DIR/rebase-merge"
 TODO="$DOTEST"/git-rebase-todo
 DONE="$DOTEST"/done
 MSG="$DOTEST"/message

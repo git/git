@@ -39,7 +39,7 @@ It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
 and run `git rebase --continue`.  Another option is to bypass the commit
 that caused the merge failure with `git rebase --skip`.  To restore the
-original <branch> and remove the .dotest working files, use the command
+original <branch> and remove the .git/rebase working files, use the command
 `git rebase --abort` instead.
 
 Assume the following history exists and the current branch is "topic":

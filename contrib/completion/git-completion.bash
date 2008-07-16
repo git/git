@@ -73,26 +73,26 @@ __git_ps1 ()
 	if [ -n "$g" ]; then
 		local r
 		local b
-		if [ -d "$g/../.dotest" ]
+		if [ -d "$g/rebase" ]
 		then
-			if test -f "$g/../.dotest/rebasing"
+			if test -f "$g/rebase/rebasing"
 			then
 				r="|REBASE"
-			elif test -f "$g/../.dotest/applying"
+			elif test -f "$g/rebase/applying"
 			then
 				r="|AM"
 			else
 				r="|AM/REBASE"
 			fi
 			b="$(git symbolic-ref HEAD 2>/dev/null)"
-		elif [ -f "$g/.dotest-merge/interactive" ]
+		elif [ -f "$g/rebase-merge/interactive" ]
 		then
 			r="|REBASE-i"
-			b="$(cat "$g/.dotest-merge/head-name")"
-		elif [ -d "$g/.dotest-merge" ]
+			b="$(cat "$g/rebase-merge/head-name")"
+		elif [ -d "$g/rebase-merge" ]
 		then
 			r="|REBASE-m"
-			b="$(cat "$g/.dotest-merge/head-name")"
+			b="$(cat "$g/rebase-merge/head-name")"
 		elif [ -f "$g/MERGE_HEAD" ]
 		then
 			r="|MERGING"
@@ -487,8 +487,8 @@ __git_whitespacelist="nowarn warn error error-all strip"
 
 _git_am ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	if [ -d .dotest ]; then
+	local cur="${COMP_WORDS[COMP_CWORD]}" dir="$(__gitdir)"
+	if [ -d "$dir"/rebase ]; then
 		__gitcomp "--skip --resolved"
 		return
 	fi
@@ -915,7 +915,7 @@ _git_push ()
 _git_rebase ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}" dir="$(__gitdir)"
-	if [ -d .dotest ] || [ -d "$dir"/.dotest-merge ]; then
+	if [ -d "$dir"/rebase ] || [ -d "$dir"/rebase-merge ]; then
 		__gitcomp "--continue --skip --abort"
 		return
 	fi
