@@ -256,6 +256,9 @@ constructor new {i_commit i_path} {
 	$w.ctxm add command \
 		-label [mc "Copy Commit"] \
 		-command [cb _copycommit]
+	$w.ctxm add command \
+		-label [mc "Do Full Copy Detection"] \
+		-command [cb _fullcopyblame]
 
 	foreach i $w_columns {
 		for {set g 0} {$g < [llength $group_colors]} {incr g} {
@@ -707,6 +710,72 @@ method _read_blame {fd cur_w cur_d} {
 		$status update $blame_lines $total_lines
 	}
 } ifdeleted { catch {close $fd} }
+
+method _find_commit_bound {data_list start_idx delta} {
+	upvar #0 $data_list line_data
+	set pos $start_idx
+	set limit       [expr {[llength $line_data] - 1}]
+	set base_commit [lindex $line_data $pos 0]
+
+	while {$pos > 0 && $pos < $limit} {
+		set new_pos [expr {$pos + $delta}]
+		if {[lindex $line_data $new_pos 0] ne $base_commit} {
+			return $pos
+		}
+
+		set pos $new_pos
+	}
+
+	return $pos
+}
+
+method _fullcopyblame {} {
+	if {$current_fd ne {}} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [mc "Busy"] \
+			-message [mc "Annotation process is already running."]
+
+		return
+	}
+
+	# Switches for original location detection
+	set threshold [get_config gui.copyblamethreshold]
+	set original_options [list -C -C "-C$threshold"]
+
+	if {[git-version >= 1.5.3]} {
+		lappend original_options -w ; # ignore indentation changes
+	}
+
+	# Find the line range
+	set pos @$::cursorX,$::cursorY
+	set lno [lindex [split [$::cursorW index $pos] .] 0]
+	set min_amov_lno [_find_commit_bound $this @amov_data $lno -1]
+	set max_amov_lno [_find_commit_bound $this @amov_data $lno 1]
+	set min_asim_lno [_find_commit_bound $this @asim_data $lno -1]
+	set max_asim_lno [_find_commit_bound $this @asim_data $lno 1]
+
+	if {$min_asim_lno < $min_amov_lno} {
+		set min_amov_lno $min_asim_lno
+	}
+
+	if {$max_asim_lno > $max_amov_lno} {
+		set max_amov_lno $max_asim_lno
+	}
+
+	lappend original_options -L "$min_amov_lno,$max_amov_lno"
+
+	# Clear lines
+	for {set i $min_amov_lno} {$i <= $max_amov_lno} {incr i} {
+		lset amov_data $i [list ]
+	}
+
+	# Start the back-end process
+	_exec_blame $this $w_amov @amov_data \
+		$original_options \
+		[mc "Running thorough copy detection..."]
+}
 
 method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
