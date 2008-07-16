@@ -26,7 +26,7 @@ clean:
 	$(RM) -r 'trash directory' test-results
 
 aggregate-results:
-	./aggregate-results.sh test-results/t*-*
+	'$(SHELL_PATH_SQ)' ./aggregate-results.sh test-results/t*-*
 
 # we can test NO_OPTIMIZE_COMMITS independently of LC_ALL
 full-svn-test:
