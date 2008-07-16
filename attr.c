@@ -459,7 +459,9 @@ static void prepare_attr_stack(const char *path, int dirlen)
 {
 	struct attr_stack *elem, *info;
 	int len;
-	char pathbuf[PATH_MAX];
+	struct strbuf pathbuf;
+
+	strbuf_init(&pathbuf, dirlen+2+strlen(GITATTRIBUTES_FILE));
 
 	/*
 	 * At the bottom of the attribute stack is the built-in
@@ -510,13 +512,14 @@ static void prepare_attr_stack(const char *path, int dirlen)
 			len = strlen(attr_stack->origin);
 			if (dirlen <= len)
 				break;
-			memcpy(pathbuf, path, dirlen);
-			memcpy(pathbuf + dirlen, "/", 2);
-			cp = strchr(pathbuf + len + 1, '/');
+			strbuf_reset(&pathbuf);
+			strbuf_add(&pathbuf, path, dirlen);
+			strbuf_addch(&pathbuf, '/');
+			cp = strchr(pathbuf.buf + len + 1, '/');
 			strcpy(cp + 1, GITATTRIBUTES_FILE);
-			elem = read_attr(pathbuf, 0);
+			elem = read_attr(pathbuf.buf, 0);
 			*cp = '\0';
-			elem->origin = strdup(pathbuf);
+			elem->origin = strdup(pathbuf.buf);
 			elem->prev = attr_stack;
 			attr_stack = elem;
 			debug_push(elem);
