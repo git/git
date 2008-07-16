@@ -497,6 +497,20 @@ proc githook_read {hook_name args} {
 	return {}
 }
 
+proc kill_file_process {fd} {
+	set process [pid $fd]
+
+	catch {
+		if {[is_Windows]} {
+			# Use a Cygwin-specific flag to allow killing
+			# native Windows processes
+			exec kill -f $process
+		} else {
+			exec kill $process
+		}
+	}
+}
+
 proc sq {value} {
 	regsub -all ' $value "'\\''" value
 	return "'$value'"

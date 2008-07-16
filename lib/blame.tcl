@@ -326,7 +326,18 @@ constructor new {i_commit i_path} {
 	bind $w.file_pane <Configure> \
 	"if {{$w.file_pane} eq {%W}} {[cb _resize %h]}"
 
+	wm protocol $top WM_DELETE_WINDOW "destroy $top"
+	bind $top <Destroy> [cb _kill]
+
 	_load $this {}
+}
+
+method _kill {} {
+	if {$current_fd ne {}} {
+		kill_file_process $current_fd
+		catch {close $current_fd}
+		set current_fd {}
+	}
 }
 
 method _load {jump} {
@@ -335,10 +346,7 @@ method _load {jump} {
 	_hide_tooltip $this
 
 	if {$total_lines != 0 || $current_fd ne {}} {
-		if {$current_fd ne {}} {
-			catch {close $current_fd}
-			set current_fd {}
-		}
+		_kill $this
 
 		foreach i $w_columns {
 			$i conf -state normal
