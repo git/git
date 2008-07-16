@@ -228,15 +228,13 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		if (mode == WORKING_DIRECTORY)
 			continue;
 
-		if (cache_name_pos(src, strlen(src)) >= 0) {
-			string_list_insert(src, &deleted);
+		assert(cache_name_pos(src, strlen(src)) >= 0);
 
-			/* destination can be a directory with 1 file inside */
-			if (string_list_has_string(&overwritten, dst))
-				string_list_insert(dst, &changed);
-			else
-				string_list_insert(dst, &added);
-		} else
+		string_list_insert(src, &deleted);
+		/* destination can be a directory with 1 file inside */
+		if (string_list_has_string(&overwritten, dst))
+			string_list_insert(dst, &changed);
+		else
 			string_list_insert(dst, &added);
 	}
 
