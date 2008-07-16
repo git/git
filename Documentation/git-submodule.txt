@@ -16,6 +16,28 @@ SYNOPSIS
 'git submodule' [--quiet] summary [--summary-limit <n>] [commit] [--] [<path>...]
 
 
+DESCRIPTION
+-----------
+Submodules are a special kind of tree entries which refer to a particular tree
+state in another repository.  The tree entry describes
+the existence of a submodule with the given name and the exact revision that
+should be used, while an entry in `.gitmodules` file gives the location of
+the repository.
+
+When checked out, submodules will maintain their own independent repositories
+within their directories; the only link between the submodule and the "parent
+project" is the tree entry within the parent project mentioned above.
+
+This command will manage the tree entries and contents of the gitmodules file
+for you, as well as inspecting the status of your submodules and updating them.
+When adding a new submodule to the tree, the 'add' subcommand is to be used.
+However, when pulling a tree containing submodules, these will not be checked
+out by default; the 'init' and 'update' subcommands will maintain submodules
+checked out and at appropriate revision in your working tree. You can inspect
+the current status of your submodules using the 'submodule' subcommand and get
+an overview of changes 'update' would perform using the 'summary' subcommand.
+
+
 COMMANDS
 --------
 add::
