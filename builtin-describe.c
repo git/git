@@ -20,7 +20,7 @@ static int tags;	/* But allow any tags if --tags is specified */
 static int longformat;
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
-const char *pattern = NULL;
+static const char *pattern;
 static int always;
 
 struct commit_name {
