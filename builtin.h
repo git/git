@@ -2,6 +2,9 @@
 #define BUILTIN_H
 
 #include "git-compat-util.h"
+#include "strbuf.h"
+#include "cache.h"
+#include "commit.h"
 
 extern const char git_version_string[];
 extern const char git_usage_string[];
@@ -11,6 +14,10 @@ extern void list_common_cmds_help(void);
 extern void help_unknown_cmd(const char *cmd);
 extern void prune_packed_objects(int);
 extern int read_line_with_nul(char *buf, int size, FILE *file);
+extern int fmt_merge_msg(int merge_summary, struct strbuf *in,
+	struct strbuf *out);
+extern int commit_tree(const char *msg, unsigned char *tree,
+		struct commit_list *parents, unsigned char *ret);
 
 extern int cmd_add(int argc, const char **argv, const char *prefix);
 extern int cmd_annotate(int argc, const char **argv, const char *prefix);
@@ -57,6 +64,7 @@ extern int cmd_ls_tree(int argc, const char **argv, const char *prefix);
 extern int cmd_ls_remote(int argc, const char **argv, const char *prefix);
 extern int cmd_mailinfo(int argc, const char **argv, const char *prefix);
 extern int cmd_mailsplit(int argc, const char **argv, const char *prefix);
+extern int cmd_merge(int argc, const char **argv, const char *prefix);
 extern int cmd_merge_base(int argc, const char **argv, const char *prefix);
 extern int cmd_merge_ours(int argc, const char **argv, const char *prefix);
 extern int cmd_merge_file(int argc, const char **argv, const char *prefix);

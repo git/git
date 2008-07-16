@@ -465,9 +465,49 @@ test_expect_success 'merge log message' '
 	git merge --no-log c2 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
 	verify_diff msg.nolog msg.act "[OOPS] bad merge log message" &&
+
 	git merge --log c3 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
+	verify_diff msg.log msg.act "[OOPS] bad merge log message" &&
+
+	git reset --hard HEAD^ &&
+	git config merge.log yes &&
+	git merge c3 &&
+	git show -s --pretty=format:%b HEAD >msg.act &&
 	verify_diff msg.log msg.act "[OOPS] bad merge log message"
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c1 with c0, c2, c0, and c1' '
+       git reset --hard c1 &&
+       git config branch.master.mergeoptions "" &&
+       test_tick &&
+       git merge c0 c2 c0 c1 &&
+       verify_merge file result.1-5 &&
+       verify_parents $c1 $c2
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c1 with c0, c2, c0, and c1' '
+       git reset --hard c1 &&
+       git config branch.master.mergeoptions "" &&
+       test_tick &&
+       git merge c0 c2 c0 c1 &&
+       verify_merge file result.1-5 &&
+       verify_parents $c1 $c2
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c1 with c1 and c2' '
+       git reset --hard c1 &&
+       git config branch.master.mergeoptions "" &&
+       test_tick &&
+       git merge c1 c2 &&
+       verify_merge file result.1-5 &&
+       verify_parents $c1 $c2
 '
 
 test_debug 'gitk --all'
