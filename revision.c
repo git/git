@@ -413,10 +413,26 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	commit->object.flags |= TREESAME;
 }
 
-static int add_parents_to_list(struct rev_info *revs, struct commit *commit, struct commit_list **list)
+static void insert_by_date_cached(struct commit *p, struct commit_list **head,
+		    struct commit_list *cached_base, struct commit_list **cache)
+{
+	struct commit_list *new_entry;
+
+	if (cached_base && p->date < cached_base->item->date)
+		new_entry = insert_by_date(p, &cached_base->next);
+	else
+		new_entry = insert_by_date(p, head);
+
+	if (cache && (!*cache || p->date < (*cache)->item->date))
+		*cache = new_entry;
+}
+
+static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
+		    struct commit_list **list, struct commit_list **cache_ptr)
 {
 	struct commit_list *parent = commit->parents;
 	unsigned left_flag;
+	struct commit_list *cached_base = cache_ptr ? *cache_ptr : NULL;
 
 	if (commit->object.flags & ADDED)
 		return 0;
@@ -446,7 +462,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 			if (p->object.flags & SEEN)
 				continue;
 			p->object.flags |= SEEN;
-			insert_by_date(p, list);
+			insert_by_date_cached(p, list, cached_base, cache_ptr);
 		}
 		return 0;
 	}
@@ -471,7 +487,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 		p->object.flags |= left_flag;
 		if (!(p->object.flags & SEEN)) {
 			p->object.flags |= SEEN;
-			insert_by_date(p, list);
+			insert_by_date_cached(p, list, cached_base, cache_ptr);
 		}
 		if(revs->first_parent_only)
 			break;
@@ -612,7 +628,7 @@ static int limit_list(struct rev_info *revs)
 
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			obj->flags |= UNINTERESTING;
-		if (add_parents_to_list(revs, commit, &list) < 0)
+		if (add_parents_to_list(revs, commit, &list, NULL) < 0)
 			return -1;
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
@@ -1415,10 +1431,12 @@ enum rewrite_result {
 
 static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp)
 {
+	struct commit_list *cache = NULL;
+
 	for (;;) {
 		struct commit *p = *pp;
 		if (!revs->limited)
-			if (add_parents_to_list(revs, p, &revs->commits) < 0)
+			if (add_parents_to_list(revs, p, &revs->commits, &cache) < 0)
 				return rewrite_one_error;
 		if (p->parents && p->parents->next)
 			return rewrite_one_ok;
@@ -1542,7 +1560,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 			if (revs->max_age != -1 &&
 			    (commit->date < revs->max_age))
 				continue;
-			if (add_parents_to_list(revs, commit, &revs->commits) < 0)
+			if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0)
 				return NULL;
 		}
 
