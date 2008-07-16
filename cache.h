@@ -334,8 +334,9 @@ extern struct packed_git {
 	struct packed_git *next;
 	unsigned long index_size;
 	unsigned long pack_size;
-	unsigned int *index_base;
+	const void *index_data;
 	void *pack_base;
+	int index_version;
 	unsigned int pack_last_used;
 	unsigned int pack_use_cnt;
 	int pack_local;
@@ -374,7 +375,7 @@ extern int server_supports(const char *feature);
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1);
 extern struct packed_git *parse_pack_index_file(const unsigned char *sha1,
-						char *idx_path);
+						const char *idx_path);
 
 extern void prepare_packed_git(void);
 extern void reprepare_packed_git(void);

@@ -402,15 +402,15 @@ static int pack_used_ctr;
 static unsigned long pack_mapped;
 struct packed_git *packed_git;
 
-static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
-				void **idx_map_)
+static int check_packed_git_idx(const char *path,  struct packed_git *p)
 {
 	void *idx_map;
-	unsigned int *index;
+	struct pack_idx_header *hdr;
 	unsigned long idx_size;
-	int nr, i;
+	unsigned int nr, i, *index;
 	int fd = open(path, O_RDONLY);
 	struct stat st;
+
 	if (fd < 0)
 		return -1;
 	if (fstat(fd, &st)) {
@@ -423,14 +423,21 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	if (idx_map == MAP_FAILED)
 		return -1;
 
-	index = idx_map;
-	*idx_map_ = idx_map;
-	*idx_size_ = idx_size;
+	/* a future index format would start with this, as older git
+	 * binaries would fail the non-monotonic index check below.
+	 * give a nicer warning to the user if we can.
+	 */
+	hdr = idx_map;
+	if (hdr->idx_signature == htonl(PACK_IDX_SIGNATURE)) {
+		munmap(idx_map, idx_size);
+		return error("index file %s is a newer version"
+			" and is not supported by this binary"
+			" (try upgrading GIT to a newer version)",
+			path);
+	}
 
-	/* check index map */
-	if (idx_size < 4*256 + 20 + 20)
-		return error("index file too small");
 	nr = 0;
+	index = idx_map;
 	for (i = 0; i < 256; i++) {
 		unsigned int n = ntohl(index[i]);
 		if (n < nr)
@@ -448,6 +455,9 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	if (idx_size != 4*256 + nr * 24 + 20 + 20)
 		return error("wrong index file size");
 
+	p->index_version = 1;
+	p->index_data = idx_map;
+	p->index_size = idx_size;
 	return 0;
 }
 
@@ -521,7 +531,7 @@ int use_packed_git(struct packed_git *p)
 		/* Check if the pack file matches with the index file.
 		 * this is cheap.
 		 */
-		if (hashcmp((unsigned char *)(p->index_base) +
+		if (hashcmp((unsigned char *)(p->index_data) +
 			    p->index_size - 40,
 			    (unsigned char *)p->pack_base +
 			    p->pack_size - 20)) {
@@ -536,35 +546,34 @@ int use_packed_git(struct packed_git *p)
 struct packed_git *add_packed_git(char *path, int path_len, int local)
 {
 	struct stat st;
-	struct packed_git *p;
-	unsigned long idx_size;
-	void *idx_map;
-	unsigned char sha1[20];
+	struct packed_git *p = xmalloc(sizeof(*p) + path_len + 2);
 
-	if (check_packed_git_idx(path, &idx_size, &idx_map))
+	/*
+	 * Make sure a corresponding .pack file exists and that
+	 * the index looks sane.
+	 */
+	path_len -= strlen(".idx");
+	if (path_len < 1)
 		return NULL;
-
-	/* do we have a corresponding .pack file? */
-	strcpy(path + path_len - 4, ".pack");
-	if (stat(path, &st) || !S_ISREG(st.st_mode)) {
-		munmap(idx_map, idx_size);
+	memcpy(p->pack_name, path, path_len);
+	strcpy(p->pack_name + path_len, ".pack");
+	if (stat(p->pack_name, &st) || !S_ISREG(st.st_mode) ||
+	    check_packed_git_idx(path, p)) {
+		free(p);
 		return NULL;
 	}
+
 	/* ok, it looks sane as far as we can check without
 	 * actually mapping the pack file.
 	 */
-	p = xmalloc(sizeof(*p) + path_len + 2);
-	strcpy(p->pack_name, path);
-	p->index_size = idx_size;
 	p->pack_size = st.st_size;
-	p->index_base = idx_map;
 	p->next = NULL;
 	p->pack_base = NULL;
 	p->pack_last_used = 0;
 	p->pack_use_cnt = 0;
 	p->pack_local = local;
-	if ((path_len > 44) && !get_sha1_hex(path + path_len - 44, sha1))
-		hashcpy(p->sha1, sha1);
+	if (path_len < 40 || get_sha1_hex(path + path_len - 40, p->sha1))
+		hashclr(p->sha1);
 	return p;
 }
 
@@ -574,23 +583,19 @@ struct packed_git *parse_pack_index(unsigned char *sha1)
 	return parse_pack_index_file(sha1, path);
 }
 
-struct packed_git *parse_pack_index_file(const unsigned char *sha1, char *idx_path)
+struct packed_git *parse_pack_index_file(const unsigned char *sha1,
+					 const char *idx_path)
 {
-	struct packed_git *p;
-	unsigned long idx_size;
-	void *idx_map;
-	char *path;
+	const char *path = sha1_pack_name(sha1);
+	struct packed_git *p = xmalloc(sizeof(*p) + strlen(path) + 2);
 
-	if (check_packed_git_idx(idx_path, &idx_size, &idx_map))
+	if (check_packed_git_idx(idx_path, p)) {
+		free(p);
 		return NULL;
+	}
 
-	path = sha1_pack_name(sha1);
-
-	p = xmalloc(sizeof(*p) + strlen(path) + 2);
 	strcpy(p->pack_name, path);
-	p->index_size = idx_size;
 	p->pack_size = 0;
-	p->index_base = idx_map;
 	p->next = NULL;
 	p->pack_base = NULL;
 	p->pack_last_used = 0;
@@ -1175,24 +1180,27 @@ int num_packed_objects(const struct packed_git *p)
 int nth_packed_object_sha1(const struct packed_git *p, int n,
 			   unsigned char* sha1)
 {
-	void *index = p->index_base + 256;
+	const unsigned char *index = p->index_data;
+	index += 4 * 256;
 	if (n < 0 || num_packed_objects(p) <= n)
 		return -1;
-	hashcpy(sha1, (unsigned char *) index + (24 * n) + 4);
+	hashcpy(sha1, index + 24 * n + 4);
 	return 0;
 }
 
 unsigned long find_pack_entry_one(const unsigned char *sha1,
 				  struct packed_git *p)
 {
-	unsigned int *level1_ofs = p->index_base;
+	const unsigned int *level1_ofs = p->index_data;
 	int hi = ntohl(level1_ofs[*sha1]);
 	int lo = ((*sha1 == 0x0) ? 0 : ntohl(level1_ofs[*sha1 - 1]));
-	void *index = p->index_base + 256;
+	const unsigned char *index = p->index_data;
+
+	index += 4 * 256;
 
 	do {
 		int mi = (lo + hi) / 2;
-		int cmp = hashcmp((unsigned char *)index + (24 * mi) + 4, sha1);
+		int cmp = hashcmp(index + 24 * mi + 4, sha1);
 		if (!cmp)
 			return ntohl(*((unsigned int *) ((char *) index + (24 * mi))));
 		if (cmp > 0)
