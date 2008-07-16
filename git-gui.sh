@@ -473,10 +473,10 @@ proc githook_read {hook_name args} {
 	set pchook [gitdir hooks $hook_name]
 	lappend args 2>@1
 
-	# On Cygwin [file executable] might lie so we need to ask
+	# On Windows [file executable] might lie so we need to ask
 	# the shell if the hook is executable.  Yes that's annoying.
 	#
-	if {[is_Cygwin]} {
+	if {[is_Windows]} {
 		upvar #0 _sh interp
 		if {![info exists interp]} {
 			set interp [_which sh]
