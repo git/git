@@ -336,6 +336,7 @@ extern struct packed_git {
 	unsigned long pack_size;
 	const void *index_data;
 	void *pack_base;
+	unsigned int num_objects;
 	int index_version;
 	unsigned int pack_last_used;
 	unsigned int pack_use_cnt;
@@ -387,7 +388,6 @@ extern struct packed_git *find_sha1_pack(const unsigned char *sha1,
 extern int use_packed_git(struct packed_git *);
 extern void unuse_packed_git(struct packed_git *);
 extern struct packed_git *add_packed_git(char *, int, int);
-extern int num_packed_objects(const struct packed_git *p);
 extern const unsigned char *nth_packed_object_sha1(const struct packed_git *, unsigned int);
 extern unsigned long find_pack_entry_one(const unsigned char *, struct packed_git *);
 extern void *unpack_entry_gently(struct packed_git *, unsigned long, char *, unsigned long *);

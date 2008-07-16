@@ -458,6 +458,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 	p->index_version = 1;
 	p->index_data = idx_map;
 	p->index_size = idx_size;
+	p->num_objects = nr;
 	return 0;
 }
 
@@ -1171,18 +1172,12 @@ void *unpack_entry_gently(struct packed_git *p, unsigned long offset,
 	}
 }
 
-int num_packed_objects(const struct packed_git *p)
-{
-	/* See check_packed_git_idx() */
-	return (p->index_size - 20 - 20 - 4*256) / 24;
-}
-
 const unsigned char *nth_packed_object_sha1(const struct packed_git *p,
 					    unsigned int n)
 {
 	const unsigned char *index = p->index_data;
 	index += 4 * 256;
-	if (num_packed_objects(p) <= n)
+	if (n >= p->num_objects)
 		return NULL;
 	return index + 24 * n + 4;
 }

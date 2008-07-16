@@ -550,7 +550,7 @@ int main(int argc, char **argv)
 			verify_pack(p, 0);
 
 		for (p = packed_git; p; p = p->next) {
-			int num = num_packed_objects(p);
+			int num = p->num_objects;
 			for (i = 0; i < num; i++)
 				fsck_sha1(nth_packed_object_sha1(p, i));
 		}

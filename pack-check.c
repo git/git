@@ -22,10 +22,10 @@ static int verify_packfile(struct packed_git *p)
 		return error("Packfile version %d unsupported",
 			     ntohl(hdr->hdr_version));
 	nr_objects = ntohl(hdr->hdr_entries);
-	if (num_packed_objects(p) != nr_objects)
+	if (p->num_objects != nr_objects)
 		return error("Packfile claims to have %d objects, "
 			     "while idx size expects %d", nr_objects,
-			     num_packed_objects(p));
+			     p->num_objects);
 
 	/* Check integrity of pack data with its SHA-1 checksum */
 	SHA1_Init(&ctx);
