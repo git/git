@@ -214,7 +214,7 @@ is_abbreviated:
 	return -2;
 }
 
-void check_typos(const char *arg, const struct option *options)
+static void check_typos(const char *arg, const struct option *options)
 {
 	if (strlen(arg) < 3)
 		return;
