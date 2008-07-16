@@ -202,6 +202,9 @@ sig_handler_t mingw_signal(int sig, sig_handler_t handler);
 #define PATH_SEP ';'
 #define PRIuMAX "I64u"
 
+void mingw_open_html(const char *path);
+#define open_html mingw_open_html
+
 /*
  * helpers
  */
