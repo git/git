@@ -289,7 +289,7 @@ static int fsck_tag(struct tag *tag)
 	return 0;
 }
 
-static int fsck_sha1(unsigned char *sha1)
+static int fsck_sha1(const unsigned char *sha1)
 {
 	struct object *obj = parse_object(sha1);
 	if (!obj)
@@ -551,11 +551,8 @@ int main(int argc, char **argv)
 
 		for (p = packed_git; p; p = p->next) {
 			int num = num_packed_objects(p);
-			for (i = 0; i < num; i++) {
-				unsigned char sha1[20];
-				nth_packed_object_sha1(p, i, sha1);
-				fsck_sha1(sha1);
-			}
+			for (i = 0; i < num; i++)
+				fsck_sha1(nth_packed_object_sha1(p, i));
 		}
 	}
 
