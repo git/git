@@ -22,6 +22,7 @@ p=              pass it through git-apply
 resolvemsg=     override error message when patch failure occurs
 r,resolved      to be used after a patch failure
 skip            skip the current patch
+abort           restore the original branch and abort the patching operation.
 rebasing        (internal use for git-rebase)"
 
 . git-sh-setup
@@ -54,6 +55,7 @@ stop_here_user_resolve () {
     fi
     echo "When you have resolved this problem run \"$cmdline --resolved\"."
     echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
+    echo "To restore the original branch and stop patching run \"$cmdline --abort\"."
 
     stop_here $1
 }
@@ -120,7 +122,7 @@ It does not apply to blobs recorded in its index."
 
 prec=4
 dotest="$GIT_DIR/rebase"
-sign= utf8=t keep= skip= interactive= resolved= binary= rebasing=
+sign= utf8=t keep= skip= interactive= resolved= binary= rebasing= abort=
 resolvemsg= resume=
 git_apply_opt=
 
@@ -145,6 +147,8 @@ do
 		resolved=t ;;
 	--skip)
 		skip=t ;;
+	--abort)
+		abort=t ;;
 	--rebasing)
 		rebasing=t threeway=t keep=t binary=t ;;
 	-d|--dotest)
@@ -177,7 +181,7 @@ fi
 
 if test -d "$dotest"
 then
-	case "$#,$skip$resolved" in
+	case "$#,$skip$resolved$abort" in
 	0,*t*)
 		# Explicit resume command and we do not have file, so
 		# we are happy.
@@ -197,9 +201,18 @@ then
 	esac ||
 	die "previous rebase directory $dotest still exists but mbox given."
 	resume=yes
+
+	case "$abort" in
+	t)
+		git rerere clear
+		git read-tree --reset -u HEAD ORIG_HEAD
+		git reset ORIG_HEAD
+		rm -fr "$dotest"
+		exit ;;
+	esac
 else
-	# Make sure we are not given --skip nor --resolved
-	test ",$skip,$resolved," = ,,, ||
+	# Make sure we are not given --skip, --resolved, nor --abort
+	test "$skip$resolved$abort" = "" ||
 		die "Resolve operation not in progress, we are not resuming."
 
 	# Start afresh.

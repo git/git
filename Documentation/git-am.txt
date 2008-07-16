@@ -13,7 +13,7 @@ SYNOPSIS
          [--3way] [--interactive] [--binary]
          [--whitespace=<option>] [-C<n>] [-p<n>]
 	 [<mbox> | <Maildir>...]
-'git am' (--skip | --resolved)
+'git am' (--skip | --resolved | --abort)
 
 DESCRIPTION
 -----------
@@ -98,6 +98,9 @@ default.   You could use `--no-utf8` to override this.
 	standard message informing you to use `--resolved`
 	or `--skip` to handle the failure.  This is solely
 	for internal use between 'git-rebase' and 'git-am'.
+
+--abort::
+	Restore the original branch and abort the patching operation.
 
 DISCUSSION
 ----------
