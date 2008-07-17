@@ -1298,7 +1298,7 @@ check: common-cmds.h
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
 
 remove-dashes:
-	./fixup-builtins $(BUILT_INS)
+	./fixup-builtins $(BUILT_INS) $(PROGRAMS) $(SCRIPTS)
 
 ### Installation rules
 
