@@ -801,6 +801,18 @@ sub req_co
 
     argsplit("co");
 
+    # Provide list of modules, if -c was used.
+    if (exists $state->{opt}{c}) {
+        my $showref = `git show-ref --heads`;
+        for my $line (split '\n', $showref) {
+            if ( $line =~ m% refs/heads/(.*)$% ) {
+                print "M $1\t$1\n";
+            }
+        }
+        print "ok\n";
+        return 1;
+    }
+
     my $module = $state->{args}[0];
     $state->{module} = $module;
     my $checkout_path = $module;
