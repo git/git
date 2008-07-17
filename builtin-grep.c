@@ -427,33 +427,35 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 	struct name_entry entry;
 	char *down;
 	int tn_len = strlen(tree_name);
-	char *path_buf = xmalloc(PATH_MAX + tn_len + 100);
+	struct strbuf pathbuf;
+
+	strbuf_init(&pathbuf, PATH_MAX + tn_len);
 
 	if (tn_len) {
-		tn_len = sprintf(path_buf, "%s:", tree_name);
-		down = path_buf + tn_len;
-		strcat(down, base);
+		strbuf_add(&pathbuf, tree_name, tn_len);
+		strbuf_addch(&pathbuf, ':');
+		tn_len = pathbuf.len;
 	}
-	else {
-		down = path_buf;
-		strcpy(down, base);
-	}
-	len = strlen(path_buf);
+	strbuf_addstr(&pathbuf, base);
+	len = pathbuf.len;
 
 	while (tree_entry(tree, &entry)) {
-		strcpy(path_buf + len, entry.path);
+		int te_len = tree_entry_len(entry.path, entry.sha1);
+		pathbuf.len = len;
+		strbuf_add(&pathbuf, entry.path, te_len);
 
 		if (S_ISDIR(entry.mode))
 			/* Match "abc/" against pathspec to
 			 * decide if we want to descend into "abc"
 			 * directory.
 			 */
-			strcpy(path_buf + len + tree_entry_len(entry.path, entry.sha1), "/");
+			strbuf_addch(&pathbuf, '/');
 
+		down = pathbuf.buf + tn_len;
 		if (!pathspec_matches(paths, down))
 			;
 		else if (S_ISREG(entry.mode))
-			hit |= grep_sha1(opt, entry.sha1, path_buf, tn_len);
+			hit |= grep_sha1(opt, entry.sha1, pathbuf.buf, tn_len);
 		else if (S_ISDIR(entry.mode)) {
 			enum object_type type;
 			struct tree_desc sub;
@@ -469,6 +471,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			free(data);
 		}
 	}
+	strbuf_release(&pathbuf);
 	return hit;
 }
 

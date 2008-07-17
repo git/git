@@ -1884,7 +1884,7 @@ sub req_annotate
     }
 
     # done; get out of the tempdir
-    cleanupWorkDir();
+    cleanupWorkTree();
 
     print "ok\n";
 
