@@ -43,7 +43,7 @@ test_expect_success "detection of case insensitive filesystem during repo init" 
 else
 test_expect_success "detection of case insensitive filesystem during repo init" '
 
-	! git config --bool core.ignorecase >/dev/null ||
+	test_must_fail git config --bool core.ignorecase >/dev/null ||
 	test $(git config --bool core.ignorecase) = false
 '
 fi

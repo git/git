@@ -20,8 +20,8 @@
 #include "parse-options.h"
 
 static const char * const git_reset_usage[] = {
-	"git-reset [--mixed | --soft | --hard] [-q] [<commit>]",
-	"git-reset [--mixed] <commit> [--] <paths>...",
+	"git reset [--mixed | --soft | --hard] [-q] [<commit>]",
+	"git reset [--mixed] <commit> [--] <paths>...",
 	NULL
 };
 

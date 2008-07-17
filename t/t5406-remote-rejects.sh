@@ -17,7 +17,7 @@ test_expect_success 'setup' '
 	git commit -a -m 2
 '
 
-test_expect_success 'push reports error' '! git push 2>stderr'
+test_expect_success 'push reports error' 'test_must_fail git push 2>stderr'
 
 test_expect_success 'individual ref reports error' 'grep rejected stderr'
 

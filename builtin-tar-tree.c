@@ -8,7 +8,7 @@
 #include "quote.h"
 
 static const char tar_tree_usage[] =
-"git-tar-tree [--remote=<repo>] <tree-ish> [basedir]\n"
+"git tar-tree [--remote=<repo>] <tree-ish> [basedir]\n"
 "*** Note that this command is now deprecated; use git-archive instead.";
 
 int cmd_tar_tree(int argc, const char **argv, const char *prefix)

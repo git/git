@@ -63,7 +63,7 @@ test_expect_failure 'pretend we have fixed a known breakage' '
 
 # updating a new file without --add should fail.
 test_expect_success 'git update-index without --add should fail adding.' '
-    ! git update-index should-be-empty
+    test_must_fail git update-index should-be-empty
 '
 
 # and with --add it should succeed, even if it is empty (it used to fail).
@@ -83,7 +83,7 @@ test_expect_success \
 # Removing paths.
 rm -f should-be-empty full-of-directories
 test_expect_success 'git update-index without --remove should fail removing.' '
-    ! git update-index should-be-empty
+    test_must_fail git update-index should-be-empty
 '
 
 test_expect_success \
@@ -217,7 +217,7 @@ test_expect_success \
     'git update-index --index-info < badobjects'
 
 test_expect_success 'writing this tree without --missing-ok.' '
-    ! git write-tree
+    test_must_fail git write-tree
 '
 
 test_expect_success \

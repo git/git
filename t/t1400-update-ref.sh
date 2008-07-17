@@ -76,7 +76,7 @@ test_expect_success "delete $m (by HEAD)" '
 rm -f .git/$m
 
 test_expect_success '(not) create HEAD with old sha1' "
-	! git update-ref HEAD $A $B
+	test_must_fail git update-ref HEAD $A $B
 "
 test_expect_success "(not) prior created .git/$m" "
 	! test -f .git/$m
@@ -87,7 +87,7 @@ test_expect_success \
 	"create HEAD" \
 	"git update-ref HEAD $A"
 test_expect_success '(not) change HEAD with wrong SHA1' "
-	! git update-ref HEAD $B $Z
+	test_must_fail git update-ref HEAD $B $Z
 "
 test_expect_success "(not) changed .git/$m" "
 	! test $B"' = $(cat .git/'"$m"')

@@ -316,14 +316,14 @@ test_expect_success 'git-clean -d -X' '
 test_expect_success 'clean.requireForce defaults to true' '
 
 	git config --unset clean.requireForce &&
-	! git-clean
+	test_must_fail git clean
 
 '
 
 test_expect_success 'clean.requireForce' '
 
 	git config clean.requireForce true &&
-	! git-clean
+	test_must_fail git clean
 
 '
 

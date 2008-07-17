@@ -59,7 +59,7 @@ test_expect_success 'fast-export master~2..master' '
 		 test $MASTER != $(git rev-parse --verify refs/heads/partial) &&
 		 git diff master..partial &&
 		 git diff master^..partial^ &&
-		 ! git rev-parse partial~2)
+		 test_must_fail git rev-parse partial~2)
 
 '
 
@@ -125,7 +125,7 @@ test_expect_success 'set up faked signed tag' '
 
 test_expect_success 'signed-tags=abort' '
 
-	! git fast-export --signed-tags=abort sign-your-name
+	test_must_fail git fast-export --signed-tags=abort sign-your-name
 
 '
 

@@ -268,7 +268,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 {
 	static int keep_dashdash = 0;
 	static char const * const parseopt_usage[] = {
-		"git-rev-parse --parseopt [options] -- [<args>...]",
+		"git rev-parse --parseopt [options] -- [<args>...]",
 		NULL
 	};
 	static struct option parseopt_opts[] = {

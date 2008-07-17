@@ -85,12 +85,12 @@ test_expect_success '.gitignore is honored' '
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
-	! git add a.?? &&
+	test_must_fail git add a.?? &&
 	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
-	! git add d.?? &&
+	test_must_fail git add d.?? &&
 	! (git ls-files | grep "\\.ig")
 '
 

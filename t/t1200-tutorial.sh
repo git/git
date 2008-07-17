@@ -102,7 +102,7 @@ echo "Lots of fun" >>example
 git commit -m 'Some fun.' -i hello example
 
 test_expect_success 'git resolve now fails' '
-	! git merge -m "Merge work in mybranch" mybranch
+	test_must_fail git merge -m "Merge work in mybranch" mybranch
 '
 
 cat > hello << EOF

@@ -20,7 +20,7 @@
 #include "mailmap.h"
 #include "parse-options.h"
 
-static char blame_usage[] = "git-blame [options] [rev-opts] [rev] [--] file";
+static char blame_usage[] = "git blame [options] [rev-opts] [rev] [--] file";
 
 static const char *blame_opt_usage[] = {
 	blame_usage,

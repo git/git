@@ -126,7 +126,7 @@ verify_merge() {
 		echo "[OOPS] unmerged files"
 		false
 	fi &&
-	if ! git diff --exit-code
+	if test_must_fail git diff --exit-code
 	then
 		echo "[OOPS] working tree != index"
 		false

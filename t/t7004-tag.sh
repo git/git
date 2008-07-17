@@ -30,17 +30,17 @@ test_expect_success 'looking for a tag in an empty tree should fail' \
 	'! (tag_exists mytag)'
 
 test_expect_success 'creating a tag in an empty tree should fail' '
-	! git-tag mynotag &&
+	test_must_fail git-tag mynotag &&
 	! tag_exists mynotag
 '
 
 test_expect_success 'creating a tag for HEAD in an empty tree should fail' '
-	! git-tag mytaghead HEAD &&
+	test_must_fail git-tag mytaghead HEAD &&
 	! tag_exists mytaghead
 '
 
 test_expect_success 'creating a tag for an unknown revision should fail' '
-	! git-tag mytagnorev aaaaaaaaaaa &&
+	test_must_fail git-tag mytagnorev aaaaaaaaaaa &&
 	! tag_exists mytagnorev
 '
 
@@ -85,16 +85,16 @@ test_expect_success \
 
 test_expect_success \
 	'trying to create a tag with the name of one existing should fail' \
-	'! git tag mytag'
+	'test_must_fail git tag mytag'
 
 test_expect_success \
 	'trying to create a tag with a non-valid name should fail' '
 	test `git-tag -l | wc -l` -eq 1 &&
-	! git tag "" &&
-	! git tag .othertag &&
-	! git tag "other tag" &&
-	! git tag "othertag^" &&
-	! git tag "other~tag" &&
+	test_must_fail git tag "" &&
+	test_must_fail git tag .othertag &&
+	test_must_fail git tag "other tag" &&
+	test_must_fail git tag "othertag^" &&
+	test_must_fail git tag "other~tag" &&
 	test `git-tag -l | wc -l` -eq 1
 '
 
@@ -107,7 +107,7 @@ test_expect_success 'creating a tag using HEAD directly should succeed' '
 
 test_expect_success 'trying to delete an unknown tag should fail' '
 	! tag_exists unknown-tag &&
-	! git-tag -d unknown-tag
+	test_must_fail git-tag -d unknown-tag
 '
 
 cat >expect <<EOF
@@ -141,13 +141,13 @@ test_expect_success \
 	'trying to delete two tags, existing and not, should fail in the 2nd' '
 	tag_exists mytag &&
 	! tag_exists myhead &&
-	! git-tag -d mytag anothertag &&
+	test_must_fail git-tag -d mytag anothertag &&
 	! tag_exists mytag &&
 	! tag_exists myhead
 '
 
 test_expect_success 'trying to delete an already deleted tag should fail' \
-	'! git-tag -d mytag'
+	'test_must_fail git-tag -d mytag'
 
 # listing various tags with pattern matching:
 
@@ -266,15 +266,15 @@ test_expect_success \
 '
 
 test_expect_success 'trying to verify an unknown tag should fail' \
-	'! git-tag -v unknown-tag'
+	'test_must_fail git-tag -v unknown-tag'
 
 test_expect_success \
 	'trying to verify a non-annotated and non-signed tag should fail' \
-	'! git-tag -v non-annotated-tag'
+	'test_must_fail git-tag -v non-annotated-tag'
 
 test_expect_success \
 	'trying to verify many non-annotated or unknown tags, should fail' \
-	'! git-tag -v unknown-tag1 non-annotated-tag unknown-tag2'
+	'test_must_fail git-tag -v unknown-tag1 non-annotated-tag unknown-tag2'
 
 # creating annotated tags:
 
@@ -334,7 +334,7 @@ test_expect_success \
 	'trying to create a tag with a non-existing -F file should fail' '
 	! test -f nonexistingfile &&
 	! tag_exists notag &&
-	! git-tag -F nonexistingfile notag &&
+	test_must_fail git-tag -F nonexistingfile notag &&
 	! tag_exists notag
 '
 
@@ -343,11 +343,12 @@ test_expect_success \
 	echo "message file 1" >msgfile1 &&
 	echo "message file 2" >msgfile2 &&
 	! tag_exists msgtag &&
-	! git-tag -m "message 1" -F msgfile1 msgtag &&
+	test_must_fail git-tag -m "message 1" -F msgfile1 msgtag &&
 	! tag_exists msgtag &&
-	! git-tag -F msgfile1 -m "message 1" msgtag &&
+	test_must_fail git-tag -F msgfile1 -m "message 1" msgtag &&
 	! tag_exists msgtag &&
-	! git-tag -m "message 1" -F msgfile1 -m "message 2" msgtag &&
+	test_must_fail git-tag -m "message 1" -F msgfile1 \
+		-m "message 2" msgtag &&
 	! tag_exists msgtag
 '
 
@@ -591,19 +592,19 @@ fi
 test_expect_success \
 	'trying to verify an annotated non-signed tag should fail' '
 	tag_exists annotated-tag &&
-	! git-tag -v annotated-tag
+	test_must_fail git-tag -v annotated-tag
 '
 
 test_expect_success \
 	'trying to verify a file-annotated non-signed tag should fail' '
 	tag_exists file-annotated-tag &&
-	! git-tag -v file-annotated-tag
+	test_must_fail git-tag -v file-annotated-tag
 '
 
 test_expect_success \
 	'trying to verify two annotated non-signed tags should fail' '
 	tag_exists annotated-tag file-annotated-tag &&
-	! git-tag -v annotated-tag file-annotated-tag
+	test_must_fail git-tag -v annotated-tag file-annotated-tag
 '
 
 # creating and verifying signed tags:
@@ -651,13 +652,14 @@ test_expect_success 'sign with a given key id' '
 
 test_expect_success 'sign with an unknown id (1)' '
 
-	! git tag -u author@example.com -m "Another message" o-signed-tag
+	test_must_fail git tag -u author@example.com \
+		-m "Another message" o-signed-tag
 
 '
 
 test_expect_success 'sign with an unknown id (2)' '
 
-	! git tag -u DEADBEEF -m "Another message" o-signed-tag
+	test_must_fail git tag -u DEADBEEF -m "Another message" o-signed-tag
 
 '
 
@@ -718,7 +720,7 @@ test_expect_success \
 	'trying to create a signed tag with non-existing -F file should fail' '
 	! test -f nonexistingfile &&
 	! tag_exists nosigtag &&
-	! git-tag -s -F nonexistingfile nosigtag &&
+	test_must_fail git-tag -s -F nonexistingfile nosigtag &&
 	! tag_exists nosigtag
 '
 
@@ -730,10 +732,11 @@ test_expect_success 'verifying two signed tags in one command should succeed' \
 
 test_expect_success \
 	'verifying many signed and non-signed tags should fail' '
-	! git-tag -v signed-tag annotated-tag &&
-	! git-tag -v file-annotated-tag file-signed-tag &&
-	! git-tag -v annotated-tag file-signed-tag file-annotated-tag &&
-	! git-tag -v signed-tag annotated-tag file-signed-tag
+	test_must_fail git-tag -v signed-tag annotated-tag &&
+	test_must_fail git-tag -v file-annotated-tag file-signed-tag &&
+	test_must_fail git-tag -v annotated-tag \
+		file-signed-tag file-annotated-tag &&
+	test_must_fail git-tag -v signed-tag annotated-tag file-signed-tag
 '
 
 test_expect_success 'verifying a forged tag should fail' '
@@ -741,7 +744,7 @@ test_expect_success 'verifying a forged tag should fail' '
 		sed -e "s/signed-tag/forged-tag/" |
 		git mktag) &&
 	git tag forged-tag $forged &&
-	! git-tag -v forged-tag
+	test_must_fail git-tag -v forged-tag
 '
 
 # blank and empty messages for signed tags:
@@ -1031,7 +1034,7 @@ test_expect_success \
 git config user.signingkey BobTheMouse
 test_expect_success \
 	'git-tag -s fails if gpg is misconfigured' \
-	'! git tag -s -m tail tag-gpg-failure'
+	'test_must_fail git tag -s -m tail tag-gpg-failure'
 git config --unset user.signingkey
 
 # try to verify without gpg:
@@ -1039,7 +1042,7 @@ git config --unset user.signingkey
 rm -rf gpghome
 test_expect_success \
 	'verify signed tag fails when public key is not present' \
-	'! git-tag -v signed-tag'
+	'test_must_fail git-tag -v signed-tag'
 
 test_expect_success \
 	'git-tag -a fails if tag annotation is empty' '

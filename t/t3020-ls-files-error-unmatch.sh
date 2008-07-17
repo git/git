@@ -17,7 +17,7 @@ git-commit -m "add foo bar"
 
 test_expect_success \
     'git ls-files --error-unmatch should fail with unmatched path.' \
-    '! git ls-files --error-unmatch foo bar-does-not-match'
+    'test_must_fail git ls-files --error-unmatch foo bar-does-not-match'
 
 test_expect_success \
     'git ls-files --error-unmatch should succeed eith matched paths.' \

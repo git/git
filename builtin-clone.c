@@ -29,7 +29,7 @@
  *
  */
 static const char * const builtin_clone_usage[] = {
-	"git-clone [options] [--] <repo> [<dir>]",
+	"git clone [options] [--] <repo> [<dir>]",
 	NULL
 };
 

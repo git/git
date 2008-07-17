@@ -11,7 +11,7 @@
 #include "parse-options.h"
 
 static const char * const builtin_rm_usage[] = {
-	"git-rm [options] [--] <file>...",
+	"git rm [options] [--] <file>...",
 	NULL
 };
 

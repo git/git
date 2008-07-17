@@ -73,7 +73,7 @@ test_expect_failure 'create and delete remote branch' '
 	git push origin :dev &&
 	git branch -d -r origin/dev &&
 	git fetch &&
-	! git show-ref --verify refs/remotes/origin/dev
+	test_must_fail git show-ref --verify refs/remotes/origin/dev
 '
 
 stop_httpd
