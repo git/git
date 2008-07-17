@@ -15,14 +15,11 @@
 static const char archive_usage[] = \
 "git-archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";
 
-static struct archiver_desc
-{
-	const char *name;
-	write_archive_fn_t write_archive;
-	parse_extra_args_fn_t parse_extra;
-} archivers[] = {
-	{ "tar", write_tar_archive, NULL },
-	{ "zip", write_zip_archive, parse_extra_zip_args },
+#define USES_ZLIB_COMPRESSION 1
+
+const struct archiver archivers[] = {
+	{ "tar", write_tar_archive },
+	{ "zip", write_zip_archive, USES_ZLIB_COMPRESSION },
 };
 
 static int run_remote_archiver(const char *remote, int argc,
@@ -79,21 +76,15 @@ static int run_remote_archiver(const char *remote, int argc,
 	return !!rv;
 }
 
-static int init_archiver(const char *name, struct archiver *ar)
+static const struct archiver *lookup_archiver(const char *name)
 {
-	int rv = -1, i;
+	int i;
 
 	for (i = 0; i < ARRAY_SIZE(archivers); i++) {
-		if (!strcmp(name, archivers[i].name)) {
-			memset(ar, 0, sizeof(*ar));
-			ar->name = archivers[i].name;
-			ar->write_archive = archivers[i].write_archive;
-			ar->parse_extra = archivers[i].parse_extra;
-			rv = 0;
-			break;
-		}
+		if (!strcmp(name, archivers[i].name))
+			return &archivers[i];
 	}
-	return rv;
+	return NULL;
 }
 
 void parse_pathspec_arg(const char **pathspec, struct archiver_args *ar_args)
@@ -145,12 +136,12 @@ void parse_treeish_arg(const char **argv, struct archiver_args *ar_args,
 	ar_args->time = archive_time;
 }
 
-int parse_archive_args(int argc, const char **argv, struct archiver *ar)
+int parse_archive_args(int argc, const char **argv, const struct archiver **ar,
+		struct archiver_args *args)
 {
-	const char *extra_argv[MAX_EXTRA_ARGS];
-	int extra_argc = 0;
 	const char *format = "tar";
 	const char *base = "";
+	int compression_level = -1;
 	int verbose = 0;
 	int i;
 
@@ -178,29 +169,33 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 			i++;
 			break;
 		}
-		if (arg[0] == '-') {
-			if (extra_argc > MAX_EXTRA_ARGS - 1)
-				die("Too many extra options");
-			extra_argv[extra_argc++] = arg;
+		if (arg[0] == '-' && isdigit(arg[1]) && arg[2] == '\0') {
+			compression_level = arg[1] - '0';
 			continue;
 		}
+		if (arg[0] == '-')
+			die("Unknown argument: %s", arg);
 		break;
 	}
 
 	/* We need at least one parameter -- tree-ish */
 	if (argc - 1 < i)
 		usage(archive_usage);
-	if (init_archiver(format, ar) < 0)
+	*ar = lookup_archiver(format);
+	if (!*ar)
 		die("Unknown archive format '%s'", format);
 
-	if (extra_argc) {
-		if (!ar->parse_extra)
-			die("'%s' format does not handle %s",
-			    ar->name, extra_argv[0]);
-		ar->args.extra = ar->parse_extra(extra_argc, extra_argv);
+	if (compression_level != -1) {
+		if ((*ar)->flags & USES_ZLIB_COMPRESSION)
+			zlib_compression_level = compression_level;
+		else {
+			die("Argument not supported for format '%s': -%d",
+					format, compression_level);
+		}
 	}
-	ar->args.verbose = verbose;
-	ar->args.base = base;
+	args->verbose = verbose;
+	args->base = base;
+	args->baselen = strlen(base);
 
 	return i;
 }
@@ -238,7 +233,8 @@ static const char *extract_remote_arg(int *ac, const char **av)
 
 int cmd_archive(int argc, const char **argv, const char *prefix)
 {
-	struct archiver ar;
+	const struct archiver *ar = NULL;
+	struct archiver_args args;
 	int tree_idx;
 	const char *remote = NULL;
 
@@ -248,14 +244,13 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 
 	setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 
-	memset(&ar, 0, sizeof(ar));
-	tree_idx = parse_archive_args(argc, argv, &ar);
+	tree_idx = parse_archive_args(argc, argv, &ar, &args);
 	if (prefix == NULL)
 		prefix = setup_git_directory();
 
 	argv += tree_idx;
-	parse_treeish_arg(argv, &ar.args, prefix);
-	parse_pathspec_arg(argv + 1, &ar.args);
+	parse_treeish_arg(argv, &args, prefix);
+	parse_pathspec_arg(argv + 1, &args);
 
-	return ar.write_archive(&ar.args);
+	return ar->write_archive(&args);
 }

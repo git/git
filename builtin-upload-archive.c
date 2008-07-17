@@ -19,7 +19,8 @@ static const char lostchild[] =
 
 static int run_upload_archive(int argc, const char **argv, const char *prefix)
 {
-	struct archiver ar;
+	const struct archiver *ar;
+	struct archiver_args args;
 	const char *sent_argv[MAX_ARGS];
 	const char *arg_cmd = "argument ";
 	char *p, buf[4096];
@@ -65,12 +66,12 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 	sent_argv[sent_argc] = NULL;
 
 	/* parse all options sent by the client */
-	treeish_idx = parse_archive_args(sent_argc, sent_argv, &ar);
+	treeish_idx = parse_archive_args(sent_argc, sent_argv, &ar, &args);
 
-	parse_treeish_arg(sent_argv + treeish_idx, &ar.args, prefix);
-	parse_pathspec_arg(sent_argv + treeish_idx + 1, &ar.args);
+	parse_treeish_arg(sent_argv + treeish_idx, &args, prefix);
+	parse_pathspec_arg(sent_argv + treeish_idx + 1, &args);
 
-	return ar.write_archive(&ar.args);
+	return ar->write_archive(&args);
 }
 
 static void error_clnt(const char *fmt, ...)

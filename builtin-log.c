@@ -313,7 +313,7 @@ static int show_object(const unsigned char *sha1, int show_tag_object,
 
 static int show_tree_object(const unsigned char *sha1,
 		const char *base, int baselen,
-		const char *pathname, unsigned mode, int stage)
+		const char *pathname, unsigned mode, int stage, void *context)
 {
 	printf("%s%s\n", pathname, S_ISDIR(mode) ? "/" : "");
 	return 0;
@@ -366,7 +366,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 					name,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			read_tree_recursive((struct tree *)o, "", 0, 0, NULL,
-					show_tree_object);
+					show_tree_object, NULL);
 			break;
 		case OBJ_COMMIT:
 			rev.pending.nr = rev.pending.alloc = 0;

@@ -248,7 +248,7 @@ struct tree *write_tree_from_memory(void)
 
 static int save_files_dirs(const unsigned char *sha1,
 		const char *base, int baselen, const char *path,
-		unsigned int mode, int stage)
+		unsigned int mode, int stage, void *context)
 {
 	int len = strlen(path);
 	char *newpath = xmalloc(baselen + len + 1);
@@ -268,7 +268,7 @@ static int save_files_dirs(const unsigned char *sha1,
 static int get_files_dirs(struct tree *tree)
 {
 	int n;
-	if (read_tree_recursive(tree, "", 0, 0, NULL, save_files_dirs) != 0)
+	if (read_tree_recursive(tree, "", 0, 0, NULL, save_files_dirs, NULL))
 		return 0;
 	n = current_file_set.nr + current_directory_set.nr;
 	return n;
