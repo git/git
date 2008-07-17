@@ -225,10 +225,9 @@ static void cleanup_subject(struct strbuf *subject)
 			continue;
 		case '[':
 			if ((pos = strchr(subject->buf, ']'))) {
-				remove = pos - subject->buf + 1;
-				/* Don't remove too much. */
-				if (remove <= (subject->len - remove + 1) * 2) {
-					strbuf_remove(subject, 0, remove);
+				remove = pos - subject->buf;
+				if (remove <= (subject->len - remove) * 2) {
+					strbuf_remove(subject, 0, remove + 1);
 					continue;
 				}
 			} else
