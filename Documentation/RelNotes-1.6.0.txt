@@ -21,7 +21,9 @@ main git.git codebase.
 By default, packfiles created with this version uses delta-base-offset
 encoding introduced in v1.4.4.  Pack idx files are using version 2 that
 allows larger packs and added robustness thanks to its CRC checking,
-introduced in v1.5.2.
+introduced in v1.5.2 and v1.4.4.5.  If you want to keep your repositories
+backwards compatible past these versions, set repack.useDeltaBaseOffset
+to false or pack.indexVersion to 1, respectively.
 
 GIT_CONFIG, which was only documented as affecting "git config", but
 actually affected all git commands, now only affects "git config".
