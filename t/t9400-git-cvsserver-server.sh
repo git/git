@@ -470,4 +470,15 @@ test_expect_success 'cvs status (no subdirs in header)' '
     ! grep / <../out
 '
 
+#------------
+# CVS CHECKOUT
+#------------
+
+cd "$WORKDIR"
+test_expect_success 'cvs co -c (shows module database)' '
+    GIT_CONFIG="$git_config" cvs co -c > out &&
+    grep "^master[	 ]\+master$" < out &&
+    ! grep -v "^master[	 ]\+master$" < out
+'
+
 test_done
