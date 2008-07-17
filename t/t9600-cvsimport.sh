@@ -5,6 +5,7 @@ test_description='git-cvsimport basic tests'
 
 CVSROOT=$(pwd)/cvsroot
 export CVSROOT
+unset CVS_SERVER
 # for clean cvsps cache
 HOME=$(pwd)
 export HOME
