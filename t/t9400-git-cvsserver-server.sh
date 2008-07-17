@@ -438,6 +438,13 @@ test_expect_success 'cvs update (-p)' '
     test -z "$(cat failures)"
 '
 
+cd "$WORKDIR"
+test_expect_success 'cvs update (module list supports packed refs)' '
+    GIT_DIR="$SERVERDIR" git pack-refs --all &&
+    GIT_CONFIG="$git_config" cvs -n up -d 2> out &&
+    grep "cvs update: New directory \`master'\''" < out
+'
+
 #------------
 # CVS STATUS
 #------------
