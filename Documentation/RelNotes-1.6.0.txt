@@ -28,6 +28,10 @@ actually affected all git commands, now only affects "git config".
 GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
 not different from GIT_CONFIG in a useful way, is removed.
 
+The ".dotest" temporary area "git am" and "git rebase" use is now moved
+inside the $GIT_DIR, to avoid mistakes of adding it to the project by
+accident.
+
 An ancient merge strategy "stupid" has been removed.
 
 
@@ -67,7 +71,8 @@ Updates since v1.5.6
 
 (performance, robustness, sanity etc.)
 
-* even more documentation pages are now accessible via "man" and "git help".
+* index-pack used too much memory when dealing with a deep delta chain.
+  This has been optimized.
 
 * reduced excessive inlining to shrink size of the "git" binary.
 
@@ -78,6 +83,8 @@ Updates since v1.5.6
   fall back to these redundant objects when able.  In particular, "git
   repack -a -f" can be used to fix such a corruption as long as necessary
   objects are available.
+
+* Performance of "git-blame -C -C" operation is vastly improved.
 
 * git-clone does not create refs in loose form anymore (it behaves as
   if you immediately ran git-pack-refs after cloning).  This will help
@@ -91,6 +98,8 @@ Updates since v1.5.6
   "git commit" has been capable of this for quite some time.
 
 (usability, bells and whistles)
+
+* even more documentation pages are now accessible via "man" and "git help".
 
 * A new environment variable GIT_CEILING_DIRECTORIES can be used to stop
   the discovery process of the toplevel of working tree; this may be useful
@@ -188,6 +197,8 @@ Updates since v1.5.6
 
 (internal)
 
+* git-merge has been reimplemented in C.
+
 
 Fixes since v1.5.6
 ------------------
@@ -195,12 +206,8 @@ Fixes since v1.5.6
 All of the fixes in v1.5.6 maintenance series are included in
 this release, unless otherwise noted.
 
- * "git fetch" into an empty repository used to remind the fetch will
-   be huge by saying "no common commits", but it is already known by
-   the user anyway (need to backport 8cb560f to 'maint').
-
 ---
 exec >/var/tmp/1
-O=v1.5.6.3-350-g499027b
+O=v1.5.6.3-436-g1f8dc67
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
