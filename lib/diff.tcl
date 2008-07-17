@@ -411,6 +411,53 @@ proc apply_line {x y} {
 	set hh [lindex [split $hh ,] 0]
 	set hln [lindex [split $hh -] 1]
 
+	# There is a special situation to take care of. Consider this hunk:
+	#
+	#    @@ -10,4 +10,4 @@
+	#     context before
+	#    -old 1
+	#    -old 2
+	#    +new 1
+	#    +new 2
+	#     context after
+	#
+	# We used to keep the context lines in the order they appear in the
+	# hunk. But then it is not possible to correctly stage only
+	# "-old 1" and "+new 1" - it would result in this staged text:
+	#
+	#    context before
+	#    old 2
+	#    new 1
+	#    context after
+	#
+	# (By symmetry it is not possible to *un*stage "old 2" and "new 2".)
+	#
+	# We resolve the problem by introducing an asymmetry, namely, when
+	# a "+" line is *staged*, it is moved in front of the context lines
+	# that are generated from the "-" lines that are immediately before
+	# the "+" block. That is, we construct this patch:
+	#
+	#    @@ -10,4 +10,5 @@
+	#     context before
+	#    +new 1
+	#     old 1
+	#     old 2
+	#     context after
+	#
+	# But we do *not* treat "-" lines that are *un*staged in a special
+	# way.
+	#
+	# With this asymmetry it is possible to stage the change
+	# "old 1" -> "new 1" directly, and to stage the change
+	# "old 2" -> "new 2" by first staging the entire hunk and
+	# then unstaging the change "old 1" -> "new 1".
+
+	# This is non-empty if and only if we are _staging_ changes;
+	# then it accumulates the consecutive "-" lines (after converting
+	# them to context lines) in order to be moved after the "+" change
+	# line.
+	set pre_context {}
+
 	set n 0
 	set i_l [$ui_diff index "$i_l + 1 lines"]
 	set patch {}
@@ -422,19 +469,27 @@ proc apply_line {x y} {
 		    [$ui_diff compare $the_l < $next_l]} {
 			# the line to stage/unstage
 			set ln [$ui_diff get $i_l $next_l]
-			set patch "$patch$ln"
 			if {$c1 eq {-}} {
 				set n [expr $n+1]
+				set patch "$patch$pre_context$ln"
+			} else {
+				set patch "$patch$ln$pre_context"
 			}
+			set pre_context {}
 		} elseif {$c1 ne {-} && $c1 ne {+}} {
 			# context line
 			set ln [$ui_diff get $i_l $next_l]
-			set patch "$patch$ln"
+			set patch "$patch$pre_context$ln"
 			set n [expr $n+1]
+			set pre_context {}
 		} elseif {$c1 eq $to_context} {
 			# turn change line into context line
 			set ln [$ui_diff get "$i_l + 1 chars" $next_l]
-			set patch "$patch $ln"
+			if {$c1 eq {-}} {
+				set pre_context "$pre_context $ln"
+			} else {
+				set patch "$patch $ln"
+			}
 			set n [expr $n+1]
 		}
 		set i_l $next_l
