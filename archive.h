@@ -13,6 +13,7 @@ struct archiver_args {
 	time_t time;
 	const char **pathspec;
 	unsigned int verbose : 1;
+	int compression_level;
 };
 
 typedef int (*write_archive_fn_t)(struct archiver_args *);
