@@ -13,9 +13,14 @@ DESCRIPTION
 -----------
 
 A `gitignore` file specifies intentionally untracked files that
-git should ignore.  Each line in a `gitignore` file specifies a
-pattern.
+git should ignore.
+Note that all the `gitignore` files really concern only files
+that are not already tracked by git;
+in order to ignore uncommitted changes in already tracked files,
+please refer to the 'git update-index --assume-unchanged'
+documentation.
 
+Each line in a `gitignore` file specifies a pattern.
 When deciding whether to ignore a path, git normally checks
 `gitignore` patterns from multiple sources, with the following
 order of precedence, from highest to lowest (within one level of
