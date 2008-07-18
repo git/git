@@ -177,6 +177,6 @@ test_expect_success "clone shallow object count" \
 	"test \"count: 18\" = \"$(grep count count.shallow)\""
 
 test_expect_success "pull in shallow repo with missing merge base" \
-	"(cd shallow && ! git pull --depth 4 .. A)"
+	"(cd shallow && test_must_fail git pull --depth 4 .. A)"
 
 test_done

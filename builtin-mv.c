@@ -11,7 +11,7 @@
 #include "parse-options.h"
 
 static const char * const builtin_mv_usage[] = {
-	"git-mv [options] <source>... <destination>",
+	"git mv [options] <source>... <destination>",
 	NULL
 };
 

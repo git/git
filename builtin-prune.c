@@ -7,7 +7,7 @@
 #include "parse-options.h"
 
 static const char * const prune_usage[] = {
-	"git-prune [-n] [--expire <time>] [--] [<head>...]",
+	"git prune [-n] [--expire <time>] [--] [<head>...]",
 	NULL
 };
 static int show_only;

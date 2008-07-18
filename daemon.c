@@ -18,7 +18,7 @@ static int verbose;
 static int reuseaddr;
 
 static const char daemon_usage[] =
-"git-daemon [--verbose] [--syslog] [--export-all]\n"
+"git daemon [--verbose] [--syslog] [--export-all]\n"
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
 "           [--base-path=path] [--base-path-relaxed]\n"
 "           [--user-path | --user-path=path]\n"

@@ -12,7 +12,7 @@
 #include "parse-options.h"
 
 static const char * const builtin_fetch_usage[] = {
-	"git-fetch [options] [<repository> <refspec>...]",
+	"git fetch [options] [<repository> <refspec>...]",
 	NULL
 };
 

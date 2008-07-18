@@ -539,7 +539,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 }
 
 static char const * const fsck_usage[] = {
-	"git-fsck [options] [<object>...]",
+	"git fsck [options] [<object>...]",
 	NULL
 };
 

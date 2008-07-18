@@ -831,7 +831,7 @@ int opt_parse_sort(const struct option *opt, const char *arg, int unset)
 }
 
 static char const * const for_each_ref_usage[] = {
-	"git-for-each-ref [options] [<pattern>]",
+	"git for-each-ref [options] [<pattern>]",
 	NULL
 };
 

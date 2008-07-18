@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description=git-hash-object
+test_description="git-hash-object"
 
 . ./test-lib.sh
 

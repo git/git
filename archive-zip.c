@@ -9,11 +9,8 @@
 #include "builtin.h"
 #include "archive.h"
 
-static int verbose;
 static int zip_date;
 static int zip_time;
-static const struct commit *commit;
-static size_t base_len;
 
 static unsigned char *zip_dir;
 static unsigned int zip_dir_size;
@@ -128,33 +125,9 @@ static void *zlib_deflate(void *data, unsigned long size,
 	return buffer;
 }
 
-static char *construct_path(const char *base, int baselen,
-                            const char *filename, int isdir, int *pathlen)
-{
-	int filenamelen = strlen(filename);
-	int len = baselen + filenamelen;
-	char *path, *p;
-
-	if (isdir)
-		len++;
-	p = path = xmalloc(len + 1);
-
-	memcpy(p, base, baselen);
-	p += baselen;
-	memcpy(p, filename, filenamelen);
-	p += filenamelen;
-	if (isdir)
-		*p++ = '/';
-	*p = '\0';
-
-	*pathlen = len;
-
-	return path;
-}
-
-static int write_zip_entry(const unsigned char *sha1,
-                           const char *base, int baselen,
-                           const char *filename, unsigned mode, int stage)
+static int write_zip_entry(struct archiver_args *args,
+		const unsigned char *sha1, const char *path, size_t pathlen,
+		unsigned int mode, void *buffer, unsigned long size)
 {
 	struct zip_local_header header;
 	struct zip_dir_header dirent;
@@ -163,33 +136,20 @@ static int write_zip_entry(const unsigned char *sha1,
 	unsigned long uncompressed_size;
 	unsigned long crc;
 	unsigned long direntsize;
-	unsigned long size;
 	int method;
-	int result = -1;
-	int pathlen;
 	unsigned char *out;
-	char *path;
-	enum object_type type;
-	void *buffer = NULL;
 	void *deflated = NULL;
 
 	crc = crc32(0, NULL, 0);
 
-	path = construct_path(base, baselen, filename, S_ISDIR(mode), &pathlen);
-	if (is_archive_path_ignored(path + base_len))
-		return 0;
-	if (verbose)
-		fprintf(stderr, "%s\n", path);
 	if (pathlen > 0xffff) {
-		error("path too long (%d chars, SHA1: %s): %s", pathlen,
-		      sha1_to_hex(sha1), path);
-		goto out;
+		return error("path too long (%d chars, SHA1: %s): %s",
+				(int)pathlen, sha1_to_hex(sha1), path);
 	}
 
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		method = 0;
 		attr2 = 16;
-		result = (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
 		out = NULL;
 		uncompressed_size = 0;
 		compressed_size = 0;
@@ -199,19 +159,13 @@ static int write_zip_entry(const unsigned char *sha1,
 			(mode & 0111) ? ((mode) << 16) : 0;
 		if (S_ISREG(mode) && zlib_compression_level != 0)
 			method = 8;
-		result = 0;
-		buffer = sha1_file_to_archive(path + base_len, sha1, mode,
-				&type, &size, commit);
-		if (!buffer)
-			die("cannot read %s", sha1_to_hex(sha1));
 		crc = crc32(crc, buffer, size);
 		out = buffer;
 		uncompressed_size = size;
 		compressed_size = size;
 	} else {
-		error("unsupported file mode: 0%o (SHA1: %s)", mode,
-		      sha1_to_hex(sha1));
-		goto out;
+		return error("unsupported file mode: 0%o (SHA1: %s)", mode,
+				sha1_to_hex(sha1));
 	}
 
 	if (method == 8) {
@@ -278,12 +232,9 @@ static int write_zip_entry(const unsigned char *sha1,
 		zip_offset += compressed_size;
 	}
 
-out:
-	free(buffer);
 	free(deflated);
-	free(path);
 
-	return result;
+	return 0;
 }
 
 static void write_zip_trailer(const unsigned char *sha1)
@@ -316,43 +267,18 @@ static void dos_time(time_t *time, int *dos_date, int *dos_time)
 
 int write_zip_archive(struct archiver_args *args)
 {
-	int plen = strlen(args->base);
+	int err;
 
 	dos_time(&args->time, &zip_date, &zip_time);
 
 	zip_dir = xmalloc(ZIP_DIRECTORY_MIN_SIZE);
 	zip_dir_size = ZIP_DIRECTORY_MIN_SIZE;
-	verbose = args->verbose;
-	commit = args->commit;
-	base_len = args->base ? strlen(args->base) : 0;
 
-	if (args->base && plen > 0 && args->base[plen - 1] == '/') {
-		char *base = xstrdup(args->base);
-		int baselen = strlen(base);
-
-		while (baselen > 0 && base[baselen - 1] == '/')
-			base[--baselen] = '\0';
-		write_zip_entry(args->tree->object.sha1, "", 0, base, 040777, 0);
-		free(base);
-	}
-	read_tree_recursive(args->tree, args->base, plen, 0,
-			    args->pathspec, write_zip_entry);
-	write_zip_trailer(args->commit_sha1);
+	err = write_archive_entries(args, write_zip_entry);
+	if (!err)
+		write_zip_trailer(args->commit_sha1);
 
 	free(zip_dir);
 
-	return 0;
-}
-
-void *parse_extra_zip_args(int argc, const char **argv)
-{
-	for (; argc > 0; argc--, argv++) {
-		const char *arg = argv[0];
-
-		if (arg[0] == '-' && isdigit(arg[1]) && arg[2] == '\0')
-			zlib_compression_level = arg[1] - '0';
-		else
-			die("Unknown argument for zip format: %s", arg);
-	}
-	return NULL;
+	return err;
 }

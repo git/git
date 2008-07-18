@@ -174,6 +174,8 @@ pick_one_preserving_merges () {
 				new_parents="$new_parents $new_p"
 				;;
 			esac
+		else
+			new_parents="$new_parents $p"
 		fi
 	done
 	case $fast_forward in

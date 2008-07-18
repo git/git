@@ -61,7 +61,7 @@ static inline void strbuf_swap(struct strbuf *a, struct strbuf *b) {
 }
 
 /*----- strbuf size related -----*/
-static inline size_t strbuf_avail(struct strbuf *sb) {
+static inline size_t strbuf_avail(const struct strbuf *sb) {
 	return sb->alloc ? sb->alloc - sb->len - 1 : 0;
 }
 
@@ -77,8 +77,14 @@ static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
 #define strbuf_reset(sb)  strbuf_setlen(sb, 0)
 
 /*----- content related -----*/
+extern void strbuf_trim(struct strbuf *);
 extern void strbuf_rtrim(struct strbuf *);
-extern int strbuf_cmp(struct strbuf *, struct strbuf *);
+extern void strbuf_ltrim(struct strbuf *);
+extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
+extern void strbuf_tolower(struct strbuf *);
+
+extern struct strbuf **strbuf_split(const struct strbuf *, int delim);
+extern void strbuf_list_free(struct strbuf **);
 
 /*----- add data in your buffer -----*/
 static inline void strbuf_addch(struct strbuf *sb, int c) {
@@ -98,7 +104,7 @@ extern void strbuf_add(struct strbuf *, const void *, size_t);
 static inline void strbuf_addstr(struct strbuf *sb, const char *s) {
 	strbuf_add(sb, s, strlen(s));
 }
-static inline void strbuf_addbuf(struct strbuf *sb, struct strbuf *sb2) {
+static inline void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2) {
 	strbuf_add(sb, sb2->buf, sb2->len);
 }
 extern void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len);

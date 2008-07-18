@@ -4,8 +4,8 @@
 #include "parse-options.h"
 
 static const char * const git_update_ref_usage[] = {
-	"git-update-ref [options] -d <refname> [<oldval>]",
-	"git-update-ref [options]    <refname> <newval> [<oldval>]",
+	"git update-ref [options] -d <refname> [<oldval>]",
+	"git update-ref [options]    <refname> <newval> [<oldval>]",
 	NULL
 };
 

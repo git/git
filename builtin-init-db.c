@@ -354,7 +354,7 @@ static int guess_repository_type(const char *git_dir)
 }
 
 static const char init_db_usage[] =
-"git-init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]]";
+"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]]";
 
 /*
  * If you want to, you can share the DB area with any number of branches.

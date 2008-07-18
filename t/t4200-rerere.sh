@@ -45,7 +45,7 @@ git commit -q -a -m second
 
 test_expect_success 'nothing recorded without rerere' '
 	(rm -rf .git/rr-cache; git config rerere.enabled false) &&
-	! git merge first &&
+	test_must_fail git merge first &&
 	! test -d .git/rr-cache
 '
 
@@ -54,7 +54,7 @@ test_expect_success 'conflicting merge' '
 	git reset --hard &&
 	mkdir .git/rr-cache &&
 	git config --unset rerere.enabled &&
-	! git merge first
+	test_must_fail git merge first
 '
 
 sha1=$(sed -e 's/	.*//' .git/MERGE_RR)
@@ -65,7 +65,7 @@ test_expect_success 'rerere.enabled works, too' '
 	rm -rf .git/rr-cache &&
 	git config rerere.enabled true &&
 	git reset --hard &&
-	! git merge first &&
+	test_must_fail git merge first &&
 	grep ^=======$ $rr/preimage
 '
 
@@ -134,7 +134,7 @@ test_expect_success 'another conflicting merge' '
 	git checkout -b third master &&
 	git show second^:a1 | sed "s/To die: t/To die! T/" > a1 &&
 	git commit -q -a -m third &&
-	! git pull . first
+	test_must_fail git pull . first
 '
 
 git show first:a1 | sed 's/To die: t/To die! T/' > expect
@@ -189,7 +189,7 @@ test_expect_success 'file2 added differently in two branches' '
 	echo Bello > file2 &&
 	git add file2 &&
 	git commit -m version2 &&
-	! git merge fourth &&
+	test_must_fail git merge fourth &&
 	sha1=$(sed -e "s/	.*//" .git/MERGE_RR) &&
 	rr=.git/rr-cache/$sha1 &&
 	echo Cello > file2 &&

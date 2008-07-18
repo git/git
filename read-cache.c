@@ -528,7 +528,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		ce = create_alias_ce(ce, alias);
 	ce->ce_flags |= CE_ADDED;
 
-	/* It was suspected to be recily clean, but it turns out to be Ok */
+	/* It was suspected to be racily clean, but it turns out to be Ok */
 	was_same = (alias &&
 		    !ce_stage(alias) &&
 		    !hashcmp(alias->sha1, ce->sha1) &&

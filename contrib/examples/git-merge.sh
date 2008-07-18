@@ -5,8 +5,8 @@
 
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
-git-merge [options] <remote>...
-git-merge [options] <msg> HEAD <remote>
+git merge [options] <remote>...
+git merge [options] <msg> HEAD <remote>
 --
 stat                 show a diffstat at the end of the merge
 n                    don't show a diffstat at the end of the merge

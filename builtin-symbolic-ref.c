@@ -4,7 +4,7 @@
 #include "parse-options.h"
 
 static const char * const git_symbolic_ref_usage[] = {
-	"git-symbolic-ref [options] name [ref]",
+	"git symbolic-ref [options] name [ref]",
 	NULL
 };
 

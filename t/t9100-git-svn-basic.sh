@@ -63,7 +63,7 @@ test_expect_success "$name" "
 	git update-index --remove dir/file &&
 	git update-index --add dir/file/file &&
 	git commit -m '$name' &&
-	! git-svn set-tree --find-copies-harder --rmdir \
+	test_must_fail git-svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch" || true
 
 
@@ -77,7 +77,7 @@ test_expect_success "$name" '
 	git update-index --remove -- bar/zzz &&
 	git update-index --add -- bar &&
 	git commit -m "$name" &&
-	! git-svn set-tree --find-copies-harder --rmdir \
+	test_must_fail git-svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch2' || true
 
 
@@ -91,7 +91,7 @@ test_expect_success "$name" '
 	echo yyy > bar/zzz/yyy &&
 	git update-index --add bar/zzz/yyy &&
 	git commit -m "$name" &&
-	! git-svn set-tree --find-copies-harder --rmdir \
+	test_must_fail git-svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch3' || true
 
 
@@ -105,7 +105,7 @@ test_expect_success "$name" '
 	echo asdf > dir &&
 	git update-index --add -- dir &&
 	git commit -m "$name" &&
-	! git-svn set-tree --find-copies-harder --rmdir \
+	test_must_fail git-svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch4' || true
 
 
@@ -216,7 +216,7 @@ test_expect_success "$name" "test_cmp a expected"
 test_expect_success 'exit if remote refs are ambigious' "
         git config --add svn-remote.svn.fetch \
                               bar:refs/remotes/git-svn &&
-	! git-svn migrate
+	test_must_fail git-svn migrate
 "
 
 test_expect_success 'exit if init-ing a would clobber a URL' '
@@ -224,7 +224,7 @@ test_expect_success 'exit if init-ing a would clobber a URL' '
         svn mkdir -m "mkdir bar" "${svnrepo}2/bar" &&
         git config --unset svn-remote.svn.fetch \
                                 "^bar:refs/remotes/git-svn$" &&
-	! git-svn init "${svnrepo}2/bar"
+	test_must_fail git-svn init "${svnrepo}2/bar"
         '
 
 test_expect_success \

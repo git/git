@@ -17,7 +17,7 @@ test_expect_success 'setup bare' '
 '
 
 test_expect_success 'hard reset is not allowed' '
-	! git reset --hard HEAD^
+	test_must_fail  git reset --hard HEAD^
 '
 
 test_expect_success 'soft reset is allowed' '

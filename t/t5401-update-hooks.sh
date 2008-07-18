@@ -61,7 +61,8 @@ EOF
 chmod u+x victim/.git/hooks/post-update
 
 test_expect_success push '
-    ! git-send-pack --force ./victim/.git master tofail >send.out 2>send.err
+	test_must_fail git-send-pack --force ./victim/.git \
+		master tofail >send.out 2>send.err
 '
 
 test_expect_success 'updated as expected' '

@@ -78,13 +78,13 @@ test_expect_success \
 test_expect_success 'git branch -m o/o o should fail when o/p exists' '
 	git branch o/o &&
         git branch o/p &&
-	! git branch -m o/o o
+	test_must_fail git branch -m o/o o
 '
 
 test_expect_success 'git branch -m q r/q should fail when r exists' '
 	git branch q &&
 	git branch r &&
-	! git branch -m q r/q
+	test_must_fail git branch -m q r/q
 '
 
 mv .git/config .git/config-saved
@@ -110,7 +110,7 @@ test_expect_success \
 
 test_expect_success 'config information was renamed, too' \
 	"test $(git config branch.s.dummy) = Hello &&
-	 ! git config branch.s/s/dummy"
+	 test_must_fail git config branch.s/s/dummy"
 
 test "$no_symlinks" || {
 test_expect_success \
@@ -118,7 +118,7 @@ test_expect_success \
      git branch -l u &&
      mv .git/logs/refs/heads/u real-u &&
      ln -s real-u .git/logs/refs/heads/u &&
-     ! git branch -m u v
+     test_must_fail git branch -m u v
 '
 }
 

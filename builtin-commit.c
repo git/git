@@ -26,12 +26,12 @@
 #include "unpack-trees.h"
 
 static const char * const builtin_commit_usage[] = {
-	"git-commit [options] [--] <filepattern>...",
+	"git commit [options] [--] <filepattern>...",
 	NULL
 };
 
 static const char * const builtin_status_usage[] = {
-	"git-status [options] [--] <filepattern>...",
+	"git status [options] [--] <filepattern>...",
 	NULL
 };
 

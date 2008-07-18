@@ -27,7 +27,7 @@ test_expect_success 'setup and corrupt repository' '
 '
 
 test_expect_success 'fsck fails' '
-	! git fsck
+	test_must_fail git fsck
 '
 
 test_expect_success 'upload-pack fails due to error in pack-objects' '
@@ -46,7 +46,7 @@ test_expect_success 'corrupt repo differently' '
 '
 
 test_expect_success 'fsck fails' '
-	! git fsck
+	test_must_fail git fsck
 '
 test_expect_success 'upload-pack fails due to error in rev-list' '
 
@@ -66,7 +66,7 @@ test_expect_success 'create empty repository' '
 
 test_expect_success 'fetch fails' '
 
-	! git fetch .. master
+	test_must_fail git fetch .. master
 
 '
 

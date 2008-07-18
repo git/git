@@ -75,7 +75,7 @@ test_expect_success 'init should register submodule url in .git/config' '
 	then
 		echo "[OOPS] init succeeded but submodule url is wrong"
 		false
-	elif ! git config submodule.example.url ./.subrepo
+	elif test_must_fail git config submodule.example.url ./.subrepo
 	then
 		echo "[OOPS] init succeeded but update of url failed"
 		false

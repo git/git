@@ -182,7 +182,7 @@ test_expect_success 'am -3 falls back to 3-way merge' '
 
 test_expect_success 'am pauses on conflict' '
 	git checkout lorem2^^ &&
-	! git am lorem-move.patch &&
+	test_must_fail git am lorem-move.patch &&
 	test -d .git/rebase
 '
 
@@ -195,7 +195,7 @@ test_expect_success 'am --skip works' '
 
 test_expect_success 'am --resolved works' '
 	git checkout lorem2^^ &&
-	! git am lorem-move.patch &&
+	test_must_fail git am lorem-move.patch &&
 	test -d .git/rebase &&
 	echo resolved >>file &&
 	git add file &&
@@ -212,13 +212,13 @@ test_expect_success 'am takes patches from a Pine mailbox' '
 '
 
 test_expect_success 'am fails on mail without patch' '
-	! git am <failmail &&
+	test_must_fail git am <failmail &&
 	rm -r .git/rebase/
 '
 
 test_expect_success 'am fails on empty patch' '
 	echo "---" >>failmail &&
-	! git am <failmail &&
+	test_must_fail git am <failmail &&
 	git am --skip &&
 	! test -d .git/rebase
 '

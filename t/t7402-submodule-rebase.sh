@@ -71,7 +71,7 @@ test_expect_success 'rebase with dirty file and submodule fails' '
 	test_tick &&
 	git commit -m rewrite file &&
 	echo dirty > file &&
-	! git rebase --onto HEAD~2 HEAD^
+	test_must_fail git rebase --onto HEAD~2 HEAD^
 
 '
 

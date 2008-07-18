@@ -1,7 +1,7 @@
 #!/bin/sh
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
-git-quiltimport [options]
+git quiltimport [options]
 --
 n,dry-run     dry run
 author=       author name and email address for patches without any

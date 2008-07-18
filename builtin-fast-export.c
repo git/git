@@ -18,7 +18,7 @@
 #include "parse-options.h"
 
 static const char *fast_export_usage[] = {
-	"git-fast-export [rev-list-opts]",
+	"git fast-export [rev-list-opts]",
 	NULL
 };
 
