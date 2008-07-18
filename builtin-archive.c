@@ -7,10 +7,8 @@
 #include "archive.h"
 #include "commit.h"
 #include "tree-walk.h"
-#include "exec_cmd.h"
 #include "pkt-line.h"
 #include "sideband.h"
-#include "attr.h"
 
 static const char archive_usage[] = \
 "git archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";

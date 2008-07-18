@@ -2,9 +2,7 @@
  * Copyright (c) 2005, 2006 Rene Scharfe
  */
 #include "cache.h"
-#include "commit.h"
 #include "tar.h"
-#include "builtin.h"
 #include "archive.h"
 
 #define RECORDSIZE	(512)

@@ -2,11 +2,6 @@
  * Copyright (c) 2006 Rene Scharfe
  */
 #include "cache.h"
-#include "commit.h"
-#include "blob.h"
-#include "tree.h"
-#include "quote.h"
-#include "builtin.h"
 #include "archive.h"
 
 static int zip_date;
