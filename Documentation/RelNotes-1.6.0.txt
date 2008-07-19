@@ -136,6 +136,9 @@ Updates since v1.5.6
 * git-archive can be told to omit certain paths from its output using
   export-ignore attributes.
 
+* git-archive uses the zlib default compression level when creating
+  zip archive.
+
 * With -v option, git-branch describes the remote tracking statistics
   similar to the way git-checkout reports by how many commits your branch
   is ahead/behind.
@@ -155,6 +158,8 @@ Updates since v1.5.6
 * git-clone can clone from a remote whose URL would be rewritten by
   configuration stored in $HOME/.gitconfig now.
 
+* git-cvsserver learned to respond to "cvs co -c".
+
 * git-diff --check now checks leftover merge conflict markers.
 
 * When remote side used to have branch 'foo' and git-fetch finds that now
@@ -165,6 +170,8 @@ Updates since v1.5.6
 
 * fast-export learned to export and import marks file; this can be used to
   interface with fast-import incrementally.
+
+* fast-import and fast-export learned to export and import gitlinks.
 
 * git-rebase records the original tip of branch in ORIG_HEAD before it is
   rewound.
@@ -210,6 +217,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.5.6.3-436-g1f8dc67
+O=v1.5.6.4-432-g6796399
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
