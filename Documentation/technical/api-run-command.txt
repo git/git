@@ -30,7 +30,7 @@ Functions
 	start_command() followed by finish_command(). Takes a pointer
 	to a `struct child_process` that specifies the details.
 
-`run_command_v_opt`, `run_command_v_opt_dir`, `run_command_v_opt_cd_env`::
+`run_command_v_opt`, `run_command_v_opt_cd`, `run_command_v_opt_cd_env`::
 
 	Convenience functions that encapsulate a sequence of
 	start_command() followed by finish_command(). The argument argv

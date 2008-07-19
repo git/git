@@ -28,16 +28,20 @@ Fixes since v1.5.6.3
    be huge by saying "no common commits", but this was an unnecessary
    noise; it is already known by the user anyway.
 
+* "git-http-fetch" would have segfaulted when pack idx file retrieved
+  from the other side was corrupt.
+
+* "git-index-pack" used too much memory when dealing with a deep delta chain.
+
 * "git-mailinfo" (hence "git-am") did not correctly handle in-body [PATCH]
   line to override the commit title taken from the mail Subject header.
 
 * "git-rebase -i -p" lost parents that are not involved in the history
   being rewritten.
 
-Contains other various documentation fixes.
+* "git-rm" lost track of where the index file was when GIT_DIR was
+  specified as a relative path.
 
---
-exec >/var/tmp/1
-echo O=$(git describe maint)
-O=v1.5.6.3-21-gebcce31
-git shortlog --no-merges $O..maint
+* "git-rev-list --quiet" was not quiet as advertised.
+
+Contains other various documentation fixes.

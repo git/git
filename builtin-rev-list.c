@@ -590,6 +590,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
 	argc = setup_revisions(argc, argv, &revs, NULL);
 
+	quiet = DIFF_OPT_TST(&revs.diffopt, QUIET);
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
 
@@ -619,10 +620,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			if (read_from_stdin++)
 				die("--stdin given twice?");
 			read_revisions_from_stdin(&revs);
-			continue;
-		}
-		if (!strcmp(arg, "--quiet")) {
-			quiet = 1;
 			continue;
 		}
 		usage(rev_list_usage);

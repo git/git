@@ -217,4 +217,16 @@ test_expect_success 'Remove nonexistent file returns nonzero exit status' '
 	test_must_fail git rm nonexistent
 '
 
+test_expect_success 'Call "rm" from outside the work tree' '
+	mkdir repo &&
+	cd repo &&
+	git init &&
+	echo something > somefile &&
+	git add somefile &&
+	git commit -m "add a file" &&
+	(cd .. &&
+	 git --git-dir=repo/.git --work-tree=repo rm somefile) &&
+	test_must_fail git ls-files --error-unmatch somefile
+'
+
 test_done
