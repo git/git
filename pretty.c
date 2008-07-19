@@ -3,6 +3,8 @@
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
+#include "path-list.h"
+#include "mailmap.h"
 
 static char *user_format;
 
@@ -288,6 +290,25 @@ static char *logmsg_reencode(const struct commit *commit,
 	return out;
 }
 
+static int mailmap_name(struct strbuf *sb, const char *email)
+{
+	static struct path_list *mail_map;
+	char buffer[1024];
+
+	if (!mail_map) {
+		mail_map = xcalloc(1, sizeof(*mail_map));
+		read_mailmap(mail_map, ".mailmap", NULL);
+	}
+
+	if (!mail_map->nr)
+		return -1;
+
+	if (!map_email(mail_map, email, buffer, sizeof(buffer)))
+		return -1;
+	strbuf_addstr(sb, buffer);
+	return 0;
+}
+
 static size_t format_person_part(struct strbuf *sb, char part,
                                const char *msg, int len)
 {
@@ -309,10 +330,12 @@ static size_t format_person_part(struct strbuf *sb, char part,
 	if (end >= len - 2)
 		goto skip;
 
-	if (part == 'n') {	/* name */
+	if (part == 'n' || part == 'N') {	/* name */
 		while (end > 0 && isspace(msg[end - 1]))
 			end--;
-		strbuf_add(sb, msg, end);
+		if (part != 'N' || !msg[end] || !msg[end + 1] ||
+		    mailmap_name(sb, msg + end + 2) < 0)
+			strbuf_add(sb, msg, end);
 		return placeholder_len;
 	}
 	start = ++end; /* save email start position */

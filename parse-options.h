@@ -28,6 +28,7 @@ enum parse_opt_option_flags {
 	PARSE_OPT_NOARG   = 2,
 	PARSE_OPT_NONEG   = 4,
 	PARSE_OPT_HIDDEN  = 8,
+	PARSE_OPT_LASTARG_DEFAULT = 16,
 };
 
 struct option;

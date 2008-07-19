@@ -159,19 +159,19 @@ test_expect_success 'stop on conflicting pick' '
 	git tag new-branch1 &&
 	test_must_fail git rebase -i master &&
 	test "$(git rev-parse HEAD~3)" = "$(git rev-parse master)" &&
-	test_cmp expect .git/.dotest-merge/patch &&
+	test_cmp expect .git/rebase-merge/patch &&
 	test_cmp expect2 file1 &&
 	test "$(git-diff --name-status |
 		sed -n -e "/^U/s/^U[^a-z]*//p")" = file1 &&
-	test 4 = $(grep -v "^#" < .git/.dotest-merge/done | wc -l) &&
-	test 0 = $(grep -c "^[^#]" < .git/.dotest-merge/git-rebase-todo)
+	test 4 = $(grep -v "^#" < .git/rebase-merge/done | wc -l) &&
+	test 0 = $(grep -c "^[^#]" < .git/rebase-merge/git-rebase-todo)
 '
 
 test_expect_success 'abort' '
 	git rebase --abort &&
 	test $(git rev-parse new-branch1) = $(git rev-parse HEAD) &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
-	! test -d .git/.dotest-merge
+	! test -d .git/rebase-merge
 '
 
 test_expect_success 'retain authorship' '

@@ -9,14 +9,14 @@ test_description='git apply test patches with multiple fragments.
 '
 . ./test-lib.sh
 
+cmp () {
+	diff -w "$@"
+}
+
 cp ../t4109/patch1.patch .
 cp ../t4109/patch2.patch .
 cp ../t4109/patch3.patch .
 cp ../t4109/patch4.patch .
-
-cmp () {
-	diff -w "$@"
-}
 
 test_expect_success "S = git apply (1)" \
     'git apply patch1.patch patch2.patch'

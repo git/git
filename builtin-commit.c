@@ -22,6 +22,7 @@
 #include "utf8.h"
 #include "parse-options.h"
 #include "path-list.h"
+#include "rerere.h"
 #include "unpack-trees.h"
 
 static const char * const builtin_commit_usage[] = {

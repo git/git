@@ -1995,9 +1995,13 @@ if {[is_enabled multicommit]} {
 	}
 }
 
-.mbar.repository add command -label [mc Quit] \
-	-command do_quit \
-	-accelerator $M1T-Q
+if {[is_MacOSX]} {
+	proc ::tk::mac::Quit {args} { do_quit }
+} else {
+	.mbar.repository add command -label [mc Quit] \
+		-command do_quit \
+		-accelerator $M1T-Q
+}
 
 # -- Edit Menu
 #

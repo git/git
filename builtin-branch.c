@@ -46,7 +46,12 @@ enum color_branch {
 	COLOR_BRANCH_CURRENT = 4,
 };
 
-static int mergefilter = -1;
+static enum merge_filter {
+	NO_FILTER = 0,
+	SHOW_NOT_MERGED,
+	SHOW_MERGED,
+} merge_filter;
+static unsigned char merge_filter_ref[20];
 
 static int parse_branch_color_slot(const char *var, int ofs)
 {
@@ -234,13 +239,15 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	if ((kind & ref_list->kinds) == 0)
 		return 0;
 
-	if (mergefilter > -1) {
+	if (merge_filter != NO_FILTER) {
 		branch.item = lookup_commit_reference_gently(sha1, 1);
 		if (!branch.item)
 			die("Unable to lookup tip of branch %s", refname);
-		if (mergefilter == 0 && has_commit(head_sha1, &branch))
+		if (merge_filter == SHOW_NOT_MERGED &&
+		    has_commit(merge_filter_ref, &branch))
 			return 0;
-		if (mergefilter == 1 && !has_commit(head_sha1, &branch))
+		if (merge_filter == SHOW_MERGED &&
+		    !has_commit(merge_filter_ref, &branch))
 			return 0;
 	}
 
@@ -443,6 +450,20 @@ static int opt_parse_with_commit(const struct option *opt, const char *arg, int 
 	return 0;
 }
 
+static int opt_parse_merge_filter(const struct option *opt, const char *arg, int unset)
+{
+	merge_filter = ((opt->long_name[0] == 'n')
+			? SHOW_NOT_MERGED
+			: SHOW_MERGED);
+	if (unset)
+		merge_filter = SHOW_NOT_MERGED; /* b/c for --no-merged */
+	if (!arg)
+		arg = "HEAD";
+	if (get_sha1(arg, merge_filter_ref))
+		die("malformed object name %s", arg);
+	return 0;
+}
+
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, rename = 0, force_create = 0;
@@ -460,13 +481,17 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
 		OPT_SET_INT('r', NULL,     &kinds, "act on remote-tracking branches",
 			REF_REMOTE_BRANCH),
-		OPT_CALLBACK(0, "contains", &with_commit, "commit",
-			     "print only branches that contain the commit",
-			     opt_parse_with_commit),
+		{
+			OPTION_CALLBACK, 0, "contains", &with_commit, "commit",
+			"print only branches that contain the commit",
+			PARSE_OPT_LASTARG_DEFAULT,
+			opt_parse_with_commit, (intptr_t)"HEAD",
+		},
 		{
 			OPTION_CALLBACK, 0, "with", &with_commit, "commit",
 			"print only branches that contain the commit",
-			PARSE_OPT_HIDDEN, opt_parse_with_commit,
+			PARSE_OPT_HIDDEN | PARSE_OPT_LASTARG_DEFAULT,
+			opt_parse_with_commit, (intptr_t) "HEAD",
 		},
 		OPT__ABBREV(&abbrev),
 
@@ -479,7 +504,18 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BIT('M', NULL, &rename, "move/rename a branch, even if target exists", 2),
 		OPT_BOOLEAN('l', NULL, &reflog, "create the branch's reflog"),
 		OPT_BOOLEAN('f', NULL, &force_create, "force creation (when already exists)"),
-		OPT_SET_INT(0, "merged", &mergefilter, "list only merged branches", 1),
+		{
+			OPTION_CALLBACK, 0, "no-merged", &merge_filter_ref,
+			"commit", "print only not merged branches",
+			PARSE_OPT_LASTARG_DEFAULT | PARSE_OPT_NONEG,
+			opt_parse_merge_filter, (intptr_t) "HEAD",
+		},
+		{
+			OPTION_CALLBACK, 0, "merged", &merge_filter_ref,
+			"commit", "print only merged branches",
+			PARSE_OPT_LASTARG_DEFAULT | PARSE_OPT_NONEG,
+			opt_parse_merge_filter, (intptr_t) "HEAD",
+		},
 		OPT_END(),
 	};
 
@@ -489,9 +525,6 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		branch_use_color = git_use_color_default;
 
 	track = git_branch_track;
-	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
-	if (!!delete + !!rename + !!force_create > 1)
-		usage_with_options(builtin_branch_usage, options);
 
 	head = resolve_ref("HEAD", head_sha1, 0, NULL);
 	if (!head)
@@ -504,6 +537,11 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			die("HEAD not found below refs/heads!");
 		head += 11;
 	}
+	hashcpy(merge_filter_ref, head_sha1);
+
+	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
+	if (!!delete + !!rename + !!force_create > 1)
+		usage_with_options(builtin_branch_usage, options);
 
 	if (delete)
 		return delete_branches(argc, argv, delete > 1, kinds);

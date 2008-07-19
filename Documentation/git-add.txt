@@ -187,8 +187,9 @@ update::
    "Update>>".  When the prompt ends with double '>>', you can
    make more than one selection, concatenated with whitespace or
    comma.  Also you can say ranges.  E.g. "2-5 7,9" to choose
-   2,3,4,5,7,9 from the list.  You can say '*' to choose
-   everything.
+   2,3,4,5,7,9 from the list.  If the second number in a range is
+   omitted, all remaining patches are taken.  E.g. "7-" to choose
+   7,8,9 from the list.  You can say '*' to choose everything.
 +
 What you chose are then highlighted with '*',
 like this:

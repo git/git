@@ -536,7 +536,8 @@ static char *lookup_prog(const char *dir, const char *cmd, int isexe, int exe_on
 		return xstrdup(path);
 	path[strlen(path)-4] = '\0';
 	if ((!exe_only || isexe) && access(path, F_OK) == 0)
-		return xstrdup(path);
+		if (!(GetFileAttributes(path) & FILE_ATTRIBUTE_DIRECTORY))
+			return xstrdup(path);
 	return NULL;
 }
 

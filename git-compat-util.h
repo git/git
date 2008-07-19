@@ -157,6 +157,12 @@ extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 extern int prefixcmp(const char *str, const char *prefix);
 extern time_t tm_to_time_t(const struct tm *tm);
 
+static inline const char *skip_prefix(const char *str, const char *prefix)
+{
+	size_t len = strlen(prefix);
+	return strncmp(str, prefix, len) ? NULL : str + len;
+}
+
 #ifdef NO_MMAP
 
 #ifndef PROT_READ
@@ -363,13 +369,6 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 # define FORCE_DIR_SET_GID S_ISGID
 #else
 # define FORCE_DIR_SET_GID 0
-#endif
-
-#ifdef WIN_ANSI
-extern int git_fputs(const char *str, FILE *stream);
-extern int git_printf(const char *format, ...) __attribute__((format (printf, 1, 2)));
-#define fputs git_fputs
-#define printf(...) git_printf(__VA_ARGS__)
 #endif
 
 #endif

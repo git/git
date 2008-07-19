@@ -9,7 +9,7 @@ git-submodule - Initialize, update or inspect submodules
 SYNOPSIS
 --------
 [verse]
-'git submodule' [--quiet] add [-b branch] [--] <repository> [<path>]
+'git submodule' [--quiet] add [-b branch] [--] <repository> <path>
 'git submodule' [--quiet] status [--cached] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] update [--init] [--] [<path>...]
@@ -20,14 +20,31 @@ COMMANDS
 --------
 add::
 	Add the given repository as a submodule at the given path
-	to the changeset to be committed next.  If path is a valid
-	repository within the project, it is added as is. Otherwise,
-	repository is cloned at the specified path. path is added to the
-	changeset and registered in .gitmodules.   If no path is
-	specified, the path is deduced from the repository specification.
-	If the repository url begins with ./ or ../, it is stored as
-	given but resolved as a relative path from the main project's
-	url when cloning.
+	to the changeset to be committed next to the current
+	project: the current project is termed termed the "superproject".
++
+This requires two arguments: <repository> and <path>.
++
+<repository> is the URL of the new submodule's origin repository.
+This may be either an absolute URL, or (if it begins with ./
+or ../), the location relative to the superproject's origin
+repository.
++
+<path> is the relative location for the cloned submodule to
+exist in the superproject. If <path> does not exist, then the
+submodule is created by cloning from the named URL. If <path> does
+exist and is already a valid git repository, then this is added
+to the changeset without cloning. This second form is provided
+to ease creating a new submodule from scratch, and presumes
+the user will later push the submodule to the given URL.
++
+In either case, the given URL is recorded into .gitmodules for
+use by subsequent users cloning the superproject. If the URL is
+given relative to the superproject's repository, the presumption
+is the superproject and submodule repositories will be kept
+together in the same relative location, and only the
+superproject's URL need be provided: git-submodule will correctly
+locate the submodule using the relative URL in .gitmodules.
 
 status::
 	Show the status of the submodules. This will print the SHA-1 of the
@@ -85,6 +102,7 @@ OPTIONS
 <path>::
 	Path to submodule(s). When specified this will restrict the command
 	to only operate on the submodules found at the specified paths.
+	(This argument is required with add).
 
 FILES
 -----

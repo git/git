@@ -325,6 +325,14 @@ struct commit_list *commit_list_insert(struct commit *item, struct commit_list *
 	return new_list;
 }
 
+unsigned commit_list_count(const struct commit_list *l)
+{
+	unsigned c = 0;
+	for (; l; l = l->next )
+		c++;
+	return c;
+}
+
 void free_commit_list(struct commit_list *list)
 {
 	while (list) {
@@ -525,26 +533,34 @@ static struct commit *interesting(struct commit_list *list)
 	return NULL;
 }
 
-static struct commit_list *merge_bases(struct commit *one, struct commit *two)
+static struct commit_list *merge_bases_many(struct commit *one, int n, struct commit **twos)
 {
 	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
+	int i;
 
-	if (one == two)
-		/* We do not mark this even with RESULT so we do not
-		 * have to clean it up.
-		 */
-		return commit_list_insert(one, &result);
+	for (i = 0; i < n; i++) {
+		if (one == twos[i])
+			/*
+			 * We do not mark this even with RESULT so we do not
+			 * have to clean it up.
+			 */
+			return commit_list_insert(one, &result);
+	}
 
 	if (parse_commit(one))
 		return NULL;
-	if (parse_commit(two))
-		return NULL;
+	for (i = 0; i < n; i++) {
+		if (parse_commit(twos[i]))
+			return NULL;
+	}
 
 	one->object.flags |= PARENT1;
-	two->object.flags |= PARENT2;
 	insert_by_date(one, &list);
-	insert_by_date(two, &list);
+	for (i = 0; i < n; i++) {
+		twos[i]->object.flags |= PARENT2;
+		insert_by_date(twos[i], &list);
+	}
 
 	while (interesting(list)) {
 		struct commit *commit;
@@ -592,21 +608,53 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 	return result;
 }
 
-struct commit_list *get_merge_bases(struct commit *one,
-					struct commit *two, int cleanup)
+struct commit_list *get_octopus_merge_bases(struct commit_list *in)
+{
+	struct commit_list *i, *j, *k, *ret = NULL;
+	struct commit_list **pptr = &ret;
+
+	for (i = in; i; i = i->next) {
+		if (!ret)
+			pptr = &commit_list_insert(i->item, pptr)->next;
+		else {
+			struct commit_list *new = NULL, *end = NULL;
+
+			for (j = ret; j; j = j->next) {
+				struct commit_list *bases;
+				bases = get_merge_bases(i->item, j->item, 1);
+				if (!new)
+					new = bases;
+				else
+					end->next = bases;
+				for (k = bases; k; k = k->next)
+					end = k;
+			}
+			ret = new;
+		}
+	}
+	return ret;
+}
+
+struct commit_list *get_merge_bases_many(struct commit *one,
+					 int n,
+					 struct commit **twos,
+					 int cleanup)
 {
 	struct commit_list *list;
 	struct commit **rslt;
 	struct commit_list *result;
 	int cnt, i, j;
 
-	result = merge_bases(one, two);
-	if (one == two)
-		return result;
+	result = merge_bases_many(one, n, twos);
+	for (i = 0; i < n; i++) {
+		if (one == twos[i])
+			return result;
+	}
 	if (!result || !result->next) {
 		if (cleanup) {
 			clear_commit_marks(one, all_flags);
-			clear_commit_marks(two, all_flags);
+			for (i = 0; i < n; i++)
+				clear_commit_marks(twos[i], all_flags);
 		}
 		return result;
 	}
@@ -624,12 +672,13 @@ struct commit_list *get_merge_bases(struct commit *one,
 	free_commit_list(result);
 
 	clear_commit_marks(one, all_flags);
-	clear_commit_marks(two, all_flags);
+	for (i = 0; i < n; i++)
+		clear_commit_marks(twos[i], all_flags);
 	for (i = 0; i < cnt - 1; i++) {
 		for (j = i+1; j < cnt; j++) {
 			if (!rslt[i] || !rslt[j])
 				continue;
-			result = merge_bases(rslt[i], rslt[j]);
+			result = merge_bases_many(rslt[i], 1, &rslt[j]);
 			clear_commit_marks(rslt[i], all_flags);
 			clear_commit_marks(rslt[j], all_flags);
 			for (list = result; list; list = list->next) {
@@ -651,6 +700,12 @@ struct commit_list *get_merge_bases(struct commit *one,
 	return result;
 }
 
+struct commit_list *get_merge_bases(struct commit *one, struct commit *two,
+				    int cleanup)
+{
+	return get_merge_bases_many(one, 1, &two, cleanup);
+}
+
 int in_merge_bases(struct commit *commit, struct commit **reference, int num)
 {
 	struct commit_list *bases, *b;
@@ -669,4 +724,56 @@ int in_merge_bases(struct commit *commit, struct commit **reference, int num)
 
 	free_commit_list(bases);
 	return ret;
+}
+
+struct commit_list *reduce_heads(struct commit_list *heads)
+{
+	struct commit_list *p;
+	struct commit_list *result = NULL, **tail = &result;
+	struct commit **other;
+	size_t num_head, num_other;
+
+	if (!heads)
+		return NULL;
+
+	/* Avoid unnecessary reallocations */
+	for (p = heads, num_head = 0; p; p = p->next)
+		num_head++;
+	other = xcalloc(sizeof(*other), num_head);
+
+	/* For each commit, see if it can be reached by others */
+	for (p = heads; p; p = p->next) {
+		struct commit_list *q, *base;
+
+		/* Do we already have this in the result? */
+		for (q = result; q; q = q->next)
+			if (p->item == q->item)
+				break;
+		if (q)
+			continue;
+
+		num_other = 0;
+		for (q = heads; q; q = q->next) {
+			if (p->item == q->item)
+				continue;
+			other[num_other++] = q->item;
+		}
+		if (num_other)
+			base = get_merge_bases_many(p->item, num_other, other, 1);
+		else
+			base = NULL;
+		/*
+		 * If p->item does not have anything common with other
+		 * commits, there won't be any merge base.  If it is
+		 * reachable from some of the others, p->item will be
+		 * the merge base.  If its history is connected with
+		 * others, but p->item is not reachable by others, we
+		 * will get something other than p->item back.
+		 */
+		if (!base || (base->item != p->item))
+			tail = &(commit_list_insert(p->item, tail)->next);
+		free_commit_list(base);
+	}
+	free(other);
+	return result;
 }

@@ -1252,8 +1252,8 @@ Return the list of files that haven't been handled."
        "\n")
       (when subject (insert subject "\n\n"))
       (cond (msg (insert msg "\n"))
-            ((file-readable-p ".dotest/msg")
-             (insert-file-contents ".dotest/msg"))
+            ((file-readable-p ".git/rebase/msg")
+             (insert-file-contents ".git/rebase/msg"))
             ((file-readable-p ".git/MERGE_MSG")
              (insert-file-contents ".git/MERGE_MSG")))
       ; delete empty lines at end
@@ -1272,9 +1272,9 @@ Return the list of files that haven't been handled."
           (coding-system (git-get-commits-coding-system))
           author-name author-email subject date)
       (when (eq 0 (buffer-size buffer))
-        (when (file-readable-p ".dotest/info")
+        (when (file-readable-p ".git/rebase/info")
           (with-temp-buffer
-            (insert-file-contents ".dotest/info")
+            (insert-file-contents ".git/rebase/info")
             (goto-char (point-min))
             (when (re-search-forward "^Author: \\(.*\\)\nEmail: \\(.*\\)$" nil t)
               (setq author-name (match-string 1))

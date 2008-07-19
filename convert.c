@@ -62,7 +62,7 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 			stats->printable++;
 	}
 
-	// If file ends with EOF then don't count this EOF as non-printable
+	/* If file ends with EOF then don't count this EOF as non-printable. */
 	if (size >= 1 && buf[size-1] == '\032')
 		stats->nonprintable--;
 }
