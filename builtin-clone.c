@@ -95,35 +95,38 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 
 static char *guess_dir_name(const char *repo, int is_bundle)
 {
-	const char *p, *start, *end, *limit;
-	int after_slash_or_colon;
+	const char *end = repo + strlen(repo), *start;
 
-	/* Guess dir name from repository: strip trailing '/',
-	 * strip trailing '[:/]*.{git,bundle}', strip leading '.*[/:]'. */
+	/*
+	 * Strip trailing slashes and /.git
+	 */
+	while (repo < end && is_dir_sep(end[-1]))
+		end--;
+	if (end - repo > 5 && is_dir_sep(end[-5]) &&
+	    !strncmp(end - 4, ".git", 4)) {
+		end -= 5;
+		while (repo < end && is_dir_sep(end[-1]))
+			end--;
+	}
 
-	after_slash_or_colon = 1;
-	limit = repo + strlen(repo);
-	start = repo;
-	end = limit;
-	for (p = repo; p < limit; p++) {
-		const char *prefix = is_bundle ? ".bundle" : ".git";
-		if (!prefixcmp(p, prefix)) {
-			if (!after_slash_or_colon)
-				end = p;
-			p += strlen(prefix) - 1;
-		} else if (!prefixcmp(p, ".bundle")) {
-			if (!after_slash_or_colon)
-				end = p;
-			p += 7;
-		} else if (*p == '/' || *p == ':') {
-			if (end == limit)
-				end = p;
-			after_slash_or_colon = 1;
-		} else if (after_slash_or_colon) {
-			start = p;
-			end = limit;
-			after_slash_or_colon = 0;
-		}
+	/*
+	 * Find last component, but be prepared that repo could have
+	 * the form  "remote.example.com:foo.git", i.e. no slash
+	 * in the directory part.
+	 */
+	start = end;
+	while (repo < start && !is_dir_sep(start[-1]) && start[-1] != ':')
+		start--;
+
+	/*
+	 * Strip .{bundle,git}.
+	 */
+	if (is_bundle) {
+		if (end - start > 7 && !strncmp(end - 7, ".bundle", 7))
+			end -= 7;
+	} else {
+		if (end - start > 4 && !strncmp(end - 4, ".git", 4))
+			end -= 4;
 	}
 
 	return xstrndup(start, end - start);
