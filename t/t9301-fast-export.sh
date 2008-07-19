@@ -143,4 +143,46 @@ test_expect_success 'signed-tags=strip' '
 
 '
 
+test_expect_success 'setup submodule' '
+
+	git checkout -f master &&
+	mkdir sub &&
+	cd sub &&
+	git init  &&
+	echo test file > file &&
+	git add file &&
+	git commit -m sub_initial &&
+	cd .. &&
+	git submodule add "`pwd`/sub" sub &&
+	git commit -m initial &&
+	test_tick &&
+	cd sub &&
+	echo more data >> file &&
+	git add file &&
+	git commit -m sub_second &&
+	cd .. &&
+	git add sub &&
+	git commit -m second
+
+'
+
+test_expect_success 'submodule fast-export | fast-import' '
+
+	SUBENT1=$(git ls-tree master^ sub) &&
+	SUBENT2=$(git ls-tree master sub) &&
+	rm -rf new &&
+	mkdir new &&
+	git --git-dir=new/.git init &&
+	git fast-export --signed-tags=strip --all |
+	(cd new &&
+	 git fast-import &&
+	 test "$SUBENT1" = "$(git ls-tree refs/heads/master^ sub)" &&
+	 test "$SUBENT2" = "$(git ls-tree refs/heads/master sub)" &&
+	 git checkout master &&
+	 git submodule init &&
+	 git submodule update &&
+	 cmp sub/file ../sub/file)
+
+'
+
 test_done

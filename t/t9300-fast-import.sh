@@ -918,4 +918,156 @@ test_expect_success \
 	 grep "progress " <input >expect &&
 	 test_cmp expect actual'
 
+###
+### series P (gitlinks)
+###
+
+cat >input <<INPUT_END
+blob
+mark :1
+data 10
+test file
+
+reset refs/heads/sub
+commit refs/heads/sub
+mark :2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 12
+sub_initial
+M 100644 :1 file
+
+blob
+mark :3
+data <<DATAEND
+[submodule "sub"]
+	path = sub
+	url = "`pwd`/sub"
+DATAEND
+
+commit refs/heads/subuse1
+mark :4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 8
+initial
+from refs/heads/master
+M 100644 :3 .gitmodules
+M 160000 :2 sub
+
+blob
+mark :5
+data 20
+test file
+more data
+
+commit refs/heads/sub
+mark :6
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 11
+sub_second
+from :2
+M 100644 :5 file
+
+commit refs/heads/subuse1
+mark :7
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 7
+second
+from :4
+M 160000 :6 sub
+
+INPUT_END
+
+test_expect_success \
+	'P: supermodule & submodule mix' \
+	'git-fast-import <input &&
+	 git checkout subuse1 &&
+	 rm -rf sub && mkdir sub && cd sub &&
+	 git init &&
+	 git fetch .. refs/heads/sub:refs/heads/master &&
+	 git checkout master &&
+	 cd .. &&
+	 git submodule init &&
+	 git submodule update'
+
+SUBLAST=$(git-rev-parse --verify sub)
+SUBPREV=$(git-rev-parse --verify sub^)
+
+cat >input <<INPUT_END
+blob
+mark :1
+data <<DATAEND
+[submodule "sub"]
+	path = sub
+	url = "`pwd`/sub"
+DATAEND
+
+commit refs/heads/subuse2
+mark :2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 8
+initial
+from refs/heads/master
+M 100644 :1 .gitmodules
+M 160000 $SUBPREV sub
+
+commit refs/heads/subuse2
+mark :3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 7
+second
+from :2
+M 160000 $SUBLAST sub
+
+INPUT_END
+
+test_expect_success \
+	'P: verbatim SHA gitlinks' \
+	'git branch -D sub &&
+	 git gc && git prune &&
+	 git-fast-import <input &&
+	 test $(git-rev-parse --verify subuse2) = $(git-rev-parse --verify subuse1)'
+
+test_tick
+cat >input <<INPUT_END
+commit refs/heads/subuse3
+mark :1
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+corrupt
+COMMIT
+
+from refs/heads/subuse2
+M 160000 inline sub
+data <<DATA
+$SUBPREV
+DATA
+
+INPUT_END
+
+test_expect_success 'P: fail on inline gitlink' '
+    ! git-fast-import <input'
+
+test_tick
+cat >input <<INPUT_END
+blob
+mark :1
+data <<DATA
+$SUBPREV
+DATA
+
+commit refs/heads/subuse3
+mark :2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+corrupt
+COMMIT
+
+from refs/heads/subuse2
+M 160000 :1 sub
+
+INPUT_END
+
+test_expect_success 'P: fail on blob mark in gitlink' '
+    ! git-fast-import <input'
+
 test_done

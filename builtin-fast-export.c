@@ -136,9 +136,18 @@ static void show_filemodify(struct diff_queue_struct *q,
 		if (is_null_sha1(spec->sha1))
 			printf("D %s\n", spec->path);
 		else {
-			struct object *object = lookup_object(spec->sha1);
-			printf("M %06o :%d %s\n", spec->mode,
-			       get_object_mark(object), spec->path);
+			/*
+			 * Links refer to objects in another repositories;
+			 * output the SHA-1 verbatim.
+			 */
+			if (S_ISGITLINK(spec->mode))
+				printf("M %06o %s %s\n", spec->mode,
+				       sha1_to_hex(spec->sha1), spec->path);
+			else {
+				struct object *object = lookup_object(spec->sha1);
+				printf("M %06o :%d %s\n", spec->mode,
+				       get_object_mark(object), spec->path);
+			}
 		}
 	}
 }
@@ -196,8 +205,10 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 		diff_root_tree_sha1(commit->tree->object.sha1,
 				    "", &rev->diffopt);
 
+	/* Export the referenced blobs, and remember the marks. */
 	for (i = 0; i < diff_queued_diff.nr; i++)
-		handle_object(diff_queued_diff.queue[i]->two->sha1);
+		if (!S_ISGITLINK(diff_queued_diff.queue[i]->two->mode))
+			handle_object(diff_queued_diff.queue[i]->two->sha1);
 
 	mark_next_object(&commit->object);
 	if (!is_encoding_utf8(encoding))
