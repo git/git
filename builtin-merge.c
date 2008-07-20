@@ -50,11 +50,9 @@ static size_t use_strategies_nr, use_strategies_alloc;
 static const char *branch;
 
 static struct strategy all_strategy[] = {
-	{ "recur",      NO_TRIVIAL },
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
 	{ "octopus",    DEFAULT_OCTOPUS },
 	{ "resolve",    0 },
-	{ "stupid",     0 },
 	{ "ours",       NO_FAST_FORWARD | NO_TRIVIAL },
 	{ "subtree",    NO_FAST_FORWARD | NO_TRIVIAL },
 };
