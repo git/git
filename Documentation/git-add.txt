@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
-	  [--update | -u] [--refresh] [--ignore-errors] [--]
+	  [--all | [--update | -u]] [--refresh] [--ignore-errors] [--]
 	  <filepattern>...
 
 DESCRIPTION
@@ -85,6 +85,12 @@ OPTIONS
 	except that the update is limited to paths specified on the
 	command line. If no paths are specified, all tracked files in the
 	current directory and its subdirectories are updated.
+
+-A::
+--all::
+	Update files that git already knows about (same as '\--update')
+	and add all untracked files that are not ignored by '.gitignore'
+	mechanism.
 
 --refresh::
 	Don't add the file(s), but only refresh their stat()
