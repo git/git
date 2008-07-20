@@ -190,7 +190,7 @@ static const char ignore_error[] =
 "The following paths are ignored by one of your .gitignore files:\n";
 
 static int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
-static int ignore_add_errors;
+static int ignore_add_errors, addremove;
 
 static struct option builtin_add_options[] = {
 	OPT__DRY_RUN(&show_only),
@@ -200,6 +200,7 @@ static struct option builtin_add_options[] = {
 	OPT_BOOLEAN('p', "patch", &patch_interactive, "interactive patching"),
 	OPT_BOOLEAN('f', "force", &ignored_too, "allow adding otherwise ignored files"),
 	OPT_BOOLEAN('u', "update", &take_worktree_changes, "update tracked files"),
+	OPT_BOOLEAN('A', "all", &addremove, "add all, noticing removal of tracked files"),
 	OPT_BOOLEAN( 0 , "refresh", &refresh_only, "don't add, only refresh the index"),
 	OPT_BOOLEAN( 0 , "ignore-errors", &ignore_add_errors, "just skip files which cannot be added because of errors"),
 	OPT_END(),
@@ -254,6 +255,14 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	git_config(add_config, NULL);
 
+	if (addremove && take_worktree_changes)
+		die("-A and -u are mutually incompatible");
+	if (addremove && !argc) {
+		static const char *here[2] = { ".", NULL };
+		argc = 1;
+		argv = here;
+	}
+
 	add_new_files = !take_worktree_changes && !refresh_only;
 	require_pathspec = !take_worktree_changes;
 
@@ -286,7 +295,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		goto finish;
 	}
 
-	if (take_worktree_changes)
+	if (take_worktree_changes || addremove)
 		exit_status |= add_files_to_cache(prefix, pathspec, flags);
 
 	if (add_new_files)
