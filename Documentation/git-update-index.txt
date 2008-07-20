@@ -88,6 +88,16 @@ OPTIONS
 	sometimes helpful when working with a big project on a
 	filesystem that has very slow lstat(2) system call
 	(e.g. cifs).
++
+This option can be also used as a coarse file-level mechanism
+to ignore uncommitted changes in tracked files (akin to what
+`.gitignore` does for untracked files).
+You should remember that an explicit 'git add' operation will
+still cause the file to be refreshed from the working tree.
+Git will fail (gracefully) in case it needs to modify this file
+in the index e.g. when merging in a commit;
+thus, in case the assumed-untracked file is changed upstream,
+you will need to handle the situation manually.
 
 -g::
 --again::

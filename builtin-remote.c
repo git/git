@@ -147,6 +147,15 @@ struct branch_info {
 
 static struct path_list branch_list;
 
+static const char *abbrev_ref(const char *name, const char *prefix)
+{
+	const char *abbrev = skip_prefix(name, prefix);
+	if (abbrev)
+		return abbrev;
+	return name;
+}
+#define abbrev_branch(name) abbrev_ref((name), "refs/heads/")
+
 static int config_read_branches(const char *key, const char *value, void *cb)
 {
 	if (!prefixcmp(key, "branch.")) {
@@ -176,18 +185,12 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 			info->remote = xstrdup(value);
 		} else {
 			char *space = strchr(value, ' ');
-			const char *ptr = skip_prefix(value, "refs/heads/");
-			if (ptr)
-				value = ptr;
+			value = abbrev_branch(value);
 			while (space) {
 				char *merge;
 				merge = xstrndup(value, space - value);
 				path_list_append(merge, &info->merge);
-				ptr = skip_prefix(space + 1, "refs/heads/");
-				if (ptr)
-					value = ptr;
-				else
-					value = space + 1;
+				value = abbrev_branch(space + 1);
 				space = strchr(value, ' ');
 			}
 			path_list_append(xstrdup(value), &info->merge);
@@ -219,12 +222,7 @@ static int handle_one_branch(const char *refname,
 	refspec.dst = (char *)refname;
 	if (!remote_find_tracking(states->remote, &refspec)) {
 		struct path_list_item *item;
-		const char *name, *ptr;
-		ptr = skip_prefix(refspec.src, "refs/heads/");
-		if (ptr)
-			name = ptr;
-		else
-			name = refspec.src;
+		const char *name = abbrev_branch(refspec.src);
 		/* symbolic refs pointing nowhere were handled already */
 		if ((flags & REF_ISSYMREF) ||
 				unsorted_path_list_has_path(&states->tracked,
@@ -253,7 +251,6 @@ static int get_ref_states(const struct ref *ref, struct ref_states *states)
 		struct path_list *target = &states->tracked;
 		unsigned char sha1[20];
 		void *util = NULL;
-		const char *ptr;
 
 		if (!ref->peer_ref || read_ref(ref->peer_ref->name, sha1))
 			target = &states->new;
@@ -262,10 +259,7 @@ static int get_ref_states(const struct ref *ref, struct ref_states *states)
 			if (hashcmp(sha1, ref->new_sha1))
 				util = &states;
 		}
-		ptr = skip_prefix(ref->name, "refs/heads/");
-		if (!ptr)
-			ptr = ref->name;
-		path_list_append(ptr, target)->util = util;
+		path_list_append(abbrev_branch(ref->name), target)->util = util;
 	}
 	free_refs(fetch_map);
 
@@ -460,10 +454,8 @@ static int append_ref_to_tracked_list(const char *refname,
 
 	memset(&refspec, 0, sizeof(refspec));
 	refspec.dst = (char *)refname;
-	if (!remote_find_tracking(states->remote, &refspec)) {
-		path_list_append(skip_prefix(refspec.src, "refs/heads/"),
-			&states->tracked);
-	}
+	if (!remote_find_tracking(states->remote, &refspec))
+		path_list_append(abbrev_branch(refspec.src), &states->tracked);
 
 	return 0;
 }
@@ -530,15 +522,10 @@ static int show(int argc, const char **argv)
 					"es" : "");
 			for (i = 0; i < states.remote->push_refspec_nr; i++) {
 				struct refspec *spec = states.remote->push + i;
-				const char *p = "", *q = "";
-				if (spec->src)
-					p = skip_prefix(spec->src, "refs/heads/");
-				if (spec->dst)
-					q = skip_prefix(spec->dst, "refs/heads/");
 				printf(" %s%s%s%s", spec->force ? "+" : "",
-					p ? p : spec->src,
-					spec->dst ? ":" : "",
-					q ? q : spec->dst);
+				       abbrev_branch(spec->src),
+				       spec->dst ? ":" : "",
+				       spec->dst ? abbrev_branch(spec->dst) : "");
 			}
 			printf("\n");
 		}
@@ -588,7 +575,7 @@ static int prune(int argc, const char **argv)
 				result |= delete_ref(refname, NULL);
 
 			printf(" * [%s] %s\n", dry_run ? "would prune" : "pruned",
-			       skip_prefix(refname, "refs/remotes/"));
+			       abbrev_ref(refname, "refs/remotes/"));
 		}
 
 		/* NEEDSWORK: free remote */

@@ -801,6 +801,18 @@ sub req_co
 
     argsplit("co");
 
+    # Provide list of modules, if -c was used.
+    if (exists $state->{opt}{c}) {
+        my $showref = `git show-ref --heads`;
+        for my $line (split '\n', $showref) {
+            if ( $line =~ m% refs/heads/(.*)$% ) {
+                print "M $1\t$1\n";
+            }
+        }
+        print "ok\n";
+        return 1;
+    }
+
     my $module = $state->{args}[0];
     $state->{module} = $module;
     my $checkout_path = $module;
@@ -947,21 +959,15 @@ sub req_update
     # projects (heads in this case) to checkout.
     #
     if ($state->{module} eq '') {
-	my $heads_dir = $state->{CVSROOT} . '/refs/heads';
-	if (!opendir HEADS, $heads_dir) {
-	    print "E [server aborted]: Failed to open directory, "
-	      . "$heads_dir: $!\nerror\n";
-	    return 0;
-	}
+        my $showref = `git show-ref --heads`;
         print "E cvs update: Updating .\n";
-	while (my $head = readdir(HEADS)) {
-	    if (-f $state->{CVSROOT} . '/refs/heads/' . $head) {
-	        print "E cvs update: New directory `$head'\n";
-	    }
-	}
-	closedir HEADS;
-	print "ok\n";
-	return 1;
+        for my $line (split '\n', $showref) {
+            if ( $line =~ m% refs/heads/(.*)$% ) {
+                print "E cvs update: New directory `$1'\n";
+            }
+        }
+        print "ok\n";
+        return 1;
     }
 
 

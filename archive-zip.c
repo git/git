@@ -2,11 +2,6 @@
  * Copyright (c) 2006 Rene Scharfe
  */
 #include "cache.h"
-#include "commit.h"
-#include "blob.h"
-#include "tree.h"
-#include "quote.h"
-#include "builtin.h"
 #include "archive.h"
 
 static int zip_date;
@@ -93,7 +88,7 @@ static void copy_le32(unsigned char *dest, unsigned int n)
 }
 
 static void *zlib_deflate(void *data, unsigned long size,
-                          unsigned long *compressed_size)
+		int compression_level, unsigned long *compressed_size)
 {
 	z_stream stream;
 	unsigned long maxsize;
@@ -101,7 +96,7 @@ static void *zlib_deflate(void *data, unsigned long size,
 	int result;
 
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, zlib_compression_level);
+	deflateInit(&stream, compression_level);
 	maxsize = deflateBound(&stream, size);
 	buffer = xmalloc(maxsize);
 
@@ -157,7 +152,7 @@ static int write_zip_entry(struct archiver_args *args,
 		method = 0;
 		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
 			(mode & 0111) ? ((mode) << 16) : 0;
-		if (S_ISREG(mode) && zlib_compression_level != 0)
+		if (S_ISREG(mode) && args->compression_level != 0)
 			method = 8;
 		crc = crc32(crc, buffer, size);
 		out = buffer;
@@ -169,7 +164,8 @@ static int write_zip_entry(struct archiver_args *args,
 	}
 
 	if (method == 8) {
-		deflated = zlib_deflate(buffer, size, &compressed_size);
+		deflated = zlib_deflate(buffer, size, args->compression_level,
+				&compressed_size);
 		if (deflated && compressed_size - 6 < size) {
 			/* ZLIB --> raw compressed data (see RFC 1950) */
 			/* CMF and FLG ... */

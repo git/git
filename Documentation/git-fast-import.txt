@@ -481,6 +481,9 @@ in octal.  Git only supports the following modes:
   what you want.
 * `100755` or `755`: A normal, but executable, file.
 * `120000`: A symlink, the content of the file will be the link target.
+* `160000`: A gitlink, SHA-1 of the object refers to a commit in
+  another repository. Git links can only be specified by SHA or through
+  a commit mark. They are used to implement submodules.
 
 In both formats `<path>` is the complete path of the file to be added
 (if not already existing) or modified (if already existing).
