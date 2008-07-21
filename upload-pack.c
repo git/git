@@ -638,7 +638,7 @@ int main(int argc, char **argv)
 	if (i != argc-1)
 		usage(upload_pack_usage);
 
-	setup_path(NULL);
+	setup_path();
 
 	dir = argv[i];
 

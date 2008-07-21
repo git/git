@@ -418,7 +418,6 @@ int main(int argc, const char **argv)
 {
 	const char *cmd = argv[0] && *argv[0] ? argv[0] : "git-help";
 	char *slash = (char *)cmd + strlen(cmd);
-	const char *cmd_path = NULL;
 	int done_alias = 0;
 
 	/*
@@ -431,7 +430,7 @@ int main(int argc, const char **argv)
 	while (cmd <= slash && !is_dir_sep(*slash));
 	if (cmd <= slash) {
 		*slash++ = 0;
-		cmd_path = cmd;
+		git_set_argv0_path(cmd);
 		cmd = slash;
 	}
 
@@ -475,7 +474,7 @@ int main(int argc, const char **argv)
 	 * environment, and the $(gitexecdir) from the Makefile at build
 	 * time.
 	 */
-	setup_path(cmd_path);
+	setup_path();
 
 	while (1) {
 		/* See if it's an internal command */

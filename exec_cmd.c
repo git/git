@@ -5,6 +5,7 @@
 
 extern char **environ;
 static const char *argv_exec_path;
+static const char *argv0_path;
 
 static const char *builtin_exec_path(void)
 {
@@ -50,6 +51,11 @@ const char *system_path(const char *path)
 	return path;
 }
 
+void git_set_argv0_path(const char *path)
+{
+	argv0_path = path;
+}
+
 void git_set_argv_exec_path(const char *exec_path)
 {
 	argv_exec_path = exec_path;
@@ -84,7 +90,7 @@ static void add_path(struct strbuf *out, const char *path)
 	}
 }
 
-void setup_path(const char *cmd_path)
+void setup_path(void)
 {
 	const char *old_path = getenv("PATH");
 	struct strbuf new_path;
@@ -94,7 +100,7 @@ void setup_path(const char *cmd_path)
 	add_path(&new_path, argv_exec_path);
 	add_path(&new_path, getenv(EXEC_PATH_ENVIRONMENT));
 	add_path(&new_path, builtin_exec_path());
-	add_path(&new_path, cmd_path);
+	add_path(&new_path, argv0_path);
 
 	if (old_path)
 		strbuf_addstr(&new_path, old_path);
