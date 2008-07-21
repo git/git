@@ -44,7 +44,7 @@ stop_here_user_resolve () {
 	    printf '%s\n' "$resolvemsg"
 	    stop_here $1
     fi
-    cmdline=$(basename $0)
+    cmdline="git am"
     if test '' != "$interactive"
     then
         cmdline="$cmdline -i"
