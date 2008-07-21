@@ -127,6 +127,7 @@ sub print_whats_cooking {
 		print "\n", "-" x 64, "\n";
 		print "[$group]\n";
 		for my $topic (@{$wc->{" $group"}}) {
+			next if ($topic->{"head"} eq '');
 			print "\n", $topic->{"head"};
 			print $topic->{"names"};
 			if ($topic->{"text"} ne '') {
@@ -144,6 +145,7 @@ sub delete_topic {
 sub merge_whats_cooking {
 	my ($old_wc, $new_wc) = @_;
 	my $group;
+	my @gone = ();
 
 	for $group (@{$old_wc->{"group list"}}) {
 		for my $topic (@{$old_wc->{" $group"}}) {
@@ -151,12 +153,10 @@ sub merge_whats_cooking {
 			my $newtopic = delete $new_wc->{"topic hash"}{$name};
 
 			if (!defined $newtopic) {
-				$topic->{"text"} = ("<<deleted\n" .
-						    $topic->{"head"} .
-						    $topic->{"names"} .
-						    ">>\n\n" .
-						    $topic->{"text"});
+				push @gone, +{ @{[ %$topic ]} };
+				$topic->{"text"} = "";
 				$topic->{"names"} = "";
+				$topic->{"head"} = "";
 				next;
 			}
 			if (($newtopic->{"names"} ne $topic->{"names"}) ||
@@ -180,6 +180,14 @@ sub merge_whats_cooking {
 	}
 
 	if (%{$new_wc->{"topic hash"}}) {
+		if (@gone) {
+			$group = 'Graduated to "master"';
+			if (!exists $old_wc->{" $group"}) {
+				unshift @{$old_wc->{"group list"}}, $group;
+				$old_wc->{" $group"} = [];
+			}
+			push @{$old_wc->{" $group"}}, @gone;
+		}
 		$group = "New Topics";
 		if (!exists $old_wc->{" $group"}) {
 			unshift @{$old_wc->{"group list"}}, $group;
