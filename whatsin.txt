@@ -1,301 +1,126 @@
-What's in git.git (Jul 2008, issue #01; Tue, 01)
+What's in git.git (Jul 2008, issue #02; Sun, 06)
 
-  maint 7ad0f27 (Start draft release notes for 1.5.6.2, 2008-07-01)
- master e903b40 (Update draft release notes for 1.6.0, 2008-07-01)
+  maint 78e3118 (GIT 1.5.6.2, 2008-07-04)
+ master 44701c6 (Merge branch 'qq/maint', 2008-07-06)
 ------------------------------------------------------------------------
 
-There are a few fixes on 'maint', in addition to futureproofing of "git
-shell" so that eventually we can update the ssh clients to ask for server
-side programs using "git upload-pack" syntax without a dash between "git"
-and the subcommand name.
+With accumulated fixes, the latest maintenance release 1.5.6.2 is out.
 
-Many of the medimu size items for 1.6.0 have been merged to 'master'.  The
-port to MinGW series will also be merged shortly.
+On the 'master' front, port to MinGW has now been merged, and the next
+major release 1.6.0 is already taking shape.
 
 ----------------------------------------------------------------
-
-GIT v1.6.0 Release Notes (draft)
-================================
-
-User visible changes
---------------------
-
-With the default Makefile settings, most of the programs are now
-installed outside your $PATH, except for "git", "gitk", "git-gui" and
-some server side programs that need to be accessible for technical
-reasons.  Invoking a git subcommand as "git-xyzzy" from the command
-line has been deprecated since early 2006 (and officially announced in
-1.5.4 release notes); use of them from your scripts after adding
-output from "git --exec-path" to the $PATH is still supported in this
-release, but users are again strongly encouraged to adjust their
-scripts to use "git xyzzy" form, as we will stop installing
-"git-xyzzy" hardlinks for built-in commands in later releases.
-
-Source changes needed for porting to MinGW environment are now all in the
-main git.git codebase.
-
-By default, packfiles created with this version uses delta-base-offset
-encoding introduced in v1.4.4.  Pack idx files are using version 2 that
-allows larger packs and added robustness thanks to its CRC checking,
-introduced in v1.5.2.
-
-
-Updates since v1.5.6
---------------------
-
-(subsystems)
-
-* git-p4 in contrib learned "allowSubmit" configuration to control on
-  which branch to allow "submit" subcommand.
-
-(portability)
-
-* Sample hook scripts shipped in templates/ are now suffixed with
-  *.sample.  We used to prevent them from triggering by default by
-  relying on the fact that we install them as unexecutable, but on
-  some filesystems this approach does not work.  Instead of running
-  "chmod +x" on them, the users who want to activate these samples
-  as-is can now rename them dropping *.sample suffix.
-
-* perl's in-place edit (-i) does not work well without backup files on Windows;
-  some tests are rewritten to cope with this.
-
-(documentation)
-
-* Updated howto/update-hook-example
-
-* Got rid of usage of "git-foo" from the tutorial.
-
-* Disambiguating "--" between revs and paths is finally documented.
-
-(performance, robustness, sanity etc.)
-
-* even more documentation pages are now accessible via "man" and "git help".
-
-* reduced excessive inlining to shrink size of the "git" binary.
-
-* verify-pack checks the object CRC when using version 2 idx files.
-
-* When an object is corrupt in a pack, the object became unusable even
-  when the same object is available in a loose form,  We now try harder to
-  fall back to these redundant objects when able.  In particular, "git
-  repack -a -f" can be used to fix such a corruption as long as necessary
-  objects are available.
-
-* git-clone does not create refs in loose form anymore (it behaves as
-  if you immediately ran git-pack-refs after cloning).  This will help
-  repositories with insanely large number of refs.
-
-* core.fsyncobjectfiles configuration can be used to ensure that the loose
-  objects created will be fsync'ed (this is only useful on filesystems
-  that does not order data writes properly).
-
-* "git commit-tree" plumbing can make Octopus with more than 16 parents.
-  "git commit" has been capable of this for quite some time.
-
-(usability, bells and whistles)
-
-* git-apply can handle a patch that touches the same path more than once
-  much better than before.
-
-* git-apply can be told not to trust the line counts recorded in the input
-  patch but recount, with the new --recount option.
-
-* git-archive can be told to omit certain paths from its output using
-  export-ignore attributes.
-
-* git-clone can clone from a remote whose URL would be rewritten by
-  configuration stored in $HOME/.gitconfig now.
-
-* git-diff --check now checks leftover merge conflict markers.
-
-* When remote side used to have branch 'foo' and git-fetch finds that now
-  it has branch 'foo/bar', it refuses to lose the existing remote tracking
-  branch and its reflog.  The error message has been improved to suggest
-  pruning the remote if the user wants to proceed and get the latest set
-  of branches from the remote, including such 'foo/bar'.
-
-* fast-export learned to export and import marks file; this can be used to
-  interface with fast-import incrementally.
-
-* Original SHA-1 value for "update-ref -d" is optional now.
-
-* git-send-mail can talk not just over SSL but over TLS now.
-
-* You can tell "git status -u" to even more aggressively omit checking
-  untracked files with --untracked-files=no.
-
-* Error codes from gitweb are made more descriptive where possible, rather
-  than "403 forbidden" as we used to issue everywhere.
-
-(internal)
-
-
-Fixes since v1.5.6
-------------------
-
-All of the fixes in v1.5.6 maintenance series are included in
-this release, unless otherwise noted.
-
- * diff -c/--cc showed unnecessary "deletion" lines at the context
-   boundary (needs backmerge to maint).
-
- * "git-clone <src> <dst>" did not create leading directories for <dst>
-   like the scripted version used to do (needs backport to maint).
-
-
-----------------------------------------------------------------
-
-* The 'maint' branch has these fixes since v1.5.6.1.
-
-Avery Pennarun (1):
-  git-svn: avoid filling up the disk with temp files.
-
-Björn Steinbrink (1):
-  git cat-file: Fix memory leak in batch mode
-
-Eric Wong (1):
-  git-svn: don't sanitize remote names in config
-
-Jeff King (1):
-  doc/rev-parse: clarify reflog vs --until for specifying revisions
-
-Jochen Voss (1):
-  avoid off-by-one error in run_upload_archive
-
-Joey Hess (1):
-  fix git config example syntax
-
-Junio C Hamano (5):
-  diff --check: do not discard error status upon seeing a good line
-  git-shell: accept "git foo" form
-  GIT 1.5.4.6
-  GIT 1.5.5.5
-  Start draft release notes for 1.5.6.2
-
-Thomas Rast (1):
-  Fix 'git show' on signed tag of signed tag of commit
-
-
 * The 'master' branch has these since the last announcement
-  in addition to the above.
+  in addition to what is in maint.
 
-Alex Riesen (1):
-  Fix use of "perl -i" on Windows
+Adam Brewster (1):
+  Move read_revisions_from_stdin from builtin-rev-list.c to revision.c
 
-Brian Gernhardt (2):
-  Fix t4017-diff-retval for white-space from wc
-  Add test results directory to t/.gitignore
+Brian Gernhardt (1):
+  Documentation: Point to gitcli(7) from git(1)
 
-Christian Couder (1):
-  help: check early if we have a command, if not try a documentation topic
+Brian Hetro (5):
+  builtin-log.c: Use 'git_config_string' to get 'format.subjectprefix' and
+    'format.suffix'
+  convert.c: Use 'git_config_string' to get 'smudge' and 'clean'
+  diff.c: Use 'git_config_string' to get 'diff.external'
+  http.c: Use 'git_config_string' to clean up SSL config.
+  builtin-commit.c: Use 'git_config_string' to get 'commit.template'
 
-Dmitry Potapov (2):
-  update-hook-example: optionally allow non-fast-forward
-  shrink git-shell by avoiding redundant dependencies
+Christian Couder (2):
+  Fix "config_error_nonbool" used with value instead of key
+  Fix "config_error_nonbool" used with value instead of key
 
-Don Zickus (1):
-  git-apply: handle a patch that touches the same path more than once
-    better
+Johannes Schindelin (2):
+  Windows: always chmod(, 0666) before unlink().
+  git fetch-pack: do not complain about "no common commits" in an empty
+    repo
 
-Jeff King (3):
-  improve for-each-ref test script
-  fetch: report local storage errors in status table
-  fetch: give a hint to the user when local refs fail to update
+Johannes Sixt (35):
+  Add compat/regex.[ch] and compat/fnmatch.[ch].
+  Compile some programs only conditionally.
+  Add target architecture MinGW.
+  Windows: Use the Windows style PATH separator ';'.
+  setup.c: Prepare for Windows directory separators.
+  Windows: Treat Windows style path names.
+  Windows: Handle absolute paths in safe_create_leading_directories().
+  Windows: Strip ".exe" from the program name.
+  Windows: Implement a wrapper of the open() function.
+  Windows: A minimal implemention of getpwuid().
+  Windows: Work around misbehaved rename().
+  Make my_mktime() public and rename it to tm_to_time_t()
+  Windows: Implement gettimeofday().
+  Windows: Fix PRIuMAX definition.
+  Windows: Implement setitimer() and sigaction().
+  Windows: Wrap execve so that shell scripts can be invoked.
+  Windows: A pipe() replacement whose ends are not inherited to children.
+  Windows: Implement start_command().
+  Windows: A rudimentary poll() emulation.
+  Windows: Disambiguate DOS style paths from SSH URLs.
+  Windows: Implement asynchronous functions as threads.
+  Windows: Work around incompatible sort and find.
+  Windows: Implement wrappers for gethostbyname(), socket(), and connect().
+  Windows: Implement a custom spawnve().
+  Windows: Add a custom implementation for utime().
+  Windows: Use a customized struct stat that also has the st_blocks member.
+  Turn builtin_exec_path into a function.
+  Windows: Compute the fallback for exec_path from the program invocation.
+  Windows: Use a relative default template_dir and ETC_GITCONFIG
+  When installing, be prepared that template_dir may be relative.
+  Windows: Make the pager work.
+  Windows: Work around an oddity when a pipe with no reader is written to.
+  Windows: Make 'git help -a' work.
+  Windows: TMP and TEMP environment variables specify a temporary
+    directory.
+  t4127-apply-same-fn: Avoid sed -i
 
-Jing Xue (1):
-  Add 'git-p4.allowSubmit' to git-p4
+Jonathan Nieder (15):
+  git-format-patch(1): fix stray \ in output
+  Documentation: fix gitlinks
+  manpages: fix bogus whitespace
+  git(1): add comma
+  git-commit(1): depersonalize description
+  Documentation: rewrap to prepare for "git-" vs "git " change
+  Documentation: more "git-" versus "git " changes
+  gitdiffcore(7): fix awkward wording
+  manpages: italicize command names in synopses
+  manpages: italicize command names
+  manpages: italicize git command names (which were in teletype font)
+  manpages: italicize gitk's name (where it was in teletype font)
+  manpages: italicize nongit command names (if they are in teletype font)
+  manpages: italicize git subcommand names (which were in teletype font)
+  manpages: use teletype font for sample command lines
 
-Johan Herland (4):
-  Incorporate fetched packs in future object traversal
-  Move pack_refs() and friends into libgit
-  Prepare testsuite for a "git clone" that packs refs
-  Teach "git clone" to pack refs
+Junio C Hamano (3):
+  fast-export --export-marks: fix off by one error
+  attribute documentation: keep EXAMPLE at end
+  clone -q: honor "quiet" option over native transports.
 
-Johannes Schindelin (4):
-  clone: respect url.insteadOf setting in global configs
-  commit-tree: lift completely arbitrary limit of 16 parents
-  Allow git-apply to recount the lines in a hunk (AKA recountdiff)
-  clone: respect the settings in $HOME/.gitconfig and /etc/gitconfig
+Marius Storm-Olsen (1):
+  Windows: Add a new lstat and fstat implementation based on Win32 API.
 
-Jonathan Nieder (7):
-  Documentation: fix links to tutorials and other new manual pages
-  whitespace fix in Documentation/git-repack.txt
-  Documentation: complicate example of "man git-command"
-  git-daemon(1): don't assume git-daemon is in /usr/bin
-  Documentation: prepare to be consistent about "git-" versus "git "
-  Documentation: be consistent about "git-" versus "git "
-  Documentation formatting and cleanup
+Matthew Ogilvie (1):
+  Documentation cvs: Clarify when a bare repository is needed
 
-Junio C Hamano (15):
-  git-shell: accept "git foo" form
-  Prepare execv_git_cmd() for removal of builtins from the filesystem
-  Keep some git-* programs in $(bindir)
-  Allow "git-reset path" when unambiguous
-  Start draft release notes for 1.6.0
-  diff --check: explain why we do not care whether old side is binary
-  check_and_emit_line(): rename and refactor
-  checkdiff: pass diff_options to the callback
-  Teach "diff --check" about new blank lines at end
-  diff --check: detect leftover conflict markers
-  Update sample pre-commit hook to use "diff --check"
-  Document the double-dash "rev -- path" disambiguator
-  t9700: skip when Test::More is not available
-  Update draft release notes for 1.6.0
-  Update draft release notes for 1.6.0
+Miklos Vajna (6):
+  Retire 'stupid' merge strategy
+  INSTALL: Update section about git-frotz form.
+  hg-to-git: avoid raising a string exception
+  hg-to-git: abort if the project directory is not a hg repo
+  hg-to-git: rewrite "git-frotz" to "git frotz"
+  hg-to-git: use git init instead of git init-db
 
-Kevin Ballard (1):
-  git-send-email: Accept fifos as well as files
+Nikolaus Schulz (1):
+  Documentation: be precise about which date --pretty uses
 
-Lea Wiemann (5):
-  t/test-lib.sh: add test_external and test_external_without_stderr
-  Git.pm: add test suite
-  gitweb: standarize HTTP status codes
-  test-lib.sh: show git init output when in verbose mode
-  GIT-VERSION-GEN: do not fail if a 'HEAD' file exists in the working copy
+Ramsay Allan Jones (1):
+  Fix some warnings (on cygwin) to allow -Werror
 
-Linus Torvalds (4):
-  Split up default "core" config parsing into helper routine
-  Split up default "user" config parsing into helper routine
-  Split up default "i18n" and "branch" config parsing into helper routines
-  Add config option to enable 'fsync()' of object files
-
-Miklos Vajna (1):
-  A simple script to parse the results from the testcases
-
-Nanako Shiraishi (1):
-  gitcli: Document meaning of --cached and --index
-
-Nguyễn Thái Ngọc Duy (1):
-  Move all dashed-form commands to libexecdir
-
-Nicolas Pitre (2):
-  repack.usedeltabaseoffset config option now defaults to "true"
-  pack.indexversion config option now defaults to 2
-
-Olivier Marin (2):
-  Documentation: remove {show,whatchanged}.difftree config options
-  show_stats(): fix stats width calculation
-
-Patrick Higgins (1):
-  Remove the use of '--' in merge program invocation
-
-Stephan Beyer (2):
-  api-builtin.txt: update and fix typo
-  t3404: stricter tests for git-rebase--interactive
-
-Sverre Rabbelier (2):
-  Modify test-lib.sh to output stats to t/test-results/*
-  Hook up the result aggregation in the test makefile.
-
-Ted Percival (1):
-  Don't use dash commands (git-foo) in tutorial-2
+Steffen Prohaska (2):
+  Windows: Fix ntohl() related warnings about printf formatting
+  compat/pread.c: Add a forward declaration to fix a warning
 
 Thomas Rast (2):
-  git-send-email: add support for TLS via Net::SMTP::SSL
-  git-send-email: prevent undefined variable warnings if no encryption is
-    set
-
-jrnieder@uchicago.edu (1):
-  Documentation: don't assume git-sh-setup and git-parse-remote are in PATH
+  git-send-email: Do not attempt to STARTTLS more than once
+  Fix apply --recount handling of no-EOL line
 
