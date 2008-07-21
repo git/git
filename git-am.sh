@@ -202,8 +202,15 @@ then
 	die "previous rebase directory $dotest still exists but mbox given."
 	resume=yes
 
-	case "$abort" in
-	t)
+	case "$skip,$abort" in
+	t,)
+		git rerere clear
+		git read-tree --reset -u HEAD HEAD
+		orig_head=$(cat "$GIT_DIR/ORIG_HEAD")
+		git reset HEAD
+		git update-ref ORIG_HEAD $orig_head
+		;;
+	,t)
 		git rerere clear
 		git read-tree --reset -u HEAD ORIG_HEAD
 		git reset ORIG_HEAD
@@ -297,7 +304,6 @@ last=`cat "$dotest/last"`
 this=`cat "$dotest/next"`
 if test "$skip" = t
 then
-	git rerere clear
 	this=`expr "$this" + 1`
 	resume=
 fi

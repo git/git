@@ -14,7 +14,7 @@ test_expect_success setup '
 	git add file-1 file-2 &&
 	git commit -m initial &&
 	git tag initial &&
-	for i in 2 3 4 5
+	for i in 2 3 4 5 6
 	do
 		echo $i >>file-1 &&
 		test_tick &&
@@ -32,13 +32,20 @@ do
 		git reset --hard initial &&
 		cp file-2-expect file-2 &&
 
-		test_must_fail git am$with3 000[124]-*.patch &&
+		test_must_fail git am$with3 000[1245]-*.patch &&
 		git log --pretty=tformat:%s >actual &&
 		for i in 3 2 initial
 		do
 			echo $i
 		done >expect &&
 		test_cmp expect actual
+	'
+
+	test_expect_success "am$with3 --skip continue after failed am$with3" '
+		test_must_fail git-am$with3 --skip >output &&
+		test "$(grep "^Applying" output)" = "Applying 6" &&
+		test_cmp file-2-expect file-2 &&
+		test ! -f .git/rr-cache/MERGE_RR
 	'
 
 	test_expect_success "am --abort goes back after failed am$with3" '
