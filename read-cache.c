@@ -38,6 +38,22 @@ static void replace_index_entry(struct index_state *istate, int nr, struct cache
 	istate->cache_changed = 1;
 }
 
+void rename_index_entry_at(struct index_state *istate, int nr, const char *new_name)
+{
+	struct cache_entry *old = istate->cache[nr], *new;
+	int namelen = strlen(new_name);
+
+	new = xmalloc(cache_entry_size(namelen));
+	copy_cache_entry(new, old);
+	new->ce_flags &= ~(CE_STATE_MASK | CE_NAMEMASK);
+	new->ce_flags |= (namelen >= CE_NAMEMASK ? CE_NAMEMASK : namelen);
+	memcpy(new->name, new_name, namelen + 1);
+
+	cache_tree_invalidate_path(istate->cache_tree, old->name);
+	remove_index_entry_at(istate, nr);
+	add_index_entry(istate, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
+}
+
 /*
  * This only updates the "non-critical" parts of the directory
  * cache, ie the parts that aren't tracked by GIT, and only used

@@ -36,18 +36,6 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 	return get_pathspec(prefix, result);
 }
 
-static void show_list(const char *label, struct string_list *list)
-{
-	if (list->nr > 0) {
-		int i;
-		printf("%s", label);
-		for (i = 0; i < list->nr; i++)
-			printf("%s%s", i > 0 ? ", " : "",
-					list->items[i].string);
-		putchar('\n');
-	}
-}
-
 static const char *add_slash(const char *path)
 {
 	int len = strlen(path);
@@ -76,11 +64,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	const char **source, **destination, **dest_path;
 	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX } *modes;
 	struct stat st;
-	struct string_list overwritten = {NULL, 0, 0, 0};
 	struct string_list src_for_dst = {NULL, 0, 0, 0};
-	struct string_list added = {NULL, 0, 0, 0};
-	struct string_list deleted = {NULL, 0, 0, 0};
-	struct string_list changed = {NULL, 0, 0, 0};
 
 	git_config(git_default_config, NULL);
 
@@ -185,12 +169,11 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				 * only files can overwrite each other:
 				 * check both source and destination
 				 */
-				if (S_ISREG(st.st_mode)) {
+				if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
 					fprintf(stderr, "Warning: %s;"
 							" will overwrite!\n",
 							bad);
 					bad = NULL;
-					string_list_insert(dst, &overwritten);
 				} else
 					bad = "Cannot overwrite";
 			}
@@ -219,6 +202,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < argc; i++) {
 		const char *src = source[i], *dst = destination[i];
 		enum update_mode mode = modes[i];
+		int pos;
 		if (show_only || verbose)
 			printf("Renaming %s to %s\n", src, dst);
 		if (!show_only && mode != INDEX &&
@@ -228,45 +212,16 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		if (mode == WORKING_DIRECTORY)
 			continue;
 
-		assert(cache_name_pos(src, strlen(src)) >= 0);
-
-		string_list_insert(src, &deleted);
-		/* destination can be a directory with 1 file inside */
-		if (string_list_has_string(&overwritten, dst))
-			string_list_insert(dst, &changed);
-		else
-			string_list_insert(dst, &added);
+		pos = cache_name_pos(src, strlen(src));
+		assert(pos >= 0);
+		if (!show_only)
+			rename_cache_entry_at(pos, dst);
 	}
 
-	if (show_only) {
-		show_list("Changed  : ", &changed);
-		show_list("Adding   : ", &added);
-		show_list("Deleting : ", &deleted);
-	} else {
-		for (i = 0; i < changed.nr; i++) {
-			const char *path = changed.items[i].string;
-			int j = cache_name_pos(path, strlen(path));
-			struct cache_entry *ce = active_cache[j];
-
-			if (j < 0)
-				die ("Huh? Cache entry for %s unknown?", path);
-			refresh_cache_entry(ce, 0);
-		}
-
-		for (i = 0; i < added.nr; i++) {
-			const char *path = added.items[i].string;
-			if (add_file_to_cache(path, verbose ? ADD_CACHE_VERBOSE : 0))
-				die("updating index entries failed");
-		}
-
-		for (i = 0; i < deleted.nr; i++)
-			remove_file_from_cache(deleted.items[i].string);
-
-		if (active_cache_changed) {
-			if (write_cache(newfd, active_cache, active_nr) ||
-			    commit_locked_index(&lock_file))
-				die("Unable to write new index file");
-		}
+	if (active_cache_changed) {
+		if (write_cache(newfd, active_cache, active_nr) ||
+		    commit_locked_index(&lock_file))
+			die("Unable to write new index file");
 	}
 
 	return 0;

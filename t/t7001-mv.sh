@@ -156,4 +156,56 @@ test_expect_success 'absolute pathname outside should fail' '(
 
 )'
 
+test_expect_success 'git mv should not change sha1 of moved cache entry' '
+
+	rm -fr .git &&
+	git init &&
+	echo 1 >dirty &&
+	git add dirty &&
+	entry="$(git ls-files --stage dirty | cut -f 1)"
+	git mv dirty dirty2 &&
+	[ "$entry" = "$(git ls-files --stage dirty2 | cut -f 1)" ] &&
+	echo 2 >dirty2 &&
+	git mv dirty2 dirty &&
+	[ "$entry" = "$(git ls-files --stage dirty | cut -f 1)" ]
+
+'
+
+rm -f dirty dirty2
+
+test_expect_success 'git mv should overwrite symlink to a file' '
+
+	rm -fr .git &&
+	git init &&
+	echo 1 >moved &&
+	ln -s moved symlink &&
+	git add moved symlink &&
+	test_must_fail git mv moved symlink &&
+	git mv -f moved symlink &&
+	! test -e moved &&
+	test -f symlink &&
+	test "$(cat symlink)" = 1 &&
+	git diff-files --quiet
+
+'
+
+rm -f moved symlink
+
+test_expect_success 'git mv should overwrite file with a symlink' '
+
+	rm -fr .git &&
+	git init &&
+	echo 1 >moved &&
+	ln -s moved symlink &&
+	git add moved symlink &&
+	test_must_fail git mv symlink moved &&
+	git mv -f symlink moved &&
+	! test -e symlink &&
+	test -h moved &&
+	git diff-files --quiet
+
+'
+
+rm -f moved symlink
+
 test_done
