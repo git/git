@@ -1,43 +1,65 @@
-What's in git.git (Jun 2008, issue #02; Sat, 21)
+What's in git.git (Jun 2008, issue #03; Mon, 23)
 
-  maint 3b2bbe9 (Documentation: fix formatting in git-svn, 2008-06-20)
- master 73f0362 (Correct documentation for git-push --mirror, 2008-06-20)
+  maint 010a2da (Extend parse-options test suite, 2008-06-22)
+ master 112db55 (Shrink the git binary a bit by avoiding unnecessary inline functions, 2008-06-22)
 ------------------------------------------------------------------------
 
-* The 'maint' branch has now preparing for 1.5.6.1, with these noncritical
-  fixes.
+There are a few more fixes destined for maint, being tested in next first.
 
-Brandon Casey (2):
-  git-merge.sh: fix typo in usage message: sucesses --> succeeds
-  t7502-commit.sh: test_must_fail doesn't work with inline environment
-    variables
+* The 'maint' branch has these fixes since the last announcement.
 
-Dan McGee (1):
-  completion: add --graph to log command completion
+Michele Ballabio (1):
+  parse-options.c: fix documentation syntax of optional arguments
 
-Jan Krüger (1):
-  Documentation: fix formatting in git-svn
+Stephan Beyer (3):
+  api-builtin.txt: update and fix typo
+  api-parse-options.txt: Introduce documentation for parse options API
+  Extend parse-options test suite
 
 
 * The 'master' branch has these since the last announcement
-  in addition to the above.  Not much to see here (yet).
+  in addition to the above.
 
-Cristian Peraferrer (1):
-  Print errno upon failure to open the COMMIT_EDITMSG file
+Jakub Narebski (2):
+  gitweb: Separate filling list of projects info
+  gitweb: Separate generating 'sort by' table header
 
-Jakub Narebski (1):
-  t/README: Add 'Skipping Tests' section below 'Running Tests'
+Jeff King (5):
+  fix whitespace violations in test scripts
+  mask necessary whitespace policy violations in test scripts
+  avoid whitespace on empty line in automatic usage message
+  avoid trailing whitespace in zero-change diffstat lines
+  enable whitespace checking of test scripts
 
-Lea Wiemann (1):
-  test-lib.sh: add --long-tests option
+Junio C Hamano (1):
+  diff -c/--cc: do not include uninteresting deletion before leading
+    context
 
-Lukas Sandström (1):
-  Add a helper script to send patches with Mozilla Thunderbird
+Karl Hasselström (2):
+  Clean up builtin-update-ref's option parsing
+  Make old sha1 optional with git update-ref -d
 
-Shawn O. Pearce (1):
-  Correct documentation for git-push --mirror
+Linus Torvalds (3):
+  racy-git: an empty blob has a fixed object name
+  Make git_dir a path relative to work_tree in setup_work_tree()
+  Shrink the git binary a bit by avoiding unnecessary inline functions
 
-Teemu Likonen (2):
-  bash: Add more option completions for 'git log'
-  Add target "install-html" the the top level Makefile
+Marius Storm-Olsen (3):
+  Add an optional <mode> argument to commit/status -u|--untracked-files
+    option
+  Add argument 'no' commit/status option -u|--untracked-files
+  Add configuration option for default untracked files mode
+
+Nanako Shiraishi (2):
+  environment.c: remove unused function
+  config.c: make git_env_bool() static
+
+Pieter de Bie (1):
+  builtin-fast-export: Add importing and exporting of revision marks
+
+Rafael Garcia-Suarez (1):
+  gitweb: remove git_blame and rename git_blame2 to git_blame
+
+René Scharfe (1):
+  Teach new attribute 'export-ignore' to git-archive
 
