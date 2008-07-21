@@ -756,6 +756,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o compat/winansi.o
 	EXTLIBS += -lws2_32
 	X = .exe
+	gitexecdir = ../libexec/git-core
 	template_dir = ../share/git-core/templates/
 	ETC_GITCONFIG = ../etc/gitconfig
 endif
