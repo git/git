@@ -28,7 +28,7 @@ OPTIONS
 
 Author
 ------
-Written by Ryan Anderson <ryan@michonline.com> and Junio C Hamano <junkio@cox.net>
+Written by Ryan Anderson <ryan@michonline.com> and Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------

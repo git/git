@@ -1,4 +1,4 @@
-From: Junio C Hamano <junkio@cox.net> and Carl Baldwin <cnb@fc.hp.com>
+From: Junio C Hamano <gitster@pobox.com> and Carl Baldwin <cnb@fc.hp.com>
 Subject: control access to branches.
 Date: Thu, 17 Nov 2005 23:55:32 -0800
 Message-ID: <7vfypumlu3.fsf@assigned-by-dhcp.cox.net>

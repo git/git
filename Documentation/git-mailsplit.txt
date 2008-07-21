@@ -46,7 +46,7 @@ OPTIONS
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
-and Junio C Hamano <junkio@cox.net>
+and Junio C Hamano <gitster@pobox.com>
 
 
 Documentation

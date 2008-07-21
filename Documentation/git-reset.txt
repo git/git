@@ -195,7 +195,7 @@ $ git add frotz.c                           <3>
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net> and Linus Torvalds <torvalds@osdl.org>
+Written by Junio C Hamano <gitster@pobox.com> and Linus Torvalds <torvalds@osdl.org>
 
 Documentation
 --------------

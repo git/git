@@ -182,7 +182,7 @@ topologically related with each other.
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 
 Documentation
