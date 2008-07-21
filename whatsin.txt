@@ -1,90 +1,51 @@
-What's in git.git (Jul 2008, issue #06; Sat, 19)
+What's in git.git (Jul 2008, issue #07; Sun, 20)
 
-  maint a1b6fb0 (GIT 1.5.6.4, 2008-07-19)
- master 09651dd (Getting closer to 1.6.0-rc0, 2008-07-19)
+  maint 2d9c572 (fix usage string for git grep, 2008-07-20)
+ master 93310a4 (Merge branch 'ap/trackinfo', 2008-07-20)
 ------------------------------------------------------------------------
 
-* The 'maint' branch is at 1.5.6.4.
+As announced in a separate message, the tip of master was tagged as
+1.6.0-rc0; for people who neglected futureproofing themselves so far, it
+would really be a good time to seriously consider doing so.
+
+* The 'maint' branch has these fixes since the last announcement.
+
+Jonathan Nieder (1):
+  fix usage string for git grep
+
+Junio C Hamano (1):
+  refresh-index: fix bitmask assignment
+
 
 * The 'master' branch has these since the last announcement
-  in addition to what is already in 1.5.6.4.
+  in addition to the above.
 
-Alexander Gavrilov (3):
-  Avoid rescanning unchanged entries in search for copies.
-  Do not try to detect move/copy for entries below threshold.
-  Support gitlinks in fast-import.
+Avery Pennarun (1):
+  Reword "your branch has diverged..." lines to reduce line length
 
-Eric Raible (1):
-  Teach lookup_prog not to select directories
+Dmitry Potapov (1):
+  git-svn: fix git svn info to work without arguments
 
-Eric Wong (1):
-  t/lib-git-svn: fix SVN_HTTPD tests to work with "trash directory"
+Junio C Hamano (8):
+  rerere.autoupdate: change the message when autoupdate is in effect
+  builtin-add.c: restructure the code for maintainability
+  git-add --all: add all files
+  git-add --all: tests
+  git-add --all: documentation
+  Link shell with compat layer functions
+  Move read_in_full() and write_in_full() to wrapper.c
+  "needs update" considered harmful
 
-Fabian Emmes (2):
-  Testsuite: Unset CVS_SERVER
-  testsuite for cvs co -c
+Lars Noschinski (1):
+  cvsserver: Add testsuite for packed refs
 
-Johannes Sixt (1):
-  builtin-clone: rewrite guess_dir_name()
+Michele Ballabio (2):
+  builtin-merge.c: Fix option parsing
+  builtin-push.c: Cleanup - use OPT_BIT() and remove some variables
 
-Junio C Hamano (9):
-  git-rebase: report checkout failure
-  t/aggregate-results: whitespace fix
-  Update draft release notes for 1.6.0
-  read-cache.c: typofix
-  mailinfo: off-by-one fix for [PATCH (foobar)] removal from Subject: line
-  builtin-remote.c: fix earlier "skip_prefix()" conversion
-  t9001 (send-email): Do not use hardcoded /bin/sh in test
-  .mailmap update
-  Getting closer to 1.6.0-rc0
+Miklos Vajna (1):
+  Teach 'git merge' that some merge strategies no longer exist
 
-Lars Noschinski (2):
-  cvsserver: Add support for packed refs
-  cvsserver: Add cvs co -c support
-
-Lukas Sandström (3):
-  Make some strbuf_*() struct strbuf arguments const.
-  Add some useful functions for strbuf manipulation.
-  git-mailinfo: use strbuf's instead of fixed buffers
-
-Miklos Vajna (4):
-  t0001-init.sh: change confusing directory name
-  t1007-hash-object.sh: use quotes for the test description
-  git-bisect: use dash-less form on git bisect log
-  make remove-dashes: apply to scripts and programs as well, not just to
-    builtins
-
-Nanako Shiraishi (3):
-  cache-tree.c: make cache_tree_find() static
-  builtin-describe.c: make a global variable "pattern" static
-  parse-options.c: make check_typos() static
-
-Peter Harris (1):
-  Add ANSI control code emulation for the Windows console
-
-Petr Baudis (5):
-  Documentation/git-submodule.txt: Add Description section
-  Documentation/RelNotes-1.6.0.txt: Expand on the incompatible packfiles
-  Documentation/git-submodule.txt: Further clarify the description
-  Documentation: How to ignore local changes in tracked files
-  Documentation/git-merge.txt: Partial rewrite of How Merge Works
-
-René Scharfe (8):
-  archive: remove args member from struct archiver
-  add context pointer to read_tree_recursive()
-  archive: add baselen member to struct archiver_args
-  archive: centralize archive entry writing
-  archive: unify file attribute handling
-  archive: remove extra arguments parsing code
-  archive: make zip compression level independent from core git
-  archive: remove unused headers
-
-Stephan Beyer (4):
-  t/test-lib.sh: exit with small negagive int is ok with test_must_fail
-  t/: Use "test_must_fail git" instead of "! git"
-  Make usage strings dash-less
-  Link git-shell only to a subset of libgit.a
-
-SungHyun Nam (1):
-  t/Makefile: use specified shell when running aggregation script
+Nanako Shiraishi (1):
+  git am --abort
 
