@@ -1,4 +1,4 @@
-What's cooking in git.git (Jun 2008, issue #02; Mon, 23)
+What's cooking in git.git (Jun 2008, issue #03; Wed, 25)
 --------------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -19,26 +19,21 @@ good set of feature enhancements.  But bigger changes will be:
 
  * git-merge will be rewritten in C.
 
-Currently tip of 'pu' is broken and does not pass tests, as j6t/mingw has
-interaction with dr/ceiling and jc/merge-theirs has interaction with
-mv/merge-in-c.
+ * default pack and idx versions will be updated as scheduled for some
+   time ago.
 
 ----------------------------------------------------------------
 [New Topics]
 
-* jc/rerere (Sun Jun 22 02:04:31 2008 -0700) 5 commits
- - rerere.autoupdate
- - t4200: fix rerere test
- - rerere: remove dubious "tail_optimization"
- - git-rerere: detect unparsable conflicts
- - rerere: rerere_created_at() and has_resolution() abstraction
-
-* sb/rebase (Sun Jun 22 01:55:50 2008 +0200) 2 commits
- + t3404: stricter tests for git-rebase--interactive
- + api-builtin.txt: update and fix typo
-
-* sb/maint-rebase (Sun Jun 22 16:07:02 2008 +0200) 1 commit
- + git-rebase.sh: Add check if rebase is in progress
+* ph/parseopt-step-blame (Tue Jun 24 11:12:12 2008 +0200) 7 commits
+ - Migrate git-blame to parse-option partially.
+ - parse-opt: add PARSE_OPT_KEEP_ARGV0 parser option.
+ - parse-opt: fake short strings for callers to believe in.
+ - parse-opt: do not pring errors on unknown options, return -2
+   intead.
+ - parse-opt: create parse_options_step.
+ - parse-opt: Export a non NORETURN usage dumper.
+ - parse-opt: have parse_options_{start,end}.
 
 ----------------------------------------------------------------
 [Will merge to master soon]
@@ -53,10 +48,12 @@ mv/merge-in-c.
  + Split up default "user" config parsing into helper routine
  + Split up default "core" config parsing into helper routine
 
-* nd/dashless (Wed Nov 28 23:21:57 2007 +0700) 1 commit
+* nd/dashless (Tue Jun 24 19:58:11 2008 -0700) 2 commits
+ + Keep some git-* programs in $(bindir)
  + Move all dashed-form commands to libexecdir
 
-Scheduled for 1.6.0.
+Scheduled for 1.6.0.  We'll leave server-side programs in $(bindir) 
+so that ssh clients can ask for "git-program" and find them on the $PATH.
 
 * sg/merge-options (Sun Apr 6 03:23:47 2008 +0200) 1 commit
  + merge: remove deprecated summary and diffstat options and config
@@ -85,11 +82,9 @@ Beginning of regression tests for Perl part of the system.
 ----------------------------------------------------------------
 [Actively Cooking]
 
-* mv/merge-in-c (Sat Jun 21 19:15:35 2008 +0200) 14 commits
+* mv/merge-in-c (Sat Jun 21 19:15:35 2008 +0200) 12 commits
  - Add new test case to ensure git-merge reduces octopus parents when
    possible
- - Add new test case to ensure git-merge filters for independent
-   parents
  - Build in merge
  - Introduce reduce_heads()
  - Introduce get_merge_bases_many()
@@ -97,17 +92,18 @@ Beginning of regression tests for Perl part of the system.
  - Introduce get_octopus_merge_bases() in commit.c
  - git-fmt-merge-msg: make it usable from other builtins
  - Move read_cache_unmerged() to read-cache.c
- - parseopt: add a new PARSE_OPT_ARGV0_IS_AN_OPTION option
  - Add new test to ensure git-merge handles pull.twohead and
    pull.octopus
  - Move parse-options's skip_prefix() to git-compat-util.h
  - Move commit_list_count() to commit.c
  - Move split_cmdline() to alias.c
 
+I dropped the change to parseopt in this series and fixed up the caller.
+
 * jc/dashless (Sat Dec 1 22:09:22 2007 -0800) 2 commits
- - Prepare execv_git_cmd() for removal of builtins from the
+ + Prepare execv_git_cmd() for removal of builtins from the
    filesystem
- - git-shell: accept "git foo" form
+ + git-shell: accept "git foo" form
 
 We do not plan to remove git-foo form completely from the filesystem at
 this point, but git-shell may need to be updated.
@@ -118,54 +114,23 @@ this point, but git-shell may need to be updated.
  + Fold test-absolute-path into test-path-utils
  + Implement normalize_absolute_path
 
+* jc/rerere (Sun Jun 22 02:04:31 2008 -0700) 5 commits
+ - rerere.autoupdate
+ - t4200: fix rerere test
+ - rerere: remove dubious "tail_optimization"
+ - git-rerere: detect unparsable conflicts
+ - rerere: rerere_created_at() and has_resolution() abstraction
+
+* sb/rebase (Sun Jun 22 01:55:50 2008 +0200) 2 commits
+ + t3404: stricter tests for git-rebase--interactive
+ + api-builtin.txt: update and fix typo
+
+* sb/maint-rebase (Sun Jun 22 16:07:02 2008 +0200) 1 commit
+ + git-rebase.sh: Add check if rebase is in progress
+
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* rs/archive-ignore (Sun Jun 8 18:42:33 2008 +0200) 1 commit
- + Teach new attribute 'export-ignore' to git-archive
-
-* lt/racy-empty (Tue Jun 10 10:44:43 2008 -0700) 1 commit
- + racy-git: an empty blob has a fixed object name
-
-* sn/static (Thu Jun 19 08:21:11 2008 +0900) 2 commits
- + config.c: make git_env_bool() static
- + environment.c: remove unused function
-
-* jc/maint-combine-diff-pre-context (Wed Jun 18 23:59:41 2008 -0700) 1 commit
- + diff -c/--cc: do not include uninteresting deletion before leading
-   context
-
-* lt/maint-gitdir-relative (Thu Jun 19 12:34:06 2008 -0700) 1 commit
- + Make git_dir a path relative to work_tree in setup_work_tree()
-
-* jn/web (Tue Jun 10 19:21:44 2008 +0200) 2 commits
- + gitweb: Separate generating 'sort by' table header
- + gitweb: Separate filling list of projects info
-
-* rg/gitweb (Fri Jun 6 09:53:32 2008 +0200) 1 commit
- + gitweb: remove git_blame and rename git_blame2 to git_blame
-
-* kh/update-ref (Tue Jun 3 01:34:53 2008 +0200) 2 commits
- + Make old sha1 optional with git update-ref -d
- + Clean up builtin-update-ref's option parsing
-
-* mo/status-untracked (Thu Jun 5 14:47:50 2008 +0200) 3 commits
- + Add configuration option for default untracked files mode
- + Add argument 'no' commit/status option -u|--untracked-files
- + Add an optional <mode> argument to commit/status -u|--untracked-
-   files option
-
-* jk/test (Sat Jun 14 03:28:07 2008 -0400) 5 commits
- + enable whitespace checking of test scripts
- + avoid trailing whitespace in zero-change diffstat lines
- + avoid whitespace on empty line in automatic usage message
- + mask necessary whitespace policy violations in test scripts
- + fix whitespace violations in test scripts
-
-Tightens whitespace rules for t/*.sh scripts.
-
-* pb/fast-export (Wed Jun 11 13:17:04 2008 +0200) 1 commit
- + builtin-fast-export: Add importing and exporting of revision marks
 
 ----------------------------------------------------------------
 [On Hold]
@@ -175,7 +140,7 @@ Tightens whitespace rules for t/*.sh scripts.
 
 Waiting for success reports from people who use various backends.
 
-* j6t/mingw (Sat Nov 17 20:48:14 2007 +0100) 38 commits
+* j6t/mingw (Sat Nov 17 20:48:14 2007 +0100) 39 commits
  - compat/pread.c: Add a forward declaration to fix a warning
  - Windows: Fix ntohl() related warnings about printf formatting
  - Windows: TMP and TEMP environment variables specify a temporary
@@ -210,22 +175,23 @@ Waiting for success reports from people who use various backends.
  - Windows: Implement setitimer() and sigaction().
  - Windows: Fix PRIuMAX definition.
  - Windows: Implement gettimeofday().
- - Windows: Handle absolute paths in
-   safe_create_leading_directories().
- - Windows: Treat Windows style path names.
- - setup.c: Prepare for Windows directory separators.
+ - Make my_mktime() public and rename it to tm_to_time_t()
  - Windows: Work around misbehaved rename().
  - Windows: always chmod(, 0666) before unlink().
  - Windows: A minimal implemention of getpwuid().
  - Windows: Implement a wrapper of the open() function.
  - Windows: Strip ".exe" from the program name.
+ - Windows: Handle absolute paths in
+   safe_create_leading_directories().
+ - Windows: Treat Windows style path names.
+ - setup.c: Prepare for Windows directory separators.
  - Windows: Use the Windows style PATH separator ';'.
  - Add target architecture MinGW.
  - Compile some programs only conditionally.
  - Add compat/regex.[ch] and compat/fnmatch.[ch].
 
 No explanation is necessary ;-).  The series is probably 'next' worthy
-as-is.
+as-is, except that template renaming hack won't be needed anymore.
 
 * jk/renamelimit (Sat May 3 13:58:42 2008 -0700) 1 commit
  - diff: enable "too large a rename" warning when -M/-C is explicitly
