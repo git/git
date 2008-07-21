@@ -55,7 +55,7 @@ name is not a symbolic ref, or 128 if another error occurs.
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 GIT
 ---

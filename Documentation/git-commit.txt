@@ -331,7 +331,7 @@ linkgit:git-commit-tree[1]
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
+Junio C Hamano <gitster@pobox.com>
 
 
 GIT

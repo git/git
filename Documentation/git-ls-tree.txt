@@ -81,7 +81,7 @@ with minimum width of 7 characters.  Object size is given only for blobs
 Author
 ------
 Written by Petr Baudis <pasky@suse.cz>
-Completely rewritten from scratch by Junio C Hamano <junkio@cox.net>,
+Completely rewritten from scratch by Junio C Hamano <gitster@pobox.com>,
 another major rewrite by Linus Torvalds <torvalds@osdl.org>
 
 Documentation

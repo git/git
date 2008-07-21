@@ -398,7 +398,7 @@ after each commit, test, and amend the commit if fixes are necessary.
 
 Authors
 ------
-Written by Junio C Hamano <junkio@cox.net> and
+Written by Junio C Hamano <gitster@pobox.com> and
 Johannes E. Schindelin <johannes.schindelin@gmx.de>
 
 Documentation

@@ -47,7 +47,7 @@ info/refs file unless `--force` flag is given.
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------

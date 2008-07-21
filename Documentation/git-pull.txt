@@ -193,7 +193,7 @@ linkgit:git-fetch[1], linkgit:git-merge[1], linkgit:git-config[1]
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
-and Junio C Hamano <junkio@cox.net>
+and Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------
