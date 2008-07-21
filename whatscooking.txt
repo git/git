@@ -1,4 +1,4 @@
-What's cooking in git.git (Jul 2008, issue #05; Sun, 13)
+What's cooking in git.git (Jul 2008, issue #06; Tue, 15)
 --------------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -8,29 +8,68 @@ in 'next'.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
-I think most of the important stuff is already in 'next'.  Let's start
-talking about closing the merge window for 1.6.0.
+It so happens that the topics clearly separated between the ones that are
+obviously ready for 1.6.0 and the others that aren't yet as of tonight.
+It seems that it is a good time to draw that line and tag -rc0 tomorrow,
+after merging the remaining topics in 'next'.
 
 ----------------------------------------------------------------
 [New Topics]
 
+I could apply these directly to master, but I am just playing it safe.
+
+* sp/maint-index-pack (Tue Jul 15 04:45:34 2008 +0000) 4 commits
+ + index-pack: Honor core.deltaBaseCacheLimit when resolving deltas
+ + index-pack: Track the object_entry that creates each base_data
+ + index-pack: Chain the struct base_data on the stack for traversal
+ + index-pack: Refactor base arguments of resolve_delta into a struct
+
+* rs/rebase-checkout-not-so-quiet (Mon Jul 14 14:05:35 2008 -0700) 1 commit
+ + git-rebase: report checkout failure
+
+* ag/blame (Wed Jul 16 02:00:58 2008 +0400) 2 commits
+ + Do not try to detect move/copy for entries below threshold.
+ + Avoid rescanning unchanged entries in search for copies.
+
+This gives a drastic performance improvement to "git-blame -C -C" with
+quite straightforward and obvious code change.
+
+* rs/archive (Mon Jul 14 21:22:05 2008 +0200) 6 commits
+ + archive: remove extra arguments parsing code
+ + archive: unify file attribute handling
+ + archive: centralize archive entry writing
+ + archive: add baselen member to struct archiver_args
+ + add context pointer to read_tree_recursive()
+ + archive: remove args member from struct archiver
+
+----------------------------------------------------------------
+[Will merge to master soon]
+
 * sb/dashless (Sun Jul 13 15:36:15 2008 +0200) 3 commits
- - Make usage strings dash-less
- - t/: Use "test_must_fail git" instead of "! git"
- - t/test-lib.sh: exit with small negagive int is ok with
+ + Make usage strings dash-less
+ + t/: Use "test_must_fail git" instead of "! git"
+ + t/test-lib.sh: exit with small negagive int is ok with
    test_must_fail
 
 * mv/dashless (Fri Jul 11 02:12:06 2008 +0200) 4 commits
- - make remove-dashes: apply to scripts and programs as well, not
+ + make remove-dashes: apply to scripts and programs as well, not
    just to builtins
- - git-bisect: use dash-less form on git bisect log
- - t1007-hash-object.sh: use quotes for the test description
- - t0001-init.sh: change confusing directory name
+ + git-bisect: use dash-less form on git bisect log
+ + t1007-hash-object.sh: use quotes for the test description
+ + t0001-init.sh: change confusing directory name
+
+* ls/mailinfo (Sun Jul 13 20:30:12 2008 +0200) 3 commits
+ + git-mailinfo: use strbuf's instead of fixed buffers
+ + Add some useful functions for strbuf manipulation.
+ + Make some strbuf_*() struct strbuf arguments const.
+
+----------------------------------------------------------------
+[Graduated to "master"]
 
 * sp/maint-bash-completion-optim (Mon Jul 14 00:22:03 2008 +0000) 1 commit
  + bash completion: Append space after file names have been completed
 
-Early parts are already merged to 'master' and need to be merged down to
+Early parts were already merged to 'master' and need to be merged down to
 maint as well, as this is about a "performance bug" that has been with us
 almost forever.
 
@@ -51,44 +90,16 @@ almost forever.
  + rerere: Separate libgit and builtin functions
  + builtin-rerere: more carefully find conflict markers
 
-* ls/mailinfo (Sun Jul 13 20:30:12 2008 +0200) 3 commits
- - git-mailinfo: use strbuf's instead of fixed buffers
- - Add some useful functions for strbuf manipulation.
- - Make some strbuf_*() struct strbuf arguments const.
-
-* gi/cherry-cache (Sat Jul 12 20:14:51 2008 -0700) 1 commit
- - cherry: cache patch-ids to avoid repeating work
-
-This does not seem to pass tests even on its own.
-
 * js/maint-pretty-mailmap (Sat Jul 12 00:28:18 2008 +0100) 1 commit
  + Add pretty format %aN which gives the author name, respecting
    .mailmap
 
-* js/more-win (Sun Jul 13 22:31:23 2008 +0200) 6 commits
- - Allow add_path() to add non-existent directories to the path
- - Allow the built-in exec path to be relative to the command
-   invocation path
- - Fix relative built-in paths to be relative to the command
-   invocation
+* js/more-win (Sun Jul 13 22:31:23 2008 +0200) 3 commits
  + help (Windows): Display HTML in default browser using Windows'
    shell API
  + help.c: Add support for htmldir relative to git_exec_path()
  + Move code interpreting path relative to exec-dir to new function
    system_path()
-
-The earlier parts are obvious; Dscho seemed to have some comments on the
-later ones that are in 'pu'.
-
-* lw/gitweb (Fri Jul 11 03:11:48 2008 +0200) 3 commits
- - gitweb: use new Git::Repo API, and add optional caching
- - Add new Git::Repo API
- - gitweb: add test suite with Test::WWW::Mechanize::CGI
-
-This does not pass t9710, at least for me X-<.
-
-----------------------------------------------------------------
-[Will merge to master soon]
 
 * jc/rebase-orig-head (Tue Jul 8 00:12:22 2008 -0400) 2 commits
  + Documentation: mention ORIG_HEAD in am, merge, and rebase
@@ -100,9 +111,6 @@ This does not pass t9710, at least for me X-<.
  + branch --contains: default to HEAD
  + parse-options: add PARSE_OPT_LASTARG_DEFAULT flag
 
-This builds on top of the parse-options enhancement series that
-has been cooking in 'next' for some time.
-
 * om/rerere-careful (Mon Jul 7 14:42:48 2008 +0200) 1 commit
  + builtin-rerere: more carefully find conflict markers
 
@@ -110,46 +118,8 @@ has been cooking in 'next' for some time.
  + git-mailinfo: Fix getting the subject from the in-body [PATCH]
    line
 
-----------------------------------------------------------------
-[Actively Cooking]
-
-* xx/merge-in-c-into-next (Wed Jul 9 13:51:46 2008 -0700) 4 commits
- + Teach git-merge -X<option> again.
- + Merge branch 'jc/merge-theirs' into xx/merge-in-c-into-next
- + builtin-merge.c: use parse_options_step() "incremental parsing"
-   machinery
- + Merge branch 'ph/parseopt-step-blame' into xx/merge-in-c-into-next
-
-I've described what this is in a separate message.
-
-* rs/imap (Wed Jul 9 22:29:02 2008 +0100) 5 commits
- - Documentation: Improve documentation for git-imap-send(1)
- - imap-send.c: more style fixes
- - imap-send.c: style fixes
- - git-imap-send: Support SSL
- - git-imap-send: Allow the program to be run from subdirectories of
-   a git tree
-
-Some people seem to prefer having this feature available also with gnutls.
-If such a patch materializes soon, that would be good, but otherwise I'll
-merge this as-is to 'next'.  Such an enhancement can be done in-tree on
-top of this series.
-
-* jc/merge-theirs (Mon Jun 30 22:18:57 2008 -0700) 5 commits
- + Make "subtree" part more orthogonal to the rest of merge-
-   recursive.
- + Teach git-pull to pass -X<option> to git-merge
- + Teach git-merge to pass -X<option> to the backend strategy module
- + git-merge-recursive-{ours,theirs}
- + git-merge-file --ours, --theirs
-
-Punting a merge by discarding your own work in conflicting parts but still
-salvaging the parts that are cleanly automerged.  It is likely that this
-will result in nonsense mishmash, but somehow often people want this, so
-here they are.  The interface to the backends is updated so that you can
-say "git merge -Xours -Xsubtree=foo/bar/baz -s recursive other" now.
-
-* mv/merge-in-c (Sun Jul 13 08:13:55 2008 +0000) 19 commits
+* mv/merge-in-c (Mon Jul 14 00:09:41 2008 -0700) 20 commits
+ + reduce_heads(): protect from duplicate input
  + reduce_heads(): thinkofix
  + Add a new test for git-merge-resolve
  + t6021: add a new test for git-merge-resolve
@@ -173,81 +143,45 @@ say "git merge -Xours -Xsubtree=foo/bar/baz -s recursive other" now.
  + Move commit_list_count() to commit.c
  + Move split_cmdline() to alias.c
 
-Sverre seems to have a yet another fixup on top of this that came late and
-I haven't looked at.
-
-----------------------------------------------------------------
-[Graduated to "master"]
-
-* js/pick-root (Fri Jul 4 16:19:52 2008 +0100) 1 commit
- + Allow cherry-picking root commits
-
-* ab/bundle (Sat Jul 5 17:26:40 2008 -0400) 1 commit
- + Teach git-bundle to read revision arguments from stdin like git-
-   rev-list.
-
-* sg/stash-k-i (Tue Jul 8 00:40:56 2008 -0700) 2 commits
- + Documentation: tweak use case in "git stash save --keep-index"
- + stash: introduce 'stash save --keep-index' option
-
-One weakness of our "partial commit" workflow support used to be that the
-user can incrementally build what is to be committed in the index but that
-state cannot be tested as a whole in the working tree.  This allows you to
-temporarily stash the remaining changes in the working tree so that the
-index state before running "stash save --keep-index" can be seen in the
-working tree to be tested and then committed.
-
-* am/stash-branch (Mon Jul 7 02:50:10 2008 +0530) 2 commits
- + Add a test for "git stash branch"
- + Implement "git stash branch <newbranch> <stash>"
-
-Creates a new branch out of the stashed state, after returning from the
-interrupt that forced you to create the stash in the first place.
-
-* tr/add-i-e (Thu Jul 3 00:00:00 2008 +0200) 3 commits
- + git-add--interactive: manual hunk editing mode
- + git-add--interactive: remove hunk coalescing
- + git-add--interactive: replace hunk recounting with apply --recount
-
-Adds 'e/dit' action to interactive add command.
-
-* jc/report-tracking (Sun Jul 6 02:54:56 2008 -0700) 5 commits
- + branch -r -v: do not spit out garbage
- + stat_tracking_info(): clear object flags used during counting
- + git-branch -v: show the remote tracking statistics
- + git-status: show the remote tracking statistics
- + Refactor "tracking statistics" code used by "git checkout"
-
-Makes the "your branch is ahead of the tracked one by N commits" logic and
-messages available to other commands; status and branch are updated.
-
-* ph/parseopt-step-blame (Wed Jul 9 23:38:34 2008 +0200) 18 commits
- + revisions: refactor handle_revision_opt into parse_revision_opt.
- + git-shortlog: migrate to parse-options partially.
- + git-blame: fix lapsus
- + git-blame: migrate to incremental parse-option [2/2]
- + git-blame: migrate to incremental parse-option [1/2]
- + revisions: split handle_revision_opt() from setup_revisions()
- + Merge branch 'jc/blame' (early part) into HEAD
- + parse-opt: add PARSE_OPT_KEEP_ARGV0 parser option.
- + parse-opt: fake short strings for callers to believe in.
- + parse-opt: do not print errors on unknown options, return -2
-   intead.
- + parse-opt: create parse_options_step.
- + parse-opt: Export a non NORETURN usage dumper.
- + parse-opt: have parse_options_{start,end}.
- + git-blame --reverse
- + builtin-blame.c: allow more than 16 parents
- + builtin-blame.c: move prepare_final() into a separate function.
- + rev-list --children
- + revision traversal: --children option
-
-Became active again ;-) This probably is ready for 'master' already,
-except for the last two which I only looked at the patch and have not
-used heavily in production yet.
-
 ----------------------------------------------------------------
 [On Hold]
+
+* rs/imap (Wed Jul 9 22:29:02 2008 +0100) 5 commits
+ - Documentation: Improve documentation for git-imap-send(1)
+ - imap-send.c: more style fixes
+ - imap-send.c: style fixes
+ - git-imap-send: Support SSL
+ - git-imap-send: Allow the program to be run from subdirectories of
+   a git tree
+
+Some people seem to prefer having this feature available also with gnutls.
+If such a patch materializes soon, that would be good, but otherwise I'll
+merge this as-is to 'next'.  Such an enhancement can be done in-tree on
+top of this series.
+
+* xx/merge-in-c-into-next (Wed Jul 9 13:51:46 2008 -0700) 4 commits
+ + Teach git-merge -X<option> again.
+ + Merge branch 'jc/merge-theirs' into xx/merge-in-c-into-next
+ + builtin-merge.c: use parse_options_step() "incremental parsing"
+   machinery
+ + Merge branch 'ph/parseopt-step-blame' into xx/merge-in-c-into-next
+
+This needs to be merged to master iff/when merge-theirs gets merged,
+but I do not think this series is widely supported, so both are on hold.
+
+* jc/merge-theirs (Mon Jun 30 22:18:57 2008 -0700) 5 commits
+ + Make "subtree" part more orthogonal to the rest of merge-
+   recursive.
+ + Teach git-pull to pass -X<option> to git-merge
+ + Teach git-merge to pass -X<option> to the backend strategy module
+ + git-merge-recursive-{ours,theirs}
+ + git-merge-file --ours, --theirs
+
+Punting a merge by discarding your own work in conflicting parts but still
+salvaging the parts that are cleanly automerged.  It is likely that this
+will result in nonsense mishmash, but somehow often people want this, so
+here they are.  The interface to the backends is updated so that you can
+say "git merge -Xours -Xsubtree=foo/bar/baz -s recursive other" now.
 
 * sg/merge-options (Sun Apr 6 03:23:47 2008 +0200) 1 commit
  + merge: remove deprecated summary and diffstat options and config
@@ -276,6 +210,14 @@ hit due to tcl/tk's limitation, so I am holding this back for now.
 ----------------------------------------------------------------
 [Stalled/Needs more work]
 
+* gi/cherry-cache (Sat Jul 12 20:14:51 2008 -0700) 1 commit
+ . cherry: cache patch-ids to avoid repeating work
+
+* lw/gitweb (Fri Jul 11 03:11:48 2008 +0200) 3 commits
+ . gitweb: use new Git::Repo API, and add optional caching
+ . Add new Git::Repo API
+ . gitweb: add test suite with Test::WWW::Mechanize::CGI
+
 * sb/sequencer (Tue Jul 1 04:38:34 2008 +0200) 4 commits
  . Migrate git-am to use git-sequencer
  . Add git-sequencer test suite (t3350)
@@ -299,5 +241,4 @@ commits that are mentioned in grafts as reachable.
 
 This is for peeling to see what's behind the blamed commit, which may or
 may not help applications like gitweb.
-
 
