@@ -269,6 +269,7 @@ cmd_update()
 	do
 		case "$1" in
 		-q|--quiet)
+			shift
 			quiet=1
 			;;
 		-i|--init)
@@ -286,7 +287,6 @@ cmd_update()
 			break
 			;;
 		esac
-		shift
 	done
 
 	git ls-files --stage -- "$@" | grep '^160000 ' |
