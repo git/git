@@ -73,12 +73,12 @@ __git_ps1 ()
 	if [ -n "$g" ]; then
 		local r
 		local b
-		if [ -d "$g/rebase" ]
+		if [ -d "$g/rebase-apply" ]
 		then
-			if test -f "$g/rebase/rebasing"
+			if test -f "$g/rebase-apply/rebasing"
 			then
 				r="|REBASE"
-			elif test -f "$g/rebase/applying"
+			elif test -f "$g/rebase-apply/applying"
 			then
 				r="|AM"
 			else
@@ -488,7 +488,7 @@ __git_whitespacelist="nowarn warn error error-all strip"
 _git_am ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}" dir="$(__gitdir)"
-	if [ -d "$dir"/rebase ]; then
+	if [ -d "$dir"/rebase-apply ]; then
 		__gitcomp "--skip --resolved"
 		return
 	fi
@@ -915,7 +915,7 @@ _git_push ()
 _git_rebase ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}" dir="$(__gitdir)"
-	if [ -d "$dir"/rebase ] || [ -d "$dir"/rebase-merge ]; then
+	if [ -d "$dir"/rebase-apply ] || [ -d "$dir"/rebase-merge ]; then
 		__gitcomp "--continue --skip --abort"
 		return
 	fi

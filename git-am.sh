@@ -121,7 +121,7 @@ It does not apply to blobs recorded in its index."
 }
 
 prec=4
-dotest="$GIT_DIR/rebase"
+dotest="$GIT_DIR/rebase-apply"
 sign= utf8=t keep= skip= interactive= resolved= binary= rebasing= abort=
 resolvemsg= resume=
 git_apply_opt=

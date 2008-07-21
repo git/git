@@ -301,7 +301,7 @@ If it does not apply correctly, there can be various reasons.
   patch appropriately.
 
 * Your MUA corrupted your patch; "am" would complain that
-  the patch does not apply.  Look at .git/rebase/ subdirectory and
+  the patch does not apply.  Look at .git/rebase-apply/ subdirectory and
   see what 'patch' file contains and check for the common
   corruption patterns mentioned above.
 
