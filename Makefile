@@ -1315,7 +1315,7 @@ remove-dashes:
 ### Installation rules
 
 ifeq ($(firstword $(subst /, ,$(template_dir))),..)
-template_instdir = $(gitexecdir)/$(template_dir)
+template_instdir = $(bindir)/$(template_dir)
 else
 template_instdir = $(template_dir)
 endif

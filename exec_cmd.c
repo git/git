@@ -43,9 +43,9 @@ static const char *builtin_exec_path(void)
 
 const char *system_path(const char *path)
 {
-	if (!is_absolute_path(path)) {
+	if (!is_absolute_path(path) && argv0_path) {
 		struct strbuf d = STRBUF_INIT;
-		strbuf_addf(&d, "%s/%s", git_exec_path(), path);
+		strbuf_addf(&d, "%s/%s", argv0_path, path);
 		path = strbuf_detach(&d, NULL);
 	}
 	return path;
