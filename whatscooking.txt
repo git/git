@@ -1,4 +1,4 @@
-What's cooking in git.git (Jun 2008, issue #04; Mon, 30)
+What's cooking in git.git (Jul 2008, issue #01; Tue, 01)
 --------------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -9,20 +9,25 @@ The topics list the commits in reverse chronological order.  The topics
 meant to be applied to the maintenance series have "maint-" in their
 names.
 
-It already is beginning to become clear what 1.6.0 will look like.  What's
+It already is beginning to become clear what 1.6.0 will look like.  Wha=
+t's
 already in 'next' all are well intentioned (I do not guarantee they are
-already bug-free --- that is what cooking them in 'next' is for) and are
+already bug-free --- that is what cooking them in 'next' is for) and ar=
+e
 good set of feature enhancements.  Bigger changes will be:
 
  * MinGW will be in.
 
  * With the default Makefile settings, most of the programs will be
-   installed outside your $PATH, except for "git", "gitk", "git-gui" and
+   installed outside your $PATH, except for "git", "gitk", "git-gui" an=
+d
    some server side programs that need to be accessible for technical
    reasons.  Invoking a git subcommand as "git-xyzzy" from the command
-   line has been deprecated since early 2006 (and officially announced in
+   line has been deprecated since early 2006 (and officially announced =
+in
    1.5.4 release notes); use of them from your scripts after adding
-   output from "git --exec-path" to the $PATH will still be supported in
+   output from "git --exec-path" to the $PATH will still be supported i=
+n
    1.6.0, but users are again strongly encouraged to adjust their
    scripts to use "git xyzzy" form, as we will stop installing
    "git-xyzzy" hardlinks for built-in commands in later releases.
@@ -32,119 +37,25 @@ good set of feature enhancements.  Bigger changes will be:
  * default pack and idx versions will be updated as scheduled for some
    time ago.
 
+ * GIT_CONFIG, which was only documented as affecting "git config", but
+   actually affected all git commands, now only affects "git config".
+   GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
+   not different from GIT_CONFIG in a useful way, is removed.
+
+----------------------------------------------------------------
+[New Topics]
+
+* js/import-zip (Mon Jun 30 19:50:44 2008 +0100) 1 commit
+ + Add another fast-import example, this time for .zip files
+
+* js/apply-root (Tue Jul 1 00:44:47 2008 +0100) 1 commit
+ + Teach "git apply" to prepend a prefix with "--root=3D<root>"
+
+* db/no-git-config (Mon Jun 30 03:37:47 2008 -0400) 1 commit
+ + Only use GIT_CONFIG in "git config", not other programs
+
 ----------------------------------------------------------------
 [Will merge to master soon]
-
-* nd/dashless (Tue Jun 24 19:58:11 2008 -0700) 2 commits
- + Keep some git-* programs in $(bindir)
- + Move all dashed-form commands to libexecdir
-
-Scheduled for 1.6.0.  We'll leave server-side programs in $(bindir) so
-that ssh clients can ask for "git-program" and find them on the $PATH.
-Next major release after 1.6.0 would most likely remove the hardlinks to
-built-in commands, but not yet.
-
-* sg/merge-options (Sun Apr 6 03:23:47 2008 +0200) 1 commit
- + merge: remove deprecated summary and diffstat options and config
-   variables
-
-* jc/dashless (Thu Jun 26 16:43:34 2008 -0700) 4 commits
- + Revert "Make clients ask for "git program" over ssh and local
-   transport"
- + Make clients ask for "git program" over ssh and local transport
- + Prepare execv_git_cmd() for removal of builtins from the
-   filesystem
- + git-shell: accept "git foo" form
-
-----------------------------------------------------------------
-[Actively Cooking]
-
-* jk/maint-fetch-ref-hier (Fri Jun 27 00:01:41 2008 -0400) 2 commits
- + fetch: give a hint to the user when local refs fail to update
- + fetch: report local storage errors in status table
-
-When the remote used to have "foo" branch but now has "foo/bar", fetch
-refuses to delete the existing remote tracking branch "foo" to create a
-new remote tracking branch "foo/bar", but the error message was
-confusing.
-
-* jc/maint-reset (Wed Jun 25 18:16:36 2008 -0700) 1 commit
- + Allow "git-reset path" when unambiguous
-
-We used to require "git-reset -- path" even when there is no ambiguity
-(i.e. path cannot be mistaken as a valid tree-ish and it is a filename in
-the work tree).
-
-* js/maint-clone-insteadof (Fri Jun 27 13:55:23 2008 +0100) 2 commits
- + clone: respect the settings in $HOME/.gitconfig and /etc/gitconfig
- + clone: respect url.insteadOf setting in global configs
-
-"git clone" did not honor "url.InsteadOf" in $HOME/.gitconfig.  I think
-Daniel's "Let's get rid of internal use of GIT_CONFIG" makes sense (even
-though it feels very scary), and it would make the solution much simpler,
-but it came late and it is already past my bedtime, so...
-
-* tr/send-email-ssl (Thu Jun 26 23:03:21 2008 +0200) 2 commits
- + git-send-email: prevent undefined variable warnings if no
-   encryption is set
- + git-send-email: add support for TLS via Net::SMTP::SSL
-
-* kb/send-email-fifo (Wed Jun 25 15:44:40 2008 -0700) 1 commit
- + git-send-email: Accept fifos as well as files
-
-Two minor send-email feature enhancements for 1.6.0.
-
-* jc/checkdiff (Sun Jun 29 16:49:06 2008 -0400) 7 commits
- + Fix t4017-diff-retval for white-space from wc
- + Update sample pre-commit hook to use "diff --check"
- + diff --check: detect leftover conflict markers
- + Teach "diff --check" about new blank lines at end
- + checkdiff: pass diff_options to the callback
- + check_and_emit_line(): rename and refactor
- + diff --check: explain why we do not care whether old side is
-   binary
-
-Allows us to replace the sample pre-commit hook that was not aware of the
-line termination convention per path nor newer whitespace breakage rules.
-
-* np/pack-default (Wed Jun 25 00:25:53 2008 -0400) 2 commits
- + pack.indexversion config option now defaults to 2
- + repack.usedeltabaseoffset config option now defaults to "true"
-
-Updates the default value for pack.indexversion to 2 and use delta-base
-offset encoding of the packfiles by default.
-
-* js/apply-recount (Fri Jun 27 18:43:09 2008 +0100) 1 commit
- + Allow git-apply to recount the lines in a hunk (AKA recountdiff)
-
-A good ingredient for implementing "apply --edit".
-
-* dz/apply-again (Fri Jun 27 14:39:12 2008 -0400) 1 commit
- + git-apply: handle a patch that touches the same path more than
-   once better
-
-Allows us to feed a patch that touches the same path more than once.
-
-* jc/reflog-expire (Sat Jun 28 22:24:49 2008 -0700) 2 commits
- - Make default expiration period of reflog used for stash infinite
- - Per-ref reflog expiry configuration
-
-As 1.6.0 will be a good time to make backward incompatible changes, the
-tip commit makes the default expiry period of stash 'never', unless you
-configure them to expire explicitly using gc.refs/stash.* variables.
-Needs consensus, but I am guessing that enough people would want stash
-that does not expire.
-
-* jc/merge-theirs (Sat Jun 28 17:28:22 2008 -0700) 3 commits
- + Teach git-merge to pass -X<option> to the backend strategy module
- + git-merge-recursive-{ours,theirs}
- + git-merge-file --ours, --theirs
-
-Punting a merge by discarding your own work in conflicting parts but still
-salvaging the parts that are cleanly automerged.  It is likely that this
-will result in nonsense mishmash, but somehow often people want this, so
-here they are.  The interface to the backends is updated so that you can
-say "git merge -Xours -s recursive other" now.
 
 * j6t/mingw (Sat Nov 17 20:48:14 2007 +0100) 38 commits
  + compat/pread.c: Add a forward declaration to fix a warning
@@ -196,8 +107,42 @@ say "git merge -Xours -s recursive other" now.
 
 No explanation necessary ;-)
 
-* mv/merge-in-c (Mon Jun 30 03:39:58 2008 +0200) 13 commits
+----------------------------------------------------------------
+[Actively Cooking]
+
+* jc/reflog-expire (Sat Jun 28 22:24:49 2008 -0700) 2 commits
+ - Make default expiration period of reflog used for stash infinite
+ - Per-ref reflog expiry configuration
+
+As 1.6.0 will be a good time to make backward incompatible changes, the
+tip commit makes the default expiry period of stash 'never', unless you
+configure them to expire explicitly using gc.refs/stash.* variables.
+Needs consensus, but I am guessing that enough people would want stash
+that does not expire.
+
+We may want to change the commit topology used to represent a stash, as
+proposed in $gmane/85055 by Nana earlier.
+
+* jc/merge-theirs (Mon Jun 30 22:18:57 2008 -0700) 4 commits
+ - Make "subtree" part more orthogonal to the rest of merge-
+   recursive.
+ + Teach git-merge to pass -X<option> to the backend strategy module
+ + git-merge-recursive-{ours,theirs}
+ + git-merge-file --ours, --theirs
+
+Punting a merge by discarding your own work in conflicting parts but st=
+ill
+salvaging the parts that are cleanly automerged.  It is likely that thi=
+s
+will result in nonsense mishmash, but somehow often people want this, s=
+o
+here they are.  The interface to the backends is updated so that you ca=
+n
+say "git merge -Xours -Xsubtree=3Dfoo/bar/baz -s recursive other" now.
+
+* mv/merge-in-c (Tue Jul 1 04:37:50 2008 +0200) 14 commits
  - Build in merge
+ - git-commit-tree: make it usable from other builtins
  - Add new test case to ensure git-merge prepends the custom merge
    message
  - Add new test case to ensure git-merge reduces octopus parents when
@@ -214,7 +159,7 @@ No explanation necessary ;-)
  - Move commit_list_count() to commit.c
  - Move split_cmdline() to alias.c
 
-The last one is still in flux.
+I think this is getting there.  Will be in 'next' soon.
 
 * dr/ceiling (Mon May 19 23:49:34 2008 -0700) 4 commits
  + Eliminate an unnecessary chdir("..")
@@ -236,28 +181,154 @@ rerere to be updated in the index automatically.
  - Migrate git-blame to parse-option partially.
  - parse-opt: add PARSE_OPT_KEEP_ARGV0 parser option.
  - parse-opt: fake short strings for callers to believe in.
- - parse-opt: do not pring errors on unknown options, return -2
+ - parse-opt: do not print errors on unknown options, return -2
    intead.
  - parse-opt: create parse_options_step.
  - parse-opt: Export a non NORETURN usage dumper.
  - parse-opt: have parse_options_{start,end}.
 
-----------------------------------------------------------------
-[Graduated to "master"]
+I recall Pierre said something about cleaning up the last one when he
+finds time, but other than that vague recollection, I lost track of thi=
+s
+series.  I am tempted to fork a few topics off of the pen=C3=BAltimo on=
+e to
+convert a few more commands as examples and merge the result to 'next'.
 
 ----------------------------------------------------------------
-[On Hold]
+[Graduated to "master"]
 
 * ph/mergetool (Mon Jun 16 17:33:41 2008 -0600) 1 commit
  + Remove the use of '--' in merge program invocation
 
-Waiting for success reports from people who use various backends.
+I got tired of waiting for success reports from people who use various
+backends.  We will hear breakages if this breaks things anyway, and if =
+it
+does, it is a fairly simple single patch to revert.
+
+* nd/dashless (Tue Jun 24 19:58:11 2008 -0700) 2 commits
+ + Keep some git-* programs in $(bindir)
+ + Move all dashed-form commands to libexecdir
+
+We'll leave server-side programs in $(bindir) so that ssh clients can a=
+sk
+for "git-program" and find them on the $PATH.  Next major release after
+1.6.0 would most likely remove the hardlinks to built-in commands, but =
+not
+yet.
+
+* jc/dashless (Thu Jun 26 16:43:34 2008 -0700) 2 commits
+ + Prepare execv_git_cmd() for removal of builtins from the
+   filesystem
+ + git-shell: accept "git foo" form
+
+The botched "client asks 'git foo'" is not included.  It will be long
+after everybody runs 1.6.0.
+
+* jk/maint-fetch-ref-hier (Fri Jun 27 00:01:41 2008 -0400) 2 commits
+ + fetch: give a hint to the user when local refs fail to update
+ + fetch: report local storage errors in status table
+
+When the remote used to have "foo" branch but now has "foo/bar", fetch
+refuses to delete the existing remote tracking branch "foo" to create a
+new remote tracking branch "foo/bar", but the error message was
+confusing.
+
+Need to backmerge to 'maint' after a while.
+
+* jc/maint-reset (Wed Jun 25 18:16:36 2008 -0700) 1 commit
+ + Allow "git-reset path" when unambiguous
+
+We used to require "git-reset -- path" even when there is no ambiguity
+(i.e. path cannot be mistaken as a valid tree-ish and it is a filename =
+in
+the work tree).
+
+Need to backmerge to 'maint' after a while.
+
+* js/maint-clone-insteadof (Fri Jun 27 13:55:23 2008 +0100) 2 commits
+ + clone: respect the settings in $HOME/.gitconfig and /etc/gitconfig
+ + clone: respect url.insteadOf setting in global configs
+
+"git clone" did not honor "url.InsteadOf" in $HOME/.gitconfig.  I think
+Daniel's "Let's get rid of internal use of GIT_CONFIG" makes sense (eve=
+n
+though it feels very scary), and it would make the solution much simple=
+r,
+but these two are independently good fix for now.  I'll queue GIT_CONFI=
+G
+one in 'next' and when it graduates the unsetenv() solution in these wi=
+ll
+become no-op.
+
+* tr/send-email-ssl (Thu Jun 26 23:03:21 2008 +0200) 2 commits
+ + git-send-email: prevent undefined variable warnings if no
+   encryption is set
+ + git-send-email: add support for TLS via Net::SMTP::SSL
+
+* kb/send-email-fifo (Wed Jun 25 15:44:40 2008 -0700) 1 commit
+ + git-send-email: Accept fifos as well as files
+
+Two minor send-email feature enhancements.
+
+* jc/checkdiff (Sun Jun 29 16:49:06 2008 -0400) 7 commits
+ + Fix t4017-diff-retval for white-space from wc
+ + Update sample pre-commit hook to use "diff --check"
+ + diff --check: detect leftover conflict markers
+ + Teach "diff --check" about new blank lines at end
+ + checkdiff: pass diff_options to the callback
+ + check_and_emit_line(): rename and refactor
+ + diff --check: explain why we do not care whether old side is
+   binary
+
+Allows us to replace the sample pre-commit hook that was not aware of t=
+he
+line termination convention per path nor newer whitespace breakage rule=
+s.
+
+* np/pack-default (Wed Jun 25 00:25:53 2008 -0400) 2 commits
+ + pack.indexversion config option now defaults to 2
+ + repack.usedeltabaseoffset config option now defaults to "true"
+
+Updates the default value for pack.indexversion to 2 and use delta-base
+offset encoding of the packfiles by default.
+
+* js/apply-recount (Fri Jun 27 18:43:09 2008 +0100) 1 commit
+ + Allow git-apply to recount the lines in a hunk (AKA recountdiff)
+
+A good ingredient for implementing "apply --edit".
+
+* dz/apply-again (Fri Jun 27 14:39:12 2008 -0400) 1 commit
+ + git-apply: handle a patch that touches the same path more than
+   once better
+
+Allows us to feed a patch that touches the same path more than once.
+
+----------------------------------------------------------------
+[On Hold]
+
+* sg/merge-options (Sun Apr 6 03:23:47 2008 +0200) 1 commit
+ + merge: remove deprecated summary and diffstat options and config
+   variables
+
+This was previously in "will be in master soon" category, but it turns =
+out
+that the synonyms to the ones this one deletes are fairly new invention
+that happend in 1.5.6 timeframe, and we cannot do this just yet.
+
+* jc/dashless (Thu Jun 26 16:43:34 2008 -0700) 2 commits
+ + Revert "Make clients ask for "git program" over ssh and local
+   transport"
+ + Make clients ask for "git program" over ssh and local transport
+
+This is the "botched" one.  Will be resurrected during 1.7.0 or 1.8.0
+timeframe.
 
 * jk/renamelimit (Sat May 3 13:58:42 2008 -0700) 1 commit
  - diff: enable "too large a rename" warning when -M/-C is explicitly
    asked for
 
-This would be the right thing to do for command line use, but gitk will be
+This would be the right thing to do for command line use, but gitk will=
+ be
 hit due to tcl/tk's limitation, so I am holding this back for now.
 
 ----------------------------------------------------------------
@@ -273,13 +344,17 @@ hit due to tcl/tk's limitation, so I am holding this back for now.
  + rev-list --children
  + revision traversal: --children option
 
-The blame that finds where each line in the original lines moved to.  This
-may help a GSoC project that wants to gather statistical overview of the
-history.  The final presentation may need tweaking (see the log message of
+The blame that finds where each line in the original lines moved to.  T=
+his
+may help a GSoC project that wants to gather statistical overview of th=
+e
+history.  The final presentation may need tweaking (see the log message=
+ of
 the commit ""git-blame --reverse" on the series).
 
 The tip two commits are for peeling to see what's behind the blamed
-commit, which we should be able to separate out into an independent topic
+commit, which we should be able to separate out into an independent top=
+ic
 from the rest.
 
 ----------------------------------------------------------------
@@ -289,7 +364,7 @@ from the rest.
  . Introduce fast forward option only
  . Head reduction before selecting merge strategy
  . Restructure git-merge.sh
- . Introduce -ff=<fast forward option>
+ . Introduce -ff=3D<fast forward option>
  . New merge tests
  . Documentation for joining more than two histories
 
@@ -320,7 +395,8 @@ This will interfere with Miklos's rewrite of merge to C.
  . revert/cherry-pick: start refactoring call to merge_recursive
 
 This is meant to improve cherry-pick's behaviour when renames are
-involved, by not using merge-recursive (whose d/f conflict resolution is
+involved, by not using merge-recursive (whose d/f conflict resolution i=
+s
 quite broken), but unfortunately has stalled for some time now.
 
 * jc/stripspace (Sun Mar 9 00:30:35 2008 -0800) 6 commits
