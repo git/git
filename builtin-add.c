@@ -140,8 +140,6 @@ static void refresh(int verbose, const char **pathspec)
 	for (specs = 0; pathspec[specs];  specs++)
 		/* nothing */;
 	seen = xcalloc(specs, 1);
-	if (read_cache() < 0)
-		die("index file corrupt");
 	refresh_index(&the_index, verbose ? REFRESH_SAY_CHANGED : REFRESH_QUIET,
 		      pathspec, seen);
 	for (i = 0; i < specs; i++) {
@@ -193,7 +191,7 @@ static const char ignore_error[] =
 "The following paths are ignored by one of your .gitignore files:\n";
 
 static int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
-static int ignore_add_errors;
+static int ignore_add_errors, addremove;
 
 static struct option builtin_add_options[] = {
 	OPT__DRY_RUN(&show_only),
@@ -203,6 +201,7 @@ static struct option builtin_add_options[] = {
 	OPT_BOOLEAN('p', "patch", &patch_interactive, "interactive patching"),
 	OPT_BOOLEAN('f', "force", &ignored_too, "allow adding otherwise ignored files"),
 	OPT_BOOLEAN('u', "update", &take_worktree_changes, "update tracked files"),
+	OPT_BOOLEAN('A', "all", &addremove, "add all, noticing removal of tracked files"),
 	OPT_BOOLEAN( 0 , "refresh", &refresh_only, "don't add, only refresh the index"),
 	OPT_BOOLEAN( 0 , "ignore-errors", &ignore_add_errors, "just skip files which cannot be added because of errors"),
 	OPT_END(),
@@ -217,13 +216,36 @@ static int add_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
+static int add_files(struct dir_struct *dir, int flags)
+{
+	int i, exit_status = 0;
+
+	if (dir->ignored_nr) {
+		fprintf(stderr, ignore_error);
+		for (i = 0; i < dir->ignored_nr; i++)
+			fprintf(stderr, "%s\n", dir->ignored[i]->name);
+		fprintf(stderr, "Use -f if you really want to add them.\n");
+		die("no files added");
+	}
+
+	for (i = 0; i < dir->nr; i++)
+		if (add_file_to_cache(dir->entries[i]->name, flags)) {
+			if (!ignore_add_errors)
+				die("adding files failed");
+			exit_status = 1;
+		}
+	return exit_status;
+}
+
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int exit_status = 0;
-	int i, newfd;
+	int newfd;
 	const char **pathspec;
 	struct dir_struct dir;
 	int flags;
+	int add_new_files;
+	int require_pathspec;
 
 	argc = parse_options(argc, argv, builtin_add_options,
 			  builtin_add_usage, 0);
@@ -234,53 +256,51 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	git_config(add_config, NULL);
 
+	if (addremove && take_worktree_changes)
+		die("-A and -u are mutually incompatible");
+	if (addremove && !argc) {
+		static const char *here[2] = { ".", NULL };
+		argc = 1;
+		argv = here;
+	}
+
+	add_new_files = !take_worktree_changes && !refresh_only;
+	require_pathspec = !take_worktree_changes;
+
 	newfd = hold_locked_index(&lock_file, 1);
 
 	flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
 		 (show_only ? ADD_CACHE_PRETEND : 0) |
 		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0));
 
-	if (take_worktree_changes) {
-		const char **pathspec;
-		if (read_cache() < 0)
-			die("index file corrupt");
-		pathspec = get_pathspec(prefix, argv);
-		exit_status = add_files_to_cache(prefix, pathspec, flags);
-		goto finish;
-	}
-
-	if (argc == 0) {
+	if (require_pathspec && argc == 0) {
 		fprintf(stderr, "Nothing specified, nothing added.\n");
 		fprintf(stderr, "Maybe you wanted to say 'git add .'?\n");
 		return 0;
 	}
 	pathspec = get_pathspec(prefix, argv);
 
+	/*
+	 * If we are adding new files, we need to scan the working
+	 * tree to find the ones that match pathspecs; this needs
+	 * to be done before we read the index.
+	 */
+	if (add_new_files)
+		fill_directory(&dir, pathspec, ignored_too);
+
+	if (read_cache() < 0)
+		die("index file corrupt");
+
 	if (refresh_only) {
 		refresh(verbose, pathspec);
 		goto finish;
 	}
 
-	fill_directory(&dir, pathspec, ignored_too);
+	if (take_worktree_changes || addremove)
+		exit_status |= add_files_to_cache(prefix, pathspec, flags);
 
-	if (read_cache() < 0)
-		die("index file corrupt");
-
-	if (dir.ignored_nr) {
-		fprintf(stderr, ignore_error);
-		for (i = 0; i < dir.ignored_nr; i++) {
-			fprintf(stderr, "%s\n", dir.ignored[i]->name);
-		}
-		fprintf(stderr, "Use -f if you really want to add them.\n");
-		die("no files added");
-	}
-
-	for (i = 0; i < dir.nr; i++)
-		if (add_file_to_cache(dir.entries[i]->name, flags)) {
-			if (!ignore_add_errors)
-				die("adding files failed");
-			exit_status = 1;
-		}
+	if (add_new_files)
+		exit_status |= add_files(&dir, flags);
 
  finish:
 	if (active_cache_changed) {
