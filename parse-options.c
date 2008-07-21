@@ -22,7 +22,7 @@ static int get_arg(struct parse_opt_ctx_t *p, const struct option *opt,
 		p->opt = NULL;
 	} else if (p->argc == 1 && (opt->flags & PARSE_OPT_LASTARG_DEFAULT)) {
 		*arg = (const char *)opt->defval;
-	} else if (p->argc) {
+	} else if (p->argc > 1) {
 		p->argc--;
 		*arg = *++p->argv;
 	} else
