@@ -12,7 +12,7 @@
 #include "blob.h"
 #include "delta.h"
 #include "builtin.h"
-#include "path-list.h"
+#include "string-list.h"
 
 /*
  *  --check turns on checking that the working tree matches the
@@ -194,7 +194,7 @@ struct image {
  * the case where more than one patches touch the same file.
  */
 
-static struct path_list fn_table;
+static struct string_list fn_table;
 
 static uint32_t hash_line(const char *cp, size_t len)
 {
@@ -2250,12 +2250,12 @@ static int read_file_or_gitlink(struct cache_entry *ce, struct strbuf *buf)
 
 static struct patch *in_fn_table(const char *name)
 {
-	struct path_list_item *item;
+	struct string_list_item *item;
 
 	if (name == NULL)
 		return NULL;
 
-	item = path_list_lookup(name, &fn_table);
+	item = string_list_lookup(name, &fn_table);
 	if (item != NULL)
 		return (struct patch *)item->util;
 
@@ -2264,7 +2264,7 @@ static struct patch *in_fn_table(const char *name)
 
 static void add_to_fn_table(struct patch *patch)
 {
-	struct path_list_item *item;
+	struct string_list_item *item;
 
 	/*
 	 * Always add new_name unless patch is a deletion
@@ -2272,7 +2272,7 @@ static void add_to_fn_table(struct patch *patch)
 	 * file creations and copies
 	 */
 	if (patch->new_name != NULL) {
-		item = path_list_insert(patch->new_name, &fn_table);
+		item = string_list_insert(patch->new_name, &fn_table);
 		item->util = patch;
 	}
 
@@ -2281,7 +2281,7 @@ static void add_to_fn_table(struct patch *patch)
 	 * later chunks shouldn't patch old names
 	 */
 	if ((patch->new_name == NULL) || (patch->is_rename)) {
-		item = path_list_insert(patch->old_name, &fn_table);
+		item = string_list_insert(patch->old_name, &fn_table);
 		item->util = (struct patch *) -1;
 	}
 }
@@ -3051,7 +3051,7 @@ static int apply_patch(int fd, const char *filename, int options)
 	int skipped_patch = 0;
 
 	/* FIXME - memory leak when using multiple patch files as inputs */
-	memset(&fn_table, 0, sizeof(struct path_list));
+	memset(&fn_table, 0, sizeof(struct string_list));
 	strbuf_init(&buf, 0);
 	patch_input_file = filename;
 	read_patch_file(&buf, fd);

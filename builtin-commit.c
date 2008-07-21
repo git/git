@@ -21,7 +21,7 @@
 #include "strbuf.h"
 #include "utf8.h"
 #include "parse-options.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "rerere.h"
 #include "unpack-trees.h"
 
@@ -150,7 +150,7 @@ static int commit_index_files(void)
  * Take a union of paths in the index and the named tree (typically, "HEAD"),
  * and return the paths that match the given pattern in list.
  */
-static int list_paths(struct path_list *list, const char *with_tree,
+static int list_paths(struct string_list *list, const char *with_tree,
 		      const char *prefix, const char **pattern)
 {
 	int i;
@@ -169,24 +169,24 @@ static int list_paths(struct path_list *list, const char *with_tree,
 			continue;
 		if (!pathspec_match(pattern, m, ce->name, 0))
 			continue;
-		path_list_insert(ce->name, list);
+		string_list_insert(ce->name, list);
 	}
 
 	return report_path_error(m, pattern, prefix ? strlen(prefix) : 0);
 }
 
-static void add_remove_files(struct path_list *list)
+static void add_remove_files(struct string_list *list)
 {
 	int i;
 	for (i = 0; i < list->nr; i++) {
 		struct stat st;
-		struct path_list_item *p = &(list->items[i]);
+		struct string_list_item *p = &(list->items[i]);
 
-		if (!lstat(p->path, &st)) {
-			if (add_to_cache(p->path, &st, 0))
+		if (!lstat(p->string, &st)) {
+			if (add_to_cache(p->string, &st, 0))
 				die("updating files failed");
 		} else
-			remove_file_from_cache(p->path);
+			remove_file_from_cache(p->string);
 	}
 }
 
@@ -221,7 +221,7 @@ static void create_base_index(void)
 static char *prepare_index(int argc, const char **argv, const char *prefix)
 {
 	int fd;
-	struct path_list partial;
+	struct string_list partial;
 	const char **pathspec = NULL;
 
 	if (interactive) {
@@ -305,7 +305,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 		die("cannot do a partial commit during a merge.");
 
 	memset(&partial, 0, sizeof(partial));
-	partial.strdup_paths = 1;
+	partial.strdup_strings = 1;
 	if (list_paths(&partial, initial_commit ? NULL : "HEAD", prefix, pathspec))
 		exit(1);
 

@@ -16,7 +16,7 @@
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "cache-tree.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "mailmap.h"
 #include "parse-options.h"
 
@@ -40,7 +40,7 @@ static int blank_boundary;
 static int incremental;
 static int cmd_is_annotate;
 static int xdl_opts = XDF_NEED_MINIMAL;
-static struct path_list mailmap;
+static struct string_list mailmap;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -1926,7 +1926,7 @@ static void sanity_check_refcnt(struct scoreboard *sb)
  * Used for the command line parsing; check if the path exists
  * in the working tree.
  */
-static int has_path_in_work_tree(const char *path)
+static int has_string_in_work_tree(const char *path)
 {
 	struct stat st;
 	return !lstat(path, &st);
@@ -2390,14 +2390,14 @@ parse_done:
 		if (argc < 2)
 			usage_with_options(blame_opt_usage, options);
 		path = add_prefix(prefix, argv[argc - 1]);
-		if (argc == 3 && !has_path_in_work_tree(path)) { /* (2b) */
+		if (argc == 3 && !has_string_in_work_tree(path)) { /* (2b) */
 			path = add_prefix(prefix, argv[1]);
 			argv[1] = argv[2];
 		}
 		argv[argc - 1] = "--";
 
 		setup_work_tree();
-		if (!has_path_in_work_tree(path))
+		if (!has_string_in_work_tree(path))
 			die("cannot stat path %s: %s", path, strerror(errno));
 	}
 

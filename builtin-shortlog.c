@@ -2,7 +2,7 @@
 #include "cache.h"
 #include "commit.h"
 #include "diff.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "revision.h"
 #include "utf8.h"
 #include "mailmap.h"
@@ -18,8 +18,8 @@ static char const * const shortlog_usage[] = {
 
 static int compare_by_number(const void *a1, const void *a2)
 {
-	const struct path_list_item *i1 = a1, *i2 = a2;
-	const struct path_list *l1 = i1->util, *l2 = i2->util;
+	const struct string_list_item *i1 = a1, *i2 = a2;
+	const struct string_list *l1 = i1->util, *l2 = i2->util;
 
 	if (l1->nr < l2->nr)
 		return 1;
@@ -35,8 +35,8 @@ static void insert_one_record(struct shortlog *log,
 {
 	const char *dot3 = log->common_repo_prefix;
 	char *buffer, *p;
-	struct path_list_item *item;
-	struct path_list *onelines;
+	struct string_list_item *item;
+	struct string_list *onelines;
 	char namebuf[1024];
 	size_t len;
 	const char *eol;
@@ -69,9 +69,9 @@ static void insert_one_record(struct shortlog *log,
 	}
 
 	buffer = xstrdup(namebuf);
-	item = path_list_insert(buffer, &log->list);
+	item = string_list_insert(buffer, &log->list);
 	if (item->util == NULL)
-		item->util = xcalloc(1, sizeof(struct path_list));
+		item->util = xcalloc(1, sizeof(struct string_list));
 	else
 		free(buffer);
 
@@ -109,11 +109,11 @@ static void insert_one_record(struct shortlog *log,
 		onelines->alloc = alloc_nr(onelines->nr);
 		onelines->items = xrealloc(onelines->items,
 				onelines->alloc
-				* sizeof(struct path_list_item));
+				* sizeof(struct string_list_item));
 	}
 
 	onelines->items[onelines->nr].util = NULL;
-	onelines->items[onelines->nr++].path = buffer;
+	onelines->items[onelines->nr++].string = buffer;
 }
 
 static void read_from_stdin(struct shortlog *log)
@@ -231,7 +231,7 @@ void shortlog_init(struct shortlog *log)
 
 	read_mailmap(&log->mailmap, ".mailmap", &log->common_repo_prefix);
 
-	log->list.strdup_paths = 1;
+	log->list.strdup_strings = 1;
 	log->wrap = DEFAULT_WRAPLEN;
 	log->in1 = DEFAULT_INDENT1;
 	log->in2 = DEFAULT_INDENT2;
@@ -299,17 +299,17 @@ void shortlog_output(struct shortlog *log)
 {
 	int i, j;
 	if (log->sort_by_number)
-		qsort(log->list.items, log->list.nr, sizeof(struct path_list_item),
+		qsort(log->list.items, log->list.nr, sizeof(struct string_list_item),
 			compare_by_number);
 	for (i = 0; i < log->list.nr; i++) {
-		struct path_list *onelines = log->list.items[i].util;
+		struct string_list *onelines = log->list.items[i].util;
 
 		if (log->summary) {
-			printf("%6d\t%s\n", onelines->nr, log->list.items[i].path);
+			printf("%6d\t%s\n", onelines->nr, log->list.items[i].string);
 		} else {
-			printf("%s (%d):\n", log->list.items[i].path, onelines->nr);
+			printf("%s (%d):\n", log->list.items[i].string, onelines->nr);
 			for (j = onelines->nr - 1; j >= 0; j--) {
-				const char *msg = onelines->items[j].path;
+				const char *msg = onelines->items[j].string;
 
 				if (log->wrap_lines) {
 					int col = print_wrapped_text(msg, log->in1, log->in2, log->wrap);
@@ -322,14 +322,14 @@ void shortlog_output(struct shortlog *log)
 			putchar('\n');
 		}
 
-		onelines->strdup_paths = 1;
-		path_list_clear(onelines, 1);
+		onelines->strdup_strings = 1;
+		string_list_clear(onelines, 1);
 		free(onelines);
 		log->list.items[i].util = NULL;
 	}
 
-	log->list.strdup_paths = 1;
-	path_list_clear(&log->list, 1);
-	log->mailmap.strdup_paths = 1;
-	path_list_clear(&log->mailmap, 1);
+	log->list.strdup_strings = 1;
+	string_list_clear(&log->list, 1);
+	log->mailmap.strdup_strings = 1;
+	string_list_clear(&log->mailmap, 1);
 }

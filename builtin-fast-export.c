@@ -13,7 +13,7 @@
 #include "log-tree.h"
 #include "revision.h"
 #include "decorate.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "utf8.h"
 #include "parse-options.h"
 
@@ -309,7 +309,7 @@ static void handle_tag(const char *name, struct tag *tag)
 }
 
 static void get_tags_and_duplicates(struct object_array *pending,
-				    struct path_list *extra_refs)
+				    struct string_list *extra_refs)
 {
 	struct tag *tag;
 	int i;
@@ -330,7 +330,7 @@ static void get_tags_and_duplicates(struct object_array *pending,
 		case OBJ_TAG:
 			tag = (struct tag *)e->item;
 			while (tag && tag->object.type == OBJ_TAG) {
-				path_list_insert(full_name, extra_refs)->util = tag;
+				string_list_insert(full_name, extra_refs)->util = tag;
 				tag = (struct tag *)tag->tagged;
 			}
 			if (!tag)
@@ -350,19 +350,19 @@ static void get_tags_and_duplicates(struct object_array *pending,
 		}
 		if (commit->util)
 			/* more than one name for the same object */
-			path_list_insert(full_name, extra_refs)->util = commit;
+			string_list_insert(full_name, extra_refs)->util = commit;
 		else
 			commit->util = full_name;
 	}
 }
 
-static void handle_tags_and_duplicates(struct path_list *extra_refs)
+static void handle_tags_and_duplicates(struct string_list *extra_refs)
 {
 	struct commit *commit;
 	int i;
 
 	for (i = extra_refs->nr - 1; i >= 0; i--) {
-		const char *name = extra_refs->items[i].path;
+		const char *name = extra_refs->items[i].string;
 		struct object *object = extra_refs->items[i].util;
 		switch (object->type) {
 		case OBJ_TAG:
@@ -445,7 +445,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	struct object_array commits = { 0, 0, NULL };
-	struct path_list extra_refs = { NULL, 0, 0, 0 };
+	struct string_list extra_refs = { NULL, 0, 0, 0 };
 	struct commit *commit;
 	char *export_filename = NULL, *import_filename = NULL;
 	struct option options[] = {

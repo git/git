@@ -7,7 +7,7 @@
 #include "builtin.h"
 #include "dir.h"
 #include "cache-tree.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "parse-options.h"
 
 static const char * const builtin_mv_usage[] = {
@@ -36,13 +36,14 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 	return get_pathspec(prefix, result);
 }
 
-static void show_list(const char *label, struct path_list *list)
+static void show_list(const char *label, struct string_list *list)
 {
 	if (list->nr > 0) {
 		int i;
 		printf("%s", label);
 		for (i = 0; i < list->nr; i++)
-			printf("%s%s", i > 0 ? ", " : "", list->items[i].path);
+			printf("%s%s", i > 0 ? ", " : "",
+					list->items[i].string);
 		putchar('\n');
 	}
 }
@@ -75,11 +76,11 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	const char **source, **destination, **dest_path;
 	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX } *modes;
 	struct stat st;
-	struct path_list overwritten = {NULL, 0, 0, 0};
-	struct path_list src_for_dst = {NULL, 0, 0, 0};
-	struct path_list added = {NULL, 0, 0, 0};
-	struct path_list deleted = {NULL, 0, 0, 0};
-	struct path_list changed = {NULL, 0, 0, 0};
+	struct string_list overwritten = {NULL, 0, 0, 0};
+	struct string_list src_for_dst = {NULL, 0, 0, 0};
+	struct string_list added = {NULL, 0, 0, 0};
+	struct string_list deleted = {NULL, 0, 0, 0};
+	struct string_list changed = {NULL, 0, 0, 0};
 
 	git_config(git_default_config, NULL);
 
@@ -189,16 +190,16 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 							" will overwrite!\n",
 							bad);
 					bad = NULL;
-					path_list_insert(dst, &overwritten);
+					string_list_insert(dst, &overwritten);
 				} else
 					bad = "Cannot overwrite";
 			}
 		} else if (cache_name_pos(src, length) < 0)
 			bad = "not under version control";
-		else if (path_list_has_path(&src_for_dst, dst))
+		else if (string_list_has_string(&src_for_dst, dst))
 			bad = "multiple sources for the same target";
 		else
-			path_list_insert(dst, &src_for_dst);
+			string_list_insert(dst, &src_for_dst);
 
 		if (bad) {
 			if (ignore_errors) {
@@ -228,15 +229,15 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			continue;
 
 		if (cache_name_pos(src, strlen(src)) >= 0) {
-			path_list_insert(src, &deleted);
+			string_list_insert(src, &deleted);
 
 			/* destination can be a directory with 1 file inside */
-			if (path_list_has_path(&overwritten, dst))
-				path_list_insert(dst, &changed);
+			if (string_list_has_string(&overwritten, dst))
+				string_list_insert(dst, &changed);
 			else
-				path_list_insert(dst, &added);
+				string_list_insert(dst, &added);
 		} else
-			path_list_insert(dst, &added);
+			string_list_insert(dst, &added);
 	}
 
 	if (show_only) {
@@ -245,7 +246,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		show_list("Deleting : ", &deleted);
 	} else {
 		for (i = 0; i < changed.nr; i++) {
-			const char *path = changed.items[i].path;
+			const char *path = changed.items[i].string;
 			int j = cache_name_pos(path, strlen(path));
 			struct cache_entry *ce = active_cache[j];
 
@@ -255,13 +256,13 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		}
 
 		for (i = 0; i < added.nr; i++) {
-			const char *path = added.items[i].path;
+			const char *path = added.items[i].string;
 			if (add_file_to_cache(path, verbose ? ADD_CACHE_VERBOSE : 0))
 				die("updating index entries failed");
 		}
 
 		for (i = 0; i < deleted.nr; i++)
-			remove_file_from_cache(deleted.items[i].path);
+			remove_file_from_cache(deleted.items[i].string);
 
 		if (active_cache_changed) {
 			if (write_cache(newfd, active_cache, active_nr) ||
