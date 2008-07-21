@@ -1,4 +1,4 @@
-What's cooking in git.git (Jul 2008, issue #06; Tue, 15)
+What's cooking in git.git (Jul 2008, issue #07; Thu, 17)
 --------------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -8,15 +8,77 @@ in 'next'.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
-It so happens that the topics clearly separated between the ones that are
-obviously ready for 1.6.0 and the others that aren't yet as of tonight.
-It seems that it is a good time to draw that line and tag -rc0 tomorrow,
-after merging the remaining topics in 'next'.
+Right now 'next' is very thin.  After today's new topics, perhaps except
+for the submodule stuff by Pasky, are merged to 'master', we will have the
+1.6.0-rc0, and from there the usual pre-release freeze begins.
+
+Due to increased activity level from people including GSoC students, I
+expect 'next' to stay somewhat more active than previous rounds during the
+1.6.0-rc cycle.  The request for people who usually follow 'next' is the
+same as usual, though.  After -rc1 is tagged, please run 'master' for your
+daily git use instead, in order to make sure 'master' does what it claims
+to do without regression.
+
+Tentative schedule, my wishful thinking:
+
+ - 1.6.0-rc0 (Jul 20)
+ - 1.6.0-rc1 (Jul 23)
+ - 1.6.0-rc2 (Jul 30)
+ - 1.6.0-rc3 (Aug  6)
+ - 1.6.0     (Aug 10)
 
 ----------------------------------------------------------------
 [New Topics]
 
-I could apply these directly to master, but I am just playing it safe.
+* jc/rerere-auto-more (Wed Jul 16 20:25:18 2008 -0700) 1 commit
+ - rerere.autoupdate: change the message when autoupdate is in effect
+
+This one is for Ingo.
+
+This changes the message rerere issues after reusing previous conflict
+resolution from "Resolved" to "Staged" when autoupdate option is in
+effect.
+
+It is envisioned that in practice, some auto resolutions are trickier and
+iffier than others, and we would want to add a feature to mark individual
+resolutions as "this is ok to autoupdate" or "do not autoupdate the result
+using this resolution even when rerere.autoupdate is in effect" in the
+future.  When that happens, these messages will make the distinction
+clearer.
+
+* ap/trackinfo (Wed Jul 16 15:19:27 2008 -0400) 1 commit
+ - Reword "your branch has diverged..." lines to reduce line length
+
+You saw the exchange on the list.  Queued is my "make it shorter and make
+sure variable parts are closer to left edge of the screen" version but
+better alternatives are welcome.  I suspect not many people would care too
+much about details, as long as the message fits and does not waste screen
+real estate.
+
+* ns/am-abort (Wed Jul 16 19:39:10 2008 +0900) 1 commit
+ - git am --abort
+
+This one is for Ted; builds on top of the recent "am and rebase leaves
+ORIG_HEAD just like reset, merge and pull does" rather nicely.
+
+* pb/submodule (Wed Jul 16 21:11:40 2008 +0200) 7 commits
+ - t7403: Submodule git mv, git rm testsuite
+ - git rm: Support for removing submodules
+ - git mv: Support moving submodules
+ - submodule.*: Introduce simple C interface for submodule lookup by
+   path
+ - git submodule add: Fix naming clash handling
+ - t7400: Add short "git submodule add" testsuite
+ - git-mv: Remove dead code branch
+
+Long overdue usability improvement series for submodule.  Very much
+welcomed.  It would be nice to have some submodule improvements in 1.6.0.
+Realistically speaking, however, I predict that it would take us a few
+more rounds to hit 'next' with this, and it will not be in 'master' when
+1.6.0 ships.
+
+----------------------------------------------------------------
+[Graduated to "master"]
 
 * sp/maint-index-pack (Tue Jul 15 04:45:34 2008 +0000) 4 commits
  + index-pack: Honor core.deltaBaseCacheLimit when resolving deltas
@@ -42,9 +104,6 @@ quite straightforward and obvious code change.
  + add context pointer to read_tree_recursive()
  + archive: remove args member from struct archiver
 
-----------------------------------------------------------------
-[Will merge to master soon]
-
 * sb/dashless (Sun Jul 13 15:36:15 2008 +0200) 3 commits
  + Make usage strings dash-less
  + t/: Use "test_must_fail git" instead of "! git"
@@ -63,85 +122,8 @@ quite straightforward and obvious code change.
  + Add some useful functions for strbuf manipulation.
  + Make some strbuf_*() struct strbuf arguments const.
 
-----------------------------------------------------------------
-[Graduated to "master"]
-
-* sp/maint-bash-completion-optim (Mon Jul 14 00:22:03 2008 +0000) 1 commit
- + bash completion: Append space after file names have been completed
-
-Early parts were already merged to 'master' and need to be merged down to
-maint as well, as this is about a "performance bug" that has been with us
-almost forever.
-
-* ag/rewrite_one (Sat Jul 12 22:00:57 2008 +0400) 1 commit
- + Fix quadratic performance in rewrite_one.
-
-* sp/win (Fri Jul 11 18:52:42 2008 +0200) 3 commits
- + We need to check for msys as well as Windows in add--interactive.
- + Convert CR/LF to LF in tag signatures
- + Fixed text file auto-detection: treat EOF character 032 at the end
-   of file as printable
-
-* js/merge-rr (Sat Jul 12 15:56:19 2008 +0100) 2 commits
- + Move MERGE_RR from .git/rr-cache/ into .git/
- + builtin-rerere: more carefully find conflict markers
-
-* sb/rerere-lib (Wed Jul 9 14:58:57 2008 +0200) 2 commits
- + rerere: Separate libgit and builtin functions
- + builtin-rerere: more carefully find conflict markers
-
-* js/maint-pretty-mailmap (Sat Jul 12 00:28:18 2008 +0100) 1 commit
- + Add pretty format %aN which gives the author name, respecting
-   .mailmap
-
-* js/more-win (Sun Jul 13 22:31:23 2008 +0200) 3 commits
- + help (Windows): Display HTML in default browser using Windows'
-   shell API
- + help.c: Add support for htmldir relative to git_exec_path()
- + Move code interpreting path relative to exec-dir to new function
-   system_path()
-
-* jc/rebase-orig-head (Tue Jul 8 00:12:22 2008 -0400) 2 commits
- + Documentation: mention ORIG_HEAD in am, merge, and rebase
- + Teach "am" and "rebase" to mark the original position with
-   ORIG_HEAD
-
-* jc/branch-merged (Tue Jul 8 17:55:47 2008 -0700) 3 commits
- + branch --merged/--no-merged: allow specifying arbitrary commit
- + branch --contains: default to HEAD
- + parse-options: add PARSE_OPT_LASTARG_DEFAULT flag
-
-* om/rerere-careful (Mon Jul 7 14:42:48 2008 +0200) 1 commit
- + builtin-rerere: more carefully find conflict markers
-
-* ls/maint-mailinfo-patch-label (Thu Jul 10 23:41:33 2008 +0200) 1 commit
- + git-mailinfo: Fix getting the subject from the in-body [PATCH]
-   line
-
-* mv/merge-in-c (Mon Jul 14 00:09:41 2008 -0700) 20 commits
- + reduce_heads(): protect from duplicate input
- + reduce_heads(): thinkofix
- + Add a new test for git-merge-resolve
- + t6021: add a new test for git-merge-resolve
- + Teach merge.log to "git-merge" again
- + Build in merge
- + Fix t7601-merge-pull-config.sh on AIX
- + git-commit-tree: make it usable from other builtins
- + Add new test case to ensure git-merge prepends the custom merge
-   message
- + Add new test case to ensure git-merge reduces octopus parents when
-   possible
- + Introduce reduce_heads()
- + Introduce get_merge_bases_many()
- + Add new test to ensure git-merge handles more than 25 refs.
- + Introduce get_octopus_merge_bases() in commit.c
- + git-fmt-merge-msg: make it usable from other builtins
- + Move read_cache_unmerged() to read-cache.c
- + Add new test to ensure git-merge handles pull.twohead and
-   pull.octopus
- + Move parse-options's skip_prefix() to git-compat-util.h
- + Move commit_list_count() to commit.c
- + Move split_cmdline() to alias.c
+This actually had a tiny regression I did not discover until I merged it
+to 'master', where a fixup has already been applied.
 
 ----------------------------------------------------------------
 [On Hold]
@@ -154,10 +136,10 @@ almost forever.
  - git-imap-send: Allow the program to be run from subdirectories of
    a git tree
 
-Some people seem to prefer having this feature available also with gnutls.
-If such a patch materializes soon, that would be good, but otherwise I'll
-merge this as-is to 'next'.  Such an enhancement can be done in-tree on
-top of this series.
+I said: "Some people seem to prefer having this feature available also
+with gnutls.  If such a patch materializes soon, that would be good, but
+otherwise I'll merge this as-is to 'next'.  Such an enhancement can be
+done in-tree on top of this series."  Anybody?
 
 * xx/merge-in-c-into-next (Wed Jul 9 13:51:46 2008 -0700) 4 commits
  + Teach git-merge -X<option> again.
@@ -213,6 +195,9 @@ hit due to tcl/tk's limitation, so I am holding this back for now.
 * gi/cherry-cache (Sat Jul 12 20:14:51 2008 -0700) 1 commit
  . cherry: cache patch-ids to avoid repeating work
 
+The discussion suggested that the value of having the cache itself is
+iffy, but I should pick up the updated one and look at it.
+
 * lw/gitweb (Fri Jul 11 03:11:48 2008 +0200) 3 commits
  . gitweb: use new Git::Repo API, and add optional caching
  . Add new Git::Repo API
@@ -223,6 +208,10 @@ hit due to tcl/tk's limitation, so I am holding this back for now.
  . Add git-sequencer test suite (t3350)
  . Add git-sequencer prototype documentation
  . Add git-sequencer shell prototype
+
+I haven't looked at the updated series yet.  I should, but nobody else
+seems to be looking at these patches, which is somewhat depressing but
+understandable.  Summer is slower ;-)
 
 * jc/grafts (Wed Jul 2 17:14:12 2008 -0700) 1 commit
  - [BROKEN wrt shallow clones] Ignore graft during object transfer
@@ -239,6 +228,6 @@ commits that are mentioned in grafts as reachable.
    format
  - git-blame: refactor code to emit "porcelain format" output
 
-This is for peeling to see what's behind the blamed commit, which may or
-may not help applications like gitweb.
+This is for peeling the line from the blamed version to see what's behind
+it, which may or may not help applications like gitweb.
 
