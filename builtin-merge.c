@@ -77,6 +77,7 @@ static int option_parse_message(const struct option *opt,
 static struct strategy *get_strategy(const char *name)
 {
 	int i;
+	struct strbuf err;
 
 	if (!name)
 		return NULL;
@@ -84,7 +85,13 @@ static struct strategy *get_strategy(const char *name)
 	for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
 		if (!strcmp(name, all_strategy[i].name))
 			return &all_strategy[i];
-	return NULL;
+
+	strbuf_init(&err, 0);
+	for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
+		strbuf_addf(&err, " %s", all_strategy[i].name);
+	fprintf(stderr, "Could not find merge strategy '%s'.\n", name);
+	fprintf(stderr, "Available strategies are:%s.\n", err.buf);
+	exit(1);
 }
 
 static void append_strategy(struct strategy *s)
@@ -96,25 +103,10 @@ static void append_strategy(struct strategy *s)
 static int option_parse_strategy(const struct option *opt,
 				 const char *name, int unset)
 {
-	int i;
-	struct strategy *s;
-
 	if (unset)
 		return 0;
 
-	s = get_strategy(name);
-
-	if (s)
-		append_strategy(s);
-	else {
-		struct strbuf err;
-		strbuf_init(&err, 0);
-		for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
-			strbuf_addf(&err, " %s", all_strategy[i].name);
-		fprintf(stderr, "Could not find merge strategy '%s'.\n", name);
-		fprintf(stderr, "Available strategies are:%s.\n", err.buf);
-		exit(1);
-	}
+	append_strategy(get_strategy(name));
 	return 0;
 }
 
@@ -643,14 +635,9 @@ static void add_strategies(const char *string, unsigned attr)
 
 	memset(&list, 0, sizeof(list));
 	split_merge_strategies(string, &list, &list_nr, &list_alloc);
-	if (list != NULL) {
-		for (i = 0; i < list_nr; i++) {
-			struct strategy *s;
-
-			s = get_strategy(list[i].name);
-			if (s)
-				append_strategy(s);
-		}
+	if (list) {
+		for (i = 0; i < list_nr; i++)
+			append_strategy(get_strategy(list[i].name));
 		return;
 	}
 	for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
