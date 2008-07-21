@@ -1,4 +1,4 @@
-What's cooking in git.git (Jul 2008, issue #08; Sat, 19)
+What's cooking in git.git (Jul 2008, issue #09; Sun, 20)
 --------------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -23,11 +23,20 @@ Tentative schedule, my wishful thinking:
  - 1.6.0-rc3 (Aug  6)
  - 1.6.0     (Aug 10)
 
-No real activity on 'next', as I was busy tending bugfixes and pushing out
-v1.5.6.4 today.
+----------------------------------------------------------------
+[New Topics]
+
+* pb/sane-mv (Mon Jul 21 02:25:56 2008 +0200) 2 commits
+ - git-mv: Keep moved index entries inact
+ - git-mv: Remove dead code branch
+
+Running "git mv A B" when you have local changes to A automatically staged
+it while moving it to B, which was a longstanding nonsense.  This attempts
+to fix it.  Pasky has other plans to build on a more solidified foundation
+to enhance the command to work with submodules better on top of this.
 
 ----------------------------------------------------------------
-[Will merge to "master" soon]
+[Graduated to "master"]
 
 * ns/am-abort (Wed Jul 16 19:39:10 2008 +0900) 1 commit
  + git am --abort
@@ -53,6 +62,30 @@ clearer.
 
 * ap/trackinfo (Wed Jul 16 15:19:27 2008 -0400) 1 commit
  + Reword "your branch has diverged..." lines to reduce line length
+
+* xx/merge-in-c-into-next (Wed Jul 9 13:51:46 2008 -0700) 4 commits
+ + Teach git-merge -X<option> again.
+ + Merge branch 'jc/merge-theirs' into xx/merge-in-c-into-next
+ + builtin-merge.c: use parse_options_step() "incremental parsing"
+   machinery
+ + Merge branch 'ph/parseopt-step-blame' into xx/merge-in-c-into-next
+
+* jc/merge-theirs (Fri Jul 18 02:43:00 2008 -0700) 6 commits
+ - Document that merge strategies can now take their own options
+ + Make "subtree" part more orthogonal to the rest of merge-
+   recursive.
+ + Teach git-pull to pass -X<option> to git-merge
+ + Teach git-merge to pass -X<option> to the backend strategy module
+ + git-merge-recursive-{ours,theirs}
+ + git-merge-file --ours, --theirs
+
+It appears nobody wants "theirs" nor "ours", so I'll soon apply a
+wholesale revert for these series to 'next', and then these will be
+dropped when we rewind 'next' after 1.6.0 final.
+
+Please make sure next time somebody asks "ours/theirs" merge on the list
+and #git s/he is quickly told that it was unanimously rejected so that
+people do not have to waste time rehashing the topic ever again.
 
 ----------------------------------------------------------------
 [Stalled/Needs more work]
@@ -91,21 +124,6 @@ I haven't looked at the updated series yet.  I should, but nobody else
 seems to be looking at these patches, which is somewhat depressing but
 understandable.  Summer is slower ;-)
 
-* pb/submodule (Wed Jul 16 21:11:40 2008 +0200) 7 commits
- . t7403: Submodule git mv, git rm testsuite
- . git rm: Support for removing submodules
- . git mv: Support moving submodules
- . submodule.*: Introduce simple C interface for submodule lookup by
-   path
- . git submodule add: Fix naming clash handling
- . t7400: Add short "git submodule add" testsuite
- . git-mv: Remove dead code branch
-
-Long overdue usability improvement series for submodule.  Very much
-welcomed.  It would be nice to have some submodule improvements in 1.6.0,
-but it would take us a few more rounds to hit 'next' with this, and it
-will not be in 'master' when 1.6.0 ships.
-
 * jc/grafts (Wed Jul 2 17:14:12 2008 -0700) 1 commit
  - [BROKEN wrt shallow clones] Ignore graft during object transfer
 
@@ -125,7 +143,7 @@ This is for peeling the line from the blamed version to see what's behind
 it, which may or may not help applications like gitweb.
 
 ----------------------------------------------------------------
-[Will drop]
+[Dropped]
 
 * xx/merge-in-c-into-next (Wed Jul 9 13:51:46 2008 -0700) 4 commits
  + Teach git-merge -X<option> again.
