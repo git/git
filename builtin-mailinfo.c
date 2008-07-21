@@ -115,10 +115,10 @@ static void handle_from(const struct strbuf *from)
 	 * the () pair at the end.
 	 */
 	strbuf_trim(&f);
-	if (f.buf[0] == '(')
-		strbuf_remove(&name, 0, 1);
-	if (f.len && f.buf[f.len - 1] == ')')
+	if (f.buf[0] == '(' && f.len && f.buf[f.len - 1] == ')') {
+		strbuf_remove(&f, 0, 1);
 		strbuf_setlen(&f, f.len - 1);
+	}
 
 	get_sane_name(&name, &f, &email);
 	strbuf_release(&f);
