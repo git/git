@@ -335,6 +335,6 @@ test_expect_success \
     git checkout -b delete-me master &&
     rm .git/refs/heads/delete-me &&
     test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
-    !(git checkout --track -b track)'
+    test_must_fail git checkout --track -b track'
 
 test_done

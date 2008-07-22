@@ -200,7 +200,7 @@ test_expect_success \
 
 test_expect_success \
     'branch from non-branch HEAD w/--track causes failure' \
-    '!(git branch --track my10 HEAD^)'
+    'test_must_fail git branch --track my10 HEAD^'
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
