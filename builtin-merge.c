@@ -572,6 +572,7 @@ static int checkout_fast_forward(unsigned char *head, unsigned char *remote)
 	memset(&trees, 0, sizeof(trees));
 	memset(&opts, 0, sizeof(opts));
 	memset(&t, 0, sizeof(t));
+	memset(&dir, 0, sizeof(dir));
 	dir.show_ignored = 1;
 	dir.exclude_per_dir = ".gitignore";
 	opts.dir = &dir;
