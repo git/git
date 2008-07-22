@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "rerere.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
@@ -23,7 +23,7 @@ static int has_resolution(const char *name)
 	return !stat(rr_path(name, "postimage"), &st);
 }
 
-static void read_rr(struct path_list *rr)
+static void read_rr(struct string_list *rr)
 {
 	unsigned char sha1[20];
 	char buf[PATH_MAX];
@@ -43,14 +43,14 @@ static void read_rr(struct path_list *rr)
 			; /* do nothing */
 		if (i == sizeof(buf))
 			die("filename too long");
-		path_list_insert(buf, rr)->util = name;
+		string_list_insert(buf, rr)->util = name;
 	}
 	fclose(in);
 }
 
 static struct lock_file write_lock;
 
-static int write_rr(struct path_list *rr, int out_fd)
+static int write_rr(struct string_list *rr, int out_fd)
 {
 	int i;
 	for (i = 0; i < rr->nr; i++) {
@@ -58,7 +58,7 @@ static int write_rr(struct path_list *rr, int out_fd)
 		int length;
 		if (!rr->items[i].util)
 			continue;
-		path = rr->items[i].path;
+		path = rr->items[i].string;
 		length = strlen(path) + 1;
 		if (write_in_full(out_fd, rr->items[i].util, 40) != 40 ||
 		    write_in_full(out_fd, "\t", 1) != 1 ||
@@ -154,7 +154,7 @@ static int handle_file(const char *path,
 	return hunk_no;
 }
 
-static int find_conflict(struct path_list *conflict)
+static int find_conflict(struct string_list *conflict)
 {
 	int i;
 	if (read_cache() < 0)
@@ -167,7 +167,7 @@ static int find_conflict(struct path_list *conflict)
 		    ce_same_name(e2, e3) &&
 		    S_ISREG(e2->ce_mode) &&
 		    S_ISREG(e3->ce_mode)) {
-			path_list_insert((const char *)e2->name, conflict);
+			string_list_insert((const char *)e2->name, conflict);
 			i++; /* skip over both #2 and #3 */
 		}
 	}
@@ -208,7 +208,7 @@ static int merge(const char *name, const char *path)
 
 static struct lock_file index_lock;
 
-static int update_paths(struct path_list *update)
+static int update_paths(struct string_list *update)
 {
 	int i;
 	int fd = hold_locked_index(&index_lock, 0);
@@ -218,8 +218,8 @@ static int update_paths(struct path_list *update)
 		return -1;
 
 	for (i = 0; i < update->nr; i++) {
-		struct path_list_item *item = &update->items[i];
-		if (add_file_to_cache(item->path, ADD_CACHE_IGNORE_ERRORS))
+		struct string_list_item *item = &update->items[i];
+		if (add_file_to_cache(item->string, ADD_CACHE_IGNORE_ERRORS))
 			status = -1;
 	}
 
@@ -232,10 +232,10 @@ static int update_paths(struct path_list *update)
 	return status;
 }
 
-static int do_plain_rerere(struct path_list *rr, int fd)
+static int do_plain_rerere(struct string_list *rr, int fd)
 {
-	struct path_list conflict = { NULL, 0, 0, 1 };
-	struct path_list update = { NULL, 0, 0, 1 };
+	struct string_list conflict = { NULL, 0, 0, 1 };
+	struct string_list update = { NULL, 0, 0, 1 };
 	int i;
 
 	find_conflict(&conflict);
@@ -248,8 +248,8 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 	 */
 
 	for (i = 0; i < conflict.nr; i++) {
-		const char *path = conflict.items[i].path;
-		if (!path_list_has_path(rr, path)) {
+		const char *path = conflict.items[i].string;
+		if (!string_list_has_string(rr, path)) {
 			unsigned char sha1[20];
 			char *hex;
 			int ret;
@@ -257,7 +257,7 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 			if (ret < 1)
 				continue;
 			hex = xstrdup(sha1_to_hex(sha1));
-			path_list_insert(path, rr)->util = hex;
+			string_list_insert(path, rr)->util = hex;
 			if (mkdir(git_path("rr-cache/%s", hex), 0755))
 				continue;;
 			handle_file(path, NULL, rr_path(hex, "preimage"));
@@ -273,13 +273,13 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 
 	for (i = 0; i < rr->nr; i++) {
 		int ret;
-		const char *path = rr->items[i].path;
+		const char *path = rr->items[i].string;
 		const char *name = (const char *)rr->items[i].util;
 
 		if (has_resolution(name)) {
 			if (!merge(name, path)) {
 				if (rerere_autoupdate)
-					path_list_insert(path, &update);
+					string_list_insert(path, &update);
 				fprintf(stderr,
 					"%s '%s' using previous resolution.\n",
 					rerere_autoupdate
@@ -337,7 +337,7 @@ static int is_rerere_enabled(void)
 	return 1;
 }
 
-int setup_rerere(struct path_list *merge_rr)
+int setup_rerere(struct string_list *merge_rr)
 {
 	int fd;
 
@@ -353,7 +353,7 @@ int setup_rerere(struct path_list *merge_rr)
 
 int rerere(void)
 {
-	struct path_list merge_rr = { NULL, 0, 0, 1 };
+	struct string_list merge_rr = { NULL, 0, 0, 1 };
 	int fd;
 
 	fd = setup_rerere(&merge_rr);

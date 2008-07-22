@@ -87,7 +87,9 @@ test_expect_success 'multiple dcommit from git-svn will not clobber svn' "
 	"
 
 
-test_expect_success 'check that rebase really failed' 'test -d .git/rebase'
+test_expect_success 'check that rebase really failed' '
+	test -d .git/rebase-apply
+'
 
 test_expect_success 'resolve, continue the rebase and dcommit' "
 	echo clobber and I really mean it > file &&

@@ -96,7 +96,7 @@ index fabadb8,cc95eb0..4866510
 +
 or like this (when '--cc' option is used):
 
-       diff --c file
+       diff --cc file
 
 2.   It is followed by one or more extended header lines
      (this example shows a merge with two parents):

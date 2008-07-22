@@ -13,7 +13,7 @@
 #include "diffcore.h"
 #include "tag.h"
 #include "unpack-trees.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "interpolate.h"
@@ -79,8 +79,8 @@ struct stage_data
 	unsigned processed:1;
 };
 
-static struct path_list current_file_set = {NULL, 0, 0, 1};
-static struct path_list current_directory_set = {NULL, 0, 0, 1};
+static struct string_list current_file_set = {NULL, 0, 0, 1};
+static struct string_list current_directory_set = {NULL, 0, 0, 1};
 
 static int call_depth = 0;
 static int verbosity = 2;
@@ -257,9 +257,9 @@ static int save_files_dirs(const unsigned char *sha1,
 	newpath[baselen + len] = '\0';
 
 	if (S_ISDIR(mode))
-		path_list_insert(newpath, &current_directory_set);
+		string_list_insert(newpath, &current_directory_set);
 	else
-		path_list_insert(newpath, &current_file_set);
+		string_list_insert(newpath, &current_file_set);
 	free(newpath);
 
 	return READ_TREE_RECURSIVE;
@@ -280,9 +280,9 @@ static int get_files_dirs(struct tree *tree)
  */
 static struct stage_data *insert_stage_data(const char *path,
 		struct tree *o, struct tree *a, struct tree *b,
-		struct path_list *entries)
+		struct string_list *entries)
 {
-	struct path_list_item *item;
+	struct string_list_item *item;
 	struct stage_data *e = xcalloc(1, sizeof(struct stage_data));
 	get_tree_entry(o->object.sha1, path,
 			e->stages[1].sha, &e->stages[1].mode);
@@ -290,7 +290,7 @@ static struct stage_data *insert_stage_data(const char *path,
 			e->stages[2].sha, &e->stages[2].mode);
 	get_tree_entry(b->object.sha1, path,
 			e->stages[3].sha, &e->stages[3].mode);
-	item = path_list_insert(path, entries);
+	item = string_list_insert(path, entries);
 	item->util = e;
 	return e;
 }
@@ -299,23 +299,23 @@ static struct stage_data *insert_stage_data(const char *path,
  * Create a dictionary mapping file names to stage_data objects. The
  * dictionary contains one entry for every path with a non-zero stage entry.
  */
-static struct path_list *get_unmerged(void)
+static struct string_list *get_unmerged(void)
 {
-	struct path_list *unmerged = xcalloc(1, sizeof(struct path_list));
+	struct string_list *unmerged = xcalloc(1, sizeof(struct string_list));
 	int i;
 
-	unmerged->strdup_paths = 1;
+	unmerged->strdup_strings = 1;
 
 	for (i = 0; i < active_nr; i++) {
-		struct path_list_item *item;
+		struct string_list_item *item;
 		struct stage_data *e;
 		struct cache_entry *ce = active_cache[i];
 		if (!ce_stage(ce))
 			continue;
 
-		item = path_list_lookup(ce->name, unmerged);
+		item = string_list_lookup(ce->name, unmerged);
 		if (!item) {
-			item = path_list_insert(ce->name, unmerged);
+			item = string_list_insert(ce->name, unmerged);
 			item->util = xcalloc(1, sizeof(struct stage_data));
 		}
 		e = item->util;
@@ -340,17 +340,17 @@ struct rename
  * 'b_tree') to be able to associate the correct cache entries with
  * the rename information. 'tree' is always equal to either a_tree or b_tree.
  */
-static struct path_list *get_renames(struct tree *tree,
+static struct string_list *get_renames(struct tree *tree,
 					struct tree *o_tree,
 					struct tree *a_tree,
 					struct tree *b_tree,
-					struct path_list *entries)
+					struct string_list *entries)
 {
 	int i;
-	struct path_list *renames;
+	struct string_list *renames;
 	struct diff_options opts;
 
-	renames = xcalloc(1, sizeof(struct path_list));
+	renames = xcalloc(1, sizeof(struct string_list));
 	diff_setup(&opts);
 	DIFF_OPT_SET(&opts, RECURSIVE);
 	opts.detect_rename = DIFF_DETECT_RENAME;
@@ -364,7 +364,7 @@ static struct path_list *get_renames(struct tree *tree,
 	diff_tree_sha1(o_tree->object.sha1, tree->object.sha1, "", &opts);
 	diffcore_std(&opts);
 	for (i = 0; i < diff_queued_diff.nr; ++i) {
-		struct path_list_item *item;
+		struct string_list_item *item;
 		struct rename *re;
 		struct diff_filepair *pair = diff_queued_diff.queue[i];
 		if (pair->status != 'R') {
@@ -374,20 +374,20 @@ static struct path_list *get_renames(struct tree *tree,
 		re = xmalloc(sizeof(*re));
 		re->processed = 0;
 		re->pair = pair;
-		item = path_list_lookup(re->pair->one->path, entries);
+		item = string_list_lookup(re->pair->one->path, entries);
 		if (!item)
 			re->src_entry = insert_stage_data(re->pair->one->path,
 					o_tree, a_tree, b_tree, entries);
 		else
 			re->src_entry = item->util;
 
-		item = path_list_lookup(re->pair->two->path, entries);
+		item = string_list_lookup(re->pair->two->path, entries);
 		if (!item)
 			re->dst_entry = insert_stage_data(re->pair->two->path,
 					o_tree, a_tree, b_tree, entries);
 		else
 			re->dst_entry = item->util;
-		item = path_list_insert(pair->one->path, renames);
+		item = string_list_insert(pair->one->path, renames);
 		item->util = re;
 	}
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -464,12 +464,12 @@ static char *unique_path(const char *path, const char *branch)
 	for (; *p; ++p)
 		if ('/' == *p)
 			*p = '_';
-	while (path_list_has_path(&current_file_set, newpath) ||
-	       path_list_has_path(&current_directory_set, newpath) ||
+	while (string_list_has_string(&current_file_set, newpath) ||
+	       string_list_has_string(&current_directory_set, newpath) ||
 	       lstat(newpath, &st) == 0)
 		sprintf(p, "_%d", suffix++);
 
-	path_list_insert(newpath, &current_file_set);
+	string_list_insert(newpath, &current_file_set);
 	return newpath;
 }
 
@@ -727,13 +727,13 @@ static void conflict_rename_rename(struct rename *ren1,
 	const char *ren2_dst = ren2->pair->two->path;
 	const char *dst_name1 = ren1_dst;
 	const char *dst_name2 = ren2_dst;
-	if (path_list_has_path(&current_directory_set, ren1_dst)) {
+	if (string_list_has_string(&current_directory_set, ren1_dst)) {
 		dst_name1 = del[delp++] = unique_path(ren1_dst, branch1);
 		output(1, "%s is a directory in %s added as %s instead",
 		       ren1_dst, branch2, dst_name1);
 		remove_file(0, ren1_dst, 0);
 	}
-	if (path_list_has_path(&current_directory_set, ren2_dst)) {
+	if (string_list_has_string(&current_directory_set, ren2_dst)) {
 		dst_name2 = del[delp++] = unique_path(ren2_dst, branch2);
 		output(1, "%s is a directory in %s added as %s instead",
 		       ren2_dst, branch1, dst_name2);
@@ -783,30 +783,30 @@ static void conflict_rename_rename_2(struct rename *ren1,
 	free(new_path1);
 }
 
-static int process_renames(struct path_list *a_renames,
-			   struct path_list *b_renames,
+static int process_renames(struct string_list *a_renames,
+			   struct string_list *b_renames,
 			   const char *a_branch,
 			   const char *b_branch)
 {
 	int clean_merge = 1, i, j;
-	struct path_list a_by_dst = {NULL, 0, 0, 0}, b_by_dst = {NULL, 0, 0, 0};
+	struct string_list a_by_dst = {NULL, 0, 0, 0}, b_by_dst = {NULL, 0, 0, 0};
 	const struct rename *sre;
 
 	for (i = 0; i < a_renames->nr; i++) {
 		sre = a_renames->items[i].util;
-		path_list_insert(sre->pair->two->path, &a_by_dst)->util
+		string_list_insert(sre->pair->two->path, &a_by_dst)->util
 			= sre->dst_entry;
 	}
 	for (i = 0; i < b_renames->nr; i++) {
 		sre = b_renames->items[i].util;
-		path_list_insert(sre->pair->two->path, &b_by_dst)->util
+		string_list_insert(sre->pair->two->path, &b_by_dst)->util
 			= sre->dst_entry;
 	}
 
 	for (i = 0, j = 0; i < a_renames->nr || j < b_renames->nr;) {
 		int compare;
 		char *src;
-		struct path_list *renames1, *renames2, *renames2Dst;
+		struct string_list *renames1, *renames2, *renames2Dst;
 		struct rename *ren1 = NULL, *ren2 = NULL;
 		const char *branch1, *branch2;
 		const char *ren1_src, *ren1_dst;
@@ -818,8 +818,8 @@ static int process_renames(struct path_list *a_renames,
 			compare = -1;
 			ren1 = a_renames->items[i++].util;
 		} else {
-			compare = strcmp(a_renames->items[i].path,
-					b_renames->items[j].path);
+			compare = strcmp(a_renames->items[i].string,
+					b_renames->items[j].string);
 			if (compare <= 0)
 				ren1 = a_renames->items[i++].util;
 			if (compare >= 0)
@@ -908,7 +908,7 @@ static int process_renames(struct path_list *a_renames,
 			}
 		} else {
 			/* Renamed in 1, maybe changed in 2 */
-			struct path_list_item *item;
+			struct string_list_item *item;
 			/* we only use sha1 and mode of these */
 			struct diff_filespec src_other, dst_other;
 			int try_merge, stage = a_renames == renames1 ? 3: 2;
@@ -922,7 +922,7 @@ static int process_renames(struct path_list *a_renames,
 
 			try_merge = 0;
 
-			if (path_list_has_path(&current_directory_set, ren1_dst)) {
+			if (string_list_has_string(&current_directory_set, ren1_dst)) {
 				clean_merge = 0;
 				output(1, "CONFLICT (rename/directory): Renamed %s->%s in %s "
 				       " directory %s added in %s",
@@ -947,7 +947,7 @@ static int process_renames(struct path_list *a_renames,
 				new_path = unique_path(ren1_dst, branch2);
 				output(1, "Added as %s instead", new_path);
 				update_file(0, dst_other.sha1, dst_other.mode, new_path);
-			} else if ((item = path_list_lookup(ren1_dst, renames2Dst))) {
+			} else if ((item = string_list_lookup(ren1_dst, renames2Dst))) {
 				ren2 = item->util;
 				clean_merge = 0;
 				ren2->processed = 1;
@@ -1003,8 +1003,8 @@ static int process_renames(struct path_list *a_renames,
 			}
 		}
 	}
-	path_list_clear(&a_by_dst, 0);
-	path_list_clear(&b_by_dst, 0);
+	string_list_clear(&a_by_dst, 0);
+	string_list_clear(&b_by_dst, 0);
 
 	return clean_merge;
 }
@@ -1082,7 +1082,7 @@ static int process_entry(const char *path, struct stage_data *entry,
 			sha = b_sha;
 			conf = "directory/file";
 		}
-		if (path_list_has_path(&current_directory_set, path)) {
+		if (string_list_has_string(&current_directory_set, path)) {
 			const char *new_path = unique_path(path, add_branch);
 			clean_merge = 0;
 			output(1, "CONFLICT (%s): There is a directory with name %s in %s. "
@@ -1173,10 +1173,10 @@ int merge_trees(struct tree *head,
 		    sha1_to_hex(merge->object.sha1));
 
 	if (unmerged_cache()) {
-		struct path_list *entries, *re_head, *re_merge;
+		struct string_list *entries, *re_head, *re_merge;
 		int i;
-		path_list_clear(&current_file_set, 1);
-		path_list_clear(&current_directory_set, 1);
+		string_list_clear(&current_file_set, 1);
+		string_list_clear(&current_directory_set, 1);
 		get_files_dirs(head);
 		get_files_dirs(merge);
 
@@ -1186,16 +1186,16 @@ int merge_trees(struct tree *head,
 		clean = process_renames(re_head, re_merge,
 				branch1, branch2);
 		for (i = 0; i < entries->nr; i++) {
-			const char *path = entries->items[i].path;
+			const char *path = entries->items[i].string;
 			struct stage_data *e = entries->items[i].util;
 			if (!e->processed
 				&& !process_entry(path, e, branch1, branch2))
 				clean = 0;
 		}
 
-		path_list_clear(re_merge, 0);
-		path_list_clear(re_head, 0);
-		path_list_clear(entries, 1);
+		string_list_clear(re_merge, 0);
+		string_list_clear(re_head, 0);
+		string_list_clear(entries, 1);
 
 	}
 	else

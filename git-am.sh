@@ -44,7 +44,7 @@ stop_here_user_resolve () {
 	    printf '%s\n' "$resolvemsg"
 	    stop_here $1
     fi
-    cmdline=$(basename $0)
+    cmdline="git am"
     if test '' != "$interactive"
     then
         cmdline="$cmdline -i"
@@ -121,7 +121,7 @@ It does not apply to blobs recorded in its index."
 }
 
 prec=4
-dotest="$GIT_DIR/rebase"
+dotest="$GIT_DIR/rebase-apply"
 sign= utf8=t keep= skip= interactive= resolved= binary= rebasing= abort=
 resolvemsg= resume=
 git_apply_opt=
@@ -202,8 +202,15 @@ then
 	die "previous rebase directory $dotest still exists but mbox given."
 	resume=yes
 
-	case "$abort" in
-	t)
+	case "$skip,$abort" in
+	t,)
+		git rerere clear
+		git read-tree --reset -u HEAD HEAD
+		orig_head=$(cat "$GIT_DIR/ORIG_HEAD")
+		git reset HEAD
+		git update-ref ORIG_HEAD $orig_head
+		;;
+	,t)
 		git rerere clear
 		git read-tree --reset -u HEAD ORIG_HEAD
 		git reset ORIG_HEAD
@@ -297,7 +304,6 @@ last=`cat "$dotest/last"`
 this=`cat "$dotest/next"`
 if test "$skip" = t
 then
-	git rerere clear
 	this=`expr "$this" + 1`
 	resume=
 fi

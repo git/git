@@ -67,7 +67,7 @@ git whatchanged --since="2 weeks ago" \-- gitk::
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
+Junio C Hamano <gitster@pobox.com>
 
 
 Documentation

@@ -426,7 +426,7 @@ but if $REV is empty, the commit object name from master will be printed.
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> .
-Junio C Hamano <junkio@cox.net> and Pierre Habouzit <madcoder@debian.org>
+Junio C Hamano <gitster@pobox.com> and Pierre Habouzit <madcoder@debian.org>
 
 Documentation
 --------------

@@ -126,4 +126,16 @@ test_expect_success 'merge picks up the best result' '
 	test $auto_count != $resolve_count
 '
 
+test_expect_success 'merge errors out on invalid strategy' '
+	git config pull.twohead "foobar" &&
+	git reset --hard c5 &&
+	test_must_fail git merge c6
+'
+
+test_expect_success 'merge errors out on invalid strategy' '
+	git config --unset-all pull.twohead &&
+	git reset --hard c5 &&
+	test_must_fail git merge -s "resolve recursive" c6
+'
+
 test_done

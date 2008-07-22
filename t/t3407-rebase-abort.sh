@@ -74,7 +74,7 @@ testrebase() {
 	'
 }
 
-testrebase "" .git/rebase
+testrebase "" .git/rebase-apply
 testrebase " --merge" .git/rebase-merge
 
 test_done

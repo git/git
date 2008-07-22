@@ -1,6 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "rerere.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
@@ -48,9 +48,9 @@ static int git_rerere_gc_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-static void garbage_collect(struct path_list *rr)
+static void garbage_collect(struct string_list *rr)
 {
-	struct path_list to_remove = { NULL, 0, 0, 1 };
+	struct string_list to_remove = { NULL, 0, 0, 1 };
 	DIR *dir;
 	struct dirent *e;
 	int i, cutoff;
@@ -69,11 +69,11 @@ static void garbage_collect(struct path_list *rr)
 		cutoff = (has_resolution(name)
 			  ? cutoff_resolve : cutoff_noresolve);
 		if (then < now - cutoff * 86400)
-			path_list_append(name, &to_remove);
+			string_list_append(name, &to_remove);
 	}
 	for (i = 0; i < to_remove.nr; i++)
-		unlink_rr_item(to_remove.items[i].path);
-	path_list_clear(&to_remove, 0);
+		unlink_rr_item(to_remove.items[i].string);
+	string_list_clear(&to_remove, 0);
 }
 
 static int outf(void *dummy, mmbuffer_t *ptr, int nbuf)
@@ -111,7 +111,7 @@ static int diff_two(const char *file1, const char *label1,
 
 int cmd_rerere(int argc, const char **argv, const char *prefix)
 {
-	struct path_list merge_rr = { NULL, 0, 0, 1 };
+	struct string_list merge_rr = { NULL, 0, 0, 1 };
 	int i, fd;
 
 	if (argc < 2)
@@ -132,16 +132,16 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 		garbage_collect(&merge_rr);
 	else if (!strcmp(argv[1], "status"))
 		for (i = 0; i < merge_rr.nr; i++)
-			printf("%s\n", merge_rr.items[i].path);
+			printf("%s\n", merge_rr.items[i].string);
 	else if (!strcmp(argv[1], "diff"))
 		for (i = 0; i < merge_rr.nr; i++) {
-			const char *path = merge_rr.items[i].path;
+			const char *path = merge_rr.items[i].string;
 			const char *name = (const char *)merge_rr.items[i].util;
 			diff_two(rr_path(name, "preimage"), path, path, path);
 		}
 	else
 		usage(git_rerere_usage);
 
-	path_list_clear(&merge_rr, 1);
+	string_list_clear(&merge_rr, 1);
 	return 0;
 }

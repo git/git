@@ -14,8 +14,8 @@ It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
 and run git rebase --continue.  Another option is to bypass the commit
 that caused the merge failure with git rebase --skip.  To restore the
-original <branch> and remove the .git/rebase working files, use the command
-git rebase --abort instead.
+original <branch> and remove the .git/rebase-apply working files, use the
+command git rebase --abort instead.
 
 Note that if <branch> is not specified on the command line, the
 currently checked out branch is used.
@@ -150,7 +150,7 @@ while test $# != 0
 do
 	case "$1" in
 	--continue)
-		test -d "$dotest" -o -d "$GIT_DIR"/rebase ||
+		test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply ||
 			die "No rebase in progress?"
 
 		git diff-files --quiet --ignore-submodules || {
@@ -173,15 +173,15 @@ do
 			finish_rb_merge
 			exit
 		fi
-		head_name=$(cat "$GIT_DIR"/rebase/head-name) &&
-		onto=$(cat "$GIT_DIR"/rebase/onto) &&
-		orig_head=$(cat "$GIT_DIR"/rebase/orig-head) &&
+		head_name=$(cat "$GIT_DIR"/rebase-apply/head-name) &&
+		onto=$(cat "$GIT_DIR"/rebase-apply/onto) &&
+		orig_head=$(cat "$GIT_DIR"/rebase-apply/orig-head) &&
 		git am --resolved --3way --resolvemsg="$RESOLVEMSG" &&
 		move_to_original_branch
 		exit
 		;;
 	--skip)
-		test -d "$dotest" -o -d "$GIT_DIR"/rebase ||
+		test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply ||
 			die "No rebase in progress?"
 
 		git reset --hard HEAD || exit $?
@@ -201,15 +201,15 @@ do
 			finish_rb_merge
 			exit
 		fi
-		head_name=$(cat "$GIT_DIR"/rebase/head-name) &&
-		onto=$(cat "$GIT_DIR"/rebase/onto) &&
-		orig_head=$(cat "$GIT_DIR"/rebase/orig-head) &&
+		head_name=$(cat "$GIT_DIR"/rebase-apply/head-name) &&
+		onto=$(cat "$GIT_DIR"/rebase-apply/onto) &&
+		orig_head=$(cat "$GIT_DIR"/rebase-apply/orig-head) &&
 		git am -3 --skip --resolvemsg="$RESOLVEMSG" &&
 		move_to_original_branch
 		exit
 		;;
 	--abort)
-		test -d "$dotest" -o -d "$GIT_DIR"/rebase ||
+		test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply ||
 			die "No rebase in progress?"
 
 		git rerere clear
@@ -217,7 +217,7 @@ do
 		then
 			move_to_original_branch
 		else
-			dotest="$GIT_DIR"/rebase
+			dotest="$GIT_DIR"/rebase-apply
 			move_to_original_branch
 		fi
 		git reset --hard $(cat "$dotest/orig-head")
@@ -265,18 +265,20 @@ do
 	shift
 done
 
-# Make sure we do not have $GIT_DIR/rebase
+# Make sure we do not have $GIT_DIR/rebase-apply
 if test -z "$do_merge"
 then
-	if mkdir "$GIT_DIR"/rebase
+	if mkdir "$GIT_DIR"/rebase-apply
 	then
-		rmdir "$GIT_DIR"/rebase
+		rmdir "$GIT_DIR"/rebase-apply
 	else
 		echo >&2 '
-It seems that I cannot create a '"$GIT_DIR"'/rebase directory, and I wonder if you
-are in the middle of patch application or another rebase.  If that is not
-the case, please rm -fr '"$GIT_DIR"'/rebase and run me again.  I am stopping in case
-you still have something valuable there.'
+It seems that I cannot create a '"$GIT_DIR"'/rebase-apply directory,
+and I wonder if you are in the middle of patch application or another
+rebase.  If that is not the case, please
+	rm -fr '"$GIT_DIR"'/rebase-apply
+ and run me again.  I am stopping in case you still have something
+valuable there.'
 		exit 1
 	fi
 else
@@ -395,10 +397,10 @@ then
 	git am $git_am_opt --rebasing --resolvemsg="$RESOLVEMSG" &&
 	move_to_original_branch
 	ret=$?
-	test 0 != $ret -a -d "$GIT_DIR"/rebase &&
-		echo $head_name > "$GIT_DIR"/rebase/head-name &&
-		echo $onto > "$GIT_DIR"/rebase/onto &&
-		echo $orig_head > "$GIT_DIR"/rebase/orig-head
+	test 0 != $ret -a -d "$GIT_DIR"/rebase-apply &&
+		echo $head_name > "$GIT_DIR"/rebase-apply/head-name &&
+		echo $onto > "$GIT_DIR"/rebase-apply/onto &&
+		echo $orig_head > "$GIT_DIR"/rebase-apply/orig-head
 	exit $ret
 fi
 

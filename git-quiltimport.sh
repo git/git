@@ -53,7 +53,7 @@ if ! [ -d "$QUILT_PATCHES" ] ; then
 fi
 
 # Temporary directories
-tmp_dir="$GIT_DIR"/rebase
+tmp_dir="$GIT_DIR"/rebase-apply
 tmp_msg="$tmp_dir/msg"
 tmp_patch="$tmp_dir/patch"
 tmp_info="$tmp_dir/info"

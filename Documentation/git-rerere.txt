@@ -204,7 +204,7 @@ conflict.
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 GIT
 ---

@@ -195,7 +195,7 @@ git push origin master:refs/heads/experimental::
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>, later rewritten in C
+Written by Junio C Hamano <gitster@pobox.com>, later rewritten in C
 by Linus Torvalds <torvalds@osdl.org>
 
 Documentation

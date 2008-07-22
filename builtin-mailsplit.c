@@ -6,7 +6,7 @@
  */
 #include "cache.h"
 #include "builtin.h"
-#include "path-list.h"
+#include "string-list.h"
 
 static const char git_mailsplit_usage[] =
 "git mailsplit [-d<prec>] [-f<n>] [-b] -o<directory> [<mbox>|<Maildir>...]";
@@ -115,7 +115,7 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	exit(1);
 }
 
-static int populate_maildir_list(struct path_list *list, const char *path)
+static int populate_maildir_list(struct string_list *list, const char *path)
 {
 	DIR *dir;
 	struct dirent *dent;
@@ -136,7 +136,7 @@ static int populate_maildir_list(struct path_list *list, const char *path)
 			if (dent->d_name[0] == '.')
 				continue;
 			snprintf(name, sizeof(name), "%s/%s", *sub, dent->d_name);
-			path_list_insert(name, list);
+			string_list_insert(name, list);
 		}
 
 		closedir(dir);
@@ -152,14 +152,14 @@ static int split_maildir(const char *maildir, const char *dir,
 	char name[PATH_MAX];
 	int ret = -1;
 	int i;
-	struct path_list list = {NULL, 0, 0, 1};
+	struct string_list list = {NULL, 0, 0, 1};
 
 	if (populate_maildir_list(&list, maildir) < 0)
 		goto out;
 
 	for (i = 0; i < list.nr; i++) {
 		FILE *f;
-		snprintf(file, sizeof(file), "%s/%s", maildir, list.items[i].path);
+		snprintf(file, sizeof(file), "%s/%s", maildir, list.items[i].string);
 		f = fopen(file, "r");
 		if (!f) {
 			error("cannot open mail %s (%s)", file, strerror(errno));
@@ -179,7 +179,7 @@ static int split_maildir(const char *maildir, const char *dir,
 
 	ret = skip;
 out:
-	path_list_clear(&list, 1);
+	string_list_clear(&list, 1);
 	return ret;
 }
 
