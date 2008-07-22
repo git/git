@@ -107,9 +107,9 @@ error_on_no_merge_candidates () {
 }
 
 test true = "$rebase" && {
-	git update-index --refresh &&
-	git diff-files --quiet &&
-	git diff-index --cached --quiet HEAD -- ||
+	git update-index --ignore-submodules --refresh &&
+	git diff-files --ignore-submodules --quiet &&
+	git diff-index --ignore-submodules --cached --quiet HEAD -- ||
 	die "refusing to pull with rebase: your working tree is not up-to-date"
 
 	. git-parse-remote &&
