@@ -41,7 +41,7 @@ memset(&list, 0, sizeof(struct string_list));
 string_list_append("foo", &list);
 string_list_append("bar", &list);
 for (i = 0; i < list.nr; i++)
-	printf("%s\n", list.items[i].path)
+	printf("%s\n", list.items[i].string)
 ----
 
 NOTE: It is more efficient to build an unsorted list and sort it
@@ -113,7 +113,7 @@ Data structures
 
 * `struct string_list_item`
 
-Represents an item of the list. The `path` member is a pointer to the
+Represents an item of the list. The `string` member is a pointer to the
 string, and you may use the `util` member for any purpose, if you want.
 
 * `struct string_list`
