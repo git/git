@@ -278,10 +278,13 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 
 		if (has_resolution(name)) {
 			if (!merge(name, path)) {
-				fprintf(stderr, "Resolved '%s' using "
-						"previous resolution.\n", path);
 				if (rerere_autoupdate)
 					path_list_insert(path, &update);
+				fprintf(stderr,
+					"%s '%s' using previous resolution.\n",
+					rerere_autoupdate
+					? "Staged" : "Resolved",
+					path);
 				goto mark_resolved;
 			}
 		}

@@ -980,7 +980,10 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	int not_new = (flags & REFRESH_IGNORE_MISSING) != 0;
 	int ignore_submodules = (flags & REFRESH_IGNORE_SUBMODULES) != 0;
 	unsigned int options = really ? CE_MATCH_IGNORE_VALID : 0;
+	const char *needs_update_message;
 
+	needs_update_message = ((flags & REFRESH_SAY_CHANGED)
+				? "locally modified" : "needs update");
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new;
 		int cache_errno = 0;
@@ -1019,7 +1022,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			}
 			if (quiet)
 				continue;
-			printf("%s: needs update\n", ce->name);
+			printf("%s: %s\n", ce->name, needs_update_message);
 			has_errors = 1;
 			continue;
 		}

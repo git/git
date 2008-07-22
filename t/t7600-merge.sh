@@ -221,7 +221,7 @@ test_expect_success 'setup' '
 
 test_debug 'gitk --all'
 
-test_expect_failure 'test option parsing' '
+test_expect_success 'test option parsing' '
 	test_must_fail git merge -$ c1 &&
 	test_must_fail git merge --no-such c1 &&
 	test_must_fail git merge -s foobar c1 &&

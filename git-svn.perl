@@ -1226,7 +1226,7 @@ sub linearize_history {
 
 sub find_file_type_and_diff_status {
 	my ($path) = @_;
-	return ('dir', '') if $path eq '.';
+	return ('dir', '') if $path eq '';
 
 	my $diff_output =
 	    command_oneline(qw(diff --cached --name-status --), $path) || "";
