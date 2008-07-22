@@ -68,8 +68,8 @@ static enum {
 static char *cleanup_arg;
 
 static int use_editor = 1, initial_commit, in_merge;
-const char *only_include_assumed;
-struct strbuf message;
+static const char *only_include_assumed;
+static struct strbuf message;
 
 static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 {
@@ -78,8 +78,7 @@ static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 		strbuf_setlen(buf, 0);
 	else {
 		strbuf_addstr(buf, arg);
-		strbuf_addch(buf, '\n');
-		strbuf_addch(buf, '\n');
+		strbuf_addstr(buf, "\n\n");
 	}
 	return 0;
 }
