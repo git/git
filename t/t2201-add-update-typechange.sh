@@ -106,12 +106,12 @@ test_expect_success modify '
 
 test_expect_success diff-files '
 	git diff-files --raw >actual &&
-	diff -u expect-files actual
+	test_cmp expect-files actual
 '
 
 test_expect_success diff-index '
 	git diff-index --raw HEAD -- >actual &&
-	diff -u expect-index actual
+	test_cmp expect-index actual
 '
 
 test_expect_success 'add -u' '
@@ -119,7 +119,7 @@ test_expect_success 'add -u' '
 	cp -p ".git/index" ".git/saved-index" &&
 	git add -u &&
 	git ls-files -s >actual &&
-	diff -u expect-final actual
+	test_cmp expect-final actual
 '
 
 test_expect_success 'commit -a' '
@@ -130,11 +130,11 @@ test_expect_success 'commit -a' '
 	fi &&
 	git commit -m "second" -a &&
 	git ls-files -s >actual &&
-	diff -u expect-final actual &&
+	test_cmp expect-final actual &&
 	rm -f .git/index &&
 	git read-tree HEAD &&
 	git ls-files -s >actual &&
-	diff -u expect-final actual
+	test_cmp expect-final actual
 '
 
 test_done
