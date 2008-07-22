@@ -42,6 +42,7 @@ struct child_process {
 	unsigned no_stderr:1;
 	unsigned git_cmd:1; /* if this is to be git sub-command */
 	unsigned stdout_to_stderr:1;
+	void (*preexec_cb)(void);
 };
 
 int start_command(struct child_process *);
