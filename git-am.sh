@@ -456,7 +456,7 @@ do
 		stop_here $this
 	fi
 
-	printf 'Applying %s\n' "$FIRSTLINE"
+	printf 'Applying: %s\n' "$FIRSTLINE"
 
 	case "$resolved" in
 	'')

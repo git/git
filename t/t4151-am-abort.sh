@@ -43,7 +43,7 @@ do
 
 	test_expect_success "am$with3 --skip continue after failed am$with3" '
 		test_must_fail git-am$with3 --skip >output &&
-		test "$(grep "^Applying" output)" = "Applying 6" &&
+		test "$(grep "^Applying" output)" = "Applying: 6" &&
 		test_cmp file-2-expect file-2 &&
 		test ! -f .git/rr-cache/MERGE_RR
 	'
