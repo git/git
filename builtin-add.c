@@ -18,6 +18,27 @@ static const char * const builtin_add_usage[] = {
 static int patch_interactive = 0, add_interactive = 0;
 static int take_worktree_changes;
 
+static void fill_pathspec_matches(const char **pathspec, char *seen, int specs)
+{
+	int num_unmatched = 0, i;
+
+	/*
+	 * Since we are walking the index as if we are warlking the directory,
+	 * we have to mark the matched pathspec as seen; otherwise we will
+	 * mistakenly think that the user gave a pathspec that did not match
+	 * anything.
+	 */
+	for (i = 0; i < specs; i++)
+		if (!seen[i])
+			num_unmatched++;
+	if (!num_unmatched)
+		return;
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen);
+	}
+}
+
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
 	char *seen;
@@ -37,6 +58,7 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 			*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
+	fill_pathspec_matches(pathspec, seen, specs);
 
 	for (i = 0; i < specs; i++) {
 		if (!seen[i] && !file_exists(pathspec[i]))
@@ -201,7 +223,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (addremove && take_worktree_changes)
 		die("-A and -u are mutually incompatible");
-	if (addremove && !argc) {
+	if ((addremove || take_worktree_changes) && !argc) {
 		static const char *here[2] = { ".", NULL };
 		argc = 1;
 		argv = here;
@@ -214,7 +236,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
 		 (show_only ? ADD_CACHE_PRETEND : 0) |
-		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0));
+		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0) |
+		 (!(addremove || take_worktree_changes)
+		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
 
 	if (require_pathspec && argc == 0) {
 		fprintf(stderr, "Nothing specified, nothing added.\n");
@@ -223,24 +247,19 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 	pathspec = get_pathspec(prefix, argv);
 
-	/*
-	 * If we are adding new files, we need to scan the working
-	 * tree to find the ones that match pathspecs; this needs
-	 * to be done before we read the index.
-	 */
-	if (add_new_files)
-		fill_directory(&dir, pathspec, ignored_too);
-
 	if (read_cache() < 0)
 		die("index file corrupt");
+
+	if (add_new_files)
+		/* This picks up the paths that are not tracked */
+		fill_directory(&dir, pathspec, ignored_too);
 
 	if (refresh_only) {
 		refresh(verbose, pathspec);
 		goto finish;
 	}
 
-	if (take_worktree_changes || addremove)
-		exit_status |= add_files_to_cache(prefix, pathspec, flags);
+	exit_status |= add_files_to_cache(prefix, pathspec, flags);
 
 	if (add_new_files)
 		exit_status |= add_files(&dir, flags);
