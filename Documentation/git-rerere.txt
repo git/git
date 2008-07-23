@@ -37,7 +37,7 @@ its working state.
 'clear'::
 
 This resets the metadata used by rerere if a merge resolution is to be
-is aborted.  Calling 'git-am --skip' or 'git-rebase [--skip|--abort]'
+aborted.  Calling 'git-am [--skip|--abort]' or 'git-rebase [--skip|--abort]'
 will automatically invoke this command.
 
 'diff'::

@@ -489,7 +489,7 @@ _git_am ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}" dir="$(__gitdir)"
 	if [ -d "$dir"/rebase-apply ]; then
-		__gitcomp "--skip --resolved"
+		__gitcomp "--skip --resolved --abort"
 		return
 	fi
 	case "$cur" in
