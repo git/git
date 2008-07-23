@@ -49,7 +49,7 @@ cat > expect << EOF
 +++++++++* [branch10^] initial
 EOF
 
-test_expect_failure 'show-branch with more than 8 branches' '
+test_expect_success 'show-branch with more than 8 branches' '
 
 	git show-branch $(for i in $numbers; do echo branch$i; done) > out &&
 	test_cmp expect out

@@ -436,8 +436,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	/* Mark them and clear the indegree */
 	for (next = orig; next; next = next->next) {
 		struct commit *commit = next->item;
-		commit->object.flags |= TOPOSORT;
-		commit->indegree = 0;
+		commit->indegree = 1;
 	}
 
 	/* update the indegree */
@@ -446,7 +445,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		while (parents) {
 			struct commit *parent = parents->item;
 
-			if (parent->object.flags & TOPOSORT)
+			if (parent->indegree)
 				parent->indegree++;
 			parents = parents->next;
 		}
@@ -464,7 +463,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 	for (next = orig; next; next = next->next) {
 		struct commit *commit = next->item;
 
-		if (!commit->indegree)
+		if (commit->indegree == 1)
 			insert = &commit_list_insert(commit, insert)->next;
 	}
 
@@ -486,7 +485,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		for (parents = commit->parents; parents ; parents = parents->next) {
 			struct commit *parent=parents->item;
 
-			if (!(parent->object.flags & TOPOSORT))
+			if (!parent->indegree)
 				continue;
 
 			/*
@@ -494,7 +493,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 			 * when all their children have been emitted thereby
 			 * guaranteeing topological order.
 			 */
-			if (!--parent->indegree) {
+			if (--parent->indegree == 1) {
 				if (!lifo)
 					insert_by_date(parent, &work);
 				else
@@ -505,7 +504,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 		 * work_item is a commit all of whose children
 		 * have already been emitted. we can emit it now.
 		 */
-		commit->object.flags &= ~TOPOSORT;
+		commit->indegree = 0;
 		*pptr = work_item;
 		pptr = &work_item->next;
 	}
