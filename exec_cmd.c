@@ -7,40 +7,6 @@ extern char **environ;
 static const char *argv_exec_path;
 static const char *argv0_path;
 
-static const char *builtin_exec_path(void)
-{
-#ifndef __MINGW32__
-	return GIT_EXEC_PATH;
-#else
-	int len;
-	char *p, *q, *sl;
-	static char *ep;
-	if (ep)
-		return ep;
-
-	len = strlen(_pgmptr);
-	if (len < 2)
-		return ep = ".";
-
-	p = ep = xmalloc(len+1);
-	q = _pgmptr;
-	sl = NULL;
-	/* copy program name, turn '\\' into '/', skip last part */
-	while ((*p = *q)) {
-		if (*q == '\\' || *q == '/') {
-			*p = '/';
-			sl = p;
-		}
-		p++, q++;
-	}
-	if (sl)
-		*sl = '\0';
-	else
-		ep[0] = '.', ep[1] = '\0';
-	return ep;
-#endif
-}
-
 const char *system_path(const char *path)
 {
 	if (!is_absolute_path(path) && argv0_path) {
@@ -75,7 +41,7 @@ const char *git_exec_path(void)
 		return env;
 	}
 
-	return builtin_exec_path();
+	return system_path(GIT_EXEC_PATH);
 }
 
 static void add_path(struct strbuf *out, const char *path)
@@ -99,7 +65,7 @@ void setup_path(void)
 
 	add_path(&new_path, argv_exec_path);
 	add_path(&new_path, getenv(EXEC_PATH_ENVIRONMENT));
-	add_path(&new_path, builtin_exec_path());
+	add_path(&new_path, system_path(GIT_EXEC_PATH));
 	add_path(&new_path, argv0_path);
 
 	if (old_path)
