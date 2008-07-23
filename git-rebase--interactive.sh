@@ -277,7 +277,7 @@ do_next () {
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		make_patch $sha1
 		: > "$DOTEST"/amend
-		warn
+		warn "Stopped at $sha1... $rest"
 		warn "You can amend the commit now, with"
 		warn
 		warn "	git commit --amend"
