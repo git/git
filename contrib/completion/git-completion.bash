@@ -1224,6 +1224,22 @@ _git_show ()
 	__git_complete_file
 }
 
+_git_show_branch ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--all --remotes --topo-order --current --more=
+			--list --independent --merge-base --no-name
+			--sha1-name --topics --reflog
+			"
+		return
+		;;
+	esac
+	__git_complete_revlist
+}
+
 _git_stash ()
 {
 	local subcommands='save list show apply clear drop pop create'
@@ -1443,7 +1459,7 @@ _git ()
 	send-email)  _git_send_email ;;
 	shortlog)    _git_shortlog ;;
 	show)        _git_show ;;
-	show-branch) _git_log ;;
+	show-branch) _git_show_branch ;;
 	stash)       _git_stash ;;
 	submodule)   _git_submodule ;;
 	svn)         _git_svn ;;
