@@ -431,7 +431,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		sha1_to_hex(remote_head->sha1), remote);
 }
 
-int git_merge_config(const char *k, const char *v, void *cb)
+static int git_merge_config(const char *k, const char *v, void *cb)
 {
 	if (branch && !prefixcmp(k, "branch.") &&
 		!prefixcmp(k + 7, branch) &&

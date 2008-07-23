@@ -809,7 +809,7 @@ static struct ref_sort *default_sort(void)
 	return sort;
 }
 
-int opt_parse_sort(const struct option *opt, const char *arg, int unset)
+static int opt_parse_sort(const struct option *opt, const char *arg, int unset)
 {
 	struct ref_sort **sort_tail = opt->value;
 	struct ref_sort *s;

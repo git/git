@@ -876,7 +876,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	}
 }
 
-int git_commit_config(const char *k, const char *v, void *cb)
+static int git_commit_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "commit.template"))
 		return git_config_string(&template_file, k, v);
