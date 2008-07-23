@@ -93,7 +93,7 @@ save_stash () {
 		shift
 	esac
 
-	stash_msg="$1"
+	stash_msg="$*"
 
 	if no_changes
 	then
@@ -267,7 +267,7 @@ show)
 	;;
 save)
 	shift
-	save_stash "$*"
+	save_stash "$@"
 	;;
 apply)
 	shift
