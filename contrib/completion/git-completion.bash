@@ -626,6 +626,8 @@ _git_bundle ()
 
 _git_checkout ()
 {
+	__git_has_doubledash && return
+
 	__gitcomp "$(__git_refs)"
 }
 
