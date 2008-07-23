@@ -933,7 +933,7 @@ while ($to_rev < $opt_l) {
 	$to_rev = $from_rev + $repack_after;
 	$to_rev = $opt_l if $opt_l < $to_rev;
 	print "Fetching from $from_rev to $to_rev ...\n" if $opt_v;
-	$svn->{'svn'}->get_log("/",$from_rev,$to_rev,0,1,1,\&commit_all);
+	$svn->{'svn'}->get_log("",$from_rev,$to_rev,0,1,1,\&commit_all);
 	my $pid = fork();
 	die "Fork: $!\n" unless defined $pid;
 	unless($pid) {
