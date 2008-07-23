@@ -22,10 +22,8 @@ static const char * const builtin_branch_usage[] = {
 	NULL
 };
 
-#define REF_UNKNOWN_TYPE    0x00
 #define REF_LOCAL_BRANCH    0x01
 #define REF_REMOTE_BRANCH   0x02
-#define REF_TAG             0x04
 
 static const char *head;
 static unsigned char head_sha1[20];
@@ -215,7 +213,7 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 {
 	struct ref_list *ref_list = (struct ref_list*)(cb_data);
 	struct ref_item *newitem;
-	int kind = REF_UNKNOWN_TYPE;
+	int kind;
 	int len;
 	static struct commit_list branch;
 
@@ -226,10 +224,8 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	} else if (!prefixcmp(refname, "refs/remotes/")) {
 		kind = REF_REMOTE_BRANCH;
 		refname += 13;
-	} else if (!prefixcmp(refname, "refs/tags/")) {
-		kind = REF_TAG;
-		refname += 10;
-	}
+	} else
+		return 0;
 
 	/* Filter with with_commit if specified */
 	if (!has_commit(sha1, ref_list->with_commit))
