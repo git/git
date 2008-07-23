@@ -10,7 +10,6 @@
 #define CHILD_SHOWN	(1u<<6)
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
-#define TOPOSORT	(1u<<9)	/* In the active toposort list.. */
 
 struct rev_info;
 struct log_info;
