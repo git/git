@@ -438,7 +438,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	opts.track = git_branch_track;
 
-	argc = parse_options(argc, argv, options, checkout_usage, 0);
+	argc = parse_options(argc, argv, options, checkout_usage,
+			     PARSE_OPT_KEEP_DASHDASH);
 	if (argc) {
 		arg = argv[0];
 		if (get_sha1(arg, rev))
