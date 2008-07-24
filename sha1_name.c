@@ -273,7 +273,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 		const char *ref, *it;
 
 		strcpy(path, mkpath(*p, len, str));
-		ref = resolve_ref(path, hash, 0, NULL);
+		ref = resolve_ref(path, hash, 1, NULL);
 		if (!ref)
 			continue;
 		if (!stat(git_path("logs/%s", path), &st) &&
