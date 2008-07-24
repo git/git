@@ -17,6 +17,8 @@ test_expect_success setup '
 	for i in 2 3 4 5 6
 	do
 		echo $i >>file-1 &&
+		echo $i >otherfile-$i &&
+		git add otherfile-$i &&
 		test_tick &&
 		git commit -a -m $i || break
 	done &&
