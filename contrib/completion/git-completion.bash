@@ -349,14 +349,32 @@ __git_complete_revlist ()
 	esac
 }
 
-__git_commands ()
+__git_all_commands ()
 {
-	if [ -n "$__git_commandlist" ]; then
-		echo "$__git_commandlist"
+	if [ -n "$__git_all_commandlist" ]; then
+		echo "$__git_all_commandlist"
 		return
 	fi
 	local i IFS=" "$'\n'
 	for i in $(git help -a|egrep '^ ')
+	do
+		case $i in
+		*--*)             : helper pattern;;
+		*) echo $i;;
+		esac
+	done
+}
+__git_all_commandlist=
+__git_all_commandlist="$(__git_all_commands 2>/dev/null)"
+
+__git_porcelain_commands ()
+{
+	if [ -n "$__git_porcelain_commandlist" ]; then
+		echo "$__git_porcelain_commandlist"
+		return
+	fi
+	local i IFS=" "$'\n'
+	for i in "help" $(__git_all_commands)
 	do
 		case $i in
 		*--*)             : helper pattern;;
@@ -427,8 +445,8 @@ __git_commands ()
 		esac
 	done
 }
-__git_commandlist=
-__git_commandlist="$(__git_commands 2>/dev/null)"
+__git_porcelain_commandlist=
+__git_porcelain_commandlist="$(__git_porcelain_commands 2>/dev/null)"
 
 __git_aliases ()
 {
@@ -776,6 +794,18 @@ _git_gc ()
 		;;
 	esac
 	COMPREPLY=()
+}
+
+_git_help ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--all --info --man --web"
+		return
+		;;
+	esac
+	__gitcomp "$(__git_all_commands)"
 }
 
 _git_ls_remote ()
@@ -1410,7 +1440,8 @@ _git ()
 		case "$i" in
 		--git-dir=*) __git_dir="${i#--git-dir=}" ;;
 		--bare)      __git_dir="." ;;
-		--version|--help|-p|--paginate) ;;
+		--version|-p|--paginate) ;;
+		--help) command="help"; break ;;
 		*) command="$i"; break ;;
 		esac
 		c=$((++c))
@@ -1430,7 +1461,7 @@ _git ()
 			--help
 			"
 			;;
-		*)     __gitcomp "$(__git_commands) $(__git_aliases)" ;;
+		*)     __gitcomp "$(__git_porcelain_commands) $(__git_aliases)" ;;
 		esac
 		return
 	fi
@@ -1455,6 +1486,7 @@ _git ()
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
 	gc)          _git_gc ;;
+	help)        _git_help ;;
 	log)         _git_log ;;
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
