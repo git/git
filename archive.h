@@ -17,12 +17,6 @@ typedef int (*write_archive_fn_t)(struct archiver_args *);
 
 typedef int (*write_archive_entry_fn_t)(struct archiver_args *args, const unsigned char *sha1, const char *path, size_t pathlen, unsigned int mode, void *buffer, unsigned long size);
 
-struct archiver {
-	const char *name;
-	write_archive_fn_t write_archive;
-	unsigned int flags;
-};
-
 /*
  * Archive-format specific backends.
  */
