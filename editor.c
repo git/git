@@ -2,7 +2,7 @@
 #include "strbuf.h"
 #include "run-command.h"
 
-void launch_editor(const char *path, struct strbuf *buffer, const char *const *env)
+int launch_editor(const char *path, struct strbuf *buffer, const char *const *env)
 {
 	const char *editor, *terminal;
 
@@ -15,12 +15,8 @@ void launch_editor(const char *path, struct strbuf *buffer, const char *const *e
 		editor = getenv("EDITOR");
 
 	terminal = getenv("TERM");
-	if (!editor && (!terminal || !strcmp(terminal, "dumb"))) {
-		fprintf(stderr,
-		"Terminal is dumb but no VISUAL nor EDITOR defined.\n"
-		"Please supply the message using either -m or -F option.\n");
-		exit(1);
-	}
+	if (!editor && (!terminal || !strcmp(terminal, "dumb")))
+		return error("Terminal is dumb but no VISUAL nor EDITOR defined.");
 
 	if (!editor)
 		editor = "vi";
@@ -28,6 +24,7 @@ void launch_editor(const char *path, struct strbuf *buffer, const char *const *e
 	if (strcmp(editor, ":")) {
 		size_t len = strlen(editor);
 		int i = 0;
+		int failed;
 		const char *args[6];
 		struct strbuf arg0;
 
@@ -43,14 +40,17 @@ void launch_editor(const char *path, struct strbuf *buffer, const char *const *e
 		args[i++] = path;
 		args[i] = NULL;
 
-		if (run_command_v_opt_cd_env(args, 0, NULL, env))
-			die("There was a problem with the editor %s.", editor);
+		failed = run_command_v_opt_cd_env(args, 0, NULL, env);
 		strbuf_release(&arg0);
+		if (failed)
+			return error("There was a problem with the editor '%s'.",
+					editor);
 	}
 
 	if (!buffer)
-		return;
+		return 0;
 	if (strbuf_read_file(buffer, path, 0) < 0)
-		die("could not read message file '%s': %s",
-		    path, strerror(errno));
+		return error("could not read file '%s': %s",
+				path, strerror(errno));
+	return 0;
 }
