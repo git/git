@@ -850,7 +850,7 @@ foreach my $t (@files) {
 				}
 				elsif (/^Content-type:/i) {
 					$has_content_type = 1;
-					if (/charset="?[^ "]+/) {
+					if (/charset="?([^ "]+)/) {
 						$body_encoding = $1;
 					}
 					push @xh, $_;
