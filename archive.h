@@ -1,9 +1,6 @@
 #ifndef ARCHIVE_H
 #define ARCHIVE_H
 
-#define MAX_EXTRA_ARGS	32
-#define MAX_ARGS	(MAX_EXTRA_ARGS + 32)
-
 struct archiver_args {
 	const char *base;
 	size_t baselen;

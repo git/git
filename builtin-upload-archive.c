@@ -16,6 +16,7 @@ static const char deadchild[] =
 static const char lostchild[] =
 "git upload-archive: archiver process was lost";
 
+#define MAX_ARGS (64)
 
 static int run_upload_archive(int argc, const char **argv, const char *prefix)
 {
@@ -45,7 +46,7 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 		if (len == 0)
 			break;	/* got a flush */
 		if (sent_argc > MAX_ARGS - 2)
-			die("Too many options (>29)");
+			die("Too many options (>%d)", MAX_ARGS - 2);
 
 		if (p[len-1] == '\n') {
 			p[--len] = 0;
