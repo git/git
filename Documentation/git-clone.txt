@@ -87,8 +87,8 @@ then the cloned repository will become corrupt.
 
 --quiet::
 -q::
-	Operate quietly.  This flag is passed to "rsync" and
-	'git-fetch-pack' commands when given.
+	Operate quietly.  This flag is also passed to the `rsync'
+	command when given.
 
 --no-checkout::
 -n::
@@ -113,9 +113,8 @@ then the cloned repository will become corrupt.
 
 --upload-pack <upload-pack>::
 -u <upload-pack>::
-	When given, and the repository to clone from is handled
-	by 'git-fetch-pack', `--exec=<upload-pack>` is passed to
-	the command to specify non-default path for the command
+	When given, and the repository to clone from is accessed
+	via ssh, this specifies a non-default path for the command
 	run on the other end.
 
 --template=<template_directory>::
