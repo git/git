@@ -41,5 +41,6 @@ extern int write_tar_archive(struct archiver_args *);
 extern int write_zip_archive(struct archiver_args *);
 
 extern int write_archive_entries(struct archiver_args *args, write_archive_entry_fn_t write_entry);
+extern int write_archive(int argc, const char **argv, const char *prefix, int setup_prefix);
 
 #endif	/* ARCHIVE_H */

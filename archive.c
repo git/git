@@ -155,3 +155,21 @@ int write_archive_entries(struct archiver_args *args,
 		err = 0;
 	return err;
 }
+
+int write_archive(int argc, const char **argv, const char *prefix,
+		int setup_prefix)
+{
+	const struct archiver *ar = NULL;
+	struct archiver_args args;
+	int tree_idx;
+
+	tree_idx = parse_archive_args(argc, argv, &ar, &args);
+	if (setup_prefix && prefix == NULL)
+		prefix = setup_git_directory();
+
+	argv += tree_idx;
+	parse_treeish_arg(argv, &args, prefix);
+	parse_pathspec_arg(argv + 1, &args);
+
+	return ar->write_archive(&args);
+}

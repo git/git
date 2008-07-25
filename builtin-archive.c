@@ -232,9 +232,6 @@ static const char *extract_remote_arg(int *ac, const char **av)
 
 int cmd_archive(int argc, const char **argv, const char *prefix)
 {
-	const struct archiver *ar = NULL;
-	struct archiver_args args;
-	int tree_idx;
 	const char *remote = NULL;
 
 	remote = extract_remote_arg(&argc, argv);
@@ -243,13 +240,5 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 
 	setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 
-	tree_idx = parse_archive_args(argc, argv, &ar, &args);
-	if (prefix == NULL)
-		prefix = setup_git_directory();
-
-	argv += tree_idx;
-	parse_treeish_arg(argv, &args, prefix);
-	parse_pathspec_arg(argv + 1, &args);
-
-	return ar->write_archive(&args);
+	return write_archive(argc, argv, prefix, 1);
 }
