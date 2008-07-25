@@ -25,7 +25,6 @@ commit id embedding:
 '
 
 . ./test-lib.sh
-TAR=${TAR:-tar}
 UNZIP=${UNZIP:-unzip}
 
 SUBSTFORMAT=%H%n
