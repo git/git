@@ -1255,8 +1255,12 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 		echo "$$FLAGS" >GIT-CFLAGS; \
             fi
 
+# We need to apply sq twice, once to protect from the shell
+# that runs GIT-BUILD-OPTIONS, and then again to protect it
+# and the first level quoting from the shell that runs "echo".
 GIT-BUILD-OPTIONS: .FORCE-GIT-BUILD-OPTIONS
-	@echo SHELL_PATH=\''$(SHELL_PATH_SQ)'\' >$@
+	@echo SHELL_PATH=\''$(subst ','\'',$(SHELL_PATH_SQ))'\' >$@
+	@echo TAR=\''$(subst ','\'',$(subst ','\'',$(TAR)))'\' >>$@
 
 ### Detect Tck/Tk interpreter path changes
 ifndef NO_TCLTK
