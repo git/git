@@ -26,14 +26,6 @@ struct archiver {
 	unsigned int flags;
 };
 
-extern int parse_archive_args(int argc, const char **argv, const struct archiver **ar, struct archiver_args *args);
-
-extern void parse_treeish_arg(const char **treeish,
-			      struct archiver_args *ar_args,
-			      const char *prefix);
-
-extern void parse_pathspec_arg(const char **pathspec,
-			       struct archiver_args *args);
 /*
  * Archive-format specific backends.
  */
