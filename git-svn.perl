@@ -3340,6 +3340,7 @@ sub new {
 	$self->{rm} = { };
 	$self->{path_prefix} = length $self->{svn_path} ?
 	                       "$self->{svn_path}/" : '';
+	$self->{config} = $opts->{config};
 	return $self;
 }
 
@@ -3528,6 +3529,57 @@ sub ensure_path {
 	return $bat->{$c};
 }
 
+# Subroutine to convert a globbing pattern to a regular expression.
+# From perl cookbook.
+sub glob2pat {
+	my $globstr = shift;
+	my %patmap = ('*' => '.*', '?' => '.', '[' => '[', ']' => ']');
+	$globstr =~ s{(.)} { $patmap{$1} || "\Q$1" }ge;
+	return '^' . $globstr . '$';
+}
+
+sub check_autoprop {
+	my ($self, $pattern, $properties, $file, $fbat) = @_;
+	# Convert the globbing pattern to a regular expression.
+	my $regex = glob2pat($pattern);
+	# Check if the pattern matches the file name.
+	if($file =~ m/($regex)/) {
+		# Parse the list of properties to set.
+		my @props = split(/;/, $properties);
+		foreach my $prop (@props) {
+			# Parse 'name=value' syntax and set the property.
+			if ($prop =~ /([^=]+)=(.*)/) {
+				my ($n,$v) = ($1,$2);
+				for ($n, $v) {
+					s/^\s+//; s/\s+$//;
+				}
+				$self->change_file_prop($fbat, $n, $v);
+			}
+		}
+	}
+}
+
+sub apply_autoprops {
+	my ($self, $file, $fbat) = @_;
+	my $conf_t = ${$self->{config}}{'config'};
+	no warnings 'once';
+	# Check [miscellany]/enable-auto-props in svn configuration.
+	if (SVN::_Core::svn_config_get_bool(
+		$conf_t,
+		$SVN::_Core::SVN_CONFIG_SECTION_MISCELLANY,
+		$SVN::_Core::SVN_CONFIG_OPTION_ENABLE_AUTO_PROPS,
+		0)) {
+		# Auto-props are enabled.  Enumerate them to look for matches.
+		my $callback = sub {
+			$self->check_autoprop($_[0], $_[1], $file, $fbat);
+		};
+		SVN::_Core::svn_config_enumerate(
+			$conf_t,
+			$SVN::_Core::SVN_CONFIG_SECTION_AUTO_PROPS,
+			$callback);
+	}
+}
+
 sub A {
 	my ($self, $m) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
@@ -3535,6 +3587,7 @@ sub A {
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 					undef, -1);
 	print "\tA\t$m->{file_b}\n" unless $::_q;
+	$self->apply_autoprops($file, $fbat);
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 }
