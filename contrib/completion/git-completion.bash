@@ -667,6 +667,15 @@ _git_commit ()
 
 _git_describe ()
 {
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--all --tags --contains --abbrev= --candidates=
+			--exact-match --debug --long --match --always
+			"
+		return
+	esac
 	__gitcomp "$(__git_refs)"
 }
 
