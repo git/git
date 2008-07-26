@@ -4,7 +4,14 @@
 # PATH=/usr/bin:/bin
 
 G=/opt/packrat/playpen/public/in-place/git/index/gitweb_config.perl
-GIT=$HOME/git-master/bin/git
+for i in active maint master next
+do
+	GIT="$HOME/git-$i/bin/git"
+	test -f "$GIT" && break
+done
+test -f "$GIT" || {
+	echo >&2 "No git to bootstrap"
+}
 PATH=/usr/bin:/bin
 LANG=C
 LC_ALL=C
