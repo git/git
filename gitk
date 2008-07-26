@@ -6457,9 +6457,10 @@ proc diffcmd {ids flags} {
 proc gettreediffs {ids} {
     global treediff treepending
 
+    if {[catch {set gdtf [open [diffcmd $ids {--no-commit-id}] r]}]} return
+
     set treepending $ids
     set treediff {}
-    if {[catch {set gdtf [open [diffcmd $ids {--no-commit-id}] r]}]} return
     fconfigure $gdtf -blocking 0
     filerun $gdtf [list gettreediffline $gdtf $ids]
 }
