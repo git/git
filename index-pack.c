@@ -699,6 +699,10 @@ static struct object_entry *append_obj_to_pack(
 	write_or_die(output_fd, header, n);
 	obj[0].idx.crc32 = crc32(0, Z_NULL, 0);
 	obj[0].idx.crc32 = crc32(obj[0].idx.crc32, header, n);
+	obj[0].size = size;
+	obj[0].hdr_size = n;
+	obj[0].type = type;
+	obj[0].real_type = type;
 	obj[1].idx.offset = obj[0].idx.offset + n;
 	obj[1].idx.offset += write_compressed(output_fd, buf, size, &obj[0].idx.crc32);
 	hashcpy(obj->idx.sha1, sha1);

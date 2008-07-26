@@ -26,13 +26,18 @@ ifdef NO_PERL_MAKEMAKER
 # $(instdir_SQ) and split it at colons.
 instdir_SQ = $(subst ','\'',$(shell cmd /x/d/c "set TEMP=$(prefix)/lib && sh -c 'echo \$$TEMP'"))
 $(makfile): ../GIT-CFLAGS Makefile
-	echo all: > $@
-	echo '	:' >> $@
+	echo all: private-Error.pm Git.pm > $@
+	echo '	mkdir -p blib/lib' >> $@
+	echo '	$(RM) blib/lib/Git.pm; cp Git.pm blib/lib/' >> $@
+	echo '	$(RM) blib/lib/Error.pm' >> $@
+	'$(PERL_PATH_SQ)' -MError -e 'exit($$Error::VERSION < 0.15009)' || \
+	echo '	cp private-Error.pm blib/lib/Error.pm' >> $@
 	echo install: >> $@
 	echo '	mkdir -p $(instdir_SQ)' >> $@
 	echo '	$(RM) $(instdir_SQ)/Git.pm; cp Git.pm $(instdir_SQ)' >> $@
-	echo '	$(RM) $(instdir_SQ)/Error.pm; \
-	cp private-Error.pm $(instdir_SQ)/Error.pm' >> $@
+	echo '	$(RM) $(instdir_SQ)/Error.pm' >> $@
+	'$(PERL_PATH_SQ)' -MError -e 'exit($$Error::VERSION < 0.15009)' || \
+	echo '	cp private-Error.pm $(instdir_SQ)/Error.pm' >> $@
 	echo instlibdir: >> $@
 	echo '	echo $(instdir_SQ)' >> $@
 else

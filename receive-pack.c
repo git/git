@@ -482,7 +482,7 @@ int main(int argc, char **argv)
 	if (!dir)
 		usage(receive_pack_usage);
 
-	setup_path(NULL);
+	setup_path();
 
 	if (!enter_repo(dir, 0))
 		die("'%s': unable to chdir or not a git archive", dir);

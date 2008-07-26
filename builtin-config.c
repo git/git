@@ -145,7 +145,7 @@ free_strings:
 	return ret;
 }
 
-char *normalize_value(const char *key, const char *value)
+static char *normalize_value(const char *key, const char *value)
 {
 	char *normalized;
 

@@ -223,3 +223,15 @@ void mingw_open_html(const char *path);
 char **copy_environ(void);
 void free_environ(char **env);
 char **env_setenv(char **env, const char *name);
+
+/*
+ * A replacement of main() that ensures that argv[0] has a path
+ */
+
+#define main(c,v) main(int argc, const char **argv) \
+{ \
+	static int mingw_main(); \
+	argv[0] = xstrdup(_pgmptr); \
+	return mingw_main(argc, argv); \
+} \
+static int mingw_main(c,v)

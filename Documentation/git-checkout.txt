@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git checkout' [-q] [-f] [[--track | --no-track] -b <new_branch> [-l]] [-m] [<branch>]
-'git checkout' [<tree-ish>] <paths>...
+'git checkout' [<tree-ish>] [--] <paths>...
 
 DESCRIPTION
 -----------

@@ -112,9 +112,9 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 --cc::
 
 	This flag implies the '-c' options and further compresses the
-	patch output by omitting hunks that show differences from only
-	one parent, or show the same change from all but one parent for
-	an Octopus merge.
+	patch output by omitting uninteresting hunks whose contents in
+	the parents have only two variants and the merge result picks
+	one of them without modification.
 
 -r::
 

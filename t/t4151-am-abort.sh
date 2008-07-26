@@ -17,6 +17,8 @@ test_expect_success setup '
 	for i in 2 3 4 5 6
 	do
 		echo $i >>file-1 &&
+		echo $i >otherfile-$i &&
+		git add otherfile-$i &&
 		test_tick &&
 		git commit -a -m $i || break
 	done &&
@@ -43,7 +45,7 @@ do
 
 	test_expect_success "am$with3 --skip continue after failed am$with3" '
 		test_must_fail git-am$with3 --skip >output &&
-		test "$(grep "^Applying" output)" = "Applying 6" &&
+		test "$(grep "^Applying" output)" = "Applying: 6" &&
 		test_cmp file-2-expect file-2 &&
 		test ! -f .git/rr-cache/MERGE_RR
 	'

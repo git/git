@@ -6,8 +6,7 @@ SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
 git am [options] [<mbox>|<Maildir>...]
-git am [options] --resolved
-git am [options] --skip
+git am [options] (--resolved | --skip | --abort)
 --
 d,dotest=       (removed -- do not use)
 i,interactive   run interactively
@@ -456,7 +455,7 @@ do
 		stop_here $this
 	fi
 
-	printf 'Applying %s\n' "$FIRSTLINE"
+	printf 'Applying: %s\n' "$FIRSTLINE"
 
 	case "$resolved" in
 	'')

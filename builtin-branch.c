@@ -13,6 +13,8 @@
 #include "remote.h"
 #include "parse-options.h"
 #include "branch.h"
+#include "diff.h"
+#include "revision.h"
 
 static const char * const builtin_branch_usage[] = {
 	"git branch [options] [-r | -a] [--merged | --no-merged]",
@@ -22,10 +24,8 @@ static const char * const builtin_branch_usage[] = {
 	NULL
 };
 
-#define REF_UNKNOWN_TYPE    0x00
 #define REF_LOCAL_BRANCH    0x01
 #define REF_REMOTE_BRANCH   0x02
-#define REF_TAG             0x04
 
 static const char *head;
 static unsigned char head_sha1[20];
@@ -181,25 +181,21 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 struct ref_item {
 	char *name;
 	unsigned int kind;
-	unsigned char sha1[20];
+	struct commit *commit;
 };
 
 struct ref_list {
+	struct rev_info revs;
 	int index, alloc, maxwidth;
 	struct ref_item *list;
 	struct commit_list *with_commit;
 	int kinds;
 };
 
-static int has_commit(const unsigned char *sha1, struct commit_list *with_commit)
+static int has_commit(struct commit *commit, struct commit_list *with_commit)
 {
-	struct commit *commit;
-
 	if (!with_commit)
 		return 1;
-	commit = lookup_commit_reference_gently(sha1, 1);
-	if (!commit)
-		return 0;
 	while (with_commit) {
 		struct commit *other;
 
@@ -215,7 +211,8 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 {
 	struct ref_list *ref_list = (struct ref_list*)(cb_data);
 	struct ref_item *newitem;
-	int kind = REF_UNKNOWN_TYPE;
+	struct commit *commit;
+	int kind;
 	int len;
 	static struct commit_list branch;
 
@@ -226,13 +223,15 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	} else if (!prefixcmp(refname, "refs/remotes/")) {
 		kind = REF_REMOTE_BRANCH;
 		refname += 13;
-	} else if (!prefixcmp(refname, "refs/tags/")) {
-		kind = REF_TAG;
-		refname += 10;
-	}
+	} else
+		return 0;
+
+	commit = lookup_commit_reference_gently(sha1, 1);
+	if (!commit)
+		return error("branch '%s' does not point at a commit", refname);
 
 	/* Filter with with_commit if specified */
-	if (!has_commit(sha1, ref_list->with_commit))
+	if (!has_commit(commit, ref_list->with_commit))
 		return 0;
 
 	/* Don't add types the caller doesn't want */
@@ -243,12 +242,8 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 		branch.item = lookup_commit_reference_gently(sha1, 1);
 		if (!branch.item)
 			die("Unable to lookup tip of branch %s", refname);
-		if (merge_filter == SHOW_NOT_MERGED &&
-		    has_commit(merge_filter_ref, &branch))
-			return 0;
-		if (merge_filter == SHOW_MERGED &&
-		    !has_commit(merge_filter_ref, &branch))
-			return 0;
+		add_pending_object(&ref_list->revs,
+				   (struct object *)branch.item, refname);
 	}
 
 	/* Resize buffer */
@@ -262,7 +257,7 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	newitem = &(ref_list->list[ref_list->index++]);
 	newitem->name = xstrdup(refname);
 	newitem->kind = kind;
-	hashcpy(newitem->sha1, sha1);
+	newitem->commit = commit;
 	len = strlen(newitem->name);
 	if (len > ref_list->maxwidth)
 		ref_list->maxwidth = len;
@@ -309,7 +304,13 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 {
 	char c;
 	int color;
-	struct commit *commit;
+	struct commit *commit = item->commit;
+
+	if (merge_filter != NO_FILTER) {
+		int is_merged = !!(item->commit->object.flags & UNINTERESTING);
+		if (is_merged != (merge_filter == SHOW_MERGED))
+			return;
+	}
 
 	switch (item->kind) {
 	case REF_LOCAL_BRANCH:
@@ -337,7 +338,7 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		strbuf_init(&subject, 0);
 		stat[0] = '\0';
 
-		commit = lookup_commit(item->sha1);
+		commit = item->commit;
 		if (commit && !parse_commit(commit)) {
 			pretty_print_commit(CMIT_FMT_ONELINE, commit,
 					    &subject, 0, NULL, NULL, 0, 0);
@@ -350,7 +351,7 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		printf("%c %s%-*s%s %s %s%s\n", c, branch_get_color(color),
 		       maxwidth, item->name,
 		       branch_get_color(COLOR_BRANCH_RESET),
-		       find_unique_abbrev(item->sha1, abbrev),
+		       find_unique_abbrev(item->commit->object.sha1, abbrev),
 		       stat, sub);
 		strbuf_release(&subject);
 	} else {
@@ -363,22 +364,34 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 {
 	int i;
 	struct ref_list ref_list;
+	struct commit *head_commit = lookup_commit_reference_gently(head_sha1, 1);
 
 	memset(&ref_list, 0, sizeof(ref_list));
 	ref_list.kinds = kinds;
 	ref_list.with_commit = with_commit;
+	if (merge_filter != NO_FILTER)
+		init_revisions(&ref_list.revs, NULL);
 	for_each_ref(append_ref, &ref_list);
+	if (merge_filter != NO_FILTER) {
+		struct commit *filter;
+		filter = lookup_commit_reference_gently(merge_filter_ref, 0);
+		filter->object.flags |= UNINTERESTING;
+		add_pending_object(&ref_list.revs,
+				   (struct object *) filter, "");
+		ref_list.revs.limited = 1;
+		prepare_revision_walk(&ref_list.revs);
+	}
 
 	qsort(ref_list.list, ref_list.index, sizeof(struct ref_item), ref_cmp);
 
 	detached = (detached && (kinds & REF_LOCAL_BRANCH));
-	if (detached && has_commit(head_sha1, with_commit)) {
+	if (detached && head_commit && has_commit(head_commit, with_commit)) {
 		struct ref_item item;
 		item.name = xstrdup("(no branch)");
 		item.kind = REF_LOCAL_BRANCH;
-		hashcpy(item.sha1, head_sha1);
+		item.commit = head_commit;
 		if (strlen(item.name) > ref_list.maxwidth)
-			      ref_list.maxwidth = strlen(item.name);
+			ref_list.maxwidth = strlen(item.name);
 		print_ref_item(&item, ref_list.maxwidth, verbose, abbrev, 1);
 		free(item.name);
 	}

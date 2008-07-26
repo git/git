@@ -68,8 +68,8 @@ static enum {
 static char *cleanup_arg;
 
 static int use_editor = 1, initial_commit, in_merge;
-const char *only_include_assumed;
-struct strbuf message;
+static const char *only_include_assumed;
+static struct strbuf message;
 
 static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 {
@@ -78,8 +78,7 @@ static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 		strbuf_setlen(buf, 0);
 	else {
 		strbuf_addstr(buf, arg);
-		strbuf_addch(buf, '\n');
-		strbuf_addch(buf, '\n');
+		strbuf_addstr(buf, "\n\n");
 	}
 	return 0;
 }
@@ -647,7 +646,11 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 		char index[PATH_MAX];
 		const char *env[2] = { index, NULL };
 		snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
-		launch_editor(git_path(commit_editmsg), NULL, env);
+		if (launch_editor(git_path(commit_editmsg), NULL, env)) {
+			fprintf(stderr,
+			"Please supply the message using either -m or -F option.\n");
+			exit(1);
+		}
 	}
 
 	if (!no_verify &&
@@ -877,7 +880,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	}
 }
 
-int git_commit_config(const char *k, const char *v, void *cb)
+static int git_commit_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "commit.template"))
 		return git_config_string(&template_file, k, v);

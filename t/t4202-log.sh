@@ -72,3 +72,4 @@ test_expect_success 'diff-filter=D' '
 
 
 test_done
+

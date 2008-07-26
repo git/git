@@ -480,6 +480,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (option_quiet)
 			transport->verbose = -1;
 
+		if (option_upload_pack)
+			transport_set_option(transport, TRANS_OPT_UPLOADPACK,
+					     option_upload_pack);
+
 		refs = transport_get_remote_refs(transport);
 		transport_fetch_refs(transport, refs);
 	}
