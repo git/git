@@ -363,6 +363,19 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	}
 }
 
+static int calc_maxwidth(struct ref_list *refs)
+{
+	int i, l, w = 0;
+	for (i = 0; i < refs->index; i++) {
+		if (!matches_merge_filter(refs->list[i].commit))
+			continue;
+		l = strlen(refs->list[i].name);
+		if (l > w)
+			w = l;
+	}
+	return w;
+}
+
 static void print_ref_list(int kinds, int detached, int verbose, int abbrev, struct commit_list *with_commit)
 {
 	int i;
@@ -383,6 +396,8 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 				   (struct object *) filter, "");
 		ref_list.revs.limited = 1;
 		prepare_revision_walk(&ref_list.revs);
+		if (verbose)
+			ref_list.maxwidth = calc_maxwidth(&ref_list);
 	}
 
 	qsort(ref_list.list, ref_list.index, sizeof(struct ref_item), ref_cmp);
