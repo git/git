@@ -307,7 +307,7 @@ proc start_rev_list {view} {
     global viewargs viewargscmd viewfiles vfilelimit
     global showlocalchanges commitinterest
     global viewactive viewinstances vmergeonly
-    global pending_select mainheadid
+    global mainheadid
     global vcanopt vflags vrevs vorigargs
 
     set startmsecs [clock clicks -milliseconds]
@@ -374,9 +374,6 @@ proc start_rev_list {view} {
     }
     filerun $fd [list getcommitlines $fd $i $view 0]
     nowbusy $view [mc "Reading"]
-    if {$view == $curview} {
-	set pending_select $mainheadid
-    }
     set viewcomplete($view) 0
     set viewactive($view) 1
     return 1
@@ -418,11 +415,22 @@ proc stop_rev_list {view} {
     set viewinstances($view) {}
 }
 
-proc getcommits {} {
+proc reset_pending_select {selid} {
+    global pending_select mainheadid
+
+    if {$selid ne {}} {
+	set pending_select $selid
+    } else {
+	set pending_select $mainheadid
+    }
+}
+
+proc getcommits {selid} {
     global canv curview need_redisplay viewactive
 
     initlayout
     if {[start_rev_list $curview]} {
+	reset_pending_select $selid
 	show_status [mc "Reading commits..."]
 	set need_redisplay 1
     } else {
@@ -503,7 +511,7 @@ proc updatecommits {} {
     filerun $fd [list getcommitlines $fd $i $view 1]
     incr viewactive($view)
     set viewcomplete($view) 0
-    set pending_select $mainheadid
+    reset_pending_select {}
     nowbusy $view "Reading"
     if {$showneartags} {
 	getallcommits
@@ -514,6 +522,11 @@ proc reloadcommits {} {
     global curview viewcomplete selectedline currentid thickerline
     global showneartags treediffs commitinterest cached_commitrow
     global targetid
+
+    set selid {}
+    if {$selectedline ne {}} {
+	set selid $currentid
+    }
 
     if {!$viewcomplete($curview)} {
 	stop_rev_list $curview
@@ -533,7 +546,7 @@ proc reloadcommits {} {
     catch {unset cached_commitrow}
     catch {unset targetid}
     setcanvscroll
-    getcommits
+    getcommits $selid
     return 0
 }
 
@@ -3325,10 +3338,7 @@ proc showview {n} {
 
     run refill_reflist
     if {![info exists viewcomplete($n)]} {
-	if {$selid ne {}} {
-	    set pending_select $selid
-	}
-	getcommits
+	getcommits $selid
 	return
     }
 
@@ -3365,11 +3375,7 @@ proc showview {n} {
     } elseif {$mainheadid ne {} && [commitinview $mainheadid $curview]} {
 	selectline [rowofcommit $mainheadid] 1
     } elseif {!$viewcomplete($n)} {
-	if {$selid ne {}} {
-	    set pending_select $selid
-	} else {
-	    set pending_select $mainheadid
-	}
+	reset_pending_select $selid
     } else {
 	set row [first_real_row]
 	if {$row < $numcommits} {
@@ -4036,6 +4042,7 @@ proc layoutmore {} {
     }
     if {[info exists pending_select] &&
 	[commitinview $pending_select $curview]} {
+	update
 	selectline [rowofcommit $pending_select] 1
     }
     drawvisible
@@ -9973,4 +9980,4 @@ if {[info exists permviews]} {
 	addviewmenu $n
     }
 }
-getcommits
+getcommits {}
