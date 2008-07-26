@@ -54,7 +54,7 @@ test_expect_success 'custom pattern' '
 
 test_expect_success 'last regexp must not be negated' '
 	git config diff.java.funcname "!static" &&
-	! git diff --no-index Beer.java Beer-correct.java
+	test_must_fail git diff --no-index Beer.java Beer-correct.java
 '
 
 test_done

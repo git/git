@@ -3,7 +3,7 @@
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "mailmap.h"
 
 static char *user_format;
@@ -292,7 +292,7 @@ static char *logmsg_reencode(const struct commit *commit,
 
 static int mailmap_name(struct strbuf *sb, const char *email)
 {
-	static struct path_list *mail_map;
+	static struct string_list *mail_map;
 	char buffer[1024];
 
 	if (!mail_map) {

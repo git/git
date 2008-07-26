@@ -21,12 +21,18 @@ main git.git codebase.
 By default, packfiles created with this version uses delta-base-offset
 encoding introduced in v1.4.4.  Pack idx files are using version 2 that
 allows larger packs and added robustness thanks to its CRC checking,
-introduced in v1.5.2.
+introduced in v1.5.2 and v1.4.4.5.  If you want to keep your repositories
+backwards compatible past these versions, set repack.useDeltaBaseOffset
+to false or pack.indexVersion to 1, respectively.
 
 GIT_CONFIG, which was only documented as affecting "git config", but
 actually affected all git commands, now only affects "git config".
 GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
 not different from GIT_CONFIG in a useful way, is removed.
+
+The ".dotest" temporary area "git am" and "git rebase" use is now moved
+inside the $GIT_DIR, to avoid mistakes of adding it to the project by
+accident.
 
 An ancient merge strategy "stupid" has been removed.
 
@@ -67,7 +73,8 @@ Updates since v1.5.6
 
 (performance, robustness, sanity etc.)
 
-* even more documentation pages are now accessible via "man" and "git help".
+* index-pack used too much memory when dealing with a deep delta chain.
+  This has been optimized.
 
 * reduced excessive inlining to shrink size of the "git" binary.
 
@@ -78,6 +85,8 @@ Updates since v1.5.6
   fall back to these redundant objects when able.  In particular, "git
   repack -a -f" can be used to fix such a corruption as long as necessary
   objects are available.
+
+* Performance of "git-blame -C -C" operation is vastly improved.
 
 * git-clone does not create refs in loose form anymore (it behaves as
   if you immediately ran git-pack-refs after cloning).  This will help
@@ -91,6 +100,8 @@ Updates since v1.5.6
   "git commit" has been capable of this for quite some time.
 
 (usability, bells and whistles)
+
+* even more documentation pages are now accessible via "man" and "git help".
 
 * A new environment variable GIT_CEILING_DIRECTORIES can be used to stop
   the discovery process of the toplevel of working tree; this may be useful
@@ -125,6 +136,9 @@ Updates since v1.5.6
 * git-archive can be told to omit certain paths from its output using
   export-ignore attributes.
 
+* git-archive uses the zlib default compression level when creating
+  zip archive.
+
 * With -v option, git-branch describes the remote tracking statistics
   similar to the way git-checkout reports by how many commits your branch
   is ahead/behind.
@@ -144,6 +158,8 @@ Updates since v1.5.6
 * git-clone can clone from a remote whose URL would be rewritten by
   configuration stored in $HOME/.gitconfig now.
 
+* git-cvsserver learned to respond to "cvs co -c".
+
 * git-diff --check now checks leftover merge conflict markers.
 
 * When remote side used to have branch 'foo' and git-fetch finds that now
@@ -154,6 +170,8 @@ Updates since v1.5.6
 
 * fast-export learned to export and import marks file; this can be used to
   interface with fast-import incrementally.
+
+* fast-import and fast-export learned to export and import gitlinks.
 
 * git-rebase records the original tip of branch in ORIG_HEAD before it is
   rewound.
@@ -188,6 +206,8 @@ Updates since v1.5.6
 
 (internal)
 
+* git-merge has been reimplemented in C.
+
 
 Fixes since v1.5.6
 ------------------
@@ -195,12 +215,8 @@ Fixes since v1.5.6
 All of the fixes in v1.5.6 maintenance series are included in
 this release, unless otherwise noted.
 
- * "git fetch" into an empty repository used to remind the fetch will
-   be huge by saying "no common commits", but it is already known by
-   the user anyway (need to backport 8cb560f to 'maint').
-
 ---
 exec >/var/tmp/1
-O=v1.5.6.3-350-g499027b
+O=v1.5.6.4-432-g6796399
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

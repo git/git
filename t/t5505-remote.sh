@@ -167,7 +167,7 @@ test_expect_success 'prune' '
 	 git fetch origin &&
 	 git remote prune origin &&
 	 git rev-parse refs/remotes/origin/side2 &&
-	 ! git rev-parse refs/remotes/origin/side)
+	 test_must_fail git rev-parse refs/remotes/origin/side)
 '
 
 cat > test/expect << EOF
@@ -182,7 +182,7 @@ test_expect_success 'prune --dry-run' '
 	(cd test &&
 	 git remote prune --dry-run origin > output &&
 	 git rev-parse refs/remotes/origin/side2 &&
-	 ! git rev-parse refs/remotes/origin/side &&
+	 test_must_fail git rev-parse refs/remotes/origin/side &&
 	(cd ../one &&
 	 git branch -m side side2) &&
 	 test_cmp expect output)
@@ -197,10 +197,10 @@ test_expect_success 'add --mirror && prune' '
 	 git branch -m side2 side) &&
 	(cd mirror &&
 	 git rev-parse --verify refs/heads/side2 &&
-	 ! git rev-parse --verify refs/heads/side &&
+	 test_must_fail git rev-parse --verify refs/heads/side &&
 	 git fetch origin &&
 	 git remote prune origin &&
-	 ! git rev-parse --verify refs/heads/side2 &&
+	 test_must_fail git rev-parse --verify refs/heads/side2 &&
 	 git rev-parse --verify refs/heads/side)
 '
 
@@ -215,10 +215,10 @@ test_expect_success 'add alt && prune' '
 	 git branch -m side side2) &&
 	(cd alttst &&
 	 git rev-parse --verify refs/remotes/origin/side &&
-	 ! git rev-parse --verify refs/remotes/origin/side2 &&
+	 test_must_fail git rev-parse --verify refs/remotes/origin/side2 &&
 	 git fetch alt &&
 	 git remote prune alt &&
-	 ! git rev-parse --verify refs/remotes/origin/side &&
+	 test_must_fail git rev-parse --verify refs/remotes/origin/side &&
 	 git rev-parse --verify refs/remotes/origin/side2)
 '
 
@@ -323,7 +323,7 @@ test_expect_success '"remote show" does not show symbolic refs' '
 
 test_expect_success 'reject adding remote with an invalid name' '
 
-	! git remote add some:url desired-name
+	test_must_fail git remote add some:url desired-name
 
 '
 

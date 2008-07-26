@@ -64,7 +64,7 @@ linkgit:git-patch-id[1]
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------

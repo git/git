@@ -379,7 +379,7 @@ test_external_without_stderr () {
 
 test_must_fail () {
 	"$@"
-	test $? -gt 0 -a $? -le 129
+	test $? -gt 0 -a $? -le 129 -o $? -gt 192
 }
 
 # test_cmp is a helper function to compare actual and expected output.

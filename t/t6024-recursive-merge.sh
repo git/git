@@ -60,7 +60,9 @@ git update-index a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:08" git commit -m F
 '
 
-test_expect_success "combined merge conflicts" "! git merge -m final G"
+test_expect_success "combined merge conflicts" "
+	test_must_fail git merge -m final G
+"
 
 cat > expect << EOF
 <<<<<<< HEAD:a1
@@ -90,7 +92,7 @@ test_expect_success 'refuse to merge binary files' '
 	printf "\0\0" > binary-file &&
 	git add binary-file &&
 	git commit -m binary2 &&
-	! git merge F > merge.out 2> merge.err &&
+	test_must_fail git merge F > merge.out 2> merge.err &&
 	grep "Cannot merge binary files: HEAD:binary-file vs. F:binary-file" \
 		merge.err
 '

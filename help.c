@@ -40,7 +40,7 @@ static struct option builtin_help_options[] = {
 };
 
 static const char * const builtin_help_usage[] = {
-	"git-help [--all] [--man|--web|--info] [command]",
+	"git help [--all] [--man|--web|--info] [command]",
 	NULL
 };
 

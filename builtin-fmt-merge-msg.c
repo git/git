@@ -6,7 +6,7 @@
 #include "tag.h"
 
 static const char *fmt_merge_msg_usage =
-	"git-fmt-merge-msg [--log] [--no-log] [--file <file>]";
+	"git fmt-merge-msg [--log] [--no-log] [--file <file>]";
 
 static int merge_summary;
 

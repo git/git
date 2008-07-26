@@ -377,6 +377,10 @@ static void fsck_dir(int i, char *path)
 			if (de->d_name[0] != '.')
 				break;
 			continue;
+		case 14:
+			if (prefixcmp(de->d_name, "tmp_obj_"))
+				break;
+			continue;
 		case 38:
 			sprintf(name, "%02x", i);
 			memcpy(name+2, de->d_name, len+1);
@@ -539,7 +543,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 }
 
 static char const * const fsck_usage[] = {
-	"git-fsck [options] [<object>...]",
+	"git fsck [options] [<object>...]",
 	NULL
 };
 

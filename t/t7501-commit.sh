@@ -19,7 +19,7 @@ test_expect_success \
 
 test_expect_success \
 	"fail initial amend" \
-	"! git-commit --amend"
+	"test_must_fail git-commit --amend"
 
 test_expect_success \
 	"initial commit" \
@@ -27,16 +27,16 @@ test_expect_success \
 
 test_expect_success \
 	"invalid options 1" \
-	"! git-commit -m foo -m bar -F file"
+	"test_must_fail git-commit -m foo -m bar -F file"
 
 test_expect_success \
 	"invalid options 2" \
-	"! git-commit -C HEAD -m illegal"
+	"test_must_fail git-commit -C HEAD -m illegal"
 
 test_expect_success \
 	"using paths with -a" \
 	"echo King of the bongo >file &&
-	! git-commit -m foo -a file"
+	test_must_fail git-commit -m foo -a file"
 
 test_expect_success \
 	"using paths with --interactive" \
@@ -45,11 +45,11 @@ test_expect_success \
 
 test_expect_success \
 	"using invalid commit with -C" \
-	"! git-commit -C bogus"
+	"test_must_fail git-commit -C bogus"
 
 test_expect_success \
 	"testing nothing to commit" \
-	"! git-commit -m initial"
+	"test_must_fail git-commit -m initial"
 
 test_expect_success \
 	"next commit" \
@@ -59,7 +59,7 @@ test_expect_success \
 test_expect_success \
 	"commit message from non-existing file" \
 	"echo 'more bongo: bongo bongo bongo bongo' >file && \
-	 ! git-commit -F gah -a"
+	 test_must_fail git-commit -F gah -a"
 
 # Empty except stray tabs and spaces on a few lines.
 sed -e 's/@$//' >msg <<EOF
@@ -70,7 +70,7 @@ Signed-off-by: hula
 EOF
 test_expect_success \
 	"empty commit message" \
-	"! git-commit -F msg -a"
+	"test_must_fail git-commit -F msg -a"
 
 test_expect_success \
 	"commit message from file" \
@@ -91,7 +91,7 @@ test_expect_success \
 test_expect_success \
 	"passing -m and -F" \
 	"echo 'enough with the bongos' >file && \
-	 ! git-commit -F msg -m amending ."
+	 test_must_fail git-commit -F msg -m amending ."
 
 test_expect_success \
 	"using message from other commit" \

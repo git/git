@@ -1308,34 +1308,28 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 int format_tracking_info(struct branch *branch, struct strbuf *sb)
 {
 	int num_ours, num_theirs;
-	const char *base, *remote_msg;
+	const char *base;
 
 	if (!stat_tracking_info(branch, &num_ours, &num_theirs))
 		return 0;
 
 	base = branch->merge[0]->dst;
 	if (!prefixcmp(base, "refs/remotes/")) {
-		remote_msg = " remote";
 		base += strlen("refs/remotes/");
-	} else {
-		remote_msg = "";
 	}
 	if (!num_theirs)
-		strbuf_addf(sb, "Your branch is ahead of the tracked%s branch '%s' "
+		strbuf_addf(sb, "Your branch is ahead of '%s' "
 			    "by %d commit%s.\n",
-			    remote_msg, base,
-			    num_ours, (num_ours == 1) ? "" : "s");
+			    base, num_ours, (num_ours == 1) ? "" : "s");
 	else if (!num_ours)
-		strbuf_addf(sb, "Your branch is behind the tracked%s branch '%s' "
-			    "by %d commit%s,\n"
+		strbuf_addf(sb, "Your branch is behind '%s' "
+			    "by %d commit%s, "
 			    "and can be fast-forwarded.\n",
-			    remote_msg, base,
-			    num_theirs, (num_theirs == 1) ? "" : "s");
+			    base, num_theirs, (num_theirs == 1) ? "" : "s");
 	else
-		strbuf_addf(sb, "Your branch and the tracked%s branch '%s' "
-			    "have diverged,\nand respectively "
-			    "have %d and %d different commit(s) each.\n",
-			    remote_msg, base,
-			    num_ours, num_theirs);
+		strbuf_addf(sb, "Your branch and '%s' have diverged,\n"
+			    "and have %d and %d different commit(s) each, "
+			    "respectively.\n",
+			    base, num_ours, num_theirs);
 	return 1;
 }

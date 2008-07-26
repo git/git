@@ -10,9 +10,9 @@ for file
 do
 	while read type value
 	do
-               case $type in
-               '')
-                       continue ;;
+		case $type in
+		'')
+			continue ;;
 		fixed)
 			fixed=$(($fixed + $value)) ;;
 		success)
@@ -20,9 +20,9 @@ do
 		failed)
 			failed=$(($failed + $value)) ;;
 		broken)
-			broken=$(( $broken + $value)) ;;
+			broken=$(($broken + $value)) ;;
 		total)
-			total=$(( $total + $value)) ;;
+			total=$(($total + $value)) ;;
 		esac
 	done <"$file"
 done

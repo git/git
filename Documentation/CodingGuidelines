@@ -105,7 +105,7 @@ For C programs:
 
  - Use the API.  No, really.  We have a strbuf (variable length
    string), several arrays with the ALLOC_GROW() macro, a
-   path_list for sorted string lists, a hash map (mapping struct
+   string_list for sorted string lists, a hash map (mapping struct
    objects) named "struct decorate", amongst other things.
 
  - When you come up with an API, document it.

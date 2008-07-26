@@ -9,7 +9,8 @@ git-tag - Create, list, delete or verify a tag object signed with GPG
 SYNOPSIS
 --------
 [verse]
-'git tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]  <name> [<head>]
+'git tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]
+	<name> [<commit> | <object>]
 'git tag' -d <name>...
 'git tag' [-n[<num>]] -l [<pattern>]
 'git tag' -v <name>...
@@ -247,7 +248,7 @@ $ GIT_COMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>,
-Junio C Hamano <junkio@cox.net> and Chris Wright <chrisw@osdl.org>.
+Junio C Hamano <gitster@pobox.com> and Chris Wright <chrisw@osdl.org>.
 
 Documentation
 --------------

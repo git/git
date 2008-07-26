@@ -381,7 +381,7 @@ See also function `git-blame-mode'."
                   "log" "-1"
 		  (concat "--pretty=" git-blame-log-oneline-format)
                   hash)
-    (buffer-substring (point-min) (1- (point-max)))))
+    (buffer-substring (point-min) (point-max))))
 
 (defvar git-blame-last-identification nil)
 (make-variable-buffer-local 'git-blame-last-identification)

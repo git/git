@@ -38,6 +38,14 @@ test_expect_success 'result is really identical' '
 	test $H = $(git rev-parse HEAD)
 '
 
+test_expect_success 'rewrite bare repository identically' '
+	(git config core.bare true && cd .git && git-filter-branch branch)
+'
+git config core.bare false
+test_expect_success 'result is really identical' '
+	test $H = $(git rev-parse HEAD)
+'
+
 test_expect_success 'rewrite, renaming a specific file' '
 	git-filter-branch -f --tree-filter "mv d doh || :" HEAD
 '

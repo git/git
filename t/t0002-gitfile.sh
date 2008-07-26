@@ -66,7 +66,7 @@ test_expect_success 'check hash-object' '
 
 test_expect_success 'check cat-file' '
 	git cat-file blob $SHA >actual &&
-	diff -u bar actual
+	test_cmp bar actual
 '
 
 test_expect_success 'check update-index' '

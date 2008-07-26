@@ -78,6 +78,13 @@ test_expect_success 'long options' '
 	test_cmp expect output
 '
 
+test_expect_success 'missing required value' '
+	test-parse-options -s;
+	test $? = 129 &&
+	test-parse-options --string;
+	test $? = 129
+'
+
 cat > expect << EOF
 boolean: 1
 integer: 13

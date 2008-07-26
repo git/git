@@ -17,7 +17,7 @@ test_expect_success \
 
 test_expect_success \
     'Setup helper tool' \
-    '(echo "#!/bin/sh"
+    '(echo "#!$SHELL_PATH"
       echo shift
       echo output=1
       echo "while test -f commandline\$output; do output=\$((\$output+1)); done"
@@ -95,7 +95,7 @@ test_expect_success 'reject long lines' '
 	clean_fake_sendmail &&
 	cp $patches longline.patch &&
 	echo $z512$z512 >>longline.patch &&
-	! git send-email \
+	test_must_fail git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
@@ -142,7 +142,7 @@ test_expect_success 'Valid In-Reply-To when prompting' '
 '
 
 test_expect_success 'setup fake editor' '
-	(echo "#!/bin/sh" &&
+	(echo "#!$SHELL_PATH" &&
 	 echo "echo fake edit >>\"\$1\""
 	) >fake-editor &&
 	chmod +x fake-editor
@@ -239,7 +239,7 @@ test_expect_success 'sendemail.cc unset' '
 
 test_expect_success '--compose adds MIME for utf8 body' '
 	clean_fake_sendmail &&
-	(echo "#!/bin/sh" &&
+	(echo "#!$SHELL_PATH" &&
 	 echo "echo utf8 body: àéìöú >>\"\$1\""
 	) >fake-editor-utf8 &&
 	chmod +x fake-editor-utf8 &&
@@ -258,7 +258,7 @@ test_expect_success '--compose adds MIME for utf8 body' '
 
 test_expect_success '--compose respects user mime type' '
 	clean_fake_sendmail &&
-	(echo "#!/bin/sh" &&
+	(echo "#!$SHELL_PATH" &&
 	 echo "(echo MIME-Version: 1.0"
 	 echo " echo Content-Type: text/plain\\; charset=iso-8859-1"
 	 echo " echo Content-Transfer-Encoding: 8bit"

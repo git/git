@@ -9,7 +9,7 @@
 #include "cache-tree.h"
 
 static const char write_tree_usage[] =
-"git-write-tree [--missing-ok] [--prefix=<prefix>/]";
+"git write-tree [--missing-ok] [--prefix=<prefix>/]";
 
 int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 {

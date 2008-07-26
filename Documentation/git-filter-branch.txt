@@ -191,7 +191,7 @@ Thus you may instead want to use `rm -f filename` as the script.
 A significantly faster version:
 
 --------------------------------------------------------------------------
-git filter-branch --index-filter 'git update-index --remove filename' HEAD
+git filter-branch --index-filter 'git rm --cached filename' HEAD
 --------------------------------------------------------------------------
 
 Now, you will get the rewritten history saved in HEAD.

@@ -442,6 +442,8 @@ static int setup_index(struct walker *walker, struct alt_base *repo, unsigned ch
 		return -1;
 
 	new_pack = parse_pack_index(sha1);
+	if (!new_pack)
+		return -1; /* parse_pack_index() already issued error message */
 	new_pack->next = repo->packs;
 	repo->packs = new_pack;
 	return 0;

@@ -16,11 +16,11 @@
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "cache-tree.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "mailmap.h"
 #include "parse-options.h"
 
-static char blame_usage[] = "git-blame [options] [rev-opts] [rev] [--] file";
+static char blame_usage[] = "git blame [options] [rev-opts] [rev] [--] file";
 
 static const char *blame_opt_usage[] = {
 	blame_usage,
@@ -40,7 +40,7 @@ static int blank_boundary;
 static int incremental;
 static int cmd_is_annotate;
 static int xdl_opts = XDF_NEED_MINIMAL;
-static struct path_list mailmap;
+static struct string_list mailmap;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -152,6 +152,10 @@ struct blame_entry {
 	 * checked if the group came from one of its parents.
 	 */
 	char guilty;
+
+	/* true if the entry has been scanned for copies in the current parent
+	 */
+	char scanned;
 
 	/* the line number of the first line of this group in the
 	 * suspect's file; internally all line numbers are 0 based.
@@ -1008,7 +1012,8 @@ static int find_move_in_parent(struct scoreboard *sb,
 	while (made_progress) {
 		made_progress = 0;
 		for (e = sb->ent; e; e = e->next) {
-			if (e->guilty || !same_suspect(e->suspect, target))
+			if (e->guilty || !same_suspect(e->suspect, target) ||
+			    ent_score(sb, e) < blame_move_score)
 				continue;
 			find_copy_in_blob(sb, e, parent, split, &file_p);
 			if (split[1].suspect &&
@@ -1033,6 +1038,7 @@ struct blame_list {
  */
 static struct blame_list *setup_blame_list(struct scoreboard *sb,
 					   struct origin *target,
+					   int min_score,
 					   int *num_ents_p)
 {
 	struct blame_entry *e;
@@ -1040,16 +1046,30 @@ static struct blame_list *setup_blame_list(struct scoreboard *sb,
 	struct blame_list *blame_list = NULL;
 
 	for (e = sb->ent, num_ents = 0; e; e = e->next)
-		if (!e->guilty && same_suspect(e->suspect, target))
+		if (!e->scanned && !e->guilty &&
+		    same_suspect(e->suspect, target) &&
+		    min_score < ent_score(sb, e))
 			num_ents++;
 	if (num_ents) {
 		blame_list = xcalloc(num_ents, sizeof(struct blame_list));
 		for (e = sb->ent, i = 0; e; e = e->next)
-			if (!e->guilty && same_suspect(e->suspect, target))
+			if (!e->scanned && !e->guilty &&
+			    same_suspect(e->suspect, target) &&
+			    min_score < ent_score(sb, e))
 				blame_list[i++].ent = e;
 	}
 	*num_ents_p = num_ents;
 	return blame_list;
+}
+
+/*
+ * Reset the scanned status on all entries.
+ */
+static void reset_scanned_flag(struct scoreboard *sb)
+{
+	struct blame_entry *e;
+	for (e = sb->ent; e; e = e->next)
+		e->scanned = 0;
 }
 
 /*
@@ -1070,7 +1090,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 	struct blame_list *blame_list;
 	int num_ents;
 
-	blame_list = setup_blame_list(sb, target, &num_ents);
+	blame_list = setup_blame_list(sb, target, blame_copy_score, &num_ents);
 	if (!blame_list)
 		return 1; /* nothing remains for this target */
 
@@ -1144,18 +1164,21 @@ static int find_copy_in_parent(struct scoreboard *sb,
 				split_blame(sb, split, blame_list[j].ent);
 				made_progress = 1;
 			}
+			else
+				blame_list[j].ent->scanned = 1;
 			decref_split(split);
 		}
 		free(blame_list);
 
 		if (!made_progress)
 			break;
-		blame_list = setup_blame_list(sb, target, &num_ents);
+		blame_list = setup_blame_list(sb, target, blame_copy_score, &num_ents);
 		if (!blame_list) {
 			retval = 1;
 			break;
 		}
 	}
+	reset_scanned_flag(sb);
 	diff_flush(&diff_opts);
 	diff_tree_release_paths(&diff_opts);
 	return retval;
@@ -1903,7 +1926,7 @@ static void sanity_check_refcnt(struct scoreboard *sb)
  * Used for the command line parsing; check if the path exists
  * in the working tree.
  */
-static int has_path_in_work_tree(const char *path)
+static int has_string_in_work_tree(const char *path)
 {
 	struct stat st;
 	return !lstat(path, &st);
@@ -2367,14 +2390,14 @@ parse_done:
 		if (argc < 2)
 			usage_with_options(blame_opt_usage, options);
 		path = add_prefix(prefix, argv[argc - 1]);
-		if (argc == 3 && !has_path_in_work_tree(path)) { /* (2b) */
+		if (argc == 3 && !has_string_in_work_tree(path)) { /* (2b) */
 			path = add_prefix(prefix, argv[1]);
 			argv[1] = argv[2];
 		}
 		argv[argc - 1] = "--";
 
 		setup_work_tree();
-		if (!has_path_in_work_tree(path))
+		if (!has_string_in_work_tree(path))
 			die("cannot stat path %s: %s", path, strerror(errno));
 	}
 

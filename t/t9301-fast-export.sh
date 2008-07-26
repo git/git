@@ -59,7 +59,7 @@ test_expect_success 'fast-export master~2..master' '
 		 test $MASTER != $(git rev-parse --verify refs/heads/partial) &&
 		 git diff master..partial &&
 		 git diff master^..partial^ &&
-		 ! git rev-parse partial~2)
+		 test_must_fail git rev-parse partial~2)
 
 '
 
@@ -125,7 +125,7 @@ test_expect_success 'set up faked signed tag' '
 
 test_expect_success 'signed-tags=abort' '
 
-	! git fast-export --signed-tags=abort sign-your-name
+	test_must_fail git fast-export --signed-tags=abort sign-your-name
 
 '
 
@@ -140,6 +140,48 @@ test_expect_success 'signed-tags=strip' '
 
 	git fast-export --signed-tags=strip sign-your-name > output &&
 	! grep PGP output
+
+'
+
+test_expect_success 'setup submodule' '
+
+	git checkout -f master &&
+	mkdir sub &&
+	cd sub &&
+	git init  &&
+	echo test file > file &&
+	git add file &&
+	git commit -m sub_initial &&
+	cd .. &&
+	git submodule add "`pwd`/sub" sub &&
+	git commit -m initial &&
+	test_tick &&
+	cd sub &&
+	echo more data >> file &&
+	git add file &&
+	git commit -m sub_second &&
+	cd .. &&
+	git add sub &&
+	git commit -m second
+
+'
+
+test_expect_success 'submodule fast-export | fast-import' '
+
+	SUBENT1=$(git ls-tree master^ sub) &&
+	SUBENT2=$(git ls-tree master sub) &&
+	rm -rf new &&
+	mkdir new &&
+	git --git-dir=new/.git init &&
+	git fast-export --signed-tags=strip --all |
+	(cd new &&
+	 git fast-import &&
+	 test "$SUBENT1" = "$(git ls-tree refs/heads/master^ sub)" &&
+	 test "$SUBENT2" = "$(git ls-tree refs/heads/master sub)" &&
+	 git checkout master &&
+	 git submodule init &&
+	 git submodule update &&
+	 cmp sub/file ../sub/file)
 
 '
 

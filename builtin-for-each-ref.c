@@ -809,7 +809,7 @@ static struct ref_sort *default_sort(void)
 	return sort;
 }
 
-int opt_parse_sort(const struct option *opt, const char *arg, int unset)
+static int opt_parse_sort(const struct option *opt, const char *arg, int unset)
 {
 	struct ref_sort **sort_tail = opt->value;
 	struct ref_sort *s;
@@ -831,7 +831,7 @@ int opt_parse_sort(const struct option *opt, const char *arg, int unset)
 }
 
 static char const * const for_each_ref_usage[] = {
-	"git-for-each-ref [options] [<pattern>]",
+	"git for-each-ref [options] [<pattern>]",
 	NULL
 };
 

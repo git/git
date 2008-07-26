@@ -124,7 +124,7 @@ test_expect_success \
 
 test_expect_success \
     '[index v1] 4) confirm that the pack is actually corrupted' \
-    '! git fsck --full $commit'
+    'test_must_fail git fsck --full $commit'
 
 test_expect_success \
     '[index v1] 5) pack-objects happily reuses corrupted data' \
@@ -133,7 +133,7 @@ test_expect_success \
 
 test_expect_success \
     '[index v1] 6) newly created pack is BAD !' \
-    '! git verify-pack -v "test-4-${pack1}.pack"'
+    'test_must_fail git verify-pack -v "test-4-${pack1}.pack"'
 
 test_expect_success \
     '[index v2] 1) stream pack to repository' \
@@ -162,11 +162,11 @@ test_expect_success \
 
 test_expect_success \
     '[index v2] 4) confirm that the pack is actually corrupted' \
-    '! git fsck --full $commit'
+    'test_must_fail git fsck --full $commit'
 
 test_expect_success \
     '[index v2] 5) pack-objects refuses to reuse corrupted data' \
-    '! git pack-objects test-5 <obj-list'
+    'test_must_fail git pack-objects test-5 <obj-list'
 
 test_expect_success \
     '[index v2] 6) verify-pack detects CRC mismatch' \
@@ -179,7 +179,8 @@ test_expect_success \
      ( while read obj
        do git cat-file -p $obj >/dev/null || exit 1
        done <obj-list ) &&
-     err=$(! git verify-pack ".git/objects/pack/pack-${pack1}.pack" 2>&1) &&
+     err=$(test_must_fail git verify-pack \
+       ".git/objects/pack/pack-${pack1}.pack" 2>&1) &&
      echo "$err" | grep "CRC mismatch"'
 
 test_done

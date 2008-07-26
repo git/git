@@ -5,7 +5,7 @@
 
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
-git-repack [options]
+git repack [options]
 --
 a               pack everything in a single pack
 A               same as -a, and turn unreachable objects loose

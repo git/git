@@ -1,7 +1,7 @@
 #include "cache.h"
 
 static const char update_server_info_usage[] =
-"git-update-server-info [--force]";
+"git update-server-info [--force]";
 
 int main(int ac, char **av)
 {

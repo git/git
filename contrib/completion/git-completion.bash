@@ -73,12 +73,12 @@ __git_ps1 ()
 	if [ -n "$g" ]; then
 		local r
 		local b
-		if [ -d "$g/rebase" ]
+		if [ -d "$g/rebase-apply" ]
 		then
-			if test -f "$g/rebase/rebasing"
+			if test -f "$g/rebase-apply/rebasing"
 			then
 				r="|REBASE"
-			elif test -f "$g/rebase/applying"
+			elif test -f "$g/rebase-apply/applying"
 			then
 				r="|AM"
 			else
@@ -488,8 +488,8 @@ __git_whitespacelist="nowarn warn error error-all strip"
 _git_am ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}" dir="$(__gitdir)"
-	if [ -d "$dir"/rebase ]; then
-		__gitcomp "--skip --resolved"
+	if [ -d "$dir"/rebase-apply ]; then
+		__gitcomp "--skip --resolved --abort"
 		return
 	fi
 	case "$cur" in
@@ -626,6 +626,8 @@ _git_bundle ()
 
 _git_checkout ()
 {
+	__git_has_doubledash && return
+
 	__gitcomp "$(__git_refs)"
 }
 
@@ -915,7 +917,7 @@ _git_push ()
 _git_rebase ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}" dir="$(__gitdir)"
-	if [ -d "$dir"/rebase ] || [ -d "$dir"/rebase-merge ]; then
+	if [ -d "$dir"/rebase-apply ] || [ -d "$dir"/rebase-merge ]; then
 		__gitcomp "--continue --skip --abort"
 		return
 	fi
@@ -1170,6 +1172,20 @@ _git_reset ()
 	__gitcomp "$(__git_refs)"
 }
 
+_git_rm ()
+{
+	__git_has_doubledash && return
+
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--cached --dry-run --ignore-unmatch --quiet"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_shortlog ()
 {
 	__git_has_doubledash && return
@@ -1208,6 +1224,22 @@ _git_show ()
 		;;
 	esac
 	__git_complete_file
+}
+
+_git_show_branch ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--all --remotes --topo-order --current --more=
+			--list --independent --merge-base --no-name
+			--sha1-name --topics --reflog
+			"
+		return
+		;;
+	esac
+	__git_complete_revlist
 }
 
 _git_stash ()
@@ -1425,10 +1457,11 @@ _git ()
 	rebase)      _git_rebase ;;
 	remote)      _git_remote ;;
 	reset)       _git_reset ;;
+	rm)          _git_rm ;;
 	send-email)  _git_send_email ;;
 	shortlog)    _git_shortlog ;;
 	show)        _git_show ;;
-	show-branch) _git_log ;;
+	show-branch) _git_show_branch ;;
 	stash)       _git_stash ;;
 	submodule)   _git_submodule ;;
 	svn)         _git_svn ;;

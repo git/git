@@ -205,7 +205,7 @@ but different purposes:
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <junkio@cox.net>
+Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------

@@ -3,7 +3,7 @@
 #include "refs.h"
 #include "diff.h"
 #include "revision.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "reflog-walk.h"
 
 struct complete_reflogs {
@@ -127,7 +127,7 @@ struct commit_reflog {
 
 struct reflog_walk_info {
 	struct commit_info_lifo reflogs;
-	struct path_list complete_reflogs;
+	struct string_list complete_reflogs;
 	struct commit_reflog *last_commit_reflog;
 };
 
@@ -141,7 +141,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 {
 	unsigned long timestamp = 0;
 	int recno = -1;
-	struct path_list_item *item;
+	struct string_list_item *item;
 	struct complete_reflogs *reflogs;
 	char *branch, *at = strchr(name, '@');
 	struct commit_reflog *commit_reflog;
@@ -161,7 +161,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	} else
 		recno = 0;
 
-	item = path_list_lookup(branch, &info->complete_reflogs);
+	item = string_list_lookup(branch, &info->complete_reflogs);
 	if (item)
 		reflogs = item->util;
 	else {
@@ -189,7 +189,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 		}
 		if (!reflogs || reflogs->nr == 0)
 			return -1;
-		path_list_insert(branch, &info->complete_reflogs)->util
+		string_list_insert(branch, &info->complete_reflogs)->util
 			= reflogs;
 	}
 

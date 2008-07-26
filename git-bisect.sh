@@ -149,7 +149,7 @@ bisect_start() {
 	echo "$start_head" >"$GIT_DIR/BISECT_START" &&
 	sq "$@" >"$GIT_DIR/BISECT_NAMES" &&
 	eval "$eval" &&
-	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG" || exit
+	echo "git bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG" || exit
 	#
 	# Check if we can proceed to the next bisect state.
 	#
@@ -169,7 +169,7 @@ bisect_write() {
 	esac
 	git update-ref "refs/bisect/$tag" "$rev" || exit
 	echo "# $state: $(git show-branch $rev)" >>"$GIT_DIR/BISECT_LOG"
-	test -n "$nolog" || echo "git-bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
+	test -n "$nolog" || echo "git bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_state() {
@@ -426,9 +426,13 @@ bisect_clean_state() {
 bisect_replay () {
 	test -r "$1" || die "cannot read $1 for replaying"
 	bisect_reset
-	while read bisect command rev
+	while read git bisect command rev
 	do
-		test "$bisect" = "git-bisect" || continue
+		test "$git $bisect" = "git bisect" -o "$git" = "git-bisect" || continue
+		if test "$git" = "git-bisect"; then
+			rev="$command"
+			command="$bisect"
+		fi
 		case "$command" in
 		start)
 			cmd="bisect_start $rev"

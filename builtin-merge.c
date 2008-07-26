@@ -50,11 +50,9 @@ static size_t use_strategies_nr, use_strategies_alloc;
 static const char *branch;
 
 static struct strategy all_strategy[] = {
-	{ "recur",      NO_TRIVIAL },
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
 	{ "octopus",    DEFAULT_OCTOPUS },
 	{ "resolve",    0 },
-	{ "stupid",     0 },
 	{ "ours",       NO_FAST_FORWARD | NO_TRIVIAL },
 	{ "subtree",    NO_FAST_FORWARD | NO_TRIVIAL },
 };
@@ -68,16 +66,18 @@ static int option_parse_message(const struct option *opt,
 
 	if (unset)
 		strbuf_setlen(buf, 0);
-	else {
+	else if (arg) {
 		strbuf_addf(buf, "%s\n\n", arg);
 		have_message = 1;
-	}
+	} else
+		return error("switch `m' requires a value");
 	return 0;
 }
 
 static struct strategy *get_strategy(const char *name)
 {
 	int i;
+	struct strbuf err;
 
 	if (!name)
 		return NULL;
@@ -85,7 +85,13 @@ static struct strategy *get_strategy(const char *name)
 	for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
 		if (!strcmp(name, all_strategy[i].name))
 			return &all_strategy[i];
-	return NULL;
+
+	strbuf_init(&err, 0);
+	for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
+		strbuf_addf(&err, " %s", all_strategy[i].name);
+	fprintf(stderr, "Could not find merge strategy '%s'.\n", name);
+	fprintf(stderr, "Available strategies are:%s.\n", err.buf);
+	exit(1);
 }
 
 static void append_strategy(struct strategy *s)
@@ -97,25 +103,10 @@ static void append_strategy(struct strategy *s)
 static int option_parse_strategy(const struct option *opt,
 				 const char *name, int unset)
 {
-	int i;
-	struct strategy *s;
-
 	if (unset)
 		return 0;
 
-	s = get_strategy(name);
-
-	if (s)
-		append_strategy(s);
-	else {
-		struct strbuf err;
-		strbuf_init(&err, 0);
-		for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
-			strbuf_addf(&err, " %s", all_strategy[i].name);
-		fprintf(stderr, "Could not find merge strategy '%s'.\n", name);
-		fprintf(stderr, "Available strategies are:%s.\n", err.buf);
-		exit(1);
-	}
+	append_strategy(get_strategy(name));
 	return 0;
 }
 
@@ -440,7 +431,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		sha1_to_hex(remote_head->sha1), remote);
 }
 
-int git_merge_config(const char *k, const char *v, void *cb)
+static int git_merge_config(const char *k, const char *v, void *cb)
 {
 	if (branch && !prefixcmp(k, "branch.") &&
 		!prefixcmp(k + 7, branch) &&
@@ -581,6 +572,7 @@ static int checkout_fast_forward(unsigned char *head, unsigned char *remote)
 	memset(&trees, 0, sizeof(trees));
 	memset(&opts, 0, sizeof(opts));
 	memset(&t, 0, sizeof(t));
+	memset(&dir, 0, sizeof(dir));
 	dir.show_ignored = 1;
 	dir.exclude_per_dir = ".gitignore";
 	opts.dir = &dir;
@@ -644,14 +636,9 @@ static void add_strategies(const char *string, unsigned attr)
 
 	memset(&list, 0, sizeof(list));
 	split_merge_strategies(string, &list, &list_nr, &list_alloc);
-	if (list != NULL) {
-		for (i = 0; i < list_nr; i++) {
-			struct strategy *s;
-
-			s = get_strategy(list[i].name);
-			if (s)
-				append_strategy(s);
-		}
+	if (list) {
+		for (i = 0; i < list_nr; i++)
+			append_strategy(get_strategy(list[i].name));
 		return;
 	}
 	for (i = 0; i < ARRAY_SIZE(all_strategy); i++)

@@ -14,9 +14,9 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
-#include "path-list.h"
+#include "string-list.h"
 
-static int read_directory(const char *path, struct path_list *list)
+static int read_directory(const char *path, struct string_list *list)
 {
 	DIR *dir;
 	struct dirent *e;
@@ -26,7 +26,7 @@ static int read_directory(const char *path, struct path_list *list)
 
 	while ((e = readdir(dir)))
 		if (strcmp(".", e->d_name) && strcmp("..", e->d_name))
-			path_list_insert(e->d_name, list);
+			string_list_insert(e->d_name, list);
 
 	closedir(dir);
 	return 0;
@@ -60,13 +60,13 @@ static int queue_diff(struct diff_options *o,
 
 	if (S_ISDIR(mode1) || S_ISDIR(mode2)) {
 		char buffer1[PATH_MAX], buffer2[PATH_MAX];
-		struct path_list p1 = {NULL, 0, 0, 1}, p2 = {NULL, 0, 0, 1};
+		struct string_list p1 = {NULL, 0, 0, 1}, p2 = {NULL, 0, 0, 1};
 		int len1 = 0, len2 = 0, i1, i2, ret = 0;
 
 		if (name1 && read_directory(name1, &p1))
 			return -1;
 		if (name2 && read_directory(name2, &p2)) {
-			path_list_clear(&p1, 0);
+			string_list_clear(&p1, 0);
 			return -1;
 		}
 
@@ -95,14 +95,14 @@ static int queue_diff(struct diff_options *o,
 			else if (i2 == p2.nr)
 				comp = -1;
 			else
-				comp = strcmp(p1.items[i1].path,
-					p2.items[i2].path);
+				comp = strcmp(p1.items[i1].string,
+					p2.items[i2].string);
 
 			if (comp > 0)
 				n1 = NULL;
 			else {
 				n1 = buffer1;
-				strncpy(buffer1 + len1, p1.items[i1++].path,
+				strncpy(buffer1 + len1, p1.items[i1++].string,
 						PATH_MAX - len1);
 			}
 
@@ -110,14 +110,14 @@ static int queue_diff(struct diff_options *o,
 				n2 = NULL;
 			else {
 				n2 = buffer2;
-				strncpy(buffer2 + len2, p2.items[i2++].path,
+				strncpy(buffer2 + len2, p2.items[i2++].string,
 						PATH_MAX - len2);
 			}
 
 			ret = queue_diff(o, n1, n2);
 		}
-		path_list_clear(&p1, 0);
-		path_list_clear(&p2, 0);
+		string_list_clear(&p1, 0);
+		string_list_clear(&p2, 0);
 
 		return ret;
 	} else {

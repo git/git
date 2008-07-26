@@ -228,10 +228,12 @@ EOF
 
 test_expect_success 'a SIGTERM should break locks' '
 	echo >>negative &&
-	"$SHELL_PATH" -c '\''
+	! "$SHELL_PATH" -c '\''
 	  echo kill -TERM $$ >> .git/FAKE_EDITOR
-	  GIT_EDITOR=.git/FAKE_EDITOR exec git commit -a'\'' && exit 1  # should fail
-	! test -f .git/index.lock
+	  GIT_EDITOR=.git/FAKE_EDITOR
+	  export GIT_EDITOR
+	  exec git commit -a'\'' &&
+	test ! -f .git/index.lock
 '
 
 rm -f .git/MERGE_MSG .git/COMMIT_EDITMSG

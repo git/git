@@ -38,7 +38,7 @@ package main;
 
 sub usage {
 	print <<EOT;
-git-send-email [options] <file | directory>...
+git send-email [options] <file | directory>...
 Options:
    --from         Specify the "From:" line of the email to be sent.
 
@@ -882,7 +882,7 @@ foreach my $t (@files) {
 				}
 				elsif (/^Content-type:/i) {
 					$has_content_type = 1;
-					if (/charset="?[^ "]+/) {
+					if (/charset="?([^ "]+)/) {
 						$body_encoding = $1;
 					}
 					push @xh, $_;

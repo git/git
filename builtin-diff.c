@@ -21,7 +21,7 @@ struct blobinfo {
 };
 
 static const char builtin_diff_usage[] =
-"git-diff <options> <rev>{0,2} -- <path>*";
+"git diff <options> <rev>{0,2} -- <path>*";
 
 static void stuff_change(struct diff_options *opt,
 			 unsigned old_mode, unsigned new_mode,
@@ -296,7 +296,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	 * If the user asked for our exit code then don't start a
 	 * pager or we would end up reporting its exit code instead.
 	 */
-	if (!DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS))
+	if (!DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS) &&
+	    check_pager_config("diff") != 0)
 		setup_pager();
 
 	/*

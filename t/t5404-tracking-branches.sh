@@ -35,7 +35,9 @@ test_expect_success 'prepare pushable branches' '
 	git commit -a -m aa-master
 '
 
-test_expect_success 'mixed-success push returns error' '! git push'
+test_expect_success 'mixed-success push returns error' '
+	test_must_fail git push
+'
 
 test_expect_success 'check tracking branches updated correctly after push' '
 	test "$(git rev-parse origin/master)" = "$(git rev-parse master)"
