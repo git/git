@@ -294,6 +294,17 @@ static void fill_tracking_info(char *stat, const char *branch_name)
 		sprintf(stat, "[ahead %d, behind %d] ", ours, theirs);
 }
 
+static int matches_merge_filter(struct commit *commit)
+{
+	int is_merged;
+
+	if (merge_filter == NO_FILTER)
+		return 1;
+
+	is_merged = !!(commit->object.flags & UNINTERESTING);
+	return (is_merged == (merge_filter == SHOW_MERGED));
+}
+
 static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 			   int abbrev, int current)
 {
@@ -301,11 +312,8 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	int color;
 	struct commit *commit = item->commit;
 
-	if (merge_filter != NO_FILTER) {
-		int is_merged = !!(item->commit->object.flags & UNINTERESTING);
-		if (is_merged != (merge_filter == SHOW_MERGED))
-			return;
-	}
+	if (!matches_merge_filter(commit))
+		return;
 
 	switch (item->kind) {
 	case REF_LOCAL_BRANCH:
