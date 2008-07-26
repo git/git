@@ -1506,8 +1506,15 @@ proc chewcommits {} {
 	global numcommits startmsecs
 
 	if {[info exists pending_select]} {
-	    set row [first_real_row]
-	    selectline $row 1
+	    update
+	    reset_pending_select {}
+
+	    if {[commitinview $pending_select $curview]} {
+		selectline [rowofcommit $pending_select] 1
+	    } else {
+		set row [first_real_row]
+		selectline $row 1
+	    }
 	}
 	if {$commitidx($curview) > 0} {
 	    #set ms [expr {[clock clicks -milliseconds] - $startmsecs}]
@@ -3372,14 +3379,18 @@ proc showview {n} {
     drawvisible
     if {$row ne {}} {
 	selectline $row 0
-    } elseif {$mainheadid ne {} && [commitinview $mainheadid $curview]} {
-	selectline [rowofcommit $mainheadid] 1
     } elseif {!$viewcomplete($n)} {
 	reset_pending_select $selid
     } else {
-	set row [first_real_row]
-	if {$row < $numcommits} {
-	    selectline $row 0
+	reset_pending_select {}
+
+	if {[commitinview $pending_select $curview]} {
+	    selectline [rowofcommit $pending_select] 1
+	} else {
+	    set row [first_real_row]
+	    if {$row < $numcommits} {
+		selectline $row 0
+	    }
 	}
     }
     if {!$viewcomplete($n)} {
