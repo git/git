@@ -2925,6 +2925,7 @@ if {[is_enabled transport]} {
 	populate_fetch_menu
 	set n [expr {[.mbar.remote index end] - $n}]
 	if {$n > 0} {
+		if {[.mbar.remote type 0] eq "tearoff"} { incr n }
 		.mbar.remote insert $n separator
 	}
 	unset n
