@@ -160,6 +160,7 @@ endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MSGFMT=1
 	GITGUI_WINDOWS_WRAPPER := YesPlease
+	GITGUI_RELATIVE := 1
 endif
 
 ifdef GITGUI_MACOSXAPP
