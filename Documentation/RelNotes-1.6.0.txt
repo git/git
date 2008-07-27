@@ -15,6 +15,9 @@ release, but users are again strongly encouraged to adjust their
 scripts to use "git xyzzy" form, as we will stop installing
 "git-xyzzy" hardlinks for built-in commands in later releases.
 
+An earlier change to page "git status" output was overwhelmingly unpopular
+and has been reverted.
+
 Source changes needed for porting to MinGW environment are now all in the
 main git.git codebase.
 
@@ -179,6 +182,10 @@ Updates since v1.5.6
 * "git rerere" can be told to update the index with auto-reused resolution
   with rerere.autoupdate configuration variable.
 
+* git-rev-parse learned $commit^! and $commit^@ notations used in "log"
+  family.  These notations are available in gitk as well, because the gitk
+  command internally uses rev-parse to interpret its arguments.
+
 * git-rev-list learned --children option to show child commits it
   encountered during the traversal, instead of shoing parent commits.
 
@@ -195,6 +202,9 @@ Updates since v1.5.6
 
 * git-status gives the remote tracking statistics similar to the way
   git-checkout reports by how many commits your branch is ahead/behind.
+
+* "git-svn dcommit" is now aware of auto-props setting the subversion user
+  has.
 
 * You can tell "git status -u" to even more aggressively omit checking
   untracked files with --untracked-files=no.
@@ -215,8 +225,15 @@ Fixes since v1.5.6
 All of the fixes in v1.5.6 maintenance series are included in
 this release, unless otherwise noted.
 
+* git-clone ignored its -u option; the fix needs to be backported to
+  'maint';
+
+* git-mv used to lose the distinction between changes that are staged
+  and that are only in the working tree, by staging both in the index
+  after moving such a path.
+
 ---
 exec >/var/tmp/1
-O=v1.5.6.4-432-g6796399
+O=v1.6.0-rc0-104-g81dc230
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
