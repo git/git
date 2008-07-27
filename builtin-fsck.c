@@ -377,10 +377,6 @@ static void fsck_dir(int i, char *path)
 			if (de->d_name[0] != '.')
 				break;
 			continue;
-		case 14:
-			if (prefixcmp(de->d_name, "tmp_obj_"))
-				break;
-			continue;
 		case 38:
 			sprintf(name, "%02x", i);
 			memcpy(name+2, de->d_name, len+1);
@@ -389,6 +385,8 @@ static void fsck_dir(int i, char *path)
 			add_sha1_list(sha1, DIRENT_SORT_HINT(de));
 			continue;
 		}
+		if (prefixcmp(de->d_name, "tmp_obj_"))
+			continue;
 		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);
 	}
 	closedir(dir);
