@@ -34,7 +34,11 @@ ifndef gitexecdir
 endif
 
 ifndef sharedir
+ifeq (git-core,$(notdir $(gitexecdir)))
+	sharedir := $(dir $(patsubst %/,%,$(dir $(gitexecdir))))share
+else
 	sharedir := $(dir $(gitexecdir))share
+endif
 endif
 
 ifndef INSTALL
