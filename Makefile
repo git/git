@@ -1362,7 +1362,10 @@ endif
 		cp "$$bindir/git$X" "$$execdir/git$X"; \
 	fi && \
 	{ $(foreach p,$(BUILT_INS), $(RM) "$$execdir/$p" && ln "$$execdir/git$X" "$$execdir/$p" ;) } && \
-	$(RM) "$$execdir/git$X" && \
+	if test "z$$bindir" != "z$$execdir"; \
+	then \
+		$(RM) "$$execdir/git$X"; \
+	fi && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
 install-doc:
