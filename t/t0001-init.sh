@@ -141,4 +141,30 @@ test_expect_success 'reinit' '
 	test_cmp again/empty again/err2
 '
 
+test_expect_success 'init with --template' '
+	mkdir template-source &&
+	echo content >template-source/file &&
+	(
+		mkdir template-custom &&
+		cd template-custom &&
+		git init --template=../template-source
+	) &&
+	test_cmp template-source/file template-custom/.git/file
+'
+
+test_expect_success 'init with --template (blank)' '
+	(
+		mkdir template-plain &&
+		cd template-plain &&
+		git init
+	) &&
+	test -f template-plain/.git/info/exclude &&
+	(
+		mkdir template-blank &&
+		cd template-blank &&
+		git init --template=
+	) &&
+	! test -f template-blank/.git/info/exclude
+'
+
 test_done
