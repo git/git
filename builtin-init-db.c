@@ -127,6 +127,8 @@ static void copy_templates(const char *template_dir)
 			template_dir = strbuf_detach(&d, NULL);
 		}
 	}
+	if (!template_dir[0])
+		return;
 	strcpy(template_path, template_dir);
 	template_len = strlen(template_path);
 	if (template_path[template_len-1] != '/') {
