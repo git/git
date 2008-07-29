@@ -185,6 +185,7 @@ test_expect_success 'git mv should overwrite symlink to a file' '
 	! test -e moved &&
 	test -f symlink &&
 	test "$(cat symlink)" = 1 &&
+	git update-index --refresh &&
 	git diff-files --quiet
 
 '
@@ -202,6 +203,7 @@ test_expect_success 'git mv should overwrite file with a symlink' '
 	git mv -f symlink moved &&
 	! test -e symlink &&
 	test -h moved &&
+	git update-index --refresh &&
 	git diff-files --quiet
 
 '
