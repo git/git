@@ -9,6 +9,7 @@
 #include "common-cmds.h"
 #include "parse-options.h"
 #include "run-command.h"
+#include "help.h"
 
 static struct man_viewer_list {
 	struct man_viewer_list *next;
@@ -300,18 +301,11 @@ static inline void mput_char(char c, unsigned int num)
 		putchar(c);
 }
 
-static struct cmdnames {
-	int alloc;
-	int cnt;
-	struct cmdname {
-		size_t len;
-		char name[1];
-	} **names;
-} main_cmds, other_cmds;
+struct cmdnames main_cmds, other_cmds;
 
-static void add_cmdname(struct cmdnames *cmds, const char *name, int len)
+void add_cmdname(struct cmdnames *cmds, const char *name, int len)
 {
-	struct cmdname *ent = xmalloc(sizeof(*ent) + len);
+	struct cmdname *ent = xmalloc(sizeof(*ent) + len + 1);
 
 	ent->len = len;
 	memcpy(ent->name, name, len);
@@ -342,7 +336,7 @@ static void uniq(struct cmdnames *cmds)
 	cmds->cnt = j;
 }
 
-static void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
+void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
 {
 	int ci, cj, ei;
 	int cmp;
@@ -418,11 +412,11 @@ static int is_executable(const char *name)
 }
 
 static unsigned int list_commands_in_dir(struct cmdnames *cmds,
-					 const char *path)
+					 const char *path,
+					 const char *prefix)
 {
 	unsigned int longest = 0;
-	const char *prefix = "git-";
-	int prefix_len = strlen(prefix);
+	int prefix_len;
 	DIR *dir = opendir(path);
 	struct dirent *de;
 	struct strbuf buf = STRBUF_INIT;
@@ -430,6 +424,9 @@ static unsigned int list_commands_in_dir(struct cmdnames *cmds,
 
 	if (!dir)
 		return 0;
+	if (!prefix)
+		prefix = "git-";
+	prefix_len = strlen(prefix);
 
 	strbuf_addf(&buf, "%s/", path);
 	len = buf.len;
@@ -460,7 +457,9 @@ static unsigned int list_commands_in_dir(struct cmdnames *cmds,
 	return longest;
 }
 
-static unsigned int load_command_list(void)
+unsigned int load_command_list(const char *prefix,
+		struct cmdnames *main_cmds,
+		struct cmdnames *other_cmds)
 {
 	unsigned int longest = 0;
 	unsigned int len;
@@ -469,7 +468,7 @@ static unsigned int load_command_list(void)
 	const char *exec_path = git_exec_path();
 
 	if (exec_path)
-		longest = list_commands_in_dir(&main_cmds, exec_path);
+		longest = list_commands_in_dir(main_cmds, exec_path, prefix);
 
 	if (!env_path) {
 		fprintf(stderr, "PATH not set\n");
@@ -481,7 +480,7 @@ static unsigned int load_command_list(void)
 		if ((colon = strchr(path, PATH_SEP)))
 			*colon = 0;
 
-		len = list_commands_in_dir(&other_cmds, path);
+		len = list_commands_in_dir(other_cmds, path, prefix);
 		if (len > longest)
 			longest = len;
 
@@ -491,36 +490,38 @@ static unsigned int load_command_list(void)
 	}
 	free(paths);
 
-	qsort(main_cmds.names, main_cmds.cnt,
-	      sizeof(*main_cmds.names), cmdname_compare);
-	uniq(&main_cmds);
+	qsort(main_cmds->names, main_cmds->cnt,
+	      sizeof(*main_cmds->names), cmdname_compare);
+	uniq(main_cmds);
 
-	qsort(other_cmds.names, other_cmds.cnt,
-	      sizeof(*other_cmds.names), cmdname_compare);
-	uniq(&other_cmds);
-	exclude_cmds(&other_cmds, &main_cmds);
+	qsort(other_cmds->names, other_cmds->cnt,
+	      sizeof(*other_cmds->names), cmdname_compare);
+	uniq(other_cmds);
+	exclude_cmds(other_cmds, main_cmds);
 
 	return longest;
 }
 
-static void list_commands(void)
+void list_commands(const char *title, unsigned int longest,
+		struct cmdnames *main_cmds, struct cmdnames *other_cmds)
 {
-	unsigned int longest = load_command_list();
 	const char *exec_path = git_exec_path();
 
-	if (main_cmds.cnt) {
-		printf("available git commands in '%s'\n", exec_path);
-		printf("----------------------------");
-		mput_char('-', strlen(exec_path));
+	if (main_cmds->cnt) {
+		printf("available %s in '%s'\n", title, exec_path);
+		printf("----------------");
+		mput_char('-', strlen(title) + strlen(exec_path));
 		putchar('\n');
-		pretty_print_string_list(&main_cmds, longest);
+		pretty_print_string_list(main_cmds, longest);
 		putchar('\n');
 	}
 
-	if (other_cmds.cnt) {
-		printf("git commands available from elsewhere on your $PATH\n");
-		printf("---------------------------------------------------\n");
-		pretty_print_string_list(&other_cmds, longest);
+	if (other_cmds->cnt) {
+		printf("%s available from elsewhere on your $PATH\n", title);
+		printf("---------------------------------------");
+		mput_char('-', strlen(title));
+		putchar('\n');
+		pretty_print_string_list(other_cmds, longest);
 		putchar('\n');
 	}
 }
@@ -542,7 +543,7 @@ void list_common_cmds_help(void)
 	}
 }
 
-static int is_in_cmdlist(struct cmdnames *c, const char *s)
+int is_in_cmdlist(struct cmdnames *c, const char *s)
 {
 	int i;
 	for (i = 0; i < c->cnt; i++)
@@ -553,7 +554,6 @@ static int is_in_cmdlist(struct cmdnames *c, const char *s)
 
 static int is_git_command(const char *s)
 {
-	load_command_list();
 	return is_in_cmdlist(&main_cmds, s) ||
 		is_in_cmdlist(&other_cmds, s);
 }
@@ -698,8 +698,9 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 			builtin_help_usage, 0);
 
 	if (show_all) {
+		unsigned int longest = load_command_list("git-", &main_cmds, &other_cmds);
 		printf("usage: %s\n\n", git_usage_string);
-		list_commands();
+		list_commands("git commands", longest, &main_cmds, &other_cmds);
 		printf("%s\n", git_more_info_string);
 		return 0;
 	}
