@@ -555,6 +555,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 		fprintf(fp,
 			"\n"
 			"# Please enter the commit message for your changes.\n"
+			"# To abort the commit, use an empty commit message.\n"
 			"# (Comment lines starting with '#' will ");
 		if (cleanup_mode == CLEANUP_ALL)
 			fprintf(fp, "not be included)\n");

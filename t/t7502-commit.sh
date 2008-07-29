@@ -142,6 +142,7 @@ test_expect_success 'cleanup commit messages (strip,-F)' '
 echo "sample
 
 # Please enter the commit message for your changes.
+# To abort the commit, use an empty commit message.
 # (Comment lines starting with '#' will not be included)" >expect
 
 test_expect_success 'cleanup commit messages (strip,-F,-e)' '
@@ -149,7 +150,7 @@ test_expect_success 'cleanup commit messages (strip,-F,-e)' '
 	echo >>negative &&
 	{ echo;echo sample;echo; } >text &&
 	git commit -e -F text -a &&
-	head -n 4 .git/COMMIT_EDITMSG >actual &&
+	head -n 5 .git/COMMIT_EDITMSG >actual &&
 	test_cmp expect actual
 
 '
@@ -162,7 +163,7 @@ test_expect_success 'author different from committer' '
 
 	echo >>negative &&
 	git commit -e -m "sample"
-	head -n 7 .git/COMMIT_EDITMSG >actual &&
+	head -n 8 .git/COMMIT_EDITMSG >actual &&
 	test_cmp expect actual
 '
 
@@ -181,7 +182,7 @@ test_expect_success 'committer is automatic' '
 		# must fail because there is no change
 		test_must_fail git commit -e -m "sample"
 	) &&
-	head -n 8 .git/COMMIT_EDITMSG |	\
+	head -n 9 .git/COMMIT_EDITMSG |	\
 	sed "s/^# Committer: .*/# Committer:/" >actual &&
 	test_cmp expect actual
 '
