@@ -92,7 +92,7 @@ Example
 
 	# Our diff algorithm
 	[diff]
-		external = "/usr/local/bin/gnu-diff -u"
+		external = /usr/local/bin/diff-wrapper
 		renames = true
 
 	[branch "devel"]
@@ -115,6 +115,13 @@ porcelain configuration variables in the respective porcelain documentation.
 core.fileMode::
 	If false, the executable bit differences between the index and
 	the working copy are ignored; useful on broken filesystems like FAT.
+	See linkgit:git-update-index[1]. True by default.
+
+core.trustctime::
+	If false, the ctime differences between the index and the
+	working copy are ignored; useful when the inode change time
+	is regularly modified by something outside Git (file system
+	crawlers and some backup systems).
 	See linkgit:git-update-index[1]. True by default.
 
 core.quotepath::
@@ -563,9 +570,11 @@ diff.autorefreshindex::
 diff.external::
 	If this config variable is set, diff generation is not
 	performed using the internal diff machinery, but using the
-	given command.  Note: if you want to use an external diff
-	program only on a subset of your files, you might want to
-	use linkgit:gitattributes[5] instead.
+	given command.  Can be overridden with the `GIT_EXTERNAL_DIFF'
+	environment variable.  The command is called with parameters
+	as described under "git Diffs" in linkgit:git[1].  Note: if
+	you want to use an external diff program only on a subset of
+	your files, you	might want to use linkgit:gitattributes[5] instead.
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename

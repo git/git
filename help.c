@@ -425,9 +425,14 @@ static unsigned int list_commands_in_dir(struct cmdnames *cmds,
 	int prefix_len = strlen(prefix);
 	DIR *dir = opendir(path);
 	struct dirent *de;
+	struct strbuf buf = STRBUF_INIT;
+	int len;
 
-	if (!dir || chdir(path))
+	if (!dir)
 		return 0;
+
+	strbuf_addf(&buf, "%s/", path);
+	len = buf.len;
 
 	while ((de = readdir(dir)) != NULL) {
 		int entlen;
@@ -435,7 +440,9 @@ static unsigned int list_commands_in_dir(struct cmdnames *cmds,
 		if (prefixcmp(de->d_name, prefix))
 			continue;
 
-		if (!is_executable(de->d_name))
+		strbuf_setlen(&buf, len);
+		strbuf_addstr(&buf, de->d_name);
+		if (!is_executable(buf.buf))
 			continue;
 
 		entlen = strlen(de->d_name) - prefix_len;
@@ -448,6 +455,7 @@ static unsigned int list_commands_in_dir(struct cmdnames *cmds,
 		add_cmdname(cmds, de->d_name + prefix_len, entlen);
 	}
 	closedir(dir);
+	strbuf_release(&buf);
 
 	return longest;
 }

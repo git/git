@@ -222,7 +222,7 @@ Given a .git/config like this:
 
 	; Our diff algorithm
 	[diff]
-		external = "/usr/local/bin/gnu-diff -u"
+		external = /usr/local/bin/diff-wrapper
 		renames = true
 
 	; Proxy settings

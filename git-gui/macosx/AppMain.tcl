@@ -7,7 +7,7 @@ if {[string first -psn [lindex $argv 0]] == 0} {
 }
 
 if {[file tail [lindex $argv 0]] eq {gitk}} {
-	set argv0 [file join $gitexecdir gitk]
+	set argv0 [lindex $argv 0]
 	set AppMain_source $argv0
 } else {
 	set argv0 [file join $gitexecdir [file tail [lindex $argv 0]]]

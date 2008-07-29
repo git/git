@@ -63,7 +63,7 @@ COMMANDS
 add::
 	Add the given repository as a submodule at the given path
 	to the changeset to be committed next to the current
-	project: the current project is termed termed the "superproject".
+	project: the current project is termed the "superproject".
 +
 This requires two arguments: <repository> and <path>.
 +

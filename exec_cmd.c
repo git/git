@@ -78,7 +78,7 @@ void setup_path(void)
 	strbuf_release(&new_path);
 }
 
-int execv_git_cmd(const char **argv)
+const char **prepare_git_cmd(const char **argv)
 {
 	int argc;
 	const char **nargv;
@@ -91,6 +91,11 @@ int execv_git_cmd(const char **argv)
 	for (argc = 0; argv[argc]; argc++)
 		nargv[argc + 1] = argv[argc];
 	nargv[argc + 1] = NULL;
+	return nargv;
+}
+
+int execv_git_cmd(const char **argv) {
+	const char **nargv = prepare_git_cmd(argv);
 	trace_argv_printf(nargv, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */

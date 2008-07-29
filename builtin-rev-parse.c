@@ -241,6 +241,36 @@ static int try_difference(const char *arg)
 	return 0;
 }
 
+static int try_parent_shorthands(const char *arg)
+{
+	char *dotdot;
+	unsigned char sha1[20];
+	struct commit *commit;
+	struct commit_list *parents;
+	int parents_only;
+
+	if ((dotdot = strstr(arg, "^!")))
+		parents_only = 0;
+	else if ((dotdot = strstr(arg, "^@")))
+		parents_only = 1;
+
+	if (!dotdot || dotdot[2])
+		return 0;
+
+	*dotdot = 0;
+	if (get_sha1(arg, sha1))
+		return 0;
+
+	if (!parents_only)
+		show_rev(NORMAL, sha1, arg);
+	commit = lookup_commit_reference(sha1);
+	for (parents = commit->parents; parents; parents = parents->next)
+		show_rev(parents_only ? NORMAL : REVERSED,
+				parents->item->object.sha1, arg);
+
+	return 1;
+}
+
 static int parseopt_dump(const struct option *o, const char *arg, int unset)
 {
 	struct strbuf *parsed = o->value;
@@ -572,6 +602,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 
 		/* Not a flag argument */
 		if (try_difference(arg))
+			continue;
+		if (try_parent_shorthands(arg))
 			continue;
 		name = arg;
 		type = NORMAL;
