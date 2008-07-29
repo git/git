@@ -277,7 +277,8 @@ You can use the following files in repository:
  * gitweb.owner
    You can use the gitweb.owner repository configuration variable to set
    repository's owner. It is displayed in the project list and summary
-   page. If it's not set, filesystem directory's owner is used.
+   page. If it's not set, filesystem directory's owner is used
+   (via GECOS field / real name field from getpwiud(3)).
  * various gitweb.* config variables (in config)
    Read description of %feature hash for detailed list, and some
    descriptions.

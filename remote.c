@@ -427,6 +427,28 @@ static void read_config(void)
 	alias_all_urls();
 }
 
+/*
+ * We need to make sure the tracking branches are well formed, but a
+ * wildcard refspec in "struct refspec" must have a trailing slash. We
+ * temporarily drop the trailing '/' while calling check_ref_format(),
+ * and put it back.  The caller knows that a CHECK_REF_FORMAT_ONELEVEL
+ * error return is Ok for a wildcard refspec.
+ */
+static int verify_refname(char *name, int is_glob)
+{
+	int result, len = -1;
+
+	if (is_glob) {
+		len = strlen(name);
+		assert(name[len - 1] == '/');
+		name[len - 1] = '\0';
+	}
+	result = check_ref_format(name);
+	if (is_glob)
+		name[len - 1] = '/';
+	return result;
+}
+
 static struct refspec *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch, int verify)
 {
 	int i;
@@ -434,11 +456,11 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 	struct refspec *rs = xcalloc(sizeof(*rs), nr_refspec);
 
 	for (i = 0; i < nr_refspec; i++) {
-		size_t llen, rlen;
+		size_t llen;
 		int is_glob;
 		const char *lhs, *rhs;
 
-		llen = rlen = is_glob = 0;
+		llen = is_glob = 0;
 
 		lhs = refspec[i];
 		if (*lhs == '+') {
@@ -458,12 +480,9 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 		}
 
 		if (rhs) {
-			rhs++;
-			rlen = strlen(rhs);
+			size_t rlen = strlen(++rhs);
 			is_glob = (2 <= rlen && !strcmp(rhs + rlen - 2, "/*"));
-			if (is_glob)
-				rlen -= 2;
-			rs[i].dst = xstrndup(rhs, rlen);
+			rs[i].dst = xstrndup(rhs, rlen - is_glob);
 		}
 
 		llen = (rhs ? (rhs - lhs - 1) : strlen(lhs));
@@ -471,7 +490,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			if ((rhs && !is_glob) || (!rhs && fetch))
 				goto invalid;
 			is_glob = 1;
-			llen -= 2;
+			llen--;
 		} else if (rhs && is_glob) {
 			goto invalid;
 		}
@@ -488,7 +507,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			if (!*rs[i].src)
 				; /* empty is ok */
 			else {
-				st = check_ref_format(rs[i].src);
+				st = verify_refname(rs[i].src, is_glob);
 				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
 					goto invalid;
 			}
@@ -503,7 +522,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			} else if (!*rs[i].dst) {
 				; /* ok */
 			} else {
-				st = check_ref_format(rs[i].dst);
+				st = verify_refname(rs[i].dst, is_glob);
 				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
 					goto invalid;
 			}
@@ -518,7 +537,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			if (!*rs[i].src)
 				; /* empty is ok */
 			else if (is_glob) {
-				st = check_ref_format(rs[i].src);
+				st = verify_refname(rs[i].src, is_glob);
 				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
 					goto invalid;
 			}
@@ -532,13 +551,13 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			 * - otherwise it must be a valid looking ref.
 			 */
 			if (!rs[i].dst) {
-				st = check_ref_format(rs[i].src);
+				st = verify_refname(rs[i].src, is_glob);
 				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
 					goto invalid;
 			} else if (!*rs[i].dst) {
 				goto invalid;
 			} else {
-				st = check_ref_format(rs[i].dst);
+				st = verify_refname(rs[i].dst, is_glob);
 				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
 					goto invalid;
 			}
@@ -687,8 +706,7 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 		if (!fetch->dst)
 			continue;
 		if (fetch->pattern) {
-			if (!prefixcmp(needle, key) &&
-			    needle[strlen(key)] == '/') {
+			if (!prefixcmp(needle, key)) {
 				*result = xmalloc(strlen(value) +
 						  strlen(needle) -
 						  strlen(key) + 1);
@@ -966,9 +984,7 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
 			continue;
 		}
 
-		if (rs[i].pattern &&
-		    !prefixcmp(src->name, rs[i].src) &&
-		    src->name[strlen(rs[i].src)] == '/')
+		if (rs[i].pattern && !prefixcmp(src->name, rs[i].src))
 			return rs + i;
 	}
 	if (matching_refs != -1)

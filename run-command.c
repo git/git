@@ -119,9 +119,8 @@ int start_command(struct child_process *cmd)
 	}
 #else
 	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
-	const char *sargv0 = cmd->argv[0];
+	const char **sargv = cmd->argv;
 	char **env = environ;
-	struct strbuf git_cmd;
 
 	if (cmd->no_stdin) {
 		s0 = dup(0);
@@ -165,9 +164,7 @@ int start_command(struct child_process *cmd)
 	}
 
 	if (cmd->git_cmd) {
-		strbuf_init(&git_cmd, 0);
-		strbuf_addf(&git_cmd, "git-%s", cmd->argv[0]);
-		cmd->argv[0] = git_cmd.buf;
+		cmd->argv = prepare_git_cmd(cmd->argv);
 	}
 
 	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
@@ -175,9 +172,9 @@ int start_command(struct child_process *cmd)
 	if (cmd->env)
 		free_environ(env);
 	if (cmd->git_cmd)
-		strbuf_release(&git_cmd);
+		free(cmd->argv);
 
-	cmd->argv[0] = sargv0;
+	cmd->argv = sargv;
 	if (s0 >= 0)
 		dup2(s0, 0), close(s0);
 	if (s1 >= 0)

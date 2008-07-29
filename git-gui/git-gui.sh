@@ -473,10 +473,10 @@ proc githook_read {hook_name args} {
 	set pchook [gitdir hooks $hook_name]
 	lappend args 2>@1
 
-	# On Cygwin [file executable] might lie so we need to ask
+	# On Windows [file executable] might lie so we need to ask
 	# the shell if the hook is executable.  Yes that's annoying.
 	#
-	if {[is_Cygwin]} {
+	if {[is_Windows]} {
 		upvar #0 _sh interp
 		if {![info exists interp]} {
 			set interp [_which sh]
@@ -495,6 +495,20 @@ proc githook_read {hook_name args} {
 	}
 
 	return {}
+}
+
+proc kill_file_process {fd} {
+	set process [pid $fd]
+
+	catch {
+		if {[is_Windows]} {
+			# Use a Cygwin-specific flag to allow killing
+			# native Windows processes
+			exec kill -f $process
+		} else {
+			exec kill $process
+		}
+	}
 }
 
 proc sq {value} {
@@ -642,6 +656,8 @@ set default_config(user.email) {}
 set default_config(gui.matchtrackingbranch) false
 set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
+set default_config(gui.fastcopyblame) false
+set default_config(gui.copyblamethreshold) 40
 set default_config(gui.diffcontext) 5
 set default_config(gui.commitmsgwidth) 75
 set default_config(gui.newbranchtemplate) {}
@@ -1670,10 +1686,10 @@ proc do_gitk {revs} {
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set exe [file join [file dirname $::_git] gitk]
+	set exe [_which gitk]
 	set cmd [list [info nameofexecutable] $exe]
-	if {! [file exists $exe]} {
-		error_popup [mc "Unable to start gitk:\n\n%s does not exist" $exe]
+	if {$exe eq {}} {
+		error_popup [mc "Couldn't find gitk in PATH"]
 	} else {
 		global env
 

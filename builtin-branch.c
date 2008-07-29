@@ -214,7 +214,6 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	struct commit *commit;
 	int kind;
 	int len;
-	static struct commit_list branch;
 
 	/* Detect kind */
 	if (!prefixcmp(refname, "refs/heads/")) {
@@ -238,13 +237,9 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	if ((kind & ref_list->kinds) == 0)
 		return 0;
 
-	if (merge_filter != NO_FILTER) {
-		branch.item = lookup_commit_reference_gently(sha1, 1);
-		if (!branch.item)
-			die("Unable to lookup tip of branch %s", refname);
+	if (merge_filter != NO_FILTER)
 		add_pending_object(&ref_list->revs,
-				   (struct object *)branch.item, refname);
-	}
+				   (struct object *)commit, refname);
 
 	/* Resize buffer */
 	if (ref_list->index >= ref_list->alloc) {
@@ -299,6 +294,17 @@ static void fill_tracking_info(char *stat, const char *branch_name)
 		sprintf(stat, "[ahead %d, behind %d] ", ours, theirs);
 }
 
+static int matches_merge_filter(struct commit *commit)
+{
+	int is_merged;
+
+	if (merge_filter == NO_FILTER)
+		return 1;
+
+	is_merged = !!(commit->object.flags & UNINTERESTING);
+	return (is_merged == (merge_filter == SHOW_MERGED));
+}
+
 static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 			   int abbrev, int current)
 {
@@ -306,11 +312,8 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	int color;
 	struct commit *commit = item->commit;
 
-	if (merge_filter != NO_FILTER) {
-		int is_merged = !!(item->commit->object.flags & UNINTERESTING);
-		if (is_merged != (merge_filter == SHOW_MERGED))
-			return;
-	}
+	if (!matches_merge_filter(commit))
+		return;
 
 	switch (item->kind) {
 	case REF_LOCAL_BRANCH:
@@ -360,6 +363,19 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	}
 }
 
+static int calc_maxwidth(struct ref_list *refs)
+{
+	int i, l, w = 0;
+	for (i = 0; i < refs->index; i++) {
+		if (!matches_merge_filter(refs->list[i].commit))
+			continue;
+		l = strlen(refs->list[i].name);
+		if (l > w)
+			w = l;
+	}
+	return w;
+}
+
 static void print_ref_list(int kinds, int detached, int verbose, int abbrev, struct commit_list *with_commit)
 {
 	int i;
@@ -380,6 +396,8 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 				   (struct object *) filter, "");
 		ref_list.revs.limited = 1;
 		prepare_revision_walk(&ref_list.revs);
+		if (verbose)
+			ref_list.maxwidth = calc_maxwidth(&ref_list);
 	}
 
 	qsort(ref_list.list, ref_list.index, sizeof(struct ref_item), ref_cmp);

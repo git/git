@@ -323,6 +323,11 @@ from symbolic link to regular file.
 The command looks at `core.ignorestat` configuration variable.  See
 'Using "assume unchanged" bit' section above.
 
+The command also looks at `core.trustctime` configuration variable.
+It can be useful when the inode change time is regularly modified by
+something outside Git (file system crawlers and backup systems use
+ctime for marking files processed) (see linkgit:git-config[1]).
+
 
 SEE ALSO
 --------

@@ -13,6 +13,7 @@ char git_default_email[MAX_GITNAME];
 char git_default_name[MAX_GITNAME];
 int user_ident_explicitly_given;
 int trust_executable_bit = 1;
+int trust_ctime = 1;
 int has_symlinks = 1;
 int ignore_case;
 int assume_unchanged;

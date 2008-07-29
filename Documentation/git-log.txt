@@ -58,7 +58,7 @@ include::diff-options.txt[]
 	its size is not included.
 
 <paths>...::
-	Show only commits that affect the specified paths.
+	Show only commits that affect any of the specified paths.
 
 
 include::rev-list-options.txt[]

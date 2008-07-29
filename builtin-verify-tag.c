@@ -92,13 +92,14 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
-	if (argc == 1)
-		usage(builtin_verify_tag_usage);
-
-	if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) {
+	if (argc > 1 &&
+	    (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose"))) {
 		verbose = 1;
 		i++;
 	}
+
+	if (argc <= i)
+		usage(builtin_verify_tag_usage);
 
 	/* sometimes the program was terminated because this signal
 	 * was received in the process of writing the gpg input: */

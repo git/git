@@ -33,13 +33,6 @@ variable group_colors {
 	#ececec
 }
 
-# Switches for original location detection
-#
-variable original_options [list -C -C]
-if {[git-version >= 1.5.3]} {
-	lappend original_options -w ; # ignore indentation changes
-}
-
 # Current blame data; cleared/reset on each load
 #
 field commit               ; # input commit to blame
@@ -263,6 +256,9 @@ constructor new {i_commit i_path} {
 	$w.ctxm add command \
 		-label [mc "Copy Commit"] \
 		-command [cb _copycommit]
+	$w.ctxm add command \
+		-label [mc "Do Full Copy Detection"] \
+		-command [cb _fullcopyblame]
 
 	foreach i $w_columns {
 		for {set g 0} {$g < [llength $group_colors]} {incr g} {
@@ -333,7 +329,18 @@ constructor new {i_commit i_path} {
 	bind $w.file_pane <Configure> \
 	"if {{$w.file_pane} eq {%W}} {[cb _resize %h]}"
 
+	wm protocol $top WM_DELETE_WINDOW "destroy $top"
+	bind $top <Destroy> [cb _kill]
+
 	_load $this {}
+}
+
+method _kill {} {
+	if {$current_fd ne {}} {
+		kill_file_process $current_fd
+		catch {close $current_fd}
+		set current_fd {}
+	}
 }
 
 method _load {jump} {
@@ -342,10 +349,7 @@ method _load {jump} {
 	_hide_tooltip $this
 
 	if {$total_lines != 0 || $current_fd ne {}} {
-		if {$current_fd ne {}} {
-			catch {close $current_fd}
-			set current_fd {}
-		}
+		_kill $this
 
 		foreach i $w_columns {
 			$i conf -state normal
@@ -511,7 +515,6 @@ method _exec_blame {cur_w cur_d options cur_s} {
 method _read_blame {fd cur_w cur_d} {
 	upvar #0 $cur_d line_data
 	variable group_colors
-	variable original_options
 
 	if {$fd ne $current_fd} {
 		catch {close $fd}
@@ -684,6 +687,18 @@ method _read_blame {fd cur_w cur_d} {
 	if {[eof $fd]} {
 		close $fd
 		if {$cur_w eq $w_asim} {
+			# Switches for original location detection
+			set threshold [get_config gui.copyblamethreshold]
+			set original_options [list "-C$threshold"]
+
+			if {![is_config_true gui.fastcopyblame]} {
+				# thorough copy search; insert before the threshold
+				set original_options [linsert $original_options 0 -C]
+			}
+			if {[git-version >= 1.5.3]} {
+				lappend original_options -w ; # ignore indentation changes
+			}
+
 			_exec_blame $this $w_amov @amov_data \
 				$original_options \
 				[mc "Loading original location annotations..."]
@@ -695,6 +710,72 @@ method _read_blame {fd cur_w cur_d} {
 		$status update $blame_lines $total_lines
 	}
 } ifdeleted { catch {close $fd} }
+
+method _find_commit_bound {data_list start_idx delta} {
+	upvar #0 $data_list line_data
+	set pos $start_idx
+	set limit       [expr {[llength $line_data] - 1}]
+	set base_commit [lindex $line_data $pos 0]
+
+	while {$pos > 0 && $pos < $limit} {
+		set new_pos [expr {$pos + $delta}]
+		if {[lindex $line_data $new_pos 0] ne $base_commit} {
+			return $pos
+		}
+
+		set pos $new_pos
+	}
+
+	return $pos
+}
+
+method _fullcopyblame {} {
+	if {$current_fd ne {}} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [mc "Busy"] \
+			-message [mc "Annotation process is already running."]
+
+		return
+	}
+
+	# Switches for original location detection
+	set threshold [get_config gui.copyblamethreshold]
+	set original_options [list -C -C "-C$threshold"]
+
+	if {[git-version >= 1.5.3]} {
+		lappend original_options -w ; # ignore indentation changes
+	}
+
+	# Find the line range
+	set pos @$::cursorX,$::cursorY
+	set lno [lindex [split [$::cursorW index $pos] .] 0]
+	set min_amov_lno [_find_commit_bound $this @amov_data $lno -1]
+	set max_amov_lno [_find_commit_bound $this @amov_data $lno 1]
+	set min_asim_lno [_find_commit_bound $this @asim_data $lno -1]
+	set max_asim_lno [_find_commit_bound $this @asim_data $lno 1]
+
+	if {$min_asim_lno < $min_amov_lno} {
+		set min_amov_lno $min_asim_lno
+	}
+
+	if {$max_asim_lno > $max_amov_lno} {
+		set max_amov_lno $max_asim_lno
+	}
+
+	lappend original_options -L "$min_amov_lno,$max_amov_lno"
+
+	# Clear lines
+	for {set i $min_amov_lno} {$i <= $max_amov_lno} {incr i} {
+		lset amov_data $i [list ]
+	}
+
+	# Start the back-end process
+	_exec_blame $this $w_amov @amov_data \
+		$original_options \
+		[mc "Running thorough copy detection..."]
+}
 
 method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
