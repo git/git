@@ -3458,7 +3458,7 @@ $ cd super
 $ git init
 $ for i in a b c d
 do
-	git submodule add ~/git/$i
+	git submodule add ~/git/$i $i
 done
 -------------------------------------------------
 
@@ -3471,10 +3471,10 @@ $ ls -a
 .  ..  .git  .gitmodules  a  b  c  d
 -------------------------------------------------
 
-The `git-submodule add` command does a couple of things:
+The `git-submodule add <repo> <path>` command does a couple of things:
 
-- It clones the submodule under the current directory and by default checks out
-  the master branch.
+- It clones the submodule from <repo> to the given <path> under the
+  current directory and by default checks out the master branch.
 - It adds the submodule's clone path to the linkgit:gitmodules[5] file and
   adds this file to the index, ready to be committed.
 - It adds the submodule's current commit ID to the index, ready to be
