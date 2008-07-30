@@ -54,9 +54,20 @@ const char *system_path(const char *path)
 	return path;
 }
 
-void git_set_argv0_path(const char *path)
+const char *git_extract_argv0_path(const char *argv0)
 {
-	argv0_path = path;
+	const char *slash = argv0 + strlen(argv0);
+
+	do
+		--slash;
+	while (slash >= argv0 && !is_dir_sep(*slash));
+
+	if (slash >= argv0) {
+		argv0_path = xstrndup(argv0, slash - argv0);
+		return slash + 1;
+	}
+
+	return argv0;
 }
 
 void git_set_argv_exec_path(const char *exec_path)
