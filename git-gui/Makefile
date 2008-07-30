@@ -34,7 +34,11 @@ ifndef gitexecdir
 endif
 
 ifndef sharedir
+ifeq (git-core,$(notdir $(gitexecdir)))
+	sharedir := $(dir $(patsubst %/,%,$(dir $(gitexecdir))))share
+else
 	sharedir := $(dir $(gitexecdir))share
+endif
 endif
 
 ifndef INSTALL
@@ -156,6 +160,7 @@ endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MSGFMT=1
 	GITGUI_WINDOWS_WRAPPER := YesPlease
+	GITGUI_RELATIVE := 1
 endif
 
 ifdef GITGUI_MACOSXAPP
