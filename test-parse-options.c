@@ -2,7 +2,8 @@
 #include "parse-options.h"
 
 static int boolean = 0;
-static unsigned long integer = 0;
+static int integer = 0;
+static unsigned long timestamp;
 static int abbrev = 7;
 static int verbose = 0, dry_run = 0, quiet = 0;
 static char *string = NULL;
@@ -32,7 +33,7 @@ int main(int argc, const char **argv)
 		OPT_INTEGER('i', "integer", &integer, "get a integer"),
 		OPT_INTEGER('j', NULL, &integer, "get a integer, too"),
 		OPT_SET_INT(0, "set23", &integer, "set integer to 23", 23),
-		OPT_DATE('t', NULL, &integer, "get timestamp of <time>"),
+		OPT_DATE('t', NULL, &timestamp, "get timestamp of <time>"),
 		OPT_CALLBACK('L', "length", &integer, "str",
 			"get length of <str>", length_callback),
 		OPT_GROUP("String options"),
@@ -56,7 +57,8 @@ int main(int argc, const char **argv)
 	argc = parse_options(argc, argv, options, usage, 0);
 
 	printf("boolean: %d\n", boolean);
-	printf("integer: %lu\n", integer);
+	printf("integer: %u\n", integer);
+	printf("timestamp: %lu\n", timestamp);
 	printf("string: %s\n", string ? string : "(not set)");
 	printf("abbrev: %d\n", abbrev);
 	printf("verbose: %d\n", verbose);
