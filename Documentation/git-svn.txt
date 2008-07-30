@@ -12,18 +12,18 @@ SYNOPSIS
 DESCRIPTION
 -----------
 'git-svn' is a simple conduit for changesets between Subversion and git.
-It is not to be confused with linkgit:git-svnimport[1], which is
-read-only.
+It provides a bidirectional flow of changes between a Subversion and a git
+respository.
 
-'git-svn' was originally designed for an individual developer who wants a
-bidirectional flow of changesets between a single branch in Subversion
-and an arbitrary number of branches in git.  Since its inception,
-'git-svn' has gained the ability to track multiple branches in a manner
-similar to 'git-svnimport'.
+'git-svn' can track a single Subversion branch simply by using a
+URL to the branch, follow branches laid out in the Subversion recommended
+method (trunk, branches, tags directories) with the --stdlayout option, or
+follow branches in any layout with the -T/-t/-b options (see options to
+'init' below, and also the 'clone' command).
 
-'git-svn' is especially useful when it comes to tracking repositories
-not organized in the way Subversion developers recommend (trunk,
-branches, tags directories).
+Once tracking a Subversion branch (with any of the above methods), the git
+repository can be updated from Subversion by the 'fetch' command and
+Subversion updated from git by the 'dcommit' command.
 
 COMMANDS
 --------
@@ -218,8 +218,7 @@ Any other arguments are passed directly to 'git-log'
 
 'commit-diff'::
 	Commits the diff of two tree-ish arguments from the
-	command-line.  This command is intended for interoperability with
-	'git-svnimport' and does not rely on being inside an `git-svn
+	command-line.  This command does not rely on being inside an `git-svn
 	init`-ed repository.  This command takes three arguments, (a) the
 	original tree to diff against, (b) the new tree result, (c) the
 	URL of the target Subversion repository.  The final argument
@@ -317,8 +316,7 @@ config key: svn.findcopiesharder
 -A<filename>::
 --authors-file=<filename>::
 
-Syntax is compatible with the files used by 'git-svnimport' and
-'git-cvsimport':
+Syntax is compatible with the file used by 'git-cvsimport':
 
 ------------------------------------------------------------------------
 	loginname = Joe User <user@example.com>
