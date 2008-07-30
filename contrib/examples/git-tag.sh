@@ -164,7 +164,7 @@ git check-ref-format "tags/$name" ||
 
 object=$(git rev-parse --verify --default HEAD "$@") || exit 1
 type=$(git cat-file -t $object) || exit 1
-tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
+tagger=$(git var GIT_COMMITTER_IDENT) || exit 1
 
 test -n "$username" ||
 	username=$(git config user.signingkey) ||

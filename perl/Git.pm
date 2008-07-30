@@ -730,7 +730,7 @@ This suite of functions retrieves and parses ident information, as stored
 in the commit and tag objects or produced by C<var GIT_type_IDENT> (thus
 C<TYPE> can be either I<author> or I<committer>; case is insignificant).
 
-The C<ident> method retrieves the ident information from C<git-var>
+The C<ident> method retrieves the ident information from C<git var>
 and either returns it as a scalar string or as an array with the fields parsed.
 Alternatively, it can take a prepared ident string (e.g. from the commit
 object) and just parse it.
