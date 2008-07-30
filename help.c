@@ -690,6 +690,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 {
 	int nongit;
 	const char *alias;
+	unsigned int longest = load_command_list("git-", &main_cmds, &other_cmds);
 
 	setup_git_directory_gently(&nongit);
 	git_config(git_help_config, NULL);
@@ -698,7 +699,6 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 			builtin_help_usage, 0);
 
 	if (show_all) {
-		unsigned int longest = load_command_list("git-", &main_cmds, &other_cmds);
 		printf("usage: %s\n\n", git_usage_string);
 		list_commands("git commands", longest, &main_cmds, &other_cmds);
 		printf("%s\n", git_more_info_string);
