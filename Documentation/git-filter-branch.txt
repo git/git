@@ -167,7 +167,7 @@ to other tags will be rewritten to point to the underlying commit.
 	directory or when there are already refs starting with
 	'refs/original/', unless forced.
 
-<rev-list-options>::
+<rev-list options>...::
 	When options are given after the new branch name, they will
 	be passed to 'git-rev-list'.  Only commits in the resulting
 	output will be filtered, although the filtered commits can still

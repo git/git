@@ -84,7 +84,7 @@ OPTIONS
 	(5) otherwise output the line.
 
 
-<pattern>::
+<pattern>...::
 
 	Show references matching one or more patterns.
 

@@ -21,8 +21,8 @@ abbreviated object name of the most recent commit.
 
 OPTIONS
 -------
-<committish>::
-	The object name of the committish.
+<committish>...::
+	Committish object names to describe.
 
 --all::
 	Instead of using only the annotated tags, use any ref
