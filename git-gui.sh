@@ -317,7 +317,7 @@ proc _git_cmd {name} {
 	return $v
 }
 
-proc _which {what} {
+proc _which {what args} {
 	global env _search_exe _search_path
 
 	if {$_search_path eq {}} {
@@ -340,8 +340,14 @@ proc _which {what} {
 		}
 	}
 
+	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
+		set suffix {}
+	} else {
+		set suffix $_search_exe
+	}
+
 	foreach p $_search_path {
-		set p [file join $p $what$_search_exe]
+		set p [file join $p $what$suffix]
 		if {[file exists $p]} {
 			return [file normalize $p]
 		}
@@ -1686,7 +1692,7 @@ proc do_gitk {revs} {
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set exe [_which gitk]
+	set exe [_which gitk -script]
 	set cmd [list [info nameofexecutable] $exe]
 	if {$exe eq {}} {
 		error_popup [mc "Couldn't find gitk in PATH"]
