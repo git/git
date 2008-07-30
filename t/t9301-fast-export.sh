@@ -185,4 +185,50 @@ test_expect_success 'submodule fast-export | fast-import' '
 
 '
 
+export GIT_AUTHOR_NAME='A U Thor'
+export GIT_COMMITTER_NAME='C O Mitter'
+
+test_expect_success 'setup copies' '
+
+	git config --unset i18n.commitencoding &&
+	git checkout -b copy rein &&
+	git mv file file3 &&
+	git commit -m move1 &&
+	test_tick &&
+	cp file2 file4 &&
+	git add file4 &&
+	git mv file2 file5 &&
+	git commit -m copy1 &&
+	test_tick &&
+	cp file3 file6 &&
+	git add file6 &&
+	git commit -m copy2 &&
+	test_tick &&
+	echo more text >> file6 &&
+	echo even more text >> file6 &&
+	git add file6 &&
+	git commit -m modify &&
+	test_tick &&
+	cp file6 file7 &&
+	echo test >> file7 &&
+	git add file7 &&
+	git commit -m copy_modify
+
+'
+
+test_expect_success 'fast-export -C -C | fast-import' '
+
+	ENTRY=$(git rev-parse --verify copy) &&
+	rm -rf new &&
+	mkdir new &&
+	git --git-dir=new/.git init &&
+	git fast-export -C -C --signed-tags=strip --all > output &&
+	grep "^C \"file6\" \"file7\"\$" output &&
+	cat output |
+	(cd new &&
+	 git fast-import &&
+	 test $ENTRY = $(git rev-parse --verify refs/heads/copy))
+
+'
+
 test_done

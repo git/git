@@ -396,12 +396,12 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		struct strbuf truname = STRBUF_INIT;
 		strbuf_addstr(&truname, "refs/heads/");
 		strbuf_addstr(&truname, remote);
-		strbuf_setlen(&truname, len+11);
+		strbuf_setlen(&truname, truname.len - len);
 		if (resolve_ref(truname.buf, buf_sha, 0, 0)) {
 			strbuf_addf(msg,
 				    "%s\t\tbranch '%s'%s of .\n",
 				    sha1_to_hex(remote_head->sha1),
-				    truname.buf,
+				    truname.buf + 11,
 				    (early ? " (early part)" : ""));
 			return;
 		}
