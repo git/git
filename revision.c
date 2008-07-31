@@ -1002,7 +1002,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    !strcmp(arg, "--no-walk") || !strcmp(arg, "--do-walk"))
 	{
 		unkv[(*unkc)++] = arg;
-		return 0;
+		return 1;
 	}
 
 	if (!prefixcmp(arg, "--max-count=")) {
