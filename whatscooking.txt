@@ -1,5 +1,5 @@
-What's cooking in git.git (Jul 2008, issue #10; Sat, 26)
---------------------------------------------------------
+What's cooking in git.git (Jul 2008, #11; Thu, 31)
+--------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
 with '-' are only in 'pu' while commits prefixed with '+' are
@@ -17,41 +17,44 @@ to do without regression.
 
 Tentative schedule, my wishful thinking:
 
- - 1.6.0-rc1 (Jul 27)
- - 1.6.0-rc2 (Aug  6)
+ - 1.6.0-rc2 (Aug  3)
  - 1.6.0-rc3 (Aug 10)
 
 ----------------------------------------------------------------
 [New Topics]
 
-* cc/bisect (Tue Jul 22 08:16:18 2008 +0200) 2 commits
- . bisect: only check merge bases when needed
- . bisect: test merge base if good rev is not an ancestor of bad rev
+* rs/archive-parse-options (Fri Jul 25 12:41:26 2008 +0200) 1 commit
+ + archive: allow --exec and --remote without equal sign
 
-* jc/add-addremove (Tue Jul 22 22:30:40 2008 -0700) 2 commits
- + builtin-add.c: optimize -A option and "git add ."
- + builtin-add.c: restructure the code for maintainability
+None of the following is for 1.6.0.
 
-* jk/pager-swap (Tue Jul 22 03:14:12 2008 -0400) 2 commits
- + spawn pager via run_command interface
- + run-command: add pre-exec callback
+* mv/merge-custom (Thu Jul 31 00:38:07 2008 +0200) 5 commits
+ + builtin-help: always load_command_list() in cmd_help()
+ + Add a second testcase for handling invalid strategies in git-merge
+ + Add a new test for using a custom merge strategy
+ + builtin-merge: allow using a custom strategy
+ + builtin-help: make some internal functions available to other
+   builtins
 
-* ph/enable-threaded (Mon Jul 21 11:23:43 2008 +0200) 1 commit
- + Enable threaded delta search on *BSD and Linux.
+* cc/merge-base-many (Sun Jul 27 13:47:22 2008 -0700) 4 commits
+ - git-merge-octopus: use (merge-base A (merge B C D E...)) for
+   stepwise merge
+ + merge-base-many: add trivial tests based on the documentation
+ + documentation: merge-base: explain "git merge-base" with more than
+   2 args
+ + merge-base: teach "git merge-base" to drive underlying
+   merge_bases_many()
+
+* jc/simplify-merges (Thu Jul 31 01:17:41 2008 -0700) 1 commit
+ . revision traversal: show full history with merge simplification
+
+"log --full-history" is with too much clutter, "log" itself is too cleverer
+than some people, and here is the middle level of merge simplification.
 
 ----------------------------------------------------------------
-[Cooking]
+[On Hold and/or Cooking]
 
-* pb/sane-mv (Mon Jul 21 02:25:56 2008 +0200) 2 commits
- - git-mv: Keep moved index entries inact
- - git-mv: Remove dead code branch
-
-Running "git mv A B" when you have local changes to A automatically staged
-it while moving it to B, which was a longstanding nonsense.  This attempts
-to fix it.  Pasky has other plans to build on a more solidified foundation
-to enhance the command to work with submodules better on top of this.
-
-I think this is of 'next' quality already.
+None of the following is for 1.6.0.
 
 * rs/imap (Wed Jul 9 22:29:02 2008 +0100) 5 commits
  + Documentation: Improve documentation for git-imap-send(1)
@@ -65,8 +68,24 @@ Some people seem to prefer having this feature available also with gnutls.
 Such an enhancement can be done in-tree on top of this series if they are
 so inclined.
 
-----------------------------------------------------------------
-[On Hold]
+* cc/bisect (Fri Jul 25 05:36:37 2008 +0200) 2 commits
+ - bisect: only check merge bases when needed
+ - bisect: test merge base if good rev is not an ancestor of bad rev
+
+* jc/add-addremove (Tue Jul 22 22:30:40 2008 -0700) 2 commits
+ + builtin-add.c: optimize -A option and "git add ."
+ + builtin-add.c: restructure the code for maintainability
+
+* jk/pager-swap (Tue Jul 22 03:14:12 2008 -0400) 2 commits
+ + spawn pager via run_command interface
+ + run-command: add pre-exec callback
+
+This changes the parent-child relationship between the pager and the git
+process.  We used to make pager the parent which meant that the exit
+status from git is lost from the caller.
+
+* ph/enable-threaded (Mon Jul 21 11:23:43 2008 +0200) 1 commit
+ + Enable threaded delta search on *BSD and Linux.
 
 * sg/merge-options (Sun Apr 6 03:23:47 2008 +0200) 1 commit
  + merge: remove deprecated summary and diffstat options and config
@@ -91,17 +110,3 @@ timeframe.
 
 This would be the right thing to do for command line use, but gitk will be
 hit due to tcl/tk's limitation, so I am holding this back for now.
-
-----------------------------------------------------------------
-[Dropped]
-
-There are a handful topics that used to be in 'pu' but tentatively dropped
-for now.
-
-*^ cc/bisect (Tue Jul 22 08:16:18 2008 +0200) 2 commits
-*^ gi/cherry-cache (Sat Jul 12 20:14:51 2008 -0700) 1 commit
-*^ jc/grafts (Wed Jul 2 17:14:12 2008 -0700) 1 commit
-*^ sb/sequencer (Tue Jul 1 04:38:34 2008 +0200) 4 commits
-
-I still hold onto their tips and intend to update them with newer versions
-and/or merge them back to 'pu' when I have time, but not right now.
