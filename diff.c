@@ -1381,6 +1381,7 @@ static struct builtin_funcname_pattern {
 			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
 			"[ 	]*([^;]*\\)$" },
 	{ "tex", "^\\(\\\\\\(sub\\)*section{.*\\)$" },
+	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
 };
 
 static const char *diff_funcname_pattern(struct diff_filespec *one)
