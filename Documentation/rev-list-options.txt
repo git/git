@@ -193,11 +193,17 @@ endif::git-rev-list[]
 
 --full-history::
 
-	Show also parts of history irrelevant to current state of a given
-	path. This turns off history simplification, which removed merges
+	Show also parts of history irrelevant to current state of given
+	paths. This turns off history simplification, which removed merges
 	which didn't change anything at all at some child. It will still actually
 	simplify away merges that didn't change anything at all into either
 	child.
+
+--simplify-merges::
+
+	Simplify away commits that did not change the given paths, similar
+	to `--full-history`, and further remove merges none of whose
+	parent history changes the given paths.
 
 --no-merges::
 
