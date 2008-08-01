@@ -1380,6 +1380,12 @@ static struct builtin_funcname_pattern {
 			"^[ 	]*\\(\\([ 	]*"
 			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
 			"[ 	]*([^;]*\\)$" },
+	{ "pascal", "^\\(\\(procedure\\|function\\|constructor\\|"
+			"destructor\\|interface\\|implementation\\|"
+			"initialization\\|finalization\\)[ \t]*.*\\)$"
+			"\\|"
+			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$"
+			},
 	{ "tex", "^\\(\\\\\\(sub\\)*section{.*\\)$" },
 	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
 };
