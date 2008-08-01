@@ -82,4 +82,11 @@ test_expect_success 'clone --mirror' '
 
 '
 
+test_expect_success 'clone --bare names the local repository <name>.git' '
+
+	git clone --bare src &&
+	test -d src.git
+
+'
+
 test_done

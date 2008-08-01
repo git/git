@@ -95,7 +95,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 	return NULL;
 }
 
-static char *guess_dir_name(const char *repo, int is_bundle)
+static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 {
 	const char *end = repo + strlen(repo), *start;
 
@@ -129,6 +129,12 @@ static char *guess_dir_name(const char *repo, int is_bundle)
 	} else {
 		if (end - start > 4 && !strncmp(end - 4, ".git", 4))
 			end -= 4;
+	}
+
+	if (is_bare) {
+		char *result = xmalloc(end - start + 5);
+		sprintf(result, "%.*s.git", (int)(end - start), start);
+		return result;
 	}
 
 	return xstrndup(start, end - start);
@@ -389,7 +395,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (argc == 2)
 		dir = xstrdup(argv[1]);
 	else
-		dir = guess_dir_name(repo_name, is_bundle);
+		dir = guess_dir_name(repo_name, is_bundle, option_bare);
 
 	if (!stat(dir, &buf))
 		die("destination directory '%s' already exists.", dir);
