@@ -489,7 +489,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 			p->object.flags |= SEEN;
 			insert_by_date_cached(p, list, cached_base, cache_ptr);
 		}
-		if(revs->first_parent_only)
+		if (revs->first_parent_only)
 			break;
 	}
 	return 0;
