@@ -1235,11 +1235,10 @@ Return the list of files that haven't been handled."
       (goto-char (point-max))
       (insert sign-off "\n"))))
 
-(defun git-setup-log-buffer (buffer &optional author-name author-email subject date msg)
+(defun git-setup-log-buffer (buffer &optional merge-heads author-name author-email subject date msg)
   "Setup the log buffer for a commit."
   (unless git-status (error "Not in git-status buffer."))
-  (let ((merge-heads (git-get-merge-heads))
-        (dir default-directory)
+  (let ((dir default-directory)
         (committer-name (git-get-committer-name))
         (committer-email (git-get-committer-email))
         (sign-off git-append-signed-off-by))
@@ -1294,7 +1293,7 @@ Return the list of files that haven't been handled."
             (goto-char (point-min))
             (when (re-search-forward "^Date: \\(.*\\)$" nil t)
               (setq date (match-string 1)))))
-        (git-setup-log-buffer buffer author-name author-email subject date))
+        (git-setup-log-buffer buffer (git-get-merge-heads) author-name author-email subject date))
       (if (boundp 'log-edit-diff-function)
 	  (log-edit 'git-do-commit nil '((log-edit-listfun . git-log-edit-files)
 					 (log-edit-diff-function . git-log-edit-diff)) buffer)
@@ -1305,11 +1304,13 @@ Return the list of files that haven't been handled."
 
 (defun git-setup-commit-buffer (commit)
   "Setup the commit buffer with the contents of COMMIT."
-  (let (author-name author-email subject date msg)
+  (let (parents author-name author-email subject date msg)
     (with-temp-buffer
       (let ((coding-system (git-get-logoutput-coding-system)))
-        (git-call-process t "log" "-1" "--pretty=medium" commit)
+        (git-call-process t "log" "-1" "--pretty=medium" "--abbrev=40" commit)
         (goto-char (point-min))
+        (when (re-search-forward "^Merge: *\\(.*\\)$" nil t)
+          (setq parents (cdr (split-string (match-string 1) " +"))))
         (when (re-search-forward "^Author: *\\(.*\\) <\\(.*\\)>$" nil t)
           (setq author-name (match-string 1))
           (setq author-email (match-string 2)))
@@ -1321,14 +1322,14 @@ Return the list of files that haven't been handled."
         (setq subject (pop msg))
         (while (and msg (zerop (length (car msg))) (pop msg)))))
     (git-setup-log-buffer (get-buffer-create "*git-commit*")
-                          author-name author-email subject date
+                          parents author-name author-email subject date
                           (mapconcat #'identity msg "\n"))))
 
 (defun git-get-commit-files (commit)
   "Retrieve the list of files modified by COMMIT."
   (let (files)
     (with-temp-buffer
-      (git-call-process t "diff-tree" "-r" "-z" "--name-only" "--no-commit-id" commit)
+      (git-call-process t "diff-tree" "-m" "-r" "-z" "--name-only" "--no-commit-id" commit)
       (goto-char (point-min))
       (while (re-search-forward "\\([^\0]*\\)\0" nil t 1)
         (push (match-string 1) files)))
