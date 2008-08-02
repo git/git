@@ -1,0 +1,19 @@
+GIT v1.5.6.5 Release Notes
+==========================
+
+Fixes since v1.5.6.4
+--------------------
+
+* "git init --template=" with blank "template" parameter linked files
+  under root directories to .git, which was a total nonsense.  Instead, it
+  means "I do not want to use anything from the template directory".
+
+* "git show-branch" mishandled its 8th branch.
+
+* Addition of "git update-index --ignore-submodules" that happened during
+  1.5.6 cycle broke "git update-index --ignore-missing".
+
+* "git send-email" did not parse charset from an existing Content-type:
+  header properly.
+
+Contains other various documentation fixes.
