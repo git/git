@@ -848,6 +848,7 @@ _git_log ()
 			--stat --numstat --shortstat
 			--decorate --diff-filter=
 			--color-words --walk-reflogs
+			--parents --children --full-history
 			"
 		return
 		;;
