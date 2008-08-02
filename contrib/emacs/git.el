@@ -173,7 +173,7 @@ if there is already one that displays the same directory."
 (defconst git-log-msg-separator "--- log message follows this line ---")
 
 (defvar git-log-edit-font-lock-keywords
-  `(("^\\(Author:\\|Date:\\|Parent:\\|Signed-off-by:\\)\\(.*\\)$"
+  `(("^\\(Author:\\|Date:\\|Merge:\\|Signed-off-by:\\)\\(.*\\)$"
      (1 font-lock-keyword-face)
      (2 font-lock-function-name-face))
     (,(concat "^\\(" (regexp-quote git-log-msg-separator) "\\)$")
@@ -433,11 +433,11 @@ the process output as a string, or nil if the git command failed."
             (when (re-search-forward "^Date: +\\(.*\\)$" nil t)
               (setq author-date (match-string 1)))
             (goto-char (point-min))
-            (while (re-search-forward "^Parent: +\\([0-9a-f]+\\)" nil t)
-              (unless (string-equal head (match-string 1))
-                (setq subject "commit (merge): ")
+            (when (re-search-forward "^Merge: +\\(.*\\)" nil t)
+              (setq subject "commit (merge): ")
+              (dolist (parent (split-string (match-string 1) " +" t))
                 (push "-p" args)
-                (push (match-string 1) args))))
+                (push parent args))))
         (setq log-start (point-min)))
       (setq log-end (point-max))
       (goto-char log-start)
@@ -1253,9 +1253,8 @@ Return the list of files that haven't been handled."
                 (or author-email committer-email)
                 (if date (format "Date: %s\n" date) "")
                 (if merge-heads
-                    (format "Parent: %s\n%s\n"
-                            (git-rev-parse "HEAD")
-                            (mapconcat (lambda (str) (concat "Parent: " str)) merge-heads "\n"))
+                    (format "Merge: %s\n"
+                            (mapconcat 'identity merge-heads " "))
                   ""))
         'face 'git-header-face)
        (propertize git-log-msg-separator 'face 'git-separator-face)
