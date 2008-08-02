@@ -33,7 +33,7 @@ static const char * const builtin_clone_usage[] = {
 	NULL
 };
 
-static int option_quiet, option_no_checkout, option_bare;
+static int option_quiet, option_no_checkout, option_bare, option_mirror;
 static int option_local, option_no_hardlinks, option_shared;
 static char *option_template, *option_reference, *option_depth;
 static char *option_origin = NULL;
@@ -45,6 +45,8 @@ static struct option builtin_clone_options[] = {
 		    "don't create a checkout"),
 	OPT_BOOLEAN(0, "bare", &option_bare, "create a bare repository"),
 	OPT_BOOLEAN(0, "naked", &option_bare, "create a bare repository"),
+	OPT_BOOLEAN(0, "mirror", &option_mirror,
+		    "create a mirror repository (implies bare)"),
 	OPT_BOOLEAN('l', "local", &option_local,
 		    "to clone from a local repository"),
 	OPT_BOOLEAN(0, "no-hardlinks", &option_no_hardlinks,
@@ -345,6 +347,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	char branch_top[256], key[256], value[256];
 	struct strbuf reflog_msg;
 	struct transport *transport = NULL;
+	char *src_ref_prefix = "refs/heads/";
 
 	struct refspec refspec;
 
@@ -358,6 +361,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (option_no_hardlinks)
 		use_local_hardlinks = 0;
+
+	if (option_mirror)
+		option_bare = 1;
 
 	if (option_bare) {
 		if (option_origin)
@@ -440,26 +446,36 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	git_config(git_default_config, NULL);
 
 	if (option_bare) {
-		strcpy(branch_top, "refs/heads/");
+		if (option_mirror)
+			src_ref_prefix = "refs/";
+		strcpy(branch_top, src_ref_prefix);
 
 		git_config_set("core.bare", "true");
 	} else {
 		snprintf(branch_top, sizeof(branch_top),
 			 "refs/remotes/%s/", option_origin);
+	}
 
+	if (option_mirror || !option_bare) {
 		/* Configure the remote */
+		if (option_mirror) {
+			snprintf(key, sizeof(key),
+					"remote.%s.mirror", option_origin);
+			git_config_set(key, "true");
+		}
+
 		snprintf(key, sizeof(key), "remote.%s.url", option_origin);
 		git_config_set(key, repo);
 
 		snprintf(key, sizeof(key), "remote.%s.fetch", option_origin);
 		snprintf(value, sizeof(value),
-				"+refs/heads/*:%s*", branch_top);
+				"+%s*:%s*", src_ref_prefix, branch_top);
 		git_config_set_multivar(key, value, "^$", 0);
 	}
 
 	refspec.force = 0;
 	refspec.pattern = 1;
-	refspec.src = "refs/heads/";
+	refspec.src = src_ref_prefix;
 	refspec.dst = branch_top;
 
 	if (path && !is_bundle)

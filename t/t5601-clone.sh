@@ -70,4 +70,16 @@ test_expect_success 'clone creates intermediate directories for bare repo' '
 
 '
 
+test_expect_success 'clone --mirror' '
+
+	git clone --mirror src mirror &&
+	test -f mirror/HEAD &&
+	test ! -f mirror/file &&
+	FETCH="$(cd mirror && git config remote.origin.fetch)" &&
+	test "+refs/*:refs/*" = "$FETCH" &&
+	MIRROR="$(cd mirror && git config --bool remote.origin.mirror)" &&
+	test "$MIRROR" = true
+
+'
+
 test_done

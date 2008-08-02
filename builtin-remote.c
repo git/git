@@ -115,7 +115,7 @@ static int add(int argc, const char **argv)
 	if (mirror) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.mirror", name);
-		if (git_config_set(buf.buf, "yes"))
+		if (git_config_set(buf.buf, "true"))
 			return 1;
 	}
 
