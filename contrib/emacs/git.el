@@ -389,11 +389,12 @@ the process output as a string, or nil if the git command failed."
 (defun git-update-ref (ref newval &optional oldval reason)
   "Update a reference by calling git-update-ref."
   (let ((args (and oldval (list oldval))))
-    (push newval args)
+    (when newval (push newval args))
     (push ref args)
     (when reason
      (push reason args)
      (push "-m" args))
+    (unless newval (push "-d" args))
     (apply 'git-call-process-display-error "update-ref" args)))
 
 (defun git-read-tree (tree &optional index-file)
@@ -1329,7 +1330,7 @@ Return the list of files that haven't been handled."
   "Retrieve the list of files modified by COMMIT."
   (let (files)
     (with-temp-buffer
-      (git-call-process t "diff-tree" "-m" "-r" "-z" "--name-only" "--no-commit-id" commit)
+      (git-call-process t "diff-tree" "-m" "-r" "-z" "--name-only" "--no-commit-id" "--root" commit)
       (goto-char (point-min))
       (while (re-search-forward "\\([^\0]*\\)\0" nil t 1)
         (push (match-string 1) files)))
@@ -1343,7 +1344,10 @@ amended version of it."
   (when (git-empty-db-p) (error "No commit to amend."))
   (let* ((commit (git-rev-parse "HEAD"))
          (files (git-get-commit-files commit)))
-    (when (git-call-process-display-error "reset" "--soft" "HEAD^")
+    (when (if (git-rev-parse "HEAD^")
+              (git-call-process-display-error "reset" "--soft" "HEAD^")
+            (and (git-update-ref "ORIG_HEAD" commit)
+                 (git-update-ref "HEAD" nil commit)))
       (git-update-status-files (copy-sequence files) 'uptodate)
       (git-mark-files git-status files)
       (git-refresh-files)
