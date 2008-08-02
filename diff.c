@@ -1386,7 +1386,7 @@ static struct builtin_funcname_pattern {
 			"\\|"
 			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$"
 			},
-	{ "tex", "^\\(\\\\\\(sub\\)*section{.*\\)$" },
+	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$" },
 	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
 };
 
