@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "blob.h"
 #include "quote.h"
+#include "parse-options.h"
 
 static void hash_fd(int fd, const char *type, int write_object, const char *path)
 {
@@ -49,87 +50,70 @@ static void hash_stdin_paths(const char *type, int write_objects)
 	strbuf_release(&nbuf);
 }
 
-static const char hash_object_usage[] =
-"git hash-object [-t <type>] [-w] [--stdin] [--] <file>...\n"
-"   or: git hash-object  --stdin-paths < <list-of-paths>";
+static const char * const hash_object_usage[] = {
+	"git hash-object [-t <type>] [-w] [--stdin] [--] <file>...",
+	"git hash-object  --stdin-paths < <list-of-paths>",
+	NULL
+};
 
-int main(int argc, char **argv)
+static const char *type;
+static int write_object;
+static int hashstdin;
+static int stdin_paths;
+
+static const struct option hash_object_options[] = {
+	OPT_STRING('t', NULL, &type, "type", "object type"),
+	OPT_BOOLEAN('w', NULL, &write_object, "write the object into the object database"),
+	OPT_BOOLEAN( 0 , "stdin", &hashstdin, "read the object from stdin"),
+	OPT_BOOLEAN( 0 , "stdin-paths", &stdin_paths, "read file names from stdin"),
+	OPT_END()
+};
+
+int main(int argc, const char **argv)
 {
 	int i;
-	const char *type = blob_type;
-	int write_object = 0;
 	const char *prefix = NULL;
 	int prefix_length = -1;
-	int no_more_flags = 0;
-	int hashstdin = 0;
-	int stdin_paths = 0;
+	const char *errstr = NULL;
+
+	type = blob_type;
 
 	git_config(git_default_config, NULL);
 
-	for (i = 1 ; i < argc; i++) {
-		if (!no_more_flags && argv[i][0] == '-') {
-			if (!strcmp(argv[i], "-t")) {
-				if (argc <= ++i)
-					usage(hash_object_usage);
-				type = argv[i];
-			}
-			else if (!strcmp(argv[i], "-w")) {
-				if (prefix_length < 0) {
-					prefix = setup_git_directory();
-					prefix_length =
-						prefix ? strlen(prefix) : 0;
-				}
-				write_object = 1;
-			}
-			else if (!strcmp(argv[i], "--")) {
-				no_more_flags = 1;
-			}
-			else if (!strcmp(argv[i], "--help"))
-				usage(hash_object_usage);
-			else if (!strcmp(argv[i], "--stdin-paths")) {
-				if (hashstdin) {
-					error("Can't use --stdin-paths with --stdin");
-					usage(hash_object_usage);
-				}
-				stdin_paths = 1;
+	argc = parse_options(argc, argv, hash_object_options, hash_object_usage, 0);
 
-			}
-			else if (!strcmp(argv[i], "--stdin")) {
-				if (stdin_paths) {
-					error("Can't use %s with --stdin-paths", argv[i]);
-					usage(hash_object_usage);
-				}
-				if (hashstdin)
-					die("Multiple --stdin arguments are not supported");
-				hashstdin = 1;
-			}
-			else
-				usage(hash_object_usage);
-		}
-		else {
-			const char *arg = argv[i];
+	if (write_object) {
+		prefix = setup_git_directory();
+		prefix_length = prefix ? strlen(prefix) : 0;
+	}
 
-			if (stdin_paths) {
-				error("Can't specify files (such as \"%s\") with --stdin-paths", arg);
-				usage(hash_object_usage);
-			}
+	if (stdin_paths) {
+		if (hashstdin)
+			errstr = "Can't use --stdin-paths with --stdin";
+		else if (argc)
+			errstr = "Can't specify files with --stdin-paths";
+	}
+	else if (hashstdin > 1)
+		errstr = "Multiple --stdin arguments are not supported";
 
-			if (hashstdin) {
-				hash_fd(0, type, write_object, NULL);
-				hashstdin = 0;
-			}
-			if (0 <= prefix_length)
-				arg = prefix_filename(prefix, prefix_length,
-						      arg);
-			hash_object(arg, type, write_object);
-			no_more_flags = 1;
-		}
+	if (errstr) {
+		error (errstr);
+		usage_with_options(hash_object_usage, hash_object_options);
+	}
+
+	if (hashstdin)
+		hash_fd(0, type, write_object, NULL);
+
+	for (i = 0 ; i < argc; i++) {
+		const char *arg = argv[i];
+
+		if (0 <= prefix_length)
+			arg = prefix_filename(prefix, prefix_length, arg);
+		hash_object(arg, type, write_object);
 	}
 
 	if (stdin_paths)
 		hash_stdin_paths(type, write_object);
 
-	if (hashstdin)
-		hash_fd(0, type, write_object, NULL);
 	return 0;
 }
