@@ -61,6 +61,10 @@ test_expect_success "Can't pass filenames as arguments with --stdin-paths" '
 	echo example | test_must_fail git hash-object --stdin-paths hello
 '
 
+test_expect_success "Can't use --path with --stdin-paths" '
+	echo example | test_must_fail git hash-object --stdin-paths --path=foo
+'
+
 # Behavior
 
 push_repo
@@ -91,6 +95,26 @@ test_expect_success 'git hash-object --stdin file1 <file0 first operates on file
 	obname1new=$(echo bar | git hash-object --stdin file1 | sed -n -e 2p) &&
 	test "$obname0" = "$obname0new" &&
 	test "$obname1" = "$obname1new"
+'
+
+test_expect_success 'check that appropriate filter is invoke when --path is used' '
+	echo fooQ | tr Q "\\015" >file0 &&
+	cp file0 file1 &&
+	echo "file0 -crlf" >.gitattributes &&
+	echo "file1 crlf" >>.gitattributes &&
+	git config core.autocrlf true &&
+	file0_sha=$(git hash-object file0) &&
+	file1_sha=$(git hash-object file1) &&
+	test "$file0_sha" != "$file1_sha" &&
+	path1_sha=$(git hash-object --path=file1 file0) &&
+	path0_sha=$(git hash-object --path=file0 file1) &&
+	test "$file0_sha" = "$path0_sha" &&
+	test "$file1_sha" = "$path1_sha" &&
+	path1_sha=$(cat file0 | git hash-object --path=file1 --stdin) &&
+	path0_sha=$(cat file1 | git hash-object --path=file0 --stdin) &&
+	test "$file0_sha" = "$path0_sha" &&
+	test "$file1_sha" = "$path1_sha" &&
+	git config --unset core.autocrlf
 '
 
 pop_repo

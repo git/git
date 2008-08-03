@@ -22,13 +22,14 @@ static void hash_fd(int fd, const char *type, int write_object, const char *path
 	maybe_flush_or_die(stdout, "hash to stdout");
 }
 
-static void hash_object(const char *path, const char *type, int write_object)
+static void hash_object(const char *path, const char *type, int write_object,
+			const char *vpath)
 {
 	int fd;
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		die("Cannot open %s", path);
-	hash_fd(fd, type, write_object, path);
+	hash_fd(fd, type, write_object, vpath);
 }
 
 static void hash_stdin_paths(const char *type, int write_objects)
@@ -44,14 +45,14 @@ static void hash_stdin_paths(const char *type, int write_objects)
 				die("line is badly quoted");
 			strbuf_swap(&buf, &nbuf);
 		}
-		hash_object(buf.buf, type, write_objects);
+		hash_object(buf.buf, type, write_objects, buf.buf);
 	}
 	strbuf_release(&buf);
 	strbuf_release(&nbuf);
 }
 
 static const char * const hash_object_usage[] = {
-	"git hash-object [-t <type>] [-w] [--stdin] [--] <file>...",
+	"git hash-object [-t <type>] [-w] [--path=<file>] [--stdin] [--] <file>...",
 	"git hash-object  --stdin-paths < <list-of-paths>",
 	NULL
 };
@@ -60,12 +61,14 @@ static const char *type;
 static int write_object;
 static int hashstdin;
 static int stdin_paths;
+static const char *vpath;
 
 static const struct option hash_object_options[] = {
 	OPT_STRING('t', NULL, &type, "type", "object type"),
 	OPT_BOOLEAN('w', NULL, &write_object, "write the object into the object database"),
 	OPT_BOOLEAN( 0 , "stdin", &hashstdin, "read the object from stdin"),
 	OPT_BOOLEAN( 0 , "stdin-paths", &stdin_paths, "read file names from stdin"),
+	OPT_STRING( 0 , "path", &vpath, "file", "process file as it were from this path"),
 	OPT_END()
 };
 
@@ -85,6 +88,8 @@ int main(int argc, const char **argv)
 	if (write_object) {
 		prefix = setup_git_directory();
 		prefix_length = prefix ? strlen(prefix) : 0;
+		if (vpath && prefix)
+			vpath = prefix_filename(prefix, prefix_length, vpath);
 	}
 
 	if (stdin_paths) {
@@ -92,6 +97,8 @@ int main(int argc, const char **argv)
 			errstr = "Can't use --stdin-paths with --stdin";
 		else if (argc)
 			errstr = "Can't specify files with --stdin-paths";
+		else if (vpath)
+			errstr = "Can't use --stdin-paths with --path";
 	}
 	else if (hashstdin > 1)
 		errstr = "Multiple --stdin arguments are not supported";
@@ -102,14 +109,14 @@ int main(int argc, const char **argv)
 	}
 
 	if (hashstdin)
-		hash_fd(0, type, write_object, NULL);
+		hash_fd(0, type, write_object, vpath);
 
 	for (i = 0 ; i < argc; i++) {
 		const char *arg = argv[i];
 
 		if (0 <= prefix_length)
 			arg = prefix_filename(prefix, prefix_length, arg);
-		hash_object(arg, type, write_object);
+		hash_object(arg, type, write_object, vpath ? vpath : arg);
 	}
 
 	if (stdin_paths)
