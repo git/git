@@ -8,15 +8,12 @@
 #include "blob.h"
 #include "quote.h"
 
-static void hash_object(const char *path, enum object_type type, int write_object)
+static void hash_fd(int fd, const char *type, int write_object, const char *path)
 {
-	int fd;
 	struct stat st;
 	unsigned char sha1[20];
-	fd = open(path, O_RDONLY);
-	if (fd < 0 ||
-	    fstat(fd, &st) < 0 ||
-	    index_fd(sha1, fd, &st, write_object, type, path))
+	if (fstat(fd, &st) < 0 ||
+	    index_fd(sha1, fd, &st, write_object, type_from_string(type), path))
 		die(write_object
 		    ? "Unable to add %s to database"
 		    : "Unable to hash %s", path);
@@ -24,12 +21,13 @@ static void hash_object(const char *path, enum object_type type, int write_objec
 	maybe_flush_or_die(stdout, "hash to stdout");
 }
 
-static void hash_stdin(const char *type, int write_object)
+static void hash_object(const char *path, const char *type, int write_object)
 {
-	unsigned char sha1[20];
-	if (index_pipe(sha1, 0, type, write_object))
-		die("Unable to add stdin to database");
-	printf("%s\n", sha1_to_hex(sha1));
+	int fd;
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		die("Cannot open %s", path);
+	hash_fd(fd, type, write_object, path);
 }
 
 static void hash_stdin_paths(const char *type, int write_objects)
@@ -45,7 +43,7 @@ static void hash_stdin_paths(const char *type, int write_objects)
 				die("line is badly quoted");
 			strbuf_swap(&buf, &nbuf);
 		}
-		hash_object(buf.buf, type_from_string(type), write_objects);
+		hash_object(buf.buf, type, write_objects);
 	}
 	strbuf_release(&buf);
 	strbuf_release(&nbuf);
@@ -116,13 +114,13 @@ int main(int argc, char **argv)
 			}
 
 			if (hashstdin) {
-				hash_stdin(type, write_object);
+				hash_fd(0, type, write_object, NULL);
 				hashstdin = 0;
 			}
 			if (0 <= prefix_length)
 				arg = prefix_filename(prefix, prefix_length,
 						      arg);
-			hash_object(arg, type_from_string(type), write_object);
+			hash_object(arg, type, write_object);
 			no_more_flags = 1;
 		}
 	}
@@ -131,6 +129,6 @@ int main(int argc, char **argv)
 		hash_stdin_paths(type, write_object);
 
 	if (hashstdin)
-		hash_stdin(type, write_object);
+		hash_fd(0, type, write_object, NULL);
 	return 0;
 }
