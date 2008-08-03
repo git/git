@@ -52,7 +52,7 @@ static void hash_stdin_paths(const char *type, int write_objects)
 }
 
 static const char * const hash_object_usage[] = {
-	"git hash-object [-t <type>] [-w] [--path=<file>] [--stdin] [--] <file>...",
+	"git hash-object [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>...",
 	"git hash-object  --stdin-paths < <list-of-paths>",
 	NULL
 };
@@ -61,6 +61,7 @@ static const char *type;
 static int write_object;
 static int hashstdin;
 static int stdin_paths;
+static int no_filters;
 static const char *vpath;
 
 static const struct option hash_object_options[] = {
@@ -68,6 +69,7 @@ static const struct option hash_object_options[] = {
 	OPT_BOOLEAN('w', NULL, &write_object, "write the object into the object database"),
 	OPT_BOOLEAN( 0 , "stdin", &hashstdin, "read the object from stdin"),
 	OPT_BOOLEAN( 0 , "stdin-paths", &stdin_paths, "read file names from stdin"),
+	OPT_BOOLEAN( 0 , "no-filters", &no_filters, "store file as is without filters"),
 	OPT_STRING( 0 , "path", &vpath, "file", "process file as it were from this path"),
 	OPT_END()
 };
@@ -99,9 +101,15 @@ int main(int argc, const char **argv)
 			errstr = "Can't specify files with --stdin-paths";
 		else if (vpath)
 			errstr = "Can't use --stdin-paths with --path";
+		else if (no_filters)
+			errstr = "Can't use --stdin-paths with --no-filters";
 	}
-	else if (hashstdin > 1)
-		errstr = "Multiple --stdin arguments are not supported";
+	else {
+		if (hashstdin > 1)
+			errstr = "Multiple --stdin arguments are not supported";
+		if (vpath && no_filters)
+			errstr = "Can't use --path with --no-filters";
+	}
 
 	if (errstr) {
 		error (errstr);
@@ -116,7 +124,8 @@ int main(int argc, const char **argv)
 
 		if (0 <= prefix_length)
 			arg = prefix_filename(prefix, prefix_length, arg);
-		hash_object(arg, type, write_object, vpath ? vpath : arg);
+		hash_object(arg, type, write_object,
+			    no_filters ? NULL : vpath ? vpath : arg);
 	}
 
 	if (stdin_paths)
