@@ -49,16 +49,16 @@ setup_repo
 # Argument checking
 
 test_expect_success "multiple '--stdin's are rejected" '
-	test_must_fail git hash-object --stdin --stdin < example
+	echo example | test_must_fail git hash-object --stdin --stdin
 '
 
 test_expect_success "Can't use --stdin and --stdin-paths together" '
-	test_must_fail git hash-object --stdin --stdin-paths &&
-	test_must_fail git hash-object --stdin-paths --stdin
+	echo example | test_must_fail git hash-object --stdin --stdin-paths &&
+	echo example | test_must_fail git hash-object --stdin-paths --stdin
 '
 
 test_expect_success "Can't pass filenames as arguments with --stdin-paths" '
-	test_must_fail git hash-object --stdin-paths hello < example
+	echo example | test_must_fail git hash-object --stdin-paths hello
 '
 
 # Behavior
