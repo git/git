@@ -194,6 +194,10 @@ static int process_path(const char *path)
 	int len;
 	struct stat st;
 
+	len = strlen(path);
+	if (has_symlink_leading_path(len, path))
+		return error("'%s' is beyond a symbolic link", path);
+
 	/*
 	 * First things first: get the stat information, to decide
 	 * what to do about the pathname!
@@ -201,7 +205,6 @@ static int process_path(const char *path)
 	if (lstat(path, &st) < 0)
 		return process_lstat_error(path, errno);
 
-	len = strlen(path);
 	if (S_ISDIR(st.st_mode))
 		return process_directory(path, len, &st);
 
