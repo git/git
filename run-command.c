@@ -304,6 +304,9 @@ int start_async(struct async *async)
 	async->out = pipe_out[0];
 
 #ifndef __MINGW32__
+	/* Flush stdio before fork() to avoid cloning buffers */
+	fflush(NULL);
+
 	async->pid = fork();
 	if (async->pid < 0) {
 		error("fork (async) failed: %s", strerror(errno));

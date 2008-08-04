@@ -31,6 +31,12 @@ test_expect_success 'clone with excess parameters (2)' '
 
 '
 
+test_expect_success 'output from clone' '
+	rm -fr dst &&
+	git clone -n "file://$(pwd)/src" dst >output &&
+	test $(grep Initialized output | wc -l) = 1
+'
+
 test_expect_success 'clone does not keep pack' '
 
 	rm -fr dst &&
