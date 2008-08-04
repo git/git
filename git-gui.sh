@@ -52,7 +52,11 @@ catch {rename send {}} ; # What an evil concept...
 set oguilib {@@GITGUI_LIBDIR@@}
 set oguirel {@@GITGUI_RELATIVE@@}
 if {$oguirel eq {1}} {
-	set oguilib [file dirname [file dirname [file normalize $argv0]]]
+	set oguilib [file dirname [file normalize $argv0]]
+	if {[file tail $oguilib] eq {git-core}} {
+		set oguilib [file dirname $oguilib]
+	}
+	set oguilib [file dirname $oguilib]
 	set oguilib [file join $oguilib share git-gui lib]
 	set oguimsg [file join $oguilib msgs]
 } elseif {[string match @@* $oguirel]} {
