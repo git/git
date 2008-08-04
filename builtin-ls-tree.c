@@ -66,17 +66,16 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 		/*
 		 * Maybe we want to have some recursive version here?
 		 *
-		 * Something like:
+		 * Something similar to this incomplete example:
 		 *
 		if (show_subprojects(base, baselen, pathname)) {
-			if (fork()) {
-				chdir(base);
-				exec ls-tree;
-			}
-			waitpid();
+			struct child_process ls_tree;
+
+			ls_tree.dir = base;
+			ls_tree.argv = ls-tree;
+			start_command(&ls_tree);
 		}
 		 *
-		 * ..or similar..
 		 */
 		type = commit_type;
 	} else if (S_ISDIR(mode)) {
