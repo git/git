@@ -1019,6 +1019,11 @@ Return the list of files that haven't been handled."
       (setq node (ewoc-prev git-status node)))
     (ewoc-goto-node git-status last)))
 
+(defun git-insert-file (file)
+  "Insert file(s) into the git-status buffer."
+  (interactive "fInsert file: ")
+  (git-update-status-files (list (file-relative-name file))))
+
 (defun git-add-file ()
   "Add marked file(s) to the index cache."
   (interactive)
@@ -1449,6 +1454,7 @@ amended version of it."
     (define-key map "\r"  'git-find-file)
     (define-key map "g"   'git-refresh-status)
     (define-key map "i"   'git-ignore-file)
+    (define-key map "I"   'git-insert-file)
     (define-key map "l"   'git-log-file)
     (define-key map "m"   'git-mark-file)
     (define-key map "M"   'git-mark-all)
@@ -1505,6 +1511,7 @@ amended version of it."
       ["Revert File" git-revert-file t]
       ["Ignore File" git-ignore-file t]
       ["Remove File" git-remove-file t]
+      ["Insert File" git-insert-file t]
       "--------"
       ["Find File" git-find-file t]
       ["View File" git-view-file t]
