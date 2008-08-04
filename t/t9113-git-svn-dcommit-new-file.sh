@@ -28,6 +28,7 @@ start_svnserve () {
 
 test_expect_success 'start tracking an empty repo' '
 	svn mkdir -m "empty dir" "$svnrepo"/empty-dir &&
+	echo "[general]" > "$rawsvnrepo"/conf/svnserve.conf &&
 	echo anon-access = write >> "$rawsvnrepo"/conf/svnserve.conf &&
 	start_svnserve &&
 	git svn init svn://127.0.0.1:$SVNSERVE_PORT &&
