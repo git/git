@@ -1493,6 +1493,8 @@ static void simplify_merges(struct rev_info *revs)
 	struct commit_list *list;
 	struct commit_list *yet_to_do, **tail;
 
+	sort_in_topological_order(&revs->commits, revs->lifo);
+
 	/* feed the list reversed */
 	yet_to_do = NULL;
 	for (list = revs->commits; list; list = list->next)
@@ -1522,9 +1524,6 @@ static void simplify_merges(struct rev_info *revs)
 		if (commit->util == commit)
 			tail = &commit_list_insert(commit, tail)->next;
 	}
-
-	/* sort topologically at the end */
-	sort_in_topological_order(&revs->commits, revs->lifo);
 }
 
 static void set_children(struct rev_info *revs)
