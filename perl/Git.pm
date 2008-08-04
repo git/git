@@ -840,8 +840,8 @@ sub _close_hash_and_insert_object {
 
 	my @vars = map { 'hash_object_' . $_ } qw(pid in out ctx);
 
-	command_close_bidi_pipe($self->{@vars});
-	delete $self->{@vars};
+	command_close_bidi_pipe(@$self{@vars});
+	delete @$self{@vars};
 }
 
 =item cat_blob ( SHA1, FILEHANDLE )
@@ -929,8 +929,8 @@ sub _close_cat_blob {
 
 	my @vars = map { 'cat_blob_' . $_ } qw(pid in out ctx);
 
-	command_close_bidi_pipe($self->{@vars});
-	delete $self->{@vars};
+	command_close_bidi_pipe(@$self{@vars});
+	delete @$self{@vars};
 }
 
 =back
