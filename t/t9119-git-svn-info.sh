@@ -5,8 +5,19 @@
 test_description='git-svn info'
 
 . ./lib-git-svn.sh
-say 'skipping svn-info test (has a race undiagnosed yet)'
-test_done
+
+set -e
+
+# Tested with: svn, version 1.4.4 (r25188)
+v=`svn --version | sed -n -e 's/^svn, version \(1\.4\.[0-9]\).*$/\1/p'`
+case $v in
+1.4.*)
+	;;
+*)
+	say "skipping svn-info test (SVN version: $v not supported)"
+	test_done
+	;;
+esac
 
 ptouch() {
 	perl -w -e '
@@ -25,7 +36,7 @@ ptouch() {
 	' "`svn info $2 | grep '^Text Last Updated:'`" "$1"
 }
 
-test_expect_success 'setup repository and import' "
+test_expect_success 'setup repository and import' '
 	mkdir info &&
 	cd info &&
 		echo FIRST > A &&
@@ -34,19 +45,19 @@ test_expect_success 'setup repository and import' "
 		mkdir directory &&
 		touch directory/.placeholder &&
 		ln -s directory symlink-directory &&
-		svn import -m 'initial' . $svnrepo &&
+		svn import -m "initial" . "$svnrepo" &&
 	cd .. &&
 	mkdir gitwc &&
 	cd gitwc &&
-		git-svn init $svnrepo &&
+		git-svn init "$svnrepo" &&
 		git-svn fetch &&
 	cd .. &&
-	svn co $svnrepo svnwc &&
+	svn co "$svnrepo" svnwc &&
 	ptouch svnwc/file gitwc/file &&
 	ptouch svnwc/directory gitwc/directory &&
 	ptouch svnwc/symlink-file gitwc/symlink-file &&
 	ptouch svnwc/symlink-directory gitwc/symlink-directory
-	"
+	'
 
 test_expect_success 'info' "
 	(cd svnwc; svn info) > expected.info &&
@@ -55,7 +66,7 @@ test_expect_success 'info' "
 	"
 
 test_expect_success 'info --url' '
-	test $(cd gitwc; git-svn info --url) = $svnrepo
+	test "$(cd gitwc; git-svn info --url)" = "$svnrepo"
 	'
 
 test_expect_success 'info .' "
@@ -65,7 +76,7 @@ test_expect_success 'info .' "
 	"
 
 test_expect_success 'info --url .' '
-	test $(cd gitwc; git-svn info --url .) = $svnrepo
+	test "$(cd gitwc; git-svn info --url .)" = "$svnrepo"
 	'
 
 test_expect_success 'info file' "
@@ -75,7 +86,7 @@ test_expect_success 'info file' "
 	"
 
 test_expect_success 'info --url file' '
-	test $(cd gitwc; git-svn info --url file) = "$svnrepo/file"
+	test "$(cd gitwc; git-svn info --url file)" = "$svnrepo/file"
 	'
 
 test_expect_success 'info directory' "
@@ -85,7 +96,7 @@ test_expect_success 'info directory' "
 	"
 
 test_expect_success 'info --url directory' '
-	test $(cd gitwc; git-svn info --url directory) = "$svnrepo/directory"
+	test "$(cd gitwc; git-svn info --url directory)" = "$svnrepo/directory"
 	'
 
 test_expect_success 'info symlink-file' "
@@ -95,7 +106,7 @@ test_expect_success 'info symlink-file' "
 	"
 
 test_expect_success 'info --url symlink-file' '
-	test $(cd gitwc; git-svn info --url symlink-file) \
+	test "$(cd gitwc; git-svn info --url symlink-file)" \
 	     = "$svnrepo/symlink-file"
 	'
 
@@ -108,7 +119,7 @@ test_expect_success 'info symlink-directory' "
 	"
 
 test_expect_success 'info --url symlink-directory' '
-	test $(cd gitwc; git-svn info --url symlink-directory) \
+	test "$(cd gitwc; git-svn info --url symlink-directory)" \
 	     = "$svnrepo/symlink-directory"
 	'
 
@@ -128,7 +139,7 @@ test_expect_success 'info added-file' "
 	"
 
 test_expect_success 'info --url added-file' '
-	test $(cd gitwc; git-svn info --url added-file) \
+	test "$(cd gitwc; git-svn info --url added-file)" \
 	     = "$svnrepo/added-file"
 	'
 
@@ -150,7 +161,7 @@ test_expect_success 'info added-directory' "
 	"
 
 test_expect_success 'info --url added-directory' '
-	test $(cd gitwc; git-svn info --url added-directory) \
+	test "$(cd gitwc; git-svn info --url added-directory)" \
 	     = "$svnrepo/added-directory"
 	'
 
@@ -173,7 +184,7 @@ test_expect_success 'info added-symlink-file' "
 	"
 
 test_expect_success 'info --url added-symlink-file' '
-	test $(cd gitwc; git-svn info --url added-symlink-file) \
+	test "$(cd gitwc; git-svn info --url added-symlink-file)" \
 	     = "$svnrepo/added-symlink-file"
 	'
 
@@ -196,7 +207,7 @@ test_expect_success 'info added-symlink-directory' "
 	"
 
 test_expect_success 'info --url added-symlink-directory' '
-	test $(cd gitwc; git-svn info --url added-symlink-directory) \
+	test "$(cd gitwc; git-svn info --url added-symlink-directory)" \
 	     = "$svnrepo/added-symlink-directory"
 	'
 
@@ -222,7 +233,7 @@ test_expect_success 'info deleted-file' "
 	"
 
 test_expect_success 'info --url file (deleted)' '
-	test $(cd gitwc; git-svn info --url file) \
+	test "$(cd gitwc; git-svn info --url file)" \
 	     = "$svnrepo/file"
 	'
 
@@ -243,7 +254,7 @@ test_expect_success 'info deleted-directory' "
 	"
 
 test_expect_success 'info --url directory (deleted)' '
-	test $(cd gitwc; git-svn info --url directory) \
+	test "$(cd gitwc; git-svn info --url directory)" \
 	     = "$svnrepo/directory"
 	'
 
@@ -265,7 +276,7 @@ test_expect_success 'info deleted-symlink-file' "
 	"
 
 test_expect_success 'info --url symlink-file (deleted)' '
-	test $(cd gitwc; git-svn info --url symlink-file) \
+	test "$(cd gitwc; git-svn info --url symlink-file)" \
 	     = "$svnrepo/symlink-file"
 	'
 
@@ -287,7 +298,7 @@ test_expect_success 'info deleted-symlink-directory' "
 	"
 
 test_expect_success 'info --url symlink-directory (deleted)' '
-	test $(cd gitwc; git-svn info --url symlink-directory) \
+	test "$(cd gitwc; git-svn info --url symlink-directory)" \
 	     = "$svnrepo/symlink-directory"
 	'
 
@@ -304,8 +315,8 @@ test_expect_success 'info unknown-file' "
 	"
 
 test_expect_success 'info --url unknown-file' '
-	test -z $(cd gitwc; git-svn info --url unknown-file \
-			2> ../actual.info--url-unknown-file) &&
+	test -z "$(cd gitwc; git-svn info --url unknown-file \
+			2> ../actual.info--url-unknown-file)" &&
 	git-diff expected.info-unknown-file actual.info--url-unknown-file
 	'
 
@@ -321,8 +332,8 @@ test_expect_success 'info unknown-directory' "
 	"
 
 test_expect_success 'info --url unknown-directory' '
-	test -z $(cd gitwc; git-svn info --url unknown-directory \
-			2> ../actual.info--url-unknown-directory) &&
+	test -z "$(cd gitwc; git-svn info --url unknown-directory \
+			2> ../actual.info--url-unknown-directory)" &&
 	git-diff expected.info-unknown-directory \
 		 actual.info--url-unknown-directory
 	'
@@ -344,8 +355,8 @@ test_expect_success 'info unknown-symlink-file' "
 	"
 
 test_expect_success 'info --url unknown-symlink-file' '
-	test -z $(cd gitwc; git-svn info --url unknown-symlink-file \
-			2> ../actual.info--url-unknown-symlink-file) &&
+	test -z "$(cd gitwc; git-svn info --url unknown-symlink-file \
+			2> ../actual.info--url-unknown-symlink-file)" &&
 	git-diff expected.info-unknown-symlink-file \
 		 actual.info--url-unknown-symlink-file
 	'
@@ -368,8 +379,8 @@ test_expect_success 'info unknown-symlink-directory' "
 	"
 
 test_expect_success 'info --url unknown-symlink-directory' '
-	test -z $(cd gitwc; git-svn info --url unknown-symlink-directory \
-			2> ../actual.info--url-unknown-symlink-directory) &&
+	test -z "$(cd gitwc; git-svn info --url unknown-symlink-directory \
+			2> ../actual.info--url-unknown-symlink-directory)" &&
 	git-diff expected.info-unknown-symlink-directory \
 		 actual.info--url-unknown-symlink-directory
 	'
