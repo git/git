@@ -1006,6 +1006,18 @@ _git_merge_base ()
 	__gitcomp "$(__git_refs)"
 }
 
+_git_mv ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--dry-run"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_name_rev ()
 {
 	__gitcomp "--tags --all --stdin"
@@ -1639,6 +1651,7 @@ _git ()
 	ls-tree)     _git_ls_tree ;;
 	merge)       _git_merge;;
 	merge-base)  _git_merge_base ;;
+	mv)          _git_mv ;;
 	name-rev)    _git_name_rev ;;
 	pull)        _git_pull ;;
 	push)        _git_push ;;
