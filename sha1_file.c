@@ -1929,11 +1929,18 @@ static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *size
 int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 {
 	struct pack_entry e;
+	int status;
 
 	if (!find_pack_entry(sha1, &e, NULL)) {
+		/* Most likely it's a loose object. */
+		status = sha1_loose_object_info(sha1, sizep);
+		if (status >= 0)
+			return status;
+
+		/* Not a loose object; someone else may have just packed it. */
 		reprepare_packed_git();
 		if (!find_pack_entry(sha1, &e, NULL))
-			return sha1_loose_object_info(sha1, sizep);
+			return status;
 	}
 	return packed_object_info(e.p, e.offset, sizep);
 }
