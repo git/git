@@ -1287,6 +1287,18 @@ _git_reset ()
 	__gitcomp "$(__git_refs)"
 }
 
+_git_revert ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--edit --mainline --no-edit --no-commit --signoff"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_rm ()
 {
 	__git_has_doubledash && return
@@ -1578,6 +1590,7 @@ _git ()
 	rebase)      _git_rebase ;;
 	remote)      _git_remote ;;
 	reset)       _git_reset ;;
+	revert)      _git_revert ;;
 	rm)          _git_rm ;;
 	send-email)  _git_send_email ;;
 	shortlog)    _git_shortlog ;;
