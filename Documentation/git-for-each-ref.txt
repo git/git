@@ -49,7 +49,7 @@ OPTIONS
 
 <pattern>...::
 	If one or more patterns are given, only refs are shown that
-	match againt at least one pattern, either using fnmatch(3) or
+	match against at least one pattern, either using fnmatch(3) or
 	literally, in the latter case matching completely or from the
 	beginning up to a slash.
 

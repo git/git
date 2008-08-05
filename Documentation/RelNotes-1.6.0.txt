@@ -187,7 +187,7 @@ Updates since v1.5.6
   command internally uses rev-parse to interpret its arguments.
 
 * git-rev-list learned --children option to show child commits it
-  encountered during the traversal, instead of shoing parent commits.
+  encountered during the traversal, instead of showing parent commits.
 
 * git-send-mail can talk not just over SSL but over TLS now.
 

@@ -13,7 +13,7 @@ DESCRIPTION
 -----------
 'git-svn' is a simple conduit for changesets between Subversion and git.
 It provides a bidirectional flow of changes between a Subversion and a git
-respository.
+repository.
 
 'git-svn' can track a single Subversion branch simply by using a
 URL to the branch, follow branches laid out in the Subversion recommended
@@ -209,7 +209,7 @@ Any other arguments are passed directly to 'git-log'
 	Recursively finds the svn:ignore property on directories and
 	creates matching .gitignore files. The resulting files are staged to
 	be committed, but are not committed. Use -r/--revision to refer to a
-	specfic revision.
+	specific revision.
 
 'show-ignore'::
 	Recursively finds and lists the svn:ignore property on
