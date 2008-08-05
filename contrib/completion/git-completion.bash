@@ -561,6 +561,29 @@ _git_add ()
 	COMPREPLY=()
 }
 
+_git_archive ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--format=*)
+		__gitcomp "$(git archive --list)" "" "${cur##--format=}"
+		return
+		;;
+	--remote=*)
+		__gitcomp "$(__git_remotes)" "" "${cur##--remote=}"
+		return
+		;;
+	--*)
+		__gitcomp "
+			--format= --list --verbose
+			--prefix= --remote= --exec=
+			"
+		return
+		;;
+	esac
+	__git_complete_file
+}
+
 _git_bisect ()
 {
 	__git_has_doubledash && return
@@ -1571,6 +1594,7 @@ _git ()
 	am)          _git_am ;;
 	add)         _git_add ;;
 	apply)       _git_apply ;;
+	archive)     _git_archive ;;
 	bisect)      _git_bisect ;;
 	bundle)      _git_bundle ;;
 	branch)      _git_branch ;;
