@@ -36,7 +36,7 @@ Updates since v1.5.1
   expansion).  These conversions apply when checking files in
   or out, and exporting via git-archive.
 
-* The packfile format now optionally suports 64-bit index.
+* The packfile format now optionally supports 64-bit index.
 
   This release supports the "version 2" format of the .idx
   file.  This is automatically enabled when a huge packfile

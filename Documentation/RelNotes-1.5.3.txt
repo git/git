@@ -86,7 +86,7 @@ Updates since v1.5.2
 
   - "git rev-list" learned --regexp-ignore-case and
     --extended-regexp options to tweak its matching logic used
-    for --grep fitering.
+    for --grep filtering.
 
   - "git describe --contains" is a handier way to call more
     obscure command "git name-rev --tags".
@@ -243,7 +243,7 @@ Updates since v1.5.2
 
   - We used to have core.legacyheaders configuration, when
     set to false, allowed git to write loose objects in a format
-    that mimicks the format used by objects stored in packs.  It
+    that mimics the format used by objects stored in packs.  It
     turns out that this was not so useful.  Although we will
     continue to read objects written in that format, we do not
     honor that configuration anymore and create loose objects in
@@ -302,7 +302,7 @@ Updates since v1.5.2
     small enough delta results it creates while looking for the
     best delta candidates.
 
-  - "git pack-objects" learned a new heuristcs to prefer delta
+  - "git pack-objects" learned a new heuristic to prefer delta
     that is shallower in depth over the smallest delta
     possible.  This improves both overall packfile access
     performance and packfile density.
