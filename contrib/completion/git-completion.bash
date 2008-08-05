@@ -865,6 +865,24 @@ _git_help ()
 	__gitcomp "$(__git_all_commands)"
 }
 
+_git_init ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--shared=*)
+		__gitcomp "
+			false true umask group all world everybody
+			" "" "${cur##--shared=}"
+		return
+		;;
+	--*)
+		__gitcomp "--quiet --bare --template= --shared --shared="
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_ls_remote ()
 {
 	__gitcomp "$(__git_remotes)"
@@ -1548,6 +1566,7 @@ _git ()
 	gc)          _git_gc ;;
 	grep)        _git_grep ;;
 	help)        _git_help ;;
+	init)        _git_init ;;
 	log)         _git_log ;;
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
