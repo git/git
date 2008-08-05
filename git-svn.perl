@@ -796,8 +796,8 @@ sub cmd_commit_diff {
 }
 
 sub cmd_info {
-	my $path = canonicalize_path(shift or ".");
-	unless (scalar(@_) == 0) {
+	my $path = canonicalize_path(defined($_[0]) ? $_[0] : ".");
+	if (exists $_[1]) {
 		die "Too many arguments specified\n";
 	}
 
@@ -813,6 +813,10 @@ sub cmd_info {
 		die "Unable to determine upstream SVN information from ",
 		    "working tree history\n";
 	}
+
+	# canonicalize_path() will return "" to make libsvn 1.5.x happy,
+	$path = "." if $path eq "";
+
 	my $full_url = $url . ($path eq "." ? "" : "/$path");
 
 	if ($_url) {
