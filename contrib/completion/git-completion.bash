@@ -667,6 +667,31 @@ _git_cherry_pick ()
 	esac
 }
 
+_git_clone ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--local
+			--no-hardlinks
+			--shared
+			--reference
+			--quiet
+			--no-checkout
+			--bare
+			--mirror
+			--origin
+			--upload-pack
+			--template=
+			--depth
+			"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_commit ()
 {
 	__git_has_doubledash && return
@@ -1498,6 +1523,7 @@ _git ()
 	checkout)    _git_checkout ;;
 	cherry)      _git_cherry ;;
 	cherry-pick) _git_cherry_pick ;;
+	clone)       _git_clone ;;
 	commit)      _git_commit ;;
 	config)      _git_config ;;
 	describe)    _git_describe ;;
