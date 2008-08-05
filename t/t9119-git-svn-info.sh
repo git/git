@@ -11,11 +11,18 @@ test_done
 ptouch() {
 	perl -w -e '
 		use strict;
+		use POSIX qw(mktime);
 		die "ptouch requires exactly 2 arguments" if @ARGV != 2;
-		die "$ARGV[0] does not exist" if ! -e $ARGV[0];
-		my @s = stat $ARGV[0];
-		utime $s[8], $s[9], $ARGV[1];
-	' "$1" "$2"
+		my $text_last_updated = shift @ARGV;
+		my $git_file = shift @ARGV;
+		die "\"$git_file\" does not exist" if ! -e $git_file;
+		if ($text_last_updated
+		    =~ /(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/) {
+			my $mtime = mktime($6, $5, $4, $3, $2 - 1, $1 - 1900);
+			my $atime = $mtime;
+			utime $atime, $mtime, $git_file;
+		}
+	' "`svn info $2 | grep '^Text Last Updated:'`" "$1"
 }
 
 test_expect_success 'setup repository and import' "
