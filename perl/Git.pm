@@ -90,7 +90,7 @@ TODO: In the future, we might also do
 Currently, the module merely wraps calls to external Git tools. In the future,
 it will provide a much faster way to interact with Git by linking directly
 to libgit. This should be completely opaque to the user, though (performance
-increate nonwithstanding).
+increase notwithstanding).
 
 =cut
 
