@@ -906,6 +906,26 @@ _git_init ()
 	COMPREPLY=()
 }
 
+_git_ls_files ()
+{
+	__git_has_doubledash && return
+
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--cached --deleted --modified --others --ignored
+			--stage --directory --no-empty-directory --unmerged
+			--killed --exclude= --exclude-from=
+			--exclude-per-directory= --exclude-standard
+			--error-unmatch --with-tree= --full-name
+			--abbrev --ignored --exclude-per-directory
+			"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_ls_remote ()
 {
 	__gitcomp "$(__git_remotes)"
@@ -1614,6 +1634,7 @@ _git ()
 	help)        _git_help ;;
 	init)        _git_init ;;
 	log)         _git_log ;;
+	ls-files)    _git_ls_files ;;
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
 	merge)       _git_merge;;
