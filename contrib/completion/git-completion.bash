@@ -1371,7 +1371,7 @@ _git_show_branch ()
 
 _git_stash ()
 {
-	local subcommands='save list show apply clear drop pop create'
+	local subcommands='save list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
@@ -1380,6 +1380,16 @@ _git_stash ()
 		case "$subcommand,$cur" in
 		save,--*)
 			__gitcomp "--keep-index"
+			;;
+		apply,--*)
+			__gitcomp "--index"
+			;;
+		show,--*|apply,--*|drop,--*|pop,--*|branch,--*)
+			COMPREPLY=()
+			;;
+		show,*|apply,*|drop,*|pop,*|branch,*)
+			__gitcomp "$(git --git-dir="$(__gitdir)" stash list \
+					| sed -n -e 's/:.*//p')"
 			;;
 		*)
 			COMPREPLY=()

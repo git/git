@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2007, Nanako Shiraishi
 
-USAGE='[  | save | list | show | apply | clear | drop | pop | create ]'
+USAGE='[  | save | list | show | apply | clear | drop | pop | create | branch ]'
 
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
