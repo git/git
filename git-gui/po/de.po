@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-14 07:18+0100\n"
-"PO-Revision-Date: 2008-05-01 11:51+0200\n"
+"POT-Creation-Date: 2008-08-02 08:58+0200\n"
+"PO-Revision-Date: 2008-08-02 09:09+0200\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -134,18 +134,11 @@ msgstr "Konfliktauflösung nötig"
 msgid "Starting gitk... please wait..."
 msgstr "Gitk wird gestartet... bitte warten."
 
-#: git-gui.sh:1653
-#, tcl-format
-msgid ""
-"Unable to start gitk:\n"
-"\n"
-"%s does not exist"
-msgstr ""
-"Gitk kann nicht gestartet werden:\n"
-"\n"
-"%s existiert nicht"
+#: git-gui.sh:1698
+msgid "Couldn't find gitk in PATH"
+msgstr "Gitk kann im PATH nicht gefunden werden."
 
-#: git-gui.sh:1860 lib/choose_repository.tcl:36
+#: git-gui.sh:1948 lib/choose_repository.tcl:36
 msgid "Repository"
 msgstr "Projektarchiv"
 
@@ -294,7 +287,15 @@ msgstr "Aus der Bereitstellung herausnehmen"
 msgid "Revert Changes"
 msgstr "Änderungen verwerfen"
 
-#: git-gui.sh:2049 git-gui.sh:2368 git-gui.sh:2467
+#: git-gui.sh:2141 git-gui.sh:2702
+msgid "Show Less Context"
+msgstr "Weniger Zeilen anzeigen"
+
+#: git-gui.sh:2145 git-gui.sh:2706
+msgid "Show More Context"
+msgstr "Mehr Zeilen anzeigen"
+
+#: git-gui.sh:2151 git-gui.sh:2470 git-gui.sh:2569
 msgid "Sign Off"
 msgstr "Abzeichnen"
 
@@ -314,11 +315,7 @@ msgstr "Zusammenführen abbrechen..."
 msgid "Push..."
 msgstr "Versenden..."
 
-#: git-gui.sh:2092 lib/choose_repository.tcl:41
-msgid "Apple"
-msgstr "Apple"
-
-#: git-gui.sh:2095 git-gui.sh:2117 lib/about.tcl:14
+#: git-gui.sh:2197 git-gui.sh:2219 lib/about.tcl:14
 #: lib/choose_repository.tcl:44 lib/choose_repository.tcl:50
 #, tcl-format
 msgid "About %s"
@@ -403,15 +400,11 @@ msgstr "Datei:"
 msgid "Apply/Reverse Hunk"
 msgstr "Kontext anwenden/umkehren"
 
-#: git-gui.sh:2595
-msgid "Show Less Context"
-msgstr "Weniger Zeilen anzeigen"
+#: git-gui.sh:2696
+msgid "Apply/Reverse Line"
+msgstr "Zeile anwenden/umkehren"
 
-#: git-gui.sh:2602
-msgid "Show More Context"
-msgstr "Mehr Zeilen anzeigen"
-
-#: git-gui.sh:2610
+#: git-gui.sh:2711
 msgid "Refresh"
 msgstr "Aktualisieren"
 
@@ -427,11 +420,19 @@ msgstr "Schriftgröße vergrößern"
 msgid "Unstage Hunk From Commit"
 msgstr "Kontext aus Bereitstellung herausnehmen"
 
-#: git-gui.sh:2648
+#: git-gui.sh:2748
+msgid "Unstage Line From Commit"
+msgstr "Zeile aus der Bereitstellung herausnehmen"
+
+#: git-gui.sh:2750
 msgid "Stage Hunk For Commit"
 msgstr "Kontext zur Bereitstellung hinzufügen"
 
-#: git-gui.sh:2667
+#: git-gui.sh:2751
+msgid "Stage Line For Commit"
+msgstr "Zeile zur Bereitstellung hinzufügen"
+
+#: git-gui.sh:2771
 msgid "Initializing..."
 msgstr "Initialisieren..."
 
@@ -493,7 +494,11 @@ msgstr "Version:"
 msgid "Copy Commit"
 msgstr "Version kopieren"
 
-#: lib/blame.tcl:384
+#: lib/blame.tcl:260
+msgid "Do Full Copy Detection"
+msgstr "Volle Kopie-Erkennung"
+
+#: lib/blame.tcl:388
 #, tcl-format
 msgid "Reading %s..."
 msgstr "%s lesen..."
@@ -514,7 +519,19 @@ msgstr "Annotierungen für ursprünglichen Ort werden geladen..."
 msgid "Annotation complete."
 msgstr "Annotierung vollständig."
 
-#: lib/blame.tcl:746
+#: lib/blame.tcl:737
+msgid "Busy"
+msgstr "Verarbeitung läuft"
+
+#: lib/blame.tcl:738
+msgid "Annotation process is already running."
+msgstr "Annotierung läuft bereits."
+
+#: lib/blame.tcl:777
+msgid "Running thorough copy detection..."
+msgstr "Intensive Kopie-Erkennung läuft..."
+
+#: lib/blame.tcl:827
 msgid "Loading annotation..."
 msgstr "Annotierung laden..."
 
@@ -759,7 +776,12 @@ msgstr "Schließen"
 msgid "Branch '%s' does not exist."
 msgstr "Zweig »%s« existiert nicht."
 
-#: lib/checkout_op.tcl:206
+#: lib/checkout_op.tcl:193
+#, tcl-format
+msgid "Failed to configure simplified git-pull for '%s'."
+msgstr "Fehler beim Einrichten der vereinfachten git-pull für »%s«."
+
+#: lib/checkout_op.tcl:228
 #, tcl-format
 msgid ""
 "Branch '%s' already exists.\n"
@@ -1485,6 +1507,14 @@ msgstr ""
 msgid "Failed to stage selected hunk."
 msgstr "Fehler beim Bereitstellen des gewählten Kontexts."
 
+#: lib/diff.tcl:386
+msgid "Failed to unstage selected line."
+msgstr "Fehler beim Herausnehmen der gewählten Zeile aus der Bereitstellung."
+
+#: lib/diff.tcl:394
+msgid "Failed to stage selected line."
+msgstr "Fehler beim Bereitstellen der gewählten Zeile."
+
 #: lib/error.tcl:20 lib/error.tcl:114
 msgid "error"
 msgstr "Fehler"
@@ -1750,6 +1780,14 @@ msgid "Match Tracking Branches"
 msgstr "Passend zu Übernahmezweig"
 
 #: lib/option.tcl:126
+msgid "Blame Copy Only On Changed Files"
+msgstr "Kopie-Annotieren nur bei geänderten Dateien"
+
+#: lib/option.tcl:127
+msgid "Minimum Letters To Blame Copy On"
+msgstr "Mindestzahl Zeichen für Kopie-Annotieren"
+
+#: lib/option.tcl:128
 msgid "Number of Diff Context Lines"
 msgstr "Anzahl der Kontextzeilen beim Vergleich"
 
