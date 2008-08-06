@@ -1,6 +1,6 @@
-Subject: What's cooking in git.git (Jul 2008, #11; Thu, 31)
+Subject: What's cooking in git.git (Aug 2008, #01; Tue, 05)
 
-What's cooking in git.git (Jul 2008, #11; Thu, 31)
+What's cooking in git.git (Aug 2008, #01; Tue, 05)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -19,18 +19,62 @@ to do without regression.
 
 Tentative schedule, my wishful thinking:
 
- - 1.6.0-rc2 (Aug  3)
+ - 1.6.0-rc2 (Aug  6)
  - 1.6.0-rc3 (Aug 10)
 
 ----------------------------------------------------------------
 [New Topics]
+
+* jc/post-simplify (Sun Aug 3 17:47:16 2008 -0700) 3 commits
+ + Topo-sort before --simplify-merges
+ + revision traversal: show full history with merge simplification
+ + revision.c: whitespace fix
+
+"log --full-history" is with too much clutter, "log" itself is too cleverer
+than some people, and here is the middle level of merge simplification.
+
+* sp/smart-http (Sun Aug 3 00:25:17 2008 -0700) 2 commits
+ - [do not merge -- original version] Add Git-aware CGI for Git-aware
+   smart HTTP transport
+ - Add backdoor options to receive-pack for use in Git-aware CGI
+
+The "magic" detection protocol was revised to use POST to info/refs; the
+top one queued is from before that discussion.
+
+* jc/add-stop-at-symlink (Mon Aug 4 00:52:37 2008 -0700) 2 commits
+ - add: refuse to add working tree items beyond symlinks
+ - update-index: refuse to add working tree items beyond symlinks
+
+The performance impact of this needs to be discussed in a separate
+thread.
+
+* dp/hash-literally (Sun Aug 3 18:36:22 2008 +0400) 6 commits
+ + add --no-filters option to git hash-object
+ + add --path option to git hash-object
+ + use parse_options() in git hash-object
+ + correct usage help string for git-hash-object
+ + correct argument checking test for git hash-object
+ + teach index_fd to work with pipes
+
+Gives a bit more flexibility to hash-objects by allowing us to lie about
+the path the contents comes from.
+
+* jn/svn-log (Sun Aug 3 14:07:21 2008 +0200) 1 commit
+ - git-svn: --clean-changelog=<style> to sanitize messages
+
+Eric firmly rejected this one so I won't be merging this to 'next' but
+this was an interesting firestarter for discussion nevertheless.
+
+----------------------------------------------------------------
+[On Hold and/or Cooking]
 
 * rs/archive-parse-options (Fri Jul 25 12:41:26 2008 +0200) 1 commit
  + archive: allow --exec and --remote without equal sign
 
 None of the following is for 1.6.0.
 
-* mv/merge-custom (Thu Jul 31 00:38:07 2008 +0200) 5 commits
+* mv/merge-custom (Sat Aug 2 10:08:38 2008 +0200) 6 commits
+ + Builtin git-help.
  + builtin-help: always load_command_list() in cmd_help()
  + Add a second testcase for handling invalid strategies in git-merge
  + Add a new test for using a custom merge strategy
@@ -47,17 +91,6 @@ None of the following is for 1.6.0.
  + merge-base: teach "git merge-base" to drive underlying
    merge_bases_many()
 
-* jc/simplify-merges (Thu Jul 31 01:17:41 2008 -0700) 1 commit
- . revision traversal: show full history with merge simplification
-
-"log --full-history" is with too much clutter, "log" itself is too cleverer
-than some people, and here is the middle level of merge simplification.
-
-----------------------------------------------------------------
-[On Hold and/or Cooking]
-
-None of the following is for 1.6.0.
-
 * rs/imap (Wed Jul 9 22:29:02 2008 +0100) 5 commits
  + Documentation: Improve documentation for git-imap-send(1)
  + imap-send.c: more style fixes
@@ -73,6 +106,10 @@ so inclined.
 * cc/bisect (Fri Jul 25 05:36:37 2008 +0200) 2 commits
  - bisect: only check merge bases when needed
  - bisect: test merge base if good rev is not an ancestor of bad rev
+
+The first one alone does not pass its self-test but combined together they
+seem to.  It does not build confidence as the latter one is supposed to be
+an optimization only.
 
 * jc/add-addremove (Tue Jul 22 22:30:40 2008 -0700) 2 commits
  + builtin-add.c: optimize -A option and "git add ."
