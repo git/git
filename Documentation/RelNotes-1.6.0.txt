@@ -142,6 +142,10 @@ Updates since v1.5.6
 * git-archive uses the zlib default compression level when creating
   zip archive.
 
+* git-archive's command line options --exec and --remote can take their
+  parameters as separate command line arguments, similar to other commands.
+  IOW, both "--exec=path" and "--exec path" are now supported.
+
 * With -v option, git-branch describes the remote tracking statistics
   similar to the way git-checkout reports by how many commits your branch
   is ahead/behind.
@@ -161,9 +165,15 @@ Updates since v1.5.6
 * git-clone can clone from a remote whose URL would be rewritten by
   configuration stored in $HOME/.gitconfig now.
 
+* "git-clone --mirror" is a handy way to set up a bare mirror repository.
+
 * git-cvsserver learned to respond to "cvs co -c".
 
 * git-diff --check now checks leftover merge conflict markers.
+
+* "git-diff -p" learned to grab a better hunk header lines in
+  Pascal/Delphi and Ruby source files, and also pays attention to
+  chapter and part boundary in TeX documents.
 
 * When remote side used to have branch 'foo' and git-fetch finds that now
   it has branch 'foo/bar', it refuses to lose the existing remote tracking
@@ -175,6 +185,10 @@ Updates since v1.5.6
   interface with fast-import incrementally.
 
 * fast-import and fast-export learned to export and import gitlinks.
+
+* "gitk" left background process behind after begin asked to dig very deep
+  history and the user killed the UI; the process is killed when the UI goes
+  away now.
 
 * git-rebase records the original tip of branch in ORIG_HEAD before it is
   rewound.
@@ -234,6 +248,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.6.0-rc0-104-g81dc230
+O=v1.6.0-rc1-113-gf44bc33
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
