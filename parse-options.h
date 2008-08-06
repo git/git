@@ -159,4 +159,6 @@ extern int parse_opt_approxidate_cb(const struct option *, const char *, int);
 	  "use <n> digits to display SHA-1s", \
 	  PARSE_OPT_OPTARG, &parse_opt_abbrev_cb, 0 }
 
+extern const char *parse_options_fix_filename(const char *prefix, const char *file);
+
 #endif

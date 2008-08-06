@@ -138,4 +138,33 @@ test_expect_success '--signoff' '
 	diff expect output
 '
 
+test_expect_success 'commit message from file (1)' '
+	mkdir subdir &&
+	echo "Log in top directory" >log &&
+	echo "Log in sub directory" >subdir/log &&
+	(
+		cd subdir &&
+		git commit --allow-empty -F log
+	) &&
+	commit_msg_is "Log in sub directory"
+'
+
+test_expect_success 'commit message from file (2)' '
+	rm -f log &&
+	echo "Log in sub directory" >subdir/log &&
+	(
+		cd subdir &&
+		git commit --allow-empty -F log
+	) &&
+	commit_msg_is "Log in sub directory"
+'
+
+test_expect_success 'commit message from stdin' '
+	(
+		cd subdir &&
+		echo "Log with foo word" | git commit --allow-empty -F -
+	) &&
+	commit_msg_is "Log with foo word"
+'
+
 test_done

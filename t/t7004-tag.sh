@@ -1070,4 +1070,24 @@ test_expect_success \
 	test_cmp expect actual
 '
 
+test_expect_success 'filename for the message is relative to cwd' '
+	mkdir subdir &&
+	echo "Tag message in top directory" >msgfile-5 &&
+	echo "Tag message in sub directory" >subdir/msgfile-5 &&
+	(
+		cd subdir &&
+		git tag -a -F msgfile-5 tag-from-subdir
+	) &&
+	git cat-file tag tag-from-subdir | grep "in sub directory"
+'
+
+test_expect_success 'filename for the message is relative to cwd' '
+	echo "Tag message in sub directory" >subdir/msgfile-6 &&
+	(
+		cd subdir &&
+		git tag -a -F msgfile-6 tag-from-subdir-2
+	) &&
+	git cat-file tag tag-from-subdir-2 | grep "in sub directory"
+'
+
 test_done

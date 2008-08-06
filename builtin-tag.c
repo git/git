@@ -346,7 +346,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	int annotate = 0, sign = 0, force = 0, lines = 0,
 		list = 0, delete = 0, verify = 0;
-	char *msgfile = NULL, *keyid = NULL;
+	const char *msgfile = NULL, *keyid = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct option options[] = {
 		OPT_BOOLEAN('l', NULL, &list, "list tag names"),
@@ -372,6 +372,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	git_config(git_tag_config, NULL);
 
 	argc = parse_options(argc, argv, options, git_tag_usage, 0);
+	msgfile = parse_options_fix_filename(prefix, msgfile);
 
 	if (keyid) {
 		sign = 1;
