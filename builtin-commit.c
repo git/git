@@ -45,7 +45,7 @@ static enum {
 	COMMIT_PARTIAL,
 } commit_style;
 
-static char *logfile, *force_author;
+static const char *logfile, *force_author;
 static const char *template_file;
 static char *edit_message, *use_message;
 static char *author_name, *author_email, *author_date;
@@ -700,11 +700,14 @@ static int message_is_empty(struct strbuf *sb, int start)
 }
 
 static int parse_and_validate_options(int argc, const char *argv[],
-				      const char * const usage[])
+				      const char * const usage[],
+				      const char *prefix)
 {
 	int f = 0;
 
 	argc = parse_options(argc, argv, builtin_commit_options, usage, 0);
+	logfile = parse_options_fix_filename(prefix, logfile);
+	template_file = parse_options_fix_filename(prefix, template_file);
 
 	if (logfile || message.len || use_message)
 		use_editor = 0;
@@ -814,7 +817,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	if (wt_status_use_color == -1)
 		wt_status_use_color = git_use_color_default;
 
-	argc = parse_and_validate_options(argc, argv, builtin_status_usage);
+	argc = parse_and_validate_options(argc, argv, builtin_status_usage, prefix);
 
 	index_file = prepare_index(argc, argv, prefix);
 
@@ -907,7 +910,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	git_config(git_commit_config, NULL);
 
-	argc = parse_and_validate_options(argc, argv, builtin_commit_usage);
+	argc = parse_and_validate_options(argc, argv, builtin_commit_usage, prefix);
 
 	index_file = prepare_index(argc, argv, prefix);
 
