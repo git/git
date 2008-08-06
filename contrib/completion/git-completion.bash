@@ -1439,7 +1439,7 @@ _git_stash ()
 		apply,--*)
 			__gitcomp "--index"
 			;;
-		show,--*|apply,--*|drop,--*|pop,--*|branch,--*)
+		show,--*|drop,--*|pop,--*|branch,--*)
 			COMPREPLY=()
 			;;
 		show,*|apply,*|drop,*|pop,*|branch,*)
