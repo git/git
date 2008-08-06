@@ -6,6 +6,9 @@ Fixes since v1.5.6.4
 
 * "git cvsimport" used to spit out "UNKNOWN LINE..." diagnostics to stdout.
 
+* "git commit -F filename" and "git tag -F filename" run from subdirectories
+  did not read the right file.
+
 * "git init --template=" with blank "template" parameter linked files
   under root directories to .git, which was a total nonsense.  Instead, it
   means "I do not want to use anything from the template directory".
@@ -24,9 +27,3 @@ Fixes since v1.5.6.4
   header properly.
 
 Contains other various documentation fixes.
-
---
-exec >/var/tmp/1
-echo O=$(git describe maint)
-O=v1.5.6.4-26-g2b6ca6d
-git shortlog --no-merges $O..maint
