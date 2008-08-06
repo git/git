@@ -9,7 +9,7 @@ Fixes since v1.5.4.4
    1.5.4).
 
  * Bogus refspec configuration such as "remote.there.fetch = =" were not
-   detected as errors (regressionin 1.5.4).
+   detected as errors (regression in 1.5.4).
 
  * You couldn't specify a custom editor whose path contains a whitespace
    via GIT_EDITOR (and core.editor).

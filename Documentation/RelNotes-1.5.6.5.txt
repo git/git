@@ -4,9 +4,16 @@ GIT v1.5.6.5 Release Notes
 Fixes since v1.5.6.4
 --------------------
 
+* "git cvsimport" used to spit out "UNKNOWN LINE..." diagnostics to stdout.
+
 * "git init --template=" with blank "template" parameter linked files
   under root directories to .git, which was a total nonsense.  Instead, it
   means "I do not want to use anything from the template directory".
+
+* "git diff-tree" and other diff plumbing ignored diff.renamelimit configuration
+  variable when the user explicitly asked for rename detection.
+
+* "git name-rev --name-only" did not work when "--stdin" option was in effect.
 
 * "git show-branch" mishandled its 8th branch.
 
@@ -17,3 +24,9 @@ Fixes since v1.5.6.4
   header properly.
 
 Contains other various documentation fixes.
+
+--
+exec >/var/tmp/1
+echo O=$(git describe maint)
+O=v1.5.6.4-26-g2b6ca6d
+git shortlog --no-merges $O..maint
