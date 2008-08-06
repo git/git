@@ -8,6 +8,13 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
+* Make attributes apply to trees, not just working tree.
+
+* "git checkout treeish -- path" from a treeish that does not contain
+  path when the index does.  It should error out but it doesn't.
+
+  #git, http://colabti.org/irclogger/irclogger_log/git?date=2008-08-03#l1318
+
 * Safer handling of grafts (Linus, me)
   $gmane/37744/focus=37866.  Partially in 'pu' but stalled due to breakage in
   "shallow clone".
@@ -15,6 +22,10 @@ The latest copy of this document is found at
 * Prepare cvsimport for fixed cvsps (David Mansfield)
 
 Message-Id: <1207100091.10532.64.camel@gandalf.cobite.com>
+
+* Unify post-receive and nonexistent post-fetch (Pascal Obry)
+
+  $gmane/91150/focus=91173
 
 * receive.localBranches = { refuse | allow } (Dscho)
   $gmane/78065
