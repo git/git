@@ -66,7 +66,7 @@ my ($_stdin, $_help, $_edit,
 	$_version, $_fetch_all, $_no_rebase,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_git_format);
+	$_git_format, $_commit_url);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -127,6 +127,8 @@ my %cmd = (
 			  'verbose|v' => \$_verbose,
 			  'dry-run|n' => \$_dry_run,
 			  'fetch-all|all' => \$_fetch_all,
+			  'commit-url=s' => \$_commit_url,
+			  'revision|r=i' => \$_revision,
 			  'no-rebase' => \$_no_rebase,
 			%cmt_opts, %fc_opts } ],
 	'set-tree' => [ \&cmd_set_tree,
@@ -416,6 +418,8 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
+	$url = $_commit_url if defined $_commit_url;
+	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
 		print "Committing to $url ...\n";
 	}
@@ -423,7 +427,6 @@ sub cmd_dcommit {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history.\nPerhaps the repository is empty.";
 	}
-	my $last_rev;
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
 	if ($_no_rebase && scalar(@$linear_refs) > 1) {
 		warn "Attempting to commit more than one change while ",
@@ -446,7 +449,7 @@ sub cmd_dcommit {
 			my $cmt_rev;
 			my %ed_opts = ( r => $last_rev,
 			                log => get_commit_entry($d)->{log},
-			                ra => Git::SVN::Ra->new($gs->full_url),
+			                ra => Git::SVN::Ra->new($url),
 			                config => SVN::Core::config_get_config(
 			                        $Git::SVN::Ra::config_dir
 			                ),
