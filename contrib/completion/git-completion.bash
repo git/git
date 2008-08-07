@@ -561,6 +561,29 @@ _git_add ()
 	COMPREPLY=()
 }
 
+_git_archive ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--format=*)
+		__gitcomp "$(git archive --list)" "" "${cur##--format=}"
+		return
+		;;
+	--remote=*)
+		__gitcomp "$(__git_remotes)" "" "${cur##--remote=}"
+		return
+		;;
+	--*)
+		__gitcomp "
+			--format= --list --verbose
+			--prefix= --remote= --exec=
+			"
+		return
+		;;
+	esac
+	__git_complete_file
+}
+
 _git_bisect ()
 {
 	__git_has_doubledash && return
@@ -667,6 +690,45 @@ _git_cherry_pick ()
 	esac
 }
 
+_git_clean ()
+{
+	__git_has_doubledash && return
+
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--dry-run --quiet"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
+_git_clone ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--local
+			--no-hardlinks
+			--shared
+			--reference
+			--quiet
+			--no-checkout
+			--bare
+			--mirror
+			--origin
+			--upload-pack
+			--template=
+			--depth
+			"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_commit ()
 {
 	__git_has_doubledash && return
@@ -719,11 +781,6 @@ _git_diff ()
 		;;
 	esac
 	__git_complete_file
-}
-
-_git_diff_tree ()
-{
-	__gitcomp "$(__git_refs)"
 }
 
 _git_fetch ()
@@ -796,6 +853,29 @@ _git_gc ()
 	COMPREPLY=()
 }
 
+_git_grep ()
+{
+	__git_has_doubledash && return
+
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--cached
+			--text --ignore-case --word-regexp --invert-match
+			--full-name
+			--extended-regexp --basic-regexp --fixed-strings
+			--files-with-matches --name-only
+			--files-without-match
+			--count
+			--and --or --not --all-match
+			"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_help ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -806,6 +886,44 @@ _git_help ()
 		;;
 	esac
 	__gitcomp "$(__git_all_commands)"
+}
+
+_git_init ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--shared=*)
+		__gitcomp "
+			false true umask group all world everybody
+			" "" "${cur##--shared=}"
+		return
+		;;
+	--*)
+		__gitcomp "--quiet --bare --template= --shared --shared="
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
+_git_ls_files ()
+{
+	__git_has_doubledash && return
+
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--cached --deleted --modified --others --ignored
+			--stage --directory --no-empty-directory --unmerged
+			--killed --exclude= --exclude-from=
+			--exclude-per-directory= --exclude-standard
+			--error-unmatch --with-tree= --full-name
+			--abbrev --ignored --exclude-per-directory
+			"
+		return
+		;;
+	esac
+	COMPREPLY=()
 }
 
 _git_ls_remote ()
@@ -853,6 +971,7 @@ _git_log ()
 			--stat --numstat --shortstat
 			--decorate --diff-filter=
 			--color-words --walk-reflogs
+			--parents --children --full-history
 			"
 		return
 		;;
@@ -885,6 +1004,18 @@ _git_merge ()
 _git_merge_base ()
 {
 	__gitcomp "$(__git_refs)"
+}
+
+_git_mv ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--dry-run"
+		return
+		;;
+	esac
+	COMPREPLY=()
 }
 
 _git_name_rev ()
@@ -1211,6 +1342,18 @@ _git_reset ()
 	__gitcomp "$(__git_refs)"
 }
 
+_git_revert ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--edit --mainline --no-edit --no-commit --signoff"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_rm ()
 {
 	__git_has_doubledash && return
@@ -1283,7 +1426,7 @@ _git_show_branch ()
 
 _git_stash ()
 {
-	local subcommands='save list show apply clear drop pop create'
+	local subcommands='save list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
@@ -1292,6 +1435,16 @@ _git_stash ()
 		case "$subcommand,$cur" in
 		save,--*)
 			__gitcomp "--keep-index"
+			;;
+		apply,--*)
+			__gitcomp "--index"
+			;;
+		show,--*|apply,--*|drop,--*|pop,--*|branch,--*)
+			COMPREPLY=()
+			;;
+		show,*|apply,*|drop,*|pop,*|branch,*)
+			__gitcomp "$(git --git-dir="$(__gitdir)" stash list \
+					| sed -n -e 's/:.*//p')"
 			;;
 		*)
 			COMPREPLY=()
@@ -1473,12 +1626,15 @@ _git ()
 	am)          _git_am ;;
 	add)         _git_add ;;
 	apply)       _git_apply ;;
+	archive)     _git_archive ;;
 	bisect)      _git_bisect ;;
 	bundle)      _git_bundle ;;
 	branch)      _git_branch ;;
 	checkout)    _git_checkout ;;
 	cherry)      _git_cherry ;;
 	cherry-pick) _git_cherry_pick ;;
+	clean)       _git_clean ;;
+	clone)       _git_clone ;;
 	commit)      _git_commit ;;
 	config)      _git_config ;;
 	describe)    _git_describe ;;
@@ -1486,18 +1642,23 @@ _git ()
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
 	gc)          _git_gc ;;
+	grep)        _git_grep ;;
 	help)        _git_help ;;
+	init)        _git_init ;;
 	log)         _git_log ;;
+	ls-files)    _git_ls_files ;;
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
 	merge)       _git_merge;;
 	merge-base)  _git_merge_base ;;
+	mv)          _git_mv ;;
 	name-rev)    _git_name_rev ;;
 	pull)        _git_pull ;;
 	push)        _git_push ;;
 	rebase)      _git_rebase ;;
 	remote)      _git_remote ;;
 	reset)       _git_reset ;;
+	revert)      _git_revert ;;
 	rm)          _git_rm ;;
 	send-email)  _git_send_email ;;
 	shortlog)    _git_shortlog ;;

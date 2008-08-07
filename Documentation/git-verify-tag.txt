@@ -15,8 +15,8 @@ Validates the gpg signature created by 'git-tag'.
 
 OPTIONS
 -------
-<tag>::
-	SHA1 identifier of a git tag object.
+<tag>...::
+	SHA1 identifiers of git tag objects.
 
 Author
 ------

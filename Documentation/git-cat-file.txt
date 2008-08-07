@@ -81,7 +81,7 @@ object specified on stdin:
 ------------
 
 If '--batch-check' is specified, output of the following form is printed for
-each object specified fon stdin:
+each object specified on stdin:
 
 ------------
 <sha1> SP <type> SP <size> LF

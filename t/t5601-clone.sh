@@ -31,6 +31,12 @@ test_expect_success 'clone with excess parameters (2)' '
 
 '
 
+test_expect_success 'output from clone' '
+	rm -fr dst &&
+	git clone -n "file://$(pwd)/src" dst >output &&
+	test $(grep Initialized output | wc -l) = 1
+'
+
 test_expect_success 'clone does not keep pack' '
 
 	rm -fr dst &&
@@ -67,6 +73,25 @@ test_expect_success 'clone creates intermediate directories for bare repo' '
 
 	git clone --bare src long/path/to/bare/dst &&
 	test -f long/path/to/bare/dst/config
+
+'
+
+test_expect_success 'clone --mirror' '
+
+	git clone --mirror src mirror &&
+	test -f mirror/HEAD &&
+	test ! -f mirror/file &&
+	FETCH="$(cd mirror && git config remote.origin.fetch)" &&
+	test "+refs/*:refs/*" = "$FETCH" &&
+	MIRROR="$(cd mirror && git config --bool remote.origin.mirror)" &&
+	test "$MIRROR" = true
+
+'
+
+test_expect_success 'clone --bare names the local repository <name>.git' '
+
+	git clone --bare src &&
+	test -d src.git
 
 '
 

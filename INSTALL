@@ -30,7 +30,7 @@ Issues of note:
    around 1997), it changed its name to gnuit and the name conflict is no
    longer a problem.
 
-   NOTE: When compiled with backward compatiblity option, the GNU
+   NOTE: When compiled with backward compatibility option, the GNU
    Interactive Tools package still can install "git", but you can build it
    with --disable-transition option to avoid this.
 
@@ -73,7 +73,7 @@ Issues of note:
 	- "ssh" is used to push and pull over the net
 
 	- "perl" and POSIX-compliant shells are needed to use most of
-	  the barebone Porcelainish scripts.
+	  the bare-bones Porcelainish scripts.
 
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not

@@ -228,9 +228,10 @@ char **env_setenv(char **env, const char *name);
  * A replacement of main() that ensures that argv[0] has a path
  */
 
-#define main(c,v) main(int argc, const char **argv) \
+#define main(c,v) dummy_decl_mingw_main(); \
+static int mingw_main(); \
+int main(int argc, const char **argv) \
 { \
-	static int mingw_main(); \
 	argv[0] = xstrdup(_pgmptr); \
 	return mingw_main(argc, argv); \
 } \

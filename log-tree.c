@@ -198,7 +198,7 @@ void log_write_email_headers(struct rev_info *opt, const char *name,
 		extra_headers = subject_buffer;
 
 		snprintf(buffer, sizeof(buffer) - 1,
-			 "--%s%s\n"
+			 "\n--%s%s\n"
 			 "Content-Type: text/x-patch;"
 			 " name=\"%s.diff\"\n"
 			 "Content-Transfer-Encoding: 8bit\n"

@@ -5,7 +5,7 @@
  */
 #include "cache.h"
 
-static const char var_usage[] = "git-var [-l | <variable>]";
+static const char var_usage[] = "git var [-l | <variable>]";
 
 struct git_var {
 	const char *name;

@@ -19,6 +19,7 @@ proc clear_diff {} {
 proc reshow_diff {} {
 	global file_states file_lists
 	global current_diff_path current_diff_side
+	global ui_diff
 
 	set p $current_diff_path
 	if {$p eq {}} {
@@ -28,7 +29,8 @@ proc reshow_diff {} {
 		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
 		clear_diff
 	} else {
-		show_diff $p $current_diff_side
+		set save_pos [lindex [$ui_diff yview] 0]
+		show_diff $p $current_diff_side {} $save_pos
 	}
 }
 
@@ -52,7 +54,7 @@ A rescan will be automatically started to find other files which may have the sa
 	rescan ui_ready 0
 }
 
-proc show_diff {path w {lno {}}} {
+proc show_diff {path w {lno {}} {scroll_pos {}}} {
 	global file_states file_lists
 	global is_3way_diff diff_active repo_config
 	global ui_diff ui_index ui_workdir
@@ -151,6 +153,10 @@ proc show_diff {path w {lno {}}} {
 		$ui_diff conf -state disabled
 		set diff_active 0
 		unlock_index
+		if {$scroll_pos ne {}} {
+			update
+			$ui_diff yview moveto $scroll_pos
+		}
 		ui_ready
 		return
 	}
@@ -190,10 +196,10 @@ proc show_diff {path w {lno {}}} {
 		-blocking 0 \
 		-encoding binary \
 		-translation binary
-	fileevent $fd readable [list read_diff $fd]
+	fileevent $fd readable [list read_diff $fd $scroll_pos]
 }
 
-proc read_diff {fd} {
+proc read_diff {fd scroll_pos} {
 	global ui_diff diff_active
 	global is_3way_diff current_diff_header
 
@@ -282,6 +288,10 @@ proc read_diff {fd} {
 		close $fd
 		set diff_active 0
 		unlock_index
+		if {$scroll_pos ne {}} {
+			update
+			$ui_diff yview moveto $scroll_pos
+		}
 		ui_ready
 
 		if {[$ui_diff index end] eq {2.0}} {

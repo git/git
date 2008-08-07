@@ -101,7 +101,7 @@ matching msgid lines.  A few tips:
    "printf()"-like functions.  Make sure "%s", "%d", and "%%" in your
    translated messages match the original.
 
-   When you have to change the order of words, you can add "<number>\$"
+   When you have to change the order of words, you can add "<number>$"
    between '%' and the conversion ('s', 'd', etc.) to say "<number>-th
    parameter to the format string is used at this point".  For example,
    if the original message is like this:
@@ -111,12 +111,17 @@ matching msgid lines.  A few tips:
    and if for whatever reason your translation needs to say weight first
    and then length, you can say something like:
 
-	"WEIGHT IS %2\$d, LENGTH IS %1\$d"
+	"WEIGHT IS %2$d, LENGTH IS %1$d"
 
-   The reason you need a backslash before dollar sign is because
-   this is a double quoted string in Tcl language, and without
-   it the letter introduces a variable interpolation, which you
-   do not want here.
+   A format specification with a '*' (asterisk) refers to *two* arguments
+   instead of one, hence the succeeding argument number is two higher
+   instead of one. So, a message like this
+
+	"%s ... %*i of %*i %s (%3i%%)"
+
+   is equivalent to
+
+	"%1$s ... %2$*i of %4$*i %6$s (%7$3i%%)"
 
  - A long message can be split across multiple lines by ending the
    string with a double quote, and starting another string on the next

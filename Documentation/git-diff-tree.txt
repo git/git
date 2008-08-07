@@ -49,13 +49,13 @@ include::diff-options.txt[]
 --stdin::
 	When '--stdin' is specified, the command does not take
 	<tree-ish> arguments from the command line.  Instead, it
-	reads either one <commit> or a pair of <tree-ish>
+	reads either one <commit> or a list of <commit>
 	separated with a single space from its standard input.
 +
 When a single commit is given on one line of such input, it compares
 the commit with its parents.  The following flags further affects its
-behavior.  This does not apply to the case where two <tree-ish>
-separated with a single space are given.
+behavior.  The remaining commits, when given, are used as if they are
+parents of the first commit.
 
 -m::
 	By default, 'git-diff-tree --stdin' does not show

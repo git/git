@@ -141,8 +141,8 @@ test_expect_success 'cleanup commit messages (strip,-F)' '
 
 echo "sample
 
-# Please enter the commit message for your changes.
-# (Comment lines starting with '#' will not be included)" >expect
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit." >expect
 
 test_expect_success 'cleanup commit messages (strip,-F,-e)' '
 

@@ -33,8 +33,8 @@ This manual page describes only the most frequently used options.
 
 OPTIONS
 -------
-<object>::
-	The name of the object to show.
+<object>...::
+	The names of objects to show.
 	For a more complete list of ways to spell object names, see
 	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 

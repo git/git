@@ -52,7 +52,11 @@ catch {rename send {}} ; # What an evil concept...
 set oguilib {@@GITGUI_LIBDIR@@}
 set oguirel {@@GITGUI_RELATIVE@@}
 if {$oguirel eq {1}} {
-	set oguilib [file dirname [file dirname [file normalize $argv0]]]
+	set oguilib [file dirname [file normalize $argv0]]
+	if {[file tail $oguilib] eq {git-core}} {
+		set oguilib [file dirname $oguilib]
+	}
+	set oguilib [file dirname $oguilib]
 	set oguilib [file join $oguilib share git-gui lib]
 	set oguimsg [file join $oguilib msgs]
 } elseif {[string match @@* $oguirel]} {
@@ -317,7 +321,7 @@ proc _git_cmd {name} {
 	return $v
 }
 
-proc _which {what} {
+proc _which {what args} {
 	global env _search_exe _search_path
 
 	if {$_search_path eq {}} {
@@ -340,8 +344,14 @@ proc _which {what} {
 		}
 	}
 
+	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
+		set suffix {}
+	} else {
+		set suffix $_search_exe
+	}
+
 	foreach p $_search_path {
-		set p [file join $p $what$_search_exe]
+		set p [file join $p $what$suffix]
 		if {[file exists $p]} {
 			return [file normalize $p]
 		}
@@ -1686,7 +1696,7 @@ proc do_gitk {revs} {
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set exe [_which gitk]
+	set exe [_which gitk -script]
 	set cmd [list [info nameofexecutable] $exe]
 	if {$exe eq {}} {
 		error_popup [mc "Couldn't find gitk in PATH"]
@@ -2925,6 +2935,7 @@ if {[is_enabled transport]} {
 	populate_fetch_menu
 	set n [expr {[.mbar.remote index end] - $n}]
 	if {$n > 0} {
+		if {[.mbar.remote type 0] eq "tearoff"} { incr n }
 		.mbar.remote insert $n separator
 	}
 	unset n

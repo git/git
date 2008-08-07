@@ -155,8 +155,9 @@ blobs contained in a commit.
   name the same commit object if there are no other object in
   your repository whose object name starts with dae86e.
 
-* An output from 'git-describe'; i.e. a closest tag, followed by a
-  dash, a `g`, and an abbreviated object name.
+* An output from 'git-describe'; i.e. a closest tag, optionally
+  followed by a dash and a number of commits, followed by a dash, a
+  `g`, and an abbreviated object name.
 
 * A symbolic ref name.  E.g. 'master' typically means the commit
   object referenced by $GIT_DIR/refs/heads/master.  If you

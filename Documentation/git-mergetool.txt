@@ -40,7 +40,7 @@ tool is available in PATH.
 +
 Instead of running one of the known merge tool programs
 'git-mergetool' can be customized to run an alternative program
-by specifying the command line to invoke in a configration
+by specifying the command line to invoke in a configuration
 variable `mergetool.<tool>.cmd`.
 +
 When 'git-mergetool' is invoked with this tool (either through the

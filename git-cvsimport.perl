@@ -952,7 +952,7 @@ while (<CVS>) {
 	} elsif (/^-+$/) { # end of unknown-line processing
 		$state = 1;
 	} elsif ($state != 11) { # ignore stuff when skipping
-		print "* UNKNOWN LINE * $_\n";
+		print STDERR "* UNKNOWN LINE * $_\n";
 	}
 }
 commit() if $branch and $state != 11;

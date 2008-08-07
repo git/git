@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git push' [--all] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>]
-           [--repo=all] [-f | --force] [-v | --verbose] [<repository> <refspec>...]
+	   [--repo=all] [-f | --force] [-v | --verbose]
+	   [<repository> <refspec>...]
 
 DESCRIPTION
 -----------
@@ -29,8 +30,8 @@ OPTIONS
 	The "remote" repository that is destination of a push
 	operation.  See the section <<URLS,GIT URLS>> below.
 
-<refspec>::
-	The canonical format of a <refspec> parameter is
+<refspec>...::
+	The canonical format of each <refspec> parameter is
 	`+?<src>:<dst>`; that is, an optional plus `+`, followed
 	by the source ref, followed by a colon `:`, followed by
 	the destination ref.
@@ -180,11 +181,11 @@ git push origin :experimental::
 	Find a ref that matches `experimental` in the `origin` repository
 	(e.g. `refs/heads/experimental`), and delete it.
 
-git push origin master:satellite/master::
-	Find a ref that matches `master` in the source repository
-	(most likely, it would find `refs/heads/master`), and update
-	the ref that matches `satellite/master` (most likely, it would
-	be `refs/remotes/satellite/master`) in `origin` repository with it.
+git push origin master:satellite/master dev:satellite/dev::
+	Use the source ref that matches `master` (e.g. `refs/heads/master`)
+	to update the ref that matches `satellite/master` (most probably
+	`refs/remotes/satellite/master`) in the `origin` repository, then
+	do the same for `dev` and `satellite/dev`.
 
 git push origin master:refs/heads/experimental::
 	Create the branch `experimental` in the `origin` repository
