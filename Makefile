@@ -1060,6 +1060,8 @@ export TAR INSTALL DESTDIR SHELL_PATH
 
 ### Build rules
 
+SHELL = $(SHELL_PATH)
+
 all:: $(ALL_PROGRAMS) $(BUILT_INS) $(OTHER_PROGRAMS) GIT-BUILD-OPTIONS
 ifneq (,$X)
 	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), $(RM) '$p';)
