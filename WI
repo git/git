@@ -10,11 +10,44 @@ log () {
 	git shortlog -w76,2,4 --no-merges "$@"
 }
 
-echo "Subject: What's in git.git (stable)"
-echo "X-maint-at: $maint_at"
-echo "X-master-at: $master_at"
-echo "X-maint-was: $maint_was"
-echo "X-master-was: $master_was"
+one () {
+	git show -s --pretty="format:%h (%s)" "$1"
+}
+
+eval $(LC_ALL=C date +"monthname=%b month=%m year=%Y date=%d dow=%a")
+
+lead="whats/in/$year/$month"
+issue=$(
+	cd Meta &&
+	git ls-tree -r --name-only HEAD "$lead"  | tail -n 1
+)
+if test -n "$issue"
+then
+	issue=$( expr "$issue" : '.*/0*\([1-9][0-9]*\)\.txt$' )
+	issue=$(( $issue + 1 ))
+else
+	issue=1
+fi
+issue=$( printf "%02d" $issue )
+
+mkdir -p "Meta/$lead"
+exec >"Meta/$lead/$issue.txt"
+
+cat <<EOF
+Subject: What's in git.git ($monthname $year, #$issue; $dow, $date)
+X-maint-at: $maint_at"
+X-master-at: $master_at"
+X-maint-was: $maint_was"
+X-master-was: $master_was"
+
+What's in git.git ($monthname $year, #$issue; $dow, $date)
+
+  maint $(one maint)
+ master $(one master)
+------------------------------------------------------------------------
+
+BLURB HERE
+EOF
 
 tagged=`git rev-parse --not --verify hold/sa/maint`
 list=`git rev-list $tagged refs/heads/maint 2>/dev/null`

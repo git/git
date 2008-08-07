@@ -222,7 +222,7 @@ close FH;
 if (@ARGV > 1) {
 	open FH, "$ARGV[1]";
 } else {
-	open FH, "Meta/WC |";
+	open FH, "Meta/WC generate |";
 }
 $new_wc = parse_whats_cooking(\*FH);
 close FH;
