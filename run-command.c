@@ -68,6 +68,7 @@ int start_command(struct child_process *cmd)
 	trace_argv_printf(cmd->argv, "trace: run_command:");
 
 #ifndef __MINGW32__
+	fflush(NULL);
 	cmd->pid = fork();
 	if (!cmd->pid) {
 		if (cmd->no_stdin)
@@ -304,6 +305,9 @@ int start_async(struct async *async)
 	async->out = pipe_out[0];
 
 #ifndef __MINGW32__
+	/* Flush stdio before fork() to avoid cloning buffers */
+	fflush(NULL);
+
 	async->pid = fork();
 	if (async->pid < 0) {
 		error("fork (async) failed: %s", strerror(errno));

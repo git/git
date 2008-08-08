@@ -131,10 +131,6 @@ static int parse_funcname_pattern(const char *var, const char *ep, const char *v
  */
 int git_diff_ui_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "diff.renamelimit")) {
-		diff_rename_limit_default = git_config_int(var, value);
-		return 0;
-	}
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
 		diff_use_color_default = git_config_colorbool(var, value, -1);
 		return 0;
@@ -167,6 +163,11 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 
 int git_diff_basic_config(const char *var, const char *value, void *cb)
 {
+	if (!strcmp(var, "diff.renamelimit")) {
+		diff_rename_limit_default = git_config_int(var, value);
+		return 0;
+	}
+
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
 		if (!value)
@@ -1380,7 +1381,14 @@ static struct builtin_funcname_pattern {
 			"^[ 	]*\\(\\([ 	]*"
 			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
 			"[ 	]*([^;]*\\)$" },
-	{ "tex", "^\\(\\\\\\(sub\\)*section{.*\\)$" },
+	{ "pascal", "^\\(\\(procedure\\|function\\|constructor\\|"
+			"destructor\\|interface\\|implementation\\|"
+			"initialization\\|finalization\\)[ \t]*.*\\)$"
+			"\\|"
+			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$"
+			},
+	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$" },
+	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
 };
 
 static const char *diff_funcname_pattern(struct diff_filespec *one)

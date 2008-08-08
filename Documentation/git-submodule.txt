@@ -146,8 +146,8 @@ OPTIONS
 	(the default). This limit only applies to modified submodules. The
 	size is always limited to 1 for added/deleted/typechanged submodules.
 
-<path>::
-	Path to submodule(s). When specified this will restrict the command
+<path>...::
+	Paths to submodule(s). When specified this will restrict the command
 	to only operate on the submodules found at the specified paths.
 	(This argument is required with add).
 

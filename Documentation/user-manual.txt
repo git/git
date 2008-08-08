@@ -479,10 +479,10 @@ Bisecting: 3537 revisions left to test after this
 -------------------------------------------------
 
 If you run "git branch" at this point, you'll see that git has
-temporarily moved you to a new branch named "bisect".  This branch
-points to a commit (with commit id 65934...) that is reachable from
-"master" but not from v2.6.18.  Compile and test it, and see whether
-it crashes.  Assume it does crash.  Then:
+temporarily moved you in "(no branch)". HEAD is now detached from any
+branch and points directly to a commit (with commit id 65934...) that
+is reachable from "master" but not from v2.6.18. Compile and test it,
+and see whether it crashes. Assume it does crash. Then:
 
 -------------------------------------------------
 $ git bisect bad
@@ -504,8 +504,7 @@ report with the commit id.  Finally, run
 $ git bisect reset
 -------------------------------------------------
 
-to return you to the branch you were on before and delete the
-temporary "bisect" branch.
+to return you to the branch you were on before.
 
 Note that the version which git-bisect checks out for you at each
 point is just a suggestion, and you're free to try a different
@@ -527,6 +526,22 @@ $ git reset --hard fb47ddb2db...
 
 then test, run "bisect good" or "bisect bad" as appropriate, and
 continue.
+
+Instead of "git bisect visualize" and then "git reset --hard
+fb47ddb2db...", you might just want to tell git that you want to skip
+the current commit:
+
+-------------------------------------------------
+$ git bisect skip
+-------------------------------------------------
+
+In this case, though, git may not eventually be able to tell the first
+bad one between some first skipped commits and a latter bad commit.
+
+There are also ways to automate the bisecting process if you have a
+test script that can tell a good from a bad commit. See
+linkgit:git-bisect[1] for more information about this and other "git
+bisect" features.
 
 [[naming-commits]]
 Naming commits

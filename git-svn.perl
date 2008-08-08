@@ -796,8 +796,8 @@ sub cmd_commit_diff {
 }
 
 sub cmd_info {
-	my $path = canonicalize_path(shift or ".");
-	unless (scalar(@_) == 0) {
+	my $path = canonicalize_path(defined($_[0]) ? $_[0] : ".");
+	if (exists $_[1]) {
 		die "Too many arguments specified\n";
 	}
 
@@ -813,6 +813,10 @@ sub cmd_info {
 		die "Unable to determine upstream SVN information from ",
 		    "working tree history\n";
 	}
+
+	# canonicalize_path() will return "" to make libsvn 1.5.x happy,
+	$path = "." if $path eq "";
+
 	my $full_url = $url . ($path eq "." ? "" : "/$path");
 
 	if ($_url) {
@@ -1420,8 +1424,12 @@ sub read_all_remotes {
 	    svn.useSvmProps/) };
 	$use_svm_props = $use_svm_props eq 'true' if $use_svm_props;
 	foreach (grep { s/^svn-remote\.// } command(qw/config -l/)) {
-		if (m!^(.+)\.fetch=\s*(.*)\s*:\s*refs/remotes/(.+)\s*$!) {
-			my ($remote, $local_ref, $remote_ref) = ($1, $2, $3);
+		if (m!^(.+)\.fetch=\s*(.*)\s*:\s*(.+)\s*$!) {
+			my ($remote, $local_ref, $_remote_ref) = ($1, $2, $3);
+			die("svn-remote.$remote: remote ref '$_remote_ref' "
+			    . "must start with 'refs/remotes/'\n")
+				unless $_remote_ref =~ m{^refs/remotes/(.+)};
+			my $remote_ref = $1;
 			$local_ref =~ s{^/}{};
 			$r->{$remote}->{fetch}->{$local_ref} = $remote_ref;
 			$r->{$remote}->{svm} = {} if $use_svm_props;

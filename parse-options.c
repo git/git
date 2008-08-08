@@ -483,3 +483,15 @@ int parse_opt_approxidate_cb(const struct option *opt, const char *arg,
 	*(unsigned long *)(opt->value) = approxidate(arg);
 	return 0;
 }
+
+/*
+ * This should really be OPTION_FILENAME type as a part of
+ * parse_options that take prefix to do this while parsing.
+ */
+extern const char *parse_options_fix_filename(const char *prefix, const char *file)
+{
+	if (!file || !prefix || is_absolute_path(file) || !strcmp("-", file))
+		return file;
+	return prefix_filename(prefix, strlen(prefix), file);
+}
+

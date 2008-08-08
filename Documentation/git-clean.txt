@@ -8,7 +8,7 @@ git-clean - Remove untracked files from the working tree
 SYNOPSIS
 --------
 [verse]
-'git clean' [-d] [-f] [-n] [-q] [-x | -X] [--] <paths>...
+'git clean' [-d] [-f] [-n] [-q] [-x | -X] [--] <path>...
 
 DESCRIPTION
 -----------
@@ -16,8 +16,8 @@ Removes files unknown to git.  This allows to clean the working tree
 from files that are not under version control.  If the '-x' option is
 specified, ignored files are also removed, allowing to remove all
 build products.
-When optional `<paths>...` arguments are given, the paths
-affected are further limited to those that match them.
+If any optional `<path>...` arguments are given, only those paths
+are affected.
 
 
 OPTIONS

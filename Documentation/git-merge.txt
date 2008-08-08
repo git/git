@@ -32,8 +32,8 @@ include::merge-options.txt[]
 	it is created). The 'git-fmt-merge-msg' script can be used
 	to give a good default for automated 'git-merge' invocations.
 
-<remote>::
-	Other branch head merged into our branch.  You need at
+<remote>...::
+	Other branch heads to merge into our branch.  You need at
 	least one <remote>.  Specifying more than one <remote>
 	obviously means you are trying an Octopus.
 

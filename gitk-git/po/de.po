@@ -7,19 +7,37 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-05-01 11:54+0200\n"
-"PO-Revision-Date: 2008-05-02 21:12+0200\n"
+"POT-Creation-Date: 2008-05-24 22:32+0200\n"
+"PO-Revision-Date: 2008-05-24 22:40+0200\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: gitk:111
-msgid "Error executing git rev-list:"
-msgstr "Fehler beim Ausführen von git-rev-list:"
+#: gitk:102
+msgid "Couldn't get list of unmerged files:"
+msgstr "Liste der nicht-zusammengeführten Dateien nicht gefunden:"
 
-#: gitk:124
+#: gitk:329
+msgid "No files selected: --merge specified but no files are unmerged."
+msgstr ""
+"Keine Dateien ausgewählt: --merge angegeben, es existieren aber keine nicht-"
+"zusammengeführten Dateien."
+
+#: gitk:332
+msgid ""
+"No files selected: --merge specified but no unmerged files are within file "
+"limit."
+msgstr ""
+"Keine Dateien ausgewähle: --merge angegeben, aber keine nicht-"
+"zusammengeführten Dateien sind in der Dateiauswahl."
+
+#: gitk:354
+msgid "Error executing git log:"
+msgstr "Fehler beim Ausführen von git-log:"
+
+#: gitk:369
 msgid "Reading"
 msgstr "Lesen"
 
@@ -56,7 +74,11 @@ msgstr "Datei"
 msgid "Update"
 msgstr "Aktualisieren"
 
-#: gitk:664
+#: gitk:1722
+msgid "Reload"
+msgstr "Neu laden"
+
+#: gitk:1723
 msgid "Reread references"
 msgstr "Zweige neu laden"
 
@@ -112,7 +134,11 @@ msgstr "Tastenkürzel"
 msgid "SHA1 ID: "
 msgstr "SHA1:"
 
-#: gitk:791
+#: gitk:1831
+msgid "Row"
+msgstr "Zeile"
+
+#: gitk:1862
 msgid "Find"
 msgstr "Suche"
 
@@ -126,19 +152,19 @@ msgstr "vorige"
 
 #: gitk:794
 msgid "commit"
-msgstr "Version"
+msgstr "Version nach"
 
 #: gitk:797 gitk:799 gitk:2356 gitk:2379 gitk:2403 gitk:4306 gitk:4369
 msgid "containing:"
-msgstr "enthaltend:"
+msgstr "Beschreibung:"
 
 #: gitk:800 gitk:1778 gitk:1783 gitk:2431
 msgid "touching paths:"
-msgstr "Pfad betreffend:"
+msgstr "Dateien:"
 
 #: gitk:801 gitk:2436
 msgid "adding/removing string:"
-msgstr "Zeichenkette ändernd:"
+msgstr "Änderungen:"
 
 #: gitk:810 gitk:812
 msgid "Exact"
@@ -253,23 +279,25 @@ msgstr "Diesen auch hervorheben"
 msgid "Highlight this only"
 msgstr "Nur diesen hervorheben"
 
-#: gitk:1318
+#: gitk:2162
+msgid "External diff"
+msgstr "Externer Vergleich"
+
+#: gitk:2403
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
 "\n"
-"Copyright © 2005-2006 Paul Mackerras\n"
+"Copyright © 2005-2008 Paul Mackerras\n"
 "\n"
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 "\n"
 "Gitk - eine Visualisierung der Git Historie\n"
 "\n"
-"Copyright © 2005-2006 Paul Mackerras\n"
+"Copyright © 2005-2008 Paul Mackerras\n"
 "\n"
-"Benutzung und Weiterverbreitung gemäß den Bedingungen der GNU General Public "
-"License\n"
-"        "
+"Benutzung und Weiterverbreitung gemäß den Bedingungen der GNU General Public License"
 
 #: gitk:1326 gitk:1387 gitk:6582
 msgid "Close"
@@ -450,11 +478,11 @@ msgstr "Name"
 msgid "Remember this view"
 msgstr "Diese Ansicht speichern"
 
-#: gitk:1928
-msgid "Commits to include (arguments to git rev-list):"
-msgstr "Versionen anzeigen (Argumente von git-rev-list):"
+#: gitk:3126
+msgid "Commits to include (arguments to git log):"
+msgstr "Versionen anzeigen (Argumente von git-log):"
 
-#: gitk:1935
+#: gitk:3133
 msgid "Command to generate more commits to include:"
 msgstr "Versionsliste durch folgendes Kommando erzeugen lassen:"
 
@@ -566,7 +594,11 @@ msgstr "Kinder"
 msgid "Reset %s branch to here"
 msgstr "Zweig »%s« hierher zurücksetzen"
 
-#: gitk:6050
+#: gitk:7204
+msgid "Detached head: can't reset"
+msgstr "Zweigspitze ist abgetrennt: Zurücksetzen nicht möglich"
+
+#: gitk:7236
 msgid "Top"
 msgstr "Oben"
 
@@ -798,7 +830,15 @@ msgstr "Naheliegende Überschriften anzeigen"
 msgid "Limit diffs to listed paths"
 msgstr "Vergleich nur für angezeigte Pfade"
 
-#: gitk:8045
+#: gitk:9264
+msgid "External diff tool"
+msgstr "Externes Vergleich-(Diff-)Programm"
+
+#: gitk:9266
+msgid "Choose..."
+msgstr "Wählen..."
+
+#: gitk:9271
 msgid "Colors: press to choose"
 msgstr "Farben: Klicken zum Wählen"
 
@@ -873,22 +913,6 @@ msgstr "Mehrdeutige Angabe »%s«: Sowohl Version als auch Dateiname existiert."
 msgid "Bad arguments to gitk:"
 msgstr "Falsche Kommandozeilen-Parameter für gitk:"
 
-#: gitk:8637
-msgid "Couldn't get list of unmerged files:"
-msgstr "Liste der nicht-zusammengeführten Dateien nicht gefunden:"
-
-#: gitk:8653
-msgid "No files selected: --merge specified but no files are unmerged."
-msgstr "Keine Dateien ausgewählt: --merge angegeben, es existieren aber keine nicht-zusammengeführten Dateien."
-
-#: gitk:8656
-msgid ""
-"No files selected: --merge specified but no unmerged files are within file "
-"limit."
-msgstr ""
-"Keine Dateien ausgewähle: --merge angegeben, aber keine nicht-"
-"zusammengeführten Dateien sind in der Dateiauswahl."
-
-#: gitk:8717
+#: gitk:9915
 msgid "Command line"
 msgstr "Kommandozeile"

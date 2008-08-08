@@ -58,7 +58,7 @@ frequently used options.
 	For a more complete list of ways to spell object names, see
 	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
-<path>::
+<path>...::
 
 	Limit commits to the ones touching files in the given paths. Note, to
 	avoid ambiguity wrt. revision names use "--" to separate the paths

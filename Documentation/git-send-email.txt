@@ -56,7 +56,7 @@ The --cc option must be repeated for each user you want on the cc list.
 
 --from::
 	Specify the sender of the emails.  This will default to
-	the value GIT_COMMITTER_IDENT, as returned by "git-var -l".
+	the value GIT_COMMITTER_IDENT, as returned by "git var -l".
 	The user will still be prompted to confirm this entry.
 
 --in-reply-to::

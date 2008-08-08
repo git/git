@@ -291,7 +291,7 @@ fi
 ws=`cat "$dotest/whitespace"`
 if test "$(cat "$dotest/sign")" = t
 then
-	SIGNOFF=`git-var GIT_COMMITTER_IDENT | sed -e '
+	SIGNOFF=`git var GIT_COMMITTER_IDENT | sed -e '
 			s/>.*/>/
 			s/^/Signed-off-by: /'
 		`

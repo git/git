@@ -69,11 +69,6 @@ static int prune_dir(int i, char *path)
 			if (de->d_name[0] != '.')
 				break;
 			continue;
-		case 14:
-			if (prefixcmp(de->d_name, "tmp_obj_"))
-				break;
-			prune_tmp_object(path, de->d_name);
-			continue;
 		case 38:
 			sprintf(name, "%02x", i);
 			memcpy(name+2, de->d_name, len+1);
@@ -88,6 +83,10 @@ static int prune_dir(int i, char *path)
 				continue;
 
 			prune_object(path, de->d_name, sha1);
+			continue;
+		}
+		if (!prefixcmp(de->d_name, "tmp_obj_")) {
+			prune_tmp_object(path, de->d_name);
 			continue;
 		}
 		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);

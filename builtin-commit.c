@@ -46,7 +46,7 @@ static enum {
 	COMMIT_PARTIAL,
 } commit_style;
 
-static char *logfile, *force_author;
+static const char *logfile, *force_author;
 static const char *template_file;
 static char *edit_message, *use_message;
 static char *author_name, *author_email, *author_date;
@@ -554,14 +554,18 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 
 		fprintf(fp,
 			"\n"
-			"# Please enter the commit message for your changes.\n"
-			"# To abort the commit, use an empty commit message.\n"
-			"# (Comment lines starting with '#' will ");
+			"# Please enter the commit message for your changes.");
 		if (cleanup_mode == CLEANUP_ALL)
-			fprintf(fp, "not be included)\n");
+			fprintf(fp,
+				" Lines starting\n"
+				"# with '#' will be ignored, and an empty"
+				" message aborts the commit.\n");
 		else /* CLEANUP_SPACE, that is. */
-			fprintf(fp, "be kept.\n"
-				"# You can remove them yourself if you want to)\n");
+			fprintf(fp,
+				" Lines starting\n"
+				"# with '#' will be kept; you may remove them"
+				" yourself if you want to.\n"
+				"# An empty message aborts the commit.\n");
 		if (only_include_assumed)
 			fprintf(fp, "# %s\n", only_include_assumed);
 
@@ -707,11 +711,14 @@ static int message_is_empty(struct strbuf *sb, int start)
 }
 
 static int parse_and_validate_options(int argc, const char *argv[],
-				      const char * const usage[])
+				      const char * const usage[],
+				      const char *prefix)
 {
 	int f = 0;
 
 	argc = parse_options(argc, argv, builtin_commit_options, usage, 0);
+	logfile = parse_options_fix_filename(prefix, logfile);
+	template_file = parse_options_fix_filename(prefix, template_file);
 
 	if (logfile || message.len || use_message)
 		use_editor = 0;
@@ -832,7 +839,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	if (wt_status_use_color == -1)
 		wt_status_use_color = git_use_color_default;
 
-	argc = parse_and_validate_options(argc, argv, builtin_status_usage);
+	argc = parse_and_validate_options(argc, argv, builtin_status_usage, prefix);
 
 	index_file = prepare_index(argc, argv, prefix);
 
@@ -925,7 +932,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	git_config(git_commit_config, NULL);
 
-	argc = parse_and_validate_options(argc, argv, builtin_commit_usage);
+	argc = parse_and_validate_options(argc, argv, builtin_commit_usage, prefix);
 
 	index_file = prepare_index(argc, argv, prefix);
 
@@ -1004,7 +1011,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		stripspace(&sb, cleanup_mode == CLEANUP_ALL);
 	if (sb.len < header_len || message_is_empty(&sb, header_len)) {
 		rollback_index_files();
-		die("no commit message?  aborting commit.");
+		fprintf(stderr, "Aborting commit due to empty commit message.\n");
+		exit(1);
 	}
 	strbuf_addch(&sb, '\0');
 	if (is_encoding_utf8(git_commit_encoding) && !is_utf8(sb.buf))

@@ -41,10 +41,10 @@ include::diff-options.txt[]
 	Print out the ref names of any commits that are shown.
 
 --full-diff::
-	Without this flag, "git log -p <paths>..." shows commits that
+	Without this flag, "git log -p <path>..." shows commits that
 	touch the specified paths, and diffs about the same specified
 	paths.  With this, the full diff is shown for commits that touch
-	the specified paths; this means that "<paths>..." limits only
+	the specified paths; this means that "<path>..." limits only
 	commits, and doesn't limit diff for those commits.
 
 --follow::
@@ -57,7 +57,7 @@ include::diff-options.txt[]
 	Note that only message is considered, if also a diff is shown
 	its size is not included.
 
-<paths>...::
+<path>...::
 	Show only commits that affect any of the specified paths.
 
 

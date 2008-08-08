@@ -90,7 +90,7 @@ TODO: In the future, we might also do
 Currently, the module merely wraps calls to external Git tools. In the future,
 it will provide a much faster way to interact with Git by linking directly
 to libgit. This should be completely opaque to the user, though (performance
-increate nonwithstanding).
+increase notwithstanding).
 
 =cut
 
@@ -417,6 +417,7 @@ have more complicated structure.
 =cut
 
 sub command_close_bidi_pipe {
+	local $?;
 	my ($pid, $in, $out, $ctx) = @_;
 	foreach my $fh ($in, $out) {
 		unless (close $fh) {
@@ -730,7 +731,7 @@ This suite of functions retrieves and parses ident information, as stored
 in the commit and tag objects or produced by C<var GIT_type_IDENT> (thus
 C<TYPE> can be either I<author> or I<committer>; case is insignificant).
 
-The C<ident> method retrieves the ident information from C<git-var>
+The C<ident> method retrieves the ident information from C<git var>
 and either returns it as a scalar string or as an array with the fields parsed.
 Alternatively, it can take a prepared ident string (e.g. from the commit
 object) and just parse it.
@@ -839,8 +840,8 @@ sub _close_hash_and_insert_object {
 
 	my @vars = map { 'hash_object_' . $_ } qw(pid in out ctx);
 
-	command_close_bidi_pipe($self->{@vars});
-	delete $self->{@vars};
+	command_close_bidi_pipe(@$self{@vars});
+	delete @$self{@vars};
 }
 
 =item cat_blob ( SHA1, FILEHANDLE )
@@ -928,8 +929,8 @@ sub _close_cat_blob {
 
 	my @vars = map { 'cat_blob_' . $_ } qw(pid in out ctx);
 
-	command_close_bidi_pipe($self->{@vars});
-	delete $self->{@vars};
+	command_close_bidi_pipe(@$self{@vars});
+	delete @$self{@vars};
 }
 
 =back

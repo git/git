@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git clone' [--template=<template_directory>]
-	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare]
+	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--depth <depth>] [--] <repository> [<directory>]
 
@@ -105,6 +105,9 @@ then the cloned repository will become corrupt.
 	them to `refs/remotes/origin/`.  When this option is
 	used, neither remote-tracking branches nor the related
 	configuration variables are created.
+
+--mirror::
+	Set up a mirror of the remote repository.  This implies --bare.
 
 --origin <name>::
 -o <name>::
