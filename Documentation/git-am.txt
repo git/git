@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git am' [--signoff] [--keep] [--utf8 | --no-utf8]
-         [--3way] [--interactive] [--binary]
+	 [--3way] [--interactive]
          [--whitespace=<option>] [-C<n>] [-p<n>]
 	 [<mbox> | <Maildir>...]
 'git am' (--skip | --resolved | --abort)
@@ -58,11 +58,6 @@ default.   You could use `--no-utf8` to override this.
 	3-way merge, if the patch records the identity of blobs
 	it is supposed to apply to, and we have those blobs
 	available locally.
-
--b::
---binary::
-	Pass `--allow-binary-replacement` flag to 'git-apply'
-	(see linkgit:git-apply[1]).
 
 --whitespace=<option>::
 	This flag is passed to the 'git-apply' (see linkgit:git-apply[1])
