@@ -14,20 +14,10 @@ static int diff_tree_commit_sha1(const unsigned char *sha1)
 	return log_tree_commit(&log_tree_opt, commit);
 }
 
-static int diff_tree_stdin(char *line)
+/* Diff one or more commits. */
+static int stdin_diff_commit(struct commit *commit, char *line, int len)
 {
-	int len = strlen(line);
 	unsigned char sha1[20];
-	struct commit *commit;
-
-	if (!len || line[len-1] != '\n')
-		return -1;
-	line[len-1] = 0;
-	if (get_sha1_hex(line, sha1))
-		return -1;
-	commit = lookup_commit(sha1);
-	if (!commit || parse_commit(commit))
-		return -1;
 	if (isspace(line[40]) && !get_sha1_hex(line+41, sha1)) {
 		/* Graft the fake parents locally to the commit */
 		int pos = 41;
@@ -50,6 +40,23 @@ static int diff_tree_stdin(char *line)
 		}
 	}
 	return log_tree_commit(&log_tree_opt, commit);
+}
+
+static int diff_tree_stdin(char *line)
+{
+	int len = strlen(line);
+	unsigned char sha1[20];
+	struct commit *commit;
+
+	if (!len || line[len-1] != '\n')
+		return -1;
+	line[len-1] = 0;
+	if (get_sha1_hex(line, sha1))
+		return -1;
+	commit = lookup_commit(sha1);
+	if (!commit || parse_commit(commit))
+		return -1;
+	return stdin_diff_commit(commit, line, len);
 }
 
 static const char diff_tree_usage[] =
