@@ -4915,14 +4915,15 @@ sub new {
 	my ($class, $glob) = @_;
 	my $re = $glob;
 	$re =~ s!/+$!!g; # no need for trailing slashes
-	my $nr = ($re =~ s!^(.*)\*(.*)$!\(\[^/\]+\)!g);
-	my ($left, $right) = ($1, $2);
+	my $nr = $re =~ tr/*/*/;
 	if ($nr > 1) {
 		die "Only one '*' wildcard expansion ",
 		    "is supported (got $nr): '$glob'\n";
 	} elsif ($nr == 0) {
 		die "One '*' is needed for glob: '$glob'\n";
 	}
+	$re =~ s!^(.*)\*(.*)$!\(\[^/\]+\)!g;
+	my ($left, $right) = ($1, $2);
 	$re = quotemeta($left) . $re . quotemeta($right);
 	if (length $left && !($left =~ s!/+$!!g)) {
 		die "Missing trailing '/' on left side of: '$glob' ($left)\n";
