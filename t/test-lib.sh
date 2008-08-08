@@ -449,6 +449,11 @@ test_done () {
 		# we will leave things as they are.
 
 		say_color pass "passed all $msg"
+
+		test -d "$remove_trash" &&
+		cd "$(dirname "$remove_trash")" &&
+		rm -rf "$(basename "$remove_trash")"
+
 		exit 0 ;;
 
 	*)
@@ -485,7 +490,8 @@ fi
 . ../GIT-BUILD-OPTIONS
 
 # Test repository
-test="trash directory"
+test="trash directory.$(basename "$0" .sh)"
+remove_trash="$TEST_DIRECTORY/$test"
 rm -fr "$test" || {
 	trap - exit
 	echo >&5 "FATAL: Cannot prepare test area"

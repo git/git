@@ -39,4 +39,3 @@ full-svn-test:
 	$(MAKE) $(TSVN) GIT_SVN_NO_OPTIMIZE_COMMITS=0 LC_ALL=en_US.UTF-8
 
 .PHONY: pre-clean $(T) aggregate-results clean
-.NOTPARALLEL:
