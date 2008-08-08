@@ -39,6 +39,6 @@ test_expect_success \
 
 test_external_without_stderr \
     'Perl API' \
-    perl ../t9700/test.pl
+    perl "$TEST_DIRECTORY"/t9700/test.pl
 
 test_done

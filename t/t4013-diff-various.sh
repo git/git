@@ -99,7 +99,7 @@ do
 	test=`echo "$cmd" | sed -e 's|[/ ][/ ]*|_|g'`
 	cnt=`expr $test_count + 1`
 	pfx=`printf "%04d" $cnt`
-	expect="../t4013/diff.$test"
+	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
 	test_expect_success "git $cmd" '

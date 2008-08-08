@@ -625,7 +625,7 @@ esac
 # Name and email: C O Mitter <committer@example.com>
 # No password given, to enable non-interactive operation.
 
-cp -R ../t7004 ./gpghome
+cp -R "$TEST_DIRECTORY"/t7004 ./gpghome
 chmod 0700 gpghome
 GNUPGHOME="$(pwd)/gpghome"
 export GNUPGHOME

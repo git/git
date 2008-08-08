@@ -8,7 +8,7 @@ test_description='git-svn useSvnsyncProps test'
 . ./lib-git-svn.sh
 
 test_expect_success 'load svnsync repo' '
-	svnadmin load -q "$rawsvnrepo" < ../t9111/svnsync.dump &&
+	svnadmin load -q "$rawsvnrepo" < "$TEST_DIRECTORY"/t9111/svnsync.dump &&
 	git-svn init --minimize-url -R arr -i bar "$svnrepo"/bar &&
 	git-svn init --minimize-url -R argh -i dir "$svnrepo"/dir &&
 	git-svn init --minimize-url -R argh -i e "$svnrepo"/dir/a/b/c/d/e &&

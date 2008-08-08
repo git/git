@@ -10,7 +10,7 @@ Prepare:
         path1/file1
 '
 . ./test-lib.sh
-. ../diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     setup \

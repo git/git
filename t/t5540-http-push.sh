@@ -19,7 +19,7 @@ then
 	exit
 fi
 
-. ../lib-httpd.sh
+. "$TEST_DIRECTORY"/lib-httpd.sh
 
 if ! start_httpd >&3 2>&4
 then

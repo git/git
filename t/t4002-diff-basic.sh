@@ -7,7 +7,7 @@ test_description='Test diff raw-output.
 
 '
 . ./test-lib.sh
-. ../lib-read-tree-m-3way.sh
+. "$TEST_DIRECTORY"/lib-read-tree-m-3way.sh
 
 cat >.test-plain-OA <<\EOF
 :000000 100644 0000000000000000000000000000000000000000 ccba72ad3888a3520b39efcf780b9ee64167535d A	AA
