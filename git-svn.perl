@@ -987,8 +987,10 @@ sub complete_url_ls_init {
 	if (length $pfx && $pfx !~ m#/$#) {
 		die "--prefix='$pfx' must have a trailing slash '/'\n";
 	}
-	command_noisy('config', "svn-remote.$gs->{repo_id}.$n",
-				"$remote_path:refs/remotes/$pfx*");
+	command_noisy('config',
+	              "svn-remote.$gs->{repo_id}.$n",
+	              "$remote_path:refs/remotes/$pfx*" .
+	                ('/*' x (($remote_path =~ tr/*/*/) - 1)) );
 }
 
 sub verify_ref {
@@ -4124,16 +4126,38 @@ sub gs_fetch_loop_common {
 	Git::SVN::gc();
 }
 
+sub get_dir_globbed {
+	my ($self, $left, $depth, $r) = @_;
+
+	my @x = eval { $self->get_dir($left, $r) };
+	return unless scalar @x == 3;
+	my $dirents = $x[0];
+	my @finalents;
+	foreach my $de (keys %$dirents) {
+		next if $dirents->{$de}->{kind} != $SVN::Node::dir;
+		if ($depth > 1) {
+			my @args = ("$left/$de", $depth - 1, $r);
+			foreach my $dir ($self->get_dir_globbed(@args)) {
+				push @finalents, "$de/$dir";
+			}
+		} else {
+			push @finalents, $de;
+		}
+	}
+	@finalents;
+}
+
 sub match_globs {
 	my ($self, $exists, $paths, $globs, $r) = @_;
 
 	sub get_dir_check {
 		my ($self, $exists, $g, $r) = @_;
-		my @x = eval { $self->get_dir($g->{path}->{left}, $r) };
-		return unless scalar @x == 3;
-		my $dirents = $x[0];
-		foreach my $de (keys %$dirents) {
-			next if $dirents->{$de}->{kind} != $SVN::Node::dir;
+
+		my @dirs = $self->get_dir_globbed($g->{path}->{left},
+		                                  $g->{path}->{depth},
+		                                  $r);
+
+		foreach my $de (@dirs) {
 			my $p = $g->{path}->full_path($de);
 			next if $exists->{$p};
 			next if (length $g->{path}->{right} &&
@@ -4915,16 +4939,20 @@ sub new {
 	my ($class, $glob) = @_;
 	my $re = $glob;
 	$re =~ s!/+$!!g; # no need for trailing slashes
-	my $nr = $re =~ tr/*/*/;
-	if ($nr > 1) {
-		die "Only one '*' wildcard expansion ",
-		    "is supported (got $nr): '$glob'\n";
-	} elsif ($nr == 0) {
+	$re =~ m!^([^*]*)(\*(?:/\*)*)([^*]*)$!;
+	my $temp = $re;
+	my ($left, $right) = ($1, $3);
+	$re = $2;
+	my $depth = $re =~ tr/*/*/;
+	if ($depth != $temp =~ tr/*/*/) {
+		die "Only one set of wildcard directories " .
+			"(e.g. '*' or '*/*/*') is supported: '$glob'\n";
+	}
+	if ($depth == 0) {
 		die "One '*' is needed for glob: '$glob'\n";
 	}
-	$re =~ s!^(.*)\*(.*)$!\(\[^/\]+\)!g;
-	my ($left, $right) = ($1, $2);
-	$re = quotemeta($left) . $re . quotemeta($right);
+	$re =~ s!\*!\[^/\]*!g;
+	$re = quotemeta($left) . "($re)" . quotemeta($right);
 	if (length $left && !($left =~ s!/+$!!g)) {
 		die "Missing trailing '/' on left side of: '$glob' ($left)\n";
 	}
@@ -4933,7 +4961,7 @@ sub new {
 	}
 	my $left_re = qr/^\/\Q$left\E(\/|$)/;
 	bless { left => $left, right => $right, left_regex => $left_re,
-	        regex => qr/$re/, glob => $glob }, $class;
+	        regex => qr/$re/, glob => $glob, depth => $depth }, $class;
 }
 
 sub full_path {
