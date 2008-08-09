@@ -22,11 +22,11 @@ proc gitdir {} {
 # run before X event handlers, so reading from a fast source can
 # make the GUI completely unresponsive.
 proc run args {
-    global isonrunq runq
+    global isonrunq runq currunq
 
     set script $args
     if {[info exists isonrunq($script)]} return
-    if {$runq eq {}} {
+    if {$runq eq {} && ![info exists currunq]} {
 	after idle dorunq
     }
     lappend runq [list {} $script]
@@ -38,10 +38,10 @@ proc filerun {fd script} {
 }
 
 proc filereadable {fd script} {
-    global runq
+    global runq currunq
 
     fileevent $fd readable {}
-    if {$runq eq {}} {
+    if {$runq eq {} && ![info exists currunq]} {
 	after idle dorunq
     }
     lappend runq [list $fd $script]
@@ -60,17 +60,19 @@ proc nukefile {fd} {
 }
 
 proc dorunq {} {
-    global isonrunq runq
+    global isonrunq runq currunq
 
     set tstart [clock clicks -milliseconds]
     set t0 $tstart
     while {[llength $runq] > 0} {
 	set fd [lindex $runq 0 0]
 	set script [lindex $runq 0 1]
+	set currunq [lindex $runq 0]
+	set runq [lrange $runq 1 end]
 	set repeat [eval $script]
+	unset currunq
 	set t1 [clock clicks -milliseconds]
 	set t [expr {$t1 - $t0}]
-	set runq [lrange $runq 1 end]
 	if {$repeat ne {} && $repeat} {
 	    if {$fd eq {} || $repeat == 2} {
 		# script returns 1 if it wants to be readded
