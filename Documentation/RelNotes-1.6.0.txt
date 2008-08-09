@@ -5,7 +5,7 @@ User visible changes
 --------------------
 
 With the default Makefile settings, most of the programs are now
-installed outside your $PATH, except for "git", "gitk", "git-gui" and
+installed outside your $PATH, except for "git", "gitk" and
 some server side programs that need to be accessible for technical
 reasons.  Invoking a git subcommand as "git-xyzzy" from the command
 line has been deprecated since early 2006 (and officially announced in
@@ -186,7 +186,7 @@ Updates since v1.5.6
 
 * fast-import and fast-export learned to export and import gitlinks.
 
-* "gitk" left background process behind after begin asked to dig very deep
+* "gitk" left background process behind after being asked to dig very deep
   history and the user killed the UI; the process is killed when the UI goes
   away now.
 
@@ -248,6 +248,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.6.0-rc1-113-gf44bc33
+O=v1.6.0-rc2-21-g0bb3a0b
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
