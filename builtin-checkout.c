@@ -437,13 +437,28 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
-	opts.track = git_branch_track;
+	opts.track = -1;
 
 	argc = parse_options(argc, argv, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
 
-	if (!opts.new_branch && (opts.track != git_branch_track))
-		die("git checkout: --track and --no-track require -b");
+	/* --track without -b should DWIM */
+	if (opts.track && opts.track != -1 && !opts.new_branch) {
+		char *slash;
+		if (!argc || !strcmp(argv[0], "--"))
+			die ("--track needs a branch name");
+		slash = strchr(argv[0], '/');
+		if (slash && !prefixcmp(argv[0], "refs/"))
+			slash = strchr(slash + 1, '/');
+		if (slash && !prefixcmp(argv[0], "remotes/"))
+			slash = strchr(slash + 1, '/');
+		if (!slash || !slash[1])
+			die ("Missing branch name; try -b");
+		opts.new_branch = slash + 1;
+	}
+
+	if (opts.track == -1)
+		opts.track = git_branch_track;
 
 	if (opts.force && opts.merge)
 		die("git checkout: -f and -m are incompatible");
