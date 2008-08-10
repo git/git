@@ -57,6 +57,13 @@ def read_pipe_lines(c):
 
     return val
 
+def p4_read_pipe_lines(c):
+    """Specifically invoke p4 on the command supplied. """
+    real_cmd = "%s %s" % ("p4", c)
+    if verbose:
+        print real_cmd
+    return read_pipe_lines(real_cmd)
+
 def system(cmd):
     if verbose:
         sys.stderr.write("executing %s\n" % cmd)
