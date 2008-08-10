@@ -98,7 +98,7 @@ def setP4ExecBit(file, mode):
         if p4Type[-1] == "+":
             p4Type = p4Type[0:-1]
 
-    system("p4 reopen -t %s %s" % (p4Type, file))
+    p4_system("reopen -t %s %s" % (p4Type, file))
 
 def getP4OpenedType(file):
     # Returns the perforce file type for the given file.
@@ -561,7 +561,7 @@ class P4Submit(Command):
             modifier = diff['status']
             path = diff['src']
             if modifier == "M":
-                system("p4 edit \"%s\"" % path)
+                p4_system("edit \"%s\"" % path)
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
                     filesToChangeExecBit[path] = diff['dst_mode']
                 editedFiles.add(path)
@@ -576,8 +576,8 @@ class P4Submit(Command):
                     filesToAdd.remove(path)
             elif modifier == "R":
                 src, dest = diff['src'], diff['dst']
-                system("p4 integrate -Dt \"%s\" \"%s\"" % (src, dest))
-                system("p4 edit \"%s\"" % (dest))
+                p4_system("integrate -Dt \"%s\" \"%s\"" % (src, dest))
+                p4_system("edit \"%s\"" % (dest))
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
                     filesToChangeExecBit[dest] = diff['dst_mode']
                 os.unlink(dest)
@@ -601,7 +601,7 @@ class P4Submit(Command):
             if response == "s":
                 print "Skipping! Good luck with the next patches..."
                 for f in editedFiles:
-                    system("p4 revert \"%s\"" % f);
+                    p4_system("revert \"%s\"" % f);
                 for f in filesToAdd:
                     system("rm %s" %f)
                 return
@@ -624,10 +624,10 @@ class P4Submit(Command):
         system(applyPatchCmd)
 
         for f in filesToAdd:
-            system("p4 add \"%s\"" % f)
+            p4_system("add \"%s\"" % f)
         for f in filesToDelete:
-            system("p4 revert \"%s\"" % f)
-            system("p4 delete \"%s\"" % f)
+            p4_system("revert \"%s\"" % f)
+            p4_system("delete \"%s\"" % f)
 
         # Set/clear executable bits
         for f in filesToChangeExecBit.keys():
@@ -728,7 +728,7 @@ class P4Submit(Command):
 
         os.chdir(self.clientPath)
         print "Syncronizing p4 checkout..."
-        system("p4 sync ...")
+        p4_system("sync ...")
 
         self.check()
 
