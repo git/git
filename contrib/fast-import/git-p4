@@ -70,6 +70,13 @@ def system(cmd):
     if os.system(cmd) != 0:
         die("command failed: %s" % cmd)
 
+def p4_system(cmd):
+    """Specifically invoke p4 as the system command. """
+    real_cmd = "%s %s" % ("p4", cmd)
+    if verbose:
+        print real_cmd
+    return system(real_cmd)
+
 def isP4Exec(kind):
     """Determine if a Perforce 'kind' should have execute permission
 
