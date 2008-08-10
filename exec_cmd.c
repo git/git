@@ -9,11 +9,48 @@ static const char *argv0_path;
 
 const char *system_path(const char *path)
 {
-	if (!is_absolute_path(path) && argv0_path) {
-		struct strbuf d = STRBUF_INIT;
-		strbuf_addf(&d, "%s/%s", argv0_path, path);
-		path = strbuf_detach(&d, NULL);
+#ifdef RUNTIME_PREFIX
+	static const char *prefix;
+
+	assert(argv0_path);
+	assert(is_absolute_path(argv0_path));
+
+	if (!prefix) {
+		const char *strip[] = {
+			GIT_EXEC_PATH,
+			BINDIR,
+			0
+		};
+		const char **s;
+
+		for (s = strip; *s; s++) {
+			const char *sargv = argv0_path + strlen(argv0_path);
+			const char *ss = *s + strlen(*s);
+			while (argv0_path < sargv && *s < ss
+				&& (*sargv == *ss ||
+				    (is_dir_sep(*sargv) && is_dir_sep(*ss)))) {
+				sargv--;
+				ss--;
+			}
+			if (*s == ss) {
+				struct strbuf d = STRBUF_INIT;
+				strbuf_add(&d, argv0_path, sargv - argv0_path);
+				prefix = strbuf_detach(&d, NULL);
+				break;
+			}
+		}
 	}
+
+	if (!prefix) {
+		fprintf(stderr, "RUNTIME_PREFIX requested for path '%s', "
+				"but prefix computation failed.\n", path);
+		return path;
+	}
+
+	struct strbuf d = STRBUF_INIT;
+	strbuf_addf(&d, "%s/%s", prefix, path);
+	path = strbuf_detach(&d, NULL);
+#endif
 	return path;
 }
 
