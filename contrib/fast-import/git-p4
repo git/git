@@ -1444,7 +1444,7 @@ class P4Sync(Command):
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
-        if self.useClientSpec or gitConfig("p4.useclientspec") == "true":
+        if self.useClientSpec or gitConfig("git-p4.useclientspec") == "true":
             self.getClientSpec()
 
         # TODO: should always look at previous commits,
