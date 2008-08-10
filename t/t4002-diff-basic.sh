@@ -169,6 +169,20 @@ test_expect_success \
      cmp -s .test-a .test-recursive-AB'
 
 test_expect_success \
+    'diff-tree --stdin of known trees.' \
+    'echo $tree_A $tree_B | git diff-tree --stdin > .test-a &&
+     echo $tree_A $tree_B > .test-plain-ABx &&
+     cat .test-plain-AB >> .test-plain-ABx &&
+     cmp -s .test-a .test-plain-ABx'
+
+test_expect_success \
+    'diff-tree --stdin of known trees.' \
+    'echo $tree_A $tree_B | git diff-tree -r --stdin > .test-a &&
+     echo $tree_A $tree_B > .test-recursive-ABx &&
+     cat .test-recursive-AB >> .test-recursive-ABx &&
+     cmp -s .test-a .test-recursive-ABx'
+
+test_expect_success \
     'diff-cache O with A in cache' \
     'git read-tree $tree_A &&
      git diff-index --cached $tree_O >.test-a &&
