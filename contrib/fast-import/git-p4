@@ -371,7 +371,7 @@ def originP4BranchesExist():
 
 def p4ChangesForPaths(depotPaths, changeRange):
     assert depotPaths
-    output = read_pipe_lines("p4 changes " + ' '.join (["%s...%s" % (p, changeRange)
+    output = p4_read_pipe_lines("changes " + ' '.join (["%s...%s" % (p, changeRange)
                                                         for p in depotPaths]))
 
     changes = []
@@ -519,7 +519,7 @@ class P4Submit(Command):
         # remove lines in the Files section that show changes to files outside the depot path we're committing into
         template = ""
         inFilesSection = False
-        for line in read_pipe_lines("p4 change -o"):
+        for line in p4_read_pipe_lines("change -o"):
             if line.endswith("\r\n"):
                 line = line[:-2] + "\n"
             if inFilesSection:
