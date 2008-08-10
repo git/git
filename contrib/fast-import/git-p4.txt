@@ -131,6 +131,38 @@ Example
 Configuration parameters
 ========================
 
+git-p4.user ($P4USER)
+
+Allows you to specify the username to use to connect to the Perforce repository.
+
+  git config [--global] git-p4.user public
+
+git-p4.password ($P4PASS)
+
+Allows you to specify the password to use to connect to the Perforce repository.
+Warning this password will be visible on the command-line invocation of the p4 binary.
+
+  git config [--global] git-p4.password public1234
+
+git-p4.port ($P4PORT)
+
+Specify the port to be used to contact the Perforce server. As this will be passed
+directly to the p4 binary, it may be in the format host:port as well.
+
+  git config [--global] git-p4.port codes.zimbra.com:2666
+
+git-p4.host ($P4HOST)
+
+Specify the host to contact for a Perforce repository.
+
+  git config [--global] git-p4.host perforce.example.com
+
+git-p4.client ($P4CLIENT)
+
+Specify the client name to use
+
+  git config [--global] git-p4.client public-view
+
 git-p4.syncFromOrigin
 
 A useful setup may be that you have a periodically updated git repository
