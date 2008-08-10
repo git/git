@@ -163,6 +163,10 @@ Specify the client name to use
 
   git config [--global] git-p4.client public-view
 
+git-p4.allowSubmit
+
+  git config [--global] git-p4.allowSubmit false
+
 git-p4.syncFromOrigin
 
 A useful setup may be that you have a periodically updated git repository
@@ -175,6 +179,10 @@ the efficient git protocol. git-p4 supports this setup by calling "git fetch ori
 by default if there is an origin branch. You can disable this using:
 
   git config [--global] git-p4.syncFromOrigin false
+
+git-p4.useclientspec
+
+  git config [--global] git-p4.useclientspec false
 
 Implementation Details...
 =========================
