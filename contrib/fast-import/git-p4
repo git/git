@@ -24,7 +24,29 @@ def p4_build_cmd(cmd):
     location. It means that hooking into the environment, or other configuration
     can be done more easily.
     """
-    real_cmd = "%s %s" % ("p4", cmd)
+    real_cmd = "%s " % "p4"
+
+    user = gitConfig("git-p4.user")
+    if len(user) > 0:
+        real_cmd += "-u %s " % user
+
+    password = gitConfig("git-p4.password")
+    if len(password) > 0:
+        real_cmd += "-P %s " % password
+
+    port = gitConfig("git-p4.port")
+    if len(port) > 0:
+        real_cmd += "-p %s " % port
+
+    host = gitConfig("git-p4.host")
+    if len(host) > 0:
+        real_cmd += "-h %s " % host
+
+    client = gitConfig("git-p4.client")
+    if len(client) > 0:
+        real_cmd += "-c %s " % client
+
+    real_cmd += "%s" % (cmd)
     if verbose:
         print real_cmd
     return real_cmd
