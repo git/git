@@ -72,9 +72,7 @@ def read_pipe_lines(c):
 
 def p4_read_pipe_lines(c):
     """Specifically invoke p4 on the command supplied. """
-    real_cmd = "%s %s" % ("p4", c)
-    if verbose:
-        print real_cmd
+    real_cmd = p4_build_cmd(c)
     return read_pipe_lines(real_cmd)
 
 def system(cmd):
@@ -85,9 +83,7 @@ def system(cmd):
 
 def p4_system(cmd):
     """Specifically invoke p4 as the system command. """
-    real_cmd = "%s %s" % ("p4", cmd)
-    if verbose:
-        print real_cmd
+    real_cmd = p4_build_cmd(cmd)
     return system(real_cmd)
 
 def isP4Exec(kind):
@@ -172,7 +168,7 @@ def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
 
 def p4CmdList(cmd, stdin=None, stdin_mode='w+b'):
-    cmd = "p4 -G %s" % cmd
+    cmd = p4_build_cmd("-G %s" % (cmd))
     if verbose:
         sys.stderr.write("Opening pipe: %s\n" % cmd)
 
