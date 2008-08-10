@@ -35,10 +35,10 @@ exec >"Meta/$lead/$issue.txt"
 
 cat <<EOF
 Subject: What's in git.git ($monthname $year, #$issue; $dow, $date)
-X-maint-at: $maint_at"
-X-master-at: $master_at"
-X-maint-was: $maint_was"
-X-master-was: $master_was"
+X-maint-at: $maint_at
+X-master-at: $master_at
+X-maint-was: $maint_was
+X-master-was: $master_was
 
 What's in git.git ($monthname $year, #$issue; $dow, $date)
 

@@ -46,4 +46,6 @@ last=$(
 	cd Meta &&
 	git ls-tree -r --name-only HEAD "whats/cooking"  | tail -n 1
 )
-Meta/UWC <"Meta/$last"
+
+sed -e 's/^\[New Topics\]$/[Old New Topics]/' "Meta/$last" |
+Meta/UWC
