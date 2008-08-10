@@ -52,10 +52,14 @@ include::diff-options.txt[]
 	reads either one <commit> or a list of <commit>
 	separated with a single space from its standard input.
 +
-When a single commit is given on one line of such input, it compares
-the commit with its parents.  The following flags further affects its
-behavior.  The remaining commits, when given, are used as if they are
+When a single commit is given, it compares the commit with its
+parents.  The remaining commits, when given, are used as if they are
 parents of the first commit.
++
+The ID of the first (or only) commit, followed by a newline, is
+printed before the differences.
++
+The following flags further affects its behavior.
 
 -m::
 	By default, 'git-diff-tree --stdin' does not show
