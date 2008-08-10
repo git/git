@@ -16,6 +16,17 @@ from sets import Set;
 
 verbose = False
 
+
+def p4_build_cmd(cmd):
+    """Build a suitable p4 command line.
+
+    This consolidates building and returning a p4 command line into one
+    location. It means that hooking into the environment, or other configuration
+    can be done more easily.
+    """
+    real_cmd = "%s %s" % ("p4", cmd)
+    return real_cmd
+
 def die(msg):
     if verbose:
         raise Exception(msg)
