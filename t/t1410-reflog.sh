@@ -175,7 +175,7 @@ test_expect_success 'recover and check' '
 
 '
 
-test_expect_failure 'delete' '
+test_expect_success 'delete' '
 	echo 1 > C &&
 	test_tick &&
 	git commit -m rat C &&
