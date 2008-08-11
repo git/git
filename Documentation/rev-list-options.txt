@@ -71,7 +71,7 @@ For example, if you have this topology:
          o---x---a---a  branch A
 -----------------------------------------------------------------------
 +
-you would get an output line this:
+you would get an output like this:
 +
 -----------------------------------------------------------------------
 	$ git rev-list --left-right --boundary --pretty=oneline A...B
