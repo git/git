@@ -90,6 +90,7 @@ you would get an output line this:
 This implies the '--topo-order' option by default, but the
 '--date-order' option may also be specified.
 
+ifndef::git-rev-list[]
 Diff Formatting
 ~~~~~~~~~~~~~~~
 
@@ -119,6 +120,7 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 -t::
 
 	Show the tree objects in the diff output. This implies '-r'.
+endif::git-rev-list[]
 
 Commit Limiting
 ~~~~~~~~~~~~~~~
