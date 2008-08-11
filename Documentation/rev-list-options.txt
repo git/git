@@ -267,8 +267,7 @@ used in the output.  When the starting commit is specified as
 'commit@\{now}', output also uses 'commit@\{timestamp}' notation
 instead.  Under '\--pretty=oneline', the commit message is
 prefixed with this information on the same line.
-+
-Cannot be combined with '\--reverse'.
+This option cannot be combined with '\--reverse'.
 See also linkgit:git-reflog[1].
 
 --merge::
