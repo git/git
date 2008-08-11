@@ -28,6 +28,16 @@ introduced in v1.5.2 and v1.4.4.5.  If you want to keep your repositories
 backwards compatible past these versions, set repack.useDeltaBaseOffset
 to false or pack.indexVersion to 1, respectively.
 
+We used to prevent sample hook scripts shipped in templates/ from
+triggering by default by relying on the fact that we install them as
+unexecutable, but on some filesystems, this approach does not work.
+They are now shipped with ".sample" suffix.  If you want to activate
+any of these samples as-is, rename them to drop the ".sample" suffix,
+instead of running "chmod +x" on them.  For example, you can rename
+hooks/post-update.sample to hooks/post-update to enable the sample
+hook that runs update-server-info, in order to make repositories
+friendly to dumb protocols (i.e. HTTP).
+
 GIT_CONFIG, which was only documented as affecting "git config", but
 actually affected all git commands, now only affects "git config".
 GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
@@ -56,11 +66,7 @@ Updates since v1.5.6
   gangs.
 
 * Sample hook scripts shipped in templates/ are now suffixed with
-  *.sample.  We used to prevent them from triggering by default by
-  relying on the fact that we install them as unexecutable, but on
-  some filesystems this approach does not work.  Instead of running
-  "chmod +x" on them, the users who want to activate these samples
-  as-is can now rename them dropping *.sample suffix.
+  *.sample.
 
 * perl's in-place edit (-i) does not work well without backup files on Windows;
   some tests are rewritten to cope with this.

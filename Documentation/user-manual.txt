@@ -1890,7 +1890,7 @@ adjustments to give web clients some extra information they need:
 $ mv proj.git /home/you/public_html/proj.git
 $ cd proj.git
 $ git --bare update-server-info
-$ chmod a+x hooks/post-update
+$ mv hooks/post-update.sample hooks/post-update
 -------------------------------------------------
 
 (For an explanation of the last two lines, see
