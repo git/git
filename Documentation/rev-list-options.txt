@@ -264,10 +264,10 @@ With '\--pretty' format other than oneline (for obvious reasons),
 this causes the output to have two extra lines of information
 taken from the reflog.  By default, 'commit@\{Nth}' notation is
 used in the output.  When the starting commit is specified as
-'commit@{now}', output also uses 'commit@\{timestamp}' notation
+'commit@\{now}', output also uses 'commit@\{timestamp}' notation
 instead.  Under '\--pretty=oneline', the commit message is
 prefixed with this information on the same line.
-
++
 Cannot be combined with '\--reverse'.
 See also linkgit:git-reflog[1].
 
