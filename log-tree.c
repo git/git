@@ -432,7 +432,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	struct commit_list *parents;
 	unsigned const char *sha1 = commit->object.sha1;
 
-	if (!opt->diff)
+	if (!opt->diff && !DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS))
 		return 0;
 
 	/* Root commit? */

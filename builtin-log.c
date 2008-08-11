@@ -218,9 +218,9 @@ static int cmd_log_walk(struct rev_info *rev)
 		finish_early_output(rev);
 
 	/*
-	 * For --check, the exit code is based on CHECK_FAILED being
-	 * accumulated in rev->diffopt, so be careful to retain that state
-	 * information if replacing rev->diffopt in this loop
+	 * For --check and --exit-code, the exit code is based on CHECK_FAILED
+	 * and HAS_CHANGES being accumulated in rev->diffopt, so be careful to
+	 * retain that state information if replacing rev->diffopt in this loop
 	 */
 	while ((commit = get_revision(rev)) != NULL) {
 		log_tree_commit(rev, commit);
@@ -236,7 +236,7 @@ static int cmd_log_walk(struct rev_info *rev)
 	    DIFF_OPT_TST(&rev->diffopt, CHECK_FAILED)) {
 		return 02;
 	}
-	return 0;
+	return diff_result_code(&rev->diffopt, 0);
 }
 
 static int git_log_config(const char *var, const char *value, void *cb)
