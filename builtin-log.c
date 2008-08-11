@@ -217,6 +217,11 @@ static int cmd_log_walk(struct rev_info *rev)
 	if (rev->early_output)
 		finish_early_output(rev);
 
+	/*
+	 * For --check, the exit code is based on CHECK_FAILED being
+	 * accumulated in rev->diffopt, so be careful to retain that state
+	 * information if replacing rev->diffopt in this loop
+	 */
 	while ((commit = get_revision(rev)) != NULL) {
 		log_tree_commit(rev, commit);
 		if (!rev->reflog_info) {
@@ -226,6 +231,10 @@ static int cmd_log_walk(struct rev_info *rev)
 		}
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
+	}
+	if (rev->diffopt.output_format & DIFF_FORMAT_CHECKDIFF &&
+	    DIFF_OPT_TST(&rev->diffopt, CHECK_FAILED)) {
+		return 02;
 	}
 	return 0;
 }
