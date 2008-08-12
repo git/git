@@ -101,7 +101,7 @@ test_expect_success 'filter subdirectory only' '
 		refs/heads/sub refs/heads/sub-earlier
 '
 
-test_expect_failure 'subdirectory filter result looks okay' '
+test_expect_success 'subdirectory filter result looks okay' '
 	test 2 = $(git rev-list sub | wc -l) &&
 	git show sub:new &&
 	test_must_fail git show sub:subdir &&

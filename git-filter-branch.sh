@@ -317,24 +317,19 @@ done <../revs
 
 # In case of a subdirectory filter, it is possible that a specified head
 # is not in the set of rewritten commits, because it was pruned by the
-# revision walker.  Fix it by mapping these heads to the next rewritten
-# ancestor(s), i.e. the boundaries in the set of rewritten commits.
+# revision walker.  Fix it by mapping these heads to the unique nearest
+# ancestor that survived the pruning.
 
-# NEEDSWORK: we should sort the unmapped refs topologically first
-while read ref
-do
-	sha1=$(git rev-parse "$ref"^0)
-	test -f "$workdir"/../map/$sha1 && continue
-	# Assign the boundarie(s) in the set of rewritten commits
-	# as the replacement commit(s).
-	# (This would look a bit nicer if --not --stdin worked.)
-	for p in $( (cd "$workdir"/../map; ls | sed "s/^/^/") |
-		git rev-list $ref --boundary --stdin |
-		sed -n "s/^-//p")
+if test "$filter_subdir"
+then
+	while read ref
 	do
-		map $p >> "$workdir"/../map/$sha1
-	done
-done < "$tempdir"/heads
+		sha1=$(git rev-parse "$ref"^0)
+		test -f "$workdir"/../map/$sha1 && continue
+		ancestor=$(git rev-list -1 $ref -- "$filter_subdir")
+		test "$ancestor" && echo $(map $ancestor) >> "$workdir"/../map/$sha1
+	done < "$tempdir"/heads
+fi
 
 # Finally update the refs
 
