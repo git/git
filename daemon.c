@@ -794,6 +794,7 @@ static void child_handler(int signo)
 		}
 		break;
 	}
+	signal(SIGCHLD, child_handler);
 }
 
 static int set_reuse_addr(int sockfd)
