@@ -220,7 +220,8 @@ bisect_next_check() {
 		if test -t 0
 		then
 			printf >&2 'Are you sure [Y/n]? '
-			case "$(read yesno)" in [Nn]*) exit 1 ;; esac
+			read yesno
+			case "$yesno" in [Nn]*) exit 1 ;; esac
 		fi
 		: bisect without good...
 		;;
