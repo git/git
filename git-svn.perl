@@ -3268,38 +3268,36 @@ sub close_file {
 				    "expected: $exp\n    got: $got\n";
 			}
 		}
-		sysseek($fh, 0, 0) or croak $!;
 		if ($fb->{mode_b} == 120000) {
-			eval {
-				sysread($fh, my $buf, 5) == 5 or croak $!;
-				$buf eq 'link ' or die "$path has mode 120000",
-						       " but is not a link";
-			};
-			if ($@) {
-				warn "$@\n";
-				sysseek($fh, 0, 0) or croak $!;
+			sysseek($fh, 0, 0) or croak $!;
+			sysread($fh, my $buf, 5) == 5 or croak $!;
+
+			unless ($buf eq 'link ') {
+				warn "$path has mode 120000",
+						" but is not a link\n";
+			} else {
+				my $tmp_fh = Git::temp_acquire('svn_hash');
+				my $res;
+				while ($res = sysread($fh, my $str, 1024)) {
+					my $out = syswrite($tmp_fh, $str, $res);
+					defined($out) && $out == $res
+						or croak("write ",
+							$tmp_fh->filename,
+							": $!\n");
+				}
+				defined $res or croak $!;
+
+				($fh, $tmp_fh) = ($tmp_fh, $fh);
+				Git::temp_release($tmp_fh, 1);
 			}
 		}
 
-		my $tmp_fh = Git::temp_acquire('svn_hash');
-		my $result;
-		while ($result = sysread($fh, my $string, 1024)) {
-			my $wrote = syswrite($tmp_fh, $string, $result);
-			defined($wrote) && $wrote == $result
-				or croak("write ",
-					$tmp_fh->filename, ": $!\n");
-		}
-		defined $result or croak $!;
-
-
-		Git::temp_release($fh, 1);
-
 		$hash = $::_repository->hash_and_insert_object(
-				$tmp_fh->filename);
+				$fh->filename);
 		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
 
 		Git::temp_release($fb->{base}, 1);
-		Git::temp_release($tmp_fh, 1);
+		Git::temp_release($fh, 1);
 	} else {
 		$hash = $fb->{blob} or die "no blob information\n";
 	}
