@@ -14,7 +14,9 @@ int merge_trees(struct tree *head,
 		const char *branch1,
 		const char *branch2,
 		struct tree **result);
-struct commit *make_virtual_commit(struct tree *tree, const char *comment);
+extern int merge_recursive_generic(const char **base_list,
+		const unsigned char *head_sha1, const char *head_name,
+		const unsigned char *next_sha1, const char *next_name);
 int merge_recursive_config(const char *var, const char *value, void *cb);
 void merge_recursive_setup(int is_subtree_merge);
 struct tree *write_tree_from_memory(void);
