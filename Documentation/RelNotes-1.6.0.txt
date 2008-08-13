@@ -178,7 +178,7 @@ Updates since v1.5.6
 * git-diff --check now checks leftover merge conflict markers.
 
 * "git-diff -p" learned to grab a better hunk header lines in
-  Pascal/Delphi and Ruby source files, and also pays attention to
+  BibTex, Pascal/Delphi, and Ruby files and also pays attention to
   chapter and part boundary in TeX documents.
 
 * When remote side used to have branch 'foo' and git-fetch finds that now
@@ -254,6 +254,6 @@ this release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.6.0-rc2-21-g0bb3a0b
+O=v1.6.0-rc3
 echo O=$(git describe refs/heads/master)
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
