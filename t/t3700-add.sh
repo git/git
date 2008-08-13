@@ -222,4 +222,12 @@ test_expect_success 'git add (add.ignore-errors = false)' '
 	! ( git ls-files foo1 | grep foo1 )
 '
 
+test_expect_success 'git add '\''fo\?bar'\'' ignores foobar' '
+	git reset --hard &&
+	touch fo\?bar foobar &&
+	git add '\''fo\?bar'\'' &&
+	git ls-files fo\?bar | grep -F fo\?bar &&
+	! ( git ls-files foobar | grep foobar )
+'
+
 test_done
