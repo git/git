@@ -1265,7 +1265,7 @@ sub md5sum {
 	my $arg = shift;
 	my $ref = ref $arg;
 	my $md5 = Digest::MD5->new();
-        if ($ref eq 'GLOB' || $ref eq 'IO::File') {
+        if ($ref eq 'GLOB' || $ref eq 'IO::File' || $ref eq 'File::Temp') {
 		$md5->addfile($arg) or croak $!;
 	} elsif ($ref eq 'SCALAR') {
 		$md5->add($$arg) or croak $!;
@@ -1327,6 +1327,7 @@ BEGIN {
 		}
 	}
 }
+
 
 my (%LOCKFILES, %INDEX_FILES);
 END {
@@ -3230,13 +3231,11 @@ sub change_file_prop {
 
 sub apply_textdelta {
 	my ($self, $fb, $exp) = @_;
-	my $fh = IO::File->new_tmpfile;
-	$fh->autoflush(1);
+	my $fh = Git::temp_acquire('svn_delta');
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
 	open my $dup, '<&', $fh or croak $!;
-	my $base = IO::File->new_tmpfile;
-	$base->autoflush(1);
+	my $base = Git::temp_acquire('git_blob');
 	if ($fb->{blob}) {
 		print $base 'link ' if ($fb->{mode_a} == 120000);
 		my $size = $::_repository->cat_blob($fb->{blob}, $base);
@@ -3251,9 +3250,9 @@ sub apply_textdelta {
 		}
 	}
 	seek $base, 0, 0 or croak $!;
-	$fb->{fh} = $dup;
+	$fb->{fh} = $fh;
 	$fb->{base} = $base;
-	[ SVN::TxDelta::apply($base, $fh, undef, $fb->{path}, $fb->{pool}) ];
+	[ SVN::TxDelta::apply($base, $dup, undef, $fb->{path}, $fb->{pool}) ];
 }
 
 sub close_file {
@@ -3269,35 +3268,36 @@ sub close_file {
 				    "expected: $exp\n    got: $got\n";
 			}
 		}
-		sysseek($fh, 0, 0) or croak $!;
 		if ($fb->{mode_b} == 120000) {
-			eval {
-				sysread($fh, my $buf, 5) == 5 or croak $!;
-				$buf eq 'link ' or die "$path has mode 120000",
-						       " but is not a link";
-			};
-			if ($@) {
-				warn "$@\n";
-				sysseek($fh, 0, 0) or croak $!;
+			sysseek($fh, 0, 0) or croak $!;
+			sysread($fh, my $buf, 5) == 5 or croak $!;
+
+			unless ($buf eq 'link ') {
+				warn "$path has mode 120000",
+						" but is not a link\n";
+			} else {
+				my $tmp_fh = Git::temp_acquire('svn_hash');
+				my $res;
+				while ($res = sysread($fh, my $str, 1024)) {
+					my $out = syswrite($tmp_fh, $str, $res);
+					defined($out) && $out == $res
+						or croak("write ",
+							$tmp_fh->filename,
+							": $!\n");
+				}
+				defined $res or croak $!;
+
+				($fh, $tmp_fh) = ($tmp_fh, $fh);
+				Git::temp_release($tmp_fh, 1);
 			}
 		}
 
-		my ($tmp_fh, $tmp_filename) = File::Temp::tempfile(UNLINK => 1);
-		my $result;
-		while ($result = sysread($fh, my $string, 1024)) {
-			my $wrote = syswrite($tmp_fh, $string, $result);
-			defined($wrote) && $wrote == $result
-				or croak("write $tmp_filename: $!\n");
-		}
-		defined $result or croak $!;
-		close $tmp_fh or croak $!;
-
-		close $fh or croak $!;
-
-		$hash = $::_repository->hash_and_insert_object($tmp_filename);
-		unlink($tmp_filename);
+		$hash = $::_repository->hash_and_insert_object(
+				$fh->filename);
 		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
-		close $fb->{base} or croak $!;
+
+		Git::temp_release($fb->{base}, 1);
+		Git::temp_release($fh, 1);
 	} else {
 		$hash = $fb->{blob} or die "no blob information\n";
 	}
@@ -3667,7 +3667,7 @@ sub chg_file {
 	} elsif ($m->{mode_b} !~ /755$/ && $m->{mode_a} =~ /755$/) {
 		$self->change_file_prop($fbat,'svn:executable',undef);
 	}
-	my $fh = IO::File->new_tmpfile or croak $!;
+	my $fh = Git::temp_acquire('git_blob');
 	if ($m->{mode_b} =~ /^120/) {
 		print $fh 'link ' or croak $!;
 		$self->change_file_prop($fbat,'svn:special','*');
@@ -3686,9 +3686,8 @@ sub chg_file {
 	my $atd = $self->apply_textdelta($fbat, undef, $pool);
 	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
 	die "Checksum mismatch\nexpected: $exp\ngot: $got\n" if ($got ne $exp);
+	Git::temp_release($fh, 1);
 	$pool->clear;
-
-	close $fh or croak $!;
 }
 
 sub D {
