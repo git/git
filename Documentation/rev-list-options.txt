@@ -193,6 +193,12 @@ endif::git-rev-list[]
 
 	Stop when a given path disappears from the tree.
 
+--simplify-merges::
+
+	Simplify away commits that did not change the given paths, similar
+	to `--full-history`, and further remove merges none of whose
+	parent history changes the given paths.
+
 --no-merges::
 
 	Do not print commits with more than one parent.
