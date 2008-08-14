@@ -501,7 +501,7 @@ __git_has_doubledash ()
 	return 1
 }
 
-__git_whitespacelist="nowarn warn error error-all strip"
+__git_whitespacelist="nowarn warn error error-all fix"
 
 _git_am ()
 {
