@@ -110,6 +110,7 @@ struct rev_info {
 
 	struct reflog_walk_info *reflog_info;
 	struct decoration children;
+	struct decoration merge_simplification;
 };
 
 #define REV_TREE_SAME		0
