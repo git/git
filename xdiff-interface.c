@@ -69,36 +69,22 @@ static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	for (i = 0; i < nbuf; i++) {
 		if (mb[i].ptr[mb[i].size-1] != '\n') {
 			/* Incomplete line */
-			priv->remainder = xrealloc(priv->remainder,
-						   priv->remainder_size +
-						   mb[i].size);
-			memcpy(priv->remainder + priv->remainder_size,
-			       mb[i].ptr, mb[i].size);
-			priv->remainder_size += mb[i].size;
+			strbuf_add(&priv->remainder, mb[i].ptr, mb[i].size);
 			continue;
 		}
 
 		/* we have a complete line */
-		if (!priv->remainder) {
+		if (!priv->remainder.len) {
 			consume_one(priv, mb[i].ptr, mb[i].size);
 			continue;
 		}
-		priv->remainder = xrealloc(priv->remainder,
-					   priv->remainder_size +
-					   mb[i].size);
-		memcpy(priv->remainder + priv->remainder_size,
-		       mb[i].ptr, mb[i].size);
-		consume_one(priv, priv->remainder,
-			    priv->remainder_size + mb[i].size);
-		free(priv->remainder);
-		priv->remainder = NULL;
-		priv->remainder_size = 0;
+		strbuf_add(&priv->remainder, mb[i].ptr, mb[i].size);
+		consume_one(priv, priv->remainder.buf, priv->remainder.len);
+		strbuf_reset(&priv->remainder);
 	}
-	if (priv->remainder) {
-		consume_one(priv, priv->remainder, priv->remainder_size);
-		free(priv->remainder);
-		priv->remainder = NULL;
-		priv->remainder_size = 0;
+	if (priv->remainder.len) {
+		consume_one(priv, priv->remainder.buf, priv->remainder.len);
+		strbuf_reset(&priv->remainder);
 	}
 	return 0;
 }
@@ -148,7 +134,9 @@ int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
 	int ret;
 	xecb->outf = xdiff_outf;
 	xecb->priv = state;
+	strbuf_init(&state->remainder, 0);
 	ret = xdi_diff(mf1, mf2, xpp, xecfg, xecb);
+	strbuf_release(&state->remainder);
 	return ret;
 }
 
