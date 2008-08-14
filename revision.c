@@ -1518,7 +1518,10 @@ static void simplify_merges(struct rev_info *revs)
 	struct commit_list *list;
 	struct commit_list *yet_to_do, **tail;
 
-	sort_in_topological_order(&revs->commits, revs->lifo);
+	if (!revs->topo_order)
+		sort_in_topological_order(&revs->commits, revs->lifo);
+	if (!revs->prune)
+		return;
 
 	/* feed the list reversed */
 	yet_to_do = NULL;
