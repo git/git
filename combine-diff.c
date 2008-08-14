@@ -217,8 +217,6 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	parent_file.size = sz;
 	xpp.flags = XDF_NEED_MINIMAL;
 	memset(&xecfg, 0, sizeof(xecfg));
-	ecb.outf = xdiff_outf;
-	ecb.priv = &state;
 	memset(&state, 0, sizeof(state));
 	state.xm.consume = consume_line;
 	state.nmask = nmask;
@@ -227,7 +225,8 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	state.num_parent = num_parent;
 	state.n = n;
 
-	xdi_diff(&parent_file, result_file, &xpp, &xecfg, &ecb);
+	xdi_diff_outf(&parent_file, result_file,
+		      &state.xm, &xpp, &xecfg, &ecb);
 	free(parent_file.ptr);
 
 	/* Assign line numbers for this parent.

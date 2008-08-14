@@ -61,7 +61,7 @@ static void consume_one(void *priv_, char *s, unsigned long size)
 	}
 }
 
-int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
+static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 {
 	struct xdiff_emit_state *priv = priv_;
 	int i;
@@ -139,6 +139,17 @@ int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t co
 	trim_common_tail(&a, &b, xecfg->ctxlen);
 
 	return xdl_diff(&a, &b, xpp, xecfg, xecb);
+}
+
+int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
+		  struct xdiff_emit_state *state, xpparam_t const *xpp,
+		  xdemitconf_t const *xecfg, xdemitcb_t *xecb)
+{
+	int ret;
+	xecb->outf = xdiff_outf;
+	xecb->priv = state;
+	ret = xdi_diff(mf1, mf2, xpp, xecfg, xecb);
+	return ret;
 }
 
 int read_mmfile(mmfile_t *ptr, const char *filename)

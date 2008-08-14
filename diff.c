@@ -459,10 +459,8 @@ static void diff_words_show(struct diff_words_data *diff_words)
 
 	xpp.flags = XDF_NEED_MINIMAL;
 	xecfg.ctxlen = diff_words->minus.alloc + diff_words->plus.alloc;
-	ecb.outf = xdiff_outf;
-	ecb.priv = diff_words;
 	diff_words->xm.consume = fn_out_diff_words_aux;
-	xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
+	xdi_diff_outf(&minus, &plus, &diff_words->xm, &xpp, &xecfg, &ecb);
 
 	free(minus.ptr);
 	free(plus.ptr);
@@ -1521,15 +1519,13 @@ static void builtin_diff(const char *name_a,
 			xecfg.ctxlen = strtoul(diffopts + 10, NULL, 10);
 		else if (!prefixcmp(diffopts, "-u"))
 			xecfg.ctxlen = strtoul(diffopts + 2, NULL, 10);
-		ecb.outf = xdiff_outf;
-		ecb.priv = &ecbdata;
 		ecbdata.xm.consume = fn_out_consume;
 		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS)) {
 			ecbdata.diff_words =
 				xcalloc(1, sizeof(struct diff_words_data));
 			ecbdata.diff_words->file = o->file;
 		}
-		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff_outf(&mf1, &mf2, &ecbdata.xm, &xpp, &xecfg, &ecb);
 		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS))
 			free_diff_words_data(&ecbdata);
 	}
@@ -1580,9 +1576,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 
 		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
-		ecb.outf = xdiff_outf;
-		ecb.priv = diffstat;
-		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff_outf(&mf1, &mf2, &diffstat->xm, &xpp, &xecfg, &ecb);
 	}
 
  free_and_return:
@@ -1628,9 +1622,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 
 		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = XDF_NEED_MINIMAL;
-		ecb.outf = xdiff_outf;
-		ecb.priv = &data;
-		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff_outf(&mf1, &mf2, &data.xm, &xpp, &xecfg, &ecb);
 
 		if ((data.ws_rule & WS_TRAILING_SPACE) &&
 		    data.trailing_blanks_start) {
@@ -3128,9 +3120,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 		xpp.flags = XDF_NEED_MINIMAL;
 		xecfg.ctxlen = 3;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
-		ecb.outf = xdiff_outf;
-		ecb.priv = &data;
-		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		xdi_diff_outf(&mf1, &mf2, &data.xm, &xpp, &xecfg, &ecb);
 	}
 
 	SHA1_Final(sha1, &ctx);

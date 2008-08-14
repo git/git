@@ -528,15 +528,13 @@ static struct patch *compare_buffer(mmfile_t *file_p, mmfile_t *file_o,
 	xpp.flags = xdl_opts;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = context;
-	ecb.outf = xdiff_outf;
-	ecb.priv = &state;
 	memset(&state, 0, sizeof(state));
 	state.xm.consume = process_u_diff;
 	state.ret = xmalloc(sizeof(struct patch));
 	state.ret->chunks = NULL;
 	state.ret->num = 0;
 
-	xdi_diff(file_p, file_o, &xpp, &xecfg, &ecb);
+	xdi_diff_outf(file_p, file_o, &state.xm, &xpp, &xecfg, &ecb);
 
 	if (state.ret->num) {
 		struct chunk *chunk;

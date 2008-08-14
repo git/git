@@ -14,7 +14,9 @@ struct xdiff_emit_state {
 };
 
 int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *ecb);
-int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf);
+int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
+		  struct xdiff_emit_state *state, xpparam_t const *xpp,
+		  xdemitconf_t const *xecfg, xdemitcb_t *xecb);
 int parse_hunk_header(char *line, int len,
 		      int *ob, int *on,
 		      int *nb, int *nn);
