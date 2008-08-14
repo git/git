@@ -16,7 +16,6 @@
 static int log_syslog;
 static int verbose;
 static int reuseaddr;
-static int child_handler_pipe[2];
 
 static const char daemon_usage[] =
 "git daemon [--verbose] [--syslog] [--export-all]\n"
@@ -680,6 +679,21 @@ static void check_dead_children(void)
 {
 	unsigned spawned, reaped, deleted;
 
+	for (;;) {
+		int status;
+		pid_t pid = waitpid(-1, &status, WNOHANG);
+
+		if (pid > 0) {
+			unsigned reaped = children_reaped;
+			if (!WIFEXITED(status) || WEXITSTATUS(status) > 0)
+				pid = -pid;
+			dead_child[reaped % MAX_CHILDREN] = pid;
+			children_reaped = reaped + 1;
+			continue;
+		}
+		break;
+	}
+
 	spawned = children_spawned;
 	reaped = children_reaped;
 	deleted = children_deleted;
@@ -760,21 +774,10 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 
 static void child_handler(int signo)
 {
-	for (;;) {
-		int status;
-		pid_t pid = waitpid(-1, &status, WNOHANG);
-
-		if (pid > 0) {
-			unsigned reaped = children_reaped;
-			if (!WIFEXITED(status) || WEXITSTATUS(status) > 0)
-				pid = -pid;
-			dead_child[reaped % MAX_CHILDREN] = pid;
-			children_reaped = reaped + 1;
-			write(child_handler_pipe[1], &status, 1);
-			continue;
-		}
-		break;
-	}
+	/* Otherwise empty handler because systemcalls will get interrupted
+	 * upon signal receipt
+	 * SysV needs the handler to be rearmed
+	 */
 	signal(SIGCHLD, child_handler);
 }
 
@@ -917,34 +920,27 @@ static int service_loop(int socknum, int *socklist)
 	struct pollfd *pfd;
 	int i;
 
-	if (pipe(child_handler_pipe) < 0)
-		die ("Could not set up pipe for child handler");
-
-	pfd = xcalloc(socknum + 1, sizeof(struct pollfd));
+	pfd = xcalloc(socknum, sizeof(struct pollfd));
 
 	for (i = 0; i < socknum; i++) {
 		pfd[i].fd = socklist[i];
 		pfd[i].events = POLLIN;
 	}
-	pfd[socknum].fd = child_handler_pipe[0];
-	pfd[socknum].events = POLLIN;
 
 	signal(SIGCHLD, child_handler);
 
 	for (;;) {
 		int i;
 
-		if (poll(pfd, socknum + 1, -1) < 0) {
+		check_dead_children();
+
+		if (poll(pfd, socknum, -1) < 0) {
 			if (errno != EINTR) {
 				logerror("Poll failed, resuming: %s",
 				      strerror(errno));
 				sleep(1);
 			}
 			continue;
-		}
-		if (pfd[socknum].revents & POLLIN) {
-			read(child_handler_pipe[0], &i, 1);
-			check_dead_children();
 		}
 
 		for (i = 0; i < socknum; i++) {
@@ -1035,11 +1031,6 @@ int main(int argc, char **argv)
 	struct group *group;
 	gid_t gid = 0;
 	int i;
-
-	/* Without this we cannot rely on waitpid() to tell
-	 * what happened to our children.
-	 */
-	signal(SIGCHLD, SIG_DFL);
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
