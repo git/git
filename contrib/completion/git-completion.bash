@@ -972,6 +972,7 @@ _git_log ()
 			--decorate --diff-filter=
 			--color-words --walk-reflogs
 			--parents --children --full-history
+			--merge
 			"
 		return
 		;;
