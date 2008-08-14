@@ -69,6 +69,10 @@ def write_pipe(c, str):
 
     return val
 
+def p4_write_pipe(c, str):
+    real_cmd = p4_build_cmd(c)
+    return write_pipe(c, str)
+
 def read_pipe(c, ignore_error=False):
     if verbose:
         sys.stderr.write('Reading pipe: %s\n' % c)
@@ -80,6 +84,9 @@ def read_pipe(c, ignore_error=False):
 
     return val
 
+def p4_read_pipe(c, ignore_error=False):
+    real_cmd = p4_build_cmd(c)
+    return read_pipe(real_cmd, ignore_error)
 
 def read_pipe_lines(c):
     if verbose:
