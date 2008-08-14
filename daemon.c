@@ -836,7 +836,7 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 		if (sockfd < 0)
 			continue;
 		if (sockfd >= FD_SETSIZE) {
-			error("too large socket descriptor.");
+			logerror("Socket descriptor too large");
 			close(sockfd);
 			continue;
 		}
@@ -955,7 +955,7 @@ static int service_loop(int socknum, int *socklist)
 
 		if (poll(pfd, socknum + 1, -1) < 0) {
 			if (errno != EINTR) {
-				error("poll failed, resuming: %s",
+				logerror("Poll failed, resuming: %s",
 				      strerror(errno));
 				sleep(1);
 			}
