@@ -141,7 +141,7 @@ def setP4ExecBit(file, mode):
 def getP4OpenedType(file):
     # Returns the perforce file type for the given file.
 
-    result = read_pipe("p4 opened %s" % file)
+    result = p4_read_pipe("opened %s" % file)
     match = re.match(".*\((.+)\)\r?$", result)
     if match:
         return match.group(1)
@@ -681,7 +681,7 @@ class P4Submit(Command):
             submitTemplate = self.prepareLogMessage(template, logMessage)
             if os.environ.has_key("P4DIFF"):
                 del(os.environ["P4DIFF"])
-            diff = read_pipe("p4 diff -du ...")
+            diff = p4_read_pipe("diff -du ...")
 
             newdiff = ""
             for newFile in filesToAdd:
@@ -719,7 +719,7 @@ class P4Submit(Command):
             if self.isWindows:
                 submitTemplate = submitTemplate.replace("\r\n", "\n")
 
-            write_pipe("p4 submit -i", submitTemplate)
+            p4_write_pipe("submit -i", submitTemplate)
         else:
             fileName = "submit.txt"
             file = open(fileName, "w+")
