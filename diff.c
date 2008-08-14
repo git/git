@@ -369,7 +369,6 @@ static void diff_words_append(char *line, unsigned long len,
 }
 
 struct diff_words_data {
-	struct xdiff_emit_state xm;
 	struct diff_words_buffer minus, plus;
 	FILE *file;
 };
@@ -459,9 +458,8 @@ static void diff_words_show(struct diff_words_data *diff_words)
 
 	xpp.flags = XDF_NEED_MINIMAL;
 	xecfg.ctxlen = diff_words->minus.alloc + diff_words->plus.alloc;
-	diff_words->xm.consume = fn_out_diff_words_aux;
-	xdi_diff_outf(&minus, &plus, &diff_words->xm, &xpp, &xecfg, &ecb);
-
+	xdi_diff_outf(&minus, &plus, fn_out_diff_words_aux, diff_words,
+		      &xpp, &xecfg, &ecb);
 	free(minus.ptr);
 	free(plus.ptr);
 	diff_words->minus.text.size = diff_words->plus.text.size = 0;
@@ -475,7 +473,6 @@ static void diff_words_show(struct diff_words_data *diff_words)
 typedef unsigned long (*sane_truncate_fn)(char *line, unsigned long len);
 
 struct emit_callback {
-	struct xdiff_emit_state xm;
 	int nparents, color_diff;
 	unsigned ws_rule;
 	sane_truncate_fn truncate;
@@ -706,8 +703,6 @@ static char *pprint_rename(const char *a, const char *b)
 }
 
 struct diffstat_t {
-	struct xdiff_emit_state xm;
-
 	int nr;
 	int alloc;
 	struct diffstat_file {
@@ -1129,7 +1124,6 @@ static void free_diffstat_info(struct diffstat_t *diffstat)
 }
 
 struct checkdiff_t {
-	struct xdiff_emit_state xm;
 	const char *filename;
 	int lineno;
 	struct diff_options *o;
@@ -1519,13 +1513,13 @@ static void builtin_diff(const char *name_a,
 			xecfg.ctxlen = strtoul(diffopts + 10, NULL, 10);
 		else if (!prefixcmp(diffopts, "-u"))
 			xecfg.ctxlen = strtoul(diffopts + 2, NULL, 10);
-		ecbdata.xm.consume = fn_out_consume;
 		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS)) {
 			ecbdata.diff_words =
 				xcalloc(1, sizeof(struct diff_words_data));
 			ecbdata.diff_words->file = o->file;
 		}
-		xdi_diff_outf(&mf1, &mf2, &ecbdata.xm, &xpp, &xecfg, &ecb);
+		xdi_diff_outf(&mf1, &mf2, fn_out_consume, &ecbdata,
+			      &xpp, &xecfg, &ecb);
 		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS))
 			free_diff_words_data(&ecbdata);
 	}
@@ -1576,7 +1570,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 
 		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
-		xdi_diff_outf(&mf1, &mf2, &diffstat->xm, &xpp, &xecfg, &ecb);
+		xdi_diff_outf(&mf1, &mf2, diffstat_consume, diffstat,
+			      &xpp, &xecfg, &ecb);
 	}
 
  free_and_return:
@@ -1597,7 +1592,6 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		return;
 
 	memset(&data, 0, sizeof(data));
-	data.xm.consume = checkdiff_consume;
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
 	data.o = o;
@@ -1622,7 +1616,8 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 
 		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = XDF_NEED_MINIMAL;
-		xdi_diff_outf(&mf1, &mf2, &data.xm, &xpp, &xecfg, &ecb);
+		xdi_diff_outf(&mf1, &mf2, checkdiff_consume, &data,
+			      &xpp, &xecfg, &ecb);
 
 		if ((data.ws_rule & WS_TRAILING_SPACE) &&
 		    data.trailing_blanks_start) {
@@ -3010,7 +3005,6 @@ static void diff_summary(FILE *file, struct diff_filepair *p)
 }
 
 struct patch_id_t {
-	struct xdiff_emit_state xm;
 	SHA_CTX *ctx;
 	int patchlen;
 };
@@ -3055,7 +3049,6 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 	SHA1_Init(&ctx);
 	memset(&data, 0, sizeof(struct patch_id_t));
 	data.ctx = &ctx;
-	data.xm.consume = patch_id_consume;
 
 	for (i = 0; i < q->nr; i++) {
 		xpparam_t xpp;
@@ -3120,7 +3113,8 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 		xpp.flags = XDF_NEED_MINIMAL;
 		xecfg.ctxlen = 3;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
-		xdi_diff_outf(&mf1, &mf2, &data.xm, &xpp, &xecfg, &ecb);
+		xdi_diff_outf(&mf1, &mf2, patch_id_consume, &data,
+			      &xpp, &xecfg, &ecb);
 	}
 
 	SHA1_Final(sha1, &ctx);
@@ -3197,7 +3191,6 @@ void diff_flush(struct diff_options *options)
 		struct diffstat_t diffstat;
 
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
-		diffstat.xm.consume = diffstat_consume;
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 			if (check_pair_status(p))

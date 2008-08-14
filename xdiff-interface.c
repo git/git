@@ -1,5 +1,12 @@
 #include "cache.h"
 #include "xdiff-interface.h"
+#include "strbuf.h"
+
+struct xdiff_emit_state {
+	xdiff_emit_consume_fn consume;
+	void *consume_callback_data;
+	struct strbuf remainder;
+};
 
 static int parse_num(char **cp_p, int *num_p)
 {
@@ -55,7 +62,7 @@ static void consume_one(void *priv_, char *s, unsigned long size)
 		unsigned long this_size;
 		ep = memchr(s, '\n', size);
 		this_size = (ep == NULL) ? size : (ep - s + 1);
-		priv->consume(priv, s, this_size);
+		priv->consume(priv->consume_callback_data, s, this_size);
 		size -= this_size;
 		s += this_size;
 	}
@@ -128,15 +135,21 @@ int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t co
 }
 
 int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
-		  struct xdiff_emit_state *state, xpparam_t const *xpp,
+		  xdiff_emit_consume_fn fn, void *consume_callback_data,
+		  xpparam_t const *xpp,
 		  xdemitconf_t const *xecfg, xdemitcb_t *xecb)
 {
 	int ret;
+	struct xdiff_emit_state state;
+
+	memset(&state, 0, sizeof(state));
+	state.consume = fn;
+	state.consume_callback_data = consume_callback_data;
 	xecb->outf = xdiff_outf;
-	xecb->priv = state;
-	strbuf_init(&state->remainder, 0);
+	xecb->priv = &state;
+	strbuf_init(&state.remainder, 0);
 	ret = xdi_diff(mf1, mf2, xpp, xecfg, xecb);
-	strbuf_release(&state->remainder);
+	strbuf_release(&state.remainder);
 	return ret;
 }
 
