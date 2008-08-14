@@ -21,7 +21,7 @@ test_expect_success 'prune stale packs' '
 	orig_pack=$(echo .git/objects/pack/*.pack) &&
 	: > .git/objects/tmp_1.pack &&
 	: > .git/objects/tmp_2.pack &&
-	test-chmtime -86501 .git/objects/tmp_1.pack &&
+	test-chmtime =-86501 .git/objects/tmp_1.pack &&
 	git prune --expire 1.day &&
 	test -f $orig_pack &&
 	test -f .git/objects/tmp_2.pack &&
@@ -39,7 +39,7 @@ test_expect_success 'prune --expire' '
 	git prune --expire=1.hour.ago &&
 	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test -f $BLOB_FILE &&
-	test-chmtime -86500 $BLOB_FILE &&
+	test-chmtime =-86500 $BLOB_FILE &&
 	git prune --expire 1.day &&
 	test $before = $(git count-objects | sed "s/ .*//") &&
 	! test -f $BLOB_FILE
@@ -53,11 +53,11 @@ test_expect_success 'gc: implicit prune --expire' '
 	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
 	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test -f $BLOB_FILE &&
-	test-chmtime -$((86400*14-30)) $BLOB_FILE &&
+	test-chmtime =-$((86400*14-30)) $BLOB_FILE &&
 	git gc &&
 	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test -f $BLOB_FILE &&
-	test-chmtime -$((86400*14+1)) $BLOB_FILE &&
+	test-chmtime =-$((86400*14+1)) $BLOB_FILE &&
 	git gc &&
 	test $before = $(git count-objects | sed "s/ .*//") &&
 	! test -f $BLOB_FILE
