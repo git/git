@@ -1001,6 +1001,25 @@ _git_merge ()
 	__gitcomp "$(__git_refs)"
 }
 
+_git_mergetool ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--tool=*)
+		__gitcomp "
+			kdiff3 tkdiff meld xxdiff emerge
+			vimdiff gvimdiff ecmerge opendiff
+			" "" "${cur##--tool=}"
+		return
+		;;
+	--*)
+		__gitcomp "--tool="
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_merge_base ()
 {
 	__gitcomp "$(__git_refs)"
@@ -1650,6 +1669,7 @@ _git ()
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
 	merge)       _git_merge;;
+	mergetool)   _git_mergetool;;
 	merge-base)  _git_merge_base ;;
 	mv)          _git_mv ;;
 	name-rev)    _git_name_rev ;;
