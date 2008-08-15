@@ -20,6 +20,7 @@
 
 static int diff_detect_rename_default;
 static int diff_rename_limit_default = 200;
+static int diff_suppress_blank_empty;
 int diff_use_color_default = -1;
 static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
@@ -173,6 +174,12 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		if (!value)
 			return config_error_nonbool(var);
 		color_parse(value, var, diff_colors[slot]);
+		return 0;
+	}
+
+	/* like GNU diff's --suppress-blank-empty option  */
+	if (!strcmp(var, "diff.suppress-blank-empty")) {
+		diff_suppress_blank_empty = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -578,6 +585,12 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		fprintf(ecbdata->file, "%s+++ %s%s%s\n",
 			meta, ecbdata->label_path[1], reset, name_b_tab);
 		ecbdata->label_path[0] = ecbdata->label_path[1] = NULL;
+	}
+
+	if (diff_suppress_blank_empty
+	    && len == 2 && line[0] == ' ' && line[1] == '\n') {
+		line[0] = '\n';
+		len = 1;
 	}
 
 	/* This is not really necessary for now because
