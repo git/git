@@ -100,8 +100,6 @@ use Carp qw(carp croak); # but croak is bad - throw instead
 use Error qw(:try);
 use Cwd qw(abs_path);
 use IPC::Open2 qw(open2);
-use File::Temp ();
-require File::Spec;
 use Fcntl qw(SEEK_SET SEEK_CUR);
 }
 
@@ -1009,6 +1007,8 @@ sub temp_release {
 sub _temp_cache {
 	my ($name) = @_;
 
+	_verify_require();
+
 	my $temp_fd = \$TEMP_FILES{$name};
 	if (defined $$temp_fd and $$temp_fd->opened) {
 		if ($TEMP_LOCKS{$$temp_fd}) {
@@ -1029,6 +1029,11 @@ sub _temp_cache {
 		binmode $$temp_fd;
 	}
 	$$temp_fd;
+}
+
+sub _verify_require {
+	eval { require File::Temp; require File::Spec; };
+	$@ and throw Error::Simple($@);
 }
 
 =item temp_reset ( FILEHANDLE )
