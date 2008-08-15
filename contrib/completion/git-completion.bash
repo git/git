@@ -885,7 +885,11 @@ _git_help ()
 		return
 		;;
 	esac
-	__gitcomp "$(__git_all_commands)"
+	__gitcomp "$(__git_all_commands)
+		attributes cli core-tutorial cvs-migration
+		diffcore gitk glossary hooks ignore modules
+		repository-layout tutorial tutorial-2
+		"
 }
 
 _git_init ()
