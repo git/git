@@ -10,7 +10,7 @@ git am [options] (--resolved | --skip | --abort)
 --
 d,dotest=       (removed -- do not use)
 i,interactive   run interactively
-b,binary        pass --allow-binary-replacement to git-apply
+b,binary        (historical option -- no-op)
 3,3way          allow fall back on 3way merging if needed
 s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
@@ -87,7 +87,7 @@ fall_back_3way () {
 
     echo Using index info to reconstruct a base tree...
     if GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-	git apply $binary --cached <"$dotest/patch"
+	git apply --cached <"$dotest/patch"
     then
 	mv "$dotest/patch-merge-base+" "$dotest/patch-merge-base"
 	mv "$dotest/patch-merge-tmp-index" "$dotest/patch-merge-index"
@@ -121,7 +121,7 @@ It does not apply to blobs recorded in its index."
 
 prec=4
 dotest="$GIT_DIR/rebase-apply"
-sign= utf8=t keep= skip= interactive= resolved= binary= rebasing= abort=
+sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
 resolvemsg= resume=
 git_apply_opt=
 
@@ -131,7 +131,7 @@ do
 	-i|--interactive)
 		interactive=t ;;
 	-b|--binary)
-		binary=t ;;
+		: ;;
 	-3|--3way)
 		threeway=t ;;
 	-s|--signoff)
@@ -149,7 +149,7 @@ do
 	--abort)
 		abort=t ;;
 	--rebasing)
-		rebasing=t threeway=t keep=t binary=t ;;
+		rebasing=t threeway=t keep=t ;;
 	-d|--dotest)
 		die "-d option is no longer supported.  Do not use."
 		;;
@@ -247,10 +247,9 @@ else
 		exit 1
 	}
 
-	# -b, -s, -u, -k and --whitespace flags are kept for the
+	# -s, -u, -k and --whitespace flags are kept for the
 	# resuming session after a patch failure.
 	# -3 and -i can and must be given when resuming.
-	echo "$binary" >"$dotest/binary"
 	echo " $ws" >"$dotest/whitespace"
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
@@ -274,10 +273,6 @@ case "$resolved" in
 	fi
 esac
 
-if test "$(cat "$dotest/binary")" = t
-then
-	binary=--allow-binary-replacement
-fi
 if test "$(cat "$dotest/utf8")" = t
 then
 	utf8=-u
@@ -459,7 +454,7 @@ do
 
 	case "$resolved" in
 	'')
-		git apply $git_apply_opt $binary --index "$dotest/patch"
+		git apply $git_apply_opt --index "$dotest/patch"
 		apply_status=$?
 		;;
 	t)

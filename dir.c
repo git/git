@@ -54,7 +54,7 @@ int common_prefix(const char **pathspec)
 
 static inline int special_char(unsigned char c1)
 {
-	return !c1 || c1 == '*' || c1 == '[' || c1 == '?';
+	return !c1 || c1 == '*' || c1 == '[' || c1 == '?' || c1 == '\\';
 }
 
 /*

@@ -8,11 +8,13 @@ git-stash - Stash the changes in a dirty working directory away
 SYNOPSIS
 --------
 [verse]
-'git stash' list
-'git stash' (show | apply | drop | pop ) [<stash>]
+'git stash' list [<options>]
+'git stash' (show | drop | pop ) [<stash>]
+'git stash' apply [--index] [<stash>]
 'git stash' branch <branchname> [<stash>]
-'git stash' [save [<message>]]
+'git stash' [save [--keep-index] [<message>]]
 'git stash' clear
+'git stash' create
 
 DESCRIPTION
 -----------
@@ -115,6 +117,11 @@ pop [<stash>]::
 	Remove a single stashed state from the stash list and apply on top
 	of the current working tree state. When no `<stash>` is given,
 	`stash@\{0}` is assumed. See also `apply`.
+
+create::
+
+	Create a stash (which is a regular commit object) and return its
+	object name, without storing it anywhere in the ref namespace.
 
 
 DISCUSSION

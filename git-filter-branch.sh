@@ -361,9 +361,17 @@ do
 	;;
 	$_x40)
 		echo "Ref '$ref' was rewritten"
-		git update-ref -m "filter-branch: rewrite" \
-				"$ref" $rewritten $sha1 ||
-			die "Could not rewrite $ref"
+		if ! git update-ref -m "filter-branch: rewrite" \
+					"$ref" $rewritten $sha1 2>/dev/null; then
+			if test $(git cat-file -t "$ref") = tag; then
+				if test -z "$filter_tag_name"; then
+					warn "WARNING: You said to rewrite tagged commits, but not the corresponding tag."
+					warn "WARNING: Perhaps use '--tag-name-filter cat' to rewrite the tag."
+				fi
+			else
+				die "Could not rewrite $ref"
+			fi
+		fi
 	;;
 	*)
 		# NEEDSWORK: possibly add -Werror, making this an error

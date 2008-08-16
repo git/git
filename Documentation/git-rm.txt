@@ -7,7 +7,7 @@ git-rm - Remove files from the working tree and from the index
 
 SYNOPSIS
 --------
-'git rm' [-f] [-n] [-r] [--cached] [--ignore-unmatch] [--quiet] [--] <file>...
+'git rm' [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch] [--quiet] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -36,6 +36,7 @@ OPTIONS
 	but this requires the `-r` option to be explicitly given.
 
 -f::
+--force::
 	Override the up-to-date check.
 
 -n::

@@ -95,4 +95,16 @@ test_expect_success 'clone --bare names the local repository <name>.git' '
 
 '
 
+test_expect_success 'clone --mirror does not repeat tags' '
+
+	(cd src &&
+	 git tag some-tag HEAD) &&
+	git clone --mirror src mirror2 &&
+	(cd mirror2 &&
+	 git show-ref 2> clone.err > clone.out) &&
+	test_must_fail grep Duplicate mirror2/clone.err &&
+	grep some-tag mirror2/clone.out
+
+'
+
 test_done

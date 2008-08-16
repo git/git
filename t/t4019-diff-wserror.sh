@@ -13,7 +13,8 @@ test_expect_success setup '
 	echo " 	HT and SP indent" >>F &&
 	echo "With trailing SP " >>F &&
 	echo "Carriage ReturnQ" | tr Q "\015" >>F &&
-	echo "No problem" >>F
+	echo "No problem" >>F &&
+	echo >>F
 
 '
 
@@ -157,6 +158,23 @@ test_expect_success 'with cr-at-eol (attribute)' '
 	grep With error >/dev/null &&
 	grep Return normal >/dev/null &&
 	grep No normal >/dev/null
+
+'
+
+test_expect_success 'trailing empty lines (1)' '
+
+	rm -f .gitattributes &&
+	test_must_fail git diff --check >output &&
+	grep "ends with blank lines." output &&
+	grep "trailing whitespace" output
+
+'
+
+test_expect_success 'trailing empty lines (2)' '
+
+	echo "F -whitespace" >.gitattributes &&
+	git diff --check >output &&
+	! test -s output
 
 '
 

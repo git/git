@@ -31,8 +31,8 @@ OPTIONS
 	operation.  See the section <<URLS,GIT URLS>> below.
 
 <refspec>...::
-	The canonical format of each <refspec> parameter is
-	`+?<src>:<dst>`; that is, an optional plus `+`, followed
+	The canonical format of a <refspec> parameter is
+	`+?<src>:<dst>`; that is, an optional plus `{plus}`, followed
 	by the source ref, followed by a colon `:`, followed by
 	the destination ref.
 +

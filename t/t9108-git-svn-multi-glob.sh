@@ -18,18 +18,18 @@ test_expect_success 'test refspec globbing' '
 	svn co "$svnrepo" tmp &&
 	(
 		cd tmp &&
-		mkdir branches tags &&
+		mkdir branches branches/v1 tags &&
 		svn add branches tags &&
-		svn cp trunk branches/start &&
+		svn cp trunk branches/v1/start &&
 		svn commit -m "start a new branch" &&
 		svn up &&
-		echo "hi" >> branches/start/src/b/readme &&
-		poke branches/start/src/b/readme &&
-		echo "hey" >> branches/start/src/a/readme &&
-		poke branches/start/src/a/readme &&
+		echo "hi" >> branches/v1/start/src/b/readme &&
+		poke branches/v1/start/src/b/readme &&
+		echo "hey" >> branches/v1/start/src/a/readme &&
+		poke branches/v1/start/src/a/readme &&
 		svn commit -m "hi" &&
 		svn up &&
-		svn cp branches/start tags/end &&
+		svn cp branches/v1/start tags/end &&
 		echo "bye" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
 		echo "aye" >> tags/end/src/a/readme &&
@@ -43,7 +43,7 @@ test_expect_success 'test refspec globbing' '
 	git config --add svn-remote.svn.fetch \
 	                 "trunk/src/a:refs/remotes/trunk" &&
 	git config --add svn-remote.svn.branches \
-	                 "branches/*/src/a:refs/remotes/branches/*" &&
+	                 "branches/*/*/src/a:refs/remotes/branches/*/*" &&
 	git config --add svn-remote.svn.tags\
 	                 "tags/*/src/a:refs/remotes/tags/*" &&
 	git-svn multi-fetch &&
@@ -51,8 +51,8 @@ test_expect_success 'test refspec globbing' '
 	    sed -e "s/^.\{41\}//" > output.end &&
 	test_cmp expect.end output.end &&
 	test "`git rev-parse refs/remotes/tags/end~1`" = \
-		"`git rev-parse refs/remotes/branches/start`" &&
-	test "`git rev-parse refs/remotes/branches/start~2`" = \
+		"`git rev-parse refs/remotes/branches/v1/start`" &&
+	test "`git rev-parse refs/remotes/branches/v1/start~2`" = \
 		"`git rev-parse refs/remotes/trunk`" &&
 	test_must_fail git rev-parse refs/remotes/tags/end@3
 	'
@@ -65,7 +65,7 @@ test_expect_success 'test left-hand-side only globbing' '
 	git config --add svn-remote.two.url "$svnrepo" &&
 	git config --add svn-remote.two.fetch trunk:refs/remotes/two/trunk &&
 	git config --add svn-remote.two.branches \
-	                 "branches/*:refs/remotes/two/branches/*" &&
+	                 "branches/*/*:refs/remotes/two/branches/*/*" &&
 	git config --add svn-remote.two.tags \
 	                 "tags/*:refs/remotes/two/tags/*" &&
 	(
@@ -76,28 +76,77 @@ test_expect_success 'test left-hand-side only globbing' '
 	) &&
 	git-svn fetch two &&
 	test `git rev-list refs/remotes/two/tags/end | wc -l` -eq 6 &&
-	test `git rev-list refs/remotes/two/branches/start | wc -l` -eq 3 &&
-	test `git rev-parse refs/remotes/two/branches/start~2` = \
+	test `git rev-list refs/remotes/two/branches/v1/start | wc -l` -eq 3 &&
+	test `git rev-parse refs/remotes/two/branches/v1/start~2` = \
 	     `git rev-parse refs/remotes/two/trunk` &&
 	test `git rev-parse refs/remotes/two/tags/end~3` = \
-	     `git rev-parse refs/remotes/two/branches/start` &&
+	     `git rev-parse refs/remotes/two/branches/v1/start` &&
 	git log --pretty=oneline refs/remotes/two/tags/end | \
 	    sed -e "s/^.\{41\}//" > output.two &&
 	test_cmp expect.two output.two
+	'
+cat > expect.four <<EOF
+adios
+adding more
+Changed 2 in v2/start
+Another versioned branch
+initial
+EOF
+
+test_expect_success 'test another branch' '
+	(
+		cd tmp &&
+		mkdir branches/v2 &&
+		svn add branches/v2 &&
+		svn cp trunk branches/v2/start &&
+		svn commit -m "Another versioned branch" &&
+		svn up &&
+		echo "hello" >> branches/v2/start/src/b/readme &&
+		poke branches/v2/start/src/b/readme &&
+		echo "howdy" >> branches/v2/start/src/a/readme &&
+		poke branches/v2/start/src/a/readme &&
+		svn commit -m "Changed 2 in v2/start" &&
+		svn up &&
+		svn cp branches/v2/start tags/next &&
+		echo "bye" >> tags/next/src/b/readme &&
+		poke tags/next/src/b/readme &&
+		echo "aye" >> tags/next/src/a/readme &&
+		poke tags/next/src/a/readme &&
+		svn commit -m "adding more" &&
+		echo "byebye" >> tags/next/src/b/readme &&
+		poke tags/next/src/b/readme &&
+		svn commit -m "adios"
+	) &&
+	git config --add svn-remote.four.url "$svnrepo" &&
+	git config --add svn-remote.four.fetch trunk:refs/remotes/four/trunk &&
+	git config --add svn-remote.four.branches \
+	                 "branches/*/*:refs/remotes/four/branches/*/*" &&
+	git config --add svn-remote.four.tags \
+	                 "tags/*:refs/remotes/four/tags/*" &&
+	git-svn fetch four &&
+	test `git rev-list refs/remotes/four/tags/next | wc -l` -eq 5 &&
+	test `git rev-list refs/remotes/four/branches/v2/start | wc -l` -eq 3 &&
+	test `git rev-parse refs/remotes/four/branches/v2/start~2` = \
+	     `git rev-parse refs/remotes/four/trunk` &&
+	test `git rev-parse refs/remotes/four/tags/next~2` = \
+	     `git rev-parse refs/remotes/four/branches/v2/start` &&
+	git log --pretty=oneline refs/remotes/four/tags/next | \
+	    sed -e "s/^.\{41\}//" > output.four &&
+	test_cmp expect.four output.four
 	'
 
 echo "Only one set of wildcard directories" \
      "(e.g. '*' or '*/*/*') is supported: 'branches/*/t/*'" > expect.three
 echo "" >> expect.three
 
-test_expect_success 'test disallow multi-globs' '
+test_expect_success 'test disallow multiple globs' '
 	git config --add svn-remote.three.url "$svnrepo" &&
 	git config --add svn-remote.three.fetch \
 	                 trunk:refs/remotes/three/trunk &&
 	git config --add svn-remote.three.branches \
-	                 "branches/*/t/*:refs/remotes/three/branches/*" &&
+	                 "branches/*/t/*:refs/remotes/three/branches/*/*" &&
 	git config --add svn-remote.three.tags \
-	                 "tags/*/*:refs/remotes/three/tags/*" &&
+	                 "tags/*:refs/remotes/three/tags/*" &&
 	(
 		cd tmp &&
 		echo "try try" >> tags/end/src/b/readme &&

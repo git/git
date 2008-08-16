@@ -1387,6 +1387,7 @@ static struct builtin_funcname_pattern {
 			"\\|"
 			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$"
 			},
+	{ "bibtex", "\\(@[a-zA-Z]\\{1,\\}[ \t]*{\\{0,1\\}[ \t]*[^ \t\"@',\\#}{~%]*\\).*$" },
 	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$" },
 	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
 };
@@ -1631,7 +1632,8 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		ecb.priv = &data;
 		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 
-		if (data.trailing_blanks_start) {
+		if ((data.ws_rule & WS_TRAILING_SPACE) &&
+		    data.trailing_blanks_start) {
 			fprintf(o->file, "%s:%d: ends with blank lines.\n",
 				data.filename, data.trailing_blanks_start);
 			data.status = 1; /* report errors */

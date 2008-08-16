@@ -232,4 +232,12 @@ test_expect_success 'git add (add.ignore-errors = false)' '
 
 fi	# skip chmod 0 tests
 
+test_expect_success 'git add '\''fo\[ou\]bar'\'' ignores foobar' '
+	git reset --hard &&
+	touch fo\[ou\]bar foobar &&
+	git add '\''fo\[ou\]bar'\'' &&
+	git ls-files fo\[ou\]bar | grep -F fo\[ou\]bar &&
+	! ( git ls-files foobar | grep foobar )
+'
+
 test_done

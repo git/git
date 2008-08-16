@@ -36,7 +36,7 @@ test_expect_success 'setup' '
 
 test_expect_success 'am' '
 
-	git am --binary -3 <patchfile &&
+	git am -3 <patchfile &&
 	git diff-files --name-status --exit-code
 
 '

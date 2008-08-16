@@ -145,7 +145,16 @@ pick_one () {
 }
 
 pick_one_preserving_merges () {
-	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
+	fast_forward=t
+	case "$1" in
+	-n)
+		fast_forward=f
+		sha1=$2
+		;;
+	*)
+		sha1=$1
+		;;
+	esac
 	sha1=$(git rev-parse $sha1)
 
 	if test -f "$DOTEST"/current-commit
@@ -156,15 +165,14 @@ pick_one_preserving_merges () {
 		die "Cannot write current commit's replacement sha1"
 	fi
 
+	echo $sha1 > "$DOTEST"/current-commit
+
 	# rewrite parents; if none were rewritten, we can fast-forward.
-	fast_forward=t
-	preserve=t
 	new_parents=
 	for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)
 	do
 		if test -f "$REWRITTEN"/$p
 		then
-			preserve=f
 			new_p=$(cat "$REWRITTEN"/$p)
 			test $p != $new_p && fast_forward=f
 			case "$new_parents" in
@@ -181,7 +189,8 @@ pick_one_preserving_merges () {
 	case $fast_forward in
 	t)
 		output warn "Fast forward to $sha1"
-		test $preserve = f || echo $sha1 > "$REWRITTEN"/$sha1
+		output git reset --hard $sha1 ||
+			die "Cannot fast forward to $sha1"
 		;;
 	f)
 		test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
@@ -191,7 +200,6 @@ pick_one_preserving_merges () {
 		output git checkout $first_parent 2> /dev/null ||
 			die "Cannot move HEAD to $first_parent"
 
-		echo $sha1 > "$DOTEST"/current-commit
 		case "$new_parents" in
 		' '*' '*)
 			# redo merge

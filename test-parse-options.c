@@ -15,7 +15,7 @@ int length_callback(const struct option *opt, const char *arg, int unset)
 	if (unset)
 		return 1; /* do not support unset */
 
-	*(unsigned long *)opt->value = strlen(arg);
+	*(int *)opt->value = strlen(arg);
 	return 0;
 }
 

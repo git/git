@@ -1,7 +1,13 @@
 #!/bin/sh
 # Copyright (c) 2007, Nanako Shiraishi
 
-USAGE='[  | save | list | show | apply | clear | drop | pop | create | branch ]'
+dashless=$(basename "$0" | sed -e 's/-/ /')
+USAGE="list [<options>]
+   or: $dashless (show | drop | pop ) [<stash>]
+   or: $dashless apply [--index] [<stash>]
+   or: $dashless branch <branchname> [<stash>]
+   or: $dashless [save [--keep-index] [<message>]]
+   or: $dashless clear"
 
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
