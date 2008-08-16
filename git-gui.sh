@@ -663,9 +663,12 @@ font create font_diffbold
 font create font_diffitalic
 
 foreach class {Button Checkbutton Entry Label
-		Labelframe Listbox Menu Message
+		Labelframe Listbox Message
 		Radiobutton Spinbox Text} {
 	option add *$class.font font_ui
+}
+if {![is_MacOSX]} {
+	option add *Menu.font font_ui
 }
 unset class
 
@@ -2301,6 +2304,12 @@ set ui_comm {}
 # -- Menu Bar
 #
 menu .mbar -tearoff 0
+if {[is_MacOSX]} {
+	# -- Apple Menu (Mac OS X only)
+	#
+	.mbar add cascade -label Apple -menu .mbar.apple
+	menu .mbar.apple
+}
 .mbar add cascade -label [mc Repository] -menu .mbar.repository
 .mbar add cascade -label [mc Edit] -menu .mbar.edit
 if {[is_enabled branch]} {
@@ -2316,7 +2325,6 @@ if {[is_enabled transport]} {
 if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	.mbar add cascade -label [mc Tools] -menu .mbar.tools
 }
-. configure -menu .mbar
 
 # -- Repository Menu
 #
@@ -2569,19 +2577,7 @@ if {[is_enabled transport]} {
 }
 
 if {[is_MacOSX]} {
-	# -- Apple Menu (Mac OS X only)
-	#
-	.mbar add cascade -label Apple -menu .mbar.apple
-	menu .mbar.apple
-
-	.mbar.apple add command -label [mc "About %s" [appname]] \
-		-command do_about
-	.mbar.apple add separator
-	.mbar.apple add command \
-		-label [mc "Preferences..."] \
-		-command do_options \
-		-accelerator $M1T-,
-	bind . <$M1B-,> do_options
+	proc ::tk::mac::ShowPreferences {} {do_options}
 } else {
 	# -- Edit Menu
 	#
@@ -2609,11 +2605,15 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 .mbar add cascade -label [mc Help] -menu .mbar.help
 menu .mbar.help
 
-if {![is_MacOSX]} {
+if {[is_MacOSX]} {
+	.mbar.apple add command -label [mc "About %s" [appname]] \
+		-command do_about
+	.mbar.apple add separator
+} else {
 	.mbar.help add command -label [mc "About %s" [appname]] \
 		-command do_about
 }
-
+. configure -menu .mbar
 
 set doc_path [githtmldir]
 if {$doc_path ne {}} {
