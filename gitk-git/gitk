@@ -9993,4 +9993,4 @@ if {[info exists permviews]} {
     }
 }
 focus -force .
-getcommits
+getcommits {}
