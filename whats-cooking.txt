@@ -1,8 +1,8 @@
-Subject: What's cooking in git.git (Aug 2008, #03; Thu, 14)
-X-master-at: a0653d550524a0263d36fde6a8cf98941dd057ab
-X-next-at: 8dd0c03fb2b8807ef71d5e807e65818dbd05a118
+Subject: What's cooking in git.git (Aug 2008, #04; Sun, 17)
+X-master-at: 053fd0c1c3da20474c4ff175c56ea4c1d6eeda11
+X-next-at: d4dfb3b89c69c0c009978a2948b4f87dee11a648
 
-What's cooking in git.git (Aug 2008, #03; Thu, 14)
+What's cooking in git.git (Aug 2008, #04; Sun, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -15,7 +15,41 @@ meant to be merged to the maintenance series have "maint-" in their names.
 ----------------------------------------------------------------
 [New Topics]
 
-* ak/p4 (Sun Aug 10 19:26:35 2008 +0100) 12 commits
+* jc/cc-ld-dynpath (Sat Aug 16 15:01:23 2008 +0200) 2 commits
+ - configure: auto detect dynamic library path switches
+ - Makefile: Allow CC_LD_DYNPATH to be overriden
+
+* jc/index-extended-flags (Sat Aug 16 23:02:08 2008 -0700) 1 commit
+ + index: future proof for "extended" index entries
+
+* mz/push-verbose (Sat Aug 16 19:58:32 2008 +0200) 1 commit
+ + Make push more verbose about illegal combination of options
+
+* mg/count-objects (Fri Aug 15 00:20:20 2008 -0400) 1 commit
+ + count-objects: Add total pack size to verbose output
+
+This one is without the human readable bits.
+
+* lt/time-reject-fractional-seconds (Sat Aug 16 21:25:40 2008 -0700) 1 commit
+ - date/time: do not get confused by fractional seconds
+
+Linus hints further enhancements as "the right way", so let's see if
+somebody else steps up and tries it before merging this to 'next'.
+
+* sb/daemon (Thu Aug 14 20:02:20 2008 +0200) 4 commits
+ - git-daemon: rewrite kindergarden, new option --max-connections
+ - git-daemon: Simplify dead-children reaping logic
+ - git-daemon: use LOG_PID, simplify logging code
+ - git-daemon: call logerror() instead of error()
+
+Can somebody who actually runs the daemon standalone comment on this one?
+
+----------------------------------------------------------------
+[On Hold and/or Cooking]
+
+* ak/p4 (Thu Aug 14 23:40:39 2008 +0100) 14 commits
+ + Utilise our new p4_read_pipe and p4_write_pipe wrappers
+ + Add p4 read_pipe and write_pipe wrappers
  + Put in the two other configuration elements found in the source
  + Put some documentation in about the parameters that have been
    added
@@ -34,7 +68,7 @@ meant to be merged to the maintenance series have "maint-" in their names.
    invocations
 
 Warmly received by the primary contributor of git-p4; I do not mind
-merging this before 1.6.0.
+merging this before 1.6.0 (final call for "Yays").
 
 * mv/merge-recursive (Tue Aug 12 22:14:00 2008 +0200) 3 commits
  - Make builtin-revert.c use merge_recursive_generic()
@@ -53,17 +87,17 @@ three-way merge" into library form.
  + pack-objects: Allow missing base objects when creating thin packs
 
 * tr/filter-branch (Tue Aug 12 10:45:59 2008 +0200) 4 commits
- - filter-branch: use --simplify-merges
- - Merge branch 'jc/post-simplify' into tr/filter-branch
- - filter-branch: fix ref rewriting with --subdirectory-filter
- - filter-branch: Extend test to show rewriting bug
+ + filter-branch: use --simplify-merges
+ + Merge branch 'jc/post-simplify' into tr/filter-branch
+ + filter-branch: fix ref rewriting with --subdirectory-filter
+ + filter-branch: Extend test to show rewriting bug
 
 * js/checkout-dwim-local (Sat Aug 9 16:00:12 2008 +0200) 1 commit
  + checkout --track: make up a sensible branch name if '-b' was
    omitted
 
 I like this low-impact usability enhancement; will most likely be in
-master soon after 1.6.0.
+master soon after 1.6.0, but not before.
 
 * bd/diff-strbuf (Wed Aug 13 23:18:22 2008 -0700) 3 commits
  + xdiff-interface: hide the whole "xdiff_emit_state" business from
@@ -80,11 +114,8 @@ would be a separate topic.
 * am/cherry-pick-rerere (Sun Aug 10 17:18:55 2008 +0530) 1 commit
  + Make cherry-pick use rerere for conflict resolution.
 
-----------------------------------------------------------------
-[On Hold and/or Cooking]
-
 * jc/test-deeper (Fri Aug 8 02:26:28 2008 -0700) 1 commit
- - tests: use $TEST_DIRECTORY to refer to the t/ directory
+ + tests: use $TEST_DIRECTORY to refer to the t/ directory
 
 * kh/diff-tree (Sun Aug 10 18:13:04 2008 +0200) 4 commits
  + Add test for diff-tree --stdin with two trees
@@ -109,13 +140,20 @@ would be a separate topic.
 
 Random collection of patches to queue for post-1.6.0 development.
 
-* jc/post-simplify (Sun Aug 3 17:47:16 2008 -0700) 3 commits
+* jc/post-simplify (Fri Aug 15 01:34:51 2008 -0700) 7 commits
+ - revision --simplify-merges: incremental simplification
+ - revision --simplify-merges: prepare for incremental simplification
+ - revision --simplify-merges: make it a no-op without pathspec
+ + revision --simplify-merges: use decoration instead of commit->util
+   field
  + Topo-sort before --simplify-merges
  + revision traversal: show full history with merge simplification
  + revision.c: whitespace fix
 
 "log --full-history" is with too much clutter, "log" itself is too cleverer
 than some people, and here is the middle level of merge simplification.
+
+I started making this incremental but the progress is not so great.
 
 * sp/smart-http (Sun Aug 3 00:25:17 2008 -0700) 2 commits
  - [do not merge -- original version] Add Git-aware CGI for Git-aware
