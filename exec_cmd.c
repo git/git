@@ -111,9 +111,7 @@ void setup_path(void)
 
 	strbuf_init(&new_path, 0);
 
-	add_path(&new_path, argv_exec_path);
-	add_path(&new_path, getenv(EXEC_PATH_ENVIRONMENT));
-	add_path(&new_path, system_path(GIT_EXEC_PATH));
+	add_path(&new_path, git_exec_path());
 	add_path(&new_path, argv0_path);
 
 	if (old_path)
