@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "blob.h"
+#include "exec_cmd.h"
 
 static char *create_temp_file(unsigned char *sha1)
 {
@@ -24,6 +25,9 @@ static char *create_temp_file(unsigned char *sha1)
 int main(int argc, char **argv)
 {
 	unsigned char sha1[20];
+
+	if (argv[0] && *argv[0])
+		git_extract_argv0_path(argv[0]);
 
 	if (argc != 2)
 		usage("git-unpack-file <sha1>");

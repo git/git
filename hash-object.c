@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "blob.h"
 #include "quote.h"
+#include "exec_cmd.h"
 
 static void hash_object(const char *path, enum object_type type, int write_object)
 {
@@ -64,6 +65,9 @@ int main(int argc, char **argv)
 	int no_more_flags = 0;
 	int hashstdin = 0;
 	int stdin_paths = 0;
+
+	if (argv[0] && *argv[0])
+		git_extract_argv0_path(argv[0]);
 
 	git_config(git_default_config, NULL);
 

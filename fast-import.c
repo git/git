@@ -150,6 +150,7 @@ Format of STDIN stream:
 #include "refs.h"
 #include "csum-file.h"
 #include "quote.h"
+#include "exec_cmd.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -2394,6 +2395,9 @@ static const char fast_import_usage[] =
 int main(int argc, const char **argv)
 {
 	unsigned int i, show_stats = 1;
+
+	if (argv[0] && *argv[0])
+		git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 	git_config(git_pack_config, NULL);
