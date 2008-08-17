@@ -1,0 +1,15 @@
+GIT v1.6.0.1 Release Notes
+==========================
+
+Fixes since v1.6.0
+------------------
+
+* ...
+
+Contains other various documentation fixes.
+
+--
+exec >/var/tmp/1
+O=v1.6.0
+echo O=$(git describe maint)
+git shortlog --no-merges $O..maint
