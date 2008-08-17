@@ -23,6 +23,7 @@
  */
 
 #include "cache.h"
+#include "exec_cmd.h"
 #ifdef NO_OPENSSL
 typedef void *SSL;
 #endif
@@ -1388,6 +1389,9 @@ int main(int argc, char **argv)
 	int r;
 	int total, n = 0;
 	int nongit_ok;
+
+	if (argv[0] && *argv[0])
+		git_extract_argv0_path(argv[0]);
 
 	/* init the random number generator */
 	arc4_init();
