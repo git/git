@@ -144,7 +144,18 @@ is_interactive () {
 	done && test -n "$1"
 }
 
+test -f "$GIT_DIR"/rebase-apply/applying &&
+	die 'It looks like git-am is in progress. Cannot rebase.'
+
 is_interactive "$@" && exec git-rebase--interactive "$@"
+
+if test $# -eq 0
+then
+	test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply || usage
+	test -d "$dotest" -o -f "$GIT_DIR"/rebase-apply/rebasing &&
+		die 'A rebase is in progress, try --continue, --skip or --abort.'
+	die "No arguments given and $GIT_DIR/rebase-apply already exists."
+fi
 
 while test $# != 0
 do
@@ -268,16 +279,16 @@ done
 # Make sure we do not have $GIT_DIR/rebase-apply
 if test -z "$do_merge"
 then
-	if mkdir "$GIT_DIR"/rebase-apply
+	if mkdir "$GIT_DIR"/rebase-apply 2>/dev/null
 	then
 		rmdir "$GIT_DIR"/rebase-apply
 	else
 		echo >&2 '
-It seems that I cannot create a '"$GIT_DIR"'/rebase-apply directory,
-and I wonder if you are in the middle of patch application or another
+It seems that I cannot create a rebase-apply directory, and
+I wonder if you are in the middle of patch application or another
 rebase.  If that is not the case, please
 	rm -fr '"$GIT_DIR"'/rebase-apply
- and run me again.  I am stopping in case you still have something
+and run me again.  I am stopping in case you still have something
 valuable there.'
 		exit 1
 	fi
@@ -285,7 +296,7 @@ else
 	if test -d "$dotest"
 	then
 		die "previous rebase directory $dotest still exists." \
-			'try git-rebase < --continue | --abort >'
+			'Try git rebase (--continue | --abort | --skip)'
 	fi
 fi
 
