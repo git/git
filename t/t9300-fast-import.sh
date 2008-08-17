@@ -1045,7 +1045,7 @@ DATA
 INPUT_END
 
 test_expect_success 'P: fail on inline gitlink' '
-    ! git-fast-import <input'
+    test_must_fail git-fast-import <input'
 
 test_tick
 cat >input <<INPUT_END
@@ -1068,6 +1068,6 @@ M 160000 :1 sub
 INPUT_END
 
 test_expect_success 'P: fail on blob mark in gitlink' '
-    ! git-fast-import <input'
+    test_must_fail git-fast-import <input'
 
 test_done

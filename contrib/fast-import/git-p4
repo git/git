@@ -16,6 +16,11 @@ from sets import Set;
 
 verbose = False
 
+def chdir(dir):
+    if os.name == 'nt':
+        os.environ['PWD']=dir
+    os.chdir(dir)
+
 def die(msg):
     if verbose:
         raise Exception(msg)
@@ -712,7 +717,7 @@ class P4Submit(Command):
         print "Perforce checkout for depot path %s located at %s" % (self.depotPath, self.clientPath)
         self.oldWorkingDirectory = os.getcwd()
 
-        os.chdir(self.clientPath)
+        chdir(self.clientPath)
         print "Syncronizing p4 checkout..."
         system("p4 sync ...")
 
@@ -732,7 +737,7 @@ class P4Submit(Command):
 
         if len(commits) == 0:
             print "All changes applied!"
-            os.chdir(self.oldWorkingDirectory)
+            chdir(self.oldWorkingDirectory)
 
             sync = P4Sync()
             sync.run([])
@@ -1670,7 +1675,7 @@ class P4Clone(P4Sync):
         print "Importing from %s into %s" % (', '.join(depotPaths), self.cloneDestination)
         if not os.path.exists(self.cloneDestination):
             os.makedirs(self.cloneDestination)
-        os.chdir(self.cloneDestination)
+        chdir(self.cloneDestination)
         system("git init")
         self.gitdir = os.getcwd() + "/.git"
         if not P4Sync.run(self, depotPaths):
@@ -1782,7 +1787,7 @@ def main():
                 if os.path.exists(cmd.gitdir):
                     cdup = read_pipe("git rev-parse --show-cdup").strip()
                     if len(cdup) > 0:
-                        os.chdir(cdup);
+                        chdir(cdup);
 
         if not isValidGitDir(cmd.gitdir):
             if isValidGitDir(cmd.gitdir + "/.git"):
