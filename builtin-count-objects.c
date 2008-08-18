@@ -43,7 +43,7 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 			if (lstat(path, &st) || !S_ISREG(st.st_mode))
 				bad = 1;
 			else
-				(*loose_size) += xsize_t(st.st_blocks);
+				(*loose_size) += xsize_t(on_disk_bytes(st));
 		}
 		if (bad) {
 			if (verbose) {
@@ -115,7 +115,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 			num_pack++;
 		}
 		printf("count: %lu\n", loose);
-		printf("size: %lu\n", loose_size / 2);
+		printf("size: %lu\n", loose_size / 1024);
 		printf("in-pack: %lu\n", packed);
 		printf("packs: %lu\n", num_pack);
 		printf("prune-packable: %lu\n", packed_loose);

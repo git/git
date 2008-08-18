@@ -31,11 +31,6 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
 	return (time_t)winTime;
 }
 
-static inline size_t size_to_blocks(size_t s)
-{
-	return (s+511)/512;
-}
-
 extern int _getdrive( void );
 /* We keep the do_lstat code in a separate function to avoid recursion.
  * When a path ends with a slash, the stat will fail with ENOENT. In
@@ -59,7 +54,6 @@ static int do_lstat(const char *file_name, struct stat *buf)
 		buf->st_uid = 0;
 		buf->st_mode = fMode;
 		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
-		buf->st_blocks = size_to_blocks(buf->st_size);
 		buf->st_dev = _getdrive() - 1;
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
@@ -142,7 +136,6 @@ int mingw_fstat(int fd, struct mingw_stat *buf)
 		buf->st_uid = st.st_uid;
 		buf->st_mode = st.st_mode;
 		buf->st_size = st.st_size;
-		buf->st_blocks = size_to_blocks(buf->st_size);
 		buf->st_dev = st.st_dev;
 		buf->st_atime = st.st_atime;
 		buf->st_mtime = st.st_mtime;
@@ -164,7 +157,6 @@ int mingw_fstat(int fd, struct mingw_stat *buf)
 		buf->st_uid = 0;
 		buf->st_mode = fMode;
 		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
-		buf->st_blocks = size_to_blocks(buf->st_size);
 		buf->st_dev = _getdrive() - 1;
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));

@@ -192,6 +192,12 @@ extern int git_munmap(void *start, size_t length);
 
 #endif /* NO_MMAP */
 
+#ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
+#define on_disk_bytes(st) ((st).st_size)
+#else
+#define on_disk_bytes(st) ((st).st_blocks * 512)
+#endif
+
 #define DEFAULT_PACKED_GIT_LIMIT \
 	((1024L * 1024L) * (sizeof(void*) >= 8 ? 8192 : 256))
 

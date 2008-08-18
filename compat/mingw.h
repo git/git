@@ -169,7 +169,6 @@ struct mingw_stat {
 	time_t st_mtime, st_atime, st_ctime;
 	unsigned st_dev, st_ino, st_uid, st_gid;
 	size_t st_size;
-	size_t st_blocks;
 };
 int mingw_lstat(const char *file_name, struct mingw_stat *buf);
 int mingw_fstat(int fd, struct mingw_stat *buf);
