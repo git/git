@@ -66,7 +66,7 @@ my ($_stdin, $_help, $_edit,
 	$_version, $_fetch_all, $_no_rebase,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_git_format);
+	$_git_format, $_commit_url);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -127,6 +127,8 @@ my %cmd = (
 			  'verbose|v' => \$_verbose,
 			  'dry-run|n' => \$_dry_run,
 			  'fetch-all|all' => \$_fetch_all,
+			  'commit-url=s' => \$_commit_url,
+			  'revision|r=i' => \$_revision,
 			  'no-rebase' => \$_no_rebase,
 			%cmt_opts, %fc_opts } ],
 	'set-tree' => [ \&cmd_set_tree,
@@ -169,7 +171,8 @@ my %cmd = (
 			  'color' => \$Git::SVN::Log::color,
 			  'pager=s' => \$Git::SVN::Log::pager
 			} ],
-	'find-rev' => [ \&cmd_find_rev, "Translate between SVN revision numbers and tree-ish",
+	'find-rev' => [ \&cmd_find_rev,
+	                "Translate between SVN revision numbers and tree-ish",
 			{} ],
 	'rebase' => [ \&cmd_rebase, "Fetch and rebase your working directory",
 			{ 'merge|m|M' => \$_merge,
@@ -229,7 +232,9 @@ unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
 read_repo_config(\%opts);
-Getopt::Long::Configure('pass_through') if ($cmd && ($cmd eq 'log' || $cmd eq 'blame'));
+if ($cmd && ($cmd eq 'log' || $cmd eq 'blame')) {
+	Getopt::Long::Configure('pass_through');
+}
 my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
                     'minimize-connections' => \$Git::SVN::Migration::_minimize,
                     'id|i=s' => \$Git::SVN::default_ref_id,
@@ -416,6 +421,8 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
+	$url = $_commit_url if defined $_commit_url;
+	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
 		print "Committing to $url ...\n";
 	}
@@ -423,7 +430,6 @@ sub cmd_dcommit {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history.\nPerhaps the repository is empty.";
 	}
-	my $last_rev;
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
 	if ($_no_rebase && scalar(@$linear_refs) > 1) {
 		warn "Attempting to commit more than one change while ",
@@ -446,7 +452,7 @@ sub cmd_dcommit {
 			my $cmt_rev;
 			my %ed_opts = ( r => $last_rev,
 			                log => get_commit_entry($d)->{log},
-			                ra => Git::SVN::Ra->new($gs->full_url),
+			                ra => Git::SVN::Ra->new($url),
 			                config => SVN::Core::config_get_config(
 			                        $Git::SVN::Ra::config_dir
 			                ),
@@ -984,8 +990,10 @@ sub complete_url_ls_init {
 	if (length $pfx && $pfx !~ m#/$#) {
 		die "--prefix='$pfx' must have a trailing slash '/'\n";
 	}
-	command_noisy('config', "svn-remote.$gs->{repo_id}.$n",
-				"$remote_path:refs/remotes/$pfx*");
+	command_noisy('config',
+	              "svn-remote.$gs->{repo_id}.$n",
+	              "$remote_path:refs/remotes/$pfx*" .
+	                ('/*' x (($remote_path =~ tr/*/*/) - 1)) );
 }
 
 sub verify_ref {
@@ -1257,7 +1265,7 @@ sub md5sum {
 	my $arg = shift;
 	my $ref = ref $arg;
 	my $md5 = Digest::MD5->new();
-        if ($ref eq 'GLOB' || $ref eq 'IO::File') {
+        if ($ref eq 'GLOB' || $ref eq 'IO::File' || $ref eq 'File::Temp') {
 		$md5->addfile($arg) or croak $!;
 	} elsif ($ref eq 'SCALAR') {
 		$md5->add($$arg) or croak $!;
@@ -1319,6 +1327,7 @@ BEGIN {
 		}
 	}
 }
+
 
 my (%LOCKFILES, %INDEX_FILES);
 END {
@@ -3222,13 +3231,11 @@ sub change_file_prop {
 
 sub apply_textdelta {
 	my ($self, $fb, $exp) = @_;
-	my $fh = IO::File->new_tmpfile;
-	$fh->autoflush(1);
+	my $fh = Git::temp_acquire('svn_delta');
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
 	open my $dup, '<&', $fh or croak $!;
-	my $base = IO::File->new_tmpfile;
-	$base->autoflush(1);
+	my $base = Git::temp_acquire('git_blob');
 	if ($fb->{blob}) {
 		print $base 'link ' if ($fb->{mode_a} == 120000);
 		my $size = $::_repository->cat_blob($fb->{blob}, $base);
@@ -3243,9 +3250,9 @@ sub apply_textdelta {
 		}
 	}
 	seek $base, 0, 0 or croak $!;
-	$fb->{fh} = $dup;
+	$fb->{fh} = $fh;
 	$fb->{base} = $base;
-	[ SVN::TxDelta::apply($base, $fh, undef, $fb->{path}, $fb->{pool}) ];
+	[ SVN::TxDelta::apply($base, $dup, undef, $fb->{path}, $fb->{pool}) ];
 }
 
 sub close_file {
@@ -3261,35 +3268,36 @@ sub close_file {
 				    "expected: $exp\n    got: $got\n";
 			}
 		}
-		sysseek($fh, 0, 0) or croak $!;
 		if ($fb->{mode_b} == 120000) {
-			eval {
-				sysread($fh, my $buf, 5) == 5 or croak $!;
-				$buf eq 'link ' or die "$path has mode 120000",
-						       " but is not a link";
-			};
-			if ($@) {
-				warn "$@\n";
-				sysseek($fh, 0, 0) or croak $!;
+			sysseek($fh, 0, 0) or croak $!;
+			sysread($fh, my $buf, 5) == 5 or croak $!;
+
+			unless ($buf eq 'link ') {
+				warn "$path has mode 120000",
+						" but is not a link\n";
+			} else {
+				my $tmp_fh = Git::temp_acquire('svn_hash');
+				my $res;
+				while ($res = sysread($fh, my $str, 1024)) {
+					my $out = syswrite($tmp_fh, $str, $res);
+					defined($out) && $out == $res
+						or croak("write ",
+							$tmp_fh->filename,
+							": $!\n");
+				}
+				defined $res or croak $!;
+
+				($fh, $tmp_fh) = ($tmp_fh, $fh);
+				Git::temp_release($tmp_fh, 1);
 			}
 		}
 
-		my ($tmp_fh, $tmp_filename) = File::Temp::tempfile(UNLINK => 1);
-		my $result;
-		while ($result = sysread($fh, my $string, 1024)) {
-			my $wrote = syswrite($tmp_fh, $string, $result);
-			defined($wrote) && $wrote == $result
-				or croak("write $tmp_filename: $!\n");
-		}
-		defined $result or croak $!;
-		close $tmp_fh or croak $!;
-
-		close $fh or croak $!;
-
-		$hash = $::_repository->hash_and_insert_object($tmp_filename);
-		unlink($tmp_filename);
+		$hash = $::_repository->hash_and_insert_object(
+				$fh->filename);
 		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
-		close $fb->{base} or croak $!;
+
+		Git::temp_release($fb->{base}, 1);
+		Git::temp_release($fh, 1);
 	} else {
 		$hash = $fb->{blob} or die "no blob information\n";
 	}
@@ -3659,7 +3667,7 @@ sub chg_file {
 	} elsif ($m->{mode_b} !~ /755$/ && $m->{mode_a} =~ /755$/) {
 		$self->change_file_prop($fbat,'svn:executable',undef);
 	}
-	my $fh = IO::File->new_tmpfile or croak $!;
+	my $fh = Git::temp_acquire('git_blob');
 	if ($m->{mode_b} =~ /^120/) {
 		print $fh 'link ' or croak $!;
 		$self->change_file_prop($fbat,'svn:special','*');
@@ -3678,9 +3686,8 @@ sub chg_file {
 	my $atd = $self->apply_textdelta($fbat, undef, $pool);
 	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
 	die "Checksum mismatch\nexpected: $exp\ngot: $got\n" if ($got ne $exp);
+	Git::temp_release($fh, 1);
 	$pool->clear;
-
-	close $fh or croak $!;
 }
 
 sub D {
@@ -4121,16 +4128,38 @@ sub gs_fetch_loop_common {
 	Git::SVN::gc();
 }
 
+sub get_dir_globbed {
+	my ($self, $left, $depth, $r) = @_;
+
+	my @x = eval { $self->get_dir($left, $r) };
+	return unless scalar @x == 3;
+	my $dirents = $x[0];
+	my @finalents;
+	foreach my $de (keys %$dirents) {
+		next if $dirents->{$de}->{kind} != $SVN::Node::dir;
+		if ($depth > 1) {
+			my @args = ("$left/$de", $depth - 1, $r);
+			foreach my $dir ($self->get_dir_globbed(@args)) {
+				push @finalents, "$de/$dir";
+			}
+		} else {
+			push @finalents, $de;
+		}
+	}
+	@finalents;
+}
+
 sub match_globs {
 	my ($self, $exists, $paths, $globs, $r) = @_;
 
 	sub get_dir_check {
 		my ($self, $exists, $g, $r) = @_;
-		my @x = eval { $self->get_dir($g->{path}->{left}, $r) };
-		return unless scalar @x == 3;
-		my $dirents = $x[0];
-		foreach my $de (keys %$dirents) {
-			next if $dirents->{$de}->{kind} != $SVN::Node::dir;
+
+		my @dirs = $self->get_dir_globbed($g->{path}->{left},
+		                                  $g->{path}->{depth},
+		                                  $r);
+
+		foreach my $de (@dirs) {
 			my $p = $g->{path}->full_path($de);
 			next if $exists->{$p};
 			next if (length $g->{path}->{right} &&
@@ -4912,15 +4941,20 @@ sub new {
 	my ($class, $glob) = @_;
 	my $re = $glob;
 	$re =~ s!/+$!!g; # no need for trailing slashes
-	my $nr = ($re =~ s!^(.*)\*(.*)$!\(\[^/\]+\)!g);
-	my ($left, $right) = ($1, $2);
-	if ($nr > 1) {
-		die "Only one '*' wildcard expansion ",
-		    "is supported (got $nr): '$glob'\n";
-	} elsif ($nr == 0) {
+	$re =~ m!^([^*]*)(\*(?:/\*)*)([^*]*)$!;
+	my $temp = $re;
+	my ($left, $right) = ($1, $3);
+	$re = $2;
+	my $depth = $re =~ tr/*/*/;
+	if ($depth != $temp =~ tr/*/*/) {
+		die "Only one set of wildcard directories " .
+			"(e.g. '*' or '*/*/*') is supported: '$glob'\n";
+	}
+	if ($depth == 0) {
 		die "One '*' is needed for glob: '$glob'\n";
 	}
-	$re = quotemeta($left) . $re . quotemeta($right);
+	$re =~ s!\*!\[^/\]*!g;
+	$re = quotemeta($left) . "($re)" . quotemeta($right);
 	if (length $left && !($left =~ s!/+$!!g)) {
 		die "Missing trailing '/' on left side of: '$glob' ($left)\n";
 	}
@@ -4929,7 +4963,7 @@ sub new {
 	}
 	my $left_re = qr/^\/\Q$left\E(\/|$)/;
 	bless { left => $left, right => $right, left_regex => $left_re,
-	        regex => qr/$re/, glob => $glob }, $class;
+	        regex => qr/$re/, glob => $glob, depth => $depth }, $class;
 }
 
 sub full_path {

@@ -202,6 +202,9 @@ test_expect_success 'retain authorship when squashing' '
 test_expect_success '-p handles "no changes" gracefully' '
 	HEAD=$(git rev-parse HEAD) &&
 	git rebase -i -p HEAD^ &&
+	git update-index --refresh &&
+	git diff-files --quiet &&
+	git diff-index --quiet --cached HEAD -- &&
 	test $HEAD = $(git rev-parse HEAD)
 '
 
@@ -235,6 +238,9 @@ test_expect_success 'preserve merges with -p' '
 	git checkout -b to-be-rebased &&
 	test_tick &&
 	git rebase -i -p --onto branch1 master &&
+	git update-index --refresh &&
+	git diff-files --quiet &&
+	git diff-index --quiet --cached HEAD -- &&
 	test $(git rev-parse HEAD~6) = $(git rev-parse branch1) &&
 	test $(git rev-parse HEAD~4^2) = $(git rev-parse to-be-preserved) &&
 	test $(git rev-parse HEAD^^2^) = $(git rev-parse HEAD^^^) &&
@@ -242,6 +248,18 @@ test_expect_success 'preserve merges with -p' '
 	test $(git show HEAD~3:file1) = C &&
 	test $(git show HEAD:file1) = E &&
 	test $(git show HEAD:unrelated-file) = 1
+'
+
+test_expect_success 'edit ancestor with -p' '
+	FAKE_LINES="1 edit 2 3 4" git rebase -i -p HEAD~3 &&
+	echo 2 > unrelated-file &&
+	test_tick &&
+	git commit -m L2-modified --amend unrelated-file &&
+	git rebase --continue &&
+	git update-index --refresh &&
+	git diff-files --quiet &&
+	git diff-index --quiet --cached HEAD -- &&
+	test $(git show HEAD:unrelated-file) = 2
 '
 
 test_expect_success '--continue tries to commit' '

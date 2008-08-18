@@ -330,7 +330,8 @@ static struct ref *write_remote_refs(const struct ref *refs,
 	struct ref *r;
 
 	get_fetch_map(refs, refspec, &tail, 0);
-	get_fetch_map(refs, tag_refspec, &tail, 0);
+	if (!option_mirror)
+		get_fetch_map(refs, tag_refspec, &tail, 0);
 
 	for (r = local_refs; r; r = r->next)
 		add_extra_ref(r->peer_ref->name, r->old_sha1, 0);

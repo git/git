@@ -203,7 +203,8 @@ static void handle_content_transfer_encoding(const struct strbuf *line)
 
 static int is_multipart_boundary(const struct strbuf *line)
 {
-	return !strbuf_cmp(line, *content_top);
+	return (((*content_top)->len <= line->len) &&
+		!memcmp(line->buf, (*content_top)->buf, (*content_top)->len));
 }
 
 static void cleanup_subject(struct strbuf *subject)
@@ -649,8 +650,11 @@ again:
 		check_header(&line, p_hdr_data, 0);
 
 	strbuf_release(&newline);
-	/* eat the blank line after section info */
-	return (strbuf_getline(&line, fin, '\n') == 0);
+	/* replenish line */
+	if (strbuf_getline(&line, fin, '\n'))
+		return 0;
+	strbuf_addch(&line, '\n');
+	return 1;
 }
 
 static inline int patchbreak(const struct strbuf *line)
@@ -757,9 +761,10 @@ static void handle_body(void)
 		/* process any boundary lines */
 		if (*content_top && is_multipart_boundary(&line)) {
 			/* flush any leftover */
-			if (line.len)
-				handle_filter(&line);
-
+			if (prev.len) {
+				handle_filter(&prev);
+				strbuf_reset(&prev);
+			}
 			if (!handle_boundary())
 				goto handle_body_out;
 		}

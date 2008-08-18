@@ -138,6 +138,15 @@ and have no uncommitted changes.
 +
 --no-rebase;;
 	After committing, do not rebase or reset.
+--commit-url <URL>;;
+	Commit to this SVN URL (the full path).  This is intended to
+	allow existing git-svn repositories created with one transport
+	method (e.g. `svn://` or `http://` for anonymous read) to be
+	reused if a user is later given access to an alternate transport
+	method (e.g. `svn+ssh://` or `https://`) for commit.
+
+	Using this option for any other purpose (don't ask)
+	is very strongly discouraged.
 --
 
 'log'::

@@ -501,7 +501,7 @@ __git_has_doubledash ()
 	return 1
 }
 
-__git_whitespacelist="nowarn warn error error-all strip"
+__git_whitespacelist="nowarn warn error error-all fix"
 
 _git_am ()
 {
@@ -885,7 +885,11 @@ _git_help ()
 		return
 		;;
 	esac
-	__gitcomp "$(__git_all_commands)"
+	__gitcomp "$(__git_all_commands)
+		attributes cli core-tutorial cvs-migration
+		diffcore gitk glossary hooks ignore modules
+		repository-layout tutorial tutorial-2
+		"
 }
 
 _git_init ()
@@ -972,6 +976,7 @@ _git_log ()
 			--decorate --diff-filter=
 			--color-words --walk-reflogs
 			--parents --children --full-history
+			--merge
 			"
 		return
 		;;
@@ -999,6 +1004,25 @@ _git_merge ()
 		return
 	esac
 	__gitcomp "$(__git_refs)"
+}
+
+_git_mergetool ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--tool=*)
+		__gitcomp "
+			kdiff3 tkdiff meld xxdiff emerge
+			vimdiff gvimdiff ecmerge opendiff
+			" "" "${cur##--tool=}"
+		return
+		;;
+	--*)
+		__gitcomp "--tool="
+		return
+		;;
+	esac
+	COMPREPLY=()
 }
 
 _git_merge_base ()
@@ -1439,7 +1463,7 @@ _git_stash ()
 		apply,--*)
 			__gitcomp "--index"
 			;;
-		show,--*|apply,--*|drop,--*|pop,--*|branch,--*)
+		show,--*|drop,--*|pop,--*|branch,--*)
 			COMPREPLY=()
 			;;
 		show,*|apply,*|drop,*|pop,*|branch,*)
@@ -1650,6 +1674,7 @@ _git ()
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
 	merge)       _git_merge;;
+	mergetool)   _git_mergetool;;
 	merge-base)  _git_merge_base ;;
 	mv)          _git_mv ;;
 	name-rev)    _git_name_rev ;;

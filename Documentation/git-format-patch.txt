@@ -147,9 +147,9 @@ include::diff-options.txt[]
 	to any configured headers, and may be used multiple times.
 
 --cover-letter::
-	Generate a cover letter template.  You still have to fill in
-	a description, but the shortlog and the diffstat will be
-	generated for you.
+	In addition to the patches, generate a cover letter file
+	containing the shortlog and the overall diffstat.  You can
+	fill in a description in the file before sending it out.
 
 --suffix=.<sfx>::
 	Instead of using `.patch` as the suffix for generated
