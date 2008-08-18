@@ -1459,8 +1459,10 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 			cnt++;
 		}
 	}
-	if (cnt)
+	if (cnt) {
+		tail = &commit_list_insert(commit, tail)->next;
 		return tail;
+	}
 
 	/*
 	 * Rewrite our list of parents.
