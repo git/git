@@ -23,6 +23,7 @@ static int diff_rename_limit_default = 200;
 int diff_use_color_default = -1;
 static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
+static int diff_mnemonic_prefix;
 
 static char diff_colors[][COLOR_MAXLEN] = {
 	"\033[m",	/* reset */
@@ -147,6 +148,10 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "diff.autorefreshindex")) {
 		diff_auto_refresh_index = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "diff.mnemonicprefix")) {
+		diff_mnemonic_prefix = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.external"))
@@ -305,6 +310,15 @@ static void emit_rewrite_diff(const char *name_a,
 	const char *new = diff_get_color(color_diff, DIFF_FILE_NEW);
 	const char *reset = diff_get_color(color_diff, DIFF_RESET);
 	static struct strbuf a_name = STRBUF_INIT, b_name = STRBUF_INIT;
+	const char *a_prefix, *b_prefix;
+
+	if (diff_mnemonic_prefix && DIFF_OPT_TST(o, REVERSE_DIFF)) {
+		a_prefix = o->b_prefix;
+		b_prefix = o->a_prefix;
+	} else {
+		a_prefix = o->a_prefix;
+		b_prefix = o->b_prefix;
+	}
 
 	name_a += (*name_a == '/');
 	name_b += (*name_b == '/');
@@ -313,8 +327,8 @@ static void emit_rewrite_diff(const char *name_a,
 
 	strbuf_reset(&a_name);
 	strbuf_reset(&b_name);
-	quote_two_c_style(&a_name, o->a_prefix, name_a, 0);
-	quote_two_c_style(&b_name, o->b_prefix, name_b, 0);
+	quote_two_c_style(&a_name, a_prefix, name_a, 0);
+	quote_two_c_style(&b_name, b_prefix, name_b, 0);
 
 	diff_populate_filespec(one, 0);
 	diff_populate_filespec(two, 0);
@@ -1432,6 +1446,14 @@ static const char *diff_funcname_pattern(struct diff_filespec *one)
 	return NULL;
 }
 
+void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b)
+{
+	if (!options->a_prefix)
+		options->a_prefix = a;
+	if (!options->b_prefix)
+		options->b_prefix = b;
+}
+
 static void builtin_diff(const char *name_a,
 			 const char *name_b,
 			 struct diff_filespec *one,
@@ -1445,9 +1467,19 @@ static void builtin_diff(const char *name_a,
 	char *a_one, *b_two;
 	const char *set = diff_get_color_opt(o, DIFF_METAINFO);
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
+	const char *a_prefix, *b_prefix;
 
-	a_one = quote_two(o->a_prefix, name_a + (*name_a == '/'));
-	b_two = quote_two(o->b_prefix, name_b + (*name_b == '/'));
+	diff_set_mnemonic_prefix(o, "a/", "b/");
+	if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
+		a_prefix = o->b_prefix;
+		b_prefix = o->a_prefix;
+	} else {
+		a_prefix = o->a_prefix;
+		b_prefix = o->b_prefix;
+	}
+
+	a_one = quote_two(a_prefix, name_a + (*name_a == '/'));
+	b_two = quote_two(b_prefix, name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
 	fprintf(o->file, "%sdiff --git %s %s%s\n", set, a_one, b_two, reset);
@@ -2308,8 +2340,10 @@ void diff_setup(struct diff_options *options)
 		DIFF_OPT_CLR(options, COLOR_DIFF);
 	options->detect_rename = diff_detect_rename_default;
 
-	options->a_prefix = "a/";
-	options->b_prefix = "b/";
+	if (!diff_mnemonic_prefix) {
+		options->a_prefix = "a/";
+		options->b_prefix = "b/";
+	}
 }
 
 int diff_setup_done(struct diff_options *options)

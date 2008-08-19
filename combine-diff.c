@@ -675,9 +675,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int i, show_hunks;
 	int working_tree_file = is_null_sha1(elem->sha1);
 	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
+	const char *a_prefix, *b_prefix;
 	mmfile_t result_file;
 
 	context = opt->context;
+	a_prefix = opt->a_prefix ? opt->a_prefix : "a/";
+	b_prefix = opt->b_prefix ? opt->b_prefix : "b/";
+
 	/* Read the result of merge first */
 	if (!working_tree_file)
 		result = grab_blob(elem->sha1, &result_size);
@@ -853,13 +857,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			dump_quoted_path("--- ", "", "/dev/null",
 					 c_meta, c_reset);
 		else
-			dump_quoted_path("--- ", opt->a_prefix, elem->path,
+			dump_quoted_path("--- ", a_prefix, elem->path,
 					 c_meta, c_reset);
 		if (deleted)
 			dump_quoted_path("+++ ", "", "/dev/null",
 					 c_meta, c_reset);
 		else
-			dump_quoted_path("+++ ", opt->b_prefix, elem->path,
+			dump_quoted_path("+++ ", b_prefix, elem->path,
 					 c_meta, c_reset);
 		dump_sline(sline, cnt, num_parent,
 			   DIFF_OPT_TST(opt, COLOR_DIFF));

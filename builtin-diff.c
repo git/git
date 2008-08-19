@@ -74,6 +74,8 @@ static int builtin_diff_b_f(struct rev_info *revs,
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)))
 		die("'%s': not a regular file or symlink", path);
 
+	diff_set_mnemonic_prefix(&revs->diffopt, "o/", "w/");
+
 	if (blob[0].mode == S_IFINVALID)
 		blob[0].mode = canon_mode(st.st_mode);
 

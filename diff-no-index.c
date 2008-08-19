@@ -252,6 +252,7 @@ void diff_no_index(struct rev_info *revs,
 	if (queue_diff(&revs->diffopt, revs->diffopt.paths[0],
 		       revs->diffopt.paths[1]))
 		exit(1);
+	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 
