@@ -107,7 +107,7 @@ static void handle_from(const struct strbuf *from)
 	el = strcspn(at, " \n\t\r\v\f>");
 	strbuf_reset(&email);
 	strbuf_add(&email, at, el);
-	strbuf_remove(&f, at - f.buf, el + 1);
+	strbuf_remove(&f, at - f.buf, el + (at[el] ? 1 : 0));
 
 	/* The remainder is name.  It could be "John Doe <john.doe@xz>"
 	 * or "john.doe@xz (John Doe)", but we have removed the

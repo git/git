@@ -43,4 +43,15 @@ test_expect_success 'Preserve NULs out of MIME encoded message' '
 
 '
 
+test_expect_success 'mailinfo on from header without name works' '
+
+	mkdir info-from &&
+	git mailsplit -oinfo-from "$TEST_DIRECTORY"/t5100/info-from.in &&
+	test_cmp "$TEST_DIRECTORY"/t5100/info-from.in info-from/0001 &&
+	git mailinfo info-from/msg info-from/patch \
+	  <info-from/0001 >info-from/out &&
+	test_cmp "$TEST_DIRECTORY"/t5100/info-from.expect info-from/out
+
+'
+
 test_done
