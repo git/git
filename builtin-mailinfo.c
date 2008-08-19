@@ -175,7 +175,7 @@ static void handle_content_type(struct strbuf *line)
 		 message_type = TYPE_OTHER;
 	if (slurp_attr(line->buf, "boundary=", boundary)) {
 		strbuf_insert(boundary, 0, "--", 2);
-		if (content_top++ >= &content[MAX_BOUNDARIES]) {
+		if (++content_top > &content[MAX_BOUNDARIES]) {
 			fprintf(stderr, "Too many boundaries to handle\n");
 			exit(1);
 		}
@@ -603,7 +603,7 @@ static void handle_filter(struct strbuf *line);
 static int find_boundary(void)
 {
 	while (!strbuf_getline(&line, fin, '\n')) {
-		if (is_multipart_boundary(&line))
+		if (*content_top && is_multipart_boundary(&line))
 			return 1;
 	}
 	return 0;
@@ -626,7 +626,7 @@ again:
 		/* technically won't happen as is_multipart_boundary()
 		   will fail first.  But just in case..
 		 */
-		if (content_top-- < content) {
+		if (--content_top < content) {
 			fprintf(stderr, "Detected mismatched boundaries, "
 					"can't recover\n");
 			exit(1);
