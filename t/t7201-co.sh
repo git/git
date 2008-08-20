@@ -337,4 +337,15 @@ test_expect_success \
     test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
     test_must_fail git checkout --track -b track'
 
+test_expect_success \
+    'checkout with --track fakes a sensible -b <name>' '
+    git update-ref refs/remotes/origin/koala/bear renamer &&
+    git checkout --track origin/koala/bear &&
+    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"'
+
+test_expect_success \
+    'checkout with --track, but without -b, fails with too short tracked name' '
+    test_must_fail git checkout --track renamer'
+
 test_done

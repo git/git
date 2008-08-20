@@ -8,7 +8,7 @@ git-checkout - Checkout a branch or paths to the working tree
 SYNOPSIS
 --------
 [verse]
-'git checkout' [-q] [-f] [[--track | --no-track] -b <new_branch> [-l]] [-m] [<branch>]
+'git checkout' [-q] [-f] [--track | --no-track] [-b <new_branch> [-l]] [-m] [<branch>]
 'git checkout' [<tree-ish>] [--] <paths>...
 
 DESCRIPTION
@@ -20,6 +20,10 @@ branch, <branch>, and updating HEAD to be <branch> or, if
 specified, <new_branch>.  Using -b will cause <new_branch> to
 be created; in this case you can use the --track or --no-track
 options, which will be passed to `git branch`.
+
+As a convenience, --track will default to create a branch whose
+name is constructed from the specified branch name by stripping
+the first namespace level.
 
 When <paths> are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
@@ -59,6 +63,10 @@ OPTIONS
 	'git-checkout' and 'git-branch' to always behave as if '--no-track' were
 	given. Set it to `always` if you want this behavior when the
 	start-point is either a local or remote branch.
++
+If no '-b' option was given, a name will be made up for you, by stripping
+the part up to the first slash of the tracked branch.  For example, if you
+called 'git checkout --track origin/next', the branch name will be 'next'.
 
 --no-track::
 	Ignore the branch.autosetupmerge configuration variable.
