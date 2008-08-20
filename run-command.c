@@ -111,6 +111,8 @@ int start_command(struct child_process *cmd)
 					unsetenv(*cmd->env);
 			}
 		}
+		if (cmd->preexec_cb)
+			cmd->preexec_cb();
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
 		} else {
