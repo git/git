@@ -271,15 +271,17 @@ __git_merge_strategies ()
 		echo "$__git_merge_strategylist"
 		return
 	fi
-	sed -n "/^all_strategies='/{
-		s/^all_strategies='//
-		s/'//
+	git merge -s help 2>&1 |
+	sed -n -e '/[Aa]vailable strategies are: /,/^$/{
+		s/\.$//
+		s/.*://
+		s/^[ 	]*//
+		s/[ 	]*$//
 		p
-		q
-		}" "$(git --exec-path)/git-merge"
+	}'
 }
 __git_merge_strategylist=
-__git_merge_strategylist="$(__git_merge_strategies 2>/dev/null)"
+__git_merge_strategylist=$(__git_merge_strategies 2>/dev/null)
 
 __git_complete_file ()
 {
