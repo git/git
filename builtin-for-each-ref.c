@@ -459,8 +459,10 @@ static void find_subpos(const char *buf, unsigned long sz, const char **sub, con
 		return;
 	*sub = buf; /* first non-empty line */
 	buf = strchr(buf, '\n');
-	if (!buf)
+	if (!buf) {
+		*body = "";
 		return; /* no body */
+	}
 	while (*buf == '\n')
 		buf++; /* skip blank between subject and body */
 	*body = buf;

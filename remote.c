@@ -579,8 +579,7 @@ int valid_fetch_refspec(const char *fetch_refspec_str)
 	struct refspec *refspec;
 
 	refspec = parse_refspec_internal(1, fetch_refspec, 1, 1);
-	if (refspec)
-		free(refspec);
+	free(refspec);
 	return !!refspec;
 }
 

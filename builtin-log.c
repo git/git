@@ -461,7 +461,7 @@ static int extra_cc_alloc;
 static void add_header(const char *value)
 {
 	int len = strlen(value);
-	while (value[len - 1] == '\n')
+	while (len && value[len - 1] == '\n')
 		len--;
 	if (!strncasecmp(value, "to: ", 4)) {
 		ALLOC_GROW(extra_to, extra_to_nr + 1, extra_to_alloc);

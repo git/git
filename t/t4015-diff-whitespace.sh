@@ -341,4 +341,15 @@ test_expect_success 'checkdiff detects trailing blank lines' '
 	git diff --check | grep "ends with blank"
 '
 
+test_expect_success 'checkdiff allows new blank lines' '
+	git checkout x &&
+	mv x y &&
+	(
+		echo "/* This is new */" &&
+		echo "" &&
+		cat y
+	) >x &&
+	git diff --check
+'
+
 test_done

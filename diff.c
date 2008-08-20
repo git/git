@@ -1628,6 +1628,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		xdemitcb_t ecb;
 
 		memset(&xecfg, 0, sizeof(xecfg));
+		xecfg.ctxlen = 1; /* at least one context line */
 		xpp.flags = XDF_NEED_MINIMAL;
 		xdi_diff_outf(&mf1, &mf2, checkdiff_consume, &data,
 			      &xpp, &xecfg, &ecb);

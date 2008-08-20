@@ -566,6 +566,7 @@ static int checkout_fast_forward(unsigned char *head, unsigned char *remote)
 
 	if (read_cache_unmerged())
 		die("you need to resolve your current index first");
+	refresh_cache(REFRESH_QUIET);
 
 	fd = hold_locked_index(lock_file, 1);
 
@@ -936,7 +937,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			hex,
 			find_unique_abbrev(remoteheads->item->object.sha1,
 			DEFAULT_ABBREV));
-		refresh_cache(REFRESH_QUIET);
 		strbuf_init(&msg, 0);
 		strbuf_addstr(&msg, "Fast forward");
 		if (have_message)

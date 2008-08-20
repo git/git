@@ -4,12 +4,28 @@ GIT v1.6.0.1 Release Notes
 Fixes since v1.6.0
 ------------------
 
-* ...
+* "git diff --check" incorrectly detected new trailing blank lines when
+  whitespace check was in effect.
+
+* "git for-each-ref" tried to dereference NULL when asked for '%(body)" on
+  a tag with a single incomplete line as its payload.
+
+* "git format-patch" peeked before the beginning of a string when
+  "format.headers" variable is empty (a misconfiguration).
+
+* "git mailinfo" (hence "git am") was unhappy when MIME multipart message
+  contained garbage after the finishing boundary.
+
+* "git mailinfo" also was unhappy when the "From: " line only had a bare
+  e-mail address.
+
+* "git merge" did not refresh the index correctly when a merge resulted in
+  a fast-forward.
 
 Contains other various documentation fixes.
 
 --
 exec >/var/tmp/1
-O=v1.6.0
+O=v1.6.0-14-g3a634dc
 echo O=$(git describe maint)
 git shortlog --no-merges $O..maint
