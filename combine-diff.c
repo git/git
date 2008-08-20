@@ -143,8 +143,6 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 }
 
 struct combine_diff_state {
-	struct xdiff_emit_state xm;
-
 	unsigned int lno;
 	int ob, on, nb, nn;
 	unsigned long nmask;
@@ -217,17 +215,15 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	parent_file.size = sz;
 	xpp.flags = XDF_NEED_MINIMAL;
 	memset(&xecfg, 0, sizeof(xecfg));
-	ecb.outf = xdiff_outf;
-	ecb.priv = &state;
 	memset(&state, 0, sizeof(state));
-	state.xm.consume = consume_line;
 	state.nmask = nmask;
 	state.sline = sline;
 	state.lno = 1;
 	state.num_parent = num_parent;
 	state.n = n;
 
-	xdi_diff(&parent_file, result_file, &xpp, &xecfg, &ecb);
+	xdi_diff_outf(&parent_file, result_file, consume_line, &state,
+		      &xpp, &xecfg, &ecb);
 	free(parent_file.ptr);
 
 	/* Assign line numbers for this parent.
