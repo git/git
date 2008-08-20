@@ -4,6 +4,13 @@ GIT v1.6.1 Release Notes
 Updates since v1.6.0
 --------------------
 
+When some commands (e.g. "git log", "git diff") spawn pager internally, we
+used to make the pager the parent process of the git command that produces
+output.  This meant that the exit status of the whole thing comes from the
+pager, not the underlying git command.  We swapped the order of the
+processes around and you will see the exit code from the command from now
+on.
+
 (subsystems)
 
 * ...
@@ -18,16 +25,25 @@ Updates since v1.6.0
 
 (performance)
 
-* ...
+* The underlying diff machinery to produce textual output has been
+  optimized, which would result in faster "git blame" processing.
 
 (usability, bells and whistles)
 
-* ...
+* "git checkout --track origin/hack" used to be a syntax error.  It now
+  DWIMs to create a corresponding local branch "hack", i.e. acts as if you
+  said "git checkout --track -b hack origin/hack".
+
+* "git diff" learned to mimick --suppress-blank-empty from GNU diff via a
+  configuration option.
+
+* "git imap-send" can optionally talk SSL.
 
 (internal)
 
-* ...
-
+* "git hash-object" learned to lie about the path being hashed, so that
+  correct gitattributes processing can be done while hashing contents
+  stored in a temporary file.
 
 Fixes since v1.6.0
 ------------------
@@ -37,6 +53,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.0
+O=v1.6.0-48-ge28a867
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
