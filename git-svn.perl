@@ -421,7 +421,7 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
-	$url = $_commit_url if defined $_commit_url;
+	$url = defined $_commit_url ? $_commit_url : $gs->full_url;
 	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
 		print "Committing to $url ...\n";
@@ -437,6 +437,8 @@ sub cmd_dcommit {
 		     "If these changes depend on each other, re-running ",
 		     "without --no-rebase may be required."
 	}
+	my $expect_url = $url;
+	Git::SVN::remove_username($expect_url);
 	while (1) {
 		my $d = shift @$linear_refs or last;
 		unless (defined $last_rev) {
@@ -511,9 +513,9 @@ sub cmd_dcommit {
 					  $gs->refname,
 					  "\nBefore dcommitting";
 				}
-				if ($url_ ne $url) {
+				if ($url_ ne $expect_url) {
 					fatal "URL mismatch after rebase: ",
-					      "$url_ != $url";
+					      "$url_ != $expect_url";
 				}
 				if ($uuid_ ne $uuid) {
 					fatal "uuid mismatch after rebase: ",
