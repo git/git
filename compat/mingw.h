@@ -162,22 +162,12 @@ int mingw_rename(const char*, const char*);
 
 /* Use mingw_lstat() instead of lstat()/stat() and
  * mingw_fstat() instead of fstat() on Windows.
- * struct stat is redefined because it lacks the st_blocks member.
  */
-struct mingw_stat {
-	unsigned st_mode;
-	time_t st_mtime, st_atime, st_ctime;
-	unsigned st_dev, st_ino, st_uid, st_gid;
-	size_t st_size;
-	size_t st_blocks;
-};
-int mingw_lstat(const char *file_name, struct mingw_stat *buf);
-int mingw_fstat(int fd, struct mingw_stat *buf);
+int mingw_lstat(const char *file_name, struct stat *buf);
+int mingw_fstat(int fd, struct stat *buf);
 #define fstat mingw_fstat
 #define lstat mingw_lstat
-#define stat mingw_stat
-static inline int mingw_stat(const char *file_name, struct mingw_stat *buf)
-{ return mingw_lstat(file_name, buf); }
+#define stat(x,y) mingw_lstat(x,y)
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
 #define utime mingw_utime
