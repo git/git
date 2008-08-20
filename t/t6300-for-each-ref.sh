@@ -262,4 +262,14 @@ for i in "--perl --shell" "-s --python" "--python --tcl" "--tcl --perl"; do
 	"
 done
 
+test_expect_success 'an unusual tag with an incomplete line' '
+
+	git tag -m "bogo" bogo &&
+	bogo=$(git cat-file tag bogo) &&
+	bogo=$(printf "%s" "$bogo" | git mktag) &&
+	git tag -f bogo "$bogo" &&
+	git for-each-ref --format "%(body)" refs/tags/bogo
+
+'
+
 test_done
