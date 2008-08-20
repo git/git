@@ -333,7 +333,6 @@ endif
 export PERL_PATH
 
 LIB_FILE=libgit.a
-COMPAT_LIB = compat/lib.a
 XDIFF_LIB=xdiff/lib.a
 
 LIB_H += archive.h
@@ -1224,12 +1223,6 @@ git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
-$(COMPAT_LIB): $(COMPAT_OBJS)
-	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(COMPAT_OBJS)
-
-git-shell$X: abspath.o ctype.o exec_cmd.o quote.o strbuf.o usage.o wrapper.o shell.o $(COMPAT_LIB)
-	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(COMPAT_LIB)
-
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H) $(wildcard */*.h)
 builtin-revert.o wt-status.o: wt-status.h
@@ -1442,7 +1435,7 @@ distclean: clean
 
 clean:
 	$(RM) *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
-		$(LIB_FILE) $(XDIFF_LIB) $(COMPAT_LIB)
+		$(LIB_FILE) $(XDIFF_LIB)
 	$(RM) $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS)
 	$(RM) *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags cscope*
