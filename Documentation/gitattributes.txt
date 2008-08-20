@@ -322,6 +322,8 @@ patterns are available:
 
 - `tex` suitable for source code for LaTeX documents.
 
+- `html` suitable for HTML/XHTML documents.
+
 
 Performing a three-way merge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

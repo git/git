@@ -1381,6 +1381,8 @@ static struct builtin_funcname_pattern {
 	const char *name;
 	const char *pattern;
 } builtin_funcname_pattern[] = {
+	{ "bibtex", "\\(@[a-zA-Z]\\{1,\\}[ \t]*{\\{0,1\\}[ \t]*[^ \t\"@',\\#}{~%]*\\).*$" },
+	{ "html", "^\\s*\\(<[Hh][1-6]\\s.*>.*\\)$" },
 	{ "java", "!^[ 	]*\\(catch\\|do\\|for\\|if\\|instanceof\\|"
 			"new\\|return\\|switch\\|throw\\|while\\)\n"
 			"^[ 	]*\\(\\([ 	]*"
@@ -1392,10 +1394,9 @@ static struct builtin_funcname_pattern {
 			"\\|"
 			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$"
 			},
-	{ "bibtex", "\\(@[a-zA-Z]\\{1,\\}[ \t]*{\\{0,1\\}[ \t]*[^ \t\"@',\\#}{~%]*\\).*$" },
-	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$" },
 	{ "python", "^\\s*\\(\\(class\\|def\\)\\s.*\\)$" },
 	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
+	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$" },
 };
 
 static const char *diff_funcname_pattern(struct diff_filespec *one)
