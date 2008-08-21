@@ -35,7 +35,8 @@ resolve_relative_url ()
 	remote="${remote:-origin}"
 	remoteurl=$(git config "remote.$remote.url") ||
 		die "remote ($remote) does not have a url defined in .git/config"
-	url="${1%/}"
+	url="$1"
+	remoteurl=${remoteurl%/}
 	while test -n "$url"
 	do
 		case "$url" in
@@ -50,7 +51,7 @@ resolve_relative_url ()
 			break;;
 		esac
 	done
-	echo "$remoteurl/$url"
+	echo "$remoteurl/${url%/}"
 }
 
 #
