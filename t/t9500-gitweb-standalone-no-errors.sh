@@ -25,9 +25,9 @@ our \$site_name = "[localhost]";
 our \$site_header = "";
 our \$site_footer = "";
 our \$home_text = "indextext.html";
-our @stylesheets = ("file:///$safe_pwd/../../gitweb/gitweb.css");
-our \$logo = "file:///$safe_pwd/../../gitweb/git-logo.png";
-our \$favicon = "file:///$safe_pwd/../../gitweb/git-favicon.png";
+our @stylesheets = ("file:///$TEST_DIRECTORY/../gitweb/gitweb.css");
+our \$logo = "file:///$TEST_DIRECTORY/../gitweb/git-logo.png";
+our \$favicon = "file:///$TEST_DIRECTORY/../gitweb/git-favicon.png";
 our \$projects_list = "";
 our \$export_ok = "";
 our \$strict_export = "";
@@ -54,7 +54,7 @@ gitweb_run () {
 	# written to web server logs, so we are not interested in that:
 	# we are interested only in properly formatted errors/warnings
 	rm -f gitweb.log &&
-	perl -- "$(pwd)/../../gitweb/gitweb.perl" \
+	perl -- "$TEST_DIRECTORY/../gitweb/gitweb.perl" \
 		>/dev/null 2>gitweb.log &&
 	if grep -q -s "^[[]" gitweb.log >/dev/null; then false; else true; fi
 
@@ -525,20 +525,20 @@ test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'encode(commit): utf8' \
-	'. ../t3901-utf8.txt &&
+	'. "$TEST_DIRECTORY"/t3901-utf8.txt &&
 	 echo "UTF-8" >> file &&
 	 git add file &&
-	 git commit -F ../t3900/1-UTF-8.txt &&
+	 git commit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
 	 gitweb_run "p=.git;a=commit"'
 test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'encode(commit): iso-8859-1' \
-	'. ../t3901-8859-1.txt &&
+	'. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
 	 echo "ISO-8859-1" >> file &&
 	 git add file &&
 	 git config i18n.commitencoding ISO-8859-1 &&
-	 git commit -F ../t3900/ISO-8859-1.txt &&
+	 git commit -F "$TEST_DIRECTORY"/t3900/ISO-8859-1.txt &&
 	 git config --unset i18n.commitencoding &&
 	 gitweb_run "p=.git;a=commit"'
 test_debug 'cat gitweb.log'

@@ -5,7 +5,7 @@
 
 test_description='test git-fast-import utility'
 . ./test-lib.sh
-. ../diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
 file2_data='file2
 second line of EOF'

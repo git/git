@@ -7,7 +7,7 @@ test_description='Test special whitespace in diff engine.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
 
 # Ray Lehtiniemi's example
 

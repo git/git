@@ -83,13 +83,13 @@ test_expect_success 'merge-msg test #1' '
 '
 
 cat >expected <<EOF
-Merge branch 'left' of ../$test
+Merge branch 'left' of $TEST_DIRECTORY/$test
 EOF
 
 test_expect_success 'merge-msg test #2' '
 
 	git checkout master &&
-	git fetch ../"$test" left &&
+	git fetch "$TEST_DIRECTORY/$test" left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	test_cmp expected actual

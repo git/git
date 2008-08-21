@@ -72,7 +72,7 @@ In addition:
 
 '
 . ./test-lib.sh
-. ../lib-read-tree-m-3way.sh
+. "$TEST_DIRECTORY"/lib-read-tree-m-3way.sh
 
 ################################################################
 # Trivial "majority when 3 stages exist" merge plus #2ALT, #3ALT
