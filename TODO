@@ -8,6 +8,30 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
+* Windows relocatable install
+
+  Steffen Prohaska ($gmane/92605), Johannes Sixt.
+
+* Haiku port
+
+  Andreas Färber ($gmane/92582)
+
+* ksh "trap foo EXIT" triggers on function return, loses exit status
+
+  Brandon Casey ($gmane/92873)
+
+* document webdav debugging tip with davfs2
+
+  Giovanni Funchal ($gmane/92745)
+
+* update "rebase -i" documentation with examples
+
+  Eric Hanchrow ($gmane/92669)
+
+* pre-push hook
+
+  Scott Chacon ($gmane/92900, $gmane/92936)
+
 * Make attributes apply to trees, not just working tree.
 
 * "git checkout treeish -- path" from a treeish that does not contain
