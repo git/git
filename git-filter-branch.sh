@@ -416,15 +416,17 @@ if [ "$filter_tag_name" ]; then
 		echo "$ref -> $new_ref ($sha1 -> $new_sha1)"
 
 		if [ "$type" = "tag" ]; then
-			new_sha1=$(git cat-file tag "$ref" |
+			new_sha1=$( ( printf 'object %s\ntype commit\ntag %s\n' \
+						"$new_sha1" "$new_ref"
+				git cat-file tag "$ref" |
 				sed -n \
 				    -e "1,/^$/{
-					  s/^object .*/object $new_sha1/
-					  s/^type .*/type commit/
-					  s/^tag .*/tag $new_ref/
+					  /^object /d
+					  /^type /d
+					  /^tag /d
 					}" \
 				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
-				    -e 'p' |
+				    -e 'p' ) |
 				git mktag) ||
 				die "Could not create new tag object for $ref"
 			if git cat-file tag "$ref" | \
