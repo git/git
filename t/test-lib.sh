@@ -491,7 +491,7 @@ fi
 
 # Test repository
 test="trash directory.$(basename "$0" .sh)"
-remove_trash="$TEST_DIRECTORY/$test"
+test ! -z "$debug" || remove_trash="$TEST_DIRECTORY/$test"
 rm -fr "$test" || {
 	trap - exit
 	echo >&5 "FATAL: Cannot prepare test area"
