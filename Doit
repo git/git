@@ -17,7 +17,7 @@ test -z "$(git diff --cached --name-status)" || {
 }
 Meta/Make clean >/dev/null 2>&1
 
-: ${branches='next master maint pu'}
+: ${branches='next master maint pu jch'}
 
 for branch in $branches
 do
