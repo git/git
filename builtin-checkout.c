@@ -157,7 +157,7 @@ struct checkout_opts {
 	int force;
 	int writeout_error;
 
-	char *new_branch;
+	const char *new_branch;
 	int new_branch_log;
 	enum branch_track track;
 };
@@ -437,27 +437,27 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
-	opts.track = -1;
+	opts.track = BRANCH_TRACK_UNSPECIFIED;
 
 	argc = parse_options(argc, argv, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
 
 	/* --track without -b should DWIM */
-	if (opts.track && opts.track != -1 && !opts.new_branch) {
-		char *slash;
-		if (!argc || !strcmp(argv[0], "--"))
+	if (0 < opts.track && !opts.new_branch) {
+		const char *argv0 = argv[0];
+		if (!argc || !strcmp(argv0, "--"))
 			die ("--track needs a branch name");
-		slash = strchr(argv[0], '/');
-		if (slash && !prefixcmp(argv[0], "refs/"))
-			slash = strchr(slash + 1, '/');
-		if (slash && !prefixcmp(argv[0], "remotes/"))
-			slash = strchr(slash + 1, '/');
-		if (!slash || !slash[1])
+		if (!prefixcmp(argv0, "refs/"))
+			argv0 += 5;
+		if (!prefixcmp(argv0, "remotes/"))
+			argv0 += 8;
+		argv0 = strchr(argv0, '/');
+		if (!argv0 || !argv0[1])
 			die ("Missing branch name; try -b");
-		opts.new_branch = slash + 1;
+		opts.new_branch = argv0 + 1;
 	}
 
-	if (opts.track == -1)
+	if (opts.track == BRANCH_TRACK_UNSPECIFIED)
 		opts.track = git_branch_track;
 
 	if (opts.force && opts.merge)

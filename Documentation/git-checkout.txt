@@ -64,9 +64,16 @@ OPTIONS
 	given. Set it to `always` if you want this behavior when the
 	start-point is either a local or remote branch.
 +
-If no '-b' option was given, a name will be made up for you, by stripping
-the part up to the first slash of the tracked branch.  For example, if you
-called 'git checkout --track origin/next', the branch name will be 'next'.
+If no '-b' option was given, the name of the new branch will be
+derived from the remote branch, by attempting to guess the name
+of the branch on remote system.  If "remotes/" or "refs/remotes/"
+are prefixed, it is stripped away, and then the part up to the
+next slash (which would be the nickname of the remote) is removed.
+This would tell us to use "hack" as the local branch when branching
+off of "origin/hack" (or "remotes/origin/hack", or even
+"refs/remotes/origin/hack").  If the given name has no slash, or the above
+guessing results in an empty name, the guessing is aborted.  You can
+exlicitly give a name with '-b' in such a case.
 
 --no-track::
 	Ignore the branch.autosetupmerge configuration variable.

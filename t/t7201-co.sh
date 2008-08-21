@@ -340,9 +340,30 @@ test_expect_success \
 test_expect_success \
     'checkout with --track fakes a sensible -b <name>' '
     git update-ref refs/remotes/origin/koala/bear renamer &&
+    git update-ref refs/new/koala/bear renamer &&
+
     git checkout --track origin/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"'
+    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+
+    git checkout master && git branch -D koala/bear &&
+
+    git checkout --track refs/remotes/origin/koala/bear &&
+    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+
+    git checkout master && git branch -D koala/bear &&
+
+    git checkout --track remotes/origin/koala/bear &&
+    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+
+    git checkout master && git branch -D koala/bear &&
+
+    git checkout --track refs/new/koala/bear &&
+    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"
+'
 
 test_expect_success \
     'checkout with --track, but without -b, fails with too short tracked name' '
