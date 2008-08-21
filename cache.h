@@ -126,6 +126,7 @@ struct cache_entry {
 
 #define CE_NAMEMASK  (0x0fff)
 #define CE_STAGEMASK (0x3000)
+#define CE_EXTENDED  (0x4000)
 #define CE_VALID     (0x8000)
 #define CE_STAGESHIFT 12
 
