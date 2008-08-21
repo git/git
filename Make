@@ -27,7 +27,7 @@ head=`$GIT symbolic-ref HEAD 2>/dev/null` &&
 branch=`expr "$head" : 'refs/heads/\(.*\)'` || branch=detached
 
 case "$branch" in
-next | maint | master | pu)
+next | maint | master | pu | jch)
 	prefix="$HOME/git-$branch"
 	;;
 snap)
@@ -45,6 +45,7 @@ d="prefix=$prefix"
 
 : ${O=-O2}
 
+Wall=-Wall
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
@@ -57,6 +58,9 @@ do
 		esac
 		O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast"
 		# O="$O -fwrapv -fno-strict-overflow"
+		;;
+	-loose)
+		Wall=
 		;;
 	--)
 		shift
@@ -77,11 +81,13 @@ sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 	$GIT describe --abbrev=4 HEAD | sed -e 's/-/./g' >version
 }
 
+CFLAGS="$O $Wall -Wdeclaration-after-statement -g"
+
 make $d \
      GITWEB_CONFIG=$G \
      PYTHON_PATH=/usr/bin/python2.4 \
      ETC_GITCONFIG=$prefix/etc/gitconfig \
-     CFLAGS="$O -Wall -Wdeclaration-after-statement -g" \
+     CFLAGS="$CFLAGS" \
      "$@"
 status=$?
 rm -f version
