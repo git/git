@@ -76,7 +76,7 @@ def write_pipe(c, str):
 
 def p4_write_pipe(c, str):
     real_cmd = p4_build_cmd(c)
-    return write_pipe(c, str)
+    return write_pipe(real_cmd, str)
 
 def read_pipe(c, ignore_error=False):
     if verbose:
