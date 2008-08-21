@@ -6,7 +6,7 @@
 
 USAGE="[--quiet] [--cached] \
 [add <repo> [-b branch] <path>]|[status|init|update [-i|--init]|summary [-n|--summary-limit <n>] [<commit>]] \
-[--] [<path>...]"
+[--] [<path>...]|[foreach <command>]"
 OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
@@ -196,6 +196,26 @@ cmd_add()
 	git config -f .gitmodules submodule."$path".url "$repo" &&
 	git add .gitmodules ||
 	die "Failed to register submodule '$path'"
+}
+
+#
+# Execute an arbitrary command sequence in each checked out
+# submodule
+#
+# $@ = command to execute
+#
+cmd_foreach()
+{
+	git ls-files --stage | grep '^160000 ' |
+	while read mode sha1 stage path
+	do
+		if test -e "$path"/.git
+		then
+			say "Entering '$path'"
+			(cd "$path" && eval "$@") ||
+			die "Stopping at '$path'; script returned non-zero status."
+		fi
+	done
 }
 
 #
@@ -583,7 +603,7 @@ cmd_status()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | init | update | status | summary)
+	add | foreach | init | update | status | summary)
 		command=$1
 		;;
 	-q|--quiet)
