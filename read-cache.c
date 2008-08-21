@@ -13,6 +13,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "revision.h"
+#include "blob.h"
 
 /* Index extensions.
  *
@@ -511,6 +512,14 @@ static struct cache_entry *create_alias_ce(struct cache_entry *ce, struct cache_
 	return new;
 }
 
+static void record_intent_to_add(struct cache_entry *ce)
+{
+	unsigned char sha1[20];
+	if (write_sha1_file("", 0, blob_type, sha1))
+		die("cannot create an empty blob in the object database");
+	hashcpy(ce->sha1, sha1);
+}
+
 int add_to_index(struct index_state *istate, const char *path, struct stat *st, int flags)
 {
 	int size, namelen, was_same;
@@ -519,6 +528,9 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_RACY_IS_DIRTY;
 	int verbose = flags & (ADD_CACHE_VERBOSE | ADD_CACHE_PRETEND);
 	int pretend = flags & ADD_CACHE_PRETEND;
+	int intent_only = flags & ADD_CACHE_INTENT;
+	int add_option = (ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|
+			  (intent_only ? ADD_CACHE_NEW_ONLY : 0));
 
 	if (!S_ISREG(st_mode) && !S_ISLNK(st_mode) && !S_ISDIR(st_mode))
 		return error("%s: can only add regular files, symbolic links or git-directories", path);
@@ -532,7 +544,8 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	ce = xcalloc(1, size);
 	memcpy(ce->name, path, namelen);
 	ce->ce_flags = namelen;
-	fill_stat_cache_info(ce, st);
+	if (!intent_only)
+		fill_stat_cache_info(ce, st);
 
 	if (trust_executable_bit && has_symlinks)
 		ce->ce_mode = create_ce_mode(st_mode);
@@ -555,8 +568,12 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		alias->ce_flags |= CE_ADDED;
 		return 0;
 	}
-	if (index_path(ce->sha1, path, st, 1))
-		return error("unable to index file %s", path);
+	if (!intent_only) {
+		if (index_path(ce->sha1, path, st, 1))
+			return error("unable to index file %s", path);
+	} else
+		record_intent_to_add(ce);
+
 	if (ignore_case && alias && different_name(ce, alias))
 		ce = create_alias_ce(ce, alias);
 	ce->ce_flags |= CE_ADDED;
@@ -569,7 +586,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 
 	if (pretend)
 		;
-	else if (add_index_entry(istate, ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
+	else if (add_index_entry(istate, ce, add_option))
 		return error("unable to add %s to index",path);
 	if (verbose && !was_same)
 		printf("add '%s'\n", path);
@@ -848,13 +865,15 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	int ok_to_add = option & ADD_CACHE_OK_TO_ADD;
 	int ok_to_replace = option & ADD_CACHE_OK_TO_REPLACE;
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
+	int new_only = option & ADD_CACHE_NEW_ONLY;
 
 	cache_tree_invalidate_path(istate->cache_tree, ce->name);
 	pos = index_name_pos(istate, ce->name, ce->ce_flags);
 
 	/* existing match? Just replace it. */
 	if (pos >= 0) {
-		replace_index_entry(istate, pos, ce);
+		if (!new_only)
+			replace_index_entry(istate, pos, ce);
 		return 0;
 	}
 	pos = -pos-1;
