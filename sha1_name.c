@@ -349,7 +349,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 			else
 				nth = -1;
 		}
-		if (0 <= nth)
+		if (100000000 <= nth) {
+			at_time = nth;
+			nth = -1;
+		} else if (0 <= nth)
 			at_time = 0;
 		else {
 			char *tmp = xstrndup(str + at + 2, reflog_len);
