@@ -440,6 +440,30 @@ test_expect_success 'good merge bases when good and bad are siblings' '
 	git bisect reset
 '
 
+check_trace() {
+	grep "$1" "$GIT_TRACE" | grep "\^$2" | grep "$3" >/dev/null
+}
+
+test_expect_success 'optimized merge base checks' '
+	GIT_TRACE="$(pwd)/trace.log" &&
+	export GIT_TRACE &&
+	git bisect start "$HASH7" "$SIDE_HASH7" > my_bisect_log.txt &&
+	grep "merge base must be tested" my_bisect_log.txt &&
+	grep "$HASH4" my_bisect_log.txt &&
+	check_trace "rev-list" "$HASH7" "$SIDE_HASH7" &&
+	git bisect good > my_bisect_log2.txt &&
+	test -f ".git/BISECT_ANCESTORS_OK" &&
+	test "$HASH6" = $(git rev-parse --verify HEAD) &&
+	: > "$GIT_TRACE" &&
+	git bisect bad > my_bisect_log3.txt &&
+	test_must_fail check_trace "rev-list" "$HASH6" "$SIDE_HASH7" &&
+	git bisect good "$A_HASH" > my_bisect_log4.txt &&
+	grep "merge base must be tested" my_bisect_log4.txt &&
+	test_must_fail test -f ".git/BISECT_ANCESTORS_OK" &&
+	check_trace "rev-list" "$HASH6" "$A_HASH" &&
+	unset GIT_TRACE
+'
+
 #
 #
 test_done

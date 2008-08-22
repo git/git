@@ -172,6 +172,25 @@ bisect_write() {
 	test -n "$nolog" || echo "git bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
 }
 
+is_expected_rev() {
+	test -f "$GIT_DIR/BISECT_EXPECTED_REV" &&
+	test "$1" = $(cat "$GIT_DIR/BISECT_EXPECTED_REV")
+}
+
+mark_expected_rev() {
+	echo "$1" > "$GIT_DIR/BISECT_EXPECTED_REV"
+}
+
+check_expected_revs() {
+	for _rev in "$@"; do
+		if ! is_expected_rev "$_rev"; then
+			rm -f "$GIT_DIR/BISECT_ANCESTORS_OK"
+			rm -f "$GIT_DIR/BISECT_EXPECTED_REV"
+			return
+		fi
+	done
+}
+
 bisect_state() {
 	bisect_autostart
 	state=$1
@@ -181,7 +200,8 @@ bisect_state() {
 	1,bad|1,good|1,skip)
 		rev=$(git rev-parse --verify HEAD) ||
 			die "Bad rev input: HEAD"
-		bisect_write "$state" "$rev" ;;
+		bisect_write "$state" "$rev"
+		check_expected_revs "$rev" ;;
 	2,bad|*,good|*,skip)
 		shift
 		eval=''
@@ -191,7 +211,8 @@ bisect_state() {
 				die "Bad rev input: $rev"
 			eval="$eval bisect_write '$state' '$sha'; "
 		done
-		eval "$eval" ;;
+		eval "$eval"
+		check_expected_revs "$@" ;;
 	*,bad)
 		die "'git bisect bad' can take only one argument." ;;
 	*)
@@ -321,6 +342,7 @@ bisect_checkout() {
 	_rev="$1"
 	_msg="$2"
 	echo "Bisecting: $_msg"
+	mark_expected_rev "$_rev"
 	git checkout -q "$_rev" || exit
 	git show-branch "$_rev"
 }
@@ -332,18 +354,10 @@ is_among() {
 	return 1
 }
 
-is_testing_merge_base() {
-	grep "^testing $1$" "$GIT_DIR/BISECT_MERGE_BASES" >/dev/null 2>&1
-}
-
-mark_testing_merge_base() {
-	echo "testing $1" >> "$GIT_DIR/BISECT_MERGE_BASES"
-}
-
 handle_bad_merge_base() {
 	_badmb="$1"
 	_good="$2"
-	if is_testing_merge_base "$_badmb"; then
+	if is_expected_rev "$_badmb"; then
 		cat >&2 <<EOF
 The merge base $_badmb is bad.
 This means the bug has been fixed between $_badmb and [$_good].
@@ -383,7 +397,6 @@ check_merge_bases() {
 		elif is_among "$_mb" "$_skip"; then
 			handle_skipped_merge_base "$_mb" "$_bad" "$_good"
 		else
-			mark_testing_merge_base "$_mb"
 			bisect_checkout "$_mb" "a merge base must be tested"
 			checkout_done=1
 			return
@@ -392,6 +405,9 @@ check_merge_bases() {
 }
 
 check_good_are_ancestors_of_bad() {
+	test -f "$GIT_DIR/BISECT_ANCESTORS_OK" &&
+		return
+
 	_bad="$1"
 	_good=$(echo $2 | sed -e 's/\^//g')
 	_skip="$3"
@@ -401,8 +417,11 @@ check_good_are_ancestors_of_bad() {
 
 	_side=$(git rev-list $_good ^$_bad)
 	if test -n "$_side"; then
-		check_merge_bases "$_bad" "$_good" "$_skip"
+		check_merge_bases "$_bad" "$_good" "$_skip" || return
+		test "$checkout_done" -eq "1" && return
 	fi
+
+	: > "$GIT_DIR/BISECT_ANCESTORS_OK"
 }
 
 bisect_next() {
@@ -491,7 +510,8 @@ bisect_clean_state() {
 	do
 		git update-ref -d $ref $hash || exit
 	done
-	rm -f "$GIT_DIR/BISECT_MERGE_BASES" &&
+	rm -f "$GIT_DIR/BISECT_EXPECTED_REV" &&
+	rm -f "$GIT_DIR/BISECT_ANCESTORS_OK" &&
 	rm -f "$GIT_DIR/BISECT_LOG" &&
 	rm -f "$GIT_DIR/BISECT_NAMES" &&
 	rm -f "$GIT_DIR/BISECT_RUN" &&
