@@ -187,6 +187,12 @@ test_expect_success \
 			test-3-${packname_3}.idx'
 
 test_expect_success \
+    'verify pack -v' \
+    'git verify-pack -v	test-1-${packname_1}.idx \
+			test-2-${packname_2}.idx \
+			test-3-${packname_3}.idx'
+
+test_expect_success \
     'verify-pack catches mismatched .idx and .pack files' \
     'cat test-1-${packname_1}.idx >test-3.idx &&
      cat test-2-${packname_2}.pack >test-3.pack &&

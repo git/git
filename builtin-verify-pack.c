@@ -1,7 +1,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "pack.h"
-
+#include "pack-revindex.h"
 
 #define MAX_CHAIN 50
 
@@ -129,6 +129,7 @@ int cmd_verify_pack(int argc, const char **argv, const char *prefix)
 		else {
 			if (verify_one_pack(argv[1], verbose))
 				err = 1;
+			discard_revindex();
 			nothing_done = 0;
 		}
 		argc--; argv++;
