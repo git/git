@@ -1619,6 +1619,15 @@ static unsigned char file_merge_bits[] = {
    0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
 } -maskdata $filemask
 
+image create bitmap file_statechange -background white -foreground green -data {
+#define file_merge_width 14
+#define file_merge_height 15
+static unsigned char file_statechange_bits[] = {
+   0xfe, 0x01, 0x02, 0x03, 0x02, 0x05, 0x02, 0x09, 0x02, 0x1f, 0x62, 0x10,
+   0x62, 0x10, 0xba, 0x11, 0xba, 0x11, 0x62, 0x10, 0x62, 0x10, 0x02, 0x10,
+   0x02, 0x10, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
 set ui_index .vpane.files.index.list
 set ui_workdir .vpane.files.workdir.list
 
@@ -1627,12 +1636,14 @@ set all_icons(A$ui_index)   file_fulltick
 set all_icons(M$ui_index)   file_fulltick
 set all_icons(D$ui_index)   file_removed
 set all_icons(U$ui_index)   file_merge
+set all_icons(T$ui_index)   file_statechange
 
 set all_icons(_$ui_workdir) file_plain
 set all_icons(M$ui_workdir) file_mod
 set all_icons(D$ui_workdir) file_question
 set all_icons(U$ui_workdir) file_merge
 set all_icons(O$ui_workdir) file_plain
+set all_icons(T$ui_workdir) file_statechange
 
 set max_status_desc 0
 foreach i {
@@ -1642,6 +1653,9 @@ foreach i {
 		{M_ {mc "Staged for commit"}}
 		{MM {mc "Portions staged for commit"}}
 		{MD {mc "Staged for commit, missing"}}
+
+		{_T {mc "File type changed, not staged"}}
+		{T_ {mc "File type changed, staged"}}
 
 		{_O {mc "Untracked, not staged"}}
 		{A_ {mc "Staged for commit"}}
@@ -2757,7 +2771,9 @@ proc popup_diff_menu {ctxm x y X Y} {
 	if {$::is_3way_diff
 		|| $current_diff_path eq {}
 		|| ![info exists file_states($current_diff_path)]
-		|| {_O} eq [lindex $file_states($current_diff_path) 0]} {
+		|| {_O} eq [lindex $file_states($current_diff_path) 0]
+		|| {_T} eq [lindex $file_states($current_diff_path) 0]
+		|| {T_} eq [lindex $file_states($current_diff_path) 0]} {
 		set s disabled
 	} else {
 		set s normal
