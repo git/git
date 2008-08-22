@@ -243,33 +243,18 @@ bisect_auto_next() {
 	bisect_next_check && bisect_next || :
 }
 
-eval_rev_list() {
-	_eval="$1"
-
-	eval $_eval
-	res=$?
-
-	if [ $res -ne 0 ]; then
-		echo >&2 "'git rev-list --bisect-vars' failed:"
-		echo >&2 "maybe you mistake good and bad revs?"
-		exit $res
-	fi
-
-	return $res
-}
-
 filter_skipped() {
 	_eval="$1"
 	_skip="$2"
 
 	if [ -z "$_skip" ]; then
-		eval_rev_list "$_eval"
+		eval "$_eval"
 		return
 	fi
 
 	# Let's parse the output of:
 	# "git rev-list --bisect-vars --bisect-all ..."
-	eval_rev_list "$_eval" | while read hash line
+	eval "$_eval" | while read hash line
 	do
 		case "$VARS,$FOUND,$TRIED,$hash" in
 			# We display some vars.
@@ -332,20 +317,113 @@ exit_if_skipped_commits () {
 	fi
 }
 
+bisect_checkout() {
+	_rev="$1"
+	_msg="$2"
+	echo "Bisecting: $_msg"
+	git checkout -q "$_rev" || exit
+	git show-branch "$_rev"
+}
+
+is_among() {
+	_rev="$1"
+	_list="$2"
+	case "$_list" in *$_rev*) return 0 ;; esac
+	return 1
+}
+
+is_testing_merge_base() {
+	grep "^testing $1$" "$GIT_DIR/BISECT_MERGE_BASES" >/dev/null 2>&1
+}
+
+mark_testing_merge_base() {
+	echo "testing $1" >> "$GIT_DIR/BISECT_MERGE_BASES"
+}
+
+handle_bad_merge_base() {
+	_badmb="$1"
+	_good="$2"
+	if is_testing_merge_base "$_badmb"; then
+		cat >&2 <<EOF
+The merge base $_badmb is bad.
+This means the bug has been fixed between $_badmb and [$_good].
+EOF
+		exit 3
+	else
+		cat >&2 <<EOF
+Some good revs are not ancestor of the bad rev.
+git bisect cannot work properly in this case.
+Maybe you mistake good and bad revs?
+EOF
+		exit 1
+	fi
+}
+
+handle_skipped_merge_base() {
+	_mb="$1"
+	_bad="$2"
+	_good="$3"
+	cat >&2 <<EOF
+Warning: the merge base between $_bad and [$_good] must be skipped.
+So we cannot be sure the first bad commit is between $_mb and $_bad.
+We continue anyway.
+EOF
+}
+
+check_merge_bases() {
+	_bad="$1"
+	_good="$2"
+	_skip="$3"
+	for _mb in $(git merge-base --all $_bad $_good)
+	do
+		if is_among "$_mb" "$_good"; then
+			continue
+		elif test "$_mb" = "$_bad"; then
+			handle_bad_merge_base "$_bad" "$_good"
+		elif is_among "$_mb" "$_skip"; then
+			handle_skipped_merge_base "$_mb" "$_bad" "$_good"
+		else
+			mark_testing_merge_base "$_mb"
+			bisect_checkout "$_mb" "a merge base must be tested"
+			checkout_done=1
+			return
+		fi
+	done
+}
+
+check_good_are_ancestors_of_bad() {
+	_bad="$1"
+	_good=$(echo $2 | sed -e 's/\^//g')
+	_skip="$3"
+
+	# Bisecting with no good rev is ok
+	test -z "$_good" && return
+
+	_side=$(git rev-list $_good ^$_bad)
+	if test -n "$_side"; then
+		check_merge_bases "$_bad" "$_good" "$_skip"
+	fi
+}
+
 bisect_next() {
 	case "$#" in 0) ;; *) usage ;; esac
 	bisect_autostart
 	bisect_next_check good
 
-	skip=$(git for-each-ref --format='%(objectname)' \
-		"refs/bisect/skip-*" | tr '\012' ' ') || exit
-
-	BISECT_OPT=''
-	test -n "$skip" && BISECT_OPT='--bisect-all'
-
+	# Get bad, good and skipped revs
 	bad=$(git rev-parse --verify refs/bisect/bad) &&
 	good=$(git for-each-ref --format='^%(objectname)' \
 		"refs/bisect/good-*" | tr '\012' ' ') &&
+	skip=$(git for-each-ref --format='%(objectname)' \
+		"refs/bisect/skip-*" | tr '\012' ' ') &&
+
+	# Maybe some merge bases must be tested first
+	check_good_are_ancestors_of_bad "$bad" "$good" "$skip" || exit
+	test "$checkout_done" -eq "1" && checkout_done='' && return
+
+	# Get bisection information
+	BISECT_OPT=''
+	test -n "$skip" && BISECT_OPT='--bisect-all'
 	eval="git rev-list --bisect-vars $BISECT_OPT $good $bad --" &&
 	eval="$eval $(cat "$GIT_DIR/BISECT_NAMES")" &&
 	eval=$(filter_skipped "$eval" "$skip") &&
@@ -366,9 +444,7 @@ bisect_next() {
 	# commit is also a "skip" commit (see above).
 	exit_if_skipped_commits "$bisect_rev"
 
-	echo "Bisecting: $bisect_nr revisions left to test after this"
-	git checkout -q "$bisect_rev" || exit
-	git show-branch "$bisect_rev"
+	bisect_checkout "$bisect_rev" "$bisect_nr revisions left to test after this"
 }
 
 bisect_visualize() {
@@ -415,6 +491,7 @@ bisect_clean_state() {
 	do
 		git update-ref -d $ref $hash || exit
 	done
+	rm -f "$GIT_DIR/BISECT_MERGE_BASES" &&
 	rm -f "$GIT_DIR/BISECT_LOG" &&
 	rm -f "$GIT_DIR/BISECT_NAMES" &&
 	rm -f "$GIT_DIR/BISECT_RUN" &&
