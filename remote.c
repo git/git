@@ -449,6 +449,26 @@ static int verify_refname(char *name, int is_glob)
 	return result;
 }
 
+/*
+ * This function frees a refspec array.
+ * Warning: code paths should be checked to ensure that the src
+ *          and dst pointers are always freeable pointers as well
+ *          as the refspec pointer itself.
+ */
+void free_refspecs(struct refspec *refspec, int nr_refspec)
+{
+	int i;
+
+	if (!refspec)
+		return;
+
+	for (i = 0; i < nr_refspec; i++) {
+		free(refspec[i].src);
+		free(refspec[i].dst);
+	}
+	free(refspec);
+}
+
 static struct refspec *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch, int verify)
 {
 	int i;
@@ -567,7 +587,12 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 
  invalid:
 	if (verify) {
-		free(rs);
+		/*
+		 * nr_refspec must be greater than zero and i must be valid
+		 * since it is only possible to reach this point from within
+		 * the for loop above.
+		 */
+		free_refspecs(rs, i+1);
 		return NULL;
 	}
 	die("Invalid refspec '%s'", refspec[i]);
@@ -579,7 +604,7 @@ int valid_fetch_refspec(const char *fetch_refspec_str)
 	struct refspec *refspec;
 
 	refspec = parse_refspec_internal(1, fetch_refspec, 1, 1);
-	free(refspec);
+	free_refspecs(refspec, 1);
 	return !!refspec;
 }
 
