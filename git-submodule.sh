@@ -54,6 +54,15 @@ resolve_relative_url ()
 }
 
 #
+# Get submodule info for registered submodules
+# $@ = path to limit submodule list
+#
+module_list()
+{
+	git ls-files --stage -- "$@" | grep '^160000 '
+}
+
+#
 # Map submodule path to submodule name
 #
 # $1 = path
@@ -206,7 +215,7 @@ cmd_add()
 #
 cmd_foreach()
 {
-	git ls-files --stage | grep '^160000 ' |
+	module_list |
 	while read mode sha1 stage path
 	do
 		if test -e "$path"/.git
@@ -246,7 +255,7 @@ cmd_init()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep '^160000 ' |
+	module_list "$@" |
 	while read mode sha1 stage path
 	do
 		# Skip already registered paths
@@ -304,7 +313,7 @@ cmd_update()
 		esac
 	done
 
-	git ls-files --stage -- "$@" | grep '^160000 ' |
+	module_list "$@" |
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit
@@ -569,7 +578,7 @@ cmd_status()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep '^160000 ' |
+	module_list "$@" |
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit
