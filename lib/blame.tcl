@@ -262,6 +262,9 @@ constructor new {i_commit i_path} {
 	$w.ctxm add command \
 		-label [mc "Show History Context"] \
 		-command [cb _gitkcommit]
+	$w.ctxm add command \
+		-label [mc "Blame Parent Commit"] \
+		-command [cb _blameparent]
 
 	foreach i $w_columns {
 		for {set g 0} {$g < [llength $group_colors]} {incr g} {
@@ -790,17 +793,25 @@ method _load_commit {cur_w cur_d pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	set dat [lindex $line_data $lno]
 	if {$dat ne {}} {
-		lappend history [list \
-			$commit $path \
-			$highlight_column \
-			$highlight_line \
-			[lindex [$w_file xview] 0] \
-			[lindex [$w_file yview] 0] \
-			]
-		set commit [lindex $dat 0]
-		set path   [lindex $dat 1]
-		_load $this [list [lindex $dat 2]]
+		_load_new_commit $this  \
+			[lindex $dat 0] \
+			[lindex $dat 1] \
+			[list [lindex $dat 2]]
 	}
+}
+
+method _load_new_commit {new_commit new_path jump} {
+	lappend history [list \
+		$commit $path \
+		$highlight_column \
+		$highlight_line \
+		[lindex [$w_file xview] 0] \
+		[lindex [$w_file yview] 0] \
+		]
+
+	set commit $new_commit
+	set path   $new_path
+	_load $this $jump
 }
 
 method _showcommit {cur_w lno} {
@@ -966,6 +977,23 @@ method _gitkcommit {} {
 		}
 
 		do_gitk $cmdline
+	}
+}
+
+method _blameparent {} {
+	set dat [_get_click_amov_info $this]
+	if {$dat ne {}} {
+		set cmit [lindex $dat 0]
+
+		if {[catch {set cparent [git rev-parse --verify "$cmit^"]}]} {
+			error_popup [strcat [mc "Cannot find parent commit:"] "\n\n$err"]
+			return;
+		}
+
+		_load_new_commit $this  \
+			$cparent \
+			[lindex $dat 1] \
+			[list [lindex $dat 2]]
 	}
 }
 
