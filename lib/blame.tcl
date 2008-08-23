@@ -984,18 +984,75 @@ method _blameparent {} {
 	set dat [_get_click_amov_info $this]
 	if {$dat ne {}} {
 		set cmit [lindex $dat 0]
+		set new_path [lindex $dat 1]
 
 		if {[catch {set cparent [git rev-parse --verify "$cmit^"]}]} {
 			error_popup [strcat [mc "Cannot find parent commit:"] "\n\n$err"]
 			return;
 		}
 
-		_load_new_commit $this  \
-			$cparent \
-			[lindex $dat 1] \
-			[list [lindex $dat 2]]
+		_kill $this
+
+		# Generate a diff between the commit and its parent,
+		# and use the hunks to update the line number.
+		# Request zero context to simplify calculations.
+		if {[catch {set fd [eval git_read diff-tree \
+				--unified=0 $cparent $cmit $new_path]} err]} {
+			$status stop [mc "Unable to display parent"]
+			error_popup [strcat [mc "Error loading diff:"] "\n\n$err"]
+			return
+		}
+
+		set r_orig_line [lindex $dat 2]
+
+		fconfigure $fd \
+			-blocking 0 \
+			-encoding binary \
+			-translation binary
+		fileevent $fd readable [cb _read_diff_load_commit \
+			$fd $cparent $new_path $r_orig_line]
+		set current_fd $fd
 	}
 }
+
+method _read_diff_load_commit {fd cparent new_path tline} {
+	if {$fd ne $current_fd} {
+		catch {close $fd}
+		return
+	}
+
+	while {[gets $fd line] >= 0} {
+		if {[regexp {^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@} $line line \
+			old_line osz old_size new_line nsz new_size]} {
+
+			if {$osz eq {}} { set old_size 1 }
+			if {$nsz eq {}} { set new_size 1 }
+
+			if {$new_line <= $tline} {
+				if {[expr {$new_line + $new_size}] > $tline} {
+					# Target line within the hunk
+					set line_shift [expr {
+						($new_size-$old_size)*($tline-$new_line)/$new_size
+						}]
+				} else {
+					set line_shift [expr {$new_size-$old_size}]
+				}
+
+				set r_orig_line [expr {$r_orig_line - $line_shift}]
+			}
+		}
+	}
+
+	if {[eof $fd]} {
+		close $fd;
+		set current_fd {}
+
+		_load_new_commit $this  \
+			$cparent        \
+			$new_path       \
+			[list $r_orig_line]
+	}
+} ifdeleted { catch {close $fd} }
 
 method _show_tooltip {cur_w pos} {
 	if {$tooltip_wm ne {}} {
