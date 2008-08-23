@@ -259,6 +259,9 @@ constructor new {i_commit i_path} {
 	$w.ctxm add command \
 		-label [mc "Do Full Copy Detection"] \
 		-command [cb _fullcopyblame]
+	$w.ctxm add command \
+		-label [mc "Show History Context"] \
+		-command [cb _gitkcommit]
 
 	foreach i $w_columns {
 		for {set g 0} {$g < [llength $group_colors]} {incr g} {
@@ -905,16 +908,64 @@ method _showcommit {cur_w lno} {
 	}
 }
 
-method _copycommit {} {
+method _get_click_amov_info {} {
 	set pos @$::cursorX,$::cursorY
 	set lno [lindex [split [$::cursorW index $pos] .] 0]
-	set dat [lindex $amov_data $lno]
+	return [lindex $amov_data $lno]
+}
+
+method _copycommit {} {
+	set dat [_get_click_amov_info $this]
 	if {$dat ne {}} {
 		clipboard clear
 		clipboard append \
 			-format STRING \
 			-type STRING \
 			-- [lindex $dat 0]
+	}
+}
+
+method _format_offset_date {base offset} {
+	set exval [expr {$base + $offset*24*60*60}]
+	return [clock format $exval -format {%Y-%m-%d}]
+}
+
+method _gitkcommit {} {
+	set dat [_get_click_amov_info $this]
+	if {$dat ne {}} {
+		set cmit [lindex $dat 0]
+		set radius [get_config gui.blamehistoryctx]
+		set cmdline [list --select-commit=$cmit]
+
+                if {$radius > 0} {
+			set author_time {}
+			set committer_time {}
+
+			catch {set author_time $header($cmit,author-time)}
+			catch {set committer_time $header($cmit,committer-time)}
+
+			if {$committer_time eq {}} {
+				set committer_time $author_time
+			}
+
+			set after_time [_format_offset_date $this $committer_time [expr {-$radius}]]
+			set before_time [_format_offset_date $this $committer_time $radius]
+
+			lappend cmdline --after=$after_time --before=$before_time
+		}
+
+		lappend cmdline $cmit
+
+		set base_rev "HEAD"
+		if {$commit ne {}} {
+			set base_rev $commit
+		}
+
+		if {$base_rev ne $cmit} {
+			lappend cmdline $base_rev
+		}
+
+		do_gitk $cmdline
 	}
 }
 
