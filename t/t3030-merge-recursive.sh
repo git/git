@@ -269,6 +269,17 @@ test_expect_success 'merge-recursive result' '
 
 '
 
+test_expect_success 'fail if the index has unresolved entries' '
+
+	rm -fr [abcd] &&
+	git checkout -f "$c1" &&
+
+	test_must_fail git merge "$c5" &&
+	test_must_fail git merge "$c5" 2> out &&
+	grep "You are in the middle of a conflicted merge" out
+
+'
+
 test_expect_success 'merge-recursive remove conflict' '
 
 	rm -fr [abcd] &&
