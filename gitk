@@ -2214,6 +2214,8 @@ proc makewindow {} {
 	-command {flist_hl 1}
     $flist_menu add command -label [mc "External diff"] \
         -command {external_diff}
+    $flist_menu add command -label [mc "Blame parent commit"] \
+        -command {external_blame 1}
 }
 
 # Windows sends all mouse wheel events to the current focused window, not
@@ -3018,6 +3020,27 @@ proc external_diff {} {
             fconfigure $fl -blocking 0
             filerun $fl [list delete_at_eof $fl $diffdir]
         }
+    }
+}
+
+proc external_blame {parent_idx} {
+    global flist_menu_file
+    global nullid nullid2
+    global parentlist selectedline currentid
+
+    if {$parent_idx > 0} {
+	set base_commit [lindex $parentlist $selectedline [expr {$parent_idx-1}]]
+    } else {
+	set base_commit $currentid
+    }
+
+    if {$base_commit eq {} || $base_commit eq $nullid || $base_commit eq $nullid2} {
+	error_popup [mc "No such commit"]
+	return
+    }
+
+    if {[catch {exec git gui blame $base_commit $flist_menu_file &} err]} {
+	error_popup [mc "git gui blame: command failed: $err"]
     }
 }
 
