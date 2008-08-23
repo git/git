@@ -151,7 +151,7 @@ method _enter {} {
 				append p [lindex $n 1]
 			}
 			append p $name
-			blame::new $browser_commit $p
+			blame::new $browser_commit $p {}
 		}
 		}
 	}

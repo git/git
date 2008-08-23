@@ -2296,10 +2296,15 @@ proc usage {} {
 switch -- $subcommand {
 browser -
 blame {
-	set subcommand_args {rev? path}
+	if {$subcommand eq "blame"} {
+		set subcommand_args {[--line=<num>] rev? path}
+	} else {
+		set subcommand_args {rev? path}
+	}
 	if {$argv eq {}} usage
 	set head {}
 	set path {}
+	set jump_spec {}
 	set is_path 0
 	foreach a $argv {
 		if {$is_path || [file exists $_prefix$a]} {
@@ -2313,6 +2318,9 @@ blame {
 				set path {}
 			}
 			set is_path 1
+		} elseif {[regexp {^--line=(\d+)$} $a a lnum]} {
+			if {$jump_spec ne {} || $head ne {}} usage
+			set jump_spec [list $lnum]
 		} elseif {$head eq {}} {
 			if {$head ne {}} usage
 			set head $a
@@ -2344,6 +2352,7 @@ blame {
 
 	switch -- $subcommand {
 	browser {
+		if {$jump_spec ne {}} usage
 		if {$head eq {}} {
 			if {$path ne {} && [file isdirectory $path]} {
 				set head $current_branch
@@ -2359,7 +2368,7 @@ blame {
 			puts stderr [mc "fatal: cannot stat path %s: No such file or directory" $path]
 			exit 1
 		}
-		blame::new $head $path
+		blame::new $head $path $jump_spec
 	}
 	}
 	return

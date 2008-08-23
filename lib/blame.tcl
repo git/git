@@ -58,7 +58,7 @@ field tooltip_t         {} ; # Text widget in $tooltip_wm
 field tooltip_timer     {} ; # Current timer event for our tooltip
 field tooltip_commit    {} ; # Commit(s) in tooltip
 
-constructor new {i_commit i_path} {
+constructor new {i_commit i_path i_jump} {
 	global cursor_ptr
 	variable active_color
 	variable group_colors
@@ -338,7 +338,7 @@ constructor new {i_commit i_path} {
 	wm protocol $top WM_DELETE_WINDOW "destroy $top"
 	bind $top <Destroy> [cb _kill]
 
-	_load $this {}
+	_load $this $i_jump
 }
 
 method _kill {} {
