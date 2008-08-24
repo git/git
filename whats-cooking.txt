@@ -1,8 +1,8 @@
-Subject: What's cooking in git.git (Aug 2008, #06; Wed, 20)
-X-master-at: ea3594e04184475226109a21e71c539ff5f139fd
-X-next-at: c5a00f7ff5becd929d3e3b3e900d0983cd6083af
+Subject: What's cooking in git.git (Aug 2008, #07; Sat, 23)
+X-master-at: d6096f17d2d5d9ccb453aabf8edc6ee238b166fc
+X-next-at: d789cd45cd80390e3cf86de6c43600007d4b59ac
 
-What's cooking in git.git (Aug 2008, #06; Wed, 20)
+What's cooking in git.git (Aug 2008, #07; Sat, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -12,11 +12,9 @@ in 'next'.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
-Today's 'pu' does not pass tests for me; it seems my box does not like new
-tests for gitweb somehow.
-
-By the way, here is a list of issues without any corresponding topic
-branches yet:
+Here is a list of issues/topics we saw on the mailing list but haven't
+resulted in anything queuable in 'pu' yet.  They need further work by
+interested parties:
 
  * Windows relocatable install
 
@@ -42,19 +40,85 @@ branches yet:
 
    Scott Chacon ($gmane/92900, $gmane/92936)
 
+ * "git commit --author=nickname" expanding nickname from somewhere
+
+   Michael J Gruber ($gmane/93274)
+
+ * Handling (possibly $HOME-) relative paths in config files
+
+   Karl Chen ($gmane/93250)
+
+ * "submodule sync"
+
+   David Aguilar ($gmane/93265)
+
+ * "rev-list --bisect --first-parent"
+
+   Avery Pennarun, me ($gmane/93420)
+
+ * "apply --include"
+
+   Joe Perches ($gmane/93505)
+
 ----------------------------------------------------------------
 [New Topics]
 
-* jc/no-slim-shell (Tue Aug 19 18:05:43 2008 -0700) 2 commits
- + Build-in "git-shell"
- + shell: do not play duplicated definition games to shrink the
-   executable
+* bd/blame (Thu Aug 21 18:22:01 2008 -0500) 5 commits
+ . Use xdiff caching to improve git blame performance
+ . Allow xdiff machinery to cache hash results for a file
+ . Always initialize xpparam_t to 0
+ . Bypass textual patch generation and parsing in git blame
+ . Allow alternate "low-level" emit function from xdl_diff
+
+Réne had a good comments on how the callback is structured.
+
+* jc/maint-name-hash-clear (Sat Aug 23 13:05:10 2008 -0700) 1 commit
+ - discard_cache: reset lazy name_hash bit
+
+I spotted this by accident while working on something unrelated.
+
+When a program calls discard_cache() to read the index again, we do not
+properly re-initialize the name_hash structure that is used by the case
+insensitivitly logic.  This _might_ improve issues people may be having on
+case insensitive filesystems.  I dunno.
+
+* mv/maint-merge-fix (Sat Aug 23 12:56:57 2008 -0700) 1 commit
+ + merge: fix numerus bugs around "trivial merge" area
+
+* ml/submodule (Thu Aug 21 19:54:01 2008 -0400) 2 commits
+ + git-submodule.sh - Remove trailing / from URL if found
+ + git-submodule.sh - Remove trailing / from URL if found
+
+Soon to be in 'master', I guess.
+
+* np/verify-pack (Fri Aug 22 15:45:53 2008 -0400) 1 commit
+ + discard revindex data when pack list changes
+
+* jc/add-ita (Thu Aug 21 01:44:53 2008 -0700) 3 commits
+ - git-add --intent-to-add (-N)
+ - cached_object: learn empty blob
+ - sha1_object_info(): pay attention to cached objects
+
+Teaches "git add" to record only the intent to add a path later.
+I think this is better done without the hardcoded empty blob object.
 
 ----------------------------------------------------------------
-[Stalled -- Needs Updates]
+[Stalled -- Needs Action to Proceed (or to be dropped)]
 
-I've moved the "Stalled" section up so that it grabs more attention from
-people.
+* sb/daemon (Thu Aug 14 20:02:20 2008 +0200) 4 commits
+ - git-daemon: rewrite kindergarden, new option --max-connections
+ - git-daemon: Simplify dead-children reaping logic
+ - git-daemon: use LOG_PID, simplify logging code
+ - git-daemon: call logerror() instead of error()
+
+Can somebody who actually runs the daemon standalone comment on this one?
+
+* jc/cc-ld-dynpath (Sat Aug 16 15:01:23 2008 +0200) 2 commits
+ - configure: auto detect dynamic library path switches
+ - Makefile: Allow CC_LD_DYNPATH to be overriden
+
+Needs success reports from people who do use user-defined dynamic library
+path when they build their "git" before this series can go anywhere.
 
 * lt/time-reject-fractional-seconds (Sat Aug 16 21:25:40 2008 -0700) 1 commit
  - date/time: do not get confused by fractional seconds
@@ -70,47 +134,34 @@ somebody else steps up and tries it before merging this to 'next'.
 The "magic" detection protocol was revised to use POST to info/refs; the
 top one queued is from before that discussion.
 
-* cc/bisect (Fri Jul 25 05:36:37 2008 +0200) 2 commits
- - bisect: only check merge bases when needed
- - bisect: test merge base if good rev is not an ancestor of bad rev
-
-The first one alone does not pass its self-test but combined together they
-seem to.  It does not build confidence as the latter one is supposed to be
-an optimization only.  Resend of fixed-up series is needed.
-
 ----------------------------------------------------------------
 [Actively Cooking]
 
-* jc/cc-ld-dynpath (Sat Aug 16 15:01:23 2008 +0200) 2 commits
- - configure: auto detect dynamic library path switches
- - Makefile: Allow CC_LD_DYNPATH to be overriden
-
-Needs success reports from people who do use user-defined dynamic library
-path when they build their "git" before this series can go anywhere.
-
-* sb/daemon (Thu Aug 14 20:02:20 2008 +0200) 4 commits
- - git-daemon: rewrite kindergarden, new option --max-connections
- - git-daemon: Simplify dead-children reaping logic
- - git-daemon: use LOG_PID, simplify logging code
- - git-daemon: call logerror() instead of error()
-
-Can somebody who actually runs the daemon standalone comment on this one?
+* cc/bisect (Fri Aug 22 05:52:29 2008 +0200) 2 commits
+ - bisect: only check merge bases when needed
+ - bisect: test merge base if good rev is not an ancestor of bad rev
 
 * mv/merge-recursive (Tue Aug 12 22:14:00 2008 +0200) 3 commits
- - Make builtin-revert.c use merge_recursive_generic()
- - merge-recursive.c: Add more generic merge_recursive_generic()
- - Split out merge_recursive() to merge-recursive.c
+ . Make builtin-revert.c use merge_recursive_generic()
+ . merge-recursive.c: Add more generic merge_recursive_generic()
+ . Split out merge_recursive() to merge-recursive.c
 
-Miklos will be working on updates.
+Miklos will be working on updates based on comments.
 
 * lw/gitweb (Mon Aug 18 21:39:49 2008 +0200) 3 commits
- - gitweb: use new Git::Repo API, and add optional caching
- - add new Perl API: Git::Repo, Git::Commit, Git::Tag, and
+ . gitweb: use new Git::Repo API, and add optional caching
+ . add new Perl API: Git::Repo, Git::Commit, Git::Tag, and
    Git::RepoRoot
- - gitweb: add test suite with Test::WWW::Mechanize::CGI
+ . gitweb: add test suite with Test::WWW::Mechanize::CGI
+
+Tentatively dropped as its tests do not seem to pass and I have no time to
+look at them.
 
 * jc/diff-prefix (Mon Aug 18 20:08:09 2008 -0700) 1 commit
  - diff: vary default prefix depending on what are compared
+
+As some people may have noticed, I've been running with this one when
+sending out "How about this" patches to the discussion threads.
 
 * sp/missing-thin-base (Tue Aug 12 11:31:06 2008 -0700) 1 commit
  + pack-objects: Allow missing base objects when creating thin packs
@@ -145,28 +196,14 @@ I started making this incremental but the progress is not so great.
 ----------------------------------------------------------------
 [Will merge to master soon]
 
-* ml/submodule-foreach (Sun Aug 10 19:10:04 2008 -0400) 1 commit
- + git-submodule - Add 'foreach' subcommand
+* jc/no-slim-shell (Tue Aug 19 18:05:43 2008 -0700) 2 commits
+ + Build-in "git-shell"
+ + shell: do not play duplicated definition games to shrink the
+   executable
 
-* pm/log-exit-code (Mon Aug 11 08:46:25 2008 +0200) 2 commits
- + Teach git log --exit-code to return an appropriate exit code
- + Teach git log --check to return an appropriate exit code
-
-* sb/commit-tree-minileak (Tue Aug 12 00:35:11 2008 +0200) 1 commit
- + Fix commit_tree() buffer leak
-
-* pb/reflog-dwim (Sun Aug 10 22:22:21 2008 +0200) 1 commit
- + builtin-reflog: Allow reflog expire to name partial ref
-
-* jc/add-stop-at-symlink (Mon Aug 4 00:52:37 2008 -0700) 2 commits
- + add: refuse to add working tree items beyond symlinks
- + update-index: refuse to add working tree items beyond symlinks
-
-Fix for a longstanding bug that allows "git add" and "git update-index" to
-add a path "a/b" to the index when "a" is a symbolic link.  We would need
-a similar fix for the case where "a" is a submodule.
-
-* mv/merge-custom (Wed Aug 13 23:32:43 2008 +0200) 7 commits
+* mv/merge-custom (Sat Aug 23 19:23:22 2008 -0700) 9 commits
+ + t7606: fix custom merge test
+ + Fix "git-merge -s bogo" help text
  + Update .gitignore to ignore git-help
  + Builtin git-help.
  + builtin-help: always load_command_list() in cmd_help()
@@ -176,31 +213,8 @@ a similar fix for the case where "a" is a submodule.
  + builtin-help: make some internal functions available to other
    builtins
 
-* kh/diff-tree (Sun Aug 10 18:13:04 2008 +0200) 4 commits
- + Add test for diff-tree --stdin with two trees
- + Teach git diff-tree --stdin to diff trees
- + diff-tree: Note that the commit ID is printed with --stdin
- + Refactoring: Split up diff_tree_stdin
-
-* mg/count-objects (Fri Aug 15 00:20:20 2008 -0400) 1 commit
- + count-objects: Add total pack size to verbose output
-
-This one is without the human readable bits.
-
-* mz/push-verbose (Sat Aug 16 19:58:32 2008 +0200) 1 commit
- + Make push more verbose about illegal combination of options
-
-* jc/index-extended-flags (Sat Aug 16 23:02:08 2008 -0700) 1 commit
- + index: future proof for "extended" index entries
-
-* cc/merge-base-many (Sun Jul 27 13:47:22 2008 -0700) 4 commits
- + git-merge-octopus: use (merge-base A (merge B C D E...)) for
-   stepwise merge
- + merge-base-many: add trivial tests based on the documentation
- + documentation: merge-base: explain "git merge-base" with more than
-   2 args
- + merge-base: teach "git merge-base" to drive underlying
-   merge_bases_many()
+The one at the tip fixes a test that assumed git-merge has a broken
+"trivial merge" implementation.
 
 * jc/add-addremove (Tue Jul 22 22:30:40 2008 -0700) 2 commits
  + builtin-add.c: optimize -A option and "git add ."
@@ -208,20 +222,6 @@ This one is without the human readable bits.
 
 * am/cherry-pick-rerere (Sun Aug 10 17:18:55 2008 +0530) 1 commit
  + Make cherry-pick use rerere for conflict resolution.
-
-* js/parallel-test (Mon Aug 18 12:25:40 2008 -0400) 4 commits
- + Update t/.gitignore to ignore all trash directories
- + Enable parallel tests
- + tests: Clarify dependencies between tests, 'aggregate-results' and
-   'clean'
- + t9700: remove useless check
-
-* jc/test-deeper (Fri Aug 8 02:26:28 2008 -0700) 1 commit
- + tests: use $TEST_DIRECTORY to refer to the t/ directory
-
-This does not actually move "t/test directory" any deeper, but fixes test
-scripts that assume they run immediately below "t/" to use TEST_DIRECTORY
-variable.
 
 ----------------------------------------------------------------
 [On Hold]
@@ -270,6 +270,67 @@ hit due to tcl/tk's limitation, so I am holding this back for now.
 
 ----------------------------------------------------------------
 [Graduated to "master"]
+
+* ml/submodule-foreach (Sun Aug 10 19:10:04 2008 -0400) 1 commit
+ + git-submodule - Add 'foreach' subcommand
+
+* pm/log-exit-code (Mon Aug 11 08:46:25 2008 +0200) 2 commits
+ + Teach git log --exit-code to return an appropriate exit code
+ + Teach git log --check to return an appropriate exit code
+
+* sb/commit-tree-minileak (Tue Aug 12 00:35:11 2008 +0200) 1 commit
+ + Fix commit_tree() buffer leak
+
+* pb/reflog-dwim (Sun Aug 10 22:22:21 2008 +0200) 1 commit
+ + builtin-reflog: Allow reflog expire to name partial ref
+
+* jc/add-stop-at-symlink (Mon Aug 4 00:52:37 2008 -0700) 2 commits
+ + add: refuse to add working tree items beyond symlinks
+ + update-index: refuse to add working tree items beyond symlinks
+
+Fix for a longstanding bug that allows "git add" and "git update-index" to
+add a path "a/b" to the index when "a" is a symbolic link.  We would need
+a similar fix for the case where "a" is a submodule.
+
+* kh/diff-tree (Sun Aug 10 18:13:04 2008 +0200) 4 commits
+ + Add test for diff-tree --stdin with two trees
+ + Teach git diff-tree --stdin to diff trees
+ + diff-tree: Note that the commit ID is printed with --stdin
+ + Refactoring: Split up diff_tree_stdin
+
+* mg/count-objects (Fri Aug 15 00:20:20 2008 -0400) 1 commit
+ + count-objects: Add total pack size to verbose output
+
+This one is without the human readable bits.
+
+* mz/push-verbose (Sat Aug 16 19:58:32 2008 +0200) 1 commit
+ + Make push more verbose about illegal combination of options
+
+* jc/index-extended-flags (Sat Aug 16 23:02:08 2008 -0700) 1 commit
+ + index: future proof for "extended" index entries
+
+* cc/merge-base-many (Sun Jul 27 13:47:22 2008 -0700) 4 commits
+ + git-merge-octopus: use (merge-base A (merge B C D E...)) for
+   stepwise merge
+ + merge-base-many: add trivial tests based on the documentation
+ + documentation: merge-base: explain "git merge-base" with more than
+   2 args
+ + merge-base: teach "git merge-base" to drive underlying
+   merge_bases_many()
+
+* js/parallel-test (Mon Aug 18 12:25:40 2008 -0400) 4 commits
+ + Update t/.gitignore to ignore all trash directories
+ + Enable parallel tests
+ + tests: Clarify dependencies between tests, 'aggregate-results' and
+   'clean'
+ + t9700: remove useless check
+
+* jc/test-deeper (Fri Aug 8 02:26:28 2008 -0700) 1 commit
+ + tests: use $TEST_DIRECTORY to refer to the t/ directory
+
+This does not actually move "t/test directory" any deeper, but fixes test
+scripts that assume they run immediately below "t/" to use TEST_DIRECTORY
+variable.
 
 * js/mingw-stat (Mon Aug 18 22:01:06 2008 +0200) 2 commits
  + Revert "Windows: Use a customized struct stat that also has the
