@@ -24,8 +24,9 @@ test_expect_success 'setup' '
 	git commit -m c1 &&
 	git tag c1 &&
 	git reset --hard c0 &&
+	echo c1c1 >c1.c &&
 	echo c2 >c2.c &&
-	git add c2.c &&
+	git add c1.c c2.c &&
 	git commit -m c2 &&
 	git tag c2
 '
@@ -38,8 +39,10 @@ test_expect_success 'merge c2 with a custom strategy' '
 	test "$(git rev-parse c2)" = "$(git rev-parse HEAD^2)" &&
 	test "$(git rev-parse c2^{tree})" = "$(git rev-parse HEAD^{tree})" &&
 	git diff --exit-code &&
+	git diff --exit-code c2 HEAD &&
+	git diff --exit-code c2 &&
 	test -f c0.c &&
-	test ! -f c1.c &&
+	grep c1c1 c1.c &&
 	test -f c2.c
 '
 
