@@ -81,9 +81,9 @@ static void logreport(int priority, const char *err, va_list params)
 		char buf[1024];
 		vsnprintf(buf, sizeof(buf), err, params);
 		syslog(priority, "%s", buf);
-	}
-	else {
-		/* Since stderr is set to linebuffered mode, the
+	} else {
+		/*
+		 * Since stderr is set to linebuffered mode, the
 		 * logging of different processes will not overlap
 		 */
 		fprintf(stderr, "[%d] ", (int)getpid());
@@ -596,31 +596,24 @@ static struct child {
 
 static void add_child(pid_t pid, struct sockaddr *addr, int addrlen)
 {
-	struct child *newborn;
-	newborn = xcalloc(1, sizeof *newborn);
-	if (newborn) {
-		struct child **cradle;
+	struct child *newborn, **cradle;
 
-		live_children++;
-		newborn->pid = pid;
-		memcpy(&newborn->address, addr, addrlen);
-		for (cradle = &firstborn; *cradle; cradle = &(*cradle)->next)
-			if (!memcmp(&(*cradle)->address, &newborn->address,
-				   sizeof newborn->address))
-				break;
-		newborn->next = *cradle;
-		*cradle = newborn;
-	}
-	else
-		logerror("Out of memory spawning new child");
+	/*
+	 * This must be xcalloc() -- we'll compare the whole sockaddr_storage
+	 * but individual address may be shorter.
+	 */
+	newborn = xcalloc(1, sizeof(*newborn));
+	live_children++;
+	newborn->pid = pid;
+	memcpy(&newborn->address, addr, addrlen);
+	for (cradle = &firstborn; *cradle; cradle = &(*cradle)->next)
+		if (!memcmp(&(*cradle)->address, &newborn->address,
+			    sizeof(newborn->address)))
+			break;
+	newborn->next = *cradle;
+	*cradle = newborn;
 }
 
-/*
- * Walk from "deleted" to "spawned", and remove child "pid".
- *
- * We move everything up by one, since the new "deleted" will
- * be one higher.
- */
 static void remove_child(pid_t pid)
 {
 	struct child **cradle, *blanket;
@@ -642,18 +635,17 @@ static void remove_child(pid_t pid)
  */
 static void kill_some_child(void)
 {
-	const struct child *blanket;
+	const struct child *blanket, *next;
 
-	if ((blanket = firstborn)) {
-		const struct child *next;
+	if (!(blanket = firstborn))
+		return;
 
-		for (; (next = blanket->next); blanket = next)
-			if (!memcmp(&blanket->address, &next->address,
-				   sizeof next->address)) {
-				kill(blanket->pid, SIGTERM);
-				break;
-			}
-	}
+	for (; (next = blanket->next); blanket = next)
+		if (!memcmp(&blanket->address, &next->address,
+			    sizeof(next->address))) {
+			kill(blanket->pid, SIGTERM);
+			break;
+		}
 }
 
 static void check_dead_children(void)
@@ -661,10 +653,10 @@ static void check_dead_children(void)
 	int status;
 	pid_t pid;
 
-	while ((pid = waitpid(-1, &status, WNOHANG))>0) {
+	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
 		const char *dead = "";
 		remove_child(pid);
-		if (!WIFEXITED(status) || WEXITSTATUS(status) > 0)
+		if (!WIFEXITED(status) || (WEXITSTATUS(status) > 0))
 			dead = " (with error)";
 		loginfo("[%d] Disconnected%s", (int)pid, dead);
 	}
@@ -676,7 +668,7 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 
 	if (max_connections && live_children >= max_connections) {
 		kill_some_child();
-		sleep(1);			 /* give it some time to die */
+		sleep(1);  /* give it some time to die */
 		check_dead_children();
 		if (live_children >= max_connections) {
 			close(incoming);
@@ -705,7 +697,8 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 
 static void child_handler(int signo)
 {
-	/* Otherwise empty handler because systemcalls will get interrupted
+	/*
+	 * Otherwise empty handler because systemcalls will get interrupted
 	 * upon signal receipt
 	 * SysV needs the handler to be rearmed
 	 */
@@ -1089,8 +1082,7 @@ int main(int argc, char **argv)
 	if (log_syslog) {
 		openlog("git-daemon", LOG_PID, LOG_DAEMON);
 		set_die_routine(daemon_die);
-	}
-	else
+	} else
 		setlinebuf(stderr); /* avoid splitting a message in the middle */
 
 	if (inetd_mode && (group_name || user_name))
