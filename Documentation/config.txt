@@ -358,8 +358,13 @@ core.editor::
 	`EDITOR` environment variables and then finally `vi`.
 
 core.pager::
-	The command that git will use to paginate output.  Can be overridden
-	with the `GIT_PAGER` environment variable.
+	The command that git will use to paginate output.  Can
+	be overridden with the `GIT_PAGER` environment
+	variable.  Note that git sets the `LESS` environment
+	variable to `FRSX` if it is unset when it runs the
+	pager.  One can change these settings by setting the
+	`LESS` variable to some other value or by giving the
+	`core.pager` option a value such as "`less -+FRSX`".
 
 core.whitespace::
 	A comma separated list of common whitespace problems to
@@ -983,9 +988,11 @@ pack.packSizeLimit::
 	linkgit:git-repack[1].
 
 pager.<cmd>::
-	Allows to set your own pager preferences for each command, overriding
-	the default. If `\--pager` or `\--no-pager` is specified on the command
-	line, it takes precedence over this option.
+	Allows turning on or off pagination of the output of a
+	particular git subcommand when writing to a tty.  If
+	`\--paginate` or `\--no-pager` is specified on the command line,
+	it takes precedence over this option.  To disable pagination for
+	all commands, set `core.pager` or 'GIT_PAGER' to "`cat`".
 
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches

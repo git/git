@@ -564,8 +564,6 @@ static int checkout_fast_forward(unsigned char *head, unsigned char *remote)
 	struct dir_struct dir;
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 
-	if (read_cache_unmerged())
-		die("you need to resolve your current index first");
 	refresh_cache(REFRESH_QUIET);
 
 	fd = hold_locked_index(lock_file, 1);
@@ -651,13 +649,15 @@ static void add_strategies(const char *string, unsigned attr)
 static int merge_trivial(void)
 {
 	unsigned char result_tree[20], result_commit[20];
-	struct commit_list parent;
+	struct commit_list *parent = xmalloc(sizeof(struct commit_list *));
 
 	write_tree_trivial(result_tree);
 	printf("Wonderful.\n");
-	parent.item = remoteheads->item;
-	parent.next = NULL;
-	commit_tree(merge_msg.buf, result_tree, &parent, result_commit);
+	parent->item = lookup_commit(head);
+	parent->next = xmalloc(sizeof(struct commit_list *));
+	parent->next->item = remoteheads->item;
+	parent->next->next = NULL;
+	commit_tree(merge_msg.buf, result_tree, parent, result_commit);
 	finish(result_commit, "In-index merge");
 	drop_save();
 	return 0;
@@ -743,6 +743,7 @@ static int evaluate_result(void)
 	int cnt = 0;
 	struct rev_info rev;
 
+	discard_cache();
 	if (read_cache() < 0)
 		die("failed to read the cache");
 
@@ -776,7 +777,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	struct commit_list **remotes = &remoteheads;
 
 	setup_work_tree();
-	if (unmerged_cache())
+	if (read_cache_unmerged())
 		die("You are in the middle of a conflicted merge.");
 
 	/*
@@ -1078,6 +1079,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		}
 
 		/* Automerge succeeded. */
+		discard_cache();
 		write_tree_trivial(result_tree);
 		automerge_was_ok = 1;
 		break;

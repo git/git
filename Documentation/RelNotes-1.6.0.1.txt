@@ -4,6 +4,9 @@ GIT v1.6.0.1 Release Notes
 Fixes since v1.6.0
 ------------------
 
+* "git diff --cc" did not honor content mangling specified by
+  gitattributes and core.autocrlf when reading from the work tree.
+
 * "git diff --check" incorrectly detected new trailing blank lines when
   whitespace check was in effect.
 
@@ -12,6 +15,8 @@ Fixes since v1.6.0
 
 * "git format-patch" peeked before the beginning of a string when
   "format.headers" variable is empty (a misconfiguration).
+
+* "git help help" did not work correctly.
 
 * "git mailinfo" (hence "git am") was unhappy when MIME multipart message
   contained garbage after the finishing boundary.
@@ -22,10 +27,10 @@ Fixes since v1.6.0
 * "git merge" did not refresh the index correctly when a merge resulted in
   a fast-forward.
 
-Contains other various documentation fixes.
+* "git merge" did not resolve a truly trivial merges that can be done
+  without content level merges.
 
---
-exec >/var/tmp/1
-O=v1.6.0-14-g3a634dc
-echo O=$(git describe maint)
-git shortlog --no-merges $O..maint
+* "git svn dcommit" to a repository with URL that has embedded usernames
+  did not work correctly.
+
+Contains other various documentation fixes.

@@ -723,6 +723,18 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 				die("early EOF '%s'", elem->path);
 
 			result[len] = 0;
+
+			/* If not a fake symlink, apply filters, e.g. autocrlf */
+			if (is_file) {
+				struct strbuf buf;
+
+				strbuf_init(&buf, 0);
+				if (convert_to_git(elem->path, result, len, &buf, safe_crlf)) {
+					free(result);
+					result = strbuf_detach(&buf, &len);
+					result_size = len;
+				}
+			}
 		}
 		else {
 		deleted_file:
