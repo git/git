@@ -771,7 +771,7 @@ _git_diff ()
 		__gitcomp "--cached --stat --numstat --shortstat --summary
 			--patch-with-stat --name-only --name-status --color
 			--no-color --color-words --no-renames --check
-			--full-index --binary --abbrev --diff-filter
+			--full-index --binary --abbrev --diff-filter=
 			--find-copies-harder --pickaxe-all --pickaxe-regex
 			--text --ignore-space-at-eol --ignore-space-change
 			--ignore-all-space --exit-code --quiet --ext-diff

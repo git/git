@@ -1159,7 +1159,7 @@ int read_index_from(struct index_state *istate, const char *path)
 	size_t mmap_size;
 
 	errno = EBUSY;
-	if (istate->alloc)
+	if (istate->initialized)
 		return istate->cache_nr;
 
 	errno = ENOENT;
@@ -1199,6 +1199,7 @@ int read_index_from(struct index_state *istate, const char *path)
 	 * index size
 	 */
 	istate->alloc = xmalloc(estimate_cache_size(mmap_size, istate->cache_nr));
+	istate->initialized = 1;
 
 	src_offset = sizeof(*hdr);
 	dst_offset = 0;
@@ -1251,6 +1252,7 @@ int discard_index(struct index_state *istate)
 	cache_tree_free(&(istate->cache_tree));
 	free(istate->alloc);
 	istate->alloc = NULL;
+	istate->initialized = 0;
 
 	/* no need to throw away allocated active_cache */
 	return 0;
