@@ -20,8 +20,6 @@
 #include "attr.h"
 #include "merge-recursive.h"
 
-static int subtree_merge;
-
 static struct tree *shift_tree_object(struct tree *one, struct tree *two)
 {
 	unsigned char shifted[20];
@@ -83,16 +81,11 @@ static struct string_list current_file_set = {NULL, 0, 0, 1};
 static struct string_list current_directory_set = {NULL, 0, 0, 1};
 
 static int call_depth = 0;
-int merge_recursive_verbosity = 2;
-static int diff_rename_limit = -1;
-static int merge_rename_limit = -1;
-static int buffer_output = 1;
 static struct strbuf obuf = STRBUF_INIT;
 
-static int show(int v)
+static int show(struct merge_options *o, int v)
 {
-	return (!call_depth && merge_recursive_verbosity >= v) ||
-		merge_recursive_verbosity >= 5;
+	return (!call_depth && o->verbosity >= v) || o->verbosity >= 5;
 }
 
 static void flush_output(void)
@@ -103,12 +96,12 @@ static void flush_output(void)
 	}
 }
 
-static void output(int v, const char *fmt, ...)
+static void output(struct merge_options *o, int v, const char *fmt, ...)
 {
 	int len;
 	va_list ap;
 
-	if (!show(v))
+	if (!show(o, v))
 		return;
 
 	strbuf_grow(&obuf, call_depth * 2 + 2);
@@ -132,7 +125,7 @@ static void output(int v, const char *fmt, ...)
 	}
 	strbuf_setlen(&obuf, obuf.len + len);
 	strbuf_add(&obuf, "\n", 1);
-	if (!buffer_output)
+	if (!o->buffer_output)
 		flush_output();
 }
 
@@ -219,17 +212,17 @@ static int git_merge_trees(int index_only,
 	return rc;
 }
 
-struct tree *write_tree_from_memory(void)
+struct tree *write_tree_from_memory(struct merge_options *o)
 {
 	struct tree *result = NULL;
 
 	if (unmerged_cache()) {
 		int i;
-		output(0, "There are unmerged index entries:");
+		output(o, 0, "There are unmerged index entries:");
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			if (ce_stage(ce))
-				output(0, "%d %.*s", ce_stage(ce), ce_namelen(ce), ce->name);
+				output(o, 0, "%d %.*s", ce_stage(ce), ce_namelen(ce), ce->name);
 		}
 		return NULL;
 	}
@@ -341,11 +334,12 @@ struct rename
  * 'b_tree') to be able to associate the correct cache entries with
  * the rename information. 'tree' is always equal to either a_tree or b_tree.
  */
-static struct string_list *get_renames(struct tree *tree,
-					struct tree *o_tree,
-					struct tree *a_tree,
-					struct tree *b_tree,
-					struct string_list *entries)
+static struct string_list *get_renames(struct merge_options *o,
+				       struct tree *tree,
+				       struct tree *o_tree,
+				       struct tree *a_tree,
+				       struct tree *b_tree,
+				       struct string_list *entries)
 {
 	int i;
 	struct string_list *renames;
@@ -355,8 +349,8 @@ static struct string_list *get_renames(struct tree *tree,
 	diff_setup(&opts);
 	DIFF_OPT_SET(&opts, RECURSIVE);
 	opts.detect_rename = DIFF_DETECT_RENAME;
-	opts.rename_limit = merge_rename_limit >= 0 ? merge_rename_limit :
-			    diff_rename_limit >= 0 ? diff_rename_limit :
+	opts.rename_limit = o->merge_rename_limit >= 0 ? o->merge_rename_limit :
+			    o->diff_rename_limit >= 0 ? o->diff_rename_limit :
 			    500;
 	opts.warn_on_too_large_rename = 1;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -717,7 +711,8 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 	return result;
 }
 
-static void conflict_rename_rename(struct rename *ren1,
+static void conflict_rename_rename(struct merge_options *o,
+				   struct rename *ren1,
 				   const char *branch1,
 				   struct rename *ren2,
 				   const char *branch2)
@@ -730,13 +725,13 @@ static void conflict_rename_rename(struct rename *ren1,
 	const char *dst_name2 = ren2_dst;
 	if (string_list_has_string(&current_directory_set, ren1_dst)) {
 		dst_name1 = del[delp++] = unique_path(ren1_dst, branch1);
-		output(1, "%s is a directory in %s adding as %s instead",
+		output(o, 1, "%s is a directory in %s adding as %s instead",
 		       ren1_dst, branch2, dst_name1);
 		remove_file(0, ren1_dst, 0);
 	}
 	if (string_list_has_string(&current_directory_set, ren2_dst)) {
 		dst_name2 = del[delp++] = unique_path(ren2_dst, branch2);
-		output(1, "%s is a directory in %s adding as %s instead",
+		output(o, 1, "%s is a directory in %s adding as %s instead",
 		       ren2_dst, branch1, dst_name2);
 		remove_file(0, ren2_dst, 0);
 	}
@@ -757,24 +752,26 @@ static void conflict_rename_rename(struct rename *ren1,
 		free(del[delp]);
 }
 
-static void conflict_rename_dir(struct rename *ren1,
+static void conflict_rename_dir(struct merge_options *o,
+				struct rename *ren1,
 				const char *branch1)
 {
 	char *new_path = unique_path(ren1->pair->two->path, branch1);
-	output(1, "Renaming %s to %s instead", ren1->pair->one->path, new_path);
+	output(o, 1, "Renaming %s to %s instead", ren1->pair->one->path, new_path);
 	remove_file(0, ren1->pair->two->path, 0);
 	update_file(0, ren1->pair->two->sha1, ren1->pair->two->mode, new_path);
 	free(new_path);
 }
 
-static void conflict_rename_rename_2(struct rename *ren1,
+static void conflict_rename_rename_2(struct merge_options *o,
+				     struct rename *ren1,
 				     const char *branch1,
 				     struct rename *ren2,
 				     const char *branch2)
 {
 	char *new_path1 = unique_path(ren1->pair->two->path, branch1);
 	char *new_path2 = unique_path(ren2->pair->two->path, branch2);
-	output(1, "Renaming %s to %s and %s to %s instead",
+	output(o, 1, "Renaming %s to %s and %s to %s instead",
 	       ren1->pair->one->path, new_path1,
 	       ren2->pair->one->path, new_path2);
 	remove_file(0, ren1->pair->two->path, 0);
@@ -784,10 +781,9 @@ static void conflict_rename_rename_2(struct rename *ren1,
 	free(new_path1);
 }
 
-static int process_renames(struct string_list *a_renames,
-			   struct string_list *b_renames,
-			   const char *a_branch,
-			   const char *b_branch)
+static int process_renames(struct merge_options *o,
+			   struct string_list *a_renames,
+			   struct string_list *b_renames)
 {
 	int clean_merge = 1, i, j;
 	struct string_list a_by_dst = {NULL, 0, 0, 0}, b_by_dst = {NULL, 0, 0, 0};
@@ -832,15 +828,15 @@ static int process_renames(struct string_list *a_renames,
 			renames1 = a_renames;
 			renames2 = b_renames;
 			renames2Dst = &b_by_dst;
-			branch1 = a_branch;
-			branch2 = b_branch;
+			branch1 = o->branch1;
+			branch2 = o->branch2;
 		} else {
 			struct rename *tmp;
 			renames1 = b_renames;
 			renames2 = a_renames;
 			renames2Dst = &a_by_dst;
-			branch1 = b_branch;
-			branch2 = a_branch;
+			branch1 = o->branch2;
+			branch2 = o->branch1;
 			tmp = ren2;
 			ren2 = ren1;
 			ren1 = tmp;
@@ -867,7 +863,7 @@ static int process_renames(struct string_list *a_renames,
 			ren2->processed = 1;
 			if (strcmp(ren1_dst, ren2_dst) != 0) {
 				clean_merge = 0;
-				output(1, "CONFLICT (rename/rename): "
+				output(o, 1, "CONFLICT (rename/rename): "
 				       "Rename \"%s\"->\"%s\" in branch \"%s\" "
 				       "rename \"%s\"->\"%s\" in \"%s\"%s",
 				       src, ren1_dst, branch1,
@@ -878,7 +874,7 @@ static int process_renames(struct string_list *a_renames,
 					update_file(0, ren1->pair->one->sha1,
 						    ren1->pair->one->mode, src);
 				}
-				conflict_rename_rename(ren1, branch1, ren2, branch2);
+				conflict_rename_rename(o, ren1, branch1, ren2, branch2);
 			} else {
 				struct merge_file_info mfi;
 				remove_file(1, ren1_src, 1);
@@ -888,13 +884,13 @@ static int process_renames(struct string_list *a_renames,
 						 branch1,
 						 branch2);
 				if (mfi.merge || !mfi.clean)
-					output(1, "Renaming %s->%s", src, ren1_dst);
+					output(o, 1, "Renaming %s->%s", src, ren1_dst);
 
 				if (mfi.merge)
-					output(2, "Auto-merging %s", ren1_dst);
+					output(o, 2, "Auto-merging %s", ren1_dst);
 
 				if (!mfi.clean) {
-					output(1, "CONFLICT (content): merge conflict in %s",
+					output(o, 1, "CONFLICT (content): merge conflict in %s",
 					       ren1_dst);
 					clean_merge = 0;
 
@@ -925,14 +921,14 @@ static int process_renames(struct string_list *a_renames,
 
 			if (string_list_has_string(&current_directory_set, ren1_dst)) {
 				clean_merge = 0;
-				output(1, "CONFLICT (rename/directory): Rename %s->%s in %s "
+				output(o, 1, "CONFLICT (rename/directory): Rename %s->%s in %s "
 				       " directory %s added in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren1_dst, branch2);
-				conflict_rename_dir(ren1, branch1);
+				conflict_rename_dir(o, ren1, branch1);
 			} else if (sha_eq(src_other.sha1, null_sha1)) {
 				clean_merge = 0;
-				output(1, "CONFLICT (rename/delete): Rename %s->%s in %s "
+				output(o, 1, "CONFLICT (rename/delete): Rename %s->%s in %s "
 				       "and deleted in %s",
 				       ren1_src, ren1_dst, branch1,
 				       branch2);
@@ -941,31 +937,32 @@ static int process_renames(struct string_list *a_renames,
 				const char *new_path;
 				clean_merge = 0;
 				try_merge = 1;
-				output(1, "CONFLICT (rename/add): Rename %s->%s in %s. "
+				output(o, 1, "CONFLICT (rename/add): Rename %s->%s in %s. "
 				       "%s added in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren1_dst, branch2);
 				new_path = unique_path(ren1_dst, branch2);
-				output(1, "Adding as %s instead", new_path);
+				output(o, 1, "Adding as %s instead", new_path);
 				update_file(0, dst_other.sha1, dst_other.mode, new_path);
 			} else if ((item = string_list_lookup(ren1_dst, renames2Dst))) {
 				ren2 = item->util;
 				clean_merge = 0;
 				ren2->processed = 1;
-				output(1, "CONFLICT (rename/rename): Rename %s->%s in %s. "
+				output(o, 1, "CONFLICT (rename/rename): "
+				       "Rename %s->%s in %s. "
 				       "Rename %s->%s in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren2->pair->one->path, ren2->pair->two->path, branch2);
-				conflict_rename_rename_2(ren1, branch1, ren2, branch2);
+				conflict_rename_rename_2(o, ren1, branch1, ren2, branch2);
 			} else
 				try_merge = 1;
 
 			if (try_merge) {
-				struct diff_filespec *o, *a, *b;
+				struct diff_filespec *one, *a, *b;
 				struct merge_file_info mfi;
 				src_other.path = (char *)ren1_src;
 
-				o = ren1->pair->one;
+				one = ren1->pair->one;
 				if (a_renames == renames1) {
 					a = ren1->pair->two;
 					b = &src_other;
@@ -973,8 +970,8 @@ static int process_renames(struct string_list *a_renames,
 					b = ren1->pair->two;
 					a = &src_other;
 				}
-				mfi = merge_file(o, a, b,
-						a_branch, b_branch);
+				mfi = merge_file(one, a, b,
+						o->branch1, o->branch2);
 
 				if (mfi.clean &&
 				    sha_eq(mfi.sha, ren1->pair->two->sha1) &&
@@ -984,20 +981,20 @@ static int process_renames(struct string_list *a_renames,
 					 * t6022 test. If you change
 					 * it update the test too.
 					 */
-					output(3, "Skipped %s (merged same as existing)", ren1_dst);
+					output(o, 3, "Skipped %s (merged same as existing)", ren1_dst);
 				else {
 					if (mfi.merge || !mfi.clean)
-						output(1, "Renaming %s => %s", ren1_src, ren1_dst);
+						output(o, 1, "Renaming %s => %s", ren1_src, ren1_dst);
 					if (mfi.merge)
-						output(2, "Auto-merging %s", ren1_dst);
+						output(o, 2, "Auto-merging %s", ren1_dst);
 					if (!mfi.clean) {
-						output(1, "CONFLICT (rename/modify): Merge conflict in %s",
+						output(o, 1, "CONFLICT (rename/modify): Merge conflict in %s",
 						       ren1_dst);
 						clean_merge = 0;
 
 						if (!index_only)
 							update_stages(ren1_dst,
-								      o, a, b, 1);
+								      one, a, b, 1);
 					}
 					update_file(mfi.clean, mfi.sha, mfi.mode, ren1_dst);
 				}
@@ -1016,9 +1013,8 @@ static unsigned char *stage_sha(const unsigned char *sha, unsigned mode)
 }
 
 /* Per entry merge function */
-static int process_entry(const char *path, struct stage_data *entry,
-			 const char *branch1,
-			 const char *branch2)
+static int process_entry(struct merge_options *o,
+			 const char *path, struct stage_data *entry)
 {
 	/*
 	printf("processing entry, clean cache: %s\n", index_only ? "yes": "no");
@@ -1040,23 +1036,23 @@ static int process_entry(const char *path, struct stage_data *entry,
 			/* Deleted in both or deleted in one and
 			 * unchanged in the other */
 			if (a_sha)
-				output(2, "Removing %s", path);
+				output(o, 2, "Removing %s", path);
 			/* do not touch working file if it did not exist */
 			remove_file(1, path, !a_sha);
 		} else {
 			/* Deleted in one and changed in the other */
 			clean_merge = 0;
 			if (!a_sha) {
-				output(1, "CONFLICT (delete/modify): %s deleted in %s "
+				output(o, 1, "CONFLICT (delete/modify): %s deleted in %s "
 				       "and modified in %s. Version %s of %s left in tree.",
-				       path, branch1,
-				       branch2, branch2, path);
+				       path, o->branch1,
+				       o->branch2, o->branch2, path);
 				update_file(0, b_sha, b_mode, path);
 			} else {
-				output(1, "CONFLICT (delete/modify): %s deleted in %s "
+				output(o, 1, "CONFLICT (delete/modify): %s deleted in %s "
 				       "and modified in %s. Version %s of %s left in tree.",
-				       path, branch2,
-				       branch1, branch1, path);
+				       path, o->branch2,
+				       o->branch1, o->branch1, path);
 				update_file(0, a_sha, a_mode, path);
 			}
 		}
@@ -1071,14 +1067,14 @@ static int process_entry(const char *path, struct stage_data *entry,
 		const char *conf;
 
 		if (a_sha) {
-			add_branch = branch1;
-			other_branch = branch2;
+			add_branch = o->branch1;
+			other_branch = o->branch2;
 			mode = a_mode;
 			sha = a_sha;
 			conf = "file/directory";
 		} else {
-			add_branch = branch2;
-			other_branch = branch1;
+			add_branch = o->branch2;
+			other_branch = o->branch1;
 			mode = b_mode;
 			sha = b_sha;
 			conf = "directory/file";
@@ -1086,13 +1082,13 @@ static int process_entry(const char *path, struct stage_data *entry,
 		if (string_list_has_string(&current_directory_set, path)) {
 			const char *new_path = unique_path(path, add_branch);
 			clean_merge = 0;
-			output(1, "CONFLICT (%s): There is a directory with name %s in %s. "
+			output(o, 1, "CONFLICT (%s): There is a directory with name %s in %s. "
 			       "Adding %s as %s",
 			       conf, path, other_branch, path, new_path);
 			remove_file(0, path, 0);
 			update_file(0, sha, mode, new_path);
 		} else {
-			output(2, "Adding %s", path);
+			output(o, 2, "Adding %s", path);
 			update_file(1, sha, mode, path);
 		}
 	} else if (a_sha && b_sha) {
@@ -1100,32 +1096,32 @@ static int process_entry(const char *path, struct stage_data *entry,
 		/* case D: Modified in both, but differently. */
 		const char *reason = "content";
 		struct merge_file_info mfi;
-		struct diff_filespec o, a, b;
+		struct diff_filespec one, a, b;
 
 		if (!o_sha) {
 			reason = "add/add";
 			o_sha = (unsigned char *)null_sha1;
 		}
-		output(2, "Auto-merging %s", path);
-		o.path = a.path = b.path = (char *)path;
-		hashcpy(o.sha1, o_sha);
-		o.mode = o_mode;
+		output(o, 2, "Auto-merging %s", path);
+		one.path = a.path = b.path = (char *)path;
+		hashcpy(one.sha1, o_sha);
+		one.mode = o_mode;
 		hashcpy(a.sha1, a_sha);
 		a.mode = a_mode;
 		hashcpy(b.sha1, b_sha);
 		b.mode = b_mode;
 
-		mfi = merge_file(&o, &a, &b,
-				 branch1, branch2);
+		mfi = merge_file(&one, &a, &b,
+				 o->branch1, o->branch2);
 
 		clean_merge = mfi.clean;
 		if (mfi.clean)
 			update_file(1, mfi.sha, mfi.mode, path);
 		else if (S_ISGITLINK(mfi.mode))
-			output(1, "CONFLICT (submodule): Merge conflict in %s "
+			output(o, 1, "CONFLICT (submodule): Merge conflict in %s "
 			       "- needs %s", path, sha1_to_hex(b.sha1));
 		else {
-			output(1, "CONFLICT (%s): Merge conflict in %s",
+			output(o, 1, "CONFLICT (%s): Merge conflict in %s",
 					reason, path);
 
 			if (index_only)
@@ -1146,22 +1142,21 @@ static int process_entry(const char *path, struct stage_data *entry,
 	return clean_merge;
 }
 
-int merge_trees(struct tree *head,
+int merge_trees(struct merge_options *o,
+		struct tree *head,
 		struct tree *merge,
 		struct tree *common,
-		const char *branch1,
-		const char *branch2,
 		struct tree **result)
 {
 	int code, clean;
 
-	if (subtree_merge) {
+	if (o->subtree_merge) {
 		merge = shift_tree_object(head, merge);
 		common = shift_tree_object(head, common);
 	}
 
 	if (sha_eq(common->object.sha1, merge->object.sha1)) {
-		output(0, "Already uptodate!");
+		output(o, 0, "Already uptodate!");
 		*result = head;
 		return 1;
 	}
@@ -1182,15 +1177,14 @@ int merge_trees(struct tree *head,
 		get_files_dirs(merge);
 
 		entries = get_unmerged();
-		re_head  = get_renames(head, common, head, merge, entries);
-		re_merge = get_renames(merge, common, head, merge, entries);
-		clean = process_renames(re_head, re_merge,
-				branch1, branch2);
+		re_head  = get_renames(o, head, common, head, merge, entries);
+		re_merge = get_renames(o, merge, common, head, merge, entries);
+		clean = process_renames(o, re_head, re_merge);
 		for (i = 0; i < entries->nr; i++) {
 			const char *path = entries->items[i].string;
 			struct stage_data *e = entries->items[i].util;
 			if (!e->processed
-				&& !process_entry(path, e, branch1, branch2))
+				&& !process_entry(o, path, e))
 				clean = 0;
 		}
 
@@ -1203,7 +1197,7 @@ int merge_trees(struct tree *head,
 		clean = 1;
 
 	if (index_only)
-		*result = write_tree_from_memory();
+		*result = write_tree_from_memory(o);
 
 	return clean;
 }
@@ -1223,10 +1217,9 @@ static struct commit_list *reverse_commit_list(struct commit_list *list)
  * Merge the commits h1 and h2, return the resulting virtual
  * commit object and a flag indicating the cleanness of the merge.
  */
-int merge_recursive(struct commit *h1,
+int merge_recursive(struct merge_options *o,
+		    struct commit *h1,
 		    struct commit *h2,
-		    const char *branch1,
-		    const char *branch2,
 		    struct commit_list *ca,
 		    struct commit **result)
 {
@@ -1235,8 +1228,8 @@ int merge_recursive(struct commit *h1,
 	struct tree *mrtree = mrtree;
 	int clean;
 
-	if (show(4)) {
-		output(4, "Merging:");
+	if (show(o, 4)) {
+		output(o, 4, "Merging:");
 		output_commit_title(h1);
 		output_commit_title(h2);
 	}
@@ -1246,8 +1239,8 @@ int merge_recursive(struct commit *h1,
 		ca = reverse_commit_list(ca);
 	}
 
-	if (show(5)) {
-		output(5, "found %u common ancestor(s):", commit_list_count(ca));
+	if (show(o, 5)) {
+		output(o, 5, "found %u common ancestor(s):", commit_list_count(ca));
 		for (iter = ca; iter; iter = iter->next)
 			output_commit_title(iter->item);
 	}
@@ -1264,6 +1257,7 @@ int merge_recursive(struct commit *h1,
 	}
 
 	for (iter = ca; iter; iter = iter->next) {
+		const char *saved_b1, *saved_b2;
 		call_depth++;
 		/*
 		 * When the merge fails, the result contains files
@@ -1273,11 +1267,14 @@ int merge_recursive(struct commit *h1,
 		 * "conflicts" were already resolved.
 		 */
 		discard_cache();
-		merge_recursive(merged_common_ancestors, iter->item,
-				"Temporary merge branch 1",
-				"Temporary merge branch 2",
-				NULL,
-				&merged_common_ancestors);
+		saved_b1 = o->branch1;
+		saved_b2 = o->branch2;
+		o->branch1 = "Temporary merge branch 1";
+		o->branch2 = "Temporary merge branch 2";
+		merge_recursive(o, merged_common_ancestors, iter->item,
+				NULL, &merged_common_ancestors);
+		o->branch1 = saved_b1;
+		o->branch2 = saved_b2;
 		call_depth--;
 
 		if (!merged_common_ancestors)
@@ -1291,8 +1288,8 @@ int merge_recursive(struct commit *h1,
 	} else
 		index_only = 1;
 
-	clean = merge_trees(h1->tree, h2->tree, merged_common_ancestors->tree,
-			    branch1, branch2, &mrtree);
+	clean = merge_trees(o, h1->tree, h2->tree, merged_common_ancestors->tree,
+			    &mrtree);
 
 	if (index_only) {
 		*result = make_virtual_commit(mrtree, "merged tree");
@@ -1319,35 +1316,33 @@ static struct commit *get_ref(const unsigned char *sha1, const char *name)
 	return (struct commit *)object;
 }
 
-int merge_recursive_generic(const char **base_list,
-		const unsigned char *head_sha1, const char *head_name,
-		const unsigned char *next_sha1, const char *next_name)
+int merge_recursive_generic(struct merge_options *o,
+			    const unsigned char *head,
+			    const unsigned char *merge,
+			    int num_base_list,
+			    const unsigned char **base_list,
+			    struct commit **result)
 {
 	int clean, index_fd;
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-	struct commit *result;
-	struct commit *head_commit = get_ref(head_sha1, head_name);
-	struct commit *next_commit = get_ref(next_sha1, next_name);
+	struct commit *head_commit = get_ref(head, o->branch1);
+	struct commit *next_commit = get_ref(merge, o->branch2);
 	struct commit_list *ca = NULL;
 
 	if (base_list) {
 		int i;
-		for (i = 0; base_list[i]; ++i) {
-			unsigned char sha[20];
+		for (i = 0; i < num_base_list; ++i) {
 			struct commit *base;
-			if (get_sha1(base_list[i], sha))
-				return error("Could not resolve ref '%s'",
-								base_list[i]);
-			if (!(base = get_ref(sha, base_list[i])))
+			if (!(base = get_ref(base_list[i], sha1_to_hex(base_list[i]))))
 				return error("Could not parse object '%s'",
-								base_list[i]);
+					sha1_to_hex(base_list[i]));
 			commit_list_insert(base, &ca);
 		}
 	}
 
 	index_fd = hold_locked_index(lock, 1);
-	clean = merge_recursive(head_commit, next_commit,
-				head_name, next_name, ca, &result);
+	clean = merge_recursive(o, head_commit, next_commit, ca,
+			result);
 	if (active_cache_changed &&
 			(write_cache(index_fd, active_cache, active_nr) ||
 			 commit_locked_index(lock)))
@@ -1356,29 +1351,35 @@ int merge_recursive_generic(const char **base_list,
 	return clean ? 0 : 1;
 }
 
-int merge_recursive_config(const char *var, const char *value, void *cb)
+static int merge_recursive_config(const char *var, const char *value, void *cb)
 {
+	struct merge_options *o = cb;
 	if (!strcasecmp(var, "merge.verbosity")) {
-		merge_recursive_verbosity = git_config_int(var, value);
+		o->verbosity = git_config_int(var, value);
 		return 0;
 	}
 	if (!strcasecmp(var, "diff.renamelimit")) {
-		diff_rename_limit = git_config_int(var, value);
+		o->diff_rename_limit = git_config_int(var, value);
 		return 0;
 	}
 	if (!strcasecmp(var, "merge.renamelimit")) {
-		merge_rename_limit = git_config_int(var, value);
+		o->merge_rename_limit = git_config_int(var, value);
 		return 0;
 	}
 	return git_default_config(var, value, cb);
 }
 
-void merge_recursive_setup(int is_subtree_merge)
+void init_merge_options(struct merge_options *o)
 {
+	memset(o, 0, sizeof(struct merge_options));
+	o->verbosity = 2;
+	o->buffer_output = 1;
+	o->diff_rename_limit = -1;
+	o->merge_rename_limit = -1;
+	git_config(merge_recursive_config, o);
 	if (getenv("GIT_MERGE_VERBOSITY"))
-		merge_recursive_verbosity =
+		o->verbosity =
 			strtol(getenv("GIT_MERGE_VERBOSITY"), NULL, 10);
-	if (merge_recursive_verbosity >= 5)
-		buffer_output = 0;
-	subtree_merge = is_subtree_merge;
+	if (o->verbosity >= 5)
+		o->buffer_output = 0;
 }

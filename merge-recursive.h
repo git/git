@@ -1,26 +1,42 @@
 #ifndef MERGE_RECURSIVE_H
 #define MERGE_RECURSIVE_H
 
-int merge_recursive(struct commit *h1,
+struct merge_options {
+	const char *branch1;
+	const char *branch2;
+	unsigned subtree_merge : 1;
+	unsigned buffer_output : 1;
+	int verbosity;
+	int diff_rename_limit;
+	int merge_rename_limit;
+};
+
+/* merge_trees() but with recursive ancestor consolidation */
+int merge_recursive(struct merge_options *o,
+		    struct commit *h1,
 		    struct commit *h2,
-		    const char *branch1,
-		    const char *branch2,
 		    struct commit_list *ancestors,
 		    struct commit **result);
 
-int merge_trees(struct tree *head,
+/* rename-detecting three-way merge, no recursion */
+int merge_trees(struct merge_options *o,
+		struct tree *head,
 		struct tree *merge,
 		struct tree *common,
-		const char *branch1,
-		const char *branch2,
 		struct tree **result);
-extern int merge_recursive_generic(const char **base_list,
-		const unsigned char *head_sha1, const char *head_name,
-		const unsigned char *next_sha1, const char *next_name);
-int merge_recursive_config(const char *var, const char *value, void *cb);
-void merge_recursive_setup(int is_subtree_merge);
-struct tree *write_tree_from_memory(void);
 
-extern int merge_recursive_verbosity;
+/*
+ * "git-merge-recursive" can be fed trees; wrap them into
+ * virtual commits and call merge_recursive() proper.
+ */
+int merge_recursive_generic(struct merge_options *o,
+			    const unsigned char *head,
+			    const unsigned char *merge,
+			    int num_ca,
+			    const unsigned char **ca,
+			    struct commit **result);
+
+void init_merge_options(struct merge_options *o);
+struct tree *write_tree_from_memory(struct merge_options *o);
 
 #endif
