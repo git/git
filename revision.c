@@ -782,6 +782,10 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 
 	revs->commit_format = CMIT_FMT_DEFAULT;
 
+	revs->grep_filter.status_only = 1;
+	revs->grep_filter.pattern_tail = &(revs->grep_filter.pattern_list);
+	revs->grep_filter.regflags = REG_NEWLINE;
+
 	diff_setup(&revs->diffopt);
 	if (prefix && !revs->diffopt.prefix) {
 		revs->diffopt.prefix = prefix;
@@ -946,15 +950,7 @@ void read_revisions_from_stdin(struct rev_info *revs)
 
 static void add_grep(struct rev_info *revs, const char *ptn, enum grep_pat_token what)
 {
-	if (!revs->grep_filter) {
-		struct grep_opt *opt = xcalloc(1, sizeof(*opt));
-		opt->status_only = 1;
-		opt->pattern_tail = &(opt->pattern_list);
-		opt->regflags = REG_NEWLINE;
-		revs->grep_filter = opt;
-	}
-	append_grep_pattern(revs->grep_filter, ptn,
-			    "command line", 0, what);
+	append_grep_pattern(&revs->grep_filter, ptn, "command line", 0, what);
 }
 
 static void add_header_grep(struct rev_info *revs, const char *field, const char *pattern)
@@ -1164,17 +1160,13 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!prefixcmp(arg, "--grep=")) {
 		add_message_grep(revs, arg+7);
 	} else if (!strcmp(arg, "--extended-regexp") || !strcmp(arg, "-E")) {
-		if (revs->grep_filter)
-			revs->grep_filter->regflags |= REG_EXTENDED;
+		revs->grep_filter.regflags |= REG_EXTENDED;
 	} else if (!strcmp(arg, "--regexp-ignore-case") || !strcmp(arg, "-i")) {
-		if (revs->grep_filter)
-			revs->grep_filter->regflags |= REG_ICASE;
+		revs->grep_filter.regflags |= REG_ICASE;
 	} else if (!strcmp(arg, "--fixed-strings") || !strcmp(arg, "-F")) {
-		if (revs->grep_filter)
-			revs->grep_filter->fixed = 1;
+		revs->grep_filter.fixed = 1;
 	} else if (!strcmp(arg, "--all-match")) {
-		if (revs->grep_filter)
-			revs->grep_filter->all_match = 1;
+		revs->grep_filter.all_match = 1;
 	} else if (!prefixcmp(arg, "--encoding=")) {
 		arg += 11;
 		if (strcmp(arg, "none"))
@@ -1349,9 +1341,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (diff_setup_done(&revs->diffopt) < 0)
 		die("diff_setup_done failed");
 
-	if (revs->grep_filter) {
-		compile_grep_patterns(revs->grep_filter);
-	}
+	compile_grep_patterns(&revs->grep_filter);
 
 	if (revs->reverse && revs->reflog_info)
 		die("cannot combine --reverse with --walk-reflogs");
@@ -1492,9 +1482,9 @@ static int rewrite_parents(struct rev_info *revs, struct commit *commit)
 
 static int commit_match(struct commit *commit, struct rev_info *opt)
 {
-	if (!opt->grep_filter)
+	if (!opt->grep_filter.pattern_list)
 		return 1;
-	return grep_buffer(opt->grep_filter,
+	return grep_buffer(&opt->grep_filter,
 			   NULL, /* we say nothing, not even filename */
 			   commit->buffer, strlen(commit->buffer));
 }
