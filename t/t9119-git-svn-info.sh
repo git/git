@@ -9,9 +9,9 @@ test_description='git-svn info'
 set -e
 
 # Tested with: svn, version 1.4.4 (r25188)
-v=`svn --version | sed -n -e 's/^svn, version \(1\.4\.[0-9]\).*$/\1/p'`
+v=`svn --version | sed -n -e 's/^svn, version \(1\.[0-9]*\.[0-9]*\).*$/\1/p'`
 case $v in
-1.4.*)
+1.[45].*)
 	;;
 *)
 	say "skipping svn-info test (SVN version: $v not supported)"
