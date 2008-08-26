@@ -6,8 +6,6 @@ test_description='git-svn info'
 
 . ./lib-git-svn.sh
 
-set -e
-
 # Tested with: svn, version 1.4.4 (r25188)
 v=`svn --version | sed -n -e 's/^svn, version \(1\.[0-9]*\.[0-9]*\).*$/\1/p'`
 case $v in
