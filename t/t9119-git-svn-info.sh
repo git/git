@@ -51,10 +51,10 @@ test_expect_success 'setup repository and import' '
 		git-svn fetch &&
 	cd .. &&
 	svn co "$svnrepo" svnwc &&
-	ptouch svnwc/file gitwc/file &&
-	ptouch svnwc/directory gitwc/directory &&
-	ptouch svnwc/symlink-file gitwc/symlink-file &&
-	ptouch svnwc/symlink-directory gitwc/symlink-directory
+	ptouch gitwc/file svnwc/file &&
+	ptouch gitwc/directory svnwc/directory &&
+	ptouch gitwc/symlink-file svnwc/symlink-file &&
+	ptouch gitwc/symlink-directory svnwc/symlink-directory
 	'
 
 test_expect_success 'info' "
