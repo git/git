@@ -34,6 +34,8 @@ ptouch() {
 	' "`svn info $2 | grep '^Text Last Updated:'`" "$1"
 }
 
+quoted_svnrepo="$(echo $svnrepo | sed 's/ /%20/')"
+
 test_expect_success 'setup repository and import' '
 	mkdir info &&
 	cd info &&
@@ -70,7 +72,7 @@ test_expect_success 'info' "
 	"
 
 test_expect_success 'info --url' '
-	test "$(cd gitwc; git-svn info --url)" = "$svnrepo"
+	test "$(cd gitwc; git-svn info --url)" = "$quoted_svnrepo"
 	'
 
 test_expect_success 'info .' "
@@ -80,7 +82,7 @@ test_expect_success 'info .' "
 	"
 
 test_expect_success 'info --url .' '
-	test "$(cd gitwc; git-svn info --url .)" = "$svnrepo"
+	test "$(cd gitwc; git-svn info --url .)" = "$quoted_svnrepo"
 	'
 
 test_expect_success 'info file' "
@@ -90,7 +92,7 @@ test_expect_success 'info file' "
 	"
 
 test_expect_success 'info --url file' '
-	test "$(cd gitwc; git-svn info --url file)" = "$svnrepo/file"
+	test "$(cd gitwc; git-svn info --url file)" = "$quoted_svnrepo/file"
 	'
 
 test_expect_success 'info directory' "
@@ -106,7 +108,7 @@ test_expect_success 'info inside directory' "
 	"
 
 test_expect_success 'info --url directory' '
-	test "$(cd gitwc; git-svn info --url directory)" = "$svnrepo/directory"
+	test "$(cd gitwc; git-svn info --url directory)" = "$quoted_svnrepo/directory"
 	'
 
 test_expect_success 'info symlink-file' "
@@ -117,7 +119,7 @@ test_expect_success 'info symlink-file' "
 
 test_expect_success 'info --url symlink-file' '
 	test "$(cd gitwc; git-svn info --url symlink-file)" \
-	     = "$svnrepo/symlink-file"
+	     = "$quoted_svnrepo/symlink-file"
 	'
 
 test_expect_success 'info symlink-directory' "
@@ -130,7 +132,7 @@ test_expect_success 'info symlink-directory' "
 
 test_expect_success 'info --url symlink-directory' '
 	test "$(cd gitwc; git-svn info --url symlink-directory)" \
-	     = "$svnrepo/symlink-directory"
+	     = "$quoted_svnrepo/symlink-directory"
 	'
 
 test_expect_success 'info added-file' "
@@ -150,7 +152,7 @@ test_expect_success 'info added-file' "
 
 test_expect_success 'info --url added-file' '
 	test "$(cd gitwc; git-svn info --url added-file)" \
-	     = "$svnrepo/added-file"
+	     = "$quoted_svnrepo/added-file"
 	'
 
 test_expect_success 'info added-directory' "
@@ -172,7 +174,7 @@ test_expect_success 'info added-directory' "
 
 test_expect_success 'info --url added-directory' '
 	test "$(cd gitwc; git-svn info --url added-directory)" \
-	     = "$svnrepo/added-directory"
+	     = "$quoted_svnrepo/added-directory"
 	'
 
 test_expect_success 'info added-symlink-file' "
@@ -195,7 +197,7 @@ test_expect_success 'info added-symlink-file' "
 
 test_expect_success 'info --url added-symlink-file' '
 	test "$(cd gitwc; git-svn info --url added-symlink-file)" \
-	     = "$svnrepo/added-symlink-file"
+	     = "$quoted_svnrepo/added-symlink-file"
 	'
 
 test_expect_success 'info added-symlink-directory' "
@@ -218,7 +220,7 @@ test_expect_success 'info added-symlink-directory' "
 
 test_expect_success 'info --url added-symlink-directory' '
 	test "$(cd gitwc; git-svn info --url added-symlink-directory)" \
-	     = "$svnrepo/added-symlink-directory"
+	     = "$quoted_svnrepo/added-symlink-directory"
 	'
 
 # The next few tests replace the "Text Last Updated" value with a
@@ -244,7 +246,7 @@ test_expect_success 'info deleted-file' "
 
 test_expect_success 'info --url file (deleted)' '
 	test "$(cd gitwc; git-svn info --url file)" \
-	     = "$svnrepo/file"
+	     = "$quoted_svnrepo/file"
 	'
 
 test_expect_success 'info deleted-directory' "
@@ -265,7 +267,7 @@ test_expect_success 'info deleted-directory' "
 
 test_expect_success 'info --url directory (deleted)' '
 	test "$(cd gitwc; git-svn info --url directory)" \
-	     = "$svnrepo/directory"
+	     = "$quoted_svnrepo/directory"
 	'
 
 test_expect_success 'info deleted-symlink-file' "
@@ -287,7 +289,7 @@ test_expect_success 'info deleted-symlink-file' "
 
 test_expect_success 'info --url symlink-file (deleted)' '
 	test "$(cd gitwc; git-svn info --url symlink-file)" \
-	     = "$svnrepo/symlink-file"
+	     = "$quoted_svnrepo/symlink-file"
 	'
 
 test_expect_success 'info deleted-symlink-directory' "
@@ -309,7 +311,7 @@ test_expect_success 'info deleted-symlink-directory' "
 
 test_expect_success 'info --url symlink-directory (deleted)' '
 	test "$(cd gitwc; git-svn info --url symlink-directory)" \
-	     = "$svnrepo/symlink-directory"
+	     = "$quoted_svnrepo/symlink-directory"
 	'
 
 # NOTE: git does not have the concept of replaced objects,
