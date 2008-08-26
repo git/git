@@ -805,6 +805,7 @@ sub cmd_commit_diff {
 
 sub cmd_info {
 	my $path = canonicalize_path(defined($_[0]) ? $_[0] : ".");
+	my $fullpath = canonicalize_path($cmd_dir_prefix . $path);
 	if (exists $_[1]) {
 		die "Too many arguments specified\n";
 	}
@@ -825,7 +826,7 @@ sub cmd_info {
 	# canonicalize_path() will return "" to make libsvn 1.5.x happy,
 	$path = "." if $path eq "";
 
-	my $full_url = $url . ($path eq "." ? "" : "/$path");
+	my $full_url = $url . ($fullpath eq "" ? "" : "/$fullpath");
 
 	if ($_url) {
 		print $full_url, "\n";
@@ -861,7 +862,7 @@ sub cmd_info {
 	}
 
 	my ($lc_author, $lc_rev, $lc_date_utc);
-	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $path);
+	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $fullpath);
 	my $log = command_output_pipe(@args);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {

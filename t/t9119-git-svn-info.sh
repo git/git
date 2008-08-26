@@ -45,12 +45,18 @@ test_expect_success 'setup repository and import' '
 		ln -s directory symlink-directory &&
 		svn import -m "initial" . "$svnrepo" &&
 	cd .. &&
+	svn co "$svnrepo" svnwc &&
+	cd svnwc &&
+		echo foo > foo &&
+		svn add foo &&
+		svn commit -m "change outside directory" &&
+		svn update &&
+	cd .. &&
 	mkdir gitwc &&
 	cd gitwc &&
 		git-svn init "$svnrepo" &&
 		git-svn fetch &&
 	cd .. &&
-	svn co "$svnrepo" svnwc &&
 	ptouch gitwc/file svnwc/file &&
 	ptouch gitwc/directory svnwc/directory &&
 	ptouch gitwc/symlink-file svnwc/symlink-file &&
@@ -91,6 +97,12 @@ test_expect_success 'info directory' "
 	(cd svnwc; svn info directory) > expected.info-directory &&
 	(cd gitwc; git-svn info directory) > actual.info-directory &&
 	test_cmp expected.info-directory actual.info-directory
+	"
+
+test_expect_success 'info inside directory' "
+	(cd svnwc/directory; svn info) > expected.info-inside-directory &&
+	(cd gitwc/directory; git-svn info) > actual.info-inside-directory &&
+	test_cmp expected.info-inside-directory actual.info-inside-directory
 	"
 
 test_expect_success 'info --url directory' '
