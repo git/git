@@ -75,8 +75,10 @@ OPTIONS
 	read the message from the standard input.
 
 --author=<author>::
-	Override the author name used in the commit.  Use
-	`A U Thor <author@example.com>` format.
+	Override the author name used in the commit.  You can use the
+	standard `A U Thor <author@example.com>` format.  Otherwise,
+	an existing commit that matches the given string and its author
+	name is used.
 
 -m <msg>::
 --message=<msg>::
