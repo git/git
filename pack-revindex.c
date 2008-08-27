@@ -142,3 +142,15 @@ struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
 	} while (lo < hi);
 	die("internal error: pack revindex corrupt");
 }
+
+void discard_revindex(void)
+{
+	if (pack_revindex_hashsz) {
+		int i;
+		for (i = 0; i < pack_revindex_hashsz; i++)
+			if (pack_revindex[i].revindex)
+				free(pack_revindex[i].revindex);
+		free(pack_revindex);
+		pack_revindex_hashsz = 0;
+	}
+}
