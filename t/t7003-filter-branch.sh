@@ -250,4 +250,12 @@ test_expect_success 'Tag name filtering strips gpg signature' '
 	test_cmp expect actual
 '
 
+test_expect_success 'Tag name filtering allows slashes in tag names' '
+	git tag -m tag-with-slash X/1 &&
+	git cat-file tag X/1 | sed -e s,X/1,X/2, > expect &&
+	git filter-branch -f --tag-name-filter "echo X/2" &&
+	git cat-file tag X/2 > actual &&
+	test_cmp expect actual
+'
+
 test_done

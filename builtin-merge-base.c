@@ -2,9 +2,11 @@
 #include "cache.h"
 #include "commit.h"
 
-static int show_merge_base(struct commit *rev1, struct commit *rev2, int show_all)
+static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 {
-	struct commit_list *result = get_merge_bases(rev1, rev2, 0);
+	struct commit_list *result;
+
+	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1, 0);
 
 	if (!result)
 		return 1;
@@ -20,7 +22,7 @@ static int show_merge_base(struct commit *rev1, struct commit *rev2, int show_al
 }
 
 static const char merge_base_usage[] =
-"git merge-base [--all] <commit-id> <commit-id>";
+"git merge-base [--all] <commit-id> <commit-id>...";
 
 static struct commit *get_commit_reference(const char *arg)
 {
@@ -38,7 +40,8 @@ static struct commit *get_commit_reference(const char *arg)
 
 int cmd_merge_base(int argc, const char **argv, const char *prefix)
 {
-	struct commit *rev1, *rev2;
+	struct commit **rev;
+	int rev_nr = 0;
 	int show_all = 0;
 
 	git_config(git_default_config, NULL);
@@ -51,10 +54,15 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 			usage(merge_base_usage);
 		argc--; argv++;
 	}
-	if (argc != 3)
+	if (argc < 3)
 		usage(merge_base_usage);
-	rev1 = get_commit_reference(argv[1]);
-	rev2 = get_commit_reference(argv[2]);
 
-	return show_merge_base(rev1, rev2, show_all);
+	rev = xmalloc((argc - 1) * sizeof(*rev));
+
+	do {
+		rev[rev_nr++] = get_commit_reference(argv[1]);
+		argc--; argv++;
+	} while (argc > 1);
+
+	return show_merge_base(rev, rev_nr, show_all);
 }

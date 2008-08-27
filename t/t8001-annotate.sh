@@ -4,7 +4,7 @@ test_description='git annotate'
 . ./test-lib.sh
 
 PROG='git annotate'
-. ../annotate-tests.sh
+. "$TEST_DIRECTORY"/annotate-tests.sh
 
 test_expect_success \
     'Annotating an old revision works' \

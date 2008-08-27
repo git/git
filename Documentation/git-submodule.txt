@@ -14,6 +14,7 @@ SYNOPSIS
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] update [--init] [--] [<path>...]
 'git submodule' [--quiet] summary [--summary-limit <n>] [commit] [--] [<path>...]
+'git submodule' [--quiet] foreach <command>
 
 
 DESCRIPTION
@@ -122,6 +123,22 @@ summary::
 	working tree/index. For a submodule in question, a series of commits
 	in the submodule between the given super project commit and the
 	index or working tree (switched by --cached) are shown.
+
+foreach::
+	Evaluates an arbitrary shell command in each checked out submodule.
+	The command has access to the variables $path and $sha1:
+	$path is the name of the submodule directory relative to the
+	superproject, and $sha1 is the commit as recorded in the superproject.
+	Any submodules defined in the superproject but not checked out are
+	ignored by this command. Unless given --quiet, foreach prints the name
+	of each submodule before evaluating the command.
+	A non-zero return from the command in any submodule causes
+	the processing to terminate. This can be overridden by adding '|| :'
+	to the end of the command.
++
+As an example, "git submodule foreach 'echo $path `git rev-parse HEAD`' will
+show the path and currently checked out commit for each submodule.
+
 
 OPTIONS
 -------

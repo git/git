@@ -488,4 +488,23 @@ test_expect_success 'merge c1 with c1 and c2' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'merge fast-forward in a dirty tree' '
+       git reset --hard c0 &&
+       mv file file1 &&
+       cat file1 >file &&
+       rm -f file1 &&
+       git merge c2
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'in-index merge' '
+	git reset --hard c0 &&
+	git merge --no-ff -s resolve c1 > out &&
+	grep "Wonderful." out &&
+	verify_parents $c0 $c1
+'
+
+test_debug 'gitk --all'
+
 test_done

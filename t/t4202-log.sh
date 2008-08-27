@@ -69,7 +69,29 @@ test_expect_success 'diff-filter=D' '
 
 '
 
+test_expect_success 'setup case sensitivity tests' '
+	echo case >one &&
+	test_tick &&
+	git commit -a -m Second
+'
 
+test_expect_success 'log --grep' '
+	echo second >expect &&
+	git log -1 --pretty="tformat:%s" --grep=sec >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log -i --grep' '
+	echo Second >expect &&
+	git log -1 --pretty="tformat:%s" -i --grep=sec >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --grep -i' '
+	echo Second >expect &&
+	git log -1 --pretty="tformat:%s" --grep=sec -i >actual &&
+	test_cmp expect actual
+'
 
 test_done
 

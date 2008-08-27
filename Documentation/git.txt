@@ -43,9 +43,10 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.6.0/git.html[documentation for release 1.6.0]
+* link:v1.6.1/git.html[documentation for release 1.6.1]
 
 * release notes for
+  link:RelNotes-1.6.1.txt[1.6.1],
   link:RelNotes-1.6.0.txt[1.6.0].
 
 * link:v1.5.6.5/git.html[documentation for release 1.5.6.5]
@@ -497,7 +498,8 @@ other
 'GIT_PAGER'::
 	This environment variable overrides `$PAGER`. If it is set
 	to an empty string or to the value "cat", git will not launch
-	a pager.
+	a pager.  See also the `core.pager` option in
+	linkgit:git-config[1].
 
 'GIT_SSH'::
 	If this environment variable is set then 'git-fetch'

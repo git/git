@@ -6,7 +6,7 @@ test_description='git mv in subdirs'
 test_expect_success \
     'prepare reference tree' \
     'mkdir path0 path1 &&
-     cp ../../COPYING path0/COPYING &&
+     cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
      git add path0/COPYING &&
      git-commit -m add -a'
 
@@ -40,7 +40,7 @@ test_expect_success \
 
 test_expect_success \
     'adding another file' \
-    'cp ../../README path0/README &&
+    'cp "$TEST_DIRECTORY"/../README path0/README &&
      git add path0/README &&
      git-commit -m add2 -a'
 

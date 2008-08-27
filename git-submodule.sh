@@ -6,9 +6,10 @@
 
 USAGE="[--quiet] [--cached] \
 [add <repo> [-b branch] <path>]|[status|init|update [-i|--init]|summary [-n|--summary-limit <n>] [<commit>]] \
-[--] [<path>...]"
+[--] [<path>...]|[foreach <command>]"
 OPTIONS_SPEC=
 . git-sh-setup
+. git-parse-remote
 require_work_tree
 
 command=
@@ -30,9 +31,7 @@ say()
 # Resolve relative url by appending to parent's url
 resolve_relative_url ()
 {
-	branch="$(git symbolic-ref HEAD 2>/dev/null)"
-	remote="$(git config branch.${branch#refs/heads/}.remote)"
-	remote="${remote:-origin}"
+	remote=$(get_default_remote)
 	remoteurl=$(git config "remote.$remote.url") ||
 		die "remote ($remote) does not have a url defined in .git/config"
 	url="$1"
@@ -51,6 +50,15 @@ resolve_relative_url ()
 		esac
 	done
 	echo "$remoteurl/$url"
+}
+
+#
+# Get submodule info for registered submodules
+# $@ = path to limit submodule list
+#
+module_list()
+{
+	git ls-files --stage -- "$@" | grep '^160000 '
 }
 
 #
@@ -199,6 +207,26 @@ cmd_add()
 }
 
 #
+# Execute an arbitrary command sequence in each checked out
+# submodule
+#
+# $@ = command to execute
+#
+cmd_foreach()
+{
+	module_list |
+	while read mode sha1 stage path
+	do
+		if test -e "$path"/.git
+		then
+			say "Entering '$path'"
+			(cd "$path" && eval "$@") ||
+			die "Stopping at '$path'; script returned non-zero status."
+		fi
+	done
+}
+
+#
 # Register submodules in .git/config
 #
 # $@ = requested paths (default to all)
@@ -226,7 +254,7 @@ cmd_init()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep '^160000 ' |
+	module_list "$@" |
 	while read mode sha1 stage path
 	do
 		# Skip already registered paths
@@ -284,7 +312,7 @@ cmd_update()
 		esac
 	done
 
-	git ls-files --stage -- "$@" | grep '^160000 ' |
+	module_list "$@" |
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit
@@ -549,7 +577,7 @@ cmd_status()
 		shift
 	done
 
-	git ls-files --stage -- "$@" | grep '^160000 ' |
+	module_list "$@" |
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit
@@ -583,7 +611,7 @@ cmd_status()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | init | update | status | summary)
+	add | foreach | init | update | status | summary)
 		command=$1
 		;;
 	-q|--quiet)

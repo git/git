@@ -217,6 +217,11 @@ static int cmd_log_walk(struct rev_info *rev)
 	if (rev->early_output)
 		finish_early_output(rev);
 
+	/*
+	 * For --check and --exit-code, the exit code is based on CHECK_FAILED
+	 * and HAS_CHANGES being accumulated in rev->diffopt, so be careful to
+	 * retain that state information if replacing rev->diffopt in this loop
+	 */
 	while ((commit = get_revision(rev)) != NULL) {
 		log_tree_commit(rev, commit);
 		if (!rev->reflog_info) {
@@ -227,7 +232,11 @@ static int cmd_log_walk(struct rev_info *rev)
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
 	}
-	return 0;
+	if (rev->diffopt.output_format & DIFF_FORMAT_CHECKDIFF &&
+	    DIFF_OPT_TST(&rev->diffopt, CHECK_FAILED)) {
+		return 02;
+	}
+	return diff_result_code(&rev->diffopt, 0);
 }
 
 static int git_log_config(const char *var, const char *value, void *cb)
@@ -461,7 +470,7 @@ static int extra_cc_alloc;
 static void add_header(const char *value)
 {
 	int len = strlen(value);
-	while (value[len - 1] == '\n')
+	while (len && value[len - 1] == '\n')
 		len--;
 	if (!strncasecmp(value, "to: ", 4)) {
 		ALLOC_GROW(extra_to, extra_to_nr + 1, extra_to_alloc);
@@ -923,7 +932,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
 
-	if (!rev.diffopt.output_format)
+	if (!rev.diffopt.output_format
+		|| rev.diffopt.output_format == DIFF_FORMAT_PATCH)
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
 
 	if (!DIFF_OPT_TST(&rev.diffopt, TEXT) && !no_binary_diff)

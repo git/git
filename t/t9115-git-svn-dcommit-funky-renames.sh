@@ -8,7 +8,7 @@ test_description='git-svn dcommit can commit renames of files with ugly names'
 . ./lib-git-svn.sh
 
 test_expect_success 'load repository with strange names' '
-	svnadmin load -q "$rawsvnrepo" < ../t9115/funky-names.dump &&
+	svnadmin load -q "$rawsvnrepo" < "$TEST_DIRECTORY"/t9115/funky-names.dump &&
 	start_httpd gtk+
 	'
 

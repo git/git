@@ -406,7 +406,7 @@ test_create_repo () {
 	error "bug in the test script: not 1 parameter to test-create-repo"
 	owd=`pwd`
 	repo="$1"
-	mkdir "$repo"
+	mkdir -p "$repo"
 	cd "$repo" || error "Cannot setup test environment"
 	"$GIT_EXEC_PATH/git" init "--template=$GIT_EXEC_PATH/templates/blt/" >&3 2>&4 ||
 	error "cannot run git init -- have you built things yet?"
@@ -449,6 +449,11 @@ test_done () {
 		# we will leave things as they are.
 
 		say_color pass "passed all $msg"
+
+		test -d "$remove_trash" &&
+		cd "$(dirname "$remove_trash")" &&
+		rm -rf "$(basename "$remove_trash")"
+
 		exit 0 ;;
 
 	*)
@@ -485,7 +490,8 @@ fi
 . ../GIT-BUILD-OPTIONS
 
 # Test repository
-test="trash directory"
+test="trash directory.$(basename "$0" .sh)"
+test ! -z "$debug" || remove_trash="$TEST_DIRECTORY/$test"
 rm -fr "$test" || {
 	trap - exit
 	echo >&5 "FATAL: Cannot prepare test area"

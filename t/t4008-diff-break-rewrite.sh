@@ -22,12 +22,12 @@ four changes in total.
 Further, with -B and -M together, these should turn into two renames.
 '
 . ./test-lib.sh
-. ../diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     setup \
-    'cat ../../README >file0 &&
-     cat ../../COPYING >file1 &&
+    'cat "$TEST_DIRECTORY"/../README >file0 &&
+     cat "$TEST_DIRECTORY"/../COPYING >file1 &&
     git update-index --add file0 file1 &&
     tree=$(git write-tree) &&
     echo "$tree"'

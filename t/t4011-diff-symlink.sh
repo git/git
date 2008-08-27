@@ -7,7 +7,7 @@ test_description='Test diff of symlinks.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
 
 if test "$no_symlinks"
 then

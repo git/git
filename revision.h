@@ -2,6 +2,7 @@
 #define REVISION_H
 
 #include "parse-options.h"
+#include "grep.h"
 
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
@@ -92,7 +93,7 @@ struct rev_info {
 	int		show_log_size;
 
 	/* Filter by commit log message */
-	struct grep_opt	*grep_filter;
+	struct grep_opt	grep_filter;
 
 	/* Display history graph */
 	struct git_graph *graph;
@@ -119,7 +120,7 @@ struct rev_info {
 void read_revisions_from_stdin(struct rev_info *revs);
 
 typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
-volatile show_early_output_fn_t show_early_output;
+extern volatile show_early_output_fn_t show_early_output;
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);

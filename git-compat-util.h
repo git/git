@@ -99,6 +99,11 @@
 #include <iconv.h>
 #endif
 
+#ifndef NO_OPENSSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
+
 /* On most systems <limits.h> would have given us this, but
  * not on some systems (e.g. GNU/Hurd).
  */
@@ -191,6 +196,12 @@ extern int git_munmap(void *start, size_t length);
 		: 32 * 1024 * 1024)
 
 #endif /* NO_MMAP */
+
+#ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
+#define on_disk_bytes(st) ((st).st_size)
+#else
+#define on_disk_bytes(st) ((st).st_blocks * 512)
+#endif
 
 #define DEFAULT_PACKED_GIT_LIMIT \
 	((1024L * 1024L) * (sizeof(void*) >= 8 ? 8192 : 256))

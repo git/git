@@ -316,9 +316,13 @@ patterns are available:
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
 
+- `python` suitable for source code in the Python language.
+
 - `ruby` suitable for source code in the Ruby language.
 
 - `tex` suitable for source code for LaTeX documents.
+
+- `html` suitable for HTML/XHTML documents.
 
 
 Performing a three-way merge

@@ -7,7 +7,7 @@ test_description='Test diff raw-output.
 
 '
 . ./test-lib.sh
-. ../lib-read-tree-m-3way.sh
+. "$TEST_DIRECTORY"/lib-read-tree-m-3way.sh
 
 cat >.test-plain-OA <<\EOF
 :000000 100644 0000000000000000000000000000000000000000 ccba72ad3888a3520b39efcf780b9ee64167535d A	AA
@@ -167,6 +167,20 @@ test_expect_success \
     'diff-tree of known trees.' \
     'git diff-tree -r $tree_A $tree_B >.test-a &&
      cmp -s .test-a .test-recursive-AB'
+
+test_expect_success \
+    'diff-tree --stdin of known trees.' \
+    'echo $tree_A $tree_B | git diff-tree --stdin > .test-a &&
+     echo $tree_A $tree_B > .test-plain-ABx &&
+     cat .test-plain-AB >> .test-plain-ABx &&
+     cmp -s .test-a .test-plain-ABx'
+
+test_expect_success \
+    'diff-tree --stdin of known trees.' \
+    'echo $tree_A $tree_B | git diff-tree -r --stdin > .test-a &&
+     echo $tree_A $tree_B > .test-recursive-ABx &&
+     cat .test-recursive-AB >> .test-recursive-ABx &&
+     cmp -s .test-a .test-recursive-ABx'
 
 test_expect_success \
     'diff-cache O with A in cache' \

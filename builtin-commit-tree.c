@@ -48,6 +48,7 @@ static const char commit_utf8_warn[] =
 int commit_tree(const char *msg, unsigned char *tree,
 		struct commit_list *parents, unsigned char *ret)
 {
+	int result;
 	int encoding_is_utf8;
 	struct strbuf buffer;
 
@@ -86,7 +87,9 @@ int commit_tree(const char *msg, unsigned char *tree,
 	if (encoding_is_utf8 && !is_utf8(buffer.buf))
 		fprintf(stderr, commit_utf8_warn);
 
-	return write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
+	result = write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
+	strbuf_release(&buffer);
+	return result;
 }
 
 int cmd_commit_tree(int argc, const char **argv, const char *prefix)

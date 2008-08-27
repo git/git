@@ -8,7 +8,7 @@ test_description='git-svn useSvmProps test'
 . ./lib-git-svn.sh
 
 test_expect_success 'load svm repo' '
-	svnadmin load -q "$rawsvnrepo" < ../t9110/svm.dump &&
+	svnadmin load -q "$rawsvnrepo" < "$TEST_DIRECTORY"/t9110/svm.dump &&
 	git-svn init --minimize-url -R arr -i bar "$svnrepo"/mirror/arr &&
 	git-svn init --minimize-url -R argh -i dir "$svnrepo"/mirror/argh &&
 	git-svn init --minimize-url -R argh -i e \

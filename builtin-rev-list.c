@@ -645,7 +645,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	    revs.diff)
 		usage(rev_list_usage);
 
-	save_commit_buffer = revs.verbose_header || revs.grep_filter;
+	save_commit_buffer = revs.verbose_header ||
+		revs.grep_filter.pattern_list;
 	if (bisect_list)
 		revs.limited = 1;
 
