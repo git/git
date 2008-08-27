@@ -708,6 +708,7 @@ class P4Submit(Command):
                 newdiff = newdiff.replace("\n", "\r\n")
             tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
             tmpFile.close()
+            mtime = os.stat(fileName).st_mtime
             defaultEditor = "vi"
             if platform.system() == "Windows":
                 defaultEditor = "notepad"
@@ -716,15 +717,29 @@ class P4Submit(Command):
             else:
                 editor = os.environ.get("EDITOR", defaultEditor);
             system(editor + " " + fileName)
-            tmpFile = open(fileName, "rb")
-            message = tmpFile.read()
-            tmpFile.close()
-            os.remove(fileName)
-            submitTemplate = message[:message.index(separatorLine)]
-            if self.isWindows:
-                submitTemplate = submitTemplate.replace("\r\n", "\n")
 
-            p4_write_pipe("submit -i", submitTemplate)
+            response = "y"
+            if os.stat(fileName).st_mtime <= mtime:
+                response = "x"
+                while response != "y" and response != "n":
+                    response = raw_input("Submit template unchanged. Submit anyway? [y]es, [n]o (skip this patch) ")
+
+            if response == "y":
+                tmpFile = open(fileName, "rb")
+                message = tmpFile.read()
+                tmpFile.close()
+                submitTemplate = message[:message.index(separatorLine)]
+                if self.isWindows:
+                    submitTemplate = submitTemplate.replace("\r\n", "\n")
+                p4_write_pipe("submit -i", submitTemplate)
+            else:
+                for f in editedFiles:
+                    p4_system("revert \"%s\"" % f);
+                for f in filesToAdd:
+                    p4_system("revert \"%s\"" % f);
+                    system("rm %s" %f)
+
+            os.remove(fileName)
         else:
             fileName = "submit.txt"
             file = open(fileName, "w+")
