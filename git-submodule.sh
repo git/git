@@ -6,7 +6,7 @@
 
 USAGE="[--quiet] [--cached] \
 [add <repo> [-b branch] <path>]|[status|init|update [-i|--init]|summary [-n|--summary-limit <n>] [<commit>]] \
-[--] [<path>...]|[foreach <command>]"
+[--] [<path>...]|[foreach <command>]|[sync [--] [<path>...]]"
 OPTIONS_SPEC=
 . git-sh-setup
 . git-parse-remote
@@ -601,6 +601,50 @@ cmd_status()
 		fi
 	done
 }
+#
+# Sync remote urls for submodules
+# This makes the value for remote.$remote.url match the value
+# specified in .gitmodules.
+#
+cmd_sync()
+{
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			quiet=1
+			shift
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+	done
+	cd_to_toplevel
+	module_list "$@" |
+	while read mode sha1 stage path
+	do
+		name=$(module_name "$path")
+		url=$(git config -f .gitmodules --get submodule."$name".url)
+		if test -e "$path"/.git
+		then
+		(
+			unset GIT_DIR
+			cd "$path"
+			remote=$(get_default_remote)
+			say "Synchronizing submodule url for '$name'"
+			git config remote."$remote".url "$url"
+		)
+		fi
+	done
+}
 
 # This loop parses the command line arguments to find the
 # subcommand name to dispatch.  Parsing of the subcommand specific
@@ -611,7 +655,7 @@ cmd_status()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | foreach | init | update | status | summary)
+	add | foreach | init | update | status | summary | sync)
 		command=$1
 		;;
 	-q|--quiet)
