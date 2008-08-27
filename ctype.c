@@ -5,6 +5,11 @@
  */
 #include "cache.h"
 
+/* Just so that no insane platform contaminate namespace with these symbols */
+#undef SS
+#undef AA
+#undef DD
+
 #define SS GIT_SPACE
 #define AA GIT_ALPHA
 #define DD GIT_DIGIT
