@@ -1110,7 +1110,10 @@ help.o: help.c common-cmds.h GIT-CFLAGS
 		'-DGIT_INFO_PATH="$(infodir_SQ)"' $<
 
 $(BUILT_INS): git$X
-	$(QUIET_BUILT_IN)$(RM) $@ && ln git$X $@
+	$(QUIET_BUILT_IN)$(RM) $@ && \
+	ln git$X $@ 2>/dev/null || \
+	ln -s git$X $@ 2>/dev/null || \
+	cp git$X $@
 
 common-cmds.h: ./generate-cmdlist.sh command-list.txt
 
@@ -1371,16 +1374,13 @@ ifneq (,$X)
 endif
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
-	if test "z$$bindir" != "z$$execdir"; \
-	then \
-		ln -f "$$bindir/git$X" "$$execdir/git$X" || \
-		cp "$$bindir/git$X" "$$execdir/git$X"; \
-	fi && \
-	{ $(foreach p,$(BUILT_INS), $(RM) "$$execdir/$p" && ln "$$execdir/git$X" "$$execdir/$p" ;) } && \
-	if test "z$$bindir" != "z$$execdir"; \
-	then \
-		$(RM) "$$execdir/git$X"; \
-	fi && \
+	{ $(RM) "$$execdir/git-add$X" && \
+		ln git-add$X "$$execdir/git-add$X" 2>/dev/null || \
+		cp git-add$X "$$execdir/git-add$X"; } && \
+	{ $(foreach p,$(filter-out git-add,$(BUILT_INS)), $(RM) "$$execdir/$p" && \
+		ln "$$execdir/git-add$X" "$$execdir/$p" 2>/dev/null || \
+		ln -s "git-add$X" "$$execdir/$p" 2>/dev/null || \
+		cp "$$execdir/git-add$X" "$$execdir/$p" || exit;) } && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
 install-doc:
