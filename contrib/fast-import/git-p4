@@ -1748,8 +1748,12 @@ class P4Clone(P4Sync):
         if not P4Sync.run(self, depotPaths):
             return False
         if self.branch != "master":
-            if gitBranchExists("refs/remotes/p4/master"):
-                system("git branch master refs/remotes/p4/master")
+            if self.importIntoRemotes:
+                masterbranch = "refs/remotes/p4/master"
+            else:
+                masterbranch = "refs/heads/p4/master"
+            if gitBranchExists(masterbranch):
+                system("git branch master %s" % masterbranch)
                 system("git checkout -f")
             else:
                 print "Could not detect main branch. No checkout/master branch created."
