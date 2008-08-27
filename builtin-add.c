@@ -8,10 +8,6 @@
 #include "dir.h"
 #include "exec_cmd.h"
 #include "cache-tree.h"
-#include "diff.h"
-#include "diffcore.h"
-#include "commit.h"
-#include "revision.h"
 #include "run-command.h"
 #include "parse-options.h"
 
@@ -21,6 +17,27 @@ static const char * const builtin_add_usage[] = {
 };
 static int patch_interactive = 0, add_interactive = 0;
 static int take_worktree_changes;
+
+static void fill_pathspec_matches(const char **pathspec, char *seen, int specs)
+{
+	int num_unmatched = 0, i;
+
+	/*
+	 * Since we are walking the index as if we are warlking the directory,
+	 * we have to mark the matched pathspec as seen; otherwise we will
+	 * mistakenly think that the user gave a pathspec that did not match
+	 * anything.
+	 */
+	for (i = 0; i < specs; i++)
+		if (!seen[i])
+			num_unmatched++;
+	if (!num_unmatched)
+		return;
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen);
+	}
+}
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
@@ -41,6 +58,7 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 			*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
+	fill_pathspec_matches(pathspec, seen, specs);
 
 	for (i = 0; i < specs; i++) {
 		if (!seen[i] && !file_exists(pathspec[i]))
@@ -77,59 +95,6 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec,
 	read_directory(dir, path, base, baselen, pathspec);
 	if (pathspec)
 		prune_directory(dir, pathspec, baselen);
-}
-
-struct update_callback_data
-{
-	int flags;
-	int add_errors;
-};
-
-static void update_callback(struct diff_queue_struct *q,
-			    struct diff_options *opt, void *cbdata)
-{
-	int i;
-	struct update_callback_data *data = cbdata;
-
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		const char *path = p->one->path;
-		switch (p->status) {
-		default:
-			die("unexpected diff status %c", p->status);
-		case DIFF_STATUS_UNMERGED:
-		case DIFF_STATUS_MODIFIED:
-		case DIFF_STATUS_TYPE_CHANGED:
-			if (add_file_to_cache(path, data->flags)) {
-				if (!(data->flags & ADD_CACHE_IGNORE_ERRORS))
-					die("updating files failed");
-				data->add_errors++;
-			}
-			break;
-		case DIFF_STATUS_DELETED:
-			if (!(data->flags & ADD_CACHE_PRETEND))
-				remove_file_from_cache(path);
-			if (data->flags & (ADD_CACHE_PRETEND|ADD_CACHE_VERBOSE))
-				printf("remove '%s'\n", path);
-			break;
-		}
-	}
-}
-
-int add_files_to_cache(const char *prefix, const char **pathspec, int flags)
-{
-	struct update_callback_data data;
-	struct rev_info rev;
-	init_revisions(&rev, prefix);
-	setup_revisions(0, NULL, &rev, NULL);
-	rev.prune_data = pathspec;
-	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
-	rev.diffopt.format_callback = update_callback;
-	data.flags = flags;
-	data.add_errors = 0;
-	rev.diffopt.format_callback_data = &data;
-	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
-	return !!data.add_errors;
 }
 
 static void refresh(int verbose, const char **pathspec)
@@ -268,7 +233,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (addremove && take_worktree_changes)
 		die("-A and -u are mutually incompatible");
-	if (addremove && !argc) {
+	if ((addremove || take_worktree_changes) && !argc) {
 		static const char *here[2] = { ".", NULL };
 		argc = 1;
 		argv = here;
@@ -281,7 +246,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
 		 (show_only ? ADD_CACHE_PRETEND : 0) |
-		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0));
+		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0) |
+		 (!(addremove || take_worktree_changes)
+		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
 
 	if (require_pathspec && argc == 0) {
 		fprintf(stderr, "Nothing specified, nothing added.\n");
@@ -290,24 +257,19 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 	pathspec = validate_pathspec(argc, argv, prefix);
 
-	/*
-	 * If we are adding new files, we need to scan the working
-	 * tree to find the ones that match pathspecs; this needs
-	 * to be done before we read the index.
-	 */
-	if (add_new_files)
-		fill_directory(&dir, pathspec, ignored_too);
-
 	if (read_cache() < 0)
 		die("index file corrupt");
+
+	if (add_new_files)
+		/* This picks up the paths that are not tracked */
+		fill_directory(&dir, pathspec, ignored_too);
 
 	if (refresh_only) {
 		refresh(verbose, pathspec);
 		goto finish;
 	}
 
-	if (take_worktree_changes || addremove)
-		exit_status |= add_files_to_cache(prefix, pathspec, flags);
+	exit_status |= add_files_to_cache(prefix, pathspec, flags);
 
 	if (add_new_files)
 		exit_status |= add_files(&dir, flags);
