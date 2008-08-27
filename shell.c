@@ -2,7 +2,6 @@
 #include "quote.h"
 #include "exec_cmd.h"
 #include "strbuf.h"
-#include "builtin.h"
 
 static int do_generic_cmd(const char *me, char *arg)
 {
@@ -45,7 +44,7 @@ static struct commands {
 	{ NULL },
 };
 
-int cmd_shell(int argc, const char **argv, const char *prefix)
+int main(int argc, char **argv)
 {
 	char *prog;
 	struct commands *cmd;
@@ -63,7 +62,7 @@ int cmd_shell(int argc, const char **argv, const char *prefix)
 	else if (argc != 3 || strcmp(argv[1], "-c"))
 		die("What do you think I am? A shell?");
 
-	prog = xstrdup(argv[2]);
+	prog = argv[2];
 	if (!strncmp(prog, "git", 3) && isspace(prog[3]))
 		/* Accept "git foo" as if the caller said "git-foo". */
 		prog[3] = '-';
