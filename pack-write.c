@@ -179,6 +179,7 @@ void fixup_pack_header_footer(int pack_fd,
 
 	SHA1_Final(pack_file_sha1, &c);
 	write_or_die(pack_fd, pack_file_sha1, 20);
+	fsync_or_die(pack_fd, pack_name);
 }
 
 char *index_pack_lockfile(int ip_out)

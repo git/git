@@ -499,7 +499,6 @@ static void write_pack_file(void)
 		} else {
 			int fd = sha1close(f, NULL, 0);
 			fixup_pack_header_footer(fd, sha1, pack_tmp_name, nr_written);
-			fsync_or_die(fd, pack_tmp_name);
 			close(fd);
 		}
 
