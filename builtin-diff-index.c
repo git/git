@@ -39,6 +39,8 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	if (rev.pending.nr != 1 ||
 	    rev.max_count != -1 || rev.min_age != -1 || rev.max_age != -1)
 		usage(diff_cache_usage);
+	if (!cached)
+		setup_work_tree();
 	if (read_cache() < 0) {
 		perror("read_cache");
 		return -1;
