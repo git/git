@@ -212,7 +212,6 @@ void load_command_list(const char *prefix,
 void list_commands(const char *title, struct cmdnames *main_cmds,
 		   struct cmdnames *other_cmds)
 {
-	const char *exec_path = git_exec_path();
 	int i, longest = 0;
 
 	for (i = 0; i < main_cmds->cnt; i++)
@@ -223,6 +222,7 @@ void list_commands(const char *title, struct cmdnames *main_cmds,
 			longest = other_cmds->names[i]->len;
 
 	if (main_cmds->cnt) {
+		const char *exec_path = git_exec_path();
 		printf("available %s in '%s'\n", title, exec_path);
 		printf("----------------");
 		mput_char('-', strlen(title) + strlen(exec_path));
