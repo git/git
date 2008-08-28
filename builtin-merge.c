@@ -93,8 +93,6 @@ static struct strategy *get_strategy(const char *name)
 		struct cmdnames not_strategies;
 		loaded = 1;
 
-		memset(&main_cmds, 0, sizeof(struct cmdnames));
-		memset(&other_cmds, 0, sizeof(struct cmdnames));
 		memset(&not_strategies, 0, sizeof(struct cmdnames));
 		load_command_list("git-merge-", &main_cmds, &other_cmds);
 		for (i = 0; i < main_cmds.cnt; i++) {
