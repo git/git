@@ -133,11 +133,10 @@ static int is_executable(const char *name)
 	return st.st_mode & S_IXUSR;
 }
 
-static unsigned int list_commands_in_dir(struct cmdnames *cmds,
+static void list_commands_in_dir(struct cmdnames *cmds,
 					 const char *path,
 					 const char *prefix)
 {
-	unsigned int longest = 0;
 	int prefix_len;
 	DIR *dir = opendir(path);
 	struct dirent *de;
@@ -145,7 +144,7 @@ static unsigned int list_commands_in_dir(struct cmdnames *cmds,
 	int len;
 
 	if (!dir)
-		return 0;
+		return;
 	if (!prefix)
 		prefix = "git-";
 	prefix_len = strlen(prefix);
@@ -168,29 +167,22 @@ static unsigned int list_commands_in_dir(struct cmdnames *cmds,
 		if (has_extension(de->d_name, ".exe"))
 			entlen -= 4;
 
-		if (longest < entlen)
-			longest = entlen;
-
 		add_cmdname(cmds, de->d_name + prefix_len, entlen);
 	}
 	closedir(dir);
 	strbuf_release(&buf);
-
-	return longest;
 }
 
-unsigned int load_command_list(const char *prefix,
+void load_command_list(const char *prefix,
 		struct cmdnames *main_cmds,
 		struct cmdnames *other_cmds)
 {
-	unsigned int longest = 0;
-	unsigned int len;
 	const char *env_path = getenv("PATH");
 	char *paths, *path, *colon;
 	const char *exec_path = git_exec_path();
 
 	if (exec_path)
-		longest = list_commands_in_dir(main_cmds, exec_path, prefix);
+		list_commands_in_dir(main_cmds, exec_path, prefix);
 
 	if (!env_path) {
 		fprintf(stderr, "PATH not set\n");
@@ -202,9 +194,7 @@ unsigned int load_command_list(const char *prefix,
 		if ((colon = strchr(path, PATH_SEP)))
 			*colon = 0;
 
-		len = list_commands_in_dir(other_cmds, path, prefix);
-		if (len > longest)
-			longest = len;
+		list_commands_in_dir(other_cmds, path, prefix);
 
 		if (!colon)
 			break;
@@ -220,14 +210,20 @@ unsigned int load_command_list(const char *prefix,
 	      sizeof(*other_cmds->names), cmdname_compare);
 	uniq(other_cmds);
 	exclude_cmds(other_cmds, main_cmds);
-
-	return longest;
 }
 
-void list_commands(const char *title, unsigned int longest,
-		struct cmdnames *main_cmds, struct cmdnames *other_cmds)
+void list_commands(const char *title, struct cmdnames *main_cmds,
+		   struct cmdnames *other_cmds)
 {
 	const char *exec_path = git_exec_path();
+	int i, longest = 0;
+
+	for (i = 0; i < main_cmds->cnt; i++)
+		if (longest < main_cmds->names[i]->len)
+			longest = main_cmds->names[i]->len;
+	for (i = 0; i < other_cmds->cnt; i++)
+		if (longest < other_cmds->names[i]->len)
+			longest = other_cmds->names[i]->len;
 
 	if (main_cmds->cnt) {
 		printf("available %s in '%s'\n", title, exec_path);

@@ -80,7 +80,7 @@ static struct strategy *get_strategy(const char *name)
 	int i;
 	struct strategy *ret;
 	static struct cmdnames main_cmds, other_cmds;
-	static int longest;
+	static int loaded;
 
 	if (!name)
 		return NULL;
@@ -89,14 +89,14 @@ static struct strategy *get_strategy(const char *name)
 		if (!strcmp(name, all_strategy[i].name))
 			return &all_strategy[i];
 
-	if (!longest) {
+	if (!loaded) {
 		struct cmdnames not_strategies;
+		loaded = 1;
 
 		memset(&main_cmds, 0, sizeof(struct cmdnames));
 		memset(&other_cmds, 0, sizeof(struct cmdnames));
 		memset(&not_strategies, 0, sizeof(struct cmdnames));
-		longest = load_command_list("git-merge-", &main_cmds,
-				&other_cmds);
+		load_command_list("git-merge-", &main_cmds, &other_cmds);
 		for (i = 0; i < main_cmds.cnt; i++) {
 			int j, found = 0;
 			struct cmdname *ent = main_cmds.names[i];
