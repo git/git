@@ -652,7 +652,8 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 			if ((plen <= namelen) &&
 			    !strncmp(refname, p, plen) &&
 			    (refname[plen] == '\0' ||
-			     refname[plen] == '/'))
+			     refname[plen] == '/' ||
+			     p[plen-1] == '/'))
 				break;
 			if (!fnmatch(p, refname, FNM_PATHNAME))
 				break;
