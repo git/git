@@ -4,6 +4,11 @@ test_description='update-index and add refuse to add beyond symlinks'
 
 . ./test-lib.sh
 
+if test "$no_symlinks"; then
+	say "symbolic links not supported - skipping tests"
+	test_done
+fi
+
 test_expect_success setup '
 	>a &&
 	mkdir b &&
