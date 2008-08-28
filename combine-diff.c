@@ -500,6 +500,18 @@ static int hunk_comment_line(const char *bol)
 	return (isalpha(ch) || ch == '_' || ch == '$');
 }
 
+static void show_line_to_eol(const char *line, int len, const char *reset)
+{
+	int saw_cr_at_eol = 0;
+	if (len < 0)
+		len = strlen(line);
+	saw_cr_at_eol = (len && line[len-1] == '\r');
+
+	printf("%.*s%s%s\n", len - saw_cr_at_eol, line,
+	       reset,
+	       saw_cr_at_eol ? "\r" : "");
+}
+
 static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 		       int use_color)
 {
@@ -593,7 +605,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 					else
 						putchar(' ');
 				}
-				printf("%s%s\n", ll->line, c_reset);
+				show_line_to_eol(ll->line, -1, c_reset);
 				ll = ll->next;
 			}
 			if (cnt < lno)
@@ -617,7 +629,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 					putchar(' ');
 				p_mask <<= 1;
 			}
-			printf("%.*s%s\n", sl->len, sl->bol, c_reset);
+			show_line_to_eol(sl->bol, sl->len, c_reset);
 		}
 	}
 }
