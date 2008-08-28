@@ -30,17 +30,32 @@ typedef struct s_xdmerge {
 	 * 2 = no conflict, take second.
 	 */
 	int mode;
+	/*
+	 * These point at the respective postimages.  E.g. <i1,chg1> is
+	 * how side #1 wants to change the common ancestor; if there is no
+	 * overlap, lines before i1 in the postimage of side #1 appear
+	 * in the merge result as a region touched by neither side.
+	 */
 	long i1, i2;
 	long chg1, chg2;
+	/*
+	 * These point at the preimage; of course there is just one
+	 * preimage, that is from the shared common ancestor.
+	 */
+	long i0;
+	long chg0;
 } xdmerge_t;
 
 static int xdl_append_merge(xdmerge_t **merge, int mode,
-		long i1, long chg1, long i2, long chg2)
+			    long i0, long chg0,
+			    long i1, long chg1,
+			    long i2, long chg2)
 {
 	xdmerge_t *m = *merge;
 	if (m && (i1 <= m->i1 + m->chg1 || i2 <= m->i2 + m->chg2)) {
 		if (mode != m->mode)
 			m->mode = 0;
+		m->chg0 = i0 + chg0 - m->i0;
 		m->chg1 = i1 + chg1 - m->i1;
 		m->chg2 = i2 + chg2 - m->i2;
 	} else {
@@ -49,6 +64,8 @@ static int xdl_append_merge(xdmerge_t **merge, int mode,
 			return -1;
 		m->next = NULL;
 		m->mode = mode;
+		m->i0 = i0;
+		m->chg0 = chg0;
 		m->i1 = i1;
 		m->chg1 = chg1;
 		m->i2 = i2;
@@ -91,10 +108,12 @@ static int xdl_merge_cmp_lines(xdfenv_t *xe1, int i1, xdfenv_t *xe2, int i2,
 	return 0;
 }
 
-static int xdl_recs_copy(xdfenv_t *xe, int i, int count, int add_nl, char *dest)
+static int xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int add_nl, char *dest)
 {
-	xrecord_t **recs = xe->xdf2.recs + i;
+	xrecord_t **recs;
 	int size = 0;
+
+	recs = (use_orig ? xe->xdf1.recs : xe->xdf2.recs) + i;
 
 	if (count < 1)
 		return 0;
@@ -113,9 +132,19 @@ static int xdl_recs_copy(xdfenv_t *xe, int i, int count, int add_nl, char *dest)
 	return size;
 }
 
+static int xdl_recs_copy(xdfenv_t *xe, int i, int count, int add_nl, char *dest)
+{
+	return xdl_recs_copy_0(0, xe, i, count, add_nl, dest);
+}
+
+static int xdl_orig_copy(xdfenv_t *xe, int i, int count, int add_nl, char *dest)
+{
+	return xdl_recs_copy_0(1, xe, i, count, add_nl, dest);
+}
+
 static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 			      xdfenv_t *xe2, const char *name2,
-			      int size, int i,
+			      int size, int i, int style,
 			      xdmerge_t *m, char *dest)
 {
 	const int marker_size = 7;
@@ -143,6 +172,20 @@ static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 	/* Postimage from side #1 */
 	size += xdl_recs_copy(xe1, m->i1, m->chg1, 1,
 			      dest ? dest + size : NULL);
+
+	if (style == XDL_MERGE_DIFF3) {
+		/* Shared preimage */
+		if (!dest) {
+			size += marker_size + 1;
+		} else {
+			for (j = 0; j < marker_size; j++)
+				dest[size++] = '|';
+			dest[size++] = '\n';
+		}
+		size += xdl_orig_copy(xe1, m->i0, m->chg0, 1,
+				      dest ? dest + size : NULL);
+	}
+
 	if (!dest) {
 		size += marker_size + 1;
 	} else {
@@ -170,14 +213,15 @@ static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 }
 
 static int xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
-		xdfenv_t *xe2, const char *name2, xdmerge_t *m, char *dest)
+				 xdfenv_t *xe2, const char *name2,
+				 xdmerge_t *m, char *dest, int style)
 {
 	int size, i;
 
 	for (size = i = 0; m; m = m->next) {
 		if (m->mode == 0)
 			size = fill_conflict_hunk(xe1, name1, xe2, name2,
-						  size, i, m, dest);
+						  size, i, style, m, dest);
 		else if (m->mode == 1)
 			size += xdl_recs_copy(xe1, i, m->i1 + m->chg1 - i, 0,
 					      dest ? dest + size : NULL);
@@ -342,9 +386,11 @@ static int xdl_simplify_non_conflicts(xdfenv_t *xe1, xdmerge_t *m,
  */
 static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 		xdfenv_t *xe2, xdchange_t *xscr2, const char *name2,
-		int level, xpparam_t const *xpp, mmbuffer_t *result) {
+		int flags, xpparam_t const *xpp, mmbuffer_t *result) {
 	xdmerge_t *changes, *c;
-	int i1, i2, chg1, chg2;
+	int i0, i1, i2, chg0, chg1, chg2;
+	int level = flags & XDL_MERGE_LEVEL_MASK;
+	int style = flags & XDL_MERGE_STYLE_MASK;
 
 	c = changes = NULL;
 
@@ -352,11 +398,14 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 		if (!changes)
 			changes = c;
 		if (xscr1->i1 + xscr1->chg1 < xscr2->i1) {
+			i0 = xscr1->i1;
 			i1 = xscr1->i2;
 			i2 = xscr2->i2 - xscr2->i1 + xscr1->i1;
+			chg0 = xscr1->chg1;
 			chg1 = xscr1->chg2;
 			chg2 = xscr1->chg1;
-			if (xdl_append_merge(&c, 1, i1, chg1, i2, chg2)) {
+			if (xdl_append_merge(&c, 1,
+					     i0, chg0, i1, chg1, i2, chg2)) {
 				xdl_cleanup_merge(changes);
 				return -1;
 			}
@@ -364,11 +413,14 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 			continue;
 		}
 		if (xscr2->i1 + xscr2->chg1 < xscr1->i1) {
+			i0 = xscr2->i1;
 			i1 = xscr1->i2 - xscr1->i1 + xscr2->i1;
 			i2 = xscr2->i2;
+			chg0 = xscr2->chg1;
 			chg1 = xscr2->chg1;
 			chg2 = xscr2->chg2;
-			if (xdl_append_merge(&c, 2, i1, chg1, i2, chg2)) {
+			if (xdl_append_merge(&c, 2,
+					     i0, chg0, i1, chg1, i2, chg2)) {
 				xdl_cleanup_merge(changes);
 				return -1;
 			}
@@ -385,19 +437,26 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 			int off = xscr1->i1 - xscr2->i1;
 			int ffo = off + xscr1->chg1 - xscr2->chg1;
 
+			i0 = xscr1->i1;
 			i1 = xscr1->i2;
 			i2 = xscr2->i2;
-			if (off > 0)
+			if (off > 0) {
+				i0 -= off;
 				i1 -= off;
+			}
 			else
 				i2 += off;
+			chg0 = xscr1->i1 + xscr1->chg1 - i0;
 			chg1 = xscr1->i2 + xscr1->chg2 - i1;
 			chg2 = xscr2->i2 + xscr2->chg2 - i2;
 			if (ffo > 0)
 				chg2 += ffo;
-			else
+			else {
+				chg0 -= ffo;
 				chg1 -= ffo;
-			if (xdl_append_merge(&c, 0, i1, chg1, i2, chg2)) {
+			}
+			if (xdl_append_merge(&c, 0,
+					     i0, chg0, i1, chg1, i2, chg2)) {
 				xdl_cleanup_merge(changes);
 				return -1;
 			}
@@ -414,11 +473,14 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	while (xscr1) {
 		if (!changes)
 			changes = c;
+		i0 = xscr1->i1;
 		i1 = xscr1->i2;
 		i2 = xscr1->i1 + xe2->xdf2.nrec - xe2->xdf1.nrec;
+		chg0 = xscr1->chg1;
 		chg1 = xscr1->chg2;
 		chg2 = xscr1->chg1;
-		if (xdl_append_merge(&c, 1, i1, chg1, i2, chg2)) {
+		if (xdl_append_merge(&c, 1,
+				     i0, chg0, i1, chg1, i2, chg2)) {
 			xdl_cleanup_merge(changes);
 			return -1;
 		}
@@ -427,11 +489,14 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	while (xscr2) {
 		if (!changes)
 			changes = c;
+		i0 = xscr2->i1;
 		i1 = xscr2->i1 + xe1->xdf2.nrec - xe1->xdf1.nrec;
 		i2 = xscr2->i2;
+		chg0 = xscr2->chg1;
 		chg1 = xscr2->chg1;
 		chg2 = xscr2->chg2;
-		if (xdl_append_merge(&c, 2, i1, chg1, i2, chg2)) {
+		if (xdl_append_merge(&c, 2,
+				     i0, chg0, i1, chg1, i2, chg2)) {
 			xdl_cleanup_merge(changes);
 			return -1;
 		}
@@ -449,7 +514,7 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	/* output */
 	if (result) {
 		int size = xdl_fill_merge_buffer(xe1, name1, xe2, name2,
-			changes, NULL);
+			changes, NULL, style);
 		result->ptr = xdl_malloc(size);
 		if (!result->ptr) {
 			xdl_cleanup_merge(changes);
@@ -457,14 +522,14 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 		}
 		result->size = size;
 		xdl_fill_merge_buffer(xe1, name1, xe2, name2, changes,
-				result->ptr);
+				      result->ptr, style);
 	}
 	return xdl_cleanup_merge(changes);
 }
 
 int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 		mmfile_t *mf2, const char *name2,
-		xpparam_t const *xpp, int level, mmbuffer_t *result) {
+		xpparam_t const *xpp, int flags, mmbuffer_t *result) {
 	xdchange_t *xscr1, *xscr2;
 	xdfenv_t xe1, xe2;
 	int status;
@@ -501,7 +566,7 @@ int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 		} else {
 			status = xdl_do_merge(&xe1, xscr1, name1,
 					      &xe2, xscr2, name2,
-					      level, xpp, result);
+					      flags, xpp, result);
 		}
 		xdl_free_script(xscr1);
 		xdl_free_script(xscr2);
