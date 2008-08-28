@@ -51,6 +51,7 @@ git-gc
 git-get-tar-commit-id
 git-grep
 git-hash-object
+git-help
 git-http-fetch
 git-http-push
 git-imap-send

@@ -230,6 +230,10 @@ test_expect_success 'test option parsing' '
 	test_must_fail git merge
 '
 
+test_expect_success 'reject non-strategy with a git-merge-foo name' '
+	test_must_fail git merge -s index c1
+'
+
 test_expect_success 'merge c0 with c1' '
 	git reset --hard c0 &&
 	git merge c1 &&
