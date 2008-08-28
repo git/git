@@ -273,7 +273,7 @@ static int git_help_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-struct cmdnames main_cmds, other_cmds;
+static struct cmdnames main_cmds, other_cmds;
 
 void list_common_cmds_help(void)
 {
