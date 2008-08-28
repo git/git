@@ -1483,7 +1483,7 @@ _git_submodule ()
 {
 	__git_has_doubledash && return
 
-	local subcommands="add status init update"
+	local subcommands="add status init update summary foreach sync"
 	if [ -z "$(__git_find_subcommand "$subcommands")" ]; then
 		local cur="${COMP_WORDS[COMP_CWORD]}"
 		case "$cur" in
