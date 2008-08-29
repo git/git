@@ -492,9 +492,9 @@ static void write_pack_file(void)
 		} else if (nr_written == nr_remaining) {
 			sha1close(f, sha1, CSUM_FSYNC);
 		} else {
-			int fd = sha1close(f, NULL, 0);
+			int fd = sha1close(f, sha1, 0);
 			fixup_pack_header_footer(fd, sha1, pack_tmp_name,
-						 nr_written, NULL, 0);
+						 nr_written, sha1, offset);
 			close(fd);
 		}
 
