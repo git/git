@@ -1060,6 +1060,13 @@ static long gather_dirstat(FILE *file, struct dirstat_dir *dir, unsigned long ch
 	return this_dir;
 }
 
+static int dirstat_compare(const void *_a, const void *_b)
+{
+	const struct dirstat_file *a = _a;
+	const struct dirstat_file *b = _b;
+	return strcmp(a->name, b->name);
+}
+
 static void show_dirstat(struct diff_options *options)
 {
 	int i;
@@ -1119,6 +1126,7 @@ static void show_dirstat(struct diff_options *options)
 		return;
 
 	/* Show all directories with more than x% of the changes */
+	qsort(dir.files, dir.nr, sizeof(dir.files[0]), dirstat_compare);
 	gather_dirstat(options->file, &dir, changed, "", 0);
 }
 
