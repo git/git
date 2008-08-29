@@ -319,82 +319,59 @@ test_expect_success 'info --url symlink-directory (deleted)' '
 
 test_expect_success 'info unknown-file' "
 	echo two > gitwc/unknown-file &&
-	cp gitwc/unknown-file svnwc/unknown-file &&
-	ptouch gitwc/unknown-file svnwc/unknown-file &&
-	(cd svnwc; svn info unknown-file) 2> expected.info-unknown-file &&
-	(cd gitwc; git-svn info unknown-file) 2> actual.info-unknown-file &&
-	test_cmp expected.info-unknown-file actual.info-unknown-file
+	(cd gitwc; test_must_fail git-svn info unknown-file) \
+		 2> actual.info-unknown-file &&
+	grep unknown-file actual.info-unknown-file
 	"
 
 test_expect_success 'info --url unknown-file' '
-	test -z "$(cd gitwc; git-svn info --url unknown-file \
-			2> ../actual.info--url-unknown-file)" &&
-	test_cmp expected.info-unknown-file actual.info--url-unknown-file
+	echo two > gitwc/unknown-file &&
+	(cd gitwc; test_must_fail git-svn info --url unknown-file) \
+		 2> actual.info-url-unknown-file &&
+	grep unknown-file actual.info-url-unknown-file
 	'
 
 test_expect_success 'info unknown-directory' "
 	mkdir gitwc/unknown-directory svnwc/unknown-directory &&
-	ptouch gitwc/unknown-directory svnwc/unknown-directory &&
-	touch gitwc/unknown-directory/.placeholder &&
-	(cd svnwc; svn info unknown-directory) \
-		2> expected.info-unknown-directory &&
-	(cd gitwc; git-svn info unknown-directory) \
-		2> actual.info-unknown-directory &&
-	test_cmp expected.info-unknown-directory actual.info-unknown-directory
+	(cd gitwc; test_must_fail git-svn info unknown-directory) \
+		 2> actual.info-unknown-directory &&
+	grep unknown-directory actual.info-unknown-directory
 	"
 
 test_expect_success 'info --url unknown-directory' '
-	test -z "$(cd gitwc; git-svn info --url unknown-directory \
-			2> ../actual.info--url-unknown-directory)" &&
-	test_cmp expected.info-unknown-directory \
-		 actual.info--url-unknown-directory
+	(cd gitwc; test_must_fail git-svn info --url unknown-directory) \
+		 2> actual.info-url-unknown-directory &&
+	grep unknown-directory actual.info-url-unknown-directory
 	'
 
 test_expect_success 'info unknown-symlink-file' "
 	cd gitwc &&
 		ln -s unknown-file unknown-symlink-file &&
 	cd .. &&
-	cd svnwc &&
-		ln -s unknown-file unknown-symlink-file &&
-	cd .. &&
-	ptouch gitwc/unknown-symlink-file svnwc/unknown-symlink-file &&
-	(cd svnwc; svn info unknown-symlink-file) \
-		2> expected.info-unknown-symlink-file &&
-	(cd gitwc; git-svn info unknown-symlink-file) \
-		2> actual.info-unknown-symlink-file &&
-	test_cmp expected.info-unknown-symlink-file \
-		 actual.info-unknown-symlink-file
+	(cd gitwc; test_must_fail git-svn info unknown-symlink-file) \
+		 2> actual.info-unknown-symlink-file &&
+	grep unknown-symlink-file actual.info-unknown-symlink-file
 	"
 
 test_expect_success 'info --url unknown-symlink-file' '
-	test -z "$(cd gitwc; git-svn info --url unknown-symlink-file \
-			2> ../actual.info--url-unknown-symlink-file)" &&
-	test_cmp expected.info-unknown-symlink-file \
-		 actual.info--url-unknown-symlink-file
+	(cd gitwc; test_must_fail git-svn info --url unknown-symlink-file) \
+		 2> actual.info-url-unknown-symlink-file &&
+	grep unknown-symlink-file actual.info-url-unknown-symlink-file
 	'
 
 test_expect_success 'info unknown-symlink-directory' "
 	cd gitwc &&
 		ln -s unknown-directory unknown-symlink-directory &&
 	cd .. &&
-	cd svnwc &&
-		ln -s unknown-directory unknown-symlink-directory &&
-	cd .. &&
-	ptouch gitwc/unknown-symlink-directory \
-	       svnwc/unknown-symlink-directory &&
-	(cd svnwc; svn info unknown-symlink-directory) \
-		2> expected.info-unknown-symlink-directory &&
-	(cd gitwc; git-svn info unknown-symlink-directory) \
-		2> actual.info-unknown-symlink-directory &&
-	test_cmp expected.info-unknown-symlink-directory \
-		 actual.info-unknown-symlink-directory
+	(cd gitwc; test_must_fail git-svn info unknown-symlink-directory) \
+		 2> actual.info-unknown-symlink-directory &&
+	grep unknown-symlink-directory actual.info-unknown-symlink-directory
 	"
 
 test_expect_success 'info --url unknown-symlink-directory' '
-	test -z "$(cd gitwc; git-svn info --url unknown-symlink-directory \
-			2> ../actual.info--url-unknown-symlink-directory)" &&
-	test_cmp expected.info-unknown-symlink-directory \
-		 actual.info--url-unknown-symlink-directory
+	(cd gitwc; test_must_fail git-svn info --url unknown-symlink-directory) \
+		 2> actual.info-url-unknown-symlink-directory &&
+	grep unknown-symlink-directory actual.info-url-unknown-symlink-directory
 	'
 
 test_done
