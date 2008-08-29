@@ -167,7 +167,7 @@ void fixup_pack_header_footer(int pack_fd,
 			 unsigned char *partial_pack_sha1,
 			 off_t partial_pack_offset)
 {
-	static const int buf_sz = 128 * 1024;
+	int aligned_sz, buf_sz = 8 * 1024;
 	SHA_CTX old_sha1_ctx, new_sha1_ctx;
 	struct pack_header hdr;
 	char *buf;
@@ -188,16 +188,21 @@ void fixup_pack_header_footer(int pack_fd,
 	partial_pack_offset -= sizeof(hdr);
 
 	buf = xmalloc(buf_sz);
+	aligned_sz = buf_sz - sizeof(hdr);
 	for (;;) {
 		ssize_t m, n;
-		m = (partial_pack_sha1 && partial_pack_offset < buf_sz) ?
-			partial_pack_offset : buf_sz;
+		m = (partial_pack_sha1 && partial_pack_offset < aligned_sz) ?
+			partial_pack_offset : aligned_sz;
 		n = xread(pack_fd, buf, m);
 		if (!n)
 			break;
 		if (n < 0)
 			die("Failed to checksum %s: %s", pack_name, strerror(errno));
 		SHA1_Update(&new_sha1_ctx, buf, n);
+
+		aligned_sz -= n;
+		if (!aligned_sz)
+			aligned_sz = buf_sz;
 
 		if (!partial_pack_sha1)
 			continue;
