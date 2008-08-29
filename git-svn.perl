@@ -832,8 +832,8 @@ sub cmd_info {
 	my ($file_type, $diff_status) = find_file_type_and_diff_status($path);
 
 	if (!$file_type && !$diff_status) {
-		print STDERR "$path:  (Not a versioned resource)\n\n";
-		return;
+		print STDERR "svn: '$path' is not under version control\n";
+		exit 1;
 	}
 
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
