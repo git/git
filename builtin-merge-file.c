@@ -15,6 +15,15 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	int ret = 0, i = 0, to_stdout = 0;
 	int merge_level = XDL_MERGE_ZEALOUS_ALNUM;
 	int merge_style = 0;
+	int nongit;
+
+	prefix = setup_git_directory_gently(&nongit);
+	if (!nongit) {
+		/* Read the configuration file */
+		git_config(git_xmerge_config, NULL);
+		if (0 <= git_xmerge_style)
+			merge_style = git_xmerge_style;
+	}
 
 	while (argc > 4) {
 		if (!strcmp(argv[1], "-L") && i < 3) {
