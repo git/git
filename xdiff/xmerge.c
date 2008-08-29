@@ -392,6 +392,15 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	int level = flags & XDL_MERGE_LEVEL_MASK;
 	int style = flags & XDL_MERGE_STYLE_MASK;
 
+	if (style == XDL_MERGE_DIFF3) {
+		/*
+		 * "diff3 -m" output does not make sense for anything
+		 * more aggressive than XDL_MERGE_EAGER.
+		 */
+		if (XDL_MERGE_EAGER < level)
+			level = XDL_MERGE_EAGER;
+	}
+
 	c = changes = NULL;
 
 	while (xscr1 && xscr2) {

@@ -27,10 +27,8 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "-q") ||
 				!strcmp(argv[1], "--quiet"))
 			freopen("/dev/null", "w", stderr);
-		else if (!strcmp(argv[1], "--diff3")) {
+		else if (!strcmp(argv[1], "--diff3"))
 			merge_style = XDL_MERGE_DIFF3;
-			merge_level = XDL_MERGE_EAGER;
-		}
 		else
 			usage(merge_file_usage);
 		argc--;
