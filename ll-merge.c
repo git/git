@@ -63,6 +63,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			int virtual_ancestor)
 {
 	xpparam_t xpp;
+	int style = 0;
 
 	if (buffer_is_binary(orig->ptr, orig->size) ||
 	    buffer_is_binary(src1->ptr, src1->size) ||
@@ -77,10 +78,12 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	}
 
 	memset(&xpp, 0, sizeof(xpp));
+	if (git_xmerge_style >= 0)
+		style = git_xmerge_style;
 	return xdl_merge(orig,
 			 src1, name1,
 			 src2, name2,
-			 &xpp, XDL_MERGE_ZEALOUS,
+			 &xpp, XDL_MERGE_ZEALOUS | style,
 			 result);
 }
 
@@ -95,10 +98,15 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 	char *src, *dst;
 	long size;
 	const int marker_size = 7;
+	int status, saved_style;
 
-	int status = ll_xdl_merge(drv_unused, result, path_unused,
-				  orig, src1, NULL, src2, NULL,
-				  virtual_ancestor);
+	/* We have to force the RCS "merge" style */
+	saved_style = git_xmerge_style;
+	git_xmerge_style = 0;
+	status = ll_xdl_merge(drv_unused, result, path_unused,
+			      orig, src1, NULL, src2, NULL,
+			      virtual_ancestor);
+	git_xmerge_style = saved_style;
 	if (status <= 0)
 		return status;
 	size = result->size;

@@ -1348,7 +1348,7 @@ static int merge_config(const char *var, const char *value, void *cb)
 		merge_rename_limit = git_config_int(var, value);
 		return 0;
 	}
-	return git_default_config(var, value, cb);
+	return git_xmerge_config(var, value, cb);
 }
 
 int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
