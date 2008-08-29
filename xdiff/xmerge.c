@@ -427,7 +427,7 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 			xscr2 = xscr2->next;
 			continue;
 		}
-		if (level < 1 || xscr1->i1 != xscr2->i1 ||
+		if (level == XDL_MERGE_MINIMAL || xscr1->i1 != xscr2->i1 ||
 				xscr1->chg1 != xscr2->chg1 ||
 				xscr1->chg2 != xscr2->chg2 ||
 				xdl_merge_cmp_lines(xe1, xscr1->i2,
@@ -449,12 +449,11 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 			chg0 = xscr1->i1 + xscr1->chg1 - i0;
 			chg1 = xscr1->i2 + xscr1->chg2 - i1;
 			chg2 = xscr2->i2 + xscr2->chg2 - i2;
-			if (ffo > 0)
-				chg2 += ffo;
-			else {
+			if (ffo < 0) {
 				chg0 -= ffo;
 				chg1 -= ffo;
-			}
+			} else
+				chg2 += ffo;
 			if (xdl_append_merge(&c, 0,
 					     i0, chg0, i1, chg1, i2, chg2)) {
 				xdl_cleanup_merge(changes);
@@ -505,9 +504,10 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	if (!changes)
 		changes = c;
 	/* refine conflicts */
-	if (level > 1 &&
+	if (XDL_MERGE_ZEALOUS <= level &&
 	    (xdl_refine_conflicts(xe1, xe2, changes, xpp) < 0 ||
-	     xdl_simplify_non_conflicts(xe1, changes, level > 2) < 0)) {
+	     xdl_simplify_non_conflicts(xe1, changes,
+					XDL_MERGE_ZEALOUS < level) < 0)) {
 		xdl_cleanup_merge(changes);
 		return -1;
 	}
