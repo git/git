@@ -410,25 +410,22 @@ static unsigned long write_object(struct sha1file *f,
 	return hdrlen + datalen;
 }
 
-static off_t write_one(struct sha1file *f,
+static int write_one(struct sha1file *f,
 			       struct object_entry *e,
-			       off_t offset)
+			       off_t *offset)
 {
 	unsigned long size;
 
 	/* offset is non zero if object is written already. */
 	if (e->idx.offset || e->preferred_base)
-		return offset;
+		return 1;
 
 	/* if we are deltified, write out base object first. */
-	if (e->delta) {
-		offset = write_one(f, e->delta, offset);
-		if (!offset)
-			return 0;
-	}
+	if (e->delta && !write_one(f, e->delta, offset))
+		return 0;
 
-	e->idx.offset = offset;
-	size = write_object(f, e, offset);
+	e->idx.offset = *offset;
+	size = write_object(f, e, *offset);
 	if (!size) {
 		e->idx.offset = 0;
 		return 0;
@@ -436,9 +433,10 @@ static off_t write_one(struct sha1file *f,
 	written_list[nr_written++] = &e->idx;
 
 	/* make sure off_t is sufficiently large not to wrap */
-	if (offset > offset + size)
+	if (*offset > *offset + size)
 		die("pack too large for current definition of off_t");
-	return offset + size;
+	*offset += size;
+	return 1;
 }
 
 /* forward declaration for write_pack_file */
@@ -448,7 +446,7 @@ static void write_pack_file(void)
 {
 	uint32_t i = 0, j;
 	struct sha1file *f;
-	off_t offset, offset_one, last_obj_offset = 0;
+	off_t offset;
 	struct pack_header hdr;
 	uint32_t nr_remaining = nr_result;
 	time_t last_mtime = 0;
@@ -480,11 +478,8 @@ static void write_pack_file(void)
 		offset = sizeof(hdr);
 		nr_written = 0;
 		for (; i < nr_objects; i++) {
-			last_obj_offset = offset;
-			offset_one = write_one(f, objects + i, offset);
-			if (!offset_one)
+			if (!write_one(f, objects + i, &offset))
 				break;
-			offset = offset_one;
 			display_progress(progress_state, written);
 		}
 
