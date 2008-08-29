@@ -77,7 +77,7 @@ static int handle_file(const char *path,
 	char buf[1024];
 	int hunk_no = 0;
 	enum {
-		RR_CONTEXT = 0, RR_SIDE_1, RR_SIDE_2,
+		RR_CONTEXT = 0, RR_SIDE_1, RR_SIDE_2, RR_ORIGINAL,
 	} hunk = RR_CONTEXT;
 	struct strbuf one, two;
 	FILE *f = fopen(path, "r");
@@ -104,8 +104,12 @@ static int handle_file(const char *path,
 			if (hunk != RR_CONTEXT)
 				goto bad;
 			hunk = RR_SIDE_1;
-		} else if (!prefixcmp(buf, "=======") && isspace(buf[7])) {
+		} else if (!prefixcmp(buf, "|||||||") && isspace(buf[7])) {
 			if (hunk != RR_SIDE_1)
+				goto bad;
+			hunk = RR_ORIGINAL;
+		} else if (!prefixcmp(buf, "=======") && isspace(buf[7])) {
+			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
 				goto bad;
 			hunk = RR_SIDE_2;
 		} else if (!prefixcmp(buf, ">>>>>>> ")) {
@@ -132,6 +136,8 @@ static int handle_file(const char *path,
 			strbuf_reset(&two);
 		} else if (hunk == RR_SIDE_1)
 			strbuf_addstr(&one, buf);
+		else if (hunk == RR_ORIGINAL)
+			; /* discard */
 		else if (hunk == RR_SIDE_2)
 			strbuf_addstr(&two, buf);
 		else if (out)
