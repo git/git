@@ -96,3 +96,255 @@ proc read_merge_stages {fd cont} {
 		eval $cont
 	}
 }
+
+proc merge_resolve_tool {} {
+	global current_diff_path
+
+	merge_load_stages $current_diff_path [list merge_resolve_tool2]
+}
+
+proc merge_resolve_tool2 {} {
+	global current_diff_path merge_stages
+
+	# Validate the stages
+	if {$merge_stages(2) eq {} ||
+	    [lindex $merge_stages(2) 0] eq {120000} ||
+	    [lindex $merge_stages(2) 0] eq {160000} ||
+	    $merge_stages(3) eq {} ||
+	    [lindex $merge_stages(3) 0] eq {120000} ||
+	    [lindex $merge_stages(3) 0] eq {160000}
+	} {
+		error_popup [mc "Cannot resolve deletion or link conflicts using a tool"]
+		return
+	}
+
+	if {![file exists $current_diff_path]} {
+		error_popup [mc "Conflict file does not exist"]
+		return
+	}
+
+	# Determine the tool to use
+	set tool [get_config merge.tool]
+	if {$tool eq {}} { set tool meld }
+
+	set merge_tool_path [get_config "mergetool.$tool.path"]
+	if {$merge_tool_path eq {}} {
+		switch -- $tool {
+		emerge { set merge_tool_path "emacs" }
+		default { set merge_tool_path $tool }
+		}
+	}
+
+	# Make file names
+	set filebase [file rootname $current_diff_path]
+	set fileext  [file extension $current_diff_path]
+	set basename [lindex [file split $current_diff_path] end]
+
+	set MERGED   $current_diff_path
+	set BASE     "./$MERGED.BASE$fileext"
+	set LOCAL    "./$MERGED.LOCAL$fileext"
+	set REMOTE   "./$MERGED.REMOTE$fileext"
+	set BACKUP   "./$MERGED.BACKUP$fileext"
+
+	set base_stage $merge_stages(1)
+
+	# Build the command line
+	switch -- $tool {
+	kdiff3 {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" --auto --L1 "$MERGED (Base)" \
+				--L2 "$MERGED (Local)" --L3 "$MERGED (Remote)" -o "$MERGED" "$BASE" "$LOCAL" "$REMOTE"]
+		} else {
+			set cmdline [list "$merge_tool_path" --auto --L1 "$MERGED (Local)" \
+				--L2 "$MERGED (Remote)" -o "$MERGED" "$LOCAL" "$REMOTE"]
+		}
+	}
+	tkdiff {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" -a "$BASE" -o "$MERGED" "$LOCAL" "$REMOTE"]
+		} else {
+			set cmdline [list "$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"]
+		}
+	}
+	meld {
+		set cmdline [list "$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"]
+	}
+	gvimdiff {
+		set cmdline [list "$merge_tool_path" -f "$LOCAL" "$MERGED" "$REMOTE"]
+	}
+	xxdiff {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" -X --show-merged-pane \
+					    -R {Accel.SaveAsMerged: "Ctrl-S"} \
+					    -R {Accel.Search: "Ctrl+F"} \
+					    -R {Accel.SearchForward: "Ctrl-G"} \
+					    --merged-file "$MERGED" "$LOCAL" "$BASE" "$REMOTE"]
+		} else {
+			set cmdline [list "$merge_tool_path" -X --show-merged-pane \
+					    -R {Accel.SaveAsMerged: "Ctrl-S"} \
+					    -R {Accel.Search: "Ctrl+F"} \
+					    -R {Accel.SearchForward: "Ctrl-G"} \
+					    --merged-file "$MERGED" "$LOCAL" "$REMOTE"]
+		}
+	}
+	opendiff {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" -ancestor "$BASE" -merge "$MERGED"]
+		} else {
+			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" -merge "$MERGED"]
+		}
+	}
+	ecmerge {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" --default --mode=merge3 --to="$MERGED"]
+		} else {
+			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" --default --mode=merge2 --to="$MERGED"]
+		}
+	}
+	emerge {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" -f emerge-files-with-ancestor-command \
+					"$LOCAL" "$REMOTE" "$BASE" "$basename"]
+		} else {
+			set cmdline [list "$merge_tool_path" -f emerge-files-command \
+					"$LOCAL" "$REMOTE" "$basename"]
+		}
+	}
+	vimdiff {
+		error_popup [mc "Not a GUI merge tool: '%s'" $tool]
+		return
+	}
+	default {
+		error_popup [mc "Unsupported merge tool '%s'" $tool]
+		return
+	}
+	}
+
+	merge_tool_start $cmdline $MERGED $BACKUP [list $BASE $LOCAL $REMOTE]
+}
+
+proc delete_temp_files {files} {
+	foreach fname $files {
+		file delete $fname
+	}
+}
+
+proc merge_tool_get_stages {target stages} {
+	global merge_stages
+
+	set i 1
+	foreach fname $stages {
+		if {$merge_stages($i) eq {}} {
+			file delete $fname
+		} else {
+			# A hack to support autocrlf properly
+			git checkout-index -f --stage=$i -- $target
+			file rename -force -- $target $fname
+		}
+		incr i
+	}
+}
+
+proc merge_tool_start {cmdline target backup stages} {
+	global merge_stages mtool_target mtool_tmpfiles mtool_fd mtool_mtime
+
+	if {[info exists mtool_fd]} {
+		if {[ask_popup [mc "Merge tool is already running, terminate it?"]] eq {yes}} {
+			catch { kill_file_process $mtool_fd }
+			catch { close $mtool_fd }
+			unset mtool_fd
+
+			set old_backup [lindex $mtool_tmpfiles end]
+			file rename -force -- $old_backup $mtool_target
+			delete_temp_files $mtool_tmpfiles
+		} else {
+			return
+		}
+	}
+
+	# Save the original file
+	file rename -force -- $target $backup
+
+	# Get the blobs; it destroys $target
+	if {[catch {merge_tool_get_stages $target $stages} err]} {
+		file rename -force -- $backup $target
+		delete_temp_files $stages
+		error_popup [mc "Error retrieving versions:\n%s" $err]
+		return
+	}
+
+	# Restore the conflict file
+	file copy -force -- $backup $target
+
+	# Initialize global state
+	set mtool_target $target
+	set mtool_mtime [file mtime $target]
+	set mtool_tmpfiles $stages
+
+	lappend mtool_tmpfiles $backup
+
+	# Force redirection to avoid interpreting output on stderr
+	# as an error, and launch the tool
+	lappend cmdline {2>@1}
+
+	if {[catch { set mtool_fd [_open_stdout_stderr $cmdline] } err]} {
+		delete_temp_files $mtool_tmpfiles
+		error_popup [mc "Could not start the merge tool:\n\n%s" $err]
+		return
+	}
+
+	ui_status [mc "Running merge tool..."]
+
+	fconfigure $mtool_fd -blocking 0 -translation binary -encoding binary
+	fileevent $mtool_fd readable [list read_mtool_output $mtool_fd]
+}
+
+proc read_mtool_output {fd} {
+	global mtool_fd mtool_tmpfiles
+
+	read $fd
+	if {[eof $fd]} {
+		unset mtool_fd
+
+		fconfigure $fd -blocking 1
+		merge_tool_finish $fd
+	}
+}
+
+proc merge_tool_finish {fd} {
+	global mtool_tmpfiles mtool_target mtool_mtime
+
+	set backup [lindex $mtool_tmpfiles end]
+	set failed 0
+
+	# Check the return code
+	if {[catch {close $fd} err]} {
+		set failed 1
+		if {$err ne {child process exited abnormally}} {
+			error_popup [strcat [mc "Merge tool failed."] "\n\n$err"]
+		}
+	}
+
+	# Check the modification time of the target file
+	if {!$failed && [file mtime $mtool_target] eq $mtool_mtime} {
+		if {[ask_popup [mc "File %s unchanged, still accept as resolved?" \
+				[short_path $mtool_target]]] ne {yes}} {
+			set failed 1
+		}
+	}
+
+	# Finish
+	if {$failed} {
+		file rename -force -- $backup $mtool_target
+		delete_temp_files $mtool_tmpfiles
+		ui_status [mc "Merge tool failed."]
+	} else {
+		if {[is_config_true merge.keepbackup]} {
+			file rename -force -- $backup "$mtool_target.orig"
+		}
+
+		delete_temp_files $mtool_tmpfiles
+
+		merge_add_resolution $mtool_target
+	}
+}

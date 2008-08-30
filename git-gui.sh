@@ -657,6 +657,8 @@ proc apply_config {} {
 }
 
 set default_config(branch.autosetupmerge) true
+set default_config(merge.tool) {}
+set default_config(merge.keepbackup) true
 set default_config(merge.diffstat) true
 set default_config(merge.summary) false
 set default_config(merge.verbosity) 2
@@ -2775,6 +2777,11 @@ create_common_diff_popup $ctxm
 
 set ctxmmg .vpane.lower.diff.body.ctxmmg
 menu $ctxmmg -tearoff 0
+$ctxmmg add command \
+	-label [mc "Run Merge Tool"] \
+	-command {merge_resolve_tool}
+lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
+$ctxmmg add separator
 $ctxmmg add command \
 	-label [mc "Use Remote Version"] \
 	-command {merge_resolve_one 3}
