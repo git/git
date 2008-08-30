@@ -131,6 +131,7 @@ proc merge_resolve_tool2 {} {
 	if {$merge_tool_path eq {}} {
 		switch -- $tool {
 		emerge { set merge_tool_path "emacs" }
+		araxis { set merge_tool_path "compare" }
 		default { set merge_tool_path $tool }
 		}
 	}
@@ -210,6 +211,31 @@ proc merge_resolve_tool2 {} {
 					"$LOCAL" "$REMOTE" "$basename"]
 		}
 	}
+	winmerge {
+		if {$base_stage ne {}} {
+			# This tool does not support 3-way merges.
+			# Use the 'conflict file' resolution feature instead.
+			set cmdline [list "$merge_tool_path" -e -ub "$MERGED"]
+		} else {
+			set cmdline [list "$merge_tool_path" -e -ub -wl \
+				-dl "Theirs File" -dr "Mine File" "$REMOTE" "$LOCAL" "$MERGED"]
+		}
+	}
+	araxis {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" -wait -merge -3 -a1 \
+				-title1:"'$MERGED (Base)'" -title2:"'$MERGED (Local)'" \
+				-title3:"'$MERGED (Remote)'" \
+				"$BASE" "$LOCAL" "$REMOTE" "$MERGED"]
+		} else {
+			set cmdline [list "$merge_tool_path" -wait -2 \
+				 -title1:"'$MERGED (Local)'" -title2:"'$MERGED (Remote)'" \
+				 "$LOCAL" "$REMOTE" "$MERGED"]
+		}
+	}
+	p4merge {
+		set cmdline [list "$merge_tool_path" "$BASE" "$REMOTE" "$LOCAL" "$MERGED"]
+	}
 	vimdiff {
 		error_popup [mc "Not a GUI merge tool: '%s'" $tool]
 		return
@@ -236,6 +262,7 @@ proc merge_tool_get_stages {target stages} {
 	foreach fname $stages {
 		if {$merge_stages($i) eq {}} {
 			file delete $fname
+			catch { close [open $fname w] }
 		} else {
 			# A hack to support autocrlf properly
 			git checkout-index -f --stage=$i -- $target
