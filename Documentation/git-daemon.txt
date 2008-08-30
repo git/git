@@ -9,8 +9,9 @@ SYNOPSIS
 --------
 [verse]
 'git daemon' [--verbose] [--syslog] [--export-all]
-	     [--timeout=n] [--init-timeout=n] [--strict-paths]
-	     [--base-path=path] [--user-path | --user-path=path]
+	     [--timeout=n] [--init-timeout=n] [--max-connections=n]
+	     [--strict-paths] [--base-path=path] [--base-path-relaxed]
+	     [--user-path | --user-path=path]
 	     [--interpolated-path=pathtemplate]
 	     [--reuseaddr] [--detach] [--pid-file=file]
 	     [--enable=service] [--disable=service]
@@ -98,6 +99,10 @@ OPTIONS
 	Timeout for specific client sub-requests. This includes the time
 	it takes for the server to process the sub-request and time spent
 	waiting for next client's request.
+
+--max-connections::
+	Maximum number of concurrent clients, defaults to 32.  Set it to
+	zero for no limit.
 
 --syslog::
 	Log to syslog instead of stderr. Note that this option does not imply
