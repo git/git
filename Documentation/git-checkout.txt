@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git checkout' [-q] [-f] [[--track | --no-track] -b <new_branch> [-l]] [-m] [<branch>]
-'git checkout' [-f|--ours|--theirs] [<tree-ish>] [--] <paths>...
+'git checkout' [-f|--ours|--theirs|-m] [<tree-ish>] [--] <paths>...
 
 DESCRIPTION
 -----------
@@ -35,7 +35,8 @@ default, if you try to check out such an entry from the index, the
 checkout operation will fail and nothing will be checked out.
 Using -f will ignore these unmerged entries.  The contents from a
 specific side of the merge can be checked out of the index by
-using --ours or --theirs.
+using --ours or --theirs.  With -m, changes made to the working tree
+file can be discarded to recreate the original conflicted merge result.
 
 OPTIONS
 -------
@@ -83,7 +84,8 @@ entries; instead, unmerged entries are ignored.
 	based sha1 expressions such as "<branchname>@\{yesterday}".
 
 -m::
-	If you have local modifications to one or more files that
+	When switching branches,
+	if you have local modifications to one or more files that
 	are different between the current branch and the branch to
 	which you are switching, the command refuses to switch
 	branches in order to preserve your modifications in context.
@@ -95,6 +97,9 @@ When a merge conflict happens, the index entries for conflicting
 paths are left unmerged, and you need to resolve the conflicts
 and mark the resolved paths with `git add` (or `git rm` if the merge
 should result in deletion of the path).
++
+When checking out paths from the index, this option lets you recreate
+the conflicted merge in the specified paths.
 
 <new_branch>::
 	Name for the new branch.
