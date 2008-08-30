@@ -20,6 +20,17 @@ static const char * const checkout_usage[] = {
 	NULL,
 };
 
+struct checkout_opts {
+	int quiet;
+	int merge;
+	int force;
+	int writeout_error;
+
+	const char *new_branch;
+	int new_branch_log;
+	enum branch_track track;
+};
+
 static int post_checkout_hook(struct commit *old, struct commit *new,
 			      int changed)
 {
@@ -85,7 +96,8 @@ static int skip_same_name(struct cache_entry *ce, int pos)
 }
 
 
-static int checkout_paths(struct tree *source_tree, const char **pathspec)
+static int checkout_paths(struct tree *source_tree, const char **pathspec,
+			  struct checkout_opts *opts)
 {
 	int pos;
 	struct checkout state;
@@ -122,8 +134,12 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
 			if (!ce_stage(ce))
 				continue;
-			errs = 1;
-			error("path '%s' is unmerged", ce->name);
+			if (opts->force) {
+				warning("path '%s' is unmerged", ce->name);
+			} else {
+				errs = 1;
+				error("path '%s' is unmerged", ce->name);
+			}
 			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
@@ -177,17 +193,6 @@ static void describe_detached_head(char *msg, struct commit *commit)
 		find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV), sb.buf);
 	strbuf_release(&sb);
 }
-
-struct checkout_opts {
-	int quiet;
-	int merge;
-	int force;
-	int writeout_error;
-
-	char *new_branch;
-	int new_branch_log;
-	enum branch_track track;
-};
 
 static int reset_tree(struct tree *tree, struct checkout_opts *o, int worktree)
 {
@@ -554,15 +559,15 @@ no_reference:
 			die("invalid path specification");
 
 		/* Checkout paths */
-		if (opts.new_branch || opts.force || opts.merge) {
+		if (opts.new_branch || opts.merge) {
 			if (argc == 1) {
-				die("git checkout: updating paths is incompatible with switching branches/forcing\nDid you intend to checkout '%s' which can not be resolved as commit?", argv[0]);
+				die("git checkout: updating paths is incompatible with switching branches.\nDid you intend to checkout '%s' which can not be resolved as commit?", argv[0]);
 			} else {
-				die("git checkout: updating paths is incompatible with switching branches/forcing");
+				die("git checkout: updating paths is incompatible with switching branches.");
 			}
 		}
 
-		return checkout_paths(source_tree, pathspec);
+		return checkout_paths(source_tree, pathspec, &opts);
 	}
 
 	if (new.name && !new.commit) {
