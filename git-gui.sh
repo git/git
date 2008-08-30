@@ -1932,7 +1932,7 @@ proc show_more_context {} {
 
 proc show_less_context {} {
 	global repo_config
-	if {$repo_config(gui.diffcontext) >= 1} {
+	if {$repo_config(gui.diffcontext) > 1} {
 		incr repo_config(gui.diffcontext) -1
 		reshow_diff
 	}
