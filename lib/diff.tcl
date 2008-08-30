@@ -65,6 +65,7 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 	global is_3way_diff diff_active repo_config
 	global ui_diff ui_index ui_workdir
 	global current_diff_path current_diff_side current_diff_header
+	global current_diff_queue
 
 	if {$diff_active || ![lock_index read]} return
 
@@ -82,12 +83,68 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 
 	set s $file_states($path)
 	set m [lindex $s 0]
-	set is_3way_diff 0
-	set diff_active 1
 	set current_diff_path $path
 	set current_diff_side $w
-	set current_diff_header {}
+	set current_diff_queue {}
 	ui_status [mc "Loading diff of %s..." [escape_path $path]]
+
+	if {[string first {U} $m] >= 0} {
+		merge_load_stages $path [list show_unmerged_diff $scroll_pos]
+	} elseif {$m eq {_O}} {
+		show_other_diff $path $w $m $scroll_pos
+	} else {
+		start_show_diff $scroll_pos
+	}
+}
+
+proc show_unmerged_diff {scroll_pos} {
+	global current_diff_path current_diff_side
+	global merge_stages ui_diff
+	global current_diff_queue
+
+	if {$merge_stages(2) eq {}} {
+		lappend current_diff_queue \
+			[list "LOCAL: deleted\nREMOTE:\n" d======= \
+			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
+	} elseif {$merge_stages(3) eq {}} {
+		lappend current_diff_queue \
+			[list "REMOTE: deleted\nLOCAL:\n" d======= \
+			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
+	} elseif {[lindex $merge_stages(1) 0] eq {120000}
+		|| [lindex $merge_stages(2) 0] eq {120000}
+		|| [lindex $merge_stages(3) 0] eq {120000}} {
+		lappend current_diff_queue \
+			[list "LOCAL:\n" d======= \
+			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
+		lappend current_diff_queue \
+			[list "REMOTE:\n" d======= \
+			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
+	} else {
+		start_show_diff $scroll_pos
+		return
+	}
+
+	advance_diff_queue $scroll_pos
+}
+
+proc advance_diff_queue {scroll_pos} {
+	global current_diff_queue ui_diff
+
+	set item [lindex $current_diff_queue 0]
+	set current_diff_queue [lrange $current_diff_queue 1 end]
+
+	$ui_diff conf -state normal
+	$ui_diff insert end [lindex $item 0] [lindex $item 1]
+	$ui_diff conf -state disabled
+
+	start_show_diff $scroll_pos [lindex $item 2]
+}
+
+proc show_other_diff {path w m scroll_pos} {
+	global file_states file_lists
+	global is_3way_diff diff_active repo_config
+	global ui_diff ui_index ui_workdir
+	global current_diff_path current_diff_side current_diff_header
 
 	# - Git won't give us the diff, there's nothing to compare to!
 	#
@@ -167,6 +224,22 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 		ui_ready
 		return
 	}
+}
+
+proc start_show_diff {scroll_pos {add_opts {}}} {
+	global file_states file_lists
+	global is_3way_diff diff_active repo_config
+	global ui_diff ui_index ui_workdir
+	global current_diff_path current_diff_side current_diff_header
+
+	set path $current_diff_path
+	set w $current_diff_side
+
+	set s $file_states($path)
+	set m [lindex $s 0]
+	set is_3way_diff 0
+	set diff_active 1
+	set current_diff_header {}
 
 	set cmd [list]
 	if {$w eq $ui_index} {
@@ -188,8 +261,12 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 	if {$w eq $ui_index} {
 		lappend cmd [PARENT]
 	}
-	lappend cmd --
-	lappend cmd $path
+	if {$add_opts ne {}} {
+		eval lappend cmd $add_opts
+	} else {
+		lappend cmd --
+		lappend cmd $path
+	}
 
 	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
 		set diff_active 0
@@ -209,6 +286,7 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 proc read_diff {fd scroll_pos} {
 	global ui_diff diff_active
 	global is_3way_diff current_diff_header
+	global current_diff_queue
 
 	$ui_diff conf -state normal
 	while {[gets $fd line] >= 0} {
@@ -293,6 +371,12 @@ proc read_diff {fd scroll_pos} {
 
 	if {[eof $fd]} {
 		close $fd
+
+		if {$current_diff_queue ne {}} {
+			advance_diff_queue $scroll_pos
+			return
+		}
+
 		set diff_active 0
 		unlock_index
 		if {$scroll_pos ne {}} {
