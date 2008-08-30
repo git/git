@@ -1817,6 +1817,10 @@ proc do_rescan {} {
 	rescan ui_ready
 }
 
+proc ui_do_rescan {} {
+	rescan {force_first_diff; ui_ready}
+}
+
 proc do_commit {} {
 	commit_tree
 }
@@ -1917,6 +1921,18 @@ proc select_first_diff {} {
 	}
 }
 
+proc force_first_diff {} {
+	global current_diff_path
+
+	if {[info exists file_states($current_diff_path)]} {
+		set state [lindex $file_states($current_diff_path) 0]
+
+		if {[string index $state 1] ne {O}} return
+	}
+
+	select_first_diff
+}
+
 proc toggle_or_diff {w x y} {
 	global file_states file_lists current_diff_path ui_index ui_workdir
 	global last_clicked selected_paths
@@ -1938,13 +1954,23 @@ proc toggle_or_diff {w x y} {
 	# Do not stage files with conflicts
 	if {[info exists file_states($path)]} {
 		set state [lindex $file_states($path) 0]
-		if {[string first {U} $state] >= 0} {
-			set col 1
-		}
+	} else {
+		set state {__}
 	}
 
+	if {[string first {U} $state] >= 0} {
+		set col 1
+	}
+
+	# Restage the file, or simply show the diff
 	if {$col == 0 && $y > 1} {
-		set after [next_diff_after_action $w $path $lno]
+		if {[string index $state 1] eq {O}} {
+			set mmask {}
+		} else {
+			set mmask {[^O]}
+		}
+
+		set after [next_diff_after_action $w $path $lno $mmask]
 
 		if {$w eq $ui_index} {
 			update_indexinfo \
@@ -2208,7 +2234,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	.mbar.commit add separator
 
 	.mbar.commit add command -label [mc Rescan] \
-		-command do_rescan \
+		-command ui_do_rescan \
 		-accelerator F5
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
@@ -2564,7 +2590,7 @@ pack .vpane.lower.commarea.buttons.l -side top -fill x
 pack .vpane.lower.commarea.buttons -side left -fill y
 
 button .vpane.lower.commarea.buttons.rescan -text [mc Rescan] \
-	-command do_rescan
+	-command ui_do_rescan
 pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
@@ -2985,9 +3011,9 @@ if {[is_enabled transport]} {
 	bind . <$M1B-Key-P> do_push_anywhere
 }
 
-bind .   <Key-F5>     do_rescan
-bind .   <$M1B-Key-r> do_rescan
-bind .   <$M1B-Key-R> do_rescan
+bind .   <Key-F5>     ui_do_rescan
+bind .   <$M1B-Key-r> ui_do_rescan
+bind .   <$M1B-Key-R> ui_do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
 bind .   <$M1B-Key-t> do_add_selection
