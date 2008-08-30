@@ -1840,6 +1840,14 @@ proc toggle_or_diff {w x y} {
 	$ui_index tag remove in_sel 0.0 end
 	$ui_workdir tag remove in_sel 0.0 end
 
+	# Do not stage files with conflicts
+	if {[info exists file_states($path)]} {
+		set state [lindex $file_states($path) 0]
+		if {[string index $state 0] eq {U}} {
+			set col 1
+		}
+	}
+
 	if {$col == 0 && $y > 1} {
 		set i [expr {$lno-1}]
 		set ll [expr {[llength $file_lists($w)]-1}]
