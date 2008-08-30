@@ -1408,16 +1408,34 @@ static int remove_duplicate_parents(struct commit *commit)
 	return surviving_parents;
 }
 
-static struct commit_list **simplify_one(struct commit *commit, struct commit_list **tail)
+struct merge_simplify_state {
+	struct commit *simplified;
+};
+
+static struct merge_simplify_state *locate_simplify_state(struct rev_info *revs, struct commit *commit)
+{
+	struct merge_simplify_state *st;
+
+	st = lookup_decoration(&revs->merge_simplification, &commit->object);
+	if (!st) {
+		st = xcalloc(1, sizeof(*st));
+		add_decoration(&revs->merge_simplification, &commit->object, st);
+	}
+	return st;
+}
+
+static struct commit_list **simplify_one(struct rev_info *revs, struct commit *commit, struct commit_list **tail)
 {
 	struct commit_list *p;
+	struct merge_simplify_state *st, *pst;
 	int cnt;
 
+	st = locate_simplify_state(revs, commit);
+
 	/*
-	 * We store which commit each one simplifies to in its util field.
 	 * Have we handled this one?
 	 */
-	if (commit->util)
+	if (st->simplified)
 		return tail;
 
 	/*
@@ -1426,7 +1444,7 @@ static struct commit_list **simplify_one(struct commit *commit, struct commit_li
 	 * anyway.
 	 */
 	if ((commit->object.flags & UNINTERESTING) || !commit->parents) {
-		commit->util = commit;
+		st->simplified = commit;
 		return tail;
 	}
 
@@ -1435,19 +1453,24 @@ static struct commit_list **simplify_one(struct commit *commit, struct commit_li
 	 * Otherwise we are not ready to rewrite this one yet.
 	 */
 	for (cnt = 0, p = commit->parents; p; p = p->next) {
-		if (!p->item->util) {
+		pst = locate_simplify_state(revs, p->item);
+		if (!pst->simplified) {
 			tail = &commit_list_insert(p->item, tail)->next;
 			cnt++;
 		}
 	}
-	if (cnt)
+	if (cnt) {
+		tail = &commit_list_insert(commit, tail)->next;
 		return tail;
+	}
 
 	/*
 	 * Rewrite our list of parents.
 	 */
-	for (p = commit->parents; p; p = p->next)
-		p->item = p->item->util;
+	for (p = commit->parents; p; p = p->next) {
+		pst = locate_simplify_state(revs, p->item);
+		p->item = pst->simplified;
+	}
 	cnt = remove_duplicate_parents(commit);
 
 	/*
@@ -1482,9 +1505,11 @@ static struct commit_list **simplify_one(struct commit *commit, struct commit_li
 	    (commit->object.flags & UNINTERESTING) ||
 	    !(commit->object.flags & TREESAME) ||
 	    (1 < cnt))
-		commit->util = commit;
-	else
-		commit->util = commit->parents->item->util;
+		st->simplified = commit;
+	else {
+		pst = locate_simplify_state(revs, commit->parents->item);
+		st->simplified = pst->simplified;
+	}
 	return tail;
 }
 
@@ -1493,7 +1518,10 @@ static void simplify_merges(struct rev_info *revs)
 	struct commit_list *list;
 	struct commit_list *yet_to_do, **tail;
 
-	sort_in_topological_order(&revs->commits, revs->lifo);
+	if (!revs->topo_order)
+		sort_in_topological_order(&revs->commits, revs->lifo);
+	if (!revs->prune)
+		return;
 
 	/* feed the list reversed */
 	yet_to_do = NULL;
@@ -1508,7 +1536,7 @@ static void simplify_merges(struct rev_info *revs)
 			struct commit_list *next = list->next;
 			free(list);
 			list = next;
-			tail = simplify_one(commit, tail);
+			tail = simplify_one(revs, commit, tail);
 		}
 	}
 
@@ -1519,9 +1547,11 @@ static void simplify_merges(struct rev_info *revs)
 	while (list) {
 		struct commit *commit = list->item;
 		struct commit_list *next = list->next;
+		struct merge_simplify_state *st;
 		free(list);
 		list = next;
-		if (commit->util == commit)
+		st = locate_simplify_state(revs, commit);
+		if (st->simplified == commit)
 			tail = &commit_list_insert(commit, tail)->next;
 	}
 }
