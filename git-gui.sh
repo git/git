@@ -1326,6 +1326,8 @@ proc rescan_done {fd buf after} {
 	unlock_index
 	display_all_files
 	if {$current_diff_path ne {}} reshow_diff
+	if {$current_diff_path eq {}} select_first_diff
+
 	uplevel #0 $after
 }
 
@@ -1821,7 +1823,98 @@ proc do_commit {} {
 
 proc next_diff {} {
 	global next_diff_p next_diff_w next_diff_i
-	show_diff $next_diff_p $next_diff_w $next_diff_i
+	show_diff $next_diff_p $next_diff_w {}
+}
+
+proc find_anchor_pos {lst name} {
+	set lid [lsearch -sorted -exact $lst $name]
+
+	if {$lid == -1} {
+		set lid 0
+		foreach lname $lst {
+			if {$lname >= $name} break
+			incr lid
+		}
+	}
+
+	return $lid
+}
+
+proc find_file_from {flist idx delta path mmask} {
+	global file_states
+
+	set len [llength $flist]
+	while {$idx >= 0 && $idx < $len} {
+		set name [lindex $flist $idx]
+
+		if {$name ne $path && [info exists file_states($name)]} {
+			set state [lindex $file_states($name) 0]
+
+			if {$mmask eq {} || [regexp $mmask $state]} {
+				return $idx
+			}
+		}
+
+		incr idx $delta
+	}
+
+	return {}
+}
+
+proc find_next_diff {w path {lno {}} {mmask {}}} {
+	global next_diff_p next_diff_w next_diff_i
+	global file_lists ui_index ui_workdir
+
+	set flist $file_lists($w)
+	if {$lno eq {}} {
+		set lno [find_anchor_pos $flist $path]
+	} else {
+		incr lno -1
+	}
+
+	if {$mmask ne {} && ![regexp {(^\^)|(\$$)} $mmask]} {
+		if {$w eq $ui_index} {
+			set mmask "^$mmask"
+		} else {
+			set mmask "$mmask\$"
+		}
+	}
+
+	set idx [find_file_from $flist $lno 1 $path $mmask]
+	if {$idx eq {}} {
+		incr lno -1
+		set idx [find_file_from $flist $lno -1 $path $mmask]
+	}
+
+	if {$idx ne {}} {
+		set next_diff_w $w
+		set next_diff_p [lindex $flist $idx]
+		set next_diff_i [expr {$idx+1}]
+		return 1
+	} else {
+		return 0
+	}
+}
+
+proc next_diff_after_action {w path {lno {}} {mmask {}}} {
+	global current_diff_path
+
+	if {$path ne $current_diff_path} {
+		return {}
+	} elseif {[find_next_diff $w $path $lno $mmask]} {
+		return {next_diff;}
+	} else {
+		return {reshow_diff;}
+	}
+}
+
+proc select_first_diff {} {
+	global ui_workdir
+
+	if {[find_next_diff $ui_workdir {} 1 {^_?U}] ||
+	    [find_next_diff $ui_workdir {} 1 {[^O]$}]} {
+		next_diff
+	}
 }
 
 proc toggle_or_diff {w x y} {
@@ -1851,32 +1944,7 @@ proc toggle_or_diff {w x y} {
 	}
 
 	if {$col == 0 && $y > 1} {
-		set i [expr {$lno-1}]
-		set ll [expr {[llength $file_lists($w)]-1}]
-
-		if {$i == $ll && $i == 0} {
-			set after {reshow_diff;}
-		} else {
-			global next_diff_p next_diff_w next_diff_i
-
-			set next_diff_w $w
-
-			if {$i < $ll} {
-				set i [expr {$i + 1}]
-				set next_diff_i $i
-			} else {
-				set next_diff_i $i
-				set i [expr {$i - 1}]
-			}
-
-			set next_diff_p [lindex $file_lists($w) $i]
-
-			if {$next_diff_p ne {} && $current_diff_path ne {}} {
-				set after {next_diff;}
-			} else {
-				set after {}
-			}
-		}
+		set after [next_diff_after_action $w $path $lno]
 
 		if {$w eq $ui_index} {
 			update_indexinfo \

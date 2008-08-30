@@ -24,10 +24,16 @@ proc reshow_diff {} {
 	set p $current_diff_path
 	if {$p eq {}} {
 		# No diff is being shown.
-	} elseif {$current_diff_side eq {}
-		|| [catch {set s $file_states($p)}]
-		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
+	} elseif {$current_diff_side eq {}} {
 		clear_diff
+	} elseif {[catch {set s $file_states($p)}]
+		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
+
+		if {[find_next_diff $current_diff_side $p {} {[^O]}]} {
+			next_diff
+		} else {
+			clear_diff
+		}
 	} else {
 		set save_pos [lindex [$ui_diff yview] 0]
 		show_diff $p $current_diff_side {} $save_pos
@@ -71,6 +77,7 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 	}
 	if {$lno >= 1} {
 		$w tag add in_diff $lno.0 [expr {$lno + 1}].0
+		$w see $lno.0
 	}
 
 	set s $file_states($path)
@@ -366,10 +373,9 @@ proc apply_hunk {x y} {
 	}
 	unlock_index
 	display_file $current_diff_path $mi
+	# This should trigger shift to the next changed file
 	if {$o eq {_}} {
-		clear_diff
-	} else {
-		set current_diff_path $current_diff_path
+		reshow_diff
 	}
 }
 

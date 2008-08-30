@@ -24,13 +24,9 @@ This operation can be undone only by restarting the merge." \
 }
 
 proc merge_add_resolution {path} {
-	global current_diff_path
+	global current_diff_path ui_workdir
 
-	if {$path eq $current_diff_path} {
-		set after {reshow_diff;}
-	} else {
-		set after {}
-	}
+	set after [next_diff_after_action $ui_workdir $path {} {^_?U}]
 
 	update_index \
 		[mc "Adding resolution for %s" [short_path $path]] \
