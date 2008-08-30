@@ -2713,6 +2713,51 @@ $ui_diff tag raise sel
 
 # -- Diff Body Context Menu
 #
+
+proc create_common_diff_popup {ctxm} {
+	$ctxm add command \
+		-label [mc "Show Less Context"] \
+		-command show_less_context
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add command \
+		-label [mc "Show More Context"] \
+		-command show_more_context
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add separator
+	$ctxm add command \
+		-label [mc Refresh] \
+		-command reshow_diff
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add command \
+		-label [mc Copy] \
+		-command {tk_textCopy $ui_diff}
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add command \
+		-label [mc "Select All"] \
+		-command {focus $ui_diff;$ui_diff tag add sel 0.0 end}
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add command \
+		-label [mc "Copy All"] \
+		-command {
+			$ui_diff tag add sel 0.0 end
+			tk_textCopy $ui_diff
+			$ui_diff tag remove sel 0.0 end
+		}
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add separator
+	$ctxm add command \
+		-label [mc "Decrease Font Size"] \
+		-command {incr_font_size font_diff -1}
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add command \
+		-label [mc "Increase Font Size"] \
+		-command {incr_font_size font_diff 1}
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add separator
+	$ctxm add command -label [mc "Options..."] \
+		-command do_options
+}
+
 set ctxm .vpane.lower.diff.body.ctxm
 menu $ctxm -tearoff 0
 $ctxm add command \
@@ -2726,73 +2771,60 @@ $ctxm add command \
 set ui_diff_applyline [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyline -state]
 $ctxm add separator
-$ctxm add command \
-	-label [mc "Show Less Context"] \
-	-command show_less_context
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add command \
-	-label [mc "Show More Context"] \
-	-command show_more_context
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add separator
-$ctxm add command \
-	-label [mc Refresh] \
-	-command reshow_diff
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add command \
-	-label [mc Copy] \
-	-command {tk_textCopy $ui_diff}
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add command \
-	-label [mc "Select All"] \
-	-command {focus $ui_diff;$ui_diff tag add sel 0.0 end}
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add command \
-	-label [mc "Copy All"] \
-	-command {
-		$ui_diff tag add sel 0.0 end
-		tk_textCopy $ui_diff
-		$ui_diff tag remove sel 0.0 end
-	}
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add separator
-$ctxm add command \
-	-label [mc "Decrease Font Size"] \
-	-command {incr_font_size font_diff -1}
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add command \
-	-label [mc "Increase Font Size"] \
-	-command {incr_font_size font_diff 1}
-lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-$ctxm add separator
-$ctxm add command -label [mc "Options..."] \
-	-command do_options
-proc popup_diff_menu {ctxm x y X Y} {
+create_common_diff_popup $ctxm
+
+set ctxmmg .vpane.lower.diff.body.ctxmmg
+menu $ctxmmg -tearoff 0
+$ctxmmg add command \
+	-label [mc "Use Remote Version"] \
+	-command {merge_resolve_one 3}
+lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
+$ctxmmg add command \
+	-label [mc "Use Local Version"] \
+	-command {merge_resolve_one 2}
+lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
+$ctxmmg add command \
+	-label [mc "Revert To Base"] \
+	-command {merge_resolve_one 1}
+lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
+$ctxmmg add separator
+create_common_diff_popup $ctxmmg
+
+proc popup_diff_menu {ctxm ctxmmg x y X Y} {
 	global current_diff_path file_states
 	set ::cursorX $x
 	set ::cursorY $y
-	if {$::ui_index eq $::current_diff_side} {
-		set l [mc "Unstage Hunk From Commit"]
-		set t [mc "Unstage Line From Commit"]
+	if {[info exists file_states($current_diff_path)]} {
+		set state [lindex $file_states($current_diff_path) 0]
 	} else {
-		set l [mc "Stage Hunk For Commit"]
-		set t [mc "Stage Line For Commit"]
+		set state {__}
 	}
-	if {$::is_3way_diff
-		|| $current_diff_path eq {}
-		|| ![info exists file_states($current_diff_path)]
-		|| {_O} eq [lindex $file_states($current_diff_path) 0]
-		|| {_T} eq [lindex $file_states($current_diff_path) 0]
-		|| {T_} eq [lindex $file_states($current_diff_path) 0]} {
-		set s disabled
+	if {[string index $state 0] eq {U}} {
+		tk_popup $ctxmmg $X $Y
 	} else {
-		set s normal
+		if {$::ui_index eq $::current_diff_side} {
+			set l [mc "Unstage Hunk From Commit"]
+			set t [mc "Unstage Line From Commit"]
+		} else {
+			set l [mc "Stage Hunk For Commit"]
+			set t [mc "Stage Line For Commit"]
+		}
+		if {$::is_3way_diff
+			|| $current_diff_path eq {}
+			|| {__} eq $state
+			|| {_O} eq $state
+			|| {_T} eq $state
+			|| {T_} eq $state} {
+			set s disabled
+		} else {
+			set s normal
+		}
+		$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
+		$ctxm entryconf $::ui_diff_applyline -state $s -label $t
+		tk_popup $ctxm $X $Y
 	}
-	$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
-	$ctxm entryconf $::ui_diff_applyline -state $s -label $t
-	tk_popup $ctxm $X $Y
 }
-bind_button3 $ui_diff [list popup_diff_menu $ctxm %x %y %X %Y]
+bind_button3 $ui_diff [list popup_diff_menu $ctxm $ctxmmg %x %y %X %Y]
 
 # -- Status Bar
 #
