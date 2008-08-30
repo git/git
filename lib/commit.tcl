@@ -151,6 +151,7 @@ The rescan will be automatically started now.
 		D? -
 		T_ -
 		M? {set files_ready 1}
+		_U -
 		U? {
 			error_popup [mc "Unmerged files cannot be committed.
 

@@ -164,6 +164,7 @@ proc write_update_index {fd pathList totalCnt batch after} {
 		_O -
 		AM {set new A_}
 		_T {set new T_}
+		_U -
 		U? {
 			if {[file exists $path]} {
 				set new M_

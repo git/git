@@ -1669,10 +1669,12 @@ foreach i {
 		{D_ {mc "Staged for removal"}}
 		{DO {mc "Staged for removal, still present"}}
 
+		{_U {mc "Requires merge resolution"}}
 		{U_ {mc "Requires merge resolution"}}
 		{UU {mc "Requires merge resolution"}}
 		{UM {mc "Requires merge resolution"}}
 		{UD {mc "Requires merge resolution"}}
+		{UT {mc "Requires merge resolution"}}
 	} {
 	set text [eval [lindex $i 1]]
 	if {$max_status_desc < [string length $text]} {
@@ -1843,7 +1845,7 @@ proc toggle_or_diff {w x y} {
 	# Do not stage files with conflicts
 	if {[info exists file_states($path)]} {
 		set state [lindex $file_states($path) 0]
-		if {[string index $state 0] eq {U}} {
+		if {[string first {U} $state] >= 0} {
 			set col 1
 		}
 	}
@@ -2814,7 +2816,7 @@ proc popup_diff_menu {ctxm ctxmmg x y X Y} {
 	} else {
 		set state {__}
 	}
-	if {[string index $state 0] eq {U}} {
+	if {[string first {U} $state] >= 0} {
 		tk_popup $ctxmmg $X $Y
 	} else {
 		if {$::ui_index eq $::current_diff_side} {

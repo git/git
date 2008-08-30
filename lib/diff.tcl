@@ -166,7 +166,7 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 		lappend cmd diff-index
 		lappend cmd --cached
 	} elseif {$w eq $ui_workdir} {
-		if {[string index $m 0] eq {U}} {
+		if {[string first {U} $m] >= 0} {
 			lappend cmd diff
 		} else {
 			lappend cmd diff-files
