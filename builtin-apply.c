@@ -1996,6 +1996,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	/*
 	 * A hunk to change lines at the beginning would begin with
 	 * @@ -1,L +N,M @@
+	 * but we need to be careful.  -U0 that inserts before the second
+	 * line also has this pattern.
 	 *
 	 * And a hunk to add to an empty file would begin with
 	 * @@ -0,0 +N,M @@
@@ -2003,7 +2005,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	 * In other words, a hunk that is (frag->oldpos <= 1) with or
 	 * without leading context must match at the beginning.
 	 */
-	match_beginning = frag->oldpos <= 1;
+	match_beginning = (!frag->oldpos ||
+			   (frag->oldpos == 1 && !unidiff_zero));
 
 	/*
 	 * A hunk without trailing lines must match at the end.
