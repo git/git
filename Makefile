@@ -1379,7 +1379,7 @@ endif
 	{ $(RM) "$$execdir/git-add$X" && \
 		ln git-add$X "$$execdir/git-add$X" 2>/dev/null || \
 		cp git-add$X "$$execdir/git-add$X"; } && \
-	{ $(foreach p,$(filter-out git-add,$(BUILT_INS)), $(RM) "$$execdir/$p" && \
+	{ $(foreach p,$(filter-out git-add$X,$(BUILT_INS)), $(RM) "$$execdir/$p" && \
 		ln "$$execdir/git-add$X" "$$execdir/$p" 2>/dev/null || \
 		ln -s "git-add$X" "$$execdir/$p" 2>/dev/null || \
 		cp "$$execdir/git-add$X" "$$execdir/$p" || exit;) } && \
