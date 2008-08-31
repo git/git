@@ -3380,11 +3380,12 @@ sub generate_diff {
 	while (<$diff_fh>) {
 		chomp $_; # this gets rid of the trailing "\0"
 		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
-					$::sha1\s($::sha1)\s
+					($::sha1)\s($::sha1)\s
 					([MTCRAD])\d*$/xo) {
 			push @mods, {	mode_a => $1, mode_b => $2,
-					sha1_b => $3, chg => $4 };
-			if ($4 =~ /^(?:C|R)$/) {
+					sha1_a => $3, sha1_b => $4,
+					chg => $5 };
+			if ($5 =~ /^(?:C|R)$/) {
 				$state = 'file_a';
 			} else {
 				$state = 'file_b';
