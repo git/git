@@ -3663,6 +3663,27 @@ sub change_file_prop {
 	$self->SUPER::change_file_prop($fbat, $pname, $pval, $self->{pool});
 }
 
+sub _chg_file_get_blob ($$$$) {
+	my ($self, $fbat, $m, $which) = @_;
+	my $fh = Git::temp_acquire("git_blob_$which");
+	if ($m->{"mode_$which"} =~ /^120/) {
+		print $fh 'link ' or croak $!;
+		$self->change_file_prop($fbat,'svn:special','*');
+	} elsif ($m->{mode_a} =~ /^120/ && $m->{"mode_$which"} !~ /^120/) {
+		$self->change_file_prop($fbat,'svn:special',undef);
+	}
+	my $blob = $m->{"sha1_$which"};
+	return ($fh,) if ($blob =~ /^0{40}$/);
+	my $size = $::_repository->cat_blob($blob, $fh);
+	croak "Failed to read object $blob" if ($size < 0);
+	$fh->flush == 0 or croak $!;
+	seek $fh, 0, 0 or croak $!;
+
+	my $exp = ::md5sum($fh);
+	seek $fh, 0, 0 or croak $!;
+	return ($fh, $exp);
+}
+
 sub chg_file {
 	my ($self, $fbat, $m) = @_;
 	if ($m->{mode_b} =~ /755$/ && $m->{mode_a} !~ /755$/) {
@@ -3670,21 +3691,7 @@ sub chg_file {
 	} elsif ($m->{mode_b} !~ /755$/ && $m->{mode_a} =~ /755$/) {
 		$self->change_file_prop($fbat,'svn:executable',undef);
 	}
-	my $fh = Git::temp_acquire('git_blob');
-	if ($m->{mode_b} =~ /^120/) {
-		print $fh 'link ' or croak $!;
-		$self->change_file_prop($fbat,'svn:special','*');
-	} elsif ($m->{mode_a} =~ /^120/ && $m->{mode_b} !~ /^120/) {
-		$self->change_file_prop($fbat,'svn:special',undef);
-	}
-	my $size = $::_repository->cat_blob($m->{sha1_b}, $fh);
-	croak "Failed to read object $m->{sha1_b}" if ($size < 0);
-	$fh->flush == 0 or croak $!;
-	seek $fh, 0, 0 or croak $!;
-
-	my $exp = ::md5sum($fh);
-	seek $fh, 0, 0 or croak $!;
-
+	my ($fh, $exp) = _chg_file_get_blob $self, $fbat, $m, 'b';
 	my $pool = SVN::Pool->new;
 	my $atd = $self->apply_textdelta($fbat, undef, $pool);
 	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
