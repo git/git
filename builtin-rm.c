@@ -221,7 +221,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			printf("rm '%s'\n", path);
 
 		if (remove_file_from_cache(path))
-			die("git-rm: unable to remove %s", path);
+			die("git rm: unable to remove %s", path);
 	}
 
 	if (show_only)
@@ -244,7 +244,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!removed)
-				die("git-rm: %s: %s", path, strerror(errno));
+				die("git rm: %s: %s", path, strerror(errno));
 		}
 	}
 
