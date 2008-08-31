@@ -20,6 +20,18 @@ static const char * const checkout_usage[] = {
 	NULL,
 };
 
+struct checkout_opts {
+	int quiet;
+	int merge;
+	int force;
+	int writeout_stage;
+	int writeout_error;
+
+	const char *new_branch;
+	int new_branch_log;
+	enum branch_track track;
+};
+
 static int post_checkout_hook(struct commit *old, struct commit *new,
 			      int changed)
 {
@@ -76,7 +88,43 @@ static int read_tree_some(struct tree *tree, const char **pathspec)
 	return 0;
 }
 
-static int checkout_paths(struct tree *source_tree, const char **pathspec)
+static int skip_same_name(struct cache_entry *ce, int pos)
+{
+	while (++pos < active_nr &&
+	       !strcmp(active_cache[pos]->name, ce->name))
+		; /* skip */
+	return pos;
+}
+
+static int check_stage(int stage, struct cache_entry *ce, int pos)
+{
+	while (pos < active_nr &&
+	       !strcmp(active_cache[pos]->name, ce->name)) {
+		if (ce_stage(active_cache[pos]) == stage)
+			return 0;
+		pos++;
+	}
+	return error("path '%s' does not have %s version",
+		     ce->name,
+		     (stage == 2) ? "our" : "their");
+}
+
+static int checkout_stage(int stage, struct cache_entry *ce, int pos,
+			  struct checkout *state)
+{
+	while (pos < active_nr &&
+	       !strcmp(active_cache[pos]->name, ce->name)) {
+		if (ce_stage(active_cache[pos]) == stage)
+			return checkout_entry(active_cache[pos], state, NULL);
+		pos++;
+	}
+	return error("path '%s' does not have %s version",
+		     ce->name,
+		     (stage == 2) ? "our" : "their");
+}
+
+static int checkout_paths(struct tree *source_tree, const char **pathspec,
+			  struct checkout_opts *opts)
 {
 	int pos;
 	struct checkout state;
@@ -85,7 +133,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	int flag;
 	struct commit *head;
 	int errs = 0;
-
+	int stage = opts->writeout_stage;
 	int newfd;
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 
@@ -107,6 +155,26 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	if (report_path_error(ps_matched, pathspec, 0))
 		return 1;
 
+	/* Any unmerged paths? */
+	for (pos = 0; pos < active_nr; pos++) {
+		struct cache_entry *ce = active_cache[pos];
+		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
+			if (!ce_stage(ce))
+				continue;
+			if (opts->force) {
+				warning("path '%s' is unmerged", ce->name);
+			} else if (stage) {
+				errs |= check_stage(stage, ce, pos);
+			} else {
+				errs = 1;
+				error("path '%s' is unmerged", ce->name);
+			}
+			pos = skip_same_name(ce, pos) - 1;
+		}
+	}
+	if (errs)
+		return 1;
+
 	/* Now we are committed to check them out */
 	memset(&state, 0, sizeof(state));
 	state.force = 1;
@@ -114,7 +182,13 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
 		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
-			errs |= checkout_entry(ce, &state, NULL);
+			if (!ce_stage(ce)) {
+				errs |= checkout_entry(ce, &state, NULL);
+				continue;
+			}
+			if (stage)
+				errs |= checkout_stage(stage, ce, pos, &state);
+			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
 
@@ -150,17 +224,6 @@ static void describe_detached_head(char *msg, struct commit *commit)
 		find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV), sb.buf);
 	strbuf_release(&sb);
 }
-
-struct checkout_opts {
-	int quiet;
-	int merge;
-	int force;
-	int writeout_error;
-
-	char *new_branch;
-	int new_branch_log;
-	enum branch_track track;
-};
 
 static int reset_tree(struct tree *tree, struct checkout_opts *o, int worktree)
 {
@@ -426,6 +489,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, "log for new branch"),
 		OPT_SET_INT('t', "track",  &opts.track, "track",
 			BRANCH_TRACK_EXPLICIT),
+		OPT_SET_INT('2', "ours", &opts.writeout_stage, "stage",
+			    2),
+		OPT_SET_INT('3', "theirs", &opts.writeout_stage, "stage",
+			    3),
 		OPT_BOOLEAN('f', NULL, &opts.force, "force"),
 		OPT_BOOLEAN('m', NULL, &opts.merge, "merge"),
 		OPT_END(),
@@ -527,20 +594,22 @@ no_reference:
 			die("invalid path specification");
 
 		/* Checkout paths */
-		if (opts.new_branch || opts.force || opts.merge) {
+		if (opts.new_branch || opts.merge) {
 			if (argc == 1) {
-				die("git checkout: updating paths is incompatible with switching branches/forcing\nDid you intend to checkout '%s' which can not be resolved as commit?", argv[0]);
+				die("git checkout: updating paths is incompatible with switching branches.\nDid you intend to checkout '%s' which can not be resolved as commit?", argv[0]);
 			} else {
-				die("git checkout: updating paths is incompatible with switching branches/forcing");
+				die("git checkout: updating paths is incompatible with switching branches.");
 			}
 		}
 
-		return checkout_paths(source_tree, pathspec);
+		return checkout_paths(source_tree, pathspec, &opts);
 	}
 
 	if (new.name && !new.commit) {
 		die("Cannot switch branch to a non-commit.");
 	}
+	if (opts.writeout_stage)
+		die("--ours/--theirs is incompatible with switching branches.");
 
 	return switch_branches(&opts, &new);
 }
