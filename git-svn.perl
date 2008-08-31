@@ -3691,12 +3691,20 @@ sub chg_file {
 	} elsif ($m->{mode_b} !~ /755$/ && $m->{mode_a} =~ /755$/) {
 		$self->change_file_prop($fbat,'svn:executable',undef);
 	}
-	my ($fh, $exp) = _chg_file_get_blob $self, $fbat, $m, 'b';
+	my ($fh_a, $exp_a) = _chg_file_get_blob $self, $fbat, $m, 'a';
+	my ($fh_b, $exp_b) = _chg_file_get_blob $self, $fbat, $m, 'b';
 	my $pool = SVN::Pool->new;
-	my $atd = $self->apply_textdelta($fbat, undef, $pool);
-	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
-	die "Checksum mismatch\nexpected: $exp\ngot: $got\n" if ($got ne $exp);
-	Git::temp_release($fh, 1);
+	my $atd = $self->apply_textdelta($fbat, $exp_a, $pool);
+	if (-s $fh_a) {
+		my $txstream = SVN::TxDelta::new ($fh_a, $fh_b, $pool);
+		SVN::TxDelta::send_txstream($txstream, @$atd, $pool);
+	} else {
+		my $got = SVN::TxDelta::send_stream($fh_b, @$atd, $pool);
+		die "Checksum mismatch\nexpected: $exp_b\ngot: $got\n"
+		    if ($got ne $exp_b);
+	}
+	Git::temp_release($fh_b, 1);
+	Git::temp_release($fh_a, 1);
 	$pool->clear;
 }
 
