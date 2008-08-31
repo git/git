@@ -421,14 +421,14 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
+	unless ($gs) {
+		die "Unable to determine upstream SVN information from ",
+		    "$head history.\nPerhaps the repository is empty.";
+	}
 	$url = defined $_commit_url ? $_commit_url : $gs->full_url;
 	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
 		print "Committing to $url ...\n";
-	}
-	unless ($gs) {
-		die "Unable to determine upstream SVN information from ",
-		    "$head history.\nPerhaps the repository is empty.";
 	}
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
 	if ($_no_rebase && scalar(@$linear_refs) > 1) {
