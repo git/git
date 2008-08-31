@@ -5,7 +5,7 @@ struct cmdnames {
 	int alloc;
 	int cnt;
 	struct cmdname {
-		size_t len;
+		size_t len; /* also used for similarity index in help.c */
 		char name[FLEX_ARRAY];
 	} **names;
 };
