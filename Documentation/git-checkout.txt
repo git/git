@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git checkout' [-q] [-f] [[--track | --no-track] -b <new_branch> [-l]] [-m] [<branch>]
-'git checkout' [-f|--ours|--theirs|-m] [<tree-ish>] [--] <paths>...
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <paths>...
 
 DESCRIPTION
 -----------
@@ -84,6 +84,7 @@ entries; instead, unmerged entries are ignored.
 	based sha1 expressions such as "<branchname>@\{yesterday}".
 
 -m::
+--merge::
 	When switching branches,
 	if you have local modifications to one or more files that
 	are different between the current branch and the branch to
@@ -100,6 +101,13 @@ should result in deletion of the path).
 +
 When checking out paths from the index, this option lets you recreate
 the conflicted merge in the specified paths.
+
+--conflict=<style>::
+	The same as --merge option above, but changes the way the
+	conflicting hunks are presented, overriding the
+	merge.conflictstyle configuration variable.  Possible values are
+	"merge" (default) and "diff3" (in addition to what is shown by
+	"merge" style, shows the original contents).
 
 <new_branch>::
 	Name for the new branch.

@@ -580,6 +580,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	const char *arg;
 	struct branch_info new;
 	struct tree *source_tree = NULL;
+	char *conflict_style = NULL;
 	struct option options[] = {
 		OPT__QUIET(&opts.quiet),
 		OPT_STRING('b', NULL, &opts.new_branch, "new branch", "branch"),
@@ -591,7 +592,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT('3', "theirs", &opts.writeout_stage, "stage",
 			    3),
 		OPT_BOOLEAN('f', NULL, &opts.force, "force"),
-		OPT_BOOLEAN('m', NULL, &opts.merge, "merge"),
+		OPT_BOOLEAN('m', "merge", &opts.merge, "merge"),
+		OPT_STRING(0, "conflict", &conflict_style, "style",
+			   "conflict style (merge or diff3)"),
 		OPT_END(),
 	};
 	int has_dash_dash;
@@ -605,6 +608,11 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
+
+	if (conflict_style) {
+		opts.merge = 1; /* implied */
+		git_xmerge_config("merge.conflictstyle", conflict_style, NULL);
+	}
 
 	if (!opts.new_branch && (opts.track != git_branch_track))
 		die("git checkout: --track and --no-track require -b");
