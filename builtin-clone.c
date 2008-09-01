@@ -387,7 +387,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	path = get_repo_path(repo_name, &is_bundle);
 	if (path)
-		repo = path;
+		repo = xstrdup(make_nonrelative_path(repo_name));
 	else if (!strchr(repo_name, ':'))
 		repo = xstrdup(make_absolute_path(repo_name));
 	else
