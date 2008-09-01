@@ -3697,7 +3697,11 @@ sub chg_file {
 	my $atd = $self->apply_textdelta($fbat, $exp_a, $pool);
 	if (-s $fh_a) {
 		my $txstream = SVN::TxDelta::new ($fh_a, $fh_b, $pool);
-		SVN::TxDelta::send_txstream($txstream, @$atd, $pool);
+		my $res = SVN::TxDelta::send_txstream($txstream, @$atd, $pool);
+		if (defined $res) {
+			die "Unexpected result from send_txstream: $res\n",
+			    "(SVN::Core::VERSION: $SVN::Core::VERSION)\n";
+		}
 	} else {
 		my $got = SVN::TxDelta::send_stream($fh_b, @$atd, $pool);
 		die "Checksum mismatch\nexpected: $exp_b\ngot: $got\n"
