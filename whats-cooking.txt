@@ -1,8 +1,8 @@
-Subject: What's cooking in git.git (Aug 2008, #08; Wed, 27)
-X-master-at: a1184d85e8752658f02746982822f43f32316803
-X-next-at: 9f25cb4fbeed4ff00c19fe462492a5ee6dfb82b3
+Subject: What's cooking in git.git (Aug 2008, #09; Sun, 31)
+X-master-at: 7f314565fe20e324e8db1a7c233e43ca4e3683f0
+X-next-at: 007e493846da7bb03b026e90ac0af8bdea9d0d0c
 
-What's cooking in git.git (Aug 2008, #08; Wed, 27)
+What's cooking in git.git (Aug 2008, #09; Sun, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -15,39 +15,90 @@ meant to be merged to the maintenance series have "maint-" in their names.
 ----------------------------------------------------------------
 [New Topics]
 
-* dk/emacs (Tue Aug 26 22:24:40 2008 -0500) 2 commits
- - Teach git.el to mark/unmark files by regexp
- - git.el: Diff only file at point by default
+Most of them are expected to spend only short amount of time on 'next'
+before graduating to 'master'.
 
-With my limited elisp expertise I did not see anything obviously wrong
-with these two patches from David Kågedal and David Christensen.
+* jc/maint-checkout-fix (Fri Aug 29 13:40:36 2008 -0700) 1 commit
+ + checkout: do not check out unmerged higher stages randomly
 
-* tl/p4 (Thu Aug 28 00:36:12 2008 +0200) 1 commit
- - git-p4: Fix checkout bug when using --import-local.
+* kb/am-directory (Fri Aug 29 15:27:50 2008 -0700) 1 commit
+ - git-am: Pass the --directory option through to git-apply
 
-A fix forked from 'maint' waiting for an Ack.
+* np/safer-pack (Fri Aug 29 16:08:02 2008 -0400) 5 commits
+ + fixup_pack_header_footer(): use nicely aligned buffer sizes
+ + index-pack: use fixup_pack_header_footer()'s validation mode
+ + pack-objects: use fixup_pack_header_footer()'s validation mode
+ + improve reliability of fixup_pack_header_footer()
+ + pack-objects: improve returned information from write_one()
+
+* jc/hide-cr-in-diff-from-less (Wed Aug 27 19:48:01 2008 -0700) 1 commit
+ + diff: Help "less" hide ^M from the output
+
+* jc/better-conflict-resolution (Sun Aug 31 20:36:32 2008 -0700) 15 commits
+ . git-merge documentation: describe how conflict is presented
+ . checkout --conflict=<style>: recreate merge in a non-default style
+ + checkout -m: recreate merge when checking out of unmerged index
+ + Merge branch 'jc/maint-checkout-fix' into 'jc/better-conflict-
+   resolution'
+ + git-merge-recursive: learn to honor merge.conflictstyle
+ + merge.conflictstyle: choose between "merge" and "diff3 -m" styles
+ + rerere: understand "diff3 -m" style conflicts with the original
+ + rerere.c: use symbolic constants to keep track of parsing states
+ + xmerge.c: "diff3 -m" style clips merge reduction level to EAGER or
+   less
+ + xmerge.c: minimum readability fixups
+ + xdiff-merge: optionally show conflicts in "diff3 -m" style
+ + xdl_fill_merge_buffer(): separate out a too deeply nested function
+ + checkout --ours/--theirs: allow checking out one side of a
+   conflicting merge
+ + checkout -f: allow ignoring unmerged paths when checking out of
+   the index
+ + checkout: do not check out unmerged higher stages randomly
+
+* tr/rev-list-reverse (Mon Sep 1 00:31:37 2008 +0200) 5 commits
+ + t6013: replace use of 'tac' with equivalent Perl
+ + rev-list: fix --reverse interaction with --parents
+ + Topo-sort before --simplify-merges
+ + revision traversal: show full history with merge simplification
+ + revision.c: whitespace fix
+
+* rf/man-env (Fri Aug 29 17:00:43 2008 +0200) 1 commit
+ + builtin-help: fallback to GIT_MAN_VIEWER before man
+
+* ar/autospell (Sun Aug 31 15:54:58 2008 +0200) 2 commits
+ + Add help.autocorrect to enable/disable autocorrecting
+ + git wrapper: DWIM mistyped commands
+
+* ho/dashless (Sun Aug 31 09:39:19 2008 -0700) 2 commits
+ + 'git foo' program identifies itself without dash in die() messages
+ + Start conforming code to "git subcmd" style
+
+* jc/author-nickname (Tue Aug 26 23:13:13 2008 -0700) 1 commit
+ + git commit --author=$name: look $name up in existing commits
+
+* dp/pid-uintmax (Sun Aug 31 14:09:39 2008 +0200) 1 commit
+ + cast pid_t's to uintmax_t to improve portability
+
+* nd/worktree (Sat Aug 30 16:15:32 2008 +0700) 5 commits
+ - setup_git_directory(): fix move to worktree toplevel directory
+ - update-index: fix worktree setup
+ + read-tree: setup worktree if merge is required
+ + grep: fix worktree setup
+ + diff*: fix worktree setup
+
+The last two fail test suite.
 
 ----------------------------------------------------------------
 [Stalled -- Needs Action to Proceed (or to be dropped)]
 
 * bd/blame (Thu Aug 21 18:22:01 2008 -0500) 5 commits
- . Use xdiff caching to improve git blame performance
- . Allow xdiff machinery to cache hash results for a file
- . Always initialize xpparam_t to 0
- . Bypass textual patch generation and parsing in git blame
- . Allow alternate "low-level" emit function from xdl_diff
+ - Use xdiff caching to improve git blame performance
+ - Allow xdiff machinery to cache hash results for a file
+ - Always initialize xpparam_t to 0
+ - Bypass textual patch generation and parsing in git blame
+ - Allow alternate "low-level" emit function from xdl_diff
 
 Réne had good comments on how the callback should be structured.
-
-* jc/maint-name-hash-clear (Sat Aug 23 13:05:10 2008 -0700) 1 commit
- - discard_cache: reset lazy name_hash bit
-
-I spotted this by accident while working on something unrelated.
-
-When a program calls discard_cache() to read the index again, we do not
-properly re-initialize the name_hash structure that is used by the case
-insensitivitly logic.  This _might_ improve issues people may be having on
-case insensitive filesystems.  I dunno.
 
 * jc/cc-ld-dynpath (Sat Aug 16 15:01:23 2008 +0200) 2 commits
  - configure: auto detect dynamic library path switches
@@ -56,83 +107,84 @@ case insensitive filesystems.  I dunno.
 Needs success reports from people who do use user-defined dynamic library
 path when they build their "git" before this series can go anywhere.
 
-* lt/time-reject-fractional-seconds (Sat Aug 16 21:25:40 2008 -0700) 1 commit
- - date/time: do not get confused by fractional seconds
+----------------------------------------------------------------
+[Will be merged to "master" soon]
 
-Linus hints further enhancements as "the right way", so let's see if
-somebody else steps up and tries it before merging this to 'next'.
+* tr/filter-branch (Sun Aug 31 10:41:01 2008 -0700) 14 commits
+ + Merge branch 'tr/rev-list-docs' into tr/filter-branch
+ + Merge branch 'jc/post-simplify' (early part) into tr/filter-branch
+ + revision --simplify-merges: make it a no-op without pathspec
+ + revision --simplify-merges: do not leave commits unprocessed
+ + revision --simplify-merges: use decoration instead of commit->util
+   field
+ + Documentation: rev-list-options: move --simplify-merges
+   documentation
+ + Merge branch 'jc/post-simplify' into tr/rev-list-docs
+ + filter-branch: use --simplify-merges
+ + Merge branch 'jc/post-simplify' into tr/filter-branch
+ + filter-branch: fix ref rewriting with --subdirectory-filter
+ + filter-branch: Extend test to show rewriting bug
+ + Topo-sort before --simplify-merges
+ + revision traversal: show full history with merge simplification
+ + revision.c: whitespace fix
+
+This now merges up all (and only) the necessary pieces from the
+post-simplify topic and the documentation updates, ready to be merged to
+"master".
 
 ----------------------------------------------------------------
 [Actively Cooking]
 
-* sb/daemon (Sun Aug 24 13:27:10 2008 -0700) 5 commits
- + daemon.c: minor style fixup
- + git-daemon: rewrite kindergarden, new option --max-connections
- + git-daemon: Simplify dead-children reaping logic
- + git-daemon: use LOG_PID, simplify logging code
- + git-daemon: call logerror() instead of error()
+* lt/time-reject-fractional-seconds (Sat Aug 16 21:25:40 2008 -0700) 1 commit
+ + date/time: do not get confused by fractional seconds
 
-I re-reviewed the changes and they look quite sane.  Hopefully be moved to
-'master' soonish.
+* jc/maint-name-hash-clear (Sat Aug 23 13:05:10 2008 -0700) 1 commit
+ + discard_cache: reset lazy name_hash bit
 
-* jc/add-ita (Thu Aug 21 01:44:53 2008 -0700) 3 commits
- - git-add --intent-to-add (-N)
- - cached_object: learn empty blob
- - sha1_object_info(): pay attention to cached objects
+I spotted this by accident while working on something unrelated.
+
+When a program calls discard_cache() to read the index again, we do not
+properly re-initialize the name_hash structure that is used by the case
+insensitivitly logic.  This _might_ improve issues people may be having on
+case insensitive filesystems.  I dunno.
+
+* jc/add-ita (Thu Aug 21 01:44:53 2008 -0700) 1 commit
+ + git-add --intent-to-add (-N)
 
 Teaches "git add" to record only the intent to add a path later.
-I think this is better done without the hardcoded empty blob object.
+I rerolled this without the fake empty blob object.
 
 * cc/bisect (Fri Aug 22 05:52:29 2008 +0200) 2 commits
  + bisect: only check merge bases when needed
  + bisect: test merge base if good rev is not an ancestor of bad rev
 
-* mv/merge-recursive (Mon Aug 25 16:25:57 2008 +0200) 3 commits
+* mv/merge-recursive (Thu Aug 28 15:43:00 2008 +0200) 4 commits
+ - builtin-merge: avoid run_command_v_opt() for recursive and subtree
  - merge-recursive: introduce merge_options
  - merge-recursive.c: Add more generic merge_recursive_generic()
  - Split out merge_recursive() to merge-recursive.c
 
-Miklos's update; will move to 'next' shortly after reading it again.
-
 * jc/diff-prefix (Mon Aug 18 20:08:09 2008 -0700) 1 commit
- - diff: vary default prefix depending on what are compared
+ + diff: vary default prefix depending on what are compared
 
 As some people may have noticed, I've been running with this one when
 sending out "How about this" patches to the discussion threads.
 
-* sp/missing-thin-base (Tue Aug 12 11:31:06 2008 -0700) 1 commit
- + pack-objects: Allow missing base objects when creating thin packs
-
-* tr/filter-branch (Tue Aug 12 10:45:59 2008 +0200) 7 commits
- + filter-branch: use --simplify-merges
- + filter-branch: fix ref rewriting with --subdirectory-filter
- + filter-branch: Extend test to show rewriting bug
-
-Fixes a longstanding filter branch bug.  Success stories?
-Later parts depends on the earlier part of "--simplify-merges"
-
-* jc/post-simplify (Fri Aug 15 01:34:51 2008 -0700) 8 commits
+* jc/post-simplify (Fri Aug 15 01:34:51 2008 -0700) 2 commits
  - revision --simplify-merges: incremental simplification
  - revision --simplify-merges: prepare for incremental simplification
- - revision --simplify-merges: make it a no-op without pathspec
- + revision --simplify-merges: do not leave commits unprocessed
- + revision --simplify-merges: use decoration instead of commit->util
-   field
- + Topo-sort before --simplify-merges
- + revision traversal: show full history with merge simplification
- + revision.c: whitespace fix
-
-"log --full-history" is with too much clutter, "log" itself is too cleverer
-than some people, and here is the middle level of merge simplification.
 
 I started making this incremental but the progress is not so great.
 
-* tr/rev-list-docs (Tue Aug 12 01:55:37 2008 +0200) 5 commits
- + Documentation: rev-list-options: move --simplify-merges
-   documentation
-
 ----------------------------------------------------------------
 [On Hold]
+
+* dk/emacs (Tue Aug 26 22:24:40 2008 -0500) 2 commits
+ - Teach git.el to mark/unmark files by regexp
+ - git.el: Diff only file at point by default
+
+These are still queued but Alexandre had improvement requests so these
+will likely be dropped.
 
 * jc/stripspace (Sun Mar 9 00:30:35 2008 -0800) 6 commits
  - git-am --forge: add Signed-off-by: line for the author
@@ -142,6 +194,8 @@ I started making this incremental but the progress is not so great.
  - stripspace: use parse_options()
  - Add "git am -s" test
  - git-am: refactor code to add signed-off-by line for the committer
+
+The one at second from the tip needs reworking.
 
 * jc/send-pack-tell-me-more (Thu Mar 20 00:44:11 2008 -0700) 1 commit
  - "git push": tellme-more protocol extension
@@ -164,11 +218,6 @@ that happend in 1.5.6 timeframe, and we cannot do this just yet.  Perhaps
 in 1.7.0, but with the loud whining about moving git-foo out of $PATH we
 have been hearing, it might not be a bad idea to drop this.
 
-* jc/dashless (Wed Jun 25 15:55:11 2008 -0700) 1 commit
- . Make clients ask for "git program" over ssh and local transport
-
-And this is now dropped.
-
 * jk/renamelimit (Sat May 3 13:58:42 2008 -0700) 1 commit
  - diff: enable "too large a rename" warning when -M/-C is explicitly
    asked for
@@ -179,41 +228,15 @@ hit due to tcl/tk's limitation, so I am holding this back for now.
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* mv/maint-merge-fix (Sat Aug 23 12:56:57 2008 -0700) 1 commit
- + merge: fix numerus bugs around "trivial merge" area
+* tl/p4 (Thu Aug 28 00:36:12 2008 +0200) 1 commit
+ + git-p4: Fix checkout bug when using --import-local.
 
-* ml/submodule (Thu Aug 21 19:54:01 2008 -0400) 2 commits
- + git-submodule.sh - Remove trailing / from URL if found
- + git-submodule.sh - Remove trailing / from URL if found
+* sb/daemon (Sun Aug 24 13:27:10 2008 -0700) 5 commits
+ + daemon.c: minor style fixup
+ + git-daemon: rewrite kindergarden, new option --max-connections
+ + git-daemon: Simplify dead-children reaping logic
+ + git-daemon: use LOG_PID, simplify logging code
+ + git-daemon: call logerror() instead of error()
 
-Soon to be in 'master', I guess.
-
-* np/verify-pack (Fri Aug 22 15:45:53 2008 -0400) 1 commit
- + discard revindex data when pack list changes
-
-* jc/no-slim-shell (Tue Aug 19 18:05:43 2008 -0700) 2 commits
- + Build-in "git-shell"
- + shell: do not play duplicated definition games to shrink the
-   executable
-
-* mv/merge-custom (Sat Aug 23 19:23:22 2008 -0700) 9 commits
- + t7606: fix custom merge test
- + Fix "git-merge -s bogo" help text
- + Update .gitignore to ignore git-help
- + Builtin git-help.
- + builtin-help: always load_command_list() in cmd_help()
- + Add a second testcase for handling invalid strategies in git-merge
- + Add a new test for using a custom merge strategy
- + builtin-merge: allow using a custom strategy
- + builtin-help: make some internal functions available to other
-   builtins
-
-The one at the tip fixes a test that assumed git-merge has a broken
-"trivial merge" implementation.
-
-* jc/add-addremove (Tue Jul 22 22:30:40 2008 -0700) 2 commits
- + builtin-add.c: optimize -A option and "git add ."
- + builtin-add.c: restructure the code for maintainability
-
-* am/cherry-pick-rerere (Sun Aug 10 17:18:55 2008 +0530) 1 commit
- + Make cherry-pick use rerere for conflict resolution.
+* sp/missing-thin-base (Tue Aug 12 11:31:06 2008 -0700) 1 commit
+ + pack-objects: Allow missing base objects when creating thin packs
