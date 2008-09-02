@@ -12,6 +12,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "rerere.h"
+#include "merge-recursive.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -201,36 +202,6 @@ static void set_author_ident_env(const char *message)
 			sha1_to_hex(commit->object.sha1));
 }
 
-static int merge_recursive(const char *base_sha1,
-		const char *head_sha1, const char *head_name,
-		const char *next_sha1, const char *next_name)
-{
-	char buffer[256];
-	const char *argv[6];
-	int i = 0;
-
-	sprintf(buffer, "GITHEAD_%s", head_sha1);
-	setenv(buffer, head_name, 1);
-	sprintf(buffer, "GITHEAD_%s", next_sha1);
-	setenv(buffer, next_name, 1);
-
-	/*
-	 * This three way merge is an interesting one.  We are at
-	 * $head, and would want to apply the change between $commit
-	 * and $prev on top of us (when reverting), or the change between
-	 * $prev and $commit on top of us (when cherry-picking or replaying).
-	 */
-	argv[i++] = "merge-recursive";
-	if (base_sha1)
-		argv[i++] = base_sha1;
-	argv[i++] = "--";
-	argv[i++] = head_sha1;
-	argv[i++] = next_sha1;
-	argv[i++] = NULL;
-
-	return run_command_v_opt(argv, RUN_COMMAND_NO_STDIN | RUN_GIT_CMD);
-}
-
 static char *help_msg(const unsigned char *sha1)
 {
 	static char helpbuf[1024];
@@ -263,14 +234,27 @@ static int index_is_dirty(void)
 	return !!DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES);
 }
 
+static struct tree *empty_tree(void)
+{
+	struct tree *tree = xcalloc(1, sizeof(struct tree));
+
+	tree->object.parsed = 1;
+	tree->object.type = OBJ_TREE;
+	pretend_sha1_file(NULL, 0, OBJ_TREE, tree->object.sha1);
+	return tree;
+}
+
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
 	struct commit *base, *next, *parent;
-	int i;
+	int i, index_fd, clean;
 	char *oneline, *reencoded_message = NULL;
 	const char *message, *encoding;
 	const char *defmsg = xstrdup(git_path("MERGE_MSG"));
+	struct merge_options o;
+	struct tree *result, *next_tree, *base_tree, *head_tree;
+	static struct lock_file index_lock;
 
 	git_config(git_default_config, NULL);
 	me = action == REVERT ? "revert" : "cherry-pick";
@@ -281,6 +265,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	if (action == REVERT && !no_replay)
 		die("revert is incompatible with replay");
 
+	if (read_cache() < 0)
+		die("git %s: failed to read the index", me);
 	if (no_commit) {
 		/*
 		 * We do not intend to commit immediately.  We just want to
@@ -293,12 +279,12 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	} else {
 		if (get_sha1("HEAD", head))
 			die ("You do not have a valid HEAD");
-		if (read_cache() < 0)
-			die("could not read the index");
 		if (index_is_dirty())
 			die ("Dirty index: cannot %s", me);
-		discard_cache();
 	}
+	discard_cache();
+
+	index_fd = hold_locked_index(&index_lock, 1);
 
 	if (!commit->parents) {
 		if (action == REVERT)
@@ -331,6 +317,10 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	if (!(message = commit->buffer))
 		die ("Cannot get commit message for %s",
 				sha1_to_hex(commit->object.sha1));
+
+	if (parent && parse_commit(parent) < 0)
+		die("%s: cannot parse parent commit %s",
+		    me, sha1_to_hex(parent->object.sha1));
 
 	/*
 	 * "commit" is an existing commit.  We would want to apply
@@ -374,13 +364,26 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		}
 	}
 
-	if (merge_recursive(base == NULL ?
-				NULL : sha1_to_hex(base->object.sha1),
-				sha1_to_hex(head), "HEAD",
-				sha1_to_hex(next->object.sha1), oneline) ||
-			write_cache_as_tree(head, 0, NULL)) {
+	read_cache();
+	init_merge_options(&o);
+	o.branch1 = "HEAD";
+	o.branch2 = oneline;
+
+	head_tree = parse_tree_indirect(head);
+	next_tree = next ? next->tree : empty_tree();
+	base_tree = base ? base->tree : empty_tree();
+
+	clean = merge_trees(&o,
+			    head_tree,
+			    next_tree, base_tree, &result);
+
+	if (active_cache_changed &&
+	    (write_cache(index_fd, active_cache, active_nr) ||
+	     commit_locked_index(&index_lock)))
+		die("%s: Unable to write new index file", me);
+
+	if (!clean) {
 		add_to_msg("\nConflicts:\n\n");
-		read_cache();
 		for (i = 0; i < active_nr;) {
 			struct cache_entry *ce = active_cache[i++];
 			if (ce_stage(ce)) {
