@@ -207,7 +207,7 @@ each change before committing:
 $ git add --patch foo            # add just first part to the index
 $ git stash save --keep-index    # save all other changes to the stash
 $ edit/build/test first part
-$ git commit foo -m 'First part' # commit fully tested change
+$ git commit -m 'First part'     # commit fully tested change
 $ git stash pop                  # prepare to work on all other changes
 # ... repeat above five steps until one commit remains ...
 $ edit/build/test remaining parts
