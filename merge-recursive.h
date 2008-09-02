@@ -9,6 +9,7 @@ struct merge_options {
 	int verbosity;
 	int diff_rename_limit;
 	int merge_rename_limit;
+	int call_depth;
 };
 
 /* merge_trees() but with recursive ancestor consolidation */

@@ -80,12 +80,11 @@ struct stage_data
 static struct string_list current_file_set = {NULL, 0, 0, 1};
 static struct string_list current_directory_set = {NULL, 0, 0, 1};
 
-static int call_depth = 0;
 static struct strbuf obuf = STRBUF_INIT;
 
 static int show(struct merge_options *o, int v)
 {
-	return (!call_depth && o->verbosity >= v) || o->verbosity >= 5;
+	return (!o->call_depth && o->verbosity >= v) || o->verbosity >= 5;
 }
 
 static void flush_output(void)
@@ -104,9 +103,9 @@ static void output(struct merge_options *o, int v, const char *fmt, ...)
 	if (!show(o, v))
 		return;
 
-	strbuf_grow(&obuf, call_depth * 2 + 2);
-	memset(obuf.buf + obuf.len, ' ', call_depth * 2);
-	strbuf_setlen(&obuf, obuf.len + call_depth * 2);
+	strbuf_grow(&obuf, o->call_depth * 2 + 2);
+	memset(obuf.buf + obuf.len, ' ', o->call_depth * 2);
+	strbuf_setlen(&obuf, obuf.len + o->call_depth * 2);
 
 	va_start(ap, fmt);
 	len = vsnprintf(obuf.buf + obuf.len, strbuf_avail(&obuf), fmt, ap);
@@ -129,11 +128,11 @@ static void output(struct merge_options *o, int v, const char *fmt, ...)
 		flush_output();
 }
 
-static void output_commit_title(struct commit *commit)
+static void output_commit_title(struct merge_options *o, struct commit *commit)
 {
 	int i;
 	flush_output();
-	for (i = call_depth; i--;)
+	for (i = o->call_depth; i--;)
 		fputs("  ", stdout);
 	if (commit->util)
 		printf("virtual %s\n", (char *)commit->util);
@@ -1230,8 +1229,8 @@ int merge_recursive(struct merge_options *o,
 
 	if (show(o, 4)) {
 		output(o, 4, "Merging:");
-		output_commit_title(h1);
-		output_commit_title(h2);
+		output_commit_title(o, h1);
+		output_commit_title(o, h2);
 	}
 
 	if (!ca) {
@@ -1242,7 +1241,7 @@ int merge_recursive(struct merge_options *o,
 	if (show(o, 5)) {
 		output(o, 5, "found %u common ancestor(s):", commit_list_count(ca));
 		for (iter = ca; iter; iter = iter->next)
-			output_commit_title(iter->item);
+			output_commit_title(o, iter->item);
 	}
 
 	merged_common_ancestors = pop_commit(&ca);
@@ -1258,7 +1257,7 @@ int merge_recursive(struct merge_options *o,
 
 	for (iter = ca; iter; iter = iter->next) {
 		const char *saved_b1, *saved_b2;
-		call_depth++;
+		o->call_depth++;
 		/*
 		 * When the merge fails, the result contains files
 		 * with conflict markers. The cleanness flag is
@@ -1275,14 +1274,14 @@ int merge_recursive(struct merge_options *o,
 				NULL, &merged_common_ancestors);
 		o->branch1 = saved_b1;
 		o->branch2 = saved_b2;
-		call_depth--;
+		o->call_depth--;
 
 		if (!merged_common_ancestors)
 			die("merge returned no commit");
 	}
 
 	discard_cache();
-	if (!call_depth) {
+	if (!o->call_depth) {
 		read_cache();
 		index_only = 0;
 	} else
