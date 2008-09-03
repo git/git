@@ -96,13 +96,17 @@ test_expect_success 'filter subdirectory only' '
 	test_tick &&
 	git commit -m "again not subdir" &&
 	git branch sub &&
-	git-filter-branch -f --subdirectory-filter subdir refs/heads/sub
+	git branch sub-earlier HEAD~2 &&
+	git-filter-branch -f --subdirectory-filter subdir \
+		refs/heads/sub refs/heads/sub-earlier
 '
 
 test_expect_success 'subdirectory filter result looks okay' '
 	test 2 = $(git rev-list sub | wc -l) &&
 	git show sub:new &&
-	test_must_fail git show sub:subdir
+	test_must_fail git show sub:subdir &&
+	git show sub-earlier:new &&
+	test_must_fail git show sub-earlier:subdir
 '
 
 test_expect_success 'more setup' '

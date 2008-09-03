@@ -409,6 +409,48 @@ Note that without '\--full-history', this still simplifies merges: if
 one of the parents is TREESAME, we follow only that one, so the other
 sides of the merge are never walked.
 
+Finally, there is a fourth simplification mode available:
+
+--simplify-merges::
+
+	First, build a history graph in the same way that
+	'\--full-history' with parent rewriting does (see above).
++
+Then simplify each commit `C` to its replacement `C'` in the final
+history according to the following rules:
++
+--
+* Set `C'` to `C`.
++
+* Replace each parent `P` of `C'` with its simplification `P'`.  In
+  the process, drop parents that are ancestors of other parents, and
+  remove duplicates.
++
+* If after this parent rewriting, `C'` is a root or merge commit (has
+  zero or >1 parents), a boundary commit, or !TREESAME, it remains.
+  Otherwise, it is replaced with its only parent.
+--
++
+The effect of this is best shown by way of comparing to
+'\--full-history' with parent rewriting.  The example turns into:
++
+-----------------------------------------------------------------------
+	  .-A---M---N---O
+	 /     /       /
+	I     B       D
+	 \   /       /
+	  `---------'
+-----------------------------------------------------------------------
++
+Note the major differences in `N` and `P` over '\--full-history':
++
+--
+* `N`'s parent list had `I` removed, because it is an ancestor of the
+  other parent `M`.  Still, `N` remained because it is !TREESAME.
++
+* `P`'s parent list similarly had `I` removed.  `P` was then
+  removed completely, because it had one parent and is TREESAME.
+--
 
 ifdef::git-rev-list[]
 Bisection Helpers
