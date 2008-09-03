@@ -10,6 +10,7 @@ struct merge_options {
 	int diff_rename_limit;
 	int merge_rename_limit;
 	int call_depth;
+	struct strbuf obuf;
 };
 
 /* merge_trees() but with recursive ancestor consolidation */

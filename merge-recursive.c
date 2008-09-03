@@ -80,18 +80,16 @@ struct stage_data
 static struct string_list current_file_set = {NULL, 0, 0, 1};
 static struct string_list current_directory_set = {NULL, 0, 0, 1};
 
-static struct strbuf obuf = STRBUF_INIT;
-
 static int show(struct merge_options *o, int v)
 {
 	return (!o->call_depth && o->verbosity >= v) || o->verbosity >= 5;
 }
 
-static void flush_output(void)
+static void flush_output(struct merge_options *o)
 {
-	if (obuf.len) {
-		fputs(obuf.buf, stdout);
-		strbuf_reset(&obuf);
+	if (o->obuf.len) {
+		fputs(o->obuf.buf, stdout);
+		strbuf_reset(&o->obuf);
 	}
 }
 
@@ -103,35 +101,35 @@ static void output(struct merge_options *o, int v, const char *fmt, ...)
 	if (!show(o, v))
 		return;
 
-	strbuf_grow(&obuf, o->call_depth * 2 + 2);
-	memset(obuf.buf + obuf.len, ' ', o->call_depth * 2);
-	strbuf_setlen(&obuf, obuf.len + o->call_depth * 2);
+	strbuf_grow(&o->obuf, o->call_depth * 2 + 2);
+	memset(o->obuf.buf + o->obuf.len, ' ', o->call_depth * 2);
+	strbuf_setlen(&o->obuf, o->obuf.len + o->call_depth * 2);
 
 	va_start(ap, fmt);
-	len = vsnprintf(obuf.buf + obuf.len, strbuf_avail(&obuf), fmt, ap);
+	len = vsnprintf(o->obuf.buf + o->obuf.len, strbuf_avail(&o->obuf), fmt, ap);
 	va_end(ap);
 
 	if (len < 0)
 		len = 0;
-	if (len >= strbuf_avail(&obuf)) {
-		strbuf_grow(&obuf, len + 2);
+	if (len >= strbuf_avail(&o->obuf)) {
+		strbuf_grow(&o->obuf, len + 2);
 		va_start(ap, fmt);
-		len = vsnprintf(obuf.buf + obuf.len, strbuf_avail(&obuf), fmt, ap);
+		len = vsnprintf(o->obuf.buf + o->obuf.len, strbuf_avail(&o->obuf), fmt, ap);
 		va_end(ap);
-		if (len >= strbuf_avail(&obuf)) {
+		if (len >= strbuf_avail(&o->obuf)) {
 			die("this should not happen, your snprintf is broken");
 		}
 	}
-	strbuf_setlen(&obuf, obuf.len + len);
-	strbuf_add(&obuf, "\n", 1);
+	strbuf_setlen(&o->obuf, o->obuf.len + len);
+	strbuf_add(&o->obuf, "\n", 1);
 	if (!o->buffer_output)
-		flush_output();
+		flush_output(o);
 }
 
 static void output_commit_title(struct merge_options *o, struct commit *commit)
 {
 	int i;
-	flush_output();
+	flush_output(o);
 	for (i = o->call_depth; i--;)
 		fputs("  ", stdout);
 	if (commit->util)
@@ -1289,7 +1287,7 @@ int merge_recursive(struct merge_options *o,
 		commit_list_insert(h1, &(*result)->parents);
 		commit_list_insert(h2, &(*result)->parents->next);
 	}
-	flush_output();
+	flush_output(o);
 	return clean;
 }
 
@@ -1375,4 +1373,5 @@ void init_merge_options(struct merge_options *o)
 			strtol(getenv("GIT_MERGE_VERBOSITY"), NULL, 10);
 	if (o->verbosity >= 5)
 		o->buffer_output = 0;
+	strbuf_init(&o->obuf, 0);
 }
