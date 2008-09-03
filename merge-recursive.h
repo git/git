@@ -1,6 +1,8 @@
 #ifndef MERGE_RECURSIVE_H
 #define MERGE_RECURSIVE_H
 
+#include "string-list.h"
+
 struct merge_options {
 	const char *branch1;
 	const char *branch2;
@@ -11,6 +13,8 @@ struct merge_options {
 	int merge_rename_limit;
 	int call_depth;
 	struct strbuf obuf;
+	struct string_list current_file_set;
+	struct string_list current_directory_set;
 };
 
 /* merge_trees() but with recursive ancestor consolidation */
