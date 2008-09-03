@@ -783,8 +783,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths[1] = NULL;
 	}
 
-	if (!list.nr)
+	if (!list.nr) {
+		if (!cached)
+			setup_work_tree();
 		return !grep_cache(&opt, paths, cached);
+	}
 
 	if (cached)
 		die("both --cached and trees are given.");

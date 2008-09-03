@@ -614,10 +614,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(path, "--refresh")) {
+				setup_work_tree();
 				has_errors |= refresh_cache(refresh_flags);
 				continue;
 			}
 			if (!strcmp(path, "--really-refresh")) {
+				setup_work_tree();
 				has_errors |= refresh_cache(REFRESH_REALLY | refresh_flags);
 				continue;
 			}
@@ -684,6 +686,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				goto finish;
 			}
 			if (!strcmp(path, "--again") || !strcmp(path, "-g")) {
+				setup_work_tree();
 				has_errors = do_reupdate(argc - i, argv + i,
 							 prefix, prefix_length);
 				if (has_errors)
@@ -702,6 +705,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				usage(update_index_usage);
 			die("unknown option %s", path);
 		}
+		setup_work_tree();
 		p = prefix_path(prefix, prefix_length, path);
 		update_one(p, NULL, 0);
 		if (set_executable_bit)
@@ -714,6 +718,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 
 		strbuf_init(&buf, 0);
 		strbuf_init(&nbuf, 0);
+		setup_work_tree();
 		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
 			const char *p;
 			if (line_termination && buf.buf[0] == '"') {

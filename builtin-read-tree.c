@@ -194,6 +194,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		usage(read_tree_usage);
 	if ((opts.dir && !opts.update))
 		die("--exclude-per-directory is meaningless unless -u");
+	if (opts.merge && !opts.index_only)
+		setup_work_tree();
 
 	if (opts.merge) {
 		if (stage < 2)
