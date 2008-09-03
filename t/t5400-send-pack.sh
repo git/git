@@ -31,7 +31,7 @@ test_expect_success setup '
 	    parent=$commit || return 1
 	done &&
 	git update-ref HEAD "$commit" &&
-	git-clone ./. victim &&
+	git clone ./. victim &&
 	cd victim &&
 	git log &&
 	cd .. &&
@@ -68,7 +68,7 @@ test_expect_success 'pack the destination repository' '
 test_expect_success \
         'pushing rewound head should not barf but require --force' '
 	# should not fail but refuse to update.
-	if git-send-pack ./victim/.git/ master
+	if git send-pack ./victim/.git/ master
 	then
 		# now it should fail with Pasky patch
 		echo >&2 Gaah, it should have failed.
@@ -85,7 +85,7 @@ test_expect_success \
 		true
 	fi &&
 	# this should update
-	git-send-pack --force ./victim/.git/ master &&
+	git send-pack --force ./victim/.git/ master &&
 	cmp victim/.git/refs/heads/master .git/refs/heads/master
 '
 
@@ -95,7 +95,7 @@ test_expect_success \
 	git branch extra master &&
 	cd .. &&
 	test -f victim/.git/refs/heads/extra &&
-	git-send-pack ./victim/.git/ :extra master &&
+	git send-pack ./victim/.git/ :extra master &&
 	! test -f victim/.git/refs/heads/extra
 '
 
@@ -109,27 +109,27 @@ test_expect_success \
 	git config receive.denyNonFastforwards true &&
 	cd .. &&
 	git update-ref refs/heads/master master^ || return 1
-	git-send-pack --force ./victim/.git/ master && return 1
+	git send-pack --force ./victim/.git/ master && return 1
 	! test_cmp .git/refs/heads/master victim/.git/refs/heads/master
 '
 
 test_expect_success \
 	'pushing does not include non-head refs' '
 	mkdir parent && cd parent &&
-	git-init && touch file && git-add file && git-commit -m add &&
+	git init && touch file && git add file && git commit -m add &&
 	cd .. &&
-	git-clone parent child && cd child && git-push --all &&
+	git clone parent child && cd child && git push --all &&
 	cd ../parent &&
-	git-branch -a >branches && ! grep origin/master branches
+	git branch -a >branches && ! grep origin/master branches
 '
 
 rewound_push_setup() {
 	rm -rf parent child &&
 	mkdir parent && cd parent &&
-	git-init && echo one >file && git-add file && git-commit -m one &&
-	echo two >file && git-commit -a -m two &&
+	git init && echo one >file && git add file && git commit -m one &&
+	echo two >file && git commit -a -m two &&
 	cd .. &&
-	git-clone parent child && cd child && git-reset --hard HEAD^
+	git clone parent child && cd child && git reset --hard HEAD^
 }
 
 rewound_push_succeeded() {
@@ -148,26 +148,26 @@ rewound_push_failed() {
 test_expect_success \
 	'pushing explicit refspecs respects forcing' '
 	rewound_push_setup &&
-	if git-send-pack ../parent/.git refs/heads/master:refs/heads/master
+	if git send-pack ../parent/.git refs/heads/master:refs/heads/master
 	then
 		false
 	else
 		true
 	fi && rewound_push_failed &&
-	git-send-pack ../parent/.git +refs/heads/master:refs/heads/master &&
+	git send-pack ../parent/.git +refs/heads/master:refs/heads/master &&
 	rewound_push_succeeded
 '
 
 test_expect_success \
 	'pushing wildcard refspecs respects forcing' '
 	rewound_push_setup &&
-	if git-send-pack ../parent/.git refs/heads/*:refs/heads/*
+	if git send-pack ../parent/.git refs/heads/*:refs/heads/*
 	then
 		false
 	else
 		true
 	fi && rewound_push_failed &&
-	git-send-pack ../parent/.git +refs/heads/*:refs/heads/* &&
+	git send-pack ../parent/.git +refs/heads/*:refs/heads/* &&
 	rewound_push_succeeded
 '
 

@@ -17,7 +17,7 @@ test_expect_success \
     'prepare a trivial repository' \
     'echo Hello > A &&
      git update-index --add A &&
-     git-commit -m "Initial commit." &&
+     git commit -m "Initial commit." &&
      HEAD=$(git rev-parse --verify HEAD)'
 
 SHA1=
@@ -97,7 +97,7 @@ test_expect_success \
      git branch n'
 
 test_expect_success 'pack, prune and repack' '
-	git-tag foo &&
+	git tag foo &&
 	git pack-refs --all --prune &&
 	git show-ref >all-of-them &&
 	git pack-refs &&

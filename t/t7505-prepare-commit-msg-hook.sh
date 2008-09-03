@@ -32,7 +32,7 @@ echo "#!$SHELL_PATH" > "$HOOK"
 cat >> "$HOOK" <<'EOF'
 
 if test "$2" = commit; then
-  source=$(git-rev-parse "$3")
+  source=$(git rev-parse "$3")
 else
   source=${2-default}
 fi

@@ -85,7 +85,7 @@ $test_case 'add (with different case)' '
 	rm camelcase &&
 	echo 1 >CamelCase &&
 	git add CamelCase &&
-	test $(git-ls-files | grep -i camelcase | wc -l) = 1
+	test $(git ls-files | grep -i camelcase | wc -l) = 1
 
 '
 

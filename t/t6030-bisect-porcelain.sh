@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2007 Christian Couder
 #
-test_description='Tests git-bisect functionality'
+test_description='Tests git bisect functionality'
 
 exec </dev/null
 
@@ -23,7 +23,7 @@ add_line_into_file()
     fi
 
     test_tick
-    git-commit --quiet -m "$MSG" $_file
+    git commit --quiet -m "$MSG" $_file
 }
 
 HASH1=

@@ -26,7 +26,7 @@ test_expect_success setup '
 	echo initial >dir2/sub3 &&
 	git add check dir1 dir2 top foo &&
 	test_tick
-	git-commit -m initial &&
+	git commit -m initial &&
 
 	echo changed >check &&
 	echo changed >top &&
@@ -40,20 +40,20 @@ test_expect_success update '
 '
 
 test_expect_success 'update noticed a removal' '
-	test "$(git-ls-files dir1/sub1)" = ""
+	test "$(git ls-files dir1/sub1)" = ""
 '
 
 test_expect_success 'update touched correct path' '
-	test "$(git-diff-files --name-status dir2/sub3)" = ""
+	test "$(git diff-files --name-status dir2/sub3)" = ""
 '
 
 test_expect_success 'update did not touch other tracked files' '
-	test "$(git-diff-files --name-status check)" = "M	check" &&
-	test "$(git-diff-files --name-status top)" = "M	top"
+	test "$(git diff-files --name-status check)" = "M	check" &&
+	test "$(git diff-files --name-status top)" = "M	top"
 '
 
 test_expect_success 'update did not touch untracked files' '
-	test "$(git-ls-files dir2/other)" = ""
+	test "$(git ls-files dir2/other)" = ""
 '
 
 test_expect_success 'cache tree has not been corrupted' '

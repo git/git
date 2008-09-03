@@ -157,7 +157,7 @@ static void create_pack_file(void)
 	/* .data is just a boolean: any non-NULL value will do */
 	rev_list.data = create_full_pack ? &rev_list : NULL;
 	if (start_async(&rev_list))
-		die("git-upload-pack: unable to fork git-rev-list");
+		die("git upload-pack: unable to fork git-rev-list");
 
 	argv[arg++] = "pack-objects";
 	argv[arg++] = "--stdout";
@@ -177,7 +177,7 @@ static void create_pack_file(void)
 	pack_objects.argv = argv;
 
 	if (start_command(&pack_objects))
-		die("git-upload-pack: unable to fork git-pack-objects");
+		die("git upload-pack: unable to fork git-pack-objects");
 
 	/* We read from pack_objects.err to capture stderr output for
 	 * progress bar, and pack_objects.out to capture the pack data.
@@ -271,7 +271,7 @@ static void create_pack_file(void)
 	}
 
 	if (finish_command(&pack_objects)) {
-		error("git-upload-pack: git-pack-objects died with error.");
+		error("git upload-pack: git-pack-objects died with error.");
 		goto fail;
 	}
 	if (finish_async(&rev_list))
@@ -291,7 +291,7 @@ static void create_pack_file(void)
 
  fail:
 	send_client_data(3, abort_msg, sizeof(abort_msg));
-	die("git-upload-pack: %s", abort_msg);
+	die("git upload-pack: %s", abort_msg);
 }
 
 static int got_sha1(char *hex, unsigned char *sha1)
@@ -300,7 +300,7 @@ static int got_sha1(char *hex, unsigned char *sha1)
 	int we_knew_they_have = 0;
 
 	if (get_sha1_hex(hex, sha1))
-		die("git-upload-pack: expected SHA1 object, got '%s'", hex);
+		die("git upload-pack: expected SHA1 object, got '%s'", hex);
 	if (!has_sha1_file(sha1))
 		return -1;
 
@@ -440,7 +440,7 @@ static int get_common_commits(void)
 			packet_write(1, "NAK\n");
 			return -1;
 		}
-		die("git-upload-pack: expected SHA1 list, got '%s'", line);
+		die("git upload-pack: expected SHA1 list, got '%s'", line);
 	}
 }
 
@@ -485,7 +485,7 @@ static void receive_needs(void)
 		}
 		if (prefixcmp(line, "want ") ||
 		    get_sha1_hex(line+5, sha1_buf))
-			die("git-upload-pack: protocol error, "
+			die("git upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
 		if (strstr(line+45, "multi_ack"))
 			multi_ack = 1;
@@ -512,7 +512,7 @@ static void receive_needs(void)
 		 */
 		o = lookup_object(sha1_buf);
 		if (!o || !(o->flags & OUR_REF))
-			die("git-upload-pack: not our ref %s", line+5);
+			die("git upload-pack: not our ref %s", line+5);
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
 			add_object_array(o, NULL, &want_obj);
@@ -577,7 +577,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	struct object *o = parse_object(sha1);
 
 	if (!o)
-		die("git-upload-pack: cannot find object %s:", sha1_to_hex(sha1));
+		die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
 
 	if (capabilities)
 		packet_write(1, "%s %s%c%s\n", sha1_to_hex(sha1), refname,
