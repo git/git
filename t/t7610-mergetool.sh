@@ -3,7 +3,7 @@
 # Copyright (c) 2008 Charles Bailey
 #
 
-test_description='git-mergetool
+test_description='git mergetool
 
 Testing basic merge tool invocation'
 

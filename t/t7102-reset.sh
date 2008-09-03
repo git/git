@@ -3,9 +3,9 @@
 # Copyright (c) 2007 Carlos Rica
 #
 
-test_description='git-reset
+test_description='git reset
 
-Documented tests for git-reset'
+Documented tests for git reset'
 
 . ./test-lib.sh
 

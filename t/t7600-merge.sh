@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Lars Hjemli
 #
 
-test_description='git-merge
+test_description='git merge
 
 Testing basic merge operations/option parsing.'
 

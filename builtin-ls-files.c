@@ -78,7 +78,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	int offset = prefix_offset;
 
 	if (len >= ent->len)
-		die("git-ls-files: internal error - directory entry not superset of prefix");
+		die("git ls-files: internal error - directory entry not superset of prefix");
 
 	if (pathspec && !pathspec_match(pathspec, ps_matched, ent->name, len))
 		return;
@@ -183,7 +183,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	int offset = prefix_offset;
 
 	if (len >= ce_namelen(ce))
-		die("git-ls-files: internal error - cache entry not superset of prefix");
+		die("git ls-files: internal error - cache entry not superset of prefix");
 
 	if (pathspec && !pathspec_match(pathspec, ps_matched, ce->name, len))
 		return;
@@ -319,7 +319,7 @@ static const char *verify_pathspec(const char *prefix)
 	}
 
 	if (prefix_offset > max || memcmp(prev, prefix, prefix_offset))
-		die("git-ls-files: cannot generate relative filenames containing '..'");
+		die("git ls-files: cannot generate relative filenames containing '..'");
 
 	prefix_len = max;
 	return max ? xmemdupz(prev, max) : NULL;

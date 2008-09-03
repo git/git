@@ -1787,7 +1787,7 @@ static int prepare_lines(struct scoreboard *sb)
 
 /*
  * Add phony grafts for use with -S; this is primarily to
- * support git-cvsserver that wants to give a linear history
+ * support git's cvsserver that wants to give a linear history
  * to its clients.
  */
 static int read_ancestry(const char *graft_file)

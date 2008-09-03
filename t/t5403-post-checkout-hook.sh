@@ -14,8 +14,8 @@ test_expect_success setup '
 	 tree0=$(git write-tree) &&
 	 commit0=$(echo setup | git commit-tree $tree0) &&
         git update-ref refs/heads/master $commit0 &&
-	 git-clone ./. clone1 &&
-	 git-clone ./. clone2 &&
+	 git clone ./. clone1 &&
+	 git clone ./. clone2 &&
         GIT_DIR=clone2/.git git branch -a new2 &&
         echo Data for commit1. >clone2/b &&
 	 GIT_DIR=clone2/.git git add clone2/b &&

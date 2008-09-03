@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Junio C Hamano
 #
 
-test_description='git-checkout tests.
+test_description='git checkout tests.
 
 Creates master, forks renamer and side branches from it.
 Test switching across them.

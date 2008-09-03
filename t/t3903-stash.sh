@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Johannes E Schindelin
 #
 
-test_description='Test git-stash'
+test_description='Test git stash'
 
 . ./test-lib.sh
 

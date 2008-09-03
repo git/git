@@ -40,7 +40,7 @@ test_expect_success 'update-index --remove --again' \
 	 git ls-files -s >current &&
 	 cmp current expected'
 
-test_expect_success 'first commit' 'git-commit -m initial'
+test_expect_success 'first commit' 'git commit -m initial'
 
 cat > expected <<\EOF
 100644 53ab446c3f4e42ce9bb728a0ccb283a101be4979 0	dir1/file3

@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-pack-object
+test_description='git pack-object
 
 '
 . ./test-lib.sh
@@ -242,24 +242,24 @@ test_expect_success \
 test_expect_success \
     'build pack index for an existing pack' \
     'cat test-1-${packname_1}.pack >test-3.pack &&
-     git-index-pack -o tmp.idx test-3.pack &&
+     git index-pack -o tmp.idx test-3.pack &&
      cmp tmp.idx test-1-${packname_1}.idx &&
 
-     git-index-pack test-3.pack &&
+     git index-pack test-3.pack &&
      cmp test-3.idx test-1-${packname_1}.idx &&
 
      cat test-2-${packname_2}.pack >test-3.pack &&
-     git-index-pack -o tmp.idx test-2-${packname_2}.pack &&
+     git index-pack -o tmp.idx test-2-${packname_2}.pack &&
      cmp tmp.idx test-2-${packname_2}.idx &&
 
-     git-index-pack test-3.pack &&
+     git index-pack test-3.pack &&
      cmp test-3.idx test-2-${packname_2}.idx &&
 
      cat test-3-${packname_3}.pack >test-3.pack &&
-     git-index-pack -o tmp.idx test-3-${packname_3}.pack &&
+     git index-pack -o tmp.idx test-3-${packname_3}.pack &&
      cmp tmp.idx test-3-${packname_3}.idx &&
 
-     git-index-pack test-3.pack &&
+     git index-pack test-3.pack &&
      cmp test-3.idx test-3-${packname_3}.idx &&
 
      :'
@@ -272,7 +272,7 @@ test_expect_success \
 
 test_expect_success \
     'make sure index-pack detects the SHA1 collision' \
-    'test_must_fail git-index-pack -o bad.idx test-3.pack'
+    'test_must_fail git index-pack -o bad.idx test-3.pack'
 
 test_expect_success \
     'honor pack.packSizeLimit' \

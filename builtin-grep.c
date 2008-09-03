@@ -774,7 +774,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			/* Make sure we do not get outside of paths */
 			for (i = 0; paths[i]; i++)
 				if (strncmp(prefix, paths[i], opt.prefix_length))
-					die("git-grep: cannot generate relative filenames containing '..'");
+					die("git grep: cannot generate relative filenames containing '..'");
 		}
 	}
 	else if (prefix) {
@@ -783,8 +783,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths[1] = NULL;
 	}
 
-	if (!list.nr)
+	if (!list.nr) {
+		if (!cached)
+			setup_work_tree();
 		return !grep_cache(&opt, paths, cached);
+	}
 
 	if (cached)
 		die("both --cached and trees are given.");

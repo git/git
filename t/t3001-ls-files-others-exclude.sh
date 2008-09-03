@@ -96,7 +96,7 @@ cat > expect << EOF
 #	three/
 EOF
 
-test_expect_success 'git-status honours core.excludesfile' \
+test_expect_success 'git status honors core.excludesfile' \
 	'test_cmp expect output'
 
 test_expect_success 'trailing slash in exclude allows directory match(1)' '

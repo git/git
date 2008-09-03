@@ -16,15 +16,15 @@ test_expect_success \
     'prepare repository with topic branches' \
     'echo First > A &&
      git update-index --add A &&
-     git-commit -m "Add A." &&
+     git commit -m "Add A." &&
      git checkout -b my-topic-branch &&
      echo Second > B &&
      git update-index --add B &&
-     git-commit -m "Add B." &&
+     git commit -m "Add B." &&
      git checkout -f master &&
      echo Third >> A &&
      git update-index A &&
-     git-commit -m "Modify A." &&
+     git commit -m "Modify A." &&
      git checkout -b side my-topic-branch &&
      echo Side >> C &&
      git add C &&

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-merge
+test_description='git merge
 
 Testing octopus merge with more than 25 refs.'
 

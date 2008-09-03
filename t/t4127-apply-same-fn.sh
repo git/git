@@ -26,7 +26,7 @@ test_expect_success 'apply same filename with independent changes' '
 	git diff >> patch0 &&
 	cp same_fn same_fn2 &&
 	git reset --hard &&
-	git-apply patch0 &&
+	git apply patch0 &&
 	diff same_fn same_fn2
 '
 
@@ -39,7 +39,7 @@ test_expect_success 'apply same filename with overlapping changes' '
 	git diff >> patch0 &&
 	cp same_fn same_fn2 &&
 	git reset --hard &&
-	git-apply patch0 &&
+	git apply patch0 &&
 	diff same_fn same_fn2
 '
 
