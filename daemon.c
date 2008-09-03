@@ -86,7 +86,7 @@ static void logreport(int priority, const char *err, va_list params)
 		 * Since stderr is set to linebuffered mode, the
 		 * logging of different processes will not overlap
 		 */
-		fprintf(stderr, "[%d] ", (int)getpid());
+		fprintf(stderr, "[%"PRIuMAX"] ", (uintmax_t)getpid());
 		vfprintf(stderr, err, params);
 		fputc('\n', stderr);
 	}
@@ -658,7 +658,7 @@ static void check_dead_children(void)
 		remove_child(pid);
 		if (!WIFEXITED(status) || (WEXITSTATUS(status) > 0))
 			dead = " (with error)";
-		loginfo("[%d] Disconnected%s", (int)pid, dead);
+		loginfo("[%"PRIuMAX"] Disconnected%s", (uintmax_t)pid, dead);
 	}
 }
 
@@ -923,7 +923,7 @@ static void store_pid(const char *path)
 	FILE *f = fopen(path, "w");
 	if (!f)
 		die("cannot open pid file %s: %s", path, strerror(errno));
-	if (fprintf(f, "%d\n", getpid()) < 0 || fclose(f) != 0)
+	if (fprintf(f, "%"PRIuMAX"\n", (uintmax_t) getpid()) < 0 || fclose(f) != 0)
 		die("failed to write pid file %s: %s", path, strerror(errno));
 }
 
