@@ -25,6 +25,7 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 	unsigned sf;
 	char buf[LARGE_PACKET_MAX + 2*FIX_SIZE];
 	char *suffix, *term;
+	int skip_pf = 0;
 
 	memcpy(buf, PREFIX, pf);
 	term = getenv("TERM");
@@ -54,39 +55,58 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 			return SIDEBAND_REMOTE_ERROR;
 		case 2:
 			buf[pf] = ' ';
-			len += pf+1;
-			while (1) {
-				int brk = pf+1;
+			do {
+				char *b = buf;
+				int brk = 0;
 
-				/* Break the buffer into separate lines. */
-				while (brk < len) {
+				/*
+				 * If the last buffer didn't end with a line
+				 * break then we should not print a prefix
+				 * this time around.
+				 */
+				if (skip_pf) {
+					b += pf+1;
+				} else {
+					len += pf+1;
+					brk += pf+1;
+				}
+
+				/* Look for a line break. */
+				for (;;) {
 					brk++;
-					if (buf[brk-1] == '\n' ||
-					    buf[brk-1] == '\r')
+					if (brk > len) {
+						brk = 0;
+						break;
+					}
+					if (b[brk-1] == '\n' ||
+					    b[brk-1] == '\r')
 						break;
 				}
 
 				/*
 				 * Let's insert a suffix to clear the end
-				 * of the screen line, but only if current
-				 * line data actually contains something.
+				 * of the screen line if a line break was
+				 * found.  Also, if we don't skip the
+				 * prefix, then a non-empty string must be
+				 * present too.
 				 */
-				if (brk > pf+1 + 1) {
+				if (brk > (skip_pf ? 0 : (pf+1 + 1))) {
 					char save[FIX_SIZE];
-					memcpy(save, buf + brk, sf);
-					buf[brk + sf - 1] = buf[brk - 1];
-					memcpy(buf + brk - 1, suffix, sf);
-					safe_write(err, buf, brk + sf);
-					memcpy(buf + brk, save, sf);
-				} else
-					safe_write(err, buf, brk);
+					memcpy(save, b + brk, sf);
+					b[brk + sf - 1] = b[brk - 1];
+					memcpy(b + brk - 1, suffix, sf);
+					safe_write(err, b, brk + sf);
+					memcpy(b + brk, save, sf);
+					len -= brk;
+				} else {
+					int l = brk ? brk : len;
+					safe_write(err, b, l);
+					len -= l;
+				}
 
-				if (brk < len) {
-					memmove(buf + pf+1, buf + brk, len - brk);
-					len = len - brk + pf+1;
-				} else
-					break;
-			}
+				skip_pf = !brk;
+				memmove(buf + pf+1, b + brk, len);
+			} while (len);
 			continue;
 		case 1:
 			safe_write(out, buf + pf+1, len);
