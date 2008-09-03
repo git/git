@@ -386,13 +386,11 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 	}
 
 	/*
-	 * If the new thing isn't a branch and isn't HEAD and we're
-	 * not starting a new branch, and we want messages, and we
-	 * weren't on a branch, and we're moving to a new commit,
-	 * describe the old commit.
+	 * If we were on a detached HEAD, but we are now moving to
+	 * a new commit, we want to mention the old commit once more
+	 * to remind the user that it might be lost.
 	 */
-	if (!new->path && strcmp(new->name, "HEAD") && !opts->new_branch &&
-	    !opts->quiet && !old.path && new->commit != old.commit)
+	if (!opts->quiet && !old.path && new->commit != old.commit)
 		describe_detached_head("Previous HEAD position was", old.commit);
 
 	if (!old.commit) {
