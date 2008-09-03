@@ -951,7 +951,8 @@ static void end_packfile(void)
 
 		close_pack_windows(pack_data);
 		fixup_pack_header_footer(pack_data->pack_fd, pack_data->sha1,
-				    pack_data->pack_name, object_count);
+				    pack_data->pack_name, object_count,
+				    NULL, 0);
 		close(pack_data->pack_fd);
 		idx_name = keep_pack(create_index());
 
