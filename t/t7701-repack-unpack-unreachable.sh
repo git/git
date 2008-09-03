@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-repack works correctly'
+test_description='git repack works correctly'
 
 . ./test-lib.sh
 

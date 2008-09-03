@@ -6,7 +6,7 @@
 # FIXME: Test the various index usages, -i and -o, test reflog,
 # signoff
 
-test_description='git-commit'
+test_description='git commit'
 . ./test-lib.sh
 
 test_tick
@@ -14,52 +14,52 @@ test_tick
 test_expect_success \
 	"initial status" \
 	"echo 'bongo bongo' >file &&
-	 git-add file && \
-	 git-status | grep 'Initial commit'"
+	 git add file && \
+	 git status | grep 'Initial commit'"
 
 test_expect_success \
 	"fail initial amend" \
-	"test_must_fail git-commit --amend"
+	"test_must_fail git commit --amend"
 
 test_expect_success \
 	"initial commit" \
-	"git-commit -m initial"
+	"git commit -m initial"
 
 test_expect_success \
 	"invalid options 1" \
-	"test_must_fail git-commit -m foo -m bar -F file"
+	"test_must_fail git commit -m foo -m bar -F file"
 
 test_expect_success \
 	"invalid options 2" \
-	"test_must_fail git-commit -C HEAD -m illegal"
+	"test_must_fail git commit -C HEAD -m illegal"
 
 test_expect_success \
 	"using paths with -a" \
 	"echo King of the bongo >file &&
-	test_must_fail git-commit -m foo -a file"
+	test_must_fail git commit -m foo -a file"
 
 test_expect_success \
 	"using paths with --interactive" \
 	"echo bong-o-bong >file &&
-	! (echo 7 | git-commit -m foo --interactive file)"
+	! (echo 7 | git commit -m foo --interactive file)"
 
 test_expect_success \
 	"using invalid commit with -C" \
-	"test_must_fail git-commit -C bogus"
+	"test_must_fail git commit -C bogus"
 
 test_expect_success \
 	"testing nothing to commit" \
-	"test_must_fail git-commit -m initial"
+	"test_must_fail git commit -m initial"
 
 test_expect_success \
 	"next commit" \
 	"echo 'bongo bongo bongo' >file \
-	 git-commit -m next -a"
+	 git commit -m next -a"
 
 test_expect_success \
 	"commit message from non-existing file" \
 	"echo 'more bongo: bongo bongo bongo bongo' >file && \
-	 test_must_fail git-commit -F gah -a"
+	 test_must_fail git commit -F gah -a"
 
 # Empty except stray tabs and spaces on a few lines.
 sed -e 's/@$//' >msg <<EOF
@@ -70,12 +70,12 @@ Signed-off-by: hula
 EOF
 test_expect_success \
 	"empty commit message" \
-	"test_must_fail git-commit -F msg -a"
+	"test_must_fail git commit -F msg -a"
 
 test_expect_success \
 	"commit message from file" \
 	"echo 'this is the commit message, coming from a file' >msg && \
-	 git-commit -F msg -a"
+	 git commit -F msg -a"
 
 cat >editor <<\EOF
 #!/bin/sh
@@ -86,16 +86,16 @@ chmod 755 editor
 
 test_expect_success \
 	"amend commit" \
-	"VISUAL=./editor git-commit --amend"
+	"VISUAL=./editor git commit --amend"
 
 test_expect_success \
 	"passing -m and -F" \
 	"echo 'enough with the bongos' >file && \
-	 test_must_fail git-commit -F msg -m amending ."
+	 test_must_fail git commit -F msg -m amending ."
 
 test_expect_success \
 	"using message from other commit" \
-	"git-commit -C HEAD^ ."
+	"git commit -C HEAD^ ."
 
 cat >editor <<\EOF
 #!/bin/sh
@@ -107,25 +107,25 @@ chmod 755 editor
 test_expect_success \
 	"editing message from other commit" \
 	"echo 'hula hula' >file && \
-	 VISUAL=./editor git-commit -c HEAD^ -a"
+	 VISUAL=./editor git commit -c HEAD^ -a"
 
 test_expect_success \
 	"message from stdin" \
 	"echo 'silly new contents' >file && \
-	 echo commit message from stdin | git-commit -F - -a"
+	 echo commit message from stdin | git commit -F - -a"
 
 test_expect_success \
 	"overriding author from command line" \
 	"echo 'gak' >file && \
-	 git-commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a"
+	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a"
 
 test_expect_success \
 	"interactive add" \
-	"echo 7 | git-commit --interactive | grep 'What now'"
+	"echo 7 | git commit --interactive | grep 'What now'"
 
 test_expect_success \
 	"showing committed revisions" \
-	"git-rev-list HEAD >current"
+	"git rev-list HEAD >current"
 
 # We could just check the head sha1, but checking each commit makes it
 # easier to isolate bugs.
@@ -140,7 +140,7 @@ d381ac431806e53f3dd7ac2f1ae0534f36d738b9
 EOF
 
 test_expect_success \
-    'validate git-rev-list output.' \
+    'validate git rev-list output.' \
     'diff current expected'
 
 test_expect_success 'partial commit that involves removal (1)' '
