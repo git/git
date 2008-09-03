@@ -7,7 +7,7 @@ test_description='git rebase --merge --skip tests'
 
 . ./test-lib.sh
 
-# we assume the default git-am -3 --skip strategy is tested independently
+# we assume the default git am -3 --skip strategy is tested independently
 # and always works :)
 
 test_expect_success setup '

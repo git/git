@@ -241,7 +241,7 @@ test_expect_success 'merge-recursive simple' '
 	rm -fr [abcd] &&
 	git checkout -f "$c2" &&
 
-	git-merge-recursive "$c0" -- "$c2" "$c1"
+	git merge-recursive "$c0" -- "$c2" "$c1"
 	status=$?
 	case "$status" in
 	1)
@@ -285,7 +285,7 @@ test_expect_success 'merge-recursive remove conflict' '
 	rm -fr [abcd] &&
 	git checkout -f "$c1" &&
 
-	git-merge-recursive "$c0" -- "$c1" "$c5"
+	git merge-recursive "$c0" -- "$c1" "$c5"
 	status=$?
 	case "$status" in
 	1)
@@ -317,7 +317,7 @@ test_expect_success 'merge-recursive d/f simple' '
 	git reset --hard &&
 	git checkout -f "$c1" &&
 
-	git-merge-recursive "$c0" -- "$c1" "$c3"
+	git merge-recursive "$c0" -- "$c1" "$c3"
 '
 
 test_expect_success 'merge-recursive result' '
@@ -339,7 +339,7 @@ test_expect_success 'merge-recursive d/f conflict' '
 	git reset --hard &&
 	git checkout -f "$c1" &&
 
-	git-merge-recursive "$c0" -- "$c1" "$c4"
+	git merge-recursive "$c0" -- "$c1" "$c4"
 	status=$?
 	case "$status" in
 	1)
@@ -373,7 +373,7 @@ test_expect_success 'merge-recursive d/f conflict the other way' '
 	git reset --hard &&
 	git checkout -f "$c4" &&
 
-	git-merge-recursive "$c0" -- "$c4" "$c1"
+	git merge-recursive "$c0" -- "$c4" "$c1"
 	status=$?
 	case "$status" in
 	1)
@@ -407,7 +407,7 @@ test_expect_success 'merge-recursive d/f conflict' '
 	git reset --hard &&
 	git checkout -f "$c1" &&
 
-	git-merge-recursive "$c0" -- "$c1" "$c6"
+	git merge-recursive "$c0" -- "$c1" "$c6"
 	status=$?
 	case "$status" in
 	1)
@@ -441,7 +441,7 @@ test_expect_success 'merge-recursive d/f conflict' '
 	git reset --hard &&
 	git checkout -f "$c6" &&
 
-	git-merge-recursive "$c0" -- "$c6" "$c1"
+	git merge-recursive "$c0" -- "$c6" "$c1"
 	status=$?
 	case "$status" in
 	1)
