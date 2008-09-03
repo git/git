@@ -6,8 +6,8 @@ test_description='git rev-list --pretty=format test'
 
 test_tick
 test_expect_success 'setup' '
-touch foo && git add foo && git-commit -m "added foo" &&
-  echo changed >foo && git-commit -a -m "changed foo"
+touch foo && git add foo && git commit -m "added foo" &&
+  echo changed >foo && git commit -a -m "changed foo"
 '
 
 # usage: test_format name format_string <expected_output
@@ -110,7 +110,7 @@ include an iso8859 character: ¡bueno!
 EOF
 test_expect_success 'setup complex body' '
 git config i18n.commitencoding iso8859-1 &&
-  echo change2 >foo && git-commit -a -F commit-msg
+  echo change2 >foo && git commit -a -F commit-msg
 '
 
 test_format complex-encoding %e <<'EOF'

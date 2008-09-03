@@ -16,9 +16,9 @@ test_expect_success setup '
 	tree1=$(git write-tree) &&
 	commit1=$(echo modify | git commit-tree $tree1 -p $commit0) &&
         git update-ref refs/heads/master $commit0 &&
-	git-clone ./. clone1 &&
+	git clone ./. clone1 &&
 	GIT_DIR=clone1/.git git update-index --add a &&
-	git-clone ./. clone2 &&
+	git clone ./. clone2 &&
 	GIT_DIR=clone2/.git git update-index --add a
 '
 

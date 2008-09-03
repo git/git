@@ -58,7 +58,7 @@ pull_to_client () {
 
 	cd client
 	test_expect_success "$number pull" \
-		"git-fetch-pack -k -v .. $heads"
+		"git fetch-pack -k -v .. $heads"
 	case "$heads" in *A*) echo $ATIP > .git/refs/heads/A;; esac
 	case "$heads" in *B*) echo $BTIP > .git/refs/heads/B;; esac
 	git symbolic-ref HEAD refs/heads/`echo $heads | sed -e 's/^\(.\).*$/\1/'`
@@ -129,7 +129,7 @@ pull_to_client 2nd "B" $((64*3))
 
 pull_to_client 3rd "A" $((1*3)) # old fails
 
-test_expect_success "clone shallow" 'git-clone --depth 2 "file://$(pwd)/." shallow'
+test_expect_success "clone shallow" 'git clone --depth 2 "file://$(pwd)/." shallow'
 
 (cd shallow; git count-objects -v) > count.shallow
 
