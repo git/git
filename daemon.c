@@ -1083,7 +1083,8 @@ int main(int argc, char **argv)
 		openlog("git-daemon", LOG_PID, LOG_DAEMON);
 		set_die_routine(daemon_die);
 	} else
-		setlinebuf(stderr); /* avoid splitting a message in the middle */
+		/* avoid splitting a message in the middle */
+		setvbuf(stderr, NULL, _IOLBF, 0);
 
 	if (inetd_mode && (group_name || user_name))
 		die("--user and --group are incompatible with --inetd");
