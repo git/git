@@ -146,8 +146,8 @@ And here is another line that is cleanly resolved or unmodified.
 ------------
 
 The area a pair of conflicting changes happened is marked with markers
-"<<<<<<", "=======", and ">>>>>>>".  The part before the "=======" is
-typically your side, and the part after it is typically their side.
+"`<<<<<<<`", "`=======`", and "`>>>>>>>`".  The part before the "`=======`"
+is typically your side, and the part after it is typically their side.
 
 The default format does not show what the original said in the conflicted
 area.  You cannot tell how many lines are deleted and replaced with the
@@ -173,8 +173,8 @@ Git makes conflict resolution easy.
 And here is another line that is cleanly resolved or unmodified.
 ------------
 
-In addition to the "<<<<<<", "=======", and ">>>>>>>" markers, it uses
-another "|||||||" marker that is followed by the original text.  You can
+In addition to the "`<<<<<<<`", "`=======`", and "`>>>>>>>`" markers, it uses
+another "`|||||||`" marker that is followed by the original text.  You can
 tell that the original just stated a fact, and your side simply gave in to
 that statement and gave up, while the other side tried to have a more
 positive attitude.  You can sometimes come up with a better resolution by
