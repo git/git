@@ -50,6 +50,15 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	return 0;
 }
 
+void load_ref_decorations(void)
+{
+	static int loaded;
+	if (!loaded) {
+		loaded = 1;
+		for_each_ref(add_ref_decoration, NULL);
+	}
+}
+
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
@@ -80,8 +89,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--decorate")) {
-			if (!decorate)
-				for_each_ref(add_ref_decoration, NULL);
+			load_ref_decorations();
 			decorate = 1;
 		} else
 			die("unrecognized argument: %s", arg);
