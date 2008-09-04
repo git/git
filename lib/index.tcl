@@ -416,11 +416,11 @@ proc do_revert_selection {} {
 
 	if {[array size selected_paths] > 0} {
 		revert_helper \
-			{Reverting selected files} \
+			[mc "Reverting selected files"] \
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		revert_helper \
-			"Reverting [short_path $current_diff_path]" \
+			[mc "Reverting %s" [short_path $current_diff_path]] \
 			[list $current_diff_path]
 	}
 }
