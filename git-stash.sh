@@ -39,6 +39,7 @@ clear_stash () {
 create_stash () {
 	stash_msg="$1"
 
+	git update-index -q --refresh
 	if no_changes
 	then
 		exit 0
@@ -101,6 +102,7 @@ save_stash () {
 
 	stash_msg="$*"
 
+	git update-index -q --refresh
 	if no_changes
 	then
 		echo 'No local changes to save'
@@ -150,6 +152,7 @@ show_stash () {
 }
 
 apply_stash () {
+	git update-index -q --refresh &&
 	git diff-files --quiet --ignore-submodules ||
 		die 'Cannot restore on top of a dirty state'
 
