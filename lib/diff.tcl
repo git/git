@@ -276,6 +276,7 @@ proc start_show_diff {scroll_pos {add_opts {}}} {
 		return
 	}
 
+	set ::current_diff_inheader 1
 	fconfigure $fd \
 		-blocking 0 \
 		-encoding binary \
@@ -292,18 +293,21 @@ proc read_diff {fd scroll_pos} {
 	while {[gets $fd line] >= 0} {
 		# -- Cleanup uninteresting diff header lines.
 		#
-		if {   [string match {diff --git *}      $line]
-			|| [string match {diff --cc *}       $line]
-			|| [string match {diff --combined *} $line]
-			|| [string match {--- *}             $line]
-			|| [string match {+++ *}             $line]} {
-			append current_diff_header $line "\n"
-			continue
+		if {$::current_diff_inheader} {
+			if {   [string match {diff --git *}      $line]
+			    || [string match {diff --cc *}       $line]
+			    || [string match {diff --combined *} $line]
+			    || [string match {--- *}             $line]
+			    || [string match {+++ *}             $line]} {
+				append current_diff_header $line "\n"
+				continue
+			}
 		}
 		if {[string match {index *} $line]} continue
 		if {$line eq {deleted file mode 120000}} {
 			set line "deleted symlink"
 		}
+		set ::current_diff_inheader 0
 
 		# -- Automatically detect if this is a 3 way diff.
 		#
