@@ -953,22 +953,9 @@ static void add_grep(struct rev_info *revs, const char *ptn, enum grep_pat_token
 	append_grep_pattern(&revs->grep_filter, ptn, "command line", 0, what);
 }
 
-static void add_header_grep(struct rev_info *revs, const char *field, const char *pattern)
+static void add_header_grep(struct rev_info *revs, enum grep_header_field field, const char *pattern)
 {
-	char *pat;
-	const char *prefix;
-	int patlen, fldlen;
-
-	fldlen = strlen(field);
-	patlen = strlen(pattern);
-	pat = xmalloc(patlen + fldlen + 10);
-	prefix = ".*";
-	if (*pattern == '^') {
-		prefix = "";
-		pattern++;
-	}
-	sprintf(pat, "^%s %s%s", field, prefix, pattern);
-	add_grep(revs, pat, GREP_PATTERN_HEAD);
+	append_header_grep_pattern(&revs->grep_filter, field, pattern);
 }
 
 static void add_message_grep(struct rev_info *revs, const char *pattern)
@@ -1159,9 +1146,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	 * Grepping the commit log
 	 */
 	else if (!prefixcmp(arg, "--author=")) {
-		add_header_grep(revs, "author", arg+9);
+		add_header_grep(revs, GREP_HEADER_AUTHOR, arg+9);
 	} else if (!prefixcmp(arg, "--committer=")) {
-		add_header_grep(revs, "committer", arg+12);
+		add_header_grep(revs, GREP_HEADER_COMMITTER, arg+12);
 	} else if (!prefixcmp(arg, "--grep=")) {
 		add_message_grep(revs, arg+7);
 	} else if (!strcmp(arg, "--extended-regexp") || !strcmp(arg, "-E")) {

@@ -386,7 +386,9 @@ __git_porcelain_commands ()
 		cat-file)         : plumbing;;
 		check-attr)       : plumbing;;
 		check-ref-format) : plumbing;;
+		checkout-index)   : plumbing;;
 		commit-tree)      : plumbing;;
+		count-objects)    : infrequent;;
 		cvsexportcommit)  : export;;
 		cvsimport)        : import;;
 		cvsserver)        : daemon;;
@@ -395,6 +397,7 @@ __git_porcelain_commands ()
 		diff-index)       : plumbing;;
 		diff-tree)        : plumbing;;
 		fast-import)      : import;;
+		fast-export)      : export;;
 		fsck-objects)     : plumbing;;
 		fetch-pack)       : plumbing;;
 		fmt-merge-msg)    : plumbing;;
@@ -404,6 +407,10 @@ __git_porcelain_commands ()
 		index-pack)       : plumbing;;
 		init-db)          : deprecated;;
 		local-fetch)      : plumbing;;
+		lost-found)       : infrequent;;
+		ls-files)         : plumbing;;
+		ls-remote)        : plumbing;;
+		ls-tree)          : plumbing;;
 		mailinfo)         : plumbing;;
 		mailsplit)        : plumbing;;
 		merge-*)          : plumbing;;
@@ -428,6 +435,7 @@ __git_porcelain_commands ()
 		runstatus)        : plumbing;;
 		sh-setup)         : internal;;
 		shell)            : daemon;;
+		show-ref)         : plumbing;;
 		send-pack)        : plumbing;;
 		show-index)       : plumbing;;
 		ssh-*)            : transport;;
@@ -442,6 +450,8 @@ __git_porcelain_commands ()
 		upload-archive)   : plumbing;;
 		upload-pack)      : plumbing;;
 		write-tree)       : plumbing;;
+		var)              : infrequent;;
+		verify-pack)      : infrequent;;
 		verify-tag)       : plumbing;;
 		*) echo $i;;
 		esac
