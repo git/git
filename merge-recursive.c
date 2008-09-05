@@ -35,18 +35,14 @@ static struct tree *shift_tree_object(struct tree *one, struct tree *two)
 }
 
 /*
- * A virtual commit has
- * - (const char *)commit->util set to the name, and
- * - *(int *)commit->object.sha1 set to the virtual id.
+ * A virtual commit has (const char *)commit->util set to the name.
  */
 
 struct commit *make_virtual_commit(struct tree *tree, const char *comment)
 {
 	struct commit *commit = xcalloc(1, sizeof(struct commit));
-	static unsigned virtual_id = 1;
 	commit->tree = tree;
 	commit->util = (void*)comment;
-	*(int*)commit->object.sha1 = virtual_id++;
 	/* avoid warnings */
 	commit->object.parsed = 1;
 	return commit;
