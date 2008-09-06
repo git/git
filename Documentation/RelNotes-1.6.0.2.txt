@@ -18,9 +18,11 @@ Fixes since v1.6.0.1
   with GIT_WORK_TREE environment settings.
 
 
-
 * "git apply --unidiff-zero" incorrectly applied a -U0 patch that inserts
   a new line before the second line.
+
+* "git blame -c" did not exactly work like "git annotate" when range
+  boundaries are involved.
 
 * "git clone $there $here/" with extra trailing slashes after explicit
   local directory name $here did not work as expected.
@@ -28,15 +30,29 @@ Fixes since v1.6.0.1
 * "git diff --dirstat -M" did not add changes in subdirectories up
   correctly for renamed paths.
 
+* "git diff --cumulative" did not imply "--dirstat".
+
 * "git for-each-ref refs/heads/" did not work as expected.
 
-* "git log --grep=pattern -i" did not ignore case.
+* "git gui" allowed users to feed patch without any context to be applied.
+
+* "git gui" botched parsing "diff" output when a line that begins with two
+  dashes and a space gets removed or a line that begins with two pluses
+  and a space gets added.
+
+* "git gui" translation updates and i18n fixes.
+
+* "git log -i --grep=pattern" did not ignore case; neither "git log -E
+  --grep=pattern" triggered extended regexp.
 
 * "git log --pretty="%ad" --date=short" did not use short format when
   showing the timestamp.
 
 * Build procedure for "git shell" that used stub versions of some
   functions and globals was not understood by linkers on some platforms.
+
+* "git stash" was fooled by a stat-dirty but otherwise unmodified paths
+  and refused to work until the user refreshed the index.
 
 * "git verify-pack -v" did not work correctly when given more than one
   packfile.
@@ -45,6 +61,7 @@ Also contains many documentation updates.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.1-49-g6a42cfe
+O=v1.6.0.1-61-g1eff26c
 echo O=$(git describe maint)
 git shortlog --no-merges $O..maint
+
