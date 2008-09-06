@@ -384,6 +384,17 @@ We continue anyway.
 EOF
 }
 
+#
+# "check_merge_bases" checks that merge bases are not "bad".
+#
+# - If one is "good", that's good, we have nothing to do.
+# - If one is "bad", it means the user assumed something wrong
+# and we must exit.
+# - If one is "skipped", we can't know but we should warn.
+# - If we don't know, we should check it out and ask the user to test.
+#
+# In the last case we will return 1, and otherwise 0.
+#
 check_merge_bases() {
 	_bad="$1"
 	_good="$2"
@@ -398,12 +409,20 @@ check_merge_bases() {
 			handle_skipped_merge_base "$_mb" "$_bad" "$_good"
 		else
 			bisect_checkout "$_mb" "a merge base must be tested"
-			checkout_done=1
-			return
+			return 1
 		fi
 	done
+	return 0
 }
 
+#
+# "check_good_are_ancestors_of_bad" checks that all "good" revs are
+# ancestor of the "bad" rev.
+#
+# If that's not the case, we need to check the merge bases.
+# If a merge base must be tested by the user we return 1 and
+# otherwise 0.
+#
 check_good_are_ancestors_of_bad() {
 	test -f "$GIT_DIR/BISECT_ANCESTORS_OK" &&
 		return
@@ -417,11 +436,13 @@ check_good_are_ancestors_of_bad() {
 
 	_side=$(git rev-list $_good ^$_bad)
 	if test -n "$_side"; then
+		# Return if a checkout was done
 		check_merge_bases "$_bad" "$_good" "$_skip" || return
-		test "$checkout_done" -eq "1" && return
 	fi
 
 	: > "$GIT_DIR/BISECT_ANCESTORS_OK"
+
+	return 0
 }
 
 bisect_next() {
@@ -437,8 +458,9 @@ bisect_next() {
 		"refs/bisect/skip-*" | tr '\012' ' ') &&
 
 	# Maybe some merge bases must be tested first
-	check_good_are_ancestors_of_bad "$bad" "$good" "$skip" || exit
-	test "$checkout_done" -eq "1" && checkout_done='' && return
+	check_good_are_ancestors_of_bad "$bad" "$good" "$skip"
+	# Return now if a checkout has already been done
+	test "$?" -eq "1" && return
 
 	# Get bisection information
 	BISECT_OPT=''
