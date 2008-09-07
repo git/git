@@ -418,10 +418,12 @@ proc stop_rev_list {view} {
 }
 
 proc reset_pending_select {selid} {
-    global pending_select mainheadid
+    global pending_select mainheadid selectheadid
 
     if {$selid ne {}} {
 	set pending_select $selid
+    } elseif {$selectheadid ne {}} {
+	set pending_select $selectheadid
     } else {
 	set pending_select $mainheadid
     }
@@ -1609,6 +1611,7 @@ proc getcommit {id} {
 proc readrefs {} {
     global tagids idtags headids idheads tagobjid
     global otherrefids idotherrefs mainhead mainheadid
+    global selecthead selectheadid
 
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
 	catch {unset $v}
@@ -1653,6 +1656,12 @@ proc readrefs {} {
 	set thehead [exec git symbolic-ref HEAD]
 	if {[string match "refs/heads/*" $thehead]} {
 	    set mainhead [string range $thehead 11 end]
+	}
+    }
+    set selectheadid {}
+    if {$selecthead ne {}} {
+	catch {
+	    set selectheadid [exec git rev-parse --verify $selecthead]
 	}
     }
 }
@@ -2205,6 +2214,8 @@ proc makewindow {} {
 	-command {flist_hl 1}
     $flist_menu add command -label [mc "External diff"] \
         -command {external_diff}
+    $flist_menu add command -label [mc "Blame parent commit"] \
+        -command {external_blame 1}
 }
 
 # Windows sends all mouse wheel events to the current focused window, not
@@ -3009,6 +3020,27 @@ proc external_diff {} {
             fconfigure $fl -blocking 0
             filerun $fl [list delete_at_eof $fl $diffdir]
         }
+    }
+}
+
+proc external_blame {parent_idx} {
+    global flist_menu_file
+    global nullid nullid2
+    global parentlist selectedline currentid
+
+    if {$parent_idx > 0} {
+	set base_commit [lindex $parentlist $selectedline [expr {$parent_idx-1}]]
+    } else {
+	set base_commit $currentid
+    }
+
+    if {$base_commit eq {} || $base_commit eq $nullid || $base_commit eq $nullid2} {
+	error_popup [mc "No such commit"]
+	return
+    }
+
+    if {[catch {exec git gui blame $base_commit $flist_menu_file &} err]} {
+	error_popup [mc "git gui blame: command failed: $err"]
     }
 }
 
@@ -9865,6 +9897,9 @@ if {![file isdirectory $gitdir]} {
     exit 1
 }
 
+set selecthead {}
+set selectheadid {}
+
 set revtreeargs {}
 set cmdline_files {}
 set i 0
@@ -9876,6 +9911,9 @@ foreach arg $argv {
 	    set cmdline_files [lrange $argv [expr {$i + 1}] end]
 	    break
 	}
+	"--select-commit=*" {
+	    set selecthead [string range $arg 16 end]
+	}
 	"--argscmd=*" {
 	    set revtreeargscmd [string range $arg 10 end]
 	}
@@ -9884,6 +9922,10 @@ foreach arg $argv {
 	}
     }
     incr i
+}
+
+if {$selecthead eq "HEAD"} {
+    set selecthead {}
 }
 
 if {$i >= [llength $argv] && $revtreeargs ne {}} {

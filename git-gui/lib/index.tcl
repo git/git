@@ -99,6 +99,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch after} {
 		switch -glob -- [lindex $s 0] {
 		A? {set new _O}
 		M? {set new _M}
+		T_ {set new _T}
 		D_ {set new _D}
 		D? {set new _?}
 		?? {continue}
@@ -162,6 +163,8 @@ proc write_update_index {fd pathList totalCnt batch after} {
 		?D {set new D_}
 		_O -
 		AM {set new A_}
+		_T {set new T_}
+		_U -
 		U? {
 			if {[file exists $path]} {
 				set new M_
@@ -231,6 +234,7 @@ proc write_checkout_index {fd pathList totalCnt batch after} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		U? {continue}
 		?M -
+		?T -
 		?D {
 			puts -nonewline $fd "[encoding convertto $path]\0"
 			display_file $path ?_
@@ -252,6 +256,7 @@ proc unstage_helper {txt paths} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		A? -
 		M? -
+		T_ -
 		D? {
 			lappend pathList $path
 			if {$path eq $current_diff_path} {
@@ -296,6 +301,7 @@ proc add_helper {txt paths} {
 		_O -
 		?M -
 		?D -
+		?T -
 		U? {
 			lappend pathList $path
 			if {$path eq $current_diff_path} {
@@ -336,6 +342,7 @@ proc do_add_all {} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		U? {continue}
 		?M -
+		?T -
 		?D {lappend paths $path}
 		}
 	}
@@ -353,6 +360,7 @@ proc revert_helper {txt paths} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		U? {continue}
 		?M -
+		?T -
 		?D {
 			lappend pathList $path
 			if {$path eq $current_diff_path} {
@@ -409,11 +417,11 @@ proc do_revert_selection {} {
 
 	if {[array size selected_paths] > 0} {
 		revert_helper \
-			{Reverting selected files} \
+			[mc "Reverting selected files"] \
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		revert_helper \
-			"Reverting [short_path $current_diff_path]" \
+			[mc "Reverting %s" [short_path $current_diff_path]] \
 			[list $current_diff_path]
 	}
 }
