@@ -79,6 +79,7 @@ static void wt_status_print_dirty_header(struct wt_status *s,
 		color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to update what will be committed)");
 	else
 		color_fprintf_ln(s->fp, c, "#   (use \"git add/rm <file>...\" to update what will be committed)");
+	color_fprintf_ln(s->fp, c, "#   (use \"git checkout -- <file>...\" to discard changes in working directory)");
 	color_fprintf_ln(s->fp, c, "#");
 }
 
