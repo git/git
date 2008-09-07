@@ -1,6 +1,6 @@
 #!/bin/sh
 
-: ${J=-j2}
+: ${J=-j4}
 force=
 while	case "$1" in
 	-pedantic) M=$1 ;;
@@ -50,12 +50,20 @@ do
 	echo "** $branch" &&
 	git checkout $branch &&
 	Meta/Make $M -- $J all &&
-	Meta/Make $M -- test &&
+	Meta/Make $M -- $J test &&
 	Meta/Make $M -- install &&
+	case "$branch" in
+	master | maint | next )
+		Meta/Make $M -- doc
+		;;
+	jch )
+		Meta/Make $M -- doc install-doc
+		;;
+	*)
+		: ;;
+	esac &&
 	Meta/Make clean || exit $?
 
 done >./:all.log 3>&2 2>&1
 
 git checkout master
-
-
