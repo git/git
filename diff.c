@@ -1402,6 +1402,7 @@ static struct builtin_funcname_pattern {
 			"\\|"
 			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$"
 			},
+	{ "php", "^[\t ]*\\(\\(function\\|class\\).*\\)" },
 	{ "python", "^\\s*\\(\\(class\\|def\\)\\s.*\\)$" },
 	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
 	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$" },

@@ -311,17 +311,19 @@ patterns are available:
 
 - `bibtex` suitable for files with BibTeX coded references.
 
+- `html` suitable for HTML/XHTML documents.
+
 - `java` suitable for source code in the Java lanugage.
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
+
+- `php` suitable for source code in the PHP language.
 
 - `python` suitable for source code in the Python language.
 
 - `ruby` suitable for source code in the Ruby language.
 
 - `tex` suitable for source code for LaTeX documents.
-
-- `html` suitable for HTML/XHTML documents.
 
 
 Performing a three-way merge
