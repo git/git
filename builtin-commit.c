@@ -878,10 +878,37 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return commitable ? 0 : 1;
 }
 
+static char *get_commit_format_string(void)
+{
+	unsigned char sha[20];
+	const char *head = resolve_ref("HEAD", sha, 0, NULL);
+	struct strbuf buf = STRBUF_INIT;
+
+	strbuf_addstr(&buf, "format:%h");
+
+	/* Are we on a detached HEAD? */
+	if (!strcmp("HEAD", head))
+		strbuf_addstr(&buf, " on detached HEAD");
+	else if (!prefixcmp(head, "refs/heads/")) {
+		const char *cp;
+		strbuf_addstr(&buf, " on ");
+		for (cp = head + 11; *cp; cp++) {
+			if (*cp == '%')
+				strbuf_addstr(&buf, "%x25");
+			else
+				strbuf_addch(&buf, *cp);
+		}
+	}
+	strbuf_addstr(&buf, ": %s");
+
+	return strbuf_detach(&buf, NULL);
+}
+
 static void print_summary(const char *prefix, const unsigned char *sha1)
 {
 	struct rev_info rev;
 	struct commit *commit;
+	char *format = get_commit_format_string();
 
 	commit = lookup_commit(sha1);
 	if (!commit)
@@ -899,7 +926,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 	rev.verbose_header = 1;
 	rev.show_root_diff = 1;
-	get_commit_format("format:%h: %s", &rev);
+	get_commit_format(format, &rev);
 	rev.always_show_header = 0;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
@@ -910,10 +937,11 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 	if (!log_tree_commit(&rev, commit)) {
 		struct strbuf buf = STRBUF_INIT;
-		format_commit_message(commit, "%h: %s", &buf, DATE_NORMAL);
+		format_commit_message(commit, format + 7, &buf, DATE_NORMAL);
 		printf("%s\n", buf.buf);
 		strbuf_release(&buf);
 	}
+	free(format);
 }
 
 static int git_commit_config(const char *k, const char *v, void *cb)
