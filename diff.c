@@ -3394,7 +3394,7 @@ void diffcore_std(struct diff_options *options)
 	if (DIFF_OPT_TST(options, QUIET))
 		return;
 
-	if (options->skip_stat_unmatch && !DIFF_OPT_TST(options, FIND_COPIES_HARDER))
+	if (options->skip_stat_unmatch)
 		diffcore_skip_stat_unmatch(options);
 	if (options->break_opt != -1)
 		diffcore_break(options->break_opt);
