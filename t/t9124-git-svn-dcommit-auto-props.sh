@@ -81,4 +81,21 @@ test_expect_success 'check resulting svn repository' '
 )
 '
 
+test_expect_success 'check renamed file' '
+	test -d user &&
+	generate_auto_props yes > user/config &&
+	git mv foo foo.sh &&
+	git commit -m "foo => foo.sh" &&
+	git svn dcommit --config-dir=user &&
+	(
+		cd work/svnrepo &&
+		svn up &&
+		test ! -e foo &&
+		test -e foo.sh &&
+		test "x$(svn propget svn:mime-type foo.sh)" = \
+		     "xapplication/x-shellscript" &&
+		test "x$(svn propget svn:eol-style foo.sh)" = "xLF"
+	)
+'
+
 test_done
