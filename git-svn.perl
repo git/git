@@ -421,14 +421,14 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
+	unless ($gs) {
+		die "Unable to determine upstream SVN information from ",
+		    "$head history.\nPerhaps the repository is empty.";
+	}
 	$url = defined $_commit_url ? $_commit_url : $gs->full_url;
 	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
 		print "Committing to $url ...\n";
-	}
-	unless ($gs) {
-		die "Unable to determine upstream SVN information from ",
-		    "$head history.\nPerhaps the repository is empty.";
 	}
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
 	if ($_no_rebase && scalar(@$linear_refs) > 1) {
@@ -803,8 +803,28 @@ sub cmd_commit_diff {
 	}
 }
 
+sub escape_uri_only {
+	my ($uri) = @_;
+	my @tmp;
+	foreach (split m{/}, $uri) {
+		s/([^\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
+		push @tmp, $_;
+	}
+	join('/', @tmp);
+}
+
+sub escape_url {
+	my ($url) = @_;
+	if ($url =~ m#^([^:]+)://([^/]*)(.*)$#) {
+		my ($scheme, $domain, $uri) = ($1, $2, escape_uri_only($3));
+		$url = "$scheme://$domain$uri";
+	}
+	$url;
+}
+
 sub cmd_info {
 	my $path = canonicalize_path(defined($_[0]) ? $_[0] : ".");
+	my $fullpath = canonicalize_path($cmd_dir_prefix . $path);
 	if (exists $_[1]) {
 		die "Too many arguments specified\n";
 	}
@@ -812,8 +832,8 @@ sub cmd_info {
 	my ($file_type, $diff_status) = find_file_type_and_diff_status($path);
 
 	if (!$file_type && !$diff_status) {
-		print STDERR "$path:  (Not a versioned resource)\n\n";
-		return;
+		print STDERR "svn: '$path' is not under version control\n";
+		exit 1;
 	}
 
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
@@ -825,21 +845,21 @@ sub cmd_info {
 	# canonicalize_path() will return "" to make libsvn 1.5.x happy,
 	$path = "." if $path eq "";
 
-	my $full_url = $url . ($path eq "." ? "" : "/$path");
+	my $full_url = $url . ($fullpath eq "" ? "" : "/$fullpath");
 
 	if ($_url) {
-		print $full_url, "\n";
+		print escape_url($full_url), "\n";
 		return;
 	}
 
 	my $result = "Path: $path\n";
 	$result .= "Name: " . basename($path) . "\n" if $file_type ne "dir";
-	$result .= "URL: " . $full_url . "\n";
+	$result .= "URL: " . escape_url($full_url) . "\n";
 
 	eval {
 		my $repos_root = $gs->repos_root;
 		Git::SVN::remove_username($repos_root);
-		$result .= "Repository Root: $repos_root\n";
+		$result .= "Repository Root: " . escape_url($repos_root) . "\n";
 	};
 	if ($@) {
 		$result .= "Repository Root: (offline)\n";
@@ -861,7 +881,7 @@ sub cmd_info {
 	}
 
 	my ($lc_author, $lc_rev, $lc_date_utc);
-	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $path);
+	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $fullpath);
 	my $log = command_output_pipe(@args);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {
@@ -3380,11 +3400,12 @@ sub generate_diff {
 	while (<$diff_fh>) {
 		chomp $_; # this gets rid of the trailing "\0"
 		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
-					$::sha1\s($::sha1)\s
+					($::sha1)\s($::sha1)\s
 					([MTCRAD])\d*$/xo) {
 			push @mods, {	mode_a => $1, mode_b => $2,
-					sha1_b => $3, chg => $4 };
-			if ($4 =~ /^(?:C|R)$/) {
+					sha1_a => $3, sha1_b => $4,
+					chg => $5 };
+			if ($5 =~ /^(?:C|R)$/) {
 				$state = 'file_a';
 			} else {
 				$state = 'file_b';
@@ -3636,6 +3657,7 @@ sub R {
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 				$self->url_path($m->{file_a}), $self->{r});
 	print "\tR\t$m->{file_a} => $m->{file_b}\n" unless $::_q;
+	$self->apply_autoprops($file, $fbat);
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 
@@ -3662,6 +3684,27 @@ sub change_file_prop {
 	$self->SUPER::change_file_prop($fbat, $pname, $pval, $self->{pool});
 }
 
+sub _chg_file_get_blob ($$$$) {
+	my ($self, $fbat, $m, $which) = @_;
+	my $fh = Git::temp_acquire("git_blob_$which");
+	if ($m->{"mode_$which"} =~ /^120/) {
+		print $fh 'link ' or croak $!;
+		$self->change_file_prop($fbat,'svn:special','*');
+	} elsif ($m->{mode_a} =~ /^120/ && $m->{"mode_$which"} !~ /^120/) {
+		$self->change_file_prop($fbat,'svn:special',undef);
+	}
+	my $blob = $m->{"sha1_$which"};
+	return ($fh,) if ($blob =~ /^0{40}$/);
+	my $size = $::_repository->cat_blob($blob, $fh);
+	croak "Failed to read object $blob" if ($size < 0);
+	$fh->flush == 0 or croak $!;
+	seek $fh, 0, 0 or croak $!;
+
+	my $exp = ::md5sum($fh);
+	seek $fh, 0, 0 or croak $!;
+	return ($fh, $exp);
+}
+
 sub chg_file {
 	my ($self, $fbat, $m) = @_;
 	if ($m->{mode_b} =~ /755$/ && $m->{mode_a} !~ /755$/) {
@@ -3669,26 +3712,24 @@ sub chg_file {
 	} elsif ($m->{mode_b} !~ /755$/ && $m->{mode_a} =~ /755$/) {
 		$self->change_file_prop($fbat,'svn:executable',undef);
 	}
-	my $fh = Git::temp_acquire('git_blob');
-	if ($m->{mode_b} =~ /^120/) {
-		print $fh 'link ' or croak $!;
-		$self->change_file_prop($fbat,'svn:special','*');
-	} elsif ($m->{mode_a} =~ /^120/ && $m->{mode_b} !~ /^120/) {
-		$self->change_file_prop($fbat,'svn:special',undef);
-	}
-	my $size = $::_repository->cat_blob($m->{sha1_b}, $fh);
-	croak "Failed to read object $m->{sha1_b}" if ($size < 0);
-	$fh->flush == 0 or croak $!;
-	seek $fh, 0, 0 or croak $!;
-
-	my $exp = ::md5sum($fh);
-	seek $fh, 0, 0 or croak $!;
-
+	my ($fh_a, $exp_a) = _chg_file_get_blob $self, $fbat, $m, 'a';
+	my ($fh_b, $exp_b) = _chg_file_get_blob $self, $fbat, $m, 'b';
 	my $pool = SVN::Pool->new;
-	my $atd = $self->apply_textdelta($fbat, undef, $pool);
-	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
-	die "Checksum mismatch\nexpected: $exp\ngot: $got\n" if ($got ne $exp);
-	Git::temp_release($fh, 1);
+	my $atd = $self->apply_textdelta($fbat, $exp_a, $pool);
+	if (-s $fh_a) {
+		my $txstream = SVN::TxDelta::new ($fh_a, $fh_b, $pool);
+		my $res = SVN::TxDelta::send_txstream($txstream, @$atd, $pool);
+		if (defined $res) {
+			die "Unexpected result from send_txstream: $res\n",
+			    "(SVN::Core::VERSION: $SVN::Core::VERSION)\n";
+		}
+	} else {
+		my $got = SVN::TxDelta::send_stream($fh_b, @$atd, $pool);
+		die "Checksum mismatch\nexpected: $exp_b\ngot: $got\n"
+		    if ($got ne $exp_b);
+	}
+	Git::temp_release($fh_b, 1);
+	Git::temp_release($fh_a, 1);
 	$pool->clear;
 }
 
