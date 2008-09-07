@@ -13,7 +13,8 @@ on.
 
 (subsystems)
 
-* ...
+* gitk can call out to git-gui to view "git blame" output; git-gui in turn
+  can run gitk from its blame view.
 
 (portability)
 
@@ -108,8 +109,12 @@ release, unless otherwise noted.
 * "git push --tags --all $there" failed with generic usage message without
   telling saying these two options are incompatible.
 
+* "git log --author/--committer" match used to potentially match the
+  timestamp part, exposing internal implementation detail.  Also these did
+  not work with --fixed-strings match at all.
+
 --
 exec >/var/tmp/1
-O=v1.6.0.1-215-g9b8ae93
+O=v1.6.0.1-266-gaf9552f
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
