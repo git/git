@@ -296,6 +296,7 @@ PROGRAMS += git-pack-redundant$X
 PROGRAMS += git-patch-id$X
 PROGRAMS += git-receive-pack$X
 PROGRAMS += git-send-pack$X
+PROGRAMS += git-shell$X
 PROGRAMS += git-show-index$X
 PROGRAMS += git-unpack-file$X
 PROGRAMS += git-update-server-info$X
@@ -837,7 +838,6 @@ EXTLIBS += -lz
 ifndef NO_POSIX_ONLY_PROGRAMS
 	PROGRAMS += git-daemon$X
 	PROGRAMS += git-imap-send$X
-	PROGRAMS += git-shell$X
 endif
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
