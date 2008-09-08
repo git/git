@@ -2706,7 +2706,7 @@ proc treeopendir {w dir} {
 	    $w insert e:$ix $e [highlight_tag $de]
 	}
     }
-    $w mark gravity e:$ix left
+    $w mark gravity e:$ix right
     $w conf -state disabled
     set treediropen($dir) 1
     set top [lindex [split [$w index @0,0] .] 0]
