@@ -697,8 +697,7 @@ ifeq ($(uname_S),NetBSD)
 		NEEDS_LIBICONV = YesPlease
 	endif
 	BASIC_CFLAGS += -I/usr/pkg/include
-	BASIC_LDFLAGS += -L/usr/pkg/lib
-	ALL_LDFLAGS += -Wl,-rpath,/usr/pkg/lib
+	BASIC_LDFLAGS += -L/usr/pkg/lib $(CC_LD_DYNPATH)/usr/pkg/lib
 	THREADED_DELTA_SEARCH = YesPlease
 endif
 ifeq ($(uname_S),AIX)
@@ -793,12 +792,14 @@ ifeq ($(uname_S),Darwin)
 	endif
 endif
 
-ifdef NO_R_TO_GCC_LINKER
-	# Some gcc does not accept and pass -R to the linker to specify
-	# the runtime dynamic library path.
-	CC_LD_DYNPATH = -Wl,-rpath=
-else
-	CC_LD_DYNPATH = -R
+ifndef CC_LD_DYNPATH
+	ifdef NO_R_TO_GCC_LINKER
+		# Some gcc does not accept and pass -R to the linker to specify
+		# the runtime dynamic library path.
+		CC_LD_DYNPATH = -Wl,-rpath,
+	else
+		CC_LD_DYNPATH = -R
+	endif
 endif
 
 ifdef NO_CURL
