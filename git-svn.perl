@@ -4025,6 +4025,7 @@ sub gs_do_switch {
 		}
 	}
 	$ra ||= $self;
+	$url_b = escape_url($url_b);
 	my $reporter = $ra->do_switch($rev_b, '', 1, $url_b, $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 	$reporter->set_path('', $rev_a, 0, @lock, $pool);
