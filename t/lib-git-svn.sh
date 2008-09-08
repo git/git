@@ -5,7 +5,7 @@ git_svn_id=git""-svn-id
 
 if test -n "$NO_SVN_TESTS"
 then
-	test_expect_success 'skipping git-svn tests, NO_SVN_TESTS defined' :
+	test_expect_success 'skipping git svn tests, NO_SVN_TESTS defined' :
 	test_done
 	exit
 fi
@@ -17,7 +17,7 @@ SVN_TREE=$GIT_SVN_DIR/svn-tree
 svn >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git-svn tests, svn not found' :
+    test_expect_success 'skipping git svn tests, svn not found' :
     test_done
     exit
 fi
@@ -91,7 +91,7 @@ start_httpd () {
 	mkdir "$GIT_DIR"/logs
 
 	cat > "$GIT_DIR/httpd.conf" <<EOF
-ServerName "git-svn test"
+ServerName "git svn test"
 ServerRoot "$GIT_DIR"
 DocumentRoot "$GIT_DIR"
 PidFile "$GIT_DIR/httpd.pid"

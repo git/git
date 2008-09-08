@@ -8,7 +8,7 @@
 # daemon running on a users system if the test fails.
 # Not all git users will need to interact with SVN.
 
-test_description='git-svn dcommit new files over svn:// test'
+test_description='git svn dcommit new files over svn:// test'
 
 . ./lib-git-svn.sh
 

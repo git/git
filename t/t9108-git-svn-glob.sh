@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright (c) 2007 Eric Wong
-test_description='git-svn globbing refspecs'
+test_description='git svn globbing refspecs'
 . ./lib-git-svn.sh
 
 cat > expect.end <<EOF
@@ -46,7 +46,7 @@ test_expect_success 'test refspec globbing' '
 	                 "branches/*/src/a:refs/remotes/branches/*" &&
 	git config --add svn-remote.svn.tags\
 	                 "tags/*/src/a:refs/remotes/tags/*" &&
-	git-svn multi-fetch &&
+	git svn multi-fetch &&
 	git log --pretty=oneline refs/remotes/tags/end | \
 	    sed -e "s/^.\{41\}//" > output.end &&
 	test_cmp expect.end output.end &&
@@ -74,7 +74,7 @@ test_expect_success 'test left-hand-side only globbing' '
 		poke tags/end/src/b/readme &&
 		svn commit -m "try to try"
 	) &&
-	git-svn fetch two &&
+	git svn fetch two &&
 	test `git rev-list refs/remotes/two/tags/end | wc -l` -eq 6 &&
 	test `git rev-list refs/remotes/two/branches/start | wc -l` -eq 3 &&
 	test `git rev-parse refs/remotes/two/branches/start~2` = \
@@ -104,7 +104,7 @@ test_expect_success 'test disallow multi-globs' '
 		poke tags/end/src/b/readme &&
 		svn commit -m "try to try"
 	) &&
-	test_must_fail git-svn fetch three 2> stderr.three &&
+	test_must_fail git svn fetch three 2> stderr.three &&
 	test_cmp expect.three stderr.three
 	'
 

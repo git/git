@@ -3,7 +3,7 @@
 # Copyright (c) 2008 Kevin Ballard
 #
 
-test_description='git-svn clone with percent escapes'
+test_description='git svn clone with percent escapes'
 . ./lib-git-svn.sh
 
 test_expect_success 'setup svnrepo' '

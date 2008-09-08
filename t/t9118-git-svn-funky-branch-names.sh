@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Eric Wong
 #
 
-test_description='git-svn funky branch names'
+test_description='git svn funky branch names'
 . ./lib-git-svn.sh
 
 # Abo-Uebernahme (Bug #994)

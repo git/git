@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2008 Brad King
 
-test_description='git-svn dcommit honors auto-props'
+test_description='git svn dcommit honors auto-props'
 
 . ./lib-git-svn.sh
 
@@ -24,8 +24,8 @@ test_expect_success 'initialize git-svn' '
 		svn import -m "import for git-svn" . "$svnrepo"
 	) &&
 	rm -rf import &&
-	git-svn init "$svnrepo"
-	git-svn fetch
+	git svn init "$svnrepo"
+	git svn fetch
 '
 
 test_expect_success 'enable auto-props config' '

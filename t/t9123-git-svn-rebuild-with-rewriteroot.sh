@@ -3,7 +3,7 @@
 # Copyright (c) 2008 Jan Krüger
 #
 
-test_description='git-svn respects rewriteRoot during rebuild'
+test_description='git svn respects rewriteRoot during rebuild'
 
 . ./lib-git-svn.sh
 

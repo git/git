@@ -3,18 +3,18 @@
 # Copyright (c) 2007 Eric Wong
 #
 
-test_description='git-svn useSvmProps test'
+test_description='git svn useSvmProps test'
 
 . ./lib-git-svn.sh
 
 test_expect_success 'load svm repo' '
 	svnadmin load -q "$rawsvnrepo" < "$TEST_DIRECTORY"/t9110/svm.dump &&
-	git-svn init --minimize-url -R arr -i bar "$svnrepo"/mirror/arr &&
-	git-svn init --minimize-url -R argh -i dir "$svnrepo"/mirror/argh &&
-	git-svn init --minimize-url -R argh -i e \
+	git svn init --minimize-url -R arr -i bar "$svnrepo"/mirror/arr &&
+	git svn init --minimize-url -R argh -i dir "$svnrepo"/mirror/argh &&
+	git svn init --minimize-url -R argh -i e \
 	  "$svnrepo"/mirror/argh/a/b/c/d/e &&
 	git config svn.useSvmProps true &&
-	git-svn fetch --all
+	git svn fetch --all
 	'
 
 uuid=161ce429-a9dd-4828-af4a-52023f968c89
@@ -50,12 +50,12 @@ test_expect_success 'verify metadata for /dir' "
 	"
 
 test_expect_success 'find commit based on SVN revision number' "
-        git-svn find-rev r12 |
+        git svn find-rev r12 |
 	    grep `git rev-parse HEAD`
         "
 
 test_expect_success 'empty rebase' "
-	git-svn rebase
+	git svn rebase
 	"
 
 test_done
