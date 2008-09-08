@@ -122,6 +122,8 @@ static int builtin_diff_index(struct rev_info *revs,
 			usage(builtin_diff_usage);
 		argv++; argc--;
 	}
+	if (!cached)
+		setup_work_tree();
 	/*
 	 * Make sure there is one revision (i.e. pending object),
 	 * and there is no revision filtering parameters.
@@ -225,6 +227,7 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		revs->combine_merges = revs->dense_combined_merges = 1;
 
+	setup_work_tree();
 	if (read_cache() < 0) {
 		perror("read_cache");
 		return -1;

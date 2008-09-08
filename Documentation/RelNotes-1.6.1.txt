@@ -13,7 +13,8 @@ on.
 
 (subsystems)
 
-* ...
+* gitk can call out to git-gui to view "git blame" output; git-gui in turn
+  can run gitk from its blame view.
 
 (portability)
 
@@ -28,16 +29,59 @@ on.
 * The underlying diff machinery to produce textual output has been
   optimized, which would result in faster "git blame" processing.
 
+* Most of the test scripts (but not the ones that try to run servers)
+  can be run in parallel.
+
 (usability, bells and whistles)
 
 * "git checkout --track origin/hack" used to be a syntax error.  It now
   DWIMs to create a corresponding local branch "hack", i.e. acts as if you
   said "git checkout --track -b hack origin/hack".
 
+* "git cherry-pick" can also utilize rerere for conflict resolution.
+
+* "git commit --author=$name" can look up author name from existing
+  commits.
+
+* "git count-objects" reports the on-disk footprint for packfiles and
+  their corresponding idx files.
+
+* "git daemon" learned --max-connections=<count> option.
+
 * "git diff" learned to mimick --suppress-blank-empty from GNU diff via a
   configuration option.
 
+* "git diff" learned to put more sensible hunk headers for Python and
+  HTML contents.
+
+* "git help" learned to use GIT_MAN_VIEWER environment variable before
+  using "man" program.
+
 * "git imap-send" can optionally talk SSL.
+
+* "git index-pack" is more careful against disk corruption while
+  completing a thin pack.
+
+* "git log --check" and "git log --exit-code" passes their underlying diff
+  status with their exit status code.
+
+* "git log" learned --simplify-merges, a milder variant of --full-history;
+  "gitk --simplify-merges" is easier to view than with --full-history.
+
+* "git merge --squash" and "git merge --no-ff" into an unborn branch are
+  noticed as user errors.
+
+* "git merge -s $strategy" can use a custom built strategy if you have a
+  command "git-merge-$strategy" on your $PATH.
+
+* "git reflog expire branch" can be used in place of "git reflog expire
+  refs/heads/branch".
+
+* "git submodule foreach" subcommand allows you to iterate over checked
+  out submodules.
+
+* "git submodule sync" subcommands allows you to update the origin URL
+  recorded in submodule directories from the toplevel .gitmodules file.
 
 (internal)
 
@@ -51,8 +95,26 @@ Fixes since v1.6.0
 All of the fixes in v1.6.0.X maintenance series are included in this
 release, unless otherwise noted.
 
+* "git add" and "git update-index" incorrectly allowed adding S/F when S
+  is a tracked symlink that points at a directory D that has a path F in
+  it (we still need to fix a similar nonsense when S is a submodule and F
+  is a path in it).
+
+* "git diff --stdin" used to take two trees on a line and compared them,
+  but we droppped support for such a use case long time ago.  This has
+  been resurrected.
+
+* "git filter-branch" failed to rewrite a tag name with slashes in it.
+
+* "git push --tags --all $there" failed with generic usage message without
+  telling saying these two options are incompatible.
+
+* "git log --author/--committer" match used to potentially match the
+  timestamp part, exposing internal implementation detail.  Also these did
+  not work with --fixed-strings match at all.
+
 --
 exec >/var/tmp/1
-O=v1.6.0-48-ge28a867
+O=v1.6.0.1-266-gaf9552f
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

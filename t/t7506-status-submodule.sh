@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-status for submodule'
+test_description='git status for submodule'
 
 . ./test-lib.sh
 

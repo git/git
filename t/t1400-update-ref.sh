@@ -228,21 +228,21 @@ test_expect_success \
     'echo TEST >F &&
      git add F &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:30" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:30" git-commit -m add -a &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:30" git commit -m add -a &&
 	 h_TEST=$(git rev-parse --verify HEAD)
 	 echo The other day this did not work. >M &&
 	 echo And then Bob told me how to fix it. >>M &&
 	 echo OTHER >F &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:41" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:41" git-commit -F M -a &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:41" git commit -F M -a &&
 	 h_OTHER=$(git rev-parse --verify HEAD) &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:44" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:44" git-commit --amend &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:44" git commit --amend &&
 	 h_FIXED=$(git rev-parse --verify HEAD) &&
 	 echo Merged initial commit and a later commit. >M &&
 	 echo $h_TEST >.git/MERGE_HEAD &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:45" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:45" git-commit -F M &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:45" git commit -F M &&
 	 h_MERGED=$(git rev-parse --verify HEAD) &&
 	 rm -f M'
 
@@ -253,7 +253,7 @@ $h_OTHER $h_FIXED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151040 +0000	co
 $h_FIXED $h_MERGED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151100 +0000	commit (merge): Merged initial commit and a later commit.
 EOF
 test_expect_success \
-	'git-commit logged updates' \
+	'git commit logged updates' \
 	"diff expect .git/logs/$m"
 unset h_TEST h_OTHER h_FIXED h_MERGED
 

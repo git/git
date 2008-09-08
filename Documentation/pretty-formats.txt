@@ -103,7 +103,7 @@ The placeholders are:
 - '%an': author name
 - '%aN': author name (respecting .mailmap)
 - '%ae': author email
-- '%ad': author date
+- '%ad': author date (format respects --date= option)
 - '%aD': author date, RFC2822 style
 - '%ar': author date, relative
 - '%at': author date, UNIX timestamp

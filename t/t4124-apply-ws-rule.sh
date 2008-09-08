@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='core.whitespace rules and git-apply'
+test_description='core.whitespace rules and git apply'
 
 . ./test-lib.sh
 

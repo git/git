@@ -61,7 +61,7 @@ test_expect_success 'apply detecting corrupt patch correctly' \
 	 detected=`sed -ne "${detected}p" broken` &&
 	 test "$detected" = xCIT'
 
-test_expect_success 'initial commit' 'git-commit -a -m initial'
+test_expect_success 'initial commit' 'git commit -a -m initial'
 
 # Try removal (b), modification (d), and creation (e).
 test_expect_success 'diff-index with --binary' \
@@ -72,7 +72,7 @@ test_expect_success 'diff-index with --binary' \
 	 git apply --stat --summary current'
 
 test_expect_success 'apply binary patch' \
-	'git-reset --hard &&
+	'git reset --hard &&
 	 git apply --binary --index <current &&
 	 tree1=`git write-tree` &&
 	 test "$tree1" = "$tree0"'

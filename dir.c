@@ -52,11 +52,6 @@ int common_prefix(const char **pathspec)
 	return prefix;
 }
 
-static inline int special_char(unsigned char c1)
-{
-	return !c1 || c1 == '*' || c1 == '[' || c1 == '?' || c1 == '\\';
-}
-
 /*
  * Does 'match' matches the given name?
  * A match is found if
@@ -80,7 +75,7 @@ static int match_one(const char *match, const char *name, int namelen)
 	for (;;) {
 		unsigned char c1 = *match;
 		unsigned char c2 = *name;
-		if (special_char(c1))
+		if (isspecial(c1))
 			break;
 		if (c1 != c2)
 			return 0;
@@ -680,17 +675,12 @@ static int cmp_name(const void *p1, const void *p2)
  */
 static int simple_length(const char *match)
 {
-	const char special[256] = {
-		[0] = 1, ['?'] = 1,
-		['\\'] = 1, ['*'] = 1,
-		['['] = 1
-	};
 	int len = -1;
 
 	for (;;) {
 		unsigned char c = *match++;
 		len++;
-		if (special[c])
+		if (isspecial(c))
 			return len;
 	}
 }

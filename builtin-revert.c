@@ -11,6 +11,7 @@
 #include "cache-tree.h"
 #include "diff.h"
 #include "revision.h"
+#include "rerere.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -395,6 +396,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			die ("Error wrapping up %s", defmsg);
 		fprintf(stderr, "Automatic %s failed.%s\n",
 			me, help_msg(commit->object.sha1));
+		rerere();
 		exit(1);
 	}
 	if (commit_lock_file(&msg_file) < 0)

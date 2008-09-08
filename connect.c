@@ -97,7 +97,7 @@ int get_ack(int fd, unsigned char *result_sha1)
 	int len = packet_read_line(fd, line, sizeof(line));
 
 	if (!len)
-		die("git-fetch-pack: expected ACK/NAK, got EOF");
+		die("git fetch-pack: expected ACK/NAK, got EOF");
 	if (line[len-1] == '\n')
 		line[--len] = 0;
 	if (!strcmp(line, "NAK"))
@@ -109,7 +109,7 @@ int get_ack(int fd, unsigned char *result_sha1)
 			return 1;
 		}
 	}
-	die("git-fetch_pack: expected ACK/NAK, got '%s'", line);
+	die("git fetch_pack: expected ACK/NAK, got '%s'", line);
 }
 
 int path_match(const char *path, int nr, char **match)

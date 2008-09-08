@@ -15,6 +15,7 @@ SYNOPSIS
 'git submodule' [--quiet] update [--init] [--] [<path>...]
 'git submodule' [--quiet] summary [--summary-limit <n>] [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach <command>
+'git submodule' [--quiet] sync [--] [<path>...]
 
 
 DESCRIPTION
@@ -139,6 +140,14 @@ foreach::
 As an example, "git submodule foreach 'echo $path `git rev-parse HEAD`' will
 show the path and currently checked out commit for each submodule.
 
+sync::
+	Synchronizes submodules' remote URL configuration setting
+	to the value specified in .gitmodules.  This is useful when
+	submodule URLs change upstream and you need to update your local
+	repositories accordingly.
++
+"git submodule sync" synchronizes all submodules while
+"git submodule sync -- A" synchronizes submodule "A" only.
 
 OPTIONS
 -------

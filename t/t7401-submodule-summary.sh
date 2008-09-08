@@ -5,7 +5,7 @@
 
 test_description='Summary support for submodules
 
-This test tries to verify the sanity of summary subcommand of git-submodule.
+This test tries to verify the sanity of summary subcommand of git submodule.
 '
 
 case $(uname -s) in

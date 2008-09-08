@@ -42,6 +42,7 @@ struct rev_info {
 			simplify_history:1,
 			lifo:1,
 			topo_order:1,
+			simplify_merges:1,
 			tag_objects:1,
 			tree_objects:1,
 			blob_objects:1,
@@ -110,6 +111,7 @@ struct rev_info {
 
 	struct reflog_walk_info *reflog_info;
 	struct decoration children;
+	struct decoration merge_simplification;
 };
 
 #define REV_TREE_SAME		0

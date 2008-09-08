@@ -310,7 +310,7 @@ static int mailmap_name(struct strbuf *sb, const char *email)
 }
 
 static size_t format_person_part(struct strbuf *sb, char part,
-                               const char *msg, int len)
+				 const char *msg, int len, enum date_mode dmode)
 {
 	/* currently all placeholders have same length */
 	const int placeholder_len = 2;
@@ -377,7 +377,7 @@ static size_t format_person_part(struct strbuf *sb, char part,
 
 	switch (part) {
 	case 'd':	/* date */
-		strbuf_addstr(sb, show_date(date, tz, DATE_NORMAL));
+		strbuf_addstr(sb, show_date(date, tz, dmode));
 		return placeholder_len;
 	case 'D':	/* date, RFC2822 style */
 		strbuf_addstr(sb, show_date(date, tz, DATE_RFC2822));
@@ -409,6 +409,7 @@ struct chunk {
 
 struct format_commit_context {
 	const struct commit *commit;
+	enum date_mode dmode;
 
 	/* These offsets are relative to the start of the commit message. */
 	int commit_header_parsed;
@@ -584,10 +585,12 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 		return 1;
 	case 'a':	/* author ... */
 		return format_person_part(sb, placeholder[1],
-		                   msg + c->author.off, c->author.len);
+				   msg + c->author.off, c->author.len,
+				   c->dmode);
 	case 'c':	/* committer ... */
 		return format_person_part(sb, placeholder[1],
-		                   msg + c->committer.off, c->committer.len);
+				   msg + c->committer.off, c->committer.len,
+				   c->dmode);
 	case 'e':	/* encoding */
 		strbuf_add(sb, msg + c->encoding.off, c->encoding.len);
 		return 1;
@@ -599,12 +602,14 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 }
 
 void format_commit_message(const struct commit *commit,
-                           const void *format, struct strbuf *sb)
+			   const void *format, struct strbuf *sb,
+			   enum date_mode dmode)
 {
 	struct format_commit_context context;
 
 	memset(&context, 0, sizeof(context));
 	context.commit = commit;
+	context.dmode = dmode;
 	strbuf_expand(sb, format, format_commit_item, &context);
 }
 
@@ -770,7 +775,7 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 	const char *encoding;
 
 	if (fmt == CMIT_FMT_USERFORMAT) {
-		format_commit_message(commit, user_format, sb);
+		format_commit_message(commit, user_format, sb, dmode);
 		return;
 	}
 

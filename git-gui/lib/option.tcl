@@ -119,13 +119,15 @@ proc do_options {} {
 		{b merge.summary {mc "Summarize Merge Commits"}}
 		{i-1..5 merge.verbosity {mc "Merge Verbosity"}}
 		{b merge.diffstat {mc "Show Diffstat After Merge"}}
+		{t merge.tool {mc "Use Merge Tool"}}
 
 		{b gui.trustmtime  {mc "Trust File Modification Timestamps"}}
 		{b gui.pruneduringfetch {mc "Prune Tracking Branches During Fetch"}}
 		{b gui.matchtrackingbranch {mc "Match Tracking Branches"}}
 		{b gui.fastcopyblame {mc "Blame Copy Only On Changed Files"}}
 		{i-20..200 gui.copyblamethreshold {mc "Minimum Letters To Blame Copy On"}}
-		{i-0..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
+		{i-0..300 gui.blamehistoryctx {mc "Blame History Context Radius (days)"}}
+		{i-1..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
 		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}
 		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
 		} {

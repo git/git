@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-pack-object --include-tag'
+test_description='git pack-object --include-tag'
 . ./test-lib.sh
 
 TRASH=`pwd`

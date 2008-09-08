@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Steven Grimm
 #
 
-test_description='git-commit
+test_description='git commit
 
 Tests for selected commit options.'
 

@@ -8,7 +8,7 @@ test_expect_success \
     'mkdir path0 path1 &&
      cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
      git add path0/COPYING &&
-     git-commit -m add -a'
+     git commit -m add -a'
 
 test_expect_success \
     'moving the file out of subdirectory' \
@@ -17,7 +17,7 @@ test_expect_success \
 # in path0 currently
 test_expect_success \
     'commiting the change' \
-    'cd .. && git-commit -m move-out -a'
+    'cd .. && git commit -m move-out -a'
 
 test_expect_success \
     'checking the commit' \
@@ -31,7 +31,7 @@ test_expect_success \
 # in path0 currently
 test_expect_success \
     'commiting the change' \
-    'cd .. && git-commit -m move-in -a'
+    'cd .. && git commit -m move-in -a'
 
 test_expect_success \
     'checking the commit' \
@@ -42,7 +42,7 @@ test_expect_success \
     'adding another file' \
     'cp "$TEST_DIRECTORY"/../README path0/README &&
      git add path0/README &&
-     git-commit -m add2 -a'
+     git commit -m add2 -a'
 
 test_expect_success \
     'moving whole subdirectory' \
@@ -50,7 +50,7 @@ test_expect_success \
 
 test_expect_success \
     'commiting the change' \
-    'git-commit -m dir-move -a'
+    'git commit -m dir-move -a'
 
 test_expect_success \
     'checking the commit' \
@@ -69,7 +69,7 @@ test_expect_success \
 
 test_expect_success \
     'commiting the change' \
-    'git-commit -m dir-move -a'
+    'git commit -m dir-move -a'
 
 test_expect_success \
     'checking the commit' \

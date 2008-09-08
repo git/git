@@ -13,7 +13,7 @@ line.
 
 touch foo bar
 git update-index --add foo bar
-git-commit -m "add foo bar"
+git commit -m "add foo bar"
 
 test_expect_success \
     'git ls-files --error-unmatch should fail with unmatched path.' \

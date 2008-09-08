@@ -149,7 +149,9 @@ The rescan will be automatically started now.
 		_? {continue}
 		A? -
 		D? -
+		T_ -
 		M? {set files_ready 1}
+		_U -
 		U? {
 			error_popup [mc "Unmerged files cannot be committed.
 
@@ -428,6 +430,7 @@ A rescan will be automatically started now.
 		__ -
 		A_ -
 		M_ -
+		T_ -
 		D_ {
 			unset file_states($path)
 			catch {unset selected_paths($path)}

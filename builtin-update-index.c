@@ -265,7 +265,7 @@ static void chmod_path(int flip, const char *path)
 	report("chmod %cx '%s'", flip, path);
 	return;
  fail:
-	die("git-update-index: cannot chmod %cx '%s'", flip, path);
+	die("git update-index: cannot chmod %cx '%s'", flip, path);
 }
 
 static void update_one(const char *path, const char *prefix, int prefix_length)
@@ -283,7 +283,7 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 
 	if (force_remove) {
 		if (remove_file_from_cache(p))
-			die("git-update-index: unable to remove %s", path);
+			die("git update-index: unable to remove %s", path);
 		report("remove '%s'", path);
 		goto free_return;
 	}
@@ -354,7 +354,7 @@ static void read_index_info(int line_termination)
 		if (line_termination && path_name[0] == '"') {
 			strbuf_reset(&uq);
 			if (unquote_c_style(&uq, path_name, NULL)) {
-				die("git-update-index: bad quoting of path name");
+				die("git update-index: bad quoting of path name");
 			}
 			path_name = uq.buf;
 		}
@@ -367,7 +367,7 @@ static void read_index_info(int line_termination)
 		if (!mode) {
 			/* mode == 0 means there is no such path -- remove */
 			if (remove_file_from_cache(path_name))
-				die("git-update-index: unable to remove %s",
+				die("git update-index: unable to remove %s",
 				    ptr);
 		}
 		else {
@@ -377,7 +377,7 @@ static void read_index_info(int line_termination)
 			 */
 			ptr[-42] = ptr[-1] = 0;
 			if (add_cacheinfo(mode, sha1, path_name, stage))
-				die("git-update-index: unable to update %s",
+				die("git update-index: unable to update %s",
 				    path_name);
 		}
 		continue;
@@ -617,10 +617,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(path, "--refresh")) {
+				setup_work_tree();
 				has_errors |= refresh_cache(refresh_flags);
 				continue;
 			}
 			if (!strcmp(path, "--really-refresh")) {
+				setup_work_tree();
 				has_errors |= refresh_cache(REFRESH_REALLY | refresh_flags);
 				continue;
 			}
@@ -629,12 +631,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				unsigned int mode;
 
 				if (i+3 >= argc)
-					die("git-update-index: --cacheinfo <mode> <sha1> <path>");
+					die("git update-index: --cacheinfo <mode> <sha1> <path>");
 
 				if (strtoul_ui(argv[i+1], 8, &mode) ||
 				    get_sha1_hex(argv[i+2], sha1) ||
 				    add_cacheinfo(mode, sha1, argv[i+3], 0))
-					die("git-update-index: --cacheinfo"
+					die("git update-index: --cacheinfo"
 					    " cannot add %s", argv[i+3]);
 				i += 3;
 				continue;
@@ -642,7 +644,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			if (!strcmp(path, "--chmod=-x") ||
 			    !strcmp(path, "--chmod=+x")) {
 				if (argc <= i+1)
-					die("git-update-index: %s <path>", path);
+					die("git update-index: %s <path>", path);
 				set_executable_bit = path[8];
 				continue;
 			}
@@ -687,6 +689,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				goto finish;
 			}
 			if (!strcmp(path, "--again") || !strcmp(path, "-g")) {
+				setup_work_tree();
 				has_errors = do_reupdate(argc - i, argv + i,
 							 prefix, prefix_length);
 				if (has_errors)
@@ -705,6 +708,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				usage(update_index_usage);
 			die("unknown option %s", path);
 		}
+		setup_work_tree();
 		p = prefix_path(prefix, prefix_length, path);
 		update_one(p, NULL, 0);
 		if (set_executable_bit)
@@ -717,6 +721,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 
 		strbuf_init(&buf, 0);
 		strbuf_init(&nbuf, 0);
+		setup_work_tree();
 		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
 			const char *p;
 			if (line_termination && buf.buf[0] == '"') {

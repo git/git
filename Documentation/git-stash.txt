@@ -159,7 +159,7 @@ perform a pull, and then unstash, like this:
 +
 ----------------------------------------------------------------
 $ git pull
-...
+ ...
 file foobar not up to date, cannot merge.
 $ git stash
 $ git pull
@@ -174,7 +174,7 @@ make a commit to a temporary branch to store your changes away, and
 return to your original branch to make the emergency fix, like this:
 +
 ----------------------------------------------------------------
-... hack hack hack ...
+# ... hack hack hack ...
 $ git checkout -b my_wip
 $ git commit -a -m "WIP"
 $ git checkout master
@@ -182,18 +182,18 @@ $ edit emergency fix
 $ git commit -a -m "Fix in a hurry"
 $ git checkout my_wip
 $ git reset --soft HEAD^
-... continue hacking ...
+# ... continue hacking ...
 ----------------------------------------------------------------
 +
 You can use 'git-stash' to simplify the above, like this:
 +
 ----------------------------------------------------------------
-... hack hack hack ...
+# ... hack hack hack ...
 $ git stash
 $ edit emergency fix
 $ git commit -a -m "Fix in a hurry"
 $ git stash apply
-... continue hacking ...
+# ... continue hacking ...
 ----------------------------------------------------------------
 
 Testing partial commits::
@@ -203,13 +203,13 @@ more commits out of the changes in the work tree, and you want to test
 each change before committing:
 +
 ----------------------------------------------------------------
-... hack hack hack ...
+# ... hack hack hack ...
 $ git add --patch foo            # add just first part to the index
 $ git stash save --keep-index    # save all other changes to the stash
 $ edit/build/test first part
-$ git commit foo -m 'First part' # commit fully tested change
+$ git commit -m 'First part'     # commit fully tested change
 $ git stash pop                  # prepare to work on all other changes
-... repeat above five steps until one commit remains ...
+# ... repeat above five steps until one commit remains ...
 $ edit/build/test remaining parts
 $ git commit foo -m 'Remaining parts'
 ----------------------------------------------------------------

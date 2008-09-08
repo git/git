@@ -35,7 +35,7 @@ test_expect_success 'add key in different section' '
 '
 
 SECTION="test.q\"s\\sq'sp e.key"
-test_expect_success 'make sure git-config escapes section names properly' '
+test_expect_success 'make sure git config escapes section names properly' '
 	git config "$SECTION" bar &&
 	check "$SECTION" bar
 '
