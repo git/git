@@ -942,9 +942,20 @@ method _format_offset_date {base offset} {
 }
 
 method _gitkcommit {} {
+	global nullid
+
 	set dat [_get_click_amov_info $this]
 	if {$dat ne {}} {
 		set cmit [lindex $dat 0]
+
+		# If the line belongs to the working copy, use HEAD instead
+		if {$cmit eq $nullid} {
+			if {[catch {set cmit [git rev-parse --verify HEAD]} err]} {
+				error_popup [strcat [mc "Cannot find HEAD commit:"] "\n\n$err"]
+				return;
+			}
+		}
+
 		set radius [get_config gui.blamehistoryctx]
 		set cmdline [list --select-commit=$cmit]
 
@@ -981,12 +992,20 @@ method _gitkcommit {} {
 }
 
 method _blameparent {} {
+	global nullid
+
 	set dat [_get_click_amov_info $this]
 	if {$dat ne {}} {
 		set cmit [lindex $dat 0]
 		set new_path [lindex $dat 1]
 
-		if {[catch {set cparent [git rev-parse --verify "$cmit^"]}]} {
+		# Allow using Blame Parent on lines modified in the working copy
+		if {$cmit eq $nullid} {
+			set parent_ref "HEAD"
+		} else {
+			set parent_ref "$cmit^"
+		}
+		if {[catch {set cparent [git rev-parse --verify $parent_ref]} err]} {
 			error_popup [strcat [mc "Cannot find parent commit:"] "\n\n$err"]
 			return;
 		}
@@ -996,8 +1015,12 @@ method _blameparent {} {
 		# Generate a diff between the commit and its parent,
 		# and use the hunks to update the line number.
 		# Request zero context to simplify calculations.
-		if {[catch {set fd [eval git_read diff-tree \
-				--unified=0 $cparent $cmit $new_path]} err]} {
+		if {$cmit eq $nullid} {
+			set diffcmd [list diff-index --unified=0 $cparent -- $new_path]
+		} else {
+			set diffcmd [list diff-tree --unified=0 $cparent $cmit -- $new_path]
+		}
+		if {[catch {set fd [eval git_read $diffcmd]} err]} {
 			$status stop [mc "Unable to display parent"]
 			error_popup [strcat [mc "Error loading diff:"] "\n\n$err"]
 			return
