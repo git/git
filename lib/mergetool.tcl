@@ -5,6 +5,12 @@ proc merge_resolve_one {stage} {
 	global current_diff_path
 
 	switch -- $stage {
+		0 {	# Stage without confirmation, to minimize
+			# disruption of the rerere workflow
+			merge_add_resolution $current_diff_path
+			return
+		}
+
 		1 { set target [mc "the base version"] }
 		2 { set target [mc "this branch"] }
 		3 { set target [mc "the other branch"] }

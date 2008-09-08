@@ -2902,6 +2902,11 @@ $ctxmmg add command \
 	-command {merge_resolve_one 1}
 lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
 $ctxmmg add separator
+$ctxmmg add command \
+	-label [mc "Stage Working Copy"] \
+	-command {merge_resolve_one 0}
+lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
+$ctxmmg add separator
 create_common_diff_popup $ctxmmg
 
 proc popup_diff_menu {ctxm ctxmmg x y X Y} {
