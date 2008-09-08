@@ -44,13 +44,13 @@ test_expect_success "checkout from svn" 'svn co "$svnrepo" "$SVN_TREE"'
 
 name='try a deep --rmdir with a commit'
 test_expect_success "$name" '
-	git checkout -f -b mybranch remotes/git-svn &&
+	git checkout -f -b mybranch ${remotes_git_svn} &&
 	mv dir/a/b/c/d/e/file dir/file &&
 	cp dir/file file &&
 	git update-index --add --remove dir/a/b/c/d/e/file dir/file file &&
 	git commit -m "$name" &&
 	git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch &&
+		${remotes_git_svn}..mybranch &&
 	svn up "$SVN_TREE" &&
 	test -d "$SVN_TREE"/dir && test ! -d "$SVN_TREE"/dir/a'
 
@@ -64,13 +64,13 @@ test_expect_success "$name" "
 	git update-index --add dir/file/file &&
 	git commit -m '$name' &&
 	test_must_fail git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch" || true
+		${remotes_git_svn}..mybranch" || true
 
 
 name='detect node change from directory to file #1'
 test_expect_success "$name" '
 	rm -rf dir "$GIT_DIR"/index &&
-	git checkout -f -b mybranch2 remotes/git-svn &&
+	git checkout -f -b mybranch2 ${remotes_git_svn} &&
 	mv bar/zzz zzz &&
 	rm -rf bar &&
 	mv zzz bar &&
@@ -78,13 +78,13 @@ test_expect_success "$name" '
 	git update-index --add -- bar &&
 	git commit -m "$name" &&
 	test_must_fail git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch2' || true
+		${remotes_git_svn}..mybranch2' || true
 
 
 name='detect node change from file to directory #2'
 test_expect_success "$name" '
 	rm -f "$GIT_DIR"/index &&
-	git checkout -f -b mybranch3 remotes/git-svn &&
+	git checkout -f -b mybranch3 ${remotes_git_svn} &&
 	rm bar/zzz &&
 	git update-index --remove bar/zzz &&
 	mkdir bar/zzz &&
@@ -92,13 +92,13 @@ test_expect_success "$name" '
 	git update-index --add bar/zzz/yyy &&
 	git commit -m "$name" &&
 	test_must_fail git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch3' || true
+		${remotes_git_svn}..mybranch3' || true
 
 
 name='detect node change from directory to file #2'
 test_expect_success "$name" '
 	rm -f "$GIT_DIR"/index &&
-	git checkout -f -b mybranch4 remotes/git-svn &&
+	git checkout -f -b mybranch4 ${remotes_git_svn} &&
 	rm -rf dir &&
 	git update-index --remove -- dir/file &&
 	touch dir &&
@@ -106,18 +106,18 @@ test_expect_success "$name" '
 	git update-index --add -- dir &&
 	git commit -m "$name" &&
 	test_must_fail git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch4' || true
+		${remotes_git_svn}..mybranch4' || true
 
 
 name='remove executable bit from a file'
 test_expect_success "$name" '
 	rm -f "$GIT_DIR"/index &&
-	git checkout -f -b mybranch5 remotes/git-svn &&
+	git checkout -f -b mybranch5 ${remotes_git_svn} &&
 	chmod -x exec.sh &&
 	git update-index exec.sh &&
 	git commit -m "$name" &&
 	git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch5 &&
+		${remotes_git_svn}..mybranch5 &&
 	svn up "$SVN_TREE" &&
 	test ! -x "$SVN_TREE"/exec.sh'
 
@@ -128,7 +128,7 @@ test_expect_success "$name" '
 	git update-index exec.sh &&
 	git commit -m "$name" &&
 	git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch5 &&
+		${remotes_git_svn}..mybranch5 &&
 	svn up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/exec.sh'
 
@@ -140,7 +140,7 @@ test_expect_success "$name" '
 	git update-index exec.sh &&
 	git commit -m "$name" &&
 	git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch5 &&
+		${remotes_git_svn}..mybranch5 &&
 	svn up "$SVN_TREE" &&
 	test -L "$SVN_TREE"/exec.sh'
 
@@ -152,7 +152,7 @@ test_expect_success "$name" '
 	git update-index --add bar/zzz exec-2.sh &&
 	git commit -m "$name" &&
 	git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch5 &&
+		${remotes_git_svn}..mybranch5 &&
 	svn up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/bar/zzz &&
 	test -L "$SVN_TREE"/exec-2.sh'
@@ -165,7 +165,7 @@ test_expect_success "$name" '
 	git update-index exec-2.sh &&
 	git commit -m "$name" &&
 	git-svn set-tree --find-copies-harder --rmdir \
-		remotes/git-svn..mybranch5 &&
+		${remotes_git_svn}..mybranch5 &&
 	svn up "$SVN_TREE" &&
 	test -f "$SVN_TREE"/exec-2.sh &&
 	test ! -L "$SVN_TREE"/exec-2.sh &&
@@ -191,7 +191,7 @@ GIT_SVN_ID=alt
 export GIT_SVN_ID
 test_expect_success "$name" \
     'git-svn init "$svnrepo" && git-svn fetch &&
-     git rev-list --pretty=raw remotes/git-svn | grep ^tree | uniq > a &&
+     git rev-list --pretty=raw ${remotes_git_svn} | grep ^tree | uniq > a &&
      git rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
      test_cmp a b'
 
@@ -215,7 +215,7 @@ test_expect_success "$name" "test_cmp a expected"
 
 test_expect_success 'exit if remote refs are ambigious' "
         git config --add svn-remote.svn.fetch \
-                              bar:refs/remotes/git-svn &&
+                              bar:refs/${remotes_git_svn} &&
 	test_must_fail git-svn migrate
 "
 
@@ -223,7 +223,7 @@ test_expect_success 'exit if init-ing a would clobber a URL' '
         svnadmin create "${PWD}/svnrepo2" &&
         svn mkdir -m "mkdir bar" "${svnrepo}2/bar" &&
         git config --unset svn-remote.svn.fetch \
-                                "^bar:refs/remotes/git-svn$" &&
+                                "^bar:refs/${remotes_git_svn}$" &&
 	test_must_fail git-svn init "${svnrepo}2/bar"
         '
 
@@ -233,7 +233,7 @@ test_expect_success \
         git config --get svn-remote.svn.fetch \
                               "^bar:refs/remotes/bar$" &&
         git config --get svn-remote.svn.fetch \
-                              "^:refs/remotes/git-svn$"
+                              "^:refs/${remotes_git_svn}$"
         '
 
 test_expect_success 'able to dcommit to a subdirectory' "
