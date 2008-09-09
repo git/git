@@ -86,10 +86,10 @@ static void add_merge_config(struct ref **head,
 		/*
 		 * Not fetched to a tracking branch?  We need to fetch
 		 * it anyway to allow this branch's "branch.$name.merge"
-		 * to be honored by git-pull, but we do not have to
+		 * to be honored by 'git pull', but we do not have to
 		 * fail if branch.$name.merge is misconfigured to point
 		 * at a nonexisting branch.  If we were indeed called by
-		 * git-pull, it will notice the misconfiguration because
+		 * 'git pull', it will notice the misconfiguration because
 		 * there is no entry in the resulting FETCH_HEAD marked
 		 * for merging.
 		 */
@@ -396,7 +396,7 @@ static int store_updated_refs(const char *url, const char *remote_name,
  * The refs we are going to fetch are in to_fetch (nr_heads in
  * total).  If running
  *
- *  $ git-rev-list --objects to_fetch[0] to_fetch[1] ... --not --all
+ *  $ git rev-list --objects to_fetch[0] to_fetch[1] ... --not --all
  *
  * does not error out, that means everything reachable from the
  * refs we are going to fetch exists and is connected to some of
