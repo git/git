@@ -390,6 +390,18 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *re
 	return retval;
 }
 
+/*
+ * If the "reading" argument is set, this function finds out what _object_
+ * the ref points at by "reading" the ref.  The ref, if it is not symbolic,
+ * has to exist, and if it is symbolic, it has to point at an existing ref,
+ * because the "read" goes through the symref to the ref it points at.
+ *
+ * The access that is not "reading" may often be "writing", but does not
+ * have to; it can be merely checking _where it leads to_. If it is a
+ * prelude to "writing" to the ref, a write to a symref that points at
+ * yet-to-be-born ref will create the real ref pointed by the symref.
+ * reading=0 allows the caller to check where such a symref leads to.
+ */
 const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *flag)
 {
 	int depth = MAXDEPTH;
@@ -409,13 +421,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		if (--depth < 0)
 			return NULL;
 
-		/* Special case: non-existing file.
-		 * Not having the refs/heads/new-branch is OK
-		 * if we are writing into it, so is .git/HEAD
-		 * that points at refs/heads/master still to be
-		 * born.  It is NOT OK if we are resolving for
-		 * reading.
-		 */
+		/* Special case: non-existing file. */
 		if (lstat(path, &st) < 0) {
 			struct ref_list *list = get_packed_refs();
 			while (list) {
