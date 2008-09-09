@@ -69,7 +69,7 @@ static const char *alias_url(const char *url)
 	if (!longest)
 		return url;
 
-	ret = malloc(rewrite[longest_i]->baselen +
+	ret = xmalloc(rewrite[longest_i]->baselen +
 		     (strlen(url) - longest->len) + 1);
 	strcpy(ret, rewrite[longest_i]->base);
 	strcpy(ret + rewrite[longest_i]->baselen, url + longest->len);
@@ -152,7 +152,7 @@ static struct branch *make_branch(const char *name, int len)
 		ret->name = xstrndup(name, len);
 	else
 		ret->name = xstrdup(name);
-	refname = malloc(strlen(name) + strlen("refs/heads/") + 1);
+	refname = xmalloc(strlen(name) + strlen("refs/heads/") + 1);
 	strcpy(refname, "refs/heads/");
 	strcpy(refname + strlen("refs/heads/"), ret->name);
 	ret->refname = refname;

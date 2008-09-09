@@ -402,7 +402,7 @@ static struct fill_chain *fill_cfg = NULL;
 
 void add_fill_function(void *data, int (*fill)(void *))
 {
-	struct fill_chain *new = malloc(sizeof(*new));
+	struct fill_chain *new = xmalloc(sizeof(*new));
 	struct fill_chain **linkp = &fill_cfg;
 	new->data = data;
 	new->fill = fill;
