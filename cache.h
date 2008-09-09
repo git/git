@@ -533,6 +533,7 @@ static inline int is_absolute_path(const char *path)
 {
 	return path[0] == '/' || has_dos_drive_prefix(path);
 }
+int is_directory(const char *);
 const char *make_absolute_path(const char *path);
 const char *make_nonrelative_path(const char *path);
 const char *make_relative_path(const char *abs, const char *base);
