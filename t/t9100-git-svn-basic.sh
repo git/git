@@ -20,7 +20,7 @@ esac
 say 'define NO_SVN_TESTS to skip git svn tests'
 
 test_expect_success \
-    'initialize git-svn' '
+    'initialize git svn' '
 	mkdir import &&
 	cd import &&
 	echo foo > foo &&
@@ -31,7 +31,7 @@ test_expect_success \
 	echo "zzz" > bar/zzz &&
 	echo "#!/bin/sh" > exec.sh &&
 	chmod +x exec.sh &&
-	svn import -m "import for git-svn" . "$svnrepo" >/dev/null &&
+	svn import -m "import for git svn" . "$svnrepo" >/dev/null &&
 	cd .. &&
 	rm -rf import &&
 	git svn init "$svnrepo"'

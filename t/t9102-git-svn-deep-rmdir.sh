@@ -9,11 +9,11 @@ test_expect_success 'initialize repo' '
 	mkdir -p deeply/nested/directory/number/2 &&
 	echo foo > deeply/nested/directory/number/1/file &&
 	echo foo > deeply/nested/directory/number/2/another &&
-	svn import -m "import for git-svn" . "$svnrepo" &&
+	svn import -m "import for git svn" . "$svnrepo" &&
 	cd ..
 	'
 
-test_expect_success 'mirror via git-svn' '
+test_expect_success 'mirror via git svn' '
 	git svn init "$svnrepo" &&
 	git svn fetch &&
 	git checkout -f -b test-rmdir ${remotes_git_svn}

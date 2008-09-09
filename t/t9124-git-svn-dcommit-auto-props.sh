@@ -16,12 +16,12 @@ enable-auto-props=$1
 EOF
 }
 
-test_expect_success 'initialize git-svn' '
+test_expect_success 'initialize git svn' '
 	mkdir import &&
 	(
 		cd import &&
 		echo foo >foo &&
-		svn import -m "import for git-svn" . "$svnrepo"
+		svn import -m "import for git svn" . "$svnrepo"
 	) &&
 	rm -rf import &&
 	git svn init "$svnrepo"

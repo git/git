@@ -48,7 +48,7 @@ EOF
 	printf "\r\n" > empty_crlf
 	a_empty_crlf=`git-hash-object -w empty_crlf`
 
-	svn import --no-auto-props -m 'import for git-svn' . "$svnrepo" >/dev/null
+	svn import --no-auto-props -m 'import for git svn' . "$svnrepo" >/dev/null
 cd ..
 
 rm -rf import
@@ -66,7 +66,7 @@ test_expect_success 'setup some commits to svn' \
 		svn commit -m "Propset Id" &&
 	cd ..'
 
-test_expect_success 'initialize git-svn' 'git svn init "$svnrepo"'
+test_expect_success 'initialize git svn' 'git svn init "$svnrepo"'
 test_expect_success 'fetch revisions from svn' 'git svn fetch'
 
 name='test svn:keywords ignoring'
