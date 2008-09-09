@@ -27,14 +27,14 @@ test_expect_success \
      echo "changed file 1" > file1 &&
      git commit -a -m "second commit" &&
 
-     git-config --add color.test.slot1 green &&
-     git-config --add test.string value &&
-     git-config --add test.dupstring value1 &&
-     git-config --add test.dupstring value2 &&
-     git-config --add test.booltrue true &&
-     git-config --add test.boolfalse no &&
-     git-config --add test.boolother other &&
-     git-config --add test.int 2k
+     git config --add color.test.slot1 green &&
+     git config --add test.string value &&
+     git config --add test.dupstring value1 &&
+     git config --add test.dupstring value2 &&
+     git config --add test.booltrue true &&
+     git config --add test.boolfalse no &&
+     git config --add test.boolother other &&
+     git config --add test.int 2k
      '
 
 test_external_without_stderr \
