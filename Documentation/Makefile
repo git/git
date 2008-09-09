@@ -44,6 +44,7 @@ MANPAGE_XSL = callouts.xsl
 INSTALL?=install
 RM ?= rm -f
 DOC_REF = origin/man
+HTML_REF = origin/html
 
 infodir?=$(prefix)/share/info
 MAKEINFO=makeinfo
@@ -221,5 +222,8 @@ install-webdoc : html
 
 quick-install:
 	sh ./install-doc-quick.sh $(DOC_REF) $(DESTDIR)$(mandir)
+
+quick-install-html:
+	sh ./install-doc-quick.sh $(HTML_REF) $(DESTDIR)$(htmldir)
 
 .PHONY: .FORCE-GIT-VERSION-FILE

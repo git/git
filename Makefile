@@ -1403,6 +1403,9 @@ install-info:
 quick-install-doc:
 	$(MAKE) -C Documentation quick-install
 
+quick-install-html:
+	$(MAKE) -C Documentation quick-install-html
+
 
 
 ### Maintainer's dist rules

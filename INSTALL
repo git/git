@@ -117,6 +117,12 @@ Issues of note:
 
 	http://www.kernel.org/pub/software/scm/git/docs/
 
+   There are also "make quick-install-doc" and "make quick-install-html"
+   which install preformatted man pages and html documentation.
+   This does not require asciidoc/xmlto, but it only works from within
+   a cloned checkout of git.git with these two extra branches, and will
+   not work for the maintainer for obvious chicken-and-egg reasons.
+
    It has been reported that docbook-xsl version 1.72 and 1.73 are
    buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
    the patch in contrib/patches/docbook-xsl-manpages-charmap.patch
