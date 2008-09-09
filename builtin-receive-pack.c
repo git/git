@@ -462,14 +462,14 @@ static int delete_only(struct command *cmd)
 	return 1;
 }
 
-int main(int argc, char **argv)
+int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	char *dir = NULL;
 
 	argv++;
 	for (i = 1; i < argc; i++) {
-		char *arg = *argv++;
+		const char *arg = *argv++;
 
 		if (*arg == '-') {
 			/* Do flag handling here */
@@ -477,7 +477,7 @@ int main(int argc, char **argv)
 		}
 		if (dir)
 			usage(receive_pack_usage);
-		dir = arg;
+		dir = xstrdup(arg);
 	}
 	if (!dir)
 		usage(receive_pack_usage);
