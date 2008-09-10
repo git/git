@@ -141,7 +141,7 @@ EOF
 
 test_expect_success \
     'validate git rev-list output.' \
-    'diff current expected'
+    'test_cmp expected current'
 
 test_expect_success 'partial commit that involves removal (1)' '
 
@@ -151,7 +151,7 @@ test_expect_success 'partial commit that involves removal (1)' '
 	git commit -m "Partial: add elif" elif &&
 	git diff-tree --name-status HEAD^ HEAD >current &&
 	echo "A	elif" >expected &&
-	diff expected current
+	test_cmp expected current
 
 '
 
@@ -160,7 +160,7 @@ test_expect_success 'partial commit that involves removal (2)' '
 	git commit -m "Partial: remove file" file &&
 	git diff-tree --name-status HEAD^ HEAD >current &&
 	echo "D	file" >expected &&
-	diff expected current
+	test_cmp expected current
 
 '
 
@@ -171,7 +171,7 @@ test_expect_success 'partial commit that involves removal (3)' '
 	git commit -m "Partial: modify elif" elif &&
 	git diff-tree --name-status HEAD^ HEAD >current &&
 	echo "M	elif" >expected &&
-	diff expected current
+	test_cmp expected current
 
 '
 
@@ -187,7 +187,7 @@ test_expect_success 'amend commit to fix author' '
 		expected &&
 	git commit --amend --author="$author" &&
 	git cat-file -p HEAD > current &&
-	diff expected current
+	test_cmp expected current
 
 '
 
@@ -256,7 +256,7 @@ test_expect_success 'amend commit to fix author' '
 		expected &&
 	git commit --amend --author="$author" &&
 	git cat-file -p HEAD > current &&
-	diff expected current
+	test_cmp expected current
 
 '
 
