@@ -4383,7 +4383,7 @@ sub config_pager {
 
 sub run_pager {
 	return unless -t *STDOUT && defined $pager;
-	pipe my $rfd, my $wfd or return;
+	pipe my ($rfd, $wfd) or return;
 	defined(my $pid = fork) or ::fatal "Can't fork: $!";
 	if (!$pid) {
 		open STDOUT, '>&', $wfd or
