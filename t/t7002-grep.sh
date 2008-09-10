@@ -22,6 +22,7 @@ test_expect_success setup '
 	mkdir t &&
 	echo test >t/t &&
 	git add file x y z t/t &&
+	test_tick &&
 	git commit -m initial
 '
 
@@ -112,5 +113,55 @@ do
         '
 
 done
+
+test_expect_success 'log grep setup' '
+	echo a >>file &&
+	test_tick &&
+	GIT_AUTHOR_NAME="With * Asterisk" \
+	GIT_AUTHOR_EMAIL="xyzzy@frotz.com" \
+	git commit -a -m "second" &&
+
+	echo a >>file &&
+	test_tick &&
+	git commit -a -m "third"
+
+'
+
+test_expect_success 'log grep (1)' '
+	git log --author=author --pretty=tformat:%s >actual &&
+	( echo third ; echo initial ) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log grep (2)' '
+	git log --author=" * " -F --pretty=tformat:%s >actual &&
+	( echo second ) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log grep (3)' '
+	git log --author="^A U" --pretty=tformat:%s >actual &&
+	( echo third ; echo initial ) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log grep (4)' '
+	git log --author="frotz\.com>$" --pretty=tformat:%s >actual &&
+	( echo second ) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log grep (5)' '
+	git log --author=Thor -F --grep=Thu --pretty=tformat:%s >actual &&
+	( echo third ; echo initial ) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log grep (6)' '
+	git log --author=-0700  --pretty=tformat:%s >actual &&
+	>expect &&
+	test_cmp expect actual
+
+'
 
 test_done
