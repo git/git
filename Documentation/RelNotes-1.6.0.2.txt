@@ -17,6 +17,10 @@ Fixes since v1.6.0.1
 * Many commands did not use the correct working tree location when used
   with GIT_WORK_TREE environment settings.
 
+* Some systems needs to use compatibility fnmach and regex libraries
+  independent from each other; the compat/ area has been reorganized to
+  allow this.
+
 
 * "git apply --unidiff-zero" incorrectly applied a -U0 patch that inserts
   a new line before the second line.
@@ -24,8 +28,14 @@ Fixes since v1.6.0.1
 * "git blame -c" did not exactly work like "git annotate" when range
   boundaries are involved.
 
+* "git checkout file" when file is still unmerged checked out contents from
+  a random high order stage, which was confusing.
+
 * "git clone $there $here/" with extra trailing slashes after explicit
   local directory name $here did not work as expected.
+
+* "git diff" on tracked contents with CRLF line endings did not drive "less"
+  intelligently when showing added or removed lines.
 
 * "git diff --dirstat -M" did not add changes in subdirectories up
   correctly for renamed paths.
@@ -42,17 +52,28 @@ Fixes since v1.6.0.1
 
 * "git gui" translation updates and i18n fixes.
 
+* "git index-pack" is more careful against disk corruption while completing
+  a thin pack.
+
 * "git log -i --grep=pattern" did not ignore case; neither "git log -E
   --grep=pattern" triggered extended regexp.
 
 * "git log --pretty="%ad" --date=short" did not use short format when
   showing the timestamp.
 
+* "git log --author=author" match incorrectly matched with the
+  timestamp part of "author " line in commit objects.
+
+* "git log -F --author=author" did not work at all.
+
 * Build procedure for "git shell" that used stub versions of some
   functions and globals was not understood by linkers on some platforms.
 
 * "git stash" was fooled by a stat-dirty but otherwise unmodified paths
   and refused to work until the user refreshed the index.
+
+* "git svn" was broken on Perl before 5.8 with recent fixes to reduce
+  use of temporary files.
 
 * "git verify-pack -v" did not work correctly when given more than one
   packfile.
@@ -61,7 +82,6 @@ Also contains many documentation updates.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.1-61-g1eff26c
+O=v1.6.0.1-78-g3632cfc
 echo O=$(git describe maint)
 git shortlog --no-merges $O..maint
-
