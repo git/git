@@ -1267,6 +1267,12 @@ $(XDIFF_LIB): $(XDIFF_OBJS)
 doc:
 	$(MAKE) -C Documentation all
 
+man:
+	$(MAKE) -C Documentation man
+
+html:
+	$(MAKE) -C Documentation html
+
 info:
 	$(MAKE) -C Documentation info
 
