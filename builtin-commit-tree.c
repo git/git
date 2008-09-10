@@ -46,7 +46,8 @@ static const char commit_utf8_warn[] =
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
 int commit_tree(const char *msg, unsigned char *tree,
-		struct commit_list *parents, unsigned char *ret)
+		struct commit_list *parents, unsigned char *ret,
+		const char *author)
 {
 	int result;
 	int encoding_is_utf8;
@@ -74,7 +75,9 @@ int commit_tree(const char *msg, unsigned char *tree,
 	}
 
 	/* Person/date information */
-	strbuf_addf(&buffer, "author %s\n", git_author_info(IDENT_ERROR_ON_NO_NAME));
+	if (!author)
+		author = git_author_info(IDENT_ERROR_ON_NO_NAME);
+	strbuf_addf(&buffer, "author %s\n", author);
 	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
 	if (!encoding_is_utf8)
 		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
@@ -123,7 +126,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	if (strbuf_read(&buffer, 0, 0) < 0)
 		die("git commit-tree: read returned %s", strerror(errno));
 
-	if (!commit_tree(buffer.buf, tree_sha1, parents, commit_sha1)) {
+	if (!commit_tree(buffer.buf, tree_sha1, parents, commit_sha1, NULL)) {
 		printf("%s\n", sha1_to_hex(commit_sha1));
 		return 0;
 	}

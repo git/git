@@ -691,7 +691,7 @@ static int merge_trivial(void)
 	parent->next = xmalloc(sizeof(struct commit_list *));
 	parent->next->item = remoteheads->item;
 	parent->next->next = NULL;
-	commit_tree(merge_msg.buf, result_tree, parent, result_commit);
+	commit_tree(merge_msg.buf, result_tree, parent, result_commit, NULL);
 	finish(result_commit, "In-index merge");
 	drop_save();
 	return 0;
@@ -720,7 +720,7 @@ static int finish_automerge(struct commit_list *common,
 	}
 	free_commit_list(remoteheads);
 	strbuf_addch(&merge_msg, '\n');
-	commit_tree(merge_msg.buf, result_tree, parents, result_commit);
+	commit_tree(merge_msg.buf, result_tree, parents, result_commit, NULL);
 	strbuf_addf(&buf, "Merge made by %s.", wt_strategy);
 	finish(result_commit, buf.buf);
 	strbuf_release(&buf);
