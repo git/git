@@ -269,7 +269,7 @@ proc parseviewrevs {view revs} {
 		lappend badrev $line
 	    }
 	}		    
-	error_popup "Error parsing revisions: $err"
+	error_popup "[mc "Error parsing revisions:"] $err"
 	return {}
     }
     set ret {}
@@ -324,7 +324,7 @@ proc start_rev_list {view} {
 	if {[catch {
 	    set str [exec sh -c $viewargscmd($view)]
 	} err]} {
-	    error_popup "Error executing --argscmd command: $err"
+	    error_popup "[mc "Error executing --argscmd command:"] $err"
 	    return 0
 	}
 	set args [concat $args [split $str "\n"]]
@@ -500,7 +500,7 @@ proc updatecommits {} {
 	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
 			  --boundary $args "--" $vfilelimit($view)] r]
     } err]} {
-	error_popup "Error executing git log: $err"
+	error_popup "[mc "Error executing git log:"] $err"
 	return
     }
     if {$viewactive($view) == 0} {
@@ -2937,7 +2937,7 @@ proc save_file_from_commit {filename output what} {
 	if {[string match "fatal: bad revision *" $err]} {
 	    return $nullfile
 	}
-	error_popup "Error getting \"$filename\" from $what: $err"
+	error_popup "[mc "Error getting \"%s\" from %s:" $filename $what] $err"
 	return {}
     }
     return $output
@@ -2994,7 +2994,7 @@ proc external_diff {} {
 	set gitktmpdir [file join [file dirname $gitdir] \
 			    [format ".gitk-tmp.%s" [pid]]]
 	if {[catch {file mkdir $gitktmpdir} err]} {
-	    error_popup "Error creating temporary directory $gitktmpdir: $err"
+	    error_popup "[mc "Error creating temporary directory %s:" $gitktmpdir] $err"
 	    unset gitktmpdir
 	    return
 	}
@@ -3003,7 +3003,7 @@ proc external_diff {} {
     incr diffnum
     set diffdir [file join $gitktmpdir $diffnum]
     if {[catch {file mkdir $diffdir} err]} {
-	error_popup "Error creating temporary directory $diffdir: $err"
+	error_popup "[mc "Error creating temporary directory %s:" $diffdir] $err"
 	return
     }
 
@@ -3016,7 +3016,7 @@ proc external_diff {} {
 		     [list $difffromfile $difftofile]]
         if {[catch {set fl [open $cmd r]} err]} {
             file delete -force $diffdir
-            error_popup [mc "$extdifftool: command failed: $err"]
+            error_popup "$extdifftool: [mc "command failed:"] $err"
         } else {
             fconfigure $fl -blocking 0
             filerun $fl [list delete_at_eof $fl $diffdir]
@@ -3041,7 +3041,7 @@ proc external_blame {parent_idx} {
     }
 
     if {[catch {exec git gui blame $base_commit $flist_menu_file &} err]} {
-	error_popup [mc "git gui blame: command failed: $err"]
+	error_popup "[mc "git gui blame: command failed:"] $err"
     }
 }
 
@@ -3050,7 +3050,7 @@ proc delete_at_eof {f dir} {
     while {[gets $f line] >= 0} {}
     if {[eof $f]} {
 	if {[catch {close $f} err]} {
-	    error_popup "External diff viewer failed: $err"
+	    error_popup "[mc "External diff viewer failed:"] $err"
 	}
 	file delete -force $dir
 	return 0
