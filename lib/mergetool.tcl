@@ -11,18 +11,18 @@ proc merge_resolve_one {stage} {
 			return
 		}
 
-		1 { set target [mc "the base version"] }
-		2 { set target [mc "this branch"] }
-		3 { set target [mc "the other branch"] }
+		1 { set targetquestion [mc "Force resolution to the base version?"] }
+		2 { set targetquestion [mc "Force resolution to this branch?"] }
+		3 { set targetquestion [mc "Force resolution to the other branch?"] }
 	}
 
-	set op_question [mc "Force resolution to %s?
-Note that the diff shows only conflicting changes.
+	set op_question [strcat $targetquestion "\n" \
+[mc "Note that the diff shows only conflicting changes.
 
 %s will be overwritten.
 
 This operation can be undone only by restarting the merge." \
-		$target [short_path $current_diff_path]]
+		[short_path $current_diff_path]]]
 
 	if {[ask_popup $op_question] eq {yes}} {
 		merge_load_stages $current_diff_path [list merge_force_stage $stage]
