@@ -311,7 +311,7 @@ patterns are available:
 
 - `bibtex` suitable for files with BibTeX coded references.
 
-- `java` suitable for source code in the Java lanugage.
+- `java` suitable for source code in the Java language.
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
 
