@@ -948,10 +948,32 @@ blame {
 }
 citool {
 	enable_option singlecommit
+	enable_option retcode
 
 	disable_option multicommit
 	disable_option branch
 	disable_option transport
+
+	while {[llength $argv] > 0} {
+		set a [lindex $argv 0]
+		switch -- $a {
+		--amend {
+			enable_option initialamend
+		}
+		--nocommit {
+			enable_option nocommit
+			enable_option nocommitmsg
+		}
+		--commitmsg {
+			disable_option nocommitmsg
+		}
+		default {
+			break
+		}
+		}
+
+		set argv [lrange $argv 1 end]
+	}
 }
 }
 
@@ -1106,6 +1128,20 @@ proc PARENT {} {
 		set empty_tree [git mktree << {}]
 	}
 	return $empty_tree
+}
+
+proc force_amend {} {
+	global selected_commit_type
+	global HEAD PARENT MERGE_HEAD commit_type
+
+	repository_state newType newHEAD newMERGE_HEAD
+	set HEAD $newHEAD
+	set PARENT $newHEAD
+	set MERGE_HEAD $newMERGE_HEAD
+	set commit_type $newType
+
+	set selected_commit_type amend
+	do_select_commit_type
 }
 
 proc rescan {after {honor_trustmtime 1}} {
@@ -1754,11 +1790,19 @@ proc do_gitk {revs} {
 }
 
 set is_quitting 0
+set ret_code    1
 
-proc do_quit {} {
+proc terminate_me {win} {
+	global ret_code
+	if {$win ne {.}} return
+	exit $ret_code
+}
+
+proc do_quit {{rc {1}}} {
 	global ui_comm is_quitting repo_config commit_type
 	global GITGUI_BCK_exists GITGUI_BCK_i
 	global ui_comm_spell
+	global ret_code
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -1813,6 +1857,7 @@ proc do_quit {} {
 		}
 	}
 
+	set ret_code $rc
 	destroy .
 }
 
@@ -2215,6 +2260,14 @@ if {[is_enabled branch]} {
 
 # -- Commit Menu
 #
+proc commit_btn_caption {} {
+	if {[is_enabled nocommit]} {
+		return [mc "Done"]
+	} else {
+		return [mc Commit@@verb]
+	}
+}
+
 if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	menu .mbar.commit
 
@@ -2280,7 +2333,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 		-command do_signoff \
 		-accelerator $M1T-S
 
-	.mbar.commit add command -label [mc Commit@@verb] \
+	.mbar.commit add command -label [commit_btn_caption] \
 		-command do_commit \
 		-accelerator $M1T-Return
 	lappend disable_on_lock \
@@ -2608,7 +2661,7 @@ button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
 	-command do_signoff
 pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 
-button .vpane.lower.commarea.buttons.commit -text [mc Commit@@verb] \
+button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
 	-command do_commit
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
@@ -2617,6 +2670,13 @@ lappend disable_on_lock \
 button .vpane.lower.commarea.buttons.push -text [mc Push] \
 	-command do_push_anywhere
 pack .vpane.lower.commarea.buttons.push -side top -fill x
+
+if {[is_enabled nocommitmsg]} {
+	.vpane.lower.commarea.buttons.signoff configure -state disabled
+}
+if {[is_enabled nocommit]} {
+	.vpane.lower.commarea.buttons.push configure -state disabled
+}
 
 # -- Commit Message Buffer
 #
@@ -3199,7 +3259,20 @@ lock_index begin-read
 if {![winfo ismapped .]} {
 	wm deiconify .
 }
-after 1 do_rescan
+after 1 {
+	if {[is_enabled initialamend]} {
+		force_amend
+	} else {
+		do_rescan
+	}
+
+	if {[is_enabled nocommitmsg]} {
+		$ui_comm configure -state disabled -background gray
+	}
+}
 if {[is_enabled multicommit]} {
 	after 1000 hint_gc
+}
+if {[is_enabled retcode]} {
+	bind . <Destroy> {+terminate_me %W}
 }
