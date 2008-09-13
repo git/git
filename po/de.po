@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-08-02 08:58+0200\n"
-"PO-Revision-Date: 2008-08-02 09:09+0200\n"
+"POT-Creation-Date: 2008-09-13 10:20+0200\n"
+"PO-Revision-Date: 2008-09-13 10:24+0200\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -110,7 +110,15 @@ msgstr "Teilweise bereitgestellt zum Eintragen"
 msgid "Staged for commit, missing"
 msgstr "Bereitgestellt zum Eintragen, fehlend"
 
-#: git-gui.sh:1597
+#: git-gui.sh:1658
+msgid "File type changed, not staged"
+msgstr "Dateityp geändert, nicht bereitgestellt"
+
+#: git-gui.sh:1659
+msgid "File type changed, staged"
+msgstr "Dateityp geändert, bereitgestellt"
+
+#: git-gui.sh:1661
 msgid "Untracked, not staged"
 msgstr "Nicht unter Versionskontrolle, nicht bereitgestellt"
 
@@ -396,15 +404,7 @@ msgstr "Alle kopieren"
 msgid "File:"
 msgstr "Datei:"
 
-#: git-gui.sh:2589
-msgid "Apply/Reverse Hunk"
-msgstr "Kontext anwenden/umkehren"
-
-#: git-gui.sh:2696
-msgid "Apply/Reverse Line"
-msgstr "Zeile anwenden/umkehren"
-
-#: git-gui.sh:2711
+#: git-gui.sh:2834
 msgid "Refresh"
 msgstr "Aktualisieren"
 
@@ -416,7 +416,35 @@ msgstr "Schriftgröße verkleinern"
 msgid "Increase Font Size"
 msgstr "Schriftgröße vergrößern"
 
-#: git-gui.sh:2646
+#: git-gui.sh:2870
+msgid "Apply/Reverse Hunk"
+msgstr "Kontext anwenden/umkehren"
+
+#: git-gui.sh:2875
+msgid "Apply/Reverse Line"
+msgstr "Zeile anwenden/umkehren"
+
+#: git-gui.sh:2885
+msgid "Run Merge Tool"
+msgstr "Zusammenführungswerkzeug"
+
+#: git-gui.sh:2890
+msgid "Use Remote Version"
+msgstr "Entfernte Version benutzen"
+
+#: git-gui.sh:2894
+msgid "Use Local Version"
+msgstr "Lokale Version benutzen"
+
+#: git-gui.sh:2898
+msgid "Revert To Base"
+msgstr "Ursprüngliche Version benutzen"
+
+#: git-gui.sh:2906
+msgid "Stage Working Copy"
+msgstr "Arbeitskopie bereitstellen"
+
+#: git-gui.sh:2925
 msgid "Unstage Hunk From Commit"
 msgstr "Kontext aus Bereitstellung herausnehmen"
 
@@ -498,7 +526,15 @@ msgstr "Version kopieren"
 msgid "Do Full Copy Detection"
 msgstr "Volle Kopie-Erkennung"
 
-#: lib/blame.tcl:388
+#: lib/blame.tcl:263
+msgid "Show History Context"
+msgstr "Historien-Kontext anzeigen"
+
+#: lib/blame.tcl:266
+msgid "Blame Parent Commit"
+msgstr "Elternversion annotieren"
+
+#: lib/blame.tcl:394
 #, tcl-format
 msgid "Reading %s..."
 msgstr "%s lesen..."
@@ -547,7 +583,19 @@ msgstr "Eintragender:"
 msgid "Original File:"
 msgstr "Ursprüngliche Datei:"
 
-#: lib/blame.tcl:925
+#: lib/blame.tcl:990
+msgid "Cannot find parent commit:"
+msgstr "Elternversion kann nicht gefunden werden:"
+
+#: lib/blame.tcl:1001
+msgid "Unable to display parent"
+msgstr "Elternversion kann nicht angezeigt werden"
+
+#: lib/blame.tcl:1002 lib/diff.tcl:191
+msgid "Error loading diff:"
+msgstr "Fehler beim Laden des Vergleichs:"
+
+#: lib/blame.tcl:1142
 msgid "Originally By:"
 msgstr "Ursprünglich von:"
 
@@ -1494,11 +1542,7 @@ msgstr "Git-Projektarchiv (Unterprojekt)"
 msgid "* Binary file (not showing content)."
 msgstr "* Binärdatei (Inhalt wird nicht angezeigt)"
 
-#: lib/diff.tcl:185
-msgid "Error loading diff:"
-msgstr "Fehler beim Laden des Vergleichs:"
-
-#: lib/diff.tcl:303
+#: lib/diff.tcl:313
 msgid "Failed to unstage selected hunk."
 msgstr ""
 "Fehler beim Herausnehmen des gewählten Kontexts aus der Bereitstellung."
@@ -1585,6 +1629,15 @@ msgstr ""
 #: lib/index.tcl:394
 msgid "Do Nothing"
 msgstr "Nichts tun"
+
+#: lib/index.tcl:419
+msgid "Reverting selected files"
+msgstr "Änderungen in gewählten Dateien verwerfen"
+
+#: lib/index.tcl:423
+#, tcl-format
+msgid "Reverting %s"
+msgstr "Änderungen in %s verwerfen"
 
 #: lib/merge.tcl:13
 msgid ""
@@ -1730,6 +1783,96 @@ msgstr "Abbruch fehlgeschlagen."
 msgid "Abort completed.  Ready."
 msgstr "Abbruch durchgeführt. Bereit."
 
+#: lib/mergetool.tcl:14
+msgid "Force resolution to the base version?"
+msgstr "Konflikt durch Basisversion ersetzen?"
+
+#: lib/mergetool.tcl:15
+msgid "Force resolution to this branch?"
+msgstr "Konflikt durch diesen Zweig ersetzen?"
+
+#: lib/mergetool.tcl:16
+msgid "Force resolution to the other branch?"
+msgstr "Konflikt durch anderen Zweig ersetzen?"
+
+#: lib/mergetool.tcl:20
+#, tcl-format
+msgid ""
+"Note that the diff shows only conflicting changes.\n"
+"\n"
+"%s will be overwritten.\n"
+"\n"
+"This operation can be undone only by restarting the merge."
+msgstr ""
+"Hinweis: Der Vergleich zeigt nur konfliktverursachende Änderungen an.\n"
+"\n"
+"»%s« wird überschrieben.\n"
+"\n"
+"Diese Operation kann nur rückgängig gemacht werden, wenn die\n"
+"Zusammenführung erneut gestartet wird."
+
+#: lib/mergetool.tcl:32
+#, tcl-format
+msgid "Adding resolution for %s"
+msgstr "Auflösung hinzugefügt für %s"
+
+#: lib/mergetool.tcl:119
+msgid "Cannot resolve deletion or link conflicts using a tool"
+msgstr ""
+"Konflikte durch gelöschte Dateien oder symbolische Links können nicht durch "
+"das Zusamenführungswerkzeug gelöst werden."
+
+#: lib/mergetool.tcl:124
+msgid "Conflict file does not exist"
+msgstr "Konflikt-Datei existiert nicht"
+
+#: lib/mergetool.tcl:236
+#, tcl-format
+msgid "Not a GUI merge tool: '%s'"
+msgstr "Kein GUI Zusammenführungswerkzeug: »%s«"
+
+#: lib/mergetool.tcl:240
+#, tcl-format
+msgid "Unsupported merge tool '%s'"
+msgstr "Unbekanntes Zusammenführungswerkzeug: »%s«"
+
+#: lib/mergetool.tcl:275
+msgid "Merge tool is already running, terminate it?"
+msgstr "Zusammenführungswerkzeug läuft bereits. Soll es abgebrochen werden?"
+
+#: lib/mergetool.tcl:295
+#, tcl-format
+msgid ""
+"Error retrieving versions:\n"
+"%s"
+msgstr ""
+"Fehler beim Abrufen der Dateiversionen:\n"
+"%s"
+
+#: lib/mergetool.tcl:315
+#, tcl-format
+msgid ""
+"Could not start the merge tool:\n"
+"\n"
+"%s"
+msgstr ""
+"Zusammenführungswerkzeug konnte nicht gestartet werden:\n"
+"\n"
+"%s"
+
+#: lib/mergetool.tcl:319
+msgid "Running merge tool..."
+msgstr "Zusammenführungswerkzeug starten..."
+
+#: lib/mergetool.tcl:347 lib/mergetool.tcl:363
+msgid "Merge tool failed."
+msgstr "Zusammenführungswerkzeug fehlgeschlagen."
+
+#: lib/mergetool.tcl:353
+#, tcl-format
+msgid "File %s unchanged, still accept as resolved?"
+msgstr "Datei »%s« unverändert. Trotzdem Konflikt als gelöst akzeptieren?"
+
 #: lib/option.tcl:95
 msgid "Restore Defaults"
 msgstr "Voreinstellungen wiederherstellen"
@@ -1767,7 +1910,11 @@ msgstr "Ausführlichkeit der Zusammenführen-Meldungen"
 msgid "Show Diffstat After Merge"
 msgstr "Vergleichsstatistik nach Zusammenführen anzeigen"
 
-#: lib/option.tcl:123
+#: lib/option.tcl:122
+msgid "Use Merge Tool"
+msgstr "Zusammenführungswerkzeug"
+
+#: lib/option.tcl:124
 msgid "Trust File Modification Timestamps"
 msgstr "Auf Dateiänderungsdatum verlassen"
 
@@ -1788,6 +1935,10 @@ msgid "Minimum Letters To Blame Copy On"
 msgstr "Mindestzahl Zeichen für Kopie-Annotieren"
 
 #: lib/option.tcl:128
+msgid "Blame History Context Radius (days)"
+msgstr "Anzahl Tage für Historien-Kontext"
+
+#: lib/option.tcl:129
 msgid "Number of Diff Context Lines"
 msgstr "Anzahl der Kontextzeilen beim Vergleich"
 
