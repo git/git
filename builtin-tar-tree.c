@@ -28,7 +28,7 @@ int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 	char *basedir_arg;
 	int nargc = 0;
 
-	nargv[nargc++] = "git-archive";
+	nargv[nargc++] = "archive";
 	nargv[nargc++] = "--format=tar";
 
 	if (2 <= argc && !prefixcmp(argv[1], "--remote=")) {
