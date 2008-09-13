@@ -313,7 +313,7 @@ patterns are available:
 
 - `html` suitable for HTML/XHTML documents.
 
-- `java` suitable for source code in the Java lanugage.
+- `java` suitable for source code in the Java language.
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
 
