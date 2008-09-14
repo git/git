@@ -12,19 +12,7 @@ test_description='git-svn dcommit new files over svn:// test'
 
 . ./lib-git-svn.sh
 
-if test -z "$SVNSERVE_PORT"
-then
-	say 'skipping svnserve test. (set $SVNSERVE_PORT to enable)'
-	test_done
-	exit
-fi
-
-start_svnserve () {
-	svnserve --listen-port $SVNSERVE_PORT \
-	         --root "$rawsvnrepo" \
-	         --listen-once \
-	         --listen-host 127.0.0.1 &
-}
+require_svnserve
 
 test_expect_success 'start tracking an empty repo' '
 	svn mkdir -m "empty dir" "$svnrepo"/empty-dir &&
