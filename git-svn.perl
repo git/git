@@ -2626,9 +2626,9 @@ sub rebuild_from_rev_db {
 sub rebuild {
 	my ($self) = @_;
 	my $map_path = $self->map_path;
-	return if (-e $map_path && ! -z $map_path);
+	my $partial = (-e $map_path && ! -z $map_path);
 	return unless ::verify_ref($self->refname.'^0');
-	if ($self->use_svm_props || $self->no_metadata) {
+	if (!$partial && ($self->use_svm_props || $self->no_metadata)) {
 		my $rev_db = $self->rev_db_path;
 		$self->rebuild_from_rev_db($rev_db);
 		if ($self->use_svm_props) {
@@ -2638,10 +2638,13 @@ sub rebuild {
 		$self->unlink_rev_db_symlink;
 		return;
 	}
-	print "Rebuilding $map_path ...\n";
+	print "Rebuilding $map_path ...\n" if (!$partial);
+	my ($base_rev, $head) = ($partial ? $self->rev_map_max_norebuild(1) :
+		(undef, undef));
 	my ($log, $ctx) =
 	    command_output_pipe(qw/rev-list --pretty=raw --no-color --reverse/,
-	                        $self->refname, '--');
+				($head ? "$head.." : "") . $self->refname,
+				'--');
 	my $metadata_url = $self->metadata_url;
 	remove_username($metadata_url);
 	my $svn_uuid = $self->ra_uuid;
@@ -2664,12 +2667,17 @@ sub rebuild {
 		    ($metadata_url && $url && ($url ne $metadata_url))) {
 			next;
 		}
+		if ($partial && $head) {
+			print "Partial-rebuilding $map_path ...\n";
+			print "Currently at $base_rev = $head\n";
+			$head = undef;
+		}
 
 		$self->rev_map_set($rev, $c);
 		print "r$rev = $c\n";
 	}
 	command_close_pipe($log, $ctx);
-	print "Done rebuilding $map_path\n";
+	print "Done rebuilding $map_path\n" if (!$partial || !$head);
 	my $rev_db_path = $self->rev_db_path;
 	if (-f $self->rev_db_path) {
 		unlink $self->rev_db_path or croak "unlink: $!";
@@ -2809,6 +2817,12 @@ sub rev_map_set {
 sub rev_map_max {
 	my ($self, $want_commit) = @_;
 	$self->rebuild;
+	my ($r, $c) = $self->rev_map_max_norebuild($want_commit);
+	$want_commit ? ($r, $c) : $r;
+}
+
+sub rev_map_max_norebuild {
+	my ($self, $want_commit) = @_;
 	my $map_path = $self->map_path;
 	stat $map_path or return $want_commit ? (0, undef) : 0;
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";

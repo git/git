@@ -49,7 +49,7 @@ test_expect_success 'make full git mirror of SVN' '
 	)
 '
 
-test_expect_failure 'fetch from git mirror and partial-rebuild' '
+test_expect_success 'fetch from git mirror and partial-rebuild' '
 	git config --add remote.origin.url "file://$PWD/mirror/.git" &&
 	git config --add remote.origin.fetch refs/remotes/*:refs/remotes/* &&
 	git fetch origin &&
