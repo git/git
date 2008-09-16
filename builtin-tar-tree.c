@@ -9,26 +9,26 @@
 
 static const char tar_tree_usage[] =
 "git tar-tree [--remote=<repo>] <tree-ish> [basedir]\n"
-"*** Note that this command is now deprecated; use git-archive instead.";
+"*** Note that this command is now deprecated; use \"git archive\" instead.";
 
 int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 {
 	/*
-	 * git-tar-tree is now a wrapper around git-archive --format=tar
+	 * "git tar-tree" is now a wrapper around "git archive --format=tar"
 	 *
 	 * $0 --remote=<repo> arg... ==>
-	 *	git-archive --format=tar --remote=<repo> arg...
+	 *	git archive --format=tar --remote=<repo> arg...
 	 * $0 tree-ish ==>
-	 *	git-archive --format=tar tree-ish
+	 *	git archive --format=tar tree-ish
 	 * $0 tree-ish basedir ==>
-	 * 	git-archive --format-tar --prefix=basedir tree-ish
+	 * 	git archive --format-tar --prefix=basedir tree-ish
 	 */
 	int i;
 	const char **nargv = xcalloc(sizeof(*nargv), argc + 2);
 	char *basedir_arg;
 	int nargc = 0;
 
-	nargv[nargc++] = "git-archive";
+	nargv[nargc++] = "archive";
 	nargv[nargc++] = "--format=tar";
 
 	if (2 <= argc && !prefixcmp(argv[1], "--remote=")) {
@@ -53,8 +53,8 @@ int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 	nargv[nargc] = NULL;
 
 	fprintf(stderr,
-		"*** git-tar-tree is now deprecated.\n"
-		"*** Running git-archive instead.\n***");
+		"*** \"git tar-tree\" is now deprecated.\n"
+		"*** Running \"git archive\" instead.\n***");
 	for (i = 0; i < nargc; i++) {
 		fputc(' ', stderr);
 		sq_quote_print(stderr, nargv[i]);
