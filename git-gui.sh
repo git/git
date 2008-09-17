@@ -3010,6 +3010,14 @@ proc create_common_diff_popup {ctxm} {
 		-command {incr_font_size font_diff 1}
 	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 	$ctxm add separator
+	set emenu $ctxm.enc
+	menu $emenu
+	build_encoding_menu $emenu [list force_diff_encoding]
+	$ctxm add cascade \
+		-label [mc "Encoding"] \
+		-menu $emenu
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add separator
 	$ctxm add command -label [mc "Options..."] \
 		-command do_options
 }

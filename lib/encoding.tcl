@@ -321,13 +321,38 @@ proc tcl_encoding {enc} {
     return {}
 }
 
+proc force_path_encoding {path enc} {
+	global path_encoding_overrides last_encoding_override
+
+	set enc [tcl_encoding $enc]
+	if {$enc eq {}} {
+		catch { unset last_encoding_override }
+		catch { unset path_encoding_overrides($path) }
+	} else {
+		set last_encoding_override $enc
+		if {$path ne {}} {
+			set path_encoding_overrides($path) $enc
+		}
+	}
+}
+
 proc get_path_encoding {path} {
-	set tcl_enc [tcl_encoding [get_config gui.encoding]]
+	global path_encoding_overrides last_encoding_override
+
+	if {[info exists last_encoding_override]} {
+		set tcl_enc $last_encoding_override
+	} else {
+		set tcl_enc [tcl_encoding [get_config gui.encoding]]
+	}
 	if {$tcl_enc eq {}} {
 		set tcl_enc [encoding system]
 	}
 	if {$path ne {}} {
-		set enc2 [tcl_encoding [gitattr $path encoding $tcl_enc]]
+		if {[info exists path_encoding_overrides($path)]} {
+			set enc2 $path_encoding_overrides($path)
+		} else {
+			set enc2 [tcl_encoding [gitattr $path encoding $tcl_enc]]
+		}
 		if {$enc2 ne {}} {
 			set tcl_enc $enc2
 		}
