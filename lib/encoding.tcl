@@ -286,39 +286,63 @@ set encoding_groups {
 	{"Symbol" Symbol Dingbats MacDingbats MacCentEuro}}
 }
 
-proc tcl_encoding {enc} {
-    global encoding_aliases
-    set names [encoding names]
-    set lcnames [string tolower $names]
-    set enc [string tolower $enc]
-    set i [lsearch -exact $lcnames $enc]
-    if {$i < 0} {
-	# look for "isonnn" instead of "iso-nnn" or "iso_nnn"
-	if {[regsub {^(iso|cp|ibm|jis)[-_]} $enc {\1} encx]} {
-	    set i [lsearch -exact $lcnames $encx]
+proc build_encoding_table {} {
+	global encoding_aliases encoding_lookup_table
+
+	# Prepare the lookup list; cannot use lsort -nocase because
+	# of compatibility issues with older Tcl (e.g. in msysgit)
+	set names [list]
+	foreach item [encoding names] {
+		lappend names [list [string tolower $item] $item]
 	}
-    }
-    if {$i < 0} {
-	foreach l $encoding_aliases {
-	    set ll [string tolower $l]
-	    if {[lsearch -exact $ll $enc] < 0} continue
-	    # look through the aliases for one that tcl knows about
-	    foreach e $ll {
-		set i [lsearch -exact $lcnames $e]
-		if {$i < 0} {
-		    if {[regsub {^(iso|cp|ibm|jis)[-_]} $e {\1} ex]} {
-			set i [lsearch -exact $lcnames $ex]
-		    }
+	set names [lsort -ascii -index 0 $names]
+	# neither can we use lsearch -index
+	set lnames [list]
+	foreach item $names {
+		lappend lnames [lindex $item 0]
+	}
+
+	foreach grp $encoding_aliases {
+		set target {}
+		foreach item $grp {
+			set i [lsearch -sorted -ascii $lnames \
+					[string tolower $item]]
+			if {$i >= 0} {
+				set target [lindex $names $i 1]
+				break
+			}
 		}
-		if {$i >= 0} break
-	    }
-	    break
+		if {$target eq {}} continue
+		foreach item $grp {
+			set encoding_lookup_table([string tolower $item]) $target
+		}
 	}
-    }
-    if {$i >= 0} {
-	return [lindex $names $i]
-    }
-    return {}
+
+	foreach item $names {
+		set encoding_lookup_table([lindex $item 0]) [lindex $item 1]
+	}
+}
+
+proc tcl_encoding {enc} {
+	global encoding_lookup_table
+	if {$enc eq {}} {
+		return {}
+	}
+	if {![info exists encoding_lookup_table]} {
+		build_encoding_table
+	}
+	set enc [string tolower $enc]
+	if {![info exists encoding_lookup_table($enc)]} {
+		# look for "isonnn" instead of "iso-nnn" or "iso_nnn"
+		if {[regsub {^(iso|cp|ibm|jis)[-_]} $enc {\1} encx]} {
+			set enc $encx
+		}
+	}
+	if {[info exists encoding_lookup_table($enc)]} {
+		return $encoding_lookup_table($enc)
+	} else {
+		return {}
+	}
 }
 
 proc force_path_encoding {path enc} {
