@@ -152,7 +152,7 @@ proc do_options {} {
 		{i-1..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
 		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}
 		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
-		{t gui.encoding {mc "Default File Contents Encoding"}}
+		{c gui.encoding {mc "Default File Contents Encoding"}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]
@@ -182,6 +182,7 @@ proc do_options {} {
 				pack $w.$f.$optid.v -side right -anchor e -padx 5
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
+			c -
 			t {
 				frame $w.$f.$optid
 				label $w.$f.$optid.l -text "$text:"
@@ -194,6 +195,16 @@ proc do_options {} {
 				pack $w.$f.$optid.v -side left -anchor w \
 					-fill x -expand 1 \
 					-padx 5
+				if {$type eq {c}} {
+					menu $w.$f.$optid.m
+					build_encoding_menu $w.$f.$optid.m \
+						[list set ${f}_config_new($name)] 1
+					button $w.$f.$optid.b \
+						-text [mc "Change"] \
+						-command [list popup_btn_menu \
+							$w.$f.$optid.m $w.$f.$optid.b]
+					pack $w.$f.$optid.b -side left -anchor w
+				}
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
 			}
