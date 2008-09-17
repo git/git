@@ -274,3 +274,17 @@ proc tcl_encoding {enc} {
     }
     return {}
 }
+
+proc get_path_encoding {path} {
+	set tcl_enc [tcl_encoding [get_config gui.encoding]]
+	if {$tcl_enc eq {}} {
+		set tcl_enc [encoding system]
+	}
+	if {$path ne {}} {
+		set enc2 [tcl_encoding [gitattr $path encoding $tcl_enc]]
+		if {$enc2 ne {}} {
+			set tcl_enc $enc2
+		}
+	}
+	return $tcl_enc
+}

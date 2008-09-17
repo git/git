@@ -164,11 +164,10 @@ proc show_other_diff {path w m scroll_pos} {
 					set sz [string length $content]
 				}
 				file {
-					set enc [gitattr $path encoding UTF-8]
 					set fd [open $path r]
 					fconfigure $fd \
 						-eofchar {} \
-						-encoding [tcl_encoding $enc]
+						-encoding [get_path_encoding $path]
 					set content [read $fd $max_sz]
 					close $fd
 					set sz [file size $path]
@@ -282,7 +281,7 @@ proc start_show_diff {scroll_pos {add_opts {}}} {
 	set ::current_diff_inheader 1
 	fconfigure $fd \
 		-blocking 0 \
-		-encoding [tcl_encoding [gitattr $path encoding UTF-8]] \
+		-encoding [get_path_encoding $path] \
 		-translation lf
 	fileevent $fd readable [list read_diff $fd $scroll_pos]
 }
@@ -435,8 +434,9 @@ proc apply_hunk {x y} {
 	}
 
 	if {[catch {
+		set enc [get_path_encoding $current_diff_path]
 		set p [eval git_write $apply_cmd]
-		fconfigure $p -translation binary -encoding binary
+		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p [$ui_diff get $s_lno $e_lno]
 		close $p} err]} {
@@ -604,8 +604,9 @@ proc apply_line {x y} {
 	set patch "@@ -$hln,$n +$hln,[eval expr $n $sign 1] @@\n$patch"
 
 	if {[catch {
+		set enc [get_path_encoding $current_diff_path]
 		set p [eval git_write $apply_cmd]
-		fconfigure $p -translation binary -encoding binary
+		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p $patch
 		close $p} err]} {

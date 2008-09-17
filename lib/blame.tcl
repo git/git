@@ -402,7 +402,7 @@ method _load {jump} {
 	fconfigure $fd \
 		-blocking 0 \
 		-translation lf \
-		-encoding [tcl_encoding [gitattr $path encoding UTF-8]]
+		-encoding [get_path_encoding $path]
 	fileevent $fd readable [cb _read_file $fd $jump]
 	set current_fd $fd
 }
