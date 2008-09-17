@@ -256,9 +256,16 @@ constructor new {i_commit i_path i_jump} {
 	$w.ctxm add command \
 		-label [mc "Copy Commit"] \
 		-command [cb _copycommit]
+	$w.ctxm add separator
+	menu $w.ctxm.enc
+	build_encoding_menu $w.ctxm.enc [cb _setencoding]
+	$w.ctxm add cascade \
+		-label [mc "Encoding"] \
+		-menu $w.ctxm.enc
 	$w.ctxm add command \
 		-label [mc "Do Full Copy Detection"] \
 		-command [cb _fullcopyblame]
+	$w.ctxm add separator
 	$w.ctxm add command \
 		-label [mc "Show History Context"] \
 		-command [cb _gitkcommit]
@@ -789,6 +796,16 @@ method _fullcopyblame {} {
 method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	_showcommit $this $cur_w $lno
+}
+
+method _setencoding {enc} {
+	force_path_encoding $path $enc
+	_load $this [list \
+		$highlight_column \
+		$highlight_line \
+		[lindex [$w_file xview] 0] \
+		[lindex [$w_file yview] 0] \
+		]
 }
 
 method _load_commit {cur_w cur_d pos} {
