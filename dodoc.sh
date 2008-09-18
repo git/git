@@ -71,6 +71,12 @@ do
 	rm -fr doc-$type-inst
 done
 
+case "$(asciidoc --version 2>&1)" in
+asciidoc' 8'.*)
+	ASCIIDOC8=YesPlease
+	export ASCIIDOC8 ;;
+esac
+
 make >./:html.log 2>&1 \
 	-C Documentation -j 2 \
 	WEBDOC_DEST="$DOCREPO/doc-html-inst" install-webdoc || exit

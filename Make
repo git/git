@@ -81,6 +81,12 @@ sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 	$GIT describe --abbrev=4 HEAD | sed -e 's/-/./g' >version
 }
 
+case "$(asciidoc --version 2>&1)" in
+asciidoc' 8'.*)
+	ASCIIDOC8=YesPlease
+	export ASCIIDOC8 ;;
+esac
+
 CFLAGS="$O $Wall -Wdeclaration-after-statement -g"
 
 make $d \

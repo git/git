@@ -17,6 +17,12 @@ make clean >/dev/null 2>&1 &&
 git checkout master &&
 make clean >/dev/null 2>&1 &&
 
+case "$(asciidoc --version 2>&1)" in
+asciidoc' 8'.*)
+	ASCIIDOC8=YesPlease
+	export ASCIIDOC8 ;;
+esac
+
 case "$1" in
 '')
 	echo "* Building all"
