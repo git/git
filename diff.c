@@ -189,6 +189,11 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 					return config_error_nonbool(var);
 				return parse_funcname_pattern(var, ep, value,
 					0);
+			} else if (!strcmp(ep, ".xfuncname")) {
+				if (!value)
+					return config_error_nonbool(var);
+				return parse_funcname_pattern(var, ep, value,
+					REG_EXTENDED);
 			}
 		}
 	}
