@@ -97,13 +97,14 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
 struct funcname_pattern_entry {
 	char *name;
 	char *pattern;
+	int cflags;
 };
 static struct funcname_pattern_list {
 	struct funcname_pattern_list *next;
 	struct funcname_pattern_entry e;
 } *funcname_pattern_list;
 
-static int parse_funcname_pattern(const char *var, const char *ep, const char *value)
+static int parse_funcname_pattern(const char *var, const char *ep, const char *value, int cflags)
 {
 	const char *name;
 	int namelen;
@@ -123,6 +124,7 @@ static int parse_funcname_pattern(const char *var, const char *ep, const char *v
 	}
 	free(pp->e.pattern);
 	pp->e.pattern = xstrdup(value);
+	pp->e.cflags = cflags;
 	return 0;
 }
 
@@ -185,7 +187,8 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 			if (!strcmp(ep, ".funcname")) {
 				if (!value)
 					return config_error_nonbool(var);
-				return parse_funcname_pattern(var, ep, value);
+				return parse_funcname_pattern(var, ep, value,
+					0);
 			}
 		}
 	}
@@ -1395,16 +1398,16 @@ static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
 			"new\\|return\\|switch\\|throw\\|while\\)\n"
 			"^[ 	]*\\(\\([ 	]*"
 			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
-			"[ 	]*([^;]*\\)$" },
+			"[ 	]*([^;]*\\)$", 0 },
 	{ "pascal", "^\\(\\(procedure\\|function\\|constructor\\|"
 			"destructor\\|interface\\|implementation\\|"
 			"initialization\\|finalization\\)[ \t]*.*\\)$"
 			"\\|"
-			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$"
-			},
-	{ "bibtex", "\\(@[a-zA-Z]\\{1,\\}[ \t]*{\\{0,1\\}[ \t]*[^ \t\"@',\\#}{~%]*\\).*$" },
-	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$" },
-	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
+			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$",
+			0 },
+	{ "bibtex", "\\(@[a-zA-Z]\\{1,\\}[ \t]*{\\{0,1\\}[ \t]*[^ \t\"@',\\#}{~%]*\\).*$", 0 },
+	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$", 0 },
+	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$", 0 },
 };
 
 static const struct funcname_pattern_entry *diff_funcname_pattern(struct diff_filespec *one)
@@ -1530,7 +1533,7 @@ static void builtin_diff(const char *name_a,
 		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		if (pe)
-			xdiff_set_find_func(&xecfg, pe->pattern);
+			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
 		if (!diffopts)
 			;
 		else if (!prefixcmp(diffopts, "--unified="))
