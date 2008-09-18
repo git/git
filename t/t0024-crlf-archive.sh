@@ -33,7 +33,7 @@ if [ $? -eq 127 ]; then
 	exit
 fi
 
-test_expect_failure 'zip archive' '
+test_expect_success 'zip archive' '
 
 	git archive --format=zip HEAD >test.zip &&
 
