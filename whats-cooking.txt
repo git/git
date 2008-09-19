@@ -1,8 +1,8 @@
-Subject: What's cooking in git.git (Sep 2008, #01; Sat, 06)
-X-master-at: ec3a4ba519c0012d58584d23f407c302e7b80eb6
-X-next-at: d2470dbfc97c972e54913e3d3c622118526c9cc2
+Subject: What's cooking in git.git (Sep 2008, #02; Wed, 10)
+X-master-at: ede4caf6e3204f9d63758d6410d0f124b0caab32
+X-next-at: c8d31b67b3f0e13f6b8ad782dadc6e8a8bc06bbb
 
-What's cooking in git.git (Sep 2008, #01; Sat, 06)
+What's cooking in git.git (Sep 2008, #02; Wed, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -15,93 +15,68 @@ meant to be merged to the maintenance series have "maint-" in their names.
 ----------------------------------------------------------------
 [New Topics]
 
-* np/pack (Tue Sep 2 10:22:22 2008 -0400) 4 commits
- + t5300: improve SHA1 collision test
- + pack-objects: don't include missing preferred base objects
- + sha1write: don't copy full sized buffers
- + Merge branch 'np/maint-safer-pack' into np/pack
+Many 'maint' material to go through the usual 'next' to 'master' to
+'maint' cycle..
 
-* ho/dirstat-by-file (Fri Sep 5 22:27:35 2008 +0300) 1 commit
- + diff --dirstat-by-file: count changed files, not lines
+* mh/maint-honor-no-ssl-verify (Thu Feb 21 15:10:37 2008 -0800) 1 commit
+ + Don't verify host name in SSL certs when GIT_SSL_NO_VERIFY is set
 
-* bw/shortref (Fri Sep 5 23:16:23 2008 +0200) 1 commit
- - for-each-ref: `:short` format for `refname`
+* dp/maint-rebase-fix (Tue Sep 9 16:05:26 2008 +0400) 2 commits
+ + git-rebase--interactive: auto amend only edited commit
+ + git-rebase-interactive: do not squash commits on abort
 
-* jc/safe-c-l-d (Tue Sep 2 14:10:15 2008 -0700) 1 commit
- + safe_create_leading_directories(): make it about "leading"
-   directories
+* jc/maint-checkout-keep-remove (Sun Sep 7 19:49:25 2008 -0700) 1 commit
+ + checkout: do not lose staged removal
 
-* jc/setlinebuf-setvbuf (Wed Sep 3 20:33:29 2008 -0700) 1 commit
- + daemon.c: avoid setlinebuf()
+* jc/maint-template-permbits (Thu Aug 21 19:31:50 2008 -0500) 1 commit
+ + Fix permission bits on sources checked out with an overtight umask
 
-* jc/maint-diff-quiet (Mon Sep 1 23:20:26 2008 -0700) 2 commits
- + diff --quiet: make it synonym to --exit-code >/dev/null
- + diff Porcelain: do not disable auto index refreshing on -C -C
+* am/status (Mon Sep 8 00:05:03 2008 +0200) 2 commits
+ - wt-status: Teach how to discard changes in the working directory
+ - wt-status: Split header generation into three functions
 
-* jc/apply-include-exclude (Mon Aug 25 01:05:31 2008 -0700) 1 commit
- - git-apply:--include=pathspec
+This is what I commented as "making status output even chattier", but
+parked here to see what people think.
 
-* rs/decorate (Thu Sep 4 23:40:03 2008 +0200) 3 commits
- + add '%d' pretty format specifier to show decoration
- + move load_ref_decorations() to log-tree.c and export it
- + log: add load_ref_decorations()
+* mv/commit-tree (Wed Sep 10 22:10:33 2008 +0200) 3 commits
+ - t7603: add new testcases to ensure builtin-commit uses
+   reduce_heads()
+ - builtin-commit: use commit_tree()
+ - commit_tree(): add a new author parameter
 
-* pb/commit-where (Fri Sep 5 19:13:05 2008 +0200) 1 commit
- - Builtin-commit: show on which branch a commit was added
+* pb/autocorrect-wrapper (Wed Sep 10 14:44:20 2008 -0700) 2 commits
+ - Fixup -- waiting for response
+ - git wrapper: also uses aliases to suggest mistyped commands
+
+* jc/alternate-push (Tue Sep 9 01:27:10 2008 -0700) 4 commits
+ - push: receiver end advertises refs from alternate repositories
+ - push: prepare sender to receive extended ref information from the
+   receiver
+ - receive-pack: make it a builtin
+ - is_directory(): a generic helper function
 
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* np/safer-pack (Fri Aug 29 16:08:02 2008 -0400) 5 commits
- + fixup_pack_header_footer(): use nicely aligned buffer sizes
- + index-pack: use fixup_pack_header_footer()'s validation mode
- + pack-objects: use fixup_pack_header_footer()'s validation mode
- + improve reliability of fixup_pack_header_footer()
- + pack-objects: improve returned information from write_one()
+* jc/hide-cr-in-diff-from-less (Wed Aug 27 19:48:01 2008 -0700) 1 commit
+ + diff: Help "less" hide ^M from the output
 
-* rf/man-env (Fri Aug 29 17:00:43 2008 +0200) 1 commit
- + builtin-help: fallback to GIT_MAN_VIEWER before man
+* jc/maint-checkout-fix (Fri Aug 29 13:40:36 2008 -0700) 1 commit
+ + checkout: do not check out unmerged higher stages randomly
 
-* ho/dashless (Sun Aug 31 09:39:19 2008 -0700) 2 commits
- + 'git foo' program identifies itself without dash in die() messages
- + Start conforming code to "git subcmd" style
+This is the same one as the bottom of "better conflict resolution" series.
 
-* jc/author-nickname (Tue Aug 26 23:13:13 2008 -0700) 1 commit
- + git commit --author=$name: look $name up in existing commits
+* jc/cc-ld-dynpath (Sat Aug 16 15:01:23 2008 +0200) 2 commits
+ + configure: auto detect dynamic library path switches
+ + Makefile: Allow CC_LD_DYNPATH to be overriden
 
-* dp/pid-uintmax (Sun Aug 31 14:09:39 2008 +0200) 1 commit
- + cast pid_t's to uintmax_t to improve portability
+I decided to push this forward; it might break minority configurations,
+but it appears nobody pays attention until it actually hurts, so let's see
+what happens when this hits 'master'.
 
-* nd/worktree (Sat Aug 30 16:15:32 2008 +0700) 5 commits
- - setup_git_directory(): fix move to worktree toplevel directory
- - update-index: fix worktree setup
- + read-tree: setup worktree if merge is required
- + grep: fix worktree setup
- + diff*: fix worktree setup
-
-The last two fail test suite.
-
-* tr/filter-branch (Sun Aug 31 10:41:01 2008 -0700) 14 commits
- + Merge branch 'tr/rev-list-docs' into tr/filter-branch
- + Merge branch 'jc/post-simplify' (early part) into tr/filter-branch
- + revision --simplify-merges: make it a no-op without pathspec
- + revision --simplify-merges: do not leave commits unprocessed
- + revision --simplify-merges: use decoration instead of commit->util
-   field
- + Documentation: rev-list-options: move --simplify-merges
-   documentation
- + Merge branch 'jc/post-simplify' into tr/rev-list-docs
- + filter-branch: use --simplify-merges
- + Merge branch 'jc/post-simplify' into tr/filter-branch
- + filter-branch: fix ref rewriting with --subdirectory-filter
- + filter-branch: Extend test to show rewriting bug
- + Topo-sort before --simplify-merges
- + revision traversal: show full history with merge simplification
- + revision.c: whitespace fix
-
-This now merges up all (and only) the necessary pieces from the
-post-simplify topic and the documentation updates, ready to be merged to
-"master".
+* ar/autospell (Sun Aug 31 15:54:58 2008 +0200) 2 commits
+ + Add help.autocorrect to enable/disable autocorrecting
+ + git wrapper: DWIM mistyped commands
 
 ----------------------------------------------------------------
 [Stalled -- Needs Action to Proceed (or to be dropped)]
@@ -118,38 +93,67 @@ Réne had good comments on how the callback should be structured.
 * kb/am-directory (Fri Aug 29 15:27:50 2008 -0700) 1 commit
  - git-am: Pass the --directory option through to git-apply
 
+I think this is still buggy and drops the option when am stops with
+conflicts.
+
+* dk/emacs (Tue Aug 26 22:24:40 2008 -0500) 2 commits
+ - Teach git.el to mark/unmark files by regexp
+ - git.el: Diff only file at point by default
+
+These are still queued but Alexandre had improvement requests so these
+will likely be dropped.
+
 ----------------------------------------------------------------
 [Will be merged to "master" soon]
 
-* jc/hide-cr-in-diff-from-less (Wed Aug 27 19:48:01 2008 -0700) 1 commit
- + diff: Help "less" hide ^M from the output
+* np/pack (Tue Sep 2 10:22:22 2008 -0400) 4 commits
+ + t5300: improve SHA1 collision test
+ + pack-objects: don't include missing preferred base objects
+ + sha1write: don't copy full sized buffers
+ + Merge branch 'np/maint-safer-pack' into np/pack
 
-* jc/maint-checkout-fix (Fri Aug 29 13:40:36 2008 -0700) 1 commit
- + checkout: do not check out unmerged higher stages randomly
+* bw/shortref (Fri Sep 5 23:16:23 2008 +0200) 1 commit
+ + for-each-ref: `:short` format for `refname`
 
-This is the same one as the bottom of "better conflict resolution" series;
-it is a bugfix meant to be applied on 'maint'.
-
-* jc/cc-ld-dynpath (Sat Aug 16 15:01:23 2008 +0200) 2 commits
- + configure: auto detect dynamic library path switches
- + Makefile: Allow CC_LD_DYNPATH to be overriden
-
-I decided to push this forward; it might break minority configurations,
-but it appears nobody pays attention until it actually hurts, so let's see
-what happens when this hits 'master'.
-
-* ar/autospell (Sun Aug 31 15:54:58 2008 +0200) 2 commits
- + Add help.autocorrect to enable/disable autocorrecting
- + git wrapper: DWIM mistyped commands
-
-----------------------------------------------------------------
-[Actively Cooking]
+* rs/decorate (Thu Sep 4 23:40:03 2008 +0200) 3 commits
+ + add '%d' pretty format specifier to show decoration
+ + move load_ref_decorations() to log-tree.c and export it
+ + log: add load_ref_decorations()
 
 * tr/rev-list-reverse (Mon Sep 1 00:31:37 2008 +0200) 2 commits
  + t6013: replace use of 'tac' with equivalent Perl
  + rev-list: fix --reverse interaction with --parents
 
-* jc/better-conflict-resolution (Thu Sep 4 23:48:48 2008 +0200) 16 commits
+* cc/bisect (Sat Sep 6 07:27:03 2008 +0200) 3 commits
+ + bisect: remove "checkout_done" variable used when checking merge
+   bases
+ + bisect: only check merge bases when needed
+ + bisect: test merge base if good rev is not an ancestor of bad rev
+
+* jc/setlinebuf-setvbuf (Wed Sep 3 20:33:29 2008 -0700) 1 commit
+ + daemon.c: avoid setlinebuf()
+
+* jc/maint-diff-quiet (Mon Sep 1 23:20:26 2008 -0700) 2 commits
+ + diff --quiet: make it synonym to --exit-code >/dev/null
+ + diff Porcelain: do not disable auto index refreshing on -C -C
+
+----------------------------------------------------------------
+[Actively Cooking]
+
+* ho/dirstat-by-file (Fri Sep 5 22:27:35 2008 +0300) 1 commit
+ + diff --dirstat-by-file: count changed files, not lines
+
+* jc/safe-c-l-d (Tue Sep 2 14:10:15 2008 -0700) 1 commit
+ + safe_create_leading_directories(): make it about "leading"
+   directories
+
+* jc/apply-include-exclude (Mon Aug 25 01:05:31 2008 -0700) 1 commit
+ - git-apply:--include=pathspec
+
+* pb/commit-where (Mon Sep 8 01:05:41 2008 +0200) 1 commit
+ + builtin-commit.c: show on which branch a commit was added
+
+* jc/better-conflict-resolution (Thu Sep 4 23:48:48 2008 +0200) 15 commits
  + Fix AsciiDoc errors in merge documentation
  + git-merge documentation: describe how conflict is presented
  + checkout --conflict=<style>: recreate merge in a non-default style
@@ -169,7 +173,6 @@ what happens when this hits 'master'.
    conflicting merge
  + checkout -f: allow ignoring unmerged paths when checking out of
    the index
- + checkout: do not check out unmerged higher stages randomly
 
 * lt/time-reject-fractional-seconds (Sat Aug 16 21:25:40 2008 -0700) 1 commit
  + date/time: do not get confused by fractional seconds
@@ -189,12 +192,6 @@ case insensitive filesystems.  I dunno.
 
 Teaches "git add" to record only the intent to add a path later.
 I rerolled this without the fake empty blob object.
-
-* cc/bisect (Sat Sep 6 07:27:03 2008 +0200) 3 commits
- + bisect: remove "checkout_done" variable used when checking merge
-   bases
- + bisect: only check merge bases when needed
- + bisect: test merge base if good rev is not an ancestor of bad rev
 
 * mv/merge-recursive (Sat Sep 6 18:29:49 2008 +0200) 11 commits
  + builtin-merge: release the lockfile in try_merge_strategy()
@@ -224,13 +221,6 @@ I started making this incremental but the progress is not so great.
 
 ----------------------------------------------------------------
 [On Hold]
-
-* dk/emacs (Tue Aug 26 22:24:40 2008 -0500) 2 commits
- - Teach git.el to mark/unmark files by regexp
- - git.el: Diff only file at point by default
-
-These are still queued but Alexandre had improvement requests so these
-will likely be dropped.
 
 * jc/stripspace (Sun Mar 9 00:30:35 2008 -0800) 6 commits
  - git-am --forge: add Signed-off-by: line for the author
@@ -270,53 +260,3 @@ have been hearing, it might not be a bad idea to drop this.
 
 This would be the right thing to do for command line use, but gitk will be
 hit due to tcl/tk's limitation, so I am holding this back for now.
-
-----------------------------------------------------------------
-[Graduated to "master"]
-
-* np/safer-pack (Fri Aug 29 16:08:02 2008 -0400) 5 commits
- + fixup_pack_header_footer(): use nicely aligned buffer sizes
- + index-pack: use fixup_pack_header_footer()'s validation mode
- + pack-objects: use fixup_pack_header_footer()'s validation mode
- + improve reliability of fixup_pack_header_footer()
- + pack-objects: improve returned information from write_one()
-
-* rf/man-env (Fri Aug 29 17:00:43 2008 +0200) 1 commit
- + builtin-help: fallback to GIT_MAN_VIEWER before man
-
-* ho/dashless (Sun Aug 31 09:39:19 2008 -0700) 2 commits
- + 'git foo' program identifies itself without dash in die() messages
- + Start conforming code to "git subcmd" style
-
-* jc/author-nickname (Tue Aug 26 23:13:13 2008 -0700) 1 commit
- + git commit --author=$name: look $name up in existing commits
-
-* dp/pid-uintmax (Sun Aug 31 14:09:39 2008 +0200) 1 commit
- + cast pid_t's to uintmax_t to improve portability
-
-* nd/worktree (Sat Aug 30 16:15:32 2008 +0700) 5 commits
- - setup_git_directory(): fix move to worktree toplevel directory
- - update-index: fix worktree setup
- + read-tree: setup worktree if merge is required
- + grep: fix worktree setup
- + diff*: fix worktree setup
-
-The last two fail test suite.
-
-* tr/filter-branch (Sun Aug 31 10:41:01 2008 -0700) 14 commits
- + Merge branch 'tr/rev-list-docs' into tr/filter-branch
- + Merge branch 'jc/post-simplify' (early part) into tr/filter-branch
- + revision --simplify-merges: make it a no-op without pathspec
- + revision --simplify-merges: do not leave commits unprocessed
- + revision --simplify-merges: use decoration instead of commit->util
-   field
- + Documentation: rev-list-options: move --simplify-merges
-   documentation
- + Merge branch 'jc/post-simplify' into tr/rev-list-docs
- + filter-branch: use --simplify-merges
- + Merge branch 'jc/post-simplify' into tr/filter-branch
- + filter-branch: fix ref rewriting with --subdirectory-filter
- + filter-branch: Extend test to show rewriting bug
- + Topo-sort before --simplify-merges
- + revision traversal: show full history with merge simplification
- + revision.c: whitespace fix
