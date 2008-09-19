@@ -95,32 +95,37 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
  * to define a customized regexp to find the beginning of a function to
  * be used for hunk header lines of "diff -p" style output.
  */
-static struct funcname_pattern {
+struct funcname_pattern_entry {
 	char *name;
 	char *pattern;
-	struct funcname_pattern *next;
+	int cflags;
+};
+static struct funcname_pattern_list {
+	struct funcname_pattern_list *next;
+	struct funcname_pattern_entry e;
 } *funcname_pattern_list;
 
-static int parse_funcname_pattern(const char *var, const char *ep, const char *value)
+static int parse_funcname_pattern(const char *var, const char *ep, const char *value, int cflags)
 {
 	const char *name;
 	int namelen;
-	struct funcname_pattern *pp;
+	struct funcname_pattern_list *pp;
 
 	name = var + 5; /* "diff." */
 	namelen = ep - name;
 
 	for (pp = funcname_pattern_list; pp; pp = pp->next)
-		if (!strncmp(pp->name, name, namelen) && !pp->name[namelen])
+		if (!strncmp(pp->e.name, name, namelen) && !pp->e.name[namelen])
 			break;
 	if (!pp) {
 		pp = xcalloc(1, sizeof(*pp));
-		pp->name = xmemdupz(name, namelen);
+		pp->e.name = xmemdupz(name, namelen);
 		pp->next = funcname_pattern_list;
 		funcname_pattern_list = pp;
 	}
-	free(pp->pattern);
-	pp->pattern = xstrdup(value);
+	free(pp->e.pattern);
+	pp->e.pattern = xstrdup(value);
+	pp->e.cflags = cflags;
 	return 0;
 }
 
@@ -189,7 +194,13 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 			if (!strcmp(ep, ".funcname")) {
 				if (!value)
 					return config_error_nonbool(var);
-				return parse_funcname_pattern(var, ep, value);
+				return parse_funcname_pattern(var, ep, value,
+					0);
+			} else if (!strcmp(ep, ".xfuncname")) {
+				if (!value)
+					return config_error_nonbool(var);
+				return parse_funcname_pattern(var, ep, value,
+					REG_EXTENDED);
 			}
 		}
 	}
@@ -513,13 +524,20 @@ const char *diff_get_color(int diff_use_color, enum color_diff ix)
 
 static void emit_line(FILE *file, const char *set, const char *reset, const char *line, int len)
 {
-	int has_trailing_newline = (len > 0 && line[len-1] == '\n');
+	int has_trailing_newline, has_trailing_carriage_return;
+
+	has_trailing_newline = (len > 0 && line[len-1] == '\n');
 	if (has_trailing_newline)
+		len--;
+	has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
+	if (has_trailing_carriage_return)
 		len--;
 
 	fputs(set, file);
 	fwrite(line, len, 1, file);
 	fputs(reset, file);
+	if (has_trailing_carriage_return)
+		fputc('\r', file);
 	if (has_trailing_newline)
 		fputc('\n', file);
 }
@@ -1375,42 +1393,40 @@ int diff_filespec_is_binary(struct diff_filespec *one)
 	return one->is_binary;
 }
 
-static const char *funcname_pattern(const char *ident)
+static const struct funcname_pattern_entry *funcname_pattern(const char *ident)
 {
-	struct funcname_pattern *pp;
+	struct funcname_pattern_list *pp;
 
 	for (pp = funcname_pattern_list; pp; pp = pp->next)
-		if (!strcmp(ident, pp->name))
-			return pp->pattern;
+		if (!strcmp(ident, pp->e.name))
+			return &pp->e;
 	return NULL;
 }
 
-static struct builtin_funcname_pattern {
-	const char *name;
-	const char *pattern;
-} builtin_funcname_pattern[] = {
-	{ "bibtex", "\\(@[a-zA-Z]\\{1,\\}[ \t]*{\\{0,1\\}[ \t]*[^ \t\"@',\\#}{~%]*\\).*$" },
-	{ "html", "^\\s*\\(<[Hh][1-6]\\s.*>.*\\)$" },
+static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
+	{ "bibtex", "\\(@[a-zA-Z]\\{1,\\}[ \t]*{\\{0,1\\}[ \t]*[^ \t\"@',\\#}{~%]*\\).*$", 0 },
+	{ "html", "^\\s*\\(<[Hh][1-6]\\s.*>.*\\)$", 0 },
 	{ "java", "!^[ 	]*\\(catch\\|do\\|for\\|if\\|instanceof\\|"
 			"new\\|return\\|switch\\|throw\\|while\\)\n"
 			"^[ 	]*\\(\\([ 	]*"
 			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
-			"[ 	]*([^;]*\\)$" },
+			"[ 	]*([^;]*\\)$", 0 },
 	{ "pascal", "^\\(\\(procedure\\|function\\|constructor\\|"
 			"destructor\\|interface\\|implementation\\|"
 			"initialization\\|finalization\\)[ \t]*.*\\)$"
 			"\\|"
-			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$"
-			},
-	{ "php", "^[\t ]*\\(\\(function\\|class\\).*\\)" },
-	{ "python", "^\\s*\\(\\(class\\|def\\)\\s.*\\)$" },
-	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
-	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$" },
+			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$",
+			0 },
+	{ "php", "^[\t ]*\\(\\(function\\|class\\).*\\)", 0 },
+	{ "python", "^\\s*\\(\\(class\\|def\\)\\s.*\\)$", 0 },
+	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$", 0 },
+	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$", 0 },
 };
 
-static const char *diff_funcname_pattern(struct diff_filespec *one)
+static const struct funcname_pattern_entry *diff_funcname_pattern(struct diff_filespec *one)
 {
-	const char *ident, *pattern;
+	const char *ident;
+	const struct funcname_pattern_entry *pe;
 	int i;
 
 	diff_filespec_check_attr(one);
@@ -1425,9 +1441,9 @@ static const char *diff_funcname_pattern(struct diff_filespec *one)
 		return funcname_pattern("default");
 
 	/* Look up custom "funcname.$ident" regexp from config. */
-	pattern = funcname_pattern(ident);
-	if (pattern)
-		return pattern;
+	pe = funcname_pattern(ident);
+	if (pe)
+		return pe;
 
 	/*
 	 * And define built-in fallback patterns here.  Note that
@@ -1435,7 +1451,7 @@ static const char *diff_funcname_pattern(struct diff_filespec *one)
 	 */
 	for (i = 0; i < ARRAY_SIZE(builtin_funcname_pattern); i++)
 		if (!strcmp(ident, builtin_funcname_pattern[i].name))
-			return builtin_funcname_pattern[i].pattern;
+			return &builtin_funcname_pattern[i];
 
 	return NULL;
 }
@@ -1513,11 +1529,11 @@ static void builtin_diff(const char *name_a,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
-		const char *funcname_pattern;
+		const struct funcname_pattern_entry *pe;
 
-		funcname_pattern = diff_funcname_pattern(one);
-		if (!funcname_pattern)
-			funcname_pattern = diff_funcname_pattern(two);
+		pe = diff_funcname_pattern(one);
+		if (!pe)
+			pe = diff_funcname_pattern(two);
 
 		memset(&xecfg, 0, sizeof(xecfg));
 		memset(&ecbdata, 0, sizeof(ecbdata));
@@ -1529,8 +1545,8 @@ static void builtin_diff(const char *name_a,
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
-		if (funcname_pattern)
-			xdiff_set_find_func(&xecfg, funcname_pattern);
+		if (pe)
+			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
 		if (!diffopts)
 			;
 		else if (!prefixcmp(diffopts, "--unified="))

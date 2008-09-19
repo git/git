@@ -3304,7 +3304,7 @@ sub close_file {
 					my $out = syswrite($tmp_fh, $str, $res);
 					defined($out) && $out == $res
 						or croak("write ",
-							$tmp_fh->filename,
+							Git::temp_path($tmp_fh),
 							": $!\n");
 				}
 				defined $res or croak $!;
@@ -3315,7 +3315,7 @@ sub close_file {
 		}
 
 		$hash = $::_repository->hash_and_insert_object(
-				$fh->filename);
+				Git::temp_path($fh));
 		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
 
 		Git::temp_release($fb->{base}, 1);
@@ -4424,7 +4424,7 @@ sub config_pager {
 
 sub run_pager {
 	return unless -t *STDOUT && defined $pager;
-	pipe my $rfd, my $wfd or return;
+	pipe my ($rfd, $wfd) or return;
 	defined(my $pid = fork) or ::fatal "Can't fork: $!";
 	if (!$pid) {
 		open STDOUT, '>&', $wfd or

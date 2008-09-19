@@ -77,7 +77,7 @@ the URLs passed as arguments.
 Note about konqueror
 --------------------
 
-When 'konqueror' is specified by the a command line option or a
+When 'konqueror' is specified by a command line option or a
 configuration variable, we launch 'kfmclient' to try to open the HTML
 man page on an already opened konqueror in a new tab if possible.
 

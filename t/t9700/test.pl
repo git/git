@@ -9,7 +9,6 @@ use Test::More qw(no_plan);
 
 use Cwd;
 use File::Basename;
-use File::Temp;
 
 BEGIN { use_ok('Git') }
 
@@ -35,7 +34,7 @@ is($r->get_color("color.test.slot1", "red"), $ansi_green, "get_color");
 # Failure cases for config:
 # Save and restore STDERR; we will probably extract this into a
 # "dies_ok" method and possibly move the STDERR handling to Git.pm.
-open our $tmpstderr, ">&", STDERR or die "cannot save STDERR"; close STDERR;
+open our $tmpstderr, ">&STDERR" or die "cannot save STDERR"; close STDERR;
 eval { $r->config("test.dupstring") };
 ok($@, "config: duplicate entry in scalar context fails");
 eval { $r->config_bool("test.boolother") };
@@ -66,21 +65,25 @@ is($r->ident_person("Name", "email", "123 +0000"), "Name <email>",
 
 # objects and hashes
 ok(our $file1hash = $r->command_oneline('rev-parse', "HEAD:file1"), "(get file hash)");
-our $tmpfile = File::Temp->new;
-is($r->cat_blob($file1hash, $tmpfile), 15, "cat_blob: size");
+my $tmpfile = "file.tmp";
+open TEMPFILE, "+>$tmpfile" or die "Can't open $tmpfile: $!";
+is($r->cat_blob($file1hash, \*TEMPFILE), 15, "cat_blob: size");
 our $blobcontents;
-{ local $/; seek $tmpfile, 0, 0; $blobcontents = <$tmpfile>; }
+{ local $/; seek TEMPFILE, 0, 0; $blobcontents = <TEMPFILE>; }
 is($blobcontents, "changed file 1\n", "cat_blob: data");
-seek $tmpfile, 0, 0;
+close TEMPFILE or die "Failed writing to $tmpfile: $!";
 is(Git::hash_object("blob", $tmpfile), $file1hash, "hash_object: roundtrip");
-$tmpfile = File::Temp->new();
-print $tmpfile my $test_text = "test blob, to be inserted\n";
+open TEMPFILE, ">$tmpfile" or die "Can't open $tmpfile: $!";
+print TEMPFILE my $test_text = "test blob, to be inserted\n";
+close TEMPFILE or die "Failed writing to $tmpfile: $!";
 like(our $newhash = $r->hash_and_insert_object($tmpfile), qr/[0-9a-fA-F]{40}/,
      "hash_and_insert_object: returns hash");
-$tmpfile = File::Temp->new;
-is($r->cat_blob($newhash, $tmpfile), length $test_text, "cat_blob: roundtrip size");
-{ local $/; seek $tmpfile, 0, 0; $blobcontents = <$tmpfile>; }
+open TEMPFILE, "+>$tmpfile" or die "Can't open $tmpfile: $!";
+is($r->cat_blob($newhash, \*TEMPFILE), length $test_text, "cat_blob: roundtrip size");
+{ local $/; seek TEMPFILE, 0, 0; $blobcontents = <TEMPFILE>; }
 is($blobcontents, $test_text, "cat_blob: roundtrip data");
+close TEMPFILE;
+unlink $tmpfile;
 
 # paths
 is($r->repo_path, "./.git", "repo_path");

@@ -218,7 +218,7 @@ static long ff_regexp(const char *line, long len,
 	return result;
 }
 
-void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value)
+void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value, int cflags)
 {
 	int i;
 	struct ff_regs *regs;
@@ -243,7 +243,7 @@ void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value)
 			expression = buffer = xstrndup(value, ep - value);
 		else
 			expression = value;
-		if (regcomp(&reg->re, expression, 0))
+		if (regcomp(&reg->re, expression, cflags))
 			die("Invalid regexp to look for hunk header: %s", expression);
 		free(buffer);
 		value = ep + 1;

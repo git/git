@@ -178,7 +178,7 @@ static void finish_object(struct object_array_entry *p)
 static void show_object(struct object_array_entry *p)
 {
 	/* An object with name "foo\n0000000..." can be used to
-	 * confuse downstream git-pack-objects very badly.
+	 * confuse downstream "git pack-objects" very badly.
 	 */
 	const char *ep = strchr(p->name, '\n');
 
