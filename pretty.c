@@ -5,6 +5,7 @@
 #include "revision.h"
 #include "string-list.h"
 #include "mailmap.h"
+#include "log-tree.h"
 
 static char *user_format;
 
@@ -481,6 +482,23 @@ static void parse_commit_header(struct format_commit_context *context)
 	context->commit_header_parsed = 1;
 }
 
+static void format_decoration(struct strbuf *sb, const struct commit *commit)
+{
+	struct name_decoration *d;
+	const char *prefix = " (";
+
+	load_ref_decorations();
+	d = lookup_decoration(&name_decoration, &commit->object);
+	while (d) {
+		strbuf_addstr(sb, prefix);
+		prefix = ", ";
+		strbuf_addstr(sb, d->name);
+		d = d->next;
+	}
+	if (prefix[0] == ',')
+		strbuf_addch(sb, ')');
+}
+
 static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
                                void *context)
 {
@@ -572,6 +590,9 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 		                 : (commit->object.flags & SYMMETRIC_LEFT)
 		                 ? '<'
 		                 : '>');
+		return 1;
+	case 'd':
+		format_decoration(sb, commit);
 		return 1;
 	}
 
