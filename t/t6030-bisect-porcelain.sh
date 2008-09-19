@@ -350,6 +350,120 @@ test_expect_success 'bisect does not create a "bisect" branch' '
 	git branch -D bisect
 '
 
+# This creates a "side" branch to test "siblings" cases.
+#
+# H1-H2-H3-H4-H5-H6-H7  <--other
+#            \
+#             S5-S6-S7  <--side
+#
+test_expect_success 'side branch creation' '
+	git bisect reset &&
+	git checkout -b side $HASH4 &&
+	add_line_into_file "5(side): first line on a side branch" hello2 &&
+	SIDE_HASH5=$(git rev-parse --verify HEAD) &&
+	add_line_into_file "6(side): second line on a side branch" hello2 &&
+	SIDE_HASH6=$(git rev-parse --verify HEAD) &&
+	add_line_into_file "7(side): third line on a side branch" hello2 &&
+	SIDE_HASH7=$(git rev-parse --verify HEAD)
+'
+
+test_expect_success 'good merge base when good and bad are siblings' '
+	git bisect start "$HASH7" "$SIDE_HASH7" > my_bisect_log.txt &&
+	grep "merge base must be tested" my_bisect_log.txt &&
+	grep $HASH4 my_bisect_log.txt &&
+	git bisect good > my_bisect_log.txt &&
+	test_must_fail grep "merge base must be tested" my_bisect_log.txt &&
+	grep $HASH6 my_bisect_log.txt &&
+	git bisect reset
+'
+test_expect_success 'skipped merge base when good and bad are siblings' '
+	git bisect start "$SIDE_HASH7" "$HASH7" > my_bisect_log.txt &&
+	grep "merge base must be tested" my_bisect_log.txt &&
+	grep $HASH4 my_bisect_log.txt &&
+	git bisect skip > my_bisect_log.txt 2>&1 &&
+	grep "Warning" my_bisect_log.txt &&
+	grep $SIDE_HASH6 my_bisect_log.txt &&
+	git bisect reset
+'
+
+test_expect_success 'bad merge base when good and bad are siblings' '
+	git bisect start "$HASH7" HEAD > my_bisect_log.txt &&
+	grep "merge base must be tested" my_bisect_log.txt &&
+	grep $HASH4 my_bisect_log.txt &&
+	test_must_fail git bisect bad > my_bisect_log.txt 2>&1 &&
+	grep "merge base $HASH4 is bad" my_bisect_log.txt &&
+	grep "fixed between $HASH4 and \[$SIDE_HASH7\]" my_bisect_log.txt &&
+	git bisect reset
+'
+
+# This creates a few more commits (A and B) to test "siblings" cases
+# when a good and a bad rev have many merge bases.
+#
+# We should have the following:
+#
+# H1-H2-H3-H4-H5-H6-H7
+#            \  \     \
+#             S5-A     \
+#              \        \
+#               S6-S7----B
+#
+# And there A and B have 2 merge bases (S5 and H5) that should be
+# reported by "git merge-base --all A B".
+#
+test_expect_success 'many merge bases creation' '
+	git checkout "$SIDE_HASH5" &&
+	git merge -m "merge HASH5 and SIDE_HASH5" "$HASH5" &&
+	A_HASH=$(git rev-parse --verify HEAD) &&
+	git checkout side &&
+	git merge -m "merge HASH7 and SIDE_HASH7" "$HASH7" &&
+	B_HASH=$(git rev-parse --verify HEAD) &&
+	git merge-base --all "$A_HASH" "$B_HASH" > merge_bases.txt &&
+	test $(wc -l < merge_bases.txt) = "2" &&
+	grep "$HASH5" merge_bases.txt &&
+	grep "$SIDE_HASH5" merge_bases.txt
+'
+
+test_expect_success 'good merge bases when good and bad are siblings' '
+	git bisect start "$B_HASH" "$A_HASH" > my_bisect_log.txt &&
+	grep "merge base must be tested" my_bisect_log.txt &&
+	git bisect good > my_bisect_log2.txt &&
+	grep "merge base must be tested" my_bisect_log2.txt &&
+	{
+		{
+			grep "$SIDE_HASH5" my_bisect_log.txt &&
+			grep "$HASH5" my_bisect_log2.txt
+		} || {
+			grep "$SIDE_HASH5" my_bisect_log2.txt &&
+			grep "$HASH5" my_bisect_log.txt
+		}
+	} &&
+	git bisect reset
+'
+
+check_trace() {
+	grep "$1" "$GIT_TRACE" | grep "\^$2" | grep "$3" >/dev/null
+}
+
+test_expect_success 'optimized merge base checks' '
+	GIT_TRACE="$(pwd)/trace.log" &&
+	export GIT_TRACE &&
+	git bisect start "$HASH7" "$SIDE_HASH7" > my_bisect_log.txt &&
+	grep "merge base must be tested" my_bisect_log.txt &&
+	grep "$HASH4" my_bisect_log.txt &&
+	check_trace "rev-list" "$HASH7" "$SIDE_HASH7" &&
+	git bisect good > my_bisect_log2.txt &&
+	test -f ".git/BISECT_ANCESTORS_OK" &&
+	test "$HASH6" = $(git rev-parse --verify HEAD) &&
+	: > "$GIT_TRACE" &&
+	git bisect bad > my_bisect_log3.txt &&
+	test_must_fail check_trace "rev-list" "$HASH6" "$SIDE_HASH7" &&
+	git bisect good "$A_HASH" > my_bisect_log4.txt &&
+	grep "merge base must be tested" my_bisect_log4.txt &&
+	test_must_fail test -f ".git/BISECT_ANCESTORS_OK" &&
+	check_trace "rev-list" "$HASH6" "$A_HASH" &&
+	unset GIT_TRACE
+'
+
 #
 #
 test_done
