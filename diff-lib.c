@@ -63,6 +63,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			      ? CE_MATCH_RACY_IS_DIRTY : 0);
 	char symcache[PATH_MAX];
 
+	diff_set_mnemonic_prefix(&revs->diffopt, "i/", "w/");
+
 	if (diff_unmerged_stage < 0)
 		diff_unmerged_stage = 2;
 	entries = active_nr;
@@ -469,6 +471,7 @@ int run_diff_index(struct rev_info *revs, int cached)
 	if (unpack_trees(1, &t, &opts))
 		exit(128);
 
+	diff_set_mnemonic_prefix(&revs->diffopt, "c/", cached ? "i/" : "w/");
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
