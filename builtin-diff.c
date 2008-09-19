@@ -225,7 +225,13 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 		argv++; argc--;
 	}
 
-	if (revs->max_count == -1 &&
+	/*
+	 * "diff --base" should not combine merges because it was not
+	 * asked to.  "diff -c" should not densify (if the user wants
+	 * dense one, --cc can be explicitly asked for, or just rely
+	 * on the default).
+	 */
+	if (revs->max_count == -1 && !revs->combine_merges &&
 	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		revs->combine_merges = revs->dense_combined_merges = 1;
 

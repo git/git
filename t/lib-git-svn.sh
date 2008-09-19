@@ -138,3 +138,20 @@ close $wr or die $!;
 close $rd or die $!;
 EOF
 }
+
+require_svnserve () {
+    if test -z "$SVNSERVE_PORT"
+    then
+        say 'skipping svnserve test. (set $SVNSERVE_PORT to enable)'
+        test_done
+        exit
+    fi
+}
+
+start_svnserve () {
+    svnserve --listen-port $SVNSERVE_PORT \
+             --root "$rawsvnrepo" \
+             --listen-once \
+             --listen-host 127.0.0.1 &
+}
+
