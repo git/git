@@ -11,10 +11,8 @@
 #include "progress.h"
 #include "csum-file.h"
 
-static void sha1flush(struct sha1file *f, unsigned int count)
+static void sha1flush(struct sha1file *f, void *buf, unsigned int count)
 {
-	void *buf = f->buffer;
-
 	for (;;) {
 		int ret = xwrite(f->fd, buf, count);
 		if (ret > 0) {
@@ -39,7 +37,7 @@ int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
 
 	if (offset) {
 		SHA1_Update(&f->ctx, f->buffer, offset);
-		sha1flush(f, offset);
+		sha1flush(f, f->buffer, offset);
 		f->offset = 0;
 	}
 	SHA1_Final(f->buffer, &f->ctx);
@@ -47,7 +45,7 @@ int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
 		hashcpy(result, f->buffer);
 	if (flags & (CSUM_CLOSE | CSUM_FSYNC)) {
 		/* write checksum and close fd */
-		sha1flush(f, 20);
+		sha1flush(f, f->buffer, 20);
 		if (flags & CSUM_FSYNC)
 			fsync_or_die(f->fd, f->name);
 		if (close(f->fd))
@@ -62,21 +60,30 @@ int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
 
 int sha1write(struct sha1file *f, void *buf, unsigned int count)
 {
-	if (f->do_crc)
-		f->crc32 = crc32(f->crc32, buf, count);
 	while (count) {
 		unsigned offset = f->offset;
 		unsigned left = sizeof(f->buffer) - offset;
 		unsigned nr = count > left ? left : count;
+		void *data;
 
-		memcpy(f->buffer + offset, buf, nr);
+		if (f->do_crc)
+			f->crc32 = crc32(f->crc32, buf, nr);
+
+		if (nr == sizeof(f->buffer)) {
+			/* process full buffer directly without copy */
+			data = buf;
+		} else {
+			memcpy(f->buffer + offset, buf, nr);
+			data = f->buffer;
+		}
+
 		count -= nr;
 		offset += nr;
 		buf = (char *) buf + nr;
 		left -= nr;
 		if (!left) {
-			SHA1_Update(&f->ctx, f->buffer, offset);
-			sha1flush(f, offset);
+			SHA1_Update(&f->ctx, data, offset);
+			sha1flush(f, data, offset);
 			offset = 0;
 		}
 		f->offset = offset;
