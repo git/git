@@ -1793,26 +1793,6 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 		return c;
 	}
 
-	if (revs->reverse) {
-		int limit = -1;
-
-		if (0 <= revs->max_count) {
-			limit = revs->max_count;
-			if (0 < revs->skip_count)
-				limit += revs->skip_count;
-		}
-		l = NULL;
-		while ((c = get_revision_1(revs))) {
-			commit_list_insert(c, &l);
-			if ((0 < limit) && !--limit)
-				break;
-		}
-		revs->commits = l;
-		revs->reverse = 0;
-		revs->max_count = -1;
-		c = NULL;
-	}
-
 	/*
 	 * Now pick up what they want to give us
 	 */
@@ -1885,7 +1865,23 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 
 struct commit *get_revision(struct rev_info *revs)
 {
-	struct commit *c = get_revision_internal(revs);
+	struct commit *c;
+	struct commit_list *reversed;
+
+	if (revs->reverse) {
+		reversed = NULL;
+		while ((c = get_revision_internal(revs))) {
+			commit_list_insert(c, &reversed);
+		}
+		revs->commits = reversed;
+		revs->reverse = 0;
+		revs->reverse_output_stage = 1;
+	}
+
+	if (revs->reverse_output_stage)
+		return pop_commit(&revs->commits);
+
+	c = get_revision_internal(revs);
 	if (c && revs->graph)
 		graph_update(revs->graph, c);
 	return c;
