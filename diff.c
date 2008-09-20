@@ -1404,23 +1404,26 @@ static const struct funcname_pattern_entry *funcname_pattern(const char *ident)
 }
 
 static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
-	{ "bibtex", "\\(@[a-zA-Z]\\{1,\\}[ \t]*{\\{0,1\\}[ \t]*[^ \t\"@',\\#}{~%]*\\).*$", 0 },
+	{ "bibtex", "(@[a-zA-Z]{1,}[ \t]*\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
+	  REG_EXTENDED },
 	{ "html", "^\\s*\\(<[Hh][1-6]\\s.*>.*\\)$", 0 },
-	{ "java", "!^[ 	]*\\(catch\\|do\\|for\\|if\\|instanceof\\|"
-			"new\\|return\\|switch\\|throw\\|while\\)\n"
-			"^[ 	]*\\(\\([ 	]*"
-			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
-			"[ 	]*([^;]*\\)$", 0 },
-	{ "pascal", "^\\(\\(procedure\\|function\\|constructor\\|"
-			"destructor\\|interface\\|implementation\\|"
-			"initialization\\|finalization\\)[ \t]*.*\\)$"
-			"\\|"
-			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$",
-			0 },
+	{ "java",
+	  "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
+	  "^[ \t]*(([ \t]*[A-Za-z_][A-Za-z_0-9]*){2,}[ \t]*\\([^;]*)$",
+	  REG_EXTENDED },
+	{ "pascal",
+	  "^((procedure|function|constructor|destructor|interface|"
+		"implementation|initialization|finalization)[ \t]*.*)$"
+	  "|"
+	  "^(.*=[ \t]*(class|record).*)$",
+	  REG_EXTENDED },
 	{ "php", "^[\t ]*\\(\\(function\\|class\\).*\\)", 0 },
 	{ "python", "^\\s*\\(\\(class\\|def\\)\\s.*\\)$", 0 },
-	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$", 0 },
-	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$", 0 },
+	{ "ruby", "^[ \t]*((class|module|def)[ \t].*)$",
+	  REG_EXTENDED },
+	{ "tex",
+	  "^(\\\\((sub)*section|chapter|part)\\*{0,1}\{.*)$",
+	  REG_EXTENDED },
 };
 
 static const struct funcname_pattern_entry *diff_funcname_pattern(struct diff_filespec *one)
