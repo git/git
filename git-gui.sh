@@ -1059,6 +1059,7 @@ set current_branch {}
 set is_detached 0
 set current_diff_path {}
 set is_3way_diff 0
+set is_conflict_diff 0
 set selected_commit_type new
 
 set nullid "0000000000000000000000000000000000000000"
@@ -2078,19 +2079,21 @@ proc toggle_or_diff {w x y} {
 	$ui_index tag remove in_sel 0.0 end
 	$ui_workdir tag remove in_sel 0.0 end
 
-	# Do not stage files with conflicts
+	# Determine the state of the file
 	if {[info exists file_states($path)]} {
 		set state [lindex $file_states($path) 0]
 	} else {
 		set state {__}
 	}
 
-	if {[string first {U} $state] >= 0} {
-		set col 1
-	}
-
 	# Restage the file, or simply show the diff
 	if {$col == 0 && $y > 1} {
+		# Conflicts need special handling
+		if {[string first {U} $state] >= 0} {
+			merge_stage_workdir $path $w $lno
+			return
+		}
+
 		if {[string index $state 1] eq {O}} {
 			set mmask {}
 		} else {
@@ -3055,11 +3058,6 @@ lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
 $ctxmmg add command \
 	-label [mc "Revert To Base"] \
 	-command {merge_resolve_one 1}
-lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
-$ctxmmg add separator
-$ctxmmg add command \
-	-label [mc "Stage Working Copy"] \
-	-command {merge_resolve_one 0}
 lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
 $ctxmmg add separator
 create_common_diff_popup $ctxmmg

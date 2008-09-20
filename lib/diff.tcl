@@ -69,9 +69,9 @@ A rescan will be automatically started to find other files which may have the sa
 	rescan ui_ready 0
 }
 
-proc show_diff {path w {lno {}} {scroll_pos {}}} {
+proc show_diff {path w {lno {}} {scroll_pos {}} {callback {}}} {
 	global file_states file_lists
-	global is_3way_diff diff_active repo_config
+	global is_3way_diff is_conflict_diff diff_active repo_config
 	global ui_diff ui_index ui_workdir
 	global current_diff_path current_diff_side current_diff_header
 	global current_diff_queue
@@ -92,36 +92,42 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 
 	set s $file_states($path)
 	set m [lindex $s 0]
+	set is_conflict_diff 0
 	set current_diff_path $path
 	set current_diff_side $w
 	set current_diff_queue {}
 	ui_status [mc "Loading diff of %s..." [escape_path $path]]
 
+	set cont_info [list $scroll_pos $callback]
+
 	if {[string first {U} $m] >= 0} {
-		merge_load_stages $path [list show_unmerged_diff $scroll_pos]
+		merge_load_stages $path [list show_unmerged_diff $cont_info]
 	} elseif {$m eq {_O}} {
-		show_other_diff $path $w $m $scroll_pos
+		show_other_diff $path $w $m $cont_info
 	} else {
-		start_show_diff $scroll_pos
+		start_show_diff $cont_info
 	}
 }
 
-proc show_unmerged_diff {scroll_pos} {
+proc show_unmerged_diff {cont_info} {
 	global current_diff_path current_diff_side
-	global merge_stages ui_diff
+	global merge_stages ui_diff is_conflict_diff
 	global current_diff_queue
 
 	if {$merge_stages(2) eq {}} {
+		set is_conflict_diff 1
 		lappend current_diff_queue \
 			[list "LOCAL: deleted\nREMOTE:\n" d======= \
 			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
 	} elseif {$merge_stages(3) eq {}} {
+		set is_conflict_diff 1
 		lappend current_diff_queue \
 			[list "REMOTE: deleted\nLOCAL:\n" d======= \
 			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
 	} elseif {[lindex $merge_stages(1) 0] eq {120000}
 		|| [lindex $merge_stages(2) 0] eq {120000}
 		|| [lindex $merge_stages(3) 0] eq {120000}} {
+		set is_conflict_diff 1
 		lappend current_diff_queue \
 			[list "LOCAL:\n" d======= \
 			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
@@ -129,14 +135,14 @@ proc show_unmerged_diff {scroll_pos} {
 			[list "REMOTE:\n" d======= \
 			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
 	} else {
-		start_show_diff $scroll_pos
+		start_show_diff $cont_info
 		return
 	}
 
-	advance_diff_queue $scroll_pos
+	advance_diff_queue $cont_info
 }
 
-proc advance_diff_queue {scroll_pos} {
+proc advance_diff_queue {cont_info} {
 	global current_diff_queue ui_diff
 
 	set item [lindex $current_diff_queue 0]
@@ -146,10 +152,10 @@ proc advance_diff_queue {scroll_pos} {
 	$ui_diff insert end [lindex $item 0] [lindex $item 1]
 	$ui_diff conf -state disabled
 
-	start_show_diff $scroll_pos [lindex $item 2]
+	start_show_diff $cont_info [lindex $item 2]
 }
 
-proc show_other_diff {path w m scroll_pos} {
+proc show_other_diff {path w m cont_info} {
 	global file_states file_lists
 	global is_3way_diff diff_active repo_config
 	global ui_diff ui_index ui_workdir
@@ -228,16 +234,21 @@ proc show_other_diff {path w m scroll_pos} {
 		$ui_diff conf -state disabled
 		set diff_active 0
 		unlock_index
+		set scroll_pos [lindex $cont_info 0]
 		if {$scroll_pos ne {}} {
 			update
 			$ui_diff yview moveto $scroll_pos
 		}
 		ui_ready
+		set callback [lindex $cont_info 1]
+		if {$callback ne {}} {
+			eval $callback
+		}
 		return
 	}
 }
 
-proc start_show_diff {scroll_pos {add_opts {}}} {
+proc start_show_diff {cont_info {add_opts {}}} {
 	global file_states file_lists
 	global is_3way_diff diff_active repo_config
 	global ui_diff ui_index ui_workdir
@@ -292,12 +303,12 @@ proc start_show_diff {scroll_pos {add_opts {}}} {
 		-blocking 0 \
 		-encoding [get_path_encoding $path] \
 		-translation lf
-	fileevent $fd readable [list read_diff $fd $scroll_pos]
+	fileevent $fd readable [list read_diff $fd $cont_info]
 }
 
-proc read_diff {fd scroll_pos} {
+proc read_diff {fd cont_info} {
 	global ui_diff diff_active
-	global is_3way_diff current_diff_header
+	global is_3way_diff is_conflict_diff current_diff_header
 	global current_diff_queue
 
 	$ui_diff conf -state normal
@@ -345,6 +356,7 @@ proc read_diff {fd scroll_pos} {
 			{--} {set tags d_--}
 			{++} {
 				if {[regexp {^\+\+([<>]{7} |={7})} $line _g op]} {
+					set is_conflict_diff 1
 					set line [string replace $line 0 1 {  }]
 					set tags d$op
 				} else {
@@ -364,6 +376,7 @@ proc read_diff {fd scroll_pos} {
 			{-} {set tags d_-}
 			{+} {
 				if {[regexp {^\+([<>]{7} |={7})} $line _g op]} {
+					set is_conflict_diff 1
 					set line [string replace $line 0 0 { }]
 					set tags d$op
 				} else {
@@ -388,12 +401,13 @@ proc read_diff {fd scroll_pos} {
 		close $fd
 
 		if {$current_diff_queue ne {}} {
-			advance_diff_queue $scroll_pos
+			advance_diff_queue $cont_info
 			return
 		}
 
 		set diff_active 0
 		unlock_index
+		set scroll_pos [lindex $cont_info 0]
 		if {$scroll_pos ne {}} {
 			update
 			$ui_diff yview moveto $scroll_pos
@@ -402,6 +416,10 @@ proc read_diff {fd scroll_pos} {
 
 		if {[$ui_diff index end] eq {2.0}} {
 			handle_empty_diff
+		}
+		set callback [lindex $cont_info 1]
+		if {$callback ne {}} {
+			eval $callback
 		}
 	}
 }

@@ -5,12 +5,6 @@ proc merge_resolve_one {stage} {
 	global current_diff_path
 
 	switch -- $stage {
-		0 {	# Stage without confirmation, to minimize
-			# disruption of the rerere workflow
-			merge_add_resolution $current_diff_path
-			return
-		}
-
 		1 { set targetquestion [mc "Force resolution to the base version?"] }
 		2 { set targetquestion [mc "Force resolution to this branch?"] }
 		3 { set targetquestion [mc "Force resolution to the other branch?"] }
@@ -27,6 +21,33 @@ This operation can be undone only by restarting the merge." \
 	if {[ask_popup $op_question] eq {yes}} {
 		merge_load_stages $current_diff_path [list merge_force_stage $stage]
 	}
+}
+
+proc merge_stage_workdir {path w lno} {
+	global current_diff_path diff_active
+
+	if {$diff_active} return
+
+	if {$path ne $current_diff_path} {
+		show_diff $path $w $lno {} [list do_merge_stage_workdir $path]
+	} else {
+		do_merge_stage_workdir $path
+	}
+}
+
+proc do_merge_stage_workdir {path} {
+	global current_diff_path is_conflict_diff
+
+	if {$path ne $current_diff_path} return;
+
+	if {$is_conflict_diff} {
+		if {[ask_popup [mc "File %s seems to have unresolved conflicts, still stage?" \
+				[short_path $path]]] ne {yes}} {
+			return
+		}
+	}
+
+	merge_add_resolution $path
 }
 
 proc merge_add_resolution {path} {
