@@ -736,7 +736,7 @@ _git_commit ()
 	--*)
 		__gitcomp "
 			--all --author= --signoff --verify --no-verify
-			--edit --amend --include --only
+			--edit --amend --include --only --interactive
 			"
 		return
 	esac
