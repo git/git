@@ -1406,7 +1406,7 @@ static const struct funcname_pattern_entry *funcname_pattern(const char *ident)
 static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
 	{ "bibtex", "(@[a-zA-Z]{1,}[ \t]*\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
 	  REG_EXTENDED },
-	{ "html", "^\\s*\\(<[Hh][1-6]\\s.*>.*\\)$", 0 },
+	{ "html", "^[ \t]*(<[Hh][1-6][ \t].*>.*)$", REG_EXTENDED },
 	{ "java",
 	  "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
 	  "^[ \t]*(([ \t]*[A-Za-z_][A-Za-z_0-9]*){2,}[ \t]*\\([^;]*)$",
@@ -1417,8 +1417,8 @@ static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
 	  "|"
 	  "^(.*=[ \t]*(class|record).*)$",
 	  REG_EXTENDED },
-	{ "php", "^[\t ]*\\(\\(function\\|class\\).*\\)", 0 },
-	{ "python", "^\\s*\\(\\(class\\|def\\)\\s.*\\)$", 0 },
+	{ "php", "^[\t ]*((function|class).*)", REG_EXTENDED },
+	{ "python", "^[ \t]*((class|def)[ \t].*)$", REG_EXTENDED },
 	{ "ruby", "^[ \t]*((class|module|def)[ \t].*)$",
 	  REG_EXTENDED },
 	{ "tex",
