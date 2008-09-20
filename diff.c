@@ -1414,7 +1414,7 @@ static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
 	{ "pascal",
 	  "^((procedure|function|constructor|destructor|interface|"
 		"implementation|initialization|finalization)[ \t]*.*)$"
-	  "|"
+	  "\n"
 	  "^(.*=[ \t]*(class|record).*)$",
 	  REG_EXTENDED },
 	{ "php", "^[\t ]*((function|class).*)", REG_EXTENDED },

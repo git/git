@@ -194,26 +194,29 @@ static long ff_regexp(const char *line, long len,
 	char *line_buffer = xstrndup(line, len); /* make NUL terminated */
 	struct ff_regs *regs = priv;
 	regmatch_t pmatch[2];
-	int result = 0, i;
+	int i;
+	int result = -1;
 
 	for (i = 0; i < regs->nr; i++) {
 		struct ff_reg *reg = regs->array + i;
-		if (reg->negate ^ !!regexec(&reg->re,
-					line_buffer, 2, pmatch, 0)) {
-			free(line_buffer);
-			return -1;
+		if (!regexec(&reg->re, line_buffer, 2, pmatch, 0)) {
+			if (reg->negate)
+				goto fail;
+			break;
 		}
 	}
+	if (regs->nr <= i)
+		goto fail;
 	i = pmatch[1].rm_so >= 0 ? 1 : 0;
 	line += pmatch[i].rm_so;
 	result = pmatch[i].rm_eo - pmatch[i].rm_so;
 	if (result > buffer_size)
 		result = buffer_size;
 	else
-		while (result > 0 && (isspace(line[result - 1]) ||
-					line[result - 1] == '\n'))
+		while (result > 0 && (isspace(line[result - 1])))
 			result--;
 	memcpy(buffer, line, result);
+ fail:
 	free(line_buffer);
 	return result;
 }
