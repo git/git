@@ -2166,7 +2166,8 @@ proc makewindow {} {
     bind $cflist <1> {sel_flist %W %x %y; break}
     bind $cflist <B1-Motion> {sel_flist %W %x %y; break}
     bind $cflist <ButtonRelease-1> {treeclick %W %x %y}
-    bind $cflist <Button-3> {pop_flist_menu %W %X %Y %x %y}
+    global ctxbut
+    bind $cflist $ctxbut {pop_flist_menu %W %X %Y %x %y}
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -4919,7 +4920,7 @@ proc drawcmittext {id row col} {
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag selectedline
     global canvxmax boldrows boldnamerows fgcolor
-    global mainheadid nullid nullid2 circleitem circlecolors
+    global mainheadid nullid nullid2 circleitem circlecolors ctxbut
 
     # listed is 0 for boundary, 1 for normal, 2 for negative, 3 for left, 4 for right
     set listed $cmitlisted($curview,$id)
@@ -4992,7 +4993,7 @@ proc drawcmittext {id row col} {
     }
     set linehtag($row) [$canv create text $xt $y -anchor w -fill $fgcolor \
 			    -text $headline -font $font -tags text]
-    $canv bind $linehtag($row) <Button-3> "rowmenu %X %Y $id"
+    $canv bind $linehtag($row) $ctxbut "rowmenu %X %Y $id"
     set linentag($row) [$canv2 create text 3 $y -anchor w -fill $fgcolor \
 			    -text $name -font $nfont -tags text]
     set linedtag($row) [$canv3 create text 3 $y -anchor w -fill $fgcolor \
@@ -5334,7 +5335,7 @@ proc bindline {t id} {
 proc drawtags {id x xt y1} {
     global idtags idheads idotherrefs mainhead
     global linespc lthickness
-    global canv rowtextx curview fgcolor bgcolor
+    global canv rowtextx curview fgcolor bgcolor ctxbut
 
     set marks {}
     set ntags 0
@@ -5412,7 +5413,7 @@ proc drawtags {id x xt y1} {
 	if {$ntags >= 0} {
 	    $canv bind $t <1> [list showtag $tag 1]
 	} elseif {$nheads >= 0} {
-	    $canv bind $t <Button-3> [list headmenu %X %Y $id $tag]
+	    $canv bind $t $ctxbut [list headmenu %X %Y $id $tag]
 	}
     }
     return $xt
@@ -9850,6 +9851,13 @@ set ignorespace 0
 set selectbgcolor gray85
 
 set circlecolors {white blue gray blue blue}
+
+# button for popping up context menus
+if {[tk windowingsystem] eq "aqua"} {
+    set ctxbut <Button-2>
+} else {
+    set ctxbut <Button-3>
+}
 
 ## For msgcat loading, first locate the installation location.
 if { [info exists ::env(GITK_MSGSDIR)] } {
