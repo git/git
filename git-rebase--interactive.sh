@@ -284,7 +284,7 @@ do_next () {
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		make_patch $sha1
-		: > "$DOTEST"/amend
+		git rev-parse --verify HEAD > "$DOTEST"/amend
 		warn "Stopped at $sha1... $rest"
 		warn "You can amend the commit now, with"
 		warn
@@ -427,14 +427,22 @@ do
 		else
 			. "$DOTEST"/author-script ||
 				die "Cannot find the author identity"
+			amend=
 			if test -f "$DOTEST"/amend
 			then
+				amend=$(git rev-parse --verify HEAD)
+				test "$amend" = $(cat "$DOTEST"/amend) ||
+				die "\
+You have uncommitted changes in your working tree. Please, commit them
+first and then run 'git rebase --continue' again."
 				git reset --soft HEAD^ ||
 				die "Cannot rewind the HEAD"
 			fi
 			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
-			git commit --no-verify -F "$DOTEST"/message -e ||
-			die "Could not commit staged changes."
+			git commit --no-verify -F "$DOTEST"/message -e || {
+				test -n "$amend" && git reset --soft $amend
+				die "Could not commit staged changes."
+			}
 		fi
 
 		require_clean_work_tree

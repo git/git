@@ -269,6 +269,8 @@ static int merge_working_tree(struct checkout_opts *opts,
 		}
 
 		/* 2-way merge to the new branch */
+		topts.initial_checkout = (!active_nr &&
+					  (old->commit == new->commit));
 		topts.update = 1;
 		topts.merge = 1;
 		topts.gently = opts->merge;

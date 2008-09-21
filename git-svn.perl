@@ -3969,21 +3969,21 @@ sub gs_do_switch {
 	my $old_url = $full_url;
 	$full_url .= '/' . escape_uri_only($path) if length $path;
 	my ($ra, $reparented);
-	if ($old_url ne $full_url) {
-		if ($old_url !~ m#^svn(\+ssh)?://#) {
-			SVN::_Ra::svn_ra_reparent($self->{session}, $full_url,
-			                          $pool);
-			$self->{url} = $full_url;
-			$reparented = 1;
-		} else {
-			$_[0] = undef;
-			$self = undef;
-			$RA = undef;
-			$ra = Git::SVN::Ra->new($full_url);
-			$ra_invalid = 1;
-		}
+
+	if ($old_url =~ m#^svn(\+ssh)?://#) {
+		$_[0] = undef;
+		$self = undef;
+		$RA = undef;
+		$ra = Git::SVN::Ra->new($full_url);
+		$ra_invalid = 1;
+	} elsif ($old_url ne $full_url) {
+		SVN::_Ra::svn_ra_reparent($self->{session}, $full_url, $pool);
+		$self->{url} = $full_url;
+		$reparented = 1;
 	}
+
 	$ra ||= $self;
+	$url_b = escape_url($url_b);
 	my $reporter = $ra->do_switch($rev_b, '', 1, $url_b, $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 	$reporter->set_path('', $rev_a, 0, @lock, $pool);

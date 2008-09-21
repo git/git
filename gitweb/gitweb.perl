@@ -2092,7 +2092,7 @@ sub parse_commit_text {
 			last;
 		}
 	}
-	if ($co{'title'} eq "") {
+	if (! defined $co{'title'} || $co{'title'} eq "") {
 		$co{'title'} = $co{'title_short'} = '(no commit message)';
 	}
 	# remove added spaces
