@@ -17,6 +17,8 @@ int git_vsnprintf(char *str, size_t maxsize, const char *format, va_list ap)
 
 	if (maxsize > 0) {
 		ret = vsnprintf(str, maxsize-SNPRINTF_SIZE_CORR, format, ap);
+		if (ret == maxsize-1)
+			ret = -1;
 		/* Windows does not NUL-terminate if result fills buffer */
 		str[maxsize-1] = 0;
 	}
@@ -34,6 +36,8 @@ int git_vsnprintf(char *str, size_t maxsize, const char *format, va_list ap)
 			break;
 		s = str;
 		ret = vsnprintf(str, maxsize-SNPRINTF_SIZE_CORR, format, ap);
+		if (ret == maxsize-1)
+			ret = -1;
 	}
 	free(s);
 	return ret;

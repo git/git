@@ -555,7 +555,8 @@ static int is_git_command(const char *s)
 {
 	load_command_list();
 	return is_in_cmdlist(&main_cmds, s) ||
-		is_in_cmdlist(&other_cmds, s);
+		is_in_cmdlist(&other_cmds, s) ||
+		!strcmp(s, "help");
 }
 
 static const char *prepend(const char *prefix, const char *cmd)

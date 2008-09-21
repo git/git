@@ -107,7 +107,7 @@ static void handle_from(const struct strbuf *from)
 	el = strcspn(at, " \n\t\r\v\f>");
 	strbuf_reset(&email);
 	strbuf_add(&email, at, el);
-	strbuf_remove(&f, at - f.buf, el + 1);
+	strbuf_remove(&f, at - f.buf, el + (at[el] ? 1 : 0));
 
 	/* The remainder is name.  It could be "John Doe <john.doe@xz>"
 	 * or "john.doe@xz (John Doe)", but we have removed the
@@ -175,7 +175,7 @@ static void handle_content_type(struct strbuf *line)
 		 message_type = TYPE_OTHER;
 	if (slurp_attr(line->buf, "boundary=", boundary)) {
 		strbuf_insert(boundary, 0, "--", 2);
-		if (content_top++ >= &content[MAX_BOUNDARIES]) {
+		if (++content_top > &content[MAX_BOUNDARIES]) {
 			fprintf(stderr, "Too many boundaries to handle\n");
 			exit(1);
 		}
@@ -603,7 +603,7 @@ static void handle_filter(struct strbuf *line);
 static int find_boundary(void)
 {
 	while (!strbuf_getline(&line, fin, '\n')) {
-		if (is_multipart_boundary(&line))
+		if (*content_top && is_multipart_boundary(&line))
 			return 1;
 	}
 	return 0;
@@ -626,7 +626,7 @@ again:
 		/* technically won't happen as is_multipart_boundary()
 		   will fail first.  But just in case..
 		 */
-		if (content_top-- < content) {
+		if (--content_top < content) {
 			fprintf(stderr, "Detected mismatched boundaries, "
 					"can't recover\n");
 			exit(1);

@@ -497,7 +497,8 @@ other
 'GIT_PAGER'::
 	This environment variable overrides `$PAGER`. If it is set
 	to an empty string or to the value "cat", git will not launch
-	a pager.
+	a pager.  See also the `core.pager` option in
+	linkgit:git-config[1].
 
 'GIT_SSH'::
 	If this environment variable is set then 'git-fetch'
