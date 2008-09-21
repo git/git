@@ -16,6 +16,41 @@ from sets import Set;
 
 verbose = False
 
+
+def p4_build_cmd(cmd):
+    """Build a suitable p4 command line.
+
+    This consolidates building and returning a p4 command line into one
+    location. It means that hooking into the environment, or other configuration
+    can be done more easily.
+    """
+    real_cmd = "%s " % "p4"
+
+    user = gitConfig("git-p4.user")
+    if len(user) > 0:
+        real_cmd += "-u %s " % user
+
+    password = gitConfig("git-p4.password")
+    if len(password) > 0:
+        real_cmd += "-P %s " % password
+
+    port = gitConfig("git-p4.port")
+    if len(port) > 0:
+        real_cmd += "-p %s " % port
+
+    host = gitConfig("git-p4.host")
+    if len(host) > 0:
+        real_cmd += "-h %s " % host
+
+    client = gitConfig("git-p4.client")
+    if len(client) > 0:
+        real_cmd += "-c %s " % client
+
+    real_cmd += "%s" % (cmd)
+    if verbose:
+        print real_cmd
+    return real_cmd
+
 def chdir(dir):
     if os.name == 'nt':
         os.environ['PWD']=dir
@@ -39,6 +74,10 @@ def write_pipe(c, str):
 
     return val
 
+def p4_write_pipe(c, str):
+    real_cmd = p4_build_cmd(c)
+    return write_pipe(c, str)
+
 def read_pipe(c, ignore_error=False):
     if verbose:
         sys.stderr.write('Reading pipe: %s\n' % c)
@@ -50,6 +89,9 @@ def read_pipe(c, ignore_error=False):
 
     return val
 
+def p4_read_pipe(c, ignore_error=False):
+    real_cmd = p4_build_cmd(c)
+    return read_pipe(real_cmd, ignore_error)
 
 def read_pipe_lines(c):
     if verbose:
@@ -62,11 +104,21 @@ def read_pipe_lines(c):
 
     return val
 
+def p4_read_pipe_lines(c):
+    """Specifically invoke p4 on the command supplied. """
+    real_cmd = p4_build_cmd(c)
+    return read_pipe_lines(real_cmd)
+
 def system(cmd):
     if verbose:
         sys.stderr.write("executing %s\n" % cmd)
     if os.system(cmd) != 0:
         die("command failed: %s" % cmd)
+
+def p4_system(cmd):
+    """Specifically invoke p4 as the system command. """
+    real_cmd = p4_build_cmd(cmd)
+    return system(real_cmd)
 
 def isP4Exec(kind):
     """Determine if a Perforce 'kind' should have execute permission
@@ -89,12 +141,12 @@ def setP4ExecBit(file, mode):
         if p4Type[-1] == "+":
             p4Type = p4Type[0:-1]
 
-    system("p4 reopen -t %s %s" % (p4Type, file))
+    p4_system("reopen -t %s %s" % (p4Type, file))
 
 def getP4OpenedType(file):
     # Returns the perforce file type for the given file.
 
-    result = read_pipe("p4 opened %s" % file)
+    result = p4_read_pipe("opened %s" % file)
     match = re.match(".*\((.+)\)\r?$", result)
     if match:
         return match.group(1)
@@ -150,7 +202,7 @@ def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
 
 def p4CmdList(cmd, stdin=None, stdin_mode='w+b'):
-    cmd = "p4 -G %s" % cmd
+    cmd = p4_build_cmd("-G %s" % (cmd))
     if verbose:
         sys.stderr.write("Opening pipe: %s\n" % cmd)
 
@@ -369,7 +421,7 @@ def originP4BranchesExist():
 
 def p4ChangesForPaths(depotPaths, changeRange):
     assert depotPaths
-    output = read_pipe_lines("p4 changes " + ' '.join (["%s...%s" % (p, changeRange)
+    output = p4_read_pipe_lines("changes " + ' '.join (["%s...%s" % (p, changeRange)
                                                         for p in depotPaths]))
 
     changes = []
@@ -517,7 +569,7 @@ class P4Submit(Command):
         # remove lines in the Files section that show changes to files outside the depot path we're committing into
         template = ""
         inFilesSection = False
-        for line in read_pipe_lines("p4 change -o"):
+        for line in p4_read_pipe_lines("change -o"):
             if line.endswith("\r\n"):
                 line = line[:-2] + "\n"
             if inFilesSection:
@@ -552,7 +604,7 @@ class P4Submit(Command):
             modifier = diff['status']
             path = diff['src']
             if modifier == "M":
-                system("p4 edit \"%s\"" % path)
+                p4_system("edit \"%s\"" % path)
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
                     filesToChangeExecBit[path] = diff['dst_mode']
                 editedFiles.add(path)
@@ -567,8 +619,8 @@ class P4Submit(Command):
                     filesToAdd.remove(path)
             elif modifier == "R":
                 src, dest = diff['src'], diff['dst']
-                system("p4 integrate -Dt \"%s\" \"%s\"" % (src, dest))
-                system("p4 edit \"%s\"" % (dest))
+                p4_system("integrate -Dt \"%s\" \"%s\"" % (src, dest))
+                p4_system("edit \"%s\"" % (dest))
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
                     filesToChangeExecBit[dest] = diff['dst_mode']
                 os.unlink(dest)
@@ -592,7 +644,7 @@ class P4Submit(Command):
             if response == "s":
                 print "Skipping! Good luck with the next patches..."
                 for f in editedFiles:
-                    system("p4 revert \"%s\"" % f);
+                    p4_system("revert \"%s\"" % f);
                 for f in filesToAdd:
                     system("rm %s" %f)
                 return
@@ -615,10 +667,10 @@ class P4Submit(Command):
         system(applyPatchCmd)
 
         for f in filesToAdd:
-            system("p4 add \"%s\"" % f)
+            p4_system("add \"%s\"" % f)
         for f in filesToDelete:
-            system("p4 revert \"%s\"" % f)
-            system("p4 delete \"%s\"" % f)
+            p4_system("revert \"%s\"" % f)
+            p4_system("delete \"%s\"" % f)
 
         # Set/clear executable bits
         for f in filesToChangeExecBit.keys():
@@ -634,7 +686,7 @@ class P4Submit(Command):
             submitTemplate = self.prepareLogMessage(template, logMessage)
             if os.environ.has_key("P4DIFF"):
                 del(os.environ["P4DIFF"])
-            diff = read_pipe("p4 diff -du ...")
+            diff = p4_read_pipe("diff -du ...")
 
             newdiff = ""
             for newFile in filesToAdd:
@@ -672,7 +724,7 @@ class P4Submit(Command):
             if self.isWindows:
                 submitTemplate = submitTemplate.replace("\r\n", "\n")
 
-            write_pipe("p4 submit -i", submitTemplate)
+            p4_write_pipe("submit -i", submitTemplate)
         else:
             fileName = "submit.txt"
             file = open(fileName, "w+")
@@ -719,7 +771,7 @@ class P4Submit(Command):
 
         chdir(self.clientPath)
         print "Syncronizing p4 checkout..."
-        system("p4 sync ...")
+        p4_system("sync ...")
 
         self.check()
 
@@ -1404,7 +1456,7 @@ class P4Sync(Command):
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
-        if self.useClientSpec or gitConfig("p4.useclientspec") == "true":
+        if self.useClientSpec or gitConfig("git-p4.useclientspec") == "true":
             self.getClientSpec()
 
         # TODO: should always look at previous commits,

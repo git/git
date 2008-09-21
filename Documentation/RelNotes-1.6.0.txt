@@ -245,15 +245,14 @@ Fixes since v1.5.6
 All of the fixes in v1.5.6 maintenance series are included in
 this release, unless otherwise noted.
 
-* git-clone ignored its -u option; the fix needs to be backported to
-  'maint';
+ * git-clone ignored its -u option; the fix needs to be backported to
+   'maint';
 
-* git-mv used to lose the distinction between changes that are staged
-  and that are only in the working tree, by staging both in the index
-  after moving such a path.
+ * git-mv used to lose the distinction between changes that are staged
+   and that are only in the working tree, by staging both in the index
+   after moving such a path.
 
----
-exec >/var/tmp/1
-O=v1.6.0-rc3
-echo O=$(git describe refs/heads/master)
-git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
+ * "git-rebase -i -p" rewrote the parents to wrong ones when amending
+   (either edit or squash) was involved, and did not work correctly
+   when fast forwarding.
+
