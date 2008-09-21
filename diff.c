@@ -511,13 +511,20 @@ const char *diff_get_color(int diff_use_color, enum color_diff ix)
 
 static void emit_line(FILE *file, const char *set, const char *reset, const char *line, int len)
 {
-	int has_trailing_newline = (len > 0 && line[len-1] == '\n');
+	int has_trailing_newline, has_trailing_carriage_return;
+
+	has_trailing_newline = (len > 0 && line[len-1] == '\n');
 	if (has_trailing_newline)
+		len--;
+	has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
+	if (has_trailing_carriage_return)
 		len--;
 
 	fputs(set, file);
 	fwrite(line, len, 1, file);
 	fputs(reset, file);
+	if (has_trailing_carriage_return)
+		fputc('\r', file);
 	if (has_trailing_newline)
 		fputc('\n', file);
 }
@@ -1054,6 +1061,13 @@ static long gather_dirstat(FILE *file, struct dirstat_dir *dir, unsigned long ch
 	return this_dir;
 }
 
+static int dirstat_compare(const void *_a, const void *_b)
+{
+	const struct dirstat_file *a = _a;
+	const struct dirstat_file *b = _b;
+	return strcmp(a->name, b->name);
+}
+
 static void show_dirstat(struct diff_options *options)
 {
 	int i;
@@ -1065,7 +1079,7 @@ static void show_dirstat(struct diff_options *options)
 	dir.alloc = 0;
 	dir.nr = 0;
 	dir.percent = options->dirstat_percent;
-	dir.cumulative = options->output_format & DIFF_FORMAT_CUMULATIVE;
+	dir.cumulative = DIFF_OPT_TST(options, DIRSTAT_CUMULATIVE);
 
 	changed = 0;
 	for (i = 0; i < q->nr; i++) {
@@ -1113,6 +1127,7 @@ static void show_dirstat(struct diff_options *options)
 		return;
 
 	/* Show all directories with more than x% of the changes */
+	qsort(dir.files, dir.nr, sizeof(dir.files[0]), dirstat_compare);
 	gather_dirstat(options->file, &dir, changed, "", 0);
 }
 
@@ -2290,6 +2305,7 @@ void diff_setup(struct diff_options *options)
 	options->break_opt = -1;
 	options->rename_limit = -1;
 	options->dirstat_percent = 3;
+	DIFF_OPT_CLR(options, DIRSTAT_CUMULATIVE);
 	options->context = 3;
 
 	options->change = diff_change;
@@ -2462,8 +2478,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_SHORTSTAT;
 	else if (opt_arg(arg, 'X', "dirstat", &options->dirstat_percent))
 		options->output_format |= DIFF_FORMAT_DIRSTAT;
-	else if (!strcmp(arg, "--cumulative"))
-		options->output_format |= DIFF_FORMAT_CUMULATIVE;
+	else if (!strcmp(arg, "--cumulative")) {
+		options->output_format |= DIFF_FORMAT_DIRSTAT;
+		DIFF_OPT_SET(options, DIRSTAT_CUMULATIVE);
+	}
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;
 	else if (!strcmp(arg, "--summary"))

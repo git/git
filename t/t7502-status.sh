@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Johannes E. Schindelin
 #
 
-test_description='git-status'
+test_description='git status'
 
 case $(uname -s) in
 *MINGW*) GIT_TEST_CMP="diff -uw";;

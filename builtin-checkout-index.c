@@ -5,26 +5,26 @@
  *
  * Careful: order of argument flags does matter. For example,
  *
- *	git-checkout-index -a -f file.c
+ *	git checkout-index -a -f file.c
  *
  * Will first check out all files listed in the cache (but not
  * overwrite any old ones), and then force-checkout "file.c" a
  * second time (ie that one _will_ overwrite any old contents
  * with the same filename).
  *
- * Also, just doing "git-checkout-index" does nothing. You probably
- * meant "git-checkout-index -a". And if you want to force it, you
- * want "git-checkout-index -f -a".
+ * Also, just doing "git checkout-index" does nothing. You probably
+ * meant "git checkout-index -a". And if you want to force it, you
+ * want "git checkout-index -f -a".
  *
  * Intuitiveness is not the goal here. Repeatability is. The
  * reason for the "no arguments means no work" thing is that
  * from scripts you are supposed to be able to do things like
  *
- *	find . -name '*.h' -print0 | xargs -0 git-checkout-index -f --
+ *	find . -name '*.h' -print0 | xargs -0 git checkout-index -f --
  *
  * or:
  *
- *	find . -name '*.h' -print0 | git-checkout-index -f -z --stdin
+ *	find . -name '*.h' -print0 | git checkout-index -f -z --stdin
  *
  * which will force all existing *.h files to be replaced with
  * their cached copies. If an empty command line implied "all",
@@ -107,7 +107,7 @@ static int checkout_file(const char *name, int prefix_length)
 	}
 
 	if (!state.quiet) {
-		fprintf(stderr, "git-checkout-index: %s ", name);
+		fprintf(stderr, "git checkout-index: %s ", name);
 		if (!has_same_name)
 			fprintf(stderr, "is not in the cache");
 		else if (checkout_stage)
@@ -258,9 +258,9 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		const char *p;
 
 		if (all)
-			die("git-checkout-index: don't mix '--all' and explicit filenames");
+			die("git checkout-index: don't mix '--all' and explicit filenames");
 		if (read_from_stdin)
-			die("git-checkout-index: don't mix '--stdin' and explicit filenames");
+			die("git checkout-index: don't mix '--stdin' and explicit filenames");
 		p = prefix_path(prefix, prefix_length, arg);
 		checkout_file(p, prefix_length);
 		if (p < arg || p > arg + strlen(arg))
@@ -271,7 +271,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		struct strbuf buf, nbuf;
 
 		if (all)
-			die("git-checkout-index: don't mix '--all' and '--stdin'");
+			die("git checkout-index: don't mix '--all' and '--stdin'");
 
 		strbuf_init(&buf, 0);
 		strbuf_init(&nbuf, 0);

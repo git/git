@@ -76,6 +76,15 @@ static int read_tree_some(struct tree *tree, const char **pathspec)
 	return 0;
 }
 
+static int skip_same_name(struct cache_entry *ce, int pos)
+{
+	while (++pos < active_nr &&
+	       !strcmp(active_cache[pos]->name, ce->name))
+		; /* skip */
+	return pos;
+}
+
+
 static int checkout_paths(struct tree *source_tree, const char **pathspec)
 {
 	int pos;
@@ -107,6 +116,20 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	if (report_path_error(ps_matched, pathspec, 0))
 		return 1;
 
+	/* Any unmerged paths? */
+	for (pos = 0; pos < active_nr; pos++) {
+		struct cache_entry *ce = active_cache[pos];
+		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
+			if (!ce_stage(ce))
+				continue;
+			errs = 1;
+			error("path '%s' is unmerged", ce->name);
+			pos = skip_same_name(ce, pos) - 1;
+		}
+	}
+	if (errs)
+		return 1;
+
 	/* Now we are committed to check them out */
 	memset(&state, 0, sizeof(state));
 	state.force = 1;
@@ -114,7 +137,11 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
 		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
-			errs |= checkout_entry(ce, &state, NULL);
+			if (!ce_stage(ce)) {
+				errs |= checkout_entry(ce, &state, NULL);
+				continue;
+			}
+			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
 
@@ -386,13 +413,11 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 	}
 
 	/*
-	 * If the new thing isn't a branch and isn't HEAD and we're
-	 * not starting a new branch, and we want messages, and we
-	 * weren't on a branch, and we're moving to a new commit,
-	 * describe the old commit.
+	 * If we were on a detached HEAD, but we are now moving to
+	 * a new commit, we want to mention the old commit once more
+	 * to remind the user that it might be lost.
 	 */
-	if (!new->path && strcmp(new->name, "HEAD") && !opts->new_branch &&
-	    !opts->quiet && !old.path && new->commit != old.commit)
+	if (!opts->quiet && !old.path && new->commit != old.commit)
 		describe_detached_head("Previous HEAD position was", old.commit);
 
 	if (!old.commit) {

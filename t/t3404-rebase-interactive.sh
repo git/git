@@ -161,7 +161,7 @@ test_expect_success 'stop on conflicting pick' '
 	test "$(git rev-parse HEAD~3)" = "$(git rev-parse master)" &&
 	test_cmp expect .git/rebase-merge/patch &&
 	test_cmp expect2 file1 &&
-	test "$(git-diff --name-status |
+	test "$(git diff --name-status |
 		sed -n -e "/^U/s/^U[^a-z]*//p")" = file1 &&
 	test 4 = $(grep -v "^#" < .git/rebase-merge/done | wc -l) &&
 	test 0 = $(grep -c "^[^#]" < .git/rebase-merge/git-rebase-todo)

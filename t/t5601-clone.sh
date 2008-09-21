@@ -107,4 +107,22 @@ test_expect_success 'clone --mirror does not repeat tags' '
 
 '
 
+test_expect_success 'clone to destination with trailing /' '
+
+	git clone src target-1/ &&
+	T=$( cd target-1 && git rev-parse HEAD ) &&
+	S=$( cd src && git rev-parse HEAD ) &&
+	test "$T" = "$S"
+
+'
+
+test_expect_success 'clone to destination with extra trailing /' '
+
+	git clone src target-2/// &&
+	T=$( cd target-2 && git rev-parse HEAD ) &&
+	S=$( cd src && git rev-parse HEAD ) &&
+	test "$T" = "$S"
+
+'
+
 test_done

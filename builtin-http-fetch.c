@@ -42,7 +42,7 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 		arg++;
 	}
 	if (argc < arg + 2 - commits_on_stdin) {
-		usage("git-http-fetch [-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin] commit-id url");
+		usage("git http-fetch [-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin] commit-id url");
 		return 1;
 	}
 	if (commits_on_stdin) {
@@ -75,7 +75,7 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 		fprintf(stderr,
 "Some loose object were found to be corrupt, but they might be just\n"
 "a false '404 Not Found' error message sent with incorrect HTTP\n"
-"status code.  Suggest running git-fsck.\n");
+"status code.  Suggest running 'git fsck'.\n");
 	}
 
 	walker_free(walker);

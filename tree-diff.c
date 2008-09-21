@@ -303,7 +303,7 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, stru
 			update_tree_entry(t2);
 			continue;
 		}
-		die("git-diff-tree: internal error");
+		die("git diff-tree: internal error");
 	}
 	return 0;
 }

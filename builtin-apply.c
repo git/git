@@ -274,7 +274,7 @@ static void say_patch_name(FILE *output, const char *pre,
 static void read_patch_file(struct strbuf *sb, int fd)
 {
 	if (strbuf_read(sb, fd, 0) < 0)
-		die("git-apply: read returned %s", strerror(errno));
+		die("git apply: read returned %s", strerror(errno));
 
 	/*
 	 * Make sure that we have some slop in the buffer
@@ -506,17 +506,17 @@ static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, 
 		name = orig_name;
 		len = strlen(name);
 		if (isnull)
-			die("git-apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
+			die("git apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
 		another = find_name(line, NULL, p_value, TERM_TAB);
 		if (!another || memcmp(another, name, len))
-			die("git-apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
+			die("git apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
 		free(another);
 		return orig_name;
 	}
 	else {
 		/* expect "/dev/null" */
 		if (memcmp("/dev/null", line, 9) || line[9] != '\n')
-			die("git-apply: bad git-diff - expected /dev/null on line %d", linenr);
+			die("git apply: bad git-diff - expected /dev/null on line %d", linenr);
 		return NULL;
 	}
 }
@@ -1996,6 +1996,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	/*
 	 * A hunk to change lines at the beginning would begin with
 	 * @@ -1,L +N,M @@
+	 * but we need to be careful.  -U0 that inserts before the second
+	 * line also has this pattern.
 	 *
 	 * And a hunk to add to an empty file would begin with
 	 * @@ -0,0 +N,M @@
@@ -2003,7 +2005,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	 * In other words, a hunk that is (frag->oldpos <= 1) with or
 	 * without leading context must match at the beginning.
 	 */
-	match_beginning = frag->oldpos <= 1;
+	match_beginning = (!frag->oldpos ||
+			   (frag->oldpos == 1 && !unidiff_zero));
 
 	/*
 	 * A hunk without trailing lines must match at the end.

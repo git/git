@@ -2,6 +2,19 @@
 #include "grep.h"
 #include "xdiff-interface.h"
 
+void append_header_grep_pattern(struct grep_opt *opt, enum grep_header_field field, const char *pat)
+{
+	struct grep_pat *p = xcalloc(1, sizeof(*p));
+	p->pattern = pat;
+	p->origin = "header";
+	p->no = 0;
+	p->token = GREP_PATTERN_HEAD;
+	p->field = field;
+	*opt->pattern_tail = p;
+	opt->pattern_tail = &p->next;
+	p->next = NULL;
+}
+
 void append_grep_pattern(struct grep_opt *opt, const char *pat,
 			 const char *origin, int no, enum grep_pat_token t)
 {
@@ -247,15 +260,52 @@ static int fixmatch(const char *pattern, char *line, regmatch_t *match)
 	}
 }
 
+static int strip_timestamp(char *bol, char **eol_p)
+{
+	char *eol = *eol_p;
+	int ch;
+
+	while (bol < --eol) {
+		if (*eol != '>')
+			continue;
+		*eol_p = ++eol;
+		ch = *eol;
+		*eol = '\0';
+		return ch;
+	}
+	return 0;
+}
+
+static struct {
+	const char *field;
+	size_t len;
+} header_field[] = {
+	{ "author ", 7 },
+	{ "committer ", 10 },
+};
+
 static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol, char *eol, enum grep_context ctx)
 {
 	int hit = 0;
 	int at_true_bol = 1;
+	int saved_ch = 0;
 	regmatch_t pmatch[10];
 
 	if ((p->token != GREP_PATTERN) &&
 	    ((p->token == GREP_PATTERN_HEAD) != (ctx == GREP_CONTEXT_HEAD)))
 		return 0;
+
+	if (p->token == GREP_PATTERN_HEAD) {
+		const char *field;
+		size_t len;
+		assert(p->field < ARRAY_SIZE(header_field));
+		field = header_field[p->field].field;
+		len = header_field[p->field].len;
+		if (strncmp(bol, field, len))
+			return 0;
+		bol += len;
+		saved_ch = strip_timestamp(bol, &eol);
+	}
 
  again:
 	if (!opt->fixed) {
@@ -298,6 +348,8 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 			goto again;
 		}
 	}
+	if (p->token == GREP_PATTERN_HEAD && saved_ch)
+		*eol = saved_ch;
 	return hit;
 }
 

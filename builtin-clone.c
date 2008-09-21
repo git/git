@@ -147,6 +147,15 @@ static int is_directory(const char *path)
 	return !stat(path, &buf) && S_ISDIR(buf.st_mode);
 }
 
+static void strip_trailing_slashes(char *dir)
+{
+	char *end = dir + strlen(dir);
+
+	while (dir < end - 1 && is_dir_sep(end[-1]))
+		end--;
+	*end = '\0';
+}
+
 static void setup_reference(const char *repo)
 {
 	const char *ref_git;
@@ -387,7 +396,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	path = get_repo_path(repo_name, &is_bundle);
 	if (path)
-		repo = path;
+		repo = xstrdup(make_nonrelative_path(repo_name));
 	else if (!strchr(repo_name, ':'))
 		repo = xstrdup(make_absolute_path(repo_name));
 	else
@@ -397,6 +406,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		dir = xstrdup(argv[1]);
 	else
 		dir = guess_dir_name(repo_name, is_bundle, option_bare);
+	strip_trailing_slashes(dir);
 
 	if (!stat(dir, &buf))
 		die("destination directory '%s' already exists.", dir);
@@ -422,10 +432,11 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (!option_bare) {
 		junk_work_tree = work_tree;
 		if (safe_create_leading_directories_const(work_tree) < 0)
-			die("could not create leading directories of '%s'",
-					work_tree);
+			die("could not create leading directories of '%s': %s",
+					work_tree, strerror(errno));
 		if (mkdir(work_tree, 0755))
-			die("could not create work tree dir '%s'.", work_tree);
+			die("could not create work tree dir '%s': %s.",
+					work_tree, strerror(errno));
 		set_git_work_tree(work_tree);
 	}
 	junk_git_dir = git_dir;

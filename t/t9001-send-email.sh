@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-send-email'
+test_description='git send-email'
 . ./test-lib.sh
 
 say "cannot invoke fake.sendmail; skipping test"

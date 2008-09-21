@@ -48,7 +48,7 @@ static void format_subst(const struct commit *commit,
 		strbuf_add(&fmt, b + 8, c - b - 8);
 
 		strbuf_add(buf, src, b - src);
-		format_commit_message(commit, fmt.buf, buf);
+		format_commit_message(commit, fmt.buf, buf, DATE_NORMAL);
 		len -= c + 1 - src;
 		src  = c + 1;
 	}

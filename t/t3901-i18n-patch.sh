@@ -107,7 +107,7 @@ test_expect_success 'rebase (U/U)' '
 	# we want UTF-8 encoded name.
 	. ../t3901-utf8.txt &&
 	git checkout -b test &&
-	git-rebase master &&
+	git rebase master &&
 
 	check_encoding 2
 '
@@ -118,7 +118,7 @@ test_expect_success 'rebase (U/L)' '
 	. ../t3901-utf8.txt &&
 
 	git reset --hard side &&
-	git-rebase master &&
+	git rebase master &&
 
 	check_encoding 2
 '
@@ -130,7 +130,7 @@ test_expect_success 'rebase (L/L)' '
 	. ../t3901-8859-1.txt &&
 
 	git reset --hard side &&
-	git-rebase master &&
+	git rebase master &&
 
 	check_encoding 2 8859
 '
@@ -143,7 +143,7 @@ test_expect_success 'rebase (L/U)' '
 	. ../t3901-8859-1.txt &&
 
 	git reset --hard side &&
-	git-rebase master &&
+	git rebase master &&
 
 	check_encoding 2 8859
 '
@@ -215,7 +215,7 @@ test_expect_success 'rebase --merge (U/U)' '
 	. ../t3901-utf8.txt &&
 
 	git reset --hard side &&
-	git-rebase --merge master &&
+	git rebase --merge master &&
 
 	check_encoding 2
 '
@@ -226,7 +226,7 @@ test_expect_success 'rebase --merge (U/L)' '
 	. ../t3901-utf8.txt &&
 
 	git reset --hard side &&
-	git-rebase --merge master &&
+	git rebase --merge master &&
 
 	check_encoding 2
 '
@@ -238,7 +238,7 @@ test_expect_success 'rebase --merge (L/L)' '
 	. ../t3901-8859-1.txt &&
 
 	git reset --hard side &&
-	git-rebase --merge master &&
+	git rebase --merge master &&
 
 	check_encoding 2 8859
 '
@@ -251,7 +251,7 @@ test_expect_success 'rebase --merge (L/U)' '
 	. ../t3901-8859-1.txt &&
 
 	git reset --hard side &&
-	git-rebase --merge master &&
+	git rebase --merge master &&
 
 	check_encoding 2 8859
 '

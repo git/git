@@ -38,7 +38,6 @@ static int show_root;
 static int reverse;
 static int blank_boundary;
 static int incremental;
-static int cmd_is_annotate;
 static int xdl_opts = XDF_NEED_MINIMAL;
 static struct string_list mailmap;
 
@@ -1686,7 +1685,7 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 		if (suspect->commit->object.flags & UNINTERESTING) {
 			if (blank_boundary)
 				memset(hex, ' ', length);
-			else if (!cmd_is_annotate) {
+			else if (!(opt & OUTPUT_ANNOTATE_COMPAT)) {
 				length--;
 				putchar('^');
 			}
@@ -1791,7 +1790,7 @@ static int prepare_lines(struct scoreboard *sb)
 
 /*
  * Add phony grafts for use with -S; this is primarily to
- * support git-cvsserver that wants to give a linear history
+ * support git's cvsserver that wants to give a linear history
  * to its clients.
  */
 static int read_ancestry(const char *graft_file)
@@ -2317,8 +2316,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	};
 
 	struct parse_opt_ctx_t ctx;
-
-	cmd_is_annotate = !strcmp(argv[0], "annotate");
+	int cmd_is_annotate = !strcmp(argv[0], "annotate");
 
 	git_config(git_blame_config, NULL);
 	init_revisions(&revs, NULL);
@@ -2345,6 +2343,9 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	}
 parse_done:
 	argc = parse_options_end(&ctx);
+
+	if (cmd_is_annotate)
+		output_option |= OUTPUT_ANNOTATE_COMPAT;
 
 	if (DIFF_OPT_TST(&revs.diffopt, FIND_COPIES_HARDER))
 		opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE |

@@ -112,7 +112,7 @@ case $(uname -s) in
 esac
 cat > test/expect << EOF
 * remote origin
-  URL: $(pwd)/one/.git
+  URL: $(pwd)/one
   Remote branch merged with 'git pull' while on branch master
     master
   New remote branch (next fetch will store in remotes/origin)
@@ -143,7 +143,7 @@ test_expect_success 'show' '
 
 cat > test/expect << EOF
 * remote origin
-  URL: $(pwd)/one/.git
+  URL: $(pwd)/one
   Remote branch merged with 'git pull' while on branch master
     master
   Tracked remote branches
@@ -172,7 +172,7 @@ test_expect_success 'prune' '
 
 cat > test/expect << EOF
 Pruning origin
-URL: $(pwd)/one/.git
+URL: $(pwd)/one
  * [would prune] origin/side2
 EOF
 

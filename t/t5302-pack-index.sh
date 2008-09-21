@@ -54,11 +54,11 @@ test_expect_success \
 
 test_expect_success \
     'index-pack with index version 1' \
-    'git-index-pack --index-version=1 -o 1.idx "test-1-${pack1}.pack"'
+    'git index-pack --index-version=1 -o 1.idx "test-1-${pack1}.pack"'
 
 test_expect_success \
     'index-pack with index version 2' \
-    'git-index-pack --index-version=2 -o 2.idx "test-1-${pack1}.pack"'
+    'git index-pack --index-version=2 -o 2.idx "test-1-${pack1}.pack"'
 
 test_expect_success \
     'index-pack results should match pack-objects ones' \
@@ -91,7 +91,7 @@ test_expect_success \
 test "$have_64bits" &&
 test_expect_success \
     'index v2: force some 64-bit offsets with index-pack' \
-    'git-index-pack --index-version=2,0x40000 -o 3.idx "test-1-${pack1}.pack"'
+    'git index-pack --index-version=2,0x40000 -o 3.idx "test-1-${pack1}.pack"'
 
 test "$have_64bits" &&
 test_expect_success \
@@ -100,7 +100,7 @@ test_expect_success \
 
 test_expect_success \
     '[index v1] 1) stream pack to repository' \
-    'git-index-pack --index-version=1 --stdin < "test-1-${pack1}.pack" &&
+    'git index-pack --index-version=1 --stdin < "test-1-${pack1}.pack" &&
      git prune-packed &&
      git count-objects | ( read nr rest && test "$nr" -eq 1 ) &&
      cmp "test-1-${pack1}.pack" ".git/objects/pack/pack-${pack1}.pack" &&
@@ -138,7 +138,7 @@ test_expect_success \
 test_expect_success \
     '[index v2] 1) stream pack to repository' \
     'rm -f .git/objects/pack/* &&
-     git-index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
+     git index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
      git prune-packed &&
      git count-objects | ( read nr rest && test "$nr" -eq 1 ) &&
      cmp "test-1-${pack1}.pack" ".git/objects/pack/pack-${pack1}.pack" &&
@@ -171,7 +171,7 @@ test_expect_success \
 test_expect_success \
     '[index v2] 6) verify-pack detects CRC mismatch' \
     'rm -f .git/objects/pack/* &&
-     git-index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
+     git index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
      git verify-pack ".git/objects/pack/pack-${pack1}.pack" &&
      chmod +w ".git/objects/pack/pack-${pack1}.idx" &&
      zeros | dd of=".git/objects/pack/pack-${pack1}.idx" conv=notrunc \

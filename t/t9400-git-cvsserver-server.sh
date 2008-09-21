@@ -488,4 +488,17 @@ test_expect_success 'cvs co -c (shows module database)' '
     ! grep -v "^master[	 ]\+master$" < out
 '
 
+#------------
+# CVS ANNOTATE
+#------------
+
+cd "$WORKDIR"
+test_expect_success 'cvs annotate' '
+    cd cvswork &&
+    GIT_CONFIG="$git_config" cvs annotate merge >../out &&
+    sed -e "s/ .*//" ../out >../actual &&
+    for i in 3 1 1 1 1 1 1 1 2 4; do echo 1.$i; done >../expect &&
+    test_cmp ../expect ../actual
+'
+
 test_done

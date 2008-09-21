@@ -97,27 +97,27 @@ test_atom tag contents 'Tagging at 1151939927
 '
 
 test_expect_success 'Check invalid atoms names are errors' '
-	test_must_fail git-for-each-ref --format="%(INVALID)" refs/heads
+	test_must_fail git for-each-ref --format="%(INVALID)" refs/heads
 '
 
 test_expect_success 'Check format specifiers are ignored in naming date atoms' '
-	git-for-each-ref --format="%(authordate)" refs/heads &&
-	git-for-each-ref --format="%(authordate:default) %(authordate)" refs/heads &&
-	git-for-each-ref --format="%(authordate) %(authordate:default)" refs/heads &&
-	git-for-each-ref --format="%(authordate:default) %(authordate:default)" refs/heads
+	git for-each-ref --format="%(authordate)" refs/heads &&
+	git for-each-ref --format="%(authordate:default) %(authordate)" refs/heads &&
+	git for-each-ref --format="%(authordate) %(authordate:default)" refs/heads &&
+	git for-each-ref --format="%(authordate:default) %(authordate:default)" refs/heads
 '
 
 test_expect_success 'Check valid format specifiers for date fields' '
-	git-for-each-ref --format="%(authordate:default)" refs/heads &&
-	git-for-each-ref --format="%(authordate:relative)" refs/heads &&
-	git-for-each-ref --format="%(authordate:short)" refs/heads &&
-	git-for-each-ref --format="%(authordate:local)" refs/heads &&
-	git-for-each-ref --format="%(authordate:iso8601)" refs/heads &&
-	git-for-each-ref --format="%(authordate:rfc2822)" refs/heads
+	git for-each-ref --format="%(authordate:default)" refs/heads &&
+	git for-each-ref --format="%(authordate:relative)" refs/heads &&
+	git for-each-ref --format="%(authordate:short)" refs/heads &&
+	git for-each-ref --format="%(authordate:local)" refs/heads &&
+	git for-each-ref --format="%(authordate:iso8601)" refs/heads &&
+	git for-each-ref --format="%(authordate:rfc2822)" refs/heads
 '
 
 test_expect_success 'Check invalid format specifiers are errors' '
-	test_must_fail git-for-each-ref --format="%(authordate:INVALID)" refs/heads
+	test_must_fail git for-each-ref --format="%(authordate:INVALID)" refs/heads
 '
 
 cat >expected <<\EOF
@@ -207,7 +207,7 @@ refs/tags/testtag
 EOF
 
 test_expect_success 'Verify ascending sort' '
-	git-for-each-ref --format="%(refname)" --sort=refname >actual &&
+	git for-each-ref --format="%(refname)" --sort=refname >actual &&
 	test_cmp expected actual
 '
 
@@ -218,7 +218,7 @@ refs/heads/master
 EOF
 
 test_expect_success 'Verify descending sort' '
-	git-for-each-ref --format="%(refname)" --sort=-refname >actual &&
+	git for-each-ref --format="%(refname)" --sort=-refname >actual &&
 	test_cmp expected actual
 '
 

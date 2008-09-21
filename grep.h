@@ -17,12 +17,18 @@ enum grep_context {
 	GREP_CONTEXT_BODY,
 };
 
+enum grep_header_field {
+	GREP_HEADER_AUTHOR = 0,
+	GREP_HEADER_COMMITTER,
+};
+
 struct grep_pat {
 	struct grep_pat *next;
 	const char *origin;
 	int no;
 	enum grep_pat_token token;
 	const char *pattern;
+	enum grep_header_field field;
 	regex_t regexp;
 };
 
@@ -74,6 +80,7 @@ struct grep_opt {
 };
 
 extern void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
+extern void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
 extern void compile_grep_patterns(struct grep_opt *opt);
 extern void free_grep_patterns(struct grep_opt *opt);
 extern int grep_buffer(struct grep_opt *opt, const char *name, char *buf, unsigned long size);

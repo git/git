@@ -12,14 +12,14 @@ test_expect_success \
     'Initialize test directory' \
     "touch -- foo bar baz 'space embedded' -q &&
      git add -- foo bar baz 'space embedded' -q &&
-     git-commit -m 'add normal files' &&
+     git commit -m 'add normal files' &&
      test_tabs=y &&
      if touch -- 'tab	embedded' 'newline
 embedded'
      then
      git add -- 'tab	embedded' 'newline
 embedded' &&
-     git-commit -m 'add files with tabs and newlines'
+     git commit -m 'add files with tabs and newlines'
      else
          say 'Your filesystem does not allow tabs in filenames.'
          test_tabs=n

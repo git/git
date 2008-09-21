@@ -2,6 +2,7 @@
 #define REVISION_H
 
 #include "parse-options.h"
+#include "grep.h"
 
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
@@ -92,7 +93,7 @@ struct rev_info {
 	int		show_log_size;
 
 	/* Filter by commit log message */
-	struct grep_opt	*grep_filter;
+	struct grep_opt	grep_filter;
 
 	/* Display history graph */
 	struct git_graph *graph;

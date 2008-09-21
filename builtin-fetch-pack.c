@@ -609,7 +609,7 @@ static struct ref *do_fetch_pack(int fd[2],
 			fprintf(stderr, "warning: no common commits\n");
 
 	if (get_pack(fd, pack_lockfile))
-		die("git-fetch-pack: fetch failed.");
+		die("git fetch-pack: fetch failed.");
 
  all_done:
 	return ref;
@@ -750,7 +750,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	if (!ret && nr_heads) {
 		/* If the heads to pull were given, we should have
 		 * consumed all of them by matching the remote.
-		 * Otherwise, 'git-fetch remote no-such-ref' would
+		 * Otherwise, 'git fetch remote no-such-ref' would
 		 * silently succeed without issuing an error.
 		 */
 		for (i = 0; i < nr_heads; i++)

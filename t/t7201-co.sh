@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Junio C Hamano
 #
 
-test_description='git-checkout tests.
+test_description='git checkout tests.
 
 Creates master, forks renamer and side branches from it.
 Test switching across them.
@@ -340,5 +340,27 @@ test_expect_success \
     rm .git/refs/heads/delete-me &&
     test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
     test_must_fail git checkout --track -b track'
+
+test_expect_success 'checkout an unmerged path should fail' '
+	rm -f .git/index &&
+	O=$(echo original | git hash-object -w --stdin) &&
+	A=$(echo ourside | git hash-object -w --stdin) &&
+	B=$(echo theirside | git hash-object -w --stdin) &&
+	(
+		echo "100644 $A 0	fild" &&
+		echo "100644 $O 1	file" &&
+		echo "100644 $A 2	file" &&
+		echo "100644 $B 3	file" &&
+		echo "100644 $A 0	filf"
+	) | git update-index --index-info &&
+	echo "none of the above" >sample &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	test_must_fail git checkout fild file filf &&
+	test_cmp sample fild &&
+	test_cmp sample filf &&
+	test_cmp sample file
+'
 
 test_done

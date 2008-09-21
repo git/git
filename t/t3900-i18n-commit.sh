@@ -18,7 +18,7 @@ test_expect_success setup '
 	T=$(git write-tree) &&
 	C=$(git commit-tree $T <../t3900/1-UTF-8.txt) &&
 	git update-ref HEAD $C &&
-	git-tag C0
+	git tag C0
 '
 
 test_expect_success 'no encoding header for base case' '
@@ -30,9 +30,9 @@ for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "$H setup" '
 		git config i18n.commitencoding $H &&
-		git-checkout -b $H C0 &&
+		git checkout -b $H C0 &&
 		echo $H >F &&
-		git-commit -a -F ../t3900/$H.txt
+		git commit -a -F ../t3900/$H.txt
 	'
 done
 
