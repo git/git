@@ -8,6 +8,7 @@
 #include "tree.h"
 #include "progress.h"
 #include "fsck.h"
+#include "exec_cmd.h"
 
 static const char index_pack_usage[] =
 "git index-pack [-v] [-o <index-file>] [{ ---keep | --keep=<msg> }] [--strict] { <pack-file> | --stdin [--fix-thin] [<pack-file>] }";
@@ -876,6 +877,9 @@ int main(int argc, char **argv)
 	struct pack_idx_entry **idx_objects;
 	unsigned char pack_sha1[20];
 	int nongit = 0;
+
+	if (argv[0] && *argv[0])
+		git_extract_argv0_path(argv[0]);
 
 	setup_git_directory_gently(&nongit);
 	git_config(git_index_pack_config, NULL);
