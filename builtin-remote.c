@@ -407,14 +407,15 @@ static int rm(int argc, const char **argv)
 	return i;
 }
 
-static void show_list(const char *title, struct string_list *list)
+static void show_list(const char *title, struct string_list *list,
+		      const char *extra_arg)
 {
 	int i;
 
 	if (!list->nr)
 		return;
 
-	printf(title, list->nr > 1 ? "es" : "");
+	printf(title, list->nr > 1 ? "es" : "", extra_arg);
 	printf("\n    ");
 	for (i = 0; i < list->nr; i++)
 		printf("%s%s", i ? " " : "", list->items[i].string);
@@ -477,7 +478,6 @@ static int show(int argc, const char **argv)
 
 	memset(&states, 0, sizeof(states));
 	for (; argc; argc--, argv++) {
-		struct strbuf buf;
 		int i;
 
 		get_remote_ref_states(*argv, &states, !no_query);
@@ -503,18 +503,16 @@ static int show(int argc, const char **argv)
 		}
 
 		if (!no_query) {
-			strbuf_init(&buf, 0);
-			strbuf_addf(&buf, "  New remote branch%%s (next fetch "
-				"will store in remotes/%s)", states.remote->name);
-			show_list(buf.buf, &states.new);
-			strbuf_release(&buf);
+			show_list("  New remote branch%s (next fetch "
+				"will store in remotes/%s)",
+				&states.new, states.remote->name);
 			show_list("  Stale tracking branch%s (use 'git remote "
-				"prune')", &states.stale);
+				"prune')", &states.stale, "");
 		}
 
 		if (no_query)
 			for_each_ref(append_ref_to_tracked_list, &states);
-		show_list("  Tracked remote branch%s", &states.tracked);
+		show_list("  Tracked remote branch%s", &states.tracked, "");
 
 		if (states.remote->push_refspec_nr) {
 			printf("  Local branch%s pushed with 'git push'\n   ",
