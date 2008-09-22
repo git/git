@@ -634,6 +634,14 @@ cmd_sync()
 	do
 		name=$(module_name "$path")
 		url=$(git config -f .gitmodules --get submodule."$name".url)
+
+		# Possibly a url relative to parent
+		case "$url" in
+		./*|../*)
+			url=$(resolve_relative_url "$url") || exit
+			;;
+		esac
+
 		if test -e "$path"/.git
 		then
 		(
