@@ -1404,7 +1404,7 @@ static const struct funcname_pattern_entry *funcname_pattern(const char *ident)
 }
 
 static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
-	{ "bibtex", "(@[a-zA-Z]{1,}[ \t]*\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
+	{ "bibtex", "(@[a-zA-Z]{1,}[ \t]*\\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
 	  REG_EXTENDED },
 	{ "html", "^[ \t]*(<[Hh][1-6][ \t].*>.*)$", REG_EXTENDED },
 	{ "java",
