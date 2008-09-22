@@ -303,4 +303,24 @@ test_expect_success 'pushing nonexistent branch by mistake should not segv' '
 
 '
 
+test_expect_success 'auto tag following fetches minimum' '
+
+	cd "$D" &&
+	git clone .git follow &&
+	git checkout HEAD^0 &&
+	(
+		for i in 1 2 3 4 5 6 7
+		do
+			echo $i >>file &&
+			git commit -m $i -a &&
+			git tag -a -m $i excess-$i || exit 1
+		done
+	) &&
+	git checkout master &&
+	(
+		cd follow &&
+		git fetch
+	)
+'
+
 test_done
