@@ -263,8 +263,13 @@ int poll(struct pollfd *ufds, unsigned int nfds, int timeout)
 {
 	int i, pending;
 
-	if (timeout != -1)
+	if (timeout >= 0) {
+		if (nfds == 0) {
+			Sleep(timeout);
+			return 0;
+		}
 		return errno = EINVAL, error("poll timeout not supported");
+	}
 
 	/* When there is only one fd to wait for, then we pretend that
 	 * input is available and let the actual wait happen when the
