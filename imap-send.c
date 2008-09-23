@@ -23,6 +23,7 @@
  */
 
 #include "cache.h"
+#include "exec_cmd.h"
 
 typedef struct store_conf {
 	char *name;
@@ -1292,6 +1293,9 @@ main(int argc, char **argv)
 	int ofs = 0;
 	int r;
 	int total, n = 0;
+
+	if (argv[0] && *argv[0])
+		git_extract_argv0_path(argv[0]);
 
 	/* init the random number generator */
 	arc4_init();

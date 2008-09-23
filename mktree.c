@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "quote.h"
 #include "tree.h"
+#include "exec_cmd.h"
 
 static struct treeent {
 	unsigned mode;
@@ -69,6 +70,9 @@ int main(int ac, char **av)
 	struct strbuf p_uq;
 	unsigned char sha1[20];
 	int line_termination = '\n';
+
+	if (av[0] && *av[0])
+		git_extract_argv0_path(av[0]);
 
 	setup_git_directory();
 
