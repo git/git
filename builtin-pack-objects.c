@@ -465,7 +465,7 @@ static void write_pack_file(void)
 			char tmpname[PATH_MAX];
 			int fd;
 			snprintf(tmpname, sizeof(tmpname),
-				 "%s/tmp_pack_XXXXXX", get_object_directory());
+				 "%s/pack/tmp_pack_XXXXXX", get_object_directory());
 			fd = xmkstemp(tmpname);
 			pack_tmp_name = xstrdup(tmpname);
 			f = sha1fd(fd, pack_tmp_name);
