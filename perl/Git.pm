@@ -58,7 +58,7 @@ require Exporter;
                 command_bidi_pipe command_close_bidi_pipe
                 version exec_path hash_object git_cmd_try
                 remote_refs
-                temp_acquire temp_release temp_reset);
+                temp_acquire temp_release temp_reset temp_path);
 
 
 =head1 DESCRIPTION
@@ -937,7 +937,7 @@ sub _close_cat_blob {
 
 { # %TEMP_* Lexical Context
 
-my (%TEMP_LOCKS, %TEMP_FILES);
+my (%TEMP_FILEMAP, %TEMP_FILES);
 
 =item temp_acquire ( NAME )
 
@@ -965,7 +965,7 @@ sub temp_acquire {
 
 	my $temp_fd = _temp_cache($name);
 
-	$TEMP_LOCKS{$temp_fd} = 1;
+	$TEMP_FILES{$temp_fd}{locked} = 1;
 	$temp_fd;
 }
 
@@ -991,16 +991,16 @@ the same string.
 sub temp_release {
 	my ($self, $temp_fd, $trunc) = _maybe_self(@_);
 
-	if (ref($temp_fd) ne 'File::Temp') {
+	if (exists $TEMP_FILEMAP{$temp_fd}) {
 		$temp_fd = $TEMP_FILES{$temp_fd};
 	}
-	unless ($TEMP_LOCKS{$temp_fd}) {
+	unless ($TEMP_FILES{$temp_fd}{locked}) {
 		carp "Attempt to release temp file '",
 			$temp_fd, "' that has not been locked";
 	}
 	temp_reset($temp_fd) if $trunc and $temp_fd->opened;
 
-	$TEMP_LOCKS{$temp_fd} = 0;
+	$TEMP_FILES{$temp_fd}{locked} = 0;
 	undef;
 }
 
@@ -1009,9 +1009,9 @@ sub _temp_cache {
 
 	_verify_require();
 
-	my $temp_fd = \$TEMP_FILES{$name};
+	my $temp_fd = \$TEMP_FILEMAP{$name};
 	if (defined $$temp_fd and $$temp_fd->opened) {
-		if ($TEMP_LOCKS{$$temp_fd}) {
+		if ($TEMP_FILES{$$temp_fd}{locked}) {
 			throw Error::Simple("Temp file with moniker '",
 				$name, "' already in use");
 		}
@@ -1021,12 +1021,13 @@ sub _temp_cache {
 			carp "Temp file '", $name,
 				"' was closed. Opening replacement.";
 		}
-		$$temp_fd = File::Temp->new(
-			TEMPLATE => 'Git_XXXXXX',
-			DIR => File::Spec->tmpdir
+		my $fname;
+		($$temp_fd, $fname) = File::Temp->tempfile(
+			'Git_XXXXXX', UNLINK => 1
 			) or throw Error::Simple("couldn't open new temp file");
 		$$temp_fd->autoflush;
 		binmode $$temp_fd;
+		$TEMP_FILES{$$temp_fd}{fname} = $fname;
 	}
 	$$temp_fd;
 }
@@ -1053,8 +1054,25 @@ sub temp_reset {
 		or throw Error::Simple("expected file position to be reset");
 }
 
+=item temp_path ( NAME )
+
+=item temp_path ( FILEHANDLE )
+
+Returns the filename associated with the given tempfile.
+
+=cut
+
+sub temp_path {
+	my ($self, $temp_fd) = _maybe_self(@_);
+
+	if (exists $TEMP_FILEMAP{$temp_fd}) {
+		$temp_fd = $TEMP_FILEMAP{$temp_fd};
+	}
+	$TEMP_FILES{$temp_fd}{fname};
+}
+
 sub END {
-	unlink values %TEMP_FILES if %TEMP_FILES;
+	unlink values %TEMP_FILEMAP if %TEMP_FILEMAP;
 }
 
 } # %TEMP_* Lexical Context

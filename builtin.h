@@ -11,7 +11,7 @@ extern const char git_usage_string[];
 extern const char git_more_info_string[];
 
 extern void list_common_cmds_help(void);
-extern void help_unknown_cmd(const char *cmd);
+extern const char *help_unknown_cmd(const char *cmd);
 extern void prune_packed_objects(int);
 extern int read_line_with_nul(char *buf, int size, FILE *file);
 extern int fmt_merge_msg(int merge_summary, struct strbuf *in,

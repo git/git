@@ -6,7 +6,7 @@ will install the git programs in your own ~/bin/ directory.  If you want
 to do a global install, you can do
 
 	$ make prefix=/usr all doc info ;# as yourself
-	# make prefix=/usr install install-doc install-info ;# as root
+	# make prefix=/usr install install-doc install-html install-info ;# as root
 
 (or prefix=/usr/local, of course).  Just like any program suite
 that uses $prefix, the built results have some paths encoded,
@@ -19,7 +19,7 @@ set up install paths (via config.mak.autogen), so you can write instead
 	$ make configure ;# as yourself
 	$ ./configure --prefix=/usr ;# as yourself
 	$ make all doc ;# as yourself
-	# make install install-doc ;# as root
+	# make install install-doc install-html;# as root
 
 
 Issues of note:
@@ -89,13 +89,22 @@ Issues of note:
    inclined to install the tools, the default build target
    ("make all") does _not_ build them.
 
+   "make doc" builds documentation in man and html formats; there are
+   also "make man", "make html" and "make info". Note that "make html"
+   requires asciidoc, but not xmlto. "make man" (and thus make doc)
+   requires both.
+
+   "make install-doc" installs documentation in man format only; there
+   are also "make install-man", "make install-html" and "make
+   install-info".
+
    Building and installing the info file additionally requires
    makeinfo and docbook2X.  Version 0.8.3 is known to work.
 
    The documentation is written for AsciiDoc 7, but "make
    ASCIIDOC8=YesPlease doc" will let you format with AsciiDoc 8.
 
-   Alternatively, pre-formatted documentation are available in
+   Alternatively, pre-formatted documentation is available in
    "html" and "man" branches of the git repository itself.  For
    example, you could:
 
@@ -116,6 +125,12 @@ Issues of note:
    would instead give you a copy of what you see at:
 
 	http://www.kernel.org/pub/software/scm/git/docs/
+
+   There are also "make quick-install-doc" and "make quick-install-html"
+   which install preformatted man pages and html documentation.
+   This does not require asciidoc/xmlto, but it only works from within
+   a cloned checkout of git.git with these two extra branches, and will
+   not work for the maintainer for obvious chicken-and-egg reasons.
 
    It has been reported that docbook-xsl version 1.72 and 1.73 are
    buggy; 1.72 misformats manual pages for callouts, and 1.73 needs

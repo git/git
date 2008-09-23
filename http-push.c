@@ -2237,7 +2237,7 @@ int main(int argc, char **argv)
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
 	if (remote->url && remote->url[strlen(remote->url)-1] != '/') {
-		rewritten_url = malloc(strlen(remote->url)+2);
+		rewritten_url = xmalloc(strlen(remote->url)+2);
 		strcpy(rewritten_url, remote->url);
 		strcat(rewritten_url, "/");
 		remote->url = rewritten_url;

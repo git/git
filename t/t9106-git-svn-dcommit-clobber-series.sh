@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Copyright (c) 2007 Eric Wong
-test_description='git-svn dcommit clobber series'
+test_description='git svn dcommit clobber series'
 . ./lib-git-svn.sh
 
 test_expect_success 'initialize repo' '

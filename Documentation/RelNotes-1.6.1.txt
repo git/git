@@ -32,7 +32,18 @@ on.
 * Most of the test scripts (but not the ones that try to run servers)
   can be run in parallel.
 
+* Bash completion of refnames in a repository with massive number of
+  refs has been optimized.
+
 (usability, bells and whistles)
+
+* When you mistype a command name, git helpfully suggests what it guesses
+  you might have meant to say.  help.autocorrect configuration can be set
+  to a non-zero value to accept the suggestion when git can uniquely
+  guess.
+
+* "git bisect" is careful about a user mistake and suggests testing of
+  merge base first when good is not a strict ancestor of bad.
 
 * "git checkout --track origin/hack" used to be a syntax error.  It now
   DWIMs to create a corresponding local branch "hack", i.e. acts as if you
@@ -54,6 +65,12 @@ on.
 * "git diff" learned to put more sensible hunk headers for Python and
   HTML contents.
 
+* "git diff" learned to vary the a/ vs b/ prefix depending on what are
+  being compared, controlled by diff.mnemonicprefix configuration.
+
+* "git for-each-ref" learned "refname:short" token that gives an
+  unambiguously abbreviated refname.
+
 * "git help" learned to use GIT_MAN_VIEWER environment variable before
   using "man" program.
 
@@ -67,6 +84,9 @@ on.
 
 * "git log" learned --simplify-merges, a milder variant of --full-history;
   "gitk --simplify-merges" is easier to view than with --full-history.
+
+* "git log --pretty=format:" learned "%d" format element that inserts
+  names of tags that point at the commit.
 
 * "git merge --squash" and "git merge --no-ff" into an unborn branch are
   noticed as user errors.
@@ -115,6 +135,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.1-266-gaf9552f
+O=v1.6.0.2-295-g34a5d35
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

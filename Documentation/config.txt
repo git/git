@@ -585,6 +585,22 @@ diff.external::
 	you want to use an external diff program only on a subset of
 	your files, you	might want to use linkgit:gitattributes[5] instead.
 
+diff.mnemonicprefix::
+	If set, 'git-diff' uses a prefix pair that is different from the
+	standard "a/" and "b/" depending on what is being compared.  When
+	this configuration is in effect, reverse diff output also swaps
+	the order of the prefixes:
+'git-diff';;
+	compares the (i)ndex and the (w)ork tree;
+'git-diff HEAD';;
+	 compares a (c)ommit and the (w)ork tree;
+'git diff --cached';;
+	compares a (c)ommit and the (i)ndex;
+'git-diff HEAD:file1 file2';;
+	compares an (o)bject and a (w)ork tree entity;
+'git diff --no-index a b';;
+	compares two non-git things (1) and (2).
+
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
 	detection; equivalent to the 'git-diff' option '-l'.
@@ -789,6 +805,15 @@ help.format::
 	Override the default help format used by linkgit:git-help[1].
 	Values 'man', 'info', 'web' and 'html' are supported. 'man' is
 	the default. 'web' and 'html' are the same.
+
+help.autocorrect::
+	Automatically correct and execute mistyped commands after
+	waiting for the given number of deciseconds (0.1 sec). If more
+	than one command can be deduced from the entered text, nothing
+	will be executed.  If the value of this option is negative,
+	the corrected command will be executed immediately. If the
+	value is 0 - the command will be just shown but not executed.
+	This is the default.
 
 http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy'

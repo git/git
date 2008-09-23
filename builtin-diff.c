@@ -74,6 +74,8 @@ static int builtin_diff_b_f(struct rev_info *revs,
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)))
 		die("'%s': not a regular file or symlink", path);
 
+	diff_set_mnemonic_prefix(&revs->diffopt, "o/", "w/");
+
 	if (blob[0].mode == S_IFINVALID)
 		blob[0].mode = canon_mode(st.st_mode);
 
@@ -223,7 +225,13 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 		argv++; argc--;
 	}
 
-	if (revs->max_count == -1 &&
+	/*
+	 * "diff --base" should not combine merges because it was not
+	 * asked to.  "diff -c" should not densify (if the user wants
+	 * dense one, --cc can be explicitly asked for, or just rely
+	 * on the default).
+	 */
+	if (revs->max_count == -1 && !revs->combine_merges &&
 	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		revs->combine_merges = revs->dense_combined_merges = 1;
 

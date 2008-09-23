@@ -13,7 +13,7 @@ test_expect_success 'setup svn repository' '
 	)
 '
 
-test_expect_success 'interact with it via git-svn' '
+test_expect_success 'interact with it via git svn' '
 	mkdir work.git &&
 	(
 		cd work.git &&

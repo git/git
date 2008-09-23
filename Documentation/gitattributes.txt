@@ -270,27 +270,27 @@ See linkgit:git[1] for details.
 Defining a custom hunk-header
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Each group of changes (called "hunk") in the textual diff output
+Each group of changes (called a "hunk") in the textual diff output
 is prefixed with a line of the form:
 
 	@@ -k,l +n,m @@ TEXT
 
-The text is called 'hunk header', and by default a line that
-begins with an alphabet, an underscore or a dollar sign is used,
-which matches what GNU 'diff -p' output uses.  This default
-selection however is not suited for some contents, and you can
-use customized pattern to make a selection.
+This is called a 'hunk header'.  The "TEXT" portion is by default a line
+that begins with an alphabet, an underscore or a dollar sign; this
+matches what GNU 'diff -p' output uses.  This default selection however
+is not suited for some contents, and you can use a customized pattern
+to make a selection.
 
-First in .gitattributes, you would assign the `diff` attribute
+First, in .gitattributes, you would assign the `diff` attribute
 for paths.
 
 ------------------------
 *.tex	diff=tex
 ------------------------
 
-Then, you would define "diff.tex.funcname" configuration to
+Then, you would define a "diff.tex.funcname" configuration to
 specify a regular expression that matches a line that you would
-want to appear as the hunk header, like this:
+want to appear as the hunk header "TEXT", like this:
 
 ------------------------
 [diff "tex"]
@@ -311,17 +311,19 @@ patterns are available:
 
 - `bibtex` suitable for files with BibTeX coded references.
 
-- `java` suitable for source code in the Java lanugage.
+- `html` suitable for HTML/XHTML documents.
+
+- `java` suitable for source code in the Java language.
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
+
+- `php` suitable for source code in the PHP language.
 
 - `python` suitable for source code in the Python language.
 
 - `ruby` suitable for source code in the Ruby language.
 
 - `tex` suitable for source code for LaTeX documents.
-
-- `html` suitable for HTML/XHTML documents.
 
 
 Performing a three-way merge

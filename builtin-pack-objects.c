@@ -23,7 +23,7 @@
 #endif
 
 static const char pack_usage[] = "\
-git-pack-objects [{ -q | --progress | --all-progress }] \n\
+git pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--max-pack-size=N] [--local] [--incremental] \n\
 	[--window=N] [--window-memory=N] [--depth=N] \n\
 	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
@@ -1725,6 +1725,14 @@ static void prepare_pack(int window, int depth)
 			if (entry->type < 0)
 				die("unable to get type of object %s",
 				    sha1_to_hex(entry->idx.sha1));
+		} else {
+			if (entry->type < 0) {
+				/*
+				 * This object is not found, but we
+				 * don't have to include it anyway.
+				 */
+				continue;
+			}
 		}
 
 		delta_list[n++] = entry;
@@ -1872,7 +1880,7 @@ static void mark_in_pack_object(struct object *object, struct packed_git *p, str
 
 /*
  * Compare the objects in the offset order, in order to emulate the
- * "git-rev-list --objects" output that produced the pack originally.
+ * "git rev-list --objects" output that produced the pack originally.
  */
 static int ofscmp(const void *a_, const void *b_)
 {

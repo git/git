@@ -3,7 +3,7 @@
 # Copyright (c) 2008 Santhosh Kumar Mani
 
 
-test_description='git-svn can fetch renamed directories'
+test_description='git svn can fetch renamed directories'
 
 . ./lib-git-svn.sh
 

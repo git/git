@@ -145,6 +145,7 @@ rm -rf $RPM_BUILD_ROOT
 %files cvs
 %defattr(-,root,root)
 %doc Documentation/*git-cvs*.txt
+%{_bindir}/git-cvsserver
 %{_libexecdir}/git-core/*cvs*
 %{!?_without_docs: %{_mandir}/man1/*cvs*.1*}
 %{!?_without_docs: %doc Documentation/*git-cvs*.html }
@@ -188,6 +189,9 @@ rm -rf $RPM_BUILD_ROOT
 # No files for you!
 
 %changelog
+* Fri Sep 12 2008 Quy Tonthat <qtonthat@gmail.com>
+- move git-cvsserver to bindir.
+
 * Sun Jun 15 2008 Junio C Hamano <gitster@pobox.com>
 - Remove curl from Requires list.
 

@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Johannes E. Schindelin
 #
 
-test_description='git-fast-export'
+test_description='git fast-export'
 . ./test-lib.sh
 
 test_expect_success 'setup' '

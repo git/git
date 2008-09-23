@@ -496,6 +496,18 @@ static int hunk_comment_line(const char *bol)
 	return (isalpha(ch) || ch == '_' || ch == '$');
 }
 
+static void show_line_to_eol(const char *line, int len, const char *reset)
+{
+	int saw_cr_at_eol = 0;
+	if (len < 0)
+		len = strlen(line);
+	saw_cr_at_eol = (len && line[len-1] == '\r');
+
+	printf("%.*s%s%s\n", len - saw_cr_at_eol, line,
+	       reset,
+	       saw_cr_at_eol ? "\r" : "");
+}
+
 static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 		       int use_color)
 {
@@ -589,7 +601,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 					else
 						putchar(' ');
 				}
-				printf("%s%s\n", ll->line, c_reset);
+				show_line_to_eol(ll->line, -1, c_reset);
 				ll = ll->next;
 			}
 			if (cnt < lno)
@@ -613,7 +625,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 					putchar(' ');
 				p_mask <<= 1;
 			}
-			printf("%.*s%s\n", sl->len, sl->bol, c_reset);
+			show_line_to_eol(sl->bol, sl->len, c_reset);
 		}
 	}
 }
@@ -671,9 +683,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int i, show_hunks;
 	int working_tree_file = is_null_sha1(elem->sha1);
 	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
+	const char *a_prefix, *b_prefix;
 	mmfile_t result_file;
 
 	context = opt->context;
+	a_prefix = opt->a_prefix ? opt->a_prefix : "a/";
+	b_prefix = opt->b_prefix ? opt->b_prefix : "b/";
+
 	/* Read the result of merge first */
 	if (!working_tree_file)
 		result = grab_blob(elem->sha1, &result_size);
@@ -849,13 +865,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			dump_quoted_path("--- ", "", "/dev/null",
 					 c_meta, c_reset);
 		else
-			dump_quoted_path("--- ", opt->a_prefix, elem->path,
+			dump_quoted_path("--- ", a_prefix, elem->path,
 					 c_meta, c_reset);
 		if (deleted)
 			dump_quoted_path("+++ ", "", "/dev/null",
 					 c_meta, c_reset);
 		else
-			dump_quoted_path("+++ ", opt->b_prefix, elem->path,
+			dump_quoted_path("+++ ", b_prefix, elem->path,
 					 c_meta, c_reset);
 		dump_sline(sline, cnt, num_parent,
 			   DIFF_OPT_TST(opt, COLOR_DIFF));

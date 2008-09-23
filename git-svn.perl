@@ -2626,9 +2626,9 @@ sub rebuild_from_rev_db {
 sub rebuild {
 	my ($self) = @_;
 	my $map_path = $self->map_path;
-	return if (-e $map_path && ! -z $map_path);
+	my $partial = (-e $map_path && ! -z $map_path);
 	return unless ::verify_ref($self->refname.'^0');
-	if ($self->use_svm_props || $self->no_metadata) {
+	if (!$partial && ($self->use_svm_props || $self->no_metadata)) {
 		my $rev_db = $self->rev_db_path;
 		$self->rebuild_from_rev_db($rev_db);
 		if ($self->use_svm_props) {
@@ -2638,10 +2638,13 @@ sub rebuild {
 		$self->unlink_rev_db_symlink;
 		return;
 	}
-	print "Rebuilding $map_path ...\n";
+	print "Rebuilding $map_path ...\n" if (!$partial);
+	my ($base_rev, $head) = ($partial ? $self->rev_map_max_norebuild(1) :
+		(undef, undef));
 	my ($log, $ctx) =
 	    command_output_pipe(qw/rev-list --pretty=raw --no-color --reverse/,
-	                        $self->refname, '--');
+				($head ? "$head.." : "") . $self->refname,
+				'--');
 	my $metadata_url = $self->metadata_url;
 	remove_username($metadata_url);
 	my $svn_uuid = $self->ra_uuid;
@@ -2664,12 +2667,17 @@ sub rebuild {
 		    ($metadata_url && $url && ($url ne $metadata_url))) {
 			next;
 		}
+		if ($partial && $head) {
+			print "Partial-rebuilding $map_path ...\n";
+			print "Currently at $base_rev = $head\n";
+			$head = undef;
+		}
 
 		$self->rev_map_set($rev, $c);
 		print "r$rev = $c\n";
 	}
 	command_close_pipe($log, $ctx);
-	print "Done rebuilding $map_path\n";
+	print "Done rebuilding $map_path\n" if (!$partial || !$head);
 	my $rev_db_path = $self->rev_db_path;
 	if (-f $self->rev_db_path) {
 		unlink $self->rev_db_path or croak "unlink: $!";
@@ -2809,6 +2817,12 @@ sub rev_map_set {
 sub rev_map_max {
 	my ($self, $want_commit) = @_;
 	$self->rebuild;
+	my ($r, $c) = $self->rev_map_max_norebuild($want_commit);
+	$want_commit ? ($r, $c) : $r;
+}
+
+sub rev_map_max_norebuild {
+	my ($self, $want_commit) = @_;
 	my $map_path = $self->map_path;
 	stat $map_path or return $want_commit ? (0, undef) : 0;
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
@@ -3304,7 +3318,7 @@ sub close_file {
 					my $out = syswrite($tmp_fh, $str, $res);
 					defined($out) && $out == $res
 						or croak("write ",
-							$tmp_fh->filename,
+							Git::temp_path($tmp_fh),
 							": $!\n");
 				}
 				defined $res or croak $!;
@@ -3315,7 +3329,7 @@ sub close_file {
 		}
 
 		$hash = $::_repository->hash_and_insert_object(
-				$fh->filename);
+				Git::temp_path($fh));
 		$hash =~ /^[a-f\d]{40}$/ or die "not a sha1: $hash\n";
 
 		Git::temp_release($fb->{base}, 1);
@@ -4010,21 +4024,21 @@ sub gs_do_switch {
 	my $old_url = $full_url;
 	$full_url .= '/' . escape_uri_only($path) if length $path;
 	my ($ra, $reparented);
-	if ($old_url ne $full_url) {
-		if ($old_url !~ m#^svn(\+ssh)?://#) {
-			SVN::_Ra::svn_ra_reparent($self->{session}, $full_url,
-			                          $pool);
-			$self->{url} = $full_url;
-			$reparented = 1;
-		} else {
-			$_[0] = undef;
-			$self = undef;
-			$RA = undef;
-			$ra = Git::SVN::Ra->new($full_url);
-			$ra_invalid = 1;
-		}
+
+	if ($old_url =~ m#^svn(\+ssh)?://#) {
+		$_[0] = undef;
+		$self = undef;
+		$RA = undef;
+		$ra = Git::SVN::Ra->new($full_url);
+		$ra_invalid = 1;
+	} elsif ($old_url ne $full_url) {
+		SVN::_Ra::svn_ra_reparent($self->{session}, $full_url, $pool);
+		$self->{url} = $full_url;
+		$reparented = 1;
 	}
+
 	$ra ||= $self;
+	$url_b = escape_url($url_b);
 	my $reporter = $ra->do_switch($rev_b, '', 1, $url_b, $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 	$reporter->set_path('', $rev_a, 0, @lock, $pool);
@@ -4424,7 +4438,7 @@ sub config_pager {
 
 sub run_pager {
 	return unless -t *STDOUT && defined $pager;
-	pipe my $rfd, my $wfd or return;
+	pipe my ($rfd, $wfd) or return;
 	defined(my $pid = fork) or ::fatal "Can't fork: $!";
 	if (!$pid) {
 		open STDOUT, '>&', $wfd or

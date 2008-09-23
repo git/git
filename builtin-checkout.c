@@ -76,6 +76,15 @@ static int read_tree_some(struct tree *tree, const char **pathspec)
 	return 0;
 }
 
+static int skip_same_name(struct cache_entry *ce, int pos)
+{
+	while (++pos < active_nr &&
+	       !strcmp(active_cache[pos]->name, ce->name))
+		; /* skip */
+	return pos;
+}
+
+
 static int checkout_paths(struct tree *source_tree, const char **pathspec)
 {
 	int pos;
@@ -107,6 +116,20 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	if (report_path_error(ps_matched, pathspec, 0))
 		return 1;
 
+	/* Any unmerged paths? */
+	for (pos = 0; pos < active_nr; pos++) {
+		struct cache_entry *ce = active_cache[pos];
+		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
+			if (!ce_stage(ce))
+				continue;
+			errs = 1;
+			error("path '%s' is unmerged", ce->name);
+			pos = skip_same_name(ce, pos) - 1;
+		}
+	}
+	if (errs)
+		return 1;
+
 	/* Now we are committed to check them out */
 	memset(&state, 0, sizeof(state));
 	state.force = 1;
@@ -114,7 +137,11 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec)
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
 		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
-			errs |= checkout_entry(ce, &state, NULL);
+			if (!ce_stage(ce)) {
+				errs |= checkout_entry(ce, &state, NULL);
+				continue;
+			}
+			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
 
@@ -242,6 +269,8 @@ static int merge_working_tree(struct checkout_opts *opts,
 		}
 
 		/* 2-way merge to the new branch */
+		topts.initial_checkout = (!active_nr &&
+					  (old->commit == new->commit));
 		topts.update = 1;
 		topts.merge = 1;
 		topts.gently = opts->merge;
@@ -549,6 +578,18 @@ no_reference:
 		}
 
 		return checkout_paths(source_tree, pathspec);
+	}
+
+	if (opts.new_branch) {
+		struct strbuf buf;
+		strbuf_init(&buf, 0);
+		strbuf_addstr(&buf, "refs/heads/");
+		strbuf_addstr(&buf, opts.new_branch);
+		if (!get_sha1(buf.buf, rev))
+			die("git checkout: branch %s already exists", opts.new_branch);
+		if (check_ref_format(buf.buf))
+			die("git checkout: we do not like '%s' as a branch name.", opts.new_branch);
+		strbuf_release(&buf);
 	}
 
 	if (new.name && !new.commit) {

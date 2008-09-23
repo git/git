@@ -104,7 +104,7 @@ static int check_local_mod(unsigned char *head, int index_only)
 				     "from both the file and the HEAD\n"
 				     "(use -f to force removal)", name);
 		else if (!index_only) {
-			/* It's not dangerous to git-rm --cached a
+			/* It's not dangerous to "git rm --cached" a
 			 * file if the index matches the file or the
 			 * HEAD, since it means the deleted content is
 			 * still available somewhere.

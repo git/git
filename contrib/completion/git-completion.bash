@@ -154,11 +154,8 @@ __git_heads ()
 {
 	local cmd i is_hash=y dir="$(__gitdir "$1")"
 	if [ -d "$dir" ]; then
-		for i in $(git --git-dir="$dir" \
-			for-each-ref --format='%(refname)' \
-			refs/heads ); do
-			echo "${i#refs/heads/}"
-		done
+		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
+			refs/heads
 		return
 	fi
 	for i in $(git ls-remote "$1" 2>/dev/null); do
@@ -175,11 +172,8 @@ __git_tags ()
 {
 	local cmd i is_hash=y dir="$(__gitdir "$1")"
 	if [ -d "$dir" ]; then
-		for i in $(git --git-dir="$dir" \
-			for-each-ref --format='%(refname)' \
-			refs/tags ); do
-			echo "${i#refs/tags/}"
-		done
+		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
+			refs/tags
 		return
 	fi
 	for i in $(git ls-remote "$1" 2>/dev/null); do
@@ -197,16 +191,8 @@ __git_refs ()
 	local cmd i is_hash=y dir="$(__gitdir "$1")"
 	if [ -d "$dir" ]; then
 		if [ -e "$dir/HEAD" ]; then echo HEAD; fi
-		for i in $(git --git-dir="$dir" \
-			for-each-ref --format='%(refname)' \
-			refs/tags refs/heads refs/remotes); do
-			case "$i" in
-				refs/tags/*)    echo "${i#refs/tags/}" ;;
-				refs/heads/*)   echo "${i#refs/heads/}" ;;
-				refs/remotes/*) echo "${i#refs/remotes/}" ;;
-				*)              echo "$i" ;;
-			esac
-		done
+		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
+			refs/tags refs/heads refs/remotes
 		return
 	fi
 	for i in $(git ls-remote "$dir" 2>/dev/null); do
@@ -750,7 +736,7 @@ _git_commit ()
 	--*)
 		__gitcomp "
 			--all --author= --signoff --verify --no-verify
-			--edit --amend --include --only
+			--edit --amend --include --only --interactive
 			"
 		return
 	esac

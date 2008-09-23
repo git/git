@@ -1,0 +1,29 @@
+GIT v1.6.0.3 Release Notes
+==========================
+
+Fixes since v1.6.0.2
+--------------------
+
+* "git archive --format=zip" did not honor core.autocrlf while
+  --format=tar did.
+
+* Continuing "git rebase -i" was very confused when the user left modified
+  files in the working tree while resolving conflicts.
+
+* Continuing "git rebase -i" was also very confused when the user left
+  some staged changes in the index after "edit".
+
+* Behaviour of "git diff --quiet" was inconsistent with "diff --exit-code"
+  with the output redirected to /dev/null.
+
+* "Git.pm" tests relied on unnecessarily more recent version of Perl.
+
+* "gitweb" triggered undef warning on commits without log messages.
+
+Many other documentation updates.
+
+--
+exec >/var/tmp/1
+O=v1.6.0.2-32-g8d11fde
+echo O=$(git describe maint)
+git shortlog --no-merges $O..maint

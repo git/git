@@ -17,5 +17,6 @@ void log_write_email_headers(struct rev_info *opt, const char *name,
 			     const char **subject_p,
 			     const char **extra_headers_p,
 			     int *need_8bit_cte_p);
+void load_ref_decorations(void);
 
 #endif

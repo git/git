@@ -373,4 +373,36 @@ test_expect_success \
     'checkout with --track, but without -b, fails with too short tracked name' '
     test_must_fail git checkout --track renamer'
 
+test_expect_success 'checkout an unmerged path should fail' '
+	rm -f .git/index &&
+	O=$(echo original | git hash-object -w --stdin) &&
+	A=$(echo ourside | git hash-object -w --stdin) &&
+	B=$(echo theirside | git hash-object -w --stdin) &&
+	(
+		echo "100644 $A 0	fild" &&
+		echo "100644 $O 1	file" &&
+		echo "100644 $A 2	file" &&
+		echo "100644 $B 3	file" &&
+		echo "100644 $A 0	filf"
+	) | git update-index --index-info &&
+	echo "none of the above" >sample &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	test_must_fail git checkout fild file filf &&
+	test_cmp sample fild &&
+	test_cmp sample filf &&
+	test_cmp sample file
+'
+
+test_expect_success 'failing checkout -b should not break working tree' '
+	git reset --hard master &&
+	git symbolic-ref HEAD refs/heads/master &&
+	test_must_fail git checkout -b renamer side^ &&
+	test $(git symbolic-ref HEAD) = refs/heads/master &&
+	git diff --exit-code &&
+	git diff --cached --exit-code
+
+'
+
 test_done
