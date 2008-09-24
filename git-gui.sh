@@ -2453,7 +2453,7 @@ if {[is_enabled transport]} {
 		-command do_push_anywhere \
 		-accelerator $M1T-P
 	.mbar.remote add command \
-		-label [mc "Delete..."] \
+		-label [mc "Delete Branch..."] \
 		-command remote_branch_delete::dialog
 }
 
