@@ -144,8 +144,9 @@ method _add {} {
 			if {[info exists env(GIT_SSH)]} {
 				set ssh $env(GIT_SSH)
 			}
-			lappend cmds [list exec $ssh $host git --git-dir=$path init --bare]
+			lappend cmds [list exec $ssh $host mkdir -p $location && git --git-dir=$path init --bare]
 		} elseif { ! [regexp {://} $location xx] } {
+			lappend cmds [list exec mkdir -p $location]
 			lappend cmds [list exec git --git-dir=$location init --bare]
 		} else {
 			tk_messageBox \
