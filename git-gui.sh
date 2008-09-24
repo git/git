@@ -1869,6 +1869,19 @@ proc do_gitk {revs} {
 	}
 }
 
+proc do_explore {} {
+	set explorer {}
+	if {[is_Cygwin] || [is_Windows]} {
+		set explorer "explorer.exe"
+	} elseif {[is_MacOSX]} {
+		set explorer "open"
+	} else {
+		# freedesktop.org-conforming system is our best shot
+		set explorer "xdg-open"
+	}
+	eval exec $explorer [file dirname [gitdir]] &
+}
+
 set is_quitting 0
 set ret_code    1
 
@@ -2219,6 +2232,11 @@ if {[is_enabled transport]} {
 # -- Repository Menu
 #
 menu .mbar.repository
+
+.mbar.repository add command \
+	-label [mc "Explore Working Copy"] \
+	-command {do_explore}
+.mbar.repository add separator
 
 .mbar.repository add command \
 	-label [mc "Browse Current Branch's Files"] \
