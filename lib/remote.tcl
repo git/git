@@ -132,91 +132,92 @@ proc load_all_remotes {} {
 	set all_remotes [lsort -unique $all_remotes]
 }
 
-proc populate_fetch_menu {} {
-	global all_remotes repo_config
-
+proc add_fetch_entry {r} {
+	global repo_config
 	set remote_m .mbar.remote
 	set fetch_m $remote_m.fetch
 	set prune_m $remote_m.prune
-
-	foreach r $all_remotes {
-		set enable 0
-		if {![catch {set a $repo_config(remote.$r.url)}]} {
-			if {![catch {set a $repo_config(remote.$r.fetch)}]} {
-				set enable 1
-			}
-		} else {
-			catch {
-				set fd [open [gitdir remotes $r] r]
-				while {[gets $fd n] >= 0} {
-					if {[regexp {^Pull:[ \t]*([^:]+):} $n]} {
-						set enable 1
-						break
-					}
+	set enable 0
+	if {![catch {set a $repo_config(remote.$r.url)}]} {
+		if {![catch {set a $repo_config(remote.$r.fetch)}]} {
+			set enable 1
+		}
+	} else {
+		catch {
+			set fd [open [gitdir remotes $r] r]
+			while {[gets $fd n] >= 0} {
+				if {[regexp {^Pull:[ \t]*([^:]+):} $n]} {
+					set enable 1
+					break
 				}
-				close $fd
 			}
+			close $fd
+		}
+	}
+
+	if {$enable} {
+		if {![winfo exists $fetch_m]} {
+			menu $prune_m
+			$remote_m insert 0 cascade \
+				-label [mc "Prune from"] \
+				-menu $prune_m
+
+			menu $fetch_m
+			$remote_m insert 0 cascade \
+				-label [mc "Fetch from"] \
+				-menu $fetch_m
 		}
 
-		if {$enable} {
-			if {![winfo exists $fetch_m]} {
-				menu $prune_m
-				$remote_m insert 0 cascade \
-					-label [mc "Prune from"] \
-					-menu $prune_m
-
-				menu $fetch_m
-				$remote_m insert 0 cascade \
-					-label [mc "Fetch from"] \
-					-menu $fetch_m
-			}
-
-			$fetch_m add command \
-				-label $r \
-				-command [list fetch_from $r]
-			$prune_m add command \
-				-label $r \
-				-command [list prune_from $r]
-		}
+		$fetch_m add command \
+			-label $r \
+			-command [list fetch_from $r]
+		$prune_m add command \
+			-label $r \
+			-command [list prune_from $r]
 	}
 }
 
-proc populate_push_menu {} {
-	global all_remotes repo_config
-
+proc add_push_entry {r} {
+	global repo_config
 	set remote_m .mbar.remote
 	set push_m $remote_m.push
+	set enable 0
+	if {![catch {set a $repo_config(remote.$r.url)}]} {
+		if {![catch {set a $repo_config(remote.$r.push)}]} {
+			set enable 1
+		}
+	} else {
+		catch {
+			set fd [open [gitdir remotes $r] r]
+			while {[gets $fd n] >= 0} {
+				if {[regexp {^Push:[ \t]*([^:]+):} $n]} {
+					set enable 1
+					break
+				}
+			}
+			close $fd
+		}
+	}
+
+	if {$enable} {
+		if {![winfo exists $push_m]} {
+			menu $push_m
+			$remote_m insert 0 cascade \
+				-label [mc "Push to"] \
+				-menu $push_m
+		}
+
+		$push_m add command \
+			-label $r \
+			-command [list push_to $r]
+	}
+}
+
+proc populate_remotes_menu {} {
+	global all_remotes
 
 	foreach r $all_remotes {
-		set enable 0
-		if {![catch {set a $repo_config(remote.$r.url)}]} {
-			if {![catch {set a $repo_config(remote.$r.push)}]} {
-				set enable 1
-			}
-		} else {
-			catch {
-				set fd [open [gitdir remotes $r] r]
-				while {[gets $fd n] >= 0} {
-					if {[regexp {^Push:[ \t]*([^:]+):} $n]} {
-						set enable 1
-						break
-					}
-				}
-				close $fd
-			}
-		}
-
-		if {$enable} {
-			if {![winfo exists $push_m]} {
-				menu $push_m
-				$remote_m insert 0 cascade \
-					-label [mc "Push to"] \
-					-menu $push_m
-			}
-
-			$push_m add command \
-				-label $r \
-				-command [list push_to $r]
-		}
+		add_fetch_entry $r
+		add_push_entry $r
 	}
 }
