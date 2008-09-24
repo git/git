@@ -137,6 +137,7 @@ proc add_fetch_entry {r} {
 	set remote_m .mbar.remote
 	set fetch_m $remote_m.fetch
 	set prune_m $remote_m.prune
+	set remove_m $remote_m.remove
 	set enable 0
 	if {![catch {set a $repo_config(remote.$r.url)}]} {
 		if {![catch {set a $repo_config(remote.$r.fetch)}]} {
@@ -157,6 +158,11 @@ proc add_fetch_entry {r} {
 
 	if {$enable} {
 		if {![winfo exists $fetch_m]} {
+			menu $remove_m
+			$remote_m insert 0 cascade \
+				-label [mc "Remove Remote"] \
+				-menu $remove_m
+
 			menu $prune_m
 			$remote_m insert 0 cascade \
 				-label [mc "Prune from"] \
@@ -174,6 +180,9 @@ proc add_fetch_entry {r} {
 		$prune_m add command \
 			-label $r \
 			-command [list prune_from $r]
+		$remove_m add command \
+			-label $r \
+			-command [list remove_remote $r]
 	}
 }
 
@@ -235,4 +244,32 @@ proc add_single_remote {name location} {
 
 	add_fetch_entry $name
 	add_push_entry $name
+}
+
+proc delete_from_menu {menu name} {
+	if {[winfo exists $menu]} {
+		$menu delete $name
+	}
+}
+
+proc remove_remote {name} {
+	global all_remotes repo_config
+
+	git remote rm $name
+
+	catch {
+		# Missing values are ok
+		unset repo_config(remote.$name.url)
+		unset repo_config(remote.$name.fetch)
+		unset repo_config(remote.$name.push)
+	}
+
+	set i [lsearch -exact all_remotes $name]
+	lreplace all_remotes $i $i
+
+	set remote_m .mbar.remote
+	delete_from_menu $remote_m.fetch $name
+	delete_from_menu $remote_m.prune $name
+	delete_from_menu $remote_m.remove $name
+	delete_from_menu $remote_m.push $name
 }
