@@ -130,9 +130,9 @@ method _add {} {
 	switch -- $opt_action {
 	fetch {
 		set c [console::new \
-			[mc "fetch %s" $remote] \
-			[mc "Fetching the %s" $remote]]
-		console::exec $c [list git fetch --all $name]
+			[mc "fetch %s" $name] \
+			[mc "Fetching the %s" $name]]
+		console::exec $c [list git fetch $name]
 	}
 	push {
 		set cmds [list]
