@@ -2449,6 +2449,10 @@ if {[is_enabled transport]} {
 	menu .mbar.remote
 
 	.mbar.remote add command \
+		-label [mc "Add..."] \
+		-command remote_add::dialog \
+		-accelerator $M1T-A
+	.mbar.remote add command \
 		-label [mc "Push..."] \
 		-command do_push_anywhere \
 		-accelerator $M1T-P

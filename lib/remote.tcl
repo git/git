@@ -221,3 +221,18 @@ proc populate_remotes_menu {} {
 		add_push_entry $r
 	}
 }
+
+proc add_single_remote {name location} {
+	global all_remotes repo_config
+	lappend all_remotes $name
+
+	git remote add $name $location
+
+	# XXX: Better re-read the config so that we will never get out
+	# of sync with git remote implementation?
+	set repo_config(remote.$name.url) $location
+	set repo_config(remote.$name.fetch) "+refs/heads/*:refs/remotes/$name/*"
+
+	add_fetch_entry $name
+	add_push_entry $name
+}
