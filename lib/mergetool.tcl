@@ -375,14 +375,6 @@ proc merge_tool_finish {fd} {
 		}
 	}
 
-	# Check the modification time of the target file
-	if {!$failed && [file mtime $mtool_target] eq $mtool_mtime} {
-		if {[ask_popup [mc "File %s unchanged, still accept as resolved?" \
-				[short_path $mtool_target]]] ne {yes}} {
-			set failed 1
-		}
-	}
-
 	# Finish
 	if {$failed} {
 		file rename -force -- $backup $mtool_target
@@ -395,6 +387,6 @@ proc merge_tool_finish {fd} {
 
 		delete_temp_files $mtool_tmpfiles
 
-		merge_add_resolution $mtool_target
+		reshow_diff
 	}
 }
