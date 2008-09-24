@@ -2271,23 +2271,25 @@ proc commit_btn_caption {} {
 if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	menu .mbar.commit
 
-	.mbar.commit add radiobutton \
-		-label [mc "New Commit"] \
-		-command do_select_commit_type \
-		-variable selected_commit_type \
-		-value new
-	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	if {![is_enabled nocommit]} {
+		.mbar.commit add radiobutton \
+			-label [mc "New Commit"] \
+			-command do_select_commit_type \
+			-variable selected_commit_type \
+			-value new
+		lappend disable_on_lock \
+			[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-	.mbar.commit add radiobutton \
-		-label [mc "Amend Last Commit"] \
-		-command do_select_commit_type \
-		-variable selected_commit_type \
-		-value amend
-	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+		.mbar.commit add radiobutton \
+			-label [mc "Amend Last Commit"] \
+			-command do_select_commit_type \
+			-variable selected_commit_type \
+			-value amend
+		lappend disable_on_lock \
+			[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-	.mbar.commit add separator
+		.mbar.commit add separator
+	}
 
 	.mbar.commit add command -label [mc Rescan] \
 		-command ui_do_rescan \
@@ -2329,9 +2331,11 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 
 	.mbar.commit add separator
 
-	.mbar.commit add command -label [mc "Sign Off"] \
-		-command do_signoff \
-		-accelerator $M1T-S
+	if {![is_enabled nocommit]} {
+		.mbar.commit add command -label [mc "Sign Off"] \
+			-command do_signoff \
+			-accelerator $M1T-S
+	}
 
 	.mbar.commit add command -label [commit_btn_caption] \
 		-command do_commit \
@@ -2657,9 +2661,11 @@ pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.incall conf -state}
 
-button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
-	-command do_signoff
-pack .vpane.lower.commarea.buttons.signoff -side top -fill x
+if {![is_enabled nocommit]} {
+	button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
+		-command do_signoff
+	pack .vpane.lower.commarea.buttons.signoff -side top -fill x
+}
 
 button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
 	-command do_commit
@@ -2667,15 +2673,10 @@ pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
 
-button .vpane.lower.commarea.buttons.push -text [mc Push] \
-	-command do_push_anywhere
-pack .vpane.lower.commarea.buttons.push -side top -fill x
-
-if {[is_enabled nocommitmsg]} {
-	.vpane.lower.commarea.buttons.signoff configure -state disabled
-}
-if {[is_enabled nocommit]} {
-	.vpane.lower.commarea.buttons.push configure -state disabled
+if {![is_enabled nocommit]} {
+	button .vpane.lower.commarea.buttons.push -text [mc Push] \
+		-command do_push_anywhere
+	pack .vpane.lower.commarea.buttons.push -side top -fill x
 }
 
 # -- Commit Message Buffer
@@ -2684,20 +2685,24 @@ frame .vpane.lower.commarea.buffer
 frame .vpane.lower.commarea.buffer.header
 set ui_comm .vpane.lower.commarea.buffer.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
-radiobutton .vpane.lower.commarea.buffer.header.new \
-	-text [mc "New Commit"] \
-	-command do_select_commit_type \
-	-variable selected_commit_type \
-	-value new
-lappend disable_on_lock \
-	[list .vpane.lower.commarea.buffer.header.new conf -state]
-radiobutton .vpane.lower.commarea.buffer.header.amend \
-	-text [mc "Amend Last Commit"] \
-	-command do_select_commit_type \
-	-variable selected_commit_type \
-	-value amend
-lappend disable_on_lock \
-	[list .vpane.lower.commarea.buffer.header.amend conf -state]
+
+if {![is_enabled nocommit]} {
+	radiobutton .vpane.lower.commarea.buffer.header.new \
+		-text [mc "New Commit"] \
+		-command do_select_commit_type \
+		-variable selected_commit_type \
+		-value new
+	lappend disable_on_lock \
+		[list .vpane.lower.commarea.buffer.header.new conf -state]
+	radiobutton .vpane.lower.commarea.buffer.header.amend \
+		-text [mc "Amend Last Commit"] \
+		-command do_select_commit_type \
+		-variable selected_commit_type \
+		-value amend
+	lappend disable_on_lock \
+		[list .vpane.lower.commarea.buffer.header.amend conf -state]
+}
+
 label $ui_coml \
 	-anchor w \
 	-justify left
@@ -2715,8 +2720,11 @@ proc trace_commit_type {varname args} {
 }
 trace add variable commit_type write trace_commit_type
 pack $ui_coml -side left -fill x
-pack .vpane.lower.commarea.buffer.header.amend -side right
-pack .vpane.lower.commarea.buffer.header.new -side right
+
+if {![is_enabled nocommit]} {
+	pack .vpane.lower.commarea.buffer.header.amend -side right
+	pack .vpane.lower.commarea.buffer.header.new -side right
+}
 
 text $ui_comm -background white -foreground black \
 	-borderwidth 1 \
