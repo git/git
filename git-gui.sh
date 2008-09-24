@@ -2493,30 +2493,12 @@ if {![is_MacOSX]} {
 		-command do_about
 }
 
-set browser {}
-catch {set browser $repo_config(instaweb.browser)}
+
 set doc_path [file dirname [gitexec]]
 set doc_path [file join $doc_path Documentation index.html]
 
 if {[is_Cygwin]} {
 	set doc_path [exec cygpath --mixed $doc_path]
-}
-
-if {$browser eq {}} {
-	if {[is_MacOSX]} {
-		set browser open
-	} elseif {[is_Cygwin]} {
-		set program_files [file dirname [exec cygpath --windir]]
-		set program_files [file join $program_files {Program Files}]
-		set firefox [file join $program_files {Mozilla Firefox} firefox.exe]
-		set ie [file join $program_files {Internet Explorer} IEXPLORE.EXE]
-		if {[file exists $firefox]} {
-			set browser $firefox
-		} elseif {[file exists $ie]} {
-			set browser $ie
-		}
-		unset program_files firefox ie
-	}
 }
 
 if {[file isfile $doc_path]} {
@@ -2525,11 +2507,13 @@ if {[file isfile $doc_path]} {
 	set doc_url {http://www.kernel.org/pub/software/scm/git/docs/}
 }
 
-if {$browser ne {}} {
-	.mbar.help add command -label [mc "Online Documentation"] \
-		-command [list exec $browser $doc_url &]
+proc start_browser {url} {
+	git "web--browse" $url
 }
-unset browser doc_path doc_url
+
+.mbar.help add command -label [mc "Online Documentation"] \
+	-command [list start_browser $doc_url]
+unset doc_path doc_url
 
 # -- Standard bindings
 #
