@@ -271,5 +271,6 @@ proc remove_remote {name} {
 	delete_from_menu $remote_m.fetch $name
 	delete_from_menu $remote_m.prune $name
 	delete_from_menu $remote_m.remove $name
-	delete_from_menu $remote_m.push $name
+	# Not all remotes are in the push menu
+	catch { delete_from_menu $remote_m.push $name }
 }
