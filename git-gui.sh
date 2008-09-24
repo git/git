@@ -995,6 +995,7 @@ citool {
 ##
 ## repository setup
 
+set picked 0
 if {[catch {
 		set _gitdir $env(GIT_DIR)
 		set _prefix {}
@@ -1006,6 +1007,7 @@ if {[catch {
 	load_config 1
 	apply_config
 	choose_repository::pick
+	set picked 1
 }
 if {![file isdirectory $_gitdir] && [is_Cygwin]} {
 	catch {set _gitdir [exec cygpath --windows $_gitdir]}
@@ -3375,4 +3377,7 @@ if {[is_enabled multicommit]} {
 }
 if {[is_enabled retcode]} {
 	bind . <Destroy> {+terminate_me %W}
+}
+if {$picked && [is_config_true gui.autoexplore]} {
+	do_explore
 }
