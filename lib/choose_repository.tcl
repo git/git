@@ -463,7 +463,7 @@ method _do_clone {} {
 	frame $w_body.args
 	pack $args -fill both
 
-	label $args.origin_l -text [mc "URL:"]
+	label $args.origin_l -text [mc "Source Location:"]
 	entry $args.origin_t \
 		-textvariable @origin_url \
 		-font font_diff \
@@ -473,7 +473,7 @@ method _do_clone {} {
 		-command [cb _open_origin]
 	grid $args.origin_l $args.origin_t $args.origin_b -sticky ew
 
-	label $args.where_l -text [mc "Directory:"]
+	label $args.where_l -text [mc "Target Directory:"]
 	entry $args.where_t \
 		-textvariable @local_path \
 		-font font_diff \

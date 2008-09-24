@@ -63,7 +63,7 @@ constructor dialog {} {
 		set urltype url
 	}
 	radiobutton $w.dest.url_r \
-		-text [mc "Arbitrary URL:"] \
+		-text [mc "Arbitrary Location:"] \
 		-value url \
 		-variable @urltype
 	entry $w.dest.url_t \
