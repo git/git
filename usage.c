@@ -41,26 +41,10 @@ static void (*die_routine)(const char *err, va_list params) NORETURN = die_built
 static void (*error_routine)(const char *err, va_list params) = error_builtin;
 static void (*warn_routine)(const char *err, va_list params) = warn_builtin;
 
-void set_usage_routine(void (*routine)(const char *err) NORETURN)
-{
-	usage_routine = routine;
-}
-
 void set_die_routine(void (*routine)(const char *err, va_list params) NORETURN)
 {
 	die_routine = routine;
 }
-
-void set_error_routine(void (*routine)(const char *err, va_list params))
-{
-	error_routine = routine;
-}
-
-void set_warn_routine(void (*routine)(const char *warn, va_list params))
-{
-	warn_routine = routine;
-}
-
 
 void usage(const char *err)
 {
