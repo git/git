@@ -4119,10 +4119,10 @@ sub git_summary {
 
 	if (@forklist) {
 		git_print_header_div('forks');
-		git_project_list_body(\@forklist, undef, 0, 15,
+		git_project_list_body(\@forklist, 'age', 0, 15,
 		                      $#forklist <= 15 ? undef :
 		                      $cgi->a({-href => href(action=>"forks")}, "..."),
-		                      'noheader');
+		                      'no_header');
 	}
 
 	git_footer_html();
