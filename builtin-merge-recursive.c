@@ -444,10 +444,8 @@ static int remove_file(int clean, const char *path, int no_wd)
 			return -1;
 	}
 	if (update_working_directory) {
-		unlink(path);
-		if (errno != ENOENT || errno != EISDIR)
+		if (remove_path(path) && errno != ENOENT)
 			return -1;
-		remove_path(path);
 	}
 	return 0;
 }
