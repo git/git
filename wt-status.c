@@ -22,12 +22,6 @@ static char wt_status_colors[][COLOR_MAXLEN] = {
 	"\033[31m", /* WT_STATUS_NOBRANCH: red */
 };
 
-static const char use_add_msg[] =
-"use \"git add <file>...\" to update what will be committed";
-static const char use_add_rm_msg[] =
-"use \"git add/rm <file>...\" to update what will be committed";
-static const char use_add_to_include_msg[] =
-"use \"git add <file>...\" to include in what will be committed";
 enum untracked_status_type show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 
 static int parse_status_slot(const char *var, int offset)
@@ -76,12 +70,24 @@ static void wt_status_print_cached_header(struct wt_status *s)
 	color_fprintf_ln(s->fp, c, "#");
 }
 
-static void wt_status_print_header(struct wt_status *s,
-				   const char *main, const char *sub)
+static void wt_status_print_dirty_header(struct wt_status *s,
+					 int has_deleted)
 {
 	const char *c = color(WT_STATUS_HEADER);
-	color_fprintf_ln(s->fp, c, "# %s:", main);
-	color_fprintf_ln(s->fp, c, "#   (%s)", sub);
+	color_fprintf_ln(s->fp, c, "# Changed but not updated:");
+	if (!has_deleted)
+		color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to update what will be committed)");
+	else
+		color_fprintf_ln(s->fp, c, "#   (use \"git add/rm <file>...\" to update what will be committed)");
+	color_fprintf_ln(s->fp, c, "#   (use \"git checkout -- <file>...\" to discard changes in working directory)");
+	color_fprintf_ln(s->fp, c, "#");
+}
+
+static void wt_status_print_untracked_header(struct wt_status *s)
+{
+	const char *c = color(WT_STATUS_HEADER);
+	color_fprintf_ln(s->fp, c, "# Untracked files:");
+	color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to include in what will be committed)");
 	color_fprintf_ln(s->fp, c, "#");
 }
 
@@ -166,14 +172,14 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 	struct wt_status *s = data;
 	int i;
 	if (q->nr) {
-		const char *msg = use_add_msg;
+		int has_deleted = 0;
 		s->workdir_dirty = 1;
 		for (i = 0; i < q->nr; i++)
 			if (q->queue[i]->status == DIFF_STATUS_DELETED) {
-				msg = use_add_rm_msg;
+				has_deleted = 1;
 				break;
 			}
-		wt_status_print_header(s, "Changed but not updated", msg);
+		wt_status_print_dirty_header(s, has_deleted);
 	}
 	for (i = 0; i < q->nr; i++)
 		wt_status_print_filepair(s, WT_STATUS_CHANGED, q->queue[i]);
@@ -291,8 +297,7 @@ static void wt_status_print_untracked(struct wt_status *s)
 		}
 		if (!shown_header) {
 			s->workdir_untracked = 1;
-			wt_status_print_header(s, "Untracked files",
-					       use_add_to_include_msg);
+			wt_status_print_untracked_header(s);
 			shown_header = 1;
 		}
 		color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
