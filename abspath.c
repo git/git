@@ -1,5 +1,16 @@
 #include "cache.h"
 
+/*
+ * Do not use this for inspecting *tracked* content.  When path is a
+ * symlink to a directory, we do not want to say it is a directory when
+ * dealing with tracked content in the working tree.
+ */
+int is_directory(const char *path)
+{
+	struct stat st;
+	return (!stat(path, &st) && S_ISDIR(st.st_mode));
+}
+
 /* We allow "recursive" symbolic links. Only within reason, though. */
 #define MAXDEPTH 5
 
@@ -17,7 +28,7 @@ const char *make_absolute_path(const char *path)
 		die ("Too long path: %.*s", 60, path);
 
 	while (depth--) {
-		if (stat(buf, &st) || !S_ISDIR(st.st_mode)) {
+		if (!is_directory(buf)) {
 			char *last_slash = strrchr(buf, '/');
 			if (last_slash) {
 				*last_slash = '\0';

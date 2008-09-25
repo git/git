@@ -6,6 +6,8 @@
 #include "exec_cmd.h"
 #include "commit.h"
 #include "object.h"
+#include "remote.h"
+#include "transport.h"
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
@@ -462,14 +464,48 @@ static int delete_only(struct command *cmd)
 	return 1;
 }
 
-int main(int argc, char **argv)
+static int add_refs_from_alternate(struct alternate_object_database *e, void *unused)
+{
+	char *other = xstrdup(make_absolute_path(e->base));
+	size_t len = strlen(other);
+	struct remote *remote;
+	struct transport *transport;
+	const struct ref *extra;
+
+	while (other[len-1] == '/')
+		other[--len] = '\0';
+	if (len < 8 || memcmp(other + len - 8, "/objects", 8))
+		return 0;
+	/* Is this a git repository with refs? */
+	memcpy(other + len - 8, "/refs", 6);
+	if (!is_directory(other))
+		return 0;
+	other[len - 8] = '\0';
+	remote = remote_get(other);
+	transport = transport_get(remote, other);
+	for (extra = transport_get_remote_refs(transport);
+	     extra;
+	     extra = extra->next) {
+		add_extra_ref(".have", extra->old_sha1, 0);
+	}
+	transport_disconnect(transport);
+	free(other);
+	return 0;
+}
+
+static void add_alternate_refs(void)
+{
+	foreach_alt_odb(add_refs_from_alternate, NULL);
+}
+
+int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	char *dir = NULL;
 
 	argv++;
 	for (i = 1; i < argc; i++) {
-		char *arg = *argv++;
+		const char *arg = *argv++;
 
 		if (*arg == '-') {
 			/* Do flag handling here */
@@ -477,7 +513,7 @@ int main(int argc, char **argv)
 		}
 		if (dir)
 			usage(receive_pack_usage);
-		dir = arg;
+		dir = xstrdup(arg);
 	}
 	if (!dir)
 		usage(receive_pack_usage);
@@ -497,7 +533,9 @@ int main(int argc, char **argv)
 	else if (0 <= receive_unpack_limit)
 		unpack_limit = receive_unpack_limit;
 
+	add_alternate_refs();
 	write_head_info();
+	clear_extra_refs();
 
 	/* EOF */
 	packet_flush(1);

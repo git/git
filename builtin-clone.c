@@ -77,7 +77,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 	for (i = 0; i < ARRAY_SIZE(suffix); i++) {
 		const char *path;
 		path = mkpath("%s%s", repo, suffix[i]);
-		if (!stat(path, &st) && S_ISDIR(st.st_mode)) {
+		if (is_directory(path)) {
 			*is_bundle = 0;
 			return xstrdup(make_nonrelative_path(path));
 		}
@@ -138,13 +138,6 @@ static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 	}
 
 	return xstrndup(start, end - start);
-}
-
-static int is_directory(const char *path)
-{
-	struct stat buf;
-
-	return !stat(path, &buf) && S_ISDIR(buf.st_mode);
 }
 
 static void strip_trailing_slashes(char *dir)

@@ -619,7 +619,7 @@ static struct ref *get_refs_via_connect(struct transport *transport)
 	struct ref *refs;
 
 	connect_setup(transport);
-	get_remote_heads(data->fd[0], &refs, 0, NULL, 0);
+	get_remote_heads(data->fd[0], &refs, 0, NULL, 0, NULL);
 
 	return refs;
 }
@@ -652,7 +652,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	if (!data->conn) {
 		connect_setup(transport);
-		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL, 0);
+		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL, 0, NULL);
 	}
 
 	refs = fetch_pack(&args, data->fd, data->conn,

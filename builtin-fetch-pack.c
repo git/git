@@ -735,7 +735,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	conn = git_connect(fd, (char *)dest, args.uploadpack,
 			   args.verbose ? CONNECT_VERBOSE : 0);
 	if (conn) {
-		get_remote_heads(fd[0], &ref, 0, NULL, 0);
+		get_remote_heads(fd[0], &ref, 0, NULL, 0, NULL);
 
 		ref = fetch_pack(&args, fd, conn, ref, dest, nr_heads, heads, NULL);
 		close(fd[0]);

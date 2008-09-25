@@ -319,7 +319,6 @@ static int git_rerere_config(const char *var, const char *value, void *cb)
 
 static int is_rerere_enabled(void)
 {
-	struct stat st;
 	const char *rr_cache;
 	int rr_cache_exists;
 
@@ -327,7 +326,7 @@ static int is_rerere_enabled(void)
 		return 0;
 
 	rr_cache = git_path("rr-cache");
-	rr_cache_exists = !stat(rr_cache, &st) && S_ISDIR(st.st_mode);
+	rr_cache_exists = is_directory(rr_cache);
 	if (rerere_enabled < 0)
 		return rr_cache_exists;
 

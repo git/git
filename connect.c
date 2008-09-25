@@ -41,12 +41,20 @@ int check_ref_type(const struct ref *ref, int flags)
 	return check_ref(ref->name, strlen(ref->name), flags);
 }
 
+static void add_extra_have(struct extra_have_objects *extra, unsigned char *sha1)
+{
+	ALLOC_GROW(extra->array, extra->nr + 1, extra->alloc);
+	hashcpy(&(extra->array[extra->nr][0]), sha1);
+	extra->nr++;
+}
+
 /*
  * Read all the refs from the other end
  */
 struct ref **get_remote_heads(int in, struct ref **list,
 			      int nr_match, char **match,
-			      unsigned int flags)
+			      unsigned int flags,
+			      struct extra_have_objects *extra_have)
 {
 	*list = NULL;
 	for (;;) {
@@ -70,6 +78,12 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		if (len != name_len + 41) {
 			free(server_capabilities);
 			server_capabilities = xstrdup(name + name_len + 1);
+		}
+
+		if (extra_have &&
+		    name_len == 5 && !memcmp(".have", name, 5)) {
+			add_extra_have(extra_have, old_sha1);
+			continue;
 		}
 
 		if (!check_ref(name, name_len, flags))

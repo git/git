@@ -254,7 +254,6 @@ static void read_info_alternates(const char * alternates, int depth);
  */
 static int link_alt_odb_entry(const char * entry, int len, const char * relative_base, int depth)
 {
-	struct stat st;
 	const char *objdir = get_object_directory();
 	struct alternate_object_database *ent;
 	struct alternate_object_database *alt;
@@ -285,7 +284,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	ent->base[pfxlen] = ent->base[entlen-1] = 0;
 
 	/* Detect cases where alternate disappeared */
-	if (stat(ent->base, &st) || !S_ISDIR(st.st_mode)) {
+	if (!is_directory(ent->base)) {
 		error("object directory %s does not exist; "
 		      "check .git/objects/info/alternates.",
 		      ent->base);
@@ -396,6 +395,16 @@ void add_to_alternates_file(const char *reference)
 		die("could not close alternates file");
 	if (alt_odb_tail)
 		link_alt_odb_entries(alt, alt + strlen(alt), '\n', NULL, 0);
+}
+
+void foreach_alt_odb(alt_odb_fn fn, void *cb)
+{
+	struct alternate_object_database *ent;
+
+	prepare_alt_odb();
+	for (ent = alt_odb_list; ent; ent = ent->next)
+		if (fn(ent, cb))
+			return;
 }
 
 void prepare_alt_odb(void)
