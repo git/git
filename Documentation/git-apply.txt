@@ -14,7 +14,8 @@ SYNOPSIS
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-pNUM] [-CNUM] [--inaccurate-eof] [--recount] [--cached]
 	  [--whitespace=<nowarn|warn|fix|error|error-all>]
-	  [--exclude=PATH] [--directory=<root>] [--verbose] [<patch>...]
+	  [--exclude=PATH] [--include=PATH] [--directory=<root>]
+	  [--verbose] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -136,6 +137,17 @@ discouraged.
 	Don't apply changes to files matching the given path pattern. This can
 	be useful when importing patchsets, where you want to exclude certain
 	files or directories.
+
+--include=<path-pattern>::
+	Apply changes to files matching the given path pattern. This can
+	be useful when importing patchsets, where you want to include certain
+	files or directories.
++
+When --exclude and --include patterns are used, they are examined in the
+order they appear on the command line, and the first match determines if a
+patch to each path is used.  A patch to a path that does not match any
+include/exclude pattern is used by default if there is no include pattern
+on the command line, and ignored if there is any include pattern.
 
 --whitespace=<action>::
 	When applying a patch, detect a new or modified line that has
