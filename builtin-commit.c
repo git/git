@@ -667,14 +667,14 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 }
 
 /*
- * Find out if the message starting at position 'start' in the strbuf
- * contains only whitespace and Signed-off-by lines.
+ * Find out if the message in the strbuf contains only whitespace and
+ * Signed-off-by lines.
  */
-static int message_is_empty(struct strbuf *sb, int start)
+static int message_is_empty(struct strbuf *sb)
 {
 	struct strbuf tmpl;
 	const char *nl;
-	int eol, i;
+	int eol, i, start = 0;
 
 	if (cleanup_mode == CLEANUP_NONE && sb->len)
 		return 0;
@@ -929,34 +929,14 @@ static const char commit_utf8_warn[] =
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
-static void add_parent(struct strbuf *sb, const unsigned char *sha1)
-{
-	struct object *obj = parse_object(sha1);
-	const char *parent = sha1_to_hex(sha1);
-	const char *cp;
-
-	if (!obj)
-		die("Unable to find commit parent %s", parent);
-	if (obj->type != OBJ_COMMIT)
-		die("Parent %s isn't a proper commit", parent);
-
-	for (cp = sb->buf; cp && (cp = strstr(cp, "\nparent ")); cp += 8) {
-		if (!memcmp(cp + 8, parent, 40) && cp[48] == '\n') {
-			error("duplicate parent %s ignored", parent);
-			return;
-		}
-	}
-	strbuf_addf(sb, "parent %s\n", parent);
-}
-
 int cmd_commit(int argc, const char **argv, const char *prefix)
 {
-	int header_len;
 	struct strbuf sb;
 	const char *index_file, *reflog_msg;
 	char *nl, *p;
 	unsigned char commit_sha1[20];
 	struct ref_lock *ref_lock;
+	struct commit_list *parents = NULL, **pptr = &parents;
 
 	git_config(git_commit_config, NULL);
 
@@ -971,13 +951,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		return 1;
 	}
 
-	/*
-	 * The commit object
-	 */
-	strbuf_init(&sb, 0);
-	strbuf_addf(&sb, "tree %s\n",
-		    sha1_to_hex(active_cache_tree->sha1));
-
 	/* Determine parents */
 	if (initial_commit) {
 		reflog_msg = "commit (initial)";
@@ -991,13 +964,13 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			die("could not parse HEAD commit");
 
 		for (c = commit->parents; c; c = c->next)
-			add_parent(&sb, c->item->object.sha1);
+			pptr = &commit_list_insert(c->item, pptr)->next;
 	} else if (in_merge) {
 		struct strbuf m;
 		FILE *fp;
 
 		reflog_msg = "commit (merge)";
-		add_parent(&sb, head_sha1);
+		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
 		strbuf_init(&m, 0);
 		fp = fopen(git_path("MERGE_HEAD"), "r");
 		if (fp == NULL)
@@ -1007,24 +980,18 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			unsigned char sha1[20];
 			if (get_sha1_hex(m.buf, sha1) < 0)
 				die("Corrupt MERGE_HEAD file (%s)", m.buf);
-			add_parent(&sb, sha1);
+			pptr = &commit_list_insert(lookup_commit(sha1), pptr)->next;
 		}
 		fclose(fp);
 		strbuf_release(&m);
 	} else {
 		reflog_msg = "commit";
-		strbuf_addf(&sb, "parent %s\n", sha1_to_hex(head_sha1));
+		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
 	}
-
-	strbuf_addf(&sb, "author %s\n",
-		    fmt_ident(author_name, author_email, author_date, IDENT_ERROR_ON_NO_NAME));
-	strbuf_addf(&sb, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
-	if (!is_encoding_utf8(git_commit_encoding))
-		strbuf_addf(&sb, "encoding %s\n", git_commit_encoding);
-	strbuf_addch(&sb, '\n');
+	parents = reduce_heads(parents);
 
 	/* Finally, get the commit message */
-	header_len = sb.len;
+	strbuf_init(&sb, 0);
 	if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
 		rollback_index_files();
 		die("could not read commit message");
@@ -1037,16 +1004,15 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	if (cleanup_mode != CLEANUP_NONE)
 		stripspace(&sb, cleanup_mode == CLEANUP_ALL);
-	if (sb.len < header_len || message_is_empty(&sb, header_len)) {
+	if (message_is_empty(&sb)) {
 		rollback_index_files();
 		fprintf(stderr, "Aborting commit due to empty commit message.\n");
 		exit(1);
 	}
-	strbuf_addch(&sb, '\0');
-	if (is_encoding_utf8(git_commit_encoding) && !is_utf8(sb.buf))
-		fprintf(stderr, commit_utf8_warn);
 
-	if (write_sha1_file(sb.buf, sb.len - 1, commit_type, commit_sha1)) {
+	if (commit_tree(sb.buf, active_cache_tree->sha1, parents, commit_sha1,
+			fmt_ident(author_name, author_email, author_date,
+				IDENT_ERROR_ON_NO_NAME))) {
 		rollback_index_files();
 		die("failed to write commit object");
 	}
@@ -1055,12 +1021,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 					   initial_commit ? NULL : head_sha1,
 					   0);
 
-	nl = strchr(sb.buf + header_len, '\n');
+	nl = strchr(sb.buf, '\n');
 	if (nl)
 		strbuf_setlen(&sb, nl + 1 - sb.buf);
 	else
 		strbuf_addch(&sb, '\n');
-	strbuf_remove(&sb, 0, header_len);
 	strbuf_insert(&sb, 0, reflog_msg, strlen(reflog_msg));
 	strbuf_insert(&sb, strlen(reflog_msg), ": ", 2);
 
