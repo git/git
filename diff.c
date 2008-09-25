@@ -1131,9 +1131,13 @@ static void show_dirstat(struct diff_options *options)
 		/*
 		 * Original minus copied is the removed material,
 		 * added is the new material.  They are both damages
-		 * made to the preimage.
+		 * made to the preimage. In --dirstat-by-file mode, count
+		 * damaged files, not damaged lines. This is done by
+		 * counting only a single damaged line per file.
 		 */
 		damage = (p->one->size - copied) + added;
+		if (DIFF_OPT_TST(options, DIRSTAT_BY_FILE) && damage > 0)
+			damage = 1;
 
 		ALLOC_GROW(dir.files, dir.nr + 1, dir.alloc);
 		dir.files[dir.nr].name = name;
@@ -2511,6 +2515,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--cumulative")) {
 		options->output_format |= DIFF_FORMAT_DIRSTAT;
 		DIFF_OPT_SET(options, DIRSTAT_CUMULATIVE);
+	} else if (opt_arg(arg, 0, "dirstat-by-file",
+			   &options->dirstat_percent)) {
+		options->output_format |= DIFF_FORMAT_DIRSTAT;
+		DIFF_OPT_SET(options, DIRSTAT_BY_FILE);
 	}
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;
