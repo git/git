@@ -99,7 +99,11 @@ int safe_create_leading_directories(char *path)
 		pos = strchr(pos, '/');
 		if (!pos)
 			break;
-		*pos = 0;
+		while (*++pos == '/')
+			;
+		if (!*pos)
+			break;
+		*--pos = '\0';
 		if (!stat(path, &st)) {
 			/* path exists */
 			if (!S_ISDIR(st.st_mode)) {
