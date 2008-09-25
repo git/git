@@ -256,9 +256,16 @@ constructor new {i_commit i_path i_jump} {
 	$w.ctxm add command \
 		-label [mc "Copy Commit"] \
 		-command [cb _copycommit]
+	$w.ctxm add separator
+	menu $w.ctxm.enc
+	build_encoding_menu $w.ctxm.enc [cb _setencoding]
+	$w.ctxm add cascade \
+		-label [mc "Encoding"] \
+		-menu $w.ctxm.enc
 	$w.ctxm add command \
 		-label [mc "Do Full Copy Detection"] \
 		-command [cb _fullcopyblame]
+	$w.ctxm add separator
 	$w.ctxm add command \
 		-label [mc "Show History Context"] \
 		-command [cb _gitkcommit]
@@ -399,7 +406,10 @@ method _load {jump} {
 	} else {
 		set fd [git_read cat-file blob "$commit:$path"]
 	}
-	fconfigure $fd -blocking 0 -translation lf -encoding binary
+	fconfigure $fd \
+		-blocking 0 \
+		-translation lf \
+		-encoding [get_path_encoding $path]
 	fileevent $fd readable [cb _read_file $fd $jump]
 	set current_fd $fd
 }
@@ -508,7 +518,7 @@ method _exec_blame {cur_w cur_d options cur_s} {
 	}
 	lappend options -- $path
 	set fd [eval git_read --nice blame $options]
-	fconfigure $fd -blocking 0 -translation lf -encoding binary
+	fconfigure $fd -blocking 0 -translation lf -encoding utf-8
 	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd
 	set blame_lines 0
@@ -788,6 +798,16 @@ method _click {cur_w pos} {
 	_showcommit $this $cur_w $lno
 }
 
+method _setencoding {enc} {
+	force_path_encoding $path $enc
+	_load $this [list \
+		$highlight_column \
+		$highlight_line \
+		[lindex [$w_file xview] 0] \
+		[lindex [$w_file yview] 0] \
+		]
+}
+
 method _load_commit {cur_w cur_d pos} {
 	upvar #0 $cur_d line_data
 	set lno [lindex [split [$cur_w index $pos] .] 0]
@@ -881,12 +901,6 @@ method _showcommit {cur_w lno} {
 				set enc [tcl_encoding $enc]
 				if {$enc ne {}} {
 					set msg [encoding convertfrom $enc $msg]
-					set author_name [encoding convertfrom $enc $author_name]
-					set committer_name [encoding convertfrom $enc $committer_name]
-					set header($cmit,author) $author_name
-					set header($cmit,committer) $committer_name
-					set header($cmit,summary) \
-					[encoding convertfrom $enc $header($cmit,summary)]
 				}
 				set msg [string trim $msg]
 			}
@@ -942,9 +956,20 @@ method _format_offset_date {base offset} {
 }
 
 method _gitkcommit {} {
+	global nullid
+
 	set dat [_get_click_amov_info $this]
 	if {$dat ne {}} {
 		set cmit [lindex $dat 0]
+
+		# If the line belongs to the working copy, use HEAD instead
+		if {$cmit eq $nullid} {
+			if {[catch {set cmit [git rev-parse --verify HEAD]} err]} {
+				error_popup [strcat [mc "Cannot find HEAD commit:"] "\n\n$err"]
+				return;
+			}
+		}
+
 		set radius [get_config gui.blamehistoryctx]
 		set cmdline [list --select-commit=$cmit]
 
@@ -981,12 +1006,20 @@ method _gitkcommit {} {
 }
 
 method _blameparent {} {
+	global nullid
+
 	set dat [_get_click_amov_info $this]
 	if {$dat ne {}} {
 		set cmit [lindex $dat 0]
 		set new_path [lindex $dat 1]
 
-		if {[catch {set cparent [git rev-parse --verify "$cmit^"]}]} {
+		# Allow using Blame Parent on lines modified in the working copy
+		if {$cmit eq $nullid} {
+			set parent_ref "HEAD"
+		} else {
+			set parent_ref "$cmit^"
+		}
+		if {[catch {set cparent [git rev-parse --verify $parent_ref]} err]} {
 			error_popup [strcat [mc "Cannot find parent commit:"] "\n\n$err"]
 			return;
 		}
@@ -996,8 +1029,12 @@ method _blameparent {} {
 		# Generate a diff between the commit and its parent,
 		# and use the hunks to update the line number.
 		# Request zero context to simplify calculations.
-		if {[catch {set fd [eval git_read diff-tree \
-				--unified=0 $cparent $cmit $new_path]} err]} {
+		if {$cmit eq $nullid} {
+			set diffcmd [list diff-index --unified=0 $cparent -- $new_path]
+		} else {
+			set diffcmd [list diff-tree --unified=0 $cparent $cmit -- $new_path]
+		}
+		if {[catch {set fd [eval git_read $diffcmd]} err]} {
 			$status stop [mc "Unable to display parent"]
 			error_popup [strcat [mc "Error loading diff:"] "\n\n$err"]
 			return

@@ -1,6 +1,28 @@
 # git-gui options editor
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+proc config_check_encodings {} {
+	global repo_config_new global_config_new
+
+	set enc $global_config_new(gui.encoding)
+	if {$enc eq {}} {
+		set global_config_new(gui.encoding) [encoding system]
+	} elseif {[tcl_encoding $enc] eq {}} {
+		error_popup [mc "Invalid global encoding '%s'" $enc]
+		return 0
+	}
+
+	set enc $repo_config_new(gui.encoding)
+	if {$enc eq {}} {
+		set repo_config_new(gui.encoding) [encoding system]
+	} elseif {[tcl_encoding $enc] eq {}} {
+		error_popup [mc "Invalid repo encoding '%s'" $enc]
+		return 0
+	}
+
+	return 1
+}
+
 proc save_config {} {
 	global default_config font_descs
 	global repo_config global_config
@@ -130,6 +152,7 @@ proc do_options {} {
 		{i-1..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
 		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}
 		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
+		{c gui.encoding {mc "Default File Contents Encoding"}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]
@@ -159,6 +182,7 @@ proc do_options {} {
 				pack $w.$f.$optid.v -side right -anchor e -padx 5
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
+			c -
 			t {
 				frame $w.$f.$optid
 				label $w.$f.$optid.l -text "$text:"
@@ -171,6 +195,16 @@ proc do_options {} {
 				pack $w.$f.$optid.v -side left -anchor w \
 					-fill x -expand 1 \
 					-padx 5
+				if {$type eq {c}} {
+					menu $w.$f.$optid.m
+					build_encoding_menu $w.$f.$optid.m \
+						[list set ${f}_config_new($name)] 1
+					button $w.$f.$optid.b \
+						-text [mc "Change"] \
+						-command [list popup_btn_menu \
+							$w.$f.$optid.m $w.$f.$optid.b]
+					pack $w.$f.$optid.b -side left -anchor w
+				}
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
 			}
@@ -275,6 +309,7 @@ proc do_restore_defaults {} {
 }
 
 proc do_save_config {w} {
+	if {![config_check_encodings]} return
 	if {[catch {save_config} err]} {
 		error_popup [strcat [mc "Failed to completely save options:"] "\n\n$err"]
 	}
