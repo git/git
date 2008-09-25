@@ -3605,19 +3605,13 @@ sub fill_project_list_info {
 	return @projects;
 }
 
-# print 'sort by' <th> element, either sorting by $key if $name eq $order
-# (changing $list), or generating 'sort by $name' replay link otherwise
+# print 'sort by' <th> element, generating 'sort by $name' replay link
+# if that order is not selected
 sub print_sort_th {
-	my ($str_sort, $name, $order, $key, $header, $list) = @_;
-	$key    ||= $name;
+	my ($name, $order, $header) = @_;
 	$header ||= ucfirst($name);
 
 	if ($order eq $name) {
-		if ($str_sort) {
-			@$list = sort {$a->{$key} cmp $b->{$key}} @$list;
-		} else {
-			@$list = sort {$a->{$key} <=> $b->{$key}} @$list;
-		}
 		print "<th>$header</th>\n";
 	} else {
 		print "<th>" .
@@ -3625,14 +3619,6 @@ sub print_sort_th {
 		               -class => "header"}, $header) .
 		      "</th>\n";
 	}
-}
-
-sub print_sort_th_str {
-	print_sort_th(1, @_);
-}
-
-sub print_sort_th_num {
-	print_sort_th(0, @_);
 }
 
 sub git_project_list_body {
@@ -3645,20 +3631,29 @@ sub git_project_list_body {
 	$from = 0 unless defined $from;
 	$to = $#projects if (!defined $to || $#projects < $to);
 
+	my %order_info = (
+		project => { key => 'path', type => 'str' },
+		descr => { key => 'descr_long', type => 'str' },
+		owner => { key => 'owner', type => 'str' },
+		age => { key => 'age', type => 'num' }
+	);
+	my $oi = $order_info{$order};
+	if ($oi->{'type'} eq 'str') {
+		@projects = sort {$a->{$oi->{'key'}} cmp $b->{$oi->{'key'}}} @projects;
+	} else {
+		@projects = sort {$a->{$oi->{'key'}} <=> $b->{$oi->{'key'}}} @projects;
+	}
+
 	print "<table class=\"project_list\">\n";
 	unless ($no_header) {
 		print "<tr>\n";
 		if ($check_forks) {
 			print "<th></th>\n";
 		}
-		print_sort_th_str('project', $order, 'path',
-		                  'Project', \@projects);
-		print_sort_th_str('descr', $order, 'descr_long',
-		                  'Description', \@projects);
-		print_sort_th_str('owner', $order, 'owner',
-		                  'Owner', \@projects);
-		print_sort_th_num('age', $order, 'age',
-		                  'Last Change', \@projects);
+		print_sort_th('project', $order, 'Project');
+		print_sort_th('descr', $order, 'Description');
+		print_sort_th('owner', $order, 'Owner');
+		print_sort_th('age', $order, 'Last Change');
 		print "<th></th>\n" . # for links
 		      "</tr>\n";
 	}
