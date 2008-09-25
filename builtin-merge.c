@@ -23,6 +23,7 @@
 #include "color.h"
 #include "rerere.h"
 #include "help.h"
+#include "merge-recursive.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -547,28 +548,65 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 	struct commit_list *j;
 	struct strbuf buf;
 
-	args = xmalloc((4 + commit_list_count(common) +
-			commit_list_count(remoteheads)) * sizeof(char *));
-	strbuf_init(&buf, 0);
-	strbuf_addf(&buf, "merge-%s", strategy);
-	args[i++] = buf.buf;
-	for (j = common; j; j = j->next)
-		args[i++] = xstrdup(sha1_to_hex(j->item->object.sha1));
-	args[i++] = "--";
-	args[i++] = head_arg;
-	for (j = remoteheads; j; j = j->next)
-		args[i++] = xstrdup(sha1_to_hex(j->item->object.sha1));
-	args[i] = NULL;
-	ret = run_command_v_opt(args, RUN_GIT_CMD);
-	strbuf_release(&buf);
-	i = 1;
-	for (j = common; j; j = j->next)
-		free((void *)args[i++]);
-	i += 2;
-	for (j = remoteheads; j; j = j->next)
-		free((void *)args[i++]);
-	free(args);
-	return -ret;
+	if (!strcmp(strategy, "recursive") || !strcmp(strategy, "subtree")) {
+		int clean;
+		struct commit *result;
+		struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
+		int index_fd;
+		struct commit_list *reversed = NULL;
+		struct merge_options o;
+
+		if (remoteheads->next) {
+			error("Not handling anything other than two heads merge.");
+			return 2;
+		}
+
+		init_merge_options(&o);
+		if (!strcmp(strategy, "subtree"))
+			o.subtree_merge = 1;
+
+		o.branch1 = head_arg;
+		o.branch2 = remoteheads->item->util;
+
+		for (j = common; j; j = j->next)
+			commit_list_insert(j->item, &reversed);
+
+		index_fd = hold_locked_index(lock, 1);
+		clean = merge_recursive(&o, lookup_commit(head),
+				remoteheads->item, reversed, &result);
+		if (active_cache_changed &&
+				(write_cache(index_fd, active_cache, active_nr) ||
+				 commit_locked_index(lock)))
+			die ("unable to write %s", get_index_file());
+		rollback_lock_file(lock);
+		return clean ? 0 : 1;
+	} else {
+		args = xmalloc((4 + commit_list_count(common) +
+					commit_list_count(remoteheads)) * sizeof(char *));
+		strbuf_init(&buf, 0);
+		strbuf_addf(&buf, "merge-%s", strategy);
+		args[i++] = buf.buf;
+		for (j = common; j; j = j->next)
+			args[i++] = xstrdup(sha1_to_hex(j->item->object.sha1));
+		args[i++] = "--";
+		args[i++] = head_arg;
+		for (j = remoteheads; j; j = j->next)
+			args[i++] = xstrdup(sha1_to_hex(j->item->object.sha1));
+		args[i] = NULL;
+		ret = run_command_v_opt(args, RUN_GIT_CMD);
+		strbuf_release(&buf);
+		i = 1;
+		for (j = common; j; j = j->next)
+			free((void *)args[i++]);
+		i += 2;
+		for (j = remoteheads; j; j = j->next)
+			free((void *)args[i++]);
+		free(args);
+		discard_cache();
+		if (read_cache() < 0)
+			die("failed to read the cache");
+		return -ret;
+	}
 }
 
 static void count_diff_files(struct diff_queue_struct *q,
@@ -779,10 +817,6 @@ static int evaluate_result(void)
 	int cnt = 0;
 	struct rev_info rev;
 
-	discard_cache();
-	if (read_cache() < 0)
-		die("failed to read the cache");
-
 	/* Check how many files differ. */
 	init_revisions(&rev, "");
 	setup_revisions(0, NULL, &rev, NULL);
@@ -916,12 +950,14 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	for (i = 0; i < argc; i++) {
 		struct object *o;
+		struct commit *commit;
 
 		o = peel_to_type(argv[i], 0, NULL, OBJ_COMMIT);
 		if (!o)
 			die("%s - not something we can merge", argv[i]);
-		remotes = &commit_list_insert(lookup_commit(o->sha1),
-			remotes)->next;
+		commit = lookup_commit(o->sha1);
+		commit->util = (void *)argv[i];
+		remotes = &commit_list_insert(commit, remotes)->next;
 
 		strbuf_addf(&buf, "GITHEAD_%s", sha1_to_hex(o->sha1));
 		setenv(buf.buf, argv[i], 1);
@@ -1115,7 +1151,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		}
 
 		/* Automerge succeeded. */
-		discard_cache();
 		write_tree_trivial(result_tree);
 		automerge_was_ok = 1;
 		break;

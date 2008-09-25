@@ -293,6 +293,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 			 */
 			struct tree *result;
 			struct tree *work;
+			struct merge_options o;
 			if (!opts->merge)
 				return 1;
 			parse_commit(old->commit);
@@ -311,13 +312,17 @@ static int merge_working_tree(struct checkout_opts *opts,
 			 */
 
 			add_files_to_cache(NULL, NULL, 0);
-			work = write_tree_from_memory();
+			init_merge_options(&o);
+			o.verbosity = 0;
+			work = write_tree_from_memory(&o);
 
 			ret = reset_tree(new->commit->tree, opts, 1);
 			if (ret)
 				return ret;
-			merge_trees(new->commit->tree, work, old->commit->tree,
-				    new->name, "local", &result);
+			o.branch1 = new->name;
+			o.branch2 = "local";
+			merge_trees(&o, new->commit->tree, work,
+				old->commit->tree, &result);
 			ret = reset_tree(new->commit->tree, opts, 0);
 			if (ret)
 				return ret;
