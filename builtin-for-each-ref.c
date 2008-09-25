@@ -321,8 +321,8 @@ static const char *find_wholine(const char *who, int wholen, const char *buf, un
 static const char *copy_line(const char *buf)
 {
 	const char *eol = strchr(buf, '\n');
-	if (!eol)
-		return "";
+	if (!eol) // simulate strchrnul()
+		eol = buf + strlen(buf);
 	return xmemdupz(buf, eol - buf);
 }
 

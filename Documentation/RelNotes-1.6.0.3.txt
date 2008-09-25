@@ -16,6 +16,22 @@ Fixes since v1.6.0.2
 * Behaviour of "git diff --quiet" was inconsistent with "diff --exit-code"
   with the output redirected to /dev/null.
 
+* "git stash apply sash@{1}" was fixed to error out.  Prior versions
+  would have applied stash@{0} incorrectly.
+
+* "git for-each-ref --format=%(subject)" fixed for commits with no
+  no newline in the message body.
+
+* "git remote" fixed to protect printf from user input.
+
+* "git checkout -q" once again suppresses the locally modified file list.
+
+* Cross-directory renames are no longer used when creating packs.  This
+  allows more graceful behavior on filesystems like sshfs.
+
+* Stale temporary files under $GIT_DIR/objects/pack are now cleaned up
+  automatically by "git prune".
+
 * "Git.pm" tests relied on unnecessarily more recent version of Perl.
 
 * "gitweb" triggered undef warning on commits without log messages.
@@ -24,6 +40,6 @@ Many other documentation updates.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.2-32-g8d11fde
+O=v1.6.0.2-41-g7fe4a72
 echo O=$(git describe maint)
 git shortlog --no-merges $O..maint
