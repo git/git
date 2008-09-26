@@ -394,12 +394,10 @@ static int update_stages(const char *path, struct diff_filespec *o,
 
 static int remove_path(const char *name)
 {
-	int ret;
 	char *slash, *dirs;
 
-	ret = unlink(name);
-	if (ret)
-		return ret;
+	if (unlink(name))
+		return -1;
 	dirs = xstrdup(name);
 	while ((slash = strrchr(name, '/'))) {
 		*slash = '\0';
@@ -407,7 +405,7 @@ static int remove_path(const char *name)
 			break;
 	}
 	free(dirs);
-	return ret;
+	return 0;
 }
 
 static int remove_file(struct merge_options *o, int clean,
