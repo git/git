@@ -185,7 +185,7 @@ cmd_add()
 	else
 
 		module_clone "$path" "$realrepo" || exit
-		(unset GIT_DIR; cd "$path" && git checkout -q ${branch:+-b "$branch" "origin/$branch"}) ||
+		(unset GIT_DIR; cd "$path" && git checkout -f -q ${branch:+-b "$branch" "origin/$branch"}) ||
 		die "Unable to checkout submodule '$path'"
 	fi
 
@@ -311,8 +311,13 @@ cmd_update()
 
 		if test "$subsha1" != "$sha1"
 		then
+			force=
+			if test -z "$subsha1"
+			then
+				force="-f"
+			fi
 			(unset GIT_DIR; cd "$path" && git-fetch &&
-				git-checkout -q "$sha1") ||
+				git-checkout $force -q "$sha1") ||
 			die "Unable to checkout '$sha1' in submodule path '$path'"
 
 			say "Submodule path '$path': checked out '$sha1'"
