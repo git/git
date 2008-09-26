@@ -18,6 +18,7 @@
 #include "ll-merge.h"
 #include "interpolate.h"
 #include "attr.h"
+#include "dir.h"
 #include "merge-recursive.h"
 
 static int subtree_merge;
@@ -416,24 +417,6 @@ static int update_stages(const char *path, struct diff_filespec *o,
 	return 0;
 }
 
-static int remove_path(const char *name)
-{
-	int ret;
-	char *slash, *dirs;
-
-	ret = unlink(name);
-	if (ret)
-		return ret;
-	dirs = xstrdup(name);
-	while ((slash = strrchr(name, '/'))) {
-		*slash = '\0';
-		if (rmdir(name) != 0)
-			break;
-	}
-	free(dirs);
-	return ret;
-}
-
 static int remove_file(int clean, const char *path, int no_wd)
 {
 	int update_cache = index_only || clean;
@@ -444,7 +427,7 @@ static int remove_file(int clean, const char *path, int no_wd)
 			return -1;
 	}
 	if (update_working_directory) {
-		if (remove_path(path) && errno != ENOENT)
+		if (remove_path(path))
 			return -1;
 	}
 	return 0;
