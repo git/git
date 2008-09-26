@@ -81,4 +81,7 @@ extern int is_inside_dir(const char *dir);
 extern void setup_standard_excludes(struct dir_struct *dir);
 extern int remove_dir_recursively(struct strbuf *path, int only_empty);
 
+/* tries to remove the path with empty directories along it, ignores ENOENT */
+extern int remove_path(const char *path);
+
 #endif
