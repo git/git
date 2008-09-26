@@ -2413,7 +2413,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 
 	.mbar.commit add separator
 
-	if {![is_enabled nocommit]} {
+	if {![is_enabled nocommitmsg]} {
 		.mbar.commit add command -label [mc "Sign Off"] \
 			-command do_signoff \
 			-accelerator $M1T-S
@@ -2743,7 +2743,7 @@ pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.incall conf -state}
 
-if {![is_enabled nocommit]} {
+if {![is_enabled nocommitmsg]} {
 	button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
 		-command do_signoff
 	pack .vpane.lower.commarea.buttons.signoff -side top -fill x
