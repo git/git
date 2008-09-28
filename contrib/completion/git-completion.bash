@@ -1141,7 +1141,8 @@ _git_send_email ()
 			--no-suppress-from --no-thread --quiet
 			--signed-off-by-cc --smtp-pass --smtp-server
 			--smtp-server-port --smtp-ssl --smtp-user --subject
-			--suppress-cc --suppress-from --thread --to"
+			--suppress-cc --suppress-from --thread --to
+			--validate --no-validate"
 		return
 		;;
 	esac
