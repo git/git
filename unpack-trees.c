@@ -941,8 +941,17 @@ int twoway_merge(struct cache_entry **src, struct unpack_trees_options *o)
 			return -1;
 		}
 	}
-	else if (newtree)
+	else if (newtree) {
+		if (oldtree && !o->initial_checkout) {
+			/*
+			 * deletion of the path was staged;
+			 */
+			if (same(oldtree, newtree))
+				return 1;
+			return reject_merge(oldtree, o);
+		}
 		return merged_entry(newtree, current, o);
+	}
 	return deleted_entry(oldtree, current, o);
 }
 

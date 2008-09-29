@@ -2136,7 +2136,9 @@ static void write_sha1_file_prepare(const void *buf, unsigned long len,
  */
 int move_temp_to_file(const char *tmpfile, const char *filename)
 {
-	int ret = link(tmpfile, filename);
+	int ret = 0;
+	if (link(tmpfile, filename))
+		ret = errno;
 
 	/*
 	 * Coda hack - coda doesn't like cross-directory links,

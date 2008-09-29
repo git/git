@@ -2417,13 +2417,6 @@ int diff_setup_done(struct diff_options *options)
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	}
 
-	/*
-	 * If we postprocess in diffcore, we cannot simply return
-	 * upon the first hit.  We need to run diff as usual.
-	 */
-	if (options->pickaxe || options->filter)
-		DIFF_OPT_CLR(options, QUIET);
-
 	return 0;
 }
 
@@ -3411,10 +3404,7 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 
 void diffcore_std(struct diff_options *options)
 {
-	if (DIFF_OPT_TST(options, QUIET))
-		return;
-
-	if (options->skip_stat_unmatch && !DIFF_OPT_TST(options, FIND_COPIES_HARDER))
+	if (options->skip_stat_unmatch)
 		diffcore_skip_stat_unmatch(options);
 	if (options->break_opt != -1)
 		diffcore_break(options->break_opt);

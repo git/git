@@ -45,7 +45,7 @@ char *write_idx_file(char *index_name, struct pack_idx_entry **objects,
 	if (!index_name) {
 		static char tmpfile[PATH_MAX];
 		snprintf(tmpfile, sizeof(tmpfile),
-			 "%s/tmp_idx_XXXXXX", get_object_directory());
+			 "%s/pack/tmp_idx_XXXXXX", get_object_directory());
 		fd = xmkstemp(tmpfile);
 		index_name = xstrdup(tmpfile);
 	} else {

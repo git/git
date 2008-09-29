@@ -535,4 +535,15 @@ test_expect_success 'reset and bind merge' '
 
 '
 
+test_expect_success 'merge removes empty directories' '
+
+	git reset --hard master &&
+	git checkout -b rm &&
+	git rm d/e &&
+	git commit -mremoved-d/e &&
+	git checkout master &&
+	git merge -s recursive rm &&
+	test_must_fail test -d d
+'
+
 test_done

@@ -60,7 +60,7 @@ OPTIONS
 	linkgit:git-pack-objects[1].
 
 -f::
-	Pass the `--no-reuse-delta` option to 'git-pack-objects'. See
+	Pass the `--no-reuse-object` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
 -q::

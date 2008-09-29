@@ -144,7 +144,14 @@ show_stash () {
 	then
 		flags=--stat
 	fi
-	s=$(git rev-parse --revs-only --no-flags --default $ref_stash "$@")
+
+	if test $# = 0
+	then
+		set x "$ref_stash@{0}"
+		shift
+	fi
+
+	s=$(git rev-parse --revs-only --no-flags "$@")
 
 	w_commit=$(git rev-parse --verify "$s") &&
 	b_commit=$(git rev-parse --verify "$s^") &&
@@ -154,7 +161,7 @@ show_stash () {
 apply_stash () {
 	git update-index -q --refresh &&
 	git diff-files --quiet --ignore-submodules ||
-		die 'Cannot restore on top of a dirty state'
+		die 'Cannot apply to a dirty working tree, please stage your changes'
 
 	unstash_index=
 	case "$1" in
@@ -163,13 +170,19 @@ apply_stash () {
 		shift
 	esac
 
+	if test $# = 0
+	then
+		set x "$ref_stash@{0}"
+		shift
+	fi
+
 	# current index state
 	c_tree=$(git write-tree) ||
 		die 'Cannot apply a stash in the middle of a merge'
 
 	# stash records the work tree, and is a merge between the
 	# base commit (first parent) and the index tree (second parent).
-	s=$(git rev-parse --revs-only --no-flags --default $ref_stash "$@") &&
+	s=$(git rev-parse --revs-only --no-flags "$@") &&
 	w_tree=$(git rev-parse --verify "$s:") &&
 	b_tree=$(git rev-parse --verify "$s^1:") &&
 	i_tree=$(git rev-parse --verify "$s^2:") ||

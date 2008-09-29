@@ -160,7 +160,10 @@ Here are the "carry forward" rules:
       0 nothing             nothing  nothing  (does not happen)
       1 nothing             nothing  exists   use M
       2 nothing             exists   nothing  remove path from index
-      3 nothing             exists   exists   use M
+      3 nothing             exists   exists,  use M if "initial checkout"
+				     H == M   keep index otherwise
+				     exists   fail
+				     H != M
 
         clean I==H  I==M
        ------------------
@@ -207,6 +210,12 @@ you picked it up via e-mail in a patch form), `git diff-index
 merge, but it would not show in `git diff-index --cached $M`
 output after two-tree merge.
 
+Case #3 is slightly tricky and needs explanation.  The result from this
+rule logically should be to remove the path if the user staged the removal
+of the path and then swiching to a new branch.  That however will prevent
+the initial checkout from happening, so the rule is modified to use M (new
+tree) only when the contents of the index is empty.  Otherwise the removal
+of the path is kept as long as $H and $M are the same.
 
 3-Way Merge
 ~~~~~~~~~~~

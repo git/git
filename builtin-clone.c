@@ -58,7 +58,7 @@ static struct option builtin_clone_options[] = {
 	OPT_STRING(0, "reference", &option_reference, "repo",
 		   "reference repository"),
 	OPT_STRING('o', "origin", &option_origin, "branch",
-		   "use <branch> instead or 'origin' to track upstream"),
+		   "use <branch> instead of 'origin' to track upstream"),
 	OPT_STRING('u', "upload-pack", &option_upload_pack, "path",
 		   "path to git-upload-pack on the remote"),
 	OPT_STRING(0, "depth", &option_depth, "depth",

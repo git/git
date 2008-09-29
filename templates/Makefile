@@ -31,9 +31,11 @@ boilerplates.made : $(bpsrc)
 		dir=`expr "$$dst" : '\(.*\)/'` && \
 		mkdir -p blt/$$dir && \
 		case "$$boilerplate" in \
-		*--) ;; \
-		*) cp -p $$boilerplate blt/$$dst ;; \
-		esac || exit; \
+		*--) continue;; \
+		esac && \
+		cp $$boilerplate blt/$$dst && \
+		if test -x "blt/$$dst"; then rx=rx; else rx=r; fi && \
+		chmod a+$$rx "blt/$$dst" || exit; \
 	done && \
 	date >$@
 
