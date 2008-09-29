@@ -1439,8 +1439,6 @@ static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
 	{ "python", "^[ \t]*((class|def)[ \t].*)$", REG_EXTENDED },
 	{ "ruby", "^[ \t]*((class|module|def)[ \t].*)$",
 	  REG_EXTENDED },
-	{ "bibtex", "(@[a-zA-Z]{1,}[ \t]*\\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
-	  REG_EXTENDED },
 	{ "tex",
 	  "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
 	  REG_EXTENDED },
