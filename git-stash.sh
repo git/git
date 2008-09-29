@@ -161,7 +161,7 @@ show_stash () {
 apply_stash () {
 	git update-index -q --refresh &&
 	git diff-files --quiet --ignore-submodules ||
-		die 'Cannot restore on top of a dirty state'
+		die 'Cannot apply to a dirty working tree, please stage your changes'
 
 	unstash_index=
 	case "$1" in

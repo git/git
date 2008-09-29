@@ -19,6 +19,7 @@
 #include "interpolate.h"
 #include "attr.h"
 #include "merge-recursive.h"
+#include "dir.h"
 
 static struct tree *shift_tree_object(struct tree *one, struct tree *two)
 {
@@ -389,22 +390,6 @@ static int update_stages(const char *path, struct diff_filespec *o,
 	if (b)
 		if (add_cacheinfo(b->mode, b->sha1, path, 3, 0, options))
 			return -1;
-	return 0;
-}
-
-static int remove_path(const char *name)
-{
-	char *slash, *dirs;
-
-	if (unlink(name))
-		return -1;
-	dirs = xstrdup(name);
-	while ((slash = strrchr(name, '/'))) {
-		*slash = '\0';
-		if (rmdir(name) != 0)
-			break;
-	}
-	free(dirs);
 	return 0;
 }
 

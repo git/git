@@ -831,3 +831,23 @@ void setup_standard_excludes(struct dir_struct *dir)
 	if (excludes_file && !access(excludes_file, R_OK))
 		add_excludes_from_file(dir, excludes_file);
 }
+
+int remove_path(const char *name)
+{
+	char *slash;
+
+	if (unlink(name) && errno != ENOENT)
+		return -1;
+
+	slash = strrchr(name, '/');
+	if (slash) {
+		char *dirs = xstrdup(name);
+		slash = dirs + (slash - name);
+		do {
+			*slash = '\0';
+		} while (rmdir(dirs) && (slash = strrchr(dirs, '/')));
+		free(dirs);
+	}
+	return 0;
+}
+

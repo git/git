@@ -13,6 +13,7 @@
 #include "delta.h"
 #include "builtin.h"
 #include "string-list.h"
+#include "dir.h"
 
 /*
  *  --check turns on checking that the working tree matches the
@@ -2735,15 +2736,7 @@ static void remove_file(struct patch *patch, int rmdir_empty)
 				warning("unable to remove submodule %s",
 					patch->old_name);
 		} else if (!unlink(patch->old_name) && rmdir_empty) {
-			char *name = xstrdup(patch->old_name);
-			char *end = strrchr(name, '/');
-			while (end) {
-				*end = 0;
-				if (rmdir(name))
-					break;
-				end = strrchr(name, '/');
-			}
-			free(name);
+			remove_path(patch->old_name);
 		}
 	}
 }
