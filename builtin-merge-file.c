@@ -4,7 +4,7 @@
 #include "xdiff-interface.h"
 
 static const char merge_file_usage[] =
-"git merge-file [-p | --stdout] [-q | --quiet] [-L name1 [-L orig [-L name2]]] file1 orig_file file2";
+"git merge-file [-p | --stdout] [--diff3] [-q | --quiet] [-L name1 [-L orig [-L name2]]] file1 orig_file file2";
 
 int cmd_merge_file(int argc, const char **argv, const char *prefix)
 {
@@ -13,6 +13,17 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	mmbuffer_t result = {NULL, 0};
 	xpparam_t xpp = {XDF_NEED_MINIMAL};
 	int ret = 0, i = 0, to_stdout = 0;
+	int merge_level = XDL_MERGE_ZEALOUS_ALNUM;
+	int merge_style = 0;
+	int nongit;
+
+	prefix = setup_git_directory_gently(&nongit);
+	if (!nongit) {
+		/* Read the configuration file */
+		git_config(git_xmerge_config, NULL);
+		if (0 <= git_xmerge_style)
+			merge_style = git_xmerge_style;
+	}
 
 	while (argc > 4) {
 		if (!strcmp(argv[1], "-L") && i < 3) {
@@ -25,6 +36,8 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "-q") ||
 				!strcmp(argv[1], "--quiet"))
 			freopen("/dev/null", "w", stderr);
+		else if (!strcmp(argv[1], "--diff3"))
+			merge_style = XDL_MERGE_DIFF3;
 		else
 			usage(merge_file_usage);
 		argc--;
@@ -46,7 +59,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	}
 
 	ret = xdl_merge(mmfs + 1, mmfs + 0, names[0], mmfs + 2, names[2],
-			&xpp, XDL_MERGE_ZEALOUS_ALNUM, &result);
+			&xpp, merge_level | merge_style, &result);
 
 	for (i = 0; i < 3; i++)
 		free(mmfs[i].ptr);

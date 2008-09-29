@@ -369,7 +369,7 @@ test_expect_success \
     'checkout with --track, but without -b, fails with too short tracked name' '
     test_must_fail git checkout --track renamer'
 
-test_expect_success 'checkout an unmerged path should fail' '
+setup_conflicting_index () {
 	rm -f .git/index &&
 	O=$(echo original | git hash-object -w --stdin) &&
 	A=$(echo ourside | git hash-object -w --stdin) &&
@@ -380,7 +380,11 @@ test_expect_success 'checkout an unmerged path should fail' '
 		echo "100644 $A 2	file" &&
 		echo "100644 $B 3	file" &&
 		echo "100644 $A 0	filf"
-	) | git update-index --index-info &&
+	) | git update-index --index-info
+}
+
+test_expect_success 'checkout an unmerged path should fail' '
+	setup_conflicting_index &&
 	echo "none of the above" >sample &&
 	cat sample >fild &&
 	cat sample >file &&
@@ -389,6 +393,121 @@ test_expect_success 'checkout an unmerged path should fail' '
 	test_cmp sample fild &&
 	test_cmp sample filf &&
 	test_cmp sample file
+'
+
+test_expect_success 'checkout with an unmerged path can be ignored' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout -f fild file filf &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp sample file
+'
+
+test_expect_success 'checkout unmerged stage' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout --ours . &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp expect file &&
+	git checkout --theirs file &&
+	test ztheirside = "z$(cat file)"
+'
+
+test_expect_success 'checkout with --merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout -m -- fild file filf &&
+	(
+		echo "<<<<<<< ours"
+		echo ourside
+		echo "======="
+		echo theirside
+		echo ">>>>>>> theirs"
+	) >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_success 'checkout with --merge, in diff3 -m style' '
+	git config merge.conflictstyle diff3 &&
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout -m -- fild file filf &&
+	(
+		echo "<<<<<<< ours"
+		echo ourside
+		echo "|||||||"
+		echo original
+		echo "======="
+		echo theirside
+		echo ">>>>>>> theirs"
+	) >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_success 'checkout --conflict=merge, overriding config' '
+	git config merge.conflictstyle diff3 &&
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout --conflict=merge -- fild file filf &&
+	(
+		echo "<<<<<<< ours"
+		echo ourside
+		echo "======="
+		echo theirside
+		echo ">>>>>>> theirs"
+	) >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_success 'checkout --conflict=diff3' '
+	git config --unset merge.conflictstyle
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout --conflict=diff3 -- fild file filf &&
+	(
+		echo "<<<<<<< ours"
+		echo ourside
+		echo "|||||||"
+		echo original
+		echo "======="
+		echo theirside
+		echo ">>>>>>> theirs"
+	) >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
 '
 
 test_expect_success 'failing checkout -b should not break working tree' '
