@@ -7,10 +7,11 @@
 #include "parse-options.h"
 
 static const char * const prune_usage[] = {
-	"git prune [-n] [--expire <time>] [--] [<head>...]",
+	"git prune [-n] [-v] [--expire <time>] [--] [<head>...]",
 	NULL
 };
 static int show_only;
+static int verbose;
 static unsigned long expire;
 
 static int prune_tmp_object(const char *path, const char *filename)
@@ -39,11 +40,12 @@ static int prune_object(char *path, const char *filename, const unsigned char *s
 		if (st.st_mtime > expire)
 			return 0;
 	}
-	if (show_only) {
+	if (show_only || verbose) {
 		enum object_type type = sha1_object_info(sha1, NULL);
 		printf("%s %s\n", sha1_to_hex(sha1),
 		       (type > 0) ? typename(type) : "unknown");
-	} else
+	}
+	if (!show_only)
 		unlink(fullpath);
 	return 0;
 }
@@ -135,6 +137,8 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	const struct option options[] = {
 		OPT_BOOLEAN('n', NULL, &show_only,
 			    "do not remove, show only"),
+		OPT_BOOLEAN('v', NULL, &verbose,
+			"report pruned objects"),
 		OPT_DATE(0, "expire", &expire,
 			 "expire objects older than <time>"),
 		OPT_END()
