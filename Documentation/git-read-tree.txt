@@ -212,7 +212,7 @@ output after two-tree merge.
 
 Case #3 is slightly tricky and needs explanation.  The result from this
 rule logically should be to remove the path if the user staged the removal
-of the path and then swiching to a new branch.  That however will prevent
+of the path and then switching to a new branch.  That however will prevent
 the initial checkout from happening, so the rule is modified to use M (new
 tree) only when the contents of the index is empty.  Otherwise the removal
 of the path is kept as long as $H and $M are the same.
