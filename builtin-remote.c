@@ -650,10 +650,13 @@ static int get_one_entry(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
 
-	string_list_append(remote->name, list)->util = remote->url_nr ?
-		(void *)remote->url[0] : NULL;
-	if (remote->url_nr > 1)
-		warning("Remote %s has more than one URL", remote->name);
+	if (remote->url_nr > 0) {
+		int i;
+
+		for (i = 0; i < remote->url_nr; i++)
+			string_list_append(remote->name, list)->util = (void *)remote->url[i];
+	} else
+		string_list_append(remote->name, list)->util = NULL;
 
 	return 0;
 }
@@ -669,10 +672,14 @@ static int show_all(void)
 		sort_string_list(&list);
 		for (i = 0; i < list.nr; i++) {
 			struct string_list_item *item = list.items + i;
-			printf("%s%s%s\n", item->string,
-				verbose ? "\t" : "",
-				verbose && item->util ?
-					(const char *)item->util : "");
+			if (verbose)
+				printf("%s\t%s\n", item->string,
+					item->util ? (const char *)item->util : "");
+			else {
+				if (i && !strcmp((item - 1)->string, item->string))
+					continue;
+				printf("%s\n", item->string);
+			}
 		}
 	}
 	return result;
