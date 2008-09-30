@@ -53,7 +53,7 @@ test_expect_success 'checkout' '
 	(
 		cd test && git checkout b1
 	) >actual &&
-	grep -e "have 1 and 1 different" actual
+	grep "have 1 and 1 different" actual
 '
 
 test_expect_success 'status' '
@@ -63,7 +63,7 @@ test_expect_success 'status' '
 		# reports nothing to commit
 		test_must_fail git status
 	) >actual &&
-	grep -e "have 1 and 1 different" actual
+	grep "have 1 and 1 different" actual
 '
 
 

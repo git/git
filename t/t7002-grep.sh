@@ -109,7 +109,7 @@ do
 	'
 
 	test_expect_success "grep -c $L (no /dev/null)" '
-		! git grep -c test $H | grep -q /dev/null
+		! git grep -c test $H | grep /dev/null
         '
 
 done

@@ -29,7 +29,7 @@ test_expect_success '-A option leaves unreachable objects unpacked' '
 	git repack -A -d -l &&
 	# verify objects are packed in repository
 	test 3 = $(git verify-pack -v -- .git/objects/pack/*.idx |
-		   grep -e "^$fsha1 " -e "^$csha1 " -e "^$tsha1 " |
+		   egrep "^($fsha1|$csha1|$tsha1) " |
 		   sort | uniq | wc -l) &&
 	git show $fsha1 &&
 	git show $csha1 &&
@@ -41,7 +41,7 @@ test_expect_success '-A option leaves unreachable objects unpacked' '
 	git repack -A -d -l &&
 	# verify objects are retained unpacked
 	test 0 = $(git verify-pack -v -- .git/objects/pack/*.idx |
-		   grep -e "^$fsha1 " -e "^$csha1 " -e "^$tsha1 " |
+		   egrep "^($fsha1|$csha1|$tsha1) " |
 		   sort | uniq | wc -l) &&
 	git show $fsha1 &&
 	git show $csha1 &&

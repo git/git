@@ -56,7 +56,7 @@ gitweb_run () {
 	rm -f gitweb.log &&
 	perl -- "$TEST_DIRECTORY/../gitweb/gitweb.perl" \
 		>/dev/null 2>gitweb.log &&
-	if grep -q -s "^[[]" gitweb.log >/dev/null; then false; else true; fi
+	if grep "^[[]" gitweb.log >/dev/null 2>&1; then false; else true; fi
 
 	# gitweb.log is left for debugging
 }
