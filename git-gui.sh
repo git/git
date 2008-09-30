@@ -2090,7 +2090,9 @@ proc toggle_or_diff {w x y} {
 	if {$col == 0 && $y > 1} {
 		# Conflicts need special handling
 		if {[string first {U} $state] >= 0} {
-			merge_stage_workdir $path $w $lno
+			# $w must always be $ui_workdir, but...
+			if {$w ne $ui_workdir} { set lno {} }
+			merge_stage_workdir $path $lno
 			return
 		}
 

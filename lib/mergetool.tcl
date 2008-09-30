@@ -23,13 +23,14 @@ This operation can be undone only by restarting the merge." \
 	}
 }
 
-proc merge_stage_workdir {path w lno} {
+proc merge_stage_workdir {path {lno {}}} {
 	global current_diff_path diff_active
+	global current_diff_side ui_workdir
 
 	if {$diff_active} return
 
-	if {$path ne $current_diff_path} {
-		show_diff $path $w $lno {} [list do_merge_stage_workdir $path]
+	if {$path ne $current_diff_path || $ui_workdir ne $current_diff_side} {
+		show_diff $path $ui_workdir $lno {} [list do_merge_stage_workdir $path]
 	} else {
 		do_merge_stage_workdir $path
 	}

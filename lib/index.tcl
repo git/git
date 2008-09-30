@@ -298,11 +298,18 @@ proc add_helper {txt paths} {
 	set after {}
 	foreach path $paths {
 		switch -glob -- [lindex $file_states($path) 0] {
+		_U -
+		U? {
+			if {$path eq $current_diff_path} {
+				unlock_index
+				merge_stage_workdir $path
+				return
+			}
+		}
 		_O -
 		?M -
 		?D -
-		?T -
-		U? {
+		?T {
 			lappend pathList $path
 			if {$path eq $current_diff_path} {
 				set after {reshow_diff;}

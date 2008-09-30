@@ -40,6 +40,7 @@ The rescan will be automatically started now.
 		_O {
 			continue; # and pray it works!
 		}
+		_U
 		U? {
 			error_popup [mc "You are in the middle of a conflicted merge.
 
