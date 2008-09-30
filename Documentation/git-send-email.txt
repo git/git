@@ -182,14 +182,16 @@ configuration variable), then authentication is not attempted.
 +
 The --to option must be repeated for each user you want on the to list.
 
---no-validate::
-	Don't perform any sanity checks on patches.
+--[no-]validate::
+	Perform sanity checks on patches.
 	Currently, validation means the following:
 +
 --
 		*	Warn of patches that contain lines longer than 998 characters; this
 			is due to SMTP limits as described by http://www.ietf.org/rfc/rfc2821.txt.
 --
++
+This option can be set with sendemail[.<identity>].validate; default to --validate
 
 
 CONFIGURATION
@@ -241,6 +243,9 @@ sendemail.smtpencryption::
 
 sendemail.smtpssl::
 	Legacy boolean that sets 'smtpencryption=ssl' if enabled.
+
+sendemail.validate::
+    Boolean override for --[no-]validate.
 
 Author
 ------

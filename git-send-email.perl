@@ -65,7 +65,7 @@ Options:
    --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
    --quiet                        * Output one line of info per email.
    --dry-run                      * Don't actually send the emails.
-   --no-validate                  * Don't perform sanity checks on patches.
+   --[no-]validate                * Perform patch sanity checks. Default on.
 
 EOT
 	exit(1);
@@ -147,7 +147,7 @@ my ($quiet, $dry_run) = (0, 0);
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
 my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_encryption);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
-my ($no_validate);
+my ($validate);
 my (@suppress_cc);
 
 my %config_bool_settings = (
@@ -155,6 +155,7 @@ my %config_bool_settings = (
     "chainreplyto" => [\$chain_reply_to, 1],
     "suppressfrom" => [\$suppress_from, undef],
     "signedoffcc" => [\$signed_off_cc, undef],
+    "validate" => [\$validate, 1],
 );
 
 my %config_settings = (
@@ -221,7 +222,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
-		    "no-validate" => \$no_validate,
+		    "validate!" => \$validate,
 	 );
 
 unless ($rc) {
@@ -374,7 +375,7 @@ for my $f (@ARGV) {
 	}
 }
 
-if (!$no_validate) {
+if ($validate) {
 	foreach my $f (@files) {
 		unless (-p $f) {
 			my $error = validate_patch($f);
