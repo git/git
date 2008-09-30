@@ -473,7 +473,7 @@ Tracking and contributing to the trunk of a Subversion-managed project:
 
 ------------------------------------------------------------------------
 # Clone a repo (like git clone):
-	git svn clone http://svn.foo.org/project/trunk
+	git svn clone http://svn.example.com/project/trunk
 # Enter the newly cloned directory:
 	cd trunk
 # You should be on master branch, double-check with git-branch
@@ -495,7 +495,7 @@ Tracking and contributing to an entire Subversion-managed project
 
 ------------------------------------------------------------------------
 # Clone a repo (like git clone):
-	git svn clone http://svn.foo.org/project -T trunk -b branches -t tags
+	git svn clone http://svn.example.com/project -T trunk -b branches -t tags
 # View all branches and tags you have cloned:
 	git branch -r
 # Reset your master to trunk (or any other branch, replacing 'trunk'
@@ -514,7 +514,7 @@ have each person clone that repository with 'git-clone':
 
 ------------------------------------------------------------------------
 # Do the initial import on a server
-	ssh server "cd /pub && git svn clone http://svn.foo.org/project
+	ssh server "cd /pub && git svn clone http://svn.example.com/project
 # Clone locally - make sure the refs/remotes/ space matches the server
 	mkdir project
 	cd project
@@ -523,7 +523,7 @@ have each person clone that repository with 'git-clone':
 	git config --add remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
 	git fetch
 # Initialize git-svn locally (be sure to use the same URL and -T/-b/-t options as were used on server)
-	git svn init http://svn.foo.org/project
+	git svn init http://svn.example.com/project
 # Pull the latest changes from Subversion
 	git svn rebase
 ------------------------------------------------------------------------
