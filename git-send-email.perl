@@ -64,11 +64,11 @@ Options:
                   Only used if --compose is also set.  If --compose is not
 		  set, this will be prompted for.
 
-   --chain-reply-to If set, the replies will all be to the previous
+   --[no-]chain-reply-to If set, the replies will all be to the previous
                   email sent, rather than to the first email sent.
                   Defaults to on.
 
-   --signed-off-cc Automatically add email addresses that appear in
+   --[no-]signed-off-by-cc Automatically add email addresses that appear in
                  Signed-off-by: or Cc: lines to the cc: list. Defaults to on.
 
    --identity     The configuration identity, a subsection to prioritise over
@@ -95,9 +95,9 @@ Options:
 		  'cccmd' for the output of the cccmd, or 'all' to suppress
 		  all of these.
 
-   --suppress-from Suppress sending emails to yourself. Defaults to off.
+   --[no-]suppress-from Suppress sending emails to yourself. Defaults to off.
 
-   --thread       Specify that the "In-Reply-To:" header should be set on all
+   --[no-]thread       Specify that the "In-Reply-To:" header should be set on all
                   emails. Defaults to on.
 
    --quiet	  Make git-send-email less verbose.  One line per email
