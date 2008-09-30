@@ -8,7 +8,7 @@ git-log - Show commit logs
 
 SYNOPSIS
 --------
-'git log' <option>...
+'git log' [<options>] [<since>..<until>] [[\--] <path>...]
 
 DESCRIPTION
 -----------
@@ -57,8 +57,11 @@ include::diff-options.txt[]
 	Note that only message is considered, if also a diff is shown
 	its size is not included.
 
-<path>...::
-	Show only commits that affect any of the specified paths.
+[\--] <path>...::
+	Show only commits that affect any of the specified paths. To
+	prevent confusion with options and branch names, paths may need
+	to be prefixed with "\-- " to separate them from options or
+	refnames.
 
 
 include::rev-list-options.txt[]
