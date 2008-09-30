@@ -19,9 +19,12 @@ The header of the email is configurable by command line options.  If not
 specified on the command line, the user will be prompted with a ReadLine
 enabled interface to provide the necessary information.
 
+
 OPTIONS
 -------
-The options available are:
+
+Composing
+~~~~~~~~~
 
 --bcc::
 	Specify a "Bcc:" value for each email. Default is the value of
@@ -34,45 +37,14 @@ The --bcc option must be repeated for each user you want on the bcc list.
 +
 The --cc option must be repeated for each user you want on the cc list.
 
---cc-cmd::
-	Specify a command to execute once per patch file which
-	should generate patch file specific "Cc:" entries.
-	Output of this command must be single email address per line.
-	Default is the value of 'sendemail.cccmd' configuration value.
-
---[no-]chain-reply-to::
-	If this is set, each email will be sent as a reply to the previous
-	email sent.  If disabled with "--no-chain-reply-to", all emails after
-	the first will be sent as replies to the first email sent.  When using
-	this, it is recommended that the first file given be an overview of the
-	entire patch series. Default is the value of the 'sendemail.chainreplyto'
-	configuration value; if that is unspecified, default to --chain-reply-to.
-
 --compose::
 	Use $GIT_EDITOR, core.editor, $VISUAL, or $EDITOR to edit an
 	introductory message for the patch series.
-
---dry-run::
-	Do everything except actually send the emails.
-
---envelope-sender::
-	Specify the envelope sender used to send the emails.
-	This is useful if your default address is not the address that is
-	subscribed to a list. If you use the sendmail binary, you must have
-	suitable privileges for the -f parameter. Default is the value of
-	the 'sendemail.envelopesender' configuration variable; if that is
-	unspecified, choosing the envelope sender is left to your MTA.
 
 --from::
 	Specify the sender of the emails.  This will default to
 	the value GIT_COMMITTER_IDENT, as returned by "git var -l".
 	The user will still be prompted to confirm this entry.
-
---identity::
-	A configuration identity. When given, causes values in the
-	'sendemail.<identity>' subsection to take precedence over
-	values in the 'sendemail' section. The default identity is
-	the value of 'sendemail.identity'.
 
 --in-reply-to::
 	Specify the contents of the first In-Reply-To header.
@@ -81,14 +53,30 @@ The --cc option must be repeated for each user you want on the cc list.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
---quiet::
-	Make git-send-email less verbose.  One line per email should be
-	all that is output.
+--subject::
+	Specify the initial subject of the email thread.
+	Only necessary if --compose is also set.  If --compose
+	is not set, this will be prompted for.
 
---[no-]signed-off-by-cc::
-	If this is set, add emails found in Signed-off-by: or Cc: lines to the
-	cc list. Default is the value of 'sendemail.signedoffcc' configuration
-	value; if that is unspecified, default to --signed-off-by-cc.
+--to::
+	Specify the primary recipient of the emails generated. Generally, this
+	will be the upstream maintainer of the project involved. Default is the
+	value of the 'sendemail.to' configuration value; if that is unspecified,
+	this will be prompted for.
++
+The --to option must be repeated for each user you want on the to list.
+
+
+Sending
+~~~~~~~
+
+--envelope-sender::
+	Specify the envelope sender used to send the emails.
+	This is useful if your default address is not the address that is
+	subscribed to a list. If you use the sendmail binary, you must have
+	suitable privileges for the -f parameter. Default is the value of
+	the 'sendemail.envelopesender' configuration variable; if that is
+	unspecified, choosing the envelope sender is left to your MTA.
 
 --smtp-encryption::
 	Specify the encryption to use, either 'ssl' or 'tls'.  Any other
@@ -130,10 +118,34 @@ user is prompted for a password while the input is masked for privacy.
 	if a username is not specified (with '--smtp-user' or 'sendemail.smtpuser'),
 	then authentication is not attempted.
 
---subject::
-	Specify the initial subject of the email thread.
-	Only necessary if --compose is also set.  If --compose
-	is not set, this will be prompted for.
+
+Automating
+~~~~~~~~~~
+
+--cc-cmd::
+	Specify a command to execute once per patch file which
+	should generate patch file specific "Cc:" entries.
+	Output of this command must be single email address per line.
+	Default is the value of 'sendemail.cccmd' configuration value.
+
+--[no-]chain-reply-to::
+	If this is set, each email will be sent as a reply to the previous
+	email sent.  If disabled with "--no-chain-reply-to", all emails after
+	the first will be sent as replies to the first email sent.  When using
+	this, it is recommended that the first file given be an overview of the
+	entire patch series. Default is the value of the 'sendemail.chainreplyto'
+	configuration value; if that is unspecified, default to --chain-reply-to.
+
+--identity::
+	A configuration identity. When given, causes values in the
+	'sendemail.<identity>' subsection to take precedence over
+	values in the 'sendemail' section. The default identity is
+	the value of 'sendemail.identity'.
+
+--[no-]signed-off-by-cc::
+	If this is set, add emails found in Signed-off-by: or Cc: lines to the
+	cc list. Default is the value of 'sendemail.signedoffcc' configuration
+	value; if that is unspecified, default to --signed-off-by-cc.
 
 --suppress-cc::
 	Specify an additional category of recipients to suppress the
@@ -157,13 +169,16 @@ user is prompted for a password while the input is masked for privacy.
 	header set. Default is the value of the 'sendemail.thread' configuration
 	value; if that is unspecified, default to --thread.
 
---to::
-	Specify the primary recipient of the emails generated. Generally, this
-	will be the upstream maintainer of the project involved. Default is the
-	value of the 'sendemail.to' configuration value; if that is unspecified,
-	this will be prompted for.
-+
-The --to option must be repeated for each user you want on the to list.
+
+Administering
+~~~~~~~~~~~~~
+
+--dry-run::
+	Do everything except actually send the emails.
+
+--quiet::
+	Make git-send-email less verbose.  One line per email should be
+	all that is output.
 
 --[no-]validate::
 	Perform sanity checks on patches.
@@ -180,6 +195,7 @@ default to '--validate'.
 
 CONFIGURATION
 -------------
+
 sendemail.aliasesfile::
 	To avoid typing long email addresses, point this to one or more
 	email aliases files.  You must also supply 'sendemail.aliasfiletype'.
@@ -188,6 +204,7 @@ sendemail.aliasfiletype::
 	Format of the file(s) specified in sendemail.aliasesfile. Must be
 	one of 'mutt', 'mailrc', 'pine', or 'gnus'.
 
+
 Author
 ------
 Written by Ryan Anderson <ryan@michonline.com>
@@ -195,9 +212,11 @@ Written by Ryan Anderson <ryan@michonline.com>
 git-send-email is originally based upon
 send_lots_of_email.pl by Greg Kroah-Hartman.
 
+
 Documentation
 --------------
 Documentation by Ryan Anderson
+
 
 GIT
 ---
