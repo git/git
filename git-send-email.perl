@@ -39,33 +39,40 @@ package main;
 sub usage {
 	print <<EOT;
 git send-email [options] <file | directory>...
-Options:
-   --identity              <str>  * Use the sendemail.<id> options.
-   --from                  <str>  * Email From:
-   --envelope-sender       <str>  * Email envelope sender.
-   --to                    <str>  * Email To:
-   --cc                    <str>  * Email Cc:
-   --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
-   --bcc                   <str>  * Email Bcc:
-   --subject               <str>  * Email "Subject:" (only if --compose).
-   --compose                      * Open an editor for introduction.
-   --in-reply-to           <str>  * First "In-Reply-To:" (only if --compose).
-   --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default on.
-   --[no-]thread                  * Use In-Reply-To: field. Default on.
-   --[no-]signed-off-by-cc        * Actually send to Cc: and Signed-off-by:
-                                    addresses. Default on.
-   --suppress-cc           <str>  * author, self, sob, cccmd, all.
-   --[no-]suppress-from           * Don't send email to self. Default off.
-   --smtp-server       <str:int>  * Outgoing SMTP server to use. The port
-                                    is optional. Default 'localhost'.
-   --smtp-server-port      <int>  * Outgoing SMTP server port.
-   --smtp-user             <str>  * The username for SMTP-AUTH.
-   --smtp-pass             <str>  * The password for SMTP-AUTH; not necessary.
-   --smtp-encryption       <str>  * tls or ssl; anything else disables.
-   --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
-   --quiet                        * Output one line of info per email.
-   --dry-run                      * Don't actually send the emails.
-   --[no-]validate                * Perform patch sanity checks. Default on.
+
+  Composing:
+    --from                  <str>  * Email From:
+    --to                    <str>  * Email To:
+    --cc                    <str>  * Email Cc:
+    --bcc                   <str>  * Email Bcc:
+    --subject               <str>  * Email "Subject:"
+    --in-reply-to           <str>  * Email "In-Reply-To:"
+    --compose                      * Open an editor for introduction.
+
+  Sending:
+    --envelope-sender       <str>  * Email envelope sender.
+    --smtp-server       <str:int>  * Outgoing SMTP server to use. The port
+                                     is optional. Default 'localhost'.
+    --smtp-server-port      <int>  * Outgoing SMTP server port.
+    --smtp-user             <str>  * Username for SMTP-AUTH.
+    --smtp-pass             <str>  * Password for SMTP-AUTH; not necessary.
+    --smtp-encryption       <str>  * tls or ssl; anything else disables.
+    --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
+
+  Automating:
+    --identity              <str>  * Use the sendemail.<id> options.
+    --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
+    --suppress-cc           <str>  * author, self, sob, cccmd, all.
+    --[no-]signed-off-by-cc        * Send to Cc: and Signed-off-by:
+                                     addresses. Default on.
+    --[no-]suppress-from           * Send to self. Default off.
+    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default on.
+    --[no-]thread                  * Use In-Reply-To: field. Default on.
+
+  Administering:
+    --quiet                        * Output one line of info per email.
+    --dry-run                      * Don't actually send the emails.
+    --[no-]validate                * Perform patch sanity checks. Default on.
 
 EOT
 	exit(1);
