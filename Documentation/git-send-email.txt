@@ -221,7 +221,7 @@ sendemail.bcc::
 	Email address (or alias) to always bcc.
 
 sendemail.chainreplyto::
-	Boolean value specifying the default to the '--chain_reply_to'
+	Boolean value specifying the default to the '--[no-]chain-reply-to'
 	parameter.
 
 sendemail.smtpserver::
