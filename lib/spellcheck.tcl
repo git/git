@@ -314,6 +314,7 @@ method _run {} {
 method _read {} {
 	while {[gets $s_fd line] >= 0} {
 		set lineno [lindex $s_pending 0 0]
+		set line [string trim $line]
 
 		if {$s_clear} {
 			$w_text tag remove misspelled "$lineno.0" "$lineno.end"
