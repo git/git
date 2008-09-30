@@ -1429,6 +1429,16 @@ static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
 	  "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
 	  "^[ \t]*(([ \t]*[A-Za-z_][A-Za-z_0-9]*){2,}[ \t]*\\([^;]*)$",
 	  REG_EXTENDED },
+	{ "objc",
+	  /* Negate C statements that can look like functions */
+	  "!^[ \t]*(do|for|if|else|return|switch|while)\n"
+	  /* Objective-C methods */
+	  "^[ \t]*([-+][ \t]*\\([ \t]*[A-Za-z_][A-Za-z_0-9* \t]*\\)[ \t]*[A-Za-z_].*)$\n"
+	  /* C functions */
+	  "^[ \t]*(([ \t]*[A-Za-z_][A-Za-z_0-9]*){2,}[ \t]*\\([^;]*)$\n"
+	  /* Objective-C class/protocol definitions */
+	  "^(@(implementation|interface|protocol)[ \t].*)$",
+	  REG_EXTENDED },
 	{ "pascal",
 	  "^((procedure|function|constructor|destructor|interface|"
 		"implementation|initialization|finalization)[ \t]*.*)$"

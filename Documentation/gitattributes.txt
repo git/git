@@ -315,6 +315,8 @@ patterns are available:
 
 - `java` suitable for source code in the Java language.
 
+- `objc` suitable for source code in the Objective-C language.
+
 - `pascal` suitable for source code in the Pascal/Delphi language.
 
 - `php` suitable for source code in the PHP language.
