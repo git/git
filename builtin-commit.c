@@ -884,12 +884,11 @@ static char *get_commit_format_string(void)
 	const char *head = resolve_ref("HEAD", sha, 0, NULL);
 	struct strbuf buf = STRBUF_INIT;
 
-	strbuf_addstr(&buf, "format:%h");
+	/* use shouty-caps if we're on detached HEAD */
+	strbuf_addf(&buf, "format:%s", strcmp("HEAD", head) ? "" : "DETACHED commit");
+	strbuf_addstr(&buf, "%h (%s)");
 
-	/* Are we on a detached HEAD? */
-	if (!strcmp("HEAD", head))
-		strbuf_addstr(&buf, " on detached HEAD");
-	else if (!prefixcmp(head, "refs/heads/")) {
+	if (!prefixcmp(head, "refs/heads/")) {
 		const char *cp;
 		strbuf_addstr(&buf, " on ");
 		for (cp = head + 11; *cp; cp++) {
@@ -899,7 +898,6 @@ static char *get_commit_format_string(void)
 				strbuf_addch(&buf, *cp);
 		}
 	}
-	strbuf_addstr(&buf, ": %s");
 
 	return strbuf_detach(&buf, NULL);
 }
@@ -933,7 +931,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
-	printf("Created %scommit ", initial_commit ? "initial " : "");
+	printf("Created %s", initial_commit ? "root-commit " : "");
 
 	if (!log_tree_commit(&rev, commit)) {
 		struct strbuf buf = STRBUF_INIT;
