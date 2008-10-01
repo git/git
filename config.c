@@ -205,8 +205,27 @@ static int git_parse_file(config_fn_t fn, void *data)
 	int baselen = 0;
 	static char var[MAXNAME];
 
+	/* U+FEFF Byte Order Mark in UTF8 */
+	static const unsigned char *utf8_bom = (unsigned char *) "\xef\xbb\xbf";
+	const unsigned char *bomptr = utf8_bom;
+
 	for (;;) {
 		int c = get_next_char();
+		if (bomptr && *bomptr) {
+			/* We are at the file beginning; skip UTF8-encoded BOM
+			 * if present. Sane editors won't put this in on their
+			 * own, but e.g. Windows Notepad will do it happily. */
+			if ((unsigned char) c == *bomptr) {
+				bomptr++;
+				continue;
+			} else {
+				/* Do not tolerate partial BOM. */
+				if (bomptr != utf8_bom)
+					break;
+				/* No BOM at file beginning. Cool. */
+				bomptr = NULL;
+			}
+		}
 		if (c == '\n') {
 			if (config_file_eof)
 				return 0;
