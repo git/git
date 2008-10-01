@@ -878,35 +878,13 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return commitable ? 0 : 1;
 }
 
-static char *get_commit_format_string(void)
-{
-	unsigned char sha[20];
-	const char *head = resolve_ref("HEAD", sha, 0, NULL);
-	struct strbuf buf = STRBUF_INIT;
-
-	/* use shouty-caps if we're on detached HEAD */
-	strbuf_addf(&buf, "format:%s", strcmp("HEAD", head) ? "" : "DETACHED commit");
-	strbuf_addstr(&buf, "%h (%s)");
-
-	if (!prefixcmp(head, "refs/heads/")) {
-		const char *cp;
-		strbuf_addstr(&buf, " on ");
-		for (cp = head + 11; *cp; cp++) {
-			if (*cp == '%')
-				strbuf_addstr(&buf, "%x25");
-			else
-				strbuf_addch(&buf, *cp);
-		}
-	}
-
-	return strbuf_detach(&buf, NULL);
-}
-
 static void print_summary(const char *prefix, const unsigned char *sha1)
 {
 	struct rev_info rev;
 	struct commit *commit;
-	char *format = get_commit_format_string();
+	static const char *format = "format:%h: \"%s\"";
+	unsigned char junk_sha1[20];
+	const char *head = resolve_ref("HEAD", junk_sha1, 0, NULL);
 
 	commit = lookup_commit(sha1);
 	if (!commit)
@@ -931,7 +909,13 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
-	printf("Created %s", initial_commit ? "root-commit " : "");
+	printf("[%s%s]: created ",
+		!prefixcmp(head, "refs/heads/") ?
+			head + 11 :
+			!strcmp(head, "HEAD") ?
+				"detached HEAD" :
+				head,
+		initial_commit ? " (root-commit)" : "");
 
 	if (!log_tree_commit(&rev, commit)) {
 		struct strbuf buf = STRBUF_INIT;
@@ -939,7 +923,6 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 		printf("%s\n", buf.buf);
 		strbuf_release(&buf);
 	}
-	free(format);
 }
 
 static int git_commit_config(const char *k, const char *v, void *cb)
