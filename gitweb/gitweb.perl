@@ -775,7 +775,7 @@ sub quot_cec {
 	);
 	my $chr = ( (exists $es{$cntrl})
 		    ? $es{$cntrl}
-		    : sprintf('\%03o', ord($cntrl)) );
+		    : sprintf('\%2x', ord($cntrl)) );
 	if ($opts{-nohtml}) {
 		return $chr;
 	} else {
