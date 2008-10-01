@@ -7,7 +7,7 @@ struct progress;
 struct sha1file {
 	int fd;
 	unsigned int offset;
-	SHA_CTX ctx;
+	git_SHA_CTX ctx;
 	off_t total;
 	struct progress *tp;
 	const char *name;

@@ -36,7 +36,7 @@ struct object_request
 	char errorstr[CURL_ERROR_SIZE];
 	long http_code;
 	unsigned char real_sha1[20];
-	SHA_CTX c;
+	git_SHA_CTX c;
 	z_stream stream;
 	int zret;
 	int rename;
@@ -83,7 +83,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 		obj_req->stream.next_out = expn;
 		obj_req->stream.avail_out = sizeof(expn);
 		obj_req->zret = inflate(&obj_req->stream, Z_SYNC_FLUSH);
-		SHA1_Update(&obj_req->c, expn,
+		git_SHA1_Update(&obj_req->c, expn,
 			    sizeof(expn) - obj_req->stream.avail_out);
 	} while (obj_req->stream.avail_in && obj_req->zret == Z_OK);
 	data_received++;
@@ -144,7 +144,7 @@ static void start_object_request(struct walker *walker,
 
 	inflateInit(&obj_req->stream);
 
-	SHA1_Init(&obj_req->c);
+	git_SHA1_Init(&obj_req->c);
 
 	url = xmalloc(strlen(obj_req->repo->base) + 51);
 	obj_req->url = xmalloc(strlen(obj_req->repo->base) + 51);
@@ -184,7 +184,7 @@ static void start_object_request(struct walker *walker,
 	if (prev_read == -1) {
 		memset(&obj_req->stream, 0, sizeof(obj_req->stream));
 		inflateInit(&obj_req->stream);
-		SHA1_Init(&obj_req->c);
+		git_SHA1_Init(&obj_req->c);
 		if (prev_posn>0) {
 			prev_posn = 0;
 			lseek(obj_req->local, 0, SEEK_SET);
@@ -244,7 +244,7 @@ static void finish_object_request(struct object_request *obj_req)
 	}
 
 	inflateEnd(&obj_req->stream);
-	SHA1_Final(obj_req->real_sha1, &obj_req->c);
+	git_SHA1_Final(obj_req->real_sha1, &obj_req->c);
 	if (obj_req->zret != Z_STREAM_END) {
 		unlink(obj_req->tmpfile);
 		return;

@@ -3087,7 +3087,7 @@ static void diff_summary(FILE *file, struct diff_filepair *p)
 }
 
 struct patch_id_t {
-	SHA_CTX *ctx;
+	git_SHA_CTX *ctx;
 	int patchlen;
 };
 
@@ -3115,7 +3115,7 @@ static void patch_id_consume(void *priv, char *line, unsigned long len)
 
 	new_len = remove_space(line, len);
 
-	SHA1_Update(data->ctx, line, new_len);
+	git_SHA1_Update(data->ctx, line, new_len);
 	data->patchlen += new_len;
 }
 
@@ -3124,11 +3124,11 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
-	SHA_CTX ctx;
+	git_SHA_CTX ctx;
 	struct patch_id_t data;
 	char buffer[PATH_MAX * 4 + 20];
 
-	SHA1_Init(&ctx);
+	git_SHA1_Init(&ctx);
 	memset(&data, 0, sizeof(struct patch_id_t));
 	data.ctx = &ctx;
 
@@ -3190,7 +3190,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 					len2, p->two->path,
 					len1, p->one->path,
 					len2, p->two->path);
-		SHA1_Update(&ctx, buffer, len1);
+		git_SHA1_Update(&ctx, buffer, len1);
 
 		xpp.flags = XDF_NEED_MINIMAL;
 		xecfg.ctxlen = 3;
@@ -3199,7 +3199,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 			      &xpp, &xecfg, &ecb);
 	}
 
-	SHA1_Final(sha1, &ctx);
+	git_SHA1_Final(sha1, &ctx);
 	return 0;
 }
 

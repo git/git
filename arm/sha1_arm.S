@@ -10,7 +10,7 @@
  */
 
 	.text
-	.globl	sha_transform
+	.globl	arm_sha_transform
 
 /*
  * void sha_transform(uint32_t *hash, const unsigned char *data, uint32_t *W);
@@ -18,7 +18,7 @@
  * note: the "data" pointer may be unaligned.
  */
 
-sha_transform:
+arm_sha_transform:
 
 	stmfd	sp!, {r4 - r8, lr}
 
