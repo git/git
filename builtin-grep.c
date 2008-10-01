@@ -295,6 +295,9 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		push_arg("-l");
 	if (opt->unmatch_name_only)
 		push_arg("-L");
+	if (opt->null_following_name)
+		/* in GNU grep git's "-z" translates to "-Z" */
+		push_arg("-Z");
 	if (opt->count)
 		push_arg("-c");
 	if (opt->post_context || opt->pre_context) {
@@ -597,6 +600,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		if (!strcmp("-L", arg) ||
 		    !strcmp("--files-without-match", arg)) {
 			opt.unmatch_name_only = 1;
+			continue;
+		}
+		if (!strcmp("-z", arg) ||
+		    !strcmp("--null", arg)) {
+			opt.null_following_name = 1;
 			continue;
 		}
 		if (!strcmp("-c", arg) ||

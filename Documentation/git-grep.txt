@@ -15,6 +15,7 @@ SYNOPSIS
 	   [-E | --extended-regexp] [-G | --basic-regexp]
 	   [-F | --fixed-strings] [-n]
 	   [-l | --files-with-matches] [-L | --files-without-match]
+	   [-z | --null]
 	   [-c | --count] [--all-match]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-f <file>] [-e] <pattern>
@@ -93,6 +94,11 @@ OPTIONS
 	names of files that contain (or do not contain) matches.
 	For better compatibility with 'git-diff', --name-only is a
 	synonym for --files-with-matches.
+
+-z::
+--null::
+	Output \0 instead of the character that normally follows a
+	file name.
 
 -c::
 --count::
