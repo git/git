@@ -1098,7 +1098,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
 		return error("bad signature");
-	if (hdr->hdr_version != htonl(2))
+	if (hdr->hdr_version != htonl(2) && hdr->hdr_version != htonl(3))
 		return error("bad index version");
 	git_SHA1_Init(&c);
 	git_SHA1_Update(&c, hdr, size - 20);
@@ -1133,6 +1133,7 @@ int read_index(struct index_state *istate)
 static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_entry *ce)
 {
 	size_t len;
+	const char *name;
 
 	ce->ce_ctime = ntohl(ondisk->ctime.sec);
 	ce->ce_mtime = ntohl(ondisk->mtime.sec);
@@ -1145,19 +1146,31 @@ static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_en
 	/* On-disk flags are just 16 bits */
 	ce->ce_flags = ntohs(ondisk->flags);
 
-	/* For future extension: we do not understand this entry yet */
-	if (ce->ce_flags & CE_EXTENDED)
-		die("Unknown index entry format");
 	hashcpy(ce->sha1, ondisk->sha1);
 
 	len = ce->ce_flags & CE_NAMEMASK;
+
+	if (ce->ce_flags & CE_EXTENDED) {
+		struct ondisk_cache_entry_extended *ondisk2;
+		int extended_flags;
+		ondisk2 = (struct ondisk_cache_entry_extended *)ondisk;
+		extended_flags = ntohs(ondisk2->flags2) << 16;
+		/* We do not yet understand any bit out of CE_EXTENDED_FLAGS */
+		if (extended_flags & ~CE_EXTENDED_FLAGS)
+			die("Unknown index entry format %08x", extended_flags);
+		ce->ce_flags |= extended_flags;
+		name = ondisk2->name;
+	}
+	else
+		name = ondisk->name;
+
 	if (len == CE_NAMEMASK)
-		len = strlen(ondisk->name);
+		len = strlen(name);
 	/*
 	 * NEEDSWORK: If the original index is crafted, this copy could
 	 * go unchecked.
 	 */
-	memcpy(ce->name, ondisk->name, len + 1);
+	memcpy(ce->name, name, len + 1);
 }
 
 static inline size_t estimate_cache_size(size_t ondisk_size, unsigned int entries)
@@ -1417,6 +1430,7 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 {
 	int size = ondisk_ce_size(ce);
 	struct ondisk_cache_entry *ondisk = xcalloc(1, size);
+	char *name;
 
 	ondisk->ctime.sec = htonl(ce->ce_ctime);
 	ondisk->ctime.nsec = 0;
@@ -1430,7 +1444,15 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 	ondisk->size = htonl(ce->ce_size);
 	hashcpy(ondisk->sha1, ce->sha1);
 	ondisk->flags = htons(ce->ce_flags);
-	memcpy(ondisk->name, ce->name, ce_namelen(ce));
+	if (ce->ce_flags & CE_EXTENDED) {
+		struct ondisk_cache_entry_extended *ondisk2;
+		ondisk2 = (struct ondisk_cache_entry_extended *)ondisk;
+		ondisk2->flags2 = htons((ce->ce_flags & CE_EXTENDED_FLAGS) >> 16);
+		name = ondisk2->name;
+	}
+	else
+		name = ondisk->name;
+	memcpy(name, ce->name, ce_namelen(ce));
 
 	return ce_write(c, fd, ondisk, size);
 }
@@ -1439,16 +1461,25 @@ int write_index(const struct index_state *istate, int newfd)
 {
 	git_SHA_CTX c;
 	struct cache_header hdr;
-	int i, err, removed;
+	int i, err, removed, extended;
 	struct cache_entry **cache = istate->cache;
 	int entries = istate->cache_nr;
 
-	for (i = removed = 0; i < entries; i++)
+	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
 			removed++;
 
+		/* reduce extended entries if possible */
+		cache[i]->ce_flags &= ~CE_EXTENDED;
+		if (cache[i]->ce_flags & CE_EXTENDED_FLAGS) {
+			extended++;
+			cache[i]->ce_flags |= CE_EXTENDED;
+		}
+	}
+
 	hdr.hdr_signature = htonl(CACHE_SIGNATURE);
-	hdr.hdr_version = htonl(2);
+	/* for extended format, increase version so older git won't try to read it */
+	hdr.hdr_version = htonl(extended ? 3 : 2);
 	hdr.hdr_entries = htonl(entries - removed);
 
 	git_SHA1_Init(&c);
