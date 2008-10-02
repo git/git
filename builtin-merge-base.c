@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "commit.h"
+#include "parse-options.h"
 
 static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 {
@@ -21,8 +22,10 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 	return 0;
 }
 
-static const char merge_base_usage[] =
-"git merge-base [--all] <commit-id> <commit-id>...";
+static const char * const merge_base_usage[] = {
+	"git merge-base [--all] <commit-id> <commit-id>...",
+	NULL
+};
 
 static struct commit *get_commit_reference(const char *arg)
 {
@@ -44,25 +47,17 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	int rev_nr = 0;
 	int show_all = 0;
 
+	struct option options[] = {
+		OPT_BOOLEAN('a', "all", &show_all, "outputs all common ancestors"),
+		OPT_END()
+	};
+
 	git_config(git_default_config, NULL);
-
-	while (1 < argc && argv[1][0] == '-') {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "-a") || !strcmp(arg, "--all"))
-			show_all = 1;
-		else
-			usage(merge_base_usage);
-		argc--; argv++;
-	}
-	if (argc < 3)
-		usage(merge_base_usage);
-
-	rev = xmalloc((argc - 1) * sizeof(*rev));
-
-	do {
-		rev[rev_nr++] = get_commit_reference(argv[1]);
-		argc--; argv++;
-	} while (argc > 1);
-
+	argc = parse_options(argc, argv, options, merge_base_usage, 0);
+	if (argc < 2)
+		usage_with_options(merge_base_usage, options);
+	rev = xmalloc(argc * sizeof(*rev));
+	while (argc-- > 0)
+		rev[rev_nr++] = get_commit_reference(*argv++);
 	return show_merge_base(rev, rev_nr, show_all);
 }
