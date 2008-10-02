@@ -274,7 +274,7 @@ static int parse_unit_factor(const char *end, unsigned long *val)
 	return 0;
 }
 
-int git_parse_long(const char *value, long *ret)
+static int git_parse_long(const char *value, long *ret)
 {
 	if (value && *value) {
 		char *end;
@@ -310,7 +310,7 @@ static void die_bad_config(const char *name)
 
 int git_config_int(const char *name, const char *value)
 {
-	long ret;
+	long ret = 0;
 	if (!git_parse_long(value, &ret))
 		die_bad_config(name);
 	return ret;
