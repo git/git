@@ -640,10 +640,11 @@ fetch.unpackLimit::
 	`transfer.unpackLimit` is used instead.
 
 format.numbered::
-	A boolean which can enable sequence numbers in patch subjects.
-	Setting this option to "auto" will enable it only if there is
-	more than one patch.  See --numbered option in
-	linkgit:git-format-patch[1].
+	A boolean which can enable or disable sequence numbers in patch
+	subjects.  It defaults to "auto" which enables it only if there
+	is more than one patch.  It can be enabled or disabled for all
+	messages by setting it to "true" or "false".  See --numbered
+	option in linkgit:git-format-patch[1].
 
 format.headers::
 	Additional email headers to include in a patch to be submitted
