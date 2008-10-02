@@ -275,6 +275,26 @@ our %feature = (
 	'forks' => {
 		'override' => 0,
 		'default' => [0]},
+
+	# Insert custom links to the action bar of all project pages.
+	# This enables you mainly to link to third-party scripts integrating
+	# into gitweb; e.g. git-browser for graphical history representation
+	# or custom web-based repository administration interface.
+
+	# The 'default' value consists of a list of triplets in the form
+	# (label, link, position) where position is the label after which
+	# to inster the link and link is a format string where %n expands
+	# to the project name, %f to the project path within the filesystem,
+	# %h to the current hash (h gitweb parameter) and %b to the current
+	# hash base (hb gitweb parameter).
+
+	# To enable system wide have in $GITWEB_CONFIG e.g.
+	# $feature{'actions'}{'default'} = [('graphiclog',
+	# 	'/git-browser/by-commit.html?r=%n', 'summary')];
+	# Project specific override is not supported.
+	'actions' => {
+		'override' => 0,
+		'default' => []},
 );
 
 sub gitweb_check_feature {
@@ -2757,13 +2777,26 @@ sub git_print_page_nav {
 			}
 		}
 	}
+
 	$arg{'tree'}{'hash'} = $treehead if defined $treehead;
 	$arg{'tree'}{'hash_base'} = $treebase if defined $treebase;
+
+	my @actions = gitweb_check_feature('actions');
+	while (@actions) {
+		my ($label, $link, $pos) = (shift(@actions), shift(@actions), shift(@actions));
+		@navs = map { $_ eq $pos ? ($_, $label) : $_ } @navs;
+		# munch munch
+		$link =~ s#%n#$project#g;
+		$link =~ s#%f#$git_dir#g;
+		$treehead ? $link =~ s#%h#$treehead#g : $link =~ s#%h##g;
+		$treebase ? $link =~ s#%b#$treebase#g : $link =~ s#%b##g;
+		$arg{$label}{'_href'} = $link;
+	}
 
 	print "<div class=\"page_nav\">\n" .
 		(join " | ",
 		 map { $_ eq $current ?
-		       $_ : $cgi->a({-href => href(%{$arg{$_}})}, "$_")
+		       $_ : $cgi->a({-href => ($arg{$_}{_href} ? $arg{$_}{_href} : href(%{$arg{$_}}))}, "$_")
 		 } @navs);
 	print "<br/>\n$extra<br/>\n" .
 	      "</div>\n";
