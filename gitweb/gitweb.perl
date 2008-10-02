@@ -1889,9 +1889,7 @@ sub git_get_projects_list {
 
 				my $subdir = substr($File::Find::name, $pfxlen + 1);
 				# we check related file in $projectroot
-				if ($check_forks and $subdir =~ m#/.#) {
-					$File::Find::prune = 1;
-				} elsif (check_export_ok("$projectroot/$filter/$subdir")) {
+				if (check_export_ok("$projectroot/$filter/$subdir")) {
 					push @list, { path => ($filter ? "$filter/" : '') . $subdir };
 					$File::Find::prune = 1;
 				}
@@ -3724,6 +3722,7 @@ sub print_sort_th_num {
 }
 
 sub git_project_list_body {
+	# actually uses global variable $project
 	my ($projlist, $order, $from, $to, $extra, $no_header) = @_;
 
 	my ($check_forks) = gitweb_check_feature('forks');
@@ -3766,7 +3765,15 @@ sub git_project_list_body {
 	my $tagfilter = $cgi->param('by_tag');
 	for (my $i = $from; $i <= $to; $i++) {
 		my $pr = $projects[$i];
+
 		next if $tagfilter and $show_ctags and not grep { lc $_ eq lc $tagfilter } keys %{$pr->{'ctags'}};
+		# Weed out forks
+		if ($check_forks) {
+			my $forkbase = $project; $forkbase ||= ''; $forkbase =~ s#\.git$#/#;
+			$forkbase="^$forkbase" if $forkbase;
+			next if not $tagfilter and $pr->{'path'} =~ m#$forkbase.*/.*#; # regexp-safe
+		}
+
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
