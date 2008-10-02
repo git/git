@@ -4070,10 +4070,10 @@ sub git_summary {
 
 	print "<div class=\"title\">&nbsp;</div>\n";
 	print "<table class=\"projects_list\">\n" .
-	      "<tr><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
-	      "<tr><td>owner</td><td>" . esc_html($owner) . "</td></tr>\n";
+	      "<tr id=\"metadata_desc\"><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
+	      "<tr id=\"metadata_owner\"><td>owner</td><td>" . esc_html($owner) . "</td></tr>\n";
 	if (defined $cd{'rfc2822'}) {
-		print "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
+		print "<tr id=\"metadata_lchange\"><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
 	}
 
 	# use per project git URL list in $projectroot/$project/cloneurl
@@ -4083,7 +4083,7 @@ sub git_summary {
 	@url_list = map { "$_/$project" } @git_base_url_list unless @url_list;
 	foreach my $git_url (@url_list) {
 		next unless $git_url;
-		print "<tr><td>$url_tag</td><td>$git_url</td></tr>\n";
+		print "<tr class=\"metadata_url\"><td>$url_tag</td><td>$git_url</td></tr>\n";
 		$url_tag = "";
 	}
 	print "</table>\n";
