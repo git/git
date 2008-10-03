@@ -322,7 +322,7 @@ do_next () {
 			MSG_OPT=
 			MSG_FILE=
 			rm -f "$SQUASH_MSG" || exit
-			cp -v "$MSG" "$GIT_DIR"/SQUASH_MSG
+			cp "$MSG" "$GIT_DIR"/SQUASH_MSG
 			rm -f "$GIT_DIR"/MERGE_MSG || exit
 			;;
 		esac
