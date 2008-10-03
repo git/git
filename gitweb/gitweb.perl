@@ -3767,11 +3767,14 @@ sub git_project_list_body {
 		my $pr = $projects[$i];
 
 		next if $tagfilter and $show_ctags and not grep { lc $_ eq lc $tagfilter } keys %{$pr->{'ctags'}};
-		# Weed out forks
+		next if $searchtext and not $pr->{'path'} =~ /$searchtext/
+			and not $pr->{'descr_long'} =~ /$searchtext/;
+		# Weed out forks or non-matching entries of search
 		if ($check_forks) {
 			my $forkbase = $project; $forkbase ||= ''; $forkbase =~ s#\.git$#/#;
 			$forkbase="^$forkbase" if $forkbase;
-			next if not $tagfilter and $pr->{'path'} =~ m#$forkbase.*/.*#; # regexp-safe
+			next if not $searchtext and not $tagfilter and $show_ctags
+				and $pr->{'path'} =~ m#$forkbase.*/.*#; # regexp-safe
 		}
 
 		if ($alternate) {
@@ -4108,6 +4111,11 @@ sub git_project_list {
 		close $fd;
 		print "</div>\n";
 	}
+	print $cgi->startform(-method => "get") .
+	      "<p class=\"projsearch\">Search:\n" .
+	      $cgi->textfield(-name => "s", -value => $searchtext) . "\n" .
+	      "</p>" .
+	      $cgi->end_form() . "\n";
 	git_project_list_body(\@list, $order);
 	git_footer_html();
 }
