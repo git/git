@@ -164,7 +164,7 @@ proc show_other_diff {path w m cont_info} {
 	# - Git won't give us the diff, there's nothing to compare to!
 	#
 	if {$m eq {_O}} {
-		set max_sz [expr {128 * 1024}]
+		set max_sz 100000
 		set type unknown
 		if {[catch {
 				set type [file type $path]
