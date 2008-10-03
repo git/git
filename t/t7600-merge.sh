@@ -511,4 +511,20 @@ test_expect_success 'in-index merge' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'merge --no-ff --no-commit && commit' '
+	git reset --hard c0 &&
+	git merge --no-ff --no-commit c1 &&
+	EDITOR=: git commit &&
+	verify_parents $c0 $c1
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'amending no-ff merge commit' '
+	EDITOR=: git commit --amend &&
+	verify_parents $c0 $c1
+'
+
+test_debug 'gitk --all'
+
 test_done

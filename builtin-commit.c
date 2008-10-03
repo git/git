@@ -937,6 +937,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	unsigned char commit_sha1[20];
 	struct ref_lock *ref_lock;
 	struct commit_list *parents = NULL, **pptr = &parents;
+	struct stat statbuf;
+	int allow_fast_forward = 1;
 
 	git_config(git_commit_config, NULL);
 
@@ -951,6 +953,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		return 1;
 	}
 
+	strbuf_init(&sb, 0);
 	/* Determine parents */
 	if (initial_commit) {
 		reflog_msg = "commit (initial)";
@@ -984,14 +987,22 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		}
 		fclose(fp);
 		strbuf_release(&m);
+		if (!stat(git_path("MERGE_MODE"), &statbuf)) {
+			if (strbuf_read_file(&sb, git_path("MERGE_MODE"), 0) < 0)
+				die("could not read MERGE_MODE: %s",
+						strerror(errno));
+			if (!strcmp(sb.buf, "no-ff"))
+				allow_fast_forward = 0;
+		}
+		if (allow_fast_forward)
+			parents = reduce_heads(parents);
 	} else {
 		reflog_msg = "commit";
 		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
 	}
-	parents = reduce_heads(parents);
 
 	/* Finally, get the commit message */
-	strbuf_init(&sb, 0);
+	strbuf_reset(&sb);
 	if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
 		rollback_index_files();
 		die("could not read commit message");
@@ -1040,6 +1051,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_MSG"));
+	unlink(git_path("MERGE_MODE"));
 	unlink(git_path("SQUASH_MSG"));
 
 	if (commit_index_files())
