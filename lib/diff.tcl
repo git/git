@@ -117,22 +117,22 @@ proc show_unmerged_diff {cont_info} {
 	if {$merge_stages(2) eq {}} {
 		set is_conflict_diff 1
 		lappend current_diff_queue \
-			[list "LOCAL: deleted\nREMOTE:\n" d======= \
+			[list [mc "LOCAL: deleted\nREMOTE:\n"] d======= \
 			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
 	} elseif {$merge_stages(3) eq {}} {
 		set is_conflict_diff 1
 		lappend current_diff_queue \
-			[list "REMOTE: deleted\nLOCAL:\n" d======= \
+			[list [mc "REMOTE: deleted\nLOCAL:\n"] d======= \
 			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
 	} elseif {[lindex $merge_stages(1) 0] eq {120000}
 		|| [lindex $merge_stages(2) 0] eq {120000}
 		|| [lindex $merge_stages(3) 0] eq {120000}} {
 		set is_conflict_diff 1
 		lappend current_diff_queue \
-			[list "LOCAL:\n" d======= \
+			[list [mc "LOCAL:\n"] d======= \
 			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
 		lappend current_diff_queue \
-			[list "REMOTE:\n" d======= \
+			[list [mc "REMOTE:\n"] d======= \
 			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
 	} else {
 		start_show_diff $cont_info
@@ -218,17 +218,17 @@ proc show_other_diff {path w m cont_info} {
 				d_@
 		} else {
 			if {$sz > $max_sz} {
-				$ui_diff insert end \
-"* Untracked file is $sz bytes.
-* Showing only first $max_sz bytes.
-" d_@
+				$ui_diff insert end [mc \
+"* Untracked file is %d bytes.
+* Showing only first %d bytes.
+" $sz $max_sz] d_@
 			}
 			$ui_diff insert end $content
 			if {$sz > $max_sz} {
-				$ui_diff insert end "
-* Untracked file clipped here by [appname].
+				$ui_diff insert end [mc "
+* Untracked file clipped here by %s.
 * To see the entire file, use an external editor.
-" d_@
+" [appname]] d_@
 			}
 		}
 		$ui_diff conf -state disabled
