@@ -69,6 +69,8 @@ constructor new {i_commit i_path i_jump} {
 	make_toplevel top w
 	wm title $top [append "[appname] ([reponame]): " [mc "File Viewer"]]
 
+	set font_w [font measure font_diff "0"]
+
 	frame $w.header -background gold
 	label $w.header.commit_l \
 		-text [mc "Commit:"] \
@@ -114,9 +116,9 @@ constructor new {i_commit i_path i_jump} {
 	pack $w_path -fill x -side right
 	pack $w.header.path_l -side right
 
-	panedwindow $w.file_pane -orient vertical
-	frame $w.file_pane.out
-	frame $w.file_pane.cm
+	panedwindow $w.file_pane -orient vertical -borderwidth 0 -sashwidth 3
+	frame $w.file_pane.out -relief flat -borderwidth 1
+	frame $w.file_pane.cm -relief sunken -borderwidth 1
 	$w.file_pane add $w.file_pane.out \
 		-sticky nsew \
 		-minsize 100 \
@@ -328,9 +330,14 @@ constructor new {i_commit i_path i_jump} {
 
 	set req_w [winfo reqwidth  $top]
 	set req_h [winfo reqheight $top]
-	set scr_h [expr {[winfo screenheight $top] - 100}]
-	if {$req_w < 600} {set req_w 600}
+	set scr_w [expr {[winfo screenwidth $top] - 40}]
+	set scr_h [expr {[winfo screenheight $top] - 120}]
+	set opt_w [expr {$font_w * (80 + 5*3 + 3)}]
+	if {$req_w < $opt_w} {set req_w $opt_w}
+	if {$req_w > $scr_w} {set req_w $scr_w}
+	set opt_h [expr {$req_w*4/3}]
 	if {$req_h < $scr_h} {set req_h $scr_h}
+	if {$req_h > $opt_h} {set req_h $opt_h}
 	set g "${req_w}x${req_h}"
 	wm geometry $top $g
 	update
@@ -338,7 +345,7 @@ constructor new {i_commit i_path i_jump} {
 	set old_height [winfo height $w.file_pane]
 	$w.file_pane sash place 0 \
 		[lindex [$w.file_pane sash coord 0] 0] \
-		[expr {int($old_height * 0.70)}]
+		[expr {int($old_height * 0.80)}]
 	bind $w.file_pane <Configure> \
 	"if {{$w.file_pane} eq {%W}} {[cb _resize %h]}"
 
