@@ -21,8 +21,10 @@ field w_amov     ; # text column: annotations + move tracking
 field w_asim     ; # text column: annotations (simple computation)
 field w_file     ; # text column: actual file data
 field w_cviewer  ; # pane showing commit message
+field finder     ; # find mini-dialog frame
 field status     ; # status mega-widget instance
 field old_height ; # last known height of $w.file_pane
+
 
 # Tk UI colors
 #
@@ -59,7 +61,7 @@ field tooltip_timer     {} ; # Current timer event for our tooltip
 field tooltip_commit    {} ; # Commit(s) in tooltip
 
 constructor new {i_commit i_path i_jump} {
-	global cursor_ptr
+	global cursor_ptr M1B M1T have_tk85
 	variable active_color
 	variable group_colors
 
@@ -199,6 +201,11 @@ constructor new {i_commit i_path i_jump} {
 		-width 80 \
 		-xscrollcommand [list $w.file_pane.out.sbx set] \
 		-font font_diff
+	if {$have_tk85} {
+		$w_file configure -inactiveselectbackground darkblue
+	}
+	$w_file tag conf found \
+		-background yellow
 
 	set w_columns [list $w_amov $w_asim $w_line $w_file]
 
@@ -218,6 +225,11 @@ constructor new {i_commit i_path i_jump} {
 		[expr {[llength $w_columns] - 1}] \
 		-weight 1
 	grid rowconfigure $w.file_pane.out 0 -weight 1
+
+	set finder [::searchbar::new \
+		$w.file_pane.out.ff $w_file \
+		-column [expr {[llength $w_columns] - 1}] \
+		]
 
 	set w_cviewer $w.file_pane.cm.t
 	text $w_cviewer \
@@ -259,6 +271,10 @@ constructor new {i_commit i_path i_jump} {
 		-label [mc "Copy Commit"] \
 		-command [cb _copycommit]
 	$w.ctxm add separator
+	$w.ctxm add command \
+		-label [mc "Find Text..."] \
+		-accelerator F7 \
+		-command [list searchbar::show $finder]
 	menu $w.ctxm.enc
 	build_encoding_menu $w.ctxm.enc [cb _setencoding]
 	$w.ctxm add cascade \
@@ -280,9 +296,15 @@ constructor new {i_commit i_path i_jump} {
 			$i tag conf color$g -background [lindex $group_colors $g]
 		}
 
+		if {$i eq $w_file} {
+			$w_file tag raise found
+		}
+		$i tag raise sel
+
 		$i conf -cursor $cursor_ptr
-		$i conf -yscrollcommand [list many2scrollbar \
-			$w_columns yview $w.file_pane.out.sby]
+		$i conf -yscrollcommand \
+			"[list ::searchbar::scrolled $finder]
+			 [list many2scrollbar $w_columns yview $w.file_pane.out.sby]"
 		bind $i <Button-1> "
 			[cb _hide_tooltip]
 			[cb _click $i @%x,%y]
@@ -319,6 +341,11 @@ constructor new {i_commit i_path i_jump} {
 	bind $w_cviewer <Tab>       "[list focus $w_file];break"
 	bind $w_cviewer <Button-1> [list focus $w_cviewer]
 	bind $w_file    <Visibility> [list focus $w_file]
+	bind $top       <F7>         [list searchbar::show $finder]
+	bind $top       <Escape>     [list searchbar::hide $finder]
+	bind $top       <F3>         [list searchbar::find_next $finder]
+	bind $top       <Shift-F3>   [list searchbar::find_prev $finder]
+	catch { bind $top <Shift-Key-XF86_Switch_VT_3> [list searchbar::find_prev $finder] }
 
 	grid configure $w.header -sticky ew
 	grid configure $w.file_pane -sticky nsew
@@ -873,6 +900,10 @@ method _showcommit {cur_w lno} {
 		foreach i $w_columns {
 			$i tag conf g$cmit -background $active_color
 			$i tag raise g$cmit
+			if {$i eq $w_file} {
+				$w_file tag raise found
+			}
+			$i tag raise sel
 		}
 
 		set author_name {}

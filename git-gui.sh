@@ -591,6 +591,7 @@ bind . <Visibility> {
 
 if {[is_Windows]} {
 	wm iconbitmap . -default $oguilib/git-gui.ico
+	set ::tk::AlwaysShowSelection 1
 }
 
 ######################################################################
@@ -1066,6 +1067,8 @@ set selected_commit_type new
 
 set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
+
+set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
 
 ######################################################################
 ##
