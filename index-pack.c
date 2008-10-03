@@ -790,7 +790,6 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		err = close(output_fd);
 		if (err)
 			die("error while closing pack file: %s", strerror(errno));
-		chmod(curr_pack_name, 0444);
 	}
 
 	if (keep_msg) {
@@ -824,8 +823,9 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		if (move_temp_to_file(curr_pack_name, final_pack_name))
 			die("cannot store pack file");
 	}
+	if (from_stdin)
+		chmod(final_pack_name, 0444);
 
-	chmod(curr_index_name, 0444);
 	if (final_index_name != curr_index_name) {
 		if (!final_index_name) {
 			snprintf(name, sizeof(name), "%s/pack/pack-%s.idx",
@@ -835,6 +835,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		if (move_temp_to_file(curr_index_name, final_index_name))
 			die("cannot store index file");
 	}
+	chmod(final_index_name, 0444);
 
 	if (!from_stdin) {
 		printf("%s\n", sha1_to_hex(sha1));
