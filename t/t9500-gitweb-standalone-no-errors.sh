@@ -503,6 +503,55 @@ test_expect_success \
 test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
+# path_info links
+test_expect_success \
+	'path_info: project' \
+	'gitweb_run "" "/.git"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch' \
+	'gitweb_run "" "/.git/b"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:file' \
+	'gitweb_run "" "/.git/master:file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:dir/' \
+	'gitweb_run "" "/.git/master:foo/"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:file (non-existent)' \
+	'gitweb_run "" "/.git/master:non-existent"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:dir/ (non-existent)' \
+	'gitweb_run "" "/.git/master:non-existent/"'
+test_debug 'cat gitweb.log'
+
+
+test_expect_success \
+	'path_info: project/branch:/file' \
+	'gitweb_run "" "/.git/master:/file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/:/file (implicit HEAD)' \
+	'gitweb_run "" "/.git/:/file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/:/ (implicit HEAD, top tree)' \
+	'gitweb_run "" "/.git/:/"'
+test_debug 'cat gitweb.log'
+
+
+# ----------------------------------------------------------------------
 # feed generation
 
 test_expect_success \

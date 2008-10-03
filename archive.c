@@ -15,7 +15,7 @@ static char const * const archive_usage[] = {
 
 #define USES_ZLIB_COMPRESSION 1
 
-const struct archiver {
+static const struct archiver {
 	const char *name;
 	write_archive_fn_t write_archive;
 	unsigned int flags;

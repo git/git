@@ -382,7 +382,7 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 	return ent;
 }
 
-struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
+static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
 	if (cache_name_exists(pathname, len, ignore_case))
 		return NULL;
@@ -391,7 +391,7 @@ struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int
 	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
-struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
+static struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
 {
 	if (cache_name_pos(pathname, len) >= 0)
 		return NULL;

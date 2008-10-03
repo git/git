@@ -6,8 +6,14 @@
 #include "hash.h"
 
 #include SHA1_HEADER
-#include <zlib.h>
+#ifndef git_SHA_CTX
+#define git_SHA_CTX	SHA_CTX
+#define git_SHA1_Init	SHA1_Init
+#define git_SHA1_Update	SHA1_Update
+#define git_SHA1_Final	SHA1_Final
+#endif
 
+#include <zlib.h>
 #if defined(NO_DEFLATE_BOUND) || ZLIB_VERNUM < 0x1200
 #define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
 #endif
@@ -749,7 +755,6 @@ typedef int (*config_fn_t)(const char *, const char *, void *);
 extern int git_default_config(const char *, const char *, void *);
 extern int git_config_from_file(config_fn_t fn, const char *, void *);
 extern int git_config(config_fn_t fn, void *);
-extern int git_parse_long(const char *, long *);
 extern int git_parse_ulong(const char *, unsigned long *);
 extern int git_config_int(const char *, const char *);
 extern unsigned long git_config_ulong(const char *, const char *);

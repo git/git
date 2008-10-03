@@ -73,7 +73,7 @@ static int write_rr(struct string_list *rr, int out_fd)
 static int handle_file(const char *path,
 	 unsigned char *sha1, const char *output)
 {
-	SHA_CTX ctx;
+	git_SHA_CTX ctx;
 	char buf[1024];
 	int hunk_no = 0;
 	enum {
@@ -95,7 +95,7 @@ static int handle_file(const char *path,
 	}
 
 	if (sha1)
-		SHA1_Init(&ctx);
+		git_SHA1_Init(&ctx);
 
 	strbuf_init(&one, 0);
 	strbuf_init(&two,  0);
@@ -127,9 +127,9 @@ static int handle_file(const char *path,
 				fputs(">>>>>>>\n", out);
 			}
 			if (sha1) {
-				SHA1_Update(&ctx, one.buf ? one.buf : "",
+				git_SHA1_Update(&ctx, one.buf ? one.buf : "",
 					    one.len + 1);
-				SHA1_Update(&ctx, two.buf ? two.buf : "",
+				git_SHA1_Update(&ctx, two.buf ? two.buf : "",
 					    two.len + 1);
 			}
 			strbuf_reset(&one);
@@ -154,7 +154,7 @@ static int handle_file(const char *path,
 	if (out)
 		fclose(out);
 	if (sha1)
-		SHA1_Final(sha1, &ctx);
+		git_SHA1_Final(sha1, &ctx);
 	if (hunk != RR_CONTEXT) {
 		if (output)
 			unlink(output);
