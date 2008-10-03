@@ -1136,6 +1136,8 @@ static int find_copy_in_parent(struct scoreboard *sb,
 
 			if (!DIFF_FILE_VALID(p->one))
 				continue; /* does not exist in parent */
+			if (S_ISGITLINK(p->one->mode))
+				continue; /* ignore git links */
 			if (porigin && !strcmp(p->one->path, porigin->path))
 				/* find_move already dealt with this path */
 				continue;
