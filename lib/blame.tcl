@@ -377,9 +377,16 @@ constructor new {i_commit i_path i_jump} {
 	"if {{$w.file_pane} eq {%W}} {[cb _resize %h]}"
 
 	wm protocol $top WM_DELETE_WINDOW "destroy $top"
-	bind $top <Destroy> [cb _kill]
+	bind $top <Destroy> [cb _handle_destroy %W]
 
 	_load $this $i_jump
+}
+
+method _handle_destroy {win} {
+	if {$win eq $w} {
+		_kill $this
+		delete_this
+	}
 }
 
 method _kill {} {
