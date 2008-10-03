@@ -27,6 +27,13 @@ our $version = "++GIT_VERSION++";
 our $my_url = $cgi->url();
 our $my_uri = $cgi->url(-absolute => 1);
 
+# if we're called with PATH_INFO, we have to strip that
+# from the URL to find our real URL
+if (my $path_info = $ENV{"PATH_INFO"}) {
+	$my_url =~ s,\Q$path_info\E$,,;
+	$my_uri =~ s,\Q$path_info\E$,,;
+}
+
 # core git executable to use
 # this can just be "git" if your webserver has a sensible PATH
 our $GIT = "++GIT_BINDIR++/git";
@@ -4445,6 +4452,7 @@ sub git_tree {
 			$hash = $hash_base;
 		}
 	}
+	die_error(404, "No such tree") unless defined($hash);
 	$/ = "\0";
 	open my $fd, "-|", git_cmd(), "ls-tree", '-z', $hash
 		or die_error(500, "Open git-ls-tree failed");
@@ -4485,8 +4493,8 @@ sub git_tree {
 		if ($basedir ne '' && substr($basedir, -1) ne '/') {
 			$basedir .= '/';
 		}
+		git_print_page_path($file_name, 'tree', $hash_base);
 	}
-	git_print_page_path($file_name, 'tree', $hash_base);
 	print "<div class=\"page_body\">\n";
 	print "<table class=\"tree\">\n";
 	my $alternate = 1;
