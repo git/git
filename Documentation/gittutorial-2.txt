@@ -32,11 +32,13 @@ Initialized empty Git repository in .git/
 $ echo 'hello world' > file.txt
 $ git add .
 $ git commit -a -m "initial commit"
-Created root-commit 54196cc (initial commit) on master
+[master (root-commit)] created 54196cc: "initial commit"
+ 1 files changed, 1 insertions(+), 0 deletions(-)
  create mode 100644 file.txt
 $ echo 'hello world!' >file.txt
 $ git commit -a -m "add emphasis"
-Created c4d59f3 (add emphasis) on master
+[master] created c4d59f3: "add emphasis"
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 ------------------------------------------------
 
 What are the 7 digits of hex that git responded to the commit with?
