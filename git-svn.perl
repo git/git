@@ -66,7 +66,7 @@ my ($_stdin, $_help, $_edit,
 	$_version, $_fetch_all, $_no_rebase,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_git_format, $_commit_url);
+	$_git_format, $_commit_url, $_tag);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -131,6 +131,15 @@ my %cmd = (
 			  'revision|r=i' => \$_revision,
 			  'no-rebase' => \$_no_rebase,
 			%cmt_opts, %fc_opts } ],
+	branch => [ \&cmd_branch,
+	            'Create a branch in the SVN repository',
+	            { 'message|m=s' => \$_message,
+	              'dry-run|n' => \$_dry_run,
+		      'tag|t' => \$_tag } ],
+	tag => [ sub { $_tag = 1; cmd_branch(@_) },
+	         'Create a tag in the SVN repository',
+	         { 'message|m=s' => \$_message,
+	           'dry-run|n' => \$_dry_run } ],
 	'set-tree' => [ \&cmd_set_tree,
 	                "Set an SVN repository to a git tree-ish",
 			{ 'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
@@ -535,6 +544,42 @@ sub cmd_dcommit {
 		}
 	}
 	unlink $gs->{index};
+}
+
+sub cmd_branch {
+	my ($branch_name, $head) = @_;
+
+	unless (defined $branch_name && length $branch_name) {
+		die(($_tag ? "tag" : "branch") . " name required\n");
+	}
+	$head ||= 'HEAD';
+
+	my ($src, $rev, undef, $gs) = working_head_info($head);
+
+	my $remote = Git::SVN::read_all_remotes()->{svn};
+	my $glob = $remote->{ $_tag ? 'tags' : 'branches' };
+	my ($lft, $rgt) = @{ $glob->{path} }{qw/left right/};
+	my $dst = join '/', $remote->{url}, $lft, $branch_name, ($rgt || ());
+
+	my $ctx = SVN::Client->new(
+		auth    => Git::SVN::Ra::_auth_providers(),
+		log_msg => sub {
+			${ $_[0] } = defined $_message
+				? $_message
+				: 'Create ' . ($_tag ? 'tag ' : 'branch ' )
+				. $branch_name;
+		},
+	);
+
+	eval {
+		$ctx->ls($dst, 'HEAD', 0);
+	} and die "branch ${branch_name} already exists\n";
+
+	print "Copying ${src} at r${rev} to ${dst}...\n";
+	$ctx->copy($src, $rev, $dst)
+		unless $_dry_run;
+
+	$gs->fetch_all;
 }
 
 sub cmd_find_rev {
