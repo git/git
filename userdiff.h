@@ -9,11 +9,9 @@ struct userdiff_funcname {
 struct userdiff_driver {
 	const char *name;
 	const char *external;
+	int binary;
 	struct userdiff_funcname funcname;
 };
-
-extern struct userdiff_driver *USERDIFF_ATTR_TRUE;
-extern struct userdiff_driver *USERDIFF_ATTR_FALSE;
 
 int userdiff_config_basic(const char *k, const char *v);
 int userdiff_config_porcelain(const char *k, const char *v);

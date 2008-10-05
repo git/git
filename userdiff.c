@@ -7,7 +7,7 @@ static int ndrivers;
 static int drivers_alloc;
 
 #define FUNCNAME(name, pattern) \
-	{ name, NULL, { pattern, REG_EXTENDED } }
+	{ name, NULL, -1, { pattern, REG_EXTENDED } }
 static struct userdiff_driver builtin_drivers[] = {
 FUNCNAME("html", "^[ \t]*(<[Hh][1-6][ \t].*>.*)$"),
 FUNCNAME("java",
@@ -32,22 +32,23 @@ FUNCNAME("python", "^[ \t]*((class|def)[ \t].*)$"),
 FUNCNAME("ruby", "^[ \t]*((class|module|def)[ \t].*)$"),
 FUNCNAME("bibtex", "(@[a-zA-Z]{1,}[ \t]*\\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$"),
 FUNCNAME("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$"),
+{ "default", NULL, -1, { NULL, 0 } },
 };
 #undef FUNCNAME
 
 static struct userdiff_driver driver_true = {
 	"diff=true",
 	NULL,
+	0,
 	{ NULL, 0 }
 };
-struct userdiff_driver *USERDIFF_ATTR_TRUE = &driver_true;
 
 static struct userdiff_driver driver_false = {
 	"!diff",
 	NULL,
+	1,
 	{ NULL, 0 }
 };
-struct userdiff_driver *USERDIFF_ATTR_FALSE = &driver_false;
 
 static struct userdiff_driver *userdiff_find_by_namelen(const char *k, int len)
 {
@@ -89,6 +90,7 @@ static struct userdiff_driver *parse_driver(const char *var,
 		drv = &drivers[ndrivers++];
 		memset(drv, 0, sizeof(*drv));
 		drv->name = xmemdupz(name, namelen);
+		drv->binary = -1;
 	}
 	return drv;
 }
@@ -109,6 +111,15 @@ static int parse_string(const char **d, const char *k, const char *v)
 	return 1;
 }
 
+static int parse_tristate(int *b, const char *k, const char *v)
+{
+	if (v && !strcasecmp(v, "auto"))
+		*b = -1;
+	else
+		*b = git_config_bool(k, v);
+	return 1;
+}
+
 int userdiff_config_basic(const char *k, const char *v)
 {
 	struct userdiff_driver *drv;
@@ -117,6 +128,8 @@ int userdiff_config_basic(const char *k, const char *v)
 		return parse_funcname(&drv->funcname, k, v, 0);
 	if ((drv = parse_driver(k, v, "xfuncname")))
 		return parse_funcname(&drv->funcname, k, v, REG_EXTENDED);
+	if ((drv = parse_driver(k, v, "binary")))
+		return parse_tristate(&drv->binary, k, v);
 
 	return 0;
 }

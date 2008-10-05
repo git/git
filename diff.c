@@ -1268,46 +1268,37 @@ static void emit_binary_diff(FILE *file, mmfile_t *one, mmfile_t *two)
 	emit_binary_diff_body(file, two, one);
 }
 
-static void diff_filespec_check_attr(struct diff_filespec *one)
+void diff_filespec_load_driver(struct diff_filespec *one)
 {
-	struct userdiff_driver *drv;
-	int check_from_data = 0;
-
-	if (one->checked_attr)
-		return;
-
-	drv = userdiff_find_by_path(one->path);
-	one->is_binary = 0;
-
-	/* binaryness */
-	if (drv == USERDIFF_ATTR_TRUE)
-		;
-	else if (drv == USERDIFF_ATTR_FALSE)
-		one->is_binary = 1;
-	else
-		check_from_data = 1;
-
-	if (check_from_data) {
-		if (!one->data && DIFF_FILE_VALID(one))
-			diff_populate_filespec(one, 0);
-
-		if (one->data)
-			one->is_binary = buffer_is_binary(one->data, one->size);
-	}
+	if (!one->driver)
+		one->driver = userdiff_find_by_path(one->path);
+	if (!one->driver)
+		one->driver = userdiff_find_by_name("default");
 }
 
 int diff_filespec_is_binary(struct diff_filespec *one)
 {
-	diff_filespec_check_attr(one);
+	if (one->is_binary == -1) {
+		diff_filespec_load_driver(one);
+		if (one->driver->binary != -1)
+			one->is_binary = one->driver->binary;
+		else {
+			if (!one->data && DIFF_FILE_VALID(one))
+				diff_populate_filespec(one, 0);
+			if (one->data)
+				one->is_binary = buffer_is_binary(one->data,
+						one->size);
+			if (one->is_binary == -1)
+				one->is_binary = 0;
+		}
+	}
 	return one->is_binary;
 }
 
 static const struct userdiff_funcname *diff_funcname_pattern(struct diff_filespec *one)
 {
-	struct userdiff_driver *drv = userdiff_find_by_path(one->path);
-	if (!drv)
-		drv = userdiff_find_by_name("default");
-	return drv && drv->funcname.pattern ? &drv->funcname : NULL;
+	diff_filespec_load_driver(one);
+	return one->driver->funcname.pattern ? &one->driver->funcname : NULL;
 }
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b)
@@ -1559,6 +1550,7 @@ struct diff_filespec *alloc_filespec(const char *path)
 	spec->path = (char *)(spec + 1);
 	memcpy(spec->path, path, namelen+1);
 	spec->count = 1;
+	spec->is_binary = -1;
 	return spec;
 }
 
