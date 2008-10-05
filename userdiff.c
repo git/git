@@ -140,6 +140,8 @@ int userdiff_config_porcelain(const char *k, const char *v)
 
 	if ((drv = parse_driver(k, v, "command")))
 		return parse_string(&drv->external, k, v);
+	if ((drv = parse_driver(k, v, "textconv")))
+		return parse_string(&drv->textconv, k, v);
 
 	return 0;
 }

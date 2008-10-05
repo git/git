@@ -11,6 +11,7 @@ struct userdiff_driver {
 	const char *external;
 	int binary;
 	struct userdiff_funcname funcname;
+	const char *textconv;
 };
 
 int userdiff_config_basic(const char *k, const char *v);
