@@ -65,6 +65,16 @@ output () {
 	esac
 }
 
+run_pre_rebase_hook () {
+	if test -x "$GIT_DIR/hooks/pre-rebase"
+	then
+		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
+			echo >&2 "The pre-rebase hook refused to rebase."
+			exit 1
+		}
+	fi
+}
+
 require_clean_work_tree () {
 	# test if working tree is dirty
 	git rev-parse --verify HEAD > /dev/null &&
@@ -507,6 +517,7 @@ first and then run 'git rebase --continue' again."
 		;;
 	--)
 		shift
+		run_pre_rebase_hook ${1+"$@"}
 		test $# -eq 1 -o $# -eq 2 || usage
 		test -d "$DOTEST" &&
 			die "Interactive rebase already started"
