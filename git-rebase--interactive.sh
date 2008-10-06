@@ -26,6 +26,7 @@ i,interactive      always used (no-op)
 continue           continue rebasing process
 abort              abort rebasing process and restore original branch
 skip               skip current patch and continue rebasing process
+no-verify          override pre-rebase hook from stopping the operation
 "
 
 . git-sh-setup
@@ -41,6 +42,7 @@ PRESERVE_MERGES=
 STRATEGY=
 ONTO=
 VERBOSE=
+OK_TO_SKIP_PRE_REBASE=
 
 GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
 mark the corrected paths with 'git add <paths>', and
@@ -66,7 +68,8 @@ output () {
 }
 
 run_pre_rebase_hook () {
-	if test -x "$GIT_DIR/hooks/pre-rebase"
+	if test -z "$OK_TO_SKIP_PRE_REBASE" &&
+	   test -x "$GIT_DIR/hooks/pre-rebase"
 	then
 		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
 			echo >&2 "The pre-rebase hook refused to rebase."
@@ -416,6 +419,11 @@ get_saved_options () {
 while test $# != 0
 do
 	case "$1" in
+	--no-verify)
+		OK_TO_SKIP_PRE_REBASE=yes
+		;;
+	--verify)
+		;;
 	--continue)
 		is_standalone "$@" || usage
 		get_saved_options
