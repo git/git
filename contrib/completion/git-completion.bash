@@ -785,14 +785,9 @@ _git_fetch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 
-	case "${COMP_WORDS[0]},$COMP_CWORD" in
-	git-fetch*,1)
+	if [ "$COMP_CWORD" = 2 ]; then
 		__gitcomp "$(__git_remotes)"
-		;;
-	git,2)
-		__gitcomp "$(__git_remotes)"
-		;;
-	*)
+	else
 		case "$cur" in
 		*:*)
 			local pfx=""
@@ -811,8 +806,7 @@ _git_fetch ()
 			__gitcomp "$(__git_refs2 "$remote")"
 			;;
 		esac
-		;;
-	esac
+	fi
 }
 
 _git_format_patch ()
@@ -1049,36 +1043,25 @@ _git_pull ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 
-	case "${COMP_WORDS[0]},$COMP_CWORD" in
-	git-pull*,1)
+	if [ "$COMP_CWORD" = 2 ]; then
 		__gitcomp "$(__git_remotes)"
-		;;
-	git,2)
-		__gitcomp "$(__git_remotes)"
-		;;
-	*)
+	else
 		local remote
 		case "${COMP_WORDS[0]}" in
 		git-pull)  remote="${COMP_WORDS[1]}" ;;
 		git)       remote="${COMP_WORDS[2]}" ;;
 		esac
 		__gitcomp "$(__git_refs "$remote")"
-		;;
-	esac
+	fi
 }
 
 _git_push ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 
-	case "${COMP_WORDS[0]},$COMP_CWORD" in
-	git-push*,1)
+	if [ "$COMP_CWORD" = 2 ]; then
 		__gitcomp "$(__git_remotes)"
-		;;
-	git,2)
-		__gitcomp "$(__git_remotes)"
-		;;
-	*)
+	else
 		case "$cur" in
 		*:*)
 			local remote
@@ -1102,8 +1085,7 @@ _git_push ()
 			__gitcomp "$(__git_refs)"
 			;;
 		esac
-		;;
-	esac
+	fi
 }
 
 _git_rebase ()

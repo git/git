@@ -643,8 +643,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.use_thin_pack = data->thin;
 	args.include_tag = data->followtags;
 	args.verbose = (transport->verbose > 0);
-	args.quiet = args.no_progress = (transport->verbose < 0);
-	args.no_progress = !isatty(1);
+	args.quiet = (transport->verbose < 0);
+	args.no_progress = args.quiet || !isatty(1);
 	args.depth = data->depth;
 
 	for (i = 0; i < nr_heads; i++)

@@ -1509,6 +1509,10 @@ static void builtin_diff(const char *name_a,
 		b_prefix = o->b_prefix;
 	}
 
+	/* Never use a non-valid filename anywhere if at all possible */
+	name_a = DIFF_FILE_VALID(one) ? name_a : name_b;
+	name_b = DIFF_FILE_VALID(two) ? name_b : name_a;
+
 	a_one = quote_two(a_prefix, name_a + (*name_a == '/'));
 	b_two = quote_two(b_prefix, name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";

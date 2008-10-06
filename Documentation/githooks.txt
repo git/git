@@ -130,6 +130,13 @@ parameter, and is invoked after a commit is made.
 This hook is meant primarily for notification, and cannot affect
 the outcome of 'git-commit'.
 
+pre-rebase
+----------
+
+This hook is called by 'git-rebase' and can be used to prevent a branch
+from getting rebased.
+
+
 post-checkout
 -----------
 
