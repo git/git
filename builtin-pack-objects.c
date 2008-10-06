@@ -1369,12 +1369,10 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 			int window, int depth, unsigned *processed)
 {
 	uint32_t i, idx = 0, count = 0;
-	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array;
 	unsigned long mem_usage = 0;
 
-	array = xmalloc(array_size);
-	memset(array, 0, array_size);
+	array = xcalloc(window, sizeof(struct unpacked));
 
 	for (;;) {
 		struct object_entry *entry = *list++;

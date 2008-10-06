@@ -477,8 +477,7 @@ static void unpack_all(void)
 
 	if (!quiet)
 		progress = start_progress("Unpacking objects", nr_objects);
-	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
-	memset(obj_list, 0, nr_objects * sizeof(*obj_list));
+	obj_list = xcalloc(nr_objects, sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
 		display_progress(progress, i + 1);

@@ -158,9 +158,8 @@ static int same_entry(struct name_entry *a, struct name_entry *b)
 
 static struct merge_list *create_entry(unsigned stage, unsigned mode, const unsigned char *sha1, const char *path)
 {
-	struct merge_list *res = xmalloc(sizeof(*res));
+	struct merge_list *res = xcalloc(1, sizeof(*res));
 
-	memset(res, 0, sizeof(*res));
 	res->stage = stage;
 	res->path = path;
 	res->mode = mode;

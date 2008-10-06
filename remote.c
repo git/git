@@ -751,8 +751,7 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 
 struct ref *alloc_ref(unsigned namelen)
 {
-	struct ref *ret = xmalloc(sizeof(struct ref) + namelen);
-	memset(ret, 0, sizeof(struct ref) + namelen);
+	struct ref *ret = xcalloc(1, sizeof(struct ref) + namelen);
 	return ret;
 }
 

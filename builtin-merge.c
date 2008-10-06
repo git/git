@@ -123,8 +123,7 @@ static struct strategy *get_strategy(const char *name)
 		exit(1);
 	}
 
-	ret = xmalloc(sizeof(struct strategy));
-	memset(ret, 0, sizeof(struct strategy));
+	ret = xcalloc(1, sizeof(struct strategy));
 	ret->name = xstrdup(name);
 	return ret;
 }
