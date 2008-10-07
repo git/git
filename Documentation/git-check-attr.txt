@@ -9,6 +9,7 @@ git-check-attr - Display gitattributes information.
 SYNOPSIS
 --------
 'git check-attr' attr... [--] pathname...
+'git check-attr' --stdin [-z] attr... < <list-of-paths
 
 DESCRIPTION
 -----------
@@ -17,6 +18,13 @@ For every pathname, this command will list if each attr is 'unspecified',
 
 OPTIONS
 -------
+--stdin::
+	Read file names from stdin instead of from the command-line.
+
+-z::
+	Only meaningful with `--stdin`; paths are separated with
+	NUL character instead of LF.
+
 \--::
 	Interpret all preceding arguments as attributes, and all following
 	arguments as path names. If not supplied, only the first argument will
