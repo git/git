@@ -137,6 +137,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 	if (read_cache() < 0)
 		die("index file corrupt");
+	refresh_cache(REFRESH_QUIET);
 
 	pathspec = get_pathspec(prefix, argv);
 	seen = NULL;
