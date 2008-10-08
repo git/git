@@ -53,7 +53,7 @@ Fixes since v1.6.0.2
 * Stale temporary files under $GIT_DIR/objects/pack are now cleaned up
   automatically by "git prune".
 
-* "git merge" once agrain removes directories after the last file has
+* "git merge" once again removes directories after the last file has
   been removed from it during the merge.
 
 * "git blame -C -C" no longer segfaults while trying to pass blame if
@@ -68,10 +68,10 @@ Fixes since v1.6.0.2
 * The "git commit" error message when there are still unmerged
   files present was clarified to match "git write-tree".
 
-* Some segfaults due to uncaught NULL pointers were fixed multiple
+* Some segfaults due to uncaught NULL pointers were fixed in multiple
   tools such as apply, reset, update-index.
 
-* Solaris bulds now default to OLD_ICONV=1 to avoid compile warnings.
+* Solaris builds now default to OLD_ICONV=1 to avoid compile warnings.
 
 * "Git.pm" tests relied on unnecessarily more recent version of Perl.
 
@@ -80,7 +80,7 @@ Fixes since v1.6.0.2
 * "gitweb" triggered undef warnings on missing trees.
 
 * "gitweb" now removes PATH_INFO from its URLs so users don't have
-  to manually set the url in the gitweb configuration.
+  to manually set the URL in the gitweb configuration.
 
 * Bash completion removed support for legacy "git-fetch", "git-push"
   and "git-pull" as these are no longer installed.  Dashless form
