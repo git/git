@@ -6418,7 +6418,7 @@ proc getblobline {bf id} {
 
 proc mergediff {id} {
     global diffmergeid mdifffd
-    global diffids
+    global diffids treediffs
     global parents
     global diffcontext
     global diffencoding
@@ -6426,6 +6426,7 @@ proc mergediff {id} {
 
     set diffmergeid $id
     set diffids $id
+    set treediffs($id) {}
     # this doesn't seem to actually affect anything...
     set cmd [concat | git diff-tree --no-commit-id --cc -U$diffcontext $id]
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
@@ -6445,7 +6446,7 @@ proc mergediff {id} {
 
 proc getmergediffline {mdf id np} {
     global diffmergeid ctext cflist mergemax
-    global difffilestart mdifffd
+    global difffilestart mdifffd treediffs
     global diffencoding
 
     $ctext conf -state normal
@@ -6462,6 +6463,7 @@ proc getmergediffline {mdf id np} {
 	    $ctext insert end "\n"
 	    set here [$ctext index "end - 1c"]
 	    lappend difffilestart $here
+	    lappend treediffs($id) $fname
 	    add_flist [list $fname]
 	    set diffencoding [get_path_encoding $fname]
 	    set l [expr {(78 - [string length $fname]) / 2}]
