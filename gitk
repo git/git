@@ -7727,24 +7727,42 @@ proc mkbrgo {top} {
 
     set name [$top.name get]
     set id [$top.sha1 get]
+    set cmdargs {}
+    set old_id {}
     if {$name eq {}} {
 	error_popup [mc "Please specify a name for the new branch"]
 	return
     }
+    if {[info exists headids($name)]} {
+	if {![confirm_popup [mc \
+		"Branch '%s' already exists. Overwrite?" $name]]} {
+	    return
+	}
+	set old_id $headids($name)
+	lappend cmdargs -f
+    }
     catch {destroy $top}
+    lappend cmdargs $name $id
     nowbusy newbranch
     update
     if {[catch {
-	exec git branch $name $id
+	eval exec git branch $cmdargs
     } err]} {
 	notbusy newbranch
 	error_popup $err
     } else {
-	set headids($name) $id
-	lappend idheads($id) $name
-	addedhead $id $name
 	notbusy newbranch
-	redrawtags $id
+	if {$old_id ne {}} {
+	    movehead $id $name
+	    movedhead $id $name
+	    redrawtags $old_id
+	    redrawtags $id
+	} else {
+	    set headids($name) $id
+	    lappend idheads($id) $name
+	    addedhead $id $name
+	    redrawtags $id
+	}
 	dispneartags 0
 	run refill_reflist
     }
