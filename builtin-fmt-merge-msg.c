@@ -358,7 +358,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	};
 
 	FILE *in = stdin;
-	struct strbuf input, output;
+	struct strbuf input = STRBUF_INIT, output = STRBUF_INIT;
 	int ret;
 
 	git_config(fmt_merge_msg_config, NULL);
@@ -372,10 +372,8 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 			die("cannot open %s", inpath);
 	}
 
-	strbuf_init(&input, 0);
 	if (strbuf_read(&input, fileno(in), 0) < 0)
 		die("could not read input file %s", strerror(errno));
-	strbuf_init(&output, 0);
 
 	ret = fmt_merge_msg(merge_summary, &input, &output);
 	if (ret)

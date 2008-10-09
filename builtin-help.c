@@ -322,10 +322,8 @@ static const char *cmd_to_page(const char *git_cmd)
 
 static void setup_man_path(void)
 {
-	struct strbuf new_path;
+	struct strbuf new_path = STRBUF_INIT;
 	const char *old_path = getenv("MANPATH");
-
-	strbuf_init(&new_path, 0);
 
 	/* We should always put ':' after our path. If there is no
 	 * old_path, the ':' at the end will let 'man' to try

@@ -124,11 +124,10 @@ static int write_tar_entry(struct archiver_args *args,
 		unsigned int mode, void *buffer, unsigned long size)
 {
 	struct ustar_header header;
-	struct strbuf ext_header;
+	struct strbuf ext_header = STRBUF_INIT;
 	int err = 0;
 
 	memset(&header, 0, sizeof(header));
-	strbuf_init(&ext_header, 0);
 
 	if (!sha1) {
 		*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
@@ -211,10 +210,9 @@ static int write_tar_entry(struct archiver_args *args,
 static int write_global_extended_header(struct archiver_args *args)
 {
 	const unsigned char *sha1 = args->commit_sha1;
-	struct strbuf ext_header;
+	struct strbuf ext_header = STRBUF_INIT;
 	int err;
 
-	strbuf_init(&ext_header, 0);
 	strbuf_append_ext_header(&ext_header, "comment", sha1_to_hex(sha1), 40);
 	err = write_tar_entry(args, NULL, NULL, 0, 0, ext_header.buf,
 			ext_header.len);

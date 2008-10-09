@@ -99,8 +99,7 @@ unsigned whitespace_rule(const char *pathname)
 /* The returned string should be freed by the caller. */
 char *whitespace_error_string(unsigned ws)
 {
-	struct strbuf err;
-	strbuf_init(&err, 0);
+	struct strbuf err = STRBUF_INIT;
 	if (ws & WS_TRAILING_SPACE)
 		strbuf_addstr(&err, "trailing whitespace");
 	if (ws & WS_SPACE_BEFORE_TAB) {

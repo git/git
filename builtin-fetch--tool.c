@@ -5,8 +5,7 @@
 
 static char *get_stdin(void)
 {
-	struct strbuf buf;
-	strbuf_init(&buf, 0);
+	struct strbuf buf = STRBUF_INIT;
 	if (strbuf_read(&buf, 0, 1024) < 0) {
 		die("error reading standard input: %s", strerror(errno));
 	}

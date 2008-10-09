@@ -54,7 +54,7 @@ static int add(int argc, const char **argv)
 	struct string_list track = { NULL, 0, 0 };
 	const char *master = NULL;
 	struct remote *remote;
-	struct strbuf buf, buf2;
+	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT;
 	const char *name, *url;
 	int i;
 
@@ -80,9 +80,6 @@ static int add(int argc, const char **argv)
 	if (remote && (remote->url_nr > 1 || strcmp(name, remote->url[0]) ||
 			remote->fetch_refspec_nr))
 		die("remote %s already exists.", name);
-
-	strbuf_init(&buf, 0);
-	strbuf_init(&buf2, 0);
 
 	strbuf_addf(&buf2, "refs/heads/test:refs/remotes/%s/test", name);
 	if (!valid_fetch_refspec(buf2.buf))
@@ -352,7 +349,7 @@ static int rm(int argc, const char **argv)
 		OPT_END()
 	};
 	struct remote *remote;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	struct known_remotes known_remotes = { NULL, NULL };
 	struct string_list branches = { NULL, 0, 0, 1 };
 	struct branches_for_remote cb_data = { NULL, &branches, &known_remotes };
@@ -368,7 +365,6 @@ static int rm(int argc, const char **argv)
 	known_remotes.to_delete = remote;
 	for_each_remote(add_known_remote, &known_remotes);
 
-	strbuf_init(&buf, 0);
 	strbuf_addf(&buf, "remote.%s", remote->name);
 	if (git_config_rename_section(buf.buf, NULL) < 1)
 		return error("Could not remove config section '%s'", buf.buf);

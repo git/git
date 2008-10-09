@@ -310,8 +310,7 @@ static void show_local_changes(struct object *head)
 
 static void describe_detached_head(char *msg, struct commit *commit)
 {
-	struct strbuf sb;
-	strbuf_init(&sb, 0);
+	struct strbuf sb = STRBUF_INIT;
 	parse_commit(commit);
 	pretty_print_commit(CMIT_FMT_ONELINE, commit, &sb, 0, NULL, NULL, 0, 0);
 	fprintf(stderr, "%s %s... %s\n", msg,
@@ -360,8 +359,7 @@ struct branch_info {
 
 static void setup_branch_path(struct branch_info *branch)
 {
-	struct strbuf buf;
-	strbuf_init(&buf, 0);
+	struct strbuf buf = STRBUF_INIT;
 	strbuf_addstr(&buf, "refs/heads/");
 	strbuf_addstr(&buf, branch->name);
 	branch->path = strbuf_detach(&buf, NULL);
@@ -484,7 +482,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 				   struct branch_info *old,
 				   struct branch_info *new)
 {
-	struct strbuf msg;
+	struct strbuf msg = STRBUF_INIT;
 	const char *old_desc;
 	if (opts->new_branch) {
 		create_branch(old->name, opts->new_branch, new->name, 0,
@@ -493,7 +491,6 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 		setup_branch_path(new);
 	}
 
-	strbuf_init(&msg, 0);
 	old_desc = old->name;
 	if (!old_desc)
 		old_desc = sha1_to_hex(old->commit->object.sha1);
@@ -738,8 +735,7 @@ no_reference:
 	}
 
 	if (opts.new_branch) {
-		struct strbuf buf;
-		strbuf_init(&buf, 0);
+		struct strbuf buf = STRBUF_INIT;
 		strbuf_addstr(&buf, "refs/heads/");
 		strbuf_addstr(&buf, opts.new_branch);
 		if (!get_sha1(buf.buf, rev))

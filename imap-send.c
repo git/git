@@ -1266,10 +1266,9 @@ static int imap_store_msg(struct store *gctx, struct msg_data *data, int *uid)
 
 static int read_message(FILE *f, struct msg_data *msg)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 
 	memset(msg, 0, sizeof(*msg));
-	strbuf_init(&buf, 0);
 
 	do {
 		if (strbuf_fread(&buf, CHUNKSIZE, f) <= 0)

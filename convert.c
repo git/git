@@ -281,7 +281,7 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	 * (child --> cmd) --> us
 	 */
 	int ret = 1;
-	struct strbuf nbuf;
+	struct strbuf nbuf = STRBUF_INIT;
 	struct async async;
 	struct filter_params params;
 
@@ -299,7 +299,6 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	if (start_async(&async))
 		return 0;	/* error was already reported */
 
-	strbuf_init(&nbuf, 0);
 	if (strbuf_read(&nbuf, async.out, len) < 0) {
 		error("read from external filter %s failed", cmd);
 		ret = 0;

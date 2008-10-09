@@ -252,7 +252,7 @@ void log_write_email_headers(struct rev_info *opt, const char *name,
 
 void show_log(struct rev_info *opt)
 {
-	struct strbuf msgbuf;
+	struct strbuf msgbuf = STRBUF_INIT;
 	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
 	int abbrev = opt->diffopt.abbrev;
@@ -381,7 +381,6 @@ void show_log(struct rev_info *opt)
 	/*
 	 * And then the pretty-printed message itself
 	 */
-	strbuf_init(&msgbuf, 0);
 	if (need_8bit_cte >= 0)
 		need_8bit_cte = has_non_ascii(opt->add_signoff);
 	pretty_print_commit(opt->commit_format, commit, &msgbuf,

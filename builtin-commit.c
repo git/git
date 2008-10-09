@@ -448,7 +448,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 {
 	struct stat statbuf;
 	int commitable, saved_color_setting;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	char *buffer;
 	FILE *fp;
 	const char *hook_arg1 = NULL;
@@ -458,7 +458,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		return 0;
 
-	strbuf_init(&sb, 0);
 	if (message.len) {
 		strbuf_addbuf(&sb, &message);
 		hook_arg1 = "message";
@@ -511,10 +510,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 		stripspace(&sb, 0);
 
 	if (signoff) {
-		struct strbuf sob;
+		struct strbuf sob = STRBUF_INIT;
 		int i;
 
-		strbuf_init(&sob, 0);
 		strbuf_addstr(&sob, sign_off_header);
 		strbuf_addstr(&sob, fmt_name(getenv("GIT_COMMITTER_NAME"),
 					     getenv("GIT_COMMITTER_EMAIL")));
@@ -672,7 +670,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
  */
 static int message_is_empty(struct strbuf *sb)
 {
-	struct strbuf tmpl;
+	struct strbuf tmpl = STRBUF_INIT;
 	const char *nl;
 	int eol, i, start = 0;
 
@@ -680,7 +678,6 @@ static int message_is_empty(struct strbuf *sb)
 		return 0;
 
 	/* See if the template is just a prefix of the message. */
-	strbuf_init(&tmpl, 0);
 	if (template_file && strbuf_read_file(&tmpl, template_file, 0) > 0) {
 		stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
 		if (start + tmpl.len <= sb->len &&
@@ -931,7 +928,7 @@ static const char commit_utf8_warn[] =
 
 int cmd_commit(int argc, const char **argv, const char *prefix)
 {
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	const char *index_file, *reflog_msg;
 	char *nl, *p;
 	unsigned char commit_sha1[20];
@@ -966,12 +963,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		for (c = commit->parents; c; c = c->next)
 			pptr = &commit_list_insert(c->item, pptr)->next;
 	} else if (in_merge) {
-		struct strbuf m;
+		struct strbuf m = STRBUF_INIT;
 		FILE *fp;
 
 		reflog_msg = "commit (merge)";
 		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
-		strbuf_init(&m, 0);
 		fp = fopen(git_path("MERGE_HEAD"), "r");
 		if (fp == NULL)
 			die("could not open %s for reading: %s",
@@ -991,7 +987,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	parents = reduce_heads(parents);
 
 	/* Finally, get the commit message */
-	strbuf_init(&sb, 0);
 	if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
 		rollback_index_files();
 		die("could not read commit message");

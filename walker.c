@@ -215,9 +215,8 @@ static int mark_complete(const char *path, const unsigned char *sha1, int flag, 
 int walker_targets_stdin(char ***target, const char ***write_ref)
 {
 	int targets = 0, targets_alloc = 0;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	*target = NULL; *write_ref = NULL;
-	strbuf_init(&buf, 0);
 	while (1) {
 		char *rf_one = NULL;
 		char *tg_one;

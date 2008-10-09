@@ -334,11 +334,10 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	}
 
 	if (verbose) {
-		struct strbuf subject;
+		struct strbuf subject = STRBUF_INIT;
 		const char *sub = " **** invalid ref ****";
 		char stat[128];
 
-		strbuf_init(&subject, 0);
 		stat[0] = '\0';
 
 		commit = item->commit;

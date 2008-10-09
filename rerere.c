@@ -79,7 +79,7 @@ static int handle_file(const char *path,
 	enum {
 		RR_CONTEXT = 0, RR_SIDE_1, RR_SIDE_2, RR_ORIGINAL,
 	} hunk = RR_CONTEXT;
-	struct strbuf one, two;
+	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
 	FILE *f = fopen(path, "r");
 	FILE *out = NULL;
 
@@ -97,8 +97,6 @@ static int handle_file(const char *path,
 	if (sha1)
 		git_SHA1_Init(&ctx);
 
-	strbuf_init(&one, 0);
-	strbuf_init(&two,  0);
 	while (fgets(buf, sizeof(buf), f)) {
 		if (!prefixcmp(buf, "<<<<<<< ")) {
 			if (hunk != RR_CONTEXT)

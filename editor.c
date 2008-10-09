@@ -26,9 +26,8 @@ int launch_editor(const char *path, struct strbuf *buffer, const char *const *en
 		int i = 0;
 		int failed;
 		const char *args[6];
-		struct strbuf arg0;
+		struct strbuf arg0 = STRBUF_INIT;
 
-		strbuf_init(&arg0, 0);
 		if (strcspn(editor, "$ \t'") != len) {
 			/* there are specials */
 			strbuf_addf(&arg0, "%s \"$@\"", editor);

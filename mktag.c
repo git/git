@@ -153,7 +153,7 @@ static int verify_tag(char *buffer, unsigned long size)
 
 int main(int argc, char **argv)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	unsigned char result_sha1[20];
 
 	if (argc != 1)
@@ -161,7 +161,6 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 
-	strbuf_init(&buf, 0);
 	if (strbuf_read(&buf, 0, 4096) < 0) {
 		die("could not read from stdin");
 	}

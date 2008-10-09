@@ -1010,13 +1010,11 @@ int graph_is_commit_finished(struct git_graph const *graph)
 
 void graph_show_commit(struct git_graph *graph)
 {
-	struct strbuf msgbuf;
+	struct strbuf msgbuf = STRBUF_INIT;
 	int shown_commit_line = 0;
 
 	if (!graph)
 		return;
-
-	strbuf_init(&msgbuf, 0);
 
 	while (!shown_commit_line) {
 		shown_commit_line = graph_next_line(graph, &msgbuf);
@@ -1031,12 +1029,11 @@ void graph_show_commit(struct git_graph *graph)
 
 void graph_show_oneline(struct git_graph *graph)
 {
-	struct strbuf msgbuf;
+	struct strbuf msgbuf = STRBUF_INIT;
 
 	if (!graph)
 		return;
 
-	strbuf_init(&msgbuf, 0);
 	graph_next_line(graph, &msgbuf);
 	fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
 	strbuf_release(&msgbuf);
@@ -1044,12 +1041,11 @@ void graph_show_oneline(struct git_graph *graph)
 
 void graph_show_padding(struct git_graph *graph)
 {
-	struct strbuf msgbuf;
+	struct strbuf msgbuf = STRBUF_INIT;
 
 	if (!graph)
 		return;
 
-	strbuf_init(&msgbuf, 0);
 	graph_padding_line(graph, &msgbuf);
 	fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
 	strbuf_release(&msgbuf);
@@ -1057,7 +1053,7 @@ void graph_show_padding(struct git_graph *graph)
 
 int graph_show_remainder(struct git_graph *graph)
 {
-	struct strbuf msgbuf;
+	struct strbuf msgbuf = STRBUF_INIT;
 	int shown = 0;
 
 	if (!graph)
@@ -1066,7 +1062,6 @@ int graph_show_remainder(struct git_graph *graph)
 	if (graph_is_commit_finished(graph))
 		return 0;
 
-	strbuf_init(&msgbuf, 0);
 	for (;;) {
 		graph_next_line(graph, &msgbuf);
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
