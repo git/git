@@ -39,75 +39,40 @@ package main;
 sub usage {
 	print <<EOT;
 git send-email [options] <file | directory>...
-Options:
-   --from         Specify the "From:" line of the email to be sent.
 
-   --to           Specify the primary "To:" line of the email.
+  Composing:
+    --from                  <str>  * Email From:
+    --to                    <str>  * Email To:
+    --cc                    <str>  * Email Cc:
+    --bcc                   <str>  * Email Bcc:
+    --subject               <str>  * Email "Subject:"
+    --in-reply-to           <str>  * Email "In-Reply-To:"
+    --compose                      * Open an editor for introduction.
 
-   --cc           Specify an initial "Cc:" list for the entire series
-                  of emails.
+  Sending:
+    --envelope-sender       <str>  * Email envelope sender.
+    --smtp-server       <str:int>  * Outgoing SMTP server to use. The port
+                                     is optional. Default 'localhost'.
+    --smtp-server-port      <int>  * Outgoing SMTP server port.
+    --smtp-user             <str>  * Username for SMTP-AUTH.
+    --smtp-pass             <str>  * Password for SMTP-AUTH; not necessary.
+    --smtp-encryption       <str>  * tls or ssl; anything else disables.
+    --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
 
-   --cc-cmd       Specify a command to execute per file which adds
-                  per file specific cc address entries
+  Automating:
+    --identity              <str>  * Use the sendemail.<id> options.
+    --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
+    --suppress-cc           <str>  * author, self, sob, cccmd, all.
+    --[no-]signed-off-by-cc        * Send to Cc: and Signed-off-by:
+                                     addresses. Default on.
+    --[no-]suppress-from           * Send to self. Default off.
+    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default on.
+    --[no-]thread                  * Use In-Reply-To: field. Default on.
 
-   --bcc          Specify a list of email addresses that should be Bcc:
-		  on all the emails.
-
-   --compose      Use \$GIT_EDITOR, core.editor, \$EDITOR, or \$VISUAL to edit
-		  an introductory message for the patch series.
-
-   --subject      Specify the initial "Subject:" line.
-                  Only necessary if --compose is also set.  If --compose
-		  is not set, this will be prompted for.
-
-   --in-reply-to  Specify the first "In-Reply-To:" header line.
-                  Only used if --compose is also set.  If --compose is not
-		  set, this will be prompted for.
-
-   --chain-reply-to If set, the replies will all be to the previous
-                  email sent, rather than to the first email sent.
-                  Defaults to on.
-
-   --signed-off-cc Automatically add email addresses that appear in
-                 Signed-off-by: or Cc: lines to the cc: list. Defaults to on.
-
-   --identity     The configuration identity, a subsection to prioritise over
-                  the default section.
-
-   --smtp-server  If set, specifies the outgoing SMTP server to use.
-                  Defaults to localhost.  Port number can be specified here with
-                  hostname:port format or by using --smtp-server-port option.
-
-   --smtp-server-port Specify a port on the outgoing SMTP server to connect to.
-
-   --smtp-user    The username for SMTP-AUTH.
-
-   --smtp-pass    The password for SMTP-AUTH.
-
-   --smtp-encryption Specify 'tls' for STARTTLS encryption, or 'ssl' for SSL.
-                  Any other value disables the feature.
-
-   --smtp-ssl     Synonym for '--smtp-encryption=ssl'.  Deprecated.
-
-   --suppress-cc  Suppress the specified category of auto-CC.  The category
-		  can be one of 'author' for the patch author, 'self' to
-		  avoid copying yourself, 'sob' for Signed-off-by lines,
-		  'cccmd' for the output of the cccmd, or 'all' to suppress
-		  all of these.
-
-   --suppress-from Suppress sending emails to yourself. Defaults to off.
-
-   --thread       Specify that the "In-Reply-To:" header should be set on all
-                  emails. Defaults to on.
-
-   --quiet	  Make git-send-email less verbose.  One line per email
-                  should be all that is output.
-
-   --dry-run	  Do everything except actually send the emails.
-
-   --envelope-sender	Specify the envelope sender used to send the emails.
-
-   --no-validate	Don't perform any sanity checks on patches.
+  Administering:
+    --quiet                        * Output one line of info per email.
+    --dry-run                      * Don't actually send the emails.
+    --[no-]validate                * Perform patch sanity checks. Default on.
 
 EOT
 	exit(1);
@@ -186,17 +151,19 @@ if ($@) {
 my ($quiet, $dry_run) = (0, 0);
 
 # Variables with corresponding config settings
-my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
+my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc, $cc_cmd);
 my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_encryption);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
-my ($no_validate);
+my ($validate);
 my (@suppress_cc);
 
 my %config_bool_settings = (
     "thread" => [\$thread, 1],
     "chainreplyto" => [\$chain_reply_to, 1],
     "suppressfrom" => [\$suppress_from, undef],
-    "signedoffcc" => [\$signed_off_cc, undef],
+    "signedoffbycc" => [\$signed_off_by_cc, undef],
+    "signedoffcc" => [\$signed_off_by_cc, undef],      # Deprecated
+    "validate" => [\$validate, 1],
 );
 
 my %config_settings = (
@@ -259,11 +226,11 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "cc-cmd=s" => \$cc_cmd,
 		    "suppress-from!" => \$suppress_from,
 		    "suppress-cc=s" => \@suppress_cc,
-		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_cc,
+		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_by_cc,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
-		    "no-validate" => \$no_validate,
+		    "validate!" => \$validate,
 	 );
 
 unless ($rc) {
@@ -335,7 +302,7 @@ if ($suppress_cc{'all'}) {
 
 # If explicit old-style ones are specified, they trump --suppress-cc.
 $suppress_cc{'self'} = $suppress_from if defined $suppress_from;
-$suppress_cc{'sob'} = !$signed_off_cc if defined $signed_off_cc;
+$suppress_cc{'sob'} = !$signed_off_by_cc if defined $signed_off_by_cc;
 
 # Debugging, print out the suppressions.
 if (0) {
@@ -416,7 +383,7 @@ for my $f (@ARGV) {
 	}
 }
 
-if (!$no_validate) {
+if ($validate) {
 	foreach my $f (@files) {
 		unless (-p $f) {
 			my $error = validate_patch($f);
