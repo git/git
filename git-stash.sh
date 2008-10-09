@@ -145,16 +145,8 @@ show_stash () {
 		flags=--stat
 	fi
 
-	if test $# = 0
-	then
-		set x "$ref_stash@{0}"
-		shift
-	fi
-
-	s=$(git rev-parse --revs-only --no-flags "$@")
-
-	w_commit=$(git rev-parse --verify "$s") &&
-	b_commit=$(git rev-parse --verify "$s^") &&
+	w_commit=$(git rev-parse --verify --default $ref_stash "$@") &&
+	b_commit=$(git rev-parse --verify "$w_commit^") &&
 	git diff $flags $b_commit $w_commit
 }
 
@@ -170,19 +162,13 @@ apply_stash () {
 		shift
 	esac
 
-	if test $# = 0
-	then
-		set x "$ref_stash@{0}"
-		shift
-	fi
-
 	# current index state
 	c_tree=$(git write-tree) ||
 		die 'Cannot apply a stash in the middle of a merge'
 
 	# stash records the work tree, and is a merge between the
 	# base commit (first parent) and the index tree (second parent).
-	s=$(git rev-parse --revs-only --no-flags "$@") &&
+	s=$(git rev-parse --verify --default $ref_stash "$@") &&
 	w_tree=$(git rev-parse --verify "$s:") &&
 	b_tree=$(git rev-parse --verify "$s^1:") &&
 	i_tree=$(git rev-parse --verify "$s^2:") ||
@@ -242,7 +228,7 @@ drop_stash () {
 		shift
 	fi
 	# Verify supplied argument looks like a stash entry
-	s=$(git rev-parse --revs-only --no-flags "$@") &&
+	s=$(git rev-parse --verify "$@") &&
 	git rev-parse --verify "$s:"   > /dev/null 2>&1 &&
 	git rev-parse --verify "$s^1:" > /dev/null 2>&1 &&
 	git rev-parse --verify "$s^2:" > /dev/null 2>&1 ||

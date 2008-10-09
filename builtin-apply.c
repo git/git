@@ -1697,7 +1697,7 @@ static int match_fragment(struct image *img,
 		fixlen = ws_fix_copy(buf, orig, oldlen, ws_rule, NULL);
 
 		/* Try fixing the line in the target */
-		if (sizeof(tgtfixbuf) < tgtlen)
+		if (sizeof(tgtfixbuf) > tgtlen)
 			tgtfix = tgtfixbuf;
 		else
 			tgtfix = xmalloc(tgtlen);
