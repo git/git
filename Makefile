@@ -346,6 +346,7 @@ LIB_H += cache.h
 LIB_H += cache-tree.h
 LIB_H += commit.h
 LIB_H += compat/mingw.h
+LIB_H += compat/cygwin.h
 LIB_H += csum-file.h
 LIB_H += decorate.h
 LIB_H += delta.h
@@ -747,6 +748,9 @@ ifeq ($(uname_S),HP-UX)
 	NO_HSTRERROR = YesPlease
 	NO_SYS_SELECT_H = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
+endif
+ifneq (,$(findstring CYGWIN,$(uname_S)))
+	COMPAT_OBJS += compat/cygwin.o
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MMAP = YesPlease

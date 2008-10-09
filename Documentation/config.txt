@@ -117,6 +117,15 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See linkgit:git-update-index[1]. True by default.
 
+core.ignoreCygwinFSTricks::
+	This option is only used by Cygwin implementation of Git. If false,
+	the Cygwin stat() and lstat() functions are used. This may be useful
+	if your repository consists of a few separate directories joined in
+	one hierarchy using Cygwin mount. If true, Git uses native Win32 API
+	whenever it is possible and falls back to Cygwin functions only to
+	handle symbol links. The native mode is more than twice faster than
+	normal Cygwin l/stat() functions. True by default.
+
 core.trustctime::
 	If false, the ctime differences between the index and the
 	working copy are ignored; useful when the inode change time
