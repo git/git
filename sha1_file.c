@@ -1571,11 +1571,9 @@ static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
 	struct delta_base_cache_entry *ent = delta_base_cache + hash;
 
 	ret = ent->data;
-	if (ret && ent->p == p && ent->base_offset == base_offset)
-		goto found_cache_entry;
-	return unpack_entry(p, base_offset, type, base_size);
+	if (!ret || ent->p != p || ent->base_offset != base_offset)
+		return unpack_entry(p, base_offset, type, base_size);
 
-found_cache_entry:
 	if (!keep_cache) {
 		ent->data = NULL;
 		ent->lru.next->prev = ent->lru.prev;
