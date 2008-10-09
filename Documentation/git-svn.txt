@@ -149,6 +149,22 @@ and have no uncommitted changes.
 	is very strongly discouraged.
 --
 
+'branch'::
+	Create a branch in the SVN repository.
+
+-m;;
+--message;;
+	Allows to specify the commit message.
+
+-t;;
+--tag;;
+	Create a tag by using the tags_subdir instead of the branches_subdir
+	specified during git svn init.
+
+'tag'::
+	Create a tag in the SVN repository. This is a shorthand for
+	'branch -t'.
+
 'log'::
 	This should make it easy to look up svn log messages when svn
 	users refer to -r/--revision numbers.
@@ -372,7 +388,8 @@ Passed directly to 'git-rebase' when using 'dcommit' if a
 -n::
 --dry-run::
 
-This can be used with the 'dcommit' and 'rebase' commands.
+This can be used with the 'dcommit', 'rebase', 'branch' and 'tag'
+commands.
 
 For 'dcommit', print out the series of git arguments that would show
 which diffs would be committed to SVN.
@@ -380,6 +397,9 @@ which diffs would be committed to SVN.
 For 'rebase', display the local branch associated with the upstream svn
 repository associated with the current branch and the URL of svn
 repository that will be fetched from.
+
+For 'branch' and 'tag', display the urls that will be used for copying when
+creating the branch or tag.
 
 --
 
@@ -498,6 +518,8 @@ Tracking and contributing to an entire Subversion-managed project
 	git svn clone http://svn.example.com/project -T trunk -b branches -t tags
 # View all branches and tags you have cloned:
 	git branch -r
+# Create a new branch in SVN
+    git svn branch waldo
 # Reset your master to trunk (or any other branch, replacing 'trunk'
 # with the appropriate name):
 	git reset --hard remotes/trunk
