@@ -435,6 +435,10 @@ div.search {
 	right: 12px
 }
 
+p.projsearch {
+	text-align: center;
+}
+
 td.linenr {
 	text-align: right;
 }
