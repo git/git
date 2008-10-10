@@ -11,7 +11,7 @@
 #include "progress.h"
 #include "csum-file.h"
 
-static void sha1flush(struct sha1file *f, unsigned int count)
+static void flush(struct sha1file *f, unsigned int count)
 {
 	void *buf = f->buffer;
 
@@ -32,22 +32,28 @@ static void sha1flush(struct sha1file *f, unsigned int count)
 	}
 }
 
-int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
+void sha1flush(struct sha1file *f)
 {
-	int fd;
 	unsigned offset = f->offset;
 
 	if (offset) {
 		SHA1_Update(&f->ctx, f->buffer, offset);
-		sha1flush(f, offset);
+		flush(f, offset);
 		f->offset = 0;
 	}
+}
+
+int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
+{
+	int fd;
+
+	sha1flush(f);
 	SHA1_Final(f->buffer, &f->ctx);
 	if (result)
 		hashcpy(result, f->buffer);
 	if (flags & (CSUM_CLOSE | CSUM_FSYNC)) {
 		/* write checksum and close fd */
-		sha1flush(f, 20);
+		flush(f, 20);
 		if (flags & CSUM_FSYNC)
 			fsync_or_die(f->fd, f->name);
 		if (close(f->fd))
@@ -76,7 +82,7 @@ int sha1write(struct sha1file *f, void *buf, unsigned int count)
 		left -= nr;
 		if (!left) {
 			SHA1_Update(&f->ctx, f->buffer, offset);
-			sha1flush(f, offset);
+			flush(f, offset);
 			offset = 0;
 		}
 		f->offset = offset;

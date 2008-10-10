@@ -707,6 +707,7 @@ static struct object_entry *append_obj_to_pack(struct sha1file *f,
 	obj[1].idx.offset = obj[0].idx.offset + n;
 	obj[1].idx.offset += write_compressed(f, buf, size);
 	obj[0].idx.crc32 = crc32_end(f);
+	sha1flush(f);
 	hashcpy(obj->idx.sha1, sha1);
 	return obj;
 }
