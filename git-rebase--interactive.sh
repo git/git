@@ -277,7 +277,7 @@ do_next () {
 		"$DOTEST"/amend || exit
 	read command sha1 rest < "$TODO"
 	case "$command" in
-	'#'*|'')
+	'#'*|''|noop)
 		mark_action_done
 		;;
 	pick|p)
@@ -584,6 +584,7 @@ first and then run 'git rebase --continue' again."
 			--abbrev=7 --reverse --left-right --cherry-pick \
 			$UPSTREAM...$HEAD | \
 			sed -n "s/^>/pick /p" > "$TODO"
+		test -s "$TODO" || echo noop >> "$TODO"
 		cat >> "$TODO" << EOF
 
 # Rebase $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
