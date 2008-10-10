@@ -117,6 +117,15 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See linkgit:git-update-index[1]. True by default.
 
+core.ignoreCygwinFSTricks::
+	This option is only used by Cygwin implementation of Git. If false,
+	the Cygwin stat() and lstat() functions are used. This may be useful
+	if your repository consists of a few separate directories joined in
+	one hierarchy using Cygwin mount. If true, Git uses native Win32 API
+	whenever it is possible and falls back to Cygwin functions only to
+	handle symbol links. The native mode is more than twice faster than
+	normal Cygwin l/stat() functions. True by default.
+
 core.trustctime::
 	If false, the ctime differences between the index and the
 	working copy are ignored; useful when the inode change time
@@ -363,8 +372,17 @@ core.pager::
 	variable.  Note that git sets the `LESS` environment
 	variable to `FRSX` if it is unset when it runs the
 	pager.  One can change these settings by setting the
-	`LESS` variable to some other value or by giving the
-	`core.pager` option a value such as "`less -+FRSX`".
+	`LESS` variable to some other value.  Alternately,
+	these settings can be overridden on a project or
+	global basis by setting the `core.pager` option.
+	Setting `core.pager` has no affect on the `LESS`
+	environment variable behaviour above, so if you want
+	to override git's default settings this way, you need
+	to be explicit.  For example, to disable the S option
+	in a backward compatible manner, set `core.pager`
+	to "`less -+$LESS -FRX`".  This will be passed to the
+	shell by git, which will translate the final command to
+	"`LESS=FRSX less -+FRSX -FRX`".
 
 core.whitespace::
 	A comma separated list of common whitespace problems to
@@ -917,6 +935,14 @@ man.<tool>.cmd::
 man.<tool>.path::
 	Override the path for the given tool that may be used to
 	display help in the 'man' format. See linkgit:git-help[1].
+
+merge.conflictstyle::
+	Specify the style in which conflicted hunks are written out to
+	working tree files upon merge.  The default is "merge", which
+	shows `<<<<<<<` conflict marker, change made by one side,
+	`=======` marker, change made by the other side, and then
+	`>>>>>>>` marker.  An alternate style, "diff3", adds `|||||||`
+	marker and the original text before `=======` marker.
 
 mergetool.<tool>.path::
 	Override the path for the given tool.  This is useful in case

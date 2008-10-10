@@ -167,4 +167,36 @@ test_expect_success 'init with --template (blank)' '
 	! test -f template-blank/.git/info/exclude
 '
 
+test_expect_success 'init --bare/--shared overrides system/global config' '
+	(
+		HOME="`pwd`" &&
+		export HOME &&
+		test_config="$HOME"/.gitconfig &&
+		unset GIT_CONFIG_NOGLOBAL &&
+		git config -f "$test_config" core.bare false &&
+		git config -f "$test_config" core.sharedRepository 0640 &&
+		mkdir init-bare-shared-override &&
+		cd init-bare-shared-override &&
+		git init --bare --shared=0666
+	) &&
+	check_config init-bare-shared-override true unset &&
+	test x0666 = \
+	x`git config -f init-bare-shared-override/config core.sharedRepository`
+'
+
+test_expect_success 'init honors global core.sharedRepository' '
+	(
+		HOME="`pwd`" &&
+		export HOME &&
+		test_config="$HOME"/.gitconfig &&
+		unset GIT_CONFIG_NOGLOBAL &&
+		git config -f "$test_config" core.sharedRepository 0666 &&
+		mkdir shared-honor-global &&
+		cd shared-honor-global &&
+		git init
+	) &&
+	test x0666 = \
+	x`git config -f shared-honor-global/.git/config core.sharedRepository`
+'
+
 test_done

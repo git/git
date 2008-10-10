@@ -10,10 +10,10 @@
 #include <string.h>
 #include "sha1.h"
 
-extern void sha1_core(uint32_t *hash, const unsigned char *p,
-		      unsigned int nblocks);
+extern void ppc_sha1_core(uint32_t *hash, const unsigned char *p,
+			  unsigned int nblocks);
 
-int SHA1_Init(SHA_CTX *c)
+int ppc_SHA1_Init(ppc_SHA_CTX *c)
 {
 	c->hash[0] = 0x67452301;
 	c->hash[1] = 0xEFCDAB89;
@@ -25,7 +25,7 @@ int SHA1_Init(SHA_CTX *c)
 	return 0;
 }
 
-int SHA1_Update(SHA_CTX *c, const void *ptr, unsigned long n)
+int ppc_SHA1_Update(ppc_SHA_CTX *c, const void *ptr, unsigned long n)
 {
 	unsigned long nb;
 	const unsigned char *p = ptr;
@@ -38,12 +38,12 @@ int SHA1_Update(SHA_CTX *c, const void *ptr, unsigned long n)
 				nb = n;
 			memcpy(&c->buf.b[c->cnt], p, nb);
 			if ((c->cnt += nb) == 64) {
-				sha1_core(c->hash, c->buf.b, 1);
+				ppc_sha1_core(c->hash, c->buf.b, 1);
 				c->cnt = 0;
 			}
 		} else {
 			nb = n >> 6;
-			sha1_core(c->hash, p, nb);
+			ppc_sha1_core(c->hash, p, nb);
 			nb <<= 6;
 		}
 		n -= nb;
@@ -52,7 +52,7 @@ int SHA1_Update(SHA_CTX *c, const void *ptr, unsigned long n)
 	return 0;
 }
 
-int SHA1_Final(unsigned char *hash, SHA_CTX *c)
+int ppc_SHA1_Final(unsigned char *hash, ppc_SHA_CTX *c)
 {
 	unsigned int cnt = c->cnt;
 
@@ -60,13 +60,13 @@ int SHA1_Final(unsigned char *hash, SHA_CTX *c)
 	if (cnt > 56) {
 		if (cnt < 64)
 			memset(&c->buf.b[cnt], 0, 64 - cnt);
-		sha1_core(c->hash, c->buf.b, 1);
+		ppc_sha1_core(c->hash, c->buf.b, 1);
 		cnt = 0;
 	}
 	if (cnt < 56)
 		memset(&c->buf.b[cnt], 0, 56 - cnt);
 	c->buf.l[7] = c->len;
-	sha1_core(c->hash, c->buf.b, 1);
+	ppc_sha1_core(c->hash, c->buf.b, 1);
 	memcpy(hash, c->hash, 20);
 	return 0;
 }

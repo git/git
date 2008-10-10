@@ -96,32 +96,37 @@ static int parse_lldiff_command(const char *var, const char *ep, const char *val
  * to define a customized regexp to find the beginning of a function to
  * be used for hunk header lines of "diff -p" style output.
  */
-static struct funcname_pattern {
+struct funcname_pattern_entry {
 	char *name;
 	char *pattern;
-	struct funcname_pattern *next;
+	int cflags;
+};
+static struct funcname_pattern_list {
+	struct funcname_pattern_list *next;
+	struct funcname_pattern_entry e;
 } *funcname_pattern_list;
 
-static int parse_funcname_pattern(const char *var, const char *ep, const char *value)
+static int parse_funcname_pattern(const char *var, const char *ep, const char *value, int cflags)
 {
 	const char *name;
 	int namelen;
-	struct funcname_pattern *pp;
+	struct funcname_pattern_list *pp;
 
 	name = var + 5; /* "diff." */
 	namelen = ep - name;
 
 	for (pp = funcname_pattern_list; pp; pp = pp->next)
-		if (!strncmp(pp->name, name, namelen) && !pp->name[namelen])
+		if (!strncmp(pp->e.name, name, namelen) && !pp->e.name[namelen])
 			break;
 	if (!pp) {
 		pp = xcalloc(1, sizeof(*pp));
-		pp->name = xmemdupz(name, namelen);
+		pp->e.name = xmemdupz(name, namelen);
 		pp->next = funcname_pattern_list;
 		funcname_pattern_list = pp;
 	}
-	free(pp->pattern);
-	pp->pattern = xstrdup(value);
+	free(pp->e.pattern);
+	pp->e.pattern = xstrdup(value);
+	pp->e.cflags = cflags;
 	return 0;
 }
 
@@ -194,7 +199,13 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 			if (!strcmp(ep, ".funcname")) {
 				if (!value)
 					return config_error_nonbool(var);
-				return parse_funcname_pattern(var, ep, value);
+				return parse_funcname_pattern(var, ep, value,
+					0);
+			} else if (!strcmp(ep, ".xfuncname")) {
+				if (!value)
+					return config_error_nonbool(var);
+				return parse_funcname_pattern(var, ep, value,
+					REG_EXTENDED);
 			}
 		}
 	}
@@ -1131,9 +1142,13 @@ static void show_dirstat(struct diff_options *options)
 		/*
 		 * Original minus copied is the removed material,
 		 * added is the new material.  They are both damages
-		 * made to the preimage.
+		 * made to the preimage. In --dirstat-by-file mode, count
+		 * damaged files, not damaged lines. This is done by
+		 * counting only a single damaged line per file.
 		 */
 		damage = (p->one->size - copied) + added;
+		if (DIFF_OPT_TST(options, DIRSTAT_BY_FILE) && damage > 0)
+			damage = 1;
 
 		ALLOC_GROW(dir.files, dir.nr + 1, dir.alloc);
 		dir.files[dir.nr].name = name;
@@ -1396,42 +1411,53 @@ int diff_filespec_is_binary(struct diff_filespec *one)
 	return one->is_binary;
 }
 
-static const char *funcname_pattern(const char *ident)
+static const struct funcname_pattern_entry *funcname_pattern(const char *ident)
 {
-	struct funcname_pattern *pp;
+	struct funcname_pattern_list *pp;
 
 	for (pp = funcname_pattern_list; pp; pp = pp->next)
-		if (!strcmp(ident, pp->name))
-			return pp->pattern;
+		if (!strcmp(ident, pp->e.name))
+			return &pp->e;
 	return NULL;
 }
 
-static struct builtin_funcname_pattern {
-	const char *name;
-	const char *pattern;
-} builtin_funcname_pattern[] = {
-	{ "bibtex", "\\(@[a-zA-Z]\\{1,\\}[ \t]*{\\{0,1\\}[ \t]*[^ \t\"@',\\#}{~%]*\\).*$" },
-	{ "html", "^\\s*\\(<[Hh][1-6]\\s.*>.*\\)$" },
-	{ "java", "!^[ 	]*\\(catch\\|do\\|for\\|if\\|instanceof\\|"
-			"new\\|return\\|switch\\|throw\\|while\\)\n"
-			"^[ 	]*\\(\\([ 	]*"
-			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
-			"[ 	]*([^;]*\\)$" },
-	{ "pascal", "^\\(\\(procedure\\|function\\|constructor\\|"
-			"destructor\\|interface\\|implementation\\|"
-			"initialization\\|finalization\\)[ \t]*.*\\)$"
-			"\\|"
-			"^\\(.*=[ \t]*\\(class\\|record\\).*\\)$"
-			},
-	{ "php", "^[\t ]*\\(\\(function\\|class\\).*\\)" },
-	{ "python", "^\\s*\\(\\(class\\|def\\)\\s.*\\)$" },
-	{ "ruby", "^\\s*\\(\\(class\\|module\\|def\\)\\s.*\\)$" },
-	{ "tex", "^\\(\\\\\\(\\(sub\\)*section\\|chapter\\|part\\)\\*\\{0,1\\}{.*\\)$" },
+static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
+	{ "bibtex", "(@[a-zA-Z]{1,}[ \t]*\\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
+	  REG_EXTENDED },
+	{ "html", "^[ \t]*(<[Hh][1-6][ \t].*>.*)$", REG_EXTENDED },
+	{ "java",
+	  "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
+	  "^[ \t]*(([ \t]*[A-Za-z_][A-Za-z_0-9]*){2,}[ \t]*\\([^;]*)$",
+	  REG_EXTENDED },
+	{ "objc",
+	  /* Negate C statements that can look like functions */
+	  "!^[ \t]*(do|for|if|else|return|switch|while)\n"
+	  /* Objective-C methods */
+	  "^[ \t]*([-+][ \t]*\\([ \t]*[A-Za-z_][A-Za-z_0-9* \t]*\\)[ \t]*[A-Za-z_].*)$\n"
+	  /* C functions */
+	  "^[ \t]*(([ \t]*[A-Za-z_][A-Za-z_0-9]*){2,}[ \t]*\\([^;]*)$\n"
+	  /* Objective-C class/protocol definitions */
+	  "^(@(implementation|interface|protocol)[ \t].*)$",
+	  REG_EXTENDED },
+	{ "pascal",
+	  "^((procedure|function|constructor|destructor|interface|"
+		"implementation|initialization|finalization)[ \t]*.*)$"
+	  "\n"
+	  "^(.*=[ \t]*(class|record).*)$",
+	  REG_EXTENDED },
+	{ "php", "^[\t ]*((function|class).*)", REG_EXTENDED },
+	{ "python", "^[ \t]*((class|def)[ \t].*)$", REG_EXTENDED },
+	{ "ruby", "^[ \t]*((class|module|def)[ \t].*)$",
+	  REG_EXTENDED },
+	{ "tex",
+	  "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
+	  REG_EXTENDED },
 };
 
-static const char *diff_funcname_pattern(struct diff_filespec *one)
+static const struct funcname_pattern_entry *diff_funcname_pattern(struct diff_filespec *one)
 {
-	const char *ident, *pattern;
+	const char *ident;
+	const struct funcname_pattern_entry *pe;
 	int i;
 
 	diff_filespec_check_attr(one);
@@ -1446,9 +1472,9 @@ static const char *diff_funcname_pattern(struct diff_filespec *one)
 		return funcname_pattern("default");
 
 	/* Look up custom "funcname.$ident" regexp from config. */
-	pattern = funcname_pattern(ident);
-	if (pattern)
-		return pattern;
+	pe = funcname_pattern(ident);
+	if (pe)
+		return pe;
 
 	/*
 	 * And define built-in fallback patterns here.  Note that
@@ -1456,7 +1482,7 @@ static const char *diff_funcname_pattern(struct diff_filespec *one)
 	 */
 	for (i = 0; i < ARRAY_SIZE(builtin_funcname_pattern); i++)
 		if (!strcmp(ident, builtin_funcname_pattern[i].name))
-			return builtin_funcname_pattern[i].pattern;
+			return &builtin_funcname_pattern[i];
 
 	return NULL;
 }
@@ -1492,6 +1518,10 @@ static void builtin_diff(const char *name_a,
 		a_prefix = o->a_prefix;
 		b_prefix = o->b_prefix;
 	}
+
+	/* Never use a non-valid filename anywhere if at all possible */
+	name_a = DIFF_FILE_VALID(one) ? name_a : name_b;
+	name_b = DIFF_FILE_VALID(two) ? name_b : name_a;
 
 	a_one = quote_two(a_prefix, name_a + (*name_a == '/'));
 	b_two = quote_two(b_prefix, name_b + (*name_b == '/'));
@@ -1552,11 +1582,11 @@ static void builtin_diff(const char *name_a,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
-		const char *funcname_pattern;
+		const struct funcname_pattern_entry *pe;
 
-		funcname_pattern = diff_funcname_pattern(one);
-		if (!funcname_pattern)
-			funcname_pattern = diff_funcname_pattern(two);
+		pe = diff_funcname_pattern(one);
+		if (!pe)
+			pe = diff_funcname_pattern(two);
 
 		memset(&xecfg, 0, sizeof(xecfg));
 		memset(&ecbdata, 0, sizeof(ecbdata));
@@ -1568,8 +1598,8 @@ static void builtin_diff(const char *name_a,
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
-		if (funcname_pattern)
-			xdiff_set_find_func(&xecfg, funcname_pattern);
+		if (pe)
+			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
 		if (!diffopts)
 			;
 		else if (!prefixcmp(diffopts, "--unified="))
@@ -2511,6 +2541,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--cumulative")) {
 		options->output_format |= DIFF_FORMAT_DIRSTAT;
 		DIFF_OPT_SET(options, DIRSTAT_CUMULATIVE);
+	} else if (opt_arg(arg, 0, "dirstat-by-file",
+			   &options->dirstat_percent)) {
+		options->output_format |= DIFF_FORMAT_DIRSTAT;
+		DIFF_OPT_SET(options, DIRSTAT_BY_FILE);
 	}
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;
@@ -3067,7 +3101,7 @@ static void diff_summary(FILE *file, struct diff_filepair *p)
 }
 
 struct patch_id_t {
-	SHA_CTX *ctx;
+	git_SHA_CTX *ctx;
 	int patchlen;
 };
 
@@ -3095,7 +3129,7 @@ static void patch_id_consume(void *priv, char *line, unsigned long len)
 
 	new_len = remove_space(line, len);
 
-	SHA1_Update(data->ctx, line, new_len);
+	git_SHA1_Update(data->ctx, line, new_len);
 	data->patchlen += new_len;
 }
 
@@ -3104,11 +3138,11 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
-	SHA_CTX ctx;
+	git_SHA_CTX ctx;
 	struct patch_id_t data;
 	char buffer[PATH_MAX * 4 + 20];
 
-	SHA1_Init(&ctx);
+	git_SHA1_Init(&ctx);
 	memset(&data, 0, sizeof(struct patch_id_t));
 	data.ctx = &ctx;
 
@@ -3170,7 +3204,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 					len2, p->two->path,
 					len1, p->one->path,
 					len2, p->two->path);
-		SHA1_Update(&ctx, buffer, len1);
+		git_SHA1_Update(&ctx, buffer, len1);
 
 		xpp.flags = XDF_NEED_MINIMAL;
 		xecfg.ctxlen = 3;
@@ -3179,7 +3213,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 			      &xpp, &xecfg, &ecb);
 	}
 
-	SHA1_Final(sha1, &ctx);
+	git_SHA1_Final(sha1, &ctx);
 	return 0;
 }
 

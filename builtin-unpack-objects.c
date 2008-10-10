@@ -19,7 +19,7 @@ static const char unpack_usage[] = "git unpack-objects [-n] [-q] [-r] [--strict]
 static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
-static SHA_CTX ctx;
+static git_SHA_CTX ctx;
 
 /*
  * When running under --strict mode, objects whose reachability are
@@ -59,7 +59,7 @@ static void *fill(int min)
 	if (min > sizeof(buffer))
 		die("cannot fill %d bytes", min);
 	if (offset) {
-		SHA1_Update(&ctx, buffer, offset);
+		git_SHA1_Update(&ctx, buffer, offset);
 		memmove(buffer, buffer + offset, len);
 		offset = 0;
 	}
@@ -477,8 +477,7 @@ static void unpack_all(void)
 
 	if (!quiet)
 		progress = start_progress("Unpacking objects", nr_objects);
-	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
-	memset(obj_list, 0, nr_objects * sizeof(*obj_list));
+	obj_list = xcalloc(nr_objects, sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
 		display_progress(progress, i + 1);
@@ -539,10 +538,10 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 		/* We don't take any non-flag arguments now.. Maybe some day */
 		usage(unpack_usage);
 	}
-	SHA1_Init(&ctx);
+	git_SHA1_Init(&ctx);
 	unpack_all();
-	SHA1_Update(&ctx, buffer, offset);
-	SHA1_Final(sha1, &ctx);
+	git_SHA1_Update(&ctx, buffer, offset);
+	git_SHA1_Final(sha1, &ctx);
 	if (strict)
 		write_rest();
 	if (hashcmp(fill(20), sha1))

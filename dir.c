@@ -382,7 +382,7 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 	return ent;
 }
 
-struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
+static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
 	if (cache_name_exists(pathname, len, ignore_case))
 		return NULL;
@@ -391,7 +391,7 @@ struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int
 	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
-struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
+static struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
 {
 	if (cache_name_pos(pathname, len) >= 0)
 		return NULL;
@@ -831,3 +831,23 @@ void setup_standard_excludes(struct dir_struct *dir)
 	if (excludes_file && !access(excludes_file, R_OK))
 		add_excludes_from_file(dir, excludes_file);
 }
+
+int remove_path(const char *name)
+{
+	char *slash;
+
+	if (unlink(name) && errno != ENOENT)
+		return -1;
+
+	slash = strrchr(name, '/');
+	if (slash) {
+		char *dirs = xstrdup(name);
+		slash = dirs + (slash - name);
+		do {
+			*slash = '\0';
+		} while (rmdir(dirs) && (slash = strrchr(dirs, '/')));
+		free(dirs);
+	}
+	return 0;
+}
+

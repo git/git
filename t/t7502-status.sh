@@ -50,6 +50,7 @@ cat > expect << \EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -80,6 +81,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -108,6 +110,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -142,6 +145,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -178,6 +182,7 @@ cat > expect << \EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   modified
 #
@@ -208,6 +213,7 @@ cat > expect << \EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -271,6 +277,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -301,6 +308,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -330,6 +338,7 @@ cat >expect <<EOF
 # On branch master
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -361,6 +370,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #

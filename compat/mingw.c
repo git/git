@@ -1,4 +1,5 @@
 #include "../git-compat-util.h"
+#include "win32.h"
 #include "../strbuf.h"
 
 unsigned int _CRT_fmode = _O_BINARY;
@@ -31,7 +32,6 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
 	return (time_t)winTime;
 }
 
-extern int _getdrive( void );
 /* We keep the do_lstat code in a separate function to avoid recursion.
  * When a path ends with a slash, the stat will fail with ENOENT. In
  * this case, we strip the trailing slashes and stat again.
@@ -40,45 +40,18 @@ static int do_lstat(const char *file_name, struct stat *buf)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
 
-	if (GetFileAttributesExA(file_name, GetFileExInfoStandard, &fdata)) {
-		int fMode = S_IREAD;
-		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			fMode |= S_IFDIR;
-		else
-			fMode |= S_IFREG;
-		if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-			fMode |= S_IWRITE;
-
+	if (!(errno = get_file_attr(file_name, &fdata))) {
 		buf->st_ino = 0;
 		buf->st_gid = 0;
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
-		buf->st_mode = fMode;
+		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes);
 		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
-		buf->st_dev = buf->st_rdev = (_getdrive() - 1);
+		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
-		errno = 0;
 		return 0;
-	}
-
-	switch (GetLastError()) {
-	case ERROR_ACCESS_DENIED:
-	case ERROR_SHARING_VIOLATION:
-	case ERROR_LOCK_VIOLATION:
-	case ERROR_SHARING_BUFFER_EXCEEDED:
-		errno = EACCES;
-		break;
-	case ERROR_BUFFER_OVERFLOW:
-		errno = ENAMETOOLONG;
-		break;
-	case ERROR_NOT_ENOUGH_MEMORY:
-		errno = ENOMEM;
-		break;
-	default:
-		errno = ENOENT;
-		break;
 	}
 	return -1;
 }
@@ -131,21 +104,13 @@ int mingw_fstat(int fd, struct stat *buf)
 		return fstat(fd, buf);
 
 	if (GetFileInformationByHandle(fh, &fdata)) {
-		int fMode = S_IREAD;
-		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			fMode |= S_IFDIR;
-		else
-			fMode |= S_IFREG;
-		if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-			fMode |= S_IWRITE;
-
 		buf->st_ino = 0;
 		buf->st_gid = 0;
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
-		buf->st_mode = fMode;
+		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes);
 		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
-		buf->st_dev = buf->st_rdev = (_getdrive() - 1);
+		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));

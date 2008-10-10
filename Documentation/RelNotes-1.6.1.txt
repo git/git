@@ -59,7 +59,7 @@ on.
 
 * "git daemon" learned --max-connections=<count> option.
 
-* "git diff" learned to mimick --suppress-blank-empty from GNU diff via a
+* "git diff" learned to mimic --suppress-blank-empty from GNU diff via a
   configuration option.
 
 * "git diff" learned to put more sensible hunk headers for Python and
@@ -121,7 +121,7 @@ release, unless otherwise noted.
   is a path in it).
 
 * "git diff --stdin" used to take two trees on a line and compared them,
-  but we droppped support for such a use case long time ago.  This has
+  but we dropped support for such a use case long time ago.  This has
   been resurrected.
 
 * "git filter-branch" failed to rewrite a tag name with slashes in it.

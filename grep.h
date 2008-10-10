@@ -74,6 +74,7 @@ struct grep_opt {
 	unsigned extended:1;
 	unsigned relative:1;
 	unsigned pathname:1;
+	unsigned null_following_name:1;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;

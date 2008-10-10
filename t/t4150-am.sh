@@ -165,7 +165,7 @@ test_expect_success 'am --keep really keeps the subject' '
 	git am --keep patch4 &&
 	! test -d .git/rebase-apply &&
 	git cat-file commit HEAD |
-		grep -q -F "Re: Re: Re: [PATCH 1/5 v2] third"
+		fgrep "Re: Re: Re: [PATCH 1/5 v2] third"
 '
 
 test_expect_success 'am -3 falls back to 3-way merge' '

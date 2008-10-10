@@ -521,6 +521,19 @@ proc kill_file_process {fd} {
 	}
 }
 
+proc gitattr {path attr default} {
+	if {[catch {set r [git check-attr $attr -- $path]}]} {
+		set r unspecified
+	} else {
+		set r [join [lrange [split $r :] 2 end] :]
+		regsub {^ } $r {} r
+	}
+	if {$r eq {unspecified}} {
+		return $default
+	}
+	return $r
+}
+
 proc sq {value} {
 	regsub -all ' $value "'\\''" value
 	return "'$value'"
@@ -665,6 +678,7 @@ set default_config(merge.verbosity) 2
 set default_config(user.name) {}
 set default_config(user.email) {}
 
+set default_config(gui.encoding) [encoding system]
 set default_config(gui.matchtrackingbranch) false
 set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
@@ -948,10 +962,32 @@ blame {
 }
 citool {
 	enable_option singlecommit
+	enable_option retcode
 
 	disable_option multicommit
 	disable_option branch
 	disable_option transport
+
+	while {[llength $argv] > 0} {
+		set a [lindex $argv 0]
+		switch -- $a {
+		--amend {
+			enable_option initialamend
+		}
+		--nocommit {
+			enable_option nocommit
+			enable_option nocommitmsg
+		}
+		--commitmsg {
+			disable_option nocommitmsg
+		}
+		default {
+			break
+		}
+		}
+
+		set argv [lrange $argv 1 end]
+	}
 }
 }
 
@@ -1023,7 +1059,11 @@ set current_branch {}
 set is_detached 0
 set current_diff_path {}
 set is_3way_diff 0
+set is_conflict_diff 0
 set selected_commit_type new
+
+set nullid "0000000000000000000000000000000000000000"
+set nullid2 "0000000000000000000000000000000000000001"
 
 ######################################################################
 ##
@@ -1105,6 +1145,20 @@ proc PARENT {} {
 	return $empty_tree
 }
 
+proc force_amend {} {
+	global selected_commit_type
+	global HEAD PARENT MERGE_HEAD commit_type
+
+	repository_state newType newHEAD newMERGE_HEAD
+	set HEAD $newHEAD
+	set PARENT $newHEAD
+	set MERGE_HEAD $newMERGE_HEAD
+	set commit_type $newType
+
+	set selected_commit_type amend
+	do_select_commit_type
+}
+
 proc rescan {after {honor_trustmtime 1}} {
 	global HEAD PARENT MERGE_HEAD commit_type
 	global ui_index ui_workdir ui_comm
@@ -1131,6 +1185,7 @@ proc rescan {after {honor_trustmtime 1}} {
 		|| [string trim [$ui_comm get 0.0 end]] eq {})} {
 		if {[string match amend* $commit_type]} {
 		} elseif {[load_message GITGUI_MSG]} {
+		} elseif {[run_prepare_commit_msg_hook]} {
 		} elseif {[load_message MERGE_MSG]} {
 		} elseif {[load_message SQUASH_MSG]} {
 		}
@@ -1228,6 +1283,70 @@ proc load_message {file} {
 		return 1
 	}
 	return 0
+}
+
+proc run_prepare_commit_msg_hook {} {
+	global pch_error
+
+	# prepare-commit-msg requires PREPARE_COMMIT_MSG exist.  From git-gui
+	# it will be .git/MERGE_MSG (merge), .git/SQUASH_MSG (squash), or an
+	# empty file but existant file.
+
+	set fd_pcm [open [gitdir PREPARE_COMMIT_MSG] a]
+
+	if {[file isfile [gitdir MERGE_MSG]]} {
+		set pcm_source "merge"
+		set fd_mm [open [gitdir MERGE_MSG] r]
+		puts -nonewline $fd_pcm [read $fd_mm]
+		close $fd_mm
+	} elseif {[file isfile [gitdir SQUASH_MSG]]} {
+		set pcm_source "squash"
+		set fd_sm [open [gitdir SQUASH_MSG] r]
+		puts -nonewline $fd_pcm [read $fd_sm]
+		close $fd_sm
+	} else {
+		set pcm_source ""
+	}
+
+	close $fd_pcm
+
+	set fd_ph [githook_read prepare-commit-msg \
+			[gitdir PREPARE_COMMIT_MSG] $pcm_source]
+	if {$fd_ph eq {}} {
+		catch {file delete [gitdir PREPARE_COMMIT_MSG]}
+		return 0;
+	}
+
+	ui_status [mc "Calling prepare-commit-msg hook..."]
+	set pch_error {}
+
+	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fileevent $fd_ph readable \
+		[list prepare_commit_msg_hook_wait $fd_ph]
+
+	return 1;
+}
+
+proc prepare_commit_msg_hook_wait {fd_ph} {
+	global pch_error
+
+	append pch_error [read $fd_ph]
+	fconfigure $fd_ph -blocking 1
+	if {[eof $fd_ph]} {
+		if {[catch {close $fd_ph}]} {
+			ui_status [mc "Commit declined by prepare-commit-msg hook."]
+			hook_failed_popup prepare-commit-msg $pch_error
+			catch {file delete [gitdir PREPARE_COMMIT_MSG]}
+			exit 1
+		} else {
+			load_message PREPARE_COMMIT_MSG
+		}
+		set pch_error {}
+		catch {file delete [gitdir PREPARE_COMMIT_MSG]}
+		return
+        }
+	fconfigure $fd_ph -blocking 0
+	catch {file delete [gitdir PREPARE_COMMIT_MSG]}
 }
 
 proc read_diff_index {fd after} {
@@ -1751,11 +1870,19 @@ proc do_gitk {revs} {
 }
 
 set is_quitting 0
+set ret_code    1
 
-proc do_quit {} {
+proc terminate_me {win} {
+	global ret_code
+	if {$win ne {.}} return
+	exit $ret_code
+}
+
+proc do_quit {{rc {1}}} {
 	global ui_comm is_quitting repo_config commit_type
 	global GITGUI_BCK_exists GITGUI_BCK_i
 	global ui_comm_spell
+	global ret_code
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -1810,6 +1937,7 @@ proc do_quit {} {
 		}
 	}
 
+	set ret_code $rc
 	destroy .
 }
 
@@ -1951,19 +2079,21 @@ proc toggle_or_diff {w x y} {
 	$ui_index tag remove in_sel 0.0 end
 	$ui_workdir tag remove in_sel 0.0 end
 
-	# Do not stage files with conflicts
+	# Determine the state of the file
 	if {[info exists file_states($path)]} {
 		set state [lindex $file_states($path) 0]
 	} else {
 		set state {__}
 	}
 
-	if {[string first {U} $state] >= 0} {
-		set col 1
-	}
-
 	# Restage the file, or simply show the diff
 	if {$col == 0 && $y > 1} {
+		# Conflicts need special handling
+		if {[string first {U} $state] >= 0} {
+			merge_stage_workdir $path $w $lno
+			return
+		}
+
 		if {[string index $state 1] eq {O}} {
 			set mmask {}
 		} else {
@@ -2212,26 +2342,36 @@ if {[is_enabled branch]} {
 
 # -- Commit Menu
 #
+proc commit_btn_caption {} {
+	if {[is_enabled nocommit]} {
+		return [mc "Done"]
+	} else {
+		return [mc Commit@@verb]
+	}
+}
+
 if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	menu .mbar.commit
 
-	.mbar.commit add radiobutton \
-		-label [mc "New Commit"] \
-		-command do_select_commit_type \
-		-variable selected_commit_type \
-		-value new
-	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	if {![is_enabled nocommit]} {
+		.mbar.commit add radiobutton \
+			-label [mc "New Commit"] \
+			-command do_select_commit_type \
+			-variable selected_commit_type \
+			-value new
+		lappend disable_on_lock \
+			[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-	.mbar.commit add radiobutton \
-		-label [mc "Amend Last Commit"] \
-		-command do_select_commit_type \
-		-variable selected_commit_type \
-		-value amend
-	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+		.mbar.commit add radiobutton \
+			-label [mc "Amend Last Commit"] \
+			-command do_select_commit_type \
+			-variable selected_commit_type \
+			-value amend
+		lappend disable_on_lock \
+			[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-	.mbar.commit add separator
+		.mbar.commit add separator
+	}
 
 	.mbar.commit add command -label [mc Rescan] \
 		-command ui_do_rescan \
@@ -2273,11 +2413,13 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 
 	.mbar.commit add separator
 
-	.mbar.commit add command -label [mc "Sign Off"] \
-		-command do_signoff \
-		-accelerator $M1T-S
+	if {![is_enabled nocommit]} {
+		.mbar.commit add command -label [mc "Sign Off"] \
+			-command do_signoff \
+			-accelerator $M1T-S
+	}
 
-	.mbar.commit add command -label [mc Commit@@verb] \
+	.mbar.commit add command -label [commit_btn_caption] \
 		-command do_commit \
 		-accelerator $M1T-Return
 	lappend disable_on_lock \
@@ -2601,19 +2743,23 @@ pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.incall conf -state}
 
-button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
-	-command do_signoff
-pack .vpane.lower.commarea.buttons.signoff -side top -fill x
+if {![is_enabled nocommit]} {
+	button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
+		-command do_signoff
+	pack .vpane.lower.commarea.buttons.signoff -side top -fill x
+}
 
-button .vpane.lower.commarea.buttons.commit -text [mc Commit@@verb] \
+button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
 	-command do_commit
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
 
-button .vpane.lower.commarea.buttons.push -text [mc Push] \
-	-command do_push_anywhere
-pack .vpane.lower.commarea.buttons.push -side top -fill x
+if {![is_enabled nocommit]} {
+	button .vpane.lower.commarea.buttons.push -text [mc Push] \
+		-command do_push_anywhere
+	pack .vpane.lower.commarea.buttons.push -side top -fill x
+}
 
 # -- Commit Message Buffer
 #
@@ -2621,20 +2767,24 @@ frame .vpane.lower.commarea.buffer
 frame .vpane.lower.commarea.buffer.header
 set ui_comm .vpane.lower.commarea.buffer.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
-radiobutton .vpane.lower.commarea.buffer.header.new \
-	-text [mc "New Commit"] \
-	-command do_select_commit_type \
-	-variable selected_commit_type \
-	-value new
-lappend disable_on_lock \
-	[list .vpane.lower.commarea.buffer.header.new conf -state]
-radiobutton .vpane.lower.commarea.buffer.header.amend \
-	-text [mc "Amend Last Commit"] \
-	-command do_select_commit_type \
-	-variable selected_commit_type \
-	-value amend
-lappend disable_on_lock \
-	[list .vpane.lower.commarea.buffer.header.amend conf -state]
+
+if {![is_enabled nocommit]} {
+	radiobutton .vpane.lower.commarea.buffer.header.new \
+		-text [mc "New Commit"] \
+		-command do_select_commit_type \
+		-variable selected_commit_type \
+		-value new
+	lappend disable_on_lock \
+		[list .vpane.lower.commarea.buffer.header.new conf -state]
+	radiobutton .vpane.lower.commarea.buffer.header.amend \
+		-text [mc "Amend Last Commit"] \
+		-command do_select_commit_type \
+		-variable selected_commit_type \
+		-value amend
+	lappend disable_on_lock \
+		[list .vpane.lower.commarea.buffer.header.amend conf -state]
+}
+
 label $ui_coml \
 	-anchor w \
 	-justify left
@@ -2652,8 +2802,11 @@ proc trace_commit_type {varname args} {
 }
 trace add variable commit_type write trace_commit_type
 pack $ui_coml -side left -fill x
-pack .vpane.lower.commarea.buffer.header.amend -side right
-pack .vpane.lower.commarea.buffer.header.new -side right
+
+if {![is_enabled nocommit]} {
+	pack .vpane.lower.commarea.buffer.header.amend -side right
+	pack .vpane.lower.commarea.buffer.header.new -side right
+}
 
 text $ui_comm -background white -foreground black \
 	-borderwidth 1 \
@@ -2858,6 +3011,14 @@ proc create_common_diff_popup {ctxm} {
 	$ctxm add command \
 		-label [mc "Increase Font Size"] \
 		-command {incr_font_size font_diff 1}
+	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+	$ctxm add separator
+	set emenu $ctxm.enc
+	menu $emenu
+	build_encoding_menu $emenu [list force_diff_encoding]
+	$ctxm add cascade \
+		-label [mc "Encoding"] \
+		-menu $emenu
 	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 	$ctxm add separator
 	$ctxm add command -label [mc "Options..."] \
@@ -3191,7 +3352,20 @@ lock_index begin-read
 if {![winfo ismapped .]} {
 	wm deiconify .
 }
-after 1 do_rescan
+after 1 {
+	if {[is_enabled initialamend]} {
+		force_amend
+	} else {
+		do_rescan
+	}
+
+	if {[is_enabled nocommitmsg]} {
+		$ui_comm configure -state disabled -background gray
+	}
+}
 if {[is_enabled multicommit]} {
 	after 1000 hint_gc
+}
+if {[is_enabled retcode]} {
+	bind . <Destroy> {+terminate_me %W}
 }

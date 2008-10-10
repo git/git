@@ -288,13 +288,13 @@ for paths.
 *.tex	diff=tex
 ------------------------
 
-Then, you would define a "diff.tex.funcname" configuration to
+Then, you would define a "diff.tex.xfuncname" configuration to
 specify a regular expression that matches a line that you would
 want to appear as the hunk header "TEXT", like this:
 
 ------------------------
 [diff "tex"]
-	funcname = "^\\(\\\\\\(sub\\)*section{.*\\)$"
+	xfuncname = "^(\\\\(sub)*section\\{.*)$"
 ------------------------
 
 Note.  A single level of backslashes are eaten by the
@@ -314,6 +314,8 @@ patterns are available:
 - `html` suitable for HTML/XHTML documents.
 
 - `java` suitable for source code in the Java language.
+
+- `objc` suitable for source code in the Objective-C language.
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
 

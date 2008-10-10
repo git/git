@@ -16,6 +16,8 @@ int parse_hunk_header(char *line, int len,
 int read_mmfile(mmfile_t *ptr, const char *filename);
 int buffer_is_binary(const char *ptr, unsigned long size);
 
-extern void xdiff_set_find_func(xdemitconf_t *xecfg, const char *line);
+extern void xdiff_set_find_func(xdemitconf_t *xecfg, const char *line, int cflags);
+extern int git_xmerge_config(const char *var, const char *value, void *cb);
+extern int git_xmerge_style;
 
 #endif

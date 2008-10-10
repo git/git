@@ -160,7 +160,7 @@ struct commit_graft *read_graft_line(char *buf, int len)
 	return graft;
 }
 
-int read_graft_file(const char *graft_file)
+static int read_graft_file(const char *graft_file)
 {
 	FILE *fp = fopen(graft_file, "r");
 	char buf[1024];

@@ -29,26 +29,6 @@ static void add_list(const char *name)
 	list.name[list.nr++] = name;
 }
 
-static int remove_file(const char *name)
-{
-	int ret;
-	char *slash;
-
-	ret = unlink(name);
-	if (ret && errno == ENOENT)
-		/* The user has removed it from the filesystem by hand */
-		ret = errno = 0;
-
-	if (!ret && (slash = strrchr(name, '/'))) {
-		char *n = xstrdup(name);
-		do {
-			n[slash - name] = 0;
-			name = n;
-		} while (!rmdir(name) && (slash = strrchr(name, '/')));
-	}
-	return ret;
-}
-
 static int check_local_mod(unsigned char *head, int index_only)
 {
 	/* items in list are already sorted in the cache order,
@@ -157,6 +137,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 	if (read_cache() < 0)
 		die("index file corrupt");
+	refresh_cache(REFRESH_QUIET);
 
 	pathspec = get_pathspec(prefix, argv);
 	seen = NULL;
@@ -239,7 +220,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		int removed = 0;
 		for (i = 0; i < list.nr; i++) {
 			const char *path = list.name[i];
-			if (!remove_file(path)) {
+			if (!remove_path(path)) {
 				removed = 1;
 				continue;
 			}

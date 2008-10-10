@@ -56,7 +56,7 @@ gitweb_run () {
 	rm -f gitweb.log &&
 	perl -- "$TEST_DIRECTORY/../gitweb/gitweb.perl" \
 		>/dev/null 2>gitweb.log &&
-	if grep -q -s "^[[]" gitweb.log >/dev/null; then false; else true; fi
+	if grep "^[[]" gitweb.log >/dev/null 2>&1; then false; else true; fi
 
 	# gitweb.log is left for debugging
 }
@@ -501,6 +501,55 @@ test_expect_success \
 	 git commit -m "Delete file" &&
 	 gitweb_run "p=.git;a=history;f=deleted_file"'
 test_debug 'cat gitweb.log'
+
+# ----------------------------------------------------------------------
+# path_info links
+test_expect_success \
+	'path_info: project' \
+	'gitweb_run "" "/.git"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch' \
+	'gitweb_run "" "/.git/b"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:file' \
+	'gitweb_run "" "/.git/master:file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:dir/' \
+	'gitweb_run "" "/.git/master:foo/"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:file (non-existent)' \
+	'gitweb_run "" "/.git/master:non-existent"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:dir/ (non-existent)' \
+	'gitweb_run "" "/.git/master:non-existent/"'
+test_debug 'cat gitweb.log'
+
+
+test_expect_success \
+	'path_info: project/branch:/file' \
+	'gitweb_run "" "/.git/master:/file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/:/file (implicit HEAD)' \
+	'gitweb_run "" "/.git/:/file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/:/ (implicit HEAD, top tree)' \
+	'gitweb_run "" "/.git/:/"'
+test_debug 'cat gitweb.log'
+
 
 # ----------------------------------------------------------------------
 # feed generation

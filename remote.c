@@ -455,7 +455,7 @@ static int verify_refname(char *name, int is_glob)
  *          and dst pointers are always freeable pointers as well
  *          as the refspec pointer itself.
  */
-void free_refspecs(struct refspec *refspec, int nr_refspec)
+static void free_refspecs(struct refspec *refspec, int nr_refspec)
 {
 	int i;
 
@@ -613,7 +613,7 @@ struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec)
 	return parse_refspec_internal(nr_refspec, refspec, 1, 0);
 }
 
-struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
+static struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
 {
 	return parse_refspec_internal(nr_refspec, refspec, 0, 0);
 }
@@ -751,8 +751,7 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 
 struct ref *alloc_ref(unsigned namelen)
 {
-	struct ref *ret = xmalloc(sizeof(struct ref) + namelen);
-	memset(ret, 0, sizeof(struct ref) + namelen);
+	struct ref *ret = xcalloc(1, sizeof(struct ref) + namelen);
 	return ret;
 }
 
@@ -783,7 +782,7 @@ struct ref *copy_ref_list(const struct ref *ref)
 	return ret;
 }
 
-void free_ref(struct ref *ref)
+static void free_ref(struct ref *ref)
 {
 	if (!ref)
 		return;

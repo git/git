@@ -204,8 +204,8 @@ void load_command_list(const char *prefix,
 		while (1) {
 			if ((colon = strchr(path, PATH_SEP)))
 				*colon = 0;
-
-			list_commands_in_dir(other_cmds, path, prefix);
+			if (!exec_path || strcmp(path, exec_path))
+				list_commands_in_dir(other_cmds, path, prefix);
 
 			if (!colon)
 				break;
@@ -262,11 +262,15 @@ int is_in_cmdlist(struct cmdnames *c, const char *s)
 }
 
 static int autocorrect;
+static struct cmdnames aliases;
 
 static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "help.autocorrect"))
 		autocorrect = git_config_int(var,value);
+	/* Also use aliases for command lookup */
+	if (!prefixcmp(var, "alias."))
+		add_cmdname(&aliases, var + 6, strlen(var + 6));
 
 	return git_default_config(var, value, cb);
 }
@@ -280,6 +284,18 @@ static int levenshtein_compare(const void *p1, const void *p2)
 	return l1 != l2 ? l1 - l2 : strcmp(s1, s2);
 }
 
+static void add_cmd_list(struct cmdnames *cmds, struct cmdnames *old)
+{
+	int i;
+	ALLOC_GROW(cmds->names, cmds->cnt + old->cnt, cmds->alloc);
+
+	for (i = 0; i < old->cnt; i++)
+		cmds->names[cmds->cnt++] = old->names[i];
+	free(old->names);
+	old->cnt = 0;
+	old->names = NULL;
+}
+
 const char *help_unknown_cmd(const char *cmd)
 {
 	int i, n, best_similarity = 0;
@@ -287,17 +303,17 @@ const char *help_unknown_cmd(const char *cmd)
 
 	memset(&main_cmds, 0, sizeof(main_cmds));
 	memset(&other_cmds, 0, sizeof(main_cmds));
+	memset(&aliases, 0, sizeof(aliases));
 
 	git_config(git_unknown_cmd_config, NULL);
 
 	load_command_list("git-", &main_cmds, &other_cmds);
 
-	ALLOC_GROW(main_cmds.names, main_cmds.cnt + other_cmds.cnt,
-		   main_cmds.alloc);
-	memcpy(main_cmds.names + main_cmds.cnt, other_cmds.names,
-	       other_cmds.cnt * sizeof(other_cmds.names[0]));
-	main_cmds.cnt += other_cmds.cnt;
-	free(other_cmds.names);
+	add_cmd_list(&main_cmds, &aliases);
+	add_cmd_list(&main_cmds, &other_cmds);
+	qsort(main_cmds.names, main_cmds.cnt,
+	      sizeof(main_cmds.names), cmdname_compare);
+	uniq(&main_cmds);
 
 	/* This reuses cmdname->len for similarity index */
 	for (i = 0; i < main_cmds.cnt; ++i)

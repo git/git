@@ -144,6 +144,16 @@ is_interactive () {
 	done && test -n "$1"
 }
 
+run_pre_rebase_hook () {
+	if test -x "$GIT_DIR/hooks/pre-rebase"
+	then
+		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
+			echo >&2 "The pre-rebase hook refused to rebase."
+			exit 1
+		}
+	fi
+}
+
 test -f "$GIT_DIR"/rebase-apply/applying &&
 	die 'It looks like git-am is in progress. Cannot rebase.'
 
@@ -320,13 +330,7 @@ onto_name=${newbase-"$upstream_name"}
 onto=$(git rev-parse --verify "${onto_name}^0") || exit
 
 # If a hook exists, give it a chance to interrupt
-if test -x "$GIT_DIR/hooks/pre-rebase"
-then
-	"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
-		echo >&2 "The pre-rebase hook refused to rebase."
-		exit 1
-	}
-fi
+run_pre_rebase_hook ${1+"$@"}
 
 # If the branch to rebase is given, that is the branch we will rebase
 # $branch_name -- branch being rebased, or HEAD (already detached)

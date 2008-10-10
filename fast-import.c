@@ -816,7 +816,7 @@ static void start_packfile(void)
 	int pack_fd;
 
 	snprintf(tmpfile, sizeof(tmpfile),
-		"%s/tmp_pack_XXXXXX", get_object_directory());
+		"%s/pack/tmp_pack_XXXXXX", get_object_directory());
 	pack_fd = xmkstemp(tmpfile);
 	p = xcalloc(1, sizeof(*p) + strlen(tmpfile) + 2);
 	strcpy(p->pack_name, tmpfile);
@@ -845,7 +845,7 @@ static int oecmp (const void *a_, const void *b_)
 static char *create_index(void)
 {
 	static char tmpfile[PATH_MAX];
-	SHA_CTX ctx;
+	git_SHA_CTX ctx;
 	struct sha1file *f;
 	struct object_entry **idx, **c, **last, *e;
 	struct object_entry_pool *o;
@@ -878,21 +878,21 @@ static char *create_index(void)
 	}
 
 	snprintf(tmpfile, sizeof(tmpfile),
-		"%s/tmp_idx_XXXXXX", get_object_directory());
+		"%s/pack/tmp_idx_XXXXXX", get_object_directory());
 	idx_fd = xmkstemp(tmpfile);
 	f = sha1fd(idx_fd, tmpfile);
 	sha1write(f, array, 256 * sizeof(int));
-	SHA1_Init(&ctx);
+	git_SHA1_Init(&ctx);
 	for (c = idx; c != last; c++) {
 		uint32_t offset = htonl((*c)->offset);
 		sha1write(f, &offset, 4);
 		sha1write(f, (*c)->sha1, sizeof((*c)->sha1));
-		SHA1_Update(&ctx, (*c)->sha1, 20);
+		git_SHA1_Update(&ctx, (*c)->sha1, 20);
 	}
 	sha1write(f, pack_data->sha1, sizeof(pack_data->sha1));
 	sha1close(f, NULL, CSUM_FSYNC);
 	free(idx);
-	SHA1_Final(pack_data->sha1, &ctx);
+	git_SHA1_Final(pack_data->sha1, &ctx);
 	return tmpfile;
 }
 
@@ -1033,15 +1033,15 @@ static int store_object(
 	unsigned char hdr[96];
 	unsigned char sha1[20];
 	unsigned long hdrlen, deltalen;
-	SHA_CTX c;
+	git_SHA_CTX c;
 	z_stream s;
 
 	hdrlen = sprintf((char*)hdr,"%s %lu", typename(type),
 		(unsigned long)dat->len) + 1;
-	SHA1_Init(&c);
-	SHA1_Update(&c, hdr, hdrlen);
-	SHA1_Update(&c, dat->buf, dat->len);
-	SHA1_Final(sha1, &c);
+	git_SHA1_Init(&c);
+	git_SHA1_Update(&c, hdr, hdrlen);
+	git_SHA1_Update(&c, dat->buf, dat->len);
+	git_SHA1_Final(sha1, &c);
 	if (sha1out)
 		hashcpy(sha1out, sha1);
 

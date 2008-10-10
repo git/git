@@ -619,7 +619,7 @@ static struct ref *get_refs_via_connect(struct transport *transport)
 	struct ref *refs;
 
 	connect_setup(transport);
-	get_remote_heads(data->fd[0], &refs, 0, NULL, 0);
+	get_remote_heads(data->fd[0], &refs, 0, NULL, 0, NULL);
 
 	return refs;
 }
@@ -643,8 +643,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.use_thin_pack = data->thin;
 	args.include_tag = data->followtags;
 	args.verbose = (transport->verbose > 0);
-	args.quiet = args.no_progress = (transport->verbose < 0);
-	args.no_progress = !isatty(1);
+	args.quiet = (transport->verbose < 0);
+	args.no_progress = args.quiet || !isatty(1);
 	args.depth = data->depth;
 
 	for (i = 0; i < nr_heads; i++)
@@ -652,7 +652,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	if (!data->conn) {
 		connect_setup(transport);
-		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL, 0);
+		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL, 0, NULL);
 	}
 
 	refs = fetch_pack(&args, data->fd, data->conn,
