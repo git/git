@@ -175,10 +175,8 @@ static int builtin_diff_combined(struct rev_info *revs,
 	if (!revs->dense_combined_merges && !revs->combine_merges)
 		revs->dense_combined_merges = revs->combine_merges = 1;
 	parent = xmalloc(ents * sizeof(*parent));
-	/* Again, the revs are all reverse */
 	for (i = 0; i < ents; i++)
-		hashcpy((unsigned char *)(parent + i),
-			ent[ents - 1 - i].item->sha1);
+		hashcpy((unsigned char *)(parent + i), ent[i].item->sha1);
 	diff_tree_combined(parent[0], parent + 1, ents - 1,
 			   revs->dense_combined_merges, revs);
 	return 0;

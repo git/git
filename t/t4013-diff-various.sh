@@ -258,6 +258,7 @@ diff --patch-with-stat -r initial..side
 diff --patch-with-raw -r initial..side
 diff --name-status dir2 dir
 diff --no-index --name-status dir2 dir
+diff master master^ side
 EOF
 
 test_done
