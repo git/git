@@ -290,10 +290,10 @@ our %feature = (
 
 	# The 'default' value consists of a list of triplets in the form
 	# (label, link, position) where position is the label after which
-	# to inster the link and link is a format string where %n expands
+	# to insert the link and link is a format string where %n expands
 	# to the project name, %f to the project path within the filesystem,
 	# %h to the current hash (h gitweb parameter) and %b to the current
-	# hash base (hb gitweb parameter).
+	# hash base (hb gitweb parameter); %% expands to %.
 
 	# To enable system wide have in $GITWEB_CONFIG e.g.
 	# $feature{'actions'}{'default'} = [('graphiclog',
@@ -2866,14 +2866,19 @@ sub git_print_page_nav {
 	$arg{'tree'}{'hash_base'} = $treebase if defined $treebase;
 
 	my @actions = gitweb_check_feature('actions');
+	my %repl = (
+		'%' => '%',
+		'n' => $project,         # project name
+		'f' => $git_dir,         # project path within filesystem
+		'h' => $treehead || '',  # current hash ('h' parameter)
+		'b' => $treebase || '',  # hash base ('hb' parameter)
+	);
 	while (@actions) {
-		my ($label, $link, $pos) = (shift(@actions), shift(@actions), shift(@actions));
+		my ($label, $link, $pos) = splice(@actions,0,3);
+		# insert
 		@navs = map { $_ eq $pos ? ($_, $label) : $_ } @navs;
 		# munch munch
-		$link =~ s#%n#$project#g;
-		$link =~ s#%f#$git_dir#g;
-		$treehead ? $link =~ s#%h#$treehead#g : $link =~ s#%h##g;
-		$treebase ? $link =~ s#%b#$treebase#g : $link =~ s#%b##g;
+		$link =~ s/%([%nfhb])/$repl{$1}/g;
 		$arg{$label}{'_href'} = $link;
 	}
 
