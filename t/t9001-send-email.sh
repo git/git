@@ -109,7 +109,7 @@ test_expect_success 'allow long lines with --no-validate' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
-		--no-validate \
+		--novalidate \
 		$patches longline.patch \
 		2>errors
 '
