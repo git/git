@@ -810,6 +810,13 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 	 * the default name from the header.
 	 */
 	patch->def_name = git_header_name(line, len);
+	if (patch->def_name && root) {
+		char *s = xmalloc(root_len + strlen(patch->def_name) + 1);
+		strcpy(s, root);
+		strcpy(s + root_len, patch->def_name);
+		free(patch->def_name);
+		patch->def_name = s;
+	}
 
 	line += len;
 	size -= len;
