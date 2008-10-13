@@ -12,7 +12,7 @@ test_expect_success setup '
 	mkdir another && (
 		cd another &&
 		git init &&
-		git fetch .. master:master
+		git fetch --update-head-ok .. master:master
 	) &&
 
 	>file2 && git add file2 && test_tick &&
