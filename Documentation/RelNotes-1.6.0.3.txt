@@ -16,6 +16,8 @@ Fixes since v1.6.0.2
 * "git rebase -i" now honors the pre-rebase hook, just like the
   other rebase implementations "git rebase" and "git rebase -m".
 
+* "git rebase -i" incorrectly aborted when there is no commit to replay.
+
 * Behaviour of "git diff --quiet" was inconsistent with "diff --exit-code"
   with the output redirected to /dev/null.
 
@@ -28,6 +30,9 @@ Fixes since v1.6.0.2
 
 * New config "diff.*.xfuncname" exposes extended regular expressions
   for user specified hunk header patterns.
+
+* "git index-pack" was recently broken and mishandled objects added by
+  thin-pack completion processing under memory pressure.
 
 * "git stash apply sash@{1}" was fixed to error out.  Prior versions
   would have applied stash@{0} incorrectly.
@@ -56,8 +61,14 @@ Fixes since v1.6.0.2
 * "git merge" once again removes directories after the last file has
   been removed from it during the merge.
 
+* "git merge" did not allocate enough memory for the structure itself when
+  enumerating the parents of the resulting commit.
+
 * "git blame -C -C" no longer segfaults while trying to pass blame if
    it encounters a submodule reference.
+
+* "git rm" incorrectly claimed that you have local modifications when a
+  path was merely stat-dirty.
 
 * "git svn" fixed to display an error message when 'set-tree' failed,
    instead of a Perl compile error.
@@ -68,10 +79,16 @@ Fixes since v1.6.0.2
 * The "git commit" error message when there are still unmerged
   files present was clarified to match "git write-tree".
 
+* "git init" was confused when core.bare or core.sharedRepository are set
+  in system or user global configuration file by mistake.  When --bare or
+  --shared is given from the command line, these now override such
+  settings made outside the repositories.
+
 * Some segfaults due to uncaught NULL pointers were fixed in multiple
   tools such as apply, reset, update-index.
 
-* Solaris builds now default to OLD_ICONV=1 to avoid compile warnings.
+* Solaris builds now default to OLD_ICONV=1 to avoid compile warnings;
+  Solaris 8 does not define NEEDS_LIBICONV by default.
 
 * "Git.pm" tests relied on unnecessarily more recent version of Perl.
 
@@ -90,6 +107,6 @@ Many other documentation updates.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.2-76-gd70b4a8
+O=v1.6.0.2-95-g72d404d
 echo O=$(git describe maint)
 git shortlog --no-merges $O..maint
