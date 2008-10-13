@@ -6229,7 +6229,7 @@ proc gettree {id} {
 	    set treepending $id
 	    set treefilelist($id) {}
 	    set treeidlist($id) {}
-	    fconfigure $gtf -blocking 0
+	    fconfigure $gtf -blocking 0 -encoding binary
 	    filerun $gtf [list gettreeline $gtf $id]
 	}
     } else {
@@ -6251,11 +6251,12 @@ proc gettreeline {gtf id} {
 	    set line [string range $line 0 [expr {$i-1}]]
 	    if {$diffids ne $nullid2 && [lindex $line 1] ne "blob"} continue
 	    set sha1 [lindex $line 2]
-	    if {[string index $fname 0] eq "\""} {
-		set fname [lindex $fname 0]
-	    }
 	    lappend treeidlist($id) $sha1
 	}
+	if {[string index $fname 0] eq "\""} {
+	    set fname [lindex $fname 0]
+	}
+	set fname [encoding convertfrom $fname]
 	lappend treefilelist($id) $fname
     }
     if {![eof $gtf]} {
@@ -6296,7 +6297,7 @@ proc showfile {f} {
 	    return
 	}
     }
-    fconfigure $bf -blocking 0
+    fconfigure $bf -blocking 0 -encoding [get_path_encoding $f]
     filerun $bf [list getblobline $bf $diffids]
     $ctext config -state normal
     clear_ctext $commentend
@@ -6334,6 +6335,7 @@ proc mergediff {id} {
     global diffids
     global parents
     global diffcontext
+    global diffencoding
     global limitdiffs vfilelimit curview
 
     set diffmergeid $id
@@ -6347,9 +6349,10 @@ proc mergediff {id} {
 	error_popup "[mc "Error getting merge diffs:"] $err"
 	return
     }
-    fconfigure $mdf -blocking 0
+    fconfigure $mdf -blocking 0 -encoding binary
     set mdifffd($id) $mdf
     set np [llength $parents($curview,$id)]
+    set diffencoding [get_path_encoding {}]
     settabs $np
     filerun $mdf [list getmergediffline $mdf $id $np]
 }
@@ -6357,6 +6360,7 @@ proc mergediff {id} {
 proc getmergediffline {mdf id np} {
     global diffmergeid ctext cflist mergemax
     global difffilestart mdifffd
+    global diffencoding
 
     $ctext conf -state normal
     set nr 0
@@ -6368,18 +6372,22 @@ proc getmergediffline {mdf id np} {
 	}
 	if {[regexp {^diff --cc (.*)} $line match fname]} {
 	    # start of a new file
+	    set fname [encoding convertfrom $fname]
 	    $ctext insert end "\n"
 	    set here [$ctext index "end - 1c"]
 	    lappend difffilestart $here
 	    add_flist [list $fname]
+	    set diffencoding [get_path_encoding $fname]
 	    set l [expr {(78 - [string length $fname]) / 2}]
 	    set pad [string range "----------------------------------------" 1 $l]
 	    $ctext insert end "$pad $fname $pad\n" filesep
 	} elseif {[regexp {^@@} $line]} {
+	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" hunksep
 	} elseif {[regexp {^[0-9a-f]{40}$} $line] || [regexp {^index} $line]} {
 	    # do nothing
 	} else {
+	    set line [encoding convertfrom $diffencoding $line]
 	    # parse the prefix - one ' ', '-' or '+' for each parent
 	    set spaces {}
 	    set minuses {}
@@ -6514,7 +6522,7 @@ proc gettreediffs {ids} {
 
     set treepending $ids
     set treediff {}
-    fconfigure $gdtf -blocking 0
+    fconfigure $gdtf -blocking 0 -encoding binary
     filerun $gdtf [list gettreediffline $gdtf $ids]
 }
 
@@ -6530,6 +6538,7 @@ proc gettreediffline {gdtf ids} {
 	    if {[string index $file 0] eq "\""} {
 		set file [lindex $file 0]
 	    }
+	    set file [encoding convertfrom $file]
 	    lappend treediff $file
 	}
     }
@@ -6587,6 +6596,7 @@ proc getblobdiffs {ids} {
     global diffcontext
     global ignorespace
     global limitdiffs vfilelimit curview
+    global diffencoding
 
     set cmd [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
@@ -6600,7 +6610,8 @@ proc getblobdiffs {ids} {
 	return
     }
     set diffinhdr 0
-    fconfigure $bdf -blocking 0
+    set diffencoding [get_path_encoding {}]
+    fconfigure $bdf -blocking 0 -encoding binary
     set blobdifffd($ids) $bdf
     filerun $bdf [list getblobdiffline $bdf $diffids]
 }
@@ -6634,6 +6645,7 @@ proc getblobdiffline {bdf ids} {
     global diffids blobdifffd ctext curdiffstart
     global diffnexthead diffnextnote difffilestart
     global diffinhdr treediffs
+    global diffencoding
 
     set nr 0
     $ctext conf -state normal
@@ -6671,10 +6683,13 @@ proc getblobdiffline {bdf ids} {
 	    } else {
 		set fname [string range $line 2 [expr {$i - 1}]]
 	    }
+	    set fname [encoding convertfrom $fname]
+	    set diffencoding [get_path_encoding $fname]
 	    makediffhdr $fname $ids
 
 	} elseif {[regexp {^@@ -([0-9]+)(,[0-9]+)? \+([0-9]+)(,[0-9]+)? @@(.*)} \
 		       $line match f1l f1c f2l f2c rest]} {
+	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" hunksep
 	    set diffinhdr 0
 
@@ -6684,6 +6699,7 @@ proc getblobdiffline {bdf ids} {
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
 		}
+		set fname [encoding convertfrom $fname]
 		set i [lsearch -exact $treediffs($ids) $fname]
 		if {$i >= 0} {
 		    setinlist difffilestart $i $curdiffstart
@@ -6694,6 +6710,8 @@ proc getblobdiffline {bdf ids} {
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
 		}
+		set fname [encoding convertfrom $fname]
+		set diffencoding [get_path_encoding $fname]
 		makediffhdr $fname $ids
 	    } elseif {[string compare -length 3 $line "---"] == 0} {
 		# do nothing
@@ -6705,6 +6723,7 @@ proc getblobdiffline {bdf ids} {
 	    $ctext insert end "$line\n" filesep
 
 	} else {
+	    set line [encoding convertfrom $diffencoding $line]
 	    set x [string range $line 0 0]
 	    if {$x == "-" || $x == "+"} {
 		set tag [expr {$x == "+"}]
@@ -9727,7 +9746,7 @@ set encoding_aliases {
     { ISO-8859-16 iso-ir-226 ISO_8859-16:2001 ISO_8859-16 latin10 l10 }
     { GBK CP936 MS936 windows-936 }
     { JIS_Encoding csJISEncoding }
-    { Shift_JIS MS_Kanji csShiftJIS }
+    { Shift_JIS MS_Kanji csShiftJIS ShiftJIS Shift-JIS }
     { Extended_UNIX_Code_Packed_Format_for_Japanese csEUCPkdFmtJapanese
       EUC-JP }
     { Extended_UNIX_Code_Fixed_Width_for_Japanese csEUCFixWidJapanese }
@@ -9769,7 +9788,7 @@ proc tcl_encoding {enc} {
     set i [lsearch -exact $lcnames $enc]
     if {$i < 0} {
 	# look for "isonnn" instead of "iso-nnn" or "iso_nnn"
-	if {[regsub {^iso[-_]} $enc iso encx]} {
+	if {[regsub {^(iso|cp|ibm|jis)[-_]} $enc {\1} encx]} {
 	    set i [lsearch -exact $lcnames $encx]
 	}
     }
@@ -9781,7 +9800,7 @@ proc tcl_encoding {enc} {
 	    foreach e $ll {
 		set i [lsearch -exact $lcnames $e]
 		if {$i < 0} {
-		    if {[regsub {^iso[-_]} $e iso ex]} {
+		    if {[regsub {^(iso|cp|ibm|jis)[-_]} $e {\1} ex]} {
 			set i [lsearch -exact $lcnames $ex]
 		    }
 		}
@@ -9794,6 +9813,34 @@ proc tcl_encoding {enc} {
 	return [lindex $names $i]
     }
     return {}
+}
+
+proc gitattr {path attr default} {
+	if {[catch {set r [exec git check-attr $attr -- $path]}]} {
+		set r unspecified
+	} else {
+		set r [join [lrange [split $r :] 2 end] :]
+		regsub {^ } $r {} r
+	}
+	if {$r eq {unspecified}} {
+		return $default
+	}
+	return $r
+}
+
+proc get_path_encoding {path} {
+	global gui_encoding
+	set tcl_enc [tcl_encoding $gui_encoding]
+	if {$tcl_enc eq {}} {
+		set tcl_enc [encoding system]
+	}
+	if {$path ne {}} {
+		set enc2 [tcl_encoding [gitattr $path encoding $tcl_enc]]
+		if {$enc2 ne {}} {
+			set tcl_enc $enc2
+		}
+	}
+	return $tcl_enc
 }
 
 # First check that Tcl/Tk is recent enough
@@ -9816,6 +9863,11 @@ if {$gitencoding == ""} {
 set tclencoding [tcl_encoding $gitencoding]
 if {$tclencoding == {}} {
     puts stderr "Warning: encoding $gitencoding is not supported by Tcl/Tk"
+}
+
+set gui_encoding [encoding system]
+catch {
+	set gui_encoding [exec git config --get gui.encoding]
 }
 
 set mainfont {Helvetica 9}
