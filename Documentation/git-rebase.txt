@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git rebase' [-i | --interactive] [-v | --verbose] [-m | --merge]
-	[-s <strategy> | --strategy=<strategy>]
+	[-s <strategy> | --strategy=<strategy>] [--no-verify]
 	[-C<n>] [ --whitespace=<option>] [-p | --preserve-merges]
 	[--onto <newbase>] <upstream> [<branch>]
 'git rebase' --continue | --skip | --abort
@@ -231,6 +231,9 @@ OPTIONS
 -v::
 --verbose::
 	Display a diffstat of what changed upstream since the last rebase.
+
+--no-verify::
+	This option bypasses the pre-rebase hook.  See also linkgit:githooks[5].
 
 -C<n>::
 	Ensure at least <n> lines of surrounding context match before
