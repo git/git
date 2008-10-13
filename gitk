@@ -6531,6 +6531,7 @@ proc gettreediffline {gdtf ids} {
     global cmitmode vfilelimit curview limitdiffs
 
     set nr 0
+    set sublist {}
     while {[incr nr] <= 1000 && [gets $gdtf line] >= 0} {
 	set i [string first "\t" $line]
 	if {$i >= 0} {
@@ -6540,8 +6541,10 @@ proc gettreediffline {gdtf ids} {
 	    }
 	    set file [encoding convertfrom $file]
 	    lappend treediff $file
+	    lappend sublist $file
 	}
     }
+    cache_gitattr encoding $sublist
     if {![eof $gdtf]} {
 	return [expr {$nr >= 1000? 2: 1}]
     }
@@ -9816,16 +9819,46 @@ proc tcl_encoding {enc} {
 }
 
 proc gitattr {path attr default} {
-	if {[catch {set r [exec git check-attr $attr -- $path]}]} {
+	global path_attr_cache
+	if {[info exists path_attr_cache($attr,$path)]} {
+		set r $path_attr_cache($attr,$path)
+	} elseif {[catch {set r [exec git check-attr $attr -- $path]}]} {
 		set r unspecified
 	} else {
 		set r [join [lrange [split $r :] 2 end] :]
 		regsub {^ } $r {} r
 	}
+	set path_attr_cache($attr,$path) $r
 	if {$r eq {unspecified}} {
 		return $default
 	}
 	return $r
+}
+
+proc cache_gitattr {attr pathlist} {
+	global path_attr_cache
+	set newlist {}
+	foreach path $pathlist {
+		if {[info exists path_attr_cache($attr,$path)]} continue
+		lappend newlist $path
+	}
+	while {$newlist ne {}} {
+		set head [lrange $newlist 0 29]
+		set newlist [lrange $newlist 30 end]
+		if {![catch {set rlist [eval exec git check-attr $attr -- $head]}]} {
+			foreach row [split $rlist "\n"] {
+				set cols [split $row :]
+				set path [lindex $cols 0]
+				set value [join [lrange $cols 2 end] :]
+				if {[string index $path 0] eq "\""} {
+					set path [encoding convertfrom [lindex $path 0]]
+				}
+				regsub {^ } $value {} value
+				set path_attr_cache($attr,$path) $value
+			}
+		}
+		update
+	}
 }
 
 proc get_path_encoding {path} {
