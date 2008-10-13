@@ -91,10 +91,10 @@ check_describe D-* HEAD^^
 check_describe A-* HEAD^^2
 check_describe B HEAD^^2^
 
-check_describe A-* --tags HEAD
-check_describe A-* --tags HEAD^
-check_describe D-* --tags HEAD^^
-check_describe A-* --tags HEAD^^2
+check_describe c-* --tags HEAD
+check_describe c-* --tags HEAD^
+check_describe e-* --tags HEAD^^
+check_describe c-* --tags HEAD^^2
 check_describe B --tags HEAD^^2^
 
 check_describe B-0-* --long HEAD^^2^

@@ -18,6 +18,9 @@ shown.  Otherwise, it suffixes the tag name with the number of
 additional commits on top of the tagged object and the
 abbreviated object name of the most recent commit.
 
+By default (without --all or --tags) `git describe` only shows
+annotated tags.  For more information about creating annotated tags
+see the -a and -s options to linkgit:git-tag[1].
 
 OPTIONS
 -------
@@ -26,11 +29,13 @@ OPTIONS
 
 --all::
 	Instead of using only the annotated tags, use any ref
-	found in `.git/refs/`.
+	found in `.git/refs/`.  This option enables matching
+	any known branch, remote branch, or lightweight tag.
 
 --tags::
 	Instead of using only the annotated tags, use any tag
-	found in `.git/refs/tags`.
+	found in `.git/refs/tags`.  This option enables matching
+	a lightweight (non-annotated) tag.
 
 --contains::
 	Instead of finding the tag that predates the commit, find
