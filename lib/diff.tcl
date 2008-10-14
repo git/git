@@ -377,7 +377,6 @@ proc read_diff {fd cont_info} {
 			{+} {
 				if {[regexp {^\+([<>]{7} |={7})} $line _g op]} {
 					set is_conflict_diff 1
-					set line [string replace $line 0 0 { }]
 					set tags d$op
 				} else {
 					set tags d_+
