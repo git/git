@@ -8,8 +8,9 @@ git-check-attr - Display gitattributes information.
 
 SYNOPSIS
 --------
+[verse]
 'git check-attr' attr... [--] pathname...
-'git check-attr' --stdin [-z] attr... < <list-of-paths
+'git check-attr' --stdin [-z] attr... < <list-of-paths>
 
 DESCRIPTION
 -----------
