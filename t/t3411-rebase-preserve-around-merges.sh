@@ -80,7 +80,7 @@ test_expect_success 'setup' '
 #       \        /
 #        -- C1 --
 #
-test_expect_failure 'squash F1 into D1' '
+test_expect_success 'squash F1 into D1' '
 	FAKE_LINES="1 squash 3 2" git rebase -i -p B1 &&
 	test "$(git rev-parse HEAD^2)" = "$(git rev-parse branch)" &&
 	test "$(git rev-parse HEAD~2)" = "$(git rev-parse B1)" &&
@@ -99,7 +99,7 @@ test_expect_failure 'squash F1 into D1' '
 #
 # And rebase G1..M1 onto E2
 
-test_expect_failure 'rebase two levels of merge' '
+test_expect_success 'rebase two levels of merge' '
 	git checkout -b branch2 A1 &&
 	touch g &&
 	git add g &&

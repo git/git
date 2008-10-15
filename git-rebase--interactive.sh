@@ -194,6 +194,15 @@ pick_one_preserving_merges () {
 		if test -f "$REWRITTEN"/$p
 		then
 			new_p=$(cat "$REWRITTEN"/$p)
+
+			# If the todo reordered commits, and our parent is marked for
+			# rewriting, but hasn't been gotten to yet, assume the user meant to
+			# drop it on top of the current HEAD
+			if test -z "$new_p"
+			then
+				new_p=$(git rev-parse HEAD)
+			fi
+
 			test $p != $new_p && fast_forward=f
 			case "$new_parents" in
 			*$new_p*)
