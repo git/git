@@ -2536,6 +2536,10 @@ proc start_browser {url} {
 
 .mbar.help add command -label [mc "Online Documentation"] \
 	-command [list start_browser $doc_url]
+
+.mbar.help add command -label [mc "Show SSH Key"] \
+	-command do_ssh_key
+
 unset doc_path doc_url
 
 # -- Standard bindings
