@@ -2332,7 +2332,7 @@ proc savestuff {w} {
     global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
-    global autoselect extdifftool
+    global autoselect extdifftool perfile_attrs
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -2359,6 +2359,7 @@ proc savestuff {w} {
 	puts $f [list set diffcontext $diffcontext]
 	puts $f [list set selectbgcolor $selectbgcolor]
 	puts $f [list set extdifftool $extdifftool]
+	puts $f [list set perfile_attrs $perfile_attrs]
 
 	puts $f "set geometry(main) [wm geometry .]"
 	puts $f "set geometry(topwidth) [winfo width .tf]"
@@ -6528,11 +6529,20 @@ proc gettreediffs {ids} {
 
 proc gettreediffline {gdtf ids} {
     global treediff treediffs treepending diffids diffmergeid
-    global cmitmode vfilelimit curview limitdiffs
+    global cmitmode vfilelimit curview limitdiffs perfile_attrs
 
     set nr 0
     set sublist {}
-    while {[incr nr] <= 1000 && [gets $gdtf line] >= 0} {
+    set max 1000
+    if {$perfile_attrs} {
+	# cache_gitattr is slow, and even slower on win32 where we
+	# have to invoke it for only about 30 paths at a time
+	set max 500
+	if {[tk windowingsystem] == "win32"} {
+	    set max 120
+	}
+    }
+    while {[incr nr] <= $max && [gets $gdtf line] >= 0} {
 	set i [string first "\t" $line]
 	if {$i >= 0} {
 	    set file [string range $line [expr {$i+1}] end]
@@ -6544,9 +6554,11 @@ proc gettreediffline {gdtf ids} {
 	    lappend sublist $file
 	}
     }
-    cache_gitattr encoding $sublist
+    if {$perfile_attrs} {
+	cache_gitattr encoding $sublist
+    }
     if {![eof $gdtf]} {
-	return [expr {$nr >= 1000? 2: 1}]
+	return [expr {$nr >= $max? 2: 1}]
     }
     close $gdtf
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
@@ -9318,7 +9330,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor
-    global tabstop limitdiffs autoselect extdifftool
+    global tabstop limitdiffs autoselect extdifftool perfile_attrs
 
     set top .gitkprefs
     set prefstop $top
@@ -9327,7 +9339,7 @@ proc doprefs {} {
 	return
     }
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-		   limitdiffs tabstop} {
+		   limitdiffs tabstop perfile_attrs} {
 	set oldprefs($v) [set $v]
     }
     toplevel $top
@@ -9369,6 +9381,11 @@ proc doprefs {} {
     checkbutton $top.ldiff.b -variable limitdiffs
     pack $top.ldiff.b $top.ldiff.l -side left
     grid x $top.ldiff -sticky w
+    frame $top.lattr
+    label $top.lattr.l -text [mc "Support per-file encodings"] -font optionfont
+    checkbutton $top.lattr.b -variable perfile_attrs
+    pack $top.lattr.b $top.lattr.l -side left
+    grid x $top.lattr -sticky w
 
     entry $top.extdifft -textvariable extdifftool
     frame $top.extdifff
@@ -9478,7 +9495,7 @@ proc prefscan {} {
     global oldprefs prefstop
 
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-		   limitdiffs tabstop} {
+		   limitdiffs tabstop perfile_attrs} {
 	global $v
 	set $v $oldprefs($v)
     }
@@ -9491,7 +9508,7 @@ proc prefsok {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
     global fontpref mainfont textfont uifont
-    global limitdiffs treediffs
+    global limitdiffs treediffs perfile_attrs
 
     catch {destroy $prefstop}
     unset prefstop
@@ -9524,8 +9541,10 @@ proc prefsok {} {
 	    dohidelocalchanges
 	}
     }
-    if {$limitdiffs != $oldprefs(limitdiffs)} {
-	# treediffs elements are limited by path
+    if {$limitdiffs != $oldprefs(limitdiffs) ||
+	($perfile_attrs && !$oldprefs(perfile_attrs))} {
+	# treediffs elements are limited by path;
+	# won't have encodings cached if perfile_attrs was just turned on
 	catch {unset treediffs}
     }
     if {$fontchanged || $maxwidth != $oldprefs(maxwidth)
@@ -9784,7 +9803,10 @@ set encoding_aliases {
 }
 
 proc tcl_encoding {enc} {
-    global encoding_aliases
+    global encoding_aliases tcl_encoding_cache
+    if {[info exists tcl_encoding_cache($enc)]} {
+	return $tcl_encoding_cache($enc)
+    }
     set names [encoding names]
     set lcnames [string tolower $names]
     set enc [string tolower $enc]
@@ -9812,68 +9834,70 @@ proc tcl_encoding {enc} {
 	    break
 	}
     }
+    set tclenc {}
     if {$i >= 0} {
-	return [lindex $names $i]
+	set tclenc [lindex $names $i]
     }
-    return {}
+    set tcl_encoding_cache($enc) $tclenc
+    return $tclenc
 }
 
 proc gitattr {path attr default} {
-	global path_attr_cache
-	if {[info exists path_attr_cache($attr,$path)]} {
-		set r $path_attr_cache($attr,$path)
-	} elseif {[catch {set r [exec git check-attr $attr -- $path]}]} {
-		set r unspecified
-	} else {
-		set r [join [lrange [split $r :] 2 end] :]
-		regsub {^ } $r {} r
+    global path_attr_cache
+    if {[info exists path_attr_cache($attr,$path)]} {
+	set r $path_attr_cache($attr,$path)
+    } else {
+	set r "unspecified"
+	if {![catch {set line [exec git check-attr $attr -- $path]}]} {
+	    regexp "(.*): encoding: (.*)" $line m f r
 	}
 	set path_attr_cache($attr,$path) $r
-	if {$r eq {unspecified}} {
-		return $default
-	}
-	return $r
+    }
+    if {$r eq "unspecified"} {
+	return $default
+    }
+    return $r
 }
 
 proc cache_gitattr {attr pathlist} {
-	global path_attr_cache
-	set newlist {}
-	foreach path $pathlist {
-		if {[info exists path_attr_cache($attr,$path)]} continue
-		lappend newlist $path
+    global path_attr_cache
+    set newlist {}
+    foreach path $pathlist {
+	if {![info exists path_attr_cache($attr,$path)]} {
+	    lappend newlist $path
 	}
-	while {$newlist ne {}} {
-		set head [lrange $newlist 0 29]
-		set newlist [lrange $newlist 30 end]
-		if {![catch {set rlist [eval exec git check-attr $attr -- $head]}]} {
-			foreach row [split $rlist "\n"] {
-				set cols [split $row :]
-				set path [lindex $cols 0]
-				set value [join [lrange $cols 2 end] :]
-				if {[string index $path 0] eq "\""} {
-					set path [encoding convertfrom [lindex $path 0]]
-				}
-				regsub {^ } $value {} value
-				set path_attr_cache($attr,$path) $value
-			}
+    }
+    set lim 1000
+    if {[tk windowingsystem] == "win32"} {
+	# windows has a 32k limit on the arguments to a command...
+	set lim 30
+    }
+    while {$newlist ne {}} {
+	set head [lrange $newlist 0 [expr {$lim - 1}]]
+	set newlist [lrange $newlist $lim end]
+	if {![catch {set rlist [eval exec git check-attr $attr -- $head]}]} {
+	    foreach row [split $rlist "\n"] {
+		if {[regexp "(.*): encoding: (.*)" $row m path value]} {
+		    if {[string index $path 0] eq "\""} {
+			set path [encoding convertfrom [lindex $path 0]]
+		    }
+		    set path_attr_cache($attr,$path) $value
 		}
-		update
+	    }
 	}
+    }
 }
 
 proc get_path_encoding {path} {
-	global gui_encoding
-	set tcl_enc [tcl_encoding $gui_encoding]
-	if {$tcl_enc eq {}} {
-		set tcl_enc [encoding system]
+    global gui_encoding perfile_attrs
+    set tcl_enc $gui_encoding
+    if {$path ne {} && $perfile_attrs} {
+	set enc2 [tcl_encoding [gitattr $path encoding $tcl_enc]]
+	if {$enc2 ne {}} {
+	    set tcl_enc $enc2
 	}
-	if {$path ne {}} {
-		set enc2 [tcl_encoding [gitattr $path encoding $tcl_enc]]
-		if {$enc2 ne {}} {
-			set tcl_enc $enc2
-		}
-	}
-	return $tcl_enc
+    }
+    return $tcl_enc
 }
 
 # First check that Tcl/Tk is recent enough
@@ -9900,7 +9924,15 @@ if {$tclencoding == {}} {
 
 set gui_encoding [encoding system]
 catch {
-	set gui_encoding [exec git config --get gui.encoding]
+    set enc [exec git config --get gui.encoding]
+    if {$enc ne {}} {
+	set tclenc [tcl_encoding $enc]
+	if {$tclenc ne {}} {
+	    set gui_encoding $tclenc
+	} else {
+	    puts stderr "Warning: encoding $enc is not supported by Tcl/Tk"
+	}
+    }
 }
 
 set mainfont {Helvetica 9}
@@ -9924,6 +9956,7 @@ set showlocalchanges 1
 set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autoselect 1
+set perfile_attrs 0
 
 set extdifftool "meld"
 
