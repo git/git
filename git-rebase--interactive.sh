@@ -170,13 +170,18 @@ pick_one_preserving_merges () {
 
 	if test -f "$DOTEST"/current-commit
 	then
-		current_commit=$(cat "$DOTEST"/current-commit) &&
-		git rev-parse HEAD > "$REWRITTEN"/$current_commit &&
-		rm "$DOTEST"/current-commit ||
-		die "Cannot write current commit's replacement sha1"
+		if [ "$fast_forward" == "t" ]
+		then
+			cat "$DOTEST"/current-commit | while read current_commit
+			do
+				git rev-parse HEAD > "$REWRITTEN"/$current_commit
+			done
+			rm "$DOTEST"/current-commit ||
+			die "Cannot write current commit's replacement sha1"
+		fi
 	fi
 
-	echo $sha1 > "$DOTEST"/current-commit
+	echo $sha1 >> "$DOTEST"/current-commit
 
 	# rewrite parents; if none were rewritten, we can fast-forward.
 	new_parents=
