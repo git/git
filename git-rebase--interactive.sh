@@ -583,6 +583,7 @@ first and then run 'git rebase --continue' again."
 			# parents to rewrite and skipping dropped commits would
 			# prematurely end our probe
 			MERGES_OPTION=
+			first_after_upstream="$(git rev-list --reverse --first-parent $UPSTREAM..$HEAD | head -n 1)"
 		else
 			MERGES_OPTION="--no-merges --cherry-pick"
 		fi
@@ -603,7 +604,7 @@ first and then run 'git rebase --continue' again."
 				preserve=t
 				for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)
 				do
-					if test -f "$REWRITTEN"/$p
+					if test -f "$REWRITTEN"/$p -a \( $p != $UPSTREAM -o $sha1 = $first_after_upstream \)
 					then
 						preserve=f
 					fi
