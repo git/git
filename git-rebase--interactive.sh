@@ -579,18 +579,67 @@ first and then run 'git rebase --continue' again."
 				echo $ONTO > "$REWRITTEN"/$c ||
 					die "Could not init rewritten commits"
 			done
+			# No cherry-pick because our first pass is to determine
+			# parents to rewrite and skipping dropped commits would
+			# prematurely end our probe
 			MERGES_OPTION=
 		else
-			MERGES_OPTION=--no-merges
+			MERGES_OPTION="--no-merges --cherry-pick"
 		fi
 
 		SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
 		SHORTHEAD=$(git rev-parse --short $HEAD)
 		SHORTONTO=$(git rev-parse --short $ONTO)
 		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
-			--abbrev=7 --reverse --left-right --cherry-pick \
+			--abbrev=7 --reverse --left-right --topo-order \
 			$UPSTREAM...$HEAD | \
-			sed -n "s/^>/pick /p" > "$TODO"
+			sed -n "s/^>//p" | while read shortsha1 rest
+		do
+			if test t != "$PRESERVE_MERGES"
+			then
+				echo "pick $shortsha1 $rest" >> "$TODO"
+			else
+				sha1=$(git rev-parse $shortsha1)
+				preserve=t
+				for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)
+				do
+					if test -f "$REWRITTEN"/$p
+					then
+						preserve=f
+					fi
+				done
+				if test f = "$preserve"
+				then
+					touch "$REWRITTEN"/$sha1
+					echo "pick $shortsha1 $rest" >> "$TODO"
+				fi
+			fi
+		done
+
+		# Watch for commits that been dropped by --cherry-pick
+		if test t = "$PRESERVE_MERGES"
+		then
+			mkdir "$DROPPED"
+			# Save all non-cherry-picked changes
+			git rev-list $UPSTREAM...$HEAD --left-right --cherry-pick | \
+				sed -n "s/^>//p" > "$DOTEST"/not-cherry-picks
+			# Now all commits and note which ones are missing in
+			# not-cherry-picks and hence being dropped
+			git rev-list $UPSTREAM...$HEAD --left-right | \
+				sed -n "s/^>//p" | while read rev
+			do
+				if test -f "$REWRITTEN"/$rev -a "$(grep "$rev" "$DOTEST"/not-cherry-picks)" = ""
+				then
+					# Use -f2 because if rev-list is telling us this commit is
+					# not worthwhile, we don't want to track its multiple heads,
+					# just the history of its first-parent for others that will
+					# be rebasing on top of it
+					git rev-list --parents -1 $rev | cut -d' ' -f2 > "$DROPPED"/$rev
+					cat "$TODO" | grep -v "${rev:0:7}" > "${TODO}2" ; mv "${TODO}2" "$TODO"
+					rm "$REWRITTEN"/$rev
+				fi
+			done
+		fi
 		test -s "$TODO" || echo noop >> "$TODO"
 		cat >> "$TODO" << EOF
 
@@ -605,28 +654,6 @@ first and then run 'git rebase --continue' again."
 # However, if you remove everything, the rebase will be aborted.
 #
 EOF
-
-		# Watch for commits that been dropped by --cherry-pick
-		if test t = "$PRESERVE_MERGES"
-		then
-			mkdir "$DROPPED"
-			# drop the --cherry-pick parameter this time
-			git rev-list $MERGES_OPTION --abbrev-commit \
-				--abbrev=7 $UPSTREAM...$HEAD --left-right | \
-				sed -n "s/^>//p" | while read rev
-			do
-				grep --quiet "$rev" "$TODO"
-				if [ $? -ne 0 ]
-				then
-					# Use -f2 because if rev-list is telling this commit is not
-					# worthwhile, we don't want to track its multiple heads,
-					# just the history of its first-parent for others that will
-					# be rebasing on top of us
-					full=$(git rev-parse $rev)
-					git rev-list --parents -1 $rev | cut -d' ' -f2 > "$DROPPED"/$full
-				fi
-			done
-		fi
 
 		has_action "$TODO" ||
 			die_abort "Nothing to do"
