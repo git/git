@@ -219,15 +219,19 @@ pick_one_preserving_merges () {
 			die "Cannot fast forward to $sha1"
 		;;
 	f)
-		test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
-
 		first_parent=$(expr "$new_parents" : ' \([^ ]*\)')
-		# detach HEAD to current parent
-		output git checkout $first_parent 2> /dev/null ||
-			die "Cannot move HEAD to $first_parent"
+
+		if [ "$1" != "-n" ]
+		then
+			# detach HEAD to current parent
+			output git checkout $first_parent 2> /dev/null ||
+				die "Cannot move HEAD to $first_parent"
+		fi
 
 		case "$new_parents" in
 		' '*' '*)
+			test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
+
 			# redo merge
 			author_script=$(get_author_ident_from_commit $sha1)
 			eval "$author_script"
