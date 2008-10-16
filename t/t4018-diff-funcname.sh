@@ -65,7 +65,8 @@ test_expect_success 'custom pattern' '
 
 test_expect_success 'last regexp must not be negated' '
 	git config diff.java.funcname "!static" &&
-	test_must_fail git diff --no-index Beer.java Beer-correct.java
+	git diff --no-index Beer.java Beer-correct.java 2>&1 |
+	grep "fatal: Last expression must not be negated:"
 '
 
 test_expect_success 'alternation in pattern' '
