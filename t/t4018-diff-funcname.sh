@@ -69,6 +69,12 @@ test_expect_success 'last regexp must not be negated' '
 	grep "fatal: Last expression must not be negated:"
 '
 
+test_expect_failure 'pattern which matches to end of line' '
+	git config diff.java.funcname "Beer$" &&
+	git diff --no-index Beer.java Beer-correct.java |
+	grep "^@@.*@@ Beer"
+'
+
 test_expect_success 'alternation in pattern' '
 	git config diff.java.xfuncname "^[ 	]*((public|static).*)$" &&
 	git diff --no-index Beer.java Beer-correct.java |
