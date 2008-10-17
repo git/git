@@ -339,6 +339,18 @@ test_expect_success 'checkout w/--track from non-branch HEAD fails' '
     test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
 '
 
+test_expect_failure 'detach a symbolic link HEAD' '
+    git checkout master &&
+    git config --bool core.prefersymlinkrefs yes &&
+    git checkout side &&
+    git checkout master &&
+    it=$(git symbolic-ref HEAD) &&
+    test "z$it" = zrefs/heads/master &&
+    here=$(git rev-parse --verify refs/heads/master) &&
+    git checkout side^ &&
+    test "z$(git rev-parse --verify refs/heads/master)" = "z$here"
+'
+
 test_expect_success 'checkout an unmerged path should fail' '
 	rm -f .git/index &&
 	O=$(echo original | git hash-object -w --stdin) &&
