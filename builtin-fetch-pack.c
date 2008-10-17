@@ -813,7 +813,8 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 			  )
 			die("shallow file was changed during fetch");
 
-		fd = hold_lock_file_for_update(&lock, shallow, 1);
+		fd = hold_lock_file_for_update(&lock, shallow,
+					       LOCK_DIE_ON_ERROR);
 		if (!write_shallow_commits(fd, 0)) {
 			unlink(shallow);
 			rollback_lock_file(&lock);

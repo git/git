@@ -339,7 +339,7 @@ test_expect_success 'checkout w/--track from non-branch HEAD fails' '
     test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
 '
 
-test_expect_failure 'detach a symbolic link HEAD' '
+test_expect_success 'detach a symbolic link HEAD' '
     git checkout master &&
     git config --bool core.prefersymlinkrefs yes &&
     git checkout side &&

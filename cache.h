@@ -411,6 +411,8 @@ struct lock_file {
 	char on_list;
 	char filename[PATH_MAX];
 };
+#define LOCK_DIE_ON_ERROR 1
+#define LOCK_NODEREF 2
 extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int hold_lock_file_for_append(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
