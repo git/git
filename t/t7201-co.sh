@@ -330,12 +330,14 @@ test_expect_success \
     test "$(git config branch.track2.merge)"
     git config branch.autosetupmerge false'
 
-test_expect_success \
-    'checkout w/--track from non-branch HEAD fails' '
-    git checkout -b delete-me master &&
-    rm .git/refs/heads/delete-me &&
-    test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
-    test_must_fail git checkout --track -b track'
+test_expect_success 'checkout w/--track from non-branch HEAD fails' '
+    git checkout master^0 &&
+    test_must_fail git symbolic-ref HEAD &&
+    test_must_fail git checkout --track -b track &&
+    test_must_fail git rev-parse --verify track &&
+    test_must_fail git symbolic-ref HEAD &&
+    test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
+'
 
 test_expect_success 'checkout an unmerged path should fail' '
 	rm -f .git/index &&
