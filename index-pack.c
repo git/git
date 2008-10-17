@@ -244,7 +244,8 @@ static void link_base_data(struct base_data *base, struct base_data *c)
 
 	c->base = base;
 	c->child = NULL;
-	base_cache_used += c->size;
+	if (c->data)
+		base_cache_used += c->size;
 	prune_base_data(c);
 }
 
@@ -494,8 +495,10 @@ static void *get_base_data(struct base_data *c)
 			free(raw);
 			if (!c->data)
 				bad_object(obj->idx.offset, "failed to apply delta");
-		} else
+		} else {
 			c->data = get_data_from_pack(obj);
+			c->size = obj->size;
+		}
 
 		base_cache_used += c->size;
 		prune_base_data(c);
@@ -504,49 +507,73 @@ static void *get_base_data(struct base_data *c)
 }
 
 static void resolve_delta(struct object_entry *delta_obj,
-			  struct base_data *base_obj, enum object_type type)
+			  struct base_data *base, struct base_data *result)
 {
 	void *delta_data;
 	unsigned long delta_size;
-	union delta_base delta_base;
-	int j, first, last;
-	struct base_data result;
 
-	delta_obj->real_type = type;
+	delta_obj->real_type = base->obj->type;
 	delta_data = get_data_from_pack(delta_obj);
 	delta_size = delta_obj->size;
-	result.data = patch_delta(get_base_data(base_obj), base_obj->size,
-			     delta_data, delta_size,
-			     &result.size);
+	result->obj = delta_obj;
+	result->data = patch_delta(get_base_data(base), base->obj->size,
+				   delta_data, delta_size, &result->size);
 	free(delta_data);
-	if (!result.data)
+	if (!result->data)
 		bad_object(delta_obj->idx.offset, "failed to apply delta");
-	sha1_object(result.data, result.size, type, delta_obj->idx.sha1);
+	sha1_object(result->data, result->size, delta_obj->real_type,
+		    delta_obj->idx.sha1);
 	nr_resolved_deltas++;
+}
 
-	result.obj = delta_obj;
-	link_base_data(base_obj, &result);
+static void find_unresolved_deltas(struct base_data *base,
+				   struct base_data *prev_base)
+{
+	int i, ref, ref_first, ref_last, ofs, ofs_first, ofs_last;
 
-	hashcpy(delta_base.sha1, delta_obj->idx.sha1);
-	if (!find_delta_children(&delta_base, &first, &last)) {
-		for (j = first; j <= last; j++) {
-			struct object_entry *child = objects + deltas[j].obj_no;
-			if (child->real_type == OBJ_REF_DELTA)
-				resolve_delta(child, &result, type);
+	/*
+	 * This is a recursive function. Those brackets should help reducing
+	 * stack usage by limiting the scope of the delta_base union.
+	 */
+	{
+		union delta_base base_spec;
+
+		hashcpy(base_spec.sha1, base->obj->idx.sha1);
+		ref = !find_delta_children(&base_spec, &ref_first, &ref_last);
+
+		memset(&base_spec, 0, sizeof(base_spec));
+		base_spec.offset = base->obj->idx.offset;
+		ofs = !find_delta_children(&base_spec, &ofs_first, &ofs_last);
+	}
+
+	if (!ref && !ofs)
+		return;
+
+	link_base_data(prev_base, base);
+
+	if (ref) {
+		for (i = ref_first; i <= ref_last; i++) {
+			struct object_entry *child = objects + deltas[i].obj_no;
+			if (child->real_type == OBJ_REF_DELTA) {
+				struct base_data result;
+				resolve_delta(child, base, &result);
+				find_unresolved_deltas(&result, base);
+			}
 		}
 	}
 
-	memset(&delta_base, 0, sizeof(delta_base));
-	delta_base.offset = delta_obj->idx.offset;
-	if (!find_delta_children(&delta_base, &first, &last)) {
-		for (j = first; j <= last; j++) {
-			struct object_entry *child = objects + deltas[j].obj_no;
-			if (child->real_type == OBJ_OFS_DELTA)
-				resolve_delta(child, &result, type);
+	if (ofs) {
+		for (i = ofs_first; i <= ofs_last; i++) {
+			struct object_entry *child = objects + deltas[i].obj_no;
+			if (child->real_type == OBJ_OFS_DELTA) {
+				struct base_data result;
+				resolve_delta(child, base, &result);
+				find_unresolved_deltas(&result, base);
+			}
 		}
 	}
 
-	unlink_base_data(&result);
+	unlink_base_data(base);
 }
 
 static int compare_delta_entry(const void *a, const void *b)
@@ -622,37 +649,13 @@ static void parse_pack_objects(unsigned char *sha1)
 		progress = start_progress("Resolving deltas", nr_deltas);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
-		union delta_base base;
-		int j, ref, ref_first, ref_last, ofs, ofs_first, ofs_last;
 		struct base_data base_obj;
 
 		if (obj->type == OBJ_REF_DELTA || obj->type == OBJ_OFS_DELTA)
 			continue;
-		hashcpy(base.sha1, obj->idx.sha1);
-		ref = !find_delta_children(&base, &ref_first, &ref_last);
-		memset(&base, 0, sizeof(base));
-		base.offset = obj->idx.offset;
-		ofs = !find_delta_children(&base, &ofs_first, &ofs_last);
-		if (!ref && !ofs)
-			continue;
-		base_obj.data = get_data_from_pack(obj);
-		base_obj.size = obj->size;
 		base_obj.obj = obj;
-		link_base_data(NULL, &base_obj);
-
-		if (ref)
-			for (j = ref_first; j <= ref_last; j++) {
-				struct object_entry *child = objects + deltas[j].obj_no;
-				if (child->real_type == OBJ_REF_DELTA)
-					resolve_delta(child, &base_obj, obj->type);
-			}
-		if (ofs)
-			for (j = ofs_first; j <= ofs_last; j++) {
-				struct object_entry *child = objects + deltas[j].obj_no;
-				if (child->real_type == OBJ_OFS_DELTA)
-					resolve_delta(child, &base_obj, obj->type);
-			}
-		unlink_base_data(&base_obj);
+		base_obj.data = NULL;
+		find_unresolved_deltas(&base_obj, NULL);
 		display_progress(progress, nr_resolved_deltas);
 	}
 }
@@ -745,7 +748,6 @@ static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved)
 	for (i = 0; i < n; i++) {
 		struct delta_entry *d = sorted_by_pos[i];
 		enum object_type type;
-		int j, first, last;
 		struct base_data base_obj;
 
 		if (objects[d->obj_no].real_type != OBJ_REF_DELTA)
@@ -759,16 +761,7 @@ static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved)
 			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
 		base_obj.obj = append_obj_to_pack(f, d->base.sha1,
 					base_obj.data, base_obj.size, type);
-		link_base_data(NULL, &base_obj);
-
-		find_delta_children(&d->base, &first, &last);
-		for (j = first; j <= last; j++) {
-			struct object_entry *child = objects + deltas[j].obj_no;
-			if (child->real_type == OBJ_REF_DELTA)
-				resolve_delta(child, &base_obj, type);
-		}
-
-		unlink_base_data(&base_obj);
+		find_unresolved_deltas(&base_obj, NULL);
 		display_progress(progress, nr_resolved_deltas);
 	}
 	free(sorted_by_pos);
