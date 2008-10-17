@@ -1750,6 +1750,45 @@ proc setoptions {} {
     option add *Entry.font uifont startupFile
 }
 
+proc makemenu {m items} {
+    menu $m
+    foreach i $items {
+	set name [mc [lindex $i 0]]
+	set type [lindex $i 1]
+	set thing [lindex $i 2]
+	set params [list $type]
+	if {$name ne {}} {
+	    set u [string first "&" [string map {&& x} $name]]
+	    lappend params -label [string map {&& & & {}} $name]
+	    if {$u >= 0} {
+		lappend params -underline $u
+	    }
+	}
+	switch -- $type {
+	    "cascade" {
+		set submenu [string tolower [string map {& ""} [lindex $i 0]]]
+		lappend params -menu $m.$submenu
+	    }
+	    "command" {
+		lappend params -command $thing
+	    }
+	    "radiobutton" {
+		lappend params -variable [lindex $thing 0] \
+		    -value [lindex $thing 1]
+	    }
+	}
+	eval $m add $params [lrange $i 3 end]
+	if {$type eq "cascade"} {
+	    makemenu $m.$submenu $thing
+	}
+    }
+}
+
+# translate string and remove ampersands
+proc mca {str} {
+    return [string map {&& & & {}} [mc $str]]
+}
+
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist cscroll
     global tabstop
@@ -1767,33 +1806,29 @@ proc makewindow {} {
     global rprogitem rprogcoord rownumsel numcommits
     global have_tk85
 
-    menu .bar
-    .bar add cascade -label [mc "File"] -menu .bar.file
-    menu .bar.file
-    .bar.file add command -label [mc "Update"] -command updatecommits
-    .bar.file add command -label [mc "Reload"] -command reloadcommits
-    .bar.file add command -label [mc "Reread references"] -command rereadrefs
-    .bar.file add command -label [mc "List references"] -command showrefs
-    .bar.file add command -label [mc "Quit"] -command doquit
-    menu .bar.edit
-    .bar add cascade -label [mc "Edit"] -menu .bar.edit
-    .bar.edit add command -label [mc "Preferences"] -command doprefs
-
-    menu .bar.view
-    .bar add cascade -label [mc "View"] -menu .bar.view
-    .bar.view add command -label [mc "New view..."] -command {newview 0}
-    .bar.view add command -label [mc "Edit view..."] -command editview \
-	-state disabled
-    .bar.view add command -label [mc "Delete view"] -command delview -state disabled
-    .bar.view add separator
-    .bar.view add radiobutton -label [mc "All files"] -command {showview 0} \
-	-variable selectedview -value 0
-
-    menu .bar.help
-    .bar add cascade -label [mc "Help"] -menu .bar.help
-    .bar.help add command -label [mc "About gitk"] -command about
-    .bar.help add command -label [mc "Key bindings"] -command keys
-    .bar.help configure
+    makemenu .bar {
+	{"File" cascade {
+	    {"Update" command updatecommits -accelerator F5}
+	    {"Reload" command reloadcommits}
+	    {"Reread references" command rereadrefs}
+	    {"List references" command showrefs}
+	    {"Quit" command doquit}
+	}}
+	{"Edit" cascade {
+	    {"Preferences" command doprefs}
+	}}
+	{"View" cascade {
+	    {"New view..." command {newview 0}}
+	    {"Edit view..." command editview -state disabled}
+	    {"Delete view" command delview -state disabled}
+	    {"" separator}
+	    {"All files" radiobutton {selectedview 0} -command {showview 0}}
+	}}
+	{"Help" cascade {
+	    {"About gitk" command about}
+	    {"Key bindings" command keys}
+	}}
+    }
     . configure -menu .bar
 
     # the gui has upper and lower half, parts of a paned window.
@@ -2174,49 +2209,42 @@ proc makewindow {} {
     set curtextcursor $textcursor
 
     set rowctxmenu .rowctxmenu
-    menu $rowctxmenu -tearoff 0
-    $rowctxmenu add command -label [mc "Diff this -> selected"] \
-	-command {diffvssel 0}
-    $rowctxmenu add command -label [mc "Diff selected -> this"] \
-	-command {diffvssel 1}
-    $rowctxmenu add command -label [mc "Make patch"] -command mkpatch
-    $rowctxmenu add command -label [mc "Create tag"] -command mktag
-    $rowctxmenu add command -label [mc "Write commit to file"] -command writecommit
-    $rowctxmenu add command -label [mc "Create new branch"] -command mkbranch
-    $rowctxmenu add command -label [mc "Cherry-pick this commit"] \
-	-command cherrypick
-    $rowctxmenu add command -label [mc "Reset HEAD branch to here"] \
-	-command resethead
+    makemenu $rowctxmenu {
+	{"Diff this -> selected" command {diffvssel 0}}
+	{"Diff selected -> this" command {diffvssel 1}}
+	{"Make patch" command mkpatch}
+	{"Create tag" command mktag}
+	{"Write commit to file" command writecommit}
+	{"Create new branch" command mkbranch}
+	{"Cherry-pick this commit" command cherrypick}
+	{"Reset HEAD branch to here" command resethead}
+    }
+    $rowctxmenu configure -tearoff 0
 
     set fakerowmenu .fakerowmenu
-    menu $fakerowmenu -tearoff 0
-    $fakerowmenu add command -label [mc "Diff this -> selected"] \
-	-command {diffvssel 0}
-    $fakerowmenu add command -label [mc "Diff selected -> this"] \
-	-command {diffvssel 1}
-    $fakerowmenu add command -label [mc "Make patch"] -command mkpatch
-#    $fakerowmenu add command -label [mc "Commit"] -command {mkcommit 0}
-#    $fakerowmenu add command -label [mc "Commit all"] -command {mkcommit 1}
-#    $fakerowmenu add command -label [mc "Revert local changes"] -command revertlocal
+    makemenu $fakerowmenu {
+	{"Diff this -> selected" command {diffvssel 0}}
+	{"Diff selected -> this" command {diffvssel 1}}
+	{"Make patch" command mkpatch}
+    }
+    $fakerowmenu configure -tearoff 0
 
     set headctxmenu .headctxmenu
-    menu $headctxmenu -tearoff 0
-    $headctxmenu add command -label [mc "Check out this branch"] \
-	-command cobranch
-    $headctxmenu add command -label [mc "Remove this branch"] \
-	-command rmbranch
+    makemenu $headctxmenu {
+	{"Check out this branch" command cobranch}
+	{"Remove this branch" command rmbranch}
+    }
+    $headctxmenu configure -tearoff 0
 
     global flist_menu
     set flist_menu .flistctxmenu
-    menu $flist_menu -tearoff 0
-    $flist_menu add command -label [mc "Highlight this too"] \
-	-command {flist_hl 0}
-    $flist_menu add command -label [mc "Highlight this only"] \
-	-command {flist_hl 1}
-    $flist_menu add command -label [mc "External diff"] \
-        -command {external_diff}
-    $flist_menu add command -label [mc "Blame parent commit"] \
-        -command {external_blame 1}
+    makemenu $flist_menu {
+	{"Highlight this too" command {flist_hl 0}}
+	{"Highlight this only" command {flist_hl 1}}
+	{"External diff" command {external_diff}}
+	{"Blame parent commit" command {external_blame 1}}
+    }
+    $flist_menu configure -tearoff 0
 }
 
 # Windows sends all mouse wheel events to the current focused window, not
@@ -3376,8 +3404,8 @@ proc showview {n} {
 
     set curview $n
     set selectedview $n
-    .bar.view entryconf [mc "Edit view..."] -state [expr {$n == 0? "disabled": "normal"}]
-    .bar.view entryconf [mc "Delete view"] -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf [mca "Edit view..."] -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf [mca "Delete view"] -state [expr {$n == 0? "disabled": "normal"}]
 
     run refill_reflist
     if {![info exists viewcomplete($n)]} {
@@ -7323,9 +7351,9 @@ proc rowmenu {x y id} {
     } else {
 	set menu $fakerowmenu
     }
-    $menu entryconfigure [mc "Diff this -> selected"] -state $state
-    $menu entryconfigure [mc "Diff selected -> this"] -state $state
-    $menu entryconfigure [mc "Make patch"] -state $state
+    $menu entryconfigure [mca "Diff this -> selected"] -state $state
+    $menu entryconfigure [mca "Diff selected -> this"] -state $state
+    $menu entryconfigure [mca "Make patch"] -state $state
     tk_popup $menu $x $y
 }
 
@@ -10146,8 +10174,8 @@ if {$cmdline_files ne {} || $revtreeargs ne {} || $revtreeargscmd ne {}} {
     set viewperm(1) 0
     set vdatemode(1) 0
     addviewmenu 1
-    .bar.view entryconf [mc "Edit view..."] -state normal
-    .bar.view entryconf [mc "Delete view"] -state normal
+    .bar.view entryconf [mca "Edit view..."] -state normal
+    .bar.view entryconf [mca "Delete view"] -state normal
 }
 
 if {[info exists permviews]} {
