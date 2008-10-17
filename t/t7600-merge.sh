@@ -518,6 +518,30 @@ test_expect_success 'refresh the index before merging' '
 	git merge c3
 '
 
+cat >expected <<EOF
+Merge branch 'c5' (early part)
+EOF
+
+test_expect_success 'merge early part of c2' '
+	git reset --hard c3 &&
+	echo c4 > c4.c &&
+	git add c4.c &&
+	git commit -m c4 &&
+	git tag c4 &&
+	echo c5 > c5.c &&
+	git add c5.c &&
+	git commit -m c5 &&
+	git tag c5 &&
+	git reset --hard c3 &&
+	echo c6 > c6.c &&
+	git add c6.c &&
+	git commit -m c6 &&
+	git tag c6 &&
+	git merge c5~1 &&
+	git show -s --pretty=format:%s HEAD > actual &&
+	test_cmp actual expected
+'
+
 test_debug 'gitk --all'
 
 test_done

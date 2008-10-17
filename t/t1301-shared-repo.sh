@@ -7,6 +7,9 @@ test_description='Test shared repository initialization'
 
 . ./test-lib.sh
 
+# Remove a default ACL from the test dir if possible.
+setfacl -k . 2>/dev/null
+
 # User must have read permissions to the repo -> failure on --shared=0400
 test_expect_success 'shared = 0400 (faulty permission u-w)' '
 	mkdir sub && (
