@@ -77,6 +77,9 @@ on.
 * "git commit --author=$name" can look up author name from existing
   commits.
 
+* output from "git commit" has been reworded in a more concise and yet
+  more informative way.
+
 * "git count-objects" reports the on-disk footprint for packfiles and
   their corresponding idx files.
 
@@ -93,6 +96,8 @@ on.
 
 * "git diff" learned --dirstat-by-file to count changed files, not number
   of lines, when summarizing the global picture.
+
+* "git diff" hunk header pattern for ObjC has been added.
 
 * "git for-each-ref" learned "refname:short" token that gives an
   unambiguously abbreviated refname.
@@ -174,6 +179,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.2-529-g769b008
+O=v1.6.0.2-553-g58e0fa5
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
