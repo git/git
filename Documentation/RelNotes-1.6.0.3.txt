@@ -24,6 +24,12 @@ Fixes since v1.6.0.2
 * "git diff --no-index" on binary files no longer outputs a bogus
   "diff --git" header line.
 
+* "git diff" hunk header patterns with multiple elements separated by LF
+  were not used correctly.
+
+* "git gc" when ejecting otherwise unreachable objects from packfiles into
+  loose form leaked memory.
+
 * Hunk headers in "git diff" default to using extended regular
   expressions, fixing some of the internal patterns on non-GNU
   platforms.
@@ -46,6 +52,8 @@ Fixes since v1.6.0.2
 * "git remote" fixed to protect printf from user input.
 
 * "git remote show -v" now displays all URLs of a remote.
+
+* "git checkout -b branch" was confused when branch already existed.
 
 * "git checkout -q" once again suppresses the locally modified file list.
 
@@ -107,6 +115,6 @@ Many other documentation updates.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.2-95-g72d404d
+O=v1.6.0.2-110-gf07c3c5
 echo O=$(git describe maint)
 git shortlog --no-merges $O..maint
