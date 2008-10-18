@@ -879,6 +879,9 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 {
 	struct rev_info rev;
 	struct commit *commit;
+	static const char *format = "format:%h: \"%s\"";
+	unsigned char junk_sha1[20];
+	const char *head = resolve_ref("HEAD", junk_sha1, 0, NULL);
 
 	commit = lookup_commit(sha1);
 	if (!commit)
@@ -896,18 +899,24 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 	rev.verbose_header = 1;
 	rev.show_root_diff = 1;
-	get_commit_format("format:%h: %s", &rev);
+	get_commit_format(format, &rev);
 	rev.always_show_header = 0;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
-	printf("Created %scommit ", initial_commit ? "initial " : "");
+	printf("[%s%s]: created ",
+		!prefixcmp(head, "refs/heads/") ?
+			head + 11 :
+			!strcmp(head, "HEAD") ?
+				"detached HEAD" :
+				head,
+		initial_commit ? " (root-commit)" : "");
 
 	if (!log_tree_commit(&rev, commit)) {
 		struct strbuf buf = STRBUF_INIT;
-		format_commit_message(commit, "%h: %s", &buf, DATE_NORMAL);
+		format_commit_message(commit, format + 7, &buf, DATE_NORMAL);
 		printf("%s\n", buf.buf);
 		strbuf_release(&buf);
 	}
