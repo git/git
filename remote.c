@@ -759,15 +759,9 @@ static struct ref *alloc_ref_with_prefix(const char *prefix, size_t prefixlen,
 	return ref;
 }
 
-struct ref *alloc_ref(unsigned namelen)
+struct ref *alloc_ref(const char *name)
 {
-	struct ref *ret = xcalloc(1, sizeof(struct ref) + namelen);
-	return ret;
-}
-
-struct ref *alloc_ref_from_str(const char* str)
-{
-	return alloc_ref_with_prefix("", 0, str);
+	return alloc_ref_with_prefix("", 0, name);
 }
 
 static struct ref *copy_ref(const struct ref *ref)
@@ -878,20 +872,20 @@ static struct ref *try_explicit_object_name(const char *name)
 	struct ref *ref;
 
 	if (!*name) {
-		ref = alloc_ref_from_str("(delete)");
+		ref = alloc_ref("(delete)");
 		hashclr(ref->new_sha1);
 		return ref;
 	}
 	if (get_sha1(name, sha1))
 		return NULL;
-	ref = alloc_ref_from_str(name);
+	ref = alloc_ref(name);
 	hashcpy(ref->new_sha1, sha1);
 	return ref;
 }
 
 static struct ref *make_linked_ref(const char *name, struct ref ***tail)
 {
-	struct ref *ret = alloc_ref_from_str(name);
+	struct ref *ret = alloc_ref(name);
 	tail_link_ref(ret, tail);
 	return ret;
 }
@@ -1196,9 +1190,8 @@ static struct ref *get_local_ref(const char *name)
 	if (!name)
 		return NULL;
 
-	if (!prefixcmp(name, "refs/")) {
-		return alloc_ref_from_str(name);
-	}
+	if (!prefixcmp(name, "refs/"))
+		return alloc_ref(name);
 
 	if (!prefixcmp(name, "heads/") ||
 	    !prefixcmp(name, "tags/") ||

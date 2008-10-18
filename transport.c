@@ -75,7 +75,7 @@ static int read_loose_refs(struct strbuf *path, int name_offset,
 
 			if (fd < 0)
 				continue;
-			next = alloc_ref_from_str(path->buf + name_offset);
+			next = alloc_ref(path->buf + name_offset);
 			if (read_in_full(fd, buffer, 40) != 40 ||
 					get_sha1_hex(buffer, next->old_sha1)) {
 				close(fd);
@@ -126,7 +126,7 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 				      (*list)->next->name)) > 0)
 			list = &(*list)->next;
 		if (!(*list)->next || cmp < 0) {
-			struct ref *next = alloc_ref_from_str(buffer + 41);
+			struct ref *next = alloc_ref(buffer + 41);
 			buffer[40] = '\0';
 			if (get_sha1_hex(buffer, next->old_sha1)) {
 				warning ("invalid SHA-1: %s", buffer);
@@ -499,7 +499,7 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 
 	strbuf_release(&buffer);
 
-	ref = alloc_ref_from_str("HEAD");
+	ref = alloc_ref("HEAD");
 	if (!walker->fetch_ref(walker, ref) &&
 	    !resolve_remote_symref(ref, refs)) {
 		ref->next = refs;
@@ -540,7 +540,7 @@ static struct ref *get_refs_from_bundle(struct transport *transport)
 		die ("Could not read bundle '%s'.", transport->url);
 	for (i = 0; i < data->header.references.nr; i++) {
 		struct ref_list_entry *e = data->header.references.list + i;
-		struct ref *ref = alloc_ref_from_str(e->name);
+		struct ref *ref = alloc_ref(e->name);
 		hashcpy(ref->old_sha1, e->sha1);
 		ref->next = result;
 		result = ref;
