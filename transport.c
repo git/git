@@ -75,7 +75,7 @@ static int read_loose_refs(struct strbuf *path, int name_offset,
 
 			if (fd < 0)
 				continue;
-			next = alloc_ref(path->len - name_offset + 1);
+			next = alloc_ref_from_str(path->buf + name_offset);
 			if (read_in_full(fd, buffer, 40) != 40 ||
 					get_sha1_hex(buffer, next->old_sha1)) {
 				close(fd);
@@ -83,7 +83,6 @@ static int read_loose_refs(struct strbuf *path, int name_offset,
 				continue;
 			}
 			close(fd);
-			strcpy(next->name, path->buf + name_offset);
 			(*tail)->next = next;
 			*tail = next;
 		}
@@ -127,14 +126,13 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 				      (*list)->next->name)) > 0)
 			list = &(*list)->next;
 		if (!(*list)->next || cmp < 0) {
-			struct ref *next = alloc_ref(len - 40);
+			struct ref *next = alloc_ref_from_str(buffer + 41);
 			buffer[40] = '\0';
 			if (get_sha1_hex(buffer, next->old_sha1)) {
 				warning ("invalid SHA-1: %s", buffer);
 				free(next);
 				continue;
 			}
-			strcpy(next->name, buffer + 41);
 			next->next = (*list)->next;
 			(*list)->next = next;
 			list = &(*list)->next;

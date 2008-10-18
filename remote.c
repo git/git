@@ -878,8 +878,7 @@ static struct ref *try_explicit_object_name(const char *name)
 	struct ref *ref;
 
 	if (!*name) {
-		ref = alloc_ref(20);
-		strcpy(ref->name, "(delete)");
+		ref = alloc_ref_from_str("(delete)");
 		hashclr(ref->new_sha1);
 		return ref;
 	}
