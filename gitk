@@ -1750,12 +1750,20 @@ proc setoptions {} {
     option add *Entry.font uifont startupFile
 }
 
+# Make a menu and submenus.
+# m is the window name for the menu, items is the list of menu items to add.
+# Each item is a list {mc label type description options...}
+# mc is ignored; it's so we can put mc there to alert xgettext
+# label is the string that appears in the menu
+# type is cascade, command or radiobutton (should add checkbutton)
+# description depends on type; it's the sublist for cascade, the
+# command to invoke for command, or {variable value} for radiobutton
 proc makemenu {m items} {
     menu $m
     foreach i $items {
-	set name [mc [lindex $i 0]]
-	set type [lindex $i 1]
-	set thing [lindex $i 2]
+	set name [mc [lindex $i 1]]
+	set type [lindex $i 2]
+	set thing [lindex $i 3]
 	set params [list $type]
 	if {$name ne {}} {
 	    set u [string first "&" [string map {&& x} $name]]
@@ -1766,7 +1774,7 @@ proc makemenu {m items} {
 	}
 	switch -- $type {
 	    "cascade" {
-		set submenu [string tolower [string map {& ""} [lindex $i 0]]]
+		set submenu [string tolower [string map {& ""} [lindex $i 1]]]
 		lappend params -menu $m.$submenu
 	    }
 	    "command" {
@@ -1777,7 +1785,7 @@ proc makemenu {m items} {
 		    -value [lindex $thing 1]
 	    }
 	}
-	eval $m add $params [lrange $i 3 end]
+	eval $m add $params [lrange $i 4 end]
 	if {$type eq "cascade"} {
 	    makemenu $m.$submenu $thing
 	}
@@ -1806,27 +1814,29 @@ proc makewindow {} {
     global rprogitem rprogcoord rownumsel numcommits
     global have_tk85
 
+    # The "mc" arguments here are purely so that xgettext
+    # sees the following string as needing to be translated
     makemenu .bar {
-	{"File" cascade {
-	    {"Update" command updatecommits -accelerator F5}
-	    {"Reload" command reloadcommits}
-	    {"Reread references" command rereadrefs}
-	    {"List references" command showrefs}
-	    {"Quit" command doquit}
+	{mc "File" cascade {
+	    {mc "Update" command updatecommits -accelerator F5}
+	    {mc "Reload" command reloadcommits}
+	    {mc "Reread references" command rereadrefs}
+	    {mc "List references" command showrefs}
+	    {mc "Quit" command doquit}
 	}}
-	{"Edit" cascade {
-	    {"Preferences" command doprefs}
+	{mc "Edit" cascade {
+	    {mc "Preferences" command doprefs}
 	}}
-	{"View" cascade {
-	    {"New view..." command {newview 0}}
-	    {"Edit view..." command editview -state disabled}
-	    {"Delete view" command delview -state disabled}
-	    {"" separator}
-	    {"All files" radiobutton {selectedview 0} -command {showview 0}}
+	{mc "View" cascade {
+	    {mc "New view..." command {newview 0}}
+	    {mc "Edit view..." command editview -state disabled}
+	    {mc "Delete view" command delview -state disabled}
+	    {xx "" separator}
+	    {mc "All files" radiobutton {selectedview 0} -command {showview 0}}
 	}}
-	{"Help" cascade {
-	    {"About gitk" command about}
-	    {"Key bindings" command keys}
+	{mc "Help" cascade {
+	    {mc "About gitk" command about}
+	    {mc "Key bindings" command keys}
 	}}
     }
     . configure -menu .bar
@@ -2210,39 +2220,39 @@ proc makewindow {} {
 
     set rowctxmenu .rowctxmenu
     makemenu $rowctxmenu {
-	{"Diff this -> selected" command {diffvssel 0}}
-	{"Diff selected -> this" command {diffvssel 1}}
-	{"Make patch" command mkpatch}
-	{"Create tag" command mktag}
-	{"Write commit to file" command writecommit}
-	{"Create new branch" command mkbranch}
-	{"Cherry-pick this commit" command cherrypick}
-	{"Reset HEAD branch to here" command resethead}
+	{mc "Diff this -> selected" command {diffvssel 0}}
+	{mc "Diff selected -> this" command {diffvssel 1}}
+	{mc "Make patch" command mkpatch}
+	{mc "Create tag" command mktag}
+	{mc "Write commit to file" command writecommit}
+	{mc "Create new branch" command mkbranch}
+	{mc "Cherry-pick this commit" command cherrypick}
+	{mc "Reset HEAD branch to here" command resethead}
     }
     $rowctxmenu configure -tearoff 0
 
     set fakerowmenu .fakerowmenu
     makemenu $fakerowmenu {
-	{"Diff this -> selected" command {diffvssel 0}}
-	{"Diff selected -> this" command {diffvssel 1}}
-	{"Make patch" command mkpatch}
+	{mc "Diff this -> selected" command {diffvssel 0}}
+	{mc "Diff selected -> this" command {diffvssel 1}}
+	{mc "Make patch" command mkpatch}
     }
     $fakerowmenu configure -tearoff 0
 
     set headctxmenu .headctxmenu
     makemenu $headctxmenu {
-	{"Check out this branch" command cobranch}
-	{"Remove this branch" command rmbranch}
+	{mc "Check out this branch" command cobranch}
+	{mc "Remove this branch" command rmbranch}
     }
     $headctxmenu configure -tearoff 0
 
     global flist_menu
     set flist_menu .flistctxmenu
     makemenu $flist_menu {
-	{"Highlight this too" command {flist_hl 0}}
-	{"Highlight this only" command {flist_hl 1}}
-	{"External diff" command {external_diff}}
-	{"Blame parent commit" command {external_blame 1}}
+	{mc "Highlight this too" command {flist_hl 0}}
+	{mc "Highlight this only" command {flist_hl 1}}
+	{mc "External diff" command {external_diff}}
+	{mc "Blame parent commit" command {external_blame 1}}
     }
     $flist_menu configure -tearoff 0
 }
