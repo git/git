@@ -134,7 +134,8 @@ endif::git-format-patch[]
 --diff-filter=[ACDMRTUXB*]::
 	Select only files that are Added (`A`), Copied (`C`),
 	Deleted (`D`), Modified (`M`), Renamed (`R`), have their
-	type (mode) changed (`T`), are Unmerged (`U`), are
+	type (i.e. regular file, symlink, submodule, ...) changed (`T`),
+	are Unmerged (`U`), are
 	Unknown (`X`), or have had their pairing Broken (`B`).
 	Any combination of the filter characters may be used.
 	When `*` (All-or-none) is added to the combination, all
