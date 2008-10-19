@@ -25,6 +25,8 @@ struct transport {
 	int (*disconnect)(struct transport *connection);
 	char *pack_lockfile;
 	signed verbose : 2;
+	/* Force progress even if the output is not a tty */
+	unsigned progress : 1;
 };
 
 #define TRANSPORT_PUSH_ALL 1

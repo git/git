@@ -90,6 +90,11 @@ then the cloned repository will become corrupt.
 	Operate quietly.  This flag is also passed to the `rsync'
 	command when given.
 
+--verbose::
+-v::
+	Display the progressbar, even in case the standard output is not
+	a terminal.
+
 --no-checkout::
 -n::
 	No checkout of HEAD is performed after the clone is complete.
