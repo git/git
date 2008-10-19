@@ -139,10 +139,26 @@ finish_rb_merge () {
 }
 
 is_interactive () {
-	test -f "$dotest"/interactive ||
-	while :; do case $#,"$1" in 0,|*,-i|*,--interactive) break ;; esac
+	while test $# != 0
+	do
+		case "$1" in
+			-i|--interactive)
+				interactive_rebase=explicit
+				break
+			;;
+			-p|--preserve-merges)
+				interactive_rebase=implied
+			;;
+		esac
 		shift
-	done && test -n "$1"
+	done
+
+	if [ "$interactive_rebase" = implied ]; then
+		GIT_EDITOR=:
+		export GIT_EDITOR
+	fi
+
+	test -n "$interactive_rebase" || test -f "$dotest"/interactive
 }
 
 run_pre_rebase_hook () {

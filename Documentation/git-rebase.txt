@@ -253,8 +253,7 @@ OPTIONS
 
 -p::
 --preserve-merges::
-	Instead of ignoring merges, try to recreate them.  This option
-	only works in interactive mode.
+	Instead of ignoring merges, try to recreate them.
 
 include::merge-strategies.txt[]
 
