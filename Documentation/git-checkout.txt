@@ -88,7 +88,7 @@ This would tell us to use "hack" as the local branch when branching
 off of "origin/hack" (or "remotes/origin/hack", or even
 "refs/remotes/origin/hack").  If the given name has no slash, or the above
 guessing results in an empty name, the guessing is aborted.  You can
-exlicitly give a name with '-b' in such a case.
+explicitly give a name with '-b' in such a case.
 
 --no-track::
 	Ignore the branch.autosetupmerge configuration variable.
