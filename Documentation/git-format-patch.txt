@@ -58,8 +58,10 @@ output, unless the --stdout option is specified.
 If -o is specified, output files are created in <dir>.  Otherwise
 they are created in the current working directory.
 
-If -n is specified, instead of "[PATCH] Subject", the first line
-is formatted as "[PATCH n/m] Subject".
+By default, the subject of a single patch is "[PATCH] First Line" and
+the subject when multiple patches are output is "[PATCH n/m] First
+Line". To force 1/1 to be added for a single patch, use -n.  To omit
+patch numbers from the subject, use -N
 
 If given --thread, 'git-format-patch' will generate In-Reply-To and
 References headers to make the second and subsequent patch mails appear
@@ -81,7 +83,7 @@ include::diff-options.txt[]
 
 -n::
 --numbered::
-	Name output in '[PATCH n/m]' format.
+	Name output in '[PATCH n/m]' format, even with a single patch.
 
 -N::
 --no-numbered::

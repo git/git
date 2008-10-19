@@ -426,7 +426,7 @@ static int istitlechar(char c)
 
 static const char *fmt_patch_suffix = ".patch";
 static int numbered = 0;
-static int auto_number = 0;
+static int auto_number = 1;
 
 static char **extra_hdr;
 static int extra_hdr_nr;
@@ -485,6 +485,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			return 0;
 		}
 		numbered = git_config_bool(var, value);
+		auto_number = auto_number && numbered;
 		return 0;
 	}
 

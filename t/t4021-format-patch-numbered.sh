@@ -45,17 +45,22 @@ test_numbered() {
 	grep "^Subject: \[PATCH 2/2\]" $1
 }
 
-test_expect_success 'Default: no numbered' '
+test_expect_success 'single patch defaults to no numbers' '
+	git format-patch --stdout HEAD~1 >patch0.single &&
+	test_single_no_numbered patch0.single
+'
 
-	git format-patch --stdout HEAD~2 >patch0 &&
-	test_no_numbered patch0
+test_expect_success 'multiple patch defaults to numbered' '
+
+	git format-patch --stdout HEAD~2 >patch0.multiple &&
+	test_numbered patch0.multiple
 
 '
 
 test_expect_success 'Use --numbered' '
 
-	git format-patch --numbered --stdout HEAD~2 >patch1 &&
-	test_numbered patch1
+	git format-patch --numbered --stdout HEAD~1 >patch1 &&
+	test_single_numbered patch1
 
 '
 
