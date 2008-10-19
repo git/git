@@ -123,4 +123,20 @@ test_expect_success 'pre-rebase hook stops rebase (2)' '
 	test 0 = $(git rev-list HEAD...side | wc -l)
 '
 
+test_expect_success 'rebase --no-verify overrides pre-rebase (1)' '
+	git checkout test &&
+	git reset --hard side &&
+	git rebase --no-verify master &&
+	test "z$(git symbolic-ref HEAD)" = zrefs/heads/test &&
+	test "z$(cat git)" = zworld
+'
+
+test_expect_success 'rebase --no-verify overrides pre-rebase (2)' '
+	git checkout test &&
+	git reset --hard side &&
+	EDITOR=true git rebase --no-verify -i master &&
+	test "z$(git symbolic-ref HEAD)" = zrefs/heads/test &&
+	test "z$(cat git)" = zworld
+'
+
 test_done
