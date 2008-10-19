@@ -91,22 +91,32 @@ static int cygwin_stat(const char *path, struct stat *buf)
  * functions should be used. The choice is determined by core.ignorecygwinfstricks.
  * Reading this option is not always possible immediately as git_dir may be
  * not be set yet. So until it is set, use cygwin lstat/stat functions.
+ * However, if the trust_executable_bit is set, we must use the Cygwin posix
+ * stat/lstat as the Windows stat fuctions do not determine posix filemode.
  */
 static int native_stat = 1;
+extern int trust_executable_bit;
 
 static int git_cygwin_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "core.ignorecygwinfstricks"))
+	if (!strcmp(var, "core.ignorecygwinfstricks")) {
 		native_stat = git_config_bool(var, value);
-	return 0;
+		return 0;
+	}
+	return git_default_config(var, value, cb);
 }
 
 static int init_stat(void)
 {
 	if (have_git_dir()) {
 		git_config(git_cygwin_config, NULL);
-		cygwin_stat_fn = native_stat ? cygwin_stat : stat;
-		cygwin_lstat_fn = native_stat ? cygwin_lstat : lstat;
+		if (!trust_executable_bit && native_stat) {
+			cygwin_stat_fn = cygwin_stat;
+			cygwin_lstat_fn = cygwin_lstat;
+		} else {
+			cygwin_stat_fn = stat;
+			cygwin_lstat_fn = lstat;
+		}
 		return 0;
 	}
 	return 1;
