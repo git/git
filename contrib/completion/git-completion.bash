@@ -881,6 +881,7 @@ _git_help ()
 		attributes cli core-tutorial cvs-migration
 		diffcore gitk glossary hooks ignore modules
 		repository-layout tutorial tutorial-2
+		workflows
 		"
 }
 
