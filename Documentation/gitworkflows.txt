@@ -258,7 +258,7 @@ from.
 =====================================
 
 You will still have to tell people by other means, such as mail.  (Git
-provides the linkgit:request-pull[1] to send preformatted pull
+provides the linkgit:git-request-pull[1] to send preformatted pull
 requests to upstream maintainers to simplify this task.)
 
 If you just want to get the newest copies of the integration branches,
