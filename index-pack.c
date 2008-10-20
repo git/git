@@ -514,15 +514,14 @@ static void *get_base_data(struct base_data *c)
 static void resolve_delta(struct object_entry *delta_obj,
 			  struct base_data *base, struct base_data *result)
 {
-	void *delta_data;
-	unsigned long delta_size;
+	void *base_data, *delta_data;
 
-	delta_obj->real_type = base->obj->type;
+	delta_obj->real_type = base->obj->real_type;
 	delta_data = get_data_from_pack(delta_obj);
-	delta_size = delta_obj->size;
+	base_data = get_base_data(base);
 	result->obj = delta_obj;
-	result->data = patch_delta(get_base_data(base), base->obj->size,
-				   delta_data, delta_size, &result->size);
+	result->data = patch_delta(base_data, base->size,
+				   delta_data, delta_obj->size, &result->size);
 	free(delta_data);
 	if (!result->data)
 		bad_object(delta_obj->idx.offset, "failed to apply delta");
