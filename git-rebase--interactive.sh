@@ -635,8 +635,8 @@ first and then run 'git rebase --continue' again."
 				sed -n "s/^>//p" > "$DOTEST"/not-cherry-picks
 			# Now all commits and note which ones are missing in
 			# not-cherry-picks and hence being dropped
-			git rev-list $UPSTREAM...$HEAD --left-right | \
-				sed -n "s/^>//p" | while read rev
+			git rev-list $UPSTREAM..$HEAD |
+			while read rev
 			do
 				if test -f "$REWRITTEN"/$rev -a "$(grep "$rev" "$DOTEST"/not-cherry-picks)" = ""
 				then
@@ -645,7 +645,8 @@ first and then run 'git rebase --continue' again."
 					# just the history of its first-parent for others that will
 					# be rebasing on top of it
 					git rev-list --parents -1 $rev | cut -d' ' -f2 > "$DROPPED"/$rev
-					cat "$TODO" | grep -v "${rev:0:7}" > "${TODO}2" ; mv "${TODO}2" "$TODO"
+					short=$(git rev-list -1 --abbrev-commit --abbrev=7 $rev)
+					grep -v "^[a-z][a-z]* $short" <"$TODO" > "${TODO}2" ; mv "${TODO}2" "$TODO"
 					rm "$REWRITTEN"/$rev
 				fi
 			done
