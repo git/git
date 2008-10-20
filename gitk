@@ -307,7 +307,7 @@ proc start_rev_list {view} {
     global startmsecs commitidx viewcomplete curview
     global tclencoding
     global viewargs viewargscmd viewfiles vfilelimit
-    global showlocalchanges commitinterest
+    global showlocalchanges
     global viewactive viewinstances vmergeonly
     global mainheadid
     global vcanopt vflags vrevs vorigargs
@@ -368,7 +368,7 @@ proc start_rev_list {view} {
     set i [reg_instance $fd]
     set viewinstances($view) [list $i]
     if {$showlocalchanges && $mainheadid ne {}} {
-	lappend commitinterest($mainheadid) {dodiffindex}
+	interestedin $mainheadid dodiffindex
     }
     fconfigure $fd -blocking 0 -translation lf -eofchar {}
     if {$tclencoding != {}} {
@@ -1231,7 +1231,7 @@ proc commitonrow {row} {
 
 proc closevarcs {v} {
     global varctok varccommits varcid parents children
-    global cmitlisted commitidx commitinterest vtokmod
+    global cmitlisted commitidx vtokmod
 
     set missing_parents 0
     set scripts {}
@@ -1256,12 +1256,7 @@ proc closevarcs {v} {
 	    }
 	    lappend varccommits($v,$b) $p
 	    incr commitidx($v)
-	    if {[info exists commitinterest($p)]} {
-		foreach script $commitinterest($p) {
-		    lappend scripts [string map [list "%I" $p] $script]
-		}
-		unset commitinterest($id)
-	    }
+	    set scripts [check_interest $p $scripts]
 	}
     }
     if {$missing_parents > 0} {
@@ -1297,8 +1292,41 @@ proc rewrite_commit {v id rwid} {
     }
 }
 
+# Mechanism for registering a command to be executed when we come
+# across a particular commit.  To handle the case when only the
+# prefix of the commit is known, the commitinterest array is now
+# indexed by the first 4 characters of the ID.  Each element is a
+# list of id, cmd pairs.
+proc interestedin {id cmd} {
+    global commitinterest
+
+    lappend commitinterest([string range $id 0 3]) $id $cmd
+}
+
+proc check_interest {id scripts} {
+    global commitinterest
+
+    set prefix [string range $id 0 3]
+    if {[info exists commitinterest($prefix)]} {
+	set newlist {}
+	foreach {i script} $commitinterest($prefix) {
+	    if {[string match "$i*" $id]} {
+		lappend scripts [string map [list "%I" $id "%P" $i] $script]
+	    } else {
+		lappend newlist $i $script
+	    }
+	}
+	if {$newlist ne {}} {
+	    set commitinterest($prefix) $newlist
+	} else {
+	    unset commitinterest($prefix)
+	}
+    }
+    return $scripts
+}
+
 proc getcommitlines {fd inst view updating}  {
-    global cmitlisted commitinterest leftover
+    global cmitlisted leftover
     global commitidx commitdata vdatemode
     global parents children curview hlview
     global idpending ordertok
@@ -1474,12 +1502,7 @@ proc getcommitlines {fd inst view updating}  {
 	    incr i
 	}
 
-	if {[info exists commitinterest($id)]} {
-	    foreach script $commitinterest($id) {
-		lappend scripts [string map [list "%I" $id] $script]
-	    }
-	    unset commitinterest($id)
-	}
+	set scripts [check_interest $id $scripts]
 	set gotsome 1
     }
     if {$gotsome} {
@@ -1606,6 +1629,19 @@ proc getcommit {id} {
 	}
     }
     return 1
+}
+
+# Expand an abbreviated commit ID to a list of full 40-char IDs that match
+# and are present in the current view.
+# This is fairly slow...
+proc longid {prefix} {
+    global varcid curview
+
+    set ids {}
+    foreach match [array names varcid "$curview,$prefix*"] {
+	lappend ids [lindex [split $match ","] 1]
+    }
+    return $ids
 }
 
 proc readrefs {} {
@@ -4119,7 +4155,7 @@ proc visiblerows {} {
 proc layoutmore {} {
     global commitidx viewcomplete curview
     global numcommits pending_select curview
-    global lastscrollset lastscrollrows commitinterest
+    global lastscrollset lastscrollrows
 
     if {$lastscrollrows < 100 || $viewcomplete($curview) ||
 	[clock clicks -milliseconds] - $lastscrollset > 500} {
@@ -4140,7 +4176,7 @@ proc doshowlocalchanges {} {
     if {[commitinview $mainheadid $curview]} {
 	dodiffindex
     } else {
-	lappend commitinterest($mainheadid) {dodiffindex}
+	interestedin $mainheadid dodiffindex
     }
 }
 
@@ -5795,11 +5831,11 @@ proc commit_descriptor {p} {
 # append some text to the ctext widget, and make any SHA1 ID
 # that we know about be a clickable link.
 proc appendwithlinks {text tags} {
-    global ctext linknum curview pendinglinks
+    global ctext linknum curview
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text $tags
-    set links [regexp -indices -all -inline {[0-9a-f]{40}} $text]
+    set links [regexp -indices -all -inline {\m[0-9a-f]{6,40}\M} $text]
     foreach l $links {
 	set s [lindex $l 0]
 	set e [lindex $l 1]
@@ -5813,16 +5849,27 @@ proc appendwithlinks {text tags} {
 }
 
 proc setlink {id lk} {
-    global curview ctext pendinglinks commitinterest
+    global curview ctext pendinglinks
 
-    if {[commitinview $id $curview]} {
+    set known 0
+    if {[string length $id] < 40} {
+	set matches [longid $id]
+	if {[llength $matches] > 0} {
+	    if {[llength $matches] > 1} return
+	    set known 1
+	    set id [lindex $matches 0]
+	}
+    } else {
+	set known [commitinview $id $curview]
+    }
+    if {$known} {
 	$ctext tag conf $lk -foreground blue -underline 1
-	$ctext tag bind $lk <1> [list selectline [rowofcommit $id] 1]
+	$ctext tag bind $lk <1> [list selbyid $id]
 	$ctext tag bind $lk <Enter> {linkcursor %W 1}
 	$ctext tag bind $lk <Leave> {linkcursor %W -1}
     } else {
 	lappend pendinglinks($id) $lk
-	lappend commitinterest($id) {makelink %I}
+	interestedin $id {makelink %P}
     }
 }
 
@@ -7138,13 +7185,13 @@ proc gotocommit {} {
     } else {
 	set id [string tolower $sha1string]
 	if {[regexp {^[0-9a-f]{4,39}$} $id]} {
-	    set matches [array names varcid "$curview,$id*"]
+	    set matches [longid $id]
 	    if {$matches ne {}} {
 		if {[llength $matches] > 1} {
 		    error_popup [mc "Short SHA1 id %s is ambiguous" $id]
 		    return
 		}
-		set id [lindex [split [lindex $matches 0] ","] 1]
+		set id [lindex $matches 0]
 	    }
 	}
     }
@@ -7992,7 +8039,7 @@ proc reflistfilter_change {n1 n2 op} {
 
 proc refill_reflist {} {
     global reflist reflistfilter showrefstop headids tagids otherrefids
-    global curview commitinterest
+    global curview
 
     if {![info exists showrefstop] || ![winfo exists $showrefstop]} return
     set refs {}
@@ -8001,7 +8048,7 @@ proc refill_reflist {} {
 	    if {[commitinview $headids($n) $curview]} {
 		lappend refs [list $n H]
 	    } else {
-		set commitinterest($headids($n)) {run refill_reflist}
+		interestedin $headids($n) {run refill_reflist}
 	    }
 	}
     }
@@ -8010,7 +8057,7 @@ proc refill_reflist {} {
 	    if {[commitinview $tagids($n) $curview]} {
 		lappend refs [list $n T]
 	    } else {
-		set commitinterest($tagids($n)) {run refill_reflist}
+		interestedin $tagids($n) {run refill_reflist}
 	    }
 	}
     }
@@ -8019,7 +8066,7 @@ proc refill_reflist {} {
 	    if {[commitinview $otherrefids($n) $curview]} {
 		lappend refs [list $n o]
 	    } else {
-		set commitinterest($otherrefids($n)) {run refill_reflist}
+		interestedin $otherrefids($n) {run refill_reflist}
 	    }
 	}
     }
