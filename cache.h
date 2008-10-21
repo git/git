@@ -519,6 +519,7 @@ static inline void hashclr(unsigned char *hash)
 {
 	memset(hash, 0, 20);
 }
+extern int is_empty_blob_sha1(const unsigned char *sha1);
 
 int git_mkstemp(char *path, size_t n, const char *template);
 

@@ -79,7 +79,8 @@ static int check_local_mod(unsigned char *head, int index_only)
 		     || hashcmp(ce->sha1, sha1))
 			staged_changes = 1;
 
-		if (local_changes && staged_changes)
+		if (local_changes && staged_changes &&
+		    !(index_only && is_empty_blob_sha1(ce->sha1)))
 			errs = error("'%s' has staged content different "
 				     "from both the file and the HEAD\n"
 				     "(use -f to force removal)", name);
