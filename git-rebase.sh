@@ -34,6 +34,7 @@ set_reflog_action rebase
 require_work_tree
 cd_to_toplevel
 
+OK_TO_SKIP_PRE_REBASE=
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".
 If you would prefer to skip this patch, instead run \"git rebase --skip\".
@@ -138,14 +139,31 @@ finish_rb_merge () {
 }
 
 is_interactive () {
-	test -f "$dotest"/interactive ||
-	while :; do case $#,"$1" in 0,|*,-i|*,--interactive) break ;; esac
+	while test $# != 0
+	do
+		case "$1" in
+			-i|--interactive)
+				interactive_rebase=explicit
+				break
+			;;
+			-p|--preserve-merges)
+				interactive_rebase=implied
+			;;
+		esac
 		shift
-	done && test -n "$1"
+	done
+
+	if [ "$interactive_rebase" = implied ]; then
+		GIT_EDITOR=:
+		export GIT_EDITOR
+	fi
+
+	test -n "$interactive_rebase" || test -f "$dotest"/interactive
 }
 
 run_pre_rebase_hook () {
-	if test -x "$GIT_DIR/hooks/pre-rebase"
+	if test -z "$OK_TO_SKIP_PRE_REBASE" &&
+	   test -x "$GIT_DIR/hooks/pre-rebase"
 	then
 		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
 			echo >&2 "The pre-rebase hook refused to rebase."
@@ -170,6 +188,9 @@ fi
 while test $# != 0
 do
 	case "$1" in
+	--no-verify)
+		OK_TO_SKIP_PRE_REBASE=yes
+		;;
 	--continue)
 		test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply ||
 			die "No rebase in progress?"

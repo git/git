@@ -32,22 +32,27 @@ Initialized empty Git repository in .git/
 $ echo 'hello world' > file.txt
 $ git add .
 $ git commit -a -m "initial commit"
-Created initial commit 54196cc2703dc165cbd373a65a4dcf22d50ae7f7
+[master (root-commit)] created 54196cc: "initial commit"
+ 1 files changed, 1 insertions(+), 0 deletions(-)
  create mode 100644 file.txt
 $ echo 'hello world!' >file.txt
 $ git commit -a -m "add emphasis"
-Created commit c4d59f390b9cfd4318117afde11d601c1085f241
+[master] created c4d59f3: "add emphasis"
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 ------------------------------------------------
 
-What are the 40 digits of hex that git responded to the commit with?
+What are the 7 digits of hex that git responded to the commit with?
 
 We saw in part one of the tutorial that commits have names like this.
 It turns out that every object in the git history is stored under
-such a 40-digit hex name.  That name is the SHA1 hash of the object's
+a 40-digit hex name.  That name is the SHA1 hash of the object's
 contents; among other things, this ensures that git will never store
 the same data twice (since identical data is given an identical SHA1
 name), and that the contents of a git object will never change (since
-that would change the object's name as well).
+that would change the object's name as well). The 7 char hex strings
+here are simply the abbreviation of such 40 character long strings.
+Abbreviations can be used everywhere where the 40 character strings
+can be used, so long as they are unambiguous.
 
 It is expected that the content of the commit object you created while
 following the example above generates a different SHA1 hash than

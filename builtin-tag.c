@@ -338,7 +338,7 @@ static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
 
 int cmd_tag(int argc, const char **argv, const char *prefix)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	unsigned char object[20], prev[20];
 	char ref[PATH_MAX];
 	const char *object_ref, *tag;
@@ -388,7 +388,6 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (verify)
 		return for_each_tag_name(argv, verify_tag);
 
-	strbuf_init(&buf, 0);
 	if (msg.given || msgfile) {
 		if (msg.given && msgfile)
 			die("only one -F or -m option is allowed.");

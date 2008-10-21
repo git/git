@@ -47,6 +47,23 @@ test_expect_success 'attribute test' '
 
 '
 
+test_expect_success 'attribute test: read paths from stdin' '
+
+	cat <<EOF > expect
+f: test: f
+a/f: test: f
+a/c/f: test: f
+a/g: test: a/g
+a/b/g: test: a/b/g
+b/g: test: unspecified
+a/b/h: test: a/b/h
+a/b/d/g: test: a/b/d/*
+EOF
+
+	sed -e "s/:.*//" < expect | git check-attr --stdin test > actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'root subdir attribute test' '
 
 	attr_check a/i a/i &&

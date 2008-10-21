@@ -753,9 +753,8 @@ static int store_write_section(int fd, const char* key)
 {
 	const char *dot;
 	int i, success;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
-	strbuf_init(&sb, 0);
 	dot = memchr(key, '.', store.baselen);
 	if (dot) {
 		strbuf_addf(&sb, "[%.*s \"", (int)(dot - key), key);
@@ -780,7 +779,7 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	int i, success;
 	int length = strlen(key + store.baselen + 1);
 	const char *quote = "";
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
 	/*
 	 * Check to see if the value needs to be surrounded with a dq pair.
@@ -797,7 +796,6 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	if (i && value[i - 1] == ' ')
 		quote = "\"";
 
-	strbuf_init(&sb, 0);
 	strbuf_addf(&sb, "\t%.*s = %s",
 		    length, key + store.baselen + 1, quote);
 

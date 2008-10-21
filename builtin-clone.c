@@ -38,9 +38,11 @@ static int option_local, option_no_hardlinks, option_shared;
 static char *option_template, *option_reference, *option_depth;
 static char *option_origin = NULL;
 static char *option_upload_pack = "git-upload-pack";
+static int option_verbose;
 
 static struct option builtin_clone_options[] = {
 	OPT__QUIET(&option_quiet),
+	OPT__VERBOSE(&option_verbose),
 	OPT_BOOLEAN('n', "no-checkout", &option_no_checkout,
 		    "don't create a checkout"),
 	OPT_BOOLEAN(0, "bare", &option_bare, "create a bare repository"),
@@ -264,10 +266,9 @@ pid_t junk_pid;
 
 static void remove_junk(void)
 {
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	if (getpid() != junk_pid)
 		return;
-	strbuf_init(&sb, 0);
 	if (junk_git_dir) {
 		strbuf_addstr(&sb, junk_git_dir);
 		remove_dir_recursively(&sb, 0);
@@ -354,7 +355,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	char *path, *dir;
 	const struct ref *refs, *head_points_at, *remote_head, *mapped_refs;
 	char branch_top[256], key[256], value[256];
-	struct strbuf reflog_msg;
+	struct strbuf reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
 	char *src_ref_prefix = "refs/heads/";
 
@@ -404,7 +405,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (!stat(dir, &buf))
 		die("destination directory '%s' already exists.", dir);
 
-	strbuf_init(&reflog_msg, 0);
 	strbuf_addf(&reflog_msg, "clone: from %s", repo);
 
 	if (option_bare)
@@ -506,6 +506,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 		if (option_quiet)
 			transport->verbose = -1;
+		else if (option_verbose)
+			transport->progress = 1;
 
 		if (option_upload_pack)
 			transport_set_option(transport, TRANS_OPT_UPLOADPACK,
@@ -526,7 +528,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		create_symref("HEAD", head_points_at->name, NULL);
 
 		if (!option_bare) {
-			struct strbuf head_ref;
+			struct strbuf head_ref = STRBUF_INIT;
 			const char *head = head_points_at->name;
 
 			if (!prefixcmp(head, "refs/heads/"))
@@ -539,7 +541,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				   head_points_at->old_sha1,
 				   NULL, 0, DIE_ON_ERR);
 
-			strbuf_init(&head_ref, 0);
 			strbuf_addstr(&head_ref, branch_top);
 			strbuf_addstr(&head_ref, "HEAD");
 

@@ -2333,6 +2333,7 @@ int force_object_loose(const unsigned char *sha1, time_t mtime)
 	enum object_type type;
 	char hdr[32];
 	int hdrlen;
+	int ret;
 
 	if (has_loose_object(sha1))
 		return 0;
@@ -2340,7 +2341,10 @@ int force_object_loose(const unsigned char *sha1, time_t mtime)
 	if (!buf)
 		return error("cannot read sha1_file for %s", sha1_to_hex(sha1));
 	hdrlen = sprintf(hdr, "%s %lu", typename(type), len) + 1;
-	return write_loose_object(sha1, hdr, hdrlen, buf, len, mtime);
+	ret = write_loose_object(sha1, hdr, hdrlen, buf, len, mtime);
+	free(buf);
+
+	return ret;
 }
 
 int has_pack_index(const unsigned char *sha1)
@@ -2386,8 +2390,7 @@ static int index_mem(unsigned char *sha1, void *buf, size_t size,
 	 * Convert blobs to git internal format
 	 */
 	if ((type == OBJ_BLOB) && path) {
-		struct strbuf nbuf;
-		strbuf_init(&nbuf, 0);
+		struct strbuf nbuf = STRBUF_INIT;
 		if (convert_to_git(path, buf, size, &nbuf,
 		                   write_object ? safe_crlf : 0)) {
 			buf = strbuf_detach(&nbuf, &size);
@@ -2411,8 +2414,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	size_t size = xsize_t(st->st_size);
 
 	if (!S_ISREG(st->st_mode)) {
-		struct strbuf sbuf;
-		strbuf_init(&sbuf, 0);
+		struct strbuf sbuf = STRBUF_INIT;
 		if (strbuf_read(&sbuf, fd, 4096) >= 0)
 			ret = index_mem(sha1, sbuf.buf, sbuf.len, write_object,
 					type, path);

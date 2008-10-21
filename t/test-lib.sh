@@ -112,8 +112,9 @@ if test -n "$color"; then
 			*) test -n "$quiet" && return;;
 		esac
 		shift
-		echo "* $*"
+		printf "* %s" "$*"
 		tput sgr0
+		echo
 		)
 	}
 else

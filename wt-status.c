@@ -103,10 +103,8 @@ static void wt_status_print_filepair(struct wt_status *s,
 {
 	const char *c = color(t);
 	const char *one, *two;
-	struct strbuf onebuf, twobuf;
+	struct strbuf onebuf = STRBUF_INIT, twobuf = STRBUF_INIT;
 
-	strbuf_init(&onebuf, 0);
-	strbuf_init(&twobuf, 0);
 	one = quote_path(p->one->path, -1, &onebuf, s->prefix);
 	two = quote_path(p->two->path, -1, &twobuf, s->prefix);
 
@@ -190,9 +188,8 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 static void wt_status_print_initial(struct wt_status *s)
 {
 	int i;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 
-	strbuf_init(&buf, 0);
 	if (active_nr) {
 		s->commitable = 1;
 		wt_status_print_cached_header(s);
@@ -268,9 +265,8 @@ static void wt_status_print_untracked(struct wt_status *s)
 	struct dir_struct dir;
 	int i;
 	int shown_header = 0;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 
-	strbuf_init(&buf, 0);
 	memset(&dir, 0, sizeof(dir));
 
 	if (!s->untracked) {

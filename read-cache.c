@@ -608,8 +608,10 @@ struct cache_entry *make_cache_entry(unsigned int mode,
 	int size, len;
 	struct cache_entry *ce;
 
-	if (!verify_path(path))
+	if (!verify_path(path)) {
+		error("Invalid path '%s'", path);
 		return NULL;
+	}
 
 	len = strlen(path);
 	size = cache_entry_size(len);
@@ -893,7 +895,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	if (!ok_to_add)
 		return -1;
 	if (!verify_path(ce->name))
-		return -1;
+		return error("Invalid path '%s'", ce->name);
 
 	if (!skip_df_check &&
 	    check_file_directory_conflict(istate, ce, pos, ok_to_replace)) {
@@ -1465,9 +1467,8 @@ int write_index(const struct index_state *istate, int newfd)
 
 	/* Write extension data here */
 	if (istate->cache_tree) {
-		struct strbuf sb;
+		struct strbuf sb = STRBUF_INIT;
 
-		strbuf_init(&sb, 0);
 		cache_tree_write(&sb, istate->cache_tree);
 		err = write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sb.len) < 0
 			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;

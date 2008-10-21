@@ -11,7 +11,7 @@
 #include "progress.h"
 #include "csum-file.h"
 
-static void sha1flush(struct sha1file *f, void *buf, unsigned int count)
+static void flush(struct sha1file *f, void * buf, unsigned int count)
 {
 	for (;;) {
 		int ret = xwrite(f->fd, buf, count);
@@ -30,22 +30,28 @@ static void sha1flush(struct sha1file *f, void *buf, unsigned int count)
 	}
 }
 
-int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
+void sha1flush(struct sha1file *f)
 {
-	int fd;
 	unsigned offset = f->offset;
 
 	if (offset) {
 		git_SHA1_Update(&f->ctx, f->buffer, offset);
-		sha1flush(f, f->buffer, offset);
+		flush(f, f->buffer, offset);
 		f->offset = 0;
 	}
+}
+
+int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
+{
+	int fd;
+
+	sha1flush(f);
 	git_SHA1_Final(f->buffer, &f->ctx);
 	if (result)
 		hashcpy(result, f->buffer);
 	if (flags & (CSUM_CLOSE | CSUM_FSYNC)) {
 		/* write checksum and close fd */
-		sha1flush(f, f->buffer, 20);
+		flush(f, f->buffer, 20);
 		if (flags & CSUM_FSYNC)
 			fsync_or_die(f->fd, f->name);
 		if (close(f->fd))
@@ -83,7 +89,7 @@ int sha1write(struct sha1file *f, void *buf, unsigned int count)
 		left -= nr;
 		if (!left) {
 			git_SHA1_Update(&f->ctx, data, offset);
-			sha1flush(f, data, offset);
+			flush(f, data, offset);
 			offset = 0;
 		}
 		f->offset = offset;

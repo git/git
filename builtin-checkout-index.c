@@ -268,13 +268,11 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	}
 
 	if (read_from_stdin) {
-		struct strbuf buf, nbuf;
+		struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;
 
 		if (all)
 			die("git checkout-index: don't mix '--all' and '--stdin'");
 
-		strbuf_init(&buf, 0);
-		strbuf_init(&nbuf, 0);
 		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
 			const char *p;
 			if (line_termination && buf.buf[0] == '"') {

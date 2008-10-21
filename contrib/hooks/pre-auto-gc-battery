@@ -30,6 +30,9 @@ then
 elif grep -q '0x01$' /proc/apm 2>/dev/null
 then
 	exit 0
+elif grep -q "AC Power \+: 1" /proc/pmu/info 2>/dev/null
+then
+	exit 0
 elif test -x /usr/bin/pmset && /usr/bin/pmset -g batt |
 	grep -q "Currently drawing from 'AC Power'"
 then

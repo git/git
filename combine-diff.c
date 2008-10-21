@@ -742,9 +742,8 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 			/* If not a fake symlink, apply filters, e.g. autocrlf */
 			if (is_file) {
-				struct strbuf buf;
+				struct strbuf buf = STRBUF_INIT;
 
-				strbuf_init(&buf, 0);
 				if (convert_to_git(elem->path, result, len, &buf, safe_crlf)) {
 					free(result);
 					result = strbuf_detach(&buf, &len);

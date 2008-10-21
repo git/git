@@ -2062,7 +2062,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	struct commit *commit;
 	struct origin *origin;
 	unsigned char head_sha1[20];
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	const char *ident;
 	time_t now;
 	int size, len;
@@ -2082,7 +2082,6 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 
 	origin = make_origin(commit, path);
 
-	strbuf_init(&buf, 0);
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;
 		const char *read_from;

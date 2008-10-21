@@ -179,6 +179,7 @@ static void drop_save(void)
 {
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_MSG"));
+	unlink(git_path("MERGE_MODE"));
 }
 
 static void save_state(void)
@@ -226,7 +227,7 @@ static void reset_hard(unsigned const char *sha1, int verbose)
 
 static void restore_state(void)
 {
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	const char *args[] = { "stash", "apply", NULL, NULL };
 
 	if (is_null_sha1(stash))
@@ -234,7 +235,6 @@ static void restore_state(void)
 
 	reset_hard(head, 1);
 
-	strbuf_init(&sb, 0);
 	args[2] = sha1_to_hex(stash);
 
 	/*
@@ -258,7 +258,7 @@ static void squash_message(void)
 {
 	struct rev_info rev;
 	struct commit *commit;
-	struct strbuf out;
+	struct strbuf out = STRBUF_INIT;
 	struct commit_list *j;
 	int fd;
 
@@ -282,7 +282,6 @@ static void squash_message(void)
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
 
-	strbuf_init(&out, 0);
 	strbuf_addstr(&out, "Squashed commit of the following:\n");
 	while ((commit = get_revision(&rev)) != NULL) {
 		strbuf_addch(&out, '\n');
@@ -327,9 +326,8 @@ static int run_hook(const char *name)
 
 static void finish(const unsigned char *new_head, const char *msg)
 {
-	struct strbuf reflog_message;
+	struct strbuf reflog_message = STRBUF_INIT;
 
-	strbuf_init(&reflog_message, 0);
 	if (!msg)
 		strbuf_addstr(&reflog_message, getenv("GIT_REFLOG_ACTION"));
 	else {
@@ -380,7 +378,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 {
 	struct object *remote_head;
 	unsigned char branch_head[20], buf_sha[20];
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	const char *ptr;
 	int len, early;
 
@@ -389,7 +387,6 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	if (!remote_head)
 		die("'%s' does not point to a commit", remote);
 
-	strbuf_init(&buf, 0);
 	strbuf_addstr(&buf, "refs/heads/");
 	strbuf_addstr(&buf, remote);
 	resolve_ref(buf.buf, branch_head, 0, 0);
@@ -444,10 +441,9 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	if (!strcmp(remote, "FETCH_HEAD") &&
 			!access(git_path("FETCH_HEAD"), R_OK)) {
 		FILE *fp;
-		struct strbuf line;
+		struct strbuf line = STRBUF_INIT;
 		char *ptr;
 
-		strbuf_init(&line, 0);
 		fp = fopen(git_path("FETCH_HEAD"), "r");
 		if (!fp)
 			die("could not open %s for reading: %s",
@@ -545,7 +541,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 	const char **args;
 	int i = 0, ret;
 	struct commit_list *j;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	int index_fd;
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 
@@ -592,7 +588,6 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 	} else {
 		args = xmalloc((4 + commit_list_count(common) +
 					commit_list_count(remoteheads)) * sizeof(char *));
-		strbuf_init(&buf, 0);
 		strbuf_addf(&buf, "merge-%s", strategy);
 		args[i++] = buf.buf;
 		for (j = common; j; j = j->next)
@@ -847,7 +842,7 @@ static int evaluate_result(void)
 int cmd_merge(int argc, const char **argv, const char *prefix)
 {
 	unsigned char result_tree[20];
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	const char *head_arg;
 	int flag, head_invalid = 0, i;
 	int best_cnt = -1, merge_was_ok = 0, automerge_was_ok = 0;
@@ -896,7 +891,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * Traditional format never would have "-m" so it is an
 	 * additional safety measure to check for it.
 	 */
-	strbuf_init(&buf, 0);
 
 	if (!have_message && is_old_style_invocation(argc, argv)) {
 		strbuf_addstr(&merge_msg, argv[0]);
@@ -926,7 +920,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		reset_hard(remote_head->sha1, 0);
 		return 0;
 	} else {
-		struct strbuf msg;
+		struct strbuf msg = STRBUF_INIT;
 
 		/* We are invoked directly as the first-class UI. */
 		head_arg = "HEAD";
@@ -939,7 +933,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * codepath so we discard the error in this
 		 * loop.
 		 */
-		strbuf_init(&msg, 0);
 		for (i = 0; i < argc; i++)
 			merge_name(argv[i], &msg);
 		fmt_merge_msg(option_log, &msg, &merge_msg);
@@ -1014,7 +1007,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			!common->next &&
 			!hashcmp(common->item->object.sha1, head)) {
 		/* Again the most common case of merging one remote. */
-		struct strbuf msg;
+		struct strbuf msg = STRBUF_INIT;
 		struct object *o;
 		char hex[41];
 
@@ -1024,7 +1017,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			hex,
 			find_unique_abbrev(remoteheads->item->object.sha1,
 			DEFAULT_ABBREV));
-		strbuf_init(&msg, 0);
 		strbuf_addstr(&msg, "Fast forward");
 		if (have_message)
 			strbuf_addstr(&msg,
@@ -1218,6 +1210,15 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (write_in_full(fd, merge_msg.buf, merge_msg.len) !=
 			merge_msg.len)
 			die("Could not write to %s", git_path("MERGE_MSG"));
+		close(fd);
+		fd = open(git_path("MERGE_MODE"), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+		if (fd < 0)
+			die("Could open %s for writing", git_path("MERGE_MODE"));
+		strbuf_reset(&buf);
+		if (!allow_fast_forward)
+			strbuf_addf(&buf, "no-ff");
+		if (write_in_full(fd, buf.buf, buf.len) != buf.len)
+			die("Could not write to %s", git_path("MERGE_MODE"));
 		close(fd);
 	}
 

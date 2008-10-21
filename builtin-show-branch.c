@@ -259,11 +259,10 @@ static void join_revs(struct commit_list **list_p,
 
 static void show_one_commit(struct commit *commit, int no_name)
 {
-	struct strbuf pretty;
+	struct strbuf pretty = STRBUF_INIT;
 	const char *pretty_str = "(unavailable)";
 	struct commit_name *name = commit->util;
 
-	strbuf_init(&pretty, 0);
 	if (commit->object.parsed) {
 		pretty_print_commit(CMIT_FMT_ONELINE, commit,
 				    &pretty, 0, NULL, NULL, 0, 0);

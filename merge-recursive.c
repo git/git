@@ -498,8 +498,7 @@ static void update_file_flags(struct merge_options *o,
 		if (type != OBJ_BLOB)
 			die("blob expected for %s '%s'", sha1_to_hex(sha), path);
 		if (S_ISREG(mode)) {
-			struct strbuf strbuf;
-			strbuf_init(&strbuf, 0);
+			struct strbuf strbuf = STRBUF_INIT;
 			if (convert_to_working_tree(path, buf, size, &strbuf)) {
 				free(buf);
 				size = strbuf.len;
@@ -1333,7 +1332,7 @@ static int merge_recursive_config(const char *var, const char *value, void *cb)
 		o->merge_rename_limit = git_config_int(var, value);
 		return 0;
 	}
-	return git_default_config(var, value, cb);
+	return git_xmerge_config(var, value, cb);
 }
 
 void init_merge_options(struct merge_options *o)

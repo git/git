@@ -321,13 +321,12 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 	const char *start = line;
 
 	if (*line == '"') {
-		struct strbuf name;
+		struct strbuf name = STRBUF_INIT;
 
 		/*
 		 * Proposed "new-style" GNU patch/diff format; see
 		 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
 		 */
-		strbuf_init(&name, 0);
 		if (!unquote_c_style(&name, line, NULL)) {
 			char *cp;
 
@@ -675,11 +674,8 @@ static char *git_header_name(char *line, int llen)
 
 	if (*line == '"') {
 		const char *cp;
-		struct strbuf first;
-		struct strbuf sp;
-
-		strbuf_init(&first, 0);
-		strbuf_init(&sp, 0);
+		struct strbuf first = STRBUF_INIT;
+		struct strbuf sp = STRBUF_INIT;
 
 		if (unquote_c_style(&first, line, &second))
 			goto free_and_fail1;
@@ -741,10 +737,9 @@ static char *git_header_name(char *line, int llen)
 	 */
 	for (second = name; second < line + llen; second++) {
 		if (*second == '"') {
-			struct strbuf sp;
+			struct strbuf sp = STRBUF_INIT;
 			const char *np;
 
-			strbuf_init(&sp, 0);
 			if (unquote_c_style(&sp, second, NULL))
 				goto free_and_fail2;
 
@@ -810,6 +805,13 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 	 * the default name from the header.
 	 */
 	patch->def_name = git_header_name(line, len);
+	if (patch->def_name && root) {
+		char *s = xmalloc(root_len + strlen(patch->def_name) + 1);
+		strcpy(s, root);
+		strcpy(s + root_len, patch->def_name);
+		free(patch->def_name);
+		patch->def_name = s;
+	}
 
 	line += len;
 	size -= len;
@@ -1508,11 +1510,10 @@ static const char minuses[]=
 
 static void show_stats(struct patch *patch)
 {
-	struct strbuf qname;
+	struct strbuf qname = STRBUF_INIT;
 	char *cp = patch->new_name ? patch->new_name : patch->old_name;
 	int max, add, del;
 
-	strbuf_init(&qname, 0);
 	quote_c_style(cp, &qname, NULL, 0);
 
 	/*
@@ -2292,13 +2293,11 @@ static void add_to_fn_table(struct patch *patch)
 
 static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	struct image image;
 	size_t len;
 	char *img;
 	struct patch *tpatch;
-
-	strbuf_init(&buf, 0);
 
 	if (!(patch->is_copy || patch->is_rename) &&
 	    ((tpatch = in_fn_table(patch->old_name)) != NULL)) {
@@ -2779,7 +2778,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
 	int fd;
-	struct strbuf nbuf;
+	struct strbuf nbuf = STRBUF_INIT;
 
 	if (S_ISGITLINK(mode)) {
 		struct stat st;
@@ -2798,7 +2797,6 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	if (fd < 0)
 		return -1;
 
-	strbuf_init(&nbuf, 0);
 	if (convert_to_working_tree(path, buf, size, &nbuf)) {
 		size = nbuf.len;
 		buf  = nbuf.buf;
@@ -3060,13 +3058,12 @@ static void prefix_patches(struct patch *p)
 static int apply_patch(int fd, const char *filename, int options)
 {
 	size_t offset;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
 	/* FIXME - memory leak when using multiple patch files as inputs */
 	memset(&fn_table, 0, sizeof(struct string_list));
-	strbuf_init(&buf, 0);
 	patch_input_file = filename;
 	read_patch_file(&buf, fd);
 	offset = 0;

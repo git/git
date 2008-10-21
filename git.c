@@ -389,10 +389,9 @@ static void handle_internal_command(int argc, const char **argv)
 
 static void execv_dashed_external(const char **argv)
 {
-	struct strbuf cmd;
+	struct strbuf cmd = STRBUF_INIT;
 	const char *tmp;
 
-	strbuf_init(&cmd, 0);
 	strbuf_addf(&cmd, "git-%s", argv[0]);
 
 	/*

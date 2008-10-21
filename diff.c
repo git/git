@@ -217,9 +217,8 @@ static char *quote_two(const char *one, const char *two)
 {
 	int need_one = quote_c_style(one, NULL, NULL, 1);
 	int need_two = quote_c_style(two, NULL, NULL, 1);
-	struct strbuf res;
+	struct strbuf res = STRBUF_INIT;
 
-	strbuf_init(&res, 0);
 	if (need_one + need_two) {
 		strbuf_addch(&res, '"');
 		quote_c_style(one, &res, NULL, 1);
@@ -683,7 +682,7 @@ static char *pprint_rename(const char *a, const char *b)
 {
 	const char *old = a;
 	const char *new = b;
-	struct strbuf name;
+	struct strbuf name = STRBUF_INIT;
 	int pfx_length, sfx_length;
 	int len_a = strlen(a);
 	int len_b = strlen(b);
@@ -691,7 +690,6 @@ static char *pprint_rename(const char *a, const char *b)
 	int qlen_a = quote_c_style(a, NULL, NULL, 0);
 	int qlen_b = quote_c_style(b, NULL, NULL, 0);
 
-	strbuf_init(&name, 0);
 	if (qlen_a || qlen_b) {
 		quote_c_style(a, &name, NULL, 0);
 		strbuf_addstr(&name, " => ");
@@ -834,8 +832,7 @@ static void fill_print_name(struct diffstat_file *file)
 		return;
 
 	if (!file->is_renamed) {
-		struct strbuf buf;
-		strbuf_init(&buf, 0);
+		struct strbuf buf = STRBUF_INIT;
 		if (quote_c_style(file->name, &buf, NULL, 0)) {
 			pname = strbuf_detach(&buf, NULL);
 		} else {
@@ -1820,10 +1817,9 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 
 static int populate_from_stdin(struct diff_filespec *s)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	size_t size = 0;
 
-	strbuf_init(&buf, 0);
 	if (strbuf_read(&buf, 0, 0) < 0)
 		return error("error while reading from stdin %s",
 				     strerror(errno));
@@ -1875,7 +1871,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 
 	if (!s->sha1_valid ||
 	    reuse_worktree_file(s->path, s->sha1, 0)) {
-		struct strbuf buf;
+		struct strbuf buf = STRBUF_INIT;
 		struct stat st;
 		int fd;
 
@@ -1918,7 +1914,6 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		/*
 		 * Convert from working tree format to canonical git format
 		 */
-		strbuf_init(&buf, 0);
 		if (convert_to_git(s->path, s->data, s->size, &buf, safe_crlf)) {
 			size_t size = 0;
 			munmap(s->data, s->size);

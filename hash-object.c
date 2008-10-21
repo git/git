@@ -34,10 +34,8 @@ static void hash_object(const char *path, const char *type, int write_object,
 
 static void hash_stdin_paths(const char *type, int write_objects)
 {
-	struct strbuf buf, nbuf;
+	struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;
 
-	strbuf_init(&buf, 0);
-	strbuf_init(&nbuf, 0);
 	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
 		if (buf.buf[0] == '"') {
 			strbuf_reset(&nbuf);

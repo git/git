@@ -29,11 +29,10 @@ static void format_subst(const struct commit *commit,
                          struct strbuf *buf)
 {
 	char *to_free = NULL;
-	struct strbuf fmt;
+	struct strbuf fmt = STRBUF_INIT;
 
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
-	strbuf_init(&fmt, 0);
 	for (;;) {
 		const char *b, *c;
 
@@ -65,10 +64,9 @@ static void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
 
 	buffer = read_sha1_file(sha1, type, sizep);
 	if (buffer && S_ISREG(mode)) {
-		struct strbuf buf;
+		struct strbuf buf = STRBUF_INIT;
 		size_t size = 0;
 
-		strbuf_init(&buf, 0);
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
 		convert_to_working_tree(path, buf.buf, buf.len, &buf);
 		if (commit)

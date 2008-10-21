@@ -448,7 +448,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 {
 	struct stat statbuf;
 	int commitable, saved_color_setting;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	char *buffer;
 	FILE *fp;
 	const char *hook_arg1 = NULL;
@@ -458,7 +458,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		return 0;
 
-	strbuf_init(&sb, 0);
 	if (message.len) {
 		strbuf_addbuf(&sb, &message);
 		hook_arg1 = "message";
@@ -511,10 +510,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 		stripspace(&sb, 0);
 
 	if (signoff) {
-		struct strbuf sob;
+		struct strbuf sob = STRBUF_INIT;
 		int i;
 
-		strbuf_init(&sob, 0);
 		strbuf_addstr(&sob, sign_off_header);
 		strbuf_addstr(&sob, fmt_name(getenv("GIT_COMMITTER_NAME"),
 					     getenv("GIT_COMMITTER_EMAIL")));
@@ -672,7 +670,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
  */
 static int message_is_empty(struct strbuf *sb)
 {
-	struct strbuf tmpl;
+	struct strbuf tmpl = STRBUF_INIT;
 	const char *nl;
 	int eol, i, start = 0;
 
@@ -680,7 +678,6 @@ static int message_is_empty(struct strbuf *sb)
 		return 0;
 
 	/* See if the template is just a prefix of the message. */
-	strbuf_init(&tmpl, 0);
 	if (template_file && strbuf_read_file(&tmpl, template_file, 0) > 0) {
 		stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
 		if (start + tmpl.len <= sb->len &&
@@ -882,6 +879,9 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 {
 	struct rev_info rev;
 	struct commit *commit;
+	static const char *format = "format:%h: \"%s\"";
+	unsigned char junk_sha1[20];
+	const char *head = resolve_ref("HEAD", junk_sha1, 0, NULL);
 
 	commit = lookup_commit(sha1);
 	if (!commit)
@@ -899,18 +899,24 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 	rev.verbose_header = 1;
 	rev.show_root_diff = 1;
-	get_commit_format("format:%h: %s", &rev);
+	get_commit_format(format, &rev);
 	rev.always_show_header = 0;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
-	printf("Created %scommit ", initial_commit ? "initial " : "");
+	printf("[%s%s]: created ",
+		!prefixcmp(head, "refs/heads/") ?
+			head + 11 :
+			!strcmp(head, "HEAD") ?
+				"detached HEAD" :
+				head,
+		initial_commit ? " (root-commit)" : "");
 
 	if (!log_tree_commit(&rev, commit)) {
 		struct strbuf buf = STRBUF_INIT;
-		format_commit_message(commit, "%h: %s", &buf, DATE_NORMAL);
+		format_commit_message(commit, format + 7, &buf, DATE_NORMAL);
 		printf("%s\n", buf.buf);
 		strbuf_release(&buf);
 	}
@@ -931,12 +937,14 @@ static const char commit_utf8_warn[] =
 
 int cmd_commit(int argc, const char **argv, const char *prefix)
 {
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	const char *index_file, *reflog_msg;
 	char *nl, *p;
 	unsigned char commit_sha1[20];
 	struct ref_lock *ref_lock;
 	struct commit_list *parents = NULL, **pptr = &parents;
+	struct stat statbuf;
+	int allow_fast_forward = 1;
 
 	git_config(git_commit_config, NULL);
 
@@ -966,12 +974,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		for (c = commit->parents; c; c = c->next)
 			pptr = &commit_list_insert(c->item, pptr)->next;
 	} else if (in_merge) {
-		struct strbuf m;
+		struct strbuf m = STRBUF_INIT;
 		FILE *fp;
 
 		reflog_msg = "commit (merge)";
 		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
-		strbuf_init(&m, 0);
 		fp = fopen(git_path("MERGE_HEAD"), "r");
 		if (fp == NULL)
 			die("could not open %s for reading: %s",
@@ -984,14 +991,22 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		}
 		fclose(fp);
 		strbuf_release(&m);
+		if (!stat(git_path("MERGE_MODE"), &statbuf)) {
+			if (strbuf_read_file(&sb, git_path("MERGE_MODE"), 0) < 0)
+				die("could not read MERGE_MODE: %s",
+						strerror(errno));
+			if (!strcmp(sb.buf, "no-ff"))
+				allow_fast_forward = 0;
+		}
+		if (allow_fast_forward)
+			parents = reduce_heads(parents);
 	} else {
 		reflog_msg = "commit";
 		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
 	}
-	parents = reduce_heads(parents);
 
 	/* Finally, get the commit message */
-	strbuf_init(&sb, 0);
+	strbuf_reset(&sb);
 	if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
 		rollback_index_files();
 		die("could not read commit message");
@@ -1040,6 +1055,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_MSG"));
+	unlink(git_path("MERGE_MODE"));
 	unlink(git_path("SQUASH_MSG"));
 
 	if (commit_index_files())

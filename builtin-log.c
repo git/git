@@ -426,7 +426,7 @@ static int istitlechar(char c)
 
 static const char *fmt_patch_suffix = ".patch";
 static int numbered = 0;
-static int auto_number = 0;
+static int auto_number = 1;
 
 static char **extra_hdr;
 static int extra_hdr_nr;
@@ -485,6 +485,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			return 0;
 		}
 		numbered = git_config_bool(var, value);
+		auto_number = auto_number && numbered;
 		return 0;
 	}
 
@@ -628,10 +629,9 @@ static void gen_message_id(struct rev_info *info, char *base)
 	const char *committer = git_committer_info(IDENT_WARN_ON_NO_NAME);
 	const char *email_start = strrchr(committer, '<');
 	const char *email_end = strrchr(committer, '>');
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	if (!email_start || !email_end || email_start > email_end - 1)
 		die("Could not extract email from committer identity.");
-	strbuf_init(&buf, 0);
 	strbuf_addf(&buf, "%s.%lu.git.%.*s", base,
 		    (unsigned long) time(NULL),
 		    (int)(email_end - email_start - 1), email_start + 1);
@@ -650,7 +650,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	const char *msg;
 	const char *extra_headers = rev->extra_headers;
 	struct shortlog log;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	int i;
 	const char *encoding = "utf-8";
 	struct diff_options opts;
@@ -671,7 +671,6 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	committer = git_committer_info(0);
 
 	msg = body;
-	strbuf_init(&sb, 0);
 	pp_user_info(NULL, CMIT_FMT_EMAIL, &sb, committer, DATE_RFC2822,
 		     encoding);
 	pp_title_line(CMIT_FMT_EMAIL, &msg, &sb, subject_start, extra_headers,
@@ -753,7 +752,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
 	char *add_signoff = NULL;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 
 	git_config(git_format_config, NULL);
 	init_revisions(&rev, prefix);
@@ -860,8 +859,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			argv[j++] = argv[i];
 	}
 	argc = j;
-
-	strbuf_init(&buf, 0);
 
 	for (i = 0; i < extra_hdr_nr; i++) {
 		strbuf_addstr(&buf, extra_hdr[i]);
@@ -1139,8 +1136,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 			sign = '-';
 
 		if (verbose) {
-			struct strbuf buf;
-			strbuf_init(&buf, 0);
+			struct strbuf buf = STRBUF_INIT;
 			pretty_print_commit(CMIT_FMT_ONELINE, commit,
 			                    &buf, 0, NULL, NULL, 0, 0);
 			printf("%c %s %s\n", sign,
