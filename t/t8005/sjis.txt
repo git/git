@@ -1,0 +1,2 @@
+SJIS_NAME="„I„r„p„~ „P„u„„„‚„€„r„y„‰ „R„y„t„€„‚„€„r"
+SJIS_MSG="„S„u„ƒ„„„€„r„€„u „ƒ„€„€„q„‹„u„~„y„u"

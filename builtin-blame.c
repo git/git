@@ -1431,7 +1431,7 @@ static void get_commit_info(struct commit *commit,
 			    int detailed)
 {
 	int len;
-	char *tmp, *endp;
+	char *tmp, *endp, *reencoded, *message;
 	static char author_buf[1024];
 	static char committer_buf[1024];
 	static char summary_buf[1024];
@@ -1449,24 +1449,29 @@ static void get_commit_info(struct commit *commit,
 			die("Cannot read commit %s",
 			    sha1_to_hex(commit->object.sha1));
 	}
+	reencoded = reencode_commit_message(commit, NULL);
+	message   = reencoded ? reencoded : commit->buffer;
 	ret->author = author_buf;
-	get_ac_line(commit->buffer, "\nauthor ",
+	get_ac_line(message, "\nauthor ",
 		    sizeof(author_buf), author_buf, &ret->author_mail,
 		    &ret->author_time, &ret->author_tz);
 
-	if (!detailed)
+	if (!detailed) {
+		free(reencoded);
 		return;
+	}
 
 	ret->committer = committer_buf;
-	get_ac_line(commit->buffer, "\ncommitter ",
+	get_ac_line(message, "\ncommitter ",
 		    sizeof(committer_buf), committer_buf, &ret->committer_mail,
 		    &ret->committer_time, &ret->committer_tz);
 
 	ret->summary = summary_buf;
-	tmp = strstr(commit->buffer, "\n\n");
+	tmp = strstr(message, "\n\n");
 	if (!tmp) {
 	error_out:
 		sprintf(summary_buf, "(%s)", sha1_to_hex(commit->object.sha1));
+		free(reencoded);
 		return;
 	}
 	tmp += 2;
@@ -1478,6 +1483,7 @@ static void get_commit_info(struct commit *commit,
 		goto error_out;
 	memcpy(summary_buf, tmp, len);
 	summary_buf[len] = 0;
+	free(reencoded);
 }
 
 /*
