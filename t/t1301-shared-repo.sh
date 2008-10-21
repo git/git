@@ -20,6 +20,10 @@ test_expect_success 'shared = 0400 (faulty permission u-w)' '
 	test $ret != "0"
 '
 
+modebits () {
+	ls -l "$1" | sed -e 's|^\(..........\).*|\1|'
+}
+
 for u in 002 022
 do
 	test_expect_success "shared=1 does not clear bits preset by umask $u" '
@@ -85,8 +89,7 @@ do
 
 		rm -f .git/info/refs &&
 		git update-server-info &&
-		actual="$(ls -l .git/info/refs)" &&
-		actual=${actual%% *} &&
+		actual="$(modebits .git/info/refs)" &&
 		test "x$actual" = "x-$y" || {
 			ls -lt .git/info
 			false
@@ -98,8 +101,7 @@ do
 
 		rm -f .git/info/refs &&
 		git update-server-info &&
-		actual="$(ls -l .git/info/refs)" &&
-		actual=${actual%% *} &&
+		actual="$(modebits .git/info/refs)" &&
 		test "x$actual" = "x-$x" || {
 			ls -lt .git/info
 			false
