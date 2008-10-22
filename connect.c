@@ -90,9 +90,8 @@ struct ref **get_remote_heads(int in, struct ref **list,
 			continue;
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
-		ref = alloc_ref(name_len + 1);
+		ref = alloc_ref(buffer + 41);
 		hashcpy(ref->old_sha1, old_sha1);
-		memcpy(ref->name, buffer + 41, name_len + 1);
 		*list = ref;
 		list = &ref->next;
 	}

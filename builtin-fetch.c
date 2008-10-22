@@ -521,8 +521,8 @@ static void find_non_local_tags(struct transport *transport,
 		     will_fetch(head, ref->old_sha1))) {
 			string_list_insert(ref_name, &new_refs);
 
-			rm = alloc_ref_from_str(ref_name);
-			rm->peer_ref = alloc_ref_from_str(ref_name);
+			rm = alloc_ref(ref_name);
+			rm->peer_ref = alloc_ref(ref_name);
 			hashcpy(rm->old_sha1, ref_sha1);
 
 			**tail = rm;
