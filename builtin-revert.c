@@ -329,7 +329,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	 * reverse of it if we are revert.
 	 */
 
-	msg_fd = hold_lock_file_for_update(&msg_file, defmsg, 1);
+	msg_fd = hold_lock_file_for_update(&msg_file, defmsg,
+					   LOCK_DIE_ON_ERROR);
 
 	encoding = get_encoding(message);
 	if (!encoding)

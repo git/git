@@ -89,7 +89,8 @@ int pack_refs(unsigned int flags)
 	memset(&cbdata, 0, sizeof(cbdata));
 	cbdata.flags = flags;
 
-	fd = hold_lock_file_for_update(&packed, git_path("packed-refs"), 1);
+	fd = hold_lock_file_for_update(&packed, git_path("packed-refs"),
+				       LOCK_DIE_ON_ERROR);
 	cbdata.refs_file = fdopen(fd, "w");
 	if (!cbdata.refs_file)
 		die("unable to create ref-pack file structure (%s)",

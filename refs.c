@@ -796,7 +796,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	struct ref_lock *lock;
 	struct stat st;
 	int last_errno = 0;
-	int type;
+	int type, lflags;
 	int mustexist = (old_sha1 && !is_null_sha1(old_sha1));
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
@@ -836,8 +836,11 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
-	if (flags & REF_NODEREF)
+	lflags = LOCK_DIE_ON_ERROR;
+	if (flags & REF_NODEREF) {
 		ref = orig_ref;
+		lflags |= LOCK_NODEREF;
+	}
 	lock->ref_name = xstrdup(ref);
 	lock->orig_ref_name = xstrdup(orig_ref);
 	ref_file = git_path("%s", ref);
@@ -851,8 +854,8 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 		error("unable to create directory for %s", ref_file);
 		goto error_return;
 	}
-	lock->lock_fd = hold_lock_file_for_update(lock->lk, ref_file, 1);
 
+	lock->lock_fd = hold_lock_file_for_update(lock->lk, ref_file, lflags);
 	return old_sha1 ? verify_lock(lock, old_sha1, mustexist) : lock;
 
  error_return:
