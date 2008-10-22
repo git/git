@@ -323,4 +323,16 @@ test_expect_success 'auto tag following fetches minimum' '
 	)
 '
 
+test_expect_success 'refuse to fetch into the current branch' '
+
+	test_must_fail git fetch . side:master
+
+'
+
+test_expect_success 'fetch into the current branch with --update-head-ok' '
+
+	git fetch --update-head-ok . side:master
+
+'
+
 test_done

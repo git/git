@@ -124,7 +124,7 @@ orig_head=$(git rev-parse --verify HEAD 2>/dev/null)
 git fetch --update-head-ok "$@" || exit 1
 
 curr_head=$(git rev-parse --verify HEAD 2>/dev/null)
-if test "$curr_head" != "$orig_head"
+if test -n "$orig_head" && test "$curr_head" != "$orig_head"
 then
 	# The fetch involved updating the current branch.
 
@@ -172,7 +172,7 @@ esac
 
 if test -z "$orig_head"
 then
-	git update-ref -m "initial pull" HEAD $merge_head "" &&
+	git update-ref -m "initial pull" HEAD $merge_head "$curr_head" &&
 	git read-tree --reset -u HEAD || exit 1
 	exit
 fi
