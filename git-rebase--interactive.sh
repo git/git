@@ -170,7 +170,7 @@ pick_one_preserving_merges () {
 
 	if test -f "$DOTEST"/current-commit
 	then
-		if [ "$fast_forward" == "t" ]
+		if test "$fast_forward" = t
 		then
 			cat "$DOTEST"/current-commit | while read current_commit
 			do
