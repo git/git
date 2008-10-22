@@ -389,6 +389,7 @@ LIB_H += transport.h
 LIB_H += tree.h
 LIB_H += tree-walk.h
 LIB_H += unpack-trees.h
+LIB_H += userdiff.h
 LIB_H += utf8.h
 LIB_H += wt-status.h
 
@@ -485,6 +486,7 @@ LIB_OBJS += tree-diff.o
 LIB_OBJS += tree.o
 LIB_OBJS += tree-walk.o
 LIB_OBJS += unpack-trees.o
+LIB_OBJS += userdiff.o
 LIB_OBJS += usage.o
 LIB_OBJS += utf8.o
 LIB_OBJS += walker.o
