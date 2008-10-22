@@ -424,7 +424,7 @@ cmd_summary() {
 	cd_to_toplevel
 	# Get modified modules cared by user
 	modules=$(git diff-index $cached --raw $head -- "$@" |
-		grep -e '^:160000' -e '^:[0-7]* 160000' |
+		egrep '^:([0-7]* )?160000' |
 		while read mod_src mod_dst sha1_src sha1_dst status name
 		do
 			# Always show modules deleted or type-changed (blob<->module)
@@ -438,7 +438,7 @@ cmd_summary() {
 	test -z "$modules" && return
 
 	git diff-index $cached --raw $head -- $modules |
-	grep -e '^:160000' -e '^:[0-7]* 160000' |
+	egrep '^:([0-7]* )?160000' |
 	cut -c2- |
 	while read mod_src mod_dst sha1_src sha1_dst status name
 	do
