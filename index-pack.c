@@ -550,8 +550,10 @@ static void find_unresolved_deltas(struct base_data *base,
 		find_delta_children(&base_spec, &ofs_first, &ofs_last);
 	}
 
-	if (ref_last == -1 && ofs_last == -1)
+	if (ref_last == -1 && ofs_last == -1) {
+		free(base->data);
 		return;
+	}
 
 	link_base_data(prev_base, base);
 
