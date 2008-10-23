@@ -1126,7 +1126,7 @@ sub read_repo_config {
 		my $v = $opts->{$o};
 		my ($key) = ($o =~ /^([a-zA-Z\-]+)/);
 		$key =~ s/-//g;
-		my $arg = 'git-config';
+		my $arg = 'git config';
 		$arg .= ' --int' if ($o =~ /[:=]i$/);
 		$arg .= ' --bool' if ($o !~ /[:=][sfi]$/);
 		if (ref $v eq 'ARRAY') {
