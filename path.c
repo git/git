@@ -348,7 +348,7 @@ int normalize_absolute_path(char *buf, const char *path)
 			goto next;
 		}
 
-		memcpy(dst, comp_start, comp_len);
+		memmove(dst, comp_start, comp_len);
 		dst += comp_len;
 	next:
 		comp_start = comp_end;
