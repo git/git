@@ -2249,6 +2249,7 @@ proc makewindow {} {
     bind $cflist <ButtonRelease-1> {treeclick %W %x %y}
     global ctxbut
     bind $cflist $ctxbut {pop_flist_menu %W %X %Y %x %y}
+    bind $ctext $ctxbut {pop_diff_menu %W %X %Y %x %y}
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -2291,6 +2292,13 @@ proc makewindow {} {
 	{mc "Blame parent commit" command {external_blame 1}}
     }
     $flist_menu configure -tearoff 0
+
+    global diff_menu
+    set diff_menu .diffctxmenu
+    makemenu $diff_menu {
+	{mc "Run git gui blame on this line" command {external_blame_diff}}
+    }
+    $diff_menu configure -tearoff 0
 }
 
 # Windows sends all mouse wheel events to the current focused window, not
@@ -2993,6 +3001,34 @@ proc pop_flist_menu {w X Y x y} {
     tk_popup $flist_menu $X $Y
 }
 
+proc find_ctext_fileinfo {line} {
+    global ctext_file_names ctext_file_lines
+
+    set ok [bsearch $ctext_file_lines $line]
+    set tline [lindex $ctext_file_lines $ok]
+
+    if {$ok >= [llength $ctext_file_lines] || $line < $tline} {
+        return {}
+    } else {
+        return [list [lindex $ctext_file_names $ok] $tline]
+    }
+}
+
+proc pop_diff_menu {w X Y x y} {
+    global ctext diff_menu flist_menu_file
+    global diff_menu_txtpos diff_menu_line
+    global diff_menu_filebase
+
+    stopfinding
+    set diff_menu_txtpos [split [$w index "@$x,$y"] "."]
+    set diff_menu_line [lindex $diff_menu_txtpos 0]
+    set f [find_ctext_fileinfo $diff_menu_line]
+    if {$f eq {}} return
+    set flist_menu_file [lindex $f 0]
+    set diff_menu_filebase [lindex $f 1]
+    tk_popup $diff_menu $X $Y
+}
+
 proc flist_hl {only} {
     global flist_menu_file findstring gdttype
 
@@ -3099,7 +3135,96 @@ proc external_diff {} {
     }
 }
 
-proc external_blame {parent_idx} {
+proc find_hunk_blamespec {base line} {
+    global ctext
+
+    # Find and parse the hunk header
+    set s_lix [$ctext search -backwards -regexp ^@@ "$line.0 lineend" $base.0]
+    if {$s_lix eq {}} return
+
+    set s_line [$ctext get $s_lix "$s_lix + 1 lines"]
+    if {![regexp {^@@@*(( -\d+(,\d+)?)+) \+(\d+)(,\d+)? @@} $s_line \
+	    s_line old_specs osz osz1 new_line nsz]} {
+	return
+    }
+
+    # base lines for the parents
+    set base_lines [list $new_line]
+    foreach old_spec [lrange [split $old_specs " "] 1 end] {
+	if {![regexp -- {-(\d+)(,\d+)?} $old_spec \
+	        old_spec old_line osz]} {
+	    return
+	}
+	lappend base_lines $old_line
+    }
+
+    # Now scan the lines to determine offset within the hunk
+    set parent {}
+    set max_parent [expr {[llength $base_lines]-2}]
+    set dline 0
+    set s_lno [lindex [split $s_lix "."] 0]
+
+    for {set i $line} {$i > $s_lno} {incr i -1} {
+	set c_line [$ctext get $i.0 "$i.0 + 1 lines"]
+	# Determine if the line is removed
+	set chunk [string range $c_line 0 $max_parent]
+	set removed_idx [string first "-" $chunk]
+	# Choose a parent index
+	if {$parent eq {}} {
+	    if {$removed_idx >= 0} {
+		set parent $removed_idx
+	    } else {
+		set unchanged_idx [string first " " $chunk]
+		if {$unchanged_idx >= 0} {
+		    set parent $unchanged_idx
+		} else {
+		    # blame the current commit
+		    set parent -1
+		}
+	    }
+	}
+	# then count other lines that belong to it
+	if {$parent >= 0} {
+	    set code [string index $c_line $parent]
+	    if {$code eq "-" || ($removed_idx < 0 && $code ne "+")} {
+		incr dline
+	    }
+	} else {
+	    if {$removed_idx < 0} {
+		incr dline
+	    }
+	}
+    }
+
+    if {$parent eq {}} { set parent -1 }
+    incr parent
+    incr dline [lindex $base_lines $parent]
+    return [list $parent $dline]
+}
+
+proc external_blame_diff {} {
+    global currentid diffmergeid cmitmode
+    global diff_menu_txtpos diff_menu_line
+    global diff_menu_filebase flist_menu_file
+
+    if {$cmitmode eq "tree"} {
+	set parent_idx 0
+	set line [expr {$diff_menu_line - $diff_menu_filebase - 1}]
+    } else {
+	set hinfo [find_hunk_blamespec $diff_menu_filebase $diff_menu_line]
+	if {$hinfo ne {}} {
+	    set parent_idx [lindex $hinfo 0]
+	    set line [lindex $hinfo 1]
+	} else {
+	    set parent_idx 0
+	    set line 0
+	}
+    }
+
+    external_blame $parent_idx $line
+}
+
+proc external_blame {parent_idx {line {}}} {
     global flist_menu_file
     global nullid nullid2
     global parentlist selectedline currentid
@@ -3115,7 +3240,12 @@ proc external_blame {parent_idx} {
 	return
     }
 
-    if {[catch {exec git gui blame $base_commit $flist_menu_file &} err]} {
+    set cmdline [list git gui blame]
+    if {$line ne {} && $line > 1} {
+	lappend cmdline "--line=$line"
+    }
+    lappend cmdline $base_commit $flist_menu_file
+    if {[catch {eval exec $cmdline &} err]} {
 	error_popup "[mc "git gui blame: command failed:"] $err"
     }
 }
@@ -6364,6 +6494,7 @@ proc gettreeline {gtf id} {
 
 proc showfile {f} {
     global treefilelist treeidlist diffids nullid nullid2
+    global ctext_file_names ctext_file_lines
     global ctext commentend
 
     set i [lsearch -exact $treefilelist($diffids) $f]
@@ -6387,6 +6518,8 @@ proc showfile {f} {
     filerun $bf [list getblobline $bf $diffids]
     $ctext config -state normal
     clear_ctext $commentend
+    lappend ctext_file_names $f
+    lappend ctext_file_lines [lindex [split $commentend "."] 0]
     $ctext insert end "\n"
     $ctext insert end "$f\n" filesep
     $ctext config -state disabled
@@ -6447,6 +6580,7 @@ proc mergediff {id} {
 proc getmergediffline {mdf id np} {
     global diffmergeid ctext cflist mergemax
     global difffilestart mdifffd treediffs
+    global ctext_file_names ctext_file_lines
     global diffencoding
 
     $ctext conf -state normal
@@ -6465,6 +6599,8 @@ proc getmergediffline {mdf id np} {
 	    lappend difffilestart $here
 	    lappend treediffs($id) $fname
 	    add_flist [list $fname]
+	    lappend ctext_file_names $fname
+	    lappend ctext_file_lines [lindex [split $here "."] 0]
 	    set diffencoding [get_path_encoding $fname]
 	    set l [expr {(78 - [string length $fname]) / 2}]
 	    set pad [string range "----------------------------------------" 1 $l]
@@ -6733,11 +6869,13 @@ proc setinlist {var i val} {
 
 proc makediffhdr {fname ids} {
     global ctext curdiffstart treediffs
+    global ctext_file_names
 
     set i [lsearch -exact $treediffs($ids) $fname]
     if {$i >= 0} {
 	setinlist difffilestart $i $curdiffstart
     }
+    set ctext_file_names [lreplace $ctext_file_names end end $fname]
     set l [expr {(78 - [string length $fname]) / 2}]
     set pad [string range "----------------------------------------" 1 $l]
     $ctext insert $curdiffstart "$pad $fname $pad" filesep
@@ -6746,6 +6884,7 @@ proc makediffhdr {fname ids} {
 proc getblobdiffline {bdf ids} {
     global diffids blobdifffd ctext curdiffstart
     global diffnexthead diffnextnote difffilestart
+    global ctext_file_names ctext_file_lines
     global diffinhdr treediffs
     global diffencoding
 
@@ -6763,6 +6902,8 @@ proc getblobdiffline {bdf ids} {
 	    # start of a new file
 	    $ctext insert end "\n"
 	    set curdiffstart [$ctext index "end - 1c"]
+	    lappend ctext_file_names ""
+	    lappend ctext_file_lines [lindex [split $curdiffstart "."] 0]
 	    $ctext insert end "\n" filesep
 	    # If the name hasn't changed the length will be odd,
 	    # the middle char will be a space, and the two bits either
@@ -6899,6 +7040,7 @@ proc nextfile {} {
 
 proc clear_ctext {{first 1.0}} {
     global ctext smarktop smarkbot
+    global ctext_file_names ctext_file_lines
     global pendinglinks
 
     set l [lindex [split $first .] 0]
@@ -6912,6 +7054,8 @@ proc clear_ctext {{first 1.0}} {
     if {$first eq "1.0"} {
 	catch {unset pendinglinks}
     }
+    set ctext_file_names {}
+    set ctext_file_lines {}
 }
 
 proc settabs {{firstab {}}} {
