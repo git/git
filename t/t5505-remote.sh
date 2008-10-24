@@ -28,7 +28,7 @@ tokens_match () {
 }
 
 check_remote_track () {
-	actual=$(git remote show "$1" | sed -n -e '$p') &&
+	actual=$(git remote show "$1" | sed -e '1,/Tracked/d') &&
 	shift &&
 	tokens_match "$*" "$actual"
 }
@@ -118,9 +118,11 @@ cat > test/expect << EOF
   New remote branch (next fetch will store in remotes/origin)
     master
   Tracked remote branches
-    side master
+    side
+    master
   Local branches pushed with 'git push'
-    master:upstream +refs/tags/lastbackup
+    master:upstream
+    +refs/tags/lastbackup
 EOF
 
 test_expect_success 'show' '
@@ -147,9 +149,11 @@ cat > test/expect << EOF
   Remote branch merged with 'git pull' while on branch master
     master
   Tracked remote branches
-    master side
+    master
+    side
   Local branches pushed with 'git push'
-    master:upstream +refs/tags/lastbackup
+    master:upstream
+    +refs/tags/lastbackup
 EOF
 
 test_expect_success 'show -n' '
@@ -191,7 +195,7 @@ test_expect_success 'prune --dry-run' '
 test_expect_success 'add --mirror && prune' '
 	(mkdir mirror &&
 	 cd mirror &&
-	 git init &&
+	 git init --bare &&
 	 git remote add --mirror -f origin ../one) &&
 	(cd one &&
 	 git branch -m side2 side) &&

@@ -11,6 +11,7 @@
 #include "attr.h"
 #include "run-command.h"
 #include "utf8.h"
+#include "userdiff.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -37,6 +38,9 @@ static char diff_colors[][COLOR_MAXLEN] = {
 	"\033[41m",	/* WHITESPACE (red background) */
 };
 
+static void diff_filespec_load_driver(struct diff_filespec *one);
+static char *run_textconv(const char *, struct diff_filespec *, size_t *);
+
 static int parse_diff_color_slot(const char *var, int ofs)
 {
 	if (!strcasecmp(var+ofs, "plain"))
@@ -54,80 +58,6 @@ static int parse_diff_color_slot(const char *var, int ofs)
 	if (!strcasecmp(var+ofs, "whitespace"))
 		return DIFF_WHITESPACE;
 	die("bad config variable '%s'", var);
-}
-
-static struct ll_diff_driver {
-	const char *name;
-	struct ll_diff_driver *next;
-	const char *cmd;
-} *user_diff, **user_diff_tail;
-
-/*
- * Currently there is only "diff.<drivername>.command" variable;
- * because there are "diff.color.<slot>" variables, we are parsing
- * this in a bit convoluted way to allow low level diff driver
- * called "color".
- */
-static int parse_lldiff_command(const char *var, const char *ep, const char *value)
-{
-	const char *name;
-	int namelen;
-	struct ll_diff_driver *drv;
-
-	name = var + 5;
-	namelen = ep - name;
-	for (drv = user_diff; drv; drv = drv->next)
-		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
-			break;
-	if (!drv) {
-		drv = xcalloc(1, sizeof(struct ll_diff_driver));
-		drv->name = xmemdupz(name, namelen);
-		if (!user_diff_tail)
-			user_diff_tail = &user_diff;
-		*user_diff_tail = drv;
-		user_diff_tail = &(drv->next);
-	}
-
-	return git_config_string(&(drv->cmd), var, value);
-}
-
-/*
- * 'diff.<what>.funcname' attribute can be specified in the configuration
- * to define a customized regexp to find the beginning of a function to
- * be used for hunk header lines of "diff -p" style output.
- */
-struct funcname_pattern_entry {
-	char *name;
-	char *pattern;
-	int cflags;
-};
-static struct funcname_pattern_list {
-	struct funcname_pattern_list *next;
-	struct funcname_pattern_entry e;
-} *funcname_pattern_list;
-
-static int parse_funcname_pattern(const char *var, const char *ep, const char *value, int cflags)
-{
-	const char *name;
-	int namelen;
-	struct funcname_pattern_list *pp;
-
-	name = var + 5; /* "diff." */
-	namelen = ep - name;
-
-	for (pp = funcname_pattern_list; pp; pp = pp->next)
-		if (!strncmp(pp->e.name, name, namelen) && !pp->e.name[namelen])
-			break;
-	if (!pp) {
-		pp = xcalloc(1, sizeof(*pp));
-		pp->e.name = xmemdupz(name, namelen);
-		pp->next = funcname_pattern_list;
-		funcname_pattern_list = pp;
-	}
-	free(pp->e.pattern);
-	pp->e.pattern = xstrdup(value);
-	pp->e.cflags = cflags;
-	return 0;
 }
 
 /*
@@ -162,11 +92,11 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "diff.external"))
 		return git_config_string(&external_diff_cmd_cfg, var, value);
-	if (!prefixcmp(var, "diff.")) {
-		const char *ep = strrchr(var, '.');
 
-		if (ep != var + 4 && !strcmp(ep, ".command"))
-			return parse_lldiff_command(var, ep, value);
+	switch (userdiff_config_porcelain(var, value)) {
+		case 0: break;
+		case -1: return -1;
+		default: return 0;
 	}
 
 	return git_diff_basic_config(var, value, cb);
@@ -193,21 +123,10 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!prefixcmp(var, "diff.")) {
-		const char *ep = strrchr(var, '.');
-		if (ep != var + 4) {
-			if (!strcmp(ep, ".funcname")) {
-				if (!value)
-					return config_error_nonbool(var);
-				return parse_funcname_pattern(var, ep, value,
-					0);
-			} else if (!strcmp(ep, ".xfuncname")) {
-				if (!value)
-					return config_error_nonbool(var);
-				return parse_funcname_pattern(var, ep, value,
-					REG_EXTENDED);
-			}
-		}
+	switch (userdiff_config_basic(var, value)) {
+		case 0: break;
+		case -1: return -1;
+		default: return 0;
 	}
 
 	return git_color_default_config(var, value, cb);
@@ -374,8 +293,19 @@ static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 	}
 	else if (diff_populate_filespec(one, 0))
 		return -1;
-	mf->ptr = one->data;
-	mf->size = one->size;
+
+	diff_filespec_load_driver(one);
+	if (one->driver->textconv) {
+		size_t size;
+		mf->ptr = run_textconv(one->driver->textconv, one, &size);
+		if (!mf->ptr)
+			return -1;
+		mf->size = size;
+	}
+	else {
+		mf->ptr = one->data;
+		mf->size = one->size;
+	}
 	return 0;
 }
 
@@ -1352,136 +1282,37 @@ static void emit_binary_diff(FILE *file, mmfile_t *one, mmfile_t *two)
 	emit_binary_diff_body(file, two, one);
 }
 
-static void setup_diff_attr_check(struct git_attr_check *check)
+void diff_filespec_load_driver(struct diff_filespec *one)
 {
-	static struct git_attr *attr_diff;
-
-	if (!attr_diff) {
-		attr_diff = git_attr("diff", 4);
-	}
-	check[0].attr = attr_diff;
-}
-
-static void diff_filespec_check_attr(struct diff_filespec *one)
-{
-	struct git_attr_check attr_diff_check;
-	int check_from_data = 0;
-
-	if (one->checked_attr)
-		return;
-
-	setup_diff_attr_check(&attr_diff_check);
-	one->is_binary = 0;
-	one->funcname_pattern_ident = NULL;
-
-	if (!git_checkattr(one->path, 1, &attr_diff_check)) {
-		const char *value;
-
-		/* binaryness */
-		value = attr_diff_check.value;
-		if (ATTR_TRUE(value))
-			;
-		else if (ATTR_FALSE(value))
-			one->is_binary = 1;
-		else
-			check_from_data = 1;
-
-		/* funcname pattern ident */
-		if (ATTR_TRUE(value) || ATTR_FALSE(value) || ATTR_UNSET(value))
-			;
-		else
-			one->funcname_pattern_ident = value;
-	}
-
-	if (check_from_data) {
-		if (!one->data && DIFF_FILE_VALID(one))
-			diff_populate_filespec(one, 0);
-
-		if (one->data)
-			one->is_binary = buffer_is_binary(one->data, one->size);
-	}
+	if (!one->driver)
+		one->driver = userdiff_find_by_path(one->path);
+	if (!one->driver)
+		one->driver = userdiff_find_by_name("default");
 }
 
 int diff_filespec_is_binary(struct diff_filespec *one)
 {
-	diff_filespec_check_attr(one);
+	if (one->is_binary == -1) {
+		diff_filespec_load_driver(one);
+		if (one->driver->binary != -1)
+			one->is_binary = one->driver->binary;
+		else {
+			if (!one->data && DIFF_FILE_VALID(one))
+				diff_populate_filespec(one, 0);
+			if (one->data)
+				one->is_binary = buffer_is_binary(one->data,
+						one->size);
+			if (one->is_binary == -1)
+				one->is_binary = 0;
+		}
+	}
 	return one->is_binary;
 }
 
-static const struct funcname_pattern_entry *funcname_pattern(const char *ident)
+static const struct userdiff_funcname *diff_funcname_pattern(struct diff_filespec *one)
 {
-	struct funcname_pattern_list *pp;
-
-	for (pp = funcname_pattern_list; pp; pp = pp->next)
-		if (!strcmp(ident, pp->e.name))
-			return &pp->e;
-	return NULL;
-}
-
-static const struct funcname_pattern_entry builtin_funcname_pattern[] = {
-	{ "bibtex", "(@[a-zA-Z]{1,}[ \t]*\\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
-	  REG_EXTENDED },
-	{ "html", "^[ \t]*(<[Hh][1-6][ \t].*>.*)$", REG_EXTENDED },
-	{ "java",
-	  "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
-	  "^[ \t]*(([ \t]*[A-Za-z_][A-Za-z_0-9]*){2,}[ \t]*\\([^;]*)$",
-	  REG_EXTENDED },
-	{ "objc",
-	  /* Negate C statements that can look like functions */
-	  "!^[ \t]*(do|for|if|else|return|switch|while)\n"
-	  /* Objective-C methods */
-	  "^[ \t]*([-+][ \t]*\\([ \t]*[A-Za-z_][A-Za-z_0-9* \t]*\\)[ \t]*[A-Za-z_].*)$\n"
-	  /* C functions */
-	  "^[ \t]*(([ \t]*[A-Za-z_][A-Za-z_0-9]*){2,}[ \t]*\\([^;]*)$\n"
-	  /* Objective-C class/protocol definitions */
-	  "^(@(implementation|interface|protocol)[ \t].*)$",
-	  REG_EXTENDED },
-	{ "pascal",
-	  "^((procedure|function|constructor|destructor|interface|"
-		"implementation|initialization|finalization)[ \t]*.*)$"
-	  "\n"
-	  "^(.*=[ \t]*(class|record).*)$",
-	  REG_EXTENDED },
-	{ "php", "^[\t ]*((function|class).*)", REG_EXTENDED },
-	{ "python", "^[ \t]*((class|def)[ \t].*)$", REG_EXTENDED },
-	{ "ruby", "^[ \t]*((class|module|def)[ \t].*)$",
-	  REG_EXTENDED },
-	{ "tex",
-	  "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
-	  REG_EXTENDED },
-};
-
-static const struct funcname_pattern_entry *diff_funcname_pattern(struct diff_filespec *one)
-{
-	const char *ident;
-	const struct funcname_pattern_entry *pe;
-	int i;
-
-	diff_filespec_check_attr(one);
-	ident = one->funcname_pattern_ident;
-
-	if (!ident)
-		/*
-		 * If the config file has "funcname.default" defined, that
-		 * regexp is used; otherwise NULL is returned and xemit uses
-		 * the built-in default.
-		 */
-		return funcname_pattern("default");
-
-	/* Look up custom "funcname.$ident" regexp from config. */
-	pe = funcname_pattern(ident);
-	if (pe)
-		return pe;
-
-	/*
-	 * And define built-in fallback patterns here.  Note that
-	 * these can be overridden by the user's config settings.
-	 */
-	for (i = 0; i < ARRAY_SIZE(builtin_funcname_pattern); i++)
-		if (!strcmp(ident, builtin_funcname_pattern[i].name))
-			return &builtin_funcname_pattern[i];
-
-	return NULL;
+	diff_filespec_load_driver(one);
+	return one->driver->funcname.pattern ? &one->driver->funcname : NULL;
 }
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b)
@@ -1579,7 +1410,7 @@ static void builtin_diff(const char *name_a,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
-		const struct funcname_pattern_entry *pe;
+		const struct userdiff_funcname *pe;
 
 		pe = diff_funcname_pattern(one);
 		if (!pe)
@@ -1733,6 +1564,7 @@ struct diff_filespec *alloc_filespec(const char *path)
 	spec->path = (char *)(spec + 1);
 	memcpy(spec->path, path, namelen+1);
 	spec->count = 1;
+	spec->is_binary = -1;
 	return spec;
 }
 
@@ -2117,29 +1949,6 @@ static void run_external_diff(const char *pgm,
 	}
 }
 
-static const char *external_diff_attr(const char *name)
-{
-	struct git_attr_check attr_diff_check;
-
-	if (!name)
-		return NULL;
-
-	setup_diff_attr_check(&attr_diff_check);
-	if (!git_checkattr(name, 1, &attr_diff_check)) {
-		const char *value = attr_diff_check.value;
-		if (!ATTR_TRUE(value) &&
-		    !ATTR_FALSE(value) &&
-		    !ATTR_UNSET(value)) {
-			struct ll_diff_driver *drv;
-
-			for (drv = user_diff; drv; drv = drv->next)
-				if (!strcmp(drv->name, value))
-					return drv->cmd;
-		}
-	}
-	return NULL;
-}
-
 static void run_diff_cmd(const char *pgm,
 			 const char *name,
 			 const char *other,
@@ -2153,9 +1962,9 @@ static void run_diff_cmd(const char *pgm,
 	if (!DIFF_OPT_TST(o, ALLOW_EXTERNAL))
 		pgm = NULL;
 	else {
-		const char *cmd = external_diff_attr(attr_path);
-		if (cmd)
-			pgm = cmd;
+		struct userdiff_driver *drv = userdiff_find_by_path(attr_path);
+		if (drv && drv->external)
+			pgm = drv->external;
 	}
 
 	if (pgm) {
@@ -3577,4 +3386,35 @@ void diff_unmerge(struct diff_options *options,
 	two = alloc_filespec(path);
 	fill_filespec(one, sha1, mode);
 	diff_queue(&diff_queued_diff, one, two)->is_unmerged = 1;
+}
+
+static char *run_textconv(const char *pgm, struct diff_filespec *spec,
+		size_t *outsize)
+{
+	struct diff_tempfile temp;
+	const char *argv[3];
+	const char **arg = argv;
+	struct child_process child;
+	struct strbuf buf = STRBUF_INIT;
+
+	prepare_temp_file(spec->path, &temp, spec);
+	*arg++ = pgm;
+	*arg++ = temp.name;
+	*arg = NULL;
+
+	memset(&child, 0, sizeof(child));
+	child.argv = argv;
+	child.out = -1;
+	if (start_command(&child) != 0 ||
+	    strbuf_read(&buf, child.out, 0) < 0 ||
+	    finish_command(&child) != 0) {
+		if (temp.name == temp.tmp_path)
+			unlink(temp.name);
+		error("error running textconv command '%s'", pgm);
+		return NULL;
+	}
+	if (temp.name == temp.tmp_path)
+		unlink(temp.name);
+
+	return strbuf_detach(&buf, outsize);
 }

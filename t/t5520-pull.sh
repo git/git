@@ -29,6 +29,18 @@ test_expect_success 'checking the results' '
 	diff file cloned/file
 '
 
+test_expect_success 'pulling into void using master:master' '
+	mkdir cloned-uho &&
+	(
+		cd cloned-uho &&
+		git init &&
+		git pull .. master:master
+	) &&
+	test -f file &&
+	test -f cloned-uho/file &&
+	test_cmp file cloned-uho/file
+'
+
 test_expect_success 'test . as a remote' '
 
 	git branch copy master &&

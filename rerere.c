@@ -352,7 +352,8 @@ int setup_rerere(struct string_list *merge_rr)
 		return -1;
 
 	merge_rr_path = xstrdup(git_path("MERGE_RR"));
-	fd = hold_lock_file_for_update(&write_lock, merge_rr_path, 1);
+	fd = hold_lock_file_for_update(&write_lock, merge_rr_path,
+				       LOCK_DIE_ON_ERROR);
 	read_rr(merge_rr);
 	return fd;
 }

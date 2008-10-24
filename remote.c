@@ -749,17 +749,19 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 	return -1;
 }
 
-struct ref *alloc_ref(unsigned namelen)
+static struct ref *alloc_ref_with_prefix(const char *prefix, size_t prefixlen,
+		const char *name)
 {
-	struct ref *ret = xcalloc(1, sizeof(struct ref) + namelen);
-	return ret;
+	size_t len = strlen(name);
+	struct ref *ref = xcalloc(1, sizeof(struct ref) + prefixlen + len + 1);
+	memcpy(ref->name, prefix, prefixlen);
+	memcpy(ref->name + prefixlen, name, len);
+	return ref;
 }
 
-struct ref *alloc_ref_from_str(const char* str)
+struct ref *alloc_ref(const char *name)
 {
-	struct ref *ret = alloc_ref(strlen(str) + 1);
-	strcpy(ret->name, str);
-	return ret;
+	return alloc_ref_with_prefix("", 0, name);
 }
 
 static struct ref *copy_ref(const struct ref *ref)
@@ -870,21 +872,20 @@ static struct ref *try_explicit_object_name(const char *name)
 	struct ref *ref;
 
 	if (!*name) {
-		ref = alloc_ref(20);
-		strcpy(ref->name, "(delete)");
+		ref = alloc_ref("(delete)");
 		hashclr(ref->new_sha1);
 		return ref;
 	}
 	if (get_sha1(name, sha1))
 		return NULL;
-	ref = alloc_ref_from_str(name);
+	ref = alloc_ref(name);
 	hashcpy(ref->new_sha1, sha1);
 	return ref;
 }
 
 static struct ref *make_linked_ref(const char *name, struct ref ***tail)
 {
-	struct ref *ret = alloc_ref_from_str(name);
+	struct ref *ret = alloc_ref(name);
 	tail_link_ref(ret, tail);
 	return ret;
 }
@@ -1152,10 +1153,8 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 			struct ref *cpy = copy_ref(ref);
 			match = ref->name + remote_prefix_len;
 
-			cpy->peer_ref = alloc_ref(local_prefix_len +
-						  strlen(match) + 1);
-			sprintf(cpy->peer_ref->name, "%s%s",
-				refspec->dst, match);
+			cpy->peer_ref = alloc_ref_with_prefix(refspec->dst,
+					local_prefix_len, match);
 			if (refspec->force)
 				cpy->peer_ref->force = 1;
 			*tail = cpy;
@@ -1188,25 +1187,18 @@ struct ref *get_remote_ref(const struct ref *remote_refs, const char *name)
 
 static struct ref *get_local_ref(const char *name)
 {
-	struct ref *ret;
 	if (!name)
 		return NULL;
 
-	if (!prefixcmp(name, "refs/")) {
-		return alloc_ref_from_str(name);
-	}
+	if (!prefixcmp(name, "refs/"))
+		return alloc_ref(name);
 
 	if (!prefixcmp(name, "heads/") ||
 	    !prefixcmp(name, "tags/") ||
-	    !prefixcmp(name, "remotes/")) {
-		ret = alloc_ref(strlen(name) + 6);
-		sprintf(ret->name, "refs/%s", name);
-		return ret;
-	}
+	    !prefixcmp(name, "remotes/"))
+		return alloc_ref_with_prefix("refs/", 5, name);
 
-	ret = alloc_ref(strlen(name) + 12);
-	sprintf(ret->name, "refs/heads/%s", name);
-	return ret;
+	return alloc_ref_with_prefix("refs/heads/", 11, name);
 }
 
 int get_fetch_map(const struct ref *remote_refs,

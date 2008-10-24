@@ -4356,7 +4356,9 @@ $ git remote show example	# get details
 * remote example
   URL: git://example.com/project.git
   Tracked remote branches
-    master next ...
+    master
+    next
+    ...
 $ git fetch example		# update branches from example
 $ git branch -r			# list all remote branches
 -----------------------------------------------

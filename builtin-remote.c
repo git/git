@@ -412,10 +412,9 @@ static void show_list(const char *title, struct string_list *list,
 		return;
 
 	printf(title, list->nr > 1 ? "es" : "", extra_arg);
-	printf("\n    ");
-	for (i = 0; i < list->nr; i++)
-		printf("%s%s", i ? " " : "", list->items[i].string);
 	printf("\n");
+	for (i = 0; i < list->nr; i++)
+		printf("    %s\n", list->items[i].string);
 }
 
 static int get_remote_ref_states(const char *name,
@@ -511,17 +510,17 @@ static int show(int argc, const char **argv)
 		show_list("  Tracked remote branch%s", &states.tracked, "");
 
 		if (states.remote->push_refspec_nr) {
-			printf("  Local branch%s pushed with 'git push'\n   ",
+			printf("  Local branch%s pushed with 'git push'\n",
 				states.remote->push_refspec_nr > 1 ?
 					"es" : "");
 			for (i = 0; i < states.remote->push_refspec_nr; i++) {
 				struct refspec *spec = states.remote->push + i;
-				printf(" %s%s%s%s", spec->force ? "+" : "",
+				printf("    %s%s%s%s\n",
+				       spec->force ? "+" : "",
 				       abbrev_branch(spec->src),
 				       spec->dst ? ":" : "",
 				       spec->dst ? abbrev_branch(spec->dst) : "");
 			}
-			printf("\n");
 		}
 
 		/* NEEDSWORK: free remote */

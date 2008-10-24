@@ -187,6 +187,19 @@ test_expect_success 'but with -f it should work.' '
 	test_must_fail git ls-files --error-unmatch baz
 '
 
+test_expect_failure 'refuse to remove cached empty file with modifications' '
+	touch empty &&
+	git add empty &&
+	echo content >empty &&
+	test_must_fail git rm --cached empty
+'
+
+test_expect_success 'remove intent-to-add file without --force' '
+	echo content >intent-to-add &&
+	git add -N intent-to-add
+	git rm --cached intent-to-add
+'
+
 test_expect_success 'Recursive test setup' '
 	mkdir -p frotz &&
 	echo qfwfq >frotz/nitfol &&

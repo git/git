@@ -983,7 +983,7 @@ test_expect_success \
 	 git checkout subuse1 &&
 	 rm -rf sub && mkdir sub && cd sub &&
 	 git init &&
-	 git fetch .. refs/heads/sub:refs/heads/master &&
+	 git fetch --update-head-ok .. refs/heads/sub:refs/heads/master &&
 	 git checkout master &&
 	 cd .. &&
 	 git submodule init &&
