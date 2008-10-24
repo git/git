@@ -91,26 +91,32 @@ static int cygwin_stat(const char *path, struct stat *buf)
  * functions should be used. The choice is determined by core.ignorecygwinfstricks.
  * Reading this option is not always possible immediately as git_dir may be
  * not be set yet. So until it is set, use cygwin lstat/stat functions.
- * However, if the trust_executable_bit is set, we must use the Cygwin posix
+ * However, if core.filemode is set, we must use the Cygwin posix
  * stat/lstat as the Windows stat fuctions do not determine posix filemode.
+ *
+ * Note that git_cygwin_config() does NOT call git_default_config() and this
+ * is deliberate.  Many commands read from config to establish initial
+ * values in variables and later tweak them from elsewhere (e.g. command line).
+ * init_stat() is called lazily on demand, typically much late in the program,
+ * and calling git_default_config() from here would break such variables.
  */
 static int native_stat = 1;
-extern int trust_executable_bit;
+static int core_filemode;
 
 static int git_cygwin_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "core.ignorecygwinfstricks")) {
+	if (!strcmp(var, "core.ignorecygwinfstricks"))
 		native_stat = git_config_bool(var, value);
-		return 0;
-	}
-	return git_default_config(var, value, cb);
+	else if (!strcmp(var, "core.filemode"))
+		core_filemode = git_config_bool(var, value);
+	return 0;
 }
 
 static int init_stat(void)
 {
 	if (have_git_dir()) {
 		git_config(git_cygwin_config, NULL);
-		if (!trust_executable_bit && native_stat) {
+		if (!core_filemode && native_stat) {
 			cygwin_stat_fn = cygwin_stat;
 			cygwin_lstat_fn = cygwin_lstat;
 		} else {
