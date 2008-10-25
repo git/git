@@ -27,7 +27,6 @@
 
 static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec);
 static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *ecb);
-static xdchange_t *xdl_get_hunk(xdchange_t *xscr, xdemitconf_t const *xecfg);
 
 
 
@@ -58,7 +57,7 @@ static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *
  * Starting at the passed change atom, find the latest change atom to be included
  * inside the differential hunk according to the specified configuration.
  */
-static xdchange_t *xdl_get_hunk(xdchange_t *xscr, xdemitconf_t const *xecfg) {
+xdchange_t *xdl_get_hunk(xdchange_t *xscr, xdemitconf_t const *xecfg) {
 	xdchange_t *xch, *xchp;
 
 	for (xchp = xscr, xch = xscr->next; xch; xchp = xch, xch = xch->next)
