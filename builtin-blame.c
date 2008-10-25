@@ -542,25 +542,6 @@ static struct patch *compare_buffer(mmfile_t *file_p, mmfile_t *file_o,
 	return state.ret;
 }
 
-/*
- * Run diff between two origins and grab the patch output, so that
- * we can pass blame for lines origin is currently suspected for
- * to its parent.
- */
-static struct patch *get_patch(struct origin *parent, struct origin *origin)
-{
-	mmfile_t file_p, file_o;
-	struct patch *patch;
-
-	fill_origin_blob(parent, &file_p);
-	fill_origin_blob(origin, &file_o);
-	if (!file_p.ptr || !file_o.ptr)
-		return NULL;
-	patch = compare_buffer(&file_p, &file_o, 0);
-	num_get_patch++;
-	return patch;
-}
-
 static void free_patch(struct patch *p)
 {
 	free(p->chunks);
@@ -824,12 +805,22 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 {
 	int i, last_in_target, plno, tlno;
 	struct patch *patch;
+	mmfile_t file_p, file_o;
 
 	last_in_target = find_last_in_target(sb, target);
 	if (last_in_target < 0)
 		return 1; /* nothing remains for this target */
 
-	patch = get_patch(parent, target);
+	/*
+	 * Run diff between two origins and grab the patch output, so that
+	 * we can pass blame for lines origin is currently suspected for
+	 * to its parent.
+	 */
+	fill_origin_blob(parent, &file_p);
+	fill_origin_blob(target, &file_o);
+	patch = compare_buffer(&file_p, &file_o, 0);
+	num_get_patch++;
+
 	plno = tlno = 0;
 	for (i = 0; i < patch->num; i++) {
 		struct chunk *chunk = &patch->chunks[i];
