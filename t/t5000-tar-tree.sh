@@ -58,6 +58,11 @@ test_expect_success \
      git commit-tree $treeid </dev/null)'
 
 test_expect_success \
+    'create bare clone' \
+    'git clone --bare . bare.git &&
+     cp .gitattributes bare.git/info/attributes'
+
+test_expect_success \
     'remove ignored file' \
     'rm a/ignored'
 
@@ -72,6 +77,14 @@ test_expect_success \
 test_expect_success \
     'git archive vs. git tar-tree' \
     'diff b.tar b2.tar'
+
+test_expect_success \
+    'git archive in a bare repo' \
+    '(cd bare.git && git archive HEAD) >b3.tar'
+
+test_expect_success \
+    'git archive vs. the same in a bare repo' \
+    'test_cmp b.tar b3.tar'
 
 test_expect_success \
     'validate file modification time' \
@@ -150,6 +163,14 @@ test_expect_success \
 test_expect_success \
     'git archive --format=zip' \
     'git archive --format=zip HEAD >d.zip'
+
+test_expect_success \
+    'git archive --format=zip in a bare repo' \
+    '(cd bare.git && git archive --format=zip HEAD) >d1.zip'
+
+test_expect_success \
+    'git archive --format=zip vs. the same in a bare repo' \
+    'test_cmp d.zip d1.zip'
 
 $UNZIP -v >/dev/null 2>&1
 if [ $? -eq 127 ]; then

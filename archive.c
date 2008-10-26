@@ -336,5 +336,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	parse_treeish_arg(argv, &args, prefix);
 	parse_pathspec_arg(argv + 1, &args);
 
+	git_config(git_default_config, NULL);
+
 	return ar->write_archive(&args);
 }
