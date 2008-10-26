@@ -76,6 +76,14 @@ test_expect_success 'format-patch produces binary' '
 	test_cmp expect.binary actual
 '
 
+test_expect_success 'status -v produces text' '
+	git reset --soft HEAD^ &&
+	git status -v >diff &&
+	find_diff <diff >actual &&
+	test_cmp expect.text actual &&
+	git reset --soft HEAD@{1}
+'
+
 cat >expect.stat <<'EOF'
  file |  Bin 2 -> 4 bytes
  1 files changed, 0 insertions(+), 0 deletions(-)

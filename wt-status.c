@@ -301,6 +301,7 @@ static void wt_status_print_verbose(struct wt_status *s)
 	setup_revisions(0, NULL, &rev, s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
+	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
 	rev.diffopt.file = s->fp;
 	rev.diffopt.close_file = 0;
 	/*
