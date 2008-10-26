@@ -32,6 +32,21 @@ static char *cleanup_path(char *path)
 	return path;
 }
 
+char *mksnpath(char *buf, size_t n, const char *fmt, ...)
+{
+	va_list args;
+	unsigned len;
+
+	va_start(args, fmt);
+	len = vsnprintf(buf, n, fmt, args);
+	va_end(args);
+	if (len >= n) {
+		snprintf(buf, n, bad_path);
+		return buf;
+	}
+	return cleanup_path(buf);
+}
+
 char *mkpath(const char *fmt, ...)
 {
 	va_list args;
