@@ -1282,7 +1282,7 @@ static void emit_binary_diff(FILE *file, mmfile_t *one, mmfile_t *two)
 	emit_binary_diff_body(file, two, one);
 }
 
-void diff_filespec_load_driver(struct diff_filespec *one)
+static void diff_filespec_load_driver(struct diff_filespec *one)
 {
 	if (!one->driver)
 		one->driver = userdiff_find_by_path(one->path);
