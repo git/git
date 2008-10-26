@@ -966,7 +966,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	const char *symref = NULL;
 	int is_symref = 0;
 
-	if (S_ISLNK(loginfo.st_mode))
+	if (log && S_ISLNK(loginfo.st_mode))
 		return error("reflog for %s is a symlink", oldref);
 
 	symref = resolve_ref(oldref, orig_sha1, 1, &flag);
