@@ -466,11 +466,16 @@ static int delete_only(struct command *cmd)
 
 static int add_refs_from_alternate(struct alternate_object_database *e, void *unused)
 {
-	char *other = xstrdup(make_absolute_path(e->base));
-	size_t len = strlen(other);
+	char *other;
+	size_t len;
 	struct remote *remote;
 	struct transport *transport;
 	const struct ref *extra;
+
+	e->name[-1] = '\0';
+	other = xstrdup(make_absolute_path(e->base));
+	e->name[-1] = '/';
+	len = strlen(other);
 
 	while (other[len-1] == '/')
 		other[--len] = '\0';
