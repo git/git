@@ -70,7 +70,7 @@ test_expect_success 'log produces text' '
 	test_cmp expect.text actual
 '
 
-test_expect_failure 'format-patch produces binary' '
+test_expect_success 'format-patch produces binary' '
 	git format-patch --no-binary --stdout HEAD^ >patch &&
 	find_diff <patch >actual &&
 	test_cmp expect.binary actual

@@ -93,12 +93,6 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.external"))
 		return git_config_string(&external_diff_cmd_cfg, var, value);
 
-	switch (userdiff_config_porcelain(var, value)) {
-		case 0: break;
-		case -1: return -1;
-		default: return 0;
-	}
-
 	return git_diff_basic_config(var, value, cb);
 }
 
@@ -107,6 +101,12 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.renamelimit")) {
 		diff_rename_limit_default = git_config_int(var, value);
 		return 0;
+	}
+
+	switch (userdiff_config(var, value)) {
+		case 0: break;
+		case -1: return -1;
+		default: return 0;
 	}
 
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
@@ -121,12 +121,6 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.suppress-blank-empty")) {
 		diff_suppress_blank_empty = git_config_bool(var, value);
 		return 0;
-	}
-
-	switch (userdiff_config_basic(var, value)) {
-		case 0: break;
-		case -1: return -1;
-		default: return 0;
 	}
 
 	return git_color_default_config(var, value, cb);
@@ -1335,7 +1329,7 @@ static void builtin_diff(const char *name_a,
 	const char *set = diff_get_color_opt(o, DIFF_METAINFO);
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 	const char *a_prefix, *b_prefix;
-	const char *textconv_one, *textconv_two;
+	const char *textconv_one = NULL, *textconv_two = NULL;
 
 	diff_set_mnemonic_prefix(o, "a/", "b/");
 	if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
@@ -1389,8 +1383,10 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	textconv_one = get_textconv(one);
-	textconv_two = get_textconv(two);
+	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
+		textconv_one = get_textconv(one);
+		textconv_two = get_textconv(two);
+	}
 
 	if (!DIFF_OPT_TST(o, TEXT) &&
 	    ( (diff_filespec_is_binary(one) && !textconv_one) ||
