@@ -694,6 +694,10 @@ ifeq ($(uname_S),FreeBSD)
 	THREADED_DELTA_SEARCH = YesPlease
 	COMPAT_CFLAGS += -Icompat/regex
 	COMPAT_OBJS += compat/regex/regex.o
+	ifeq ($(shell expr "$(uname_R)" : '4\.'),2)
+		NO_UINTMAX_T = YesPlease
+		NO_STRTOUMAX = YesPlease
+	endif
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
