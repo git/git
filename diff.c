@@ -1311,6 +1311,8 @@ static const char *get_textconv(struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one))
 		return NULL;
+	if (!S_ISREG(one->mode))
+		return NULL;
 	diff_filespec_load_driver(one);
 	return one->driver->textconv;
 }

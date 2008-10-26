@@ -104,7 +104,7 @@ index ad8b3d2..67be421
 \ No newline at end of file
 EOF
 # make a symlink the hard way that works on symlink-challenged file systems
-test_expect_failure 'textconv does not act on symlinks' '
+test_expect_success 'textconv does not act on symlinks' '
 	echo -n frotz > file &&
 	git add file &&
 	git ls-files -s | sed -e s/100644/120000/ |
