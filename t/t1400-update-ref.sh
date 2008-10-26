@@ -75,6 +75,13 @@ test_expect_success "delete $m (by HEAD)" '
 '
 rm -f .git/$m
 
+cp -f .git/HEAD .git/HEAD.orig
+test_expect_success "delete symref without dereference" '
+	git update-ref --no-deref -d HEAD &&
+	! test -f .git/HEAD
+'
+cp -f .git/HEAD.orig .git/HEAD
+
 test_expect_success '(not) create HEAD with old sha1' "
 	test_must_fail git update-ref HEAD $A $B
 "
