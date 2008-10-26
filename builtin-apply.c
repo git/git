@@ -2850,8 +2850,8 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 		unsigned int nr = getpid();
 
 		for (;;) {
-			const char *newpath;
-			newpath = mkpath("%s~%u", path, nr);
+			char newpath[PATH_MAX];
+			mksnpath(newpath, sizeof(newpath), "%s~%u", path, nr);
 			if (!try_create_file(newpath, mode, buf, size)) {
 				if (!rename(newpath, path))
 					return;
