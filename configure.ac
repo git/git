@@ -436,6 +436,14 @@ AC_CHECK_FUNC(strlcpy,
 [NO_STRLCPY=YesPlease])
 AC_SUBST(NO_STRLCPY)
 #
+# Define NO_UINTMAX_T if your platform does not have uintmax_t
+AC_CHECK_TYPE(uintmax_t,
+[NO_UINTMAX_T=],
+[NO_UINTMAX_T=YesPlease],[
+#include <inttypes.h>
+])
+AC_SUBST(NO_UINTMAX_T)
+#
 # Define NO_STRTOUMAX if you don't have strtoumax in the C library.
 AC_CHECK_FUNC(strtoumax,
 [NO_STRTOUMAX=],

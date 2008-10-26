@@ -955,6 +955,9 @@ endif
 ifdef NO_IPV6
 	BASIC_CFLAGS += -DNO_IPV6
 endif
+ifdef NO_UINTMAX_T
+	BASIC_CFLAGS += -Duintmax_t=uint32_t
+endif
 ifdef NO_SOCKADDR_STORAGE
 ifdef NO_IPV6
 	BASIC_CFLAGS += -Dsockaddr_storage=sockaddr_in
