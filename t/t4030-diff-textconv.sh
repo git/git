@@ -52,7 +52,7 @@ test_expect_success 'setup textconv filters' '
 	git config diff.fail.textconv false
 '
 
-test_expect_failure 'diff produces text' '
+test_expect_success 'diff produces text' '
 	git diff HEAD^ HEAD >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.text actual
@@ -64,7 +64,7 @@ test_expect_success 'diff-tree produces binary' '
 	test_cmp expect.binary actual
 '
 
-test_expect_failure 'log produces text' '
+test_expect_success 'log produces text' '
 	git log -1 -p >log &&
 	find_diff <log >actual &&
 	test_cmp expect.text actual
@@ -80,7 +80,7 @@ cat >expect.stat <<'EOF'
  file |  Bin 2 -> 4 bytes
  1 files changed, 0 insertions(+), 0 deletions(-)
 EOF
-test_expect_failure 'diffstat does not run textconv' '
+test_expect_success 'diffstat does not run textconv' '
 	echo file diff=fail >.gitattributes &&
 	git diff --stat HEAD^ HEAD >actual &&
 	test_cmp expect.stat actual
