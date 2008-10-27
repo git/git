@@ -2296,6 +2296,7 @@ proc makewindow {} {
     global diff_menu
     set diff_menu .diffctxmenu
     makemenu $diff_menu {
+	{mc "Show origin of this line" command show_line_source}
 	{mc "Run git gui blame on this line" command {external_blame_diff}}
     }
     $diff_menu configure -tearoff 0
@@ -2830,9 +2831,15 @@ proc treeclick {w x y} {
 }
 
 proc setfilelist {id} {
-    global treefilelist cflist
+    global treefilelist cflist jump_to_here
 
     treeview $cflist $treefilelist($id) 0
+    if {$jump_to_here ne {}} {
+	set f [lindex $jump_to_here 0]
+	if {[lsearch -exact $treefilelist($id) $f] >= 0} {
+	    showfile $f
+	}
+    }
 }
 
 image create bitmap tri-rt -background black -foreground blue -data {
@@ -3254,6 +3261,91 @@ proc external_blame {parent_idx {line {}}} {
     if {[catch {eval exec $cmdline &} err]} {
 	error_popup "[mc "git gui blame: command failed:"] $err"
     }
+}
+
+proc show_line_source {} {
+    global cmitmode currentid parents curview blamestuff blameinst
+    global diff_menu_line diff_menu_filebase flist_menu_file
+
+    if {$cmitmode eq "tree"} {
+	set id $currentid
+	set line [expr {$diff_menu_line - $diff_menu_filebase}]
+    } else {
+	set h [find_hunk_blamespec $diff_menu_filebase $diff_menu_line]
+	if {$h eq {}} return
+	set pi [lindex $h 0]
+	if {$pi == 0} {
+	    mark_ctext_line $diff_menu_line
+	    return
+	}
+	set id [lindex $parents($curview,$currentid) [expr {$pi - 1}]]
+	set line [lindex $h 1]
+    }
+    if {[catch {
+	set f [open [list | git blame -p -L$line,+1 $id -- $flist_menu_file] r]
+    } err]} {
+	error_popup [mc "Couldn't start git blame: %s" $err]
+	return
+    }
+    fconfigure $f -blocking 0
+    set i [reg_instance $f]
+    set blamestuff($i) {}
+    set blameinst $i
+    filerun $f [list read_line_source $f $i]
+}
+
+proc stopblaming {} {
+    global blameinst
+
+    if {[info exists blameinst]} {
+	stop_instance $blameinst
+	unset blameinst
+    }
+}
+
+proc read_line_source {fd inst} {
+    global blamestuff curview commfd blameinst
+
+    while {[gets $fd line] >= 0} {
+	lappend blamestuff($inst) $line
+    }
+    if {![eof $fd]} {
+	return 1
+    }
+    unset commfd($inst)
+    unset blameinst
+    fconfigure $fd -blocking 1
+    if {[catch {close $fd} err]} {
+	error_popup [mc "Error running git blame: %s" $err]
+	return 0
+    }
+
+    set fname {}
+    set line [split [lindex $blamestuff($inst) 0] " "]
+    set id [lindex $line 0]
+    set lnum [lindex $line 1]
+    if {[string length $id] == 40 && [string is xdigit $id] &&
+	[string is digit -strict $lnum]} {
+	# look for "filename" line
+	foreach l $blamestuff($inst) {
+	    if {[string match "filename *" $l]} {
+		set fname [string range $l 9 end]
+		break
+	    }
+	}
+    }
+    if {$fname ne {}} {
+	# all looks good, select it
+	if {[commitinview $id $curview]} {
+	    selectline [rowofcommit $id] 1 [list $fname $lnum]
+	} else {
+	    error_popup [mc "That line comes from commit %s, \
+			     which is not in this view" [shortids $id]]
+	}
+    } else {
+	puts "oops couldn't parse git blame output"
+    }
+    return 0
 }
 
 # delete $dir when we see eof on $f (presumably because the child has exited)
@@ -5748,6 +5840,7 @@ proc stopfinding {} {
 	set fprogcoord 0
 	adjustprogress
     }
+    stopblaming
 }
 
 proc findmore {} {
@@ -6152,7 +6245,7 @@ proc make_secsel {l} {
     $canv3 lower $t
 }
 
-proc selectline {l isnew} {
+proc selectline {l isnew {desired_loc {}}} {
     global canv ctext commitinfo selectedline
     global canvy0 linespc parents children curview
     global currentid sha1entry
@@ -6160,7 +6253,7 @@ proc selectline {l isnew} {
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
     global targetrow targetid lastscrollrows
-    global autoselect
+    global autoselect jump_to_here
 
     catch {unset pending_select}
     $canv delete hover
@@ -6299,6 +6392,7 @@ proc selectline {l isnew} {
     $ctext conf -state disabled
     set commentend [$ctext index "end - 1c"]
 
+    set jump_to_here $desired_loc
     init_flist [mc "Comments"]
     if {$cmitmode eq "tree"} {
 	gettree $id
@@ -6546,13 +6640,30 @@ proc getblobline {bf id} {
 	$ctext insert end "$line\n"
     }
     if {[eof $bf]} {
+	global jump_to_here ctext_file_names commentend
+
 	# delete last newline
 	$ctext delete "end - 2c" "end - 1c"
 	close $bf
+	if {$jump_to_here ne {} &&
+	    [lindex $jump_to_here 0] eq [lindex $ctext_file_names 0]} {
+	    set lnum [expr {[lindex $jump_to_here 1] +
+			    [lindex [split $commentend .] 0]}]
+	    mark_ctext_line $lnum
+	}
 	return 0
     }
     $ctext config -state disabled
     return [expr {$nl >= 1000? 2: 1}]
+}
+
+proc mark_ctext_line {lnum} {
+    global ctext
+
+    $ctext tag delete omark
+    $ctext tag add omark $lnum.0 "$lnum.0 + 1 line"
+    $ctext tag conf omark -background "#e0e0ff"
+    $ctext see $lnum.0
 }
 
 proc mergediff {id} {
@@ -6562,10 +6673,12 @@ proc mergediff {id} {
     global diffcontext
     global diffencoding
     global limitdiffs vfilelimit curview
+    global targetline
 
     set diffmergeid $id
     set diffids $id
     set treediffs($id) {}
+    set targetline {}
     # this doesn't seem to actually affect anything...
     set cmd [concat | git diff-tree --no-commit-id --cc -U$diffcontext $id]
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
@@ -6587,7 +6700,7 @@ proc getmergediffline {mdf id np} {
     global diffmergeid ctext cflist mergemax
     global difffilestart mdifffd treediffs
     global ctext_file_names ctext_file_lines
-    global diffencoding
+    global diffencoding jump_to_here targetline diffline
 
     $ctext conf -state normal
     set nr 0
@@ -6611,9 +6724,17 @@ proc getmergediffline {mdf id np} {
 	    set l [expr {(78 - [string length $fname]) / 2}]
 	    set pad [string range "----------------------------------------" 1 $l]
 	    $ctext insert end "$pad $fname $pad\n" filesep
+	    set targetline {}
+	    if {$jump_to_here ne {} && [lindex $jump_to_here 0] eq $fname} {
+		set targetline [lindex $jump_to_here 1]
+	    }
+	    set diffline 0
 	} elseif {[regexp {^@@} $line]} {
 	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" hunksep
+	    if {[regexp { \+(\d+),\d+ @@} $line m nl]} {
+		set diffline $nl
+	    }
 	} elseif {[regexp {^[0-9a-f]{40}$} $line] || [regexp {^index} $line]} {
 	    # do nothing
 	} else {
@@ -6653,6 +6774,15 @@ proc getmergediffline {mdf id np} {
 		lappend tags m$num
 	    }
 	    $ctext insert end "$line\n" $tags
+	    if {$targetline ne {} && $minuses eq {}} {
+		if {$diffline == $targetline} {
+		    set here [$ctext index "end - 1 line"]
+		    mark_ctext_line [lindex [split $here .] 0]
+		    set targetline {}
+		} else {
+		    incr diffline
+		}
+	    }
 	}
     }
     $ctext conf -state disabled
@@ -6840,7 +6970,7 @@ proc getblobdiffs {ids} {
     global diffcontext
     global ignorespace
     global limitdiffs vfilelimit curview
-    global diffencoding
+    global diffencoding targetline
 
     set cmd [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
@@ -6853,6 +6983,7 @@ proc getblobdiffs {ids} {
 	puts "error getting diffs: $err"
 	return
     }
+    set targetline {}
     set diffinhdr 0
     set diffencoding [get_path_encoding {}]
     fconfigure $bdf -blocking 0 -encoding binary
@@ -6875,7 +7006,7 @@ proc setinlist {var i val} {
 
 proc makediffhdr {fname ids} {
     global ctext curdiffstart treediffs
-    global ctext_file_names
+    global ctext_file_names jump_to_here targetline diffline
 
     set i [lsearch -exact $treediffs($ids) $fname]
     if {$i >= 0} {
@@ -6885,6 +7016,11 @@ proc makediffhdr {fname ids} {
     set l [expr {(78 - [string length $fname]) / 2}]
     set pad [string range "----------------------------------------" 1 $l]
     $ctext insert $curdiffstart "$pad $fname $pad" filesep
+    set targetline {}
+    if {$jump_to_here ne {} && [lindex $jump_to_here 0] eq $fname} {
+	set targetline [lindex $jump_to_here 1]
+    }
+    set diffline 0
 }
 
 proc getblobdiffline {bdf ids} {
@@ -6892,7 +7028,7 @@ proc getblobdiffline {bdf ids} {
     global diffnexthead diffnextnote difffilestart
     global ctext_file_names ctext_file_lines
     global diffinhdr treediffs
-    global diffencoding
+    global diffencoding jump_to_here targetline diffline
 
     set nr 0
     $ctext conf -state normal
@@ -6941,6 +7077,7 @@ proc getblobdiffline {bdf ids} {
 	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" hunksep
 	    set diffinhdr 0
+	    set diffline $f2l
 
 	} elseif {$diffinhdr} {
 	    if {![string compare -length 12 "rename from " $line]} {
@@ -6974,6 +7111,7 @@ proc getblobdiffline {bdf ids} {
 	} else {
 	    set line [encoding convertfrom $diffencoding $line]
 	    set x [string range $line 0 0]
+	    set here [$ctext index "end - 1 chars"]
 	    if {$x == "-" || $x == "+"} {
 		set tag [expr {$x == "+"}]
 		$ctext insert end "$line\n" d$tag
@@ -6983,6 +7121,14 @@ proc getblobdiffline {bdf ids} {
 		# "\ No newline at end of file",
 		# or something else we don't recognize
 		$ctext insert end "$line\n" hunksep
+	    }
+	    if {$targetline ne {} && ($x eq " " || $x eq "+")} {
+		if {$diffline == $targetline} {
+		    mark_ctext_line [lindex [split $here .] 0]
+		    set targetline {}
+		} else {
+		    incr diffline
+		}
 	    }
 	}
     }
