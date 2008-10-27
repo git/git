@@ -56,6 +56,8 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		if (!strcmp(arg, "--decorate")) {
 			load_ref_decorations();
 			decorate = 1;
+		} else if (!strcmp(arg, "--source")) {
+			rev->show_source = 1;
 		} else
 			die("unrecognized argument: %s", arg);
 	}

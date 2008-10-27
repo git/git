@@ -199,6 +199,8 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 			mark_parents_uninteresting(commit);
 			revs->limited = 1;
 		}
+		if (revs->show_source && !commit->util)
+			commit->util = (void *) name;
 		return commit;
 	}
 
@@ -484,6 +486,8 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 
 		if (parse_commit(p) < 0)
 			return -1;
+		if (revs->show_source && !p->util)
+			p->util = commit->util;
 		p->object.flags |= left_flag;
 		if (!(p->object.flags & SEEN)) {
 			p->object.flags |= SEEN;
