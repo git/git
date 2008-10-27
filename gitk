@@ -2415,7 +2415,7 @@ proc savestuff {w} {
     global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
-    global autoselect extdifftool perfile_attrs
+    global autoselect extdifftool perfile_attrs markbgcolor
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -2439,6 +2439,7 @@ proc savestuff {w} {
 	puts $f [list set fgcolor $fgcolor]
 	puts $f [list set colors $colors]
 	puts $f [list set diffcolors $diffcolors]
+	puts $f [list set markbgcolor $markbgcolor]
 	puts $f [list set diffcontext $diffcontext]
 	puts $f [list set selectbgcolor $selectbgcolor]
 	puts $f [list set extdifftool $extdifftool]
@@ -6658,11 +6659,11 @@ proc getblobline {bf id} {
 }
 
 proc mark_ctext_line {lnum} {
-    global ctext
+    global ctext markbgcolor
 
     $ctext tag delete omark
     $ctext tag add omark $lnum.0 "$lnum.0 + 1 line"
-    $ctext tag conf omark -background "#e0e0ff"
+    $ctext tag conf omark -background $markbgcolor
     $ctext see $lnum.0
 }
 
@@ -9731,7 +9732,7 @@ proc chg_fontparam {v sub op} {
 proc doprefs {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
-    global bgcolor fgcolor ctext diffcolors selectbgcolor
+    global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global tabstop limitdiffs autoselect extdifftool perfile_attrs
 
     set top .gitkprefs
@@ -9824,6 +9825,12 @@ proc doprefs {} {
 		      "diff hunk header" \
 		      [list $ctext tag conf hunksep -foreground]]
     grid x $top.hunksepbut $top.hunksep -sticky w
+    label $top.markbgsep -padx 40 -relief sunk -background $markbgcolor
+    button $top.markbgbut -text [mc "Marked line bg"] -font optionfont \
+	-command [list choosecolor markbgcolor {} $top.markbgsep \
+		      [mc "marked line background"] \
+		      [list $ctext tag conf omark -background]]
+    grid x $top.markbgbut $top.markbgsep -sticky w
     label $top.selbgsep -padx 40 -relief sunk -background $selectbgcolor
     button $top.selbgbut -text [mc "Select bg"] -font optionfont \
 	-command [list choosecolor selectbgcolor {} $top.selbgsep background setselbg]
@@ -10369,6 +10376,7 @@ set diffcolors {red "#00a000" blue}
 set diffcontext 3
 set ignorespace 0
 set selectbgcolor gray85
+set markbgcolor "#e0e0ff"
 
 set circlecolors {white blue gray blue blue}
 
