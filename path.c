@@ -47,6 +47,29 @@ char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 	return cleanup_path(buf);
 }
 
+char *git_snpath(char *buf, size_t n, const char *fmt, ...)
+{
+	const char *git_dir = get_git_dir();
+	va_list args;
+	size_t len;
+
+	len = strlen(git_dir);
+	if (n < len + 1)
+		goto bad;
+	memcpy(buf, git_dir, len);
+	if (len && !is_dir_sep(git_dir[len-1]))
+		buf[len++] = '/';
+	va_start(args, fmt);
+	len += vsnprintf(buf + len, n - len, fmt, args);
+	va_end(args);
+	if (len >= n)
+		goto bad;
+	return cleanup_path(buf);
+bad:
+	snprintf(buf, n, bad_path);
+	return buf;
+}
+
 char *mkpath(const char *fmt, ...)
 {
 	va_list args;
