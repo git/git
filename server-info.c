@@ -25,7 +25,7 @@ static int add_info_ref(const char *path, const unsigned char *sha1, int flag, v
 
 static int update_info_refs(int force)
 {
-	char *path0 = xstrdup(git_path("info/refs"));
+	char *path0 = git_pathdup("info/refs");
 	int len = strlen(path0);
 	char *path1 = xmalloc(len + 2);
 
