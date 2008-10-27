@@ -3019,9 +3019,13 @@ proc pop_diff_menu {w X Y x y} {
     global diff_menu_txtpos diff_menu_line
     global diff_menu_filebase
 
-    stopfinding
     set diff_menu_txtpos [split [$w index "@$x,$y"] "."]
     set diff_menu_line [lindex $diff_menu_txtpos 0]
+    # don't pop up the menu on hunk-separator or file-separator lines
+    if {[lsearch -glob [$ctext tag names $diff_menu_line.0] "*sep"] >= 0} {
+	return
+    }
+    stopfinding
     set f [find_ctext_fileinfo $diff_menu_line]
     if {$f eq {}} return
     set flist_menu_file [lindex $f 0]
@@ -3159,45 +3163,47 @@ proc find_hunk_blamespec {base line} {
     }
 
     # Now scan the lines to determine offset within the hunk
-    set parent {}
     set max_parent [expr {[llength $base_lines]-2}]
     set dline 0
     set s_lno [lindex [split $s_lix "."] 0]
 
-    for {set i $line} {$i > $s_lno} {incr i -1} {
-	set c_line [$ctext get $i.0 "$i.0 + 1 lines"]
-	# Determine if the line is removed
-	set chunk [string range $c_line 0 $max_parent]
+    # Determine if the line is removed
+    set chunk [$ctext get $line.0 "$line.1 + $max_parent chars"]
+    if {[string match {[-+ ]*} $chunk]} {
 	set removed_idx [string first "-" $chunk]
 	# Choose a parent index
-	if {$parent eq {}} {
-	    if {$removed_idx >= 0} {
-		set parent $removed_idx
+	if {$removed_idx >= 0} {
+	    set parent $removed_idx
+	} else {
+	    set unchanged_idx [string first " " $chunk]
+	    if {$unchanged_idx >= 0} {
+		set parent $unchanged_idx
 	    } else {
-		set unchanged_idx [string first " " $chunk]
-		if {$unchanged_idx >= 0} {
-		    set parent $unchanged_idx
-		} else {
-		    # blame the current commit
-		    set parent -1
-		}
+		# blame the current commit
+		set parent -1
 	    }
 	}
 	# then count other lines that belong to it
-	if {$parent >= 0} {
-	    set code [string index $c_line $parent]
-	    if {$code eq "-" || ($removed_idx < 0 && $code ne "+")} {
-		incr dline
-	    }
-	} else {
-	    if {$removed_idx < 0} {
-		incr dline
+	for {set i $line} {[incr i -1] > $s_lno} {} {
+	    set chunk [$ctext get $i.0 "$i.1 + $max_parent chars"]
+	    # Determine if the line is removed
+	    set removed_idx [string first "-" $chunk]
+	    if {$parent >= 0} {
+		set code [string index $chunk $parent]
+		if {$code eq "-" || ($removed_idx < 0 && $code ne "+")} {
+		    incr dline
+		}
+	    } else {
+		if {$removed_idx < 0} {
+		    incr dline
+		}
 	    }
 	}
+	incr parent
+    } else {
+	set parent 0
     }
 
-    if {$parent eq {}} { set parent -1 }
-    incr parent
     incr dline [lindex $base_lines $parent]
     return [list $parent $dline]
 }
@@ -3209,7 +3215,7 @@ proc external_blame_diff {} {
 
     if {$cmitmode eq "tree"} {
 	set parent_idx 0
-	set line [expr {$diff_menu_line - $diff_menu_filebase - 1}]
+	set line [expr {$diff_menu_line - $diff_menu_filebase}]
     } else {
 	set hinfo [find_hunk_blamespec $diff_menu_filebase $diff_menu_line]
 	if {$hinfo ne {}} {
