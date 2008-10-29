@@ -1355,7 +1355,7 @@ static off_t get_delta_base(struct packed_git *p,
 			base_offset = (base_offset << 7) + (c & 127);
 		}
 		base_offset = delta_obj_offset - base_offset;
-		if (base_offset >= delta_obj_offset)
+		if (base_offset <= 0 || base_offset >= delta_obj_offset)
 			return 0;  /* out of bound */
 		*curpos += used;
 	} else if (type == OBJ_REF_DELTA) {
