@@ -1314,8 +1314,10 @@ unsigned long get_size_from_delta(struct packed_git *p,
 	} while ((st == Z_OK || st == Z_BUF_ERROR) &&
 		 stream.total_out < sizeof(delta_head));
 	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) && stream.total_out != sizeof(delta_head))
-		die("delta data unpack-initial failed");
+	if ((st != Z_STREAM_END) && stream.total_out != sizeof(delta_head)) {
+		error("delta data unpack-initial failed");
+		return 0;
+	}
 
 	/* Examine the initial part of the delta to figure out
 	 * the result size.
@@ -1382,15 +1384,29 @@ static int packed_delta_info(struct packed_git *p,
 	off_t base_offset;
 
 	base_offset = get_delta_base(p, w_curs, &curpos, type, obj_offset);
+	if (!base_offset)
+		return OBJ_BAD;
 	type = packed_object_info(p, base_offset, NULL);
+	if (type <= OBJ_NONE) {
+		struct revindex_entry *revidx = find_pack_revindex(p, base_offset);
+		const unsigned char *base_sha1 =
+					nth_packed_object_sha1(p, revidx->nr);
+		mark_bad_packed_object(p, base_sha1);
+		type = sha1_object_info(base_sha1, NULL);
+		if (type <= OBJ_NONE)
+			return OBJ_BAD;
+	}
 
 	/* We choose to only get the type of the base object and
 	 * ignore potentially corrupt pack file that expects the delta
 	 * based on a base with a wrong size.  This saves tons of
 	 * inflate() calls.
 	 */
-	if (sizep)
+	if (sizep) {
 		*sizep = get_size_from_delta(p, w_curs, curpos);
+		if (*sizep == 0)
+			type = OBJ_BAD;
+	}
 
 	return type;
 }
@@ -1500,8 +1516,9 @@ static int packed_object_info(struct packed_git *p, off_t obj_offset,
 			*sizep = size;
 		break;
 	default:
-		die("pack %s contains unknown object type %d",
-		    p->pack_name, type);
+		error("unknown object type %i at offset %"PRIuMAX" in %s",
+		      type, (uintmax_t)obj_offset, p->pack_name);
+		type = OBJ_BAD;
 	}
 	unuse_pack(&w_curs);
 	return type;
@@ -1971,7 +1988,14 @@ int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 		if (!find_pack_entry(sha1, &e, NULL))
 			return status;
 	}
-	return packed_object_info(e.p, e.offset, sizep);
+
+	status = packed_object_info(e.p, e.offset, sizep);
+	if (status < 0) {
+		mark_bad_packed_object(e.p, sha1);
+		status = sha1_object_info(sha1, sizep);
+	}
+
+	return status;
 }
 
 static void *read_packed_sha1(const unsigned char *sha1,
