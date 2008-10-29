@@ -1053,6 +1053,8 @@ static void check_object(struct object_entry *entry)
 			if (reuse_delta && !entry->preferred_base) {
 				struct revindex_entry *revidx;
 				revidx = find_pack_revindex(p, ofs);
+				if (!revidx)
+					goto give_up;
 				base_ref = nth_packed_object_sha1(p, revidx->nr);
 			}
 			entry->in_pack_header_size = used + used_0;

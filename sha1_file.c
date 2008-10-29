@@ -1388,9 +1388,12 @@ static int packed_delta_info(struct packed_git *p,
 		return OBJ_BAD;
 	type = packed_object_info(p, base_offset, NULL);
 	if (type <= OBJ_NONE) {
-		struct revindex_entry *revidx = find_pack_revindex(p, base_offset);
-		const unsigned char *base_sha1 =
-					nth_packed_object_sha1(p, revidx->nr);
+		struct revindex_entry *revidx;
+		const unsigned char *base_sha1;
+		revidx = find_pack_revindex(p, base_offset);
+		if (!revidx)
+			return OBJ_BAD;
+		base_sha1 = nth_packed_object_sha1(p, revidx->nr);
 		mark_bad_packed_object(p, base_sha1);
 		type = sha1_object_info(base_sha1, NULL);
 		if (type <= OBJ_NONE)
@@ -1682,9 +1685,12 @@ static void *unpack_delta_entry(struct packed_git *p,
 		 * This is costly but should happen only in the presence
 		 * of a corrupted pack, and is better than failing outright.
 		 */
-		struct revindex_entry *revidx = find_pack_revindex(p, base_offset);
-		const unsigned char *base_sha1 =
-					nth_packed_object_sha1(p, revidx->nr);
+		struct revindex_entry *revidx;
+		const unsigned char *base_sha1;
+		revidx = find_pack_revindex(p, base_offset);
+		if (!revidx)
+			return NULL;
+		base_sha1 = nth_packed_object_sha1(p, revidx->nr);
 		error("failed to read delta base object %s"
 		      " at offset %"PRIuMAX" from %s",
 		      sha1_to_hex(base_sha1), (uintmax_t)base_offset,
