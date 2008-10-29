@@ -1002,7 +1002,7 @@ static void check_object(struct object_entry *entry)
 		 * We want in_pack_type even if we do not reuse delta
 		 * since non-delta representations could still be reused.
 		 */
-		used = unpack_object_header_gently(buf, avail,
+		used = unpack_object_header_buffer(buf, avail,
 						   &entry->in_pack_type,
 						   &entry->size);
 

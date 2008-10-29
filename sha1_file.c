@@ -1110,7 +1110,8 @@ static int legacy_loose_object(unsigned char *map)
 		return 0;
 }
 
-unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep)
+unsigned long unpack_object_header_buffer(const unsigned char *buf,
+		unsigned long len, enum object_type *type, unsigned long *sizep)
 {
 	unsigned shift;
 	unsigned char c;
@@ -1122,10 +1123,10 @@ unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned lon
 	size = c & 15;
 	shift = 4;
 	while (c & 0x80) {
-		if (len <= used)
+		if (len <= used || sizeof(long) * 8 <= shift) {
+			error("bad object header");
 			return 0;
-		if (sizeof(long) * 8 <= shift)
-			return 0;
+		}
 		c = buf[used++];
 		size += (c & 0x7f) << shift;
 		shift += 7;
@@ -1164,7 +1165,7 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	 * really worth it and we don't write it any longer.  But we
 	 * can still read it.
 	 */
-	used = unpack_object_header_gently(map, mapsize, &type, &size);
+	used = unpack_object_header_buffer(map, mapsize, &type, &size);
 	if (!used || !valid_loose_object_type[type])
 		return -1;
 	map += used;
@@ -1411,10 +1412,11 @@ static int unpack_object_header(struct packed_git *p,
 	 * insane, so we know won't exceed what we have been given.
 	 */
 	base = use_pack(p, w_curs, *curpos, &left);
-	used = unpack_object_header_gently(base, left, &type, sizep);
-	if (!used)
-		die("object offset outside of pack file");
-	*curpos += used;
+	used = unpack_object_header_buffer(base, left, &type, sizep);
+	if (!used) {
+		type = OBJ_BAD;
+	} else
+		*curpos += used;
 
 	return type;
 }
