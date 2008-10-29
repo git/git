@@ -964,14 +964,14 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	struct stat loginfo;
 	int log = !lstat(git_path("logs/%s", oldref), &loginfo);
 	const char *symref = NULL;
-	int is_symref = 0;
 
 	if (log && S_ISLNK(loginfo.st_mode))
 		return error("reflog for %s is a symlink", oldref);
 
 	symref = resolve_ref(oldref, orig_sha1, 1, &flag);
 	if (flag & REF_ISSYMREF)
-		is_symref = 1;
+		return error("refname %s is a symbolic ref, renaming it is not supported",
+			oldref);
 	if (!symref)
 		return error("refname %s not found", oldref);
 
@@ -1035,20 +1035,17 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	}
 	logmoved = log;
 
-	if (!is_symref) {
-		lock = lock_ref_sha1_basic(newref, NULL, 0, NULL);
-		if (!lock) {
-			error("unable to lock %s for update", newref);
-			goto rollback;
-		}
-		lock->force_write = 1;
-		hashcpy(lock->old_sha1, orig_sha1);
-		if (write_ref_sha1(lock, orig_sha1, logmsg)) {
-			error("unable to write current sha1 into %s", newref);
-			goto rollback;
-		}
-	} else
-		create_symref(newref, symref, logmsg);
+	lock = lock_ref_sha1_basic(newref, NULL, 0, NULL);
+	if (!lock) {
+		error("unable to lock %s for update", newref);
+		goto rollback;
+	}
+	lock->force_write = 1;
+	hashcpy(lock->old_sha1, orig_sha1);
+	if (write_ref_sha1(lock, orig_sha1, logmsg)) {
+		error("unable to write current sha1 into %s", newref);
+		goto rollback;
+	}
 
 	return 0;
 
