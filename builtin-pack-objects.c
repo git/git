@@ -389,22 +389,28 @@ static unsigned long write_object(struct sha1file *f,
 			dheader[pos] = ofs & 127;
 			while (ofs >>= 7)
 				dheader[--pos] = 128 | (--ofs & 127);
-			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit)
+			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
+				unuse_pack(&w_curs);
 				return 0;
+			}
 			sha1write(f, header, hdrlen);
 			sha1write(f, dheader + pos, sizeof(dheader) - pos);
 			hdrlen += sizeof(dheader) - pos;
 			reused_delta++;
 		} else if (type == OBJ_REF_DELTA) {
-			if (limit && hdrlen + 20 + datalen + 20 >= limit)
+			if (limit && hdrlen + 20 + datalen + 20 >= limit) {
+				unuse_pack(&w_curs);
 				return 0;
+			}
 			sha1write(f, header, hdrlen);
 			sha1write(f, entry->delta->idx.sha1, 20);
 			hdrlen += 20;
 			reused_delta++;
 		} else {
-			if (limit && hdrlen + datalen + 20 >= limit)
+			if (limit && hdrlen + datalen + 20 >= limit) {
+				unuse_pack(&w_curs);
 				return 0;
+			}
 			sha1write(f, header, hdrlen);
 		}
 		copy_pack_data(f, p, &w_curs, offset, datalen);
