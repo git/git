@@ -1005,6 +1005,8 @@ static void check_object(struct object_entry *entry)
 		used = unpack_object_header_buffer(buf, avail,
 						   &entry->in_pack_type,
 						   &entry->size);
+		if (used == 0)
+			goto give_up;
 
 		/*
 		 * Determine if this is a delta and if so whether we can
@@ -1016,6 +1018,8 @@ static void check_object(struct object_entry *entry)
 			/* Not a delta hence we've already got all we need. */
 			entry->type = entry->in_pack_type;
 			entry->in_pack_header_size = used;
+			if (entry->type < OBJ_COMMIT || entry->type > OBJ_BLOB)
+				goto give_up;
 			unuse_pack(&w_curs);
 			return;
 		case OBJ_REF_DELTA:
@@ -1032,16 +1036,20 @@ static void check_object(struct object_entry *entry)
 			ofs = c & 127;
 			while (c & 128) {
 				ofs += 1;
-				if (!ofs || MSB(ofs, 7))
-					die("delta base offset overflow in pack for %s",
-					    sha1_to_hex(entry->idx.sha1));
+				if (!ofs || MSB(ofs, 7)) {
+					error("delta base offset overflow in pack for %s",
+					      sha1_to_hex(entry->idx.sha1));
+					goto give_up;
+				}
 				c = buf[used_0++];
 				ofs = (ofs << 7) + (c & 127);
 			}
 			ofs = entry->in_pack_offset - ofs;
-			if (ofs <= 0 || ofs >= entry->in_pack_offset)
-				die("delta base offset out of bound for %s",
-				    sha1_to_hex(entry->idx.sha1));
+			if (ofs <= 0 || ofs >= entry->in_pack_offset) {
+				error("delta base offset out of bound for %s",
+				      sha1_to_hex(entry->idx.sha1));
+				goto give_up;
+			}
 			if (reuse_delta && !entry->preferred_base) {
 				struct revindex_entry *revidx;
 				revidx = find_pack_revindex(p, ofs);
@@ -1078,6 +1086,8 @@ static void check_object(struct object_entry *entry)
 			 */
 			entry->size = get_size_from_delta(p, &w_curs,
 					entry->in_pack_offset + entry->in_pack_header_size);
+			if (entry->size == 0)
+				goto give_up;
 			unuse_pack(&w_curs);
 			return;
 		}
@@ -1087,6 +1097,7 @@ static void check_object(struct object_entry *entry)
 		 * with sha1_object_info() to find about the object type
 		 * at this point...
 		 */
+		give_up:
 		unuse_pack(&w_curs);
 	}
 
