@@ -1136,9 +1136,19 @@ sub get_commit_entry {
 		system($editor, $commit_editmsg);
 	}
 	rename $commit_editmsg, $commit_msg or croak $!;
-	open $log_fh, '<', $commit_msg or croak $!;
-	{ local $/; chomp($log_entry{log} = <$log_fh>); }
-	close $log_fh or croak $!;
+	{
+		# SVN requires messages to be UTF-8 when entering the repo
+		local $/;
+		open $log_fh, '<', $commit_msg or croak $!;
+		binmode $log_fh;
+		chomp($log_entry{log} = <$log_fh>);
+
+		if (my $enc = Git::config('i18n.commitencoding')) {
+			require Encode;
+			Encode::from_to($log_entry{log}, $enc, 'UTF-8');
+		}
+		close $log_fh or croak $!;
+	}
 	unlink $commit_msg;
 	\%log_entry;
 }
@@ -2273,6 +2283,14 @@ sub do_git_commit {
 	}
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
+	binmode $msg_fh;
+
+	# we always get UTF-8 from SVN, but we may want our commits in
+	# a different encoding.
+	if (my $enc = Git::config('i18n.commitencoding')) {
+		require Encode;
+		Encode::from_to($log_entry->{log}, 'UTF-8', $enc);
+	}
 	print $msg_fh $log_entry->{log} or croak $!;
 	restore_commit_header_env($old_env);
 	unless ($self->no_metadata) {
