@@ -105,7 +105,7 @@ index ad8b3d2..67be421
 EOF
 # make a symlink the hard way that works on symlink-challenged file systems
 test_expect_failure 'textconv does not act on symlinks' '
-	echo -n frotz > file &&
+	printf frotz > file &&
 	git add file &&
 	git ls-files -s | sed -e s/100644/120000/ |
 		git update-index --index-info &&
