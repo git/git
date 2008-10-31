@@ -82,6 +82,17 @@ test_expect_success "delete symref without dereference" '
 '
 cp -f .git/HEAD.orig .git/HEAD
 
+test_expect_success "delete symref without dereference when the referred ref is packed" '
+	echo foo >foo.c &&
+	git add foo.c &&
+	git commit -m foo &&
+	git pack-refs --all &&
+	git update-ref --no-deref -d HEAD &&
+	! test -f .git/HEAD
+'
+cp -f .git/HEAD.orig .git/HEAD
+git update-ref -d $m
+
 test_expect_success '(not) create HEAD with old sha1' "
 	test_must_fail git update-ref HEAD $A $B
 "
