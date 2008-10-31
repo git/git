@@ -1410,6 +1410,8 @@ _git_shortlog ()
 
 _git_show ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
