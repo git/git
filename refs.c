@@ -413,7 +413,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		*flag = 0;
 
 	for (;;) {
-		const char *path = git_path("%s", ref);
+		char path[PATH_MAX];
 		struct stat st;
 		char *buf;
 		int fd;
@@ -421,6 +421,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		if (--depth < 0)
 			return NULL;
 
+		git_snpath(path, sizeof(path), "%s", ref);
 		/* Special case: non-existing file. */
 		if (lstat(path, &st) < 0) {
 			struct ref_list *list = get_packed_refs();
@@ -1130,13 +1131,14 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 	int logfd, written, oflags = O_APPEND | O_WRONLY;
 	unsigned maxlen, len;
 	int msglen;
-	char *log_file, *logrec;
+	char log_file[PATH_MAX];
+	char *logrec;
 	const char *committer;
 
 	if (log_all_ref_updates < 0)
 		log_all_ref_updates = !is_bare_repository();
 
-	log_file = git_path("logs/%s", ref_name);
+	git_snpath(log_file, sizeof(log_file), "logs/%s", ref_name);
 
 	if (log_all_ref_updates &&
 	    (!prefixcmp(ref_name, "refs/heads/") ||
@@ -1265,7 +1267,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 	const char *lockpath;
 	char ref[1000];
 	int fd, len, written;
-	char *git_HEAD = xstrdup(git_path("%s", ref_target));
+	char *git_HEAD = git_pathdup("%s", ref_target);
 	unsigned char old_sha1[20], new_sha1[20];
 
 	if (logmsg && read_ref(ref_target, old_sha1))

@@ -283,7 +283,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 		int fd;
 
 		/* write the template message before editing: */
-		path = xstrdup(git_path("TAG_EDITMSG"));
+		path = git_pathdup("TAG_EDITMSG");
 		fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 		if (fd < 0)
 			die("could not create file '%s': %s",
