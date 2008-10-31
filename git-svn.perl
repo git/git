@@ -2202,7 +2202,7 @@ sub do_git_commit {
 	}
 	die "Tree is not a valid sha1: $tree\n" if $tree !~ /^$::sha1$/o;
 
-	my @exec = ('git-commit-tree', $tree);
+	my @exec = ('git', 'commit-tree', $tree);
 	foreach ($self->get_commit_parents($log_entry)) {
 		push @exec, '-p', $_;
 	}
