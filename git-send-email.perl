@@ -407,10 +407,9 @@ for my $f (@ARGV) {
 
 		push @files, grep { -f $_ } map { +$f . "/" . $_ }
 				sort readdir(DH);
-
+		closedir(DH);
 	} elsif (-f $f or -p $f) {
 		push @files, $f;
-
 	} else {
 		print STDERR "Skipping $f - not found.\n";
 	}
