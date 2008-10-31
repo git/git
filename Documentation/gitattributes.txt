@@ -163,8 +163,8 @@ few exceptions.  Even though...
 `ident`
 ^^^^^^^
 
-When the attribute `ident` is set to a path, git replaces
-`$Id$` in the blob object with `$Id:`, followed by
+When the attribute `ident` is set for a path, git replaces
+`$Id$` in the blob object with `$Id:`, followed by the
 40-character hexadecimal blob object name, followed by a dollar
 sign `$` upon checkout.  Any byte sequence that begins with
 `$Id:` and ends with `$` in the worktree file is replaced
