@@ -1698,6 +1698,16 @@ static void prepare_pack(int window, int depth)
 
 	get_object_details();
 
+	/*
+	 * If we're locally repacking then we need to be doubly careful
+	 * from now on in order to make sure no stealth corruption gets
+	 * propagated to the new pack.  Clients receiving streamed packs
+	 * should validate everything they get anyway so no need to incur
+	 * the additional cost here in that case.
+	 */
+	if (!pack_to_stdout)
+		do_check_packed_object_crc = 1;
+
 	if (!nr_objects || !window || !depth)
 		return;
 

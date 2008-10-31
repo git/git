@@ -565,6 +565,9 @@ extern int force_object_loose(const unsigned char *sha1, time_t mtime);
 /* just like read_sha1_file(), but non fatal in presence of bad objects */
 extern void *read_object(const unsigned char *sha1, enum object_type *type, unsigned long *size);
 
+/* global flag to enable extra checks when accessing packed objects */
+extern int do_check_packed_object_crc;
+
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
 extern int move_temp_to_file(const char *tmpfile, const char *filename);
