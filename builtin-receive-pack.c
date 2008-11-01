@@ -11,6 +11,7 @@
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
+static int deny_deletes = 0;
 static int deny_non_fast_forwards = 0;
 static int receive_fsck_objects;
 static int receive_unpack_limit = -1;
@@ -23,6 +24,11 @@ static int capabilities_sent;
 
 static int receive_pack_config(const char *var, const char *value, void *cb)
 {
+	if (strcmp(var, "receive.denydeletes") == 0) {
+		deny_deletes = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (strcmp(var, "receive.denynonfastforwards") == 0) {
 		deny_non_fast_forwards = git_config_bool(var, value);
 		return 0;
@@ -184,6 +190,12 @@ static const char *update(struct command *cmd)
 		error("unpack should have generated %s, "
 		      "but I can't find it!", sha1_to_hex(new_sha1));
 		return "bad pack";
+	}
+	if (deny_deletes && is_null_sha1(new_sha1) &&
+	    !is_null_sha1(old_sha1) &&
+	    !prefixcmp(name, "refs/heads/")) {
+		error("denying ref deletion for %s", name);
+		return "deletion prohibited";
 	}
 	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
 	    !is_null_sha1(old_sha1) &&
