@@ -208,6 +208,15 @@ and returns the process output as a string, or nil if the git failed."
     (and (eq 0 (apply #' git-call-process-env t env args))
          (buffer-string))))
 
+(defun git-call-process-string-display-error (&rest args)
+  "Wrapper for call-process that displays error message and returns
+the process output as a string, or nil if the git command failed."
+  (with-temp-buffer
+    (if (eq 0 (apply #'git-call-process-env (list t t) nil args))
+        (buffer-string)
+      (display-message-or-buffer (current-buffer))
+      nil)))
+
 (defun git-run-process-region (buffer start end program args)
   "Run a git process with a buffer region as input."
   (let ((output-buffer (current-buffer))
@@ -391,14 +400,16 @@ and returns the process output as a string, or nil if the git failed."
 
 (defun git-read-tree (tree &optional index-file)
   "Read a tree into the index file."
-  (apply #'git-call-process-env nil
-         (if index-file `(("GIT_INDEX_FILE" . ,index-file)) nil)
-         "read-tree" (if tree (list tree))))
+  (let ((process-environment
+         (append (and index-file (list (concat "GIT_INDEX_FILE=" index-file))) process-environment)))
+    (apply 'git-call-process-display-error "read-tree" (if tree (list tree)))))
 
 (defun git-write-tree (&optional index-file)
   "Call git-write-tree and return the resulting tree SHA1 as a string."
-  (git-get-string-sha1
-   (git-call-process-env-string (and index-file `(("GIT_INDEX_FILE" . ,index-file))) "write-tree")))
+  (let ((process-environment
+         (append (and index-file (list (concat "GIT_INDEX_FILE=" index-file))) process-environment)))
+    (git-get-string-sha1
+     (git-call-process-string-display-error "write-tree"))))
 
 (defun git-commit-tree (buffer tree head)
   "Call git-commit-tree with buffer as input and return the resulting commit SHA1."
@@ -824,19 +835,18 @@ Return the list of files that haven't been handled."
 
 (defun git-update-index (index-file files)
   "Run git-update-index on a list of files."
-  (let ((env (and index-file `(("GIT_INDEX_FILE" . ,index-file))))
+  (let ((process-environment (append (and index-file (list (concat "GIT_INDEX_FILE=" index-file)))
+                                     process-environment))
         added deleted modified)
     (dolist (info files)
       (case (git-fileinfo->state info)
         ('added (push info added))
         ('deleted (push info deleted))
         ('modified (push info modified))))
-    (when added
-      (apply #'git-call-process-env nil env "update-index" "--add" "--" (git-get-filenames added)))
-    (when deleted
-      (apply #'git-call-process-env nil env "update-index" "--remove" "--" (git-get-filenames deleted)))
-    (when modified
-      (apply #'git-call-process-env nil env "update-index" "--" (git-get-filenames modified)))))
+    (and
+     (or (not added) (apply #'git-call-process-display-error "update-index" "--add" "--" (git-get-filenames added)))
+     (or (not deleted) (apply #'git-call-process-display-error "update-index" "--remove" "--" (git-get-filenames deleted)))
+     (or (not modified) (apply #'git-call-process-display-error "update-index" "--" (git-get-filenames modified))))))
 
 (defun git-run-pre-commit-hook ()
   "Run the pre-commit hook if any."
@@ -862,17 +872,19 @@ Return the list of files that haven't been handled."
           (message "You cannot commit unmerged files, resolve them first.")
         (unwind-protect
             (let ((files (git-marked-files-state 'added 'deleted 'modified))
-                  head head-tree)
+                  head tree head-tree)
               (unless (git-empty-db-p)
                 (setq head (git-rev-parse "HEAD")
                       head-tree (git-rev-parse "HEAD^{tree}")))
               (if files
                   (progn
                     (message "Running git commit...")
-                    (git-read-tree head-tree index-file)
-                    (git-update-index nil files)         ;update both the default index
-                    (git-update-index index-file files)  ;and the temporary one
-                    (let ((tree (git-write-tree index-file)))
+                    (when
+                        (and
+                         (git-read-tree head-tree index-file)
+                         (git-update-index nil files)         ;update both the default index
+                         (git-update-index index-file files)  ;and the temporary one
+                         (setq tree (git-write-tree index-file)))
                       (if (or (not (string-equal tree head-tree))
                               (yes-or-no-p "The tree was not modified, do you really want to perform an empty commit? "))
                           (let ((commit (git-commit-tree buffer tree head)))
