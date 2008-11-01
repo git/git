@@ -752,7 +752,7 @@ Return the list of files that haven't been handled."
            (concat "--exclude-per-directory=" git-per-dir-ignore-file)
            (append options (mapcar (lambda (f) (concat "--exclude-from=" f)) exclude-files)))))
 
-(defun git-update-status-files (&optional files)
+(defun git-update-status-files (&optional files mark-files)
   "Update the status of FILES from the index."
   (unless git-status (error "Not in git-status buffer."))
   ;; set the needs-update flag on existing files
@@ -777,12 +777,12 @@ Return the list of files that haven't been handled."
     (when remaining-files
       (setq remaining-files (git-run-ls-files-cached git-status remaining-files 'uptodate)))
     (git-set-filenames-state git-status remaining-files nil)
+    (when mark-files (git-mark-files git-status files))
     (git-refresh-files)
     (git-refresh-ewoc-hf git-status)))
 
 (defun git-mark-files (status files)
   "Mark all the specified FILES, and unmark the others."
-  (setq files (sort files #'string-lessp))
   (let ((file (and files (pop files)))
         (node (ewoc-nth status 0)))
     (while node
@@ -1371,9 +1371,7 @@ amended version of it."
               (git-call-process-display-error "reset" "--soft" "HEAD^")
             (and (git-update-ref "ORIG_HEAD" commit)
                  (git-update-ref "HEAD" nil commit)))
-      (git-update-status-files (copy-sequence files))
-      (git-mark-files git-status files)
-      (git-refresh-files)
+      (git-update-status-files files t)
       (git-setup-commit-buffer commit)
       (git-commit-file))))
 
