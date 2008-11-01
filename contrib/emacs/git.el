@@ -183,11 +183,9 @@ if there is already one that displays the same directory."
   "Build a list of NAME=VALUE strings from a list of environment strings."
   (mapcar (lambda (entry) (concat (car entry) "=" (cdr entry))) env))
 
-(defun git-call-process-env (buffer env &rest args)
+(defun git-call-process (buffer &rest args)
   "Wrapper for call-process that sets environment strings."
-  (let ((process-environment (append (git-get-env-strings env)
-                                     process-environment)))
-    (apply #'call-process "git" nil buffer nil args)))
+  (apply #'call-process "git" nil buffer nil args))
 
 (defun git-call-process-display-error (&rest args)
   "Wrapper for call-process that displays error messages."
@@ -197,22 +195,22 @@ if there is already one that displays the same directory."
                (let ((default-directory dir)
                      (buffer-read-only nil))
                  (erase-buffer)
-                 (eq 0 (apply 'call-process "git" nil (list buffer t) nil args))))))
+                 (eq 0 (apply #'git-call-process (list buffer t) args))))))
     (unless ok (display-message-or-buffer buffer))
     ok))
 
-(defun git-call-process-env-string (env &rest args)
-  "Wrapper for call-process that sets environment strings,
-and returns the process output as a string, or nil if the git failed."
+(defun git-call-process-string (&rest args)
+  "Wrapper for call-process that returns the process output as a string,
+or nil if the git command failed."
   (with-temp-buffer
-    (and (eq 0 (apply #' git-call-process-env t env args))
+    (and (eq 0 (apply #'git-call-process t args))
          (buffer-string))))
 
 (defun git-call-process-string-display-error (&rest args)
   "Wrapper for call-process that displays error message and returns
 the process output as a string, or nil if the git command failed."
   (with-temp-buffer
-    (if (eq 0 (apply #'git-call-process-env (list t t) nil args))
+    (if (eq 0 (apply #'git-call-process (list t t) args))
         (buffer-string)
       (display-message-or-buffer (current-buffer))
       nil)))
@@ -235,7 +233,7 @@ the process output as a string, or nil if the git command failed."
       (let ((default-directory dir)
             (buffer-read-only nil))
         (erase-buffer)
-        (apply #'git-call-process-env buffer nil args)))
+        (apply #'git-call-process buffer args)))
     (message "Running git %s...done" (car args))
     buffer))
 
@@ -336,7 +334,7 @@ the process output as a string, or nil if the git command failed."
   (let ((cdup (with-output-to-string
                 (with-current-buffer standard-output
                   (cd dir)
-                  (unless (eq 0 (call-process "git" nil t nil "rev-parse" "--show-cdup"))
+                  (unless (eq 0 (git-call-process t "rev-parse" "--show-cdup"))
                     (error "cannot find top-level git tree for %s." dir))))))
     (expand-file-name (concat (file-name-as-directory dir)
                               (car (split-string cdup "\n"))))))
@@ -357,7 +355,7 @@ the process output as a string, or nil if the git command failed."
     (sort-lines nil (point-min) (point-max))
     (save-buffer))
   (when created
-    (git-call-process-env nil nil "update-index" "--add" "--" (file-relative-name ignore-name)))
+    (git-call-process nil "update-index" "--add" "--" (file-relative-name ignore-name)))
   (git-update-status-files (list (file-relative-name ignore-name)) 'unknown)))
 
 ; propertize definition for XEmacs, stolen from erc-compat
@@ -376,16 +374,16 @@ the process output as a string, or nil if the git command failed."
 (defun git-rev-parse (rev)
   "Parse a revision name and return its SHA1."
   (git-get-string-sha1
-   (git-call-process-env-string nil "rev-parse" rev)))
+   (git-call-process-string "rev-parse" rev)))
 
 (defun git-config (key)
   "Retrieve the value associated to KEY in the git repository config file."
-  (let ((str (git-call-process-env-string nil "config" key)))
+  (let ((str (git-call-process-string "config" key)))
     (and str (car (split-string str "\n")))))
 
 (defun git-symbolic-ref (ref)
   "Wrapper for the git-symbolic-ref command."
-  (let ((str (git-call-process-env-string nil "symbolic-ref" ref)))
+  (let ((str (git-call-process-string "symbolic-ref" ref)))
     (and str (car (split-string str "\n")))))
 
 (defun git-update-ref (ref newval &optional oldval reason)
@@ -463,7 +461,7 @@ the process output as a string, or nil if the git command failed."
 
 (defun git-empty-db-p ()
   "Check if the git db is empty (no commit done yet)."
-  (not (eq 0 (call-process "git" nil nil nil "rev-parse" "--verify" "HEAD"))))
+  (not (eq 0 (git-call-process nil "rev-parse" "--verify" "HEAD"))))
 
 (defun git-get-merge-heads ()
   "Retrieve the merge heads from the MERGE_HEAD file if present."
@@ -479,7 +477,7 @@ the process output as a string, or nil if the git command failed."
 (defun git-get-commit-description (commit)
   "Get a one-line description of COMMIT."
   (let ((coding-system-for-read (git-get-logoutput-coding-system)))
-    (let ((descr (git-call-process-env-string nil "log" "--max-count=1" "--pretty=oneline" commit)))
+    (let ((descr (git-call-process-string "log" "--max-count=1" "--pretty=oneline" commit)))
       (if (and descr (string-match "\\`\\([0-9a-f]\\{40\\}\\) *\\(.*\\)$" descr))
           (concat (substring (match-string 1 descr) 0 10) " - " (match-string 2 descr))
         descr))))
@@ -655,7 +653,7 @@ Return the list of files that haven't been handled."
   (let ((remaining (copy-sequence files))
 	infolist)
     (with-temp-buffer
-      (apply #'git-call-process-env t nil "diff-index" "-z" "-M" "HEAD" "--" files)
+      (apply #'git-call-process t "diff-index" "-z" "-M" "HEAD" "--" files)
       (goto-char (point-min))
       (while (re-search-forward
 	      ":\\([0-7]\\{6\\}\\) \\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} [0-9a-f]\\{40\\} \\(\\([ADMUT]\\)\0\\([^\0]+\\)\\|\\([CR]\\)[0-9]*\0\\([^\0]+\\)\0\\([^\0]+\\)\\)\0"
@@ -688,7 +686,7 @@ Return the list of files that haven't been handled."
 Return the list of files that haven't been handled."
   (let (infolist)
     (with-temp-buffer
-      (apply #'git-call-process-env t nil "ls-files" "-z" (append options (list "--") files))
+      (apply #'git-call-process t "ls-files" "-z" (append options (list "--") files))
       (goto-char (point-min))
       (while (re-search-forward "\\([^\0]*?\\)\\(/?\\)\0" nil t 1)
         (let ((name (match-string 1)))
@@ -705,7 +703,7 @@ Return the list of files that haven't been handled."
   (let ((remaining (copy-sequence files))
 	infolist)
     (with-temp-buffer
-      (apply #'git-call-process-env t nil "ls-files" "-z" "-s" "-c" "--" files)
+      (apply #'git-call-process t "ls-files" "-z" "-s" "-c" "--" files)
       (goto-char (point-min))
       (while (re-search-forward "\\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} 0\t\\([^\0]+\\)\0" nil t)
 	(let* ((new-perm (string-to-number (match-string 1) 8))
@@ -719,7 +717,7 @@ Return the list of files that haven't been handled."
 (defun git-run-ls-unmerged (status files)
   "Run git-ls-files -u on FILES and parse the results into STATUS."
   (with-temp-buffer
-    (apply #'git-call-process-env t nil "ls-files" "-z" "-u" "--" files)
+    (apply #'git-call-process t "ls-files" "-z" "-u" "--" files)
     (goto-char (point-min))
     (let (unmerged-files)
       (while (re-search-forward "[0-7]\\{6\\} [0-9a-f]\\{40\\} [123]\t\\([^\0]+\\)\0" nil t)
@@ -893,8 +891,8 @@ Return the list of files that haven't been handled."
                               (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
                               (with-current-buffer buffer (erase-buffer))
                               (git-update-status-files (git-get-filenames files) 'uptodate)
-                              (git-call-process-env nil nil "rerere")
-                              (git-call-process-env nil nil "gc" "--auto")
+                              (git-call-process nil "rerere")
+                              (git-call-process nil "gc" "--auto")
                               (git-refresh-files)
                               (git-refresh-ewoc-hf git-status)
                               (message "Committed %s." commit)
@@ -1311,7 +1309,7 @@ Return the list of files that haven't been handled."
   (let (author-name author-email subject date msg)
     (with-temp-buffer
       (let ((coding-system (git-get-logoutput-coding-system)))
-        (git-call-process-env t nil "log" "-1" "--pretty=medium" commit)
+        (git-call-process t "log" "-1" "--pretty=medium" commit)
         (goto-char (point-min))
         (when (re-search-forward "^Author: *\\(.*\\) <\\(.*\\)>$" nil t)
           (setq author-name (match-string 1))
@@ -1331,7 +1329,7 @@ Return the list of files that haven't been handled."
   "Retrieve the list of files modified by COMMIT."
   (let (files)
     (with-temp-buffer
-      (git-call-process-env t nil "diff-tree" "-r" "-z" "--name-only" "--no-commit-id" commit)
+      (git-call-process t "diff-tree" "-r" "-z" "--name-only" "--no-commit-id" commit)
       (goto-char (point-min))
       (while (re-search-forward "\\([^\0]*\\)\0" nil t 1)
         (push (match-string 1) files)))
@@ -1395,7 +1393,7 @@ amended version of it."
          (cur-name (and pos (git-fileinfo->name (ewoc-data pos)))))
     (unless status (error "Not in git-status buffer."))
     (message "Refreshing git status...")
-    (git-call-process-env nil nil "update-index" "--refresh")
+    (git-call-process nil "update-index" "--refresh")
     (git-clear-status status)
     (git-update-status-files nil)
     ; restore file marks
@@ -1588,7 +1586,7 @@ Meant to be used in `after-save-hook'."
         (let ((filename (file-relative-name file dir)))
           ; skip files located inside the .git directory
           (unless (string-match "^\\.git/" filename)
-            (git-call-process-env nil nil "add" "--refresh" "--" filename)
+            (git-call-process nil "add" "--refresh" "--" filename)
             (git-update-status-files (list filename) 'uptodate)))))))
 
 (defun git-help ()
