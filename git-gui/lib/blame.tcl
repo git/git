@@ -21,8 +21,10 @@ field w_amov     ; # text column: annotations + move tracking
 field w_asim     ; # text column: annotations (simple computation)
 field w_file     ; # text column: actual file data
 field w_cviewer  ; # pane showing commit message
+field finder     ; # find mini-dialog frame
 field status     ; # status mega-widget instance
 field old_height ; # last known height of $w.file_pane
+
 
 # Tk UI colors
 #
@@ -59,7 +61,7 @@ field tooltip_timer     {} ; # Current timer event for our tooltip
 field tooltip_commit    {} ; # Commit(s) in tooltip
 
 constructor new {i_commit i_path i_jump} {
-	global cursor_ptr
+	global cursor_ptr M1B M1T have_tk85
 	variable active_color
 	variable group_colors
 
@@ -68,6 +70,8 @@ constructor new {i_commit i_path i_jump} {
 
 	make_toplevel top w
 	wm title $top [append "[appname] ([reponame]): " [mc "File Viewer"]]
+
+	set font_w [font measure font_diff "0"]
 
 	frame $w.header -background gold
 	label $w.header.commit_l \
@@ -114,9 +118,9 @@ constructor new {i_commit i_path i_jump} {
 	pack $w_path -fill x -side right
 	pack $w.header.path_l -side right
 
-	panedwindow $w.file_pane -orient vertical
-	frame $w.file_pane.out
-	frame $w.file_pane.cm
+	panedwindow $w.file_pane -orient vertical -borderwidth 0 -sashwidth 3
+	frame $w.file_pane.out -relief flat -borderwidth 1
+	frame $w.file_pane.cm -relief sunken -borderwidth 1
 	$w.file_pane add $w.file_pane.out \
 		-sticky nsew \
 		-minsize 100 \
@@ -197,6 +201,11 @@ constructor new {i_commit i_path i_jump} {
 		-width 80 \
 		-xscrollcommand [list $w.file_pane.out.sbx set] \
 		-font font_diff
+	if {$have_tk85} {
+		$w_file configure -inactiveselectbackground darkblue
+	}
+	$w_file tag conf found \
+		-background yellow
 
 	set w_columns [list $w_amov $w_asim $w_line $w_file]
 
@@ -216,6 +225,11 @@ constructor new {i_commit i_path i_jump} {
 		[expr {[llength $w_columns] - 1}] \
 		-weight 1
 	grid rowconfigure $w.file_pane.out 0 -weight 1
+
+	set finder [::searchbar::new \
+		$w.file_pane.out.ff $w_file \
+		-column [expr {[llength $w_columns] - 1}] \
+		]
 
 	set w_cviewer $w.file_pane.cm.t
 	text $w_cviewer \
@@ -257,6 +271,10 @@ constructor new {i_commit i_path i_jump} {
 		-label [mc "Copy Commit"] \
 		-command [cb _copycommit]
 	$w.ctxm add separator
+	$w.ctxm add command \
+		-label [mc "Find Text..."] \
+		-accelerator F7 \
+		-command [list searchbar::show $finder]
 	menu $w.ctxm.enc
 	build_encoding_menu $w.ctxm.enc [cb _setencoding]
 	$w.ctxm add cascade \
@@ -278,9 +296,15 @@ constructor new {i_commit i_path i_jump} {
 			$i tag conf color$g -background [lindex $group_colors $g]
 		}
 
+		if {$i eq $w_file} {
+			$w_file tag raise found
+		}
+		$i tag raise sel
+
 		$i conf -cursor $cursor_ptr
-		$i conf -yscrollcommand [list many2scrollbar \
-			$w_columns yview $w.file_pane.out.sby]
+		$i conf -yscrollcommand \
+			"[list ::searchbar::scrolled $finder]
+			 [list many2scrollbar $w_columns yview $w.file_pane.out.sby]"
 		bind $i <Button-1> "
 			[cb _hide_tooltip]
 			[cb _click $i @%x,%y]
@@ -317,6 +341,11 @@ constructor new {i_commit i_path i_jump} {
 	bind $w_cviewer <Tab>       "[list focus $w_file];break"
 	bind $w_cviewer <Button-1> [list focus $w_cviewer]
 	bind $w_file    <Visibility> [list focus $w_file]
+	bind $top       <F7>         [list searchbar::show $finder]
+	bind $top       <Escape>     [list searchbar::hide $finder]
+	bind $top       <F3>         [list searchbar::find_next $finder]
+	bind $top       <Shift-F3>   [list searchbar::find_prev $finder]
+	catch { bind $top <Shift-Key-XF86_Switch_VT_3> [list searchbar::find_prev $finder] }
 
 	grid configure $w.header -sticky ew
 	grid configure $w.file_pane -sticky nsew
@@ -328,9 +357,14 @@ constructor new {i_commit i_path i_jump} {
 
 	set req_w [winfo reqwidth  $top]
 	set req_h [winfo reqheight $top]
-	set scr_h [expr {[winfo screenheight $top] - 100}]
-	if {$req_w < 600} {set req_w 600}
+	set scr_w [expr {[winfo screenwidth $top] - 40}]
+	set scr_h [expr {[winfo screenheight $top] - 120}]
+	set opt_w [expr {$font_w * (80 + 5*3 + 3)}]
+	if {$req_w < $opt_w} {set req_w $opt_w}
+	if {$req_w > $scr_w} {set req_w $scr_w}
+	set opt_h [expr {$req_w*4/3}]
 	if {$req_h < $scr_h} {set req_h $scr_h}
+	if {$req_h > $opt_h} {set req_h $opt_h}
 	set g "${req_w}x${req_h}"
 	wm geometry $top $g
 	update
@@ -338,14 +372,21 @@ constructor new {i_commit i_path i_jump} {
 	set old_height [winfo height $w.file_pane]
 	$w.file_pane sash place 0 \
 		[lindex [$w.file_pane sash coord 0] 0] \
-		[expr {int($old_height * 0.70)}]
+		[expr {int($old_height * 0.80)}]
 	bind $w.file_pane <Configure> \
 	"if {{$w.file_pane} eq {%W}} {[cb _resize %h]}"
 
 	wm protocol $top WM_DELETE_WINDOW "destroy $top"
-	bind $top <Destroy> [cb _kill]
+	bind $top <Destroy> [cb _handle_destroy %W]
 
 	_load $this $i_jump
+}
+
+method _handle_destroy {win} {
+	if {$win eq $w} {
+		_kill $this
+		delete_this
+	}
 }
 
 method _kill {} {
@@ -866,6 +907,10 @@ method _showcommit {cur_w lno} {
 		foreach i $w_columns {
 			$i tag conf g$cmit -background $active_color
 			$i tag raise g$cmit
+			if {$i eq $w_file} {
+				$w_file tag raise found
+			}
+			$i tag raise sel
 		}
 
 		set author_name {}
