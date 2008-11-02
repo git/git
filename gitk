@@ -1751,19 +1751,19 @@ proc show_error {w top msg} {
     tkwait window $top
 }
 
-proc error_popup msg {
+proc error_popup {msg {owner .}} {
     set w .error
     toplevel $w
-    wm transient $w .
+    wm transient $w $owner
     show_error $w $w $msg
 }
 
-proc confirm_popup msg {
+proc confirm_popup {msg {owner .}} {
     global confirm_ok
     set confirm_ok 0
     set w .confirm
     toplevel $w
-    wm transient $w .
+    wm transient $w $owner
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
@@ -2546,6 +2546,7 @@ proc about {} {
     }
     toplevel $w
     wm title $w [mc "About gitk"]
+    wm transient $w .
     message $w.m -text [mc "
 Gitk - a commit viewer for git
 
@@ -2574,6 +2575,7 @@ proc keys {} {
     }
     toplevel $w
     wm title $w [mc "Gitk key bindings"]
+    wm transient $w .
     message $w.m -text "
 [mc "Gitk key bindings:"]
 
@@ -3503,6 +3505,7 @@ proc vieweditor {top n title} {
 
     toplevel $top
     wm title $top $title
+    wm transient $top .
     label $top.nl -text [mc "Name"]
     entry $top.name -width 20 -textvariable newviewname($n)
     grid $top.nl $top.name -sticky w -pady 5
@@ -3572,9 +3575,7 @@ proc newviewok {top n} {
     if {[catch {
 	set newargs [shellsplit $newviewargs($n)]
     } err]} {
-	error_popup "[mc "Error in commit selection arguments:"] $err"
-	wm raise $top
-	focus $top
+	error_popup "[mc "Error in commit selection arguments:"] $err" $top
 	return
     }
     set files {}
@@ -7770,6 +7771,7 @@ proc mkpatch {} {
     set patchtop $top
     catch {destroy $top}
     toplevel $top
+    wm transient $top .
     label $top.title -text [mc "Generate patch"]
     grid $top.title - -pady 10
     label $top.from -text [mc "From:"]
@@ -7836,7 +7838,7 @@ proc mkpatchgo {} {
     set cmd [lrange $cmd 1 end]
     lappend cmd >$fname &
     if {[catch {eval exec $cmd} err]} {
-	error_popup "[mc "Error creating patch:"] $err"
+	error_popup "[mc "Error creating patch:"] $err" $patchtop
     }
     catch {destroy $patchtop}
     unset patchtop
@@ -7856,6 +7858,7 @@ proc mktag {} {
     set mktagtop $top
     catch {destroy $top}
     toplevel $top
+    wm transient $top .
     label $top.title -text [mc "Create tag"]
     grid $top.title - -pady 10
     label $top.id -text [mc "ID:"]
@@ -7888,18 +7891,18 @@ proc domktag {} {
     set id [$mktagtop.sha1 get]
     set tag [$mktagtop.tag get]
     if {$tag == {}} {
-	error_popup [mc "No tag name specified"]
-	return
+	error_popup [mc "No tag name specified"] $mktagtop
+	return 0
     }
     if {[info exists tagids($tag)]} {
-	error_popup [mc "Tag \"%s\" already exists" $tag]
-	return
+	error_popup [mc "Tag \"%s\" already exists" $tag] $mktagtop
+	return 0
     }
     if {[catch {
 	exec git tag $tag $id
     } err]} {
-	error_popup "[mc "Error creating tag:"] $err"
-	return
+	error_popup "[mc "Error creating tag:"] $err" $mktagtop
+	return 0
     }
 
     set tagids($tag) $id
@@ -7908,6 +7911,7 @@ proc domktag {} {
     addedtag $id
     dispneartags 0
     run refill_reflist
+    return 1
 }
 
 proc redrawtags {id} {
@@ -7946,7 +7950,7 @@ proc mktagcan {} {
 }
 
 proc mktaggo {} {
-    domktag
+    if {![domktag]} return
     mktagcan
 }
 
@@ -7957,6 +7961,7 @@ proc writecommit {} {
     set wrcomtop $top
     catch {destroy $top}
     toplevel $top
+    wm transient $top .
     label $top.title -text [mc "Write commit to file"]
     grid $top.title - -pady 10
     label $top.id -text [mc "ID:"]
@@ -7994,7 +7999,7 @@ proc wrcomgo {} {
     set cmd "echo $id | [$wrcomtop.cmd get]"
     set fname [$wrcomtop.fname get]
     if {[catch {exec sh -c $cmd >$fname &} err]} {
-	error_popup "[mc "Error writing commit:"] $err"
+	error_popup "[mc "Error writing commit:"] $err" $wrcomtop
     }
     catch {destroy $wrcomtop}
     unset wrcomtop
@@ -8013,6 +8018,7 @@ proc mkbranch {} {
     set top .makebranch
     catch {destroy $top}
     toplevel $top
+    wm transient $top .
     label $top.title -text [mc "Create new branch"]
     grid $top.title - -pady 10
     label $top.id -text [mc "ID:"]
@@ -8044,12 +8050,12 @@ proc mkbrgo {top} {
     set cmdargs {}
     set old_id {}
     if {$name eq {}} {
-	error_popup [mc "Please specify a name for the new branch"]
+	error_popup [mc "Please specify a name for the new branch"] $top
 	return
     }
     if {[info exists headids($name)]} {
 	if {![confirm_popup [mc \
-		"Branch '%s' already exists. Overwrite?" $name]]} {
+		"Branch '%s' already exists. Overwrite?" $name] $top]} {
 	    return
 	}
 	set old_id $headids($name)
@@ -8310,6 +8316,7 @@ proc showrefs {} {
     }
     toplevel $top
     wm title $top [mc "Tags and heads: %s" [file tail [pwd]]]
+    wm transient $top .
     text $top.list -background $bgcolor -foreground $fgcolor \
 	-selectbackground $selectbgcolor -font mainfont \
 	-xscrollcommand "$top.xsb set" -yscrollcommand "$top.ysb set" \
@@ -9637,6 +9644,7 @@ proc mkfontdisp {font top which} {
 
 proc choosefont {font which} {
     global fontparam fontlist fonttop fontattr
+    global prefstop
 
     set fontparam(which) $which
     set fontparam(font) $font
@@ -9650,6 +9658,7 @@ proc choosefont {font which} {
 	font create sample
 	eval font config sample [font actual $font]
 	toplevel $top
+	wm transient $top $prefstop
 	wm title $top [mc "Gitk font chooser"]
 	label $top.l -textvariable fontparam(which)
 	pack $top.l -side top
@@ -9766,6 +9775,7 @@ proc doprefs {} {
     }
     toplevel $top
     wm title $top [mc "Gitk preferences"]
+    wm transient $top .
     label $top.ldisp -text [mc "Commit list display options"]
     grid $top.ldisp - -sticky w -pady 10
     label $top.spacer -text " "
