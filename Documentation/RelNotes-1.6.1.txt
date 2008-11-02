@@ -62,6 +62,8 @@ on.
 * "git bisect" is careful about a user mistake and suggests testing of
   merge base first when good is not a strict ancestor of bad.
 
+* "git check-attr --stdin" can check attributes for multiple paths.
+
 * "git checkout --track origin/hack" used to be a syntax error.  It now
   DWIMs to create a corresponding local branch "hack", i.e. acts as if you
   said "git checkout --track -b hack origin/hack".
@@ -74,6 +76,8 @@ on.
 
 * "git cherry-pick" can also utilize rerere for conflict resolution.
 
+* "git clone" learned to be verbose with -v
+
 * "git commit --author=$name" can look up author name from existing
   commits.
 
@@ -84,6 +88,12 @@ on.
   their corresponding idx files.
 
 * "git daemon" learned --max-connections=<count> option.
+
+* "git daemon" exports REMOTE_ADDR to record client address, so that
+  spawned programs can act differently on it.
+
+* "git describe --tags" favours closer lightweight tags than farther
+  annotated tags now.
 
 * "git diff" learned to mimic --suppress-blank-empty from GNU diff via a
   configuration option.
@@ -99,8 +109,15 @@ on.
 
 * "git diff" hunk header pattern for ObjC has been added.
 
+* a "textconv" filter that makes binary files textual form for human
+   consumption can be specified as an attribute for paths; "git diff"
+   learnt to make use of it.
+
 * "git for-each-ref" learned "refname:short" token that gives an
   unambiguously abbreviated refname.
+
+* Auto-numbering of the subject lines is the default for "git
+  format-patch" now.
 
 * "git grep" learned to accept -z similar to GNU grep.
 
@@ -127,8 +144,17 @@ on.
 * "git merge -s $strategy" can use a custom built strategy if you have a
   command "git-merge-$strategy" on your $PATH.
 
+* "git rebase" honours pre-rebase hook; use --no-verify to bypass it.
+
+* "git rebase -p" uses interactive rebase machinery now to preserve the merges.
+
 * "git reflog expire branch" can be used in place of "git reflog expire
   refs/heads/branch".
+
+* "git remote show $remote" lists remote branches one-per-line now.
+
+* when giving up resolving a conflicted merge, "git reset --hard" failed
+  to remove new paths from the working tree. [cherry-pick to 'maint'?]
 
 * "git submodule foreach" subcommand allows you to iterate over checked
   out submodules.
@@ -179,6 +205,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.2-553-g58e0fa5
+O=v1.6.0.3-574-gaebd173
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
