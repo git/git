@@ -1,0 +1,29 @@
+GIT v1.6.0.4 Release Notes
+==========================
+
+Fixes since v1.6.0.3
+--------------------
+
+* 'git-add -p' said "No changes" when only binary files were changed.
+
+* git-archive did not work correctly in bare repositories.
+
+* when we refuse to detect renames because there are too many new or
+  deleted files, we did not say how many there are.
+
+* 'git-push --mirror' tried and failed to push the stash; there is no
+  point in sending it to begin with.
+
+* 'git-send-email' had a small fd leak while scanning directory.
+
+* git-svn used deprecated 'git-foo' form of subcommand invocaition.
+
+* Plugged small memleaks here and there.
+
+* Also contains many documentation updates.
+
+--
+exec >/var/tmp/1
+O=v1.6.0.3-22-gc2163c6
+echo O=$(git describe maint)
+git shortlog --no-merges $O..maint

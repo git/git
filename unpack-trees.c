@@ -382,7 +382,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->merge_size = len;
 
 	if (!dfc)
-		dfc = xcalloc(1, sizeof(struct cache_entry) + 1);
+		dfc = xcalloc(1, cache_entry_size(0));
 	o->df_conflict_entry = dfc;
 
 	if (len) {

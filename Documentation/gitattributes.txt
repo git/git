@@ -213,6 +213,9 @@ with `crlf`, and then `ident` and fed to `filter`.
 Generating diff text
 ~~~~~~~~~~~~~~~~~~~~
 
+`diff`
+^^^^^^
+
 The attribute `diff` affects if 'git-diff' generates textual
 patch for the path or just says `Binary files differ`.  It also
 can affect what line is shown on the hunk header `@@ -k,l +n,m @@`
@@ -330,6 +333,9 @@ patterns are available:
 
 Performing a three-way merge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`merge`
+^^^^^^^
 
 The attribute `merge` affects how three versions of a file is
 merged when a file-level merge is necessary during `git merge`,

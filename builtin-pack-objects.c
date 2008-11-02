@@ -1375,7 +1375,7 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 	array = xcalloc(window, sizeof(struct unpacked));
 
 	for (;;) {
-		struct object_entry *entry = *list++;
+		struct object_entry *entry;
 		struct unpacked *n = array + idx;
 		int j, max_depth, best_base = -1;
 
@@ -1384,6 +1384,7 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 			progress_unlock();
 			break;
 		}
+		entry = *list++;
 		(*list_size)--;
 		if (!entry->preferred_base) {
 			(*processed)++;
