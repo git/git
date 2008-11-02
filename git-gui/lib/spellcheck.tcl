@@ -80,7 +80,7 @@ method _connect {pipe_fd} {
 		error_popup [strcat [mc "Unrecognized spell checker"] ":\n\n$s_version"]
 		return
 	}
-	set s_version [string range $s_version 5 end]
+	set s_version [string range [string trim $s_version] 5 end]
 	regexp \
 		{International Ispell Version .* \(but really (Aspell .*?)\)$} \
 		$s_version _junk s_version
