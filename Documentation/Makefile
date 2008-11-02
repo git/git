@@ -87,7 +87,9 @@ man7: $(DOC_MAN7)
 
 info: git.info gitman.info
 
-install: man
+install: install-man
+
+install-man: man
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man5dir)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man7dir)
@@ -220,7 +222,9 @@ $(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
 install-webdoc : html
 	sh ./install-webdoc.sh $(WEBDOC_DEST)
 
-quick-install:
+quick-install: quick-install-man
+
+quick-install-man:
 	sh ./install-doc-quick.sh $(DOC_REF) $(DESTDIR)$(mandir)
 
 quick-install-html:
