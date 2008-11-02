@@ -229,6 +229,7 @@ INSTALL = install
 RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
+PTHREAD_LIBS = -lpthread
 
 export TCL_PATH TCLTK_PATH
 
@@ -695,6 +696,7 @@ ifeq ($(uname_S),FreeBSD)
 	COMPAT_CFLAGS += -Icompat/regex
 	COMPAT_OBJS += compat/regex/regex.o
 	ifeq ($(shell expr "$(uname_R)" : '4\.'),2)
+		PTHREAD_LIBS = -pthread
 		NO_UINTMAX_T = YesPlease
 		NO_STRTOUMAX = YesPlease
 	endif
@@ -1023,7 +1025,7 @@ endif
 
 ifdef THREADED_DELTA_SEARCH
 	BASIC_CFLAGS += -DTHREADED_DELTA_SEARCH
-	EXTLIBS += -lpthread
+	EXTLIBS += $(PTHREAD_LIBS)
 	LIB_OBJS += thread-utils.o
 endif
 ifdef DIR_HAS_BSD_GROUP_SEMANTICS
