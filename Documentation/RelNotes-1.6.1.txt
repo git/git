@@ -62,6 +62,9 @@ on.
 * "git bisect" is careful about a user mistake and suggests testing of
   merge base first when good is not a strict ancestor of bad.
 
+* "git blame" re-encodes the commit metainfo to UTF-8 from i18n.commitEncoding
+  by default.
+
 * "git check-attr --stdin" can check attributes for multiple paths.
 
 * "git checkout --track origin/hack" used to be a syntax error.  It now
@@ -144,6 +147,9 @@ on.
 * "git merge -s $strategy" can use a custom built strategy if you have a
   command "git-merge-$strategy" on your $PATH.
 
+* "git push" can be told to reject deletion of refs with receive.denyDeletes
+  configuration.
+
 * "git rebase" honours pre-rebase hook; use --no-verify to bypass it.
 
 * "git rebase -p" uses interactive rebase machinery now to preserve the merges.
@@ -164,6 +170,8 @@ on.
 
 * "git svn branch" can create new branches on the other end.
 
+* "gitweb" can use more saner PATH_INFO based URL.
+
 (internal)
 
 * "git hash-object" learned to lie about the path being hashed, so that
@@ -173,6 +181,10 @@ on.
 * various callers of git-merge-recursive avoid forking it as an external
   process.
 
+* Git class defined in "Git.pm" can be subclasses a bit more easily.
+
+* We used to link GNU regex library as a compatibility layer for some platforms,
+  but it turns out it is not necessary on most of them.
 
 Fixes since v1.6.0
 ------------------
@@ -205,6 +217,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.3-574-gaebd173
+O=v1.6.0.3-610-g94dc4b8
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
