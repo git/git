@@ -536,12 +536,16 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 		 * would normally create a console window. But
 		 * since we'll be redirecting std streams, we do
 		 * not need the console.
+		 * It is necessary to use DETACHED_PROCESS
+		 * instead of CREATE_NO_WINDOW to make ssh
+		 * recognize that it has no console.
 		 */
-		flags = CREATE_NO_WINDOW;
+		flags = DETACHED_PROCESS;
 	} else {
 		/* There is already a console. If we specified
-		 * CREATE_NO_WINDOW here, too, Windows would
+		 * DETACHED_PROCESS here, too, Windows would
 		 * disassociate the child from the console.
+		 * The same is true for CREATE_NO_WINDOW.
 		 * Go figure!
 		 */
 		flags = 0;
