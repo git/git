@@ -1746,6 +1746,8 @@ proc show_error {w top msg} {
     pack $w.ok -side bottom -fill x
     bind $top <Visibility> "grab $top; focus $top"
     bind $top <Key-Return> "destroy $top"
+    bind $top <Key-space>  "destroy $top"
+    bind $top <Key-Escape> "destroy $top"
     tkwait window $top
 }
 
@@ -1769,6 +1771,9 @@ proc confirm_popup msg {
     button $w.cancel -text [mc Cancel] -command "destroy $w"
     pack $w.cancel -side right -fill x
     bind $w <Visibility> "grab $w; focus $w"
+    bind $w <Key-Return> "set confirm_ok 1; destroy $w"
+    bind $w <Key-space>  "set confirm_ok 1; destroy $w"
+    bind $w <Key-Escape> "destroy $w"
     tkwait window $w
     return $confirm_ok
 }
@@ -2611,6 +2616,7 @@ proc keys {} {
 	    -justify left -bg white -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
     button $w.ok -text [mc "Close"] -command "destroy $w" -default active
+    bind $w <Key-Escape> [list destroy $w]
     pack $w.ok -side bottom
     bind $w <Visibility> "focus $w.ok"
     bind $w <Key-Escape> "destroy $w"
@@ -3533,6 +3539,7 @@ proc vieweditor {top n title} {
     frame $top.buts
     button $top.buts.ok -text [mc "OK"] -command [list newviewok $top $n]
     button $top.buts.can -text [mc "Cancel"] -command [list destroy $top]
+    bind $top <Escape> [list destroy $top]
     grid $top.buts.ok $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -7793,6 +7800,8 @@ proc mkpatch {} {
     frame $top.buts
     button $top.buts.gen -text [mc "Generate"] -command mkpatchgo
     button $top.buts.can -text [mc "Cancel"] -command mkpatchcan
+    bind $top <Key-Return> mkpatchgo
+    bind $top <Key-Escape> mkpatchcan
     grid $top.buts.gen $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -7864,6 +7873,8 @@ proc mktag {} {
     frame $top.buts
     button $top.buts.gen -text [mc "Create"] -command mktaggo
     button $top.buts.can -text [mc "Cancel"] -command mktagcan
+    bind $top <Key-Return> mktaggo
+    bind $top <Key-Escape> mktagcan
     grid $top.buts.gen $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -7967,6 +7978,8 @@ proc writecommit {} {
     frame $top.buts
     button $top.buts.gen -text [mc "Write"] -command wrcomgo
     button $top.buts.can -text [mc "Cancel"] -command wrcomcan
+    bind $top <Key-Return> wrcomgo
+    bind $top <Key-Escape> wrcomcan
     grid $top.buts.gen $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -8014,6 +8027,8 @@ proc mkbranch {} {
     frame $top.buts
     button $top.buts.go -text [mc "Create"] -command [list mkbrgo $top]
     button $top.buts.can -text [mc "Cancel"] -command "catch {destroy $top}"
+    bind $top <Key-Return> [list mkbrgo $top]
+    bind $top <Key-Escape> "catch {destroy $top}"
     grid $top.buts.go $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -8138,6 +8153,7 @@ proc resethead {} {
     button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
     pack $w.ok -side left -fill x -padx 20 -pady 20
     button $w.cancel -text [mc Cancel] -command "destroy $w"
+    bind $w <Key-Escape> [list destroy $w]
     pack $w.cancel -side right -fill x -padx 20 -pady 20
     bind $w <Visibility> "grab $w; focus $w"
     tkwait window $w
@@ -8315,6 +8331,7 @@ proc showrefs {} {
     pack $top.f.l -side left
     grid $top.f - -sticky ew -pady 2
     button $top.close -command [list destroy $top] -text [mc "Close"]
+    bind $top <Key-Escape> [list destroy $top]
     grid $top.close -
     grid columnconfigure $top 0 -weight 1
     grid rowconfigure $top 0 -weight 1
@@ -9666,6 +9683,8 @@ proc choosefont {font which} {
 	frame $top.buts
 	button $top.buts.ok -text [mc "OK"] -command fontok -default active
 	button $top.buts.can -text [mc "Cancel"] -command fontcan -default normal
+	bind $top <Key-Return> fontok
+	bind $top <Key-Escape> fontcan
 	grid $top.buts.ok $top.buts.can
 	grid columnconfigure $top.buts 0 -weight 1 -uniform a
 	grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -9845,6 +9864,8 @@ proc doprefs {} {
     frame $top.buts
     button $top.buts.ok -text [mc "OK"] -command prefsok -default active
     button $top.buts.can -text [mc "Cancel"] -command prefscan -default normal
+    bind $top <Key-Return> prefsok
+    bind $top <Key-Escape> prefscan
     grid $top.buts.ok $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
