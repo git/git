@@ -188,7 +188,7 @@ test_expect_success 'prune --dry-run' '
 test_expect_success 'add --mirror && prune' '
 	(mkdir mirror &&
 	 cd mirror &&
-	 git init &&
+	 git init --bare &&
 	 git remote add --mirror -f origin ../one) &&
 	(cd one &&
 	 git branch -m side2 side) &&
