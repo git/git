@@ -721,6 +721,10 @@ if (defined $searchtext) {
 our $git_dir;
 $git_dir = "$projectroot/$project" if $project;
 
+# list of supported snapshot formats
+our @snapshot_fmts = gitweb_check_feature('snapshot');
+@snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
+
 # dispatch
 if (!defined $action) {
 	if (defined $hash) {
@@ -1647,8 +1651,6 @@ sub format_diff_line {
 # linked.  Pass the hash of the tree/commit to snapshot.
 sub format_snapshot_links {
 	my ($hash) = @_;
-	my @snapshot_fmts = gitweb_check_feature('snapshot');
-	@snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
 	my $num_fmts = @snapshot_fmts;
 	if ($num_fmts > 1) {
 		# A parenthesized list of links bearing format names.
@@ -4846,20 +4848,17 @@ sub git_tree {
 }
 
 sub git_snapshot {
-	my @supported_fmts = gitweb_check_feature('snapshot');
-	@supported_fmts = filter_snapshot_fmts(@supported_fmts);
-
 	my $format = $input_params{'snapshot_format'};
-	if (!@supported_fmts) {
+	if (!@snapshot_fmts) {
 		die_error(403, "Snapshots not allowed");
 	}
 	# default to first supported snapshot format
-	$format ||= $supported_fmts[0];
+	$format ||= $snapshot_fmts[0];
 	if ($format !~ m/^[a-z0-9]+$/) {
 		die_error(400, "Invalid snapshot format parameter");
 	} elsif (!exists($known_snapshot_formats{$format})) {
 		die_error(400, "Unknown snapshot format");
-	} elsif (!grep($_ eq $format, @supported_fmts)) {
+	} elsif (!grep($_ eq $format, @snapshot_fmts)) {
 		die_error(403, "Unsupported snapshot format");
 	}
 
