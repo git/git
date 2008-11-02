@@ -8088,6 +8088,32 @@ proc mkbrgo {top} {
     }
 }
 
+proc exec_citool {tool_args {baseid {}}} {
+    global commitinfo env
+
+    set save_env [array get env GIT_AUTHOR_*]
+
+    if {$baseid ne {}} {
+	if {![info exists commitinfo($baseid)]} {
+	    getcommit $baseid
+	}
+	set author [lindex $commitinfo($baseid) 1]
+	set date [lindex $commitinfo($baseid) 2]
+	if {[regexp {^\s*(\S.*\S|\S)\s*<(.*)>\s*$} \
+	            $author author name email]
+	    && $date ne {}} {
+	    set env(GIT_AUTHOR_NAME) $name
+	    set env(GIT_AUTHOR_EMAIL) $email
+	    set env(GIT_AUTHOR_DATE) $date
+	}
+    }
+
+    eval exec git citool $tool_args &
+
+    array unset env GIT_AUTHOR_*
+    array set env $save_env
+}
+
 proc cherrypick {} {
     global rowmenuid curview
     global mainhead mainheadid
@@ -8106,7 +8132,19 @@ proc cherrypick {} {
     # no error occurs, and exec takes that as an indication of error...
     if {[catch {exec sh -c "git cherry-pick -r $rowmenuid 2>&1"} err]} {
 	notbusy cherrypick
-	error_popup $err
+	if {[regexp -line \
+	    {Entry '(.*)' would be overwritten by merge} $err msg fname]} {
+	    error_popup [mc "Cherry-pick failed:
+file '%s' had local modifications.
+
+Please commit, reset or stash your changes." $fname]
+	} elseif {[regexp -line {^CONFLICT \(.*\):} $err msg]} {
+	    # Force citool to read MERGE_MSG
+	    file delete [file join [gitdir] "GITGUI_MSG"]
+	    exec_citool {} $rowmenuid
+	} else {
+	    error_popup $err
+	}
 	return
     }
     set newhead [exec git rev-parse HEAD]
