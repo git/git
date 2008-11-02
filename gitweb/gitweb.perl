@@ -811,6 +811,7 @@ sub href (%) {
 		#   - action
 		#   - hash_parent or hash_parent_base:/file_parent
 		#   - hash or hash_base:/filename
+		#   - the snapshot_format as an appropriate suffix
 
 		# When the script is the root DirectoryIndex for the domain,
 		# $href here would be something like http://gitweb.example.com/
@@ -821,6 +822,10 @@ sub href (%) {
 		# Then add the project name, if present
 		$href .= "/".esc_url($params{'project'}) if defined $params{'project'};
 		delete $params{'project'};
+
+		# since we destructively absorb parameters, we keep this
+		# boolean that remembers if we're handling a snapshot
+		my $is_snapshot = $params{'action'} eq 'snapshot';
 
 		# Summary just uses the project path URL, any other action is
 		# added to the URL
@@ -860,6 +865,18 @@ sub href (%) {
 		} elsif (defined $params{'hash'}) {
 			$href .= esc_url($params{'hash'});
 			delete $params{'hash'};
+		}
+
+		# If the action was a snapshot, we can absorb the
+		# snapshot_format parameter too
+		if ($is_snapshot) {
+			my $fmt = $params{'snapshot_format'};
+			# snapshot_format should always be defined when href()
+			# is called, but just in case some code forgets, we
+			# fall back to the default
+			$fmt ||= $snapshot_fmts[0];
+			$href .= $known_snapshot_formats{$fmt}{'suffix'};
+			delete $params{'snapshot_format'};
 		}
 	}
 
