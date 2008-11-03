@@ -11,6 +11,7 @@
 #include "reflog-walk.h"
 #include "patch-ids.h"
 #include "decorate.h"
+#include "log-tree.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -301,6 +302,24 @@ static int rev_compare_tree(struct rev_info *revs, struct commit *parent, struct
 
 	if (!t1)
 		return REV_TREE_NEW;
+
+	if (revs->simplify_by_decoration) {
+		/*
+		 * If we are simplifying by decoration, then the commit
+		 * is worth showing if it has a tag pointing at it.
+		 */
+		if (lookup_decoration(&name_decoration, &commit->object))
+			return REV_TREE_DIFFERENT;
+		/*
+		 * A commit that is not pointed by a tag is uninteresting
+		 * if we are not limited by path.  This means that you will
+		 * see the usual "commits that touch the paths" plus any
+		 * tagged commit by specifying both --simplify-by-decoration
+		 * and pathspec.
+		 */
+		if (!revs->prune_data)
+			return REV_TREE_SAME;
+	}
 	if (!t2)
 		return REV_TREE_DIFFERENT;
 	tree_difference = REV_TREE_SAME;
@@ -1041,6 +1060,14 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->rewrite_parents = 1;
 		revs->simplify_history = 0;
 		revs->limited = 1;
+	} else if (!strcmp(arg, "--simplify-by-decoration")) {
+		revs->simplify_merges = 1;
+		revs->rewrite_parents = 1;
+		revs->simplify_history = 0;
+		revs->simplify_by_decoration = 1;
+		revs->limited = 1;
+		revs->prune = 1;
+		load_ref_decorations();
 	} else if (!strcmp(arg, "--date-order")) {
 		revs->lifo = 0;
 		revs->topo_order = 1;
