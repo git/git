@@ -294,8 +294,11 @@ static void file_change(struct diff_options *options,
 	DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
-static int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree *t2)
+static int rev_compare_tree(struct rev_info *revs, struct commit *parent, struct commit *commit)
 {
+	struct tree *t1 = parent->tree;
+	struct tree *t2 = commit->tree;
+
 	if (!t1)
 		return REV_TREE_NEW;
 	if (!t2)
@@ -308,12 +311,13 @@ static int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree 
 	return tree_difference;
 }
 
-static int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
+static int rev_same_tree_as_empty(struct rev_info *revs, struct commit *commit)
 {
 	int retval;
 	void *tree;
 	unsigned long size;
 	struct tree_desc empty, real;
+	struct tree *t1 = commit->tree;
 
 	if (!t1)
 		return 0;
@@ -347,7 +351,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		return;
 
 	if (!commit->parents) {
-		if (rev_same_tree_as_empty(revs, commit->tree))
+		if (rev_same_tree_as_empty(revs, commit))
 			commit->object.flags |= TREESAME;
 		return;
 	}
@@ -367,7 +371,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 			die("cannot simplify commit %s (because of %s)",
 			    sha1_to_hex(commit->object.sha1),
 			    sha1_to_hex(p->object.sha1));
-		switch (rev_compare_tree(revs, p->tree, commit->tree)) {
+		switch (rev_compare_tree(revs, p, commit)) {
 		case REV_TREE_SAME:
 			tree_same = 1;
 			if (!revs->simplify_history || (p->object.flags & UNINTERESTING)) {
@@ -387,7 +391,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 
 		case REV_TREE_NEW:
 			if (revs->remove_empty_trees &&
-			    rev_same_tree_as_empty(revs, p->tree)) {
+			    rev_same_tree_as_empty(revs, p)) {
 				/* We are adding all the specified
 				 * paths from this parent, so the
 				 * history beyond this parent is not
