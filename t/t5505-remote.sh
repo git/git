@@ -328,4 +328,19 @@ test_expect_success 'reject adding remote with an invalid name' '
 
 '
 
+# The first three test if the tracking branches are properly renamed,
+# the last two ones check if the config is updated.
+
+test_expect_success 'rename a remote' '
+
+	git clone one four &&
+	(cd four &&
+	 git remote rename origin upstream &&
+	 rmdir .git/refs/remotes/origin &&
+	 test "$(git symbolic-ref refs/remotes/upstream/HEAD)" = "refs/remotes/upstream/master" &&
+	 test "$(git rev-parse upstream/master)" = "$(git rev-parse master)" &&
+	 test "$(git config remote.upstream.fetch)" = "+refs/heads/*:refs/remotes/upstream/*" &&
+	 test "$(git config branch.master.remote)" = "upstream")
+
+'
 test_done
