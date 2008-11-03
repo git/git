@@ -54,6 +54,7 @@ struct rev_info {
 			rewrite_parents:1,
 			print_parents:1,
 			show_source:1,
+			show_decorations:1,
 			reverse:1,
 			reverse_output_stage:1,
 			cherry_pick:1,

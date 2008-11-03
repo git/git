@@ -59,6 +59,8 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 
 	if (opt->show_source && commit->util)
 		printf(" %s", (char *) commit->util);
+	if (!opt->show_decorations)
+		return;
 	decoration = lookup_decoration(&name_decoration, &commit->object);
 	if (!decoration)
 		return;
