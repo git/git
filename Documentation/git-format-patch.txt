@@ -46,7 +46,8 @@ applies to that command line and you do not get "everything
 since the beginning of the time".  If you want to format
 everything since project inception to one commit, say "git
 format-patch \--root <commit>" to make it clear that it is the
-latter case.
+latter case.  If you want to format a single commit, you can do
+this with "git format-patch -1 <commit>".
 
 By default, each output file is numbered sequentially from 1, and uses the
 first line of the commit message (massaged for pathname safety) as
