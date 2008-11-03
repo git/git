@@ -37,9 +37,9 @@ of `i18n.commitencoding` in its `encoding` header.  This is to
 help other people who look at them later.  Lack of this header
 implies that the commit log message is encoded in UTF-8.
 
-. 'git-log', 'git-show' and friends looks at the `encoding`
-  header of a commit object, and tries to re-code the log
-  message into UTF-8 unless otherwise specified.  You can
+. 'git-log', 'git-show', 'git-blame' and friends look at the
+  `encoding` header of a commit object, and try to re-code the
+  log message into UTF-8 unless otherwise specified.  You can
   specify the desired output encoding with
   `i18n.logoutputencoding` in `.git/config` file, like this:
 +

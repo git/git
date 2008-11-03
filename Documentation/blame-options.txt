@@ -49,6 +49,13 @@ of lines before or after the line given by <start>.
 	Show the result incrementally in a format designed for
 	machine consumption.
 
+--encoding=<encoding>::
+	Specifies the encoding used to output author names
+	and commit summaries. Setting it to `none` makes blame
+	output unconverted data. For more information see the
+	discussion about encoding in the linkgit:git-log[1]
+	manual page.
+
 --contents <file>::
 	When <rev> is not specified, the command annotates the
 	changes starting backwards from the working tree copy.
