@@ -224,13 +224,7 @@ generate_create_branch_email()
 	echo ""
 
 	echo $LOGBEGIN
-	# This shows all log entries that are not already covered by
-	# another ref - i.e. commits that are now accessible from this
-	# ref that were previously not accessible
-	# (see generate_update_branch_email for the explanation of this
-	# command)
-	git rev-parse --not --branches | grep -v $(git rev-parse $refname) |
-	git rev-list --pretty --stdin $newrev
+	show_new_revisions
 	echo $LOGEND
 }
 
@@ -390,8 +384,7 @@ generate_update_branch_email()
 
 		echo ""
 		echo $LOGBEGIN
-		git rev-parse --not --branches | grep -v $(git rev-parse $refname) |
-		git rev-list --pretty --stdin $oldrev..$newrev
+		show_new_revisions
 
 		# XXX: Need a way of detecting whether git rev-list actually
 		# outputted anything, so that we can issue a "no new
@@ -590,6 +583,36 @@ generate_delete_general_email()
 	git show -s --pretty=oneline $oldrev
 	echo $LOGEND
 }
+
+
+# --------------- Miscellaneous utilities
+
+#
+# Show new revisions as the user would like to see them in the email.
+#
+show_new_revisions()
+{
+	# This shows all log entries that are not already covered by
+	# another ref - i.e. commits that are now accessible from this
+	# ref that were previously not accessible
+	# (see generate_update_branch_email for the explanation of this
+	# command)
+
+	# Revision range passed to rev-list differs for new vs. updated
+	# branches.
+	if [ "$change_type" = create ]
+	then
+		# Show all revisions exclusive to this (new) branch.
+		revspec=$newrev
+	else
+		# Branch update; show revisions not part of $oldrev.
+		revspec=$oldrev..$newrev
+	fi
+
+	git rev-parse --not --branches | grep -v $(git rev-parse $refname) |
+	git rev-list --pretty --stdin $revspec
+}
+
 
 send_mail()
 {
