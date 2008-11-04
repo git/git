@@ -6854,8 +6854,10 @@ proc gettreediffline {gdtf ids} {
 		set file [lindex $file 0]
 	    }
 	    set file [encoding convertfrom $file]
-	    lappend treediff $file
-	    lappend sublist $file
+	    if {$file ne [lindex $treediff end]} {
+		lappend treediff $file
+		lappend sublist $file
+	    }
 	}
     }
     if {$perfile_attrs} {
@@ -6960,7 +6962,7 @@ proc makediffhdr {fname ids} {
     if {$i >= 0} {
 	setinlist difffilestart $i $curdiffstart
     }
-    set ctext_file_names [lreplace $ctext_file_names end end $fname]
+    lset ctext_file_names end $fname
     set l [expr {(78 - [string length $fname]) / 2}]
     set pad [string range "----------------------------------------" 1 $l]
     $ctext insert $curdiffstart "$pad $fname $pad" filesep
@@ -7032,6 +7034,18 @@ proc getblobdiffline {bdf ids} {
 		}
 	    }
 	    makediffhdr $fname $ids
+
+	} elseif {![string compare -length 16 "* Unmerged path " $line]} {
+	    set fname [encoding convertfrom [string range $line 16 end]]
+	    $ctext insert end "\n"
+	    set curdiffstart [$ctext index "end - 1c"]
+	    lappend ctext_file_names $fname
+	    lappend ctext_file_lines [lindex [split $curdiffstart "."] 0]
+	    $ctext insert end "$line\n" filesep
+	    set i [lsearch -exact $treediffs($ids) $fname]
+	    if {$i >= 0} {
+		setinlist difffilestart $i $curdiffstart
+	    }
 
 	} elseif {![string compare -length 2 "@@" $line]} {
 	    regexp {^@@+} $line ats
