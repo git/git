@@ -38,6 +38,12 @@
 # hooks.emailprefix
 #   All emails have their subjects prefixed with this prefix, or "[SCM]"
 #   if emailprefix is unset, to aid filtering
+# hooks.showrev
+#   The shell command used to format each revision in the email, with
+#   "%s" replaced with the commit id.  Defaults to "git rev-list -1
+#   --pretty %s", displaying the commit id, author, date and log
+#   message.  To list full patches separated by a blank line, you
+#   could set this to "git show -C %s; echo".
 #
 # Notes
 # -----
@@ -610,7 +616,16 @@ show_new_revisions()
 	fi
 
 	git rev-parse --not --branches | grep -v $(git rev-parse $refname) |
-	git rev-list --pretty --stdin $revspec
+	if [ -z "$custom_showrev" ]
+	then
+		git rev-list --pretty --stdin $revspec
+	else
+		git rev-list --stdin $revspec |
+		while read onerev
+		do
+			eval $(printf "$custom_showrev" $onerev)
+		done
+	fi
 }
 
 
@@ -650,6 +665,7 @@ recipients=$(git config hooks.mailinglist)
 announcerecipients=$(git config hooks.announcelist)
 envelopesender=$(git config hooks.envelopesender)
 emailprefix=$(git config hooks.emailprefix || echo '[SCM] ')
+custom_showrev=$(git config hooks.showrev)
 
 # --- Main loop
 # Allow dual mode: run from the command line just like the update hook, or
