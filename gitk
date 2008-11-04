@@ -3238,6 +3238,22 @@ proc external_blame_diff {} {
     external_blame $parent_idx $line
 }
 
+# Find the SHA1 ID of the blob for file $fname in the index
+# at stage 0 or 2
+proc index_sha1 {fname} {
+    set f [open [list | git ls-files -s $fname] r]
+    while {[gets $f line] >= 0} {
+	set info [lindex [split $line "\t"] 0]
+	set stage [lindex $info 2]
+	if {$stage eq "0" || $stage eq "2"} {
+	    close $f
+	    return [lindex $info 1]
+	}
+    }
+    close $f
+    return {}
+}
+
 proc external_blame {parent_idx {line {}}} {
     global flist_menu_file
     global nullid nullid2
@@ -3267,7 +3283,9 @@ proc external_blame {parent_idx {line {}}} {
 proc show_line_source {} {
     global cmitmode currentid parents curview blamestuff blameinst
     global diff_menu_line diff_menu_filebase flist_menu_file
+    global nullid nullid2 gitdir
 
+    set from_index {}
     if {$cmitmode eq "tree"} {
 	set id $currentid
 	set line [expr {$diff_menu_line - $diff_menu_filebase}]
@@ -3279,11 +3297,46 @@ proc show_line_source {} {
 	    mark_ctext_line $diff_menu_line
 	    return
 	}
-	set id [lindex $parents($curview,$currentid) [expr {$pi - 1}]]
+	incr pi -1
+	if {$currentid eq $nullid} {
+	    if {$pi > 0} {
+		# must be a merge in progress...
+		if {[catch {
+		    # get the last line from .git/MERGE_HEAD
+		    set f [open [file join $gitdir MERGE_HEAD] r]
+		    set id [lindex [split [read $f] "\n"] end-1]
+		    close $f
+		} err]} {
+		    error_popup [mc "Couldn't read merge head: %s" $err]
+		    return
+		}
+	    } elseif {$parents($curview,$currentid) eq $nullid2} {
+		# need to do the blame from the index
+		if {[catch {
+		    set from_index [index_sha1 $flist_menu_file]
+		} err]} {
+		    error_popup [mc "Error reading index: %s" $err]
+		    return
+		}
+	    }
+	} else {
+	    set id [lindex $parents($curview,$currentid) $pi]
+	}
 	set line [lindex $h 1]
     }
+    set blameargs {}
+    if {$from_index ne {}} {
+	lappend blameargs | git cat-file blob $from_index
+    }
+    lappend blameargs | git blame -p -L$line,+1
+    if {$from_index ne {}} {
+	lappend blameargs --contents -
+    } else {
+	lappend blameargs $id
+    }
+    lappend blameargs -- $flist_menu_file
     if {[catch {
-	set f [open [list | git blame -p -L$line,+1 $id -- $flist_menu_file] r]
+	set f [open $blameargs r]
     } err]} {
 	error_popup [mc "Couldn't start git blame: %s" $err]
 	return
@@ -3305,7 +3358,7 @@ proc stopblaming {} {
 }
 
 proc read_line_source {fd inst} {
-    global blamestuff curview commfd blameinst
+    global blamestuff curview commfd blameinst nullid nullid2
 
     while {[gets $fd line] >= 0} {
 	lappend blamestuff($inst) $line
@@ -3337,6 +3390,11 @@ proc read_line_source {fd inst} {
     }
     if {$fname ne {}} {
 	# all looks good, select it
+	if {$id eq $nullid} {
+	    # blame uses all-zeroes to mean not committed,
+	    # which would mean a change in the index
+	    set id $nullid2
+	}
 	if {[commitinview $id $curview]} {
 	    selectline [rowofcommit $id] 1 [list $fname $lnum]
 	} else {
