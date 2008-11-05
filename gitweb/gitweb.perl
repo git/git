@@ -30,7 +30,7 @@ our $my_uri = $cgi->url(-absolute => 1);
 # if we're called with PATH_INFO, we have to strip that
 # from the URL to find our real URL
 # we make $path_info global because it's also used later on
-my $path_info = $ENV{"PATH_INFO"};
+our $path_info = $ENV{"PATH_INFO"};
 if ($path_info) {
 	$my_url =~ s,\Q$path_info\E$,,;
 	$my_uri =~ s,\Q$path_info\E$,,;
@@ -442,7 +442,7 @@ $projects_list ||= $projectroot;
 # together during validation: this allows subsequent uses (e.g. href()) to be
 # agnostic of the parameter origin
 
-my %input_params = ();
+our %input_params = ();
 
 # input parameters are stored with the long parameter name as key. This will
 # also be used in the href subroutine to convert parameters to their CGI
@@ -452,7 +452,7 @@ my %input_params = ();
 # XXX: Warning: If you touch this, check the search form for updating,
 # too.
 
-my @cgi_param_mapping = (
+our @cgi_param_mapping = (
 	project => "p",
 	action => "a",
 	file_name => "f",
@@ -469,10 +469,10 @@ my @cgi_param_mapping = (
 	extra_options => "opt",
 	search_use_regexp => "sr",
 );
-my %cgi_param_mapping = @cgi_param_mapping;
+our %cgi_param_mapping = @cgi_param_mapping;
 
 # we will also need to know the possible actions, for validation
-my %actions = (
+our %actions = (
 	"blame" => \&git_blame,
 	"blobdiff" => \&git_blobdiff,
 	"blobdiff_plain" => \&git_blobdiff_plain,
@@ -504,7 +504,7 @@ my %actions = (
 
 # finally, we have the hash of allowed extra_options for the commands that
 # allow them
-my %allowed_options = (
+our %allowed_options = (
 	"--no-merges" => [ qw(rss atom log shortlog history) ],
 );
 
