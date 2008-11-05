@@ -1957,7 +1957,10 @@ sub git_get_project_ctags {
 	my $ctags = {};
 
 	$git_dir = "$projectroot/$path";
-	foreach (<$git_dir/ctags/*>) {
+	unless (opendir D, "$git_dir/ctags") {
+		return $ctags;
+	}
+	foreach (grep { -f $_ } map { "$git_dir/ctags/$_" } readdir(D)) {
 		open CT, $_ or next;
 		my $val = <CT>;
 		chomp $val;
@@ -1965,6 +1968,7 @@ sub git_get_project_ctags {
 		my $ctag = $_; $ctag =~ s#.*/##;
 		$ctags->{$ctag} = $val;
 	}
+	closedir D;
 	$ctags;
 }
 
