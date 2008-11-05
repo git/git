@@ -183,8 +183,13 @@ on.
 
 * Git class defined in "Git.pm" can be subclasses a bit more easily.
 
-* We used to link GNU regex library as a compatibility layer for some platforms,
-  but it turns out it is not necessary on most of them.
+* We used to link GNU regex library as a compatibility layer for some
+  platforms, but it turns out it is not necessary on most of them.
+
+* Some path handling routines used fixed number of buffers used alternately
+  but depending on the call depth, this arrangement led to hard to track
+  bugs.  This issue is being addressed.
+
 
 Fixes since v1.6.0
 ------------------
@@ -217,6 +222,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.0.3-610-g94dc4b8
+O=v1.6.0.3-639-ga1a846a
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
