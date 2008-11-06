@@ -63,16 +63,8 @@ Message-Id: <1207100091.10532.64.camel@gandalf.cobite.com>
 * "[alias] st = status" and "cd .git && git st" (Jeff King)
   $gmane/72327
 
-* use "assume unchanged" bit to implement narrow checkout
-  $gmane/77046
-
-* send-pack vs receive-pack history exchange (me)
-
 * zlib abstraction (Marco)
   $gmane/72262
 
 * git --index-file=<foo> <cmd> (Linus)
   $gmane/77332
-
-* git lost-found vs git fsck --lost-found
-  $gmane/78267
